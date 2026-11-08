@@ -324,7 +324,7 @@ function futureSave() {
   G.dailyCommissions(P, "2026-11-08"); P.daily.list.forEach(c => { c.done = true; });
   P.keys.b3 = "2026-11-12"; P.recipes.r1 = "2026-11-11"; P.cellar.floorsDone[1] = "2026-11-11"; P.badges.first = "2026-11-10";
   // 第二位參觀者：連續抱了 1 天；收起來的 dayVis 剛好是真的今天
-  G.setRng(G.mulberry32(22)); G.addVisitor(P, "小華", 1); G.chooseCandidate(P, 0); G.setRng(null);
+  G.setRng(G.mulberry32(22)); G.addVisitor(P, "小華", 1); G.chooseJob(P, "historian"); G.setRng(null); // 決定 0028：選職業再抽優缺點
   P.hugDays = ["2026-11-13"]; P.visit.from = "2026-11-12";
   G.switchVisitor(P, "v1"); // 回到第一位；小華收起來
   const v2 = P.visitors.find(v => v.vid === "v2");
@@ -354,14 +354,10 @@ T("舊存檔（遊戲日期在 5 天後）：拉回今天，受傷剩的天數�
   assert.ok(list.length >= 3); assert.ok(list.every(c => !c.done));
   // 第 N 天：建立的日期比今天晚 → 今天是第 1 天
   assert.strictEqual(P.created, "2026-11-08"); assert.strictEqual(G.gameDayNo(P, "2026-11-08"), 1); assert.strictEqual(G.gameDayNo(P, "2026-11-09"), 2);
-  // 連續抱抱枕：舊的最後一天變成昨天，今天抱就接得上（連 3 天治好怪癖）
+  // hugDays：11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027），舊存檔有的照樣往前移、不會壞
   assert.deepStrictEqual(JSON.parse(JSON.stringify(P.hugDays)), ["2026-11-06", "2026-11-07"]);
-  assert.strictEqual(G.hugStreak(P), 2);
-  if (G.NUM.quirkCureDays === 3) {
-    P.pillows["標準|棉布|剛剛好|"] = 1; G.setRng(() => 0.5);
-    const h = G.hug(P, "標準|棉布|剛剛好|"); G.setRng(null);
-    assert.ok(h.ok && h.cured, "連 3 天抱，怪癖好了"); assert.strictEqual(P.quirks.length, 0);
-  }
+  // 怪癖：舊存檔沒有期限的，讀進來補上（決定 0027）
+  assert.ok(P.quirks.every(q => typeof q.until === "number" && q.task), "怪癖補了期限和治法");
   // 不在場的那位：dayVis 作廢，換回來照新的一天；hugDays 也往前移
   const v2 = P.visitors.find(v => v.vid === "v2");
   assert.strictEqual(v2.dayVis, null); assert.deepStrictEqual(JSON.parse(JSON.stringify(v2.hugDays)), ["2026-11-07"]);
