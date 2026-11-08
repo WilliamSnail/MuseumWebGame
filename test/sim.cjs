@@ -6,9 +6,11 @@ const RUNS = +process.argv[2] || 1000;
 // 每天玩幾分鐘（DAY_MIN）。11-09 起遊戲裡的一天＝真實的一天（台灣時間 05:00 換日，決定 0019），所以這裡模擬「每天玩 N 分鐘、玩完就等明天」。
 // 預設 20：設計基準是每天玩 20 分鐘（翊文 11-08：「每天玩大概20分鐘左右比較好」）。以前一天＝玩 15 分鐘時，DAY_MIN=15 就是那時的算法
 const SESSION = (+process.env.DAY_MIN || 20) * 60;
+// 每天第一次進館簽到（11-09，決定 0030）。SIGNIN=0 不簽，用來比較簽到讓節奏快了多少
+const SIGNIN = process.env.SIGNIN !== "0";
 // 每個動作大約要幾秒（含走路、看說明牌、擲骰動畫、揭曉動畫）
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
-const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
+const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
 const LOCKED0 = baseLocked(G.newProfile("challenge"));
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
 function sim(seed) {
@@ -18,13 +20,16 @@ function sim(seed) {
   let t = 0, day = 0, date = G.addDays("2026-11-08", 0);
   G.setNowClock(() => t * 1000); // 「現在」照模擬的秒數走：怪癖 20 分鐘後自己消失（11-09，決定 0027）
   G.ensureDay(P, date);
+  const SV = { signin: G.newSignin() }; // 簽到的紀錄是帳號的（SAVE.signin）
+  const signToday = () => { if (!SIGNIN) return; const r = G.signIn(SV, P, date); if (r.ok) r.gains.forEach(g => { if (g.kind === "insp") INC.sign += g.n; if (g.kind === "item" && g.insp) INC.sign += g.insp; }); };
+  signToday();
   const out = { t4: null, tAll: null, made: 0, legends: 0, epics: 0, perfects: 0, failed: 0, endings: 0, quirks: 0, minSan: 99, days: 1, unlockAt10: null };
   let dayStart = 0, visitorClock = 0;
   const spend = sec => {
     t += sec; visitorClock += sec;
     G.tickAction(P); // 每個動作讓瘋狂發作倒數
     while (visitorClock >= G.NUM.visitorEvery) { visitorClock -= G.NUM.visitorEvery; const v = G.visitorArrive(P, rng); if (v) INC.visit += v.gain; }
-    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); out.days++; }
+    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); signToday(); out.days++; }
   };
   const san = (spec, src) => {
     const r = G.sanCheck(P, spec, src);
@@ -119,13 +124,13 @@ function sim(seed) {
   G.setRng(null);
   return out;
 }
-const INC={visit:0,deliver:0,view:0,read:0,badge:0};globalThis.INC=INC;
+const INC={visit:0,deliver:0,view:0,read:0,badge:0,sign:0};globalThis.INC=INC;
 const runs = Array.from({ length: RUNS }, (_, i) => sim(1000 + i));
 const q = (arr, p) => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) * p)] : NaN; };
 const f = n => n.toFixed(1);
 const t4 = runs.map(r => r.t4), tAll = runs.map(r => r.tAll), at10 = runs.map(r => r.unlockAt10);
 const made = runs.reduce((s, r) => s + r.made, 0);
-console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘）`);
+console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${SIGNIN ? "，每天簽到" : "，不簽到"}）`);
 console.log(`玩 10 分鐘時解鎖了幾個：中位數 ${q(at10, .5)}（10%–90%：${q(at10, .1)}–${q(at10, .9)}）　目標 3–4`);
 console.log(`解鎖 4 個要幾分鐘：中位數 ${f(q(t4, .5))}（10%–90%：${f(q(t4, .1))}–${f(q(t4, .9))}）`);
 console.log(`全部解鎖（${LOCKED0} 個）要幾小時：中位數 ${f(q(tAll, .5) / 60)}（10%–90%：${f(q(tAll, .1) / 60)}–${f(q(tAll, .9) / 60)}）　目標 2–3 小時；沒解完 ${runs.filter(r => r.tAll == null).length} 次`);

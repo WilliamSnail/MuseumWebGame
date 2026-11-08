@@ -6,7 +6,7 @@ const RUNS = +process.argv[2] || 1000;
 const SESSION = 45 * 60;           // 每天玩 45 分鐘
 // 每個動作大約要幾秒（含走路、看說明牌、擲骰動畫、揭曉動畫）
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
-const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
+const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
 const LOCKED0 = baseLocked(G.newProfile("challenge"));
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
 function sim(seed) {

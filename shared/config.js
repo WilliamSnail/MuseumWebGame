@@ -4,7 +4,8 @@
 //  ・start: true ＝一開始就打開；req ＝解鎖前要先做到的事；
 //    forbidden ＝禁忌選項（不算在基本組合裡，佩佩神話夠了才會自己打開）；
 //    mutant ＝突變選項（只能靠融合室配種突變出來）；gift ＝委託人送的選項；
-//    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）。
+//    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）；
+//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
 //  ・新加的選項如果畫法裡沒有對應，圖上會用預設的樣子，文字照樣出現。
 //  ・下面的文字是 Claude 的草稿；標「第 1 代」的文字不要改。
 // ================================================================
@@ -44,6 +45,9 @@ export const PEPE_PARTS = [
     { name: "觸手帽", forbidden: true, myth: 5 },
     { name: "毛帽", mutant: true },
     { name: "紳士帽", gift: "collector" },
+    // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS）
+    { name: "館員帽", limited: "signin" },
+    { name: "燈籠帽", limited: "signin" },
   ] },
   { name: "姿勢", options: [
     { name: "站著", start: true },
@@ -64,7 +68,7 @@ export const RENAMED = { "俄國8": "俄國8+9" };
 // ---------- 抱枕（第 1 代選單的「枕」）：另外多一類「印哪一隻」，從收藏裡挑 ----------
 export const PILLOW_PARTS = [
   { name: "尺寸", inName: true, options: [{ name: "小抱枕" }, { name: "標準" }, { name: "等身大" }] },
-  { name: "材質", inName: true, options: [{ name: "棉布" }, { name: "絨毛" }, { name: "桃皮絨" }] },
+  { name: "材質", inName: true, options: [{ name: "棉布" }, { name: "絨毛" }, { name: "桃皮絨" }, { name: "星光絨", limited: "signin" }] }, // 星光絨：簽到限定的材料，做一個用掉一份（決定 0030）
   { name: "填充", options: [{ name: "軟綿綿" }, { name: "剛剛好" }, { name: "硬梆梆" }] },
 ];
 
@@ -123,7 +127,27 @@ export const NUM = {
   cellarRest: "1D3",        // 隊伍裡有躺平、毛帽：每一層第一次走時各回這麼多理智
   linesFrom: 4,             // 解鎖幾個選項之後，老主顧（委託人關係線）才開始出現
   lineReward: 8,            // 老主顧的委託給多少靈感
+  // 第 4 版（11-09，決定 0030）：每日簽到、每週全簽到、節日。數字是草稿，跑 test/sim.cjs 看過（維護日誌 11-09_翊文_每日簽到.md）
+  signin: {
+    // 照「累計第幾次」七天一輪（斷掉不歸零）：第 1～7 次各給什麼。第 7 次多一點。一輪加起來靈感 17、心情 13（每天平均靈感 2 點多）
+    // 第 1 次只給心情：第一天剛開館就多 3 靈感，模擬裡「玩 10 分鐘解鎖幾個」從 4 變 5（11-09 跑過），所以靈感從第 2 次才給
+    cycle: [{ mood: 3 }, { insp: 2 }, { insp: 2, mood: 2 }, { insp: 3 }, { insp: 2, mood: 3 }, { insp: 3 }, { insp: 5, mood: 5 }],
+    holiday: { insp: 5, mood: 3, mat: 1 }, // 節日那天簽到多一份（mat ＝星光絨幾份）；紀念日沒有
+    weekKinds: ["part", "deco", "mat"],    // 每週全簽到的特別項目，照週的號碼輪流（大家同一週同一種）
+    dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
+    noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
+  },
 };
+// ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
+// kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）
+// 名字、說明在 content3.js 的 LIMITED_TEXT；樣子在 web/src/art.js。每週全簽到照 NUM.signin.weekKinds 輪到哪一種，那一種裡再照週輪流
+export const LIMITED_ITEMS = [
+  { id: "hat-curator", kind: "part", cat: "帽子", opt: "館員帽" },
+  { id: "hat-lantern", kind: "part", cat: "帽子", opt: "燈籠帽" },
+  { id: "stand-velvet", kind: "deco", slot: "stand" },
+  { id: "frame-vine", kind: "deco", slot: "frame" },
+  { id: "mat-star", kind: "mat", cat: "材質", opt: "星光絨", n: 3 },
+];
 
 // ---------- 第 3 版：工坊升級（系統 K，在館長室買） ----------
 export const UPGRADES = [

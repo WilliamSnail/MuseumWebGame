@@ -13,7 +13,7 @@ const unexport = t => t.replace(/^export\s+/gm, ""); // 第 4 版：拿掉 expor
 const src3 = unexport(raw3);
 
 const NAMES = ["JOBS", "SKILL_TEXT", "JOB_TEXT", "FUSION_TEXT", "RECIPE_TEXT", "UPGRADE_TEXT", "CELLAR", "CHAPTER4", "BOOK4",
-  "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT", "QUIRK_TASK_TEXT"]; // QUIRK_TASK_TEXT：怪癖的治法（11-09，決定 0027）；VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
+  "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT", "QUIRK_TASK_TEXT", "LIMITED_TEXT", "SIGNIN_TEXT", "HOLIDAY_TEXT"]; // QUIRK_TASK_TEXT：怪癖的治法（11-09，決定 0027）；VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
 
 const errors = [], warns = [];
 const err = (m) => errors.push(m);
@@ -42,7 +42,7 @@ const CFG = vm.runInContext("({PEPE_PARTS, RECIPES, UPGRADES, SKILLS, WEEKLY_IDS
 const BASE = {};
 for (const part of CFG.PEPE_PARTS) {
   if (part.deco) continue;
-  BASE[part.name] = part.options.filter((o) => !o.forbidden && !o.mutant && !o.gift).map((o) => o.name);
+  BASE[part.name] = part.options.filter((o) => !o.forbidden && !o.mutant && !o.gift && !o.limited).map((o) => o.name); // limited：簽到限定（11-09，決定 0030）
 }
 const SKILLS = ["偵查", "鑑賞", "神秘學", "幸運", "手工藝", "說服"];
 const MOODS = ["開心", "傷心", "生氣"];

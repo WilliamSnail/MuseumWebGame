@@ -21,6 +21,7 @@
 // ================================================================
 import { WEEKLY_TEXT } from "./content3.js";
 import { weekIndex, weeklyTheme } from "./logic3.js";
+import { holidayNotices } from "./holidays.js";
 
 export const NOTICE_CATS = ["館方公告", "特展活動"];
 const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
@@ -102,6 +103,7 @@ export function visibleNotices(P, today) {
   const list = NOTICES.filter(n => (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire));
   const w = weeklyNotice(P);
   if (w) list.push(w);
+  list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）
   return list.sort((a, b) => (!!b.pinned - !!a.pinned) || (RANK[b.importance] - RANK[a.importance]) || String(b.publish || "9999").localeCompare(String(a.publish || "9999")));
 }
 
