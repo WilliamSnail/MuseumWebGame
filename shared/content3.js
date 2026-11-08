@@ -690,11 +690,11 @@ export const TRAIT_TEXT = {
 };
 // 換人時的畫面（遺物、挑下壹位、館長室的歷任參觀者牆）。{x} 這種由畫面帶入。
 export const LEGACY_TEXT = {
-  leaveTitle: "第 {x} 位參觀者要走了",
+  leaveTitle: "{who}要走了", // {who} ＝「阿明（第 1 位參觀者）」，沒有名字是「第 1 位參觀者」（11-08）
   leaveSub: "走之前，留下壹樣東西給下壹位參觀者。",
   relic: "留下壹件收藏當遺物",
-  relicDesc: "放進館長室的遺物櫃，寫著「第 {x} 位參觀者留下的」。下壹位開場心情 +{mood}。",
-  relicDescNoMood: "放進館長室的遺物櫃，寫著「第 {x} 位參觀者留下的」。",
+  relicDesc: "放進館長室的遺物櫃，寫著「{who}留下的」。下壹位開場心情 +{mood}。",
+  relicDescNoMood: "放進館長室的遺物櫃，寫著「{who}留下的」。",
   relicNone: "收藏裡還沒有東西。",
   relicPick: "挑壹件要留下的",
   relicEmpty: "（還沒挑）",
@@ -709,14 +709,33 @@ export const LEGACY_TEXT = {
   pickBtn: "就是你了",
   perk: "小優點",
   flaw: "小缺點",
-  gotRelic: "第 {x} 位參觀者留下了「{name}」：開場心情 +{mood}",
-  gotRelicNoMood: "第 {x} 位參觀者留下了「{name}」",
-  gotSkill: "第 {x} 位參觀者把「{skill}」傳下來了：起點 +{plus}",
+  gotRelic: "{who}留下了「{name}」：開場心情 +{mood}",
+  gotRelicNoMood: "{who}留下了「{name}」",
+  gotSkill: "{who}把「{skill}」傳下來了：起點 +{plus}",
   relics: "遺物櫃",
-  relicLabel: "第 {x} 位參觀者留下的",
+  relicLabel: "{who}留下的",
   wallHint: "點壹張卡片，看這位參觀者的詳細。",
   now: "現在",
   empty: "你是第 {x} 位參觀者。前面還沒有人。",
+  // 退休換人（11-08 翊文：「好，加些其他的」，決定 0025）
+  endEnding: "看完「{ending}」，退休了。",
+  endRetire: "自己決定退休了。",
+  retireBtn: "退休，換下壹位",
+  stayBtn: "繼續當參觀者",
+  retireAsk: "{who}要退休嗎？會掛上歷任參觀者牆，位子空出來給下壹位，走之前可以留下壹樣東西。退休了就不能回來。",
+  retireYes: "退休",
+  retireNo: "再想想",
+  officeTitle: "退休",
+  officeDesc: "不用等到理智用完，也可以讓這位參觀者退休：掛上歷任參觀者牆，留下壹樣東西給下壹位，在同壹個位子換人。收藏、靈感都留在館裡。",
+  officeBtn: "讓這位參觀者退休",
+  officeAsk1: "要讓{who}退休嗎？職業、技能、理智、怪癖都會跟著走，收藏和靈感留在館裡。",
+  officeAsk2: "真的嗎？{who}退休了就不能回來。",
+  notDark: "燈熄了，要先走進那扇門。",
+  notBout: "正在發作，等發作過去再說。",
+  notCellar: "還在地下收藏庫，先上來。",
+  notPicking: "還沒挑職業。",
+  notNew: "剛來沒多久，再過 {x} 天才能退休。",
+  retired: "{who}退休了。",
 };
 // 多位參觀者（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018）：標題畫面的三個位子、取名字、改名字。
 // {x} ＝數字；{name} ＝玩家取的名字；{max} ＝名字最多幾個字（config.js 的 LEGACY.nameMax）；{n} ＝候選人有幾位

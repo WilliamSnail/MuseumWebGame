@@ -5,17 +5,17 @@
 // ---------- 6 抱枕工作台（系統 I：印你的佩佩） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../shared/config.js";
-import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT, NEXT_VISITOR } from "../../shared/content.js";
-import { CLIENT_LINES, ENDING_CELLAR, RECIPE_TEXT } from "../../shared/content3.js";
+import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
+import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallCode, hallItem, hallScore, hug, hugStreak, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, nextVisitor, num, pad, parseHallCode, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, scoreItems, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallCode, hallItem, hallScore, hug, hugStreak, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parseHallCode, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, scoreItems, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
-import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
-import { traitHits, traitTag } from "../../shared/legacy.js";
+import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
+import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { $, $$, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, pepePlacard, persist, placard, placeTarget, ptNode, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
-import { hallTabs, legacyFlow, pickJob, weeklyHall } from "./ui_screens3.js";
+import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 
 SCREENS.pillow = root => {
@@ -616,18 +616,20 @@ SCREENS.ending = (root, params) => {
     stats.classList.add("enter");
     await wait(900);
     if (id === "russia8") actions.append(btn("下一位參觀者", async e => {
-      // 參觀者一位接一位（11-08 翊文，roguelike 的繼承）：先留一樣東西給下一位（A），換人之後從候選人挑一位（C）
-      const b = e.currentTarget; b.disabled = true;
-      const leave = await legacyFlow();
-      const r = nextVisitor(P, "russia8", leave);
-      markFresh(P, "office", "wall:" + r.entry.n); // 館長室的歷任參觀者牆多了一張（導覽列標「新」）
-      persist();
-      go("lobby", {}, { action: false });
-      await FX.rollOverlay({ title: "下一位參觀者", sub: NEXT_VISITOR.join("　"), spec: "3D6", result: { total: r.total, faces: r.faces }, outcome: { text: `心情 ${P.mood}　理智 ${P.sanity}`, tone: "neutral" } });
-      updateStatus();
-      await pickJob(); // 新的參觀者：有候選人就從候選人挑，沒有就選職業
+      // 參觀者一位接一位（11-08 翊文，roguelike 的繼承）：先留一樣東西給下一位（A），換人之後從候選人挑一位（C）。流程在 ui_screens3.js 的 retireFlow
+      e.currentTarget.disabled = true;
+      await retireFlow("russia8");
     }, "primary"));
-    else actions.append(btn("回大廳繼續逛", () => go("lobby", {}, { action: false }), "primary"));
+    else if (RETIRE_ENDINGS.includes(id) && retireCheck(P, "ending").ok) {
+      // 退休換人（11-08 翊文：「好，加些其他的」，決定 0025）：看完館長、地下館長、你的佩佩博物館，可以退休換下一位，也可以繼續當參觀者
+      actions.append(btn(LEGACY_TEXT.stayBtn, () => go("lobby", {}, { action: false }), "primary"),
+        btn(LEGACY_TEXT.retireBtn, async e => {
+          const b = e.currentTarget;
+          if (!(await ask(legacyFill(LEGACY_TEXT.retireAsk, { who: visitorLabel(P) }), LEGACY_TEXT.retireYes, LEGACY_TEXT.retireNo))) return;
+          b.disabled = true;
+          await retireFlow(id);
+        }, "ghost"));
+    } else actions.append(btn("回大廳繼續逛", () => go("lobby", {}, { action: false }), "primary"));
     actions.querySelector("button").focus();
   })();
 };
