@@ -7,6 +7,8 @@ import * as content3 from "../shared/content3.js";
 import * as logic from "../shared/logic.js";
 import * as logic3 from "../shared/logic3.js";
 import * as fresh from "../shared/fresh.js";
+import * as holidays from "../shared/holidays.js";
+import * as signin from "../shared/signin.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
@@ -44,5 +46,14 @@ ok("fresh 叫得到 logic、logic3（新解開的東西，11-08）", () => {
 });
 ok("名字：第 4 版", () => {
   assert.strictEqual(config.GEN_TEXT.museum, "佩佩博物館2"); // 決定 0022
+});
+ok("簽到、節日接得上 logic、logic3（11-09，決定 0030）", () => {
+  const save = logic.newSave();
+  const P = save.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-09-25");
+  const r = signin.signIn(save, P, "2026-09-25");
+  assert.ok(r.ok && r.holiday.key === "midautumn");
+  assert.strictEqual(holidays.holidayOf("2026-09-25").name, "中秋節");
+  assert.strictEqual(logic.exhibitById("hx-midautumn-0").holiday, "midautumn");
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

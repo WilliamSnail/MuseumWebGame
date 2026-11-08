@@ -23,7 +23,7 @@ function buildProfile(rng, stage) {
   const n = { early: 12, mid: 40, late: 100 }[stage];
   if (stage !== "early") {
     G.CATS.forEach(c => G.partOf(c).options.forEach(o => {
-      if (o.forbidden || o.mutant || o.gift || o.key) return;
+      if (o.forbidden || o.mutant || o.gift || o.limited || o.key) return;
       if (stage === "mid" && (o.name === "皇冠" || o.name === "斯拉夫蹲")) return;
       if (!P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name);
     }));

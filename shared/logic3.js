@@ -5,9 +5,9 @@
 
 // ---------- 系統 K：工坊升級 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, EXHIBITS, MOOD_BEATS, NUM, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
-import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
+import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
 import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
 
 export const hasUp = (P, id) => !!(P && P.upgrades && P.upgrades[id]);
@@ -400,13 +400,13 @@ export function roomProgress(P) {
     // 跟手作坊頁籤上的數字一樣算：禁忌選項打開了才算進去
     let a = 0, b = 0;
     CATS.filter(c => !partOf(c).deco || decoOpen(P, c)).forEach(c => {
-      const all = allOpts(c).filter(n => !optOf(c, n).forbidden || isUnlocked(P, c, n));
+      const all = allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited) || isUnlocked(P, c, n)); // 簽到限定的（決定 0030）拿到了才算
       b += all.length; a += all.filter(n => isUnlocked(P, c, n)).length;
     });
     out.workshop = frac(a, b, "選項");
   }
   out.fusion = frac(RECIPES.filter(r => P.recipes && P.recipes[r.id]).length, RECIPES.length, "配方");
-  const kinds = new Set(Object.keys(P.pillows).map(k => parsePillowKey(k).base));
+  const kinds = new Set(Object.keys(P.pillows).map(k => parsePillowKey(k)).filter(pp => !PILLOW_CATS.some(cc => (PILLOW_PARTS.find(p => p.name === cc).options.find(o => o.name === pp.pick[cc]) || {}).limited)).map(pp => pp.base)); // 星光絨的抱枕不算（PILLOW_TOTAL 不算它，決定 0030）
   out.pillow = frac(kinds.size, PILLOW_TOTAL, "抱枕");
   if (P.day) { const list = dailyCommissions(P, P.day.date); out.commission = frac(list.filter(c => c.done).length, list.length, "今天"); }
   out.hall = frac(P.hall.filter(Boolean).length, hallSize(P), "展台");

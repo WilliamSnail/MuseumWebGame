@@ -11,7 +11,7 @@ const d100 = N => { const t = N === 100 ? 0 : Math.floor(N / 10), u = N === 100 
 const dN = (v, n) => (v - 0.5) / n; // 讓 1Dn 擲出 v
 function seq(...vals) { const q = vals.flat(); return () => q.length ? q.shift() : 0.5; }
 function fresh(mode = "challenge") { const P = G.newProfile(mode); G.ensureDay(P, "2026-11-08"); return P; }
-const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.gift && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
+const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
 const P3 = () => { const P = fresh(); unlockAll(P); P.insp = 500; return P; };
 const mk = (P, o, nat = 50) => G.finishMake(P, Object.assign({ 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, o), { natural: nat });
 const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）

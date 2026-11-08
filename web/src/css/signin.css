@@ -1,0 +1,268 @@
+/* ================================================================
+   每日簽到、簽到日曆、節日（11-09，決定 0030）
+   規則在 shared/signin.js、shared/holidays.js；畫面在 web/src/ui_signin.js。
+   ================================================================ */
+
+/* ---------- 節日的外觀（body.holiday-主題，ui_core.js 的 applyHolidayLook） ----------
+   只改一點點：導覽列下面一條節日的花邊、PEPE MUSEUM 旁邊一個小圖示、大廳的簽到條換個邊框色。
+   不蓋住按鈕（pointer-events: none）、不放會動的（body.reduce-motion 本來就不會動）。設定頁可以關。 */
+body.holiday-on { --hol-a: #C8362C; --hol-b: #E9C05A; }
+body.holiday-confetti { --hol-a: #E9C05A; --hol-b: #3B6FD6; }
+body.holiday-spring, body.holiday-lantern { --hol-a: #C8362C; --hol-b: #E9C05A; }
+body.holiday-balloon { --hol-a: #E8735F; --hol-b: #6C9BE0; }
+body.holiday-willow { --hol-a: #6FAF55; --hol-b: #D9E8C4; }
+body.holiday-tea { --hol-a: #B98A4A; --hol-b: #F3EEE2; }
+body.holiday-zongzi { --hol-a: #5E9A48; --hol-b: #C9A86A; }
+body.holiday-stars { --hol-a: #5E6FB8; --hol-b: #FFF1C2; }
+body.holiday-waterlamp { --hol-a: #E78FA8; --hol-b: #FFD36B; }
+body.holiday-moon { --hol-a: #FBEBB0; --hol-b: #8A6A12; }
+body.holiday-book { --hol-a: #7A6A4A; --hol-b: #F6F0DE; }
+body.holiday-firework { --hol-a: #F2CF4E; --hol-b: #A989DD; }
+body.holiday-chrys { --hol-a: #E2A92E; --hol-b: #5E9A48; }
+body.holiday-tangyuan { --hol-a: #EE8C8C; --hol-b: #F7F5EF; }
+body.holiday-xmas { --hol-a: #B83A2E; --hol-b: #3F6B3A; }
+body.holiday-clock { --hol-a: #E9C05A; --hol-b: #2A2218; }
+body.holiday-on #nav::after { content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 4px; pointer-events: none; z-index: 1;
+  background: repeating-linear-gradient(90deg, var(--hol-a) 0 16px, var(--hol-b) 16px 32px); opacity: .9; }
+.brand .hol-orn { display: inline-block; width: 24px; height: 24px; margin-left: 4px; vertical-align: -6px; letter-spacing: 0; pointer-events: auto; }
+.brand .hol-orn svg { width: 100%; height: 100%; display: block; }
+@media (max-width: 760px) { .brand .hol-orn { width: 20px; height: 20px; margin-left: 0; vertical-align: -5px; } }
+
+/* ---------- 共用的小東西 ---------- */
+.sg-item { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; }
+.sg-item-art { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 6px; background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(156,116,40,.35); overflow: hidden; }
+.sg-item-art > svg { width: 100%; height: 100%; }
+.sg-item-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sg-item-body b { font-family: var(--serif); font-size: 1rem; letter-spacing: .04em; }
+.sg-item-kind { font-size: .75rem; color: var(--parch-sub); }
+.sg-item-note { font-size: .8125rem; line-height: 1.5; color: var(--parch-ink); }
+.lim-stand-demo { position: relative; width: 60px; height: 56px; }
+.lim-stand-demo .lim-ped { position: absolute; left: 6px; right: 6px; bottom: 4px; height: 30px; border-radius: 2px; background: linear-gradient(180deg, #F4F2EC, #D9D6CC); box-shadow: inset 0 0 0 1px #BDB9AD; }
+.lim-stand-demo svg { position: absolute; left: 2px; right: 2px; top: 18px; width: 56px; height: auto; }
+.lim-plate-demo { position: relative; display: grid; place-items: center; width: 58px; height: 34px; border-radius: 3px; background: linear-gradient(180deg, #3B2719, #24160F); color: var(--gold-hi); font: 700 .75rem/1 var(--serif); letter-spacing: .1em; box-shadow: inset 0 0 0 1px #C99A2E; }
+.lim-c { position: absolute; width: 16px; height: 16px; pointer-events: none; }
+.lim-c svg { width: 100%; height: 100%; display: block; }
+.lim-c.tl { left: -4px; top: -4px; }
+.lim-c.br { right: -4px; bottom: -4px; transform: rotate(180deg); }
+
+/* ---------- 簽到卡：木框裡一張羊皮紙 ---------- */
+.nb-frame.nb-sign { width: min(700px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); }
+.nb-sign .nb-surface, .nb-cal .nb-surface { overflow-y: auto; }
+.sg-card { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px 24px 20px; border-radius: 2px;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); color: var(--parch-ink);
+  background: linear-gradient(180deg, #FCF7EA, #F1E6CB); box-shadow: 0 4px 10px rgba(0,0,0,.35), 0 16px 34px rgba(0,0,0,.25); }
+.sg-card .btn:not(.primary), .sg-detail .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.4); border-color: var(--gold-lo); }
+.sg-head { display: flex; flex-direction: column; gap: 4px; padding-right: 96px; }
+.sg-date { margin: 0; font-size: .8125rem; color: var(--parch-sub); letter-spacing: .08em; }
+.sg-count { margin: 0; font-family: var(--serif); font-size: 1.375rem; letter-spacing: .06em; }
+.sg-why { margin: 0; font-size: .8125rem; line-height: 1.6; color: var(--parch-sub); }
+.sg-stamp { position: absolute; right: 18px; top: 14px; width: 92px; height: 92px; transform: rotate(-8deg); opacity: .92; pointer-events: none; }
+.sg-stamp svg { width: 100%; height: 100%; }
+.sg-stamp.pop { animation: sgStamp .5s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes sgStamp { from { transform: rotate(-8deg) scale(1.9); opacity: 0; } 60% { opacity: 1; } }
+body.reduce-motion .sg-stamp.pop { animation: none; }
+.sg-sign { align-self: center; min-width: 220px; }
+
+/* 七天一輪 */
+.sg-cycle { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.sg-cy { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 7px; border-radius: 4px; text-align: center;
+  background: rgba(255,255,255,.5); box-shadow: inset 0 0 0 1px rgba(156,116,40,.35); font-size: .75rem; line-height: 1.35; }
+.sg-cy small { color: var(--parch-sub); font-size: .6875rem; }
+.sg-cy.big { background: rgba(233,192,90,.28); }
+.sg-cy.today { box-shadow: inset 0 0 0 2px #9C7428, 0 0 0 2px rgba(201,154,46,.35); font-weight: 700; }
+.sg-cy.done { opacity: .62; }
+.sg-cy.today.done { opacity: 1; }
+.sg-cy-ok { position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; color: #4E7A44; }
+.sg-cy-ok svg { width: 100%; height: 100%; }
+
+/* 這一週 */
+.sg-weekbox { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 4px; background: rgba(156,116,40,.08); box-shadow: inset 0 0 0 1px rgba(156,116,40,.3); }
+.sg-week-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; }
+.sg-week-h b { font-family: var(--serif); font-size: 1.0625rem; }
+.sg-week-h span { font-size: .75rem; color: var(--parch-sub); }
+.sg-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; }
+.sg-wd { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; border-radius: 4px; font-size: .6875rem; color: var(--parch-sub); }
+.sg-wd-mark { display: block; width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(156,116,40,.4); background: rgba(255,255,255,.45); }
+.sg-wd-mark svg { width: 100%; height: 100%; display: block; }
+.sg-wd.on .sg-wd-mark { box-shadow: none; background: none; }
+.sg-wd.today .sg-wd-mark { box-shadow: inset 0 0 0 2px #9C7428; }
+.sg-wd.today small { color: var(--parch-ink); font-weight: 700; }
+.sg-wd.miss .sg-wd-mark { background: repeating-linear-gradient(45deg, rgba(0,0,0,.06) 0 3px, rgba(0,0,0,0) 3px 6px); }
+.sg-wd.future { opacity: .7; }
+.sg-prize { display: flex; flex-direction: column; gap: 8px; }
+.sg-prize-h { display: flex; flex-direction: column; gap: 2px; margin: 0; }
+.sg-prize-h b { font-size: .9375rem; }
+.sg-prize-h span { font-size: .75rem; color: var(--parch-sub); line-height: 1.5; }
+.sg-prize-st { margin: 0; font-size: .8125rem; font-weight: 700; color: #7A5A1E; }
+.sg-prize.got .sg-prize-st { color: #4E7A44; }
+.sg-use { align-self: flex-start; }
+
+/* 節日 */
+.sg-hol { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border-radius: 4px;
+  background: linear-gradient(180deg, rgba(200,54,44,.1), rgba(233,192,90,.12)); box-shadow: inset 0 0 0 1px rgba(200,54,44,.35); }
+.sg-hol.quiet { grid-template-columns: minmax(0, 1fr); background: rgba(120,120,120,.08); box-shadow: inset 0 0 0 1px rgba(120,120,120,.3); }
+.sg-hol-ic { width: 52px; height: 52px; }
+.sg-hol-ic svg { width: 100%; height: 100%; }
+.sg-hol-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sg-hol-body b { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .06em; }
+.sg-hol-body p { margin: 0; font-size: .875rem; line-height: 1.65; }
+.sg-hol-r { font-weight: 700; color: #7A5A1E; }
+.sg-hol-art { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.sg-hol-art small { font-size: .75rem; color: var(--parch-sub); }
+.sg-hol-art-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.sg-art { display: flex; flex-direction: column; align-items: center; gap: 3px; margin: 0; width: 86px; }
+.sg-art .frame { display: block; width: 72px; height: 92px; padding: 3px; border-radius: 2px; background: linear-gradient(135deg, #E2C266, #9C7428); box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.sg-art .frame svg { width: 100%; height: 100%; display: block; }
+.sg-art.covered .frame { background: linear-gradient(135deg, #7A1F2B, #4E1520); }
+.sg-art figcaption { font-size: .6875rem; text-align: center; line-height: 1.35; }
+.sg-go-gallery { align-self: flex-start; }
+
+/* 簽完拿到的 */
+.sg-result { display: flex; flex-direction: column; gap: 8px; }
+.sg-result h3 { margin: 0; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .12em; }
+.sg-res-grp { display: flex; flex-direction: column; gap: 6px; }
+.sg-res-h { margin: 0; font-size: .8125rem; font-weight: 700; color: #6E5020; }
+.sg-res-grp.g-week .sg-res-h { color: #9A231C; }
+.sg-gains { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.sg-gain { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 700; }
+.sg-gain .ic, .sg-gain .ic svg { width: 18px; height: 18px; }
+.sg-gain.item { justify-content: space-between; flex-wrap: wrap; padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(156,116,40,.35); font-weight: 400; }
+.sg-gain.item .sg-item { flex: 1 1 240px; }
+.sg-today { margin: 0; font-size: .875rem; color: var(--parch-sub); }
+.nb-sign .nb-foot, .nb-cal .nb-foot { gap: 10px; flex-wrap: wrap; }
+
+/* ---------- 簽到日曆 ---------- */
+.nb-frame.nb-cal { width: min(1080px, 100%); }
+.nb-cal .nb-surface { gap: 12px; }
+.sg-sum { display: grid; grid-template-columns: auto minmax(220px, 1.3fr) minmax(220px, 1.4fr) auto; gap: 10px; }
+.sg-sum-c { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 10px 12px; border-radius: 3px; min-width: 0;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #EFE3C6); box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.sg-sum-c small { font-size: .75rem; color: var(--parch-sub); }
+.sg-sum-c > b { font-family: var(--serif); font-size: 1.25rem; }
+.sg-sum-c .sg-week { gap: 2px; }
+.sg-sum-c .sg-wd-mark { width: 24px; height: 24px; }
+.sg-sum-c .sg-item { grid-template-columns: 48px minmax(0, 1fr); }
+.sg-sum-c .sg-item-art { width: 48px; height: 48px; }
+.sg-sum-n { font-size: .6875rem; line-height: 1.4; color: var(--parch-sub); max-width: 12em; }
+.sg-cal { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); gap: 14px; }
+.sg-cal-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px; border-radius: 3px;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #F1E6CB); box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+.sg-cal-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sg-cal-head b { font-family: var(--serif); font-size: 1.125rem; letter-spacing: .1em; min-width: 8.5em; text-align: center; }
+.sg-cal-head .btn { color: var(--parch-ink); background: rgba(255,255,255,.45); border-color: var(--gold-lo); }
+.sg-cal-nav { min-width: 40px; font-size: 1.125rem !important; }
+.sg-cal-n { margin-left: auto; font-size: .75rem; color: var(--parch-sub); }
+.sg-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.sg-gh { padding: 2px 0; text-align: center; font-size: .75rem; font-weight: 700; color: var(--parch-sub); }
+.sg-day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 56px; padding: 4px 5px; border: 0; border-radius: 4px; cursor: pointer;
+  font: inherit; color: var(--parch-ink); background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(156,116,40,.28); text-align: left; overflow: hidden; }
+.sg-day:hover { background: rgba(255,255,255,.85); }
+.sg-day.out { opacity: .42; }
+.sg-day.future .sg-dn { color: var(--parch-sub); }
+.sg-day.today { box-shadow: inset 0 0 0 2px #9C7428, 0 0 0 1px rgba(201,154,46,.4); }
+.sg-day.sel { background: #FFF8E2; box-shadow: inset 0 0 0 2px #B33A2E; }
+.sg-day.hol { background: linear-gradient(180deg, rgba(200,54,44,.12), rgba(255,255,255,.55)); }
+.sg-day.hol.quiet { background: rgba(140,140,140,.12); }
+.sg-dn { font-size: .875rem; font-weight: 700; line-height: 1.2; }
+.sg-dm { position: absolute; right: 2px; top: 2px; width: 30px; height: 30px; opacity: .9; pointer-events: none; }
+.sg-dm svg { width: 100%; height: 100%; display: block; }
+.sg-dh { display: flex; align-items: center; gap: 2px; max-width: 100%; font-size: .6875rem; line-height: 1.2; color: #8E1E18; font-weight: 700; white-space: nowrap; }
+.sg-day.hol.quiet .sg-dh { color: #5A5A55; }
+.sg-dh i { flex: 0 0 auto; width: 16px; height: 16px; }
+.sg-dh i svg { width: 100%; height: 100%; display: block; }
+.sg-dh span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sg-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 2px 0 0; font-size: .75rem; color: var(--parch-sub); }
+.sg-legend .lg.next { color: #8E1E18; font-weight: 700; }
+.sg-detail { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 3px; overflow-y: auto;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #F1E6CB); box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+.sg-detail h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .06em; }
+.sg-tag { padding: 1px 8px; border-radius: 2px; background: #9C7428; color: #FFF8E6; font-size: .6875rem; letter-spacing: .08em; }
+.sg-det-s, .sg-det-n { margin: 0; font-size: .875rem; }
+.sg-det-n { color: var(--parch-sub); }
+.sg-cal-sign { align-self: flex-start; }
+
+/* ---------- 大廳：今天的簽到 ---------- */
+.lobby-sign { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 0 0 14px; padding: 10px 14px; border-radius: 12px;
+  background: linear-gradient(180deg, rgba(58,36,22,.88), rgba(32,20,13,.88)); border: 1px solid var(--gold-lo); box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+body.holiday-on .lobby-sign { border-color: var(--hol-a); box-shadow: 0 0 0 1px var(--hol-b), 0 4px 14px rgba(0,0,0,.3); }
+.lobby-sign.done { opacity: .94; }
+.lobby-sign.hol-only { padding: 8px 12px; }
+.ls-tag { flex: 0 0 auto; width: 40px; height: 40px; }
+.ls-tag svg { width: 100%; height: 100%; display: block; }
+.lobby-sign:not(.done) .ls-tag { filter: grayscale(.7) opacity(.7); }
+.ls-body { flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ls-body b { color: var(--gold-hi); font-size: 1rem; }
+.ls-body span { color: var(--on-wall-sub); font-size: .8125rem; }
+.ls-hol { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(233,192,90,.6); cursor: pointer;
+  background: rgba(200,54,44,.25); color: #FFF1D6; font: inherit; font-size: .875rem; }
+.ls-hol.quiet { background: rgba(140,140,140,.2); border-color: rgba(200,200,200,.4); }
+.ls-hol i { width: 22px; height: 22px; }
+.ls-hol i svg { width: 100%; height: 100%; display: block; }
+.ls-btn { flex: 0 0 auto; }
+
+/* ---------- 畫廊：節日特展 ---------- */
+.hol-gallery { margin: 22px 0 6px; padding: 14px 14px 4px; border-radius: 10px; border: 1px solid var(--gold-lo);
+  background: linear-gradient(180deg, rgba(200,54,44,.16), rgba(32,20,13,.25)); }
+.hg-head { display: flex; align-items: center; gap: 12px; }
+.hg-ic { flex: 0 0 auto; width: 48px; height: 48px; }
+.hg-ic svg { width: 100%; height: 100%; }
+.hg-head h2 { margin: 0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .1em; color: var(--gold-hi); }
+.hg-head p { margin: 4px 0 0; color: var(--on-wall-sub, #E8DCC6); font-size: .875rem; line-height: 1.6; }
+.hg-head small { color: var(--on-wall-sub, #E8DCC6); opacity: .85; }
+.hg-row { margin-top: 8px; }
+
+/* ---------- 展廳：展台裝飾、館主名牌 ---------- */
+.ped-slot.has-deco .ped-block { position: relative; }
+.ped-slot .stand-deco { position: absolute; left: 4%; right: 4%; top: -3px; pointer-events: none; z-index: 2; }
+.ped-slot .stand-deco svg { display: block; width: 100%; height: auto; }
+.hall-limited { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 12px; }
+.hall-plate { position: relative; display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 18px; border-radius: 3px;
+  background: linear-gradient(180deg, #3B2719, #24160F); color: var(--gold-hi); box-shadow: inset 0 0 0 1px var(--gold-lo); }
+.hall-plate small { font-size: .75rem; opacity: .8; letter-spacing: .1em; }
+.hall-plate b { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .08em; }
+.hall-plate.lim-frame-vine { box-shadow: inset 0 0 0 2px #C99A2E, inset 0 0 0 4px rgba(0,0,0,.35), inset 0 0 0 5px rgba(226,181,62,.6), 0 2px 8px rgba(0,0,0,.35); padding: 8px 22px; }
+.hall-plate .lim-c { width: 22px; height: 22px; }
+.hall-plate .lim-c.tl { left: -6px; top: -6px; } .hall-plate .lim-c.br { right: -6px; bottom: -6px; }
+.hall-lim-t { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.hall-lim-t small { color: var(--on-wall-sub, #E8DCC6); font-size: .75rem; }
+/* 館友名單上自己的名牌框 */
+.nf-nick.lim-frame-vine { padding: 1px 8px; border-radius: 3px; box-shadow: inset 0 0 0 1px #C99A2E, 0 0 0 2px rgba(226,181,62,.35); background: linear-gradient(180deg, rgba(233,192,90,.18), rgba(0,0,0,0)); }
+
+/* ---------- 抱枕：簽到限定的材料 ---------- */
+.seg-btn.lim { position: relative; background-image: linear-gradient(180deg, rgba(46,58,110,.18), rgba(46,58,110,.05)); }
+.seg-btn.lim .lim-n { display: block; font-size: .6875rem; opacity: .8; }
+.seg-btn.lim-empty { opacity: .6; }
+
+/* ---------- 手機 ---------- */
+@media (max-width: 760px) {
+  .sg-card { padding: 18px 14px 16px; gap: 12px; }
+  .sg-head { padding-right: 72px; }
+  .sg-count { font-size: 1.1875rem; }
+  .sg-stamp { width: 70px; height: 70px; right: 10px; top: 10px; }
+  .sg-cycle { gap: 3px; }
+  .sg-cy { padding: 6px 1px 5px; font-size: .625rem; }
+  .sg-cy small { font-size: .5625rem; }
+  .sg-wd-mark { width: 26px; height: 26px; }
+  .sg-sign { width: 100%; min-width: 0; }
+  .sg-hol { grid-template-columns: 40px minmax(0, 1fr); gap: 10px; padding: 10px; }
+  .sg-hol-ic { width: 40px; height: 40px; }
+  .sg-sum { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .sg-sum-c { padding: 7px 8px; }
+  .sg-sum-c > b { font-size: 1.0625rem; }
+  .sg-sum-c.prize { grid-column: 1 / -1; order: 5; }
+  .sg-sum-c .sg-week, .sg-sum-n { display: none; } /* 手機：這週的七格在簽到卡裡看，這裡只寫 N／7 */
+  .sg-cal { grid-template-columns: minmax(0, 1fr); flex: none; } /* 手機：整頁往下捲，不擠在一個框裡 */
+  .sg-detail { overflow-y: visible; }
+  .sg-cal-main { padding: 8px 6px; }
+  .sg-cal-head b { min-width: 0; font-size: 1rem; }
+  .sg-cal-n { width: 100%; margin-left: 0; }
+  .sg-grid { gap: 2px; }
+  .sg-day { min-height: 52px; padding: 3px 2px; }
+  .sg-dn { font-size: .8125rem; }
+  .sg-dm { width: 22px; height: 22px; right: 1px; top: 1px; }
+  .sg-dh { font-size: .5625rem; gap: 1px; }
+  .sg-dh i { width: 12px; height: 12px; }
+  .lobby-sign { padding: 10px 12px; }
+  .ls-btn { width: 100%; }
+  .hg-head h2 { font-size: 1.0625rem; }
+}

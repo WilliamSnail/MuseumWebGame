@@ -13,7 +13,7 @@ import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.j
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
 import { traitDesc, traitName } from "../../shared/legacy.js";
-import { $, $$, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -163,6 +163,7 @@ export async function afterEnter() {
   if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）
   await dailyRecovery();
   if (PANELS.autoBoard) PANELS.autoBoard(); // 公佈欄：有新公告就打開壹次（11-08）
+  if (PANELS.autoSignin) PANELS.autoSignin(); // 簽到卡：公佈欄關了才跳；今天簽過就不跳（11-09，ui_signin.js）
 }
 export async function dailyRecovery() {
   if (!UI.pendingRecovery || isFree(P)) return;
@@ -230,7 +231,7 @@ SCREENS.lobby = root => {
     feature ? (() => { const fb = h("div", { class: "frog live", html: itemHTML(feature) }); const wrap = h("div", { class: "lobby-feature" }, fb, pepePlacard(feature.pick, { perfect: feature.perfect })); enliven(fb, feature.pick); return wrap; })()
       : h("div", { class: "lobby-feature empty" }, placard(["還沒有作品", "先去畫廊找靈感，再到手作坊做你的第一隻佩佩。"])),
     !isFree(P) && (P.vname || P.visitor > 1) ? h("p", { class: "sub lobby-who" }, visitorLabel(P)) : null); // 多位參觀者（11-08）：有名字寫名字
-  root.append(roomHead("大廳", sub), stepBar, lobbyFriends(), h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）
+  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, lobbyFriends(), h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）
 };
 
 // ---------- 3 畫廊：橫向走廊 ----------
@@ -272,6 +273,7 @@ SCREENS.gallery = (root, params) => {
   });
   corridor.addEventListener("scroll", () => { UI.params.scroll = corridor.scrollLeft; });
   root.append(corridor, h("p", { class: "hint" }, "用滑鼠滾輪或手指左右滑，點展品靠近看。"));
+  if (ADDONS.gallery) root.append(ADDONS.gallery()); // 節日特展：只有節日那天（11-09，ui_signin.js）
   if (params.scroll) requestAnimationFrame(() => { corridor.scrollLeft = params.scroll; });
 };
 // 每幅畫底下的靈感那壹行
@@ -284,7 +286,7 @@ export async function focusExhibit(ex) {
   if (UI.busy) return;
   UI.busy = true;
   const host = $("#room");
-  const artBox = h("div", { class: `frame focus-art art-${ex.art}`, html: ART.exhibit(ex.art) });
+  const artBox = h("div", { class: `frame focus-art art-${ex.art}`, html: ART.exhibit(ex.art, { hol: ex.look }) }); // look：節日特展的小裝飾（11-09）
   const info = h("div", { class: "focus-info" });
   // 得到、失去的東西：放在說明卡下面（畫的旁邊），一直留到回走廊
   const gains = h("div", { class: "focus-gains", "aria-live": "polite" });
@@ -303,7 +305,7 @@ export async function focusExhibit(ex) {
   try {
     closeBtn.disabled = true;
     const before = P.seen[ex.id] || 0;
-    if (!isFree(P) && P.sanity < 50 && before > 0 && !P.day.diff[ex.id] && ART.exhibitDiffs && ART.exhibitDiffs[ex.art] && Math.random() < 0.6) {
+    if (!isFree(P) && P.sanity < 50 && before > 0 && !ex.holiday && !P.day.diff[ex.id] && ART.exhibitDiffs && ART.exhibitDiffs[ex.art] && Math.random() < 0.6) {
       P.day.diff[ex.id] = true;
       await diffGame(ex, artBox, info);
     }
@@ -640,7 +642,7 @@ SCREENS.workshop = (root, params) => {
     tabs.replaceChildren(...CATS.filter(c => !partOf(c).deco || decoOpen(P, c)).map(c => {
       const t = h("div", { class: "tab-wrap" + (c === tab ? " on" : "") },
         h("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(c === tab), onClick: () => { tab = c; UI.params.tab = c; drawTabs(); drawCards(); drawTools(); } },
-          icon(CAT_ICON[c] || "sparkle"), h("span", { class: "tab-t" }, c), h("span", { class: "tab-n" }, `${usable(P, c).length}/${allOpts(c).filter(n => !optOf(c, n).forbidden || isUnlocked(P, c, n)).length}`),
+          icon(CAT_ICON[c] || "sparkle"), h("span", { class: "tab-t" }, c), h("span", { class: "tab-n" }, `${usable(P, c).length}/${allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited) || isUnlocked(P, c, n)).length}`), // 簽到限定的拿到了才算（11-09）
           freshUnder(P, "workshop", FRESH_KEY.opt(c, "")) || isFresh(P, "workshop", FRESH_KEY.cat(c)) ? freshTag("tab-fresh") : null), // 這頁有新選項（11-08）
         c === ROLLED && !free ? null : h("button", { type: "button", class: "hold" + (hold[c] ? " on" : ""), "aria-pressed": String(!!hold[c]), title: hold[c] ? "鎖住了：擲骰時這一類不變" : "鎖住這一類：擲骰時不變",
           onClick: () => { hold[c] = !hold[c]; drawTabs(); } }, icon(hold[c] ? "lock" : "unlock")));
