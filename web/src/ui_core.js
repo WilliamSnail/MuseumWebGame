@@ -12,6 +12,7 @@ import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, noticeState, visibleNotices } from "../../shared/notices.js";
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
+import { holidayClass, holidayOf } from "../../shared/holidays.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
@@ -27,6 +28,8 @@ export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin",
 export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
 export const PANELS = {};
+// 房間裡多出來的一塊（大廳的簽到條、畫廊的節日特展、展廳的裝飾……）：後面的檔（ui_signin.js）登記進來，房間有就叫（11-09，決定 0030）
+export const ADDONS = {};
 // 館友小卡上的按鈕（參觀展廳、送佩佩、邀請一起融合……）：各自的檔登記進來，館友名單（ui_login.js）照順序畫。
 // 一筆：{ id, label, show(p), run(p) }；p 是名單上的一位（id、nick、status、room）。show 不給就是都顯示。
 export const FRIEND_ACTIONS = [];
@@ -215,7 +218,7 @@ export function buildNav() {
   const roomItem = ([id, name]) => h("a", { href: "#", class: "nav-drawer-link md-item", dataset: { room: id, name }, onClick: e => { e.preventDefault(); toggleMenu(false); navTo(id); } }, icon(NAV_ICON[id] || "sparkle"), h("span", { class: "md-t" }, name), freshTag("nav-fresh"));
   const drawer = h("div", { class: "nav-drawer", id: "navDrawer", hidden: true, role: "region", "aria-label": "選單" },
     h("p", { class: "md-h" }, "公告與信件"),
-    h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail"))),
+    h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）
@@ -411,6 +414,7 @@ export function updateBoardBadges() {
   setItem(".md-board", boardTxt, badge.seal);
   updateNetMenu();
   setItem(".md-mail", mails ? `${mails} 封沒領` : "", false);
+  if (ADDONS.calBadge) setItem(".md-cal", ADDONS.calBadge(), false); // 「今天還沒簽到」（ui_signin.js）
   if (mb) {
     const n = badge.count + mails;
     mb.dataset.n = String(n);
@@ -534,6 +538,29 @@ export function applySettings() {
   document.body.classList.add("font-" + (s.font || "m"));
   const sb = $("#soundBtn");
   if (sb) { sb.replaceChildren(icon(s.muted ? "mute" : "sound")); sb.setAttribute("aria-label", s.muted ? "打開聲音" : "靜音"); }
+  applyHolidayLook();
+}
+// 節日那天換一點外觀（翊文 11-09：「每日有特別的節日時，外觀主題要改一下下(當天而已)」，決定 0030）：
+//   body 加 holiday-主題（顏色、導覽列下面一條節日的花邊，css/signin.css），導覽列的 PEPE MUSEUM 旁邊一個小圖示。
+//   照 realTodayStr()（台灣時間 05:00 換日）：boot.js 的 tick() 每秒叫，過了 05:00 自己換回來，不用重新整理。設定頁可以關（SAVE.settings.holidayLook）
+export function applyHolidayLook() {
+  if (typeof document === "undefined" || !document.body || !SAVE) return;
+  const b = document.body, today = realTodayStr();
+  const cls = SAVE.settings.holidayLook === false ? "" : holidayClass(today);
+  const brand = $("#nav .brand");
+  if (b.dataset.holiday === cls && (!cls || !brand || $(".hol-orn", brand))) return;
+  [...b.classList].filter(c => c.startsWith("holiday-")).forEach(c => b.classList.remove(c));
+  if (cls) b.classList.add("holiday-on", cls);
+  b.dataset.holiday = cls;
+  if (!brand) return;
+  const old = $(".hol-orn", brand);
+  if (!cls) { if (old) old.remove(); return; }
+  const hol = holidayOf(today);
+  const orn = old || h("span", { class: "hol-orn" });
+  orn.innerHTML = ART.holidayIcon(cls.slice("holiday-".length));
+  orn.title = hol ? `今天是${hol.dayName === hol.name ? hol.name : hol.name + "・" + hol.dayName}` : "";
+  orn.setAttribute("aria-label", orn.title);
+  if (!old) brand.append(orn);
 }
 
 // ---------- 換畫面 ----------

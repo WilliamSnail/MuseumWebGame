@@ -158,6 +158,14 @@ export const ART = (() => {
     // 毛帽：酒紅色針織帽 + 毛球；紳士帽：黑色高帽 + 酒紅緞帶
     毛帽: { h: 46, svg: h => `<path d="M67 ${h + 1}Q66 ${h - 38} 100 ${h - 39}Q134 ${h - 38} 133 ${h + 1}Z" fill="#A33445" stroke="#5E1622" stroke-width="${SW}" stroke-linejoin="round"/>` + ln([76, 88, 100, 112, 124].map(x => `M${x} ${h - 11}q-3-6 0-12q3-6 0-12`).join(""), "#7E2433", 1.3, ' opacity=".8"') + `<rect x="64" y="${h - 10}" width="72" height="13" rx="6" fill="#8A2838" stroke="#5E1622" stroke-width="${SW}"/>` + ln([72, 80, 88, 96, 104, 112, 120, 128].map(x => `M${x} ${h - 8}v9`).join(""), "#5E1622", 1.1) + `<circle cx="100" cy="${h - 41}" r="8.5" fill="#F3E6C4" stroke="#B9A57A" stroke-width="2" stroke-dasharray="1.6 1.4"/>` },
     紳士帽: { h: 54, svg: h => `<ellipse cx="100" cy="${h}" rx="40" ry="6.5" fill="#262626" stroke="#0E0E0E" stroke-width="${SW}"/><path d="M77 ${h - 1}L79 ${h - 50}Q100 ${h - 54} 121 ${h - 50}L123 ${h - 1}Q100 ${h + 3} 77 ${h - 1}Z" fill="#232323" stroke="#0E0E0E" stroke-width="${SW}" stroke-linejoin="round"/><path d="M78 ${h - 15}Q100 ${h - 12} 122 ${h - 15}L122.6 ${h - 5}Q100 ${h - 1} 77.4 ${h - 5}Z" fill="#7A1F2B"/>` + ln(`M84 ${h - 46}L83 ${h - 18}`, "#5A5A58", 2.2, ' opacity=".7"') + ln(`M78 ${h - 15}Q100 ${h - 12} 122 ${h - 15}`, "#A8404E", 1) },
+    // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（樣子是草稿）。館員帽：深藍小帽、金帶、正中間一顆紅色的印；燈籠帽：紅紙燈籠、金色的蓋子和流蘇
+    館員帽: { h: 36, svg: h => `<path d="M70 ${h - 3}L66 ${h - 31}Q100 ${h - 41} 134 ${h - 31}L130 ${h - 3}Z" fill="#26345C" stroke="#141C36" stroke-width="${SW}" stroke-linejoin="round"/><ellipse cx="100" cy="${h - 32}" rx="34" ry="7" fill="#33467A" stroke="#141C36" stroke-width="${SW}"/>` +
+      `<rect x="69" y="${h - 13}" width="62" height="7" fill="#D9AE3E" stroke="#8A6A12" stroke-width="1.2"/><path d="M72 ${h - 2}Q100 ${h + 10} 128 ${h - 2}Q100 ${h + 3} 72 ${h - 2}Z" fill="#141C36"/>` +
+      `<circle cx="100" cy="${h - 23}" r="7" fill="#C8362C" stroke="#7E1A14" stroke-width="1.2"/>` + ln(`M96.5 ${h - 25.5}h7M96.5 ${h - 21}h7M100 ${h - 28}v9`, "#F6E7C8", 1.2) },
+    燈籠帽: { h: 66, svg: h => `<rect x="78" y="${h - 7}" width="44" height="8" rx="2.5" fill="#C99A2E" stroke="#8A6512" stroke-width="1.5"/><ellipse cx="100" cy="${h - 31}" rx="33" ry="25" fill="#D9382E" stroke="#8E1E18" stroke-width="${SW}"/>` +
+      ln(`M100 ${h - 55}V${h - 7}M84 ${h - 53}Q75 ${h - 31} 84 ${h - 8}M116 ${h - 53}Q125 ${h - 31} 116 ${h - 8}`, "#9E241C", 1.4) + `<ellipse cx="90" cy="${h - 39}" rx="7" ry="10" fill="#F58A6E" opacity=".45"/>` +
+      `<rect x="82" y="${h - 60}" width="36" height="8" rx="2.5" fill="#C99A2E" stroke="#8A6512" stroke-width="1.5"/>` + ln(`M100 ${h - 60}V${h - 64}`, "#8A6512", 2) + `<circle cx="100" cy="${h - 65}" r="2.6" fill="#C99A2E"/>` +
+      ln(`M133 ${h - 28}q5 10 2 22M136 ${h - 28}q7 10 5 20`, "#E2B53E", 1.6) },
   };
   const beanie = { h: 40, svg: h => `<path d="M68 ${h + 1}Q68 ${h - 36} 100 ${h - 36}Q132 ${h - 36} 132 ${h + 1}Z" fill="#5FAF68" stroke="#2F6E38" stroke-width="${SW}" stroke-linejoin="round"/><rect x="66" y="${h - 9}" width="68" height="11" rx="5" fill="#4C9A56" stroke="#2F6E38" stroke-width="${SW}"/>` + ln(`M78 ${h - 8}v9M90 ${h - 8}v9M100 ${h - 8}v9M110 ${h - 8}v9M122 ${h - 8}v9`, "#2F6E38", 1.2) + `<circle cx="100" cy="${h - 38}" r="7" fill="#F6F1D6" stroke="#2F6E38" stroke-width="${SW}"/>` };
   const hatOf = name => HATS[name] || beanie;
@@ -349,6 +357,7 @@ export const ART = (() => {
     棉布: { fab: "#F4EFE4", edge: "#CFC5B2" },
     絨毛: { fab: "#F7F1E8", edge: "#DCD1BF", fuzzy: 1 },
     桃皮絨: { fab: "#F5F1EA", edge: "#CBC3B5", gloss: 1 },
+    星光絨: { fab: "#2E3A6E", edge: "#151C3E", gloss: 1, star: 1 }, // 簽到限定的材料（11-09，決定 0030）：深藍絨布織了金線，亮亮的
   };
 
   function pillow(pick, printPick, o = {}) {
@@ -383,6 +392,7 @@ export const ART = (() => {
       inner = `<g${M.fuzzy ? ` filter="url(#${id}b)" opacity=".93"` : M.gloss ? ' opacity=".96"' : ""}><svg x="${n(vx)}" y="${n(vy)}" width="${n(VW)}" height="${n(VH)}" viewBox="${n(bx0)} ${n(by0)} ${n(bw)} ${n(bh)}" overflow="hidden">${b.defs ? `<defs>${b.defs}</defs>` : ""}${deco}${b.fig}</svg></g>`;
     }
     inner += `<path d="${d}" fill="url(#${id}g)"/>`;
+    if (M.star) inner += [[.16, .2, 4], [.82, .16, 3], [.9, .62, 3.6], [.1, .74, 3], [.5, .1, 2.4], [.36, .86, 2.6], [.7, .88, 3.2]].map(([px, py, r]) => spark(x0 + w * px, y0 + h * py, r, "#F2D894", ' opacity=".9"')).join("");
     if (M.gloss) {
       defs += `<linearGradient id="${id}l" x1="0" y1="0" x2="1" y2="1"><stop offset=".12" stop-color="#fff" stop-opacity="0"/><stop offset=".27" stop-color="#fff" stop-opacity=".42"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/><stop offset=".62" stop-color="#fff" stop-opacity=".22"/><stop offset=".72" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#B8AE9C" stop-opacity=".18"/></linearGradient>`;
       inner += `<path d="${d}" fill="url(#${id}l)"/>`;
@@ -519,7 +529,7 @@ export const ART = (() => {
   function exhibit(id, o = {}) {
     const v = [1, 2, 3].includes(+o.variant) ? +o.variant : 0, X = EXHIBITS[id];
     if (!X) return svgOpen("0 0 240 300", "展品") + `<rect width="240" height="300" fill="#F1F0EB"/>` + ln("M60 210L100 150L130 190L150 170L180 210Z", "#C9C7C0", 2) + C(160, 110, 12, "none", ' stroke="#C9C7C0" stroke-width="2"') + `</svg>`;
-    return svgOpen(X.vb, X.label + (o.open ? "（開著）" : "")) + X.draw(v, nid("x"), o) + `</svg>`;
+    return svgOpen(X.vb, X.label + (o.open ? "（開著）" : "")) + X.draw(v, nid("x"), o) + (o.hol ? holOnArt(o.hol, X.vb) : "") + `</svg>`; // o.hol：節日特展的小裝飾（11-09，決定 0030）
   }
 
   // ---------- 地下收藏庫各層（320×180），越往下越怪；o.cleared = 燈亮了 ----------
@@ -650,6 +660,7 @@ export const ART = (() => {
     hourglass: P("M6.5 3.5h11M6.5 20.5h11M8 3.5V6c0 2.6 4 4.4 4 6s-4 3.4-4 6v2.5M16 3.5V6c0 2.6-4 4.4-4 6s4 3.4 4 6v2.5M9.8 18.6h4.4L12 16.4z"),
   };
   ICONS.cellar = ICONS.stairs;
+  ICONS.calendar = `<rect x="4" y="5.5" width="16" height="14.5" rx="2"/>` + P("M4 10.5h16M8.5 3.5v4M15.5 3.5v4M8 14h2M12 14h2M16 14h.5M8 17h2M12 17h2"); // 簽到日曆（11-09）
   const icon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || `<circle cx="12" cy="12" r="4"/>`}</svg>`;
 
   // ---------- 平面圖：每間房是可以點的區塊（11 間 + 大廳） ----------
@@ -728,12 +739,75 @@ export const ART = (() => {
       `<text x="60" y="${n(68 + fs * .34)}" font-size="${fs}" font-weight="700" text-anchor="middle" fill="${red}" stroke="none" font-family="'Noto Serif TC','Source Han Serif TC','PMingLiU','Songti TC',serif">${esc(t)}</text></g></svg>`;
   }
 
+  // ---------- 第 4 版（11-09，決定 0030）：節日、簽到 ----------
+  // 節日的小裝飾：都畫在 100×100 的格子裡。畫廊節日特展的畫、導覽列的小圖示共用。
+  // at：放在畫的哪裡（tr 右上、tl 左上、br 右下、bl 左下、top 上面中間、sides 兩邊整條）
+  // 都是自己畫的簡單形狀；有青蛙的地方用遊戲自己的圓青蛙（不畫 Pepe 的樣子）
+  const frogDot = (x, y, s, c, a = "") => `<g transform="translate(${x} ${y}) scale(${s})" fill="${c}"${a}>${C(-6, -6, 5, c) + C(6, -6, 5, c)}<ellipse cx="0" cy="2" rx="11" ry="8"/></g>`;
+  const ray = (x, y, r, c, k) => Array.from({ length: k }, (_, i) => { const a = i * 2 * Math.PI / k, c1 = Math.cos(a), s1 = Math.sin(a); return ln(`M${n(x + c1 * r * .35)} ${n(y + s1 * r * .35)}L${n(x + c1 * r)} ${n(y + s1 * r)}`, c, 1.8); }).join("") + C(x, y, 2.4, c);
+  const HOL = {
+    lantern: { at: "tr", svg: () => ln("M50 0V12", "#6E4A1A", 2) + `<rect x="38" y="11" width="24" height="7" rx="2" fill="#C99A2E"/><ellipse cx="50" cy="44" rx="25" ry="27" fill="#D9382E" stroke="#8E1E18" stroke-width="2"/>` +
+      ln("M50 17V71M38 19Q30 44 38 69M62 19Q70 44 62 69", "#9E241C", 1.4) + `<ellipse cx="42" cy="36" rx="6" ry="10" fill="#F58A6E" opacity=".5"/><rect x="40" y="70" width="20" height="6" rx="2" fill="#C99A2E"/>` + ln("M46 76V94M50 76V97M54 76V94", "#E2B53E", 1.6) },
+    couplet: { at: "sides", svg: () => `<rect x="4" y="4" width="14" height="92" rx="1.5" fill="#C8362C" stroke="#8E1E18" stroke-width="1"/><rect x="82" y="4" width="14" height="92" rx="1.5" fill="#C8362C" stroke="#8E1E18" stroke-width="1"/>` +
+      [14, 30, 46, 62, 78].map(y => C(11, y, 2.6, "#E9C05A") + C(89, y, 2.6, "#E9C05A")).join("") },
+    confetti: { at: "top", svg: () => [[12, 18, "#E9C05A", 20], [28, 8, "#C8362C", -30], [44, 22, "#3B6FD6", 10], [60, 10, "#E9C05A", 40], [76, 20, "#7DC35B", -15], [90, 8, "#C8362C", 25], [20, 38, "#3B6FD6", -40], [52, 40, "#E9C05A", 15], [82, 36, "#C8362C", -10]]
+      .map(([x, y, c, r]) => `<rect x="${x - 3}" y="${y - 1.6}" width="6" height="3.2" rx=".8" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join("") + ln("M2 4Q20 24 40 6T80 8T100 4", "#E9C05A", 1.6) + spark(36, 56, 4, "#F2D894") + spark(70, 52, 3, "#F2D894") },
+    balloon: { at: "tr", svg: () => [[34, 30, "#E8735F"], [56, 22, "#F2CF4E"], [74, 36, "#6C9BE0"]].map(([x, y, c]) => `<ellipse cx="${x}" cy="${y}" rx="12" ry="15" fill="${c}" stroke="#5A4630" stroke-width="1"/>` + ln(`M${x} ${y + 15}Q${x - 4} ${y + 40} 52 96`, "#5A4630", 1) + `<ellipse cx="${x - 4}" cy="${y - 6}" rx="3" ry="5" fill="#fff" opacity=".45"/>`).join("") },
+    willow: { at: "tl", svg: () => ln("M4 4Q40 10 60 40Q74 62 70 96", "#6B5232", 2.2) + [[16, 10], [28, 16], [40, 24], [50, 34], [58, 46], [64, 58], [68, 70], [69, 84]].map(([x, y], i) => `<ellipse cx="${x + (i % 2 ? 6 : -6)}" cy="${y + 4}" rx="3.2" ry="8" fill="${i % 3 ? "#8CC66A" : "#6FAF55"}" transform="rotate(${i % 2 ? -30 : 30} ${x} ${y})"/>`).join("") },
+    tea: { at: "br", svg: () => `<path d="M22 50H70Q70 82 46 84Q22 82 22 50Z" fill="#F3EEE2" stroke="#8A7A5C" stroke-width="2"/><path d="M70 56Q86 56 82 68Q78 76 66 74" fill="none" stroke="#8A7A5C" stroke-width="2"/><ellipse cx="46" cy="86" rx="32" ry="6" fill="#D9CFBA" stroke="#8A7A5C" stroke-width="1.5"/><ellipse cx="46" cy="52" rx="23" ry="4" fill="#B98A4A"/>` + ln("M36 40q-6-8 0-16q6-8 0-16M50 40q-6-8 0-16q6-8 0-16", "#BFB6A6", 1.8, ' opacity=".8"') },
+    zongzi: { at: "br", svg: () => [[34, 60, 1], [64, 66, .85]].map(([x, y, s]) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0-30L24 18H-24Z" fill="#5E9A48" stroke="#2F5A28" stroke-width="2" stroke-linejoin="round"/><path d="M0-30L8 18H-6Z" fill="#7DB65E"/>` + ln("M-15 0H15M-20 10H20", "#C9A86A", 2.4) + `</g>`).join("") + ln("M34 30Q50 14 64 42", "#C9A86A", 1.6) },
+    stars: { at: "top", svg: () => spark(18, 30, 9, "#FFF1C2") + spark(82, 26, 9, "#FFF1C2") + C(18, 30, 14, "#FFF1C2", ' opacity=".18"') + C(82, 26, 14, "#FFF1C2", ' opacity=".18"') + ln("M26 32Q50 4 74 28", "#E8DDB2", 1.4, ' stroke-dasharray="1.5 4" opacity=".9"') + [[34, 20], [44, 14], [56, 13], [66, 18]].map(([x, y]) => C(x, y, 1.6, "#FFF6DA")).join("") },
+    waterlamp: { at: "bl", svg: () => `<ellipse cx="50" cy="84" rx="44" ry="8" fill="#2E4E66" opacity=".55"/>` + [-50, -25, 0, 25, 50].map(r => `<ellipse cx="50" cy="66" rx="7" ry="18" fill="#F2A7BE" stroke="#B5627C" stroke-width="1" transform="rotate(${r} 50 80)"/>`).join("") + `<ellipse cx="50" cy="80" rx="20" ry="5" fill="#E78FA8"/><path d="M50 48Q56 56 50 62Q44 56 50 48Z" fill="#FFD36B"/>` + C(50, 56, 10, "#FFD36B", ' opacity=".25"') + `<ellipse cx="50" cy="92" rx="10" ry="2" fill="#FFD36B" opacity=".35"/>` },
+    moon: { at: "tr", svg: () => C(54, 44, 40, "#FFF3C4", ' opacity=".22"') + C(54, 44, 30, "#FBEBB0") + C(44, 34, 5, "#EED98E") + C(66, 52, 7, "#EED98E") + C(50, 60, 3.5, "#EED98E") + frogDot(56, 44, .9, "#D9C37A", ' opacity=".7"') },
+    book: { at: "br", svg: () => `<path d="M8 40Q30 32 50 42Q70 32 92 40V82Q70 74 50 84Q30 74 8 82Z" fill="#F6F0DE" stroke="#7A6A4A" stroke-width="2" stroke-linejoin="round"/>` + ln("M50 42V84", "#7A6A4A", 1.6) + ln("M16 48Q30 44 42 50M16 58Q30 54 42 60M16 68Q30 64 42 70M58 50Q70 44 84 48M58 60Q70 54 84 58M58 70Q70 64 84 68", "#B7AA8A", 1.2) + `<circle cx="80" cy="26" r="9" fill="#D9473A"/>` + ln("M80 17q2-6 6-6", "#5E9A48", 2) },
+    firework: { at: "top", svg: () => ray(28, 34, 20, "#F2CF4E", 12) + ray(72, 28, 16, "#E8735F", 12) + ray(52, 60, 12, "#A989DD", 10) },
+    chrys: { at: "bl", svg: () => ln("M50 96Q48 76 52 60", "#4E7A3A", 2.4) + `<ellipse cx="38" cy="80" rx="10" ry="4" fill="#5E9A48" transform="rotate(-30 38 80)"/><ellipse cx="62" cy="74" rx="10" ry="4" fill="#5E9A48" transform="rotate(30 62 74)"/>` + Array.from({ length: 16 }, (_, i) => `<ellipse cx="50" cy="30" rx="3.4" ry="15" fill="${i % 2 ? "#F2C94E" : "#E2A92E"}" transform="rotate(${i * 22.5} 50 44)"/>`).join("") + C(50, 44, 7, "#C98A1E") },
+    tangyuan: { at: "br", svg: () => `<path d="M12 54H88Q86 88 50 90Q14 88 12 54Z" fill="#F3EEE2" stroke="#8A7A5C" stroke-width="2"/><ellipse cx="50" cy="54" rx="38" ry="7" fill="#F7EBD2" stroke="#8A7A5C" stroke-width="1.5"/>` + [[34, 50, "#F7F5EF"], [48, 47, "#EE8C8C"], [62, 50, "#F7F5EF"], [42, 54, "#EE8C8C"], [56, 54, "#F7F5EF"]].map(([x, y, c]) => C(x, y, 6.5, c, ' stroke="#CDBFA6" stroke-width=".8"')).join("") + ln("M18 66Q50 74 82 66", "#C8362C", 1.4, ' opacity=".6"') },
+    xmas: { at: "top", svg: () => ln("M0 10Q25 30 50 12T100 10", "#3F6B3A", 1.6) + [[8, 15, "#E8735F"], [22, 23, "#F2CF4E"], [36, 21, "#6C9BE0"], [50, 13, "#E8735F"], [64, 19, "#7DC35B"], [78, 22, "#F2CF4E"], [92, 13, "#6C9BE0"]].map(([x, y, c]) => C(x, y + 4, 3.6, c) + C(x, y + 4, 7, c, ' opacity=".25"')).join("") + [[14, 46], [40, 40], [66, 50], [88, 42], [28, 62], [76, 64]].map(([x, y]) => C(x, y, 2, "#fff", ' opacity=".85"')).join("") },
+    clock: { at: "top", svg: () => C(50, 46, 32, "#F6F0DE", ' stroke="#8A6A12" stroke-width="3"') + Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return C(n(50 + Math.sin(a) * 26), n(46 - Math.cos(a) * 26), i % 3 ? 1.2 : 2.2, "#5A4630"); }).join("") + ln("M50 46L48 24M50 46L60 40", "#2A2218", 2.6) + C(50, 46, 2.6, "#C8362C") + ln("M50 14V6", "#8A6A12", 3) },
+  };
+  HOL.spring = HOL.lantern; // 春節的外觀用燈籠
+  // 放到畫上：照 at 決定位置，大小是畫寬的 4 成（sides 是兩邊整條）
+  function holOnArt(look, vb) {
+    const D = HOL[look];
+    if (!D) return "";
+    const [, , W, H] = String(vb).split(" ").map(Number);
+    if (D.at === "sides") return `<g transform="scale(${n(W / 100)} ${n(H / 100)})" opacity=".95">${D.svg()}</g>`;
+    const sz = W * .4, m = W * .03;
+    const x = D.at === "tl" || D.at === "bl" ? m : D.at === "top" ? (W - sz) / 2 : W - sz - m, y = D.at === "br" || D.at === "bl" ? H - sz - m : m;
+    return `<g transform="translate(${n(x)} ${n(y)}) scale(${n(sz / 100)})">${D.svg()}</g>`;
+  }
+  // 導覽列、簽到卡、日曆上的節日小圖示（不認得的不畫）
+  function holidayIcon(look) { const D = HOL[look]; return D ? svgOpen("0 0 100 100", null, ' aria-hidden="true" class="hol-ic"') + D.svg() + `</svg>` : ""; }
+  // 節日的雕像：大理石的圓青蛙坐在台座上（遊戲自己的青蛙；不是 Pepe 的樣子）。節日的東西由 o.hol 加上去
+  EXHIBITS.holstatue = { vb: "0 0 220 300", label: "節日的小雕像", draw: (v, id) => {
+    let s = `<defs>${lg(id + "a", [[0, "#E9E6DC"], [1, "#D6D2C6"]])}${rg(id + "m", [[0, "#FFFFFD"], [.6, "#EEEDE8"], [1, "#CDCBC3"]], ' cx=".38" cy=".32" r=".8"')}</defs>`;
+    s += `<rect width="220" height="300" fill="url(#${id}a)"/><path d="M40 236V100Q40 48 110 48Q180 48 180 100V236Z" fill="#DEDAD0"/><rect y="292" width="220" height="8" fill="#CFCBBF"/>`;
+    s += `<rect x="58" y="232" width="104" height="58" fill="#EFEEE9" stroke="#CFCDC6" stroke-width="1.2"/><rect x="48" y="222" width="124" height="12" rx="1" fill="#F6F5F1" stroke="#CFCDC6" stroke-width="1.2"/><rect x="86" y="252" width="48" height="14" rx="1" fill="#CDBB8E" stroke="#A8925F" stroke-width="1"/>` + ln("M93 257H127M97 261H123", "#8F7A4C", 1);
+    s += `<g ${XHEAD}><g fill="url(#${id}m)" stroke="#C3C1B9" stroke-width="1.6"><ellipse cx="84" cy="218" rx="15" ry="6"/><ellipse cx="136" cy="218" rx="15" ry="6"/></g>` + blob(110, 186, 46, 34, 20, 150, 15, `url(#${id}m)`, "#C3C1B9", 1.6) +
+      C(90, 148, 8.5, "#F8F7F3", ' stroke="#D4D2CA" stroke-width="1"') + C(130, 148, 8.5, "#F8F7F3", ' stroke="#D4D2CA" stroke-width="1"') + `<g ${XPUP}>${C(91, 146, 2.6, "#9C9A92") + C(131, 146, 2.6, "#9C9A92")}</g>` + ln("M98 196Q110 204 122 196", "#B9B7AE", 2) + `</g>`;
+    return s;
+  } };
+  // 展台裝飾：紅絨緞帶（掛在每一座展台的邊上，中間別一顆金色徽章）；只是好看
+  function standDeco(id) {
+    if (id !== "stand-velvet") return "";
+    return svgOpen("0 0 120 34", null, ' aria-hidden="true" class="stand-deco-svg"') + `<path d="M2 4Q30 26 60 10Q90 26 118 4V10Q90 32 60 16Q30 32 2 10Z" fill="#8E2233" stroke="#5E1622" stroke-width="1.2"/>` + ln("M4 8Q30 28 60 13Q90 28 116 8", "#C8576A", 1.2, ' opacity=".7"') +
+      ln("M8 10V30M112 10V30", "#C99A2E", 1.4) + C(8, 31, 2.2, "#E2B53E") + C(112, 31, 2.2, "#E2B53E") + C(60, 14, 6.5, "#E2B53E", ' stroke="#8A6512" stroke-width="1.2"') + spark(60, 14, 3.2, "#FFF1C2") + `</svg>`;
+  }
+  // 名牌框的角：金色藤蔓（左上角的樣子；其他角由畫面轉過去）
+  function nameCorner(id) {
+    if (id !== "frame-vine") return "";
+    return svgOpen("0 0 40 40", null, ' aria-hidden="true" class="name-corner-svg"') + ln("M3 37V14Q3 3 14 3H37", "#C99A2E", 2.6) + ln("M8 30Q8 10 28 8", "#E2B53E", 1.4) +
+      [[6, 22, -30], [12, 12, -60], [22, 6, -80], [5, 30, -10]].map(([x, y, r]) => `<ellipse cx="${x + 3}" cy="${y}" rx="2.4" ry="5" fill="#B98A1E" transform="rotate(${r} ${x} ${y})"/>`).join("") + C(14, 14, 2.4, "#F2D894") + `</svg>`;
+  }
+
   const silhouette = `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path fill="#000" d="M7 13a6 6 0 1 1 12 0a6 6 0 1 1-12 0ZM21 13a6 6 0 1 1 12 0a6 6 0 1 1-12 0ZM5 25a15 11 0 1 1 30 0a15 11 0 1 1-30 0ZM9 34.5a5 3 0 1 1 10 0a5 3 0 1 1-10 0ZM21 34.5a5 3 0 1 1 10 0a5 3 0 1 1-10 0Z"/></svg>`;
 
   return {
     frog, headTop, pillow, exhibit, exhibitDiffs, floorPlan, icon, stamp, silhouette, COLORS, RARITY_COLORS, TINT,
     hatSpot, cellarScene, jobBadge, altar, altarSpots,
+    holidayIcon, standDeco, nameCorner, // 第 4 版（11-09，決定 0030）：節日的小圖示、展台裝飾、名牌框
     // 登記表：設計者加新選項時可以直接加一筆（例如 ART.parts.HATS.牛仔帽 = { h: 30, svg: h => "..." }）
-    parts: { POSE, MOODS, HATS, AURA, PSIZE, PFILL, PMAT, EXHIBITS, ICONS, BGS, ITEMS, GRAD, SCENES, JOBS },
+    parts: { POSE, MOODS, HATS, AURA, PSIZE, PFILL, PMAT, EXHIBITS, ICONS, BGS, ITEMS, GRAD, SCENES, JOBS, HOL },
   };
 })();

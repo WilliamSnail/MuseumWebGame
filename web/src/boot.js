@@ -7,7 +7,7 @@ import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../shared/logic.js";
 import { visitorEvery } from "../../shared/logic3.js";
-import { $, FIT, P, SAVE, UI, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
+import { $, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
@@ -22,12 +22,14 @@ export function normalizeImages(o) {
   return out;
 }
 export function tick() {
-  if (!P || document.hidden) return;
+  if (document.hidden) return;
+  applyHolidayLook(); // 節日的外觀：過了 05:00 自己換（11-09，決定 0030）。標題畫面也換，所以放在 P 前面
+  if (!P) return;
   const t = todayStr(); // 台灣時間 05:00 換日（決定 0019）
   if (P.day && P.day.date !== t) {
     ensureDay(P, t); UI.pendingRecovery = !isFree(P); UI.pendingGrowth = UI.pendingRecovery; updateStatus();
     snd("bell"); note(`新的壹天：第 ${pad(gameDayNo(P, t), 3)} 天。委託換新了，每天的次數也重新算。`, "good");
-    if (UI.screen === "lobby") dailyRecovery();
+    if (UI.screen === "lobby") dailyRecovery().then(() => { if (PANELS.autoSignin) PANELS.autoSignin(); }); // 換日了：今天的簽到卡（11-09）
   }
   quirkTick(); // 怪癖時間到自己消失、剩幾分鐘換字（決定 0027）。照真的時鐘走，沒在玩也算，所以放在下面那行前面
   updateDayClock(); // 「還有 N 小時換日」每秒更新（沒在玩也照走，換日是照時鐘）

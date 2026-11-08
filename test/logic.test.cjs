@@ -10,7 +10,7 @@ const d100 = N => { const t = N === 100 ? 0 : Math.floor(N / 10), u = N === 100 
 const dN = (v, n) => (v - 0.5) / n; // 讓 1Dn 擲出 v
 function seq(...vals) { const q = vals.flat(); return () => q.length ? q.shift() : Math.random(); }
 function fresh(mode = "challenge") { const P = G.newProfile(mode); G.ensureDay(P, "2026-11-08"); return P; }
-const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.gift && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
+const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
 
 // ---------- A 解鎖 ----------
 T("A 一開始 32 種，解鎖巫師帽變 48", () => {

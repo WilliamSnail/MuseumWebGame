@@ -10,6 +10,8 @@ import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
 import { hallSize, hasTalent, hasUp, sequelEvents, skillCheck } from "./logic3.js";
 import { fixLegacy, leaveLegacy, newVisit, traitSum, visitorRecord } from "./legacy.js";
 import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./visitors.js";
+import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./signin.js";
+import { holidayExhibitById, holidaysOn } from "./holidays.js";
 
 export let RNG = Math.random;
 export function setRng(f) { RNG = f || Math.random; }
@@ -121,13 +123,13 @@ export const PILLOW_CATS = PILLOW_PARTS.map(p => p.name);
 export const partOf = cat => PEPE_PARTS.find(p => p.name === cat);
 export const optOf = (cat, name) => (partOf(cat) || { options: [] }).options.find(o => o.name === name);
 export const allOpts = cat => partOf(cat).options.map(o => o.name);
-export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift));
+export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift || o.limited)); // limited：簽到限定（11-09，決定 0030）
 export const baseOpts = cat => partOf(cat).options.filter(o => !isSpecialOpt(o)).map(o => o.name);
 export function catOfOption(name) { const p = PEPE_PARTS.find(pp => pp.options.some(o => o.name === name)); return p ? p.name : null; }
 export const CORE_TOTAL = CORE_CATS.reduce((n, c) => n * baseOpts(c).length, 1); // 圖鑑的格數
 export const BASE_TOTAL = CORE_TOTAL;
 export const ALL_TOTAL = CATS.reduce((n, c) => n * allOpts(c).length, 1);
-export const PILLOW_TOTAL = PILLOW_PARTS.reduce((n, p) => n * p.options.length, 1);
+export const PILLOW_TOTAL = PILLOW_PARTS.reduce((n, p) => n * p.options.filter(o => !o.limited).length, 1); // 簽到限定的材料（星光絨）不算進去（決定 0030）
 export const RARITY_ORDER = allOpts(ROLLED);
 export const FAILED = "失敗作";
 export const rarityRank = r => r === FAILED ? -1 : RARITY_ORDER.indexOf(r);
@@ -178,10 +180,12 @@ export function codexPick(idx) {
 export function catalogNo(pick) {
   const i = codexIndex(pick);
   if (i >= 0) return "No. " + pad(i + 1);
+  // 限定的選項（簽到拿的帽子，決定 0030）另外編號「限 No.」，不改到原本「異 No.」「禁 No.」的號碼
+  const lim = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).limited);
   let idx = 0;
-  for (const c of CORE_CATS) { const list = allOpts(c); idx = idx * list.length + Math.max(0, list.indexOf(pick[c])); }
+  for (const c of CORE_CATS) { const list = lim ? allOpts(c) : allOpts(c).filter(n => !optOf(c, n).limited); idx = idx * list.length + Math.max(0, list.indexOf(pick[c])); }
   const forb = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).forbidden);
-  return (forb ? "禁" : "異") + " No. " + pad(idx + 1);
+  return (lim ? "限" : forb ? "禁" : "異") + " No. " + pad(idx + 1);
 }
 export function hatWord(h) { return h === "沒有" ? "不戴帽" : h; }
 export function decoWord(cat, v) {
@@ -240,6 +244,8 @@ export function newProfile(mode) {
     keys: free ? { bg: true, hold: true, book4: true } : {}, upgrades: free ? Object.fromEntries(UPGRADES.map(u => [u.id, true])) : {},
     recipes: {}, repaired: {}, injured: {}, job: null, skills: null, skillTicks: {}, history: [],
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
+    // 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西（shared/signin.js）。博物館的，換參觀者不會跟著換
+    limited: { got: {}, wear: { stand: null, frame: null }, stock: {} },
     // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
     fresh: {},
     // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
@@ -327,6 +333,7 @@ export function unlockState(P, cat, name) {
   if (o.mutant) return { state: "mutant", text: "只能在融合室突變出來" };
   if (o.gift) { const l = typeof CLIENT_LINES !== "undefined" && CLIENT_LINES[o.gift]; return { state: "gift", text: `跟${l ? l.name : "委託人"}的委託走完才會收到` }; }
   if (o.key) return { state: "key", text: o.key === "bg" ? "地下收藏庫 B3 的鑰匙打開" : "地下收藏庫 B5 的鑰匙打開" };
+  if (o.limited) return { state: "limited", text: "簽到限定：每週全簽到拿得到" }; // 決定 0030
   if (!reqMet(P, o.req)) return { state: "req", text: reqText(o.req) };
   const cost = unlockCost(P);
   return { state: "buy", cost, ok: P.insp >= cost, text: `${cost} 靈感解鎖` };
@@ -709,7 +716,7 @@ export function nextVisitor(P, endedBy = "russia8", leave = null) {
 // ---------- 畫廊、起源室 ----------
 export function exhibitById(id) {
   const ex = EXHIBITS.find(e => e.id === id);
-  if (!ex) return null;
+  if (!ex) return holidayExhibitById(id); // 節日的藝術品（shared/holidays.js，決定 0030）
   const extra = (typeof NEW_EXHIBITS !== "undefined" && NEW_EXHIBITS[id]) || {};
   return Object.assign({}, extra, ex, { title: ex.title || extra.title, label: ex.label || extra.label, lines: ex.lines || extra.lines || [] });
 }
@@ -729,6 +736,7 @@ export function chapterOpen(P, id) {
   return P.unlockCount >= (id === 2 ? NUM.ch2 : NUM.ch3);
 }
 export function exhibitOpen(P, ex) {
+  if (ex.holiday) return holidaysOn(P.day ? P.day.date : todayStr()).some(h => h.key === ex.holiday); // 節日的藝術品：只有節日那天（決定 0030）
   if (!ex.unlock || isFree(P)) return true;
   if (ex.unlock === "hidden") return chapterOpen(P, 2) && GEN1_EXHIBITS.every(id => P.seen[id]);
   if (ex.unlock === "russia8") return isUnlocked(P, "心情", "俄國8+9") && !!P.seen.hidden;
@@ -803,12 +811,15 @@ export function canMakePillow(P, pick, print) {
   if (!print) return { ok: false, reason: "先從下面挑一隻要印的佩佩" };
   const cost = isFree(P) ? 0 : NUM.costPillow;
   if (P.insp < cost) return { ok: false, reason: `靈感不夠（做一個要 ${cost}）` };
+  // 簽到限定的材料（星光絨，決定 0030）：做一個用掉一份
+  if (PILLOW_CATS.some(c => isLimitedMat(pick[c]) && stockOf(P, pick[c]) < 1)) return { ok: false, reason: `${PILLOW_CATS.map(c => pick[c]).find(v => isLimitedMat(v))}用完了：每週全簽到、節日簽到拿得到` };
   return { ok: true, cost };
 }
 export function makePillow(P, pick, print) {
   const can = canMakePillow(P, pick, print);
   if (!can.ok) return can;
   P.insp -= can.cost;
+  PILLOW_CATS.forEach(c => useStock(P, pick[c])); // 星光絨用掉一份（決定 0030）
   // 小優點「手巧」（11-08）：有 N% 不花靈感
   const lucky = can.cost > 0 && traitSum(P, "pillowFree") > 0 && RNG() * 100 < traitSum(P, "pillowFree");
   if (lucky) P.insp += can.cost;
@@ -1286,7 +1297,8 @@ export const SAVE_VERSION = 3;
 // dayMin：以前是「遊戲裡一天玩幾分鐘」（0 ＝ 真實的一天）。11-09 起一律真實的一天（決定 0019），欄位留著、固定 0，不再用
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
-    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 0 }, tutorialDone: false, gen2Migrated: false };
+    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 0, holidayLook: true }, tutorialDone: false, gen2Migrated: false,
+    signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/signin.js）
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
 export const renameVal = v => (typeof RENAMED !== "undefined" && RENAMED[v]) || v;
@@ -1339,6 +1351,7 @@ export function fixProfile(P, mode) {
   if (out.daily && out.daily.list && out.daily.list.some(c => c.need && Object.keys(c.need).some(k => !CATS.includes(k) && !PILLOW_CATS.includes(k) && !["print", "perfect", "failed"].includes(k)))) out.daily = null;
   out.stats = Object.assign(base.stats, out.stats || {});
   out.wsPick = Object.assign({}, DEFAULT_PICK, out.wsPick || {});
+  out.limited = fixLimited(out.limited); // 簽到限定的東西（11-09，決定 0030）
   return out;
 }
 export function migrateSave(o) {
@@ -1348,6 +1361,7 @@ export function migrateSave(o) {
   s.settings.dayMin = 0; // 舊存檔的 15／30／60 不用了（11-09）。改成 0：還沒更新的舊畫面讀到，也是照真的日期，不會又跑到好幾天後
   s.profiles = Object.assign({ challenge: null, free: null }, o.profiles || {});
   ["challenge", "free"].forEach(m => { if (s.profiles[m]) s.profiles[m] = fixProfile(s.profiles[m], m); });
+  s.signin = fixSignin(o.signin); // 每日簽到（11-09，決定 0030）：舊存檔沒有就是空的
   s.v = SAVE_VERSION;
   return s;
 }

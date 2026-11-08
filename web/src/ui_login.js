@@ -11,7 +11,7 @@
 // ================================================================
 import { SAVE_KEY, migrateSave, nowMs } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
-import { $, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, updateNetMenu, useProfile } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, updateNetMenu, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const MOVED_KEY = "pepe4.movedTo";  // 這台電腦的舊存檔搬給哪個帳號了（只搬一次，不然兩個帳號會有同一份）
@@ -225,7 +225,7 @@ export function openFriends() {
     const card = p => h("div", { class: `nf-card ${p.status}${p.me ? " me" : ""}` },
       h("span", { class: "nf-dot", "aria-hidden": "true" }),
       h("div", { class: "nf-body" },
-        h("b", { class: "nf-nick" }, p.nick, p.me ? h("small", null, "（你）") : null),
+        h("b", { class: "nf-nick" + (p.me && ADDONS.frameClass ? ADDONS.frameClass() : "") }, p.nick, p.me ? h("small", null, "（你）") : null), // 名牌框：簽到拿的（11-09）；別人的要等伺服器傳得到（規則還沒改）
         h("span", { class: "nf-where" }, p.status === "offline" ? `離線・${ago(p.lastSeen)}` : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room))),
       p.me ? null : friendButtons(p, m.close));
     const off = NET.state !== "online";

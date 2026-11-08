@@ -13,13 +13,15 @@ import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
-import { $, $$, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { isLimitedMat, stockOf } from "../../shared/signin.js";
+import { $, $$, ADDONS, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 
-SCREENS.pillow = root => {
+SCREENS.pillow = (root, params = {}) => {
   const pick = P.plPick;
+  if (params.mat) { pick.材質 = params.mat; params.mat = null; } // 簽到拿的材料「馬上使用」：直接選好（11-09，決定 0030）
   const owned = collectionItems("pepe").concat(collectionItems("failed"));
   if (!P.plPrint && owned.length) P.plPrint = (owned[0].kind === "failed" ? "f:" : "p:") + owned[0].key;
   const art = h("div", { class: "pillow-art" });
@@ -64,8 +66,9 @@ SCREENS.pillow = root => {
   const drawRows = () => {
     rows.replaceChildren(...PILLOW_PARTS.map(part => h("div", { class: "pl-row" },
       h("span", { class: "pl-row-l" }, part.name),
-      h("div", { class: "seg big" }, part.options.map(o => h("button", { type: "button", class: "seg-btn" + (pick[part.name] === o.name ? " on" : ""),
-        onClick: () => { pick[part.name] = o.name; snd("click"); drawAll(); } }, o.name))),
+      h("div", { class: "seg big" }, part.options.map(o => h("button", { type: "button", class: "seg-btn" + (pick[part.name] === o.name ? " on" : "") + (o.limited ? " lim" + (stockOf(P, o.name) > 0 ? "" : " lim-empty") : ""),
+        title: o.limited ? "簽到限定的材料：每週全簽到、節日簽到拿得到，做壹個用掉壹份" : null,
+        onClick: () => { pick[part.name] = o.name; snd("click"); drawAll(); } }, o.name, o.limited && isLimitedMat(o.name) && !isFree(P) ? h("small", { class: "lim-n" }, `剩 ${stockOf(P, o.name)}`) : null))), // 星光絨（11-09）
       part.name === "填充" ? btn([icon("pillow"), " 親手塞"], async () => { const f = await stuffGame(); if (f) { pick.填充 = f; drawAll(); } }, "ghost", { title: "按住塞棉花，放開的時機決定軟硬" }) : null)));
   };
   const drawAll = () => { drawArt(); drawInfo(); drawRows(); persist(); };
@@ -294,7 +297,7 @@ SCREENS.codex = (root, params) => {
   } else if (tab === "forbidden") {
     const list = Object.entries(P.pepes).map(([k, e]) => ({ kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect })).filter(i => i.pick && !isBasePick(i.pick));
     const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o)).map(o => ({ c, o })));
-    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : "委託人送的";
+    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? "簽到限定" : "委託人送的";
     root.append(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), pepePlacard(it.pick, { perfect: it.perfect }))))
         : h("p", { class: "empty" }, "還沒有禁忌作品。"));
@@ -383,6 +386,7 @@ SCREENS.hall = (root, params) => {
     P.visitorLog.length ? P.visitorLog.slice(0, 6).map(v => visitorCard(v)) : h("p", { class: "empty" }, hs.items.length ? "參觀者快來了。" : "擺上作品，參觀者就會來。"));
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點一件、再點展台", drag: true });
   root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
+  if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
 // 還沒見過「俄國8+9」的人不列那個主題，只留壹張「？？？」；沒解鎖「不可名狀」就不提它
@@ -550,6 +554,7 @@ SCREENS.settings = root => {
     h("div", { class: "set-list" },
       h("div", { class: "set-row" }, h("span", null, "字大小"), seg("font", [["s", "小"], ["m", "中"], ["l", "大"]])),
       h("div", { class: "set-row" }, h("span", null, "動畫減量"), seg("reduceMotion", [[false, "關"], [true, "開（只淡入）"]])),
+      h("div", { class: "set-row" }, h("span", null, "節日外觀"), h("div", null, seg("holidayLook", [[true, "打開"], [false, "關"]]), h("p", { class: "sub" }, "節日那天（台灣時間 05:00 到隔天 05:00）館裡的顏色和裝飾換壹下。"))), // 11-09，決定 0030
       // 換日（11-08 翊文：「壹天多長 全部都要是真實的壹天」）：拿掉 15／30／60 分鐘的選項，只寫什麼時候換日（決定 0019）
       h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,
         h("p", { class: "sub" }, "台灣時間每天 05:00 換壹天，每週壹 05:00 換週，大家的壹天都壹樣。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"),

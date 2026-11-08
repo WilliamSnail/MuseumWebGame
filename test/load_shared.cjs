@@ -4,7 +4,7 @@
 // 模組之間的 import 對不對，另外由 test/esm_smoke.mjs 和 vite build 檢查。
 const fs = require("fs"), path = require("path"), vm = require("vm");
 
-const ORDER = ["config.js", "content.js", "content3.js", "logic.js", "logic3.js", "fresh.js", "guide.js", "notices.js", "mailbox.js", "legacy.js", "visitors.js", "gifts.js", "coop.js", "party.js"]; // fresh.js（11-08）用到 logic、logic3；guide.js（11-08，新玩家的下一步）用到 logic。都放最後；notices.js、mailbox.js（11-08，公佈欄、信箱）用到 logic、logic3、content3；legacy.js（11-08，參觀者一位接一位）用到 config、content3、logic、logic3（logic、logic3 也在函式裡叫它）；visitors.js（11-08，多位參觀者）用到 config、logic、legacy（logic 也在函式裡叫它）；gifts.js（11-08，送佩佩、參觀展廳）用到 logic，mailbox.js 在函式裡叫它；coop.js（11-08，合作地下收藏庫）用到 config、logic、logic3、legacy；party.js（11-08，邀請、隊伍）不用別的檔，放最後
+const ORDER = ["config.js", "content.js", "content3.js", "logic.js", "logic3.js", "fresh.js", "guide.js", "notices.js", "mailbox.js", "legacy.js", "visitors.js", "gifts.js", "coop.js", "party.js", "holidays.js", "signin.js"]; // fresh.js（11-08）用到 logic、logic3；guide.js（11-08，新玩家的下一步）用到 logic。都放最後；notices.js、mailbox.js（11-08，公佈欄、信箱）用到 logic、logic3、content3；legacy.js（11-08，參觀者一位接一位）用到 config、content3、logic、logic3（logic、logic3 也在函式裡叫它）；visitors.js（11-08，多位參觀者）用到 config、logic、legacy（logic 也在函式裡叫它）；gifts.js（11-08，送佩佩、參觀展廳）用到 logic，mailbox.js 在函式裡叫它；coop.js（11-08，合作地下收藏庫）用到 config、logic、logic3、legacy；holidays.js、signin.js（11-09，節日、每日簽到）用到 config、content3、logic、logic3（logic 也在函式裡叫它們），放最後；party.js（11-08，邀請、隊伍）不用別的檔，放最後
 const DIR = path.join(__dirname, "..", "shared");
 
 const read = f => fs.readFileSync(path.join(DIR, f), "utf8");
