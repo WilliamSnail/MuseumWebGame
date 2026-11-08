@@ -997,3 +997,23 @@ body.reduce-motion .lg-opt, body.reduce-motion .vw-card { transition: none; tran
 .afraid-bar .ic, .afraid-bar .ic svg { width: 18px; height: 18px; flex: 0 0 auto; color: #9A231C; margin-top: 2px; }
 .afraid-lines { display: flex; flex-direction: column; gap: 4px; }
 .afraid-bar b { color: #9A231C; }
+
+/* ----- 怪癖：做完壹件事就好，不然 20 分鐘後自己消失（11-09，決定 0027；原本是連續 3 天抱抱枕） -----
+   狀態列小牌子多壹行小字（要做的事・剩幾分）；卡片多「沒做的話：還剩 N 分鐘」；
+   做得到治法的房間（抱枕工作台、委託櫃台、畫廊）上面壹塊綠框羊皮紙，深色字（暗紅牆上要看得清楚） */
+/* 小牌子排成兩行（名字／要做的事・剩幾分），不然 1366 寬有壹個怪癖狀態列就要換排 */
+button.chip.qk-chip { display: inline-grid; grid-template-columns: auto auto; column-gap: 5px; align-items: center; text-align: left; line-height: 1.2; border-radius: 10px; padding: 2px 10px; }
+.qk-chip .ic { grid-row: 1 / span 2; }
+.qk-chip .qk-chip-sub { grid-column: 2; font-size: .6875rem; opacity: .92; white-space: nowrap; }
+.qk-hint { display: block; margin-top: 2px; font-size: .8125rem; color: var(--parch-sub); }
+.qk-time { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; font-size: .9375rem; line-height: 1.6; color: #6B4A22; }
+.qk-time .ic, .qk-time .ic svg { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 3px; }
+.qk-time .qk-left { font-weight: 700; color: #7A1F2B; }
+.qk-here { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px; padding: 10px 14px; border-radius: 4px;
+  background: linear-gradient(180deg, #F3F6E6, #E1E9CD); border: 1px solid #4F8A57; border-left: 5px solid #2F6E38; box-shadow: 0 2px 6px rgba(0,0,0,.3); color: #1F2A1A; font-size: .875rem; line-height: 1.6; }
+.qk-here .ic, .qk-here .ic svg { width: 18px; height: 18px; flex: 0 0 auto; color: #2F6E38; margin-top: 2px; }
+.qk-here-lines { display: flex; flex-direction: column; gap: 2px; }
+.qk-here b { color: #2F5E36; }
+.qk-here small { color: #4A5A40; font-size: .8125rem; }
+.ex-cap .ex-cure { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 1px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #FFF6E0; background: #2F6E38; }
+.ex-cure .ic, .ex-cure .ic svg { width: 13px; height: 13px; }
