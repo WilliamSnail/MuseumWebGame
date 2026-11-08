@@ -9,6 +9,9 @@ const TYPES = ["新功能", "修正", "平衡", "內容", "文件", "伺服器"]
 const STATES = ["待合併", "已上線", "本機完成", "還沒驗證"];
 const HEADINGS = ["## 為什麼要改", "## 改了什麼", "## 怎麼確認的", "## 還沒做、要注意", "## 給下一個人"];
 const NAME_RE = /^(\d{2})-(\d{2})_([^_]+)_(.+)\.md$/; // 月-日_作者_主題.md
+// 日期：台灣時間寫到秒（2026-11-09 00:25:13，npm run now 印得出來）。這一天以前的舊日誌只有日期，照舊可以
+const DATE_RE = /^(\d{4}-\d{2}-\d{2})( \d{2}:\d{2}:\d{2})?$/;
+const TIME_FROM = "2026-11-09"; // 決定 0029
 
 // 所有日誌檔：維護日誌/年份/*.md（範本.md、README.md 不算）
 function listLogs() {
@@ -50,12 +53,14 @@ function check(file) {
   for (const f of FIELDS) if (meta[f] == null || meta[f] === "" || (Array.isArray(meta[f]) && !meta[f].length)) errs.push(`${rel}：缺少欄位「${f}」`);
   if (meta.類型 && !TYPES.includes(meta.類型)) errs.push(`${rel}：類型只能是 ${TYPES.join("／")}，現在是「${meta.類型}」`);
   if (meta.狀態 && !STATES.includes(meta.狀態)) errs.push(`${rel}：狀態只能是 ${STATES.join("／")}，現在是「${meta.狀態}」`);
-  if (meta.日期 && !/^\d{4}-\d{2}-\d{2}$/.test(meta.日期)) errs.push(`${rel}：日期要寫成 2026-11-08`);
-  if (meta.日期 && nm && meta.日期 !== `${year}-${nm[1]}-${nm[2]}`) errs.push(`${rel}：日期 ${meta.日期} 跟資料夾、檔名（${year}-${nm[1]}-${nm[2]}）對不上`);
+  const dm = meta.日期 ? String(meta.日期).match(DATE_RE) : null;
+  if (meta.日期 && !dm) errs.push(`${rel}：日期要寫成 2026-11-09 00:25:13（台灣時間，寫到秒；npm run now 印得出來）`);
+  if (dm && !dm[2] && dm[1] >= TIME_FROM) errs.push(`${rel}：${TIME_FROM} 起日期要寫到秒，例如 ${dm[1]} 00:25:13（npm run now）`);
+  if (dm && nm && dm[1] !== `${year}-${nm[1]}-${nm[2]}`) errs.push(`${rel}：日期 ${dm[1]} 跟資料夾、檔名（${year}-${nm[1]}-${nm[2]}）對不上`);
   if (meta.作者 && nm && meta.作者 !== nm[3]) errs.push(`${rel}：作者「${meta.作者}」跟檔名的「${nm[3]}」對不上`);
   if (meta.範圍 && !Array.isArray(meta.範圍)) errs.push(`${rel}：範圍要寫成 [檔案, 檔案]`);
   for (const h of HEADINGS) if (!body.includes(h)) errs.push(`${rel}：少了標題「${h}」`);
   return errs;
 }
 
-module.exports = { ROOT, LOG_DIR, FIELDS, TYPES, STATES, HEADINGS, NAME_RE, listLogs, parse, check };
+module.exports = { ROOT, LOG_DIR, FIELDS, TYPES, STATES, HEADINGS, NAME_RE, DATE_RE, TIME_FROM, listLogs, parse, check };
