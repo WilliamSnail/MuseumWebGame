@@ -1,0 +1,67 @@
+# 合併到 main 之後：先跑跟 PR 一樣的測試和打包，都過了才部署到正式的 pepe-museum（決定 0023、0024）。
+# 免費帳號的私人 repo 鎖不住 main（翊文 11-08：「沒問題」），所以「測試沒過就不部署」寫在這裡：deploy 要等 test 過。
+# 部署用的服務帳號金鑰放在 GitHub 的 Secrets：FIREBASE_SERVICE_ACCOUNT（只有翊文能放，AI 拿不到；怎麼建見 docs/Firebase做法.md 第六節）。
+# 還沒放金鑰之前，部署那一步會跳過（不會報錯）。
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 一次只部署一個，後面的排隊（不要兩個部署同時蓋）
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 測試（規則、內容、特效、模組、日誌格式）
+        run: npm test
+      - name: 打包
+        run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - name: 還沒放部署的金鑰
+        if: env.HAS_KEY != 'true'
+        run: echo "還沒在 GitHub Secrets 放 FIREBASE_SERVICE_ACCOUNT，這次不部署。"
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+      - uses: actions/setup-node@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: 裝套件
+        if: env.HAS_KEY == 'true'
+        run: |
+          npm ci
+          npm --prefix functions ci
+      - name: 打包（連正式的 pepe-museum）
+        if: env.HAS_KEY == 'true'
+        run: npm run build
+      - name: 部署（網頁、Firestore 和 Realtime Database 的規則、Functions）
+        if: env.HAS_KEY == 'true'
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
+          rm -f "$RUNNER_TEMP/sa.json"

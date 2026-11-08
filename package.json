@@ -1,0 +1,27 @@
+{
+  "name": "pepe-museum-4",
+  "private": true,
+  "description": "佩佩博物館 4（多人版）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/main.js",
+    "test": "node test/run_all.cjs",
+    "log:index": "node tools/log_index.cjs",
+    "version:bump": "node tools/bump_version.cjs",
+    "emulators": "node tools/emulators.cjs",
+    "functions:shared": "node tools/copy_shared.cjs"
+  },
+  "devDependencies": {
+    "acorn": "^8.19.0",
+    "eslint-scope": "^8.4.0",
+    "firebase-tools": "^15.35.0",
+    "vite": "^8.3.6"
+  },
+  "dependencies": {
+    "firebase": "^13.2.0",
+    "ws": "^8.22.1"
+  }
+}

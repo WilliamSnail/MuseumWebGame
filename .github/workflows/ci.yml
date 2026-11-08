@@ -1,0 +1,31 @@
+# 每個 PR 都跑：測試 → 打包 → 維護日誌檢查。沒過就不要合併（AI 合併前要看這個是綠的，決定 0024）。
+# 免費帳號的私人 repo 鎖不住 main；部署在 deploy.yml，合併到 main 後先重跑測試，過了才部署。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 要比對 PR 改了哪些檔
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 測試（規則、內容、特效、模組、日誌格式）
+        run: npm test
+      - name: 打包
+        run: npm run build
+      - name: PR 改了程式就要有維護日誌
+        if: github.event_name == 'pull_request'
+        run: node tools/log_check.cjs --base origin/${{ github.base_ref }}

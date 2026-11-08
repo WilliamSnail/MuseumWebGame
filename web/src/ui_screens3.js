@@ -1,0 +1,758 @@
+// ================================================================
+//  第 3 版的畫面：選職業、技能成長、融合室、館長室、地下收藏庫、每週特展
+// ================================================================
+
+// ---------- 選職業（系統 L） ----------
+// ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
+import { CELLAR_REWARDS, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
+import { BOOK4, BOOK_SEQUELS, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, TRADE_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
+import { FORBIDDEN_BOOKS } from "../../shared/content.js";
+import { ART } from "./art.js";
+import { FX } from "./fx.js";
+import { CATS, ROLLED, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
+import { assignJob, buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, giftCode, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, parseWeeklyCode, placeWeekly, receiveGift, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyCode, weeklyState } from "../../shared/logic3.js";
+import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
+import { candidateStats, cellarDarkLoss, chooseCandidate, legacyOptions, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
+import { cleanName, renameVisitor } from "../../shared/visitors.js";
+import { $, $$, P, SCREENS, UI, actionTick, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
+import { roomHead } from "./ui_screens1.js";
+import { copyText } from "./ui_screens2.js";
+
+export function pickJob() {
+  if (P && !isFree(P) && asList(P.cands).length) return pickCandidate(); // 換人之後：從候選人挑一位（11-08）；第一位參觀者照舊選職業
+  return new Promise(res => {
+    if (!P || isFree(P) || typeof JOBS === "undefined") { res(null); return; }
+    const m = miniLayer(JOB_TEXT.pick, JOB_TEXT.sub);
+    m.card.classList.add("wide");
+    const grid = h("div", { class: "job-grid" }, JOBS.map(j => {
+      const b = h("button", { type: "button", class: "job" },
+        h("span", { class: "job-badge", html: ART.jobBadge ? ART.jobBadge(j.id) : ART.icon("medal") }),
+        h("b", null, j.name), h("span", { class: "job-skill" }, `拿手：${j.skill}`),
+        h("span", { class: "job-desc" }, j.desc), j.motto ? h("span", { class: "job-motto" }, `「${j.motto}」`) : null);
+      b.addEventListener("click", () => {
+        const r = assignJob(P, j.id);
+        m.close(); snd("unlock");
+        note(`你是${j.name}。拿手的「${r.main}」是 ${r.value}。`, "good");
+        if (r.moodAgain) note(`賭徒的運氣：心情再擲一次是 ${r.moodAgain.value}，取高的 → ${P.mood}`, "good");
+        updateStatus(); persist(); res(j.id);
+      });
+      return b;
+    }));
+    m.card.append(grid);
+    grid.querySelector("button").focus();
+  });
+}
+// 技能成長（CoC 的經驗檢定）：每天第一次進館
+export function growthFlow() {
+  return new Promise(res => {
+    if (!UI.pendingGrowth || !P || isFree(P)) { res(); return; }
+    UI.pendingGrowth = false;
+    const g = skillGrowth(P);
+    persist();
+    if (!g.length) { res(); return; }
+    const m = miniLayer("技能成長", "昨天用成功過的技能，擲 d100 比技能值大就 +1D10。");
+    const why = traitHits(P, "growth").map(traitTag).join("、"); // 小優點「學得快」、小缺點「慢熱」（11-08）
+    m.card.append(h("div", { class: "growth" }, g.map(x => h("p", null,
+      h("b", null, x.skill), `：擲出 ${pad(x.roll.total, 2)}　`,
+      x.up ? h("span", { class: "good" }, `＞ ${x.value - x.gain}，+${x.gain} → ${x.value}${x.adj && why ? `（${why}）` : ""}`) : `≤ ${x.value}，這次沒有長進`))),
+      h("div", { class: "rv-btns" }, btn("好", () => { m.close(); res(); }, "primary")));
+    g.filter(x => x.up).forEach(x => note(fill(JOB_TEXT.growth, x.skill), "good"));
+    m.card.querySelector(".btn").focus();
+  });
+}
+
+// ---------- 參觀者一位接一位（翊文 11-08，roguelike 的繼承；規則在 shared/legacy.js） ----------
+// LEGACY_TEXT 裡的 {名字} 換成值
+export const legacyFill = (t, o = {}) => Object.keys(o).reduce((s, k) => s.split("{" + k + "}").join(String(o[k])), String(t));
+// 遺物（或前任留下的遺物）→ 收藏列的格式，畫圖、寫名字用
+export function relicItem(r) {
+  if (!r || typeof r.key !== "string") return null;
+  if (r.kind === "pillow") return { kind: "pillow", key: r.key };
+  const pick = fromKey(r.key);
+  return pick ? { kind: r.kind, key: r.key, pick, perfect: !!r.perfect } : null;
+}
+// 前一位留給這一位的東西，寫成一句話
+export function legacyLine(L) {
+  if (!L) return null;
+  if (L.type === "relic") { const it = relicItem(L); return legacyFill(L.mood ? LEGACY_TEXT.gotRelic : LEGACY_TEXT.gotRelicNoMood, { x: L.from, name: it ? itemTitle(it) : "?", mood: L.mood }); }
+  if (L.type === "skill") return legacyFill(LEGACY_TEXT.gotSkill, { x: L.from, skill: L.skill, plus: L.plus });
+  return null;
+}
+// ---------- 多位參觀者的名字（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/visitors.js） ----------
+// 名字是玩家打的字：一律用 h() 的字串（純文字）放，不用 html:
+// 稱呼：有名字「阿明（第 2 位參觀者）」，沒有「第 2 位參觀者」
+export const visitorLabel = v => (v && v.vname ? `${v.vname}（第 ${v.visitor} 位參觀者）` : `第 ${(v && v.visitor) || 1} 位參觀者`);
+// 名字為什麼不行（cleanName 回傳 null 的時候）
+export function nameError(raw) {
+  const t = String(raw == null ? "" : raw).trim();
+  if (!t) return VISITOR_TEXT.errEmpty;
+  if ([...t].length > LEGACY.nameMax) return legacyFill(VISITOR_TEXT.errLong, { max: LEGACY.nameMax });
+  return VISITOR_TEXT.errBad;
+}
+export function nameInput(value, placeholder) {
+  return h("input", { class: "t-input vs-input", type: "text", maxlength: String(LEGACY.nameMax), autocomplete: "off", spellcheck: "false",
+    placeholder: placeholder || VISITOR_TEXT.placeholder, value: value || "", "aria-label": VISITOR_TEXT.label });
+}
+// 問名字（新參觀者、改名字）：回傳整理好的名字；按「算了」或 Esc 回傳 null
+export function askVisitorName({ title = VISITOR_TEXT.add, sub = "", value = "", ok = VISITOR_TEXT.next } = {}) {
+  return new Promise(res => {
+    const m = miniLayer(title, sub);
+    m.card.classList.add("vs-ask");
+    const input = nameInput(value);
+    const err = h("p", { class: "vs-err", role: "alert" });
+    const done = v => { m.close(); res(v); };
+    const form = h("form", { class: "vs-form" }, input, err,
+      h("div", { class: "rv-btns" }, h("button", { type: "submit", class: "btn primary" }, ok), btn(VISITOR_TEXT.cancel, () => done(null), "ghost")));
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const nm = cleanName(input.value);
+      if (!nm) { err.textContent = nameError(input.value); snd("error"); input.focus(); return; }
+      done(nm);
+    });
+    m.layer.addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagation(); done(null); } });
+    m.card.append(form);
+    input.focus(); input.select();
+  });
+}
+// 小優點、小缺點的小框（候選人卡片、名片、牆上的詳細）
+export function traitBox(id, kind) {
+  if (!id) return null;
+  return h("span", { class: "cand-trait " + kind }, h("b", null, `${kind === "perk" ? LEGACY_TEXT.perk : LEGACY_TEXT.flaw}・${traitName(id)}`), h("span", null, traitDesc(id)));
+}
+// A. 換人之前：留一樣東西給下一位。回傳 nextVisitor 要的 leave（{ type: "relic", item }、{ type: "skill" }、null ＝什麼都不留）
+export function legacyFlow() {
+  return new Promise(res => {
+    if (!P || isFree(P)) { res(null); return; }
+    const opt = legacyOptions(P);
+    const m = miniLayer(legacyFill(LEGACY_TEXT.leaveTitle, { x: P.visitor }), LEGACY_TEXT.leaveSub);
+    m.card.classList.add("wide", "lg-modal");
+    const body = h("div", { class: "lg-body" });
+    m.card.append(body);
+    const done = v => { m.close(); res(v); };
+    const showMain = () => {
+      const relicB = h("button", { type: "button", class: "lg-opt", disabled: !opt.relic.ok }, h("span", { class: "lg-ic" }, icon("medal")), h("b", null, LEGACY_TEXT.relic),
+        h("span", { class: "lg-desc" }, opt.relic.ok ? legacyFill(opt.relic.mood ? LEGACY_TEXT.relicDesc : LEGACY_TEXT.relicDescNoMood, { x: P.visitor, mood: opt.relic.mood }) : LEGACY_TEXT.relicNone));
+      relicB.addEventListener("click", () => { snd("click"); showRelic(); });
+      const skillB = opt.skill.ok ? h("button", { type: "button", class: "lg-opt" }, h("span", { class: "lg-ic" }, icon("star")), h("b", null, LEGACY_TEXT.skill),
+        h("span", { class: "lg-desc" }, legacyFill(LEGACY_TEXT.skillDesc, opt.skill))) : null;
+      if (skillB) skillB.addEventListener("click", () => { snd("unlock"); done({ type: "skill" }); });
+      body.replaceChildren(h("div", { class: "lg-grid" }, relicB, skillB), h("div", { class: "rv-btns" }, btn(LEGACY_TEXT.none, () => done(null), "ghost")));
+      (opt.relic.ok ? relicB : skillB || body.querySelector(".btn")).focus();
+    };
+    const showRelic = () => {
+      let chosen = null;
+      const preview = h("div", { class: "lg-preview" }, h("div", { class: "relic-glass" }), h("div", { class: "lg-pv-t" }, h("b", null, LEGACY_TEXT.relicEmpty), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: P.visitor }))));
+      const ok = btn([icon("medal"), " ", LEGACY_TEXT.relicOk], () => { if (chosen) { snd("unlock"); done({ type: "relic", item: { kind: chosen.kind, key: chosen.key } }); } }, "primary", { disabled: true });
+      const kinds = ["pepe", "failed", "pillow", "repaired"];
+      const strip = collectionStrip({ tabs: kinds, start: kinds.find(k => collectionItems(k).length) || "pepe", title: LEGACY_TEXT.relicPick, hint: LEGACY_TEXT.relicHint,
+        onPick: item => {
+          chosen = item; ok.disabled = false; snd("click");
+          preview.replaceChildren(h("div", { class: "relic-glass" }, h("div", { class: "relic-art", html: itemHTML(item) })),
+            h("div", { class: "lg-pv-t" }, h("b", null, itemTitle(item)), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: P.visitor }))));
+          strip.refresh();
+        },
+        selected: item => !!chosen && chosen.kind === item.kind && chosen.key === item.key });
+      body.replaceChildren(preview, strip, h("div", { class: "rv-btns" }, ok, btn(LEGACY_TEXT.back, showMain, "ghost")));
+      const first = strip.querySelector(".strip-item");
+      if (first) first.focus({ preventScroll: true });
+    };
+    showMain();
+  });
+}
+// C. 換人之後：從候選人挑一位（卡片上的數字跟挑了之後一樣，都是 candidateStats 算的）
+export function pickCandidate() {
+  return new Promise(res => {
+    const cands = asList(P.cands);
+    const m = miniLayer(LEGACY_TEXT.pickTitle, legacyFill(LEGACY_TEXT.pickSub, { x: cands.length }));
+    m.card.classList.add("wide", "cand-modal");
+    const got = legacyLine(P.legacy);
+    if (got) m.card.append(h("p", { class: "cand-got" }, icon(P.legacy.type === "relic" ? "medal" : "star"), h("span", null, got)));
+    // 多位參觀者（11-08）：理智歸零換人時，新的這位還沒有名字，在這裡取（不填就叫「第 N 位參觀者」）。從空位子加的已經取好了
+    let nameBox = null;
+    const nameErr = h("p", { class: "vs-err", role: "alert" });
+    if (!P.vname) {
+      nameBox = nameInput("", `第 ${P.visitor} 位參觀者`);
+      m.card.append(h("label", { class: "cand-name" }, h("b", null, VISITOR_TEXT.candName), nameBox, h("small", null, legacyFill(VISITOR_TEXT.candNameHint, { x: P.visitor }))), nameErr);
+    }
+    const grid = h("div", { class: "cand-grid" }, cands.map((c, i) => {
+      const b = candCard(c);
+      b.addEventListener("click", () => {
+        if (nameBox && nameBox.value.trim()) {
+          if (!renameVisitor(P, P.vid, nameBox.value)) { nameErr.textContent = nameError(nameBox.value); snd("error"); nameBox.focus(); return; }
+        }
+        const j = jobInfo(c.job);
+        const r = chooseCandidate(P, i);
+        if (!r) return;
+        m.close(); snd("unlock");
+        note(`${visitorLabel(P)}是${j.name}。拿手的「${r.main}」是 ${r.value}。`, "good");
+        if (r.moodAgain) note(`賭徒的運氣：心情再擲壹次是 ${r.moodAgain.value}，取高的`, "good");
+        note(`${LEGACY_TEXT.perk}「${traitName(r.perk)}」、${LEGACY_TEXT.flaw}「${traitName(r.flaw)}」：館長室的名片上看得到。開場心情 ${r.mood}、理智 ${r.sanity}。`, "neutral");
+        updateStatus(); persist();
+        if (UI.screen === "lobby") rerender(); // 大廳旁邊的「誰在館裡」換成新的名字、職業（11-08）
+        res(c.job);
+      });
+      return b;
+    }));
+    m.card.append(grid);
+    (nameBox || grid.querySelector("button")).focus();
+  });
+}
+export function candCard(c) {
+  const j = jobInfo(c.job), st = candidateStats(P, c);
+  const mood = clampN(P.mood + st.mood, 0, 99), san = clampN(P.sanity + st.sanity, 1, maxSan(P));
+  const skills = h("span", { class: "cand-skills" }, SKILLS.map(s => {
+    const d = st.delta[s] || 0;
+    return h("span", { class: "cand-sk" + (s === st.main ? " main" : "") + (d > 0 ? " up" : d < 0 ? " down" : "") },
+      h("small", null, s), h("b", null, String(st.skills[s])), d ? h("i", null, d > 0 ? `+${d}` : `−${-d}`) : null);
+  }));
+  return h("button", { type: "button", class: "cand", "aria-label": `${j.name}：${LEGACY_TEXT.perk}${traitName(c.perk)}，${LEGACY_TEXT.flaw}${traitName(c.flaw)}` },
+    h("span", { class: "cand-head" }, h("span", { class: "job-badge", html: ART.jobBadge ? ART.jobBadge(c.job) : ART.icon("medal") }),
+      h("span", { class: "cand-id" }, h("b", null, j.name), h("span", { class: "job-skill" }, `拿手：${st.main} ${st.skills[st.main]}`), j.motto ? h("span", { class: "job-motto" }, `「${j.motto}」`) : null)),
+    h("span", { class: "job-desc" }, j.desc),
+    traitBox(c.perk, "perk"), traitBox(c.flaw, "flaw"),
+    skills,
+    h("span", { class: "cand-start" }, `開場：心情 ${st.mood ? `${P.mood} → ${mood}` : mood}・理智 ${st.sanity ? `${P.sanity} → ${san}` : san}`),
+    h("span", { class: "cand-go" }, LEGACY_TEXT.pickBtn));
+}
+// 理智在哪裡用完（P.visit.where 記的是理智檢定的來源）→ 「在畫廊看「雕像」的時候」
+export function whereWords(src) {
+  const s = String(src || "");
+  if (!s) return null;
+  if (s.startsWith("book:")) {
+    const id = s.slice(5), b = [].concat(FORBIDDEN_BOOKS || [], BOOK4 ? [BOOK4] : [], BOOK_SEQUELS || []).find(x => x && x.id === id);
+    return b ? `在讀禁書《${b.title}》的時候` : "在讀禁書的時候";
+  }
+  if (s.startsWith("cellar:")) return `在地下收藏庫 B${s.slice(7, 8)}`;
+  if (s === "fusion") return "在融合室";
+  if (s === "beyond") return "在圖鑑室";
+  const ex = exhibitById(s);
+  return ex && ex.title ? `在畫廊看「${ex.title}」的時候` : null;
+}
+
+// ---------- 融合室（系統 J） ----------
+SCREENS.fusion = root => {
+  const slots = UI.fusion || (UI.fusion = [null, null]);
+  slots.forEach((s, i) => { if (s && !P.pepes[s.key]) slots[i] = null; });
+  const altar = h("div", { class: "altar" + (slots[0] && slots[1] ? " ready" : "") }, h("div", { class: "altar-art", html: ART.altar ? ART.altar() : "" }));
+  const slotEl = i => {
+    const it = slots[i] ? { kind: "pepe", key: slots[i].key, pick: fromKey(slots[i].key), perfect: !!(P.pepes[slots[i].key] || {}).perfect } : null;
+    const el = h("div", { class: `altar-slot s${i}` + (it ? " full" : ""), "aria-label": it ? `融合台 ${i + 1}：${itemTitle(it)}` : `融合台 ${i + 1}：空的` },
+      h("div", { class: "altar-frog", html: it ? itemHTML(it) : "" }),
+      h("div", { class: "altar-label" }, it ? itemTitle(it) : i === 0 ? "爸爸" : "媽媽"),
+      it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "拿下來", onClick: e => { e.stopPropagation(); slots[i] = null; rerender(); } }, icon("close")) : null);
+    placeTarget(el, ["pepe"], item => {
+      if (item.kind !== "pepe") { note("只有佩佩能放上融合台。", "bad"); return false; }
+      slots[i] = { key: item.key }; snd("submit"); later(rerender, 200); return true;
+    });
+    return el;
+  };
+  altar.append(slotEl(0), slotEl(1));
+  const n = Object.keys(P.pepes).length;
+  const info = h("div", { class: "fusion-info" });
+  const A = slots[0] && fusionItemUI(slots[0].key), B = slots[1] && fusionItemUI(slots[1].key);
+  if (A && B) {
+    const ch = fusionChances();
+    const rec = matchRecipe(A, B);
+    const rt = rec && typeof RECIPE_TEXT !== "undefined" ? RECIPE_TEXT[rec.id] : null;
+    const rows = CATS.filter(c => c !== ROLLED && (!partOf(c).deco || decoOpen(P, c))).map(c => {
+      const mut = partOf(c).options.filter(o => o.mutant).map(o => o.name);
+      return h("tr", null, h("td", null, c), h("td", null, A.pick[c]), h("td", null, B.pick[c]), h("td", { class: "sub" }, mut.length ? mut.join("、") : "隨機"));
+    });
+    const blood = [A, B].filter(x => rarityRank(x.pick[ROLLED]) >= 1).length * NUM.blood;
+    const can = canFuse(P, slots[0] && { kind: "pepe", key: slots[0].key }, slots[1] && { kind: "pepe", key: slots[1].key });
+    info.append(
+      placard([FUSION_TEXT.ready, `每一類：爸爸 ${ch.a}%、媽媽 ${ch.b}%、突變 ${ch.mutate}%`]),
+      h("table", { class: "rtable fusion-table" }, h("thead", null, h("tr", null, h("td", null, ""), h("td", null, "爸爸"), h("td", null, "媽媽"), h("td", null, "突變"))), h("tbody", null, rows)),
+      h("p", { class: "sub" }, rec ? (P.recipes[rec.id] ? `配方「${rt ? rt.name : rec.id}」會發生。` : "這一對好像會發生什麼特別的事……") : "沒有對上配方。稀有度照樣擲 d100。"),
+      !isFree(P) ? h("p", { class: "sub" }, `血統 ${blood} 點（爸媽每一隻稀有以上給 ${NUM.blood} 點）　融合要 ${fusionPrice(P)} 靈感${traitHits(P, "fusion").map(t => `（${traitTag(t)}）`).join("")}，還要擲理智（${sanWords(rec && rec.san ? rec.san : NUM.fusionSan)}）`) : null,
+      fusionPill(),
+      h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", fusionPrice(P))}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(fusionPrice(P)), can.ok ? null : h("p", { class: "warn-line" }, can.reason)));
+  } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
+  const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true,
+    onPick: item => { const i = slots[0] ? (slots[1] ? 0 : 1) : 0; slots[i] = { key: item.key }; snd("submit"); rerender(); },
+    selected: item => slots.some(s => s && s.key === item.key) });
+  const newRecipes = freshUnder(P, "codex", FRESH_KEY.recipe("")); // 圖鑑室的配方頁有新的：按鈕上也標「新」（11-08）
+  root.append(roomHead("融合室", FUSION_TEXT.intro, btn([icon("scroll"), " 配方圖鑑", newRecipes ? freshTag("tab-fresh") : null], () => go("codex", { tab: "recipes" }), "ghost")),
+    h("p", { class: "sub" }, `配對的可能性：收藏 ${num(n)} 隻 × ${num(n)} 隻 ＝ ${num(n * n)} 種`),
+    h("div", { class: "fusion-wrap" }, altar, info), strip);
+};
+export function fusionItemUI(key) { const e = P.pepes[key]; return e ? { kind: "pepe", key, pick: fromKey(key), perfect: !!e.perfect } : null; }
+export async function doFusion() {
+  if (UI.busy) return;
+  const slots = UI.fusion;
+  const f = startFusion(P, { kind: "pepe", key: slots[0].key }, { kind: "pepe", key: slots[1].key });
+  if (!f.ok) { snd("error"); note(f.reason, "bad"); return; }
+  UI.busy = true;
+  try {
+    const altar = $(".altar");
+    if (altar) altar.classList.add("fusing");
+    snd("fuse"); updateStatus(); persist();
+    await wait(1000);
+    if (!isFree(P)) {
+      await sanFlow(f.san, "fusion", "融合", { anchor: altar || undefined, noInvoluntary: true });
+      if (P.dark) return;
+    }
+    if (f.mutations.length) snd("mutate");
+    f.mutations.forEach(m => note(fill(FUSION_TEXT.mutate, m.name), "good"));
+    await showEvents(f.events);
+    UI.fusion = [null, null];
+    const fusion = { blood: f.blood, minRarity: f.minRarity, title: f.title, recipe: f.recipe, fixed: f.fixed };
+    if (f.fixed || isFree(P)) go("reveal", { res: finishMake(P, f.child, { natural: 50, fusion }), from: "fusion" });
+    else go("reveal", { pick: f.child, roll: f.roll, fusion, from: "fusion" });
+  } finally { UI.busy = false; }
+}
+
+// ---------- 館長室（升級、名片、修復台、交換碼、歷任參觀者） ----------
+SCREENS.office = (root, params) => {
+  const tab = params.tab || "sheet";
+  const OFFICE_IC = { sheet: "info", upgrades: "plus", repair: "hammer", trade: "share", history: "hourglass" };
+  const tabs = h("div", { class: "seg big-tabs" }, [["sheet", "參觀者名片"], ["upgrades", "工坊升級"], ["repair", "修復台"], ["trade", "交換碼"], ["history", JOB_TEXT.history]].map(([id, n]) =>
+    h("button", { type: "button", class: "seg-btn" + (id === tab ? " on" : ""), "aria-pressed": String(id === tab), onClick: () => go("office", { tab: id }, { action: false }) }, icon(OFFICE_IC[id]), h("span", null, n),
+      (id === "upgrades" && freshUnder(P, "office", FRESH_KEY.up(""))) || (id === "history" && freshUnder(P, "office", "wall:")) ? freshTag("tab-fresh") : null))); // 有第壹次買得起的升級（11-08）；牆上多了一位參觀者（11-08，key 是 "wall:第幾位"）
+  root.append(roomHead("館長室", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.office) || "", tabs));
+  if (tab === "sheet") root.append(officeSheet());
+  else if (tab === "upgrades") root.append(officeUpgrades());
+  else if (tab === "repair") root.append(officeRepair());
+  else if (tab === "trade") root.append(officeTrade());
+  else root.append(officeHistory());
+};
+export function officeSheet() {
+  if (isFree(P)) return placard(["自由模式", "自由模式沒有職業，也不擲骰。"]);
+  if (!P.job) return h("div", null, placard(["還沒選職業"]), btn("選職業", async () => { await pickJob(); rerender(); }, "primary"));
+  const j = jobInfo(P.job);
+  const main = jobSkill(P.job);
+  return h("div", { class: "sheet" },
+    h("div", { class: "sheet-head placard" },
+      h("div", { class: "sheet-badge", html: ART.jobBadge ? ART.jobBadge(P.job) : "" }),
+      h("div", null, h("div", { class: "pl-title" }, `${visitorLabel(P)}・${j.name}`), j.desc ? h("div", { class: "pl-line" }, j.desc) : null, j.motto ? h("div", { class: "pl-aside" }, `「${j.motto}」`) : null,
+        // 參觀者一位接一位（11-08）：這一位的小優缺點、前一位留下的
+        P.perk || P.flaw || P.legacy ? h("div", { class: "sheet-traits" }, traitBox(P.perk, "perk"), traitBox(P.flaw, "flaw"),
+          legacyLine(P.legacy) ? h("p", { class: "cand-got" }, icon(P.legacy.type === "relic" ? "medal" : "star"), h("span", null, legacyLine(P.legacy))) : null) : null)),
+    h("div", { class: "sheet-left" }, h("div", { class: "sheet-stats" },
+      [["心情", `${P.mood}／99`], ["理智", `${P.sanity}／${maxSan(P)}`], ["佩佩神話", String(P.myth)], ["靈感", String(P.insp)], ["做過", `${P.stats.made} 隻`], ["融合", `${P.stats.fused || 0} 次`]].map(([k, v]) => h("div", { class: "stat" }, h("span", null, k), h("b", null, v)))),
+      // 怪癖放在數字正下方（翊文 11-08：「怪癖要上面一點才看的到」）
+      P.quirks.length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), P.quirks.map(q => quirkCard(q))) : null),
+    h("div", { class: "skills placard" }, h("div", { class: "pl-title" }, "技能"),
+      SKILLS.map(s => h("div", { class: "skill-row" + (s === main ? " main" : "") },
+        h("span", { class: "skill-n" }, s, s === main ? "（拿手）" : ""),
+        h("span", { class: "skill-bar" }, h("i", { style: { width: skillOf(P, s) + "%" } })),
+        h("b", null, String(skillOf(P, s))),
+        h("span", { class: "skill-tick", title: "今天用成功過，明天會擲成長" }, P.skillTicks[s] ? "✓" : ""),
+        h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || ""))),
+      h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")));
+}
+export function officeUpgrades() {
+  return h("div", null, inspHave(), h("div", { class: "badge-grid" }, UPGRADES.map(u => {
+    const t = (typeof UPGRADE_TEXT !== "undefined" && UPGRADE_TEXT[u.id]) || { name: u.id, desc: "" };
+    const st = upgradeState(P, u.id);
+    const b = h("div", { class: "badge upgrade" + (st.state === "owned" ? " got" : "") }, icon(st.state === "owned" ? "check" : "hammer"),
+      h("b", null, t.name), h("p", { class: "sub" }, t.desc),
+      st.state === "owned" ? h("p", { class: "sub" }, `已經有了・${P.upgrades[u.id]}`) :
+      st.state === "req" ? h("p", { class: "sub" }, st.text) :
+      btn(costText("買", u.cost), () => {
+        const r = buyUpgrade(P, u.id);
+        if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
+        snd("unlock"); note(`買了「${t.name}」`, "good"); updateStatus(); persist(); rerender(); showEvents(r.events);
+      }, st.ok ? "primary" : "ghost"),
+      st.state === "buy" && !st.ok && P.insp < u.cost ? h("p", { class: "up-short" }, `還差 ${u.cost - P.insp} 靈感`) : null);
+    return freshMark(b, st.state === "buy" && isFresh(P, "office", FRESH_KEY.up(u.id)));
+  })));
+}
+export function officeRepair() {
+  if (!hasUp(P, "repair")) return h("div", null, placard(["修復台還沒買", "在「工坊升級」買了修復台，就能把失敗作修成修復品、治好在地下收藏庫受傷的佩佩。"]), btn("去工坊升級", () => go("office", { tab: "upgrades" }, { action: false }), "primary"));
+  const failed = collectionItems("failed");
+  const hurt = Object.keys(P.injured).filter(k => P.pepes[k]).map(k => ({ kind: "pepe", key: k, pick: fromKey(k) }));
+  return h("div", null, inspHave(),
+    h("h3", { class: "sec-title" }, `受傷的佩佩（${hurt.length}）`),
+    hurt.length ? h("div", { class: "item-grid" }, hurt.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }),
+      h("p", { class: "sub" }, `${itemTitle(it)}・${P.injured[it.key]} 會自己好`),
+      btn(costText("治好", NUM.healCost), () => { const r = healInjured(P, it.key); if (!r.ok) { note(r.reason, "bad"); return; } snd("hug"); note("包紮好了。", "good"); updateStatus(); persist(); rerender(); }, "ghost"))))
+      : h("p", { class: "empty" }, "沒有受傷的佩佩。"),
+    h("h3", { class: "sec-title" }, `失敗作（${failed.length}）`),
+    failed.length ? h("div", { class: "item-grid" }, failed.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }),
+      h("p", { class: "sub" }, itemTitle(it)),
+      btn(costText("修修看", NUM.repairCost), () => {
+        const r = repairFailed(P, it.key);
+        if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
+        if (r.check && !r.check.skip) note(`手工藝 ${r.check.roll.total} ≤ ${r.check.target}？${r.fixed ? "成功" : "失手了"}`, r.fixed ? "good" : "bad");
+        if (r.fixed) { snd("unlock"); note("修好了，變成修復品。", "good"); showEvents(r.events); }
+        updateStatus(); persist(); rerender();
+      }, "ghost"))))
+      : h("p", { class: "empty" }, `沒有失敗作。擲出 ${NUM.fumbleFrom}–100 才會有。`));
+}
+export function officeTrade() {
+  const box = h("div", { class: "share-box" }, h("p", { class: "sub" }, "點下面一件作品，就會變成一串交換碼。"));
+  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "送出", hint: "點一件作品", onPick: item => {
+    const code = giftCode(P, item);
+    if (!code) return;
+    const ta = h("textarea", { class: "code", readonly: true, rows: "3" }, code);
+    box.replaceChildren(h("p", { class: "sub" }, `${itemTitle(item)}：${TRADE_TEXT.send}`), ta, btn([icon("copy"), " 一鍵複製"], () => copyText(code, ta), "primary"));
+  } });
+  const inTa = h("textarea", { class: "code", rows: "3", placeholder: "貼上別人給你的交換碼" });
+  const recv = h("div", { class: "share-box" }, h("p", { class: "sub" }, "收下："), inTa, btn("收下", () => {
+    const r = receiveGift(P, inTa.value);
+    if (!r.ok) { snd("error"); note(r.reason === "already" ? TRADE_TEXT.already : TRADE_TEXT.bad, "bad"); return; }
+    snd("unlock");
+    const it = r.kind === "pillow" ? { kind: "pillow", key: r.key } : { kind: r.kind, key: r.key, pick: fromKey(r.key) };
+    note(fill(TRADE_TEXT.receive, itemTitle(it)), "good");
+    inTa.value = ""; updateStatus(); persist(); showEvents(r.events);
+  }, "primary"));
+  return h("div", { class: "trade" }, strip, box, recv);
+}
+// D. 歷任參觀者牆（11-08）：上面是遺物櫃，下面一位一張卡（最前面是現在這一位），點了展開詳細
+export function officeHistory() {
+  const list = asList(P.history), relics = asList(P.relics), free = isFree(P);
+  const cards = [];
+  if (!free) { const now = visitorRecord(P, null); cards.push(historyCard(Object.assign(now, { now: true }), now.madeThis)); }
+  // 多位參觀者（11-08）：別的位子上的也在館裡（收著的欄位蓋在 P 上算紀錄，博物館的累計照 P 的）
+  if (!free) asList(P.visitors).filter(v => v && v.slot != null).sort((a, b) => a.slot - b.slot).forEach(v => {
+    const r = visitorRecord(Object.assign({}, P, v), null);
+    cards.push(historyCard(Object.assign(r, { now: true, here: true }), r.madeThis));
+  });
+  list.forEach((x, i) => cards.push(historyCard(x, visitorMade(list, i))));
+  return h("div", { class: "vw" },
+    relics.length ? h("section", { class: "relic-sec" }, h("h3", { class: "sec-title" }, icon("medal"), " ", LEGACY_TEXT.relics),
+      h("div", { class: "relic-shelf" }, relics.map(relicCase))) : null,
+    h("h3", { class: "sec-title" }, icon("hourglass"), " ", JOB_TEXT.history),
+    list.length || cards.length > 1 ? h("p", { class: "sub vw-hint" }, LEGACY_TEXT.wallHint) : h("p", { class: "empty" }, legacyFill(LEGACY_TEXT.empty, { x: P.visitor })), // 別的位子有人：不寫「前面還沒有人」
+    cards.length ? h("div", { class: "vw-wall" }, cards) : null);
+}
+export function relicCase(r) {
+  const it = relicItem(r);
+  return h("figure", { class: "relic-case" }, h("div", { class: "relic-glass" }, it ? h("div", { class: "relic-art", html: itemHTML(it) }) : null),
+    h("figcaption", null, h("b", null, it ? itemTitle(it) : "？"), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: r.n }))));
+}
+// 牆上的一張卡。x ＝ P.history 的一筆（或現在這一位的 visitorRecord）；made ＝這一位做了幾隻（不知道是 null）
+export function historyCard(x, made) {
+  const j = x.job ? jobInfo(x.job) : null;
+  const dash = "—";
+  const stat = (label, v) => h("span", { class: "vw-stat" }, h("b", null, v), h("small", null, label));
+  const isNew = "perk" in x; // 11-08 以後的紀錄才有優缺點、地下、看懂、留下什麼
+  const where = whereWords(x.where);
+  const end = x.now ? "還在館裡" : x.endedBy === "russia8" ? `${where ? where + "，理智用完了。" : ""}最後走進了俄國8+9 的房間。` : "離開了。";
+  const left = x.left, li = left && left.type === "relic" ? relicItem(left) : null;
+  const leftEl = left ? h("div", { class: "vw-left" }, li ? h("span", { class: "vw-relic", html: itemHTML(li) }) : icon(left.type === "skill" ? "star" : "medal"),
+    h("span", null, left.type === "relic" ? `留下了「${li ? itemTitle(li) : "壹件收藏"}」` : `留下了「${left.skill}」+${left.plus}`))
+    : !x.now && isNew ? h("div", { class: "vw-left none" }, "什麼都沒留下") : null;
+  const row = (k, v) => v == null || v === "" ? null : h("div", { class: "vw-row" }, h("span", null, k), h("span", null, v));
+  const more = h("div", { class: "vw-more" },
+    row("來的那天", x.from || (x.now || isNew ? dash : "（更新前來的，沒有記到）")),
+    x.now ? null : row("離開那天", x.d),
+    x.mins != null ? row("玩了", `${x.mins} 分鐘`) : null,
+    x.best ? row("最拿手", `${x.best[0]} ${x.best[1]}`) : null,
+    typeof x.myth === "number" && isNew ? row("佩佩神話", String(x.myth)) : null,
+    x.quirks && x.quirks.length ? row("怪癖", x.quirks.map(q => quirkName(q)).join("、")) : null,
+    x.got ? row("前任留給這位的", legacyLine(x.got)) : null,
+    j && j.desc ? row("職業", `${j.name}：${j.desc}`) : null,
+    traitBox(x.perk, "perk"), traitBox(x.flaw, "flaw"));
+  const card = h("div", { class: "vw-card" + (x.now ? " now" : ""), role: "button", tabindex: "0", "aria-expanded": "false", "aria-label": `${x.name ? x.name + "・" : ""}第 ${x.n} 位參觀者${j ? "・" + j.name : ""}` },
+    x.now ? h("span", { class: "vw-now" + (x.here ? " here" : "") }, x.here ? VISITOR_TEXT.here : LEGACY_TEXT.now) : null,
+    h("div", { class: "vw-top" }, h("span", { class: "vw-badge", html: j && ART.jobBadge ? ART.jobBadge(x.job) : ART.icon("frog") }),
+      // 有名字寫名字（11-08）；以前的紀錄沒有名字，照舊
+      h("div", { class: "vw-id" }, h("b", null, x.name || `第 ${x.n} 位參觀者`), h("span", null, [x.name ? `第 ${x.n} 位參觀者` : null, j ? j.name : "（還沒選職業）"].filter(Boolean).join("・")))),
+    x.perk || x.flaw ? h("div", { class: "vw-tags" }, x.perk ? h("span", { class: "vw-tag perk" }, traitName(x.perk)) : null, x.flaw ? h("span", { class: "vw-tag flaw" }, traitName(x.flaw)) : null) : null,
+    h("div", { class: "vw-stats" }, stat("做了幾隻", made == null ? dash : num(made)), stat("地下", isNew || x.now ? (x.deepest ? `B${x.deepest}` : "沒下去") : dash), stat("看懂幾件", isNew || x.now ? String(x.understood || 0) : dash)),
+    h("p", { class: "vw-end" }, end),
+    leftEl, more);
+  const toggle = () => { const open = card.classList.toggle("open"); card.setAttribute("aria-expanded", String(open)); snd("flip"); };
+  card.addEventListener("click", toggle);
+  card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  return freshMark(card, !x.now && isFresh(P, "office", "wall:" + x.n));
+}
+
+// ---------- 地下收藏庫（系統 M） ----------
+SCREENS.cellar = root => {
+  if (P.cellar.run) { cellarRoom(root); return; }
+  const team = UI.cellarTeam || (UI.cellarTeam = [null, null, null]);
+  team.forEach((k, i) => { if (k && (!P.pepes[k] || P.injured[k])) team[i] = null; });
+  const best = P.cellar.best || 0;
+  const floors = cellarFloors();
+  if (UI.cellarFloor == null || UI.cellarFloor > best + 1) UI.cellarFloor = Math.min(best + 1, floors.length);
+  const floorEls = floors.map(n => {
+    const f = cellarFloor(n), open = n <= best + 1, done = !!P.cellar.floorsDone[n];
+    const r = CELLAR_REWARDS[n] || {};
+    const reward = [r.insp ? `${r.insp} 靈感` : null, r.unlock ? `「${r.unlock[1]}」` : null, r.key ? `「${r.key === "bg" ? "背景" : "手上拿的東西"}」的鑰匙` : null, r.book ? "一本禁書" : null, r.ending ? "結局" : null].filter(Boolean).join("、");
+    const el = h("button", { type: "button", class: "floor" + (UI.cellarFloor === n ? " on" : "") + (open ? "" : " locked") + (done ? " done" : ""), "aria-label": `B${n} ${f.name}` },
+      h("span", { class: "floor-art", html: ART.cellarScene ? ART.cellarScene(n, { cleared: done }) : "" }),
+      h("span", { class: "floor-n" }, `B${n}`), h("b", null, open ? f.name : "？？？"),
+      h("span", { class: "sub" }, done ? "走過了" : open ? `第一次走完：${reward}` : `要先走過 B${n - 1}`));
+    freshMark(el, open && isFresh(P, "cellar", FRESH_KEY.floor(n))); // 新開的樓層（11-08）
+    el.addEventListener("click", () => { if (!open) { note(`要先走過 B${n - 1}`); return; } UI.cellarFloor = n; rerender(); });
+    return el;
+  });
+  const items = team.map(k => k ? { kind: "pepe", key: k, pick: fromKey(k), perfect: !!(P.pepes[k] || {}).perfect } : null);
+  const slotEls = items.map((it, i) => {
+    const el = h("div", { class: "team-slot" + (it ? " full" : ""), "aria-label": it ? `隊員 ${i + 1}：${itemTitle(it)}` : `隊員 ${i + 1}：空的` },
+      h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }),
+      h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? h("b", null, itemTitle(it)) : "空位", it ? h("span", null, `強度 ${memberPower(it, null)}・${it.pick.帽子}・${it.pick.姿勢}`) : null),
+      it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "換下來", onClick: e => { e.stopPropagation(); team[i] = null; rerender(); } }, icon("close")) : null);
+    placeTarget(el, ["pepe"], item => {
+      if (item.kind !== "pepe") { note("只帶佩佩下去。", "bad"); return false; }
+      if (P.injured[item.key]) { note("牠受傷了，先休息。", "bad"); return false; }
+      if (team.includes(item.key)) return false;
+      team[i] = item.key; snd("submit"); later(rerender, 200); return true;
+    });
+    return el;
+  });
+  const full = team.every(Boolean);
+  const tp = full ? teamPower(P, items, null) : null;
+  const legend = teamRules();
+  const strip = collectionStrip({ tabs: ["pepe"], title: "挑隊員", hint: "點壹隻放進隊伍；受傷的不能下去", drag: true,
+    meta: item => teamMeta(item, team),
+    sorts: [["power", "強度高的先", (a, b) => (!!P.injured[a.key] - !!P.injured[b.key]) || (memberPower(b, null) - memberPower(a, null))], ["new", "照收藏順序", null]],
+    onPick: item => { if (P.injured[item.key]) { note("牠受傷了，先休息。", "bad"); return; } if (team.includes(item.key)) return; const i = team.indexOf(null); team[i < 0 ? 2 : i] = item.key; snd("submit"); rerender(); },
+    selected: item => team.includes(item.key) });
+  const go_ = btn([icon("stairs"), ` 下到 B${UI.cellarFloor}`], () => {
+    const r = startCellar(P, UI.cellarFloor, team);
+    if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
+    snd("whoosh"); persist(); rerender();
+  }, "primary big", { disabled: !full });
+  root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
+    h("div", { class: "floors" }, floorEls),
+    h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
+      tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),
+      go_, legend)),
+    strip);
+};
+export function cellarRoom(root) {
+  const run = P.cellar.run, f = cellarFloor(run.floor), room = currentRoom(P);
+  if (room && room.choices.some(c => c.check.type === "san") && UI.eerieRoom !== room.id) { UI.eerieRoom = room.id; later(() => snd("eerie"), 400); }
+  if (!f || !room) { leaveCellar(P); go("cellar", {}, { action: false }); return; }
+  const team = teamItems(P, run.team);
+  const tp = teamPower(P, team, room);
+  const dots = h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" })));
+  const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
+  const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
+    h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`))),
+    h("div", { class: "tb-total" }, h("span", { class: "poss-l" }, "這個房間的隊伍強度"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null));
+  const chips = h("div", { class: "nc-tags" }, room.mood ? h("span", { class: "tag" }, `房間的心情：${room.mood}`) : null, room.color ? h("span", { class: "tag" }, `房間的顏色：${room.color}`) : null);
+  const result = h("div", { class: "room-result", "aria-live": "polite" });
+  const desc = c => c.type === "power" ? `強度 ${tp.total}＋擲 1～10，要 ≥ ${c.target}` : c.type === "skill" ? `${c.skill} ${clampN(skillOf(P, c.skill) + (c.mod || 0) + (team.some(t => t.pick.帽子 === "紳士帽") ? 10 : 0), 1, 99)}%` : c.type === "san" ? `理智 ${sanShort(c.spec)}` : "安全";
+  const choices = h("div", { class: "choices" }, room.choices.map((c, i) => btn([h("span", null, c.label), h("small", null, desc(c.check))], () => resolveFlow(i, result, choices), c.check.type === "none" ? "ghost" : "")));
+  const stage = cellarStage(team, room, run.floor);
+  // 游標移到選項上（或用鍵盤選到）：舞台先預告這個選項會怎麼做
+  $$(".btn", choices).forEach((b, i) => {
+    const c = room.choices[i];
+    const on = () => { if (!stage.classList.contains("acting")) stageProp(stage, c.check, desc(c.check)); };
+    b.addEventListener("pointerenter", on); b.addEventListener("focus", on);
+    b.addEventListener("pointerleave", () => { if (!stage.classList.contains("acting")) stageClear(stage); });
+  });
+  const card = h("div", { class: "note-card room-card" + (room.boss ? " boss" : "") }, h("i", { class: "pin" }), chips,
+    h("h2", { class: "room-title" }, ptNode(room.title)), h("div", { class: "nc-text" }, room.lines.map(l => h("p", null, ptNode(l)))),
+    h("p", { class: "cs-hint" }, icon("sparkle"), " 游標移到選項上，看隊伍會怎麼做；按下去牠們就會動起來"), choices, result);
+  root.append(roomHead(`B${run.floor}　${f.name}`, run.idx === 0 && f.intro ? f.intro : null, dots, leave),
+    stage,
+    teamBar, card);
+}
+export async function resolveFlow(i, result, choices) {
+  if (UI.busy) return;
+  UI.busy = true;
+  $$("button", choices).forEach(b => { b.disabled = true; });
+  try {
+    const stage = $(".cellar-stage"), team = teamItems(P, P.cellar.run.team);
+    const res = cellarResolve(P, i);
+    if (!res) return;
+    if (stage) { stageProp(stage, res.choice.check, ""); await stageAct(stage, res.choice.check); }
+    let sanSuccess = null;
+    if (res.type === "power") {
+      snd("drum");
+      await FX.rollOverlay({ title: "強度檢定", sub: `隊伍強度 ${res.power}，再加擲出的 1～10，要 ≥ ${res.target}`, spec: "1D10", result: res.roll,
+        outcome: { text: `${res.power} ＋ ${res.roll.total} ＝ ${res.total}　${res.success ? "過了" : "不夠"}${res.rerolled ? "（皇冠號令重擲過）" : ""}`, tone: res.success ? "good" : "bad" } });
+    } else if (res.type === "skill") {
+      await FX.rollOverlay({ title: `${res.skill}檢定`, sub: `擲出 ≤ ${res.target} 就成功${res.rerolled ? "（皇冠號令重擲過）" : ""}`, spec: "d100", result: res.roll,
+        outcome: { text: res.success ? "成功" : "失敗", tone: res.success ? "good" : "bad" } });
+    } else if (res.type === "san") {
+      const s = await sanFlow(res.sanSpec, "cellar:" + res.room.id, res.room.title, { anchor: result, noInvoluntary: true });
+      if (P.dark) return;
+      sanSuccess = s ? s.r.success : true;
+      // 小缺點「怕黑」（11-08）：理智檢定扣了理智，再多扣（另外扣，數字才對得上）
+      const dark = s ? cellarDarkLoss(P, s.loss) : 0;
+      if (dark) { note(`怕黑：在地下多扣 ${dark} 點理智`, "bad"); await lossFlow(dark, "cellar:" + res.room.id, { anchor: result }); if (P.dark) return; }
+    }
+    res.notes.filter(n => /皇冠|紳士帽/.test(n)).forEach(n => note(n, "good"));
+    const fx = cellarApply(P, res, sanSuccess);
+    if (stage) stageOutcome(stage, res, fx, team);
+    if (fx.blocked.length) snd("block");
+    if (fx.injured) later(() => snd("hurt"), fx.blocked.length ? 300 : 0);
+    const lines = [fx.text || (fx.success ? "你們過去了。" : "不太順利。")];
+    if (fx.insp) lines.push(`+${fx.insp} 靈感`);
+    if (fx.sanGain) lines.push(`理智 +${fx.sanGain}`);
+    if (fx.myth) lines.push(`佩佩神話 +${fx.myth}`);
+    fx.blocked.forEach(b => lines.push(b));
+    if (fx.dark) lines.push(`怕黑：理智多扣 ${fx.dark} 點`);
+    if (fx.injured) lines.push(`「${itemTitle(fx.injured)}」受傷了（${fx.injureDays || injureDaysOf(P)} 天後會好；館長室的修復台可以治）`);
+    result.replaceChildren(placard(lines, { cls: fx.success ? "ok" : "bad" }));
+    if (fx.insp) { FX.floatText(result, `+${fx.insp} 靈感`, "good"); snd("coin"); }
+    if (fx.sanLoss) { await lossFlow(fx.sanLoss, "cellar:" + res.room.id, { anchor: result }); if (P.dark) return; }
+    await showEvents(fx.events);
+    actionTick(); updateStatus(); persist();
+    result.append(h("div", { class: "rv-btns" }, btn("繼續", () => advanceFlow(result), "primary")));
+    result.querySelector(".btn.primary").focus({ preventScroll: true });
+  } finally { UI.busy = false; }
+}
+export async function advanceFlow(result) {
+  const a = cellarAdvance(P);
+  persist();
+  if (!a) { go("cellar", {}, { action: false }); return; }
+  if (!a.floorDone) { rerender(); window.scrollTo(0, 0); return; }
+  const f = cellarFloor(a.floor);
+  const st = $(".cellar-stage"); if (st) st.classList.add("descend");
+  snd("fanfare");
+  const r = a.reward || {};
+  const lines = [`B${a.floor} 走完了`, f.clear || ""];
+  if (a.first && r.insp) lines.push(`+${r.insp} 靈感`);
+  result.replaceChildren(placard(lines, { gold: true }));
+  updateStatus();
+  await showEvents(a.events);
+  if (a.ending) { await wait(1500); go("ending", { id: a.ending }, { action: false }); return; }
+  result.append(h("div", { class: "rv-btns" },
+    a.next ? btn([icon("stairs"), ` 繼續往下到 B${a.next}`], () => { rerender(); window.scrollTo(0, 0); }, "primary") : null,
+    btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, a.next ? "ghost" : "primary")));
+}
+
+// ---------- 展廳的頁籤、每週特展 ----------
+export function hallTabs(active) {
+  return h("div", { class: "seg hall-tabs big-tabs" },
+    h("button", { type: "button", class: "seg-btn" + (active === "main" ? " on" : ""), onClick: () => go("hall", {}, { action: false }) }, icon("hall"), h("span", null, "常設展")),
+    h("button", { type: "button", class: "seg-btn" + (active === "week" ? " on" : ""), onClick: () => go("hall", { week: true }, { action: false }) }, icon("star"), h("span", null, "本週特展")));
+}
+export function weeklyHall(root, params) {
+  const W = weeklyState(P);
+  const T = (typeof WEEKLY_TEXT !== "undefined" && WEEKLY_TEXT[W.theme]) || { name: W.theme, rule: "" };
+  const items = W.slots.map(s => hallItem(P, s));
+  const sc = scoreItems(items);
+  const shareBox = h("div", { class: "share-box", hidden: true });
+  const tools = [btn([icon("share"), " 分享本週成績"], () => {
+    shareBox.hidden = false;
+    const code = weeklyCode(P);
+    const ta = h("textarea", { class: "code", readonly: true, rows: "3" }, code);
+    shareBox.replaceChildren(h("p", { class: "sub" }, "把這串字傳給 Yuga，比比看誰的特展分數高。"), ta, btn([icon("copy"), " 一鍵複製"], () => copyText(code, ta), "primary"));
+  }, "ghost"), btn("看別人的特展", () => {
+    shareBox.hidden = false;
+    const ta = h("textarea", { class: "code", rows: "3", placeholder: "貼上別人的特展碼" });
+    shareBox.replaceChildren(ta, btn("比比看", () => {
+      const v = parseWeeklyCode(ta.value);
+      if (!v) { note("這串讀不出來。", "bad"); return; }
+      const Tv = (typeof WEEKLY_TEXT !== "undefined" && WEEKLY_TEXT[v.theme]) || { name: v.theme };
+      shareBox.replaceChildren(h("p", null, `對方的特展「${Tv.name}」：最高 ${v.best} 分。你這週最高 ${W.best} 分。${v.week !== W.w ? "（不是同一週的特展）" : v.best > W.best ? "對方贏了。" : v.best < W.best ? "你贏了。" : "平手。"}`),
+        h("div", { class: "hall-room visit" }, v.items.map(it => h("div", { class: "ped-slot" + (it ? " full" : "") }, h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }), h("div", { class: "ped-block" })))));
+    }, "primary"));
+  }, "ghost")];
+  const room = h("div", { class: "hall-room" }, W.slots.map((s, i) => {
+    const it = hallItem(P, s);
+    const el = h("div", { class: "ped-slot" + (it ? " full" : "") },
+      h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }), h("div", { class: "ped-block" }),
+      h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? itemTitle(it) : "空展台"),
+      it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "拿下來", onClick: e => { e.stopPropagation(); W.slots[i] = null; persist(); rerender(); } }, icon("close")) : null);
+    placeTarget(el, ["pepe", "pillow"], item => {
+      const r = placeWeekly(P, i, item);
+      if (!r.ok) { snd("error"); note(r.reason, "bad"); return false; }
+      snd("submit"); if (r.isBest) note(`本週新紀錄：${r.best} 分`, "good");
+      persist(); later(rerender, 250); return true;
+    });
+    return el;
+  }));
+  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: `只能放：${T.rule}`, drag: true });
+  root.append(roomHead("本週特展", `${T.name}：${T.rule}`, ...tools), shareBox, hallTabs("week"),
+    h("div", { class: "hall-wall themed" }, h("div", { class: "theme-name" }, h("h2", null, T.name), h("p", null, `現在 ${sc.score} 分　本週最高 ${W.best} 分`))),
+    room, strip);
+}
+
+// ---------- 地下收藏庫的舞台（翊文 11-08：選項要有互動） ----------
+export const CS_ROW = { 坐著: 1, 躺平: 2 }; // 0 前排、1 中排、2 後排
+export const CS_SKILL_IC = { 偵查: "magnifier", 鑑賞: "eye", 神秘學: "book", 幸運: "dice", 手工藝: "hammer", 說服: "handshake" };
+export const CS_CRATE = '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="10" width="48" height="44" rx="3" fill="#9C7A3E" stroke="#3B2719" stroke-width="3"/><path d="M6 25H54M6 40H54M19 10V54M41 10V54" stroke="#3B2719" stroke-width="2.4"/><path d="M9 13L51 51" stroke="#5E4420" stroke-width="2"/></svg>';
+export const CS_EYE = '<svg viewBox="-12 -9 24 18" xmlns="http://www.w3.org/2000/svg"><path d="M-10 0Q0-8 10 0Q0 8-10 0Z" fill="#EDE7F6" stroke="#2A2238" stroke-width=".8"/><ellipse class="cs-pupil" rx="2.4" ry="5.5" fill="#2A2238"/></svg>';
+export function cellarStage(team, room, floor) {
+  const stage = h("div", { class: "cellar-stage" });
+  stage.append(h("div", { class: "cellar-scene", html: ART.cellarScene ? ART.cellarScene(floor) : "" }));
+  stage.append(h("div", { class: "cs-prop" }, h("div", { class: "cs-p-art" }), h("span", { class: "cs-p-label" })));
+  const crew = h("div", { class: "cs-team" });
+  team.forEach((it, i) => {
+    const pw = memberPower(it, room);
+    const beat = !!room.mood && MOOD_BEATS[it.pick.心情] === room.mood, beaten = !!room.mood && MOOD_BEATS[room.mood] === it.pick.心情;
+    crew.append(h("div", { class: "cs-frog" + (beat ? " beat" : "") + (beaten ? " beaten" : "") + (P.injured[it.key] ? " hurt" : ""), style: { "--i": i, "--row": CS_ROW[it.pick.姿勢] || 0 }, dataset: { key: it.key } },
+      h("span", { class: "cs-tag" }, `強度 ${pw}${beat ? "・剋到 ×2" : beaten ? "・被剋" : ""}`),
+      h("div", { class: "cs-art", html: itemHTML(it) }),
+      h("div", { class: "cs-pops" })));
+  });
+  stage.append(crew, h("div", { class: "cs-float" }));
+  return stage;
+}
+// 預告：這個選項要做什麼
+export function stageProp(stage, check, label) {
+  const prop = stage.querySelector(".cs-prop"), t = check.type;
+  prop.className = "cs-prop on t-" + t;
+  prop.querySelector(".cs-p-art").innerHTML = t === "power" ? CS_CRATE : t === "skill" ? ART.icon(CS_SKILL_IC[check.skill] || "sparkle") : t === "san" ? CS_EYE : ART.icon("arrowRight");
+  if (label != null) prop.querySelector(".cs-p-label").textContent = label;
+  stage.dataset.preview = t;
+}
+export function stageClear(stage) { stage.querySelector(".cs-prop").className = "cs-prop"; delete stage.dataset.preview; }
+// 按下去：隊伍先動作，再擲骰
+export async function stageAct(stage, check) {
+  stage.classList.add("acting", "act-" + check.type);
+  if (check.type === "power") snd("whoosh");
+  else if (check.type === "san") snd("eerie");
+  else if (check.type === "none") snd("steps");
+  await wait(check.type === "none" ? 900 : 750);
+}
+export function stagePop(f, text, tone) { if (f) f.querySelector(".cs-pops").append(h("span", { class: "cs-pop " + (tone || "") }, text)); }
+// 擲完骰：演出結果
+export function stageOutcome(stage, res, fx, team) {
+  ["act-power", "act-skill", "act-san", "act-none"].forEach(c => stage.classList.remove(c));
+  stage.classList.remove("acting");
+  stage.classList.add(fx.success ? "won" : "lost", "t-" + res.type);
+  const frogs = [...stage.querySelectorAll(".cs-frog")];
+  const of = it => it && frogs.find(f => f.dataset.key === it.key);
+  frogs.forEach(f => { f.classList.remove("cheer", "recoil"); f.getBoundingClientRect(); f.classList.add(fx.success ? "cheer" : "recoil"); });
+  if (fx.injured) { const f = of(fx.injured); if (f) { f.classList.add("hurt", "fall"); stagePop(f, "受傷了", "bad"); } }
+  fx.blocked.forEach(b => {
+    const who = /棒球帽/.test(b) ? team.find(t => t.pick.帽子 === "棒球帽") : /斯拉夫蹲/.test(b) ? team.find(t => t.pick.姿勢 === "斯拉夫蹲") : null;
+    const f = of(who); if (f) { f.classList.add("shield"); stagePop(f, /棒球帽/.test(b) ? "擋下來了" : "穩住了", "good"); }
+  });
+  if (res.rerolled) { const f = of(team.find(t => t.pick.帽子 === "皇冠")); if (f) { f.classList.add("crowned"); stagePop(f, "皇冠號令：重擲", "good"); } }
+  if (fx.rested) team.filter(t => t.pick.姿勢 === "躺平" || t.pick.帽子 === "毛帽").forEach(t => stagePop(of(t), "回理智", "good"));
+  const fl = stage.querySelector(".cs-float");
+  const say = (text, tone) => fl.append(h("span", { class: "cs-say " + (tone || "") }, text));
+  if (fx.insp) say(`+${fx.insp} 靈感`, "good");
+  if (fx.sanGain) say(`理智 +${fx.sanGain}`, "good");
+  if (fx.sanLoss) { say(`理智 −${fx.sanLoss}`, "bad"); stage.classList.add("hit"); }
+  if (res.type === "none") say("悄悄地過去了");
+}
+
+// ---------- 挑隊員：每隻底下的小卡（強度、心情相剋、能力、狀態） ----------
+export const HAT_AB = { 棒球帽: "擋壹次", 皇冠: "重擲壹次", 巫師帽: "全隊 +2", 觸手帽: "全隊 +5・扣理智", 紳士帽: "技能 +10", 毛帽: "回理智" };
+export const POSE_AB = { 比讚: "全隊每隻 +1", 躺平: "回理智", 斯拉夫蹲: "不會被推倒", 倒立: "強度 +1" };
+export function teamMeta(item, team) {
+  const p = item.pick, hurt = P.injured[item.key], inTeam = team.includes(item.key);
+  const beats = MOOD_BEATS[p.心情];
+  const abil = [];
+  if (HAT_AB[p.帽子]) abil.push([p.帽子, HAT_AB[p.帽子]]);
+  if (POSE_AB[p.姿勢]) abil.push([p.姿勢, POSE_AB[p.姿勢]]);
+  return h("span", { class: "si-meta" },
+    h("span", { class: "si-pw" }, `強度 ${memberPower(item, null)}`, item.perfect ? h("small", null, "（完美 +1）") : null),
+    h("span", { class: "si-mood" }, p.心情 === "俄國8+9" ? "俄國8+9・不被剋" : beats ? `${p.心情}・剋${beats}` : p.心情),
+    abil.map(([k, v]) => h("span", { class: "si-ab", title: `${k}：${v}` }, `${k}：${v}`)),
+    hurt ? h("span", { class: "si-st bad" }, `受傷・${String(hurt).slice(5)} 會好`) : inTeam ? h("span", { class: "si-st good" }, "隊伍中") : null);
+}
+
+// ---------- 地下收藏庫的隊伍規則（翊文 11-08：要像設定頁的「怎麼玩」壹樣，粗體和顏色標重點） ----------
+// E：金色重點；B：紅色（不利、扣理智）；G：綠色（有利、回理智）
+export function teamRules() {
+  const E = t => h("b", { class: "em" }, t), B = t => h("b", { class: "em bad" }, t), G = t => h("b", { class: "em good" }, t);
+  const R = (ic, title, ...parts) => h("li", null, h("span", { class: "rl-t" }, icon(ic), " ", title), h("p", null, ...parts));
+  return h("div", { class: "legend placard" }, h("div", { class: "pl-title" }, "隊伍規則"),
+    h("ul", { class: "rl-list" },
+      R("sparkle", "強度", "普通 ", E("1"), "、稀有 ", E("2"), "、超稀有 ", E("3"), "、傳說級 ", E("5"), "、不可名狀 ", E("6"), "，完美作品 ", E("+1"), "。"),
+      R("heart", "心情相剋", "開心剋傷心、傷心剋生氣、生氣剋開心：", G("剋到 ×2"), "，", B("被剋 −1"), "。俄國8+9 ", G("不被剋"), "。顏色跟房間壹樣 ", G("+1"), "。"),
+      R("hat", "帽子", "棒球帽", G("擋壹次"), "、皇冠", G("重擲壹次"), "、巫師帽 ", G("+2"), "、觸手帽 ", G("+5"), "（", B("扣理智"), "）、紳士帽", G("技能 +10"), "、毛帽", G("回理智"), "。"),
+      R("hand", "姿勢", "比讚", G("全隊每隻 +1"), "、躺平", G("回理智"), "、斯拉夫蹲", G("不會被推倒"), "（擋壹次受傷）、倒立 ", G("+1"), "。毛帽、躺平：每壹層第壹次走時，各回 ", G("1D3 理智"), "。")));
+}
+
+// 融合室：今天還能融合幾次（翊文 11-08：每天的上限要寫出來）
+export function fusionPill() {
+  if (isFree(P)) return null;
+  const left = fusionLeft(P), lim = fusionLimit(P);
+  const sub = `壹天 ${lim} 次。` + (hasUp(P, "forge2") ? "" : "館長室買「第二座融合爐」，每天多 3 次。");
+  return limitPill(left ? `今天還能融合 ${left} 次` : "今天的融合次數用完了，明天再來", left, sub);
+}

@@ -1,0 +1,201 @@
+/* ================================================================
+   館內公佈欄、信箱、選單（翊文 11-08）
+   - 「館內公佈欄應該也要是個 TAB」：導覽列的「公佈欄」頁籤，沒讀的重要公告蓋火漆印
+   - 「可以做漢堡菜單，把設定和公告相關的放進去」：右上角「選單」
+   - 「信箱，公佈欄應該可以在整個畫面最上面覆蓋，像真的公告欄一樣」：木框＋軟木板／綠絨布，蓋住整個畫面
+   這個檔放在 theme3.css 後面載入（main.js）。
+   ================================================================ */
+
+/* ---------- 導覽列：公佈欄頁籤 ---------- */
+.nav-board .nb-seal, .nav-board .nb-dot { display: none; position: absolute; pointer-events: none; }
+.nav-board.has-seal .nb-seal { display: block; top: -4px; left: 10px; width: 14px; height: 14px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #E58074, #A3261E 58%, #5E120E); box-shadow: 0 0 0 1.5px rgba(238,215,156,.85), 0 1px 3px rgba(0,0,0,.6);
+  animation: nbSealPulse 2.4s ease-in-out infinite; }
+.nav-board.has-dot .nb-dot { display: block; top: -2px; left: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 6px rgba(238,215,156,.85); }
+.nav-board.has-seal, .nav-board.has-dot { color: var(--gold-hi); }
+.nav-board.has-seal .ic, .nav-board.has-dot .ic { opacity: 1; color: var(--gold); }
+@keyframes nbSealPulse { 50% { box-shadow: 0 0 0 1.5px rgba(238,215,156,.85), 0 0 10px 3px rgba(229,128,116,.55); } }
+@media (max-width: 1240px) and (min-width: 761px) {
+  .nav-board.has-seal .nb-seal { left: calc(50% + 3px); top: -3px; }
+  .nav-board.has-dot .nb-dot { left: calc(50% + 6px); top: -1px; }
+}
+
+/* ---------- 選單按鈕（每個寬度都有） ---------- */
+.menu-btn { display: inline-flex; align-items: center; gap: 6px; width: auto; height: 40px; padding: 0 14px 0 11px; border-radius: 20px; position: relative;
+  border: 1px solid rgba(200,162,90,.5); color: var(--on-wall); }
+.menu-btn .ic, .menu-btn .ic svg { width: 19px; height: 19px; }
+.menu-btn .menu-t { font-family: var(--serif); font-size: .875rem; letter-spacing: .14em; white-space: nowrap; }
+.menu-btn.on { background: rgba(200,162,90,.22); color: var(--gold-hi); border-color: var(--gold); }
+.menu-n { display: none; position: absolute; top: -7px; right: -7px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px;
+  background: linear-gradient(180deg, #F0D995, #C8A25A); color: #2A1A0C; font: 700 .6875rem/19px system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 1.5px #24160F, 0 1px 3px rgba(0,0,0,.5); }
+.menu-btn.has-n .menu-n { display: block; }
+.menu-btn.has-seal .menu-n { background: radial-gradient(circle at 36% 30%, #E58074, #A3261E 58%, #5E120E); color: #FBE9D6; }
+.menu-btn .menu-fresh { top: auto; bottom: -7px; right: -6px; left: auto; } /* 右上角是數字，「新」放右下角（放左邊會壓到聲音的按鈕） */
+@media (min-width: 761px) { .menu-btn .menu-fresh { display: none !important; } } /* 電腦上房間的「新」已經在頁籤上 */
+
+/* ---------- 選單裡面 ---------- */
+.nav-drawer { left: auto; right: 14px; top: calc(var(--nav-h) - 2px); width: min(340px, calc(100vw - 28px)); display: block; padding: 8px 10px 12px;
+  border: 1px solid var(--gold-lo); border-radius: 6px; max-height: calc(100vh - var(--nav-h) - 16px); overflow-y: auto;
+  box-shadow: 0 0 0 1px rgba(238,215,156,.16), 0 18px 40px rgba(0,0,0,.55); }
+.md-h { margin: 10px 8px 4px; font-size: .75rem; letter-spacing: .24em; color: var(--gold); font-family: var(--serif); }
+.md-group { display: flex; flex-direction: column; }
+.md-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 0 10px; border: 0; border-bottom: 1px solid rgba(200,162,90,.2); border-radius: 4px;
+  background: none; color: var(--on-wall); font: inherit; font-family: var(--serif); letter-spacing: .06em; text-align: left; text-decoration: none; cursor: pointer; transition: background var(--t), color var(--t); }
+.md-item:hover { background: rgba(200,162,90,.14); color: var(--gold-hi); }
+.md-item .ic, .md-item .ic svg { width: 19px; height: 19px; flex: 0 0 auto; }
+.md-t { flex: 1; min-width: 0; }
+.md-badge { font-size: .75rem; white-space: nowrap; }
+.md-item.has-badge .md-badge { padding: 2px 9px; border-radius: 999px; color: var(--gold-hi); background: rgba(200,162,90,.2); border: 1px solid rgba(238,215,156,.45); }
+.md-item.hot .md-badge { color: #FBE9D6; background: linear-gradient(180deg, #B83A2E, #7E1E18); border-color: #E8A090; }
+.md-rooms { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; }
+@media (min-width: 761px) { .md-rooms-h, .md-rooms { display: none; } } /* 電腦上房間在頁籤上 */
+@media (max-width: 760px) {
+  .nav-drawer { left: 0; right: 0; width: auto; top: var(--nav-h); border-radius: 0; border-left: 0; border-right: 0; max-height: calc(100vh - var(--nav-h)); }
+  .menu-btn { padding: 0 12px 0 10px; }
+}
+
+/* ================================================================
+   蓋在整個畫面上的木框
+   ================================================================ */
+body.nb-open { overflow: hidden; }
+.nb-layer { position: fixed; inset: 0; z-index: 8800; display: grid; place-items: center; padding: 18px; background: rgba(18,8,6,.74); backdrop-filter: blur(3px); animation: nbFade .25s ease both; }
+@keyframes nbFade { from { opacity: 0; } }
+.nb-frame { position: relative; display: flex; flex-direction: column; width: min(1100px, 100%); height: min(800px, calc(100vh - 36px)); height: min(800px, calc(100dvh - 36px)); padding: 0 20px 16px; border-radius: 6px;
+  background: repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 26px, rgba(0,0,0,.09) 26px 28px, rgba(255,220,170,.035) 28px 54px), linear-gradient(180deg, #5C3B22, #3B2617 55%, #2E1D12);
+  border: 1px solid #1E130B;
+  box-shadow: inset 0 0 0 1px rgba(255,220,170,.12), inset 0 0 0 6px rgba(0,0,0,.16), 0 0 0 1px rgba(200,162,90,.35), 0 30px 80px rgba(0,0,0,.6);
+  animation: nbDrop .38s cubic-bezier(.2,1.2,.4,1) both; }
+.nb-frame:focus { outline: none; }
+@keyframes nbDrop { from { transform: translateY(-16px) scale(.985); opacity: 0; } }
+body.reduce-motion .nb-layer, body.reduce-motion .nb-frame, body.reduce-motion .nav-board .nb-seal { animation: none; }
+
+/* 上面：銅牌、按鈕 */
+.nb-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 66px; padding: 10px 0 8px; }
+.nb-plaque { position: relative; display: inline-flex; align-items: center; gap: 10px; padding: 7px 24px 7px 18px; border-radius: 4px; color: #2A1A0C;
+  background: linear-gradient(180deg, #F0D995 0%, #C8A25A 48%, #A07C34 100%); box-shadow: inset 0 1px 0 rgba(255,250,225,.7), inset 0 0 0 1px rgba(110,80,32,.6), 0 3px 8px rgba(0,0,0,.45); }
+.nb-plaque::before, .nb-plaque::after { content: ""; position: absolute; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFF4D0, #8C6A2E); box-shadow: 0 0 0 1px rgba(80,55,20,.5); }
+.nb-plaque::before { left: 6px; } .nb-plaque::after { right: 7px; }
+.nb-plaque h2 { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 700; letter-spacing: .3em; text-shadow: 0 1px 0 rgba(255,240,200,.5); white-space: nowrap; }
+.nb-plaque .ic, .nb-plaque .ic svg { width: 22px; height: 22px; }
+.nb-top-r { display: flex; align-items: center; gap: 8px; }
+.nb-x { width: 44px; height: 44px; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 50%; border: 1px solid rgba(200,162,90,.55); background: rgba(0,0,0,.25); color: var(--gold-hi); cursor: pointer; transition: background var(--t); }
+.nb-x:hover { background: rgba(200,162,90,.22); }
+.nb-frame .btn.small { min-height: 38px; padding: 0 14px; font-size: .8125rem; letter-spacing: .08em; }
+
+/* 中間：軟木板（信箱是綠絨布） */
+.nb-surface { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 14px; border-radius: 3px;
+  background-color: #A87A4C;
+  background-image: radial-gradient(rgba(70,38,14,.42) 1px, rgba(0,0,0,0) 1.6px), radial-gradient(rgba(255,232,196,.22) 1px, rgba(0,0,0,0) 1.8px),
+    radial-gradient(ellipse at 28% 18%, rgba(255,225,180,.22), rgba(0,0,0,0) 60%), radial-gradient(ellipse at 80% 100%, rgba(40,20,8,.35), rgba(0,0,0,0) 60%);
+  background-size: 6px 6px, 9px 9px, 100% 100%, 100% 100%; background-position: 0 0, 3px 4px, 0 0, 0 0;
+  box-shadow: inset 0 0 0 2px rgba(200,162,90,.55), inset 0 4px 14px rgba(0,0,0,.45); }
+.nb-mail .nb-surface { background-color: #2F4A35;
+  background-image: radial-gradient(rgba(0,0,0,.2) 1px, rgba(0,0,0,0) 1.5px), radial-gradient(ellipse at 30% 8%, rgba(200,240,200,.13), rgba(0,0,0,0) 60%), radial-gradient(ellipse at 70% 100%, rgba(0,0,0,.3), rgba(0,0,0,0) 60%);
+  background-size: 4px 4px, 100% 100%, 100% 100%; }
+.nb-foot { display: flex; justify-content: center; padding-top: 10px; }
+.nb-foot:empty { display: none; }
+.nb-empty { margin: 36px 0; text-align: center; color: #FBEFD9; text-shadow: 0 1px 2px rgba(0,0,0,.65); font-family: var(--serif); letter-spacing: .08em; }
+
+/* 種類的頁籤：兩張小紙卡 */
+.nb-tabs { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; }
+.nb-tab { position: relative; min-height: 40px; padding: 0 18px; border: 1px solid #B89A66; border-radius: 3px; cursor: pointer;
+  background: linear-gradient(180deg, #F2E7CD, #E2D2AC); color: #5A4630; font: inherit; font-family: var(--serif); letter-spacing: .14em;
+  box-shadow: 0 2px 4px rgba(0,0,0,.35); transform: rotate(-.6deg); transition: transform .15s, box-shadow .15s; }
+.nb-tab:nth-child(2) { transform: rotate(.7deg); }
+.nb-tab:hover { transform: rotate(0); }
+.nb-tab.on { background: linear-gradient(180deg, #FFF8E8, #F2E6C8); color: #2A1E16; font-weight: 700; box-shadow: 0 0 0 2px var(--gold), 0 3px 8px rgba(0,0,0,.4); transform: rotate(0); }
+.nb-dot { display: inline-block; width: 8px; height: 8px; margin-left: 7px; border-radius: 50%; background: #B83A2E; vertical-align: middle; box-shadow: 0 0 0 1.5px rgba(255,240,220,.9); }
+
+.nb-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(250px, 34%) minmax(0, 1fr); gap: 20px; }
+.nb-list { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 16px 12px 10px 6px; }
+.nb-read { min-height: 0; overflow-y: auto; padding: 16px 10px 10px; }
+.nb-read.empty { display: grid; place-items: center; }
+
+/* 釘在板子上的紙條 */
+.nb-slip { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; flex: 0 0 auto; padding: 18px 16px 13px; border: 0; border-radius: 1px; cursor: pointer;
+  font: inherit; font-family: var(--serif); text-align: left; color: var(--parch-ink);
+  background: linear-gradient(180deg, #FBF5E6, #EFE3C6); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 3px 6px rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.18);
+  transform: rotate(var(--tilt, 0deg)); transition: transform .18s, box-shadow .18s; }
+.nb-slip:hover { transform: rotate(0) translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 6px 12px rgba(0,0,0,.4), 0 14px 24px rgba(0,0,0,.2); }
+.nb-slip.on { transform: rotate(0); box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgba(0,0,0,.42); }
+.nb-slip-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding-right: 22px; }
+.nb-slip-tag { padding: 1px 8px; border: 1px solid #9C7428; border-radius: 2px; color: #6E5020; font-size: .75rem; letter-spacing: .08em; }
+.nb-slip-tag.hot { border-color: #9A231C; background: #9A231C; color: #FFF3E6; }
+.nb-slip-d { font-size: .75rem; color: var(--parch-sub); }
+.nb-slip-t { font-size: 1rem; line-height: 1.45; }
+.nb-slip.unread .nb-slip-t { font-weight: 700; }
+.nb-pin { position: absolute; top: -9px; left: 50%; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #D86558, #8E1F1A 62%, #5E120E); box-shadow: 0 2px 3px rgba(0,0,0,.55); }
+.nb-pin::after { content: ""; position: absolute; left: 4px; top: 4px; width: 5px; height: 4px; border-radius: 50%; background: rgba(255,222,205,.65); }
+/* 沒讀的：蓋著紅色火漆，上面壓著「館」字 */
+.nb-wax { position: absolute; right: -9px; top: -9px; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #D25A4C, #9A231C 55%, #5E120E); box-shadow: 0 0 0 2px rgba(154,35,28,.3), 0 2px 4px rgba(0,0,0,.45);
+  color: rgba(255,224,200,.92); font: 700 .75rem/1 var(--serif); }
+.nb-wax::after { content: "館"; }
+
+/* 正在看的那一則：一大張紙，兩顆圖釘 */
+.nb-sheet { position: relative; max-width: 740px; margin: 0 auto; padding: 30px 34px 24px; border-radius: 1px;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); --accent: #9C7428; color: var(--parch-ink);
+  background: linear-gradient(180deg, #FCF7EA, #F1E6CB); box-shadow: 0 4px 10px rgba(0,0,0,.35), 0 16px 34px rgba(0,0,0,.25); }
+.nb-sheet .nb-pin.l { left: 28px; margin-left: 0; }
+.nb-sheet .nb-pin.r { left: auto; right: 28px; margin-left: 0; }
+.nb-sheet h3 { margin: 8px 0 2px; font-family: var(--serif); font-size: 1.375rem; letter-spacing: .06em; line-height: 1.4; }
+.nb-date { margin: 0 0 12px; font-size: .8125rem; color: var(--parch-sub); }
+.nb-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.nb-tag { padding: 1px 8px; border: 1px solid #9C7428; border-radius: 2px; color: #6E5020; font-size: .75rem; }
+.nb-tag.hot { border-color: #9A231C; background: #9A231C; color: #FFF3E6; }
+.nb-tag.st { border-style: dashed; }
+.nb-sec { margin: 14px 0 0; }
+.nb-sec h4 { margin: 0 0 6px; font-family: var(--serif); font-size: 1rem; letter-spacing: .1em; color: #6E5020; }
+.nb-sec p { margin: 0 0 6px; line-height: 1.8; }
+.nb-cta { display: flex; justify-content: flex-end; margin-top: 20px; }
+.nb-sheet .btn:not(.primary), .nb-env .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.35); border-color: var(--gold-lo); }
+.nb-back { margin: 0 0 16px; }
+.nb-one { min-height: 0; overflow-y: auto; padding: 16px 6px 8px; }
+.nb-frame.urgent { width: min(700px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); }
+
+/* 今天不再自動打開：釘在下面的小紙條 */
+.nb-skip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 16px; border-radius: 2px; cursor: pointer;
+  background: linear-gradient(180deg, #F7EFDD, #E9DCBC); color: var(--parch-ink); font-size: .875rem; box-shadow: 0 2px 4px rgba(0,0,0,.35); }
+.nb-skip input { width: 18px; height: 18px; margin: 0; accent-color: #9C7428; }
+
+/* ---------- 信箱：綠絨布上一封一封的信封 ---------- */
+.nb-frame.nb-mail { width: min(820px, 100%); }
+.nb-hint { margin: 0 0 12px; font-size: .875rem; line-height: 1.6; color: #E4EEDF; }
+.nb-envs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 6px 4px 10px; }
+.nb-env { position: relative; flex: 0 0 auto; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 18px 18px 16px; border-radius: 2px; overflow: hidden;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); color: var(--parch-ink);
+  background: linear-gradient(180deg, #FBF4E2, #EEDFBF); box-shadow: 0 3px 8px rgba(0,0,0,.42); }
+/* 信封的蓋子：兩條斜線 */
+.nb-env::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 30px; pointer-events: none;
+  background: linear-gradient(to bottom right, rgba(0,0,0,0) calc(50% - 1px), rgba(156,116,40,.3) 50%, rgba(0,0,0,0) calc(50% + 1px)) left / 50% 100% no-repeat,
+    linear-gradient(to bottom left, rgba(0,0,0,0) calc(50% - 1px), rgba(156,116,40,.3) 50%, rgba(0,0,0,0) calc(50% + 1px)) right / 50% 100% no-repeat; }
+.nb-env .nb-wax { position: relative; right: auto; top: auto; width: 46px; height: 46px; font-size: .9375rem; }
+.nb-env.claimed { opacity: .66; }
+.nb-env-stamp { display: grid; place-items: center; width: 50px; height: 50px; border: 2px solid #5E8F5A; border-radius: 50%; color: #4E7A44; font-size: .75rem; font-weight: 700; transform: rotate(-12deg); }
+.nb-env-body { position: relative; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.nb-env-body b { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .04em; }
+.nb-env-from, .nb-env-note { font-size: .8125rem; color: var(--parch-sub); }
+.nb-env-gift { font-size: .9375rem; font-weight: 700; color: #7A5A1E; }
+.nb-env-act { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.nb-env-act small { font-size: .75rem; color: var(--parch-sub); }
+
+/* ---------- 手機：木框鋪滿整個畫面 ---------- */
+@media (max-width: 760px) {
+  .nb-layer { padding: 0; }
+  .nb-frame, .nb-frame.urgent, .nb-frame.nb-mail { width: 100%; height: 100vh; height: 100dvh; max-height: none; border-radius: 0; padding: 0 10px 10px; }
+  .nb-top { min-height: 58px; padding: 8px 0 6px; }
+  .nb-plaque { padding: 6px 16px 6px 12px; gap: 8px; }
+  .nb-plaque h2 { font-size: 1.0625rem; letter-spacing: .18em; }
+  .nb-plaque .ic, .nb-plaque .ic svg { width: 19px; height: 19px; }
+  .nb-surface { padding: 12px 10px; }
+  .nb-body { grid-template-columns: minmax(0, 1fr); }
+  .nb-list { padding: 14px 14px 8px 8px; } /* 右邊留給火漆印 */
+  .nb-read { padding: 4px 2px 8px; }
+  .nb-sheet { padding: 26px 18px 18px; }
+  .nb-sheet h3 { font-size: 1.1875rem; }
+  .nb-env { grid-template-columns: 44px minmax(0, 1fr); gap: 10px 12px; padding: 16px 14px 14px; }
+  .nb-env .nb-wax { width: 40px; height: 40px; }
+  .nb-env-stamp { width: 44px; height: 44px; }
+  .nb-env-act { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+}

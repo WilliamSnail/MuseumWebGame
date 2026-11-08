@@ -1,0 +1,72 @@
+/* ================================================================
+   多位參觀者（翊文 11-08：「玩家可以選擇和命名多個參觀者」，決定 0018）
+   - 標題畫面的三個位子（ui_screens1.js 的 visitorSlotsBox）：羊皮紙卡片，上次玩的那位金框
+   - 取名字、改名字的小框（ui_screens3.js 的 askVisitorName）、挑候選人時的「取名字」那一格
+   - 歷任參觀者牆上「也在館裡」的牌子
+   這個檔放在 net.css 後面載入（main.js）。
+   ================================================================ */
+
+/* ---------- 標題：三個位子 ---------- */
+.vs-wrap { width: min(920px, 100%); display: flex; flex-direction: column; gap: 10px; animation: enter .6s .1s var(--ease) both; }
+body.reduce-motion .vs-wrap { animation: none; }
+.vs-head { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 12px; color: var(--on-wall-sub); font-size: .8125rem; line-height: 1.6; }
+.vs-head b { font-family: var(--serif); font-size: 1rem; letter-spacing: .24em; color: var(--gold-hi); }
+.vs-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.vs-card { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 16px 16px 12px; text-align: left; border-radius: 2px;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); color: var(--parch-ink);
+  background: linear-gradient(180deg, #F7EFDD, #EFE3C8); border: 1px solid var(--gold-lo);
+  box-shadow: inset 0 0 0 3px #F7EFDD, inset 0 0 0 4px rgba(200,162,90,.55), 0 10px 26px rgba(0,0,0,.35); }
+.vs-card.cur { border-color: var(--gold-deep); box-shadow: inset 0 0 0 3px #F7EFDD, inset 0 0 0 4px rgba(200,162,90,.9), 0 0 0 2px var(--gold-hi), 0 10px 26px rgba(0,0,0,.4), 0 0 22px rgba(238,215,156,.35); }
+.vs-last { position: absolute; top: -10px; left: 14px; padding: 1px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; color: #2A1A0C;
+  background: linear-gradient(180deg, #EED79C, #C9A55A); border: 1px solid var(--gold-deep); }
+.vs-top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.vs-badge { flex: 0 0 auto; width: 48px; height: 48px; display: grid; place-items: center; }
+.vs-badge svg { width: 100%; height: 100%; }
+.vs-badge.empty { width: 40px; height: 40px; padding: 8px; border-radius: 50%; border: 1px dashed rgba(200,162,90,.7); color: var(--gold); }
+.vs-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vs-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--serif); font-size: 1.125rem; letter-spacing: .06em; color: #3A2410; }
+.vs-no { font-size: .8125rem; line-height: 1.5; color: var(--parch-sub); }
+.vs-stats { display: flex; gap: 8px; }
+.vs-stat { flex: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 6px 10px; border-radius: 4px; background: rgba(200,162,90,.14); border: 1px solid rgba(200,162,90,.35); }
+.vs-stat small { color: var(--parch-sub); font-size: .75rem; letter-spacing: .1em; }
+.vs-stat b { font-size: 1rem; color: #3A2410; font-variant-numeric: tabular-nums; }
+.vs-warn { margin: 0; padding: 4px 10px; border-radius: 4px; font-size: .8125rem; color: #6E1E18; background: rgba(160,40,30,.1); border: 1px solid rgba(160,40,30,.3); }
+.vs-card.dark .vs-badge { filter: grayscale(.7) brightness(.7); }
+.vs-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: auto; }
+.vs-acts .btn { flex: 1 1 auto; min-height: 44px; }
+.vs-card .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.35); border-color: var(--gold-lo); }
+.vs-card .btn:not(.primary):hover { color: #1E1208; background: rgba(255,246,220,.8); border-color: #8C6A2E; }
+.vs-card .t-link { color: #6E5020; }
+.vs-card .t-link:hover { color: #3A2410; }
+/* 空位子：牆上的虛線框，不是紙 */
+.vs-card.empty { justify-content: space-between; color: var(--on-wall); background: rgba(20,10,8,.32); border: 1px dashed rgba(200,162,90,.6); box-shadow: none; }
+.vs-card.empty .vs-name { color: var(--gold-hi); }
+.vs-card.empty .vs-no { color: var(--on-wall-sub); white-space: normal; }
+.vs-card.empty .btn { color: var(--on-wall); background: rgba(255,240,210,.06); border-color: var(--gold); }
+.vs-card.empty .btn:hover { color: var(--gold-hi); background: rgba(200,162,90,.18); }
+.vs-card.empty .btn .ic, .vs-card.empty .btn .ic svg { width: 16px; height: 16px; vertical-align: -2px; }
+/* 自由模式：三個位子下面，小一點 */
+.t-actions.vs-free { margin-top: 4px; }
+.t-actions.vs-free .btn { min-width: 0; min-height: 44px; font-size: .9375rem; }
+
+/* ---------- 取名字、改名字 ---------- */
+.mini-card.vs-ask { width: min(440px, calc(100vw - 32px)); }
+.vs-form { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.vs-input { width: 100%; box-sizing: border-box; }
+.vs-err { margin: 0; color: #9A231C; font-size: .875rem; }
+.vs-err:empty { display: none; }
+/* 挑候選人時的「取名字」 */
+.cand-name { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 2px; padding: 10px 12px; border-radius: 6px; background: rgba(255,255,255,.35); border: 1px solid rgba(200,162,90,.45); }
+.cand-name b { font-family: var(--serif); color: #6E5020; letter-spacing: .1em; }
+.cand-name small { color: var(--parch-sub); font-size: .8125rem; }
+.cand-name .vs-input { max-width: 340px; min-height: 42px; }
+
+/* ---------- 歷任參觀者牆：別的位子上的「也在館裡」 ---------- */
+.vw-now.here { background: linear-gradient(180deg, #E8DAB9, #C9B08E); }
+
+/* ---------- 手機：卡片變一欄 ---------- */
+@media (max-width: 760px) {
+  .vs-slots { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .vs-card { padding: 14px 14px 10px; }
+  .vs-head { flex-direction: column; align-items: center; text-align: center; }
+}

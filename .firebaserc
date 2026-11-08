@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-pepe4",
+    "prod": "pepe-museum"
+  }
+}

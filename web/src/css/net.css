@@ -1,0 +1,95 @@
+/* ================================================================
+   多人版 M1（翊文 11-08）：標題的登入、館友、我的帳號、大廳的「館友在線」
+   - 「首頁可以改成登入」
+   - 「大廳要有一個地方顯示目前上線的館友名稱和狀態」
+   木框、軟木板、紙在 board.css；這個檔放在 board.css 後面載入（main.js）。
+   ================================================================ */
+
+/* ---------- 標題：登入 ---------- */
+.t-login-area { display: flex; flex-direction: column; align-items: center; gap: 12px; min-height: 110px; animation: enter .8s 1.4s var(--ease) both; }
+.t-login-area .t-actions { animation-delay: .1s; } /* 登入之後才出現：不要再等 1.6 秒 */
+body.reduce-motion .t-login-area, body.reduce-motion .t-login-area .t-actions { animation: none; }
+.t-login { width: min(440px, 100%); display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 18px 22px 14px; text-align: left; border-radius: 2px;
+  --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); color: var(--parch-ink);
+  background: linear-gradient(180deg, #F7EFDD, #EFE3C8); border: 1px solid var(--gold-lo);
+  box-shadow: inset 0 0 0 3px #F7EFDD, inset 0 0 0 4px rgba(200,162,90,.55), 0 10px 26px rgba(0,0,0,.35); }
+.t-login-h { margin: 0; font-family: var(--serif); font-size: 1rem; letter-spacing: .24em; color: #6E5020; }
+.t-login-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.t-input { flex: 1; min-width: 0; min-height: 46px; padding: 0 14px; border: 1px solid #B89A66; border-radius: 3px; background: #FFFBF0; color: var(--parch-ink); font: inherit; font-size: 1.05rem; }
+.t-input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.t-login .btn { min-height: 46px; }
+.t-login .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.35); border-color: var(--gold-lo); }
+.t-net-note { margin: 0; font-size: .8125rem; line-height: 1.6; color: var(--on-wall-sub); }
+.t-login .t-net-note { color: var(--parch-sub); }
+.t-login-err { margin: 0; color: #9A231C; font-size: .875rem; }
+.t-login-err:empty { display: none; }
+.t-hello { margin: 0; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .12em; color: var(--gold-hi); }
+.t-hello b { color: #FFF3D6; }
+.t-link { padding: 6px 8px; border: 0; background: none; color: var(--on-wall-sub); font: inherit; font-size: .8125rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.t-link:hover { color: var(--gold-hi); }
+
+/* ---------- 燈號（館友、大廳共用） ---------- */
+.nf-dot { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: #8A8A85; box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+.online .nf-dot { background: #4FAE5A; box-shadow: 0 0 0 2px rgba(0,0,0,.2), 0 0 8px rgba(79,174,90,.85); }
+.away .nf-dot { background: #E0B23E; box-shadow: 0 0 0 2px rgba(0,0,0,.2); }
+
+/* ---------- 館友：深色木牆上的銅名牌 ---------- */
+.nb-frame.nb-friends { width: min(780px, 100%); }
+.nb-friends .nb-surface { background-color: #3A2415;
+  background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0) 0 118px, rgba(0,0,0,.22) 118px 121px), radial-gradient(ellipse at 30% 0%, rgba(255,220,170,.12), rgba(0,0,0,0) 60%);
+  background-size: auto, 100% 100%; }
+.nf-count { margin-right: 4px; color: var(--gold-hi); font-size: .875rem; letter-spacing: .08em; white-space: nowrap; }
+.nf-list { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-content: start; gap: 14px; padding: 6px 4px 10px; }
+.nf-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 3px; color: #2A1A0C;
+  background: linear-gradient(180deg, #F0D995 0%, #C8A25A 52%, #A98838 100%); box-shadow: inset 0 1px 0 rgba(255,250,225,.65), inset 0 0 0 1px rgba(110,80,32,.55), 0 3px 8px rgba(0,0,0,.45); }
+.nf-card.offline { background: linear-gradient(180deg, #CFC3A6, #A99A7A); color: #3E3426; }
+.nf-card.me { box-shadow: inset 0 1px 0 rgba(255,250,225,.65), 0 0 0 2px #FFF3D6, 0 3px 8px rgba(0,0,0,.45); }
+.nf-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nf-nick { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .04em; }
+.nf-nick small { margin-left: 4px; font-size: .75rem; font-weight: 400; }
+.nf-where { font-size: .8125rem; color: #5A4630; }
+.nf-hint { margin: 12px 0 0; }
+.nf-card { flex-wrap: wrap; }
+.nf-acts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+.nf-acts .btn { color: #2A1A0C; background: rgba(255,250,230,.55); border-color: rgba(110,80,32,.6); }
+.nf-acts .btn:hover { background: rgba(255,250,230,.85); color: #1E1208; }
+.nf-off { margin: 0 0 10px; color: #F3D9A4; }
+.nf-list.stale { opacity: .55; filter: grayscale(.5); }
+
+/* ---------- 我的帳號：一張釘在板子上的紙 ---------- */
+.nb-frame.nb-account { width: min(580px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); }
+.nb-account .nb-surface { flex: 0 1 auto; overflow-y: auto; padding-top: 22px; }
+.na-sheet { width: 100%; max-width: none; }
+.na-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px dashed var(--parch-line); }
+.na-l { color: #6E5020; font-family: var(--serif); font-size: .9375rem; letter-spacing: .1em; }
+.na-nick { display: flex; gap: 8px; }
+.na-input { min-height: 40px; font-size: 1rem; }
+.na-check { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; cursor: pointer; }
+.na-check input { width: 18px; height: 18px; margin: 0; accent-color: #9C7428; }
+.na-err { margin: 6px 0 0; color: #9A231C; font-size: .875rem; }
+.na-err:empty { display: none; }
+
+/* ---------- 大廳：館友在線 ---------- */
+.lobby-friends { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 18px; padding: 10px 14px; border-radius: 12px;
+  background: rgba(20,10,8,.38); border: 1px solid rgba(200,162,90,.45); animation: enter .5s var(--ease, ease) both; }
+body.reduce-motion .lobby-friends { animation: none; }
+.lf-tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--serif); font-size: .8125rem; letter-spacing: .14em; color: var(--gold); white-space: nowrap; }
+.lf-tag .ic, .lf-tag .ic svg { width: 17px; height: 17px; }
+.lf-list { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.lf-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; max-width: 100%; padding: 0 13px 0 11px; border: 1px solid rgba(200,162,90,.45); border-radius: 999px;
+  background: rgba(255,240,210,.06); color: var(--on-wall); font: inherit; cursor: pointer; transition: border-color var(--t), background var(--t); }
+.lf-chip:hover { border-color: var(--gold-hi); background: rgba(200,162,90,.16); }
+.lf-chip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--serif); letter-spacing: .04em; }
+.lf-chip small { white-space: nowrap; font-size: .75rem; color: var(--on-wall-sub); }
+.lf-chip .nf-dot { width: 9px; height: 9px; }
+.lf-none, .lf-more { flex: 1; color: var(--on-wall-sub); font-size: .875rem; }
+.lf-more { flex: 0 0 auto; align-self: center; }
+.lf-all { margin-left: auto; }
+
+@media (max-width: 760px) {
+  .t-login { padding: 16px 16px 12px; }
+  .na-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .lobby-friends { padding: 8px 10px; gap: 8px 10px; }
+  .lf-list { flex-basis: 100%; order: 3; }
+  .lf-none { flex-basis: 100%; order: 3; }
+}

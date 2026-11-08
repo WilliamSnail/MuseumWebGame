@@ -1,0 +1,39 @@
+rules_version = '2';
+// Firestore 的規則（docs/Firebase做法.md 第二節）。改這個檔要翊文核准（CODEOWNERS）。
+// 原則：
+//   - 不在館友名單（members/{uid}）上的人，什麼都讀不到、寫不了。館友只有 Functions 的 join 能建（檢查邀請名單）。
+//   - 存檔只有自己讀寫；rev 一定要加一（兩個分頁同時存，後到的會失敗，畫面就重新讀）。
+//   - 伺服器的信、邀請名單：只有 Functions（Admin SDK 不受這些規則限制）。
+//   - 沒寫到的路徑一律不准。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isMember() { return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid)); }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    // 暱稱：1–12 個字（看不見的字由畫面和 Functions 擋）
+    function nickOk(n) { return n is string && n.size() >= 1 && n.size() <= 12; }
+    function saveOk(d) { return d.data is string && d.data.size() < 1000000 && d.rev is int && d.updatedAt is timestamp; }
+
+    match /members/{uid} {
+      allow read: if isMember();
+      allow update: if isMember() && isMe(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nick', 'invisible'])
+        && nickOk(request.resource.data.nick)
+        && request.resource.data.invisible is bool;
+    }
+
+    match /saves/{uid} {
+      allow read: if isMember() && isMe(uid);
+      allow create: if isMember() && isMe(uid) && saveOk(request.resource.data) && request.resource.data.rev == 1;
+      allow update: if isMember() && isMe(uid) && saveOk(request.resource.data) && request.resource.data.rev == resource.data.rev + 1;
+    }
+
+    match /invites/{email} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

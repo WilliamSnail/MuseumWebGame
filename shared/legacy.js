@@ -1,0 +1,210 @@
+// ================================================================
+//  參觀者一位接一位：roguelike 的繼承
+//  翊文 11-08：「現在理智歸零以後，下一個探險者可以繼承一些東西……就像Rouge like那樣，每個帳戶是自己的進度，一個探險者後可以下一個」
+//  主線替翊文挑了規劃.md 第四節的 A、C、D（docs/決定/0016-參觀者繼承做ACD.md）：
+//    A. 前任的遺物：換人時，前一位留一樣東西給下一位（一件收藏放進館長室的遺物櫃，或最拿手的技能 +10）。
+//    C. 挑下一位：從 3 位候選人挑一位，每位是「職業＋一個小優點＋一個小缺點」。
+//    D. 歷任參觀者牆：換人時把這一位的紀錄寫進 P.history，館長室一位一張卡。
+//  純函式：只改傳進來的 P，亂數用 RNG。
+//  數值在 config.js（LEGACY、PERKS、FLAWS），文字在 content3.js（TRAIT_TEXT、LEGACY_TEXT）。
+//
+//  存在 P 裡的（newProfile 給預設；舊存檔由 fixLegacy 補）：
+//    P.perk、P.flaw  這一位的小優點、小缺點（id）。第一位參觀者、自由模式是 null。
+//    P.cands         換人之後還沒挑的候選人（挑好就變 null）。存在存檔裡：重新整理也是同樣 3 位，不能重抽。
+//    P.legacy        前一位留給這一位的東西：{ from, type: "relic", kind, key, mood } 或 { from, type: "skill", skill, plus }；沒有是 null。
+//    P.relics        遺物櫃：歷任留下的收藏（新的在前面），整間博物館共用，換人也留著。
+//    P.visit         這一位自己的統計：{ from（來的那天）, sec0, made0, deepest（地下走到第幾層）, understood（看懂了哪些）, where（理智在哪裡用完）,
+//                    made（這一位做了幾隻）, sec（這一位玩了幾秒） }。made、sec 是多位參觀者（11-08）加的：stats.made、activeSec 是整間博物館的，三位輪流玩，相減會算到別人的
+//  效果接在原本的規則裡（找 traitSum）：logic.js 的 makePillow、deliver、understandCheck；
+//  logic3.js 的 assignJob、skillGrowth、fusionPrice、teamPower、cellarApply、injureDaysOf。
+// ================================================================
+import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
+import { JOBS, TRAIT_TEXT } from "./content3.js";
+import { RNG, asList, clampN, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
+import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
+
+// ---------- 小優點、小缺點 ----------
+export const traitById = id => (id && (PERKS.find(t => t.id === id) || FLAWS.find(t => t.id === id))) || null;
+export const traitName = id => (TRAIT_TEXT[id] || {}).name || id;
+// 這一位身上的優缺點（自由模式沒有）
+export function traitsOf(P) { return P && !isFree(P) ? [P.perk, P.flaw].map(traitById).filter(Boolean) : []; }
+// 優缺點在某一個欄位加起來是多少，例如 traitSum(P, "fusion") ＝ 融合多花（＋）或少花（−）幾靈感
+export function traitSum(P, field) { return traitsOf(P).reduce((n, t) => n + (typeof t[field] === "number" ? t[field] : 0), 0); }
+// 影響到這個欄位的那幾個：[{ id, name, v }]（畫面寫「力氣大 +1」用）
+export function traitHits(P, field) { return traitsOf(P).filter(t => typeof t[field] === "number" && t[field]).map(t => ({ id: t.id, name: traitName(t.id), v: t[field] })); }
+// 「力氣大 +1」「沒力氣 −1」
+export const traitTag = hit => `${hit.name} ${hit.v > 0 ? "+" : "−"}${Math.abs(hit.v)}`;
+// 說明文字：TRAIT_TEXT 裡的 {欄位名} 換成 config.js 的數字（取絕對值，正負寫在字裡）；{from}、{to} 是原本和改了之後
+const BASE_OF = { fusion: () => NUM.fusionCost, injure: () => NUM.injureDays, sanity: () => NUM.startSanity };
+export function traitDesc(id) {
+  const t = traitById(id), tx = TRAIT_TEXT[id];
+  if (!t || !tx) return "";
+  let s = tx.desc;
+  Object.keys(t).forEach(k => { if (typeof t[k] === "number" || typeof t[k] === "string") s = s.split("{" + k + "}").join(String(typeof t[k] === "number" ? Math.abs(t[k]) : t[k])); });
+  const f = Object.keys(BASE_OF).find(k => typeof t[k] === "number");
+  if (f) { const b = BASE_OF[f](); s = s.split("{from}").join(String(b)).split("{to}").join(String(Math.max(f === "injure" ? 1 : 0, b + t[f]))); }
+  return s;
+}
+// 兩個優缺點有沒有同一類（同一類的不會配在同一位身上，例如「精打細算」不會配「坐不住」）
+export const traitsClash = (a, b) => !!(a && b) && asList(a.tag).some(x => asList(b.tag).includes(x));
+
+// 地下收藏庫扣理智時，「怕黑」多扣幾點（有扣才多扣）
+export function cellarDarkLoss(P, loss) { return loss > 0 ? Math.max(0, traitSum(P, "cellarSan")) : 0; }
+
+// ---------- 這一位自己的統計（D：歷任參觀者牆要用） ----------
+export function newVisit(P) {
+  return { from: todayStr(), sec0: P.activeSec || 0, made0: (P.stats && P.stats.made) || 0, deepest: 0, understood: {}, where: null, made: 0, sec: 0 };
+}
+// 最拿手的技能 [名字, 值]：值最高的；一樣高就選職業的拿手技能，再照 SKILLS 的順序
+export function bestSkill(P) {
+  if (!P || !P.skills) return null;
+  const main = P.job ? jobSkill(P.job) : null;
+  let best = null;
+  SKILLS.forEach(s => {
+    const v = P.skills[s];
+    if (typeof v !== "number") return;
+    if (!best || v > best[1] || (v === best[1] && s === main)) best = [s, v];
+  });
+  return best;
+}
+// 寫進 P.history 的一筆（nextVisitor 用；不改 P）。endedBy ＝怎麼結束的（現在只有 "russia8"）；null ＝還在館裡（牆上「現在」那張）
+export function visitorRecord(P, endedBy) {
+  const v = P.visit || {};
+  const made = (P.stats && P.stats.made) || 0;
+  const lostIn = /^cellar:(\d)/.exec(String(v.where || "")); // 在地下第幾層用完理智，至少走到那一層
+  return {
+    n: P.visitor, job: P.job || null, made, endedBy, d: todayStr(), // 第 3 版就有的欄位（made 是整間博物館累計的）
+    // 第 4 版（11-08）
+    perk: P.perk || null, flaw: P.flaw || null,
+    madeThis: typeof v.made === "number" ? v.made : typeof v.made0 === "number" ? Math.max(0, made - v.made0) : null,
+    deepest: Math.max(v.deepest || 0, lostIn ? +lostIn[1] : 0),
+    understood: Object.keys(v.understood || {}).length,
+    where: v.where || null,
+    from: v.from || null,
+    mins: typeof v.sec === "number" ? Math.round(v.sec / 60) : typeof v.sec0 === "number" ? Math.max(0, Math.round(((P.activeSec || 0) - v.sec0) / 60)) : null,
+    myth: P.myth || 0,
+    best: bestSkill(P),
+    quirks: asList(P.quirks).map(q => ({ type: q.type, cat: q.cat, opt: q.opt || null })),
+    got: P.legacy ? Object.assign({}, P.legacy) : null,
+    left: null,
+    name: P.vname || null, // 多位參觀者（11-08）：玩家取的名字；以前的紀錄沒有
+  };
+}
+// 牆上「做了幾隻」：新的紀錄有 madeThis；舊的紀錄只有累計的 made，跟前一位（n − 1）相減
+export function visitorMade(list, i) {
+  const x = list[i];
+  if (!x) return null;
+  if (typeof x.madeThis === "number") return x.madeThis;
+  if (typeof x.made !== "number") return null;
+  const prev = list[i + 1];
+  if (prev) return prev.n === x.n - 1 && typeof prev.made === "number" ? Math.max(0, x.made - prev.made) : null;
+  return x.n === 1 ? x.made : null;
+}
+
+// ---------- A. 前任的遺物 ----------
+const ownsAnything = P => [P.pepes, P.failed, P.pillows, P.repaired].some(o => o && Object.keys(o).length > 0);
+// 換人前可以留什麼：{ relic: { ok, mood }, skill: { ok, skill, value, plus } }
+export function legacyOptions(P) {
+  const best = bestSkill(P);
+  return {
+    relic: { ok: !isFree(P) && ownsAnything(P), mood: LEGACY.relicMood },
+    skill: best && !isFree(P) ? { ok: true, skill: best[0], value: best[1], plus: LEGACY.skillPlus } : { ok: false },
+  };
+}
+// 留下東西（nextVisitor 用）。leave：{ type: "relic", item: { kind, key } }、{ type: "skill" }，或 null（什麼都不留）。
+// 遺物是快照：放進 P.relics 之後，收藏怎麼變，遺物櫃裡的都還在。收藏本身不會少。
+// entry（這一位的紀錄）的 left 記這一位留了什麼；回傳留給下一位的 P.legacy（沒有就 null）。
+export function leaveLegacy(P, entry, leave) {
+  if (!leave || isFree(P)) return null;
+  if (leave.type === "relic") {
+    const it = leave.item ? hallItem(P, leave.item) : null;
+    if (!it) return null;
+    const e = it.kind === "pepe" ? P.pepes[it.key] : null;
+    const relic = { n: P.visitor, kind: it.kind, key: it.key, perfect: !!it.perfect, title: (e && e.title) || null, d: todayStr() };
+    P.relics = [relic].concat(asList(P.relics)).slice(0, LEGACY.relicsMax);
+    if (entry) entry.left = { type: "relic", kind: relic.kind, key: relic.key, perfect: relic.perfect, title: relic.title };
+    return { from: P.visitor, type: "relic", kind: relic.kind, key: relic.key, mood: LEGACY.relicMood };
+  }
+  if (leave.type === "skill") {
+    const best = bestSkill(P);
+    if (!best) return null;
+    if (entry) entry.left = { type: "skill", skill: best[0], value: best[1], plus: LEGACY.skillPlus };
+    return { from: P.visitor, type: "skill", skill: best[0], plus: LEGACY.skillPlus };
+  }
+  return null;
+}
+
+// ---------- C. 挑下一位 ----------
+// 換人時的候選人：職業不重複；每位一個小優點、一個小缺點（同一類的不配在一起；三位之間盡量不重複）；技能先擲好，卡片上就看得到
+export function rollCandidates(P) {
+  if (!P || isFree(P)) return null;
+  const jobs = (typeof JOBS !== "undefined" && JOBS.length ? JOBS.map(j => j.id) : Object.keys(JOB_SKILL)).slice();
+  for (let i = jobs.length - 1; i > 0; i--) { const j = Math.floor(RNG() * (i + 1)); const t = jobs[i]; jobs[i] = jobs[j]; jobs[j] = t; } // 洗牌
+  const usedPerk = new Set(), usedFlaw = new Set();
+  return jobs.slice(0, Math.max(1, LEGACY.candidates)).map(job => {
+    const okJob = t => !asList(t.notJob).includes(job);
+    const perks = PERKS.filter(okJob);
+    const perk = pickOne(perks.filter(t => !usedPerk.has(t.id))) || pickOne(perks) || null;
+    const flaws = FLAWS.filter(t => okJob(t) && !traitsClash(t, perk));
+    const flaw = pickOne(flaws.filter(t => !usedFlaw.has(t.id))) || pickOne(flaws) || null;
+    if (perk) usedPerk.add(perk.id);
+    if (flaw) usedFlaw.add(flaw.id);
+    return { job, perk: perk ? perk.id : null, flaw: flaw ? flaw.id : null, skills: rollSkills(job) };
+  });
+}
+// 候選人進館之後的樣子（卡片上先算給玩家看；挑了就照這個套用，兩邊一定一樣）：
+//   skills ＝加減之後的技能；delta ＝ { 技能: 加減多少 }；mood、sanity ＝開場心情、理智要加減多少；why ＝每一項是誰給的
+export function candidateStats(P, c) {
+  const main = jobSkill(c.job), skills = Object.assign({}, c.skills), delta = {}, why = [];
+  const add = (s, v) => { if (!v || typeof skills[s] !== "number") return; const before = skills[s]; skills[s] = clampN(before + v, 1, 99); delta[s] = (delta[s] || 0) + skills[s] - before; };
+  [traitById(c.perk), traitById(c.flaw)].filter(Boolean).forEach(t => {
+    if (t.others) { SKILLS.filter(s => s !== main).forEach(s => add(s, t.others)); why.push({ id: t.id, what: "others", v: t.others }); }
+    if (t.skillName) { add(t.skillName, t.skillAdj); why.push({ id: t.id, what: "skill", skill: t.skillName, v: t.skillAdj }); }
+  });
+  const L = P && P.legacy;
+  if (L && L.type === "skill") { add(L.skill, L.plus); why.push({ id: "legacy", what: "skill", skill: L.skill, v: L.plus }); }
+  let mood = 0, sanity = 0;
+  [traitById(c.perk), traitById(c.flaw)].filter(Boolean).forEach(t => {
+    if (t.mood) { mood += t.mood; why.push({ id: t.id, what: "mood", v: t.mood }); }
+    if (t.sanity) { sanity += t.sanity; why.push({ id: t.id, what: "sanity", v: t.sanity }); }
+  });
+  if (L && L.type === "relic" && L.mood) { mood += L.mood; why.push({ id: "legacy", what: "mood", v: L.mood }); }
+  return { main, skills, delta, mood, sanity, why };
+}
+// 挑第 i 位：職業、技能、優缺點、前任留下的東西一次套用。回傳畫面要寫的東西；沒有這位就回傳 null
+export function chooseCandidate(P, i) {
+  const c = asList(P.cands)[i];
+  if (!c) return null;
+  const st = candidateStats(P, c);
+  const moodFrom = P.mood;
+  const r = assignJob(P, c.job, st.skills); // 賭徒：心情再擲一次取高（在加減之前）
+  P.perk = c.perk || null; P.flaw = c.flaw || null;
+  P.mood = clampN(P.mood + st.mood, 0, 99);
+  if (st.sanity) P.sanity = clampN(P.sanity + st.sanity, 1, maxSan(P));
+  if (P.day && !P.day.lost) P.day.startSan = P.sanity; // 今天的理智從加減之後算（「失眠」開場 45，怪癖的 1/5 也照 45 算；11-08）
+  P.cands = null;
+  return { job: c.job, perk: P.perk, flaw: P.flaw, main: r.main, value: P.skills[r.main], moodAgain: r.moodAgain || null, moodFrom, mood: P.mood, moodAdj: st.mood, sanity: P.sanity, sanityAdj: st.sanity, delta: st.delta, why: st.why };
+}
+
+// ---------- 舊存檔補欄位（fixProfile 最後叫） ----------
+// hadVisit ＝存檔裡本來就有 P.visit。沒有的話這一位是更新前就來的：起點用「上一位離開時累計做了幾隻」，來的那天、玩了多久不知道
+export function fixLegacy(P, hadVisit) {
+  if (!hadVisit) {
+    const h = asList(P.history)[0];
+    P.visit = { from: null, sec0: null, made0: h && typeof h.made === "number" ? h.made : 0, deepest: 0, understood: {}, where: null };
+  }
+  const v = P.visit;
+  if (typeof v.made0 !== "number") v.made0 = 0;
+  if (typeof v.deepest !== "number") v.deepest = 0;
+  if (!v.understood || typeof v.understood !== "object" || Array.isArray(v.understood)) v.understood = {};
+  // 多位參觀者（11-08）之前只有一位在館裡：到現在的累計相減就是這一位的，之後各記各的
+  if (typeof v.made !== "number") v.made = Math.max(0, ((P.stats && P.stats.made) || 0) - v.made0);
+  if (typeof v.sec !== "number") v.sec = typeof v.sec0 === "number" ? Math.max(0, (P.activeSec || 0) - v.sec0) : null;
+  ["perk", "flaw"].forEach(k => { if (P[k] && !traitById(P[k])) P[k] = null; });
+  P.cands = Array.isArray(P.cands) ? P.cands.filter(c => c && typeof c.job === "string" && c.skills && typeof c.skills === "object") : null;
+  if (P.cands && !P.cands.length) P.cands = null;
+  if (!P.legacy || typeof P.legacy !== "object" || Array.isArray(P.legacy)) P.legacy = null;
+  P.relics = asList(P.relics).filter(r => r && typeof r.key === "string" && typeof r.kind === "string")
+    .map(r => Object.assign({}, r, { key: r.kind === "pillow" ? normPillowKey(r.key) : normKey(r.key) }));
+  return P;
+}
