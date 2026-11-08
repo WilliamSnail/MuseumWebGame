@@ -13,6 +13,7 @@ const STEPS = [
   ["館友之間（送佩佩、參觀展廳的規則）", ["test/gifts.test.cjs"]],
   ["每日簽到、每週全簽到、節日（11-09，決定 0030）", ["test/signin.test.cjs"]],
   ["合作地下收藏庫（投票、強度、技能、理智、受傷、幽靈）", ["test/coop.test.cjs"]],
+  ["邀請、隊伍、一起融合", ["test/party.test.cjs"]],
   ["內容檢查（content.js）", ["test/content/check.cjs"]],
   ["內容檢查（content3.js）", ["test/content/check3.cjs"]],
   ["特效在 Node 載得起來", ["test/fx/node-check.cjs"]],

@@ -19,9 +19,11 @@ const narrow = () => matchMedia("(max-width: 760px)").matches;
 const TILT = [-1.2, .9, -.5, 1.1, -.8, .4]; // 紙釘上去不會剛好正正的
 
 // 蓋在整個畫面上的木框。按 Esc、點框外面、按右上角的 X 都會關；按 Tab 只在框裡面轉
-// ic：銅牌上的圖示（沒給就看 kind：信箱是信封，其他是卷軸）。館友、我的帳號（ui_login.js）也用這個框
-export function overlay(kind, title, label, ic) {
-  document.querySelectorAll(".nb-layer").forEach(l => l.remove());
+// ic：銅牌上的圖示（沒給就看 kind：信箱是信封，其他是卷軸）。館友、我的帳號（ui_login.js）、隊伍（ui_party.js）也用這個框
+// onClose：關掉的時候要做的事（不給就只是關掉）
+export function overlay(kind, title, label, ic, onClose) {
+  // 同時只開一個框：先把開著的照正常的方式關掉（會叫它的 onClose，例如隊伍的框＝離開隊伍；鍵盤的監聽也會拿掉）
+  document.querySelectorAll(".nb-layer").forEach(l => { if (l.nbClose) l.nbClose(); else l.remove(); });
   const back = document.activeElement;
   const top = h("div", { class: "nb-top" }), surface = h("div", { class: "nb-surface" }), foot = h("div", { class: "nb-foot" });
   const frame = h("div", { class: "nb-frame " + kind, tabindex: "-1" }, top, surface, foot);
@@ -32,6 +34,7 @@ export function overlay(kind, title, label, ic) {
     if (!document.querySelector(".nb-layer")) document.body.classList.remove("nb-open");
     document.removeEventListener("keydown", onKey, true);
     updateBoardBadges();
+    if (onClose) { try { onClose(); } catch (e) { console.error("關掉框的時候出錯", e); } } // 例如：關掉隊伍的框＝離開隊伍（ui_party.js）
     const to = back && back.isConnected && back.offsetParent !== null ? back : document.querySelector(".menu-btn");
     if (to && to.focus) to.focus({ preventScroll: true });
   };
@@ -47,6 +50,7 @@ export function overlay(kind, title, label, ic) {
   const x = h("button", { type: "button", class: "nb-x", "aria-label": "關掉", title: "關掉（Esc）", onClick: () => close() }, icon("close"));
   const setTop = extra => top.replaceChildren(h("div", { class: "nb-plaque" }, icon(ic || (kind.includes("nb-mail") ? "mail" : "scroll")), h("h2", null, title)), h("div", { class: "nb-top-r" }, extra, x));
   document.addEventListener("keydown", onKey, true);
+  layer.nbClose = close;
   layer.addEventListener("click", e => { if (e.target === layer) close(); });
   setTop(null);
   document.body.append(layer);

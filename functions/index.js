@@ -3,14 +3,11 @@
 //  伺服器說了算的事都在這裡；規則照舊在 shared/（部署前 tools/copy_shared.cjs 複製進 functions/shared/）。
 //  做法見 docs/Firebase做法.md 第三節。地區用台灣（asia-east1）。
 // ================================================================
+import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { setGlobalOptions } from "firebase-functions/v2";
-import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 
-setGlobalOptions({ region: "asia-east1", maxInstances: 5 });
-initializeApp();
 
 const EMULATOR = process.env.FUNCTIONS_EMULATOR === "true";
 
@@ -49,3 +46,6 @@ export const join = onCall(async req => {
   await getDatabase().ref(`members/${auth.uid}`).set(true);
   return { nick, invisible: false, id: auth.uid };
 });
+
+// ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
+export { invite, inviteReply, partyAction } from "./party.js";

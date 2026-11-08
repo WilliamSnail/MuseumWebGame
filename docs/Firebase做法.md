@@ -43,6 +43,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
 | `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了、有新的信 | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
+| `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions，誰都不能讀 |
 
 - 在線名單：每個人聽 `/status`（10 人，一次全讀沒問題）。隱身的人寫 offline。
 - 「在哪裡」：換房間寫自己的 `room`。

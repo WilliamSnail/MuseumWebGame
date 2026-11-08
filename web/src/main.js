@@ -11,6 +11,7 @@ import "./css/theme3.css";
 import "./css/board.css"; // 公佈欄、信箱、選單（11-08）
 import "./css/net.css"; // 登入、館友、我的帳號（多人版 M1，11-08）
 import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版 M1，11-08，決定 0018）
+import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
 
 import "./art.js";
@@ -23,6 +24,7 @@ import "./ui_curio.js";
 import "./ui_odd.js";
 import "./ui_board.js"; // 公佈欄、信箱（11-08）
 import "./ui_login.js"; // 登入、存檔放伺服器、館友（多人版 M1，11-08）
+import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;

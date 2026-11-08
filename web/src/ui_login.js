@@ -143,6 +143,19 @@ NET.on("logout", e => {
   if (was && e && e.code !== "logout") note("登入過期了，請再登入壹次。", "bad");
 });
 
+// ---------- 伺服器改了我的存檔（例如一起融合做好了）：重新讀（不提示「衝突」） ----------
+NET.on("message", async m => {
+  if (!m || m.t !== "save_changed" || !UI.net) return;
+  try {
+    NET.dropPending(); // 手上還沒送出去的那份是舊的：不丟掉，幾秒後會把伺服器剛寫好的蓋掉（11-09）
+    const r = await NET.loadSave();
+    const mode = SAVE.current, playing = !!P;
+    setSave(migrateSave(r.data));
+    if (playing && mode && SAVE.profiles[mode]) useProfile(mode); else setP(null);
+    if (P && UI.screen !== "title") rerender();
+  } catch (e) { /* 下次存的時候會碰到衝突，再讀一次 */ }
+});
+
 // ---------- 別的分頁或裝置先存了：換成伺服器上的那一份 ----------
 NET.on("conflict", async () => {
   if (!UI.net) return;
