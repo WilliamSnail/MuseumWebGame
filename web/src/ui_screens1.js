@@ -311,19 +311,23 @@ export async function focusExhibit(ex) {
     if (v.san) {
       await wait(700);
       const res = await sanFlow(v.san, ex.id, ex.title, { anchor: gains, occult: !!ex.myth });
-      if (res && !closed) {
-        gain(res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
-        const sa = SAN_ASIDES[ex.id] || {};
-        const aside = res.r.habituated || v.san === "0/1" ? SAN_ASIDES.habituated : res.r.success ? (ex.successAside || sa.success) : (ex.failAside || sa.fail);
-        if (aside) pl.append(h("div", { class: "pl-aside" }, ptNode(aside)));
+      // 框被發作拉走（closed）時：框上的字不用寫了，但神話一定要給（viewExhibit 已經記了 mythFrom，這次不給就再也拿不到）
+      if (res) {
+        if (!closed) {
+          gain(res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
+          const sa = SAN_ASIDES[ex.id] || {};
+          const aside = res.r.habituated || v.san === "0/1" ? SAN_ASIDES.habituated : res.r.success ? (ex.successAside || sa.success) : (ex.failAside || sa.fail);
+          if (aside) pl.append(h("div", { class: "pl-aside" }, ptNode(aside)));
+        }
         if (res.ev.zero) { close(); return; }
         if (v.myth) {
           const ev = addMyth(P, v.myth);
           note(`佩佩神話 +${v.myth}：理智上限變成 ${maxSan(P)}`, "bad");
-          gain(`佩佩神話 +${v.myth}`, "bad");
+          if (!closed) gain(`佩佩神話 +${v.myth}`, "bad");
+          updateStatus(); persist();
           await showEvents(ev);
         }
-        if (res.involuntary === "backout") { await wait(1200); close(); go("lobby"); return; }
+        if (res.involuntary === "backout") { if (!closed) { await wait(1200); close(); go("lobby"); } return; }
       }
     } else if (v.myth) { const ev = addMyth(P, v.myth); await showEvents(ev); }
     await showEvents(progressEvents(P));
