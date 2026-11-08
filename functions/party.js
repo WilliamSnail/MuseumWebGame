@@ -7,6 +7,7 @@
 //    /inbox/{uid}/{id}  給這個人的通知（invited、invite_closed、party、save_changed）
 //  一起融合的結果：Functions 在同一個 Firestore 交易裡讀兩份存檔、算、兩份一起寫回（rev 各加一）。
 // ================================================================
+import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
