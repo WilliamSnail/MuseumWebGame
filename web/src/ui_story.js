@@ -13,11 +13,15 @@ import { NUM } from "../../shared/config.js";
 import { activeQuirks, isFree, nowMs, todayStr } from "../../shared/logic.js";
 import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, seasonName, seasonOf, shelfTabOf, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { $$, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
+import { holidayOf } from "../../shared/holidays.js";
+
+// 節日接上每週劇情（11-09）：那一天是節日，週包的那天就帶著節日（名字、節日的話、藝術品），書和公告可以提到它
+setStoryHolidayOf(holidayOf);
 
 // ---------- 內容：content/weeks/ 下面所有的 json（帳本 content/story/ 不在這裡，不打包進網頁） ----------
 const RAW = import.meta.glob("../../content/weeks/**/*.json", { eager: true, import: "default" });

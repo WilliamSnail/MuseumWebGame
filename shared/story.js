@@ -60,7 +60,7 @@ export const STORY_ITEMS = {
 };
 
 // ---------- 日期：週、季 ----------
-const isDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const storyIsDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const utc = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); };
 // "YYYY-MM-DD" 是星期幾：1 ＝週一 … 7 ＝週日
 export function weekDayNo(dateStr) { return ((new Date(utc(dateStr)).getUTCDay() + 6) % 7) + 1; }
@@ -140,7 +140,7 @@ const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0,
 // 回傳 null：還沒到的週、比 NUM.story.startWeek 早的週、找不到內容
 export function storyWeekAt(lib, label, today, fb) {
   const monday = isoMonday(label);
-  if (!monday || !lib || !isDate(today) || today < monday || label < NUM.story.startWeek) return null; // 每週劇情從 startWeek 那週開始
+  if (!monday || !lib || !storyIsDate(today) || today < monday || label < NUM.story.startWeek) return null; // 每週劇情從 startWeek 那週開始
   const reg = lib.weeks[label];
   const fbName = reg ? null : (fb && lib.fallback[fb] ? fb : pickFallback(lib, label));
   const src = reg || (fbName ? lib.fallback[fbName] : null);
