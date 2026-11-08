@@ -3,6 +3,9 @@
 const fs = require("fs"), path = require("path");
 const { ROOT, LOG_DIR, listLogs, parse } = require("./log_lib.cjs");
 
+// 排序用固定的字碼順序，不用 localeCompare：不同版本的 Node 排中文不一樣（11-08：這台電腦 Node 24 過、GitHub 的 Node 22 說總表不是最新的）
+const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
+
 function build() {
   const rows = listLogs().map(f => {
     const p = parse(fs.readFileSync(f, "utf8"));
@@ -10,7 +13,7 @@ function build() {
     const rel = path.relative(LOG_DIR, f).split(path.sep).join("/");
     const topic = path.basename(f, ".md").split("_").slice(2).join("_");
     return { date: m.日期 || "", file: rel, line: `| ${m.日期 || "?"} | ${m.作者 || "?"} | ${m.AI || "?"} | ${m.類型 || "?"} | [${topic}](${encodeURI(rel)}) | ${m.狀態 || "?"} | ${m.版本 || "?"} |` };
-  }).sort((a, b) => (b.date + b.file).localeCompare(a.date + a.file));
+  }).sort((a, b) => cmp(b.date + b.file, a.date + a.file));
   return [
     "# 維護日誌總表",
     "",
