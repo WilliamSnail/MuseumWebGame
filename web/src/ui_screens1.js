@@ -18,6 +18,7 @@ import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 import { lobbyFriends, loginArea, refreshLogin } from "./ui_login.js";
+import { ORIGIN_TABS, galleryTabs, originTabs, storyLobby, storyShelf, storyShow } from "./ui_story.js"; // 每週劇情（11-09）
 
 export function roomHead(title, sub, ...extra) {
   const back = UI.screen && UI.screen !== "lobby" && !HIDE_CHROME.includes(UI.screen) && P ? btn([icon("lobby"), " 回大廳"], () => navTo("lobby"), "ghost small rh-back") : null;
@@ -231,12 +232,13 @@ SCREENS.lobby = root => {
     feature ? (() => { const fb = h("div", { class: "frog live", html: itemHTML(feature) }); const wrap = h("div", { class: "lobby-feature" }, fb, pepePlacard(feature.pick, { perfect: feature.perfect })); enliven(fb, feature.pick); return wrap; })()
       : h("div", { class: "lobby-feature empty" }, placard(["還沒有作品", "先去畫廊找靈感，再到手作坊做你的第一隻佩佩。"])),
     !isFree(P) && (P.vname || P.visitor > 1) ? h("p", { class: "sub lobby-who" }, visitorLabel(P)) : null); // 多位參觀者（11-08）：有名字寫名字
-  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, lobbyFriends(), h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）
+  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, storyLobby(), lobbyFriends(), h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；storyLobby：本週地下收藏庫（每週劇情，11-09）
 };
 
 // ---------- 3 畫廊：橫向走廊 ----------
 SCREENS.gallery = (root, params) => {
-  root.append(roomHead("畫廊", GALLERY_INTRO));
+  if (params.show && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
+  root.append(roomHead("畫廊", GALLERY_INTRO), galleryTabs("main"));
   if (!isFree(P)) {
     const g0 = NUM.galleryInsp[0], gN = NUM.galleryInsp[NUM.galleryInsp.length - 1];
     root.append(h("div", { class: "limit-box" },
@@ -394,8 +396,9 @@ export function diffGame(ex, artBox, info) {
 }
 
 // ---------- 4 起源室：書架 ----------
-SCREENS.origin = root => {
+SCREENS.origin = (root, params) => {
   root.append(roomHead("起源室", "書可以翻開。新章節解鎖時，書背會亮起來。"));
+  const tab = ORIGIN_TABS.some(t => t[0] === params.tab) ? params.tab : "shelf"; // 書架分頁籤（11-09，docs/每週劇情.md 第九節）：館藏、禁書照舊，主線、每週劇情、節日在 ui_story.js
   const reader = h("div", { class: "reader", "aria-live": "polite" }, h("p", { class: "empty" }, "從書架上挑一本書。"));
   const books = [{ id: 0, title: "起源", spine: "起源", gen1: true }].concat(allChapters());
   const shelf = h("div", { class: "shelf" }, h("span", { class: "shelf-label" }, "館藏"),
@@ -440,7 +443,10 @@ SCREENS.origin = root => {
       el.addEventListener("click", () => openForbidden(b, reader));
       return el;
     }));
-  root.append(h("div", { class: "origin-wrap" }, h("div", { class: "shelves" }, shelf, forb), reader));
+  const opened = books.filter(b => b.gen1 || chapterOpen(P, b.id)), fbVis = forbList.filter(b => !b.after || sequelOpen(P, b));
+  const counts = { shelf: [opened.length, opened.filter(b => !P.chaptersRead[b.id]).length, opened.filter(b => !b.gen1 && isFresh(P, "origin", FRESH_KEY.ch(b.id))).length + (isFresh(P, "origin", FRESH_KEY.understood) ? 1 : 0)],
+    forbidden: [fbVis.length, isFree(P) ? 0 : fbVis.filter(b => !P.mythFrom[b.id]).length, fbVis.filter(b => isFresh(P, "origin", FRESH_KEY.book(b.id))).length] }; // 頁籤上的「幾本・幾本沒讀」
+  root.append(originTabs(tab, counts), h("div", { class: "origin-wrap" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };
 // 《佩佩起源考・補遺》：讀過上壹本之後，在起源室什麼都不做 NUM.idleBook 秒（點滑鼠、按鍵盤、滾輪會重來；移動滑鼠沒關係）

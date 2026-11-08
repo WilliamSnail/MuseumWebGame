@@ -1,0 +1,32 @@
+{
+  "lines": [{ "id": "interlude", "name": "館裡的小插曲", "kind": "side" }],
+  "holiday": null,
+  "board": "門口的雨傘架多了三把小傘；書架多了 1 本書。",
+  "books": [
+    { "id": "i2", "line": "interlude", "title": "多出來的雨傘", "spine": "雨傘", "unlock": { "type": "now" },
+      "pages": [
+        "那天下午下了壹場雨。\n雨停了以後，門口的雨傘架\n多了三把傘。",
+        "三把傘都是綠色的，\n都很小，\n小得只有佩佩撐得下。",
+        "警衛把傘撐開晾乾。\n傘面內側都寫著同壹句話：\n「借用，會還。」\n(隔天，傘不見了，架子上多了三顆瓜子)"
+      ] }
+  ],
+  "daily": [
+    { "id": "a", "kind": "deliver", "n": 1, "reward": { "insp": 2 } },
+    { "id": "b", "kind": "hug", "n": 1, "reward": { "mood": 5 } },
+    { "id": "c", "kind": "show", "reward": { "insp": 2 } }
+  ],
+  "dailyBonus": { "mood": 5 },
+  "show": {
+    "title": "下雨天",
+    "intro": "今天的畫，都有壹點濕。",
+    "works": [
+      { "id": "s1", "art": "frog", "pick": { "顏色": "綠", "心情": "傷心", "姿勢": "坐著" }, "fx": ["water"], "frame": "wood",
+        "title": "忘了帶傘", "lines": ["牠坐在門口等雨停。", "畫框的下緣，還在滴水。"] },
+      { "id": "s2", "art": "frog", "pick": { "顏色": "黃", "心情": "開心", "姿勢": "站著", "背景": "星空" }, "fx": ["water"], "frame": "gold",
+        "title": "雨停以後", "lines": ["雨停了，星星出來了。", "牠是第壹個發現的。"] },
+      { "id": "s3", "art": "portrait", "variant": 2, "fx": ["water", "faded"], "frame": "plain",
+        "title": "淋過雨的肖像", "lines": ["顏色暈開了壹點。", "看起來比較溫柔。"] }
+    ]
+  },
+  "adds": []
+}

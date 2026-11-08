@@ -137,6 +137,24 @@ export const NUM = {
     dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
+  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
+  story: {
+    bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
+    showInsp: [1, 2],       // 今日特展第一次看一幅：不用理智檢定的／要理智檢定的
+    showInspDay: 5,         // 今日特展一天最多拿幾靈感
+    showSanMax: 6,          // 今日特展的畫，理智檢定失敗最多扣幾點（成功一定不扣，所以「看完今日特展」不會一定掉理智）
+    stampPerTask: 1,        // 每週任務做完一個、領的時候拿幾枚週章
+    stampAllBonus: 2,       // 5 個每週任務全做完，再多拿幾枚（週章不會過期，之後兌換所用）
+    skillBook: "1D3",       // 技能書：用了技能加幾點
+    skillCap: 80,           // 技能書最多加到幾
+    dailyMinutes: 12,       // 3 個每日任務加起來最多幾分鐘（照 STORY_TASKS 每種的估計時間算）
+    dayBudget: { insp: 22, mood: 10, items: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展
+    weekTaskBudget: { insp: 60, mood: 20, items: 3 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
+    startWeek: "2026-W46",  // 每週劇情從這一週開始有（更早的週沒有劇情，也不用備用週）
+    seasonStart: "2026-11-16", // 第一季從這一週開始（2026-W47）；之前的算「序章」
+    seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）
+    shelfRow: 8,            // 書架一排最多放幾本，超過就分頁
+  },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）

@@ -98,12 +98,15 @@ export function weeklyNotice(P) {
   };
 }
 
+// 別的檔加進來的公告（例如每週劇情的「本週地下收藏庫」，web/src/ui_story.js 登記）：一筆是 (P, today) => 公告或 null
+export const NOTICE_EXTRA = [];
 // 現在看得到的公告：已經發布、還沒下架；置頂的、重要的排前面，再照發布日期新的在前
 export function visibleNotices(P, today) {
   const list = NOTICES.filter(n => (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire));
   const w = weeklyNotice(P);
   if (w) list.push(w);
   list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）
+  NOTICE_EXTRA.forEach(f => { const n = f(P, today); if (n) list.push(n); });
   return list.sort((a, b) => (!!b.pinned - !!a.pinned) || (RANK[b.importance] - RANK[a.importance]) || String(b.publish || "9999").localeCompare(String(a.publish || "9999")));
 }
 

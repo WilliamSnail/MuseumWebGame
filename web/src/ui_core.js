@@ -30,6 +30,8 @@ export const SCREENS = {};
 export const PANELS = {};
 // 房間裡多出來的一塊（大廳的簽到條、畫廊的節日特展、展廳的裝飾……）：後面的檔（ui_signin.js）登記進來，房間有就叫（11-09，決定 0030）
 export const ADDONS = {};
+// 後面的檔掛上來的動作：status ＝每次 updateStatus 都叫一次（每週劇情 ui_story.js：新的書、做完的任務、狀態列的「追蹤」）
+export const HOOKS = {};
 // 館友小卡上的按鈕（參觀展廳、送佩佩、邀請一起融合……）：各自的檔登記進來，館友名單（ui_login.js）照順序畫。
 // 一筆：{ id, label, show(p), run(p) }；p 是名單上的一位（id、nick、status、room）。show 不給就是都顯示。
 export const FRIEND_ACTIONS = [];
@@ -219,6 +221,8 @@ export function buildNav() {
   const drawer = h("div", { class: "nav-drawer", id: "navDrawer", hidden: true, role: "region", "aria-label": "選單" },
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
+    h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
+    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story"))),
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）
@@ -358,7 +362,8 @@ export function buildStatus() {
   const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋還有多久換日（-s 是手機用的短版）
   const items = free
     ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), numItem("jobs", "委託", () => navTo("commission"))]
-    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission"))];
+    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
+      h("button", { type: "button", class: "st-item st-follow", id: "st-follow", hidden: true })]; // 每週劇情追蹤的那條線的下壹步（ui_story.js 的 trackBar）
   const extra = h("div", { class: "st-extra", id: "st-extra" });
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
   const toggle = h("button", { class: "st-toggle", type: "button", "aria-label": "展開狀態", onClick: () => st.classList.toggle("open") }, icon("info"));
@@ -448,6 +453,7 @@ export function updateStatus(instant) {
   audioTrack(instant);
   syncFresh();
   updateBoardBadges();
+  if (HOOKS.status) HOOKS.status();
   if (!P || !$("#status .st-row")) return;
   const amnesia = P.bout && P.bout.i === 0;
   const set = (id, val, text) => {

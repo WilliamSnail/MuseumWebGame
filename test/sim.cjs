@@ -10,6 +10,22 @@ const SESSION = (+process.env.DAY_MIN || 20) * 60;
 const SIGNIN = process.env.SIGNIN !== "0";
 // 每個動作大約要幾秒（含走路、看說明牌、擲骰動畫、揭曉動畫）
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
+// 每週劇情（11-09，shared/story.js）：STORY=0 不算。照備用週「常青1」真的內容算每天拿到多少（每日任務、全做完的那份、書、今日特展、B1 的房間、每週任務平均到每天），
+// 假設每天都做完；花的時間：讀書 60 秒一本、看特展 25 秒一幅、走一間房 90 秒。每日任務本身（做佩佩、交委託、看畫）本來就在下面的玩法裡，不另外算時間
+const STORY = process.env.STORY !== "0";
+const STORY_DAYS = (() => {
+  if (!STORY) return null;
+  const { readWeeks } = require("../tools/week_check.cjs");
+  const F = readWeeks().files, wk = F["備用/常青1/week.json"], S = G.NUM.story;
+  const ins = r => (r && r.insp) || 0, choice = r => Math.max(0, ...(r.choices || []).map(c => (c.success && c.success.insp) || 0));
+  const weekly = (wk.weekly.reduce((n, t) => n + ins(t.reward), 0) + ins(wk.weeklyBonus) + (wk.anomaly ? ins(wk.anomaly.room.reward) + choice(wk.anomaly.room) : 0)) / 7;
+  return [1, 2, 3, 4, 5, 6, 7].map(n => {
+    const d = F[`備用/常青1/d${n}.json`], b1 = (d.adds || []).filter(r => r.floor === 1);
+    const show = Math.min(S.showInspDay, d.show.works.reduce((s, w) => s + S.showInsp[w.san ? 1 : 0], 0));
+    const insp = d.daily.reduce((s, t) => s + ins(t.reward), 0) + ins(d.dailyBonus) + d.books.length * S.bookInsp + show + b1.reduce((s, r) => s + ins(r.reward) + choice(r), 0) + weekly;
+    return { insp, sec: d.books.length * 60 + d.show.works.length * 25 + b1.length * 90 };
+  });
+})();
 const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
 const LOCKED0 = baseLocked(G.newProfile("challenge"));
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
@@ -25,11 +41,12 @@ function sim(seed) {
   signToday();
   const out = { t4: null, tAll: null, made: 0, legends: 0, epics: 0, perfects: 0, failed: 0, endings: 0, quirks: 0, minSan: 99, days: 1, unlockAt10: null };
   let dayStart = 0, visitorClock = 0;
+  const storyDay = () => { if (!STORY_DAYS) return; const s = STORY_DAYS[day % 7]; P.insp += Math.round(s.insp); INC.story += Math.round(s.insp); t += s.sec; };
   const spend = sec => {
     t += sec; visitorClock += sec;
     G.tickAction(P); // 每個動作讓瘋狂發作倒數
     while (visitorClock >= G.NUM.visitorEvery) { visitorClock -= G.NUM.visitorEvery; const v = G.visitorArrive(P, rng); if (v) INC.visit += v.gain; }
-    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); signToday(); out.days++; }
+    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); signToday(); out.days++; storyDay(); }
   };
   const san = (spec, src) => {
     const r = G.sanCheck(P, spec, src);
@@ -70,6 +87,7 @@ function sim(seed) {
   };
   let guard = 0;
   spend(COST.start); // 開場、擲心情、3 步引導
+  storyDay(); // 第一天的每週劇情
   while (guard++ < 20000) {
     const unlocks = LOCKED0 - baseLocked(P);
     if (unlocks >= 4 && out.t4 == null) out.t4 = t / 60;
@@ -124,13 +142,13 @@ function sim(seed) {
   G.setRng(null);
   return out;
 }
-const INC={visit:0,deliver:0,view:0,read:0,badge:0,sign:0};globalThis.INC=INC;
+const INC={visit:0,deliver:0,view:0,read:0,badge:0,sign:0,story:0};globalThis.INC=INC;
 const runs = Array.from({ length: RUNS }, (_, i) => sim(1000 + i));
 const q = (arr, p) => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) * p)] : NaN; };
 const f = n => n.toFixed(1);
 const t4 = runs.map(r => r.t4), tAll = runs.map(r => r.tAll), at10 = runs.map(r => r.unlockAt10);
 const made = runs.reduce((s, r) => s + r.made, 0);
-console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${SIGNIN ? "，每天簽到" : "，不簽到"}）`);
+console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${SIGNIN ? "，每天簽到" : "，不簽到"}）${STORY_DAYS ? `；每週劇情照備用週算，每天 ${STORY_DAYS.map(s => Math.round(s.insp)).join("、")} 靈感（STORY=0 不算）` : "；不算每週劇情"}`);
 console.log(`玩 10 分鐘時解鎖了幾個：中位數 ${q(at10, .5)}（10%–90%：${q(at10, .1)}–${q(at10, .9)}）　目標 3–4`);
 console.log(`解鎖 4 個要幾分鐘：中位數 ${f(q(t4, .5))}（10%–90%：${f(q(t4, .1))}–${f(q(t4, .9))}）`);
 console.log(`全部解鎖（${LOCKED0} 個）要幾小時：中位數 ${f(q(tAll, .5) / 60)}（10%–90%：${f(q(tAll, .1) / 60)}–${f(q(tAll, .9) / 60)}）　目標 2–3 小時；沒解完 ${runs.filter(r => r.tAll == null).length} 次`);

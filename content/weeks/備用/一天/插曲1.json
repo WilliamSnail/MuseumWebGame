@@ -1,0 +1,32 @@
+{
+  "lines": [{ "id": "interlude", "name": "館裡的小插曲", "kind": "side" }],
+  "holiday": null,
+  "board": "館裡停電了十分鐘；書架多了 1 本書。",
+  "books": [
+    { "id": "i1", "line": "interlude", "title": "停電的十分鐘", "spine": "停電", "unlock": { "type": "now" },
+      "pages": [
+        "晚上八點，館裡的燈壹起熄了。\n守夜的警衛拿著手電筒，\n從大廳走到畫廊。",
+        "停電的十分鐘裡，\n畫廊的每壹幅畫都很安靜，\n安靜得像是在憋氣。",
+        "燈亮的時候，\n大家都在原來的位置。\n只有壹隻佩佩的帽子，戴反了。\n(你決定不要問是誰戴的)"
+      ] }
+  ],
+  "daily": [
+    { "id": "a", "kind": "view", "exhibit": "portrait", "reward": { "insp": 2 } },
+    { "id": "b", "kind": "make", "n": 1, "reward": { "insp": 2 } },
+    { "id": "c", "kind": "show", "reward": { "mood": 5 } }
+  ],
+  "dailyBonus": { "insp": 3 },
+  "show": {
+    "title": "暗暗的畫",
+    "intro": "停電以後，有幾幅畫好像沒有完全亮回來。",
+    "works": [
+      { "id": "s1", "art": "frog", "pick": { "顏色": "綠", "心情": "開心", "姿勢": "站著" }, "fx": ["dark"], "frame": "dark",
+        "title": "還在黑暗裡的佩佩", "lines": ["牠還在等燈亮。", "其實燈已經亮了。"] },
+      { "id": "s2", "art": "portrait", "variant": 1, "fx": ["dark"], "frame": "gold",
+        "title": "暗下來的肖像", "lines": ["肖像的顏色暗了壹階。", "眼睛比平常更亮。"] },
+      { "id": "s3", "art": "rare", "variant": 3, "fx": ["dark", "glow"], "frame": "ornate",
+        "title": "自己會發光的那幅", "lines": ["停電的時候，只有這幅還看得見。", "館方說，牠本來就很帥。"] }
+    ]
+  },
+  "adds": []
+}

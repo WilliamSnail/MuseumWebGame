@@ -1,0 +1,32 @@
+{
+  "lines": [{ "id": "interlude", "name": "館裡的小插曲", "kind": "side" }],
+  "holiday": null,
+  "board": "閉館以後，畫廊有腳步聲在繞圈；書架多了 1 本書。",
+  "books": [
+    { "id": "i3", "line": "interlude", "title": "繞圈的腳步聲", "spine": "腳步聲", "unlock": { "type": "now" },
+      "pages": [
+        "閉館以後，畫廊傳來腳步聲。\n叩、叩、叩。\n從這頭走到那頭，再走回來。",
+        "警衛跟著聲音走了三圈。\n第四圈的時候，\n他發現腳步聲是跟著他走的。",
+        "他停下來。\n腳步聲也停下來，\n然後很有禮貌地，往旁邊讓了壹步。\n(你覺得這樣很有禮貌)"
+      ] }
+  ],
+  "daily": [
+    { "id": "a", "kind": "view", "exhibit": "rare", "reward": { "insp": 2 } },
+    { "id": "b", "kind": "make", "need": { "顏色": "紅" }, "reward": { "insp": 2 } },
+    { "id": "c", "kind": "show", "reward": { "mood": 5 } }
+  ],
+  "dailyBonus": { "items": ["mat:畫布"] },
+  "show": {
+    "title": "走廊的盡頭",
+    "intro": "這幾幅畫掛在走廊的最後面。腳步聲每次都停在這裡。",
+    "works": [
+      { "id": "s1", "art": "portrait", "variant": 0, "fx": ["flip"], "frame": "gold",
+        "title": "轉過身的肖像", "lines": ["這幅畫原本是朝另壹邊的。", "今天早上，牠轉過來了。"] },
+      { "id": "s2", "art": "frog", "pick": { "顏色": "紅", "心情": "生氣", "姿勢": "站著" }, "fx": [], "frame": "ornate",
+        "title": "不想被跟的佩佩", "lines": ["牠瞪著走廊的另壹頭。", "好像那裡有誰。"] },
+      { "id": "s3", "art": "strange", "variant": 3, "fx": ["sepia"], "frame": "dark", "san": "0/1D3",
+        "title": "繞著車走的祭司", "lines": ["祭司們繞著車子走。", "壹圈，又壹圈。"] }
+    ]
+  },
+  "adds": []
+}

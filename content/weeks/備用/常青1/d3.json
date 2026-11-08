@@ -1,0 +1,56 @@
+{
+  "day": 3,
+  "holiday": null,
+  "board": "B1 的招領箱後面，多了壹扇小門；書架多了 2 本書。",
+  "books": [
+    { "id": "3a", "line": "backdoor", "title": "箱子後面", "spine": "箱子後面", "unlock": { "type": "now" },
+      "pages": [
+        "警衛把招領箱往旁邊挪了壹點，\n想看看箱子底下有沒有東西。",
+        "箱子後面的牆上，有壹扇小門。\n門很矮，只有佩佩那麼高。\n門把是壹顆鈕扣。",
+        "他敲了敲。\n門後面傳來翻紙的聲音，\n然後停了。",
+        "「明天再說。」他寫。\n那天晚上，他沒有再下去 B1。"
+      ] },
+    { "id": "3b", "line": "backdoor", "title": "小門後面的櫃台", "spine": "小櫃台", "unlock": { "type": "find", "room": "backdoor" },
+      "pages": [
+        "門後面是壹個很小的房間。\n裡面只有壹張櫃台，和壹盞亮著的檯燈。",
+        "櫃台上攤著壹本登記簿。\n「拾得」「待領」「已領」三欄，\n「已領」那壹欄壹個字都沒有。",
+        "最新的壹行還沒寫完。\n筆放在旁邊，筆蓋沒有蓋。\n(你沒有替它寫完)"
+      ] }
+  ],
+  "daily": [
+    { "id": "d3a", "kind": "cellar", "floor": 1, "reward": { "insp": 3 } },
+    { "id": "d3b", "kind": "hug", "n": 1, "reward": { "mood": 5 } },
+    { "id": "d3c", "kind": "show", "reward": { "insp": 2 } }
+  ],
+  "dailyBonus": { "items": ["book:手工藝"] },
+  "show": {
+    "title": "門後面",
+    "intro": "今天的畫，都是從門縫裡看出去的樣子。",
+    "works": [
+      { "id": "s3a", "art": "frog", "pick": { "顏色": "黃", "心情": "開心", "姿勢": "坐著", "手上拿的東西": "放大鏡" }, "fx": [], "frame": "plain",
+        "title": "拿著放大鏡的佩佩", "lines": ["牠在找什麼很小的東西。", "可能是壹顆鈕扣。"] },
+      { "id": "s3b", "art": "hidden", "variant": 0, "fx": ["dark"], "frame": "dark", "san": "0/1D4",
+        "title": "門縫後面", "lines": ["門縫很窄，只看得到壹點點光。", "光的旁邊，有東西眨了壹下。"] },
+      { "id": "s3c", "art": "statue", "variant": 3, "fx": ["dust"], "frame": "plain",
+        "title": "被搬到門邊的雕像", "lines": ["這尊雕像以前不在這裡。", "底座上的灰，有壹道被拖過的痕跡。"] }
+    ]
+  },
+  "adds": [
+    { "id": "backdoor", "floor": 1, "line": "backdoor",
+      "title": "箱子後面的小門", "hint": "去 B1，看看招領箱後面",
+      "intro": "招領箱被挪開了。牆上那扇小門開著壹條縫。",
+      "lines": ["門後面很暗，只有壹盞檯燈亮著。", "門口的地上，排著壹列小小的腳印。"],
+      "mood": "生氣", "color": "綠",
+      "choices": [
+        { "label": "循著腳印走進去", "check": { "type": "skill", "skill": "偵查", "mod": 0 },
+          "success": { "text": "腳印停在壹張櫃台前面。櫃台上攤著壹本登記簿。", "insp": 3 },
+          "fail": { "text": "腳印繞了壹圈，又回到你的腳邊。", "san": "1D2" } },
+        { "label": "把門整個推開", "check": { "type": "power", "target": 12 },
+          "success": { "text": "門很輕，壹推就開了。裡面好像有誰剛離開。", "insp": 3 },
+          "fail": { "text": "門推不開。門後面有誰頂著。", "san": "1D3" } },
+        { "label": "從門縫看就好", "check": { "type": "none" },
+          "success": { "text": "你從門縫看進去。檯燈下面，有壹本攤開的登記簿。" } }
+      ],
+      "reward": { "insp": 3 } }
+  ]
+}
