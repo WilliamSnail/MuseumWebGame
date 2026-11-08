@@ -978,3 +978,11 @@ body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: 
   .relic-art { width: 82px; height: 82px; }
 }
 body.reduce-motion .lg-opt, body.reduce-motion .cand, body.reduce-motion .vw-card { transition: none; transform: none; }
+
+/* ----- 手作坊：不敢碰的說明（翊文 11-08：看了壹幅畫之後選項點不了，其實是恐懼症）。放在卡片列外面、羊皮紙底深色字（暗紅牆上要看得清楚） ----- */
+.ws-afraid:empty { display: none; }
+.afraid-bar { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 10px; padding: 10px 14px; border-radius: 4px;
+  background: linear-gradient(180deg, #FBF3E4, #F1E2CB); border: 1px solid #A8382D; box-shadow: 0 2px 6px rgba(0,0,0,.3); color: #2A1E16; font-size: .875rem; line-height: 1.6; }
+.afraid-bar .ic, .afraid-bar .ic svg { width: 18px; height: 18px; flex: 0 0 auto; color: #9A231C; margin-top: 2px; }
+.afraid-lines { display: flex; flex-direction: column; gap: 4px; }
+.afraid-bar b { color: #9A231C; }

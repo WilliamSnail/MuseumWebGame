@@ -547,9 +547,10 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
   .scr-workshop .ws-top { display: contents; }
   .scr-workshop .ws-stage { order: 1; }
   .scr-workshop .ws-tabs { order: 2; margin-top: 18px; flex-wrap: nowrap; overflow-x: auto; }
-  .scr-workshop .ws-cards { order: 3; }
-  .scr-workshop .ws-tools { order: 4; margin-top: 12px; }
-  .scr-workshop .ws-info { order: 5; margin-top: 18px; }
+  .scr-workshop .ws-afraid { order: 3; margin-top: 10px; } /* 不敢碰的說明：分頁和卡片中間（沒設的話會跑到最上面） */
+  .scr-workshop .ws-cards { order: 4; }
+  .scr-workshop .ws-tools { order: 5; margin-top: 12px; }
+  .scr-workshop .ws-info { order: 6; margin-top: 18px; }
   .ws-stage .frog { width: 230px; height: 230px; }
   .pedestal { width: 210px; height: 50px; }
   .tab { padding: 0 2px 0 8px; white-space: nowrap; }

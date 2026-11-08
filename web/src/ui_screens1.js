@@ -7,7 +7,7 @@ import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD
 import { BOOK4, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
+import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
 import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
@@ -289,6 +289,8 @@ export async function focusExhibit(ex) {
   const close = () => { if (closed) return; closed = true; layer.remove(); document.removeEventListener("keydown", onKey); UI.busy = false; if (UI.screen === "gallery") rerender(); };
   const onKey = e => { if (e.key === "Escape" && !$(".fx-overlay")) close(); };
   document.addEventListener("keydown", onKey);
+  // 被換畫面拿掉時（發作把人拉走）：一樣收乾淨（go() 會跑 UI.cleanup）
+  UI.cleanup.push(() => { if (closed) return; closed = true; document.removeEventListener("keydown", onKey); UI.busy = false; });
   host.append(layer);
   requestAnimationFrame(() => layer.classList.add("in"));
   try {
@@ -314,19 +316,23 @@ export async function focusExhibit(ex) {
     if (v.san) {
       await wait(700);
       const res = await sanFlow(v.san, ex.id, ex.title, { anchor: gains, occult: !!ex.myth });
-      if (res && !closed) {
-        gain(res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
-        const sa = SAN_ASIDES[ex.id] || {};
-        const aside = res.r.habituated || v.san === "0/1" ? SAN_ASIDES.habituated : res.r.success ? (ex.successAside || sa.success) : (ex.failAside || sa.fail);
-        if (aside) pl.append(h("div", { class: "pl-aside" }, ptNode(aside)));
+      // 框被發作拉走（closed）時：框上的字不用寫了，但神話一定要給（viewExhibit 已經記了 mythFrom，這次不給就再也拿不到）
+      if (res) {
+        if (!closed) {
+          gain(res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
+          const sa = SAN_ASIDES[ex.id] || {};
+          const aside = res.r.habituated || v.san === "0/1" ? SAN_ASIDES.habituated : res.r.success ? (ex.successAside || sa.success) : (ex.failAside || sa.fail);
+          if (aside) pl.append(h("div", { class: "pl-aside" }, ptNode(aside)));
+        }
         if (res.ev.zero) { close(); return; }
         if (v.myth) {
           const ev = addMyth(P, v.myth);
           note(`佩佩神話 +${v.myth}：理智上限變成 ${maxSan(P)}`, "bad");
-          gain(`佩佩神話 +${v.myth}`, "bad");
+          if (!closed) gain(`佩佩神話 +${v.myth}`, "bad");
+          updateStatus(); persist();
           await showEvents(ev);
         }
-        if (res.involuntary === "backout") { await wait(1200); close(); go("lobby"); return; }
+        if (res.involuntary === "backout") { if (!closed) { await wait(1200); close(); go("lobby"); } return; }
       }
     } else if (v.myth) { const ev = addMyth(P, v.myth); await showEvents(ev); }
     await showEvents(progressEvents(P));
@@ -531,6 +537,29 @@ export function rarityRanges() { // 最後壹列是失敗作（NUM.fumbleFrom–
   const rs = RARITY_TABLE.map(t => { const to = Math.min(t.max, NUM.fumbleFrom - 1), r = { name: t.name, from: lo, to, pct: to - lo + 1 }; lo = t.max + 1; return r; });
   return rs.concat([{ name: FAILED, from: NUM.fumbleFrom, to: 100, pct: 101 - NUM.fumbleFrom, failed: true }]);
 }
+// 不敢碰的選項：說清楚為什麼、怎麼好（翊文 11-08：「看了一幅畫之後其他本來解開的就還不能點，看看是不是有問題」——
+// 是看畫的理智檢定失敗得到的恐懼症，照規則擋住的，但原本只寫「不敢碰」，看起來像壞掉）
+function afraidText(cat, name, why) {
+  if (why && why.kind === "bout") return `恐懼症發作：暫時不敢碰「${name}」，再 ${why.left} 個動作就好。`;
+  if (why && why.kind === "quirk") return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`;
+  return `你不敢碰「${name}」。`;
+}
+// 這壹類有不敢碰的：卡片上面壹行說明（不用點也看得到）
+function afraidBar(cat) {
+  const blocked = allOpts(cat).filter(n => isUnlocked(P, cat, n) && isBlocked(P, cat, n));
+  if (!blocked.length) return null;
+  // 怪癖和發作分開說（同壹類兩種都有的時候，不要把暫時的發作說成怪癖）
+  const byQuirk = blocked.filter(n => { const w = blockedWhy(P, cat, n); return w && w.kind === "quirk"; });
+  const byBout = blocked.filter(n => !byQuirk.includes(n));
+  const lines = [];
+  if (byQuirk.length) {
+    const q = blockedWhy(P, cat, byQuirk[0]).quirk;
+    const what = !q.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : byQuirk.map(n => `「${n}」`).join("、") + "不敢碰";
+    lines.push(h("span", null, h("b", null, what), `：這是看可怕的東西時理智檢定失敗留下的怪癖。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`));
+  }
+  if (byBout.length) lines.push(h("span", null, h("b", null, byBout.map(n => `「${n}」`).join("、") + "不敢碰"), `：恐懼症發作中，再 ${P.bout ? P.bout.left : 1} 個動作就好。`));
+  return h("div", { class: "afraid-bar", role: "note" }, icon("eye"), h("div", { class: "afraid-lines" }, lines));
+}
 SCREENS.workshop = (root, params) => {
   const free = isFree(P);
   const pick = P.wsPick;
@@ -558,9 +587,10 @@ SCREENS.workshop = (root, params) => {
   const info = h("aside", { class: "ws-info" });
   const tabs = h("div", { class: "ws-tabs", role: "tablist" });
   const cards = h("div", { class: "ws-cards", role: "listbox", "aria-label": "選項" });
+  const afraidBox = h("div", { class: "ws-afraid" }); // 不敢碰的說明放在卡片列外面（卡片列在手機上是橫的，放裡面會被擠成直條）
   const tools = h("div", { class: "ws-tools" });
   root.append(roomHead(GEN_TEXT.workshop, free ? "自由模式：什麼都能直接選。" : "點卡片換選項；帽子可以直接拖到頭上。稀有度做出來才知道。"),
-    h("div", { class: "ws-top" }, stage, info), tabs, cards, tools);
+    h("div", { class: "ws-top" }, stage, info), tabs, afraidBox, cards, tools);
 
   const drawFrog = anim => {
     frogBox.innerHTML = frogHTML(pick, free ? { fx: true } : {});
@@ -614,7 +644,7 @@ SCREENS.workshop = (root, params) => {
     const preview = Object.assign({}, pick, { [cat]: name });
     let sub;
     if (st.state === "open") {
-      if (blocked) sub = h("span", { class: "c-sub warn" }, "不敢碰");
+      if (blocked) { const why = blockedWhy(P, cat, name); sub = h("span", { class: "c-sub warn", title: afraidText(cat, name, why) }, why && why.kind === "bout" ? "不敢碰（發作）" : "不敢碰"); }
       else if (rolledTab) { const r = rarityRanges().find(x => x.name === name); sub = h("span", { class: "c-sub" }, r ? `${pad(r.from, 2)}–${pad(r.to, 2)}` : "神話＋01"); }
     } else if (st.state === "buy") sub = h("span", { class: "c-sub" + (st.ok ? " can" : "") }, icon("lock"), `花 ${st.cost} 靈感解鎖`);
     else sub = h("span", { class: "c-sub" }, icon("lock"), st.state === "forbidden" ? `禁忌：神話 ${o.myth}` : st.text);
@@ -628,7 +658,7 @@ SCREENS.workshop = (root, params) => {
     let armed = false;
     const activate = () => {
       if (st.state === "open") {
-        if (blocked) { snd("error"); note(`你不敢碰「${name}」`, "bad"); card.classList.add("shake"); return; }
+        if (blocked) { snd("error"); note(afraidText(cat, name, blockedWhy(P, cat, name)), "bad"); card.classList.add("shake"); return; }
         if (rolledTab) { note("稀有度做出來才知道：按「做」之後擲 d100。"); return; }
         select(cat, name);
       } else if (st.state === "buy") {
@@ -655,6 +685,7 @@ SCREENS.workshop = (root, params) => {
   const drawCards = () => {
     const list = allOpts(tab).map(n => cardFor(tab, n)).filter(Boolean);
     cards.replaceChildren(...list);
+    afraidBox.replaceChildren(afraidBar(tab));
     if (tab === ROLLED && !free) cards.append(h("p", { class: "card-note" }, `稀有度不能選：按「做」之後擲 d100，01 是完美作品、${NUM.fumbleFrom}–100 是失敗作。可以花心情把骰子壓低。`));
   };
   cards.addEventListener("keydown", e => {

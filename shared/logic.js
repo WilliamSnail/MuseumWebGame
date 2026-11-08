@@ -316,6 +316,14 @@ export function mythUnlocks(P) {
 }
 
 // ---------- 恐懼症讓選項不能用 ----------
+// 為什麼不敢碰（翊文 11-08：「看了一幅畫之後其他本來解開的就還不能點，看看是不是有問題」：
+// 是恐懼症照規則擋的，但畫面沒說為什麼，看起來像壞掉）。回傳 { kind: "quirk", quirk } 或 { kind: "bout", left }，沒擋就 null
+export function blockedWhy(P, cat, name) {
+  const q = P.quirks.find(x => x.type === "phobia" && x.cat === cat && (x.opt ? x.opt === name : name !== baseOpts(cat)[0]));
+  if (q) return { kind: "quirk", quirk: q };
+  if (P.bout && P.bout.i === 8 && P.bout.cat === cat && P.bout.opt === name) return { kind: "bout", left: P.bout.left };
+  return null;
+}
 export function blockedSet(P) {
   const b = {};
   const add = (c, n) => { (b[c] = b[c] || new Set()).add(n); };
