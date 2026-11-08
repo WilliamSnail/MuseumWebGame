@@ -12,7 +12,7 @@
 //    importance "low"（只在公佈欄裡標）、"normal"、"important"（導覽列的「公佈欄」蓋火漆印）、"urgent"（登入時直接打開）
 //    pinned     置頂（最多一兩則）
 //    title      標題（兩行以內）
-//    publish／expire  發布、下架的日期（台灣日期，含當天；照真的日曆，不是遊戲裡的一天）
+//    publish／expire  發布、下架的日期（台灣日期，含當天；跟 todayStr 一樣台灣時間 05:00 換日）
 //    start／end 活動期間（可以不填）
 //    sections   [[段落名, [句子, …]], …]，畫面會寫成「〓段落名〓」
 //    cta        「前往」按鈕：{ label, room, params } 或 { label, panel: "mail" }
@@ -82,7 +82,7 @@ export const NOTICES = [
   },
 ];
 
-// 這週的特展（照遊戲裡的日期換，跟展廳的「本週特展」同一個主題）
+// 這週的特展（跟展廳的「本週特展」同一個主題）。台灣時間週一 05:00 換週（決定 0019，weekIndex）
 export function weeklyNotice(P) {
   if (!P || !P.day) return null;
   const date = P.day.date, theme = weeklyTheme(date), T = WEEKLY_TEXT[theme] || { name: theme, rule: "" };
@@ -91,7 +91,7 @@ export function weeklyNotice(P) {
     title: `本週特展：${T.name}`, publish: null, expire: null,
     sections: [
       ["內容", [T.rule, "照規則擺滿展廳的特展區，分數會記下來；之後館裡的人可以壹起比。"]],
-      ["時間", ["遊戲裡的這壹週（每 7 天換壹個主題）。"]],
+      ["時間", ["台灣時間每週壹 05:00 換壹個主題，大家的這壹週都壹樣。"]],
     ],
     cta: { label: "去展廳的本週特展", room: "hall", params: { tab: "weekly" } },
   };

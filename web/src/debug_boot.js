@@ -1,7 +1,7 @@
 // 開發用：網址後面加 #畫面 就直接打開那個畫面，並放好假的收藏。只在 npm run dev 時載入（main.js），不會進正式打包。
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { STORY_CHAPTERS } from "../../shared/content.js";
-import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, exhibitById, finishMake, mulberry32, newProfile, newSave, partOf, pillowKeyOf, placeInHall, setRng, visitorArrive } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, visitorArrive } from "../../shared/logic.js";
 import { assignJob, hallSize, startCellar } from "../../shared/logic3.js";
 import { $, P, SAVE, UI, applyBodyState, collectionItems, go, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "./ui_screens1.js";
@@ -35,6 +35,7 @@ import { pickJob } from "./ui_screens3.js";
     dailyCommissions(P, P.day.date)[1].done = true;
     P.insp = 37; P.mood = 55; P.sanity = arg === "lowsan" ? 28 : 64; P.myth = 3;
     if (arg === "bout") P.bout = { i: 3, left: 4 };
+    if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 18 * 60000 + 5000, task: "calm" }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 7 * 60000 + 5000, task: "hug" }]; // 怪癖（11-09，決定 0027）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
     setRng(null);
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
@@ -48,6 +49,6 @@ import { pickJob } from "./ui_screens3.js";
     if (screen === "focus") { go("gallery", {}, { action: false }); setTimeout(() => focusExhibit(exhibitById(extra || "strange")), 300); return; }
     if (screen === "ending") { go("ending", { id: arg || "curator" }, { action: false }); return; }
     if (screen === "book") { go("origin", {}, { action: false }); setTimeout(() => openBook(STORY_CHAPTERS[0], $(".reader")), 300); return; }
-    go(screen, arg && !["lowsan", "bout"].includes(arg) ? { tab: arg } : {}, { action: false });
+    go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) ? { tab: arg } : {}, { action: false });
   }, 150);
 })();

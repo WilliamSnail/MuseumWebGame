@@ -105,7 +105,7 @@ export const NUM = {
   visitorStep: 50,          // 參觀者給的靈感＝1＋展廳評分÷50（無條件捨去）
   miniPerDay: 5,            // 每個小遊戲一天最多拿幾次靈感
   ch2: 4, ch3: 8,           // 解鎖幾個選項後開第 2、3 章
-  quirkCureDays: 3,         // 連續幾天抱抱枕治好怪癖
+  quirkMinutes: 20,         // 怪癖沒治好的話，幾分鐘後自己消失（真的時鐘，關掉遊戲也在走；決定 0027。原本是「連續 3 天抱抱枕」quirkCureDays）
   // 第 3 版
   fusionCost: 3,            // 融合一次要多少靈感
   fusionPerDay: 3,          // 一天可以融合幾次（升級「第二座融合爐」再 +3）

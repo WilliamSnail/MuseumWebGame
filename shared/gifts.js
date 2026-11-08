@@ -17,16 +17,11 @@ export const SOCIAL = {
   noteMax: 50,      // 留言最多幾個字
   notesShown: 10,   // 展廳上顯示最近幾則留言
   mailDays: 30,     // 信寄到之後幾天沒領就不見（照台灣日期）
-  dayStartHour: 5,  // 台灣時間幾點換日
-  tzHours: 8,       // 台灣是 UTC+8
+  // 幾點換日、台灣是 UTC 幾：11-09 搬到 logic.js（DAY_START_HOUR、TZ_HOURS），全部共用一份
 };
 
 // ---------- 台灣時間 05:00 換日的「今天」 ----------
-// ms：從 1970 算起的毫秒（伺服器的 Date.now()）。凌晨 00:00–04:59 還算前一天。回傳 "YYYY-MM-DD"
-export function taipeiDay(ms) {
-  if (typeof ms !== "number" || !isFinite(ms)) throw new Error("taipeiDay 要給毫秒數（伺服器的時間）");
-  return new Date(ms + (SOCIAL.tzHours - SOCIAL.dayStartHour) * 3600000).toISOString().slice(0, 10);
-}
+// taipeiDay(毫秒) 11-09 搬到 logic.js（todayStr 也用它，全部共用一份）。這個檔的函式不自己算日期：today 由呼叫的人給（伺服器用 taipeiDay(自己的時間)），不信瀏覽器
 // "YYYY-MM-DD" 往後 n 天（用 UTC 算，不受電腦的時區影響）
 export function dayPlus(day, n) {
   const [y, m, d] = String(day).split("-").map(Number);
@@ -158,7 +153,7 @@ export function cleanGiftItem(g) {
   const title = typeof g.title === "string" && g.title.length <= 40 ? g.title : null;
   return { kind: g.kind, key, perfect: g.kind === "pepe" && !!g.perfect, title: g.kind === "pepe" ? title : null };
 }
-// 把壹隻放進收藏（收到的人那邊，領信的時候）。today：遊戲裡的日期（不給就用 todayStr()）
+// 把壹隻放進收藏（收到的人那邊，領信的時候）。today：今天的日期（台灣時間 05:00 換日；不給就用 todayStr()）
 // 回傳 { ok: true, kind, key, isNew, events（徽章、解鎖） } 或 { ok: false, code, reason }
 export function putGift(P, gift, today) {
   if (!P || typeof P !== "object") return { ok: false, code: "no_museum", reason: "還沒開館。" };

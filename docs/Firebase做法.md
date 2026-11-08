@@ -61,7 +61,7 @@ Hosting：放 dist/，網址 專案名.web.app
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
 - **骰子**：`shared/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。
-- **「今天」**：伺服器這邊的每天（按讚、來訪、合作的前 3 趟）照台灣時間 05:00 換日（決定 0019）。單人的遊戲日（15 分鐘一天）還沒改，Functions 改存檔時用那份存檔自己的 `P.day.date`。
+- **「今天」**：全部照台灣時間 05:00 換日（決定 0019）。11-09 起遊戲裡的一天也是（不再是 15 分鐘一天）。Functions 要「今天」一律 `taipeiDay(Date.now())`（`shared/logic.js`，用伺服器的時間），改存檔前先 `ensureDay(P, 今天)`。Functions 裡 `nowMs()` 就是伺服器的 `Date.now()`（不要在 Functions 用 `setNowClock`、`setDayClock`）。畫面那邊的「現在」登入後也照網路的時間（決定 0026）。
 
 ## 四、畫面的 NET
 

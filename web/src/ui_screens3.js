@@ -9,7 +9,7 @@ import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, ROLLED, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
+import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
 import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, giftCode, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, parseWeeklyCode, placeWeekly, receiveGift, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyCode, weeklyState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
@@ -378,7 +378,8 @@ export function officeSheet() {
     h("div", { class: "sheet-left" }, h("div", { class: "sheet-stats" },
       [["心情", `${P.mood}／99`], ["理智", `${P.sanity}／${maxSan(P)}`], ["佩佩神話", String(P.myth)], ["靈感", String(P.insp)], ["做過", `${P.stats.made} 隻`], ["融合", `${P.stats.fused || 0} 次`]].map(([k, v]) => h("div", { class: "stat" }, h("span", null, k), h("b", null, v)))),
       // 怪癖放在數字正下方（翊文 11-08：「怪癖要上面一點才看的到」）
-      P.quirks.length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), P.quirks.map(q => quirkCard(q))) : null),
+      // 11-09（決定 0027）：卡片上寫要做的那件事、還剩幾分鐘；時間到的不列
+      activeQuirks(P).length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), activeQuirks(P).map(q => quirkCard(q))) : null),
     h("div", { class: "skills placard" }, h("div", { class: "pl-title" }, "技能"),
       SKILLS.map(s => h("div", { class: "skill-row" + (s === main ? " main" : "") },
         h("span", { class: "skill-n" }, s, s === main ? "（拿手）" : ""),

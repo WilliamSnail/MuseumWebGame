@@ -5,9 +5,9 @@
 import { GEN_TEXT } from "../../shared/config.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDateStr, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, setDayClock, todayStr, visitorArrive } from "../../shared/logic.js";
+import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../shared/logic.js";
 import { visitorEvery } from "../../shared/logic3.js";
-import { $, FIT, P, SAVE, UI, applySettings, buildNav, clearHeld, dayMins, go, h, motionOff, note, persist, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
+import { $, FIT, P, SAVE, UI, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
@@ -23,16 +23,17 @@ export function normalizeImages(o) {
 }
 export function tick() {
   if (!P || document.hidden) return;
-  const t = todayStr();
+  const t = todayStr(); // 台灣時間 05:00 換日（決定 0019）
   if (P.day && P.day.date !== t) {
     ensureDay(P, t); UI.pendingRecovery = !isFree(P); UI.pendingGrowth = UI.pendingRecovery; updateStatus();
-    snd("bell"); note(`新的壹天：第 ${pad(gameDayNo(P, dayMins()), 3)} 天。委託換新了，每天的次數也重新算。`, "good");
+    snd("bell"); note(`新的壹天：第 ${pad(gameDayNo(P, t), 3)} 天。委託換新了，每天的次數也重新算。`, "good");
     if (UI.screen === "lobby") dailyRecovery();
   }
-  if (Date.now() - UI.lastInput > 60000) return; // 沒在玩就不算時間
+  quirkTick(); // 怪癖時間到自己消失、剩幾分鐘換字（決定 0027）。照真的時鐘走，沒在玩也算，所以放在下面那行前面
+  updateDayClock(); // 「還有 N 小時換日」每秒更新（沒在玩也照走，換日是照時鐘）
+  if (Date.now() - UI.lastInput > 60000) return; // 沒在玩就不算時間（展廳的參觀者、這一位玩了幾秒）
   P.activeSec++;
   if (P.visit && typeof P.visit.sec === "number") P.visit.sec++; // 這一位玩了幾秒（多位參觀者，11-08；activeSec 是整間博物館的）
-  updateDayClock(); // 「幾分鐘後換天」每秒更新
   if (P.activeSec % visitorEvery(P) === 0) {
     const v = visitorArrive(P);
     if (v) {
@@ -60,7 +61,8 @@ export function boot() {
   if (n) UI.migrated = n;
   persist();
   document.documentElement.style.setProperty("--sil", `url("data:image/svg+xml;utf8,${encodeURIComponent(ART.silhouette)}")`);
-  setDayClock(() => P && dayMins() > 0 ? gameDateStr(P, dayMins()) : null); // 「今天」照遊戲裡的天數走
+  // 「今天」＝台灣時間 05:00 換日，todayStr() 自己算（決定 0019，11-09 拿掉「壹天多長」）。
+  // 「現在」照網路的時間：登入後 net_firebase.js 讀 Firebase 的時間差，setNowClock 換掉（決定 0026）。沒登入之前照電腦的時鐘
   buildNav();
   applySettings();
   document.addEventListener("pointermove", trackGaze, { passive: true });
