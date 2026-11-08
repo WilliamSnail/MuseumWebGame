@@ -311,6 +311,47 @@ T("怕黑：地下收藏庫扣理智時多扣；看懂檢定比較容易", () =>
   G.setRng(null);
 });
 
+// ---------- 退休換人（決定 0025） ----------
+const retiree = () => { const P = fresh(); G.setRng(G.mulberry32(3)); G.assignJob(P, "detective"); G.setRng(null); P.visit.from = G.addDays(G.todayStr(), -G.LEGACY.retireDays); return P; };
+T("退休：館長室要來了 LEGACY.retireDays 天以上；看完結局不用等", () => {
+  const P = retiree();
+  assert.deepStrictEqual(J(G.retireCheck(P, "office")), { ok: true, reason: null });
+  P.visit.from = G.todayStr();
+  const c = J(G.retireCheck(P, "office"));
+  assert.strictEqual(c.ok, false); assert.strictEqual(c.reason, "new"); assert.strictEqual(c.days, G.LEGACY.retireDays);
+  assert.strictEqual(G.retireCheck(P, "ending").ok, true);
+  P.visit.from = null; // 舊存檔不知道哪天來的
+  assert.strictEqual(G.retireCheck(P, "office").ok, true);
+});
+T("退休：燈熄了、正在發作、正在地下、還沒挑職業、自由模式都不行", () => {
+  const why = P => G.retireCheck(P, "ending").reason;
+  let P = retiree(); P.dark = true; assert.strictEqual(why(P), "dark");
+  P = retiree(); P.sanity = 0; assert.strictEqual(why(P), "dark");
+  P = retiree(); P.bout = { i: 1, left: 2 }; assert.strictEqual(why(P), "bout");
+  P = retiree(); P.cellar.run = { floor: 1, idx: 0 }; assert.strictEqual(why(P), "cellar");
+  P = retiree(); P.job = null; assert.strictEqual(why(P), "picking");
+  assert.strictEqual(why(fresh("free")), "free");
+});
+T("退休的結局都有文字；退休走 nextVisitor，牆上記怎麼結束的，理智不用歸零", () => {
+  G.RETIRE_ENDINGS.forEach(id => assert.ok(id === "cellar" ? G.ENDING_CELLAR.title : G.ENDINGS[id] && G.ENDINGS[id].title, id));
+  assert.ok(!G.RETIRE_ENDINGS.includes("russia8"));
+  ["endEnding", "endRetire", "retireBtn", "stayBtn", "retireAsk", "officeAsk1", "officeAsk2", "notNew"].forEach(k => assert.ok(G.LEGACY_TEXT[k], k));
+  const P = retiree(); P.vname = "阿明"; P.sanity = 33; mk(P, {});
+  const r = G.nextVisitor(P, "curator", { type: "skill" });
+  assert.strictEqual(r.entry.endedBy, "curator"); assert.strictEqual(r.entry.where, null); assert.strictEqual(r.entry.name, "阿明");
+  assert.strictEqual(P.history[0].endedBy, "curator");
+  assert.strictEqual(P.visitor, 2); assert.strictEqual(P.sanity, G.NUM.startSanity); assert.ok(P.cands.length);
+  assert.strictEqual(P.legacy.fromName, "阿明"); assert.strictEqual(P.legacy.from, 1);
+});
+T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
+  const P = retiree(); P.vname = "阿明"; const a = mk(P, { 顏色: "藍" });
+  G.nextVisitor(P, "retire", { type: "relic", item: { kind: "pepe", key: a.key } });
+  assert.strictEqual(P.relics[0].name, "阿明"); assert.strictEqual(P.relics[0].n, 1); assert.strictEqual(P.legacy.fromName, "阿明");
+  G.chooseCandidate(P, 0);
+  G.nextVisitor(P, "russia8", { type: "relic", item: { kind: "pepe", key: a.key } }); // 第 2 位沒有取名字
+  assert.strictEqual(P.relics[0].name, null); assert.strictEqual(P.legacy.fromName, null);
+});
+
 // ---------- 真正的 ES 模組也接得上（legacy ⇄ logic ⇄ logic3 互相 import） ----------
 (async () => {
   try {

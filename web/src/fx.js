@@ -2417,6 +2417,12 @@ export const FX = (() => {
     s.raf = raf(tick);
     return s;
   }
+  // 第 4 版（11-08）：外面要收掉導覽（例如換到標題畫面）。正在等的那一步拿到 r（預設 'skip'）
+  function spotlightEnd(r) {
+    if (!spot) return;
+    if (spot.resolve) doneSpot(spot, r || 'skip');
+    else closeSpot(spot);
+  }
   function doneSpot(s, r) {
     if (!s.resolve) return;
     const res = s.resolve;
@@ -2517,6 +2523,7 @@ export const FX = (() => {
     floatText,
     goldDust,
     spotlight,
+    spotlightEnd,
     press,
   });
   return api;
