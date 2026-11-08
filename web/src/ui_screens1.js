@@ -7,13 +7,13 @@ import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD
 import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
+import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
 import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
 import { traitDesc, traitName } from "../../shared/legacy.js";
-import { $, $$, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, pepePlacard, persist, placard, placeTarget, ptNode, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -243,6 +243,8 @@ SCREENS.gallery = (root, params) => {
       h("p", null, icon("hourglass"), h("span", null, "同壹件展品，", h("b", { class: "em" }, `壹天最多再拿 ${g0.perDay}～${gN.perDay} 次靈感`), "（每幅畫底下寫著今天還剩幾次）。")),
       h("p", null, icon("eye"), h("span", null, "同壹天看同壹幅可怕的畫", h("b", { class: "em" }, `超過 ${NUM.habituate} 次`), "，就不怕了（理智只扣 0/1）；", h("b", { class: "em bad" }, "隔天又會怕"), "。"))));
   }
+  const calmCure = !isFree(P) && activeQuirks(P).some(q => q.task === "calm"); // 有怪癖的治法是「看壹幅不可怕的畫」（11-09，決定 0027）
+  if (calmCure) root.append(quirkHereBox("calm"));
   const corridor = h("div", { class: "corridor", tabindex: "0", "aria-label": "走廊，可以左右滑動" });
   EXHIBITS.forEach(e => {
     const ex = exhibitById(e.id);
@@ -254,6 +256,7 @@ SCREENS.gallery = (root, params) => {
       open ? ptNode(ex.title, "ex-title") : h("span", { class: "ex-title" }, "？"),
       open && spec && !isFree(P) ? h("span", { class: "ex-san", title: `看的時候擲 1～100，擲出 ≤ 你的理智就算成功：${sanWords(spec)}` }, `理智 ${sanShort(spec)}`) : null,
       open && !P.seen[ex.id] ? h("span", { class: "ex-new" }, "沒看過") : null,
+      open && calmCure && !ex.san ? h("span", { class: "ex-cure" }, icon("check"), "看了治好怪癖") : null,
       open && !isFree(P) ? exInspLine(ex) : null,
       open && !isFree(P) && ex.san && viewsToday(P, ex) ? h("span", { class: "ex-hab" + (viewsToday(P, ex) > NUM.habituate ? " calm" : "") }, viewsToday(P, ex) > NUM.habituate ? `今天看了 ${viewsToday(P, ex)} 次：已經不怕了` : `今天看了 ${viewsToday(P, ex)} 次（超過 ${NUM.habituate} 次就不怕）`) : null,
       !open ? h("span", { class: "ex-lock" }, icon("lock"), ex.lockedHint || "還沒開放") : null);
@@ -316,6 +319,7 @@ export async function focusExhibit(ex) {
     else if (v.capped) gain(`今天這件的靈感拿完了（壹天 ${galleryInsp(ex).perDay} 次），明天再來`, "");
     if (v.insp && !v.first) gain(reviewsLeft(P, ex) ? `今天這件還能拿 ${reviewsLeft(P, ex)} 次` : "今天這件的靈感拿完了", "");
     if (v.mood) { await wait(300); gain(`心情 ${v.mood > 0 ? "+" : "−"}${Math.abs(v.mood)}`, v.mood > 0 ? "good" : "bad"); }
+    if (v.cured.length) { v.cured.forEach(c => gain(`治好了「${quirkName(c.quirk)}」`, "good")); noteCured(v.cured); snd("unlock"); } // 看了不可怕的畫（決定 0027）
     updateStatus(); persist();
     if (v.san) {
       await wait(700);
@@ -545,7 +549,10 @@ export function rarityRanges() { // 最後壹列是失敗作（NUM.fumbleFrom–
 // 是看畫的理智檢定失敗得到的恐懼症，照規則擋住的，但原本只寫「不敢碰」，看起來像壞掉）
 function afraidText(cat, name, why) {
   if (why && why.kind === "bout") return `恐懼症發作：暫時不敢碰「${name}」，再 ${why.left} 個動作就好。`;
-  if (why && why.kind === "quirk") return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`;
+  if (why && why.kind === "quirk") { // 11-09（決定 0027）：治法是得到時抽的那壹件，不然 20 分鐘後自己消失
+    const cure = quirkCureText(why.quirk);
+    return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。${cure ? `治法：${cure}不然 ` : ""}${quirkLeftText(why.quirk, "n")}後自己消失。`;
+  }
   return `你不敢碰「${name}」。`;
 }
 // 這壹類有不敢碰的：卡片上面壹行說明（不用點也看得到）
@@ -556,11 +563,13 @@ function afraidBar(cat) {
   const byQuirk = blocked.filter(n => { const w = blockedWhy(P, cat, n); return w && w.kind === "quirk"; });
   const byBout = blocked.filter(n => !byQuirk.includes(n));
   const lines = [];
-  if (byQuirk.length) {
-    const q = blockedWhy(P, cat, byQuirk[0]).quirk;
-    const what = !q.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : byQuirk.map(n => `「${n}」`).join("、") + "不敢碰";
-    lines.push(h("span", null, h("b", null, what), `：這是看可怕的東西時理智檢定失敗留下的怪癖。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`));
-  }
+  // 同壹類可能有兩個恐懼症（整類的、單壹選項的），治法各自不同：壹個怪癖壹行（11-09，決定 0027）
+  [...new Set(byQuirk.map(n => blockedWhy(P, cat, n).quirk))].forEach(q => {
+    const mine = byQuirk.filter(n => blockedWhy(P, cat, n).quirk === q);
+    const what = !q.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : mine.map(n => `「${n}」`).join("、") + "不敢碰";
+    const cure = quirkCureText(q);
+    lines.push(h("span", null, h("b", null, what), `：這是看可怕的東西時理智檢定失敗留下的「${quirkName(q)}」。`, cure ? `治法：${cure}不然 ` : "", quirkLeftNode(q, "n"), "後自己消失。"));
+  });
   if (byBout.length) lines.push(h("span", null, h("b", null, byBout.map(n => `「${n}」`).join("、") + "不敢碰"), `：恐懼症發作中，再 ${P.bout ? P.bout.left : 1} 個動作就好。`));
   return h("div", { class: "afraid-bar", role: "note" }, icon("eye"), h("div", { class: "afraid-lines" }, lines));
 }

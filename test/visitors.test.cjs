@@ -22,7 +22,7 @@ const museum = P => J({ insp: P.insp, pepes: P.pepes, unlocked: P.unlocked, upgr
 function withFirst() {
   const P = fresh(); P.insp = 100;
   G.setRng(G.mulberry32(11)); G.assignJob(P, "detective"); G.setRng(null);
-  P.vname = "阿明"; P.myth = 4; P.mythFrom = { "book:b1": 4 }; P.quirks = [{ type: "mania", cat: "顏色", opt: "紅" }]; P.sanity = 31; P.mood = 62;
+  P.vname = "阿明"; P.myth = 4; P.mythFrom = { "book:b1": 4 }; P.quirks = [{ type: "mania", cat: "顏色", opt: "紅", since: DAY, until: G.nowMs() + 10 * 60000, task: "hug" }]; P.sanity = 31; // 怪癖是 11-09 的格式（有 until、task，決定 0027），存檔讀回來才會一樣 P.mood = 62;
   P.skillTicks = { 觀察: true }; P.hugDays = ["2026-11-07"]; P.oddSeen = { talk: DAY }; P.swapNext = true; P.bout = { id: 3, left: 2 };
   P.cellar.run = { floor: 2, room: 1, team: ["x"] }; P.visit.deepest = 2;
   return P;

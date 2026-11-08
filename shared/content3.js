@@ -772,3 +772,13 @@ export const VISITOR_TEXT = {
   renamed: "改好了：「{name}」。",
   full: "位子都滿了。",
 };
+
+// ----- 怪癖的治法：做完壹件事就好，沒做的話 20 分鐘後自己消失（決定 0027） -----
+// 翊文 11-08：「或連續 3 天去抱抱枕 這個太久了，現在改成20分鐘內只要完成某樣事情就可以了」
+// 得到怪癖時，從現在做得到的裡面抽壹件（shared/logic.js 的 pickQuirkTask）。
+//   act：要做的事；chip：狀態列上的短版；where：在哪個房間；hint：再說清楚壹點（{x} 換成不可怕的畫的名字）
+export const QUIRK_TASK_TEXT = {
+  hug: { act: "抱壹次抱枕", chip: "抱抱枕", where: "抱枕工作台", hint: "今天還沒抱過的抱枕都可以，按住抱壹下。" },
+  deliver: { act: "交壹張委託", chip: "交委託", where: "委託櫃台", hint: "櫃台上哪壹張都可以，壹鍵交件也算。" },
+  calm: { act: "看壹幅不可怕的畫", chip: "看不可怕的畫", where: "畫廊", hint: "不用理智檢定的畫都可以，例如{x}。" },
+};

@@ -28,7 +28,7 @@
 // ================================================================
 import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
 import { TRAIT_TEXT } from "./content3.js";
-import { asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
+import { RNG, activeQuirks, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
 import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
 
 // ---------- 小優點、小缺點 ----------
@@ -92,7 +92,7 @@ export function visitorRecord(P, endedBy) {
     mins: typeof v.sec === "number" ? Math.round(v.sec / 60) : typeof v.sec0 === "number" ? Math.max(0, Math.round(((P.activeSec || 0) - v.sec0) / 60)) : null,
     myth: P.myth || 0,
     best: bestSkill(P),
-    quirks: asList(P.quirks).map(q => ({ type: q.type, cat: q.cat, opt: q.opt || null })),
+    quirks: activeQuirks(P).map(q => ({ type: q.type, cat: q.cat, opt: q.opt || null })), // 時間到的不算（決定 0027）
     got: P.legacy ? Object.assign({}, P.legacy) : null,
     left: null,
     name: P.vname || null, // 多位參觀者（11-08）：玩家取的名字；以前的紀錄沒有

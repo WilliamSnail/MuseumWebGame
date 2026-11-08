@@ -20,7 +20,7 @@
 //  純函式：只改傳進來的 P，亂數用 RNG（rollExpr 裡）。
 // ================================================================
 import { LEGACY, NUM } from "./config.js";
-import { asList, isFree, rollExpr } from "./logic.js";
+import { asList, fixQuirks, isFree, rollExpr } from "./logic.js";
 import { newVisit, traitById } from "./legacy.js";
 
 // 「這一位的」欄位（維護日誌 11-08_翊文_參觀者繼承.md 的欄位表，加上 vid、vname、slot、hugDays、oddSeen、cands）。
@@ -155,6 +155,7 @@ function fixPack(P, v) {
   Object.keys(b).forEach(k => { if (v[k] === undefined) v[k] = b[k]; });
   ["mythFrom", "skillTicks", "oddSeen"].forEach(k => { if (!isObj(v[k])) v[k] = {}; });
   ["quirks", "hugDays", "moodRoll"].forEach(k => { if (!Array.isArray(v[k])) v[k] = []; });
+  v.quirks = fixQuirks(v.quirks); // 怪癖的 until、task（11-09，決定 0027）：不在場的也從載入這一刻起算
   ["sanity", "mood", "myth"].forEach(k => { if (typeof v[k] !== "number" || !isFinite(v[k])) v[k] = b[k]; });
   if (!isObj(v.visit)) v.visit = { from: null, sec0: null, made0: 0, deepest: 0, understood: {}, where: null };
   if (!isObj(v.visit.understood)) v.visit.understood = {};

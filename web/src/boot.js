@@ -7,7 +7,7 @@ import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDateStr, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, setDayClock, todayStr, visitorArrive } from "../../shared/logic.js";
 import { visitorEvery } from "../../shared/logic3.js";
-import { $, FIT, P, SAVE, UI, applySettings, buildNav, clearHeld, dayMins, go, h, motionOff, note, persist, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
+import { $, FIT, P, SAVE, UI, applySettings, buildNav, clearHeld, dayMins, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
@@ -29,6 +29,7 @@ export function tick() {
     snd("bell"); note(`新的壹天：第 ${pad(gameDayNo(P, dayMins()), 3)} 天。委託換新了，每天的次數也重新算。`, "good");
     if (UI.screen === "lobby") dailyRecovery();
   }
+  quirkTick(); // 怪癖時間到自己消失、剩幾分鐘換字（決定 0027）。照真的時鐘走，沒在玩也算，所以放在下面那行前面
   if (Date.now() - UI.lastInput > 60000) return; // 沒在玩就不算時間
   P.activeSec++;
   if (P.visit && typeof P.visit.sec === "number") P.visit.sec++; // 這一位玩了幾秒（多位參觀者，11-08；activeSec 是整間博物館的）

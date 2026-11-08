@@ -13,7 +13,7 @@ const unexport = t => t.replace(/^export\s+/gm, ""); // 第 4 版：拿掉 expor
 const src3 = unexport(raw3);
 
 const NAMES = ["JOBS", "SKILL_TEXT", "JOB_TEXT", "FUSION_TEXT", "RECIPE_TEXT", "UPGRADE_TEXT", "CELLAR", "CHAPTER4", "BOOK4",
-  "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT"]; // VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
+  "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT", "QUIRK_TASK_TEXT"]; // QUIRK_TASK_TEXT：怪癖的治法（11-09，決定 0027）；VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
 
 const errors = [], warns = [];
 const err = (m) => errors.push(m);
@@ -136,12 +136,15 @@ keysExactly(C.FUSION_TEXT, ["intro", "empty", "ready", "sanSub", "mutate", "reci
 }
 
 // ---- {x} placement ----
-const NEEDS_X = ["JOB_TEXT.growth", "FUSION_TEXT.mutate", "FUSION_TEXT.recipe", "TRADE_TEXT.receive"];
+const NEEDS_X = ["JOB_TEXT.growth", "FUSION_TEXT.mutate", "FUSION_TEXT.recipe", "TRADE_TEXT.receive", "QUIRK_TASK_TEXT.calm.hint"];
 for (const [p, s] of strings) {
   const has = /\{x\}/.test(s);
   if (NEEDS_X.includes(p) && !has) err(p + " needs {x}");
   if (!NEEDS_X.includes(p) && has && !NAMED_OK.test(p)) err("{x} in unexpected place " + p);
 }
+// ---- QUIRK_TASK_TEXT：怪癖的治法，每種都要有四句（11-09，決定 0027；種類跟 logic.js 的 QUIRK_TASKS 一樣） ----
+keysExactly(C.QUIRK_TASK_TEXT, ["hug", "deliver", "calm"], "QUIRK_TASK_TEXT");
+for (const k of ["hug", "deliver", "calm"]) keysExactly(C.QUIRK_TASK_TEXT[k], ["act", "chip", "where", "hint"], "QUIRK_TASK_TEXT." + k);
 // ---- TRAIT_TEXT：跟 config.js 的 PERKS、FLAWS 一一對上；{欄位名} 要是那個優缺點有的欄位（11-08） ----
 {
   const T = vm.runInContext("({ PERKS: typeof PERKS !== 'undefined' ? PERKS : null, FLAWS: typeof FLAWS !== 'undefined' ? FLAWS : null })", ctx);
