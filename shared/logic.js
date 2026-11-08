@@ -8,7 +8,7 @@ import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_PART
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, QUIRK_TEXT, STORY_CHAPTERS, VISITOR_COMMENTS } from "./content.js";
 import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
 import { hallSize, hasTalent, hasUp, sequelEvents, skillCheck } from "./logic3.js";
-import { fixLegacy, leaveLegacy, newVisit, rollCandidates, traitSum, visitorRecord } from "./legacy.js";
+import { fixLegacy, leaveLegacy, newVisit, traitSum, visitorRecord } from "./legacy.js";
 import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./visitors.js";
 
 export let RNG = Math.random;
@@ -27,28 +27,58 @@ export const pad = (n, w = 4) => String(n).padStart(w, "0");
 export const clampN = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 export const asList = v => Array.isArray(v) ? v : v ? [v] : [];
 export const pickOne = (arr, rng = RNG) => arr[Math.floor(rng() * arr.length)];
-// ---------- 遊戲裡的壹天（翊文 11-08：「壹天改成每 15 分鐘」） ----------
-// 畫面那邊用 setDayClock 設定「今天」是遊戲裡的哪壹天；沒設定（測試、真實日期模式）就用電腦的日期
+// ---------- 現在幾點：照網路上的時間（決定 0026） ----------
+// 翊文 11-09：「遊戲裡的內容也是跟著那網路抓取的真實時間時間」。大家同步，改電腦的時間也沒用。
+// 規則裡要「現在」一律用 nowMs()，不要直接 Date.now()。
+// 畫面登入連上 Realtime Database 之後，net_firebase.js 用 setNowClock(() => Date.now() + 伺服器的時間差) 換成網路的時間；
+// 還沒拿到之前（還沒登入、測試、模擬）照這台電腦的時鐘。畫面上動畫的計時（setTimeout、多久沒動）不用它。
+// 怪癖的 20 分鐘（決定 0027）、換日（決定 0019）都用它；測試用 setNowClock 換時鐘（傳 null 換回電腦的時鐘）。
+export let NOW_CLOCK = null;
+export function setNowClock(fn) { NOW_CLOCK = fn || null; }
+export function nowMs() {
+  if (NOW_CLOCK) { const t = NOW_CLOCK(); if (Number.isFinite(t)) return t; }
+  return Date.now();
+}
+// ---------- 一天：台灣時間 05:00 換日，週一 05:00 換週（決定 0019） ----------
+// 翊文 11-08：「壹天多長 全部都要是真實的壹天」「這樣才能全部同步」。以前是「玩 15 分鐘一天」（決定 0003，被 0019 取代）。
+// 大家的一天都一樣：瀏覽器、伺服器、Functions 都用這裡的算法。
+// 規則和測試不碰真的時鐘：要算哪一天就把時間（毫秒）傳進去，或直接傳日期字串給 ensureDay 這些。
+export const TZ_HOURS = 8;        // 台灣是 UTC+8
+export const DAY_START_HOUR = 5;  // 台灣時間幾點換日
+export const DAY_MS = 86400000;   // 一天幾毫秒
+// ms：從 1970 算起的毫秒（例如伺服器的 Date.now()）。凌晨 00:00–04:59 還算前一天。回傳 "YYYY-MM-DD"
+export function taipeiDay(ms) {
+  if (typeof ms !== "number" || !isFinite(ms)) throw new Error("taipeiDay 要給毫秒數（伺服器的時間）");
+  return new Date(ms + (TZ_HOURS - DAY_START_HOUR) * 3600000).toISOString().slice(0, 10);
+}
+// 「今天」也可以直接給日期字串：setDayClock(() => "YYYY-MM-DD")（測試、之後要伺服器直接給日期時用）。
+// 沒設定就照 nowMs()（登入後是網路的時間）算台灣的哪一天。現在畫面沒有用 setDayClock
 export let DAY_CLOCK = null;
 export function setDayClock(fn) { DAY_CLOCK = fn || null; }
-export function realTodayStr(d = new Date()) { return `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`; }
-export function todayStr(d) {
-  if (!d && DAY_CLOCK) { const s = DAY_CLOCK(); if (s) return s; }
-  return realTodayStr(d || new Date());
+// 今天是哪一天。t：不給＝現在（nowMs）；給毫秒數或 Date＝那個時間是台灣的哪一天（不看 setDayClock）
+export function todayStr(t) {
+  if (t == null && DAY_CLOCK) { const s = DAY_CLOCK(); if (s) return s; }
+  return taipeiDay(t == null ? nowMs() : +t);
 }
+// 公佈欄、信箱用的「真的日期」。11-09 起跟 todayStr 一樣（以前 todayStr 是遊戲裡的日期），兩個不能不一樣
+export function realTodayStr(t) { return todayStr(t); }
 export function daysBetween(a, b) { const f = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); }
-// 第幾天：mins ＞ 0 ＝ 玩了幾個「mins 分鐘」（只算真的在玩的時間）；mins ＝ 0 ＝ 真實日期，從建立這位參觀者那天算起
-export function gameDayNo(P, mins) {
-  if (mins > 0) return 1 + Math.floor((P.activeSec || 0) / (mins * 60));
-  return 1 + Math.max(0, daysBetween(P.created || realTodayStr(), realTodayStr()));
+// 第幾天：從這間博物館建立那天（P.created，第一次進館那天）算第 1 天。today 不給就用 todayStr()
+export function gameDayNo(P, today) {
+  const t = typeof today === "string" ? today : todayStr();
+  const n = daysBetween(P && typeof P.created === "string" ? P.created : t, t);
+  return 1 + (n > 0 ? n : 0);
 }
-// 遊戲裡第 N 天的日期字串：建立參觀者那天＋N−1 天（壹定往後走，規則裡比日期先後的地方都對）
-export function gameDateStr(P, mins) { return addDays(P.created || realTodayStr(), gameDayNo(P, mins) - 1); }
-// 離下壹天還有幾秒（只算在玩的時間）
-export function secToNextDay(P, mins) { return mins > 0 ? mins * 60 - ((P.activeSec || 0) % (mins * 60)) : null; }
+// 離下一次換日（台灣時間 05:00）還有幾秒。ms 不給＝現在（nowMs）
+export function secToNextDay(ms) {
+  const t = ms == null ? nowMs() : +ms;
+  const into = (((t + (TZ_HOURS - DAY_START_HOUR) * 3600000) % DAY_MS) + DAY_MS) % DAY_MS; // 今天（從 05:00 起）過了幾毫秒
+  return Math.ceil((DAY_MS - into) / 1000);
+}
+// "YYYY-MM-DD" 往後 n 天（用 UTC 算，不受電腦的時區影響）
 export function addDays(dateStr, n) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return todayStr(new Date(y, m - 1, d + n));
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 export function fill(t, x) { return String(t).split("{x}").join(x); }
 export function b64e(s) {
@@ -200,8 +230,8 @@ export function newProfile(mode) {
     unlocked, unlockCount: 0,
     pepes: {}, failed: {}, pillows: {}, serial: 0,
     seen: {}, chaptersRead: {}, mythFrom: {}, understood: {},
-    day: null, hugDays: [], badges: {}, done: 0, comments: [],
-    daily: null, quirks: [], bout: null, swapNext: false, dark: false,
+    day: null, hugDays: [], badges: {}, done: 0, comments: [], // hugDays：11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027）；舊存檔有，先留著
+    daily: null, quirks: [], bout: null, swapNext: false, dark: false, // quirks：{ type, cat, opt, since, until, task }，見 gainQuirk
     hall: [null, null, null, null, null, null], hallVisitors: 0, visitorLog: [], themesSeen: {},
     endings: {}, fullRows: {}, news: { gallery: true },
     wsPick: Object.assign({}, DEFAULT_PICK), plPick: { 尺寸: "標準", 材質: "棉布", 填充: "剛剛好" }, plPrint: "",
@@ -212,7 +242,8 @@ export function newProfile(mode) {
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
     // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
     fresh: {},
-    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點、還沒挑的候選人、前一位留下的、遺物櫃、這一位自己的統計
+    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
+    //   cands 是以前「3 位候選人」還沒挑的，0028 以後一直是 null（舊存檔裡有的留著，選職業時清掉）
     perk: null, flaw: null, cands: null, legacy: null, relics: [],
     visit: { from: todayStr(), sec0: 0, made0: 0, deepest: 0, understood: {}, where: null, made: 0, sec: 0 },
     // 第 4 版（11-08 翊文）：一個帳號最多 3 位參觀者、共用博物館（shared/visitors.js，決定 0018）。自由模式沒有位子
@@ -224,12 +255,41 @@ export const maxSan = P => 99 - P.myth;
 
 export function ensureDay(P, date = todayStr()) {
   if (P.day && P.day.date === date) return null;
+  const back = rewindDays(P, date); // 舊存檔的日期比今天晚（以前 15 分鐘一天）：先拉回來
   const firstEver = !P.day;
   P.day = { date, startSan: P.sanity, lost: 0, exLoss: {}, reviews: {}, views: {}, moodFx: {}, hugs: {}, mini: {}, diff: {}, quirkGiven: false,
     fusions: 0, pairs: {}, rerolls: 0, hints: {} };
   // 地下收藏庫受的傷，時間到了自己好
   Object.keys(P.injured || {}).forEach(k => { if (P.injured[k] <= date) delete P.injured[k]; });
-  return { firstEver };
+  return { firstEver, back };
+}
+// ---------- 舊存檔：遊戲裡的日期跑到今天後面 ----------
+// 11-09 以前一天是「玩 15 分鐘」，遊戲裡的日期可能比真的日期晚好幾天。改成真實的一天之後，時間等於往回走。
+// ensureDay 碰到「P.day.date 比今天晚」時叫這個。做完之後 P.day 會重開成今天（ensureDay 接著做），所以只會做一次。
+// 回傳往回拉了幾天（0 ＝不用拉）。怎麼拉、為什麼（維護日誌 11-09_翊文_真實的一天.md）：
+//   - 今天當成新的一天：每天的次數重新算（ensureDay 重開 P.day），進館照常擲心情恢復、技能成長。
+//   - 受傷（P.injured 的「好的那天」）：剩幾天就還是幾天，整個往前移。不然要等好幾天、甚至好幾個月才好。
+//   - hugDays（現在這位和不在場那幾位的）：整串往前移。11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027），舊存檔有的照樣移，不會壞。
+//   - 這一位哪天來的（現在這位和不在場那幾位的 visit.from）：一樣往前移，舊的最後一天變成昨天。館長室退休要「來了 1 天以上」（決定 0025，retireCheck），不移的話要等好幾天。
+//   - 今天的委託（P.daily）：作廢，照今天重抽。舊的委託日期可能剛好等於今天，會變成「今天的委託都做完了」。
+//   - 不在場那幾位的 dayVis（那天掉了多少理智）：作廢，換回來時照新的一天算。理由同上（日期可能剛好等於今天）。
+//   - P.created（第 N 天從這天算）比今天晚：改成今天。比今天早的不動（那是真的建立的那天）。
+//   - 其他日期（鑰匙、收藏的 d、地下的 floorsDone、配方、怪癖的 since、徽章……）只是紀錄，規則只看有沒有，不看先後，不動。
+//   - 每週特展（P.weekly）：週的號碼對不上就照這週重來（weeklyState 本來就這樣），不用另外處理。
+export function rewindDays(P, today) {
+  if (!P || !P.day || typeof P.day.date !== "string" || typeof today !== "string") return 0;
+  const ahead = daysBetween(today, P.day.date);
+  if (!(ahead > 0)) return 0;
+  const isDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  if (P.injured && typeof P.injured === "object") Object.keys(P.injured).forEach(k => { if (isDay(P.injured[k])) P.injured[k] = addDays(P.injured[k], -ahead); });
+  const hugBack = list => asList(list).filter(isDay).map(s => addDays(s, -(ahead + 1)));
+  P.hugDays = hugBack(P.hugDays);
+  const fromBack = v => { if (v && v.visit && typeof v.visit === "object" && isDay(v.visit.from)) v.visit.from = addDays(v.visit.from, -(ahead + 1)); };
+  fromBack(P);
+  asList(P.visitors).forEach(v => { if (v && typeof v === "object") { v.hugDays = hugBack(v.hugDays); v.dayVis = null; fromBack(v); } });
+  P.daily = null;
+  if (!isDay(P.created) || P.created > today) P.created = today;
+  return ahead;
 }
 // 每天第一次打開：擲 d100，比心情大就 +1D10（CoC 的幸運恢復）
 export function moodRecovery(P) {
@@ -316,10 +376,19 @@ export function mythUnlocks(P) {
 }
 
 // ---------- 恐懼症讓選項不能用 ----------
+// 為什麼不敢碰（翊文 11-08：「看了一幅畫之後其他本來解開的就還不能點，看看是不是有問題」：
+// 是恐懼症照規則擋的，但畫面沒說為什麼，看起來像壞掉）。回傳 { kind: "quirk", quirk } 或 { kind: "bout", left }，沒擋就 null
+// 時間到的怪癖（決定 0027）就不擋了，就算還沒被 expireQuirks 拿掉
+export function blockedWhy(P, cat, name) {
+  const q = activeQuirks(P).find(x => x.type === "phobia" && x.cat === cat && (x.opt ? x.opt === name : name !== baseOpts(cat)[0]));
+  if (q) return { kind: "quirk", quirk: q };
+  if (P.bout && P.bout.i === 8 && P.bout.cat === cat && P.bout.opt === name) return { kind: "bout", left: P.bout.left };
+  return null;
+}
 export function blockedSet(P) {
   const b = {};
   const add = (c, n) => { (b[c] = b[c] || new Set()).add(n); };
-  P.quirks.filter(q => q.type === "phobia").forEach(q => {
+  activeQuirks(P).filter(q => q.type === "phobia").forEach(q => {
     if (q.opt) add(q.cat, q.opt);
     else allOpts(q.cat).filter(n => n !== baseOpts(q.cat)[0]).forEach(n => add(q.cat, n));
   });
@@ -335,7 +404,7 @@ export function possibilities(P) { return CATS.reduce((n, c) => n * usable(P, c)
 export function pillowPossibilities(P) { return PILLOW_TOTAL * (Object.keys(P.pepes).length + Object.keys(P.failed).length); }
 
 // ---------- 系統 B：做佩佩、擲稀有度 ----------
-export function maniaQuirk(P) { return P.quirks.find(q => q.type === "mania"); }
+export function maniaQuirk(P) { return activeQuirks(P).find(q => q.type === "mania"); }
 export function makeCost(P, pick) {
   if (isFree(P)) return 0;
   let c = NUM.costPepe;
@@ -496,7 +565,11 @@ export function involuntary(P) {
   if (id === "swap") P.swapNext = true;
   return id;
 }
-// 不定性瘋狂：得到一個長期怪癖
+// 不定性瘋狂：得到一個怪癖。
+// 治法（決定 0027，翊文 11-08：「做完一件事情就好，20分鐘後負面怪癖會自己消失」；恐懼症、狂熱都算負面，理由見決定 0027）：
+//   q.task  得到時從「現在做得到的」抽一件（pickQuirkTask）：做完就好。都做不到時是 null，只能等時間到
+//   q.until 得到那一刻（nowMs）＋ NUM.quirkMinutes 分鐘：時間到自己消失（真的時鐘，關掉遊戲也在走）
+// 原本的「連續 3 天抱抱枕」、委託櫃台的「治療委託」都拿掉了：「交一張委託」就是原本的治療委託，併成同一件
 export function gainQuirk(P) {
   const cats = CATS.filter(c => c !== ROLLED);
   const type = RNG() < 0.5 ? "phobia" : "mania";
@@ -507,24 +580,97 @@ export function gainQuirk(P) {
   } else {
     cats.forEach(c => usable(P, c).forEach(n => cands.push({ cat: c, opt: n })));
   }
-  const used = new Set(P.quirks.map(q => q.type + q.cat + q.opt));
+  const now = nowMs();
+  const used = new Set(activeQuirks(P, now).map(q => q.type + q.cat + q.opt));
   const left = cands.filter(q => !used.has(type + q.cat + q.opt));
   if (!left.length) return null;
   const before = possibilities(P);
-  const q = Object.assign({ type, since: todayStr() }, pickOne(left));
+  const q = Object.assign({ type, since: todayStr() }, pickOne(left), { until: now + quirkSpan(), task: null });
   P.quirks.push(q);
-  if (P.daily) { const c = P.daily.list.find(x => !x.done); if (c && !P.daily.list.some(x => x.cure && !x.done)) c.cure = true; }
+  q.task = pickQuirkTask(P); // 放進去之後才挑：新的恐懼症擋住的選項，委託也做不出來
   return { quirk: q, from: before, to: possibilities(P) };
 }
 export function quirkName(q) {
   const x = q.opt ? (q.cat === "顏色" ? q.opt + "色" : q.opt) : q.cat;
   return fill(QUIRK_TEXT[q.type].name, x);
 }
-export function cureQuirk(P) {
-  if (!P.quirks.length) return null;
+// 治好一個怪癖（q 沒給就是第一個）。回傳 { quirk, from, to }（可能性前後），沒有就 null
+export function cureQuirk(P, q) {
+  const list = Array.isArray(P.quirks) ? P.quirks : [];
+  const i = q ? list.indexOf(q) : 0;
+  if (i < 0 || !list.length) return null;
   const before = possibilities(P);
-  const q = P.quirks.shift();
-  return { quirk: q, from: before, to: possibilities(P) };
+  const gone = list.splice(i, 1)[0];
+  return { quirk: gone, from: before, to: possibilities(P) };
+}
+
+// ---------- 怪癖：做完一件事就好，不然 NUM.quirkMinutes 分鐘後自己消失（決定 0027） ----------
+// 治療的事有三種（文字在 content3.js 的 QUIRK_TASK_TEXT）：
+//   hug      抱一次抱枕：hug() 抱成功
+//   deliver  交一張委託：deliver() 交成功（一鍵交件也算，因為它也是一張一張 deliver）
+//   calm     看一幅不可怕的畫：viewExhibit() 看了不用理智檢定的畫（ex.san 沒寫的）
+// 要加一種：這裡加名字、quirkTaskOk 加「現在做不做得到」、那個動作的函式叫 cureByTask、QUIRK_TASK_TEXT 加文字、test/content/check3.cjs 加 key
+export const QUIRK_TASKS = ["hug", "deliver", "calm"];
+export const quirkSpan = () => NUM.quirkMinutes * 60000;
+// 還沒過期（沒有 until 的當成還沒過期：測試、舊存檔在 fixQuirks 補上之前）
+export const quirkLive = (q, now = nowMs()) => !!q && !(typeof q.until === "number" && q.until <= now);
+export const activeQuirks = (P, now = nowMs()) => asList(P && P.quirks).filter(q => quirkLive(q, now));
+// 還剩幾分鐘（無條件進位：還剩 30 秒寫 1 分鐘）；過期是 0
+export function quirkMinsLeft(q, now = nowMs()) {
+  if (!q || typeof q.until !== "number" || !Number.isFinite(q.until)) return NUM.quirkMinutes;
+  return Math.max(0, Math.ceil((q.until - now) / 60000));
+}
+// 開放的、不用理智檢定的畫（「看一幅不可怕的畫」）
+export function calmExhibits(P) { return EXHIBITS.map(e => exhibitById(e.id)).filter(ex => ex && !ex.san && exhibitOpen(P, ex)); }
+// 這件事現在做不做得到（20 分鐘內）。抽治法時只抽做得到的
+export function quirkTaskOk(P, kind) {
+  if (!P || isFree(P)) return false;
+  if (kind === "hug") return !!P.day && Object.keys(P.pillows || {}).some(k => !(P.day.hugs || {})[k]); // 有今天還沒抱過的抱枕
+  if (kind === "deliver") {
+    if (!P.day) return false;
+    if (autoDeliverables(P).length) return true; // 收藏裡已經有交得出去的
+    // 或是做一隻就交得出去：不挑稀有度、不要完美作品、不要失敗作，選項沒被擋住，靈感夠做一隻（狂熱時最多多花 1）
+    return dailyCommissions(P, P.day.date).some(c => {
+      const n = c.need || {};
+      return !c.done && c.kind !== "pillow" && !n.perfect && !n.failed && !(ROLLED in n) && needSatisfiable(P, c) && P.insp >= NUM.costPepe + 1;
+    });
+  }
+  if (kind === "calm") return calmExhibits(P).length > 0;
+  return false;
+}
+// 抽一件治法（RNG）：跟別的怪癖不一樣的優先，都一樣就隨便抽；都做不到回傳 null
+export function pickQuirkTask(P) {
+  const ok = QUIRK_TASKS.filter(k => quirkTaskOk(P, k));
+  if (!ok.length) return null;
+  const taken = new Set(activeQuirks(P).map(q => q.task));
+  const fresh = ok.filter(k => !taken.has(k));
+  return pickOne(fresh.length ? fresh : ok);
+}
+// 做了一件事：治法是這件事、還沒過期的怪癖都治好。回傳 [{ quirk, from, to }]（沒有就是空的）
+export function cureByTask(P, kind, now = nowMs()) {
+  const out = [];
+  activeQuirks(P, now).filter(q => q.task === kind).forEach(q => { const r = cureQuirk(P, q); if (r) out.push(r); });
+  return out;
+}
+// 時間到的拿掉。回傳拿掉的 [{ quirk }]（畫面每秒叫一次，有拿掉就跳提示；之後伺服器也叫這個）
+export function expireQuirks(P, now = nowMs()) {
+  if (!P || !Array.isArray(P.quirks)) return [];
+  const gone = P.quirks.filter(q => !quirkLive(q, now));
+  if (!gone.length) return [];
+  P.quirks = P.quirks.filter(q => quirkLive(q, now));
+  return gone.map(q => ({ quirk: q }));
+}
+// 舊存檔補欄位（fixProfile、visitors.js 的 fixPack 叫）：
+//   - 沒有 until（11-09 以前的怪癖）：從載入那一刻起算 NUM.quirkMinutes 分鐘
+//   - until 比「現在＋NUM.quirkMinutes 分鐘」還晚（電腦時鐘被往回調過）：拉回來
+//   - 沒有 task：補「交一張委託」（原本的治法是交「治療委託」，最接近）；task 是 null（得到時都做不到）就留著 null
+export function fixQuirks(list, now = nowMs()) {
+  return asList(list).filter(q => q && typeof q === "object" && !Array.isArray(q)).map(q => {
+    const out = Object.assign({}, q);
+    if (typeof out.until !== "number" || !Number.isFinite(out.until) || out.until > now + quirkSpan()) out.until = now + quirkSpan();
+    if (out.task !== null && !QUIRK_TASKS.includes(out.task)) out.task = "deliver";
+    return out;
+  });
 }
 // 半價：花「掉的理智 ×2」的心情，把這次掉的理智減半（理智檢定本身不能花心情）
 export const halveCost = loss => loss * 2;
@@ -533,8 +679,8 @@ export const halved = loss => Math.ceil(loss / 2);
 // 第 4 版（11-08 翊文，roguelike 的繼承，規則在 shared/legacy.js）：
 //   leave ＝這一位留給下一位的東西：{ type: "relic", item: { kind, key } }、{ type: "skill" }，或 null（A）
 //   這一位的紀錄多記了優缺點、做了幾隻、地下走到第幾層、看懂幾件、留了什麼（D）
-//   新的一位先不選職業：P.cands 放 3 位候選人，畫面那邊用 chooseCandidate 挑（C）
-// 回傳心情的骰子（跟以前一樣），另外帶 entry（這一位的紀錄）、left（留給下一位的）、cands（候選人）
+//   新的一位先不選職業：畫面那邊從 6 個職業選，再抽小優點、小缺點（legacy.js 的 chooseJob；決定 0028，以前是從 3 位候選人挑）
+// 回傳心情的骰子（跟以前一樣），另外帶 entry（這一位的紀錄）、left（留給下一位的）
 export function nextVisitor(P, endedBy = "russia8", leave = null) {
   P.history = asList(P.history);
   const entry = visitorRecord(P, endedBy);
@@ -551,13 +697,13 @@ export function nextVisitor(P, endedBy = "russia8", leave = null) {
   // 以前是整個 P.day 重來，換人就多拿一輪每天的次數
   if (!P.day) ensureDay(P);
   Object.assign(P.day, freshDayVis(P));
-  // 同一個位子換人（visitors.js）：新的編號、還沒取名字；連續抱抱枕、怪事的旁白是這一位的，重來
+  // 同一個位子換人（visitors.js）：新的編號、還沒取名字；怪事的旁白是這一位的，重來（hugDays 11-09 起不用了，照樣清掉）
   if (hasSlots(P)) { P.vid = "v" + P.visitor; P.vname = null; }
   P.hugDays = []; P.oddSeen = {};
   P.perk = null; P.flaw = null; P.legacy = left;
   P.visit = newVisit(P);
-  P.cands = rollCandidates(P);
-  return Object.assign(r, { entry, left, cands: P.cands });
+  P.cands = null;
+  return Object.assign(r, { entry, left });
 }
 
 // ---------- 畫廊、起源室 ----------
@@ -601,7 +747,7 @@ export function viewExhibit(P, ex) {
   const first = !P.seen[ex.id];
   P.seen[ex.id] = (P.seen[ex.id] || 0) + 1;
   if (P.day) { P.day.views = P.day.views || {}; P.day.views[ex.id] = (P.day.views[ex.id] || 0) + 1; }
-  const out = { first, insp: 0, mood: 0, myth: 0, san: null, events: [] };
+  const out = { first, insp: 0, mood: 0, myth: 0, san: null, events: [], cured: [] };
   if (isFree(P)) return out;
   const gi = galleryInsp(ex);
   if (first) out.insp = gi.first;
@@ -614,6 +760,7 @@ export function viewExhibit(P, ex) {
   }
   if (ex.myth && !P.mythFrom[ex.id]) { P.mythFrom[ex.id] = true; out.myth = ex.myth; }
   out.san = sanSpecFor(P, ex);
+  if (!ex.san) out.cured = cureByTask(P, "calm"); // 看了不可怕的畫：治法是這件的怪癖治好（決定 0027）
   return out;
 }
 export function addMyth(P, n) {
@@ -671,31 +818,16 @@ export function makePillow(P, pick, print) {
   return { ok: true, key, isNew, free: lucky, events: progressEvents(P) };
 }
 export function hug(P, key) {
-  if (isFree(P)) return { ok: true, gain: 0, free: true };
+  if (isFree(P)) return { ok: true, gain: 0, free: true, cured: [] };
   if (P.day.hugs[key]) return { ok: false, already: true };
   P.day.hugs[key] = true;
   const { print } = parsePillowKey(key);
   const happy = print && print.pick.心情 === "開心";
   const roll = rollExpr(happy ? NUM.hugHappy : NUM.hug);
   const gain = gainSan(P, roll.total);
-  const today = P.day.date;
-  if (!P.hugDays.includes(today)) P.hugDays.push(today);
-  P.hugDays = P.hugDays.slice(-7);
-  let cured = null;
-  if (P.quirks.length) {
-    let streak = 1;
-    while (P.hugDays.includes(addDays(today, -streak))) streak++;
-    if (streak >= NUM.quirkCureDays) { cured = cureQuirk(P); P.hugDays = []; }
-  }
+  // 治法是「抱一次抱枕」的怪癖治好（決定 0027；原本是連續 3 天抱抱枕，P.hugDays、hugStreak 拿掉了）
+  const cured = cureByTask(P, "hug");
   return { ok: true, roll, gain, happy, cured };
-}
-// 連續幾天有抱抱枕（今天還沒抱就從昨天算）
-export function hugStreak(P) {
-  if (!P.day) return 0;
-  const t = P.day.date, from = P.hugDays.includes(t) ? 0 : 1;
-  let s = 0;
-  while (P.hugDays.includes(addDays(t, -(from + s)))) s++;
-  return s;
 }
 
 // ---------- 系統 C：委託 ----------
@@ -756,7 +888,6 @@ export function dailyCommissions(P, date = todayStr()) {
   if (hasUp(P, "board")) list.push(extraCommission(P, rng, date, list.length, used, take));
   const line = lineCommission(P, date);
   if (line) list.push(line);
-  if (P.quirks.length) list[0].cure = true;
   P.daily = { date, list };
   return list;
 }
@@ -822,7 +953,7 @@ export function deliver(P, idx, item) {
   if (!checkDelivery(P, c, item)) return { ok: false, reason: "委託人搖搖頭：好像不是這個" };
   c.done = true;
   P.done++;
-  const out = { ok: true, reward: 0, san: null, gain: 0, cured: null, comment: c.comment, events: [], skill: null, line: null };
+  const out = { ok: true, reward: 0, san: null, gain: 0, cured: [], comment: c.comment, events: [], skill: null, line: null };
   if (!isFree(P)) {
     let reward = c.reward;
     // 推銷員：說服成功，賞金多 30%
@@ -832,7 +963,7 @@ export function deliver(P, idx, item) {
     if (deal) { const before = reward; reward = Math.max(1, reward + deal); out.deal = reward - before; }
     P.insp += reward; out.reward = reward;
     out.san = rollExpr(NUM.commissionSan); out.gain = gainSan(P, out.san.total);
-    if (c.cure) out.cured = cureQuirk(P);
+    out.cured = cureByTask(P, "deliver"); // 交了一張委託：治法是這件的怪癖治好（決定 0027；原本只有標「治療委託」的那張才算）
   }
   P.comments.unshift({ who: c.client, text: c.comment, d: P.day ? P.day.date : todayStr(), job: c.text });
   P.comments = P.comments.slice(0, 200);
@@ -915,7 +1046,7 @@ export function autoDeliverables(P) {
 }
 // 照 autoDeliverables 的清單一張一張 deliver（說服、治好怪癖、老主顧的故事線都跟手動交一樣，因為是同一個函式）。
 // 委託已經換掉（換天了）或交不了的跳過，算在 skipped。
-// 回傳 { results: [{ idx, c, item, r }], skipped, reward, gain, cured: [r.cured…], events }
+// 回傳 { results: [{ idx, c, item, r }], skipped, reward, gain, cured: [{ quirk, from, to }…], events }
 export function deliverAll(P, plan) {
   const out = { results: [], skipped: 0, reward: 0, gain: 0, cured: [], events: [] };
   (plan || []).forEach(p => {
@@ -926,7 +1057,7 @@ export function deliverAll(P, plan) {
     if (!r.ok) { out.skipped++; return; }
     out.results.push({ idx: p.idx, c, item: p.item, r });
     out.reward += r.reward; out.gain += r.gain;
-    if (r.cured) out.cured.push(r.cured);
+    out.cured.push(...r.cured);
     out.events.push(...r.events);
   });
   return out;
@@ -1152,9 +1283,10 @@ export const IMG_KEY = "pepeMuseum2.img";
 export const FIT_KEY = "pepeMuseum2.fit";
 export const GEN2_KEY = "pepeMuseum2";
 export const SAVE_VERSION = 3;
+// dayMin：以前是「遊戲裡一天玩幾分鐘」（0 ＝ 真實的一天）。11-09 起一律真實的一天（決定 0019），欄位留著、固定 0，不再用
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
-    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 15 }, tutorialDone: false, gen2Migrated: false }; // dayMin：遊戲裡壹天幾分鐘（0 ＝ 真實的壹天）
+    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 0 }, tutorialDone: false, gen2Migrated: false };
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
 export const renameVal = v => (typeof RENAMED !== "undefined" && RENAMED[v]) || v;
@@ -1193,6 +1325,7 @@ export function fixProfile(P, mode) {
   ["pepes", "failed", "pillows", "seen", "chaptersRead", "mythFrom", "badges", "themesSeen", "endings", "fullRows", "news",
     "keys", "upgrades", "recipes", "repaired", "injured", "skillTicks", "lines", "giftsIn", "understood", "fresh", "visit"].forEach(k => { if (!out[k] || typeof out[k] !== "object" || Array.isArray(out[k])) out[k] = {}; });
   ["quirks", "comments", "visitorLog", "hugDays", "history", "relics"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  out.quirks = fixQuirks(out.quirks); // 怪癖 20 分鐘後自己消失（11-09，決定 0027）：舊存檔的怪癖從載入這一刻起算；不在場的參觀者在 fixVisitors 裡補
   fixLegacy(out, !!(P && P.visit && typeof P.visit === "object" && !Array.isArray(P.visit))); // 參觀者一位接一位（11-08）：舊存檔補 P.visit 這些
   fixVisitors(out, P); // 多位參觀者（11-08）：舊存檔的這一位變成第一個位子
   // 第 3 版：key 補成七類
@@ -1212,6 +1345,7 @@ export function migrateSave(o) {
   if (!o || typeof o !== "object") return newSave();
   const s = Object.assign(newSave(), o);
   s.settings = Object.assign(newSave().settings, o.settings || {});
+  s.settings.dayMin = 0; // 舊存檔的 15／30／60 不用了（11-09）。改成 0：還沒更新的舊畫面讀到，也是照真的日期，不會又跑到好幾天後
   s.profiles = Object.assign({ challenge: null, free: null }, o.profiles || {});
   ["challenge", "free"].forEach(m => { if (s.profiles[m]) s.profiles[m] = fixProfile(s.profiles[m], m); });
   s.v = SAVE_VERSION;

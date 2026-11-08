@@ -17,15 +17,15 @@
 //    P.slot          在標題畫面的第幾個位子（0、1、2）。理智歸零換人，在同一個位子
 //    P.visitors      不在場的那幾位
 //    P.visitorCount  博物館發過幾個號碼
-//  純函式：只改傳進來的 P，亂數用 RNG（rollExpr、rollCandidates 裡）。
+//  純函式：只改傳進來的 P，亂數用 RNG（rollExpr 裡）。
 // ================================================================
 import { LEGACY, NUM } from "./config.js";
-import { asList, isFree, rollExpr } from "./logic.js";
-import { newVisit, rollCandidates, traitById } from "./legacy.js";
+import { asList, fixQuirks, isFree, rollExpr } from "./logic.js";
+import { newVisit, traitById } from "./legacy.js";
 
 // 「這一位的」欄位（維護日誌 11-08_翊文_參觀者繼承.md 的欄位表，加上 vid、vname、slot、hugDays、oddSeen、cands）。
 //   cellar.run（正在走的地下）在 cellar 裡面，另外收成 cellarRun。
-//   cands：還沒挑的候選人跟著那個位子走（重新整理、換來換去都是同樣 3 位）。
+//   cands：以前「3 位候選人」還沒挑的（決定 0028 拿掉了，不再產生）。舊存檔裡有的照樣跟著那個位子走，不動它。
 //   oddSeen：理智低的怪事，一位參觀者第一次出現才跳旁白（ui_odd.js）。
 export const VISITOR_KEYS = ["vid", "vname", "slot", "visitor", "sanity", "mood", "moodRoll", "myth", "mythFrom", "quirks", "bout", "dark", "swapNext",
   "job", "skills", "skillTicks", "perk", "flaw", "legacy", "visit", "cands", "hugDays", "oddSeen"];
@@ -94,11 +94,12 @@ export function blankVisitor(P, o = {}) {
 }
 
 // ---------- 三個位子 ----------
-// 每個位子：null（空的）或 { vid, vname, name, slot, visitor, job, sanity, maxSan, mood, myth, dark, picking（還沒挑職業）, current（現在在場、上次玩的那位） }
+// 每個位子：null（空的）或 { vid, vname, name, slot, visitor, job, perk, flaw（小優點、小缺點，沒有是 null）, sanity, maxSan, mood, myth, dark, picking（還沒挑職業）, current（現在在場、上次玩的那位） }
 export function visitorSlots(P) {
   const out = Array.from({ length: LEGACY.slots }, () => null);
   if (!hasSlots(P)) return out;
   const card = (v, current) => ({ vid: v.vid, vname: v.vname || null, name: visitorName(v), slot: v.slot, visitor: v.visitor, job: v.job || null,
+    perk: (traitById(v.perk) && v.perk) || null, flaw: (traitById(v.flaw) && v.flaw) || null,
     sanity: v.sanity, maxSan: 99 - (v.myth || 0), mood: v.mood, myth: v.myth || 0, dark: !!v.dark, picking: !v.job, current });
   [P].concat(asList(P.visitors)).forEach((v, i) => { if (v && okSlot(v.slot) && !out[v.slot]) out[v.slot] = card(v, i === 0); });
   return out;
@@ -120,8 +121,8 @@ export function switchVisitor(P, vid) {
   return true;
 }
 // 在空位子加一位（不是整個帳號的第一位：那位是 newProfile 做的）。
-// 現在這位收進 P.visitors，新的那位放出來：擲心情（3D6 × 5）、擲 3 位候選人（P.cands，畫面用 chooseCandidate 挑）。
-// 回傳心情的骰子，另外帶 vid、slot、cands；沒有空位子、自由模式、名字不合格回傳 null
+// 現在這位收進 P.visitors，新的那位放出來：擲心情（3D6 × 5）。職業還沒選：畫面接著從 6 個職業選、抽小優缺點（legacy.js 的 chooseJob，決定 0028）。
+// 回傳心情的骰子，另外帶 vid、slot；沒有空位子、自由模式、名字不合格回傳 null
 export function addVisitor(P, name, slot) {
   if (!hasSlots(P)) return null;
   const nm = cleanName(name);
@@ -129,13 +130,12 @@ export function addVisitor(P, name, slot) {
   const open = freeSlots(P);
   if (!open.length) return null;
   const s = open.includes(slot) ? slot : open[0];
-  // 沒有 P.day（還沒進過館）：不在這裡開新的一天。進館時 ensureDay 會照現在這位的理智算（「今天」要等畫面設好遊戲裡的日期）
+  // 沒有 P.day（還沒進過館）：不在這裡開新的一天。進館時 ensureDay 會照現在這位的理智算（「今天」照台灣時間 05:00 換日，決定 0019）
   P.visitors = asList(P.visitors).concat([packVisitor(P)]);
   const n = takeVisitorNo(P);
   const r = rollExpr("3D6");
   wearVisitor(P, blankVisitor(P, { vid: "v" + n, vname: nm, slot: s, visitor: n, mood: r.total * 5, moodRoll: r.faces }));
-  P.cands = rollCandidates(P);
-  return Object.assign(r, { vid: P.vid, slot: s, cands: P.cands });
+  return Object.assign(r, { vid: P.vid, slot: s });
 }
 // 改名字（現在這位或不在場的）。回傳改好的名字；名字不合格、找不到人回傳 null
 export function renameVisitor(P, vid, name) {
@@ -155,6 +155,7 @@ function fixPack(P, v) {
   Object.keys(b).forEach(k => { if (v[k] === undefined) v[k] = b[k]; });
   ["mythFrom", "skillTicks", "oddSeen"].forEach(k => { if (!isObj(v[k])) v[k] = {}; });
   ["quirks", "hugDays", "moodRoll"].forEach(k => { if (!Array.isArray(v[k])) v[k] = []; });
+  v.quirks = fixQuirks(v.quirks); // 怪癖的 until、task（11-09，決定 0027）：不在場的也從載入這一刻起算
   ["sanity", "mood", "myth"].forEach(k => { if (typeof v[k] !== "number" || !isFinite(v[k])) v[k] = b[k]; });
   if (!isObj(v.visit)) v.visit = { from: null, sec0: null, made0: 0, deepest: 0, understood: {}, where: null };
   if (!isObj(v.visit.understood)) v.visit.understood = {};

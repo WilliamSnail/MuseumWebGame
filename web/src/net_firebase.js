@@ -17,6 +17,7 @@ import { GoogleAuthProvider, browserLocalPersistence, browserSessionPersistence,
 import { connectFirestoreEmulator, doc, getDoc, getFirestore, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { connectDatabaseEmulator, getDatabase, onChildAdded, onDisconnect, onValue, ref, remove, serverTimestamp as rtdbNow, set } from "firebase/database";
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
+import { setNowClock } from "../../shared/logic.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
 import { NetError } from "./net.js";
 
@@ -191,6 +192,20 @@ export function createFirebaseNet(opts = {}) {
     return chain;
   }
 
+  // ── 網路的時間（決定 0026，翊文 11-09：「遊戲裡的內容也是跟著那網路抓取的真實時間時間」） ──
+  // .info/serverTimeOffset：Firebase 給的「伺服器時間 − 這台電腦的時間」（毫秒），連上之後自己會更新。
+  // 拿到之後遊戲裡的「現在」（shared/logic.js 的 nowMs）＝這台電腦的時間＋這個差。還沒拿到之前照電腦的時間。
+  // 斷線、登出時留著最後一次的差，不改回電腦的時間：電腦的時鐘差很多時，連線斷斷續續會讓「今天」跳來跳去、多換一天。
+  let clockOffset = null;
+  function watchClock() {
+    return onValue(ref(rtdb, ".info/serverTimeOffset"), snap => {
+      const off = Number(snap.val());
+      if (!Number.isFinite(off)) return;
+      clockOffset = off;
+      setNowClock(() => Date.now() + clockOffset);
+    }, () => {});
+  }
+
   // ── 在線名單（Realtime Database 的 /status） ──
   let offs = [], lastInput = Date.now(), awayTimer = null, wasAway = false, winHooked = false, baseline = true;
   const statusRef = () => ref(rtdb, `status/${me.id}`);
@@ -220,6 +235,7 @@ export function createFirebaseNet(opts = {}) {
     if (!me || offs.length) return;
     setState("connecting");
     baseline = true;
+    offs.push(watchClock());
     offs.push(onValue(ref(rtdb, ".info/connected"), snap => {
       if (snap.val() === true) {
         onDisconnect(statusRef()).set({ state: "offline", room: "title", nick: me.nick, at: rtdbNow() }).then(writeStatus, () => {});

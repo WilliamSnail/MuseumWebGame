@@ -677,10 +677,9 @@ body.reduce-motion .dk-eyes i { animation: none; }
 
 .rtable tr.fumble td { color: #A8382D; }
 
-/* ----- 狀態列：第 001 天（翊文 11-08） ----- */
+/* ----- 狀態列：第 001 天（翊文 11-08）。11-09 改成真實的一天之後沒有「暫停」了，拿掉 .paused ----- */
 .st-day .st-num { font-family: var(--serif); letter-spacing: .06em; white-space: nowrap; }
 .st-day .st-left { font-size: .75rem; color: var(--on-wall-sub); white-space: nowrap; }
-.st-day.paused .st-left::after { content: "（暫停）"; }
 .st-day .st-num-s, .st-day .st-left-s { display: none; }
 @media (max-width: 760px) {
   .st-day .st-label, .st-day .st-num, .st-day .st-left { display: none; }
@@ -689,7 +688,9 @@ body.reduce-motion .dk-eyes i { animation: none; }
   #status .st-row { gap: 6px; }
   #status .st-poss .st-num { font-size: .75rem; }
 }
-.set-day .seg { flex-wrap: wrap; }
+/* 設定頁的「換日」（11-09 拿掉 15／30／60 分鐘的選項，只剩說明） */
+.set-day > div { flex-direction: column; flex: 1 1 16em; min-width: 0; gap: 4px; }
+.set-day .sub { margin: 0; }
 
 /* ----- 收藏列：顏色、姿勢篩選（翊文 11-08） ----- */
 .strip-filters { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -869,7 +870,7 @@ body.reduce-motion .fresh-tag::after { content: none; }
 @keyframes goalGlow { 50% { filter: drop-shadow(0 0 2px rgba(238,215,156,.6)) drop-shadow(0 0 5px rgba(238,215,156,.25)); } }
 body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: none; }
 
-/* ----- 參觀者一位接一位（翊文 11-08，roguelike 的繼承）：換人時留下一樣東西（.lg-*）、挑下一位（.cand-*）、館長室的遺物櫃（.relic-*）和歷任參觀者牆（.vw-*） ----- */
+/* ----- 參觀者一位接一位（翊文 11-08，roguelike 的繼承）：換人時留下一樣東西（.lg-*）、選職業之後抽小優缺點（.draw-*；.cand-* 是以前挑候選人留下來的名字，小框、技能列還在用）、館長室的遺物櫃（.relic-*）和歷任參觀者牆（.vw-*） ----- */
 /* 留下一樣東西 */
 .mini-card.lg-modal { width: min(760px, 100%); border-top: 5px solid var(--gold); }
 .lg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
@@ -887,20 +888,10 @@ body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: 
 .lg-pv-t b { font-family: var(--serif); font-size: 1.05rem; color: var(--parch-ink); }
 .lg-body { display: flex; flex-direction: column; gap: 14px; }
 .lg-modal .strip-wrap { margin: 0; }
-/* 挑下一位 */
-.mini-card.cand-modal { border-top: 5px solid var(--gold); }
+/* 前一位留下的（選職業那一頁、館長室的名片） */
 .cand-got { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 12px; border-radius: 6px; background: rgba(200,162,90,.18); border: 1px solid rgba(200,162,90,.45); color: #5A3E12; font-weight: 700; font-size: .9375rem; }
 .cand-got .ic { width: 18px; height: 18px; flex: 0 0 auto; color: #9C7428; }
-.cand-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.cand { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 12px; cursor: pointer;
-  background: linear-gradient(180deg, #F8F0DE, #EADCBE); border: 1px solid var(--gold-lo); border-radius: 6px; color: var(--parch-ink); font-family: var(--serif);
-  box-shadow: inset 0 0 0 2px #F8F0DE, inset 0 0 0 3px rgba(200,162,90,.5); transition: transform var(--t) var(--ease), box-shadow var(--t); }
-.cand:hover, .cand:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 2px #F8F0DE, inset 0 0 0 4px var(--gold), 0 0 18px rgba(238,215,156,.5); }
-.cand-head { display: flex; gap: 10px; align-items: center; }
-.cand-head .job-badge { width: 56px; height: 56px; flex: 0 0 auto; }
-.cand-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.cand-id b { font-size: 1.1rem; letter-spacing: .08em; }
-.cand .job-desc { font-size: .8125rem; }
+/* 小優點、小缺點的小框（館長室的名片、牆上的詳細）、技能列、開場的心情和理智 */
 .cand-trait { display: flex; flex-direction: column; gap: 2px; padding: 6px 9px; border-radius: 5px; border-left: 4px solid; font-family: "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; font-size: .8125rem; line-height: 1.5; }
 .cand-trait b { font-family: var(--serif); font-size: .875rem; letter-spacing: .04em; }
 .cand-trait.perk { background: rgba(60,110,71,.12); border-color: #3C6E47; color: #234A2C; }
@@ -915,8 +906,28 @@ body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: 
 .cand-sk.up i { color: #2F6E38; }
 .cand-sk.down i { color: #A8382D; }
 .cand-start { font-size: .8125rem; color: var(--parch-ink); font-family: "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; }
-.cand-go { margin-top: auto; align-self: stretch; text-align: center; padding: 7px 10px; border-radius: 3px; font-weight: 700; letter-spacing: .12em; color: #2A1A0C;
-  background: linear-gradient(180deg, #F0D995, #C8A25A 48%, #A07C34); border: 1px solid var(--gold-deep); box-shadow: inset 0 1px 0 rgba(255,250,225,.7); }
+/* 選職業（11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：選好之後抽小優點、小缺點的說明，和抽到之後蓋的卡 */
+.mini-card.job-modal { border-top: 5px solid var(--gold); }
+.job-modal > .cand-got, .job-modal > .cand-name, .job-modal > .job-draw-note { margin: 0 0 12px; }
+.job-draw-note { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: rgba(255,255,255,.35); border: 1px dashed rgba(140,106,46,.6); color: #5A3E12; font-size: .875rem; line-height: 1.55; }
+.job-draw-note .ic { width: 20px; height: 20px; flex: 0 0 auto; color: #8C6A2E; }
+.mini-card.draw-modal { width: min(640px, 100%); border-top: 5px solid var(--gold); display: flex; flex-direction: column; gap: 12px; }
+.draw-modal > h2, .draw-modal > .sub { margin-bottom: 0; }
+.draw-modal > .cand-start { margin: -4px 0 0; font-size: .875rem; }
+.draw-head { display: flex; align-items: center; gap: 12px; }
+.draw-head .job-badge { width: 56px; height: 56px; flex: 0 0 auto; }
+.draw-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-family: var(--serif); }
+.draw-id b { font-size: 1.15rem; letter-spacing: .08em; color: var(--parch-ink); }
+.draw-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.draw-card { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 6px; border: 2px solid; text-align: left;
+  font-family: "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; animation: draw-in .5s calc(var(--i, 0) * .35s + .1s) var(--ease) both; }
+.draw-card.perk { background: rgba(60,110,71,.12); border-color: #3C6E47; color: #234A2C; }
+.draw-card.flaw { background: rgba(168,56,45,.10); border-color: #A8382D; color: #6E1F17; }
+.draw-kind { font-size: .75rem; font-weight: 700; letter-spacing: .16em; }
+.draw-name { font-family: var(--serif); font-size: 1.35rem; letter-spacing: .08em; line-height: 1.3; }
+.draw-desc { font-size: .9375rem; line-height: 1.55; }
+@keyframes draw-in { from { opacity: 0; transform: rotateY(80deg) scale(.92); } to { opacity: 1; transform: none; } }
+body.reduce-motion .draw-card { animation: none; }
 /* 館長室的名片：這一位的優缺點、前一位留下的 */
 .sheet-traits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .sheet-traits .cand-trait { flex: 1 1 220px; }
@@ -970,11 +981,40 @@ body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: 
 .vw-row { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 8px; font-size: .8125rem; line-height: 1.5; }
 .vw-row > span:first-child { color: var(--parch-sub); }
 @media (max-width: 760px) {
-  .cand-grid { grid-template-columns: minmax(0, 1fr); }
+  .draw-cards { grid-template-columns: minmax(0, 1fr); }
+  .draw-name { font-size: 1.2rem; }
   .lg-grid { grid-template-columns: minmax(0, 1fr); }
   .vw-wall { grid-template-columns: minmax(0, 1fr); }
   .relic-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 10px; gap: 10px; }
   .relic-glass { width: 96px; height: 96px; }
   .relic-art { width: 82px; height: 82px; }
 }
-body.reduce-motion .lg-opt, body.reduce-motion .cand, body.reduce-motion .vw-card { transition: none; transform: none; }
+body.reduce-motion .lg-opt, body.reduce-motion .vw-card { transition: none; transform: none; }
+
+/* ----- 手作坊：不敢碰的說明（翊文 11-08：看了壹幅畫之後選項點不了，其實是恐懼症）。放在卡片列外面、羊皮紙底深色字（暗紅牆上要看得清楚） ----- */
+.ws-afraid:empty { display: none; }
+.afraid-bar { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 10px; padding: 10px 14px; border-radius: 4px;
+  background: linear-gradient(180deg, #FBF3E4, #F1E2CB); border: 1px solid #A8382D; box-shadow: 0 2px 6px rgba(0,0,0,.3); color: #2A1E16; font-size: .875rem; line-height: 1.6; }
+.afraid-bar .ic, .afraid-bar .ic svg { width: 18px; height: 18px; flex: 0 0 auto; color: #9A231C; margin-top: 2px; }
+.afraid-lines { display: flex; flex-direction: column; gap: 4px; }
+.afraid-bar b { color: #9A231C; }
+
+/* ----- 怪癖：做完壹件事就好，不然 20 分鐘後自己消失（11-09，決定 0027；原本是連續 3 天抱抱枕） -----
+   狀態列小牌子多壹行小字（要做的事・剩幾分）；卡片多「沒做的話：還剩 N 分鐘」；
+   做得到治法的房間（抱枕工作台、委託櫃台、畫廊）上面壹塊綠框羊皮紙，深色字（暗紅牆上要看得清楚） */
+/* 小牌子排成兩行（名字／要做的事・剩幾分），不然 1366 寬有壹個怪癖狀態列就要換排 */
+button.chip.qk-chip { display: inline-grid; grid-template-columns: auto auto; column-gap: 5px; align-items: center; text-align: left; line-height: 1.2; border-radius: 10px; padding: 2px 10px; }
+.qk-chip .ic { grid-row: 1 / span 2; }
+.qk-chip .qk-chip-sub { grid-column: 2; font-size: .6875rem; opacity: .92; white-space: nowrap; }
+.qk-hint { display: block; margin-top: 2px; font-size: .8125rem; color: var(--parch-sub); }
+.qk-time { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0 0; font-size: .9375rem; line-height: 1.6; color: #6B4A22; }
+.qk-time .ic, .qk-time .ic svg { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 3px; }
+.qk-time .qk-left { font-weight: 700; color: #7A1F2B; }
+.qk-here { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px; padding: 10px 14px; border-radius: 4px;
+  background: linear-gradient(180deg, #F3F6E6, #E1E9CD); border: 1px solid #4F8A57; border-left: 5px solid #2F6E38; box-shadow: 0 2px 6px rgba(0,0,0,.3); color: #1F2A1A; font-size: .875rem; line-height: 1.6; }
+.qk-here .ic, .qk-here .ic svg { width: 18px; height: 18px; flex: 0 0 auto; color: #2F6E38; margin-top: 2px; }
+.qk-here-lines { display: flex; flex-direction: column; gap: 2px; }
+.qk-here b { color: #2F5E36; }
+.qk-here small { color: #4A5A40; font-size: .8125rem; }
+.ex-cap .ex-cure { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 1px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #FFF6E0; background: #2F6E38; }
+.ex-cure .ic, .ex-cure .ic svg { width: 13px; height: 13px; }

@@ -5,41 +5,96 @@
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { CELLAR_REWARDS, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
-import { BOOK4, BOOK_SEQUELS, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, TRADE_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
-import { FORBIDDEN_BOOKS } from "../../shared/content.js";
+import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, TRADE_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
+import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, ROLLED, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
-import { assignJob, buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, giftCode, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, parseWeeklyCode, placeWeekly, receiveGift, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyCode, weeklyState } from "../../shared/logic3.js";
-import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
-import { candidateStats, cellarDarkLoss, chooseCandidate, legacyOptions, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
+import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
+import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, giftCode, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, parseWeeklyCode, placeWeekly, receiveGift, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyCode, weeklyState } from "../../shared/logic3.js";
+import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
+import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
-import { $, $$, P, SCREENS, UI, actionTick, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
+import { $, $$, P, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
 import { roomHead } from "./ui_screens1.js";
 import { copyText } from "./ui_screens2.js";
 
+// 選職業（每一位參觀者都一樣，第一位也是；11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：
+//   從 6 個職業選一個 → 抽一個小優點、一個小缺點（shared/legacy.js 的 chooseJob）→ 馬上存檔 → 蓋一張卡寫抽到什麼、有什麼效果（drawReveal）。
+//   抽到就定了，不能重抽：存好之後 P.job 有值，重新整理也不會再選。
+//   以前換人時是從 3 位候選人挑（pickCandidate，拿掉了）。候選人那一頁原本有的「前一位留下的」「取名字」搬到這一頁，做法照舊。
 export function pickJob() {
-  if (P && !isFree(P) && asList(P.cands).length) return pickCandidate(); // 換人之後：從候選人挑一位（11-08）；第一位參觀者照舊選職業
   return new Promise(res => {
-    if (!P || isFree(P) || typeof JOBS === "undefined") { res(null); return; }
+    if (!P || isFree(P) || P.job || typeof JOBS === "undefined") { res((P && P.job) || null); return; }
     const m = miniLayer(JOB_TEXT.pick, JOB_TEXT.sub);
-    m.card.classList.add("wide");
+    m.card.classList.add("wide", "job-modal");
+    const got = legacyLine(P.legacy); // 前一位留下的（以前寫在候選人上面）：選職業之前就看得到，例如傳下來的技能
+    if (got) m.card.append(h("p", { class: "cand-got" }, icon(P.legacy.type === "relic" ? "medal" : "star"), h("span", null, got)));
+    // 理智歸零、退休換人時，新的這位還沒有名字：在這裡取（不填就叫「第 N 位參觀者」）。從標題「新參觀者」來的已經取好了
+    let nameBox = null;
+    const nameErr = h("p", { class: "vs-err", role: "alert" });
+    if (!P.vname) {
+      nameBox = nameInput("", `第 ${P.visitor} 位參觀者`);
+      m.card.append(h("label", { class: "cand-name" }, h("b", null, VISITOR_TEXT.candName), nameBox, h("small", null, legacyFill(VISITOR_TEXT.candNameHint, { x: P.visitor }))), nameErr);
+    }
+    m.card.append(h("p", { class: "job-draw-note" }, icon("dice"), h("span", null, LEGACY_TEXT.drawNote)));
+    let busy = false;
     const grid = h("div", { class: "job-grid" }, JOBS.map(j => {
       const b = h("button", { type: "button", class: "job" },
         h("span", { class: "job-badge", html: ART.jobBadge ? ART.jobBadge(j.id) : ART.icon("medal") }),
         h("b", null, j.name), h("span", { class: "job-skill" }, `拿手：${j.skill}`),
         h("span", { class: "job-desc" }, j.desc), j.motto ? h("span", { class: "job-motto" }, `「${j.motto}」`) : null);
-      b.addEventListener("click", () => {
-        const r = assignJob(P, j.id);
+      b.addEventListener("click", async () => {
+        if (busy) return;
+        if (nameBox && nameBox.value.trim()) {
+          if (!renameVisitor(P, P.vid, nameBox.value)) { nameErr.textContent = nameError(nameBox.value); snd("error"); nameBox.focus(); return; }
+        }
+        const r = chooseJob(P, j.id);
+        if (!r) return;
+        busy = true;
+        persistNow(); // 抽到的馬上存（不等幾秒），重新整理也不能重抽
         m.close(); snd("unlock");
-        note(`你是${j.name}。拿手的「${r.main}」是 ${r.value}。`, "good");
-        if (r.moodAgain) note(`賭徒的運氣：心情再擲一次是 ${r.moodAgain.value}，取高的 → ${P.mood}`, "good");
-        updateStatus(); persist(); res(j.id);
+        updateStatus();
+        await drawReveal(r);
+        note(legacyFill(LEGACY_TEXT.drawDone, { who: visitorLabel(P), job: j.name, perk: traitName(r.perk), flaw: traitName(r.flaw) }), "good");
+        if (UI.screen === "lobby") rerender(); // 大廳旁邊的「誰在館裡」換成新的名字、職業（11-08）
+        res(j.id);
       });
       return b;
     }));
     m.card.append(grid);
-    grid.querySelector("button").focus();
+    (nameBox || grid.querySelector("button")).focus();
+  });
+}
+// 選好職業之後蓋的卡（決定 0028）：抽到的小優點、小缺點（名字＋效果）、拿手和技能（加減多少）、開場的心情和理智。
+// 已經存好了，這裡只是給玩家看清楚；只有「知道了」，沒有重抽
+export function drawReveal(r) {
+  return new Promise(res => {
+    const j = jobInfo(r.job);
+    const m = miniLayer(LEGACY_TEXT.drawTitle, legacyFill(LEGACY_TEXT.drawSub, { who: visitorLabel(P), job: j.name }));
+    m.card.classList.add("wide", "draw-modal");
+    const sign = v => (v > 0 ? `+${v}` : `−${-v}`);
+    const whyOf = what => r.why.filter(w => w.what === what).map(w => `${w.id === "legacy" ? LEGACY_TEXT.drawLegacy : traitName(w.id)} ${sign(w.v)}`).join("、");
+    const fromTo = (a, b, what) => (a === b ? String(b) : `${a} → ${b}${whyOf(what) ? `（${whyOf(what)}）` : ""}`);
+    const drawn = (id, kind, i) => (id ? h("div", { class: "draw-card " + kind, style: { "--i": i } },
+      h("span", { class: "draw-kind" }, kind === "perk" ? LEGACY_TEXT.perk : LEGACY_TEXT.flaw),
+      h("b", { class: "draw-name" }, traitName(id)),
+      h("span", { class: "draw-desc" }, traitDesc(id))) : null);
+    const skills = h("div", { class: "cand-skills" }, SKILLS.map(s => {
+      const d = r.delta[s] || 0;
+      return h("span", { class: "cand-sk" + (s === r.main ? " main" : "") + (d > 0 ? " up" : d < 0 ? " down" : "") },
+        h("small", null, s), h("b", null, String(r.skills[s])), d ? h("i", null, sign(d)) : null);
+    }));
+    const ok = btn(LEGACY_TEXT.drawOk, () => { m.close(); res(); }, "primary");
+    m.card.append(
+      h("div", { class: "draw-head" }, h("span", { class: "job-badge", html: ART.jobBadge ? ART.jobBadge(r.job) : ART.icon("medal") }),
+        h("span", { class: "draw-id" }, h("b", null, j.name), h("span", { class: "job-skill" }, `拿手：${r.main} ${r.value}`))),
+      h("div", { class: "draw-cards" }, drawn(r.perk, "perk", 0), drawn(r.flaw, "flaw", 1)),
+      skills,
+      r.moodAgain ? h("p", { class: "cand-start" }, `賭徒的運氣：心情再擲壹次是 ${r.moodAgain.value}，取高的`) : null,
+      h("p", { class: "cand-start" }, `開場：心情 ${fromTo(r.moodFrom, r.mood, "mood")}・理智 ${fromTo(r.sanityFrom, r.sanity, "sanity")}`),
+      h("div", { class: "rv-btns" }, ok));
+    snd("flip");
+    ok.focus();
   });
 }
 // 技能成長（CoC 的經驗檢定）：每天第一次進館
@@ -74,14 +129,16 @@ export function relicItem(r) {
 // 前一位留給這一位的東西，寫成一句話
 export function legacyLine(L) {
   if (!L) return null;
-  if (L.type === "relic") { const it = relicItem(L); return legacyFill(L.mood ? LEGACY_TEXT.gotRelic : LEGACY_TEXT.gotRelicNoMood, { x: L.from, name: it ? itemTitle(it) : "?", mood: L.mood }); }
-  if (L.type === "skill") return legacyFill(LEGACY_TEXT.gotSkill, { x: L.from, skill: L.skill, plus: L.plus });
+  const who = whoOf(L.from, L.fromName); // 11-08：有名字寫名字（以前的沒有，寫「第 N 位參觀者」）
+  if (L.type === "relic") { const it = relicItem(L); return legacyFill(L.mood ? LEGACY_TEXT.gotRelic : LEGACY_TEXT.gotRelicNoMood, { who, name: it ? itemTitle(it) : "?", mood: L.mood }); }
+  if (L.type === "skill") return legacyFill(LEGACY_TEXT.gotSkill, { who, skill: L.skill, plus: L.plus });
   return null;
 }
 // ---------- 多位參觀者的名字（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/visitors.js） ----------
 // 名字是玩家打的字：一律用 h() 的字串（純文字）放，不用 html:
 // 稱呼：有名字「阿明（第 2 位參觀者）」，沒有「第 2 位參觀者」
-export const visitorLabel = v => (v && v.vname ? `${v.vname}（第 ${v.visitor} 位參觀者）` : `第 ${(v && v.visitor) || 1} 位參觀者`);
+export const whoOf = (n, name) => (name ? `${name}（第 ${n || 1} 位參觀者）` : `第 ${n || 1} 位參觀者`);
+export const visitorLabel = v => whoOf(v && v.visitor, v && v.vname);
 // 名字為什麼不行（cleanName 回傳 null 的時候）
 export function nameError(raw) {
   const t = String(raw == null ? "" : raw).trim();
@@ -114,7 +171,7 @@ export function askVisitorName({ title = VISITOR_TEXT.add, sub = "", value = "",
     input.focus(); input.select();
   });
 }
-// 小優點、小缺點的小框（候選人卡片、名片、牆上的詳細）
+// 小優點、小缺點的小框（館長室的名片、牆上的詳細）
 export function traitBox(id, kind) {
   if (!id) return null;
   return h("span", { class: "cand-trait " + kind }, h("b", null, `${kind === "perk" ? LEGACY_TEXT.perk : LEGACY_TEXT.flaw}・${traitName(id)}`), h("span", null, traitDesc(id)));
@@ -124,14 +181,14 @@ export function legacyFlow() {
   return new Promise(res => {
     if (!P || isFree(P)) { res(null); return; }
     const opt = legacyOptions(P);
-    const m = miniLayer(legacyFill(LEGACY_TEXT.leaveTitle, { x: P.visitor }), LEGACY_TEXT.leaveSub);
+    const m = miniLayer(legacyFill(LEGACY_TEXT.leaveTitle, { who: visitorLabel(P) }), LEGACY_TEXT.leaveSub);
     m.card.classList.add("wide", "lg-modal");
     const body = h("div", { class: "lg-body" });
     m.card.append(body);
     const done = v => { m.close(); res(v); };
     const showMain = () => {
       const relicB = h("button", { type: "button", class: "lg-opt", disabled: !opt.relic.ok }, h("span", { class: "lg-ic" }, icon("medal")), h("b", null, LEGACY_TEXT.relic),
-        h("span", { class: "lg-desc" }, opt.relic.ok ? legacyFill(opt.relic.mood ? LEGACY_TEXT.relicDesc : LEGACY_TEXT.relicDescNoMood, { x: P.visitor, mood: opt.relic.mood }) : LEGACY_TEXT.relicNone));
+        h("span", { class: "lg-desc" }, opt.relic.ok ? legacyFill(opt.relic.mood ? LEGACY_TEXT.relicDesc : LEGACY_TEXT.relicDescNoMood, { who: visitorLabel(P), mood: opt.relic.mood }) : LEGACY_TEXT.relicNone));
       relicB.addEventListener("click", () => { snd("click"); showRelic(); });
       const skillB = opt.skill.ok ? h("button", { type: "button", class: "lg-opt" }, h("span", { class: "lg-ic" }, icon("star")), h("b", null, LEGACY_TEXT.skill),
         h("span", { class: "lg-desc" }, legacyFill(LEGACY_TEXT.skillDesc, opt.skill))) : null;
@@ -141,14 +198,14 @@ export function legacyFlow() {
     };
     const showRelic = () => {
       let chosen = null;
-      const preview = h("div", { class: "lg-preview" }, h("div", { class: "relic-glass" }), h("div", { class: "lg-pv-t" }, h("b", null, LEGACY_TEXT.relicEmpty), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: P.visitor }))));
+      const preview = h("div", { class: "lg-preview" }, h("div", { class: "relic-glass" }), h("div", { class: "lg-pv-t" }, h("b", null, LEGACY_TEXT.relicEmpty), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { who: visitorLabel(P) }))));
       const ok = btn([icon("medal"), " ", LEGACY_TEXT.relicOk], () => { if (chosen) { snd("unlock"); done({ type: "relic", item: { kind: chosen.kind, key: chosen.key } }); } }, "primary", { disabled: true });
       const kinds = ["pepe", "failed", "pillow", "repaired"];
       const strip = collectionStrip({ tabs: kinds, start: kinds.find(k => collectionItems(k).length) || "pepe", title: LEGACY_TEXT.relicPick, hint: LEGACY_TEXT.relicHint,
         onPick: item => {
           chosen = item; ok.disabled = false; snd("click");
           preview.replaceChildren(h("div", { class: "relic-glass" }, h("div", { class: "relic-art", html: itemHTML(item) })),
-            h("div", { class: "lg-pv-t" }, h("b", null, itemTitle(item)), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: P.visitor }))));
+            h("div", { class: "lg-pv-t" }, h("b", null, itemTitle(item)), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { who: visitorLabel(P) }))));
           strip.refresh();
         },
         selected: item => !!chosen && chosen.kind === item.kind && chosen.key === item.key });
@@ -159,60 +216,50 @@ export function legacyFlow() {
     showMain();
   });
 }
-// C. 換人之後：從候選人挑一位（卡片上的數字跟挑了之後一樣，都是 candidateStats 算的）
-export function pickCandidate() {
-  return new Promise(res => {
-    const cands = asList(P.cands);
-    const m = miniLayer(LEGACY_TEXT.pickTitle, legacyFill(LEGACY_TEXT.pickSub, { x: cands.length }));
-    m.card.classList.add("wide", "cand-modal");
-    const got = legacyLine(P.legacy);
-    if (got) m.card.append(h("p", { class: "cand-got" }, icon(P.legacy.type === "relic" ? "medal" : "star"), h("span", null, got)));
-    // 多位參觀者（11-08）：理智歸零換人時，新的這位還沒有名字，在這裡取（不填就叫「第 N 位參觀者」）。從空位子加的已經取好了
-    let nameBox = null;
-    const nameErr = h("p", { class: "vs-err", role: "alert" });
-    if (!P.vname) {
-      nameBox = nameInput("", `第 ${P.visitor} 位參觀者`);
-      m.card.append(h("label", { class: "cand-name" }, h("b", null, VISITOR_TEXT.candName), nameBox, h("small", null, legacyFill(VISITOR_TEXT.candNameHint, { x: P.visitor }))), nameErr);
-    }
-    const grid = h("div", { class: "cand-grid" }, cands.map((c, i) => {
-      const b = candCard(c);
-      b.addEventListener("click", () => {
-        if (nameBox && nameBox.value.trim()) {
-          if (!renameVisitor(P, P.vid, nameBox.value)) { nameErr.textContent = nameError(nameBox.value); snd("error"); nameBox.focus(); return; }
-        }
-        const j = jobInfo(c.job);
-        const r = chooseCandidate(P, i);
-        if (!r) return;
-        m.close(); snd("unlock");
-        note(`${visitorLabel(P)}是${j.name}。拿手的「${r.main}」是 ${r.value}。`, "good");
-        if (r.moodAgain) note(`賭徒的運氣：心情再擲壹次是 ${r.moodAgain.value}，取高的`, "good");
-        note(`${LEGACY_TEXT.perk}「${traitName(r.perk)}」、${LEGACY_TEXT.flaw}「${traitName(r.flaw)}」：館長室的名片上看得到。開場心情 ${r.mood}、理智 ${r.sanity}。`, "neutral");
-        updateStatus(); persist();
-        if (UI.screen === "lobby") rerender(); // 大廳旁邊的「誰在館裡」換成新的名字、職業（11-08）
-        res(c.job);
-      });
-      return b;
-    }));
-    m.card.append(grid);
-    (nameBox || grid.querySelector("button")).focus();
-  });
+// ---------- 退休換人（11-08 翊文：「好，加些其他的」，docs/決定/0025-退休換人.md；規則在 shared/legacy.js 的 retireCheck） ----------
+// 結局的名字（牆上「看完「館長」，退休了。」）
+export function endingTitle(id) {
+  if (id === "cellar") return (typeof ENDING_CELLAR !== "undefined" && ENDING_CELLAR.title) || id;
+  return (ENDINGS[id] && ENDINGS[id].title) || id;
 }
-export function candCard(c) {
-  const j = jobInfo(c.job), st = candidateStats(P, c);
-  const mood = clampN(P.mood + st.mood, 0, 99), san = clampN(P.sanity + st.sanity, 1, maxSan(P));
-  const skills = h("span", { class: "cand-skills" }, SKILLS.map(s => {
-    const d = st.delta[s] || 0;
-    return h("span", { class: "cand-sk" + (s === st.main ? " main" : "") + (d > 0 ? " up" : d < 0 ? " down" : "") },
-      h("small", null, s), h("b", null, String(st.skills[s])), d ? h("i", null, d > 0 ? `+${d}` : `−${-d}`) : null);
-  }));
-  return h("button", { type: "button", class: "cand", "aria-label": `${j.name}：${LEGACY_TEXT.perk}${traitName(c.perk)}，${LEGACY_TEXT.flaw}${traitName(c.flaw)}` },
-    h("span", { class: "cand-head" }, h("span", { class: "job-badge", html: ART.jobBadge ? ART.jobBadge(c.job) : ART.icon("medal") }),
-      h("span", { class: "cand-id" }, h("b", null, j.name), h("span", { class: "job-skill" }, `拿手：${st.main} ${st.skills[st.main]}`), j.motto ? h("span", { class: "job-motto" }, `「${j.motto}」`) : null)),
-    h("span", { class: "job-desc" }, j.desc),
-    traitBox(c.perk, "perk"), traitBox(c.flaw, "flaw"),
-    skills,
-    h("span", { class: "cand-start" }, `開場：心情 ${st.mood ? `${P.mood} → ${mood}` : mood}・理智 ${st.sanity ? `${P.sanity} → ${san}` : san}`),
-    h("span", { class: "cand-go" }, LEGACY_TEXT.pickBtn));
+// 牆上「怎麼結束的」：退休的那幾種（理智歸零另外寫）
+export function retireWords(endedBy) {
+  if (endedBy === "retire") return LEGACY_TEXT.endRetire;
+  if (RETIRE_ENDINGS.includes(endedBy)) return legacyFill(LEGACY_TEXT.endEnding, { ending: endingTitle(endedBy) });
+  return null;
+}
+// 不能退休的原因寫成字
+export function retireReason(c) {
+  const t = { dark: LEGACY_TEXT.notDark, bout: LEGACY_TEXT.notBout, cellar: LEGACY_TEXT.notCellar, picking: LEGACY_TEXT.notPicking }[c.reason];
+  return t || (c.reason === "new" ? legacyFill(LEGACY_TEXT.notNew, { x: c.days || 1 }) : "");
+}
+// 換下一位（理智歸零、退休都走這裡）：留一樣東西（A）→ 寫上牆（D）→ 擲心情 → 選職業、抽小優缺點、取名字（C，決定 0028）。endedBy ＝怎麼結束的
+export async function retireFlow(endedBy) {
+  const who = visitorLabel(P);
+  const leave = await legacyFlow();
+  const r = nextVisitor(P, endedBy, leave);
+  markFresh(P, "office", "wall:" + r.entry.n); // 館長室的歷任參觀者牆多了一張（導覽列標「新」）
+  persist();
+  go("lobby", {}, { action: false });
+  if (endedBy !== "russia8") note(legacyFill(LEGACY_TEXT.retired, { who }), "neutral");
+  await FX.rollOverlay({ title: "下一位參觀者", sub: NEXT_VISITOR.join("　"), spec: "3D6", result: { total: r.total, faces: r.faces }, outcome: { text: `心情 ${P.mood}　理智 ${P.sanity}`, tone: "neutral" } });
+  updateStatus();
+  await pickJob(); // 從 6 個職業選，再抽小優點、小缺點；還沒有名字就在那一頁取
+  return r;
+}
+// 館長室名片下面的「退休」：不用等理智用完。確認兩次
+export function retireBox() {
+  const c = retireCheck(P, "office");
+  const b = btn(LEGACY_TEXT.officeBtn, async () => {
+    if (UI.busy || !retireCheck(P, "office").ok) return;
+    const who = visitorLabel(P);
+    if (!(await ask(legacyFill(LEGACY_TEXT.officeAsk1, { who }), LEGACY_TEXT.retireYes, LEGACY_TEXT.retireNo))) return;
+    if (!(await ask(legacyFill(LEGACY_TEXT.officeAsk2, { who }), LEGACY_TEXT.retireYes, LEGACY_TEXT.retireNo))) return;
+    UI.busy = true;
+    try { await retireFlow("retire"); } finally { UI.busy = false; }
+  }, "ghost danger-line", { disabled: !c.ok });
+  return h("div", { class: "retire-box placard" }, h("div", { class: "pl-title" }, icon("hourglass"), " ", LEGACY_TEXT.officeTitle),
+    h("p", { class: "pl-line" }, LEGACY_TEXT.officeDesc), b, c.ok ? null : h("p", { class: "sub retire-why" }, retireReason(c)));
 }
 // 理智在哪裡用完（P.visit.where 記的是理智檢定的來源）→ 「在畫廊看「雕像」的時候」
 export function whereWords(src) {
@@ -331,7 +378,8 @@ export function officeSheet() {
     h("div", { class: "sheet-left" }, h("div", { class: "sheet-stats" },
       [["心情", `${P.mood}／99`], ["理智", `${P.sanity}／${maxSan(P)}`], ["佩佩神話", String(P.myth)], ["靈感", String(P.insp)], ["做過", `${P.stats.made} 隻`], ["融合", `${P.stats.fused || 0} 次`]].map(([k, v]) => h("div", { class: "stat" }, h("span", null, k), h("b", null, v)))),
       // 怪癖放在數字正下方（翊文 11-08：「怪癖要上面一點才看的到」）
-      P.quirks.length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), P.quirks.map(q => quirkCard(q))) : null),
+      // 11-09（決定 0027）：卡片上寫要做的那件事、還剩幾分鐘；時間到的不列
+      activeQuirks(P).length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), activeQuirks(P).map(q => quirkCard(q))) : null),
     h("div", { class: "skills placard" }, h("div", { class: "pl-title" }, "技能"),
       SKILLS.map(s => h("div", { class: "skill-row" + (s === main ? " main" : "") },
         h("span", { class: "skill-n" }, s, s === main ? "（拿手）" : ""),
@@ -339,7 +387,8 @@ export function officeSheet() {
         h("b", null, String(skillOf(P, s))),
         h("span", { class: "skill-tick", title: "今天用成功過，明天會擲成長" }, P.skillTicks[s] ? "✓" : ""),
         h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || ""))),
-      h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")));
+      h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")),
+    retireBox()); // 退休（11-08，決定 0025）
 }
 export function officeUpgrades() {
   return h("div", null, inspHave(), h("div", { class: "badge-grid" }, UPGRADES.map(u => {
@@ -420,7 +469,7 @@ export function officeHistory() {
 export function relicCase(r) {
   const it = relicItem(r);
   return h("figure", { class: "relic-case" }, h("div", { class: "relic-glass" }, it ? h("div", { class: "relic-art", html: itemHTML(it) }) : null),
-    h("figcaption", null, h("b", null, it ? itemTitle(it) : "？"), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { x: r.n }))));
+    h("figcaption", null, h("b", null, it ? itemTitle(it) : "？"), h("span", { class: "relic-label" }, legacyFill(LEGACY_TEXT.relicLabel, { who: whoOf(r.n, r.name) }))));
 }
 // 牆上的一張卡。x ＝ P.history 的一筆（或現在這一位的 visitorRecord）；made ＝這一位做了幾隻（不知道是 null）
 export function historyCard(x, made) {
@@ -429,7 +478,7 @@ export function historyCard(x, made) {
   const stat = (label, v) => h("span", { class: "vw-stat" }, h("b", null, v), h("small", null, label));
   const isNew = "perk" in x; // 11-08 以後的紀錄才有優缺點、地下、看懂、留下什麼
   const where = whereWords(x.where);
-  const end = x.now ? "還在館裡" : x.endedBy === "russia8" ? `${where ? where + "，理智用完了。" : ""}最後走進了俄國8+9 的房間。` : "離開了。";
+  const end = x.now ? "還在館裡" : x.endedBy === "russia8" ? `${where ? where + "，理智用完了。" : ""}最後走進了俄國8+9 的房間。` : retireWords(x.endedBy) || "離開了。";
   const left = x.left, li = left && left.type === "relic" ? relicItem(left) : null;
   const leftEl = left ? h("div", { class: "vw-left" }, li ? h("span", { class: "vw-relic", html: itemHTML(li) }) : icon(left.type === "skill" ? "star" : "medal"),
     h("span", null, left.type === "relic" ? `留下了「${li ? itemTitle(li) : "壹件收藏"}」` : `留下了「${left.skill}」+${left.plus}`))

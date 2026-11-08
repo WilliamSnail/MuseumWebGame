@@ -688,13 +688,13 @@ export const TRAIT_TEXT = {
   butter: { name: "手滑", desc: "在地下收藏庫受傷的隊員，晚 {injure} 天好（{from} → {to} 天）。" },
   insomnia: { name: "失眠", desc: "開場理智 −{sanity}（{from} → {to}）。" },
 };
-// 換人時的畫面（遺物、挑下壹位、館長室的歷任參觀者牆）。{x} 這種由畫面帶入。
+// 換人時的畫面（遺物、選職業之後抽小優缺點、館長室的歷任參觀者牆）。{x} 這種由畫面帶入。
 export const LEGACY_TEXT = {
-  leaveTitle: "第 {x} 位參觀者要走了",
+  leaveTitle: "{who}要走了", // {who} ＝「阿明（第 1 位參觀者）」，沒有名字是「第 1 位參觀者」（11-08）
   leaveSub: "走之前，留下壹樣東西給下壹位參觀者。",
   relic: "留下壹件收藏當遺物",
-  relicDesc: "放進館長室的遺物櫃，寫著「第 {x} 位參觀者留下的」。下壹位開場心情 +{mood}。",
-  relicDescNoMood: "放進館長室的遺物櫃，寫著「第 {x} 位參觀者留下的」。",
+  relicDesc: "放進館長室的遺物櫃，寫著「{who}留下的」。下壹位開場心情 +{mood}。",
+  relicDescNoMood: "放進館長室的遺物櫃，寫著「{who}留下的」。",
   relicNone: "收藏裡還沒有東西。",
   relicPick: "挑壹件要留下的",
   relicEmpty: "（還沒挑）",
@@ -704,22 +704,45 @@ export const LEGACY_TEXT = {
   skillDesc: "你的「{skill}」是 {value}。下壹位的{skill}起點 +{plus}。",
   none: "什麼都不留",
   back: "回上壹步",
-  pickTitle: "下壹位參觀者",
-  pickSub: "門口有 {x} 位參觀者在排隊。挑壹位進館：每位有自己的職業、壹個小優點、壹個小缺點。",
-  pickBtn: "就是你了",
+  // 每一位參觀者都從 6 個職業自己選，選好再抽一個小優點、一個小缺點（11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028；以前換人時是從 3 位候選人挑）
+  drawNote: "選好職業之後，會抽壹個小優點、壹個小缺點。抽到就定了，不能重抽。",
+  drawTitle: "抽到的小優點、小缺點",
+  drawSub: "{who}是{job}。抽到就定了，不能重抽；館長室的名片上隨時看得到。",
+  drawOk: "知道了",
+  drawLegacy: "前壹位留下的",
+  drawDone: "{who}是{job}。小優點「{perk}」、小缺點「{flaw}」：館長室的名片上看得到。",
   perk: "小優點",
   flaw: "小缺點",
-  gotRelic: "第 {x} 位參觀者留下了「{name}」：開場心情 +{mood}",
-  gotRelicNoMood: "第 {x} 位參觀者留下了「{name}」",
-  gotSkill: "第 {x} 位參觀者把「{skill}」傳下來了：起點 +{plus}",
+  gotRelic: "{who}留下了「{name}」：開場心情 +{mood}",
+  gotRelicNoMood: "{who}留下了「{name}」",
+  gotSkill: "{who}把「{skill}」傳下來了：起點 +{plus}",
   relics: "遺物櫃",
-  relicLabel: "第 {x} 位參觀者留下的",
+  relicLabel: "{who}留下的",
   wallHint: "點壹張卡片，看這位參觀者的詳細。",
   now: "現在",
   empty: "你是第 {x} 位參觀者。前面還沒有人。",
+  // 退休換人（11-08 翊文：「好，加些其他的」，決定 0025）
+  endEnding: "看完「{ending}」，退休了。",
+  endRetire: "自己決定退休了。",
+  retireBtn: "退休，換下壹位",
+  stayBtn: "繼續當參觀者",
+  retireAsk: "{who}要退休嗎？會掛上歷任參觀者牆，位子空出來給下壹位，走之前可以留下壹樣東西。退休了就不能回來。",
+  retireYes: "退休",
+  retireNo: "再想想",
+  officeTitle: "退休",
+  officeDesc: "不用等到理智用完，也可以讓這位參觀者退休：掛上歷任參觀者牆，留下壹樣東西給下壹位，在同壹個位子換人。收藏、靈感都留在館裡。",
+  officeBtn: "讓這位參觀者退休",
+  officeAsk1: "要讓{who}退休嗎？職業、技能、理智、怪癖都會跟著走，收藏和靈感留在館裡。",
+  officeAsk2: "真的嗎？{who}退休了就不能回來。",
+  notDark: "燈熄了，要先走進那扇門。",
+  notBout: "正在發作，等發作過去再說。",
+  notCellar: "還在地下收藏庫，先上來。",
+  notPicking: "還沒挑職業。",
+  notNew: "剛來沒多久，再過 {x} 天才能退休。",
+  retired: "{who}退休了。",
 };
 // 多位參觀者（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018）：標題畫面的三個位子、取名字、改名字。
-// {x} ＝數字；{name} ＝玩家取的名字；{max} ＝名字最多幾個字（config.js 的 LEGACY.nameMax）；{n} ＝候選人有幾位
+// {x} ＝數字；{name} ＝玩家取的名字；{max} ＝名字最多幾個字（config.js 的 LEGACY.nameMax）
 export const VISITOR_TEXT = {
   slotsTitle: "館裡的參觀者",
   slotsSub: "最多 {x} 位，共用同壹間博物館：收藏、靈感、解鎖是大家的；理智、心情、職業是每位自己的。",
@@ -732,8 +755,8 @@ export const VISITOR_TEXT = {
   dark: "燈熄了：要走進那扇門",
   last: "上次玩的",
   here: "也在館裡",
-  firstSub: "幫你的第壹位參觀者取個名字（最多 {max} 個字）。接著擲心情、選職業。",
-  addSub: "幫這位參觀者取個名字（最多 {max} 個字）。接著擲心情，從門口排隊的 {n} 位裡挑壹位。",
+  firstSub: "幫你的第壹位參觀者取個名字（最多 {max} 個字）。接著擲心情、選職業，再抽壹個小優點、壹個小缺點。",
+  addSub: "幫這位參觀者取個名字（最多 {max} 個字）。接著擲心情、選職業，再抽壹個小優點、壹個小缺點。",
   renameSub: "新的名字（最多 {max} 個字）。",
   placeholder: "例如：阿明",
   label: "名字",
@@ -743,8 +766,19 @@ export const VISITOR_TEXT = {
   errEmpty: "先取壹個名字。",
   errLong: "名字最多 {max} 個字。",
   errBad: "名字裡有看不見的字，換壹個試試。",
+  // 理智歸零、退休換人時，新的那位還沒有名字：在選職業那一頁取（以前在挑候選人那一頁；key 的名字沒改，決定 0028）
   candName: "這位參觀者叫什麼名字？",
   candNameHint: "不填就叫「第 {x} 位參觀者」。之後在門口可以改。",
   renamed: "改好了：「{name}」。",
   full: "位子都滿了。",
+};
+
+// ----- 怪癖的治法：做完壹件事就好，沒做的話 20 分鐘後自己消失（決定 0027） -----
+// 翊文 11-08：「或連續 3 天去抱抱枕 這個太久了，現在改成20分鐘內只要完成某樣事情就可以了」
+// 得到怪癖時，從現在做得到的裡面抽壹件（shared/logic.js 的 pickQuirkTask）。
+//   act：要做的事；chip：狀態列上的短版；where：在哪個房間；hint：再說清楚壹點（{x} 換成不可怕的畫的名字）
+export const QUIRK_TASK_TEXT = {
+  hug: { act: "抱壹次抱枕", chip: "抱抱枕", where: "抱枕工作台", hint: "今天還沒抱過的抱枕都可以，按住抱壹下。" },
+  deliver: { act: "交壹張委託", chip: "交委託", where: "委託櫃台", hint: "櫃台上哪壹張都可以，壹鍵交件也算。" },
+  calm: { act: "看壹幅不可怕的畫", chip: "看不可怕的畫", where: "畫廊", hint: "不用理智檢定的畫都可以，例如{x}。" },
 };

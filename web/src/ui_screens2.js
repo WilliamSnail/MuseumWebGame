@@ -5,17 +5,17 @@
 // ---------- 6 抱枕工作台（系統 I：印你的佩佩） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../shared/config.js";
-import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT, NEXT_VISITOR } from "../../shared/content.js";
-import { CLIENT_LINES, ENDING_CELLAR, RECIPE_TEXT } from "../../shared/content3.js";
+import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
+import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallCode, hallItem, hallScore, hug, hugStreak, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, nextVisitor, num, pad, parseHallCode, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, scoreItems, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallCode, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parseHallCode, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, scoreItems, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
-import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
-import { traitHits, traitTag } from "../../shared/legacy.js";
-import { $, $$, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, pepePlacard, persist, placard, placeTarget, ptNode, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
+import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
+import { $, $$, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
-import { hallTabs, legacyFlow, pickJob, weeklyHall } from "./ui_screens3.js";
+import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 
 SCREENS.pillow = root => {
@@ -59,7 +59,7 @@ SCREENS.pillow = root => {
         const left = Object.keys(P.pillows).filter(k => k !== key && !huggedToday(k)).length;
         return left ? h("p", { class: "sub hug-more" }, `還有 ${left} 個抱枕今天還沒抱：在下面「抱枕」頁點壹個就能抱。`) : null;
       })(),
-      P.quirks.length && !isFree(P) ? h("p", { class: "warn-line" }, `連續 ${NUM.quirkCureDays} 天抱抱枕可以治好怪癖：現在 ${hugStreak(P)} 天`) : null);
+      quirkHereBox("hug")); // 治法是「抱壹次抱枕」的怪癖（11-09，決定 0027；原本是連續 3 天抱抱枕）
   };
   const drawRows = () => {
     rows.replaceChildren(...PILLOW_PARTS.map(part => h("div", { class: "pl-row" },
@@ -96,7 +96,7 @@ SCREENS.pillow = root => {
       if (r.already) { note("這個今天抱過了。"); return; }
       if (r.gain) FX.floatText(stage, `理智 +${r.gain}`, "good");
       note(pickOne(HUG_TEXT) + (r.free ? "" : `　理智 +${r.gain}（擲 ${diceWords(r.roll.spec)}）`), "good");
-      if (r.cured) note(`治好了「${quirkName(r.cured.quirk)}」：可能性 ${num(r.cured.from)} → ${num(r.cured.to)}`, "good");
+      noteCured(r.cured);
       applyBodyState(); updateStatus(); drawInfo(); strip.refresh(); persist(); actionTick();
     }, 450);
   };
@@ -121,7 +121,7 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。", cBtn), commentsBox, autoBar(), board, strip);
+  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
@@ -185,20 +185,20 @@ export function autoSummary(res) {
   return quirkLayer(`壹鍵交件：交了 ${n} 張`, free ? "自由模式：交件只收評語，不算靈感和理智。" : "每張委託單都蓋上了「完成」。", [
     h("div", { class: "ad-sum" }, stat(n, "張委託"), free ? null : stat(`+${res.reward}`, "靈感"), free ? null : stat(`+${res.gain}`, "理智")),
     skills.length ? h("p", { class: "ad-note" }, `說服 ${skills.length} 次，成功 ${won} 次${won ? "（成功的那幾張賞金多三成）" : ""}`) : null,
-    ...res.cured.map(cu => h("p", { class: "ad-note good" }, `治好了「${quirkName(cu.quirk)}」：可能性 ${num(cu.from)} → ${num(cu.to)}`)),
+    ...res.cured.map(cu => h("p", { class: "ad-note good" }, `治好了「${quirkName(cu.quirk)}」${cu.to !== cu.from ? `：可能性 ${num(cu.from)} → ${num(cu.to)}` : ""}`)), // 狂熱治好時可能性不變，不寫
     ...lines.map(l => h("p", { class: "ad-note line" }, l.finale ? `${l.name}：「${l.finale}」` : `${l.name}的故事 ${l.step}／${l.of}`)),
     quotes.length ? h("div", { class: "ad-quotes" }, quotes.map(x => h("blockquote", null, h("p", null, `「${x.r.comment}」`), h("small", null, `— ${x.c.client}`)))) : null,
     res.skipped ? h("p", { class: "ad-note" }, `有 ${res.skipped} 張沒交成（委託換新了）。`) : null,
   ], "ad-modal", "好");
 }
 export function noteCard(c, i) {
-  const card = h("div", { class: "note-card" + (c.done ? " done" : "") + (c.cure ? " cure" : ""), "aria-label": `委託：${c.text}` },
+  const card = h("div", { class: "note-card" + (c.done ? " done" : ""), "aria-label": `委託：${c.text}` },
     h("i", { class: "pin" }),
-    h("div", { class: "nc-tags" }, h("span", { class: "tag" }, c.kind === "line" ? `${c.client} ${c.step + 1}／${CLIENT_LINES[c.line].steps.length}` : KIND_NAME[c.kind] || c.kind), h("span", { class: "stars", title: "難度" }, "★".repeat(QUEST_STARS[c.kind] || 1)), c.cure ? h("span", { class: "tag warn" }, "治療委託") : null),
+    h("div", { class: "nc-tags" }, h("span", { class: "tag" }, c.kind === "line" ? `${c.client} ${c.step + 1}／${CLIENT_LINES[c.line].steps.length}` : KIND_NAME[c.kind] || c.kind), h("span", { class: "stars", title: "難度" }, "★".repeat(QUEST_STARS[c.kind] || 1))), // 「治療委託」的標籤拿掉了（11-09，決定 0027）：治法是交委託的話，哪壹張都算
     c.intro ? h("p", { class: "nc-intro" }, ptNode(c.intro)) : null,
     h("p", { class: "nc-text" }, ptNode(c.text)),
     h("p", { class: "nc-client" }, `— ${c.client}`),
-    h("p", { class: "nc-reward" }, isFree(P) ? "交件可以收到評語" : `+${c.reward} 靈感${traitHits(P, "deal").map(t => `（${traitTag(t)}）`).join("")}・理智 +${NUM.commissionSan}${c.cure ? "・治好一個怪癖" : ""}`), // 嘴甜、不會講價（11-08）
+    h("p", { class: "nc-reward" }, isFree(P) ? "交件可以收到評語" : `+${c.reward} 靈感${traitHits(P, "deal").map(t => `（${traitTag(t)}）`).join("")}・理智 +${NUM.commissionSan}`), // 嘴甜、不會講價（11-08）
     c.done ? h("div", { class: "nc-stamp", html: ART.stamp("完成") }) : null,
     c.done ? null : h("p", { class: "nc-drop" }, c.kind === "pillow" ? "把抱枕拖到這裡" : "把佩佩拖到這裡"));
   if (!c.done) placeTarget(card, c.kind === "pillow" ? ["pillow"] : ["pepe"], item => {
@@ -213,7 +213,7 @@ export function noteCard(c, i) {
     if (r.reward) FX.floatText(card, `+${r.reward} 靈感`, "good");
     if (r.gain) later(() => FX.floatText(card, `理智 +${r.gain}`, "good"), 350);
     note(`${c.client}：「${r.comment}」`, "good");
-    if (r.cured) note(`治好了「${quirkName(r.cured.quirk)}」：可能性 ${num(r.cured.from)} → ${num(r.cured.to)}`, "good");
+    noteCured(r.cured);
     later(() => card.classList.add("fly"), 750);
     later(() => { if (UI.screen === "commission") rerender(); }, 1400);
     applyBodyState(); updateStatus(); persist(); actionTick();
@@ -550,13 +550,10 @@ SCREENS.settings = root => {
     h("div", { class: "set-list" },
       h("div", { class: "set-row" }, h("span", null, "字大小"), seg("font", [["s", "小"], ["m", "中"], ["l", "大"]])),
       h("div", { class: "set-row" }, h("span", null, "動畫減量"), seg("reduceMotion", [[false, "關"], [true, "開（只淡入）"]])),
-      // 遊戲裡的壹天多長（翊文 11-08：「可以改成壹天是每 15 分鐘嗎，可以再設定」）
-      h("div", { class: "set-row set-day" }, h("span", null, "壹天多長"), h("div", null,
-        seg("dayMin", [[15, "玩 15 分鐘"], [30, "30 分鐘"], [60, "60 分鐘"], [0, "真實的壹天"]]),
-        h("p", { class: "sub" }, (s.dayMin == null ? 15 : s.dayMin) > 0
-          ? "只算真的在玩的時間（壹分鐘沒動就不算，關掉遊戲也不會偷跑）。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"
-          : "照電腦的日期，半夜 12 點換壹天。"),
-        P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P, s.dayMin == null ? 15 : +s.dayMin), 3)} 天。`) : null)),
+      // 換日（11-08 翊文：「壹天多長 全部都要是真實的壹天」）：拿掉 15／30／60 分鐘的選項，只寫什麼時候換日（決定 0019）
+      h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,
+        h("p", { class: "sub" }, "台灣時間每天 05:00 換壹天，每週壹 05:00 換週，大家的壹天都壹樣。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"),
+        P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P), 3)} 天（你第壹次進館那天是第 1 天）。`) : null)),
       h("div", { class: "set-row" }, h("span", null, "聲音"), seg("muted", [[false, "打開"], [true, "靜音"]])),
       h("div", { class: "set-row set-vol" }, h("span", null, "音量"), volumeBox()),
       h("div", { class: "set-row set-demo" }, h("span", null, "試聽"), demoBox()),
@@ -616,18 +613,20 @@ SCREENS.ending = (root, params) => {
     stats.classList.add("enter");
     await wait(900);
     if (id === "russia8") actions.append(btn("下一位參觀者", async e => {
-      // 參觀者一位接一位（11-08 翊文，roguelike 的繼承）：先留一樣東西給下一位（A），換人之後從候選人挑一位（C）
-      const b = e.currentTarget; b.disabled = true;
-      const leave = await legacyFlow();
-      const r = nextVisitor(P, "russia8", leave);
-      markFresh(P, "office", "wall:" + r.entry.n); // 館長室的歷任參觀者牆多了一張（導覽列標「新」）
-      persist();
-      go("lobby", {}, { action: false });
-      await FX.rollOverlay({ title: "下一位參觀者", sub: NEXT_VISITOR.join("　"), spec: "3D6", result: { total: r.total, faces: r.faces }, outcome: { text: `心情 ${P.mood}　理智 ${P.sanity}`, tone: "neutral" } });
-      updateStatus();
-      await pickJob(); // 新的參觀者：有候選人就從候選人挑，沒有就選職業
+      // 參觀者一位接一位（11-08 翊文，roguelike 的繼承）：先留一樣東西給下一位（A），換人之後選職業、抽小優缺點（C，決定 0028）。流程在 ui_screens3.js 的 retireFlow
+      e.currentTarget.disabled = true;
+      await retireFlow("russia8");
     }, "primary"));
-    else actions.append(btn("回大廳繼續逛", () => go("lobby", {}, { action: false }), "primary"));
+    else if (RETIRE_ENDINGS.includes(id) && retireCheck(P, "ending").ok) {
+      // 退休換人（11-08 翊文：「好，加些其他的」，決定 0025）：看完館長、地下館長、你的佩佩博物館，可以退休換下一位，也可以繼續當參觀者
+      actions.append(btn(LEGACY_TEXT.stayBtn, () => go("lobby", {}, { action: false }), "primary"),
+        btn(LEGACY_TEXT.retireBtn, async e => {
+          const b = e.currentTarget;
+          if (!(await ask(legacyFill(LEGACY_TEXT.retireAsk, { who: visitorLabel(P) }), LEGACY_TEXT.retireYes, LEGACY_TEXT.retireNo))) return;
+          b.disabled = true;
+          await retireFlow(id);
+        }, "ghost"));
+    } else actions.append(btn("回大廳繼續逛", () => go("lobby", {}, { action: false }), "primary"));
     actions.querySelector("button").focus();
   })();
 };
@@ -810,10 +809,10 @@ export function howToPlay() {
       R("gallery", "靈感", "逛畫廊拿", E("靈感"), "，用靈感在手作坊做佩佩、解鎖選項。每解鎖壹個，", E("可能性"), "當場變大。"),
       R("dice", "稀有度", "挑戰模式做出來才知道：擲 ", E("d100"), "，", E("01–02 傳說級"), "、", E("03–12 超稀有"), "、", E("13–40 稀有"), "，其他普通。", E("01 完美作品"), "，", B(`${NUM.fumbleFrom}–100 失敗作`), "。"),
       R("heart", "心情＝幸運", E("1 點心情把骰子壓低 1"), "，最低到 02。不滿意可以", E("孤注壹擲"), "重擲壹次，但不能花心情，", B("結果更差要做理智檢定"), "。"),
-      R("eye", "理智檢定", "開場理智 ", E(String(NUM.startSanity)), "。看到嚇人的東西要擲 1～100：", E("擲出的數字 ≤ 你現在的理智就算成功"), "，成功掉得少、失敗掉得多（例如「成功扣 1 點，失敗扣 1～6 點」）。", B("壹次掉 5 點以上"), "再擲壹次，看你「看懂了沒」（50＋佩佩神話），看懂了就", B("瘋狂發作"), "。", B("壹天掉超過當天理智的 1/5"), "會得到怪癖。"),
+      R("eye", "理智檢定", "開場理智 ", E(String(NUM.startSanity)), "。看到嚇人的東西要擲 1～100：", E("擲出的數字 ≤ 你現在的理智就算成功"), "，成功掉得少、失敗掉得多（例如「成功扣 1 點，失敗扣 1～6 點」）。", B("壹次掉 5 點以上"), "再擲壹次，看你「看懂了沒」（50＋佩佩神話），看懂了就", B("瘋狂發作"), "。", B("壹天掉超過當天理智的 1/5"), "會得到怪癖：", G("做完卡片上寫的那壹件事就好"), `，不然 ${NUM.quirkMinutes} 分鐘後也會自己消失。`), // 11-09（決定 0027）
       R("scroll", "佩佩神話", "理智上限＝", E("99－佩佩神話"), "。讀禁書、看隱藏展品會懂更多，也會打開", E("禁忌選項"), "。", B("理智 0"), "的時候，會發生壹些事。"), // 不破梗（翊文 11-08）
       R("pillow", "補理智", G("抱抱枕"), "、", G("完成委託"), "、", G("圖鑑整類全收集"), "可以補理智。"),
       R("fusion", "融合室・館長室", "兩隻佩佩融合成壹隻：每壹類各 ", E("45% 遺傳"), "、", E("10% 突變"), "，試出", E("隱藏配方"), "。館長室可以買升級、修東西、送交換碼。"),
-      R("cellar", "職業・地下收藏庫", "每位參觀者有職業和技能：", E("擲 d100 ≤ 技能值"), "就成功，用成功的技能隔天會成長。地下收藏庫帶 ", E("3 隻佩佩"), "下去：", E("心情相剋"), "、", E("帽子是技能"), "、", E("姿勢是站位"), "。"),
-      R("hourglass", "歷任參觀者", "換下壹位參觀者時，可以", E("留下壹樣東西"), "、", E("挑下壹位"), "。館長室看得到歷任參觀者。"))); // 不破梗：不寫什麼時候換人（11-08）
+      R("cellar", "職業・地下收藏庫", "每位參觀者自己選職業，再抽", G("壹個小優點"), "、", B("壹個小缺點"), "（館長室的名片上看得到）。技能", E("擲 d100 ≤ 技能值"), "就成功，用成功的技能隔天會成長。地下收藏庫帶 ", E("3 隻佩佩"), "下去：", E("心情相剋"), "、", E("帽子是技能"), "、", E("姿勢是站位"), "。"),
+      R("hourglass", "歷任參觀者", "換下壹位參觀者時，可以", E("留下壹樣東西"), "給下壹位。館長室看得到歷任參觀者。"))); // 不破梗：不寫什麼時候換人（11-08）
 }
