@@ -543,6 +543,8 @@ export function go(name, params = {}, opts = {}) {
   }
   UI.pendingMake = null;
   const prev = UI.screen;
+  // 換房間：上壹個房間留下的「忙碌中」一律清掉（11-08：看畫時發作「昏倒」「驚慌逃跑」「想看起源」直接換畫面，看畫的框沒關，忙碌中一直留著，之後看畫、翻禁書都沒反應）
+  if (prev !== name) UI.busy = false;
   UI.screen = name; UI.params = params;
   document.body.dataset.screen = name;
   if (UI.net) NET.where(netRoom(name)); // 館友名單上的「在哪裡」

@@ -284,6 +284,8 @@ export async function focusExhibit(ex) {
   const close = () => { if (closed) return; closed = true; layer.remove(); document.removeEventListener("keydown", onKey); UI.busy = false; if (UI.screen === "gallery") rerender(); };
   const onKey = e => { if (e.key === "Escape" && !$(".fx-overlay")) close(); };
   document.addEventListener("keydown", onKey);
+  // 被換畫面拿掉時（發作把人拉走）：一樣收乾淨（go() 會跑 UI.cleanup）
+  UI.cleanup.push(() => { if (closed) return; closed = true; document.removeEventListener("keydown", onKey); UI.busy = false; });
   host.append(layer);
   requestAnimationFrame(() => layer.classList.add("in"));
   try {
@@ -537,10 +539,17 @@ function afraidText(cat, name, why) {
 function afraidBar(cat) {
   const blocked = allOpts(cat).filter(n => isUnlocked(P, cat, n) && isBlocked(P, cat, n));
   if (!blocked.length) return null;
-  const why = blockedWhy(P, cat, blocked[0]);
-  const what = why && why.kind === "quirk" && !why.quirk.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : blocked.map(n => `「${n}」`).join("、") + "不敢碰";
-  const how = why && why.kind === "bout" ? `發作中，再 ${why.left} 個動作就好。` : `這是看可怕的東西時理智檢定失敗留下的怪癖。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`;
-  return h("p", { class: "afraid-bar", role: "note" }, icon("eye"), h("span", null, h("b", null, what), "：", how));
+  // 怪癖和發作分開說（同壹類兩種都有的時候，不要把暫時的發作說成怪癖）
+  const byQuirk = blocked.filter(n => { const w = blockedWhy(P, cat, n); return w && w.kind === "quirk"; });
+  const byBout = blocked.filter(n => !byQuirk.includes(n));
+  const lines = [];
+  if (byQuirk.length) {
+    const q = blockedWhy(P, cat, byQuirk[0]).quirk;
+    const what = !q.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : byQuirk.map(n => `「${n}」`).join("、") + "不敢碰";
+    lines.push(h("span", null, h("b", null, what), `：這是看可怕的東西時理智檢定失敗留下的怪癖。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`));
+  }
+  if (byBout.length) lines.push(h("span", null, h("b", null, byBout.map(n => `「${n}」`).join("、") + "不敢碰"), `：恐懼症發作中，再 ${P.bout ? P.bout.left : 1} 個動作就好。`));
+  return h("div", { class: "afraid-bar", role: "note" }, icon("eye"), h("div", { class: "afraid-lines" }, lines));
 }
 SCREENS.workshop = (root, params) => {
   const free = isFree(P);
@@ -569,9 +578,10 @@ SCREENS.workshop = (root, params) => {
   const info = h("aside", { class: "ws-info" });
   const tabs = h("div", { class: "ws-tabs", role: "tablist" });
   const cards = h("div", { class: "ws-cards", role: "listbox", "aria-label": "選項" });
+  const afraidBox = h("div", { class: "ws-afraid" }); // 不敢碰的說明放在卡片列外面（卡片列在手機上是橫的，放裡面會被擠成直條）
   const tools = h("div", { class: "ws-tools" });
   root.append(roomHead(GEN_TEXT.workshop, free ? "自由模式：什麼都能直接選。" : "點卡片換選項；帽子可以直接拖到頭上。稀有度做出來才知道。"),
-    h("div", { class: "ws-top" }, stage, info), tabs, cards, tools);
+    h("div", { class: "ws-top" }, stage, info), tabs, afraidBox, cards, tools);
 
   const drawFrog = anim => {
     frogBox.innerHTML = frogHTML(pick, free ? { fx: true } : {});
@@ -665,7 +675,8 @@ SCREENS.workshop = (root, params) => {
   };
   const drawCards = () => {
     const list = allOpts(tab).map(n => cardFor(tab, n)).filter(Boolean);
-    cards.replaceChildren(afraidBar(tab), ...list);
+    cards.replaceChildren(...list);
+    afraidBox.replaceChildren(afraidBar(tab));
     if (tab === ROLLED && !free) cards.append(h("p", { class: "card-note" }, `稀有度不能選：按「做」之後擲 d100，01 是完美作品、${NUM.fumbleFrom}–100 是失敗作。可以花心情把骰子壓低。`));
   };
   cards.addEventListener("keydown", e => {
