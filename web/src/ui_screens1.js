@@ -7,7 +7,7 @@ import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD
 import { BOOK4, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
+import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
 import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
@@ -526,6 +526,22 @@ export function rarityRanges() { // 最後壹列是失敗作（NUM.fumbleFrom–
   const rs = RARITY_TABLE.map(t => { const to = Math.min(t.max, NUM.fumbleFrom - 1), r = { name: t.name, from: lo, to, pct: to - lo + 1 }; lo = t.max + 1; return r; });
   return rs.concat([{ name: FAILED, from: NUM.fumbleFrom, to: 100, pct: 101 - NUM.fumbleFrom, failed: true }]);
 }
+// 不敢碰的選項：說清楚為什麼、怎麼好（翊文 11-08：「看了一幅畫之後其他本來解開的就還不能點，看看是不是有問題」——
+// 是看畫的理智檢定失敗得到的恐懼症，照規則擋住的，但原本只寫「不敢碰」，看起來像壞掉）
+function afraidText(cat, name, why) {
+  if (why && why.kind === "bout") return `恐懼症發作：暫時不敢碰「${name}」，再 ${why.left} 個動作就好。`;
+  if (why && why.kind === "quirk") return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`;
+  return `你不敢碰「${name}」。`;
+}
+// 這壹類有不敢碰的：卡片上面壹行說明（不用點也看得到）
+function afraidBar(cat) {
+  const blocked = allOpts(cat).filter(n => isUnlocked(P, cat, n) && isBlocked(P, cat, n));
+  if (!blocked.length) return null;
+  const why = blockedWhy(P, cat, blocked[0]);
+  const what = why && why.kind === "quirk" && !why.quirk.opt ? `「${cat}」除了「${baseOpts(cat)[0]}」都不敢碰` : blocked.map(n => `「${n}」`).join("、") + "不敢碰";
+  const how = why && why.kind === "bout" ? `發作中，再 ${why.left} 個動作就好。` : `這是看可怕的東西時理智檢定失敗留下的怪癖。治法：委託櫃台交「治療委託」，或連續 ${NUM.quirkCureDays} 天抱抱枕。`;
+  return h("p", { class: "afraid-bar", role: "note" }, icon("eye"), h("span", null, h("b", null, what), "：", how));
+}
 SCREENS.workshop = (root, params) => {
   const free = isFree(P);
   const pick = P.wsPick;
@@ -609,7 +625,7 @@ SCREENS.workshop = (root, params) => {
     const preview = Object.assign({}, pick, { [cat]: name });
     let sub;
     if (st.state === "open") {
-      if (blocked) sub = h("span", { class: "c-sub warn" }, "不敢碰");
+      if (blocked) { const why = blockedWhy(P, cat, name); sub = h("span", { class: "c-sub warn", title: afraidText(cat, name, why) }, why && why.kind === "bout" ? "不敢碰（發作）" : "不敢碰"); }
       else if (rolledTab) { const r = rarityRanges().find(x => x.name === name); sub = h("span", { class: "c-sub" }, r ? `${pad(r.from, 2)}–${pad(r.to, 2)}` : "神話＋01"); }
     } else if (st.state === "buy") sub = h("span", { class: "c-sub" + (st.ok ? " can" : "") }, icon("lock"), `花 ${st.cost} 靈感解鎖`);
     else sub = h("span", { class: "c-sub" }, icon("lock"), st.state === "forbidden" ? `禁忌：神話 ${o.myth}` : st.text);
@@ -623,7 +639,7 @@ SCREENS.workshop = (root, params) => {
     let armed = false;
     const activate = () => {
       if (st.state === "open") {
-        if (blocked) { snd("error"); note(`你不敢碰「${name}」`, "bad"); card.classList.add("shake"); return; }
+        if (blocked) { snd("error"); note(afraidText(cat, name, blockedWhy(P, cat, name)), "bad"); card.classList.add("shake"); return; }
         if (rolledTab) { note("稀有度做出來才知道：按「做」之後擲 d100。"); return; }
         select(cat, name);
       } else if (st.state === "buy") {
@@ -649,7 +665,7 @@ SCREENS.workshop = (root, params) => {
   };
   const drawCards = () => {
     const list = allOpts(tab).map(n => cardFor(tab, n)).filter(Boolean);
-    cards.replaceChildren(...list);
+    cards.replaceChildren(afraidBar(tab), ...list);
     if (tab === ROLLED && !free) cards.append(h("p", { class: "card-note" }, `稀有度不能選：按「做」之後擲 d100，01 是完美作品、${NUM.fumbleFrom}–100 是失敗作。可以花心情把骰子壓低。`));
   };
   cards.addEventListener("keydown", e => {

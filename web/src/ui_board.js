@@ -175,6 +175,8 @@ export function autoBoard(tries = 0) {
   if (window.__PM_NODOOR__) return; // 開發用的 #畫面：不要自己跳出來擋住
   if (busy()) { if (tries < 15) setTimeout(() => autoBoard(tries + 1), 2000); return; }
   autoDone = true;
+  // 只有還在大廳才自己打開（11-08：玩家已經走去畫廊看畫了，公佈欄突然蓋上來很突兀）；沒打開的，選單上照樣有數字
+  if (UI.screen !== "lobby") { updateBoardBadges(); return; }
   const today = realTodayStr(), list = visibleNotices(P, today), state = noticeState(SAVE);
   syncMail(P, list, today); persist(); updateBoardBadges();
   const plan = autoOpenPlan(state, list, today);

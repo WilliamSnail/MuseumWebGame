@@ -980,5 +980,22 @@ T("壹鍵 治療委託會治好怪癖；自由模式也能交（不給靈感）"
   assert.strictEqual(fr.results.length, 1); assert.strictEqual(fr.reward, 0); assert.strictEqual(F.insp, 0); assert.strictEqual(F.comments.length, 1);
 });
 
+// 不敢碰的原因（11-08：看畫之後選項點不了，其實是恐懼症，要說清楚）
+T("不敢碰：說得出是哪個怪癖、還是發作", () => {
+  const P = fresh(); unlockAll(P);
+  const base = G.baseOpts("帽子")[0], other = G.allOpts("帽子").find(n => n !== base);
+  P.quirks.push({ type: "phobia", cat: "帽子", opt: null });
+  assert.strictEqual(G.blockedWhy(P, "帽子", other).kind, "quirk", "整類的恐懼症");
+  assert.strictEqual(G.blockedWhy(P, "帽子", base), null, "最基本的那個不擋");
+  assert.strictEqual(G.isBlocked(P, "帽子", other), true, "跟 isBlocked 一致");
+  P.quirks = [{ type: "phobia", cat: "顏色", opt: "黑" }];
+  assert.strictEqual(G.blockedWhy(P, "顏色", "黑").quirk.opt, "黑");
+  assert.strictEqual(G.blockedWhy(P, "顏色", "紅"), null);
+  P.quirks = []; P.bout = { i: 8, left: 3, cat: "姿勢", opt: "倒立" };
+  const b = G.blockedWhy(P, "姿勢", "倒立");
+  assert.strictEqual(b.kind, "bout"); assert.strictEqual(b.left, 3);
+  assert.strictEqual(G.blockedWhy(P, "姿勢", "站著"), null);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
