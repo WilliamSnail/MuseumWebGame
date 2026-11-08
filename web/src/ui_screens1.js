@@ -4,7 +4,7 @@
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { EXHIBITS, GALLERY_INTRO, GEN_TEXT, LEGACY, NUM, ORIGIN, RARITY_TABLE, UPGRADES } from "../../shared/config.js";
 import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD_RECOVER_TEXT, PERFECT_WORK_TEXT, ROOM_HINTS, SAN_ASIDES, TITLE_TAGLINE, TUTORIAL_TEXT } from "../../shared/content.js";
-import { BOOK4, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
+import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
@@ -12,6 +12,7 @@ import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerol
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
+import { traitDesc, traitName } from "../../shared/legacy.js";
 import { $, $$, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, pepePlacard, persist, placard, placeTarget, ptNode, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
@@ -41,7 +42,7 @@ SCREENS.title = root => {
 // 多位參觀者（翊文 11-08：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/visitors.js）：
 //   - 挑戰模式有進度：三個位子的卡片（visitorSlotsBox）。有人的位子「繼續參觀」（上次玩的那位是主要的金色按鈕）、可以改名字；空位子「新參觀者」。
 //   - 沒有進度：「新參觀者」（主要）＋自由模式，跟以前一樣。
-//   - 「新參觀者」先取名字再挑：整個帳號的第一位選職業（startChallenge → pickJob）；之後在空位子加的，從 3 位候選人挑（addVisitorFlow → pickCandidate）。
+//   - 「新參觀者」先取名字再擲心情、選職業：每一位都從 6 個職業選，再抽一個小優點、一個小缺點（pickJob；決定 0028，以前空位子加的是從 3 位候選人挑）。
 //   - 「新參觀者」不會再清掉博物館（以前按兩次會整個重新開始）。
 function titleActions() {
   const C = SAVE.profiles.challenge;
@@ -81,6 +82,9 @@ function slotCard(s) {
     h("div", { class: "vs-top" }, h("span", { class: "vs-badge", html: j && ART.jobBadge ? ART.jobBadge(s.job) : ART.icon("frog") }),
       h("div", { class: "vs-id" }, h("b", { class: "vs-name" }, s.name), h("span", { class: "vs-no" }, [s.vname ? `第 ${s.visitor} 位參觀者` : null, j ? j.name : "還沒選職業"].filter(Boolean).join("・")))),
     h("div", { class: "vs-stats" }, stat("理智", `${s.sanity}／${s.maxSan}`), stat("心情", String(s.mood))),
+    // 小優點、小缺點（決定 0028：每一位選職業時抽；0028 以前的第一位沒有，就不放）。效果寫在 title，館長室的名片上有完整的
+    s.perk || s.flaw ? h("div", { class: "vs-traits" }, [["perk", s.perk], ["flaw", s.flaw]].filter(x => x[1]).map(([k, id]) =>
+      h("span", { class: "vw-tag " + k, title: traitDesc(id) }, `${k === "perk" ? LEGACY_TEXT.perk : LEGACY_TEXT.flaw}・${traitName(id)}`))) : null,
     s.dark ? h("p", { class: "vs-warn" }, VISITOR_TEXT.dark) : s.picking ? h("p", { class: "vs-warn" }, VISITOR_TEXT.picking) : null,
     h("div", { class: "vs-acts" }, play, ren));
 }
@@ -105,18 +109,18 @@ async function renameFlow(s) {
   note(legacyFill(VISITOR_TEXT.renamed, { name }), "good");
   refreshLogin();
 }
-// 整個帳號的第一位：取名字 → 擲心情 → 選職業（照舊從 6 個職業選）
+// 整個帳號的第一位：取名字 → 擲心情 → 選職業（6 個職業）、抽小優缺點（決定 0028：第一位也抽）
 async function firstVisitor() {
   if (SAVE.profiles.challenge) { refreshLogin(); return; }
   const name = await askVisitorName({ sub: legacyFill(VISITOR_TEXT.firstSub, { max: LEGACY.nameMax }) });
   if (name) await startChallenge(name);
 }
-// 在空位子加一位：取名字 → 擲心情 → 從候選人挑（繼承做好的那一套，不用留遺物）
+// 在空位子加一位：取名字 → 擲心情 → 選職業、抽小優缺點（跟第一位一樣，不用留遺物；決定 0028）
 async function addVisitorFlow(slot) {
   const C = SAVE.profiles.challenge;
   if (!C) { firstVisitor(); return; }
   if (!freeSlots(C).length) { note(VISITOR_TEXT.full, "bad"); refreshLogin(); return; }
-  const name = await askVisitorName({ sub: legacyFill(VISITOR_TEXT.addSub, { max: LEGACY.nameMax, n: LEGACY.candidates }) });
+  const name = await askVisitorName({ sub: legacyFill(VISITOR_TEXT.addSub, { max: LEGACY.nameMax }) });
   if (!name) return;
   const r = addVisitor(C, name, slot);
   if (!r) { note(VISITOR_TEXT.full, "bad"); refreshLogin(); return; }
@@ -124,7 +128,7 @@ async function addVisitorFlow(slot) {
   go("lobby", {}, { action: false });
   await FX.rollOverlay({ title: "擲心情", sub: MOOD_ROLL_SUB, spec: "3D6", result: { total: r.total, faces: r.faces }, outcome: { text: `${visitorLabel(P)}：心情 ${P.mood}　理智 ${P.sanity}`, tone: "neutral" } });
   updateStatus();
-  await pickJob(); // 有候選人：從候選人挑
+  await pickJob(); // 從 6 個職業選，再抽小優點、小缺點
   afterEnter();
 }
 const MOOD_ROLL_SUB = "像克蘇魯建角色：擲 3 顆 6 面骰加起來，再 × 5。心情就是你的幸運，之後可以花掉來改骰子。";

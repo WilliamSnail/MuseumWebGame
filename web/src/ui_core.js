@@ -151,6 +151,11 @@ export function persist() {
   if (UI.net) { NET.saveSoon(SAVE); return; }
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) { /* 預覽環境可能不能存 */ }
 }
+// 馬上存，不等 saveSoon 的幾秒：抽到的東西（小優點、小缺點）不能因為馬上重新整理就重抽（決定 0028）
+export function persistNow() {
+  persist();
+  if (UI.net && NET.flush) NET.flush().catch(() => {});
+}
 // 告訴伺服器「我在哪個房間」：房間代號照 server/protocol.md（小寫英文開頭，最多 32 字）
 export function netRoom(name) {
   const r = String(name || "").toLowerCase();

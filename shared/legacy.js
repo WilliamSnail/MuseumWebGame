@@ -3,7 +3,10 @@
 //  翊文 11-08：「現在理智歸零以後，下一個探險者可以繼承一些東西……就像Rouge like那樣，每個帳戶是自己的進度，一個探險者後可以下一個」
 //  主線替翊文挑了規劃.md 第四節的 A、C、D（docs/決定/0016-參觀者繼承做ACD.md）：
 //    A. 前任的遺物：換人時，前一位留一樣東西給下一位（一件收藏放進館長室的遺物櫃，或最拿手的技能 +10）。
-//    C. 挑下一位：從 3 位候選人挑一位，每位是「職業＋一個小優點＋一個小缺點」。
+//    C. 挑下一位：原本是從 3 位候選人挑一位（每位是「職業＋一個小優點＋一個小缺點」）。
+//       11-08 翊文：「創第二個角色的時候只剩三個職業為什麼，而且優缺點創第一個角色的時候沒有寫」，選了「6 個職業自己選，再抽優缺點」
+//       （docs/決定/0028-每位參觀者都選職業再抽優缺點.md）：每一位參觀者（第一位也是）都從 6 個職業自己選，
+//       選好再用 RNG 抽一個小優點、一個小缺點（chooseJob）。抽到就存在 P 上，不能重抽。3 位候選人那一套拿掉了。
 //    D. 歷任參觀者牆：換人時把這一位的紀錄寫進 P.history，館長室一位一張卡。
 //  退休換人（翊文 11-08：「好，加些其他的」，docs/決定/0025-退休換人.md）：除了理智歸零，
 //    看完其他結局（館長、地下館長、你的佩佩博物館）可以退休；館長室的名片上也可以自己退休（retireCheck）。
@@ -12,18 +15,20 @@
 //  數值在 config.js（LEGACY、PERKS、FLAWS），文字在 content3.js（TRAIT_TEXT、LEGACY_TEXT）。
 //
 //  存在 P 裡的（newProfile 給預設；舊存檔由 fixLegacy 補）：
-//    P.perk、P.flaw  這一位的小優點、小缺點（id）。第一位參觀者、自由模式是 null。
-//    P.cands         換人之後還沒挑的候選人（挑好就變 null）。存在存檔裡：重新整理也是同樣 3 位，不能重抽。
+//    P.perk、P.flaw  這一位的小優點、小缺點（id）。選職業時抽（chooseJob）；還沒選職業、自由模式是 null。
+//                    0028 以前的第一位參觀者沒有抽過，維持 null（不補抽）。
+//    P.cands         以前「3 位候選人」還沒挑的（0028 以後不再產生）。舊存檔裡有就留著不動；那一位選職業時清成 null（跟以前挑了候選人一樣）。
 //    P.legacy        前一位留給這一位的東西：{ from, type: "relic", kind, key, mood } 或 { from, type: "skill", skill, plus }；沒有是 null。
 //    P.relics        遺物櫃：歷任留下的收藏（新的在前面），整間博物館共用，換人也留著。
 //    P.visit         這一位自己的統計：{ from（來的那天）, sec0, made0, deepest（地下走到第幾層）, understood（看懂了哪些）, where（理智在哪裡用完）,
 //                    made（這一位做了幾隻）, sec（這一位玩了幾秒） }。made、sec 是多位參觀者（11-08）加的：stats.made、activeSec 是整間博物館的，三位輪流玩，相減會算到別人的
 //  效果接在原本的規則裡（找 traitSum）：logic.js 的 makePillow、deliver、understandCheck；
-//  logic3.js 的 assignJob、skillGrowth、fusionPrice、teamPower、cellarApply、injureDaysOf。
+//  logic3.js 的 skillGrowth、fusionPrice、teamPower、cellarApply、injureDaysOf。
+//  開場就算的（心情、理智、技能起點）在選職業時加（chooseJob → startStats）。
 // ================================================================
 import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
-import { JOBS, TRAIT_TEXT } from "./content3.js";
-import { RNG, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
+import { TRAIT_TEXT } from "./content3.js";
+import { asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
 import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
 
 // ---------- 小優點、小缺點 ----------
@@ -157,27 +162,19 @@ export function retireCheck(P, how = "office") {
   return { ok: true, reason: null };
 }
 
-// ---------- C. 挑下一位 ----------
-// 換人時的候選人：職業不重複；每位一個小優點、一個小缺點（同一類的不配在一起；三位之間盡量不重複）；技能先擲好，卡片上就看得到
-export function rollCandidates(P) {
-  if (!P || isFree(P)) return null;
-  const jobs = (typeof JOBS !== "undefined" && JOBS.length ? JOBS.map(j => j.id) : Object.keys(JOB_SKILL)).slice();
-  for (let i = jobs.length - 1; i > 0; i--) { const j = Math.floor(RNG() * (i + 1)); const t = jobs[i]; jobs[i] = jobs[j]; jobs[j] = t; } // 洗牌
-  const usedPerk = new Set(), usedFlaw = new Set();
-  return jobs.slice(0, Math.max(1, LEGACY.candidates)).map(job => {
-    const okJob = t => !asList(t.notJob).includes(job);
-    const perks = PERKS.filter(okJob);
-    const perk = pickOne(perks.filter(t => !usedPerk.has(t.id))) || pickOne(perks) || null;
-    const flaws = FLAWS.filter(t => okJob(t) && !traitsClash(t, perk));
-    const flaw = pickOne(flaws.filter(t => !usedFlaw.has(t.id))) || pickOne(flaws) || null;
-    if (perk) usedPerk.add(perk.id);
-    if (flaw) usedFlaw.add(flaw.id);
-    return { job, perk: perk ? perk.id : null, flaw: flaw ? flaw.id : null, skills: rollSkills(job) };
-  });
+// ---------- C. 選職業，再抽小優點、小缺點（決定 0028） ----------
+// 翊文 11-08 選了「6 個職業自己選，再抽優缺點」：每一位參觀者（第一位也是）都一樣。以前換人時是從 3 位候選人挑（rollCandidates，拿掉了）。
+// 抽一個小優點、一個小缺點（用 RNG）。job ＝選好的職業：notJob 的抽不到（抱枕職人不會是「手巧」）；同一類（tag）的不配在一起
+export function rollTraits(job) {
+  const okJob = t => !asList(t.notJob).includes(job);
+  const perk = pickOne(PERKS.filter(okJob)) || null;
+  const flaw = pickOne(FLAWS.filter(t => okJob(t) && !traitsClash(t, perk))) || null;
+  return { perk: perk ? perk.id : null, flaw: flaw ? flaw.id : null };
 }
-// 候選人進館之後的樣子（卡片上先算給玩家看；挑了就照這個套用，兩邊一定一樣）：
+// 開場的樣子：c ＝ { job, perk, flaw, skills（擲好的技能） }，加上前一位留下的（P.legacy）。
 //   skills ＝加減之後的技能；delta ＝ { 技能: 加減多少 }；mood、sanity ＝開場心情、理智要加減多少；why ＝每一項是誰給的
-export function candidateStats(P, c) {
+//   （就是以前候選人卡片上算的 candidateStats，改了名字，算法沒改）
+export function startStats(P, c) {
   const main = jobSkill(c.job), skills = Object.assign({}, c.skills), delta = {}, why = [];
   const add = (s, v) => { if (!v || typeof skills[s] !== "number") return; const before = skills[s]; skills[s] = clampN(before + v, 1, 99); delta[s] = (delta[s] || 0) + skills[s] - before; };
   [traitById(c.perk), traitById(c.flaw)].filter(Boolean).forEach(t => {
@@ -194,19 +191,23 @@ export function candidateStats(P, c) {
   if (L && L.type === "relic" && L.mood) { mood += L.mood; why.push({ id: "legacy", what: "mood", v: L.mood }); }
   return { main, skills, delta, mood, sanity, why };
 }
-// 挑第 i 位：職業、技能、優缺點、前任留下的東西一次套用。回傳畫面要寫的東西；沒有這位就回傳 null
-export function chooseCandidate(P, i) {
-  const c = asList(P.cands)[i];
-  if (!c) return null;
-  const st = candidateStats(P, c);
-  const moodFrom = P.mood;
-  const r = assignJob(P, c.job, st.skills); // 賭徒：心情再擲一次取高（在加減之前）
-  P.perk = c.perk || null; P.flaw = c.flaw || null;
+// 選職業（每一位參觀者都走這裡）：抽一個小優點、一個小缺點 → 擲技能 → 優缺點的加減、前一位留下的一次套用。
+// 抽到就記在 P.perk、P.flaw，不能重抽：畫面要馬上存檔；已經選過職業（P.job 有值）、自由模式、沒有這個職業，都不做事，回傳 null。
+// 回傳畫面要寫的東西：抽到什麼、技能（加減之後）和加減多少、開場心情和理智從多少變多少、賭徒再擲的心情
+export function chooseJob(P, job) {
+  if (!P || isFree(P) || P.job || !JOB_SKILL[job]) return null;
+  const c = Object.assign({ job }, rollTraits(job));
+  c.skills = rollSkills(job);
+  const st = startStats(P, c);
+  const moodFrom = P.mood, sanityFrom = P.sanity;
+  const r = assignJob(P, job, st.skills); // 賭徒：心情再擲一次取高（在加減之前）
+  P.perk = c.perk; P.flaw = c.flaw;
   P.mood = clampN(P.mood + st.mood, 0, 99);
   if (st.sanity) P.sanity = clampN(P.sanity + st.sanity, 1, maxSan(P));
   if (P.day && !P.day.lost) P.day.startSan = P.sanity; // 今天的理智從加減之後算（「失眠」開場 45，怪癖的 1/5 也照 45 算；11-08）
-  P.cands = null;
-  return { job: c.job, perk: P.perk, flaw: P.flaw, main: r.main, value: P.skills[r.main], moodAgain: r.moodAgain || null, moodFrom, mood: P.mood, moodAdj: st.mood, sanity: P.sanity, sanityAdj: st.sanity, delta: st.delta, why: st.why };
+  P.cands = null; // 舊存檔還沒挑的候選人：選了職業就用不到了（以前挑了候選人也是清掉）
+  return { job, perk: P.perk, flaw: P.flaw, main: r.main, value: P.skills[r.main], skills: Object.assign({}, P.skills), moodAgain: r.moodAgain || null,
+    moodFrom, mood: P.mood, moodAdj: st.mood, sanityFrom, sanity: P.sanity, sanityAdj: st.sanity, delta: st.delta, why: st.why };
 }
 
 // ---------- 舊存檔補欄位（fixProfile 最後叫） ----------

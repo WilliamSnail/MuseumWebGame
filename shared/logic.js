@@ -8,7 +8,7 @@ import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_PART
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, QUIRK_TEXT, STORY_CHAPTERS, VISITOR_COMMENTS } from "./content.js";
 import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
 import { hallSize, hasTalent, hasUp, sequelEvents, skillCheck } from "./logic3.js";
-import { fixLegacy, leaveLegacy, newVisit, rollCandidates, traitSum, visitorRecord } from "./legacy.js";
+import { fixLegacy, leaveLegacy, newVisit, traitSum, visitorRecord } from "./legacy.js";
 import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./visitors.js";
 
 export let RNG = Math.random;
@@ -212,7 +212,8 @@ export function newProfile(mode) {
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
     // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
     fresh: {},
-    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點、還沒挑的候選人、前一位留下的、遺物櫃、這一位自己的統計
+    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
+    //   cands 是以前「3 位候選人」還沒挑的，0028 以後一直是 null（舊存檔裡有的留著，選職業時清掉）
     perk: null, flaw: null, cands: null, legacy: null, relics: [],
     visit: { from: todayStr(), sec0: 0, made0: 0, deepest: 0, understood: {}, where: null, made: 0, sec: 0 },
     // 第 4 版（11-08 翊文）：一個帳號最多 3 位參觀者、共用博物館（shared/visitors.js，決定 0018）。自由模式沒有位子
@@ -541,8 +542,8 @@ export const halved = loss => Math.ceil(loss / 2);
 // 第 4 版（11-08 翊文，roguelike 的繼承，規則在 shared/legacy.js）：
 //   leave ＝這一位留給下一位的東西：{ type: "relic", item: { kind, key } }、{ type: "skill" }，或 null（A）
 //   這一位的紀錄多記了優缺點、做了幾隻、地下走到第幾層、看懂幾件、留了什麼（D）
-//   新的一位先不選職業：P.cands 放 3 位候選人，畫面那邊用 chooseCandidate 挑（C）
-// 回傳心情的骰子（跟以前一樣），另外帶 entry（這一位的紀錄）、left（留給下一位的）、cands（候選人）
+//   新的一位先不選職業：畫面那邊從 6 個職業選，再抽小優點、小缺點（legacy.js 的 chooseJob；決定 0028，以前是從 3 位候選人挑）
+// 回傳心情的骰子（跟以前一樣），另外帶 entry（這一位的紀錄）、left（留給下一位的）
 export function nextVisitor(P, endedBy = "russia8", leave = null) {
   P.history = asList(P.history);
   const entry = visitorRecord(P, endedBy);
@@ -564,8 +565,8 @@ export function nextVisitor(P, endedBy = "russia8", leave = null) {
   P.hugDays = []; P.oddSeen = {};
   P.perk = null; P.flaw = null; P.legacy = left;
   P.visit = newVisit(P);
-  P.cands = rollCandidates(P);
-  return Object.assign(r, { entry, left, cands: P.cands });
+  P.cands = null;
+  return Object.assign(r, { entry, left });
 }
 
 // ---------- 畫廊、起源室 ----------
