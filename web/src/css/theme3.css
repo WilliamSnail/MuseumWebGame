@@ -677,10 +677,9 @@ body.reduce-motion .dk-eyes i { animation: none; }
 
 .rtable tr.fumble td { color: #A8382D; }
 
-/* ----- 狀態列：第 001 天（翊文 11-08） ----- */
+/* ----- 狀態列：第 001 天（翊文 11-08）。11-09 改成真實的一天之後沒有「暫停」了，拿掉 .paused ----- */
 .st-day .st-num { font-family: var(--serif); letter-spacing: .06em; white-space: nowrap; }
 .st-day .st-left { font-size: .75rem; color: var(--on-wall-sub); white-space: nowrap; }
-.st-day.paused .st-left::after { content: "（暫停）"; }
 .st-day .st-num-s, .st-day .st-left-s { display: none; }
 @media (max-width: 760px) {
   .st-day .st-label, .st-day .st-num, .st-day .st-left { display: none; }
@@ -689,7 +688,9 @@ body.reduce-motion .dk-eyes i { animation: none; }
   #status .st-row { gap: 6px; }
   #status .st-poss .st-num { font-size: .75rem; }
 }
-.set-day .seg { flex-wrap: wrap; }
+/* 設定頁的「換日」（11-09 拿掉 15／30／60 分鐘的選項，只剩說明） */
+.set-day > div { flex-direction: column; flex: 1 1 16em; min-width: 0; gap: 4px; }
+.set-day .sub { margin: 0; }
 
 /* ----- 收藏列：顏色、姿勢篩選（翊文 11-08） ----- */
 .strip-filters { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }

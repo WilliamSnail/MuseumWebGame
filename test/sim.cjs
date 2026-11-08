@@ -3,7 +3,9 @@
 const { load } = require("./load_shared.cjs");
 const G = load();
 const RUNS = +process.argv[2] || 1000;
-const SESSION = (+process.env.DAY_MIN || 15) * 60; // 遊戲裡壹天 ＝ 玩幾分鐘：預設 15，跟遊戲的預設壹樣；DAY_MIN=45 ＝ 以前「每天玩 45 分鐘」的算法
+// 每天玩幾分鐘（DAY_MIN）。11-09 起遊戲裡的一天＝真實的一天（台灣時間 05:00 換日，決定 0019），所以這裡模擬「每天玩 N 分鐘、玩完就等明天」。
+// 預設 20：設計基準是每天玩 20 分鐘（翊文 11-08：「每天玩大概20分鐘左右比較好」）。以前一天＝玩 15 分鐘時，DAY_MIN=15 就是那時的算法
+const SESSION = (+process.env.DAY_MIN || 20) * 60;
 // 每個動作大約要幾秒（含走路、看說明牌、擲骰動畫、揭曉動畫）
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
 const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
@@ -123,7 +125,7 @@ const q = (arr, p) => { const a = arr.filter(x => x != null).sort((x, y) => x - 
 const f = n => n.toFixed(1);
 const t4 = runs.map(r => r.t4), tAll = runs.map(r => r.tAll), at10 = runs.map(r => r.unlockAt10);
 const made = runs.reduce((s, r) => s + r.made, 0);
-console.log(`模擬 ${RUNS} 次（遊戲裡壹天 ＝ 玩 ${SESSION / 60} 分鐘）`);
+console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘）`);
 console.log(`玩 10 分鐘時解鎖了幾個：中位數 ${q(at10, .5)}（10%–90%：${q(at10, .1)}–${q(at10, .9)}）　目標 3–4`);
 console.log(`解鎖 4 個要幾分鐘：中位數 ${f(q(t4, .5))}（10%–90%：${f(q(t4, .1))}–${f(q(t4, .9))}）`);
 console.log(`全部解鎖（${LOCKED0} 個）要幾小時：中位數 ${f(q(tAll, .5) / 60)}（10%–90%：${f(q(tAll, .1) / 60)}–${f(q(tAll, .9) / 60)}）　目標 2–3 小時；沒解完 ${runs.filter(r => r.tAll == null).length} 次`);

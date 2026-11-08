@@ -4,7 +4,9 @@
 const { load } = require("./load_shared.cjs");
 const G = load();
 const RUNS = +process.argv[2] || 500;
-const SESSION = (+process.env.DAY_MIN || 15) * 60; // 遊戲裡壹天 ＝ 玩幾分鐘：預設 15，跟遊戲的預設壹樣；DAY_MIN=45 ＝ 以前「每天玩 45 分鐘」的算法
+// 每天玩幾分鐘（DAY_MIN）。11-09 起遊戲裡的一天＝真實的一天（台灣時間 05:00 換日，決定 0019），所以這裡模擬「每天玩 N 分鐘、玩完就等明天」。
+// 預設 20：設計基準是每天玩 20 分鐘（翊文 11-08：「每天玩大概20分鐘左右比較好」）。以前一天＝玩 15 分鐘時，DAY_MIN=15 就是那時的算法
+const SESSION = (+process.env.DAY_MIN || 20) * 60;
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
 function sim(seed) {
@@ -83,7 +85,7 @@ const FORBIDDEN_BOOKS_LIST = G.FORBIDDEN_BOOKS;
 const runs = Array.from({ length: RUNS }, (_, i) => sim(5000 + i));
 const within = m => runs.filter(r => r.zeroAt != null && r.zeroAt <= m).length / RUNS * 100;
 const z = runs.map(r => r.zeroAt).filter(x => x != null).sort((a, b) => a - b);
-console.log(`好奇的玩家 ${RUNS} 次（遊戲裡壹天 ＝ 玩 ${SESSION / 60} 分鐘）：理智歸零（俄國8+9 的房間）`);
+console.log(`好奇的玩家 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘）：理智歸零（俄國8+9 的房間）`);
 console.log(`  1 小時內 ${within(60).toFixed(0)}%　2 小時內 ${within(120).toFixed(0)}%　3 小時內 ${within(180).toFixed(0)}%　4 小時內 ${within(240).toFixed(0)}%`);
 console.log(`  第一次歸零的時間中位數：${z.length ? (z[Math.floor(z.length / 2)] / 60).toFixed(1) + " 小時" : "沒有"}；4 小時內平均歸零 ${(runs.reduce((s, r) => s + r.zeros, 0) / RUNS).toFixed(1)} 次`);
 console.log(`  瘋狂發作平均 ${(runs.reduce((s, r) => s + r.bouts, 0) / RUNS).toFixed(1)} 次；得到怪癖 ${(runs.filter(r => r.quirks).length / RUNS * 100).toFixed(0)}%`);
