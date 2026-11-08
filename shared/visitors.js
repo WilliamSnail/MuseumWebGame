@@ -130,7 +130,7 @@ export function addVisitor(P, name, slot) {
   const open = freeSlots(P);
   if (!open.length) return null;
   const s = open.includes(slot) ? slot : open[0];
-  // 沒有 P.day（還沒進過館）：不在這裡開新的一天。進館時 ensureDay 會照現在這位的理智算（「今天」要等畫面設好遊戲裡的日期）
+  // 沒有 P.day（還沒進過館）：不在這裡開新的一天。進館時 ensureDay 會照現在這位的理智算（「今天」照台灣時間 05:00 換日，決定 0019）
   P.visitors = asList(P.visitors).concat([packVisitor(P)]);
   const n = takeVisitorNo(P);
   const r = rollExpr("3D6");

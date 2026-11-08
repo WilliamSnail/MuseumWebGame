@@ -550,13 +550,10 @@ SCREENS.settings = root => {
     h("div", { class: "set-list" },
       h("div", { class: "set-row" }, h("span", null, "字大小"), seg("font", [["s", "小"], ["m", "中"], ["l", "大"]])),
       h("div", { class: "set-row" }, h("span", null, "動畫減量"), seg("reduceMotion", [[false, "關"], [true, "開（只淡入）"]])),
-      // 遊戲裡的壹天多長（翊文 11-08：「可以改成壹天是每 15 分鐘嗎，可以再設定」）
-      h("div", { class: "set-row set-day" }, h("span", null, "壹天多長"), h("div", null,
-        seg("dayMin", [[15, "玩 15 分鐘"], [30, "30 分鐘"], [60, "60 分鐘"], [0, "真實的壹天"]]),
-        h("p", { class: "sub" }, (s.dayMin == null ? 15 : s.dayMin) > 0
-          ? "只算真的在玩的時間（壹分鐘沒動就不算，關掉遊戲也不會偷跑）。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"
-          : "照電腦的日期，半夜 12 點換壹天。"),
-        P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P, s.dayMin == null ? 15 : +s.dayMin), 3)} 天。`) : null)),
+      // 換日（11-08 翊文：「壹天多長 全部都要是真實的壹天」）：拿掉 15／30／60 分鐘的選項，只寫什麼時候換日（決定 0019）
+      h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,
+        h("p", { class: "sub" }, "台灣時間每天 05:00 換壹天，每週壹 05:00 換週，大家的壹天都壹樣。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"),
+        P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P), 3)} 天（你第壹次進館那天是第 1 天）。`) : null)),
       h("div", { class: "set-row" }, h("span", null, "聲音"), seg("muted", [[false, "打開"], [true, "靜音"]])),
       h("div", { class: "set-row set-vol" }, h("span", null, "音量"), volumeBox()),
       h("div", { class: "set-row set-demo" }, h("span", null, "試聽"), demoBox()),

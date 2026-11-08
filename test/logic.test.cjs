@@ -218,17 +218,180 @@ T("E 主題展的進度跟 hallThemes 壹致", () => {
   assert.strictEqual(tp.find(t => t.id === "rainbow").have, 3);
   tp.forEach(t => assert.strictEqual(t.ok, G.hallScore(P).themes.includes(t.id), t.id));
 });
-T("遊戲裡的壹天：玩 15 分鐘算壹天；todayStr 跟著走", () => {
-  const P = fresh(); P.created = "2026-11-08"; P.activeSec = 0;
-  assert.strictEqual(G.gameDayNo(P, 15), 1); assert.strictEqual(G.gameDateStr(P, 15), "2026-11-08");
-  P.activeSec = 15 * 60 - 1; assert.strictEqual(G.gameDayNo(P, 15), 1); assert.strictEqual(G.secToNextDay(P, 15), 1);
-  P.activeSec = 15 * 60; assert.strictEqual(G.gameDayNo(P, 15), 2); assert.strictEqual(G.gameDateStr(P, 15), "2026-11-09");
-  P.activeSec = 40 * 60; assert.strictEqual(G.gameDayNo(P, 30), 2); assert.strictEqual(G.gameDayNo(P, 15), 3);
-  G.setDayClock(() => G.gameDateStr(P, 15));
-  try { assert.strictEqual(G.todayStr(), "2026-11-10"); assert.strictEqual(G.addDays("2026-11-30", 1), "2026-12-01"); }
-  finally { G.setDayClock(null); }
-  assert.strictEqual(G.todayStr(), G.realTodayStr());
+// ---------- 一天：台灣時間 05:00 換日、週一 05:00 換週（決定 0019，11-09 拿掉「壹天多長」） ----------
+// 時間一律傳進去（台灣時間的字串轉成毫秒），不碰真的時鐘。台灣＝UTC+8：台灣 05:00 ＝ UTC 前一天 21:00
+const TW = s => Date.parse(s + "+08:00"); // "2026-11-09T05:00:00" 當成台灣時間
+T("台灣時間 04:59 和 05:00 是不同天；todayStr、realTodayStr、taipeiDay 一樣", () => {
+  assert.strictEqual(G.taipeiDay(TW("2026-11-09T04:59:59")), "2026-11-08");
+  assert.strictEqual(G.taipeiDay(TW("2026-11-09T05:00:00")), "2026-11-09");
+  assert.strictEqual(G.taipeiDay(TW("2026-11-09T00:30:00")), "2026-11-08", "半夜 00:30 還算前一天");
+  assert.strictEqual(G.taipeiDay(TW("2026-11-09T23:59:59")), "2026-11-09");
+  assert.strictEqual(G.taipeiDay(TW("2027-01-01T05:00:00")), "2027-01-01");
+  assert.strictEqual(G.taipeiDay(TW("2027-01-01T04:00:00")), "2026-12-31", "跨年要等到 05:00");
+  [TW("2026-11-09T04:59:59"), TW("2026-11-09T05:00:00"), TW("2028-02-29T12:00:00")].forEach(ms => {
+    assert.strictEqual(G.todayStr(ms), G.taipeiDay(ms));
+    assert.strictEqual(G.realTodayStr(ms), G.taipeiDay(ms));
+    assert.strictEqual(G.todayStr(new Date(ms)), G.taipeiDay(ms), "給 Date 也可以");
+  });
+  assert.throws(() => G.taipeiDay(), /毫秒/);
+  assert.strictEqual(G.todayStr(), G.taipeiDay(Date.now()), "不給時間＝現在");
+  assert.strictEqual(G.realTodayStr(), G.todayStr(), "公佈欄、信箱的日期跟 todayStr 一樣");
+});
+T("setDayClock 蓋掉「今天」：todayStr()、realTodayStr() 一起變；給了時間的不受影響；addDays 不受影響", () => {
+  G.setDayClock(() => "2030-01-01");
+  try {
+    assert.strictEqual(G.todayStr(), "2030-01-01"); assert.strictEqual(G.realTodayStr(), "2030-01-01");
+    assert.strictEqual(G.todayStr(TW("2026-11-09T05:00:00")), "2026-11-09");
+    assert.strictEqual(G.addDays("2026-11-30", 1), "2026-12-01"); assert.strictEqual(G.addDays("2026-03-01", -1), "2026-02-28");
+    assert.strictEqual(G.addDays("2028-02-28", 1), "2028-02-29"); assert.strictEqual(G.addDays("2026-12-31", 1), "2027-01-01");
+  } finally { G.setDayClock(null); }
   assert.strictEqual(G.daysBetween("2026-11-08", "2026-12-01"), 23);
+});
+T("網路的時間：setNowClock 換掉「現在」，todayStr、secToNextDay、換日、每週活動都照它走（決定 0026）", () => {
+  let now = TW("2026-11-15T23:00:00"); // 星期日晚上
+  G.setNowClock(() => now);
+  try {
+    assert.strictEqual(G.nowMs(), now);
+    assert.strictEqual(G.todayStr(), "2026-11-15"); assert.strictEqual(G.realTodayStr(), "2026-11-15");
+    assert.strictEqual(G.secToNextDay(), 6 * 3600);
+    const P = G.newProfile("challenge"); assert.strictEqual(P.created, "2026-11-15", "新的博物館：建立的日期也照網路的時間");
+    G.ensureDay(P); assert.strictEqual(P.day.date, "2026-11-15");
+    const w = G.weeklyState(P).w, nid = G.weeklyNotice(P).id;
+    now = TW("2026-11-16T04:59:59"); // 週一 04:59：還是同一天、同一週
+    assert.strictEqual(G.ensureDay(P), null); assert.strictEqual(G.secToNextDay(), 1);
+    now = TW("2026-11-16T05:00:00"); // 週一 05:00：換日、換週
+    const r = G.ensureDay(P);
+    assert.ok(r && !r.firstEver); assert.strictEqual(P.day.date, "2026-11-16");
+    assert.strictEqual(G.weeklyState(P).w, w + 1); assert.notStrictEqual(G.weeklyNotice(P).id, nid);
+    assert.strictEqual(G.gameDayNo(P), 2);
+    // 給了時間的不看「現在」；setDayClock 給的日期比「現在」優先
+    assert.strictEqual(G.todayStr(TW("2026-12-01T12:00:00")), "2026-12-01");
+    G.setDayClock(() => "2030-01-01"); assert.strictEqual(G.todayStr(), "2030-01-01"); G.setDayClock(null);
+    // 換掉的時鐘壞了（不是數字）：照電腦的時間
+    G.setNowClock(() => NaN); assert.ok(Math.abs(G.nowMs() - Date.now()) < 1000);
+    G.setNowClock(() => undefined); assert.strictEqual(G.todayStr(), G.taipeiDay(Date.now()));
+  } finally { G.setNowClock(null); G.setDayClock(null); }
+  assert.ok(Math.abs(G.nowMs() - Date.now()) < 1000, "拿掉之後照電腦的時間");
+});
+T("secToNextDay：算到下一個台灣 05:00", () => {
+  assert.strictEqual(G.secToNextDay(TW("2026-11-09T04:59:59")), 1);
+  assert.strictEqual(G.secToNextDay(TW("2026-11-09T05:00:00")), 86400, "剛換日：還有一整天");
+  assert.strictEqual(G.secToNextDay(TW("2026-11-09T23:00:00")), 6 * 3600);
+  assert.strictEqual(G.secToNextDay(TW("2026-11-09T00:00:00")), 5 * 3600);
+  assert.strictEqual(G.secToNextDay(TW("2026-11-09T12:34:56.500")), 16 * 3600 + 25 * 60 + 4, "不到一秒的算一秒");
+  const s = G.secToNextDay();
+  assert.ok(s >= 1 && s <= 86400);
+});
+T("換週：台灣時間週日 23:00 和週一 05:00 是不同週；週一 04:59 還是上一週", () => {
+  assert.strictEqual(new Date(Date.UTC(2026, 10, 16)).getUTCDay(), 1, "2026-11-16 是星期一");
+  const sun = G.todayStr(TW("2026-11-15T23:00:00")), mon459 = G.todayStr(TW("2026-11-16T04:59:00")), mon5 = G.todayStr(TW("2026-11-16T05:00:00"));
+  assert.deepStrictEqual([sun, mon459, mon5], ["2026-11-15", "2026-11-15", "2026-11-16"]);
+  assert.strictEqual(G.weekIndex(sun), G.weekIndex(mon459));
+  assert.strictEqual(G.weekIndex(mon5), G.weekIndex(sun) + 1);
+  assert.strictEqual(G.weekIndex(G.todayStr(TW("2026-11-23T04:59:00"))), G.weekIndex(mon5), "下個週一 04:59 還是同一週");
+  assert.strictEqual(G.weekIndex(G.todayStr(TW("2026-11-23T05:00:00"))), G.weekIndex(mon5) + 1);
+  assert.notStrictEqual(G.weeklyTheme(sun), G.weeklyTheme(mon5));
+  // 每週特展、每週公告跟著換
+  const P = fresh(); G.ensureDay(P, sun);
+  const w1 = G.weeklyState(P).w, n1 = G.weeklyNotice(P).id;
+  G.ensureDay(P, mon5);
+  assert.strictEqual(G.weeklyState(P).w, w1 + 1); assert.notStrictEqual(G.weeklyNotice(P).id, n1);
+  assert.strictEqual(G.weeklyState(P).theme, G.weeklyTheme(mon5));
+});
+T("第 N 天：從第一次進館那天算第 1 天", () => {
+  const P = fresh(); P.created = "2026-11-08";
+  assert.strictEqual(G.gameDayNo(P, "2026-11-08"), 1);
+  assert.strictEqual(G.gameDayNo(P, "2026-11-10"), 3);
+  assert.strictEqual(G.gameDayNo(P, "2026-12-08"), 31);
+  assert.strictEqual(G.gameDayNo(P, "2026-11-01"), 1, "建立的日期比今天晚：不會變成 0 或負的");
+  P.created = null; assert.strictEqual(G.gameDayNo(P, "2026-11-10"), 1);
+  P.created = "壞掉"; assert.strictEqual(G.gameDayNo(P, "2026-11-10"), 1);
+  const Q = G.newProfile("challenge"); assert.strictEqual(Q.created, G.todayStr()); assert.strictEqual(G.gameDayNo(Q), 1, "新的博物館是第 1 天");
+  assert.strictEqual(G.newSave().settings.dayMin, 0, "新存檔：dayMin 留著、固定 0");
+});
+// 舊存檔：以前 15 分鐘一天，遊戲裡的日期跑到真的日期後面
+function futureSave() {
+  const P = G.newProfile("challenge"); P.created = "2026-11-10"; // 建立的那天也是遊戲裡的日期（在今天後面）
+  G.ensureDay(P, "2026-11-13"); // 遊戲裡的「今天」：5 天後
+  P.insp = 50;
+  const a = G.finishMake(P, { 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, { natural: 50 }).key;
+  const b = G.finishMake(P, { 稀有度: "普通", 心情: "傷心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, { natural: 50 }).key;
+  P.injured[a] = "2026-11-15"; // 還要 2 天才好
+  P.injured[b] = "2026-11-14"; // 還要 1 天
+  P.quirks = [{ type: "phobia", cat: "顏色", opt: "黑" }];
+  P.day.fusions = 9; P.day.mini = { memory: 99 }; P.day.reviews = { portrait: 99 }; P.day.lost = 7; P.day.quirkGiven = true;
+  // 今天的委託停在「剛好等於真的今天」的那一天，而且都做完了（重抽之前要先作廢）
+  G.dailyCommissions(P, "2026-11-08"); P.daily.list.forEach(c => { c.done = true; });
+  P.keys.b3 = "2026-11-12"; P.recipes.r1 = "2026-11-11"; P.cellar.floorsDone[1] = "2026-11-11"; P.badges.first = "2026-11-10";
+  // 第二位參觀者：連續抱了 1 天；收起來的 dayVis 剛好是真的今天
+  G.setRng(G.mulberry32(22)); G.addVisitor(P, "小華", 1); G.chooseCandidate(P, 0); G.setRng(null);
+  P.hugDays = ["2026-11-13"]; P.visit.from = "2026-11-12";
+  G.switchVisitor(P, "v1"); // 回到第一位；小華收起來
+  const v2 = P.visitors.find(v => v.vid === "v2");
+  v2.dayVis = { date: "2026-11-08", startSan: 40, lost: 9, quirkGiven: true, exLoss: { statue: 9 }, views: { statue: 8 } };
+  P.hugDays = ["2026-11-12", "2026-11-13"]; // 第一位連續抱了 2 天
+  P.visit.from = "2026-11-13"; P.job = P.job || "detective"; // 第一位是遊戲裡「今天」才來的
+  const save = G.newSave(); save.profiles.challenge = P; save.current = "challenge"; save.settings.dayMin = 15;
+  return { save: JSON.parse(JSON.stringify(save)), a, b };
+}
+T("舊存檔（遊戲日期在 5 天後）：拉回今天，受傷剩的天數一樣、今天的次數照常、不會壞", () => {
+  const { save, a, b } = futureSave();
+  const S = G.migrateSave(save), P = S.profiles.challenge;
+  assert.strictEqual(S.settings.dayMin, 0, "舊的 15 分鐘改成 0（不用了）");
+  const r = G.ensureDay(P, "2026-11-08");
+  assert.ok(r && !r.firstEver, "算新的一天（進館會擲心情恢復）"); assert.strictEqual(r.back, 5);
+  assert.strictEqual(P.day.date, "2026-11-08");
+  // 受傷：剩 2 天、1 天，照樣
+  assert.strictEqual(P.injured[a], "2026-11-10"); assert.strictEqual(P.injured[b], "2026-11-09");
+  assert.strictEqual(G.daysBetween(P.day.date, P.injured[a]), 2);
+  // 今天的次數重新算
+  assert.strictEqual(P.day.fusions, 0); assert.strictEqual(G.fusionLeft(P), G.fusionLimit(P));
+  assert.strictEqual(G.miniLeft(P, "memory"), G.NUM.miniPerDay);
+  assert.strictEqual(G.reviewsLeft(P, G.exhibitById("portrait")), G.galleryInsp(G.exhibitById("portrait")).perDay);
+  assert.strictEqual(P.day.lost, 0); assert.strictEqual(P.day.quirkGiven, false); assert.strictEqual(P.day.startSan, P.sanity);
+  // 今天的委託：重抽，沒有做完的
+  const list = G.dailyCommissions(P, "2026-11-08");
+  assert.ok(list.length >= 3); assert.ok(list.every(c => !c.done));
+  // 第 N 天：建立的日期比今天晚 → 今天是第 1 天
+  assert.strictEqual(P.created, "2026-11-08"); assert.strictEqual(G.gameDayNo(P, "2026-11-08"), 1); assert.strictEqual(G.gameDayNo(P, "2026-11-09"), 2);
+  // 連續抱抱枕：舊的最後一天變成昨天，今天抱就接得上（連 3 天治好怪癖）
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(P.hugDays)), ["2026-11-06", "2026-11-07"]);
+  assert.strictEqual(G.hugStreak(P), 2);
+  if (G.NUM.quirkCureDays === 3) {
+    P.pillows["標準|棉布|剛剛好|"] = 1; G.setRng(() => 0.5);
+    const h = G.hug(P, "標準|棉布|剛剛好|"); G.setRng(null);
+    assert.ok(h.ok && h.cured, "連 3 天抱，怪癖好了"); assert.strictEqual(P.quirks.length, 0);
+  }
+  // 不在場的那位：dayVis 作廢，換回來照新的一天；hugDays 也往前移
+  const v2 = P.visitors.find(v => v.vid === "v2");
+  assert.strictEqual(v2.dayVis, null); assert.deepStrictEqual(JSON.parse(JSON.stringify(v2.hugDays)), ["2026-11-07"]);
+  G.switchVisitor(P, "v2");
+  assert.strictEqual(P.day.lost, 0); assert.strictEqual(P.day.quirkGiven, false); assert.deepStrictEqual(JSON.parse(JSON.stringify(P.day.views)), {});
+  G.switchVisitor(P, "v1");
+  // 這一位哪天來的：舊的最後一天變成昨天，館長室退休不用等好幾天（決定 0025 要來了 1 天以上）
+  assert.strictEqual(P.visit.from, "2026-11-07"); assert.strictEqual(v2.visit.from, "2026-11-06");
+  if (typeof G.retireCheck === "function") { G.setDayClock(() => "2026-11-08"); try { const rc = G.retireCheck(P, "office"); assert.notStrictEqual(rc.reason, "new", "不會因為日期往回走變成「剛來」"); } finally { G.setDayClock(null); } }
+  // 紀錄的日期不動
+  assert.strictEqual(P.keys.b3, "2026-11-12"); assert.strictEqual(P.recipes.r1, "2026-11-11"); assert.strictEqual(P.cellar.floorsDone[1], "2026-11-11"); assert.strictEqual(P.badges.first, "2026-11-10");
+  // 只拉一次；之後照常換日、受傷照常好
+  assert.strictEqual(G.ensureDay(P, "2026-11-08"), null);
+  const r2 = G.ensureDay(P, "2026-11-09"); assert.strictEqual(r2.back, 0);
+  assert.ok(!P.injured[b], "剩 1 天的明天好了"); assert.ok(P.injured[a]);
+  G.ensureDay(P, "2026-11-10"); assert.ok(!P.injured[a]);
+  // 還是存得起來、讀得回來
+  const again = G.migrateSave(JSON.parse(JSON.stringify(S)));
+  assert.strictEqual(again.profiles.challenge.day.date, "2026-11-10");
+  assert.ok(Object.keys(again.profiles.challenge.pepes).length >= 2);
+});
+T("舊存檔：遊戲日期沒有比今天晚的不動；自由模式也拉得回來", () => {
+  const P = fresh(); P.created = "2026-11-01"; P.injured.x = "2026-11-12"; P.hugDays = ["2026-11-07"];
+  const r = G.ensureDay(P, "2026-11-09");
+  assert.strictEqual(r.back, 0); assert.strictEqual(P.injured.x, "2026-11-12"); assert.deepStrictEqual(JSON.parse(JSON.stringify(P.hugDays)), ["2026-11-07"]);
+  assert.strictEqual(P.created, "2026-11-01"); assert.strictEqual(G.gameDayNo(P, "2026-11-09"), 9);
+  assert.strictEqual(G.rewindDays(P, "2026-11-20"), 0); assert.strictEqual(G.rewindDays(null, "2026-11-20"), 0); assert.strictEqual(G.rewindDays({ day: null }, "2026-11-20"), 0);
+  const F = G.newProfile("free"); G.ensureDay(F, "2026-12-01");
+  const rf = G.ensureDay(F, "2026-11-08");
+  assert.strictEqual(rf.back, 23); assert.strictEqual(F.day.date, "2026-11-08"); assert.ok(G.dailyCommissions(F, "2026-11-08").length >= 3);
 });
 T("起源室：第伍～捌章的打開條件", () => {
   const P = fresh();

@@ -464,6 +464,8 @@ export function healInjured(P, key) {
 }
 
 // ---------- 每週特展 ----------
+// 第幾週：從星期一算起。dateStr 是 todayStr() 給的日期（台灣時間 05:00 換日），所以換週是台灣時間週一 05:00（決定 0019）：
+// 週一 04:59 還是星期日的日期，算上一週。1970-01-01 是星期四，加 3 天讓 1970-01-05（星期一）變成第 1 週的第一天
 export function weekIndex(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const days = Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 3; // 讓每一週從星期一開始

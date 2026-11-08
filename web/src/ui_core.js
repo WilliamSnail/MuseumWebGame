@@ -352,7 +352,7 @@ export function buildStatus() {
     h("span", { class: "st-label" }, label), h("span", { class: "st-track" }, h("i", { class: "st-fill" }), h("i", { class: "st-dot" })), h("span", { class: "st-val" }, h("b", { class: "st-num" }, "0"), h("small", { class: "st-max" }, "／99")));
   const numItem = (id, label, onClick) => h(onClick ? "button" : "div", { class: "st-item", id: "st-" + id, type: onClick ? "button" : null, onClick },
     h("span", { class: "st-label" }, label), h("b", { class: "st-num" }, "0"));
-  const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋幾分鐘後換天（-s 是手機用的短版）
+  const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋還有多久換日（-s 是手機用的短版）
   const items = free
     ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), numItem("jobs", "委託", () => navTo("commission"))]
     : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission"))];
@@ -377,18 +377,18 @@ export function watchStatusHeight() {
   });
   statusRO.observe(st);
 }
-// 狀態列的「第 001 天」和「12 分鐘後換天」（翊文 11-08）；每秒由 boot.js 的 tick() 呼叫，只在字變了才改
+// 狀態列的「第 001 天」和「還有 N 小時換日」；每秒由 boot.js 的 tick() 呼叫，只在字變了才改。
+// 11-09 起一天＝台灣時間 05:00 到隔天 05:00（決定 0019）：第 N 天從第一次進館那天算，倒數算到下一個 05:00
 export function updateDayClock() {
   const dEl = P && $("#st-day");
   if (!dEl) return;
-  const dm = typeof dayMins === "function" ? dayMins() : 15, left = secToNextDay(P, dm);
-  const dayText = `第 ${pad(gameDayNo(P, dm), 3)} 天`;
-  const leftText = dm > 0 ? (left > 60 ? `${Math.ceil(left / 60)} 分鐘後換天` : `${left} 秒後換天`) : "半夜 12 點換天";
-  const shortDay = `${pad(gameDayNo(P, dm), 3)}天`, shortLeft = dm > 0 ? (left > 60 ? `${Math.ceil(left / 60)}分後` : `${left}秒後`) : "半夜";
-  [[".st-num", dayText], [".st-num-s", shortDay], [".st-left", leftText], [".st-left-s", shortLeft]].forEach(([q, t]) => { const e = $(q, dEl); if (e && e.textContent !== t) e.textContent = t; });
-  const idle = dm > 0 && Date.now() - UI.lastInput > 60000;
-  dEl.classList.toggle("paused", idle);
-  dEl.title = dm > 0 ? `遊戲裡壹天 ＝ 玩 ${dm} 分鐘。只算真的在玩的時間：壹分鐘沒動就暫停（${idle ? "現在暫停中" : "現在在算"}）。設定頁可以改。` : "照電腦的日期，半夜 12 點換壹天。設定頁可以改。";
+  const no = pad(gameDayNo(P), 3), left = secToNextDay();
+  const hrs = Math.floor(left / 3600), mins = Math.max(1, Math.ceil(left / 60));
+  const leftText = hrs >= 1 ? `還有 ${hrs} 小時換日` : `還有 ${mins} 分鐘換日`;
+  const shortLeft = hrs >= 1 ? `${hrs}小時後` : `${mins}分後`;
+  [[".st-num", `第 ${no} 天`], [".st-num-s", `${no}天`], [".st-left", leftText], [".st-left-s", shortLeft]].forEach(([q, t]) => { const e = $(q, dEl); if (e && e.textContent !== t) e.textContent = t; });
+  const tip = `第 ${no} 天（你第壹次進館那天是第 1 天）。台灣時間每天 05:00 換壹天，週壹 05:00 換週，大家都壹樣。`;
+  if (dEl.title !== tip) dEl.title = tip;
 }
 // 公佈欄頁籤的火漆印、選單裡的「N 則沒讀／N 封沒領」、選單按鈕上的數字（updateStatus 每次都更新；公告附的獎勵也在這裡寄進信箱）
 export function updateBoardBadges() {
@@ -963,8 +963,9 @@ export function trackGaze(e) {
 }
 
 // ---------- 從別的檔搬過來的（第 4 版：讓 ui_core 不必 import 後面的檔） ----------
-// 遊戲裡壹天幾分鐘（設定頁可以改；0 ＝ 真實的壹天）
-export const dayMins = () => { const v = SAVE && SAVE.settings ? SAVE.settings.dayMin : 15; return v == null ? 15 : +v; };
+// 以前是「遊戲裡一天玩幾分鐘」（設定頁的「壹天多長」）。11-09 起一律真實的一天（決定 0019），永遠回 0（＝真實的一天）。
+// 留著是給還在叫它的地方；SAVE.settings.dayMin 也留著，只是不用
+export const dayMins = () => 0;
 // 小遊戲共用的框（原本在 ui_screens2.js）
 export function miniLayer(title, sub) {
   const card = h("div", { class: "mini-card enter", role: "dialog", "aria-label": title }, h("h2", null, title), h("p", { class: "sub" }, sub));

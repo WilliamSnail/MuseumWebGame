@@ -9,7 +9,7 @@
 //  - UI.localPlay：不連伺服器（開發用的 #畫面、開發時伺服器沒開按「先用這台電腦的存檔玩」）。
 //  - 開發時網址帶 ?user=名字：這個分頁自己登入（net.js 把 token 放 sessionStorage），一台電腦開好幾個分頁當不同的人。
 // ================================================================
-import { SAVE_KEY, migrateSave } from "../../shared/logic.js";
+import { SAVE_KEY, migrateSave, nowMs } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 import { $, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, updateNetMenu, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -189,7 +189,7 @@ NET.on("status", () => { redrawLobby(); if (friendsDraw) friendsDraw(); });
 // ---------- 館友（選單 → 館友） ----------
 const ago = iso => {
   if (!iso) return "還沒來過";
-  const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+  const m = Math.max(0, Math.round((nowMs() - Date.parse(iso)) / 60000)); // lastSeen 是伺服器的時間，跟網路的時間比（決定 0026）
   if (m < 2) return "剛剛";
   if (m < 60) return `${m} 分鐘前`;
   if (m < 60 * 24) return `${Math.round(m / 60)} 小時前`;

@@ -27,37 +27,58 @@ export const pad = (n, w = 4) => String(n).padStart(w, "0");
 export const clampN = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 export const asList = v => Array.isArray(v) ? v : v ? [v] : [];
 export const pickOne = (arr, rng = RNG) => arr[Math.floor(rng() * arr.length)];
-// ---------- 遊戲裡的壹天（翊文 11-08：「壹天改成每 15 分鐘」） ----------
-// 畫面那邊用 setDayClock 設定「今天」是遊戲裡的哪壹天；沒設定（測試、真實日期模式）就用電腦的日期
-export let DAY_CLOCK = null;
-export function setDayClock(fn) { DAY_CLOCK = fn || null; }
-export function realTodayStr(d = new Date()) { return `${d.getFullYear()}-${pad(d.getMonth() + 1, 2)}-${pad(d.getDate(), 2)}`; }
-export function todayStr(d) {
-  if (!d && DAY_CLOCK) { const s = DAY_CLOCK(); if (s) return s; }
-  return realTodayStr(d || new Date());
-}
-// ---------- 現在幾毫秒（11-09，決定 0027：怪癖 20 分鐘後自己消失） ----------
-// 規則裡要算「過了幾分鐘」一律用 nowMs()，不要直接 Date.now()。
-// 測試、之後的伺服器用 setNowClock 換時鐘（跟 setDayClock 一樣：傳一個函式，回傳毫秒；傳 null 換回電腦的時鐘）
+// ---------- 現在幾點：照網路上的時間（決定 0026） ----------
+// 翊文 11-09：「遊戲裡的內容也是跟著那網路抓取的真實時間時間」。大家同步，改電腦的時間也沒用。
+// 規則裡要「現在」一律用 nowMs()，不要直接 Date.now()。
+// 畫面登入連上 Realtime Database 之後，net_firebase.js 用 setNowClock(() => Date.now() + 伺服器的時間差) 換成網路的時間；
+// 還沒拿到之前（還沒登入、測試、模擬）照這台電腦的時鐘。畫面上動畫的計時（setTimeout、多久沒動）不用它。
+// 怪癖的 20 分鐘（決定 0027）、換日（決定 0019）都用它；測試用 setNowClock 換時鐘（傳 null 換回電腦的時鐘）。
 export let NOW_CLOCK = null;
 export function setNowClock(fn) { NOW_CLOCK = fn || null; }
 export function nowMs() {
   if (NOW_CLOCK) { const t = NOW_CLOCK(); if (Number.isFinite(t)) return t; }
   return Date.now();
 }
-export function daysBetween(a, b) { const f = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); }
-// 第幾天：mins ＞ 0 ＝ 玩了幾個「mins 分鐘」（只算真的在玩的時間）；mins ＝ 0 ＝ 真實日期，從建立這位參觀者那天算起
-export function gameDayNo(P, mins) {
-  if (mins > 0) return 1 + Math.floor((P.activeSec || 0) / (mins * 60));
-  return 1 + Math.max(0, daysBetween(P.created || realTodayStr(), realTodayStr()));
+// ---------- 一天：台灣時間 05:00 換日，週一 05:00 換週（決定 0019） ----------
+// 翊文 11-08：「壹天多長 全部都要是真實的壹天」「這樣才能全部同步」。以前是「玩 15 分鐘一天」（決定 0003，被 0019 取代）。
+// 大家的一天都一樣：瀏覽器、伺服器、Functions 都用這裡的算法。
+// 規則和測試不碰真的時鐘：要算哪一天就把時間（毫秒）傳進去，或直接傳日期字串給 ensureDay 這些。
+export const TZ_HOURS = 8;        // 台灣是 UTC+8
+export const DAY_START_HOUR = 5;  // 台灣時間幾點換日
+export const DAY_MS = 86400000;   // 一天幾毫秒
+// ms：從 1970 算起的毫秒（例如伺服器的 Date.now()）。凌晨 00:00–04:59 還算前一天。回傳 "YYYY-MM-DD"
+export function taipeiDay(ms) {
+  if (typeof ms !== "number" || !isFinite(ms)) throw new Error("taipeiDay 要給毫秒數（伺服器的時間）");
+  return new Date(ms + (TZ_HOURS - DAY_START_HOUR) * 3600000).toISOString().slice(0, 10);
 }
-// 遊戲裡第 N 天的日期字串：建立參觀者那天＋N−1 天（壹定往後走，規則裡比日期先後的地方都對）
-export function gameDateStr(P, mins) { return addDays(P.created || realTodayStr(), gameDayNo(P, mins) - 1); }
-// 離下壹天還有幾秒（只算在玩的時間）
-export function secToNextDay(P, mins) { return mins > 0 ? mins * 60 - ((P.activeSec || 0) % (mins * 60)) : null; }
+// 「今天」也可以直接給日期字串：setDayClock(() => "YYYY-MM-DD")（測試、之後要伺服器直接給日期時用）。
+// 沒設定就照 nowMs()（登入後是網路的時間）算台灣的哪一天。現在畫面沒有用 setDayClock
+export let DAY_CLOCK = null;
+export function setDayClock(fn) { DAY_CLOCK = fn || null; }
+// 今天是哪一天。t：不給＝現在（nowMs）；給毫秒數或 Date＝那個時間是台灣的哪一天（不看 setDayClock）
+export function todayStr(t) {
+  if (t == null && DAY_CLOCK) { const s = DAY_CLOCK(); if (s) return s; }
+  return taipeiDay(t == null ? nowMs() : +t);
+}
+// 公佈欄、信箱用的「真的日期」。11-09 起跟 todayStr 一樣（以前 todayStr 是遊戲裡的日期），兩個不能不一樣
+export function realTodayStr(t) { return todayStr(t); }
+export function daysBetween(a, b) { const f = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); }
+// 第幾天：從這間博物館建立那天（P.created，第一次進館那天）算第 1 天。today 不給就用 todayStr()
+export function gameDayNo(P, today) {
+  const t = typeof today === "string" ? today : todayStr();
+  const n = daysBetween(P && typeof P.created === "string" ? P.created : t, t);
+  return 1 + (n > 0 ? n : 0);
+}
+// 離下一次換日（台灣時間 05:00）還有幾秒。ms 不給＝現在（nowMs）
+export function secToNextDay(ms) {
+  const t = ms == null ? nowMs() : +ms;
+  const into = (((t + (TZ_HOURS - DAY_START_HOUR) * 3600000) % DAY_MS) + DAY_MS) % DAY_MS; // 今天（從 05:00 起）過了幾毫秒
+  return Math.ceil((DAY_MS - into) / 1000);
+}
+// "YYYY-MM-DD" 往後 n 天（用 UTC 算，不受電腦的時區影響）
 export function addDays(dateStr, n) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return todayStr(new Date(y, m - 1, d + n));
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 export function fill(t, x) { return String(t).split("{x}").join(x); }
 export function b64e(s) {
@@ -234,12 +255,41 @@ export const maxSan = P => 99 - P.myth;
 
 export function ensureDay(P, date = todayStr()) {
   if (P.day && P.day.date === date) return null;
+  const back = rewindDays(P, date); // 舊存檔的日期比今天晚（以前 15 分鐘一天）：先拉回來
   const firstEver = !P.day;
   P.day = { date, startSan: P.sanity, lost: 0, exLoss: {}, reviews: {}, views: {}, moodFx: {}, hugs: {}, mini: {}, diff: {}, quirkGiven: false,
     fusions: 0, pairs: {}, rerolls: 0, hints: {} };
   // 地下收藏庫受的傷，時間到了自己好
   Object.keys(P.injured || {}).forEach(k => { if (P.injured[k] <= date) delete P.injured[k]; });
-  return { firstEver };
+  return { firstEver, back };
+}
+// ---------- 舊存檔：遊戲裡的日期跑到今天後面 ----------
+// 11-09 以前一天是「玩 15 分鐘」，遊戲裡的日期可能比真的日期晚好幾天。改成真實的一天之後，時間等於往回走。
+// ensureDay 碰到「P.day.date 比今天晚」時叫這個。做完之後 P.day 會重開成今天（ensureDay 接著做），所以只會做一次。
+// 回傳往回拉了幾天（0 ＝不用拉）。怎麼拉、為什麼（維護日誌 11-09_翊文_真實的一天.md）：
+//   - 今天當成新的一天：每天的次數重新算（ensureDay 重開 P.day），進館照常擲心情恢復、技能成長。
+//   - 受傷（P.injured 的「好的那天」）：剩幾天就還是幾天，整個往前移。不然要等好幾天、甚至好幾個月才好。
+//   - 連續抱抱枕（現在這位和不在場那幾位的 hugDays）：整串往前移，舊的最後一天變成昨天。今天再抱就接得上，不會斷。
+//   - 這一位哪天來的（現在這位和不在場那幾位的 visit.from）：一樣往前移，舊的最後一天變成昨天。館長室退休要「來了 1 天以上」（決定 0025，retireCheck），不移的話要等好幾天。
+//   - 今天的委託（P.daily）：作廢，照今天重抽。舊的委託日期可能剛好等於今天，會變成「今天的委託都做完了」。
+//   - 不在場那幾位的 dayVis（那天掉了多少理智）：作廢，換回來時照新的一天算。理由同上（日期可能剛好等於今天）。
+//   - P.created（第 N 天從這天算）比今天晚：改成今天。比今天早的不動（那是真的建立的那天）。
+//   - 其他日期（鑰匙、收藏的 d、地下的 floorsDone、配方、怪癖的 since、徽章……）只是紀錄，規則只看有沒有，不看先後，不動。
+//   - 每週特展（P.weekly）：週的號碼對不上就照這週重來（weeklyState 本來就這樣），不用另外處理。
+export function rewindDays(P, today) {
+  if (!P || !P.day || typeof P.day.date !== "string" || typeof today !== "string") return 0;
+  const ahead = daysBetween(today, P.day.date);
+  if (!(ahead > 0)) return 0;
+  const isDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  if (P.injured && typeof P.injured === "object") Object.keys(P.injured).forEach(k => { if (isDay(P.injured[k])) P.injured[k] = addDays(P.injured[k], -ahead); });
+  const hugBack = list => asList(list).filter(isDay).map(s => addDays(s, -(ahead + 1)));
+  P.hugDays = hugBack(P.hugDays);
+  const fromBack = v => { if (v && v.visit && typeof v.visit === "object" && isDay(v.visit.from)) v.visit.from = addDays(v.visit.from, -(ahead + 1)); };
+  fromBack(P);
+  asList(P.visitors).forEach(v => { if (v && typeof v === "object") { v.hugDays = hugBack(v.hugDays); v.dayVis = null; fromBack(v); } });
+  P.daily = null;
+  if (!isDay(P.created) || P.created > today) P.created = today;
+  return ahead;
 }
 // 每天第一次打開：擲 d100，比心情大就 +1D10（CoC 的幸運恢復）
 export function moodRecovery(P) {
@@ -1233,9 +1283,10 @@ export const IMG_KEY = "pepeMuseum2.img";
 export const FIT_KEY = "pepeMuseum2.fit";
 export const GEN2_KEY = "pepeMuseum2";
 export const SAVE_VERSION = 3;
+// dayMin：以前是「遊戲裡一天玩幾分鐘」（0 ＝ 真實的一天）。11-09 起一律真實的一天（決定 0019），欄位留著、固定 0，不再用
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
-    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 15 }, tutorialDone: false, gen2Migrated: false }; // dayMin：遊戲裡壹天幾分鐘（0 ＝ 真實的壹天）
+    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 0 }, tutorialDone: false, gen2Migrated: false };
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
 export const renameVal = v => (typeof RENAMED !== "undefined" && RENAMED[v]) || v;
@@ -1294,6 +1345,7 @@ export function migrateSave(o) {
   if (!o || typeof o !== "object") return newSave();
   const s = Object.assign(newSave(), o);
   s.settings = Object.assign(newSave().settings, o.settings || {});
+  s.settings.dayMin = 0; // 舊存檔的 15／30／60 不用了（11-09）。改成 0：還沒更新的舊畫面讀到，也是照真的日期，不會又跑到好幾天後
   s.profiles = Object.assign({ challenge: null, free: null }, o.profiles || {});
   ["challenge", "free"].forEach(m => { if (s.profiles[m]) s.profiles[m] = fixProfile(s.profiles[m], m); });
   s.v = SAVE_VERSION;

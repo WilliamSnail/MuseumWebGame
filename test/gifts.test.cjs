@@ -286,7 +286,7 @@ T("信：來訪的信附靈感；全部領取算得出領了幾隻佩佩", () =>
     const B = logic.newProfile("challenge"); logic.ensureDay(B, DAY);
     const k = logic.pepeKey(logic.DEFAULT_PICK);
     A.pepes[k] = { n: 1, s: 1 };
-    const r = gifts.sendGift(A, { kind: "pepe", key: k }, { id: "m1", fromNick: "小明", today: gifts.taipeiDay(Date.parse("2026-11-08T12:00:00Z")) });
+    const r = gifts.sendGift(A, { kind: "pepe", key: k }, { id: "m1", fromNick: "小明", today: logic.taipeiDay(Date.parse("2026-11-08T12:00:00Z")) }); // taipeiDay 11-09 搬到 logic.js（todayStr 也用它）
     assert.ok(r.ok);
     mailbox.sendMail(B, r.mail, DAY);
     assert.ok(mailbox.claimMail(B, "m1", DAY).ok);
