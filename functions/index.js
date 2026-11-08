@@ -49,3 +49,6 @@ export const join = onCall(async req => {
   await getDatabase().ref(`members/${auth.uid}`).set(true);
   return { nick, invisible: false, id: auth.uid };
 });
+
+// ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
+export { invite, inviteReply, partyAction } from "./party.js";

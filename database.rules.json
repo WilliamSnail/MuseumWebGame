@@ -11,11 +11,21 @@
       "$uid": {
         ".write": "auth != null && auth.uid === $uid && root.child('members').child(auth.uid).exists()",
         ".validate": "newData.hasChildren(['state', 'at']) && newData.child('state').isString() && newData.child('state').val().matches(/^(online|away|offline)$/)",
-        "state": { ".validate": "newData.isString()" },
-        "room": { ".validate": "newData.isString() && newData.val().matches(/^[a-z][a-z0-9_:-]{0,31}$/)" },
-        "nick": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
-        "at": { ".validate": "newData.isNumber()" },
-        "$other": { ".validate": false }
+        "state": {
+          ".validate": "newData.isString()"
+        },
+        "room": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z][a-z0-9_:-]{0,31}$/)"
+        },
+        "nick": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "inbox": {
@@ -25,6 +35,20 @@
           ".write": "auth != null && auth.uid === $uid && !newData.exists()"
         }
       }
+    },
+    "parties": {
+      "$pid": {
+        ".read": "auth != null && data.child('members').child(auth.uid).exists()",
+        ".write": false
+      }
+    },
+    "invites": {
+      ".read": false,
+      ".write": false
+    },
+    "partyOf": {
+      ".read": false,
+      ".write": false
     }
   }
 }

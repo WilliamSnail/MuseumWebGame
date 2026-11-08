@@ -288,9 +288,14 @@ export function createFirebaseNet(opts = {}) {
     connect,
     disconnect,
     where(r) { room = r; writeStatus(); return true; },
-    // 之後的邀請、隊伍：叫 Functions（M3）。現在還沒有，回傳 false。
+    // 邀請、隊伍都走 Functions（call）；舊的 send 留著，回傳 false。
     send() { return false; },
     call,
+    // 聽 Realtime Database 的一個位置（例如隊伍 parties/{pid}）：有變就 fn(值)；沒權限、斷了 fn(null, 錯誤)。回傳停止的函式
+    watch(path, fn) {
+      if (!rtdb) return () => {};
+      return onValue(ref(rtdb, path), snap => fn(snap.val()), err => fn(null, err));
+    },
     get me() { return me; },
     get state() { return state; },
     get roster() { return roster; },
