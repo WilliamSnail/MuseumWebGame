@@ -27,8 +27,8 @@ function withFirst() {
   P.cellar.run = { floor: 2, room: 1, team: ["x"] }; P.visit.deepest = 2;
   return P;
 }
-// 加第二位，挑第 0 位候選人
-function addSecond(P, name = "小華") { G.setRng(G.mulberry32(22)); const r = G.addVisitor(P, name, 1); G.chooseCandidate(P, 0); G.setRng(null); return r; }
+// 加第二位，選職業（藝術史學者）、抽小優缺點（決定 0028；以前是挑第 0 位候選人）
+function addSecond(P, name = "小華") { G.setRng(G.mulberry32(22)); const r = G.addVisitor(P, name, 1); G.chooseJob(P, "historian"); G.setRng(null); return r; }
 
 // ---------- 欄位清單 ----------
 T("VISITOR_KEYS 包含欄位表「這一位的」那一欄，加上 vid、vname、hugDays；博物館的都不在裡面", () => {
@@ -51,7 +51,7 @@ T("新的挑戰模式：第一位在第一個位子、號碼 1、還沒有名字
 });
 
 // ---------- 加一位 ----------
-T("在空位子加一位：新號碼、擲心情、3 位候選人；第一位收進 P.visitors", () => {
+T("在空位子加一位：新號碼、擲心情、還沒選職業（沒有候選人、還沒抽優缺點）；第一位收進 P.visitors", () => {
   const P = withFirst();
   const before = mine(P);
   G.setRng(G.mulberry32(5));
@@ -59,7 +59,7 @@ T("在空位子加一位：新號碼、擲心情、3 位候選人；第一位收
   G.setRng(null);
   assert.ok(r);
   assert.strictEqual(P.vname, "小華"); assert.strictEqual(P.visitor, 2); assert.strictEqual(P.vid, "v2"); assert.strictEqual(P.slot, 2); assert.strictEqual(r.slot, 2);
-  assert.strictEqual(P.job, null); assert.strictEqual(P.cands.length, G.LEGACY.candidates);
+  assert.strictEqual(P.job, null); assert.strictEqual(P.cands, null); assert.ok(!("cands" in r)); assert.strictEqual(P.perk, null); assert.strictEqual(P.flaw, null);
   assert.strictEqual(P.sanity, G.NUM.startSanity); assert.strictEqual(P.myth, 0); assert.deepStrictEqual(J(P.quirks), []); assert.strictEqual(P.mood, r.total * 5);
   assert.strictEqual(P.cellar.run, null); assert.deepStrictEqual(J(P.hugDays), []); assert.deepStrictEqual(J(P.oddSeen), {});
   assert.strictEqual(P.visitors.length, 1);
@@ -82,15 +82,21 @@ T("加一位：名字不合格、沒有空位子、自由模式都不加", () =>
   const Q = fresh(); G.addVisitor(Q, "二", 0);
   assert.strictEqual(Q.slot, 1);
 });
-T("號碼不重複：三個位子 1、2、3，候選人跟著位子（換來換去還是同樣 3 位）", () => {
+T("號碼不重複：三個位子 1、2、3；還沒選職業的換來換去還是沒選，選了之後抽到的優缺點跟著那一位", () => {
   const P = fresh();
-  G.setRng(G.mulberry32(3)); G.addVisitor(P, "二", 1); const cands = S(P.cands); G.addVisitor(P, "三", 2); G.setRng(null);
+  G.setRng(G.mulberry32(3)); G.addVisitor(P, "二", 1); G.addVisitor(P, "三", 2); G.setRng(null);
   assert.strictEqual(S(G.visitorSlots(P).map(s => s.visitor)), S([1, 2, 3]));
   assert.strictEqual(new Set(G.visitorSlots(P).map(s => s.vid)).size, 3);
   assert.strictEqual(P.visitorCount, 3);
   G.switchVisitor(P, "v1"); G.switchVisitor(P, "v2");
-  assert.strictEqual(S(P.cands), cands); assert.strictEqual(P.job, null);
-  assert.ok(G.chooseCandidate(P, 1)); assert.ok(P.job);
+  assert.strictEqual(P.job, null); assert.strictEqual(P.perk, null);
+  assert.ok(G.chooseJob(P, "gambler")); assert.strictEqual(P.job, "gambler");
+  const drawn = S([P.perk, P.flaw, P.skills]);
+  G.switchVisitor(P, "v3"); assert.strictEqual(P.job, null); assert.strictEqual(P.perk, null);
+  G.switchVisitor(P, "v2"); assert.strictEqual(S([P.perk, P.flaw, P.skills]), drawn);
+  const slot = G.visitorSlots(P)[1];
+  assert.strictEqual(slot.perk, P.perk); assert.strictEqual(slot.flaw, P.flaw); // 標題的位子卡片也有優缺點
+  assert.strictEqual(G.visitorSlots(P)[2].perk, null); // 還沒選職業的沒有
 });
 
 // ---------- 換人 ----------
@@ -180,7 +186,7 @@ T("改名字：現在這位、不在場的都能改；名字不合格不改", ()
 // ---------- 理智歸零：在同一個位子換人 ----------
 T("nextVisitor 在位子裡換人：同一個位子、新號碼、名字空著；別的位子不動；紀錄有名字；每天的次數留著", () => {
   const P = withFirst(); addSecond(P); // 現在是小華（第 2 位，位子 1）
-  G.setRng(G.mulberry32(9)); G.addVisitor(P, "小美", 2); G.chooseCandidate(P, 0); G.setRng(null); // 第 3 位，位子 2
+  G.setRng(G.mulberry32(9)); G.addVisitor(P, "小美", 2); G.chooseJob(P, "artisan"); G.setRng(null); // 第 3 位，位子 2
   G.switchVisitor(P, "v2");
   const others = S(P.visitors);
   P.day.fusions = 1; P.day.hugs.k = true; P.day.lost = 6; P.day.quirkGiven = true; P.hugDays = [DAY]; P.oddSeen = { talk: DAY };
@@ -193,13 +199,19 @@ T("nextVisitor 在位子裡換人：同一個位子、新號碼、名字空著�
   assert.strictEqual(P.day.fusions, 1); assert.ok(P.day.hugs.k);
   assert.strictEqual(P.day.lost, 0); assert.strictEqual(P.day.quirkGiven, false); assert.strictEqual(P.day.startSan, G.NUM.startSanity);
   assert.deepStrictEqual(J(P.hugDays), []); assert.deepStrictEqual(J(P.oddSeen), {});
-  assert.ok(P.cands && P.cands.length);
+  assert.strictEqual(P.cands, null); assert.strictEqual(P.job, null); assert.strictEqual(P.perk, null); // 接著選職業、抽優缺點（決定 0028）
   assert.strictEqual(S(G.visitorSlots(P).map(s => s.visitor)), S([1, 4, 3]));
 });
-T("挑了「失眠」的候選人：今天的理智從加減之後算（startSan ＝開場理智）", () => {
+T("抽到「失眠」：今天的理智從加減之後算（startSan ＝開場理智）；第一位和換人之後都一樣", () => {
+  // 固定骰子抽到「失眠」：偵探的優點抽第 0 個（不跟失眠同一類），缺點清單裡找失眠的位置
+  const draw = () => { const perk = G.PERKS[0], flaws = G.FLAWS.filter(t => !G.traitsClash(t, perk)); const i = flaws.findIndex(t => t.id === "insomnia");
+    const q = [0.5 / G.PERKS.length, (i + 0.5) / flaws.length]; return () => (q.length ? q.shift() : 0.5); };
+  const first = fresh(); G.setRng(draw()); G.chooseJob(first, "detective"); G.setRng(null);
+  assert.strictEqual(first.flaw, "insomnia"); assert.strictEqual(first.visitor, 1);
+  assert.strictEqual(first.sanity, G.NUM.startSanity + G.traitById("insomnia").sanity); assert.strictEqual(first.day.startSan, first.sanity);
   const P = fresh(); G.nextVisitor(P);
-  P.cands[0].flaw = "insomnia";
-  G.chooseCandidate(P, 0);
+  G.setRng(draw()); G.chooseJob(P, "detective"); G.setRng(null);
+  assert.strictEqual(P.flaw, "insomnia");
   assert.strictEqual(P.sanity, G.NUM.startSanity + G.traitById("insomnia").sanity);
   assert.strictEqual(P.day.startSan, P.sanity);
 });
@@ -264,6 +276,22 @@ T("舊存檔：壞掉的位子資料補好（重號、同一個位子、少欄�
   assert.ok(P.visitorCount >= 5);
   // 補好之後換得過去
   assert.ok(G.switchVisitor(P, P.visitors[1].vid));
+});
+
+T("舊存檔（決定 0028 以前）：不在場、候選人還沒挑的那位，讀回來、換來換去候選人都原樣留著；換到他、選職業之後才清掉", () => {
+  const P = withFirst();
+  G.setRng(G.mulberry32(4)); G.addVisitor(P, "小華", 1); G.setRng(null);
+  P.cands = [{ job: "detective", perk: "strong", flaw: "slow", skills: G.rollSkills("detective") }, { job: "artisan", perk: "quick", flaw: "gloomy", skills: G.rollSkills("artisan") }]; // 以前 addVisitor 擲的
+  G.switchVisitor(P, "v1"); // 小華收進 P.visitors
+  const cands = S(P.visitors[0].cands);
+  const back = G.migrateSave(J((() => { const s = G.newSave(); s.profiles.challenge = P; s.current = "challenge"; return s; })())).profiles.challenge;
+  assert.strictEqual(S(back.visitors[0].cands), cands);
+  assert.strictEqual(back.job, "detective"); assert.strictEqual(back.perk, null); assert.strictEqual(back.flaw, null); // 阿明（第一位）不補抽
+  G.switchVisitor(back, "v2");
+  assert.strictEqual(S(back.cands), cands); assert.strictEqual(back.job, null);
+  assert.ok(G.chooseJob(back, "salesman")); // 候選人裡沒有的職業也能選
+  assert.strictEqual(back.cands, null); assert.ok(G.traitById(back.perk) && G.traitById(back.flaw));
+  G.switchVisitor(back, "v1"); assert.strictEqual(back.perk, null); // 阿明還是沒有
 });
 
 // ---------- 名字 ----------
