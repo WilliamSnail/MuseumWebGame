@@ -1,5 +1,5 @@
 // 參觀者一位接一位：roguelike 的繼承（shared/legacy.js）：node test/legacy.test.cjs（npm test 也會跑）
-// A 前任的遺物、C 挑下一位（候選人、小優缺點）、D 歷任參觀者牆的紀錄、舊存檔補欄位。數字一律讀 NUM、LEGACY、PERKS、FLAWS。
+// A 前任的遺物、C 選職業再抽小優缺點（決定 0028；以前是 3 位候選人）、D 歷任參觀者牆的紀錄、舊存檔補欄位。數字一律讀 NUM、LEGACY、PERKS、FLAWS。
 const assert = require("assert");
 const path = require("path");
 const { pathToFileURL } = require("url");
@@ -15,10 +15,23 @@ const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c
 const P3 = () => { const P = fresh(); unlockAll(P); P.insp = 500; return P; };
 const mk = (P, o, nat = 50) => G.finishMake(P, Object.assign({ 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, o), { natural: nat });
 const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）
-// 換到第 2 位參觀者，挑第 i 位候選人
-const nextAndPick = (P, leave, i = 0) => { const r = G.nextVisitor(P, "russia8", leave); return { r, c: G.chooseCandidate(P, i) }; };
+const S = x => JSON.stringify(x);
 // 直接給這位參觀者一個優缺點（測效果用）
 const withTrait = (P, id) => { if (G.PERKS.some(t => t.id === id)) P.perk = id; else P.flaw = id; return P; };
+// 固定骰子：讓 chooseJob 抽到指定的小優點、小缺點。rollTraits 先抽優點、再抽缺點，各用一次 RNG（照 notJob、同一類不配的規則先篩）；後面擲技能都是 0.5
+function drawSeq(job, perkId, flawId) {
+  const okJob = t => !(t.notJob || []).includes(job);
+  const perks = G.PERKS.filter(okJob), perk = G.traitById(perkId);
+  const flaws = G.FLAWS.filter(t => okJob(t) && !G.traitsClash(t, perk));
+  const pi = perks.findIndex(t => t.id === perkId), fi = flaws.findIndex(t => t.id === flawId);
+  if (pi < 0 || fi < 0) throw new Error(`${job} 抽不到 ${perkId}／${flawId}`);
+  return seq((pi + 0.5) / perks.length, (fi + 0.5) / flaws.length);
+}
+const chooseWith = (P, job, perkId, flawId) => { G.setRng(drawSeq(job, perkId, flawId)); const r = G.chooseJob(P, job); G.setRng(null); return r; };
+// 技能全擲 0.5 時的起點（chooseWith 擲出來的就是這個，再加減優缺點、前一位留下的）
+const baseSkills = job => { G.setRng(seq()); const s = J(G.rollSkills(job)); G.setRng(null); return s; };
+const jobIds = () => G.JOBS.map(j => j.id);
+const saveOf = P => { const s = G.newSave(); s.profiles.challenge = P; s.current = "challenge"; return s; };
 
 // ---------- 預設、存檔 ----------
 T("新的參觀者：優缺點、候選人、遺物櫃、這一位的統計都有預設", () => {
@@ -42,67 +55,76 @@ T("舊存檔：沒有 P.visit 的，起點用上一位離開時累計做了幾�
   assert.strictEqual(Q.perk, null); assert.strictEqual(Q.cands, null); assert.strictEqual(Q.legacy, null);
   assert.strictEqual(Q.relics.length, 1); assert.strictEqual(Q.relics[0].key, G.normKey("普通|開心|紅|沒有|站著"));
 });
-T("存檔再讀一次，候選人還是同樣 3 位（重新整理不能重抽）", () => {
-  const P = fresh(); mk(P, {});
-  G.setRng(G.mulberry32(7)); G.nextVisitor(P); G.setRng(null);
-  const save = G.newSave(); save.profiles.challenge = P; save.current = "challenge";
-  const back = G.migrateSave(J(save)).profiles.challenge;
-  assert.strictEqual(JSON.stringify(back.cands), JSON.stringify(P.cands));
+T("選好職業之後存檔再讀一次：職業、優缺點、技能都一樣；已經選過的不能再選（重新整理不能重抽）", () => {
+  const P = fresh();
+  G.setRng(G.mulberry32(7)); const r = G.chooseJob(P, "occultist"); G.setRng(null);
+  assert.ok(r && P.perk && P.flaw);
+  const back = G.migrateSave(J(saveOf(P))).profiles.challenge;
+  assert.strictEqual(S([back.job, back.perk, back.flaw, back.skills, back.mood, back.sanity]), S([P.job, P.perk, P.flaw, P.skills, P.mood, P.sanity]));
+  const before = S(back);
+  assert.strictEqual(G.chooseJob(back, "occultist"), null); assert.strictEqual(G.chooseJob(back, "gambler"), null);
+  assert.strictEqual(S(back), before);
 });
 
-// ---------- C. 候選人 ----------
-T("換人之後有 LEGACY.candidates 位候選人：職業不重複、優缺點不同類、技能先擲好", () => {
-  const P = fresh();
-  const r = G.nextVisitor(P);
-  assert.strictEqual(P.job, null);
-  assert.strictEqual(P.cands.length, G.LEGACY.candidates); assert.strictEqual(r.cands, P.cands);
-  assert.strictEqual(new Set(P.cands.map(c => c.job)).size, P.cands.length);
-  P.cands.forEach(c => {
-    const perk = G.traitById(c.perk), flaw = G.traitById(c.flaw);
-    assert.ok(G.PERKS.includes(perk) && G.FLAWS.includes(flaw), c.perk + "/" + c.flaw);
-    assert.ok(!G.traitsClash(perk, flaw));
-    const main = G.jobSkill(c.job);
-    G.SKILLS.forEach(s => { const v = c.skills[s]; assert.ok(s === main ? v >= G.NUM.skillMainBase + 1 && v <= G.NUM.skillMainBase + 10 : v >= G.NUM.skillOtherBase + 1 && v <= G.NUM.skillOtherBase + 10, s + " " + v); });
+// ---------- C. 選職業，再抽小優點、小缺點（決定 0028） ----------
+T("第一位參觀者：6 個職業都能自己選；選好抽到一個小優點、一個小缺點；回傳的跟 P 上的一樣", () => {
+  assert.strictEqual(S(jobIds().slice().sort()), S(Object.keys(G.JOB_SKILL).sort())); // JOBS 和 JOB_SKILL 對得上
+  jobIds().forEach(job => {
+    const P = fresh();
+    assert.strictEqual(P.visitor, 1); assert.strictEqual(P.job, null); assert.strictEqual(P.perk, null); assert.strictEqual(P.flaw, null);
+    const r = G.chooseJob(P, job);
+    assert.ok(r, job);
+    assert.strictEqual(P.job, job);
+    const perk = G.traitById(P.perk), flaw = G.traitById(P.flaw);
+    assert.ok(G.PERKS.includes(perk) && G.FLAWS.includes(flaw), P.perk + "/" + P.flaw);
+    assert.strictEqual(r.perk, P.perk); assert.strictEqual(r.flaw, P.flaw); assert.strictEqual(r.job, job);
+    assert.strictEqual(r.main, G.jobSkill(job)); assert.strictEqual(r.value, P.skills[r.main]);
+    assert.strictEqual(S(r.skills), S(P.skills)); assert.strictEqual(r.mood, P.mood); assert.strictEqual(r.sanity, P.sanity);
   });
 });
-T("候選人用 RNG 產生：同一個種子，同樣的候選人", () => {
-  const run = () => { const P = fresh(); G.setRng(G.mulberry32(42)); G.nextVisitor(P); G.setRng(null); return JSON.stringify(P.cands); };
-  assert.strictEqual(run(), run());
+T("第 2 位以後也一樣：換人不再擲候選人；6 個職業都能選，抽到一個小優點、一個小缺點", () => {
+  jobIds().forEach(job => {
+    const P = fresh(); G.chooseJob(P, "detective");
+    const r = G.nextVisitor(P, "russia8", null);
+    assert.strictEqual(P.cands, null); assert.ok(!("cands" in r));
+    assert.strictEqual(P.job, null); assert.strictEqual(P.perk, null); assert.strictEqual(P.flaw, null);
+    assert.ok(G.chooseJob(P, job), job);
+    assert.strictEqual(P.visitor, 2); assert.strictEqual(P.job, job);
+    assert.ok(G.traitById(P.perk) && G.traitById(P.flaw));
+  });
 });
-T("候選人：notJob 的職業抽不到那個優點（抱枕職人不會是「手巧」）；同一批的優點、缺點不重複", () => {
-  for (let seed = 1; seed <= 200; seed++) {
-    G.setRng(G.mulberry32(seed));
-    const P = fresh(); G.nextVisitor(P);
-    P.cands.forEach(c => { const t = G.traitById(c.perk); assert.ok(!(t.notJob || []).includes(c.job), seed + ":" + c.job + c.perk); });
-    assert.strictEqual(new Set(P.cands.map(c => c.perk)).size, P.cands.length);
-    assert.strictEqual(new Set(P.cands.map(c => c.flaw)).size, P.cands.length);
-  }
-  G.setRng(null);
-});
-T("挑一位：職業、技能跟卡片上算的一樣；優缺點記下來；候選人清掉，不能再挑", () => {
+T("固定骰子：同一個種子，抽到的優缺點、技能、心情、理智都一樣；骰子指定抽到哪一個", () => {
+  const run = job => { G.setRng(G.mulberry32(42)); const P = fresh(); G.chooseJob(P, job); G.setRng(null); return S([P.perk, P.flaw, P.skills, P.mood, P.sanity]); };
+  jobIds().forEach(job => assert.strictEqual(run(job), run(job), job));
   const P = fresh();
-  G.nextVisitor(P);
-  const c = J(P.cands[1]);
-  const st = J(G.candidateStats(P, c));
-  const moodBefore = P.mood;
-  const r = G.chooseCandidate(P, 1);
-  assert.strictEqual(P.job, c.job); assert.strictEqual(P.perk, c.perk); assert.strictEqual(P.flaw, c.flaw);
-  assert.deepStrictEqual(J(P.skills), st.skills);
-  if (c.job !== "gambler") assert.strictEqual(P.mood, Math.max(0, Math.min(99, moodBefore + st.mood)));
-  assert.strictEqual(r.main, G.jobSkill(c.job));
-  assert.strictEqual(P.cands, null); assert.strictEqual(G.chooseCandidate(P, 0), null);
+  const r = chooseWith(P, "detective", "thrifty", "darkfear");
+  assert.strictEqual(P.perk, "thrifty"); assert.strictEqual(P.flaw, "darkfear"); assert.strictEqual(r.perk, "thrifty");
+  assert.strictEqual(S(P.skills), S(baseSkills("detective"))); // 這兩個不改技能
 });
-T("第一位參觀者沒有候選人（照舊選職業），也沒有優缺點", () => {
-  const P = fresh();
-  assert.strictEqual(P.cands, null);
-  G.assignJob(P, "detective");
-  assert.strictEqual(P.perk, null); assert.ok(P.skills.偵查 > G.NUM.skillMainBase);
+T("200 個種子 × 6 個職業：notJob 抽不到（抱枕職人不會是「手巧」）、同一類不配在一起；每一種優缺點都抽得到", () => {
+  const seenP = new Set(), seenF = new Set();
+  for (let seed = 1; seed <= 200; seed++) jobIds().forEach(job => {
+    G.setRng(G.mulberry32(seed)); const P = fresh(); G.chooseJob(P, job); G.setRng(null);
+    const perk = G.traitById(P.perk), flaw = G.traitById(P.flaw);
+    assert.ok(!(perk.notJob || []).includes(job) && !(flaw.notJob || []).includes(job), seed + ":" + job + P.perk);
+    assert.ok(!G.traitsClash(perk, flaw), seed + ":" + P.perk + "/" + P.flaw);
+    seenP.add(P.perk); seenF.add(P.flaw);
+  });
+  assert.strictEqual(seenP.size, G.PERKS.length); assert.strictEqual(seenF.size, G.FLAWS.length);
 });
-T("自由模式沒有候選人，優缺點也不算", () => {
-  const P = fresh("free");
-  assert.strictEqual(G.rollCandidates(P), null);
-  P.perk = "thrifty"; P.flaw = "weak";
-  assert.strictEqual(G.traitSum(P, "fusion"), 0); assert.strictEqual(G.fusionPrice(P), 0);
+T("不能重抽：已經選過職業、沒有這個職業、自由模式都不做事；自由模式的優缺點也不算", () => {
+  const P = fresh(); G.chooseJob(P, "salesman");
+  const before = S(P);
+  assert.strictEqual(G.chooseJob(P, "salesman"), null); assert.strictEqual(G.chooseJob(P, "detective"), null);
+  assert.strictEqual(S(P), before);
+  const Q = fresh(); assert.strictEqual(G.chooseJob(Q, "沒有這個"), null); assert.strictEqual(Q.job, null); assert.strictEqual(Q.perk, null);
+  const F = fresh("free"); assert.strictEqual(G.chooseJob(F, "detective"), null); assert.strictEqual(F.job, null); assert.strictEqual(F.perk, null);
+  F.perk = "thrifty"; F.flaw = "weak";
+  assert.strictEqual(G.traitSum(F, "fusion"), 0); assert.strictEqual(G.fusionPrice(F), 0);
+});
+T("3 位候選人那一套拿掉了：沒有 rollCandidates、chooseCandidate、candidateStats、LEGACY.candidates", () => {
+  assert.strictEqual(typeof G.rollCandidates, "undefined"); assert.strictEqual(typeof G.chooseCandidate, "undefined"); assert.strictEqual(typeof G.candidateStats, "undefined");
+  assert.ok(!("candidates" in G.LEGACY));
 });
 
 // ---------- A. 前任的遺物 ----------
@@ -116,10 +138,11 @@ T("留下一件收藏當遺物：放進遺物櫃（第幾位留的）、收藏�
   assert.strictEqual(Object.keys(P.pepes).length, nPepes);
   assert.strictEqual(P.history[0].left.type, "relic"); assert.strictEqual(P.history[0].left.key, a.key);
   assert.strictEqual(P.legacy.type, "relic"); assert.strictEqual(P.legacy.from, 1); assert.strictEqual(P.legacy.mood, G.LEGACY.relicMood);
-  // 挑一位不是賭徒、心情沒有優缺點加減的
-  P.cands = [{ job: "detective", perk: "strong", flaw: "slow", skills: G.rollSkills("detective") }];
-  P.mood = 40; G.chooseCandidate(P, 0);
-  assert.strictEqual(P.mood, 40 + G.LEGACY.relicMood);
+  // 選一個不是賭徒的職業，抽到心情沒有加減的優缺點：選職業時才加遺物的心情
+  P.mood = 40;
+  const r = chooseWith(P, "detective", "strong", "slow");
+  assert.strictEqual(P.mood, 40 + G.LEGACY.relicMood); assert.strictEqual(r.moodFrom, 40); assert.strictEqual(r.moodAdj, G.LEGACY.relicMood);
+  assert.ok(r.why.some(w => w.id === "legacy" && w.what === "mood"));
 });
 T("遺物不在收藏裡：什麼都沒留", () => {
   const P = fresh();
@@ -128,7 +151,7 @@ T("遺物不在收藏裡：什麼都沒留", () => {
 });
 T("遺物櫃最多 LEGACY.relicsMax 件，新的在前面", () => {
   const P = fresh(); const a = mk(P, {}); const b = mk(P, { 顏色: "綠" });
-  for (let i = 0; i < G.LEGACY.relicsMax + 3; i++) { G.nextVisitor(P, "russia8", { type: "relic", item: { kind: "pepe", key: i % 2 ? b.key : a.key } }); G.chooseCandidate(P, 0); }
+  for (let i = 0; i < G.LEGACY.relicsMax + 3; i++) { G.nextVisitor(P, "russia8", { type: "relic", item: { kind: "pepe", key: i % 2 ? b.key : a.key } }); G.chooseJob(P, "detective"); }
   assert.strictEqual(P.relics.length, G.LEGACY.relicsMax);
   assert.strictEqual(P.relics[0].n, P.visitor - 1);
 });
@@ -138,12 +161,12 @@ T("把最拿手的技能傳下去：下一位這個技能起點 +LEGACY.skillPlu
   G.nextVisitor(P, "russia8", { type: "skill" });
   assert.deepStrictEqual([P.legacy.type, P.legacy.skill, P.legacy.plus], ["skill", "偵查", G.LEGACY.skillPlus]);
   assert.strictEqual(P.history[0].left.skill, "偵查");
-  const c = J(P.cands[0]);
-  const st = G.candidateStats(P, c);
-  const own = (G.traitById(c.perk).others && G.jobSkill(c.job) !== "偵查" ? G.traitById(c.perk).others : 0) + (G.traitById(c.flaw).skillName === "偵查" ? G.traitById(c.flaw).skillAdj : 0);
-  assert.strictEqual(st.skills.偵查, Math.max(1, Math.min(99, c.skills.偵查 + own + G.LEGACY.skillPlus)));
-  G.chooseCandidate(P, 0);
-  assert.strictEqual(P.skills.偵查, st.skills.偵查);
+  // 下一位選推銷員（拿手不是偵查），抽到不改技能的優缺點
+  const base = baseSkills("salesman");
+  const r = chooseWith(P, "salesman", "strong", "slow");
+  assert.strictEqual(P.skills.偵查, Math.max(1, Math.min(99, base.偵查 + G.LEGACY.skillPlus)));
+  assert.strictEqual(r.delta.偵查, P.skills.偵查 - base.偵查);
+  assert.ok(r.why.some(w => w.id === "legacy" && w.skill === "偵查"));
 });
 T("最拿手的技能一樣高：選職業的拿手技能", () => {
   const P = fresh(); G.assignJob(P, "salesman");
@@ -160,7 +183,7 @@ T("什麼都不留：遺物櫃、P.legacy 都沒有；紀錄的 left 是 null", 
 // ---------- D. 歷任參觀者的紀錄 ----------
 T("紀錄：做了幾隻（這一位的）、地下走到第幾層、看懂幾件、理智在哪裡用完、優缺點、前任留給牠的", () => {
   const P = P3();
-  G.nextVisitor(P); G.chooseCandidate(P, 0); // 第 2 位
+  G.nextVisitor(P); chooseWith(P, "detective", "strong", "slow"); // 第 2 位
   const before = P.stats.made;
   const team = [mk(P, {}), mk(P, { 顏色: "綠" }), mk(P, { 顏色: "黃" })].map(r => r.key);
   assert.ok(G.startCellar(P, 1, team).ok);
@@ -175,6 +198,13 @@ T("紀錄：做了幾隻（這一位的）、地下走到第幾層、看懂幾�
   assert.strictEqual(P.history.length, 2); assert.strictEqual(P.history[1].n, 1);
   // 新的一位從 0 開始算
   assert.strictEqual(P.visit.deepest, 0); assert.strictEqual(P.visit.made0, P.stats.made); assert.strictEqual(P.visit.where, null);
+});
+T("第一位參觀者的紀錄也有抽到的優缺點（決定 0028）", () => {
+  const P = fresh(); chooseWith(P, "gambler", "lucky", "insomnia");
+  const now = G.visitorRecord(P, null);
+  assert.strictEqual(now.n, 1); assert.strictEqual(now.perk, "lucky"); assert.strictEqual(now.flaw, "insomnia");
+  G.nextVisitor(P);
+  assert.strictEqual(P.history[0].perk, "lucky"); assert.strictEqual(P.history[0].flaw, "insomnia");
 });
 T("走完一層接著往下：走到的那一層也算", () => {
   const P = P3(); P.cellar.best = 1;
@@ -255,30 +285,33 @@ T("學得快、慢熱：技能成長多長、少長 1（最少還是 +1）", () 
   assert.strictEqual(g[0].gain, 1); assert.strictEqual(P.skills.鑑賞, 27);
   G.setRng(null);
 });
-T("好運、悲觀、失眠：挑了之後開場心情、理智跟著加減", () => {
-  const P = fresh();
-  G.nextVisitor(P);
-  P.cands = [{ job: "detective", perk: "lucky", flaw: "insomnia", skills: G.rollSkills("detective") }];
-  const mood = P.mood;
-  G.chooseCandidate(P, 0);
+T("好運、悲觀、失眠：第一位參觀者也一樣，開場心情、理智跟著加減（今天的理智從加減之後算）", () => {
+  let P = fresh(); const mood = P.mood;
+  const r = chooseWith(P, "detective", "lucky", "insomnia");
+  assert.strictEqual(P.visitor, 1);
   assert.strictEqual(P.mood, Math.min(99, mood + G.traitById("lucky").mood));
   assert.strictEqual(P.sanity, G.NUM.startSanity + G.traitById("insomnia").sanity);
-  G.nextVisitor(P);
-  P.cands = [{ job: "detective", perk: "strong", flaw: "gloomy", skills: G.rollSkills("detective") }];
-  const m2 = P.mood; G.chooseCandidate(P, 0);
+  assert.strictEqual(P.day.startSan, P.sanity);
+  assert.strictEqual(r.moodFrom, mood); assert.strictEqual(r.moodAdj, G.traitById("lucky").mood);
+  assert.strictEqual(r.sanityFrom, G.NUM.startSanity); assert.strictEqual(r.sanityAdj, G.traitById("insomnia").sanity);
+  P = fresh(); const m2 = P.mood;
+  chooseWith(P, "detective", "strong", "gloomy");
   assert.strictEqual(P.mood, Math.max(0, m2 + G.traitById("gloomy").mood));
+  // 第 2 位也一樣
+  G.nextVisitor(P); const m3 = P.mood;
+  chooseWith(P, "historian", "lucky", "weak");
+  assert.strictEqual(P.mood, Math.min(99, m3 + G.traitById("lucky").mood));
 });
-T("多才多藝、笨手笨腳：技能起點加減", () => {
-  const P = fresh(); G.nextVisitor(P);
-  const sk = G.rollSkills("detective");
-  P.cands = [{ job: "detective", perk: "allround", flaw: "darkfear", skills: Object.assign({}, sk) }];
-  G.chooseCandidate(P, 0);
-  G.SKILLS.forEach(s => assert.strictEqual(P.skills[s], s === "偵查" ? sk[s] : sk[s] + G.traitById("allround").others));
-  G.nextVisitor(P);
-  const sk2 = G.rollSkills("artisan");
-  P.cands = [{ job: "artisan", perk: "strong", flaw: "clumsy", skills: Object.assign({}, sk2) }];
-  G.chooseCandidate(P, 0);
-  assert.strictEqual(P.skills.手工藝, sk2.手工藝 + G.traitById("clumsy").skillAdj);
+T("多才多藝、笨手笨腳：技能起點加減（回傳的 delta 跟實際加減一樣）", () => {
+  let P = fresh();
+  const sk = baseSkills("detective"), main = G.jobSkill("detective"), others = G.traitById("allround").others;
+  const r = chooseWith(P, "detective", "allround", "darkfear");
+  G.SKILLS.forEach(s => assert.strictEqual(P.skills[s], s === main ? sk[s] : Math.min(99, sk[s] + others), s));
+  G.SKILLS.forEach(s => assert.strictEqual(r.delta[s] || 0, P.skills[s] - sk[s], s));
+  P = fresh();
+  const cl = G.traitById("clumsy"), sk2 = baseSkills("detective");
+  chooseWith(P, "detective", "strong", "clumsy");
+  assert.strictEqual(P.skills[cl.skillName], Math.max(1, sk2[cl.skillName] + cl.skillAdj));
 });
 T("手腳俐落、手滑：受傷的隊員早、晚 1 天好", () => {
   const P = P3();
@@ -311,6 +344,57 @@ T("怕黑：地下收藏庫扣理智時多扣；看懂檢定比較容易", () =>
   G.setRng(null);
 });
 
+T("第一位參觀者抽到的，規則裡都算：每一種優缺點各抽一次（traitSum、融合價、受傷天數）", () => {
+  const all = G.PERKS.concat(G.FLAWS);
+  const START = ["mood", "sanity", "others", "skillAdj"]; // 開場就加完的（上面另外測）
+  const FIELDS = [...new Set(all.flatMap(t => Object.keys(t).filter(k => typeof t[k] === "number")))].filter(k => !START.includes(k));
+  assert.ok(FIELDS.includes("fusion") && FIELDS.includes("power") && FIELDS.includes("cellarSan"));
+  all.forEach(t => {
+    const isPerk = G.PERKS.includes(t);
+    const job = jobIds().find(id => !(t.notJob || []).includes(id));
+    const o = (isPerk ? G.FLAWS : G.PERKS).find(x => !(x.notJob || []).includes(job) && !G.traitsClash(x, t)); // 配一個不同類的
+    const P = fresh();
+    if (isPerk) chooseWith(P, job, t.id, o.id); else chooseWith(P, job, o.id, t.id);
+    assert.strictEqual(P.visitor, 1); assert.strictEqual(isPerk ? P.perk : P.flaw, t.id);
+    FIELDS.forEach(f => assert.strictEqual(G.traitSum(P, f), (t[f] || 0) + (o[f] || 0), t.id + " " + f));
+    assert.strictEqual(G.fusionPrice(P), Math.max(0, G.NUM.fusionCost + (t.fusion || 0) + (o.fusion || 0)), t.id);
+    assert.strictEqual(G.injureDaysOf(P), Math.max(1, G.NUM.injureDays + (t.injure || 0) + (o.injure || 0)), t.id);
+  });
+});
+
+// ---------- 舊存檔（決定 0028：已經在館裡的參觀者不改） ----------
+T("舊存檔：0028 以前的第一位參觀者（選了職業、沒有優缺點）讀回來還是沒有，不補抽；職業、技能、心情、理智都不變", () => {
+  const P = fresh(); G.assignJob(P, "detective"); P.mood = 63; P.sanity = 41; // 以前第一位只選職業（assignJob），沒有抽
+  const old = J(P); delete old.perk; delete old.flaw; delete old.cands; // 更早的存檔連欄位都沒有
+  const back = G.migrateSave(J(saveOf(old))).profiles.challenge;
+  assert.strictEqual(back.perk, null); assert.strictEqual(back.flaw, null);
+  assert.strictEqual(back.job, "detective"); assert.strictEqual(S(back.skills), S(P.skills)); assert.strictEqual(back.mood, 63); assert.strictEqual(back.sanity, 41);
+  assert.strictEqual(G.traitSum(back, "fusion"), 0); assert.strictEqual(G.fusionPrice(back), G.NUM.fusionCost);
+  assert.strictEqual(G.chooseJob(back, "gambler"), null); assert.strictEqual(back.perk, null); assert.strictEqual(back.job, "detective"); // 有職業了：不會再抽
+  // 有欄位、是 null 的（0016 以後、0028 以前的第一位）也一樣
+  const old2 = J(P); old2.perk = null; old2.flaw = null;
+  const b2 = G.fixProfile(old2, "challenge");
+  assert.strictEqual(b2.perk, null); assert.strictEqual(b2.flaw, null); assert.strictEqual(b2.job, "detective");
+});
+T("舊存檔：以前從候選人挑的（有優缺點）照舊，效果照算", () => {
+  const P = fresh(); G.nextVisitor(P); G.assignJob(P, "historian"); P.perk = "thrifty"; P.flaw = "butter"; // 以前 chooseCandidate 做的事
+  const back = G.migrateSave(J(saveOf(J(P)))).profiles.challenge;
+  assert.strictEqual(back.perk, "thrifty"); assert.strictEqual(back.flaw, "butter"); assert.strictEqual(back.job, "historian"); assert.strictEqual(back.visitor, 2);
+  assert.strictEqual(G.fusionPrice(back), G.NUM.fusionCost + G.traitById("thrifty").fusion);
+  assert.strictEqual(G.injureDaysOf(back), G.NUM.injureDays + G.traitById("butter").injure);
+});
+T("舊存檔：還在門口、3 位候選人還沒挑的：讀回來候選人原樣留著；選職業照新的做法（6 個都能選、抽優缺點），候選人清掉", () => {
+  const P = fresh(); G.nextVisitor(P);
+  P.cands = [{ job: "detective", perk: "strong", flaw: "slow", skills: G.rollSkills("detective") }, { job: "gambler", perk: "lucky", flaw: "weak", skills: G.rollSkills("gambler") },
+    { job: "artisan", perk: "quick", flaw: "gloomy", skills: G.rollSkills("artisan") }];
+  const cands = S(P.cands);
+  const back = G.migrateSave(J(saveOf(J(P)))).profiles.challenge;
+  assert.strictEqual(S(back.cands), cands); assert.strictEqual(back.job, null); assert.strictEqual(back.perk, null);
+  const r = chooseWith(back, "occultist", "sweet", "restless"); // 候選人裡沒有的職業也能選
+  assert.ok(r); assert.strictEqual(back.job, "occultist"); assert.strictEqual(back.cands, null);
+  assert.strictEqual(back.perk, "sweet"); assert.strictEqual(back.flaw, "restless");
+});
+
 // ---------- 退休換人（決定 0025） ----------
 const retiree = () => { const P = fresh(); G.setRng(G.mulberry32(3)); G.assignJob(P, "detective"); G.setRng(null); P.visit.from = G.addDays(G.todayStr(), -G.LEGACY.retireDays); return P; };
 T("退休：館長室要來了 LEGACY.retireDays 天以上；看完結局不用等", () => {
@@ -340,14 +424,14 @@ T("退休的結局都有文字；退休走 nextVisitor，牆上記怎麼結束�
   const r = G.nextVisitor(P, "curator", { type: "skill" });
   assert.strictEqual(r.entry.endedBy, "curator"); assert.strictEqual(r.entry.where, null); assert.strictEqual(r.entry.name, "阿明");
   assert.strictEqual(P.history[0].endedBy, "curator");
-  assert.strictEqual(P.visitor, 2); assert.strictEqual(P.sanity, G.NUM.startSanity); assert.ok(P.cands.length);
+  assert.strictEqual(P.visitor, 2); assert.strictEqual(P.sanity, G.NUM.startSanity); assert.strictEqual(P.cands, null); assert.strictEqual(P.job, null);
   assert.strictEqual(P.legacy.fromName, "阿明"); assert.strictEqual(P.legacy.from, 1);
 });
 T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
   const P = retiree(); P.vname = "阿明"; const a = mk(P, { 顏色: "藍" });
   G.nextVisitor(P, "retire", { type: "relic", item: { kind: "pepe", key: a.key } });
   assert.strictEqual(P.relics[0].name, "阿明"); assert.strictEqual(P.relics[0].n, 1); assert.strictEqual(P.legacy.fromName, "阿明");
-  G.chooseCandidate(P, 0);
+  G.chooseJob(P, "detective");
   G.nextVisitor(P, "russia8", { type: "relic", item: { kind: "pepe", key: a.key } }); // 第 2 位沒有取名字
   assert.strictEqual(P.relics[0].name, null); assert.strictEqual(P.legacy.fromName, null);
 });
@@ -359,9 +443,12 @@ T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
     const logic = await import(url("logic.js"));
     const legacy = await import(url("legacy.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, "2026-11-08");
+    assert.ok(legacy.chooseJob(P, "artisan")); // 第一位也抽
+    assert.ok(legacy.traitById(P.perk) && legacy.traitById(P.flaw));
     logic.nextVisitor(P, "russia8", { type: "skill" });
-    assert.strictEqual(P.cands.length, legacy.traitById(P.cands[0].perk) ? P.cands.length : -1);
-    assert.ok(legacy.chooseCandidate(P, 0));
+    assert.strictEqual(P.cands, null); assert.strictEqual(P.job, null);
+    assert.ok(legacy.chooseJob(P, "gambler"));
+    assert.strictEqual(legacy.chooseJob(P, "gambler"), null);
     pass++;
   } catch (e) { fail++; console.log("FAIL ES 模組", "\n   ", e.message); }
   console.log(`${pass} passed, ${fail} failed（參觀者一位接一位）`);

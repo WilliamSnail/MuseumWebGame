@@ -1,7 +1,7 @@
 /* ================================================================
    多位參觀者（翊文 11-08：「玩家可以選擇和命名多個參觀者」，決定 0018）
    - 標題畫面的三個位子（ui_screens1.js 的 visitorSlotsBox）：羊皮紙卡片，上次玩的那位金框
-   - 取名字、改名字的小框（ui_screens3.js 的 askVisitorName）、挑候選人時的「取名字」那一格
+   - 取名字、改名字的小框（ui_screens3.js 的 askVisitorName）、選職業時的「取名字」那一格（以前在挑候選人那一頁，class 名字沒改）
    - 歷任參觀者牆上「也在館裡」的牌子
    這個檔放在 net.css 後面載入（main.js）。
    ================================================================ */
@@ -30,6 +30,9 @@ body.reduce-motion .vs-wrap { animation: none; }
 .vs-stat { flex: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 6px 10px; border-radius: 4px; background: rgba(200,162,90,.14); border: 1px solid rgba(200,162,90,.35); }
 .vs-stat small { color: var(--parch-sub); font-size: .75rem; letter-spacing: .1em; }
 .vs-stat b { font-size: 1rem; color: #3A2410; font-variant-numeric: tabular-nums; }
+/* 小優點、小缺點的小牌子（決定 0028）：顏色跟歷任參觀者牆的 .vw-tag 一樣 */
+.vs-traits { display: flex; flex-wrap: wrap; gap: 6px; }
+.vs-traits .vw-tag { cursor: help; }
 .vs-warn { margin: 0; padding: 4px 10px; border-radius: 4px; font-size: .8125rem; color: #6E1E18; background: rgba(160,40,30,.1); border: 1px solid rgba(160,40,30,.3); }
 .vs-card.dark .vs-badge { filter: grayscale(.7) brightness(.7); }
 .vs-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: auto; }
@@ -55,7 +58,7 @@ body.reduce-motion .vs-wrap { animation: none; }
 .vs-input { width: 100%; box-sizing: border-box; }
 .vs-err { margin: 0; color: #9A231C; font-size: .875rem; }
 .vs-err:empty { display: none; }
-/* 挑候選人時的「取名字」 */
+/* 選職業時的「取名字」（理智歸零、退休換人時；決定 0028 以前在挑候選人那一頁） */
 .cand-name { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 2px; padding: 10px 12px; border-radius: 6px; background: rgba(255,255,255,.35); border: 1px solid rgba(200,162,90,.45); }
 .cand-name b { font-family: var(--serif); color: #6E5020; letter-spacing: .1em; }
 .cand-name small { color: var(--parch-sub); font-size: .8125rem; }

@@ -39,7 +39,7 @@ import { pickJob } from "./ui_screens3.js";
     setRng(null);
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
     if (screen === "fusion2") { const it = collectionItems("pepe"); UI.fusion = [{ key: it[0].key }, { key: it[1].key }]; go("fusion", {}, { action: false }); return; }
-    if (screen === "jobpick") { P.job = null; go("lobby", {}, { action: false }); setTimeout(() => pickJob(), 200); return; }
+    if (screen === "jobpick") { P.job = null; P.perk = null; P.flaw = null; go("lobby", {}, { action: false }); setTimeout(() => pickJob(), 200); return; }
     applyBodyState();
     if (screen === "title") { setP(null); go("title", {}, { action: false }); return; }
     if (screen === "titlehover") { setP(null); go("title", {}, { action: false }); setTimeout(() => [...document.querySelectorAll(".t-actions .btn")].pop().dispatchEvent(new MouseEvent("mouseenter")), 300); return; }
