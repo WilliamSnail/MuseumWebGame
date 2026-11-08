@@ -147,6 +147,7 @@ NET.on("logout", e => {
 NET.on("message", async m => {
   if (!m || m.t !== "save_changed" || !UI.net) return;
   try {
+    NET.dropPending(); // 手上還沒送出去的那份是舊的：不丟掉，幾秒後會把伺服器剛寫好的蓋掉（11-09）
     const r = await NET.loadSave();
     const mode = SAVE.current, playing = !!P;
     setSave(migrateSave(r.data));

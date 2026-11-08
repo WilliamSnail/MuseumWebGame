@@ -11,6 +11,8 @@ export const PARTY = {
   minMembers: { fusion: 2, cellar: 1 }, // 地下一個人也能下去（館方助手補位）
   picks: { fusion: 1, cellar: 2 },      // 每人帶幾隻（一起融合 1 隻；地下 1–2 隻，決定 0020）
   sayMax: 50,                           // 自由打字一句幾個字（決定 0020）
+  offlineWaitMs: 10000,                 // 隊友斷線多久，畫面才請伺服器把他移出隊伍（11-09）
+  offlineMinMs: 5000,                   // 伺服器自己確認：至少斷線這麼久才移（重新整理一下不會被踢）
 };
 export const PARTY_KINDS = ["fusion", "cellar"];
 
@@ -37,6 +39,10 @@ export function inviteProblem(inv, uid, now) {
   if (now > inv.expires) return "邀請過期了";
   return null;
 }
+// 這個邀請已經用不到了（回覆過、過期了）：伺服器送新邀請時順手刪掉
+export function inviteOver(inv, now) {
+  return !inv || inv.state !== "open" || now > inv.expires;
+}
 
 // ---------- 隊伍 ----------
 export function newParty({ pid, kind, leader, leaderNick, now }) {
@@ -51,6 +57,11 @@ export function fixParty(p) {
     m.ready = !!m.ready;
   }
   p.phase = p.phase || "lobby";
+  // 融合的結果：沒有突變時 mutations 是空陣列，存進去就不見了
+  if (p.result && typeof p.result === "object") {
+    const mu = p.result.mutations;
+    p.result.mutations = Array.isArray(mu) ? mu : mu && typeof mu === "object" ? Object.values(mu) : [];
+  }
   return p;
 }
 // 隊員照進來的順序
@@ -59,9 +70,11 @@ export function partyMembers(p) {
 }
 export function partyJoin(p, uid, nick, now) {
   if (p.phase !== "lobby") return { ok: false, reason: "已經開始了" };
-  if (p.members[uid]) return { ok: true };
+  // 已經在隊伍裡（例如重新整理過、框不見了，又被邀請一次）：當作重新進來，大家重新按準備
+  if (p.members[uid]) { Object.values(p.members).forEach(m => { m.ready = false; }); delete p.fail; return { ok: true }; }
   if (Object.keys(p.members).length >= PARTY.maxMembers[p.kind]) return { ok: false, reason: "隊伍滿了" };
   p.members[uid] = { nick, ready: false, pick: [], joinedAt: now };
+  delete p.fail; // 人變了：上次「開始不了」的原因不算了
   return { ok: true };
 }
 // 離開。隊長走了，換最早進來的那位當隊長；沒人了就解散（closed）
@@ -72,6 +85,7 @@ export function partyLeave(p, uid) {
   if (!left.length) { p.phase = "closed"; return { ok: true, closed: true }; }
   if (p.leader === uid) p.leader = left[0].id;
   left.forEach(m => { p.members[m.id].ready = false; }); // 人變了，大家重新按準備
+  delete p.fail;
   return { ok: true, closed: false };
 }
 // 選帶哪幾隻（換了就要重新按準備）
@@ -84,6 +98,7 @@ export function partyPick(p, uid, keys) {
   if (list.length > PARTY.picks[p.kind]) return { ok: false, reason: `每人最多帶 ${PARTY.picks[p.kind]} 隻` };
   m.pick = list;
   m.ready = false;
+  delete p.fail; // 換了佩佩：上次「開始不了」的原因不算了（p.fail 是伺服器寫的，兩個人都看得到）
   return { ok: true };
 }
 export function partyReady(p, uid, ready) {
@@ -92,6 +107,7 @@ export function partyReady(p, uid, ready) {
   if (p.phase !== "lobby") return { ok: false, reason: "已經開始了" };
   if (ready && !m.pick.length) return { ok: false, reason: "先選壹隻佩佩" };
   m.ready = !!ready;
+  delete p.fail;
   return { ok: true };
 }
 // 隊長能不能按開始
@@ -101,6 +117,15 @@ export function canStartParty(p, uid) {
   const ms = partyMembers(p);
   if (ms.length < PARTY.minMembers[p.kind]) return { ok: false, reason: p.kind === "fusion" ? "壹起融合要兩個人" : "人不夠" };
   const notReady = ms.find(m => !m.ready || !m.pick.length);
-  if (notReady) return { ok: false, reason: `等 ${notReady.nick} 準備好` };
+  if (notReady) return { ok: false, reason: `等 ${notReady.nick} 準備好`, waitFor: notReady.id }; // waitFor：等的是誰（是自己的話，畫面寫「等你準備好」）
   return { ok: true, members: ms };
+}
+// 隊友斷線了，能不能把他移出隊伍（伺服器在 partyAction 的 prune 用）。可以就回 null，不行回傳原因
+// st：Realtime Database 的 /status/{uid}；invisible：他是不是隱身（隱身的人看起來就是離線，看不出來，不移）
+export function pruneProblem(st, invisible, now) {
+  if (invisible) return "隱身的館友看不出在不在線";
+  if (!st) return null;
+  if (st.state !== "offline") return "還在線上";
+  if (typeof st.at === "number" && now - st.at < PARTY.offlineMinMs) return "剛剛才斷線，再等壹下";
+  return null;
 }

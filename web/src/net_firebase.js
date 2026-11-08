@@ -15,7 +15,7 @@
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, browserLocalPersistence, browserSessionPersistence, connectAuthEmulator, getAuth, onAuthStateChanged, setPersistence, signInWithCredential, signInWithPopup, signOut } from "firebase/auth";
 import { connectFirestoreEmulator, doc, getDoc, getFirestore, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
-import { connectDatabaseEmulator, getDatabase, onChildAdded, onDisconnect, onValue, ref, remove, serverTimestamp as rtdbNow, set } from "firebase/database";
+import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, ref, remove, serverTimestamp as rtdbNow, set } from "firebase/database";
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { setNowClock } from "../../shared/logic.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
@@ -34,7 +34,8 @@ const hexOf = s => [...new TextEncoder().encode(s)].map(b => b.toString(16).padS
 function toNetError(e) {
   if (e instanceof NetError) return e;
   const code = String((e && e.code) || "");
-  const msg = (e && e.message ? String(e.message).replace(/^Firebase:\s*/, "").replace(/\s*\(.*\)\.?$/, "") : "") || "出錯了";
+  // Functions 的 SDK 會在伺服器那句話後面加「 [400]」這種 HTTP 狀態碼：玩家只看那句話（代碼在 code、瀏覽器的 console 也看得到）
+  const msg = (e && e.message ? String(e.message).replace(/^Firebase:\s*/, "").replace(/\s*\(.*\)\.?$/, "").replace(/\s*\[\d{3}\]$/, "") : "") || "出錯了";
   if (code.includes("permission-denied")) return new NetError(403, "not_invited", msg.includes("邀請") ? msg : "沒有權限（不在邀請名單上？）");
   if (code.includes("unauthenticated")) return new NetError(401, "need_login", "要先登入");
   if (code.includes("unavailable") || code.includes("network") || code.includes("deadline")) return new NetError(0, "network", "連不上 Firebase");
@@ -191,6 +192,12 @@ export function createFirebaseNet(opts = {}) {
     });
     return chain;
   }
+  // 丟掉還沒送出去的存檔：伺服器改了我的存檔（例如一起融合），等一下要整份換成伺服器的。
+  // 不丟的話，手上那份舊的會在幾秒後照新的 rev 送出去，把伺服器剛寫好的蓋掉。
+  function dropPending() {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    pending = null;
+  }
 
   // ── 網路的時間（決定 0026，翊文 11-09：「遊戲裡的內容也是跟著那網路抓取的真實時間時間」） ──
   // .info/serverTimeOffset：Firebase 給的「伺服器時間 − 這台電腦的時間」（毫秒），連上之後自己會更新。
@@ -301,6 +308,7 @@ export function createFirebaseNet(opts = {}) {
     save,
     saveSoon,
     flush,
+    dropPending,
     connect,
     disconnect,
     where(r) { room = r; writeStatus(); return true; },
@@ -311,6 +319,11 @@ export function createFirebaseNet(opts = {}) {
     watch(path, fn) {
       if (!rtdb) return () => {};
       return onValue(ref(rtdb, path), snap => fn(snap.val()), err => fn(null, err));
+    },
+    // 讀一次 Realtime Database 的一個位置；沒權限、讀不到都回 null（例如已經不是這個隊伍的隊員）
+    async read(path) {
+      if (!rtdb) return null;
+      try { return (await get(ref(rtdb, path))).val(); } catch (e) { return null; }
     },
     get me() { return me; },
     get state() { return state; },

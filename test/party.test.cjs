@@ -54,6 +54,62 @@ T("隊伍：Realtime Database 讀回來少了空陣列也能用", () => {
   assert.strictEqual(JSON.stringify(p.members.b.pick), "[\"k1\"]");
   assert.strictEqual(p.phase, "lobby");
 });
+T("隊伍：還不能開始時說等的是誰（隊長自己的畫面寫「等你準備好」用）", () => {
+  const p = two();
+  assert.strictEqual(G.canStartParty(p, "a").waitFor, "a", "先等隊長自己");
+  G.partyPick(p, "a", ["k1"]); G.partyReady(p, "a", true);
+  assert.strictEqual(G.canStartParty(p, "a").waitFor, "b");
+  assert.strictEqual(G.canStartParty(p, "a").reason, "等 小華 準備好");
+});
+T("隊伍：上次開始不了的原因（fail），換佩佩、有人進出就拿掉", () => {
+  const p = two();
+  p.fail = { reason: "小明：這一對今天已經融合過了", at: NOW };
+  G.partyPick(p, "a", ["k1"]);
+  assert.strictEqual(p.fail, undefined, "換佩佩");
+  p.fail = { reason: "x", at: NOW };
+  G.partyLeave(p, "b");
+  assert.strictEqual(p.fail, undefined, "有人走了");
+  p.fail = { reason: "x", at: NOW };
+  G.partyJoin(p, "c", "小美", NOW + 5);
+  assert.strictEqual(p.fail, undefined, "有人進來");
+  p.fail = { reason: "x", at: NOW };
+  G.partyPick(p, "c", ["k3"]); p.fail = { reason: "x", at: NOW };
+  G.partyReady(p, "c", true);
+  assert.strictEqual(p.fail, undefined, "按準備");
+});
+T("隊伍：已經在隊伍裡又被邀請一次（重新整理過）：大家重新按準備", () => {
+  const p = two();
+  G.partyPick(p, "a", ["k1"]); G.partyReady(p, "a", true);
+  G.partyPick(p, "b", ["k9"]); G.partyReady(p, "b", true);
+  assert.ok(G.partyJoin(p, "b", "小華", NOW + 9).ok);
+  assert.strictEqual(p.members.a.ready, false);
+  assert.strictEqual(p.members.b.ready, false);
+  assert.strictEqual(JSON.stringify(p.members.b.pick), "[\"k9\"]", "選好的佩佩留著");
+});
+T("隊伍：融合的結果沒有突變（空陣列被 Realtime Database 拿掉）也讀得回來", () => {
+  const p = G.fixParty({ pid: "p", kind: "fusion", leader: "a", phase: "done", members: {}, result: { a: { id: "a" }, b: { id: "b" } } });
+  assert.strictEqual(JSON.stringify(p.result.mutations), "[]");
+  const q = G.fixParty({ pid: "p", kind: "fusion", leader: "a", members: {}, result: { mutations: { 0: "微醺" } } });
+  assert.strictEqual(JSON.stringify(q.result.mutations), "[\"微醺\"]");
+});
+T("隊伍：斷線的隊友要真的離線夠久、不是隱身，才移出去", () => {
+  const t = NOW;
+  assert.strictEqual(G.pruneProblem({ state: "offline", at: t - G.PARTY.offlineMinMs }, false, t), null);
+  assert.strictEqual(G.pruneProblem(null, false, t), null, "沒有在線紀錄就當作離線");
+  assert.ok(G.pruneProblem({ state: "online", at: t - 60000 }, false, t), "還在線上");
+  assert.ok(G.pruneProblem({ state: "away", at: t - 60000 }, false, t), "離開一下不算");
+  assert.ok(G.pruneProblem({ state: "offline", at: t - 1000 }, false, t), "剛剛才斷線（重新整理）");
+  assert.ok(G.pruneProblem({ state: "offline", at: t - 60000 }, true, t), "隱身的看不出來");
+  assert.ok(G.PARTY.offlineWaitMs >= G.PARTY.offlineMinMs, "畫面等的比伺服器要的久");
+});
+T("邀請：回覆過、過期的算用不到了", () => {
+  const inv = G.newInvite({ iid: "i1", kind: "fusion", from: "a", fromNick: "小明", to: "b", toNick: "小華", now: NOW });
+  assert.strictEqual(G.inviteOver(inv, NOW + 1000), false);
+  assert.strictEqual(G.inviteOver(inv, NOW + G.PARTY.inviteMs + 1), true);
+  inv.state = "declined";
+  assert.strictEqual(G.inviteOver(inv, NOW), true);
+  assert.strictEqual(G.inviteOver(null, NOW), true);
+});
 T("說話：看不見的字拿掉、最多 50 字", () => {
   assert.strictEqual(G.cleanSay("  走這邊 \n 快點 "), "走這邊 快點");
   assert.strictEqual(G.cleanSay("a" + String.fromCharCode(0x200b) + "b"), "ab");
