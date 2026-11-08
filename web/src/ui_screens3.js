@@ -17,6 +17,7 @@ import { cleanName, renameVisitor } from "../../shared/visitors.js";
 import { $, $$, P, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
 import { roomHead } from "./ui_screens1.js";
 import { copyText } from "./ui_screens2.js";
+import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 
 // 選職業（每一位參觀者都一樣，第一位也是；11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：
 //   從 6 個職業選一個 → 抽一個小優點、一個小缺點（shared/legacy.js 的 chooseJob）→ 馬上存檔 → 蓋一張卡寫抽到什麼、有什麼效果（drawReveal）。
@@ -557,6 +558,7 @@ SCREENS.cellar = root => {
     snd("whoosh"); persist(); rerender();
   }, "primary big", { disabled: !full });
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
+    storyCellarBox(),
     h("div", { class: "floors" }, floorEls),
     h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
       tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),
@@ -569,7 +571,7 @@ export function cellarRoom(root) {
   if (!f || !room) { leaveCellar(P); go("cellar", {}, { action: false }); return; }
   const team = teamItems(P, run.team);
   const tp = teamPower(P, team, room);
-  const dots = h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" })));
+  const dots = run.extra ? null : h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" }))); // run.extra：每週劇情多出來的壹間（只走這壹間）
   const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
   const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
     h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`))),
@@ -589,7 +591,7 @@ export function cellarRoom(root) {
   const card = h("div", { class: "note-card room-card" + (room.boss ? " boss" : "") }, h("i", { class: "pin" }), chips,
     h("h2", { class: "room-title" }, ptNode(room.title)), h("div", { class: "nc-text" }, room.lines.map(l => h("p", null, ptNode(l)))),
     h("p", { class: "cs-hint" }, icon("sparkle"), " 游標移到選項上，看隊伍會怎麼做；按下去牠們就會動起來"), choices, result);
-  root.append(roomHead(`B${run.floor}　${f.name}`, run.idx === 0 && f.intro ? f.intro : null, dots, leave),
+  root.append(roomHead(`B${run.floor}　${f.name}`, run.extra ? run.extra.intro || "這週多出來的地方。" : run.idx === 0 && f.intro ? f.intro : null, dots, leave),
     stage,
     teamBar, card);
 }

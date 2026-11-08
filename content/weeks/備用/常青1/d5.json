@@ -1,0 +1,59 @@
+{
+  "day": 5,
+  "holiday": null,
+  "board": "今日特展有幾幅畫缺了壹角；書架多了 2 本書。",
+  "books": [
+    { "id": "5a", "line": "lost", "title": "缺了壹角的畫", "spine": "缺角", "unlock": { "type": "now" },
+      "pages": [
+        "第五張招領單沒有綁在東西上。\n它自己就是壹塊碎片：\n壹幅畫的右下角。",
+        "碎片上畫著壹隻腳，\n腳旁邊有壹行簽名，\n只剩下壹半。",
+        "警衛拿著它去 B3 的走廊，\n壹個壹個空畫框比對。\n每壹個都差壹點點對不上。",
+        "最後他把碎片放在畫廊的長椅上。\n「也許畫自己會來找。」他寫。"
+      ] },
+    { "id": "5b", "line": "lost", "title": "空畫框的那壹角", "spine": "那壹角", "unlock": { "type": "find", "room": "frame" },
+      "pages": [
+        "碎片放進最後壹個畫框，\n剛好合上。",
+        "畫框裡還是空的。\n可是右下角多了壹隻腳，\n和半個簽名。",
+        "簽名的另壹半，\n寫在畫框的背面：\n「……計」。\n(你決定先不要猜)"
+      ] }
+  ],
+  "daily": [
+    { "id": "d5a", "kind": "fuse", "n": 1, "reward": { "insp": 3 } },
+    { "id": "d5b", "kind": "view", "exhibit": "rare", "reward": { "insp": 2 } },
+    { "id": "d5c", "kind": "show", "reward": { "mood": 5 } }
+  ],
+  "dailyBonus": { "items": ["book:鑑賞"] },
+  "show": {
+    "title": "缺了壹角",
+    "intro": "今天的畫，右下角都缺了壹塊。缺口的形狀都壹樣。",
+    "works": [
+      { "id": "s5a", "art": "portrait", "variant": 3, "fx": ["torn"], "frame": "gold",
+        "title": "少了腳的肖像", "lines": ["畫裡的佩佩站得很直。", "可是右下角少了壹隻腳。"] },
+      { "id": "s5b", "art": "rare", "variant": 2, "fx": ["torn"], "frame": "ornate",
+        "title": "帥，但是缺角", "lines": ["缺了壹角，還是很帥。", "簽名的地方，剛好被撕掉了。"] },
+      { "id": "s5c", "art": "frog", "pick": { "顏色": "紅", "心情": "傷心", "姿勢": "躺平" }, "fx": ["faded", "torn"], "frame": "plain",
+        "title": "躺著等的佩佩", "lines": ["牠躺著，好像在等那壹角回來。", "等了很久，顏色都淡了。"] },
+      { "id": "s5d", "art": "statue", "variant": 1, "fx": ["torn", "dust"], "frame": "wood",
+        "title": "裂開的雕像", "lines": ["雕像的底座裂了壹道。", "裂縫往右下角延伸，停在壹個缺口前面。"] }
+    ]
+  },
+  "adds": [
+    { "id": "frame", "floor": 3, "line": "lost",
+      "title": "差壹角的畫框", "hint": "去 B3 的走廊，找那個差壹角的畫框",
+      "intro": "空畫框的走廊上，有壹個畫框的右下角是缺的。",
+      "lines": ["畫框是金色的，只有右下角是黑的。", "缺口的形狀，跟那塊碎片壹模壹樣。"],
+      "mood": null, "color": "紅",
+      "choices": [
+        { "label": "比對碎片的筆觸", "check": { "type": "skill", "skill": "鑑賞", "mod": 0 },
+          "success": { "text": "筆觸對得上。這壹角，就是這個畫框的。", "insp": 4 },
+          "fail": { "text": "你越比越覺得，碎片在躲你。", "san": "1D3" } },
+        { "label": "把歪掉的畫框扶正", "check": { "type": "power", "target": 17 },
+          "success": { "text": "畫框扶正了。缺口剛好對著你手上的碎片。", "insp": 4 },
+          "fail": { "text": "畫框掉下來，砸到了壹隻佩佩。", "san": "1D2", "injure": true } },
+        { "label": "直接把碎片放上去", "check": { "type": "san", "spec": "0/1D6" },
+          "success": { "text": "碎片自己往缺口裡滑。喀的壹聲，合上了。", "insp": 3 },
+          "fail": { "text": "碎片合上的時候，畫框裡傳來壹聲嘆氣。" } }
+      ],
+      "reward": { "insp": 2 } }
+  ]
+}

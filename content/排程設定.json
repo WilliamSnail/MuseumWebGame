@@ -1,0 +1,6 @@
+{
+  "說明": "每週劇情的排程（週一 04:30 排這週、每天 04:30 寫今天）開始前先讀這份。pause 是 true，或這週的名字在 pauseWeeks 裡：排程不寫新的內容，遊戲自己會用備用週（content/weeks/備用/）和備用的一天。翊文、Yuga 可以直接改這份（開 PR）。格式見 content/README.md 第六節。",
+  "pause": false,
+  "pauseWeeks": [],
+  "note": ""
+}

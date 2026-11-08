@@ -245,6 +245,7 @@ export function startCellar(P, floor, keys) {
 export function currentRoom(P) {
   const run = P.cellar.run;
   if (!run) return null;
+  if (run.extra) return run.extra; // 每週劇情多出來的一間（shared/story.js 的 startStoryRoom）：只走這一間
   const f = cellarFloor(run.floor);
   return f ? f.rooms[run.idx] || null : null;
 }
@@ -355,6 +356,7 @@ export function cellarApply(P, res, sanSuccess) {
 export function cellarAdvance(P) {
   const run = P.cellar.run;
   if (!run) return null;
+  if (run.extra) { P.cellar.run = null; return { floorDone: false, extra: true }; } // 每週劇情多出來的那一間：走完就回地面，不算整層
   run.idx++;
   const f = cellarFloor(run.floor);
   if (run.idx < f.rooms.length) return { floorDone: false };
