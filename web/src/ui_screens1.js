@@ -27,6 +27,8 @@ export function roomHead(title, sub, ...extra) {
 // 多人版 M1（翊文 11-08：「首頁可以改成登入」）：標題中間那一塊是 ui_login.js 的 loginArea()。
 // 還沒登入只有登入的框；登入、讀到伺服器的存檔之後，才放下面這些按鈕（titleActions 每次重新做，因為存檔換了）
 SCREENS.title = root => {
+  // 新參觀者的教學還沒走完就回到門口（選單「換參觀者」、登出、別的分頁先存了）：把教學的對話框收掉（11-08 修）
+  if (FX.spotlightEnd) FX.spotlightEnd("gone");
   root.append(h("div", { class: "t-wrap" },
     h("h1", { class: "t-name" }, GEN_TEXT.museum),
     h("div", { class: "t-orn", "aria-hidden": "true" }),
@@ -154,6 +156,7 @@ export async function afterEnter() {
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
+  if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）
   await dailyRecovery();
   if (PANELS.autoBoard) PANELS.autoBoard(); // 公佈欄：有新公告就打開壹次（11-08）
 }
@@ -170,9 +173,11 @@ export async function dailyRecovery() {
 export async function tutorial() {
   const steps = [() => $('.fp-room[data-room="gallery"]'), () => $("#status"), () => $('.fp-room[data-room="workshop"]')];
   for (let i = 0; i < steps.length; i++) {
+    if (UI.screen !== "lobby") return; // 已經離開大廳（例如回到門口）：不在別的畫面上放教學，下次進館再從頭（11-08 修）
     const el = steps[i]();
     if (!el) continue;
     const r = await FX.spotlight(el, { text: TUTORIAL_TEXT[i], step: i + 1, total: steps.length });
+    if (r === "gone") return; // 被收掉的（回到門口）：不算看完
     if (r === "skip") break;
   }
   SAVE.tutorialDone = true; persist();

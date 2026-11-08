@@ -70,3 +70,16 @@ body.reduce-motion .vs-wrap { animation: none; }
   .vs-card { padding: 14px 14px 10px; }
   .vs-head { flex-direction: column; align-items: center; text-align: center; }
 }
+
+/* ---------- 館長室名片下面的「退休」（11-08，決定 0025） ---------- */
+.retire-box { grid-column: 1 / -1; max-width: none; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.retire-box .pl-title .ic, .retire-box .pl-title .ic svg { width: 18px; height: 18px; vertical-align: -3px; }
+.retire-box .pl-line { margin: 0; }
+.retire-box .btn { color: #6E1E18; background: rgba(255,255,255,.45); border-color: #A0463C; }
+.retire-box .btn:hover { color: #4A120E; background: rgba(255,236,226,.85); border-color: #7A2A20; }
+.retire-box .btn:disabled { opacity: .55; cursor: not-allowed; }
+.retire-why { margin: 0; color: var(--parch-sub); }
+/* 結局畫面：「繼續當參觀者」「退休，換下一位」兩顆並排，手機疊起來 */
+.end-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.end-actions .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.4); border-color: var(--gold-lo); } /* 結局是羊皮紙底：一般按鈕的淺色字會看不見 */
+.end-actions .btn:not(.primary):hover { color: #1E1208; background: rgba(255,246,220,.85); border-color: #8C6A2E; }

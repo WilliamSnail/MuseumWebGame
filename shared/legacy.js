@@ -5,6 +5,9 @@
 //    A. 前任的遺物：換人時，前一位留一樣東西給下一位（一件收藏放進館長室的遺物櫃，或最拿手的技能 +10）。
 //    C. 挑下一位：從 3 位候選人挑一位，每位是「職業＋一個小優點＋一個小缺點」。
 //    D. 歷任參觀者牆：換人時把這一位的紀錄寫進 P.history，館長室一位一張卡。
+//  退休換人（翊文 11-08：「好，加些其他的」，docs/決定/0025-退休換人.md）：除了理智歸零，
+//    看完其他結局（館長、地下館長、你的佩佩博物館）可以退休；館長室的名片上也可以自己退休（retireCheck）。
+//    退休跟理智歸零走同一條路：nextVisitor(P, 怎麼結束的, 留下的)。
 //  純函式：只改傳進來的 P，亂數用 RNG。
 //  數值在 config.js（LEGACY、PERKS、FLAWS），文字在 content3.js（TRAIT_TEXT、LEGACY_TEXT）。
 //
@@ -20,7 +23,7 @@
 // ================================================================
 import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
 import { JOBS, TRAIT_TEXT } from "./content3.js";
-import { RNG, asList, clampN, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
+import { RNG, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
 import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
 
 // ---------- 小優點、小缺點 ----------
@@ -120,18 +123,38 @@ export function leaveLegacy(P, entry, leave) {
     const it = leave.item ? hallItem(P, leave.item) : null;
     if (!it) return null;
     const e = it.kind === "pepe" ? P.pepes[it.key] : null;
-    const relic = { n: P.visitor, kind: it.kind, key: it.key, perfect: !!it.perfect, title: (e && e.title) || null, d: todayStr() };
+    const relic = { n: P.visitor, name: P.vname || null, kind: it.kind, key: it.key, perfect: !!it.perfect, title: (e && e.title) || null, d: todayStr() };
     P.relics = [relic].concat(asList(P.relics)).slice(0, LEGACY.relicsMax);
     if (entry) entry.left = { type: "relic", kind: relic.kind, key: relic.key, perfect: relic.perfect, title: relic.title };
-    return { from: P.visitor, type: "relic", kind: relic.kind, key: relic.key, mood: LEGACY.relicMood };
+    return { from: P.visitor, fromName: P.vname || null, type: "relic", kind: relic.kind, key: relic.key, mood: LEGACY.relicMood };
   }
   if (leave.type === "skill") {
     const best = bestSkill(P);
     if (!best) return null;
     if (entry) entry.left = { type: "skill", skill: best[0], value: best[1], plus: LEGACY.skillPlus };
-    return { from: P.visitor, type: "skill", skill: best[0], plus: LEGACY.skillPlus };
+    return { from: P.visitor, fromName: P.vname || null, type: "skill", skill: best[0], plus: LEGACY.skillPlus };
   }
   return null;
+}
+
+// ---------- 退休換人（決定 0025） ----------
+// 看完這些結局可以退休（理智歸零 russia8 本來就會換人）
+export const RETIRE_ENDINGS = ["curator", "cellar", "museum"];
+// 現在可不可以退休。how ＝ "ending"（看完結局）或 "office"（館長室的名片，自己退休）
+// 回傳 { ok, reason }；reason：free 自由模式、dark 燈熄了（要走進那扇門）、bout 正在發作、cellar 正在地下、picking 還沒挑職業、
+//   new 剛來（館長室退休要來了 LEGACY.retireDays 天以上；看完結局不用）。days ＝還要等幾天
+export function retireCheck(P, how = "office") {
+  if (!P || isFree(P)) return { ok: false, reason: "free" };
+  if (P.dark || P.sanity <= 0) return { ok: false, reason: "dark" };
+  if (P.bout) return { ok: false, reason: "bout" };
+  if (P.cellar && P.cellar.run) return { ok: false, reason: "cellar" };
+  if (!P.job) return { ok: false, reason: "picking" };
+  if (how === "office") {
+    const from = P.visit && P.visit.from;
+    const stayed = from ? daysBetween(from, todayStr()) : Infinity; // 舊存檔不知道哪天來的：當成來很久了
+    if (stayed < LEGACY.retireDays) return { ok: false, reason: "new", days: LEGACY.retireDays - stayed };
+  }
+  return { ok: true, reason: null };
 }
 
 // ---------- C. 挑下一位 ----------
