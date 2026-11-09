@@ -241,17 +241,20 @@ export function limitedNames(ids) { return asList(ids).map(id => (limitedInfo(id
 // ---------- 材料換週章 ----------
 export function matCount(P) {
   const bag = storyState(P).bag;
-  return Object.keys(bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material").reduce((n, id) => n + (bag[id] || 0), 0);
+  return Object.keys(bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material").reduce((n, id) => n + (bag[id] || 0) * (STORY_ITEMS[id].worth || 1), 0);
 }
-// 用掉 NUM.shop.matToStamp 份（先用最多的那種），拿一枚週章
+// 用掉 NUM.shop.matToStamp 份（先用最多的那種，能剛好就剛好），拿一枚週章。金箔一個算 2 份；只剩金箔湊不剛好時不找零
 export function tradeMats(P) {
   if (!P || isFree(P)) return { ok: false, reason: "自由模式用不到" };
   const need = NUM.shop.matToStamp;
   if (matCount(P) < need) return { ok: false, reason: `材料不夠（要 ${need} 份）` };
   const S = storyState(P), mats = Object.keys(S.bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material");
-  for (let i = 0; i < need; i++) {
-    const id = mats.filter(x => S.bag[x] > 0).sort((a, b) => S.bag[b] - S.bag[a])[0];
+  const worth = x => STORY_ITEMS[x].worth || 1;
+  for (let left = need; left > 0;) {
+    const have = mats.filter(x => S.bag[x] > 0), fit = have.filter(x => worth(x) <= left);
+    const id = fit.length ? fit.sort((a, b) => S.bag[b] - S.bag[a])[0] : have.sort((a, b) => worth(a) - worth(b))[0];
     S.bag[id]--;
+    left -= worth(id);
     if (!S.bag[id]) delete S.bag[id];
   }
   S.stamps += 1;

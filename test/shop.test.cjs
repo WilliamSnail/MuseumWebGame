@@ -534,6 +534,26 @@ T("買到的頭飾真的做得出來；舊的展廳、圖鑑算法不會壞", G 
 });
 
 // ---------- 材料換週章 ----------
+T("金箔算 2 份：金箔加舊畫布剛好換壹枚；只剩金箔要 2 片不找零；有舊畫布就不多花金箔；說明寫得出份數", G => {
+  const P = fresh(G), S = G.storyState(P);
+  assert.strictEqual(G.NUM.shop.matToStamp, 3);
+  S.bag = { "mat:金箔": 1 };
+  assert.strictEqual(G.matCount(P), 2);
+  assert.strictEqual(G.tradeMats(P).ok, false);
+  assert.strictEqual(S.bag["mat:金箔"], 1, "不夠不能動");
+  S.bag = { "mat:金箔": 1, "mat:畫布": 1 };
+  assert.strictEqual(G.matCount(P), 3);
+  assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(G.matCount(P), 0);
+  S.bag = { "mat:金箔": 3 };
+  assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(S.bag["mat:金箔"], 1, "只剩金箔用 2 片");
+  S.bag = { "mat:金箔": 2, "mat:畫布": 5 };
+  assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(G.matCount(P), 6, "剛好用掉 3 份");
+  assert.ok(G.itemDesc("mat:金箔").includes("算 2 份"));
+  assert.ok(G.itemDesc("mat:畫布").includes("算 1 份"));
+});
 T("材料換週章：每 NUM.shop.matToStamp 份（哪一種都算）換一枚；不夠不能換；別的東西不會被用掉", G => {
   const P = fresh(G), S = G.storyState(P), need = G.NUM.shop.matToStamp;
   S.bag = { "mat:畫布": need - 1, firstAid: 2 };

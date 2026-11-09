@@ -352,6 +352,16 @@ export const NOTICES = [
     cta: { label: "打開本週榜單", panel: "rank" },
   },
   {
+    id: "foil-worth", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "金箔現在值 2 份", publish: "2026-11-09", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "金箔是用來**換週章**的：到兌換所，舊畫布、金線壹個算 1 份，**金箔壹個算 2 份**，每 3 份換壹枚週章。",
+        "賭場「換小獎」也會寫清楚每樣東西的用途。",
+      ]],
+    ],
+  },
+  {
     id: "casino-live", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "賭場多了「實況」：開播、斗內，金額隨機", publish: "2026-11-09", expire: "2027-12-31",
     sections: [
