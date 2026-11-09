@@ -173,3 +173,6 @@
   .story-shelf { min-height: 200px; }
   .origin-tabs .seg-btn { padding: 5px 9px; }
 }
+
+/* 每週任務的旁白（決定 0048） */
+.sp-t-words { display: block; font-style: italic; opacity: .8; }

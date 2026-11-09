@@ -221,6 +221,8 @@ export function storyWeekAt(lib, label, today, fb) {
       show: d.show ? { title: d.show.title || "", intro: d.show.intro || "", works: asList(d.show.works).map(w => Object.assign({}, w, { id: p + w.id, local: w.id, day: n, date })) } : null,
       adds: asList(d.adds).map(r => room(r, p, n)),
     };
+    // 每週任務的旁白（決定 0048）：今天可以換某個每週任務底下那句話（新聞的新梗每天才查得到）。只會讀到今天為止的天，晚的蓋掉早的
+    asList(d.weeklyWords).forEach(x => { const t = x && W.weekly.find(w => w.local === x.task); if (t && typeof x.words === "string" && x.words.trim()) t.words = x.words; });
     W.days.push(day);
     W.books.push(...day.books); W.rooms.push(...day.adds); W.daily.push(...day.daily);
     if (day.show) W.works.push(...day.show.works);
