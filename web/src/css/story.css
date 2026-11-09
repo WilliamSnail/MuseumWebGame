@@ -176,3 +176,11 @@
 
 /* 每週任務的旁白（決定 0048） */
 .sp-t-words { display: block; font-style: italic; opacity: .8; }
+
+/* 大廳「打開每週劇情」：每 4 秒亮一下（還有事做才有 sl-nudge，動畫減量時不閃） */
+.btn.sl-nudge { animation: sl-nudge 4s ease-in-out infinite; }
+@keyframes sl-nudge {
+  0%, 72%, 100% { box-shadow: 0 0 0 0 rgba(232, 197, 110, 0); filter: brightness(1); }
+  84% { box-shadow: 0 0 0 5px rgba(232, 197, 110, .55), 0 0 22px 6px rgba(232, 197, 110, .6); filter: brightness(1.28); }
+}
+body.reduce-motion .btn.sl-nudge { animation: none; }
