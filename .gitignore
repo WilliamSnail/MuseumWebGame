@@ -8,6 +8,7 @@ dist/
 
 # Firebase：模擬器的資料、紀錄、部署的暫存、複製過去的規則
 .firebase-data/
+firebase.emu*.json
 .firebase/
 firebase-debug.log
 firestore-debug.log
