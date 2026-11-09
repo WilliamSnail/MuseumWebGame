@@ -1,12 +1,13 @@
 // 每週劇情的規則（shared/story.js）：node test/story.test.cjs（npm test 也會跑）
-// 內容用真的 content/weeks/（備用週「常青1」、備用的一天），正式週在測試裡用備用週複製一份。
+// 內容用真的 content/weeks/備用/（備用週「常青1」、備用的一天），正式週在測試裡用備用週複製一份。
+// 排程每週寫的正式週（content/weeks/2026-W46/ 這種）不讀進來：測試不跟著每週的內容變。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 const { readWeeks } = require("../tools/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } finally { G.setNowClock(null); G.setRng(null); } };
 const clone = o => JSON.parse(JSON.stringify(o));
-const FILES = readWeeks().files;
+const FILES = Object.fromEntries(Object.entries(readWeeks().files).filter(([k]) => k.startsWith("備用/")));
 const at = s => Date.parse(s + "+08:00"); // 台灣時間
 const seq = arr => { let i = 0; return () => arr[i++ % arr.length]; };
 // 一位挑戰模式的參觀者，今天是 date
