@@ -1,0 +1,39 @@
+# 看 Yuga Bot 每個指令花多久（手動按）：翊文 11-09 回報 /pepe-餐車 常常「該申請未受回應」，Discord 限 3 秒。
+# 只印「指令名和毫秒」、啟動紀錄和「出錯」那一行，不印別的；那幾行本來就沒有人的資料。金鑰只在 GitHub Secrets。
+name: Discord 指令耗時
+
+on:
+  workflow_dispatch:
+    inputs:
+      lines:
+        description: 看最近幾行紀錄
+        required: false
+        default: "300"
+
+permissions:
+  contents: read
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: 裝套件
+        run: npm ci
+      - name: 印耗時
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          LINES: ${{ inputs.lines }}
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          case "$LINES" in ''|*[!0-9]*) LINES=300 ;; esac
+          npx firebase functions:log --project prod --only discordBot --lines "$LINES" 2>&1 \
+            | grep -E 'discordBot [^ ]+ [0-9]+ms|discordBot：出錯|STARTUP|Starting new instance|no available instance' \
+            | sed -E 's/\x1b\[[0-9;]*m//g' | cut -c1-140 || true
