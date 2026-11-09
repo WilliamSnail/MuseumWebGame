@@ -50,7 +50,7 @@ function busy(G) {
   S.books = { "2026-W46/1a": { got: "2026-11-09", read: "2026-11-09" }, "2026-W46/1b": { got: "2026-11-09", read: null }, "2026-W45/1a": { got: "2026-11-05", read: "2026-11-05" } };
   S.stamps = 3;
   P.quirks = [
-    { type: "phobia", cat: "顏色", opt: "綠", since: TODAY, until: NOW + 10 * 60000, task: "hug" },
+    { type: "phobia", cat: "顏色", opt: "綠", since: TODAY, until: NOW + 3 * 86400000, task: "hug" },
     { type: "phobia", cat: "帽子", opt: null, since: TODAY, until: NOW - 1, task: "hug" }, // 時間到了：不算
   ];
   return { save, P };
@@ -98,7 +98,7 @@ T("摘要：這週、有沒有卡住", G => {
   assert.strictEqual(s.stuck.sanityZero, 2);
   assert.strictEqual(s.stuck.quirks.length, 1, "時間到的怪癖不算");
   assert.strictEqual(s.stuck.quirks[0].name, "綠色恐懼症");
-  assert.strictEqual(s.stuck.quirks[0].minsLeft, 10);
+  assert.strictEqual(s.stuck.quirks[0].daysLeft, 3);
   assert.strictEqual(s.stuck.quirks[0].task, G.QUIRK_TASK_TEXT.hug.act);
 });
 T("解鎖：跟模擬的「全部解鎖」同一個算法（限定、鑰匙、禁忌都不算）", G => {
