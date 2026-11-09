@@ -60,6 +60,14 @@
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false
     },
+    "coopTalkLog": {
+      ".read": false,
+      ".write": false
+    },
+    "coopReports": {
+      ".read": false,
+      ".write": false
+    },
     "coopChat": {
       "$pid": {
         ".read": "auth != null && root.child('parties').child($pid).child('members').child(auth.uid).exists()",

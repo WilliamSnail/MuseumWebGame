@@ -46,8 +46,9 @@ Hosting：放 dist/，網址 專案名.web.app
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
 | `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions；`/partyOf/{uid}` 他自己讀得到（接回去用），別的誰都不能讀 |
 | `/coopView/{pid}/{uid}` | 合作地下給這個人看的樣子（`viewFor`） | 只有 Functions；**只有他自己讀得到** |
-| `/coopChat/{pid}` | 合作地下的對話（已經變形的） | 只有 Functions；隊員讀得到 |
-| `/coopChatLog/{pid}`、`/coopChatAt/{pid}` | 變形前的原文（報告用）、送太快的擋 | 只有 Functions，誰都不能讀 |
+| `/coopChat/{pid}` | 合作地下的對話（已經變形的，短句、叫聲、打的字），隊伍解散就清 | 只有 Functions；隊員讀得到 |
+| `/coopChatLog/{pid}`、`/coopChatAt/{pid}` | 短句變形前的原文（報告用）、送太快的擋 | 只有 Functions，誰都不能讀 |
+| `/coopTalkLog/{這一趟}/{id}`、`/coopReports/{id}` | 打的字的紀錄（誰、原文、變形後，不記 email；不清）、檢舉 | 只有 Functions；之後的管理員讀，玩家讀不到 |
 | `/traces/...` | 留言牌、影子、幽影、還沒領的讚 | 只有 Functions；館友讀得到 |
 | `/lounge/{id}` | 交誼廳：館友貼的探險報告 | 只有 Functions；館友讀得到 |
 
@@ -63,7 +64,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `join` | 第一次登入：email 在邀請名單上 → 建 `members/{uid}` | M1 |
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
-| `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話、時間到、接回去、移出斷線的人（`shared/coop.js`、`coop_flow.js`、`coop_fun.js`） | M4 |
+| `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話和打字、檢舉、時間到、接回去、移出斷線的人（`shared/coop.js`、`coop_flow.js`、`coop_fun.js`） | M4 |
 | `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop_trace.js`） | M2、M6 |
 | `sendGift`、`claimMail`、`visitHall` | 送佩佩、領信、來訪的靈感 | M2 |
 

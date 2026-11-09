@@ -361,8 +361,16 @@ function drawRun(v) {
   // 同壹步重畫（有人投票、說話）：捲軸留在原地；換了階段：捲到看得到卡片
   const old = s.m.surface.querySelector(".cx-main"), oldScroll = old ? [old.scrollTop, s.m.surface.querySelector(".cx-run").scrollTop] : null, same = s.drawnKey === `${v.step}:${v.phase}`;
   s.drawnKey = `${v.step}:${v.phase}`;
-  s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), evidenceBox(v), chatBox(v))));
-  const runEl = s.m.surface.querySelector(".cx-run");
+  // 右邊的對話不跟著重畫：打字打到一半不會被洗掉，中文輸入法也不會被打斷（只換左邊和隊員）
+  let runEl = s.m.surface.querySelector(".cx-run");
+  if (runEl) old.replaceWith(main);
+  else {
+    runEl = h("div", { class: "cx-run" }, main, h("aside", { class: "cx-side" }, h("div", { class: "cx-side-top" }), chatPanel()));
+    s.m.surface.replaceChildren(runEl);
+  }
+  runEl.className = "cx-run pr" + lv + (v.role ? " role-" + v.role : "");
+  runEl.querySelector(".cx-side-top").replaceChildren(sideBox(v), evidenceBox(v));
+  refreshChat(v);
   if (same && oldScroll) { main.scrollTop = oldScroll[0]; runEl.scrollTop = oldScroll[1]; }
   else {
     const card = main.querySelector(".cx-card");
@@ -375,8 +383,9 @@ function drawRun(v) {
 function drawSide() {
   const s = S;
   if (!s || !s.view || s.anim || !s.m) return;
-  const side = s.m.surface.querySelector(".cx-side");
-  if (side) side.replaceChildren(sideBox(s.view), evidenceBox(s.view), chatBox(s.view));
+  const top = s.m.surface.querySelector(".cx-side-top");
+  if (top) top.replaceChildren(sideBox(s.view), evidenceBox(s.view));
+  refreshChat(s.view);
 }
 async function leaveRun() {
   const yes = await ask("真的要離隊？你拿到的都留著，你的佩佩會先回去。", "離隊", "留下來");
@@ -432,39 +441,80 @@ function revealBox(v) {
     h("p", null, `門上真正的記號是 ${rev.truth.join("・")}，對上的是${COOP_LETTERS[rev.answer]}。${rev.hit ? "你們選對了。" : "你們選的不是它。"}`),
     fakes.map(([id, sym]) => h("p", { class: "cx-fake" }, `${nameOf(id)} 多看到的「${sym}」，門上沒有。`)));
 }
-// 對話：只有短句和叫聲。伺服器變形（理智低的人說的話會變），大家看到的都是同壹句
+// 對話：短句、叫聲、自由打字（決定 0020、0036）。伺服器變形（理智低的人說的話會變），大家看到的都是同壹句。
+// 打的字只當資料：一律是文字節點（h() 的字串），不會變成標籤。
 function onChat(val) {
   const s = S, list = val ? Object.entries(val).map(([id, m]) => Object.assign({ key: id }, m)).sort((a, b) => (a.at || 0) - (b.at || 0)) : [];
   const fresh = list.length > s.chatSeen ? list.slice(s.chatSeen) : [];
   const first = s.chatSeen === 0 && s.chatFirst !== false;
   s.chat = list; s.chatSeen = list.length; s.chatFirst = false;
   if (!first) fresh.forEach(m => { if (m.by !== (NET.me && NET.me.id)) { if (m.k === "call") croak(m.id, m.text); else snd("flip"); } });
-  const box = s.m && s.m.surface.querySelector(".cx-log");
+  const box = s.chatEls && s.chatEls.log;
   if (box) { box.replaceChildren(...chatLines()); box.scrollTop = box.scrollHeight; }
 }
 function chatLines() {
   const meId = NET.me && NET.me.id;
   const list = S.chat.slice(-40);
   if (!list.length) return [h("p", { class: "cx-log-empty" }, "還沒有人說話。")];
-  return list.map(m => h("p", { class: "cx-line" + (m.by === meId ? " me" : "") + (m.k === "call" ? " call" : "") }, h("b", null, m.name), h("span", null, m.text)));
+  const reported = S.reported || (S.reported = {});
+  return list.map(m => h("p", { class: "cx-line" + (m.by === meId ? " me" : "") + (m.k === "call" ? " call" : "") + (m.k === "text" ? " typed" : "") }, h("b", null, m.name), h("span", null, m.text),
+    m.k === "text" && m.by !== meId ? h("button", { type: "button", class: "cx-report-btn", disabled: !!reported[m.key], title: "把這句話記下來給管理員", onClick: () => reportLine(m) }, reported[m.key] ? "檢舉了" : "檢舉") : null));
 }
-function chatBox(v) {
-  const me = meOf(v), s = S;
-  const send = data => { call("say", data).catch(e => { snd("error"); note(e.message || "說不出來。", "bad"); }); };
+async function reportLine(m) {
+  const yes = await ask(`檢舉 ${m.name} 說的這句話？會記下來給管理員看。`, "檢舉", "算了");
+  if (!yes || !S) return;
+  try {
+    await call("report", { key: m.key });
+    S.reported[m.key] = true;
+    if (S.chatEls) S.chatEls.log.replaceChildren(...chatLines());
+    note("記下來了，謝謝你。", "good");
+  } catch (e) { snd("error"); note(e.message || "檢舉不了。", "bad"); }
+}
+// 打字的那一格：整趟用同壹個，不重畫
+function sendTyped() {
+  const s = S, input = s && s.chatEls && s.chatEls.input;
+  if (!input) return;
+  const t = input.value;
+  if (!t.trim()) return;
+  input.value = "";
+  const back = reason => { if (!input.value) input.value = t; note(reason, "bad"); };
+  call("say", { text: t }).then(r => { if (r && r.ok === false) back(r.reason || "說慢壹點"); }).catch(e => { snd("error"); back(e.message || "說不出來。"); });
+}
+function chatPanel() {
+  const s = S;
+  if (s.chatEls) return s.chatEls.root;
   const log = h("div", { class: "cx-log", role: "log", "aria-live": "polite" }, chatLines());
+  const input = h("input", { class: "t-input cx-type", type: "text", maxlength: String(PARTY.sayMax), autocomplete: "off", placeholder: `打字（最多 ${PARTY.sayMax} 字）`, "aria-label": "打字" });
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); sendTyped(); } });
+  const typeRow = h("div", { class: "cx-typerow" }, input, btn("說", sendTyped, "small"));
+  const ctrl = h("div", { class: "cx-ctrl" });
+  const root = h("div", { class: "cx-chat" }, log, typeRow, ctrl);
+  s.chatEls = { root, log, input, typeRow, ctrl };
+  return root;
+}
+// 換手上的短句（記號、選項每間不一樣）。打字那一格不動；幽靈、走完了就收起來
+function refreshChat(v) {
+  const s = S;
+  if (!s || !s.chatEls) return;
+  const { log, typeRow, ctrl } = s.chatEls, me = meOf(v);
+  const can = !me.ghost && !v.ended && !me.out;
+  typeRow.hidden = !can;
+  ctrl.replaceChildren(...(can ? sayButtons(v) : me.ghost ? [h("p", { class: "cx-ghostsay" }, "你不能說話了。")] : []));
   later0(() => { log.scrollTop = log.scrollHeight; });
-  if (me.ghost) return h("div", { class: "cx-chat" }, log, h("p", { class: "cx-ghostsay" }, "你不能說話了。"));
-  if (v.ended || me.out) return h("div", { class: "cx-chat" }, log);
+}
+function sayButtons(v) {
+  const s = S;
+  const send = data => { call("say", data).then(r => { if (r && r.ok === false) note(r.reason || "說慢壹點"); }).catch(e => { snd("error"); note(e.message || "說不出來。", "bad"); }); };
   const syms = v.clue && v.clue.marks ? [...new Set(Object.values(v.clue.marks).flat())].sort() : [];
   const room = roomOf(v), n = room ? room.choices.length : 0;
   const tab = s.sayTab || "say";
-  const tabs = h("div", { class: "cx-say-tabs" }, [["say", "短句"], ["sym", "記號"], ["pick", "選項"]].map(([id, t]) => h("button", { type: "button", class: "cx-say-tab" + (tab === id ? " on" : ""), onClick: () => { s.sayTab = id; drawSide(); } }, t)));
+  const tabs = h("div", { class: "cx-say-tabs" }, [["say", "短句"], ["sym", "記號"], ["pick", "選項"]].map(([id, t]) => h("button", { type: "button", class: "cx-say-tab" + (tab === id ? " on" : ""), onClick: () => { s.sayTab = id; refreshChat(s.view); } }, t)));
   let body;
   if (tab === "sym") body = syms.length ? syms.map(x => btn(`我看到「${x}」`, () => send({ say: "see", x }), "small")) : [h("span", { class: "pt-hint" }, "這壹間沒有記號。")];
   else if (tab === "pick") body = Array.from({ length: n }, (_, i) => COOP_LETTERS[i]).flatMap(x => [btn(`選${x}`, () => send({ say: "pick", x }), "small"), btn(`別選${x}`, () => send({ say: "avoid", x }), "small")]);
   else body = COOP_SAY.filter(x => !x.arg).map(x => btn(x.text, () => send({ say: x.id }), "small"));
-  return h("div", { class: "cx-chat" }, log, tabs, h("div", { class: "cx-say" }, body),
-    h("div", { class: "cx-calls", "aria-label": "佩佩的叫聲" }, COOP_CALLS.map(x => btn(x.text, () => { croak(x.id, x.text); send({ call: x.id }); }, "small cx-call"))));
+  return [tabs, h("div", { class: "cx-say" }, body),
+    h("div", { class: "cx-calls", "aria-label": "佩佩的叫聲" }, COOP_CALLS.map(x => btn(x.text, () => { croak(x.id, x.text); send({ call: x.id }); }, "small cx-call")))];
 }
 const later0 = fn => setTimeout(fn, 0);
 // 佩佩的叫聲、敲一下：自己合成（決定 0008）。很短、很小聲。還沒有人聽過

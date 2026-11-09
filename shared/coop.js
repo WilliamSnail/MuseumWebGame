@@ -67,7 +67,8 @@ export const COOP = {
     halluc: [{ below: 40, chance: 0.5 }, { below: 25, chance: 1 }] }, // 理智低於這個，有這個機率多看到壹個不存在的記號
   // 說的話變形（機制 4）：stutter ＝結巴的機率；swap ＝變成別句話的機率
   warp: [{ below: 40, stutter: 0.3, swap: 0.1 }, { below: 25, stutter: 0.5, swap: 0.3 }, { below: 12, stutter: 0.5, swap: 0.5 }],
-  sayGapMs: 900,           // 壹句話之後要等多久（送太快會擋）
+  sayGapMs: 900,           // 短句、叫聲：壹句話之後要等多久（送太快會擋）
+  typeGapMs: 2000,         // 自由打字：兩句之間要等多久（決定 0020、0036）
   // 湊證據（機制 3）：每間最多掉一個。win ＝過了掉的機率；lose ＝沒過掉的機率；理智低於 fakeBelow 的人找到的，有 fakeChance 是假的
   //   need ＝湊幾個才能猜；insp ＝猜對的靈感（＋層數 × perFloor）；wrongSan ＝猜錯全隊擲理智
   truth: { win: 1, lose: 0.5, fakeBelow: 30, fakeChance: 0.4, need: 3, insp: 6, perFloor: 2, wrongSan: "1/1D4", guessMs: 40000 },

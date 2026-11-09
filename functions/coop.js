@@ -14,7 +14,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { COOP, coopFix, coopMember, coopPresent, viewFor } from "./shared/coop.js";
 import { coopAct, coopBegin } from "./shared/coop_flow.js";
-import { coopSayBuild } from "./shared/coop_fun.js";
+import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop_fun.js";
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers } from "./shared/party.js";
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
 import { switchVisitor } from "./shared/visitors.js";
@@ -184,26 +184,45 @@ async function pruneRun(me, pid, uid) {
 }
 
 // ---------- Functions ----------
-// 說話（機制 4）：只有短句和叫聲（翊文 11-09 貼的第 4 點「沒有打字」；決定 0020 的自由打字要不要，等翊文）。伺服器變形，畫面動不了。
-// 紀錄：大家看到的放 /coopChat；變形前的原文放 /coopChatLog（只有伺服器，探險報告用）
+// 說話（機制 4）：短句、叫聲、自由打字（決定 0020、0036）。伺服器變形，畫面動不了。
+// 放哪裡：大家看到的（已經變形的）放 /coopChat/{pid}，隊員讀得到，隊伍解散就清掉；
+//   短句變形前的原文放 /coopChatLog/{pid}（只有伺服器，探險報告用，打的字不進報告）；
+//   打的字留紀錄放 /coopTalkLog/{這一趟}（誰、原文、變形後、時間；不記 email；只有 Functions 和之後的管理員讀得到，不會清）。
 async function say(me, pid, data) {
   const rs = await runRef(pid).get();
   if (!rs.exists) throw bad("這壹趟已經結束了");
   const run = coopFix(JSON.parse(rs.data().data)), t = now();
-  // 送太快會擋：交易裡比上次的時間
-  let tooFast = false;
-  await rtdb().ref(`coopChatAt/${pid}/${me.uid}`).transaction(cur => {
-    tooFast = !!(cur && t - cur < COOP.sayGapMs);
-    return tooFast ? undefined : t;
-  });
-  if (tooFast) return { ok: false, reason: "說慢壹點" };
   setRng(mulberry32(hashStr(`${pid}:${me.uid}:${t}`)));
   let r;
   try { r = coopSayBuild(run, me.uid, data); } finally { setRng(null); }
   if (!r.ok) throw bad(r.reason);
+  // 送太快會擋：交易裡比上次的時間（放在檢查之後：幽靈、壞掉的句子不算一句）
+  let tooFast = false;
+  await rtdb().ref(`coopChatAt/${pid}/${me.uid}`).transaction(cur => {
+    const g = coopSayGap(cur, r.kind, t);
+    tooFast = !g.ok;
+    return g.ok ? g.next : undefined;
+  });
+  if (tooFast) return { ok: false, reason: "說慢壹點" };
   const ref = rtdb().ref(`coopChat/${pid}`).push();
   await ref.set({ by: me.uid, name: r.name, text: r.text, k: r.kind, id: r.id, at: t });
-  if (r.warped) await rtdb().ref(`coopChatLog/${pid}/${ref.key}`).set({ by: me.uid, name: r.name, from: r.from, to: r.text, at: t });
+  if (r.kind === "text") await rtdb().ref(`coopTalkLog/${run.id}/${ref.key}`).set({ by: me.uid, name: r.name, from: r.from, to: r.text, at: t });
+  else if (r.warped) await rtdb().ref(`coopChatLog/${pid}/${ref.key}`).set({ by: me.uid, name: r.name, from: r.from, to: r.text, at: t });
+  return { ok: true };
+}
+// 檢舉一句打的字：記下來給管理員（管理員介面之後再接）。讀的是伺服器存的那句，不收畫面送來的字
+async function report(me, pid, key) {
+  if (typeof key !== "string" || !/^[-_0-9A-Za-z]+$/.test(key)) throw new HttpsError("invalid-argument", "找不到這句話");
+  const inParty = (await rtdb().ref(`parties/${pid}/members/${me.uid}`).get()).exists();
+  if (!inParty) throw bad("你不在這個隊伍裡");
+  const msg = (await rtdb().ref(`coopChat/${pid}/${key}`).get()).val();
+  const problem = coopReportProblem(msg, me.uid);
+  if (problem) throw bad(problem);
+  const rs = await runRef(pid).get();
+  const run = rs.exists ? JSON.parse(rs.data().data).id : null;
+  const talk = run ? (await rtdb().ref(`coopTalkLog/${run}/${key}`).get()).val() : null;
+  // 同一個人檢舉同一句只留一筆
+  await rtdb().ref(`coopReports/${key}_${me.uid}`).set({ pid, run, key, by: msg.by, name: msg.name, text: msg.text, from: talk ? talk.from : null, at: msg.at, reporter: me.uid, reporterNick: me.nick, reportedAt: now() });
   return { ok: true };
 }
 
@@ -238,6 +257,7 @@ export const coopStep = onCall(async req => {
   }
   if (act === "prune") return pruneRun(me, pid, data && data.uid);
   if (act === "say") return say(me, pid, data || {});
+  if (act === "report") return report(me, pid, data && data.key);
   if (FLOW_ACTS.includes(act)) {
     await runStep(pid, me.uid, act, data || {});
     return { ok: true };

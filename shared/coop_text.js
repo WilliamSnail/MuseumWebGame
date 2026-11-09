@@ -47,6 +47,9 @@ export const COOP_CALLS = [
   { id: "guu", text: "咕", warp: ["咕嚕咕嚕", "咕？咕？", "（牠也咕了壹聲）"] },
 ];
 
+// 自由打字（決定 0020）：理智低的人打的字，後半可能變成這些（伺服器變，shared/coop_fun.js 的 coopWarpText）
+export const COOP_WARP_WORDS = ["牠在後面", "不要回頭", "牠聽得到", "我不是我", "你也看到了嗎"];
+
 // 畫面上的說明（不破梗）
 export const COOP_CLUE_TEXT = {
   hint: "門上有三個記號。每個人只看得到壹部分：用短句說出來，拼起來。三個都對上的那個選項，過起來比較容易。",

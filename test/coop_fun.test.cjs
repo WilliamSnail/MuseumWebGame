@@ -178,12 +178,11 @@ T("全隊都變幽靈：這一趟失敗、回地面（結局照個人）", () =>
 });
 
 // ---------- 機制 4：說話 ----------
-T("短句：理智高不變形；只收清單上的，沒有打字", () => {
+T("短句：理智高不變形；只收清單上的", () => {
   const { run } = three({ san: 60 });
   const r = G.coopSayBuild(run, "a", { say: "go" });
   assert.deepStrictEqual([r.ok, r.text, r.warped], [true, "走這邊", false]);
   assert.strictEqual(G.coopSayBuild(run, "a", { say: "打什麼都可以" }).ok, false);
-  assert.strictEqual(G.coopSayBuild(run, "a", { text: "自由打字" }).ok, false);
   assert.strictEqual(G.coopSayBuild(run, "a", { say: "see", x: "不是記號" }).ok, false);
   assert.strictEqual(G.coopSayBuild(run, "a", { say: "pick", x: "戊" }).ok, false);
   assert.strictEqual(G.coopSayBuild(run, "a", { say: "see", x: "月" }).text, "我看到「月」");
@@ -225,6 +224,78 @@ T("伺服器變形：拿隊員現在的理智（run 裡的），不是畫面給�
   assert.strictEqual(r.warped, true);
   assert.strictEqual(r.from, "安全");
 });
+// ---------- 自由打字（決定 0020、0036） ----------
+T("打字：清掉看不見的字、連續空白變一個、最多 PARTY.sayMax 個字；空的、不是字串的不收", () => {
+  const { run } = three({ san: 60 });
+  const zw = String.fromCharCode(0x200b), ctl = String.fromCharCode(7);
+  let r = G.coopSayBuild(run, "a", { text: `  走${zw}這${ctl}邊   快 ` });
+  assert.deepStrictEqual([r.ok, r.kind, r.text, r.from, r.warped], [true, "text", "走這邊 快", "走這邊 快", false]);
+  assert.strictEqual(r.id, null, "Realtime Database 不收 undefined");
+  r = G.coopSayBuild(run, "a", { text: "長".repeat(G.PARTY.sayMax + 20) });
+  assert.strictEqual([...r.text].length, G.PARTY.sayMax);
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: "   " }).ok, false);
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: zw }).ok, false);
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: 123 }).ok, false);
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: null }).ok, false);
+});
+T("打字：照字面，標籤不會被改掉也不會被執行（畫面用文字節點，這裡只確定伺服器原樣留著）", () => {
+  const { run } = three({ san: 60 });
+  const bad = "<img src=x onerror=alert(1)>";
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: bad }).text, bad);
+});
+T("打字會變形：伺服器看 run 裡的理智（畫面送什麼都沒用）；理智高不變；會結巴、後半會變；原文另外留", () => {
+  const { run } = three({ san: 60 });
+  G.setRng(() => 0.01);
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: "這裡安全", san: 5, warped: true }).warped, false, "理智 60 不變形，畫面亂送沒用");
+  run.members[0].san = 20;
+  let r = G.coopSayBuild(run, "a", { text: "這裡安全" });
+  assert.strictEqual(r.warped, true);
+  assert.ok(r.text.startsWith("這裡……"), r.text);
+  assert.ok(G.COOP_WARP_WORDS.some(w => r.text.endsWith(w)), r.text);
+  assert.strictEqual(r.from, "這裡安全");
+  G.setRng(() => 0.7); // 落在結巴
+  r = G.coopSayBuild(run, "a", { text: "這裡安全" });
+  assert.strictEqual(r.warped, true);
+  assert.ok(r.text.includes("……"), r.text);
+  G.setRng(() => 0.999); // 沒事
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: "這裡安全" }).warped, false);
+  // 最長的那句變形之後也不會長太多
+  G.setRng(() => 0.01);
+  assert.ok([...G.coopWarpText("長".repeat(G.PARTY.sayMax), 10).text].length <= G.PARTY.sayMax + 10);
+});
+T("打字：幽靈不能打，只能敲；離隊的、走完的也不能", () => {
+  const { run, Ps } = three({ san: 60 });
+  run.members[1].ghost = true; Ps.b.sanity = 0;
+  const r = G.coopSayBuild(run, "b", { text: "救命" });
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.reason.includes("幽靈"));
+  run.members[2].out = "left";
+  assert.strictEqual(G.coopSayBuild(run, "c", { text: "哈囉" }).ok, false);
+  run.ended = true;
+  assert.strictEqual(G.coopSayBuild(run, "a", { text: "哈囉" }).ok, false);
+});
+T("太快會擋：打字 2 秒一句；短句另外算；打字算在短句的間隔裡", () => {
+  let g = G.coopSayGap(null, "text", NOW);
+  assert.ok(g.ok);
+  let last = g.next;
+  assert.strictEqual(G.coopSayGap(last, "text", NOW + G.COOP.typeGapMs - 1).ok, false, "打字太快");
+  assert.ok(G.coopSayGap(last, "text", NOW + G.COOP.typeGapMs).ok);
+  assert.strictEqual(G.coopSayGap(last, "say", NOW + G.COOP.sayGapMs - 1).ok, false, "短句也要隔一下");
+  g = G.coopSayGap(last, "say", NOW + G.COOP.sayGapMs);
+  assert.ok(g.ok);
+  last = g.next;
+  assert.strictEqual(G.coopSayGap(last, "text", NOW + G.COOP.sayGapMs + G.COOP.sayGapMs).ok, false, "中間說過短句，打字的 2 秒還是照算");
+  assert.ok(G.coopSayGap(last, "text", NOW + G.COOP.typeGapMs + G.COOP.sayGapMs).ok);
+  assert.ok(G.coopSayGap(last, "call", NOW + G.COOP.sayGapMs + G.COOP.sayGapMs).ok, "叫聲不看打字的間隔");
+});
+T("檢舉：只有打的字；不能檢舉自己；找不到的不行", () => {
+  assert.strictEqual(G.coopReportProblem({ k: "text", by: "a" }, "b"), null);
+  assert.ok(G.coopReportProblem({ k: "text", by: "a" }, "a"));
+  assert.ok(G.coopReportProblem({ k: "say", by: "a" }, "b"));
+  assert.ok(G.coopReportProblem({ k: "call", by: "a" }, "b"));
+  assert.ok(G.coopReportProblem(null, "b"));
+});
+
 // ---------- 機制 3：湊證據猜真相 ----------
 // 把這一層走到底（大家投同一個，有搬的就略過）；opts.pick(run) 回傳選項
 function walkFloor(run, Ps, ids, opts = {}) {

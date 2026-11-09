@@ -6,7 +6,8 @@
 //
 //  機制 2 每個人看到的不一樣：run.clue ＝ { truth: [三個真的記號], answer: 選項號碼, marks: { 選項: [三個記號] }, seen: { 隊員: [看到的] }, fake: { 隊員: 不存在的那個 } }
 //    這些都只在伺服器（Firestore 的 coopRuns）。送出去一律走 coopFilterView：只留他自己 seen 的那幾個，看不出哪個是假的。
-//  機制 4 只用叫聲說話：coopSayBuild 由伺服器變形。沒有打字。
+//  機制 4 叫聲、短句、自由打字（翊文 11-09 回答「要」，決定 0020、0036）：coopSayBuild 由伺服器變形，畫面做不了手腳。
+//    打的字用 cleanSay 清過（最多 PARTY.sayMax 個字），只當資料：畫面一律當純文字。送太快會擋（coopSayGap）。可以檢舉（coopReportProblem）。
 //  機制 6 幽靈：不投票、不說話（coopSayBuild 擋）；看得到真的記號；一間敲一下（coopKnock）。
 //  機制 3 湊證據：run.truth ＝ { id: 住客（祕密）, found: [{ kind, by, room, fake }], done, guess, right }。湊齊三個，走完這一層才猜（coopGuess）。
 //  機制 5 留守：run.hazard ＝這一間哪個選項有東西（祕密）；地圖、危險度只有留守的人的畫面有（coopFilterView）。
@@ -14,7 +15,8 @@
 //  機制 9 報告：run.stats 收集，走完 coopMakeReport，存進每個人的 P.coopReports（博物館的，不跟著參觀者換）。
 // ================================================================
 import { COOP, coopActive, coopFinish, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop.js";
-import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS } from "./coop_text.js";
+import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./coop_text.js";
+import { cleanSay } from "./party.js";
 import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "./logic.js";
 import { cellarFloor, skillOf } from "./logic3.js";
 
@@ -403,13 +405,48 @@ export function coopWarp(item, x, san) {
   if (roll < lv.swap + lv.stutter) return { text: coopStutter(plain), warped: true };
   return { text: plain, warped: false };
 }
-// 伺服器：這句話能不能說、變形之後是什麼。data ＝ { say: 短句 id, x: 記號或選項號碼 } 或 { call: 叫聲 id }。沒有打字：只收清單上的
+// 打的字變形：結巴（「等我一下」→「等我……一下……？」），或後半變成別的話（「這裡安全」→「這裡……牠在後面」）。san ＝打字的人的理智
+export function coopWarpText(text, san) {
+  let lv = null;
+  COOP.warp.forEach(w => { if (san < w.below) lv = w; });
+  if (!lv) return { text, warped: false };
+  const roll = RNG();
+  if (roll < lv.swap) {
+    const cs = [...text], keep = Math.ceil(cs.length / 2);
+    return { text: `${cs.slice(0, keep).join("")}……${COOP_WARP_WORDS[Math.floor(RNG() * COOP_WARP_WORDS.length)]}`, warped: true };
+  }
+  if (roll < lv.swap + lv.stutter) return { text: coopStutter(text), warped: true };
+  return { text, warped: false };
+}
+// 送太快會擋。last ＝ { at: 上一句（什麼都算）, typed: 上一句打的字 }；kind ＝ "say"、"call"、"text"。回傳 { ok, next: 要存回去的 }
+export function coopSayGap(last, kind, now) {
+  const l = last && typeof last === "object" ? last : {};
+  if (l.at && now - l.at < COOP.sayGapMs) return { ok: false };
+  if (kind === "text" && l.typed && now - l.typed < COOP.typeGapMs) return { ok: false };
+  return { ok: true, next: { at: now, typed: kind === "text" ? now : l.typed || null } };
+}
+// 檢舉：只檢舉打的字（短句、叫聲是清單上的）；不能檢舉自己。可以回 null，不行回傳原因
+export function coopReportProblem(msg, uid) {
+  if (!msg) return "找不到這句話";
+  if (msg.k !== "text") return "這句是固定的短句，不用檢舉";
+  if (msg.by === uid) return "這是你自己說的";
+  return null;
+}
+// 伺服器：這句話能不能說、變形之後是什麼。data ＝ { say: 短句 id, x: 記號或選項號碼 }、{ call: 叫聲 id } 或 { text: 打的字 }
 export function coopSayBuild(run, id, data) {
   const m = coopMember(run, id);
   if (!m || m.out) return { ok: false, reason: "你不在這壹趟裡" };
   if (run.ended) return { ok: false, reason: "這壹趟已經結束了" };
   if (m.ghost) return { ok: false, reason: "幽靈不能說話" };
-  const d = data || {}, kind = d.call ? "call" : "say";
+  const d = data || {};
+  if (d.text !== undefined) { // 自由打字：清過才算；只當資料
+    if (typeof d.text !== "string") return { ok: false, reason: "要打字" };
+    const t = cleanSay(d.text);
+    if (!t) return { ok: false, reason: "先打字" };
+    const w = coopWarpText(t, m.san);
+    return { ok: true, kind: "text", id: null, name: m.name, text: w.text, warped: w.warped, from: t };
+  }
+  const kind = d.call ? "call" : "say";
   const item = kind === "call" ? COOP_CALLS.find(x => x.id === d.call) : COOP_SAY.find(x => x.id === d.say);
   if (!item) return { ok: false, reason: "沒有這句話" };
   let x = "";
