@@ -18,7 +18,7 @@ import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
-import { markText, ptMark } from "./ui_core.js";
+import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
@@ -72,7 +72,7 @@ export function storyTick() {
   const today = todayStr();
   const ev = syncStory(P, W, today);
   const seen = clueSync(P, STORY_LIB, today); // 線索 → 你看懂了（拿線索悄悄記，集齊才有事件）
-  if (seen.length) { seen.forEach(() => markFresh(P, "origin", FRESH_KEY.understood, UI.screen)); markFreshNav(); queue.push(...seen); persist(); }
+  if (seen.length) { seen.forEach(() => markFresh(P, "origin", FRESH_KEY.understood, UI.screen)); markFreshNav(); cards.push(...seen); persist(); }
   if (ev.length) {
     ev.forEach(e => { if (e.type === "storyBook") markFresh(P, "origin", "story:" + e.book.id, UI.screen); });
     if (warm) queue.push(...ev);
@@ -81,7 +81,18 @@ export function storyTick() {
   warm = true;
   trackBar();
   menuBadge(W);
-  if (queue.length && !ticking) { ticking = true; later(flushEvents, 0); }
+  // 不用 later：換畫面時 later 的計時器會被取消，ticking 就卡住，之後的事件全部不見
+  if (queue.length && !ticking) { ticking = true; setTimeout(flushEvents, 0); }
+  showCards();
+}
+// 「你看懂了」壹張壹張來，按了才換下壹張（翊文 11-09：「看懂會說你看懂了什麼」）。
+// 載入存檔時就會集齊，那時還在標題畫面，要等進到遊戲才跳，不然玩家看不到
+var cards = [], carding = false;
+async function showCards() {
+  if (carding || !cards.length || UI.screen === "title") return;
+  carding = true;
+  try { while (cards.length) await understoodCard(cards.shift()); }
+  finally { carding = false; }
 }
 function flushEvents() {
   ticking = false;
@@ -89,10 +100,7 @@ function flushEvents() {
   const W = curWeek();
   if (!W) return;
   ev.forEach(e => {
-    if (e.type === "understood") {
-      snd("eerie", 2);
-      note(`你看懂了：${e.text}（記進起源室的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}）`, "bad", 12000);
-    } else if (e.type === "storyBook") {
+    if (e.type === "storyBook") {
       const l = lineById(W, e.book.line);
       note(`書架多了壹本：〈${e.book.title}〉（起源室的「${shelfName(shelfTabOf(l))}」）`, "good", 7000);
     } else if (e.type === "storyTask") {

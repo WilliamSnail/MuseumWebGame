@@ -55,6 +55,8 @@ function dayMessage(w, d, n, hol, evs, fun) {
   // 活動當天：今日館訊後面多一段（日期用這週的週一往後算 n - 1 天；沒有活動就不加）
   const day = w && w.start ? shared().addDays(w.start, n - 1) : null;
   evs.filter(e => e.date === day).forEach(e => lines.push("", `🎪 【${e.when}限時活動】${e.from}～${e.to}　${e.title}`, e.words, e.effect + "。錯過了也不會少什麼。"));
+  // 每天提醒領大禮包（翊文 11-10：「Discord還會發新劇情和大禮包請大家領吧」）
+  lines.push("", "🎁 【今日大禮包】今天的大禮包可以領了：到 Hamachi 賭場，或在這裡打 `/pepe-大禮包`。");
   lines.push("", "館長室 敬啟");
   // 連結一定留著：太長只截前面的內容
   const end = "\n\n" + footer(), text = lines.join("\n").trim(), room = MAX - end.length;
