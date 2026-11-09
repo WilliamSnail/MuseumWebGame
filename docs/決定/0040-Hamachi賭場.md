@@ -31,13 +31,21 @@
 - **成就和財產**：每個人一頁看自己的成就（新的 17 個，在賭場拿；可以當稱號）、一頁看財產（紀念品，可以掛在自己的展廳，最多 3 件）。稱號和紀念品存在存檔的 `P.casinoTitle`、`P.hallSouvenirs`（伺服器檢查有沒有才寫），展廳給別人看之前過 `cleanHallView`（只收清單上的 id、名字用清單的、舊資料的名字只收短短的純文字）。
 - **舊資料認領**：Firestore `casinoLegacy/{小寫 email}`（`chips`、`achievements`、`properties`），由翊文之後放；第一次進賭場有這筆又沒領過就跳認領卡，領了之後錢包和資料庫兩邊都標記，不能領兩次。**沒有匯入工具**。
 - **籌碼換小獎**：靈感 200,000 籌碼一點（一週 5 次）、舊畫布 600,000（一週 2 次）、金箔 1,500,000（一週 1 次）。全部在 `NUM.casino.exchange`，等翊文。**沒有真錢，不能花錢買**（決定 0009）。
+- **第二階段：館友同桌**（用現有的隊伍，`PARTY_KINDS` 多 `table`，1–4 人，一個人也能開）：
+  - 同一張桌、同一副牌（每一局洗一副新的 52 張）、同一個莊家；各下各的注，照入座的順序輪流要牌。下注 30 秒、輪到你 25 秒、看結果 10 秒（`NUM.casino`，等翊文），之後自動下一局。
+  - 時間到、斷線都當停牌。伺服器沒有計時器：畫面到時間會叫 `tick`（每個人錯開 0–1.5 秒，伺服器自己看是不是真的到了）；很久沒人叫，下次一碰就一段一段補完。斷線超過 10 秒，館友的畫面請伺服器把他移出隊伍（沿用現有的 `prune`），他那一手當停牌。
+  - 玩家的牌大家都看得到（跟真的賭桌一樣）；莊家的暗牌、牌組結算才給。理智低的人看到的牌是假的（只有自己，用看的人的理智）。
+  - 離桌不影響別人：下注前離桌退注；打牌中離桌，這一手當停牌、照樣結算（錢進他的錢包）。最後一個人離桌，這一手也先算完才收。
+  - 說話：快速短句（6 句）＋自由打字（`cleanSay`，最多 50 字，純文字，至少隔 1.5 秒），最近 30 句留在 `casinoChat/{pid}`，隊伍解散就清。打的字沒有留紀錄、沒有檢舉（跟合作地下不一樣）：這次的桌子只有 4 個館友，先不做，吵架或洗版再討論。
+  - 沒做：同桌的「牌桌王」榜單、別人的暗牌（玩家沒有暗牌）、保險、分牌、加倍。
 - 打工、斗內、拚經濟、轉帳這次不做。「牌桌王」榜單等每週排行榜上線。
 
 ## 影響
 
-- 新檔：`shared/casino.js`、`casino_text.js`、`casino_wallet.js`，`functions/casino.js`，`web/src/ui_casino.js`、`css/casino.css`，`test/casino.test.cjs`、`sim_casino.cjs`。
+- 新檔：`shared/casino.js`、`casino_text.js`、`casino_wallet.js`、`casino_table.js`，`functions/casino.js`、`casino_table.js`，`web/src/ui_casino.js`、`ui_casino_table.js`、`css/casino.css`，`test/casino.test.cjs`、`casino_table.test.cjs`、`sim_casino.cjs`。
+- `functions/party.js` 的 `partyHooks` 改成陣列（合作地下和賭場同桌各自 push），`shared/party.js` 多 `table`；`database.rules.json` 多 `casinoView`、`casinoChat`。
 - `shared/config.js` 多 `NUM.casino`；`shared/notices.js` 多一則公告；`shared/gifts.js`、`shared/visit.js` 的展廳多 `souvenirs`、`title`。
-- Firestore 多 `casinoWallets`、`casinoRounds`、`casinoHouse`、`casinoLegacy`（都只有 Functions；`firestore.rules` 最後一條已經擋掉其他人）。
+- Firestore 多 `casinoWallets`、`casinoRounds`、`casinoHouse`、`casinoTables`、`casinoLegacy`（都只有 Functions；`firestore.rules` 最後一條已經擋掉其他人）。
 
 ## 什麼時候可以再討論
 

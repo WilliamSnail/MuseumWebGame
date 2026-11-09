@@ -1,12 +1,12 @@
 ---
-日期: 2026-11-09 11:47:11
+日期: 2026-11-09 12:00:10
 作者: 翊文
 AI: Claude Sonnet 5.5（Claude Code）
 類型: 新功能
-範圍: [shared/casino.js, shared/casino_text.js, shared/casino_wallet.js, shared/config.js, shared/notices.js, shared/gifts.js, shared/visit.js, functions/casino.js, functions/index.js, web/src/ui_casino.js, web/src/css/casino.css, web/src/ui_core.js, web/src/ui_screens2.js, web/src/ui_visit.js, web/src/debug_boot.js, web/src/main.js, test/casino.test.cjs, test/sim_casino.cjs, test/run_all.cjs, test/load_shared.cjs, test/esm_smoke.mjs, test/gifts.test.cjs, test/visit.test.cjs, tools/check_imports.cjs, docs/決定/0040-Hamachi賭場.md, docs/賭場規劃.md, docs/現況.md, docs/架構.md, docs/Firebase做法.md]
+範圍: [shared/casino_table.js, shared/party.js, functions/casino_table.js, functions/party.js, functions/coop.js, database.rules.json, web/src/ui_casino_table.js, web/src/ui_party.js, web/src/ui_screens1.js, test/casino_table.test.cjs, shared/casino.js, shared/casino_text.js, shared/casino_wallet.js, shared/config.js, shared/notices.js, shared/gifts.js, shared/visit.js, functions/casino.js, functions/index.js, web/src/ui_casino.js, web/src/css/casino.css, web/src/ui_core.js, web/src/ui_screens2.js, web/src/ui_visit.js, web/src/debug_boot.js, web/src/main.js, test/casino.test.cjs, test/sim_casino.cjs, test/run_all.cjs, test/load_shared.cjs, test/esm_smoke.mjs, test/gifts.test.cjs, test/visit.test.cjs, tools/check_imports.cjs, docs/決定/0040-Hamachi賭場.md, docs/賭場規劃.md, docs/現況.md, docs/架構.md, docs/Firebase做法.md]
 PR: 無
 版本: 2026.11.08-1
-測試: npm test 全過（賭場 45 項是新的）、vite build 成功、模擬 test/sim_casino.cjs 每格 30 萬手、瀏覽器經過第 6 套模擬器叫到真的 casino Function（假帳號、假的舊資料）看過電腦 1366 和手機 375；聲音沒有（賭場沒有新聲音，用現成的 coin、unlock、error、flip）
+測試: npm test 全過（賭場 45 項、同桌 19 項是新的）、vite build 成功、模擬 test/sim_casino.cjs 每格 30 萬手、瀏覽器經過第 6 套模擬器叫到真的 casino、casinoTable Function（假帳號 小明、小華，假的舊資料）看過電腦 1366 和手機 375，兩個分頁同桌走過一圈；聲音沒有（賭場沒有新聲音，用現成的 coin、unlock、error、flip）
 狀態: 本機完成
 相關: [docs/決定/0040-Hamachi賭場.md, docs/賭場規劃.md, docs/決定/0009-不做真錢.md, docs/決定/0036-合作地下的玩法.md]
 ---
@@ -15,7 +15,7 @@ PR: 無
 
 > 「這事是我以前做的21點的遊戲，可能稍微有點問題需要修，能夠整合到博物館遊戲嗎」「可以把裡面的金額等等的數值也放進來」「好，就這麼做」「成就和財產變成紀念品： 這些功能都要留」（翊文）
 
-把舊的 Discord 21 點整合進遊戲。這一篇是第一階段（單人）；第二階段（館友同桌）接在下面。
+把舊的 Discord 21 點整合進遊戲。這一篇有兩階段：第一階段單人（commit b91b22e）、第二階段館友同桌。
 
 ## 改了什麼（第一階段）
 
@@ -26,6 +26,17 @@ PR: 無
 - 籌碼錢包（新玩家 1,000,000）、救濟、大禮包、餐車（品牌換掉）、換小獎（每週上限）、成就 17 個（可以當稱號）、財產（掛展廳）、舊資料認領（`casinoLegacy/{email}`）。
 - 展廳多稱號和紀念品（自己的和館友的，館友的過 `cleanHallView`）；公佈欄多壹則「Hamachi 賭場開張了」。
 - `NUM.casino`（等翊文的數字都標了）。
+
+## 改了什麼（第二階段：館友同桌）
+
+- 賭場「牌桌」頁籤「開一桌」（一個人也行）、館友小卡「邀請同桌打 21 點」、桌子裡直接列出在線的館友可以邀請（開別的框會把桌子的框關掉＝離桌，所以不另外開館友名單）。邀請卡、接受、被邀請的人自動入座，都走現有的隊伍（`PARTY_KINDS` 多 `table`，隊伍一直是 lobby，隨時有人進出）。
+- 1–4 人同一張桌、每一局洗一副新的 52 張、同一個莊家；下注 30 秒、輪到你 25 秒、看結果 10 秒（`NUM.casino`），之後自動下一局。人都下好注就馬上發牌。
+- 時間到、斷線當停牌（伺服器沒有計時器：畫面到時間叫 `tick`，每人錯開 0–1.5 秒）；斷線超過 10 秒請伺服器移出隊伍（沿用 `prune`）；很久沒人叫，下次一碰就一段一段補完。
+- 離桌不影響別人：下注前退注；打牌中這一手當停牌、照樣結算進他的錢包。
+- 看得到別人的牌（跟真的賭桌一樣）；莊家底牌、牌組結算才給；理智低的人自己看到假牌。
+- 說話：6 句快速短句＋自由打字（`cleanSay`、純文字、間隔 1.5 秒）；沒有留紀錄和檢舉（決定 0040 寫了為什麼）。
+- 成就「同桌壹夜」（兩人以上打完一局）、財產「牌桌的小旗」。
+- `functions/party.js` 的 `partyHooks` 改成陣列（合作地下和賭場各自 push）。
 
 ## 怎麼確認的
 
@@ -43,14 +54,17 @@ PR: 無
   - 同桌（基本打法、賭徒＋幸運 60）：一人 -0.35%、兩人 -0.59%、四人 -0.48%（同一個種子；差別在雜訊裡）。
   - **結論**：舊的賠率本來就很接近公平（五張牌 2:1 對玩家很划算）；一般打法莊家贏 0.6–4%。最大的加成加上最強的打法大約打平（+0.05%，30 萬手的雜訊約 ±0.15%），所以加成只能這麼小。加成 0.5%＋0.5% 的時候高手會贏莊家，所以改成 0.2%＋0.2%。
   - 大禮包 100 萬包：平均 1,718,825 籌碼／包；一到五星 50.08／29.96／14.49／4.47／1.01%。買 1 抽券 150 萬、11 抽券 1,000 萬，11 包平均約 1,890 萬——券比價錢划算，錢又是莊家出的，所以莊家會常常破產（舊的就是這樣，梗留著；換日 Yuga 借他一筆重新開張）。
+- 同桌單元測試 19 項：入座上限 4 人、一個人也能玩、下注、同一副牌 52 張不重複（60 種子）、輪流（沒輪到不能動、舊 seq 被擋）、結果各算各的且錢守恆、超時和斷線當停牌（下一位有完整的時間）、很久沒人叫一次補完、下注時間到、前兩張 21 點自動停牌、別人的暗牌和牌組不外洩（view 裡沒有 deck、san、錢包）、理智低只有自己看錯牌、離桌退注、打牌中離桌不影響別人的結果、最後一位離桌錢不會不見、成就、加成只算自己的、下一局乾淨。另外跑 3000 局亂打（有人不下注、發呆、中途離桌又回來）：每一局錢包加莊家加還沒結算的注都守恆。
 - 瀏覽器（第 6 套模擬器，見「還沒做、要注意」）：第一次進賭場跳認領卡 → 先不要 → 照樣能玩；荷官的挑剔（abc、0、太多）；發牌、要牌爆了、成就提示；大禮包全開、餐車買烤雞肉；再進去認領（籌碼 +7,777,777，成就 2、財產 4 件，全是假資料）；認領之後不再跳卡；成就當稱號、財產掛展廳，自己的展廳看得到稱號和紀念品；沒打完的一手關掉再開還在；手機 375 版面（修了標題列把框撐寬）。
+- 瀏覽器同桌（小明、小華兩個分頁）：小明開桌、邀請小華（右下角邀請卡）、小華接受自動入座（2／4 人）；各下注（小明 10,000、小華 20,000）→ 發牌 → 「輪到 小明」→ 小明停牌 → 小華發呆 25 秒 → 自動停牌、莊家補牌、結算（小明贏 10,031＝含賭徒加成 31，小華輸 20,000）；快速短句和打字「<b>你好</b> <img…>」兩邊都是純文字；第二局小華在輪到小明的時候關掉框離桌，小明繼續打，兩個人都結算（小華離桌後打開賭場，籌碼 985,001，是他離桌那一手贏的）；小華的展廳頁在小明那邊看得到稱號和紀念品；關掉小華的分頁（真的斷線）約 30 秒後被移出隊伍（2／4 → 1／4 人）；手機 375 看了同桌（修了每一塊被壓扁、牌跑出框外）。
 
 ## 還沒做、要注意
 
-- **沒測到**：理智低的假牌在畫面上的樣子（單元測試有，瀏覽器的測試帳號理智 50）、館友在自己的展廳看到我的稱號和紀念品（單元測試過濾有測，瀏覽器是第二階段用兩個帳號看）、聲音。
+- **沒測到**：理智低的假牌在畫面上的樣子（單元測試有，瀏覽器的測試帳號理智 50）、三到四人同桌（瀏覽器只開了兩個人；單元測試和 3000 局有四人）、很久沒人叫 tick 的補完（單元測試有）、邀請被婉拒和過期（沿用現有的邀請卡，沒另外看）、同桌的聲音（用現成的 coin、error 等，沒人聽過）、手機寬度的邀請卡。
 - 第 5 套模擬器的集線器埠 9500 被別的程式用了，改用第 6 套（連接埠 +6000，網頁 5206）。
+- 同桌沒有留紀錄和檢舉打的字（合作地下有）：桌子只有 4 個館友，吵架或洗版再做。「牌桌王」榜單沒做（等每週排行榜）。
 - 打工、斗內、拚經濟、轉帳沒做。舊 Discord 名字對到哪位館友沒做（認領是用 email 對 `casinoLegacy` 文件）。
-- 要翊文決定的：籌碼最小和最大注、救濟的數字、換小獎的數字、券太划算要不要調價、玩家黑傑克碰到莊家三張牌 21 點算平手莊家贏要不要改。
+- 要翊文決定的：籌碼最小和最大注、救濟的數字、換小獎的數字、同桌的三個時間（下注 30 秒、輪到你 25 秒、看結果 10 秒）、券太划算要不要調價、玩家黑傑克碰到莊家三張牌 21 點算平手莊家贏要不要改。
 - 正式版還沒有人開過；部署之後第一次進賭場才會建錢包。要放舊資料：Firestore 後台建 `casinoLegacy/{小寫 email}`（欄位 `chips`、`achievements`、`properties`）。
 
 ## 給下一個人
@@ -60,3 +74,7 @@ PR: 無
 - 賭場的亂數：Functions 用 crypto（`cryptoRng`），不要改成 `mulberry32(種子)`，種子猜得到的話牌就推得出底牌。
 - `casinoLegacy` 的名字和金額是玩家資料，不要放進 repo、測試、日誌。測試用的是假的。
 - 畫面文字用「一」，`docs/` 用「一」；`test/casino.test.cjs` 會擋畫面文字裡的「一」和品牌字。
+- 同桌的隊伍一直是 lobby，所以 `partyJoin` 隨時能進；不要在 `startParty` 裡處理 `table`（沒有「開始」）。
+- 同桌的時間：下一段從「上一段到期的時候」起算（最晚 3 秒），不是從 tick 到的時候；不然很久沒人叫的桌子要等好幾個 tick 才補完。
+- 開別的蓋在畫面上的框（`overlay`）會把現在的框用正常的方式關掉：桌子的框關掉＝離桌。要在桌子裡做的事不要另外開框。
+- 瀏覽器的分頁在背景會變慢，等幾秒再看；同一個瀏覽器的分頁共用登入（我用 `?user=` 開兩個分頁）。第 5 套模擬器的集線器埠 9500 被別的程式佔著，我改用第 6 套。

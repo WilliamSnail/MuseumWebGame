@@ -41,6 +41,7 @@ async function play(req, me, opts, fn) {
       const ss = opts.save ? await tx.get(saveRef(me.uid)) : null;
       const ls = opts.legacy && email ? await tx.get(legacyRef(email)) : null;
       const w = casWalletFix(parse(ws), day);
+      if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;

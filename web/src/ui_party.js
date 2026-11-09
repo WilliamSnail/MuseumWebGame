@@ -17,7 +17,7 @@ import { FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd } f
 import { overlay } from "./ui_board.js";
 import { learnText } from "../../shared/shop.js";
 
-const KIND_TEXT = { fusion: "壹起融合", cellar: "壹起下地下收藏庫" };
+const KIND_TEXT = { fusion: "壹起融合", cellar: "壹起下地下收藏庫", table: "壹起玩 21 點" };
 // 別種隊伍的框（合作地下在 ui_coop.js 登記）：{ cellar: { open(pid), isOpen(pid), say(m) } }。這個檔不 import 它，不然會繞圈
 export const PARTY_HOOKS = {};
 const canFuseHere = () => !!P && !isFree(P);
@@ -68,7 +68,7 @@ function dropOutgoing(iid) { if (iid && outgoing.delete(iid)) drawInvites(); }
 
 // ---------- 邀請 ----------
 export async function sendInvite(friend, kind) {
-  if (!canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能邀請館友${KIND_TEXT[kind] || ""}。`, "bad"); return; }
+  if (kind !== "table" && !canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能邀請館友${KIND_TEXT[kind] || ""}。`, "bad"); return; } // table：賭場同桌，只要登入
   try {
     await NET.flush().catch(() => {});
     const r = await NET.call("invite", { to: friend.id, kind });
@@ -86,13 +86,14 @@ function inviteCard(m) {
     h("p", { class: "inv-t" }, h("b", null, m.from.nick), ` 邀請你${KIND_TEXT[m.kind] || ""}`),
     m.kind === "fusion" ? h("p", { class: "inv-sub" }, "兩個人各放壹隻佩佩，做出來的那隻兩個人都拿到；各扣各的靈感和融合次數。") : null,
     m.kind === "cellar" ? h("p", { class: "inv-sub" }, "每個人帶 1–2 隻佩佩，壹起投票、看同壹顆骰子；理智各扣各的。") : null,
+    m.kind === "table" ? h("p", { class: "inv-sub" }, "Hamachi 賭場：同壹張桌、同壹副牌，各下各的注，輪流要牌。") : null,
     h("div", { class: "inv-btns" }, btn("接受", () => reply(true), "primary small"), btn("婉拒", () => reply(false), "small"),
       h("span", { class: "inv-left", dataset: { exp: String(m.expires) } }, `還有 ${secLeft(m.expires)} 秒`)),
     more);
   async function reply(accept) {
     dropIncoming(m.iid);
     drawInvites();
-    if (accept && !canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能${KIND_TEXT[m.kind] || "壹起玩"}（這次先婉拒了）。`, "bad"); accept = false; }
+    if (accept && m.kind !== "table" && !canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能${KIND_TEXT[m.kind] || "壹起玩"}（這次先婉拒了）。`, "bad"); accept = false; }
     try {
       if (accept) await NET.flush().catch(() => {});
       const r = await NET.call("inviteReply", { iid: m.iid, accept });
@@ -255,7 +256,7 @@ async function partyNotice(m) {
   if (!p || p.phase === "closed" || !meId || !p.members[meId]) return;
   if (view && view.pid === m.pid) return; // 讀的時候已經打開了
   // 在門口（還沒選參觀者）、自由模式：放不了佩佩，就退出這一隊，隊友會看到我離開了（不然他會一直等）
-  if (!canFuseHere()) { NET.call("partyAction", { pid: m.pid, act: "leave" }).catch(() => {}); return; }
+  if (p.kind !== "table" && !canFuseHere()) { NET.call("partyAction", { pid: m.pid, act: "leave" }).catch(() => {}); return; }
   say();
   if (PARTY_HOOKS[p.kind]) PARTY_HOOKS[p.kind].open(m.pid); else openParty(m.pid);
 }

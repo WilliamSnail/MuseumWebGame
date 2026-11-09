@@ -110,3 +110,30 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
   .cas-chips { padding: 2px 8px; font-size: .8125rem; }
   .cas-chips b { font-size: .9375rem; }
 }
+
+/* ----- 館友同桌（ui_casino_table.js） ----- */
+.nb-frame.nb-table { width: min(980px, 100%); }
+.cas-tb-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,.3); border: 1px solid rgba(231,200,120,.4); }
+.cas-count { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .06em; color: #F8E3A0; }
+.cas-tb-head small { color: rgba(243,238,220,.75); }
+.cas-tb-seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+.cas-seat.tb { padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.22); border: 1px solid rgba(231,200,120,.25); }
+.cas-seat.tb.me { border-color: rgba(231,200,120,.7); }
+.cas-seat.tb.turn { box-shadow: 0 0 0 2px #F8E3A0; }
+.cas-seat.tb.gone { opacity: .6; }
+.cas-tb-st { color: rgba(243,238,220,.75); }
+.cas-tb-out { margin: 0; font-weight: 700; color: #F8E3A0; }
+.cas-tb-out.k-lose { color: #FFB4A6; }
+.cas-dealer-line { margin: 0; padding: 8px 12px; border-left: 4px solid #E7C878; background: rgba(0,0,0,.3); border-radius: 6px; color: #FFF8DC; }
+.cas-dealer-line b { color: #F8E3A0; }
+.cas-tb-chat { display: flex; flex-direction: column; gap: 6px; }
+.cas-tb-chat h3 { margin: 0; font-family: var(--serif); letter-spacing: .08em; color: #F8E3A0; font-size: 1rem; }
+.cas-chat { min-height: 70px; max-height: 120px; }
+.cas-chat p { overflow-wrap: anywhere; }
+.cas-chat b { color: #F8E3A0; }
+.cas-chat-form { display: flex; gap: 6px; margin-top: 6px; }
+.cas-chat-in { flex: 1; min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 6px; border: 1px solid #C8A25A; background: #FBF7EA; color: #1B1B1B; }
+.cas-seat.tb .cas-card { width: 44px; height: 62px; }
+.cas-seat.tb .cas-card b, .cas-seat.tb .cas-card i { font-size: 1.125rem; }
+.cas-body > * { flex-shrink: 0; } /* 空間不夠就捲動，不要把每一塊壓扁（壓扁了牌會跑出框外） */
+.cas-invite { display: flex; flex-direction: column; gap: 4px; }
