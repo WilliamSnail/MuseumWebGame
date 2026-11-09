@@ -14,7 +14,7 @@ import { PANELS, h, icon, snd, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const T = BOARD_TEXT;
-const ICON = { codex: "codex", hall: "hall", deep: "stairs", books: "book", full: "calendar", stamps: "medal" }; // 遊戲裡用遊戲的圖示；emoji 是 Discord 公告用的（有些電腦畫出來是黑黑一塊）
+const ICON = { codex: "codex", hall: "hall", deep: "stairs", books: "book", full: "calendar", stamps: "medal", table: "cards", ach: "star", donate: "gift", bust: "hand", econ: "exchange", god: "gem" }; // 遊戲裡用遊戲的圖示；emoji 是 Discord 公告用的（有些電腦畫出來是黑黑一塊）
 const isMe = nick => !!(NET.me && NET.me.nick === nick);
 const nameNode = (nick, title) => (title ? h("span", { class: "rk-who" }, h("span", { class: "rk-name" + (isMe(nick) ? " me" : "") }, nick), titleTag(title, "rk-ttl")) : h("span", { class: "rk-name" + (isMe(nick) ? " me" : "") }, nick));
 // titles：跟 nicks 一一對上的稱號名字（決定 0050；榜單是當週算好存的，沒有稱號的人沒這個欄位）
@@ -22,7 +22,7 @@ const nameList = (nicks, titles) => nicks.flatMap((n, i) => (i ? ["、", nameNod
 
 // 一個榜：一張牌子。同分的排在同一列
 function card(b) {
-  const head = h("h3", null, icon(ICON[b.id] || "star"), h("span", null, b.title), b.all ? h("small", null, fill(T.fullNote, NUM.board.fullDays)) : null);
+  const head = h("h3", null, icon(ICON[b.id] || "star"), h("span", null, b.title), b.all ? h("small", null, fill(T.fullNote, NUM.board.fullDays)) : b.sub ? h("small", null, b.sub) : null);
   if (!b.rows.length) return h("section", { class: "rk-card none" }, head, h("p", { class: "rk-none" }, "這週還沒有人上榜"));
   if (b.all) return h("section", { class: "rk-card" }, head, h("p", { class: "rk-all" }, nameList(b.rows.map(r => r.nick), b.rows.map(r => r.title || ""))));
   return h("section", { class: "rk-card" }, head, h("ol", { class: "rk-rows" }, boardGroups(b.rows).map(g =>
@@ -31,7 +31,7 @@ function card(b) {
 function bodyOf(v) {
   const list = (title, cls, items) => (items.length ? h("section", { class: "rk-note " + cls }, h("h3", null, title), h("ul", null, items)) : null);
   return h("div", { class: "rk-body" },
-    h("p", { class: "rk-period" }, fill(T.panelPeriod, boardPeriodText(v)), v.first ? h("small", null, T.panelFirst) : null, v.live ? h("small", null, T.panelLive) : null),
+    h("p", { class: "rk-period" }, fill(T.panelPeriod, boardPeriodText(v)), v.first ? h("small", null, T.panelFirst) : null, v.casFirst ? h("small", null, T.panelCasFirst) : null, v.live ? h("small", null, T.panelLive) : null),
     v.empty ? h("p", { class: "nb-empty" }, T.panelEmpty) : h("div", { class: "rk-grid" }, v.boards.map(card)),
     list(T.tipsHead, "tips", v.tips.map(t => h("li", null, t))),
     list(T.nudgesHead, "nudges", v.nudges.map(n => h("li", null, nameNode(n.nick), " ", n.text))),

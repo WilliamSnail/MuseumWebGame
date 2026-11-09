@@ -13,9 +13,10 @@
 //  Discord 的回覆是玩家看的，文字照第 1 代用「壹」。文字都是草稿，Yuga 可以改。
 // ================================================================
 import { NUM } from "./config.js";
+import { BOARD_TEXT } from "./content3.js";
 import { eventEffect, eventRange, eventsOnDate } from "./events.js";
 import { funDaysOf, holidaysOn } from "./holidays.js";
-import { boardDiscordNick, boardGroups, boardPeriodText, boardValueText, boardViewOf } from "./board.js";
+import { boardCut, boardDiscordNick, boardGroups, boardPeriodText, boardTrim, boardValueText, boardViewOf } from "./board.js";
 import { titleName } from "./titles.js";
 import { noticeLive, NOTICES } from "./notices.js";
 
@@ -283,14 +284,21 @@ export function dcBoardText(doc) {
   const v = boardViewOf(doc);
   if (!v) return DC_TEXT.boardNone;
   if (v.empty) return DC_TEXT.boardEmpty;
-  const lines = [dcText("boardHead", { period: boardPeriodText(v) })];
-  v.boards.filter(b => b.rows.length).forEach(b => {
-    if (b.all) { lines.push("", `${b.emoji} 【${b.title}】`, b.rows.map(r => dcNick(r.nick)).join("、")); return; }
-    lines.push("", `${b.emoji} 【${b.title}】`);
-    boardGroups(b.rows).forEach(g => lines.push(`${g.rank}. ${g.nicks.map(dcNick).join("、")}　${boardValueText(b.id, g.value)}`));
-  });
-  lines.push("", DC_TEXT.boardFoot);
-  return lines.join("\n");
+  // 互動回覆只能一則（2000 字）：十二個榜太長就一層一層收（boardTrim：先留前 2 名、再只留第 1 名），最後整行截短，結尾的說明一定留著
+  const tail = `\n\n${DC_TEXT.boardFoot}`, max = NUM.board.discordMax;
+  const make = lv => {
+    const lines = [dcText("boardHead", { period: boardPeriodText(v) })];
+    if (v.casFirst) lines.push(BOARD_TEXT.casFirst);
+    v.boards.filter(b => b.rows.length).forEach(b => {
+      const t = boardTrim(b, lv);
+      if (b.all) { lines.push("", `${b.emoji} 【${b.title}】`, t.rows.map(r => dcNick(r.nick)).join("、") + (t.more ? `…等 ${b.rows.length} 人` : "")); return; }
+      lines.push("", `${b.emoji} 【${b.title}】${b.sub ? ` ${b.sub}` : ""}`);
+      boardGroups(t.rows).forEach(g => lines.push(`${g.rank}. ${g.nicks.map(dcNick).join("、")}　${boardValueText(b.id, g.value)}`));
+    });
+    return lines.join("\n");
+  };
+  for (let lv = 0; lv <= 2; lv++) { const t = make(lv); if (t.length + tail.length <= max) return t + tail; }
+  return boardCut(make(2), max - tail.length) + tail;
 }
 // 今天的活動：events 是 eventsFromWeeks 的結果（Functions 從打包的資料拿）；day 是台灣日期。
 // info 是這天的 DAY_DATA（{ title, n, board, real }，沒有就是 null）：有的話多「今日館訊」（跟 Discord 早上的公告同一行，只有今天）和「今天的現實世界」（real，最多 3 則；沒有就不顯示這塊，不補、不編）

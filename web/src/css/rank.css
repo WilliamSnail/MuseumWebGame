@@ -19,6 +19,8 @@
 .rk-card h3 { display: flex; align-items: center; gap: 6px; }
 .rk-card h3 svg { flex: none; width: 18px; height: 18px; color: #6E4A12; }
 .rk-card h3 small { font-size: .75rem; font-weight: 400; color: var(--parch-sub); }
+.rk-card h3 { flex-wrap: wrap; }
+.rk-card h3 span { min-width: 0; }
 .rk-rows { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .rk-row { display: flex; align-items: baseline; gap: 8px; min-height: 28px; font-size: .9375rem; line-height: 1.5; }
 .rk-medal { flex: none; align-self: center; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-family: var(--serif); font-size: .8125rem; font-weight: 700; color: #3A2A10; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 0 0 1px rgba(90,64,24,.55); }
@@ -42,6 +44,12 @@
 .rk-note .rk-name.me { color: var(--gold-hi); text-decoration-color: rgba(238,215,156,.5); }
 .rk-where { margin: 0; text-align: center; font-size: .75rem; line-height: 1.5; color: #CDBE9F; }
 
+/* 手機橫向（高度很矮）：十二張牌子要能往下捲，不讓外框把內容切掉 */
+.rk-body { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .rk-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .rk-card { padding: 8px 10px 9px; }
+}
 @media (max-width: 760px) {
   .rk-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .rk-card { padding: 9px 12px 10px; }
