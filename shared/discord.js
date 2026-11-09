@@ -17,11 +17,13 @@ import { eventEffect, eventRange, eventsOnDate } from "./events.js";
 import { funDaysOf, holidaysOn } from "./holidays.js";
 import { boardDiscordNick, boardGroups, boardPeriodText, boardValueText, boardViewOf } from "./board.js";
 import { titleName } from "./titles.js";
+import { noticeLive, NOTICES } from "./notices.js";
 
 export const DC_SITE = "https://pepe-museum.web.app";
 // 指令名字：全部小寫 pepe- 開頭（Discord 規定小寫），打 /pepe 就會列出全部
-export const DC_CMD = { link: "pepe-綁定", unlink: "pepe-解除綁定", join: "pepe-加入", chips: "pepe-籌碼", house: "pepe-莊家", board: "pepe-排行榜", today: "pepe-今日活動", online: "pepe-誰在線" };
+export const DC_CMD = { link: "pepe-綁定", unlink: "pepe-解除綁定", join: "pepe-加入", chips: "pepe-籌碼", house: "pepe-莊家", board: "pepe-排行榜", today: "pepe-今日活動", online: "pepe-誰在線", news: "pepe-更新" };
 export const DC_LINK_OPT = "碼";
+export const DC_NEWS_OPT = "幾則";
 export const DC_EPHEMERAL = 64; // flags：只有本人看得到
 
 // 要註冊給 Discord 的指令（guild commands）
@@ -34,8 +36,9 @@ export function dcCommands() {
     cmd(DC_CMD.chips, "看你自己的籌碼和稱號（只有你看得到）"),
     cmd(DC_CMD.house, "莊家現在有多少錢、有沒有破產"),
     cmd(DC_CMD.board, "最近壹次的每週排行榜"),
-    cmd(DC_CMD.today, "今天的限時活動和小節日"),
+    cmd(DC_CMD.today, "今天的館訊、限時活動、節日，和今天的現實世界"),
     cmd(DC_CMD.online, "現在在館裡的館友（隱身的不列）"),
+    cmd(DC_CMD.news, "最近幾則館方的更新公告", [{ type: 4, name: DC_NEWS_OPT, description: `要看幾則（預設 ${NUM.discord.newsDefault}，最多 ${NUM.discord.newsMax}）`, required: false, min_value: 1, max_value: NUM.discord.newsMax }]),
   ];
 }
 // 指令名字 → 內部的名字（link、unlink…）；不認得回傳 ""
@@ -144,6 +147,11 @@ export function dcNum(n) {
   return (v < 0 ? "-" : "") + String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 const dcCap = (s, n = 1900) => (s.length > n ? [...s].slice(0, n - 1).join("") + "…" : s);
+// 一行純文字：拿掉看不見的字、@、markdown 和連結用的符號、換行；最多 max 字。給「不是暱稱」的短句用（現實消息、公告標題）
+export function dcPlain(s, max = 60) {
+  const t = [...String(s == null ? "" : s)].filter(ch => { const n = ch.codePointAt(0); return !(n < 0x20 || n === 0x7f || (n >= 0x200b && n <= 0x200f) || (n >= 0x2028 && n <= 0x202e) || (n >= 0x2060 && n <= 0x206f) || n === 0xfeff); }).join("");
+  return [...t.replace(/[@＠<>＜＞`*_~|\\]/g, "").replace(/\s+/g, " ").trim()].slice(0, max).join("");
+}
 
 // ---------- 回覆 ----------
 // 一律不 @ 任何人（allowed_mentions）。ephemeral＝只有本人看得到
@@ -184,6 +192,11 @@ export const DC_TEXT = {
   todayEvents: "限時活動",
   todayHol: "節日",
   todayFun: "小節日",
+  todayBoard: "今日館訊",
+  todayReal: "今天的現實世界",
+  newsHead: "最近的館方更新（{n} 則）",
+  newsNone: "最近沒有新的更新公告。",
+  newsFoot: "完整的內容在遊戲選單的「公佈欄」：{url}",
   onlineNone: "館裡現在沒有人在線。",
   onlineSome: "現在在館裡的館友（{n} 位）：{names}",
   joinLink: "R，歡迎來博物館。點這個連結用 Google 登入，就成為館友（{m} 分鐘內有效、只能用壹次，不要轉給別人）：\n{url}",
@@ -226,15 +239,43 @@ export function dcBoardText(doc) {
   lines.push("", DC_TEXT.boardFoot);
   return lines.join("\n");
 }
-// 今天的活動：weeksEvents 是 eventsFromWeeks 的結果（Functions 從打包的資料拿）；day 是台灣日期
-export function dcTodayText(day, events) {
-  const evs = eventsOnDate(events, day), hols = holidaysOn(day), funs = funDaysOf(day);
-  if (!evs.length && !hols.length && !funs.length) return DC_TEXT.todayNone;
+// 今天的活動：events 是 eventsFromWeeks 的結果（Functions 從打包的資料拿）；day 是台灣日期。
+// info 是這天的 DAY_DATA（{ title, n, board, real }，沒有就是 null）：有的話多「今日館訊」（跟 Discord 早上的公告同一行，只有今天）和「今天的現實世界」（real，最多 3 則；沒有就不顯示這塊，不補、不編）
+export function dcRealList(info) {
+  const raw = info && Array.isArray(info.real) ? info.real : [];
+  return raw.filter(s => typeof s === "string").map(s => dcPlain(s, NUM.discord.realChars)).filter(Boolean).slice(0, NUM.discord.realMax);
+}
+export function dcTodayText(day, events, info) {
+  const evs = eventsOnDate(events, day), hols = holidaysOn(day), funs = funDaysOf(day), real = dcRealList(info);
+  const board = info && typeof info.board === "string" ? dcPlain(info.board, 120) : "";
+  if (!evs.length && !hols.length && !funs.length && !real.length && !board) return DC_TEXT.todayNone;
   const lines = [dcText("todayHead", { day: day.slice(5).replace("-", "/") })];
+  if (board) lines.push("", `【${DC_TEXT.todayBoard}】`, `〈${dcPlain(info.title, 20)}〉第 ${Math.max(1, Math.min(7, Math.floor(+info.n) || 1))} 日　${board}`);
   if (evs.length) lines.push("", `【${DC_TEXT.todayEvents}】`, ...evs.map(ev => `・${eventRange(ev)}　${ev.title}：${eventEffect(ev)}`));
   if (hols.length) lines.push("", `【${DC_TEXT.todayHol}】`, ...hols.map(h => `・${h.dayName || h.name}`));
   if (funs.length) lines.push("", `【${DC_TEXT.todayFun}】`, ...funs.map(f => `・${f.name}${f.line ? `：${f.line}` : ""}`));
+  if (real.length) lines.push("", `【${DC_TEXT.todayReal}】`, ...real.map(s => `・${s}`));
   return lines.join("\n");
+}
+export const DC_HIDE_WORDS = /理智|怪癖|靈感/;
+// /pepe-更新：最近幾則玩家看得到的館方公告（已發布、還沒下架；跟遊戲的公佈欄同一個判斷 noticeLive）。新的在前（同一天的，寫在後面的比較新）
+export function dcNewsList(today, limit) {
+  const k = Math.min(NUM.discord.newsMax, Math.max(1, Math.floor(+limit) || NUM.discord.newsDefault));
+  // 標題有理智、怪癖、靈感的不列（頻道裡不放這三樣的字；那幾則在遊戲的公佈欄看得到）
+  return NOTICES.map((n, i) => ({ n, i })).filter(x => noticeLive(x.n, today) && !DC_HIDE_WORDS.test(String(x.n.title)))
+    .sort((a, b) => String(b.n.publish || "").localeCompare(String(a.n.publish || "")) || b.i - a.i).slice(0, k).map(x => x.n);
+}
+export function dcNewsText(today, limit) {
+  const list = dcNewsList(today, limit);
+  if (!list.length) return DC_TEXT.newsNone;
+  const foot = dcText("newsFoot", { url: DC_SITE }), rows = [];
+  let used = DC_TEXT.newsHead.length + foot.length + 40;
+  for (const n of list) { // 不超過 Discord 的字數：放不下的後面幾則不列，連結一定留著
+    const d = String(n.publish || "").slice(5).replace("-", "/"), row = `・${d ? d + "　" : ""}${dcPlain(n.title, 40)}`;
+    if (used + row.length + 1 > 1800) break;
+    rows.push(row); used += row.length + 1;
+  }
+  return [dcText("newsHead", { n: rows.length }), ...rows, "", foot].join("\n");
 }
 export function dcOnlineText(nicks) {
   const list = (Array.isArray(nicks) ? nicks : []).map(dcNick);

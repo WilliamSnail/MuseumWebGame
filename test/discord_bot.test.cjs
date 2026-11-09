@@ -25,7 +25,9 @@ T("指令清單：全部 pepe- 開頭、小寫、名字和說明長度合 Discor
     for (const o of c.options || []) { assert.ok(/^[-_\p{L}\p{N}]{1,32}$/u.test(o.name)); assert.ok(o.description.length >= 1 && o.description.length <= 100); }
   }
   assert.strictEqual(names.size, list.length);
-  for (const k of ["link", "unlink", "join", "chips", "house", "board", "today", "online"]) assert.ok(names.has(G.DC_CMD[k]), k);
+  for (const k of ["link", "unlink", "join", "chips", "house", "board", "today", "online", "news"]) assert.ok(names.has(G.DC_CMD[k]), k);
+  const nw = J(G.dcCommands().find(c => c.name === G.DC_CMD.news));
+  assert.deepStrictEqual(nw.options.map(o => [o.name, o.type, o.required, o.min_value, o.max_value]), [[G.DC_NEWS_OPT, 4, false, 1, G.NUM.discord.newsMax]]);
   assert.deepStrictEqual(J(G.dcCommands().find(c => c.name === G.DC_CMD.link).options.map(o => o.name)), [G.DC_LINK_OPT]);
 });
 
@@ -181,6 +183,57 @@ T("今天的活動：有活動就列；沒有活動也沒節日就說沒有；�
   assert.ok(fun.length && G.dcTodayText("2027-03-14", []).includes(fun[0].name));
   const hol = G.holidaysOn("2026-12-25");
   if (hol.length) assert.ok(G.dcTodayText("2026-12-25", []).includes(hol[0].name));
+});
+
+T("今天的活動加今日館訊和現實世界：有才顯示、沒有就不顯示、不編；壞資料和提及都擋掉", G => {
+  const none = G.dcTodayText("2026-11-12", [], { title: "標題", n: 3, board: "", real: [] });
+  assert.ok(!none.includes("現實世界"), none);
+  const info = { title: "換季的失物招領", n: 2, board: "B1 的樓梯口多了壹個招領箱。", real: ["台北有壹個光影展，展到月底。", "宜蘭海邊有風箏節。", "第三則。", "第四則不該出現。"] };
+  const t = G.dcTodayText("2026-11-10", [], info);
+  assert.ok(t.includes("【今日館訊】") && t.includes("換季的失物招領") && t.includes("第 2 日") && t.includes("招領箱"), t);
+  assert.ok(t.includes("【今天的現實世界】") && t.includes("・台北有壹個光影展") && t.includes("・第三則。") && !t.includes("第四則"), t);
+  // 只有現實世界也算有東西（不回「今天沒有活動」）；沒有任何東西才回沒有
+  const only = G.dcTodayText("2026-11-12", [], { real: ["只有這壹則。"] });
+  assert.ok(only.includes("只有這壹則") && !only.includes("今日館訊"), only);
+  assert.strictEqual(G.dcTodayText("2026-11-12", [], { real: [] }), G.dcTodayText("2026-11-12", []));
+  assert.deepStrictEqual(J(G.dcRealList({ real: ["好", 5, null, "", "   ", { a: 1 }] })), ["好"]);
+  assert.deepStrictEqual(J(G.dcRealList({ real: "不是陣列" })), []);
+  assert.deepStrictEqual(J(G.dcRealList(null)), []);
+  const evil = G.dcRealList({ real: ["@everyone 看這裡 <@123> `x` **粗** [a](http://x)\n換行"] })[0];
+  assert.ok(!/[@<>`*]/.test(evil) && !evil.includes("\n"), evil);
+  assert.ok([...G.dcRealList({ real: ["壹".repeat(500)] })[0]].length <= G.NUM.discord.realChars);
+  assert.ok(G.dcTodayText("2026-11-10", [], { title: "標", n: 1, board: "壹".repeat(3000), real: [] }).length < 2000);
+  // 過 dcReply 不會超過 2000 字
+  assert.ok(J(G.dcReply(G.dcTodayText("2026-11-10", [], info), false)).data.content.length <= 2000);
+});
+
+T("/pepe-更新：列最近幾則玩家看得到的公告（日期、標題、連結）；預設 5 則；未發布、過期的不列；不超過 2000 字", G => {
+  const t = G.dcNewsText("2026-11-09");
+  const rows = t.split("\n").filter(l => l.startsWith("・"));
+  assert.strictEqual(rows.length, G.NUM.discord.newsDefault, t);
+  assert.ok(t.includes(G.DC_SITE) && t.includes("公佈欄"), t);
+  assert.ok(rows.every(r => /^・\d\d\/\d\d　/.test(r)), t);
+  assert.strictEqual(G.dcNewsList("2026-11-09", 3).length, 3);
+  assert.strictEqual(G.dcNewsList("2026-11-09", 999).length, G.NUM.discord.newsMax);
+  assert.strictEqual(G.dcNewsList("2026-11-09", 0).length, G.NUM.discord.newsDefault);
+  assert.strictEqual(G.dcNewsList("2026-11-09", "abc").length, G.NUM.discord.newsDefault);
+  // 日期排序：新的在前；同一天寫在後面的比較新
+  const all = G.dcNewsList("2027-01-01", 10), pub = all.map(n => n.publish);
+  assert.deepStrictEqual(pub, pub.slice().sort().reverse());
+  // 未發布的不列：發布日之前什麼都沒有
+  assert.strictEqual(G.dcNewsText("2026-01-01"), G.DC_TEXT.newsNone);
+  // 過期的不列：全部都過期之後
+  assert.strictEqual(G.dcNewsText("2099-01-01"), G.DC_TEXT.newsNone);
+  // 跟遊戲公佈欄同一個判斷
+  const today = "2026-11-17";
+  const inGame = G.visibleNotices(null, today).filter(n => G.NOTICES.includes(n)).map(n => n.id).sort();
+  const inDc = G.NOTICES.filter(n => G.noticeLive(n, today)).map(n => n.id).sort();
+  assert.deepStrictEqual(inDc, inGame);
+  assert.ok(!G.dcNewsList(today, 10).some(n => !G.noticeLive(n, today)));
+  assert.ok(G.dcNewsText(today, 10).length < 2000);
+  assert.ok(!/@|<|\*\*/.test(G.dcNewsText("2026-11-09", 10)));
+  assert.ok(!/理智|怪癖|靈感/.test(G.dcNewsText("2026-11-09", 10)), "頻道裡不放理智、怪癖、靈感");
+  assert.ok(G.NOTICES.some(n => /怪癖/.test(n.title)) && !G.dcNewsList("2026-11-09", 10).some(n => /怪癖/.test(n.title)));
 });
 
 T("誰在線：只列暱稱；沒人就說沒人", G => {

@@ -64,7 +64,7 @@ async function bot(body, o = {}) {
 function interaction(text, discordId, guild = GUILD, name = "測試員") {
   const m = /^\/?(\S+)(?:\s+(.*))?$/.exec(text);
   const data = { name: m[1] };
-  if (m[2]) data.options = [{ name: "碼", type: 3, value: m[2] }];
+  if (m[2]) data.options = [m[1] === "pepe-更新" ? { name: "幾則", type: 4, value: Number(m[2]) } : { name: m[1] === "pepe-21點" ? "下注" : "碼", type: m[1] === "pepe-21點" ? 4 : 3, value: m[1] === "pepe-21點" ? Number(m[2]) : m[2] }];
   return { type: 2, id: randId(), token: "tk", guild_id: guild, member: { user: { id: discordId, username: name, global_name: name } }, data };
 }
 const said = [];
@@ -155,7 +155,22 @@ async function all() {
   });
   await check("沒綁定的人打 /pepe-解除綁定：說沒有綁定", async () => { has((await say("/pepe-解除綁定", D.x)).text, "還沒有綁定"); });
   await check("沒綁定的人可以看公開的（莊家、今日活動、排行榜、誰在線）", async () => {
-    for (const c of ["/pepe-莊家", "/pepe-今日活動", "/pepe-排行榜", "/pepe-誰在線"]) { const r = await say(c, D.x); assert.strictEqual(r.flags, 0, c); assert.ok(r.text.length > 0, c); }
+    for (const c of ["/pepe-莊家", "/pepe-今日活動", "/pepe-排行榜", "/pepe-誰在線", "/pepe-更新"]) { const r = await say(c, D.x); assert.strictEqual(r.flags, 0, c); assert.ok(r.text.length > 0, c); }
+  });
+  await check("/pepe-今日活動：今天有館訊（打包的 DAY_DATA）就列「今日館訊」；沒有現實消息就沒有那一塊（不編）", async () => {
+    const dd = JSON.parse(/DAY_DATA = (\{.*\});/.exec(require("fs").readFileSync(require("path").join(__dirname, "..", "functions", "shared", "day_data.js"), "utf8"))[1]);
+    const r = await say("/pepe-今日活動", D.x), info = dd[day];
+    assert.strictEqual(r.flags, 0);
+    if (info) { has(r.text, "今日館訊", info.title); if (!info.real.length) hasNot(r.text, "現實世界"); else has(r.text, "今天的現實世界", info.real[0].slice(0, 6)); }
+    else hasNot(r.text, "現實世界");
+    hasNot(r.text, "@everyone");
+  });
+  await check("/pepe-更新：預設 5 則、有日期標題和遊戲連結；給 2 就 2 則；全頻道看得到", async () => {
+    const r = await say("/pepe-更新", D.x); assert.strictEqual(r.flags, 0);
+    has(r.text, "最近的館方更新", "pepe-museum.web.app"); assert.strictEqual(r.text.split("\n").filter(l => l.startsWith("・")).length, 5);
+    const r2 = await say("/pepe-更新 2", D.x); assert.strictEqual(r2.text.split("\n").filter(l => l.startsWith("・")).length, 2);
+    assert.ok(r.text.length < 2000);
+    const r10 = await say("/pepe-更新 10", D.x); assert.strictEqual(r10.text.split("\n").filter(l => l.startsWith("・")).length, 10); hasNot(r10.text, "怪癖"); assert.ok(r10.text.length < 2000);
   });
 
   // ---- 綁定：碼 ----
@@ -353,9 +368,11 @@ async function all() {
   });
 
   // ---- 沒設定 ----
-  await check("沒設定（拿掉模擬器的測試設定）回 503，不影響別的 Function", async () => {
-    await fsDel("discordTest/config"); const r = await bot({ type: 1 }); assert.strictEqual(r.status, 503);
-    assert.ok((await alice.call("discordLinkState")).result.configured === false);
+  await check("拿掉模擬器的測試設定：改用 repo 裡的正式常數（Application ID 等 11-09 已填），測試金鑰簽的請求回 401；常數若是空的則回 503；不影響別的 Function", async () => {
+    await fsDel("discordTest/config"); const r = await bot({ type: 1 });
+    const filled = /publicKey: "[0-9a-f]{64}"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "functions", "discord_config.js"), "utf8"));
+    assert.strictEqual(r.status, filled ? 401 : 503);
+    assert.ok((await alice.call("discordLinkState")).result.configured === filled);
     assert.ok((await alice.call("casino", { act: "peek" })).ok, "賭場照常");
     await fsSet("discordTest/config", { publicKey: PUB_HEX, guildId: GUILD });
   });

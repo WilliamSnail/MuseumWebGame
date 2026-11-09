@@ -311,6 +311,10 @@ export const NUM = {
     joinCodeMin: 30,        // 自己加入的連結幾分鐘內有效、只能用一次
     joinPerDay: 5,          // 壹天（05:00 換日）最多幾人靠 Discord 自己加入
     skewSec: 300,           // 簽名的時間戳跟伺服器差超過幾秒就拒絕
+    newsDefault: 5,         // /pepe-更新 預設列幾則
+    newsMax: 10,            // /pepe-更新 最多列幾則
+    realMax: 3,             // /pepe-今日活動 的「今天的現實世界」最多列幾則
+    realChars: 60,          // 每則最多幾個字（檢查程式限 50，這裡是 Functions 這邊的保險）
   },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------

@@ -16,7 +16,7 @@ const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 // 字數（畫面上看得到的字；書頁不算換行）
 const LIMITS = { weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
-  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40 };
+  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3 };
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
 // 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
 const BANNED = [
@@ -280,6 +280,15 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         if (!isObj(x) || !(ctx.weeklyIds || new Set()).has(x.task)) { E(w, "task 要是這週的每週任務 id"); return; }
         text(w + ".words", x.words, LIMITS.weeklyWords);
       });
+    }
+    if (d.real !== undefined) { // 今天的現實世界（只給 Discord 的 /pepe-今日活動，不進遊戲；content/排程說明.md 一之六）
+      if (o.spare) E(where + ".real", "備用的一天不能寫 real（那不是真的某一天）");
+      else if (!Array.isArray(d.real) || d.real.length > LIMITS.realMax) E(where + ".real", `要是陣列，最多 ${LIMITS.realMax} 則`);
+      else {
+        d.real.forEach((s, i) => text(`${where}.real[${i}]`, s, LIMITS.real));
+        if (new Set(d.real).size !== d.real.length) E(where + ".real", "有重複的");
+        d.real.forEach((s, i) => { if (typeof s === "string" && /[@<>`*_~|\\]|:\/\//.test(s)) E(`${where}.real[${i}]`, "不要有連結、@、markdown 符號"); });
+      }
     }
     rewardOk(where + ".dailyBonus", d.dailyBonus);
     if (!isObj(d.show)) E(where, "要有今日特展（show）");

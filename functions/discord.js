@@ -18,8 +18,9 @@ import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_dat
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
+import { DAY_DATA } from "./shared/day_data.js";
 import { NUM } from "./shared/config.js";
-import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT } from "./shared/discord.js";
+import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "./shared/discord.js";
 import { taipeiDay } from "./shared/logic.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組
@@ -76,7 +77,11 @@ async function cmdBoard() {
   return dcReply(dcBoardText(s.exists ? s.data() : null), false);
 }
 async function cmdToday(p, now) {
-  return dcReply(dcTodayText(taipeiDay(now), eventsFromWeeks(EVENT_WEEKS)), false);
+  const day = taipeiDay(now); // 遊戲的今天（台灣 05:00 換日），跟今日館訊用同一天
+  return dcReply(dcTodayText(day, eventsFromWeeks(EVENT_WEEKS), DAY_DATA[day] || null), false);
+}
+async function cmdNews(p, now) {
+  return dcReply(dcNewsText(taipeiDay(now), p.opts[DC_NEWS_OPT]), false);
 }
 // 在線的人：照遊戲裡的規則——隱身的人狀態本來就寫成離線；這裡再用 members 的 invisible 擋一次，不比遊戲露得多。只列暱稱
 async function cmdOnline() {
@@ -88,7 +93,7 @@ async function cmdOnline() {
   const nicks = docs.filter(d => d.exists && d.data().invisible !== true).map(d => d.data().nick);
   return dcReply(dcOnlineText(nicks), false);
 }
-const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline };
+const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline, news: cmdNews };
 
 export const discordBot = onRequest({ cors: false }, async (req, res) => {
   const t0 = Date.now();

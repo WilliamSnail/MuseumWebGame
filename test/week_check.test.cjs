@@ -63,6 +63,22 @@ T("字數、畫面用「壹」、禁用字、英文字母", () => {
   expectErr(c => { c.files["2026-W47/d2.json"].show.works[0].lines[0] = "地震的時候牠躲起來了。"; }, /禁用字「地震」/);
   expectErr(c => { c.files["2026-W47/d1.json"].books[0].pages[1] = "他寫下[[壹個字|explode]]。\n然後走了。"; }, /動作「explode」不存在/);
 });
+T("今天的現實世界 real：最多 3 則、50 字、照新聞的禁用字；備用的一天不能寫", () => {
+  const good = regular(); good.files["2026-W47/d2.json"].real = ["台北市立美術館有壹個光影展。", "宜蘭海邊有壹場風箏節。"];
+  assert.deepStrictEqual(run(good).errors, []);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = "台北有展覽"; }, /real.*陣列/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["壹", "貳", "參", "肆"]; }, /最多 3 則/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["壹".repeat(51)]; }, /太長了/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = [""]; }, /要有字/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = [3]; }, /要有字/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["總統出席了開幕。"]; }, /禁用字「總統」/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["現場發生車禍。"]; }, /禁用字「車禍」/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["在 Taipei 有展覽。"]; }, /英文字母/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["今天有一場展覽。"]; }, /用「壹」/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["展覽網址 http://x.tw"]; }, /英文字母|連結/);
+  expectErr(c => { c.files["2026-W47/d2.json"].real = ["壹樣的", "壹樣的"]; }, /重複/);
+  expectErr(c => { c.files["備用/一天/插曲1.json"].real = ["台北有展覽。"]; }, /備用的一天不能寫 real/);
+});
 T("任務：種類要存在、每日任務做得完、不放一定要掉理智的", () => {
   expectErr(c => { c.files["2026-W47/d1.json"].daily[0].kind = "visitFriend"; }, /沒有「visitFriend」這種任務/);
   expectErr(c => { c.files["2026-W47/d1.json"].daily[0] = { id: "d1a", kind: "view", exhibit: "strange", reward: { insp: 2 } }; }, /一定要掉理智/);
