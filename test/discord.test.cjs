@@ -1,6 +1,6 @@
-// tools/discord_post.cjs：只發新的一天、訊息的樣子、不會 @ 人、沒放金鑰就跳過（不會真的連 Discord）
+// tools/discord_post.cjs：訊息的樣子、不會 @ 人、沒放金鑰就跳過（不會真的連 Discord）。什麼時候發看 test/announce.test.cjs
 const assert = require("assert");
-const { newDays, dayMessage, send, MAX } = require("../tools/discord_post.cjs");
+const { dayMessage, eventPost, shared, send, MAX } = require("../tools/discord_post.cjs");
 
 let pass = 0, fail = 0;
 const tests = [];
@@ -8,10 +8,12 @@ const T = (name, fn) => tests.push([name, fn]);
 
 const w = { title: "換季的失物招領", summary: ["立冬剛過。", "多了壹個招領箱。"] };
 
-T("只認這週的 dN.json；備用週、week.json、靈感來源不算", () => {
-  const out = newDays(["content/weeks/2026-W46/d3.json", "content/weeks/2026-W46/week.json", "content/weeks/2026-W46/靈感來源.md", "content/weeks/備用/常青1/d1.json", "content/weeks/備用/一天/插曲1.json"]);
-  assert.deepStrictEqual(out, [{ week: "2026-W46", n: 3 }]);
-  assert.deepStrictEqual(newDays([]), []);
+T("活動開跑的訊息：名字、時間、加成、入館連結（只有壹個）；不寫「現在開始了」（可能早幾分鐘發）", () => {
+  const ev = shared().cleanEvents([{ id: "x", kind: "coopBoost", date: "2026-11-11", from: "20:00", to: "22:00", title: "加班夜", words: "招領箱前排起壹串人。" }], "2026-11-09", "2026-W46")[0];
+  const m = eventPost(ev);
+  for (const s of ["限時活動開跑", "〈加班夜〉", "今晚 20:00～22:00", "招領箱前排起壹串人。", "×1.5", "錯過了也不會少什麼"]) assert.ok(m.includes(s), s);
+  assert.strictEqual(m.split("pepe-museum.web.app").length, 2);
+  assert.ok(!m.includes("現在開始"));
 });
 T("週一：標題、不劇透的大綱、今天那一行、網址", () => {
   const m = dayMessage(w, { board: "書架多了 2 本書。" }, 1, null);

@@ -223,6 +223,7 @@ export const NUM = {
     earliest: "05:00",      // 活動最早幾點開始（05:00 換日，不跨日）
     minMin: 30, maxMin: 360, // 一場最短、最長幾分鐘
     titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/week_check.cjs 檢查）
+    noticeMinLeft: 5,       // 開跑的通知：活動剩不到這麼多分鐘就不跳了（快結束才打開遊戲，大廳那條看得到就好；決定 0045）
   },
   // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
   show: {
@@ -256,6 +257,9 @@ export const NUM = {
       { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
       { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
     ],
+    // 地下探險撿籌碼（決定 0047，翊文 11-09：「讓地下探險劇情也有機會可以拿到一點點籌碼」）。先照這樣，等翊文：
+    // 走完壹個房間擲壹次，chance 的機率撿到 min～max（每 step 壹級）；壹天最多撿 perDay 次。對照：最小的注 100、壹杯麥茶 1,750、免費大禮包最小 10,000、換壹點靈感 200,000，壹天最多也只有 6,000
+    cellarFind: { chance: 0.25, min: 500, max: 2000, step: 100, perDay: 3 },
     foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
