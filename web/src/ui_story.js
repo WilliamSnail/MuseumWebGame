@@ -532,7 +532,7 @@ async function focusWork(W, w) {
     info.replaceChildren(placard([w.title].concat(w.lines || []), { cls: "big" }), gains);
     if (v.insp) { gain(`+${v.insp} 靈感`, "good"); snd("coin"); }
     else if (v.first && v.capped) gain(`今日特展的靈感今天拿完了（壹天 ${NUM.story.showInspDay}）`, "");
-    if (v.cured.length) { v.cured.forEach(() => gain("治好了怪癖", "good")); noteCured(v.cured); }
+    if (v.cured.length) { v.cured.filter(c => !c.step).forEach(() => gain("治好了怪癖", "good")); noteCured(v.cured); }
     updateStatus(); persist();
     if (v.san) {
       snd("eerie");

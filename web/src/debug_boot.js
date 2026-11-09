@@ -36,7 +36,7 @@ import { pickJob } from "./ui_screens3.js";
     dailyCommissions(P, P.day.date)[1].done = true;
     P.insp = 37; P.mood = 55; P.sanity = arg === "lowsan" ? 28 : 64; P.myth = 3;
     if (arg === "bout") P.bout = { i: 3, left: 4 };
-    if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 18 * 60000 + 5000, task: "calm" }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 7 * 60000 + 5000, task: "hug" }]; // 怪癖（11-09，決定 0027）
+    if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 5 * 86400000 + 5000, task: "calm", done: [] }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 2 * 86400000 + 5000, task: "hug", done: [P.day.date] }]; // 怪癖（決定 0046）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
     setRng(null);
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }

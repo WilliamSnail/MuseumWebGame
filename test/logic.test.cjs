@@ -1116,7 +1116,7 @@ T("壹鍵 deliverAll：同一隻可以交好幾張；賞金、理智加總；換
 });
 T("壹鍵 交件也算「交壹張委託」，治好怪癖；自由模式也能交（不給靈感）", () => {
   const P = P3();
-  P.quirks.push({ type: "phobia", cat: "顏色", opt: "黑", task: "deliver" }); // 11-09（決定 0027）：不用再標「治療委託」，治法是交委託的都算
+  P.quirks.push({ type: "phobia", cat: "顏色", opt: "黑", task: "deliver", done: ["2000-01-01"] }); // 決定 0027：不用再標「治療委託」，治法是交委託的都算；決定 0046：要兩個遊戲日，這裡已經有 1 天了
   board(P, [{ 心情: "開心" }]);
   mk(P, {}, 60);
   const r = G.deliverAll(P, G.autoDeliverables(P));
@@ -1145,11 +1145,17 @@ T("不敢碰：說得出是哪個怪癖、還是發作", () => {
   assert.strictEqual(G.blockedWhy(P, "姿勢", "站著"), null);
 });
 
-// ---------- 怪癖：做完一件事就好，不然 NUM.quirkMinutes 分鐘後自己消失（翊文 11-08，決定 0027；原本是連續 3 天抱抱枕） ----------
-const T0 = Date.UTC(2026, 10, 9, 3, 0, 0); // 固定的「現在」（G.setNowClock）
-const MIN = 60000;
+// ---------- 怪癖：在 NUM.quirkTaskDays 個不同的遊戲日做到治法那件事，不然 NUM.quirkDays 天後自己消失（決定 0046；0027 是做完一件事、20 分鐘） ----------
+const T0 = Date.UTC(2026, 10, 9, 3, 0, 0); // 固定的「現在」＝台灣 2026-11-09 11:00（遊戲日 2026-11-09）（G.setNowClock）
+const DAYMS = 86400000;
+const D1 = "2026-11-09", D2 = "2026-11-10";
 const withPillow = P => { const r = mk(P, {}); const key = G.pillowKeyOf({ 尺寸: "標準", 材質: "棉布", 填充: "剛剛好" }, "p:" + r.key); P.pillows[key] = 1; return key; };
-T("怪癖 得到時有一件治法（只抽現在做得到的）和 NUM.quirkMinutes 分鐘的期限", () => {
+const qk = (task, o = {}) => Object.assign({ type: "phobia", cat: "帽子", opt: null, since: D1, until: T0 + G.NUM.quirkDays * DAYMS, task, done: [] }, o);
+T("怪癖 數字：先照 7 天、2 個遊戲日、最多 3 個", () => {
+  assert.strictEqual(G.NUM.quirkDays, 7); assert.strictEqual(G.NUM.quirkTaskDays, 2); assert.strictEqual(G.NUM.quirkMax, 3);
+  assert.strictEqual(G.NUM.quirkMinutes, undefined, "舊的設定拿掉了");
+});
+T("怪癖 得到時有一件治法（只抽現在做得到的）、7 天的期限、0 個日子的進度", () => {
   G.setNowClock(() => T0);
   const P = fresh(); P.insp = 0;
   same(G.QUIRK_TASKS.filter(k => G.quirkTaskOk(P, k)), ["calm"], "沒有抱枕、靈感不夠做一隻：只剩看不可怕的畫");
@@ -1157,10 +1163,13 @@ T("怪癖 得到時有一件治法（只抽現在做得到的）和 NUM.quirkMin
   const g = G.gainQuirk(P);
   G.setRng(null);
   assert.strictEqual(g.quirk.type, "phobia"); assert.strictEqual(g.quirk.cat, "帽子");
-  assert.strictEqual(g.quirk.until, T0 + G.NUM.quirkMinutes * MIN);
+  assert.strictEqual(g.quirk.until, T0 + G.NUM.quirkDays * DAYMS);
   assert.strictEqual(g.quirk.task, "calm", "只有這件做得到");
-  assert.strictEqual(G.quirkMinsLeft(g.quirk), G.NUM.quirkMinutes);
-  assert.strictEqual(G.quirkMinsLeft(g.quirk, T0 + 30 * 1000), G.NUM.quirkMinutes, "還剩 19 分半寫 20 分鐘（無條件進位）");
+  same(g.quirk.done, [], "一天都還沒做");
+  assert.strictEqual(G.quirkNeedDays(g.quirk), G.NUM.quirkTaskDays); assert.ok(!G.quirkDoneToday(g.quirk));
+  assert.strictEqual(G.quirkDaysLeft(g.quirk), G.NUM.quirkDays);
+  assert.strictEqual(G.quirkDaysLeft(g.quirk, T0 + 3600000), G.NUM.quirkDays, "過了 1 小時還是寫 7 天（無條件進位）");
+  assert.strictEqual(G.quirkDaysLeft(g.quirk, T0 + DAYMS + 1), G.NUM.quirkDays - 1);
   // 有抱枕、委託交得出去：三件都做得到
   withPillow(P); board(P, [{ 心情: "開心" }]);
   same(G.QUIRK_TASKS.filter(k => G.quirkTaskOk(P, k)), ["hug", "deliver", "calm"]);
@@ -1179,7 +1188,7 @@ T("怪癖 得到時有一件治法（只抽現在做得到的）和 NUM.quirkMin
   // 跟別的怪癖不一樣的優先
   P.day.hugs = {};
   P.daily.list.forEach(c => { c.done = false; });
-  P.quirks = [{ type: "mania", cat: "顏色", opt: "紅", until: T0 + MIN, task: "hug" }];
+  P.quirks = [qk("hug", { type: "mania", cat: "顏色", opt: "紅" })];
   G.setRng(seq(0)); assert.strictEqual(G.pickQuirkTask(P), "deliver");
   G.setRng(seq(0.99)); assert.strictEqual(G.pickQuirkTask(P), "calm");
   G.setRng(null);
@@ -1187,34 +1196,140 @@ T("怪癖 得到時有一件治法（只抽現在做得到的）和 NUM.quirkMin
   assert.strictEqual(G.pickQuirkTask(fresh("free")), null);
   G.setNowClock(null);
 });
-T("怪癖 做完治法就治好：抱抱枕、交委託、看不可怕的畫；做別的不算", () => {
+T("怪癖 同時最多 NUM.quirkMax 個，滿了不再給（留一週不會越疊越多）；過期的不佔位子", () => {
   G.setNowClock(() => T0);
-  const P = P3(); const key = withPillow(P);
-  const q = (task, o = {}) => Object.assign({ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: T0 + 20 * MIN, task }, o);
-  // 抱抱枕
-  P.quirks = [q("hug"), q("deliver", { opt: "皇冠" })];
-  const h = G.hug(P, key);
-  assert.strictEqual(h.cured.length, 1); assert.strictEqual(h.cured[0].quirk.task, "hug");
-  assert.ok(h.cured[0].to > h.cured[0].from, "可能性變回來");
+  const P = fresh(); unlockAll(P);
+  P.quirks = [qk("calm", { cat: "帽子" }), qk("calm", { cat: "姿勢" }), qk("calm", { type: "mania", cat: "顏色", opt: "紅" })];
+  assert.strictEqual(P.quirks.length, G.NUM.quirkMax);
+  G.setRng(seq(0.1, 0, 0)); assert.strictEqual(G.gainQuirk(P), null, "已經 3 個"); G.setRng(null);
+  assert.strictEqual(P.quirks.length, G.NUM.quirkMax);
+  P.quirks[0].until = T0 - 1; // 1 個時間到了
+  G.setRng(seq(0.1, 0, 0)); const g = G.gainQuirk(P); G.setRng(null);
+  assert.ok(g, "時間到的不算在裡面");
+  // 理智掉太多的那一天額度照樣用掉（不會下一次再補給）
+  const R = fresh(); R.day.startSan = 40; R.quirks = P.quirks.slice(1).concat([qk("calm", { cat: "顏色", opt: "黃" })]);
+  const ev = G.applySan(R, 9, "strange"); assert.ok(ev.indef); assert.ok(R.day.quirkGiven);
+  G.setNowClock(null);
+});
+T("怪癖 兩個不同的遊戲日才治好：同一天做再多次只算一天，不用連續", () => {
+  G.setNowClock(() => T0);
+  const P = P3(); const key = withPillow(P); // 另外手動加第二個抱枕
+  P.pillows["p:另一個"] = 1;
+  P.quirks = [qk("hug"), qk("deliver", { opt: "皇冠" })];
+  // 第 1 天：抱 → 算 1 天，沒好
+  const h1 = G.hug(P, key);
+  assert.strictEqual(h1.cured.length, 1); assert.strictEqual(h1.cured[0].step, true);
+  assert.strictEqual(h1.cured[0].done, 1); assert.strictEqual(h1.cured[0].need, 1);
+  same(P.quirks[0].done, [D1]); assert.ok(G.quirkDoneToday(P.quirks[0])); assert.strictEqual(G.quirkNeedDays(P.quirks[0]), 1);
+  assert.strictEqual(P.quirks.length, 2, "還沒好");
+  // 同一天再抱別的抱枕：不再算
+  const h2 = G.hug(P, "p:另一個");
+  assert.strictEqual(h2.cured.length, 0, "同一天只算一天"); same(P.quirks[0].done, [D1]); assert.strictEqual(P.quirks.length, 2);
+  // 同一天抱的次數再多、治法是別件的怪癖也沒動
+  same(P.quirks[1].done, []);
+  // 隔 3 天（不用連續）：再抱 → 治好
+  G.setNowClock(() => T0 + 3 * DAYMS);
+  P.day.hugs = {};
+  const h3 = G.hug(P, key);
+  assert.strictEqual(h3.cured.length, 1); assert.ok(!h3.cured[0].step); assert.strictEqual(h3.cured[0].quirk.task, "hug");
+  assert.ok(h3.cured[0].to > h3.cured[0].from, "可能性變回來");
   same(P.quirks.map(x => x.task), ["deliver"], "治法不是抱抱枕的留著");
-  // 看畫：可怕的不算，不可怕的才算
-  P.quirks = [q("calm")];
-  assert.strictEqual(G.viewExhibit(P, G.exhibitById("strange")).cured.length, 0);
-  assert.strictEqual(P.quirks.length, 1);
-  assert.strictEqual(G.viewExhibit(P, G.exhibitById("portrait")).cured.length, 1);
-  assert.strictEqual(P.quirks.length, 0);
-  // 交委託：哪一張都可以（不用再標「治療委託」）
-  P.quirks = [q("deliver")];
-  board(P, [{ 心情: "開心" }]); mk(P, {}, 60);
+  G.setNowClock(null);
+});
+T("怪癖 看不可怕的畫、交委託也一樣要兩個遊戲日；可怕的畫不算；過期的不算", () => {
+  G.setNowClock(() => T0);
+  const P = P3(); withPillow(P);
+  P.quirks = [qk("calm")];
+  assert.strictEqual(G.viewExhibit(P, G.exhibitById("strange")).cured.length, 0, "可怕的畫不算");
+  same(P.quirks[0].done, []);
+  const v1 = G.viewExhibit(P, G.exhibitById("portrait"));
+  assert.strictEqual(v1.cured.length, 1); assert.strictEqual(v1.cured[0].step, true); assert.strictEqual(P.quirks.length, 1);
+  assert.strictEqual(G.viewExhibit(P, G.exhibitById("portrait")).cured.length, 0, "同一天再看不算");
+  G.setNowClock(() => T0 + DAYMS);
+  const v2 = G.viewExhibit(P, G.exhibitById("portrait"));
+  assert.strictEqual(v2.cured.length, 1); assert.ok(!v2.cured[0].step); assert.strictEqual(P.quirks.length, 0, "第二個遊戲日治好");
+  // 交委託：哪一張都可以
+  G.setNowClock(() => T0);
+  P.quirks = [qk("deliver")];
+  board(P, [{ 心情: "開心" }, { 心情: "開心" }]); mk(P, {}, 60);
   const plan = G.autoDeliverables(P);
   const d = G.deliver(P, plan[0].idx, plan[0].item);
-  assert.ok(d.ok); assert.strictEqual(d.cured.length, 1); assert.strictEqual(P.quirks.length, 0);
-  // 過期的不算治好（已經自己消失了）
-  P.quirks = [q("hug", { until: T0 - 1 })]; P.day.hugs = {};
-  assert.strictEqual(G.hug(P, key).cured.length, 0);
+  assert.ok(d.ok); assert.strictEqual(d.cured.length, 1); assert.strictEqual(d.cured[0].step, true); assert.strictEqual(P.quirks.length, 1);
+  G.setNowClock(() => T0 + DAYMS);
+  P.daily = null; board(P, [{ 心情: "開心" }]); mk(P, {}, 60);
+  const plan2 = G.autoDeliverables(P);
+  const d2 = G.deliver(P, plan2[0].idx, plan2[0].item);
+  assert.ok(d2.ok); assert.ok(!d2.cured[0].step); assert.strictEqual(P.quirks.length, 0);
+  // 過期的不算
+  P.quirks = [qk("hug", { until: T0 + DAYMS - 1 })]; P.day.hugs = {};
+  assert.strictEqual(G.hug(P, withPillow(P)).cured.length, 0);
   // 委託櫃台不再標「治療委託」
-  P.quirks = [q("deliver")]; P.daily = null;
+  P.quirks = [qk("deliver")]; P.daily = null;
   assert.ok(G.dailyCommissions(P).every(c => !("cure" in c)));
+  G.setNowClock(null);
+});
+T("怪癖 台灣 05:00 前後算不同的遊戲日（cureByTask 直接給時間）", () => {
+  const P = fresh();
+  const tw = (m, d, h, mi) => Date.UTC(2026, m - 1, d, h - 8, mi, 0); // 台灣時間 → 毫秒
+  P.quirks = [qk("hug", { until: tw(12, 31, 0, 0) })];
+  // 11-10 04:58 和 04:59 都還是 11-09
+  assert.strictEqual(G.cureByTask(P, "hug", tw(11, 10, 4, 58)).length, 1);
+  assert.strictEqual(G.cureByTask(P, "hug", tw(11, 10, 4, 59)).length, 0, "同一個遊戲日");
+  same(P.quirks[0].done, ["2026-11-09"]);
+  // 05:00 整換日 → 第二天 → 治好
+  const r = G.cureByTask(P, "hug", tw(11, 10, 5, 0));
+  assert.strictEqual(r.length, 1); assert.ok(!r[0].step); assert.strictEqual(P.quirks.length, 0);
+  // 反過來：00:30（還是前一天）和隔天 05:01 也是兩天
+  P.quirks = [qk("hug", { until: tw(12, 31, 0, 0) })];
+  G.cureByTask(P, "hug", tw(11, 12, 0, 30)); same(P.quirks[0].done, ["2026-11-11"]);
+  assert.ok(!G.cureByTask(P, "hug", tw(11, 12, 5, 1))[0].step);
+});
+T("怪癖 7 天整：差 1 毫秒還在擋，到了就不擋；不在場的參觀者時間照走", () => {
+  let now = T0; G.setNowClock(() => now);
+  const P = fresh(); unlockAll(P);
+  const other = G.allOpts("帽子").find(n => n !== G.baseOpts("帽子")[0]);
+  const span = G.NUM.quirkDays * DAYMS;
+  P.quirks = [qk("calm")];
+  now = T0 + span - 1;
+  assert.ok(G.isBlocked(P, "帽子", other), "還差 1 毫秒"); assert.strictEqual(G.quirkDaysLeft(P.quirks[0]), 1);
+  assert.strictEqual(G.expireQuirks(P).length, 0);
+  now = T0 + span;
+  assert.ok(!G.isBlocked(P, "帽子", other), "7 天整就不擋了（還沒 expireQuirks 也一樣）");
+  assert.strictEqual(G.quirkDaysLeft(P.quirks[0]), 0); assert.strictEqual(G.activeQuirks(P).length, 0);
+  assert.strictEqual(G.expireQuirks(P).length, 1); assert.strictEqual(P.quirks.length, 0);
+  same(G.expireQuirks(P), [], "拿過了不會再報");
+  // 不在場的參觀者：換人、關遊戲都不停表
+  now = T0;
+  const A = fresh();
+  const r = G.addVisitor(A, "阿明", 1); assert.ok(r);
+  A.quirks = [qk("hug", { type: "mania", cat: "顏色", opt: "紅" })]; // 現在在場的是第 2 位；給牠一個怪癖
+  const vid2 = A.vid;
+  assert.ok(G.switchVisitor(A, A.visitors[0].vid), "換回第 1 位，第 2 位收起來");
+  assert.strictEqual(A.visitors.find(v => v.vid === vid2).quirks[0].until, T0 + span, "收起來的 until 沒變");
+  now = T0 + 6 * DAYMS; assert.strictEqual(G.activeQuirks(A.visitors.find(v => v.vid === vid2)).length, 1, "第 6 天還在");
+  now = T0 + span; assert.strictEqual(G.activeQuirks(A.visitors.find(v => v.vid === vid2)).length, 0, "不在場，時間到也過期了");
+  assert.ok(G.switchVisitor(A, vid2)); assert.strictEqual(G.expireQuirks(A).length, 1, "換回來就拿掉"); assert.strictEqual(A.quirks.length, 0);
+  G.setNowClock(null);
+});
+T("怪癖 做不到的治法：換日時改抽一件做得到的（做過的日子留著）；沒有治法的補上", () => {
+  G.setNowClock(() => T0);
+  const P = fresh(); P.insp = 0; // 沒有抱枕、沒有靈感做一隻、也沒有收藏：只剩看畫
+  P.quirks = [qk("deliver", { done: [D1] }), qk("hug", { cat: "姿勢" }), qk(null, { cat: "顏色", opt: "黑" }), qk("calm", { cat: "顏色", opt: "黃" })];
+  same(G.retaskQuirks(P).map(r => [r.from, r.to]), [["deliver", "calm"], ["hug", "calm"], [null, "calm"]], "做得到的不動");
+  same(P.quirks.map(q => q.task), ["calm", "calm", "calm", "calm"]);
+  same(P.quirks[0].done, [D1], "做過的日子不重算");
+  same(G.retaskQuirks(P), [], "再看一次沒有要改的");
+  // 自由模式、沒有怪癖：不做事
+  same(G.retaskQuirks(fresh("free")), []); same(G.retaskQuirks(fresh()), []);
+  // 換日（ensureDay）會叫它
+  const Q = fresh(); Q.insp = 0; Q.quirks = [qk("hug")];
+  const d = G.ensureDay(Q, "2026-11-10");
+  assert.strictEqual(d.retasked.length, 1); assert.strictEqual(Q.quirks[0].task, "calm");
+  assert.strictEqual(G.ensureDay(Q, "2026-11-10"), null, "同一天不再看");
+  // 做得到的不換：有抱枕
+  const R = fresh(); R.insp = 0; withPillow(R); R.quirks = [qk("hug")];
+  assert.strictEqual(G.ensureDay(R, "2026-11-10").retasked.length, 0);
+  assert.strictEqual(R.quirks[0].task, "hug");
   G.setNowClock(null);
 });
 T("怪癖 時間到自己消失：isBlocked、blockedWhy、可能性、makeCost 都不算了；expireQuirks 拿掉並回報", () => {
@@ -1222,52 +1337,51 @@ T("怪癖 時間到自己消失：isBlocked、blockedWhy、可能性、makeCost 
   const P = fresh(); unlockAll(P);
   const other = G.allOpts("帽子").find(n => n !== G.baseOpts("帽子")[0]);
   const base = { 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" };
-  P.quirks = [{ type: "phobia", cat: "帽子", opt: null, until: T0 + 20 * MIN, task: "calm" }, { type: "mania", cat: "顏色", opt: "綠", until: T0 + 25 * MIN, task: "hug" }];
+  P.quirks = [qk("calm", { until: T0 + 5 * DAYMS }), qk("hug", { type: "mania", cat: "顏色", opt: "綠", until: T0 + 6 * DAYMS })];
   assert.ok(G.isBlocked(P, "帽子", other)); assert.strictEqual(G.blockedWhy(P, "帽子", other).kind, "quirk");
   assert.strictEqual(G.possibilities(P), G.BASE_TOTAL / 4);
   assert.strictEqual(G.makeCost(P, base), G.NUM.costPepe + 1);
-  now = T0 + 20 * MIN - 1;
-  assert.ok(G.isBlocked(P, "帽子", other), "還差 1 毫秒");
-  assert.strictEqual(G.quirkMinsLeft(P.quirks[0]), 1);
-  now = T0 + 20 * MIN;
+  now = T0 + 5 * DAYMS;
   assert.ok(!G.isBlocked(P, "帽子", other), "時間到就不擋了（還沒 expireQuirks 也一樣）");
   assert.strictEqual(G.blockedWhy(P, "帽子", other), null);
   assert.strictEqual(G.possibilities(P), G.BASE_TOTAL);
-  assert.strictEqual(G.quirkMinsLeft(P.quirks[0]), 0);
   assert.strictEqual(G.activeQuirks(P).length, 1);
-  assert.strictEqual(G.makeCost(P, base), G.NUM.costPepe + 1, "狂熱還有 5 分鐘");
+  assert.strictEqual(G.makeCost(P, base), G.NUM.costPepe + 1, "狂熱還有 1 天");
   const gone = G.expireQuirks(P);
   assert.strictEqual(gone.length, 1); assert.strictEqual(gone[0].quirk.type, "phobia");
   assert.strictEqual(P.quirks.length, 1);
-  same(G.expireQuirks(P), [], "拿過了不會再報");
-  now = T0 + 25 * MIN;
+  now = T0 + 6 * DAYMS;
   assert.strictEqual(G.makeCost(P, base), G.NUM.costPepe);
   assert.strictEqual(G.expireQuirks(P).length, 1); assert.strictEqual(P.quirks.length, 0);
   // 過期的不佔位子：同一個怪癖可以再得到
   const R = fresh();
-  R.quirks = [{ type: "phobia", cat: "帽子", opt: null, until: now - 1, task: "calm" }];
+  R.quirks = [qk("calm", { until: now - 1 })];
   G.setRng(seq(0.1, 0, 0)); const g = G.gainQuirk(R); G.setRng(null);
-  assert.ok(g); assert.strictEqual(g.quirk.cat, "帽子"); assert.strictEqual(g.quirk.opt, null); assert.strictEqual(g.quirk.until, now + 20 * MIN);
+  assert.ok(g); assert.strictEqual(g.quirk.cat, "帽子"); assert.strictEqual(g.quirk.opt, null); assert.strictEqual(g.quirk.until, now + G.NUM.quirkDays * DAYMS);
   G.setNowClock(null);
 });
-T("存檔：舊存檔的怪癖補 until（從載入那一刻起算）和 task；不在場的參觀者也補；新的格式讀回來一字不差", () => {
+T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起算 7 天、有 until 的不延長；不在場的參觀者也補；讀回來一字不差", () => {
   G.setNowClock(() => T0);
-  const span = G.NUM.quirkMinutes * MIN;
+  const span = G.NUM.quirkDays * DAYMS;
   const old = G.newProfile("challenge");
   old.quirks = [
-    { type: "phobia", cat: "帽子", opt: null, since: "2026-11-01" },                     // 11-09 以前的：沒有 until、task
-    { type: "mania", cat: "顏色", opt: "紅", until: T0 + 10 * 60 * MIN, task: "hug" },   // 電腦時鐘被往回調過：太晚了，拉回來
-    { type: "phobia", cat: "姿勢", opt: "躺平", until: T0 + 5 * MIN, task: null },       // 新的格式：照舊（null ＝得到時都做不到）
-    { type: "phobia", cat: "顏色", opt: "黃", until: T0 + 5 * MIN, task: "跳舞" },       // 認不得的治法
+    { type: "phobia", cat: "帽子", opt: null, since: "2026-11-01" },                       // 11-09 以前的：沒有 until、task
+    { type: "mania", cat: "顏色", opt: "紅", until: T0 + 30 * DAYMS, task: "hug" },        // 電腦時鐘被往回調過：太晚了，拉回來
+    { type: "phobia", cat: "姿勢", opt: "躺平", until: T0 + 5 * 60000, task: null },        // 20 分鐘版的格式：until 照舊（不延長）、沒有 done
+    { type: "phobia", cat: "顏色", opt: "黃", until: T0 + 5 * 60000, task: "跳舞", done: ["2026-11-09", "2026-11-09", "壞的", 3, null] }, // 認不得的治法；進度只留不重複的日期
   ];
   old.visitors = [{ vid: "v2", visitor: 2, slot: 1, quirks: [{ type: "mania", cat: "帽子", opt: "皇冠" }] }];
   const save = G.newSave(); save.profiles.challenge = old;
   const P = G.migrateSave(JSON.parse(JSON.stringify(save))).profiles.challenge;
-  same(P.quirks.map(q => [q.until - T0, q.task]), [[span, "deliver"], [span, "hug"], [5 * MIN, null], [5 * MIN, "deliver"]]);
-  same(P.visitors[0].quirks.map(q => [q.until - T0, q.task]), [[span, "deliver"]], "不在場的參觀者");
-  assert.ok(G.isBlocked(P, "帽子", "棒球帽"), "剛讀進來還在擋（從載入起算 20 分鐘）");
+  same(P.quirks.map(q => [q.until - T0, q.task]), [[span, "deliver"], [span, "hug"], [5 * 60000, null], [5 * 60000, "deliver"]]);
+  same(P.quirks.map(q => q.done), [[], [], [], ["2026-11-09"]], "沒有進度就當 0 個日子");
+  same(P.visitors[0].quirks.map(q => [q.until - T0, q.task, q.done]), [[span, "deliver", []]], "不在場的參觀者");
+  assert.ok(G.isBlocked(P, "帽子", "棒球帽"), "剛讀進來還在擋（從載入起算 7 天）");
   const s2 = G.newSave(); s2.profiles.challenge = P;
   same(G.migrateSave(JSON.parse(JSON.stringify(s2))).profiles.challenge.quirks, JSON.parse(JSON.stringify(P.quirks)));
+  // 舊存檔的怪癖做一次事：算第 1 天（進度從 0 起）
+  P.quirks = [P.quirks[1]]; P.pillows["p:x"] = 1; G.ensureDay(P, D1); P.day.hugs = {};
+  const h = G.hug(P, "p:x"); assert.strictEqual(h.cured[0].step, true); assert.strictEqual(h.cured[0].done, 1);
   G.setNowClock(null);
 });
 

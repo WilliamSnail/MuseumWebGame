@@ -14,10 +14,11 @@ function sim(seed) {
   G.setRng(rng);
   const P = G.newProfile("challenge");
   let t = 0, day = 0, date = G.addDays("2026-11-08", 0);
-  G.setNowClock(() => t * 1000); // 「現在」照模擬的秒數走：怪癖 20 分鐘後自己消失（11-09，決定 0027）
+  let dayStart = 0;
+  G.setNowClock(() => Date.UTC(2026, 10, 8, 3, 0, 0) + day * 86400000 + (t - dayStart) * 1000); // 「現在」：模擬的每一天隔 24 小時，玩的那段照模擬的秒數走（怪癖 7 天、兩個遊戲日才算得對；決定 0046）
   G.ensureDay(P, date);
   const out = { t4: null, tAll: null, made: 0, legends: 0, epics: 0, perfects: 0, failed: 0, endings: 0, quirks: 0, minSan: 99, days: 1, unlockAt10: null };
-  let dayStart = 0, visitorClock = 0;
+  let visitorClock = 0;
   const spend = sec => {
     t += sec; visitorClock += sec;
     G.tickAction(P); // 每個動作讓瘋狂發作倒數

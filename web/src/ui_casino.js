@@ -9,10 +9,10 @@
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_FIND_TEXT, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
-import { todayStr } from "../../shared/logic.js";
+import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -443,5 +443,20 @@ async function askChips() {
   try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); }
   catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
 }
+// 走完地下的一個房間（單人：ui_screens3.js 的 resolveFlow；合作：ui_coop.js 的 playResult）：跟伺服器說「我走完這間了」（決定 0047）。
+// 有沒有、給多少、一天幾次都是伺服器的事，這裡只照回答跳通知、換狀態列的數字。不等它：離線、沒有 Functions、模擬器沒開，都安靜地算了，探險照走
+ADDONS.cellarFind = roomId => {
+  let ask;
+  try {
+    if (!roomId || !P || isFree(P) || !UI.net || !NET.loggedIn) return;
+    ask = NET.call("casino", { act: "cellarFind", room: String(roomId) });
+  } catch (e) { return; }
+  Promise.resolve(ask).then(r => {
+    if (!r || !r.ok || !(r.found > 0)) return;
+    if (typeof r.chips === "number") setChips(r.chips);
+    const lines = CAS_FIND_TEXT.lines;
+    note(`${lines[(r.t | 0) % lines.length]}（+${casNum(r.found)} 籌碼）`, "good");
+  }).catch(() => {});
+};
 NET.on("status", () => { if (NET.state === "online") askChips(); });
 NET.on("logout", () => { chipsAsked = false; setChips(null); });

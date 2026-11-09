@@ -32,7 +32,7 @@ npm run dev            # http://localhost:5173（開發時自動連模擬器）
 npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
-npm run ship|local|doc:new  # 省步驟的腳本：tools/README.md
+npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md
 npm run log:index      # 重產日誌索引（不要手改）
 node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
 ```

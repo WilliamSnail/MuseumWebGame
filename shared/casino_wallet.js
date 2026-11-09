@@ -27,7 +27,7 @@ export function casWalletNew() {
     v: 1, chips: NUM.casino.startChips,
     rel: { day: null, n: 0 }, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
-    st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, chipsMax: NUM.casino.startChips, net: 0 },
+    st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
 // 讀回來的錢包：補欄位、換日重算（今天的免費大禮包、救濟；這週的換小獎）。day 是台灣的今天

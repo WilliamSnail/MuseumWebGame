@@ -38,14 +38,14 @@ function eventNow(id) {
   }
   throw new Error(`找不到活動 ${id}`);
 }
-const portUp = port => new Promise(res => {
-  const q = http.get({ host: "127.0.0.1", port, path: "/", timeout: 1500 }, r => { r.resume(); res(true); });
+const portUp = (port, host = "127.0.0.1") => new Promise(res => {
+  const q = http.get({ host, port, path: "/", timeout: 1500 }, r => { r.resume(); res(true); });
   q.on("error", () => res(false));
   q.on("timeout", () => { q.destroy(); res(false); });
 });
-async function waitPort(port, ms) {
+async function waitPort(port, ms, host) {
   const end = Date.now() + ms;
-  while (Date.now() < end) { if (await portUp(port)) return true; await new Promise(r => setTimeout(r, 1500)); }
+  while (Date.now() < end) { if (await portUp(port, host)) return true; await new Promise(r => setTimeout(r, 1500)); }
   return false;
 }
 function killTree(pid) {
@@ -61,6 +61,8 @@ function stop() {
 }
 async function start() {
   if (fs.existsSync(PID_FILE)) { console.log(`第 ${SET} 套好像開著，先關：npm run local -- --set ${SET} --stop`); }
+  // 舊的還開著就停：不然新的開不起來，測到的會是別的分支的程式
+  if (await portUp(rtdbPort(SET)) || await portUp(PORT, "localhost")) throw new Error(`連接埠已經有人在用（第 ${SET} 套或 ${PORT}），測到的會是別的分支：先關掉`);
   const opts = { cwd: ROOT, shell: true, stdio: "ignore", detached: process.platform !== "win32", windowsHide: true };
   const emu = spawn("npm", ["run", "emulators"], Object.assign({}, opts, { env: Object.assign({}, process.env, { EMU_SET: String(SET) }) }));
   if (!(await waitPort(rtdbPort(SET), 180000))) { killTree(emu.pid); throw new Error("模擬器三分鐘內沒開起來"); }
@@ -68,7 +70,7 @@ async function start() {
   console.log((rules.stdout + rules.stderr).trim());
   const web = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], Object.assign({}, opts, { env: Object.assign({}, process.env, { VITE_EMU_SET: String(SET) }) }));
   fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid] }));
-  if (!(await waitPort(PORT, 60000))) throw new Error("網頁一分鐘內沒開起來");
+  if (!(await waitPort(PORT, 60000, "localhost"))) throw new Error("網頁一分鐘內沒開起來");
   console.log(`好了：http://localhost:${PORT}/?user=小明`);
   emu.unref(); web.unref();
 }

@@ -640,6 +640,7 @@ export async function resolveFlow(i, result, choices) {
     await showEvents(fx.events);
     actionTick(); updateStatus(); persist();
     if (ADDONS.cellarResolved) ADDONS.cellarResolved(res.room, result); // 走完這一間：可以留牌子（ui_trace.js）
+    if (ADDONS.cellarFind && !res.room.story && !res.room.trial) ADDONS.cellarFind(res.room.id); // 撿籌碼（決定 0047）：不等伺服器，失敗就算了
     result.append(h("div", { class: "rv-btns" }, btn("繼續", () => advanceFlow(result), "primary")));
     result.querySelector(".btn.primary").focus({ preventScroll: true });
   } finally {

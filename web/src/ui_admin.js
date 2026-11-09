@@ -94,7 +94,7 @@ function detailOf(r) {
     section("這週", [["簽到累計", `${num(w.signCount)} 次`], ["這週簽到", `${w.signWeek}／7${w.signedToday ? "（今天簽了）" : "（今天還沒簽）"}`], ["每週劇情任務", `做完 ${num(w.tasksDone)} 個`], ["週章", `${num(w.stamps)} 枚`], ["這週的書", `讀了 ${num(w.booksRead)} 本`]]),
     h("section", { class: "adm-sec" }, h("h4", null, "有沒有卡住"),
       h("dl", null, h("dt", null, "理智歸零"), h("dd", null, `${num(k.sanityZero)} 次`), k.dark ? [h("dt", null, "現在"), h("dd", null, "燈熄了（理智用完，還沒換人）")] : null),
-      k.quirks.length ? h("ul", { class: "adm-quirks" }, k.quirks.map(q => h("li", null, h("b", null, q.name), `　還剩 ${q.minsLeft} 分鐘`, q.task ? `，${q.task}就好` : ""))) : h("p", { class: "adm-none" }, "現在沒有怪癖。")),
+      k.quirks.length ? h("ul", { class: "adm-quirks" }, k.quirks.map(q => h("li", null, h("b", null, q.name), `　還剩 ${q.daysLeft} 天`, q.task ? `，${q.task}就好` : ""))) : h("p", { class: "adm-none" }, "現在沒有怪癖。")),
     when);
 }
 
