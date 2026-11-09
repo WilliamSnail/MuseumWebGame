@@ -27,12 +27,13 @@
 
 ```bash
 npm install            # 第一次
-npm run emulators      # Firebase 模擬器（要 Java 21），登入、存檔、館友都在這裡；管理畫面 http://127.0.0.1:4400
+npm run emulators      # Firebase 模擬器（要 Java 21）；管理畫面 http://127.0.0.1:4400
 npm run dev            # http://localhost:5173（開發時自動連模擬器）
-npm test               # 規則、內容、特效、模組、import 檢查、日誌格式，要全過（不含模擬）
+npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
-npm run log:index      # 重新產生 維護日誌/README.md（不要手改它）
+npm run ship|local|doc:new  # 省步驟的腳本：tools/README.md
+npm run log:index      # 重產日誌索引（不要手改）
 node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
 ```
 
