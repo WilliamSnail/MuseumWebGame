@@ -1376,6 +1376,22 @@ T("狂熱 3 天、恐懼症 7 天（翊文 11-09）；已經得到的狂熱載�
   for (let i = 0; i < 40; i++) { const g = G.gainQuirk(P); if (g) assert.strictEqual(g.quirk.until, T0 + G.quirkDaysOf(g.quirk.type) * DAYMS); P.quirks = []; }
   G.setNowClock(null);
 });
+T("心情的旁白要說實話：真的變了才說第 1 代的話，壹天第二次、滿了、到底、自由模式都說原因", () => {
+  const P = fresh(), ex = G.exhibitById("rare"), bad = G.exhibitById("strange");
+  P.mood = 50;
+  const v1 = G.viewExhibit(P, ex);
+  assert.strictEqual(v1.mood, 10); assert.strictEqual(v1.moodNote, "");
+  const v2 = G.viewExhibit(P, ex);
+  assert.strictEqual(v2.mood, 0); assert.ok(v2.moodNote.includes("今天已經看過"));
+  assert.strictEqual(P.mood, 60);
+  const Q = fresh(); Q.mood = 99;
+  assert.ok(G.viewExhibit(Q, ex).moodNote.includes("滿了"));
+  const R = fresh(); R.mood = 0;
+  assert.ok(G.viewExhibit(R, bad).moodNote.includes("不能再低"));
+  const F = G.newProfile("free");
+  assert.ok(G.viewExhibit(F, ex).moodNote.includes("自由模式"));
+  assert.strictEqual(G.viewExhibit(fresh(), G.exhibitById("statue")).moodNote, "", "沒有心情效果的展品不用說");
+});
 T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起算 7 天、有 until 的不延長；不在場的參觀者也補；讀回來一字不差", () => {
   G.setNowClock(() => T0);
   const span = G.NUM.quirkDays * DAYMS;

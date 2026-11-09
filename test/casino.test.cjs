@@ -93,6 +93,17 @@ T("餐車的吃的加心情、理智：有每天上限、換日重算、券和�
   for (let i = 0; i < 12; i++) G.casBuy(w, house, 6, DAY, undefined, P);
   assert.strictEqual(P.mood, 10 + NUM_food(G).mood);
   assert.strictEqual(P.sanity, 20 + NUM_food(G).san);
+  { // 快到上限：實際加的比菜單少，要說為什麼（翊文 11-09：「餐車吃的食物跟加的心情似乎也對不上」）
+    const w2 = G.casWalletFix(null, DAY), h2 = { bankroll: 1e9 }, Q = G.newProfile("challenge");
+    w2.chips = 1e8; Q.mood = 10; w2.food = { day: DAY, mood: G.NUM.casino.foodCap.mood - 1, san: 0 };
+    const cut = G.casBuy(w2, h2, 6, DAY, undefined, Q);
+    assert.strictEqual(cut.mood, 1);
+    assert.ok(cut.lines.some(l => l.includes("本來是 +5")));
+    assert.strictEqual(G.casFoodLeft(w2, DAY), 0);
+    assert.strictEqual(G.casFoodOf(G.CAS_MENU.find(x => x.id === "snack")).mood, 2, "零食其實是烤雞，菜單要寫 +2");
+    assert.ok(G.dcFoodMenu("123456")[0].components[0].options.find(o => o.value === "juice").description.includes("心情 +4"));
+    assert.ok(G.dcFoodMenu("123456")[0].components[0].options.find(o => o.value === "snack").description.includes("心情 +2"));
+  }
   const full = G.casBuy(w, house, 1, DAY, undefined, P);
   assert.strictEqual(full.mood, 0); assert.ok(full.lines.includes(G.CAS_TEXT.foodFull));
   assert.strictEqual(full.ok, true, "吃飽了還是買得到");

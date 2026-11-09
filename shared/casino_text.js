@@ -56,6 +56,7 @@ export const CAS_TEXT = {
   dinerBroke: "你沒有錢，只有 {chips}，滾",
   foodFull: "今天吃飽了：還是吃得下，只是心情、理智不會再加了",
   foodMood: "心情 +{n}（現在 {now}）",
+  foodCut: "心情 +{n}（現在 {now}）。本來是 +{want}，今天的份快吃滿了",
   foodNoVisitor: "好吃，不過現在沒有挑戰模式的參觀者，心情不會變",
   dinerThanks: "謝謝",
   dinerNeedPack: "您還沒領今天的大禮包，請先領才能買這個",

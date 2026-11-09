@@ -790,12 +790,21 @@ export function exhibitDanger(ex) {
 export const galleryInsp = ex => NUM.galleryInsp[Math.min(exhibitDanger(ex), NUM.galleryInsp.length - 1)];
 export function reviewsLeft(P, ex) { return P.day ? Math.max(0, galleryInsp(ex).perDay - (P.day.reviews[ex.id] || 0)) : 0; }
 export function viewsToday(P, ex) { return P.day && P.day.views ? P.day.views[ex.id] || 0 : 0; }
+// 有心情效果的東西，這次心情沒變的時候說實話（翊文 11-09：「(你的心情變好了些) 沒有加心情耶」）。
+// 心情壹天只算壹次（第 1 代的規則），第 1 代的文字只在真的變了才出現。心情真的變了回傳空字串
+export function moodNoteOf(P, ex, gained) {
+  if (!ex.mood || gained) return "";
+  if (isFree(P)) return "(自由模式沒有心情)";
+  if (ex.mood > 0 && P.mood >= 99) return "(你的心情已經滿了)";
+  if (ex.mood < 0 && P.mood <= 0) return "(你的心情已經不能再低了)";
+  return "(今天已經看過了，心情不會再變，明天再來)";
+}
 export function viewExhibit(P, ex) {
   const first = !P.seen[ex.id];
   P.seen[ex.id] = (P.seen[ex.id] || 0) + 1;
   if (P.day) { P.day.views = P.day.views || {}; P.day.views[ex.id] = (P.day.views[ex.id] || 0) + 1; }
-  const out = { first, insp: 0, mood: 0, myth: 0, san: null, events: [], cured: [] };
-  if (isFree(P)) return out;
+  const out = { first, insp: 0, mood: 0, myth: 0, san: null, events: [], cured: [], moodNote: "" };
+  if (isFree(P)) { out.moodNote = moodNoteOf(P, ex, 0); return out; }
   const gi = galleryInsp(ex);
   if (first) out.insp = gi.first;
   else if (reviewsLeft(P, ex) > 0) { P.day.reviews[ex.id] = (P.day.reviews[ex.id] || 0) + 1; out.insp = gi.review; }
@@ -805,6 +814,7 @@ export function viewExhibit(P, ex) {
     P.day.moodFx[ex.id] = true;
     const before = P.mood; P.mood = clampN(P.mood + ex.mood, 0, 99); out.mood = P.mood - before;
   }
+  out.moodNote = moodNoteOf(P, ex, out.mood);
   if (ex.myth && !P.mythFrom[ex.id]) { P.mythFrom[ex.id] = true; out.myth = ex.myth; }
   out.san = sanSpecFor(P, ex);
   if (!ex.san) out.cured = cureByTask(P, "calm"); // 看了不可怕的畫：治法是這件的怪癖治好（決定 0027）

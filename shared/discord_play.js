@@ -8,6 +8,7 @@
 import { NUM } from "./config.js";
 import { CAS_MENU, CAS_TEXT } from "./casino_text.js";
 import { casCardName } from "./casino.js";
+import { casFoodOf } from "./casino_wallet.js";
 import { DC_TEXT, dcNick, dcNum, dcPlain, dcText } from "./discord.js";
 import { dcOutBjText } from "./discord_out.js";
 
@@ -53,7 +54,7 @@ export const dcBjButtons = (seq, discordId) => [{ type: 1, components: [
 // 餐車的選單：9 樣餐點，值是餐點的 id（casBuy 認 id）
 export function dcFoodMenu(discordId) {
   return [{ type: 1, components: [{ type: 3, custom_id: dcFoodId(discordId), placeholder: DC_TEXT.foodPick, min_values: 1, max_values: 1,
-    options: CAS_MENU.map(it => ({ label: `${it.name}（${dcNum(it.price)}）`.slice(0, 100), value: it.id, description: (it.ticket ? "大禮包券，買了壹定拿到" : `抽到大禮包券 ${it.odds}%`).slice(0, 100) })) }] }];
+    options: CAS_MENU.map(it => ({ label: `${it.name}（${dcNum(it.price)}）`.slice(0, 100), value: it.id, description: (it.ticket ? "大禮包券，買了壹定拿到" : `${casFoodOf(it).mood ? `心情 +${casFoodOf(it).mood}・` : ""}抽到大禮包券 ${it.odds}%`).slice(0, 100) })) }] }];
 }
 
 // ---------- 21 點 ----------
@@ -94,8 +95,8 @@ export function dcBjText(v, o = {}) {
 export const dcBjPublic = (nick, kind, net) => dcOutBjText(nick, { hands: 1, wins: kind === "win" || kind === "blackjack" || kind === "charlie" ? 1 : 0, losses: kind === "lose" ? 1 : 0, pushes: kind === "push" ? 1 : 0, net });
 
 // ---------- 餐車 ----------
-export function dcFoodText(chips, resultLines) {
-  const head = dcText("foodHead", { chips: dcNum(chips) });
+export function dcFoodText(chips, resultLines, moodLeft) {
+  const head = dcText("foodHead", { chips: dcNum(chips) }) + (Number.isFinite(moodLeft) ? `\n今天吃東西還能加 ${moodLeft} 點心情。` : "");
   return resultLines && resultLines.length ? dcLines(resultLines) + "\n\n" + head : head;
 }
 

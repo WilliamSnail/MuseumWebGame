@@ -13,7 +13,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  回覆壹律過 dcScrub：不放 email、理智、怪癖、靈感；暱稱過 dcNick；不 @ 任何人。
 // ================================================================
 import { getFirestore } from "firebase-admin/firestore";
-import { casWalletFix } from "./shared/casino_wallet.js";
+import { casFoodLeft, casWalletFix } from "./shared/casino_wallet.js";
 import { CAS_MENU } from "./shared/casino_text.js";
 import { DC_BET_OPT, DC_PACK_OPT, DC_LIVE_OPT, DC_CMD, DC_TEXT, dcReply, dcText, dcUpdate } from "./shared/discord.js";
 import { dcBjButtons, dcBjText, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub } from "./shared/discord_play.js";
@@ -91,7 +91,8 @@ async function cmdPack(p) {
 async function cmdFood(p, now) {
   const me = await playerOf(p.discordId);
   if (!me) return NONE();
-  return dcReply(dcFoodText(await chipsOf(me.uid, now)), true, dcFoodMenu(p.discordId));
+  const s = await db().doc(`casinoWallets/${me.uid}`).get(), day = taipeiDay(now), w = casWalletFix(s.exists ? JSON.parse(s.data().data) : null, day);
+  return dcReply(dcFoodText(w.chips, null, casFoodLeft(w, day)), true, dcFoodMenu(p.discordId));
 }
 async function onFood(p, c, now) {
   if (c.discordId !== p.discordId) return dcReply(DC_TEXT.foodNotYours, true);
@@ -102,7 +103,7 @@ async function onFood(p, c, now) {
   const r = await playCore(me, "", { save: true }, ctx => actBuy(ctx, { item }));
   if (!r.ok) return dcUpdate(dcFoodText(await chipsOf(me.uid, now), dcScrub([r.reason])), dcFoodMenu(p.discordId));
   const lines = (r.lines || []).concat((r.ach || []).map(a => `🏅 ${a.name}`));
-  return dcUpdate(dcFoodText(r.wallet.chips, lines), dcFoodMenu(p.discordId));
+  return dcUpdate(dcFoodText(r.wallet.chips, lines, r.wallet.foodMoodLeft), dcFoodMenu(p.discordId));
 }
 
 // ---------- 拚經濟 ----------

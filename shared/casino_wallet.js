@@ -196,6 +196,10 @@ export function casOpenPacks(w, house, n, day) {
 // pick：餐點的號碼（1–9）或 id。吃東西有機會抽到券（要先開過今天的大禮包）
 // 吃東西的效果（翊文 11-09：「買賭場裡吃的東西應該也要可以加一些心情之類的效果」）：心情、理智，一天有上限。
 // P 是這位參觀者（沒有、自由模式就沒有效果）。燈熄了的時候不加理智。回傳 { mood, san, full（今天的份吃完了） }
+// 這樣東西吃下去其實是哪壹樣（零食會變成烤雞，舊的梗）：菜單上的數字要跟實際加的壹樣
+export const casFoodOf = it => (it && it.redirect ? CAS_MENU.find(x => x.id === it.redirect) || it : it);
+// 今天還能靠吃東西加幾點心情
+export const casFoodLeft = (w, day) => Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0));
 export function casFoodEffect(w, it, P, day) {
   const none = { mood: 0, san: 0, full: false };
   if (!it || (!it.mood && !it.san) || !P || isFree(P)) return none;
@@ -225,7 +229,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   let gotTickets = 0;
   const food = casFoodEffect(w, it, P, day);
   // 買完要說恢復了多少（翊文 11-09：「吃餐車恢復的心情應該也要再買之後說壹下」）
-  if (food.mood || food.san) lines.push([food.mood ? casFill(CAS_TEXT.foodMood, { n: food.mood, now: P.mood }) : "", food.san ? `理智 +${food.san}` : ""].filter(Boolean).join("，"));
+  if (food.mood || food.san) lines.push([food.mood ? casFill(food.mood < (it.mood || 0) ? CAS_TEXT.foodCut : CAS_TEXT.foodMood, { n: food.mood, now: P.mood, want: it.mood }) : "", food.san ? `理智 +${food.san}` : ""].filter(Boolean).join("，"));
   else if (food.full) lines.push(CAS_TEXT.foodFull);
   else if ((it.mood || it.san) && (!P || isFree(P))) lines.push(CAS_TEXT.foodNoVisitor);
   if (it.special === "sushi") lines.push(CAS_TEXT.sushiLine);

@@ -11,7 +11,7 @@
 import { NUM } from "../../shared/config.js";
 import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
-import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
+import { casCleanSouvenirs, casCleanTitle, casFoodOf } from "../../shared/casino_wallet.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
@@ -458,7 +458,7 @@ function dinerPane() {
       h("p", { class: "cas-have" }, w.opened > 0 ? "今天的大禮包你開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"),
       h("ul", { class: "cas-menu" }, CAS_MENU.map(it => {
         const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
-        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([it.mood ? `心情 +${it.mood}` : "", it.san ? `理智 +${it.san}` : "", `${it.odds}% 機率抽到券`].filter(Boolean).join("・")))),
+        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([casFoodOf(it).mood ? `心情 +${casFoodOf(it).mood}` : "", casFoodOf(it).san ? `理智 +${casFoodOf(it).san}` : "", `${it.odds}% 機率抽到券`].filter(Boolean).join("・")))),
           h("span", { class: "cas-price" }, casNum(it.price)),
           btn("買", () => buy(it), "primary small", { disabled: lack || locked || S.busy ? true : null, title: lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null }));
       })),
