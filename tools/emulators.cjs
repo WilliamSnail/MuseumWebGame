@@ -11,6 +11,9 @@ const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
 const DATA = path.join(ROOT, ".firebase-data");
 const env = { ...process.env };
+// functions/discord_warm.js 有 top-level await：新版 Node 的 require() 載不了，firebase-tools 又只有 require 失敗成 ERR_REQUIRE_ESM 才改用 import。
+// 關掉 require(esm)，模擬器才載得起來（正式環境本來就用 import）。
+env.NODE_OPTIONS = [env.NODE_OPTIONS, "--no-experimental-require-module"].filter(Boolean).join(" ");
 
 function hasJava(e) {
   const r = spawnSync("java", ["-version"], { env: e });

@@ -69,7 +69,7 @@ export const STORY_ITEMS = {
   "book:說服": { name: "技能書《怎麼說好話》", kind: "skillBook", skill: "說服" },
   firstAid: { name: "急救箱", kind: "heal" },
   "mat:畫布": { name: "舊畫布", kind: "material" },
-  "mat:金箔": { name: "金箔", kind: "material" },
+  "mat:金箔": { name: "金箔", kind: "material", worth: 2 }, // 換週章算 2 份（翊文 11-09：「幫我改金箔」，它比舊畫布貴很多）
   "mat:金線": { name: "金線", kind: "material" },
 };
 
@@ -443,7 +443,7 @@ export function itemDesc(id) {
   if (!it) return "";
   if (it.kind === "skillBook") { const p = parseDice(NUM.story.skillBook); return `用了：${it.skill} +${p.m ? `${p.n}～${p.n * p.m}` : p.flat}（最多到 ${NUM.story.skillCap}）。給現在這位參觀者。`; }
   if (it.kind === "heal") return "用了：地下收藏庫受傷的佩佩，全部馬上好。";
-  return `收著。在兌換所，每 ${NUM.shop.matToStamp} 份換壹枚週章。`;
+  return `用來換週章：到兌換所，每 ${NUM.shop.matToStamp} 份換壹枚。這個算 ${it.worth || 1} 份。`;
 }
 export function rewardText(r) {
   if (!r) return "";
