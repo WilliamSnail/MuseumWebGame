@@ -301,6 +301,10 @@ export const NUM = {
     nudgesMax: 3,           // 給個人的小提醒最多幾條，一個人最多一條
     signNear: 5,            // 這週簽了幾天以上，才提醒「只差幾天就全勤」
     lowShare: 0.5,          // 有做的人不到這個比例，才算「大家做得不多」
+    chipCap: 1e12,          // 賭場榜（斗內王、賭神）的籌碼上限：錢包是不可信的資料，拿數字要有上限（決定 0054）
+    countCap: 999999,       // 賭場榜（牌桌王、爆牌王、拚經濟王）的次數上限
+    achCap: 999,            // 成就王的成就數上限
+    discordMax: 2000,       // Discord 一則最多幾個字（公告、/pepe-排行榜 都不能超過）
   },
   // Discord 聯動第一步（決定 0051，規則 shared/discord.js）
   discord: {

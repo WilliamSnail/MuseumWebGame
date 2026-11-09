@@ -50,10 +50,11 @@ function newRoomFloor(label, root = ROOT) {
 
 const toMs = t => (t && typeof t.toMillis === "function" ? t.toMillis() : 0);
 async function readPeople(db) {
-  const [members, saves] = await Promise.all([db.collection("members").get(), db.collection("saves").get()]);
-  const map = {};
+  const [members, saves, wallets] = await Promise.all([db.collection("members").get(), db.collection("saves").get(), db.collection("casinoWallets").get()]);
+  const map = {}, wmap = {};
   saves.docs.forEach(d => { map[d.id] = d.data().data; });
-  return { members: members.docs.map(d => ({ uid: d.id, nick: d.data().nick, joinedAt: toMs(d.data().joinedAt) })), saves: map };
+  wallets.docs.forEach(d => { wmap[d.id] = d.data().data; }); // 賭場錢包（決定 0054）：data 是 JSON 字串；只在這裡用 Admin 讀，規則沒放寬
+  return { members: members.docs.map(d => ({ uid: d.id, nick: d.data().nick, joinedAt: toMs(d.data().joinedAt) })), saves: map, wallets: wmap };
 }
 
 // 回傳 { status, text }。status：already 這週發過了、dry 只印不發、empty 沒人有進度、skip 沒放 Discord、failed 發失敗、posted 發了
@@ -76,6 +77,7 @@ async function runWeekly({ db, board, opts = {}, env = process.env, fetcher, log
     snapshot = r.snapshot;
     if (old && old.posted) { doc.posted = true; doc.postedAt = old.postedAt || null; } // 重算、再發失敗時，還是記得發過
     if (r.unreadable) log(`有 ${r.unreadable} 份存檔讀不了：這次沒算，累計數字留上週的。`);
+    if (r.casUnreadable) log(`有 ${r.casUnreadable} 份賭場錢包讀不了：這次沒算，累計數字留上週的。`);
   }
   const text = board.boardDiscordText(doc, footer(), MAX);
   log(doc.empty ? `${wk.label} 沒有人有進度。` : text);
@@ -114,8 +116,9 @@ async function runDaily({ db, board, opts = {}, log = console.log, floorOf = new
   const [input, prevSnap] = await Promise.all([readPeople(db), db.doc(`boards/${wk.prev}/private/people`).get()]);
   const r = board.boardCompute(board.boardPeopleOf(input, wk), prevSnap.exists ? prevSnap.data() : null, wk, { newRoomFloor: floorOf(wk.label) });
   if (r.unreadable) log(`有 ${r.unreadable} 份存檔讀不了：這次沒算。`);
+  if (r.casUnreadable) log(`有 ${r.casUnreadable} 份賭場錢包讀不了：這次沒算。`);
   const doc = Object.assign({}, r.doc, { live: true, tips: [], nudges: [] }); // 建議和提醒是寫給過完的那壹週的，週中不放
-  log(doc.empty ? `${wk.label} 到現在沒有人有進度。` : board.boardDiscordText(doc, "", 2000));
+  log(doc.empty ? `${wk.label} 到現在沒有人有進度。` : board.boardDiscordText(doc, ""));
   if (opts.dryRun) { log("只印不寫：沒有寫 Firestore。"); return { status: "dry", week: wk.label }; }
   if (doc.empty) { log("沒有人有進度，榜單留著原本的。"); return { status: "empty", week: wk.label }; }
   await db.doc("boards/latest").set(doc);

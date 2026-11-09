@@ -165,5 +165,9 @@ ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）",
   assert.ok(stats.ok && stats.entered);
   const r = board.boardCompute([{ uid: "a", nick: "小明", stats }], null, wk);
   assert.ok(r.doc.first && r.snapshot.people.a);
+  const wallet = board.boardCasOf(JSON.stringify({ st: { wins: 3, busts: 1, net: 50 }, lv: { sentAll: 9 }, ec: { wins: 2 }, ach: { x: { d: "2026-11-09" } } }));
+  assert.deepStrictEqual([wallet.wins, wallet.busts, wallet.net, wallet.sent, wallet.econ, wallet.ach], [3, 1, 50, 9, 2, 1]);
+  assert.strictEqual(board.boardCompute([{ uid: "a", nick: "小明", stats, cas: wallet }], null, wk).doc.casFirst, true);
+  assert.strictEqual(board.BOARD_DEFS.length, 12);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

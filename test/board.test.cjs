@@ -577,6 +577,225 @@ T("真的跑的時候：tools/weekly_board.cjs 叫的 board.xxx 都拿得到（l
   assert.ok(b.boardWeekOf(b.nowMs()));
 });
 
+// ---------- 十二個榜：賭場的六個（決定 0054）----------
+// 賭場錢包（casinoWallets/{uid}.data）。over：{ wins, busts, net, sent, econ, ach（幾個成就）, chips }
+const walletOf = (G, over = {}) => {
+  const w = G.casWalletNew();
+  Object.assign(w.st, { wins: over.wins || 0, busts: over.busts || 0, net: over.net || 0, hands: (over.wins || 0) + (over.busts || 0) });
+  w.lv = { day: WED, n: 0, sent: 0, got: 0, sentAll: over.sent || 0, gotAll: 0, times: 0 };
+  w.ec = { day: WED, n: 0, wins: over.econ || 0, fails: 0, loot: 0, rescues: 0 };
+  for (let i = 0; i < (over.ach || 0); i++) w.ach["old:a:t" + i] = { d: WED, name: "成就" + i };
+  if (over.chips != null) w.chips = over.chips;
+  return JSON.stringify(w);
+};
+const casPeople = (G, list) => G.boardPeopleOf({ members: list.map(([uid, nick], i) => ({ uid, nick, joinedAt: i + 1 })), saves: Object.fromEntries(list.map(([uid]) => [uid, saveOf(G, { codex: 1 })])), wallets: Object.fromEntries(list.filter(x => x[2] !== undefined).map(([uid, , raw]) => [uid, raw])) }, week(G));
+const CAS_IDS = ["table", "ach", "donate", "bust", "econ", "god"];
+const base1 = { cas: 1, people: { a: { cas: { wins: 10, busts: 2, net: 1000, ach: 3, sent: 500, econ: 1 } }, b: { cas: { wins: 4, busts: 9, net: 5000, ach: 6, sent: 0, econ: 7 } } } };
+
+T("十二個榜：BOARD_DEFS 有 12 個，新的 6 個是牌桌王、成就王、斗內王、爆牌王、拚經濟王、賭神，文字有好笑的說明", G => {
+  assert.strictEqual(G.BOARD_DEFS.length, 12);
+  assert.deepStrictEqual(J(G.BOARD_DEFS.slice(6).map(d => d.id)), CAS_IDS);
+  assert.deepStrictEqual(J(G.BOARD_DEFS.slice(6).map(d => d.title)), ["牌桌王", "成就王", "斗內王", "爆牌王", "拚經濟王", "賭神"]);
+  assert.ok(G.BOARD_DEFS.find(d => d.id === "bust").sub.includes("最敢要牌"));
+  G.BOARD_DEFS.forEach(d => { assert.ok(!(d.title + (d.sub || "")).includes("一"), "介面文字用壹：" + d.title); });
+  ["最窮", "墊底", "最慘"].forEach(w => assert.ok(!JSON.stringify(G.BOARD_DEFS).includes(w)));
+});
+T("賭場榜的數字：週增量＝現在累計 − 上週快照；成就王不相減；賭神看淨贏", G => {
+  const people = casPeople(G, [["a", "甲", walletOf(G, { wins: 15, busts: 5, net: 1800, ach: 4, sent: 2500, econ: 3 })], ["b", "乙", walletOf(G, { wins: 6, busts: 10, net: 4000, ach: 9, sent: 100, econ: 7 })]]);
+  const r = G.boardCompute(people, base1, week(G));
+  assert.deepStrictEqual(rows(r.doc, "table"), [{ rank: 1, nick: "甲", value: 5 }, { rank: 2, nick: "乙", value: 2 }]);
+  assert.deepStrictEqual(rows(r.doc, "ach"), [{ rank: 1, nick: "乙", value: 9 }, { rank: 2, nick: "甲", value: 4 }], "累計");
+  assert.deepStrictEqual(rows(r.doc, "donate"), [{ rank: 1, nick: "甲", value: 2000 }, { rank: 2, nick: "乙", value: 100 }]);
+  assert.deepStrictEqual(rows(r.doc, "bust"), [{ rank: 1, nick: "甲", value: 3 }, { rank: 2, nick: "乙", value: 1 }]);
+  assert.deepStrictEqual(rows(r.doc, "econ"), [{ rank: 1, nick: "甲", value: 2 }], "乙 7 → 7 沒有增加，不上榜");
+  assert.deepStrictEqual(rows(r.doc, "god"), [{ rank: 1, nick: "甲", value: 800 }], "乙淨贏變少（5000 → 4000）不上榜");
+  assert.strictEqual(r.doc.casFirst, false);
+  assert.strictEqual(r.snapshot.cas, 1);
+  assert.deepStrictEqual(J(r.snapshot).people.a.cas, { wins: 15, busts: 5, net: 1800, ach: 4, sent: 2500, econ: 3 });
+  assert.strictEqual(J(r.snapshot).people.a.codex, 1, "原本的累計還在");
+  assert.strictEqual(G.boardValueText("donate", 2000), "2,000 籌碼");
+  assert.strictEqual(G.boardValueText("god", 12345678), "1234.56 萬 籌碼");
+  assert.strictEqual(G.boardValueText("table", 5), "5 手");
+  assert.strictEqual(G.boardValueText("ach", 9), "9 個");
+  assert.strictEqual(G.boardValueText("bust", 3), "3 次");
+});
+T("第一週沒有基準：賭場的週榜是空的，不把累計全當本週；成就王列累計；文字不說謊；下一週有基準", G => {
+  const wallets = [["a", "甲", walletOf(G, { wins: 500, busts: 90, net: 9e6, ach: 5, sent: 7e6, econ: 40 })]];
+  [null, { people: { a: { codex: 1, books: 0, hall: 0, deepest: 0 } } }, { cas: 0, people: {} }].forEach(prev => {
+    const r = G.boardCompute(casPeople(G, wallets), prev, week(G));
+    ["table", "donate", "bust", "econ", "god"].forEach(id => assert.deepStrictEqual(rows(r.doc, id), [], id));
+    assert.deepStrictEqual(rows(r.doc, "ach"), [{ rank: 1, nick: "甲", value: 5 }]);
+    assert.strictEqual(r.doc.casFirst, true);
+    assert.strictEqual(r.snapshot.cas, 1, "這次的快照就是下週的基準");
+    const text = G.boardDiscordText(r.doc, footer(), MAX), dc = G.dcBoardText(r.doc);
+    assert.ok(!/【(牌桌王|賭神|爆牌王|斗內王|拚經濟王)】/.test(text) && !/【(牌桌王|賭神|爆牌王|斗內王|拚經濟王)】/.test(dc), "沒有數字就不列");
+    assert.ok(text.includes("下週壹起才有本週的數字") && dc.includes("下週壹起才有本週的數字"));
+    assert.ok(text.includes("成就王") && text.includes("5 個"));
+    // 下一週：快照有基準，這週多的才算
+    const nextWallets = [["a", "甲", walletOf(G, { wins: 503, busts: 90, net: 9e6 + 300, ach: 5, sent: 7e6 + 50, econ: 42 })]];
+    const r2 = G.boardCompute(casPeople(G, nextWallets), J(r.snapshot), week(G));
+    assert.strictEqual(r2.doc.casFirst, false);
+    assert.deepStrictEqual([rows(r2.doc, "table")[0].value, rows(r2.doc, "donate")[0].value, rows(r2.doc, "econ")[0].value, rows(r2.doc, "god")[0].value], [3, 50, 2, 300]);
+    assert.deepStrictEqual(rows(r2.doc, "bust"), [], "沒爆牌就不上榜");
+  });
+});
+T("有基準那週：新進賭場的人從 0 算；快照裡的壞基準當沒有基準", G => {
+  const prev = { cas: 1, people: { a: { cas: { wins: 10, busts: 0, net: 0, ach: 0, sent: 0, econ: 0 } }, x: { cas: { bad: 1 } } } };
+  const people = casPeople(G, [["a", "甲", walletOf(G, { wins: 10 })], ["n", "新人", walletOf(G, { wins: 4, busts: 2, net: 300 })], ["x", "壞基準", walletOf(G, { wins: 999, net: 99999 })]]);
+  const r = G.boardCompute(people, prev, week(G));
+  assert.deepStrictEqual(rows(r.doc, "table"), [{ rank: 1, nick: "新人", value: 4 }]);
+  assert.deepStrictEqual(rows(r.doc, "god"), [{ rank: 1, nick: "新人", value: 300 }]);
+});
+T("賭神：淨贏負的、剛好 0 的不上榜；舊錢包、大禮包、餐車的大額不算（只看每一手的輸贏）", G => {
+  const prev = { cas: 1, people: {} };
+  const people = casPeople(G, [
+    ["a", "輸家", walletOf(G, { wins: 3, net: -5000 })],
+    ["b", "平手", walletOf(G, { wins: 3, net: 0 })],
+    ["c", "有大錢包", walletOf(G, { net: 0, chips: 5e9 })], // 籌碼很多（舊錢包認領、大禮包），但沒有贏的紀錄
+    ["d", "小贏", walletOf(G, { wins: 1, net: 200, chips: 10 })],
+  ]);
+  const r = G.boardCompute(people, prev, week(G));
+  assert.deepStrictEqual(rows(r.doc, "god"), [{ rank: 1, nick: "小贏", value: 200 }]);
+  // 真的結算：一勝一負（爆牌）→ wins 1、busts 1、net 0；認領舊錢包不動 net
+  const w = G.casWalletFix(G.casWalletNew(), WED), house = G.casHouseNew();
+  const hand = (kind, why, net, bet) => G.casSettle(w, house, { bet, out: { kind, why, net, payout: bet + net }, settled: false }, { day: WED, withOthers: false });
+  hand("win", "", 100, 100); hand("lose", "bust", -100, 100);
+  w.chips += 1e8; // 大禮包、舊錢包
+  const c = G.boardCasOf(JSON.stringify(w));
+  assert.deepStrictEqual([c.ok, c.has, c.wins, c.busts, c.net], [true, true, 1, 1, 0]);
+});
+T("爆牌王：只有玩過而且爆過才上榜；同桌贏的手也算進牌桌王（結算同一個函式）", G => {
+  const w = G.casWalletFix(G.casWalletNew(), WED), house = G.casHouseNew();
+  G.casSettle(w, house, { bet: 100, out: { kind: "win", why: "", net: 100, payout: 200 }, settled: false }, { day: WED, withOthers: true });
+  const c = G.boardCasOf(JSON.stringify(w));
+  assert.deepStrictEqual([c.wins, c.busts], [1, 0]);
+  const people = casPeople(G, [["a", "甲", JSON.stringify(w)], ["b", "沒玩過", walletOf(G, {})], ["c", "沒錢包"]]);
+  const r = G.boardCompute(people, { cas: 1, people: {} }, week(G));
+  assert.deepStrictEqual(rows(r.doc, "bust"), []);
+  assert.deepStrictEqual(rows(r.doc, "table").map(x => x.nick), ["甲"]);
+});
+T("壞錢包、沒有錢包：不丟錯、不上榜、別人照算、累計留上週的", G => {
+  const bad = ["{壞掉", "[]", "5", "null", '{"st":5,"lv":"x","ec":[],"ach":7}', '{"st":{"wins":"很多","busts":-9,"net":"x"},"lv":{"sentAll":1e300},"ec":{"wins":1e999},"ach":{"a":1,"b":null}}'];
+  bad.forEach(raw => { const c = G.boardCasOf(raw); assert.ok(c && typeof c.ok === "boolean", raw); });
+  assert.deepStrictEqual(J(G.boardCasOf("[]")), { ok: false });
+  const huge = G.boardCasOf(bad[5]);
+  assert.ok(huge.ok && huge.wins === 0 && huge.busts === 0 && huge.net === 0 && huge.sent === G.NUM.board.chipCap && huge.econ === 0 && huge.ach === 0, JSON.stringify(huge));
+  const list = bad.map((raw, i) => ["bad" + i, "壞" + i, raw]).concat([["good", "好", walletOf(G, { wins: 5 })], ["none", "沒錢包"]]);
+  const prev = { cas: 1, people: { bad0: { cas: { wins: 1, busts: 0, net: 0, ach: 0, sent: 0, econ: 0 } }, good: { cas: { wins: 1, busts: 0, net: 0, ach: 0, sent: 0, econ: 0 } } } };
+  const r = G.boardCompute(casPeople(G, list), prev, week(G));
+  assert.deepStrictEqual(rows(r.doc, "table"), [{ rank: 1, nick: "好", value: 4 }]);
+  assert.ok(r.casUnreadable >= 3);
+  assert.deepStrictEqual(J(r.snapshot).people.bad0.cas, { wins: 1, busts: 0, net: 0, ach: 0, sent: 0, econ: 0 }, "讀不了的留上週的");
+  assert.deepStrictEqual(J(r.snapshot).people.bad2.cas, { bad: 1 }, "上週也沒有的，標壞基準");
+  assert.ok(!(J(r.snapshot).people.none || {}).cas, "沒進過賭場的人，快照裡沒有賭場欄位");
+  // 沒有 wallets 這個欄位（舊的呼叫方式）：賭場的榜是空的、快照沒有 cas 記號
+  const old = G.boardCompute(G.boardPeopleOf({ members: [{ uid: "a", nick: "甲", joinedAt: 1 }], saves: { a: saveOf(G, { codex: 2 }) } }, week(G)), null, week(G));
+  CAS_IDS.forEach(id => assert.deepStrictEqual(rows(old.doc, id), []));
+  assert.strictEqual(old.snapshot.cas, undefined); assert.strictEqual(old.doc.casFirst, false);
+});
+T("沒進過賭場的人不上賭場榜，也不影響原本的六個榜；錢包的人沒有存檔也不會壞", G => {
+  const wk = week(G);
+  const people = G.boardPeopleOf({ members: [{ uid: "a", nick: "甲", joinedAt: 1 }, { uid: "b", nick: "乙", joinedAt: 2 }], saves: { a: saveOf(G, { codex: 4 }) }, wallets: { b: walletOf(G, { wins: 9, net: 10, ach: 2 }) } }, wk);
+  const r = G.boardCompute(people, { cas: 1, people: {} }, wk);
+  assert.deepStrictEqual(rows(r.doc, "codex").map(x => x.nick), ["甲"]);
+  assert.deepStrictEqual(rows(r.doc, "table").map(x => x.nick), ["乙"]);
+  assert.ok(!rows(r.doc, "table").concat(rows(r.doc, "ach")).some(x => x.nick === "甲"));
+});
+T("12 個榜的 Discord 公告不超過 2000 字，敬啟和連結都在；同分很多人也一樣", G => {
+  const mk = (n, nickLen, same) => {
+    const list = Array.from({ length: n }, (_, i) => ["u" + i, "暱".repeat(nickLen - 1) + (i % 10), walletOf(G, { wins: (same ? 9 : 5 + i) + 3, busts: (same ? 9 : 2 + i) + 1, net: (same ? 777 : 100 * (i + 1)) + 1, ach: same ? 8 : 1 + i, sent: (same ? 5e6 : 1e6 * (i + 1)) + 1, econ: (same ? 4 : 1 + i) + 1 })]);
+    const prev = { cas: 1, people: Object.fromEntries(list.map(([uid]) => [uid, { cas: { wins: 3, busts: 1, net: 1, ach: 0, sent: 1, econ: 1 } }])) };
+    const people = G.boardPeopleOf({ members: list.map(([uid, nick], i) => ({ uid, nick, joinedAt: i + 1 })), saves: Object.fromEntries(list.map(([uid]) => [uid, saveOf(G, { codex: 5, deepest: 3, sign: 7, read: 2, stamps: 3 })])), wallets: Object.fromEntries(list.map(([uid, , raw]) => [uid, raw])) }, week(G));
+    return G.boardCompute(people, Object.assign(prev, { people: Object.fromEntries(Object.entries(prev.people).map(([k, v]) => [k, Object.assign({ codex: 0, books: 0, hall: 0, deepest: 0 }, v)])) }), week(G)).doc;
+  };
+  const ends = footer();
+  [[3, 12, false], [8, 12, false], [8, 12, true], [40, 12, true]].forEach(([n, len, same]) => {
+    const doc = mk(n, len, same);
+    CAS_IDS.concat(["codex", "deep"]).forEach(id => assert.ok(boardOf(doc, id).rows.length > 0, id));
+    const text = G.boardDiscordText(doc, ends, MAX);
+    assert.ok(text.length <= MAX, `${n} 人 ${same ? "同分" : ""}：${text.length}`);
+    assert.ok(text.endsWith(`館長室 敬啟\n\n${ends}`));
+    assert.ok(text.includes(SITE));
+    const dc = G.dcBoardText(doc);
+    assert.ok(dc.length <= 2000, `/pepe-排行榜 ${n} 人：${dc.length}`);
+    assert.ok(dc.endsWith(G.DC_TEXT.boardFoot));
+    assert.ok(!/@|<|evil/.test(text + dc));
+  });
+  // 一般的狀況（每個榜 3 名）沒有被收：十二個榜都完整，建議還在
+  const normal = G.boardDiscordText(mk(3, 4, false), ends, MAX);
+  ["牌桌王", "成就王", "斗內王", "爆牌王", "拚經濟王", "賭神", "館長室的建議"].forEach(s => assert.ok(normal.includes(s), s));
+  assert.ok(normal.includes("本週最敢要牌"));
+  assert.ok(G.dcBoardText(mk(3, 4, false)).includes("本週最敢要牌"));
+});
+T("給玩家看的文件、公告、/pepe-排行榜：賭場榜也沒有 uid、email、錢包內容", G => {
+  const uid = "uid-祕密-98765";
+  const raw = JSON.parse(walletOf(G, { wins: 8, busts: 3, net: 500, ach: 2, sent: 300, econ: 2 }));
+  raw.email = FAKE_EMAIL; raw.discordId = "123456789012345678"; raw.lv.secret = "祕密籌碼";
+  const people = G.boardPeopleOf({ members: [{ uid, nick: "小明", email: FAKE_EMAIL, joinedAt: 1 }], saves: { [uid]: saveOf(G, { codex: 1 }) }, wallets: { [uid]: JSON.stringify(raw) } }, week(G));
+  const r = G.boardCompute(people, { cas: 1, people: {} }, week(G));
+  const pub = JSON.stringify(J(r.doc)) + G.boardDiscordText(r.doc, footer(), MAX) + G.dcBoardText(r.doc);
+  assert.ok(!pub.includes(uid) && !pub.includes(FAKE_EMAIL) && !pub.includes("123456789012345678") && !pub.includes("祕密"));
+  assert.ok(pub.includes("小明") && pub.includes("牌桌王"));
+  assert.ok(!/理智|怪癖|靈感/.test(JSON.stringify(G.BOARD_DEFS)));
+  assert.deepStrictEqual(Object.keys(J(r.snapshot).people[uid].cas).sort(), ["ach", "busts", "econ", "net", "sent", "wins"], "快照只有累計數字");
+  assert.ok(!JSON.stringify(J(r.snapshot)).includes(FAKE_EMAIL));
+  assert.strictEqual(JSON.stringify(J(r.doc)), JSON.stringify(J(JSON.parse(JSON.stringify(J(r.doc))))), "沒有 undefined");
+});
+T("讀回來的賭場榜：數字上限、舊的只有 6 個榜的文件也讀得出來", G => {
+  const v = J(G.boardViewOf({ week: "2026-W46", boards: [{ id: "god", rows: [{ rank: 1, nick: "甲", value: 5e11 }, { rank: 2, nick: "乙", value: 1e20 }] }, { id: "table", rows: [{ rank: 1, nick: "甲", value: 50000 }] }] }));
+  assert.deepStrictEqual(v.boards.find(b => b.id === "god").rows.map(r => r.value), [5e11, G.NUM.board.chipCap]);
+  assert.strictEqual(v.boards.find(b => b.id === "table").rows[0].value, 50000);
+  assert.strictEqual(v.boards.find(b => b.id === "god").sub, "本週 21 點淨賺最多籌碼");
+  assert.deepStrictEqual(J(G.boardViewOf({ week: "2026-W46", boards: [] }).boards), []);
+  assert.strictEqual(G.boardViewOf({ week: "2026-W46", boards: [] }).casFirst, false);
+});
+const walletSeed = G => ({
+  "members/uid-a": { nick: "甲" }, "members/uid-b": { nick: "乙" }, "members/uid-c": { nick: "沒賭場" },
+  "saves/uid-a": { data: saveOf(G, { codex: 4 }), rev: 1 }, "saves/uid-b": { data: saveOf(G, { codex: 2 }), rev: 1 }, "saves/uid-c": { data: saveOf(G, { codex: 1 }), rev: 1 },
+  "casinoWallets/uid-a": { data: walletOf(G, { wins: 20, busts: 4, net: 900, ach: 3, sent: 1000, econ: 2 }), rev: 1 },
+  "casinoWallets/uid-b": { data: "{壞掉", rev: 1 },
+});
+T("跑起來（假 Firestore）：週一先寫沒有基準的快照，下一週才有賭場的週榜；每天更新用同一份快照", async G => {
+  const db = fakeDb(walletSeed(G)), sent = [];
+  const r1 = await run(G, db, { env: DISCORD, fetcher: okFetch(sent) });
+  assert.strictEqual(r1.status, "posted");
+  const d1 = db.docs.get("boards/2026-W46"), p1 = db.docs.get("boards/2026-W46/private/people");
+  assert.strictEqual(d1.casFirst, true);
+  assert.deepStrictEqual(d1.boards.find(b => b.id === "table").rows, []);
+  assert.deepStrictEqual(d1.boards.find(b => b.id === "ach").rows, [{ rank: 1, nick: "甲", value: 3 }]);
+  assert.strictEqual(p1.cas, 1);
+  assert.deepStrictEqual(p1.people["uid-a"].cas, { wins: 20, busts: 4, net: 900, ach: 3, sent: 1000, econ: 2 });
+  assert.deepStrictEqual(p1.people["uid-b"].cas, { bad: 1 });
+  assert.ok(!p1.people["uid-c"].cas, "沒進過賭場");
+  assert.ok(r1.lines.join("\n").includes("賭場錢包讀不了"));
+  assert.ok(sent[0].length <= MAX && sent[0].includes("下週壹起才有本週的數字"));
+  // 週三每天更新（W47 進行中，上週的快照是基準）：甲這週贏 5 手、爆 1 次
+  db.docs.set("casinoWallets/uid-a", { data: walletOf(G, { wins: 25, busts: 5, net: 1400, ach: 4, sent: 1250, econ: 3 }), rev: 2 });
+  const d = await daily(G, db);
+  assert.strictEqual(d.status, "updated");
+  const live = db.docs.get("boards/latest");
+  assert.strictEqual(live.casFirst, false);
+  const val = id => live.boards.find(b => b.id === id).rows.map(x => `${x.nick}:${x.value}`);
+  assert.deepStrictEqual([val("table"), val("bust"), val("god"), val("donate"), val("econ"), val("ach")], [["甲:5"], ["甲:1"], ["甲:500"], ["甲:250"], ["甲:1"], ["甲:4"]]);
+  assert.ok(!JSON.stringify(live).includes("uid-"));
+  assert.strictEqual(db.docs.has("boards/2026-W47/private/people"), false, "每天更新不寫快照");
+  // 下一個週一正式結算
+  const r2 = await run(G, db, { opts: { now: RUN + 7 * 86400000 }, env: DISCORD, fetcher: okFetch(sent) });
+  assert.strictEqual(r2.status, "posted");
+  const d2 = db.docs.get("boards/2026-W47");
+  assert.strictEqual(d2.casFirst, false);
+  assert.deepStrictEqual(d2.boards.find(b => b.id === "god").rows, [{ rank: 1, nick: "甲", value: 500 }]);
+  assert.ok(sent[1].includes("💰 【賭神】") && sent[1].includes("🃏 【牌桌王】") && sent[1].length <= MAX);
+});
+T("workflow 跑的腳本有讀 casinoWallets，而且規則沒有放寬（玩家讀不到錢包）", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "weekly_board.cjs"), "utf8");
+  assert.ok(src.includes('collection("casinoWallets")'));
+  const r = fs.readFileSync(path.join(__dirname, "..", "firestore.rules"), "utf8");
+  assert.ok(!/casinoWallets[^}]*allow (read|write): if (isMember|true|request)/.test(r), "錢包的規則不放寬");
+  const m = /match \/casinoWallets\/\{[^}]*\} \{([\s\S]*?)\n    \}/.exec(r);
+  if (m) assert.ok(!/allow read: if (isMember|true)/.test(m[1]) || m[1].includes("isMe("), "只有自己或沒人");
+});
+
 (async () => {
   for (const [name, fn] of tests) {
     const G = load();
