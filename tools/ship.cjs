@@ -33,6 +33,7 @@ const commitText = (msg, ai = "Claude Opus 5.5") => `${String(msg).trim()}\n\nCo
 const prBody = body => { const b = String(body || "").trim(); return b.includes(FOOTER) ? b + "\n" : `${b}\n\n${FOOTER}\n`; };
 // main 不能直接動
 const branchOk = b => !!b && b !== "main" && b !== "master";
+const titleOk = t => [...String(t || "").trim()].length >= 4; // 擋掉 --title x 這種占位的
 // PR 剛開，GitHub 可能還沒登記 CI：這時 gh pr checks 會失敗，但不是真的失敗，要等
 const noChecksYet = text => /no checks reported/i.test(String(text || ""));
 
@@ -60,7 +61,7 @@ const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）"
 
 function main() {
   const o = parseArgs(process.argv.slice(2)), ai = process.env.SHIP_AI || "Claude Opus 5.5";
-  if (!o.title) throw new Error("要有 --title");
+  if (!titleOk(o.title)) throw new Error("--title 要寫真的標題：它會變成 commit 訊息和 PR 標題，推上去就改不回來");
   const body = o["body-file"] ? fs.readFileSync(o["body-file"], "utf8") : o.body;
   if (!body) throw new Error("要有 --body 或 --body-file");
   const branch = git(["branch", "--show-current"]).out;
@@ -117,4 +118,4 @@ function main() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet };
+module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk };

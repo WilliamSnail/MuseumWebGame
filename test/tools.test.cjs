@@ -1,6 +1,9 @@
 // 給 AI 重複用的腳本：tools/ship.cjs、local_game.cjs、new_doc.cjs、edit_lib.cjs（只測規則，不會真的合併、開伺服器）
 const assert = require("assert");
-const { parseArgs, commitText, prBody, branchOk, noChecksYet } = require("../tools/ship.cjs");
+const { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk } = require("../tools/ship.cjs");
+const wf = require("../tools/wf_run.cjs");
+const emuDoc = require("../tools/emu_doc.cjs");
+const wt = require("../tools/new_worktree.cjs");
 const { keepBoth, canAuto } = require("../tools/merge_main.cjs");
 const { moveEventNow, rtdbPort, fnPort } = require("../tools/local_game.cjs");
 const { nextDecision, safeName, logText, decisionText } = require("../tools/new_doc.cjs");
@@ -123,6 +126,40 @@ T("apply_edits：找不到、不只壹處、沒有檔都回報；Windows 換行�
   assert.strictEqual(planResult(steps("甲\n乙"), () => "頭\r\n甲\r\n乙\r\n尾").files.a, "頭\r\n丙\r\n尾");
   const two = parsePlan("@@@ 檔案 a\n@@@ 舊\n甲\n@@@ 新\n乙\n@@@ 完\n@@@ 舊\n乙\n@@@ 新\n丙\n@@@ 完\n");
   assert.strictEqual(planResult(two, () => "甲").files.a, "丙");
+});
+
+T("ship：標題太短擋下來（--title x 會變成推不回來的 commit 訊息）", () => {
+  assert.ok(titleOk("排行榜每天更新"));
+  for (const t of ["x", "", null, "  ab  "]) assert.ok(!titleOk(t), String(t));
+});
+T("wf：參數看得懂，打錯就停；只認新的那一次（舊的不能當成功）", () => {
+  const o = wf.parseArgs(["discord-announce.yml", "-f", "a=1=2", "--file", "message=文.txt", "--ref", "b", "--grep", "x"], () => " 多行\n文字 \n");
+  assert.deepStrictEqual(o, { workflow: "discord-announce.yml", ref: "b", grep: "x", inputs: { a: "1=2", message: "多行\n文字" } });
+  assert.strictEqual(wf.parseArgs(["a.yml"]).ref, "main");
+  assert.throws(() => wf.parseArgs([]), /檔名/);
+  assert.throws(() => wf.parseArgs(["a.yml", "-f", "沒有等號"]), /名字=內容/);
+  assert.throws(() => wf.parseArgs(["a.yml", "--打錯"]), /沒有/);
+  assert.throws(() => wf.parseArgs(["a.yml", "b.yml"]), /看不懂/);
+  assert.strictEqual(wf.newRunId(["111"], "111"), null, "還是舊的那次");
+  assert.strictEqual(wf.newRunId([""], "111"), null);
+  assert.strictEqual(wf.newRunId(["222"], "111"), "222");
+  assert.strictEqual(wf.logBody("log\t步驟\t2026-11-09T01:02:03Z 公告發了。"), "公告發了。");
+});
+T("emu:doc：連接埠跟模擬器一樣；巢狀欄位；值會轉型；寫錯就停", () => {
+  assert.deepStrictEqual([3, 4, 6].map(emuDoc.firestorePort), [11180, 12180, 14180]);
+  assert.deepStrictEqual(emuDoc.setPath({ ec: { n: 3, wins: 1 } }, "ec.n", 0), { ec: { n: 0, wins: 1 } });
+  assert.deepStrictEqual(emuDoc.setPath({}, "a.b", 1), { a: { b: 1 } });
+  assert.deepStrictEqual(emuDoc.pairs(["bankroll=-500000", "on=true", "nick=小明"]), [["bankroll", -500000], ["on", true], ["nick", "小明"]]);
+  assert.throws(() => emuDoc.pairs([]), /欄位=值/);
+  assert.throws(() => emuDoc.pairs(["沒有等號"]), /欄位=值/);
+  for (const v of [1, 1.5, true, "字", null]) assert.strictEqual(emuDoc.fromFs(emuDoc.toFs(v)), v);
+});
+T("wt：分支要 claude/ 開頭；缺東西就停", () => {
+  assert.deepStrictEqual(wt.parseArgs(["--dir", "d", "--branch", "claude/主題"]), { dir: "d", branch: "claude/主題", remove: false });
+  assert.strictEqual(wt.parseArgs(["--dir", "d", "--remove"]).remove, true);
+  for (const b of ["main", "claude/", "claude/有 空白"]) assert.throws(() => wt.parseArgs(["--dir", "d", "--branch", b]), /claude/);
+  assert.throws(() => wt.parseArgs(["--branch", "claude/x"]), /--dir/);
+  assert.throws(() => wt.parseArgs(["--dir", "d", "亂打"]), /看不懂/);
 });
 
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);

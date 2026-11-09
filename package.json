@@ -19,6 +19,9 @@
     "local": "node tools/local_game.cjs",
     "doc:new": "node tools/new_doc.cjs",
     "edits": "node tools/apply_edits.cjs",
+    "wf": "node tools/wf_run.cjs",
+    "emu:doc": "node tools/emu_doc.cjs",
+    "wt": "node tools/new_worktree.cjs",
     "merge:main": "node tools/merge_main.cjs",
     "emu:call": "node tools/emu_call.cjs",
     "functions:shared": "node tools/copy_shared.cjs"
