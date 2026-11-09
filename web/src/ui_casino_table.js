@@ -14,7 +14,7 @@ import { CAS_QUICK } from "../../shared/casino_table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, setChips, snd } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, setChips, snd, titleOfId, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
@@ -147,7 +147,7 @@ function seatCard(s, v) {
   const state = s.gone ? "離桌了，這手當停牌" : s.out ? "" : s.st === "idle" ? (phaseBet ? "還沒下注" : "旁觀") : s.st === "bet" ? "下好注了" : s.st === "play" ? (v.turn === s.uid ? "要牌中……" : "等輪到") : s.st === "done" ? "爆了" : s.timedOut ? "時間到，停牌" : "停牌";
   const kinds = { win: "贏了", blackjack: "黑傑克！", charlie: "五張過關！", push: "平手", lose: "輸了" };
   return h("div", { class: "cas-seat tb" + (s.you ? " me" : "") + (v.turn === s.uid ? " turn" : "") + (s.gone ? " gone" : "") },
-    h("div", { class: "cas-who" }, h("b", null, s.nick, s.you ? "（你）" : ""), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
+    h("div", { class: "cas-who" }, h("b", null, s.nick, s.you ? "（你）" : ""), titleTag(titleOfId(s.uid), "cas-ttl"), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
     s.cards.length ? handEl(s.cards, { warped: s.warped, label: `${s.nick} 的牌` }) : null,
     s.out ? h("p", { class: "cas-tb-out k-" + s.out.kind }, kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
 }

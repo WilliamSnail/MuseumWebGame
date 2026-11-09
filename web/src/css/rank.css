@@ -25,6 +25,8 @@
 .rk-row.r1 .rk-medal { background: linear-gradient(180deg, #F2DC97, #C8A25A); }
 .rk-row.r2 .rk-medal { background: linear-gradient(180deg, #E9E9E6, #AFAFAA); }
 .rk-row.r3 .rk-medal { background: linear-gradient(180deg, #E3B38B, #B57F52); }
+.rk-who { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; max-width: 100%; }
+.rk-ttl { align-self: center; max-width: 9em; }
 .rk-names { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .rk-val { flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; color: #6E4A12; }
 .rk-name.me { font-weight: 700; color: #7A2A14; text-decoration: underline; text-decoration-color: rgba(122,42,20,.45); text-underline-offset: 3px; }

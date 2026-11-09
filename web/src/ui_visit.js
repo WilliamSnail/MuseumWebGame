@@ -21,7 +21,7 @@ import { NUM } from "../../shared/config.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { RANK, ago, reloadSave } from "./ui_login.js";
 import { roomHead } from "./ui_screens1.js";
@@ -183,7 +183,7 @@ export function pickFriend(o) {
     const card = p => {
       return h("button", { type: "button", class: `nf-card nf-pickcard ${p.status}`, disabled: busy ? true : undefined, "aria-busy": busy === p.id ? "true" : undefined, onClick: () => choose(p) },
         h("span", { class: "nf-dot", "aria-hidden": "true" }),
-        h("div", { class: "nf-body" }, h("b", { class: "nf-nick" }, p.nick),
+        h("div", { class: "nf-body" }, h("b", { class: "nf-nick" }, p.nick), titleTag(p.title),
           h("span", { class: "nf-where" }, p.status === "offline" ? `離線・${ago(p.lastSeen)}` : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room))),
         h("span", { class: "nf-pick-go" }, busy === p.id ? "……" : "選他"));
     };

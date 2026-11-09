@@ -10,8 +10,9 @@
 //  - 開發時網址帶 ?user=名字：這個分頁自己登入（net.js 把 token 放 sessionStorage），一台電腦開好幾個分頁當不同的人。
 // ================================================================
 import { SAVE_KEY, migrateSave, nowMs } from "../../shared/logic.js";
+import { titleName } from "../../shared/titles.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, updateNetMenu, useProfile } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, titleTag, updateNetMenu, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const MOVED_KEY = "pepe4.movedTo";  // 這台電腦的舊存檔搬給哪個帳號了（只搬一次，不然兩個帳號會有同一份）
@@ -236,6 +237,7 @@ export function openFriends() {
       h("span", { class: "nf-dot", "aria-hidden": "true" }),
       h("div", { class: "nf-body" },
         h("b", { class: "nf-nick" + (p.me && ADDONS.frameClass ? ADDONS.frameClass() : "") }, p.nick, p.me ? h("small", null, "（你）") : null), // 名牌框：簽到拿的（11-09）；別人的要等伺服器傳得到（規則還沒改）
+        titleTag(p.title), // 稱號（決定 0050）：沒有就不佔位置
         h("span", { class: "nf-where" }, p.status === "offline" ? `離線・${ago(p.lastSeen)}` : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room))),
       p.me ? null : friendButtons(p, m.close));
     const off = NET.state !== "online";
@@ -266,8 +268,8 @@ function drawLobbyFriends(box) {
   }
   const on = NET.roster.filter(p => !p.me && p.status !== "offline").sort((a, b) => RANK[a.status] - RANK[b.status] || String(a.nick).localeCompare(String(b.nick)));
   const where = p => (p.status === "away" ? "離開壹下" : roomLabel(p.room));
-  const chip = p => h("button", { type: "button", class: "lf-chip " + p.status, title: `${p.nick}：${where(p)}`, onClick: () => openFriends() },
-    h("span", { class: "nf-dot", "aria-hidden": "true" }), h("b", null, p.nick), h("small", null, where(p)));
+  const chip = p => h("button", { type: "button", class: "lf-chip " + p.status, title: `${p.nick}${titleName(p.title) ? `（${titleName(p.title)}）` : ""}：${where(p)}`, onClick: () => openFriends() },
+    h("span", { class: "nf-dot", "aria-hidden": "true" }), h("b", null, p.nick), titleTag(p.title, "lf-ttl"), h("small", null, where(p)));
   box.replaceChildren(
     h("span", { class: "lf-tag" }, icon("users"), "館友在線"),
     on.length ? h("div", { class: "lf-list" }, on.slice(0, LOBBY_MAX).map(chip), on.length > LOBBY_MAX ? h("span", { class: "lf-more" }, `還有 ${on.length - LOBBY_MAX} 位`) : null)

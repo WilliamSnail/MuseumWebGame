@@ -18,7 +18,7 @@ import { COOP } from "../../shared/coop.js";
 import { coopTurnsLeft } from "../../shared/coop_flow.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop_text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, updateStatus, useProfile } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { eventBoostText } from "../../shared/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
@@ -267,7 +267,7 @@ function drawLobby() {
   const card = m => {
     const off = m.id !== meId && offline(m.id);
     return h("div", { class: "pt-member cx-member" + (m.ready ? " ready" : "") + (m.id === meId ? " me" : "") + (off ? " off" : "") },
-      h("b", { class: "pt-nick" }, m.nick, m.id === party.leader ? h("small", null, "隊長") : null),
+      h("b", { class: "pt-nick" }, m.nick, m.id === party.leader ? h("small", null, "隊長") : null), titleTag(titleOfId(m.id)),
       m.guard ? h("div", { class: "cx-guard-mark", html: ART.icon("eye") }) : h("div", { class: "cx-pets" }, m.pick.length ? m.pick.map(k => pet(k)) : h("div", { class: "pt-pet empty cx-mini" }, "還沒選")),
       h("span", { class: "pt-name" }, m.guard ? "留在監視器前" : typeof m.best === "number" ? (m.best ? `走過 B${m.best}` : "還沒下去過") : "　"),
       h("span", { class: "pt-state" }, off ? "不在線……" : m.ready ? "準備好了" : m.guard ? "還沒準備好" : "還在選"));

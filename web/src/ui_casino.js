@@ -361,7 +361,7 @@ function swapPane() {
 function achPane() {
   const w = S.w, have = new Map(w.ach.map(a => [a.id, a]));
   const cur = w.title ? w.ach.find(a => a.id === w.title) : null;
-  const setTitle = id => act("title", { id }, () => note(id ? "稱號換好了，展廳上看得到。" : "拿掉稱號了。", "good"));
+  const setTitle = id => act("title", { id }, () => note(id ? "稱號換好了，展廳和館友名單上看得到。" : "拿掉稱號了。", "good"));
   const row = (a, mine) => h("li", { class: mine ? "got" : "lock" },
     h("span", { class: "cas-badge", "aria-hidden": "true" }, icon(mine ? "medal" : "lock")),
     h("span", { class: "cas-name" }, h("b", null, mine ? a.name : "？？？"), h("small", null, mine ? (mine.old ? `${mine.desc}` : a.desc) : a.desc)),
@@ -369,7 +369,7 @@ function achPane() {
   // wk：每週收藏集滿的稱號（決定 0042）
   const oldOnes = w.ach.filter(a => a.old), wkOnes = w.ach.filter(a => a.wk);
   return [
-    sec("稱號", h("p", { class: "cas-note" }, cur ? ["現在的稱號：", h("b", null, cur.name), "。在展廳上，來參觀的館友看得到。"] : "還沒有稱號。拿到成就之後，可以選壹個當稱號。"),
+    sec("稱號", h("p", { class: "cas-note" }, cur ? ["現在的稱號：", h("b", null, cur.name), "。在展廳、館友名單、榜單上，館友都看得到。"] : "還沒有稱號。拿到成就之後，可以選壹個當稱號。"),
       h("p", { class: "cas-have" }, `已經拿到 ${w.ach.length} 個成就。`)),
     sec("在賭場拿得到的", h("ul", { class: "cas-list" }, CAS_ACH.map(a => row(a, have.get(a.id))))),
     wkOnes.length ? sec("每週收藏集滿的稱號", h("ul", { class: "cas-list" }, wkOnes.map(a => row(a, a)))) : null,

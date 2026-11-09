@@ -30,6 +30,7 @@ const STEPS = [
   ["Hamachi 賭場（21 點的規則、真的牌組、賠率、看錯牌、錢包、救濟、大禮包、餐車、換小獎、成就和財產、舊資料認領，決定 0040）", ["test/casino.test.cjs"]],
   ["Hamachi 賭場的館友同桌（輪流、同一副牌、時間限制、超時和斷線當停牌、離桌、暗牌不外洩、錢守恆，決定 0040）", ["test/casino_table.test.cjs"]],
   ["Hamachi 賭場的每週收藏（換週歸零、過期不懲罰、重複領不行、條件邊界、壞資料、舊錢包、同桌和單人都算、只由伺服器算，決定 0042）", ["test/casino_week.test.cjs"]],
+  ["稱號到處看得到（公開哪一個、讀回來檢查、館友名單、導覽圖、每週榜單、資料庫規則只放寬 titles，決定 0050）", ["test/titles.test.cjs"]],
   ["手機轉橫的提示（先用直的記在裝置上、鎖橫向失敗不丟錯、landscape.css 只在手機橫拿和直拿才生效，決定 0043）", ["test/orient.test.cjs"]],
   ["動畫減量不會讓東西看不到", ["test/motion.test.cjs"]],
   ["說明文字標重點", ["test/mark.test.cjs"]],

@@ -18,11 +18,12 @@ import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
 import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
+import { titlePublish } from "./shared/titles.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
-import { inbox, needMember, newId, now } from "./party.js";
+import { inbox, needMember, newId, now, rtdb } from "./party.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -70,6 +71,12 @@ async function play(req, me, opts, fn) {
     return out;
   } finally { setRng(null); }
 }
+// 稱號到處看得到（決定 0050）：現在戴的稱號公開在 Realtime Database 的 titles/{uid}（館友讀得到，只有這裡寫得動）。
+// 只放 { id, name }，名字是錢包裡的（不信存檔）。寫不進去不影響賭場本身，下次進館的 peek 會再補
+const publishTitle = async (uid, t) => {
+  try { await (t ? rtdb().ref(`titles/${uid}`).set(t) : rtdb().ref(`titles/${uid}`).remove()); }
+  catch (e) { console.error("titles：寫不進去", uid, e && e.message); }
+};
 // 畫面要的：錢包摘要、這一手、莊家
 // 每一步成功的回答都經過這裡：先同步每週收藏（統計夠了就發），再把摘要、這一手、莊家一起給畫面
 export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
@@ -88,7 +95,12 @@ export const casino = onCall(async req => {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
       const ws = await walletRef(me.uid).get();
-      return { ok: true, chips: casWalletFix(parse(ws), taipeiDay(now())).chips };
+      const w = casWalletFix(parse(ws), taipeiDay(now()));
+      if (w.title) { // 有戴稱號的人，進館時把稱號補到 titles（以前戴的、上次沒寫成功的）；沒稱號的人不多讀存檔
+        const S = parse(await saveRef(me.uid).get());
+        await publishTitle(me.uid, titlePublish(w, S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null));
+      }
+      return { ok: true, chips: w.chips };
     }
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
@@ -131,12 +143,18 @@ export const casino = onCall(async req => {
       ctx.saveDirty = true;
       return shape(ctx, { reward: r.reward });
     });
-    case "title": return play(req, me, { save: true }, ctx => {
-      const r = casSetTitle(ctx.w, ctx.P, d.id == null ? null : String(d.id));
-      if (!r.ok) return no(r);
-      ctx.saveDirty = !!ctx.P;
-      return shape(ctx);
-    });
+    case "title": {
+      let pub = null;
+      const out = await play(req, me, { save: true }, ctx => {
+        const r = casSetTitle(ctx.w, ctx.P, d.id == null ? null : String(d.id));
+        if (!r.ok) return no(r);
+        ctx.saveDirty = !!ctx.P;
+        pub = titlePublish(ctx.w, ctx.P);
+        return shape(ctx);
+      });
+      if (out && out.ok) await publishTitle(me.uid, pub); // 交易成功才公開
+      return out;
+    }
     case "hang": return play(req, me, { save: true }, ctx => {
       const r = casHang(ctx.w, ctx.P, String(d.id), !!d.on);
       if (!r.ok) return no(r);
