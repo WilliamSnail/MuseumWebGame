@@ -18,7 +18,7 @@ import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 import { lobbyFriends, loginArea, refreshLogin } from "./ui_login.js";
-import { ORIGIN_TABS, galleryTabs, originTabs, storyLobby, storyShelf, storyShow } from "./ui_story.js"; // 每週劇情（11-09）
+import { ORIGIN_TABS, galleryTabs, originTabs, storyLobby, storyShelf, storyShow, weekUnderstood } from "./ui_story.js"; // 每週劇情（11-09）
 
 export function roomHead(title, sub, ...extra) {
   const back = UI.screen && UI.screen !== "lobby" && !HIDE_CHROME.includes(UI.screen) && P ? btn([icon("lobby"), " 回大廳"], () => navTo("lobby"), "ghost small rh-back") : null;
@@ -420,7 +420,7 @@ SCREENS.origin = (root, params) => {
       });
       return el;
     }));
-  if (!isFree(P) && Object.keys(P.understood || {}).length) {
+  if (!isFree(P) && (Object.keys(P.understood || {}).length || weekUnderstood().near.length)) {
     const el = h("button", { type: "button", class: "spine uk-spine", "aria-label": "看懂的事" }, h("span", { class: "spine-t" }, "看懂的事"));
     freshMark(el, isFresh(P, "origin", FRESH_KEY.understood)); // 《看懂的事》多了壹件（11-08）
     el.addEventListener("click", () => { $$(".spine.on", root).forEach(x => x.classList.remove("on")); el.classList.add("on"); snd("eerie", 1); openUnderstood(reader); });
@@ -489,7 +489,17 @@ export function openUnderstood(reader) {
     h("p", { class: "uk-count" }, `看懂了 ${got}／${UNDERSTAND_TEXT.length} 件。照發生的順序排，拼起來就是這間博物館的祕密。`),
     h("ol", { class: "uk-list" }, UNDERSTAND_TEXT.map(x => P.understood[x.id]
       ? h("li", null, h("span", { class: "uk-from" }, x.from), h("span", { class: "uk-line" }, ptNode(x.text)))
-      : h("li", { class: "unknown" }, h("span", { class: "uk-line" }, "？？？（還沒看懂）"))))));
+      : h("li", { class: "unknown" }, h("span", { class: "uk-line" }, "？？？（還沒看懂）")))),
+    weekUnderstoodBox()));
+}
+// 每週劇情裡看懂的（線索集齊才會多壹件，shared/clues.js）。快看懂的只說還差幾條和提示，不給答案
+function weekUnderstoodBox() {
+  const v = weekUnderstood();
+  if (!v.done.length && !v.near.length) return null;
+  return h("div", { class: "uk-weeks" },
+    h("h3", { class: "uk-sub" }, "這些週看懂的"),
+    v.done.length ? h("ol", { class: "uk-list" }, v.done.map(x => h("li", null, h("span", { class: "uk-from" }, x.from || "館裡"), h("span", { class: "uk-line" }, ptNode(x.text))))) : null,
+    v.near.map(x => h("p", { class: "uk-near" }, `有件事快看懂了：還差 ${x.left} 條。`, x.hint ? h("span", { class: "uk-hint" }, ptNode(x.hint)) : null)));
 }
 export function bookReader(reader, title, pages, o = {}) {
   let i = 0;

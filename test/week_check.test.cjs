@@ -411,5 +411,58 @@ T("賭場收藏：casino.line 要在這週的 lines 裡；沒寫 line 的正式�
   c.files["2026-W47/week.json"].events = [{ id: "cn", kind: "casinoBoost", date: "2026-11-18", from: "20:00", to: "22:00", title: "招領櫃檯夜", words: "賭場多開壹個小窗口。" }];
   assert.deepStrictEqual(run(c).errors, []);
 });
+// ---------- 線索和看懂（shared/clues.js） ----------
+const withClues = c => {
+  c.files["2026-W47/d1.json"].books[0].clue = "c-hand-one";
+
+  c.files["2026-W47/d2.json"].show.works[0].clue = "c-work-two";
+  c.files["2026-W47/d2.json"].understand = [{ id: "u-first", need: ["c-hand-one", "c-work-two"], from: "招領箱的帳", text: "他沒有離開。", hint: "還有壹條在畫廊" }];
+  return c;
+};
+T("線索和看懂：寫對的過；備用週、舊內容不受影響", () => {
+  assert.deepStrictEqual(run(withClues(regular())).errors, []);
+});
+T("線索：id 格式、重複、放錯地方、備用週都擋", () => {
+  expectErr(c => { c.files["2026-W47/d1.json"].books[0].clue = "線索壹"; }, /clue「線索壹」寫法不對/);
+  expectErr(c => { c.files["2026-W47/d1.json"].books[0].clue = "C-Big"; }, /寫法不對/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d3.json"].books[0].clue = "c-hand-one"; }, /已經用在/);
+  expectErr(c => { c.files["2026-W47/d1.json"].daily[0].clue = "c-daily"; }, /每日任務的 clue 遊戲還不會算/);
+  expectErr(c => { c.files["2026-W47/d1.json"].casino = { note: "賭場今天很安靜。", clue: "c-casino" }; }, /賭場的 clue 遊戲還不會算/);
+  expectErr(c => { c.files["備用/常青1/d1.json"].books[0].clue = "c-spare"; }, /備用週不能寫 clue/);
+  expectErr(c => { const k = Object.keys(c.files).find(x => x.startsWith("備用/一天/")); c.files[k].books[0].clue = "c-spare"; }, /備用的一天不能寫 clue/);
+});
+T("看懂：id、need、text、from、hint 的格式", () => {
+  const u = c => c.files["2026-W47/d2.json"].understand[0];
+  expectErr(c => { withClues(c); u(c).id = "壹"; }, /id「壹」寫法不對/);
+  expectErr(c => { withClues(c); u(c).id = "book1"; }, /寫法不對/);
+  expectErr(c => { withClues(c); u(c).need = []; }, /need/);
+  expectErr(c => { withClues(c); delete u(c).need; }, /need/);
+  expectErr(c => { withClues(c); u(c).need = ["c-hand-one", "c-hand-one"]; }, /有重複的線索/);
+  expectErr(c => { withClues(c); delete u(c).hint; }, /hint/);
+  expectErr(c => { withClues(c); delete u(c).from; }, /from/);
+  expectErr(c => { withClues(c); u(c).text = "他沒有離開。".repeat(20); }, /太長/);
+  expectErr(c => { withClues(c); u(c).text = "你看懂了：他沒有離開。"; }, /不用寫「你看懂了：」/);
+  expectErr(c => { withClues(c); u(c).text = "那是一個人。"; }, /用「壹」/);
+  expectErr(c => { withClues(c); u(c).text = "總統來了。"; }, /禁用字/);
+  expectErr(c => { withClues(c); u(c).hint = "look here"; }, /英文字母/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand.push(clone(u(c)), clone(u(c))); }, /壹天最多/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d3.json"].understand = [clone(u(c))]; }, /已經用在/);
+});
+T("看懂：need 的線索要在同一天或更早，找不到、還沒出現都擋", () => {
+  expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].need = ["c-nowhere"]; }, /線索「c-nowhere」找不到/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d1.json"].understand = [clone(c.files["2026-W47/d2.json"].understand[0])]; delete c.files["2026-W47/d2.json"].understand; }, /要到 .* 才出現，還沒到/);
+  const c = withClues(regular()); // 同一天也可以
+  c.files["2026-W47/d2.json"].books[0].clue = "c-same-day"; c.files["2026-W47/d2.json"].understand[0].need = ["c-hand-one", "c-same-day"];
+  assert.deepStrictEqual(run(c).errors, []);
+});
+T("帳本 mysteries：closeBy 過了還沒收要警告，收了就不警告，答案不印出來", () => {
+  const c = regular();
+  c.ledger.mysteries = { list: [{ id: "m-test", q: "測試", closeBy: "2026-W46", status: "open", truth: "測試用的謎底不能出現在輸出", clues: [] }, { id: "m-done", q: "收了", closeBy: "2026-W46", status: "closed" }, { id: "m-later", q: "還沒到", closeBy: "2027-W20", status: "open" }] };
+  const r = run(c);
+  assert.ok(r.warnings.some(w => /m-test.*到期了還沒收/.test(w)));
+  assert.ok(!r.warnings.some(w => /m-done|m-later/.test(w)));
+  assert.ok(!JSON.stringify(r).includes("測試用的謎底"));
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

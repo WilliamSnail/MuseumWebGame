@@ -237,7 +237,7 @@ export function newProfile(mode) {
     sanity: NUM.startSanity, myth: 0, insp: free ? 0 : NUM.startInsp,
     unlocked, unlockCount: 0,
     pepes: {}, failed: {}, pillows: {}, serial: 0,
-    seen: {}, chaptersRead: {}, mythFrom: {}, understood: {},
+    seen: {}, chaptersRead: {}, mythFrom: {}, understood: {}, clues: {},
     day: null, hugDays: [], badges: {}, done: 0, comments: [], // hugDays：11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027）；舊存檔有，先留著
     daily: null, quirks: [], bout: null, swapNext: false, dark: false, // quirks：{ type, cat, opt, since, until, task }，見 gainQuirk
     hall: [null, null, null, null, null, null], hallVisitors: 0, visitorLog: [], themesSeen: {},
@@ -770,7 +770,7 @@ export function chapterOpen(P, id) {
   const mc = typeof MORE_CHAPTERS !== "undefined" && MORE_CHAPTERS.find(c => c.id === id);
   if (mc) {
     const n = mc.need || {};
-    return !!((n.seen && P.seen[n.seen]) || (n.unlocks && P.unlockCount >= n.unlocks) || (n.understood && Object.keys(P.understood || {}).length >= n.understood) || (n.ending && Object.keys(P.endings || {}).length));
+    return !!((n.seen && P.seen[n.seen]) || (n.unlocks && P.unlockCount >= n.unlocks) || (n.understood && Object.keys(P.understood || {}).filter(k => !/^u-/.test(k)).length >= n.understood) || (n.ending && Object.keys(P.endings || {}).length));
   }
   return P.unlockCount >= (id === 2 ? NUM.ch2 : NUM.ch3);
 }
@@ -1386,7 +1386,7 @@ export function fixProfile(P, mode) {
     sortUnlocked(out, c);
   });
   ["pepes", "failed", "pillows", "seen", "chaptersRead", "mythFrom", "badges", "themesSeen", "endings", "fullRows", "news",
-    "keys", "upgrades", "recipes", "repaired", "injured", "skillTicks", "lines", "giftsIn", "understood", "fresh", "visit"].forEach(k => { if (!out[k] || typeof out[k] !== "object" || Array.isArray(out[k])) out[k] = {}; });
+    "keys", "upgrades", "recipes", "repaired", "injured", "skillTicks", "lines", "giftsIn", "understood", "clues", "fresh", "visit"].forEach(k => { if (!out[k] || typeof out[k] !== "object" || Array.isArray(out[k])) out[k] = {}; });
   ["quirks", "comments", "visitorLog", "hugDays", "history", "relics"].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   out.quirks = fixQuirks(out.quirks); // 怪癖 7 天後自己消失（決定 0046，原本 20 分鐘）：舊存檔沒有 until 的怪癖從載入這一刻起算；不在場的參觀者在 fixVisitors 裡補
   fixLegacy(out, !!(P && P.visit && typeof P.visit === "object" && !Array.isArray(P.visit))); // 參觀者一位接一位（11-08）：舊存檔補 P.visit 這些

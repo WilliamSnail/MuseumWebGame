@@ -1099,6 +1099,14 @@ export function quirkMakeBox(pick) {
   }));
 }
 // 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進起源室的《看懂的事》
+// 集齊線索看懂的（shared/clues.js）：跟看懂檢定同壹張大卡片，按了才關，不會錯過。不扣理智、不發作
+export function understoodCard(e) {
+  snd("eerie", 2);
+  return quirkLayer("你看懂了", e.from ? `來自：${e.from}` : "", [
+    h("p", { class: "uk-text" }, ptNode(e.text)),
+    h("p", { class: "uk-note" }, `這件事記進了起源室書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}。`),
+  ], "uk-modal", "我看懂了");
+}
 export function understandFlow(src) {
   const u = understandLine(P, src);
   if (u.isNew) { markFresh(P, "origin", FRESH_KEY.understood, UI.screen); markFreshNav(); } // 起源室書架上的《看懂的事》多了壹件

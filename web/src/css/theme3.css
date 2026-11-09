@@ -662,6 +662,10 @@ body.reduce-motion .spine.sealed.stir { animation: none; }
 .uk-list .uk-from { display: block; font-size: .8125rem; color: #6B3FA0; font-weight: 700; letter-spacing: .08em; }
 .uk-list .uk-line { font-family: var(--serif); }
 .uk-list li.unknown { color: var(--parch-sub); opacity: .6; }
+.uk-weeks { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--parch-sub); }
+.uk-sub { margin: 0 0 8px; font-size: 1rem; color: #6B3FA0; letter-spacing: .08em; }
+.uk-near { margin: 10px 0 0; line-height: 1.7; color: var(--parch-sub); font-family: var(--serif); }
+.uk-near .uk-hint { display: block; font-size: .875rem; }
 
 /* ----- 理智 0：熄燈的展廳（翊文 11-08：手電筒要整頁都有） ----- */
 html:has(body.dark), body.dark { overflow: hidden; }
