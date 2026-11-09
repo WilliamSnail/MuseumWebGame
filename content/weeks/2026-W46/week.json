@@ -1,0 +1,52 @@
+{
+  "week": "2026-W46",
+  "start": "2026-11-09",
+  "title": "換季的失物招領",
+  "theme": "序章。新聞：東北季風轉涼、大家換季翻出冬衣、立冬剛過。B1 的樓梯口冷得像冬天，招領箱裡全是冬天的東西；週日留下那頁帳『收支：差壹隻。』",
+  "holidayWeek": false,
+  "summary": [
+    "立冬剛過，B1 的樓梯口忽然吹起冷風。",
+    "風停的地方，多了壹個失物招領箱，裡面塞滿了圍巾、手套和毛帽。",
+    "這週要替箱子裡的冬天找主人：讀招領單、回到地下看看，也替館裡做幾隻暖暖的佩佩。",
+    "週日會知道，最後那張沒人來領的紙上寫了什麼。"
+  ],
+  "lines": [
+    { "id": "w46-lost", "name": "換季的招領箱", "kind": "week" },
+    { "id": "w46-door", "name": "招領箱後面的小門", "kind": "floor" }
+  ],
+  "anomaly": {
+    "title": "B1 的樓梯口變冷了",
+    "text": [
+      "樓梯口吹上來壹陣冷風，風停的地方放著壹個失物招領箱。",
+      "箱子上貼著壹張紙：「撿到的東西請放這裡。失主請在週日以前來領。」",
+      "帶 3 隻佩佩下去，就能把箱子搬到燈下看看。"
+    ],
+    "room": {
+      "id": "box", "floor": 1, "line": "w46-lost",
+      "title": "塞滿冬衣的招領箱", "hint": "去 B1 看看那個招領箱",
+      "intro": "樓梯口的燈下，放著壹個木箱。箱蓋被壹條圍巾撐著，關不起來。",
+      "lines": ["木箱上寫著「失物招領」，字是新漆的。", "箱子裡塞滿了冬天的東西，每壹件都綁著壹張小紙條。"],
+      "mood": null, "color": "黃",
+      "choices": [
+        { "label": "把箱子搬到燈下", "check": { "type": "power", "target": 11 },
+          "success": { "text": "箱子很重，摸起來比樓梯口還冷。最上面那張招領單，寫著今天的日期。", "insp": 3 },
+          "fail": { "text": "箱子動也不動，像是有誰在裡面拉著那條圍巾。", "san": "1D2" } },
+        { "label": "翻看最上面的招領單", "check": { "type": "skill", "skill": "偵查", "mod": 10 },
+          "success": { "text": "招領單的字很小、很整齊。每張的最後都寫著「待領」。", "insp": 3 },
+          "fail": { "text": "紙條太多，冷風壹吹，你看得眼花。", "san": "1D2" } },
+        { "label": "先登記壹下就好", "check": { "type": "none" },
+          "success": { "text": "你在登記簿上寫下「已看過」。風好像小了壹點。" } }
+      ],
+      "reward": { "insp": 3 }
+    }
+  },
+  "weekly": [
+    { "id": "w1", "kind": "spot", "room": "box", "reward": { "insp": 6 } },
+    { "id": "w2", "kind": "spot", "room": "draft", "reward": { "items": ["book:偵查"] } },
+    { "id": "w3", "kind": "readWeek", "n": 6, "reward": { "insp": 8 } },
+    { "id": "w4", "kind": "dailyAll", "n": 3, "reward": { "mood": 10 } },
+    { "id": "w5", "kind": "ending", "reward": { "insp": 8 } }
+  ],
+  "weeklyBonus": { "insp": 10, "items": ["mat:金線"] },
+  "ending": { "need": { "read": 6 } }
+}
