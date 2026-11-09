@@ -15,7 +15,7 @@ import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
-import { $$, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
@@ -269,7 +269,7 @@ export function storyLobby() {
 }
 
 // ---------- 起源室：書架的頁籤 ----------
-export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"]];
+export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
 const shelfName = id => (ORIGIN_TABS.find(t => t[0] === id) || [id, id])[1];
 // 全部的週（今天這週＋以前的），舊的在前
 let pastCache = { key: null, list: [] };
@@ -284,7 +284,7 @@ const kindOfBook = (w, b) => { const l = lineById(w, b.line); return l ? l.kind 
 const tabOfBook = (w, b) => shelfTabOf({ kind: kindOfBook(w, b) });
 // 每個頁籤：幾本（打得開的）、沒讀幾本、有沒有新的
 function storyCounts() {
-  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], season: [0, 0, 0], holiday: [0, 0, 0] };
+  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], season: [0, 0, 0], holiday: [0, 0, 0], curate: ADDONS.curateCounts ? ADDONS.curateCounts() : [0, 0, 0] };
   if (!on()) return out;
   allWeeks().forEach(w => w.books.forEach(b => {
     const st = bookState(P, w, b), c = out[tabOfBook(w, b)];
@@ -305,7 +305,7 @@ export function originTabs(tab, counts = {}) {
   }));
 }
 // 一排書，超過 NUM.story.shelfRow 本就分頁（手機也一樣，不會撐長）
-function shelfRow(key, label, spines, extra) {
+export function shelfRow(key, label, spines, extra) {
   const per = NUM.story.shelfRow, pages = Math.max(1, Math.ceil(spines.length / per));
   const store = UI.shelfPage || (UI.shelfPage = {});
   let p = Math.min(store[key] || 0, pages - 1);
@@ -368,6 +368,7 @@ function seasonVolume(n, weeks, reader) {
 }
 // 書架：主線、每週劇情、節日（館藏、禁書照舊在 ui_screens1.js）
 export function storyShelf(tab, reader, params = {}) {
+  if (tab === "curate" && ADDONS.curateShelf) return ADDONS.curateShelf(reader, params); // 策展手記（決定 0035）
   if (!on()) return h("div", { class: "shelf story-shelf" }, h("span", { class: "shelf-label" }, shelfName(tab)), h("p", { class: "shelf-empty" }, "每週劇情在挑戰模式裡。"));
   const W = curWeek(), weeks = allWeeks();
   if (params.week) { const w = weeks.find(x => x.label === params.week); if (w) later(() => weekVolume(w, reader), 0); }

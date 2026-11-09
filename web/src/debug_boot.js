@@ -19,7 +19,7 @@ import { pickJob } from "./ui_screens3.js";
     SAVE.profiles.challenge = newProfile("challenge");
     useProfile("challenge");
     setRng(mulberry32(42));
-    CATS.forEach(c => partOf(c).options.forEach(o => { if (!o.forbidden && !P.unlocked[c].includes(o.name) && o.name !== "皇冠" && o.name !== "斯拉夫蹲") P.unlocked[c].push(o.name); }));
+    CATS.forEach(c => partOf(c).options.forEach(o => { if (!o.forbidden && o.limited !== "show" && o.limited !== "week" && !P.unlocked[c].includes(o.name) && o.name !== "皇冠" && o.name !== "斯拉夫蹲") P.unlocked[c].push(o.name); }));
     P.unlockCount = 8;
     for (let i = 0; i < 150; i++) finishMake(P, codexPick(Math.floor(RNG() * BASE_TOTAL)), { natural: 1 + Math.floor(RNG() * 99) });
     const legend = { 稀有度: "普通", 心情: "開心", 顏色: "綠", 帽子: "巫師帽", 姿勢: "站著" };

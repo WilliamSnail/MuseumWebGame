@@ -296,8 +296,8 @@ SCREENS.codex = (root, params) => {
       })));
   } else if (tab === "forbidden") {
     const list = Object.entries(P.pepes).map(([k, e]) => ({ kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect })).filter(i => i.pick && !isBasePick(i.pick));
-    const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o)).map(o => ({ c, o })));
-    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? (o.limited === "shop" ? "兌換所限定" : "簽到限定") : "委託人送的";
+    const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o) && !((o.limited === "show" || o.limited === "week") && !isUnlocked(P, c, o.name))).map(o => ({ c, o }))); // 主題展、每週特展的配件拿到才列（決定 0035）
+    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? ({ shop: "兌換所限定", show: "主題展限定", week: "每週特展限定" }[o.limited] || "簽到限定") : "委託人送的";
     root.append(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), pepePlacard(it.pick, { perfect: it.perfect }))))
         : h("p", { class: "empty" }, "還沒有禁忌作品。"));
@@ -389,6 +389,7 @@ SCREENS.hall = (root, params) => {
   root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
   if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
   if (ADDONS.hallGuests) ADDONS.hallGuests(root); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
+  if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
 // 還沒見過「俄國8+9」的人不列那個主題，只留壹張「？？？」；沒解鎖「不可名狀」就不提它
@@ -402,7 +403,8 @@ export function themeGuide(hs) {
       h("div", { class: "tg-head" }, h("b", { class: "tg-name" }, tx.name), h("span", { class: "tg-bonus" }, `+${t.bonus}`)),
       h("p", { class: "tg-rule" }, t.rule, t.id === "legend" && eld ? "（或不可名狀）" : ""),
       h("div", { class: "tg-bar" }, h("i", { style: { width: (t.ok ? 100 : pct) + "%" } })),
-      h("p", { class: "tg-have" }, top ? "✓ 牆上的主題" : t.ok ? "✓ 也成立（只算加分最高的壹個）" : `現在 ${t.have}／${t.need}${t.extra ? "・" + t.extra : ""}`));
+      h("p", { class: "tg-have" }, top ? "✓ 牆上的主題" : t.ok ? "✓ 也成立（只算加分最高的壹個）" : `現在 ${t.have}／${t.need}${t.extra ? "・" + t.extra : ""}`),
+      ADDONS.themeCard ? ADDONS.themeCard(t.id) : null); // 這個主題展辦到哪壹級（決定 0035，ui_themeshow.js）
   });
   if (!known) cards.push(h("div", { class: "tg-card unknown" }, h("div", { class: "tg-head" }, h("b", { class: "tg-name" }, "？？？")), h("p", { class: "tg-rule" }, "還有壹個主題，等你發現。")));
   return h("section", { class: "theme-guide", "aria-label": "主題展" },

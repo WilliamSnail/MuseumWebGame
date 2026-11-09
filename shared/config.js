@@ -5,7 +5,7 @@
 //    forbidden ＝禁忌選項（不算在基本組合裡，佩佩神話夠了才會自己打開）；
 //    mutant ＝突變選項（只能靠融合室配種突變出來）；gift ＝委託人送的選項；
 //    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）；
-//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
+//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032；"show"：主題展辦到金、"week"：每週特展到金，決定 0035）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
 //  ・新加的選項如果畫法裡沒有對應，圖上會用預設的樣子，文字照樣出現。
 //  ・下面的文字是 Claude 的草稿；標「第 1 代」的文字不要改。
 // ================================================================
@@ -57,6 +57,21 @@ export const PEPE_PARTS = [
     { name: "蝴蝶結", limited: "shop" },
     { name: "鐵鍋帽", limited: "shop" },
     { name: "摺紙帽", limited: "shop" },
+    // 主題展辦到金才拿得到（決定 0035，名字、樣子都是草稿）。首飾也放在「帽子」這一類：不多開一類，舊存檔的 key 才不用改；一次戴一樣
+    { name: "傳說的金冠", limited: "show" },
+    { name: "火氣頭帶", limited: "show" },
+    { name: "淚滴耳環", limited: "show" },
+    { name: "瓜子項鍊", limited: "show" },
+    { name: "彩虹圍巾", limited: "show" },
+    { name: "三層帽", limited: "show" },
+    { name: "枕頭睡帽", limited: "show" },
+    { name: "歡笑花環", limited: "show" },
+    { name: "躺平眼罩", limited: "show" },
+    { name: "縫過的領結", limited: "show" },
+    // 每週特展到金才拿得到（決定 0035）：先做 3 件，其他 5 週的還沒做
+    { name: "黑絨領結", limited: "week" },
+    { name: "小枕頭髮夾", limited: "week" },
+    { name: "金瓜子項鍊", limited: "week" },
   ] },
   { name: "姿勢", options: [
     { name: "站著", start: true },
@@ -195,6 +210,16 @@ export const NUM = {
     limitedMax: 4,          // 週包的 shop 最多指定幾件
     matToStamp: 3,          // 幾份材料（背包裡的舊畫布、金箔、金線，哪一種都算）換一枚週章
   },
+  // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
+  show: {
+    days: 3,                // 同一個主題連續掛幾天才算辦完（真的天，05:00 換日；掛上那天算第 1 天）
+    tiers: [60, 80, 95],    // 銅、銀、金要幾分
+    tiersBy: { failed: [40, 55, 75] }, // 失敗作一件只有 3 分，照 60／80／95 辦不到金：另外算
+    bronzeMood: 10,         // 第一次到銅：心情 +幾（給現在這位）
+    silverInsp: 15,         // 第一次到銀：靈感 +幾（給博物館）
+    // 每週特展到金要幾分（只有這一級；同樣照「這週最高分」）。failedOnly、start32、noLegend 的分數本來就到不了 90
+    weekGold: { start32: 45, allBlack: 90, allFlat: 90, failedOnly: 30, noHat: 90, noLegend: 70, pillowWeek: 90, gopnikWeek: 90 },
+  },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）
@@ -215,6 +240,21 @@ export const LIMITED_ITEMS = [
   { id: "hat-bow", kind: "part", cat: "帽子", opt: "蝴蝶結", shop: true, price: 5 },
   { id: "hat-pot", kind: "part", cat: "帽子", opt: "鐵鍋帽", shop: true, price: 5 },
   { id: "hat-paper", kind: "part", cat: "帽子", opt: "摺紙帽", shop: true, price: 5 },
+  // 主題展辦到金（決定 0035）：theme 是 HALL_THEME_BONUS 的主題。from 有寫的不會被每週全簽到抽到（signin.js 的 weeklyItem）
+  { id: "show-legend", kind: "part", cat: "帽子", opt: "傳說的金冠", from: "show", theme: "legend" },
+  { id: "show-angry", kind: "part", cat: "帽子", opt: "火氣頭帶", from: "show", theme: "angry" },
+  { id: "show-tears", kind: "part", cat: "帽子", opt: "淚滴耳環", from: "show", theme: "tears" },
+  { id: "show-russia8", kind: "part", cat: "帽子", opt: "瓜子項鍊", from: "show", theme: "russia8" },
+  { id: "show-rainbow", kind: "part", cat: "帽子", opt: "彩虹圍巾", from: "show", theme: "rainbow" },
+  { id: "show-hats", kind: "part", cat: "帽子", opt: "三層帽", from: "show", theme: "hats" },
+  { id: "show-pillows", kind: "part", cat: "帽子", opt: "枕頭睡帽", from: "show", theme: "pillows" },
+  { id: "show-joy", kind: "part", cat: "帽子", opt: "歡笑花環", from: "show", theme: "joy" },
+  { id: "show-flat", kind: "part", cat: "帽子", opt: "躺平眼罩", from: "show", theme: "flat" },
+  { id: "show-failed", kind: "part", cat: "帽子", opt: "縫過的領結", from: "show", theme: "failed" },
+  // 每週特展到金（決定 0035）：theme 是 WEEKLY_IDS 的主題。先做 3 件
+  { id: "week-allBlack", kind: "part", cat: "帽子", opt: "黑絨領結", from: "week", theme: "allBlack" },
+  { id: "week-pillowWeek", kind: "part", cat: "帽子", opt: "小枕頭髮夾", from: "week", theme: "pillowWeek" },
+  { id: "week-gopnikWeek", kind: "part", cat: "帽子", opt: "金瓜子項鍊", from: "week", theme: "gopnikWeek" },
 ];
 // ---------- 第 4 版（11-09，決定 0032）：兌換所的裝備 ----------
 // 名字、說明在 content3.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。

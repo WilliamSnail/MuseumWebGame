@@ -1,0 +1,99 @@
+/* 主題展辦完（決定 0035，web/src/ui_themeshow.js）。展廳牆是深色的：字用 --on-wall、--on-wall-sub */
+
+/* ----- 牆下面：展期、三級 ----- */
+.ts-panel { margin: 4px 0 18px; padding: 12px 16px; border: 1px solid rgba(200,162,90,.55); border-radius: 10px; background: linear-gradient(180deg, rgba(200,162,90,.14), rgba(20,8,10,.32)); color: var(--on-wall); }
+.ts-panel.idle { background: rgba(20,8,10,.28); border-color: rgba(200,162,90,.35); }
+.ts-panel p { margin: 0; }
+.ts-idle { color: var(--on-wall-sub); line-height: 1.65; }
+.ts-idle b { color: var(--gold-hi); font-family: var(--serif); letter-spacing: .08em; }
+.ts-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.ts-name { font-family: var(--serif); font-size: 1.25rem; letter-spacing: .08em; color: var(--gold-hi); }
+.ts-pips { display: inline-flex; gap: 6px; }
+.ts-pips i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--gold); background: transparent; }
+.ts-pips i.on { background: var(--gold-hi); box-shadow: 0 0 8px rgba(238,215,156,.55); }
+.ts-left { margin-top: 6px !important; font-weight: 700; color: var(--on-wall); line-height: 1.55; }
+.ts-now { margin-top: 2px !important; color: var(--on-wall-sub); line-height: 1.55; }
+.ts-warn, .ts-prev { margin-top: 10px !important; font-size: .875rem; line-height: 1.55; color: var(--on-wall-sub); }
+.ts-prev { color: #F4C9A0; font-weight: 700; }
+
+.ts-bar { position: relative; height: 10px; margin: 26px 0 12px; border-radius: 5px; background: rgba(255,255,255,.12); }
+.ts-bar > i { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #8C6A2E, #E9CF8E); transition: width .4s; }
+.ts-tick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: rgba(255,255,255,.4); }
+.ts-tick.on { background: var(--gold-hi); }
+.ts-tick b { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 1px; font-size: .75rem; font-weight: 700; color: var(--on-wall-sub); white-space: nowrap; }
+.ts-tick.on b { color: var(--gold-hi); }
+body.reduce-motion .ts-bar > i { transition: none; }
+
+.ts-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ts-chip { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px; border-radius: 8px; border: 1px solid rgba(200,162,90,.3); background: rgba(255,240,210,.05); min-width: 0; }
+.ts-chip-h { font-size: .8125rem; font-weight: 700; color: var(--on-wall-sub); }
+.ts-chip-r { display: flex; align-items: center; gap: 4px; font-size: .9375rem; color: var(--on-wall); overflow-wrap: anywhere; }
+.ts-chip.lit { border-color: var(--gold); background: rgba(200,162,90,.18); }
+.ts-chip.lit .ts-chip-h { color: var(--gold-hi); }
+.ts-chip.got { border-style: dashed; opacity: .78; }
+.ts-ok { display: inline-flex; width: 16px; height: 16px; flex: none; color: #A6E0AE; }
+.ts-ok svg { width: 100%; height: 100%; }
+
+/* ----- 海報 ----- */
+.ts-wall { margin: 0 0 18px; }
+.ts-wall-h { margin: 0 0 8px; font-size: .875rem; letter-spacing: .1em; color: var(--on-wall-sub); }
+.ts-posters { display: flex; flex-wrap: wrap; gap: 12px; }
+.ts-poster { position: relative; width: 104px; padding: 6px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; color: #3B2719; background: #EADBB8; border: 1px solid #8C6A2E; border-top-width: 5px; box-shadow: 0 4px 10px rgba(0,0,0,.4); transform: rotate(-1.2deg); }
+.ts-poster:nth-child(2n) { transform: rotate(1deg); }
+.ts-poster:nth-child(3n) { transform: rotate(-.4deg); }
+body.reduce-motion .ts-poster { transition: none; }
+.ts-poster::before { content: ""; position: absolute; top: -9px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #5E1622; box-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.ts-p-art { display: block; width: 84px; height: 84px; }
+.ts-p-art svg { display: block; width: 100%; height: 100%; }
+.ts-poster b { font-family: var(--serif); font-size: .875rem; line-height: 1.25; letter-spacing: .02em; }
+.ts-poster small { font-size: .6875rem; line-height: 1.3; color: #5C4630; }
+.ts-poster.t1 { border-top-color: #A9713E; }
+.ts-poster.t2 { border-top-color: #9EA6AE; }
+.ts-poster.t3 { border-top-color: #E2B53E; background: #F3E4B6; box-shadow: 0 4px 12px rgba(0,0,0,.4), 0 0 12px rgba(226,181,62,.45); }
+.ts-poster.p-legend .ts-p-art { background: radial-gradient(circle, rgba(226,181,62,.35), transparent 70%); }
+.ts-poster.p-angry .ts-p-art { background: radial-gradient(circle, rgba(217,56,46,.22), transparent 70%); }
+.ts-poster.p-tears .ts-p-art { background: radial-gradient(circle, rgba(124,195,238,.3), transparent 70%); }
+.ts-poster.p-russia8 .ts-p-art { background: radial-gradient(circle, rgba(38,44,64,.25), transparent 70%); }
+.ts-poster.p-flat .ts-p-art, .ts-poster.p-pillows .ts-p-art { background: radial-gradient(circle, rgba(126,147,196,.25), transparent 70%); }
+.ts-poster.p-failed { filter: saturate(.75); }
+
+/* ----- 主題小卡上的獎牌 ----- */
+.ts-card-medal { margin: 0; font-size: .8125rem; font-weight: 700; color: var(--on-wall-sub); }
+.ts-card-medal.t1 { color: #E0A873; }
+.ts-card-medal.t2 { color: #D6DCE2; }
+.ts-card-medal.t3 { color: #F2CF68; }
+
+/* ----- 本週特展 ----- */
+.ts-panel.week { margin-top: 10px; }
+.ts-week { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center; }
+.ts-week .sg-item-art { background: rgba(255,240,210,.14); box-shadow: inset 0 0 0 1px rgba(200,162,90,.4); }
+
+/* ----- 辦完的卡片（羊皮紙，字用深色） ----- */
+.mini-card.ts-card { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow: auto; text-align: center; }
+.ts-medal { width: 76px; height: 76px; margin: 8px auto 12px; display: grid; place-items: center; border-radius: 50%; font-family: var(--serif); font-size: 2rem; font-weight: 700; color: #3B2719; border: 3px solid #6E5020; box-shadow: 0 3px 8px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.55); }
+.ts-medal.t1 { background: radial-gradient(circle at 35% 30%, #F0C8A0, #B57E46 70%); }
+.ts-medal.t2 { background: radial-gradient(circle at 35% 30%, #F6F8FA, #A9B1B8 70%); }
+.ts-medal.t3 { background: radial-gradient(circle at 35% 30%, #FFF1B8, #DDAA2E 70%); }
+.ts-gains { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.ts-gain { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--parch-ink); }
+.ts-gain .ic, .ts-gain .ic svg { width: 20px; height: 20px; }
+.ts-gain.item { flex-wrap: wrap; font-weight: 400; padding: 8px; border-radius: 8px; background: rgba(255,255,255,.35); box-shadow: inset 0 0 0 1px rgba(110,80,32,.3); }
+.ts-gain.item .sg-item-art { flex: none; }
+.ts-gain-t { flex: 1 1 170px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ts-gain-t b { font-family: var(--serif); font-size: 1.0625rem; }
+.ts-gain-t small { font-size: .8125rem; line-height: 1.5; }
+.ts-note-line { display: flex; align-items: flex-start; gap: 6px; margin: 0 0 10px; text-align: left; color: var(--parch-ink); font-weight: 700; line-height: 1.5; }
+.ts-note-line .ic, .ts-note-line .ic svg { width: 20px; height: 20px; flex: none; }
+.ts-card-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+
+@media (max-width: 760px) {
+  .ts-panel { padding: 10px 12px; }
+  .ts-name { font-size: 1.0625rem; }
+  .ts-chips { gap: 6px; }
+  .ts-chip { padding: 6px 7px; }
+  .ts-chip-h { font-size: .75rem; }
+  .ts-chip-r { font-size: .8125rem; }
+  .ts-posters { gap: 10px; }
+  .ts-poster { width: calc((100% - 20px) / 3); }
+  .ts-p-art { width: 100%; height: auto; aspect-ratio: 1; }
+}
