@@ -73,6 +73,10 @@ export const casino = onCall(async req => {
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
+    case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
+      const ws = await walletRef(me.uid).get();
+      return { ok: true, chips: casWalletFix(parse(ws), taipeiDay(now())).chips };
+    }
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);

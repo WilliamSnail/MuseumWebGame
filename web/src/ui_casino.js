@@ -12,7 +12,7 @@ import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, netRoom, note, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, netRoom, note, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const fill = casFill;
@@ -35,6 +35,7 @@ let S = null; // { m, tab, w, round, house, say, busy, shown（莊家翻開幾�
 
 async function call(act, data) {
   const r = await NET.call("casino", Object.assign({ act }, data || {}));
+  if (r && r.wallet && typeof r.wallet.chips === "number") setChips(r.wallet.chips); // 狀態列跟著變
   return r;
 }
 function sync(r) {
@@ -360,3 +361,14 @@ ADDONS.hall3 = root => {
   if (el) root.append(el);
 };
 ADDONS.casinoShelf = v => shelfEl(v.title || null, v.souvenirs || []);
+
+// 狀態列的籌碼：連上就讀一次（只讀）。登出就清掉
+let chipsAsked = false;
+async function askChips() {
+  if (chipsAsked || !UI.net || !NET.loggedIn) return;
+  chipsAsked = true;
+  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); }
+  catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
+}
+NET.on("status", () => { if (NET.state === "online") askChips(); });
+NET.on("logout", () => { chipsAsked = false; setChips(null); });

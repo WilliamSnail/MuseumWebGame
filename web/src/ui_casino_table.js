@@ -14,7 +14,7 @@ import { CAS_QUICK } from "../../shared/casino_table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, snd } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, setChips, snd } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
@@ -79,7 +79,7 @@ function onView(v, fromWatch) {
   const s = T;
   if (!s) return;
   if (s.view && v.seq < s.view.seq && v.round <= s.view.round) return;
-  if (typeof v.chips === "number") s.chips = v.chips;
+  if (typeof v.chips === "number") { s.chips = v.chips; setChips(v.chips); }
   s.view = v;
   if (v.phase === "result" && s.noted !== v.round + ":" + v.pid) { s.noted = v.round + ":" + v.pid; resultNotes(v); }
   draw();
