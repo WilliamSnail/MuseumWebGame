@@ -1,0 +1,43 @@
+# 把 Yuga Bot 的斜線指令（/pepe-…）註冊到佩佩博物館的 Discord 伺服器（手動按，或 gh workflow run discord-commands.yml -f application_id=… -f guild_id=…）。
+# 指令清單在 shared/discord.js；整份取代：清單沒有的舊指令會被拿掉。決定 0051。
+# 需要 GitHub Secrets 的 DISCORD_BOT_TOKEN（跟 discord-test.yml 同一個）。Application ID、伺服器 ID 不是密碼，直接填在下面的欄位。
+name: 註冊 Discord 斜線指令
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_id:
+        description: "Application ID（Discord 開發者頁面 → General Information）"
+        required: true
+        type: string
+      guild_id:
+        description: "伺服器 ID（Discord 開發者模式 → 右鍵伺服器 → 複製伺服器 ID）"
+        required: true
+        type: string
+      print_only:
+        description: "只印清單，不送出去"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 只印清單
+        if: inputs.print_only
+        run: node tools/discord_commands.cjs --print
+      - name: 註冊指令
+        if: ${{ !inputs.print_only }}
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_APPLICATION_ID: ${{ inputs.application_id }}
+          DISCORD_GUILD_ID: ${{ inputs.guild_id }}
+        run: node tools/discord_commands.cjs

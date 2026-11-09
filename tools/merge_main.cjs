@@ -6,7 +6,7 @@ const { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const INDEX = "維護日誌/README.md";
 // 兩邊都留。notice：每則是 { … }，衝突裡的兩段開頭共用一個 "  {"，要補回去
-const KEEP_BOTH = { "shared/notices.js": "notice", "test/run_all.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };
+const KEEP_BOTH = { "shared/notices.js": "notice", "test/run_all.cjs": "plain", "test/tools.test.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };
 const canAuto = f => f === INDEX || !!KEEP_BOTH[f];
 
 const MARK = /^<<<<<<< [^\n]*\n([\s\S]*?)^=======\n([\s\S]*?)^>>>>>>> [^\n]*\n/gm;

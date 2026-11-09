@@ -309,6 +309,7 @@ export function openAccount() {
         draw();
       })),
       row("提示", check("館友上線時提示我", SAVE.settings.arriveNote !== false, v => { SAVE.settings.arriveNote = v; persist(); })),
+      ADDONS.discordRow ? ADDONS.discordRow() : null, // 綁定 Discord（決定 0051，ui_discord.js）：伺服器沒開通就藏起來
       h("div", { class: "nb-cta" }, btn("登出", () => { m.close(); logout(); }, "small"))));
   };
   draw();

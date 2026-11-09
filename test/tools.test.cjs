@@ -84,6 +84,24 @@ T("edit：找不到、不只一處都會丟錯；字裡的 $ 不會被吃掉", (
   assert.strictEqual(editorOf("a").append("b").text(), "ab");
 });
 
+// ---------- discord_commands.cjs / discord_fake.cjs（決定 0051） ----------
+T("discord_commands：沒金鑰要說缺哪個、不能連線；ID 不是數字也擋；請求的網址和內容對", () => {
+  const { request } = require("../tools/discord_commands.cjs");
+  assert.throws(() => request({}), /DISCORD_BOT_TOKEN.*DISCORD_APPLICATION_ID.*DISCORD_GUILD_ID/);
+  assert.throws(() => request({ DISCORD_BOT_TOKEN: "t", DISCORD_APPLICATION_ID: "abc", DISCORD_GUILD_ID: "123456" }), /數字/);
+  const r = request({ DISCORD_BOT_TOKEN: "secret-token", DISCORD_APPLICATION_ID: "111111", DISCORD_GUILD_ID: "222222" });
+  assert.strictEqual(r.url, "https://discord.com/api/v10/applications/111111/guilds/222222/commands");
+  assert.strictEqual(r.headers.Authorization, "Bot secret-token");
+  const body = JSON.parse(r.body);
+  assert.ok(body.length >= 8 && body.every(c => /^pepe-/.test(c.name)));
+});
+T("discord_commands：錯誤訊息裡的 token 會遮掉", () => {
+  const { redact } = require("../tools/discord_commands.cjs");
+  assert.ok(!redact("bad Bot secret-token here").includes("secret-token"));
+  assert.strictEqual(redact("沒有 token"), "沒有 token");
+});
+
+
 T("apply_edits：反引號、$、引號、反斜線都逐字；少標記會丟錯", () => {
   const nasty = "`a${b}` \"c\" 'd' \\n $& $1";
   const steps = parsePlan(`@@@ 檔案 a.md\n@@@ 舊\n舊\n字\n@@@ 新\n${nasty}\n@@@ 完\n@@@ 檔案 b.md\n@@@ 整檔\n${nasty}\n@@@ 完\n`);

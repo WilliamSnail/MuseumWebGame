@@ -19,6 +19,7 @@ import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, 
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { setNowClock } from "../../shared/logic.js";
 import { titlesFromDb } from "../../shared/titles.js";
+import { dcJoinParam, dcStripJoin } from "../../shared/discord.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
 import { NetError } from "./net.js";
 
@@ -82,8 +83,18 @@ export function createFirebaseNet(opts = {}) {
   function setState(s, extra = {}) { if (state === s && s !== "retrying") return; state = s; emit("status", { state: s, ...extra }); }
 
   // ── 登入 ──
+  // Discord 的加入連結（決定 0051）：網址帶 ?join=碼，登入後傳給 join。伺服器回了（成功或拒絕）就把參數從網址拿掉；斷線沒回就留著，等下次
+  let joinCode = typeof location !== "undefined" ? dcJoinParam(location.search) : "";
+  function clearJoinCode() {
+    joinCode = "";
+    try { history.replaceState(null, "", location.pathname + dcStripJoin(location.search) + location.hash); } catch (e) { /* 沒有 history 就算了 */ }
+  }
   async function joinAs(user) {
-    const r = await call("join");
+    const code = joinCode;
+    let r;
+    try { r = await call("join", code ? { code } : {}); }
+    catch (e) { if (code && e && e.code !== "network") clearJoinCode(); throw e; }
+    if (code) clearJoinCode();
     me = { id: user.uid, nick: r.nick, invisible: !!r.invisible, email: user.email || "" };
     return me;
   }
