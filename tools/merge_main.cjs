@@ -29,7 +29,10 @@ function mergeListLine(oursLine, theirsLine) {
 const oneLine = s => s.split("\n").length === 2 && s.endsWith("\n");
 function keepBoth(text, how = "plain") {
   return text.replace(MARK, (m, ours, theirs) => {
-    if (how === "notice") return `${ours}  {\n${theirs}`;
+    if (how === "notice") { // git 會把兩邊共同的收尾（"    ],\n  },"）留在衝突外面：我這邊要自己補上才是完整的壹則
+      const whole = /^ {2}\},\n$/m.test(ours.slice(ours.lastIndexOf("\n", ours.length - 2) + 1));
+      return `${ours}${whole ? "" : "    ],\n  },\n"}  {\n${theirs}`;
+    }
     if (how === "list" && oneLine(ours) && oneLine(theirs)) return mergeListLine(ours.trimEnd(), theirs.trimEnd()) + "\n";
     return ours + theirs;
   });

@@ -50,6 +50,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能寫 |
 |---|---|---|
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
+| `/titles/{uid}` | 現在戴的稱號 `{ id, name }`（決定 0050）。只有 `functions/casino.js` 在換稱號、進館時寫；名字用錢包裡的，不信存檔 | 只有 Functions；館友讀得到 |
 | `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了（`save_changed`）、有新的信（`mail_new`）、有人來過展廳（`hall_news`） | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
 | `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions；`/partyOf/{uid}` 他自己讀得到（接回去用），別的誰都不能讀 |

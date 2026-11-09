@@ -16,6 +16,7 @@ import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, mark
 import { boardBadge, noticeState, visibleNotices } from "../../shared/notices.js";
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { holidayClass, holidayOf } from "../../shared/holidays.js";
+import { titleName, titleText } from "../../shared/titles.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
@@ -491,6 +492,14 @@ export function updateBoardBadges() {
     labelMenu();
   }
 }
+// 稱號小標籤（決定 0050）：館友名單、小卡、選館友、榜單、隊伍、牌桌共用。沒有稱號就回傳 null（版面不變）。
+// 字很長就在 css 裡縮成「…」（.ttl），完整的字放在滑鼠停上去的提示。稱號是玩家的成就名，一律純文字
+export function titleTag(t, cls) {
+  const n = typeof t === "string" ? titleText(t) : titleName(t); // 物件：館友的稱號；字串：每週榜單存的名字
+  return n ? h("span", { class: "ttl" + (cls ? " " + cls : ""), title: "稱號：" + n }, n) : null;
+}
+// 這位館友（id）現在戴的稱號；名單還沒讀到、沒有就是 null
+export const titleOfId = id => { const p = NET.roster.find(x => x.id === id); return p && p.title ? p.title : null; };
 // 選單裡的「館友（N 人在線）」「我的帳號（暱稱）」：登入了才出現
 export function updateNetMenu() {
   const on = !!UI.net;

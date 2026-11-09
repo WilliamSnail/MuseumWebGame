@@ -95,7 +95,7 @@ function sync() {
   const by = on ? matesByRoom(NET.roster) : null;
   const portrait = plan.classList.contains("portrait");
   // 名單沒變就不動（滑鼠停著的、淡入的都不被打斷）
-  const sig = by ? JSON.stringify([portrait, Object.keys(by).map(k => [k, by[k].map(m => [m.id, m.nick, m.status, m.where || ""])])]) : "";
+  const sig = by ? JSON.stringify([portrait, Object.keys(by).map(k => [k, by[k].map(m => [m.id, m.nick, m.status, m.where || "", m.title || ""])])]) : "";
   if (plan.dataset.mates === sig) return;
   plan.dataset.mates = sig;
   svg.querySelector(".fp-mates")?.remove();
@@ -117,7 +117,7 @@ function sync() {
   for (const g of svg.querySelectorAll(".fp-room[data-room]")) {
     const key = g.dataset.room, list = by[key];
     if (!list || !list.length) continue;
-    g.setAttribute("aria-label", `${g.dataset.lab0}（館友在這裡：${list.map(m => m.nick).join("、")}）`);
+    g.setAttribute("aria-label", `${g.dataset.lab0}（館友在這裡：${list.map(m => m.nick + (m.title ? `，稱號${m.title}` : "")).join("、")}）`);
     const r = g.querySelector(".fp-shape"), x = +r.getAttribute("x"), y = +r.getAttribute("y"), w = +r.getAttribute("width"), hh = +r.getAttribute("height");
     const sp = contentSpan(g, svg), pad = 5, ph = plateH(fs);
     if (!sp) { now[key] = list.map(m => m.id); continue; } // 量不到（畫面沒顯示）：先不畫
@@ -136,7 +136,7 @@ function sync() {
   if (by.lobby.length) place("lobby", by.lobby, LOBBY_FREE[portrait ? "port" : "land"], portrait ? 4 : 3);
   prevIds = now;
   if (by.elsewhere.length) {
-    const names = by.elsewhere.slice(0, 4).map(m => `${m.nick}（${m.where.slice(1)}）`).join("、") + (by.elsewhere.length > 4 ? ` 等 ${by.elsewhere.length} 位` : "");
+    const names = by.elsewhere.slice(0, 4).map(m => `${m.nick}${m.title ? `「${m.title}」` : ""}（${m.where.slice(1)}）`).join("、") + (by.elsewhere.length > 4 ? ` 等 ${by.elsewhere.length} 位` : "");
     plan.append(h("p", { class: "plan-else" }, "在別處：", names));
   }
 }

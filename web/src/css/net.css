@@ -49,6 +49,14 @@ body.reduce-motion .t-login-area, body.reduce-motion .t-login-area .t-actions { 
 .nf-nick small { margin-left: 4px; font-size: .75rem; font-weight: 400; }
 .nf-where { font-size: .8125rem; color: #5A4630; }
 .nf-hint { margin: 12px 0 0; }
+/* 稱號小標籤（決定 0050）：館友小卡、選館友、大廳的名牌、隊伍、牌桌、榜單共用。比名字小一級；太長就縮成「…」，完整的字在滑鼠提示 */
+.ttl { display: inline-block; box-sizing: border-box; align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;
+  padding: 0 7px; border: 1px solid rgba(156,116,40,.55); border-radius: 999px; background: rgba(156,116,40,.1); color: #6E5020; font-size: .6875rem; font-weight: 400; line-height: 1.55; letter-spacing: .04em; }
+.pt-member .ttl { align-self: center; }
+.nf-card.offline .ttl { color: #5A4A30; border-color: rgba(90,74,48,.5); }
+.lf-ttl, .cas-ttl { color: var(--gold-hi, #F2D58B); border-color: rgba(200,162,90,.5); background: rgba(0,0,0,.22); }
+.lf-ttl { flex: 0 1 auto; min-width: 0; max-width: 8em; }
+.cas-ttl { align-self: center; max-width: 9em; }
 .nf-card { flex-wrap: wrap; }
 .nf-acts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
 .nf-acts .btn { color: #2A1A0C; background: rgba(255,250,230,.55); border-color: rgba(110,80,32,.6); }

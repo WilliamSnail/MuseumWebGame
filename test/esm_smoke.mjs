@@ -28,13 +28,14 @@ import * as casinoWallet from "../shared/casino_wallet.js";
 import * as casinoTable from "../shared/casino_table.js";
 import * as casinoFind from "../shared/casino_find.js";
 import * as board from "../shared/board.js";
+import * as titles from "../shared/titles.js";
 import * as events from "../shared/events.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, casinoFind, events })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, titles, casinoFind, events })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);

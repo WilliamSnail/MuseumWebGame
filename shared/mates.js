@@ -4,6 +4,8 @@
 //  room 是玩家寫進資料庫的字串：只認白名單，不認得的一律不顯示。
 // ================================================================
 
+import { titleName } from "./titles.js";
+
 // 導覽圖上有的房間（跟 web/src/art.js 的 PLAN 對得上）
 export const MATE_ROOMS = ["lobby", "origin", "gallery", "codex", "office", "workshop", "pillow", "commission", "cellar", "hall", "library", "fusion", "casino"];
 // 不在圖上、但可以寫「在別處」的：門口、設定
@@ -36,6 +38,8 @@ export function matesByRoom(roster) {
     if (!spot) continue;
     seen.add(id);
     const m = { id, nick, status: p.status };
+    const tt = titleName(p.title); // 稱號（決定 0050）：名牌放不下，只給朗讀文字和「在別處」那一行用；沒有稱號就沒有這個欄位
+    if (tt) m.title = tt;
     if (spot === "elsewhere") out.elsewhere.push(Object.assign(m, { where: MATE_ELSEWHERE[p.room] }));
     else out[spot].push(m);
   }

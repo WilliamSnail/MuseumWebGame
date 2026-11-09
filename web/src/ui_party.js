@@ -13,7 +13,7 @@ import { describePepe, fromKey, isFree, nowMs } from "../../shared/logic.js";
 import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/logic3.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd } from "./ui_core.js";
+import { FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd, titleOfId, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { learnText } from "../../shared/shop.js";
 
@@ -167,7 +167,7 @@ export function openParty(pid) {
     const memberCard = mm => {
       const off = mm.id !== meId && offline(mm.id);
       return h("div", { class: "pt-member" + (mm.ready ? " ready" : "") + (mm.id === meId ? " me" : "") + (off ? " off" : "") },
-        h("b", { class: "pt-nick" }, mm.nick, mm.id === party.leader ? h("small", null, "隊長") : null),
+        h("b", { class: "pt-nick" }, mm.nick, mm.id === party.leader ? h("small", null, "隊長") : null), titleTag(titleOfId(mm.id)),
         mm.pick.length ? pet(mm.pick[0]) : h("div", { class: "pt-pet empty" }, "還沒選"),
         h("span", { class: "pt-name" }, mm.pick.length ? describePepe(fromKey(mm.pick[0])).title : "　"),
         h("span", { class: "pt-state" }, off ? "不在線……" : mm.ready ? "準備好了" : "還在選"));
@@ -225,7 +225,7 @@ export function openParty(pid) {
       r.roll != null ? h("p", { class: "pt-hint" }, `稀有度的骰子：${r.roll}（兩個人同壹顆）`) : null,
       muts.length ? h("p", { class: "pt-hint" }, `突變：${muts.join("、")}`) : null,
       h("div", { class: "pt-members" },
-        [me, other].map(s => h("div", { class: "pt-member" + (s.id === meId ? " me" : "") }, h("b", { class: "pt-nick" }, s.nick), h("span", { class: "pt-state" }, line(s)), h("span", { class: "pt-name" }, sanLine(s))))),
+        [me, other].map(s => h("div", { class: "pt-member" + (s.id === meId ? " me" : "") }, h("b", { class: "pt-nick" }, s.nick), titleTag(titleOfId(s.id)), h("span", { class: "pt-state" }, line(s)), h("span", { class: "pt-name" }, sanLine(s))))),
       me.learn ? h("p", { class: "pt-hint pt-learn" + (me.learn.gained ? " got" : "") }, learnText(me.learn, other.nick)) : null, // 跟館友學（決定 0032）
       h("div", { class: "pt-foot" }, btn("收下了", () => m.close(), "primary"))));
     if (!coined) { coined = true; snd("coin"); } // 對方按「收下了」離開時會重畫：聲音只響一次

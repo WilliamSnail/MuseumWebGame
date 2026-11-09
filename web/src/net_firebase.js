@@ -18,6 +18,7 @@ import { connectFirestoreEmulator, doc, getDoc, getFirestore, runTransaction, se
 import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, onValue, ref, remove, serverTimestamp as rtdbNow, set } from "firebase/database";
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { setNowClock } from "../../shared/logic.js";
+import { titlesFromDb } from "../../shared/titles.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
 import { NetError } from "./net.js";
 
@@ -75,6 +76,7 @@ export function createFirebaseNet(opts = {}) {
   const call = async (name, data = {}) => { try { return (await httpsCallable(fns, name)(data)).data; } catch (e) { throw toNetError(e); } };
 
   let me = null, rev = 0, state = "idle", roster = [], room = null, wanted = false;
+  let statusRaw = null, titles = {}; // 在線名單的原始資料、館友戴的稱號（titles/{uid}，決定 0050）
   let pending = null, saveTimer = null, chain = Promise.resolve();
   const saveDelayMs = opts.saveDelayMs ?? 3000;
   function setState(s, extra = {}) { if (state === s && s !== "retrying") return; state = s; emit("status", { state: s, ...extra }); }
@@ -222,6 +224,7 @@ export function createFirebaseNet(opts = {}) {
   }
   function writeStatus() { if (me && rtdb && wanted) set(statusRef(), statusNow()).catch(() => {}); }
   async function goOffline() { if (me && rtdb) { try { await set(statusRef(), { state: "offline", room: room && ROOM_RE.test(room) ? room : "title", nick: me.nick, at: rtdbNow() }); } catch (e) { /* 已經斷了 */ } } }
+  const rosterNow = () => Object.entries(statusRaw || {}).map(([id, s]) => ({ id, nick: s.nick || "館友", status: s.state || "offline", room: s.room || null, lastSeen: s.at ? new Date(s.at).toISOString() : null, me: id === me.id, title: Object.prototype.hasOwnProperty.call(titles, id) ? titles[id] : null }));
   function setRoster(list) {
     if (!baseline) {
       const before = new Map(roster.map(p => [p.id, p.status]));
@@ -251,9 +254,14 @@ export function createFirebaseNet(opts = {}) {
       } else if (state === "online") setState("retrying");
     }));
     offs.push(onValue(ref(rtdb, "status"), snap => {
-      const v = snap.val() || {};
-      setRoster(Object.entries(v).map(([id, s]) => ({ id, nick: s.nick || "館友", status: s.state || "offline", room: s.room || null, lastSeen: s.at ? new Date(s.at).toISOString() : null, me: id === me.id })));
+      statusRaw = snap.val() || {};
+      setRoster(rosterNow());
     }, () => setState("retrying")));
+    // 稱號：Functions 寫、館友讀。讀不到（規則還沒放、斷線）就當大家都沒有稱號，不影響連線狀態
+    offs.push(onValue(ref(rtdb, "titles"), snap => {
+      titles = titlesFromDb(snap.val());
+      if (statusRaw) setRoster(rosterNow()); // 名單還沒讀到就先不動：太早叫 setRoster 會讓「上線了」的提示判斷錯
+    }, () => { titles = {}; if (statusRaw) setRoster(rosterNow()); }));
     offs.push(onChildAdded(ref(rtdb, `inbox/${me.id}`), snap => {
       const m = snap.val();
       remove(snap.ref).catch(() => {});
@@ -268,6 +276,7 @@ export function createFirebaseNet(opts = {}) {
     wanted = false;
     offs.forEach(off => { try { off(); } catch (e) { /* 已經關了 */ } });
     offs = [];
+    statusRaw = null; titles = {};
     if (awayTimer) { clearInterval(awayTimer); awayTimer = null; }
     setState("stopped");
   }

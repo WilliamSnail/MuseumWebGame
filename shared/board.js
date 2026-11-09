@@ -11,6 +11,7 @@
 //    boardPeopleOf({ members, saves }, 週)  整份名單
 //    boardCompute(名單, 上週快照, 週, ctx)  → { doc（給玩家看的）, snapshot（下週相減用，有 uid）, unreadable（幾份讀不了） }
 //    boardDiscordText(doc, 連結, 上限)      Discord 公告
+//  榜上每一列可以多一個 title（決定 0050）：那個人當時戴的稱號的名字（純文字，最多 NUM.casino.titleMax 字）；沒稱號就沒有這個欄位。
 //  玩家看得到的 doc 裡沒有 uid、email，也沒有理智、怪癖、靈感。累計數字（snapshot）放另一份文件，玩家讀不到（firestore.rules）。
 //  隱身的人照算：這是遊戲進度，不是在線狀態。
 //  存檔是玩家自己寫的（shared/admin.js 開頭）：值一律當不可信，只拿數字、有上限。暱稱只當純文字；貼到 Discord 前要過 boardDiscordNick。
@@ -25,6 +26,7 @@ import { bookSequels, cellarFloors, weekIndex } from "./logic3.js";
 import { shopState } from "./shop.js";
 import { dayStartMs, isoWeek, storyState, weekMonday } from "./story.js";
 import { showStatus } from "./themeshow.js";
+import { titleName } from "./titles.js";
 
 const brdObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const brdNum = v => (typeof v === "number" && Number.isFinite(v) ? v : 0);
@@ -59,6 +61,8 @@ export function boardWeekOf(now = nowMs()) {
 // ---------- 暱稱 ----------
 // 遊戲裡用的：去掉看不見的字、連續空白變一個、最多 12 個字（畫面只當純文字放）
 const brdPlain = s => String(s == null ? "" : s).replace(/[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}]/gu, " ").replace(/\s+/g, " ").trim();
+// 稱號：只留名字（純文字、有字數上限）；不是字串、空的都當沒有
+const brdTitle = t => (typeof t === "string" ? [...brdPlain(t)].slice(0, NUM.casino.titleMax).join("") : "");
 const brdNick = n => (typeof n === "string" && [...brdPlain(n)].slice(0, 12).join("")) || "館友";
 // 貼到 Discord 的：再清掉 @、markdown 符號、連結會用到的符號，暱稱弄不出提及、粗體、連結。全形的 ＠ 這些也算（NFKC 先轉成半形）
 export function boardDiscordNick(n) {
@@ -92,6 +96,7 @@ export function boardStatsOf(raw, wk) {
       ok: true, entered: true,
       codex: brdInt(s.progress.codex.have),
       books: brdInt(s.progress.books.chapters.have) + read.size,
+      title: brdTry(() => titleName(P.casinoTitle), ""), // 稱號（決定 0050）：跟展廳一樣看 P.casinoTitle，過 casCleanTitle
       hall: brdInt(brdTry(() => hallScore(P).score, 0), 100),
       deepest: brdInt(s.progress.deepest, cellarFloors().length || 99),
       storyRead: Object.values(S.books).filter(b => brdObj(b) && inWeek(b.read)).length,
@@ -118,12 +123,12 @@ export function boardPeopleOf(input, wk) {
 // ---------- 排名 ----------
 // list：[{ nick, value }]（照要的順序）。0 不上榜；同分同名次（1、1、3）；列到第 top 名
 function brdRank(list, top) {
-  const sorted = list.map((x, no) => ({ nick: x.nick, value: x.value, no })).filter(x => x.value > 0).sort((a, b) => b.value - a.value || a.no - b.no);
+  const sorted = list.map((x, no) => ({ nick: x.nick, value: x.value, title: x.title, no })).filter(x => x.value > 0).sort((a, b) => b.value - a.value || a.no - b.no);
   const rows = [];
   let rank = 0, last = null;
   sorted.forEach((x, i) => {
     if (x.value !== last) { rank = i + 1; last = x.value; }
-    if (rank <= top) rows.push({ rank, nick: x.nick, value: x.value });
+    if (rank <= top) rows.push(x.title ? { rank, nick: x.nick, value: x.value, title: x.title } : { rank, nick: x.nick, value: x.value });
   });
   return rows;
 }
@@ -134,6 +139,11 @@ export function boardGroups(rows) {
     const g = out[out.length - 1];
     if (g && g.rank === r.rank) g.nicks.push(r.nick);
     else out.push({ rank: r.rank, value: r.value, nicks: [r.nick] });
+  });
+  // 有人戴稱號才多一個 titles（跟 nicks 一一對上，沒有的是空字串）；都沒有就跟以前一樣
+  out.forEach(g => {
+    const ts = asList(rows).filter(r => r.rank === g.rank).map(r => brdTitle(r.title));
+    if (ts.some(Boolean)) g.titles = ts;
   });
   return out;
 }
@@ -201,7 +211,7 @@ export function boardCompute(people, prevSnap, wk, ctx = {}) {
     stamps: p => p.stats.stampsWeek,
   };
   const boards = BOARD_DEFS.map(def => {
-    const rank = ins.map(p => ({ nick: p.nick, value: values[def.id](p) }));
+    const rank = ins.map(p => ({ nick: p.nick, value: values[def.id](p), title: brdTitle(p.stats.title) }));
     return { id: def.id, title: first && def.firstTitle ? def.firstTitle : def.title, rows: brdRank(rank, def.all ? list.length || 1 : NUM.board.top) };
   });
   const snap = {};
@@ -227,7 +237,7 @@ export function boardViewOf(d) {
   const boards = BOARD_DEFS.map(def => {
     const b = asList(d.boards).find(x => brdObj(x) && x.id === def.id);
     if (!b) return null;
-    const rows = asList(b.rows).filter(brdObj).map(r => ({ rank: brdInt(r.rank), nick: brdNick(r.nick), value: brdInt(r.value) })).filter(r => r.rank > 0);
+    const rows = asList(b.rows).filter(brdObj).map(r => { const t = brdTitle(r.title), o = { rank: brdInt(r.rank), nick: brdNick(r.nick), value: brdInt(r.value) }; if (t) o.title = t; return o; }).filter(r => r.rank > 0);
     return { id: def.id, emoji: def.emoji, title: typeof b.title === "string" && b.title ? text(b.title, 20) : def.title, all: !!def.all, rows };
   }).filter(Boolean);
   return {

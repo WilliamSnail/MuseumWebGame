@@ -10,22 +10,23 @@ import { NUM } from "../../shared/config.js";
 import { fill } from "../../shared/logic.js";
 import { boardGroups, boardPeriodText, boardValueText, boardViewOf } from "../../shared/board.js";
 import { NET } from "./net_firebase.js";
-import { PANELS, h, icon, snd } from "./ui_core.js";
+import { PANELS, h, icon, snd, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const T = BOARD_TEXT;
 const ICON = { codex: "codex", hall: "hall", deep: "stairs", books: "book", full: "calendar", stamps: "medal" }; // 遊戲裡用遊戲的圖示；emoji 是 Discord 公告用的（有些電腦畫出來是黑黑一塊）
 const isMe = nick => !!(NET.me && NET.me.nick === nick);
-const nameNode = nick => h("span", { class: "rk-name" + (isMe(nick) ? " me" : "") }, nick);
-const nameList = nicks => nicks.flatMap((n, i) => (i ? ["、", nameNode(n)] : [nameNode(n)]));
+const nameNode = (nick, title) => (title ? h("span", { class: "rk-who" }, h("span", { class: "rk-name" + (isMe(nick) ? " me" : "") }, nick), titleTag(title, "rk-ttl")) : h("span", { class: "rk-name" + (isMe(nick) ? " me" : "") }, nick));
+// titles：跟 nicks 一一對上的稱號名字（決定 0050；榜單是當週算好存的，沒有稱號的人沒這個欄位）
+const nameList = (nicks, titles) => nicks.flatMap((n, i) => (i ? ["、", nameNode(n, titles && titles[i])] : [nameNode(n, titles && titles[i])]));
 
 // 一個榜：一張牌子。同分的排在同一列
 function card(b) {
   const head = h("h3", null, icon(ICON[b.id] || "star"), h("span", null, b.title), b.all ? h("small", null, fill(T.fullNote, NUM.board.fullDays)) : null);
   if (!b.rows.length) return h("section", { class: "rk-card none" }, head, h("p", { class: "rk-none" }, "這週還沒有人上榜"));
-  if (b.all) return h("section", { class: "rk-card" }, head, h("p", { class: "rk-all" }, nameList(b.rows.map(r => r.nick))));
+  if (b.all) return h("section", { class: "rk-card" }, head, h("p", { class: "rk-all" }, nameList(b.rows.map(r => r.nick), b.rows.map(r => r.title || ""))));
   return h("section", { class: "rk-card" }, head, h("ol", { class: "rk-rows" }, boardGroups(b.rows).map(g =>
-    h("li", { class: `rk-row r${g.rank}` }, h("span", { class: "rk-medal", "aria-label": `第 ${g.rank} 名` }, String(g.rank)), h("span", { class: "rk-names" }, nameList(g.nicks)), h("b", { class: "rk-val" }, boardValueText(b.id, g.value))))));
+    h("li", { class: `rk-row r${g.rank}` }, h("span", { class: "rk-medal", "aria-label": `第 ${g.rank} 名` }, String(g.rank)), h("span", { class: "rk-names" }, nameList(g.nicks, g.titles)), h("b", { class: "rk-val" }, boardValueText(b.id, g.value))))));
 }
 function bodyOf(v) {
   const list = (title, cls, items) => (items.length ? h("section", { class: "rk-note " + cls }, h("h3", null, title), h("ul", null, items)) : null);

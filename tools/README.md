@@ -13,7 +13,7 @@
 | 要做什麼 | 指令 |
 |---|---|
 | 上線：本機測試 → commit → 併 main → 推 → 開 PR → 等 CI → 合併 → 等部署 | `npm run ship -- --title "標題" --body "內容"`（放背景跑；`--no-merge` 不合併） |
-| 開本機測試環境：模擬器、規則、網頁 | `npm run local -- --set 8 --port 5288`（放背景跑；`--stop` 關掉） |
+| 開本機測試環境：模擬器、規則、網頁 | `npm run local -- --set 8 --port 5288`（放背景跑；`--stop` 關掉；測試請換到還沒開的 `--set`，不然會測到別的分支） |
 | 測限時活動：把一場移到 90 秒後開始 | `npm run local -- --event-now double11`（測完 `git checkout` 還原，不要 commit） |
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |

@@ -56,6 +56,16 @@
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false
     },
+    "titles": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false,
+      "$uid": {
+        ".validate": "newData.hasChildren(['id', 'name']) && newData.child('id').isString() && newData.child('id').val().length <= 40 && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 12",
+        "id": { ".validate": "newData.isString()" },
+        "name": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
     "lounge": {
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false

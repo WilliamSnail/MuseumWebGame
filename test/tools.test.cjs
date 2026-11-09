@@ -33,6 +33,8 @@ T("merge：公告兩邊都留，開頭的 { 補回去；其他的只留內容；
   const c = "頭\n  {\n<<<<<<< HEAD\n    id: 1,\n  },\n=======\n    id: 2,\n  },\n>>>>>>> origin/main\n];\n";
   assert.strictEqual(keepBoth(c, "notice"), "頭\n  {\n    id: 1,\n  },\n  {\n    id: 2,\n  },\n];\n");
   assert.strictEqual(keepBoth("<<<<<<< a\nA\n=======\nB\n>>>>>>> b\n"), "A\nB\n");
+  const c2 = "  {\n<<<<<<< HEAD\n    id: 1,\n      ]],\n=======\n    id: 2,\n      ]],\n>>>>>>> origin/main\n    ],\n  },\n];\n";
+  assert.strictEqual(keepBoth(c2, "notice"), "  {\n    id: 1,\n      ]],\n    ],\n  },\n  {\n    id: 2,\n      ]],\n    ],\n  },\n];\n", "共同的收尾留在衝突外面");
   const l = '<<<<<<< a\nconst O = ["x.js", "new1.js", "z.js"];\n=======\nconst O = ["x.js", "z.js", "new2.js"];\n>>>>>>> b\n';
   assert.strictEqual(keepBoth(l, "list"), 'const O = ["x.js", "new1.js", "z.js", "new2.js"];\n');
   assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md"));

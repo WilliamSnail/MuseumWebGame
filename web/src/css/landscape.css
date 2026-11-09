@@ -436,6 +436,7 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .brand { display: inline-flex; align-items: center; min-height: 40px; }
   .lf-chip { min-height: 40px; }
+  .lf-ttl { max-width: 5.5em; }
 }
 
 /* ----- 點擊範圍至少 40px ----- */
