@@ -99,6 +99,46 @@ body.reduce-motion .cx-run.pr3 .cx-stage .cellar-scene { animation: none; }
 .cx-tr.ghost { opacity: .7; font-style: italic; }
 .cx-san { color: var(--parch-sub); white-space: nowrap; }
 
+/* 門上的記號：每個人只看得到自己的 */
+.cx-clue { margin: 8px 0 0; padding: 6px 10px; border-left: 3px solid #9C7428; background: rgba(156,116,40,.12); font-size: .8125rem; line-height: 1.5; }
+.cx-clue p { margin: 0 0 4px; }
+.cx-clue.real { border-left-color: #6D7BB5; background: rgba(109,123,181,.16); }
+.cx-seen { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.cx-seen b { display: inline-grid; place-items: center; width: 2em; height: 2em; border: 1px solid #6E5020; border-radius: 3px; background: #FFF6E0; font-family: var(--serif); font-size: 1.0625rem; }
+.cx-letter { flex: 0 0 auto; margin-right: 8px; font-family: var(--serif); color: #6E5020; }
+.cx-label2 { flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.cx-marks { display: inline-flex; gap: 3px; }
+.cx-marks i { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border: 1px solid rgba(110,80,32,.5); border-radius: 2px; font-style: normal; font-family: var(--serif); font-size: .8125rem; color: #6E5020; background: rgba(255,246,224,.6); }
+.cx-marks i.seen { background: #C8A25A; color: #2A1A0C; border-color: #6E5020; font-weight: 700; }
+.cx-choices .btn small { flex: 0 0 auto; margin-left: 10px; }
+.btn.cx-tremble { animation: cxTremble .22s linear infinite; box-shadow: 0 0 0 2px rgba(109,123,181,.7); }
+@keyframes cxTremble { 0% { transform: translate(0, 0); } 25% { transform: translate(1.5px, -1px); } 50% { transform: translate(-1px, 1px); } 75% { transform: translate(1px, 1px); } 100% { transform: translate(-1.5px, 0); } }
+body.reduce-motion .btn.cx-tremble { animation: none; outline: 2px dashed #6D7BB5; outline-offset: 2px; }
+.btn.cx-real { box-shadow: inset 0 0 0 2px #6D7BB5; }
+.cx-reveal { margin: 6px 0; padding: 6px 10px; border-left: 3px solid #9C7428; background: rgba(156,116,40,.1); font-size: .8125rem; }
+.cx-reveal p { margin: 2px 0; }
+.cx-fake { color: #6A2C8C; font-weight: 700; }
+/* 幽靈：整個畫面褪色 */
+.cx-run.role-ghost .cx-stage { filter: grayscale(1) brightness(1.1) contrast(.8); }
+.cx-run.role-ghost .cx-card { background-color: #DEE2EC; }
+
+/* 對話 */
+.cx-chat { display: flex; flex-direction: column; gap: 6px; min-height: 0; flex: 1 1 auto; }
+.cx-log { flex: 1 1 110px; min-height: 90px; max-height: 240px; overflow-y: auto; padding: 6px 8px; border-radius: 3px; background: rgba(0,0,0,.35); border: 1px solid rgba(200,162,90,.3); font-size: .8125rem; color: #FBEFD9; }
+.cx-log-empty { margin: 0; opacity: .6; }
+.cx-line { margin: 2px 0; line-height: 1.45; overflow-wrap: anywhere; }
+.cx-line b { margin-right: 6px; color: var(--gold-hi, #F2DA9A); font-weight: 700; }
+.cx-line.me b { color: #BFE3B4; }
+.cx-line.call span { font-family: var(--serif); font-size: .9375rem; }
+.cx-ghostsay { margin: 0; font-size: .8125rem; color: #C9D6DA; }
+.cx-say-tabs { display: flex; gap: 4px; }
+.cx-say-tab { flex: 1; min-height: 32px; border: 1px solid rgba(200,162,90,.4); border-radius: 3px 3px 0 0; background: rgba(0,0,0,.2); color: #FBEFD9; font: inherit; font-size: .75rem; cursor: pointer; }
+.cx-say-tab.on { background: rgba(200,162,90,.3); }
+.cx-say { display: flex; flex-wrap: wrap; gap: 4px; }
+.nb-frame .cx-say .btn.small, .nb-frame .cx-calls .btn.small { min-height: 34px; padding: 0 8px; font-size: .75rem; letter-spacing: 0; }
+.cx-calls { display: flex; gap: 4px; }
+.nb-frame .cx-calls .btn.small { flex: 1; font-family: var(--serif); font-size: .9375rem; }
+
 /* 右邊的隊員 */
 .cx-mates { display: flex; flex-direction: column; gap: 6px; }
 .cx-mate { padding: 8px 10px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #EFE3C6); }
@@ -128,6 +168,9 @@ body.reduce-motion .cx-run.pr3 .cx-stage .cellar-scene { animation: none; }
   .cx-stage .cs-tag { font-size: .625rem; padding: 0 4px; }
   .cx-mates { flex-direction: row; flex-wrap: wrap; }
   .cx-mate { flex: 1 1 45%; }
+  .cx-choices .btn { flex-wrap: wrap; }
+  .cx-choices .btn small { margin-left: 0; flex: 1 1 100%; }
+  .cx-log { max-height: 140px; }
   .cx-tr { grid-template-columns: minmax(56px, auto) 1fr; }
   .cx-san { grid-column: 2; }
 }

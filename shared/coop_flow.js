@@ -8,11 +8,13 @@
 //    vote    data.choice：選項的號碼或 "retreat"。大家都投了就開票
 //    ack     看完結果了。大家都按了就走下一步
 //    floor   data.go："down"（往下一層）或 "up"（回地面）
+//    knock   幽靈敲一下，data.choice：讓這個選項發抖（一間一次）
 //    tick    時間到了（畫面請伺服器，伺服器自己看 run.deadline）：沒投的算棄權、沒按的不等了
 //    resume  斷線回來：時間早就過了又沒有人催的話，再給一點時間
 //    leave   離隊（uid 自己；斷線太久由伺服器代叫）
 //  回傳 { ok, saves（存檔有沒有變）, dropped（這一步離隊的人）, ended（這一趟剛結束）, noop（什麼都沒變）} 或 { ok: false, reason }。
 // ================================================================
+import { coopKnock } from "./coop_fun.js";
 import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
 
 // ---------- 每天前幾趟有獎勵（照帳號：P.coopDay 不跟著參觀者換，決定 0020） ----------
@@ -116,6 +118,9 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0) {
     if (v !== "retreat" && !(Number.isInteger(v) && room && room.choices[v])) return { ok: false, reason: "沒有這個選項" };
     run.votes[uid] = v;
     if (everyVoted(run)) r = doResolve(run, Ps, now, out);
+  } else if (act === "knock") {
+    const k = coopKnock(run, uid, data.choice);
+    if (!k.ok) return k;
   } else if (act === "ack") {
     if (run.phase !== "result") { out.noop = true; return out; }
     run.acks[uid] = true;

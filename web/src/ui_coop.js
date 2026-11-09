@@ -15,7 +15,7 @@ import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../
 import { cellarFloor, cellarFloors, memberPower } from "../../shared/logic3.js";
 import { COOP } from "../../shared/coop.js";
 import { coopTurnsLeft } from "../../shared/coop_flow.js";
-import { COOP_OVER_TEXT, COOP_PRESSURE_TEXT } from "../../shared/coop_text.js";
+import { COOP_CALLS, COOP_CLUE_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_SAY } from "../../shared/coop_text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -58,7 +58,7 @@ export function openCoop(pid, o = {}) {
   NET.flush().catch(() => {}); // 手上的先送上去，之後都是伺服器寫（docs/多人實作.md 第二節第 3 條）
   UI.saveHold = true;
   document.body.classList.add("coop-on");
-  S = { pid, m: null, party: null, view: null, gone: false, out: null, shown: -1, anim: false, busy: null, offs: [], timers: {}, clock: null, pending: [], resumed: !!o.resumed, myVote: null, tickAt: 0, bestSent: false };
+  S = { pid, m: null, party: null, view: null, gone: false, out: null, shown: -1, anim: false, busy: null, offs: [], timers: {}, clock: null, pending: [], resumed: !!o.resumed, myVote: null, tickAt: 0, bestSent: false, chat: [], chatSeen: 0 };
   mount();
   const s = S, meId = NET.me && NET.me.id;
   s.offs.push(NET.watch(`parties/${pid}`, v => {
@@ -72,6 +72,7 @@ export function openCoop(pid, o = {}) {
     draw();
   }));
   s.offs.push(NET.watch(`coopView/${pid}/${meId}`, v => { if (S === s && v && v.j) onView(JSON.parse(v.j)); }));
+  s.offs.push(NET.watch(`coopChat/${pid}`, v => { if (S === s) onChat(v); }));
   s.offs.push(NET.on("roster", () => { if (S === s) { watchOff(); drawSide(); } }));
   s.clock = setInterval(tickClock, 250);
   if (o.resumed) call("resume").catch(() => {});
@@ -81,7 +82,10 @@ export function openCoop(pid, o = {}) {
 function mount() {
   S.m = overlay("nb-party nb-coop", "地下收藏庫", "合作地下收藏庫", "stairs", onFrameClose);
 }
-function runningNow() { return !!(S && S.party && S.party.phase === "running" && !S.gone && !S.out); }
+function runningNow() {
+  if (!S || !S.party || S.party.phase !== "running" || S.gone || S.out) return false;
+  return !(S.view && meOf(S.view).out); // 幽靈回到地面了：可以走了
+}
 function onFrameClose() {
   if (!S) return;
   if (runningNow()) { // 走到一半不會不小心離隊：框馬上回來，要離隊請按「離隊」
@@ -169,6 +173,7 @@ function tellEvents(list) {
     else if (e.type === "injured") note(`你的「${describePepe(fromKey(e.key)).title}」受傷了（${e.days} 天後會好）。`, "bad");
     else if (e.type === "blocked") { snd("block"); note(e.what === "squat" ? "斯拉夫蹲穩住了，沒有佩佩受傷。" : "棒球帽擋下來了。", "good"); }
     else if (e.type === "insp" && e.gain) snd("coin");
+    else if (e.type === "surface") note("你回到地面了。", "bad");
   });
 }
 
@@ -335,14 +340,14 @@ function drawRun(v) {
     f ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
     lv ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null);
   const main = h("div", { class: "cx-main" }, head, stage(v), phaseCard(v, me));
-  s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv }, main, h("aside", { class: "cx-side" }, sideBox(v))));
+  s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), chatBox(v))));
   tickClock();
 }
 function drawSide() {
   const s = S;
   if (!s || !s.view || s.anim || !s.m) return;
   const side = s.m.surface.querySelector(".cx-side");
-  if (side) side.replaceChildren(sideBox(s.view));
+  if (side) side.replaceChildren(sideBox(s.view), chatBox(s.view));
 }
 async function leaveRun() {
   const yes = await ask("真的要離隊？你拿到的都留著，你的佩佩會先回去。", "離隊", "留下來");
@@ -363,10 +368,102 @@ function stage(v) {
   return st;
 }
 function phaseCard(v, me) {
+  if (me.out === "ghost" && !v.ended) return h("div", { class: "note-card room-card cx-card" }, h("i", { class: "pin" }), h("h2", { class: "room-title" }, "你回到地面了"), h("p", { class: "cx-text" }, "大家往下走了。你的參觀者留在這壹層的樓梯口，接下來要換下壹位。"), h("div", { class: "cx-card-foot" }, btn("回去", () => S.m.close(), "primary")));
   if (v.phase === "vote") return voteCard(v, me);
   if (v.phase === "result") return resultCard(v, me);
   if (v.phase === "floorDone") return floorCard(v, me);
   return overCard(v, me);
+}
+// 門上的記號：只有自己看到的（真的只送這幾個給我，別人的、哪個是假的都不在我手上）
+function clueBox(v, me) {
+  if (v.role === "guard") return h("p", { class: "cx-clue" }, COOP_CLUE_TEXT.guard);
+  if (!v.clue) return null;
+  const solo = v.members.filter(m => !m.out && !m.guard).length < 2;
+  return h("div", { class: "cx-clue" + (me.ghost ? " real" : "") },
+    h("p", null, me.ghost ? COOP_CLUE_TEXT.ghost : solo ? COOP_CLUE_TEXT.solo : COOP_CLUE_TEXT.hint),
+    h("div", { class: "cx-seen" }, h("span", null, me.ghost ? "真正的記號：" : "你看到的記號："), v.clue.seen.map(sym => h("b", null, sym))));
+}
+function revealBox(v) {
+  const rev = v.last && v.last.reveal;
+  if (!rev) return null;
+  const nameOf = id => (v.members.find(m => m.id === id) || {}).name || "隊友";
+  const fakes = Object.entries(rev.fake || {});
+  return h("div", { class: "cx-reveal" },
+    h("p", null, `門上真正的記號是 ${rev.truth.join("・")}，對上的是${COOP_LETTERS[rev.answer]}。${rev.hit ? "你們選對了。" : "你們選的不是它。"}`),
+    fakes.map(([id, sym]) => h("p", { class: "cx-fake" }, `${nameOf(id)} 多看到的「${sym}」，門上沒有。`)));
+}
+// 對話：只有短句和叫聲。伺服器變形（理智低的人說的話會變），大家看到的都是同壹句
+function onChat(val) {
+  const s = S, list = val ? Object.entries(val).map(([id, m]) => Object.assign({ key: id }, m)).sort((a, b) => (a.at || 0) - (b.at || 0)) : [];
+  const fresh = list.length > s.chatSeen ? list.slice(s.chatSeen) : [];
+  const first = s.chatSeen === 0 && s.chatFirst !== false;
+  s.chat = list; s.chatSeen = list.length; s.chatFirst = false;
+  if (!first) fresh.forEach(m => { if (m.by !== (NET.me && NET.me.id)) { if (m.k === "call") croak(m.id, m.text); else snd("flip"); } });
+  const box = s.m && s.m.surface.querySelector(".cx-log");
+  if (box) { box.replaceChildren(...chatLines()); box.scrollTop = box.scrollHeight; }
+}
+function chatLines() {
+  const meId = NET.me && NET.me.id;
+  const list = S.chat.slice(-40);
+  if (!list.length) return [h("p", { class: "cx-log-empty" }, "還沒有人說話。")];
+  return list.map(m => h("p", { class: "cx-line" + (m.by === meId ? " me" : "") + (m.k === "call" ? " call" : "") }, h("b", null, m.name), h("span", null, m.text)));
+}
+function chatBox(v) {
+  const me = meOf(v), s = S;
+  const send = data => { call("say", data).catch(e => { snd("error"); note(e.message || "說不出來。", "bad"); }); };
+  const log = h("div", { class: "cx-log", role: "log", "aria-live": "polite" }, chatLines());
+  later0(() => { log.scrollTop = log.scrollHeight; });
+  if (me.ghost) return h("div", { class: "cx-chat" }, log, h("p", { class: "cx-ghostsay" }, "你不能說話了。"));
+  if (v.ended || me.out) return h("div", { class: "cx-chat" }, log);
+  const syms = v.clue && v.clue.marks ? [...new Set(Object.values(v.clue.marks).flat())].sort() : [];
+  const room = roomOf(v), n = room ? room.choices.length : 0;
+  const tab = s.sayTab || "say";
+  const tabs = h("div", { class: "cx-say-tabs" }, [["say", "短句"], ["sym", "記號"], ["pick", "選項"]].map(([id, t]) => h("button", { type: "button", class: "cx-say-tab" + (tab === id ? " on" : ""), onClick: () => { s.sayTab = id; drawSide(); } }, t)));
+  let body;
+  if (tab === "sym") body = syms.length ? syms.map(x => btn(`我看到「${x}」`, () => send({ say: "see", x }), "small")) : [h("span", { class: "pt-hint" }, "這壹間沒有記號。")];
+  else if (tab === "pick") body = Array.from({ length: n }, (_, i) => COOP_LETTERS[i]).flatMap(x => [btn(`選${x}`, () => send({ say: "pick", x }), "small"), btn(`別選${x}`, () => send({ say: "avoid", x }), "small")]);
+  else body = COOP_SAY.filter(x => !x.arg).map(x => btn(x.text, () => send({ say: x.id }), "small"));
+  return h("div", { class: "cx-chat" }, log, tabs, h("div", { class: "cx-say" }, body),
+    h("div", { class: "cx-calls", "aria-label": "佩佩的叫聲" }, COOP_CALLS.map(x => btn(x.text, () => { croak(x.id, x.text); send({ call: x.id }); }, "small cx-call"))));
+}
+const later0 = fn => setTimeout(fn, 0);
+// 佩佩的叫聲、敲一下：自己合成（決定 0008）。很短、很小聲。還沒有人聽過
+let audio = null;
+function tone(fn) {
+  if (FX.settings.muted) return;
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    fn(audio, audio.currentTime);
+  } catch (e) { /* 這台電腦出不了聲 */ }
+}
+function croak(id, text) {
+  const base = { gua: 170, wa: 300, shh: 900, guu: 130 }[id] || 200, odd = !["呱", "哇", "噓", "咕"].includes(text);
+  tone((c, t) => {
+    const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
+    o.type = id === "shh" ? "triangle" : "sawtooth";
+    f.type = "bandpass"; f.frequency.value = base * 3; f.Q.value = 2;
+    o.frequency.setValueAtTime(base * (odd ? 0.7 : 1), t);
+    o.frequency.exponentialRampToValueAtTime(base * (odd ? 0.45 : 1.25), t + 0.11);
+    o.frequency.exponentialRampToValueAtTime(base * (odd ? 0.9 : 0.8), t + 0.22);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.11, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+    o.connect(f); f.connect(g); g.connect(c.destination);
+    o.start(t); o.stop(t + 0.28);
+  });
+}
+function knockSound() {
+  tone((c, t) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(70, t + 0.09);
+    g.gain.setValueAtTime(0.16, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+    o.connect(g); g.connect(c.destination);
+    o.start(t); o.stop(t + 0.15);
+  });
 }
 const choiceDesc = (o, v) => {
   if (!o) return "";
@@ -383,8 +480,16 @@ function voteCard(v, me) {
   const mine = S.myVote != null ? S.myVote : v.votes ? v.votes[v.me] : undefined;
   const namesFor = c => v.members.filter(m => v.votes && v.votes[m.id] === c).map(m => h("span", { class: "cx-v" }, m.name));
   const vote = c => { S.myVote = c; draw(); doAct("vote", { choice: c }); snd("click"); };
-  const choices = h("div", { class: "choices cx-choices" }, room.choices.map((c, i) => btn([h("span", null, c.label), h("small", null, choiceDesc(pv.choices[i], v)), h("span", { class: "cx-vs" }, namesFor(i))],
-    () => vote(i), (c.check.type === "none" ? "ghost" : "") + (mine === i ? " cx-on" : ""), { disabled: !can, "aria-pressed": String(mine === i) })));
+  const knock = c => { doAct("knock", { choice: c }); knockSound(); };
+  const clue = v.clue, seen = clue ? clue.seen : [];
+  const markRow = i => {
+    const list = clue && clue.marks ? clue.marks[i] : null;
+    return list ? h("span", { class: "cx-marks", "aria-label": `記號：${list.join("、")}` }, list.map(sym => h("i", { class: seen.includes(sym) ? "seen" : "" }, sym))) : null;
+  };
+  const knocked = v.knocked || {};
+  const choices = h("div", { class: "choices cx-choices" }, room.choices.map((c, i) => btn([h("b", { class: "cx-letter" }, COOP_LETTERS[i]), h("span", { class: "cx-label2" }, c.label, markRow(i)), h("small", null, choiceDesc(pv.choices[i], v)), h("span", { class: "cx-vs" }, namesFor(i))],
+    () => (me.ghost ? knock(i) : vote(i)), (c.check.type === "none" ? "ghost" : "") + (mine === i ? " cx-on" : "") + (knocked[i] ? " cx-tremble" : "") + (me.ghost && clue && clue.answer === i ? " cx-real" : ""),
+    { disabled: me.ghost ? !!v.iKnocked : !can, "aria-pressed": String(mine === i), title: knocked[i] ? "這個選項在發抖" : null })));
   const leader = v.members.find(m => m.id === v.leader);
   const waiting = v.members.filter(m => !m.out && !m.ghost && !m.guard && !voted(m.id)).map(m => m.name);
   return h("div", { class: "note-card room-card cx-card" + (room.boss ? " boss" : "") },
@@ -392,6 +497,7 @@ function voteCard(v, me) {
     h("div", { class: "nc-tags" }, room.mood ? h("span", { class: "tag" }, `房間的心情：${room.mood}`) : null, room.color ? h("span", { class: "tag" }, `房間的顏色：${room.color}`) : null, leader ? h("span", { class: "tag cx-leader" }, `這間的領隊：${leader.name}（平手他決定）`) : null),
     h("h2", { class: "room-title" }, ptNode(room.title)),
     h("div", { class: "nc-text" }, room.lines.map(l => h("p", null, ptNode(l)))),
+    clueBox(v, me),
     choices,
     h("div", { class: "cx-card-foot" },
       can ? btn(["撤退", h("span", { class: "cx-vs" }, namesFor("retreat"))], () => vote("retreat"), "ghost small" + (mine === "retreat" ? " cx-on" : ""), { "aria-pressed": String(mine === "retreat") }) : h("span", { class: "pt-hint" }, me.ghost ? "你已經不能投票了。" : "你在監視器前。"),
@@ -432,8 +538,10 @@ function resultCard(v, me) {
     h("i", { class: "pin" }),
     room ? h("h2", { class: "room-title" }, ptNode(room.title)) : null,
     lines.map(t => h("p", { class: "pt-sub" }, t)),
+    (l.check && l.check.notes ? l.check.notes.filter(n => /記號|皇冠|紳士帽|壓力/.test(n)) : []).map(n => h("p", { class: "pt-sub" }, n)),
     text ? h("p", { class: "cx-text" }, ptNode(text)) : null,
     hurt.map(x => h("p", { class: "cx-hurtline" }, `${nameOf(x.owner)} 的「${describePepe(fromKey(x.key)).title}」受傷了（${x.days} 天後會好）。`)),
+    revealBox(v),
     memberTable(v),
     h("div", { class: "cx-card-foot" }, btn(acked ? "等大家……" : "繼續", () => doAct("ack"), "primary", { disabled: !!acked }), h("span", { class: "pt-hint cx-wait" }, waiting ? `還有 ${waiting} 個人在看` : ""), h("span", { class: "cx-clock" })));
 }

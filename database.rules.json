@@ -52,6 +52,20 @@
         ".write": false
       }
     },
+    "traces": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false
+    },
+    "lounge": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false
+    },
+    "coopChat": {
+      "$pid": {
+        ".read": "auth != null && root.child('parties').child($pid).child('members').child(auth.uid).exists()",
+        ".write": false
+      }
+    },
     "coopView": {
       "$pid": {
         "$uid": {

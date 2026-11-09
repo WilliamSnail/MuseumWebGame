@@ -28,6 +28,7 @@ import { NUM } from "./config.js";
 import { addDays, addMyth, applySan, clampN, fromKey, fullPick, gainQuirk, gainSan, isFree, maxSan, pepeKey, pickOne, rollExpr, sanCheck, startBout, understandCheck } from "./logic.js";
 import { cellarAdvance, cellarFloor, injureDaysOf, skillCheck, skillOf, teamHas, teamPower, understandLine } from "./logic3.js";
 import { cellarDarkLoss, traitHits, traitTag } from "./legacy.js";
+import { coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
 export const COOP = {
@@ -61,6 +62,12 @@ export const COOP = {
   offlineMs: 60000,        // 斷線多久才移出隊伍（伺服器自己看 /status 再確認）
   staleMs: 600000,         // 這麼久沒有人動：這一趟算結束（大家都走了，回來才收）
   dailyRewarded: 3,        // 每個帳號每天前幾趟有獎勵（決定 0020）
+  // 每個人看到的不一樣（機制 2）：門上三個記號，每個人看到壹部分。選到三個都對上的選項有好處
+  clue: { seekSkill: 50, power: 2, skill: 15, san: 2, insp: 1,   // seekSkill：偵查到這麼高多看到壹個；power：門檻 −2；skill：技能 +15；san：理智少扣 2；insp：過了多 1 靈感
+    halluc: [{ below: 40, chance: 0.5 }, { below: 25, chance: 1 }] }, // 理智低於這個，有這個機率多看到壹個不存在的記號
+  // 說的話變形（機制 4）：stutter ＝結巴的機率；swap ＝變成別句話的機率
+  warp: [{ below: 40, stutter: 0.3, swap: 0.1 }, { below: 25, stutter: 0.5, swap: 0.3 }, { below: 12, stutter: 0.5, swap: 0.5 }],
+  sayGapMs: 900,           // 壹句話之後要等多久（送太快會擋）
 };
 
 // ---------- 小工具 ----------
@@ -234,6 +241,7 @@ export function startCoop(members, floor, opt = {}) {
     team: [], used: {}, pressure: null, room: null, last: null, log: [], cleared: [],
   };
   run.team = coopTeam(run, Ps);
+  if (run.fun) coopStart(run, Ps);
   members.forEach(m => { if (!m.guard && m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
   coopSync(run, Ps);
   return { ok: true, run, events: coopNewEvents(run) };
@@ -274,21 +282,24 @@ export function coopTally(run, votes, tieBreak) {
 
 // ---------- 擲骰 ----------
 // 強度：全隊一起擲一次。技能：技能最高的人擲。理智：每個人各自擲（幽靈不擲）。皇冠全隊一層重擲一次。
-export function coopCheck(run, Ps, room, ch) {
+export function coopCheck(run, Ps, room, ch, bonus = null) {
   const k = ch.check, pr = run.pressure || coopPressure(run);
   const out = { type: k.type, success: true, roll: null, total: null, target: null, rerolled: false, notes: [] };
+  if (bonus) out.clue = true;
   const crown = () => { if (run.used.crown || !teamHas(run.team, "帽子", "皇冠")) return false; run.used.crown = true; out.rerolled = true; out.notes.push("皇冠號令：重擲一次"); return true; };
   if (k.type === "power") {
     const tp = coopPower(run, Ps, room);
     out.power = tp.total; out.notes = tp.notes.slice(); out.base = k.target;
-    out.target = coopTargetOf(run, k.target);
+    out.target = coopTargetOf(run, k.target) - (bonus ? bonus.power : 0);
+    if (bonus) out.notes.push(`記號對上了：門檻 −${bonus.power}`);
     out.roll = rollExpr("1D10"); out.total = tp.total + out.roll.total; out.success = out.total >= out.target;
     if (!out.success && crown()) { out.firstRoll = out.roll; out.roll = rollExpr("1D10"); out.total = tp.total + out.roll.total; out.success = out.total >= out.target; }
     out.tentacle = coopVoters(run).filter(m => coopOwns(run, m.id, "帽子", "觸手帽")).map(m => m.id); // 這幾個人要付理智
   } else if (k.type === "skill") {
     const by = coopRoller(run, Ps, k.skill), P = Ps[by];
     const gent = teamHas(run.team, "帽子", "紳士帽") ? 10 : 0;
-    const mod = (k.mod || 0) + gent + pr.skill;
+    const mod = (k.mod || 0) + gent + pr.skill + (bonus ? bonus.skill : 0);
+    if (bonus) out.notes.push(`記號對上了：技能 +${bonus.skill}`);
     if (gent) out.notes.push("紳士帽的禮貌 +10");
     if (pr.skill) out.notes.push(`理智壓力 ${pr.skill}`);
     let sc = skillCheck(P, k.skill, mod);
@@ -296,7 +307,11 @@ export function coopCheck(run, Ps, room, ch) {
     if (!out.success && crown()) { out.firstRoll = out.roll; sc = skillCheck(P, k.skill, mod); out.roll = sc.roll; out.success = !!sc.success; }
   } else if (k.type === "san") {
     out.spec = k.spec; out.san = {};
-    coopVoters(run).forEach(m => { out.san[m.id] = sanCheck(Ps[m.id], k.spec, "cellar:" + room.id); });
+    coopVoters(run).forEach(m => {
+      const r = sanCheck(Ps[m.id], k.spec, "cellar:" + room.id);
+      if (bonus && r.loss) r.loss = Math.max(0, r.loss - bonus.san); // 記號對上了：少扣一點
+      out.san[m.id] = r;
+    });
     const rs = Object.values(out.san);
     out.passed = rs.filter(r => r.success).length;
     out.success = rs.length > 0 && out.passed === rs.length; // 記錄用：每個人都過才算「全隊過了」；結果是一個人一個人算的
@@ -447,10 +462,11 @@ export function coopResolve(run, Ps, votes, opt = {}) {
     return { ok: true, run, retreat: true, vote, events };
   }
   const ch = room.choices[vote.pick];
-  const check = coopCheck(run, Ps, room, ch);
+  const check = coopCheck(run, Ps, room, ch, run.fun ? coopCheckFun(run, vote.pick) : null);
   const fx = coopApply(run, Ps, room, ch, check, events);
   run.last = { floor: run.floor, room: room.id, choice: vote.pick, vote, check, fx, events };
   run.log.push({ floor: run.floor, room: room.id, choice: vote.pick, type: check.type, success: check.success });
+  if (run.fun) coopRoomDone(run, Ps, room, ch, vote, check, fx, events);
   run.phase = "result";
   if (!coopVoters(run).length) coopFinish(run, "lost"); // 大家都變幽靈了：這一趟到這裡
   coopSync(run, Ps);
@@ -477,6 +493,7 @@ export function coopAdvance(run, Ps) {
   if (run.idx < f.rooms.length) {
     coopNextLeader(run);
     run.phase = "vote";
+    if (run.fun) coopPlanRoom(run, Ps);
     coopSync(run, Ps);
     return { ok: true, run, floorDone: false, events };
   }
@@ -510,6 +527,7 @@ export function coopContinue(run, Ps) {
   run.team = coopTeam(run, Ps);
   coopNextLeader(run);
   run.phase = "vote";
+  if (run.fun) coopStart(run, Ps);
   coopSync(run, Ps);
   return { ok: true, run, events };
 }
@@ -546,5 +564,6 @@ export function viewFor(run, id) {
   v.me = id;
   if (v.last && v.last.events) v.last.events = { [id]: v.last.events[id] || [] }; // 事件只給他自己的
   v.fresh = (run.fresh && run.fresh[id]) || [];
+  if (run.fun) coopFilterView(v, run, id); // 不該看到的東西在這裡拿掉：線索、幻覺、地圖（coop_fun.js）
   return v;
 }

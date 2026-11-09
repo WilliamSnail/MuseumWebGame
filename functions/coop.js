@@ -14,6 +14,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { COOP, coopFix, coopMember, coopPresent, viewFor } from "./shared/coop.js";
 import { coopAct, coopBegin } from "./shared/coop_flow.js";
+import { coopSayBuild } from "./shared/coop_fun.js";
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers } from "./shared/party.js";
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
 import { switchVisitor } from "./shared/visitors.js";
@@ -151,9 +152,12 @@ partyHooks.beforeLeave = async (pid, uid) => {
   catch (e) { if (!(e instanceof HttpsError)) console.error("合作地下離隊出錯", e); } // 這一趟已經不在了：照樣離開隊伍
 };
 partyHooks.closed = async pid => {
-  await rtdb().ref(`coopView/${pid}`).remove().catch(() => {});
-  await runRef(pid).delete().catch(() => {});
+  await clearRunStuff(pid);
 };
+async function clearRunStuff(pid) {
+  await rtdb().ref().update({ [`coopView/${pid}`]: null, [`coopChat/${pid}`]: null, [`coopChatLog/${pid}`]: null, [`coopChatAt/${pid}`]: null }).catch(() => {});
+  await runRef(pid).delete().catch(() => {});
+}
 
 // ---------- 隊友斷線太久：伺服器自己看 /status 再移 ----------
 async function pruneRun(me, pid, uid) {
@@ -174,7 +178,30 @@ async function pruneRun(me, pid, uid) {
 }
 
 // ---------- Functions ----------
-const FLOW_ACTS = ["vote", "ack", "floor", "tick", "resume"];
+// 說話（機制 4）：只有短句和叫聲（翊文 11-09 貼的第 4 點「沒有打字」；決定 0020 的自由打字要不要，等翊文）。伺服器變形，畫面動不了。
+// 紀錄：大家看到的放 /coopChat；變形前的原文放 /coopChatLog（只有伺服器，探險報告用）
+async function say(me, pid, data) {
+  const rs = await runRef(pid).get();
+  if (!rs.exists) throw bad("這壹趟已經結束了");
+  const run = coopFix(JSON.parse(rs.data().data)), t = now();
+  // 送太快會擋：交易裡比上次的時間
+  let tooFast = false;
+  await rtdb().ref(`coopChatAt/${pid}/${me.uid}`).transaction(cur => {
+    tooFast = !!(cur && t - cur < COOP.sayGapMs);
+    return tooFast ? undefined : t;
+  });
+  if (tooFast) return { ok: false, reason: "說慢壹點" };
+  setRng(mulberry32(hashStr(`${pid}:${me.uid}:${t}`)));
+  let r;
+  try { r = coopSayBuild(run, me.uid, data); } finally { setRng(null); }
+  if (!r.ok) throw bad(r.reason);
+  const ref = rtdb().ref(`coopChat/${pid}`).push();
+  await ref.set({ by: me.uid, name: r.name, text: r.text, k: r.kind, id: r.id, at: t });
+  if (r.warped) await rtdb().ref(`coopChatLog/${pid}/${ref.key}`).set({ by: me.uid, name: r.name, from: r.from, to: r.text, at: t });
+  return { ok: true };
+}
+
+const FLOW_ACTS = ["vote", "knock", "ack", "floor", "tick", "resume"];
 export const coopStep = onCall(async req => {
   const me = await needMember(req);
   const { pid, act, data } = req.data || {};
@@ -200,11 +227,11 @@ export const coopStep = onCall(async req => {
   }
   if (act === "again") {
     await changeParty(pid, p => partyBack(p, me.uid));
-    await rtdb().ref(`coopView/${pid}`).remove().catch(() => {});
-    await runRef(pid).delete().catch(() => {});
+    await clearRunStuff(pid);
     return { ok: true };
   }
   if (act === "prune") return pruneRun(me, pid, data && data.uid);
+  if (act === "say") return say(me, pid, data || {});
   if (FLOW_ACTS.includes(act)) {
     await runStep(pid, me.uid, act, data || {});
     return { ok: true };
