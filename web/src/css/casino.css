@@ -255,3 +255,18 @@ body.reduce-motion .sl-bulb, body.reduce-motion .sl-cell.sl-hit, body.reduce-mot
   .sl-name { font-size: 1.0625rem; }
   .nb-casino .nb-tab { padding: 0 10px; }
 }
+
+/* 手機的選單已經有房間列表（導覽列的賭場也在裡面），不要再列一次（翊文 11-09） */
+@media (max-width: 760px) { .md-casino-h, .md-casino-g { display: none; } }
+
+/* 導覽列多了賭場：字放圖示下面的寬度要提早；窄的時候再收緊，不要擠出畫面 */
+@media (max-width: 1350px) and (min-width: 761px) {
+  .nav-link { flex-direction: column; gap: 2px; padding: 3px 0; font-size: .75rem; letter-spacing: .08em; line-height: 1.2; }
+  .nav-link .ic, .nav-link .ic svg { width: 18px; height: 18px; }
+  .nav-links { gap: 12px; }
+}
+@media (max-width: 880px) and (min-width: 761px) {
+  .nav-links { gap: 5px; }
+  .nav-link { font-size: .6875rem; letter-spacing: .02em; }
+  .brand { letter-spacing: .12em; font-size: .75rem; }
+}

@@ -25,8 +25,8 @@ export function setImg(v) { IMG = v; return v; }
 export function setFit(v) { FIT = v; return v; }
 export const UI = { screen: "title", params: {}, held: null, undo: [], timers: [], lastInput: Date.now(), busy: false, cleanup: [] };
 export const RCOLOR = { 普通: "var(--r-common)", 稀有: "var(--r-rare)", 超稀有: "var(--r-epic)", 傳說級稀有: "var(--r-legend)", 不可名狀: "var(--r-eldritch)", 失敗作: "#B9B4AA", 修復品: "#9C8A6A" };
-export const ROOM_NAMES = { casino: "賭場", lobby: "大廳", gallery: "畫廊", origin: "起源室", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", office: "館長室", library: "圖庫", settings: "設定" };
-export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "起源"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["office", "館長室"]];
+export const ROOM_NAMES = { lobby: "大廳", gallery: "畫廊", origin: "起源室", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", casino: "賭場", office: "館長室", library: "圖庫", settings: "設定" };
+export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "起源"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["casino", "賭場"], ["office", "館長室"]];
 export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
 export const PANELS = {};
@@ -204,7 +204,7 @@ export function useProfile(mode) {
 
 // ---------- 導覽列 ----------
 // 導覽列的圖示（翊文 11-08：「這個也可以加 icon 嗎」）；手機的選單也用同壹套
-export const NAV_ICON = { lobby: "lobby", gallery: "gallery", origin: "origin", workshop: "workshop", fusion: "fusion", pillow: "pillow", hall: "hall", codex: "codex", cellar: "stairs", office: "office",
+export const NAV_ICON = { lobby: "lobby", gallery: "gallery", origin: "origin", workshop: "workshop", fusion: "fusion", pillow: "pillow", hall: "hall", codex: "codex", cellar: "stairs", casino: "dice", office: "office",
   commission: "commission", library: "library", settings: "gear" };
 // 公佈欄、信箱是蓋在整個畫面上的（ui_board.js 登記在 PANELS），不是房間
 export function openPanel(name) {
@@ -235,8 +235,8 @@ export function buildNav() {
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
     h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop")), item("md-rank", "star", "本週榜單", () => openPanel("rank"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）；本週榜單（決定 0039，ui_board_rank.js 登記 PANELS.rank）
-    h("p", { class: "md-h" }, "賭場"), // Hamachi 賭場（決定 0040，ui_casino.js 登記 PANELS.casino）
-    h("div", { class: "md-group" }, item("md-casino", "dice", "Hamachi 賭場", () => openPanel("casino"))),
+    h("p", { class: "md-h md-casino-h" }, "賭場"), // Hamachi 賭場（決定 0040，ui_casino.js 登記 PANELS.casino）
+    h("div", { class: "md-group md-casino-g" }, item("md-casino", "dice", "Hamachi 賭場", () => openPanel("casino"))),
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）
