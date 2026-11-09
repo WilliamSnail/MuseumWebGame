@@ -255,6 +255,8 @@ export const NUM = {
       { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
       { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
     ],
+    // 單人 21 點的連勝、連敗（翊文 11-09：「21點連續贏會恢復一點心情，連續輸會降一點san值」，決定 0049）。數字全部先照這樣，等翊文
+    streak: { winN: 3, mood: 2, loseN: 3, san: 1, moodDay: 6, sanDay: 3 }, // 連贏 winN 把心情 +mood、連輸 loseN 把理智 -san；每天（05:00 換日）心情最多加 moodDay、理智最多扣 sanDay；平手不算；理智最低留到 1
     foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字

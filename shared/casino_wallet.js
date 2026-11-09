@@ -6,7 +6,7 @@
 //  錢包的資料（w）：
 //    chips 籌碼；rel { day, n } 今天領過幾次救濟；pk { day, left, opened } 今天免費大禮包還剩幾包、開過幾包；tickets 買到、抽到的券；
 //    ex { week, n:{換小獎的 id: 這週換過幾次} }；ach { 成就 id: { d: 日期, name? } }；props { 財產 id: { n, d, name? } }；meals { 餐點 id: 買過幾次 }；
-//    title 現在當稱號的成就 id；hung 掛在展廳的財產 id；st 統計；legacy { at } 認領過舊資料；tablePid 現在坐的牌桌（第二階段）
+//    sk 連勝連敗（shared/casino_streak.js，決定 0049）；title 現在當稱號的成就 id；hung 掛在展廳的財產 id；st 統計；legacy { at } 認領過舊資料；tablePid 現在坐的牌桌（第二階段）
 //    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino_week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
 import { NUM } from "./config.js";
@@ -15,6 +15,7 @@ import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoun
 import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
 import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
+import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -25,7 +26,7 @@ export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips,
     rel: { day: null, n: 0 }, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
-    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {},
+    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
@@ -40,6 +41,7 @@ export function casWalletFix(w, day) {
   for (const k of Object.keys(base.st)) if (!Number.isFinite(w.st[k])) w.st[k] = base.st[k];
   if (!casIsObj(w.ex.n)) w.ex.n = {};
   if (!Array.isArray(w.hung)) w.hung = [];
+  casSkFix(w, day); // 連勝連敗（決定 0049）：舊錢包沒有 sk，補；換日重算今天的份
   if (day) {
     if (w.rel.day !== day) w.rel = { day, n: 0 };
     if (w.pk.day !== day) w.pk = { day, left: NUM.casino.dailyPacks, opened: 0 }; // 舊的：每人 2 包、不會換日重算（bug）；這裡每天 2 包，沒開的不累積
@@ -372,6 +374,11 @@ function casAfterMove(ctx) {
   let settle = null, ticket = false;
   if (round.state === "done") {
     settle = casSettle(w, house, round, { day, withOthers: false });
+    if (settle.ok && ctx.P) { // 連勝連敗（決定 0049）：只有單人，只在這一手第一次結算時算（round.settled 擋重複）
+      const sk = casSkStep(w, ctx.P, round.out.kind, day);
+      settle.streak = sk.lines;
+      if (sk.changed) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
+    }
     ticket = settle.ok && round.out && ["win", "blackjack", "charlie"].includes(round.out.kind) && casWinTicket(w);
   }
   return { ok: true, round, view: casRoundView(round, ctx.viewer || ""), settle, ticket };

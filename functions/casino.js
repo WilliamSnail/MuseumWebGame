@@ -10,6 +10,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
 //    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
+//  連勝連敗（決定 0049）：結算的同一個交易裡，心情、理智寫進存檔（deal、hit、stand 都讀存檔）。
 //  改到存檔的（換小獎的靈感、稱號、掛紀念品）：同一個交易寫存檔（rev 加一），交易成功才通知 save_changed。
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -100,15 +101,15 @@ export const casino = onCall(async req => {
       const r = casStepDeal(ctx, d.text);
       if (!r.ok) return Object.assign(no(r), { gag: !!r.gag });
       ctx.roundDirty = true;
-      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke } : null, ticket: !!r.ticket });
+      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
     });
     case "hit":
-    case "stand": return play(req, me, {}, ctx => {
+    case "stand": return play(req, me, { save: true }, ctx => {
       const seq = Number.isInteger(d.seq) ? d.seq : -1;
       const r = act === "hit" ? casStepHit(ctx, seq) : casStepStand(ctx, seq);
       if (!r.ok) return no(r);
       ctx.roundDirty = true;
-      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke } : null, ticket: !!r.ticket });
+      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
     });
     case "relief": return play(req, me, {}, ctx => {
       if (ctx.round && ctx.round.state === "playing") return { ok: false, reason: "先打完這壹手" };

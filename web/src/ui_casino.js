@@ -161,7 +161,7 @@ function tablePane() {
     btn(`向 Yuga 借籌碼（今天還能借 ${w.reliefLeft} 次）`, () => act("relief", {}, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); }), "primary", { disabled: S.busy ? true : null })));
   else if (w.chips < NUM.casino.reliefBelow && !playing && !w.canRelief) parts.push(h("p", { class: "cas-relief" }, fill(CAS_TEXT.reliefNone, { n: NUM.casino.dailyPacks })));
   if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
-  parts.push(h("p", { class: "cas-rules" }, "規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。"));
+  parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情會好壹點，連輸 ${NUM.casino.streak.loseN} 把理智會掉壹點（平手不算，每天有上限）。`));
   return parts;
 }
 function resultCard(r) {
@@ -188,6 +188,10 @@ function celebrate(ach) {
   for (const a of ach || []) { note(`成就「${a.name}」！在「成就」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
   celebrateWk();
 }
+// 連勝連敗（決定 0049）：伺服器算好的文字；心情、理智已經寫進存檔，狀態列隨 save_changed 更新
+function streakNote(lines) {
+  for (const t of lines || []) note(t, t.includes("理智") ? "bad" : "good");
+}
 // 每週收藏有新的（伺服器在同一個交易裡發的）：牌翻完、錢算完才說
 function celebrateWk() {
   const s = S;
@@ -204,7 +208,7 @@ async function deal(text) {
     say([CAS_TEXT.dealHole, fill(CAS_TEXT.dealUp, { card: casCardName(v.dealer.cards[1]) })]);
     snd("flip");
     if (v.state === "done") await finish(v, r, { natural: true });
-    else if (r.settle) celebrate(r.settle.ach);
+    else if (r.settle) { celebrate(r.settle.ach); streakNote(r.settle.streak); }
   });
 }
 async function move(kind) {
@@ -253,7 +257,7 @@ async function finish(v, r, o) {
   if (S !== s) return;
   if (out.kind === "lose") snd("error"); else if (out.kind !== "push") snd("coin");
   if (r.ticket) say([CAS_TEXT.packWon]);
-  if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); }
+  if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); streakNote(r.settle.streak); }
   say(s.house || []);
   if (v.slips && v.slips.length) say([`牌翻回來了：你剛剛有 ${v.slips.length} 張牌看錯了。`]);
 }
