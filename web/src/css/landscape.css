@@ -116,16 +116,28 @@
 
 /* ----- 提示（toast）：靠右下角，不蓋住中間 ----- */
 @media (max-height: 500px) and (orientation: landscape) {
-  .fx-toasts { left: auto; right: max(8px, env(safe-area-inset-right)); bottom: calc(var(--status-real, var(--status-h)) + 6px); transform: none; align-items: flex-end; gap: 4px; max-width: min(56vw, 420px); }
-  .fx-toast { min-height: 40px; padding: 4px 12px; font-size: 12px; line-height: 1.4; max-width: min(56vw, 420px); }
+  .fx-toasts { left: max(8px, env(safe-area-inset-left)); right: auto; bottom: calc(var(--status-real, var(--status-h)) + 6px); transform: none; align-items: flex-start; gap: 4px; max-width: min(50vw, 400px); }
+  .fx-toast { min-height: 40px; padding: 4px 12px; font-size: 12px; line-height: 1.4; max-width: min(50vw, 400px); }
+  /* 邀請卡：右下角，比提示窄壹點 */
+  .inv-stack { left: auto; right: max(8px, env(safe-area-inset-right)); width: min(360px, 48vw); bottom: calc(var(--status-real, var(--status-h)) + 6px); gap: 6px; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 14px); overflow-y: auto; }
+  .inv-card { padding: 10px 14px 8px; }
+  .inv-t { margin: 0 0 2px; font-size: .9375rem; }
+  .inv-sub { margin: 0 0 6px; font-size: .75rem; line-height: 1.4; }
+  .inv-btns .btn { min-height: 40px; }
+  .pt-members { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .pt-member { padding: 8px 6px; }
+  .pt-member.wait { min-height: 120px; }
+  .pt-pet { width: 64px; height: 64px; }
   .fx-toast-act { min-height: 40px; padding: 4px 12px; font-size: 12px; }
 }
 
 /* ----- 蓋在畫面上的木框（公佈欄、信箱、每週劇情、兌換所、賭場、合作地下、館友…）：吃滿高度，上面壹條薄的，內容自己捲 ----- */
 @media (max-height: 500px) and (orientation: landscape) {
-  .nb-layer { padding: 0; }
-  .nb-frame, .nb-frame.urgent, .nb-frame.nb-mail { width: 100%; max-width: none; height: 100vh; height: 100dvh; max-height: none; border-radius: 0; padding: 0 max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)); }
-  .nb-frame.urgent { height: 100dvh; }
+  .nb-layer { display: block; padding: 0; bottom: var(--kb, 0px); }
+  .mini-layer { bottom: var(--kb, 0px); }
+  .nb-frame, .nb-frame.urgent, .nb-frame.nb-mail { width: 100%; max-width: none; height: 100%; max-height: none; border-radius: 0; padding: 0 max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)); }
+  .nb-frame.urgent { height: 100%; }
+  .cas-chat-form { position: sticky; bottom: 0; z-index: 2; padding: 4px 0; background: #234F38; }
   .nb-top { min-height: 48px; padding: 4px 0; }
   .nb-plaque { padding: 3px 18px 3px 12px; gap: 6px; }
   .nb-plaque h2 { font-size: .9375rem; letter-spacing: .14em; }
@@ -136,7 +148,7 @@
   .nb-foot { padding-top: 4px; }
   .nb-tabs { gap: 8px; margin: 0 0 6px; }
   .nb-tab { min-height: 40px; padding: 0 14px; font-size: .8125rem; }
-  .nb-body { grid-template-columns: minmax(210px, 36%) minmax(0, 1fr); gap: 10px; }
+  .nb-body { grid-template-columns: minmax(210px, 36%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 10px; }
   .nb-body.reading { grid-template-columns: minmax(0, 1fr); }
   .nb-list { gap: 14px; padding: 12px 12px 8px 6px; }
   .nb-slip { padding: 14px 12px 9px; gap: 3px; }
@@ -375,4 +387,49 @@
   .sl-payline { top: calc(6px + var(--sl-h)); }
   .sl-name { font-size: 1rem; }
   .sl-lever { flex-basis: 34px; min-height: 40px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .cas-body:has(> .cas-felt):not(:has(> .cas-house)) > .cas-felt { grid-row: 1 / span 3; }
+}
+/* 擲骰的時候展台是空的：橫拿高度不夠，先不放展台，骰盤放左上 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-reveal.rolling .rv-stage { display: none; }
+  .scr-reveal.rolling .rv-tray { grid-row: 1; grid-column: 1; }
+  .scr-reveal.rolling .rv-panel { grid-row: 1; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-reveal { align-items: start; }
+  .rv-tray, .rv-stage { align-self: start; }
+  .scr-reveal .rv-panel { position: static; }
+}
+
+/* ----- 合作地下收藏庫：左邊舞台和房間（自己捲）、右邊隊員和聊天（自己捲），輸入列貼在右下 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-frame.nb-coop { height: 100%; padding: 0 max(8px, env(safe-area-inset-left)) 4px; border-radius: 0; }
+  .nb-layer:has(.nb-coop) { padding: 0; }
+  .nb-coop .nb-surface { padding: 6px; }
+  .nb-coop .nb-plaque h2 { font-size: .9375rem; letter-spacing: .12em; }
+  .cx-run { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 38%); grid-template-rows: minmax(0, 1fr); gap: 10px; overflow: hidden; }
+  .cx-main { overflow-y: auto; flex: 1 1 auto; }
+  .cx-side { overflow-y: auto; flex: 1 1 auto; gap: 6px; }
+  .cx-stage { max-height: 76px; }
+  .cx-stage .cs-frog { left: calc((var(--i) + .5) * (100% / var(--n)) - min(6.5%, 50% / var(--n))); width: min(13%, 100% / var(--n)); }
+  .cx-stage .cs-tag { font-size: .6875rem; padding: 1px 6px; }
+  .cx-stage .cellar-scene { margin-top: -14%; }
+  .cx-head { gap: 8px; }
+  .cx-head h3 { font-size: 1rem; }
+  .cx-mates { flex-direction: column; flex-wrap: nowrap; }
+  .cx-mate { flex: none; }
+  .cx-choices .btn { flex-wrap: nowrap; min-height: 44px; }
+  .cx-choices .btn small { margin-left: 10px; flex: 0 0 auto; }
+  .cx-log { flex: 1 1 60px; min-height: 60px; max-height: 120px; }
+  .cx-chat { display: contents; }
+  .cx-typerow { position: sticky; bottom: 0; z-index: 2; padding: 2px 0; background: #3B2617; }
+  .nb-frame .cx-typerow .btn.small, .cx-type { min-height: 40px; }
+  .cx-ctrl { gap: 4px; }
+  .cx-members { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .cx-floor span { display: inline; }
+  .cx-floor { min-height: 40px; padding: 4px 10px; }
+  .cx-tr { grid-template-columns: minmax(56px, auto) 1fr auto; }
+  .cx-san { grid-column: auto; }
 }

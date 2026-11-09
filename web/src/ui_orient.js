@@ -50,6 +50,26 @@ function build() {
     if (e.target.closest("button, .m-door, .btn")) tryLockLandscape();
   }, true);
 }
+// 鍵盤跳出來（橫拿的手機高度只有 360～430，鍵盤會蓋掉大半）：量出被蓋住的高度，放在 --kb；
+// css/landscape.css 用它把蓋在畫面上的框縮到鍵盤上面。點到輸入格時，把它捲到看得到的地方。
+// 只設壹個 CSS 變數、只捲輸入格，電腦和直拿的版面不會用到 --kb。
+function watchKeyboard() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const set = () => {
+    const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    document.documentElement.style.setProperty("--kb", kb + "px");
+  };
+  vv.addEventListener("resize", set);
+  vv.addEventListener("scroll", set);
+  set();
+  document.addEventListener("focusin", e => {
+    const t = e.target;
+    if (!t || !t.matches || !t.matches("input, textarea")) return;
+    setTimeout(() => { try { if (t.isConnected) t.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (err) { /* 沒關係 */ } }, 320);
+  });
+}
 if (typeof document !== "undefined") {
-  if (document.body) build(); else document.addEventListener("DOMContentLoaded", build);
+  const start = () => { build(); watchKeyboard(); };
+  if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 }
