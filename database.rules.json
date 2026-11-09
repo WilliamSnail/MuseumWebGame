@@ -66,6 +66,27 @@
         "$other": { ".validate": false }
       }
     },
+    "casinoLive": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false,
+      ".validate": "newData.hasChildren(['seq'])",
+      "seq": { ".validate": "newData.isNumber()" },
+      "uid": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128" },
+      "nick": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+      "since": { ".validate": "newData.isNumber()" },
+      "until": { ".validate": "newData.isNumber()" },
+      "msg": {
+        ".validate": "newData.hasChildren(['id', 'at', 'from', 'to', 'n'])",
+        "id": { ".validate": "newData.isNumber()" },
+        "at": { ".validate": "newData.isNumber()" },
+        "from": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+        "to": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+        "toUid": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 128" },
+        "n": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      },
+      "$other": { ".validate": false }
+    },
     "lounge": {
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false

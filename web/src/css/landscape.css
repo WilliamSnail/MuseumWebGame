@@ -88,6 +88,7 @@
   .scr-lobby > .room-head { order: 0; }
   .scr-lobby > .next-step { order: 1; }
   .scr-lobby > .event-bar { order: 2; }
+  .scr-lobby > .live-bar { order: 2; margin: 0 0 6px; padding: 4px 10px; gap: 4px 10px; }
   .scr-lobby > .lobby-wrap { order: 3; }
   .scr-lobby > .lobby-hint { order: 4; }
   .lobby-wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -361,6 +362,9 @@
   .cas-econ-slogan { font-size: 1rem; letter-spacing: .12em; }
   .cas-econ-stage { min-height: 72px; max-height: 96px; }
   .cas-econ-go { min-height: 40px; padding: 0 18px; }
+  .cas-live-now { font-size: 1rem; letter-spacing: .08em; }
+  .cas-live-stage { min-height: 40px; max-height: 64px; }
+  .cas-live-go { min-height: 40px; padding: 0 18px; }
   .cas-body { padding-bottom: 4px; }
   .cas-body:has(> .cas-felt) { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 8px 12px; align-content: start; align-items: start; grid-auto-rows: max-content; }
   .cas-body:has(> .cas-felt) > * { grid-column: 2; }

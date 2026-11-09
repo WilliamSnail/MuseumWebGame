@@ -265,6 +265,8 @@ export const NUM = {
     cellarFind: { chance: 0.25, min: 500, max: 2000, step: 100, perDay: 3 },
     // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55 },
+    // 實況和斗內（舊 Discord 21 點的玩法，決定 0053）：金額是 base + step×k，k 是 1～kMax 的整數（舊的：10000 + 10000×1～25，也就是 2 萬～26 萬），自己不能選。durationMs 開播多久自動下播；graceMs 實況主離線超過這麼久算下播（關掉遊戲）。perDay、receiveCap 是新的（等翊文）
+    live: { base: 10000, step: 10000, kMax: 25, durationMs: 3600000, graceMs: 60000, perDay: 3, receiveCap: 1000000 },
     foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字

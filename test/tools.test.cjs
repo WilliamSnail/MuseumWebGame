@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { parseArgs, commitText, prBody, branchOk, noChecksYet } = require("../tools/ship.cjs");
 const { keepBoth, canAuto } = require("../tools/merge_main.cjs");
-const { moveEventNow, rtdbPort } = require("../tools/local_game.cjs");
+const { moveEventNow, rtdbPort, fnPort } = require("../tools/local_game.cjs");
 const { nextDecision, safeName, logText, decisionText } = require("../tools/new_doc.cjs");
 const { editorOf } = require("../tools/edit_lib.cjs");
 const { parsePlan, planResult } = require("../tools/apply_edits.cjs");
@@ -55,6 +55,7 @@ T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別�
   assert.strictEqual(moveEventNow(w, "c", 0), null);
   assert.strictEqual(moveEventNow({}, "a", 0), null);
   assert.strictEqual(rtdbPort(8), 17100);
+  assert.deepStrictEqual([fnPort(4), fnPort(5)], [9101, 10101], "跟 tools/emulators.cjs 壹樣");
 });
 T("doc：決定的下一個號碼；檔名不會有不能用的字", () => {
   assert.strictEqual(nextDecision(["0044-趣味節日.md", "0009-x.md", "README.md"]), "0045");

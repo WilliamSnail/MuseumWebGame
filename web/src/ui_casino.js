@@ -2,14 +2,14 @@
 //  Hamachi 賭場的畫面（決定 0040；規則在 shared/casino*.js，伺服器在 functions/casino.js）
 //  這個檔只畫「伺服器給我的樣子」，什麼都不算：發牌、點數、派彩、錢包都在伺服器。畫面只拿得到看得到的牌，莊家的底牌結算才給。
 //  入口：右上角「選單」的「Hamachi 賭場」（ui_core.js 的 buildNav → PANELS.casino）。
-//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、拚經濟、餐車、換小獎、成就、財產。
+//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、拚經濟、實況（決定 0053）、餐車、換小獎、成就、財產。
 //  「本週收藏」（決定 0042）：這週的收藏品和進度、集滿領週章、讀集滿的故事；畫在 ui_casino_week.js，進度和領獎都是伺服器的。
 //  荷官是 Yuga Bot，台詞是舊 Discord 21 點的（shared/casino_text.js）。理智低的時候伺服器給的牌會是假的，結算才翻回真的。
 //  籌碼跟靈感分開，沒有真錢。介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
 import { isFree, todayStr } from "../../shared/logic.js";
@@ -20,10 +20,11 @@ import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
 import { casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
 import { slotMachine } from "./ui_casino_slot.js";
+import { LIVE, liveClock, liveNow, liveThanks, onLive } from "./ui_casino_live.js";
 
 const fill = casFill;
 const pick = a => a[Math.floor(Math.random() * a.length)]; // 荷官亂說話用，不影響結果（結果在伺服器）
-const TABS = [["table", "牌桌", "cards"], ["week", "本週收藏", "star"], ["packs", "大禮包", "gift"], ["econ", "拚經濟", "hammer"], ["diner", "餐車", "food"], ["swap", "換小獎", "exchange"], ["ach", "成就", "medal"], ["props", "財產", "gem"]]; // 頁籤的圖示（翊文 11-09）
+const TABS = [["table", "牌桌", "cards"], ["week", "本週收藏", "star"], ["packs", "大禮包", "gift"], ["econ", "拚經濟", "hammer"], ["live", "實況", "lamp"], ["diner", "餐車", "food"], ["swap", "換小獎", "exchange"], ["ach", "成就", "medal"], ["props", "財產", "gem"]]; // 頁籤的圖示（翊文 11-09）
 
 // ---------- 一張牌 ----------
 export function cardEl(c, o = {}) {
@@ -90,7 +91,7 @@ export async function openCasino(o) {
   if (!UI.net || !NET.loggedIn) { note("Hamachi 賭場在伺服器上：要登入才進得去。", "bad"); return; }
   // 劇情面板的「去賭場」直接開到「本週收藏」
   const want = o && typeof o.tab === "string" && TABS.some(t => t[0] === o.tab) ? o.tab : null;
-  if (S && S.m && S.m.layer.isConnected) { if (want) { S.tab = want; draw(); } return; }
+  if (S && S.m && S.m.layer.isConnected) { if (want) goTab(want); return; }
   const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); });
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
   S = { m, tab: want || "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
@@ -105,6 +106,7 @@ export async function openCasino(o) {
     say([pick(CAS_TEXT.hello), Math.random() < 0.5 ? pick(CAS_ECON.chat) : pick(CAS_TEXT.idle)]); // 荷官的身世壹點壹點露出來（拚經濟）
     if (r.round && r.round.state === "playing") say(["上次那壹手還沒打完，繼續吧。"]);
     s.busy = false; draw();
+    if (s.tab === "live") liveLoad();
     if (r.legacy) legacyCard(r.legacy);
   } catch (e) {
     if (S !== s) return;
@@ -124,8 +126,8 @@ function draw() {
   if (!S.w) { m.surface.replaceChildren(h("p", { class: "nb-empty" }, "正在入座……")); return; }
   const old = m.surface.querySelector(".cas-body"), keepY = old && old.dataset.tab === S.tab ? old.scrollTop : 0;
   const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name, ic]) =>
-    h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => { S.tab = id; draw(); } }, icon(ic), " ", name)));
-  const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
+    h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => goTab(id) }, icon(ic), " ", name)));
+  const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "live" ? livePane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   m.surface.replaceChildren(tabs, box, h("p", { class: "cas-foot" }, CAS_TEXT.series));
   box.scrollTop = keepY;
@@ -382,6 +384,62 @@ async function econGo() {
   s.ecPlaying = false; s.busy = false;
   draw();
   econFollow();
+}
+
+// ---------- 實況和斗內（決定 0053） ----------
+// 誰在播、到幾點、最近一則感謝來自 ui_casino_live.js（聽 Realtime Database，大家同步）；今天還能斗內幾次、今天收了多少、按下去的結果都是伺服器算的（act live／liveOn／liveOff／donate）
+function goTab(id) {
+  if (!S) return;
+  S.tab = id;
+  if (id === "live") liveLoad();
+  draw();
+}
+async function liveLoad() {
+  const s = S;
+  if (!s || s.lvBusy) return;
+  s.lvBusy = true;
+  try {
+    const r = await call("live");
+    if (S === s && r && r.ok) liveTake(r);
+  } catch (e) { /* 連不上：畫面照舊 */ }
+  if (S !== s) return;
+  s.lvBusy = false; s.lvAsked = true;
+  if (s.tab === "live" && !s.busy) draw();
+}
+function liveTake(r) {
+  S.lvMy = r.my; S.lvLive = r.live;
+  if (typeof r.chips === "number") { if (S.w) S.w.chips = r.chips; setChips(r.chips); }
+}
+onLive(kind => { if (S && S.tab === "live" && !S.busy && S.m.layer.isConnected) { if (kind === "node") liveLoad(); draw(); } }); // 別人開播、下播、斗內：這一頁跟著變
+function liveGo(name) {
+  return act(name, null, r => {
+    liveTake(r);
+    if (name === "donate") { snd("coin"); S.lvSay = r.line; } // 全館的感謝是 Realtime Database 那邊跳的；這裡留壹行在頁面上
+    else { snd(name === "liveOn" ? "bell" : "flip"); S.lvSay = null; }
+  });
+}
+function livePane() {
+  const my = S.lvMy, c = LIVE.ready ? liveNow() : (S.lvLive && S.lvLive.on && S.lvLive.until > Date.now() ? S.lvLive : null);
+  const last = LIVE.node.msg, canDonate = !!c && !c.mine && !!my && my.left > 0 && !S.busy;
+  const status = c ? h("p", { class: "cas-live-now on" }, icon("lamp"), " ", h("b", null, c.mine ? CAS_LIVE.you : fill(CAS_LIVE.now, { name: c.nick })), h("span", { class: "cas-live-until" }, fill(CAS_LIVE.until, { t: liveClock(c.until) })))
+    : h("p", { class: "cas-live-now" }, CAS_LIVE.noOne);
+  const acts = [];
+  if (c && c.mine) acts.push(btn(CAS_LIVE.stop, () => liveGo("liveOff"), "cas-live-go", { disabled: S.busy ? true : null }));
+  else {
+    if (c) acts.push(btn(CAS_LIVE.donate, () => liveGo("donate"), "primary cas-live-go", { disabled: canDonate ? null : true }));
+    acts.push(btn(CAS_LIVE.start, () => liveGo("liveOn"), c ? "ghost cas-live-go" : "primary cas-live-go", { disabled: c || S.busy ? true : null, title: c ? fill(CAS_LIVE.taken, { name: c.nick }) : null }));
+  }
+  const lines = [];
+  if (S.lvSay) lines.push(h("p", { class: "last" }, S.lvSay));
+  else if (last) lines.push(h("p", null, h("small", null, CAS_LIVE.lastLabel, "："), liveThanks(last)));
+  return [
+    sec(CAS_LIVE.title, h("p", { class: "cas-note" }, CAS_LIVE.intro), status,
+      h("div", { class: "cas-say cas-live-stage", role: "log", "aria-live": "polite", "aria-label": "實況的感謝" }, lines.length ? lines : h("p", null, c ? "按「斗內」試試手氣。" : "還沒有人開播。")),
+      h("div", { class: "cas-acts" }, acts,
+        my ? h("span", { class: "cas-have" }, my.left > 0 ? fill(CAS_LIVE.left, { n: my.left }) : CAS_LIVE.limit) : h("span", { class: "cas-have" }, S.lvAsked ? "" : "讀取中……")),
+      my ? h("p", { class: "cas-hint" }, fill(CAS_LIVE.gotToday, { n: casNum(my.got), cap: casNum(my.cap) }), "　", fill(CAS_LIVE.sentToday, { n: casNum(my.sent) })) : null,
+      h("p", { class: "cas-hint" }, fill(CAS_LIVE.rule, { perDay: NUM.casino.live.perDay, cap: casNum(NUM.casino.live.receiveCap) }))),
+  ];
 }
 
 // ---------- 餐車 ----------

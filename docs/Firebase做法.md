@@ -36,6 +36,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `casinoRounds/{uid}` | 賭場現在這一手：洗好的牌、莊家的底牌都在裡面 | 沒有人（只有 Functions） | 只有 Functions，交易 |
 | `casinoTables/{pid}` | 賭場同桌完整的一桌（`data`：JSON 字串：牌組、莊家底牌、每個座位的注和牌） | 沒有人（只有 Functions） | 只有 Functions，跟座位的錢包同一個交易 |
 | `casinoHouse/main` | 莊家的錢（大家共用，可以破產） | 沒有人（只有 Functions） | 只有 Functions |
+| `casinoLive/main` | 賭場「實況」現在的實況主和最近一則感謝（`data`：JSON 字串；決定 0053）。斗內時跟兩邊的錢包在同一個交易裡改；實況主還沒有錢包就當場補開場籌碼再加 | 沒有人（只有 Functions） | 只有 Functions，交易 |
 | `casinoLegacy/{小寫 email}` | 舊 Discord 21 點的資料：`chips`、`achievements`、`properties`；翊文之後放。認領後多 `claimedBy`。**不放進 repo** | 沒有人（只有 Functions） | 翊文（後台）；Functions 只標 `claimedBy` |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 | `calls/{uid}/items/{id}` | 「請你去看我的展廳」（11-09）：編號 `call-日期-請的人`，同一天同一位只有一則（再請就蓋過去、變回沒看過）。看過標 `seen`，不刪 | 沒有人（瀏覽器叫 `socialNews` 拿；沒寫進規則，走「一律不准」） | 只有 Functions |
@@ -57,6 +58,7 @@ Hosting：放 dist/，網址 專案名.web.app
 |---|---|---|
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
 | `/titles/{uid}` | 現在戴的稱號 `{ id, name }`（決定 0050）。只有 `functions/casino.js` 在換稱號、進館時寫；名字用錢包裡的，不信存檔 | 只有 Functions；館友讀得到 |
+| `/casinoLive` | 賭場「實況」現在的實況主和最近一則感謝（決定 0053）：`{ seq, uid, nick, since, until, msg: { id, at, from, to, toUid, n } }`；沒人在播就沒有 `uid`。只有暱稱和 uid，沒有 email、錢包。真正的狀態在 Firestore `casinoLive/main`，這裡是交易成功後寫的鏡像（用 `seq` 擋晚到的舊資料）；畫面聽這裡，跳「感謝」和大廳的「正在實況」。規則有欄位白名單（`$other` 不准） | 只有 Functions；館友讀得到 |
 | `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了（`save_changed`）、有新的信（`mail_new`）、有人來過展廳（`hall_news`） | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
 | `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions；`/partyOf/{uid}` 他自己讀得到（接回去用），別的誰都不能讀 |
@@ -92,7 +94,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳、誰請我去看展廳（`calls`；`seenCalls` 把處理過的標起來） | M2 |
 | `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
 | `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
-| `casino` | Hamachi 賭場（決定 0040）：`open`（錢包、舊資料有沒有）、`deal`、`hit`、`stand`、`relief`、`pack`、`buy`、`exchange`、`title`、`hang`、`legacy`（認領）。規則 `shared/casino*.js` | 決定 0040 |
+| `casino` | Hamachi 賭場（決定 0040）：`open`（錢包、舊資料有沒有）、`deal`、`hit`、`stand`、`relief`、`pack`、`buy`、`exchange`、`title`、`hang`、`legacy`（認領）、`econ`（拚經濟，決定 0052）、`live`（誰在實況）、`liveOn`、`liveOff`、`donate`（實況和斗內，決定 0053；實況主離線看 `/status`）。規則 `shared/casino*.js` | 決定 0040 |
 | `casinoTable` | 賭場同桌：`open`（開桌）、`join`（入座）、`bet`、`hit`、`stand`、`tick`（時間到往下走）、`say`（短句、打字）。離桌用 `partyAction` 的 `leave`（掛鉤幫他離桌）。規則 `shared/casino_table.js` | 決定 0040 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
