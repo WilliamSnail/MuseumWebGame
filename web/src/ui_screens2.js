@@ -363,8 +363,8 @@ SCREENS.hall = (root, params) => {
   const tools = UI.net && PANELS.pickFriend ? [
     btn([icon("users"), " 看館友的展廳"], () => PANELS.pickFriend({ title: "看館友的展廳", hint: "選一位館友，走進他的展廳。他不在線也看得到。",
       onPick: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) }), "ghost"),
-    ADDONS.hallCall ? btn([icon("share"), " 請館友來看"], () => PANELS.pickFriend({ title: "請館友來看", hint: "選一位館友，請他來看你的展廳。沒有獎勵；他在線上會馬上看到，不在線的下次進館看到。每天每位可以請壹次。",
-      keep: true, doneOf: p => ADDONS.hallCall.done(p), onPick: p => ADDONS.hallCall.send(p) }), "ghost") : null,
+    ADDONS.hallCall ? btn([icon("share"), " 請館友來看"], () => PANELS.pickFriend({ title: "請館友來看", hint: "選一位館友，請他來看你的展廳。沒有獎勵；他在線上會馬上看到，不在線的下次進館看到。",
+      keep: true, onPick: p => ADDONS.hallCall.send(p) }), "ghost") : null,
   ].filter(Boolean) : [];
   root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, ...tools));
   const wall = h("div", { class: "hall-wall" + (theme ? " themed" : "") },

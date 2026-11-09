@@ -15,10 +15,10 @@
 //  玩家打的字（暱稱、留言）只當資料：一律用 h() 的文字，不用 html。
 // ================================================================
 import { HALL_THEME_TEXT } from "../../shared/content.js";
-import { canGive, checkHallCall, cleanHallNote, giftCount, SOCIAL } from "../../shared/gifts.js";
+import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../shared/gifts.js";
 import { WEEKLY_TEXT } from "../../shared/content3.js";
 import { NUM } from "../../shared/config.js";
-import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey, todayStr } from "../../shared/logic.js";
+import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
 import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
@@ -157,7 +157,7 @@ ADDONS.friendHall = friendHall;
 FRIEND_ACTIONS.push({ id: "visit", label: "參觀展廳", show: () => !!P, run: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) });
 
 // ---------- 選館友的小窗（共用） ----------
-// o：{ title, hint（小字說明）, onPick(p)（p＝{ id, nick }）, keep（選了不關窗，可以一位一位選；onPick 回傳 Promise 就等它）, doneOf(p)（回傳一句話＝這位選過了，按鈕停用） }
+// o：{ title, hint（小字說明）, onPick(p)（p＝{ id, nick }）, keep（選了不關窗，可以一位一位選；onPick 回傳 Promise 就等它） }
 // 列出 NET.roster 裡除了自己的所有館友：線上排前面，燈號、暱稱、在哪裡或多久前來過。暱稱是玩家打的字，一律純文字。
 let pickDraw = null;
 export function pickFriend(o) {
@@ -180,12 +180,11 @@ export function pickFriend(o) {
     const n = list.filter(p => p.status !== "offline").length;
     m.setTop(h("span", { class: "nf-count" }, n ? `${n} 位館友在線` : "現在沒有別的館友在線"));
     const card = p => {
-      const done = o.doneOf ? o.doneOf(p) : null;
-      return h("button", { type: "button", class: `nf-card nf-pickcard ${p.status}`, disabled: done || busy ? true : undefined, "aria-busy": busy === p.id ? "true" : undefined, onClick: () => choose(p) },
+      return h("button", { type: "button", class: `nf-card nf-pickcard ${p.status}`, disabled: busy ? true : undefined, "aria-busy": busy === p.id ? "true" : undefined, onClick: () => choose(p) },
         h("span", { class: "nf-dot", "aria-hidden": "true" }),
         h("div", { class: "nf-body" }, h("b", { class: "nf-nick" }, p.nick),
           h("span", { class: "nf-where" }, p.status === "offline" ? `離線・${ago(p.lastSeen)}` : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room))),
-        h("span", { class: "nf-pick-go" + (done ? " done" : "") }, done || (busy === p.id ? "……" : "選他")));
+        h("span", { class: "nf-pick-go" }, busy === p.id ? "……" : "選他"));
     };
     const off = NET.state !== "online";
     m.surface.replaceChildren(
@@ -201,23 +200,18 @@ PANELS.pickFriend = pickFriend;
 NET.on("roster", () => { if (pickDraw) pickDraw(); });
 NET.on("status", () => { if (pickDraw) pickDraw(); });
 
-// ---------- 請館友來看我的展廳（沒有獎勵；一天一位一次，伺服器檢查） ----------
-const called = new Set(); // 今天請過誰（伺服器才是準的；這裡讓按鈕馬上有反應）
-const calledKey = id => `${todayStr()}:${id}`;
-const ALREADY = checkHallCall({ self: false, open: true, done: true }).reason;
+// ---------- 請館友來看我的展廳（沒有獎勵；同一位可以一直請，翊文 11-09） ----------
 async function callFriend(p) {
   try {
     await NET.call("hallCall", { to: p.id });
-    called.add(calledKey(p.id));
     snd("coin");
     note(`已經請 ${p.nick} 來看你的展廳。他在線上會馬上看到；不在線，下次進館就看得到。`, "good");
   } catch (e) {
     snd("error");
-    if (e.message === ALREADY) called.add(calledKey(p.id));
     note(e.message || "請不出去，等壹下再試。", "bad");
   }
 }
-ADDONS.hallCall = { send: callFriend, done: p => (called.has(calledKey(p.id)) ? "今天請過了" : null) };
+ADDONS.hallCall = { send: callFriend };
 const visitFriend = f => { seenCallsFrom(f.id); go("hall", { friend: { id: f.id, nick: f.nick } }, { action: false }); };
 
 // ---------- 跟館友比本週特展（唯讀；不算來訪、不寄信） ----------
@@ -511,7 +505,6 @@ NET.on("logout", () => {
   serverMail = [];
   guests = null;
   calls = [];
-  called.clear();
   told = false;
   lastSeenCall = 0;
   if (soonTimer) { clearTimeout(soonTimer); soonTimer = null; }

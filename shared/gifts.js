@@ -85,12 +85,11 @@ export function checkHallAct(kind, s) {
 }
 
 // ---------- 請館友來看我的展廳 ----------
-// 沒有獎勵，只是寄一則通知。能不能請：每天每位一次（跟 checkHallAct 一樣的做法）；自己不行；自己的展廳還沒開館也不行（沒東西可看）。
-// s：{ self（請的是自己）, open（我的展廳開了沒）, done（今天已經請過這位） }。回傳 { ok } 或 { ok: false, code, reason }
+// 沒有獎勵，只是寄一則通知。同一位可以一直請（翊文 11-09）；不能請自己，自己的展廳要開館。
+// s：{ self（請的是自己）, open（我的展廳開了沒） }。回傳 { ok } 或 { ok: false, code, reason }
 export function checkHallCall(s) {
   if (!s || s.self) return { ok: false, code: "self", reason: "不能請自己。" };
   if (!s.open) return { ok: false, code: "not_open", reason: "你的展廳還沒開館：先用挑戰模式擺幾件作品。" };
-  if (s.done) return { ok: false, code: "already", reason: "今天已經請過這位館友了，明天再請。" };
   return { ok: true };
 }
 
