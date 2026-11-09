@@ -11,7 +11,7 @@ const { execFileSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const SITE = "https://pepe-museum.web.app";
 // 每則公告最後面的連結（翊文 11-09：「每天的公告最後面也給一些遊戲網站連結」）。要加連結加在這裡
-const LINKS = [["進遊戲", SITE]];
+const LINKS = [["入館", SITE]];
 const footer = () => LINKS.map(([name, url]) => `${name}：${url}`).join("\n");
 const MAX = 2000; // Discord 一則訊息最多 2000 字
 const DAY_FILE = /^content\/weeks\/(\d{4}-W\d{2})\/d([1-7])\.json$/;
@@ -26,12 +26,14 @@ function newDays(files) {
 function dayMessage(w, d, n, hol) {
   const lines = [];
   if (n === 1) {
-    lines.push(`**本週地下收藏庫：〈${w.title}〉**`, ...(Array.isArray(w.summary) ? w.summary : []), "");
-    lines.push(`第 1 天：${d.board || ""}`);
+    // 博物館的公告口吻（翊文 11-09：「要以稍微更加像博物館的公告方式推出」）
+    lines.push("**佩佩博物館2　本週特展公告**", `地下收藏庫本週主題：〈${w.title}〉`, "", ...(Array.isArray(w.summary) ? w.summary : []), "");
+    lines.push(`【今日館訊】${d.board || ""}`);
   } else {
-    lines.push(`**〈${w.title}〉第 ${n} 天**`, d.board || "");
+    lines.push("**佩佩博物館2　今日館訊**", `〈${w.title}〉第 ${n} 日`, "", d.board || "");
   }
-  if (hol) lines.push("", `今天是${hol.name}。${hol.words || ""}`);
+  if (hol) lines.push("", `【本日節慶】${hol.name}。${hol.words || ""}`);
+  lines.push("", "館長室 敬啟");
   // 連結一定留著：太長只截前面的內容
   const end = "\n\n" + footer(), text = lines.join("\n").trim(), room = MAX - end.length;
   return (text.length > room ? text.slice(0, room - 1) + "…" : text) + end;
