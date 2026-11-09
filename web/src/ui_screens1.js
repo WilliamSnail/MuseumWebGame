@@ -237,7 +237,7 @@ SCREENS.lobby = root => {
 
 // ---------- 3 畫廊：橫向走廊 ----------
 SCREENS.gallery = (root, params) => {
-  if (params.show && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
+  if ((params.show || params.tab === "show") && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
   root.append(roomHead("畫廊", GALLERY_INTRO), galleryTabs("main"));
   if (!isFree(P)) {
     const g0 = NUM.galleryInsp[0], gN = NUM.galleryInsp[NUM.galleryInsp.length - 1];

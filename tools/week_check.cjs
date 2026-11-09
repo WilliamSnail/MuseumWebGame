@@ -15,14 +15,13 @@ const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 // 字數（畫面上看得到的字；書頁不算換行）
 const LIMITS = { weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
-  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50 };
+  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40 };
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
-// 選舉、投票、兩岸這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；決定 0037）；擋的是真實的職位、政黨、人名
+// 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
 const BANNED = [
   "總統", "立委", "議員", "政府", "國民黨", "民進黨", "民眾黨", "親民黨", "時代力量", "台灣基進", "共產黨", "藍營", "綠營",
   "賴清德", "蔡英文", "馬英九", "柯文哲", "韓國瑜", "侯友宜", "盧秀燕", "鄭麗文", "朱立倫", "蔣萬安", "黃國昌", "蕭美琴", "卓榮泰", "習近平", "川普", "拜登", "普丁",
-  "中共", "解放軍", "戰爭", "軍隊", "飛彈", "導彈", "核武", "轟炸", "侵略",
-  "宗教", "佛教", "道教", "基督", "天主", "伊斯蘭", "媽祖", "上帝", "菩薩", "耶穌",
+  "中共", "解放軍", // 真實組織的名字，跟政黨同一條規矩
   "死亡", "死掉", "死者", "喪生", "罹難", "遇難", "傷亡", "屍體", "地震", "海嘯", "土石流", "火災", "爆炸", "車禍", "空難", "墜機",
   "殺人", "謀殺", "自殺", "槍", "炸彈", "恐攻", "綁架", "毒品", "詐騙", "搶劫",
   "病毒", "疫情", "疫苗", "癌症", "醫院", "處方", "療效",
@@ -132,7 +131,12 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   // ---------- 一幅畫（今日特展） ----------
   const workOk = (where, w) => {
     if (!isObj(w)) { E(where, "要是物件"); return; }
-    if (!G.SHOW_ART.includes(w.art)) E(where, `art 只能是 ${G.SHOW_ART.join("、")}（不畫 Pepe 的樣子；要新的畫法得寫程式）`);
+    if (w.svg != null) { // 排程自己畫的新畫（決定 0031 補充）：只准畫圖的標籤和屬性，畫面也會再淨化一次
+      if (w.art != null) E(where, "art 和 svg 只能寫一個");
+      const r = G.sanitizeSvg(w.svg, "c-");
+      r.errors.forEach(m => E(where + ".svg", m));
+      r.texts.forEach(t => text(where + ".svg 裡的字", t, LIMITS.svgText));
+    } else if (!G.SHOW_ART.includes(w.art)) E(where, `art 只能是 ${G.SHOW_ART.join("、")}，或用 svg 自己畫（不畫 Pepe 的樣子）`);
     if (w.art === "frog") {
       if (!isObj(w.pick)) E(where, "frog 要有 pick（手作坊的選項）");
       else Object.entries(w.pick).forEach(([c, v]) => { if (!G.storyOptOk(c, v)) E(where, `pick 的「${c}：${v}」不是手作坊的選項`); });
@@ -230,6 +234,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       text(where + ".show.intro", d.show.intro, LIMITS.showIntro);
       if (!Array.isArray(d.show.works) || d.show.works.length < 3 || d.show.works.length > 5) E(where + ".show", "works 要 3～5 幅");
       else d.show.works.forEach((w, i) => { ids("畫", w && w.id); workOk(`${where}.show.works[${i}]`, w); });
+      // 每天至少畫一兩幅全新的（翊文 11-09：「新的畫廊的話好像只是原本的畫改一點點」）。2026-11-09 那天已經上線，不算
+      if (o.date && o.date > "2026-11-09" && Array.isArray(d.show.works) && !d.show.works.some(w => w && w.svg != null)) W(where + ".show", "今天的特展沒有新畫：每天至少用 svg 畫 1–2 幅全新的");
     }
     budget(where, G.dayRewardTotal(d), N.dayBudget);
     if (o.date === undefined && !o.spare && d.date !== undefined) E(where, "備用週的天不寫 date（日期由遊戲照這週算）");

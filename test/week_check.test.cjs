@@ -243,5 +243,48 @@ T("新聞的界線：館內選舉、投票、兩岸可以寫；真實的政黨�
   expectErr(c => { c.files["2026-W47/d1.json"].board = "國民黨來參觀了；書架多了 2 本書。"; }, /禁用字「國民黨」/);
   expectErr(c => { c.files["2026-W47/d1.json"].board = "賴清德來參觀了；書架多了 2 本書。"; }, /禁用字「賴清德」/);
 });
+// ---------- 今日特展的新畫（works[].svg） ----------
+const DRAW = "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#222'/></svg>";
+const withSvg = (c, svg) => { const w = c.files["2026-W47/d1.json"].show.works[1]; delete w.art; delete w.variant; w.svg = svg; return c; };
+T("新畫：用 svg 畫的過得了；跟舊畫混著；art 和 svg 只能寫一個", () => {
+  assert.deepStrictEqual(run(withSvg(regular(), DRAW)).errors, []);
+  assert.deepStrictEqual(run(withSvg(regular(), [DRAW.slice(0, 30), DRAW.slice(30)])).errors, [], "字串的陣列也可以");
+  expectErr(c => { withSvg(c, DRAW); c.files["2026-W47/d1.json"].show.works[1].art = "portrait"; }, /art 和 svg 只能寫一個/);
+  expectErr(c => { delete c.files["2026-W47/d1.json"].show.works[1].svg; }, /art 只能是/);
+});
+T("新畫：擋 script、foreignObject、image、on 事件、外部網址、style、太大、沒有 viewBox", () => {
+  const X = s => "<svg viewBox='0 0 1 1'>" + s + "</svg>";
+  expectErr(c => withSvg(c, X("<script>alert(1)</script>")), /不准用 <script>/);
+  expectErr(c => withSvg(c, X("<foreignObject/>")), /不准用 <foreignObject>/);
+  expectErr(c => withSvg(c, X("<image href='a.png'/>")), /不准用 <image>/);
+  expectErr(c => withSvg(c, X("<a href='#b'/>")), /不准用 <a>/);
+  expectErr(c => withSvg(c, X("<rect onclick='x()'/>")), /不准用事件屬性 onclick/);
+  expectErr(c => withSvg(c, X("<use href='https://x.y/z#a'/>")), /不能連到外面/);
+  expectErr(c => withSvg(c, X("<rect fill='url(http://x.y/z)'/>")), /不能連到外面/);
+  expectErr(c => withSvg(c, X("<rect style='fill:red'/>")), /不准用 style/);
+  expectErr(c => withSvg(c, X("<rect/>".repeat(3000))), /太大了/);
+  expectErr(c => withSvg(c, "<svg><rect/></svg>"), /要有 viewBox/);
+});
+T("新畫：畫裡的字也算遊戲文字（壹、禁用字、英文字母）", () => {
+  const X = s => "<svg viewBox='0 0 1 1'><text>" + s + "</text></svg>";
+  assert.deepStrictEqual(run(withSvg(regular(), X("待領壹張"))).errors, []);
+  expectErr(c => withSvg(c, X("待領一張")), /用「壹」/);
+  expectErr(c => withSvg(c, X("民進黨")), /禁用字「民進黨」/);
+  expectErr(c => withSvg(c, X("Pepe")), /英文字母/);
+});
+T("新畫：正式週那天一幅新畫都沒有：警告（不擋）；11-09 已經上線的不算", () => {
+  const c = regular();
+  const r = run(c);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /2026-W47\/d2\.json\.show：今天的特展沒有新畫/.test(w)), r.warnings.join("\n"));
+  assert.ok(!r.warnings.some(w => /2026-W47\/d1\.json\.show：今天的特展沒有新畫/.test(w)), "d1 複製的那幅有新畫");
+});
+T("禁用字：戰爭、宗教這些拿掉了；中共、解放軍留著", () => {
+  const ok = regular();
+  ok.files["2026-W47/d1.json"].books[0].pages[0] = "展品們的戰爭，用抱枕打。\n宗教、軍隊、飛彈都是紙糊的。";
+  assert.ok(!has(run(ok), /禁用字/), run(ok).errors.join("\n"));
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "中共來參觀了；書架多了 2 本書。"; }, /禁用字「中共」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "解放軍來參觀了；書架多了 2 本書。"; }, /禁用字「解放軍」/);
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
