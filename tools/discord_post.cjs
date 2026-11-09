@@ -22,17 +22,30 @@ function newDays(files) {
     .sort((a, b) => (a.week < b.week ? -1 : a.week > b.week ? 1 : a.n - b.n));
 }
 
+// 這週的限時活動（決定 0041）：壞的丟掉、照時間排好（跟遊戲用同一份 shared/events.js）。evs 不給就從 week.json 的 events 整理
+let SHARED = null;
+const shared = () => SHARED || (SHARED = require("../test/load_shared.cjs").load());
+function weekEvents(w) {
+  const G = shared();
+  return G.cleanEvents(w && w.events, w && w.start, w && w.week).map(ev => ({ date: ev.date, from: ev.from, to: ev.to, title: ev.title, words: ev.words, effect: G.eventEffect(ev), when: G.eventWhen(ev), wd: "一二三四五六日"[G.weekDayNo(ev.date) - 1] }));
+}
+
 // 訊息的文字。w ＝ week.json、d ＝ dN.json、n ＝第幾天、hol ＝ holidayOf 回傳的節日（沒有就 null）
-function dayMessage(w, d, n, hol) {
+function dayMessage(w, d, n, hol, evs) {
+  evs = evs || weekEvents(w);
   const lines = [];
   if (n === 1) {
     // 博物館的公告口吻（翊文 11-09：「要以稍微更加像博物館的公告方式推出」）
     lines.push("🏛 **佩佩博物館2　本週特展公告**", `📜 地下收藏庫本週主題：〈${w.title}〉`, "", ...(Array.isArray(w.summary) ? w.summary : []), "");
+    if (evs.length) lines.push("🎪 【本週限時活動】", ...evs.map(e => `・${e.date.slice(5).replace("-", "/")}（${e.wd}）${e.from}～${e.to}　${e.title}：${e.effect}`), "");
     lines.push(`📣 【今日館訊】${d.board || ""}`);
   } else {
     lines.push("🏛 **佩佩博物館2　今日館訊**", `📜 〈${w.title}〉第 ${n} 日`, "", d.board || "");
   }
   if (hol) lines.push("", `🏮 【本日節慶】${hol.name}。${hol.words || ""}`);
+  // 活動當天：今日館訊後面多一段（日期用這週的週一往後算 n - 1 天；沒有活動就不加）
+  const day = w && w.start ? shared().addDays(w.start, n - 1) : null;
+  evs.filter(e => e.date === day).forEach(e => lines.push("", `🎪 【${e.when}限時活動】${e.from}～${e.to}　${e.title}`, e.words, e.effect + "。錯過了也不會少什麼。"));
   lines.push("", "館長室 敬啟");
   // 連結一定留著：太長只截前面的內容
   const end = "\n\n" + footer(), text = lines.join("\n").trim(), room = MAX - end.length;

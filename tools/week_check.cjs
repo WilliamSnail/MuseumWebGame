@@ -291,6 +291,28 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         wk.shop.forEach(id => { if (!all.includes(id)) E(sw, `「${id}」不是兌換所賣的限定頭飾（只能從 ${all.join("、")} 挑；新的要畫，寫提案）`); });
       }
     }
+    // 限時活動（決定 0041）：日期在這週內、時間對、kind 認得、id 不重複、同一天不重疊、文字照畫面上的字檢查。可以不寫
+    if (wk.events !== undefined) {
+      const ew = where + "/week.json.events", NE = G.NUM.events;
+      if (o.fallback) E(ew, "備用週不寫 events（沒有日期，可能在任何一週用到）");
+      else if (!Array.isArray(wk.events)) E(ew, "要寫成陣列");
+      else {
+        if (wk.events.length > NE.perWeek) E(ew, `一週最多 ${NE.perWeek} 場（NUM.events.perWeek），這週寫了 ${wk.events.length} 場`);
+        const seen = new Set();
+        wk.events.forEach((ev, i) => {
+          const w = `${ew}[${i}]`;
+          G.eventProblems(ev, G.isoMonday(name)).forEach(p => E(w, p));
+          if (!ev || typeof ev !== "object") return;
+          if (seen.has(ev.id)) E(w, `id「${ev.id}」重複`);
+          seen.add(ev.id);
+          text(w + ".title", ev.title, 0);
+          text(w + ".words", ev.words, 0);
+          wk.events.slice(0, i).forEach(b => {
+            if (b && b.date === ev.date && G.eventMinutes(b.from) < G.eventMinutes(ev.to) && G.eventMinutes(ev.from) < G.eventMinutes(b.to)) E(w, `跟 ${b.id} 的時間重疊了`);
+          });
+        });
+      }
+    }
     // 一週裡獎勵寫技能成長的房間不能太多（決定 0032）
     const skillRooms = [wk.anomaly && wk.anomaly.room].concat(...Object.values(pack.days).map(d => asList(d && d.adds))).filter(r => r && isObj(r.reward) && r.reward.skill).length;
     if (skillRooms > G.NUM.shop.weekSkillRooms) E(where, `這週有 ${skillRooms} 間房間給技能成長，最多 ${G.NUM.shop.weekSkillRooms} 間（NUM.shop.weekSkillRooms）`);

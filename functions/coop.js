@@ -15,9 +15,12 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { COOP, coopFix, coopMember, coopPresent, viewFor } from "./shared/coop.js";
 import { coopAct, coopBegin } from "./shared/coop_flow.js";
 import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop_fun.js";
-import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers } from "./shared/party.js";
+import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "./shared/party.js";
+import { trialById } from "./shared/shop.js";
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
 import { switchVisitor } from "./shared/visitors.js";
+import { eventLive, eventRunOf, eventsFromWeeks } from "./shared/events.js";
+import { EVENT_WEEKS } from "./shared/events_data.js"; // tools/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
 import { traceRunEnd } from "./coop_trace.js";
 
@@ -124,7 +127,11 @@ async function startRun(me, pid) {
       });
       setRng(mulberry32(hashStr(`${id}:start`)));
       let r;
-      try { r = coopBegin(members, party.floor || 1, today, t, { id, fun: true }); } finally { setRng(null); }
+      // 限時活動：用伺服器時間 t 判斷（玩家改電腦時間沒用）。按出發這一刻在活動內，這一趟就照活動算到走完，記在 run.event
+      // 合作試煉（隊長在準備區選了試煉房間）：吃試煉的活動，每個人的成長走完那一刻照自己的資格各算各的（shared/coop.js 的 coopTrialDone）
+      const trial = party.trial && trialById(party.trial) ? { id: party.trial, date: today } : null;
+      const event = eventRunOf(eventLive(eventsFromWeeks(EVENT_WEEKS), trial ? "trialBoost" : "coopBoost", t));
+      try { r = coopBegin(members, party.floor || 1, today, t, { id, fun: true, event, trial }); } finally { setRng(null); }
       if (!r.ok) throw bad(r.reason);
       r.run.rev = 1;
       tx.set(runRef(pid), { data: JSON.stringify(r.run), rev: 1, updatedAt: FieldValue.serverTimestamp() });
@@ -243,6 +250,12 @@ export const coopStep = onCall(async req => {
   if (typeof pid !== "string" || !pid) throw new HttpsError("invalid-argument", "少了隊伍的號碼");
   if (act === "start") return startRun(me, pid);
   if (act === "setFloor") { await changeParty(pid, p => partyFloor(p, me.uid, data && data.floor)); return { ok: true }; }
+  if (act === "setTrial") {
+    const room = data && data.id != null ? trialById(data.id) : null;
+    if (data && data.id != null && !room) throw bad("沒有這間試煉房間");
+    await changeParty(pid, p => partyTrial(p, me.uid, room ? room.id : null, room ? room.floor : null));
+    return { ok: true };
+  }
   if (act === "setGuard") { await changeParty(pid, p => partyGuard(p, me.uid, !!(data && data.on))); return { ok: true }; }
   if (act === "setBest") {
     // 只拿來在準備區顯示「誰走到哪一層」；真的檢查在開始時照存檔算

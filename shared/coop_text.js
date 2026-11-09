@@ -108,6 +108,8 @@ export const COOP_GUARD_TEXT = {
 // 探險報告（機制 9）的句子
 export const COOP_REPORT_TEXT = {
   title: { done: "探險報告", retreat: "探險報告：撤退", lost: "探險報告：沒有人回來", stale: "探險報告：不了了之" },
+  event: "限時活動「{title}」中走的（{tag}）。",
+  trial: "試煉「{title}」：{list}。",
   save: "{who}的理智只剩 {san}，{by}替他擋下來了。",
   knock: "幽靈{by}敲了壹下，大家跟著選，過了。",
   halluc: "{who}看到 {n} 次不存在的記號。",

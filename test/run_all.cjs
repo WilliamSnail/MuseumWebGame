@@ -24,6 +24,8 @@ const STEPS = [
   ["兌換所和技能成長（裝備、提升技能、上課、試煉房間、跟館友學、限定頭飾）", ["test/shop.test.cjs"]],
   ["每週排行榜（同分、第一週、相減、壞存檔、暱稱清理、2000 字、建議，決定 0039）", ["test/board.test.cjs"]],
   ["大廳導覽圖上的館友（名單 → 每間房有誰、白名單、放不下的「+N」）", ["test/mates.test.cjs"]],
+  ["合作試煉（隊伍選試煉房間、各算各的成長、資格不合陪打、次數不多扣、活動加成、離隊和斷線接回去，決定 0041）", ["test/coop_trial.test.cjs"]],
+  ["限時活動（時間邊界、台灣時間、開始時在活動內算到走完、多 1 趟、試煉加成、壞資料，決定 0041）", ["test/events.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],

@@ -211,6 +211,15 @@ export const NUM = {
     limitedMax: 4,          // 週包的 shop 最多指定幾件
     matToStamp: 3,          // 幾份材料（背包裡的舊畫布、金箔、金線，哪一種都算）換一枚週章
   },
+  // 第 4 版（11-09，決定 0041）：限時活動（規則 shared/events.js，內容寫在 content/weeks/<週>/week.json 的 events）。數字都等翊文看
+  events: {
+    coopBoost: { mult: 1.5, extraTurns: 1 }, // 合作地下收藏庫：記號對上、猜對、搬回來的靈感 ×1.5；活動中那天多 1 趟有獎勵（P.coopDay 上限 +1，不疊加）
+    trialBoost: { mult: 1.5 },               // 試煉房間：過關的技能成長 ×1.5（一間一週還是只拿一次）
+    perWeek: 3,             // 一週最多排幾場（週一排程挑 1～2 場，其他給臨時加的）
+    earliest: "05:00",      // 活動最早幾點開始（05:00 換日，不跨日）
+    minMin: 30, maxMin: 360, // 一場最短、最長幾分鐘
+    titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/week_check.cjs 檢查）
+  },
   // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
   show: {
     days: 3,                // 同一個主題連續掛幾天才算辦完（真的天，05:00 換日；掛上那天算第 1 天）

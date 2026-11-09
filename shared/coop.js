@@ -28,6 +28,8 @@ import { NUM } from "./config.js";
 import { addDays, addMyth, applySan, clampN, fromKey, fullPick, gainQuirk, gainSan, isFree, maxSan, pepeKey, pickOne, rollExpr, sanCheck, startBout, understandCheck } from "./logic.js";
 import { cellarAdvance, cellarFloor, injureDaysOf, skillCheck, skillOf, teamHas, teamPower, understandLine } from "./logic3.js";
 import { cellarDarkLoss, traitHits, traitTag } from "./legacy.js";
+import { eventRunFix } from "./events.js";
+import { trialById, trialState, trialWin } from "./shop.js";
 import { coopCanGuess, coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
@@ -88,7 +90,13 @@ export const coopPresent = run => run.members.filter(m => !m.out);
 // 能投票、能擲骰的人：還在地下、不是幽靈
 export const coopCanAct = m => !!m && !m.out && !m.ghost && !m.guard;
 export const coopVoters = run => run.members.filter(coopCanAct);
-export const coopRoom = run => { const f = run && cellarFloor(run.floor); return f ? f.rooms[run.idx] || null : null; };
+// 這一趟走的「層」：一般是地下收藏庫的一層；合作試煉（決定 0041）是只有一間房的小層（那一間試煉房間）
+export function coopFloorOf(run) {
+  if (!run) return null;
+  const t = run.trial && trialById(run.trial.id);
+  return t ? { floor: t.floor, name: t.title, rooms: [t] } : cellarFloor(run.floor);
+}
+export const coopRoom = run => { const f = run && coopFloorOf(run); return f ? f.rooms[run.idx] || null : null; };
 // 這位隊員帶的佩佩有沒有某個選項（棒球帽、觸手帽是誰的）
 export const coopOwns = (run, id, cat, v) => run.team.some(it => it.owner === id && it.pick[cat] === v);
 export function coopHelperItem(i) {
@@ -191,6 +199,9 @@ export function coopFix(run) {
   if (!run.votes || typeof run.votes !== "object") run.votes = {};
   if (!run.acks || typeof run.acks !== "object") run.acks = {};
   run.step = run.step || 0;
+  run.trial = run.trial && typeof run.trial === "object" && trialById(run.trial.id) ? run.trial : null; // 合作試煉（決定 0041）：{ id, skill, date, elig, fx }
+  if (run.trial) { if (!run.trial.elig || typeof run.trial.elig !== "object") run.trial.elig = {}; if (!run.trial.fx || typeof run.trial.fx !== "object") run.trial.fx = null; }
+  run.event = eventRunFix(run.event); // 限時活動（決定 0041）：開始那一刻在活動內，這一趟就照活動算到走完
   run.members.forEach(m => {
     m.keys = coopArr(m.keys); m.ghost = !!m.ghost; m.guard = !!m.guard; m.out = m.out || null; m.rewarded = m.rewarded !== false; m.skips = m.skips || 0;
     if (!m.used || typeof m.used !== "object") m.used = {};
@@ -204,11 +215,12 @@ export function coopFix(run) {
 // ---------- 建一趟 ----------
 // 檢查。層數看每位自己的 P.cellar.best（每個人都要走過上一層）：
 //   鑰匙、禁書、結局是照順序一層一層拿的，跟單人一樣；老手還是可以陪新手走淺的層（老手只拿「再走一次」的靈感）。
-export function canStartCoop(members, floor) {
+export function canStartCoop(members, floor, trial) {
   if (!Array.isArray(members) || !members.length || members.length > COOP.maxPlayers) return { ok: false, reason: `一隊 1–${COOP.maxPlayers} 個人` };
   if (!cellarFloor(floor)) return { ok: false, reason: "這一層還沒開放" };
   const ids = new Set();
   let total = 0;
+  if (trial && members.some(m => m && m.guard)) return { ok: false, reason: "試煉房間只有壹間，沒有人留守" };
   if (members.filter(m => m && m.guard).length > 1) return { ok: false, reason: "只能有壹個人留守" };
   if (members.every(m => m && m.guard)) return { ok: false, reason: "要有人下去" };
   for (const m of members) {
@@ -233,14 +245,18 @@ export function canStartCoop(members, floor) {
   if (total > COOP.teamMax) return { ok: false, reason: `隊伍最多 ${COOP.teamMax} 隻（現在 ${total} 隻）` };
   return { ok: true, total, helpers: Math.max(0, COOP.teamMin - total) };
 }
-// opt.fun：打開好玩的機制（線索、幻覺、證據、留守的地圖、搬東西、報告）；伺服器都開，舊的測試、模擬不開就跟原本一模一樣。opt.id：這一趟的編號
+// opt.trial：{ id, date }＝走的是試煉房間（決定 0041）：只有那一間，過了每個人各算各的技能成長；opt.today 之外要有 date（算「這週拿過了沒」用的那天）
+// opt.event：開始那一刻正在進行的限時活動（events.js 的 eventRunOf；沒有就是 null）。opt.fun：打開好玩的機制（線索、幻覺、證據、留守的地圖、搬東西、報告）；伺服器都開，舊的測試、模擬不開就跟原本一模一樣。opt.id：這一趟的編號
 export function startCoop(members, floor, opt = {}) {
-  const can = canStartCoop(members, floor);
+  const tr = opt.trial ? trialById(opt.trial.id) : null;
+  if (opt.trial && !tr) return { ok: false, reason: "沒有這間試煉房間" };
+  if (tr) floor = tr.floor; // 試煉房間在哪一層就在哪一層
+  const can = canStartCoop(members, floor, !!tr);
   if (!can.ok) return can;
   const Ps = {};
   const first = members.find(m => !m.guard);
   const run = {
-    v: 1, id: opt.id || null, fun: !!opt.fun, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
+    v: 1, id: opt.id || null, fun: !!opt.fun, event: eventRunFix(opt.event), trial: null, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
     leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
@@ -250,6 +266,12 @@ export function startCoop(members, floor, opt = {}) {
     }),
     team: [], used: {}, pressure: null, room: null, last: null, log: [], cleared: [],
   };
+  if (tr) {
+    // 每個人這間試煉現在算不算（開始前先給畫面看：資格不合的人可以陪打，但不拿成長）；過關那一刻會再查一次
+    const date = opt.trial.date || (members[0].P.day && members[0].P.day.date);
+    run.trial = { id: tr.id, skill: tr.skill, date, elig: {}, fx: null };
+    members.forEach(m => { const st = trialState(m.P, tr.id, date); run.trial.elig[m.id] = { state: st.state, reason: st.reason }; });
+  }
   run.team = coopTeam(run, Ps);
   if (run.fun) coopStart(run, Ps);
   members.forEach(m => { if (!m.guard && m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
@@ -404,6 +426,7 @@ export function coopApply(run, Ps, room, ch, check, events) {
       if (!r || m.ghost) { f.success = r ? r.success : null; P.cellar.cleared[room.id] = true; return; } // 幽靈沒有擲，也沒有結果
     }
     f.success = ok;
+    if (ok && run.trial) m.trialOk = true; // 合作試煉：這一位過關了（走完那一刻照他自己的資格算成長）
     const o = (ok ? ch.success : ch.fail) || {};
     const firstWin = ok && !P.cellar.won[room.id];
     const firstClear = !P.cellar.cleared[room.id];
@@ -431,7 +454,7 @@ export function coopApply(run, Ps, room, ch, check, events) {
       f.sanLoss = loss;
       if (o.myth) { f.myth = o.myth; m.got.myth += o.myth; ev.push({ type: "myth", gain: o.myth }); ev.push(...addMyth(P, o.myth)); }
       // 躺平、毛帽（看整隊）：每一層每個人第一次走的那間各回 1D3
-      if (firstClear) {
+      if (firstClear && !run.trial) {
         if (teamHas(run.team, "姿勢", "躺平") && !m.used.rest) { m.used.rest = true; f.sanGain += coopSanGain(P, m, rollExpr(NUM.cellarRest).total, "躺平", ev); }
         if (teamHas(run.team, "帽子", "毛帽") && !m.used.beanie) { m.used.beanie = true; f.sanGain += coopSanGain(P, m, rollExpr(NUM.cellarRest).total, "毛帽", ev); }
       }
@@ -501,12 +524,35 @@ export function coopFloorReward(P, floor) {
   P.cellar.run = keep;
   return a;
 }
+// ---------- 合作試煉：走完那一間，每個人各算各的 ----------
+// 沒過的、變幽靈的不算；過了的人照他自己的資格（樓層走過沒、有沒有技能、技能到上限沒、這週拿過沒）算：
+// 合格的才 trialWin（記進他自己的 P.shop.trials，一間一週一次，不會多扣）；不合格的陪打，看得到原因。
+// 限時活動（run.event 是 trialBoost）：成長 ×倍率，開始那一刻記下來就照它算到走完。結果寫進 run.trial.fx 給畫面。
+export function coopTrialDone(run, Ps, events) {
+  const T = run.trial, boost = run.event && run.event.kind === "trialBoost" ? run.event : null;
+  T.fx = {};
+  run.members.filter(m => !m.out || m.out === "ghost").forEach(m => {
+    const P = Ps[m.id];
+    if (!P) return;
+    if (m.ghost || !m.trialOk) { T.fx[m.id] = { state: m.ghost ? "ghost" : "fail" }; return; }
+    const st = trialState(P, T.id, T.date);
+    if (st.state !== "open") { T.fx[m.id] = { state: "noGrow", reason: st.reason }; return; }
+    const g = trialWin(P, { id: T.id, trial: T.skill, boost }, T.date);
+    T.fx[m.id] = g ? { state: "grown", skill: g.skill, before: g.before, after: g.after, boost: !!g.boost } : { state: "noGrow", reason: "這週拿過了" };
+    if (g) events[m.id].push({ type: "trial", skill: g.skill, before: g.before, after: g.after });
+  });
+  run.cleared.push(run.floor);
+  run.idx = 0;
+  coopFinish(run, "done");
+  coopSync(run, Ps);
+  return { ok: true, run, floorDone: true, trialDone: true, floor: run.floor, next: null, rewards: {}, events };
+}
 export function coopAdvance(run, Ps) {
   coopFix(run);
   if (!run || (run.phase !== "result" && run.phase !== "carried")) return { ok: false, reason: "還沒擲完這一間" };
   const events = coopNewEvents(run);
   run.step++;
-  const f = cellarFloor(run.floor);
+  const f = coopFloorOf(run);
   if (run.fun && run.phase === "result" && coopCarryDue(run)) { // 這一間有要搬的東西（機制 8）
     run.phase = "carry";
     coopSync(run, Ps);
@@ -520,6 +566,7 @@ export function coopAdvance(run, Ps) {
     coopSync(run, Ps);
     return { ok: true, run, floorDone: false, events };
   }
+  if (run.trial) return coopTrialDone(run, Ps, events); // 合作試煉：沒有「第一次走完這一層」的獎勵，只有各人的技能成長
   // 整層走完：每個人（還在走這一層的幽靈也算，他走過了）拿自己的第一次過關獎勵
   const floor = run.floor, rewards = {};
   run.idx = f.rooms.length - 1;

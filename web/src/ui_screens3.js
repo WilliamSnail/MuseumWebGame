@@ -639,7 +639,7 @@ export async function resolveFlow(i, result, choices) {
     if (fx.myth) lines.push(`佩佩神話 +${fx.myth}`);
     fx.blocked.forEach(b => lines.push(b));
     if (fx.dark) lines.push(`${darkWhy()}：理智${fx.dark > 0 ? "多" : "少"}扣 ${Math.abs(fx.dark)} 點`);
-    if (fx.trial) { lines.push(`試煉過了：${fx.trial.skill} ${fx.trial.before} → ${fx.trial.after}`); snd("unlock"); } // 試煉房間的技能成長（決定 0032）
+    if (fx.trial) { lines.push(`試煉過了：${fx.trial.skill} ${fx.trial.before} → ${fx.trial.after}${fx.trial.boost ? `（限時活動 ×${fx.trial.boost.mult}）` : ""}`); snd("unlock"); } // 試煉房間的技能成長（決定 0032）
     if (fx.injured) lines.push(`「${itemTitle(fx.injured)}」受傷了（${fx.injureDays || injureDaysOf(P)} 天後會好；館長室的修復台可以治）`);
     result.replaceChildren(placard(lines, { cls: fx.success ? "ok" : "bad" }));
     if (fx.insp) { FX.floatText(result, `+${fx.insp} 靈感`, "good"); snd("coin"); }

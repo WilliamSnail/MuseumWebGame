@@ -234,7 +234,7 @@ SCREENS.lobby = root => {
     feature ? (() => { const fb = h("div", { class: "frog live", html: itemHTML(feature) }); const wrap = h("div", { class: "lobby-feature" }, fb, pepePlacard(feature.pick, { perfect: feature.perfect })); enliven(fb, feature.pick); return wrap; })()
       : h("div", { class: "lobby-feature empty" }, placard(["還沒有作品", "先去畫廊找靈感，再到手作坊做你的第一隻佩佩。"])),
     !isFree(P) && (P.vname || P.visitor > 1) ? h("p", { class: "sub lobby-who" }, visitorLabel(P)) : null); // 多位參觀者（11-08）：有名字寫名字
-  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, storyLobby(), lobbyFriends(), ADDONS.lobbyGuests ? ADDONS.lobbyGuests() : null, h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；lobbyGuests：你不在時誰來過（多人版 M2，ui_visit.js）；storyLobby：本週地下收藏庫（每週劇情，11-09）
+  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobbyEvent ? ADDONS.lobbyEvent() : null, ADDONS.lobby ? ADDONS.lobby() : null, storyLobby(), lobbyFriends(), ADDONS.lobbyGuests ? ADDONS.lobbyGuests() : null, h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；lobbyGuests：你不在時誰來過（多人版 M2，ui_visit.js）；storyLobby：本週地下收藏庫（每週劇情，11-09）
 };
 
 // ---------- 3 畫廊：橫向走廊 ----------

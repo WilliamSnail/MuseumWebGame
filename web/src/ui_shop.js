@@ -18,6 +18,9 @@ import { overlay } from "./ui_board.js";
 import { visitorLabel } from "./ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { curWeek } from "./ui_story.js";
+import { eventBoostText } from "../../shared/events.js";
+import { eventTagNode, liveEvent } from "./ui_events.js";
+import { openCoopTrial } from "./ui_coop.js";
 
 const on = () => !!(P && !isFree(P));
 const fill = (s, o) => Object.keys(o).reduce((t, k) => t.split("{" + k + "}").join(String(o[k])), s);
@@ -176,23 +179,25 @@ function trialBox() {
   const rooms = trialRooms();
   if (!rooms.length) return null;
   const team = (UI.cellarTeam || []).filter(Boolean);
+  const boost = liveEvent("trialBoost");
   const card = r => {
     const st = trialState(P, r.id), open = st.state === "open";
     const go_ = () => {
       if (team.length < 3) { snd("error"); note("先在下面放滿 3 隻隊員，再進去。", "bad"); return; }
-      const res = startTrial(P, r.id, UI.cellarTeam);
+      const res = startTrial(P, r.id, UI.cellarTeam, undefined, liveEvent("trialBoost")); // 限時活動：走進去這一刻在活動內，這一間就照活動算（決定 0041，用網路時間 nowMs）
       if (!res.ok) { snd("error"); note(res.reason, "bad"); return; }
       snd("whoosh"); persist(); rerender(); window.scrollTo(0, 0);
     };
     return h("li", { class: "sc-room trial" + (open ? "" : " locked") + (st.state === "done" ? " found" : "") },
       h("span", { class: "sc-floor" }, `B${r.floor}`),
-      h("span", { class: "sc-body" }, h("b", null, st.state === "locked" ? "？？？" : r.title), h("small", null, `${r.skill} +${rangeWords(NUM.shop.trialSkill)}`, open ? "" : `・${st.reason}`)),
-      open ? btn([icon("stairs"), " 帶隊伍進去"], go_, "primary small") : h("span", { class: "sc-lock" }, icon(st.state === "done" ? "check" : "lock")));
+      h("span", { class: "sc-body" }, h("b", null, st.state === "locked" ? "？？？" : r.title), h("small", null, `${r.skill} +${rangeWords(NUM.shop.trialSkill)}${boost && open ? `（×${boost.mult}）` : ""}`, open ? "" : `・${st.reason}`)),
+      open ? h("span", { class: "sc-btns" }, btn([icon("stairs"), " 帶隊伍進去"], go_, "primary small"), UI.net ? btn([icon("users"), " 邀館友壹起"], () => openCoopTrial(r.id), "small") : null) : h("span", { class: "sc-lock" }, icon(st.state === "done" ? "check" : "lock")));
   };
   // 收得起來：手機上、還沒有能挑戰的（新玩家）預設收著（下面還有樓層和隊伍，不要擠下去）；打開過就記著，重畫之後還是開的
   const openN = rooms.filter(r => trialState(P, r.id).state === "open").length;
   const box = h("details", { class: "story-cellar trial-box", "aria-label": "試煉房間", open: UI.trialOpen == null ? openN > 0 && !matchMedia("(max-width: 760px)").matches : UI.trialOpen, onToggle: e => { UI.trialOpen = e.target.open; } },
     h("summary", { class: "sc-kicker trial-sum" }, icon("key"), " 試煉房間", h("small", null, openN ? `現在可以挑戰 ${openN} 間` : "現在沒有可以挑戰的")),
+    boost ? h("p", { class: "ev-note" }, eventTagNode(boost), ` ${boost.title}：${eventBoostText(boost)}。`) : null,
     h("p", { class: "trial-why" }, fill(SHOP_TEXT.trialWhy, { dice: rangeWords(NUM.shop.trialSkill), n: NUM.shop.trialPerWeek })),
     h("ul", { class: "sc-rooms" }, rooms.map(card)));
   return box;

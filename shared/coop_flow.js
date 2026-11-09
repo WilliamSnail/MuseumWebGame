@@ -18,24 +18,34 @@
 //  回傳 { ok, saves（存檔有沒有變）, dropped（這一步離隊的人）, ended（這一趟剛結束）, noop（什麼都沒變）} 或 { ok: false, reason }。
 // ================================================================
 import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopSaveReport } from "./coop_fun.js";
+import { eventExtraTurns, eventRunFix } from "./events.js";
+import { trialById } from "./shop.js";
 import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
 
 // ---------- 每天前幾趟有獎勵（照帳號：P.coopDay 不跟著參觀者換，決定 0020） ----------
 // 算一趟，回傳這一趟有沒有獎勵。P.coopDay ＝ { date, n }
-export function coopTakeTurn(P, today) {
+// extra：限時活動中開始的，這一天多幾趟有獎勵（決定 0041；最多 1 趟，不疊加）。活動外開始的趟不看 extra，所以多的那趟只在活動內拿得到
+export function coopTakeTurn(P, today, extra = 0) {
   const d = P.coopDay && P.coopDay.date === today ? P.coopDay : { date: today, n: 0 };
   d.n++;
   P.coopDay = d;
-  return d.n <= COOP.dailyRewarded;
+  return d.n <= COOP.dailyRewarded + Math.min(1, Math.max(0, extra));
 }
-export const coopTurnsLeft = (P, today) => Math.max(0, COOP.dailyRewarded - (P && P.coopDay && P.coopDay.date === today ? P.coopDay.n : 0));
+// 今天還剩幾趟有獎勵。boost：現在正在進行的合作活動（events.js 的 eventRunOf），有的話把多的那趟算進去
+export const coopTurnsLeft = (P, today, boost) => Math.max(0, COOP.dailyRewarded + eventExtraTurns(eventRunFix(boost)) - (P && P.coopDay && P.coopDay.date === today ? P.coopDay.n : 0));
 
 // ---------- 開始一趟 ----------
 // members 跟 startCoop 一樣；能開始才算一趟（中途離開不退）
 export function coopBegin(members, floor, today, now, opt = {}) {
-  const can = canStartCoop(members, floor);
+  const tr = opt.trial ? trialById(opt.trial.id) : null;
+  if (tr) { floor = tr.floor; opt = Object.assign({}, opt, { trial: Object.assign({ date: today }, opt.trial) }); }
+  const can = canStartCoop(members, floor, !!tr);
   if (!can.ok) return can;
-  members.forEach(m => { m.rewarded = coopTakeTurn(m.P, today); });
+  if (tr) members.forEach(m => { m.rewarded = false; }); // 合作試煉（決定 0041）：拿的是技能成長，不算每天 3 趟、沒有靈感
+  else {
+    const extra = eventExtraTurns(eventRunFix(opt.event)); // 限時活動：開始這一刻在活動內，多 1 趟有獎勵
+    members.forEach(m => { m.rewarded = coopTakeTurn(m.P, today, extra); });
+  }
   const s = startCoop(members, floor, opt);
   if (!s.ok) return s;
   s.run.at = now;

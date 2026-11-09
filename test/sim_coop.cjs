@@ -8,6 +8,9 @@
 const { G, CELLAR, buildProfile, evalChoice } = require("./sim_cellar.cjs");
 const FUN = process.env.SIM_FUN === "1";   // SIM_FUN=1：打開好玩的機制（記號、房間裡的東西、搬、猜）
 const TALK = process.env.SIM_TALK === "1"; // SIM_TALK=1：隊員有講話（知道記號對上的是哪個，算進選法）
+const EVENT = process.env.SIM_EVENT === "1" ? G.eventRunOf({ id: "sim", kind: "coopBoost", title: "模擬", end: 0 }) : null; // SIM_EVENT=1：限時活動中開始的（靈感 ×NUM.events.coopBoost.mult，決定 0041）
+const REPLAY = process.env.SIM_REPLAY === "1";   // SIM_REPLAY=1：這一層每間都已經過關（只剩「再走一次」的靈感，算「多 1 趟有獎勵」值多少）
+const UNREWARDED = process.env.SIM_REWARDED === "0"; // SIM_REWARDED=0：今天已經沒有獎勵的趟
 const RUNS = +process.argv[2] || 1000;
 const START = +process.argv[3] || G.NUM.startSanity;
 const STAGE = { 1: "early", 2: "early", 3: "mid", 4: "mid", 5: "late" };
@@ -31,6 +34,7 @@ function profile(floor, run, j) {
   }
   const P = JSON.parse(cache.get(id));
   P.cellar.best = floor - 1; P.sanity = START; P.day.startSan = START;
+  if (REPLAY) G.cellarFloor(floor).rooms.forEach(r => { P.cellar.won[r.id] = true; P.cellar.cleared[r.id] = true; });
   return P;
 }
 
@@ -113,8 +117,8 @@ function evalCoop(run, Ps, id, room, ch) {
 }
 function coop(profiles, each, floor, seed) {
   const rng = G.mulberry32(seed); G.setRng(rng);
-  const members = profiles.map((P, j) => ({ id: "p" + j, name: "隊員" + (j + 1), P, keys: pickKeys(P, floor, each[j]) }));
-  const s = G.startCoop(members, floor, FUN ? { id: "sim" + seed, fun: true } : {});
+  const members = profiles.map((P, j) => ({ id: "p" + j, name: "隊員" + (j + 1), P, keys: pickKeys(P, floor, each[j]), rewarded: !UNREWARDED }));
+  const s = G.startCoop(members, floor, FUN ? { id: "sim" + seed, fun: true, event: EVENT } : {});
   if (!s.ok) return null;
   const run = s.run, Ps = {};
   members.forEach(m => { Ps[m.id] = m.P; });

@@ -120,7 +120,22 @@ export function partyFloor(p, uid, floor) {
   if (p.leader !== uid) return { ok: false, reason: "要隊長選層數" };
   if (!Number.isInteger(floor) || floor < 1 || floor > 9) return { ok: false, reason: "沒有這壹層" };
   p.floor = floor;
+  delete p.trial; // 選層數＝走一般的地下收藏庫（不是試煉房間）
   Object.values(p.members).forEach(m => { m.ready = false; }); // 換層數了，大家重新按準備
+  delete p.fail;
+  return { ok: true };
+}
+// 隊長選一間試煉房間（決定 0041，合作試煉）；id 是 null＝改回一般的地下收藏庫。floor 是那間試煉房間在哪一層（伺服器查好傳進來）
+export function partyTrial(p, uid, id, floor) {
+  if (p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能選試煉" };
+  if (p.leader !== uid) return { ok: false, reason: "要隊長選" };
+  if (id === null) { delete p.trial; }
+  else {
+    if (typeof id !== "string" || !/^t:[a-z]{1,16}$/.test(id) || !Number.isInteger(floor) || floor < 1 || floor > 9) return { ok: false, reason: "沒有這間試煉房間" };
+    if (Object.values(p.members).some(m => m.guard)) return { ok: false, reason: "試煉房間只有壹間，沒有人留守：先請留守的人回來" };
+    p.trial = id; p.floor = floor;
+  }
+  Object.values(p.members).forEach(m => { m.ready = false; });
   delete p.fail;
   return { ok: true };
 }
@@ -130,6 +145,7 @@ export function partyGuard(p, uid, on) {
   if (!m) return { ok: false, reason: "你不在這個隊伍裡" };
   if (p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能換" };
   if (on) {
+    if (p.trial) return { ok: false, reason: "試煉房間只有壹間，沒有人留守" };
     if (Object.keys(p.members).length < 2) return { ok: false, reason: "要有人下去：壹個人不能留守" };
     const other = Object.entries(p.members).find(([id, x]) => id !== uid && x.guard);
     if (other) return { ok: false, reason: `${other[1].nick} 已經留守了` };

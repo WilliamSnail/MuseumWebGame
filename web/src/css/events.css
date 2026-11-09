@@ -1,0 +1,33 @@
+/* 限時活動（決定 0041）：大廳的一條、「限時活動 ×1.5」標籤、這週的活動清單。深色牆底，跟 story.css 的小卡同一個樣子。 */
+.event-bar { display: grid; gap: 6px; margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(200,162,90,.55); background: linear-gradient(90deg, rgba(120,70,20,.5), rgba(0,0,0,.28)); color: var(--on-wall); }
+.event-bar[hidden] { display: none; }
+.ev-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin: 0; }
+.ev-kick { display: inline-flex; align-items: center; gap: 4px; font-size: .8125rem; font-weight: 700; letter-spacing: .08em; color: var(--gold-hi, #F2D58A); }
+.ev-kick .ic, .ev-kick .ic svg { width: 14px; height: 14px; }
+.ev-line b { font-family: var(--serif); font-size: 1.0625rem; color: var(--gold-hi, #F2D58A); letter-spacing: .05em; }
+.ev-when { font-size: .875rem; font-variant-numeric: tabular-nums; color: var(--on-wall); }
+.ev-line.live .ev-when { padding: 1px 10px; border-radius: 999px; background: rgba(0,0,0,.35); border: 1px solid rgba(200,162,90,.45); }
+.ev-effect { flex: 1 1 100%; font-size: .8125rem; color: var(--on-wall-sub); }
+.ev-tag { display: inline-flex; align-items: center; gap: 4px; padding: 1px 10px; border-radius: 999px; border: 1px solid #C79A3C; background: rgba(120,70,20,.55); color: #FFF0C8; font-size: .8125rem; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+.ev-tag .ic, .ev-tag .ic svg { width: 13px; height: 13px; }
+/* 羊皮紙或淺底的框裡（準備區、結果）：深色字 */
+.parch .ev-tag, .note-card .ev-tag { background: #F3DFAE; color: #5A3A10; border-color: #8C6A2E; }
+.ev-note { margin: 4px 0 0; font-size: .875rem; }
+.event-list { margin: 14px 0; padding: 10px 14px; border-radius: 10px; border: 1px dashed rgba(200,162,90,.55); background: rgba(0,0,0,.2); }
+.event-list h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 1rem; color: var(--gold-hi, #F2D58A); }
+.event-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.event-list li { display: grid; gap: 2px; }
+.event-list li b { color: var(--on-wall); }
+.event-list small { color: var(--on-wall-sub); }
+@media (max-width: 760px) {
+  .event-bar { padding: 8px 12px; }
+  .ev-line { gap: 2px 8px; }
+}
+/* 試煉房間那一列：兩顆按鈕並排（單人進去、邀館友壹起） */
+.sc-btns { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+/* 合作試煉：準備區的說明、走的時候每個人拿不拿成長 */
+.cx-trial-note { margin: 4px 0; }
+.cx-tw { display: inline-block; margin-right: 6px; }
+@media (max-width: 760px) { .sc-btns { width: 100%; justify-content: flex-start; } }
+/* 手機上樓層按鈕只留 B1、B2；試煉房間同一層有好幾間，一定要看得到名字 */
+@media (max-width: 760px) { .cx-floors .cx-trial span { display: block; max-width: 7.5em; font-size: .75rem; text-align: left; } }
