@@ -137,3 +137,51 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-seat.tb .cas-card b, .cas-seat.tb .cas-card i { font-size: 1.125rem; }
 .cas-body > * { flex-shrink: 0; } /* 空間不夠就捲動，不要把每一塊壓扁（壓扁了牌會跑出框外） */
 .cas-invite { display: flex; flex-direction: column; gap: 4px; }
+
+/* 每週收藏（決定 0042；web/src/ui_casino_week.js）：賭場的「本週收藏」頁籤是綠絨布，每週劇情面板是羊皮紙，兩邊各配顏色 */
+.cw-box { display: flex; flex-direction: column; gap: 8px; }
+.cw-box p { margin: 0; line-height: 1.6; }
+.cw-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cw-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; }
+.cw-badge { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; }
+.cw-badge .ic, .cw-badge svg { width: 18px; height: 18px; }
+.cw-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.cw-name b { overflow-wrap: anywhere; }
+.cw-name small { line-height: 1.5; overflow-wrap: anywhere; }
+.cw-count { font-weight: 600; }
+.cw-story, .cw-late { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 8px; }
+.cw-story h4, .cw-late h4 { margin: 0; font-family: var(--serif); letter-spacing: .06em; }
+.cw-story p { margin: 0; line-height: 1.8; }
+.cw-late-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cw-late-row .btn { margin-left: auto; }
+.cw-claimed { display: flex; align-items: center; gap: 6px; }
+.cw-claimed .ic, .cw-reward .ic, .cw-note .ic { width: 18px; height: 18px; vertical-align: -3px; }
+/* 綠絨布 */
+.nb-casino .cw-item { background: rgba(0,0,0,.24); border: 1px solid rgba(231,200,120,.25); }
+.nb-casino .cw-item.got { border-color: rgba(248,227,160,.7); background: rgba(231,200,120,.14); }
+.nb-casino .cw-badge { background: rgba(231,200,120,.22); color: #F8E3A0; }
+.nb-casino .cw-name b { color: #FFF8DC; }
+.nb-casino .cw-name small { color: rgba(243,238,220,.72); }
+.nb-casino .cw-cond { color: #F8E3A0; }
+.nb-casino .cw-count { color: #F8E3A0; }
+.nb-casino .cw-reward, .nb-casino .cw-intro { color: rgba(243,238,220,.88); }
+.nb-casino .cw-note { color: #FFE9B0; }
+.nb-casino .cw-story, .nb-casino .cw-late { background: rgba(0,0,0,.28); border: 1px solid rgba(231,200,120,.4); color: #F3EEDC; }
+.nb-casino .cw-story h4, .nb-casino .cw-late h4 { color: #F8E3A0; }
+.nb-casino .cw-story small { color: rgba(243,238,220,.6); }
+/* 羊皮紙（每週劇情面板，沿用 .sp-sec 的深色字） */
+.sp-sec .cw-item { background: rgba(110,80,32,.08); border: 1px solid var(--parch-line, rgba(110,80,32,.35)); }
+.sp-sec .cw-item.got { background: rgba(110,160,90,.16); border-color: rgba(70,120,60,.55); }
+.sp-sec .cw-badge { background: rgba(110,80,32,.16); color: #6E5020; }
+.sp-sec .cw-item.got .cw-badge { background: rgba(70,120,60,.25); color: #2F5A27; }
+.sp-sec .cw-name b { color: var(--parch-ink, #2B1B0C); }
+.sp-sec .cw-name small { color: var(--parch-sub, #5A4630); }
+.sp-sec .cw-cond { color: #6E5020; }
+.sp-sec .cw-count { color: #6E5020; }
+@media (max-width: 760px) {
+  .cw-item { flex-wrap: wrap; }
+  .cw-late-row .btn { margin-left: 0; }
+}
+.cw-box > .btn { align-self: flex-start; }
+.sp-sec .cw-note { color: #5A4630; }
+.sp-sec .cw-reward { color: var(--parch-ink, #2B1B0C); }

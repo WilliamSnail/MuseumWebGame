@@ -320,5 +320,80 @@ T("活動：名字、文字長度、畫面用「壹」、禁用字、英文字�
   expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { words: "Come and see" })]; }, /英文字母/);
   expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { title: "" })]; }, /title 要有字/);
 });
+// ---------- 賭場的每週收藏（決定 0042） ----------
+const CAS = () => regular().files["2026-W47/week.json"].casino;
+const casW = mutate => { const c = regular(); mutate(c.files["2026-W47/week.json"].casino, c); return c; };
+T("賭場收藏：寫對的過；沒有 casino 的舊週照常；複製的備用週帶著 casino 也過", () => {
+  assert.ok(CAS() && CAS().items.length >= 3);
+  const c = regular(); delete c.files["2026-W47/week.json"].casino;
+  assert.deepStrictEqual(run(c).errors, []);
+  assert.ok(!run(regular()).errors.length);
+});
+T("賭場收藏：件數 3～5、條件要認得、n 的範圍、meal 要指是哪樣、id 不重複", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items = c.files["2026-W47/week.json"].casino.items.slice(0, 2); }, /要 3～5 件/);
+  expectErr(c => { const it = c.files["2026-W47/week.json"].casino.items; while (it.length < 6) it.push(Object.assign(clone(it[0]), { id: "z" + it.length })); }, /要 3～5 件/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = { type: "lottery", n: 1 }; }, /when.type 只能是/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = { type: "wins", n: 0 }; }, /when.n 要是/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = { type: "wins", n: 999 }; }, /when.n 要是/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = { type: "meal", n: 1 }; }, /when.meal/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = { type: "meal", meal: "ticket1", n: 1 }; }, /when.meal/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].when = "贏三手"; }, /when 要寫成/);
+  expectErr(c => { const it = c.files["2026-W47/week.json"].casino.items; it[1].id = it[0].id; }, /用過了/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].id = "壞 id"; }, /id 只能用/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].reward = { insp: 50 }; }, /不認得「reward」/);
+});
+T("賭場收藏：字數、「壹」、英文字母、禁用字", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].name = "名字長到超過十二個字的收藏品"; }, /name.*太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].desc = "字".repeat(60); }, /desc.*太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].desc = "一條圍巾。"; }, /用「壹」/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].name = "Casino"; }, /英文字母/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.items[0].desc = "掛在炸彈旁邊。"; }, /禁用字/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.title = ""; }, /要有字/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.intro = "字".repeat(70); }, /intro.*太長/);
+});
+T("賭場收藏：集滿的獎勵要有稱號、紀念品、小故事；不能自己寫靈感、週章；故事頁數和字數", () => {
+  expectErr(c => { delete c.files["2026-W47/week.json"].casino.reward; }, /reward.*要寫成/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.insp = 50; }, /不認得「insp」/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.stamps = 5; }, /不認得「stamps」/);
+  expectErr(c => { delete c.files["2026-W47/week.json"].casino.reward.souvenir; }, /souvenir.*要寫成/);
+  expectErr(c => { delete c.files["2026-W47/week.json"].casino.reward.story; }, /story.*要寫成/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.story.pages = []; }, /要 1～3 頁/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.story.pages = ["壹", "壹", "壹", "壹"]; }, /要 1～3 頁/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.story.pages = ["字".repeat(130)]; }, /pages\[0\].*太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.title = "名字長到超過十二個字的稱號稱號"; }, /reward.title.*太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].casino.reward.souvenir.name = ""; }, /souvenir.name/);
+});
+T("賭場收藏：每天加一件或多一段話；加碼的 id 不能跟這週的重複；備用的一天不能放", () => {
+  const ok = regular(); ok.files["2026-W47/d3.json"].casino = { note: "今天多壹段話。", item: { id: "extra3", name: "加碼的收藏", desc: "第 3 天多的壹件。", when: { type: "hands", n: 4 } } };
+  assert.deepStrictEqual(run(ok).errors, []);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = { note: "字".repeat(60) }; }, /note.*太長/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = { item: { id: c.files["2026-W47/week.json"].casino.items[0].id, name: "重複", desc: "重複的 id。", when: { type: "hands", n: 4 } } }; }, /用過了/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = { item: { id: "x", name: "壞條件", desc: "條件壞掉。", when: { type: "wins", n: 99 } } }; }, /when.n/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = {}; }, /item 或 note/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = { note: "一段話。" }; }, /用「壹」/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = { note: "好", bonus: 1 }; }, /不認得「bonus」/);
+  expectErr(c => { c.files["2026-W47/d3.json"].casino = 5; }, /要寫成/);
+  expectErr(c => { delete c.files["2026-W47/week.json"].casino; c.files["2026-W47/d3.json"].casino = { note: "沒有主段。" }; }, /week.json 沒有 casino/);
+  const spare = Object.keys(base.files).find(k => /^備用\/一天\//.test(k));
+  expectErr(c => { c.files[spare].casino = { note: "備用的一天不放。" }; }, /備用的一天不放賭場/);
+});
+T("賭場收藏：帳本的 weeks 沒寫 casino 只警告（不擋）", () => {
+  const c = regular(); const r = run(c);
+  assert.ok(r.warnings.some(w => /沒有 casino/.test(w)));
+  c.ledger.weeks["2026-W47"].casino = ["接 w47-lost：賭場的招領櫃檯"];
+  assert.ok(!run(c).warnings.some(w => /沒有 casino/.test(w)));
+  const none = regular(); delete none.files["2026-W47/week.json"].casino;
+  assert.ok(!run(none).warnings.some(w => /沒有 casino/.test(w)), "這週沒有收藏就不提醒");
+});
+T("賭場收藏：casino.line 要在這週的 lines 裡；沒寫 line 的正式週只警告；賭場活動 casinoBoost 認得", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].casino.line = "不存在的線"; }, /不在這週的 lines/);
+  const c = regular(); const r = run(c);
+  assert.ok(r.warnings.some(w => /沒有 line/.test(w)));
+  c.files["2026-W47/week.json"].casino.line = "w47-lost";
+  assert.ok(!run(c).warnings.some(w => /沒有 line/.test(w)));
+  assert.deepStrictEqual(run(c).errors, []);
+  c.files["2026-W47/week.json"].events = [{ id: "cn", kind: "casinoBoost", date: "2026-11-18", from: "20:00", to: "22:00", title: "招領櫃檯夜", words: "賭場多開壹個小窗口。" }];
+  assert.deepStrictEqual(run(c).errors, []);
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

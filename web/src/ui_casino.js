@@ -2,7 +2,8 @@
 //  Hamachi 賭場的畫面（決定 0040；規則在 shared/casino*.js，伺服器在 functions/casino.js）
 //  這個檔只畫「伺服器給我的樣子」，什麼都不算：發牌、點數、派彩、錢包都在伺服器。畫面只拿得到看得到的牌，莊家的底牌結算才給。
 //  入口：右上角「選單」的「Hamachi 賭場」（ui_core.js 的 buildNav → PANELS.casino）。
-//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、大禮包、餐車、換小獎、成就、財產。
+//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、餐車、換小獎、成就、財產。
+//  「本週收藏」（決定 0042）：這週的收藏品和進度、集滿領週章、讀集滿的故事；畫在 ui_casino_week.js，進度和領獎都是伺服器的。
 //  荷官是 Yuga Bot，台詞是舊 Discord 21 點的（shared/casino_text.js）。理智低的時候伺服器給的牌會是假的，結算才翻回真的。
 //  籌碼跟靈感分開，沒有真錢。介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
@@ -11,13 +12,17 @@ import { NUM } from "../../shared/config.js";
 import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
+import { todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, netRoom, note, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
+import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
+import { eventTagNode, liveEvent } from "./ui_events.js";
+import { casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
 
 const fill = casFill;
 const pick = a => a[Math.floor(Math.random() * a.length)]; // 荷官亂說話用，不影響結果（結果在伺服器）
-const TABS = [["table", "牌桌"], ["packs", "大禮包"], ["diner", "餐車"], ["swap", "換小獎"], ["ach", "成就"], ["props", "財產"]];
+const TABS = [["table", "牌桌"], ["week", "本週收藏"], ["packs", "大禮包"], ["diner", "餐車"], ["swap", "換小獎"], ["ach", "成就"], ["props", "財產"]];
 
 // ---------- 一張牌 ----------
 export function cardEl(c, o = {}) {
@@ -42,6 +47,9 @@ function sync(r) {
   if (r.wallet) S.w = r.wallet;
   if ("round" in r) S.round = r.round;
   if (r.house) S.house = r.house;
+  if (r.wk) { setWkView(r.wk); S.wk = r.wk; } // 每週收藏的進度（伺服器算的）
+  if (Array.isArray(r.wkNew) && r.wkNew.length) S.wkNew = (S.wkNew || []).concat(r.wkNew); // 新的收藏品：等牌翻完再告訴他（celebrate）
+  if (r.wkDone) S.wkDone = true;
   if (r.reopen) say([r.reopen]);
 }
 function say(lines) {
@@ -74,13 +82,15 @@ async function act(name, data, then) {
 }
 
 // ---------- 開、關 ----------
-export async function openCasino() {
+export async function openCasino(o) {
   if (!P) return;
   if (!UI.net || !NET.loggedIn) { note("Hamachi 賭場在伺服器上：要登入才進得去。", "bad"); return; }
-  if (S && S.m && S.m.layer.isConnected) return;
+  // 劇情面板的「去賭場」直接開到「本週收藏」
+  const want = o && typeof o.tab === "string" && TABS.some(t => t[0] === o.tab) ? o.tab : null;
+  if (S && S.m && S.m.layer.isConnected) { if (want) { S.tab = want; draw(); } return; }
   const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); });
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
-  S = { m, tab: "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
+  S = { m, tab: want || "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;
   draw();
   snd("flip");
@@ -112,7 +122,7 @@ function draw() {
   const old = m.surface.querySelector(".cas-body"), keepY = old && old.dataset.tab === S.tab ? old.scrollTop : 0;
   const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name]) =>
     h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => { S.tab = id; draw(); } }, name)));
-  const body = S.tab === "table" ? tablePane() : S.tab === "packs" ? packsPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
+  const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   m.surface.replaceChildren(tabs, box, h("p", { class: "cas-foot" }, CAS_TEXT.series));
   box.scrollTop = keepY;
@@ -174,6 +184,16 @@ function betBox() {
 }
 function celebrate(ach) {
   for (const a of ach || []) { note(`成就「${a.name}」！在「成就」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
+  celebrateWk();
+}
+// 每週收藏有新的（伺服器在同一個交易裡發的）：牌翻完、錢算完才說
+function celebrateWk() {
+  const s = S;
+  if (!s) return;
+  const items = s.wkNew || [], done = s.wkDone;
+  s.wkNew = []; s.wkDone = false;
+  for (const it of items) { note(`收藏品「${it.name}」到手了！到「本週收藏」頁籤看。`, "good"); snd("unlock"); }
+  if (done) { note("這週的賭場收藏集滿了！到「本週收藏」領週章、讀集滿的故事。", "good"); snd("unlock"); }
 }
 async function deal(text) {
   S.shown = null; S.fresh = null;
@@ -236,10 +256,22 @@ async function finish(v, r, o) {
   if (v.slips && v.slips.length) say([`牌翻回來了：你剛剛有 ${v.slips.length} 張牌看錯了。`]);
 }
 
+// ---------- 本週收藏（決定 0042） ----------
+function weekPane() {
+  const W = curWeek(), def = weekCasino(W);
+  if (!def) return sec("本週收藏", h("p", { class: "cas-note" }, W ? "這週賭場沒有特別的收藏。" : "每週收藏在挑戰模式裡。"));
+  const claim = label => act("wkclaim", { week: label }, r => {
+    snd("unlock");
+    note(`領到了：週章 ${r.claimed.stamps} 枚。集滿的小故事放在起源室書架的「每週劇情」。`, "good");
+  });
+  return sec(def.title, weekCollection(def, S.wk || CAS_WK.view, todayStr(), { claim, pastDef: label => casinoDefOf(label), busy: S.busy }));
+}
+
 // ---------- 大禮包 ----------
 function packsPane() {
   const w = S.w, can = w.packsLeft > 0;
   const rows = CAS_PACKS.map((p, i) => h("li", null, h("span", { class: "cas-stars", "aria-label": `${p.stars} 星` }, "★".repeat(p.stars)), h("b", null, p.name), h("small", null, `${(p.upTo - (i ? CAS_PACKS[i - 1].upTo : 0)) / 10}%`)));
+  const boost = liveEvent("casinoBoost");
   const open = n => act("pack", { n }, r => {
     S.packs = r.packs;
     const best = r.packs.reduce((a, b) => (b.stars > a.stars ? b : a), r.packs[0]);
@@ -248,7 +280,7 @@ function packsPane() {
     celebrate(r.ach);
   });
   return [
-    sec("每日大禮包", h("p", { class: "cas-note" }, `每天有 ${NUM.casino.dailyPacks} 包免費的（沒開的不累積）；餐車買的、贏牌抽到的券另外算。籌碼是莊家出的。`),
+    sec("每日大禮包", boost ? h("p", { class: "cas-note" }, eventTagNode(boost), ` ${boost.title}：活動時間內多 ${NUM.events.casinoBoost.extraPacks} 包（進來就加好了，沒趕上也不會少什麼）。`) : null, h("p", { class: "cas-note" }, `每天有 ${NUM.casino.dailyPacks} 包免費的（沒開的不累積）；餐車買的、贏牌抽到的券另外算。籌碼是莊家出的。`),
       h("p", { class: "cas-have" }, `今天免費的剩 ${w.packsToday} 包，券 ${w.tickets} 張，共 ${w.packsLeft} 包可以開。`),
       h("div", { class: "cas-acts" }, btn(`開壹包`, () => open(1), "primary", { disabled: !can || S.busy ? true : null }),
         w.packsLeft > 1 ? btn(`全開（${Math.min(w.packsLeft, NUM.casino.maxPacksAtOnce)} 包）`, () => open(w.packsLeft), "", { disabled: S.busy ? true : null }) : null)),
@@ -298,11 +330,13 @@ function achPane() {
     h("span", { class: "cas-badge", "aria-hidden": "true" }, icon(mine ? "medal" : "lock")),
     h("span", { class: "cas-name" }, h("b", null, mine ? a.name : "？？？"), h("small", null, mine ? (mine.old ? `${mine.desc}` : a.desc) : a.desc)),
     mine ? (w.title === a.id ? btn("拿掉稱號", () => setTitle(null), "small", { disabled: S.busy ? true : null }) : btn("當稱號", () => setTitle(a.id), "small primary", { disabled: S.busy ? true : null })) : null);
-  const oldOnes = w.ach.filter(a => a.old);
+  // wk：每週收藏集滿的稱號（決定 0042）
+  const oldOnes = w.ach.filter(a => a.old), wkOnes = w.ach.filter(a => a.wk);
   return [
     sec("稱號", h("p", { class: "cas-note" }, cur ? ["現在的稱號：", h("b", null, cur.name), "。在展廳上，來參觀的館友看得到。"] : "還沒有稱號。拿到成就之後，可以選壹個當稱號。"),
       h("p", { class: "cas-have" }, `已經拿到 ${w.ach.length} 個成就。`)),
     sec("在賭場拿得到的", h("ul", { class: "cas-list" }, CAS_ACH.map(a => row(a, have.get(a.id))))),
+    wkOnes.length ? sec("每週收藏集滿的稱號", h("ul", { class: "cas-list" }, wkOnes.map(a => row(a, a)))) : null,
     oldOnes.length ? sec("以前拿到的（Discord 21 點）", h("ul", { class: "cas-list" }, oldOnes.map(a => row(a, a)))) : null,
   ];
 }

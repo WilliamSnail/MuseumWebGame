@@ -159,6 +159,12 @@ function pickSpare(lib, date, used) {
   for (let k = 0; k < names.length; k++) { const nm = names[(at + k) % names.length]; if (!used.has(nm)) return nm; }
   return names[at];
 }
+// 這一週用哪一包內容：{ src: { week, days }, fbName }（正式週，或備用週）。找不到回傳 null。賭場的每週收藏（決定 0042）用它找這週的 casino
+export function storyPackFor(lib, label, fb) {
+  if (!lib || !lib.weeks || !lib.fallback) return null;
+  const reg = lib.weeks[label], fbName = reg ? null : (fb && lib.fallback[fb] ? fb : pickFallback(lib, label)), src = reg || (fbName ? lib.fallback[fbName] : null);
+  return src && src.week ? { src, fbName } : null;
+}
 // skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
 const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0), skill: r && SKILLS.includes(r.skill) ? r.skill : null });
 
@@ -240,13 +246,14 @@ export function lineById(W, id) { return W ? W.lines.find(l => l.id === id) || n
 // ---------- 存檔 ----------
 // P.story = { v, books: { id: { got, read } }, tasks: { id: { base, done, claimed } }, works: { id: 日期 }, spots: { 房間 id: 日期 },
 //             weeks: { 週: { fb, first, bonus: { 第幾天: 日期 }, weekBonus } }, deep: { 日期: 走到第幾層 }, showInsp: { 日期: 拿了幾靈感 },
-//             bag: { 東西 id: 幾個 }, stamps: 週章, track: 追蹤哪一條劇情線, seen: { 劇情線 id: 看過的下一步 }, log: [] }
+//             bag: { 東西 id: 幾個 }, stamps: 週章, track: 追蹤哪一條劇情線, seen: { 劇情線 id: 看過的下一步 }, log: [],
+//             cas: { 週: 日期 } 賭場每週收藏集滿、領過週章的週（伺服器寫，決定 0042；書架才讀得到那週集滿的小故事） }
 const isPlain = v => !!v && typeof v === "object" && !Array.isArray(v);
 export function storyState(P) {
   if (!isPlain(P.story)) P.story = {};
   const S = P.story;
   S.v = 1;
-  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
+  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
   if (!Number.isFinite(S.stamps) || S.stamps < 0) S.stamps = 0;
   if (typeof S.track !== "string") S.track = null;
   if (!Array.isArray(S.log)) S.log = [];

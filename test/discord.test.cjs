@@ -68,6 +68,38 @@ T("限時活動：真的 W46 的內容公告出來有兩場", () => {
   assert.ok(m.includes("11/11（三）20:00～22:00") && m.includes("11/14（六）20:00～22:00"), m);
   assert.ok(m.length <= MAX);
 });
+// 賭場的每週收藏（決定 0042）
+const cw = Object.assign({ week: "2026-W46", start: "2026-11-09" }, w, { casino: { title: "賭場的招領櫃檯", intro: "前言。", items: [
+  { id: "a", name: "圍巾", desc: "壹條圍巾。", when: { type: "wins", n: 3 } }, { id: "b", name: "茶杯", desc: "壹只茶杯。", when: { type: "packs", n: 2 } }, { id: "c", name: "椅子", desc: "壹張椅子。", when: { type: "hands", n: 8 } }],
+  reward: { title: "常客", souvenir: { name: "紀念品", desc: "說明。" }, story: { title: "故事", pages: ["壹頁。"] } } } });
+T("賭場收藏：週一的公告提壹句這週的收藏（標題、幾件、沒有花錢的地方）；別天不重提", () => {
+  const m = dayMessage(cw, { board: "x" }, 1, null);
+  assert.ok(m.includes("【本週賭場收藏】賭場的招領櫃檯：3 件"), m);
+  assert.ok(m.includes("什麼都不用花"));
+  assert.ok(!dayMessage(cw, { board: "x" }, 3, null).includes("本週賭場收藏"));
+  assert.ok(m.length <= MAX && m.endsWith("入館：https://pepe-museum.web.app"));
+});
+T("賭場收藏：那天 dN.json 加碼的收藏品或話才提；沒有就不提", () => {
+  const m = dayMessage(cw, { board: "x", casino: { note: "招領櫃檯今天多了壹句話。", item: { id: "x", name: "手套", desc: "壹隻手套。", when: { type: "hands", n: 4 } } } }, 3, null);
+  assert.ok(m.includes("【賭場加碼】多了壹件「手套」"), m);
+  assert.ok(m.includes("招領櫃檯今天多了壹句話。"));
+  assert.ok(!dayMessage(cw, { board: "x" }, 3, null).includes("賭場加碼"));
+});
+T("賭場收藏：舊的週（沒有 casino）和壞的 casino 公告照舊、不丟錯", () => {
+  const plain = dayMessage(wev, { board: "x" }, 1, null);
+  assert.ok(!plain.includes("賭場"));
+  [5, "x", [], { items: "x" }, { title: "a", items: [] }].forEach(c => assert.ok(!dayMessage(Object.assign({}, cw, { casino: c }), { board: "x", casino: 5 }, 1, null).includes("賭場")));
+  assert.ok(!dayMessage(w, { board: "x", casino: { note: "沒有週的設定" } }, 3, null).includes("賭場"), "沒有 week/start 的內容不提");
+});
+T("賭場收藏：真的 W46 的內容週一公告提到賭場的招領櫃檯", () => {
+  const fs = require("fs"), path = require("path");
+  const dir = path.join(__dirname, "..", "content", "weeks", "2026-W46");
+  const rw = JSON.parse(fs.readFileSync(path.join(dir, "week.json"), "utf8")), rd = JSON.parse(fs.readFileSync(path.join(dir, "d1.json"), "utf8"));
+  const m = dayMessage(rw, rd, 1, null);
+  assert.ok(m.includes("【本週賭場收藏】") && m.includes(rw.casino.title), m);
+  assert.ok(m.includes(rd.casino.note), "d1 的那句話");
+  assert.ok(m.length <= MAX);
+});
 T("超過 Discord 的上限會截短", () => {
   const m = dayMessage({ title: "長", summary: ["字".repeat(5000)] }, { board: "x" }, 1, null);
   assert.ok(m.length <= MAX);

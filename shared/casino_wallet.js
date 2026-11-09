@@ -7,12 +7,15 @@
 //    chips 籌碼；rel { day, n } 今天領過幾次救濟；pk { day, left, opened } 今天免費大禮包還剩幾包、開過幾包；tickets 買到、抽到的券；
 //    ex { week, n:{換小獎的 id: 這週換過幾次} }；ach { 成就 id: { d: 日期, name? } }；props { 財產 id: { n, d, name? } }；meals { 餐點 id: 買過幾次 }；
 //    title 現在當稱號的成就 id；hung 掛在展廳的財產 id；st 統計；legacy { at } 認領過舊資料；tablePid 現在坐的牌桌（第二階段）
+//    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino_week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
 import { NUM } from "./config.js";
 import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
 import { RNG, hashStr, isFree } from "./logic.js";
-import { isoWeek, STORY_ITEMS, storyState } from "./story.js";
+import { eventLive } from "./events.js";
+import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
+import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
 const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
@@ -22,7 +25,7 @@ export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips,
     rel: { day: null, n: 0 }, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
-    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null,
+    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {},
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
@@ -42,7 +45,8 @@ export function casWalletFix(w, day) {
     if (w.pk.day !== day) w.pk = { day, left: NUM.casino.dailyPacks, opened: 0 }; // 舊的：每人 2 包、不會換日重算（bug）；這裡每天 2 包，沒開的不累積
     const wk = isoWeek(day);
     if (w.ex.week !== wk) w.ex = { week: wk, n: {} };
-  }
+    casWkRoll(w, wk); // 每週收藏：週一 05:00 換週，上一週收進 wkLog，這週統計歸零（決定 0042）
+  } else casWkRoll(w, null);
   return w;
 }
 export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0 });
@@ -61,17 +65,22 @@ export const casHouseLines = h => [casFill(CAS_TEXT.houseNow, { n: casNum(h.bank
 // ---------- 成就、財產 ----------
 const casCleanName = s => [...String(s == null ? "" : s)].filter(ch => { const n = ch.codePointAt(0); return !(n < 0x20 || n === 0x7f || (n >= 0x200b && n <= 0x200f) || (n >= 0x2028 && n <= 0x202e) || (n >= 0x2060 && n <= 0x206f) || n === 0xfeff); }).join("").replace(/\s+/g, " ").trim().slice(0, 40);
 export const casShortName = s => [...casCleanName(s)].slice(0, NUM.casino.titleMax).join("");
+// 每週收藏的 id：wk:2026-W46（集滿的紀念品、稱號）、wk:2026-W46:scarf（一件收藏品）
+const CAS_WK_ID = /^wk:\d{4}-W\d{2}(:[A-Za-z0-9_-]{1,32})?$/;
+const casIsWkId = id => typeof id === "string" && CAS_WK_ID.test(id);
 const casLegacyId = (kind, name) => `old:${kind}:${hashStr(name).toString(36)}`;
 export function casAchInfo(w, id) {
   const base = CAS_ACH.find(a => a.id === id);
   if (base) return { id, name: base.name, desc: base.desc, old: false };
   const e = w && w.ach && w.ach[id];
+  if (e && typeof e.name === "string" && casIsWkId(id)) return { id, name: casShortName(e.name), desc: `賭場 ${id.slice(3)} 的每週收藏集滿了。`, old: false, wk: true };
   if (e && typeof e.name === "string") return { id, name: casShortName(e.name), desc: "以前在 Discord 21 點拿到的。", old: true };
   return null;
 }
 export function casPropInfo(w, id) {
   if (CAS_PROPS[id]) return { id, name: CAS_PROPS[id].name, desc: CAS_PROPS[id].desc, old: false };
   const e = w && w.props && w.props[id];
+  if (e && typeof e.name === "string" && casIsWkId(id)) return { id, name: casShortName(e.name), desc: typeof e.desc === "string" ? [...e.desc].slice(0, NUM.casino.week.descMax).join("") : "", old: false, wk: true };
   if (e && typeof e.name === "string") return { id, name: casShortName(e.name), desc: "以前在 Discord 21 點得到的紀念品。", old: true };
   return null;
 }
@@ -118,11 +127,25 @@ export function casSettle(w, house, round, ctx = {}) {
   if (win && round.allin) st.allinWins++;
   if (win && before >= 0 && house.bankroll < 0) st.houseBroke++;
   if (ctx.withOthers) st.tables++;
+  casWkHand(w, { kind: o.kind, why: o.why, withOthers: !!ctx.withOthers }); // 每週收藏的統計（決定 0042）
   st.chipsMax = Math.max(st.chipsMax, w.chips);
   const lines = [];
   if (win) lines.push(casFill(CAS_TEXT.houseLost, { n: casNum(o.net) }));
   else if (o.kind === "lose") lines.push(casFill(CAS_TEXT.houseGot, { n: casNum(round.bet) }));
   return { ok: true, ach: casAchCheck(w, ctx.day), lines, houseBroke: house.bankroll < 0 };
+}
+
+// ---------- 限時活動 casinoBoost（決定 0042）：活動時間內，第一次碰錢包多 1 包免費大禮包 ----------
+// events：eventsFromWeeks 整理過的清單；t：伺服器的時間（毫秒）。每場活動每人只給一次（記在 w.pk.ev，換日跟著清掉）。回傳這次多的包數
+export function casEventPacks(w, events, t) {
+  const ev = eventLive(events, "casinoBoost", t);
+  if (!ev) return 0;
+  if (!Array.isArray(w.pk.ev)) w.pk.ev = [];
+  if (w.pk.ev.includes(ev.id)) return 0;
+  const n = NUM.events.casinoBoost.extraPacks;
+  w.pk.ev = w.pk.ev.concat(ev.id).slice(-4);
+  w.pk.left += n;
+  return n;
 }
 
 // ---------- 救濟 ----------
@@ -163,6 +186,7 @@ export function casOpenPacks(w, house, n, day) {
     packs.push(d);
   }
   w.st.chipsMax = Math.max(w.st.chipsMax, w.chips);
+  casWkPacks(w, packs);
   return { ok: true, packs, total: packs.reduce((s, p) => s + p.chips, 0), left: casPacksLeft(w), ach: casAchCheck(w, day) };
 }
 
@@ -189,6 +213,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer) {
     if (it.ticket === 11 && RNG() * 100 > 60) lines.push(...CAS_TEXT.seaHero); // 舊的：買 11 抽券，四成機率海超人出來說話
   } else {
     w.meals[it.id] = (w.meals[it.id] || 0) + 1;
+    casWkMeal(w, it.id);
     if (CAS_PROPS[it.id]) casAddProp(w, it.id, day);
     if (opened) {
       if (1 + Math.floor(RNG() * 100) <= it.odds) { w.tickets += 3; gotTickets = 3; lines.push(casFill(CAS_TEXT.dinerWon, { p: it.odds, n: 3 })); }
@@ -254,6 +279,7 @@ export function casCleanSouvenirs(list) {
   for (const x of Array.isArray(list) ? list : []) {
     if (!x || typeof x.id !== "string" || x.id.length > 40 || out.length >= NUM.casino.hangMax) continue;
     if (CAS_PROPS[x.id]) out.push({ id: x.id, name: CAS_PROPS[x.id].name, desc: CAS_PROPS[x.id].desc, old: false });
+    else if (casIsWkId(x.id) && typeof x.name === "string" && casShortName(x.name)) out.push({ id: x.id, name: casShortName(x.name), desc: "", old: false });
     else if (/^old:p:[0-9a-z]+$/.test(x.id) && typeof x.name === "string" && casShortName(x.name)) out.push({ id: x.id, name: casShortName(x.name), desc: "", old: true });
   }
   return out;
@@ -262,7 +288,7 @@ export function casCleanTitle(t) {
   if (!t || typeof t !== "object" || typeof t.id !== "string") return null;
   const a = CAS_ACH.find(x => x.id === t.id);
   if (a) return { id: a.id, name: a.name };
-  if (/^old:a:[0-9a-z]+$/.test(t.id) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
+  if ((/^old:a:[0-9a-z]+$/.test(t.id) || /^wk:\d{4}-W\d{2}$/.test(t.id)) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
   return null;
 }
 
@@ -332,6 +358,31 @@ function casAfterMove(ctx) {
     ticket = settle.ok && round.out && ["win", "blackjack", "charlie"].includes(round.out.kind) && casWinTicket(w);
   }
   return { ok: true, round, view: casRoundView(round, ctx.viewer || ""), settle, ticket };
+}
+
+// ---------- 每週收藏（決定 0042；規則在 casino_week.js，這裡接劇情的週和存檔） ----------
+// lib：storyLibrary 整理過的（網頁從 STORY_LIB 拿，Functions 從打包進去的 casino_week_data.js 拿）。label：2026-W46；fb：指定用哪個備用週（不給就照週數輪）
+// 回傳這週的收藏內容（casWeekDef），沒有就 null。比 NUM.story.startWeek 早的週沒有
+export function casWkDefFor(lib, label, fb) {
+  const monday = isoMonday(label);
+  if (!monday || !lib || label < NUM.story.startWeek) return null;
+  const pack = storyPackFor(lib, label, fb);
+  return pack ? casWeekDef(pack.src, label, monday) : null;
+}
+// 領集滿的週章（伺服器寫存檔，只領一次）。label 可以是這週，或以前還沒領的週。P：挑戰模式的參觀者
+export function casWkClaim(w, P, label, day) {
+  if (!P || isFree(P)) return { ok: false, reason: "要用挑戰模式的參觀者進館，才領得到週章" };
+  const ent = w.wk && w.wk.week === label ? w.wk : w.wkLog && w.wkLog[label];
+  if (!ent || !ent.done) return { ok: false, reason: "這週的收藏還沒集滿" };
+  if (ent.claimed) return { ok: false, reason: "領過了" };
+  ent.claimed = day;
+  const S = storyState(P), r = { stamps: NUM.casino.week.stamp };
+  S.stamps += r.stamps;
+  if (!S.cas || typeof S.cas !== "object" || Array.isArray(S.cas)) S.cas = {};
+  S.cas[label] = day;
+  S.log.push({ d: day, what: `${label}/casino`, r: rewardText(r) });
+  if (S.log.length > 100) S.log = S.log.slice(-100);
+  return { ok: true, reward: r, week: label };
 }
 
 // ---------- 畫面要的錢包摘要 ----------

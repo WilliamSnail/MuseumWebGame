@@ -64,7 +64,7 @@ function sheet(n, today, close) {
   const st = noticeStatus(n, today);
   const goCta = () => {
     close();
-    if (n.cta.panel && PANELS[n.cta.panel]) PANELS[n.cta.panel]();
+    if (n.cta.panel && PANELS[n.cta.panel]) PANELS[n.cta.panel](n.cta.params);
     else if (n.cta.params) go(n.cta.room, n.cta.params);
     else navTo(n.cta.room);
   };

@@ -21,6 +21,7 @@ import { RNG, TZ_HOURS, addDays, asList, taipeiDay } from "./logic.js";
 export const EVENT_KINDS = {
   coopBoost: { name: "合作地下收藏庫", where: "地下收藏庫的「壹起下去」" },
   trialBoost: { name: "試煉房間", where: "地下收藏庫的試煉房間" },
+  casinoBoost: { name: "賭場", where: "Hamachi 賭場的大禮包" },
 };
 const EV_KINDS = Object.keys(EVENT_KINDS);
 const EV_ID = /^[A-Za-z0-9_-]{1,32}$/, EV_HM = /^([01]\d|2[0-3]):([0-5]\d)$/, EV_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -140,6 +141,7 @@ export function eventEffect(ev) {
   const c = (ev && NUM.events[ev.kind]) || {};
   if (ev && ev.kind === "coopBoost") return `記號對上、猜對、搬回來的靈感 ×${evNum(c.mult || 1)}，當天多 ${c.extraTurns || 0} 趟有獎勵`;
   if (ev && ev.kind === "trialBoost") return `試煉房間過關的技能成長 ×${evNum(c.mult || 1)}`;
+  if (ev && ev.kind === "casinoBoost") return `賭場多 ${c.extraPacks || 1} 包免費大禮包（籌碼不是錢）`;
   return "";
 }
 // 一句話說加成（從記下來的樣子 eventRunOf 來；畫面上的標籤旁邊用）
@@ -148,6 +150,7 @@ export function eventBoostText(boost) {
   const m = evNum(boost.mult || 1);
   if (boost.kind === "coopBoost") return `記號對上、猜對、搬回來的靈感 ×${m}${eventExtraTurns(boost) ? `，今天多 ${eventExtraTurns(boost)} 趟有獎勵` : ""}`;
   if (boost.kind === "trialBoost") return `試煉房間過關的技能成長 ×${m}`;
+  if (boost.kind === "casinoBoost") return `賭場多 ${NUM.events.casinoBoost.extraPacks} 包免費大禮包`;
   return "";
 }
 // 畫面上標籤用的短句：「限時活動 ×1.5」

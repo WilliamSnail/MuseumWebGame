@@ -7,6 +7,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    casinoRounds/{uid}    現在這一手：洗好的牌、莊家的底牌都在裡面（畫面只拿到看得到的）
 //    casinoHouse/main      莊家的錢（大家共用）
 //    casinoLegacy/{小寫 email}   舊 Discord 21 點的籌碼、成就、財產，翊文之後放；認領後標 claimedBy
+//  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
+//    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
 //  改到存檔的（換小獎的靈感、稱號、掛紀念品）：同一個交易寫存檔（rev 加一），交易成功才通知 save_changed。
 // ================================================================
@@ -14,7 +16,11 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
-import { casBuy, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView } from "./shared/casino_wallet.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casWkSync, casWkView } from "./shared/casino_week.js";
+import { eventsFromWeeks } from "./shared/events.js";
+import { EVENT_WEEKS } from "./shared/events_data.js";
+import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now } from "./party.js";
 
@@ -41,11 +47,12 @@ async function play(req, me, opts, fn) {
       const ss = opts.save ? await tx.get(saveRef(me.uid)) : null;
       const ls = opts.legacy && email ? await tx.get(legacyRef(email)) : null;
       const w = casWalletFix(parse(ws), day);
+      const evPacks = casEventPacks(w, eventsFromWeeks(EVENT_WEEKS), t); // 限時活動（casinoBoost）：伺服器的時間說了算
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
-      const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, roundDirty: false, saveDirty: false };
+      const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       const r = fn(ctx);
       if (!r.ok && !opts.writeAnyway) return r;
       put(tx, walletRef(me.uid), ctx.w);
@@ -64,7 +71,13 @@ async function play(req, me, opts, fn) {
   } finally { setRng(null); }
 }
 // 畫面要的：錢包摘要、這一手、莊家
-const shape = (ctx, extra) => Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null }, extra || {});
+// 每一步成功的回答都經過這裡：先同步每週收藏（統計夠了就發），再把摘要、這一手、莊家一起給畫面
+export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
+const shape = (ctx, extra) => {
+  const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
+  return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
+    round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+};
 const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
 export const casino = onCall(async req => {
@@ -124,6 +137,16 @@ export const casino = onCall(async req => {
       if (!r.ok) return no(r);
       ctx.saveDirty = true;
       return shape(ctx);
+    });
+    // 每週收藏：只看進度（story 面板用）
+    case "wk": return play(req, me, {}, ctx => shape(ctx));
+    // 領集滿的週章（這週，或以前集滿了還沒領的週）；伺服器寫存檔，只領一次
+    case "wkclaim": return play(req, me, { save: true }, ctx => {
+      const label = typeof d.week === "string" && /^\d{4}-W\d{2}$/.test(d.week) ? d.week : ctx.w.wk.week;
+      const r = casWkClaim(ctx.w, ctx.P, label, ctx.day);
+      if (!r.ok) return no(r);
+      ctx.saveDirty = true;
+      return shape(ctx, { claimed: { week: label, stamps: r.reward.stamps } });
     });
     case "legacy": return play(req, me, { legacy: true }, ctx => {
       if (!emailOf(req)) return { ok: false, reason: "找不到你的 email，沒辦法認領" };

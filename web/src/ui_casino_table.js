@@ -18,6 +18,7 @@ import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, snd
 import { overlay } from "./ui_board.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
+import { CAS_WK } from "./ui_casino_week.js";
 
 const hashOf = s => [...String(s)].reduce((n, c) => (n * 31 + c.codePointAt(0)) >>> 0, 7);
 let T = null; // { pid, m, view, chips, party, chat, offs, timers, clock, busy, tickKey, said, bet, gone, lastRound }
@@ -81,8 +82,18 @@ function onView(v, fromWatch) {
   if (s.view && v.seq < s.view.seq && v.round <= s.view.round) return;
   if (typeof v.chips === "number") s.chips = v.chips;
   s.view = v;
+  wkNotes(s, v);
   if (v.phase === "result" && s.noted !== v.round + ":" + v.pid) { s.noted = v.round + ":" + v.pid; resultNotes(v); }
   draw();
+}
+// 每週收藏（決定 0042）：伺服器在結算的那個交易裡發的，跟著給我的樣子一起來（wkNew.k 是第幾版，同一版只說一次）
+function wkNotes(s, v) {
+  const w = v.wkNew;
+  if (!w || !Array.isArray(w.items) || s.wkSeen === w.k) return;
+  s.wkSeen = w.k;
+  CAS_WK.at = 0; // 賭場和劇情面板的進度過期，下次打開重問伺服器
+  w.items.forEach(it => { note(`收藏品「${it.name}」到手了！到賭場的「本週收藏」頁籤看。`, "good"); snd("unlock"); });
+  if (w.done) { note("這週的賭場收藏集滿了！到「本週收藏」領週章、讀集滿的故事。", "good"); snd("unlock"); }
 }
 function resultNotes(v) {
   const me = v.seats.find(x => x.you);

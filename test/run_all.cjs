@@ -28,6 +28,7 @@ const STEPS = [
   ["限時活動（時間邊界、台灣時間、開始時在活動內算到走完、多 1 趟、試煉加成、壞資料，決定 0041）", ["test/events.test.cjs"]],
   ["Hamachi 賭場（21 點的規則、真的牌組、賠率、看錯牌、錢包、救濟、大禮包、餐車、換小獎、成就和財產、舊資料認領，決定 0040）", ["test/casino.test.cjs"]],
   ["Hamachi 賭場的館友同桌（輪流、同一副牌、時間限制、超時和斷線當停牌、離桌、暗牌不外洩、錢守恆，決定 0040）", ["test/casino_table.test.cjs"]],
+  ["Hamachi 賭場的每週收藏（換週歸零、過期不懲罰、重複領不行、條件邊界、壞資料、舊錢包、同桌和單人都算、只由伺服器算，決定 0042）", ["test/casino_week.test.cjs"]],
   ["動畫減量不會讓東西看不到", ["test/motion.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],

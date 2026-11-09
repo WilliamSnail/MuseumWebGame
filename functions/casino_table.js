@@ -15,11 +15,12 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { casBonusPct } from "./shared/casino.js";
 import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTSeats, casTSit, casTView } from "./shared/casino_table.js";
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
+import { casWkSync } from "./shared/casino_week.js";
 import { NUM } from "./shared/config.js";
 import { cleanSay, fixParty, newParty } from "./shared/party.js";
 import { isFree, setRng, taipeiDay } from "./shared/logic.js";
 import { bad, leaveCurrent, ledParty, needMember, newId, now, partyHooks, rtdb } from "./party.js";
-import { cryptoRng } from "./casino.js";
+import { cryptoRng, wkDefOf } from "./casino.js";
 
 const db = () => getFirestore();
 const tableRef = pid => db().doc(`casinoTables/${pid}`);
@@ -54,21 +55,27 @@ async function tableTxn(pid, uid, opts, fn) {
       const r = fn({ t, ctx, now: t0, P, uid }) || { ok: true };
       if (r.write === false && !moved && ts.exists) return Object.assign({}, r, { wallets });
       t.rev = (t.rev || 0) + 1;
+      // 每週收藏（決定 0042）：這一步結算了誰，誰的統計就多了；同一個交易裡看每個人有沒有新的收藏品。同桌和單人用同一份規則
+      const wkNew = {};
+      for (const id of ids) {
+        const s = casWkSync(wallets[id], wkDefOf(wallets[id]), day);
+        if (s.newItems.length || s.completed) wkNew[id] = { k: t.rev, items: s.newItems.map(x => ({ id: x.id, name: x.name })), done: s.completed };
+      }
       put(tx, tableRef(pid), t);
       put(tx, houseRef(), house);
       for (const id of ids) put(tx, walletRef(id), wallets[id]);
-      return Object.assign({}, r, { wrote: true, wallets });
+      return Object.assign({}, r, { wrote: true, wallets, wkNew });
     });
     return Object.assign({ t }, out, { wallets: out.wallets || null });
   } finally { setRng(null); }
 }
 // 給每個人看的樣子。兩步差很近時，晚到的舊版不能蓋掉新的
-async function publish(t, wallets, t0 = now()) {
+async function publish(t, wallets, wkNew = null, t0 = now()) {
   const r = t.rev || 0;
   await Promise.all(t.order.map(id => {
     if (t.seats[id] && t.seats[id].gone) return null;
     const chips = wallets && wallets[id] ? wallets[id].chips : undefined; // 他自己的籌碼（別人的不給）
-    return rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(Object.assign(casTView(t, id, t0), { chips })) }));
+    return rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(Object.assign(casTView(t, id, t0), { chips, wkNew: wkNew && wkNew[id] ? wkNew[id] : undefined })) }));
   }));
 }
 async function inParty(pid, uid) {
@@ -77,7 +84,7 @@ async function inParty(pid, uid) {
   return p;
 }
 const viewOf = (r, uid) => Object.assign(casTView(r.t, uid, now()), { chips: r.wallets && r.wallets[uid] ? r.wallets[uid].chips : undefined });
-const answer = (r, uid) => Object.assign({ ok: r.ok !== false, view: viewOf(r, uid) }, r.ok === false ? { reason: r.reason, gag: !!r.gag } : {}, r.refund ? { refund: r.refund } : {});
+const answer = (r, uid) => Object.assign({ ok: r.ok !== false, view: viewOf(r, uid) }, r.ok === false ? { reason: r.reason, gag: !!r.gag } : {}, r.refund ? { refund: r.refund } : {}, r.wkNew && r.wkNew[uid] ? { wkNew: r.wkNew[uid] } : {});
 
 // ---------- 離桌的掛鉤（functions/party.js 的 leaveParty 叫） ----------
 partyHooks.beforeLeave.push(async (pid, uid) => {
@@ -128,7 +135,7 @@ export const casinoTable = onCall(async req => {
     }
     const r = await tableTxn(pid, me.uid, { create: true }, ({ t }) => casTSit(t, me.uid, me.nick));
     if (!r.ok) throw bad(r.reason);
-    await publish(r.t, r.wallets);
+    await publish(r.t, r.wallets, r.wkNew);
     return { ok: true, pid, view: viewOf(r, me.uid) };
   }
   const pid = d.pid;
@@ -144,6 +151,6 @@ export const casinoTable = onCall(async req => {
     case "tick": r = await tableTxn(pid, me.uid, {}, () => ({ ok: true, write: false })); break;
     default: throw new HttpsError("invalid-argument", "不認得的動作");
   }
-  if (r.wrote) await publish(r.t, r.wallets);
+  if (r.wrote) await publish(r.t, r.wallets, r.wkNew);
   return answer(r, me.uid);
 });

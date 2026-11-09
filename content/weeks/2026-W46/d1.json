@@ -3,6 +3,7 @@
   "date": "2026-11-09",
   "holiday": null,
   "board": "B1 的樓梯口變冷了，多了壹個招領箱；書架多了 2 本書。",
+  "casino": { "note": "賭場門口的招領櫃檯今天收到壹條圍巾和壹只茶杯，荷官正在登記。" },
   "books": [
     { "id": "1a", "line": "w46-lost", "title": "樓梯口的冷風", "spine": "冷風", "unlock": { "type": "now" },
       "pages": [

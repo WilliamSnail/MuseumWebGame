@@ -24,5 +24,32 @@ function eventData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "events_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks/*/week.json 的 events（給 Functions 判斷限時活動）\nexport const EVENT_WEEKS = " + JSON.stringify(eventData()) + ";\n");
+// 賭場的每週收藏（決定 0042）：同一個做法。只放每週 week.json 和每天 dN.json 的 casino（storyLibrary 整理過的樣子：{ weeks, fallback }），不放劇情。
+// 備用週一定要全部列進去（哪一個備用週輪到這週，是照「備用週有幾個」算的，少一個就會輪錯），沒有 casino 的放空的。
+function casinoData() {
+  const dir = path.join(ROOT, "content", "weeks"), out = { weeks: {}, fallback: {} };
+  if (!fs.existsSync(dir)) return out;
+  const pack = d => {
+    const wf = path.join(d, "week.json");
+    if (!fs.existsSync(wf)) return null;
+    const p = { week: {}, days: {} };
+    try {
+      const wk = JSON.parse(fs.readFileSync(wf, "utf8"));
+      if (wk.casino) p.week.casino = wk.casino;
+      for (let n = 1; n <= 7; n++) {
+        const df = path.join(d, "d" + n + ".json");
+        if (fs.existsSync(df)) { const day = JSON.parse(fs.readFileSync(df, "utf8")); if (day.casino) p.days[n] = { casino: day.casino }; }
+      }
+    } catch (e) { console.error("賭場收藏：讀不出來", d, e.message); }
+    return p;
+  };
+  for (const name of fs.readdirSync(dir).sort()) {
+    const d = path.join(dir, name);
+    if (/^\d{4}-W\d{2}$/.test(name)) { const p = pack(d); if (p) out.weeks[name] = p; }
+    else if (name === "備用") for (const fb of fs.readdirSync(d).sort()) { if (fb === "一天") continue; const p = pack(path.join(d, fb)); if (p) out.fallback[fb] = p; }
+  }
+  return out;
+}
+fs.writeFileSync(path.join(to, "casino_week_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 裡的 casino（給 Functions 判斷賭場的每週收藏）\nexport const CAS_WEEK_LIB = " + JSON.stringify(casinoData()) + ";\n");
 fs.writeFileSync(path.join(to, "README.md"), "這個資料夾是 tools/copy_shared.cjs 從 shared/ 複製來的，不要改這裡，改 shared/。\n");
 if (require.main === module) console.log(`複製了 ${n} 個規則檔到 functions/shared/`);
