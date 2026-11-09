@@ -19,6 +19,7 @@
 // node tools/announce.cjs --sync   把排程檔的時間寫進工作流程
 // node tools/announce.cjs --check  工作流程跟排程檔對不對得上
 // node tools/announce.cjs --any-due  現在有沒有該發還沒發的（有：結束碼 0。部署完用，只看不發）
+// node tools/announce.cjs --preview "2026-11-10 08:30"  那個時間會發什麼，印出來不發（只看內容，當作都還沒發過）
 const fs = require("fs"), path = require("path");
 const { send, footer, MAX, dayPost, eventPost, readJSON, shared } = require("./discord_post.cjs");
 
@@ -159,6 +160,13 @@ function readPosted() {
 }
 
 async function main() {
+  if (process.argv.includes("--preview")) {
+    const at = process.argv[process.argv.indexOf("--preview") + 1], ms = parseAt(at);
+    if (ms == null) throw new Error("時間要寫成 2026-11-10 08:30");
+    const { due } = duePosts(allEntries(), [], ms);
+    console.log(due.length ? due.map(e => `===== ${e.id}\n${e.make ? e.make() : `${e.text}\n\n${footer()}`}`).join("\n\n") : "那個時間沒有要發的。");
+    return;
+  }
   if (process.argv.includes("--any-due")) {
     const { due } = duePosts(allEntries(), readPosted(), Date.now());
     console.log(due.length ? `有該發的：${due.map(e => e.id).join("、")}` : "沒有該發的。");
