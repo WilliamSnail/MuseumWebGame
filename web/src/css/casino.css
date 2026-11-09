@@ -280,3 +280,21 @@ body.reduce-motion .cas-econ-stage p { animation: none; }
   .nav-link { font-size: .6875rem; letter-spacing: .02em; }
   .brand { letter-spacing: .12em; font-size: .75rem; }
 }
+
+/* 實況和斗內（決定 0053）：賭場的「實況」頁籤、大廳的一小行 */
+.cas-live-now { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; margin: 0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .12em; color: #F8E3A0; text-align: center; }
+.cas-live-now .ic, .cas-live-now .ic svg { width: 20px; height: 20px; }
+.cas-live-now.on b { color: #FFE9A6; }
+.cas-live-until { font-family: inherit; font-size: .875rem; letter-spacing: .04em; font-variant-numeric: tabular-nums; color: var(--on-wall-sub, #C9B08E); }
+.cas-live-stage { min-height: 56px; max-height: 120px; }
+.cas-live-stage p.last { color: #FFE9A6; font-weight: 700; }
+.cas-live-go { min-height: 48px; padding: 0 24px; font-size: 1.0625rem; letter-spacing: .2em; }
+.live-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 14px; padding: 8px 14px; border-radius: 12px; border: 1px solid rgba(200,162,90,.55); background: linear-gradient(90deg, rgba(110,30,40,.55), rgba(0,0,0,.28)); color: var(--on-wall); }
+.live-bar[hidden] { display: none; }
+.live-text { display: inline-flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.live-text b { font-family: var(--serif); font-size: 1.0625rem; color: var(--gold-hi, #F2D58A); letter-spacing: .05em; }
+.live-text .ic, .live-text .ic svg { width: 16px; height: 16px; }
+.live-dot { width: 10px; height: 10px; border-radius: 50%; background: #E0524A; box-shadow: 0 0 0 3px rgba(224,82,74,.25); animation: live-pulse 1.8s ease-in-out infinite; }
+@keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+body.reduce-motion .live-dot { animation: none; }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }

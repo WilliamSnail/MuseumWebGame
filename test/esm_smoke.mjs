@@ -28,6 +28,7 @@ import * as casinoWallet from "../shared/casino_wallet.js";
 import * as casinoTable from "../shared/casino_table.js";
 import * as casinoFind from "../shared/casino_find.js";
 import * as casinoEcon from "../shared/casino_econ.js";
+import * as casinoLive from "../shared/casino_live.js";
 import * as board from "../shared/board.js";
 import * as titles from "../shared/titles.js";
 import * as events from "../shared/events.js";
@@ -143,6 +144,13 @@ ok("拚經濟接得上 config、casino_text、casino（決定 0052）", () => {
   const r = casinoEcon.casEconPlay(w, house, "2026-11-09", () => 0.999);
   assert.ok(r.ok && r.win && house.bankroll === h0 + config.NUM.casino.econ.rMax * config.NUM.casino.econ.winPer);
   assert.ok(r.lines.length >= 3);
+});
+ok("實況和斗內接得上 config、casino_text、casino、casino_wallet（決定 0053）", () => {
+  const d = { uid: "d1", nick: "小明", w: casinoWallet.casWalletFix(casinoWallet.casWalletNew(), "2026-11-09") };
+  const sw = casinoWallet.casWalletFix(null, "2026-11-09");
+  const st = casinoLive.liveStart(casinoLive.liveNew(), { uid: "s1", nick: "阿播" }, 1e12, null).st;
+  const r = casinoLive.liveDonate(st, d, sw, "2026-11-09", 1e12 + 1, null, () => 0);
+  assert.ok(r.ok && r.n === config.NUM.casino.live.base + config.NUM.casino.live.step && r.line.includes("小明"));
 });
 ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）", () => {
   const save = logic.newSave();

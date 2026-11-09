@@ -8,6 +8,9 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    casinoHouse/main      莊家的錢（大家共用）
 //    casinoLegacy/{小寫 email}   舊 Discord 21 點的籌碼、成就、財產，翊文之後放；認領後標 claimedBy
 //  拚經濟（決定 0052）：act econ，全館共用的莊家跟著拚，一人一天 3 次（shared/casino_econ.js）。
+//  實況和斗內（決定 0053）：act live（看）、liveOn（開播）、liveOff（下播）、donate（斗內）。規則在 shared/casino_live.js（純函式，之後 Discord 也用）。
+//    casinoLive/main   現在的實況主和最近一則感謝（data：JSON 字串）。開播、下播、斗內都在同一個 Firestore 交易裡改；斗內同時改兩邊的錢包（不經過莊家），實況主還沒有錢包就當場補開場籌碼再加
+//    /casinoLive（Realtime Database）  同一份的公開鏡像（只有暱稱和 uid，館友讀得到），交易成功之後寫；用 seq 擋掉晚到的舊資料。畫面聽這裡，跳「感謝」和大廳的「正在實況」
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
 //    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
@@ -23,11 +26,12 @@ import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casEconPlay, casEconView } from "./shared/casino_econ.js";
+import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
-import { inbox, needMember, newId, now, rtdb } from "./party.js";
+import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -81,6 +85,43 @@ const publishTitle = async (uid, t) => {
   try { await (t ? rtdb().ref(`titles/${uid}`).set(t) : rtdb().ref(`titles/${uid}`).remove()); }
   catch (e) { console.error("titles：寫不進去", uid, e && e.message); }
 };
+// 實況和斗內（決定 0053）。交易裡讀：實況主的狀態、自己的錢包、（斗內才）實況主的錢包；全部讀完才寫。
+// 實況主有沒有離線（關掉遊戲）看 Realtime Database 的 status/{uid}（畫面連上就寫、斷線自動寫 offline），離線超過 NUM.casino.live.graceMs 算下播
+const liveRef = () => db().doc("casinoLive/main");
+const mirrorLive = async st => {
+  try { await rtdb().ref("casinoLive").transaction(cur => (cur && Number.isFinite(cur.seq) && cur.seq >= st.seq ? undefined : liveNode(st))); }
+  catch (e) { console.error("casinoLive：鏡像寫不進去", e && e.message); } // 寫不進去不影響交易；下次有人看（act live）會補
+};
+async function liveAct(me, act, rnd) {
+  const t = now(), day = taipeiDay(t);
+  const out = await db().runTransaction(async tx => {
+    const ls = await tx.get(liveRef());
+    const st0 = liveFix(ls.exists ? parse(ls) : null);
+    let presence = null;
+    if (st0.uid) { try { presence = await statusOf(st0.uid); } catch (e) { presence = null; } } // 讀不到就當不知道（不算離線）
+    const mine = await tx.get(walletRef(me.uid));
+    const sws = act === "donate" && st0.uid && st0.uid !== me.uid ? await tx.get(walletRef(st0.uid)) : null;
+    const w = casWalletFix(parse(mine), day);
+    const see = (st, extra) => Object.assign({ ok: true, live: liveView(st, t, presence, me.uid), my: liveMyView(w, day), chips: w.chips, st }, extra || {});
+    if (act === "live") return see(st0);
+    if (act === "liveOn" || act === "liveOff") {
+      const r = act === "liveOn" ? liveStart(st0, { uid: me.uid, nick: me.nick }, t, presence) : liveStop(st0, me.uid);
+      if (!r.ok) return { ok: false, reason: r.reason || "沒辦法" };
+      put(tx, liveRef(), r.st);
+      return see(r.st);
+    }
+    // donate
+    const sw = casWalletFix(sws && sws.exists ? parse(sws) : null, day); // 實況主沒有錢包：新的錢包有開場籌碼，加上去再寫（不會蓋掉）
+    const r = liveDonate(st0, { uid: me.uid, nick: me.nick, w }, sw, day, t, presence, rnd);
+    if (!r.ok) return { ok: false, reason: r.reason || "沒辦法" };
+    put(tx, walletRef(me.uid), w);
+    put(tx, walletRef(st0.uid), sw);
+    put(tx, liveRef(), r.st);
+    return see(r.st, { n: r.n, line: r.line, from: r.from, to: r.to });
+  });
+  if (out && out.ok && out.st) { await mirrorLive(out.st); delete out.st; }
+  return out;
+}
 // 畫面要的：錢包摘要、這一手、莊家
 // 每一步成功的回答都經過這裡：先同步每週收藏（統計夠了就發），再把摘要、這一手、莊家一起給畫面
 export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
@@ -117,6 +158,11 @@ export const casino = onCall(async req => {
       if (!r.ok) return no(r);
       return shape(ctx, { econ: Object.assign(casEconView(ctx.w, ctx.day), { win: r.win, r: r.r, amount: r.amount, policy: r.policy, loot: r.loot, ticket: r.ticket, rescued: r.rescued, lines: r.lines }) });
     });
+    // 實況和斗內（決定 0053）：誰在播、開播、下播、斗內。連點、一天幾次、收款上限都在這個交易裡擋
+    case "live":
+    case "liveOn":
+    case "liveOff":
+    case "donate": return liveAct(me, act, cryptoRng);
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);
