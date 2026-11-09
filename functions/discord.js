@@ -13,6 +13,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { createPublicKey, verify } from "node:crypto";
+import "./discord_warm.js"; // 啟動時先連好資料庫（檔裡有為什麼）
 import { discordConfig } from "./discord_config.js";
 import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_data.js";
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";

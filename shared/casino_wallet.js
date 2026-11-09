@@ -224,8 +224,10 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   lines.push(it.line || "");
   let gotTickets = 0;
   const food = casFoodEffect(w, it, P, day);
-  if (food.mood || food.san) lines.push([food.mood ? `心情 +${food.mood}` : "", food.san ? `理智 +${food.san}` : ""].filter(Boolean).join("，"));
+  // 買完要說恢復了多少（翊文 11-09：「吃餐車恢復的心情應該也要再買之後說壹下」）
+  if (food.mood || food.san) lines.push([food.mood ? casFill(CAS_TEXT.foodMood, { n: food.mood, now: P.mood }) : "", food.san ? `理智 +${food.san}` : ""].filter(Boolean).join("，"));
   else if (food.full) lines.push(CAS_TEXT.foodFull);
+  else if ((it.mood || it.san) && (!P || isFree(P))) lines.push(CAS_TEXT.foodNoVisitor);
   if (it.special === "sushi") lines.push(CAS_TEXT.sushiLine);
   if (it.ticket) {
     w.tickets += it.ticket; gotTickets = it.ticket;

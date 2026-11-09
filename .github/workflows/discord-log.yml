@@ -1,14 +1,14 @@
 # 看 Yuga Bot 每個指令花多久（手動按）：翊文 11-09 回報 /pepe-餐車 常常「該申請未受回應」，Discord 限 3 秒。
-# 只印「指令名和毫秒」、啟動紀錄和「出錯」那一行，不印別的；那幾行本來就沒有人的資料。金鑰只在 GitHub Secrets。
+# 只印時間、狀態碼、耗時、指令名和啟動紀錄，不印別的；這些本來就沒有人的資料。金鑰只在 GitHub Secrets。
 name: Discord 指令耗時
 
 on:
   workflow_dispatch:
     inputs:
-      lines:
-        description: 看最近幾行紀錄
+      hours:
+        description: 看最近幾小時
         required: false
-        default: "300"
+        default: "3"
 
 permissions:
   contents: read
@@ -18,22 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - name: 裝套件
-        run: npm ci
       - name: 印耗時
         env:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          LINES: ${{ inputs.lines }}
+          HOURS: ${{ inputs.hours }}
         run: |
           trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          case "$LINES" in ''|*[!0-9]*) LINES=300 ;; esac
-          npx firebase functions:log --project prod --only discordBot --lines "$LINES" 2>&1 \
-            | grep -E 'discordBot [^ ]+ [0-9]+ms|discordBot：出錯|STARTUP|Starting new instance|no available instance' \
-            | sed -E 's/\x1b\[[0-9;]*m//g' | cut -c1-140 || true
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/sa.json" --quiet
+          case "$HOURS" in ''|*[!0-9]*) HOURS=3 ;; esac
+          BASE='resource.type="cloud_run_revision" AND resource.labels.service_name="discordbot"'
+          echo "== 每個請求（時間 狀態碼 耗時）"
+          gcloud logging read "$BASE AND httpRequest.requestMethod=\"POST\"" --project pepe-museum --freshness="${HOURS}h" --limit 80 --order=asc \
+            --format='value(timestamp,httpRequest.status,httpRequest.latency)'
+          echo "== 指令和啟動（時間 內容）"
+          gcloud logging read "$BASE AND (textPayload:\"ms\" OR textPayload:\"Starting new instance\" OR textPayload:\"出錯\" OR textPayload:\"no available instance\")" --project pepe-museum --freshness="${HOURS}h" --limit 80 --order=asc \
+            --format='value(timestamp,textPayload)' | grep -E 'discordBot [^ ]+ [0-9]+ms|出錯|Starting new instance|no available instance' | cut -c1-110 || true
