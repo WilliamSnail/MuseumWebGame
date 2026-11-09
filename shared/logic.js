@@ -1402,3 +1402,22 @@ export function importCode(code) {
     return migrateSave(o);
   } catch (e) { return null; }
 }
+
+// ---------- 說明文字標重點（翊文 11-09：「這些說明文字最好也有粗體或顏色差別來標示重點」） ----------
+// 寫的人可以用 **重點** 指定；其他自動標：獎勵（綠）、扣的（紅）、「短的名字」、樓層、數量、時間。只用在說明文字，書和劇情不用。
+// 回傳 [{ t: 字, k: 種類 }]，k 是 em（金色粗體）、good（綠）、bad（紅）或 null（照常）
+const MARK_RE = /\*\*(.+?)\*\*|((?:靈感|心情|理智|週章|籌碼)\s*[+＋]\s*[\d.,]+\s*[萬億]?)|((?:靈感|心情|理智|籌碼)\s*[-−－]\s*[\d.,]+)|(「[^「」\n]{1,12}」)|(\bB[1-5]\b)|(\d{1,2}:\d{2}(?:[～~-]\d{1,2}:\d{2})?)|(\d[\d.,]*\s*(?:隻佩佩|隻|趟|包|枚|次|張|天|位|人|萬|億|分鐘|小時|秒|%))/g;
+export function markTokens(text) {
+  const s = String(text == null ? "" : text), out = [];
+  let at = 0;
+  for (const m of s.matchAll(MARK_RE)) {
+    if (m.index > at) out.push({ t: s.slice(at, m.index), k: null });
+    if (m[1] != null) out.push({ t: m[1], k: "em" });
+    else if (m[2] != null) out.push({ t: m[0], k: "good" });
+    else if (m[3] != null) out.push({ t: m[0], k: "bad" });
+    else out.push({ t: m[0], k: "em" });
+    at = m.index + m[0].length;
+  }
+  if (at < s.length) out.push({ t: s.slice(at), k: null });
+  return out;
+}

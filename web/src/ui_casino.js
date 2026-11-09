@@ -14,15 +14,16 @@ import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
 import { todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, netRoom, note, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
 import { casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
+import { slotMachine } from "./ui_casino_slot.js";
 
 const fill = casFill;
 const pick = a => a[Math.floor(Math.random() * a.length)]; // 荷官亂說話用，不影響結果（結果在伺服器）
-const TABS = [["table", "牌桌"], ["week", "本週收藏"], ["packs", "大禮包"], ["diner", "餐車"], ["swap", "換小獎"], ["ach", "成就"], ["props", "財產"]];
+const TABS = [["table", "牌桌", "cards"], ["week", "本週收藏", "star"], ["packs", "大禮包", "gift"], ["diner", "餐車", "food"], ["swap", "換小獎", "exchange"], ["ach", "成就", "medal"], ["props", "財產", "gem"]]; // 頁籤的圖示（翊文 11-09）
 
 // ---------- 一張牌 ----------
 export function cardEl(c, o = {}) {
@@ -40,6 +41,7 @@ let S = null; // { m, tab, w, round, house, say, busy, shown（莊家翻開幾�
 
 async function call(act, data) {
   const r = await NET.call("casino", Object.assign({ act }, data || {}));
+  if (r && r.wallet && typeof r.wallet.chips === "number") setChips(r.wallet.chips); // 狀態列跟著變
   return r;
 }
 function sync(r) {
@@ -120,8 +122,8 @@ function draw() {
   m.setTop(S.w ? chipsPill() : null);
   if (!S.w) { m.surface.replaceChildren(h("p", { class: "nb-empty" }, "正在入座……")); return; }
   const old = m.surface.querySelector(".cas-body"), keepY = old && old.dataset.tab === S.tab ? old.scrollTop : 0;
-  const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name]) =>
-    h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => { S.tab = id; draw(); } }, name)));
+  const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name, ic]) =>
+    h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => { S.tab = id; draw(); } }, icon(ic), " ", name)));
   const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   m.surface.replaceChildren(tabs, box, h("p", { class: "cas-foot" }, CAS_TEXT.series));
@@ -272,15 +274,46 @@ function packsPane() {
   const w = S.w, can = w.packsLeft > 0;
   const rows = CAS_PACKS.map((p, i) => h("li", null, h("span", { class: "cas-stars", "aria-label": `${p.stars} 星` }, "★".repeat(p.stars)), h("b", null, p.name), h("small", null, `${(p.upTo - (i ? CAS_PACKS[i - 1].upTo : 0)) / 10}%`)));
   const boost = liveEvent("casinoBoost");
-  const open = n => act("pack", { n }, r => {
-    S.packs = r.packs;
-    const best = r.packs.reduce((a, b) => (b.stars > a.stars ? b : a), r.packs[0]);
-    say([r.packs.length === 1 ? `${best.name}：${casNum(best.chips)}` : `開了 ${r.packs.length} 包，共 ${casNum(r.total)}`, fill(CAS_TEXT.packLeft, { n: S.w.packsLeft })]);
-    snd(best.stars >= 4 ? "unlock" : "coin");
-    celebrate(r.ach);
-  });
+  // 拉霸（翊文 11-09）：先轉，伺服器回來再壹輪壹輪停。籌碼等停好才變，不然狀態列會先爆雷
+  const machine = S.slot || (S.slot = slotMachine({ idle: "拉下拉桿，開壹包", onPull: () => pull(1) }));
+  machine.enable(can && !S.busy);
+  machine.idle(can ? "拉下拉桿，開壹包" : "今天沒有可以開的了");
+  const pull = async n => {
+    const s = S;
+    if (!s || s.busy || s.w.packsLeft < 1) return;
+    s.busy = true;
+    s.m.surface.querySelectorAll("button").forEach(b => { b.disabled = true; });
+    machine.spin();
+    let r = null;
+    try {
+      [r] = await Promise.all([NET.call("casino", { act: "pack", n }), holdFor(motionOff() ? 0 : 500)]);
+      if (!r || !r.ok) { snd("error"); await machine.abort((r && r.reason) || "沒開成，等壹下再試。"); r = null; }
+    } catch (e) { snd("error"); await machine.abort((e && e.message) || "沒開成，等壹下再試。"); r = null; }
+    if (r) {
+      const many = r.packs.length > 1;
+      for (let i = 0; i < r.packs.length; i++) {
+        if (i > 0) machine.spin();
+        if (machine.hurried && i < r.packs.length - 1 && many) continue; // 點了機器：直接跳到最後壹包
+        await machine.land(r.packs[i], { fast: many });
+        if (many && i < r.packs.length - 1) await holdFor(motionOff() ? 150 : r.packs[i].stars >= 4 ? 900 : 260);
+      }
+      if (many) machine.say(`開了 ${r.packs.length} 包，共 +${casNum(r.total)}`);
+      setChips(r.wallet.chips);
+    }
+    if (S !== s) return;
+    if (r) {
+      sync(r);
+      S.packs = r.packs;
+      const best = r.packs.reduce((a, b) => (b.stars > a.stars ? b : a), r.packs[0]);
+      say([r.packs.length === 1 ? `${best.name}：${casNum(best.chips)}` : `開了 ${r.packs.length} 包，共 ${casNum(r.total)}`, fill(CAS_TEXT.packLeft, { n: S.w.packsLeft })]);
+      celebrate(r.ach);
+    }
+    s.busy = false;
+    draw();
+  };
+  const open = n => pull(n);
   return [
-    sec("每日大禮包", boost ? h("p", { class: "cas-note" }, eventTagNode(boost), ` ${boost.title}：活動時間內多 ${NUM.events.casinoBoost.extraPacks} 包（進來就加好了，沒趕上也不會少什麼）。`) : null, h("p", { class: "cas-note" }, `每天有 ${NUM.casino.dailyPacks} 包免費的（沒開的不累積）；餐車買的、贏牌抽到的券另外算。籌碼是莊家出的。`),
+    sec("每日大禮包", machine.el, boost ? h("p", { class: "cas-note" }, eventTagNode(boost), ` ${boost.title}：活動時間內多 ${NUM.events.casinoBoost.extraPacks} 包（進來就加好了，沒趕上也不會少什麼）。`) : null, h("p", { class: "cas-note" }, `每天有 ${NUM.casino.dailyPacks} 包免費的（沒開的不累積）；餐車買的、贏牌抽到的券另外算。籌碼是莊家出的。`),
       h("p", { class: "cas-have" }, `今天免費的剩 ${w.packsToday} 包，券 ${w.tickets} 張，共 ${w.packsLeft} 包可以開。`),
       h("div", { class: "cas-acts" }, btn(`開壹包`, () => open(1), "primary", { disabled: !can || S.busy ? true : null }),
         w.packsLeft > 1 ? btn(`全開（${Math.min(w.packsLeft, NUM.casino.maxPacksAtOnce)} 包）`, () => open(w.packsLeft), "", { disabled: S.busy ? true : null }) : null)),
@@ -295,14 +328,17 @@ function dinerPane() {
   const buy = it => act("buy", { item: it.n }, r => {
     S.dinerLines = r.lines || [];
     snd("coin");
+    if (r.mood) note(`心情 +${r.mood}${r.san ? `，理智 +${r.san}` : ""}`, "good");
+    else if (r.san) note(`理智 +${r.san}`, "good");
     celebrate(r.ach);
   });
   return [
     sec("餐車", h("p", { class: "cas-note" }, fill(CAS_TEXT.dinerHello, { name: CAS_TEXT.dealer }), "。", CAS_TEXT.dinerHint, "。"),
+      h("p", { class: "cas-note" }, markText(`吃東西會加**心情**，茶還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
       h("p", { class: "cas-have" }, w.opened > 0 ? "今天的大禮包你開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"),
       h("ul", { class: "cas-menu" }, CAS_MENU.map(it => {
         const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
-        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : `${it.odds}% 機率抽到券`)),
+        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([it.mood ? `心情 +${it.mood}` : "", it.san ? `理智 +${it.san}` : "", `${it.odds}% 機率抽到券`].filter(Boolean).join("・")))),
           h("span", { class: "cas-price" }, casNum(it.price)),
           btn("買", () => buy(it), "primary small", { disabled: lack || locked || S.busy ? true : null, title: lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null }));
       })),
@@ -394,3 +430,14 @@ ADDONS.hall3 = root => {
   if (el) root.append(el);
 };
 ADDONS.casinoShelf = v => shelfEl(v.title || null, v.souvenirs || []);
+
+// 狀態列的籌碼：連上就讀一次（只讀）。登出就清掉
+let chipsAsked = false;
+async function askChips() {
+  if (chipsAsked || !UI.net || !NET.loggedIn) return;
+  chipsAsked = true;
+  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); }
+  catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
+}
+NET.on("status", () => { if (NET.state === "online") askChips(); });
+NET.on("logout", () => { chipsAsked = false; setChips(null); });

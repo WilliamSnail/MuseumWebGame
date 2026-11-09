@@ -18,6 +18,7 @@ import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
+import { markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
@@ -214,13 +215,13 @@ function weekPane(W, draw, m) {
   const S = storyState(P), d = todayOf(W), today = todayStr();
   const head = h("div", { class: "sp-head" },
     h("p", { class: "sp-kicker" }, `本週地下收藏庫・第 ${W.dayNo} 天／7 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`),
-    h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptNode(s))),
+    h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptMark(s))),
     h("div", { class: "sp-go" }, btn([icon("book"), " 起源室的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
       d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
       btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
   const events = eventListBox(W.events);
   const cdef = weekCasino(W), casino = cdef ? weekBox(cdef, todayStr(), { after: draw }) : null; // 賭場的每週收藏（決定 0042）
-  const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, s)))) : null;
+  const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
   const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow("3 個都做完，多壹份", dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
     h("p", { class: "sp-note" }, "每日任務只有當天；做完了沒領的，這週裡都還能領。")) : null;
@@ -482,7 +483,7 @@ export function storyShow(root) {
   const S = storyState(P), show = d.show, today = todayStr();
   root.append(roomHead("畫廊", `今日特展：${show.title}`), galleryTabs("show"));
   root.append(h("div", { class: "limit-box" },
-    h("p", null, icon("star"), h("span", null, ptNode(show.intro))),
+    h("p", null, icon("star"), ptMark(show.intro)),
     h("p", null, icon("sparkle"), h("span", null, "第壹次看壹幅：", h("b", { class: "em good" }, `+${NUM.story.showInsp[0]}～+${NUM.story.showInsp[1]} 靈感`), `（要擲理智的比較多）。今日特展壹天最多拿 ${NUM.story.showInspDay} 靈感，今天拿了 ${S.showInsp[today] || 0}。`)),
     h("p", null, icon("hourglass"), h("span", null, "今日特展只有今天，明天 05:00 換壹個主題。", W.dayNo >= 7 ? "週日旁邊有這週的回顧展。" : "這週的畫，週日會收進「本週回顧展」。"))));
   if (activeQuirks(P).some(q => q.task === "calm")) root.append(quirkHereBox("calm")); // 怪癖的治法是「看壹幅不可怕的畫」（決定 0027）
@@ -562,13 +563,13 @@ export function storyCellarBox() {
     };
     return h("li", { class: "sc-room" + (found ? " found" : "") + (open ? "" : " locked") + (r.anomaly ? " anomaly" : "") },
       h("span", { class: "sc-floor" }, `B${r.floor}`),
-      h("span", { class: "sc-body" }, h("b", null, found ? r.title : r.hint), h("small", null, found ? `找到了${spotClaimed(P, W, r.id) && rewardText(r.reward) ? `（${rewardText(r.reward)}）` : ""}` : !open ? `要先走到 B${r.floor}` : r.anomaly ? "本週異狀" : `第 ${r.day} 天多出來的地方`)),
+      h("span", { class: "sc-body" }, h("b", null, found ? r.title : r.hint), h("small", null, found ? markText(`找到了${spotClaimed(P, W, r.id) && rewardText(r.reward) ? `（${rewardText(r.reward)}）` : ""}`) : !open ? `要先走到 B${r.floor}` : r.anomaly ? "本週異狀" : `第 ${r.day} 天多出來的地方`)),
       open ? btn([icon("stairs"), found ? " 再去壹次" : " 帶隊伍進去"], go_, found ? "ghost small" : "primary small") : h("span", { class: "sc-lock" }, icon("lock")));
   };
   return h("section", { class: "story-cellar", "aria-label": "本週異狀" },
-    W.anomaly ? h("div", { class: "sc-anomaly" }, h("p", { class: "sc-kicker" }, icon("eye"), " 本週異狀"), h("b", null, W.anomaly.title), W.anomaly.text.map(t => h("p", null, ptNode(t)))) : null,
+    W.anomaly ? h("div", { class: "sc-anomaly" }, h("p", { class: "sc-kicker" }, icon("eye"), " 本週異狀"), h("b", null, W.anomaly.title), W.anomaly.text.map(t => h("p", null, ptMark(t)))) : null,
     W.rooms.length ? h("ul", { class: "sc-rooms" }, W.rooms.map(card)) : null,
-    h("p", { class: "sc-hint" }, "用下面挑好的 3 隻進去，只走那壹間；過了就算找到。已經走過的樓層，也可能多出新的地方。"));
+    h("p", { class: "sc-hint" }, markText("用下面挑好的 **3 隻**進去，只走那壹間；**過了就算找到**。已經走過的樓層，也可能多出新的地方。")));
 }
 
 // ---------- 登記進 ui_core、公佈欄 ----------

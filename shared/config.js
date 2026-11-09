@@ -254,6 +254,7 @@ export const NUM = {
       { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
       { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
     ],
+    foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
     // 同桌（第二階段）

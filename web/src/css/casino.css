@@ -185,3 +185,73 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cw-box > .btn { align-self: flex-start; }
 .sp-sec .cw-note { color: #5A4630; }
 .sp-sec .cw-reward { color: var(--parch-ink, #2B1B0C); }
+/* 狀態列的籌碼（翊文 11-09）：手機放不下，可能性收進 ⓘ 展開 */
+#st-chips[hidden] { display: none; }
+#st-chips .st-num { white-space: nowrap; }
+@media (max-width: 760px) {
+  #status:not(.open) #st-chips:not([hidden]) ~ #st-poss { display: none; }
+}
+
+/* ----- 大禮包的拉霸機（翊文 11-09）：木頭機身、黃銅邊、會跑的燈、象牙色的輪子 ----- */
+.nb-casino .nb-tab svg { width: 18px; height: 18px; vertical-align: -4px; }
+.sl-machine { --sl-h: 58px; position: relative; max-width: 560px; margin: 8px auto 14px; padding: 12px 14px 14px; border-radius: 22px 22px 12px 12px; background: linear-gradient(180deg, #6A3020 0%, #471F13 55%, #2C130B 100%); border: 2px solid #C8A25A; box-shadow: inset 0 0 0 1px rgba(255,235,180,.28), inset 0 -22px 34px rgba(0,0,0,.45), 0 16px 28px rgba(0,0,0,.5); }
+.sl-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
+.sl-name { font-family: var(--serif); font-weight: 700; font-size: 1.25rem; letter-spacing: .3em; margin-right: -.3em; white-space: nowrap; color: #F8E3A0; text-shadow: 0 1px 0 #6E5020, 0 0 12px rgba(248,201,74,.55); }
+.sl-bulbs { display: flex; flex: 1 1 auto; justify-content: space-between; min-width: 0; }
+.sl-bulb { width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFF3C4, #E7B428 55%, #8C6A2E); box-shadow: 0 0 6px rgba(248,201,74,.75); animation: slChase 1.6s steps(2) infinite; }
+.sl-bulb:nth-child(2n) { animation-delay: .8s; }
+.sl-machine.sl-spinning .sl-bulb { animation-duration: .36s; }
+.sl-machine.sl-spinning .sl-bulb:nth-child(2n) { animation-delay: .18s; }
+@keyframes slChase { 0% { opacity: 1; } 50% { opacity: .22; box-shadow: none; } 100% { opacity: 1; } }
+.sl-body { display: flex; align-items: stretch; gap: 8px; }
+.sl-window { position: relative; flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; padding: 8px; border-radius: 10px; background: #120906; border: 2px solid #8C6A2E; box-shadow: inset 0 4px 14px #000, 0 0 0 1px rgba(255,235,180,.2); }
+.sl-reel { position: relative; height: calc(var(--sl-h) * 3); overflow: hidden; border-radius: 5px; background: #FBF6E8; }
+.sl-reel::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(20,8,4,.72) 0%, rgba(20,8,4,.18) 26%, rgba(255,255,255,.12) 50%, rgba(20,8,4,.18) 74%, rgba(20,8,4,.72) 100%); }
+.sl-strip { will-change: transform; }
+.sl-strip.sl-blur { filter: blur(1.4px); }
+.sl-cell { height: var(--sl-h); display: grid; place-items: center; font-family: Georgia, "Times New Roman", serif; font-size: calc(var(--sl-h) * .62); line-height: 1; user-select: none; }
+.sl-cell.s-star { color: #D3920B; text-shadow: 0 1px 0 #FFF7D6, 0 0 7px rgba(231,180,40,.6); }
+.sl-cell.s-red { color: #B3261E; }
+.sl-cell.s-dark { color: #231A14; }
+.sl-cell.sl-hit { background: radial-gradient(circle, #FFF2B8 0%, #F8C94A 70%, #D3A02A 100%); animation: slHit .45s ease-out; }
+@keyframes slHit { 0% { filter: brightness(1.9); } 100% { filter: none; } }
+.sl-payline { position: absolute; left: 3px; right: 3px; top: calc(8px + var(--sl-h)); height: var(--sl-h); pointer-events: none; border-block: 2px solid rgba(248,201,74,.85); box-shadow: 0 0 12px rgba(248,201,74,.35); }
+.sl-payline::before, .sl-payline::after { content: ""; position: absolute; top: 50%; width: 0; height: 0; margin-top: -7px; border-block: 7px solid transparent; }
+.sl-payline::before { left: -3px; border-left: 9px solid #F8C94A; }
+.sl-payline::after { right: -3px; border-right: 9px solid #F8C94A; }
+.sl-machine.sl-tease .sl-payline { animation: slTease .3s ease-in-out infinite alternate; }
+@keyframes slTease { to { border-color: #FFF2B8; box-shadow: 0 0 22px rgba(255,230,140,.95); } }
+.sl-lever { position: relative; flex: 0 0 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.sl-lever:disabled { cursor: default; opacity: .55; }
+.sl-socket { position: absolute; left: 50%; bottom: 8px; width: 30px; height: 26px; margin-left: -15px; border-radius: 6px; background: linear-gradient(180deg, #F0D995, #A07C34); border: 1px solid #6E5020; box-shadow: inset 0 1px 0 rgba(255,250,225,.7), 0 2px 4px rgba(0,0,0,.5); }
+.sl-arm { position: absolute; left: 50%; bottom: 22px; width: 8px; height: calc(100% - 52px); margin-left: -4px; border-radius: 4px; background: linear-gradient(90deg, #8C8780, #F2EFE8 45%, #8C8780); transform-origin: 50% 100%; }
+.sl-knob { position: absolute; left: 50%; top: -14px; width: 26px; height: 26px; margin-left: -13px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFB4A6, #C8281E 55%, #6E0F0A); box-shadow: 0 3px 6px rgba(0,0,0,.55); }
+.sl-lever:hover:not(:disabled) .sl-knob { filter: brightness(1.15); }
+.sl-lever.sl-pull .sl-arm { animation: slPull .62s cubic-bezier(.5,0,.3,1); }
+@keyframes slPull { 0% { transform: scaleY(1); } 42% { transform: scaleY(-.62); } 60% { transform: scaleY(-.62); } 100% { transform: scaleY(1); } }
+.sl-stars { display: flex; justify-content: center; gap: 10px; margin: 10px 0 8px; font-size: 1.375rem; line-height: 1; }
+.sl-star { color: rgba(255,235,180,.2); }
+.sl-star.sl-on { color: #F8C94A; text-shadow: 0 0 10px rgba(248,201,74,.9); animation: slPop .35s ease-out; }
+@keyframes slPop { 0% { transform: scale(1.7); } 100% { transform: none; } }
+.sl-plate { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; padding: 8px 12px; border-radius: 6px; text-align: center; color: #2A1E16; background: linear-gradient(180deg, #F4E6BC, #D9BE7E); border: 1px solid #8C6A2E; box-shadow: inset 0 1px 0 rgba(255,250,225,.75); }
+.sl-plate-t { font-family: var(--serif); font-size: 1rem; letter-spacing: .06em; }
+.sl-plate-n { font-family: Georgia, var(--serif); font-weight: 700; font-size: 1.25rem; color: #8A5A08; }
+.sl-machine.sl-win3 .sl-plate, .sl-machine.sl-win4 .sl-plate, .sl-machine.sl-win5 .sl-plate { background: linear-gradient(180deg, #FFF0B8, #F0C24E); }
+.sl-machine.sl-win4 .sl-bulb, .sl-machine.sl-win5 .sl-bulb { animation-duration: .24s; }
+.sl-machine.sl-win4 .sl-window { animation: slGlow 1.1s ease-in-out 2; }
+.sl-machine.sl-win5 .sl-window { animation: slGlow .7s ease-in-out 5; }
+.sl-machine.sl-win5 { animation: slShake .5s ease-in-out; }
+@keyframes slGlow { 50% { box-shadow: inset 0 4px 14px #000, 0 0 34px 6px rgba(248,201,74,.85); } }
+@keyframes slShake { 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+body.reduce-motion .sl-bulb, body.reduce-motion .sl-cell.sl-hit, body.reduce-motion .sl-star.sl-on, body.reduce-motion .sl-lever.sl-pull .sl-arm, body.reduce-motion .sl-machine.sl-win4 .sl-window, body.reduce-motion .sl-machine.sl-win5 .sl-window, body.reduce-motion .sl-machine.sl-win5, body.reduce-motion .sl-machine.sl-tease .sl-payline { animation: none; }
+@media (max-width: 760px) {
+  .sl-machine { --sl-h: 44px; padding: 10px 8px 10px; }
+  .sl-window { gap: 3px; padding: 6px; }
+  .sl-payline { top: calc(6px + var(--sl-h)); }
+  .sl-lever { flex-basis: 30px; }
+  .sl-socket { width: 22px; margin-left: -11px; }
+  .sl-arm { width: 6px; margin-left: -3px; }
+  .sl-knob { width: 20px; height: 20px; margin-left: -10px; top: -10px; }
+  .sl-name { font-size: 1.0625rem; }
+  .nb-casino .nb-tab { padding: 0 10px; }
+}

@@ -2,11 +2,13 @@
 //  畫面：共用的部分（導覽列、狀態列、燈光、理智檢定流程）
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
+import { casExact, casNum } from "../../shared/casino.js";
 import { NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT } from "../../shared/content3.js";
+import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
+import { markTokens } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkMinsLeft, quirkName, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
@@ -101,6 +103,14 @@ export function ptNode(text, cls) {
   const s = pt(text);
   const glitch = P && !isFree(P) && P.sanity < 40 && s !== text;
   return h("span", { class: (cls || "") + (glitch ? " glitch" : "") }, s);
+}
+
+// 說明文字標重點（markTokens）：回傳可以放進 h() 的東西。玩家打的字不要用這個
+export const markText = text => markTokens(text).map(x => (x.k ? h("b", { class: "mk mk-" + x.k }, x.t) : x.t));
+export function ptMark(text, cls) {
+  const s = pt(text);
+  const glitch = P && !isFree(P) && P.sanity < 40 && s !== text;
+  return h("span", { class: (cls || "") + (glitch ? " glitch" : "") }, markText(s));
 }
 
 // ---------- 畫青蛙、抱枕（套上發作效果和圖庫） ----------
@@ -357,23 +367,56 @@ export function audioTrack(instant) {
 }
 
 // ---------- 狀態列 ----------
+// 狀態列的提示（翊文 11-09）：滑鼠移上去、鍵盤選到；手機點壹下（委託、籌碼點了是走過去，手機上看 ⓘ 展開）
+let tipBox = null;
+function tipHide() { if (tipBox) tipBox.hidden = true; }
+function tipShow(box, id) {
+  const t = STATUS_TIPS[id];
+  if (!t) return;
+  if (!tipBox || !tipBox.isConnected) { tipBox = h("div", { class: "st-tip", id: "st-tip", role: "tooltip", hidden: true }); document.body.append(tipBox); }
+  const live = id === "san" && P && !isFree(P) ? `現在的上限是 ${maxSan(P)}（99－佩佩神話）。` : id === "chips" && box.dataset.exact ? `現在有 ${box.dataset.exact}。` : null;
+  tipBox.replaceChildren(h("b", { class: "st-tip-t" }, t.title), h("p", null, markText(t.what)), live ? h("p", { class: "st-tip-live" }, markText(live)) : null,
+    t.how ? h("p", { class: "st-tip-l" }, t.label) : null, t.how ? h("ul", null, t.how.map(x => h("li", null, markText(x)))) : null);
+  tipBox.hidden = false;
+  const r = box.getBoundingClientRect(), w = tipBox.offsetWidth;
+  tipBox.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+  tipBox.style.bottom = (innerHeight - $("#status").getBoundingClientRect().top + 8) + "px";
+}
+function statusTips(st) {
+  $$(".st-item[id]", st).forEach(box => {
+    const id = box.id.slice(3);
+    if (!STATUS_TIPS[id]) return;
+    if (box.tagName !== "BUTTON") {
+      box.tabIndex = 0;
+      box.addEventListener("click", e => { e.stopPropagation(); if (tipBox && !tipBox.hidden && tipBox.dataset.of === id) tipHide(); else { tipShow(box, id); tipBox.dataset.of = id; } });
+    }
+    box.addEventListener("pointerenter", e => { if (e.pointerType !== "touch") tipShow(box, id); });
+    box.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") tipHide(); });
+    box.addEventListener("focus", () => tipShow(box, id));
+    box.addEventListener("blur", tipHide);
+  });
+}
+document.addEventListener("click", tipHide);
+document.addEventListener("keydown", e => { if (e.key === "Escape") tipHide(); });
 export function buildStatus() {
   const st = $("#status");
   if (!P) { st.replaceChildren(); return; }
   const free = isFree(P);
-  const bar = (id, label) => h("div", { class: "st-item st-bar", id: "st-" + id, title: label },
+  const bar = (id, label) => h("div", { class: "st-item st-bar", id: "st-" + id },
     h("span", { class: "st-label" }, label), h("span", { class: "st-track" }, h("i", { class: "st-fill" }), h("i", { class: "st-dot" })), h("span", { class: "st-val" }, h("b", { class: "st-num" }, "0"), h("small", { class: "st-max" }, "／99")));
   const numItem = (id, label, onClick) => h(onClick ? "button" : "div", { class: "st-item", id: "st-" + id, type: onClick ? "button" : null, onClick },
     h("span", { class: "st-label" }, label), h("b", { class: "st-num" }, "0"));
+  const chipsItem = () => numItem("chips", "籌碼", () => { if (PANELS.casino) PANELS.casino(); }); // 賭場的籌碼（翊文 11-09），點了打開賭場
   const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋還有多久換日（-s 是手機用的短版）
   const items = free
-    ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), numItem("jobs", "委託", () => navTo("commission"))]
-    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
+    ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), chipsItem(), numItem("jobs", "委託", () => navTo("commission"))]
+    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), chipsItem(), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
       h("button", { type: "button", class: "st-item st-follow", id: "st-follow", hidden: true })]; // 每週劇情追蹤的那條線的下壹步（ui_story.js 的 trackBar）
   const extra = h("div", { class: "st-extra", id: "st-extra" });
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
   const toggle = h("button", { class: "st-toggle", type: "button", "aria-label": "展開狀態", onClick: () => st.classList.toggle("open") }, icon("info"));
   st.replaceChildren(h("div", { class: "st-row" }, items, extra, dots), toggle);
+  statusTips(st);
   updateStatus(true);
   watchStatusHeight();
 }
@@ -455,6 +498,16 @@ function labelMenu() {
   if (mb.classList.contains("has-fresh") && matchMedia("(max-width: 760px)").matches) bits.push("有新解開的東西");
   mb.setAttribute("aria-label", bits.length ? `選單（${bits.join("、")}）` : "選單");
 }
+// 狀態列的籌碼：沒登入不顯示；數字從伺服器來（ui_casino.js 的 casino peek、每次賭場的回覆）
+export function drawChips() {
+  const box = $("#st-chips");
+  if (!box) return;
+  box.hidden = !UI.net || typeof UI.chips !== "number";
+  if (box.hidden) return;
+  $(".st-num", box).textContent = casNum(UI.chips);
+  box.dataset.exact = casExact(UI.chips);
+}
+export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }
 export function updateStatus(instant) {
   audioTrack(instant);
   syncFresh();
@@ -477,6 +530,7 @@ export function updateStatus(instant) {
     box.style.setProperty("--p", pct + "%");
   };
   updateDayClock();
+  drawChips();
   const jobs = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
   if (isFree(P)) {
     set("poss", 0, `${num(possibilities(P))} 種`);

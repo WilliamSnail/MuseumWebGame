@@ -12,7 +12,7 @@
 import { NUM } from "./config.js";
 import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
-import { RNG, hashStr, isFree } from "./logic.js";
+import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
 import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
@@ -192,7 +192,21 @@ export function casOpenPacks(w, house, n, day) {
 
 // ---------- 餐車 ----------
 // pick：餐點的號碼（1–9）或 id。吃東西有機會抽到券（要先開過今天的大禮包）
-export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer) {
+// 吃東西的效果（翊文 11-09：「買賭場裡吃的東西應該也要可以加一些心情之類的效果」）：心情、理智，一天有上限。
+// P 是這位參觀者（沒有、自由模式就沒有效果）。燈熄了的時候不加理智。回傳 { mood, san, full（今天的份吃完了） }
+export function casFoodEffect(w, it, P, day) {
+  const none = { mood: 0, san: 0, full: false };
+  if (!it || (!it.mood && !it.san) || !P || isFree(P)) return none;
+  const C = NUM.casino.foodCap;
+  if (!w.food || w.food.day !== day) w.food = { day, mood: 0, san: 0 };
+  const moodRoom = Math.min(C.mood - w.food.mood, 99 - (P.mood || 0)), mood = Math.max(0, Math.min(it.mood || 0, moodRoom));
+  const want = P.dark ? 0 : Math.max(0, Math.min(it.san || 0, C.san - w.food.san));
+  const san = want ? gainSan(P, want) : 0;
+  if (mood) P.mood = clampN((P.mood || 0) + mood, 0, 99);
+  w.food.mood += mood; w.food.san += san;
+  return { mood, san, full: !mood && !san };
+}
+export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   let it = CAS_MENU.find(x => x.n === +pick || x.id === pick);
   if (!it) return { ok: false, reason: "餐車沒有這個" };
   const lines = [casFill(CAS_TEXT.dinerHello, { name })];
@@ -207,6 +221,9 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer) {
   house.bankroll += it.price;
   lines.push(it.line || "");
   let gotTickets = 0;
+  const food = casFoodEffect(w, it, P, day);
+  if (food.mood || food.san) lines.push([food.mood ? `心情 +${food.mood}` : "", food.san ? `理智 +${food.san}` : ""].filter(Boolean).join("，"));
+  else if (food.full) lines.push(CAS_TEXT.foodFull);
   if (it.special === "sushi") lines.push(CAS_TEXT.sushiLine);
   if (it.ticket) {
     w.tickets += it.ticket; gotTickets = it.ticket;
@@ -221,7 +238,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer) {
     }
   }
   lines.push(CAS_TEXT.dinerThanks);
-  return { ok: true, item: it.id, price: it.price, lines: lines.filter(Boolean), tickets: gotTickets, ach: casAchCheck(w, day) };
+  return { ok: true, item: it.id, price: it.price, lines: lines.filter(Boolean), tickets: gotTickets, ach: casAchCheck(w, day), mood: food.mood, san: food.san };
 }
 // 贏一把：有機率多一張券（舊的 rottery(20)；要先開過今天的大禮包）
 export function casWinTicket(w) {
@@ -389,6 +406,7 @@ export function casWkClaim(w, P, label, day) {
 export function casWalletView(w, day) {
   const C = NUM.casino;
   return {
+    foodMoodLeft: Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0)), foodSanLeft: Math.max(0, NUM.casino.foodCap.san - (w.food && w.food.day === day ? w.food.san : 0)),
     chips: w.chips, tickets: w.tickets, packsToday: w.pk.left, packsLeft: casPacksLeft(w), opened: w.pk.opened,
     reliefLeft: Math.max(0, C.reliefPerDay - w.rel.n), canRelief: w.chips < C.reliefBelow && w.rel.n < C.reliefPerDay,
     ex: C.exchange.map(x => ({ id: x.id, chips: x.chips, perWeek: x.perWeek, left: casExchangeLeft(w, x.id) })),

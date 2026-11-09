@@ -86,6 +86,10 @@ export const casino = onCall(async req => {
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
+    case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
+      const ws = await walletRef(me.uid).get();
+      return { ok: true, chips: casWalletFix(parse(ws), taipeiDay(now())).chips };
+    }
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);
@@ -115,9 +119,10 @@ export const casino = onCall(async req => {
       const r = casOpenPacks(ctx.w, ctx.house, d.n, ctx.day);
       return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
     });
-    case "buy": return play(req, me, {}, ctx => {
-      const r = casBuy(ctx.w, ctx.house, d.item, ctx.day);
-      return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach }) : no(r);
+    case "buy": return play(req, me, { save: true }, ctx => {
+      const r = casBuy(ctx.w, ctx.house, d.item, ctx.day, undefined, ctx.P);
+      if (r.ok && (r.mood || r.san)) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
+      return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach, mood: r.mood, san: r.san }) : no(r);
     });
     case "exchange": return play(req, me, { save: true }, ctx => {
       if (!ctx.P) return { ok: false, reason: "要用挑戰模式的參觀者進館，才能換" };

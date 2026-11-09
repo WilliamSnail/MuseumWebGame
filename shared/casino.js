@@ -16,7 +16,27 @@ import { skillOf } from "./logic3.js";
 export const CAS_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 export const CAS_SUITS = ["♠", "♥", "♦", "♣"];
 export const casFill = (s, o) => Object.keys(o || {}).reduce((t, k) => t.split("{" + k + "}").join(String(o[k])), String(s));
-export const casNum = n => Math.round(+n || 0).toLocaleString("en-US");
+// 金額（翊文 11-09：「數字太多可以換成中文的比如說 萬 ，億等等的」）：一萬以下照寫，一萬以上換成萬、億，最多兩位小數。無條件捨去，不會把錢寫多
+export const casNum = n => {
+  const v = Math.round(+n || 0), a = Math.abs(v), sign = v < 0 ? "-" : "";
+  const two = x => String(Math.floor(x * 100 + 1e-7) / 100);
+  if (a >= 1e8) return `${sign}${two(a / 1e8)} 億`;
+  if (a >= 1e4) return `${sign}${two(a / 1e4)} 萬`;
+  return v.toLocaleString("en-US");
+};
+export const casExact = n => Math.round(+n || 0).toLocaleString("en-US"); // 完整的數字（滑鼠停著看）
+
+// ---------- 大禮包的拉霸機：五輪怎麼停（只是演出，結果是伺服器決定的） ----------
+// 幾顆星就從左邊停幾個 ★。已經有 2 顆星以上，下壹輪拖長壹點（會不會再中？）；斷了之後剩下的很快停完。
+// fast：全開的時候每包很快，不拖。回傳 5 輪 { star, near（沒中，但下面那格是 ★）, tease（拖長）, dur（毫秒）, gap（停完等多久） }
+export function casSlotPlan(stars, fast) {
+  const n = Math.max(0, Math.min(5, Math.floor(+stars) || 0));
+  return Array.from({ length: 5 }, (_, i) => {
+    const star = i < n, first = i === n, tease = !fast && i >= 2 && i <= n;
+    const dur = fast ? 150 : tease ? 1250 : star ? 620 : first ? 620 : 240;
+    return { star, near: first, tease, dur, gap: fast ? 0 : star ? 90 : 0 };
+  });
+}
 
 // ---------- 牌 ----------
 export const casDeck = () => Array.from({ length: 52 }, (_, i) => i);
@@ -85,8 +105,10 @@ function casHidden(ch) {
 export function casBetCheck(text, chips) {
   const C = NUM.casino;
   const raw = typeof text === "number" ? String(text) : String(text == null ? "" : text);
-  const t = [...raw].filter(ch => !casHidden(ch)).join("").replace(/,/g, "").trim().slice(0, 24);
-  const shown = [...t].slice(0, 12).join("");
+  const typed = [...raw].filter(ch => !casHidden(ch)).join("").replace(/,/g, "").trim().slice(0, 24);
+  const unit = /^([0-9]+(?:[.][0-9]+)?)\s*(萬|億)$/.exec(typed); // 也可以打「10萬」「1.5億」
+  const t = unit ? String(Math.round(Number(unit[1]) * (unit[2] === "億" ? 1e8 : 1e4))) : typed;
+  const shown = [...typed].slice(0, 12).join("");
   if (!t) return { ok: false, line: CAS_TEXT.betWeird };
   if (!/^[-+]?[0-9]+([.][0-9]+)?$/.test(t)) return { ok: false, line: casFill(CAS_TEXT.betNaN, { text: shown }) };
   const n = Number(t);
