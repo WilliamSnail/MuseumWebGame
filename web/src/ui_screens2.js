@@ -356,6 +356,7 @@ SCREENS.hall = (root, params) => {
     if (r.ok) later(() => showEvents(r.events), 300);
   }
   if (params.view) { hallVisit(root, params.view); return; }
+  if (params.friend && ADDONS.friendHall) { ADDONS.friendHall(root, params); return; } // 走進館友的展廳（多人版 M2，ui_visit.js）
   if (params.week) { weeklyHall(root, params); return; }
   const hs = hallScore(P);
   const theme = hs.theme ? HALL_THEME_TEXT[hs.theme] : null;
@@ -387,6 +388,7 @@ SCREENS.hall = (root, params) => {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點一件、再點展台", drag: true });
   root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
   if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
+  if (ADDONS.hallGuests) ADDONS.hallGuests(root); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
 // 還沒見過「俄國8+9」的人不列那個主題，只留壹張「？？？」；沒解鎖「不可名狀」就不提它

@@ -30,8 +30,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `members/{uid}` | 這個帳號是館友：`nick`、`invisible`、`joinedAt` | 館友 | 只有 Functions（`join` 檢查邀請名單之後建） |
 | `invites/{email}` | 邀請名單；`admin: true` 的是管理員（第八節） | 沒有人（只有 Functions） | 翊文在 Firestore 後台（AI 碰不到） |
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
-| `halls/{uid}` | 展廳給別人看的那一小部分（M2） | 館友 | 自己存檔時一起寫 |
-| `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪、補償） | 自己 | 只有 Functions |
+| `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
+| `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
 - 沒有 `members/{uid}` 的人，什麼都讀不到、寫不了（`firestore.rules`）。這就是邀請制：Google 帳號誰都能登入，但不在名單上就進不了館。
@@ -41,7 +41,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能寫 |
 |---|---|---|
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
-| `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了、有新的信 | 只有 Functions；自己讀完刪掉 |
+| `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了（`save_changed`）、有新的信（`mail_new`）、有人來過展廳（`hall_news`） | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
 | `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions，誰都不能讀 |
 
@@ -58,7 +58,9 @@ Hosting：放 dist/，網址 專案名.web.app
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下的每一步（`shared/coop.js`） | M4 |
-| `sendGift`、`claimMail`、`visitHall` | 送佩佩、領信、來訪的靈感 | M2 |
+| `visitHall`、`hallAct` | 走進館友的展廳（給展廳那一部分、記來訪、寄謝禮）、按讚、留言 | M2 |
+| `sendGift`、`claimMail` | 送佩佩（同一個交易從自己的收藏拿掉、寄進對方的信箱）、領信（同一個交易放進存檔、把信標成領過） | M2 |
+| `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳 | M2 |
 | `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
 | `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
 

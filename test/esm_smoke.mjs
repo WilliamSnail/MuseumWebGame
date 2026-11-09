@@ -13,12 +13,13 @@ import * as signin from "../shared/signin.js";
 import * as story from "../shared/story.js";
 import * as admin from "../shared/admin.js";
 import * as shop from "../shared/shop.js";
+import * as visit from "../shared/visit.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop, visit })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -75,5 +76,20 @@ ok("兌換所接得上 legacy、story（11-09，決定 0032）：穿著的裝備
   assert.ok(shop.buyGear(P, "abacus", "2026-11-09").ok);
   assert.ok(shop.wearGear(P, "abacus").ok);
   assert.strictEqual(legacy.traitSum(P, "deal"), config.GEAR_ITEMS.find(x => x.id === "abacus").deal);
+});
+ok("參觀展廳、送佩佩接得上 gifts、mailbox、logic（11-09）", () => {
+  const save = logic.newSave();
+  const P = save.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  const key = logic.pepeKey(Object.assign({}, logic.DEFAULT_PICK));
+  P.pepes[key] = { n: 2, perfect: false, s: 1, d: "2026-11-09" };
+  const r = visit.stepSendGift({ save, item: { kind: "pepe", key }, me: { uid: "a", nick: "小明" }, to: "b", today: "2026-11-09", mailId: "gift-1" });
+  assert.ok(r.ok && r.mail.gift.pepe.key === key);
+  assert.strictEqual(P.pepes[key].n, 1);
+  const save2 = logic.newSave();
+  const P2 = save2.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P2, "2026-11-09");
+  const c = visit.stepClaimMail({ save: save2, mails: [r.mail], today: "2026-11-09" });
+  assert.ok(c.ok && c.total.pepes === 1 && P2.pepes[key].n === 1);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

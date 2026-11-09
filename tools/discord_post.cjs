@@ -4,6 +4,7 @@
 // 金鑰放 GitHub Secrets：DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID（翊文放的，AI 拿不到，也不要印出來）。沒放就跳過，不報錯。
 // node tools/discord_post.cjs        照這次合併新加的檔發
 // node tools/discord_post.cjs --test 發一則測試訊息
+// node tools/discord_post.cjs --say  發環境變數 ANNOUNCE 的文字（手動的公告）
 const fs = require("fs"), path = require("path");
 const { execFileSync } = require("child_process");
 
@@ -58,6 +59,14 @@ function changedFiles() {
 const readJSON = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8"));
 
 async function main() {
+  if (process.argv.includes("--say")) { // 手動的公告（.github/workflows/discord-announce.yml）：文字從環境變數來，最後面照樣放連結
+    const text = String(process.env.ANNOUNCE || "").trim();
+    if (!text) { console.log("沒有要發的文字。"); return; }
+    const end = "\n\n" + footer();
+    const ok = await send((text.length > MAX - end.length ? text.slice(0, MAX - end.length - 1) + "…" : text) + end);
+    console.log(ok ? "公告發了。" : "沒發。");
+    return;
+  }
   if (process.argv.includes("--test")) {
     // 測試：發最新一天真正格式的公告，看長什麼樣
     const dir = path.join(ROOT, "content", "weeks");

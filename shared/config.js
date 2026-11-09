@@ -146,6 +146,15 @@ export const NUM = {
     dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
+  // 第 4 版（11-09）：參觀館友的展廳、伺服器的信（規則 shared/visit.js；來訪的靈感、留言字數這些在 gifts.js 的 SOCIAL）
+  guest: {
+    logMax: 60,             // 訪客簿留幾筆（一天一位館友一筆；今天的不會被擠掉）
+    shown: 12,              // 自己的展廳上列幾筆「館友來過」（新的一定都列）
+    slotsMax: 12,           // 給別人看的展台最多幾座（別人的存檔不能相信）
+    claimMax: 30,           // 一次最多領幾封伺服器的信
+    mailListMax: 60,        // 信箱一次列幾封伺服器的信
+    giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
+  },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）

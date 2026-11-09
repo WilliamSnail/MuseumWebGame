@@ -10,9 +10,9 @@
 // ================================================================
 import { realTodayStr } from "../../shared/logic.js";
 import { NOTICE_CATS, autoOpenPlan, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
-import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail, unclaimedCount } from "../../shared/mailbox.js";
+import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
-import { P, PANELS, SAVE, UI, btn, go, h, icon, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { ADDONS, P, PANELS, SAVE, UI, btn, go, h, icon, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 
 const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
 const narrow = () => matchMedia("(max-width: 760px)").matches;
@@ -138,17 +138,31 @@ export function openMailbox() {
   pruneMail(P, today);
   persist();
   const m = overlay("nb-mail", "信箱");
+  // 伺服器的信（館友送的佩佩、來訪的謝禮，ui_visit.js）：跟這封一起列；領的時候問伺服器，領了就搬進 P.mail，變成下面「已領取」的一封
+  const sv = ADDONS.serverMail || null;
   const draw = () => {
-    const list = mailList(P, today), left = unclaimedCount(P, today);
-    m.setTop(left ? btn(`全部領取（${left}）`, () => {
+    const srv = sv ? sv.list() : [];
+    const list = srv.map(x => Object.assign({ server: true }, x)).concat(mailList(P, today)).sort((a, b) => (a.claimed - b.claimed) || b.sent.localeCompare(a.sent));
+    const left = list.filter(x => !x.claimed).length;
+    m.setTop(left ? btn(`全部領取（${left}）`, async () => {
       const t = claimAllMail(P, today);
       snd("coin"); updateStatus(); persist();
+      const s = srv.length ? await sv.claim(srv.map(x => x.id)) : null;
+      if (s) { t.n += s.n; t.insp += s.insp; t.mood += s.mood; t.pepes += s.pepes; }
       note(t.n ? `領了 ${t.n} 封${giftText(t) ? "：" + giftText(t) : ""}` : "沒有可以領的。", "good");
-      draw();
+      if (m.layer.isConnected) draw();
     }, "primary small") : null);
     const envs = list.length ? list.map(x => {
-      const act = x.claimed ? null : h("div", { class: "nb-env-act" }, h("small", null, `還有 ${daysLeft(x, today)} 天`), (() => {
-        const b = btn("領取", () => {
+      const act = x.claimed ? (x.gift && x.gift.pepe && sv ? sv.useRow(x.gift.pepe, m.close) : null) : h("div", { class: "nb-env-act" }, h("small", null, `還有 ${daysLeft(x, today)} 天`), (() => {
+        const b = btn("領取", async () => {
+          if (x.server) {
+            b.disabled = true;
+            const s = await sv.claim([x.id]);
+            b.disabled = false;
+            if (s && s.n) { snd("coin"); FX.floatText(b, giftText(s) || "已領取", "good"); }
+            if (m.layer.isConnected) draw();
+            return;
+          }
           const r = claimMail(P, x.id, today);
           if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
           snd("coin");
@@ -160,15 +174,16 @@ export function openMailbox() {
       })());
       return h("div", { class: "nb-env" + (x.claimed ? " claimed" : "") },
         x.claimed ? h("span", { class: "nb-env-stamp" }, "已領取") : h("span", { class: "nb-wax big", "aria-hidden": "true" }),
-        h("div", { class: "nb-env-body" }, h("b", null, x.title), h("span", { class: "nb-env-from" }, `${x.from}・${md(x.sent)} 寄來`), x.note ? h("span", { class: "nb-env-note" }, x.note) : null,
+        h("div", { class: "nb-env-body" }, h("b", null, x.title), h("span", { class: "nb-env-from" }, `${x.from}・${md(x.sent)} 寄來`), x.note && !(x.gift && x.gift.pepe) ? h("span", { class: "nb-env-note" }, x.note) : null,
           h("span", { class: "nb-env-gift" }, giftText(x.gift) || "（只有信，沒有附東西）")),
         act);
     }) : [h("p", { class: "nb-empty" }, "信箱是空的。")];
-    m.surface.replaceChildren(h("p", { class: "nb-hint" }, "獎勵、補償，之後還有館友送的東西，都會寄到這裡。寄到之後 30 天沒領就會不見。"), h("div", { class: "nb-envs" }, envs));
+    m.surface.replaceChildren(h("p", { class: "nb-hint" }, "獎勵、補償、館友送的佩佩、來訪的謝禮，都會寄到這裡。寄到之後 30 天沒領就會不見。"), h("div", { class: "nb-envs" }, envs));
     updateBoardBadges();
   };
   draw();
   snd("flip");
+  if (sv) sv.refresh().then(() => { if (m.layer.isConnected) draw(); }).catch(() => { /* 連不上：先列這台電腦知道的 */ });
 }
 
 // ---------- 進館後自己打開（一次進館最多一次） ----------
