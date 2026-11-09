@@ -116,10 +116,16 @@ async function main() {
     if (sa.project_id !== "pepe-museum") throw new Error("金鑰不是 pepe-museum 的");
     initializeApp({ credential: applicationDefault(), projectId: sa.project_id });
   }
-  const board = await import("../shared/board.js");
+  const board = await loadBoard();
   const r = await runWeekly({ db: getFirestore(), board, opts, env: emulator ? {} : process.env }); // 連模擬器一定不發 Discord
   if (r.status === "failed") process.exitCode = 1;
 }
 
+// 真的跑的時候用的規則：board.js 的，加上「現在」（nowMs 是 logic.js 的，board.js 沒有 export；測試的 load_shared 串在一起所以看不出來）
+async function loadBoard() {
+  const [board, logic] = await Promise.all([import("../shared/board.js"), import("../shared/logic.js")]);
+  return Object.assign({}, board, { nowMs: logic.nowMs });
+}
+
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { parseOptions, newRoomFloor, runWeekly };
+module.exports = { parseOptions, newRoomFloor, runWeekly, loadBoard };
