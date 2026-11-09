@@ -6,7 +6,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    - 沒設定（公鑰、伺服器 ID 還是空的）回 503，其他 Function 不受影響。
 //    - 只接受設定的伺服器（Guild）來的指令。
 //    - 3 秒內要回：這裡的指令都只讀、寫幾份文件就回，不先回「處理中」再補（Function 回完不保證還能跑）。
-//      入口很薄：靜態 import 只有 options、discord_data、shared 的規則；沒有另外開 codebase，也沒設 minInstances（原因和量到的時間見日誌）。
+//      入口很薄：靜態 import 只有 options、discord_data、shared 的規則；沒有另外開 codebase。第壹版沒設 minInstances，正式環境閒置後真的超過 3 秒，翊文 11-09 同意常駐壹台（原因和量到的時間見日誌）。
 //  回覆裡只有遊戲暱稱：沒有 email、理智、怪癖、靈感。不 @ 任何人。
 // ================================================================
 import { onRequest } from "firebase-functions/v2/https";
@@ -90,7 +90,8 @@ async function cmdOnline() {
 }
 const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline };
 
-export const discordBot = onRequest({ cors: false }, async (req, res) => {
+// 常駐壹台（翊文 11-09）：閒置後第壹個指令啟動太慢，超過 Discord 的 3 秒就會「未受回應」。小顆 CPU 省錢（官方的例子約每月 3 美元），小顆 CPU 只能壹次處理壹個請求
+export const discordBot = onRequest({ cors: false, minInstances: 1, cpu: "gcf_gen1", memory: "256MiB", concurrency: 1 }, async (req, res) => {
   const t0 = Date.now();
   if (req.method !== "POST") { res.set("Allow", "POST"); return J(res, 405, { error: "POST only" }); }
   const cfg = await discordConfig();
