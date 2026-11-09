@@ -7,7 +7,7 @@ import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../shared/logic.js";
 import { visitorEvery } from "../../shared/logic3.js";
-import { $, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
+import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
@@ -73,10 +73,10 @@ export function boot() {
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") { if (UI.held) { clearHeld(); note("放下了。"); } toggleMenu(false); }
   });
-  let rt = null, wasPortrait = matchMedia("(max-width: 760px)").matches;
+  let rt = null, wasPortrait = planPortrait();
   window.addEventListener("resize", () => {
     clearTimeout(rt);
-    rt = setTimeout(() => { const p = matchMedia("(max-width: 760px)").matches; if (p !== wasPortrait) { wasPortrait = p; if (UI.screen === "lobby") rerender(); } }, 250);
+    rt = setTimeout(() => { const p = planPortrait(); if (p !== wasPortrait) { wasPortrait = p; if (UI.screen === "lobby") rerender(); } }, 250);
   });
   setInterval(tick, 1000);
   netBoot(); // 多人版 M1：看伺服器、上次登入過沒（不等它，布幕先放）

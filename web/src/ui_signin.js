@@ -19,7 +19,7 @@ import { cycleReward, limitedInfo, limitedCount, ownsLimited, signIn, signPrevie
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
-import { $$, ADDONS, P, PANELS, SAVE, UI, btn, go, h, icon, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { exInspLine, focusExhibit } from "./ui_screens1.js";
 
@@ -201,7 +201,7 @@ export function openCalendar(o = {}) {
           "aria-pressed": String(c.date === sel), "aria-label": `${dayLabel(c.date)}${c.isToday ? "，今天" : ""}${c.signed ? `，簽到了（第 ${c.n} 次）` : ""}${hol ? "，" + c.hol.map(holName).join("、") : ""}${fun.length ? "，趣味節日：" + fun.map(f => f.name).join("、") : ""}`,
           onClick: () => {
             sel = c.date; if (!c.inMonth) { y = +c.date.slice(0, 4); mo = +c.date.slice(5, 7); } draw();
-            if (matchMedia("(max-width: 760px)").matches) { const det = m.surface.querySelector(".sg-detail"); if (det) det.scrollIntoView({ block: "start", behavior: motionOff() ? "auto" : "smooth" }); } // 手機：說明在日曆下面
+            if (planPortrait()) { const det = m.surface.querySelector(".sg-detail"); if (det) det.scrollIntoView({ block: "start", behavior: motionOff() ? "auto" : "smooth" }); } // 手機：說明在日曆下面
           } },
           h("span", { class: "sg-dn" }, String(c.d)),
           c.signed ? h("span", { class: "sg-dm", html: ART.stamp("簽"), "aria-hidden": "true" }) : null,

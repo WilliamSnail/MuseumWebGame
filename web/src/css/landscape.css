@@ -1,0 +1,483 @@
+/* ================================================================
+   手機橫拿（翊文 11-09：「手機介面改成橫向操作好了，可能比較正確」，決定 0043）
+   一、直拿的手機：蓋一層「請轉橫」的提示（ui_orient.js 放元素，這裡只負責什麼時候看得到）
+   二、橫拿的手機（高度只有 360～430）：薄導覽列、薄狀態列、左右分欄、蓋在畫面上的框吃滿高度
+   這份放在所有樣式的最後（main.js 最後 import），才蓋得過前面按寬度寫的規則。
+   電腦（高 > 500）、直拿的手機版面都不在這裡動。
+   ================================================================ */
+
+/* ---------- 一、直拿請轉橫 ---------- */
+.orient { display: none; }
+@media (orientation: portrait) and (max-width: 760px) and (pointer: coarse) {
+  body:not(.orient-skip) .orient { position: fixed; inset: 0; z-index: 9990; display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: radial-gradient(ellipse at 50% 30%, rgba(92,39,49,.96), rgba(30,10,16,.99) 75%), #1E0A10; color: var(--on-wall, #F1E4CC); text-align: center; overflow-y: auto; }
+  body:not(.orient-skip) { overflow: hidden; }
+  .or-card { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 320px; padding: 30px 24px 26px; border: 1px solid var(--gold-lo, #8C6A2E); border-radius: 4px;
+    background: rgba(20,8,10,.55); box-shadow: inset 0 0 0 4px rgba(20,8,10,.6), inset 0 0 0 5px rgba(200,162,90,.45), 0 18px 44px rgba(0,0,0,.5); }
+  .or-icon { width: 96px; height: 96px; color: var(--gold-hi, #EED79C); }
+  .or-icon svg { width: 100%; height: 100%; overflow: visible; }
+  .or-phone-body { transform-box: view-box; transform-origin: 32px 28px; animation: orTurn 3.4s ease-in-out infinite; }
+  .or-arrow { animation: orFade 3.4s ease-in-out infinite; }
+  .or-t { margin: 0; font-family: var(--serif); font-size: 1.3rem; letter-spacing: .12em; line-height: 1.5; color: var(--gold-hi, #EED79C); }
+  .or-s { margin: 0; font-size: .875rem; line-height: 1.7; color: var(--on-wall-sub, #C9B08E); }
+  .or-skip { margin-top: 6px; min-height: 44px; }
+  body.reduce-motion .or-phone-body, body.reduce-motion .or-arrow { animation: none; }
+  body.reduce-motion .or-phone-body { transform: rotate(-90deg); }
+}
+@keyframes orTurn { 0%, 18% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+@keyframes orFade { 0%, 18% { opacity: 0; } 40%, 85% { opacity: .75; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) and (orientation: portrait) {
+  .or-phone-body, .or-arrow { animation: none; }
+  .or-phone-body { transform: rotate(-90deg); }
+}
+
+/* ---------- 二、橫拿的手機 ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --nav-h: 40px; --status-h: 42px; }
+  /* ----- 導覽列：一排，房間可以橫向捲 ----- */
+  #nav { gap: 8px; padding: 0 max(8px, env(safe-area-inset-left)) 0 max(8px, env(safe-area-inset-left)); }
+  #nav .brand { display: none !important; } /* 高度寬度都不夠：把位子讓給 12 個房間，回大廳按第壹格 */
+  .nav-links { display: flex; flex: 1 1 auto; min-width: 0; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; align-self: stretch; align-items: stretch; -webkit-overflow-scrolling: touch; }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-link { flex: 1 1 0; flex-direction: column; gap: 1px; padding: 2px 0; min-height: 40px; min-width: 40px; justify-content: center; font-size: .625rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; border-bottom: 2px solid transparent; }
+  .nav-link .ic, .nav-link .ic svg { width: 15px; height: 15px; }
+  .nav-link .nav-fresh { top: 2px; left: auto; right: 0; }
+  .nav-tools { gap: 0; flex: 0 0 auto; }
+  .icon-btn { width: 40px; height: 40px; }
+  .menu-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; border-radius: 20px; }
+  .menu-btn .menu-t { font-size: .75rem; }
+  .nav-drawer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; top: var(--nav-h); left: auto; right: max(6px, env(safe-area-inset-right)); width: min(620px, calc(100vw - 12px)); max-height: calc(100vh - var(--nav-h)); max-height: calc(100dvh - var(--nav-h)); overflow-y: auto; padding: 2px 12px 8px; border-radius: 0 0 6px 6px; align-content: start; }
+  .nav-drawer .md-h { grid-column: 1 / -1; margin: 6px 8px 2px; }
+  .nav-drawer .md-group, .nav-drawer .md-rooms { display: contents; }
+  .nav-drawer .md-group[hidden], .nav-drawer .md-h[hidden] { display: none; }
+  .nav-drawer-link, .nav-drawer .md-item { min-height: 40px; }
+  .md-casino-h { display: none; }
+  .md-casino-g { display: contents; }
+  .st-tip { max-height: calc(100dvh - 16px); overflow-y: auto; }
+
+  /* ----- 狀態列：一排、沒有進度條 ----- */
+  #status { min-height: 0; height: var(--status-h); padding: 0 max(10px, env(safe-area-inset-left)); align-items: center; border-top-width: 1px; }
+  .st-row { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: 14px; padding: 0; scrollbar-width: none; align-items: center; height: 100%; }
+  .st-row::-webkit-scrollbar { display: none; }
+  .st-track, .st-toggle { display: none !important; }
+  #status.open .st-track { display: none; }
+  .st-item, #status.open .st-item { flex: 0 0 auto; flex-direction: row; align-items: center; gap: 5px; min-height: 40px; font-size: .75rem; line-height: 1.2; }
+  .st-label { font-size: .75rem; }
+  .st-num { font-size: 1rem; min-width: 0; }
+  .st-max { font-size: .625rem; }
+  #st-jobs .st-num { width: 24px; height: 24px; font-size: .75rem; }
+  .st-day { display: flex; flex-direction: row; align-items: baseline; gap: 5px; }
+  .st-day .st-label { display: none; }
+  .st-day .st-num { display: block; font-size: .875rem; }
+  .st-day .st-num-s, .st-day .st-left-s { display: none; }
+  .st-day .st-left { display: block; font-size: .625rem; }
+  .st-extra, .st-bout, #status.open .st-extra, #status.open .st-bout { display: flex; flex: 0 0 auto; flex-wrap: nowrap; }
+  .st-extra .chip { font-size: .6875rem; padding: 0 8px; }
+
+  /* ----- 房間 ----- */
+  #room { padding: 10px max(14px, env(safe-area-inset-left)) calc(var(--status-real, var(--status-h)) + 18px); min-height: calc(100vh - var(--nav-h)); }
+  .room-head { margin-bottom: 8px; gap: 2px 14px; }
+  .room-head h1 { font-size: 1.25rem; }
+  .room-head .sub { flex-basis: 240px; font-size: .75rem; }
+}
+
+/* ----- 大廳：導覽圖用橫的那張，滿寬；下壹步、簽到那些條壓成一行高 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-lobby { display: flex; flex-direction: column; }
+  .scr-lobby > * { order: 5; }
+  .scr-lobby > .room-head { order: 0; }
+  .scr-lobby > .next-step { order: 1; }
+  .scr-lobby > .event-bar { order: 2; }
+  .scr-lobby > .lobby-wrap { order: 3; }
+  .scr-lobby > .lobby-hint { order: 4; }
+  .lobby-wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .lobby-side { display: none; }
+  .lobby-hint { margin-top: 6px; min-height: 0; font-size: .75rem; }
+  .next-step, .lobby-sign, .story-lobby { margin: 0 0 8px; padding: 6px 12px; border-radius: 10px; flex-wrap: nowrap; gap: 4px 10px; }
+  .next-step .ns-tag { font-size: .6875rem; padding: 2px 8px; }
+  .next-step .ns-body { flex: 1 1 0; flex-basis: 0; flex-direction: row; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; }
+  .next-step .ns-text { font-size: .875rem; }
+  .next-step .ns-why { font-size: .6875rem; }
+  .next-step .btn { width: auto; min-height: 40px; padding: 0 14px; font-size: .8125rem; }
+  .lobby-sign { align-items: center; }
+  .ls-tag { width: 30px; height: 30px; }
+  .ls-body { flex: 1 1 0; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0 10px; }
+  .ls-body b { font-size: .875rem; }
+  .ls-body span { font-size: .6875rem; }
+  .ls-btn, .lobby-sign .btn { width: auto; min-height: 40px; padding: 0 14px; font-size: .8125rem; }
+  .story-lobby { grid-template-columns: minmax(0, 1fr) auto; }
+  .sl-head { gap: 2px 10px; }
+  .sl-title { font-size: .9375rem; }
+  .sl-btns { grid-column: 2; grid-row: 2 / span 2; flex-direction: row; }
+  .sl-btns .btn { flex: 0 0 auto; min-height: 40px; padding: 0 12px; font-size: .8125rem; }
+  .sl-track { min-height: 40px; }
+  .plan svg { max-height: none; }
+}
+
+/* ----- 提示（toast）：靠右下角，不蓋住中間 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fx-toasts { left: max(8px, env(safe-area-inset-left)); right: auto; bottom: calc(var(--status-real, var(--status-h)) + 6px); transform: none; align-items: flex-start; gap: 4px; max-width: min(50vw, 400px); }
+  .fx-toast { min-height: 40px; padding: 4px 12px; font-size: 12px; line-height: 1.4; max-width: min(50vw, 400px); }
+  /* 邀請卡：右下角，比提示窄壹點 */
+  .inv-stack { left: auto; right: max(8px, env(safe-area-inset-right)); width: min(360px, 48vw); bottom: calc(var(--status-real, var(--status-h)) + 6px); gap: 6px; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 14px); overflow-y: auto; }
+  .inv-card { padding: 10px 14px 8px; }
+  .inv-t { margin: 0 0 2px; font-size: .9375rem; }
+  .inv-sub { margin: 0 0 6px; font-size: .75rem; line-height: 1.4; }
+  .inv-btns .btn { min-height: 40px; }
+  .pt-members { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .pt-member { padding: 8px 6px; }
+  .pt-member.wait { min-height: 120px; }
+  .pt-pet { width: 64px; height: 64px; }
+  .fx-toast-act { min-height: 40px; padding: 4px 12px; font-size: 12px; }
+}
+
+/* ----- 蓋在畫面上的木框（公佈欄、信箱、每週劇情、兌換所、賭場、合作地下、館友…）：吃滿高度，上面壹條薄的，內容自己捲 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-layer { display: block; padding: 0; bottom: var(--kb, 0px); }
+  .mini-layer { bottom: var(--kb, 0px); }
+  .nb-frame, .nb-frame.urgent, .nb-frame.nb-mail { width: 100%; max-width: none; height: 100%; max-height: none; border-radius: 0; padding: 0 max(10px, env(safe-area-inset-left)) 6px max(10px, env(safe-area-inset-right)); }
+  .nb-frame.urgent { height: 100%; }
+  .cas-chat-form { position: sticky; bottom: 0; z-index: 2; padding: 4px 0; background: #234F38; }
+  .nb-top { min-height: 48px; padding: 4px 0; }
+  .nb-plaque { padding: 3px 18px 3px 12px; gap: 6px; }
+  .nb-plaque h2 { font-size: .9375rem; letter-spacing: .14em; }
+  .nb-plaque .ic, .nb-plaque .ic svg { width: 17px; height: 17px; }
+  .nb-x { width: 40px; height: 40px; }
+  .nb-frame .btn.small { min-height: 40px; padding: 0 12px; font-size: .75rem; }
+  .nb-surface { padding: 6px 10px; }
+  .nb-foot { padding-top: 4px; }
+  .nb-tabs { gap: 8px; margin: 0 0 6px; }
+  .nb-tab { min-height: 40px; padding: 0 14px; font-size: .8125rem; }
+  .nb-body { grid-template-columns: minmax(210px, 36%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 10px; }
+  .nb-body.reading { grid-template-columns: minmax(0, 1fr); }
+  .nb-list { gap: 14px; padding: 12px 12px 8px 6px; }
+  .nb-slip { padding: 14px 12px 9px; gap: 3px; }
+  .nb-slip-t { font-size: .875rem; }
+  .nb-read { padding: 8px 6px 8px; }
+  .nb-sheet { padding: 22px 20px 14px; }
+  .nb-sheet h3 { font-size: 1.0625rem; }
+  .nb-sec p { line-height: 1.65; font-size: .875rem; }
+  .nb-env { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px 12px; padding: 12px 12px 10px; }
+  .nb-env .nb-wax { width: 38px; height: 38px; }
+  .nb-env-stamp { width: 42px; height: 42px; }
+  .nb-envs { gap: 10px; }
+  .nb-hint { margin: 0 0 6px; font-size: .75rem; line-height: 1.5; }
+  .nb-skip { min-height: 40px; padding: 2px 12px; font-size: .8125rem; }
+  .nb-cta { margin-top: 10px; }
+}
+
+/* ----- 開場、登入 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .t-wrap { padding: 10px 20px 14px; min-height: 100vh; min-height: 100dvh; }
+  .t-name { font-size: clamp(30px, 6.4vw, 52px); letter-spacing: .2em; }
+  .t-orn { margin-top: 4px; height: 14px; background-size: 200px 14px; width: 200px; }
+  .t-en { margin-top: 6px; font-size: .6875rem; letter-spacing: .6em; }
+  .t-tag { margin: 8px 0 8px; font-size: .875rem; }
+  .t-free { margin-top: 8px; }
+  .t-actions { gap: 10px; }
+  .t-actions .btn { min-width: 128px; min-height: 44px; font-size: .9375rem; padding: 0 18px; }
+  .t-login-area { gap: 6px; min-height: 0; }
+  .t-login { padding: 10px 16px 8px; gap: 6px; }
+  .t-login-row { flex-wrap: nowrap; gap: 8px; }
+  .t-input { min-height: 42px; scroll-margin: 60px 0 120px; }
+  .t-login .btn { min-height: 42px; }
+  .t-hello { font-size: .9375rem; }
+  .t-music { right: max(10px, env(safe-area-inset-right)); bottom: 8px; font-size: .75rem; padding: 6px 12px; min-height: 40px; }
+}
+
+/* ----- 小視窗、詢問、擲骰：高度不夠就自己捲，按鈕都按得到 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mini-layer { display: flex; overflow-y: auto; padding: 8px max(10px, env(safe-area-inset-left)); }
+  .mini-card { margin: auto; max-height: none; padding: 14px 20px; gap: 8px; }
+  .mini-card.wide, .mini-card.ad-modal { max-height: none; overflow: visible; }
+  .mini-card h2 { font-size: 1.25rem; }
+  .mini-card.qk-modal h2, .mini-card.uk-modal h2 { font-size: 1.25rem; }
+  .mini-card .btn { min-height: 40px; }
+  .ask { bottom: calc(var(--status-real, var(--status-h)) + 8px); padding: 10px 16px; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); overflow-y: auto; }
+  .ask.ad-ask { max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); }
+  .ask p { margin: 0 0 8px; }
+  .ask .btn, .ask-btns .btn { min-height: 40px; }
+  /* 擲骰：左邊骰盤、右邊文字 */
+  .fx-overlay { padding: 8px; }
+  .fx-roll-card { width: min(680px, 100%); max-height: calc(100dvh - 16px); padding: 12px 18px 10px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: 18px; align-items: center; text-align: center; }
+  .fx-roll-card .fx-roll-tray { grid-column: 1; grid-row: 1 / span 4; margin-top: 0; }
+  .fx-roll-card .fx-roll-title { grid-column: 2; grid-row: 1; font-size: 17px; align-self: end; }
+  .fx-roll-card .fx-roll-sub { grid-column: 2; grid-row: 2; margin-top: 2px; font-size: 13px; }
+  .fx-roll-card .fx-roll-outcome { grid-column: 2; grid-row: 3; align-self: center; font-size: 17px; line-height: 26px; }
+  .fx-roll-card .fx-roll-more { grid-column: 2; grid-row: 4; align-self: start; margin-top: 2px; }
+  .fx-roll-card .fx-tray { --fx-tray-h: 136px; gap: 6px; }
+  .fx-tray-total { font-size: 34px; line-height: 40px; }
+  .fx-spot-card { max-height: calc(100dvh - 16px); overflow-y: auto; }
+}
+
+/* ----- 開場：三個參觀者的位子並排 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .t-wrap:has(.vs-wrap) { justify-content: flex-start; padding-top: 6px; }
+  .t-wrap:has(.vs-wrap) .t-name { font-size: clamp(24px, 4.4vw, 40px); }
+  .t-wrap:has(.vs-wrap) .t-orn, .t-wrap:has(.vs-wrap) .t-en, .t-wrap:has(.vs-wrap) .t-tag { display: none; }
+  .vs-wrap { gap: 6px; }
+  .vs-head { flex-direction: row; font-size: .75rem; gap: 0 10px; }
+  .vs-head b { font-size: .875rem; }
+  .vs-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .vs-card { padding: 12px 10px 8px; gap: 6px; }
+  .vs-badge { width: 36px; height: 36px; }
+  .vs-name { font-size: 1rem; }
+  .vs-no { font-size: .75rem; }
+  .vs-stat { padding: 3px 8px; }
+  .vs-acts .btn { min-height: 40px; padding: 0 10px; font-size: .8125rem; }
+  .t-actions.vs-free .btn { min-height: 40px; }
+  .t-hello { margin-top: 4px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .t-music { top: 8px; bottom: auto; }
+  .vs-stat { flex-direction: column; align-items: flex-start; gap: 0; }
+  .vs-stat b { white-space: nowrap; }
+}
+
+/* ----- 各房間：把「直拿」折成一欄的版面還原成左右分欄（寬度夠），尺寸縮小 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* 手作坊：左邊青蛙固定著，右邊分頁、卡片、做的按鈕、工具 */
+  .scr-workshop { display: grid; grid-template-columns: 170px minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  .scr-workshop > * { grid-column: 2; }
+  .scr-workshop > .room-head { grid-column: 1 / -1; }
+  .scr-workshop .ws-top { display: contents; }
+  .scr-workshop .ws-stage { grid-column: 1; grid-row: 2 / span 8; order: 0; position: sticky; top: calc(var(--nav-h) + 6px); padding-top: 0; }
+  .scr-workshop .ws-tabs { order: 1; margin: 0 0 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .scr-workshop .ws-afraid { order: 2; margin-top: 0; }
+  .scr-workshop .ws-cards { order: 3; min-height: 0; padding-bottom: 6px; }
+  .scr-workshop .ws-info { order: 4; margin-top: 4px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: start; }
+  .scr-workshop .ws-tools { order: 5; margin-top: 4px; }
+  .ws-tabs::-webkit-scrollbar { display: none; }
+  .tab { min-height: 40px; }
+  .ws-stage .frog { width: 150px; height: 150px; }
+  .pedestal { width: 160px; height: 34px; }
+  .ws-info .placard { max-width: none; padding: 8px 12px; }
+  .ws-info .poss { grid-column: 1 / -1; align-items: baseline; }
+  .ws-info .poss-l { width: auto; }
+  .poss-n { font-size: 1.4rem; }
+  .ws-info .ws-make { grid-column: 2; grid-row: 1; }
+  .hold-hint { margin: 0 0 4px; font-size: .75rem; }
+  .origin-wrap { grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: 18px; }
+  .pl-top { grid-template-columns: minmax(0, 1fr) minmax(220px, 290px); gap: 16px; }
+  .pillow-art { width: min(200px, 40vh); height: min(200px, 40vh); }
+  .cx-wrap { grid-template-columns: minmax(0, 1fr) minmax(200px, 260px); gap: 14px; }
+  .cx-grid { grid-template-columns: repeat(auto-fill, minmax(24px, 1fr)); }
+  .cx-detail, .fit-wrap { position: sticky; top: calc(var(--nav-h) + 8px); }
+  .hall-wrap { grid-template-columns: minmax(0, 1fr) minmax(190px, 230px); gap: 14px; }
+  .hall-room { grid-template-columns: repeat(3, 1fr); gap: 14px 10px; padding: 8px 0; }
+  .ped-art { width: 100px; height: 100px; }
+  .ped-block { width: 96px; height: 48px; }
+  .lib-wrap { grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); gap: 14px; margin-top: 12px; }
+  .sheet, .fusion-wrap, .team-wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .sheet-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .floors { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .job-grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .job { padding: 8px 10px; }
+  .draw-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .lg-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+  .corridor { padding: 10px 24px 14px; gap: 40px; margin: 0 -14px; }
+  .frame { height: min(240px, 52vh); }
+  .set-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .set-cols .rules { position: static; }
+  .vol-row { grid-template-columns: 7em minmax(0, 1fr) 2.2em; }
+}
+
+/* ----- 房間標題：回大廳還是在標題下面靠左（不要改回去），只是縮小；花紋線縮成壹條細線 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .room-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 2px 14px; padding-bottom: 6px; margin-bottom: 8px; }
+  .room-head > h1 { grid-column: 1; grid-row: 1; }
+  .room-head > .sub { grid-column: 2; grid-row: 1; flex: none; min-width: 0; }
+  .room-head > .rh-row { grid-column: 1; grid-row: 2; }
+  .room-head > .head-tools { grid-column: 2; grid-row: 2; margin: 0; }
+  .room-head > :not(h1):not(.sub):not(.rh-row):not(.head-tools) { grid-column: 1 / -1; }
+  .room-head .head-tools .btn { min-height: 40px; padding: 0 14px; font-size: .8125rem; }
+  .room-head::after { height: 1px; }
+  .room-head h1 { font-size: 1.25rem; letter-spacing: .16em; }
+  .room-head .rh-row { margin-top: 0; flex: none; }
+  .rh-back { min-height: 40px; padding: 2px 12px; font-size: .8125rem; }
+  .room-head .head-tools { margin-top: 0; flex: none; }
+}
+
+/* ----- 畫廊：走廊先看到，規則說明放下面；骰盤矮壹點；標題旁的工具跟回大廳同壹排 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-gallery { display: flex; flex-direction: column; }
+  .scr-gallery > .corridor { order: 1; }
+  .scr-gallery > .limit-box { order: 2; margin: 0 0 10px; padding: 8px 12px; }
+  .scr-gallery > .hint { order: 3; margin-top: 4px; }
+  .limit-box p { font-size: .8125rem; line-height: 1.5; }
+  .fx-tray { --fx-tray-h: 128px; gap: 6px; }
+  .fx-tray-foot { height: 88px; }
+  .fx-tray-readout, .fx-tray-cta { gap: 4px; }
+}
+
+/* ----- 地下收藏庫（單人走房間）：左邊場景和隊員，右邊房間卡和選項 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-cellar:has(> .cellar-stage) { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 14px; align-items: start; }
+  .scr-cellar:has(> .cellar-stage) > .room-head { grid-column: 1 / -1; }
+  .scr-cellar:has(> .cellar-stage) > .cellar-stage { grid-column: 1; grid-row: 2; }
+  .scr-cellar:has(> .cellar-stage) > .team-bar { grid-column: 1; grid-row: 3; margin: 8px 0 0; gap: 6px; }
+  .scr-cellar:has(> .cellar-stage) > .note-card { grid-column: 2; grid-row: 2 / span 2; margin: 0; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); overflow-y: auto; padding: 14px 16px; }
+  .scr-cellar:has(> .cellar-stage) > :not(.room-head):not(.cellar-stage):not(.team-bar):not(.note-card) { grid-column: 2; }
+  .cellar-scene { margin: 0 auto 6px; }
+  .tb-member .si-art { width: 44px; height: 44px; }
+  .room-card .room-title { margin: 6px 0 2px; font-size: 1.125rem; }
+  .note-card { min-height: 0; }
+  .nc-text { margin: 8px 0 6px; font-size: .9375rem; line-height: 1.65; flex: none; }
+  .choices .btn { min-height: 44px; padding: 6px 14px; }
+  .cs-hint { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .nc-text p { margin: 0 0 6px; }
+}
+
+/* ----- 揭曉：左邊青蛙和骰盤、右邊結果 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-reveal { grid-template-columns: minmax(0, 1fr) minmax(220px, 310px); gap: 6px 18px; min-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); }
+  .rv-stage { min-height: 0; grid-row: 1; grid-column: 1; }
+  .rv-tray { grid-row: 2; grid-column: 1; }
+  .rv-panel { grid-row: 1 / span 2; grid-column: 2; gap: 8px; }
+  .rv-frog { width: min(200px, 48vh); height: min(200px, 48vh); margin-bottom: -24px; }
+  .rv-spot { width: 360px; height: 100%; top: -20px; }
+  .rv-num { font-size: 2.6rem; }
+  .rv-r { font-size: 1rem; }
+  .rv-panel .placard { padding: 10px 14px; }
+  .rv-btns .btn { min-height: 40px; }
+  .rv-tray .fx-tray { max-width: 320px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .pedestal.big, .rv-stage .pedestal { width: 220px; height: 50px; }
+}
+
+/* ----- Hamachi 賭場：牌桌左右分欄、輸入格和按鈕在右邊 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-casino .nb-top, .nb-casino .nb-top-r { flex-wrap: nowrap; gap: 8px; }
+  .nb-casino .nb-plaque h2 { font-size: .9375rem; letter-spacing: .1em; }
+  .cas-chips { padding: 2px 10px; font-size: .8125rem; }
+  .cas-chips b { font-size: 1rem; }
+  .nb-casino .nb-tab { min-height: 40px; padding: 0 10px; font-size: .8125rem; }
+  .nb-casino .nb-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .nb-casino .nb-tabs::-webkit-scrollbar { display: none; }
+  .cas-foot { display: none; }
+  .cas-body { padding-bottom: 4px; }
+  .cas-body:has(> .cas-felt) { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 8px 12px; align-content: start; align-items: start; grid-auto-rows: max-content; }
+  .cas-body:has(> .cas-felt) > * { grid-column: 2; }
+  .cas-body:has(> .cas-felt) > .cas-house, .cas-body:has(> .cas-felt) > .cas-rules { grid-column: 1 / -1; }
+  .cas-body:has(> .cas-felt) > .cas-felt { grid-column: 1; grid-row: 2 / span 3; min-height: 120px; padding: 8px 10px; gap: 8px; }
+  .cas-body:has(> .cas-felt) > .cas-say { max-height: 96px; min-height: 0; padding: 6px 10px; }
+  .cas-card { width: 40px; height: 58px; }
+  .cas-card b, .cas-card i { font-size: 1.0625rem; }
+  .cas-hand { min-height: 60px; gap: 6px; }
+  .cas-betbox, .cas-sec { padding: 8px 10px; gap: 6px; }
+  .cas-bet { flex: 1 1 100px; min-height: 40px; }
+  .cas-acts .btn, .cas-betrow .btn, .cas-quick .btn { min-height: 40px; }
+  .cas-menu li, .cas-list li, .cas-packs li { flex-wrap: nowrap; }
+  .cas-menu, .cas-list, .cas-packs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cas-tb-seats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+  .nb-frame.nb-table { width: 100%; }
+  .sl-machine { --sl-h: 38px; padding: 8px 8px 8px; margin: 4px auto 8px; }
+  .sl-payline { top: calc(6px + var(--sl-h)); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .sl-machine { --sl-h: 40px; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 4px 14px; align-items: center; max-width: 640px; padding: 8px 10px 8px; }
+  .sl-top { grid-column: 1; grid-row: 1; margin-bottom: 0; }
+  .sl-body { grid-column: 1; grid-row: 2; }
+  .sl-stars { grid-column: 2; grid-row: 1; margin: 0; }
+  .sl-plate { grid-column: 2; grid-row: 2; min-height: 0; padding: 6px 8px; }
+  .sl-window { gap: 3px; padding: 6px; }
+  .sl-payline { top: calc(6px + var(--sl-h)); }
+  .sl-name { font-size: 1rem; }
+  .sl-lever { flex-basis: 34px; min-height: 40px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .cas-body:has(> .cas-felt):not(:has(> .cas-house)) > .cas-felt { grid-row: 1 / span 3; }
+}
+/* 擲骰的時候展台是空的：橫拿高度不夠，先不放展台，骰盤放左上 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-reveal.rolling .rv-stage { display: none; }
+  .scr-reveal.rolling .rv-tray { grid-row: 1; grid-column: 1; }
+  .scr-reveal.rolling .rv-panel { grid-row: 1; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-reveal { align-items: start; }
+  .rv-tray, .rv-stage { align-self: start; }
+  .scr-reveal .rv-panel { position: static; }
+}
+
+/* ----- 合作地下收藏庫：左邊舞台和房間（自己捲）、右邊隊員和聊天（自己捲），輸入列貼在右下 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-frame.nb-coop { height: 100%; padding: 0 max(8px, env(safe-area-inset-left)) 4px; border-radius: 0; }
+  .nb-layer:has(.nb-coop) { padding: 0; }
+  .nb-coop .nb-surface { padding: 6px; }
+  .nb-coop .nb-plaque h2 { font-size: .9375rem; letter-spacing: .12em; }
+  .cx-run { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 38%); grid-template-rows: minmax(0, 1fr); gap: 10px; overflow: hidden; }
+  .cx-main { overflow-y: auto; flex: 1 1 auto; }
+  .cx-side { overflow-y: auto; flex: 1 1 auto; gap: 6px; }
+  .cx-stage { max-height: 76px; }
+  .cx-stage .cs-frog { left: calc((var(--i) + .5) * (100% / var(--n)) - min(6.5%, 50% / var(--n))); width: min(13%, 100% / var(--n)); }
+  .cx-stage .cs-tag { font-size: .6875rem; padding: 1px 6px; }
+  .cx-stage .cellar-scene { margin-top: -14%; }
+  .cx-head { gap: 8px; }
+  .cx-head h3 { font-size: 1rem; }
+  .cx-mates { flex-direction: column; flex-wrap: nowrap; }
+  .cx-mate { flex: none; }
+  .cx-choices .btn { flex-wrap: nowrap; min-height: 44px; }
+  .cx-choices .btn small { margin-left: 10px; flex: 0 0 auto; }
+  .cx-log { flex: 1 1 60px; min-height: 60px; max-height: 120px; }
+  .cx-chat { display: contents; }
+  .cx-typerow { position: sticky; bottom: 0; z-index: 2; padding: 2px 0; background: #3B2617; }
+  .nb-frame .cx-typerow .btn.small, .cx-type { min-height: 40px; }
+  .cx-ctrl { gap: 4px; }
+  .cx-members { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .cx-floor span { display: inline; }
+  .cx-floor { min-height: 40px; padding: 4px 10px; }
+  .cx-tr { grid-template-columns: minmax(56px, auto) 1fr auto; }
+  .cx-san { grid-column: auto; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .brand { display: inline-flex; align-items: center; min-height: 40px; }
+  .lf-chip { min-height: 40px; }
+}
+
+/* ----- 點擊範圍至少 40px ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .seg-btn, .chip-btn, .strip-filter, .btn.small, .tab { min-height: 40px; }
+  .hold, .tab-wrap .hold { width: 40px; min-width: 40px; height: 40px; flex: 0 0 40px; }
+  .seg-btn { min-width: 40px; }
+  .chip-btn { min-width: 40px; justify-content: center; }
+  .t-link { min-height: 40px; }
+}
+
+/* ----- 簽到日曆：摘要壹排、日曆和當天的細節左右分欄 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sg-sum { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .sg-sum-c.prize { grid-column: auto; order: 0; }
+  .sg-cal { grid-template-columns: minmax(0, 1.5fr) minmax(210px, 1fr); gap: 10px; }
+  .sg-day { min-height: 44px; }
+  .sg-card { padding: 14px 16px 12px; gap: 10px; }
+}
+
+/* ----- 地下收藏庫（還沒下去）：先挑樓層和隊員，本週異狀放後面 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-cellar:not(:has(> .cellar-stage)) { display: flex; flex-direction: column; }
+  .scr-cellar:not(:has(> .cellar-stage)) > * { order: 6; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .room-head { order: 0; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .floors { order: 1; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .team-wrap { order: 2; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .strip-wrap { order: 3; }
+  .floors { margin-bottom: 8px; }
+}
+
+/* ----- 畫廊靠近看：畫在左邊、說明在右邊 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .focus-layer { padding: 8px max(14px, env(safe-area-inset-left)); justify-content: flex-start; overflow-y: auto; }
+  .focus-layer > :first-child { margin-top: auto; }
+  .focus-layer > :last-child { margin-bottom: auto; }
+  .focus-inner { flex-direction: row; flex-wrap: nowrap; gap: 20px; align-items: center; justify-content: center; }
+  .focus-art { height: min(220px, 56vh); flex: 0 0 auto; }
+  .focus-info { min-width: 0; flex: 1 1 260px; max-width: 420px; gap: 6px; }
+  .focus-info .btn { min-height: 40px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .tab, .tab-wrap { white-space: nowrap; }
+  .tab-wrap { flex: 0 0 auto; }
+}

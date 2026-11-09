@@ -16,6 +16,7 @@ import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/l
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
+import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 
@@ -542,6 +543,9 @@ SCREENS.settings = root => {
       h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,
         h("p", { class: "sub" }, "台灣時間每天 05:00 換壹天，每週壹 05:00 換週，大家的壹天都壹樣。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"),
         P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P), 3)} 天（你第壹次進館那天是第 1 天）。`) : null)),
+      h("div", { class: "set-row set-orient" }, h("span", null, "手機直拿提醒"), h("div", null,
+        h("div", { class: "seg" }, [[false, "提醒我轉橫"], [true, "不用提醒"]].map(([v, n]) => h("button", { type: "button", class: "seg-btn" + (orientSkipped() === v ? " on" : ""), onClick: () => { setOrientSkip(v); rerender(); } }, n))),
+        h("p", { class: "sub" }, "手機直拿時，會請你把手機轉橫（橫著比較好玩）。只記在這台裝置，電腦和平板不會跳。"))),
       h("div", { class: "set-row" }, h("span", null, "聲音"), seg("muted", [[false, "打開"], [true, "靜音"]])),
       h("div", { class: "set-row set-vol" }, h("span", null, "音量"), volumeBox()),
       h("div", { class: "set-row set-demo" }, h("span", null, "試聽"), demoBox()),
