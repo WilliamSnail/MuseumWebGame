@@ -3,7 +3,7 @@
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
-const { parseOptions, newRoomFloor, runWeekly } = require("../tools/weekly_board.cjs");
+const { parseOptions, isDaily, newRoomFloor, runWeekly, runDaily } = require("../tools/weekly_board.cjs");
 const { footer, MAX } = require("../tools/discord_post.cjs");
 
 const tw = s => Date.parse(s + "+08:00"); // 台灣時間 → 毫秒
@@ -405,6 +405,44 @@ const seedOf = G => ({
 });
 const run = (G, db, o = {}) => { const q = quiet(); return runWeekly(Object.assign({ db, board: G, opts: { now: RUN }, env: {}, log: q.log, warn: q.warn, floorOf: () => 1 }, o)).then(r => Object.assign(r, { lines: q.lines })); };
 
+const LIVE_WED = Date.parse("2026-11-18T01:00:00Z"); // 台灣週三，W47 進行中
+const daily = (G, db, o = {}) => { const q = quiet(); return runDaily({ db, board: G, opts: Object.assign({ now: LIVE_WED }, o), log: q.log, floorOf: () => 1 }).then(r => Object.assign(r, { lines: q.lines })); };
+T("每天更新：只寫 boards/latest，標 live，沒有建議和提醒，不碰週快照", async G => {
+  const db = fakeDb(seedOf(G));
+  const r = await daily(G, db);
+  assert.strictEqual(r.status, "updated");
+  assert.strictEqual(r.week, "2026-W47");
+  const latest = db.docs.get("boards/latest");
+  assert.strictEqual(latest.live, true); assert.strictEqual(latest.week, "2026-W47");
+  assert.deepStrictEqual([latest.tips, latest.nudges], [[], []]);
+  assert.strictEqual(db.docs.has("boards/2026-W47"), false);
+  assert.strictEqual(db.docs.has("boards/2026-W47/private/people"), false);
+  const pub = JSON.stringify(latest) + r.lines.join("\n");
+  assert.ok(!pub.includes("uid-")); assert.ok(!pub.includes(FAKE_EMAIL));
+  const v = G.boardViewOf(latest);
+  assert.strictEqual(v.live, true); assert.ok(G.boardPeriodText(v).endsWith("（目前）"));
+  assert.strictEqual(G.boardViewOf({ week: "2026-W46", boards: [] }).live, false);
+});
+T("每天更新：週壹跳過，加 force 才算；只印不寫；之後週壹的正式結算照常", async G => {
+  const db = fakeDb(seedOf(G)), sent = [];
+  assert.strictEqual((await daily(G, db, { now: RUN })).status, "monday");
+  assert.strictEqual(db.docs.has("boards/latest"), false);
+  assert.strictEqual((await daily(G, db, { dryRun: true })).status, "dry");
+  assert.strictEqual(db.docs.has("boards/latest"), false);
+  assert.strictEqual((await daily(G, db, { now: RUN, force: true })).status, "updated");
+  assert.strictEqual(db.docs.get("boards/latest").live, true);
+  const r = await run(G, db, { env: DISCORD, fetcher: okFetch(sent) });
+  assert.strictEqual(r.status, "posted");
+  assert.strictEqual(sent.length, 1);
+  assert.notStrictEqual(db.docs.get("boards/latest").live, true, "正式結算蓋回去");
+});
+T("每天更新：沒人有進度就留著原本的榜；排程和手動的判斷", async G => {
+  const db = fakeDb({ "boards/latest": { week: "2026-W46", boards: [] } });
+  assert.strictEqual((await daily(G, db)).status, "empty");
+  assert.strictEqual(db.docs.get("boards/latest").week, "2026-W46");
+  assert.ok(isDaily({ daily: "true" }) && isDaily({ daily: true }) && isDaily({}, ["--daily"]) && isDaily({}, [], "35 21 * * *"));
+  assert.ok(!isDaily({ daily: "false" }) && !isDaily({}, [], "15 21 * * 0") && !isDaily(undefined));
+});
 T("正常的一次：快照先寫、發一則、記 posted；再跑不發第二次", async G => {
   const db = fakeDb(seedOf(G)), sent = [];
   const r = await run(G, db, { env: DISCORD, fetcher: okFetch(sent) });

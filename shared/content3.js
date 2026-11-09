@@ -951,6 +951,7 @@ export const BOARD_TEXT = {
   panelLabel: "本週榜單（只有館友看得到）",
   panelPeriod: "統計期間：{x}（週壹 05:00 換週）",
   panelFirst: "這是第壹份榜單，還沒有上週可以比。",
+  panelLive: "這週到目前為止，每天清晨更新；週壹換週時才是正式結算。",
   panelLoading: "正在讀榜單……",
   panelNone: "第壹份榜單還沒貼出來。每週壹早上 5 點多會張貼上壹週的榜單。",
   panelEmpty: "這週還沒有人上榜。下週壹早上再來看看。",

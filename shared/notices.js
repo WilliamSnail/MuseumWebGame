@@ -326,6 +326,16 @@ export const NOTICES = [
     cta: { label: "去拚經濟", panel: "casino", params: { tab: "econ" } },
   },
   {
+    id: "board-daily", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "排行榜每天更新了", publish: "2026-11-09", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "排行榜不用等到週壹了：每天清晨會更新這週到目前為止的名次，榜單上會標「目前」。",
+        "週壹換週時才是正式結算，公告也還是週壹才發。",
+      ]],
+    ],
+  },
+  {
     id: "casino-live", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "賭場多了「實況」：開播、斗內，金額隨機", publish: "2026-11-09", expire: "2027-12-31",
     sections: [
