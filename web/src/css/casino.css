@@ -137,3 +137,10 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-seat.tb .cas-card b, .cas-seat.tb .cas-card i { font-size: 1.125rem; }
 .cas-body > * { flex-shrink: 0; } /* 空間不夠就捲動，不要把每一塊壓扁（壓扁了牌會跑出框外） */
 .cas-invite { display: flex; flex-direction: column; gap: 4px; }
+
+/* 狀態列的籌碼（翊文 11-09）：手機放不下，可能性收進 ⓘ 展開 */
+#st-chips[hidden] { display: none; }
+#st-chips .st-num { white-space: nowrap; }
+@media (max-width: 760px) {
+  #status:not(.open) #st-chips:not([hidden]) ~ #st-poss { display: none; }
+}

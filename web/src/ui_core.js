@@ -2,6 +2,7 @@
 //  畫面：共用的部分（導覽列、狀態列、燈光、理智檢定流程）
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
+import { casExact, casNum } from "../../shared/casino.js";
 import { NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
 import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT } from "../../shared/content3.js";
@@ -365,10 +366,11 @@ export function buildStatus() {
     h("span", { class: "st-label" }, label), h("span", { class: "st-track" }, h("i", { class: "st-fill" }), h("i", { class: "st-dot" })), h("span", { class: "st-val" }, h("b", { class: "st-num" }, "0"), h("small", { class: "st-max" }, "／99")));
   const numItem = (id, label, onClick) => h(onClick ? "button" : "div", { class: "st-item", id: "st-" + id, type: onClick ? "button" : null, onClick },
     h("span", { class: "st-label" }, label), h("b", { class: "st-num" }, "0"));
+  const chipsItem = () => numItem("chips", "籌碼", () => { if (PANELS.casino) PANELS.casino(); }); // 賭場的籌碼（翊文 11-09），點了打開賭場
   const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋還有多久換日（-s 是手機用的短版）
   const items = free
-    ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), numItem("jobs", "委託", () => navTo("commission"))]
-    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
+    ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), chipsItem(), numItem("jobs", "委託", () => navTo("commission"))]
+    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), chipsItem(), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
       h("button", { type: "button", class: "st-item st-follow", id: "st-follow", hidden: true })]; // 每週劇情追蹤的那條線的下壹步（ui_story.js 的 trackBar）
   const extra = h("div", { class: "st-extra", id: "st-extra" });
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
@@ -455,6 +457,16 @@ function labelMenu() {
   if (mb.classList.contains("has-fresh") && matchMedia("(max-width: 760px)").matches) bits.push("有新解開的東西");
   mb.setAttribute("aria-label", bits.length ? `選單（${bits.join("、")}）` : "選單");
 }
+// 狀態列的籌碼：沒登入不顯示；數字從伺服器來（ui_casino.js 的 casino peek、每次賭場的回覆）
+export function drawChips() {
+  const box = $("#st-chips");
+  if (!box) return;
+  box.hidden = !UI.net || typeof UI.chips !== "number";
+  if (box.hidden) return;
+  $(".st-num", box).textContent = casNum(UI.chips);
+  box.title = `籌碼 ${casExact(UI.chips)}（只在賭場用，不是真錢）`;
+}
+export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }
 export function updateStatus(instant) {
   audioTrack(instant);
   syncFresh();
@@ -477,6 +489,7 @@ export function updateStatus(instant) {
     box.style.setProperty("--p", pct + "%");
   };
   updateDayClock();
+  drawChips();
   const jobs = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
   if (isFree(P)) {
     set("poss", 0, `${num(possibilities(P))} 種`);
