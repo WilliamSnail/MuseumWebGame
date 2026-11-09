@@ -39,10 +39,15 @@ function gh() {
   const win = "C:\\Program Files\\GitHub CLI\\gh.exe";
   return fs.existsSync(win) ? win : "gh";
 }
+// 失敗的時候印什麼：測試從第壹個 ✗ 開始（不然會被後面過的項目蓋掉），其他的印最後 25 行
+function failText(out) {
+  const lines = out.trim().split("\n"), i = lines.findIndex(l => l.startsWith("✗"));
+  return (i >= 0 ? lines.slice(i, i + 25) : lines.slice(-25)).join("\n");
+}
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { cwd: ROOT, encoding: "utf8", shell: opts.shell || false, input: opts.input, maxBuffer: 1 << 26 });
   if (r.error) throw r.error;
-  if (r.status !== 0 && !opts.ok) throw new Error(`${path.basename(cmd)} ${args.slice(0, 3).join(" ")} 失敗：\n${(r.stdout + r.stderr).trim().split("\n").slice(-25).join("\n")}`);
+  if (r.status !== 0 && !opts.ok) throw new Error(`${path.basename(cmd)} ${args.slice(0, 3).join(" ")} 失敗：\n${failText(r.stdout + r.stderr)}`);
   return Object.assign(r, { out: (r.stdout || "").trim() });
 }
 const git = (args, opts) => run("git", ["-c", "core.quotepath=false", ...args], opts);

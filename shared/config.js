@@ -257,6 +257,8 @@ export const NUM = {
       { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
       { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
     ],
+    // 單人 21 點的連勝、連敗（翊文 11-09：「21點連續贏會恢復一點心情，連續輸會降一點san值」，決定 0049）。數字全部先照這樣，等翊文
+    streak: { winN: 3, mood: 2, loseN: 3, san: 1, moodDay: 6, sanDay: 3 }, // 連贏 winN 把心情 +mood、連輸 loseN 把理智 -san；每天（05:00 換日）心情最多加 moodDay、理智最多扣 sanDay；平手不算；理智最低留到 1
     // 地下探險撿籌碼（決定 0047，翊文 11-09：「讓地下探險劇情也有機會可以拿到一點點籌碼」）。先照這樣，等翊文：
     // 走完壹個房間擲壹次，chance 的機率撿到 min～max（每 step 壹級）；壹天最多撿 perDay 次。對照：最小的注 100、壹杯麥茶 1,750、免費大禮包最小 10,000、換壹點靈感 200,000，壹天最多也只有 6,000
     cellarFind: { chance: 0.25, min: 500, max: 2000, step: 100, perDay: 3 },
