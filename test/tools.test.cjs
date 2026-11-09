@@ -1,6 +1,7 @@
 // 給 AI 重複用的腳本：tools/ship.cjs、local_game.cjs、new_doc.cjs、edit_lib.cjs（只測規則，不會真的合併、開伺服器）
 const assert = require("assert");
-const { parseArgs, commitText, prBody, onlyIndexConflict, branchOk } = require("../tools/ship.cjs");
+const { parseArgs, commitText, prBody, branchOk } = require("../tools/ship.cjs");
+const { keepBoth, canAuto } = require("../tools/merge_main.cjs");
 const { moveEventNow, rtdbPort } = require("../tools/local_game.cjs");
 const { nextDecision, safeName, logText, decisionText } = require("../tools/new_doc.cjs");
 const { editorOf } = require("../tools/edit_lib.cjs");
@@ -28,10 +29,12 @@ T("ship：commit 和 PR 的署名", () => {
   assert.ok(b.trim().endsWith("https://claude.com/claude-code)"));
   assert.strictEqual(prBody(b).split("Generated with").length, 2, "不會多壹行");
 });
-T("ship：衝突只有日誌索引才自己解", () => {
-  assert.ok(onlyIndexConflict(["維護日誌/README.md"]));
-  assert.ok(!onlyIndexConflict([]));
-  assert.ok(!onlyIndexConflict(["維護日誌/README.md", "shared/config.js"]));
+T("merge：公告兩邊都留，開頭的 { 補回去；其他的只留內容；不認得的檔不自動解", () => {
+  const c = "頭\n  {\n<<<<<<< HEAD\n    id: 1,\n  },\n=======\n    id: 2,\n  },\n>>>>>>> origin/main\n];\n";
+  assert.strictEqual(keepBoth(c, "notice"), "頭\n  {\n    id: 1,\n  },\n  {\n    id: 2,\n  },\n];\n");
+  assert.strictEqual(keepBoth("<<<<<<< a\nA\n=======\nB\n>>>>>>> b\n"), "A\nB\n");
+  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md"));
+  assert.ok(!canAuto("shared/logic.js"));
 });
 T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別場不動；找不到回 null", () => {
   const w = { events: [{ id: "a", date: "2026-11-11", from: "20:00", to: "22:00" }, { id: "b", date: "2026-11-14", from: "20:00", to: "22:00" }] };
