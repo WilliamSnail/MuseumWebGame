@@ -9,6 +9,7 @@ name: 每週排行榜
 on:
   schedule:
     - cron: "15 21 * * 0" # UTC 週日 21:15 ＝台灣週一 05:15（05:00 換週之後）
+    - cron: "35 21 * * *" # 每天台灣 05:35 更新這週到現在的榜單（只寫 boards/latest，不發 Discord，週一跳過；翊文 11-09）
   workflow_dispatch:
     inputs:
       dry_run:
@@ -18,6 +19,11 @@ on:
         default: true
       force:
         description: 這週發過了也重算、再發一次（數字會變成現在的）
+        required: false
+        type: boolean
+        default: false
+      daily:
+        description: 只更新這週到現在的榜單（不發 Discord）；週一要加 force
         required: false
         type: boolean
         default: false
@@ -55,6 +61,7 @@ jobs:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          BOARD_SCHEDULE: ${{ github.event.schedule }}
         run: |
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/weekly_board.cjs

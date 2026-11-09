@@ -31,7 +31,7 @@ function card(b) {
 function bodyOf(v) {
   const list = (title, cls, items) => (items.length ? h("section", { class: "rk-note " + cls }, h("h3", null, title), h("ul", null, items)) : null);
   return h("div", { class: "rk-body" },
-    h("p", { class: "rk-period" }, fill(T.panelPeriod, boardPeriodText(v)), v.first ? h("small", null, T.panelFirst) : null),
+    h("p", { class: "rk-period" }, fill(T.panelPeriod, boardPeriodText(v)), v.first ? h("small", null, T.panelFirst) : null, v.live ? h("small", null, T.panelLive) : null),
     v.empty ? h("p", { class: "nb-empty" }, T.panelEmpty) : h("div", { class: "rk-grid" }, v.boards.map(card)),
     list(T.tipsHead, "tips", v.tips.map(t => h("li", null, t))),
     list(T.nudgesHead, "nudges", v.nudges.map(n => h("li", null, nameNode(n.nick), " ", n.text))),

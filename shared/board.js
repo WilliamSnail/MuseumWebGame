@@ -58,6 +58,14 @@ export function boardWeekOf(now = nowMs()) {
   return { label: isoWeek(from), prev: isoWeek(addDays(from, -7)), next: isoWeek(monday), from, to: addDays(monday, -1), at: dayStartMs(monday) - 1000, live: now };
 }
 
+// 每天更新用（翊文 11-09：「排行榜可以每天都更新嗎」）：還在進行中的這壹週，算到現在為止。prev 是剛過完的那壹週（相減的基準）
+export function boardLiveWeekOf(now = nowMs()) {
+  const monday = weekMonday(taipeiDay(now));
+  return { label: isoWeek(monday), prev: isoWeek(addDays(monday, -7)), next: isoWeek(addDays(monday, 7)), from: monday, to: addDays(monday, 6), at: now, live: now };
+}
+// 今天是這週的第壹天（週壹）嗎：這天還是看上週的正式榜單，每天更新跳過，不然剛結算的榜會被幾乎空的新週蓋掉
+export const boardIsFirstDay = (now = nowMs()) => weekMonday(taipeiDay(now)) === taipeiDay(now);
+
 // ---------- 暱稱 ----------
 // 遊戲裡用的：去掉看不見的字、連續空白變一個、最多 12 個字（畫面只當純文字放）
 const brdPlain = s => String(s == null ? "" : s).replace(/[\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Cs}]/gu, " ").replace(/\s+/g, " ").trim();
@@ -241,7 +249,7 @@ export function boardViewOf(d) {
     return { id: def.id, emoji: def.emoji, title: typeof b.title === "string" && b.title ? text(b.title, 20) : def.title, all: !!def.all, rows };
   }).filter(Boolean);
   return {
-    week: text(d.week, 10), from: text(d.from, 10), to: text(d.to, 10), first: d.first === true, empty: d.empty === true || boards.every(b => !b.rows.length), posted: d.posted === true, boards,
+    week: text(d.week, 10), from: text(d.from, 10), to: text(d.to, 10), first: d.first === true, live: d.live === true, empty: d.empty === true || boards.every(b => !b.rows.length), posted: d.posted === true, boards,
     tips: asList(d.tips).filter(s => typeof s === "string").map(s => text(s, 100)),
     nudges: asList(d.nudges).filter(n => brdObj(n) && typeof n.text === "string").map(n => ({ nick: brdNick(n.nick), text: text(n.text, 60) })),
   };
@@ -249,7 +257,7 @@ export function boardViewOf(d) {
 // 11/09～11/15
 export function boardPeriodText(v) {
   const md = s => (typeof s === "string" && s.length === 10 ? s.slice(5).split("-").join("/") : "");
-  return `${md(v && v.from)}～${md(v && v.to)}`;
+  return `${md(v && v.from)}～${md(v && v.to)}${v && v.live ? "（目前）" : ""}`;
 }
 
 // ---------- Discord 公告 ----------
