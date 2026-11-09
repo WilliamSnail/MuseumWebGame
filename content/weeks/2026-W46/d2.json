@@ -1,0 +1,247 @@
+{
+  "day": 2,
+  "date": "2026-11-10",
+  "holiday": null,
+  "board": "招領箱裡多了壹隻手套；B2 的帽架披上了圍巾；書架多了 2 本書。",
+  "real": [
+    "台中的美術館從這個週末起有壹場藝術雙年展，展期會持續到年底。"
+  ],
+  "casino": {
+    "note": "招領櫃檯今天收到壹隻手套。荷官說，另壹隻也許在牌桌底下，還沒有找到。"
+  },
+  "books": [
+    {
+      "id": "2a",
+      "line": "w46-lost",
+      "title": "手套壹雙",
+      "spine": "手套",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「北風加強，後半夜最冷。」\n「我多披了壹件外套下去巡。」",
+        "箱子裡多了壹雙手套。\n招領單上寫得清清楚楚：\n「拾得物：手套壹雙。」",
+        "他把手套攤在燈下。\n左手的那隻在，\n右手的那隻不在。",
+        "他翻了箱底，翻了樓梯，\n連牆縫都用手電筒照過。\n「壹雙，只找到壹隻。」",
+        "招領單最下面多了壹行小字：\n「失主若來，請說另壹隻放哪。」\n(你把這句也抄進了紀錄)"
+      ]
+    },
+    {
+      "id": "2s",
+      "line": "season-2026-winter",
+      "title": "第壹張明信片",
+      "spine": "明信片",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "立冬之後的第壹個早晨，\n館門口的信箱裡多了壹張明信片。\n沒有署名，郵戳被雪蓋住了。",
+        "正面畫著雪夜。\n背面的字很大、很潦草：\n「今年冬天，館裡有幾隻佩佩要過冬？」",
+        "警衛把它釘在值班室的牆上。\n他照著數，寫下壹份名單，\n數了兩遍，兩遍都是同壹個數。",
+        "他又數了第三遍。\n這次他把名單翻過來看，\n背面比正面多了壹行。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d2a",
+      "kind": "read",
+      "book": "2a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d2b",
+      "kind": "cellar",
+      "floor": 1,
+      "giver": "yuga",
+      "says": "R，壹個人看店很忙。你替我去地下壹樓看看招領箱。",
+      "done": "R。沒有我的帳。算了，我去對帳。",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d2c",
+      "kind": "show",
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:金線"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w1",
+      "words": "北風壹夜沒停，箱子上的紙條被吹得嘩嘩響。"
+    }
+  ],
+  "show": {
+    "title": "壹隻的手套",
+    "intro": "北風吹了壹夜。招領箱旁邊新掛了幾幅畫，畫的都是只剩壹半的東西。",
+    "works": [
+      {
+        "id": "s2a",
+        "frame": "wood",
+        "fx": [],
+        "title": "只有壹隻的手套",
+        "lines": [
+          "手套攤在燈下，指頭還微微彎著。",
+          "旁邊的釘子上掛著空空的繩圈，像是在等另壹隻。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<radialGradient id='lamp' cx='50%' cy='42%' r='65%'><stop offset='0' stop-color='#e9c37a'/><stop offset='.55' stop-color='#6b4a2a'/><stop offset='1' stop-color='#1b120b'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='11' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='5' xChannelSelector='R' yChannelSelector='G'/></filter>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='8' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#lamp)'/>",
+          "<g filter='url(#r)'>",
+          "<path d='M70 190 Q66 140 82 120 L92 70 Q96 62 104 68 L106 112 L112 62 Q116 54 124 60 L124 112 L132 66 Q138 58 144 66 L142 116 L152 90 Q158 84 164 90 L158 140 Q172 170 160 214 Q150 244 112 248 Q74 244 70 190 Z' fill='#8a2f2a' stroke='#2a0e0c' stroke-width='3'/>",
+          "<path d='M84 222 Q112 232 150 222' fill='none' stroke='#d9b36a' stroke-width='4'/>",
+          "<path d='M86 150 Q112 160 146 148' fill='none' stroke='#5a1d1a' stroke-width='2'/>",
+          "<circle cx='190' cy='60' r='5' fill='#3a2a1a'/>",
+          "<path d='M190 65 Q200 90 186 110 Q176 126 190 140' fill='none' stroke='#c9a15a' stroke-width='3'/>",
+          "<path d='M40 262 L200 262' stroke='#2a1a0e' stroke-width='5'/>",
+          "</g>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s2b",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "圍了圍巾的白布",
+        "lines": [
+          "白布底下的形狀，被人細心地圍了壹圈圍巾。",
+          "圍巾打的結很整齊。地上有壹排很小的腳印，走到畫框外面就不見了。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='wall' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1c2530'/><stop offset='1' stop-color='#0c1016'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.45' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.88'/></radialGradient>",
+          "<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='4' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='5' xChannelSelector='R' yChannelSelector='G'/></filter>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#wall)'/>",
+          "<path d='M0 250 L240 240 L240 300 L0 300 Z' fill='#0a0d12'/>",
+          "<g filter='url(#r)'>",
+          "<path d='M84 250 Q76 200 88 150 Q92 110 120 96 Q148 110 152 150 Q164 200 156 250 Z' fill='#d8d4c8' stroke='#4a4a48' stroke-width='3'/>",
+          "<path d='M96 160 Q120 176 146 160' fill='none' stroke='#4a4a48' stroke-width='2'/>",
+          "<path d='M88 140 Q120 160 152 140 L154 160 Q120 182 86 160 Z' fill='#b3433a' stroke='#3a1512' stroke-width='3'/>",
+          "<path d='M142 156 Q150 190 144 214 L134 212 Q140 186 134 160 Z' fill='#b3433a' stroke='#3a1512' stroke-width='2'/>",
+          "<ellipse cx='60' cy='262' rx='5' ry='3' fill='#06080b'/>",
+          "<ellipse cx='72' cy='270' rx='5' ry='3' fill='#06080b'/>",
+          "<ellipse cx='48' cy='274' rx='5' ry='3' fill='#06080b'/>",
+          "<ellipse cx='36' cy='284' rx='5' ry='3' fill='#06080b'/>",
+          "</g>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s2c",
+        "art": "frog",
+        "pick": {
+          "顏色": "紅",
+          "心情": "傷心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "sepia"
+        ],
+        "frame": "plain",
+        "title": "找另壹隻的佩佩",
+        "lines": [
+          "牠站在樓梯口，手上只有壹隻手套。",
+          "牠不確定要找的是左手還是右手。"
+        ]
+      },
+      {
+        "id": "s2d",
+        "art": "portrait",
+        "variant": 1,
+        "fx": [
+          "dust"
+        ],
+        "frame": "gold",
+        "title": "圍巾剛好的肖像",
+        "lines": [
+          "畫中的人把圍巾圍得剛剛好。",
+          "畫框背面貼著「待領」，字很小、很整齊。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "hatrack",
+      "floor": 2,
+      "line": "w46-lost",
+      "title": "帽架上的圍巾",
+      "hint": "去 B2，看看雕像廳角落的帽架",
+      "intro": "雕像廳的角落立著壹個帽架。架上披滿了圍巾，每壹條都打著壹樣的結。",
+      "lines": [
+        "雕像身上的白布外面，也被人圍了壹圈。",
+        "地上有壹排很小的腳印，走到帽架就停了。"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "數壹數架上的圍巾",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "圍巾和雕像剛好壹樣多。最後壹條還沒有圍上去，被人放在帽架的最上面。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "你數到壹半就亂了。總覺得架子後面有人在小聲數。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把最上面那條拿下來",
+          "check": {
+            "type": "power",
+            "target": 15
+          },
+          "success": {
+            "text": "圍巾還是暖的。你把它放回去的時候，覺得有誰輕輕說了聲「謝謝」。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "圍巾像被什麼拉住了，你的手滑了壹下。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "替旁邊的雕像整理壹下結",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你把歪掉的結拉正。雕像沒有動，可是氣氛暖了壹點。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
