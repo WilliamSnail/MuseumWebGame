@@ -25,6 +25,7 @@ import * as casino from "../shared/casino.js";
 import * as casinoWeek from "../shared/casino_week.js";
 import * as casinoWallet from "../shared/casino_wallet.js";
 import * as casinoTable from "../shared/casino_table.js";
+import * as casinoFind from "../shared/casino_find.js";
 import * as board from "../shared/board.js";
 import * as events from "../shared/events.js";
 
@@ -32,7 +33,7 @@ let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoWallet, casinoTable, events })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoWallet, casinoTable, casinoFind, events })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -122,6 +123,15 @@ ok("賭場接得上 config、logic、logic3、story（11-09，決定 0040）", (
   const r = casinoWallet.casStepDeal(ctx, "1000");
   assert.ok(r.ok && r.view.player.cards.length === 2);
   assert.strictEqual(casino.casHand([0, 12]).total, 21);
+  logic.setRng(null);
+});
+ok("地下撿籌碼接得上 config、content3、logic、casino_text（決定 0047）", () => {
+  logic.setRng(logic.mulberry32(3));
+  const w = casinoWallet.casWalletFix(casinoWallet.casWalletNew(), "2026-11-09");
+  const room = content3.CELLAR[0].rooms[0].id;
+  const r = casinoFind.casCellarFind(w, casinoWallet.casHouseNew(), room, "2026-11-09", () => 0);
+  assert.ok(r.ok && r.found >= config.NUM.casino.cellarFind.min);
+  assert.ok(!casinoFind.casCellarFind(w, null, room, "2026-11-09", () => 0).ok);
   logic.setRng(null);
 });
 ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）", () => {

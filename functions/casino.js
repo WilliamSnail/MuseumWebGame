@@ -18,6 +18,7 @@ import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
 import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
+import { casCellarFind } from "./shared/casino_find.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
@@ -90,6 +91,11 @@ export const casino = onCall(async req => {
       const ws = await walletRef(me.uid).get();
       return { ok: true, chips: casWalletFix(parse(ws), taipeiDay(now())).chips };
     }
+    // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
+    case "cellarFind": return play(req, me, {}, ctx => {
+      const r = casCellarFind(ctx.w, ctx.house, d.room, ctx.day);
+      return r.ok ? { ok: true, found: r.found, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
+    });
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);
