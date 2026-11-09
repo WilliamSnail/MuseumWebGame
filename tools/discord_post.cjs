@@ -30,6 +30,20 @@ function weekEvents(w) {
   return G.cleanEvents(w && w.events, w && w.start, w && w.week).map(ev => ({ date: ev.date, from: ev.from, to: ev.to, title: ev.title, words: ev.words, effect: G.eventEffect(ev), when: G.eventWhen(ev), wd: "一二三四五六日"[G.weekDayNo(ev.date) - 1] }));
 }
 
+// 賭場的每週收藏（決定 0042）：週一提壹句這週的收藏；那天 dN.json 有加碼的收藏品或話，就提壹句。壞的不提（跟遊戲用同一份 shared/casino_week.js 整理）
+// 回傳 { week: 週一那句（沒有就 ""）, today: [那天的句子] }
+function casinoLines(w, d, n) {
+  const out = { week: "", today: [] };
+  if (!w || !w.week || !w.start) return out;
+  const def = shared().casWeekDef({ week: w, days: { [n]: d || {} } }, w.week, w.start);
+  if (!def) return out;
+  const base = def.items.filter(it => !it.extra);
+  if (n === 1) out.week = `🎰 【本週賭場收藏】${def.title}：${base.length} 件，湊齊有紀念品和稱號（籌碼不是錢，什麼都不用花）`;
+  def.items.filter(it => it.extra && it.day === n).forEach(it => out.today.push(`🎰 【賭場加碼】多了壹件「${it.name}」，拿不拿都可以`));
+  def.notes.filter(x => x.day === n).forEach(x => out.today.push(`🎰 ${x.text}`));
+  return out;
+}
+
 // 訊息的文字。w ＝ week.json、d ＝ dN.json、n ＝第幾天、hol ＝ holidayOf 回傳的節日（沒有就 null）
 function dayMessage(w, d, n, hol, evs) {
   evs = evs || weekEvents(w);
@@ -38,11 +52,14 @@ function dayMessage(w, d, n, hol, evs) {
     // 博物館的公告口吻（翊文 11-09：「要以稍微更加像博物館的公告方式推出」）
     lines.push("🏛 **佩佩博物館2　本週特展公告**", `📜 地下收藏庫本週主題：〈${w.title}〉`, "", ...(Array.isArray(w.summary) ? w.summary : []), "");
     if (evs.length) lines.push("🎪 【本週限時活動】", ...evs.map(e => `・${e.date.slice(5).replace("-", "/")}（${e.wd}）${e.from}～${e.to}　${e.title}：${e.effect}`), "");
+    const cas = casinoLines(w, d, n);
+    if (cas.week) lines.push(cas.week, "");
     lines.push(`📣 【今日館訊】${d.board || ""}`);
   } else {
     lines.push("🏛 **佩佩博物館2　今日館訊**", `📜 〈${w.title}〉第 ${n} 日`, "", d.board || "");
   }
   if (hol) lines.push("", `🏮 【本日節慶】${hol.name}。${hol.words || ""}`);
+  casinoLines(w, d, n).today.forEach(t => lines.push("", t));
   // 活動當天：今日館訊後面多一段（日期用這週的週一往後算 n - 1 天；沒有活動就不加）
   const day = w && w.start ? shared().addDays(w.start, n - 1) : null;
   evs.filter(e => e.date === day).forEach(e => lines.push("", `🎪 【${e.when}限時活動】${e.from}～${e.to}　${e.title}`, e.words, e.effect + "。錯過了也不會少什麼。"));

@@ -215,6 +215,7 @@ export const NUM = {
   // 第 4 版（11-09，決定 0041）：限時活動（規則 shared/events.js，內容寫在 content/weeks/<週>/week.json 的 events）。數字都等翊文看
   events: {
     coopBoost: { mult: 1.5, extraTurns: 1 }, // 合作地下收藏庫：記號對上、猜對、搬回來的靈感 ×1.5；活動中那天多 1 趟有獎勵（P.coopDay 上限 +1，不疊加）
+    casinoBoost: { extraPacks: 1 },          // 賭場：活動時間內，第一次進賭場多 1 包免費大禮包（每場活動每人一次；等翊文）
     trialBoost: { mult: 1.5 },               // 試煉房間：過關的技能成長 ×1.5（一間一週還是只拿一次）
     perWeek: 3,             // 一週最多排幾場（週一排程挑 1～2 場，其他給臨時加的）
     earliest: "05:00",      // 活動最早幾點開始（05:00 換日，不跨日）
@@ -253,6 +254,7 @@ export const NUM = {
       { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
       { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
     ],
+    foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
     // 同桌（第二階段）
@@ -262,6 +264,21 @@ export const NUM = {
     resultMs: 10000,        // 看結果的時間，之後自動下一局
     sayGapMs: 1500,         // 說話至少隔多久
     chatKeep: 30,           // 聊天留最近幾句
+    // 每週收藏（決定 0042，shared/casino_week.js）。數字全部等翊文
+    week: {
+      stamp: 1,             // 一週集滿，領 1 枚週章（每週任務一個 1 枚、全做完再多 2 枚，所以這個很少）。靈感一點都不給
+      itemsMin: 3,          // 一週的收藏品 3～5 件（week.json 的 casino.items）
+      itemsMax: 5,
+      extraMax: 1,          // 每天的 dN.json 可以再加 1 件（加碼件不算集滿的條件）
+      titleMax: 14,         // 這週收藏的標題
+      introMax: 60,         // 前言
+      descMax: 50,          // 一件收藏品的說明
+      noteMax: 50,          // 每天多的一段話
+      souvenirDescMax: 40,  // 集滿的紀念品說明
+      storyPagesMax: 3,     // 集滿後的小故事 1～3 頁
+      pageMax: 120,         // 每頁字數（跟書一樣）
+      keepWeeks: 8,         // 錢包裡留幾週的紀錄（過期的週：拿到的財產留著，沒領的週章還能補領）
+    },
   },
   // 第 4 版（11-09，決定 0039）：每週排行榜（規則 shared/board.js）
   board: {

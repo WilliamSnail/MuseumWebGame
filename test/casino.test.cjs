@@ -8,6 +8,7 @@ const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { f
 const JS = x => JSON.parse(JSON.stringify(x));
 const eq = (a, b) => assert.deepStrictEqual(JS(a), JS(b)); // vm 裡出來的物件跟這裡的不是同一個 realm，先過 JSON 再比
 const DAY = "2026-11-09";
+const NUM_food = G => G.NUM.casino.foodCap;
 const seeded = (G, n = 1) => G.setRng(G.mulberry32(n));
 // 牌：點數 + 花色*13。a(1)=A，k=13
 const card = (r, s = 0) => (r - 1) + s * 13;
@@ -78,6 +79,35 @@ T("拉霸機的停法：幾顆星就從左邊停幾個 ★；2 顆以上才拖�
   assert.strictEqual(G.casSlotPlan(2)[3].near, false);
   assert.ok(G.casSlotPlan(5, true).every(x => !x.tease && x.dur <= 150), "全開很快");
   assert.strictEqual(G.casSlotPlan("壞的").filter(x => x.star).length, 0, "壞資料不丟錯");
+});
+T("餐車的吃的加心情、理智：有每天上限、換日重算、券和自由模式沒有效果、燈熄了不加理智", G => {
+  const newP = () => { const P = G.newProfile("challenge"); P.mood = 10; P.sanity = 20; return P; };
+  const house = G.casHouseNew();
+  let w = G.casWalletNew(); w.chips = 1e9;
+  let P = newP();
+  const r = G.casBuy(w, house, 1, DAY, undefined, P);
+  assert.strictEqual(r.mood, 2); assert.strictEqual(P.mood, 12);
+  const tea = G.casBuy(w, house, 2, DAY, undefined, P);
+  assert.strictEqual(tea.mood, 1); assert.strictEqual(tea.san, 1); assert.strictEqual(P.sanity, 21);
+  // 上限
+  for (let i = 0; i < 12; i++) G.casBuy(w, house, 6, DAY, undefined, P);
+  assert.strictEqual(P.mood, 10 + NUM_food(G).mood);
+  assert.strictEqual(P.sanity, 20 + NUM_food(G).san);
+  const full = G.casBuy(w, house, 1, DAY, undefined, P);
+  assert.strictEqual(full.mood, 0); assert.ok(full.lines.includes(G.CAS_TEXT.foodFull));
+  assert.strictEqual(full.ok, true, "吃飽了還是買得到");
+  // 換日
+  const next = G.casBuy(w, house, 1, "2026-11-10", undefined, P);
+  assert.strictEqual(next.mood, 2);
+  // 券沒有效果
+  w.pk.opened = 1; const before = P.mood; G.casBuy(w, house, 8, "2026-11-10", undefined, P); assert.strictEqual(P.mood, before);
+  // 沒有參觀者、自由模式
+  w = G.casWalletNew(); w.chips = 1e7;
+  assert.strictEqual(G.casBuy(w, house, 1, DAY).mood, 0);
+  const F = G.newProfile("free"); F.mood = 3; assert.strictEqual(G.casBuy(w, house, 1, DAY, undefined, F).mood, 0);
+  // 心情到頂、燈熄了
+  P = newP(); P.mood = 99; assert.strictEqual(G.casBuy(w, house, 1, DAY, undefined, P).mood, 0); assert.strictEqual(P.mood, 99);
+  P = newP(); P.dark = true; P.sanity = 0; w = G.casWalletNew(); w.chips = 1e7; assert.strictEqual(G.casBuy(w, house, 2, DAY, undefined, P).san, 0); assert.strictEqual(P.sanity, 0);
 });
 T("牌名", G => {
   assert.strictEqual(G.casCardName(0), "A♠"); assert.strictEqual(G.casCardName(51), "K♣"); assert.strictEqual(G.casCardName(9), "10♠");

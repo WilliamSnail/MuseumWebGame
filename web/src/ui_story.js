@@ -5,6 +5,7 @@
 //    起源室書架的頁籤（館藏、禁書、主線、每週劇情、節日）和合訂本
 //    畫廊的「今日特展」、地下收藏庫的「本週異狀」和這週多出來的房間
 //    大廳的小卡、狀態列的「追蹤」那一行、公佈欄的「本週地下收藏庫」公告
+//    賭場的每週收藏（決定 0042）：劇情面板的「本週賭場收藏」、劇情線裡的一條「賭場收藏」、集滿後的小故事放書架的「每週劇情」（畫法在 ui_casino_week.js）
 //  舊的檔只加幾行接口：ui_core.js（HOOKS.status、選單、狀態列的格子）、ui_screens1.js（大廳、畫廊、起源室）、ui_screens3.js（地下收藏庫）。
 //  ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 ui_core 的 PANELS、HOOKS。
 //  介面上的字照第 1 代用「壹」。
@@ -12,6 +13,8 @@
 import { NUM } from "../../shared/config.js";
 import { activeQuirks, isFree, nowMs, todayStr } from "../../shared/logic.js";
 import { NOTICE_EXTRA } from "../../shared/notices.js";
+import { casWkBase } from "../../shared/casino_week.js";
+import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
@@ -19,6 +22,7 @@ import { markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
+import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
 
@@ -38,12 +42,20 @@ export function weekFor(today) {
   return weekCache.W;
 }
 export function curWeek() { return P && !isFree(P) ? weekFor(todayStr()) : null; }
+// 賭場的每週收藏（決定 0042）：某一週的內容（沒有就 null）。一週只整理一次
+const casDefs = {};
+export function casinoDefOf(label, fb) {
+  const key = label + "|" + (fb || "");
+  if (!(key in casDefs)) casDefs[key] = casWkDefFor(STORY_LIB, label, fb);
+  return casDefs[key];
+}
+export const weekCasino = W => (W ? casinoDefOf(W.label, W.fallback) : null);
 const on = () => !!(P && !isFree(P));
 
 // ---------- 下一步、任務的「前往」 ----------
 export function goStep(step) {
   if (!step) return;
-  if (step.panel && PANELS[step.panel]) { PANELS[step.panel](); return; }
+  if (step.panel && PANELS[step.panel]) { PANELS[step.panel](step.params); return; }
   if (!step.room) { note(step.text || "明天 05:00 之後再來看看。"); return; }
   if (step.params) go(step.room, step.params); else navTo(step.room);
 }
@@ -95,6 +107,8 @@ function claimables(W) {
   let n = unclaimed(P, W).length;
   W.days.forEach(d => { if (dayBonusState(P, W, d.n) === "ready") n++; });
   if (weekBonusState(P, W) === "ready") n++;
+  const cv = CAS_WK.view; // 賭場收藏集滿了、週章還沒領（伺服器給的進度，拿到過才知道）
+  if (cv && cv.week === W.label && cv.done && !cv.claimed && weekCasino(W)) n++;
   return n;
 }
 function menuBadge(W) {
@@ -206,6 +220,7 @@ function weekPane(W, draw, m) {
       d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
       btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
   const events = eventListBox(W.events);
+  const cdef = weekCasino(W), casino = cdef ? weekBox(cdef, todayStr(), { after: draw }) : null; // 賭場的每週收藏（決定 0042）
   const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
   const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow("3 個都做完，多壹份", dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
@@ -222,12 +237,12 @@ function weekPane(W, draw, m) {
     return h("li", null, h("b", null, `${itemName(id)} ×${n}`), h("small", null, itemDesc(id)),
       can.ok ? btn("使用", () => { const u = useStoryItem(P, id); if (!u.ok) { note(u.reason, "bad"); return; } snd("unlock"); note(`用了${itemName(id)}：${u.text}`, "good"); updateStatus(); persist(); draw(); }, "small") : h("span", { class: "sp-keep" }, can.reason));
   })) : h("p", { class: "sp-note" }, "還沒有東西。任務的獎勵（技能書、急救箱、材料）會放在這裡。"));
-  return [head, events, anomaly, daily, weekly, old, bagSec];
+  return [head, events, anomaly, casino, daily, weekly, old, bagSec];
 }
 function lineCard(l, draw, m) {
   return h("li", { class: "sp-line" + (l.done ? " done" : "") + (l.tracked ? " tracked" : "") },
     h("div", { class: "sp-l-head" }, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, l.name), l.fresh ? h("span", { class: "nb-dot", "aria-label": "新的下壹步" }) : null),
-    h("p", { class: "sp-l-prog" }, `讀了 ${l.read}／${l.books} 本`, l.kind === "main" || l.kind === "season" ? null : `・${l.done ? "走完了" : `第 ${Math.min(7, curWeek() ? curWeek().dayNo : 7)} 天／7 天`}`),
+    h("p", { class: "sp-l-prog" }, l.kind === "casino" ? `收到了 ${l.read}／${l.books} 件` : `讀了 ${l.read}／${l.books} 本`, l.kind === "main" || l.kind === "season" || l.kind === "casino" ? null : `・${l.done ? "走完了" : `第 ${Math.min(7, curWeek() ? curWeek().dayNo : 7)} 天／7 天`}`),
     l.next ? h("p", { class: "sp-l-next" }, h("span", null, "下壹步："), h("b", null, l.next.text)) : h("p", { class: "sp-l-next" }, l.done ? "這條線走完了，收進「劇情回顧」。" : ""),
     h("div", { class: "sp-l-act" },
       l.next && (l.next.room || l.next.panel) && !l.done ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); goStep(l.next); }, "primary small") : null,
@@ -282,7 +297,18 @@ function allWeeks() {
   return W ? pastCache.list.concat([W]) : pastCache.list.slice();
 }
 // 現在看得到的劇情線：這週的＋還在走的季節線（換季之後舊的那條收進劇情回顧）
-function linesNow(W) { return W ? storyLines(P, W).concat(seasonLines(P, allWeeks()).filter(l => !l.done)) : []; }
+function linesNow(W) { return W ? storyLines(P, W).concat(seasonLines(P, allWeeks()).filter(l => !l.done), casinoLine(W) || []) : []; }
+// 賭場的每週收藏也是一條可以追蹤的線（決定 0042）：下一步是「去賭場做哪件事」，進度是伺服器給的（拿不到就請他去賭場看）
+function casinoLine(W) {
+  const def = weekCasino(W);
+  if (!def || W.past) return null;
+  const S = storyState(P), id = "casino:" + W.label, view = CAS_WK.view, v = view && view.week === W.label ? view : null;
+  const done = !!(v && v.done && v.claimed), t = done ? "" : wkNextText(def, view, todayStr());
+  const first = v ? def.items.find(x => x.date <= todayStr() && !v.got[x.id]) : null;
+  const key = done ? "done" : !v ? "view" : v.done ? "claim" : first ? first.id : "";
+  return { id, name: def.title || "賭場收藏", kind: "casino", kindText: "賭場收藏", week: W.label, books: casWkBase(def).length, read: wkGotCount(def, view), next: t ? { text: t, panel: "casino", params: { tab: "week" } } : null,
+    done, fresh: !done && !!t && S.seen[id] !== key, key, tracked: S.track === id, started: true };
+}
 const kindOfBook = (w, b) => { const l = lineById(w, b.line); return l ? l.kind : "week"; };
 const tabOfBook = (w, b) => shelfTabOf({ kind: kindOfBook(w, b) });
 // 每個頁籤：幾本（打得開的）、沒讀幾本、有沒有新的
@@ -353,6 +379,23 @@ export function openStoryBook(w, b, reader, el) {
   const book = reader.querySelector(".book");
   if (book) book.insertBefore(h("p", { class: "book-from" }, `${l ? `${LINE_KINDS[l.kind] || ""}〈${l.name}〉・` : ""}${w.label}・第 ${b.day} 天`), book.children[1] || null);
 }
+// 賭場集滿的小故事（決定 0042）：領過週章（P.story.cas）才放上書架，過了那週還是讀得到
+function casinoStory(w) {
+  const def = weekCasino(w), S = storyState(P);
+  return def && S.cas[w.label] && def.reward.story.pages.length ? { def, title: def.reward.story.title || "賭場的小故事", pages: def.reward.story.pages } : null;
+}
+function openCasinoStory(w, st, reader) {
+  bookReader(reader, st.title, st.pages);
+  const book = reader.querySelector(".book");
+  if (book) book.insertBefore(h("p", { class: "book-from" }, `賭場收藏〈${st.def.title}〉・${w.label}`), book.children[1] || null);
+}
+function casinoSpine(w, reader) {
+  const st = casinoStory(w);
+  if (!st) return null;
+  const el = h("button", { type: "button", class: "spine story casino", "aria-label": `賭場收藏的小故事：${st.title}` }, h("span", { class: "spine-t" }, "賭場"));
+  el.addEventListener("click", () => { $$(".spine.on").forEach(x => x.classList.remove("on")); el.classList.add("on"); snd("flip"); openCasinoStory(w, st, reader); });
+  return el;
+}
 // 一週（合訂本裡的一冊）：書的清單
 function weekVolume(w, reader) {
   const items = w.books.map(b => {
@@ -360,6 +403,8 @@ function weekVolume(w, reader) {
     return h("li", null, h("button", { type: "button", class: "vol-book" + (st === "open" ? " unread" : ""), onClick: () => openStoryBook(w, b, reader) },
       h("span", null, `第 ${b.day} 天`), h("b", null, st === "locked" ? "（還打不開）" : `〈${b.title}〉`), st === "read" ? icon("check") : null));
   });
+  const cst = casinoStory(w);
+  if (cst) items.push(h("li", null, h("button", { type: "button", class: "vol-book", onClick: () => openCasinoStory(w, cst, reader) }, h("span", null, "賭場"), h("b", null, `〈${cst.title}〉`))));
   reader.replaceChildren(h("div", { class: "book vol-book-list" }, h("h2", { class: "book-title" }, `〈${w.title}〉`),
     h("p", { class: "book-from" }, `${seasonName(seasonOf(w.label))}・${w.label}（${w.start.slice(5).replace("-", "/")} 起）`),
     w.summary.map(s => h("p", { class: "vol-sum" }, ptNode(s))), h("ol", { class: "vol-list" }, items)));
@@ -377,6 +422,8 @@ export function storyShelf(tab, reader, params = {}) {
   if (params.week) { const w = weeks.find(x => x.label === params.week); if (w) later(() => weekVolume(w, reader), 0); }
   if (tab === "weekly") {
     const cur = W ? W.books.filter(b => tabOfBook(W, b) === "weekly").map(b => spineFor(W, b, reader)) : [];
+    const cs = W ? casinoSpine(W, reader) : null; // 賭場集滿的小故事（領過週章才有）
+    if (cs) cur.push(cs);
     const rows = [shelfRow("cur", W ? `本週〈${W.title}〉・第 ${W.dayNo} 天` : "本週", cur, "這週的書，每天 05:00 會多 1～2 本。")];
     const past = weeks.filter(w => w !== W);
     const sNow = W ? seasonOf(W.label) : null;

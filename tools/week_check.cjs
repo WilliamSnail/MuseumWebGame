@@ -154,8 +154,51 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     }
   };
 
+  // ---------- 賭場的每週收藏（決定 0042）：week.json 的 casino、dN.json 的 casino ----------
+  const casItemOk = (where, it, ids) => {
+    G.casWkItemProblems(it).filter(p => !/^(name|desc) /.test(p)).forEach(p => E(where, p));
+    if (!isObj(it)) return;
+    Object.keys(it).forEach(k => { if (!["id", "name", "desc", "when"].includes(k)) E(where, `不認得「${k}」（收藏品只有 id、name、desc、when；獎勵由遊戲自己發）`); });
+    text(where + ".name", it.name, G.NUM.casino.titleMax);
+    text(where + ".desc", it.desc, G.NUM.casino.week.descMax);
+    if (typeof it.id === "string") { if (ids.has(it.id)) E(where, `id「${it.id}」這週用過了（收藏品的 id 一週裡不能重複）`); ids.add(it.id); }
+  };
+  const casinoWeekOk = (where, c, ids, lineIds, fallback) => {
+    const NC = G.NUM.casino.week;
+    if (!isObj(c)) { E(where, "要寫成 { title, intro, items, reward }"); return; }
+    Object.keys(c).forEach(k => { if (!["title", "intro", "items", "reward", "line"].includes(k)) E(where, `不認得「${k}」`); });
+    if (c.line !== undefined && !lineIds.has(c.line)) E(where + ".line", `「${c.line}」不在這週的 lines 裡（賭場收藏是這週的一條劇情線，要先在 lines 宣告，帳本也要有）`);
+    if (c.line === undefined && !fallback) W(where, "沒有 line：賭場收藏要算進這週的劇情線（week.json 的 lines 加一條，casino.line 指過去，帳本也記）");
+    text(where + ".title", c.title, NC.titleMax);
+    text(where + ".intro", c.intro, NC.introMax);
+    if (!Array.isArray(c.items) || c.items.length < NC.itemsMin || c.items.length > NC.itemsMax) E(where + ".items", `要 ${NC.itemsMin}～${NC.itemsMax} 件`);
+    else c.items.forEach((it, i) => casItemOk(`${where}.items[${i}]`, it, ids));
+    const r = c.reward, rw = where + ".reward";
+    if (!isObj(r)) { E(rw, "要寫成 { title, souvenir: { name, desc }, story: { title, pages } }"); return; }
+    Object.keys(r).forEach(k => { if (!["title", "souvenir", "story"].includes(k)) E(rw, `不認得「${k}」（集滿的獎勵只有稱號、紀念品、小故事；週章由遊戲給，不給靈感）`); });
+    text(rw + ".title", r.title, G.NUM.casino.titleMax);
+    if (!isObj(r.souvenir)) E(rw + ".souvenir", "要寫成 { name, desc }");
+    else { text(rw + ".souvenir.name", r.souvenir.name, G.NUM.casino.titleMax); text(rw + ".souvenir.desc", r.souvenir.desc, NC.souvenirDescMax); }
+    if (!isObj(r.story)) E(rw + ".story", "要寫成 { title, pages }（集滿後讀的一小段，接這週的劇情）");
+    else {
+      text(rw + ".story.title", r.story.title, LIMITS.bookTitle);
+      if (!Array.isArray(r.story.pages) || r.story.pages.length < 1 || r.story.pages.length > NC.storyPagesMax) E(rw + ".story.pages", `要 1～${NC.storyPagesMax} 頁`);
+      else r.story.pages.forEach((p, i) => text(`${rw}.story.pages[${i}]`, p, NC.pageMax));
+    }
+  };
+  const casinoDayOk = (where, c, ctx, o) => {
+    const NC = G.NUM.casino.week;
+    if (o.spare) { E(where, "備用的一天不放賭場的收藏（不影響賭場的每週進度）"); return; }
+    if (!isObj(c)) { E(where, "要寫成 { item, note }"); return; }
+    if (!ctx.hasCasino) E(where, "這週的 week.json 沒有 casino，每天加的收藏品和話不會用到");
+    Object.keys(c).forEach(k => { if (!["item", "note"].includes(k)) E(where, `不認得「${k}」（只有 item、note）`); });
+    if (c.item === undefined && c.note === undefined) E(where, "item 或 note 至少寫一個");
+    if (c.note !== undefined) text(where + ".note", c.note, NC.noteMax);
+    if (c.item !== undefined) casItemOk(where + ".item", c.item, ctx.casIds);
+  };
+
   // ---------- 任務 ----------
-  const taskOk = (where, t, ctx, when) => {
+  const taskOk =(where, t, ctx, when) => {
     if (!isObj(t)) { E(where, "要是物件"); return 0; }
     const K = G.STORY_TASKS[t.kind];
     if (!K) { E(where, `沒有「${t.kind}」這種任務（只能用 ${Object.keys(G.STORY_TASKS).join("、")}；新的種類要寫程式）`); return 0; }
@@ -227,6 +270,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     if (minutes > N.dailyMinutes) E(where, `3 個每日任務大約要 ${minutes} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
     books.forEach((b, i) => bookOk(`${where}.books[${i}]`, b, Object.assign({ spare: !!o.spare }, ctx), n));
     if (!o.spare && !books.some(b => b && ctx.weekLine.has(b.line))) E(where, "每天至少一本書接這週的線（line 是這週 kind week 或 floor 的線）");
+    if (d.casino !== undefined) casinoDayOk(where + ".casino", d.casino, ctx, o);
     rewardOk(where + ".dailyBonus", d.dailyBonus);
     if (!isObj(d.show)) E(where, "要有今日特展（show）");
     else {
@@ -313,6 +357,10 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         });
       }
     }
+    // 賭場的每週收藏（決定 0042）：3～5 件、條件認得、字數、畫面用「壹」、禁用字、集滿的獎勵。可以不寫（舊的週照常）；每天的 casino 在 dayOk
+    ctx.casIds = new Set();
+    ctx.hasCasino = wk.casino !== undefined;
+    if (wk.casino !== undefined) casinoWeekOk(where + "/week.json.casino", wk.casino, ctx.casIds, lineIds, !!o.fallback);
     // 一週裡獎勵寫技能成長的房間不能太多（決定 0032）
     const skillRooms = [wk.anomaly && wk.anomaly.room].concat(...Object.values(pack.days).map(d => asList(d && d.adds))).filter(r => r && isObj(r.reward) && r.reward.skill).length;
     if (skillRooms > G.NUM.shop.weekSkillRooms) E(where, `這週有 ${skillRooms} 間房間給技能成長，最多 ${G.NUM.shop.weekSkillRooms} 間（NUM.shop.weekSkillRooms）`);
@@ -385,6 +433,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       const rec = isObj(L.weeks) ? L.weeks[d.where] : null;
       if (!rec || typeof rec.main !== "string" || !rec.main.trim()) E(d.where, "帳本的 weeks 裡要寫這週主線推到哪（main）：每週至少把主線往前推一步（第十二節）");
       if (!rec || !asList(rec.ties).length) W(d.where, "帳本的 weeks 裡沒有 ties：這週的線、每天的書碰到主軸的哪一點（決定 0037）");
+      if (d.wk && d.wk.casino !== undefined && (!rec || !asList(rec.casino).length)) W(d.where, "帳本的 weeks 裡沒有 casino：這週賭場的收藏接劇情的哪一條線、碰到主軸的哪一點（決定 0042）");
     });
     asList(L.foreshadow).forEach((f, i) => {
       if (!f || !f.id || !f.what || !f.planted || typeof f.closed !== "boolean") { E(`${lw}.foreshadow[${i}]`, "要有 id、what、planted、due、closed"); return; }
