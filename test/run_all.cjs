@@ -29,6 +29,7 @@ const STEPS = [
   ["Hamachi 賭場（21 點的規則、真的牌組、賠率、看錯牌、錢包、救濟、大禮包、餐車、換小獎、成就和財產、舊資料認領，決定 0040）", ["test/casino.test.cjs"]],
   ["Hamachi 賭場的館友同桌（輪流、同一副牌、時間限制、超時和斷線當停牌、離桌、暗牌不外洩、錢守恆，決定 0040）", ["test/casino_table.test.cjs"]],
   ["動畫減量不會讓東西看不到", ["test/motion.test.cjs"]],
+  ["說明文字標重點", ["test/mark.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],

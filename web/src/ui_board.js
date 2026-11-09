@@ -12,7 +12,7 @@ import { realTodayStr } from "../../shared/logic.js";
 import { NOTICE_CATS, autoOpenPlan, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
-import { ADDONS, P, PANELS, SAVE, UI, btn, go, h, icon, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { ADDONS, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 
 const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
 const narrow = () => matchMedia("(max-width: 760px)").matches;
@@ -72,7 +72,7 @@ function sheet(n, today, close) {
     h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" + (t === "重要" ? " hot" : "") }, t)), st ? h("span", { class: "nb-tag st" }, st) : null),
     h("h3", null, n.title),
     h("p", { class: "nb-date" }, n.weekly ? "這壹週" : `${md(n.publish)} 發布`),
-    (n.sections || []).map(([name, lines]) => h("section", { class: "nb-sec" }, h("h4", null, `〓${name}〓`), lines.map(l => h("p", null, l)))),
+    (n.sections || []).map(([name, lines]) => h("section", { class: "nb-sec" }, h("h4", null, `〓${name}〓`), lines.map(l => h("p", null, markText(l))))),
     n.cta ? h("div", { class: "nb-cta" }, btn([n.cta.label, " ", h("span", { "aria-hidden": "true" }, "→")], goCta, "primary")) : null);
 }
 
