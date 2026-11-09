@@ -4,11 +4,14 @@
 //   2. 先寫快照：boards/{週}（給玩家看的榜單）、boards/{週}/private/people（累計數字，有 uid，玩家讀不到）、boards/latest（遊戲裡讀這份）。
 //   3. 再發 Discord，發了才記 posted。Discord 沒放金鑰或發失敗，快照照樣留著；下次跑會用同一份榜單補發。
 // 同一週不發兩次。沒有人有進度：快照照寫，不發。
+// 每天更新（翊文 11-09：「排行榜可以每天都更新嗎」）：每天 05:35 算這週到現在，**只寫 boards/latest**，不寫週快照、不發 Discord，週一的正式結算完全不受影響。
+//   週一跳過（還在看上週的正式榜單），手動 daily 加 force 才算。
 // 這支讀得到大家的存檔，但只算數字：紀錄裡只印榜單文字，不印 email、uid、存檔內容。
 //
 // node tools/weekly_board.cjs              照上面做（金鑰：GOOGLE_APPLICATION_CREDENTIALS；Discord：DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID）
 // node tools/weekly_board.cjs --dry-run    只印不發：不寫 Firestore、不發 Discord
 // node tools/weekly_board.cjs --force      這週發過了也重算、再發一次（數字會變成現在的）
+// node tools/weekly_board.cjs --daily      每天更新；加 --force 週一也算；加 --dry-run 只印不寫
 // 連模擬器（docs/Firebase做法.md 第十節）：FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
 //   有 FIRESTORE_EMULATOR_HOST 就一定不發 Discord。--now 只有連模擬器時能用。
 const fs = require("fs"), path = require("path");
@@ -22,6 +25,12 @@ function parseOptions(inputs, argv = []) {
   const yes = v => v === true || v === "true";
   const o = inputs || {};
   return { dryRun: yes(o.dry_run) || argv.includes("--dry-run"), force: yes(o.force) || argv.includes("--force") };
+}
+// 這次是不是每天更新：手動選了、指令有 --daily，或是每天那個排程叫的
+const DAILY_CRON = "35 21 * * *";
+function isDaily(inputs, argv = [], schedule = "") {
+  const v = (inputs || {}).daily;
+  return v === true || v === "true" || argv.includes("--daily") || schedule === DAILY_CRON;
 }
 const readEvent = () => {
   const p = process.env.GITHUB_EVENT_PATH;
@@ -98,9 +107,27 @@ async function runWeekly({ db, board, opts = {}, env = process.env, fetcher, log
   return { status: "posted", week: wk.label, text };
 }
 
+// 每天更新：這週到現在。只寫 boards/latest。回傳 { status, week }。status：monday 週壹跳過、dry 只印不寫、empty 沒人有進度（留著原本的榜）、updated
+async function runDaily({ db, board, opts = {}, log = console.log, floorOf = newRoomFloor }) {
+  const now = opts.now != null ? opts.now : board.nowMs(), wk = board.boardLiveWeekOf(now);
+  if (board.boardIsFirstDay(now) && !opts.force) { log("今天週壹，大家還在看上週的正式榜單，這次不更新。"); return { status: "monday", week: wk.label }; }
+  const [input, prevSnap] = await Promise.all([readPeople(db), db.doc(`boards/${wk.prev}/private/people`).get()]);
+  const r = board.boardCompute(board.boardPeopleOf(input, wk), prevSnap.exists ? prevSnap.data() : null, wk, { newRoomFloor: floorOf(wk.label) });
+  if (r.unreadable) log(`有 ${r.unreadable} 份存檔讀不了：這次沒算。`);
+  const doc = Object.assign({}, r.doc, { live: true, tips: [], nudges: [] }); // 建議和提醒是寫給過完的那壹週的，週中不放
+  log(doc.empty ? `${wk.label} 到現在沒有人有進度。` : board.boardDiscordText(doc, "", 2000));
+  if (opts.dryRun) { log("只印不寫：沒有寫 Firestore。"); return { status: "dry", week: wk.label }; }
+  if (doc.empty) { log("沒有人有進度，榜單留著原本的。"); return { status: "empty", week: wk.label }; }
+  await db.doc("boards/latest").set(doc);
+  log(`${wk.label} 目前的榜單更新了（只改 boards/latest，沒發 Discord）。`);
+  return { status: "updated", week: wk.label };
+}
+
 async function main() {
   const argv = process.argv.slice(2);
-  const opts = parseOptions(readEvent(), argv);
+  const event = readEvent();
+  const opts = parseOptions(event, argv);
+  const daily = isDaily(event, argv, process.env.BOARD_SCHEDULE);
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
   if (argv.includes("--now")) {
     if (!emulator) throw new Error("--now 只有連模擬器時能用");
@@ -117,6 +144,7 @@ async function main() {
     initializeApp({ credential: applicationDefault(), projectId: sa.project_id });
   }
   const board = await loadBoard();
+  if (daily) { await runDaily({ db: getFirestore(), board, opts }); return; }
   const r = await runWeekly({ db: getFirestore(), board, opts, env: emulator ? {} : process.env }); // 連模擬器一定不發 Discord
   if (r.status === "failed") process.exitCode = 1;
 }
@@ -128,4 +156,4 @@ async function loadBoard() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { parseOptions, newRoomFloor, runWeekly, loadBoard };
+module.exports = { parseOptions, isDaily, newRoomFloor, runWeekly, runDaily, loadBoard };
