@@ -76,7 +76,8 @@ export const join = onCall(async req => {
 // ---------- Discord 聯動第一步（決定 0051）：機器人入口 discordBot、遊戲裡的綁定 ----------
 export { discordBot } from "./discord.js";
 export { discordLinkCode, discordLinkState, discordUnlink } from "./discord_link.js";
-export { discordOutboxSend } from "./discord_out.js";
+// 暫停：Firestore 觸發要專案擁有者開權限才部署得上（翊文開好後拿掉這個註解，步驟在 docs/Firebase做法.md 第十二節）。事件先寫進 discordOutbox，不發。
+// export { discordOutboxSend } from "./discord_out.js";
 
 // ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
 export { invite, inviteReply, partyAction } from "./party.js";
