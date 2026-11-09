@@ -63,11 +63,20 @@ jobs:
         if: env.HAS_KEY == 'true'
         env:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # Discord 發頻道要用的（決定 0051 第二步）：翊文放在 GitHub Secrets。沒放就不寫，Functions 那邊沒有就不發、不報錯
+          DC_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DC_CHANNEL: ${{ secrets.DISCORD_CHANNEL_ID }}
         run: |
+          # 部署完（不管成不成功）一定刪掉金鑰和 functions/.env。這段不要開指令追蹤、不要 echo 任何金鑰
+          trap 'rm -f "$RUNNER_TEMP/sa.json" functions/.env' EXIT
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          tok=$(printf '%s' "$DC_TOKEN" | tr -d '[:space:]')
+          chan=$(printf '%s' "$DC_CHANNEL" | tr -d '[:space:]')
+          if [ -n "$tok" ] && [ -n "$chan" ]; then
+            printf 'DISCORD_BOT_TOKEN=%s\nDISCORD_CHANNEL_ID=%s\n' "$tok" "$chan" > functions/.env
+          fi
           npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
-          rm -f "$RUNNER_TEMP/sa.json"
       # 今日館訊固定早上八點半發（tools/announce.cjs）。這裡只補兩種情形：八點半之後才合併的、早上部署壞掉現在修好的
       - name: 讀哪些公告發過了
         if: env.HAS_KEY == 'true'

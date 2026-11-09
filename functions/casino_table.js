@@ -21,6 +21,7 @@ import { cleanSay, fixParty, newParty } from "./shared/party.js";
 import { isFree, setRng, taipeiDay } from "./shared/logic.js";
 import { bad, leaveCurrent, ledParty, needMember, newId, now, partyHooks, rtdb } from "./party.js";
 import { cryptoRng, wkDefOf } from "./casino.js";
+import { outHouse } from "./discord_out.js";
 
 const db = () => getFirestore();
 const tableRef = pid => db().doc(`casinoTables/${pid}`);
@@ -36,7 +37,7 @@ const viewPath = (pid, uid) => `casinoView/${pid}/${uid}`;
 async function tableTxn(pid, uid, opts, fn) {
   const t0 = now(), day = taipeiDay(t0);
   setRng(cryptoRng);
-  let t = null;
+  let t = null, hb = null, ha = null; // 莊家的錢在這個交易前後（Discord：桌上有人把莊家打到破產）
   try {
     const out = await db().runTransaction(async tx => {
       const ts = await tx.get(tableRef(pid));
@@ -51,9 +52,11 @@ async function tableTxn(pid, uid, opts, fn) {
       const S = ss && ss.exists ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { wallets, house, day };
+      hb = house.bankroll;
       const moved = casTAdvance(t, ctx, t0);
       const r = fn({ t, ctx, now: t0, P, uid }) || { ok: true };
-      if (r.write === false && !moved && ts.exists) return Object.assign({}, r, { wallets });
+      ha = house.bankroll;
+      if (r.write === false && !moved && ts.exists) { hb = ha = null; return Object.assign({}, r, { wallets }); }
       t.rev = (t.rev || 0) + 1;
       // 每週收藏（決定 0042）：這一步結算了誰，誰的統計就多了；同一個交易裡看每個人有沒有新的收藏品。同桌和單人用同一份規則
       const wkNew = {};
@@ -66,6 +69,7 @@ async function tableTxn(pid, uid, opts, fn) {
       for (const id of ids) put(tx, walletRef(id), wallets[id]);
       return Object.assign({}, r, { wrote: true, wallets, wkNew });
     });
+    await outHouse({ before: hb, after: ha, t: t0 }); // 同桌沒有「是誰」：只說莊家破產了（沒寫東西的步驟 hb、ha 是 null，不會發）
     return Object.assign({ t }, out, { wallets: out.wallets || null });
   } finally { setRng(null); }
 }

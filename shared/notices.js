@@ -350,6 +350,25 @@ export const NOTICES = [
     ],
     cta: { label: "去實況", panel: "casino", params: { tab: "live" } },
   },
+  {
+    id: "discord-yuga", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
+    title: "Yuga Bot 來到 Discord：綁定之後，可以在 Discord 玩賭場", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "館友到遊戲選單的**「我的帳號」**，按「綁定 Discord」拿壹組 6 位數的碼，再到佩佩博物館的 Discord 打 **/pepe-綁定 碼**。綁好會送 100 萬籌碼（每個遊戲帳號只送壹次）。",
+        "還不是館友的朋友，在 Discord 打 **/pepe-加入**，會拿到壹個只有你看得到的加入連結，用 Google 登入就成為館友，不用再請館長加。",
+        "綁定之後可以在 Discord 玩：**/pepe-21點**（用按鈕要牌、停牌，牌局只有你看得到，打完頻道會多壹行結果）、**/pepe-大禮包**、**/pepe-餐車**（用選單買）、**/pepe-拚經濟**、**/pepe-實況**、**/pepe-斗內**。",
+        "不用綁定也能查：/pepe-莊家、/pepe-排行榜、/pepe-今日活動（多了今天的館訊和現實世界的消息）、/pepe-誰在線、/pepe-更新（最近的公告）。打 /pepe 就會列出全部指令。",
+        "遊戲裡的大事也會出現在頻道：莊家破產、莊家被救回來、有人加入博物館、有人開播、斗內的感謝。只會寫暱稱。",
+      ]],
+      ["規則", [
+        "Discord 和遊戲是同壹份進度：籌碼、每天拚經濟的次數、大禮包的包數、斗內的上限都共用，不會因為換地方多拿壹份。遊戲裡開到壹半的 21 點，可以到 Discord 打完。",
+        "21 點在 Discord 加牌的過程只有你看得到，打完才會在頻道公開輸贏；同壹個人 5 分鐘內連打，會併成壹則。",
+        "同桌 21 點、籌碼換小獎、舊錢包認領還是只能在遊戲裡。籌碼不是錢，也買不到錢。",
+        "遊戲網址：https://pepe-museum.web.app",
+      ]],
+    ],
+  },
 ];
 
 // 這週的特展（跟展廳的「本週特展」同一個主題）。台灣時間週一 05:00 換週（決定 0019，weekIndex）
@@ -369,9 +388,11 @@ export function weeklyNotice(P) {
 
 // 別的檔加進來的公告（例如每週劇情的「本週地下收藏庫」，web/src/ui_story.js 登記）：一筆是 (P, today) => 公告或 null
 export const NOTICE_EXTRA = [];
+// 這則今天看得到嗎：已經發布、還沒下架（日期含當天）。Discord 的 /pepe-更新 也用這個判斷
+export function noticeLive(n, today) { return !!n && (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire); }
 // 現在看得到的公告：已經發布、還沒下架；置頂的、重要的排前面，再照發布日期新的在前
 export function visibleNotices(P, today) {
-  const list = NOTICES.filter(n => (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire));
+  const list = NOTICES.filter(n => noticeLive(n, today));
   const w = weeklyNotice(P);
   if (w) list.push(w);
   list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）

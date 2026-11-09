@@ -64,15 +64,24 @@ async function bot(body, o = {}) {
 function interaction(text, discordId, guild = GUILD, name = "測試員") {
   const m = /^\/?(\S+)(?:\s+(.*))?$/.exec(text);
   const data = { name: m[1] };
-  if (m[2]) data.options = [{ name: "碼", type: 3, value: m[2] }];
+  const OPT = { "pepe-更新": ["幾則", 4], "pepe-21點": ["下注", 3], "pepe-大禮包": ["幾包", 4], "pepe-實況": ["動作", 3] }; // 指令 → [選項名, Discord 的型別（3 字串、4 整數）]
+  const o = OPT[m[1]] || ["碼", 3];
+  if (m[2]) data.options = [{ name: o[0], type: o[1], value: o[1] === 4 ? Number(m[2]) : m[2] }];
   return { type: 2, id: randId(), token: "tk", guild_id: guild, member: { user: { id: discordId, username: name, global_name: name } }, data };
 }
 const said = [];
 async function say(text, discordId, guild) {
   const r = await bot(interaction(text, discordId, guild));
   const d = r.json && r.json.data;
-  if (d) said.push(d.content);
-  return { r, text: d ? d.content : "", flags: d ? d.flags : null, ms: r.ms };
+  if (d) said.push(d.content + JSON.stringify(d.components || []));
+  return { r, text: d ? d.content : "", flags: d ? d.flags : null, ms: r.ms, type: r.json && r.json.type, comps: (d && d.components) || [] };
+}
+// 按按鈕（元件型別 2）或選選單（型別 3，values 是選的值）。discordId 是按的人
+async function press(customId, discordId, o = {}) {
+  const body = { type: 3, id: randId(), token: "tk", guild_id: o.guild || GUILD, member: { user: { id: discordId, username: "按的人", global_name: "按的人" } }, data: { custom_id: customId, component_type: o.menu ? 3 : 2, values: o.values } };
+  const r = await bot(body), d = r.json && r.json.data;
+  if (d) said.push(d.content + JSON.stringify(d.components || []));
+  return { r, text: d ? d.content : "", flags: d ? d.flags : null, ms: r.ms, type: r.json && r.json.type, comps: (d && d.components) || [] };
 }
 
 // ---------- 遊戲這邊的帳號（模擬器的 Google 登入） ----------
@@ -86,7 +95,7 @@ async function gameUser(name, o = {}) {
   return u;
 }
 // 館友：@dev.local 的帳號在模擬器不用邀請（開發用），join 一次就是館友
-const member = async name => { const u = await gameUser(name, { email: `dev-${Buffer.from(name + Math.random()).toString("hex").slice(0, 30)}@dev.local` }); const r = await u.call("join"); if (!r.ok) throw new Error("建館友失敗：" + r.message); return u; };
+const member = async name => { const u = await gameUser(name, { email: `dev-${crypto.randomBytes(10).toString("hex")}@dev.local` }); const r = await u.call("join"); if (!r.ok) throw new Error("建館友失敗：" + r.message); return u; };
 
 // ---------- 檢查 ----------
 const results = [];
@@ -98,6 +107,23 @@ const assert = require("assert");
 const has = (s, ...parts) => parts.forEach(p => assert.ok(String(s).includes(p), `應該有「${p}」：${String(s).slice(0, 200)}`));
 const hasNot = (s, ...parts) => parts.forEach(p => assert.ok(!String(s).includes(p), `不該有「${p}」：${String(s).slice(0, 200)}`));
 const walletOf = async uid => { const d = await fsGet(`casinoWallets/${uid}`); return d ? JSON.parse(d.data) : null; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const waitFor = async (fn, ms = 10000) => { const t0 = Date.now(); for (;;) { const v = await fn(); if (v) return v; if (Date.now() - t0 > ms) return null; await sleep(150); } };
+async function fsList(col) {
+  const r = await req(PORT.fs, "GET", `${FSBASE}/${col}?pageSize=300`, null, OWNER);
+  return ((r.json && r.json.documents) || []).map(d => Object.assign({ id: d.name.split("/").pop() }, Object.fromEntries(Object.entries(d.fields || {}).map(([k, x]) => [k, dec(x)]))));
+}
+// ---- 第二步（outbox）的測試工具：模擬器的 Function 絕不連真的 Discord，「會發的訊息」寫進 discordTestSent；discordTest/out 控制有沒有 token、發送會不會失敗 ----
+const OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"];
+async function outClear() {
+  for (const col of ["discordOutbox", "discordTestSent"]) for (const d of await fsList(col)) await fsDel(`${col}/${d.id}`);
+  for (const k of OUT_KINDS) await fsDel(`discordOutboxState/${k}`);
+}
+const outSetup = async o => { await outClear(); await fsSet("discordTest/out", o); };
+const outDocs = async prefix => (await fsList("discordOutbox")).filter(d => d.id.startsWith(prefix + "-"));
+const sentDocs = async () => fsList("discordTestSent");
+const setHouse = bankroll => fsSet("casinoHouse/main", { data: JSON.stringify({ v: 1, bankroll, hands: 0, day: taipeiDay(), reopened: 0 }) });
+const houseNow = async () => JSON.parse((await fsGet("casinoHouse/main")).data).bankroll;
 
 async function single() {
   const text = arg("cmd"), id = arg("user", randId());
@@ -155,7 +181,22 @@ async function all() {
   });
   await check("沒綁定的人打 /pepe-解除綁定：說沒有綁定", async () => { has((await say("/pepe-解除綁定", D.x)).text, "還沒有綁定"); });
   await check("沒綁定的人可以看公開的（莊家、今日活動、排行榜、誰在線）", async () => {
-    for (const c of ["/pepe-莊家", "/pepe-今日活動", "/pepe-排行榜", "/pepe-誰在線"]) { const r = await say(c, D.x); assert.strictEqual(r.flags, 0, c); assert.ok(r.text.length > 0, c); }
+    for (const c of ["/pepe-莊家", "/pepe-今日活動", "/pepe-排行榜", "/pepe-誰在線", "/pepe-更新"]) { const r = await say(c, D.x); assert.strictEqual(r.flags, 0, c); assert.ok(r.text.length > 0, c); }
+  });
+  await check("/pepe-今日活動：今天有館訊（打包的 DAY_DATA）就列「今日館訊」；沒有現實消息就沒有那一塊（不編）", async () => {
+    const dd = JSON.parse(/DAY_DATA = (\{.*\});/.exec(require("fs").readFileSync(require("path").join(__dirname, "..", "functions", "shared", "day_data.js"), "utf8"))[1]);
+    const r = await say("/pepe-今日活動", D.x), info = dd[day];
+    assert.strictEqual(r.flags, 0);
+    if (info) { has(r.text, "今日館訊", info.title); if (!info.real.length) hasNot(r.text, "現實世界"); else has(r.text, "今天的現實世界", info.real[0].slice(0, 6)); }
+    else hasNot(r.text, "現實世界");
+    hasNot(r.text, "@everyone");
+  });
+  await check("/pepe-更新：預設 5 則、有日期標題和遊戲連結；給 2 就 2 則；全頻道看得到", async () => {
+    const r = await say("/pepe-更新", D.x); assert.strictEqual(r.flags, 0);
+    has(r.text, "最近的館方更新", "pepe-museum.web.app"); assert.strictEqual(r.text.split("\n").filter(l => l.startsWith("・")).length, 5);
+    const r2 = await say("/pepe-更新 2", D.x); assert.strictEqual(r2.text.split("\n").filter(l => l.startsWith("・")).length, 2);
+    assert.ok(r.text.length < 2000);
+    const r10 = await say("/pepe-更新 10", D.x); assert.strictEqual(r10.text.split("\n").filter(l => l.startsWith("・")).length, 10); hasNot(r10.text, "怪癖"); assert.ok(r10.text.length < 2000);
   });
 
   // ---- 綁定：碼 ----
@@ -353,9 +394,304 @@ async function all() {
   });
 
   // ---- 沒設定 ----
-  await check("沒設定（拿掉模擬器的測試設定）回 503，不影響別的 Function", async () => {
-    await fsDel("discordTest/config"); const r = await bot({ type: 1 }); assert.strictEqual(r.status, 503);
-    assert.ok((await alice.call("discordLinkState")).result.configured === false);
+  // ---- 第二步：遊戲大事發到頻道 ----
+  const NUMS = require("../test/load_shared.cjs").load().NUM;
+  const joinViaDiscord = async name => { // 一個新的人靠 /pepe-加入 的連結成為館友
+    await fsSet(`discordJoinDay/${day}`, { n: 0 });
+    const r = await say("/pepe-加入", randId()); const c = /join=([a-z0-9]{16})/.exec(r.text)[1];
+    const g = await gameUser(name); const j = await g.call("join", { code: c }); assert.ok(j.ok, j.message); return g;
+  };
+  await check("發頻道：有人靠 /pepe-加入 成為館友 → 寫 outbox → 發到頻道（只有暱稱、不 @ 任何人）", async () => {
+    await outSetup({ token: true });
+    const g = await joinViaDiscord("Frank");
+    const o = await waitFor(async () => { const d = (await outDocs("join")).find(x => x.id === `join-${g.uid}` && x.status === "sent"); return d; });
+    assert.ok(o, "outbox 應該是 sent：" + JSON.stringify(await outDocs("join")));
+    const s = (await sentDocs()).find(x => x.id === `join-${g.uid}`); assert.ok(s, "應該有發");
+    has(s.content, "Frank 加入了博物館"); hasNot(s.content, "@", g.email, "test.example"); assert.strictEqual(s.mentions, JSON.stringify({ parse: [] }));
+    assert.ok((await fsGet("discordOutboxState/join")).at > 0);
+  });
+  await check("暱稱是 @everyone 也不能 tag：字裡沒有 @，body 帶 allowed_mentions parse []", async () => {
+    await outSetup({ token: true });
+    const g = await joinViaDiscord("@everyone");
+    const o = await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${g.uid}` && x.status === "sent"));
+    assert.ok(o, JSON.stringify(await outDocs("join")));
+    const s = (await sentDocs()).find(x => x.id === `join-${g.uid}`); hasNot(s.content, "@"); has(s.content, "everyone"); assert.strictEqual(s.mentions, JSON.stringify({ parse: [] }));
+  });
+  await check("冷卻：同一種事件 10 分鐘內第二個不發（標 skipped: cooldown）；冷卻過了（把紀錄改舊）又發", async () => {
+    await outSetup({ token: true });
+    const a = await joinViaDiscord("Gina"); assert.ok(await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${a.uid}` && x.status === "sent")));
+    const b = await joinViaDiscord("Henry");
+    const ob = await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${b.uid}` && x.status !== "pending"));
+    assert.ok(ob && ob.status === "skipped" && ob.reason === "cooldown", JSON.stringify(ob));
+    assert.ok(!(await sentDocs()).some(x => x.id === `join-${b.uid}`), "冷卻中不能發");
+    await fsSet("discordOutboxState/join", { at: Date.now() - (NUMS.discord.outCooldownMin * 60000 + 1000) });
+    const c = await joinViaDiscord("Iris");
+    assert.ok(await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${c.uid}` && x.status === "sent")), "冷卻過了應該發");
+  });
+  await check("沒 token：不發、不報錯、不佔冷卻（標 skipped: no-token），遊戲照常", async () => {
+    await outSetup({ token: false });
+    const g = await joinViaDiscord("Jack"); assert.ok((await fsGet(`members/${g.uid}`)));
+    const o = await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${g.uid}` && x.status !== "pending"));
+    assert.ok(o && o.status === "skipped" && o.reason === "no-token", JSON.stringify(o));
+    assert.strictEqual((await sentDocs()).length, 0); assert.strictEqual(await fsGet("discordOutboxState/join"), null);
+    assert.ok((await g.call("casino", { act: "peek" })).ok, "賭場照常");
+  });
+  await check("發送失敗：記 failed 和原因、不重試；加入照樣成功，賭場照常", async () => {
+    await outSetup({ token: true, fail: true });
+    const g = await joinViaDiscord("Kate"); assert.ok(await fsGet(`members/${g.uid}`), "加入沒被影響");
+    const o = await waitFor(async () => (await outDocs("join")).find(x => x.id === `join-${g.uid}` && x.status === "failed"));
+    assert.ok(o && /發送失敗/.test(o.error) && !/token/i.test(o.error), JSON.stringify(o));
+    await sleep(2500); assert.strictEqual((await fsGet(`discordOutbox/join-${g.uid}`)).status, "failed", "不重試、不改回去");
+    assert.strictEqual((await sentDocs()).length, 0);
+    assert.ok((await g.call("casino", { act: "open" })).ok, "賭場照常");
+  });
+  await check("同一個事件只發一次：outbox 已經有這件事（同名文件），遊戲照常、不會再寫、不會再發", async () => {
+    await outSetup({ token: true });
+    const g = await gameUser("Lena");
+    await fsSet(`discordOutbox/join-${g.uid}`, { kind: "join", text: "舊的那則", status: "sent", at: Date.now() });
+    await fsSet(`discordJoinDay/${day}`, { n: 0 });
+    const r = await say("/pepe-加入", randId()); const c = /join=([a-z0-9]{16})/.exec(r.text)[1];
+    assert.ok((await g.call("join", { code: c })).ok);
+    await sleep(1500); const d = await fsGet(`discordOutbox/join-${g.uid}`);
+    assert.strictEqual(d.text, "舊的那則"); assert.strictEqual((await sentDocs()).length, 0);
+  });
+  await check("太舊的事件（寫進去超過 30 分鐘還沒發）不發", async () => {
+    await outSetup({ token: true });
+    await fsSet("discordOutbox/join-oldone", { kind: "join", text: "很久以前", status: "pending", at: Date.now() - 40 * 60000 });
+    const o = await waitFor(async () => { const d = await fsGet("discordOutbox/join-oldone"); return d && d.status !== "pending" ? d : null; });
+    assert.ok(o && o.status === "skipped" && o.reason === "old", JSON.stringify(o)); assert.strictEqual((await sentDocs()).length, 0);
+  });
+  const econUser = async () => { const u = await member("拚" + Math.random().toString(36).slice(2, 6)); return u; };
+  await check("莊家破產（拚經濟失敗把莊家拚到負的）→ 頻道發一則「莊家破產了」", async () => {
+    await outSetup({ token: true }); await setHouse(0);
+    let broke = false;
+    for (let i = 0; i < 6 && !broke; i++) { const u = await econUser(); for (let k = 0; k < NUMS.casino.econ.perDay && !broke; k++) { await setHouse(0); const r = await u.call("casino", { act: "econ" }); assert.ok(r.ok, r.message); broke = (await houseNow()) < 0; } }
+    assert.ok(broke, "試了很多次都沒拚到破產");
+    const o = await waitFor(async () => (await outDocs("broke")).find(x => x.status === "sent")); assert.ok(o, JSON.stringify(await outDocs("broke")));
+    has((await sentDocs()).find(x => x.id === o.id).content, "莊家破產了");
+  });
+  await check("莊家被救回來（拚經濟 rescued）→ 頻道發「○○ 把莊家拚回來了」", async () => {
+    await outSetup({ token: true }); await setHouse(-1000);
+    let who = null;
+    for (let i = 0; i < 10 && !who; i++) { const u = await econUser(); for (let k = 0; k < NUMS.casino.econ.perDay && !who; k++) { const r = await u.call("casino", { act: "econ" }); assert.ok(r.ok, r.message); if (r.result.econ.rescued) who = u; else if ((await houseNow()) >= 0) break; } }
+    assert.ok(who, "沒有人把莊家拚回來");
+    const o = await waitFor(async () => (await outDocs("rescued")).find(x => x.status === "sent")); assert.ok(o, JSON.stringify(await outDocs("rescued")));
+    has((await sentDocs()).find(x => x.id === o.id).content, who.name, "把莊家拚回來了");
+  });
+  const handStand = async u => { // 下最小注，要到 17 點以上就停；回傳最後一次的結果
+    let r = await u.call("casino", { act: "deal", text: String(NUMS.casino.minBet) }); assert.ok(r.ok && r.result.ok !== false, JSON.stringify(r));
+    for (let i = 0; i < 8 && r.result.round && r.result.round.state === "playing"; i++) {
+      const rd = r.result.round, act = rd.player.total >= 17 ? "stand" : "hit";
+      r = await u.call("casino", { act, seq: rd.seq }); assert.ok(r.ok, r.message);
+    }
+    return r;
+  };
+  await check("有人把莊家打到破產的那一把（莊家 0、玩家贏）→ 頻道發「○○ 壹把把莊家打到破產了」，有暱稱", async () => {
+    await outSetup({ token: true });
+    const u = await member("打手" + Math.random().toString(36).slice(2, 5)); await u.call("casino", { act: "open" });
+    let hit = false;
+    for (let i = 0; i < 60 && !hit; i++) { await setHouse(0); await handStand(u); hit = (await houseNow()) < 0; }
+    assert.ok(hit, "60 手都沒贏過？");
+    const o = await waitFor(async () => (await outDocs("breaker")).find(x => x.status === "sent")); assert.ok(o, JSON.stringify(await outDocs("breaker")));
+    has((await sentDocs()).find(x => x.id === o.id).content, u.name, "打到破產");
+  });
+  await check("實況開播 → 頻道發一則；斗內 → 發感謝（有兩人暱稱和金額），斗內冷卻是 1 分鐘（第二筆馬上來被擋，改舊後可以發）", async () => {
+    await outSetup({ token: true }); await fsDel("casinoLive/main");
+    const s = await member("主播Ann"), d = await member("路人Bo"), d2 = await member("路人Cy");
+    for (const u of [s, d, d2]) await u.call("casino", { act: "open" });
+    const on = await s.call("casino", { act: "liveOn" }); assert.ok(on.ok && on.result.ok !== false, JSON.stringify(on));
+    const o1 = await waitFor(async () => (await outDocs("liveOn")).find(x => x.status === "sent")); assert.ok(o1, JSON.stringify(await outDocs("liveOn")));
+    has((await sentDocs()).find(x => x.id === o1.id).content, "主播Ann", "開播");
+    const dn = await d.call("casino", { act: "donate" }); assert.ok(dn.ok && dn.result.ok !== false, JSON.stringify(dn));
+    const o2 = await waitFor(async () => (await outDocs("donate")).find(x => x.status === "sent")); assert.ok(o2, JSON.stringify(await outDocs("donate")));
+    has((await sentDocs()).find(x => x.id === o2.id).content, "路人Bo", "主播Ann", "斗內", "籌碼");
+    const dn2 = await d2.call("casino", { act: "donate" }); assert.ok(dn2.ok && dn2.result.ok !== false, JSON.stringify(dn2));
+    const o3 = await waitFor(async () => (await outDocs("donate")).find(x => x.id !== o2.id && x.status !== "pending")); assert.ok(o3 && o3.status === "skipped" && o3.reason === "cooldown", JSON.stringify(o3));
+    await s.call("casino", { act: "liveOff" });
+  });
+  await check("發出去的每一則（模擬器的 discordTestSent）：沒有 email、理智、怪癖、靈感，全都不 @ 任何人", async () => {
+    await outSetup({ token: true });
+    const g = await joinViaDiscord("Mia"); assert.ok(await waitFor(async () => (await sentDocs()).find(x => x.id === `join-${g.uid}`)));
+    for (const s of await sentDocs()) { assert.ok(!/[\w.+-]+@[\w-]+\.[\w.]+|@/.test(s.content), s.content); assert.ok(!/理智|怪癖|靈感/.test(s.content), s.content); assert.strictEqual(s.mentions, JSON.stringify({ parse: [] })); }
+  });
+  // ---- 第三步：在 Discord 玩 ----
+  await outSetup({ token: true });
+  const bindNew = async name => { // 一個新的館友，綁好 Discord（拿到 100 萬獎勵）
+    const u = await member(name), cr = await u.call("discordLinkCode"); if (!cr.ok) throw new Error("拿不到綁定碼：" + cr.message); const code = cr.result.code; u.did = randId();
+    has((await say(`/pepe-綁定 ${code}`, u.did)).text, "綁定好了"); return u;
+  };
+  const roundOf = async u => { const d = await fsGet(`casinoRounds/${u.uid}`); return d ? JSON.parse(d.data) : null; };
+  const btns = r => (r.comps[0] ? r.comps[0].components.map(c => c.custom_id) : []);
+  const startHand = async (u, bet = "1000") => { // 開一手，要拿到還在打（有按鈕）的；前兩張剛好 21 點直接打完的就再來一手
+    for (let i = 0; i < 40; i++) { const r = await say(`/pepe-21點 ${bet}`, u.did); assert.strictEqual(r.flags, 64, r.text); if (r.comps.length) return r; }
+    throw new Error("40 手都是壹開始就 21 點？");
+  };
+  const finishHand = async (u, r) => { // 一直停牌到打完；回傳最後一則
+    for (let i = 0; i < 6 && r.comps.length; i++) r = await press(btns(r)[1], u.did);
+    return r;
+  };
+  const OUTCOME = /淨賺 \+|輸了 |不賺不賠/;
+  await check("沒綁定的人用六個遊戲指令和按鈕：都只有本人看得到，教他怎麼綁定或加入", async () => {
+    const x = randId();
+    for (const c of ["/pepe-21點 1000", "/pepe-大禮包", "/pepe-餐車", "/pepe-拚經濟", "/pepe-實況", "/pepe-斗內"]) { const r = await say(c, x); assert.strictEqual(r.flags, 64, c); has(r.text, "/pepe-加入", "/pepe-綁定"); }
+    const b = await press(`bj:hit:0:${x}`, x); assert.strictEqual(b.flags, 64); has(b.text, "/pepe-綁定");
+    const f = await press(`food:${x}`, x, { menu: true, values: ["tea"] }); assert.strictEqual(f.flags, 64); has(f.text, "/pepe-綁定");
+  });
+  await check("21 點整手：下注 → 按鈕要牌／停牌 → 打完；牌局只有本人看得到；seq 重按被擋、別人的按鈕被擋、什麼都沒改", async () => {
+    const u = await bindNew("牌手阿花"); let r = await startHand(u);
+    has(r.text, "21 點", "下注 1,000", "你的牌", "莊家"); hasNot(r.text, "理智", "@");
+    assert.deepStrictEqual(r.comps[0].components.map(c => c.label), ["要牌", "停牌"]);
+    const ids = btns(r); has(ids[0], "bj:hit:0:" + u.did); has(ids[1], "bj:stand:0:" + u.did);
+    const before = await roundOf(u); assert.strictEqual(before.state, "playing"); const walletBefore = (await walletOf(u.uid)).chips;
+    // 別人的按鈕
+    const other = await press(ids[1], randId()); assert.strictEqual(other.type, 4); assert.strictEqual(other.flags, 64); has(other.text, "不是你的");
+    assert.deepStrictEqual(await roundOf(u), before, "別人按了之後牌局沒變");
+    // 要牌 (seq 0 → 1)
+    const hit = await press(ids[0], u.did); assert.strictEqual(hit.type, 7, JSON.stringify(hit.r.json).slice(0, 200)); has(hit.text, "你的牌");
+    const afterHit = await roundOf(u); assert.strictEqual(afterHit.player.length, before.player.length + 1);
+    // 同一顆按鈕再按一次（seq 過期）：被擋，牌局不變，訊息換成現在的樣子
+    const again = await press(ids[0], u.did); assert.strictEqual(again.type, 7); has(again.text, "不是最新的");
+    assert.deepStrictEqual(await roundOf(u), afterHit, "重按之後牌局沒變（沒有多要一張）");
+    // 打完
+    const done = await finishHand(u, hit); assert.strictEqual(done.comps.length, 0, "打完就沒有按鈕了");
+    has(done.text, "你現在有"); assert.ok(OUTCOME.test(done.text), done.text); hasNot(done.text, "理智");
+    const fin = await roundOf(u); assert.strictEqual(fin.state, "done");
+    // 打完之後再按舊的按鈕：不會重複結算
+    const w1 = (await walletOf(u.uid)).chips; const stale = await press(ids[1], u.did); assert.strictEqual(stale.type, 7); assert.strictEqual((await walletOf(u.uid)).chips, w1, "不重複派彩");
+    // 錢包的數字跟 Discord 說的一樣（共用）
+    const said1 = Number(/你現在有 ([\d,]+) 籌碼/.exec(done.text)[1].replace(/,/g, "")); assert.strictEqual(said1, w1);
+    assert.strictEqual((await u.call("casino", { act: "peek" })).result.chips, w1, "遊戲讀到的籌碼一樣");
+  });
+  await check("打完自動在頻道公開一行結果（只有暱稱和輸贏）；同一個人 5 分鐘內連打併成同一則（編輯第壹則）", async () => {
+    await outSetup({ token: true });
+    const u = await bindNew("牌手小明");
+    for (let i = 0; i < 2; i++) { const r = await startHand(u); await finishHand(u, r); }
+    const docs = (await outDocs("bj")).filter(d => d.uid === u.uid).sort((a, b) => a.at - b.at);
+    const ok = await waitFor(async () => { const ds = (await outDocs("bj")).filter(d => d.uid === u.uid); return ds.length >= 2 && ds.every(d => d.status !== "pending" && d.status !== "sending") ? ds : null; });
+    assert.ok(ok, "outbox：" + JSON.stringify(await outDocs("bj")));
+    const sorted = ok.sort((a, b) => a.at - b.at); assert.strictEqual(sorted[0].status, "sent"); assert.ok(sorted.slice(1).every(d => d.status === "merged"), JSON.stringify(sorted.map(d => d.status)));
+    const first = (await sentDocs()).find(s => s.id === sorted[0].id); assert.ok(first, "第壹則有發");
+    has(first.content, "牌手小明"); hasNot(first.content, "@", "籌碼餘額", "你現在有"); assert.strictEqual(first.mentions, JSON.stringify({ parse: [] }));
+    assert.strictEqual((await sentDocs()).filter(s => sorted.some(d => d.id === s.id)).length, 1, "這個人只有壹則訊息（其餘是編輯）");
+    has(first.content, `連打了 ${sorted.length} 手 21 點`); assert.strictEqual(first.edits, sorted.length - 1);
+    assert.strictEqual(docs.length, sorted.length);
+  });
+  await check("沒 token 的時候打完 21 點：遊戲照常、頻道不發、不報錯", async () => {
+    await outSetup({ token: false });
+    const u = await bindNew("牌手無名"); const r = await startHand(u); const d = await finishHand(u, r); assert.ok(OUTCOME.test(d.text));
+    const o = await waitFor(async () => (await outDocs("bj")).find(x => x.uid === u.uid && x.status !== "pending")); assert.ok(o && o.status === "skipped" && o.reason === "no-token", JSON.stringify(o));
+    assert.strictEqual((await sentDocs()).length, 0);
+  });
+  await check("發送失敗的時候打完 21 點：遊戲照常（結果、籌碼都算）", async () => {
+    await outSetup({ token: true, fail: true });
+    const u = await bindNew("牌手倒楣"); const r = await startHand(u); const d = await finishHand(u, r); assert.ok(OUTCOME.test(d.text), d.text);
+    const o = await waitFor(async () => (await outDocs("bj")).find(x => x.uid === u.uid && x.status === "failed")); assert.ok(o && /發送失敗/.test(o.error), JSON.stringify(o));
+    assert.strictEqual((await roundOf(u)).state, "done");
+    await outSetup({ token: true });
+  });
+  await check("遊戲開一半的牌，可以到 Discord 打完（不下注、直接 /pepe-21點）；Discord 開一半的，遊戲也能打完，Discord 的舊按鈕被擋", async () => {
+    const u = await bindNew("牌手兩邊跑");
+    // (a) 遊戲開、Discord 打完
+    let g = null; for (let i = 0; i < 40 && !g; i++) { const r = await u.call("casino", { act: "deal", text: "1000" }); assert.ok(r.ok, r.message); if (r.result.round && r.result.round.state === "playing") g = r.result; }
+    assert.ok(g, "遊戲開不出還在打的牌");
+    const r = await say("/pepe-21點", u.did); assert.strictEqual(r.flags, 64); has(r.text, "接著打", "你的牌"); assert.ok(r.comps.length, "有按鈕");
+    has(btns(r)[1], `bj:stand:${g.round.seq}:${u.did}`);
+    const done = await finishHand(u, r); assert.ok(OUTCOME.test(done.text), done.text);
+    const view = (await u.call("casino", { act: "wk" })).result; assert.strictEqual(view.round.state, "done", "遊戲這邊也是打完了"); assert.strictEqual(view.round.out.kind, (await roundOf(u)).out.kind);
+    assert.strictEqual(view.wallet.chips, (await walletOf(u.uid)).chips);
+    // (b) Discord 開、遊戲停牌，Discord 的舊按鈕被擋
+    const r2 = await startHand(u); const ids = btns(r2);
+    const st = await u.call("casino", { act: "stand", seq: Number(ids[1].split(":")[2]) }); assert.ok(st.ok && st.result.ok !== false, JSON.stringify(st));
+    const w1 = (await walletOf(u.uid)).chips; const late = await press(ids[1], u.did); assert.strictEqual(late.type, 7); has(late.text, "不是最新的"); assert.strictEqual(late.comps.length, 0, "已經打完，不再有按鈕");
+    assert.strictEqual((await walletOf(u.uid)).chips, w1, "不會多結算");
+    // 遊戲裡打完的那手，不會在頻道公開（只有在 Discord 打完的才公開）
+    const rid = (await roundOf(u)).id;
+    assert.ok(!(await outDocs("bj")).some(d => d.id === `bj-${rid}`), "在遊戲裡打完的不公開");
+  });
+  await check("下注不合規則：照遊戲的挑剔話回本人（沒下注、不是數字、太少、太多、錢不夠）；沒有牌局被開出來", async () => {
+    const u = await bindNew("牌手挑剔"); const before = await roundOf(u);
+    for (const [bet, re] of [["", /要下多少/], ["abc", /再下壹次abc/], ["5", /最少要下/], ["999999999999", /(最多只能下|你才沒那麼有錢)/], ["2000萬", /(最多只能下|你才沒那麼有錢)/]]) {
+      const r = await say(bet ? `/pepe-21點 ${bet}` : "/pepe-21點", u.did); assert.strictEqual(r.flags, 64, bet); assert.ok(re.test(r.text), `${bet} → ${r.text}`); assert.strictEqual(r.comps.length, 0);
+    }
+    assert.deepStrictEqual(await roundOf(u), before);
+    const ok = await say("/pepe-21點 1萬", u.did); has(ok.text, "下注 10,000");  // 「10萬」「1萬」這種寫法也行
+    await finishHand(u, ok);
+  });
+  await check("次數和上限跟遊戲共用：拚經濟壹天 3 次（遊戲 2 次 + Discord 1 次），第 4 次兩邊都被擋", async () => {
+    const u = await bindNew("拚經濟共用"); const per = NUMS.casino.econ.perDay;
+    for (let i = 0; i < per - 1; i++) assert.ok((await u.call("casino", { act: "econ" })).result.ok !== false);
+    const r = await say("/pepe-拚經濟", u.did); assert.strictEqual(r.flags, 0, r.text); has(r.text, "拚了壹次經濟", "拚 經濟，做 就對了", "今天還能拚 0 次"); hasNot(r.text, "理智", "@");
+    const r2 = await say("/pepe-拚經濟", u.did); assert.strictEqual(r2.flags, 64); has(r2.text, "今天拚夠了");
+    const g = await u.call("casino", { act: "econ" }); assert.ok(g.result.ok === false, "遊戲這邊也被擋");
+    assert.strictEqual((await walletOf(u.uid)).ec.n, per);
+  });
+  await check("大禮包：Discord 開、遊戲開，壹天的包數共用；開完回本人「沒有可以開的」；全頻道看得到", async () => {
+    const u = await bindNew("禮包共用");
+    assert.ok((await u.call("casino", { act: "pack", n: 1 })).result.ok !== false);
+    const r = await say("/pepe-大禮包", u.did); assert.strictEqual(r.flags, 0, r.text); has(r.text, "開大禮包", "禮包", "合計 +", "剩下"); hasNot(r.text, "理智");
+    let refused = null; for (let i = 0; i < 15 && !refused; i++) { const x = await say("/pepe-大禮包", u.did); if (x.flags === 64) refused = x; }
+    assert.ok(refused && /沒有可以開的大禮包/.test(refused.text), refused && refused.text);
+    assert.ok((await u.call("casino", { act: "pack", n: 1 })).result.ok === false, "遊戲這邊也沒有了");
+    const w = await walletOf(u.uid); assert.ok(w.pk.opened >= 2);
+    const multi = await bindNew("禮包兩包"); const m2 = await say("/pepe-大禮包 2", multi.did); assert.strictEqual((m2.text.match(/・/g) || []).length, 2, m2.text);
+  });
+  await check("餐車：選單（9 樣、只有本人看得到）→ 選壹樣 → 扣籌碼、不顯示理智；別人的選單被擋", async () => {
+    const u = await bindNew("餐車客人"); const m = await say("/pepe-餐車", u.did);
+    assert.strictEqual(m.flags, 64); has(m.text, "餐車", "籌碼"); const sel = m.comps[0].components[0]; assert.strictEqual(sel.type, 3); assert.strictEqual(sel.options.length, 9); has(sel.custom_id, "food:" + u.did);
+    assert.ok(sel.options.every(o => o.label.length <= 100 && o.value && o.description.length <= 100));
+    const other = await press(sel.custom_id, randId(), { menu: true, values: ["tea"] }); assert.strictEqual(other.flags, 64); has(other.text, "不是你的");
+    const w0 = (await walletOf(u.uid)).chips; const buy = await press(sel.custom_id, u.did, { menu: true, values: ["tea"] });
+    assert.strictEqual(buy.type, 7); has(buy.text, "冰涼麥茶", "謝謝"); hasNot(buy.text, "理智"); assert.strictEqual(buy.comps[0].components[0].type, 3, "選單還在，可以再買");
+    assert.strictEqual((await walletOf(u.uid)).chips, w0 - 1750);
+    const poor = await press(sel.custom_id, u.did, { menu: true, values: ["admiral"] }); // 200 萬，買得起（100 萬 + 獎勵）？買不起就會說錢不夠
+    assert.strictEqual(poor.type, 7);
+    const bad = await press(sel.custom_id, u.did, { menu: true, values: ["不存在的"] }); assert.strictEqual(bad.type, 7);
+  });
+  await check("存檔：餐車加心情要改存檔 → rev 加壹、寫在同壹個交易、事後通知 save_changed；舊 rev 的分頁寫不進去（不會把伺服器的蓋掉）", async () => {
+    const u = await bindNew("存檔測試"); const G = require("../test/load_shared.cjs").load(); const P = JSON.parse(JSON.stringify(G.newProfile("challenge"))); P.mood = 50; P.sanity = 60;
+    await fsSet(`saves/${u.uid}`, { data: JSON.stringify({ profiles: { challenge: P }, current: "challenge" }), rev: 7 });
+    const m = await say("/pepe-餐車", u.did), sel = m.comps[0].components[0];
+    const buy = await press(sel.custom_id, u.did, { menu: true, values: ["chicken"] }); assert.strictEqual(buy.type, 7); has(buy.text, "烤雞肉", "心情 +"); hasNot(buy.text, "理智");
+    const s = await fsGet(`saves/${u.uid}`); const S2 = JSON.parse(s.data);
+    assert.strictEqual(s.rev, 8, "rev 加壹"); assert.ok(S2.profiles.challenge.mood > 50, "心情真的加了：" + S2.profiles.challenge.mood);
+    const inbox = (await req(PORT.rtdb, "GET", `/inbox/${u.uid}.json?ns=${PROJECT}`, null, OWNER)).json || {};
+    assert.ok(Object.values(inbox).some(x => x.t === "save_changed" && x.rev === 8), "有通知遊戲分頁重讀：" + JSON.stringify(inbox));
+    // 遊戲分頁用舊的 rev 7 存檔：遊戲的 save() 是「現在的 rev 不等於手上的 rev 就不寫」——這裡照同樣的規則用 REST 的前置條件模擬
+    const cur = (await fsGet(`saves/${u.uid}`)).rev; assert.notStrictEqual(cur, 7, "伺服器已經是新的 rev，舊分頁的 save() 會碰到 conflict，不會寫");
+  });
+  await check("理智低的人打 21 點：看錯牌照算，但所有回覆都不寫「理智」；連輸的提示也不寫；沒有存檔的人只算籌碼", async () => {
+    const u = await bindNew("牌手眼花"); const G = require("../test/load_shared.cjs").load(); const P = JSON.parse(JSON.stringify(G.newProfile("challenge"))); P.mood = 50; P.sanity = 5;
+    await fsSet(`saves/${u.uid}`, { data: JSON.stringify({ profiles: { challenge: P }, current: "challenge" }), rev: 1 });
+    let warped = false, streak = false;
+    for (let i = 0; i < 60 && !(warped && streak); i++) {
+      const r = await say("/pepe-21點 100", u.did); hasNot(r.text, "理智"); if (/眼睛有點花/.test(r.text)) warped = true;
+      const d = r.comps.length ? await finishHand(u, r) : r; hasNot(d.text, "理智"); if (/看錯了|眼睛有點花/.test(d.text)) warped = true; if (/手心冒汗/.test(d.text)) streak = true;
+    }
+    assert.ok(warped, "60 手都沒有看錯過牌？"); // 理智 5：每張牌看錯的機率很高
+    const plain = await bindNew("牌手沒存檔"); const r = await startHand(plain); const d = await finishHand(plain, r); assert.ok(OUTCOME.test(d.text));
+  });
+  await check("實況和斗內：Discord 開播（全頻道、不另外寫 outbox）→ 別人斗內（全頻道感謝）→ 下播；沒人在播、斗內自己、重複開播都回本人", async () => {
+    await outSetup({ token: true }); await fsDel("casinoLive/main");
+    const s = await bindNew("主播小花"), d = await bindNew("斗內小明");
+    const none = await say("/pepe-斗內", d.did); assert.strictEqual(none.flags, 64); has(none.text, "沒有人在實況");
+    const on = await say("/pepe-實況", s.did); assert.strictEqual(on.flags, 0, on.text); has(on.text, "主播小花 開播了", "播到");
+    const again = await say("/pepe-實況", s.did); assert.strictEqual(again.flags, 64); has(again.text, "已經在實況了");
+    const taken = await say("/pepe-實況", d.did); assert.strictEqual(taken.flags, 64); has(taken.text, "主播小花 正在實況");
+    const me = await say("/pepe-斗內", s.did); assert.strictEqual(me.flags, 64); has(me.text, "不能斗內給自己");
+    const w0 = (await walletOf(s.uid)).chips, dw0 = (await walletOf(d.uid)).chips;
+    const dn = await say("/pepe-斗內", d.did); assert.strictEqual(dn.flags, 0, dn.text); has(dn.text, "斗內小明", "斗內", "實況主：主播小花");
+    const got = (await walletOf(s.uid)).chips - w0; assert.ok(got >= 20000 && got <= 260000, "金額隨機 2 萬～26 萬：" + got); assert.strictEqual(dw0 - (await walletOf(d.uid)).chips, got, "守恆");
+    const v = (await d.call("casino", { act: "live" })).result; assert.ok(v.live.on && v.live.nick === "主播小花", "遊戲這邊看得到同一位實況主");
+    const off = await say("/pepe-實況 off", s.did); assert.strictEqual(off.flags, 0); has(off.text, "主播小花 下播了");
+    const notYou = await say("/pepe-實況 off", s.did); assert.strictEqual(notYou.flags, 64);
+    await sleep(1200); assert.strictEqual((await outDocs("liveOn")).length + (await outDocs("donate")).length, 0, "Discord 開的播、斗內的回覆本身就是公開的，不再寫 outbox");
+  });
+  await fsDel("discordTest/out"); await outClear();
+  await check("拿掉模擬器的測試設定：改用 repo 裡的正式常數（Application ID 等 11-09 已填），測試金鑰簽的請求回 401；常數若是空的則回 503；不影響別的 Function", async () => {
+    await fsDel("discordTest/config"); const r = await bot({ type: 1 });
+    const filled = /publicKey: "[0-9a-f]{64}"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "functions", "discord_config.js"), "utf8"));
+    assert.strictEqual(r.status, filled ? 401 : 503);
+    assert.ok((await alice.call("discordLinkState")).result.configured === filled);
     assert.ok((await alice.call("casino", { act: "peek" })).ok, "賭場照常");
     await fsSet("discordTest/config", { publicKey: PUB_HEX, guildId: GUILD });
   });
@@ -365,6 +701,9 @@ async function all() {
     for (const s of said) { assert.ok(!/[\w.+-]+@[\w-]+\.[\w.]+/.test(s), "有 email：" + s); assert.ok(!/理智|怪癖|靈感/.test(s), "有不該說的：" + s); }
   });
 
+  if (process.argv.includes("--show")) { // 印幾則新指令的回覆，看長什麼樣子（含按鈕的 JSON）
+    for (const re of [/下注 [\d,]+\n你的牌/, /開大禮包/, /餐車/, /拚了壹次/, /開播了/, /斗內了/, /連打了/]) { const s = said.find(x => re.test(x)); if (s) console.log("\n----------\n" + s); }
+  }
   const bad = results.filter(r => !r[0]).length;
   const sorted = timings.slice().sort((a, b) => a - b), p = q => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
   console.log(`\n${results.length - bad}／${results.length} 項通過${bad ? `，${bad} 項沒過` : ""}（${Math.round((Date.now() - t0) / 1000)} 秒）`);

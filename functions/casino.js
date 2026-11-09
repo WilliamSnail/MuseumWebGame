@@ -33,6 +33,7 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
+import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -48,8 +49,10 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 // 一個交易：讀錢包、這一手、莊家（要的話還有存檔、舊資料）→ fn(ctx) → 寫回
 // fn 回傳 { ok: false, ... }：什麼都不寫，原樣回給畫面（不是錯誤：荷官的話也是這樣回）
 // fn 回傳 { ok: true, ... }：ctx.round 有改（ctx.roundDirty）就寫；錢包、莊家一定寫；ctx.saveDirty 就寫存檔
-async function play(req, me, opts, fn) {
-  const t = now(), day = taipeiDay(t), email = emailOf(req);
+// 核心吃 { uid, nick } 和 email（只有認領舊資料用）：遊戲（casino 這個 Function）和 Discord（functions/discord_play.js）各包一層，規則只有這壹份
+export async function playCore(me, email, opts, fn) {
+  const t = now(), day = taipeiDay(t);
+  let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
@@ -63,7 +66,9 @@ async function play(req, me, opts, fn) {
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
+      hb = ctx.house.bankroll;
       const r = fn(ctx);
+      ha = ctx.house.bankroll;
       if (!r.ok && !opts.writeAnyway) return r;
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
@@ -77,9 +82,12 @@ async function play(req, me, opts, fn) {
       return Object.assign({}, r, { rev });
     });
     if (out && out.rev) await inbox(me.uid, { t: "save_changed", rev: out.rev, why: "casino" });
+    // 莊家破產、被救回來 → Discord（寫 outbox；寫不進去只記錄，不影響這步）
+    if (out && out.ok !== false) await outHouse({ before: hb, after: ha, nick: me.nick, settled: !!out.settle, rescued: !!(out.econ && out.econ.rescued), t });
     return out;
   } finally { setRng(null); }
 }
+const play = (req, me, opts, fn) => playCore(me, emailOf(req), opts, fn);
 // 稱號到處看得到（決定 0050）：現在戴的稱號公開在 Realtime Database 的 titles/{uid}（館友讀得到，只有這裡寫得動）。
 // 只放 { id, name }，名字是錢包裡的（不信存檔）。寫不進去不影響賭場本身，下次進館的 peek 會再補
 const publishTitle = async (uid, t) => {
@@ -93,7 +101,8 @@ const mirrorLive = async st => {
   try { await rtdb().ref("casinoLive").transaction(cur => (cur && Number.isFinite(cur.seq) && cur.seq >= st.seq ? undefined : liveNode(st))); }
   catch (e) { console.error("casinoLive：鏡像寫不進去", e && e.message); } // 寫不進去不影響交易；下次有人看（act live）會補
 };
-async function liveAct(me, act, rnd) {
+// opts.out === false：這壹步是 Discord 指令做的，回覆本身就是公開的，不用再寫 outbox（不然頻道會出現兩則）
+export async function liveAct(me, act, rnd, opts = {}) {
   const t = now(), day = taipeiDay(t);
   const out = await db().runTransaction(async tx => {
     const ls = await tx.get(liveRef());
@@ -122,18 +131,52 @@ async function liveAct(me, act, rnd) {
     put(tx, liveRef(), r.st);
     return see(r.st, { n: r.n, line: r.line, from: r.from, to: r.to });
   });
-  if (out && out.ok && out.st) { await mirrorLive(out.st); delete out.st; }
+  if (out && out.ok && out.st) {
+    await mirrorLive(out.st);
+    if (act === "liveOn" && opts.out !== false) await outLiveOn(out.st.seq, me.nick); // Discord：開播
+    if (act === "donate" && out.st.msg && opts.out !== false) await outDonate(out.st.msg.id, out.from, out.to, out.n); // Discord：斗內感謝
+    delete out.st;
+  }
   return out;
 }
 // 畫面要的：錢包摘要、這一手、莊家
 // 每一步成功的回答都經過這裡：先同步每週收藏（統計夠了就發），再把摘要、這一手、莊家一起給畫面
 export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
-const shape = (ctx, extra) => {
+export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
     econ: casEconView(ctx.w, ctx.day), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
-const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
+export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
+
+// ---------- 每個動作在交易裡做的事（遊戲和 Discord 共用，行為一字不改；從下面 casino 的 switch 搬出來的） ----------
+export const actEcon = ctx => {
+  const r = casEconPlay(ctx.w, ctx.house, ctx.day, cryptoRng);
+  if (!r.ok) return no(r);
+  return shape(ctx, { econ: Object.assign(casEconView(ctx.w, ctx.day), { win: r.win, r: r.r, amount: r.amount, policy: r.policy, loot: r.loot, ticket: r.ticket, rescued: r.rescued, lines: r.lines }) });
+};
+export const actDeal = (ctx, d) => {
+  const r = casStepDeal(ctx, d.text);
+  if (!r.ok) return Object.assign(no(r), { gag: !!r.gag });
+  ctx.roundDirty = true;
+  return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
+};
+export const actHitStand = (act, ctx, d) => {
+  const seq = Number.isInteger(d.seq) ? d.seq : -1;
+  const r = act === "hit" ? casStepHit(ctx, seq) : casStepStand(ctx, seq);
+  if (!r.ok) return no(r);
+  ctx.roundDirty = true;
+  return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
+};
+export const actPack = (ctx, d) => {
+  const r = casOpenPacks(ctx.w, ctx.house, d.n, ctx.day);
+  return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
+};
+export const actBuy = (ctx, d) => {
+  const r = casBuy(ctx.w, ctx.house, d.item, ctx.day, undefined, ctx.P);
+  if (r.ok && (r.mood || r.san)) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
+  return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach, mood: r.mood, san: r.san }) : no(r);
+};
 
 export const casino = onCall(async req => {
   const me = await needMember(req);
@@ -156,11 +199,7 @@ export const casino = onCall(async req => {
       return r.ok ? { ok: true, found: r.found, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
     });
     // 拚經濟（決定 0052）：結果、莊家的錢、錢包都在這個交易裡算；一人一天幾次、連點都在這裡擋（交易一個一個排隊，第二下看到的已經是新的次數）。畫面只拿到結果和要跳的字
-    case "econ": return play(req, me, {}, ctx => {
-      const r = casEconPlay(ctx.w, ctx.house, ctx.day, cryptoRng);
-      if (!r.ok) return no(r);
-      return shape(ctx, { econ: Object.assign(casEconView(ctx.w, ctx.day), { win: r.win, r: r.r, amount: r.amount, policy: r.policy, loot: r.loot, ticket: r.ticket, rescued: r.rescued, lines: r.lines }) });
-    });
+    case "econ": return play(req, me, {}, actEcon);
     // 實況和斗內（決定 0053）：誰在播、開播、下播、斗內。連點、一天幾次、收款上限都在這個交易裡擋
     case "live":
     case "liveOn":
@@ -172,34 +211,16 @@ export const casino = onCall(async req => {
         return shape(ctx, { legacy: peek, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
       });
     }
-    case "deal": return play(req, me, { save: true }, ctx => {
-      const r = casStepDeal(ctx, d.text);
-      if (!r.ok) return Object.assign(no(r), { gag: !!r.gag });
-      ctx.roundDirty = true;
-      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
-    });
+    case "deal": return play(req, me, { save: true }, ctx => actDeal(ctx, d));
     case "hit":
-    case "stand": return play(req, me, { save: true }, ctx => {
-      const seq = Number.isInteger(d.seq) ? d.seq : -1;
-      const r = act === "hit" ? casStepHit(ctx, seq) : casStepStand(ctx, seq);
-      if (!r.ok) return no(r);
-      ctx.roundDirty = true;
-      return shape(ctx, { settle: r.settle ? { ach: r.settle.ach, lines: r.settle.lines, houseBroke: r.settle.houseBroke, streak: r.settle.streak || [] } : null, ticket: !!r.ticket });
-    });
+    case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, ctx => {
       if (ctx.round && ctx.round.state === "playing") return { ok: false, reason: "先打完這壹手" };
       const r = casRelief(ctx.w, ctx.day);
       return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
     });
-    case "pack": return play(req, me, {}, ctx => {
-      const r = casOpenPacks(ctx.w, ctx.house, d.n, ctx.day);
-      return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
-    });
-    case "buy": return play(req, me, { save: true }, ctx => {
-      const r = casBuy(ctx.w, ctx.house, d.item, ctx.day, undefined, ctx.P);
-      if (r.ok && (r.mood || r.san)) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
-      return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach, mood: r.mood, san: r.san }) : no(r);
-    });
+    case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
+    case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {
       if (!ctx.P) return { ok: false, reason: "要用挑戰模式的參觀者進館，才能換" };
       const r = casExchange(ctx.w, String(d.id), ctx.P);

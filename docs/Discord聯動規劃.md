@@ -2,7 +2,7 @@
 
 翊文 11-09：「理想是Yuga bot可以在我們discord channel 跟玩家互動，內容也是跟我們數據庫即時同步的」「Yuga Bot 接話：有人說「要不要」就回「不要」這個不用做」「可以的話，能夠連線玩家相應的Discord 帳號，讓玩家可以在discord 直接玩賭場或是斗內等等的」。
 
-**狀態：第一步做好了（11-09，程式在分支上，還沒部署、還沒接 Discord）；第二步、第三步還沒動工。** 決定 0051。數字和標「預設」的都可以改。
+**狀態：第一步已上線，在真的 Discord 跑通了（11-09，Bot 顯示名 Yuga v2.2，八個指令）。第二步（大事發頻道）、第三步（在 Discord 玩）、`/pepe-更新`、今日活動加現實消息，程式做好了，在分支上、模擬器測過，還沒部署、還沒在真的 Discord 試。** 決定 0051。數字和標「預設」的都可以改。
 
 第一步的做法、設定、要翊文操作的步驟在 `docs/Firebase做法.md` 第十一節；做的時候新定的事補在決定 0051 第 12 條以後。簡單說：
 
@@ -88,6 +88,16 @@ Discord 要求 **3 秒內回應**，這是最大的風險，還沒量過：
 - 每種事件有冷卻時間，預設同一種 10 分鐘最多一則，同一個事件只發一次。
 - 名字只用遊戲暱稱。
 
+**做好了（11-09，模擬器測過，還沒部署）**：
+
+- 做法：遊戲裡的交易成功**之後**寫 `discordOutbox/{事件id}`（`functions/discord_out.js` 的 `outboxPut`：寫不進去只記錄、不丟錯，所以不會讓交易失敗），`discordOutboxSend`（`onDocumentCreated`）發到頻道。規則在 `shared/discord_out.js`（事件的字、冷卻、太舊、body）。
+- 事件：`broke` 莊家破產（拚經濟或別的把莊家弄成負的）、`breaker` 某人贏的那一手把莊家打到負的、`rescued` 拚經濟把莊家拚回來、`join` 靠 `/pepe-加入` 成為館友、`liveOn` 開播、`donate` 斗內感謝；第三步加了 `bj`（在 Discord 打完的 21 點）。同桌打到破產只說「莊家破產了」（沒有「是誰」）。
+- 冷卻 `NUM.discord.outCooldownMin`（10 分鐘）、斗內 `outDonateMin`（1 分鐘）；冷卻中的不補發（標 skipped）；超過 `outMaxAgeMin`（30 分鐘）才輪到的不發。每天最多 5 人靠 Discord 加入，但「加入」這一種 10 分鐘只發一則。
+- 同一件事只發一次：文件名是事件的身分，發送前在交易裡把 `pending` 改成 `sending`。發失敗記 `failed` 和原因，不重試。沒 token：標 `skipped: no-token`，不佔冷卻。
+- 在 Discord 開播、斗內的回覆本身就是公開的，不另外寫 outbox（不然頻道會出現兩則）。
+
+**要翊文確認的**：第一次部署這個 Firestore 觸發的 Function（`discordOutboxSend`）可能要在 Google Cloud 開 Eventarc 的 API 或給部署用的服務帳號權限；部署失敗的話看 Actions 的錯誤訊息。Bot 在頻道要有「發送訊息」權限（現在發公告的就是同一隻）。
+
 ### 第三步：在頻道裡玩
 
 要先綁定才能玩，籌碼、次數和上限都跟遊戲共用，不會因為換到 Discord 多拿一份。
@@ -106,12 +116,21 @@ Discord 要求 **3 秒內回應**，這是最大的風險，還沒量過：
 - **斗內**：對方也要是館友；每日上限照 `docs/賭場規劃.md`。實況不一定要在 Discord 開，遊戲開的也能在 Discord 斗內。
 - **不搬**：同桌 21 點（要計時輪流，留在遊戲裡）、籌碼換小獎。
 
+**做好了（11-09，模擬器測過，還沒部署）**：
+
+- 六個指令都做了：`/pepe-21點 下注`（可以打 `10000`、`10萬`；不填下注＝接著打還沒打完的那手）、`/pepe-大禮包 [幾包]`（預設 1 包）、`/pepe-餐車`（選單 9 樣）、`/pepe-拚經濟`、`/pepe-實況 [開播｜下播]`（預設開播）、`/pepe-斗內`。沒綁定的人收到怎麼綁定或加入。
+- 做法：`functions/casino.js` 的 `play` 拆成 `playCore`，每個動作在交易裡做的事搬成 `actDeal`、`actHitStand`、`actPack`、`actBuy`、`actEcon`（`liveAct` 也匯出），遊戲和 `functions/discord_play.js` 都呼叫它們。文字和按鈕在 `shared/discord_play.js`（`DC_TEXT`、`CAS_*`）。
+- 公開與否：21 點牌局和餐車只有本人；大禮包、拚經濟、實況、斗內回在頻道。**和原本表格不同的地方**：大禮包、拚經濟不演拉霸和跳字（要編輯訊息，違反 3 秒），一次列完；拚經濟的結果公開。
+- 21 點打完，頻道多一行結果（走 outbox，同一個人 5 分鐘內連打併成一則：編輯第一則）。在遊戲裡打完的不公開。
+- 存檔衝突的結論：見 `docs/Firebase做法.md` 第十二節。
+
 ## 要翊文做的（AI 碰不到）
 
 1. 到 Discord 開發者頁面，把 Interactions Endpoint URL 填成部署好的 Function 網址（AI 給網址）。
 2. 確認 bot 有 `applications.commands` 權限，沒有就重新邀請一次。
 3. 把 Application ID、Public Key、伺服器 ID 給 AI。這三個不是密碼，可以放設定檔。**Bot token 不要貼給 AI。**
-4. 第二步時，把 token 放進 Firebase 的 Secret Manager，或同意改部署流程從 GitHub Secrets 帶過去。
+4. （第二步）token 不用放 Secret Manager：`deploy.yml` 部署時從 GitHub Secrets 的 `DISCORD_BOT_TOKEN`、`DISCORD_CHANNEL_ID`（發公告用的同一組）帶過去。確認這兩個 Secret 還在。
+5. 指令從 8 個變成 15 個，要到 GitHub → Actions →「註冊 Discord 斜線指令」再按一次，打 `/pepe` 才看得到新的。
 
 ## 翊文決定了的
 
@@ -125,7 +144,7 @@ Discord 要求 **3 秒內回應**，這是最大的風險，還沒量過：
 
 ## 自己加入
 
-翊文 11-09：「有沒有辦法讓還沒是館友的人自己加也可以加進來，不用我一直更改firebase」。翊文同意了提案，選「任何人都能加入」（「好，就這樣」）。**還沒動工，做好之前照現在的邀請名單。**
+翊文 11-09：「有沒有辦法讓還沒是館友的人自己加也可以加進來，不用我一直更改firebase」。翊文同意了提案，選「任何人都能加入」（「好，就這樣」）。**第一步做好了；「頻道發一則○○加入了」第二步做好了。**
 
 現在的做法：第一次登入時，`join` 查 `invites/{email}`，不在名單上就進不來。管理員介面已經能加 Gmail，不用進 Firebase 後台，但還是要翊文一個一個加。
 

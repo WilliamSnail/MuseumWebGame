@@ -252,3 +252,28 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --
 4. GitHub → Actions →「註冊 Discord 斜線指令」→ Run workflow，填 Application ID 和伺服器 ID（`DISCORD_BOT_TOKEN` 用現有的 Secret）。成功後在 Discord 打 `/pepe` 會列出八個指令。
 5. 部署之後，開發者頁面 → General Information →「Interactions Endpoint URL」填 `https://asia-east1-pepe-museum.cloudfunctions.net/discordBot`（部署完以 Firebase 主控台 → Functions 顯示的網址為準）→ Save。Discord 會先送 PING 驗證；**第一次可能因為冷啟動超過 3 秒存不起來，再按一次 Save 就好**。
 6. 在真的頻道試：`/pepe-莊家`、`/pepe-加入`、遊戲裡拿碼再 `/pepe-綁定 碼`；請 AI 或自己看 Firebase 主控台 → Functions → `discordBot` 的紀錄，每個指令有一行「指令名 加毫秒」，那就是正式環境的回應時間。
+
+## 十二、Discord 聯動第二步、第三步（決定 0051）
+
+規劃和做法在 `docs/Discord聯動規劃.md` 的第二步、第三步。程式：`functions/discord_out.js`（outbox 和發送）、`functions/discord_play.js`（在 Discord 玩）、`functions/casino.js`（`playCore` 和 `act…`）；規則 `shared/discord_out.js`、`shared/discord_play.js`。
+
+### 第二步：遊戲大事發到頻道
+
+- **資料**（都只有 Functions 碰得到，`firestore.rules` 沒動）：`discordOutbox/{事件id}`（`kind`、`text`、`status`：pending → sending → sent／merged／skipped／failed）、`discordOutboxState/{kind}`（`{ at }` 上次發出的時間，冷卻用；21 點是 `bj-{uid}` 存併單的狀態）。模擬器才有的：`discordTest/out`（控制「有沒有 token」「發送會不會失敗」）、`discordTestSent/{id}`（模擬器「會發的訊息」）。
+- **寫入**：遊戲交易成功**之後**呼叫 `outHouse`、`outJoin`、`outLiveOn`、`outDonate`、`outBj`；內部包了 try／catch 和 2 秒逾時，寫不進去只記錄，永遠不丟錯。
+- **發送**：`discordOutboxSend`（`onDocumentCreated("discordOutbox/{id}")`，地區跟著全域設定 asia-east1，跟 Firestore 同一區）。一個交易裡檢查：還是 pending、不太舊、有 token、冷卻過了，才改成 sending 並記下冷卻時間；然後打 Discord 的 API。失敗記 `failed` 和原因，不重試。
+- **Token**：`.github/workflows/deploy.yml` 部署前用 `printf` 把 `DISCORD_BOT_TOKEN`、`DISCORD_CHANNEL_ID`（GitHub Secrets，就是發公告用的那組）寫進 `functions/.env`（`.gitignore` 擋住），部署完不管成不成功都用 `trap` 刪掉。Function 讀 `process.env`；沒有就不發、不報錯。不用 `defineSecret`（secret 不存在會讓整個部署失敗）。`test/discord_out.test.cjs` 檢查這些寫法。
+- **模擬器絕不連真的 Discord**：`FUNCTIONS_EMULATOR === "true"` 時完全不看環境變數裡的 token，也不呼叫 `fetch`。
+- **可能卡住的地方**：這是專案第一個 Firestore 觸發的 Function。第一次部署時，Google Cloud 可能要先開 Eventarc API，或給部署用的服務帳號權限；失敗的話看 Actions 的錯誤訊息，其他 Function 不受影響。
+
+### 第三步：在 Discord 玩
+
+- **共用規則**：`playCore(me, email, opts, fn)` 是原本 `play` 的內容；遊戲的 `play(req, …)` 只是 `playCore(me, emailOf(req), …)`。`deal`、`hit`、`stand`、`pack`、`buy`、`econ` 在交易裡做的事是 `actDeal`、`actHitStand`、`actPack`、`actBuy`、`actEcon`，遊戲的 switch 和 Discord 都呼叫它們；實況、斗內是 `liveAct`。
+- **3 秒**：每個動作當場做完交易就回，不先回再繼續做。
+- **按鈕**：`custom_id` 是 `bj:hit|stand:{seq}:{Discord ID}`（餐車選單是 `food:{Discord ID}`）。按了之後用 type 7 把原本那則訊息換掉。
+
+### 存檔衝突的結論（21 點和餐車會改存檔）
+
+- 伺服器端：`playCore` 在同一個交易裡讀錢包、牌局、莊家、存檔，寫回時存檔的 `rev` 加一，交易成功後才用 `inbox` 通知 `save_changed`（`why: "casino"`）。Discord 和遊戲走同一條路，兩邊同時按，Firestore 會讓其中一邊重試。模擬器實測：餐車加心情後 `saves/{uid}` 的 `rev` 7 → 8、心情真的加了、`inbox/{uid}` 有 `save_changed` 的 `rev: 8`。
+- 遊戲分頁同時開著（只讀程式確認，沒有在瀏覽器試）：分頁存檔用交易檢查 `rev`（`web/src/net_firebase.js` 的 `save()`），現在的 `rev` 跟手上的不同就不寫、發 `conflict`，不會蓋掉伺服器剛寫的值；分頁連著的話收到 `save_changed` 會先丟掉還沒送出去的存檔再重讀（`reloadSave`，`web/src/ui_login.js`），所以伺服器的值不會被舊的蓋掉。**代價**（原本就有，賭場在別的分頁玩也一樣）：分頁裡「幾秒內還沒存出去」的操作，會在 Discord 動作之後被丟掉。分頁沒連線的話，之後存檔會碰到 conflict，改用伺服器的那份。
+- 改哪位參觀者：存檔裡 `profiles.challenge`，跟遊戲裡的賭場一樣。沒有存檔或沒有挑戰模式的人，Discord 只算籌碼，沒有心情、理智的變化。自由模式也沒有。

@@ -51,5 +51,29 @@ function casinoData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "casino_week_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 裡的 casino（給 Functions 判斷賭場的每週收藏）\nexport const CAS_WEEK_LIB = " + JSON.stringify(casinoData()) + ";\n");
+// 每天的館訊和現實消息（Discord 的 /pepe-今日活動，決定 0051）：只放 { 週標題, 第幾天, board 那一行, real 的短句 }，依日期查。
+// 不放書、任務、特展（劇情不能到處送）。real 只收字串、最多 3 則（壞的丟掉；檢查在 tools/week_check.cjs）。大小：每天約 200 位元組，一年約 80KB 以內
+function dayData() {
+  const dir = path.join(ROOT, "content", "weeks"), out = {};
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir).sort()) {
+    const wf = path.join(dir, name, "week.json");
+    if (!/^\d{4}-W\d{2}$/.test(name) || !fs.existsSync(wf)) continue;
+    let title = "";
+    try { title = String(JSON.parse(fs.readFileSync(wf, "utf8")).title || ""); } catch (e) { console.error("每天的館訊：讀不出來", name, e.message); continue; }
+    for (let n = 1; n <= 7; n++) {
+      const df = path.join(dir, name, "d" + n + ".json");
+      if (!fs.existsSync(df)) continue;
+      try {
+        const d = JSON.parse(fs.readFileSync(df, "utf8"));
+        if (typeof d.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) continue;
+        const real = Array.isArray(d.real) ? d.real.filter(s => typeof s === "string" && s.trim()).slice(0, 3) : [];
+        out[d.date] = { title, n, board: typeof d.board === "string" ? d.board : "", real };
+      } catch (e) { console.error("每天的館訊：讀不出來", df, e.message); }
+    }
+  }
+  return out;
+}
+fs.writeFileSync(path.join(to, "day_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每天的館訊（board）和現實消息（real），依日期查（給 Discord 的 /pepe-今日活動）\nexport const DAY_DATA = " + JSON.stringify(dayData()) + ";\n");
 fs.writeFileSync(path.join(to, "README.md"), "這個資料夾是 tools/copy_shared.cjs 從 shared/ 複製來的，不要改這裡，改 shared/。\n");
 if (require.main === module) console.log(`複製了 ${n} 個規則檔到 functions/shared/`);

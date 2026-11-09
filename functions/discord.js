@@ -18,9 +18,11 @@ import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_dat
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
+import { DAY_DATA } from "./shared/day_data.js";
 import { NUM } from "./shared/config.js";
-import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT } from "./shared/discord.js";
+import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "./shared/discord.js";
 import { taipeiDay } from "./shared/logic.js";
+import { PLAY_HANDLERS, onComponent } from "./discord_play.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組
 const HEX = /^[0-9a-fA-F]+$/;
@@ -76,7 +78,11 @@ async function cmdBoard() {
   return dcReply(dcBoardText(s.exists ? s.data() : null), false);
 }
 async function cmdToday(p, now) {
-  return dcReply(dcTodayText(taipeiDay(now), eventsFromWeeks(EVENT_WEEKS)), false);
+  const day = taipeiDay(now); // 遊戲的今天（台灣 05:00 換日），跟今日館訊用同一天
+  return dcReply(dcTodayText(day, eventsFromWeeks(EVENT_WEEKS), DAY_DATA[day] || null), false);
+}
+async function cmdNews(p, now) {
+  return dcReply(dcNewsText(taipeiDay(now), p.opts[DC_NEWS_OPT]), false);
 }
 // 在線的人：照遊戲裡的規則——隱身的人狀態本來就寫成離線；這裡再用 members 的 invisible 擋一次，不比遊戲露得多。只列暱稱
 async function cmdOnline() {
@@ -88,7 +94,7 @@ async function cmdOnline() {
   const nicks = docs.filter(d => d.exists && d.data().invisible !== true).map(d => d.data().nick);
   return dcReply(dcOnlineText(nicks), false);
 }
-const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline };
+const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline, news: cmdNews, ...PLAY_HANDLERS };
 
 // 常駐壹台（翊文 11-09）：閒置後第壹個指令啟動太慢，超過 Discord 的 3 秒就會「未受回應」。小顆 CPU 省錢（官方的例子約每月 3 美元），小顆 CPU 只能壹次處理壹個請求
 export const discordBot = onRequest({ cors: false, minInstances: 1, cpu: "gcf_gen1", memory: "256MiB", concurrency: 1 }, async (req, res) => {
@@ -103,14 +109,14 @@ export const discordBot = onRequest({ cors: false, minInstances: 1, cpu: "gcf_ge
   const p = dcParse(body);
   if (p.kind === "ping") return J(res, 200, dcPong());
   if (p.guildId !== cfg.guildId || !p.discordId) return J(res, 200, dcReply(dcText("notHere"), true));
-  if (p.kind === "component") return J(res, 200, dcReply(dcText("noButton"), true));
-  if (p.kind !== "command" || !HANDLERS[p.key]) return J(res, 200, dcReply(dcText("unknown"), true));
+  if (p.kind !== "command" && p.kind !== "component") return J(res, 200, dcReply(dcText("unknown"), true));
+  if (p.kind === "command" && !HANDLERS[p.key]) return J(res, 200, dcReply(dcText("unknown"), true));
   try {
-    const out = await HANDLERS[p.key](p, Date.now());
-    console.log("discordBot", p.key, `${Date.now() - t0}ms`); // 指令名和時間，沒有人的資料
+    const out = p.kind === "component" ? await onComponent(p, Date.now()) : await HANDLERS[p.key](p, Date.now());
+    console.log("discordBot", p.key || "component", `${Date.now() - t0}ms`); // 指令名和時間，沒有人的資料
     return J(res, 200, out);
   } catch (e) {
-    console.error("discordBot：出錯", p.key, e && e.message);
+    console.error("discordBot：出錯", p.key || "component", e && e.message);
     return J(res, 200, dcReply(dcText("oops"), true));
   }
 });
