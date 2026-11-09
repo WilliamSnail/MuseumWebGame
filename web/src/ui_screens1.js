@@ -7,7 +7,7 @@ import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD
 import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
+import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
 import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
@@ -321,7 +321,7 @@ export async function focusExhibit(ex) {
     if (v.san || ex.myth || ex.art === "russia8") later(() => snd("eerie"), 300);
     snd("flip");
     const pl = placard([ex.title].concat(ex.lines), { cls: "big" });
-    if (ex.aside) pl.append(h("div", { class: "pl-aside" }, ptNode(ex.aside)));
+    if (ex.aside) pl.append(h("div", { class: "pl-aside" }, ptNode(v.moodNote || ex.aside)));
     info.replaceChildren(pl, gains);
     await wait(250);
     if (v.insp) { gain(`+${v.insp} 靈感`, "good"); snd("coin"); }
@@ -520,7 +520,7 @@ export function bookReader(reader, title, pages, o = {}) {
 export function openBook(b, reader) {
   if (b.gen1) {
     const m = readOrigin(P);
-    bookReader(reader, "起源", [ORIGIN.lines.join("\n")], { aside: ORIGIN.aside, onEnd: () => { P.chaptersRead[0] = true; persist(); } });
+    bookReader(reader, "起源", [ORIGIN.lines.join("\n")], { aside: moodNoteOf(P, ORIGIN, m) || ORIGIN.aside, onEnd: () => { P.chaptersRead[0] = true; persist(); } });
     if (m) { bookGain(reader, `心情 +${m}`, "good"); updateStatus(); }
     return;
   }
