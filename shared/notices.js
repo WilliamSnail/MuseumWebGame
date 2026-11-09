@@ -250,6 +250,11 @@ export const NOTICES = [
       ]],
     ],
   },
+  {
+    id: "fix-commission1", v: 1, cat: "館方公告", tags: ["已更新"], importance: "low",
+    title: "委託交過不會再出現了", publish: "2026-11-09", expire: "2026-12-31",
+    sections: [["修好了", ["之前重新進館時，今天交過的委託會變回沒交過。現在交過就是交過。"]]],
+  },
 ];
 
 // 這週的特展（跟展廳的「本週特展」同一個主題）。台灣時間週一 05:00 換週（決定 0019，weekIndex）

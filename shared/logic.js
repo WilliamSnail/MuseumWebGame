@@ -1309,6 +1309,8 @@ export function newSave() {
     signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/signin.js）
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
+// 文字裡有沒有舊名字。新名字可能包含舊名字（俄國8+9 裡面就有俄國8），要先拿掉新名字再找，不然每次載入都會當成舊存檔
+export const hasOldName = s => typeof RENAMED !== "undefined" && Object.entries(RENAMED).some(([a, b]) => String(s).split(b).join("").includes(a));
 export const renameVal = v => (typeof RENAMED !== "undefined" && RENAMED[v]) || v;
 export const renameKey = k => String(k).split("|").map(renameVal).join("|");
 export function renameMap(o) { const out = {}; Object.entries(o || {}).forEach(([k, v]) => { out[renameKey(k)] = v; }); return out; }
@@ -1326,7 +1328,7 @@ export function fixProfile(P, mode) {
   const base = newProfile(mode);
   const out = Object.assign(base, P || {});
   out.mode = mode;
-  if (typeof RENAMED !== "undefined" && Object.keys(RENAMED).some(n => JSON.stringify(P || {}).includes(n))) {
+  if (hasOldName(JSON.stringify(P || {}))) {
     out.pepes = renameMap(out.pepes); out.failed = renameMap(out.failed); out.pillows = renameMap(out.pillows);
     Object.keys(out.unlocked || {}).forEach(c => { out.unlocked[c] = asList(out.unlocked[c]).map(renameVal); });
     out.hall = (out.hall || []).map(s => s && Object.assign({}, s, { key: renameKey(s.key) }));
@@ -1334,7 +1336,7 @@ export function fixProfile(P, mode) {
     if (out.bout && out.bout.opt) out.bout.opt = renameVal(out.bout.opt);
     Object.keys(out.wsPick || {}).forEach(c => { out.wsPick[c] = renameVal(out.wsPick[c]); });
     if (out.plPrint) out.plPrint = renameKey(out.plPrint);
-    out.daily = null;
+    if (hasOldName(JSON.stringify(out.daily || null))) out.daily = null; // 委託本身寫著舊名字才重抽（交不出來）；不然交過的會變成沒交過（翊文 11-09）
   }
   CATS.forEach(c => {
     out.unlocked[c] = asList(out.unlocked[c]).filter(n => optOf(c, n));
