@@ -17,9 +17,11 @@ const LIMITS = { weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50 };
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
+// 選舉、投票、兩岸這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；決定 0037）；擋的是真實的職位、政黨、人名
 const BANNED = [
-  "政治", "選舉", "投票", "總統", "立委", "議員", "政府", "政黨", "國民黨", "民進黨", "民眾黨", "共產黨", "罷免", "公投",
-  "兩岸", "中共", "解放軍", "台獨", "統獨", "戰爭", "軍隊", "飛彈", "導彈", "核武", "轟炸", "侵略",
+  "總統", "立委", "議員", "政府", "國民黨", "民進黨", "民眾黨", "親民黨", "時代力量", "台灣基進", "共產黨", "藍營", "綠營",
+  "賴清德", "蔡英文", "馬英九", "柯文哲", "韓國瑜", "侯友宜", "盧秀燕", "鄭麗文", "朱立倫", "蔣萬安", "黃國昌", "蕭美琴", "卓榮泰", "習近平", "川普", "拜登", "普丁",
+  "中共", "解放軍", "戰爭", "軍隊", "飛彈", "導彈", "核武", "轟炸", "侵略",
   "宗教", "佛教", "道教", "基督", "天主", "伊斯蘭", "媽祖", "上帝", "菩薩", "耶穌",
   "死亡", "死掉", "死者", "喪生", "罹難", "遇難", "傷亡", "屍體", "地震", "海嘯", "土石流", "火災", "爆炸", "車禍", "空難", "墜機",
   "殺人", "謀殺", "自殺", "槍", "炸彈", "恐攻", "綁架", "毒品", "詐騙", "搶劫",
@@ -248,12 +250,12 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       const lw = `${where}/week.json.lines[${i}]`;
       if (!l || !/^[A-Za-z0-9_-]+$/.test(l.id || "")) { E(lw, "id 只能用英文、數字、-、_"); return; }
       if (!G.LINE_KINDS[l.kind]) E(lw, `kind 只能是 ${Object.keys(G.LINE_KINDS).join("、")}`);
-      if (o.fallback && (l.kind === "main" || l.kind === "holiday")) E(lw, "備用週不放主線、節日的線（備用週可能在任何一週用到）");
+      if (o.fallback && (l.kind === "main" || l.kind === "holiday" || l.kind === "season")) E(lw, "備用週不放主線、季節、節日的線（備用週可能在任何一週用到）");
       text(lw + ".name", l.name, LIMITS.lineName);
       lineIds.add(l.id); if (l.kind === "week" || l.kind === "floor") weekLine.add(l.id);
       const prev = allLines[l.id];
-      if (prev && l.kind !== "main") E(lw, `劇情線 id「${l.id}」在 ${prev.where} 用過了（只有主線可以跨週用同一個 id）`);
-      if (prev && l.kind === "main" && prev.name !== l.name) E(lw, `主線「${l.id}」的名字跟 ${prev.where} 不一樣`);
+      if (prev && !G.CROSS_WEEK_KINDS.includes(l.kind)) E(lw, `劇情線 id「${l.id}」在 ${prev.where} 用過了（只有主線、季節線可以跨週用同一個 id）`);
+      if (prev && G.CROSS_WEEK_KINDS.includes(l.kind) && prev.name !== l.name) E(lw, `${G.LINE_KINDS[l.kind]}線「${l.id}」的名字跟 ${prev.where} 不一樣`);
       allLines[l.id] = { name: l.name, kind: l.kind, where, week: o.fallback ? null : name, fallback: o.fallback ? name : null };
     });
     if (!weekLine.size) E(where + "/week.json", "lines 裡要有一條 kind 是 week 的（這週的線）");
@@ -281,7 +283,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (!end && !wk.continues) E(`${where}/d7.json`, "週日要有一本 ending: true 的書收尾（或在 week.json 寫 continues 延到下週）");
     }
     if (dayFiles.length === 7 && isInt(need, 1, 14)) {
-      const all = [].concat(...dayFiles.map(n => asList(pack.days[n].books))).filter(b => b && !b.ending);
+      const seasonIds = new Set(asList(wk.lines).filter(l => l && l.kind === "season").map(l => l.id)); // 季節線的書不算：沒讀也不會卡住這週的結局
+      const all = [].concat(...dayFiles.map(n => asList(pack.days[n].books))).filter(b => b && !b.ending && !seasonIds.has(b.line));
       const roomFloor = id => { const r = [wk.anomaly && wk.anomaly.room].concat(...dayFiles.map(n => asList(pack.days[n].adds))).find(x => x && x.id === id); return r ? r.floor : 9; };
       const easy = all.filter(b => { const u = b.unlock || {}; return !u.type || u.type === "now" || u.type === "task" || (u.type === "find" && roomFloor(u.room) === 1); }).length;
       if (need > easy) E(where, `結局要讀 ${need} 本，可是不用走到 B2 以下就讀得到的只有 ${easy} 本（新玩家打不開結局）`);
@@ -315,6 +318,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   else {
     const L = ledger, lw = "content/story/帳本.json";
     if (!isObj(L.main) || !Array.isArray(L.main.seasons)) E(lw, "main.seasons 要是陣列（主線的大綱，一季一筆）");
+    if (!isObj(L.main) || typeof L.main.theme !== "string" || !L.main.theme.trim()) E(lw, "main.theme 要寫主線的主旨（所有劇情線共同的主軸，決定 0037）");
     if (!Array.isArray(L.lines)) E(lw, "lines 要是陣列（每一條劇情線）");
     if (!Array.isArray(L.foreshadow)) E(lw, "foreshadow 要是陣列（伏筆清單）");
     ["characters", "places", "items", "news"].forEach(k => { if (!Array.isArray(L[k])) E(lw, `${k} 要是陣列`); });
@@ -331,16 +335,41 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (!l) { E(x.where, `劇情線「${id}」不在帳本裡（content/story/帳本.json 的 lines）`); return; }
       if (l.name !== x.name) E(x.where, `劇情線「${id}」的名字跟帳本不一樣（帳本寫「${l.name}」）`);
       if (l.kind !== x.kind) E(x.where, `劇情線「${id}」的種類跟帳本不一樣（帳本寫 ${l.kind}）`);
-      if (x.week && l.kind !== "main" && l.start !== x.week) E(x.where, `劇情線「${id}」帳本的 start 要寫 ${x.week}`);
+      if (x.week && !G.CROSS_WEEK_KINDS.includes(l.kind) && l.start !== x.week) E(x.where, `劇情線「${id}」帳本的 start 要寫 ${x.week}`);
     });
     done.filter(d => !d.where.startsWith("備用")).forEach(d => {
       const rec = isObj(L.weeks) ? L.weeks[d.where] : null;
       if (!rec || typeof rec.main !== "string" || !rec.main.trim()) E(d.where, "帳本的 weeks 裡要寫這週主線推到哪（main）：每週至少把主線往前推一步（第十二節）");
+      if (!rec || !asList(rec.ties).length) W(d.where, "帳本的 weeks 裡沒有 ties：這週的線、每天的書碰到主軸的哪一點（決定 0037）");
     });
     asList(L.foreshadow).forEach((f, i) => {
       if (!f || !f.id || !f.what || !f.planted || typeof f.closed !== "boolean") { E(`${lw}.foreshadow[${i}]`, "要有 id、what、planted、due、closed"); return; }
       if (!f.closed && /^\d{4}-W\d{2}$/.test(f.due || "") && f.due < nowWeek) W(`${lw}.foreshadow「${f.id}」`, `預計 ${f.due} 收，到期了還沒收（${f.what}）`);
     });
+    // 季節線（決定 0037）：沒有 seasonal 的舊帳本照常
+    if (L.seasonal != null) {
+      const sl = isObj(L.seasonal) ? L.seasonal.lines : null;
+      if (!Array.isArray(sl)) E(lw, "seasonal.lines 要是陣列（一季一條線）");
+      asList(sl).forEach((s, i) => {
+        const sw = `${lw}.seasonal.lines[${i}]`;
+        if (!s || !s.id || !s.name) { E(sw, "要有 id、name"); return; }
+        if (!G.YEAR_SEASONS.some(y => y[0] === s.season)) E(sw, "season 只能是 冬、春、夏、秋");
+        if (!Array.isArray(s.chapters)) { E(sw, "chapters 要是陣列（每章 week、title、tell、ties）"); return; }
+        const inLines = byId[s.id];
+        if (inLines && (inLines.name !== s.name || inLines.kind !== "season")) E(sw, `線「${s.id}」要跟帳本的 lines 一樣（名字、kind season）`);
+        s.chapters.forEach((c, j) => {
+          const cw = `${sw}.chapters[${j}]`, mon = c && G.isoMonday(c.week);
+          if (!mon || !c.title || !Array.isArray(c.tell) || !c.tell.length) { E(cw, "要有 week（例如 2026-W46）、title、tell"); return; }
+          const sun = G.addDays(mon, 6);
+          if (G.yearSeason(mon) !== s.season && G.yearSeason(sun) !== s.season) W(cw, `${c.week} 不在${s.season}天（${G.yearSeason(mon)}）：換季那週要開新的線`);
+          if (!asList(c.ties).length) W(cw, `第 ${j + 1} 章「${c.title}」沒有 ties：季節線是副劇情，每章要寫碰到主線的哪一點（決定 0037）`);
+          const pack = lib.weeks[c.week];
+          const has = !!pack && Object.values(pack.days).some(d => asList(d && d.books).some(b => b && b.line === s.id));
+          if (!has && (today >= sun || (pack && pack.days[7]))) W(cw, `${c.week} 有季節線的章「${c.title}」，到週日還沒放書（這週某一天放一本掛在 ${s.id} 上的書）`);
+          if (has && !c.written) W(cw, `${c.week} 已經放了季節線的書，帳本的 written 還沒標`);
+        });
+      });
+    }
     const seen = {};
     Object.entries(L.weeks || {}).forEach(([w, r]) => asList(r && r.news).forEach(n => { if (seen[n]) W(lw, `新聞元素「${n}」在 ${seen[n]}、${w} 都用了（避免一直重複）`); seen[n] = w; }));
   }

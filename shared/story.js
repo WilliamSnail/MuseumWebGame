@@ -37,8 +37,10 @@ export const STORY_TASKS = {
   showDays: { when: "weekly", min: 0 }, // 看完今日特展 n 天
   ending: { when: "weekly", min: 0 },   // 讀到這週的結局
 };
-// 劇情線的種類：main 主線（跨週，id 不加週的名字）、week 這週的、floor 樓層的新劇情線、holiday 節日、side 小插曲、curator 策展手記
-export const LINE_KINDS = { main: "主線", week: "這週的", floor: "樓層的新劇情線", holiday: "節日", side: "小插曲", curator: "策展手記" };
+// 劇情線的種類：main 主線（跨週，id 不加週的名字）、season 季節線（一年四季各一條，跨週，大約兩週一章；是圍繞主線主軸的副劇情，沒玩也不會卡住主線，決定 0037）、week 這週的、floor 樓層的新劇情線、holiday 節日、side 小插曲、curator 策展手記
+export const LINE_KINDS = { main: "主線", season: "季節", week: "這週的", floor: "樓層的新劇情線", holiday: "節日", side: "小插曲", curator: "策展手記" };
+// 跨週的線：id 不加週的名字，好幾週的書算同一條（主線、季節線）
+export const CROSS_WEEK_KINDS = ["main", "season"];
 // 今日特展：用 web/src/art.js 已經有的畫法，換參數（frog ＝遊戲自己的青蛙，pick 照手作坊的選項）。不畫 Pepe the Frog 的樣子
 export const SHOW_ART = ["frog", "portrait", "strange", "rare", "statue", "hidden"];
 export const SHOW_FX = ["sepia", "faded", "dust", "dark", "flip", "water", "torn", "shadow", "glow"]; // 畫面上的效果（web/src/css/story.css）
@@ -97,6 +99,17 @@ export function seasonOf(label) {
   return n < 0 ? 0 : 1 + Math.floor(n / NUM.story.seasonWeeks);
 }
 export function seasonName(n) { return n > 0 ? `第 ${n} 季` : "序章"; }
+// 一年的春夏秋冬（季節線用；上面的 seasonOf 是主線四週一段的「季」，不要混）。照節氣切，差一兩天沒關係（決定 0037）
+export const YEAR_SEASONS = [["春", "02-04"], ["夏", "05-05"], ["秋", "08-07"], ["冬", "11-07"]];
+// "YYYY-MM-DD" 是冬／春／夏／秋（立春 2/4、立夏 5/5、立秋 8/7、立冬 11/7；1 月到 2/3 還是冬）
+export function yearSeason(dateStr) {
+  const md = String(dateStr).slice(5);
+  let s = "冬";
+  YEAR_SEASONS.forEach(([name, from]) => { if (md >= from) s = name; });
+  return s;
+}
+// 這一週算哪一季：照這週的週一（2026-W46 的週一 11/9 是冬）
+export function weekSeason(label) { const m = isoMonday(label); return m ? yearSeason(m) : null; }
 
 // ---------- 讀進來的檔整理成一份 ----------
 // files：{ "2026-W46/week.json": 內容, "2026-W46/d1.json": 內容, "備用/常青1/d1.json": …, "備用/一天/插曲1.json": … }（路徑從 content/weeks/ 算起）
@@ -157,7 +170,7 @@ export function storyWeekAt(lib, label, today, fb) {
   const lineMap = {};
   const addLine = (l, p) => {
     if (!l || !l.id) return;
-    const id = l.kind === "main" ? l.id : p + l.id;
+    const id = CROSS_WEEK_KINDS.includes(l.kind) ? l.id : p + l.id;
     if (!lineMap[p + l.id]) { lineMap[p + l.id] = id; if (!W.lines.some(x => x.id === id)) W.lines.push({ id, local: l.id, name: l.name || l.id, kind: LINE_KINDS[l.kind] ? l.kind : "week" }); }
   };
   asList(wk.lines).forEach(l => addLine(l, pre));
@@ -178,7 +191,7 @@ export function storyWeekAt(lib, label, today, fb) {
     if (!d) { spare = pickSpare(lib, date, used); d = spare ? lib.spare[spare] : null; if (spare) used.add(spare); }
     if (!d) continue;
     const p = spare ? `${label}/d${n}-` : pre;
-    if (spare) asList(d.lines).forEach(l => addLine(Object.assign({}, l, { kind: l.kind === "main" ? "side" : l.kind }), p));
+    if (spare) asList(d.lines).forEach(l => addLine(Object.assign({}, l, { kind: CROSS_WEEK_KINDS.includes(l.kind) ? "side" : l.kind }), p));
     const unlock = u => !u || !u.type || u.type === "now" ? { type: "now" } : u.type === "find" ? { type: "find", room: "s:" + p + u.room } : u.type === "task" ? { type: "task", task: p + u.task } : u.type === "ending" ? { type: "ending" } : { type: "now" };
     const day = {
       n, date, spare, holiday: d.holiday || (STORY_HOLIDAY_OF ? STORY_HOLIDAY_OF(date) : null) || null, board: d.board || "",
@@ -327,14 +340,16 @@ export function taskDone(P, t) { const S = storyState(P), st = S.tasks[t.id]; re
 
 // ---------- 書 ----------
 const spotFound = (P, S, id) => !!(S.spots[id] || (P.cellar && P.cellar.won && P.cellar.won[id]));
-function endingNeed(W) { const others = W.books.filter(b => !b.ending).length; return W.ending.read == null ? others : Math.min(W.ending.read, others); }
+// 季節線的書不算在「讀幾本打開結局」裡：沒讀也不會卡住這週、卡住主線（決定 0037）
+const countsForEnding = (W, b) => !b.ending && (lineById(W, b.line) || {}).kind !== "season";
+function endingNeed(W) { const others = W.books.filter(b => countsForEnding(W, b)).length; return W.ending.read == null ? others : Math.min(W.ending.read, others); }
 // 這本書的條件到了沒（不看有沒有讀過）
 export function bookOpenNow(P, W, b, S = storyState(P)) {
   if (W.past) return true;
   const u = b.unlock || { type: "now" };
   if (u.type === "find") return spotFound(P, S, u.room);
   if (u.type === "task") return !!(S.tasks[u.task] && S.tasks[u.task].done);
-  if (u.type === "ending") return W.books.filter(x => !x.ending && S.books[x.id] && S.books[x.id].read).length >= endingNeed(W);
+  if (u.type === "ending") return W.books.filter(x => countsForEnding(W, x) && S.books[x.id] && S.books[x.id].read).length >= endingNeed(W);
   return true;
 }
 // "read"、"open"、"locked"
@@ -554,8 +569,8 @@ export function claimSpot(P, W, id, today) {
 export function spotClaimed(P, W, id) { const rec = storyState(P).weeks[W.label]; return !!(rec && rec.spots && rec.spots[id]); }
 
 // ---------- 劇情線 ----------
-// 每一條：名字、種類、讀了幾本、下一步（只說去哪裡、做什麼）。lines 回傳這週的；主線也在這裡（W.lines 裡 kind main 的）
-export function shelfTabOf(line) { return line && line.kind === "main" ? "mainline" : line && line.kind === "holiday" ? "holiday" : "weekly"; }
+// 每一條：名字、種類、讀了幾本、下一步（只說去哪裡、做什麼）。storyLines 回傳這週的（主線也在這裡，W.lines 裡 kind main 的）；季節線跨週，在 seasonLines
+export function shelfTabOf(line) { const k = line && line.kind; return k === "main" ? "mainline" : k === "season" ? "season" : k === "holiday" ? "holiday" : "weekly"; }
 export function lineNext(P, W, line) {
   const S = storyState(P);
   const books = W.books.filter(b => b.line === line.id);
@@ -575,7 +590,7 @@ export function lineNext(P, W, line) {
 export function storyLines(P, W) {
   if (!P || isFree(P) || !W) return [];
   const S = storyState(P);
-  return W.lines.map(line => {
+  return W.lines.filter(line => line.kind !== "season").map(line => { // 季節線跨週，另外算（seasonLines）
     const books = W.books.filter(b => b.line === line.id), read = books.filter(b => bookState(P, W, b) === "read").length;
     const next = lineNext(P, W, line);
     const tail = !next && !W.past && W.dayNo < 7 ? { text: "明天 05:00 之後再來看看", room: null, wait: true } : null;
@@ -586,6 +601,29 @@ export function storyLines(P, W) {
       fresh: !done && S.seen[line.id] !== key, key, tracked: S.track === line.id,
       started: books.length > 0 || W.rooms.some(r => r.line === line.id) };
   }).filter(l => l.started); // 還沒有書、也還沒有房間的線先不列（名字可能會破梗）
+}
+// 季節線：跨好幾週，把全部的週（weeks，以前的＋這週）裡掛在同一條線上的書加起來。回傳最新的一條在最後。
+// 過了那週的書還是可以補讀，下一步會先帶去讀舊的。有更新的一條（換季了）就算走完（done），收進劇情回顧；書還在書架上。
+export function seasonLines(P, weeks) {
+  if (!P || isFree(P)) return [];
+  const S = storyState(P), all = asList(weeks).filter(Boolean).slice().sort((a, b) => a.label.localeCompare(b.label)), order = [], map = {};
+  all.forEach(w => w.lines.filter(l => l.kind === "season").forEach(l => {
+    const books = w.books.filter(b => b.line === l.id);
+    if (!books.length) return; // 宣告了還沒放書：先不列（名字可能會破梗）
+    if (!map[l.id]) { map[l.id] = { line: l, weeks: [], books: [] }; order.push(map[l.id]); }
+    map[l.id].weeks.push(w);
+    books.forEach(b => map[l.id].books.push({ w, b }));
+  }));
+  return order.map((x, i) => {
+    const done = i < order.length - 1;
+    let next = null;
+    for (const w of x.weeks) { next = lineNext(P, w, x.line); if (next) break; }
+    const step = next || (done ? null : { text: "下壹章還沒來，過幾天再看看", room: null, wait: true });
+    const key = done ? "done" : step.text;
+    return { id: x.line.id, name: x.line.name, kind: "season", kindText: LINE_KINDS.season, week: x.weeks[x.weeks.length - 1].label, books: x.books.length,
+      read: x.books.filter(o => bookState(P, o.w, o.b) === "read").length, list: x.books, next: step, done,
+      fresh: !done && S.seen[x.line.id] !== key, key, tracked: S.track === x.line.id, started: true };
+  });
 }
 export function markLinesSeen(P, lines) { const S = storyState(P); asList(lines).forEach(l => { S.seen[l.id] = l.key; }); }
 export function trackLine(P, id) { const S = storyState(P); S.track = S.track === id ? null : id; return S.track; }
