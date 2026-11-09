@@ -18,6 +18,7 @@ import { NUM, SKILLS } from "./config.js";
 import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan } from "./logic.js";
 import { canStartCellar, cellarFloor, weekIndex } from "./logic3.js";
 import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
+import { cleanEvents, eventListLine } from "./events.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -177,7 +178,8 @@ export function storyWeekAt(lib, label, today, fb) {
     title: wk.title || "", theme: wk.theme || "", summary: asList(wk.summary), holidayWeek: !!wk.holidayWeek,
     lines: [], days: [], books: [], rooms: [], works: [], daily: [],
     ending: { read: wk.ending && wk.ending.need && Number.isFinite(+wk.ending.need.read) ? +wk.ending.need.read : null },
-    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, shop: asList(wk.shop), // shop：這週兌換所上架的限定頭飾（shared/shop.js 的 shopOnSale）
+    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, events: reg ? cleanEvents(wk.events, monday, label) : [], // events：這週的限時活動（決定 0041，shared/events.js）
+     shop: asList(wk.shop), // shop：這週兌換所上架的限定頭飾（shared/shop.js 的 shopOnSale）
   };
   const lineMap = {};
   const addLine = (l, p) => {
@@ -655,6 +657,7 @@ export function storyNotice(W, today, now) {
         "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來，到兌換所換裝備、提升技能）。週日讀到這週的結局。",
         "錯過的天，書都還在，可以補讀；每日任務、今日特展只有當天。",
       ]],
+      W.events.length ? ["限時活動", W.events.map(eventListLine).concat(["時間到了就回到平常的樣子；沒趕上也不會少什麼。"])] : null,
       ["兌換所", [`這週上架的限定頭飾：${limitedNames(shopOnSale(W, W.start))}。`]],
       W.anomaly ? ["本週異狀", [W.anomaly.title].concat(W.anomaly.text)] : null,
       ["每週任務", W.weekly.map(t => `・${taskText(t, W)}`)],

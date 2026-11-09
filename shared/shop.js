@@ -22,6 +22,7 @@ import { asList, isFree, parseDice, rollExpr, todayStr } from "./logic.js";
 import { canStartCellar, cellarFloor, jobSkill, weekIndex } from "./logic3.js";
 import { grantLimited, limitedInfo, ownsLimited } from "./signin.js";
 import { STORY_ITEMS, storyState } from "./story.js";
+import { eventRunFix, eventScale } from "./events.js";
 
 const shopObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 
@@ -53,11 +54,12 @@ export function fixShop(P) {
 // 骰子的範圍（畫面寫「+1～5」用）
 export function rangeWords(spec) { const p = parseDice(spec); return p.m ? `${p.n}～${p.n * p.m}` : String(p.flat); }
 // 指定一個技能加一個骰子（最多到 cap）。沒有技能（還沒選職業）回傳 null
-export function growSkill(P, skill, spec, cap) {
+// boost：限時活動（events.js 的 eventRunOf），有的話骰出來的點數乘上倍率（決定 0041）
+export function growSkill(P, skill, spec, cap, boost) {
   if (!P || !P.skills || !SKILLS.includes(skill)) return null;
-  const before = P.skills[skill] || 0, roll = rollExpr(spec);
-  P.skills[skill] = Math.max(before, Math.min(cap, before + roll.total));
-  return { skill, before, after: P.skills[skill], roll };
+  const before = P.skills[skill] || 0, roll = rollExpr(spec), gain = eventScale(boost, roll.total);
+  P.skills[skill] = Math.max(before, Math.min(cap, before + gain));
+  return { skill, before, after: P.skills[skill], roll, boost: boost && gain !== roll.total ? boost : null };
 }
 // 價錢表：照現在的技能值找「低於 below」的第一列（最後一列當上限以上的）
 function priceRow(table, value) { return table.find(r => value < r.below) || table[table.length - 1]; }
@@ -157,20 +159,21 @@ export function trialState(P, id, date = dateOf(P)) {
   return { state: "open", reason: "", left };
 }
 // 走進去：借單人地下收藏庫的流程走一間（P.cellar.run.extra，跟 story.js 的 startStoryRoom 一樣）
-export function startTrial(P, id, keys, date = dateOf(P)) {
+// boost：走進去這一刻正在進行的試煉活動（events.js 的 eventRunOf）；記在這一間裡，過關時照它算到走完
+export function startTrial(P, id, keys, date = dateOf(P), boost = null) {
   if (!P || isFree(P)) return { ok: false, reason: "自由模式不下去" };
   const r = trialById(id), st = trialState(P, id, date);
   if (!r || st.state !== "open") return { ok: false, reason: st.reason || "沒有這間" };
   const can = canStartCellar(P, r.floor, keys);
   if (!can.ok) return can;
-  const extra = { id: r.id, title: r.title, lines: asList(r.lines), mood: r.mood || null, color: r.color || null, choices: asList(r.choices), intro: r.intro || null, trial: r.skill };
+  const extra = { id: r.id, title: r.title, lines: asList(r.lines), mood: r.mood || null, color: r.color || null, choices: asList(r.choices), intro: r.intro || null, trial: r.skill, boost: boost && boost.kind === "trialBoost" ? eventRunFix(boost) : null };
   P.cellar.run = { floor: r.floor, idx: 0, team: keys.slice(), used: {}, log: [], extra };
   return { ok: true };
 }
 // 過關（logic3.js 的 cellarApply 叫）：room.trial ＝哪個技能。給成長、記這週的次數。這週拿過了回傳 null
 export function trialWin(P, room, date = dateOf(P)) {
   if (!P || isFree(P) || !room || !room.trial || trialUsed(P, room.id, date) >= NUM.shop.trialPerWeek) return null;
-  const grown = growSkill(P, room.trial, NUM.shop.trialSkill, skillCapAll());
+  const grown = growSkill(P, room.trial, NUM.shop.trialSkill, skillCapAll(), eventRunFix(room.boost));
   if (!grown) return null;
   shopState(P).trials[room.id] = { w: weekIndex(date), n: trialUsed(P, room.id, date) + 1 };
   return grown;

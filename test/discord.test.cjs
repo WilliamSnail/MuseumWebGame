@@ -33,6 +33,41 @@ T("節日那天加節日的話", () => {
   const m = dayMessage(w, { board: "x" }, 2, { name: "中秋節", words: "大家排隊看月亮。" });
   assert.ok(m.includes("【本日節慶】中秋節。大家排隊看月亮。"));
 });
+const wev = Object.assign({ week: "2026-W46", start: "2026-11-09" }, w, { events: [
+  { id: "double11", kind: "coopBoost", date: "2026-11-11", from: "20:00", to: "22:00", title: "雙 11 的招領箱加班夜", words: "邀館友壹起下去翻箱底。" },
+  { id: "winter", kind: "trialBoost", date: "2026-11-14", from: "20:00", to: "22:00", title: "冬衣試煉夜", words: "壹個人、壹起都行。" },
+  { id: "bad", kind: "nope", date: "2026-11-14", from: "20:00", to: "22:00", title: "壞的", words: "x" }] });
+T("限時活動：週一的公告列出這週的活動（壞的不列）", () => {
+  const m = dayMessage(wev, { board: "書架多了 2 本書。" }, 1, null);
+  assert.ok(m.includes("【本週限時活動】"));
+  assert.ok(m.includes("・11/11（三）20:00～22:00　雙 11 的招領箱加班夜：") && m.includes("靈感 ×1.5"));
+  assert.ok(m.includes("・11/14（六）20:00～22:00　冬衣試煉夜：") && m.includes("技能成長 ×1.5"));
+  assert.ok(!m.includes("壞的"));
+  assert.ok(!m.includes("【今晚限時活動】"), "週一不是活動當天");
+});
+T("限時活動：活動當天的今日館訊多一段【今晚限時活動】；別天沒有", () => {
+  const m = dayMessage(wev, { board: "招領箱裡多了壹頂帽子。" }, 3, null);
+  assert.ok(m.includes("【今晚限時活動】20:00～22:00　雙 11 的招領箱加班夜"));
+  assert.ok(m.includes("邀館友壹起下去翻箱底。") && m.includes("錯過了也不會少什麼"));
+  assert.ok(!m.includes("冬衣試煉夜"));
+  assert.ok(dayMessage(wev, { board: "x" }, 6, null).includes("【今晚限時活動】20:00～22:00　冬衣試煉夜"));
+  assert.ok(!dayMessage(wev, { board: "x" }, 2, null).includes("限時活動"));
+  assert.ok(!dayMessage(wev, { board: "x" }, 3, null).includes("【本週限時活動】"), "週三不重列整週");
+});
+T("限時活動：下午的活動寫「今天」；沒有 events 的舊週公告照舊", () => {
+  const m = dayMessage(Object.assign({}, wev, { events: [{ id: "pm", kind: "trialBoost", date: "2026-11-14", from: "14:00", to: "16:00", title: "午後場", words: "壹起。" }] }), { board: "x" }, 6, null);
+  assert.ok(m.includes("【今天限時活動】14:00～16:00　午後場"));
+  assert.ok(!dayMessage(w, { board: "x" }, 1, null).includes("限時活動"));
+  assert.ok(!dayMessage(Object.assign({}, wev, { events: undefined }), { board: "x" }, 3, null).includes("限時活動"));
+});
+T("限時活動：真的 W46 的內容公告出來有兩場", () => {
+  const fs = require("fs"), path = require("path");
+  const dir = path.join(__dirname, "..", "content", "weeks", "2026-W46");
+  const rw = JSON.parse(fs.readFileSync(path.join(dir, "week.json"), "utf8")), rd = JSON.parse(fs.readFileSync(path.join(dir, "d1.json"), "utf8"));
+  const m = dayMessage(rw, rd, 1, null);
+  assert.ok(m.includes("11/11（三）20:00～22:00") && m.includes("11/14（六）20:00～22:00"), m);
+  assert.ok(m.length <= MAX);
+});
 T("超過 Discord 的上限會截短", () => {
   const m = dayMessage({ title: "長", summary: ["字".repeat(5000)] }, { board: "x" }, 1, null);
   assert.ok(m.length <= MAX);

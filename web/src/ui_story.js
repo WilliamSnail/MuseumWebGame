@@ -17,6 +17,7 @@ import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, c
 import { ART } from "./art.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
+import { eventListBox } from "./ui_events.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
 
@@ -203,6 +204,7 @@ function weekPane(W, draw, m) {
     h("div", { class: "sp-go" }, btn([icon("book"), " 起源室的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
       d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
       btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
+  const events = eventListBox(W.events);
   const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, s)))) : null;
   const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow("3 個都做完，多壹份", dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
@@ -219,7 +221,7 @@ function weekPane(W, draw, m) {
     return h("li", null, h("b", null, `${itemName(id)} ×${n}`), h("small", null, itemDesc(id)),
       can.ok ? btn("使用", () => { const u = useStoryItem(P, id); if (!u.ok) { note(u.reason, "bad"); return; } snd("unlock"); note(`用了${itemName(id)}：${u.text}`, "good"); updateStatus(); persist(); draw(); }, "small") : h("span", { class: "sp-keep" }, can.reason));
   })) : h("p", { class: "sp-note" }, "還沒有東西。任務的獎勵（技能書、急救箱、材料）會放在這裡。"));
-  return [head, anomaly, daily, weekly, old, bagSec];
+  return [head, events, anomaly, daily, weekly, old, bagSec];
 }
 function lineCard(l, draw, m) {
   return h("li", { class: "sp-line" + (l.done ? " done" : "") + (l.tracked ? " tracked" : "") },

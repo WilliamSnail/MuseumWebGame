@@ -10,7 +10,8 @@
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { NET } from "./net_firebase.js";
-import { CELLAR_REWARDS } from "../../shared/config.js";
+import { CELLAR_REWARDS, NUM } from "../../shared/config.js";
+import { rangeWords, trialById, trialRooms, trialState } from "../../shared/shop.js";
 import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../../shared/logic.js";
 import { cellarFloor, cellarFloors, memberPower } from "../../shared/logic3.js";
 import { COOP } from "../../shared/coop.js";
@@ -19,6 +20,8 @@ import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDEN
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
+import { eventBoostText } from "../../shared/events.js";
+import { eventTagNode, liveEvent } from "./ui_events.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { claimMyLikes, traceBox, traceWisp } from "./ui_trace.js";
 import { afterEnter } from "./ui_screens1.js";
@@ -276,15 +279,27 @@ function drawLobby() {
   const known = ms.filter(m => !m.guard).map(m => (typeof m.best === "number" ? m.best : null)).filter(x => x != null); // 留守的人不下去：不看他走到哪
   const reach = known.length ? Math.min(...known) + 1 : 1;
   const floors = h("div", { class: "cx-floors", role: "group", "aria-label": "下到第幾層" }, cellarFloors().map(n => {
-    const f = cellarFloor(n), on = party.floor === n, open = n <= reach;
+    const f = cellarFloor(n), on = party.floor === n && !party.trial, open = n <= reach;
     return h("button", { type: "button", class: "cx-floor" + (on ? " on" : "") + (open ? "" : " locked"), disabled: !isLeader || !open, "aria-pressed": String(on), title: open ? f.name : `隊上有人還沒走過 B${n - 1}`, onClick: () => doAct("setFloor", { floor: n }) },
       h("b", null, `B${n}`), h("span", null, open ? f.name : "還不能去"));
   }));
+  // 試煉房間（決定 0041）：沿用同一個隊伍、投票、骰子；過關後技能成長每個人各算各的
+  const trialPick = party.trial ? trialById(party.trial) : null, myTrial = trialPick && canPlay() ? trialState(P, trialPick.id) : null;
+  const trials = h("div", { class: "cx-floors", role: "group", "aria-label": "試煉房間" }, trialRooms().map(r => {
+    const on = party.trial === r.id, open = r.floor <= reach;
+    return h("button", { type: "button", class: "cx-floor cx-trial" + (on ? " on" : "") + (open ? "" : " locked"), disabled: !isLeader || !open, "aria-pressed": String(on), title: open ? `${r.skill}試煉` : `隊上有人還沒走過 B${r.floor - 1}`, onClick: () => doAct("setTrial", { id: on ? null : r.id }) },
+      h("b", null, `B${r.floor}`), h("span", null, open ? r.title : "還不能去"));
+  }));
+  const trialBoostNow = liveEvent("trialBoost");
+  const trialNote = trialPick ? h("p", { class: "pt-hint cx-trial-note" }, `試煉「${trialPick.title}」（${trialPick.skill}）：大家壹起投票、看同壹顆骰子，過了每個人各自算技能成長（${trialPick.skill} +${rangeWords(NUM.shop.trialSkill)}，壹間壹週拿 ${NUM.shop.trialPerWeek} 次）。這週拿過了、技能滿了、還沒走過 B${trialPick.floor} 的人可以陪打，但不拿成長；不算每天 ${COOP.dailyRewarded} 趟，也沒有靈感。`,
+    myTrial ? h("b", null, myTrial.state === "open" ? "　你現在拿得到成長。" : `　你現在不拿成長（${myTrial.reason}）。`) : null,
+    trialBoostNow ? h("span", null, "　", eventTagNode(trialBoostNow), ` ${eventBoostText(trialBoostNow)}`) : null) : null;
   const fail = party.fail && party.fail.reason ? h("p", { class: "pt-hint pt-warn" }, `開始不了：${party.fail.reason}`) : null;
-  const today = todayStr(), left = canPlay() ? coopTurnsLeft(P, today) : 0;
+  const today = todayStr(), boost = liveEvent("coopBoost"), left = canPlay() ? coopTurnsLeft(P, today, boost) : 0; // boost：限時活動（決定 0041）；真正算不算由伺服器按出發那一刻的時間決定
   const foot = h("div", { class: "pt-foot" }, fail,
-    h("p", { class: "pt-hint cx-grow" }, left ? `今天還有 ${left} 趟有獎勵（壹天前 ${COOP.dailyRewarded} 趟）；之後只有好玩，第壹次過關的獎勵照舊。` : "今天的獎勵拿完了，這趟只有好玩；第壹次過關的獎勵照舊。"),
-    isLeader ? [can.ok ? null : h("p", { class: "pt-hint" }, can.waitFor === meId ? "等你準備好" : can.reason), btn([icon("stairs"), ` 下到 B${party.floor || 1}`], async () => { await NET.flush().catch(() => {}); doAct("start"); }, "primary", { disabled: !can.ok || s.busy === "start" })]
+    boost && !trialPick ? h("p", { class: "pt-hint ev-note" }, eventTagNode(boost), ` ${boost.title}：${eventBoostText(boost)}。按出發那一刻還在活動內才算，走到活動結束後也照算。`) : null,
+    h("p", { class: "pt-hint cx-grow" }, trialPick ? "試煉只有壹間房，走完就回地面。" : left ? `今天還有 ${left} 趟有獎勵（壹天前 ${COOP.dailyRewarded} 趟${boost ? "，限時活動中多 1 趟" : ""}）；之後只有好玩，第壹次過關的獎勵照舊。` : "今天的獎勵拿完了，這趟只有好玩；第壹次過關的獎勵照舊。"),
+    isLeader ? [can.ok ? null : h("p", { class: "pt-hint" }, can.waitFor === meId ? "等你準備好" : can.reason), btn([icon("stairs"), trialPick ? ` 進試煉：${trialPick.title}` : ` 下到 B${party.floor || 1}`], async () => { await NET.flush().catch(() => {}); doAct("start"); }, "primary", { disabled: !can.ok || s.busy === "start" })]
       : h("p", { class: "pt-hint" }, "等隊長按出發。"));
   s.m.setTop(btn("離開隊伍", () => s.m.close(), "small"));
   const keep = s.m.surface.querySelector(".pt-pick");
@@ -293,6 +308,8 @@ function drawLobby() {
     h("p", { class: "nb-hint pt-intro" }, `壹隊 1–${COOP.maxPlayers} 個人，每人帶 ${COOP.eachMin}–${COOP.eachMax} 隻（隊伍最多 ${COOP.teamMax} 隻）；不到 ${COOP.teamMin} 隻由${COOP.helperName}補。大家壹起投票，看同壹顆骰子，理智各扣各的。全隊的理智越低，下面越危險。`),
     members,
     h("div", { class: "cx-row" }, h("span", { class: "cx-label" }, "下到"), floors),
+    h("div", { class: "cx-row" }, h("span", { class: "cx-label" }, "或試煉"), trials),
+    trialNote,
     total ? h("p", { class: "pt-hint" }, helper ? `隊伍 ${total} 隻，${COOP.helperName}補 ${helper} 隻。` : `隊伍 ${total} 隻。`, total > COOP.teamMax ? h("b", { class: "pt-warn" }, `　太多了，最多 ${COOP.teamMax} 隻。`) : null) : null,
     mine ? picker(mine, ms) : null,
     inviteBox(ms),
@@ -335,21 +352,27 @@ function inviteBox(ms) {
 
 // ---------- 走一趟 ----------
 function meOf(v) { return v.members.find(m => m.id === v.me) || {}; }
-function roomOf(v) { const f = cellarFloor(v.floor); return f ? f.rooms[v.idx] : null; }
+// 這一趟走的那一層：合作試煉（決定 0041）是只有一間房的小層
+function floorOf(v) { const t = v.trial && trialById(v.trial.id); return t ? { floor: t.floor, name: t.title, rooms: [t] } : cellarFloor(v.floor); }
+function roomOf(v) { const f = floorOf(v); return f ? f.rooms[v.idx] : null; }
+// 合作試煉：每個人這間算不算拿成長（開始時查的；過關那一刻會再查一次）
+const trialWhy = x => (x && x.state === "open" ? "拿得到成長" : x && x.reason ? `陪打，不拿成長（${x.reason}）` : "陪打");
 function oddLine(v) {
   const lv = v.pressure ? v.pressure.lv : 0, t = COOP_PRESSURE_TEXT[lv];
   if (!lv || !t) return null;
   return t.odd[hashOf(`${v.id}:${v.floor}:${v.idx}`) % t.odd.length];
 }
 function drawRun(v) {
-  const s = S, me = meOf(v), f = cellarFloor(v.floor), lv = v.pressure ? v.pressure.lv : 0;
+  const s = S, me = meOf(v), f = floorOf(v), lv = v.pressure ? v.pressure.lv : 0;
   const top = [h("span", { class: "cx-clock" }), v.ended ? null : btn("離隊", leaveRun, "small")];
   s.m.setTop(top);
   const guard = v.role === "guard";
   const head = h("div", { class: "cx-head" },
-    h("h3", null, guard ? `B${v.floor}　監視器` : `B${v.floor}　${f ? f.name : ""}`),
+    h("h3", null, guard ? `B${v.floor}　監視器` : v.trial ? `B${v.floor}　試煉：${f ? f.name : ""}（${v.trial.skill}）` : `B${v.floor}　${f ? f.name : ""}`),
     // 下去的人看不到地圖：這隊有人留守的話，連走到第幾間的小點也不給（要靠講）
     f && !(v.hasGuard && !guard) ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
+    v.trial ? h("p", { class: "ev-note" }, "每個人各自擲、各自算成長：", v.members.filter(m => !m.guard && m.out !== "left").map(m => h("span", { class: "cx-tw" }, `${m.name}${m.id === v.me ? "（你）" : ""}：${trialWhy(v.trial.elig && v.trial.elig[m.id])}　`))) : null,
+    v.event ? h("p", { class: "ev-note" }, eventTagNode(v.event), ` ${v.event.title}：${eventBoostText(v.event)}`) : null, // 這一趟是在限時活動中開始的，照活動算到走完（決定 0041）
     lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
@@ -673,7 +696,7 @@ function truthLine(v) {
     fakes.map(x => h("p", { class: "cx-fake" }, `${nameOf(x.by)} 找到的「${COOP_EVIDENCE[x.kind]}」，不是真的。`)));
 }
 function resultLines(v) {
-  const l = v.last, room = (cellarFloor(l.floor) || { rooms: [] }).rooms.find(r => r.id === l.room);
+  const l = v.last, room = (floorOf(v) || { rooms: [] }).rooms.find(r => r.id === l.room);
   const nameOf = id => (v.members.find(m => m.id === id) || {}).name || "隊友";
   const lines = [];
   if (l.choice === "retreat" || !room) return { room, lines, ch: null };
@@ -745,6 +768,16 @@ function floorCard(v, me) {
       btn(["回到地面", h("span", { class: "cx-vs" }, namesFor("up"))], () => vote("up"), "ghost" + (mine === "up" ? " cx-on" : ""), { disabled: !can })),
     h("div", { class: "cx-card-foot" }, h("span", { class: "pt-hint" }, can ? "大家投票；平手領隊決定；沒投就回地面。" : "等大家決定。"), h("span", { class: "cx-clock" })));
 }
+// 合作試煉走完：每個人的成長（各算各的）
+function trialResult(v) {
+  if (!v.trial || !v.trial.fx) return null;
+  const fx = v.trial.fx;
+  return h("div", { class: "cx-table cx-trial-res" }, v.members.filter(m => fx[m.id]).map(m => {
+    const x = fx[m.id];
+    const t = x.state === "grown" ? `${x.skill} ${x.before} → ${x.after}${x.boost ? "（限時活動）" : ""}` : x.state === "noGrow" ? `陪打，沒有成長（${x.reason || ""}）` : x.state === "ghost" ? "撐不住了，沒有成長" : "這次沒過，沒有成長";
+    return h("div", { class: "cx-tr" + (m.id === v.me ? " me" : "") }, h("b", null, m.name), h("span", null, t), h("span", { class: "cx-san" }, ""));
+  }));
+}
 function overCard(v, me) {
   const s = S, isLeader = s.party && s.party.leader === v.me;
   const sum = v.summary || [];
@@ -752,6 +785,7 @@ function overCard(v, me) {
     h("h2", { class: "room-title" }, v.over === "lost" ? "這壹趟到這裡" : "回到地面了"),
     h("p", { class: "cx-text" }, COOP_OVER_TEXT[v.over] || COOP_OVER_TEXT.done),
     truthLine(v),
+    trialResult(v),
     v.report ? reportSheet(v.report, { live: true }) : null,
     v.report ? null : h("div", { class: "cx-table" }, sum.map(x => h("div", { class: "cx-tr" + (x.id === v.me ? " me" : "") + (x.ghost ? " ghost" : "") }, h("b", null, x.name),
       h("span", null, `理智 ${x.startSan} → ${x.san}，靈感 +${x.got.insp}${x.got.injured.length ? `，${x.got.injured.length} 隻受傷` : ""}`), h("span", { class: "cx-san" }, x.ghost ? "理智歸零" : x.out === "left" ? "先走了" : "")))),
@@ -832,11 +866,23 @@ async function openNew() {
     if (r && r.pid) openCoop(r.pid);
   } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
 }
+// 試煉房間那邊的「邀館友壹起」（ui_shop.js）：開壹隊、選好那間試煉，進準備區
+export async function openCoopTrial(id) {
+  if (!canPlay()) { note("要先用挑戰模式的參觀者進館。", "bad"); return; }
+  try {
+    await NET.flush().catch(() => {});
+    const r = await NET.call("coopStep", { act: "open" });
+    if (!r || !r.pid) return;
+    await NET.call("coopStep", { pid: r.pid, act: "setTrial", data: { id } });
+    openCoop(r.pid);
+  } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
+}
 // 地下收藏庫的畫面最上面
 ADDONS.cellarTop = () => {
   if (!UI.net || !canPlay()) return null;
   claimMyLikes().catch(() => {}); // 有館友讚了我的牌子：領靈感（ui_trace.js）
-  return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"),
+  const boost = liveEvent("coopBoost"); // 限時活動（決定 0041）
+  return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"), boost ? h("p", { class: "ev-note" }, eventTagNode(boost), ` 「${boost.title}」：${eventBoostText(boost)}。`) : null,
     btn("探險報告", openReports, "small"), btn("交誼廳", openLounge, "small"));
 };
 FRIEND_ACTIONS.push({ id: "cellar", label: "邀請壹起打地下收藏庫", show: p => p.status !== "offline" && canPlay(), run: p => sendInvite(p, "cellar") });

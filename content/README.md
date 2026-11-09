@@ -56,9 +56,15 @@ content/
   "weeklyBonus": { "insp": 10, "items": ["mat:金線"] }, // 5 個都做完多給的；週章遊戲自己給
   "ending": { "need": { "read": 6 } },                 // 讀了這週幾本書，週日的結局才打開
   "shop": ["hat-rain", "hat-muff"],                    // 選填：這週兌換所上架哪幾件限定頭飾（第四節「兌換所上架」）。不寫就照週號輪流
-  "continues": "2026-W48"        // 選填：這週的線延到下週（週日就可以不放 ending 的書）
+  "continues": "2026-W48",       // 選填：這週的線延到下週（週日就可以不放 ending 的書）
+  "events": [                    // 選填：這週的限時活動（決定 0041，下面「限時活動」）
+    { "id": "double11", "kind": "coopBoost", "date": "2026-11-11", "from": "20:00", "to": "22:00", "title": "…", "words": "…" }
+  ]
 }
 ```
+
+- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 只有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）和 `trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
+  - Functions 拿得到同一份：`tools/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
 
 - `kind`：`week` 這週的、`floor` 樓層的新劇情線、`main` 主線、`season` 季節線（第八節）、`holiday` 節日、`side` 小插曲（備用的一天用）、`curator` 策展手記（之後）。
 - 備用週不放 `main`、`season`、`holiday` 的線（可能在任何一週用到）。`main`、`season` 跨週用同一個 id、同一個名字。

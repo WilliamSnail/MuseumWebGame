@@ -286,5 +286,39 @@ T("禁用字：戰爭、宗教這些拿掉了；中共、解放軍留著", () =>
   expectErr(c => { c.files["2026-W47/d1.json"].board = "中共來參觀了；書架多了 2 本書。"; }, /禁用字「中共」/);
   expectErr(c => { c.files["2026-W47/d1.json"].board = "解放軍來參觀了；書架多了 2 本書。"; }, /禁用字「解放軍」/);
 });
+// ---------- 限時活動（決定 0041） ----------
+const EV1 = { id: "e1", kind: "coopBoost", date: "2026-11-18", from: "20:00", to: "22:00", title: "招領夜", words: "邀館友壹起下去翻箱底。" };
+const withEvents = (...evs) => { const c = regular(); c.files["2026-W47/week.json"].events = evs.map(clone); return c; };
+T("活動：寫對的過；沒有 events 的週照常（舊週）", () => {
+  assert.deepStrictEqual(run(withEvents(EV1, Object.assign({}, EV1, { id: "e2", kind: "trialBoost", date: "2026-11-21", from: "14:00", to: "16:00" }))).errors, []);
+  assert.deepStrictEqual(run(regular()).errors, []);
+});
+T("活動：日期不在這週、日期壞掉、時間格式、from 晚於 to、早於 05:00、太短太長", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { date: "2026-11-23" })]; }, /這週之內/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { date: "2026-11-08" })]; }, /這週之內/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { date: "明天" })]; }, /date/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { from: "8pm" })]; }, /from 要寫成/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { to: "26:00" })]; }, /to 要寫成/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { from: "22:00", to: "20:00" })]; }, /晚於 from/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { from: "03:00", to: "06:00" })]; }, /早於 05:00/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { from: "20:00", to: "20:10" })]; }, /太短/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { from: "06:00", to: "23:00" })]; }, /太長/);
+});
+T("活動：kind 不認得、id 重複、同一天重疊、一週太多場、不是陣列、備用週不能寫", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { kind: "doubleXp" })]; }, /kind 只能是/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [EV1, Object.assign({}, EV1, { from: "10:00", to: "11:00" })]; }, /id「e1」重複/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [EV1, Object.assign({}, EV1, { id: "e2", from: "21:00", to: "23:00" })]; }, /重疊/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [1, 2, 3, 4].map(i => Object.assign({}, EV1, { id: "e" + i, from: `1${i}:00`, to: `1${i}:30` })); }, /一週最多/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = EV1; }, /要寫成陣列/);
+  expectErr(c => { c.files["備用/常青1/week.json"].events = [EV1]; }, /備用週不寫 events/);
+});
+T("活動：名字、文字長度、畫面用「壹」、禁用字、英文字母", () => {
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { title: "這個名字太長了太長了太長了太長了太長了" })]; }, /title 太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { words: "字".repeat(80) })]; }, /words 太長/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { words: "一起下去翻箱底。" })]; }, /用「壹」/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { title: "總統來參觀" })]; }, /禁用字「總統」/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { words: "Come and see" })]; }, /英文字母/);
+  expectErr(c => { c.files["2026-W47/week.json"].events = [Object.assign({}, EV1, { title: "" })]; }, /title 要有字/);
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

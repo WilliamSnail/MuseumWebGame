@@ -49,5 +49,13 @@
     { "id": "w5", "kind": "ending", "reward": { "insp": 8 } }
   ],
   "weeklyBonus": { "insp": 10, "items": ["mat:金線"] },
+  "events": [
+    { "id": "double11", "kind": "coopBoost", "date": "2026-11-11", "from": "20:00", "to": "22:00",
+      "title": "雙 11 的招領箱加班夜",
+      "words": "雙 11 的夜裡，招領箱前排起壹串人。邀館友壹起下去翻箱底，找得越齊，靈感越多。" },
+    { "id": "winter-trial", "kind": "trialBoost", "date": "2026-11-14", "from": "20:00", "to": "22:00",
+      "title": "冬衣試煉夜",
+      "words": "箱子後面有人敲門，說要考考誰最會認冬衣。壹個人闖、找館友壹起闖都行，過關的收穫多壹點。" }
+  ],
   "ending": { "need": { "read": 6 } }
 }

@@ -14,11 +14,13 @@
 //  機制 8 一起搬：run.carry ＝ { idx: 第幾間之後, item, picks, done, result }。
 //  機制 9 報告：run.stats 收集，走完 coopMakeReport，存進每個人的 P.coopReports（博物館的，不跟著參觀者換）。
 // ================================================================
-import { COOP, coopActive, coopFinish, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop.js";
+import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./coop_text.js";
 import { cleanSay } from "./party.js";
+import { eventScale, eventTag } from "./events.js";
+import { trialById } from "./shop.js";
 import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "./logic.js";
-import { cellarFloor, skillOf } from "./logic3.js";
+import { skillOf } from "./logic3.js";
 
 // ---------- 小骰子 ----------
 export const coopLocalRng = (run, tag) => mulberry32(hashStr(`${run.id || ""}:${run.seed}:${tag}`));
@@ -28,12 +30,16 @@ function coopShuffle(list, rng) {
   return a;
 }
 
+// 這一趟的限時活動裡「合作地下」那一種的加成（試煉的活動只管技能成長，不動靈感）
+export const coopBoostOf = run => (run && run.event && run.event.kind === "coopBoost" ? run.event : null);
+
 // ---------- 開始一趟、往下一層 ----------
 export function coopStart(run, Ps) {
   if (run.seed == null) run.seed = Math.floor(RNG() * 1e9);
   if (!run.stats) run.stats = { rooms: [], halluc: {}, fakes: [], saves: [], carry: [], truth: [], ghosts: [] };
   // 這一層住的是什麼、哪一間之後有要搬的東西
-  const rng = coopLocalRng(run, `floor:${run.floor}`), f = cellarFloor(run.floor);
+  if (run.trial) { run.truth = null; run.carry = null; coopPlanRoom(run, Ps); return; } // 合作試煉（決定 0041）：只有那一間，沒有證據要猜、沒有東西要搬
+  const rng = coopLocalRng(run, `floor:${run.floor}`), f = coopFloorOf(run);
   const res = COOP_RESIDENTS[Math.floor(rng() * COOP_RESIDENTS.length)];
   run.truth = { id: res.id, order: coopShuffle(res.ev, rng), found: [], done: false, guess: null, right: null };
   run.carry = { idx: f ? Math.floor(rng() * f.rooms.length) : 0, item: COOP_ITEMS[(run.floor - 1) % COOP_ITEMS.length], picks: {}, done: false, result: null };
@@ -130,13 +136,16 @@ export function coopRoomDone(run, Ps, room, ch, vote, check, fx, events) {
   coopReportRoom(run, Ps, room, vote, check, fx);
   if (c) {
     run.last.reveal = { truth: c.truth, answer: c.answer, fake: c.fake, hit: vote.pick === c.answer };
-    if (vote.pick === c.answer && check.success) coopVoters(run).forEach(m => {
-      const P = Ps[m.id];
-      if (!P || !COOP.clue.insp || m.rewarded === false) return;
-      P.insp += COOP.clue.insp;
-      m.got.insp += COOP.clue.insp;
-      events[m.id].push({ type: "insp", gain: COOP.clue.insp, why: "記號對上了" });
-    });
+    if (vote.pick === c.answer && check.success) {
+      const gain = eventScale(coopBoostOf(run), COOP.clue.insp); // 限時活動：靈感變多（決定 0041）
+      coopVoters(run).forEach(m => {
+        const P = Ps[m.id];
+        if (!P || !COOP.clue.insp || m.rewarded === false) return;
+        P.insp += gain;
+        m.got.insp += gain;
+        events[m.id].push({ type: "insp", gain, why: "記號對上了" });
+      });
+    }
   }
 }
 
@@ -164,7 +173,7 @@ export function coopDropEvidence(run, Ps, vote, check) {
   t.found.push(e);
   return e;
 }
-export const coopCanGuess = run => !!(run.truth && !run.truth.done && run.truth.found.length >= COOP.truth.need);
+export const coopCanGuess = run => !!(!run.trial && run.truth && !run.truth.done && run.truth.found.length >= COOP.truth.need);
 // 開票：多數；平手領隊的；都沒投就是沒猜。猜對全隊拿靈感、記進《看懂的事》；猜錯全隊（還在地下的）擲理智
 export function coopGuess(run, Ps, votes) {
   if (run.phase !== "guess" || !run.truth) return { ok: false, reason: "現在不用猜" };
@@ -178,7 +187,7 @@ export function coopGuess(run, Ps, votes) {
   t.done = true; t.guess = pick; t.right = pick ? pick === t.id : null;
   const floor = run.last && run.last.floorDone ? run.last.floorDone : run.floor;
   if (pick === t.id) {
-    const n = COOP.truth.insp + floor * COOP.truth.perFloor;
+    const n = eventScale(coopBoostOf(run), COOP.truth.insp + floor * COOP.truth.perFloor); // 限時活動：靈感變多（決定 0041）
     coopPresent(run).forEach(m => {
       const P = Ps[m.id];
       if (!P) return;
@@ -241,7 +250,7 @@ export function coopCarryDo(run, Ps) {
   }
   c.done = true; c.result = res;
   if (res.kind === "ok") {
-    const n = COOP.carry.insp + run.floor;
+    const n = eventScale(coopBoostOf(run), COOP.carry.insp + run.floor); // 限時活動：靈感變多（決定 0041）
     coopPresent(run).forEach(m => { if (m.rewarded && Ps[m.id]) { Ps[m.id].insp += n; m.got.insp += n; events[m.id].push({ type: "insp", gain: n, why: "搬回來了" }); } });
     res.insp = n;
   } else if (res.kind === "slip" || res.kind === "bump") {
@@ -282,7 +291,7 @@ export function coopChoiceDanger(c) {
 export const coopRoomDanger = room => Math.max(0, ...room.choices.map(coopChoiceDanger));
 // 監視器的畫面：整層的地圖（每間的危險度）、這一間每個選項的危險度和哪個有東西。房間的字一個都沒有
 export function coopGuardMap(run) {
-  const f = cellarFloor(run.floor);
+  const f = coopFloorOf(run);
   if (!f) return null;
   const room = run.phase === "vote" ? coopRoom(run) : null;
   return {
@@ -323,6 +332,8 @@ export function coopMakeReport(run, warps, today) {
   const nameOf = id => (coopMember(run, id) || {}).name || "館友";
   const fill = (t, o) => Object.entries(o).reduce((x, [k, v]) => x.split(`{${k}}`).join(String(v)), t);
   const lines = [];
+  if (run.event) lines.push({ k: "event", t: fill(T.event, { title: run.event.title, tag: eventTag(run.event) }) }); // 限時活動中走的
+  if (run.trial && run.trial.fx) lines.push({ k: "trial", t: fill(T.trial, { title: (trialById(run.trial.id) || {}).title || "", list: run.members.filter(m => run.trial.fx[m.id]).map(m => { const x = run.trial.fx[m.id]; return `${m.name}：${x.state === "grown" ? `${x.skill} ${x.before} → ${x.after}` : x.state === "noGrow" ? "陪打，沒有成長" : "沒過"}`; }).join("、") }) }); // 合作試煉
   // 誰救了誰
   const save = s.saves[s.saves.length - 1];
   if (save) lines.push({ k: "save", t: save.knock ? fill(T.knock, { by: nameOf(save.by) }) : fill(T.save, { who: nameOf(save.who), san: save.san, by: save.by ? nameOf(save.by) : "全隊" }) });

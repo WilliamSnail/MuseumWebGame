@@ -21,6 +21,7 @@ import "./css/shop.css"; // 兌換所、上課、試煉房間（11-09，決定 0
 import "./css/themeshow.css"; // 主題展辦完：展期、三級、海報（11-09，決定 0035）
 import "./css/rank.css"; // 本週榜單（11-09，決定 0039）
 import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
+import "./css/events.css"; // 限時活動（決定 0041）
 import "./css/casino.css"; // Hamachi 賭場（決定 0040）
 
 import "./art.js";
@@ -44,6 +45,7 @@ import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房
 import "./ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
 import "./ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
 import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
+import "./ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/events.js
 import "./ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino.js
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 
