@@ -530,6 +530,15 @@ T("規則：館友可以讀 boards、不能寫；其他沒放寬", () => {
   assert.ok(/match \/saves\/\{uid\} \{\s*allow read: if isMember\(\) && isMe\(uid\);/.test(r), "存檔還是只有自己讀得到");
 });
 
+T("真的跑的時候：tools/weekly_board.cjs 叫的 board.xxx 都拿得到（load_shared 串在一起看不出來，11-09 上線時才發現少 nowMs）", async () => {
+  const b = await require("../tools/weekly_board.cjs").loadBoard();
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "weekly_board.cjs"), "utf8");
+  const names = [...new Set([...src.matchAll(/\bboard\.([a-zA-Z]+)\(/g)].map(m => m[1]))];
+  assert.ok(names.includes("nowMs") && names.length >= 4, names.join());
+  for (const n of names) assert.strictEqual(typeof b[n], "function", n);
+  assert.ok(b.boardWeekOf(b.nowMs()));
+});
+
 (async () => {
   for (const [name, fn] of tests) {
     const G = load();
