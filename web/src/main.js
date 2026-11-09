@@ -19,6 +19,7 @@ import "./css/story.css"; // 每週劇情：書架的頁籤、今日特展、本
 import "./css/admin.css"; // 管理員介面（只看不改，決定 0033）
 import "./css/shop.css"; // 兌換所、上課、試煉房間（11-09，決定 0032）
 import "./css/themeshow.css"; // 主題展辦完：展期、三級、海報（11-09，決定 0035）
+import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 
 import "./art.js";
 import "./fx.js";
@@ -39,6 +40,7 @@ import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來
 import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
 import "./ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
+import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
 if (debugScreen) window.__PM_NODOOR__ = true; // 開發時直接進畫面，不放開館布幕

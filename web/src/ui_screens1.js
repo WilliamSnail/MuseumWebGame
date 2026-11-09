@@ -211,6 +211,7 @@ SCREENS.lobby = root => {
   const imgs = Object.values(IMG).reduce((n, v) => n + asList(v).filter(Boolean).length, 0);
   progress.library = { text: imgs ? `你的圖 ${imgs} 張` : "還沒放圖", pct: null };
   const plan = h("div", { class: "plan" + (portrait ? " portrait" : ""), html: ART.floorPlan({ portrait, names: ROOM_NAMES, progress, fresh: freshRooms(P) }) }); // fresh：有新解開的東西的房間標「新」（11-08）
+  if (ADDONS.planMates) ADDONS.planMates(plan); // 導覽圖上的館友（ui_mates.js）
   const hint = h("p", { class: "lobby-hint", "aria-live": "polite" }, portrait ? "點一間房走進去。" : "把滑鼠移到房間上看看。");
   // 新玩家的下壹步（翊文 11-08「先改前三個」，介面檢查第 2 項）：大廳標題下面壹條，電腦和手機都看得到；導覽圖上那間房發光
   const step = nextStep(P);
