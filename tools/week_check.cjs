@@ -16,7 +16,8 @@ const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 // 字數（畫面上看得到的字；書頁不算換行）
 const LIMITS = { weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
-  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3 };
+  roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3,
+  understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6 }; // 線索和看懂（shared/clues.js）
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
 // 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
 const BANNED = [
@@ -426,6 +427,56 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   });
   if (Object.keys(lib.spare).length < 2) E("content/weeks/備用/一天", "至少要有 2 個備用的一天");
 
+  // ---------- 線索和看懂（shared/clues.js；格式 content/README.md「線索和看懂」） ----------
+  // clue 只能放在書、房間（adds）、今日特展的畫（show.works）；放在別的地方遊戲不會算，所以擋。need 的線索要在同一天或更早已經存在
+  {
+    const where = (label, n) => `${label}/d${n}.json`, sources = {}, defIds = {};
+    const order = [];
+    Object.keys(lib.weeks).sort().forEach(label => { for (let n = 1; n <= 7; n++) if (lib.weeks[label].days[n]) order.push([label, n]); });
+    const at = (label, n) => order.findIndex(x => x[0] === label && x[1] === n);
+    order.forEach(([label, n]) => {
+      const d = lib.weeks[label].days[n], w = where(label, n);
+      const add = (id, spot) => {
+        if (typeof id !== "string" || !G.CLUE_ID_RE.test(id)) { E(spot, `clue「${id}」寫法不對（c- 開頭，小寫英文、數字、-，例如 c-small-hand-note）`); return; }
+        if (sources[id]) E(spot, `clue「${id}」已經用在 ${sources[id].spot}（一條線索只放一個地方；同一個謎要分幾個地方，就用幾個不同的 id）`);
+        else sources[id] = { spot, at: at(label, n) };
+      };
+      asList(d.books).forEach((b, i) => { if (isObj(b) && b.clue !== undefined) add(b.clue, `${w}.books[${i}]`); });
+      asList(d.adds).forEach((r, i) => { if (isObj(r) && r.clue !== undefined) add(r.clue, `${w}.adds[${i}]`); });
+      asList(d.show && d.show.works).forEach((x, i) => { if (isObj(x) && x.clue !== undefined) add(x.clue, `${w}.show.works[${i}]`); });
+      asList(d.daily).forEach((t, i) => { if (isObj(t) && t.clue !== undefined) E(`${w}.daily[${i}]`, "每日任務的 clue 遊戲還不會算（只有書、房間、今日特展的畫），先不要寫"); });
+      if (isObj(d.casino) && (d.casino.clue !== undefined || (isObj(d.casino.item) && d.casino.item.clue !== undefined))) E(`${w}.casino`, "賭場的 clue 遊戲還不會算（只有書、房間、今日特展的畫），先不要寫");
+    });
+    order.forEach(([label, n]) => {
+      const d = lib.weeks[label].days[n], w = where(label, n);
+      if (d.understand === undefined) return;
+      if (!Array.isArray(d.understand) || d.understand.length > LIMITS.understandPerDay) { E(w + ".understand", `要是陣列，壹天最多 ${LIMITS.understandPerDay} 件`); return; }
+      d.understand.forEach((u, i) => {
+        const uw = `${w}.understand[${i}]`;
+        if (!isObj(u)) { E(uw, "要是物件"); return; }
+        if (typeof u.id !== "string" || !G.UNDERSTAND_ID_RE.test(u.id)) E(uw, `id「${u.id}」寫法不對（u- 開頭，小寫英文、數字、-）`);
+        else if (defIds[u.id]) E(uw, `id「${u.id}」已經用在 ${defIds[u.id]}`);
+        else defIds[u.id] = uw;
+        if (G.UNDERSTAND_TEXT.some(x => x.id === u.id)) E(uw, `id「${u.id}」跟《看懂的事》固定的條目撞名`);
+        text(uw + ".text", u.text, LIMITS.understandText);
+        if (typeof u.text === "string" && u.text.startsWith("你看懂了")) E(uw + ".text", "不用寫「你看懂了：」，畫面會自己加");
+        text(uw + ".from", u.from, LIMITS.understandFrom);
+        text(uw + ".hint", u.hint, LIMITS.understandHint); // 必填：拿到壹部分線索時給的提示（不破梗）
+        if (!Array.isArray(u.need) || !u.need.length || u.need.length > LIMITS.understandNeedMax) { E(uw + ".need", `要是線索 id 的陣列，1～${LIMITS.understandNeedMax} 條`); return; }
+        if (new Set(u.need).size !== u.need.length) E(uw + ".need", "有重複的線索");
+        u.need.forEach(c => {
+          const s = sources[c];
+          if (!s) E(uw + ".need", `線索「${c}」找不到（要先在書、房間或今日特展的畫寫 clue）`);
+          else if (s.at > at(label, n)) E(uw + ".need", `線索「${c}」要到 ${s.spot} 才出現，還沒到（need 只能放同壹天或更早的線索）`);
+        });
+      });
+    });
+    Object.keys(lib.fallback).forEach(name => Object.entries(lib.fallback[name].days).forEach(([n, d]) => {
+      if (JSON.stringify(d).includes("\"clue\"") || (isObj(d) && d.understand !== undefined)) E(`備用/${name}/d${n}.json`, "備用週不能寫 clue、understand（沒有日期，可能在任何一週用到）");
+    }));
+    Object.entries(lib.spare).forEach(([name, d]) => { if (JSON.stringify(d).includes("\"clue\"") || (isObj(d) && d.understand !== undefined)) E(`備用/一天/${name}.json`, "備用的一天不能寫 clue、understand"); });
+  }
+
   // ---------- 劇情帳本 ----------
   const nowWeek = G.isoWeek(today);
   if (!ledger || ledger.__bad) E("content/story/帳本.json", ledger ? `JSON 讀不出來（${ledger.__bad}）` : "找不到");
@@ -462,6 +513,11 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     asList(L.foreshadow).forEach((f, i) => {
       if (!f || !f.id || !f.what || !f.planted || typeof f.closed !== "boolean") { E(`${lw}.foreshadow[${i}]`, "要有 id、what、planted、due、closed"); return; }
       if (!f.closed && /^\d{4}-W\d{2}$/.test(f.due || "") && f.due < nowWeek) W(`${lw}.foreshadow「${f.id}」`, `預計 ${f.due} 收，到期了還沒收（${f.what}）`);
+    });
+    // 謎底和線索圖（mysteries）：closeBy 過了還沒收要警告（答案不進這個檢查，也不印出來）
+    asList(L.mysteries && L.mysteries.list).forEach((m, i) => {
+      if (!isObj(m) || !m.id) { E(`${lw}.mysteries.list[${i}]`, "要有 id"); return; }
+      if (m.status !== "closed" && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && m.closeBy < nowWeek) W(`${lw}.mysteries「${m.id}」`, `預計 ${m.closeBy} 收，到期了還沒收（status 還是 ${m.status}）`);
     });
     // 季節線（決定 0037）：沒有 seasonal 的舊帳本照常
     if (L.seasonal != null) {
