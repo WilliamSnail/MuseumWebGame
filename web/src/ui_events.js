@@ -2,14 +2,15 @@
 //  限時活動的畫面（決定 0041；規則 shared/events.js；內容寫在 content/weeks/<週>/week.json 的 events）
 //  這個檔放：
 //    大廳的一條（還沒開始寫「今晚 20:00～22:00：○○」，進行中會倒數，結束就消失；ui_screens1.js 的 ADDONS.lobbyEvent）
+//    開跑的通知（eventNoticeTick：遊戲開著活動開始了、或活動中打開遊戲，跳壹則有按鈕的通知；決定 0045）
 //    其他畫面用的小東西：現在有沒有哪一種活動（liveEvent）、「限時活動 ×1.5」的標籤（eventTagNode）、這週活動的清單（eventListBox）
 //  「現在」用 nowMs()（網路時間，決定 0026），改電腦的時間沒用。合作的加成是伺服器判斷的（functions/coop.js），這裡只是顯示。
 //  大廳那一條自己一秒更新一次，不跟著別人換房間、名單更新重畫，所以不會閃。
 //  介面上的字用「壹」。
 // ================================================================
 import { nowMs } from "../../shared/logic.js";
-import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks } from "../../shared/events.js";
-import { ADDONS, every, h, icon } from "./ui_core.js";
+import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventNoticeText, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks, eventsToNotify } from "../../shared/events.js";
+import { ADDONS, HIDE_CHROME, P, PANELS, UI, every, h, icon, navTo, note, readJSON, snd } from "./ui_core.js";
 
 // 只讀正式週的 week.json（備用週沒有日期，不會有活動）
 const RAW = import.meta.glob("../../content/weeks/*/week.json", { eager: true, import: "default" });
@@ -48,6 +49,31 @@ function lobbyEventBar() {
   return box;
 }
 ADDONS.lobbyEvent = lobbyEventBar;
+
+// ---------- 開跑的通知（翊文 11-09：「現時活動開跑的時候有辦法能推播嗎」「先做 Discord 和遊戲內通知」，決定 0045） ----------
+// 每場活動每台裝置跳壹次，不打斷正在做的事。記在這台裝置（localStorage，不進存檔）；不能寫的環境只記在這次。
+// 畫面在背景、還沒進館的時候不跳：等看得到再跳（不然人不在，通知就白跳了）。
+const SEEN_KEY = "pepe4.eventNoticed";
+let seenMem = null;
+const seenList = () => { if (!seenMem) { const v = readJSON(SEEN_KEY); seenMem = Array.isArray(v) ? v : []; } return seenMem; };
+function markSeen(id) {
+  seenMem = [...seenList(), id].slice(-30);
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify(seenMem)); } catch (e) { /* 只記在這次 */ }
+}
+// 按鈕帶去該去的地方；已經在那裡就不放按鈕
+function eventGo(ev) {
+  if (ev.kind === "casinoBoost") return { label: "去賭場", run: () => PANELS.casino && PANELS.casino() };
+  return UI.screen === "cellar" ? undefined : { label: "去地下", run: () => navTo("cellar") };
+}
+function eventNoticeTick() {
+  if (!P || document.hidden || HIDE_CHROME.includes(UI.screen)) return;
+  eventsToNotify(allEvents(), nowMs(), seenList()).forEach(ev => {
+    markSeen(ev.id);
+    snd("bell");
+    note(eventNoticeText(ev), "good", 20000, eventGo(ev));
+  });
+}
+if (typeof window !== "undefined") setInterval(eventNoticeTick, 5000); // 不用 every：換房間會清掉 every 的計時器
 
 // ---------- 這週的活動清單（每週劇情面板用） ----------
 export function eventListBox(events) {

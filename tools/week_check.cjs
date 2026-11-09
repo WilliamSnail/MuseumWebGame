@@ -5,6 +5,7 @@
 // 別的檔可以 require 這支，用 checkContent({ files, ledger, settings, today }) 檢查記憶體裡的內容（test/week_check.test.cjs）。
 const fs = require("fs"), path = require("path");
 const { load } = require("../test/load_shared.cjs");
+const { eventSlotOk } = require("./announce.cjs");
 const G = load();
 
 const ROOT = path.join(__dirname, "..");
@@ -347,6 +348,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
           const w = `${ew}[${i}]`;
           G.eventProblems(ev, G.isoMonday(name)).forEach(p => E(w, p));
           if (!ev || typeof ev !== "object") return;
+          if (!eventSlotOk(ev.date, ev.from)) W(w, `${ev.from} 開始的話 Discord 不會發開跑公告：平日要 20:00，週末 14:00 或 20:00（工作流程只在這些時間檢查）`);
           if (seen.has(ev.id)) E(w, `id「${ev.id}」重複`);
           seen.add(ev.id);
           text(w + ".title", ev.title, 0);

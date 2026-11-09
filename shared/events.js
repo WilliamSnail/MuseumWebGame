@@ -108,6 +108,11 @@ export function eventBars(list, t) {
   return bars;
 }
 export const eventsOnDate = (list, date) => asList(list).filter(ev => ev && ev.date === date);
+// 該跳「開跑了」通知的活動（決定 0045）：進行中、這台裝置還沒跳過（seen 是跳過的 id）、還剩夠久
+export function eventsToNotify(list, t, seen) {
+  const done = new Set(asList(seen)), min = NUM.events.noticeMinLeft * 60000;
+  return eventsLive(list, t).filter(ev => !done.has(ev.id) && ev.end - t >= min);
+}
 
 // ---------- 一趟 / 一間 記下來的樣子（開始那一刻在活動內，就照這份算到走完） ----------
 // 回傳 { id, kind, title, mult, extra, until }：extra 是多幾趟有獎勵（合作才有），until 是活動結束的毫秒（只給畫面顯示）
@@ -144,6 +149,8 @@ export function eventEffect(ev) {
   if (ev && ev.kind === "casinoBoost") return `賭場多 ${c.extraPacks || 1} 包免費大禮包（籌碼不是錢）`;
   return "";
 }
+// 開跑通知的字
+export const eventNoticeText = ev => `限時活動開跑：${ev.title}。${eventEffect(ev)}。`;
 // 一句話說加成（從記下來的樣子 eventRunOf 來；畫面上的標籤旁邊用）
 export function eventBoostText(boost) {
   if (!boost) return "";

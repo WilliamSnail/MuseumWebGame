@@ -269,6 +269,24 @@ T("試煉：一週還是只拿一次（活動不多給次數）", () => {
 
 // ---------- Functions 拿得到同一份 ----------
 // tools/copy_shared.cjs 把 content/weeks/*/week.json 的 events 打包成 functions/shared/events_data.js；Functions 用同一份規則（shared/events.js）算
+T("開跑通知（決定 0045）：進行中才跳、跳過的不再跳、快結束不跳、壞的時間不跳", () => {
+  const G = load();
+  const list = G.cleanEvents([{ id: "a", kind: "coopBoost", date: "2026-11-11", from: "20:00", to: "22:00", title: "加班夜", words: "字" }], "2026-11-09", "W");
+  const at = hm => G.eventAt("2026-11-11", hm), id = list[0].id;
+  assert.strictEqual(G.eventsToNotify(list, at("19:59"), []).length, 0, "還沒開始");
+  assert.strictEqual(G.eventsToNotify(list, at("20:00"), []).length, 1, "剛開始");
+  assert.strictEqual(G.eventsToNotify(list, at("21:00"), []).length, 1, "活動中才打開遊戲");
+  assert.strictEqual(G.eventsToNotify(list, at("20:00"), [id]).length, 0, "跳過了");
+  assert.strictEqual(G.eventsToNotify(list, at("21:55"), []).length, 1, "還剩 5 分鐘");
+  assert.strictEqual(G.eventsToNotify(list, at("21:56"), []).length, 0, "快結束了");
+  assert.strictEqual(G.eventsToNotify(list, at("22:00"), []).length, 0, "結束了");
+  assert.strictEqual(G.eventsToNotify(list, NaN, []).length, 0);
+  assert.strictEqual(G.eventsToNotify(list, at("20:00"), null).length, 1, "沒有紀錄");
+  assert.strictEqual(G.eventsToNotify(null, at("20:00"), []).length, 0);
+  const text = G.eventNoticeText(list[0]);
+  assert.ok(text.includes("加班夜") && text.includes("×1.5"), text);
+});
+
 (async () => {
   try {
     require("child_process").execFileSync(process.execPath, [require("path").join(__dirname, "..", "tools", "copy_shared.cjs")], { stdio: "pipe" });
