@@ -62,9 +62,7 @@ async function main() {
   if (process.argv.includes("--say")) { // 手動的公告（.github/workflows/discord-announce.yml）：文字從環境變數來，最後面照樣放連結
     const text = String(process.env.ANNOUNCE || "").trim();
     if (!text) { console.log("沒有要發的文字。"); return; }
-    const end = "
-
-" + footer();
+    const end = "\n\n" + footer();
     const ok = await send((text.length > MAX - end.length ? text.slice(0, MAX - end.length - 1) + "…" : text) + end);
     console.log(ok ? "公告發了。" : "沒發。");
     return;
