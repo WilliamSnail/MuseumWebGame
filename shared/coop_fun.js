@@ -111,7 +111,7 @@ export function coopCheckFun(run, pick) {
 export function coopRoomDone(run, Ps, room, ch, vote, check, fx, events) {
   const c = run.clue;
   run.woken = 0; // 吵醒的東西只影響這一間
-  const src = "cellar:" + room.id, ghostsBefore = run.members.filter(m => m.ghost).length;
+  const src = "cellar:" + room.id;
   // 房間裡有東西：選到又沒過，多扣
   if (run.hazard === vote.pick) {
     run.last.hazard = true;
@@ -125,7 +125,7 @@ export function coopRoomDone(run, Ps, room, ch, vote, check, fx, events) {
   }
   const ev = coopDropEvidence(run, Ps, vote, check);
   if (ev) run.last.evidence = { kind: ev.kind, by: ev.by };
-  coopReportRoom(run, Ps, room, vote, check, fx, ghostsBefore);
+  coopReportRoom(run, Ps, room, vote, check, fx);
   if (c) {
     run.last.reveal = { truth: c.truth, answer: c.answer, fake: c.fake, hit: vote.pick === c.answer };
     if (vote.pick === c.answer && check.success) coopVoters(run).forEach(m => {
@@ -197,6 +197,7 @@ export function coopGuess(run, Ps, votes) {
     });
   }
   run.stats.truth.push({ floor, id: t.id, guess: pick, right: t.right });
+  coopNoteGhosts(run, coopRoom(run), null);
   run.last = Object.assign({}, run.last, { truth: { id: t.id, guess: pick, right: t.right, fakes: t.found.filter(x => x.fake).map(x => ({ kind: x.kind, by: x.by })) } });
   if (!coopVoters(run).length) coopFinish(run, "lost");
   else if (!run.next) coopFinish(run, "done");
@@ -251,6 +252,7 @@ export function coopCarryDo(run, Ps) {
     });
   }
   run.stats.carry.push({ floor: run.floor, item: c.item, kind: res.kind, who: res.who });
+  coopNoteGhosts(run, coopRoom(run), null);
   run.phase = coopVoters(run).length ? "carried" : "over";
   if (run.phase === "over") coopFinish(run, "lost");
   coopSync(run, Ps);
@@ -288,7 +290,7 @@ export function coopGuardMap(run) {
 }
 
 // ---------- 機制 9：探險報告 ----------
-function coopReportRoom(run, Ps, room, vote, check, fx, ghostsBefore) {
+function coopReportRoom(run, Ps, room, vote, check, fx) {
   const s = run.stats;
   if (!s) return;
   let heat = 0;
@@ -304,8 +306,13 @@ function coopReportRoom(run, Ps, room, vote, check, fx, ghostsBefore) {
   }
   // 幽靈敲了一下，大家跟著選，過了
   Object.entries(run.knocks || {}).forEach(([id, c]) => { if (c === vote.pick && check.success) s.saves.push({ by: id, knock: true }); });
-  // 誰在這一間倒下
-  if (run.members.filter(m => m.ghost).length > ghostsBefore) run.members.filter(m => m.ghost && !s.ghosts.some(g => g.id === m.id)).forEach(m => s.ghosts.push({ id: m.id, room: room.title, floor: run.floor }));
+  coopNoteGhosts(run, room, vote.pick);
+}
+// 誰在這裡倒下（報告、最後的影子用）。choice ＝全隊最後選了哪個（搬東西、猜的時候倒下的沒有）
+function coopNoteGhosts(run, room, choice) {
+  const s = run.stats;
+  if (!s || !room) return;
+  run.members.filter(m => m.ghost && !s.ghosts.some(g => g.id === m.id)).forEach(m => s.ghosts.push({ id: m.id, room: room.title, roomId: room.id, choice, floor: run.floor }));
 }
 // warps ＝ [{ name, from, to }]：說話變形的紀錄（只有伺服器有）。today：哪一天（不給就用 todayStr）
 export function coopMakeReport(run, warps, today) {

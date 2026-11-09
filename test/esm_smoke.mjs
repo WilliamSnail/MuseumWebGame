@@ -14,12 +14,13 @@ import * as coop from "../shared/coop.js";
 import * as coopFlow from "../shared/coop_flow.js";
 import * as coopText from "../shared/coop_text.js";
 import * as coopFun from "../shared/coop_fun.js";
+import * as coopTrace from "../shared/coop_trace.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);

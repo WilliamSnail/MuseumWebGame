@@ -27,6 +27,7 @@ import "./ui_odd.js";
 import "./ui_board.js"; // 公佈欄、信箱（11-08）
 import "./ui_login.js"; // 登入、存檔放伺服器、館友（多人版 M1，11-08）
 import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
+import "./ui_trace.js"; // 留下痕跡（留言牌、影子、幽影，11-09）
 import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop.js，伺服器在 functions/coop.js
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js

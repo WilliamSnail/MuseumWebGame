@@ -20,6 +20,7 @@ import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
+import { claimMyLikes, traceBox, traceWisp } from "./ui_trace.js";
 import { afterEnter } from "./ui_screens1.js";
 import { stageAct, stageProp } from "./ui_screens3.js";
 
@@ -351,7 +352,11 @@ function drawRun(v) {
     lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
-  const main = h("div", { class: "cx-main" }, head, guard ? monitor(v) : stage(v), phaseCard(v, me));
+  const st = guard ? monitor(v) : stage(v);
+  const main = h("div", { class: "cx-main" }, head, st, phaseCard(v, me));
+  // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
+  const wispKey = `${v.floor}:${v.idx}`;
+  if (!guard && v.phase === "vote" && s.wispKey !== wispKey) { s.wispKey = wispKey; setTimeout(() => { if (S === s) traceWisp(s.m.surface.querySelector(".cellar-stage"), v.floor); }, 1500); }
   s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), evidenceBox(v), chatBox(v))));
   tickClock();
 }
@@ -390,6 +395,12 @@ function phaseCard(v, me) {
   if (v.phase === "vote") return voteCard(v, me);
   if (v.phase === "result") return resultCard(v, me);
   return overCard(v, me);
+}
+// 館友留下的痕跡（機制 7）：同一間重畫時不要重讀（留言牌的表單也不要被洗掉），留同一塊
+function roomTraces(id, canSign) {
+  const s = S, key = id + (canSign ? ":done" : "");
+  if (s.traceKey !== key || !s.traceEl) { s.traceKey = key; s.traceEl = traceBox(id, { canSign }); }
+  return s.traceEl;
 }
 // 門上的記號：只有自己看到的（真的只送這幾個給我，別人的、哪個是假的都不在我手上）
 function clueBox(v, me) {
@@ -515,6 +526,7 @@ function voteCard(v, me) {
     h("h2", { class: "room-title" }, ptNode(room.title)),
     h("div", { class: "nc-text" }, room.lines.map(l => h("p", null, ptNode(l)))),
     clueBox(v, me),
+    roomTraces(room.id, false),
     choices,
     h("div", { class: "cx-card-foot" },
       can ? btn(["撤退", h("span", { class: "cx-vs" }, namesFor("retreat"))], () => vote("retreat"), "ghost small" + (mine === "retreat" ? " cx-on" : ""), { "aria-pressed": String(mine === "retreat") }) : h("span", { class: "pt-hint" }, me.ghost ? "你已經不能投票了。" : "你在監視器前。"),
@@ -636,6 +648,7 @@ function resultCard(v, me) {
     (l.check && l.check.notes ? l.check.notes.filter(n => /記號|皇冠|紳士帽|壓力/.test(n)) : []).map(n => h("p", { class: "pt-sub" }, n)),
     text ? h("p", { class: "cx-text" }, ptNode(text)) : null,
     hurt.map(x => h("p", { class: "cx-hurtline" }, `${nameOf(x.owner)} 的「${describePepe(fromKey(x.key)).title}」受傷了（${x.days} 天後會好）。`)),
+    room ? roomTraces(room.id, true) : null,
     revealBox(v),
     l.hazard && !success ? h("p", { class: "cx-hurtline" }, v.hasGuard ? COOP_GUARD_TEXT.hazardHit : "房間裡還有別的東西。") : null,
     l.evidence ? h("p", { class: "cx-found" }, `${nameOf(l.evidence.by)} 找到了證據：${COOP_EVIDENCE[l.evidence.kind]}。${COOP_EVIDENCE_LINES[l.evidence.kind] || ""}`) : null,
@@ -759,6 +772,7 @@ async function openNew() {
 // 地下收藏庫的畫面最上面
 ADDONS.cellarTop = () => {
   if (!UI.net || !canPlay()) return null;
+  claimMyLikes().catch(() => {}); // 有館友讚了我的牌子：領靈感（ui_trace.js）
   return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"),
     btn("探險報告", openReports, "small"), btn("交誼廳", openLounge, "small"));
 };

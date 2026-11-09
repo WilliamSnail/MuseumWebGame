@@ -19,6 +19,7 @@ import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, p
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
 import { switchVisitor } from "./shared/visitors.js";
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
+import { traceRunEnd } from "./coop_trace.js";
 
 const runRef = pid => getFirestore().doc(`coopRuns/${pid}`);
 const viewPath = (pid, uid) => `coopView/${pid}/${uid}`;
@@ -86,7 +87,10 @@ async function afterStep(pid, { r, run, saved }, uid, act) {
     await inbox(id, { t: "coop_out", pid, why: "afk" });
     for (const o of coopPresent(run)) if (o.id !== id) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "afk" });
   }
-  if (r.ended) await rtdb().ref(`parties/${pid}`).update({ phase: "done" }).catch(() => {});
+  if (r.ended) {
+    await rtdb().ref(`parties/${pid}`).update({ phase: "done" }).catch(() => {});
+    await traceRunEnd(run).catch(e => console.error("合作地下：痕跡寫不進去", e)); // 最後的影子、幽影（機制 7）
+  }
 }
 
 // ---------- 開始 ----------

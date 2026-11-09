@@ -594,7 +594,8 @@ export function cellarRoom(root) {
     h("p", { class: "cs-hint" }, icon("sparkle"), " 游標移到選項上，看隊伍會怎麼做；按下去牠們就會動起來"), choices, result);
   root.append(roomHead(`B${run.floor}　${f.name}`, run.extra ? run.extra.intro || "這週多出來的地方。" : run.idx === 0 && f.intro ? f.intro : null, dots, leave),
     stage,
-    teamBar, card);
+    teamBar, card,
+    ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null); // 館友留下的痕跡（ui_trace.js）
 }
 export async function resolveFlow(i, result, choices) {
   if (UI.busy) return;
@@ -638,12 +639,18 @@ export async function resolveFlow(i, result, choices) {
     if (fx.sanLoss) { await lossFlow(fx.sanLoss, "cellar:" + res.room.id, { anchor: result }); if (P.dark) return; }
     await showEvents(fx.events);
     actionTick(); updateStatus(); persist();
+    if (ADDONS.cellarResolved) ADDONS.cellarResolved(res.room, result); // 走完這一間：可以留牌子（ui_trace.js）
     result.append(h("div", { class: "rv-btns" }, btn("繼續", () => advanceFlow(result), "primary")));
     result.querySelector(".btn.primary").focus({ preventScroll: true });
-  } finally { UI.busy = false; }
+  } finally {
+    UI.busy = false;
+    if (P && P.dark && ADDONS.cellarZero) { const zr = P.cellar.run && currentRoom(P); if (zr) ADDONS.cellarZero(zr, i); } // 理智在這一間歸零：留一個影子（ui_trace.js）
+  }
 }
 export async function advanceFlow(result) {
+  const passKeys = P.cellar.run ? P.cellar.run.team : null; // 走完一層要留幽影用（cellarAdvance 可能會把 run 收掉）
   const a = cellarAdvance(P);
+  if (a && a.floorDone && ADDONS.cellarFloorDone) ADDONS.cellarFloorDone(a.floor, passKeys);
   persist();
   if (!a) { go("cellar", {}, { action: false }); return; }
   if (!a.floorDone) { rerender(); window.scrollTo(0, 0); return; }
