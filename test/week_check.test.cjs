@@ -106,6 +106,33 @@ T("房間：強度門檻照樓層、下一步的字照規矩", () => {
   expectErr(c => { c.files["2026-W47/d3.json"].adds[0].hint = "門後面有壹本登記簿"; }, /寫成「去 B1 …」/);
   expectErr(c => { c.files["2026-W47/d3.json"].adds[0].floor = 9; }, /floor 要是 1～5/);
 });
+T("兌換所上架 shop（決定 0032）：照週號輪流可以不寫；寫了只能挑已經畫好的、不重複、不超過上限", () => {
+  const ok = regular(); ok.files["2026-W47/week.json"].shop = ["hat-rain", "hat-muff"];
+  assert.deepStrictEqual(run(ok).errors, []);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["傳說的金冠"]; }, /不是兌換所賣的限定頭飾/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["stand-velvet"]; }, /不是兌換所賣的限定頭飾/); // 簽到的東西不賣
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["hat-rain", "hat-rain"]; }, /有重複的 id/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["hat-rain", "hat-chef", "hat-muff", "hat-miner", "hat-bow"]; }, /最多指定 4 件/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = "hat-rain"; }, /要寫成 id 的陣列/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = []; }, /要寫成 id 的陣列/);
+});
+T("房間獎勵的技能成長（決定 0032）：只有房間可以、技能要存在、不能有不用挑戰的選項、一週有上限", () => {
+  // 底：把一間房間的 none 選項拿掉，獎勵寫技能成長
+  const room = c => { const r = c.files["2026-W47/d3.json"].adds[0]; r.choices = r.choices.filter(x => x.check.type !== "none"); r.reward = { skill: "偵查" }; return r; };
+  const ok = regular(); room(ok);
+  assert.deepStrictEqual(run(ok).errors, []);
+  const anomalyOk = regular(); { const r = anomalyOk.files["2026-W47/week.json"].anomaly.room; r.choices = r.choices.filter(x => x.check.type !== "none"); r.reward = { insp: 2, skill: "鑑賞" }; }
+  assert.deepStrictEqual(run(anomalyOk).errors, [], "本週異狀的房間也可以");
+  expectErr(c => { room(c).reward = { skill: "打字" }; }, /沒有「打字」這個技能/);
+  expectErr(c => { const r = c.files["2026-W47/d3.json"].adds[0]; r.reward = { skill: "偵查" }; r.choices[0].check = { type: "none" }; }, /不能有 check.type none/);
+  expectErr(c => { c.files["2026-W47/d1.json"].daily[0].reward = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  expectErr(c => { c.files["2026-W47/d1.json"].dailyBonus = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  expectErr(c => { c.files["2026-W47/week.json"].weeklyBonus = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  // 一天最多一間（預算）；一週最多 NUM.shop.weekSkillRooms 間
+  const copy = (c, n, id) => { const r = clone(c.files["2026-W47/d3.json"].adds[0]); r.id = id; c.files[`2026-W47/d${n}.json`].adds.push(r); return r; };
+  expectErr(c => { room(c); copy(c, 3, "extra-a"); }, /超過預算：skills/);
+  expectErr(c => { room(c); copy(c, 5, "extra-b"); copy(c, 6, "extra-c"); }, /間房間給技能成長，最多/);
+});
 T("id 一週裡不能重複", () => {
   expectErr(c => { c.files["2026-W47/d2.json"].books[0].id = "1a"; }, /id「1a」這週用過了/);
 });
@@ -130,6 +157,134 @@ T("備用週不放主線；備用的一天不加房間、不放 side 以外的�
 T("排程設定：pause 要是 true／false", () => {
   expectErr(c => { c.settings.pause = "yes"; }, /pause 要是 true 或 false/);
   expectErr(c => { c.settings.pauseWeeks = ["下週"]; }, /pauseWeeks/);
+});
+// ---------- 季節線、主旨（決定 0037） ----------
+const WINTER = "season-2026-winter";
+// W47 宣告季節線、d2 放一本；帳本的冬天那條線，第 2 章改到 W47
+function withSeason(c, o = {}) {
+  c.files["2026-W47/week.json"].lines.push({ id: WINTER, name: "冬天的明信片", kind: "season" });
+  if (o.book !== false) { const d = c.files["2026-W47/d2.json"]; d.books = d.books.slice(0, 1).concat([{ id: "sea1", line: WINTER, title: "明信片", spine: "明信片", unlock: { type: "now" }, pages: ["壹", "貳"] }]); }
+  const s = c.ledger.seasonal.lines.find(l => l.id === WINTER);
+  s.chapters = [{ week: "2026-W47", title: "測試的章", tell: ["壹"], ties: ["f-page"], written: o.book === false ? null : "2026-W47/sea1" }];
+  c.ledger.weeks["2026-W47"].ties = ["f-page"];
+  return c;
+}
+const warned = (c, re) => run(c).warnings.some(w => re.test(w));
+T("季節線：種類合法、跨週用同一個 id；名字和種類要跟帳本一樣", () => {
+  const c = withSeason(regular()), r = run(c);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(!warned(c, /還沒放書/));
+  assert.ok(!warned(c, /written/));
+  expectErr(k => { withSeason(k); k.files["2026-W47/week.json"].lines.find(l => l.id === WINTER).name = "別的名字"; }, /名字跟帳本不一樣/);
+  expectErr(k => { withSeason(k); k.ledger.lines.find(l => l.id === WINTER).kind = "week"; }, /種類跟帳本不一樣/);
+  expectErr(k => { withSeason(k); k.ledger.seasonal.lines.find(l => l.id === WINTER).name = "別的名字"; }, /要跟帳本的 lines 一樣/);
+  expectErr(k => { k.files["備用/常青1/week.json"].lines.push({ id: WINTER, name: "冬天的明信片", kind: "season" }); }, /備用週不放主線、季節/);
+});
+T("季節線：這週帳本有章卻沒放書：週日才警告，不擋", () => {
+  const sun = withSeason(regular(), { book: false });
+  const r = run(sun);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /到週日還沒放書/.test(w)), r.warnings.join("\n"));
+  const mid = withSeason(regular(), { book: false });
+  mid.today = "2026-11-18"; // 週三，只寫到 d3
+  [4, 5, 6, 7].forEach(n => delete mid.files[`2026-W47/d${n}.json`]);
+  assert.ok(!warned(mid, /2026-W47 有季節線的章/), "週三還不用警告");
+  const nofolder = regular();
+  nofolder.ledger.seasonal.lines.find(l => l.id === WINTER).chapters = [{ week: "2026-W48", title: "用備用週那週", tell: ["壹"], ties: ["f-page"], written: null }];
+  nofolder.today = "2026-11-30";
+  assert.ok(warned(nofolder, /2026-W48 有季節線的章/), "那週用備用週也要提醒");
+});
+T("季節線：放了書帳本沒標 written、章在別的季：警告", () => {
+  const c = withSeason(regular());
+  c.ledger.seasonal.lines.find(l => l.id === WINTER).chapters[0].written = null;
+  assert.ok(warned(c, /written 還沒標/));
+  const d = withSeason(regular());
+  d.ledger.seasonal.lines.find(l => l.id === WINTER).chapters.push({ week: "2027-W20", title: "夏天的章", tell: ["壹"], ties: ["x"], written: null });
+  assert.ok(warned(d, /不在冬天/));
+  const e = regular();
+  e.ledger.seasonal.lines.find(l => l.id === WINTER).chapters = [{ week: "2027-W05", title: "跨在換季那週", tell: ["壹"], ties: ["x"], written: null }];
+  assert.ok(!warned(e, /不在冬天/), "週一還是冬天");
+  e.ledger.seasonal.lines[1].chapters = [{ week: "2027-W05", title: "除夕", tell: ["壹"], ties: ["x"], written: null }];
+  assert.ok(!warned(e, /不在春天/), "除夕那週已經過立春：放春天也可以");
+});
+T("季節線的書不算進結局要讀的本數", () => {
+  const c = withSeason(regular());
+  // 常青1 不用走到 B2 以下就讀得到的是 9 本；加一本季節線也不會變 10
+  c.files["2026-W47/week.json"].ending.need.read = 10;
+  assert.ok(has(run(c), /新玩家打不開結局/));
+});
+T("主旨：帳本沒有 main.theme 就擋；沒有 ties 只警告", () => {
+  expectErr(c => { delete c.ledger.main.theme; }, /main\.theme/);
+  expectErr(c => { c.ledger.main.theme = "  "; }, /main\.theme/);
+  const a = regular();
+  assert.deepStrictEqual(run(a).errors, []);
+  assert.ok(warned(a, /2026-W47.*沒有 ties/), "這週沒寫 ties");
+  a.ledger.weeks["2026-W47"].ties = ["f-page"];
+  assert.ok(!warned(a, /2026-W47：帳本的 weeks 裡沒有 ties/));
+  const b = withSeason(regular());
+  delete b.ledger.seasonal.lines.find(l => l.id === WINTER).chapters[0].ties;
+  const r = run(b);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /沒有 ties：季節線是副劇情/.test(w)));
+  expectErr(c => { c.ledger.weeks["2026-W47"].main = ""; }, /主線推到哪/);
+});
+T("舊帳本沒有 seasonal 照常", () => {
+  const c = regular();
+  delete c.ledger.seasonal;
+  c.ledger.lines = c.ledger.lines.filter(l => l.kind !== "season");
+  assert.deepStrictEqual(run(c).errors, []);
+});
+T("新聞的界線：館內選舉、投票、兩岸可以寫；真實的政黨、人名擋", () => {
+  const ok = regular();
+  ok.files["2026-W47/d1.json"].board = "展品們投票選館長，選票不夠；書架多了 2 本書。";
+  ok.files["2026-W47/d1.json"].books[0].pages[0] = "館內選舉開始了。\n兩岸的展廳都寄了信。";
+  assert.ok(!has(run(ok), /禁用字/), run(ok).errors.join("\n"));
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "民進黨來參觀了；書架多了 2 本書。"; }, /禁用字「民進黨」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "國民黨來參觀了；書架多了 2 本書。"; }, /禁用字「國民黨」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "賴清德來參觀了；書架多了 2 本書。"; }, /禁用字「賴清德」/);
+});
+// ---------- 今日特展的新畫（works[].svg） ----------
+const DRAW = "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#222'/></svg>";
+const withSvg = (c, svg) => { const w = c.files["2026-W47/d1.json"].show.works[1]; delete w.art; delete w.variant; w.svg = svg; return c; };
+T("新畫：用 svg 畫的過得了；跟舊畫混著；art 和 svg 只能寫一個", () => {
+  assert.deepStrictEqual(run(withSvg(regular(), DRAW)).errors, []);
+  assert.deepStrictEqual(run(withSvg(regular(), [DRAW.slice(0, 30), DRAW.slice(30)])).errors, [], "字串的陣列也可以");
+  expectErr(c => { withSvg(c, DRAW); c.files["2026-W47/d1.json"].show.works[1].art = "portrait"; }, /art 和 svg 只能寫一個/);
+  expectErr(c => { delete c.files["2026-W47/d1.json"].show.works[1].svg; }, /art 只能是/);
+});
+T("新畫：擋 script、foreignObject、image、on 事件、外部網址、style、太大、沒有 viewBox", () => {
+  const X = s => "<svg viewBox='0 0 1 1'>" + s + "</svg>";
+  expectErr(c => withSvg(c, X("<script>alert(1)</script>")), /不准用 <script>/);
+  expectErr(c => withSvg(c, X("<foreignObject/>")), /不准用 <foreignObject>/);
+  expectErr(c => withSvg(c, X("<image href='a.png'/>")), /不准用 <image>/);
+  expectErr(c => withSvg(c, X("<a href='#b'/>")), /不准用 <a>/);
+  expectErr(c => withSvg(c, X("<rect onclick='x()'/>")), /不准用事件屬性 onclick/);
+  expectErr(c => withSvg(c, X("<use href='https://x.y/z#a'/>")), /不能連到外面/);
+  expectErr(c => withSvg(c, X("<rect fill='url(http://x.y/z)'/>")), /不能連到外面/);
+  expectErr(c => withSvg(c, X("<rect style='fill:red'/>")), /不准用 style/);
+  expectErr(c => withSvg(c, X("<rect/>".repeat(3000))), /太大了/);
+  expectErr(c => withSvg(c, "<svg><rect/></svg>"), /要有 viewBox/);
+});
+T("新畫：畫裡的字也算遊戲文字（壹、禁用字、英文字母）", () => {
+  const X = s => "<svg viewBox='0 0 1 1'><text>" + s + "</text></svg>";
+  assert.deepStrictEqual(run(withSvg(regular(), X("待領壹張"))).errors, []);
+  expectErr(c => withSvg(c, X("待領一張")), /用「壹」/);
+  expectErr(c => withSvg(c, X("民進黨")), /禁用字「民進黨」/);
+  expectErr(c => withSvg(c, X("Pepe")), /英文字母/);
+});
+T("新畫：正式週那天一幅新畫都沒有：警告（不擋）；11-09 已經上線的不算", () => {
+  const c = regular();
+  const r = run(c);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /2026-W47\/d2\.json\.show：今天的特展沒有新畫/.test(w)), r.warnings.join("\n"));
+  assert.ok(!r.warnings.some(w => /2026-W47\/d1\.json\.show：今天的特展沒有新畫/.test(w)), "d1 複製的那幅有新畫");
+});
+T("禁用字：戰爭、宗教這些拿掉了；中共、解放軍留著", () => {
+  const ok = regular();
+  ok.files["2026-W47/d1.json"].books[0].pages[0] = "展品們的戰爭，用抱枕打。\n宗教、軍隊、飛彈都是紙糊的。";
+  assert.ok(!has(run(ok), /禁用字/), run(ok).errors.join("\n"));
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "中共來參觀了；書架多了 2 本書。"; }, /禁用字「中共」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "解放軍來參觀了；書架多了 2 本書。"; }, /禁用字「解放軍」/);
 });
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

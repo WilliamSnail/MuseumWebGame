@@ -797,7 +797,93 @@ export const LIMITED_TEXT = {
   "stand-velvet": { name: "紅絨緞帶", kind: "展台裝飾", desc: "酒紅色的絨布緞帶，掛在展廳每壹座展台的邊上，中間別著金色的小徽章。只是好看，不影響評分。", use: "掛到展台上" },
   "frame-vine": { name: "金藤名牌框", kind: "名牌框", desc: "金色藤蔓纏成的名牌框。展廳的館主名牌、館友名單上你的名字都會換上它。只是好看。", use: "換上名牌框" },
   "mat-star": { name: "星光絨", kind: "抱枕材料", desc: "深藍色的絨布，裡面織了細細的金線，做成抱枕會亮亮的。做壹個抱枕用掉壹份。", use: "去抱枕工作台用" },
+  // 兌換所賣的限定頭飾（11-09，決定 0032）。名字、樣子都是草稿，Yuga 可以改
+  "hat-rain": { name: "黃雨帽", kind: "佩佩部件・帽子", desc: "鮮黃色的雨帽，後面的帽簷特別長。下雨天地下室會用到。", use: "去手作坊戴上" },
+  "hat-chef": { name: "廚師帽", kind: "佩佩部件・帽子", desc: "又高又蓬的白帽子，戴上去就覺得自己會做菜了。", use: "去手作坊戴上" },
+  "hat-muff": { name: "毛耳罩", kind: "佩佩部件・帽子", desc: "毛茸茸的粉紅耳罩。寒流來的時候，低語也比較小聲。", use: "去手作坊戴上" },
+  "hat-miner": { name: "礦工帽", kind: "佩佩部件・帽子", desc: "黃色的硬殼帽，前面有壹盞小燈。只是好看，照不亮地下。", use: "去手作坊戴上" },
+  "hat-wreath": { name: "花環", kind: "佩佩部件・帽子", desc: "用小花編成的圈圈，放在頭頂上。花瓣不知道為什麼壹直不會謝。", use: "去手作坊戴上" },
+  "hat-bow": { name: "蝴蝶結", kind: "佩佩部件・帽子", desc: "紅色的大蝴蝶結。招領箱裡撿來的，沒有人來領。", use: "去手作坊戴上" },
+  "hat-pot": { name: "鐵鍋帽", kind: "佩佩部件・帽子", desc: "壹口小鐵鍋，握把朝旁邊。戴著走路會輕輕敲出聲音。", use: "去手作坊戴上" },
+  "hat-paper": { name: "摺紙帽", kind: "佩佩部件・帽子", desc: "舊報紙摺的帽子，上面的字已經看不清楚了。", use: "去手作坊戴上" },
+  // 主題展、每週特展的限定配件（決定 0035）。全部是草稿，Yuga 可以改
+  "show-legend": { name: "傳說的金冠", kind: "佩佩部件・帽子", desc: "比皇冠高壹截，壹圈紅絨，五個尖角都頂著小金球。「傳說殿堂」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-angry": { name: "火氣頭帶", kind: "佩佩部件・帽子", desc: "紅色的頭帶，正中間壹小撮火。不燙，只是看起來很有意見。「憤怒之廳」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-tears": { name: "淚滴耳環", kind: "佩佩部件・首飾", desc: "兩滴不會乾的眼淚，掛在頭的兩邊。「淚之廳」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-russia8": { name: "瓜子項鍊", kind: "佩佩部件・首飾", desc: "壹顆壹顆瓜子串成的項鍊，中間那顆最大。吃掉就沒有了，所以沒有人吃。「俄國8+9 特展」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-rainbow": { name: "彩虹圍巾", kind: "佩佩部件・首飾", desc: "紅、綠、黃、黑四條。在佩佩的世界，這就是彩虹。「彩虹」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-hats": { name: "三層帽", kind: "佩佩部件・帽子", desc: "壹頂帽子上面壹頂帽子，上面又壹頂帽子。「帽子展」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-pillows": { name: "枕頭睡帽", kind: "佩佩部件・帽子", desc: "長長的條紋睡帽，尾巴上掛著壹顆小枕頭。「抱枕沙龍」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-joy": { name: "歡笑花環", kind: "佩佩部件・帽子", desc: "壹圈小花。中間那朵在笑，別的花看起來也快要笑了。「歡樂廳」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-flat": { name: "躺平眼罩", kind: "佩佩部件・帽子", desc: "推到頭上的眼罩，上面繡著兩條閉著的眼睛。「躺平區」辦到金才拿得到。", use: "去手作坊戴上" },
+  "show-failed": { name: "縫過的領結", kind: "佩佩部件・首飾", desc: "歪壹邊的領結，有壹條看得出來的縫線。「失敗作回顧展」辦到金才拿得到。", use: "去手作坊戴上" },
+  "week-allBlack": { name: "黑絨領結", kind: "佩佩部件・首飾", desc: "黑絨做的領結，中間壹顆金色的小釘。每週特展「黑色週」到金才拿得到。", use: "去手作坊戴上" },
+  "week-pillowWeek": { name: "小枕頭髮夾", kind: "佩佩部件・帽子", desc: "夾在頭上的小枕頭。真的軟的。每週特展的抱枕週到金才拿得到。", use: "去手作坊戴上" },
+  "week-gopnikWeek": { name: "金瓜子項鍊", kind: "佩佩部件・首飾", desc: "瓜子項鍊的金色款。每週特展的 8+9 週到金才拿得到。", use: "去手作坊戴上" },
 };
+// 兌換所的裝備（11-09，決定 0032）：{n} 換成 config.js 的數字。名字、說明都是草稿
+export const GEAR_TEXT = {
+  magnifier: { name: "放大鏡", desc: "偵查檢定 +{n}。" },
+  coin: { name: "幸運銅板", desc: "幸運檢定 +{n}。" },
+  apron: { name: "圍裙", desc: "做抱枕有 {n}% 不花靈感。" },
+  abacus: { name: "算盤", desc: "交委託多拿 {n} 靈感。" },
+  amulet: { name: "護身符", desc: "看懂檢定的機率低 {n}（比較不會看懂，也就比較不會發瘋）。" },
+  gloves: { name: "搬運手套", desc: "地下收藏庫的隊伍強度 +{n}。" },
+  lamp: { name: "探險燈", desc: "在地下收藏庫扣理智時少扣 {n} 點（最少還是扣 1 點）。" },
+  notebook: { name: "學習筆記", desc: "換日的技能成長多長 {n} 點。" },
+};
+// 兌換所上的字
+export const SHOP_TEXT = {
+  title: "兌換所",
+  tiers: { common: "普通", fine: "精良", rare: "稀有" },
+  why: "週章是做完每週任務拿的，不會過期。這裡可以換裝備、提升技能、買這週限定的頭飾。",
+  gearWhy: "裝備放在博物館，換人還在，三位參觀者都可以穿；現在這位最多穿 {n} 件。",
+  skillWhy: "只有現在這位參觀者會變強（技能跟著人走）；技能越高越貴，最多到 {cap}。",
+  limitedWhy: "這週上架的限定頭飾，下週壹 05:00 換壹批。不算進「全部解鎖」，另外算限定收藏。",
+  matWhy: "背包裡的舊畫布、金箔、金線，每 {n} 份（哪壹種都算）換壹枚週章。",
+  lessonWhy: "老主顧輪流來教你壹招：花靈感，指定壹個技能 +{dice}。壹天 {n} 堂，技能越高越貴，最多上到 {cap}。",
+  trialWhy: "每壹間考壹個技能，用下面挑好的 3 隻進去，只走那壹間。過了，那個技能 +{dice}；壹間壹週可以拿 {n} 次。沒過可以再試，但會掉理智、可能受傷。",
+};
+// 地下的試煉房間（11-09，決定 0032）：跟 CELLAR 的房間一樣的格式，多一個 skill（過了哪個技能成長）。
+// 強度門檻照樓層（B1 11–13、B2 15–16、B3 17–19）。沒有 type none 的選項：不挑戰就過不了。過了不給靈感、不回理智，只給技能成長（NUM.shop.trialSkill）。
+export const TRIAL_ROOMS = [
+  { id: "t:look", floor: 1, skill: "偵查", title: "兩幅壹樣的畫", intro: "試煉房間：眼力。",
+    lines: ["牆上掛著兩幅壹模壹樣的佩佩。", "牌子上寫：「找出哪裡不壹樣，我就教你。」"],
+    choices: [
+      { label: "壹格壹格比對", check: { type: "skill", skill: "偵查", mod: 0 }, success: { text: "右邊那隻少了壹根睫毛。你的眼睛好像變利了。" }, fail: { text: "看到眼睛發痠，牠們好像在對你眨眼。", san: "1D2" } },
+      { label: "把畫搬到燈下看", check: { type: "power", target: 12 }, success: { text: "燈壹照，破綻就出來了。你記住了該看哪裡。" }, fail: { text: "畫框比想像中重，砸到腳了。", injure: true } },
+    ] },
+  { id: "t:stitch", floor: 1, skill: "手工藝", title: "沒縫完的抱枕", intro: "試煉房間：手藝。",
+    lines: ["工作台上有壹個縫到壹半的抱枕，針還插在上面。", "線頭自己動了壹下，像在等你。"],
+    choices: [
+      { label: "接著縫完", check: { type: "skill", skill: "手工藝", mod: 0 }, success: { text: "最後壹針收得漂亮。抱枕滿意地癱軟下來。" }, fail: { text: "針腳歪得像在尖叫，你不敢再看。", san: "1D2" } },
+      { label: "壓住亂動的線頭", check: { type: "power", target: 11 }, success: { text: "按住了。你學會了線頭的脾氣。" }, fail: { text: "線纏上來，有壹隻被絆倒了。", injure: true } },
+    ] },
+  { id: "t:gaze", floor: 2, skill: "鑑賞", title: "沒有署名的畫", intro: "試煉房間：眼光。",
+    lines: ["三幅畫，只有壹幅是真跡。", "另外兩幅在你轉頭的時候，好像換了位置。"],
+    choices: [
+      { label: "看筆觸認真跡", check: { type: "skill", skill: "鑑賞", mod: -5 }, success: { text: "你指對了。另外兩幅默默把臉轉過去。" }, fail: { text: "你指錯了，三幅畫壹起笑了出來。", san: "1D3" } },
+      { label: "盯到它先移開視線", check: { type: "san", spec: "1/1D4" }, success: { text: "它先移開了。你懂得看畫的人也會被看。" }, fail: { text: "你先移開了，後頸涼涼的。" } },
+    ] },
+  { id: "t:cups", floor: 2, skill: "幸運", title: "三個倒扣的杯子", intro: "試煉房間：手氣。",
+    lines: ["桌上三個倒扣的杯子，其中壹個底下有東西在動。", "沒有人叫你選，可是你知道得選壹個。"],
+    choices: [
+      { label: "憑感覺掀壹個", check: { type: "skill", skill: "幸運", mod: 0 }, success: { text: "底下是壹顆骰子，六點朝上。你覺得今天手很順。" }, fail: { text: "杯子底下的東西摸了你壹下。", san: "1D3" } },
+      { label: "三個壹起掀開", check: { type: "power", target: 15 }, success: { text: "全部掀開，牠逃不掉。你摸清了牠的習慣。" }, fail: { text: "杯子飛起來砸中隊伍。", injure: true } },
+    ] },
+  { id: "t:plate", floor: 3, skill: "神秘學", title: "念不出來的門牌", intro: "試煉房間：學問。",
+    lines: ["門牌上的字，每次看都不壹樣。", "門後有人小聲地跟著你念。"],
+    choices: [
+      { label: "照古書的念法念", check: { type: "skill", skill: "神秘學", mod: -5 }, success: { text: "你念對了。門後的聲音滿意地安靜下來。" }, fail: { text: "念到壹半，舌頭不是你的了。", san: "1D4" } },
+      { label: "閉上眼睛跟著念", check: { type: "san", spec: "1/1D6" }, success: { text: "你聽懂了壹點點，不多，剛剛好。" }, fail: { text: "你念了很久才發現門牌在念你。" } },
+    ] },
+  { id: "t:guard", floor: 3, skill: "說服", title: "不肯開門的守衛", intro: "試煉房間：口才。",
+    lines: ["壹尊石膏佩佩擋在門口。", "牠說今天不開放，明天也不開放。"],
+    choices: [
+      { label: "跟牠講道理", check: { type: "skill", skill: "說服", mod: 0 }, success: { text: "牠想了很久，往旁邊挪了壹步。你學到了講話的節奏。" }, fail: { text: "你講到壹半，牠把你的話再講壹次給你聽。", san: "1D3" } },
+      { label: "硬把牠搬開", check: { type: "power", target: 18 }, success: { text: "搬開了。牠還在念，不過你已經聽懂牠怕什麼。" }, fail: { text: "石膏比你想的還重，有壹隻被壓到。", injure: true } },
+    ] },
+];
 // 簽到卡、簽到日曆上的字
 export const SIGNIN_TEXT = {
   title: "今天的簽到",

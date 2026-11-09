@@ -1,0 +1,79 @@
+/* ================================================================
+   管理員介面（第一版：只看不改，決定 0033）
+   木框在 board.css（overlay）；燈號 .nf-dot 在 net.css。這個檔放在它們後面載入（main.js）。
+   手機（760px 以下）：只留暱稱、最後上線、圖鑑、第幾天四欄，其他的點開看，不用橫向捲動。平板（1000px 以下）：「狀況」收到暱稱下面。
+   ================================================================ */
+.md-admin-box[hidden] { display: none; }
+
+/* .nb-layer 是 grid，百分比寬度會被表的內容撐開：用視窗的寬度算（.nb-layer 左右各 18px；手機 0） */
+.nb-frame.nb-admin { width: min(1240px, calc(100vw - 36px)); }
+.nb-admin .nb-surface { gap: 10px; background-color: #2B2A33;
+  background-image: radial-gradient(rgba(0,0,0,.22) 1px, rgba(0,0,0,0) 1.5px), radial-gradient(ellipse at 30% 8%, rgba(220,215,240,.1), rgba(0,0,0,0) 60%);
+  background-size: 4px 4px, 100% 100%; }
+.nb-admin .adm-refresh { white-space: nowrap; }
+
+/* 最上面的數字 */
+.adm-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.adm-tile { display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 6px 10px; border-radius: 3px; color: #2A1A0C;
+  background: linear-gradient(180deg, #F0D995 0%, #C8A25A 52%, #A98838 100%); box-shadow: inset 0 1px 0 rgba(255,250,225,.65), inset 0 0 0 1px rgba(110,80,32,.55), 0 2px 6px rgba(0,0,0,.4); }
+.adm-tile b { font-family: var(--serif); font-size: 1.5rem; line-height: 1.2; }
+.adm-tile small { font-size: .8125rem; white-space: nowrap; }
+
+.adm-note { margin: 0; font-size: .8125rem; line-height: 1.5; color: #E8E2D2; }
+.adm-err { margin: 0; padding: 8px 12px; border-radius: 3px; font-size: .875rem; color: #FBE9D6; background: rgba(150,40,30,.85); }
+
+/* 表 */
+.adm-wrap { flex: 1; min-height: 0; overflow: auto; border-radius: 3px; background: linear-gradient(180deg, #F7EFDD, #EFE3C8); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 3px 10px rgba(0,0,0,.4); }
+.adm-wrap:focus-visible, .adm-wrap button:focus-visible { outline: 2px solid #6E5020; outline-offset: -2px; }
+.adm-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .875rem; color: var(--parch-ink); font-variant-numeric: tabular-nums; }
+.adm-table th { position: sticky; top: 0; z-index: 1; padding: 8px 10px; text-align: left; white-space: nowrap; font-family: var(--serif); font-weight: 700; color: #4A3418; background: #E2D0A6; border-bottom: 1px solid var(--gold-lo); }
+.adm-table td { padding: 7px 10px; white-space: nowrap; border-bottom: 1px solid var(--parch-line); }
+.adm-sort { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(74,52,24,.4); text-underline-offset: 3px; }
+.adm-sort:hover { color: #7A2A14; }
+.adm-arrow { font-size: .6875rem; }
+
+.adm-row { cursor: pointer; }
+.adm-row:hover td { background: rgba(200,162,90,.2); }
+.adm-row.on td { background: rgba(200,162,90,.3); border-bottom-color: transparent; }
+.adm-row.offline .nf-dot { background: #8A8A85; }
+.adm-open { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.adm-who { display: flex; flex-direction: column; min-width: 0; }
+.adm-who b { font-family: var(--serif); font-size: 1rem; }
+.adm-who small { font-size: .75rem; color: var(--parch-sub); }
+.adm-nick .nf-dot { width: 10px; height: 10px; margin-top: .4em; }
+
+.adm-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.adm-tags.adm-narrow { display: none; }
+.adm-tag { padding: 1px 7px; border-radius: 999px; font-size: .75rem; color: #4A3418; background: rgba(110,80,32,.14); white-space: nowrap; }
+.adm-tag.warn { color: #5A2A08; background: #F2C879; }
+.adm-tag.bad { color: #FFF3E6; background: #9A231C; }
+.adm-bad { color: #9A231C; font-weight: 700; }
+
+/* 展開的細節 */
+.adm-table .adm-detail td { padding: 0; white-space: normal; background: rgba(255,250,235,.6); border-bottom: 2px solid var(--gold-lo); }
+.adm-detail-in { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; padding: 10px 14px 14px; }
+.adm-detail-in > p { grid-column: 1 / -1; margin: 0; }
+.adm-sec { min-width: 0; }
+.adm-sec h4 { margin: 0 0 4px; font-family: var(--serif); font-size: .9375rem; letter-spacing: .1em; color: #6E5020; border-bottom: 1px solid var(--parch-line); }
+.adm-sec dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; margin: 0; font-size: .8125rem; line-height: 1.5; }
+.adm-sec dt { color: var(--parch-sub); white-space: nowrap; }
+.adm-sec dd { margin: 0; overflow-wrap: anywhere; }
+.adm-quirks { margin: 6px 0 0; padding: 0 0 0 16px; font-size: .8125rem; line-height: 1.5; }
+.adm-none { margin: 6px 0 0; font-size: .8125rem; color: var(--parch-sub); }
+
+/* 平板：「狀況」那一欄收到暱稱下面 */
+@media (max-width: 1000px) {
+  .adm-table .adm-flags { display: none; }
+  .adm-tags.adm-narrow { display: inline-flex; margin-top: 2px; }
+  .adm-table td.adm-nick { white-space: normal; }
+}
+@media (max-width: 760px) {
+  .nb-frame.nb-admin { width: 100vw; }
+  .adm-tile { flex-wrap: wrap; gap: 0 4px; padding: 4px 6px; }
+  .adm-tile b { font-size: 1.25rem; }
+  .adm-tile small { font-size: .6875rem; }
+  .adm-table { font-size: .8125rem; }
+  .adm-table th, .adm-table td { padding: 6px 5px; }
+  .adm-table .adm-wide { display: none; }
+  .adm-detail-in { grid-template-columns: minmax(0, 1fr); padding: 8px 10px 12px; }
+}

@@ -17,6 +17,7 @@
 import { NUM, SKILLS } from "./config.js";
 import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan } from "./logic.js";
 import { canStartCellar, cellarFloor, weekIndex } from "./logic3.js";
+import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -37,15 +38,27 @@ export const STORY_TASKS = {
   showDays: { when: "weekly", min: 0 }, // 看完今日特展 n 天
   ending: { when: "weekly", min: 0 },   // 讀到這週的結局
 };
-// 劇情線的種類：main 主線（跨週，id 不加週的名字）、week 這週的、floor 樓層的新劇情線、holiday 節日、side 小插曲、curator 策展手記
-export const LINE_KINDS = { main: "主線", week: "這週的", floor: "樓層的新劇情線", holiday: "節日", side: "小插曲", curator: "策展手記" };
+// 劇情線的種類：main 主線（跨週，id 不加週的名字）、season 季節線（一年四季各一條，跨週，大約兩週一章；是圍繞主線主軸的副劇情，沒玩也不會卡住主線，決定 0037）、week 這週的、floor 樓層的新劇情線、holiday 節日、side 小插曲、curator 策展手記
+export const LINE_KINDS = { main: "主線", season: "季節", week: "這週的", floor: "樓層的新劇情線", holiday: "節日", side: "小插曲", curator: "策展手記" };
+// 跨週的線：id 不加週的名字，好幾週的書算同一條（主線、季節線）
+export const CROSS_WEEK_KINDS = ["main", "season"];
 // 今日特展：用 web/src/art.js 已經有的畫法，換參數（frog ＝遊戲自己的青蛙，pick 照手作坊的選項）。不畫 Pepe the Frog 的樣子
 export const SHOW_ART = ["frog", "portrait", "strange", "rare", "statue", "hidden"];
 export const SHOW_FX = ["sepia", "faded", "dust", "dark", "flip", "water", "torn", "shadow", "glow"]; // 畫面上的效果（web/src/css/story.css）
 export const SHOW_FRAMES = ["gold", "dark", "wood", "plain", "ornate"];
+// 今日特展的新畫：works[].svg（排程照這週的故事畫的向量圖）。只准下面這些標籤和屬性，其他一律不要（sanitizeSvg）
+export const SVG_TAGS = ["svg", "g", "defs", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "title", "desc",
+  "linearGradient", "radialGradient", "stop", "clipPath", "mask", "pattern", "use",
+  "filter", "feGaussianBlur", "feTurbulence", "feDisplacementMap", "feColorMatrix", "feComponentTransfer", "feFuncR", "feFuncG", "feFuncB", "feFuncA", "feBlend", "feComposite", "feMerge", "feMergeNode", "feOffset", "feFlood", "feDropShadow"];
+export const SVG_ATTRS = ["id", "viewBox", "preserveAspectRatio", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "fx", "fy", "width", "height", "d", "points", "dx", "dy", "href",
+  "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-opacity", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit",
+  "opacity", "transform", "clip-path", "clip-rule", "mask", "filter", "font-size", "font-family", "font-weight", "font-style", "text-anchor", "dominant-baseline", "letter-spacing", "paint-order",
+  "offset", "stop-color", "stop-opacity", "gradientUnits", "gradientTransform", "spreadMethod", "patternUnits", "patternContentUnits", "patternTransform", "maskUnits", "maskContentUnits", "clipPathUnits",
+  "filterUnits", "primitiveUnits", "stdDeviation", "baseFrequency", "numOctaves", "seed", "type", "scale", "xChannelSelector", "yChannelSelector", "in", "in2", "result", "values", "mode", "operator",
+  "k1", "k2", "k3", "k4", "tableValues", "slope", "intercept", "amplitude", "exponent", "flood-color", "flood-opacity", "stitchTiles", "color-interpolation-filters"];
 // 書裡 [[字|動作]] 可以用的動作（ui_screens1.js 的 BOOK_ACTIONS）
 export const BOOK_ACTION_IDS = ["void", "mirror", "window", "beat", "hat", "codex", "cellar"];
-// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，之後兌換所用
+// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/shop.js 的 tradeMats）
 export const STORY_ITEMS = {
   "book:偵查": { name: "技能書《放大鏡的用法》", kind: "skillBook", skill: "偵查" },
   "book:鑑賞": { name: "技能書《看畫的方法》", kind: "skillBook", skill: "鑑賞" },
@@ -97,6 +110,17 @@ export function seasonOf(label) {
   return n < 0 ? 0 : 1 + Math.floor(n / NUM.story.seasonWeeks);
 }
 export function seasonName(n) { return n > 0 ? `第 ${n} 季` : "序章"; }
+// 一年的春夏秋冬（季節線用；上面的 seasonOf 是主線四週一段的「季」，不要混）。照節氣切，差一兩天沒關係（決定 0037）
+export const YEAR_SEASONS = [["春", "02-04"], ["夏", "05-05"], ["秋", "08-07"], ["冬", "11-07"]];
+// "YYYY-MM-DD" 是冬／春／夏／秋（立春 2/4、立夏 5/5、立秋 8/7、立冬 11/7；1 月到 2/3 還是冬）
+export function yearSeason(dateStr) {
+  const md = String(dateStr).slice(5);
+  let s = "冬";
+  YEAR_SEASONS.forEach(([name, from]) => { if (md >= from) s = name; });
+  return s;
+}
+// 這一週算哪一季：照這週的週一（2026-W46 的週一 11/9 是冬）
+export function weekSeason(label) { const m = isoMonday(label); return m ? yearSeason(m) : null; }
 
 // ---------- 讀進來的檔整理成一份 ----------
 // files：{ "2026-W46/week.json": 內容, "2026-W46/d1.json": 內容, "備用/常青1/d1.json": …, "備用/一天/插曲1.json": … }（路徑從 content/weeks/ 算起）
@@ -134,7 +158,8 @@ function pickSpare(lib, date, used) {
   for (let k = 0; k < names.length; k++) { const nm = names[(at + k) % names.length]; if (!used.has(nm)) return nm; }
   return names[at];
 }
-const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0) });
+// skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
+const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0), skill: r && SKILLS.includes(r.skill) ? r.skill : null });
 
 // 一週整理成遊戲用的樣子（id 都加上週的名字）。label ＝ "2026-W46"；today ＝今天（只打開到今天的天）；fb ＝指定用哪一個備用週（不給就照週數輪）
 // 回傳 null：還沒到的週、比 NUM.story.startWeek 早的週、找不到內容
@@ -152,12 +177,12 @@ export function storyWeekAt(lib, label, today, fb) {
     title: wk.title || "", theme: wk.theme || "", summary: asList(wk.summary), holidayWeek: !!wk.holidayWeek,
     lines: [], days: [], books: [], rooms: [], works: [], daily: [],
     ending: { read: wk.ending && wk.ending.need && Number.isFinite(+wk.ending.need.read) ? +wk.ending.need.read : null },
-    weeklyBonus: reward(wk.weeklyBonus), anomaly: null,
+    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, shop: asList(wk.shop), // shop：這週兌換所上架的限定頭飾（shared/shop.js 的 shopOnSale）
   };
   const lineMap = {};
   const addLine = (l, p) => {
     if (!l || !l.id) return;
-    const id = l.kind === "main" ? l.id : p + l.id;
+    const id = CROSS_WEEK_KINDS.includes(l.kind) ? l.id : p + l.id;
     if (!lineMap[p + l.id]) { lineMap[p + l.id] = id; if (!W.lines.some(x => x.id === id)) W.lines.push({ id, local: l.id, name: l.name || l.id, kind: LINE_KINDS[l.kind] ? l.kind : "week" }); }
   };
   asList(wk.lines).forEach(l => addLine(l, pre));
@@ -178,7 +203,7 @@ export function storyWeekAt(lib, label, today, fb) {
     if (!d) { spare = pickSpare(lib, date, used); d = spare ? lib.spare[spare] : null; if (spare) used.add(spare); }
     if (!d) continue;
     const p = spare ? `${label}/d${n}-` : pre;
-    if (spare) asList(d.lines).forEach(l => addLine(Object.assign({}, l, { kind: l.kind === "main" ? "side" : l.kind }), p));
+    if (spare) asList(d.lines).forEach(l => addLine(Object.assign({}, l, { kind: CROSS_WEEK_KINDS.includes(l.kind) ? "side" : l.kind }), p));
     const unlock = u => !u || !u.type || u.type === "now" ? { type: "now" } : u.type === "find" ? { type: "find", room: "s:" + p + u.room } : u.type === "task" ? { type: "task", task: p + u.task } : u.type === "ending" ? { type: "ending" } : { type: "now" };
     const day = {
       n, date, spare, holiday: d.holiday || (STORY_HOLIDAY_OF ? STORY_HOLIDAY_OF(date) : null) || null, board: d.board || "",
@@ -327,14 +352,16 @@ export function taskDone(P, t) { const S = storyState(P), st = S.tasks[t.id]; re
 
 // ---------- 書 ----------
 const spotFound = (P, S, id) => !!(S.spots[id] || (P.cellar && P.cellar.won && P.cellar.won[id]));
-function endingNeed(W) { const others = W.books.filter(b => !b.ending).length; return W.ending.read == null ? others : Math.min(W.ending.read, others); }
+// 季節線的書不算在「讀幾本打開結局」裡：沒讀也不會卡住這週、卡住主線（決定 0037）
+const countsForEnding = (W, b) => !b.ending && (lineById(W, b.line) || {}).kind !== "season";
+function endingNeed(W) { const others = W.books.filter(b => countsForEnding(W, b)).length; return W.ending.read == null ? others : Math.min(W.ending.read, others); }
 // 這本書的條件到了沒（不看有沒有讀過）
 export function bookOpenNow(P, W, b, S = storyState(P)) {
   if (W.past) return true;
   const u = b.unlock || { type: "now" };
   if (u.type === "find") return spotFound(P, S, u.room);
   if (u.type === "task") return !!(S.tasks[u.task] && S.tasks[u.task].done);
-  if (u.type === "ending") return W.books.filter(x => !x.ending && S.books[x.id] && S.books[x.id].read).length >= endingNeed(W);
+  if (u.type === "ending") return W.books.filter(x => countsForEnding(W, x) && S.books[x.id] && S.books[x.id].read).length >= endingNeed(W);
   return true;
 }
 // "read"、"open"、"locked"
@@ -405,7 +432,7 @@ export function itemDesc(id) {
   if (!it) return "";
   if (it.kind === "skillBook") { const p = parseDice(NUM.story.skillBook); return `用了：${it.skill} +${p.m ? `${p.n}～${p.n * p.m}` : p.flat}（最多到 ${NUM.story.skillCap}）。給現在這位參觀者。`; }
   if (it.kind === "heal") return "用了：地下收藏庫受傷的佩佩，全部馬上好。";
-  return "收著。之後的兌換所用得到。";
+  return `收著。在兌換所，每 ${NUM.shop.matToStamp} 份換壹枚週章。`;
 }
 export function rewardText(r) {
   if (!r) return "";
@@ -413,6 +440,7 @@ export function rewardText(r) {
   if (r.insp) bits.push(`靈感 +${r.insp}`);
   if (r.mood) bits.push(`心情 +${r.mood}`);
   if (r.stamps) bits.push(`週章 ${r.stamps} 枚`);
+  if (r.skill) bits.push(`${r.skill} +${rangeWords(NUM.shop.trialSkill)}`);
   asList(r.items).forEach(id => bits.push(itemName(id)));
   return bits.join("、");
 }
@@ -423,6 +451,7 @@ function give(P, S, r, today, what) {
   asList(r.items).forEach(id => { S.bag[id] = (S.bag[id] || 0) + 1; });
   S.log.push({ d: today, what, r: rewardText(r) });
   if (S.log.length > 100) S.log = S.log.slice(-100);
+  return r.skill ? growSkill(P, r.skill, NUM.shop.trialSkill, NUM.story.skillCap) : null; // 房間的技能成長（決定 0032）：現在這位長
 }
 // 領任務的獎勵（只有那一週領得到）。每週任務多給週章
 export function claimTask(P, W, id, today) {
@@ -479,7 +508,7 @@ export function unclaimed(P, W) {
 export function itemUsable(P, id) {
   const it = STORY_ITEMS[id], S = storyState(P);
   if (!it || !(S.bag[id] > 0)) return { ok: false, reason: "沒有這個" };
-  if (it.kind === "material") return { ok: false, reason: "收著，之後的兌換所用得到" };
+  if (it.kind === "material") return { ok: false, reason: "收著，到兌換所換週章" };
   if (isFree(P)) return { ok: false, reason: "自由模式用不到" };
   if (it.kind === "skillBook") {
     if (!P.skills || !SKILLS.includes(it.skill)) return { ok: false, reason: "這位參觀者還沒有技能（先選職業）" };
@@ -548,14 +577,14 @@ export function claimSpot(P, W, id, today) {
   if (!isPlain(rec.spots)) rec.spots = {};
   if (rec.spots[id]) return { ok: false, reason: "領過了" };
   rec.spots[id] = today;
-  give(P, S, r.reward, today, id);
-  return { ok: true, reward: r.reward };
+  const grown = give(P, S, r.reward, today, id);
+  return { ok: true, reward: r.reward, grown };
 }
 export function spotClaimed(P, W, id) { const rec = storyState(P).weeks[W.label]; return !!(rec && rec.spots && rec.spots[id]); }
 
 // ---------- 劇情線 ----------
-// 每一條：名字、種類、讀了幾本、下一步（只說去哪裡、做什麼）。lines 回傳這週的；主線也在這裡（W.lines 裡 kind main 的）
-export function shelfTabOf(line) { return line && line.kind === "main" ? "mainline" : line && line.kind === "holiday" ? "holiday" : "weekly"; }
+// 每一條：名字、種類、讀了幾本、下一步（只說去哪裡、做什麼）。storyLines 回傳這週的（主線也在這裡，W.lines 裡 kind main 的）；季節線跨週，在 seasonLines
+export function shelfTabOf(line) { const k = line && line.kind; return k === "main" ? "mainline" : k === "season" ? "season" : k === "holiday" ? "holiday" : "weekly"; }
 export function lineNext(P, W, line) {
   const S = storyState(P);
   const books = W.books.filter(b => b.line === line.id);
@@ -575,7 +604,7 @@ export function lineNext(P, W, line) {
 export function storyLines(P, W) {
   if (!P || isFree(P) || !W) return [];
   const S = storyState(P);
-  return W.lines.map(line => {
+  return W.lines.filter(line => line.kind !== "season").map(line => { // 季節線跨週，另外算（seasonLines）
     const books = W.books.filter(b => b.line === line.id), read = books.filter(b => bookState(P, W, b) === "read").length;
     const next = lineNext(P, W, line);
     const tail = !next && !W.past && W.dayNo < 7 ? { text: "明天 05:00 之後再來看看", room: null, wait: true } : null;
@@ -586,6 +615,29 @@ export function storyLines(P, W) {
       fresh: !done && S.seen[line.id] !== key, key, tracked: S.track === line.id,
       started: books.length > 0 || W.rooms.some(r => r.line === line.id) };
   }).filter(l => l.started); // 還沒有書、也還沒有房間的線先不列（名字可能會破梗）
+}
+// 季節線：跨好幾週，把全部的週（weeks，以前的＋這週）裡掛在同一條線上的書加起來。回傳最新的一條在最後。
+// 過了那週的書還是可以補讀，下一步會先帶去讀舊的。有更新的一條（換季了）就算走完（done），收進劇情回顧；書還在書架上。
+export function seasonLines(P, weeks) {
+  if (!P || isFree(P)) return [];
+  const S = storyState(P), all = asList(weeks).filter(Boolean).slice().sort((a, b) => a.label.localeCompare(b.label)), order = [], map = {};
+  all.forEach(w => w.lines.filter(l => l.kind === "season").forEach(l => {
+    const books = w.books.filter(b => b.line === l.id);
+    if (!books.length) return; // 宣告了還沒放書：先不列（名字可能會破梗）
+    if (!map[l.id]) { map[l.id] = { line: l, weeks: [], books: [] }; order.push(map[l.id]); }
+    map[l.id].weeks.push(w);
+    books.forEach(b => map[l.id].books.push({ w, b }));
+  }));
+  return order.map((x, i) => {
+    const done = i < order.length - 1;
+    let next = null;
+    for (const w of x.weeks) { next = lineNext(P, w, x.line); if (next) break; }
+    const step = next || (done ? null : { text: "下壹章還沒來，過幾天再看看", room: null, wait: true });
+    const key = done ? "done" : step.text;
+    return { id: x.line.id, name: x.line.name, kind: "season", kindText: LINE_KINDS.season, week: x.weeks[x.weeks.length - 1].label, books: x.books.length,
+      read: x.books.filter(o => bookState(P, o.w, o.b) === "read").length, list: x.books, next: step, done,
+      fresh: !done && S.seen[x.line.id] !== key, key, tracked: S.track === x.line.id, started: true };
+  });
 }
 export function markLinesSeen(P, lines) { const S = storyState(P); asList(lines).forEach(l => { S.seen[l.id] = l.key; }); }
 export function trackLine(P, id) { const S = storyState(P); S.track = S.track === id ? null : id; return S.track; }
@@ -600,9 +652,10 @@ export function storyNotice(W, today, now) {
       ["大綱", W.summary],
       ["這週怎麼玩", [
         "每天 05:00：起源室書架的「每週劇情」多 1～2 本書，3 個每日任務換新，畫廊的「今日特展」換壹個主題。",
-        "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來）。週日讀到這週的結局。",
+        "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來，到兌換所換裝備、提升技能）。週日讀到這週的結局。",
         "錯過的天，書都還在，可以補讀；每日任務、今日特展只有當天。",
       ]],
+      ["兌換所", [`這週上架的限定頭飾：${limitedNames(shopOnSale(W, W.start))}。`]],
       W.anomaly ? ["本週異狀", [W.anomaly.title].concat(W.anomaly.text)] : null,
       ["每週任務", W.weekly.map(t => `・${taskText(t, W)}`)],
       ["時間", [`這週還剩 ${weekLeftText(now, W.start)}（下週壹 05:00 換下壹週）。`]],
@@ -612,12 +665,121 @@ export function storyNotice(W, today, now) {
   };
 }
 
+// ---------- 今日特展的新畫：把 works[].svg 淨化（檢查程式和畫面用同一個） ----------
+// svg：字串，或字串的陣列（接起來；JSON 裡比較好讀）。prefix：加在每個 id 前面，不同幅（同一幅畫兩次也是）的 id 才不會撞到。
+// 回傳 { ok, svg（淨化好的字串，不 ok 是空字串）, errors, texts（畫裡的字，也算遊戲文字）, bytes }。
+// 做法：自己一個字一個字讀，只有白名單的標籤、屬性才會寫進結果；任何讀不懂的都算錯，整幅不要（寧可不畫）。
+const SVG_TAG_SET = new Set(SVG_TAGS), SVG_ATTR_SET = new Set(SVG_ATTRS), SVG_TEXT_TAGS = new Set(["text", "tspan", "title", "desc"]);
+const SVG_HREF_TAGS = new Set(["use", "linearGradient", "radialGradient", "pattern"]);
+const SVG_BAD_VALUE = /[<>&"'`\\]|[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
+const SVG_OUTSIDE = /javascript|vbscript|data:|https?:|\/\/|expression\(|@import/i;
+const SVG_ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
+function svgBytes(s) { let n = 0; for (const ch of s) { const c = ch.codePointAt(0); n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; } return n; }
+export function sanitizeSvg(svg, prefix = "") {
+  const src = Array.isArray(svg) ? svg.join("") : svg;
+  const out = { ok: false, svg: "", errors: [], texts: [], bytes: 0 };
+  const err = m => { out.errors.push(m); };
+  if (typeof src !== "string" || !src.trim()) { err("svg 要是字串（或字串的陣列）"); return out; }
+  out.bytes = svgBytes(src);
+  if (out.bytes > NUM.story.showSvgKB * 1024) { err(`太大了（${Math.ceil(out.bytes / 1024)} KB，最多 ${NUM.story.showSvgKB} KB）`); return out; }
+  const n = src.length, stack = [], ids = new Set(), refs = new Set();
+  let html = "", i = 0, rootSeen = false, rootDone = false;
+  const ref = id => { refs.add(id); return prefix + id; };
+  while (i < n) {
+    const lt = src.indexOf("<", i), chunk = src.slice(i, lt < 0 ? n : lt);
+    if (chunk.trim()) {
+      const top = stack[stack.length - 1];
+      if (!SVG_TEXT_TAGS.has(top)) err(`標籤外面不能有字：「${chunk.trim().slice(0, 20)}」（字要放在 text 裡）`);
+      if (chunk.replace(/&(amp|lt|gt);/g, "").includes("&")) err("字裡的 & 只准 &amp; &lt; &gt;");
+      if (chunk.includes(">")) err("字裡不能有 >（要寫 &gt;）");
+      out.texts.push(chunk.trim());
+      html += chunk;
+    } else html += chunk.trim() ? "" : (chunk ? " " : "");
+    if (lt < 0) break;
+    const rest = src.slice(lt, lt + 200);
+    if (src[lt + 1] === "!" || src[lt + 1] === "?") { err("不能有 <! 或 <?（註解、DOCTYPE、CDATA）"); return out; }
+    const close = /^<\/([A-Za-z][A-Za-z0-9:_-]*)\s*>/.exec(rest);
+    if (close) {
+      const top = stack.pop();
+      if (top !== close[1]) { err(`標籤沒有配對：</${close[1]}>`); return out; }
+      html += `</${close[1]}>`;
+      if (!stack.length) rootDone = true;
+      i = lt + close[0].length;
+      continue;
+    }
+    const open = /^<([A-Za-z][A-Za-z0-9:_-]*)/.exec(rest);
+    if (!open) { err("讀不懂的標籤：" + rest.slice(0, 20)); return out; }
+    const tag = open[1];
+    if (!SVG_TAG_SET.has(tag)) { err(`不准用 <${tag}>（只准畫圖的標籤）`); return out; }
+    const parent = stack[stack.length - 1];
+    if (rootDone) { err("<svg> 只能有一個，後面不能再有東西"); return out; }
+    if (!rootSeen) { if (tag !== "svg") { err("最外面要是 <svg>"); return out; } rootSeen = true; }
+    else if (tag === "svg") { err("<svg> 裡面不能再放 <svg>"); return out; }
+    if (parent === "title" || parent === "desc") { err(`<${parent}> 裡面只能放字`); return out; }
+    if ((parent === "text" || parent === "tspan") && tag !== "tspan") { err(`<${parent}> 裡面只能放字和 <tspan>`); return out; }
+    let j = lt + open[0].length, attrs = "", selfClose = false, hasView = false, ended = false;
+    while (j < n) {
+      const ws = /^\s*/.exec(src.slice(j, j + 40))[0]; j += ws.length;
+      if (src.startsWith("/>", j)) { selfClose = true; j += 2; ended = true; break; }
+      if (src[j] === ">") { j += 1; ended = true; break; }
+      const am = /^([A-Za-z_:][A-Za-z0-9_:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/.exec(src.slice(j));
+      if (!am) { err(`<${tag}> 的屬性讀不懂（要寫成 名字='值'）`); return out; }
+      j += am[0].length;
+      const name = am[1], val = am[2] != null ? am[2] : am[3];
+      if (/^on/i.test(name)) { err(`不准用事件屬性 ${name}`); continue; }
+      if (name === "style" || name === "class") { err(`不准用 ${name}（顏色、線條直接寫在屬性上）`); continue; }
+      if (name === "xmlns") { if (val !== "http://www.w3.org/2000/svg") err("xmlns 不對"); continue; }
+      if (name === "xmlns:xlink") { if (tag !== "svg") err("xmlns:xlink 只能寫在 <svg>"); continue; }
+      if (name !== "xlink:href" && !SVG_ATTR_SET.has(name)) { err(`不准用屬性 ${name}（在 <${tag}>）`); continue; }
+      if (SVG_BAD_VALUE.test(val)) { err(`${name} 的值有不准的字元`); continue; }
+      if (SVG_OUTSIDE.test(val)) { err(`${name} 不能連到外面（外部網址、script）`); continue; }
+      if (name === "href" || name === "xlink:href") {
+        if (!SVG_HREF_TAGS.has(tag)) { err(`<${tag}> 不能有 href`); continue; }
+        if (!val.startsWith("#") || !SVG_ID.test(val.slice(1))) { err(`href 只能連到這幅畫裡面的 #id（${val.slice(0, 30)}）`); continue; }
+        attrs += ` href="#${ref(val.slice(1))}"`;
+        continue;
+      }
+      if (name === "id") {
+        if (!SVG_ID.test(val)) { err(`id「${val}」只能用英文開頭、英文數字 - _`); continue; }
+        if (ids.has(val)) { err(`id「${val}」重複了`); continue; }
+        ids.add(val);
+        attrs += ` id="${prefix}${val}"`;
+        continue;
+      }
+      if (/url\s*\(/i.test(val)) {
+        const um = /^url\(#([A-Za-z][A-Za-z0-9_-]*)\)$/.exec(val.trim());
+        if (!um) { err(`${name} 的 url() 只能連到這幅畫裡面的 #id`); continue; }
+        attrs += ` ${name}="url(#${ref(um[1])})"`;
+        continue;
+      }
+      if (tag === "svg" && (name === "width" || name === "height")) continue; // 大小由畫框決定
+      if (name === "viewBox") {
+        if (tag === "svg") hasView = /^\s*-?[\d.]+[\s,]+-?[\d.]+[\s,]+[\d.]+[\s,]+[\d.]+\s*$/.test(val);
+      }
+      attrs += ` ${name}="${val}"`;
+    }
+    if (!ended) { err(`<${tag}> 沒有結束`); return out; }
+    if (tag === "svg") { if (!hasView) err("<svg> 要有 viewBox（例如 0 0 240 300）"); attrs = ` xmlns="http://www.w3.org/2000/svg"${attrs}`; }
+    html += `<${tag}${attrs}${selfClose ? "/>" : ">"}`;
+    if (!selfClose) stack.push(tag);
+    else if (!stack.length) rootDone = true;
+    i = j;
+  }
+  if (!rootSeen) err("最外面要是 <svg>");
+  if (stack.length) err(`<${stack[stack.length - 1]}> 沒有關起來`);
+  refs.forEach(id => { if (!ids.has(id)) err(`連到不存在的 #${id}`); });
+  if (out.errors.length) return out;
+  out.ok = true;
+  out.svg = html;
+  return out;
+}
+
 // ---------- 預算（tools/week_check.cjs 和測試用） ----------
 const maxChoiceInsp = r => Math.max(0, ...asList(r && r.choices).map(c => +(c && c.success && c.success.insp) || 0));
-const addR = (a, r) => { const x = reward(r); a.insp += x.insp; a.mood += x.mood; a.items += x.items.length; return a; };
+const addR = (a, r) => { const x = reward(r); a.insp += x.insp; a.mood += x.mood; a.items += x.items.length; a.skills += x.skill ? 1 : 0; return a; };
 // 一天全部拿到的（週包裡的原始格式）
 export function dayRewardTotal(d) {
-  const t = { insp: 0, mood: 0, items: 0 };
+  const t = { insp: 0, mood: 0, items: 0, skills: 0 };
   asList(d && d.daily).forEach(x => addR(t, x.reward));
   addR(t, d && d.dailyBonus);
   t.insp += asList(d && d.books).length * NUM.story.bookInsp;
@@ -627,7 +789,7 @@ export function dayRewardTotal(d) {
 }
 // 每週任務＋全做完的那份＋本週異狀的房間
 export function weekTaskTotal(wk) {
-  const t = { insp: 0, mood: 0, items: 0 };
+  const t = { insp: 0, mood: 0, items: 0, skills: 0 };
   asList(wk && wk.weekly).forEach(x => addR(t, x.reward));
   addR(t, wk && wk.weeklyBonus);
   if (wk && wk.anomaly && wk.anomaly.room) { addR(t, wk.anomaly.room.reward); t.insp += maxChoiceInsp(wk.anomaly.room); }

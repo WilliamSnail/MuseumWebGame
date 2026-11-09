@@ -10,6 +10,7 @@
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
 import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "./logic.js";
+import { showPosters } from "./themeshow.js";
 
 export const SOCIAL = {
   visitInsp: 2,     // 館友今天第一次來參觀，展廳主人拿幾點靈感
@@ -48,7 +49,7 @@ export function hallView(save) {
   let hs = { score: 0, theme: null, themes: [] };
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
-  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null };
+  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P) }; // posters：辦完的展覽（決定 0035）
 }
 
 // ---------- 來訪、按讚、留言 ----------

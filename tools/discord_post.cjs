@@ -4,13 +4,14 @@
 // 金鑰放 GitHub Secrets：DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID（翊文放的，AI 拿不到，也不要印出來）。沒放就跳過，不報錯。
 // node tools/discord_post.cjs        照這次合併新加的檔發
 // node tools/discord_post.cjs --test 發一則測試訊息
+// node tools/discord_post.cjs --say  發環境變數 ANNOUNCE 的文字（手動的公告）
 const fs = require("fs"), path = require("path");
 const { execFileSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 const SITE = "https://pepe-museum.web.app";
 // 每則公告最後面的連結（翊文 11-09：「每天的公告最後面也給一些遊戲網站連結」）。要加連結加在這裡
-const LINKS = [["進遊戲", SITE]];
+const LINKS = [["🎟 入館", SITE]];
 const footer = () => LINKS.map(([name, url]) => `${name}：${url}`).join("\n");
 const MAX = 2000; // Discord 一則訊息最多 2000 字
 const DAY_FILE = /^content\/weeks\/(\d{4}-W\d{2})\/d([1-7])\.json$/;
@@ -25,12 +26,14 @@ function newDays(files) {
 function dayMessage(w, d, n, hol) {
   const lines = [];
   if (n === 1) {
-    lines.push(`**本週地下收藏庫：〈${w.title}〉**`, ...(Array.isArray(w.summary) ? w.summary : []), "");
-    lines.push(`第 1 天：${d.board || ""}`);
+    // 博物館的公告口吻（翊文 11-09：「要以稍微更加像博物館的公告方式推出」）
+    lines.push("🏛 **佩佩博物館2　本週特展公告**", `📜 地下收藏庫本週主題：〈${w.title}〉`, "", ...(Array.isArray(w.summary) ? w.summary : []), "");
+    lines.push(`📣 【今日館訊】${d.board || ""}`);
   } else {
-    lines.push(`**〈${w.title}〉第 ${n} 天**`, d.board || "");
+    lines.push("🏛 **佩佩博物館2　今日館訊**", `📜 〈${w.title}〉第 ${n} 日`, "", d.board || "");
   }
-  if (hol) lines.push("", `今天是${hol.name}。${hol.words || ""}`);
+  if (hol) lines.push("", `🏮 【本日節慶】${hol.name}。${hol.words || ""}`);
+  lines.push("", "館長室 敬啟");
   // 連結一定留著：太長只截前面的內容
   const end = "\n\n" + footer(), text = lines.join("\n").trim(), room = MAX - end.length;
   return (text.length > room ? text.slice(0, room - 1) + "…" : text) + end;
@@ -58,6 +61,14 @@ function changedFiles() {
 const readJSON = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8"));
 
 async function main() {
+  if (process.argv.includes("--say")) { // 手動的公告（.github/workflows/discord-announce.yml）：文字從環境變數來，最後面照樣放連結
+    const text = String(process.env.ANNOUNCE || "").trim();
+    if (!text) { console.log("沒有要發的文字。"); return; }
+    const end = "\n\n" + footer();
+    const ok = await send((text.length > MAX - end.length ? text.slice(0, MAX - end.length - 1) + "…" : text) + end);
+    console.log(ok ? "公告發了。" : "沒發。");
+    return;
+  }
   if (process.argv.includes("--test")) {
     // 測試：發最新一天真正格式的公告，看長什麼樣
     const dir = path.join(ROOT, "content", "weeks");

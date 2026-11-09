@@ -15,12 +15,12 @@ T("只認這週的 dN.json；備用週、week.json、靈感來源不算", () => 
 });
 T("週一：標題、不劇透的大綱、今天那一行、網址", () => {
   const m = dayMessage(w, { board: "書架多了 2 本書。" }, 1, null);
-  assert.ok(m.includes("〈換季的失物招領〉")); assert.ok(m.includes("立冬剛過。")); assert.ok(m.includes("第 1 天：書架多了 2 本書。")); assert.ok(m.includes("pepe-museum.web.app"));
+  assert.ok(m.includes("本週特展公告")); assert.ok(m.includes("〈換季的失物招領〉")); assert.ok(m.includes("立冬剛過。")); assert.ok(m.includes("【今日館訊】書架多了 2 本書。")); assert.ok(m.includes("館長室 敬啟")); assert.ok(m.includes("pepe-museum.web.app"));
 });
 T("其他天：不重貼大綱", () => {
   const m = dayMessage(w, { board: "招領箱裡多了壹頂帽子。" }, 3, null);
-  assert.ok(m.includes("第 3 天")); assert.ok(m.includes("招領箱裡多了壹頂帽子。")); assert.ok(!m.includes("立冬剛過。"));
-  assert.ok(m.endsWith("進遊戲：https://pepe-museum.web.app"), "每天最後面都有連結");
+  assert.ok(m.includes("今日館訊")); assert.ok(m.includes("第 3 日")); assert.ok(m.includes("招領箱裡多了壹頂帽子。")); assert.ok(!m.includes("立冬剛過。"));
+  assert.ok(m.endsWith("入館：https://pepe-museum.web.app"), "每天最後面都有連結");
 });
 T("備用週真的內容：大綱有進訊息（欄位名字跟週包一樣）", () => {
   const fs = require("fs"), path = require("path");
@@ -31,12 +31,12 @@ T("備用週真的內容：大綱有進訊息（欄位名字跟週包一樣）",
 });
 T("節日那天加節日的話", () => {
   const m = dayMessage(w, { board: "x" }, 2, { name: "中秋節", words: "大家排隊看月亮。" });
-  assert.ok(m.includes("今天是中秋節。大家排隊看月亮。"));
+  assert.ok(m.includes("【本日節慶】中秋節。大家排隊看月亮。"));
 });
 T("超過 Discord 的上限會截短", () => {
   const m = dayMessage({ title: "長", summary: ["字".repeat(5000)] }, { board: "x" }, 1, null);
   assert.ok(m.length <= MAX);
-  assert.ok(m.endsWith("進遊戲：https://pepe-museum.web.app"), "截短了連結還在最後面");
+  assert.ok(m.endsWith("入館：https://pepe-museum.web.app"), "截短了連結還在最後面");
 });
 T("沒放金鑰：跳過，不連線", async () => {
   let called = false;

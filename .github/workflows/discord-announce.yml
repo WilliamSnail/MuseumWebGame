@@ -1,0 +1,28 @@
+# 手動發一則公告到 Discord（例如「新版本上線」）：gh workflow run discord-announce.yml -f message="……"，或在 GitHub 的 Actions 頁按。
+# 只有翊文要求時才發（翊文 11-09：「都完成後用discod發布新更新」）。每天的公告是部署完自動發的，不用這個。
+name: Discord 公告
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 要發的文字（最多 2000 字，不會 @ 人）
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 發公告
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          ANNOUNCE: ${{ inputs.message }}
+        run: node tools/discord_post.cjs --say

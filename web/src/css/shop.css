@@ -1,0 +1,81 @@
+/* ================================================================
+   兌換所、委託櫃台的上課、地下的試煉房間、名片上的裝備（11-09，決定 0032；web/src/ui_shop.js）。放在最後載入（main.js）。
+   兌換所的框跟每週劇情面板同一個樣子（nb-story，css/story.css），這裡只放多出來的。
+   ================================================================ */
+
+/* ----- 兌換所 ----- */
+.shp-why { margin: 0; color: var(--on-wall-sub); }
+.shp-wearing b { font-family: var(--serif); color: #6E5020; font-size: 1.0625rem; letter-spacing: .04em; }
+.shp-wearing { padding: 12px 16px; }
+.shp-list { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.shp-gear { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--parch-line); border-radius: 6px; background: rgba(255,255,255,.4); }
+.shp-gear.worn { border-color: var(--gold-lo); background: rgba(200,162,90,.2); }
+.shp-gear.t-fine { border-left: 4px solid #4F7FB5; }
+.shp-gear.t-rare { border-left: 4px solid #A8622A; }
+.shp-ic { flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #6E5020; background: rgba(200,162,90,.25); }
+.shp-ic .ic, .shp-ic .ic svg { width: 22px; height: 22px; }
+.shp-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.shp-body b { color: var(--parch-ink); }
+.shp-body small { color: var(--parch-sub); line-height: 1.5; }
+.shp-tag { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: #6E5020; color: #FCF7EA !important; font-size: .75rem; font-weight: 400; }
+.shp-act { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.shp-short { color: #9A231C; font-size: .75rem; }
+.shp-have { margin: 6px 0; color: #6E5020; font-size: .875rem; font-weight: 600; }
+.shp-have.short { color: #9A231C; }
+
+/* 這週限定：畫在青蛙上的頭飾 */
+.shp-limited { margin: 8px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+.shp-lim { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; text-align: center; border: 1px solid var(--parch-line); border-radius: 6px; background: rgba(255,255,255,.4); }
+.shp-lim b { color: var(--parch-ink); }
+.shp-lim small { color: var(--parch-sub); line-height: 1.5; }
+.shp-lim-art { display: block; width: 128px; height: 128px; }
+.shp-lim-art svg { display: block; width: 100%; height: 100%; }
+.shp-lim .btn { margin-top: auto; }
+.shp-lim-got { grid-template-columns: 76px minmax(0, 1fr) auto; }
+.shp-lim-got .shp-lim-art { grid-row: 1 / span 2; width: 76px; height: 76px; }
+.shp-lim-got small { grid-column: 2; }
+.shp-lim-got > :last-child { grid-column: 3; }
+
+/* ----- 委託櫃台：上課 ----- */
+.lesson-box { margin: 18px 0; padding: 12px 16px; border: 1px solid rgba(200,162,90,.45); border-radius: 10px; background: rgba(20,8,10,.32); display: flex; flex-direction: column; gap: 8px; }
+.lesson-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.lesson-head h2 { margin: 0; font-family: var(--serif); font-size: 1.125rem; letter-spacing: .08em; color: var(--gold-hi); }
+.lesson-head .btn { margin-left: auto; }
+.lesson-why { margin: 0; color: var(--on-wall); font-size: .875rem; line-height: 1.6; }
+.lesson-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 6px; }
+.lesson-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(200,162,90,.3); background: rgba(0,0,0,.2); }
+.lesson-n { color: var(--on-wall); white-space: nowrap; }
+.lesson-n b { color: var(--gold-hi); font-family: Georgia, var(--serif); }
+.lesson-full { color: var(--on-wall-sub); font-size: .8125rem; }
+.lesson-box .insp-have { margin: 0; }
+
+/* ----- 地下收藏庫：試煉房間（用本週異狀的樣子） ----- */
+.trial-box { background: linear-gradient(180deg, rgba(74,46,36,.5), rgba(28,18,16,.55)); }
+.trial-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 28px; cursor: pointer; list-style-position: inside; }
+.trial-sum small { font-weight: 400; letter-spacing: .02em; color: var(--on-wall-sub); }
+.trial-why { margin: 0; color: var(--on-wall); line-height: 1.6; }
+.trial-box[open] .sc-rooms { margin-top: 2px; }
+.sc-room.trial .sc-floor { background: linear-gradient(180deg, #E8C9A0, #8C5E34); }
+
+/* ----- 館長室的名片：穿了什麼 ----- */
+.sheet-gear { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: none; }
+.sg-worn { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.sg-worn li { display: flex; align-items: center; gap: 8px; }
+.sg-worn li > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sg-worn small { color: var(--parch-sub); line-height: 1.4; }
+
+/* ----- 一起融合的結果：跟館友學 ----- */
+.pt-learn.got { color: var(--gold-hi); font-weight: 700; }
+
+@media (max-width: 760px) {
+  .sl-btns { flex-wrap: wrap; } /* 大廳的小卡多了「兌換所」：主要的按鈕自己一排，字才不會斷成兩行 */
+  .sl-btns .btn.primary { flex: 1 1 100%; }
+  .shp-gear { flex-wrap: wrap; }
+  .shp-act { flex: 1 1 100%; align-items: stretch; }
+  .shp-lim-art { width: 112px; height: 112px; }
+  .lesson-head .btn { margin-left: 0; }
+  .sc-room.trial { flex-wrap: wrap; }
+  .sc-room.trial .sc-body { flex: 1 1 calc(100% - 60px); }
+  .sc-room.trial .btn { flex: 1 1 100%; }
+  .sc-room.trial .sc-lock { display: none; }
+}

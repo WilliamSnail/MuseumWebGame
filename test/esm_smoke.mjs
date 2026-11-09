@@ -6,6 +6,7 @@ import * as content from "../shared/content.js";
 import * as content3 from "../shared/content3.js";
 import * as logic from "../shared/logic.js";
 import * as logic3 from "../shared/logic3.js";
+import * as legacy from "../shared/legacy.js";
 import * as fresh from "../shared/fresh.js";
 import * as holidays from "../shared/holidays.js";
 import * as signin from "../shared/signin.js";
@@ -15,12 +16,16 @@ import * as coopFlow from "../shared/coop_flow.js";
 import * as coopText from "../shared/coop_text.js";
 import * as coopFun from "../shared/coop_fun.js";
 import * as coopTrace from "../shared/coop_trace.js";
+import * as admin from "../shared/admin.js";
+import * as shop from "../shared/shop.js";
+import * as visit from "../shared/visit.js";
+import * as themeshow from "../shared/themeshow.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -61,5 +66,43 @@ ok("簽到、節日接得上 logic、logic3（11-09，決定 0030）", () => {
   assert.ok(r.ok && r.holiday.key === "midautumn");
   assert.strictEqual(holidays.holidayOf("2026-09-25").name, "中秋節");
   assert.strictEqual(logic.exhibitById("hx-midautumn-0").holiday, "midautumn");
+});
+ok("管理員介面的摘要接得上每個規則檔（決定 0033）", () => {
+  const save = logic.newSave();
+  save.profiles.challenge = logic.newProfile("challenge");
+  const s = admin.adminSummary(JSON.stringify(save));
+  assert.ok(s.ok && s.entered);
+  assert.strictEqual(s.progress.codex.total, logic.CORE_TOTAL);
+  assert.strictEqual(admin.adminSummary("{壞掉").ok, false);
+});
+ok("兌換所接得上 legacy、story（11-09，決定 0032）：穿著的裝備算進 traitSum", () => {
+  const P = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  story.storyState(P).stamps = 99;
+  assert.ok(shop.buyGear(P, "abacus", "2026-11-09").ok);
+  assert.ok(shop.wearGear(P, "abacus").ok);
+  assert.strictEqual(legacy.traitSum(P, "deal"), config.GEAR_ITEMS.find(x => x.id === "abacus").deal);
+});
+ok("參觀展廳、送佩佩接得上 gifts、mailbox、logic（11-09）", () => {
+  const save = logic.newSave();
+  const P = save.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  const key = logic.pepeKey(Object.assign({}, logic.DEFAULT_PICK));
+  P.pepes[key] = { n: 2, perfect: false, s: 1, d: "2026-11-09" };
+  const r = visit.stepSendGift({ save, item: { kind: "pepe", key }, me: { uid: "a", nick: "小明" }, to: "b", today: "2026-11-09", mailId: "gift-1" });
+  assert.ok(r.ok && r.mail.gift.pepe.key === key);
+  assert.strictEqual(P.pepes[key].n, 1);
+  const save2 = logic.newSave();
+  const P2 = save2.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P2, "2026-11-09");
+  const c = visit.stepClaimMail({ save: save2, mails: [r.mail], today: "2026-11-09" });
+  assert.ok(c.ok && c.total.pepes === 1 && P2.pepes[key].n === 1);
+});
+ok("主題展接得上 logic、logic3、signin（11-09，決定 0035）", () => {
+  const P = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  assert.deepStrictEqual(themeshow.syncShow(P, "2026-11-09"), []);
+  assert.strictEqual(themeshow.showItemOf("legend").opt, "傳說的金冠");
+  logic3.weeklyState(P);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

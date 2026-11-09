@@ -104,7 +104,7 @@ export function grantLimited(P, id, today, n) {
     return out;
   }
   box.got[id] = today || null;
-  if (it.kind === "part") out.events = grantOption(P, it.cat, it.opt, "signin");
+  if (it.kind === "part") out.events = grantOption(P, it.cat, it.opt, it.from || "signin"); // from：主題展、每週特展給的（決定 0035）
   return out;
 }
 // 換上展台裝飾、名牌框（id 給 null 加 slot＝拿下來）。沒有的不能換
@@ -143,7 +143,7 @@ export function weekDates(date) {
 export function weeklyItem(wk) {
   const kinds = NUM.signin.weekKinds, mod = (a, b) => ((a % b) + b) % b;
   const kind = kinds[mod(wk, kinds.length)];
-  const list = LIMITED_ITEMS.filter(x => x.kind === kind);
+  const list = LIMITED_ITEMS.filter(x => x.kind === kind && !x.shop && !x.from); // shop：兌換所賣的（決定 0032）；from：主題展、每週特展給的（決定 0035）。全簽到都不會輪到
   return list.length ? list[mod(Math.floor(wk / kinds.length), list.length)] : null;
 }
 // 這一週簽了幾天：{ wk, dates, signed（七個 true/false）, n, item（這週的特別項目）, claimed（領過了沒） }

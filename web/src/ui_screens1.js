@@ -233,12 +233,12 @@ SCREENS.lobby = root => {
     feature ? (() => { const fb = h("div", { class: "frog live", html: itemHTML(feature) }); const wrap = h("div", { class: "lobby-feature" }, fb, pepePlacard(feature.pick, { perfect: feature.perfect })); enliven(fb, feature.pick); return wrap; })()
       : h("div", { class: "lobby-feature empty" }, placard(["還沒有作品", "先去畫廊找靈感，再到手作坊做你的第一隻佩佩。"])),
     !isFree(P) && (P.vname || P.visitor > 1) ? h("p", { class: "sub lobby-who" }, visitorLabel(P)) : null); // 多位參觀者（11-08）：有名字寫名字
-  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, storyLobby(), lobbyFriends(), h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；storyLobby：本週地下收藏庫（每週劇情，11-09）
+  root.append(roomHead("大廳", sub), stepBar, ADDONS.lobby ? ADDONS.lobby() : null, storyLobby(), lobbyFriends(), ADDONS.lobbyGuests ? ADDONS.lobbyGuests() : null, h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；lobbyGuests：你不在時誰來過（多人版 M2，ui_visit.js）；storyLobby：本週地下收藏庫（每週劇情，11-09）
 };
 
 // ---------- 3 畫廊：橫向走廊 ----------
 SCREENS.gallery = (root, params) => {
-  if (params.show && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
+  if ((params.show || params.tab === "show") && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
   root.append(roomHead("畫廊", GALLERY_INTRO), galleryTabs("main"));
   if (!isFree(P)) {
     const g0 = NUM.galleryInsp[0], gN = NUM.galleryInsp[NUM.galleryInsp.length - 1];
@@ -660,6 +660,8 @@ SCREENS.workshop = (root, params) => {
     const st = unlockState(P, cat, name);
     const o = optOf(cat, name);
     if (o.forbidden && st.state === "forbidden" && P.myth < o.myth - 4) return null; // 太遠的禁忌選項先不露面
+    if (o.limited === "shop" && st.state !== "open") return null; // 兌換所的限定頭飾：買到了才出現（決定 0032；帽子那頁不會多一排鎖著的）
+    if (o.limited && o.limited !== "signin" && o.limited !== "shop" && st.state !== "open") return null; // 主題展、每週特展的配件：拿到才出現，下面壹行字說怎麼拿（決定 0035）
     const blocked = st.state === "open" && isBlocked(P, cat, name);
     const on = pick[cat] === name;
     const rolledTab = cat === ROLLED && !free;
@@ -708,6 +710,7 @@ SCREENS.workshop = (root, params) => {
     const list = allOpts(tab).map(n => cardFor(tab, n)).filter(Boolean);
     cards.replaceChildren(...list);
     afraidBox.replaceChildren(afraidBar(tab));
+    if (ADDONS.hatNote && tab === "帽子" && !free) cards.append(ADDONS.hatNote()); // 主題展的限定配件（決定 0035，ui_themeshow.js）
     if (tab === ROLLED && !free) cards.append(h("p", { class: "card-note" }, `稀有度不能選：按「做」之後擲 d100，01 是完美作品、${NUM.fumbleFrom}–100 是失敗作。可以花心情把骰子壓低。`));
   };
   cards.addEventListener("keydown", e => {

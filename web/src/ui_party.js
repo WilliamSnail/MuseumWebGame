@@ -8,12 +8,14 @@
 //    各選一隻 → 準備好了 → 隊長按「開始融合」→ 伺服器擲一次骰、兩份存檔一起寫 → 兩個人看到同一隻。
 //  - 關掉這個框＝離開隊伍。隊友斷線超過 PARTY.offlineWaitMs，請伺服器把他移出去（伺服器自己再確認一次）。
 // ================================================================
+import { NUM } from "../../shared/config.js";
 import { describePepe, fromKey, isFree, nowMs } from "../../shared/logic.js";
 import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/logic3.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
 import { FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
+import { learnText } from "../../shared/shop.js";
 
 const KIND_TEXT = { fusion: "壹起融合", cellar: "壹起下地下收藏庫" };
 // 別種隊伍的框（合作地下在 ui_coop.js 登記）：{ cellar: { open(pid), isOpen(pid), say(m) } }。這個檔不 import 它，不然會繞圈
@@ -223,6 +225,7 @@ export function openParty(pid) {
       muts.length ? h("p", { class: "pt-hint" }, `突變：${muts.join("、")}`) : null,
       h("div", { class: "pt-members" },
         [me, other].map(s => h("div", { class: "pt-member" + (s.id === meId ? " me" : "") }, h("b", { class: "pt-nick" }, s.nick), h("span", { class: "pt-state" }, line(s)), h("span", { class: "pt-name" }, sanLine(s))))),
+      me.learn ? h("p", { class: "pt-hint pt-learn" + (me.learn.gained ? " got" : "") }, learnText(me.learn, other.nick)) : null, // 跟館友學（決定 0032）
       h("div", { class: "pt-foot" }, btn("收下了", () => m.close(), "primary"))));
     if (!coined) { coined = true; snd("coin"); } // 對方按「收下了」離開時會重畫：聲音只響一次
   };

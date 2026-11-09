@@ -55,12 +55,13 @@ content/
   "weekly": [ …剛好 5 個每週任務（第四節）… ],
   "weeklyBonus": { "insp": 10, "items": ["mat:金線"] }, // 5 個都做完多給的；週章遊戲自己給
   "ending": { "need": { "read": 6 } },                 // 讀了這週幾本書，週日的結局才打開
+  "shop": ["hat-rain", "hat-muff"],                    // 選填：這週兌換所上架哪幾件限定頭飾（第四節「兌換所上架」）。不寫就照週號輪流
   "continues": "2026-W48"        // 選填：這週的線延到下週（週日就可以不放 ending 的書）
 }
 ```
 
-- `kind`：`week` 這週的、`floor` 樓層的新劇情線、`main` 主線、`holiday` 節日、`side` 小插曲（備用的一天用）、`curator` 策展手記（之後）。
-- 備用週不放 `main`、`holiday` 的線（可能在任何一週用到）。
+- `kind`：`week` 這週的、`floor` 樓層的新劇情線、`main` 主線、`season` 季節線（第八節）、`holiday` 節日、`side` 小插曲（備用的一天用）、`curator` 策展手記（之後）。
+- 備用週不放 `main`、`season`、`holiday` 的線（可能在任何一週用到）。`main`、`season` 跨週用同一個 id、同一個名字。
 - **每週任務只能指到週一就有的東西**：本週異狀的房間、d1 的書和房間；或用不用指定的種類（`readWeek`、`dailyAll`、`showDays`、`ending`、`cellar`、`make`…）。後面幾天才寫的房間，週一還不存在，檢查會擋。
 
 ## 三、一天：`d1.json` … `d7.json`
@@ -132,12 +133,35 @@ content/
 ### 獎勵
 
 - `reward`：`{ "insp": 1–10, "mood": 1–10, "items": [最多 2 樣] }`。週章不要寫：每週任務遊戲自己給 `NUM.story.stampPerTask` 枚，全做完多 `stampAllBonus` 枚。
-- 東西（`STORY_ITEMS`）：技能書 `book:偵查`、`book:鑑賞`、`book:神秘學`、`book:幸運`、`book:手工藝`、`book:說服`（用了技能 +1D3，最多 80）；`firstAid` 急救箱（受傷的佩佩全好）；材料 `mat:畫布`、`mat:金箔`、`mat:金線`（收著，之後兌換所用）。領的時候可以「馬上使用」。
-- **預算**（`NUM.story`）：一天全部（3 個每日任務＋全做完那份＋那天的書 × `bookInsp`＋那天的房間＋今日特展上限）最多 `dayBudget`（靈感 22、心情 10、東西 1）；每週任務 5 個＋全做完那份＋本週異狀的房間最多 `weekTaskBudget`（靈感 60、心情 20、東西 3）。
+- 東西（`STORY_ITEMS`）：技能書 `book:偵查`、`book:鑑賞`、`book:神秘學`、`book:幸運`、`book:手工藝`、`book:說服`（用了技能 +1D3，最多 80）；`firstAid` 急救箱（受傷的佩佩全好）；材料 `mat:畫布`、`mat:金箔`、`mat:金線`（收著，在兌換所每 3 份換一枚週章）。領的時候可以「馬上使用」。
+- **房間的獎勵可以多寫技能成長**：`{ "insp": 3, "skill": "偵查" }`（只有房間：`adds`、`anomaly.room`）。技能只能寫 `偵查`、`鑑賞`、`神秘學`、`幸運`、`手工藝`、`說服`；加多少是遊戲定的（`NUM.shop.trialSkill`，現在 +1D5，最多到 80），找到房間時給現在這位參觀者。
+  - 有技能成長的房間**不能有 `check.type: "none"` 的選項**（不然不挑戰也算過）。
+  - 一天最多一間、一週最多 `NUM.shop.weekSkillRooms`（2）間。結局要讀的書不要指到這種房間（要挑戰才過得了）。
+- **預算**（`NUM.story`）：一天全部（3 個每日任務＋全做完那份＋那天的書 × `bookInsp`＋那天的房間＋今日特展上限）最多 `dayBudget`（靈感 22、心情 10、東西 1、技能成長 1）；每週任務 5 個＋全做完那份＋本週異狀的房間最多 `weekTaskBudget`（靈感 60、心情 20、東西 3、技能成長 1）。
 
-### 今日特展的畫（`SHOW_ART`、`SHOW_FX`、`SHOW_FRAMES`）
+### 兌換所上架（`week.json` 的 `shop`）
 
-- `art`：`frog`（遊戲自己的青蛙，`pick` 寫手作坊的選項：稀有度、心情、顏色、帽子、姿勢、背景、手上拿的東西）、`portrait`、`strange`、`rare`、`statue`、`hidden`（畫廊已經有的畫，`variant` 0–3）。**不畫 Pepe the Frog 的樣子**；要新的畫法得改 `web/src/art.js`，走一般的 PR。
+週包可以指定這週賣哪幾件限定頭飾，照這週的主題挑。**只能從下面已經畫好的挑**（`shared/config.js` 的 `LIMITED_ITEMS` 裡 `shop: true` 的）；要新畫的寫提案（`content/排程說明.md` 第六節）。
+
+| id | 名字（草稿） | 適合什麼主題 |
+|---|---|---|
+| `hat-rain` | 黃雨帽 | 下雨、淹水、颱風前的天氣 |
+| `hat-chef` | 廚師帽 | 排隊美食、吃的、夜市 |
+| `hat-muff` | 毛耳罩 | 寒流、冬天、噪音 |
+| `hat-miner` | 礦工帽 | 挖地下、找東西、停電 |
+| `hat-wreath` | 花環 | 春天、賞花、畢業、慶祝 |
+| `hat-bow` | 蝴蝶結 | 失物招領、送禮、可愛的東西 |
+| `hat-pot` | 鐵鍋帽 | 做菜、搶購、吵吵鬧鬧的週 |
+| `hat-paper` | 摺紙帽 | 報紙、書、紙、手作 |
+
+- 寫 1～`NUM.shop.limitedMax`（4）件，不重複。不寫這一欄就照週號輪流（一週 `limitedRotate` 件，大家同一週同一批）；備用週通常不寫。
+- 一件 5 枚週章（`LIMITED_ITEMS` 的 `price`）。買到的帽子打開在手作坊，不算進「全部解鎖」。下週沒上架就買不到了，等輪回來或週包再指定。
+- 公告會自動多一行「這週上架的限定頭飾：…」，不用自己寫。
+
+### 今日特展的畫（`SHOW_ART`、`SHOW_FX`、`SHOW_FRAMES`；新畫 `svg` 見第九節）
+
+- 一幅畫寫 `art`（舊的畫換參數）或 `svg`（自己畫，第九節），一天 3–5 幅可以混著。**每天至少用 `svg` 畫 1–2 幅全新的。**
+- `art`：`frog`（遊戲自己的青蛙，`pick` 寫手作坊的選項：稀有度、心情、顏色、帽子、姿勢、背景、手上拿的東西）、`portrait`、`strange`、`rare`、`statue`、`hidden`（畫廊已經有的畫，`variant` 0–3）。**不畫 Pepe the Frog 的樣子**。
 - `fx`（最多 2 個）：`sepia`、`faded`、`dust`、`dark`、`flip`、`water`、`torn`、`shadow`（只剩影子）、`glow`。
 - `frame`：`gold`、`dark`、`wood`、`plain`、`ornate`。
 - `san`：可怕的才寫，成功一定不扣（`0/1D4`），失敗最多 `NUM.story.showSanMax`（6）點。不寫的就是不可怕的（看了也治好「看壹幅不可怕的畫」的怪癖）。
@@ -171,13 +195,17 @@ content/
 
 | 欄位 | 內容 |
 |---|---|
+| `calendar` | 節日表以外大家會聊的日子（雙 11、情人節……）：`date` 或 `when`、`name`、`idea`（草稿點子）。每天的排程看到就融進今天 |
+| `main.depths` | 主旨往深處走的方向（`layers`：一層一個問題、怎麼藏進故事、接到哪；`seasons`：之後幾季的方向）。一季往下挖一層，不下結論，不把問句直接寫進遊戲 |
+| `main.theme` | **主線的主旨**（翊文定案，不要改；要改先問翊文）：所有劇情線共同的主軸（沒有就擋）。每週的線、每天的書、季節線都圍繞它（決定 0037） |
 | `main.direction`、`main.connects` | 主線的大方向、接到遊戲已經有的故事 |
 | `main.seasons[]` | 一季一筆：`season`、`name`、`weeks`、`summary`、`chapters[]`（`week`、`title`、`tell` 每章要交代的事） |
 | `lines[]` | 每一條劇情線：`id`、`name`、`kind`、`start`（哪一週開始；主線以外要跟週一樣）、`status`（還沒開始／進行中／收尾了／先放著／備用）、`summary` |
 | `foreshadow[]` | 伏筆：`id`、`what`、`planted`、`due`（預計哪一週收，或 `S2` 這種）、`closed`、`note` |
 | `characters[]`、`places[]`、`items[]` | 角色（名字、說話的樣子）、地點、物品，避免前後不一樣 |
 | `news[]` | 用過的新聞元素（只寫抽象的元素） |
-| `weeks{}` | 每週一筆：`use`（正式週或 `備用/常青1`）、`main`（這週主線推到哪，正式週一定要寫）、`news`（這週用的元素） |
+| `seasonal.lines[]` | 季節線一季一條：`id`、`name`、`season`（冬／春／夏／秋）、`year`、`status`、`summary` 或 `direction`、`chapters[]`（第八節） |
+| `weeks{}` | 每週一筆：`use`（正式週或 `備用/常青1`）、`main`（這週主線推到哪，正式週一定要寫）、`ties`（這週碰到主軸的哪一點，每天加一行；沒寫只警告）、`news`（這週用的元素） |
 
 ## 六、排程設定：`content/排程設定.json`
 
@@ -192,10 +220,65 @@ content/
 ## 七、檢查程式擋什麼（`node tools/week_check.cjs`）
 
 - 格式：放的位置、檔名（`week.json`、`d1`–`d7`）、週的名字、`start` 是週一、`date` 對得上、還沒到的天先寫（比遊戲的今天晚超過一天）。
-- 字數（第三節的數字）、畫面上的字用「壹」（**不准有「一」**）、禁用字（政治、選舉、兩岸、戰爭、宗教、災難、傷亡、犯罪、醫療、品牌……）、英文字母（樓層 B1、骰子 1D3 除外）、大括號只准 `{圖鑑格數}`、書裡的動作要存在。
+- 字數（第三節的數字）、畫面上的字用「壹」（**不准有「一」**）、禁用字（真實的職位、政黨、人名、災難、傷亡、犯罪、醫療、品牌……，清單在 `tools/week_check.cjs` 的 `BANNED`；選舉、投票、兩岸這類一般的字可以寫）、英文字母（樓層 B1、骰子 1D3 除外）、大括號只准 `{圖鑑格數}`、書裡的動作要存在。
 - 任務的種類和參數、每日任務做得完、獎勵的東西存在、不超過預算。
+- 房間獎勵的技能成長：只有房間可以、技能要存在、不能有 `none` 的選項、一天和一週的上限。週包的 `shop`：要是陣列、id 要是兌換所賣的、不重複、不超過上限。
 - 每本書掛在這週存在的劇情線上；每天至少一本接這週的線；解開的條件指到存在的房間、任務；週日有結局（或 `continues`）；結局新玩家打得開。
-- 今日特展的畫法、效果、畫框、理智檢定；房間的強度門檻、技能、理智、`hint` 的寫法。
-- 劇情帳本：每條劇情線都在帳本裡、名字和種類一樣；正式週要寫這週主線推到哪；到期還沒收的伏筆、重複的新聞元素 → **警告**（不擋，寫進 PR）。
+- 今日特展的畫法、效果、畫框、理智檢定；`svg` 的標籤、屬性、外部網址、大小、裡面的字（第九節）；那天一幅新畫都沒有 → 警告。房間的強度門檻、技能、理智、`hint` 的寫法。
+- 劇情帳本：有 `main.theme`；每條劇情線都在帳本裡、名字和種類一樣（季節線也是）；正式週要寫這週主線推到哪；到期還沒收的伏筆、重複的新聞元素、這週沒寫 `ties`、季節線的章沒寫 `ties`、季節線的章到週日還沒放書 → **警告**（不擋，寫進 PR）。
 - 排程設定的格式；`web/src/` 不准讀帳本和排程設定。
 - 擋得住的例子都在 `test/week_check.test.cjs`。
+
+## 八、季節線（決定 0037）
+
+- 一年四季各一條線，跨好幾週，大約每兩週一章，接得上當季的節日（`shared/holidays.js` 的 `holidayOf`）。
+- **季節照節氣切**：立冬約 11/7 起是冬、立春約 2/4 起是春、立夏約 5/5 起是夏、立秋約 8/7 起是秋（`yearSeason(日期)`）；這週的週一屬於哪一季就算哪一季（`weekSeason(週)`）。節日剛好在換季那週，可以放在新的那一季（2027-W05 的週一還沒立春，除夕 2/5 已經過了，放春天）。
+- **是副劇情**：每章從季節和節日的角度碰到主線的東西（同一個帳、同一批人物或地方、同一個謎的另一面），不揭曉主線的謎底、不搶主線的進度。
+- **帳本** `seasonal.lines[].chapters[]`：`week`（哪一週）、`title`、`holiday`（當週的節日，可以 `null`）、`tell`（要交代的事）、`ties`（碰到主線的哪一點）、`written`（還沒寫 `null`；寫了放書的 id）。`lines` 也要有這條線（`kind: "season"`，`start` 寫第一章那週）。
+- **週包**：那週的 `week.json` 的 `lines` 加 `{ "id": "season-2026-winter", "name": "冬天的明信片", "kind": "season" }`（id、名字跟帳本一樣，好幾週同一個）；某一天放一本 `"line": "season-2026-winter"` 的書，`"unlock": { "type": "now" }`。沒有書的週不用寫這條線。
+- **遊戲怎麼算**：好幾週的書算同一條線；書放起源室的「季節」頁籤，過了那週還是可以補讀（不給靈感）；劇情線面板看得到進度和下一步。有更新的一條線（換季）舊的就算走完，收進劇情回顧。**季節線的書不算進結局要讀的本數**：沒讀也不會卡住這週、卡住主線。
+
+## 九、今日特展的新畫：`works[].svg`（翊文：「新的畫廊的話好像只是原本的畫改一點點，之後能不能更加不一樣」）
+
+每幅畫可以帶自己的向量圖，照這週的故事畫。寫成字串，或字串的陣列（接起來，JSON 裡比較好讀）。屬性用單引號，JSON 不用跳脫。例子看 `content/weeks/備用/常青1/`：d1 `s1b`、d3 `s3b`、d6 `s6d`、d7 `s7c`、`s7d`。
+
+```json
+{ "id": "s3b", "svg": ["<svg viewBox='0 0 240 300'><defs>…</defs>", "<rect width='240' height='300' fill='url(#w)'/>", "…", "</svg>"],
+  "fx": [], "frame": "dark", "san": "0/1D4", "title": "門縫後面", "lines": ["門縫很窄，只看得到壹點點光。", "光的旁邊，有東西眨了壹下。"] }
+```
+
+### 不能畫什麼
+
+- **不畫 Pepe the Frog 的樣子，也不畫青蛙或任何像 Pepe 的角色**。新的畫以**場景、物品、抽象、光影**為主。要青蛙就用 `art: "frog"`（遊戲自己的青蛙）。
+- 不下載、不描別人的圖；不用真實的品牌標誌；不畫真人。
+
+### 規矩（`shared/story.js` 的 `sanitizeSvg`：檢查程式擋，畫面也會再淨化一次）
+
+- 只准這些標籤（`SVG_TAGS`）：`svg`、`g`、`defs`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`title`、`desc`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`mask`、`pattern`、`use`，還有 `filter` 和裡面的 `feGaussianBlur`、`feTurbulence`、`feDisplacementMap`、`feColorMatrix`、`feComponentTransfer`、`feFuncR/G/B/A`、`feBlend`、`feComposite`、`feMerge`、`feMergeNode`、`feOffset`、`feFlood`、`feDropShadow`。
+- 屬性也有白名單（`SVG_ATTRS`：幾何、顏色、線條、字型、漸層、濾鏡）。**不准**：`script`、`foreignObject`、`image`、`a`、`style`（標籤和屬性都不准，顏色直接寫在屬性上）、`class`、`on` 開頭的事件、外部網址、註解、CDATA。
+- `url()` 和 `href` 只能連到這幅畫裡面的 `#id`（`use`、漸層、`pattern` 才能有 `href`），id 要存在、不能重複。id 不用怕跟別幅撞到：畫面會加前綴。
+- 最外面一個 `<svg>`，要有 `viewBox`（建議 `0 0 240 300`，跟畫廊的畫一樣直的）。`width`、`height` 會拿掉，大小由畫框決定。
+- **一幅最多 `NUM.story.showSvgKB`（12）KB。**
+- 畫裡的字（`text`、`tspan`、`title`、`desc`）也算遊戲文字：用「壹」、過禁用字、不要英文字母，一段 40 字以內；`&` 只准 `&amp;` `&lt;` `&gt;`。字會讀得很小，少放。
+- 有哪裡不合，整幅都不畫（畫面改放空白的佔位），所以一定要過 `npm test`。
+
+### 畫風（給排程看）
+
+這間博物館的畫要有**不安感和手繪感**：暗色、羊皮紙色，像油畫或版畫。
+
+- **一幅一個清楚的主題**：一眼看得出畫的是什麼（一個箱子、一扇門、一本帳本），再讓人覺得哪裡不對。不要只是幾何圖形堆疊。
+- **同一天的幾幅彼此要明顯不同**：構圖、顏色、題材都換（一幅場景、一幅物品、一幅抽象）。
+- **跟這週的故事有關**，說明牌（`lines`）跟畫的東西要對得上。
+- 手繪感三個小技巧（`常青1` 的畫都這樣）：
+  - 線條抖一點：`<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='4' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='5' xChannelSelector='R' yChannelSelector='G'/></filter>`，整組形狀放進 `<g filter='url(#r)'>`。`seed` 每幅換。
+  - 畫布的顆粒：最上面蓋一張 `<rect width='240' height='300' filter='url(#n)'/>`，`n` 是 `<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='8' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>`。
+  - 四邊暗下來：`radialGradient` 中間透明、邊上接近黑（`stop-opacity` .86）。
+
+三種寫法的例子：
+
+1. **漸層背景＋剪影**（`常青1` d1 `s1b`「沒人來領的箱子」）：`radialGradient` 當燈光和牆，物品用深色 `path` 剪出來，只有燈下那一小塊有顏色。
+2. **用 path 畫的房間**（d3 `s3b`「門縫後面」）：牆、地板的透視線、門框、門板都是 `path`；最亮的只有門縫和地上那道光，門縫裡站著一個看不清楚的影子。
+3. **抽象的冷風**（d7 `s7d`「風把招領單吹走了」）：深藍底，幾條又粗又抖的 `path`（`stroke` 用漸層、兩頭透明），再疊一層 `feGaussianBlur` 的霧；紙片越遠越小。
+
+新畫要照這個順序確認：`npm test` 過（`tools/week_check.cjs` 擋不准的東西）。**檢查不看畫得好不好、像不像青蛙**：那是寫的人自己要守的。
+

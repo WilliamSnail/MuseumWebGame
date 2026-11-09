@@ -387,8 +387,9 @@ export function officeSheet() {
         h("span", { class: "skill-bar" }, h("i", { style: { width: skillOf(P, s) + "%" } })),
         h("b", null, String(skillOf(P, s))),
         h("span", { class: "skill-tick", title: "今天用成功過，明天會擲成長" }, P.skillTicks[s] ? "✓" : ""),
-        h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || ""))),
+        h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || "", traitHits(P, "skill:" + s).map(t => `（${traitTag(t)}）`).join("")))), // 放大鏡這種裝備（決定 0032）
       h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")),
+    ADDONS.sheet ? ADDONS.sheet() : null, // 穿了什麼裝備（決定 0032，ui_shop.js）
     retireBox()); // 退休（11-08，決定 0025）
 }
 export function officeUpgrades() {
@@ -560,6 +561,7 @@ SCREENS.cellar = root => {
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
     storyCellarBox(),
     ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）
+    ADDONS.cellar ? ADDONS.cellar() : null, // 試煉房間（決定 0032，ui_shop.js）
     h("div", { class: "floors" }, floorEls),
     h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
       tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),
@@ -572,7 +574,7 @@ export function cellarRoom(root) {
   if (!f || !room) { leaveCellar(P); go("cellar", {}, { action: false }); return; }
   const team = teamItems(P, run.team);
   const tp = teamPower(P, team, room);
-  const dots = run.extra ? null : h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" }))); // run.extra：每週劇情多出來的壹間（只走這壹間）
+  const dots = run.extra ? null : h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" }))); // run.extra：每週劇情多出來的一間、試煉房間（只走這一間）
   const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
   const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
     h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`))),
@@ -597,6 +599,8 @@ export function cellarRoom(root) {
     teamBar, card,
     ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null); // 館友留下的痕跡（ui_trace.js）
 }
+// 誰讓理智多扣、少扣：「怕黑 +1、探險燈 −1」（只有一個就寫名字）
+const darkWhy = () => { const hits = traitHits(P, "cellarSan"); return hits.length === 1 ? hits[0].name : hits.map(traitTag).join("、"); };
 export async function resolveFlow(i, result, choices) {
   if (UI.busy) return;
   UI.busy = true;
@@ -615,12 +619,13 @@ export async function resolveFlow(i, result, choices) {
       await FX.rollOverlay({ title: `${res.skill}檢定`, sub: `擲出 ≤ ${res.target} 就成功${res.rerolled ? "（皇冠號令重擲過）" : ""}`, spec: "d100", result: res.roll,
         outcome: { text: res.success ? "成功" : "失敗", tone: res.success ? "good" : "bad" } });
     } else if (res.type === "san") {
-      const s = await sanFlow(res.sanSpec, "cellar:" + res.room.id, res.room.title, { anchor: result, noInvoluntary: true });
+      // 探險燈（決定 0032）：理智檢定要扣的先少扣
+      const s = await sanFlow(res.sanSpec, "cellar:" + res.room.id, res.room.title, { anchor: result, noInvoluntary: true, adjust: l => { const d = cellarDarkLoss(P, l); if (d < 0) note(`${darkWhy()}：理智少扣 ${-d} 點`, "good"); return l + Math.min(0, d); } });
       if (P.dark) return;
       sanSuccess = s ? s.r.success : true;
       // 小缺點「怕黑」（11-08）：理智檢定扣了理智，再多扣（另外扣，數字才對得上）
-      const dark = s ? cellarDarkLoss(P, s.loss) : 0;
-      if (dark) { note(`怕黑：在地下多扣 ${dark} 點理智`, "bad"); await lossFlow(dark, "cellar:" + res.room.id, { anchor: result }); if (P.dark) return; }
+      const dark = s ? Math.max(0, cellarDarkLoss(P, s.loss)) : 0;
+      if (dark) { note(`${darkWhy()}：在地下多扣 ${dark} 點理智`, "bad"); await lossFlow(dark, "cellar:" + res.room.id, { anchor: result }); if (P.dark) return; }
     }
     res.notes.filter(n => /皇冠|紳士帽/.test(n)).forEach(n => note(n, "good"));
     const fx = cellarApply(P, res, sanSuccess);
@@ -632,7 +637,8 @@ export async function resolveFlow(i, result, choices) {
     if (fx.sanGain) lines.push(`理智 +${fx.sanGain}`);
     if (fx.myth) lines.push(`佩佩神話 +${fx.myth}`);
     fx.blocked.forEach(b => lines.push(b));
-    if (fx.dark) lines.push(`怕黑：理智多扣 ${fx.dark} 點`);
+    if (fx.dark) lines.push(`${darkWhy()}：理智${fx.dark > 0 ? "多" : "少"}扣 ${Math.abs(fx.dark)} 點`);
+    if (fx.trial) { lines.push(`試煉過了：${fx.trial.skill} ${fx.trial.before} → ${fx.trial.after}`); snd("unlock"); } // 試煉房間的技能成長（決定 0032）
     if (fx.injured) lines.push(`「${itemTitle(fx.injured)}」受傷了（${fx.injureDays || injureDaysOf(P)} 天後會好；館長室的修復台可以治）`);
     result.replaceChildren(placard(lines, { cls: fx.success ? "ok" : "bad" }));
     if (fx.insp) { FX.floatText(result, `+${fx.insp} 靈感`, "good"); snd("coin"); }
@@ -714,6 +720,7 @@ export function weeklyHall(root, params) {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: `只能放：${T.rule}`, drag: true });
   root.append(roomHead("本週特展", `${T.name}：${T.rule}`, ...tools), shareBox, hallTabs("week"),
     h("div", { class: "hall-wall themed" }, h("div", { class: "theme-name" }, h("h2", null, T.name), h("p", null, `現在 ${sc.score} 分　本週最高 ${W.best} 分`))),
+    ...(ADDONS.weeklyShow ? [ADDONS.weeklyShow(W)] : []), // 到金拿這週的限定配件（決定 0035，ui_themeshow.js）
     room, strip);
 }
 

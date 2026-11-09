@@ -143,17 +143,26 @@ NET.on("logout", e => {
   if (was && e && e.code !== "logout") note("登入過期了，請再登入壹次。", "bad");
 });
 
-// ---------- 伺服器改了我的存檔（例如一起融合做好了）：重新讀（不提示「衝突」） ----------
-NET.on("message", async m => {
-  if (!m || m.t !== "save_changed" || !UI.net) return;
-  try {
+// ---------- 伺服器改了我的存檔（例如一起融合做好了、送佩佩、領信）：重新讀（不提示「衝突」） ----------
+// minRev：伺服器寫好的那一版。手上已經是這一版或更新的就不用讀。
+// 自己按的（送佩佩、領信）會有兩邊叫這裡：回傳值回來、save_changed 通知也來。只讀一次：多讀一次會把這幾秒的進度丟掉（任務完成的提示會跳兩次，11-09 在模擬器看到的）。
+let reloading = null;
+export async function reloadSave(minRev) {
+  while (reloading) await reloading.catch(() => {}); // 正在讀：等它讀完，再看夠不夠新
+  if (minRev && NET.rev >= minRev) return;
+  reloading = (async () => {
     NET.dropPending(); // 手上還沒送出去的那份是舊的：不丟掉，幾秒後會把伺服器剛寫好的蓋掉（11-09）
     const r = await NET.loadSave();
     const mode = SAVE.current, playing = !!P;
     setSave(migrateSave(r.data));
     if (playing && mode && SAVE.profiles[mode]) useProfile(mode); else setP(null);
     if (P && UI.screen !== "title") rerender();
-  } catch (e) { /* 下次存的時候會碰到衝突，再讀一次 */ }
+  })().finally(() => { reloading = null; });
+  return reloading;
+}
+NET.on("message", async m => {
+  if (!m || m.t !== "save_changed" || !UI.net) return;
+  try { await reloadSave(m.rev); } catch (e) { /* 下次存的時候會碰到衝突，再讀一次 */ }
 });
 
 // ---------- 別的分頁或裝置先存了：換成伺服器上的那一份 ----------
@@ -233,7 +242,7 @@ export function openFriends() {
     m.surface.replaceChildren(
       off ? h("p", { class: "nb-hint nf-off" }, "連線中斷了：下面是斷線前的名單，連回來會自己更新。") : null,
       list.length ? h("div", { class: "nf-list" + (off ? " stale" : "") }, list.map(card)) : h("p", { class: "nb-empty" }, NET.state === "online" ? "館裡還沒有別人。" : "正在連線……"),
-      h("p", { class: "nb-hint nf-hint" }, "之後可以參觀館友的展廳、送佩佩。"),
+      h("p", { class: "nb-hint nf-hint" }, "館友不在線也可以參觀他的展廳、送他佩佩。"),
       ADDONS.friendsFoot ? ADDONS.friendsFoot(m.close) : null);
   };
   friendsDraw = draw;

@@ -5,7 +5,7 @@
 //    forbidden ＝禁忌選項（不算在基本組合裡，佩佩神話夠了才會自己打開）；
 //    mutant ＝突變選項（只能靠融合室配種突變出來）；gift ＝委託人送的選項；
 //    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）；
-//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
+//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032；"show"：主題展辦到金、"week"：每週特展到金，決定 0035）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
 //  ・新加的選項如果畫法裡沒有對應，圖上會用預設的樣子，文字照樣出現。
 //  ・下面的文字是 Claude 的草稿；標「第 1 代」的文字不要改。
 // ================================================================
@@ -48,6 +48,30 @@ export const PEPE_PARTS = [
     // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS）
     { name: "館員帽", limited: "signin" },
     { name: "燈籠帽", limited: "signin" },
+    // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS；哪一週賣哪幾件見 LIMITED_ITEMS 下面的說明）
+    { name: "黃雨帽", limited: "shop" },
+    { name: "廚師帽", limited: "shop" },
+    { name: "毛耳罩", limited: "shop" },
+    { name: "礦工帽", limited: "shop" },
+    { name: "花環", limited: "shop" },
+    { name: "蝴蝶結", limited: "shop" },
+    { name: "鐵鍋帽", limited: "shop" },
+    { name: "摺紙帽", limited: "shop" },
+    // 主題展辦到金才拿得到（決定 0035，名字、樣子都是草稿）。首飾也放在「帽子」這一類：不多開一類，舊存檔的 key 才不用改；一次戴一樣
+    { name: "傳說的金冠", limited: "show" },
+    { name: "火氣頭帶", limited: "show" },
+    { name: "淚滴耳環", limited: "show" },
+    { name: "瓜子項鍊", limited: "show" },
+    { name: "彩虹圍巾", limited: "show" },
+    { name: "三層帽", limited: "show" },
+    { name: "枕頭睡帽", limited: "show" },
+    { name: "歡笑花環", limited: "show" },
+    { name: "躺平眼罩", limited: "show" },
+    { name: "縫過的領結", limited: "show" },
+    // 每週特展到金才拿得到（決定 0035）：先做 3 件，其他 5 週的還沒做
+    { name: "黑絨領結", limited: "week" },
+    { name: "小枕頭髮夾", limited: "week" },
+    { name: "金瓜子項鍊", limited: "week" },
   ] },
   { name: "姿勢", options: [
     { name: "站著", start: true },
@@ -137,23 +161,65 @@ export const NUM = {
     dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
+  // 第 4 版（11-09）：參觀館友的展廳、伺服器的信（規則 shared/visit.js；來訪的靈感、留言字數這些在 gifts.js 的 SOCIAL）
+  guest: {
+    postersMax: 13,         // 參觀時最多看幾張展覽海報（主題展 10 個、每週特展 3 個）
+    logMax: 60,             // 訪客簿留幾筆（一天一位館友一筆；今天的不會被擠掉）
+    shown: 12,              // 自己的展廳上列幾筆「館友來過」（新的一定都列）
+    slotsMax: 12,           // 給別人看的展台最多幾座（別人的存檔不能相信）
+    claimMax: 30,           // 一次最多領幾封伺服器的信
+    mailListMax: 60,        // 信箱一次列幾封伺服器的信
+    giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
+  },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
     showInsp: [1, 2],       // 今日特展第一次看一幅：不用理智檢定的／要理智檢定的
     showInspDay: 5,         // 今日特展一天最多拿幾靈感
+    showSvgKB: 12,          // 今日特展自己畫的向量圖（works[].svg）一幅最多幾 KB
     showSanMax: 6,          // 今日特展的畫，理智檢定失敗最多扣幾點（成功一定不扣，所以「看完今日特展」不會一定掉理智）
     stampPerTask: 1,        // 每週任務做完一個、領的時候拿幾枚週章
     stampAllBonus: 2,       // 5 個每週任務全做完，再多拿幾枚（週章不會過期，之後兌換所用）
     skillBook: "1D3",       // 技能書：用了技能加幾點
     skillCap: 80,           // 技能書最多加到幾
     dailyMinutes: 12,       // 3 個每日任務加起來最多幾分鐘（照 STORY_TASKS 每種的估計時間算）
-    dayBudget: { insp: 22, mood: 10, items: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展
-    weekTaskBudget: { insp: 60, mood: 20, items: 3 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
+    dayBudget: { insp: 22, mood: 10, items: 1, skills: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展（skills：幾間房間給技能成長，決定 0032）
+    weekTaskBudget: { insp: 60, mood: 20, items: 3, skills: 1 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
     startWeek: "2026-W46",  // 每週劇情從這一週開始有（更早的週沒有劇情，也不用備用週）
     seasonStart: "2026-11-16", // 第一季從這一週開始（2026-W47）；之前的算「序章」
     seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）
     shelfRow: 8,            // 書架一排最多放幾本，超過就分頁
+  },
+  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/shop.js）。數字是草稿，跑 test/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
+  // 技能的上限：技能書、提升技能、試煉房間、跟館友學都到 NUM.story.skillCap（80）；上課只到 lessonCap（60）；換日的經驗檢定照舊到 99
+  shop: {
+    gearWorn: 2,            // 現在這位參觀者最多穿幾件裝備
+    gearPrice: { common: 4, fine: 8, rare: 14 }, // 裝備幾枚週章：普通、精良、稀有（每週全做完最多拿 7 枚）
+    skillUp: "1D5",         // 提升技能：花週章，指定一個技能加這麼多
+    skillUpPrice: [{ below: 40, stamps: 2 }, { below: 60, stamps: 3 }, { below: 81, stamps: 5 }], // 技能現在低於 below 時要幾枚：越高越貴
+    lessonPerDay: 1,        // 委託櫃台上課：一天幾堂（P.day 的，換人不會多一堂）
+    lessonSkill: "1D3",     // 上一堂課技能加這麼多
+    lessonCap: 60,          // 上課最多上到幾
+    lessonPrice: [{ below: 30, insp: 6 }, { below: 45, insp: 10 }, { below: 61, insp: 15 }], // 技能現在低於 below 時要幾靈感
+    trialSkill: "1D5",      // 地下的試煉房間、週包房間獎勵的技能成長
+    trialPerWeek: 1,        // 一間試煉房間一週可以拿幾次成長（週一 05:00 換週）
+    weekSkillRooms: 2,      // 週包一週最多幾間房間的獎勵可以寫技能成長（tools/week_check.cjs 檢查）
+    learnChance: 50,        // 一起融合：對方拿手的技能比你高，你那個技能 +1 的機率（%）
+    learnPerDay: 2,         // 一天最多這樣學會幾次（P.day 的）
+    learnGain: 1,           // 學會了加幾點
+    limitedRotate: 3,       // 週包沒指定 shop 的週，限定頭飾照週號輪流上架幾件
+    limitedMax: 4,          // 週包的 shop 最多指定幾件
+    matToStamp: 3,          // 幾份材料（背包裡的舊畫布、金箔、金線，哪一種都算）換一枚週章
+  },
+  // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
+  show: {
+    days: 3,                // 同一個主題連續掛幾天才算辦完（真的天，05:00 換日；掛上那天算第 1 天）
+    tiers: [60, 80, 95],    // 銅、銀、金要幾分
+    tiersBy: { failed: [40, 55, 75] }, // 失敗作一件只有 3 分，照 60／80／95 辦不到金：另外算
+    bronzeMood: 10,         // 第一次到銅：心情 +幾（給現在這位）
+    silverInsp: 15,         // 第一次到銀：靈感 +幾（給博物館）
+    // 每週特展到金要幾分（只有這一級；同樣照「這週最高分」）。failedOnly、start32、noLegend 的分數本來就到不了 90
+    weekGold: { start32: 45, allBlack: 90, allFlat: 90, failedOnly: 30, noHat: 90, noLegend: 70, pillowWeek: 90, gopnikWeek: 90 },
   },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
@@ -165,6 +231,46 @@ export const LIMITED_ITEMS = [
   { id: "stand-velvet", kind: "deco", slot: "stand" },
   { id: "frame-vine", kind: "deco", slot: "frame" },
   { id: "mat-star", kind: "mat", cat: "材質", opt: "星光絨", n: 3 },
+  // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾。shop: true ＝只有兌換所賣（每週全簽到不會輪到）；price ＝幾枚週章。
+  // 週包 week.json 可以寫 shop: ["hat-rain", …] 指定這週賣哪幾件（排程照這週的主題挑）；沒指定的週照週號輪流（shared/shop.js 的 shopOnSale）
+  { id: "hat-rain", kind: "part", cat: "帽子", opt: "黃雨帽", shop: true, price: 5 },
+  { id: "hat-chef", kind: "part", cat: "帽子", opt: "廚師帽", shop: true, price: 5 },
+  { id: "hat-muff", kind: "part", cat: "帽子", opt: "毛耳罩", shop: true, price: 5 },
+  { id: "hat-miner", kind: "part", cat: "帽子", opt: "礦工帽", shop: true, price: 5 },
+  { id: "hat-wreath", kind: "part", cat: "帽子", opt: "花環", shop: true, price: 5 },
+  { id: "hat-bow", kind: "part", cat: "帽子", opt: "蝴蝶結", shop: true, price: 5 },
+  { id: "hat-pot", kind: "part", cat: "帽子", opt: "鐵鍋帽", shop: true, price: 5 },
+  { id: "hat-paper", kind: "part", cat: "帽子", opt: "摺紙帽", shop: true, price: 5 },
+  // 主題展辦到金（決定 0035）：theme 是 HALL_THEME_BONUS 的主題。from 有寫的不會被每週全簽到抽到（signin.js 的 weeklyItem）
+  { id: "show-legend", kind: "part", cat: "帽子", opt: "傳說的金冠", from: "show", theme: "legend" },
+  { id: "show-angry", kind: "part", cat: "帽子", opt: "火氣頭帶", from: "show", theme: "angry" },
+  { id: "show-tears", kind: "part", cat: "帽子", opt: "淚滴耳環", from: "show", theme: "tears" },
+  { id: "show-russia8", kind: "part", cat: "帽子", opt: "瓜子項鍊", from: "show", theme: "russia8" },
+  { id: "show-rainbow", kind: "part", cat: "帽子", opt: "彩虹圍巾", from: "show", theme: "rainbow" },
+  { id: "show-hats", kind: "part", cat: "帽子", opt: "三層帽", from: "show", theme: "hats" },
+  { id: "show-pillows", kind: "part", cat: "帽子", opt: "枕頭睡帽", from: "show", theme: "pillows" },
+  { id: "show-joy", kind: "part", cat: "帽子", opt: "歡笑花環", from: "show", theme: "joy" },
+  { id: "show-flat", kind: "part", cat: "帽子", opt: "躺平眼罩", from: "show", theme: "flat" },
+  { id: "show-failed", kind: "part", cat: "帽子", opt: "縫過的領結", from: "show", theme: "failed" },
+  // 每週特展到金（決定 0035）：theme 是 WEEKLY_IDS 的主題。先做 3 件
+  { id: "week-allBlack", kind: "part", cat: "帽子", opt: "黑絨領結", from: "week", theme: "allBlack" },
+  { id: "week-pillowWeek", kind: "part", cat: "帽子", opt: "小枕頭髮夾", from: "week", theme: "pillowWeek" },
+  { id: "week-gopnikWeek", kind: "part", cat: "帽子", opt: "金瓜子項鍊", from: "week", theme: "gopnikWeek" },
+];
+// ---------- 第 4 版（11-09，決定 0032）：兌換所的裝備 ----------
+// 名字、說明在 content3.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。
+// 效果的欄位跟小優點、小缺點一樣（下面 PERKS 的說明），legacy.js 的 traitSum 會一起算，所以不用在規則裡另外加判斷；
+// 多一種 "skill:技能名"：那個技能檢定時多幾點（不改技能本身，也不影響成長）。tier：common 普通、fine 精良、rare 稀有（價錢在 NUM.shop.gearPrice）。
+// 會讓理智好過的（探險燈）放在最貴的一級；理智要「算容易歸零」（docs/界線.md）。
+export const GEAR_ITEMS = [
+  { id: "magnifier", tier: "common", "skill:偵查": 5 },
+  { id: "coin", tier: "common", "skill:幸運": 5 },
+  { id: "apron", tier: "common", pillowFree: 30 },
+  { id: "abacus", tier: "fine", deal: 1 },
+  { id: "amulet", tier: "fine", understand: -10 },
+  { id: "gloves", tier: "fine", power: 1 },
+  { id: "lamp", tier: "rare", cellarSan: -1 },
+  { id: "notebook", tier: "rare", growth: 1 },
 ];
 
 // ---------- 第 3 版：工坊升級（系統 K，在館長室買） ----------

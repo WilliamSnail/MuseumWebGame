@@ -28,11 +28,11 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能讀 | 誰能寫 |
 |---|---|---|---|
 | `members/{uid}` | 這個帳號是館友：`nick`、`invisible`、`joinedAt` | 館友 | 只有 Functions（`join` 檢查邀請名單之後建） |
-| `invites/{email}` | 邀請名單 | 沒有人（只有 Functions） | 管理員（之後的管理介面） |
+| `invites/{email}` | 邀請名單；`admin: true` 的是管理員（第八節） | 沒有人（只有 Functions） | 翊文在 Firestore 後台（AI 碰不到） |
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
-| `halls/{uid}` | 展廳給別人看的那一小部分（M2） | 館友 | 自己存檔時一起寫 |
+| `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
 | `coopRuns/{pid}` | 合作地下完整的一趟（`data`：JSON 字串，裡面有線索、幻覺、地圖） | 沒有人（只有 Functions） | 只有 Functions，跟存檔同一個交易 |
-| `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪、補償） | 自己 | 只有 Functions |
+| `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
 - 沒有 `members/{uid}` 的人，什麼都讀不到、寫不了（`firestore.rules`）。這就是邀請制：Google 帳號誰都能登入，但不在名單上就進不了館。
@@ -42,7 +42,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能寫 |
 |---|---|---|
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
-| `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了、有新的信 | 只有 Functions；自己讀完刪掉 |
+| `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了（`save_changed`）、有新的信（`mail_new`）、有人來過展廳（`hall_news`） | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
 | `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions；`/partyOf/{uid}` 他自己讀得到（接回去用），別的誰都不能讀 |
 | `/coopView/{pid}/{uid}` | 合作地下給這個人看的樣子（`viewFor`） | 只有 Functions；**只有他自己讀得到** |
@@ -66,7 +66,11 @@ Hosting：放 dist/，網址 專案名.web.app
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話和打字、檢舉、時間到、接回去、移出斷線的人（`shared/coop.js`、`coop_flow.js`、`coop_fun.js`） | M4 |
 | `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop_trace.js`） | M2、M6 |
-| `sendGift`、`claimMail`、`visitHall` | 送佩佩、領信、來訪的靈感 | M2 |
+| `visitHall`、`hallAct` | 走進館友的展廳（給展廳那一部分、記來訪、寄謝禮）、按讚、留言 | M2 |
+| `sendGift`、`claimMail` | 送佩佩（同一個交易從自己的收藏拿掉、寄進對方的信箱）、領信（同一個交易放進存檔、把信標成領過） | M2 |
+| `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳 | M2 |
+| `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
+| `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
 - **骰子**：`shared/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。
@@ -136,3 +140,41 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 - [ ] 開 GitHub repo（私人），把一起開發的朋友加進來。
 - [ ] 一起開發的朋友：`pepe-museum` 給「檢視者」（Viewer）。
 - [ ] 部署用的服務帳號和金鑰（上面「部署用的服務帳號」那一段）。
+
+## 八、管理員（翊文在後台設，決定 0033）
+
+管理員只看得到大家的進度，不能改（`functions/admin.js`、`shared/admin.js`、`web/src/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
+
+翊文怎麼把自己設成管理員（AI 不能做，AI 碰不到正式的 Firebase）：
+
+1. Firebase 主控台（專案 `pepe-museum`）→「Firestore Database」→ 集合 `invites`。
+2. 打開自己的 email 那一筆。文件 ID 要全部小寫，跟登入的 Google 帳號一樣。沒有那一筆就新增一筆。
+3. 按「新增欄位」：名稱 `admin`，類型 `boolean`，值 `true`。要選 boolean，不要打成字串。
+4. 回遊戲重新整理：進館後右上角「選單」多一項「管理員」。
+
+- 拿掉：把 `admin` 刪掉或改成 `false`，下次登入選單就沒有了；已經開著的畫面，按「重新整理」會變成「沒有權限」。
+- 那一筆有 `disabled` 就不算管理員。
+- Functions 看的是登入 token 的 email（小寫，`email_verified` 要是 true）。
+
+在模擬器測（只用假帳號）：
+
+1. 算出假帳號的 email：`node -e "console.log('dev-' + Buffer.from('測試管理').toString('hex').slice(0, 40) + '@dev.local')"`。
+2. http://127.0.0.1:4400/firestore → `invites` → 新增文件，文件 ID 是那個 email，欄位 `admin`，類型 boolean，值 true。
+3. 開 `http://localhost:5173/?user=測試管理`，進館 → 選單 → 管理員。
+
+## 九、固定動作（決定 0038）
+
+翊文跟 AI 說要做什麼（例如「邀請 xxx@gmail.com」），AI 按 GitHub 上的 `firebase-task.yml`；金鑰在 GitHub Secrets，AI 拿不到。翊文也可以自己到 GitHub 的 Actions 頁按。
+
+| 動作 | 做什麼 |
+|---|---|
+| `invite` | 把一個 Gmail 加進邀請名單（可以帶名字）；被停用的會恢復 |
+| `admin-on`、`admin-off` | 設或取消管理員 |
+| `disable`、`enable` | 停用或恢復邀請。停用只擋還沒加入的、讓管理員失效；已經加入的還進得去 |
+| `stats` | 合起來的數字：邀請、管理員、館友、有存檔的、最近 24 小時和 7 天有存檔的。沒有 email、名字 |
+
+```bash
+gh workflow run firebase-task.yml -f action=stats
+```
+
+這幾件以外都不能做（讀存檔、改存檔、刪資料都不行）。email、名字在紀錄裡遮掉，不寫進 repo。

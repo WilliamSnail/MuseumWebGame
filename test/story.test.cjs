@@ -354,5 +354,155 @@ T("換參觀者：每週劇情的進度是博物館的，不會跟著人走", G 
   assert.strictEqual(G.storyState(P).stamps, 3);
   assert.ok(Object.keys(G.storyState(P).books).length > 0);
 });
+// ---------- 季節線（決定 0037） ----------
+// 正式週 W47、W49 各放一本季節線的書（d1）；W47 的線是冬天那條，spring ＝ true 時 W49 換成春天那條
+function withSeason(G, spring) {
+  const files = clone(FILES);
+  [["2026-W47", "2026-11-16"], ["2026-W49", "2026-11-30"]].forEach(([label, start], i) => {
+    const wk = clone(files["備用/常青1/week.json"]); wk.week = label; wk.start = start;
+    const line = spring && i === 1 ? { id: "season-2027-spring", name: "春天的門口", kind: "season" } : { id: "season-2026-winter", name: "冬天的明信片", kind: "season" };
+    wk.lines.push(line);
+    files[label + "/week.json"] = wk;
+    for (let n = 1; n <= 7; n++) { const d = clone(files[`備用/常青1/d${n}.json`]); d.date = G.addDays(start, n - 1); files[`${label}/d${n}.json`] = d; }
+    files[label + "/d1.json"].books.push({ id: "s" + i, line: line.id, title: "第" + i + "張明信片", spine: "明信片", unlock: { type: "now" }, pages: ["壹", "貳"] });
+  });
+  return G.storyLibrary(files);
+}
+T("yearSeason：照節氣切；主線的季（seasonOf）不變", G => {
+  const cases = { "2026-11-06": "秋", "2026-11-07": "冬", "2026-12-22": "冬", "2027-01-15": "冬", "2027-02-03": "冬", "2027-02-04": "春", "2027-02-05": "春", "2027-05-04": "春", "2027-05-05": "夏", "2027-08-06": "夏", "2027-08-07": "秋", "2027-11-07": "冬" };
+  Object.entries(cases).forEach(([d, s]) => assert.strictEqual(G.yearSeason(d), s, d));
+  assert.strictEqual(G.weekSeason("2026-W46"), "冬", "這週剛好立冬");
+  assert.strictEqual(G.weekSeason("2026-W45"), "秋");
+  assert.strictEqual(G.weekSeason("2027-W05"), "冬", "週一 2/1 還沒立春");
+  assert.strictEqual(G.weekSeason("2027-W06"), "春");
+  assert.strictEqual(G.seasonOf("2026-W47"), 1, "主線四週一段的季是另一回事");
+});
+T("季節線：種類合法、跨週同一條、書進「季節」頁籤", G => {
+  const lib = withSeason(G), W = G.storyWeek(lib, "2026-11-16");
+  assert.strictEqual(G.LINE_KINDS.season, "季節");
+  const b = W.books.find(x => x.local === "s0");
+  assert.strictEqual(b.line, "season-2026-winter", "id 不加週的名字");
+  assert.strictEqual(G.shelfTabOf(G.lineById(W, b.line)), "season");
+  assert.strictEqual(G.shelfTabOf({ kind: "main" }), "mainline");
+  assert.strictEqual(G.shelfTabOf({ kind: "week" }), "weekly");
+});
+T("季節線：進度跨週加起來、下一步帶去補讀舊的、過了那週還能讀（不給靈感）", G => {
+  const P = fresh(G, "2026-11-30"), lib = withSeason(G);
+  const W = G.storyWeek(lib, "2026-11-30"), weeks = G.storyPastWeeks(lib, "2026-11-30", P).concat([W]);
+  G.syncStory(P, W, "2026-11-30");
+  assert.ok(!G.storyLines(P, W).some(l => l.kind === "season"), "這週的 storyLines 不列，另外算");
+  let L = G.seasonLines(P, weeks);
+  assert.strictEqual(L.length, 1);
+  assert.strictEqual(L[0].books, 2);
+  assert.strictEqual(L[0].read, 0);
+  assert.ok(L[0].fresh);
+  assert.strictEqual(L[0].next.text, "讀書架上的〈第0張明信片〉", "先補舊的");
+  assert.strictEqual(L[0].next.params.tab, "season");
+  const old = G.storyWeekAt(lib, "2026-W47", "2026-11-30");
+  const insp = P.insp, r = G.readStoryBook(P, old, "2026-W47/s0", "2026-11-30");
+  assert.ok(r.ok && r.first);
+  assert.strictEqual(P.insp, insp, "補讀不給靈感");
+  L = G.seasonLines(P, weeks);
+  assert.strictEqual(L[0].read, 1);
+  assert.strictEqual(L[0].next.text, "讀書架上的〈第1張明信片〉");
+  G.readStoryBook(P, W, "2026-W49/s1", "2026-11-30");
+  L = G.seasonLines(P, weeks);
+  assert.ok(L[0].next.wait, "都讀完了：等下壹章");
+  assert.ok(!L[0].done, "這季還沒過");
+  assert.strictEqual(G.trackLine(P, L[0].id), L[0].id);
+  assert.ok(G.seasonLines(P, weeks)[0].tracked);
+});
+T("季節線：宣告了還沒放書不列；換季之後舊的那條算走完", G => {
+  const P = fresh(G, "2026-11-30");
+  const files = clone(FILES), wk = clone(files["備用/常青1/week.json"]);
+  wk.week = "2026-W47"; wk.start = "2026-11-16"; wk.lines.push({ id: "season-2026-winter", name: "冬天的明信片", kind: "season" });
+  files["2026-W47/week.json"] = wk;
+  const noBook = G.storyLibrary(files);
+  assert.strictEqual(G.seasonLines(P, [G.storyWeek(noBook, "2026-11-16")]).length, 0, "名字可能破梗");
+  const lib = withSeason(G, true), W = G.storyWeek(lib, "2026-11-30");
+  const L = G.seasonLines(P, G.storyPastWeeks(lib, "2026-11-30", P).concat([W]));
+  assert.strictEqual(L.length, 2);
+  assert.ok(L[0].done && L[0].id === "season-2026-winter", "舊的走完，收進劇情回顧");
+  assert.ok(!L[1].done && L[1].id === "season-2027-spring");
+  assert.strictEqual(G.bookState(P, G.storyWeekAt(lib, "2026-W47", "2026-11-30"), G.storyWeekAt(lib, "2026-W47", "2026-11-30").books.find(b => b.local === "s0")), "open", "舊的書還是讀得到");
+});
+T("季節線：沒讀也不會卡住這週的結局；讀了也不算進結局的本數", G => {
+  const lib = withSeason(G), P = fresh(G, "2026-11-22"), W = G.storyWeek(lib, "2026-11-22"), S = G.storyState(P);
+  const end = W.books.find(x => x.ending), season = W.books.find(x => x.local === "s0");
+  const others = W.books.filter(x => !x.ending && x !== season);
+  others.slice(0, W.ending.read).forEach(x => { S.books[x.id] = { got: "2026-11-22", read: "2026-11-22" }; });
+  assert.strictEqual(G.bookState(P, W, end), "open", "季節線的書沒讀，結局照開");
+  const P2 = fresh(G, "2026-11-22"), S2 = G.storyState(P2);
+  S2.books[season.id] = { got: "2026-11-22", read: "2026-11-22" };
+  others.slice(0, W.ending.read - 1).forEach(x => { S2.books[x.id] = { got: "2026-11-22", read: "2026-11-22" }; });
+  assert.strictEqual(G.bookState(P2, W, end), "locked", "季節線的書不算");
+});
+T("舊週包沒有季節線照常", G => {
+  const lib = LIB(G), P = fresh(G), W = G.storyWeek(lib, "2026-11-09");
+  assert.strictEqual(G.seasonLines(P, [W]).length, 0);
+  assert.ok(G.storyLines(P, W).length > 0);
+  assert.strictEqual(G.seasonLines(G.newProfile("free"), [W]).length, 0, "自由模式也沒有");
+});
+// ---------- 今日特展的新畫（works[].svg）：畫面和檢查程式用同一個 sanitizeSvg ----------
+const SVG_OK = "<svg viewBox='0 0 10 10' width='99' height='99'><defs><linearGradient id='g'><stop offset='0' stop-color='#fff'/></linearGradient><path id='p' d='M0 0L1 1'/></defs><rect width='10' height='10' fill='url(#g)'/><use href='#p'/><text x='1' y='2'>待領<tspan>壹</tspan></text></svg>";
+T("sanitizeSvg：畫圖的標籤留著；id 加前綴、連結跟著改；svg 的大小交給畫框；字記下來", G => {
+  const r = G.sanitizeSvg(SVG_OK, "a-");
+  assert.ok(r.ok, r.errors.join());
+  assert.ok(r.svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">'), r.svg.slice(0, 80));
+  assert.ok(r.svg.includes('id="a-g"') && r.svg.includes('fill="url(#a-g)"') && r.svg.includes('href="#a-p"'));
+  assert.ok(!/width="99"/.test(r.svg));
+  assert.strictEqual(JSON.stringify(r.texts), JSON.stringify(["待領", "壹"]));
+  assert.notStrictEqual(G.sanitizeSvg(SVG_OK, "b-").svg, r.svg, "前綴不同，不同幅的 id 不會撞");
+  assert.strictEqual(G.sanitizeSvg(SVG_OK.split("<rect").join("|<rect").split("|"), "a-").svg, r.svg, "字串的陣列也可以");
+});
+T("sanitizeSvg：不准的東西整幅不要（回傳空字串）", G => {
+  const bad = {
+    "<script>": "<svg viewBox='0 0 1 1'><script>alert(1)</script></svg>",
+    "大寫": "<svg viewBox='0 0 1 1'><SCRIPT>alert(1)</SCRIPT></svg>",
+    "foreignObject": "<svg viewBox='0 0 1 1'><foreignObject><div/></foreignObject></svg>",
+    "image": "<svg viewBox='0 0 1 1'><image href='a.png'/></svg>",
+    "a": "<svg viewBox='0 0 1 1'><a href='#x'><rect/></a></svg>",
+    "style 標籤": "<svg viewBox='0 0 1 1'><style>rect{fill:red}</style></svg>",
+    "style 屬性": "<svg viewBox='0 0 1 1'><rect style='fill:url(http://x.y/z)'/></svg>",
+    "onload": "<svg viewBox='0 0 1 1' onload='x()'></svg>",
+    "ONCLICK": "<svg viewBox='0 0 1 1'><rect ONCLICK='x()'/></svg>",
+    "外部 href": "<svg viewBox='0 0 1 1'><use href='http://x.y/z#a'/></svg>",
+    "xlink": "<svg viewBox='0 0 1 1'><use xlink:href='https://x.y/z#a'/></svg>",
+    "外部 url": "<svg viewBox='0 0 1 1'><rect fill='url(https://x.y/z)'/></svg>",
+    "javascript": "<svg viewBox='0 0 1 1'><use href='javascript:x()'/></svg>",
+    "繞過": "<svg viewBox='0 0 1 1'><rect fill='&#106;avascript:x'/></svg>",
+    "沒有 viewBox": "<svg><rect/></svg>",
+    "最外面不是 svg": "<g viewBox='0 0 1 1'></g>",
+    "第二個 svg": "<svg viewBox='0 0 1 1'></svg><svg viewBox='0 0 1 1'></svg>",
+    "裡面再一個 svg": "<svg viewBox='0 0 1 1'><svg viewBox='0 0 1 1'/></svg>",
+    "註解": "<svg viewBox='0 0 1 1'><!-- x --></svg>",
+    "CDATA": "<svg viewBox='0 0 1 1'><![CDATA[x]]></svg>",
+    "title 塞標籤": "<svg viewBox='0 0 1 1'><title><rect/></title></svg>",
+    "字的編碼繞過": "<svg viewBox='0 0 1 1'><text>&#19968;</text></svg>",
+    "標籤外面的字": "<svg viewBox='0 0 1 1'>abc</svg>",
+    "沒關起來": "<svg viewBox='0 0 1 1'><g>",
+    "class": "<svg viewBox='0 0 1 1'><rect class='btn'/></svg>",
+    "不存在的 id": "<svg viewBox='0 0 1 1'><rect fill='url(#nope)'/></svg>",
+    "重複的 id": "<svg viewBox='0 0 1 1'><rect id='a'/><rect id='a'/></svg>",
+    "不是字串": 12,
+  };
+  Object.entries(bad).forEach(([k, v]) => { const r = G.sanitizeSvg(v, "a-"); assert.strictEqual(r.ok, false, k); assert.strictEqual(r.svg, "", k); assert.ok(r.errors.length, k); });
+});
+T("sanitizeSvg：一幅最多 NUM.story.showSvgKB", G => {
+  const fit = "<svg viewBox='0 0 1 1'>" + "<rect/>".repeat(Math.floor((G.NUM.story.showSvgKB * 1024 - 40) / 7)) + "</svg>";
+  assert.ok(G.sanitizeSvg(fit).ok);
+  const r = G.sanitizeSvg(fit + "<rect/>".repeat(40));
+  assert.strictEqual(r.ok, false);
+  assert.ok(/太大/.test(r.errors[0]));
+});
+T("備用週的新畫都過得了淨化；同一天新舊可以混著", G => {
+  let n = 0;
+  for (let d = 1; d <= 7; d++) FILES[`備用/常青1/d${d}.json`].show.works.filter(w => w.svg != null).forEach(w => { const r = G.sanitizeSvg(w.svg, "x-"); assert.ok(r.ok, w.id + r.errors.join()); n++; });
+  assert.ok(n >= 2, "至少 2 幅當例子");
+  const W = G.storyWeek(LIB(G), "2026-11-11");
+  const works = G.todayOf(W).show.works;
+  assert.ok(works.some(w => w.svg != null) && works.some(w => w.art), "第 3 天新舊混著");
+  assert.ok(works.find(w => w.svg != null).id.startsWith("2026-W46/"));
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

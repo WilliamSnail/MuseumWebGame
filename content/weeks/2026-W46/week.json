@@ -12,7 +12,8 @@
   ],
   "lines": [
     { "id": "w46-lost", "name": "換季的招領箱", "kind": "week" },
-    { "id": "w46-door", "name": "招領箱後面的小門", "kind": "floor" }
+    { "id": "w46-door", "name": "招領箱後面的小門", "kind": "floor" },
+    { "id": "season-2026-winter", "name": "冬天的明信片", "kind": "season" }
   ],
   "anomaly": {
     "title": "B1 的樓梯口變冷了",

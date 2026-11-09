@@ -13,9 +13,9 @@ import { NUM } from "../../shared/config.js";
 import { activeQuirks, isFree, nowMs, todayStr } from "../../shared/logic.js";
 import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
-import { $$, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
@@ -80,7 +80,7 @@ function flushEvents() {
     } else if (e.type === "storySpot") {
       snd("unlock");
       const r = claimSpot(P, W, e.room.id, todayStr());
-      note(`找到了：${e.room.title}${r.ok && rewardText(r.reward) ? `　${rewardText(r.reward)}` : ""}`, "good");
+      note(`找到了：${e.room.title}${r.ok && rewardText(r.reward) ? `　${rewardText(r.reward)}` : ""}${r.ok && r.grown ? `（${r.grown.skill} ${r.grown.before} → ${r.grown.after}）` : ""}`, "good");
       if (r.ok && r.reward.items.length) itemsFlow(r.reward.items);
       updateStatus();
     }
@@ -98,7 +98,7 @@ function claimables(W) {
 function menuBadge(W) {
   const el = document.querySelector(".md-story");
   if (!el) return;
-  const n = claimables(W), fresh = storyLines(P, W).some(l => l.fresh);
+  const n = claimables(W), fresh = linesNow(W).some(l => l.fresh);
   const b = el.querySelector(".md-badge");
   const t = n ? `${n} 個可以領` : fresh ? "有新的下壹步" : "";
   if (b && b.textContent !== t) b.textContent = t;
@@ -109,7 +109,7 @@ export function trackBar() {
   const el = document.getElementById("st-follow");
   if (!el) return;
   const W = on() ? curWeek() : null;
-  const l = W ? storyLines(P, W).find(x => x.tracked) : null;
+  const l = W ? linesNow(W).find(x => x.tracked) : null;
   if (!l || !l.next) { el.hidden = true; return; }
   const txt = `追蹤：${l.next.text}`;
   if (el.dataset.t !== txt) {
@@ -160,9 +160,9 @@ export function openStory(o = {}) {
   const draw = () => {
     storyTick();
     const W = curWeek(), S = storyState(P);
-    const lines = W ? storyLines(P, W) : [];
+    const lines = W ? linesNow(W) : [];
     const dots = { week: claimables(W) > 0, lines: lines.some(l => l.fresh) };
-    m.setTop(h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，之後的兌換所用得到。" }, icon("medal"), ` 週章 ${S.stamps} 枚`));
+    m.setTop([h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，到兌換所換東西。" }, icon("medal"), ` 週章 ${S.stamps} 枚`), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null]);
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "每週劇情" }, SP_TABS.map(([id, name]) =>
       h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : ""), onClick: () => { tab = id; draw(); } },
         name, dots[id] ? h("span", { class: "nb-dot", "aria-label": id === "week" ? "有獎勵可以領" : "有新的下壹步" }) : null)));
@@ -210,7 +210,7 @@ function weekPane(W, draw, m) {
   const wbr = Object.assign({}, W.weeklyBonus, { stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });
   const weekly = sec("每週任務", h("ul", { class: "sp-tasks" }, W.weekly.map(t => taskRow(W, t, draw, m)),
     bonusRow("5 個都做完：這週限定的那份", weekBonusState(P, W), wbr, () => claimFlow(claimWeekBonus(P, W, today), draw))),
-    h("p", { class: "sp-note" }, `每週任務做完壹個拿 ${NUM.story.stampPerTask} 枚週章，全部做完再多 ${NUM.story.stampAllBonus} 枚。週章會存起來，之後的兌換所用得到。`));
+    h("p", { class: "sp-note" }, `每週任務做完壹個拿 ${NUM.story.stampPerTask} 枚週章，全部做完再多 ${NUM.story.stampAllBonus} 枚。週章會存起來，可以到兌換所換裝備、提升技能。`));
   const left = unclaimed(P, W).filter(t => t.daily && (!d || t.day !== d.n));
   const old = left.length ? sec("前幾天做完、還沒領的", h("ul", { class: "sp-tasks" }, left.map(t => taskRow(W, t, draw, m)))) : null;
   const bag = Object.entries(S.bag).filter(([, n]) => n > 0);
@@ -224,7 +224,7 @@ function weekPane(W, draw, m) {
 function lineCard(l, draw, m) {
   return h("li", { class: "sp-line" + (l.done ? " done" : "") + (l.tracked ? " tracked" : "") },
     h("div", { class: "sp-l-head" }, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, l.name), l.fresh ? h("span", { class: "nb-dot", "aria-label": "新的下壹步" }) : null),
-    h("p", { class: "sp-l-prog" }, `讀了 ${l.read}／${l.books} 本`, l.kind === "main" ? null : `・${l.done ? "走完了" : `第 ${Math.min(7, curWeek() ? curWeek().dayNo : 7)} 天／7 天`}`),
+    h("p", { class: "sp-l-prog" }, `讀了 ${l.read}／${l.books} 本`, l.kind === "main" || l.kind === "season" ? null : `・${l.done ? "走完了" : `第 ${Math.min(7, curWeek() ? curWeek().dayNo : 7)} 天／7 天`}`),
     l.next ? h("p", { class: "sp-l-next" }, h("span", null, "下壹步："), h("b", null, l.next.text)) : h("p", { class: "sp-l-next" }, l.done ? "這條線走完了，收進「劇情回顧」。" : ""),
     h("div", { class: "sp-l-act" },
       l.next && (l.next.room || l.next.panel) && !l.done ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); goStep(l.next); }, "primary small") : null,
@@ -236,9 +236,10 @@ function linesPane(W, lines, draw, m) {
     h("ul", { class: "sp-lines" }, lines.map(l => lineCard(l, draw, m)))];
 }
 function reviewPane(m) {
-  const past = storyPastWeeks(STORY_LIB, todayStr(), P);
-  if (!past.length) return h("p", { class: "nb-empty" }, "走完的劇情線會收在這裡，隨時可以回去重讀。");
-  return h("ul", { class: "sp-review" }, past.map(w => {
+  const past = storyPastWeeks(STORY_LIB, todayStr(), P), oldSeasons = seasonLines(P, allWeeks()).filter(l => l.done).reverse(); // 換季之後舊的季節線也收在這裡
+  if (!past.length && !oldSeasons.length) return h("p", { class: "nb-empty" }, "走完的劇情線會收在這裡，隨時可以回去重讀。");
+  return h("ul", { class: "sp-review" }, oldSeasons.map(l => h("li", null, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, `〈${l.name}〉`), h("small", null, `讀了 ${l.read}／${l.books} 本`),
+    btn("到書架看", () => { m.close(); go("origin", { tab: "season" }); }, "small"))), past.map(w => {
     const lines = storyLines(P, w);
     const read = w.books.filter(b => bookState(P, w, b) === "read").length;
     return h("li", null, h("span", { class: "sp-l-kind" }, `${seasonName(seasonOf(w.label))}・${w.label}`), h("b", null, `〈${w.title}〉`),
@@ -252,7 +253,7 @@ export function storyLobby() {
   if (!on()) return null;
   const W = curWeek();
   if (!W) return null;
-  const S = storyState(P), d = todayOf(W), lines = storyLines(P, W);
+  const S = storyState(P), d = todayOf(W), lines = linesNow(W);
   const tracked = lines.find(l => l.tracked) || null, show = tracked || lines.find(l => l.next && !l.next.wait) || null;
   const n = claimables(W), fresh = lines.some(l => l.fresh);
   const chip = (t, cls) => h("span", { class: "sl-chip" + (cls ? " " + cls : "") }, t);
@@ -263,20 +264,27 @@ export function storyLobby() {
       chip(`週章 ${S.stamps} 枚`), n ? chip(`${n} 個獎勵可以領`, "hot") : null),
     show && show.next ? h("button", { type: "button", class: "sl-track", onClick: () => goStep(show.next) }, icon("sparkle"),
       h("span", null, `${tracked ? "追蹤" : "劇情線"}〈${show.name}〉：`, h("b", null, show.next.text)), show.next.room || show.next.panel ? h("span", { class: "sl-arrow", "aria-hidden": "true" }, "→") : null) : null,
-    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small"), btn("劇情線", () => openStory({ tab: "lines" }), "small")));
+    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small"), btn("劇情線", () => openStory({ tab: "lines" }), "small"), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null));
   return card;
 }
 
 // ---------- 起源室：書架的頁籤 ----------
-export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["weekly", "每週劇情"], ["holiday", "節日"]];
+export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
 const shelfName = id => (ORIGIN_TABS.find(t => t[0] === id) || [id, id])[1];
 // 全部的週（今天這週＋以前的），舊的在前
-function allWeeks() { const W = curWeek(), past = storyPastWeeks(STORY_LIB, todayStr(), P).reverse(); return W ? past.concat([W]) : past; }
+let pastCache = { key: null, list: [] };
+function allWeeks() {
+  const W = curWeek(), today = todayStr(), key = today + "|" + Object.keys((P && P.story && P.story.weeks) || {}).length; // 每次 updateStatus 都會用到（季節線），一天算一次就好
+  if (pastCache.key !== key) pastCache = { key, list: storyPastWeeks(STORY_LIB, today, P).reverse() };
+  return W ? pastCache.list.concat([W]) : pastCache.list.slice();
+}
+// 現在看得到的劇情線：這週的＋還在走的季節線（換季之後舊的那條收進劇情回顧）
+function linesNow(W) { return W ? storyLines(P, W).concat(seasonLines(P, allWeeks()).filter(l => !l.done)) : []; }
 const kindOfBook = (w, b) => { const l = lineById(w, b.line); return l ? l.kind : "week"; };
 const tabOfBook = (w, b) => shelfTabOf({ kind: kindOfBook(w, b) });
 // 每個頁籤：幾本（打得開的）、沒讀幾本、有沒有新的
 function storyCounts() {
-  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], holiday: [0, 0, 0] };
+  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], season: [0, 0, 0], holiday: [0, 0, 0], curate: ADDONS.curateCounts ? ADDONS.curateCounts() : [0, 0, 0] };
   if (!on()) return out;
   allWeeks().forEach(w => w.books.forEach(b => {
     const st = bookState(P, w, b), c = out[tabOfBook(w, b)];
@@ -297,7 +305,7 @@ export function originTabs(tab, counts = {}) {
   }));
 }
 // 一排書，超過 NUM.story.shelfRow 本就分頁（手機也一樣，不會撐長）
-function shelfRow(key, label, spines, extra) {
+export function shelfRow(key, label, spines, extra) {
   const per = NUM.story.shelfRow, pages = Math.max(1, Math.ceil(spines.length / per));
   const store = UI.shelfPage || (UI.shelfPage = {});
   let p = Math.min(store[key] || 0, pages - 1);
@@ -360,6 +368,7 @@ function seasonVolume(n, weeks, reader) {
 }
 // 書架：主線、每週劇情、節日（館藏、禁書照舊在 ui_screens1.js）
 export function storyShelf(tab, reader, params = {}) {
+  if (tab === "curate" && ADDONS.curateShelf) return ADDONS.curateShelf(reader, params); // 策展手記（決定 0035）
   if (!on()) return h("div", { class: "shelf story-shelf" }, h("span", { class: "shelf-label" }, shelfName(tab)), h("p", { class: "shelf-empty" }, "每週劇情在挑戰模式裡。"));
   const W = curWeek(), weeks = allWeeks();
   if (params.week) { const w = weeks.find(x => x.label === params.week); if (w) later(() => weekVolume(w, reader), 0); }
@@ -383,6 +392,10 @@ export function storyShelf(tab, reader, params = {}) {
     })));
     return rows;
   }
+  if (tab === "season") { // 季節線：一條線一排，新的在上面；過了那週還是可以補讀（決定 0037）
+    const rows = seasonLines(P, weeks).reverse().map(l => shelfRow("season-" + l.id, `${l.name}${l.done ? "（走完了）" : ""}`, l.list.map(o => spineFor(o.w, o.b, reader))));
+    return rows.length ? rows : [shelfRow("season", "季節", [], "壹年四季各壹條線，大約兩週壹本。第壹本寫好就會放在這裡。")];
+  }
   const want = tab === "mainline" ? "main" : "holiday";
   const list = [];
   weeks.forEach(w => w.books.forEach(b => { if (kindOfBook(w, b) === want) list.push(spineFor(w, b, reader)); }));
@@ -401,12 +414,17 @@ export function galleryTabs(active) {
     h("button", { type: "button", class: "seg-btn" + (active === "show" ? " on" : ""), onClick: () => go("gallery", { show: true }, { action: false }) }, icon("star"), h("span", null, `今日特展：${d.show.title}`),
       unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null));
 }
+let svgSeq = 0;
 function workArt(w) {
+  if (w.svg != null) { // 排程畫的新畫：畫面再淨化一次（不能只靠檢查程式）；每次畫都換 id 前綴，同一幅畫兩次也不會撞到
+    const r = sanitizeSvg(w.svg, `ws${++svgSeq}-`);
+    return r.ok ? r.svg : ART.exhibit("none");
+  }
   const shadow = (w.fx || []).includes("shadow");
   if (w.art === "frog") return ART.frog(Object.assign({}, w.pick), { silhouette: shadow, noBg: shadow });
   return ART.exhibit(w.art, { variant: w.variant || 0 });
 }
-const frameCls = w => `frame st-frame fr-${w.frame || "gold"} art-${w.art === "frog" ? "frog" : w.art}` + (w.fx || []).map(f => " fx-" + f).join("");
+const frameCls = w => `frame st-frame fr-${w.frame || "gold"} art-${w.svg != null ? "svg" : w.art === "frog" ? "frog" : w.art}` + (w.fx || []).map(f => " fx-" + f).join("");
 // 畫廊的「今日特展」頁（SCREENS.gallery 的 params.show）。沒有今日特展就回傳 false（畫廊照常畫）
 export function storyShow(root) {
   if (!on()) return false;

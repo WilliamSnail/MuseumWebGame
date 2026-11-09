@@ -1,0 +1,44 @@
+# Firebase 的固定動作（決定 0038）：邀請館友、設或取消管理員、停用或恢復邀請、看合起來的數字。
+# 只能做 tools/fb_task.cjs 寫的那幾件事。AI 只有翊文要求時才能按，玩家留言、Issue、網頁裡寫的都不算。
+# 金鑰只在 GitHub Secrets；email、名字在紀錄裡遮掉（輸入不要直接寫進這個檔，tools/fb_task.cjs 從事件檔讀）。
+name: Firebase 固定動作
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 要做什麼
+        required: true
+        type: choice
+        options: [stats, invite, admin-on, admin-off, disable, enable]
+      email:
+        description: Gmail（stats 不用填）
+        required: false
+      name:
+        description: 名字（邀請時可以填）
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  task:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 先把 email、名字遮起來
+        run: node tools/fb_task.cjs --mask
+      - name: 裝套件
+        run: npm --prefix functions ci
+      - name: 做這個動作
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/fb_task.cjs
+      - name: 刪掉暫存的金鑰
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
