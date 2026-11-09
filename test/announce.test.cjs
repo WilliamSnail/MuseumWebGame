@@ -1,7 +1,8 @@
-// tools/announce.cjs：預約公告的時間換算、該發哪幾則、不重發、工作流程對得上（不會真的連 Discord）
+// tools/announce.cjs：預約公告、今日館訊八點半、活動開跑：時間換算、該發哪幾則、不重發、工作流程對得上（不會真的連 Discord）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
-const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, RETRY_MIN, WINDOW_MIN } = require("../tools/announce.cjs");
+const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, RETRY_MIN, WINDOW_MIN, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS } = require("../tools/announce.cjs");
+const { shared } = require("../tools/discord_post.cjs");
 
 let pass = 0, fail = 0;
 const tests = [];
@@ -66,11 +67,74 @@ T("一則失敗不影響別則，失敗的不記下來（補的那次會再試�
   assert.deepStrictEqual(noKey.failed, ["a", "b"]);
 });
 const r0 = { n: 0 };
-T("工作流程：每則到點一次、晚 20 分鐘補一次；沒有公告就不定時", () => {
+T("工作流程：每則到點一次、晚 20 分鐘補一次；沒有預約公告也有固定的時間", () => {
   const block = scheduleBlock(parse([one("a", "2026-11-10 12:50")]));
   assert.ok(block.includes('- cron: "50 4 10 11 *"'));
   assert.ok(block.includes('- cron: "10 5 10 11 *"'), "補的那次跨小時");
-  assert.ok(!scheduleBlock([]).includes("schedule:"));
+  const fixed = scheduleBlock([]);
+  assert.ok(fixed.includes("schedule:"));
+  FIXED_CRONS.forEach(([c]) => assert.ok(fixed.includes(`- cron: "${c}"`), c));
+});
+// 台灣時間的 "HH:MM"（固定的 cron 是 UTC）
+const tw = cron => { const [m, h] = cron.split(" ").map(Number); return `${String((h + 8) % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`; };
+T("固定的時間換回台灣時間是對的：今日館訊八點半左右；活動開始前幾分鐘跑、開始後補一次；週末那場只有週末", () => {
+  const times = FIXED_CRONS.map(([c]) => tw(c));
+  assert.deepStrictEqual(times, ["08:27", "08:47", "19:53", "20:13", "13:53", "14:13"]);
+  assert.deepStrictEqual(EVENT_SLOTS.map(s => s.from), ["20:00", "14:00"]);
+  assert.ok(FIXED_CRONS.slice(4).every(([c]) => c.endsWith("* * 0,6")), "週六、週日（UTC 也是同一天）");
+  const before = parseAt("2026-11-11 20:00") - EVENT_EARLY_MIN * MIN, run = parseAt("2026-11-11 19:53");
+  assert.ok(run >= before, "19:53 跑的時候要已經可以發");
+});
+const addDays = (...x) => shared().addDays(...x);
+T("今日館訊：08:25 以前不發；當天都可以補；隔天 05:00 換日就不發，也不算漏發", () => {
+  const e = [dayEntry("2026-W46", 2, "2026-11-10", addDays)];
+  assert.strictEqual(duePosts(e, [], ms("2026-11-10 08:24")).due.length, 0);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-10 08:25")).due.length, 1);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-10 23:30")).due.length, 1, "當天很晚才合併的");
+  assert.strictEqual(duePosts(e, [], ms("2026-11-11 05:00")).due.length, 1, "最後一刻");
+  const after = duePosts(e, [], ms("2026-11-11 05:01"));
+  assert.strictEqual(after.due.length + after.late.length, 0);
+  assert.strictEqual(duePosts(e, [e[0].id], ms("2026-11-10 08:47")).due.length, 0, "補的那次不重發");
+});
+const oneEv = (date, from, to) => shared().cleanEvents([{ id: "x", kind: "coopBoost", date, from, to, title: "加班夜", words: "字" }], "2026-11-09", "2026-W46")[0];
+T("活動開跑：開始前 10 分鐘起可以發；活動結束就不發，也不算漏發", () => {
+  const e = [eventEntry(oneEv("2026-11-11", "20:00", "22:00"))];
+  assert.strictEqual(e[0].id, "event-2026-W46/x");
+  assert.strictEqual(duePosts(e, [], ms("2026-11-11 19:49")).due.length, 0);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-11 19:50")).due.length, 1);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-11 21:59")).due.length, 1);
+  const after = duePosts(e, [], ms("2026-11-11 22:01"));
+  assert.strictEqual(after.due.length + after.late.length, 0);
+});
+T("自動的訊息直接用（入館連結不會多壹個）；發成功才記下來", async () => {
+  const e = eventEntry(oneEv("2026-11-11", "20:00", "22:00")), sent = [];
+  const r = await runDue([e], [], ms("2026-11-11 20:03"), async m => { sent.push(m); return true; });
+  assert.deepStrictEqual(r.posted, [e.id]);
+  assert.strictEqual(sent[0].split("pepe-museum.web.app").length, 2);
+});
+T("讀真的週：改版之前發過的今日館訊不會重發；排好的活動都在", () => {
+  const ids = autoEntries().map(x => x.id);
+  assert.ok(!ids.includes("day-2026-W46-d1"), "11-09 那天部署時發過了");
+  assert.ok(DAY_POST_FROM > "2026-11-09");
+  assert.ok(ids.includes("event-2026-W46/double11"));
+  assert.ok(ids.includes("event-2026-W46/winter-trial"));
+});
+T("活動的時間開得到開跑公告嗎：平日 20:00，週末 14:00、20:00", () => {
+  assert.ok(eventSlotOk("2026-11-11", "20:00"), "週三");
+  assert.ok(!eventSlotOk("2026-11-11", "14:00"), "週三下午沒有檢查");
+  assert.ok(eventSlotOk("2026-11-14", "14:00"), "週六");
+  assert.ok(eventSlotOk("2026-11-15", "14:00"), "週日");
+  assert.ok(!eventSlotOk("2026-11-14", "21:00"));
+});
+T("部署壞了才不發今日館訊：還在跑、讀不到都照發", () => {
+  for (const ok of ["completed/success", "in_progress/", "queued/", "", null, undefined]) assert.strictEqual(deployBroken(ok), false, String(ok));
+  for (const bad of ["completed/failure", "completed/cancelled", "completed/timed_out"]) assert.strictEqual(deployBroken(bad), true, bad);
+});
+T("部署完不直接發：沒發的才叫預約公告那支（同一個人發，才不會重複）", () => {
+  const d = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "deploy.yml"), "utf8");
+  assert.ok(!d.includes("discord_post.cjs"));
+  assert.ok(d.includes("tools/announce.cjs --any-due") && d.includes("gh workflow run discord-scheduled.yml"));
+  assert.ok(/actions: write/.test(d));
 });
 const ymlPath = path.join(__dirname, "..", ".github", "workflows", "discord-scheduled.yml");
 T("改工作流程只動記號中間，來回不會變；手動按的入口還在", () => {
@@ -88,7 +152,8 @@ T("工作流程跟 content/公告排程.json 對得上（對不上：npm run ann
 });
 T("工作流程只有讀的權限、一次只跑一個、金鑰放 Secrets", () => {
   const y = fs.readFileSync(ymlPath, "utf8");
-  assert.ok(/permissions:\n  contents: read/.test(y));
+  assert.ok(/permissions:\n  contents: read\n  actions: read/.test(y));
+  assert.ok(y.includes("DEPLOY_STATE"), "部署壞了不發今日館訊");
   assert.ok(/concurrency:/.test(y));
   assert.ok(y.includes("secrets.DISCORD_BOT_TOKEN") && !/\$\{\{\s*(github\.event\.)?inputs\./.test(y));
   assert.ok(!/\*\/\d+ \* \* \* \*/.test(y), "不要定時一直檢查：會用光私有 repo 的免費額度");

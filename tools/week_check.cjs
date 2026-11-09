@@ -5,6 +5,7 @@
 // 別的檔可以 require 這支，用 checkContent({ files, ledger, settings, today }) 檢查記憶體裡的內容（test/week_check.test.cjs）。
 const fs = require("fs"), path = require("path");
 const { load } = require("../test/load_shared.cjs");
+const { eventSlotOk } = require("./announce.cjs");
 const G = load();
 
 const ROOT = path.join(__dirname, "..");
@@ -13,7 +14,7 @@ const LEDGER = path.join(ROOT, "content", "story", "帳本.json");
 const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 
 // 字數（畫面上看得到的字；書頁不算換行）
-const LIMITS = { weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
+const LIMITS = { weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40 };
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
@@ -271,6 +272,15 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     books.forEach((b, i) => bookOk(`${where}.books[${i}]`, b, Object.assign({ spare: !!o.spare }, ctx), n));
     if (!o.spare && !books.some(b => b && ctx.weekLine.has(b.line))) E(where, "每天至少一本書接這週的線（line 是這週 kind week 或 floor 的線）");
     if (d.casino !== undefined) casinoDayOk(where + ".casino", d.casino, ctx, o);
+    if (d.weeklyWords !== undefined) { // 每週任務的旁白（決定 0048）
+      if (o.spare) E(where, "備用的壹天不能寫 weeklyWords（不知道那週有哪些任務）");
+      else if (!Array.isArray(d.weeklyWords) || d.weeklyWords.length > 2) E(where + ".weeklyWords", "要是陣列，壹天最多 2 句");
+      else d.weeklyWords.forEach((x, i) => {
+        const w = `${where}.weeklyWords[${i}]`;
+        if (!isObj(x) || !(ctx.weeklyIds || new Set()).has(x.task)) { E(w, "task 要是這週的每週任務 id"); return; }
+        text(w + ".words", x.words, LIMITS.weeklyWords);
+      });
+    }
     rewardOk(where + ".dailyBonus", d.dailyBonus);
     if (!isObj(d.show)) E(where, "要有今日特展（show）");
     else {
@@ -322,6 +332,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     const later = { books: new Set(ctx.books), rooms: new Set(ctx.rooms) };
     Object.values(pack.days).forEach(d => { asList(d && d.books).forEach(b => b && later.books.add(b.id)); asList(d && d.adds).forEach(r => r && later.rooms.add(r.id)); });
     if (!Array.isArray(wk.weekly) || wk.weekly.length !== 5) E(where + "/week.json", "weekly 要剛好 5 個");
+    ctx.weeklyIds = new Set(asList(wk.weekly).map(t => t && t.id).filter(Boolean));
+    asList(wk.weekly).forEach((t, i) => { if (t && t.words !== undefined) text(`${where}/week.json.weekly[${i}].words`, t.words, LIMITS.weeklyWords); });
     asList(wk.weekly).forEach((t, i) => { if (t && t.id) { if (ctx.ids.has(t.id)) E(where, `id「${t.id}」重複`); ctx.ids.add(t.id); ctx.tasks.add(t.id); } taskOk(`${where}/week.json.weekly[${i}]`, t, Object.assign({}, ctx, later, { day: {} }), "weekly"); });
     rewardOk(where + "/week.json.weeklyBonus", wk.weeklyBonus);
     budget(where + "/week.json", G.weekTaskTotal(wk), N.weekTaskBudget);
@@ -347,6 +359,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
           const w = `${ew}[${i}]`;
           G.eventProblems(ev, G.isoMonday(name)).forEach(p => E(w, p));
           if (!ev || typeof ev !== "object") return;
+          if (!eventSlotOk(ev.date, ev.from)) W(w, `${ev.from} 開始的話 Discord 不會發開跑公告：平日要 20:00，週末 14:00 或 20:00（工作流程只在這些時間檢查）`);
           if (seen.has(ev.id)) E(w, `id「${ev.id}」重複`);
           seen.add(ev.id);
           text(w + ".title", ev.title, 0);
@@ -433,6 +446,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       const rec = isObj(L.weeks) ? L.weeks[d.where] : null;
       if (!rec || typeof rec.main !== "string" || !rec.main.trim()) E(d.where, "帳本的 weeks 裡要寫這週主線推到哪（main）：每週至少把主線往前推一步（第十二節）");
       if (!rec || !asList(rec.ties).length) W(d.where, "帳本的 weeks 裡沒有 ties：這週的線、每天的書碰到主軸的哪一點（決定 0037）");
+      if (d.where >= "2026-W47" && (!rec || !asList(rec.world).length)) W(d.where, "帳本的 weeks 裡沒有 world：這週世界觀多露出了什麼（決定 0048）");
+      if (d.where >= "2026-W47" && (!rec || !asList(rec.sideRefs).length)) W(d.where, "帳本的 weeks 裡沒有 sideRefs：哪些支線提到了主線新露出來的東西（決定 0048）");
       if (d.wk && d.wk.casino !== undefined && (!rec || !asList(rec.casino).length)) W(d.where, "帳本的 weeks 裡沒有 casino：這週賭場的收藏接劇情的哪一條線、碰到主軸的哪一點（決定 0042）");
     });
     asList(L.foreshadow).forEach((f, i) => {

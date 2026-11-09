@@ -1,12 +1,10 @@
 // 把每週劇情的公告發到 Discord（翊文 11-09：「我想用Discord bot發布訊息」）。
-// 自動部署（.github/workflows/deploy.yml）部署完跑這支：這次合併有新的一天（content/weeks/<週>/dN.json）才發，沒有就不發。
+// 這支放訊息的樣子和「發」這個動作。什麼時候發是 tools/announce.cjs（今日館訊早上八點半、活動開跑、預約公告）。
 //   週一（d1）：這週的標題、不劇透的大綱、今天那一行。其他天：今天那一行。節日那天再加節日的話。
 // 金鑰放 GitHub Secrets：DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID（翊文放的，AI 拿不到，也不要印出來）。沒放就跳過，不報錯。
-// node tools/discord_post.cjs        照這次合併新加的檔發
 // node tools/discord_post.cjs --test 發一則測試訊息
 // node tools/discord_post.cjs --say  發環境變數 ANNOUNCE 的文字（手動的公告）
 const fs = require("fs"), path = require("path");
-const { execFileSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 const SITE = "https://pepe-museum.web.app";
@@ -14,13 +12,6 @@ const SITE = "https://pepe-museum.web.app";
 const LINKS = [["🎟 入館", SITE]];
 const footer = () => LINKS.map(([name, url]) => `${name}：${url}`).join("\n");
 const MAX = 2000; // Discord 一則訊息最多 2000 字
-const DAY_FILE = /^content\/weeks\/(\d{4}-W\d{2})\/d([1-7])\.json$/;
-
-// 這次合併新加了哪幾天（排程一次通常一天）。備用週的檔不算（`content/weeks/備用/` 比對不到）
-function newDays(files) {
-  return files.map(f => f.match(DAY_FILE)).filter(Boolean).map(m => ({ week: m[1], n: Number(m[2]) }))
-    .sort((a, b) => (a.week < b.week ? -1 : a.week > b.week ? 1 : a.n - b.n));
-}
 
 // 這週的限時活動（決定 0041）：壞的丟掉、照時間排好（跟遊戲用同一份 shared/events.js）。evs 不給就從 week.json 的 events 整理
 let SHARED = null;
@@ -70,6 +61,17 @@ function dayMessage(w, d, n, hol, evs, fun) {
   return (text.length > room ? text.slice(0, room - 1) + "…" : text) + end;
 }
 
+// 某一天的今日館訊（節日、趣味節日照那天的日期查）
+function dayPost(week, n) {
+  const w = readJSON(`content/weeks/${week}/week.json`), d = readJSON(`content/weeks/${week}/d${n}.json`), G = shared();
+  return dayMessage(w, d, n, d.date ? G.holidayOf(d.date) : null, undefined, d.date ? G.funDaysOf(d.date) : []);
+}
+// 限時活動開跑（決定 0045）。可能早幾分鐘或晚幾分鐘發，所以寫時間，不寫「現在開始了」
+function eventPost(ev) {
+  const G = shared();
+  return ["🎪 **佩佩博物館2　限時活動開跑**", `📜 〈${ev.title}〉${G.eventWhen(ev)} ${G.eventRange(ev)}`, "", ev.words, "", `✨ ${G.eventEffect(ev)}。錯過了也不會少什麼。`, "", "館長室 敬啟", "", footer()].join("\n");
+}
+
 // 發一則。沒有人會被 @（allowed_mentions 空的）。錯誤訊息不含金鑰
 async function send(content, env = process.env, fetcher = fetch) {
   const token = env.DISCORD_BOT_TOKEN, channel = env.DISCORD_CHANNEL_ID;
@@ -83,12 +85,6 @@ async function send(content, env = process.env, fetcher = fetch) {
   return true;
 }
 
-function changedFiles() {
-  try {
-    return execFileSync("git", ["-c", "core.quotepath=false", "diff", "--name-only", "--diff-filter=A", "HEAD^1", "HEAD", "--", "content/weeks"], { cwd: ROOT, encoding: "utf8" })
-      .split("\n").map(s => s.trim()).filter(Boolean);
-  } catch (e) { console.log("讀不到這次合併改了什麼，這次不發：" + e.message.split("\n")[0]); return []; }
-}
 const readJSON = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8"));
 
 async function main() {
@@ -110,15 +106,8 @@ async function main() {
     console.log(ok ? "測試訊息發了。" : "沒發。");
     return;
   }
-  const days = newDays(changedFiles());
-  if (!days.length) { console.log("這次合併沒有新的一天，不發。"); return; }
-  const { holidayOf, funDaysOf } = await import("../shared/holidays.js");
-  for (const { week, n } of days) {
-    const w = readJSON(`content/weeks/${week}/week.json`), d = readJSON(`content/weeks/${week}/d${n}.json`);
-    const ok = await send(dayMessage(w, d, n, d.date ? holidayOf(d.date) : null, undefined, d.date ? funDaysOf(d.date) : []));
-    console.log(ok ? `發了 ${week} 第 ${n} 天。` : "沒發。");
-  }
+  console.log("這支只留 --say、--test。今日館訊和活動開跑是 tools/announce.cjs 發的。");
 }
 
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { newDays, dayMessage, send, footer, MAX };
+module.exports = { dayMessage, dayPost, eventPost, readJSON, shared, send, footer, MAX };

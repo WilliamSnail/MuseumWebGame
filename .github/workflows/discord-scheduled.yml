@@ -1,11 +1,20 @@
-# 預約公告：content/公告排程.json 寫的時間到了就發到 Discord（tools/announce.cjs）。
-# 只在每則公告自己的時間跑，平常不跑：repo 是私有的，定時檢查會用光免費的 Actions 額度（理由見 tools/announce.cjs）。
+# 定時發到 Discord（tools/announce.cjs）：今日館訊（早上八點半）、限時活動開跑、content/公告排程.json 的預約公告。
+# 只在該發的時間跑：repo 是私有的，一直檢查會用光免費的 Actions 額度（理由見 tools/announce.cjs）。
 # 發過的記在 Actions cache，到點和補的那次不會重發。
 name: Discord 預約公告
 
 on:
-  # >>> 預約公告的時間（tools/announce.cjs --sync 產生的，不要手改）
-  # <<< 預約公告的時間
+  # >>> 定時（tools/announce.cjs --sync 產生的，不要手改）
+  schedule:
+    - cron: "27 0 * * *" # 今日館訊：台灣每天 08:27
+    - cron: "47 0 * * *" # 今日館訊：補一次
+    - cron: "53 11 * * *" # 限時活動 20:00：台灣每天 19:53
+    - cron: "13 12 * * *" # 限時活動 20:00：補一次
+    - cron: "53 5 * * 0,6" # 限時活動 14:00：台灣週末 13:53
+    - cron: "13 6 * * 0,6" # 限時活動 14:00：補一次
+    - cron: "25 0 10 11 *" # 趣味節日和手機橫向：台灣 2026-11-10 08:25
+    - cron: "45 0 10 11 *" # 趣味節日和手機橫向：補一次
+  # <<< 定時
   workflow_dispatch:
 
 # 一次只跑一個，免得同一則發兩次
@@ -15,6 +24,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read # 看最新一次部署成功了沒
 
 jobs:
   send:
@@ -31,10 +41,17 @@ jobs:
           path: .announce-state
           key: announce-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: announce-state-
+      - name: 看最新一次部署
+        id: deploy
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "state=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow=deploy.yml --branch main --limit 1 --json status,conclusion --jq '.[0] | "\(.status)/\(.conclusion)"')" >> "$GITHUB_OUTPUT"
       - name: 發到時間的公告
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          DEPLOY_STATE: ${{ steps.deploy.outputs.state }}
         run: node tools/announce.cjs
       - name: 記下哪些發過了
         if: always()
