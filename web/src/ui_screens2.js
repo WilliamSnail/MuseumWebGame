@@ -14,7 +14,7 @@ import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } f
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
-import { $, $$, ADDONS, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, ADDONS, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -800,9 +800,9 @@ export async function beyondFlow(cell) {
     const veil = h("div", { class: "beyond-veil" }, h("p", null, "(你閉上眼睛)"));
     document.body.append(veil);
     requestAnimationFrame(() => veil.classList.add("in"));
-    snd("whisper"); await wait(2600);
+    snd("whisper"); await holdFor(3000);
     veil.querySelector("p").textContent = done ? "(那格裡什麼都沒有了。帽子在你頭上)" : "(那格裡的佩佩戴著帽子。帽子在動)";
-    snd("squelch"); await wait(2000);
+    snd("squelch"); await holdFor(3800);
     veil.remove();
     if (!done && !isFree(P)) { await sanFlow("0/1D3", "beyond", "最後壹格的下壹格", { noInvoluntary: true }); if (P.dark) return; }
     if (!done) { const ev = unlockSequel(P, "book3b"); persist(); await showEvents(ev); }

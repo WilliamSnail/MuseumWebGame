@@ -356,7 +356,11 @@ body.reduce-motion .hug-hint.ready, body.reduce-motion .huggable svg { animation
 @keyframes mirrorIn { from { opacity: 0; filter: blur(6px); } }
 .spine.sealed { opacity: .8; border-style: dashed; }
 .spine.sealed .spine-t { letter-spacing: .2em; }
-.spine.sequel .spine-t::before { content: "續・"; font-size: .7em; opacity: .7; }
+/* 禁書的續集：書背右邊是書名、左邊小字是第壹本的名字，貼著前壹本放（翊文 11-09） */
+.spine.sequel { margin-left: -7px; }
+.spine-two { display: flex; flex-direction: row-reverse; align-items: flex-start; gap: 3px; }
+.spine-of { writing-mode: vertical-rl; font-size: .6875rem; letter-spacing: .08em; line-height: 1.2; color: var(--gold); white-space: nowrap; }
+.spine.sealed .spine-of { color: var(--gold); }
 .sealed-hint { font-size: 1rem; line-height: 1.8; padding: 10px 12px; border-left: 3px solid #7A3FB0; background: rgba(122,63,176,.08); }
 /* 圖鑑：最後壹格的下壹格 */
 .cell-beyond { aspect-ratio: 1; border: 0; padding: 0; cursor: pointer; border-radius: 4px; background: radial-gradient(circle at 50% 40%, #4A3768, #120C18 80%); box-shadow: 0 0 8px rgba(138,79,216,.6); display: grid; place-items: center; animation: beyondPulse 2.6s ease-in-out infinite; }
@@ -1018,3 +1022,19 @@ button.chip.qk-chip { display: inline-grid; grid-template-columns: auto auto; co
 .qk-here small { color: #4A5A40; font-size: .8125rem; }
 .ex-cap .ex-cure { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 1px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #FFF6E0; background: #2F6E38; }
 .ex-cure .ic, .ex-cure .ic svg { width: 13px; height: 13px; }
+
+/* ----- 書的翻頁（翊文 11-09：「翻頁箭頭可以明顯一點嗎」） ----- */
+.book-arrow { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; font-family: var(--serif); font-size: .9375rem; letter-spacing: .08em; border: 1px solid var(--gold-deep); border-radius: 3px; cursor: pointer; color: #1E1208; background: linear-gradient(180deg, #F0D995 0%, #C8A25A 48%, #A07C34 100%); box-shadow: inset 0 1px 0 rgba(255,250,225,.6), 0 2px 5px rgba(42,30,22,.35); transition: filter .15s, transform .15s; }
+.book-arrow svg { width: 20px; height: 20px; stroke-width: 2.4; transition: transform .15s; }
+.book-arrow:hover:not(:disabled) { filter: brightness(1.08); }
+.book-arrow.next:hover:not(:disabled) svg { transform: translateX(3px); }
+.book-arrow.prev:hover:not(:disabled) svg { transform: translateX(-3px); }
+.book-arrow:active:not(:disabled) { transform: translateY(1px); }
+.book-arrow:disabled { background: transparent; border-color: var(--parch-line); color: var(--parch-sub); box-shadow: none; opacity: .55; cursor: default; }
+
+/* ----- 不由自主閉上眼睛（翊文 11-09：太短看不到效果） ----- */
+.blink-veil { position: fixed; inset: 0; z-index: 9000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; opacity: 0; transition: opacity .45s; cursor: pointer; }
+.blink-veil.in { opacity: 1; }
+.blink-veil p { margin: 0; color: #CDB8F0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .2em; text-align: center; padding: 0 20px; }
+.blink-n { min-height: 3.5rem; color: var(--gold-hi); font-family: var(--serif); font-weight: 400; font-size: 2.75rem; line-height: 3.5rem; }
+.blink-veil small { color: #6F6786; font-size: .75rem; letter-spacing: .1em; }

@@ -72,6 +72,7 @@ export const icon = (name, cls) => h("span", { class: "ic " + (cls || ""), html:
 export const btn = (label, onClick, cls = "", extra = {}) => h("button", Object.assign({ class: "btn " + cls, type: "button", onClick }, extra), label);
 export const wait = ms => new Promise(r => setTimeout(r, motionOff() ? Math.min(ms, 120) : ms));
 export const motionOff = () => document.body.classList.contains("reduce-motion");
+export const holdFor = ms => new Promise(r => setTimeout(r, ms)); // 要讓人看字的等待：動畫減量也不縮短
 export function later(fn, ms) { const t = setTimeout(fn, ms); UI.timers.push(t); return t; }
 export function every(fn, ms) { const t = setInterval(fn, ms); UI.timers.push(t); return t; }
 export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearInterval(t); }); UI.timers = []; UI.cleanup.forEach(f => { try { f(); } catch (e) { /* 已經拿掉了 */ } }); UI.cleanup = []; }
@@ -828,12 +829,29 @@ export async function sanFlow(spec, src, title, o = {}) {
     if (!r.success && !o.noInvoluntary) {
       const inv = involuntary(P);
       res.involuntary = inv;
+      if (inv === "blink") return blinkFlow();
       note(INVOLUNTARY[inv], "bad");
-      return inv === "blink" ? (async () => { document.body.classList.add("blink"); await wait(1100); document.body.classList.remove("blink"); })() : null;
+      return null;
     }
     return null;
   });
   return res;
+}
+// 「你閉上眼睛，從壹數到拾」：畫面真的黑掉，壹個壹個數（翊文 11-09：原本 1.1 秒太短，看不到效果）。點壹下可以先睜開
+export async function blinkFlow() {
+  const n = h("b", { class: "blink-n" });
+  const veil = h("div", { class: "blink-veil", role: "status" }, h("p", null, INVOLUNTARY.blink), n, h("small", null, "點壹下睜開眼睛"));
+  let opened = false;
+  veil.addEventListener("click", () => { opened = true; });
+  document.body.append(veil);
+  requestAnimationFrame(() => veil.classList.add("in"));
+  snd("whisper");
+  await holdFor(900);
+  for (const c of "壹貳參肆伍陸柒捌玖拾") { if (opened) break; n.textContent = c; await holdFor(320); }
+  if (!opened) await holdFor(500);
+  veil.classList.remove("in");
+  await holdFor(500);
+  veil.remove();
 }
 // 扣理智之後：歸零、看懂檢定、瘋狂發作、怪癖（直接扣理智的地方也走這裡）
 export async function lossFlow(loss, src, o = {}, beforeTemp) {
