@@ -17,7 +17,8 @@ const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 const LIMITS = { weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3,
-  understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6 }; // 線索和看懂（shared/clues.js）
+  understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6, // 線索和看懂（shared/clues.js）
+  yugaSays: 40, yugaDone: 40 }; // Yuga Bot 交代的任務（每日任務的 giver、says、done）
 // 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
 // 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
 const BANNED = [
@@ -270,6 +271,18 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     let minutes = 0;
     daily.forEach((t, i) => { minutes += taskOk(`${where}.daily[${i}]`, t, Object.assign({ day: d }, ctx), "daily"); });
     if (minutes > N.dailyMinutes) E(where, `3 個每日任務大約要 ${minutes} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
+    // Yuga Bot 交代的任務：giver 只能是 yuga、says 必填、done 選填；壹天最多壹個；備用的壹天不能有。字 R 是荷官叫玩家的方式，其他英文字母照樣擋
+    const yuga = (s, max, w) => text(w, typeof s === "string" ? s.replace(/R/g, "阿") : s, max);
+    daily.forEach((t, i) => {
+      if (!isObj(t)) return;
+      const w = `${where}.daily[${i}]`;
+      if (t.giver === undefined) { if (t.says !== undefined || t.done !== undefined) E(w, "有 says／done 就要寫 giver: \"yuga\""); return; }
+      if (t.giver !== "yuga") E(w + ".giver", "giver 只能是 \"yuga\"");
+      if (o.spare || !o.date) E(w + ".giver", "備用週、備用的壹天不能讓 Yuga Bot 交任務（不知道那天劇情走到哪）");
+      yuga(t.says, LIMITS.yugaSays, w + ".says");
+      if (t.done !== undefined) yuga(t.done, LIMITS.yugaDone, w + ".done");
+    });
+    if (daily.filter(t => isObj(t) && t.giver !== undefined).length > 1) E(where, "壹天最多壹個 Yuga Bot 交代的任務");
     books.forEach((b, i) => bookOk(`${where}.books[${i}]`, b, Object.assign({ spare: !!o.spare }, ctx), n));
     if (!o.spare && !books.some(b => b && ctx.weekLine.has(b.line))) E(where, "每天至少一本書接這週的線（line 是這週 kind week 或 floor 的線）");
     if (d.casino !== undefined) casinoDayOk(where + ".casino", d.casino, ctx, o);

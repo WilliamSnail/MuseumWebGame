@@ -23,7 +23,7 @@ import { DAY_DATA } from "./shared/day_data.js";
 import { NUM } from "./shared/config.js";
 import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "./shared/discord.js";
 import { taipeiDay } from "./shared/logic.js";
-import { PLAY_HANDLERS, onComponent } from "./discord_play.js";
+import { PLAY_HANDLERS, onComponent, yugaLineFor } from "./discord_play.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組
 const HEX = /^[0-9a-fA-F]+$/;
@@ -68,7 +68,8 @@ async function cmdChips(p, now) {
   if (!ms.exists) return dcReply(dcText("chipsGone"), true);
   // 稱號只讀不寫（titles 由賭場寫，test/titles.test.cjs 擋其他檔的寫法，所以這裡用 ref("titles").child(uid)）
   const w = casWalletFix(parseData(ws), taipeiDay(now)); // 沒進過賭場＝開場的數字（跟遊戲裡的 peek 一樣，不建錢包）
-  return dcReply(dcChipsText(ms.data().nick, w.chips, ts.val()), true);
+  const says = await yugaLineFor(uid, now); // Yuga Bot 交代的任務：今天有、你還沒做完，最後多壹行（只有本人看得到）
+  return dcReply(dcChipsText(ms.data().nick, w.chips, ts.val()) + (says ? "\n" + says : ""), true);
 }
 async function cmdHouse(p, now) {
   const hs = await getFirestore().doc("casinoHouse/main").get();

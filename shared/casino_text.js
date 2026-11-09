@@ -50,6 +50,8 @@ export const CAS_TEXT = {
   reliefGive: "Yuga 借你，補到 {n}。今天還能借 {left} 次",
   reliefNone: "今天借完了，明天 05:00 再來。大禮包每天還有 {n} 包",
   reliefNot: "你還有籌碼，不用借",
+  reliefTip: "R 你沒錢了喔。Yuga 可以借你籌碼（今天還能借 {left} 次）",
+  reliefPoor: "可以借：按上面的「向 Yuga 借」",
   // 餐車
   dinerHello: "您好，餐車收銀是 {name}",
   dinerHint: "吃東西有機會抽中大禮包券，先開過今天的大禮包才抽得到",

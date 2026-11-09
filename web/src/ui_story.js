@@ -217,7 +217,8 @@ function taskRow(W, t, draw, m) {
       : where && !W.past ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); goStep(where); }, "small") : null;
   return h("li", { class: "sp-task" + (st.done ? " done" : "") + (st.claimed ? " claimed" : "") },
     h("span", { class: "sp-check", "aria-hidden": "true" }, st.done ? icon("check") : null),
-    h("span", { class: "sp-t-main" }, h("span", { class: "sp-t-text" }, taskText(t, W)), t.weekly && t.words ? h("small", { class: "sp-t-words" }, ptMark(t.words)) : null, h("small", { class: "sp-t-r" }, rewardText(r))),
+    h("span", { class: "sp-t-main" }, h("span", { class: "sp-t-text" }, taskText(t, W)), t.weekly && t.words ? h("small", { class: "sp-t-words" }, ptMark(t.words)) : null,
+      t.giver === "yuga" && t.says ? h("small", { class: "sp-t-yuga" }, h("b", null, "Yuga Bot 交代："), t.says) : null, h("small", { class: "sp-t-r" }, rewardText(r))),
     h("span", { class: "sp-t-n" }, `${n}／${tgt}`), act);
 }
 function bonusRow(text, state, reward, claim) {

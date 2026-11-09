@@ -166,6 +166,14 @@ export function storyPackFor(lib, label, fb) {
   return src && src.week ? { src, fbName } : null;
 }
 // skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
+// Yuga Bot 交代的任務：giver 只認 "yuga"，says／done 要是有字的字串（最多 YUGA_MAX 字），不然當作沒有這回事。備用的壹天不收（不知道那天劇情走到哪）
+export const YUGA_MAX = 40;
+const yugaText = s => (typeof s === "string" && s.trim() ? [...s.trim()].slice(0, YUGA_MAX).join("") : "");
+function yugaTask(t, ok) {
+  const says = ok && t.giver === "yuga" ? yugaText(t.says) : "";
+  t.giver = says ? "yuga" : null; t.says = says; t.done = says ? yugaText(t.done) : "";
+  return t;
+}
 const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0), skill: r && SKILLS.includes(r.skill) ? r.skill : null });
 
 // 一週整理成遊戲用的樣子（id 都加上週的名字）。label ＝ "2026-W46"；today ＝今天（只打開到今天的天）；fb ＝指定用哪一個備用週（不給就照週數輪）
@@ -216,7 +224,7 @@ export function storyWeekAt(lib, label, today, fb) {
     const day = {
       n, date, spare, holiday: d.holiday || (STORY_HOLIDAY_OF ? STORY_HOLIDAY_OF(date) : null) || null, board: d.board || "",
       books: asList(d.books).map((b, i) => Object.assign({}, b, { id: p + b.id, local: b.id, day: n, idx: i, line: lineOf(b.line, p), unlock: b.ending ? { type: "ending" } : unlock(b.unlock), pages: asList(b.pages) })),
-      daily: asList(d.daily).map((t, i) => task(t, p, { daily: true, day: n, date, idx: i })),
+      daily: asList(d.daily).map((t, i) => yugaTask(task(t, p, { daily: true, day: n, date, idx: i }), !spare && !fbName)),
       dailyBonus: reward(d.dailyBonus),
       show: d.show ? { title: d.show.title || "", intro: d.show.intro || "", works: asList(d.show.works).map(w => Object.assign({}, w, { id: p + w.id, local: w.id, day: n, date })) } : null,
       adds: asList(d.adds).map(r => room(r, p, n)),
@@ -249,13 +257,14 @@ export function lineById(W, id) { return W ? W.lines.find(l => l.id === id) || n
 // P.story = { v, books: { id: { got, read } }, tasks: { id: { base, done, claimed } }, works: { id: 日期 }, spots: { 房間 id: 日期 },
 //             weeks: { 週: { fb, first, bonus: { 第幾天: 日期 }, weekBonus } }, deep: { 日期: 走到第幾層 }, showInsp: { 日期: 拿了幾靈感 },
 //             bag: { 東西 id: 幾個 }, stamps: 週章, track: 追蹤哪一條劇情線, seen: { 劇情線 id: 看過的下一步 }, log: [],
+//             said: { 任務 id: 日期 } Yuga Bot 交代的任務，做完後荷官說過 done 了（ui_casino.js；舊存檔沒有，storyState 補）,
 //             cas: { 週: 日期 } 賭場每週收藏集滿、領過週章的週（伺服器寫，決定 0042；書架才讀得到那週集滿的小故事） }
 const isPlain = v => !!v && typeof v === "object" && !Array.isArray(v);
 export function storyState(P) {
   if (!isPlain(P.story)) P.story = {};
   const S = P.story;
   S.v = 1;
-  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
+  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas", "said"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
   if (!Number.isFinite(S.stamps) || S.stamps < 0) S.stamps = 0;
   if (typeof S.track !== "string") S.track = null;
   if (!Array.isArray(S.log)) S.log = [];
@@ -264,7 +273,7 @@ export function storyState(P) {
 // 舊的紀錄清掉（8 週以前的任務、看過的畫、每天的數字）；書讀過的留著（劇情回顧要用）
 export function pruneStory(S, today) {
   const cutDate = addDays(weekMonday(today), -56), cutWeek = isoWeek(cutDate);
-  ["tasks", "works"].forEach(k => Object.keys(S[k]).forEach(id => { if (id.split("/")[0] < cutWeek) delete S[k][id]; }));
+  ["tasks", "works", "said"].forEach(k => Object.keys(S[k]).forEach(id => { if (id.split("/")[0] < cutWeek) delete S[k][id]; }));
   ["deep", "showInsp"].forEach(k => Object.keys(S[k]).forEach(d => { if (d < cutDate) delete S[k][d]; }));
   if (S.log.length > 100) S.log = S.log.slice(-100);
 }
@@ -464,6 +473,24 @@ function give(P, S, r, today, what) {
   if (S.log.length > 100) S.log = S.log.slice(-100);
   return r.skill ? growSkill(P, r.skill, NUM.shop.trialSkill, NUM.story.skillCap) : null; // 房間的技能成長（決定 0032）：現在這位長
 }
+// ---------- Yuga Bot 交代的任務 ----------
+// 今天的每日任務裡 Yuga Bot 交代的那一個（壹天最多壹個；檢查程式擋）。沒有回傳 null
+export function yugaTaskOf(W) {
+  const d = todayOf(W);
+  return d ? d.daily.find(t => t.giver === "yuga") || null : null;
+}
+// 荷官要說的話：還沒做完 → { kind: "says", text }；做完了、有 done、還沒說過 → { kind: "done", text, id }（說完呼叫 yugaMarkSaid）；其他 null。
+// P.story.said 是 { 任務 id: 日期 }：舊存檔沒有這欄，storyState 補成空的
+export function yugaLine(P, W) {
+  if (!P || !W || W.past || isFree(P)) return null;
+  const t = yugaTaskOf(W);
+  if (!t) return null;
+  const S = storyState(P), st = S.tasks[t.id];
+  if (!(st && st.done)) return { kind: "says", text: t.says, id: t.id };
+  if (t.done && !S.said[t.id]) return { kind: "done", text: t.done, id: t.id };
+  return null;
+}
+export function yugaMarkSaid(P, id, today) { const S = storyState(P); S.said[id] = today || true; }
 // 領任務的獎勵（只有那一週領得到）。每週任務多給週章
 export function claimTask(P, W, id, today) {
   if (!P || isFree(P)) return { ok: false, reason: "自由模式沒有任務" };

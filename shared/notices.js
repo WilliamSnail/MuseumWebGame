@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "yuga-errands-borrow", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "Yuga Bot 有時會交代你事情；沒錢可以借", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["新的東西", [
+        "荷官 Yuga Bot 偶爾會想到壹件事，交給你去辦。那天的每日任務裡會標「Yuga Bot 交代」，進賭場的時候，荷官也會提壹句。任務本身跟平常的每日任務壹樣，做完照領獎勵。",
+        "籌碼不到 1,000 的時候，賭場每個頁籤上方都會出現「向 Yuga 借籌碼」，不用再回牌桌找。籌碼不夠買餐車、換小獎、下注的時候，借得到會順便提醒你。",
+        "Discord 也能借：綁定之後打 **/pepe-借錢**，只有你看得到。次數和補到多少跟遊戲裡壹樣，壹天共用。在 Discord 買不起或下注不夠，也會提醒你可以借。",
+        "綁定的人用 /pepe-籌碼、/pepe-21點、/pepe-餐車 的時候，Yuga Bot 交代的事如果還沒做完，回覆最後會多壹行（只有你看得到）。",
+      ]],
+      ["怎麼玩", ["Yuga Bot 交代的事不用急，也不是每天都有。沒做也不會卡住劇情。籌碼不是錢，借了也不用還。"]],
+    ],
+  },
+  {
     id: "understand-grows", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "《看懂的事》會跟著每週劇情長", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
