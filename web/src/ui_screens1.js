@@ -426,19 +426,22 @@ SCREENS.origin = (root, params) => {
     forbList.push(b);
     for (let s = bookSequels().find(x => x.after === b.id); s; s = bookSequels().find(x => x.after === s.id)) forbList.push(s);
   });
+  // 續集接在哪壹本後面（翊文 11-09：「禁書的哪個是哪壹個的續集有點難看得出來」）：書背寫上第壹本的名字，也貼著那壹本放
+  const seriesRoot = b => { let r = b; while (r && r.after) { const id = r.after; r = forbList.find(x => x.id === id); } return r || b; };
+  const seriesTag = b => h("span", { class: "spine-of" }, `${seriesRoot(b).spine} 續集`);
   const forb = h("div", { class: "shelf forbidden" }, h("span", { class: "shelf-label" }, "禁書"),
     forbList.map(b => {
       if (b.after && !sequelVisible(P, b)) return null;
       if (b.after && !sequelOpen(P, b)) {
-        const sealed = h("button", { type: "button", class: "spine dark sealed", dataset: { seq: b.id }, "aria-label": `還打不開的續集。${b.hint}` }, h("span", { class: "spine-t" }, "續集"), icon("lock"));
+        const sealed = h("button", { type: "button", class: "spine dark sealed sequel", dataset: { seq: b.id }, "aria-label": `還打不開的《${seriesRoot(b).spine}》續集。${b.hint}` }, h("span", { class: "spine-of" }, seriesRoot(b).spine), h("span", { class: "spine-t" }, "續集"), icon("lock"));
         sealed.addEventListener("click", () => {
           $$(".spine.on", root).forEach(x => x.classList.remove("on")); sealed.classList.add("on"); snd("eerie", 1);
           reader.replaceChildren(h("div", { class: "book sealed-book" }, h("h2", { class: "book-title" }, "還打不開的續集"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, b.hint, b.need === "idleOrigin" ? `大約 ${NUM.idleBook} 秒。` : "")));
         });
         return sealed;
       }
-      const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": `禁書：${b.title}` },
-        h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null);
+      const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": b.after ? `禁書：${b.title}（《${seriesRoot(b).spine}》的續集）` : `禁書：${b.title}` },
+        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null);
       freshMark(el, isFresh(P, "origin", FRESH_KEY.book(b.id))); // 新的禁書、續集（11-08）
       el.addEventListener("click", () => openForbidden(b, reader));
       return el;
@@ -487,8 +490,9 @@ export function bookReader(reader, title, pages, o = {}) {
   let i = 0;
   const page = h("div", { class: "page" });
   const count = h("span", { class: "page-n" });
-  const prev = h("button", { type: "button", class: "icon-btn", "aria-label": "上一頁", onClick: () => flip(-1) }, icon("arrowLeft"));
-  const next = h("button", { type: "button", class: "icon-btn", "aria-label": "下一頁", onClick: () => flip(1) }, icon("arrowRight"));
+  // 翊文 11-09：「翻頁箭頭可以明顯一點嗎」：金色按鈕，箭頭旁邊寫字
+  const prev = h("button", { type: "button", class: "book-arrow prev", onClick: () => flip(-1) }, icon("arrowLeft"), h("span", null, "上壹頁"));
+  const next = h("button", { type: "button", class: "book-arrow next", onClick: () => flip(1) }, h("span", null, "下壹頁"), icon("arrowRight"));
   const draw = () => {
     page.replaceChildren(...String(pages[i]).split("\n").map(l => bookLine(l)));
     if (o.aside && i === pages.length - 1) page.append(h("p", { class: "pl-aside" }, ptNode(o.aside)));

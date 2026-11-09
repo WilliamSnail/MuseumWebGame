@@ -564,8 +564,9 @@ SCREENS.cellar = root => {
     h("div", { class: "floors" }, floorEls),
     h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
       tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),
-      go_, legend)),
-    strip);
+      go_)),
+    strip, // 翊文 11-09：挑隊員要在隊伍正下方，不用滑到最下面
+    legend);
 };
 export function cellarRoom(root) {
   const run = P.cellar.run, f = cellarFloor(run.floor), room = currentRoom(P);
