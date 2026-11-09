@@ -77,8 +77,13 @@ T("viewFor：只送自己看到的；答案、別人的、誰是假的都不在�
   assert.strictEqual(v.clue.truth, undefined);
   assert.strictEqual(v.clue.fake, undefined);
   assert.ok(!txt.includes('"fake"'));
-  assert.ok(!txt.includes('"truth"'));
+  assert.ok(!txt.includes('"truth":['), "真的記號不能送");
   assert.strictEqual(v.seed, undefined);
+  assert.strictEqual(v.hazard, undefined);
+  assert.strictEqual(v.map, undefined, "地圖只給留守的人");
+  assert.strictEqual(v.stats, undefined);
+  assert.strictEqual(v.truth.id, undefined, "住的是什麼，猜完才知道");
+  assert.strictEqual(v.truth.order, undefined);
   // 有幻覺的人自己也看不出來
   const a = G.viewFor(run, "a");
   assert.ok(a.clue.seen.includes(c.fake.a));
@@ -116,7 +121,7 @@ T("記號對上又過了：多一點靈感（今天沒獎勵的不拿）", () =>
   const { run, Ps } = three();
   run.members[1].rewarded = false;
   const ans = run.clue.answer;
-  G.setRng(() => 0.001); // 骰子都很小：技能、理智都過；強度不一定
+  G.setRng(() => 0.15); // 骰子都很小（11）：技能、理智都過；強度不一定
   Ps.a.insp = Ps.b.insp = Ps.c.insp = 0;
   const room = G.coopRoom(run);
   if (room.choices[ans].check.type === "power") { run.team.forEach(it => { it.pick.稀有度 = "不可名狀"; }); G.coopSync(run, Ps); }
@@ -133,6 +138,7 @@ T("走到下一間發新的記號；留守的人不算", () => {
   const first = JSON.stringify(run.clue);
   G.coopAct(run, Ps, "a", "vote", { choice: safe(run) }, NOW); G.coopAct(run, Ps, "b", "vote", { choice: safe(run) }, NOW);
   ["a", "b", "g"].forEach(id => G.coopAct(run, Ps, id, "ack", {}, NOW));
+  if (run.phase === "carry") { G.coopAct(run, Ps, "a", "carry", { side: "skip" }, NOW); G.coopAct(run, Ps, "b", "carry", { side: "skip" }, NOW); ["a", "b", "g"].forEach(id => G.coopAct(run, Ps, id, "ack", {}, NOW)); }
   assert.strictEqual(run.idx, 1);
   assert.notStrictEqual(JSON.stringify(run.clue), first);
 });
@@ -218,6 +224,237 @@ T("伺服器變形：拿隊員現在的理智（run 裡的），不是畫面給�
   const r = G.coopSayBuild(run, "a", { say: "safe", san: 99 });
   assert.strictEqual(r.warped, true);
   assert.strictEqual(r.from, "安全");
+});
+// ---------- 機制 3：湊證據猜真相 ----------
+// 把這一層走到底（大家投同一個，有搬的就略過）；opts.pick(run) 回傳選項
+function walkFloor(run, Ps, ids, opts = {}) {
+  let guard = 0;
+  while (run.phase !== "floorDone" && run.phase !== "over" && run.phase !== "guess" && guard++ < 60) {
+    if (run.phase === "vote") {
+      const v = opts.pick ? opts.pick(run) : safe(run);
+      ids.forEach(id => G.coopAct(run, Ps, id, "vote", { choice: v }, NOW));
+    } else if (run.phase === "carry") {
+      ids.forEach(id => G.coopAct(run, Ps, id, "carry", { side: "skip" }, NOW));
+    } else ids.forEach(id => G.coopAct(run, Ps, id, "ack", {}, NOW));
+  }
+}
+T("證據：選安全的不掉；過了一定掉，沒有重複，都是這位住客的（理智高）", () => {
+  const { run, Ps } = three();
+  walkFloor(run, Ps, ["a", "b", "c"]);
+  assert.ok(run.truth.found.length < G.COOP.truth.need, "B1 只有壹間沒有安全的選項");
+  assert.strictEqual(run.phase, "floorDone", "湊不齊就不用猜");
+  const o = three();
+  G.setRng(() => 0.15); // 骰子都很小（11）：技能、理智都過
+  o.run.team.forEach(it => { it.pick.稀有度 = "不可名狀"; });
+  walkFloor(o.run, o.Ps, ["a", "b", "c"], { pick: run => run.room.choices.findIndex(c => c.type !== "none") });
+  const t = o.run.truth, res = G.COOP_RESIDENTS.find(x => x.id === t.id);
+  assert.ok(t.found.length >= G.COOP.truth.need, "4 間過了至少 3 個：" + t.found.length);
+  assert.strictEqual(new Set(t.found.map(x => x.kind)).size, t.found.length);
+  t.found.forEach(x => assert.ok(res.ev.includes(x.kind)));
+  assert.strictEqual(o.run.phase, "guess");
+});
+T("證據：理智低的人找到的可能是假的；大家看得到找到什麼，看不到哪個是假的", () => {
+  const { run, Ps } = party([{ id: "a", san: 20 }]);
+  run.truth.found = []; G.setRng(() => 0.5);
+  let fakes = 0;
+  for (let i = 0; i < 60; i++) {
+    run.truth.found = []; run.idx = i % 4; run.seed = 1000 + i;
+    const e = G.coopDropEvidence(run, Ps, { pick: 0 }, { type: "skill", success: true, by: "a" });
+    if (e && e.fake) fakes++;
+  }
+  assert.ok(fakes > 5 && fakes < 45, "假的要有一些：" + fakes);
+  run.truth.found = [{ kind: "foot", by: "a", room: "1a", fake: true }];
+  const v = G.viewFor(run, "a");
+  assert.strictEqual(v.truth.found[0].fake, undefined);
+  assert.strictEqual(v.truth.fakes, undefined);
+  run.truth.done = true;
+  assert.deepStrictEqual(J(G.viewFor(run, "a").truth.fakes), ["foot"]);
+});
+function atGuess(specs) {
+  const o = party(specs || [{ id: "a" }, { id: "b" }, { id: "c" }]);
+  const ids = o.run.members.filter(m => !m.guard).map(m => m.id);
+  const res = G.COOP_RESIDENTS.find(x => x.id === o.run.truth.id);
+  o.run.truth.found = res.ev.map(kind => ({ kind, by: ids[0], room: "1a", fake: false }));
+  walkFloor(o.run, o.Ps, ids);
+  assert.strictEqual(o.run.phase, "guess");
+  return Object.assign(o, { ids, res });
+}
+T("猜對：全隊拿靈感、記進《看懂的事》；今天沒獎勵的不拿靈感，一樣看懂", () => {
+  const o = atGuess();
+  const { run, Ps, res } = o;
+  run.members[1].rewarded = false;
+  const i0 = Ps.a.insp, i1 = Ps.b.insp;
+  assert.ok(G.UNDERSTAND_TEXT.some(x => x.id === res.understand), "要在《看懂的事》的清單裡");
+  ["a", "b", "c"].forEach(id => G.coopAct(run, Ps, id, "guess", { id: res.id }, NOW));
+  const n = G.COOP.truth.insp + run.floor * G.COOP.truth.perFloor;
+  assert.strictEqual(Ps.a.insp, i0 + n);
+  assert.strictEqual(Ps.b.insp, i1);
+  ["a", "b", "c"].forEach(id => assert.ok(Ps[id].understood[res.understand]));
+  assert.strictEqual(run.truth.right, true);
+  assert.strictEqual(run.phase, "floorDone");
+  assert.strictEqual(G.viewFor(run, "a").truth.id, res.id);
+});
+T("猜錯：全隊擲理智（失敗扣比較多），不會記進《看懂的事》；都沒猜就沒事", () => {
+  const o = atGuess();
+  const { run, Ps, res } = o;
+  const wrong = G.COOP_RESIDENTS.find(x => x.id !== res.id).id;
+  const s0 = Ps.a.sanity;
+  G.setRng(() => 0.99); // 擲很大：理智檢定失敗
+  ["a", "b", "c"].forEach(id => G.coopAct(run, Ps, id, "guess", { id: wrong }, NOW));
+  assert.strictEqual(run.truth.right, false);
+  assert.ok(Ps.a.sanity < s0);
+  assert.ok(!Ps.a.understood[res.understand]);
+  const p = atGuess();
+  const s1 = p.Ps.a.sanity;
+  G.coopAct(p.run, p.Ps, "a", "tick", {}, NOW + G.COOP.truth.guessMs);
+  assert.strictEqual(p.run.truth.right, null);
+  assert.strictEqual(p.Ps.a.sanity, s1);
+  assert.strictEqual(p.run.phase, "floorDone");
+});
+
+// ---------- 機制 5：留守 ----------
+T("留守：看得到地圖、每個選項的危險度、哪個有東西；看不到房間的字。下去的人看不到地圖", () => {
+  const { run } = party([{ id: "a" }, { id: "b" }, { id: "g", guard: true }]);
+  const g = G.viewFor(run, "g"), a = G.viewFor(run, "a");
+  assert.strictEqual(g.role, "guard");
+  assert.strictEqual(g.room, null);
+  assert.strictEqual(g.map.rooms.length, G.cellarFloor(1).rooms.length);
+  assert.strictEqual(g.map.options.filter(o => o.hazard).length, 1);
+  assert.ok(g.map.options.every(o => typeof o.danger === "number"));
+  assert.strictEqual(a.map, undefined);
+  assert.ok(a.room);
+  assert.strictEqual(a.hasGuard, true);
+  const room = G.coopRoom(run);
+  assert.ok(!JSON.stringify(g.map).includes(room.title));
+});
+T("留守：選到有東西的選項又沒過，下面的人多扣；留守的人不扣、也不算走過這一層", () => {
+  const { run, Ps } = party([{ id: "a" }, { id: "b" }, { id: "g", guard: true }]);
+  run.hazard = 1; // B1 第壹間的乙是技能
+  G.setRng(() => 0.99); // 擲很大：技能不過
+  const san = Ps.g.sanity, a0 = Ps.a.sanity;
+  const r = G.coopResolve(run, Ps, { a: 1, b: 1 });
+  assert.ok(r.ok);
+  assert.strictEqual(r.check.success, false);
+  assert.strictEqual(run.last.hazard, true);
+  assert.ok(r.fx.members.a.hazard > 0);
+  assert.ok(Ps.a.sanity < a0);
+  assert.strictEqual(Ps.g.sanity, san);
+  assert.strictEqual(r.fx.members.g, undefined);
+});
+T("留守：要有人下去；只能一個；一隊只有他不行（準備區也擋）", () => {
+  const P1 = person(), P2 = person();
+  assert.strictEqual(G.canStartCoop([{ id: "a", P: P1, keys: [], guard: true }], 1).ok, false);
+  assert.strictEqual(G.canStartCoop([{ id: "a", P: P1, keys: [], guard: true }, { id: "b", P: P2, keys: [], guard: true }], 1).ok, false);
+  const p = G.newParty({ pid: "p", kind: "cellar", leader: "a", leaderNick: "a", now: NOW });
+  assert.strictEqual(G.partyGuard(p, "a", true).ok, false, "一個人不能留守");
+  G.partyJoin(p, "b", "b", NOW);
+  assert.ok(G.partyGuard(p, "a", true).ok);
+  assert.strictEqual(G.partyGuard(p, "b", true).ok, false, "只能一個");
+  assert.ok(G.partyReady(p, "a", true).ok, "留守的人不用選佩佩");
+  assert.ok(G.partyPick(p, "b", ["k"]).ok);
+  assert.ok(G.partyReady(p, "b", true).ok);
+  assert.ok(G.canStartParty(p, "a").ok);
+});
+
+// ---------- 機制 8：兩個人一起搬 ----------
+function atCarry(specs) {
+  const o = party(specs || [{ id: "a" }, { id: "b" }, { id: "c" }]);
+  const ids = o.run.members.filter(m => !m.guard).map(m => m.id);
+  o.run.carry.idx = 0;
+  ids.forEach(id => G.coopAct(o.run, o.Ps, id, "vote", { choice: safe(o.run) }, NOW));
+  o.run.members.forEach(m => G.coopAct(o.run, o.Ps, m.id, "ack", {}, NOW));
+  assert.strictEqual(o.run.phase, "carry");
+  assert.strictEqual(o.run.idx, 0);
+  return Object.assign(o, { ids });
+}
+T("搬：一左一右都穩，全隊拿靈感；有一個人手滑，碎了、吵醒東西（下一間門檻 +1）", () => {
+  const o = atCarry();
+  const i0 = o.Ps.c.insp;
+  G.setRng(() => 0.15); // 擲很小（11）：都不手滑
+  G.coopAct(o.run, o.Ps, "a", "carry", { side: "L" }, NOW);
+  G.coopAct(o.run, o.Ps, "b", "carry", { side: "R" }, NOW);
+  G.coopAct(o.run, o.Ps, "c", "carry", { side: "skip" }, NOW);
+  assert.strictEqual(o.run.phase, "carried");
+  assert.strictEqual(o.run.carry.result.kind, "ok");
+  assert.strictEqual(o.Ps.c.insp, i0 + G.COOP.carry.insp + 1);
+  const p = atCarry();
+  const s0 = p.Ps.c.sanity;
+  G.setRng(() => 0.999); // 擲很大：手滑
+  G.coopAct(p.run, p.Ps, "a", "carry", { side: "L" }, NOW);
+  G.coopAct(p.run, p.Ps, "b", "carry", { side: "R" }, NOW);
+  G.coopAct(p.run, p.Ps, "c", "carry", { side: "L" }, NOW); // 第三個人抓左邊：只是在旁邊
+  assert.strictEqual(p.run.carry.result.kind, "slip");
+  assert.ok(p.Ps.c.sanity < s0, "全隊都被吵醒的東西嚇到");
+  assert.strictEqual(p.run.woken, G.COOP.carry.wake);
+  assert.strictEqual(p.run.pressure.power, G.COOP.carry.wake);
+  p.run.members.forEach(m => G.coopAct(p.run, p.Ps, m.id, "ack", {}, NOW));
+  assert.strictEqual(p.run.idx, 1, "搬完才走到下一間");
+  const before = p.run.room.choices.find(c => c.type === "power");
+  if (before) assert.strictEqual(before.target, G.coopTarget(before.base, p.run.team.length, 3) + G.COOP.carry.wake);
+  G.coopResolve(p.run, p.Ps, { a: safe(p.run), b: safe(p.run), c: safe(p.run) });
+  assert.strictEqual(p.run.woken, 0, "吵醒的東西只影響一間");
+});
+T("搬：都抓同一邊撞在一起；只有一個人抬不動；沒人抬沒事；時間到照現在的算", () => {
+  const o = atCarry();
+  ["a", "b", "c"].forEach(id => G.coopAct(o.run, o.Ps, id, "carry", { side: "L" }, NOW));
+  assert.strictEqual(o.run.carry.result.kind, "bump");
+  assert.ok(o.run.woken);
+  const p = atCarry();
+  G.coopAct(p.run, p.Ps, "a", "carry", { side: "L" }, NOW);
+  G.coopAct(p.run, p.Ps, "a", "tick", {}, NOW + G.COOP.carry.ms);
+  assert.strictEqual(p.run.carry.result.kind, "alone");
+  assert.ok(!p.run.woken);
+  const q = atCarry();
+  G.coopAct(q.run, q.Ps, "a", "tick", {}, NOW + G.COOP.carry.ms);
+  assert.strictEqual(q.run.carry.result.kind, "left");
+  assert.strictEqual(q.run.phase, "carried");
+  assert.strictEqual(G.coopAct(q.run, q.Ps, "a", "carry", { side: "L" }, NOW).ok, false, "搬完了不能再搬");
+});
+T("搬：一個人的時候館方助手抬另一邊；幽靈、留守的不能抬", () => {
+  const o = atCarry([{ id: "a" }]);
+  G.setRng(() => 0.15);
+  G.coopAct(o.run, o.Ps, "a", "carry", { side: "L" }, NOW);
+  assert.strictEqual(o.run.carry.result.kind, "ok");
+  assert.strictEqual(o.run.carry.result.rolls.length, 2);
+  assert.strictEqual(o.run.carry.result.rolls[1].id, null);
+  const p = atCarry([{ id: "a" }, { id: "b" }, { id: "g", guard: true }]);
+  assert.strictEqual(G.coopAct(p.run, p.Ps, "g", "carry", { side: "L" }, NOW).ok, false);
+});
+
+// ---------- 機制 9：探險報告 ----------
+T("報告：寫誰救了誰、誰看到幻覺、最驚險的一間、搞笑的一刻；存進每個人的存檔", () => {
+  const { run, Ps } = party([{ id: "a", san: 20 }, { id: "b", san: 60 }, { id: "c", san: 60 }]);
+  G.setRng(() => 0.99); // 都失敗：有人掉理智
+  const v = run.room.choices.findIndex(c => c.type !== "none");
+  ["a", "b", "c"].forEach(id => G.coopAct(run, Ps, id, "vote", { choice: v }, NOW));
+  G.setRng(G.mulberry32(3));
+  run.stats.saves.push({ by: "b", who: "a", san: 8 });
+  const warps = [{ name: "a", from: "安全", to: "牠在後面" }];
+  const r = G.coopAct(run, Ps, "a", "leave", {}, NOW); assert.ok(r.ok);
+  G.coopAct(run, Ps, "b", "leave", {}, NOW);
+  const end = G.coopAct(run, Ps, "c", "leave", {}, NOW, { warps, today: "2026-11-09" });
+  assert.ok(end.ended);
+  const rep = run.report, text = rep.lines.map(l => l.t).join("|");
+  assert.strictEqual(rep.date, "2026-11-09");
+  assert.ok(text.includes("a") && text.includes("8"), text);
+  assert.ok(rep.lines.some(l => l.k === "halluc"), text);
+  assert.ok(rep.lines.some(l => l.k === "scary"), text);
+  assert.ok(text.includes("牠在後面"), text);
+  assert.strictEqual(G.viewFor(run, "c").report.id, rep.id);
+  assert.ok(!JSON.stringify(rep).includes('"id":"a"'), "報告裡不放帳號編號");
+});
+T("報告存檔：最多留幾張，舊的掉出去，掛在展廳的留著；換參觀者不會不見；舊存檔讀得回來", () => {
+  const P = person();
+  P.hallReport = "r0";
+  for (let i = 0; i <= G.COOP.report.keep + 2; i++) G.coopSaveReport(P, { id: "r" + i, lines: [] });
+  assert.strictEqual(P.coopReports.length, G.COOP.report.keep);
+  assert.ok(P.coopReports.some(r => r.id === "r0"), "掛著的留著");
+  assert.strictEqual(P.coopReports[0].id, "r" + (G.COOP.report.keep + 2));
+  assert.ok(!G.VISITOR_KEYS.includes("coopReports"));
+  G.coopSaveReport(P, { id: "r0", lines: [1] });
+  assert.strictEqual(P.coopReports.filter(r => r.id === "r0").length, 1, "同一趟只留一張");
+  const save = G.newSave(); save.profiles.challenge = P;
+  assert.ok(G.migrateSave(J(save)).profiles.challenge.coopReports.length > 0);
 });
 console.log(`${pass} passed, ${fail} failed（合作地下好玩的機制）`);
 process.exit(fail ? 1 : 0);

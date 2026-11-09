@@ -28,7 +28,7 @@ import { NUM } from "./config.js";
 import { addDays, addMyth, applySan, clampN, fromKey, fullPick, gainQuirk, gainSan, isFree, maxSan, pepeKey, pickOne, rollExpr, sanCheck, startBout, understandCheck } from "./logic.js";
 import { cellarAdvance, cellarFloor, injureDaysOf, skillCheck, skillOf, teamHas, teamPower, understandLine } from "./logic3.js";
 import { cellarDarkLoss, traitHits, traitTag } from "./legacy.js";
-import { coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
+import { coopCanGuess, coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
 export const COOP = {
@@ -68,6 +68,14 @@ export const COOP = {
   // 說的話變形（機制 4）：stutter ＝結巴的機率；swap ＝變成別句話的機率
   warp: [{ below: 40, stutter: 0.3, swap: 0.1 }, { below: 25, stutter: 0.5, swap: 0.3 }, { below: 12, stutter: 0.5, swap: 0.5 }],
   sayGapMs: 900,           // 壹句話之後要等多久（送太快會擋）
+  // 湊證據（機制 3）：每間最多掉一個。win ＝過了掉的機率；lose ＝沒過掉的機率；理智低於 fakeBelow 的人找到的，有 fakeChance 是假的
+  //   need ＝湊幾個才能猜；insp ＝猜對的靈感（＋層數 × perFloor）；wrongSan ＝猜錯全隊擲理智
+  truth: { win: 1, lose: 0.5, fakeBelow: 30, fakeChance: 0.4, need: 3, insp: 6, perFloor: 2, wrongSan: "1/1D4", guessMs: 40000 },
+  // 房間裡有東西（機制 5）：每間一個選項；選到又沒過，多扣這麼多理智。只有留守的人看得到
+  hazard: { san: "1D3" },
+  // 一起搬（機制 8）：每層一件。base ＋手工藝 ÷ skillDiv ＝不手滑的機率（百分比）；helper ＝館方助手的；insp ＋層數 ＝搬回來全隊的靈感；breakSan ＝摔碎了扣的；wake ＝吵醒之後下一間多加幾級門檻
+  carry: { base: 60, skillDiv: 3, helper: 70, insp: 2, breakSan: "1D3", wake: 1, ms: 25000 },
+  report: { lowSan: 15, keep: 12 }, // 探險報告：理智低於這個算「差點出事」；存幾張
 };
 
 // ---------- 小工具 ----------
@@ -112,7 +120,8 @@ export function coopPressure(run) {
   const avg = ms.length ? ms.reduce((n, m) => n + (m.ghost ? 0 : m.san), 0) / ms.length : 0;
   let hit = null;
   COOP.pressure.forEach(p => { if (avg < p.below && (!hit || p.lv > hit.lv)) hit = p; });
-  return { avg: Math.round(avg * 10) / 10, lv: hit ? hit.lv : 0, power: hit ? hit.power : 0, skill: hit ? hit.skill : 0, failSan: hit ? hit.failSan : 0 };
+  const woke = run.woken || 0; // 搬東西摔碎了（機制 8）：下一間多一點
+  return { avg: Math.round(avg * 10) / 10, lv: hit ? hit.lv : 0, power: (hit ? hit.power : 0) + woke, skill: (hit ? hit.skill : 0) - 5 * woke, failSan: hit ? hit.failSan : 0, woke };
 }
 // 全隊的強度：每隻佩佩的強度、帽子和姿勢的全隊加成（看整隊）沿用 teamPower；
 // 小優點「力氣大」、小缺點「沒力氣」每位隊員各算各的（幽靈不算：參觀者推不動了，佩佩還在推）
@@ -162,7 +171,7 @@ export function coopPreview(run, Ps) {
 }
 // 每位隊員的理智、幽靈、壓力、房間的樣子跟 P 對齊（每一步最後叫）
 export function coopSync(run, Ps) {
-  run.members.forEach(m => { const P = Ps[m.id]; if (!P || m.out === "left") return; m.san = P.sanity; m.max = maxSan(P); m.myth = P.myth; });
+  run.members.forEach(m => { const P = Ps[m.id]; if (!P || m.out === "left" || m.out === "ghost") return; m.san = P.sanity; m.max = maxSan(P); m.myth = P.myth; });
   run.pressure = coopPressure(run);
   run.room = run.phase === "vote" ? coopPreview(run, Ps) : null;
   return run;
@@ -441,6 +450,12 @@ export function coopApply(run, Ps, room, ch, check, events) {
     }
   }
   pending.forEach(([P, m, loss, parts, ev]) => coopSanHit(P, m, loss, src, parts, ev));
+  // 留守的人：照再走一次算靈感（今天有獎勵才拿）；不扣理智、不受傷、不算走過這一間
+  run.members.filter(m => m.guard && !m.out).forEach(m => {
+    const o = (check.success ? ch.success : ch.fail) || {};
+    if (o.insp && m.rewarded && Ps[m.id]) { Ps[m.id].insp += NUM.cellarRepeatInsp; m.got.insp += NUM.cellarRepeatInsp; events[m.id].push({ type: "insp", gain: NUM.cellarRepeatInsp, first: false, why: "留守" }); }
+    m.got.rooms++;
+  });
   return fx;
 }
 
@@ -485,10 +500,15 @@ export function coopFloorReward(P, floor) {
 }
 export function coopAdvance(run, Ps) {
   coopFix(run);
-  if (!run || run.phase !== "result") return { ok: false, reason: "還沒擲完這一間" };
+  if (!run || (run.phase !== "result" && run.phase !== "carried")) return { ok: false, reason: "還沒擲完這一間" };
   const events = coopNewEvents(run);
   run.step++;
   const f = cellarFloor(run.floor);
+  if (run.fun && run.phase === "result" && coopCarryDue(run)) { // 這一間有要搬的東西（機制 8）
+    run.phase = "carry";
+    coopSync(run, Ps);
+    return { ok: true, run, carry: true, events };
+  }
   run.idx++;
   if (run.idx < f.rooms.length) {
     coopNextLeader(run);
@@ -510,7 +530,8 @@ export function coopAdvance(run, Ps) {
   run.next = cellarFloor(floor + 1) ? floor + 1 : null;
   run.phase = "floorDone";
   run.last = Object.assign({}, run.last, { floorDone: floor, rewards });
-  if (!run.next) coopFinish(run, "done"); // B5 走完了
+  if (run.fun && coopCanGuess(run)) run.phase = "guess"; // 湊齊三個證據：先猜（機制 3）。B5 猜完才算結束
+  else if (!run.next) coopFinish(run, "done"); // B5 走完了
   coopSync(run, Ps);
   return { ok: true, run, floorDone: true, floor, next: run.next, rewards, events };
 }

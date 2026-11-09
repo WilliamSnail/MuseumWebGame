@@ -387,6 +387,7 @@ SCREENS.hall = (root, params) => {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點一件、再點展台", drag: true });
   root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
   if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
+  if (ADDONS.hall2) ADDONS.hall2(root); // 掛在牆上的探險報告（ui_coop.js）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
 // 還沒見過「俄國8+9」的人不列那個主題，只留壹張「？？？」；沒解鎖「不可名狀」就不提它

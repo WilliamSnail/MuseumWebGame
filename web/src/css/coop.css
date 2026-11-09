@@ -139,6 +139,46 @@ body.reduce-motion .btn.cx-tremble { animation: none; outline: 2px dashed #6D7BB
 .cx-calls { display: flex; gap: 4px; }
 .nb-frame .cx-calls .btn.small { flex: 1; font-family: var(--serif); font-size: .9375rem; }
 
+/* 留守：監視器 */
+.cx-monitor { padding: 10px 12px; border-radius: 3px; background: #0E1512; border: 2px solid #3C4A42; box-shadow: inset 0 0 26px rgba(0,0,0,.8); color: #9FE3B6; font-family: var(--serif); }
+.cx-map { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-mroom { flex: 1 1 110px; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid rgba(159,227,182,.4); border-radius: 2px; font-size: .8125rem; }
+.cx-mroom.now { background: rgba(159,227,182,.14); box-shadow: 0 0 0 2px #9FE3B6; }
+.cx-mroom.done { opacity: .45; }
+.cx-mroom.d3:not(.done) { border-color: #E36A5A; color: #FFB9A8; }
+.cx-mroom.d2:not(.done) { border-color: #E3C25A; color: #F4E0A0; }
+.cx-mnote { margin: 8px 0 0; font-size: .75rem; opacity: .8; }
+.cx-opts { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.cx-opt { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; border: 1px solid var(--gold-lo); border-radius: 3px; background: rgba(255,255,255,.35); font-size: .875rem; }
+.cx-opt.d3 { background: rgba(200,60,40,.14); }
+.cx-opt.hazard { box-shadow: 0 0 0 2px #B4251C; }
+.cx-opt em { padding: 0 6px; border-radius: 999px; background: #B4251C; color: #FFF; font-style: normal; font-size: .75rem; }
+
+/* 證據 */
+.cx-evid { padding: 8px 10px; border-radius: 3px; background: rgba(251,245,230,.1); border: 1px solid rgba(200,162,90,.35); font-size: .8125rem; color: #FBEFD9; }
+.cx-evid ul { margin: 4px 0 0; padding: 0 0 0 16px; }
+.cx-evid p { margin: 4px 0 0; opacity: .7; }
+.cx-evid small { opacity: .7; }
+.cx-found { margin: 6px 0; font-size: .875rem; font-weight: 700; color: #4F3A10; }
+.cx-marks i.wide { width: auto; padding: 0 4px; font-size: .75rem; }
+
+/* 探險報告 */
+.cx-report { margin-top: 8px; padding: 10px 14px; border: 1px solid #9C7428; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #F1E5C8); box-shadow: inset 0 0 0 3px #FBF5E6, inset 0 0 0 4px rgba(200,162,90,.5); }
+.cx-rep-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; font-family: var(--serif); }
+.cx-rep-head b { font-size: 1.0625rem; letter-spacing: .1em; }
+.cx-rep-head span { font-size: .75rem; color: var(--parch-sub); }
+.cx-rep-mem { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0; font-size: .75rem; color: var(--parch-sub); }
+.cx-rep-mem .ghost { font-style: italic; opacity: .75; }
+.cx-rep-lines { margin: 4px 0; padding: 0 0 0 18px; font-size: .875rem; line-height: 1.6; }
+.cx-rep-lines .k-funny { font-weight: 700; }
+.cx-rep-by { margin: 4px 0 0; font-size: .75rem; color: var(--parch-sub); text-align: right; }
+.cx-rep-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.cx-rep-btns .btn { color: var(--parch-ink); background: rgba(255,255,255,.35); border-color: var(--gold-lo); }
+.cx-hall { max-width: 720px; margin: 18px auto; }
+.cx-hall h3 { margin: 0 0 4px; text-align: center; font-family: var(--serif); letter-spacing: .12em; color: var(--on-wall, #FBEFD9); }
+.nb-frame.nb-lounge { width: min(760px, 100%); }
+.nb-lounge .nb-surface { background-color: #2A1F18; }
+
 /* 右邊的隊員 */
 .cx-mates { display: flex; flex-direction: column; gap: 6px; }
 .cx-mate { padding: 8px 10px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #EFE3C6); }

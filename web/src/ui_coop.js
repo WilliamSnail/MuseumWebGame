@@ -15,7 +15,7 @@ import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../
 import { cellarFloor, cellarFloors, memberPower } from "../../shared/logic3.js";
 import { COOP } from "../../shared/coop.js";
 import { coopTurnsLeft } from "../../shared/coop_flow.js";
-import { COOP_CALLS, COOP_CLUE_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_SAY } from "../../shared/coop_text.js";
+import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop_text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -136,7 +136,14 @@ function onView(v) {
   s.shown = v.step;
   s.pending.push(...(v.fresh || []).filter(e => ["badge", "unlock", "chapter", "exhibit", "row", "theme", "recipe", "key", "book"].includes(e.type)));
   if (v.phase === "result") playResult(v);
-  else if (!s.anim) { if (v.phase === "floorDone") snd("fanfare"); else if (v.phase === "vote") snd("steps"); draw(); }
+  else if (!s.anim) {
+    if (v.phase === "floorDone" || v.phase === "guess") snd("fanfare");
+    else if (v.phase === "vote") snd("steps");
+    else if (v.phase === "carry") snd("whoosh");
+    else if (v.phase === "carried" && v.carry && v.carry.result) { if (v.carry.result.woke) snd("hurt"); else if (v.carry.result.kind === "ok") snd("coin"); }
+    tellEvents(v.fresh || []);
+    draw();
+  }
 }
 // 擲骰的演出：大家看到同一顆（理智檢定各擲各的）
 async function playResult(v) {
@@ -174,6 +181,7 @@ function tellEvents(list) {
     else if (e.type === "blocked") { snd("block"); note(e.what === "squat" ? "斯拉夫蹲穩住了，沒有佩佩受傷。" : "棒球帽擋下來了。", "good"); }
     else if (e.type === "insp" && e.gain) snd("coin");
     else if (e.type === "surface") note("你回到地面了。", "bad");
+    else if (e.type === "truth" && e.isNew) note("這件事記進《看懂的事》了。", "good");
   });
 }
 
@@ -335,19 +343,23 @@ function drawRun(v) {
   const s = S, me = meOf(v), f = cellarFloor(v.floor), lv = v.pressure ? v.pressure.lv : 0;
   const top = [h("span", { class: "cx-clock" }), v.ended ? null : btn("離隊", leaveRun, "small")];
   s.m.setTop(top);
+  const guard = v.role === "guard";
   const head = h("div", { class: "cx-head" },
-    h("h3", null, `B${v.floor}　${f ? f.name : ""}`),
-    f ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
-    lv ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null);
-  const main = h("div", { class: "cx-main" }, head, stage(v), phaseCard(v, me));
-  s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), chatBox(v))));
+    h("h3", null, guard ? `B${v.floor}　監視器` : `B${v.floor}　${f ? f.name : ""}`),
+    // 下去的人看不到地圖：這隊有人留守的話，連走到第幾間的小點也不給（要靠講）
+    f && !(v.hasGuard && !guard) ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
+    lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
+    v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
+    v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
+  const main = h("div", { class: "cx-main" }, head, guard ? monitor(v) : stage(v), phaseCard(v, me));
+  s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), evidenceBox(v), chatBox(v))));
   tickClock();
 }
 function drawSide() {
   const s = S;
   if (!s || !s.view || s.anim || !s.m) return;
   const side = s.m.surface.querySelector(".cx-side");
-  if (side) side.replaceChildren(sideBox(s.view), chatBox(s.view));
+  if (side) side.replaceChildren(sideBox(s.view), evidenceBox(s.view), chatBox(s.view));
 }
 async function leaveRun() {
   const yes = await ask("真的要離隊？你拿到的都留著，你的佩佩會先回去。", "離隊", "留下來");
@@ -363,15 +375,20 @@ function stage(v) {
     h("span", { class: "cs-tag" }, it.helper ? COOP.helperName : nameOf(it.owner), room ? `・${memberPower(it, room)}` : ""),
     h("div", { class: "cs-art", html: itemHTML({ kind: "pepe", key: it.key, pick: it.pick, perfect: it.perfect }) }),
     h("div", { class: "cs-pops" })))), h("div", { class: "cs-float" }));
-  const odd = oddLine(v);
+  const odd = v.ended ? null : oddLine(v);
   if (odd) st.append(h("p", { class: "cx-odd" }, odd));
   return st;
 }
 function phaseCard(v, me) {
   if (me.out === "ghost" && !v.ended) return h("div", { class: "note-card room-card cx-card" }, h("i", { class: "pin" }), h("h2", { class: "room-title" }, "你回到地面了"), h("p", { class: "cx-text" }, "大家往下走了。你的參觀者留在這壹層的樓梯口，接下來要換下壹位。"), h("div", { class: "cx-card-foot" }, btn("回去", () => S.m.close(), "primary")));
+  if (v.phase === "over" || v.ended) return overCard(v, me);
+  if (v.phase === "carry") return carryCard(v, me);
+  if (v.phase === "carried") return carriedCard(v, me);
+  if (v.phase === "guess") return guessCard(v, me);
+  if (v.phase === "floorDone") return floorCard(v, me);
+  if (v.role === "guard") return guardCard(v, me);
   if (v.phase === "vote") return voteCard(v, me);
   if (v.phase === "result") return resultCard(v, me);
-  if (v.phase === "floorDone") return floorCard(v, me);
   return overCard(v, me);
 }
 // 門上的記號：只有自己看到的（真的只送這幾個給我，別人的、哪個是假的都不在我手上）
@@ -503,6 +520,84 @@ function voteCard(v, me) {
       can ? btn(["撤退", h("span", { class: "cx-vs" }, namesFor("retreat"))], () => vote("retreat"), "ghost small" + (mine === "retreat" ? " cx-on" : ""), { "aria-pressed": String(mine === "retreat") }) : h("span", { class: "pt-hint" }, me.ghost ? "你已經不能投票了。" : "你在監視器前。"),
       h("span", { class: "pt-hint cx-wait" }, waiting.length ? `等 ${waiting.join("、")}` : "開票中……"), h("span", { class: "cx-clock" })));
 }
+// ---------- 留守：監視器（機制 5） ----------
+const DANGER_TEXT = d => COOP_GUARD_TEXT.danger[d] || "";
+function monitor(v) {
+  const map = v.map || { rooms: [], options: [] };
+  return h("div", { class: "cx-monitor", role: "img", "aria-label": "地下收藏庫的地圖" },
+    h("div", { class: "cx-map" }, map.rooms.map(r => h("div", { class: "cx-mroom d" + r.danger + (r.now ? " now" : "") + (r.done ? " done" : "") }, h("b", null, `第 ${r.i + 1} 間`), h("span", null, r.done ? "走過了" : `危險度：${DANGER_TEXT(r.danger)}`)))),
+    h("p", { class: "cx-mnote" }, COOP_GUARD_TEXT.hint));
+}
+function guardCard(v, me) {
+  const map = v.map || { options: [] }, votes = v.votes || {};
+  if (v.phase === "result") {
+    const l = v.last || {}, ok = l.check ? l.check.success : true;
+    return h("div", { class: "note-card room-card cx-card cx-result " + (ok ? "ok" : "bad") }, h("i", { class: "pin" }),
+      h("h2", { class: "room-title" }, l.choice === "retreat" ? "他們撤退了" : `他們選了${COOP_LETTERS[l.choice] || ""}：${ok ? "過了" : "沒過"}`),
+      l.hazard ? h("p", { class: "cx-hurtline" }, COOP_GUARD_TEXT.hazardHit) : null,
+      memberTable(v),
+      ackFoot(v));
+  }
+  const namesFor = c => v.members.filter(m => votes[m.id] === c).map(m => h("span", { class: "cx-v" }, m.name));
+  return h("div", { class: "note-card room-card cx-card cx-guard" }, h("i", { class: "pin" }),
+    h("h2", { class: "room-title" }, `第 ${v.idx + 1} 間的選項`),
+    h("p", { class: "pt-sub" }, COOP_CLUE_TEXT.guard),
+    h("div", { class: "cx-opts" }, map.options.map(o => h("div", { class: "cx-opt d" + o.danger + (o.hazard ? " hazard" : "") }, h("b", { class: "cx-letter" }, COOP_LETTERS[o.i]), h("span", null, `危險度：${DANGER_TEXT(o.danger)}`), o.hazard ? h("em", null, COOP_GUARD_TEXT.hazard) : null, h("span", { class: "cx-vs" }, namesFor(o.i))))),
+    h("div", { class: "cx-card-foot" }, h("span", { class: "pt-hint cx-wait" }, "用右邊的短句告訴他們。"), h("span", { class: "cx-clock" })));
+}
+function ackFoot(v) {
+  const acked = v.acks && v.acks[v.me];
+  const waiting = v.members.filter(m => !m.out && !(v.acks && v.acks[m.id])).length;
+  return h("div", { class: "cx-card-foot" }, btn(acked ? "等大家……" : "繼續", () => doAct("ack"), "primary", { disabled: !!acked }), h("span", { class: "pt-hint cx-wait" }, waiting ? `還有 ${waiting} 個人在看` : ""), h("span", { class: "cx-clock" }));
+}
+// ---------- 兩個人一起搬（機制 8） ----------
+function carryCard(v, me) {
+  const c = v.carry || { picks: {} }, can = !me.ghost && !me.guard, mine = c.picks ? c.picks[v.me] : null;
+  const solo = v.members.filter(m => !m.out && !m.guard).length === 1;
+  const namesFor = side => v.members.filter(m => c.picks && c.picks[m.id] === side).map(m => h("span", { class: "cx-v" }, m.name));
+  const pick = side => { doAct("carry", { side }); snd("click"); };
+  const b = (side, label) => btn([label, h("span", { class: "cx-vs" }, namesFor(side))], () => pick(side), (side === "skip" ? "ghost" : "primary") + (mine === side ? " cx-on" : ""), { disabled: !can });
+  return h("div", { class: "note-card room-card cx-card cx-carry" }, h("i", { class: "pin" }),
+    h("h2", { class: "room-title" }, "這個要壹起搬"),
+    h("p", { class: "cx-text" }, (solo ? COOP_CARRY_TEXT.solo : COOP_CARRY_TEXT.ask).split("{x}").join(c.item || "")),
+    h("div", { class: "cx-go" }, b("L", "抬左邊"), b("R", "抬右邊"), b("skip", "不抬")),
+    h("div", { class: "cx-card-foot" }, h("span", { class: "pt-hint cx-wait" }, can ? "兩邊都要有人，不要抓同壹邊。手工藝高比較不會手滑。" : "你現在抬不動。"), h("span", { class: "cx-clock" })));
+}
+function carriedCard(v, me) {
+  const c = v.carry || {}, r = c.result || {}, nameOf = id => (id ? (v.members.find(m => m.id === id) || {}).name : COOP.helperName);
+  return h("div", { class: "note-card room-card cx-card cx-result " + (r.kind === "ok" ? "ok" : r.woke ? "bad" : "") }, h("i", { class: "pin" }),
+    h("h2", { class: "room-title" }, r.kind === "ok" ? "搬回來了" : r.woke ? "碎了" : "沒有搬"),
+    h("p", { class: "cx-text" }, c.line || ""),
+    (r.rolls || []).length ? h("div", { class: "cx-table" }, r.rolls.map(x => h("div", { class: "cx-tr" }, h("b", null, nameOf(x.id)), h("span", null, `擲 ${x.roll}，要 ≤ ${x.target}`), h("span", { class: "cx-san" }, x.ok ? "穩住了" : "手滑")))) : null,
+    r.insp ? h("p", { class: "cx-reward" }, `全隊 +${r.insp} 靈感`) : null,
+    r.woke ? h("p", { class: "cx-hurtline" }, COOP_CARRY_TEXT.woke) : null,
+    ackFoot(v));
+}
+// ---------- 湊證據猜真相（機制 3） ----------
+function evidenceBox(v) {
+  if (!v.truth || v.role === "guard" && !v.truth.found.length) return null;
+  const t = v.truth, nameOf = id => (v.members.find(m => m.id === id) || {}).name || "";
+  return h("div", { class: "cx-evid" }, h("b", null, `證據 ${t.found.length}／${t.need}`),
+    t.found.length ? h("ul", null, t.found.map(x => h("li", { title: COOP_EVIDENCE_LINES[x.kind] || "" }, COOP_EVIDENCE[x.kind], h("small", null, `　${nameOf(x.by)} 找到的`)))) : h("p", null, "還沒有。過了房間才找得到東西。"));
+}
+function guessCard(v, me) {
+  const t = v.truth, can = !me.ghost && !me.guard, votes = v.votes || {}, found = t.found.map(x => x.kind), mine = votes[v.me];
+  const namesFor = id => v.members.filter(m => votes[m.id] === id).map(m => h("span", { class: "cx-v" }, m.name));
+  return h("div", { class: "note-card room-card cx-card cx-guess" }, h("i", { class: "pin" }),
+    h("h2", { class: "room-title" }, "這壹層住的是什麼？"),
+    h("p", { class: "cx-text" }, `你們湊到了：${found.map(k => COOP_EVIDENCE[k]).join("、")}。猜對了大家有獎勵、記進《看懂的事》；猜錯了全隊擲理智。理智低的人找到的，不壹定是真的。`),
+    h("div", { class: "choices cx-choices" }, COOP_RESIDENTS.map(r => btn([h("span", { class: "cx-label2" }, r.name, h("span", { class: "cx-marks" }, r.ev.map(k => h("i", { class: found.includes(k) ? "seen wide" : "wide" }, COOP_EVIDENCE[k])))), h("small", null, r.desc), h("span", { class: "cx-vs" }, namesFor(r.id))],
+      () => { doAct("guess", { id: r.id }); snd("click"); }, mine === r.id ? "cx-on" : "", { disabled: !can }))),
+    h("div", { class: "cx-card-foot" }, h("span", { class: "pt-hint cx-wait" }, can ? "大家投票，平手領隊決定。" : "等大家決定。"), h("span", { class: "cx-clock" })));
+}
+function truthLine(v) {
+  const t = v.truth;
+  if (!t || !t.done || !t.guess) return null;
+  const r = COOP_RESIDENTS.find(x => x.id === t.id), nameOf = id => (v.members.find(m => m.id === id) || {}).name || "";
+  const fakes = (v.last && v.last.truth && v.last.truth.fakes) || [];
+  return h("div", { class: "cx-reveal" }, h("p", null, (t.right ? COOP_TRUTH_TEXT.right : COOP_TRUTH_TEXT.wrong).split("{x}").join(r ? r.name : "")),
+    fakes.map(x => h("p", { class: "cx-fake" }, `${nameOf(x.by)} 找到的「${COOP_EVIDENCE[x.kind]}」，不是真的。`)));
+}
 function resultLines(v) {
   const l = v.last, room = (cellarFloor(l.floor) || { rooms: [] }).rooms.find(r => r.id === l.room);
   const nameOf = id => (v.members.find(m => m.id === id) || {}).name || "隊友";
@@ -518,7 +613,7 @@ function memberTable(v) {
   return h("div", { class: "cx-table" }, v.members.filter(m => !m.guard && m.out !== "left").map(m => {
     const f = fx[m.id] || {}, r = l && l.check && l.check.san ? l.check.san[m.id] : null, parts = [];
     if (r) parts.push(`擲 ${r.roll.total} ${r.success ? "過" : "沒過"}`);
-    const loss = (f.sanLoss || 0) + (r ? r.loss : 0) + (r ? (f.pressure || 0) + (f.dark || 0) : 0);
+    const loss = (f.sanLoss || 0) + (f.hazard || 0) + (r ? r.loss : 0) + (r ? (f.pressure || 0) + (f.dark || 0) : 0);
     if (loss) parts.push(`理智 −${loss}`);
     if (f.sanGain) parts.push(`理智 +${f.sanGain}`);
     if (f.insp) parts.push(`+${f.insp} 靈感`);
@@ -542,6 +637,8 @@ function resultCard(v, me) {
     text ? h("p", { class: "cx-text" }, ptNode(text)) : null,
     hurt.map(x => h("p", { class: "cx-hurtline" }, `${nameOf(x.owner)} 的「${describePepe(fromKey(x.key)).title}」受傷了（${x.days} 天後會好）。`)),
     revealBox(v),
+    l.hazard && !success ? h("p", { class: "cx-hurtline" }, v.hasGuard ? COOP_GUARD_TEXT.hazardHit : "房間裡還有別的東西。") : null,
+    l.evidence ? h("p", { class: "cx-found" }, `${nameOf(l.evidence.by)} 找到了證據：${COOP_EVIDENCE[l.evidence.kind]}。${COOP_EVIDENCE_LINES[l.evidence.kind] || ""}`) : null,
     memberTable(v),
     h("div", { class: "cx-card-foot" }, btn(acked ? "等大家……" : "繼續", () => doAct("ack"), "primary", { disabled: !!acked }), h("span", { class: "pt-hint cx-wait" }, waiting ? `還有 ${waiting} 個人在看` : ""), h("span", { class: "cx-clock" })));
 }
@@ -565,7 +662,8 @@ function floorCard(v, me) {
   return h("div", { class: "note-card room-card cx-card cx-floor-done" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, `B${f.floor} 走完了`),
     f.clear ? h("p", { class: "cx-text" }, ptNode(f.clear)) : null,
-    rw ? h("p", { class: "cx-reward" }, `第壹次走完：${rw}`) : h("p", { class: "pt-sub" }, "這層你走過了。"),
+    truthLine(v),
+    me.guard ? h("p", { class: "pt-sub" }, "你在監視器前，這層不算你走過。") : rw ? h("p", { class: "cx-reward" }, `第壹次走完：${rw}`) : h("p", { class: "pt-sub" }, "這層你走過了。"),
     me.ghost ? h("p", { class: "cx-hurtline" }, "你的參觀者撐到這裡。大家往下走的話，你就回到地面。") : null,
     h("div", { class: "cx-go" },
       v.next ? btn([icon("stairs"), ` 往下到 B${v.next}`, h("span", { class: "cx-vs" }, namesFor("down"))], () => vote("down"), "primary" + (mine === "down" ? " cx-on" : ""), { disabled: !can }) : null,
@@ -578,7 +676,9 @@ function overCard(v, me) {
   return h("div", { class: "note-card room-card cx-card cx-over" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.over === "lost" ? "這壹趟到這裡" : "回到地面了"),
     h("p", { class: "cx-text" }, COOP_OVER_TEXT[v.over] || COOP_OVER_TEXT.done),
-    h("div", { class: "cx-table" }, sum.map(x => h("div", { class: "cx-tr" + (x.id === v.me ? " me" : "") + (x.ghost ? " ghost" : "") }, h("b", null, x.name),
+    truthLine(v),
+    v.report ? reportSheet(v.report, { live: true }) : null,
+    v.report ? null : h("div", { class: "cx-table" }, sum.map(x => h("div", { class: "cx-tr" + (x.id === v.me ? " me" : "") + (x.ghost ? " ghost" : "") }, h("b", null, x.name),
       h("span", null, `理智 ${x.startSan} → ${x.san}，靈感 +${x.got.insp}${x.got.injured.length ? `，${x.got.injured.length} 隻受傷` : ""}`), h("span", { class: "cx-san" }, x.ghost ? "理智歸零" : x.out === "left" ? "先走了" : "")))),
     h("div", { class: "cx-card-foot" },
       isLeader && !me.ghost && !(P && P.dark) ? btn([icon("stairs"), " 再走壹趟"], () => doAct("again"), "small") : null,
@@ -599,6 +699,54 @@ function sideBox(v) {
   }));
 }
 
+// ---------- 探險報告（機制 9） ----------
+// o.live：走完當下的那張（有「掛到展廳」「貼到交誼廳」）；o.posted：交誼廳上的（寫誰貼的）
+export function reportSheet(rep, o = {}) {
+  const hung = P && P.hallReport === rep.id;
+  return h("article", { class: "cx-report" },
+    h("div", { class: "cx-rep-head" }, h("b", null, rep.title), h("span", null, `${rep.date || ""}${rep.floors && rep.floors.length ? `・B${rep.floors.join("、B")}` : ""}`)),
+    h("div", { class: "cx-rep-mem" }, (rep.members || []).map(m => h("span", { class: (m.ghost ? "ghost" : "") + (m.guard ? " guard" : "") }, h("b", null, m.name), m.guard ? " 留守" : ` 理智 ${m.san0} → ${m.san1}`, m.insp ? `，靈感 +${m.insp}` : ""))),
+    h("ul", { class: "cx-rep-lines" }, (rep.lines || []).map(l => h("li", { class: "k-" + l.k }, l.t))),
+    o.posted ? h("p", { class: "cx-rep-by" }, `${o.posted} 貼的`) : null,
+    o.live || o.panel ? h("div", { class: "cx-rep-btns" },
+      btn(hung ? "從展廳拿下來" : "掛到展廳", () => reportAct("hang", hung ? null : rep.id), "small"),
+      btn("貼到交誼廳", () => reportAct("post", rep.id), "small")) : null);
+}
+async function reportAct(act, id) {
+  try {
+    await NET.flush().catch(() => {});
+    await NET.call("coopTrace", { act, id });
+    note(act === "post" ? "貼到交誼廳了。" : id ? "掛到展廳了。" : "從展廳拿下來了。", "good");
+    snd("submit");
+  } catch (e) { snd("error"); note(e.message || "沒辦法。", "bad"); }
+}
+// 大家貼的探險報告（交誼廳）
+function openLounge() {
+  const m = overlay("nb-party nb-lounge", "交誼廳", "交誼廳", "users");
+  m.surface.replaceChildren(h("p", { class: "nb-empty" }, "正在讀……"));
+  NET.read("lounge").then(v => {
+    if (!m.layer.isConnected) return;
+    const list = v ? Object.values(v).sort((a, b) => (b.at || 0) - (a.at || 0)) : [];
+    m.surface.replaceChildren(h("div", { class: "pt-wrap" }, h("p", { class: "nb-hint pt-intro" }, "館友貼的探險報告。"),
+      list.length ? list.map(x => reportSheet(x.report, { posted: x.nick })) : h("p", { class: "nb-empty" }, "還沒有人貼。")));
+  });
+  snd("flip");
+}
+// 我的探險報告
+function openReports() {
+  const m = overlay("nb-party nb-lounge", "探險報告", "探險報告", "scroll");
+  const list = (P && P.coopReports) || [];
+  m.surface.replaceChildren(h("div", { class: "pt-wrap" }, list.length ? list.map(x => reportSheet(x, { panel: true })) : h("p", { class: "nb-empty" }, "還沒有報告。下去走壹趟就有了。")));
+  snd("flip");
+}
+PANELS.lounge = openLounge;
+// 掛在展廳（ui_screens2.js 的 ADDONS.hall2）
+ADDONS.hall2 = root => {
+  const rep = P && P.hallReport && (P.coopReports || []).find(r => r.id === P.hallReport);
+  if (rep) root.append(h("div", { class: "cx-hall" }, h("h3", null, "掛在牆上的探險報告"), reportSheet(rep)));
+};
+ADDONS.friendsFoot = close => (UI.net ? btn("交誼廳：大家貼的探險報告", () => { close(); openLounge(); }, "small") : null);
+
 // ---------- 入口 ----------
 async function openNew() {
   if (!canPlay()) { note("要先用挑戰模式的參觀者進館。", "bad"); return; }
@@ -611,7 +759,8 @@ async function openNew() {
 // 地下收藏庫的畫面最上面
 ADDONS.cellarTop = () => {
   if (!UI.net || !canPlay()) return null;
-  return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"));
+  return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"),
+    btn("探險報告", openReports, "small"), btn("交誼廳", openLounge, "small"));
 };
 FRIEND_ACTIONS.push({ id: "cellar", label: "邀請壹起打地下收藏庫", show: p => p.status !== "offline" && canPlay(), run: p => sendInvite(p, "cellar") });
 PARTY_HOOKS.cellar = {

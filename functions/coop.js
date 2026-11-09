@@ -34,6 +34,8 @@ async function publish(pid, run) {
 // 一步：交易裡讀 run、存檔，叫 coopAct，寫回
 async function runStep(pid, uid, act, data = {}) {
   const db = getFirestore(), t = now();
+  const log = (await rtdb().ref(`coopChatLog/${pid}`).get()).val() || {}; // 探險報告：搞笑的一刻（要先讀，交易裡不能讀 Realtime Database）
+  const opt = { warps: Object.values(log), today: taipeiDay(t) };
   const res = await db.runTransaction(async tx => {
     const rs = await tx.get(runRef(pid));
     if (!rs.exists) throw bad("這壹趟已經結束了");
@@ -55,7 +57,7 @@ async function runStep(pid, uid, act, data = {}) {
     // 骰子：中間不 await
     setRng(mulberry32(hashStr(`${run.id}:${run.step}:${run.rev || 0}`)));
     let r;
-    try { r = coopAct(run, Ps, uid, act, data, t); } finally { setRng(null); }
+    try { r = coopAct(run, Ps, uid, act, data, t, opt); } finally { setRng(null); }
     if (!r.ok) throw bad(r.reason);
     if (r.noop) return { r, run, saved: {} };
     ids.forEach(id => { if (backs[id] && Ps[id].vid !== backs[id]) switchVisitor(Ps[id], backs[id]); });
@@ -201,7 +203,7 @@ async function say(me, pid, data) {
   return { ok: true };
 }
 
-const FLOW_ACTS = ["vote", "knock", "ack", "floor", "tick", "resume"];
+const FLOW_ACTS = ["vote", "knock", "carry", "guess", "ack", "floor", "tick", "resume"];
 export const coopStep = onCall(async req => {
   const me = await needMember(req);
   const { pid, act, data } = req.data || {};

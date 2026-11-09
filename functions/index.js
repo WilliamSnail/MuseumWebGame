@@ -52,3 +52,4 @@ export { invite, inviteReply, partyAction } from "./party.js";
 
 // ---------- 合作地下收藏庫（M4）：寫在 coop.js ----------
 export { coopStep } from "./coop.js";
+export { coopTrace } from "./coop_trace.js";

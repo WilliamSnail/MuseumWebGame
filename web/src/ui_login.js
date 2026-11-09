@@ -233,7 +233,8 @@ export function openFriends() {
     m.surface.replaceChildren(
       off ? h("p", { class: "nb-hint nf-off" }, "連線中斷了：下面是斷線前的名單，連回來會自己更新。") : null,
       list.length ? h("div", { class: "nf-list" + (off ? " stale" : "") }, list.map(card)) : h("p", { class: "nb-empty" }, NET.state === "online" ? "館裡還沒有別人。" : "正在連線……"),
-      h("p", { class: "nb-hint nf-hint" }, "之後可以參觀館友的展廳、送佩佩、邀請壹起打地下收藏庫。"));
+      h("p", { class: "nb-hint nf-hint" }, "之後可以參觀館友的展廳、送佩佩。"),
+      ADDONS.friendsFoot ? ADDONS.friendsFoot(m.close) : null);
   };
   friendsDraw = draw;
   draw();

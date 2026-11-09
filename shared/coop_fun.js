@@ -8,11 +8,15 @@
 //    這些都只在伺服器（Firestore 的 coopRuns）。送出去一律走 coopFilterView：只留他自己 seen 的那幾個，看不出哪個是假的。
 //  機制 4 只用叫聲說話：coopSayBuild 由伺服器變形。沒有打字。
 //  機制 6 幽靈：不投票、不說話（coopSayBuild 擋）；看得到真的記號；一間敲一下（coopKnock）。
+//  機制 3 湊證據：run.truth ＝ { id: 住客（祕密）, found: [{ kind, by, room, fake }], done, guess, right }。湊齊三個，走完這一層才猜（coopGuess）。
+//  機制 5 留守：run.hazard ＝這一間哪個選項有東西（祕密）；地圖、危險度只有留守的人的畫面有（coopFilterView）。
+//  機制 8 一起搬：run.carry ＝ { idx: 第幾間之後, item, picks, done, result }。
+//  機制 9 報告：run.stats 收集，走完 coopMakeReport，存進每個人的 P.coopReports（博物館的，不跟著參觀者換）。
 // ================================================================
-import { COOP, coopMember, coopRoom, coopVoters } from "./coop.js";
-import { COOP_CALLS, COOP_LETTERS, COOP_SAY, COOP_SYMBOLS } from "./coop_text.js";
-import { RNG, hashStr, mulberry32 } from "./logic.js";
-import { skillOf } from "./logic3.js";
+import { COOP, coopActive, coopFinish, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop.js";
+import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS } from "./coop_text.js";
+import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "./logic.js";
+import { cellarFloor, skillOf } from "./logic3.js";
 
 // ---------- 小骰子 ----------
 export const coopLocalRng = (run, tag) => mulberry32(hashStr(`${run.id || ""}:${run.seed}:${tag}`));
@@ -25,6 +29,12 @@ function coopShuffle(list, rng) {
 // ---------- 開始一趟、往下一層 ----------
 export function coopStart(run, Ps) {
   if (run.seed == null) run.seed = Math.floor(RNG() * 1e9);
+  if (!run.stats) run.stats = { rooms: [], halluc: {}, fakes: [], saves: [], carry: [], truth: [], ghosts: [] };
+  // 這一層住的是什麼、哪一間之後有要搬的東西
+  const rng = coopLocalRng(run, `floor:${run.floor}`), f = cellarFloor(run.floor);
+  const res = COOP_RESIDENTS[Math.floor(rng() * COOP_RESIDENTS.length)];
+  run.truth = { id: res.id, order: coopShuffle(res.ev, rng), found: [], done: false, guess: null, right: null };
+  run.carry = { idx: f ? Math.floor(rng() * f.rooms.length) : 0, item: COOP_ITEMS[(run.floor - 1) % COOP_ITEMS.length], picks: {}, done: false, result: null };
   coopPlanRoom(run, Ps);
 }
 // 走進一間房：發這一間的記號
@@ -32,6 +42,9 @@ export function coopPlanRoom(run, Ps) {
   const rng = coopLocalRng(run, `${run.floor}:${run.idx}`);
   run.clue = coopDealClue(run, Ps, rng);
   run.knocks = {};
+  // 房間裡有東西：哪個選項（只有留守的人看得到）
+  const room = coopRoom(run), risky = room ? room.choices.map((c, i) => i).filter(i => room.choices[i].check.type !== "none") : [];
+  run.hazard = risky.length ? risky[Math.floor(rng() * risky.length)] : null;
 }
 
 // ---------- 機制 2：每個人看到的不一樣 ----------
@@ -94,9 +107,25 @@ export function coopCheckFun(run, pick) {
 }
 
 // ---------- 一間走完 ----------
-// 把真相翻開給大家看（記號是什麼、誰多看到什麼）；過了再多一點靈感
+// 把真相翻開給大家看（記號是什麼、誰多看到什麼）；過了再多一點靈感；房間裡的東西；掉證據；記到報告裡
 export function coopRoomDone(run, Ps, room, ch, vote, check, fx, events) {
   const c = run.clue;
+  run.woken = 0; // 吵醒的東西只影響這一間
+  const src = "cellar:" + room.id, ghostsBefore = run.members.filter(m => m.ghost).length;
+  // 房間裡有東西：選到又沒過，多扣
+  if (run.hazard === vote.pick) {
+    run.last.hazard = true;
+    coopActive(run).forEach(m => {
+      const f = fx.members[m.id];
+      if (!f || f.success !== false || m.ghost) return;
+      const n = rollExpr(COOP.hazard.san).total;
+      f.hazard = n;
+      coopSanHit(Ps[m.id], m, n, src, { hazard: n }, events[m.id]);
+    });
+  }
+  const ev = coopDropEvidence(run, Ps, vote, check);
+  if (ev) run.last.evidence = { kind: ev.kind, by: ev.by };
+  coopReportRoom(run, Ps, room, vote, check, fx, ghostsBefore);
   if (c) {
     run.last.reveal = { truth: c.truth, answer: c.answer, fake: c.fake, hit: vote.pick === c.answer };
     if (vote.pick === c.answer && check.success) coopVoters(run).forEach(m => {
@@ -107,6 +136,227 @@ export function coopRoomDone(run, Ps, room, ch, vote, check, fx, events) {
       events[m.id].push({ type: "insp", gain: COOP.clue.insp, why: "記號對上了" });
     });
   }
+}
+
+// ---------- 機制 3：湊證據猜真相 ----------
+// 這一間掉一個證據嗎。過了一定掉；沒過一半一半；選安全的什麼都沒碰，不掉。
+// 誰找到的：擲骰的人（強度、理智檢定就是領隊）。他理智低的話，找到的可能是假的（不屬於這位住客）。
+export function coopDropEvidence(run, Ps, vote, check) {
+  const t = run.truth;
+  if (!t || t.done || check.type === "none") return null;
+  const rng = coopLocalRng(run, `ev:${run.floor}:${run.idx}`);
+  const hit = !!(run.clue && vote.pick === run.clue.answer);
+  if (rng() >= (check.success || hit ? COOP.truth.win : COOP.truth.lose)) return null;
+  const by = check.by || (coopVoters(run).find(m => m.id === run.leader) || coopVoters(run)[0] || {}).id;
+  if (!by) return null;
+  const res = COOP_RESIDENTS.find(x => x.id === t.id), have = new Set(t.found.map(x => x.kind));
+  const P = Ps[by];
+  let kind = null, fake = false;
+  if (P && P.sanity < COOP.truth.fakeBelow && rng() < COOP.truth.fakeChance) {
+    const others = Object.keys(COOP_EVIDENCE).filter(k => !res.ev.includes(k) && !have.has(k));
+    if (others.length) { kind = others[Math.floor(rng() * others.length)]; fake = true; }
+  }
+  if (!kind) kind = t.order.find(k => !have.has(k));
+  if (!kind) return null;
+  const e = { kind, by, room: coopRoom(run) ? coopRoom(run).id : null, fake };
+  t.found.push(e);
+  return e;
+}
+export const coopCanGuess = run => !!(run.truth && !run.truth.done && run.truth.found.length >= COOP.truth.need);
+// 開票：多數；平手領隊的；都沒投就是沒猜。猜對全隊拿靈感、記進《看懂的事》；猜錯全隊（還在地下的）擲理智
+export function coopGuess(run, Ps, votes) {
+  if (run.phase !== "guess" || !run.truth) return { ok: false, reason: "現在不用猜" };
+  const t = run.truth, events = coopNewEvents(run), res = COOP_RESIDENTS.find(x => x.id === t.id);
+  run.step++;
+  const count = {};
+  coopVoters(run).forEach(m => { const v = votes[m.id]; if (COOP_RESIDENTS.some(x => x.id === v)) count[v] = (count[v] || 0) + 1; });
+  const ids = Object.keys(count), top = Math.max(0, ...Object.values(count));
+  const tied = ids.filter(i => count[i] === top);
+  const pick = !ids.length ? null : tied.length === 1 ? tied[0] : tied.includes(votes[run.leader]) ? votes[run.leader] : tied.sort()[0];
+  t.done = true; t.guess = pick; t.right = pick ? pick === t.id : null;
+  const floor = run.last && run.last.floorDone ? run.last.floorDone : run.floor;
+  if (pick === t.id) {
+    const n = COOP.truth.insp + floor * COOP.truth.perFloor;
+    coopPresent(run).forEach(m => {
+      const P = Ps[m.id];
+      if (!P) return;
+      if (m.rewarded) { P.insp += n; m.got.insp += n; events[m.id].push({ type: "insp", gain: n, why: "猜對了" }); }
+      P.understood = P.understood || {};
+      const isNew = !P.understood[res.understand];
+      if (isNew) P.understood[res.understand] = todayStr();
+      if (P.visit) { P.visit.understood = P.visit.understood || {}; P.visit.understood[res.understand] = true; }
+      events[m.id].push({ type: "truth", id: res.id, isNew });
+    });
+  } else if (pick) {
+    coopVoters(run).forEach(m => {
+      const P = Ps[m.id];
+      if (!P) return;
+      const r = sanCheck(P, COOP.truth.wrongSan, null);
+      events[m.id].push({ type: "sanCheck", spec: r.spec, roll: r.roll, target: P.sanity, success: r.success, loss: r.loss, why: "猜錯了" });
+      coopSanHit(P, m, r.loss, "cellar:guess", { guess: r.loss }, events[m.id]);
+    });
+  }
+  run.stats.truth.push({ floor, id: t.id, guess: pick, right: t.right });
+  run.last = Object.assign({}, run.last, { truth: { id: t.id, guess: pick, right: t.right, fakes: t.found.filter(x => x.fake).map(x => ({ kind: x.kind, by: x.by })) } });
+  if (!coopVoters(run).length) coopFinish(run, "lost");
+  else if (!run.next) coopFinish(run, "done");
+  else run.phase = "floorDone";
+  coopSync(run, Ps);
+  return { ok: true, run, events };
+}
+
+// ---------- 機制 8：兩個人一起才搬得動 ----------
+export const coopCarryDue = run => !!(run.carry && !run.carry.done && run.carry.idx === run.idx && coopVoters(run).length > 0);
+export function coopCarryPick(run, id, side) {
+  const m = coopMember(run, id);
+  if (!m || m.out || m.ghost || m.guard) return { ok: false, reason: "你現在不能搬" };
+  if (side !== "L" && side !== "R" && side !== "skip") return { ok: false, reason: "要抬哪壹邊" };
+  run.carry.picks[id] = side;
+  return { ok: true };
+}
+// 不手滑的機率：60 ＋手工藝 ÷ 3（COOP.carry）
+export const coopCarryChance = P => Math.min(95, COOP.carry.base + Math.floor(skillOf(P, "手工藝") / COOP.carry.skillDiv));
+// 開抬。左右都有人：兩個人各擲；有一個手滑就碎、吵醒東西。都抓同一邊：撞在一起，也碎。只有一個人：抬不動。一個人（館方助手補位）：助手抬另一邊。
+export function coopCarryDo(run, Ps) {
+  const c = run.carry, voters = coopVoters(run), events = coopNewEvents(run);
+  run.step++;
+  const L = voters.filter(m => c.picks[m.id] === "L"), R = voters.filter(m => c.picks[m.id] === "R");
+  const solo = voters.length === 1 && coopActive(run).length === 1;
+  const res = { kind: "left", who: [], rolls: [] };
+  let pair = null;
+  if (solo && L.length + R.length === 1) pair = [(L[0] || R[0]), null];
+  else if (L.length && R.length) pair = [L[0], R[0]];
+  else if (L.length + R.length > 1) { res.kind = "bump"; res.who = [...L, ...R].map(m => m.id); }
+  else if (L.length + R.length === 1) { res.kind = "alone"; res.who = [(L[0] || R[0]).id]; }
+  if (pair) {
+    res.who = pair.filter(Boolean).map(m => m.id);
+    pair.forEach(m => {
+      const target = m ? coopCarryChance(Ps[m.id]) : COOP.carry.helper, roll = rollD100();
+      res.rolls.push({ id: m ? m.id : null, roll: roll.total, target, ok: roll.total <= target });
+    });
+    res.kind = res.rolls.every(r => r.ok) ? "ok" : "slip";
+  }
+  c.done = true; c.result = res;
+  if (res.kind === "ok") {
+    const n = COOP.carry.insp + run.floor;
+    coopPresent(run).forEach(m => { if (m.rewarded && Ps[m.id]) { Ps[m.id].insp += n; m.got.insp += n; events[m.id].push({ type: "insp", gain: n, why: "搬回來了" }); } });
+    res.insp = n;
+  } else if (res.kind === "slip" || res.kind === "bump") {
+    run.woken = COOP.carry.wake;
+    res.woke = true;
+    coopActive(run).forEach(m => {
+      if (m.ghost) return;
+      const n = rollExpr(COOP.carry.breakSan).total;
+      coopSanHit(Ps[m.id], m, n, "cellar:carry", { carry: n }, events[m.id]);
+    });
+  }
+  run.stats.carry.push({ floor: run.floor, item: c.item, kind: res.kind, who: res.who });
+  run.phase = coopVoters(run).length ? "carried" : "over";
+  if (run.phase === "over") coopFinish(run, "lost");
+  coopSync(run, Ps);
+  return { ok: true, run, events };
+}
+export function coopCarryLine(run) {
+  const c = run.carry, r = c && c.result;
+  if (!r) return "";
+  const names = r.who.map(id => (coopMember(run, id) || {}).name || "").filter(Boolean);
+  const who = names.join("和") || COOP.helperName;
+  return COOP_CARRY_TEXT[r.kind].split("{x}").join(c.item).split("{who}").join(who);
+}
+
+// ---------- 機制 5：留守 ----------
+// 選項的危險度：0 安全、1 低、2 中、3 高（看失敗會扣多少、會不會受傷）
+export function coopChoiceDanger(c) {
+  if (c.check.type === "none") return 0;
+  const fail = c.fail || {};
+  let n = 0;
+  if (fail.san && !String(fail.san).startsWith("+")) n += maxExpr(fail.san);
+  if (fail.injure) n += 2;
+  if (c.check.type === "san") n += maxExpr(splitSan(c.check.spec)[1]);
+  return n <= 2 ? 1 : n <= 4 ? 2 : 3;
+}
+export const coopRoomDanger = room => Math.max(0, ...room.choices.map(coopChoiceDanger));
+// 監視器的畫面：整層的地圖（每間的危險度）、這一間每個選項的危險度和哪個有東西。房間的字一個都沒有
+export function coopGuardMap(run) {
+  const f = cellarFloor(run.floor);
+  if (!f) return null;
+  const room = run.phase === "vote" ? coopRoom(run) : null;
+  return {
+    rooms: f.rooms.map((r, i) => ({ i, danger: coopRoomDanger(r), now: i === run.idx && run.phase !== "floorDone", done: i < run.idx || run.phase === "floorDone" })),
+    options: room ? room.choices.map((c, i) => ({ i, danger: coopChoiceDanger(c), hazard: i === run.hazard })) : [],
+  };
+}
+
+// ---------- 機制 9：探險報告 ----------
+function coopReportRoom(run, Ps, room, vote, check, fx, ghostsBefore) {
+  const s = run.stats;
+  if (!s) return;
+  let heat = 0;
+  Object.entries(fx.members).forEach(([id, f]) => { heat += (f.sanLoss || 0) + (f.hazard || 0) + (check.san && check.san[id] ? check.san[id].loss : 0) + (check.san ? (f.pressure || 0) + (f.dark || 0) : 0); });
+  s.rooms.push({ floor: run.floor, title: room.title, heat, type: check.type, success: check.success, margin: check.total != null && check.target != null ? check.total - check.target : null });
+  // 誰看到幻覺
+  if (run.clue) Object.entries(run.clue.fake).forEach(([id, sym]) => { s.halluc[id] = (s.halluc[id] || 0) + 1; s.fakes.push({ id, sym, floor: run.floor }); });
+  // 誰救了誰：過了一個失敗會出事的選項，隊上有人理智很低
+  const ch = room.choices[vote.pick];
+  if ((check.type === "power" || check.type === "skill") && check.success && ch && ch.fail && (ch.fail.san || ch.fail.injure)) {
+    const low = coopVoters(run).find(m => m.san <= COOP.report.lowSan && m.id !== check.by);
+    if (low) s.saves.push({ by: check.by || null, who: low.id, san: low.san });
+  }
+  // 幽靈敲了一下，大家跟著選，過了
+  Object.entries(run.knocks || {}).forEach(([id, c]) => { if (c === vote.pick && check.success) s.saves.push({ by: id, knock: true }); });
+  // 誰在這一間倒下
+  if (run.members.filter(m => m.ghost).length > ghostsBefore) run.members.filter(m => m.ghost && !s.ghosts.some(g => g.id === m.id)).forEach(m => s.ghosts.push({ id: m.id, room: room.title, floor: run.floor }));
+}
+// warps ＝ [{ name, from, to }]：說話變形的紀錄（只有伺服器有）。today：哪一天（不給就用 todayStr）
+export function coopMakeReport(run, warps, today) {
+  const s = run.stats || { rooms: [], halluc: {}, fakes: [], saves: [], carry: [], truth: [], ghosts: [] };
+  const T = COOP_REPORT_TEXT, rng = coopLocalRng(run, "report");
+  const nameOf = id => (coopMember(run, id) || {}).name || "館友";
+  const fill = (t, o) => Object.entries(o).reduce((x, [k, v]) => x.split(`{${k}}`).join(String(v)), t);
+  const lines = [];
+  // 誰救了誰
+  const save = s.saves[s.saves.length - 1];
+  if (save) lines.push({ k: "save", t: save.knock ? fill(T.knock, { by: nameOf(save.by) }) : fill(T.save, { who: nameOf(save.who), san: save.san, by: save.by ? nameOf(save.by) : "全隊" }) });
+  // 誰看到幻覺
+  const hs = Object.entries(s.halluc).sort((a, b) => b[1] - a[1]);
+  if (hs.length) {
+    const [id, n] = hs[0], one = s.fakes.find(x => x.id === id);
+    lines.push({ k: "halluc", t: n > 1 ? fill(T.halluc, { who: nameOf(id), n }) : fill(T.hallucOne, { who: nameOf(id), sym: one ? one.sym : "" }) });
+  }
+  // 最驚險的一間
+  const hot = s.rooms.slice().sort((a, b) => b.heat - a.heat)[0];
+  lines.push({ k: "scary", t: hot && hot.heat > 0 ? fill(T.scary, { room: hot.title, n: hot.heat }) : T.calm });
+  // 誰倒下了
+  s.ghosts.forEach(g => lines.push({ k: "ghost", t: fill(T.ghost, { who: nameOf(g.id), room: g.room }) }));
+  // 真相、搬的東西
+  s.truth.forEach(x => { if (x.guess) lines.push({ k: "truth", t: fill(x.right ? T.truthOk : T.truthNo, { floor: x.floor, x: (COOP_RESIDENTS.find(r => r.id === x.id) || {}).name || "" }) }); });
+  s.carry.filter(c => c.kind === "ok").forEach(c => lines.push({ k: "carry", t: fill(T.carryOk, { who: c.who.map(nameOf).join("和") || COOP.helperName, item: c.item }) }));
+  // 搞笑的一刻：換句話的變形 → 摔碎 → 結巴 → 沒有
+  const swap = warps.filter(w => !w.to.includes("……") && w.from !== w.to), any = warps.filter(w => w.from !== w.to);
+  const slip = s.carry.find(c => c.kind === "slip" || c.kind === "bump");
+  let funny = null;
+  if (swap.length) { const w = swap[Math.floor(rng() * swap.length)]; funny = fill(T.warp, { who: w.name, from: w.from, to: w.to }); }
+  else if (slip) funny = fill(T.carrySlip, { item: slip.item, floor: slip.floor });
+  else if (any.length) { const w = any[Math.floor(rng() * any.length)]; funny = fill(T.warp, { who: w.name, from: w.from, to: w.to }); }
+  lines.push({ k: "funny", t: funny || T.funnyNone });
+  const guard = run.members.find(m => m.guard);
+  if (guard) lines.push({ k: "guard", t: fill(T.guard, { who: guard.name }) });
+  return {
+    id: run.id || String(run.seed), date: today || todayStr(), floors: [...new Set(s.rooms.map(r => r.floor))], over: run.over, title: T.title[run.over] || T.title.done,
+    members: run.members.map(m => ({ name: m.name, ghost: !!m.ghost, guard: !!m.guard, left: m.out === "left", san0: m.startSan, san1: m.san, insp: m.got.insp })),
+    lines,
+  };
+}
+// 存進存檔（博物館的，換參觀者不會不見）。最多留幾張，舊的掉出去；掛在展廳的那張留著
+export function coopSaveReport(P, report) {
+  if (!P || !report) return;
+  const list = Array.isArray(P.coopReports) ? P.coopReports.filter(r => r && r.id !== report.id) : [];
+  list.unshift(report);
+  while (list.length > COOP.report.keep) {
+    const i = list.map(r => r.id).lastIndexOf(list.slice().reverse().find(r => r.id !== P.hallReport).id);
+    list.splice(i, 1);
+  }
+  P.coopReports = list;
 }
 
 // ---------- 機制 6：幽靈敲一下 ----------
@@ -185,5 +435,21 @@ export function coopFilterView(v, run, id) {
   v.knocked = k;
   v.iKnocked = !!(run.knocks && run.knocks[id] !== undefined);
   delete v.knocks;
+  // 地圖、哪個選項有東西：只有留守的人看得到；他看不到房間裡的細節
+  delete v.hazard;
+  delete v.stats;
+  if (m.guard) {
+    v.map = coopGuardMap(run);
+    v.room = null;
+    if (v.last) { v.last = { floor: v.last.floor, choice: v.last.choice, vote: v.last.vote, check: v.last.check ? { type: v.last.check.type, success: v.last.check.success } : null, fx: v.last.fx, hazard: v.last.hazard || false, evidence: v.last.evidence, floorDone: v.last.floorDone, rewards: v.last.rewards, truth: v.last.truth, events: v.last.events }; }
+  }
+  v.hasGuard = run.members.some(x => x.guard && !x.out);
+  // 證據：大家看得到找到什麼、誰找到的；哪個是假的、住的是什麼，猜完才知道
+  if (run.truth) {
+    const t = run.truth;
+    v.truth = { found: t.found.map(x => ({ kind: x.kind, by: x.by, room: x.room })), done: t.done, guess: t.guess, right: t.right, need: COOP.truth.need };
+    if (t.done) { v.truth.id = t.id; v.truth.fakes = t.found.filter(x => x.fake).map(x => x.kind); }
+  }
+  if (run.carry) v.carry = run.phase === "carry" || run.phase === "carried" ? { item: run.carry.item, picks: run.carry.picks, result: run.carry.result, line: coopCarryLine(run), chance: null } : null;
   return v;
 }

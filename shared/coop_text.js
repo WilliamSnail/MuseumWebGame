@@ -54,3 +54,69 @@ export const COOP_CLUE_TEXT = {
   ghost: "你是幽靈了：看得到真正的記號，但是不能說話。只能敲壹下，讓壹個選項發抖。",
   guard: "你在監視器前，看不到房間裡的細節。",
 };
+
+// 湊證據猜真相（機制 3）。每種證據一個代號；每位住客有三種。猜對了記進《看懂的事》（content3.js 的 UNDERSTAND_TEXT，id 是 understand）
+export const COOP_EVIDENCE = { foot: "腳印", smell: "味道", sound: "聲音", photo: "照片", scratch: "抓痕", cold: "冷風", hair: "毛" };
+export const COOP_EVIDENCE_LINES = {
+  foot: "灰塵上有壹串小腳印，走到牆邊就沒有了。",
+  smell: "聞到壹股舊抱枕的味道。這裡沒有抱枕。",
+  sound: "有東西在數數。數到八，停壹下，再數九。",
+  photo: "地上有壹張照片。照片裡是你們，從背後拍的。",
+  scratch: "門框上有抓痕，由下往上，越來越深。",
+  cold: "有壹陣冷風，只吹過其中壹個人。",
+  hair: "架子上黏著壹撮毛。你們都沒有這個顏色的毛。",
+};
+export const COOP_RESIDENTS = [
+  { id: "dust", name: "灰塵裡的小佩佩", ev: ["foot", "smell", "hair"], desc: "晚上才下來的那些。", understand: "coop_dust" },
+  { id: "statue", name: "站太久的參觀者", ev: ["foot", "cold", "photo"], desc: "他們以為還在排隊。", understand: "coop_statue" },
+  { id: "frame", name: "畫框裡走下來的", ev: ["scratch", "photo", "sound"], desc: "牠們記得每壹個看過牠們的人。", understand: "coop_frame" },
+  { id: "water", name: "水閘後面的那隻", ev: ["sound", "cold", "smell"], desc: "牠在等人把閘打開。", understand: "coop_water" },
+  { id: "hat", name: "住在帽子裡的", ev: ["hair", "scratch", "sound"], desc: "牠挑的不是帽子，是頭。", understand: "coop_hat" },
+  { id: "none", name: "什麼都沒有", ev: ["cold", "photo", "hair"], desc: "這才是最可怕的答案。", understand: "coop_none" },
+];
+export const COOP_TRUTH_TEXT = {
+  right: "猜對了。這壹層住的，是「{x}」。",
+  wrong: "猜錯了。這壹層住的，是「{x}」。牠聽到了。",
+  none: "沒有人開口。牠也沒有。",
+};
+
+// 兩個人一起才搬得動（機制 8）：每層一件，門口的東西
+export const COOP_ITEMS = ["第壹代的大理石展台", "裹著白布的半身像", "空畫框堆成的塔", "泡過水的檔案櫃", "沒有底的白色箱子"];
+export const COOP_CARRY_TEXT = {
+  ask: "角落有壹件「{x}」。壹隻佩佩抬不動。要兩個人壹左壹右，同時抬。",
+  solo: "角落有壹件「{x}」。壹隻佩佩抬不動。館方助手會抬另壹邊。",
+  ok: "「{x}」搬回來了。{who}抬得很穩，大家都鬆了壹口氣。",
+  slip: "手滑了。「{x}」掉在地上，碎成壹地。有什麼東西，被吵醒了。",
+  bump: "{who}都抓同壹邊，撞在壹起。「{x}」摔碎了。有什麼東西，被吵醒了。",
+  left: "沒有人抬。「{x}」留在原地，好像有點失望。",
+  alone: "{who}壹個人抬不動。「{x}」留在原地。",
+  woke: "吵醒的東西還在：這壹間門檻 +1、技能 −5。",
+};
+
+// 留守（機制 5）：監視器上怎麼寫
+export const COOP_GUARD_TEXT = {
+  danger: ["安全", "低", "中", "高"],
+  hazard: "有東西",
+  hint: "你看得到每間房的危險度，看不到房間裡有什麼。下面的人看得到細節，看不到這張圖。要靠講的。",
+  below: "這隊有人留在監視器前，他看得到你們看不到的。",
+  hazardHit: "監視器上那個紅點，就在這裡。",
+};
+
+// 探險報告（機制 9）的句子
+export const COOP_REPORT_TEXT = {
+  title: { done: "探險報告", retreat: "探險報告：撤退", lost: "探險報告：沒有人回來", stale: "探險報告：不了了之" },
+  save: "{who}的理智只剩 {san}，{by}替他擋下來了。",
+  knock: "幽靈{by}敲了壹下，大家跟著選，過了。",
+  halluc: "{who}看到 {n} 次不存在的記號。",
+  hallucOne: "{who}看到了不存在的「{sym}」。",
+  scary: "最驚險的壹間：「{room}」，全隊掉了 {n} 點理智。",
+  calm: "這壹趟很平靜。平靜得有點可疑。",
+  ghost: "{who}在「{room}」理智歸零了。",
+  warp: "{who}想說「{from}」，大家聽到的是「{to}」。",
+  carryOk: "{who}把「{item}」搬回來了。",
+  carrySlip: "「{item}」摔碎了，碎片現在還在 B{floor}。",
+  truthOk: "全隊猜對了：B{floor} 住的是「{x}」。",
+  truthNo: "全隊猜錯了：B{floor} 住的是「{x}」。",
+  guard: "{who}全程在監視器前面看。",
+  funnyNone: "搞笑的壹刻：沒有。大家都很認真，這本身就很好笑。",
+};
