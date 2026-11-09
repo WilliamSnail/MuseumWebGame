@@ -56,7 +56,12 @@ function stop() {
   let saved = null;
   try { saved = JSON.parse(fs.readFileSync(PID_FILE, "utf8")); } catch (e) { console.log(`第 ${SET} 套沒有記錄，沒有東西要關。`); return; }
   saved.pids.forEach(killTree);
-  fs.unlinkSync(PID_FILE);
+  // 記下來的是外面那層 shell，裡面的程式可能還活著：照這套的設定檔、這個連接埠找出來再關壹次（netstat 在這裡看不全）
+  if (process.platform === "win32") {
+    const ps = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*firebase.emu${SET}.json*' -or $_.CommandLine -like '*vite*--port ${saved.port || PORT} --strictPort*' } | ForEach-Object { $_.ProcessId }`;
+    spawnSync("powershell", ["-NoProfile", "-Command", ps], { encoding: "utf8" }).stdout.split(/\s+/).filter(Boolean).filter(p => Number(p) !== process.pid).forEach(killTree);
+  }
+
   console.log(`第 ${SET} 套關了。`);
 }
 async function start() {
@@ -69,7 +74,7 @@ async function start() {
   const rules = spawnSync(process.execPath, ["tools/emu_rules.cjs"], { cwd: ROOT, encoding: "utf8", env: Object.assign({}, process.env, { EMU_SET: String(SET) }) });
   console.log((rules.stdout + rules.stderr).trim());
   const web = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], Object.assign({}, opts, { env: Object.assign({}, process.env, { VITE_EMU_SET: String(SET) }) }));
-  fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid] }));
+  fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid], port: PORT }));
   if (!(await waitPort(PORT, 60000, "localhost"))) throw new Error("網頁一分鐘內沒開起來");
   console.log(`好了：http://localhost:${PORT}/?user=小明`);
   emu.unref(); web.unref();
