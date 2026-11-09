@@ -28,6 +28,20 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fun-days", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "館裡多了好多奇怪的小節日", publish: "2026-11-09", expire: "2027-12-31",
+    sections: [
+      ["新的東西", [
+        "圓周率日、漢堡日、博物館日、青蛙日、枕頭大戰日……壹年有 100 多個**冷門的小節日**，大部分的週都碰得到幾個。",
+        "大廳會多壹小行「今天是……」，簽到日曆的格子角落有**「趣」**字，點那壹天就看得到名字和館內的小故事。",
+        "有幾個跟館裡的房間有關（抱枕工作台、賭場餐車、大廳、手作坊的帽子），會順便提壹句。",
+        "Discord 的今日館訊也會多壹行【今日冷知識】。",
+      ]],
+      ["注意事項", ["這些小節日只是好玩：**館裡不換樣子、沒有獎勵、也不貼公告**。要不要加獎勵，等館長決定。"]],
+    ],
+    cta: { label: "打開簽到日曆", panel: "calendar" },
+  },
+  {
     id: "coop-open", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important", pinned: true,
     title: "地下收藏庫可以結伴下樓了", publish: "2026-11-09", expire: "2027-12-31",
     sections: [

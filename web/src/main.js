@@ -14,6 +14,7 @@ import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版
 import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./css/coop.css"; // 合作地下收藏庫（多人版 M4，11-09）
 import "./css/visit.css"; // 參觀館友的展廳、送佩佩（多人版 M2，11-09）
+import "./css/funday.css"; // 趣味節日（決定 0044）
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
 import "./css/story.css"; // 每週劇情：書架的頁籤、今日特展、本週異狀、每週劇情面板（11-09）
 import "./css/admin.css"; // 管理員介面（只看不改，決定 0033）
