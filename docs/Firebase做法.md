@@ -32,6 +32,10 @@ Hosting：放 dist/，網址 專案名.web.app
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
 | `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
 | `coopRuns/{pid}` | 合作地下完整的一趟（`data`：JSON 字串，裡面有線索、幻覺、地圖） | 沒有人（只有 Functions） | 只有 Functions，跟存檔同一個交易 |
+| `casinoWallets/{uid}` | 賭場的籌碼錢包（`data`：JSON 字串，籌碼、成就、財產、統計；決定 0040） | 沒有人（只有 Functions） | 只有 Functions |
+| `casinoRounds/{uid}` | 賭場現在這一手：洗好的牌、莊家的底牌都在裡面 | 沒有人（只有 Functions） | 只有 Functions，交易 |
+| `casinoHouse/main` | 莊家的錢（大家共用，可以破產） | 沒有人（只有 Functions） | 只有 Functions |
+| `casinoLegacy/{小寫 email}` | 舊 Discord 21 點的資料：`chips`、`achievements`、`properties`；翊文之後放。認領後多 `claimedBy`。**不放進 repo** | 沒有人（只有 Functions） | 翊文（後台）；Functions 只標 `claimedBy` |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
@@ -71,6 +75,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳 | M2 |
 | `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
 | `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
+| `casino` | Hamachi 賭場（決定 0040）：`open`（錢包、舊資料有沒有）、`deal`、`hit`、`stand`、`relief`、`pack`、`buy`、`exchange`、`title`、`hang`、`legacy`（認領）。規則 `shared/casino*.js` | 決定 0040 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
 - **骰子**：`shared/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。

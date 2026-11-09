@@ -23,6 +23,7 @@ const STEPS = [
   ["管理員介面的摘要（算得對、壞存檔不丟錯、舊存檔、沒有 email，決定 0033）", ["test/admin.test.cjs"]],
   ["兌換所和技能成長（裝備、提升技能、上課、試煉房間、跟館友學、限定頭飾）", ["test/shop.test.cjs"]],
   ["大廳導覽圖上的館友（名單 → 每間房有誰、白名單、放不下的「+N」）", ["test/mates.test.cjs"]],
+  ["Hamachi 賭場（21 點的規則、真的牌組、賠率、看錯牌、錢包、救濟、大禮包、餐車、換小獎、成就和財產、舊資料認領，決定 0040）", ["test/casino.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],

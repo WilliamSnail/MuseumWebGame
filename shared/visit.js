@@ -13,6 +13,7 @@ import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js"
 import { normKey, parsePillowKey, refPick } from "./logic.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
+import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
 
 // ---------- 訪客簿 ----------
 export function fixGuestBook(raw) {
@@ -110,6 +111,8 @@ export function cleanHallView(view) {
     frame: worn(view.frame, "frame"),
     posters: cleanPosters(view.posters),
     report: cleanHallReport(view.report),
+    souvenirs: casCleanSouvenirs(view.souvenirs), // 賭場的紀念品、稱號（決定 0040）：只收清單上的 id 和短短的純文字名字
+    title: casCleanTitle(view.title),
   };
 }
 

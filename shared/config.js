@@ -221,6 +221,38 @@ export const NUM = {
     // 每週特展到金要幾分（只有這一級；同樣照「這週最高分」）。failedOnly、start32、noLegend 的分數本來就到不了 90
     weekGold: { start32: 45, allBlack: 90, allFlat: 90, failedOnly: 30, noHat: 90, noLegend: 70, pillowWeek: 90, gopnikWeek: 90 },
   },
+  // 第 4 版（11-09，決定 0040）：Hamachi 賭場（規則 shared/casino*.js，伺服器 functions/casino*.js）。籌碼跟靈感分開，沒有真錢。
+  // 標「等翊文」的是我先定的數字，翊文看過再改。賠率、禮包機率、餐點價錢是舊 Discord bot 的（packs、MENU 在 shared/casino_text.js）
+  casino: {
+    startChips: 1000000,    // 新玩家的籌碼。舊程式裡沒有預設（錢包檔是手動建的）；20 個舊錢包裡有 3 個剛好是 1,000,000（沒動過的起始值），所以沿用
+    minBet: 100,            // 等翊文：最小的注
+    maxBet: 10000000,       // 等翊文：最大的注（舊的沒有上限，只看錢包）
+    houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
+    houseReset: 10000000,   // 莊家破產中（小於 0）過了換日，Yuga 借他這麼多重新開張
+    reliefBelow: 1000,      // 籌碼低於這個（而且沒在打牌）就可以領救濟
+    reliefTo: 20000,        // 救濟：補到這麼多（等翊文）
+    reliefPerDay: 2,        // 一天最多領幾次救濟（等翊文）
+    dailyPacks: 2,          // 每天免費的大禮包幾包（舊的：每人 2 包；不累積，換日重算）
+    maxPacksAtOnce: 11,     // 一次最多連開幾包（11 抽券）
+    packWinOdds: 20,        // 贏一把有 20% 機率多一張大禮包券（舊的 rottery(20)；要先開過今天的大禮包）
+    bonus: { gamblerPct: 0.2, luckPct: 0.2 }, // 賭徒、幸運技能的小加成：贏的那一把，賺的錢多 %（賭徒 +gamblerPct；幸運每 100 點 +luckPct）。小到莊家還是贏，模擬見日誌（等翊文）
+    warp: [{ below: 12, p: 0.6 }, { below: 25, p: 0.4 }, { below: 40, p: 0.2 }], // 理智低於 below，每張牌有 p 的機率顯示成別張（只是看起來，結算用真的）
+    // 籌碼換小獎：每週有上限（週一 05:00 換週）。reward：insp 靈感、bag 背包的材料（story.js 的 STORY_ITEMS）。數字全部等翊文
+    exchange: [
+      { id: "insp", chips: 200000, perWeek: 5, reward: { insp: 1 } },
+      { id: "canvas", chips: 600000, perWeek: 2, reward: { bag: "mat:畫布" } },
+      { id: "foil", chips: 1500000, perWeek: 1, reward: { bag: "mat:金箔" } },
+    ],
+    hangMax: 3,             // 展廳最多掛幾件紀念品
+    titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
+    // 同桌（第二階段）
+    seats: 4,               // 一桌最多幾人（跟 PARTY.maxMembers.table 一樣）
+    betMs: 30000,           // 下注的時間
+    turnMs: 25000,          // 輪到你，要或不要的時間；超過、斷線都當停牌
+    resultMs: 10000,        // 看結果的時間，之後自動下一局
+    sayGapMs: 1500,         // 說話至少隔多久
+    chatKeep: 30,           // 聊天留最近幾句
+  },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）

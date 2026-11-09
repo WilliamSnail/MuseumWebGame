@@ -389,6 +389,7 @@ SCREENS.hall = (root, params) => {
   root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
   if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
   if (ADDONS.hall2) ADDONS.hall2(root); // 掛在牆上的探險報告（ui_coop.js）
+  if (ADDONS.hall3) ADDONS.hall3(root); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
   if (ADDONS.hallGuests) ADDONS.hallGuests(root); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
   if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）
 };
