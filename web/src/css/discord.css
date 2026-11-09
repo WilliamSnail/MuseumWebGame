@@ -1,0 +1,11 @@
+/* 我的帳號裡的「綁定 Discord」（決定 0051，web/src/ui_discord.js） */
+.na-discord[hidden] { display: none; }
+.na-discord { align-items: start; }
+.nd-body { min-width: 0; }
+.nd-line { margin: 0 0 6px; line-height: 1.6; color: #3A2812; font-size: .9375rem; }
+.nd-sub { color: #6E5020; font-size: .875rem; }
+.nd-cmd { margin: 6px 0 8px; padding: 10px 12px; border-radius: 8px; background: rgba(60,38,14,.1); border: 1px dashed rgba(110,80,32,.6);
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1.0625rem; color: #2A1A0C; overflow-wrap: anywhere; user-select: all; }
+.nd-code { font-size: 1.5rem; letter-spacing: .18em; color: #7A1C14; }
+.nd-left { font-variant-numeric: tabular-nums; }
+.nd-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
