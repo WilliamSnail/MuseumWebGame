@@ -22,6 +22,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
 import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { CAS_LIVE } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
@@ -101,6 +102,8 @@ async function liveAct(me, act, rnd) {
     if (st0.uid) { try { presence = await statusOf(st0.uid); } catch (e) { presence = null; } } // 讀不到就當不知道（不算離線）
     const mine = await tx.get(walletRef(me.uid));
     const sws = act === "donate" && st0.uid && st0.uid !== me.uid ? await tx.get(walletRef(st0.uid)) : null;
+    // 隱身的人狀態是離線，開播壹分鐘就會被當成下播：先擋，並告訴他為什麼
+    if (act === "liveOn") { const ms = await tx.get(db().doc(`members/${me.uid}`)); if (ms.exists && ms.data().invisible === true) return { ok: false, reason: CAS_LIVE.invisible }; }
     const w = casWalletFix(parse(mine), day);
     const see = (st, extra) => Object.assign({ ok: true, live: liveView(st, t, presence, me.uid), my: liveMyView(w, day), chips: w.chips, st }, extra || {});
     if (act === "live") return see(st0);

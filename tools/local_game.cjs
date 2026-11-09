@@ -14,6 +14,18 @@ const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i >= 0 
 const SET = Number(arg("set", 8)), PORT = Number(arg("port", 5288));
 const PID_FILE = path.join(os.tmpdir(), `pepe-local-game-${SET}.json`);
 const rtdbPort = set => 9100 + 1000 * set;
+const fnPort = set => 5101 + 1000 * set;
+// 模擬器的連接埠開了，Functions 不壹定載入完了（這時叫會 404）：等 join 不再是 404 才算好
+const fnReady = port => new Promise(res => {
+  const q = http.get({ host: "127.0.0.1", port, path: "/demo-pepe4/asia-east1/join", timeout: 3000 }, r => { r.resume(); res(r.statusCode !== 404); });
+  q.on("error", () => res(false));
+  q.on("timeout", () => { q.destroy(); res(false); });
+});
+async function waitFn(port, ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) { if (await fnReady(port)) return true; await new Promise(r => setTimeout(r, 1500)); }
+  return false;
+}
 
 // 把某一場活動改成 ms 這個時間過 90 秒開始、開 1 小時（純函式，測試用）。回傳新的 week 物件；找不到回 null
 function moveEventNow(week, id, ms) {
@@ -76,6 +88,7 @@ async function start() {
   const web = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], Object.assign({}, opts, { env: Object.assign({}, process.env, { VITE_EMU_SET: String(SET) }) }));
   fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid], port: PORT }));
   if (!(await waitPort(PORT, 60000, "localhost"))) throw new Error("網頁一分鐘內沒開起來");
+  if (!(await waitFn(fnPort(SET), 120000))) throw new Error("Functions 兩分鐘內沒載入好：先看 functions 有沒有語法錯誤");
   console.log(`好了：http://localhost:${PORT}/?user=小明`);
   emu.unref(); web.unref();
 }
@@ -86,4 +99,4 @@ async function main() {
   await start();
 }
 if (require.main === module) main().then(() => process.exit(0), e => { console.error(e.message); process.exit(1); });
-module.exports = { moveEventNow, rtdbPort };
+module.exports = { moveEventNow, rtdbPort, fnPort };
