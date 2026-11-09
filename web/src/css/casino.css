@@ -61,6 +61,9 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-bet { flex: 1 1 180px; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 6px; border: 1px solid #C8A25A; background: #FBF7EA; color: #1B1B1B; font-size: 1rem; font-family: Georgia, var(--serif); }
 .cas-quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .cas-relief { color: #FFE9B0; }
+/* 沒錢了的借錢提示：每個頁籤上方壹條 */
+.cas-borrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 2px 0; padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,.3); border: 1px solid rgba(231,200,120,.6); color: #FFE9B0; }
+.cas-borrow-t { flex: 1 1 220px; min-width: 0; line-height: 1.5; font-size: .9375rem; }
 
 /* 清單：餐車、換小獎、成就、財產 */
 .cas-menu, .cas-list, .cas-packs, .cas-odds { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }

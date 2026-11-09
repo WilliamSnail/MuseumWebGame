@@ -172,6 +172,12 @@ export const actPack = (ctx, d) => {
   const r = casOpenPacks(ctx.w, ctx.house, d.n, ctx.day);
   return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
 };
+// 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino_wallet.js）
+export const actRelief = ctx => {
+  if (ctx.round && ctx.round.state === "playing") return { ok: false, reason: "先打完這壹手" };
+  const r = casRelief(ctx.w, ctx.day);
+  return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
+};
 export const actBuy = (ctx, d) => {
   const r = casBuy(ctx.w, ctx.house, d.item, ctx.day, undefined, ctx.P);
   if (r.ok && (r.mood || r.san)) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
@@ -214,11 +220,7 @@ export const casino = onCall(async req => {
     case "deal": return play(req, me, { save: true }, ctx => actDeal(ctx, d));
     case "hit":
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
-    case "relief": return play(req, me, {}, ctx => {
-      if (ctx.round && ctx.round.state === "playing") return { ok: false, reason: "先打完這壹手" };
-      const r = casRelief(ctx.w, ctx.day);
-      return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
-    });
+    case "relief": return play(req, me, {}, actRelief);
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
     case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {

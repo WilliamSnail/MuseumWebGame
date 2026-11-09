@@ -42,6 +42,7 @@ const STEPS = [
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["Discord 聯動第一步的規則（解析 interaction、綁定碼、打錯擋、加入連結、公開的字沒有 email、指令清單，決定 0051）", ["test/discord_bot.test.cjs"]],
   ["Discord 聯動第三步的文字和按鈕（指令選項、按鈕 custom_id、21 點訊息、餐車選單、把理智拿掉、21 點併單、規則只有壹套、不先回再做，決定 0051）", ["test/discord_play.test.cjs"]],
+  ["Yuga Bot 交代的任務（giver 的文字、說完 done 不重複、舊存檔、壞資料、Discord 的 says 不帶理智、借錢規則只有壹套、/pepe-借錢，決定 0051）", ["test/yuga.test.cjs"]],
   ["Discord 聯動第二步的規則（遊戲大事發到頻道：事件的字只有暱稱、冷卻、太舊的不發、不 @ 任何人、token 不進 repo、部署流程、模擬器不連真的 Discord，決定 0051）", ["test/discord_out.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],

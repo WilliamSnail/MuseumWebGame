@@ -10,7 +10,7 @@
 //    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino_week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
 import { NUM } from "./config.js";
-import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
+import { CAS_ACH, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
 import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
 import { eventLive } from "./events.js";
@@ -151,6 +151,13 @@ export function casEventPacks(w, events, t) {
 }
 
 // ---------- 救濟 ----------
+// 現在借得到嗎（遊戲的借錢提示、Discord 的「可以跟 Yuga 借」都看這個；規則的數字只在 NUM.casino）。w 要是 casWalletFix 過的
+export const casCanRelief = w => !!w && w.chips < NUM.casino.reliefBelow && w.rel.n < NUM.casino.reliefPerDay;
+// 這句失敗的原因是不是「錢不夠」（買不起、下注不夠、斗內不夠）：是的話，借得到就多提醒壹句可以借
+export function casPoorReason(reason) {
+  const s = String(reason == null ? "" : reason);
+  return [CAS_TEXT.betPoor, CAS_TEXT.dinerBroke, CAS_LIVE.poor, "籌碼不夠"].some(t => s.includes(t.split("{")[0]));
+}
 export function casRelief(w, day) {
   const C = NUM.casino;
   if (w.chips >= C.reliefBelow) return { ok: false, reason: CAS_TEXT.reliefNot };
@@ -427,7 +434,7 @@ export function casWalletView(w, day) {
   return {
     foodMoodLeft: Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0)), foodSanLeft: Math.max(0, NUM.casino.foodCap.san - (w.food && w.food.day === day ? w.food.san : 0)),
     chips: w.chips, tickets: w.tickets, packsToday: w.pk.left, packsLeft: casPacksLeft(w), opened: w.pk.opened,
-    reliefLeft: Math.max(0, C.reliefPerDay - w.rel.n), canRelief: w.chips < C.reliefBelow && w.rel.n < C.reliefPerDay,
+    reliefLeft: Math.max(0, C.reliefPerDay - w.rel.n), canRelief: casCanRelief(w),
     ex: C.exchange.map(x => ({ id: x.id, chips: x.chips, perWeek: x.perWeek, left: casExchangeLeft(w, x.id) })),
     ach: Object.keys(w.ach).map(id => Object.assign({ d: w.ach[id].d }, casAchInfo(w, id))).filter(a => a.name),
     props: Object.keys(w.props).map(id => Object.assign({ n: w.props[id].n, d: w.props[id].d, hung: w.hung.includes(id) }, casPropInfo(w, id))).filter(p => p.name),

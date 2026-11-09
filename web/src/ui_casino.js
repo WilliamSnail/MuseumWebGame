@@ -11,11 +11,12 @@
 import { NUM } from "../../shared/config.js";
 import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
-import { casCleanSouvenirs, casCleanTitle, casFoodWords } from "../../shared/casino_wallet.js";
+import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino_wallet.js";
+import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
 import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
@@ -73,7 +74,9 @@ async function act(name, data, then) {
     if (S !== s) return r;
     if (!r.ok) {
       snd("error");
-      if (name === "deal" && r.gag) say([r.reason]); else note(r.reason || "沒辦法。", "bad");
+      // 錢不夠（買不起、下注不夠）而且借得到：多說壹句可以借
+      const why = (r.reason || "沒辦法。") + (casPoorReason(r.reason) && s.w && s.w.canRelief && !(s.round && s.round.state === "playing") ? "。" + CAS_TEXT.reliefPoor : "");
+      if (name === "deal" && r.gag) say([why]); else note(why, "bad");
       s.busy = false; draw();
       return r;
     }
@@ -106,6 +109,9 @@ export async function openCasino(o) {
     sync(r);
     say([pick(CAS_TEXT.hello), Math.random() < 0.5 ? pick(CAS_ECON.chat) : pick(CAS_TEXT.idle)]); // 荷官的身世壹點壹點露出來（拚經濟）
     if (r.round && r.round.state === "playing") say(["上次那壹手還沒打完，繼續吧。"]);
+    // Yuga Bot 交代的任務（今天的每日任務有 giver）：沒做完，荷官說那句話；做完了說 done，只說壹次（記在存檔 P.story.said）
+    const yl = yugaLine(P, curWeek());
+    if (yl) { say([yl.text]); if (yl.kind === "done") { yugaMarkSaid(P, yl.id, todayStr()); persist(); } }
     s.busy = false; draw();
     if (s.tab === "live") liveLoad();
     if (r.legacy) legacyCard(r.legacy);
@@ -130,11 +136,19 @@ function draw() {
     h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => goTab(id) }, icon(ic), " ", name)));
   const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "live" ? livePane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
-  m.surface.replaceChildren(tabs, box, h("p", { class: "cas-foot" }, CAS_TEXT.series));
+  m.surface.replaceChildren(...[tabs, reliefBar(), box, h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
   box.scrollTop = keepY;
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
+// 沒錢了可以借（每個頁籤上方都看得到；規則在 shared/casino_wallet.js 的 casRelief，伺服器 act relief）。打牌打到一半借不了，不顯示
+function reliefBar() {
+  const w = S.w, playing = S.round && S.round.state === "playing";
+  if (!w || !w.canRelief || playing) return null;
+  return h("div", { class: "cas-borrow", role: "status" },
+    h("span", { class: "cas-borrow-t" }, fill(CAS_TEXT.reliefTip, { left: w.reliefLeft })),
+    btn("向 Yuga 借籌碼", () => act("relief", {}, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); }), "primary small", { disabled: S.busy ? true : null }));
+}
 
 // ---------- 牌桌 ----------
 function houseLine() {
@@ -161,9 +175,7 @@ function tablePane() {
       btn("要（加牌）", () => move("hit"), "primary", { disabled: S.busy ? true : null }), btn("不要", () => move("stand"), "", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   } else if (!playing && S.shown == null) parts.push(betBox());
-  if (w.canRelief && !playing) parts.push(sec("", h("p", { class: "cas-relief" }, CAS_TEXT.reliefHello, " ", `籌碼不到 ${casNum(NUM.casino.reliefBelow)} 了。`),
-    btn(`向 Yuga 借籌碼（今天還能借 ${w.reliefLeft} 次）`, () => act("relief", {}, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); }), "primary", { disabled: S.busy ? true : null })));
-  else if (w.chips < NUM.casino.reliefBelow && !playing && !w.canRelief) parts.push(h("p", { class: "cas-relief" }, fill(CAS_TEXT.reliefNone, { n: NUM.casino.dailyPacks })));
+  if (w.chips < NUM.casino.reliefBelow && !playing && !w.canRelief) parts.push(h("p", { class: "cas-relief" }, fill(CAS_TEXT.reliefNone, { n: NUM.casino.dailyPacks })));
   if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
   parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情會好壹點，連輸 ${NUM.casino.streak.loseN} 把理智會掉壹點（平手不算，每天有上限）。`));
   return parts;

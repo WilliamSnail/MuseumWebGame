@@ -531,9 +531,9 @@ async function all() {
     return r;
   };
   const OUTCOME = /淨賺 \+|輸了 |不賺不賠/;
-  await check("沒綁定的人用六個遊戲指令和按鈕：都只有本人看得到，教他怎麼綁定或加入", async () => {
+  await check("沒綁定的人用七個遊戲指令和按鈕：都只有本人看得到，教他怎麼綁定或加入", async () => {
     const x = randId();
-    for (const c of ["/pepe-21點 1000", "/pepe-大禮包", "/pepe-餐車", "/pepe-拚經濟", "/pepe-實況", "/pepe-斗內"]) { const r = await say(c, x); assert.strictEqual(r.flags, 64, c); has(r.text, "/pepe-加入", "/pepe-綁定"); }
+    for (const c of ["/pepe-21點 1000", "/pepe-大禮包", "/pepe-餐車", "/pepe-拚經濟", "/pepe-實況", "/pepe-斗內", "/pepe-借錢"]) { const r = await say(c, x); assert.strictEqual(r.flags, 64, c); has(r.text, "/pepe-加入", "/pepe-綁定"); }
     const b = await press(`bj:hit:0:${x}`, x); assert.strictEqual(b.flags, 64); has(b.text, "/pepe-綁定");
     const f = await press(`food:${x}`, x, { menu: true, values: ["tea"] }); assert.strictEqual(f.flags, 64); has(f.text, "/pepe-綁定");
   });
@@ -646,6 +646,58 @@ async function all() {
     const poor = await press(sel.custom_id, u.did, { menu: true, values: ["admiral"] }); // 200 萬，買得起（100 萬 + 獎勵）？買不起就會說錢不夠
     assert.strictEqual(poor.type, 7);
     const bad = await press(sel.custom_id, u.did, { menu: true, values: ["不存在的"] }); assert.strictEqual(bad.type, 7);
+  });
+  // ---- 沒錢可以跟 Yuga 借（決定 0051 補）----
+  const setChips = async (u, chips) => { const w = await walletOf(u.uid); w.chips = chips; await fsSet(`casinoWallets/${u.uid}`, { data: JSON.stringify(w) }); };
+  await check("/pepe-借錢：還有籌碼不能借；沒錢了借到 reliefTo、有成就；跟遊戲共用一天的次數；借完說今天借完了；只有本人看得到", async () => {
+    const C = NUMS.casino, u = await bindNew("借錢阿花");
+    const rich = await say("/pepe-借錢", u.did); assert.strictEqual(rich.flags, 64); has(rich.text, "你還有籌碼"); hasNot(rich.text, "理智", "@");
+    await setChips(u, 500);
+    const r = await say("/pepe-借錢", u.did); assert.strictEqual(r.flags, 64, r.text); has(r.text, "你沒錢了喔", "Yuga 借你", "今天還能借 " + (C.reliefPerDay - 1) + " 次", "你現在有 " + C.reliefTo.toLocaleString("en-US") + " 籌碼"); hasNot(r.text, "理智", "@");
+    let w = await walletOf(u.uid); assert.strictEqual(w.chips, C.reliefTo); assert.strictEqual(w.rel.n, 1); assert.ok(w.ach.relief, "成就「Yuga 的朋友」");
+    has(r.text, "解鎖");
+    await setChips(u, 0);
+    const g = await u.call("casino", { act: "relief" }); assert.ok(g.ok && g.result.ok !== false, JSON.stringify(g)); // 遊戲借第 2 次
+    assert.strictEqual((await walletOf(u.uid)).rel.n, 2);
+    await setChips(u, 0);
+    const none = await say("/pepe-借錢", u.did); assert.strictEqual(none.flags, 64); has(none.text, "今天借完了"); assert.strictEqual((await walletOf(u.uid)).chips, 0, "借完了就不再補");
+    assert.strictEqual((await u.call("casino", { act: "relief" })).result.ok, false, "遊戲這邊也被擋");
+  });
+  await check("/pepe-借錢：21 點打到一半不能借（先打完）；打完才能借", async () => {
+    const u = await bindNew("借錢打牌"); const r = await startHand(u, "1000");
+    await setChips(u, 300); const x = await say("/pepe-借錢", u.did); assert.strictEqual(x.flags, 64); has(x.text, "先打完"); assert.strictEqual((await walletOf(u.uid)).rel.n, 0);
+    await finishHand(u, r); await setChips(u, 300); has((await say("/pepe-借錢", u.did)).text, "Yuga 借你");
+  });
+  await check("買不起、下注不夠：借得到就多一行「打 /pepe-借錢 跟 Yuga 借」；有錢的人、借完的人、別的失敗都沒有", async () => {
+    const u = await bindNew("借錢提醒"); await setChips(u, 500);
+    const bj = await say("/pepe-21點 5000", u.did); assert.strictEqual(bj.flags, 64); has(bj.text, "你才沒那麼有錢", "/pepe-借錢"); hasNot(bj.text, "理智");
+    const small = await say("/pepe-21點 5", u.did); has(small.text, "最少要下"); hasNot(small.text, "/pepe-借錢");
+    const m = await say("/pepe-餐車", u.did), sel = m.comps[0].components[0];
+    const buy = await press(sel.custom_id, u.did, { menu: true, values: ["tea"] }); assert.strictEqual(buy.type, 7); has(buy.text, "你沒有錢", "/pepe-借錢");
+    const rich = await bindNew("沒借錢提醒"); const rb = await say("/pepe-21點 2000萬", rich.did); has(rb.text, "你才沒那麼有錢"); hasNot(rb.text, "/pepe-借錢");
+    const used = await bindNew("借完不提醒"); await setChips(used, 100); has((await say("/pepe-借錢", used.did)).text, "Yuga 借你"); await setChips(used, 100); await u.call("casino", { act: "peek" });
+    await setChips(used, 100); has((await say("/pepe-借錢", used.did)).text, "Yuga 借你"); await setChips(used, 100);
+    const ub = await say("/pepe-21點 5000", used.did); has(ub.text, "你才沒那麼有錢"); hasNot(ub.text, "/pepe-借錢");
+  });
+  await check("斗內給實況主但自己錢不夠：借得到就提醒可以借", async () => {
+    await outSetup({ token: true }); await fsDel("casinoLive/main");
+    const s = await bindNew("借錢主播"), d = await bindNew("借錢斗內"); await say("/pepe-實況", s.did); await setChips(d, 500);
+    const r = await say("/pepe-斗內", d.did); assert.strictEqual(r.flags, 64); has(r.text, "你才沒那麼有錢", "/pepe-借錢");
+    await say("/pepe-實況 off", s.did);
+  });
+  await check("Yuga Bot 交代的任務：今天有（DAY_DATA）而且還沒做完 → /pepe-籌碼、/pepe-21點、/pepe-餐車 本人的回覆最後多一行；做完了、公開指令都沒有", async () => {
+    const src = require("fs").readFileSync(require("path").join(__dirname, "..", "functions", "shared", "day_data.js"), "utf8");
+    const all = JSON.parse(src.slice(src.indexOf("{"), src.lastIndexOf("}") + 1)), info = all[taipeiDay()];
+    if (!info || !info.yuga) { console.log("    （今天沒有 Yuga 交代的任務，這項略過；要測就暫時在今天的 dN.json 的每日任務加 giver、says，重開模擬器）"); return; }
+    const u = await bindNew("交代阿花"), says = info.yuga.says;
+    hasNot(JSON.stringify(info.yuga), "kind", "reward");
+    const c = await say("/pepe-籌碼", u.did); assert.strictEqual(c.flags, 64); assert.ok(c.text.endsWith(says), c.text); hasNot(c.text, "理智", "@");
+    const bj = await startHand(u); assert.ok(bj.text.endsWith(says), bj.text); await finishHand(u, bj);
+    const f = await say("/pepe-餐車", u.did); assert.ok(f.text.endsWith(says), f.text);
+    for (const pub of ["/pepe-莊家", "/pepe-大禮包", "/pepe-拚經濟", "/pepe-今日活動", "/pepe-借錢"]) { const r = await say(pub, u.did); hasNot(r.text, says); }
+    const S = { profiles: { challenge: { story: { tasks: { [`${info.week}/${info.yuga.id}`]: { base: 0, done: "x" } } } } }, current: "challenge" };
+    await fsSet(`saves/${u.uid}`, { data: JSON.stringify(S), rev: 1 });
+    hasNot((await say("/pepe-籌碼", u.did)).text, says); hasNot((await say("/pepe-餐車", u.did)).text, says);
   });
   await check("存檔：餐車加心情要改存檔 → rev 加壹、寫在同壹個交易、事後通知 save_changed；舊 rev 的分頁寫不進去（不會把伺服器的蓋掉）", async () => {
     const u = await bindNew("存檔測試"); const G = require("../test/load_shared.cjs").load(); const P = JSON.parse(JSON.stringify(G.newProfile("challenge"))); P.mood = 50; P.sanity = 60;

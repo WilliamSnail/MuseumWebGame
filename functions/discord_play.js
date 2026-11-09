@@ -13,12 +13,13 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  回覆壹律過 dcScrub：不放 email、理智、怪癖、靈感；暱稱過 dcNick；不 @ 任何人。
 // ================================================================
 import { getFirestore } from "firebase-admin/firestore";
-import { casFoodLeft, casWalletFix } from "./shared/casino_wallet.js";
+import { casFoodLeft, casPoorReason, casWalletFix } from "./shared/casino_wallet.js";
 import { CAS_MENU } from "./shared/casino_text.js";
 import { DC_BET_OPT, DC_PACK_OPT, DC_LIVE_OPT, DC_CMD, DC_TEXT, dcReply, dcText, dcUpdate } from "./shared/discord.js";
-import { dcBjButtons, dcBjText, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub } from "./shared/discord_play.js";
+import { dcBjButtons, dcBjText, dcBorrowText, dcBorrowTip, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub, dcYugaLine } from "./shared/discord_play.js";
+import { DAY_DATA } from "./shared/day_data.js";
 import { taipeiDay } from "./shared/logic.js";
-import { actBuy, actDeal, actEcon, actHitStand, actPack, cryptoRng, liveAct, no, playCore, shape } from "./casino.js";
+import { actBuy, actDeal, actEcon, actHitStand, actPack, actRelief, cryptoRng, liveAct, no, playCore, shape } from "./casino.js";
 import { linkedUid } from "./discord_data.js";
 import { outBj } from "./discord_out.js";
 
@@ -33,15 +34,34 @@ export async function playerOf(discordId) {
 }
 const NONE = () => dcReply(dcText("chipsNone"), true); // 還沒綁定：怎麼綁定、怎麼加入
 const reasonReply = r => dcReply(dcReasonText(r && r.reason), true);
-async function chipsOf(uid, now) {
+async function walletOf(uid, now) {
   const s = await db().doc(`casinoWallets/${uid}`).get();
-  return casWalletFix(s.exists ? JSON.parse(s.data().data) : null, taipeiDay(now)).chips;
+  return casWalletFix(s.exists ? JSON.parse(s.data().data) : null, taipeiDay(now));
+}
+const chipsOf = async (uid, now) => (await walletOf(uid, now)).chips;
+// 失敗的原因是「錢不夠」而且借得到：多壹行「打 /pepe-借錢 跟 Yuga 借」。只有錢不夠的失敗才多讀壹次錢包（成功的路徑不多花時間）
+async function borrowTipFor(uid, r, now) {
+  if (!r || !casPoorReason(r.reason)) return "";
+  return dcBorrowTip(r.reason, await walletOf(uid, now));
+}
+async function reasonReplyTip(me, r, now) {
+  const tip = await borrowTipFor(me.uid, r, now);
+  return dcReply(dcReasonText(r && r.reason) + (tip ? "\n" + tip : ""), true);
+}
+// Yuga Bot 交代的任務（只在本人看得到的回覆最後多壹行）：今天有、而且這個人還沒做完才說。今天沒有這個任務的日子（大多數）完全不讀存檔
+export async function yugaLineFor(uid, now) {
+  const info = DAY_DATA[taipeiDay(now)];
+  if (!info || !info.yuga) return "";
+  const s = await db().doc(`saves/${uid}`).get();
+  let save = null;
+  try { save = s.exists ? JSON.parse(s.data().data) : null; } catch (e) { save = null; }
+  return dcYugaLine(info, save);
 }
 
 // ---------- 21 點 ----------
 // 回覆：文字 + 按鈕（還在打）或沒有按鈕（打完）。update＝按了按鈕，把原本那則換掉
-function bjReply(p, r, update, note) {
-  const text = dcBjText(r, { note }), rd = r.round;
+function bjReply(p, r, update, note, extra) {
+  const text = dcBjText(r, { note }) + (extra ? "\n" + extra : ""), rd = r.round;
   const comps = rd && rd.state === "playing" ? dcBjButtons(rd.seq, p.discordId) : [];
   return update ? dcUpdate(text, comps) : dcReply(text, true, comps);
 }
@@ -50,7 +70,7 @@ async function bjFinished(me, r) {
   const rd = r && r.round;
   if (r && r.ok !== false && r.settle && rd && rd.state === "done" && rd.out) await outBj(me.uid, me.nick, rd.id, rd.out.kind, rd.out.net);
 }
-async function cmdBj(p) {
+async function cmdBj(p, now) {
   const me = await playerOf(p.discordId);
   if (!me) return NONE();
   const text = p.opts[DC_BET_OPT];
@@ -60,9 +80,9 @@ async function cmdBj(p) {
     if (text == null || !String(text).trim()) return { ok: false, reason: DC_TEXT.bjNoBet };
     return actDeal(ctx, { text });
   });
-  if (!r.ok) return reasonReply(r);
+  if (!r.ok) return reasonReplyTip(me, r, now);
   await bjFinished(me, r);
-  return bjReply(p, r, false, r.resumed ? DC_TEXT.bjResume : "");
+  return bjReply(p, r, false, r.resumed ? DC_TEXT.bjResume : "", await yugaLineFor(me.uid, now));
 }
 async function onBj(p, c) {
   if (c.discordId !== p.discordId) return dcReply(DC_TEXT.bjNotYours, true); // 別人的按鈕
@@ -92,7 +112,8 @@ async function cmdFood(p, now) {
   const me = await playerOf(p.discordId);
   if (!me) return NONE();
   const s = await db().doc(`casinoWallets/${me.uid}`).get(), day = taipeiDay(now), w = casWalletFix(s.exists ? JSON.parse(s.data().data) : null, day);
-  return dcReply(dcFoodText(w.chips, null, casFoodLeft(w, day)), true, dcFoodMenu(p.discordId));
+  const says = await yugaLineFor(me.uid, now);
+  return dcReply(dcFoodText(w.chips, null, casFoodLeft(w, day)) + (says ? "\n" + says : ""), true, dcFoodMenu(p.discordId));
 }
 async function onFood(p, c, now) {
   if (c.discordId !== p.discordId) return dcReply(DC_TEXT.foodNotYours, true);
@@ -101,7 +122,10 @@ async function onFood(p, c, now) {
   const item = p.values[0];
   if (!CAS_MENU.some(it => it.id === item)) return dcUpdate(dcFoodText(await chipsOf(me.uid, now)), dcFoodMenu(p.discordId));
   const r = await playCore(me, "", { save: true }, ctx => actBuy(ctx, { item }));
-  if (!r.ok) return dcUpdate(dcFoodText(await chipsOf(me.uid, now), dcScrub([r.reason])), dcFoodMenu(p.discordId));
+  if (!r.ok) {
+    const tip = await borrowTipFor(me.uid, r, now);
+    return dcUpdate(dcFoodText(await chipsOf(me.uid, now), dcScrub([r.reason]).concat(tip ? [tip] : [])), dcFoodMenu(p.discordId));
+  }
   const lines = (r.lines || []).concat((r.ach || []).map(a => `🏅 ${a.name}`));
   return dcUpdate(dcFoodText(r.wallet.chips, lines, r.wallet.foodMoodLeft), dcFoodMenu(p.discordId));
 }
@@ -123,15 +147,23 @@ async function cmdLive(p) {
   if (!r.ok) return reasonReply(r);
   return dcReply(off ? dcLiveOffText(me.nick) : dcLiveOnText(me.nick, r.live && r.live.until), false);
 }
-async function cmdDonate(p) {
+async function cmdDonate(p, now) {
   const me = await playerOf(p.discordId);
   if (!me) return NONE();
   const r = await liveAct(me, "donate", cryptoRng, { out: false });
-  return r.ok ? dcReply(dcDonateText(r), false) : reasonReply(r);
+  return r.ok ? dcReply(dcDonateText(r), false) : reasonReplyTip(me, r, now);
 }
 
-export const PLAY_HANDLERS = { bj: cmdBj, pack: cmdPack, food: cmdFood, econ: cmdEcon, live: cmdLive, donate: cmdDonate };
-export const PLAY_COMMANDS = [DC_CMD.bj, DC_CMD.pack, DC_CMD.food, DC_CMD.econ, DC_CMD.live, DC_CMD.donate];
+// ---------- 借錢（沒錢了跟 Yuga 借）：跟遊戲裡的「向 Yuga 借」同壹個規則（actRelief → casRelief），回覆只有本人看得到 ----------
+async function cmdBorrow(p) {
+  const me = await playerOf(p.discordId);
+  if (!me) return NONE();
+  const r = await playCore(me, "", {}, actRelief);
+  return r.ok ? dcReply(dcBorrowText(r), true) : reasonReply(r);
+}
+
+export const PLAY_HANDLERS = { bj: cmdBj, pack: cmdPack, food: cmdFood, econ: cmdEcon, live: cmdLive, donate: cmdDonate, borrow: cmdBorrow };
+export const PLAY_COMMANDS = [DC_CMD.bj, DC_CMD.pack, DC_CMD.food, DC_CMD.econ, DC_CMD.live, DC_CMD.donate, DC_CMD.borrow];
 
 // 按鈕、選單。認不得的（過期的舊版、亂寫的）說已經過期
 export async function onComponent(p, now) {

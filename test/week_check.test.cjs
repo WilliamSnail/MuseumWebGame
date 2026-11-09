@@ -464,5 +464,26 @@ T("帳本 mysteries：closeBy 過了還沒收要警告，收了就不警告，�
   assert.ok(!JSON.stringify(r).includes("測試用的謎底"));
 });
 
+// ---------- Yuga Bot 交代的任務（giver、says、done） ----------
+const giver = (extra, day = 3, idx = 0) => c => { Object.assign(c.files[`2026-W47/d${day}.json`].daily[idx], { giver: "yuga", says: "R，我剛想到壹件事。B2 那邊你幫我數壹下。" }, extra || {}); };
+T("Yuga 交代的任務：寫對的過（R 可以寫，done 選填）", () => {
+  const c = regular(); giver({ done: "R。我就知道。" })(c);
+  const r = run(c); assert.deepStrictEqual(r.errors, []);
+});
+T("Yuga 交代的任務：giver 只能是 yuga", () => expectErr(giver({ giver: "boss" }), /giver 只能是/));
+T("Yuga 交代的任務：says 必填", () => expectErr(giver({ says: undefined }), /says.*要有字/));
+T("Yuga 交代的任務：says 太長（超過 40 字）", () => expectErr(giver({ says: "壹".repeat(41) }), /says.*太長/));
+T("Yuga 交代的任務：done 太長", () => expectErr(giver({ done: "壹".repeat(41) }), /done.*太長/));
+T("Yuga 交代的任務：says 的「一」要寫「壹」", () => expectErr(giver({ says: "R，我想到一件事。" }), /says.*壹/));
+T("Yuga 交代的任務：done 的「一」要寫「壹」", () => expectErr(giver({ done: "R，一下就好。" }), /done.*壹/));
+T("Yuga 交代的任務：禁用字", () => expectErr(giver({ says: "R，總統來過。" }), /says.*禁用字/));
+T("Yuga 交代的任務：R 以外的英文字母擋", () => expectErr(giver({ says: "R，叫 Pepe 來。" }), /says.*英文字母/));
+T("Yuga 交代的任務：一天最多一個", () => expectErr(c => { giver()(c); giver({}, 3, 1)(c); }, /壹天最多壹個/));
+T("Yuga 交代的任務：只有 says／done 沒有 giver 會擋", () => expectErr(c => { c.files["2026-W47/d3.json"].daily[0].says = "R，測試。"; }, /要寫 giver/));
+T("Yuga 交代的任務：備用週不能放", () => {
+  const c = regular(); Object.assign(c.files["備用/常青1/d2.json"].daily[0], { giver: "yuga", says: "R，測試。" });
+  assert.ok(has(run(c), /備用週、備用的壹天不能讓 Yuga Bot 交任務/));
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

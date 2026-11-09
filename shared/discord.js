@@ -23,7 +23,7 @@ import { noticeLive, NOTICES } from "./notices.js";
 export const DC_SITE = "https://pepe-museum.web.app";
 // 指令名字：全部小寫 pepe- 開頭（Discord 規定小寫），打 /pepe 就會列出全部
 export const DC_CMD = { link: "pepe-綁定", unlink: "pepe-解除綁定", join: "pepe-加入", chips: "pepe-籌碼", house: "pepe-莊家", board: "pepe-排行榜", today: "pepe-今日活動", online: "pepe-誰在線", news: "pepe-更新",
-  bj: "pepe-21點", pack: "pepe-大禮包", food: "pepe-餐車", econ: "pepe-拚經濟", live: "pepe-實況", donate: "pepe-斗內" }; // 後面六個是第三步：綁定了才能玩（決定 0051）
+  bj: "pepe-21點", pack: "pepe-大禮包", food: "pepe-餐車", econ: "pepe-拚經濟", live: "pepe-實況", donate: "pepe-斗內", borrow: "pepe-借錢" }; // 後面七個是第三步：綁定了才能玩（決定 0051）
 export const DC_LINK_OPT = "碼";
 export const DC_NEWS_OPT = "幾則";
 export const DC_BET_OPT = "下注";
@@ -50,6 +50,7 @@ export function dcCommands() {
     cmd(DC_CMD.econ, "拚經濟：跟全館共用的莊家壹起拚（要先綁定，壹天幾次有上限）"),
     cmd(DC_CMD.live, "開播或下播（要先綁定；全館壹次只有壹位實況主）", [{ type: 3, name: DC_LIVE_OPT, description: "開播或下播（不填就是開播）", required: false, choices: [{ name: DC_LIVE_ON, value: "on" }, { name: DC_LIVE_OFF, value: "off" }] }]),
     cmd(DC_CMD.donate, "斗內給現在的實況主（要先綁定；金額隨機，壹天有次數上限）"),
+    cmd(DC_CMD.borrow, `沒錢了跟 Yuga 借籌碼（要先綁定；籌碼不到 ${dcNum(NUM.casino.reliefBelow)} 才能借，壹天有次數上限）`),
     cmd(DC_CMD.news, "最近幾則館方的更新公告", [{ type: 4, name: DC_NEWS_OPT, description: `要看幾則（預設 ${NUM.discord.newsDefault}，最多 ${NUM.discord.newsMax}）`, required: false, min_value: 1, max_value: NUM.discord.newsMax }]),
   ];
 }
@@ -251,6 +252,7 @@ export const DC_TEXT = {
   liveOn: "📺 {nick} 開播了，播到 {t}。想看的到遊戲賭場的「實況」，也可以打 /pepe-斗內。",
   liveOff: "📺 {nick} 下播了。",
   donateOk: "🎁 {line}（實況主：{to}）",
+  borrowTip: "R 你沒錢了喔。打 /pepe-借錢 跟 Yuga 借。",
   onlineNone: "館裡現在沒有人在線。",
   onlineSome: "現在在館裡的館友（{n} 位）：{names}",
   joinLink: "R，歡迎來博物館。點這個連結用 Google 登入，就成為館友（{m} 分鐘內有效、只能用壹次，不要轉給別人）：\n{url}",

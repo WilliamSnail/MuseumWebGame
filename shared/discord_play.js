@@ -8,7 +8,7 @@
 import { NUM } from "./config.js";
 import { CAS_MENU, CAS_TEXT } from "./casino_text.js";
 import { casCardName } from "./casino.js";
-import { casFoodWords } from "./casino_wallet.js";
+import { casCanRelief, casFoodWords, casPoorReason } from "./casino_wallet.js";
 import { DC_TEXT, dcNick, dcNum, dcPlain, dcText } from "./discord.js";
 import { dcOutBjText } from "./discord_out.js";
 
@@ -118,5 +118,21 @@ export function dcEconText(nick, res) {
 export const dcLiveOnText = (nick, until) => dcText("liveOn", { nick: dcNick(nick), t: dcClock(until) });
 export const dcLiveOffText = nick => dcText("liveOff", { nick: dcNick(nick) });
 export const dcDonateText = res => dcLines([dcText("donateOk", { line: res.line, to: dcNick(res.to) })]);
+// 借錢（決定 0051 補）：成功時 r 是 relief 的結果（lines 是荷官的話，wallet.chips 是借完的籌碼）
+export function dcBorrowText(r) {
+  const names = ((r && r.ach) || []).map(a => dcPlain(a && a.name, 12)).filter(Boolean);
+  return dcLines(((r && r.lines) || []).concat(r && r.wallet && Number.isFinite(r.wallet.chips) ? [dcText("bjChips", { chips: dcNum(r.wallet.chips) })] : [], names.length ? [dcText("bjAch", { names: names.join("、") })] : []));
+}
+// 失敗的原因是「錢不夠」而且借得到：多壹行「可以打 /pepe-借錢」。w 是 casWalletFix 過的錢包；其他情況原樣
+export const dcBorrowTip = (reason, w) => (casPoorReason(reason) && casCanRelief(w) ? DC_TEXT.borrowTip : "");
+// Yuga Bot 交代的任務：info 是 DAY_DATA[今天]（{ week, yuga: { id, says } }），save 是這個人的存檔（可以沒有）。
+// 今天有、而且這個人還沒做完 → 回那句 says（過 dcScrub）；沒有或做完了 → ""。只有 says，不帶答案（打包時只放 says，tools/copy_shared.cjs）
+export function dcYugaLine(info, save) {
+  const y = info && info.yuga;
+  if (!y || typeof y.says !== "string" || typeof y.id !== "string") return "";
+  const P = save && save.profiles && save.profiles.challenge, st = P && P.story && P.story.tasks && P.story.tasks[`${info.week}/${y.id}`];
+  if (st && st.done) return "";
+  return dcScrub([y.says])[0] || "";
+}
 // 失敗的原因（都是遊戲自己的話）：弄乾淨再說
 export const dcReasonText = reason => dcLines([reason]) || DC_TEXT.oops;
