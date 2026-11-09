@@ -131,5 +131,90 @@ T("排程設定：pause 要是 true／false", () => {
   expectErr(c => { c.settings.pause = "yes"; }, /pause 要是 true 或 false/);
   expectErr(c => { c.settings.pauseWeeks = ["下週"]; }, /pauseWeeks/);
 });
+// ---------- 季節線、主旨（決定 0037） ----------
+const WINTER = "season-2026-winter";
+// W47 宣告季節線、d2 放一本；帳本的冬天那條線，第 2 章改到 W47
+function withSeason(c, o = {}) {
+  c.files["2026-W47/week.json"].lines.push({ id: WINTER, name: "冬天的明信片", kind: "season" });
+  if (o.book !== false) { const d = c.files["2026-W47/d2.json"]; d.books = d.books.slice(0, 1).concat([{ id: "sea1", line: WINTER, title: "明信片", spine: "明信片", unlock: { type: "now" }, pages: ["壹", "貳"] }]); }
+  const s = c.ledger.seasonal.lines.find(l => l.id === WINTER);
+  s.chapters = [{ week: "2026-W47", title: "測試的章", tell: ["壹"], ties: ["f-page"], written: o.book === false ? null : "2026-W47/sea1" }];
+  c.ledger.weeks["2026-W47"].ties = ["f-page"];
+  return c;
+}
+const warned = (c, re) => run(c).warnings.some(w => re.test(w));
+T("季節線：種類合法、跨週用同一個 id；名字和種類要跟帳本一樣", () => {
+  const c = withSeason(regular()), r = run(c);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(!warned(c, /還沒放書/));
+  assert.ok(!warned(c, /written/));
+  expectErr(k => { withSeason(k); k.files["2026-W47/week.json"].lines.find(l => l.id === WINTER).name = "別的名字"; }, /名字跟帳本不一樣/);
+  expectErr(k => { withSeason(k); k.ledger.lines.find(l => l.id === WINTER).kind = "week"; }, /種類跟帳本不一樣/);
+  expectErr(k => { withSeason(k); k.ledger.seasonal.lines.find(l => l.id === WINTER).name = "別的名字"; }, /要跟帳本的 lines 一樣/);
+  expectErr(k => { k.files["備用/常青1/week.json"].lines.push({ id: WINTER, name: "冬天的明信片", kind: "season" }); }, /備用週不放主線、季節/);
+});
+T("季節線：這週帳本有章卻沒放書：週日才警告，不擋", () => {
+  const sun = withSeason(regular(), { book: false });
+  const r = run(sun);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /到週日還沒放書/.test(w)), r.warnings.join("\n"));
+  const mid = withSeason(regular(), { book: false });
+  mid.today = "2026-11-18"; // 週三，只寫到 d3
+  [4, 5, 6, 7].forEach(n => delete mid.files[`2026-W47/d${n}.json`]);
+  assert.ok(!warned(mid, /2026-W47 有季節線的章/), "週三還不用警告");
+  const nofolder = regular();
+  nofolder.ledger.seasonal.lines.find(l => l.id === WINTER).chapters = [{ week: "2026-W48", title: "用備用週那週", tell: ["壹"], ties: ["f-page"], written: null }];
+  nofolder.today = "2026-11-30";
+  assert.ok(warned(nofolder, /2026-W48 有季節線的章/), "那週用備用週也要提醒");
+});
+T("季節線：放了書帳本沒標 written、章在別的季：警告", () => {
+  const c = withSeason(regular());
+  c.ledger.seasonal.lines.find(l => l.id === WINTER).chapters[0].written = null;
+  assert.ok(warned(c, /written 還沒標/));
+  const d = withSeason(regular());
+  d.ledger.seasonal.lines.find(l => l.id === WINTER).chapters.push({ week: "2027-W20", title: "夏天的章", tell: ["壹"], ties: ["x"], written: null });
+  assert.ok(warned(d, /不在冬天/));
+  const e = regular();
+  e.ledger.seasonal.lines.find(l => l.id === WINTER).chapters = [{ week: "2027-W05", title: "跨在換季那週", tell: ["壹"], ties: ["x"], written: null }];
+  assert.ok(!warned(e, /不在冬天/), "週一還是冬天");
+  e.ledger.seasonal.lines[1].chapters = [{ week: "2027-W05", title: "除夕", tell: ["壹"], ties: ["x"], written: null }];
+  assert.ok(!warned(e, /不在春天/), "除夕那週已經過立春：放春天也可以");
+});
+T("季節線的書不算進結局要讀的本數", () => {
+  const c = withSeason(regular());
+  // 常青1 不用走到 B2 以下就讀得到的是 9 本；加一本季節線也不會變 10
+  c.files["2026-W47/week.json"].ending.need.read = 10;
+  assert.ok(has(run(c), /新玩家打不開結局/));
+});
+T("主旨：帳本沒有 main.theme 就擋；沒有 ties 只警告", () => {
+  expectErr(c => { delete c.ledger.main.theme; }, /main\.theme/);
+  expectErr(c => { c.ledger.main.theme = "  "; }, /main\.theme/);
+  const a = regular();
+  assert.deepStrictEqual(run(a).errors, []);
+  assert.ok(warned(a, /2026-W47.*沒有 ties/), "這週沒寫 ties");
+  a.ledger.weeks["2026-W47"].ties = ["f-page"];
+  assert.ok(!warned(a, /2026-W47：帳本的 weeks 裡沒有 ties/));
+  const b = withSeason(regular());
+  delete b.ledger.seasonal.lines.find(l => l.id === WINTER).chapters[0].ties;
+  const r = run(b);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /沒有 ties：季節線是副劇情/.test(w)));
+  expectErr(c => { c.ledger.weeks["2026-W47"].main = ""; }, /主線推到哪/);
+});
+T("舊帳本沒有 seasonal 照常", () => {
+  const c = regular();
+  delete c.ledger.seasonal;
+  c.ledger.lines = c.ledger.lines.filter(l => l.kind !== "season");
+  assert.deepStrictEqual(run(c).errors, []);
+});
+T("新聞的界線：館內選舉、投票、兩岸可以寫；真實的政黨、人名擋", () => {
+  const ok = regular();
+  ok.files["2026-W47/d1.json"].board = "展品們投票選館長，選票不夠；書架多了 2 本書。";
+  ok.files["2026-W47/d1.json"].books[0].pages[0] = "館內選舉開始了。\n兩岸的展廳都寄了信。";
+  assert.ok(!has(run(ok), /禁用字/), run(ok).errors.join("\n"));
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "民進黨來參觀了；書架多了 2 本書。"; }, /禁用字「民進黨」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "國民黨來參觀了；書架多了 2 本書。"; }, /禁用字「國民黨」/);
+  expectErr(c => { c.files["2026-W47/d1.json"].board = "賴清德來參觀了；書架多了 2 本書。"; }, /禁用字「賴清德」/);
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
