@@ -35,6 +35,9 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # 部署完叫預約公告那支（最後一步）
     env:
       HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
     steps:
@@ -43,8 +46,6 @@ jobs:
         run: echo "還沒在 GitHub Secrets 放 FIREBASE_SERVICE_ACCOUNT，這次不部署。"
       - uses: actions/checkout@v4
         if: env.HAS_KEY == 'true'
-        with:
-          fetch-depth: 2 # 發 Discord 公告要看這次合併新加了哪幾天
       - uses: actions/setup-node@v4
         if: env.HAS_KEY == 'true'
         with:
@@ -67,10 +68,21 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
           rm -f "$RUNNER_TEMP/sa.json"
-      - name: 公告發到 Discord（這次有新的一天才發；發失敗不影響部署）
-        if: env.HAS_KEY == 'true' && github.event_name == 'push'
+      # 今日館訊固定早上八點半發（tools/announce.cjs）。這裡只補兩種情形：八點半之後才合併的、早上部署壞掉現在修好的
+      - name: 讀哪些公告發過了
+        if: env.HAS_KEY == 'true'
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: .announce-state
+          key: announce-state-deploy-${{ github.run_id }}
+          restore-keys: announce-state-
+      - name: 有該發還沒發的公告，就叫預約公告那支發（發不成不影響部署）
+        if: env.HAS_KEY == 'true'
         continue-on-error: true
         env:
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
-        run: node tools/discord_post.cjs
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if node tools/announce.cjs --any-due; then
+            gh workflow run discord-scheduled.yml --repo "$GITHUB_REPOSITORY" --ref main
+          fi

@@ -221,6 +221,7 @@ export const NUM = {
     earliest: "05:00",      // 活動最早幾點開始（05:00 換日，不跨日）
     minMin: 30, maxMin: 360, // 一場最短、最長幾分鐘
     titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/week_check.cjs 檢查）
+    noticeMinLeft: 5,       // 開跑的通知：活動剩不到這麼多分鐘就不跳了（快結束才打開遊戲，大廳那條看得到就好；決定 0045）
   },
   // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
   show: {
