@@ -31,6 +31,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `invites/{email}` | 邀請名單 | 沒有人（只有 Functions） | 管理員（之後的管理介面） |
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
 | `halls/{uid}` | 展廳給別人看的那一小部分（M2） | 館友 | 自己存檔時一起寫 |
+| `coopRuns/{pid}` | 合作地下完整的一趟（`data`：JSON 字串，裡面有線索、幻覺、地圖） | 沒有人（只有 Functions） | 只有 Functions，跟存檔同一個交易 |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪、補償） | 自己 | 只有 Functions |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
@@ -43,7 +44,12 @@ Hosting：放 dist/，網址 專案名.web.app
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
 | `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了、有新的信 | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
-| `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions，誰都不能讀 |
+| `/sent/{uid}/{iid}`、`/partyOf/{uid}` | 這個人送出去還沒回覆的邀請（找舊邀請用，不用在 `/invites` 建索引）、現在在哪一隊 | 只有 Functions；`/partyOf/{uid}` 他自己讀得到（接回去用），別的誰都不能讀 |
+| `/coopView/{pid}/{uid}` | 合作地下給這個人看的樣子（`viewFor`） | 只有 Functions；**只有他自己讀得到** |
+| `/coopChat/{pid}` | 合作地下的對話（已經變形的） | 只有 Functions；隊員讀得到 |
+| `/coopChatLog/{pid}`、`/coopChatAt/{pid}` | 變形前的原文（報告用）、送太快的擋 | 只有 Functions，誰都不能讀 |
+| `/traces/...` | 留言牌、影子、幽影、還沒領的讚 | 只有 Functions；館友讀得到 |
+| `/lounge/{id}` | 交誼廳：館友貼的探險報告 | 只有 Functions；館友讀得到 |
 
 - 在線名單：每個人聽 `/status`（10 人，一次全讀沒問題）。隱身的人寫 offline。
 - 「在哪裡」：換房間寫自己的 `room`。
@@ -57,7 +63,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `join` | 第一次登入：email 在邀請名單上 → 建 `members/{uid}` | M1 |
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
-| `coopStep` | 合作地下的每一步（`shared/coop.js`） | M4 |
+| `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話、時間到、接回去、移出斷線的人（`shared/coop.js`、`coop_flow.js`、`coop_fun.js`） | M4 |
+| `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop_trace.js`） | M2、M6 |
 | `sendGift`、`claimMail`、`visitHall` | 送佩佩、領信、來訪的靈感 | M2 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
@@ -90,6 +97,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 - 模擬器的管理畫面：http://localhost:4400（看資料、看登入的人）。
 - 連接埠（`firebase.json`）：Auth 9099、Firestore 8180、Realtime Database 9100、Functions 5101、Hosting 5050、管理畫面 4400。翊文的電腦 8080、9000、4000 已經有別的程式在用，所以不用預設的。
+- **模擬器的 Realtime Database 規則**：`npm run emulators` 把規則放在 `demo-pepe4-default-rtdb`，遊戲用的是 `demo-pepe4`，所以本機其實沒有規則。要測「玩家讀不到」：開好之後跑 `node tools/emu_rules.cjs`（第 N 套前面加 `EMU_SET=N`）。
 - 模擬器關掉資料就沒了；要留著用 `--export-on-exit`（`npm run emulators` 已經設好，放在 `.firebase-data/`，不進 repo）。
 - 同時開好幾套（好幾個分支各測各的 Functions）：`EMU_SET=1 npm run emulators`，連接埠都加 1000×EMU_SET（管理畫面 5400），資料不存；網頁要連同一套：`VITE_EMU_SET=1 npx vite --port 5190 --strictPort`。會有一行「multiple instances」的警告，沒關係。
 

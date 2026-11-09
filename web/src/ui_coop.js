@@ -150,6 +150,7 @@ function onView(v) {
 async function playResult(v) {
   const s = S;
   if (!s || s.anim) { draw(); return; }
+  if (v.role === "guard") { tellEvents(v.fresh || []); draw(); return; } // 留守的人看不到骰子：只看結果
   s.anim = true;
   try {
     const l = v.last, c = l.check, me = v.me, nameOf = id => (v.members.find(m => m.id === id) || {}).name || "隊友";
