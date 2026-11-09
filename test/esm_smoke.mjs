@@ -6,17 +6,19 @@ import * as content from "../shared/content.js";
 import * as content3 from "../shared/content3.js";
 import * as logic from "../shared/logic.js";
 import * as logic3 from "../shared/logic3.js";
+import * as legacy from "../shared/legacy.js";
 import * as fresh from "../shared/fresh.js";
 import * as holidays from "../shared/holidays.js";
 import * as signin from "../shared/signin.js";
 import * as story from "../shared/story.js";
 import * as admin from "../shared/admin.js";
+import * as shop from "../shared/shop.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -65,5 +67,13 @@ ok("管理員介面的摘要接得上每個規則檔（決定 0033）", () => {
   assert.ok(s.ok && s.entered);
   assert.strictEqual(s.progress.codex.total, logic.CORE_TOTAL);
   assert.strictEqual(admin.adminSummary("{壞掉").ok, false);
+});
+ok("兌換所接得上 legacy、story（11-09，決定 0032）：穿著的裝備算進 traitSum", () => {
+  const P = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  story.storyState(P).stamps = 99;
+  assert.ok(shop.buyGear(P, "abacus", "2026-11-09").ok);
+  assert.ok(shop.wearGear(P, "abacus").ok);
+  assert.strictEqual(legacy.traitSum(P, "deal"), config.GEAR_ITEMS.find(x => x.id === "abacus").deal);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

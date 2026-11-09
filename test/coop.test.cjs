@@ -285,6 +285,48 @@ T("扣理智之後照舊：一次掉 5 點以上擲看懂檢定、看懂了瘋�
   assert.deepStrictEqual(J(ev.map(e => e.type)), ["sanLoss", "understand", "bout"]);
   assert.ok(ev[1].success); assert.ok(Ps.b.bout); assert.strictEqual(ev[1].line.id, G.understandId("cellar:1d"));
 });
+T("探險燈（兌換所，決定 0032）：合作地下也少扣，最少還是扣 1；理智檢定的房間也少扣", () => {
+  const lamp = (P) => { G.storyState(P).stamps = 99; assert.ok(G.buyGear(P, "lamp", DATE).ok); assert.ok(G.wearGear(P, "lamp").ok); };
+  const off = G.GEAR_ITEMS.find(x => x.id === "lamp").cellarSan;
+  // 1d 敲水管失敗：扣 1D3，兩個人都擲 3
+  {
+    const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
+    lamp(Ps.b);
+    goRoom(run, Ps, 3); roomIs(run, "1d");
+    const i = choiceOf(run, "power");
+    G.setRng(seq(dN(1, 10), dN(3, 3), dN(3, 3)));
+    const r = G.coopResolve(run, Ps, { a: i, b: i });
+    G.setRng(null);
+    assert.strictEqual(r.fx.members.a.sanLoss, 3);
+    assert.strictEqual(r.fx.members.b.sanLoss, 3 + off); assert.strictEqual(r.fx.members.b.dark, off);
+  }
+  // 兩個人都擲 1：扣 1 點的照扣
+  {
+    const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
+    lamp(Ps.b);
+    goRoom(run, Ps, 3);
+    const i = choiceOf(run, "power");
+    G.setRng(seq(dN(1, 10), dN(1, 3), dN(1, 3)));
+    const r = G.coopResolve(run, Ps, { a: i, b: i });
+    G.setRng(null);
+    assert.strictEqual(r.fx.members.b.sanLoss, 1);
+  }
+  // 理智檢定的房間：骰子一樣，戴燈的少扣 1（扣在 check 那一次，不會變成負的）
+  {
+    const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
+    lamp(Ps.b);
+    const f1 = G.cellarFloor(1).rooms, idx = f1.findIndex(rm => rm.choices.some(c => c.check.type === "san"));
+    assert.ok(idx >= 0, "B1 要有理智檢定的房間");
+    goRoom(run, Ps, idx);
+    const i = choiceOf(run, "san");
+    G.setRng(() => 0.99); // 都擲最大：理智檢定失敗、扣最多
+    const r = G.coopResolve(run, Ps, { a: i, b: i });
+    G.setRng(null);
+    assert.ok(G.NUM.startSanity - Ps.a.sanity >= 2, "這間要扣 2 點以上才看得出來");
+    assert.strictEqual(Ps.b.sanity - Ps.a.sanity, -off, "戴燈的少扣");
+    r.events.b.filter(e => e.type === "sanLoss").forEach(e => assert.ok(e.loss > 0));
+  }
+});
 T("全隊的理智壓力：平均理智越低，門檻越高、技能越難、失敗多扣（幽靈算 0）", () => {
   const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
   const P0 = G.coopPressure(run);

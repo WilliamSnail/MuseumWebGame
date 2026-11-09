@@ -3,6 +3,7 @@
 import { STORY_CHAPTERS } from "../../shared/content.js";
 import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, visitorArrive } from "../../shared/logic.js";
 import { assignJob, hallSize, startCellar } from "../../shared/logic3.js";
+import { storyState } from "../../shared/story.js";
 import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";
@@ -48,8 +49,9 @@ import { pickJob } from "./ui_screens3.js";
     if (screen === "roll") { go("reveal", { pick: Object.assign({}, legend), roll: { total: 7, faces: [0, 7] } }, { action: false }); return; }
     if (screen === "focus") { go("gallery", {}, { action: false }); setTimeout(() => focusExhibit(exhibitById(extra || "strange")), 300); return; }
     if (screen === "ending") { go("ending", { id: arg || "curator" }, { action: false }); return; }
-    // 簽到卡、簽到日曆（11-09，決定 0030）：#signin、#calendar
-    if (screen === "signin" || screen === "calendar") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
+    // 簽到卡、簽到日曆（11-09，決定 0030）：#signin、#calendar；兌換所（決定 0032）：#shop，放好 40 枚週章
+    if (screen === "shop") storyState(P).stamps = 40;
+    if (screen === "signin" || screen === "calendar" || screen === "shop") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
     if (screen === "book") { go("origin", {}, { action: false }); setTimeout(() => openBook(STORY_CHAPTERS[0], $(".reader")), 300); return; }
     go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) ? { tab: arg } : {}, { action: false });
   }, 150);

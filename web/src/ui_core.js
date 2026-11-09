@@ -29,6 +29,7 @@ export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
 export const PANELS = {};
 // 房間裡多出來的一塊（大廳的簽到條、畫廊的節日特展、展廳的裝飾……）：後面的檔（ui_signin.js）登記進來，房間有就叫（11-09，決定 0030）
+// 兌換所（ui_shop.js，決定 0032）也登記在這裡：commission（委託櫃台的上課）、cellar（地下的試煉房間）、sheet（館長室名片上穿了什麼）
 export const ADDONS = {};
 // 後面的檔掛上來的動作：status ＝每次 updateStatus 都叫一次（每週劇情 ui_story.js：新的書、做完的任務、狀態列的「追蹤」）
 export const HOOKS = {};
@@ -222,7 +223,7 @@ export function buildNav() {
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
-    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story"))),
+    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）
@@ -801,6 +802,7 @@ export function sanWords(spec) { const [a, b] = splitSan(spec); const one = x =>
 export function sanShort(spec) { const [a, b] = splitSan(spec); const one = x => { const w = diceWords(x); return w === "0" ? "不扣" : ` −${w}`; }; return `成功${one(a)}、失敗${one(b)}`; }
 
 // ---------- 理智檢定的完整流程（系統 F） ----------
+// o.adjust：這次要扣的理智先改過再扣（地下收藏庫的探險燈少扣，決定 0032）
 export async function sanFlow(spec, src, title, o = {}) {
   if (!P || isFree(P)) return null;
   const r = sanCheck(P, spec, src);
@@ -809,7 +811,7 @@ export async function sanFlow(spec, src, title, o = {}) {
   const out = r.success ? `成功。${lossText}` : `${r.fumble ? "大失敗！" : "失敗。"}${lossText}${r.lossRoll.flat ? "" : `（在 ${diceWords(r.expr)} 裡擲出 ${r.lossRoll.total}）`}`;
   snd("sanPre");
   await FX.rollOverlay({ title: "理智檢定", sub, spec: "d100", result: r.roll, hold: String(src || "").startsWith("book:") ? 6000 : undefined, outcome: { text: out + (r.habituated ? "　" + SAN_ASIDES.habituated : ""), tone: r.success ? "good" : "bad", sound: r.success ? "sanOk" : "sanBad" } });
-  let loss = r.loss;
+  let loss = o.adjust ? o.adjust(r.loss) : r.loss;
   if (o.occult && loss > 0 && hasTalent(P, "神秘學")) {
     const sc = skillCheck(P, "神秘學");
     note(`神秘學 ${sc.roll.total} ≤ ${sc.target}？${sc.success ? "成功：你知道該往哪裡看，損失減半" : "失敗"}`, sc.success ? "good" : "neutral");

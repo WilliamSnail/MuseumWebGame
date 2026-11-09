@@ -8,6 +8,7 @@
 //    各選一隻 → 準備好了 → 隊長按「開始融合」→ 伺服器擲一次骰、兩份存檔一起寫 → 兩個人看到同一隻。
 //  - 關掉這個框＝離開隊伍。隊友斷線超過 PARTY.offlineWaitMs，請伺服器把他移出去（伺服器自己再確認一次）。
 // ================================================================
+import { NUM } from "../../shared/config.js";
 import { describePepe, fromKey, isFree, nowMs } from "../../shared/logic.js";
 import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/logic3.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
@@ -210,6 +211,7 @@ export function openParty(pid) {
     const muts = r.mutations || [];
     const line = s => s.got ? `拿到了${s.perfect ? "（完美作品！）" : s.failed ? "（失敗作）" : ""}` : "理智用完了，沒拿到";
     const sanLine = s => s.san ? `理智檢定擲 ${s.san.roll}：${s.san.success ? "成功" : "失敗"}，扣 ${s.san.loss}` : "";
+    const learnLine = (l, who) => l.gained ? `跟 ${who} 學了壹招：${l.skill} ${l.from} → ${l.to}` : l.capped ? `${who} 的${l.skill}比你高，可是今天學夠了（壹天 ${NUM.shop.learnPerDay} 次）。` : `${who} 的${l.skill}比你高（${l.value}）。你在旁邊看，這次沒學會。`;
     m.setTop(null);
     m.surface.replaceChildren(h("div", { class: "pt-wrap pt-result" },
       h("h3", { class: "pt-result-t" }, r.title ? `配方「${r.title}」！` : "融合好了"),
@@ -219,6 +221,7 @@ export function openParty(pid) {
       muts.length ? h("p", { class: "pt-hint" }, `突變：${muts.join("、")}`) : null,
       h("div", { class: "pt-members" },
         [me, other].map(s => h("div", { class: "pt-member" + (s.id === meId ? " me" : "") }, h("b", { class: "pt-nick" }, s.nick), h("span", { class: "pt-state" }, line(s)), h("span", { class: "pt-name" }, sanLine(s))))),
+      me.learn ? h("p", { class: "pt-hint pt-learn" + (me.learn.gained ? " got" : "") }, learnLine(me.learn, other.nick)) : null, // 跟館友學（決定 0032）
       h("div", { class: "pt-foot" }, btn("收下了", () => m.close(), "primary"))));
     if (!coined) { coined = true; snd("coin"); } // 對方按「收下了」離開時會重畫：聲音只響一次
   };

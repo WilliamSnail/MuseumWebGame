@@ -5,7 +5,7 @@
 //    forbidden ＝禁忌選項（不算在基本組合裡，佩佩神話夠了才會自己打開）；
 //    mutant ＝突變選項（只能靠融合室配種突變出來）；gift ＝委託人送的選項；
 //    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）；
-//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
+//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
 //  ・新加的選項如果畫法裡沒有對應，圖上會用預設的樣子，文字照樣出現。
 //  ・下面的文字是 Claude 的草稿；標「第 1 代」的文字不要改。
 // ================================================================
@@ -48,6 +48,15 @@ export const PEPE_PARTS = [
     // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS）
     { name: "館員帽", limited: "signin" },
     { name: "燈籠帽", limited: "signin" },
+    // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS；哪一週賣哪幾件見 LIMITED_ITEMS 下面的說明）
+    { name: "黃雨帽", limited: "shop" },
+    { name: "廚師帽", limited: "shop" },
+    { name: "毛耳罩", limited: "shop" },
+    { name: "礦工帽", limited: "shop" },
+    { name: "花環", limited: "shop" },
+    { name: "蝴蝶結", limited: "shop" },
+    { name: "鐵鍋帽", limited: "shop" },
+    { name: "摺紙帽", limited: "shop" },
   ] },
   { name: "姿勢", options: [
     { name: "站著", start: true },
@@ -148,12 +157,33 @@ export const NUM = {
     skillBook: "1D3",       // 技能書：用了技能加幾點
     skillCap: 80,           // 技能書最多加到幾
     dailyMinutes: 12,       // 3 個每日任務加起來最多幾分鐘（照 STORY_TASKS 每種的估計時間算）
-    dayBudget: { insp: 22, mood: 10, items: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展
-    weekTaskBudget: { insp: 60, mood: 20, items: 3 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
+    dayBudget: { insp: 22, mood: 10, items: 1, skills: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展（skills：幾間房間給技能成長，決定 0032）
+    weekTaskBudget: { insp: 60, mood: 20, items: 3, skills: 1 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
     startWeek: "2026-W46",  // 每週劇情從這一週開始有（更早的週沒有劇情，也不用備用週）
     seasonStart: "2026-11-16", // 第一季從這一週開始（2026-W47）；之前的算「序章」
     seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）
     shelfRow: 8,            // 書架一排最多放幾本，超過就分頁
+  },
+  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/shop.js）。數字是草稿，跑 test/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
+  // 技能的上限：技能書、提升技能、試煉房間、跟館友學都到 NUM.story.skillCap（80）；上課只到 lessonCap（60）；換日的經驗檢定照舊到 99
+  shop: {
+    gearWorn: 2,            // 現在這位參觀者最多穿幾件裝備
+    gearPrice: { common: 4, fine: 8, rare: 14 }, // 裝備幾枚週章：普通、精良、稀有（每週全做完最多拿 7 枚）
+    skillUp: "1D5",         // 提升技能：花週章，指定一個技能加這麼多
+    skillUpPrice: [{ below: 40, stamps: 2 }, { below: 60, stamps: 3 }, { below: 81, stamps: 5 }], // 技能現在低於 below 時要幾枚：越高越貴
+    lessonPerDay: 1,        // 委託櫃台上課：一天幾堂（P.day 的，換人不會多一堂）
+    lessonSkill: "1D3",     // 上一堂課技能加這麼多
+    lessonCap: 60,          // 上課最多上到幾
+    lessonPrice: [{ below: 30, insp: 6 }, { below: 45, insp: 10 }, { below: 61, insp: 15 }], // 技能現在低於 below 時要幾靈感
+    trialSkill: "1D5",      // 地下的試煉房間、週包房間獎勵的技能成長
+    trialPerWeek: 1,        // 一間試煉房間一週可以拿幾次成長（週一 05:00 換週）
+    weekSkillRooms: 2,      // 週包一週最多幾間房間的獎勵可以寫技能成長（tools/week_check.cjs 檢查）
+    learnChance: 50,        // 一起融合：對方拿手的技能比你高，你那個技能 +1 的機率（%）
+    learnPerDay: 2,         // 一天最多這樣學會幾次（P.day 的）
+    learnGain: 1,           // 學會了加幾點
+    limitedRotate: 3,       // 週包沒指定 shop 的週，限定頭飾照週號輪流上架幾件
+    limitedMax: 4,          // 週包的 shop 最多指定幾件
+    matToStamp: 3,          // 幾份材料（背包裡的舊畫布、金箔、金線，哪一種都算）換一枚週章
   },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
@@ -165,6 +195,31 @@ export const LIMITED_ITEMS = [
   { id: "stand-velvet", kind: "deco", slot: "stand" },
   { id: "frame-vine", kind: "deco", slot: "frame" },
   { id: "mat-star", kind: "mat", cat: "材質", opt: "星光絨", n: 3 },
+  // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾。shop: true ＝只有兌換所賣（每週全簽到不會輪到）；price ＝幾枚週章。
+  // 週包 week.json 可以寫 shop: ["hat-rain", …] 指定這週賣哪幾件（排程照這週的主題挑）；沒指定的週照週號輪流（shared/shop.js 的 shopOnSale）
+  { id: "hat-rain", kind: "part", cat: "帽子", opt: "黃雨帽", shop: true, price: 5 },
+  { id: "hat-chef", kind: "part", cat: "帽子", opt: "廚師帽", shop: true, price: 5 },
+  { id: "hat-muff", kind: "part", cat: "帽子", opt: "毛耳罩", shop: true, price: 5 },
+  { id: "hat-miner", kind: "part", cat: "帽子", opt: "礦工帽", shop: true, price: 5 },
+  { id: "hat-wreath", kind: "part", cat: "帽子", opt: "花環", shop: true, price: 5 },
+  { id: "hat-bow", kind: "part", cat: "帽子", opt: "蝴蝶結", shop: true, price: 5 },
+  { id: "hat-pot", kind: "part", cat: "帽子", opt: "鐵鍋帽", shop: true, price: 5 },
+  { id: "hat-paper", kind: "part", cat: "帽子", opt: "摺紙帽", shop: true, price: 5 },
+];
+// ---------- 第 4 版（11-09，決定 0032）：兌換所的裝備 ----------
+// 名字、說明在 content3.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。
+// 效果的欄位跟小優點、小缺點一樣（下面 PERKS 的說明），legacy.js 的 traitSum 會一起算，所以不用在規則裡另外加判斷；
+// 多一種 "skill:技能名"：那個技能檢定時多幾點（不改技能本身，也不影響成長）。tier：common 普通、fine 精良、rare 稀有（價錢在 NUM.shop.gearPrice）。
+// 會讓理智好過的（探險燈）放在最貴的一級；理智要「算容易歸零」（docs/界線.md）。
+export const GEAR_ITEMS = [
+  { id: "magnifier", tier: "common", "skill:偵查": 5 },
+  { id: "coin", tier: "common", "skill:幸運": 5 },
+  { id: "apron", tier: "common", pillowFree: 30 },
+  { id: "abacus", tier: "fine", deal: 1 },
+  { id: "amulet", tier: "fine", understand: -10 },
+  { id: "gloves", tier: "fine", power: 1 },
+  { id: "lamp", tier: "rare", cellarSan: -1 },
+  { id: "notebook", tier: "rare", growth: 1 },
 ];
 
 // ---------- 第 3 版：工坊升級（系統 K，在館長室買） ----------

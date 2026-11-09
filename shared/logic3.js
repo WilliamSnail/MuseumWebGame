@@ -9,6 +9,7 @@ import { CELLAR_POWER, CELLAR_REWARDS, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, 
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
 import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
+import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
 
 export const hasUp = (P, id) => !!(P && P.upgrades && P.upgrades[id]);
 export function hallSize(P) { return 6 + (hasUp(P, "ped7") ? 1 : 0) + (hasUp(P, "ped8") ? 1 : 0); }
@@ -70,7 +71,8 @@ export function assignJob(P, id, skills) {
   }
   return out;
 }
-export const skillOf = (P, s) => (P && P.skills && P.skills[s]) || 15;
+// 技能值：加上穿著的裝備（放大鏡這種，欄位 "skill:偵查"，決定 0032）。成長、傳下去看的是 P.skills 本身，不算裝備
+export const skillOf = (P, s) => Math.min(99, ((P && P.skills && P.skills[s]) || 15) + traitSum(P, "skill:" + s));
 export function skillCheck(P, s, mod = 0) {
   if (!P || isFree(P)) return { skill: s, success: false, skip: true };
   const target = clampN(skillOf(P, s) + mod, 1, 99);
@@ -219,6 +221,11 @@ export function fuseTogether(PA, a, PB, b) {
       : finishMake(P, core.child, { natural: roll.total, spent: core.blood, pushed: 0, fusion });
     out[side] = { events: events.concat(made ? made.events : []), san: { roll: sc.roll.total, success: sc.success, loss: sanEv.loss, zero: sanEv.zero, indef: sanEv.indef }, made };
   });
+  // 跟館友學（決定 0032）：對方拿手的技能比你高，有機會 +1。放在最後：骰子不影響上面算好的小孩、理智。理智用完的人學不到
+  // 兩個人比的都是融合之前的技能（同一次 A 學完不會影響 B）
+  const ta = friendTalent(PA), tb = friendTalent(PB);
+  out.a.learn = out.a.san.zero ? null : learnFromFriend(PA, tb);
+  out.b.learn = out.b.san.zero ? null : learnFromFriend(PB, ta);
   return out;
 }
 
@@ -321,6 +328,7 @@ export function cellarApply(P, res, sanSuccess) {
   const firstClear = !P.cellar.cleared[room.id]; // 第一次走這個房間（回理智只算第一次，不能一直下去刷）
   if (o.insp) { fx.insp = firstWin ? o.insp : NUM.cellarRepeatInsp; if (!isFree(P)) P.insp += fx.insp; }
   if (success) P.cellar.won[room.id] = true;
+  if (success && room.trial) fx.trial = trialWin(P, room); // 試煉房間過了：技能成長（決定 0032，shared/shop.js）
   if (o.san) {
     const s = String(o.san).trim();
     if (s.startsWith("+")) { fx.sanGain = isFree(P) || !firstWin ? 0 : gainSan(P, rollExpr(s.slice(1)).total); }
@@ -331,7 +339,7 @@ export function cellarApply(P, res, sanSuccess) {
     }
   }
   if (res.extraSan && !isFree(P)) fx.sanLoss += rollExpr(res.extraSan).total;
-  // 小缺點「怕黑」（11-08）：有扣理智就多扣
+  // 小缺點「怕黑」（11-08）：有扣理智就多扣；裝備「探險燈」（決定 0032）：少扣
   const dark = cellarDarkLoss(P, fx.sanLoss);
   if (dark) { fx.sanLoss += dark; fx.dark = dark; }
   if (o.myth && !isFree(P)) { fx.myth = o.myth; fx.events.push(...addMyth(P, o.myth)); }
@@ -343,8 +351,8 @@ export function cellarApply(P, res, sanSuccess) {
       if (hurt) { fx.injureDays = injureDaysOf(P); P.injured[hurt.key] = addDays(P.day.date, fx.injureDays); fx.injured = hurt; }
     }
   }
-  // 躺平的、戴毛帽的：每一層第一次走的時候回 1D3 理智（各一次）
-  if (!isFree(P) && firstClear) {
+  // 躺平的、戴毛帽的：每一層第一次走的時候回 1D3 理智（各一次）。試煉房間不算（不能靠它回理智，決定 0032）
+  if (!isFree(P) && firstClear && !room.trial) {
     if (teamHas(team, "姿勢", "躺平") && once("rest")) { fx.sanGain += gainSan(P, rollExpr(NUM.cellarRest).total); fx.rested = "躺平"; }
     if (teamHas(team, "帽子", "毛帽") && once("beanie")) { fx.sanGain += gainSan(P, rollExpr(NUM.cellarRest).total); fx.rested = (fx.rested ? fx.rested + "、" : "") + "毛帽"; }
   }

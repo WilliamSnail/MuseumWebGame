@@ -106,6 +106,33 @@ T("房間：強度門檻照樓層、下一步的字照規矩", () => {
   expectErr(c => { c.files["2026-W47/d3.json"].adds[0].hint = "門後面有壹本登記簿"; }, /寫成「去 B1 …」/);
   expectErr(c => { c.files["2026-W47/d3.json"].adds[0].floor = 9; }, /floor 要是 1～5/);
 });
+T("兌換所上架 shop（決定 0032）：照週號輪流可以不寫；寫了只能挑已經畫好的、不重複、不超過上限", () => {
+  const ok = regular(); ok.files["2026-W47/week.json"].shop = ["hat-rain", "hat-muff"];
+  assert.deepStrictEqual(run(ok).errors, []);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["傳說的金冠"]; }, /不是兌換所賣的限定頭飾/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["stand-velvet"]; }, /不是兌換所賣的限定頭飾/); // 簽到的東西不賣
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["hat-rain", "hat-rain"]; }, /有重複的 id/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = ["hat-rain", "hat-chef", "hat-muff", "hat-miner", "hat-bow"]; }, /最多指定 4 件/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = "hat-rain"; }, /要寫成 id 的陣列/);
+  expectErr(c => { c.files["2026-W47/week.json"].shop = []; }, /要寫成 id 的陣列/);
+});
+T("房間獎勵的技能成長（決定 0032）：只有房間可以、技能要存在、不能有不用挑戰的選項、一週有上限", () => {
+  // 底：把一間房間的 none 選項拿掉，獎勵寫技能成長
+  const room = c => { const r = c.files["2026-W47/d3.json"].adds[0]; r.choices = r.choices.filter(x => x.check.type !== "none"); r.reward = { skill: "偵查" }; return r; };
+  const ok = regular(); room(ok);
+  assert.deepStrictEqual(run(ok).errors, []);
+  const anomalyOk = regular(); { const r = anomalyOk.files["2026-W47/week.json"].anomaly.room; r.choices = r.choices.filter(x => x.check.type !== "none"); r.reward = { insp: 2, skill: "鑑賞" }; }
+  assert.deepStrictEqual(run(anomalyOk).errors, [], "本週異狀的房間也可以");
+  expectErr(c => { room(c).reward = { skill: "打字" }; }, /沒有「打字」這個技能/);
+  expectErr(c => { const r = c.files["2026-W47/d3.json"].adds[0]; r.reward = { skill: "偵查" }; r.choices[0].check = { type: "none" }; }, /不能有 check.type none/);
+  expectErr(c => { c.files["2026-W47/d1.json"].daily[0].reward = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  expectErr(c => { c.files["2026-W47/d1.json"].dailyBonus = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  expectErr(c => { c.files["2026-W47/week.json"].weeklyBonus = { skill: "偵查" }; }, /技能成長只能放在房間/);
+  // 一天最多一間（預算）；一週最多 NUM.shop.weekSkillRooms 間
+  const copy = (c, n, id) => { const r = clone(c.files["2026-W47/d3.json"].adds[0]); r.id = id; c.files[`2026-W47/d${n}.json`].adds.push(r); return r; };
+  expectErr(c => { room(c); copy(c, 3, "extra-a"); }, /超過預算：skills/);
+  expectErr(c => { room(c); copy(c, 5, "extra-b"); copy(c, 6, "extra-c"); }, /間房間給技能成長，最多/);
+});
 T("id 一週裡不能重複", () => {
   expectErr(c => { c.files["2026-W47/d2.json"].books[0].id = "1a"; }, /id「1a」這週用過了/);
 });

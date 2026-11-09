@@ -353,10 +353,12 @@ export function coopApply(run, Ps, room, ch, check, events) {
       if (r) {
         ok = r.success;
         ev.push({ type: "sanCheck", spec: r.spec, roll: r.roll, target: P.sanity, success: r.success, fumble: r.fumble, loss: r.loss, expr: r.expr, habituated: r.habituated });
-        coopSanHit(P, m, r.loss, src, { check: r.loss }, ev);
+        // 怕黑多扣、探險燈少扣（dark 可能是負的，決定 0032）：先算總共扣幾點，再分成兩次扣
         const extra = !r.success ? pr.failSan : 0, dark = cellarDarkLoss(P, r.loss + extra);
+        const total = r.loss + extra + dark, first = Math.min(r.loss, total);
+        coopSanHit(P, m, first, src, { check: first }, ev);
         f.pressure = extra; f.dark = dark;
-        if (extra + dark) coopSanHit(P, m, extra + dark, src, { pressure: extra, dark }, ev);
+        if (total - first) coopSanHit(P, m, total - first, src, { pressure: extra, dark }, ev);
       }
       if (!r || m.ghost) { f.success = r ? r.success : null; P.cellar.cleared[room.id] = true; return; } // 幽靈沒有擲，也沒有結果
     }

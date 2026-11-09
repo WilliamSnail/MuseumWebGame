@@ -166,8 +166,38 @@ export const ART = (() => {
       ln(`M100 ${h - 55}V${h - 7}M84 ${h - 53}Q75 ${h - 31} 84 ${h - 8}M116 ${h - 53}Q125 ${h - 31} 116 ${h - 8}`, "#9E241C", 1.4) + `<ellipse cx="90" cy="${h - 39}" rx="7" ry="10" fill="#F58A6E" opacity=".45"/>` +
       `<rect x="82" y="${h - 60}" width="36" height="8" rx="2.5" fill="#C99A2E" stroke="#8A6512" stroke-width="1.5"/>` + ln(`M100 ${h - 60}V${h - 64}`, "#8A6512", 2) + `<circle cx="100" cy="${h - 65}" r="2.6" fill="#C99A2E"/>` +
       ln(`M133 ${h - 28}q5 10 2 22M136 ${h - 28}q7 10 5 20`, "#E2B53E", 1.6) },
+    // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾（樣子是草稿；戴在遊戲自己的青蛙上）
+    // 黃雨帽：鮮黃的圓頂、後面的帽簷特別長（往右垂下去）
+    黃雨帽: { h: 34, svg: h => `<path d="M60 ${h + 2}Q100 ${h + 11} 138 ${h + 2}Q160 ${h + 3} 172 ${h + 19}Q148 ${h + 11} 128 ${h + 9}Q100 ${h + 13} 72 ${h + 9}Q62 ${h + 8} 60 ${h + 2}Z" fill="#E5AE1E" stroke="#94700E" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      `<path d="M67 ${h + 3}Q66 ${h - 34} 100 ${h - 34}Q134 ${h - 34} 133 ${h + 3}Q100 ${h + 9} 67 ${h + 3}Z" fill="#F4C93A" stroke="#94700E" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M100 ${h - 33}V${h + 5}M82 ${h - 28}Q76 ${h - 12} 76 ${h + 4}M118 ${h - 28}Q124 ${h - 12} 124 ${h + 4}`, "#B98F1E", 1.4) + `<ellipse cx="85" cy="${h - 20}" rx="6" ry="9" fill="#FFF0A8" opacity=".6"/>` },
+    // 廚師帽：白色、又高又蓬，底下一圈帽帶
+    廚師帽: { h: 60, svg: h => `<path d="M74 ${h - 11}Q54 ${h - 28} 72 ${h - 42}Q74 ${h - 62} 100 ${h - 58}Q126 ${h - 62} 128 ${h - 42}Q146 ${h - 28} 126 ${h - 11}Z" fill="#FBFAF4" stroke="#A9A595" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M86 ${h - 16}Q84 ${h - 32} 88 ${h - 44}M100 ${h - 16}V${h - 46}M114 ${h - 16}Q116 ${h - 32} 112 ${h - 44}`, "#C9C5B6", 1.5) +
+      `<rect x="72" y="${h - 13}" width="56" height="15" rx="3.5" fill="#EFECE0" stroke="#A9A595" stroke-width="${SW}"/>` },
+    // 毛耳罩：頭頂一條帶子，兩邊粉紅色毛茸茸的耳罩
+    毛耳罩: { h: 12, svg: h => ln(`M60 ${h + 24}Q58 ${h - 14} 100 ${h - 14}Q142 ${h - 14} 140 ${h + 24}`, "#7A4E94", 5.5) + ln(`M60 ${h + 24}Q58 ${h - 14} 100 ${h - 14}Q142 ${h - 14} 140 ${h + 24}`, "#A67CC0", 2.2) +
+      [58, 142].map(x => `<circle cx="${x}" cy="${h + 31}" r="14.5" fill="#F4A9C0" stroke="#B9627E" stroke-width="2" stroke-dasharray="2.4 1.6"/><circle cx="${x}" cy="${h + 31}" r="7.5" fill="#FBD3DF"/>`).join("") },
+    // 礦工帽：黃色硬殼帽，前面一盞小燈
+    礦工帽: { h: 38, svg: h => `<path d="M66 ${h}Q65 ${h - 37} 100 ${h - 37}Q135 ${h - 37} 134 ${h}Z" fill="#E8A91F" stroke="#8C640C" stroke-width="${SW}" stroke-linejoin="round"/>` + ln(`M100 ${h - 36}V${h - 28}M78 ${h - 30}Q72 ${h - 16} 72 ${h - 2}M122 ${h - 30}Q128 ${h - 16} 128 ${h - 2}`, "#B58314", 1.6) +
+      `<rect x="57" y="${h - 4}" width="86" height="9" rx="4.5" fill="#D29A18" stroke="#8C640C" stroke-width="${SW}"/><rect x="88" y="${h - 25}" width="24" height="17" rx="3" fill="#4A4A4A" stroke="#222" stroke-width="1.6"/><circle cx="100" cy="${h - 17}" r="7" fill="#FFF3A8" stroke="#C99A2E" stroke-width="1.6"/>` + spark(100, h - 17, 4, "#FFFFFF") },
+    // 花環：綠色的圈，上面一圈小花
+    花環: { h: 11, svg: h => `<ellipse cx="100" cy="${h - 2}" rx="37" ry="8" fill="none" stroke="#5E9A4A" stroke-width="4.5"/>` +
+      [[64, 0, "#F4A9C0"], [76, -7, "#FFF6D6"], [90, -10, "#F2CF4E"], [106, -10, "#F4A9C0"], [122, -7, "#FFF6D6"], [136, 0, "#F2CF4E"], [120, 5, "#F4A9C0"], [100, 7, "#FFF6D6"], [80, 5, "#F2CF4E"]].map(([x, d, c]) => {
+        const y = h - 2 + d;
+        return [[0, -4], [3.8, -1.2], [2.4, 3.2], [-2.4, 3.2], [-3.8, -1.2]].map(([a, b]) => `<circle cx="${x + a}" cy="${y + b}" r="2.9" fill="${c}" stroke="#A98A5E" stroke-width=".6"/>`).join("") + `<circle cx="${x}" cy="${y}" r="1.9" fill="#D9842E"/>`;
+      }).join("") },
+    // 蝴蝶結：紅色的大蝴蝶結，放在頭頂上
+    蝴蝶結: { h: 28, svg: h => [1, -1].map(s => `<path d="M100 ${h - 11}Q${100 + s * 16} ${h - 34} ${100 + s * 37} ${h - 24}Q${100 + s * 42} ${h - 12} ${100 + s * 36} ${h + 1}Q${100 + s * 18} ${h + 3} 100 ${h - 7}Z" fill="#D9382E" stroke="#8E1E18" stroke-width="${SW}" stroke-linejoin="round"/>` + ln(`M${100 + s * 9} ${h - 12}Q${100 + s * 22} ${h - 18} ${100 + s * 30} ${h - 18}M${100 + s * 9} ${h - 9}Q${100 + s * 20} ${h - 7} ${100 + s * 29} ${h - 5}`, "#A8281F", 1.5)).join("") +
+      `<rect x="91" y="${h - 17}" width="18" height="15" rx="5" fill="#E85A4E" stroke="#8E1E18" stroke-width="${SW}"/>` },
+    // 鐵鍋帽：一口小鐵鍋，握把朝旁邊
+    鐵鍋帽: { h: 34, svg: h => `<rect x="130" y="${h - 25}" width="38" height="7" rx="3.5" fill="#3B3B3B" stroke="#1E1E1E" stroke-width="1.8"/><path d="M67 ${h}L72 ${h - 30}Q100 ${h - 36} 128 ${h - 30}L133 ${h}Q100 ${h + 7} 67 ${h}Z" fill="#8C9299" stroke="#464B50" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      `<ellipse cx="100" cy="${h - 31}" rx="28" ry="4.6" fill="#5F656B" stroke="#464B50" stroke-width="1.8"/>` + ln(`M82 ${h - 22}L80 ${h - 2}`, "#C8CDD2", 3, ' opacity=".8"') + ln(`M92 ${h - 22}L91 ${h - 8}`, "#C8CDD2", 1.8, ' opacity=".6"') },
+    // 摺紙帽：舊報紙摺的三角帽，上面有幾行看不清楚的字（只有線條）
+    摺紙帽: { h: 46, svg: h => `<path d="M62 ${h - 1}L100 ${h - 46}L138 ${h - 1}Z" fill="#EFE8D2" stroke="#857D66" stroke-width="${SW}" stroke-linejoin="round"/><path d="M57 ${h - 3}H143L138 ${h + 8}H62Z" fill="#E2DAC0" stroke="#857D66" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M100 ${h - 45}V${h - 3}`, "#B5AD94", 1.2) + ln(`M86 ${h - 20}H96M83 ${h - 14}H96M80 ${h - 8}H96M104 ${h - 20}H114M104 ${h - 14}H117M104 ${h - 8}H120M68 ${h + 2}H132`, "#8F876E", 1.3) },
   };
-  const beanie = { h: 40, svg: h => `<path d="M68 ${h + 1}Q68 ${h - 36} 100 ${h - 36}Q132 ${h - 36} 132 ${h + 1}Z" fill="#5FAF68" stroke="#2F6E38" stroke-width="${SW}" stroke-linejoin="round"/><rect x="66" y="${h - 9}" width="68" height="11" rx="5" fill="#4C9A56" stroke="#2F6E38" stroke-width="${SW}"/>` + ln(`M78 ${h - 8}v9M90 ${h - 8}v9M100 ${h - 8}v9M110 ${h - 8}v9M122 ${h - 8}v9`, "#2F6E38", 1.2) + `<circle cx="100" cy="${h - 38}" r="7" fill="#F6F1D6" stroke="#2F6E38" stroke-width="${SW}"/>` };
+  const beanie ={ h: 40, svg: h => `<path d="M68 ${h + 1}Q68 ${h - 36} 100 ${h - 36}Q132 ${h - 36} 132 ${h + 1}Z" fill="#5FAF68" stroke="#2F6E38" stroke-width="${SW}" stroke-linejoin="round"/><rect x="66" y="${h - 9}" width="68" height="11" rx="5" fill="#4C9A56" stroke="#2F6E38" stroke-width="${SW}"/>` + ln(`M78 ${h - 8}v9M90 ${h - 8}v9M100 ${h - 8}v9M110 ${h - 8}v9M122 ${h - 8}v9`, "#2F6E38", 1.2) + `<circle cx="100" cy="${h - 38}" r="7" fill="#F6F1D6" stroke="#2F6E38" stroke-width="${SW}"/>` };
   const hatOf = name => HATS[name] || beanie;
 
   // ---------- 稀有度光暈（只有 o.fx 才畫） ----------
@@ -658,6 +688,7 @@ export const ART = (() => {
     palette: P("M12 3.5a8.5 8.5 0 0 0 0 17c1.4 0 2-.9 2-1.9s-.8-1.5-.8-2.3.7-1.6 1.8-1.6H17a3.5 3.5 0 0 0 3.5-3.5c0-4.1-3.8-7.7-8.5-7.7z") + `<circle cx="7.6" cy="11" r="1.2"/><circle cx="10.2" cy="7.4" r="1.2"/><circle cx="14.4" cy="7.4" r="1.2"/>`,
     hand: P("M8 13V6.5a1.5 1.5 0 0 1 3 0V11M11 10.5V5a1.5 1.5 0 0 1 3 0v5.5M14 10.5V6.8a1.5 1.5 0 0 1 3 0V14c0 3.6-2.4 6-5.5 6S6.4 18.2 5.3 15.6l-1.4-3.2a1.4 1.4 0 0 1 2.5-1.2L8 13.5"),
     hourglass: P("M6.5 3.5h11M6.5 20.5h11M8 3.5V6c0 2.6 4 4.4 4 6s-4 3.4-4 6v2.5M16 3.5V6c0 2.6-4 4.4-4 6s4 3.4 4 6v2.5M9.8 18.6h4.4L12 16.4z"),
+    lamp: `<rect x="7.5" y="8" width="9" height="10" rx="2"/>` + P("M9 8l1-3.5h4l1 3.5M10 18v2.5h4V18M12 11v3.5M8.5 4.5a4 3 0 0 1 7 0"), // 探險燈（兌換所，決定 0032）
   };
   ICONS.cellar = ICONS.stairs;
   ICONS.calendar = `<rect x="4" y="5.5" width="16" height="14.5" rx="2"/>` + P("M4 10.5h16M8.5 3.5v4M15.5 3.5v4M8 14h2M12 14h2M16 14h.5M8 17h2M12 17h2"); // 簽到日曆（11-09）

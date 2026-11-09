@@ -12,6 +12,7 @@ import { fixLegacy, leaveLegacy, newVisit, traitSum, visitorRecord } from "./leg
 import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./visitors.js";
 import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./signin.js";
 import { holidayExhibitById, holidaysOn } from "./holidays.js";
+import { fixShop } from "./shop.js";
 
 export let RNG = Math.random;
 export function setRng(f) { RNG = f || Math.random; }
@@ -123,7 +124,7 @@ export const PILLOW_CATS = PILLOW_PARTS.map(p => p.name);
 export const partOf = cat => PEPE_PARTS.find(p => p.name === cat);
 export const optOf = (cat, name) => (partOf(cat) || { options: [] }).options.find(o => o.name === name);
 export const allOpts = cat => partOf(cat).options.map(o => o.name);
-export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift || o.limited)); // limited：簽到限定（11-09，決定 0030）
+export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift || o.limited)); // limited：簽到限定（11-09，決定 0030）、兌換所限定（決定 0032）
 export const baseOpts = cat => partOf(cat).options.filter(o => !isSpecialOpt(o)).map(o => o.name);
 export function catOfOption(name) { const p = PEPE_PARTS.find(pp => pp.options.some(o => o.name === name)); return p ? p.name : null; }
 export const CORE_TOTAL = CORE_CATS.reduce((n, c) => n * baseOpts(c).length, 1); // 圖鑑的格數
@@ -246,6 +247,8 @@ export function newProfile(mode) {
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
     // 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西（shared/signin.js）。博物館的，換參觀者不會跟著換
     limited: { got: {}, wear: { stand: null, frame: null }, stock: {} },
+    // 第 4 版（11-09，決定 0032）：兌換所（shared/shop.js）。shop 是博物館的（買到的裝備、試煉房間這週的次數）；gear 是現在這位穿著的（VISITOR_KEYS）
+    shop: { gear: {}, trials: {} }, gear: [],
     // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
     fresh: {},
     // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
@@ -333,7 +336,7 @@ export function unlockState(P, cat, name) {
   if (o.mutant) return { state: "mutant", text: "只能在融合室突變出來" };
   if (o.gift) { const l = typeof CLIENT_LINES !== "undefined" && CLIENT_LINES[o.gift]; return { state: "gift", text: `跟${l ? l.name : "委託人"}的委託走完才會收到` }; }
   if (o.key) return { state: "key", text: o.key === "bg" ? "地下收藏庫 B3 的鑰匙打開" : "地下收藏庫 B5 的鑰匙打開" };
-  if (o.limited) return { state: "limited", text: "簽到限定：每週全簽到拿得到" }; // 決定 0030
+  if (o.limited) return { state: "limited", text: o.limited === "shop" ? "兌換所限定：用週章換" : "簽到限定：每週全簽到拿得到" }; // 決定 0030、0032
   if (!reqMet(P, o.req)) return { state: "req", text: reqText(o.req) };
   const cost = unlockCost(P);
   return { state: "buy", cost, ok: P.insp >= cost, text: `${cost} 靈感解鎖` };
@@ -1352,6 +1355,7 @@ export function fixProfile(P, mode) {
   out.stats = Object.assign(base.stats, out.stats || {});
   out.wsPick = Object.assign({}, DEFAULT_PICK, out.wsPick || {});
   out.limited = fixLimited(out.limited); // 簽到限定的東西（11-09，決定 0030）
+  fixShop(out); // 兌換所（11-09，決定 0032）：舊存檔沒有裝備；放在 fixVisitors 後面（不在場的那幾位也要補）
   return out;
 }
 export function migrateSave(o) {

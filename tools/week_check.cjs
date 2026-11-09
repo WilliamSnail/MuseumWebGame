@@ -78,16 +78,17 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   const rewardOk = (where, r, o = {}) => {
     if (r == null) { if (!o.optional) E(where, "要有獎勵"); return; }
     if (!isObj(r)) { E(where, "獎勵要寫成 { insp, mood, items }"); return; }
-    Object.keys(r).forEach(k => { if (!["insp", "mood", "items"].includes(k)) E(where, `獎勵不認得「${k}」（週章由遊戲自己給，不要寫）`); });
+    Object.keys(r).forEach(k => { if (!["insp", "mood", "items"].concat(o.room ? ["skill"] : []).includes(k)) E(where, k === "skill" ? "技能成長只能放在房間的獎勵（adds、anomaly.room）" : `獎勵不認得「${k}」（週章由遊戲自己給，不要寫）`); });
+    if ("skill" in r && !G.SKILLS.includes(r.skill)) E(where, `沒有「${r.skill}」這個技能（${G.SKILLS.join("、")}）`);
     if ("insp" in r && !isInt(r.insp, 1, 10)) E(where, "insp 要是 1～10 的整數");
     if ("mood" in r && !isInt(r.mood, 1, 10)) E(where, "mood 要是 1～10 的整數");
     if ("items" in r) {
       if (!Array.isArray(r.items) || r.items.length > 2) E(where, "items 最多 2 樣");
       else r.items.forEach(id => { if (!G.STORY_ITEMS[id]) E(where, `沒有「${id}」這種東西（shared/story.js 的 STORY_ITEMS）`); });
     }
-    if (!o.optional && !r.insp && !r.mood && !(r.items && r.items.length)) E(where, "獎勵是空的");
+    if (!o.optional && !r.insp && !r.mood && !(r.items && r.items.length) && !r.skill) E(where, "獎勵是空的");
   };
-  const budget = (where, got, cap) => ["insp", "mood", "items"].forEach(k => { if (got[k] > cap[k]) E(where, `獎勵超過預算：${k} ${got[k]}（最多 ${cap[k]}，NUM.story）`); });
+  const budget = (where, got, cap) => ["insp", "mood", "items", "skills"].forEach(k => { if (got[k] > cap[k]) E(where, `獎勵超過預算：${k} ${got[k]}（最多 ${cap[k]}，NUM.story）`); });
 
   // ---------- 一間房間（地下收藏庫的格式） ----------
   const roomOk = (where, r, ctx) => {
@@ -123,7 +124,9 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       out("success", c && c.success);
       if (ck.type !== "none") out("fail", c && c.fail);
     });
-    rewardOk(where + ".reward", r.reward);
+    rewardOk(where + ".reward", r.reward, { room: true });
+    // 技能成長要真的挑戰過：有 none 的選項就不用挑戰，直接算過（決定 0032）
+    if (isObj(r.reward) && r.reward.skill && asList(r.choices).some(c => c && c.check && c.check.type === "none")) E(where + ".reward", "獎勵有技能成長的房間，不能有 check.type none 的選項（不挑戰也算過）");
   };
 
   // ---------- 一幅畫（今日特展） ----------
@@ -272,6 +275,19 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     asList(wk.weekly).forEach((t, i) => { if (t && t.id) { if (ctx.ids.has(t.id)) E(where, `id「${t.id}」重複`); ctx.ids.add(t.id); ctx.tasks.add(t.id); } taskOk(`${where}/week.json.weekly[${i}]`, t, Object.assign({}, ctx, later, { day: {} }), "weekly"); });
     rewardOk(where + "/week.json.weeklyBonus", wk.weeklyBonus);
     budget(where + "/week.json", G.weekTaskTotal(wk), N.weekTaskBudget);
+    // 這週兌換所上架的限定頭飾（決定 0032）：只能挑已經畫好的（config.js 的 LIMITED_ITEMS 裡 shop: true 的）。可以不寫（照週號輪流）
+    if (wk.shop !== undefined) {
+      const sw = where + "/week.json.shop", all = G.shopLimitedIds();
+      if (!Array.isArray(wk.shop) || !wk.shop.length) E(sw, "要寫成 id 的陣列，例如 [\"hat-rain\"]（不指定就不要寫這一欄）");
+      else {
+        if (wk.shop.length > G.NUM.shop.limitedMax) E(sw, `最多指定 ${G.NUM.shop.limitedMax} 件`);
+        if (new Set(wk.shop).size !== wk.shop.length) E(sw, "有重複的 id");
+        wk.shop.forEach(id => { if (!all.includes(id)) E(sw, `「${id}」不是兌換所賣的限定頭飾（只能從 ${all.join("、")} 挑；新的要畫，寫提案）`); });
+      }
+    }
+    // 一週裡獎勵寫技能成長的房間不能太多（決定 0032）
+    const skillRooms = [wk.anomaly && wk.anomaly.room].concat(...Object.values(pack.days).map(d => asList(d && d.adds))).filter(r => r && isObj(r.reward) && r.reward.skill).length;
+    if (skillRooms > G.NUM.shop.weekSkillRooms) E(where, `這週有 ${skillRooms} 間房間給技能成長，最多 ${G.NUM.shop.weekSkillRooms} 間（NUM.shop.weekSkillRooms）`);
     const need = wk.ending && wk.ending.need && wk.ending.need.read;
     if (!isInt(need, 1, 14)) E(where + "/week.json", "ending.need.read 要寫讀幾本才打開結局（1～14）");
     const dayFiles = Object.keys(pack.days).map(Number).sort((a, b) => a - b);

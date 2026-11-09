@@ -223,7 +223,7 @@ async function startParty(me, pid) {
   }
   // 到這裡兩份存檔已經寫好了：後面就算出錯，也不能說「沒扣東西」
   const { r, revA, revB } = out;
-  const side = (m, s) => ({ id: m.id, nick: m.nick, got: !!s.made, key: s.made ? s.made.key : null, failed: !!(s.made && s.made.failed), perfect: !!(s.made && s.made.perfect), san: s.san });
+  const side = (m, s) => ({ id: m.id, nick: m.nick, got: !!s.made, key: s.made ? s.made.key : null, failed: !!(s.made && s.made.failed), perfect: !!(s.made && s.made.perfect), san: s.san, learn: s.learn || null }); // learn：跟館友學（決定 0032）
   const result = { child: r.child, title: r.title || null, recipe: r.recipe || null, mutations: (r.mutations || []).map(x => x.name), roll: r.roll ? r.roll.total : null, a: side(a, r.a), b: side(b, r.b), at: now() };
   try { await pref.update({ phase: "done", result: JSON.parse(JSON.stringify(result)) }); } // JSON 一次：拿掉 undefined（Realtime Database 不收）
   catch (e) { console.error("一起融合：存檔寫好了，結果寫不進隊伍", e); }
