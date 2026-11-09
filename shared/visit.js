@@ -136,12 +136,12 @@ export function stepWeeklyView(o) {
 }
 
 // ---------- 請館友來看我的展廳（Functions 的 hallCall） ----------
-// 一天一位只能請一次：通知存在對方的 calls/{對方}/items/{callId}，編號一樣就是請過了（交易重跑也不會多一則）。
+// 通知存在對方的 calls/{對方}/items/{callId}：同一天同一個人只留一則，再請就蓋過去、變回沒看過。
 // 格式 { fromId, from（暱稱）, day, at, seen }。沒有獎勵。
 export const callId = (day, uid) => `call-${day}-${uid}`;
-// o：{ open（我的展廳開了沒）, had（今天已經請過這位）, me, to, today, at }。回傳 { ok, id, call } 或 { ok: false, code, reason }
+// o：{ open（我的展廳開了沒）, me, to, today, at }。回傳 { ok, id, call } 或 { ok: false, code, reason }
 export function stepHallCall(o) {
-  const can = checkHallCall({ self: o.me.uid === o.to, open: !!o.open, done: !!o.had });
+  const can = checkHallCall({ self: o.me.uid === o.to, open: !!o.open }); // 同一位可以一直請（翊文 11-09）；同一天同一個人只留一則，再請就蓋過去、變回沒看過
   if (!can.ok) return can;
   return { ok: true, id: callId(o.today, o.me.uid), call: { fromId: o.me.uid, from: o.me.nick, day: o.today, at: o.at, seen: false } };
 }

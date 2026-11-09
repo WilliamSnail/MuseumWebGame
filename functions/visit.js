@@ -20,7 +20,7 @@ import { dayPlus, hallView, weeklyView } from "./shared/gifts.js";
 import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "./shared/logic.js";
 import { weekIndex, weeklyTheme } from "./shared/logic3.js";
 import { friendTalent, learnFromFriend } from "./shared/shop.js";
-import { callId, callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "./shared/visit.js";
+import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "./shared/visit.js";
 
 // ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。
@@ -138,7 +138,7 @@ export const visitWeekly = onCall(async req => {
   return JSON.parse(JSON.stringify({ owner: { id: owner, nick }, open: r.open, started: r.started, week: r.week, theme: r.theme, best: r.best, slots: r.slots }));
 });
 
-// ---------- 請館友來看我的展廳：沒有獎勵；一天一位一次 ----------
+// ---------- 請館友來看我的展廳：沒有獎勵；同一位可以一直請（翊文 11-09） ----------
 export const hallCall = onCall(async req => {
   const me = await needMember(req);
   const to = idArg(req.data && req.data.to, "要選壹位館友");
@@ -147,13 +147,9 @@ export const hallCall = onCall(async req => {
   if (!toNick) throw bad("找不到這位館友");
   const t = nowMs(), today = todayStr(t);
   const { view } = hallOf(await saveRef(me.uid).get()); // 我的展廳開館了才有東西可看
-  await db().runTransaction(async tx => {
-    const ref = callRef(to, callId(today, me.uid));
-    const had = await tx.get(ref);
-    const r = stepHallCall({ open: view.open, had: had.exists, me, to, today, at: t });
-    if (!r.ok) throw bad(r.reason);
-    tx.set(ref, Object.assign({}, r.call, { createdAt: FieldValue.serverTimestamp() }));
-  });
+  const r = stepHallCall({ open: view.open, me, to, today, at: t });
+  if (!r.ok) throw bad(r.reason);
+  await callRef(to, r.id).set(Object.assign({}, r.call, { createdAt: FieldValue.serverTimestamp() }));
   await notify(to, { t: "hall_call", from: me.nick, fromId: me.uid });
   return { ok: true, toNick };
 });

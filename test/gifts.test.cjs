@@ -275,14 +275,13 @@ T("信：來訪的信附靈感；全部領取算得出領了幾隻佩佩", () =>
 });
 
 // ---------- 請館友來看展廳（11-09，取代分享碼） ----------
-T("請館友來看：自己不行、自己的展廳沒開館不行、今天請過就不行；其他可以", () => {
-  assert.deepStrictEqual(J(G.checkHallCall({ self: false, open: true, done: false })), { ok: true });
-  assert.strictEqual(G.checkHallCall({ self: true, open: true, done: false }).code, "self");
-  assert.strictEqual(G.checkHallCall({ self: false, open: false, done: false }).code, "not_open");
-  assert.strictEqual(G.checkHallCall({ self: false, open: true, done: true }).code, "already");
+T("請館友來看：自己不行、自己的展廳沒開館不行；其他都可以（同一位可以一直請）", () => {
+  assert.deepStrictEqual(J(G.checkHallCall({ self: false, open: true })), { ok: true });
+  assert.strictEqual(G.checkHallCall({ self: true, open: true }).code, "self");
+  assert.strictEqual(G.checkHallCall({ self: false, open: false }).code, "not_open");
   assert.strictEqual(G.checkHallCall(null).code, "self", "壞資料當作不行");
   assert.strictEqual(G.checkHallCall(undefined).ok, false);
-  for (const s of [{ self: true, open: true, done: true }, { self: false, open: false, done: true }]) assert.ok(G.checkHallCall(s).reason.length > 3, "不行的時候要有一句話");
+  for (const s of [{ self: true, open: true }, { self: false, open: false }]) assert.ok(G.checkHallCall(s).reason.length > 3, "不行的時候要有一句話");
 });
 
 // ---------- 本週特展給館友比的那一小部分（11-09，取代特展碼） ----------

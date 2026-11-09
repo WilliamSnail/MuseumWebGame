@@ -85,7 +85,6 @@ button.nf-card.nf-pickcard:hover:not(:disabled), button.nf-card.nf-pickcard:focu
 button.nf-card.nf-pickcard:disabled { cursor: default; filter: saturate(.55); }
 .nf-pickcard .nf-body { flex: 1; }
 .nf-pick-go { flex: 0 0 auto; padding: 3px 12px; border-radius: 12px; font-size: .8125rem; color: #2A1A0C; background: rgba(255,250,230,.55); border: 1px solid rgba(110,80,32,.6); }
-.nf-pick-go.done { background: transparent; border-style: dashed; color: #5A4630; }
 .nf-pick-hint { margin: 0 0 12px; }
 .nb-pick .nf-list { grid-template-columns: 1fr; }
 .lgu-call { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }

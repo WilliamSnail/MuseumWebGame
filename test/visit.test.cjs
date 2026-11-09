@@ -416,7 +416,7 @@ T("比特展：不能比自己；壞資料不丟錯、不能信（壞的格子�
 });
 
 // ---------- 請館友來看（11-09，取代分享碼） ----------
-const call = (more = {}) => G.stepHallCall(Object.assign({ open: true, had: false, me: A, to: "ub", today: DAY, at: 5000 }, more));
+const call = (more = {}) => G.stepHallCall(Object.assign({ open: true, me: A, to: "ub", today: DAY, at: 5000 }, more));
 T("請館友來看：給通知的內容，編號是日期加上請的人（同一天同一位只有一則）", () => {
   const r = J(call());
   assert.strictEqual(r.ok, true);
@@ -426,12 +426,14 @@ T("請館友來看：給通知的內容，編號是日期加上請的人（同�
   assert.notStrictEqual(G.callId(DAY, A.uid), G.callId(DAY, B.uid), "不同的人是不同的一則");
   assert.ok(!JSON.stringify(r).includes("gift"), "沒有獎勵");
 });
-T("請館友來看：每天每位一次、自己不行、自己的展廳沒開館不行", () => {
-  assert.strictEqual(call({ had: true }).code, "already");
+T("請館友來看：同一位可以一直請（翊文 11-09），還是同一則、變回沒看過；自己不行、自己的展廳沒開館不行", () => {
+  const first = J(call()), again = J(call({ at: 9000 }));
+  assert.strictEqual(again.ok, true);
+  assert.strictEqual(again.id, first.id, "同一天同一個人只留一則，不會堆起來");
+  assert.strictEqual(again.call.at, 9000);
+  assert.strictEqual(again.call.seen, false);
   assert.strictEqual(call({ to: A.uid }).code, "self");
   assert.strictEqual(call({ open: false }).code, "not_open");
-  assert.strictEqual(call({ had: true }).ok, false);
-  assert.strictEqual(call({ today: NEXT, had: false }).ok, true, "隔天又可以請");
 });
 T("請館友來看：通知給畫面看的樣子只留該給的欄位，壞的拿掉，暱稱最多 12 字", () => {
   const raw = { fromId: "ua", from: "小明", day: DAY, at: 5000, seen: false, createdAt: "x", secret: "不該給" };
