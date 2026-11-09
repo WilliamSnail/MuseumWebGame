@@ -77,7 +77,7 @@ export function later(fn, ms) { const t = setTimeout(fn, ms); UI.timers.push(t);
 export function every(fn, ms) { const t = setInterval(fn, ms); UI.timers.push(t); return t; }
 export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearInterval(t); }); UI.timers = []; UI.cleanup.forEach(f => { try { f(); } catch (e) { /* 已經拿掉了 */ } }); UI.cleanup = []; }
 // 提示壹律至少 6.5 秒，字越多留越久（翊文 11-08：「你一天內掉太多理智了」這種說明太快消失，至少要 6 秒）
-export const note = (text, tone, ms) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90) });
+export const note = (text, tone, ms, action) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90), action }); // action：{ label, run }，toast 上多一顆按鈕（例如「去看看」）
 export const snd = (n, a) => FX.sound.play(n, a);
 
 // 說明牌上的字：偏執發作時都寫「牠們在看你」，理智低時偶爾歪掉、錯字

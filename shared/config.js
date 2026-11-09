@@ -170,6 +170,7 @@ export const NUM = {
     claimMax: 30,           // 一次最多領幾封伺服器的信
     mailListMax: 60,        // 信箱一次列幾封伺服器的信
     giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
+    callListMax: 10,        // 「請你去看展廳」的通知一次列幾則（今天、昨天沒看的）
   },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {

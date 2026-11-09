@@ -84,6 +84,32 @@ export function checkHallAct(kind, s) {
   return { ok: true };
 }
 
+// ---------- 請館友來看我的展廳 ----------
+// 沒有獎勵，只是寄一則通知。能不能請：每天每位一次（跟 checkHallAct 一樣的做法）；自己不行；自己的展廳還沒開館也不行（沒東西可看）。
+// s：{ self（請的是自己）, open（我的展廳開了沒）, done（今天已經請過這位） }。回傳 { ok } 或 { ok: false, code, reason }
+export function checkHallCall(s) {
+  if (!s || s.self) return { ok: false, code: "self", reason: "不能請自己。" };
+  if (!s.open) return { ok: false, code: "not_open", reason: "你的展廳還沒開館：先用挑戰模式擺幾件作品。" };
+  if (s.done) return { ok: false, code: "already", reason: "今天已經請過這位館友了，明天再請。" };
+  return { ok: true };
+}
+
+// ---------- 每週特展給館友比的那一小部分 ----------
+// save：整份存檔。只回傳 { open, w（第幾週）, theme, best（這週最高分）, slots }；不改存檔（不像 weeklyState 會換週）。
+// 沒有挑戰模式：{ open: false }。有挑戰模式但這週還沒擺過：w 是 null。slots 的格式跟 hallView 一樣（沒有名字）
+export function weeklyView(save) {
+  const P = save && save.profiles && save.profiles.challenge;
+  if (!P || typeof P !== "object" || isFree(P) || !Array.isArray(P.hall)) return { open: false }; // hallView 一樣：沒開館的存檔
+  const W = P.weekly;
+  if (!W || typeof W !== "object" || !Array.isArray(W.slots)) return { open: true, w: null, theme: null, best: 0, slots: [] };
+  const slots = W.slots.map(s => {
+    let it = null;
+    try { it = hallItem(P, s); } catch (e) { it = null; }
+    return it ? { kind: it.kind, key: it.key, perfect: !!it.perfect, title: null } : null;
+  });
+  return { open: true, w: W.w, theme: typeof W.theme === "string" ? W.theme : null, best: +W.best || 0, slots };
+}
+
 // ---------- 送佩佩：能不能送、拿出來、放進去 ----------
 // 能送的：佩佩、失敗作、修復品（抱枕不是佩佩，不能送）
 export const GIFT_KINDS = ["pepe", "failed", "repaired"];

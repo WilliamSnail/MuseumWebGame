@@ -210,7 +210,7 @@ NET.on("roster", () => { updateNetMenu(); if (friendsDraw) friendsDraw(); redraw
 NET.on("status", () => { redrawLobby(); if (friendsDraw) friendsDraw(); });
 
 // ---------- 館友（選單 → 館友） ----------
-const ago = iso => {
+export const ago = iso => {
   if (!iso) return "還沒來過";
   const m = Math.max(0, Math.round((nowMs() - Date.parse(iso)) / 60000)); // lastSeen 是伺服器的時間，跟網路的時間比（決定 0026）
   if (m < 2) return "剛剛";
@@ -218,7 +218,7 @@ const ago = iso => {
   if (m < 60 * 24) return `${Math.round(m / 60)} 小時前`;
   return `${Math.round(m / 1440)} 天前`;
 };
-const RANK = { online: 0, away: 1, offline: 2 };
+export const RANK = { online: 0, away: 1, offline: 2 };
 // 館友小卡上的按鈕：別的檔登記在 ui_core.js 的 FRIEND_ACTIONS（M2 參觀展廳、送佩佩；M3 邀請一起融合……）
 function friendButtons(p, close) {
   const acts = FRIEND_ACTIONS.filter(a => !a.show || a.show(p));
