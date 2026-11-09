@@ -13,7 +13,7 @@ import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.j
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
 import { traitDesc, traitName } from "../../shared/legacy.js";
-import { $, planPortrait, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, planPortrait, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, quirkProgText, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -328,7 +328,7 @@ export async function focusExhibit(ex) {
     else if (v.capped) gain(`今天這件的靈感拿完了（壹天 ${galleryInsp(ex).perDay} 次），明天再來`, "");
     if (v.insp && !v.first) gain(reviewsLeft(P, ex) ? `今天這件還能拿 ${reviewsLeft(P, ex)} 次` : "今天這件的靈感拿完了", "");
     if (v.mood) { await wait(300); gain(`心情 ${v.mood > 0 ? "+" : "−"}${Math.abs(v.mood)}`, v.mood > 0 ? "good" : "bad"); }
-    if (v.cured.length) { v.cured.forEach(c => gain(`治好了「${quirkName(c.quirk)}」`, "good")); noteCured(v.cured); snd("unlock"); } // 看了不可怕的畫（決定 0027）
+    if (v.cured.length) { v.cured.filter(c => !c.step).forEach(c => gain(`治好了「${quirkName(c.quirk)}」`, "good")); noteCured(v.cured); if (v.cured.some(c => !c.step)) snd("unlock"); } // 看了不可怕的畫（決定 0027）
     updateStatus(); persist();
     if (v.san) {
       await wait(700);
@@ -566,9 +566,9 @@ export function rarityRanges() { // 最後壹列是失敗作（NUM.fumbleFrom–
 // 是看畫的理智檢定失敗得到的恐懼症，照規則擋住的，但原本只寫「不敢碰」，看起來像壞掉）
 function afraidText(cat, name, why) {
   if (why && why.kind === "bout") return `恐懼症發作：暫時不敢碰「${name}」，再 ${why.left} 個動作就好。`;
-  if (why && why.kind === "quirk") { // 11-09（決定 0027）：治法是得到時抽的那壹件，不然 20 分鐘後自己消失
-    const cure = quirkCureText(why.quirk);
-    return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。${cure ? `治法：${cure}不然 ` : ""}${quirkLeftText(why.quirk, "n")}後自己消失。`;
+  if (why && why.kind === "quirk") { // 決定 0046：治法是得到時抽的那壹件，要做 2 個不同的日子，不然壹週後自己好
+    const cure = quirkCureText(why.quirk), prog = quirkProgText(why.quirk);
+    return `你有「${quirkName(why.quirk)}」，不敢碰「${name}」。${cure ? `治法：${cure}${prog}不然 ` : ""}${quirkLeftText(why.quirk, "n")}後自己好。`;
   }
   return `你不敢碰「${name}」。`;
 }

@@ -17,7 +17,7 @@ function sim(seed) {
   G.setRng(rng);
   const P = G.newProfile("challenge");
   let t = 0, day = 0, date = "2026-11-08", dayStart = 0, visitorClock = 0;
-  G.setNowClock(() => t * 1000); // 「現在」照模擬的秒數走：怪癖 20 分鐘後自己消失（11-09，決定 0027）
+  G.setNowClock(() => Date.UTC(2026, 10, 8, 3, 0, 0) + day * 86400000 + (t - dayStart) * 1000); // 「現在」：模擬的每一天隔 24 小時，玩的那段照模擬的秒數走（怪癖 7 天、兩個遊戲日才算得對；決定 0046）
   G.ensureDay(P, date);
   if (GEAR0.length) { G.storyState(P).stamps = 999; GEAR0.forEach(id => { G.buyGear(P, id, date); G.wearGear(P, id); }); }
   const out = { zeroAt: null, zeros: 0, minSan: 99, bouts: 0, quirks: 0 };

@@ -44,7 +44,8 @@ function sim(seed) {
   G.setRng(rng);
   const P = G.newProfile("challenge");
   let t = 0, day = 0, date = G.addDays("2026-11-08", 0);
-  G.setNowClock(() => t * 1000); // 「現在」照模擬的秒數走：怪癖 20 分鐘後自己消失（11-09，決定 0027）
+  let dayStart = 0;
+  G.setNowClock(() => Date.UTC(2026, 10, 8, 3, 0, 0) + day * 86400000 + (t - dayStart) * 1000); // 「現在」：模擬的每一天隔 24 小時，玩的那段照模擬的秒數走（怪癖 7 天、兩個遊戲日才算得對；決定 0046）
   G.ensureDay(P, date);
   if (GEAR0.length) { G.storyState(P).stamps = 999; GEAR0.forEach(id => { G.buyGear(P, id, date); G.wearGear(P, id); }); G.storyState(P).stamps = 0; }
   const shopDay = () => { if (!SHOP) return; G.storyState(P).stamps += 1; SHOP_BUY.forEach(id => { if (G.buyGear(P, id, date).ok) G.wearGear(P, id); }); };
@@ -53,7 +54,7 @@ function sim(seed) {
   const signToday = () => { if (!SIGNIN) return; const r = G.signIn(SV, P, date); if (r.ok) r.gains.forEach(g => { if (g.kind === "insp") INC.sign += g.n; if (g.kind === "item" && g.insp) INC.sign += g.insp; }); };
   signToday();
   const out = { shows: 0, showBest: 0, t4: null, tAll: null, made: 0, legends: 0, epics: 0, perfects: 0, failed: 0, endings: 0, quirks: 0, minSan: 99, days: 1, unlockAt10: null };
-  let dayStart = 0, visitorClock = 0;
+  let visitorClock = 0;
   const storyDay = () => { if (!STORY_DAYS) return; const s = STORY_DAYS[day % 7]; P.insp += Math.round(s.insp); INC.story += Math.round(s.insp); t += s.sec; };
   const friendsDay = () => { let paid = 0; for (let i = 0; i < VISITS; i++) { const g = G.visitGain({ open: true, paidToday: paid }); if (g) { paid++; P.insp += g; INC.friends += g; } } };
   const spend = sec => {

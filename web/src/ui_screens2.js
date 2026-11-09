@@ -189,7 +189,7 @@ export function autoSummary(res) {
   return quirkLayer(`壹鍵交件：交了 ${n} 張`, free ? "自由模式：交件只收評語，不算靈感和理智。" : "每張委託單都蓋上了「完成」。", [
     h("div", { class: "ad-sum" }, stat(n, "張委託"), free ? null : stat(`+${res.reward}`, "靈感"), free ? null : stat(`+${res.gain}`, "理智")),
     skills.length ? h("p", { class: "ad-note" }, `說服 ${skills.length} 次，成功 ${won} 次${won ? "（成功的那幾張賞金多三成）" : ""}`) : null,
-    ...res.cured.map(cu => h("p", { class: "ad-note good" }, `治好了「${quirkName(cu.quirk)}」${cu.to !== cu.from ? `：可能性 ${num(cu.from)} → ${num(cu.to)}` : ""}`)), // 狂熱治好時可能性不變，不寫
+    ...res.cured.filter(cu => !cu.step).map(cu => h("p", { class: "ad-note good" }, `治好了「${quirkName(cu.quirk)}」${cu.to !== cu.from ? `：可能性 ${num(cu.from)} → ${num(cu.to)}` : ""}`)), // 狂熱治好時可能性不變，不寫
     ...lines.map(l => h("p", { class: "ad-note line" }, l.finale ? `${l.name}：「${l.finale}」` : `${l.name}的故事 ${l.step}／${l.of}`)),
     quotes.length ? h("div", { class: "ad-quotes" }, quotes.map(x => h("blockquote", null, h("p", null, `「${x.r.comment}」`), h("small", null, `— ${x.c.client}`)))) : null,
     res.skipped ? h("p", { class: "ad-note" }, `有 ${res.skipped} 張沒交成（委託換新了）。`) : null,
@@ -801,7 +801,7 @@ export function howToPlay() {
       R("gallery", "靈感", "逛畫廊拿", E("靈感"), "，用靈感在手作坊做佩佩、解鎖選項。每解鎖壹個，", E("可能性"), "當場變大。"),
       R("dice", "稀有度", "挑戰模式做出來才知道：擲 ", E("d100"), "，", E("01–02 傳說級"), "、", E("03–12 超稀有"), "、", E("13–40 稀有"), "，其他普通。", E("01 完美作品"), "，", B(`${NUM.fumbleFrom}–100 失敗作`), "。"),
       R("heart", "心情＝幸運", E("1 點心情把骰子壓低 1"), "，最低到 02。不滿意可以", E("孤注壹擲"), "重擲壹次，但不能花心情，", B("結果更差要做理智檢定"), "。"),
-      R("eye", "理智檢定", "開場理智 ", E(String(NUM.startSanity)), "。看到嚇人的東西要擲 1～100：", E("擲出的數字 ≤ 你現在的理智就算成功"), "，成功掉得少、失敗掉得多（例如「成功扣 1 點，失敗扣 1～6 點」）。", B("壹次掉 5 點以上"), "再擲壹次，看你「看懂了沒」（50＋佩佩神話），看懂了就", B("瘋狂發作"), "。", B("壹天掉超過當天理智的 1/5"), "會得到怪癖：", G("做完卡片上寫的那壹件事就好"), `，不然 ${NUM.quirkMinutes} 分鐘後也會自己消失。`), // 11-09（決定 0027）
+      R("eye", "理智檢定", "開場理智 ", E(String(NUM.startSanity)), "。看到嚇人的東西要擲 1～100：", E("擲出的數字 ≤ 你現在的理智就算成功"), "，成功掉得少、失敗掉得多（例如「成功扣 1 點，失敗扣 1～6 點」）。", B("壹次掉 5 點以上"), "再擲壹次，看你「看懂了沒」（50＋佩佩神話），看懂了就", B("瘋狂發作"), "。", B("壹天掉超過當天理智的 1/5"), "會得到怪癖：", G(`在 ${NUM.quirkTaskDays} 個不同的日子各做壹次卡片上寫的那件事`), `，不然 ${NUM.quirkDays} 天後也會自己好。這段時間可以換別的參觀者玩。`), // 決定 0046（0027 是做完壹件事、20 分鐘）
       R("scroll", "佩佩神話", "理智上限＝", E("99－佩佩神話"), "。讀禁書、看隱藏展品會懂更多，也會打開", E("禁忌選項"), "。", B("理智 0"), "的時候，會發生壹些事。"), // 不破梗（翊文 11-08）
       R("pillow", "補理智", G("抱抱枕"), "、", G("完成委託"), "、", G("圖鑑整類全收集"), "可以補理智。"),
       R("fusion", "融合室・館長室", "兩隻佩佩融合成壹隻：每壹類各 ", E("45% 遺傳"), "、", E("10% 突變"), "，試出", E("隱藏配方"), "。館長室可以買升級、修東西、送佩佩給館友。"),
