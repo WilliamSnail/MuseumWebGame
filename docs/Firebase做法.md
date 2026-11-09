@@ -32,6 +32,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
 | `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
+| `boards/{週}`、`boards/latest` | 每週排行榜（決定 0039）：榜單、建議、提醒、`posted`。只有暱稱和榜上的數字，沒有 uid、email。`latest` 是最新一週的整份複製 | 館友 | 只有 `tools/weekly_board.cjs`（Admin SDK） |
+| `boards/{週}/private/people` | 那一週每個人的累計數字（圖鑑、書、展廳、地下），下週相減用。用 uid 當 key，所以放另一份：Firestore 的規則不能只擋一個欄位 | 沒有人（走最下面的「一律不准」） | 只有 `tools/weekly_board.cjs` |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
 - 沒有 `members/{uid}` 的人，什麼都讀不到、寫不了（`firestore.rules`）。這就是邀請制：Google 帳號誰都能登入，但不在名單上就進不了館。
@@ -81,6 +83,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `connect()`、`where()`、`roster` | `/status`：寫自己的、聽全部的、`onDisconnect` |
 | `send(msg)` | 叫對應的 Function |
 | `on("message")` | 聽 `/inbox/{uid}` |
+| `readBoard()` | 讀 `boards/latest`（本週榜單，決定 0039）。只有 Firebase 版有 |
 
 - 開發時網址帶 `?user=名字`：這個分頁自己登入（登入狀態只放在這個分頁），一台電腦開幾個分頁就是幾個人，跟原本一樣。
 - `ui_login.js` 看 `info().auth`：模擬器 → 打名字；正式 → 「用 Google 登入」。
@@ -169,3 +172,32 @@ gh workflow run firebase-task.yml -f action=stats
 ```
 
 這幾件以外都不能做（讀存檔、改存檔、刪資料都不行）。email、名字在紀錄裡遮掉，不寫進 repo。
+
+## 十、每週排行榜（決定 0039）
+
+`.github/workflows/weekly-board.yml` 跑 `tools/weekly_board.cjs`，規則在 `shared/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
+
+- **什麼時候**：每週一台灣時間 05:15（cron `15 21 * * 0`，UTC 週日 21:15）。GitHub 的排程可能晚幾分鐘，只在預設分支跑。
+- **算哪一週**：一律是剛過完的那一週。週三手動按，算的也是上一週。
+- **順序**：讀 `members`、`saves` → 跟 `boards/{上週}/private/people` 相減 → 先寫快照（`boards/{週}`、`boards/{週}/private/people`、`boards/latest`）→ 再發 Discord → 發了才記 `posted`。
+- **Discord 沒放或發失敗**：快照已經寫了。再跑一次會用同一份榜單補發（不重算）。發失敗那次的 Actions 會是紅的；沒放金鑰是綠的。
+- **同一週不發兩次**：看 `posted`。`force` 會重算、再發一次，數字會變成現在的。
+- **沒有人有進度**：快照照寫，不發。
+- **紀錄**：只印榜單文字和幾份存檔讀不了（只有數字）。沒有 email、uid、存檔內容。
+
+手動按（AI 只有翊文要求時才能按，跟固定動作一樣）：
+
+```bash
+gh workflow run weekly-board.yml -f dry_run=true             # 只印不發：不寫 Firestore、不發 Discord（手動的預設）
+gh workflow run weekly-board.yml -f dry_run=false            # 照正常的流程
+gh workflow run weekly-board.yml -f dry_run=false -f force=true   # 這週發過了也重算、再發一次
+```
+
+在模擬器測（只用假資料）：
+
+```bash
+EMU_SET=4 npm run emulators        # Firestore 在 12180
+FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
+```
+
+有 `FIRESTORE_EMULATOR_HOST` 就一定不發 Discord，就算環境變數有金鑰也一樣。`--now` 只有連模擬器時能用。

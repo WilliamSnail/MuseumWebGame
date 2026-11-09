@@ -15,12 +15,13 @@ import * as admin from "../shared/admin.js";
 import * as shop from "../shared/shop.js";
 import * as visit from "../shared/visit.js";
 import * as themeshow from "../shared/themeshow.js";
+import * as board from "../shared/board.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop, visit, themeshow })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop, visit, themeshow, board })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -99,5 +100,16 @@ ok("主題展接得上 logic、logic3、signin（11-09，決定 0035）", () => 
   assert.deepStrictEqual(themeshow.syncShow(P, "2026-11-09"), []);
   assert.strictEqual(themeshow.showItemOf("legend").opt, "傳說的金冠");
   logic3.weeklyState(P);
+});
+ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）", () => {
+  const save = logic.newSave();
+  const P = save.profiles.challenge = logic.newProfile("challenge");
+  logic.ensureDay(P, "2026-11-09");
+  const wk = board.boardWeekOf(Date.parse("2026-11-16T05:15:00+08:00"));
+  assert.strictEqual(wk.label, "2026-W46");
+  const stats = board.boardStatsOf(JSON.stringify(save), wk);
+  assert.ok(stats.ok && stats.entered);
+  const r = board.boardCompute([{ uid: "a", nick: "小明", stats }], null, wk);
+  assert.ok(r.doc.first && r.snapshot.people.a);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);
