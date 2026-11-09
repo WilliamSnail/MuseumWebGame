@@ -1360,6 +1360,22 @@ T("怪癖 時間到自己消失：isBlocked、blockedWhy、可能性、makeCost 
   assert.ok(g); assert.strictEqual(g.quirk.cat, "帽子"); assert.strictEqual(g.quirk.opt, null); assert.strictEqual(g.quirk.until, now + G.NUM.quirkDays * DAYMS);
   G.setNowClock(null);
 });
+T("狂熱 3 天、恐懼症 7 天（翊文 11-09）；已經得到的狂熱載入時拉回 3 天；已經快到期的不延長", () => {
+  assert.strictEqual(G.NUM.quirkManiaDays, 3);
+  assert.strictEqual(G.quirkDaysOf("mania"), 3);
+  assert.strictEqual(G.quirkDaysOf("phobia"), 7);
+  const fixed = G.fixQuirks([
+    { type: "mania", cat: "顏色", opt: "紅", until: T0 + 6 * DAYMS, task: "hug" },
+    { type: "phobia", cat: "顏色", opt: "黃", until: T0 + 6 * DAYMS, task: "hug" },
+    { type: "mania", cat: "顏色", opt: "藍", until: T0 + DAYMS, task: "hug" },
+  ], T0);
+  assert.deepStrictEqual(fixed.map(q => q.until), [T0 + 3 * DAYMS, T0 + 6 * DAYMS, T0 + DAYMS]);
+  assert.strictEqual(G.quirkDaysLeft({ type: "mania" }), 3, "沒有 until");
+  G.setNowClock(() => T0);
+  const P = G.newProfile("challenge");
+  for (let i = 0; i < 40; i++) { const g = G.gainQuirk(P); if (g) assert.strictEqual(g.quirk.until, T0 + G.quirkDaysOf(g.quirk.type) * DAYMS); P.quirks = []; }
+  G.setNowClock(null);
+});
 T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起算 7 天、有 until 的不延長；不在場的參觀者也補；讀回來一字不差", () => {
   G.setNowClock(() => T0);
   const span = G.NUM.quirkDays * DAYMS;
@@ -1373,9 +1389,9 @@ T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起�
   old.visitors = [{ vid: "v2", visitor: 2, slot: 1, quirks: [{ type: "mania", cat: "帽子", opt: "皇冠" }] }];
   const save = G.newSave(); save.profiles.challenge = old;
   const P = G.migrateSave(JSON.parse(JSON.stringify(save))).profiles.challenge;
-  same(P.quirks.map(q => [q.until - T0, q.task]), [[span, "deliver"], [span, "hug"], [5 * 60000, null], [5 * 60000, "deliver"]]);
+  same(P.quirks.map(q => [q.until - T0, q.task]), [[span, "deliver"], [3 * DAYMS, "hug"], [5 * 60000, null], [5 * 60000, "deliver"]]);
   same(P.quirks.map(q => q.done), [[], [], [], ["2026-11-09"]], "沒有進度就當 0 個日子");
-  same(P.visitors[0].quirks.map(q => [q.until - T0, q.task, q.done]), [[span, "deliver", []]], "不在場的參觀者");
+  same(P.visitors[0].quirks.map(q => [q.until - T0, q.task, q.done]), [[G.quirkSpan(P.visitors[0].quirks[0].type), "deliver", []]], "不在場的參觀者");
   assert.ok(G.isBlocked(P, "帽子", "棒球帽"), "剛讀進來還在擋（從載入起算 7 天）");
   const s2 = G.newSave(); s2.profiles.challenge = P;
   same(G.migrateSave(JSON.parse(JSON.stringify(s2))).profiles.challenge.quirks, JSON.parse(JSON.stringify(P.quirks)));
