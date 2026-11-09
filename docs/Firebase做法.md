@@ -152,3 +152,20 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 1. 算出假帳號的 email：`node -e "console.log('dev-' + Buffer.from('測試管理').toString('hex').slice(0, 40) + '@dev.local')"`。
 2. http://127.0.0.1:4400/firestore → `invites` → 新增文件，文件 ID 是那個 email，欄位 `admin`，類型 boolean，值 true。
 3. 開 `http://localhost:5173/?user=測試管理`，進館 → 選單 → 管理員。
+
+## 九、固定動作（決定 0038）
+
+翊文跟 AI 說要做什麼（例如「邀請 xxx@gmail.com」），AI 按 GitHub 上的 `firebase-task.yml`；金鑰在 GitHub Secrets，AI 拿不到。翊文也可以自己到 GitHub 的 Actions 頁按。
+
+| 動作 | 做什麼 |
+|---|---|
+| `invite` | 把一個 Gmail 加進邀請名單（可以帶名字）；被停用的會恢復 |
+| `admin-on`、`admin-off` | 設或取消管理員 |
+| `disable`、`enable` | 停用或恢復邀請。停用只擋還沒加入的、讓管理員失效；已經加入的還進得去 |
+| `stats` | 合起來的數字：邀請、管理員、館友、有存檔的、最近 24 小時和 7 天有存檔的。沒有 email、名字 |
+
+```bash
+gh workflow run firebase-task.yml -f action=stats
+```
+
+這幾件以外都不能做（讀存檔、改存檔、刪資料都不行）。email、名字在紀錄裡遮掉，不寫進 repo。
