@@ -343,6 +343,13 @@ function econPane() {
     sec("怎麼拚", h("p", { class: "cas-note" }, CAS_ECON.how.join("、"), "。")),
   ];
 }
+// 跳字區矮的時候（手機橫拿），讓最新壹行留在看得到的地方，不然會看不到結果
+function econFollow() {
+  const st = S && S.m && S.m.surface.querySelector(".cas-econ-stage"), last = st && st.lastElementChild;
+  if (!st || !last) return;
+  st.scrollTop = st.scrollHeight;
+  last.scrollIntoView({ block: "nearest" });
+}
 async function econGo() {
   const s = S;
   if (!s || s.busy || s.ecPlaying || !s.ec || s.ec.left < 1) return;
@@ -362,6 +369,7 @@ async function econGo() {
       s.ecLines.push(ev.lines[i]);
       snd("flip");
       draw();
+      econFollow();
       await wait(i < 2 ? 700 : 620);
     }
     if (S !== s) return;
@@ -373,6 +381,7 @@ async function econGo() {
   }
   s.ecPlaying = false; s.busy = false;
   draw();
+  econFollow();
 }
 
 // ---------- 餐車 ----------
