@@ -56,6 +56,11 @@
 .trial-why { margin: 0; color: var(--on-wall); line-height: 1.6; }
 .trial-box[open] .sc-rooms { margin-top: 2px; }
 .sc-room.trial .sc-floor { background: linear-gradient(180deg, #E8C9A0, #8C5E34); }
+/* 文字佔第壹列，兩顆按鈕並排在第二列（翊文 11-09：「應該說排版不正確」，原本按鈕把文字擠成壹字壹行） */
+.sc-room.trial { flex-wrap: wrap; }
+.sc-room.trial .sc-body { flex: 1 1 calc(100% - 100px); min-width: 0; }
+.sc-room.trial .sc-btns { flex: 1 1 100%; display: flex; flex-flow: row wrap; gap: 6px; }
+.sc-room.trial .sc-btns .btn { flex: 1 1 9em; min-width: 0; white-space: nowrap; }
 
 /* ----- 館長室的名片：穿了什麼 ----- */
 .sheet-gear { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: none; }
