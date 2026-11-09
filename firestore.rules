@@ -28,6 +28,13 @@ service cloud.firestore {
       allow update: if isMember() && isMe(uid) && saveOk(request.resource.data) && request.resource.data.rev == resource.data.rev + 1;
     }
 
+    // 每週排行榜（決定 0039）：館友可以讀，沒有人能從瀏覽器寫（tools/weekly_board.cjs 用 Admin SDK 寫）。
+    // 每個人的累計數字放在 boards/{week}/private/people：這裡沒有開，走最下面的「一律不准」。
+    match /boards/{week} {
+      allow read: if isMember();
+      allow write: if false;
+    }
+
     match /invites/{email} {
       allow read, write: if false;
     }

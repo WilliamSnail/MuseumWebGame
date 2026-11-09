@@ -221,6 +221,15 @@ export const NUM = {
     // 每週特展到金要幾分（只有這一級；同樣照「這週最高分」）。failedOnly、start32、noLegend 的分數本來就到不了 90
     weekGold: { start32: 45, allBlack: 90, allFlat: 90, failedOnly: 30, noHat: 90, noLegend: 70, pillowWeek: 90, gopnikWeek: 90 },
   },
+  // 第 4 版（11-09，決定 0039）：每週排行榜（規則 shared/board.js）
+  board: {
+    top: 3,                 // 每個榜列到第幾名（同分同名次；全勤例外，簽滿的都列）
+    fullDays: 7,            // 全勤：這週簽滿幾天
+    tipsMax: 3,             // 全館的建議最多幾條（最少 2 條，不夠的用平常的建議補）
+    nudgesMax: 3,           // 給個人的小提醒最多幾條，一個人最多一條
+    signNear: 5,            // 這週簽了幾天以上，才提醒「只差幾天就全勤」
+    lowShare: 0.5,          // 有做的人不到這個比例，才算「大家做得不多」
+  },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）

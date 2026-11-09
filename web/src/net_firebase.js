@@ -320,6 +320,12 @@ export function createFirebaseNet(opts = {}) {
       if (!rtdb) return () => {};
       return onValue(ref(rtdb, path), snap => fn(snap.val()), err => fn(null, err));
     },
+    // 本週榜單（決定 0039）：讀 boards/latest。還沒有榜單回 null；讀不到丟 NetError（規則：館友才讀得到，firestore.rules）
+    async readBoard() {
+      if (!me) throw new NetError(401, "need_login", "要先登入");
+      try { const snap = await getDoc(doc(fs, "boards", "latest")); return snap.exists() ? snap.data() : null; }
+      catch (e) { throw toNetError(e); }
+    },
     // 讀一次 Realtime Database 的一個位置；沒權限、讀不到都回 null（例如已經不是這個隊伍的隊員）
     async read(path) {
       if (!rtdb) return null;

@@ -224,7 +224,7 @@ export function buildNav() {
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
-    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）
+    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop")), item("md-rank", "star", "本週榜單", () => openPanel("rank"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）；本週榜單（決定 0039，ui_board_rank.js 登記 PANELS.rank）
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）

@@ -22,6 +22,7 @@ const STEPS = [
   ["每週劇情（任務、獎勵、週章、換日換週、書、劇情線、備用週）", ["test/story.test.cjs"]],
   ["管理員介面的摘要（算得對、壞存檔不丟錯、舊存檔、沒有 email，決定 0033）", ["test/admin.test.cjs"]],
   ["兌換所和技能成長（裝備、提升技能、上課、試煉房間、跟館友學、限定頭飾）", ["test/shop.test.cjs"]],
+  ["每週排行榜（同分、第一週、相減、壞存檔、暱稱清理、2000 字、建議，決定 0039）", ["test/board.test.cjs"]],
   ["大廳導覽圖上的館友（名單 → 每間房有誰、白名單、放不下的「+N」）", ["test/mates.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],
