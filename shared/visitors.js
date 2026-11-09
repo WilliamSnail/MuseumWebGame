@@ -28,7 +28,7 @@ import { newVisit, traitById } from "./legacy.js";
 //   cands：以前「3 位候選人」還沒挑的（決定 0028 拿掉了，不再產生）。舊存檔裡有的照樣跟著那個位子走，不動它。
 //   oddSeen：理智低的怪事，一位參觀者第一次出現才跳旁白（ui_odd.js）。
 export const VISITOR_KEYS = ["vid", "vname", "slot", "visitor", "sanity", "mood", "moodRoll", "myth", "mythFrom", "quirks", "bout", "dark", "swapNext",
-  "job", "skills", "skillTicks", "perk", "flaw", "legacy", "visit", "cands", "hugDays", "oddSeen"];
+  "job", "skills", "skillTicks", "perk", "flaw", "legacy", "visit", "cands", "hugDays", "oddSeen", "gear"]; // gear：這一位穿著的裝備（裝備本身是博物館的，P.shop.gear，決定 0032）
 // P.day 裡算這一位理智的：
 //   startSan、lost、quirkGiven ＝ applySan 的「一天掉超過當天理智的 1/5 給怪癖」
 //   exLoss ＝ sanCheck 的「同一件展品一天最多掉它的最大值」
@@ -88,7 +88,7 @@ export function wearVisitor(P, v) {
 export function blankVisitor(P, o = {}) {
   return Object.assign({
     vid: null, vname: null, slot: 0, visitor: 1, sanity: NUM.startSanity, mood: 50, moodRoll: [], myth: 0, mythFrom: {}, quirks: [], bout: null, dark: false, swapNext: false,
-    job: null, skills: null, skillTicks: {}, perk: null, flaw: null, legacy: null, visit: newVisit(P), cands: null, hugDays: [], oddSeen: {},
+    job: null, skills: null, skillTicks: {}, perk: null, flaw: null, legacy: null, visit: newVisit(P), cands: null, hugDays: [], oddSeen: {}, gear: [],
     cellarRun: null, dayVis: null,
   }, o);
 }

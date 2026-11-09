@@ -8,6 +8,9 @@ const RUNS = +process.argv[2] || 500;
 // 預設 20：設計基準是每天玩 20 分鐘（翊文 11-08：「每天玩大概20分鐘左右比較好」）。以前一天＝玩 15 分鐘時，DAY_MIN=15 就是那時的算法
 const SESSION = (+process.env.DAY_MIN || 20) * 60;
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
+// 兌換所（11-09，決定 0032）：GEAR=amulet,lamp 這樣第一天就穿著（裝備是博物館的，老玩家的下一位一開始就有）。
+// 這支沒有走地下收藏庫：探險燈、技能要看 sim_cellar.cjs（GEAR、SKILL_PLUS）
+const GEAR0 = (process.env.GEAR || "").split(",").filter(Boolean);
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
 function sim(seed) {
   const rng = G.mulberry32(seed);
@@ -16,6 +19,7 @@ function sim(seed) {
   let t = 0, day = 0, date = "2026-11-08", dayStart = 0, visitorClock = 0;
   G.setNowClock(() => t * 1000); // 「現在」照模擬的秒數走：怪癖 20 分鐘後自己消失（11-09，決定 0027）
   G.ensureDay(P, date);
+  if (GEAR0.length) { G.storyState(P).stamps = 999; GEAR0.forEach(id => { G.buyGear(P, id, date); G.wearGear(P, id); }); }
   const out = { zeroAt: null, zeros: 0, minSan: 99, bouts: 0, quirks: 0 };
   const spend = sec => {
     t += sec; visitorClock += sec; G.tickAction(P);
@@ -85,7 +89,7 @@ const FORBIDDEN_BOOKS_LIST = G.FORBIDDEN_BOOKS;
 const runs = Array.from({ length: RUNS }, (_, i) => sim(5000 + i));
 const within = m => runs.filter(r => r.zeroAt != null && r.zeroAt <= m).length / RUNS * 100;
 const z = runs.map(r => r.zeroAt).filter(x => x != null).sort((a, b) => a - b);
-console.log(`好奇的玩家 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘）：理智歸零（俄國8+9 的房間）`);
+console.log(`好奇的玩家 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${GEAR0.length ? `，穿著 ${GEAR0.join("、")}` : ""}）：理智歸零（俄國8+9 的房間）`);
 console.log(`  1 小時內 ${within(60).toFixed(0)}%　2 小時內 ${within(120).toFixed(0)}%　3 小時內 ${within(180).toFixed(0)}%　4 小時內 ${within(240).toFixed(0)}%`);
 console.log(`  第一次歸零的時間中位數：${z.length ? (z[Math.floor(z.length / 2)] / 60).toFixed(1) + " 小時" : "沒有"}；4 小時內平均歸零 ${(runs.reduce((s, r) => s + r.zeros, 0) / RUNS).toFixed(1)} 次`);
 console.log(`  瘋狂發作平均 ${(runs.reduce((s, r) => s + r.bouts, 0) / RUNS).toFixed(1)} 次；得到怪癖 ${(runs.filter(r => r.quirks).length / RUNS * 100).toFixed(0)}%`);

@@ -143,7 +143,7 @@ export function weekDates(date) {
 export function weeklyItem(wk) {
   const kinds = NUM.signin.weekKinds, mod = (a, b) => ((a % b) + b) % b;
   const kind = kinds[mod(wk, kinds.length)];
-  const list = LIMITED_ITEMS.filter(x => x.kind === kind);
+  const list = LIMITED_ITEMS.filter(x => x.kind === kind && !x.shop); // shop：兌換所賣的（決定 0032），全簽到不會輪到
   return list.length ? list[mod(Math.floor(wk / kinds.length), list.length)] : null;
 }
 // 這一週簽了幾天：{ wk, dates, signed（七個 true/false）, n, item（這週的特別項目）, claimed（領過了沒） }

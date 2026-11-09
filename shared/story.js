@@ -17,6 +17,7 @@
 import { NUM, SKILLS } from "./config.js";
 import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan } from "./logic.js";
 import { canStartCellar, cellarFloor, weekIndex } from "./logic3.js";
+import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -47,7 +48,7 @@ export const SHOW_FX = ["sepia", "faded", "dust", "dark", "flip", "water", "torn
 export const SHOW_FRAMES = ["gold", "dark", "wood", "plain", "ornate"];
 // 書裡 [[字|動作]] 可以用的動作（ui_screens1.js 的 BOOK_ACTIONS）
 export const BOOK_ACTION_IDS = ["void", "mirror", "window", "beat", "hat", "codex", "cellar"];
-// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，之後兌換所用
+// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/shop.js 的 tradeMats）
 export const STORY_ITEMS = {
   "book:偵查": { name: "技能書《放大鏡的用法》", kind: "skillBook", skill: "偵查" },
   "book:鑑賞": { name: "技能書《看畫的方法》", kind: "skillBook", skill: "鑑賞" },
@@ -147,7 +148,8 @@ function pickSpare(lib, date, used) {
   for (let k = 0; k < names.length; k++) { const nm = names[(at + k) % names.length]; if (!used.has(nm)) return nm; }
   return names[at];
 }
-const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0) });
+// skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
+const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0), skill: r && SKILLS.includes(r.skill) ? r.skill : null });
 
 // 一週整理成遊戲用的樣子（id 都加上週的名字）。label ＝ "2026-W46"；today ＝今天（只打開到今天的天）；fb ＝指定用哪一個備用週（不給就照週數輪）
 // 回傳 null：還沒到的週、比 NUM.story.startWeek 早的週、找不到內容
@@ -165,7 +167,7 @@ export function storyWeekAt(lib, label, today, fb) {
     title: wk.title || "", theme: wk.theme || "", summary: asList(wk.summary), holidayWeek: !!wk.holidayWeek,
     lines: [], days: [], books: [], rooms: [], works: [], daily: [],
     ending: { read: wk.ending && wk.ending.need && Number.isFinite(+wk.ending.need.read) ? +wk.ending.need.read : null },
-    weeklyBonus: reward(wk.weeklyBonus), anomaly: null,
+    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, shop: asList(wk.shop), // shop：這週兌換所上架的限定頭飾（shared/shop.js 的 shopOnSale）
   };
   const lineMap = {};
   const addLine = (l, p) => {
@@ -420,7 +422,7 @@ export function itemDesc(id) {
   if (!it) return "";
   if (it.kind === "skillBook") { const p = parseDice(NUM.story.skillBook); return `用了：${it.skill} +${p.m ? `${p.n}～${p.n * p.m}` : p.flat}（最多到 ${NUM.story.skillCap}）。給現在這位參觀者。`; }
   if (it.kind === "heal") return "用了：地下收藏庫受傷的佩佩，全部馬上好。";
-  return "收著。之後的兌換所用得到。";
+  return `收著。在兌換所，每 ${NUM.shop.matToStamp} 份換壹枚週章。`;
 }
 export function rewardText(r) {
   if (!r) return "";
@@ -428,6 +430,7 @@ export function rewardText(r) {
   if (r.insp) bits.push(`靈感 +${r.insp}`);
   if (r.mood) bits.push(`心情 +${r.mood}`);
   if (r.stamps) bits.push(`週章 ${r.stamps} 枚`);
+  if (r.skill) bits.push(`${r.skill} +${rangeWords(NUM.shop.trialSkill)}`);
   asList(r.items).forEach(id => bits.push(itemName(id)));
   return bits.join("、");
 }
@@ -438,6 +441,7 @@ function give(P, S, r, today, what) {
   asList(r.items).forEach(id => { S.bag[id] = (S.bag[id] || 0) + 1; });
   S.log.push({ d: today, what, r: rewardText(r) });
   if (S.log.length > 100) S.log = S.log.slice(-100);
+  return r.skill ? growSkill(P, r.skill, NUM.shop.trialSkill, NUM.story.skillCap) : null; // 房間的技能成長（決定 0032）：現在這位長
 }
 // 領任務的獎勵（只有那一週領得到）。每週任務多給週章
 export function claimTask(P, W, id, today) {
@@ -494,7 +498,7 @@ export function unclaimed(P, W) {
 export function itemUsable(P, id) {
   const it = STORY_ITEMS[id], S = storyState(P);
   if (!it || !(S.bag[id] > 0)) return { ok: false, reason: "沒有這個" };
-  if (it.kind === "material") return { ok: false, reason: "收著，之後的兌換所用得到" };
+  if (it.kind === "material") return { ok: false, reason: "收著，到兌換所換週章" };
   if (isFree(P)) return { ok: false, reason: "自由模式用不到" };
   if (it.kind === "skillBook") {
     if (!P.skills || !SKILLS.includes(it.skill)) return { ok: false, reason: "這位參觀者還沒有技能（先選職業）" };
@@ -563,8 +567,8 @@ export function claimSpot(P, W, id, today) {
   if (!isPlain(rec.spots)) rec.spots = {};
   if (rec.spots[id]) return { ok: false, reason: "領過了" };
   rec.spots[id] = today;
-  give(P, S, r.reward, today, id);
-  return { ok: true, reward: r.reward };
+  const grown = give(P, S, r.reward, today, id);
+  return { ok: true, reward: r.reward, grown };
 }
 export function spotClaimed(P, W, id) { const rec = storyState(P).weeks[W.label]; return !!(rec && rec.spots && rec.spots[id]); }
 
@@ -638,9 +642,10 @@ export function storyNotice(W, today, now) {
       ["大綱", W.summary],
       ["這週怎麼玩", [
         "每天 05:00：起源室書架的「每週劇情」多 1～2 本書，3 個每日任務換新，畫廊的「今日特展」換壹個主題。",
-        "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來）。週日讀到這週的結局。",
+        "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來，到兌換所換裝備、提升技能）。週日讀到這週的結局。",
         "錯過的天，書都還在，可以補讀；每日任務、今日特展只有當天。",
       ]],
+      ["兌換所", [`這週上架的限定頭飾：${limitedNames(shopOnSale(W, W.start))}。`]],
       W.anomaly ? ["本週異狀", [W.anomaly.title].concat(W.anomaly.text)] : null,
       ["每週任務", W.weekly.map(t => `・${taskText(t, W)}`)],
       ["時間", [`這週還剩 ${weekLeftText(now, W.start)}（下週壹 05:00 換下壹週）。`]],
@@ -652,10 +657,10 @@ export function storyNotice(W, today, now) {
 
 // ---------- 預算（tools/week_check.cjs 和測試用） ----------
 const maxChoiceInsp = r => Math.max(0, ...asList(r && r.choices).map(c => +(c && c.success && c.success.insp) || 0));
-const addR = (a, r) => { const x = reward(r); a.insp += x.insp; a.mood += x.mood; a.items += x.items.length; return a; };
+const addR = (a, r) => { const x = reward(r); a.insp += x.insp; a.mood += x.mood; a.items += x.items.length; a.skills += x.skill ? 1 : 0; return a; };
 // 一天全部拿到的（週包裡的原始格式）
 export function dayRewardTotal(d) {
-  const t = { insp: 0, mood: 0, items: 0 };
+  const t = { insp: 0, mood: 0, items: 0, skills: 0 };
   asList(d && d.daily).forEach(x => addR(t, x.reward));
   addR(t, d && d.dailyBonus);
   t.insp += asList(d && d.books).length * NUM.story.bookInsp;
@@ -665,7 +670,7 @@ export function dayRewardTotal(d) {
 }
 // 每週任務＋全做完的那份＋本週異狀的房間
 export function weekTaskTotal(wk) {
-  const t = { insp: 0, mood: 0, items: 0 };
+  const t = { insp: 0, mood: 0, items: 0, skills: 0 };
   asList(wk && wk.weekly).forEach(x => addR(t, x.reward));
   addR(t, wk && wk.weeklyBonus);
   if (wk && wk.anomaly && wk.anomaly.room) { addR(t, wk.anomaly.room.reward); t.insp += maxChoiceInsp(wk.anomaly.room); }

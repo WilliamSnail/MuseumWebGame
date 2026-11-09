@@ -124,7 +124,7 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
+  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
@@ -297,7 +297,7 @@ SCREENS.codex = (root, params) => {
   } else if (tab === "forbidden") {
     const list = Object.entries(P.pepes).map(([k, e]) => ({ kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect })).filter(i => i.pick && !isBasePick(i.pick));
     const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o)).map(o => ({ c, o })));
-    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? "簽到限定" : "委託人送的";
+    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? (o.limited === "shop" ? "兌換所限定" : "簽到限定") : "委託人送的";
     root.append(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), pepePlacard(it.pick, { perfect: it.perfect }))))
         : h("p", { class: "empty" }, "還沒有禁忌作品。"));

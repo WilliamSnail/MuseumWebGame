@@ -6,6 +6,8 @@ const G = load();
 const CELLAR = G.CELLAR;
 const RUNS = +process.argv[2] || 1000;
 const DATE = "2026-11-08";
+// 兌換所和技能成長（11-09，決定 0032）：GEAR=lamp,gloves 這樣穿著裝備下去；SKILL_PLUS=20 每個技能多 20（提升技能、上課、試煉房間之後）
+const GEAR0 = (process.env.GEAR || "").split(",").filter(Boolean), SKILL_PLUS = +process.env.SKILL_PLUS || 0;
 
 const parse = e => { const m = String(e).trim().match(/^(\d+)D(\d+)$/i); return m ? { n: +m[1], m: +m[2] } : { flat: +e || 0 }; };
 const mean = e => { const p = parse(e); return p.m ? p.n * (p.m + 1) / 2 : p.flat; };
@@ -20,6 +22,8 @@ function buildProfile(rng, stage) {
   P.tutorialDone = true;
   const job = ["detective", "historian", "occultist", "gambler", "artisan", "salesman"][Math.floor(rng() * 6)];
   G.assignJob(P, job);
+  if (SKILL_PLUS) G.SKILLS.forEach(s => { P.skills[s] = Math.max(P.skills[s], Math.min(G.NUM.story.skillCap, P.skills[s] + SKILL_PLUS)); });
+  if (GEAR0.length) { G.storyState(P).stamps = 999; GEAR0.forEach(id => { G.buyGear(P, id, DATE); G.wearGear(P, id); }); }
   const n = { early: 12, mid: 40, late: 100 }[stage];
   if (stage !== "early") {
     G.CATS.forEach(c => G.partOf(c).options.forEach(o => {
@@ -134,7 +138,7 @@ function descend(P, rng, strat, teamHow) {
       if (res.type === "power") { out.powerTry++; if (res.success) out.powerWin++; }
       if (res.type === "skill") { out.skillTry++; if (res.success) out.skillWin++; }
       if (res.type === "none") out.safeTaken++;
-      if (res.type === "san") { out.sanTry++; const r = G.sanCheck(P, res.sanSpec, src); hit(r.loss); sanSuccess = r.success; }
+      if (res.type === "san") { out.sanTry++; const r = G.sanCheck(P, res.sanSpec, src); hit(r.loss + Math.min(0, G.cellarDarkLoss(P, r.loss))); sanSuccess = r.success; } // 探險燈少扣（決定 0032）
       if (out.zero) break;
       const fx = G.cellarApply(P, res, sanSuccess);
       if (fx.injured) out.injuries++;

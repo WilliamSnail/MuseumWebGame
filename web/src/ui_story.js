@@ -80,7 +80,7 @@ function flushEvents() {
     } else if (e.type === "storySpot") {
       snd("unlock");
       const r = claimSpot(P, W, e.room.id, todayStr());
-      note(`找到了：${e.room.title}${r.ok && rewardText(r.reward) ? `　${rewardText(r.reward)}` : ""}`, "good");
+      note(`找到了：${e.room.title}${r.ok && rewardText(r.reward) ? `　${rewardText(r.reward)}` : ""}${r.ok && r.grown ? `（${r.grown.skill} ${r.grown.before} → ${r.grown.after}）` : ""}`, "good");
       if (r.ok && r.reward.items.length) itemsFlow(r.reward.items);
       updateStatus();
     }
@@ -162,7 +162,7 @@ export function openStory(o = {}) {
     const W = curWeek(), S = storyState(P);
     const lines = W ? linesNow(W) : [];
     const dots = { week: claimables(W) > 0, lines: lines.some(l => l.fresh) };
-    m.setTop(h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，之後的兌換所用得到。" }, icon("medal"), ` 週章 ${S.stamps} 枚`));
+    m.setTop([h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，到兌換所換東西。" }, icon("medal"), ` 週章 ${S.stamps} 枚`), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null]);
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "每週劇情" }, SP_TABS.map(([id, name]) =>
       h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : ""), onClick: () => { tab = id; draw(); } },
         name, dots[id] ? h("span", { class: "nb-dot", "aria-label": id === "week" ? "有獎勵可以領" : "有新的下壹步" }) : null)));
@@ -210,7 +210,7 @@ function weekPane(W, draw, m) {
   const wbr = Object.assign({}, W.weeklyBonus, { stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });
   const weekly = sec("每週任務", h("ul", { class: "sp-tasks" }, W.weekly.map(t => taskRow(W, t, draw, m)),
     bonusRow("5 個都做完：這週限定的那份", weekBonusState(P, W), wbr, () => claimFlow(claimWeekBonus(P, W, today), draw))),
-    h("p", { class: "sp-note" }, `每週任務做完壹個拿 ${NUM.story.stampPerTask} 枚週章，全部做完再多 ${NUM.story.stampAllBonus} 枚。週章會存起來，之後的兌換所用得到。`));
+    h("p", { class: "sp-note" }, `每週任務做完壹個拿 ${NUM.story.stampPerTask} 枚週章，全部做完再多 ${NUM.story.stampAllBonus} 枚。週章會存起來，可以到兌換所換裝備、提升技能。`));
   const left = unclaimed(P, W).filter(t => t.daily && (!d || t.day !== d.n));
   const old = left.length ? sec("前幾天做完、還沒領的", h("ul", { class: "sp-tasks" }, left.map(t => taskRow(W, t, draw, m)))) : null;
   const bag = Object.entries(S.bag).filter(([, n]) => n > 0);
@@ -264,7 +264,7 @@ export function storyLobby() {
       chip(`週章 ${S.stamps} 枚`), n ? chip(`${n} 個獎勵可以領`, "hot") : null),
     show && show.next ? h("button", { type: "button", class: "sl-track", onClick: () => goStep(show.next) }, icon("sparkle"),
       h("span", null, `${tracked ? "追蹤" : "劇情線"}〈${show.name}〉：`, h("b", null, show.next.text)), show.next.room || show.next.panel ? h("span", { class: "sl-arrow", "aria-hidden": "true" }, "→") : null) : null,
-    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small"), btn("劇情線", () => openStory({ tab: "lines" }), "small")));
+    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small"), btn("劇情線", () => openStory({ tab: "lines" }), "small"), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null));
   return card;
 }
 

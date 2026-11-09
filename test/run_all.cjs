@@ -16,6 +16,7 @@ const STEPS = [
   ["邀請、隊伍、一起融合", ["test/party.test.cjs"]],
   ["每週劇情（任務、獎勵、週章、換日換週、書、劇情線、備用週）", ["test/story.test.cjs"]],
   ["管理員介面的摘要（算得對、壞存檔不丟錯、舊存檔、沒有 email，決定 0033）", ["test/admin.test.cjs"]],
+  ["兌換所和技能成長（裝備、提升技能、上課、試煉房間、跟館友學、限定頭飾）", ["test/shop.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],
   ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/week_check.cjs"]],

@@ -15,6 +15,7 @@ import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
 import "./css/story.css"; // 每週劇情：書架的頁籤、今日特展、本週異狀、每週劇情面板（11-09）
 import "./css/admin.css"; // 管理員介面（只看不改，決定 0033）
+import "./css/shop.css"; // 兌換所、上課、試煉房間（11-09，決定 0032）
 
 import "./art.js";
 import "./fx.js";
@@ -30,6 +31,7 @@ import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來
+import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
 if (debugScreen) window.__PM_NODOOR__ = true; // 開發時直接進畫面，不放開館布幕

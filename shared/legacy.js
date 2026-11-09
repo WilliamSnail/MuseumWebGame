@@ -27,16 +27,17 @@
 //  開場就算的（心情、理智、技能起點）在選職業時加（chooseJob → startStats）。
 // ================================================================
 import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
-import { TRAIT_TEXT } from "./content3.js";
+import { GEAR_TEXT, TRAIT_TEXT } from "./content3.js";
 import { RNG, activeQuirks, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
 import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
+import { wornGear } from "./shop.js";
 
 // ---------- 小優點、小缺點 ----------
 export const traitById = id => (id && (PERKS.find(t => t.id === id) || FLAWS.find(t => t.id === id))) || null;
-export const traitName = id => (TRAIT_TEXT[id] || {}).name || id;
-// 這一位身上的優缺點（自由模式沒有）
-export function traitsOf(P) { return P && !isFree(P) ? [P.perk, P.flaw].map(traitById).filter(Boolean) : []; }
-// 優缺點在某一個欄位加起來是多少，例如 traitSum(P, "fusion") ＝ 融合多花（＋）或少花（−）幾靈感
+export const traitName = id => (TRAIT_TEXT[id] || GEAR_TEXT[id] || {}).name || id;
+// 這一位身上的優缺點，加上穿著的裝備（兌換所，決定 0032；欄位一樣，下面的 traitSum、traitHits 一起算）。自由模式沒有
+export function traitsOf(P) { return P && !isFree(P) ? [P.perk, P.flaw].map(traitById).filter(Boolean).concat(wornGear(P)) : []; }
+// 優缺點和裝備在某一個欄位加起來是多少，例如 traitSum(P, "fusion") ＝ 融合多花（＋）或少花（−）幾靈感
 export function traitSum(P, field) { return traitsOf(P).reduce((n, t) => n + (typeof t[field] === "number" ? t[field] : 0), 0); }
 // 影響到這個欄位的那幾個：[{ id, name, v }]（畫面寫「力氣大 +1」用）
 export function traitHits(P, field) { return traitsOf(P).filter(t => typeof t[field] === "number" && t[field]).map(t => ({ id: t.id, name: traitName(t.id), v: t[field] })); }
@@ -56,8 +57,8 @@ export function traitDesc(id) {
 // 兩個優缺點有沒有同一類（同一類的不會配在同一位身上，例如「精打細算」不會配「坐不住」）
 export const traitsClash = (a, b) => !!(a && b) && asList(a.tag).some(x => asList(b.tag).includes(x));
 
-// 地下收藏庫扣理智時，「怕黑」多扣幾點（有扣才多扣）
-export function cellarDarkLoss(P, loss) { return loss > 0 ? Math.max(0, traitSum(P, "cellarSan")) : 0; }
+// 地下收藏庫扣理智時要加減幾點：小缺點「怕黑」多扣、裝備「探險燈」少扣（決定 0032）。有扣才算；少扣的話最少還是扣 1 點（理智要算容易歸零）
+export function cellarDarkLoss(P, loss) { return loss > 0 ? Math.max(1 - loss, traitSum(P, "cellarSan")) : 0; }
 
 // ---------- 這一位自己的統計（D：歷任參觀者牆要用） ----------
 export function newVisit(P) {

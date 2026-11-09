@@ -55,7 +55,7 @@ export function useNow(id, close) {
   if (!t || !P) return;
   if (it.kind === "part") t.params.preset = Object.assign({}, P.wsPick, t.params.preset); // 手作坊的 preset 要整套（其他類照現在選的）
   if (close) close();
-  document.querySelectorAll(".nb-layer").forEach(l => l.remove());
+  document.querySelectorAll(".nb-layer").forEach(l => { if (l.nbClose) l.nbClose(); else l.remove(); }); // 照正常的方式關（只拿掉畫面的話，木框的鍵盤監聽會留著，之後的 Esc 都被它吃掉）
   document.body.classList.remove("nb-open");
   if (t.wear) { wearDeco(P, id); persist(); note(`換上了「${it.name}」。在展廳看得到；不想要可以在展廳拿下來。`, "good"); }
   else if (it.kind === "part") note(`「${it.name}」選好了：按「做」就戴著它做壹隻。`, "good");

@@ -659,6 +659,7 @@ SCREENS.workshop = (root, params) => {
     const st = unlockState(P, cat, name);
     const o = optOf(cat, name);
     if (o.forbidden && st.state === "forbidden" && P.myth < o.myth - 4) return null; // 太遠的禁忌選項先不露面
+    if (o.limited === "shop" && st.state !== "open") return null; // 兌換所的限定頭飾：買到了才出現（決定 0032；帽子那頁不會多一排鎖著的）
     const blocked = st.state === "open" && isBlocked(P, cat, name);
     const on = pick[cat] === name;
     const rolledTab = cat === ROLLED && !free;
