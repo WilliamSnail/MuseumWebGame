@@ -40,7 +40,7 @@ async function doAct(act, data) {
   if (!s || s.busy === act) return;
   s.busy = act;
   try { await call(act, data); }
-  catch (e) { snd("error"); note(e.message || "沒辦法。", "bad"); }
+  catch (e) { if (!/^現在/.test(e.message || "")) { snd("error"); note(e.message || "沒辦法。", "bad"); } } // 「現在不是投票的時候」：時間剛好到，不用提示
   finally { if (S === s) { s.busy = null; draw(); } }
 }
 async function partyAct(act, extra) {
@@ -66,7 +66,7 @@ export function openCoop(pid, o = {}) {
     if (S !== s) return;
     if (v == null) { if (s.party) s.gone = true; s.party = null; } else s.party = fixParty(v);
     if (s.party && s.party.phase === "lobby") {
-      if (s.view) { s.view = null; s.shown = -1; } // 再走壹趟：回到準備區
+      if (s.view) { s.view = null; s.shown = -1; s.bestSent = false; } // 再走壹趟：回到準備區（走完可能多走過一層）
       if (!s.bestSent && canPlay()) { s.bestSent = true; call("setBest", { best: P.cellar.best || 0 }).catch(() => {}); }
     }
     watchOff();
@@ -272,7 +272,7 @@ function drawLobby() {
   const members = h("div", { class: "pt-members cx-members" }, ms.map(card), empties);
 
   // 層數：隊長選；看每個人自己的進度（決定：每個人都要走過上一層）
-  const known = ms.map(m => (typeof m.best === "number" ? m.best : null)).filter(x => x != null);
+  const known = ms.filter(m => !m.guard).map(m => (typeof m.best === "number" ? m.best : null)).filter(x => x != null); // 留守的人不下去：不看他走到哪
   const reach = known.length ? Math.min(...known) + 1 : 1;
   const floors = h("div", { class: "cx-floors", role: "group", "aria-label": "下到第幾層" }, cellarFloors().map(n => {
     const f = cellarFloor(n), on = party.floor === n, open = n <= reach;
@@ -357,7 +357,18 @@ function drawRun(v) {
   // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
   const wispKey = `${v.floor}:${v.idx}`;
   if (!guard && v.phase === "vote" && s.wispKey !== wispKey) { s.wispKey = wispKey; setTimeout(() => { if (S === s) traceWisp(s.m.surface.querySelector(".cellar-stage"), v.floor); }, 1500); }
+  // 同壹步重畫（有人投票、說話）：捲軸留在原地；換了階段：捲到看得到卡片
+  const old = s.m.surface.querySelector(".cx-main"), oldScroll = old ? [old.scrollTop, s.m.surface.querySelector(".cx-run").scrollTop] : null, same = s.drawnKey === `${v.step}:${v.phase}`;
+  s.drawnKey = `${v.step}:${v.phase}`;
   s.m.surface.replaceChildren(h("div", { class: "cx-run pr" + lv + (v.role ? " role-" + v.role : "") }, main, h("aside", { class: "cx-side" }, sideBox(v), evidenceBox(v), chatBox(v))));
+  const runEl = s.m.surface.querySelector(".cx-run");
+  if (same && oldScroll) { main.scrollTop = oldScroll[0]; runEl.scrollTop = oldScroll[1]; }
+  else {
+    const card = main.querySelector(".cx-card");
+    if (card && v.phase !== "vote" && main.scrollHeight > main.clientHeight) main.scrollTop = Math.max(0, card.offsetTop - main.offsetTop - 8);
+    else main.scrollTop = 0;
+    runEl.scrollTop = 0;
+  }
   tickClock();
 }
 function drawSide() {
