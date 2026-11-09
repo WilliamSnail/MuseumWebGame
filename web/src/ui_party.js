@@ -18,6 +18,8 @@ import { overlay } from "./ui_board.js";
 import { learnText } from "../../shared/shop.js";
 
 const KIND_TEXT = { fusion: "壹起融合", cellar: "壹起下地下收藏庫" };
+// 別種隊伍的框（合作地下在 ui_coop.js 登記）：{ cellar: { open(pid), isOpen(pid), say(m) } }。這個檔不 import 它，不然會繞圈
+export const PARTY_HOOKS = {};
 const canFuseHere = () => !!P && !isFree(P);
 // 邀請的期限是伺服器的時間：跟網路的時間（nowMs）比，不跟這台電腦的時鐘比
 const secLeft = exp => Math.max(0, Math.ceil((exp - nowMs()) / 1000));
@@ -35,7 +37,8 @@ function drawInvites() {
   if (outgoing.size) {
     const rows = [...outgoing.values()].map(o => h("p", { class: "inv-out-row" },
       h("span", null, "等 ", h("b", null, o.toNick), " 回覆"), h("span", { class: "inv-left", dataset: { exp: String(o.expires) } }, `還有 ${secLeft(o.expires)} 秒`)));
-    const card = h("div", { class: "inv-card inv-out", role: "status" }, h("p", { class: "inv-sub" }, "壹起融合的邀請送出了"), rows);
+    const kinds = new Set([...outgoing.values()].map(o => o.kind)); // 通常只有一種；兩種都有就只寫「邀請送出了」
+    const card = h("div", { class: "inv-card inv-out", role: "status" }, h("p", { class: "inv-sub" }, kinds.size === 1 ? `${KIND_TEXT[[...kinds][0]] || ""}的邀請送出了` : "邀請送出了"), rows);
     if (outCard && outCard.isConnected) outCard.replaceWith(card); else box.prepend(card);
     outCard = card;
   } else if (outCard) { outCard.remove(); outCard = null; }
@@ -64,12 +67,12 @@ function dropIncoming(iid) {
 function dropOutgoing(iid) { if (iid && outgoing.delete(iid)) drawInvites(); }
 
 // ---------- 邀請 ----------
-async function sendInvite(friend, kind) {
-  if (!canFuseHere()) { note("要先用挑戰模式的參觀者進館，才能邀請館友壹起融合。", "bad"); return; }
+export async function sendInvite(friend, kind) {
+  if (!canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能邀請館友${KIND_TEXT[kind] || ""}。`, "bad"); return; }
   try {
     await NET.flush().catch(() => {});
     const r = await NET.call("invite", { to: friend.id, kind });
-    outgoing.set(r.iid, { toNick: r.toNick, expires: r.expires });
+    outgoing.set(r.iid, { toNick: r.toNick, expires: r.expires, kind });
     drawInvites();
   } catch (e) { snd("error"); note(e.message || "邀請送不出去。", "bad"); }
 }
@@ -82,17 +85,18 @@ function inviteCard(m) {
   const card = h("div", { class: "inv-card inv-in", role: "alertdialog", "aria-label": `${m.from.nick} 邀請你${KIND_TEXT[m.kind] || ""}`, dataset: { iid: m.iid } },
     h("p", { class: "inv-t" }, h("b", null, m.from.nick), ` 邀請你${KIND_TEXT[m.kind] || ""}`),
     m.kind === "fusion" ? h("p", { class: "inv-sub" }, "兩個人各放壹隻佩佩，做出來的那隻兩個人都拿到；各扣各的靈感和融合次數。") : null,
+    m.kind === "cellar" ? h("p", { class: "inv-sub" }, "每個人帶 1–2 隻佩佩，壹起投票、看同壹顆骰子；理智各扣各的。") : null,
     h("div", { class: "inv-btns" }, btn("接受", () => reply(true), "primary small"), btn("婉拒", () => reply(false), "small"),
       h("span", { class: "inv-left", dataset: { exp: String(m.expires) } }, `還有 ${secLeft(m.expires)} 秒`)),
     more);
   async function reply(accept) {
     dropIncoming(m.iid);
     drawInvites();
-    if (accept && m.kind === "fusion" && !canFuseHere()) { note("要先用挑戰模式的參觀者進館，才能壹起融合（這次先婉拒了）。", "bad"); accept = false; }
+    if (accept && !canFuseHere()) { note(`要先用挑戰模式的參觀者進館，才能${KIND_TEXT[m.kind] || "壹起玩"}（這次先婉拒了）。`, "bad"); accept = false; }
     try {
       if (accept) await NET.flush().catch(() => {});
       const r = await NET.call("inviteReply", { iid: m.iid, accept });
-      if (accept && r.pid) openParty(r.pid);
+      if (accept && r.pid) { if (PARTY_HOOKS[m.kind]) PARTY_HOOKS[m.kind].open(r.pid); else openParty(r.pid); }
     } catch (e) { snd("error"); note(e.message || "回覆不了。", "bad"); }
   }
   incoming.push({ m, card, more });
@@ -239,6 +243,8 @@ export function openParty(pid) {
 // 隊伍有變：開著這一隊的框就跳提示；沒開著，先確認隊伍還在、自己還是隊員才打開（離線時累積的舊通知、已經解散的隊伍都不理）
 async function partyNotice(m) {
   dropOutgoing(m.iid);
+  const hookOpen = Object.values(PARTY_HOOKS).find(k => k.isOpen(m.pid));
+  if (hookOpen) { hookOpen.say(m); return; } // 別種隊伍的框開著這一隊：它自己提示
   const say = () => {
     if (m.joined) note(`${m.joined} 加入了隊伍。`, "good");
     if (m.left) note(m.why === "offline" ? `${m.left} 斷線了，離開了隊伍。` : `${m.left} 離開了隊伍。`);
@@ -251,7 +257,7 @@ async function partyNotice(m) {
   // 在門口（還沒選參觀者）、自由模式：放不了佩佩，就退出這一隊，隊友會看到我離開了（不然他會一直等）
   if (!canFuseHere()) { NET.call("partyAction", { pid: m.pid, act: "leave" }).catch(() => {}); return; }
   say();
-  openParty(m.pid);
+  if (PARTY_HOOKS[p.kind]) PARTY_HOOKS[p.kind].open(m.pid); else openParty(m.pid);
 }
 NET.on("message", m => {
   if (!m || !UI.net) return;

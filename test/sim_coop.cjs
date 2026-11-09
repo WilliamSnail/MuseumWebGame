@@ -6,6 +6,8 @@
 // 挑隊員：單人和合作都用下面的 pickKeys（每隻照整層的強度排，挑最強的幾隻）。
 //   sim_cellar.cjs 的 pickTeam 是隨機抽 120 組 3 隻，收藏一多（晚期 100 隻）就挑不到最強的那組，單人會被算得太弱。
 const { G, CELLAR, buildProfile, evalChoice } = require("./sim_cellar.cjs");
+const FUN = process.env.SIM_FUN === "1";   // SIM_FUN=1：打開好玩的機制（記號、房間裡的東西、搬、猜）
+const TALK = process.env.SIM_TALK === "1"; // SIM_TALK=1：隊員有講話（知道記號對上的是哪個，算進選法）
 const RUNS = +process.argv[2] || 1000;
 const START = +process.argv[3] || G.NUM.startSanity;
 const STAGE = { 1: "early", 2: "early", 3: "mid", 4: "mid", 5: "late" };
@@ -112,18 +114,18 @@ function evalCoop(run, Ps, id, room, ch) {
 function coop(profiles, each, floor, seed) {
   const rng = G.mulberry32(seed); G.setRng(rng);
   const members = profiles.map((P, j) => ({ id: "p" + j, name: "隊員" + (j + 1), P, keys: pickKeys(P, floor, each[j]) }));
-  const s = G.startCoop(members, floor);
+  const s = G.startCoop(members, floor, FUN ? { id: "sim" + seed, fun: true } : {});
   if (!s.ok) return null;
   const run = s.run, Ps = {};
   members.forEach(m => { Ps[m.id] = m.P; });
-  const o = { clear: false, ghost: 0, wipe: false, loss: 0, insp: 0, powerTry: 0, powerWin: 0, skillTry: 0, skillWin: 0, safe: 0, odds: [], people: members.length, pressure: 0, rooms: 0, ties: 0 };
+  const o = { clear: false, ghost: 0, wipe: false, loss: 0, insp: 0, powerTry: 0, powerWin: 0, skillTry: 0, skillWin: 0, safe: 0, odds: [], people: members.length, pressure: 0, rooms: 0, ties: 0, clueHit: 0, carryOk: 0, carryBad: 0, ev: 0, guessOk: 0, guessBad: 0 };
   const inspBefore = members.map(m => m.P.insp);
   G.cellarFloor(floor).rooms.forEach(r => r.choices.forEach(c => { if (c.check.type === "power") o.odds.push(powerP(G.coopTargetOf(run, c.check.target) - G.coopPower(run, Ps, r).total)); }));
   while (run.phase === "vote") {
     const room = G.coopRoom(run), votes = {};
     G.coopVoters(run).forEach(m => {
       let idx = 0, bs = -1e9;
-      room.choices.forEach((c, i) => { const sc = smart(evalCoop(run, Ps, m.id, room, c)); if (sc > bs) { bs = sc; idx = i; } });
+      room.choices.forEach((c, i) => { const sc = smart(evalCoop(run, Ps, m.id, room, c)) + (TALK && run.clue && run.clue.answer === i ? 2 : 0); if (sc > bs) { bs = sc; idx = i; } });
       votes[m.id] = idx;
     });
     o.pressure += run.pressure.lv; o.rooms++;
@@ -133,9 +135,30 @@ function coop(profiles, each, floor, seed) {
     if (t === "power") { o.powerTry++; if (r.check.success) o.powerWin++; }
     if (t === "skill") { o.skillTry++; if (r.check.success) o.skillWin++; }
     if (t === "none") o.safe++;
+    if (r.check.clue) o.clueHit++;
     if (run.phase === "over") break;
-    const a = G.coopAdvance(run, Ps);
-    if (a.floorDone) { o.clear = true; break; }
+    let a = G.coopAdvance(run, Ps);
+    if (run.phase === "carry") { // 搬：前兩個人一左一右
+      G.coopVoters(run).forEach((m, i) => G.coopCarryPick(run, m.id, i === 0 ? "L" : i === 1 ? "R" : "skip"));
+      G.coopCarryDo(run, Ps);
+      const k = run.carry.result.kind;
+      if (k === "ok") o.carryOk++; else if (k === "slip" || k === "bump") o.carryBad++;
+      if (run.phase === "over") break;
+      a = G.coopAdvance(run, Ps);
+    }
+    if (a.floorDone) {
+      o.clear = true;
+      if (run.phase === "guess") { // 猜：照找到的證據挑對上最多的那位
+        const found = run.truth.found.map(x => x.kind);
+        const best = G.COOP_RESIDENTS.slice().sort((x, y) => y.ev.filter(k => found.includes(k)).length - x.ev.filter(k => found.includes(k)).length)[0];
+        const votes2 = {};
+        G.coopVoters(run).forEach(m => { votes2[m.id] = best.id; });
+        G.coopGuess(run, Ps, votes2);
+        if (run.truth.right) o.guessOk++; else o.guessBad++;
+      }
+      if (run.truth) o.ev = run.truth.found.length;
+      break;
+    }
   }
   o.wipe = run.over === "lost";
   o.ghost = run.members.filter(m => m.ghost).length / members.length;
@@ -165,6 +188,7 @@ if (require.main === module) {
   const t0 = Date.now();
   console.log(`合作地下收藏庫的模擬：每格 ${RUNS} 趟，開始理智 ${START}，大家都用 smart 的選法`);
   console.log(`門檻放大：門檻 ＋（門檻 − ${G.COOP.dice}）×（隻數 − ${G.COOP.baseTeam}）÷ ${G.COOP.baseTeam} × ${G.COOP.scale} ＋ ${G.COOP.perPlayer} ×（人數 − 1）；理智壓力 ${G.COOP.pressure.map(p => `平均 < ${p.below} → ${p.lv} 級（門檻 +${p.power}、技能 ${p.skill}、失敗多扣 ${p.failSan}）`).join("；")}`);
+  if (FUN) console.log(`好玩的機制打開了（SIM_FUN=1）${TALK ? "，隊員有講話（SIM_TALK=1）" : ""}`);
   console.log("層 | 隊伍 | 走完這層 | 每人歸零（幽靈） | 全滅 | 每人扣理智 | 每人靈感 | 強度勝算（每個強度選項都推） | 強度檢定過（次數） | 技能過（次數） | 選安全 | 平均壓力");
   for (let floor = 1; floor <= 5; floor++) {
     CONFIGS.forEach(cfg => {
@@ -185,6 +209,7 @@ if (require.main === module) {
         pct(sum(res, o => o.skillWin), sum(res, o => o.skillTry)) + "（" + avg(res, o => o.skillTry).toFixed(1) + "）",
         avg(res, o => o.safe).toFixed(1),
         cfg.single ? "-" : (sum(res, o => o.pressure) / Math.max(1, sum(res, o => o.rooms))).toFixed(2),
+        ...(FUN && !cfg.single ? [`對上記號 ${avg(res, o => o.clueHit).toFixed(1)}/間`, `證據 ${avg(res, o => o.ev).toFixed(1)}`, `猜對 ${pct(sum(res, o => o.guessOk), sum(res, o => o.guessOk + o.guessBad))}（有猜 ${pct(sum(res, o => o.guessOk + o.guessBad), res.length)}）`, `搬回來 ${pct(sum(res, o => o.carryOk), sum(res, o => o.carryOk + o.carryBad))}`] : []),
       ].join(" | "));
     });
   }

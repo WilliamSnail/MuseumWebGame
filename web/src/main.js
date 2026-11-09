@@ -12,6 +12,7 @@ import "./css/board.css"; // 公佈欄、信箱、選單（11-08）
 import "./css/net.css"; // 登入、館友、我的帳號（多人版 M1，11-08）
 import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版 M1，11-08，決定 0018）
 import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
+import "./css/coop.css"; // 合作地下收藏庫（多人版 M4，11-09）
 import "./css/visit.css"; // 參觀館友的展廳、送佩佩（多人版 M2，11-09）
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
 import "./css/story.css"; // 每週劇情：書架的頁籤、今日特展、本週異狀、每週劇情面板（11-09）
@@ -32,6 +33,8 @@ import "./ui_board.js"; // 公佈欄、信箱（11-08）
 import "./ui_login.js"; // 登入、存檔放伺服器、館友（多人版 M1，11-08）
 import "./ui_visit.js"; // 參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，11-09）。放在 ui_party 前面：館友小卡上的按鈕照載入的順序
 import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
+import "./ui_trace.js"; // 留下痕跡（留言牌、影子、幽影，11-09）
+import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop.js，伺服器在 functions/coop.js
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來

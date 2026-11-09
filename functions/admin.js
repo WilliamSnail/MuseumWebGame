@@ -25,12 +25,13 @@ export const adminCheck = onCall(async req => ({ admin: await isAdmin(req.auth) 
 export const adminOverview = onCall(async req => {
   if (!(await isAdmin(req.auth))) throw new HttpsError("permission-denied", "沒有權限");
   const db = getFirestore();
-  const [members, saves, status] = await Promise.all([db.collection("members").get(), db.collection("saves").get(), getDatabase().ref("status").get()]);
+  const [members, saves, status, reports] = await Promise.all([db.collection("members").get(), db.collection("saves").get(), getDatabase().ref("status").get(), getDatabase().ref("coopReports").limitToLast(200).get()]);
   const saveMap = {};
   saves.forEach(d => { saveMap[d.id] = { data: d.data().data, updatedAt: toMs(d.data().updatedAt) }; });
   return adminOverviewOf({
     members: members.docs.map(d => ({ uid: d.id, nick: d.data().nick, joinedAt: toMs(d.data().joinedAt) })),
     saves: saveMap,
     status: status.val(),
+    reports: reports.val(),
   }, nowMs());
 });
