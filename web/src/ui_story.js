@@ -275,6 +275,8 @@ export function storyLobby() {
   const tracked = lines.find(l => l.tracked) || null, show = tracked || lines.find(l => l.next && !l.next.wait) || null;
   const n = claimables(W), fresh = lines.some(l => l.fresh);
   const chip = (t, cls) => h("span", { class: "sl-chip" + (cls ? " " + cls : "") }, t);
+  // 還有事做就每幾秒閃一下（翊文 11-09：「劇情按鈕可以幾秒閃一下，提示大家要來按嗎」）：獎勵、新的下壹步、任務沒做完。全做完就不閃
+  const pending = n > 0 || fresh || (d ? d.daily : []).concat(W.weekly).some(t => !taskDone(P, t));
   const card = h("section", { class: "story-lobby", "aria-label": "本週地下收藏庫" },
     h("div", { class: "sl-head" }, h("span", { class: "sl-tag" }, icon("book"), " 本週地下收藏庫"), h("b", { class: "sl-title" }, `〈${W.title}〉`),
       h("span", { class: "sl-left" }, `第 ${W.dayNo} 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`), fresh ? h("span", { class: "nb-dot", "aria-label": "有新的下壹步" }) : null),
@@ -282,7 +284,7 @@ export function storyLobby() {
       chip(`週章 ${S.stamps} 枚`), n ? chip(`${n} 個獎勵可以領`, "hot") : null),
     show && show.next ? h("button", { type: "button", class: "sl-track", onClick: () => goStep(show.next) }, icon("sparkle"),
       h("span", null, `${tracked ? "追蹤" : "劇情線"}〈${show.name}〉：`, h("b", null, show.next.text)), show.next.room || show.next.panel ? h("span", { class: "sl-arrow", "aria-hidden": "true" }, "→") : null) : null,
-    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small"), btn("劇情線", () => openStory({ tab: "lines" }), "small"), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null));
+    h("div", { class: "sl-btns" }, btn("打開每週劇情", () => openStory(), "primary small" + (pending ? " sl-nudge" : "")), btn("劇情線", () => openStory({ tab: "lines" }), "small"), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null));
   return card;
 }
 
