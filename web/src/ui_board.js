@@ -12,10 +12,10 @@ import { realTodayStr } from "../../shared/logic.js";
 import { NOTICE_CATS, autoOpenPlan, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
-import { ADDONS, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 
 const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
-const narrow = () => matchMedia("(max-width: 760px)").matches;
+const narrow = () => planPortrait(); // 橫拿的手機寬度夠，左右分欄（決定 0043）
 const TILT = [-1.2, .9, -.5, 1.1, -.8, .4]; // 紙釘上去不會剛好正正的
 
 // 蓋在整個畫面上的木框。按 Esc、點框外面、按右上角的 X 都會關；按 Tab 只在框裡面轉

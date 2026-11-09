@@ -23,6 +23,7 @@ import "./css/rank.css"; // 本週榜單（11-09，決定 0039）
 import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 import "./css/events.css"; // 限時活動（決定 0041）
 import "./css/casino.css"; // Hamachi 賭場（決定 0040）
+import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";
 import "./fx.js";
@@ -48,6 +49,7 @@ import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：
 import "./ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/events.js
 import "./ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
 import "./ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino.js
+import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;

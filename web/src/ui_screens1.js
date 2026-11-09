@@ -13,7 +13,7 @@ import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.j
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
 import { traitDesc, traitName } from "../../shared/legacy.js";
-import { $, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, planPortrait, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -207,7 +207,7 @@ export function roomHasNew(id) {
   return false;
 }
 SCREENS.lobby = root => {
-  const portrait = matchMedia("(max-width: 760px)").matches;
+  const portrait = planPortrait();
   const jobs = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
   const sub = isFree(P) ? FREE_MODE_TEXT : `今天有 ${jobs} 張委託　你已經打開的可能性 ${num(possibilities(P))}／${num(knownTotal(P))}`;
   const progress = roomProgress(P);

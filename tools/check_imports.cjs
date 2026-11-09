@@ -11,7 +11,7 @@ const FILES = [
   ...fs.readdirSync(path.join(ROOT, "shared")).filter(f => f.endsWith(".js")).map(f => "shared/" + f),
   ...fs.readdirSync(path.join(ROOT, "web/src")).filter(f => f.endsWith(".js")).map(f => "web/src/" + f),
 ];
-const LATER_THAN_CORE = ["ui_screens1.js", "ui_screens2.js", "ui_screens3.js", "ui_curio.js", "ui_odd.js", "ui_board.js", "ui_login.js", "ui_party.js", "ui_coop.js", "ui_trace.js", "ui_signin.js", "ui_story.js", "ui_admin.js", "ui_shop.js", "ui_visit.js", "ui_themeshow.js", "ui_board_rank.js", "ui_mates.js", "ui_casino_slot.js", "ui_casino.js", "ui_casino_table.js", "ui_casino_week.js", "ui_events.js", "boot.js", "debug_boot.js", "main.js"];
+const LATER_THAN_CORE = ["ui_screens1.js", "ui_screens2.js", "ui_screens3.js", "ui_curio.js", "ui_odd.js", "ui_board.js", "ui_login.js", "ui_party.js", "ui_coop.js", "ui_trace.js", "ui_signin.js", "ui_story.js", "ui_admin.js", "ui_shop.js", "ui_visit.js", "ui_themeshow.js", "ui_board_rank.js", "ui_mates.js", "ui_casino_slot.js", "ui_casino.js", "ui_casino_table.js", "ui_casino_week.js", "ui_events.js", "ui_orient.js", "boot.js", "debug_boot.js", "main.js"];
 
 const info = {};
 for (const f of FILES) {

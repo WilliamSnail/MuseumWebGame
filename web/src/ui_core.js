@@ -50,6 +50,9 @@ if (typeof Element !== "undefined") {
     Element.prototype[name] = f;
   });
 }
+// 手機橫著拿（高度只有 360～430）：版面用 css/landscape.css。「導覽圖用直的那張」只在寬度窄、而且不是橫著的手機才算（決定 0043）
+export const LANDSCAPE_Q = "(max-height: 500px) and (orientation: landscape)";
+export function planPortrait() { return matchMedia("(max-width: 760px)").matches && !matchMedia(LANDSCAPE_Q).matches; }
 export function h(tag, props, ...kids) {
   const el = document.createElement(tag);
   if (props) for (const [k, v] of Object.entries(props)) {
