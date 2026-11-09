@@ -8,6 +8,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { redeemJoin } from "./discord_data.js";
+import { outJoin } from "./discord_out.js";
 import { dcJoinCodeOf, dcText, dcVerifiedEmail } from "./shared/discord.js";
 
 
@@ -52,6 +53,7 @@ export const join = onCall(async req => {
       if (r.ok) {
         await getDatabase().ref(`members/${auth.uid}`).set(true);
         const m = r.member ? (await ref.get()).data() : { nick, invisible: false };
+        if (!r.member) await outJoin(auth.uid, m.nick); // Discord：頻道發「○○ 加入了博物館」（寫 outbox，失敗不影響加入）
         return { nick: m.nick, invisible: !!m.invisible, id: auth.uid };
       }
       if (r.reason === "disabled") throw new HttpsError("permission-denied", dcText("joinWebDisabled"));
@@ -74,6 +76,7 @@ export const join = onCall(async req => {
 // ---------- Discord 聯動第一步（決定 0051）：機器人入口 discordBot、遊戲裡的綁定 ----------
 export { discordBot } from "./discord.js";
 export { discordLinkCode, discordLinkState, discordUnlink } from "./discord_link.js";
+export { discordOutboxSend } from "./discord_out.js";
 
 // ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
 export { invite, inviteReply, partyAction } from "./party.js";

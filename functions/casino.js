@@ -33,6 +33,7 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
+import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -50,6 +51,7 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 // fn 回傳 { ok: true, ... }：ctx.round 有改（ctx.roundDirty）就寫；錢包、莊家一定寫；ctx.saveDirty 就寫存檔
 async function play(req, me, opts, fn) {
   const t = now(), day = taipeiDay(t), email = emailOf(req);
+  let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
@@ -63,7 +65,9 @@ async function play(req, me, opts, fn) {
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
+      hb = ctx.house.bankroll;
       const r = fn(ctx);
+      ha = ctx.house.bankroll;
       if (!r.ok && !opts.writeAnyway) return r;
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
@@ -77,6 +81,8 @@ async function play(req, me, opts, fn) {
       return Object.assign({}, r, { rev });
     });
     if (out && out.rev) await inbox(me.uid, { t: "save_changed", rev: out.rev, why: "casino" });
+    // 莊家破產、被救回來 → Discord（寫 outbox；寫不進去只記錄，不影響這步）
+    if (out && out.ok !== false) await outHouse({ before: hb, after: ha, nick: me.nick, settled: !!out.settle, rescued: !!(out.econ && out.econ.rescued), t });
     return out;
   } finally { setRng(null); }
 }
@@ -122,7 +128,12 @@ async function liveAct(me, act, rnd) {
     put(tx, liveRef(), r.st);
     return see(r.st, { n: r.n, line: r.line, from: r.from, to: r.to });
   });
-  if (out && out.ok && out.st) { await mirrorLive(out.st); delete out.st; }
+  if (out && out.ok && out.st) {
+    await mirrorLive(out.st);
+    if (act === "liveOn") await outLiveOn(out.st.seq, me.nick); // Discord：開播
+    if (act === "donate" && out.st.msg) await outDonate(out.st.msg.id, out.from, out.to, out.n); // Discord：斗內感謝
+    delete out.st;
+  }
   return out;
 }
 // 畫面要的：錢包摘要、這一手、莊家

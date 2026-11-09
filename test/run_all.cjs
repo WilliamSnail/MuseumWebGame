@@ -40,6 +40,7 @@ const STEPS = [
   ["說明文字標重點", ["test/mark.test.cjs"]],
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["Discord 聯動第一步的規則（解析 interaction、綁定碼、打錯擋、加入連結、公開的字沒有 email、指令清單，決定 0051）", ["test/discord_bot.test.cjs"]],
+  ["Discord 聯動第二步的規則（遊戲大事發到頻道：事件的字只有暱稱、冷卻、太舊的不發、不 @ 任何人、token 不進 repo、部署流程、模擬器不連真的 Discord，決定 0051）", ["test/discord_out.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
   ["交過的委託不能再交", ["test/commission_keep.test.cjs"]],
