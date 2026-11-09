@@ -13,6 +13,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { createPublicKey, verify } from "node:crypto";
+import "./discord_warm.js"; // 啟動時先連好資料庫（檔裡有為什麼）
 import { discordConfig } from "./discord_config.js";
 import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_data.js";
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
@@ -95,17 +96,6 @@ async function cmdOnline() {
   return dcReply(dcOnlineText(nicks), false);
 }
 const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline, news: cmdNews, ...PLAY_HANDLERS };
-
-// 預熱（翊文 11-09 回報常常「該申請未受回應」）：真實紀錄顯示新機器第壹次讀資料庫要 1.9～2.7 秒，之後只要 0.1～0.5 秒，
-// 加上網路就超過 Discord 的 3 秒；常駐的機器每 15～20 分鐘會被換壹台，所以壹直碰到。這裡在開始接請求之前先連好。
-// 只有 discordBot 自己啟動時才做（其他 Function 也會載入這個檔），模擬器不做；連不上最多等 8 秒，照樣開始接請求。
-if (process.env.FUNCTION_TARGET === "discordBot" && process.env.FUNCTIONS_EMULATOR !== "true") {
-  const t0 = Date.now();
-  const warm = Promise.all([getFirestore().doc("casinoHouse/main").get(), getDatabase().ref("casinoLive/seq").get()])
-    .catch(e => console.error("discordBot：預熱出錯", e && e.message));
-  await Promise.race([warm, new Promise(r => setTimeout(r, 8000))]);
-  console.log("discordBot warm", `${Date.now() - t0}ms`);
-}
 
 // 常駐壹台（翊文 11-09）：閒置後第壹個指令啟動太慢，超過 Discord 的 3 秒就會「未受回應」。小顆 CPU 省錢（官方的例子約每月 3 美元），小顆 CPU 只能壹次處理壹個請求
 export const discordBot = onRequest({ cors: false, minInstances: 1, cpu: "gcf_gen1", memory: "256MiB", concurrency: 1 }, async (req, res) => {
