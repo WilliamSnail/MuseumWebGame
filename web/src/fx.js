@@ -2198,6 +2198,14 @@ export const FX = (() => {
     const dot = h('span', 'fx-toast-dot');
     dot.setAttribute('aria-hidden', 'true');
     t.append(dot, h('span', 'fx-toast-text', String(text)));
+    // 按鈕（例如「去看看」）：o.action = { label, run }。label 是純文字；按下去先做 run 再收掉這則
+    if (o.action && typeof o.action.run === 'function') {
+      const ab = h('button', 'fx-toast-act');
+      ab.type = 'button';
+      ab.textContent = String(o.action.label || '');
+      ab.addEventListener('click', () => { try { o.action.run(); } catch (e) { console.error(e); } });
+      t.append(ab);
+    }
     flipList(w, () => w.appendChild(t));
     void t.offsetWidth;
     t.classList.add('is-in');

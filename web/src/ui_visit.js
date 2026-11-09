@@ -8,18 +8,22 @@
 //  - 送佩佩：蓋在畫面上的木框。先選一隻，再按「送給 ○○」（送出去就拿不回來）。
 //  - 信箱（ui_board.js）：ADDONS.serverMail 給它伺服器的信。領佩佩的那一封有「馬上使用」：擺上展廳、拿去融合。
 //  - 誰來過：大廳一條（ADDONS.lobbyGuests，有新的才出現）、自己的展廳一塊（ADDONS.hallGuests）。
+//  - 選館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：PANELS.pickFriend({ title, hint, onPick })。
+//    展廳的「看館友的展廳」「請館友來看」、本週特展的「跟館友比比看」、館長室的「送館友」都用它（取代分享碼、特展碼、交換碼）。
+//    請館友來看（hallCall）：沒有獎勵；線上的人馬上跳一則有「去看看」的通知，不在線的人下次進館在大廳那一條看到（socialNews 的 calls）。
 //  伺服器改了我的存檔（送佩佩、領信）：先 NET.flush()，回來 reloadSave()（docs/多人實作.md 原則 3）。
 //  玩家打的字（暱稱、留言）只當資料：一律用 h() 的文字，不用 html。
 // ================================================================
 import { HALL_THEME_TEXT } from "../../shared/content.js";
-import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../shared/gifts.js";
+import { canGive, checkHallCall, cleanHallNote, giftCount, SOCIAL } from "../../shared/gifts.js";
+import { WEEKLY_TEXT } from "../../shared/content3.js";
 import { NUM } from "../../shared/config.js";
-import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../shared/logic.js";
+import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey, todayStr } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
-import { reloadSave } from "./ui_login.js";
+import { RANK, ago, reloadSave } from "./ui_login.js";
 import { roomHead } from "./ui_screens1.js";
 import { learnText } from "../../shared/shop.js";
 import { posterWall } from "./ui_themeshow.js";
@@ -69,6 +73,7 @@ async function loadVisit(f, params) {
     st.data = r;
     if (r.rev) await reloadSave(r.rev);
     visitDone({ owner: r.owner, view: r.view, first: r.first, gain: r.gain, learn: r.learn });
+    seenCallsFrom(f.id); // 他請我來看，我來了：那則通知不用再留
   } catch (e) { st.err = e.message || "走不進去，等壹下再試。"; }
   st.loading = false;
   if (stillHere(params)) rerender();
@@ -151,6 +156,88 @@ function friendHall(root, params) {
 ADDONS.friendHall = friendHall;
 FRIEND_ACTIONS.push({ id: "visit", label: "參觀展廳", show: () => !!P, run: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) });
 
+// ---------- 選館友的小窗（共用） ----------
+// o：{ title, hint（小字說明）, onPick(p)（p＝{ id, nick }）, keep（選了不關窗，可以一位一位選；onPick 回傳 Promise 就等它）, doneOf(p)（回傳一句話＝這位選過了，按鈕停用） }
+// 列出 NET.roster 裡除了自己的所有館友：線上排前面，燈號、暱稱、在哪裡或多久前來過。暱稱是玩家打的字，一律純文字。
+let pickDraw = null;
+export function pickFriend(o) {
+  if (!UI.net) { note("登入之後才選得到館友。"); return; }
+  let busy = null;
+  const m = overlay("nb-friends nb-pick", o.title, o.title, "users", () => { pickDraw = null; });
+  const choose = async p => {
+    if (busy) return;
+    const who = { id: p.id, nick: p.nick };
+    if (!o.keep) { m.close(); o.onPick(who); return; }
+    busy = p.id;
+    draw();
+    try { await o.onPick(who); } catch (e) { console.error(e); }
+    busy = null;
+    draw();
+  };
+  const draw = () => {
+    if (!m.layer.isConnected) { pickDraw = null; return; }
+    const list = NET.roster.filter(p => !p.me).sort((a, b) => RANK[a.status] - RANK[b.status] || String(b.lastSeen || "").localeCompare(String(a.lastSeen || "")) || String(a.nick).localeCompare(String(b.nick)));
+    const n = list.filter(p => p.status !== "offline").length;
+    m.setTop(h("span", { class: "nf-count" }, n ? `${n} 位館友在線` : "現在沒有別的館友在線"));
+    const card = p => {
+      const done = o.doneOf ? o.doneOf(p) : null;
+      return h("button", { type: "button", class: `nf-card nf-pickcard ${p.status}`, disabled: done || busy ? true : undefined, "aria-busy": busy === p.id ? "true" : undefined, onClick: () => choose(p) },
+        h("span", { class: "nf-dot", "aria-hidden": "true" }),
+        h("div", { class: "nf-body" }, h("b", { class: "nf-nick" }, p.nick),
+          h("span", { class: "nf-where" }, p.status === "offline" ? `離線・${ago(p.lastSeen)}` : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room))),
+        h("span", { class: "nf-pick-go" + (done ? " done" : "") }, done || (busy === p.id ? "……" : "選他")));
+    };
+    const off = NET.state !== "online";
+    m.surface.replaceChildren(
+      off ? h("p", { class: "nb-hint nf-off" }, "連線中斷了：下面是斷線前的名單，連回來會自己更新。") : null,
+      o.hint ? h("p", { class: "nb-hint nf-hint nf-pick-hint" }, o.hint) : null,
+      list.length ? h("div", { class: "nf-list" + (off ? " stale" : "") }, list.map(card)) : h("p", { class: "nb-empty" }, NET.state === "online" ? "館裡還沒有別的館友：等他們登入了再來選。" : "正在連線……"));
+  };
+  pickDraw = draw;
+  draw();
+  snd("flip");
+}
+PANELS.pickFriend = pickFriend;
+NET.on("roster", () => { if (pickDraw) pickDraw(); });
+NET.on("status", () => { if (pickDraw) pickDraw(); });
+
+// ---------- 請館友來看我的展廳（沒有獎勵；一天一位一次，伺服器檢查） ----------
+const called = new Set(); // 今天請過誰（伺服器才是準的；這裡讓按鈕馬上有反應）
+const calledKey = id => `${todayStr()}:${id}`;
+const ALREADY = checkHallCall({ self: false, open: true, done: true }).reason;
+async function callFriend(p) {
+  try {
+    await NET.call("hallCall", { to: p.id });
+    called.add(calledKey(p.id));
+    snd("coin");
+    note(`已經請 ${p.nick} 來看你的展廳。他在線上會馬上看到；不在線，下次進館就看得到。`, "good");
+  } catch (e) {
+    snd("error");
+    if (e.message === ALREADY) called.add(calledKey(p.id));
+    note(e.message || "請不出去，等壹下再試。", "bad");
+  }
+}
+ADDONS.hallCall = { send: callFriend, done: p => (called.has(calledKey(p.id)) ? "今天請過了" : null) };
+const visitFriend = f => { seenCallsFrom(f.id); go("hall", { friend: { id: f.id, nick: f.nick } }, { action: false }); };
+
+// ---------- 跟館友比本週特展（唯讀；不算來訪、不寄信） ----------
+// 本週特展那一頁（ui_screens3.js）選了館友之後叫這裡：friend＝{ id, nick }，W＝我的這週（weeklyState），box＝放結果的地方
+ADDONS.weeklyVs = async (friend, W, box) => {
+  box.hidden = false;
+  box.replaceChildren(h("p", { class: "sub" }, `正在看 ${friend.nick} 這週的特展……`));
+  let r;
+  try { r = await NET.call("visitWeekly", { owner: friend.id }); }
+  catch (e) { snd("error"); if (box.isConnected) box.replaceChildren(h("p", { class: "sub" }, e.message || "看不到，等壹下再試。")); return; }
+  if (!box.isConnected) return;
+  const nick = r.owner.nick;
+  if (!r.open) { box.replaceChildren(h("p", { class: "sub" }, `${nick} 還沒用挑戰模式開館，沒有特展可以比。`)); return; }
+  if (!r.started) { box.replaceChildren(h("p", { class: "sub" }, `${nick} 這週的特展還沒開始：他還沒擺過作品。`)); return; }
+  const Tv = WEEKLY_TEXT[r.theme] || { name: r.theme };
+  box.replaceChildren(h("p", { class: "sub" }, `跟 ${nick} 比比看`),
+    h("p", null, `對方的特展「${Tv.name}」：最高 ${r.best} 分。你這週最高 ${W.best} 分。${r.best > W.best ? "對方贏了。" : r.best < W.best ? "你贏了。" : "平手。"}`),
+    h("div", { class: "hall-room visit" }, r.slots.map((s, i) => friendPedestal(s, i, null))));
+};
+
 // ---------- 送佩佩 ----------
 const NO_GIVE = { injured: "受傷了", in_cellar: "在地下", on_show: "在展台上" };
 const GIFT_TABS = [["pepe", "佩佩"], ["failed", "失敗作"], ["repaired", "修復品"]];
@@ -216,6 +303,7 @@ export function openGift(friend) {
   snd("flip");
 }
 FRIEND_ACTIONS.push({ id: "gift", label: "送佩佩", show: () => canGiftHere(), run: p => openGift(p) });
+PANELS.giftTo = openGift; // 館長室的「送館友」（ui_screens3.js）：選了館友就開送佩佩的框
 
 // ---------- 馬上使用（信箱領到佩佩之後） ----------
 function placeNow(item, close) {
@@ -243,6 +331,7 @@ function useRow(gift, close) {
 // ---------- 伺服器的信、誰來過 ----------
 let serverMail = [];    // 還沒領的信
 let guests = null;      // { likes, unseen, list }：讀到之前是 null
+let calls = [];         // 「請你去看他的展廳」：{ id, fromId, from, day, at }，今天、昨天還沒處理的
 let told = false;       // 這次登入說過「你不在的時候」了沒
 let lastSeenCall = 0;
 let soonTimer = null;
@@ -251,6 +340,7 @@ export async function refreshSocial(o = {}) {
   const r = await NET.call("socialNews", o);
   serverMail = r.mail || [];
   guests = r.guests || null;
+  calls = r.calls || [];
   if (o.seen && guests) guests.unseen = 0; // list 裡的 fresh 留著：這次畫面還標得出哪些是新的
   updateBoardBadges();
   drawLobbyGuests();
@@ -261,7 +351,7 @@ function refreshSoon() {
   if (soonTimer) return;
   soonTimer = setTimeout(() => {
     soonTimer = null;
-    const onMine = UI.screen === "hall" && !UI.params.friend && !UI.params.week && !UI.params.view;
+    const onMine = UI.screen === "hall" && !UI.params.friend && !UI.params.week;
     refreshSocial(onMine ? { seen: true } : {}).catch(() => {});
   }, 500);
 }
@@ -283,6 +373,16 @@ async function claimServer(ids) {
 ADDONS.serverMail = { list: () => serverMail, refresh: () => refreshSocial(), claim: claimServer, useRow };
 ADDONS.mailCount = () => serverMail.length;
 
+// 這幾則請你去看展廳的通知我處理過了（去看了、或按知道了）：告訴伺服器標起來，畫面先拿掉
+function seenCalls(list) {
+  const ids = list.map(c => c.id);
+  if (!ids.length || !UI.net) return;
+  calls = calls.filter(c => !ids.includes(c.id));
+  drawLobbyGuests();
+  NET.call("socialNews", { seenCalls: ids }).catch(() => {});
+}
+function seenCallsFrom(fromId) { seenCalls(calls.filter(c => c.fromId === fromId)); }
+
 // 「小明、小華 來過你的展廳，留了 1 句話」
 function guestWords(list) {
   const names = [...new Set(list.map(x => x.nick))];
@@ -297,9 +397,46 @@ function tellNews() {
   const parts = [];
   const words = guests ? guestWords(guests.list.filter(x => x.fresh)) : "";
   if (words) parts.push(words);
-  if (serverMail.length) parts.push(`信箱有 ${serverMail.length} 封館友的信`);
   if (parts.length) note(`你不在的時候：${parts.join("；")}。`, "good");
 }
+
+// ---------- 進館時的大提示卡：館友寄來的信、請你去看展廳 ----------
+// 翊文 11-09：「信箱如果收到其他館友收到的信，收到的館友打開遊戲進館就要有大提示說有誰送了你，請去看信」
+// afterEnter（ui_screens1.js）在公佈欄、簽到卡「前面」叫 PANELS.autoMail：卡片關了才輪到下一張，所以不會被蓋掉。
+// 還沒領就每次進館都跳；全部領完就不跳。同一次登入只跳一次（換畫面回大廳、合作地下接回去再叫也不會重跳）。
+// 教學、合作地下接回去、黑房間進行中，afterEnter 根本不會走到這裡。已經在線時收到的信，走下面 NET.on("message") 的通知＋信箱紅點。
+let mailCardShown = false;
+const mailBusy = () => UI.busy || document.querySelector(".mini-layer, .ask, .nb-layer, .fx-overlay, .fx-roll-card, .fx-spot-card, .m-door");
+// 信的文字：誰、做了什麼（暱稱、物品名都是純文字）
+function mailLine(m) {
+  const from = m.from || "館友";
+  if (String(m.id).startsWith("visit-")) return `${from} 來看了你的展廳，謝禮在信箱`; // 來訪謝禮不算「送」
+  if (m.gift && m.gift.pepe) return `${from} 送了你 ${m.note || "壹隻佩佩"}`;
+  return `${from} 寄了信給你${m.title ? `：${m.title}` : ""}`;
+}
+function openMailNews(onClose) {
+  const items = serverMail.map(m => ({ text: mailLine(m), gift: !!(m.gift && m.gift.pepe) })).sort((a, b) => b.gift - a.gift)
+    .concat(calls.map(c => ({ text: `${c.from} 請你去看他的展廳`, call: c })));
+  const m = overlay("nb-account nb-mailnews", "館友來信", "館友來信", "mail", onClose);
+  const shown = items.slice(0, 5);
+  const rows = shown.map(it => h("li", { class: "mn-row" }, h("span", { class: "mn-text" }, it.text),
+    it.call ? btn(["去看看 ", arrow()], () => { m.close(); visitFriend({ id: it.call.fromId, nick: it.call.from }); }, "small") : null));
+  m.surface.replaceChildren(h("article", { class: "nb-sheet na-sheet mn-sheet" }, h("i", { class: "nb-pin l", "aria-hidden": "true" }), h("i", { class: "nb-pin r", "aria-hidden": "true" }),
+    h("h3", null, "你不在的時候，館友來信了"),
+    h("ul", { class: "mn-list" }, rows),
+    items.length > shown.length ? h("p", { class: "sub mn-more" }, `還有 ${items.length - shown.length} 封`) : null,
+    h("div", { class: "nb-cta mn-cta" }, serverMail.length ? btn([icon("mail"), " 去看信"], () => { m.close(); if (PANELS.mail) PANELS.mail(); }, "primary") : null, btn("先不用", () => m.close(), "small"))));
+  snd("bell");
+}
+PANELS.autoMail = async function autoMail() {
+  if (mailCardShown || !UI.net || !P || isFree(P) || window.__PM_NODOOR__) return;
+  try { await refreshSocial(); } catch (e) { return; }
+  if (!serverMail.length && !calls.length) return;
+  for (let i = 0; i < 10 && mailBusy(); i++) await wait(500);
+  if (mailBusy() || UI.screen !== "lobby" || mailCardShown) return;
+  mailCardShown = true;
+  await new Promise(resolve => openMailNews(resolve));
+};
 
 // 大廳：有新的才出現
 function drawLobbyGuests() {
@@ -307,11 +444,13 @@ function drawLobbyGuests() {
   if (!box) return;
   const fresh = guests && guests.unseen ? guests.list.filter(x => x.fresh) : [];
   const n = serverMail.length;
-  box.hidden = !fresh.length && !n;
+  box.hidden = !fresh.length && !n && !calls.length;
   if (box.hidden) { box.replaceChildren(); return; }
   const last = fresh.find(x => x.note);
+  const callRows = calls.slice(0, 3).map(c => h("div", { class: "lgu-call" }, h("b", null, `${c.from} 請你去看他的展廳`),
+    btn(["去看看 ", arrow()], () => visitFriend({ id: c.fromId, nick: c.from }), "primary small"), btn("知道了", () => seenCalls([c]), "small")));
   box.replaceChildren(h("span", { class: "lf-tag" }, icon("users"), "館友來過"),
-    h("div", { class: "lgu-body" }, fresh.length ? h("b", null, guestWords(fresh)) : null, last ? h("span", { class: "lgu-note" }, `${last.nick}：「${last.note}」`) : null, n ? h("span", { class: "lgu-note" }, `信箱有 ${n} 封館友的信。`) : null),
+    h("div", { class: "lgu-body" }, callRows, calls.length > 3 ? h("span", { class: "lgu-note" }, `還有 ${calls.length - 3} 位請你去看`) : null, fresh.length ? h("b", null, guestWords(fresh)) : null, last ? h("span", { class: "lgu-note" }, `${last.nick}：「${last.note}」`) : null, n ? h("span", { class: "lgu-note" }, `信箱有 ${n} 封館友的信。`) : null),
     fresh.length ? btn(["去展廳看 ", arrow()], () => go("hall"), "small") : null,
     n ? btn([icon("mail"), " 信箱"], () => PANELS.mail && PANELS.mail(), n && !fresh.length ? "primary small" : "small") : null);
 }
@@ -353,17 +492,26 @@ ADDONS.hallGuests = root => {
 // 離線時累積的舊通知不一則一則跳（進館時 tellNews 一次說），只有剛剛發生的才跳
 const recent = m => told && nowMs() - (m.at || 0) < 30000;
 NET.on("message", m => {
-  if (!m || !UI.net || (m.t !== "mail_new" && m.t !== "hall_news")) return;
+  if (!m || !UI.net || (m.t !== "mail_new" && m.t !== "hall_news" && m.t !== "hall_call")) return;
   refreshSoon();
   if (!recent(m)) return;
-  if (m.t === "mail_new") { snd("bell"); note(`${m.from} 送你壹隻佩佩：${m.text}。到信箱領。`, "good"); return; }
+  if (m.t === "hall_call") { // 有人請我去看他的展廳：跳一則有「去看看」的通知（不在線的，下次進館在大廳那一條看到）
+    if (typeof m.fromId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(m.fromId)) return;
+    snd("bell");
+    note(`${m.from} 請你去看他的展廳。`, "good", 20000, { label: "去看看", run: () => visitFriend({ id: m.fromId, nick: String(m.from || "館友") }) });
+    return;
+  }
+  if (m.t === "mail_new") { snd("bell"); note(`${m.from} 送你壹隻佩佩：${m.text}。到信箱領。`, "good", 20000, { label: "去看信", run: () => PANELS.mail && PANELS.mail() }); return; } // 已經在線：清楚的通知（有按鈕）加信箱紅點，不跳大卡，免得打斷手上的事
   if (m.what === "visit") note(`${m.from} 來參觀你的展廳${m.insp ? `：信箱多了壹封謝禮（靈感 +${m.insp}）` : ""}。`);
   else if (m.what === "like") note(`${m.from} 給你的展廳按了讚。`, "good");
   else if (m.what === "note") note(`${m.from} 在你的展廳留話：「${m.text}」`, "good");
 });
 NET.on("logout", () => {
+  mailCardShown = false;
   serverMail = [];
   guests = null;
+  calls = [];
+  called.clear();
   told = false;
   lastSeenCall = 0;
   if (soonTimer) { clearTimeout(soonTimer); soonTimer = null; }

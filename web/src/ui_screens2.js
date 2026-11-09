@@ -9,12 +9,12 @@ import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
 import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallCode, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parseHallCode, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, scoreItems, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
-import { $, $$, ADDONS, FIT, IMG, P, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -355,30 +355,18 @@ SCREENS.hall = (root, params) => {
     const r = placeInHall(P, empty >= 0 ? empty : 0, it);
     if (r.ok) later(() => showEvents(r.events), 300);
   }
-  if (params.view) { hallVisit(root, params.view); return; }
   if (params.friend && ADDONS.friendHall) { ADDONS.friendHall(root, params); return; } // 走進館友的展廳（多人版 M2，ui_visit.js）
   if (params.week) { weeklyHall(root, params); return; }
   const hs = hallScore(P);
   const theme = hs.theme ? HALL_THEME_TEXT[hs.theme] : null;
-  const shareBox = h("div", { class: "share-box", hidden: true });
-  const tools = [btn([icon("share"), " 分享"], () => {
-    shareBox.hidden = !shareBox.hidden;
-    if (shareBox.hidden) return;
-    const code = hallCode(P);
-    const ta = h("textarea", { class: "code", readonly: true, rows: "3" }, code);
-    shareBox.replaceChildren(h("p", { class: "sub" }, "把這串字傳給 Yuga，他貼進「看別人的展廳」就看得到同一間展廳。不用上網、不用帳號。"), ta,
-      btn([icon("copy"), " 一鍵複製"], () => copyText(code, ta), "primary"));
-  }, "ghost"), btn("看別人的展廳", () => {
-    shareBox.hidden = false;
-    const ta = h("textarea", { class: "code", rows: "3", placeholder: "把分享碼貼在這裡" });
-    shareBox.replaceChildren(h("p", { class: "sub" }, "貼上別人給你的分享碼："), ta, btn("去看看", () => {
-      const v = parseHallCode(ta.value);
-      if (!v) { note("這串分享碼讀不出來。", "bad"); return; }
-      go("hall", { view: v }, { action: false });
-    }, "primary"));
-    ta.focus();
-  }, "ghost")];
-  root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, ...tools), shareBox);
+  // 看館友的展廳、請館友來看（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：登入了才有；單機沒有館友，不放按鈕
+  const tools = UI.net && PANELS.pickFriend ? [
+    btn([icon("users"), " 看館友的展廳"], () => PANELS.pickFriend({ title: "看館友的展廳", hint: "選一位館友，走進他的展廳。他不在線也看得到。",
+      onPick: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) }), "ghost"),
+    ADDONS.hallCall ? btn([icon("share"), " 請館友來看"], () => PANELS.pickFriend({ title: "請館友來看", hint: "選一位館友，請他來看你的展廳。沒有獎勵；他在線上會馬上看到，不在線的下次進館看到。每天每位可以請壹次。",
+      keep: true, doneOf: p => ADDONS.hallCall.done(p), onPick: p => ADDONS.hallCall.send(p) }), "ghost") : null,
+  ].filter(Boolean) : [];
+  root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, ...tools));
   const wall = h("div", { class: "hall-wall" + (theme ? " themed" : "") },
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
       : h("p", { class: "theme-hint big" }, "牆上還沒有主題。", h("b", null, "擺對主題"), "，牆上會浮出主題名，", h("b", { class: "good" }, "評分 +10～+20"), "。看下面哪壹個最接近 ↓"));
@@ -430,17 +418,6 @@ export function pedestal(slot, i) {
   return el;
 }
 export function visitorCard(v) { return h("div", { class: "visitor enter" }, h("p", null, `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}`)); }
-export function hallVisit(root, view) {
-  const s = scoreItems(view.items);
-  const theme = s.theme ? HALL_THEME_TEXT[s.theme] : null;
-  root.append(roomHead("別人的展廳", `評分 ${s.score}／100`, btn("回我的展廳", () => go("hall", {}, { action: false }), "ghost")),
-    h("div", { class: "hall-wall" + (theme ? " themed" : "") }, theme ? h("div", { class: "theme-name" }, h("h2", null, theme.name), h("p", null, theme.wall)) : null),
-    h("div", { class: "hall-room visit" }, [0, 1, 2, 3, 4, 5].map(i => {
-      const it = view.items[i];
-      return h("div", { class: "ped-slot" + (it ? " full" : "") }, h("div", { class: "ped-art", html: it ? itemHTML(it, it.kind === "pepe" ? { fx: true } : {}) : "" }), h("div", { class: "ped-block" }),
-        h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? itemTitle(it) : "空展台"));
-    })));
-}
 export function copyText(text, ta) {
   const ok = () => note("複製好了。", "good");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, () => { ta.select(); document.execCommand("copy"); ok(); });
@@ -822,7 +799,7 @@ export function howToPlay() {
       R("eye", "理智檢定", "開場理智 ", E(String(NUM.startSanity)), "。看到嚇人的東西要擲 1～100：", E("擲出的數字 ≤ 你現在的理智就算成功"), "，成功掉得少、失敗掉得多（例如「成功扣 1 點，失敗扣 1～6 點」）。", B("壹次掉 5 點以上"), "再擲壹次，看你「看懂了沒」（50＋佩佩神話），看懂了就", B("瘋狂發作"), "。", B("壹天掉超過當天理智的 1/5"), "會得到怪癖：", G("做完卡片上寫的那壹件事就好"), `，不然 ${NUM.quirkMinutes} 分鐘後也會自己消失。`), // 11-09（決定 0027）
       R("scroll", "佩佩神話", "理智上限＝", E("99－佩佩神話"), "。讀禁書、看隱藏展品會懂更多，也會打開", E("禁忌選項"), "。", B("理智 0"), "的時候，會發生壹些事。"), // 不破梗（翊文 11-08）
       R("pillow", "補理智", G("抱抱枕"), "、", G("完成委託"), "、", G("圖鑑整類全收集"), "可以補理智。"),
-      R("fusion", "融合室・館長室", "兩隻佩佩融合成壹隻：每壹類各 ", E("45% 遺傳"), "、", E("10% 突變"), "，試出", E("隱藏配方"), "。館長室可以買升級、修東西、送交換碼。"),
+      R("fusion", "融合室・館長室", "兩隻佩佩融合成壹隻：每壹類各 ", E("45% 遺傳"), "、", E("10% 突變"), "，試出", E("隱藏配方"), "。館長室可以買升級、修東西、送佩佩給館友。"),
       R("cellar", "職業・地下收藏庫", "每位參觀者自己選職業，再抽", G("壹個小優點"), "、", B("壹個小缺點"), "（館長室的名片上看得到）。技能", E("擲 d100 ≤ 技能值"), "就成功，用成功的技能隔天會成長。地下收藏庫帶 ", E("3 隻佩佩"), "下去：", E("心情相剋"), "、", E("帽子是技能"), "、", E("姿勢是站位"), "。"),
       R("hourglass", "歷任參觀者", "換下壹位參觀者時，可以", E("留下壹樣東西"), "給下壹位。館長室看得到歷任參觀者。"))); // 不破梗：不寫什麼時候換人（11-08）
 }
