@@ -46,6 +46,16 @@ export const CROSS_WEEK_KINDS = ["main", "season"];
 export const SHOW_ART = ["frog", "portrait", "strange", "rare", "statue", "hidden"];
 export const SHOW_FX = ["sepia", "faded", "dust", "dark", "flip", "water", "torn", "shadow", "glow"]; // 畫面上的效果（web/src/css/story.css）
 export const SHOW_FRAMES = ["gold", "dark", "wood", "plain", "ornate"];
+// 今日特展的新畫：works[].svg（排程照這週的故事畫的向量圖）。只准下面這些標籤和屬性，其他一律不要（sanitizeSvg）
+export const SVG_TAGS = ["svg", "g", "defs", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text", "tspan", "title", "desc",
+  "linearGradient", "radialGradient", "stop", "clipPath", "mask", "pattern", "use",
+  "filter", "feGaussianBlur", "feTurbulence", "feDisplacementMap", "feColorMatrix", "feComponentTransfer", "feFuncR", "feFuncG", "feFuncB", "feFuncA", "feBlend", "feComposite", "feMerge", "feMergeNode", "feOffset", "feFlood", "feDropShadow"];
+export const SVG_ATTRS = ["id", "viewBox", "preserveAspectRatio", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "fx", "fy", "width", "height", "d", "points", "dx", "dy", "href",
+  "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-opacity", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit",
+  "opacity", "transform", "clip-path", "clip-rule", "mask", "filter", "font-size", "font-family", "font-weight", "font-style", "text-anchor", "dominant-baseline", "letter-spacing", "paint-order",
+  "offset", "stop-color", "stop-opacity", "gradientUnits", "gradientTransform", "spreadMethod", "patternUnits", "patternContentUnits", "patternTransform", "maskUnits", "maskContentUnits", "clipPathUnits",
+  "filterUnits", "primitiveUnits", "stdDeviation", "baseFrequency", "numOctaves", "seed", "type", "scale", "xChannelSelector", "yChannelSelector", "in", "in2", "result", "values", "mode", "operator",
+  "k1", "k2", "k3", "k4", "tableValues", "slope", "intercept", "amplitude", "exponent", "flood-color", "flood-opacity", "stitchTiles", "color-interpolation-filters"];
 // 書裡 [[字|動作]] 可以用的動作（ui_screens1.js 的 BOOK_ACTIONS）
 export const BOOK_ACTION_IDS = ["void", "mirror", "window", "beat", "hat", "codex", "cellar"];
 // 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/shop.js 的 tradeMats）
@@ -653,6 +663,115 @@ export function storyNotice(W, today, now) {
     ].filter(Boolean),
     cta: { label: "前往", panel: "story" },
   };
+}
+
+// ---------- 今日特展的新畫：把 works[].svg 淨化（檢查程式和畫面用同一個） ----------
+// svg：字串，或字串的陣列（接起來；JSON 裡比較好讀）。prefix：加在每個 id 前面，不同幅（同一幅畫兩次也是）的 id 才不會撞到。
+// 回傳 { ok, svg（淨化好的字串，不 ok 是空字串）, errors, texts（畫裡的字，也算遊戲文字）, bytes }。
+// 做法：自己一個字一個字讀，只有白名單的標籤、屬性才會寫進結果；任何讀不懂的都算錯，整幅不要（寧可不畫）。
+const SVG_TAG_SET = new Set(SVG_TAGS), SVG_ATTR_SET = new Set(SVG_ATTRS), SVG_TEXT_TAGS = new Set(["text", "tspan", "title", "desc"]);
+const SVG_HREF_TAGS = new Set(["use", "linearGradient", "radialGradient", "pattern"]);
+const SVG_BAD_VALUE = /[<>&"'`\\]|[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
+const SVG_OUTSIDE = /javascript|vbscript|data:|https?:|\/\/|expression\(|@import/i;
+const SVG_ID = /^[A-Za-z][A-Za-z0-9_-]*$/;
+function svgBytes(s) { let n = 0; for (const ch of s) { const c = ch.codePointAt(0); n += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; } return n; }
+export function sanitizeSvg(svg, prefix = "") {
+  const src = Array.isArray(svg) ? svg.join("") : svg;
+  const out = { ok: false, svg: "", errors: [], texts: [], bytes: 0 };
+  const err = m => { out.errors.push(m); };
+  if (typeof src !== "string" || !src.trim()) { err("svg 要是字串（或字串的陣列）"); return out; }
+  out.bytes = svgBytes(src);
+  if (out.bytes > NUM.story.showSvgKB * 1024) { err(`太大了（${Math.ceil(out.bytes / 1024)} KB，最多 ${NUM.story.showSvgKB} KB）`); return out; }
+  const n = src.length, stack = [], ids = new Set(), refs = new Set();
+  let html = "", i = 0, rootSeen = false, rootDone = false;
+  const ref = id => { refs.add(id); return prefix + id; };
+  while (i < n) {
+    const lt = src.indexOf("<", i), chunk = src.slice(i, lt < 0 ? n : lt);
+    if (chunk.trim()) {
+      const top = stack[stack.length - 1];
+      if (!SVG_TEXT_TAGS.has(top)) err(`標籤外面不能有字：「${chunk.trim().slice(0, 20)}」（字要放在 text 裡）`);
+      if (chunk.replace(/&(amp|lt|gt);/g, "").includes("&")) err("字裡的 & 只准 &amp; &lt; &gt;");
+      if (chunk.includes(">")) err("字裡不能有 >（要寫 &gt;）");
+      out.texts.push(chunk.trim());
+      html += chunk;
+    } else html += chunk.trim() ? "" : (chunk ? " " : "");
+    if (lt < 0) break;
+    const rest = src.slice(lt, lt + 200);
+    if (src[lt + 1] === "!" || src[lt + 1] === "?") { err("不能有 <! 或 <?（註解、DOCTYPE、CDATA）"); return out; }
+    const close = /^<\/([A-Za-z][A-Za-z0-9:_-]*)\s*>/.exec(rest);
+    if (close) {
+      const top = stack.pop();
+      if (top !== close[1]) { err(`標籤沒有配對：</${close[1]}>`); return out; }
+      html += `</${close[1]}>`;
+      if (!stack.length) rootDone = true;
+      i = lt + close[0].length;
+      continue;
+    }
+    const open = /^<([A-Za-z][A-Za-z0-9:_-]*)/.exec(rest);
+    if (!open) { err("讀不懂的標籤：" + rest.slice(0, 20)); return out; }
+    const tag = open[1];
+    if (!SVG_TAG_SET.has(tag)) { err(`不准用 <${tag}>（只准畫圖的標籤）`); return out; }
+    const parent = stack[stack.length - 1];
+    if (rootDone) { err("<svg> 只能有一個，後面不能再有東西"); return out; }
+    if (!rootSeen) { if (tag !== "svg") { err("最外面要是 <svg>"); return out; } rootSeen = true; }
+    else if (tag === "svg") { err("<svg> 裡面不能再放 <svg>"); return out; }
+    if (parent === "title" || parent === "desc") { err(`<${parent}> 裡面只能放字`); return out; }
+    if ((parent === "text" || parent === "tspan") && tag !== "tspan") { err(`<${parent}> 裡面只能放字和 <tspan>`); return out; }
+    let j = lt + open[0].length, attrs = "", selfClose = false, hasView = false, ended = false;
+    while (j < n) {
+      const ws = /^\s*/.exec(src.slice(j, j + 40))[0]; j += ws.length;
+      if (src.startsWith("/>", j)) { selfClose = true; j += 2; ended = true; break; }
+      if (src[j] === ">") { j += 1; ended = true; break; }
+      const am = /^([A-Za-z_:][A-Za-z0-9_:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/.exec(src.slice(j));
+      if (!am) { err(`<${tag}> 的屬性讀不懂（要寫成 名字='值'）`); return out; }
+      j += am[0].length;
+      const name = am[1], val = am[2] != null ? am[2] : am[3];
+      if (/^on/i.test(name)) { err(`不准用事件屬性 ${name}`); continue; }
+      if (name === "style" || name === "class") { err(`不准用 ${name}（顏色、線條直接寫在屬性上）`); continue; }
+      if (name === "xmlns") { if (val !== "http://www.w3.org/2000/svg") err("xmlns 不對"); continue; }
+      if (name === "xmlns:xlink") { if (tag !== "svg") err("xmlns:xlink 只能寫在 <svg>"); continue; }
+      if (name !== "xlink:href" && !SVG_ATTR_SET.has(name)) { err(`不准用屬性 ${name}（在 <${tag}>）`); continue; }
+      if (SVG_BAD_VALUE.test(val)) { err(`${name} 的值有不准的字元`); continue; }
+      if (SVG_OUTSIDE.test(val)) { err(`${name} 不能連到外面（外部網址、script）`); continue; }
+      if (name === "href" || name === "xlink:href") {
+        if (!SVG_HREF_TAGS.has(tag)) { err(`<${tag}> 不能有 href`); continue; }
+        if (!val.startsWith("#") || !SVG_ID.test(val.slice(1))) { err(`href 只能連到這幅畫裡面的 #id（${val.slice(0, 30)}）`); continue; }
+        attrs += ` href="#${ref(val.slice(1))}"`;
+        continue;
+      }
+      if (name === "id") {
+        if (!SVG_ID.test(val)) { err(`id「${val}」只能用英文開頭、英文數字 - _`); continue; }
+        if (ids.has(val)) { err(`id「${val}」重複了`); continue; }
+        ids.add(val);
+        attrs += ` id="${prefix}${val}"`;
+        continue;
+      }
+      if (/url\s*\(/i.test(val)) {
+        const um = /^url\(#([A-Za-z][A-Za-z0-9_-]*)\)$/.exec(val.trim());
+        if (!um) { err(`${name} 的 url() 只能連到這幅畫裡面的 #id`); continue; }
+        attrs += ` ${name}="url(#${ref(um[1])})"`;
+        continue;
+      }
+      if (tag === "svg" && (name === "width" || name === "height")) continue; // 大小由畫框決定
+      if (name === "viewBox") {
+        if (tag === "svg") hasView = /^\s*-?[\d.]+[\s,]+-?[\d.]+[\s,]+[\d.]+[\s,]+[\d.]+\s*$/.test(val);
+      }
+      attrs += ` ${name}="${val}"`;
+    }
+    if (!ended) { err(`<${tag}> 沒有結束`); return out; }
+    if (tag === "svg") { if (!hasView) err("<svg> 要有 viewBox（例如 0 0 240 300）"); attrs = ` xmlns="http://www.w3.org/2000/svg"${attrs}`; }
+    html += `<${tag}${attrs}${selfClose ? "/>" : ">"}`;
+    if (!selfClose) stack.push(tag);
+    else if (!stack.length) rootDone = true;
+    i = j;
+  }
+  if (!rootSeen) err("最外面要是 <svg>");
+  if (stack.length) err(`<${stack[stack.length - 1]}> 沒有關起來`);
+  refs.forEach(id => { if (!ids.has(id)) err(`連到不存在的 #${id}`); });
+  if (out.errors.length) return out;
+  out.ok = true;
+  out.svg = html;
+  return out;
 }
 
 // ---------- 預算（tools/week_check.cjs 和測試用） ----------

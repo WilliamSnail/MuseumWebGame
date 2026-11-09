@@ -443,5 +443,66 @@ T("舊週包沒有季節線照常", G => {
   assert.ok(G.storyLines(P, W).length > 0);
   assert.strictEqual(G.seasonLines(G.newProfile("free"), [W]).length, 0, "自由模式也沒有");
 });
+// ---------- 今日特展的新畫（works[].svg）：畫面和檢查程式用同一個 sanitizeSvg ----------
+const SVG_OK = "<svg viewBox='0 0 10 10' width='99' height='99'><defs><linearGradient id='g'><stop offset='0' stop-color='#fff'/></linearGradient><path id='p' d='M0 0L1 1'/></defs><rect width='10' height='10' fill='url(#g)'/><use href='#p'/><text x='1' y='2'>待領<tspan>壹</tspan></text></svg>";
+T("sanitizeSvg：畫圖的標籤留著；id 加前綴、連結跟著改；svg 的大小交給畫框；字記下來", G => {
+  const r = G.sanitizeSvg(SVG_OK, "a-");
+  assert.ok(r.ok, r.errors.join());
+  assert.ok(r.svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">'), r.svg.slice(0, 80));
+  assert.ok(r.svg.includes('id="a-g"') && r.svg.includes('fill="url(#a-g)"') && r.svg.includes('href="#a-p"'));
+  assert.ok(!/width="99"/.test(r.svg));
+  assert.strictEqual(JSON.stringify(r.texts), JSON.stringify(["待領", "壹"]));
+  assert.notStrictEqual(G.sanitizeSvg(SVG_OK, "b-").svg, r.svg, "前綴不同，不同幅的 id 不會撞");
+  assert.strictEqual(G.sanitizeSvg(SVG_OK.split("<rect").join("|<rect").split("|"), "a-").svg, r.svg, "字串的陣列也可以");
+});
+T("sanitizeSvg：不准的東西整幅不要（回傳空字串）", G => {
+  const bad = {
+    "<script>": "<svg viewBox='0 0 1 1'><script>alert(1)</script></svg>",
+    "大寫": "<svg viewBox='0 0 1 1'><SCRIPT>alert(1)</SCRIPT></svg>",
+    "foreignObject": "<svg viewBox='0 0 1 1'><foreignObject><div/></foreignObject></svg>",
+    "image": "<svg viewBox='0 0 1 1'><image href='a.png'/></svg>",
+    "a": "<svg viewBox='0 0 1 1'><a href='#x'><rect/></a></svg>",
+    "style 標籤": "<svg viewBox='0 0 1 1'><style>rect{fill:red}</style></svg>",
+    "style 屬性": "<svg viewBox='0 0 1 1'><rect style='fill:url(http://x.y/z)'/></svg>",
+    "onload": "<svg viewBox='0 0 1 1' onload='x()'></svg>",
+    "ONCLICK": "<svg viewBox='0 0 1 1'><rect ONCLICK='x()'/></svg>",
+    "外部 href": "<svg viewBox='0 0 1 1'><use href='http://x.y/z#a'/></svg>",
+    "xlink": "<svg viewBox='0 0 1 1'><use xlink:href='https://x.y/z#a'/></svg>",
+    "外部 url": "<svg viewBox='0 0 1 1'><rect fill='url(https://x.y/z)'/></svg>",
+    "javascript": "<svg viewBox='0 0 1 1'><use href='javascript:x()'/></svg>",
+    "繞過": "<svg viewBox='0 0 1 1'><rect fill='&#106;avascript:x'/></svg>",
+    "沒有 viewBox": "<svg><rect/></svg>",
+    "最外面不是 svg": "<g viewBox='0 0 1 1'></g>",
+    "第二個 svg": "<svg viewBox='0 0 1 1'></svg><svg viewBox='0 0 1 1'></svg>",
+    "裡面再一個 svg": "<svg viewBox='0 0 1 1'><svg viewBox='0 0 1 1'/></svg>",
+    "註解": "<svg viewBox='0 0 1 1'><!-- x --></svg>",
+    "CDATA": "<svg viewBox='0 0 1 1'><![CDATA[x]]></svg>",
+    "title 塞標籤": "<svg viewBox='0 0 1 1'><title><rect/></title></svg>",
+    "字的編碼繞過": "<svg viewBox='0 0 1 1'><text>&#19968;</text></svg>",
+    "標籤外面的字": "<svg viewBox='0 0 1 1'>abc</svg>",
+    "沒關起來": "<svg viewBox='0 0 1 1'><g>",
+    "class": "<svg viewBox='0 0 1 1'><rect class='btn'/></svg>",
+    "不存在的 id": "<svg viewBox='0 0 1 1'><rect fill='url(#nope)'/></svg>",
+    "重複的 id": "<svg viewBox='0 0 1 1'><rect id='a'/><rect id='a'/></svg>",
+    "不是字串": 12,
+  };
+  Object.entries(bad).forEach(([k, v]) => { const r = G.sanitizeSvg(v, "a-"); assert.strictEqual(r.ok, false, k); assert.strictEqual(r.svg, "", k); assert.ok(r.errors.length, k); });
+});
+T("sanitizeSvg：一幅最多 NUM.story.showSvgKB", G => {
+  const fit = "<svg viewBox='0 0 1 1'>" + "<rect/>".repeat(Math.floor((G.NUM.story.showSvgKB * 1024 - 40) / 7)) + "</svg>";
+  assert.ok(G.sanitizeSvg(fit).ok);
+  const r = G.sanitizeSvg(fit + "<rect/>".repeat(40));
+  assert.strictEqual(r.ok, false);
+  assert.ok(/太大/.test(r.errors[0]));
+});
+T("備用週的新畫都過得了淨化；同一天新舊可以混著", G => {
+  let n = 0;
+  for (let d = 1; d <= 7; d++) FILES[`備用/常青1/d${d}.json`].show.works.filter(w => w.svg != null).forEach(w => { const r = G.sanitizeSvg(w.svg, "x-"); assert.ok(r.ok, w.id + r.errors.join()); n++; });
+  assert.ok(n >= 2, "至少 2 幅當例子");
+  const W = G.storyWeek(LIB(G), "2026-11-11");
+  const works = G.todayOf(W).show.works;
+  assert.ok(works.some(w => w.svg != null) && works.some(w => w.art), "第 3 天新舊混著");
+  assert.ok(works.find(w => w.svg != null).id.startsWith("2026-W46/"));
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

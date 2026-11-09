@@ -13,7 +13,7 @@ import { NUM } from "../../shared/config.js";
 import { activeQuirks, isFree, nowMs, todayStr } from "../../shared/logic.js";
 import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { $$, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -413,12 +413,17 @@ export function galleryTabs(active) {
     h("button", { type: "button", class: "seg-btn" + (active === "show" ? " on" : ""), onClick: () => go("gallery", { show: true }, { action: false }) }, icon("star"), h("span", null, `今日特展：${d.show.title}`),
       unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null));
 }
+let svgSeq = 0;
 function workArt(w) {
+  if (w.svg != null) { // 排程畫的新畫：畫面再淨化一次（不能只靠檢查程式）；每次畫都換 id 前綴，同一幅畫兩次也不會撞到
+    const r = sanitizeSvg(w.svg, `ws${++svgSeq}-`);
+    return r.ok ? r.svg : ART.exhibit("none");
+  }
   const shadow = (w.fx || []).includes("shadow");
   if (w.art === "frog") return ART.frog(Object.assign({}, w.pick), { silhouette: shadow, noBg: shadow });
   return ART.exhibit(w.art, { variant: w.variant || 0 });
 }
-const frameCls = w => `frame st-frame fr-${w.frame || "gold"} art-${w.art === "frog" ? "frog" : w.art}` + (w.fx || []).map(f => " fx-" + f).join("");
+const frameCls = w => `frame st-frame fr-${w.frame || "gold"} art-${w.svg != null ? "svg" : w.art === "frog" ? "frog" : w.art}` + (w.fx || []).map(f => " fx-" + f).join("");
 // 畫廊的「今日特展」頁（SCREENS.gallery 的 params.show）。沒有今日特展就回傳 false（畫廊照常畫）
 export function storyShow(root) {
   if (!on()) return false;

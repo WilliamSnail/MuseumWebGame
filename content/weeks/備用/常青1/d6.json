@@ -26,7 +26,34 @@
       { "id": "s6b", "art": "frog", "pick": { "顏色": "紅", "心情": "傷心", "姿勢": "坐著", "帽子": "棒球帽" }, "fx": ["shadow"], "frame": "wood",
         "title": "（也是空白）", "lines": ["這個影子戴著帽子。", "帽子的形狀，你好像在哪裡看過。"] },
       { "id": "s6c", "art": "hidden", "variant": 3, "fx": ["dark"], "frame": "dark", "san": "0/1D4",
-        "title": "（沒有寫）", "lines": ["白布底下的眼睛，壹隻壹隻睜開。", "最新睜開的那隻，也還沒有名字。"] }
+        "title": "（沒有寫）", "lines": ["白布底下的眼睛，壹隻壹隻睜開。", "最新睜開的那隻，也還沒有名字。"] },
+      { "id": "s6d", "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<radialGradient id='w' cx='.5' cy='.42' r='.75'><stop offset='0' stop-color='#6a2230'/><stop offset='.55' stop-color='#3a1119'/><stop offset='1' stop-color='#12060a'/></radialGradient>",
+          "<pattern id='d' width='26' height='34' patternUnits='userSpaceOnUse'><path d='M13 3Q20 11 13 17Q6 11 13 3ZM0 20Q7 26 0 33M26 20Q19 26 26 33' fill='none' stroke='#8b3a45' stroke-opacity='.3' stroke-width='1'/></pattern>",
+          "<linearGradient id='b' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#f0d99a'/><stop offset='.45' stop-color='#b58a3b'/><stop offset='.7' stop-color='#e2c478'/><stop offset='1' stop-color='#7c5a20'/></linearGradient>",
+          "<linearGradient id='i' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0b0806'/><stop offset='1' stop-color='#1f1610'/></linearGradient>",
+          "<filter id='r' x='-6%' y='-6%' width='112%' height='112%'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='27' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G'/></filter>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='55' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "<radialGradient id='v' cx='.5' cy='.46' r='.78'><stop offset='.45' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#060302' stop-opacity='.86'/></radialGradient>",
+          "</defs><rect width='240' height='300' fill='url(#w)'/><rect width='240' height='300' fill='url(#d)'/>",
+          "<g filter='url(#r)'>",
+          "<path d='M56 36L184 32L188 176L52 180Z' fill='url(#b)' stroke='#3a2610' stroke-width='2'/>",
+          "<path d='M68 48L172 45L175 165L65 168Z' fill='url(#i)' stroke='#2a1a0a' stroke-width='3'/>",
+          "<ellipse cx='120' cy='106' rx='40' ry='50' fill='#040302' opacity='.7'/>",
+          "<path d='M120 12V34' stroke='#20150c' stroke-width='2'/><circle cx='120' cy='12' r='3' fill='#b58a3b'/>",
+          "<path d='M78 196L164 193L166 224L77 227Z' fill='url(#b)' stroke='#3a2610' stroke-width='1.8'/>",
+          "<path d='M84 202L159 199L160 218L83 221Z' fill='#e9d9ac' stroke='#7c5a20' stroke-width='1'/>",
+          "<circle cx='81' cy='211' r='1.6' fill='#3a2610'/><circle cx='163' cy='208' r='1.6' fill='#3a2610'/>",
+          "<path d='M0 256L240 246V300H0Z' fill='#1a0f09'/><path d='M0 256L240 246' stroke='#6a4522' stroke-width='2.4'/>",
+          "<path d='M126 270L196 244L200 250L132 276Z' fill='#0d0a08' stroke='#b58a3b' stroke-width='1'/><path d='M126 270L118 280L132 276Z' fill='#c9a35a'/>",
+          "<path d='M112 283q5-6 10 0q-5 7-10 0Z' fill='#050505'/>",
+          "</g>",
+          "<rect width='240' height='300' fill='url(#v)'/><rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ],
+        "fx": [], "frame": "ornate",
+        "title": "空白的名牌", "lines": ["畫框裡什麼都沒有，名牌也是空的。","旁邊那支筆，墨水還是濕的。"] }
     ]
   },
   "adds": []

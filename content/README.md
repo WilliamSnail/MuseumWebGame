@@ -158,9 +158,10 @@ content/
 - 一件 5 枚週章（`LIMITED_ITEMS` 的 `price`）。買到的帽子打開在手作坊，不算進「全部解鎖」。下週沒上架就買不到了，等輪回來或週包再指定。
 - 公告會自動多一行「這週上架的限定頭飾：…」，不用自己寫。
 
-### 今日特展的畫（`SHOW_ART`、`SHOW_FX`、`SHOW_FRAMES`）
+### 今日特展的畫（`SHOW_ART`、`SHOW_FX`、`SHOW_FRAMES`；新畫 `svg` 見第九節）
 
-- `art`：`frog`（遊戲自己的青蛙，`pick` 寫手作坊的選項：稀有度、心情、顏色、帽子、姿勢、背景、手上拿的東西）、`portrait`、`strange`、`rare`、`statue`、`hidden`（畫廊已經有的畫，`variant` 0–3）。**不畫 Pepe the Frog 的樣子**；要新的畫法得改 `web/src/art.js`，走一般的 PR。
+- 一幅畫寫 `art`（舊的畫換參數）或 `svg`（自己畫，第九節），一天 3–5 幅可以混著。**每天至少用 `svg` 畫 1–2 幅全新的。**
+- `art`：`frog`（遊戲自己的青蛙，`pick` 寫手作坊的選項：稀有度、心情、顏色、帽子、姿勢、背景、手上拿的東西）、`portrait`、`strange`、`rare`、`statue`、`hidden`（畫廊已經有的畫，`variant` 0–3）。**不畫 Pepe the Frog 的樣子**。
 - `fx`（最多 2 個）：`sepia`、`faded`、`dust`、`dark`、`flip`、`water`、`torn`、`shadow`（只剩影子）、`glow`。
 - `frame`：`gold`、`dark`、`wood`、`plain`、`ornate`。
 - `san`：可怕的才寫，成功一定不扣（`0/1D4`），失敗最多 `NUM.story.showSanMax`（6）點。不寫的就是不可怕的（看了也治好「看壹幅不可怕的畫」的怪癖）。
@@ -223,7 +224,7 @@ content/
 - 任務的種類和參數、每日任務做得完、獎勵的東西存在、不超過預算。
 - 房間獎勵的技能成長：只有房間可以、技能要存在、不能有 `none` 的選項、一天和一週的上限。週包的 `shop`：要是陣列、id 要是兌換所賣的、不重複、不超過上限。
 - 每本書掛在這週存在的劇情線上；每天至少一本接這週的線；解開的條件指到存在的房間、任務；週日有結局（或 `continues`）；結局新玩家打得開。
-- 今日特展的畫法、效果、畫框、理智檢定；房間的強度門檻、技能、理智、`hint` 的寫法。
+- 今日特展的畫法、效果、畫框、理智檢定；`svg` 的標籤、屬性、外部網址、大小、裡面的字（第九節）；那天一幅新畫都沒有 → 警告。房間的強度門檻、技能、理智、`hint` 的寫法。
 - 劇情帳本：有 `main.theme`；每條劇情線都在帳本裡、名字和種類一樣（季節線也是）；正式週要寫這週主線推到哪；到期還沒收的伏筆、重複的新聞元素、這週沒寫 `ties`、季節線的章沒寫 `ties`、季節線的章到週日還沒放書 → **警告**（不擋，寫進 PR）。
 - 排程設定的格式；`web/src/` 不准讀帳本和排程設定。
 - 擋得住的例子都在 `test/week_check.test.cjs`。
@@ -236,3 +237,48 @@ content/
 - **帳本** `seasonal.lines[].chapters[]`：`week`（哪一週）、`title`、`holiday`（當週的節日，可以 `null`）、`tell`（要交代的事）、`ties`（碰到主線的哪一點）、`written`（還沒寫 `null`；寫了放書的 id）。`lines` 也要有這條線（`kind: "season"`，`start` 寫第一章那週）。
 - **週包**：那週的 `week.json` 的 `lines` 加 `{ "id": "season-2026-winter", "name": "冬天的明信片", "kind": "season" }`（id、名字跟帳本一樣，好幾週同一個）；某一天放一本 `"line": "season-2026-winter"` 的書，`"unlock": { "type": "now" }`。沒有書的週不用寫這條線。
 - **遊戲怎麼算**：好幾週的書算同一條線；書放起源室的「季節」頁籤，過了那週還是可以補讀（不給靈感）；劇情線面板看得到進度和下一步。有更新的一條線（換季）舊的就算走完，收進劇情回顧。**季節線的書不算進結局要讀的本數**：沒讀也不會卡住這週、卡住主線。
+
+## 九、今日特展的新畫：`works[].svg`（翊文：「新的畫廊的話好像只是原本的畫改一點點，之後能不能更加不一樣」）
+
+每幅畫可以帶自己的向量圖，照這週的故事畫。寫成字串，或字串的陣列（接起來，JSON 裡比較好讀）。屬性用單引號，JSON 不用跳脫。例子看 `content/weeks/備用/常青1/`：d1 `s1b`、d3 `s3b`、d6 `s6d`、d7 `s7c`、`s7d`。
+
+```json
+{ "id": "s3b", "svg": ["<svg viewBox='0 0 240 300'><defs>…</defs>", "<rect width='240' height='300' fill='url(#w)'/>", "…", "</svg>"],
+  "fx": [], "frame": "dark", "san": "0/1D4", "title": "門縫後面", "lines": ["門縫很窄，只看得到壹點點光。", "光的旁邊，有東西眨了壹下。"] }
+```
+
+### 不能畫什麼
+
+- **不畫 Pepe the Frog 的樣子，也不畫青蛙或任何像 Pepe 的角色**。新的畫以**場景、物品、抽象、光影**為主。要青蛙就用 `art: "frog"`（遊戲自己的青蛙）。
+- 不下載、不描別人的圖；不用真實的品牌標誌；不畫真人。
+
+### 規矩（`shared/story.js` 的 `sanitizeSvg`：檢查程式擋，畫面也會再淨化一次）
+
+- 只准這些標籤（`SVG_TAGS`）：`svg`、`g`、`defs`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`title`、`desc`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`mask`、`pattern`、`use`，還有 `filter` 和裡面的 `feGaussianBlur`、`feTurbulence`、`feDisplacementMap`、`feColorMatrix`、`feComponentTransfer`、`feFuncR/G/B/A`、`feBlend`、`feComposite`、`feMerge`、`feMergeNode`、`feOffset`、`feFlood`、`feDropShadow`。
+- 屬性也有白名單（`SVG_ATTRS`：幾何、顏色、線條、字型、漸層、濾鏡）。**不准**：`script`、`foreignObject`、`image`、`a`、`style`（標籤和屬性都不准，顏色直接寫在屬性上）、`class`、`on` 開頭的事件、外部網址、註解、CDATA。
+- `url()` 和 `href` 只能連到這幅畫裡面的 `#id`（`use`、漸層、`pattern` 才能有 `href`），id 要存在、不能重複。id 不用怕跟別幅撞到：畫面會加前綴。
+- 最外面一個 `<svg>`，要有 `viewBox`（建議 `0 0 240 300`，跟畫廊的畫一樣直的）。`width`、`height` 會拿掉，大小由畫框決定。
+- **一幅最多 `NUM.story.showSvgKB`（12）KB。**
+- 畫裡的字（`text`、`tspan`、`title`、`desc`）也算遊戲文字：用「壹」、過禁用字、不要英文字母，一段 40 字以內；`&` 只准 `&amp;` `&lt;` `&gt;`。字會讀得很小，少放。
+- 有哪裡不合，整幅都不畫（畫面改放空白的佔位），所以一定要過 `npm test`。
+
+### 畫風（給排程看）
+
+這間博物館的畫要有**不安感和手繪感**：暗色、羊皮紙色，像油畫或版畫。
+
+- **一幅一個清楚的主題**：一眼看得出畫的是什麼（一個箱子、一扇門、一本帳本），再讓人覺得哪裡不對。不要只是幾何圖形堆疊。
+- **同一天的幾幅彼此要明顯不同**：構圖、顏色、題材都換（一幅場景、一幅物品、一幅抽象）。
+- **跟這週的故事有關**，說明牌（`lines`）跟畫的東西要對得上。
+- 手繪感三個小技巧（`常青1` 的畫都這樣）：
+  - 線條抖一點：`<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='4' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='5' xChannelSelector='R' yChannelSelector='G'/></filter>`，整組形狀放進 `<g filter='url(#r)'>`。`seed` 每幅換。
+  - 畫布的顆粒：最上面蓋一張 `<rect width='240' height='300' filter='url(#n)'/>`，`n` 是 `<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='8' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>`。
+  - 四邊暗下來：`radialGradient` 中間透明、邊上接近黑（`stop-opacity` .86）。
+
+三種寫法的例子：
+
+1. **漸層背景＋剪影**（`常青1` d1 `s1b`「沒人來領的箱子」）：`radialGradient` 當燈光和牆，物品用深色 `path` 剪出來，只有燈下那一小塊有顏色。
+2. **用 path 畫的房間**（d3 `s3b`「門縫後面」）：牆、地板的透視線、門框、門板都是 `path`；最亮的只有門縫和地上那道光，門縫裡站著一個看不清楚的影子。
+3. **抽象的冷風**（d7 `s7d`「風把招領單吹走了」）：深藍底，幾條又粗又抖的 `path`（`stroke` 用漸層、兩頭透明），再疊一層 `feGaussianBlur` 的霧；紙片越遠越小。
+
+新畫要照這個順序確認：`npm test` 過（`tools/week_check.cjs` 擋不准的東西）。**檢查不看畫得好不好、像不像青蛙**：那是寫的人自己要守的。
+
