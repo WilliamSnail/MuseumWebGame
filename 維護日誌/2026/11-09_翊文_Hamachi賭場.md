@@ -7,7 +7,7 @@ AI: Claude Sonnet 5.5（Claude Code）
 PR: 無
 版本: 2026.11.08-1
 測試: npm test 全過（賭場 45 項、同桌 19 項是新的）、vite build 成功、模擬 test/sim_casino.cjs 每格 30 萬手、瀏覽器經過第 6 套模擬器叫到真的 casino、casinoTable Function（假帳號 小明、小華，假的舊資料）看過電腦 1366 和手機 375，兩個分頁同桌走過一圈；聲音沒有（賭場沒有新聲音，用現成的 coin、unlock、error、flip）
-狀態: 本機完成
+狀態: 待合併
 相關: [docs/決定/0040-Hamachi賭場.md, docs/賭場規劃.md, docs/決定/0009-不做真錢.md, docs/決定/0036-合作地下的玩法.md]
 ---
 

@@ -5,18 +5,18 @@
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { CELLAR_REWARDS, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
-import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, TRADE_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
+import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
-import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, giftCode, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, parseWeeklyCode, placeWeekly, receiveGift, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyCode, weeklyState } from "../../shared/logic3.js";
+import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, placeWeekly, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
-import { $, $$, ADDONS, P, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
+import { $, $$, ADDONS, P, PANELS, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
 import { roomHead } from "./ui_screens1.js";
-import { copyText } from "./ui_screens2.js";
+import { SOCIAL } from "../../shared/gifts.js";
 import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 
 // 選職業（每一位參觀者都一樣，第一位也是；11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：
@@ -350,11 +350,12 @@ export async function doFusion() {
   } finally { UI.busy = false; }
 }
 
-// ---------- 館長室（升級、名片、修復台、交換碼、歷任參觀者） ----------
+// ---------- 館長室（升級、名片、修復台、送館友、歷任參觀者） ----------
 SCREENS.office = (root, params) => {
-  const tab = params.tab || "sheet";
+  // 「送館友」要登入才有（單機沒有館友）：沒登入的人不放這個頁籤，網址帶 tab=trade 也回到名片
+  const tab = params.tab === "trade" && !UI.net ? "sheet" : params.tab || "sheet";
   const OFFICE_IC = { sheet: "info", upgrades: "plus", repair: "hammer", trade: "share", history: "hourglass" };
-  const tabs = h("div", { class: "seg big-tabs" }, [["sheet", "參觀者名片"], ["upgrades", "工坊升級"], ["repair", "修復台"], ["trade", "交換碼"], ["history", JOB_TEXT.history]].map(([id, n]) =>
+  const tabs = h("div", { class: "seg big-tabs" }, [["sheet", "參觀者名片"], ["upgrades", "工坊升級"], ["repair", "修復台"], ["trade", "送館友"], ["history", JOB_TEXT.history]].filter(([id]) => id !== "trade" || UI.net).map(([id, n]) =>
     h("button", { type: "button", class: "seg-btn" + (id === tab ? " on" : ""), "aria-pressed": String(id === tab), onClick: () => go("office", { tab: id }, { action: false }) }, icon(OFFICE_IC[id]), h("span", null, n),
       (id === "upgrades" && freshUnder(P, "office", FRESH_KEY.up(""))) || (id === "history" && freshUnder(P, "office", "wall:")) ? freshTag("tab-fresh") : null))); // 有第壹次買得起的升級（11-08）；牆上多了一位參觀者（11-08，key 是 "wall:第幾位"）
   root.append(roomHead("館長室", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.office) || "", tabs));
@@ -431,24 +432,16 @@ export function officeRepair() {
       }, "ghost"))))
       : h("p", { class: "empty" }, `沒有失敗作。擲出 ${NUM.fumbleFrom}–100 才會有。`));
 }
+// 送館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友 → 選一隻 → 寄到他的信箱（規則在 shared/gifts.js，伺服器在 functions/visit.js 的 sendGift）。取代交換碼
 export function officeTrade() {
-  const box = h("div", { class: "share-box" }, h("p", { class: "sub" }, "點下面一件作品，就會變成一串交換碼。"));
-  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "送出", hint: "點一件作品", onPick: item => {
-    const code = giftCode(P, item);
-    if (!code) return;
-    const ta = h("textarea", { class: "code", readonly: true, rows: "3" }, code);
-    box.replaceChildren(h("p", { class: "sub" }, `${itemTitle(item)}：${TRADE_TEXT.send}`), ta, btn([icon("copy"), " 一鍵複製"], () => copyText(code, ta), "primary"));
-  } });
-  const inTa = h("textarea", { class: "code", rows: "3", placeholder: "貼上別人給你的交換碼" });
-  const recv = h("div", { class: "share-box" }, h("p", { class: "sub" }, "收下："), inTa, btn("收下", () => {
-    const r = receiveGift(P, inTa.value);
-    if (!r.ok) { snd("error"); note(r.reason === "already" ? TRADE_TEXT.already : TRADE_TEXT.bad, "bad"); return; }
-    snd("unlock");
-    const it = r.kind === "pillow" ? { kind: "pillow", key: r.key } : { kind: r.kind, key: r.key, pick: fromKey(r.key) };
-    note(fill(TRADE_TEXT.receive, itemTitle(it)), "good");
-    inTa.value = ""; updateStatus(); persist(); showEvents(r.events);
-  }, "primary"));
-  return h("div", { class: "trade" }, strip, box, recv);
+  const free = isFree(P);
+  return h("div", { class: "trade" }, h("div", { class: "share-box" },
+    h("p", { class: "sub" }, `選一位館友，再挑一隻送給他：寄到他的信箱，他不在線也收得到，上線後自己領（${SOCIAL.mailDays} 天沒領就不見）。送出去就拿不回來。`),
+    free ? h("p", { class: "warn-line" }, "自由模式不能送佩佩（收藏是挑戰模式的）。回挑戰模式的參觀者，才送得出去。") : null,
+    h("div", { class: "rv-btns" },
+      btn([icon("share"), " 選館友，送佩佩"], () => PANELS.pickFriend({ title: "送佩佩給館友", hint: "選一位館友，下一步挑要送的那隻。", onPick: p => PANELS.giftTo(p) }), "primary", { disabled: free || undefined }),
+      PANELS.mail ? btn([icon("mail"), " 看信箱"], () => PANELS.mail(), "ghost") : null),
+    h("p", { class: "sub" }, "館友送你的佩佩，會放在信箱（選單 → 信箱）裡，到那裡領。")));
 }
 // D. 歷任參觀者牆（11-08）：上面是遺物櫃，下面一位一張卡（最前面是現在這一位），點了展開詳細
 export function officeHistory() {
@@ -687,23 +680,10 @@ export function weeklyHall(root, params) {
   const T = (typeof WEEKLY_TEXT !== "undefined" && WEEKLY_TEXT[W.theme]) || { name: W.theme, rule: "" };
   const items = W.slots.map(s => hallItem(P, s));
   const sc = scoreItems(items);
-  const shareBox = h("div", { class: "share-box", hidden: true });
-  const tools = [btn([icon("share"), " 分享本週成績"], () => {
-    shareBox.hidden = false;
-    const code = weeklyCode(P);
-    const ta = h("textarea", { class: "code", readonly: true, rows: "3" }, code);
-    shareBox.replaceChildren(h("p", { class: "sub" }, "把這串字傳給 Yuga，比比看誰的特展分數高。"), ta, btn([icon("copy"), " 一鍵複製"], () => copyText(code, ta), "primary"));
-  }, "ghost"), btn("看別人的特展", () => {
-    shareBox.hidden = false;
-    const ta = h("textarea", { class: "code", rows: "3", placeholder: "貼上別人的特展碼" });
-    shareBox.replaceChildren(ta, btn("比比看", () => {
-      const v = parseWeeklyCode(ta.value);
-      if (!v) { note("這串讀不出來。", "bad"); return; }
-      const Tv = (typeof WEEKLY_TEXT !== "undefined" && WEEKLY_TEXT[v.theme]) || { name: v.theme };
-      shareBox.replaceChildren(h("p", null, `對方的特展「${Tv.name}」：最高 ${v.best} 分。你這週最高 ${W.best} 分。${v.week !== W.w ? "（不是同一週的特展）" : v.best > W.best ? "對方贏了。" : v.best < W.best ? "你贏了。" : "平手。"}`),
-        h("div", { class: "hall-room visit" }, v.items.map(it => h("div", { class: "ped-slot" + (it ? " full" : "") }, h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }), h("div", { class: "ped-block" })))));
-    }, "primary"));
-  }, "ghost")];
+  // 跟館友比比看（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友，唯讀看他這週的特展分數和展台。登入了才有
+  const vsBox = h("div", { class: "share-box", hidden: true });
+  const tools = UI.net && PANELS.pickFriend && ADDONS.weeklyVs ? [btn([icon("users"), " 跟館友比比看"], () =>
+    PANELS.pickFriend({ title: "跟館友比比看", hint: "選一位館友，看他這週的特展分數和展台，跟你比。不會通知他。", onPick: p => ADDONS.weeklyVs(p, W, vsBox) }), "ghost")] : [];
   const room = h("div", { class: "hall-room" }, W.slots.map((s, i) => {
     const it = hallItem(P, s);
     const el = h("div", { class: "ped-slot" + (it ? " full" : "") },
@@ -719,7 +699,7 @@ export function weeklyHall(root, params) {
     return el;
   }));
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: `只能放：${T.rule}`, drag: true });
-  root.append(roomHead("本週特展", `${T.name}：${T.rule}`, ...tools), shareBox, hallTabs("week"),
+  root.append(roomHead("本週特展", `${T.name}：${T.rule}`, ...tools), vsBox, hallTabs("week"),
     h("div", { class: "hall-wall themed" }, h("div", { class: "theme-name" }, h("h2", null, T.name), h("p", null, `現在 ${sc.score} 分　本週最高 ${W.best} 分`))),
     ...(ADDONS.weeklyShow ? [ADDONS.weeklyShow(W)] : []), // 到金拿這週的限定配件（決定 0035，ui_themeshow.js）
     room, strip);

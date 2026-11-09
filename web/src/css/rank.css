@@ -1,0 +1,47 @@
+/* ================================================================
+   本週榜單（決定 0039，web/src/ui_board_rank.js）
+   木框在 board.css（overlay）。底是深色的展示櫃，一個榜是一張羊皮紙牌子。
+   電腦排三欄（寬度不夠自己變兩欄），手機（760px 以下）一欄。
+   ================================================================ */
+.nb-frame.nb-rank { width: min(1040px, 100%); }
+.nb-rank .nb-surface { background-color: #2C2320;
+  background-image: radial-gradient(rgba(0,0,0,.22) 1px, rgba(0,0,0,0) 1.5px), radial-gradient(ellipse at 50% 0%, rgba(238,215,156,.14), rgba(0,0,0,0) 60%);
+  background-size: 4px 4px, 100% 100%; }
+
+.rk-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 2px 4px 8px; }
+.rk-period { margin: 0; text-align: center; font-size: .875rem; line-height: 1.5; color: #EADFC6; }
+.rk-period small { display: block; font-size: .8125rem; color: #CDBE9F; }
+.rk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; align-items: start; }
+
+/* 一個榜：羊皮紙牌子 */
+.rk-card { padding: 10px 14px 12px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #F7EFDD, #EFE3C8); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 3px 10px rgba(0,0,0,.4); }
+.rk-card h3 { margin: 0 0 6px; padding-bottom: 5px; border-bottom: 1px solid var(--parch-line); font-family: var(--serif); font-size: 1rem; font-weight: 700; line-height: 1.4; letter-spacing: .04em; color: #4A3418; }
+.rk-card h3 { display: flex; align-items: center; gap: 6px; }
+.rk-card h3 svg { flex: none; width: 18px; height: 18px; color: #6E4A12; }
+.rk-card h3 small { font-size: .75rem; font-weight: 400; color: var(--parch-sub); }
+.rk-rows { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.rk-row { display: flex; align-items: baseline; gap: 8px; min-height: 28px; font-size: .9375rem; line-height: 1.5; }
+.rk-medal { flex: none; align-self: center; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-family: var(--serif); font-size: .8125rem; font-weight: 700; color: #3A2A10; box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 0 0 1px rgba(90,64,24,.55); }
+.rk-row.r1 .rk-medal { background: linear-gradient(180deg, #F2DC97, #C8A25A); }
+.rk-row.r2 .rk-medal { background: linear-gradient(180deg, #E9E9E6, #AFAFAA); }
+.rk-row.r3 .rk-medal { background: linear-gradient(180deg, #E3B38B, #B57F52); }
+.rk-names { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rk-val { flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; color: #6E4A12; }
+.rk-name.me { font-weight: 700; color: #7A2A14; text-decoration: underline; text-decoration-color: rgba(122,42,20,.45); text-underline-offset: 3px; }
+.rk-all { margin: 0; font-size: .9375rem; line-height: 1.6; overflow-wrap: anywhere; }
+.rk-none { margin: 0; font-size: .8125rem; color: var(--parch-sub); }
+.rk-card.none { opacity: .86; }
+
+/* 建議、小提醒 */
+.rk-note { padding: 9px 14px 11px; border-radius: 3px; color: #F4E7C8; background: rgba(255,240,210,.07); box-shadow: inset 0 0 0 1px rgba(200,162,90,.5); }
+.rk-note h3 { margin: 0 0 4px; font-family: var(--serif); font-size: .9375rem; font-weight: 700; letter-spacing: .04em; color: var(--gold-hi); }
+.rk-note ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 3px; font-size: .9375rem; line-height: 1.6; }
+.rk-note .rk-name { font-weight: 700; }
+.rk-note .rk-name.me { color: var(--gold-hi); text-decoration-color: rgba(238,215,156,.5); }
+.rk-where { margin: 0; text-align: center; font-size: .75rem; line-height: 1.5; color: #CDBE9F; }
+
+@media (max-width: 760px) {
+  .rk-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .rk-card { padding: 9px 12px 10px; }
+  .rk-note { padding: 8px 12px 10px; }
+}

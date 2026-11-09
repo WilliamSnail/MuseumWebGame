@@ -1,0 +1,63 @@
+# 每週排行榜（決定 0039）：每週一台灣時間 05:15 算剛過完的那一週，存快照到 Firestore，發到 Discord。
+# 翊文 11-09：「另外每周排行榜也可以用discord推送給大家看，並提供一些建議」
+# 這個流程讀得到大家的存檔（只算數字，不印出來）：tools/weekly_board.cjs 的紀錄只有榜單文字，沒有 email、uid、存檔內容。
+# 金鑰只在 GitHub Secrets：FIREBASE_SERVICE_ACCOUNT、DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID（翊文放的，AI 拿不到）。
+# 手動按：AI 只有翊文要求時才能按（跟決定 0038 一樣）。手動的選項不要直接寫進這個檔，tools/weekly_board.cjs 從事件檔讀。
+# Discord 還沒放或發失敗，快照照樣寫（先寫快照再發）；再跑一次會用同一份榜單補發。
+name: 每週排行榜
+
+on:
+  schedule:
+    - cron: "15 21 * * 0" # UTC 週日 21:15 ＝台灣週一 05:15（05:00 換週之後）
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 只印不發（不寫 Firestore、不發 Discord）
+        required: false
+        type: boolean
+        default: true
+      force:
+        description: 這週發過了也重算、再發一次（數字會變成現在的）
+        required: false
+        type: boolean
+        default: false
+
+# 一次只跑一個，免得同一週發兩次
+concurrency:
+  group: weekly-board
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  board:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - name: 還沒放 Firebase 的金鑰
+        if: env.HAS_KEY != 'true'
+        run: echo "還沒在 GitHub Secrets 放 FIREBASE_SERVICE_ACCOUNT，這次不算。"
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+      - uses: actions/setup-node@v4
+        if: env.HAS_KEY == 'true'
+        with:
+          node-version: 22
+      - name: 裝套件
+        if: env.HAS_KEY == 'true'
+        run: npm --prefix functions ci
+      - name: 算榜單、存快照、發 Discord
+        if: env.HAS_KEY == 'true'
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: |
+          printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/weekly_board.cjs
+      - name: 刪掉暫存的金鑰
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"

@@ -59,4 +59,4 @@ export { adminCheck, adminOverview } from "./admin.js";
 export { casino } from "./casino.js";
 export { casinoTable } from "./casino_table.js";
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
-export { claimMail, hallAct, sendGift, socialNews, visitHall } from "./visit.js";
+export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./visit.js";

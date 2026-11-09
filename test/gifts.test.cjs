@@ -1,5 +1,5 @@
 // 館友之間的規則（shared/gifts.js，多人版 M2）：node test/gifts.test.cjs（npm test 也會跑）
-// 台灣時間 05:00 換日、來訪靈感的上限、留言的檢查、展廳給別人看的部分（不漏存檔）、
+// 台灣時間 05:00 換日、來訪靈感的上限、留言的檢查、展廳給別人看的部分（不漏存檔）、請館友來看、本週特展給別人比的部分、
 // 送佩佩（能不能送、拿出來、放進去、完美作品、失敗作、修復品）、信（送、領、領兩次、過期、自由模式）。
 // 數字一律讀 SOCIAL。
 const assert = require("assert");
@@ -272,6 +272,46 @@ T("信：來訪的信附靈感；全部領取算得出領了幾隻佩佩", () =>
   assert.ok(B.insp >= insp0 + G.SOCIAL.visitInsp, "來訪的靈感加進去了（收到的佩佩可能另外解開徽章、多拿靈感）");
   assert.ok(G.giftText(t).includes("佩佩 1 隻"));
   assert.strictEqual(G.giftText({ insp: 10, mood: 5 }), "靈感 +10、心情 +5", "舊的寫法不變");
+});
+
+// ---------- 請館友來看展廳（11-09，取代分享碼） ----------
+T("請館友來看：自己不行、自己的展廳沒開館不行、今天請過就不行；其他可以", () => {
+  assert.deepStrictEqual(J(G.checkHallCall({ self: false, open: true, done: false })), { ok: true });
+  assert.strictEqual(G.checkHallCall({ self: true, open: true, done: false }).code, "self");
+  assert.strictEqual(G.checkHallCall({ self: false, open: false, done: false }).code, "not_open");
+  assert.strictEqual(G.checkHallCall({ self: false, open: true, done: true }).code, "already");
+  assert.strictEqual(G.checkHallCall(null).code, "self", "壞資料當作不行");
+  assert.strictEqual(G.checkHallCall(undefined).ok, false);
+  for (const s of [{ self: true, open: true, done: true }, { self: false, open: false, done: true }]) assert.ok(G.checkHallCall(s).reason.length > 3, "不行的時候要有一句話");
+});
+
+// ---------- 本週特展給館友比的那一小部分（11-09，取代特展碼） ----------
+T("本週特展：只給週數、主題、最高分、展台，不漏收藏、靈感、理智、信；不改存檔", () => {
+  const P = fresh(), k = keyOf({ 顏色: colors()[1] });
+  P.pepes[k] = { n: 2, perfect: true, s: 1, d: DAY, title: "小綠" };
+  P.weekly = { w: 2900, theme: "start32", slots: [{ kind: "pepe", key: k }, null, { kind: "pepe", key: "不存在|的|佩|佩|x|y|z" }, null, null, null], best: 61 };
+  P.insp = 987654; P.sanity = 43;
+  P.mail = [{ id: "m1", title: "祕密的信", gift: {}, sent: DAY, expire: DAY, claimed: false }];
+  const before = JSON.stringify(P);
+  const v = J(G.weeklyView({ profiles: { challenge: P, free: null }, email: "someone@example.com" }));
+  assert.deepStrictEqual(Object.keys(v).sort(), ["best", "open", "slots", "theme", "w"]);
+  assert.strictEqual(v.w, 2900); assert.strictEqual(v.theme, "start32"); assert.strictEqual(v.best, 61);
+  assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: null });
+  assert.strictEqual(v.slots[1], null);
+  assert.strictEqual(v.slots[2], null, "收藏裡沒有的當空的");
+  const text = JSON.stringify(v);
+  for (const leak of ["987654", "祕密的信", "example.com", "sanity", "小綠"]) assert.ok(!text.includes(leak), "不該有 " + leak);
+  assert.strictEqual(JSON.stringify(P), before, "不改存檔（不像 weeklyState 會換週）");
+});
+T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒擺過是 w null", () => {
+  assert.deepStrictEqual(J(G.weeklyView({ profiles: { challenge: null, free: fresh("free") } })), { open: false });
+  assert.deepStrictEqual(J(G.weeklyView(null)), { open: false });
+  assert.deepStrictEqual(J(G.weeklyView({ profiles: { challenge: { mode: "challenge" } } })), { open: false });
+  const P = fresh();
+  delete P.weekly;
+  assert.deepStrictEqual(J(G.weeklyView({ profiles: { challenge: P } })), { open: true, w: null, theme: null, best: 0, slots: [] });
+  P.weekly = { w: 5, theme: 7, slots: "壞的", best: "x" };
+  assert.strictEqual(J(G.weeklyView({ profiles: { challenge: P } })).w, null, "slots 壞掉就當沒擺過");
 });
 
 // ---------- 真正的 ES 模組（伺服器、Firebase 的 Cloud Functions 會這樣用） ----------

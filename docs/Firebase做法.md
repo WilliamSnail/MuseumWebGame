@@ -38,6 +38,9 @@ Hosting：放 dist/，網址 專案名.web.app
 | `casinoHouse/main` | 莊家的錢（大家共用，可以破產） | 沒有人（只有 Functions） | 只有 Functions |
 | `casinoLegacy/{小寫 email}` | 舊 Discord 21 點的資料：`chips`、`achievements`、`properties`；翊文之後放。認領後多 `claimedBy`。**不放進 repo** | 沒有人（只有 Functions） | 翊文（後台）；Functions 只標 `claimedBy` |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
+| `calls/{uid}/items/{id}` | 「請你去看我的展廳」（11-09）：編號 `call-日期-請的人`，同一天同一位只有一則（伺服器用它擋重複）。看過標 `seen`，不刪 | 沒有人（瀏覽器叫 `socialNews` 拿；沒寫進規則，走「一律不准」） | 只有 Functions |
+| `boards/{週}`、`boards/latest` | 每週排行榜（決定 0039）：榜單、建議、提醒、`posted`。只有暱稱和榜上的數字，沒有 uid、email。`latest` 是最新一週的整份複製 | 館友 | 只有 `tools/weekly_board.cjs`（Admin SDK） |
+| `boards/{週}/private/people` | 那一週每個人的累計數字（圖鑑、書、展廳、地下），下週相減用。用 uid 當 key，所以放另一份：Firestore 的規則不能只擋一個欄位 | 沒有人（走最下面的「一律不准」） | 只有 `tools/weekly_board.cjs` |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
 - 沒有 `members/{uid}` 的人，什麼都讀不到、寫不了（`firestore.rules`）。這就是邀請制：Google 帳號誰都能登入，但不在名單上就進不了館。
@@ -75,7 +78,9 @@ Hosting：放 dist/，網址 專案名.web.app
 | `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop_trace.js`） | M2、M6 |
 | `visitHall`、`hallAct` | 走進館友的展廳（給展廳那一部分、記來訪、寄謝禮）、按讚、留言 | M2 |
 | `sendGift`、`claimMail` | 送佩佩（同一個交易從自己的收藏拿掉、寄進對方的信箱）、領信（同一個交易放進存檔、把信標成領過） | M2 |
-| `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳 | M2 |
+| `hallCall` | 請館友來看我的展廳（11-09，取代分享碼）：沒有獎勵，每天每位一次，自己的展廳要開館；寫 `calls`、送 `hall_call` 通知（`shared/gifts.js` 的 `checkHallCall`、`shared/visit.js` 的 `stepHallCall`） | M2 |
+| `visitWeekly` | 跟館友比本週特展（11-09，取代特展碼）：只讀，檢查對方是館友，只回那一週的最高分和展台（`weeklyView` → `stepWeeklyView`，格子走 `cleanHallSlot`）；不算來訪、不寄信；對方沒開館、這週沒擺過就只回旗標 | M2 |
+| `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳、誰請我去看展廳（`calls`；`seenCalls` 把處理過的標起來） | M2 |
 | `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
 | `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
 | `casino` | Hamachi 賭場（決定 0040）：`open`（錢包、舊資料有沒有）、`deal`、`hit`、`stand`、`relief`、`pack`、`buy`、`exchange`、`title`、`hang`、`legacy`（認領）。規則 `shared/casino*.js` | 決定 0040 |
@@ -98,6 +103,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `connect()`、`where()`、`roster` | `/status`：寫自己的、聽全部的、`onDisconnect` |
 | `send(msg)` | 叫對應的 Function |
 | `on("message")` | 聽 `/inbox/{uid}` |
+| `readBoard()` | 讀 `boards/latest`（本週榜單，決定 0039）。只有 Firebase 版有 |
 
 - 開發時網址帶 `?user=名字`：這個分頁自己登入（登入狀態只放在這個分頁），一台電腦開幾個分頁就是幾個人，跟原本一樣。
 - `ui_login.js` 看 `info().auth`：模擬器 → 打名字；正式 → 「用 Google 登入」。
@@ -187,3 +193,32 @@ gh workflow run firebase-task.yml -f action=stats
 ```
 
 這幾件以外都不能做（讀存檔、改存檔、刪資料都不行）。email、名字在紀錄裡遮掉，不寫進 repo。
+
+## 十、每週排行榜（決定 0039）
+
+`.github/workflows/weekly-board.yml` 跑 `tools/weekly_board.cjs`，規則在 `shared/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
+
+- **什麼時候**：每週一台灣時間 05:15（cron `15 21 * * 0`，UTC 週日 21:15）。GitHub 的排程可能晚幾分鐘，只在預設分支跑。
+- **算哪一週**：一律是剛過完的那一週。週三手動按，算的也是上一週。
+- **順序**：讀 `members`、`saves` → 跟 `boards/{上週}/private/people` 相減 → 先寫快照（`boards/{週}`、`boards/{週}/private/people`、`boards/latest`）→ 再發 Discord → 發了才記 `posted`。
+- **Discord 沒放或發失敗**：快照已經寫了。再跑一次會用同一份榜單補發（不重算）。發失敗那次的 Actions 會是紅的；沒放金鑰是綠的。
+- **同一週不發兩次**：看 `posted`。`force` 會重算、再發一次，數字會變成現在的。
+- **沒有人有進度**：快照照寫，不發。
+- **紀錄**：只印榜單文字和幾份存檔讀不了（只有數字）。沒有 email、uid、存檔內容。
+
+手動按（AI 只有翊文要求時才能按，跟固定動作一樣）：
+
+```bash
+gh workflow run weekly-board.yml -f dry_run=true             # 只印不發：不寫 Firestore、不發 Discord（手動的預設）
+gh workflow run weekly-board.yml -f dry_run=false            # 照正常的流程
+gh workflow run weekly-board.yml -f dry_run=false -f force=true   # 這週發過了也重算、再發一次
+```
+
+在模擬器測（只用假資料）：
+
+```bash
+EMU_SET=4 npm run emulators        # Firestore 在 12180
+FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
+```
+
+有 `FIRESTORE_EMULATOR_HOST` 就一定不發 Discord，就算環境變數有金鑰也一樣。`--now` 只有連模擬器時能用。

@@ -165,6 +165,8 @@ export async function afterEnter() {
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
   if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）
   await dailyRecovery();
+  if (PANELS.autoMail) await PANELS.autoMail(); // 館友寄來的信、請你去看展廳：大提示卡，排在公佈欄、簽到卡前面，關了才跳下一張（11-09，ui_visit.js）
+  if (UI.screen === "title" || !P) return;
   if (PANELS.autoBoard) PANELS.autoBoard(); // 公佈欄：有新公告就打開壹次（11-08）
   if (PANELS.autoSignin) PANELS.autoSignin(); // 簽到卡：公佈欄關了才跳；今天簽過就不跳（11-09，ui_signin.js）
 }
