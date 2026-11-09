@@ -23,7 +23,7 @@ export function setImg(v) { IMG = v; return v; }
 export function setFit(v) { FIT = v; return v; }
 export const UI = { screen: "title", params: {}, held: null, undo: [], timers: [], lastInput: Date.now(), busy: false, cleanup: [] };
 export const RCOLOR = { 普通: "var(--r-common)", 稀有: "var(--r-rare)", 超稀有: "var(--r-epic)", 傳說級稀有: "var(--r-legend)", 不可名狀: "var(--r-eldritch)", 失敗作: "#B9B4AA", 修復品: "#9C8A6A" };
-export const ROOM_NAMES = { lobby: "大廳", gallery: "畫廊", origin: "起源室", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", office: "館長室", library: "圖庫", settings: "設定" };
+export const ROOM_NAMES = { casino: "賭場", lobby: "大廳", gallery: "畫廊", origin: "起源室", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", office: "館長室", library: "圖庫", settings: "設定" };
 export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "起源"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["office", "館長室"]];
 export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
@@ -260,6 +260,7 @@ export function toggleMenu(force) {
 export function navTo(room) {
   if (!P) { go("title"); return; }
   if (P.dark && room !== "settings") { note("燈熄了，什麼都看不到。", "bad"); return; }
+  if (!SCREENS[room] && PANELS[room]) { PANELS[room](); return; } // 導覽圖上的賭場是蓋在畫面上的框（翊文 11-09：「Hamachi 賭場在大廳看不到」）
   go(room);
 }
 export function markNav() {

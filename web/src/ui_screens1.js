@@ -228,7 +228,7 @@ SCREENS.lobby = root => {
     g.classList.toggle("is-goal", !!step && step.room === id);
     g.addEventListener("click", () => navTo(id));
     g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navTo(id); } });
-    const show = () => { hint.textContent = `${ROOM_NAMES[id] || id}：${ROOM_HINTS[id] || (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3[id]) || ""}`; };
+    const show = () => { hint.textContent = ROOM_HINTS[id] || (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3[id]) || ROOM_NAMES[id] || id; };
     g.addEventListener("mouseenter", show); g.addEventListener("focus", show);
   });
   const mine = collectionItems("pepe");

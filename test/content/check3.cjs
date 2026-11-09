@@ -322,7 +322,7 @@ function valueList(v) {
   for (const id of ids) keysExactly(C.WEEKLY_TEXT[id], ["name", "rule"], "WEEKLY_TEXT." + id);
   keysExactly(C.TRADE_TEXT, ["send", "receive", "already", "bad"], "TRADE_TEXT");
   keysExactly(C.NEW_OPTION_TEXT, NEW_OPTS, "NEW_OPTION_TEXT");
-  keysExactly(C.ROOM_HINTS3, ["fusion", "office", "cellar"], "ROOM_HINTS3");
+  keysExactly(C.ROOM_HINTS3, ["fusion", "office", "cellar", "casino"], "ROOM_HINTS3");
 }
 
 // ---- ids must match config.js ----

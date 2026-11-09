@@ -12,7 +12,7 @@ import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, note, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, icon, miniLayer, netRoom, note, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const fill = casFill;
@@ -78,7 +78,8 @@ export async function openCasino() {
   if (!P) return;
   if (!UI.net || !NET.loggedIn) { note("Hamachi 賭場在伺服器上：要登入才進得去。", "bad"); return; }
   if (S && S.m && S.m.layer.isConnected) return;
-  const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; });
+  const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); });
+  NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
   S = { m, tab: "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;
   draw();

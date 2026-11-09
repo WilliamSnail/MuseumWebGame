@@ -14,7 +14,7 @@ import { CAS_QUICK } from "../../shared/casino_table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, note, snd } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, h, icon, netRoom, note, snd } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
@@ -60,7 +60,8 @@ export function openTable(pid) {
   call("join").then(r => { if (T === s && r.view) onView(r.view); }).catch(e => { if (T === s) note((e && e.message) || "入座不了。", "bad"); });
 }
 function mount() {
-  T.m = overlay("nb-casino nb-table", "Hamachi 賭場・同桌", "Hamachi 賭場同桌", "dice", onFrameClose);
+  T.m = overlay("nb-casino nb-table", "Hamachi 賭場・同桌", "Hamachi 賭場同桌", "dice", (...a) => { NET.where(netRoom(UI.screen)); return onFrameClose(...a); });
+  NET.where("casino");
 }
 function onFrameClose() { if (T) endTable(true); }
 async function endTable(leave) {

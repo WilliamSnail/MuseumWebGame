@@ -746,14 +746,14 @@ export const ART = (() => {
   const icon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || `<circle cx="12" cy="12" r="4"/>`}</svg>`;
 
   // ---------- 平面圖：每間房是可以點的區塊（11 間 + 大廳） ----------
-  const NAMES = { gallery: "畫廊", origin: "起源室", workshop: "手作坊", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", library: "圖庫", fusion: "融合室", office: "館長室", cellar: "地下收藏庫", lobby: "大廳" };
+  const NAMES = { casino: "賭場", gallery: "畫廊", origin: "起源室", workshop: "手作坊", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", library: "圖庫", fusion: "融合室", office: "館長室", cellar: "地下收藏庫", lobby: "大廳" };
   const PLAN = {
     land: { vb: "0 0 1000 600", fs: 22, isz: 34, ent: [570, 570], lobby: { d: "M330 280H670V570H470V440H330Z", box: [330, 280, 340, 160] },
-      rooms: [["origin", 30, 30, 220, 170], ["gallery", 250, 30, 320, 170], ["codex", 570, 30, 220, 170], ["office", 790, 30, 180, 170], ["workshop", 30, 200, 300, 185], ["pillow", 30, 385, 300, 185], ["commission", 330, 200, 340, 80], ["cellar", 330, 440, 140, 130], ["hall", 670, 200, 300, 123], ["library", 670, 323, 300, 124], ["fusion", 670, 447, 300, 123]],
-      doors: [["v", 250, 115], ["v", 570, 115], ["v", 790, 115], ["h", 140, 200], ["h", 450, 200], ["h", 880, 200], ["h", 500, 280, 70], ["v", 330, 332], ["v", 330, 412, 36], ["v", 470, 505], ["h", 180, 385], ["v", 670, 240, 40], ["v", 670, 385], ["v", 670, 508], ["h", 820, 323], ["h", 820, 447]] },
+      rooms: [["origin", 30, 30, 220, 170], ["gallery", 250, 30, 320, 170], ["codex", 570, 30, 220, 170], ["office", 790, 30, 180, 170], ["workshop", 30, 200, 300, 185], ["pillow", 30, 385, 170, 185], ["casino", 200, 385, 130, 185], ["commission", 330, 200, 340, 80], ["cellar", 330, 440, 140, 130], ["hall", 670, 200, 300, 123], ["library", 670, 323, 300, 124], ["fusion", 670, 447, 300, 123]],
+      doors: [["v", 250, 115], ["v", 570, 115], ["v", 790, 115], ["h", 140, 200], ["h", 450, 200], ["h", 880, 200], ["h", 500, 280, 70], ["v", 330, 332], ["v", 330, 412, 36], ["v", 470, 505], ["h", 115, 385], ["v", 670, 240, 40], ["v", 670, 385], ["v", 670, 508], ["h", 820, 323], ["h", 820, 447]] },
     port: { vb: "0 0 600 900", fs: 26, isz: 38, ent: [300, 870], lobby: { d: "M230 430H370V870H230Z", box: [230, 430, 140, 440] },
-      rooms: [["origin", 30, 30, 200, 150], ["codex", 230, 30, 180, 150], ["office", 410, 30, 160, 150], ["gallery", 30, 180, 360, 150], ["fusion", 390, 180, 180, 150], ["workshop", 30, 330, 200, 200], ["pillow", 30, 530, 200, 340], ["commission", 230, 330, 140, 100], ["hall", 370, 330, 200, 200], ["library", 370, 530, 200, 190], ["cellar", 370, 720, 200, 150]],
-      doors: [["v", 230, 105], ["v", 410, 105], ["h", 130, 180], ["h", 490, 180], ["v", 390, 255], ["h", 300, 330], ["h", 300, 430, 60], ["v", 230, 480], ["v", 230, 700], ["v", 370, 480], ["v", 370, 625], ["v", 370, 795], ["h", 130, 530], ["h", 470, 530]] },
+      rooms: [["origin", 30, 30, 200, 150], ["codex", 230, 30, 180, 150], ["office", 410, 30, 160, 150], ["gallery", 30, 180, 360, 150], ["fusion", 390, 180, 180, 150], ["workshop", 30, 330, 200, 200], ["pillow", 30, 530, 200, 190], ["casino", 30, 720, 200, 150], ["commission", 230, 330, 140, 100], ["hall", 370, 330, 200, 200], ["library", 370, 530, 200, 190], ["cellar", 370, 720, 200, 150]],
+      doors: [["v", 230, 105], ["v", 410, 105], ["h", 130, 180], ["h", 490, 180], ["v", 390, 255], ["h", 300, 330], ["h", 300, 430, 60], ["v", 230, 480], ["v", 230, 625], ["v", 230, 795], ["v", 370, 480], ["v", 370, 625], ["v", 370, 795], ["h", 130, 530], ["h", 470, 530]] },
   };
   // 地下收藏庫：往下的樓梯（平面圖畫法：一階一階的踏板 + 往下箭頭）
   const stairsPlan = (x, y, w, h, done = 0) => {
@@ -777,7 +777,7 @@ export const ART = (() => {
         if (prog) colW = Math.max(colW, [...prog.text].length * pf * .82, bar ? bw * .8 : 0);
         const tot = S + 12 + colW; ix = cx - tot / 2; iy = cy - S / 2; tx = ix + S + 12 + colW / 2; ty = cy + f * .36 - extra / 2;
       } else { const top = cy - (S + (S ? 12 : 0) + f + extra) / 2; ix = cx - S / 2; iy = top; tx = cx; ty = top + S + (S ? 10 : 0) + f * .86; }
-      let out = S ? `<g class="fp-icon" transform="translate(${n(ix)} ${n(iy)}) scale(${n(S / 24 * 100) / 100})" fill="none" stroke="currentColor" stroke-width="${n(1.7 * 24 / S * 100) / 100}" stroke-linecap="round" stroke-linejoin="round">${ICONS[key] || ICONS.lobby}</g>` : "";
+      let out = S ? `<g class="fp-icon" transform="translate(${n(ix)} ${n(iy)}) scale(${n(S / 24 * 100) / 100})" fill="none" stroke="currentColor" stroke-width="${n(1.7 * 24 / S * 100) / 100}" stroke-linecap="round" stroke-linejoin="round">${ICONS[key === "casino" ? "dice" : key] || ICONS.lobby}</g>` : "";
       out += `<text class="fp-label" x="${n(tx)}" y="${n(ty)}" text-anchor="middle" font-size="${f}" font-family="inherit">${esc(name)}</text>`;
       if (prog) {
         const py = ty + 8 + pf * .9, cls = "fp-prog" + (prog.done ? " done" : "");
