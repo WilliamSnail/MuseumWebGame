@@ -50,7 +50,7 @@ export function hallView(save) {
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
   const hung = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) : null; // 掛在牆上的探險報告（決定 0036）
-  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P) }; // posters：辦完的展覽（決定 0035）
+  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
 }
 
 // ---------- 來訪、按讚、留言 ----------

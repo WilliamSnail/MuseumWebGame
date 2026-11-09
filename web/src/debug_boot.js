@@ -51,7 +51,7 @@ import { pickJob } from "./ui_screens3.js";
     if (screen === "ending") { go("ending", { id: arg || "curator" }, { action: false }); return; }
     // 簽到卡、簽到日曆（11-09，決定 0030）：#signin、#calendar；兌換所（決定 0032）：#shop，放好 40 枚週章
     if (screen === "shop") storyState(P).stamps = 40;
-    if (screen === "signin" || screen === "calendar" || screen === "shop") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
+    if (screen === "signin" || screen === "calendar" || screen === "shop" || screen === "casino") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
     if (screen === "book") { go("origin", {}, { action: false }); setTimeout(() => openBook(STORY_CHAPTERS[0], $(".reader")), 300); return; }
     go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) ? { tab: arg } : {}, { action: false });
   }, 150);

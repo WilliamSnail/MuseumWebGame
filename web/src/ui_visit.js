@@ -151,6 +151,7 @@ function friendHall(root, params) {
     h("h3", null, "館友留言"), notes);
   root.append(roomHead(`${nick} 的展廳`, `評分 ${v.score}／100`, ...tools), plate, wall, posterWall(v.posters || []), h("div", { class: "hall-wrap fh-wrap" }, room, side),
     v.report && ADDONS.reportSheet ? h("div", { class: "cx-hall" }, h("h3", null, "掛在牆上的探險報告"), ADDONS.reportSheet(v.report)) : null,
+    ADDONS.casinoShelf ? ADDONS.casinoShelf(v) : null, // 館友掛的賭場紀念品和稱號（決定 0040，ui_casino.js）
     visitLearnLine(d.learn, nick));
 }
 ADDONS.friendHall = friendHall;

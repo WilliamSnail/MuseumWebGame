@@ -20,13 +20,17 @@ import * as admin from "../shared/admin.js";
 import * as shop from "../shared/shop.js";
 import * as visit from "../shared/visit.js";
 import * as themeshow from "../shared/themeshow.js";
+import * as casinoText from "../shared/casino_text.js";
+import * as casino from "../shared/casino.js";
+import * as casinoWallet from "../shared/casino_wallet.js";
+import * as casinoTable from "../shared/casino_table.js";
 import * as board from "../shared/board.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWallet, casinoTable })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -105,6 +109,18 @@ ok("主題展接得上 logic、logic3、signin（11-09，決定 0035）", () => 
   assert.deepStrictEqual(themeshow.syncShow(P, "2026-11-09"), []);
   assert.strictEqual(themeshow.showItemOf("legend").opt, "傳說的金冠");
   logic3.weeklyState(P);
+});
+ok("賭場接得上 config、logic、logic3、story（11-09，決定 0040）", () => {
+  logic.setRng(logic.mulberry32(7));
+  const w = casinoWallet.casWalletFix(casinoWallet.casWalletNew(), "2026-11-09");
+  assert.strictEqual(w.chips, config.NUM.casino.startChips);
+  const house = casinoWallet.casHouseNew();
+  const P = logic.newProfile("challenge");
+  const ctx = { w, house, round: null, P, day: "2026-11-09", id: "t1" };
+  const r = casinoWallet.casStepDeal(ctx, "1000");
+  assert.ok(r.ok && r.view.player.cards.length === 2);
+  assert.strictEqual(casino.casHand([0, 12]).total, 21);
+  logic.setRng(null);
 });
 ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）", () => {
   const save = logic.newSave();
