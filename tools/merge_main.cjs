@@ -11,14 +11,20 @@ const canAuto = f => f === INDEX || !!KEEP_BOTH[f];
 
 const MARK = /^<<<<<<< [^\n]*\n([\s\S]*?)^=======\n([\s\S]*?)^>>>>>>> [^\n]*\n/gm;
 // 一行的清單（load_shared 的 ORDER、esm_smoke 的模組表）兩邊各加了東西：以對方為底，把我這邊多的放回原本的前一項後面
-function mergeListLine(ours, theirs) {
+function mergeListLine(oursLine, theirsLine) {
+  // 收尾（"]; // 註解"）兩邊都有的先拿掉，最後一項才比得到
+  let n = 0;
+  while (n < oursLine.length && n < theirsLine.length && oursLine[oursLine.length - 1 - n] === theirsLine[theirsLine.length - 1 - n]) n++;
+  let cut = oursLine.length - n;
+  while (cut < oursLine.length && !"]}".includes(oursLine[cut])) cut++;
+  const tail = oursLine.slice(cut), ours = oursLine.slice(0, cut), theirs = theirsLine.slice(0, theirsLine.length - tail.length);
   const a = ours.split(", "), out = theirs.split(", ");
   a.forEach((tok, i) => {
     if (out.includes(tok)) return;
     const at = i > 0 ? out.indexOf(a[i - 1]) : -1;
     out.splice(at + 1, 0, tok);
   });
-  return out.join(", ");
+  return out.join(", ") + tail;
 }
 const oneLine = s => s.split("\n").length === 2 && s.endsWith("\n");
 function keepBoth(text, how = "plain") {
