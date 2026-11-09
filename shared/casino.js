@@ -26,6 +26,18 @@ export const casNum = n => {
 };
 export const casExact = n => Math.round(+n || 0).toLocaleString("en-US"); // 完整的數字（滑鼠停著看）
 
+// ---------- 大禮包的拉霸機：五輪怎麼停（只是演出，結果是伺服器決定的） ----------
+// 幾顆星就從左邊停幾個 ★。已經有 2 顆星以上，下壹輪拖長壹點（會不會再中？）；斷了之後剩下的很快停完。
+// fast：全開的時候每包很快，不拖。回傳 5 輪 { star, near（沒中，但下面那格是 ★）, tease（拖長）, dur（毫秒）, gap（停完等多久） }
+export function casSlotPlan(stars, fast) {
+  const n = Math.max(0, Math.min(5, Math.floor(+stars) || 0));
+  return Array.from({ length: 5 }, (_, i) => {
+    const star = i < n, first = i === n, tease = !fast && i >= 2 && i <= n;
+    const dur = fast ? 150 : tease ? 1250 : star ? 620 : first ? 620 : 240;
+    return { star, near: first, tease, dur, gap: fast ? 0 : star ? 90 : 0 };
+  });
+}
+
 // ---------- 牌 ----------
 export const casDeck = () => Array.from({ length: 52 }, (_, i) => i);
 export function casShuffle(deck) {

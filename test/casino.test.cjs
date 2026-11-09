@@ -63,6 +63,22 @@ T("下注可以打「10萬」「1.5億」「1,000」；打壞的照樣被擋", G
   assert.strictEqual(G.casBetCheck("abc", 1e9).ok, false);
   assert.ok(big);
 });
+T("拉霸機的停法：幾顆星就從左邊停幾個 ★；2 顆以上才拖長；斷了之後很快；全開不拖", G => {
+  for (let n = 1; n <= 5; n++) {
+    const p = G.casSlotPlan(n);
+    assert.strictEqual(p.length, 5);
+    assert.strictEqual(p.filter(x => x.star).length, n, n + " 顆星");
+    assert.ok(p.slice(0, n).every(x => x.star), "星都在左邊");
+    assert.ok(p.every(x => x.dur > 0));
+  }
+  assert.strictEqual(G.casSlotPlan(1).filter(x => x.tease).length, 0, "壹顆星不用吊胃口");
+  assert.deepStrictEqual(JS(G.casSlotPlan(3).map(x => x.tease)), [false, false, true, true, false], "第 3、4 輪拖長：有沒有再中");
+  assert.strictEqual(G.casSlotPlan(5)[4].tease, true, "最後壹顆也拖長");
+  assert.strictEqual(G.casSlotPlan(2)[2].near, true, "斷掉的那壹輪，下面那格是 ★");
+  assert.strictEqual(G.casSlotPlan(2)[3].near, false);
+  assert.ok(G.casSlotPlan(5, true).every(x => !x.tease && x.dur <= 150), "全開很快");
+  assert.strictEqual(G.casSlotPlan("壞的").filter(x => x.star).length, 0, "壞資料不丟錯");
+});
 T("牌名", G => {
   assert.strictEqual(G.casCardName(0), "A♠"); assert.strictEqual(G.casCardName(51), "K♣"); assert.strictEqual(G.casCardName(9), "10♠");
 });

@@ -1038,3 +1038,22 @@ button.chip.qk-chip { display: inline-grid; grid-template-columns: auto auto; co
 .blink-veil p { margin: 0; color: #CDB8F0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .2em; text-align: center; padding: 0 20px; }
 .blink-n { min-height: 3.5rem; color: var(--gold-hi); font-family: var(--serif); font-weight: 400; font-size: 2.75rem; line-height: 3.5rem; }
 .blink-veil small { color: #6F6786; font-size: .75rem; letter-spacing: .1em; }
+
+/* ----- 狀態列的提示（翊文 11-09）：羊皮紙小卡，從狀態列往上開 ----- */
+.st-tip { position: fixed; z-index: 8000; width: min(300px, calc(100vw - 16px)); padding: 12px 14px; border-radius: 4px; color: var(--parch-ink); background: var(--parch); border: 1px solid var(--gold-lo); box-shadow: inset 0 0 0 1px rgba(255,250,225,.6), 0 10px 24px rgba(0,0,0,.5); font-size: .875rem; line-height: 1.55; pointer-events: none; }
+.st-tip[hidden] { display: none; }
+.st-tip-t { display: block; font-family: var(--serif); font-size: 1rem; letter-spacing: .1em; margin-bottom: 4px; }
+.st-tip p { margin: 0 0 4px; }
+.st-tip-live { color: #8A5A08; }
+.st-tip-l { margin-top: 8px !important; font-weight: 700; color: #6E5020; }
+.st-tip ul { margin: 2px 0 0; padding-left: 18px; }
+.st-tip li { margin: 1px 0; }
+.st-item[tabindex="0"], button.st-item { cursor: help; }
+button.st-item { cursor: pointer; }
+
+/* ----- 說明文字的重點（翊文 11-09）：深色底金色、綠、紅；羊皮紙上換深一點的字 ----- */
+.mk { font-weight: 700; }
+.mk-em { color: var(--mk-em, var(--gold-hi)); }
+.mk-good { color: var(--mk-good, #A6E0AE); }
+.mk-bad { color: var(--mk-bad, #F3B3AA); }
+.st-tip, .nb-sheet, .placard { --mk-em: #7A4E12; --mk-good: #2F6E38; --mk-bad: #A8382D; }

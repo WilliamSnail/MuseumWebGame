@@ -5,9 +5,10 @@
 import { casExact, casNum } from "../../shared/casino.js";
 import { NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT } from "../../shared/content3.js";
+import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
+import { markTokens } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkMinsLeft, quirkName, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
@@ -102,6 +103,14 @@ export function ptNode(text, cls) {
   const s = pt(text);
   const glitch = P && !isFree(P) && P.sanity < 40 && s !== text;
   return h("span", { class: (cls || "") + (glitch ? " glitch" : "") }, s);
+}
+
+// 說明文字標重點（markTokens）：回傳可以放進 h() 的東西。玩家打的字不要用這個
+export const markText = text => markTokens(text).map(x => (x.k ? h("b", { class: "mk mk-" + x.k }, x.t) : x.t));
+export function ptMark(text, cls) {
+  const s = pt(text);
+  const glitch = P && !isFree(P) && P.sanity < 40 && s !== text;
+  return h("span", { class: (cls || "") + (glitch ? " glitch" : "") }, markText(s));
 }
 
 // ---------- 畫青蛙、抱枕（套上發作效果和圖庫） ----------
@@ -358,11 +367,42 @@ export function audioTrack(instant) {
 }
 
 // ---------- 狀態列 ----------
+// 狀態列的提示（翊文 11-09）：滑鼠移上去、鍵盤選到；手機點壹下（委託、籌碼點了是走過去，手機上看 ⓘ 展開）
+let tipBox = null;
+function tipHide() { if (tipBox) tipBox.hidden = true; }
+function tipShow(box, id) {
+  const t = STATUS_TIPS[id];
+  if (!t) return;
+  if (!tipBox || !tipBox.isConnected) { tipBox = h("div", { class: "st-tip", id: "st-tip", role: "tooltip", hidden: true }); document.body.append(tipBox); }
+  const live = id === "san" && P && !isFree(P) ? `現在的上限是 ${maxSan(P)}（99－佩佩神話）。` : id === "chips" && box.dataset.exact ? `現在有 ${box.dataset.exact}。` : null;
+  tipBox.replaceChildren(h("b", { class: "st-tip-t" }, t.title), h("p", null, markText(t.what)), live ? h("p", { class: "st-tip-live" }, markText(live)) : null,
+    t.how ? h("p", { class: "st-tip-l" }, t.label) : null, t.how ? h("ul", null, t.how.map(x => h("li", null, markText(x)))) : null);
+  tipBox.hidden = false;
+  const r = box.getBoundingClientRect(), w = tipBox.offsetWidth;
+  tipBox.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+  tipBox.style.bottom = (innerHeight - $("#status").getBoundingClientRect().top + 8) + "px";
+}
+function statusTips(st) {
+  $$(".st-item[id]", st).forEach(box => {
+    const id = box.id.slice(3);
+    if (!STATUS_TIPS[id]) return;
+    if (box.tagName !== "BUTTON") {
+      box.tabIndex = 0;
+      box.addEventListener("click", e => { e.stopPropagation(); if (tipBox && !tipBox.hidden && tipBox.dataset.of === id) tipHide(); else { tipShow(box, id); tipBox.dataset.of = id; } });
+    }
+    box.addEventListener("pointerenter", e => { if (e.pointerType !== "touch") tipShow(box, id); });
+    box.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") tipHide(); });
+    box.addEventListener("focus", () => tipShow(box, id));
+    box.addEventListener("blur", tipHide);
+  });
+}
+document.addEventListener("click", tipHide);
+document.addEventListener("keydown", e => { if (e.key === "Escape") tipHide(); });
 export function buildStatus() {
   const st = $("#status");
   if (!P) { st.replaceChildren(); return; }
   const free = isFree(P);
-  const bar = (id, label) => h("div", { class: "st-item st-bar", id: "st-" + id, title: label },
+  const bar = (id, label) => h("div", { class: "st-item st-bar", id: "st-" + id },
     h("span", { class: "st-label" }, label), h("span", { class: "st-track" }, h("i", { class: "st-fill" }), h("i", { class: "st-dot" })), h("span", { class: "st-val" }, h("b", { class: "st-num" }, "0"), h("small", { class: "st-max" }, "／99")));
   const numItem = (id, label, onClick) => h(onClick ? "button" : "div", { class: "st-item", id: "st-" + id, type: onClick ? "button" : null, onClick },
     h("span", { class: "st-label" }, label), h("b", { class: "st-num" }, "0"));
@@ -376,6 +416,7 @@ export function buildStatus() {
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
   const toggle = h("button", { class: "st-toggle", type: "button", "aria-label": "展開狀態", onClick: () => st.classList.toggle("open") }, icon("info"));
   st.replaceChildren(h("div", { class: "st-row" }, items, extra, dots), toggle);
+  statusTips(st);
   updateStatus(true);
   watchStatusHeight();
 }
@@ -464,7 +505,7 @@ export function drawChips() {
   box.hidden = !UI.net || typeof UI.chips !== "number";
   if (box.hidden) return;
   $(".st-num", box).textContent = casNum(UI.chips);
-  box.title = `籌碼 ${casExact(UI.chips)}（只在賭場用，不是真錢）`;
+  box.dataset.exact = casExact(UI.chips);
 }
 export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }
 export function updateStatus(instant) {
