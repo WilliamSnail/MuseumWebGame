@@ -9,6 +9,9 @@ const { execFileSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 const SITE = "https://pepe-museum.web.app";
+// 每則公告最後面的連結（翊文 11-09：「每天的公告最後面也給一些遊戲網站連結」）。要加連結加在這裡
+const LINKS = [["進遊戲", SITE]];
+const footer = () => LINKS.map(([name, url]) => `${name}：${url}`).join("\n");
 const MAX = 2000; // Discord 一則訊息最多 2000 字
 const DAY_FILE = /^content\/weeks\/(\d{4}-W\d{2})\/d([1-7])\.json$/;
 
@@ -28,9 +31,9 @@ function dayMessage(w, d, n, hol) {
     lines.push(`**〈${w.title}〉第 ${n} 天**`, d.board || "");
   }
   if (hol) lines.push("", `今天是${hol.name}。${hol.words || ""}`);
-  lines.push("", `來逛逛：${SITE}`);
-  const text = lines.join("\n").trim();
-  return text.length > MAX ? text.slice(0, MAX - 1) + "…" : text;
+  // 連結一定留著：太長只截前面的內容
+  const end = "\n\n" + footer(), text = lines.join("\n").trim(), room = MAX - end.length;
+  return (text.length > room ? text.slice(0, room - 1) + "…" : text) + end;
 }
 
 // 發一則。沒有人會被 @（allowed_mentions 空的）。錯誤訊息不含金鑰
@@ -56,7 +59,12 @@ const readJSON = rel => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8")
 
 async function main() {
   if (process.argv.includes("--test")) {
-    const ok = await send(`佩佩博物館2 的公告接上 Discord 了。之後每天台灣時間 05:00 前，這裡會貼當天的消息；週一貼這週地下收藏庫的大綱。\n${SITE}`);
+    // 測試：發最新一天真正格式的公告，看長什麼樣
+    const dir = path.join(ROOT, "content", "weeks");
+    const week = fs.readdirSync(dir).filter(n => /^\d{4}-W\d{2}$/.test(n)).sort().pop();
+    const n = week ? Math.max(...fs.readdirSync(path.join(dir, week)).map(f => (f.match(/^d([1-7])\.json$/) || [])[1]).filter(Boolean).map(Number)) : 0;
+    const body = week && n > 0 ? dayMessage(readJSON(`content/weeks/${week}/week.json`), readJSON(`content/weeks/${week}/d${n}.json`), n, null) : footer();
+    const ok = await send(`（這是測試，之後每天會自動貼這樣的公告）\n\n${body}`.slice(0, MAX));
     console.log(ok ? "測試訊息發了。" : "沒發。");
     return;
   }
