@@ -153,7 +153,7 @@ export function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); 
 // 沒登入（標題畫面、開發用的 #畫面）：照舊存在這台電腦。
 // 登入後不寫這台電腦的舊存檔：留著給「搬上去」用，也不會被兩個分頁（兩個帳號）互相蓋掉。
 export function persist() {
-  if (UI.net) { NET.saveSoon(SAVE); return; }
+  if (UI.net) { if (!UI.saveHold) NET.saveSoon(SAVE); return; } // saveHold：伺服器正在寫我的存檔（合作地下走到一半），這邊不要存，不然會撞 rev（ui_coop.js）
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) { /* 預覽環境可能不能存 */ }
 }
 // 馬上存，不等 saveSoon 的幾秒：抽到的東西（小優點、小缺點）不能因為馬上重新整理就重抽（決定 0028）

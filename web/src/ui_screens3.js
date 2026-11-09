@@ -14,7 +14,7 @@ import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFlo
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
-import { $, $$, P, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
+import { $, $$, ADDONS, P, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
 import { roomHead } from "./ui_screens1.js";
 import { copyText } from "./ui_screens2.js";
 import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
@@ -559,6 +559,7 @@ SCREENS.cellar = root => {
   }, "primary big", { disabled: !full });
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
     storyCellarBox(),
+    ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）
     h("div", { class: "floors" }, floorEls),
     h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
       tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),

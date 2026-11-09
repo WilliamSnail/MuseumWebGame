@@ -164,6 +164,7 @@ NET.on("conflict", async () => {
     const mode = SAVE.current, playing = !!P;
     setSave(migrateSave(r.data));
     if (playing && mode && SAVE.profiles[mode]) useProfile(mode); else setP(null);
+    if (UI.saveHold) return; // 合作地下走到一半：是伺服器寫的，不用提示
     note("別的分頁或裝置先存了：換成伺服器上的進度。同壹個帳號開兩個分頁，進度會互相蓋掉。", "bad");
     if (P) rerender(); else go("title", {}, { action: false });
   } catch (e) { /* 下次存的時候再試 */ }

@@ -55,14 +55,22 @@ export const COOP = {
     { below: 30, lv: 2, power: 2, skill: -10, failSan: 1 },
     { below: 20, lv: 3, power: 3, skill: -15, failSan: 2 },
   ],
+  // 伺服器走一趟的時間（shared/coop_flow.js，docs/多人實作.md 的 M4）：投票 30 秒、棄權連 3 次離隊、斷線 60 秒
+  voteMs: 30000, resultMs: 20000, floorMs: 30000, resumeMs: 15000,
+  maxSkips: 3,             // 連幾次沒投票算掛機、自動離隊
+  offlineMs: 60000,        // 斷線多久才移出隊伍（伺服器自己看 /status 再確認）
+  staleMs: 600000,         // 這麼久沒有人動：這一趟算結束（大家都走了，回來才收）
+  dailyRewarded: 3,        // 每個帳號每天前幾趟有獎勵（決定 0020）
 };
 
 // ---------- 小工具 ----------
 export const coopMember = (run, id) => run.members.find(m => m.id === id) || null;
-// 還在這一趟裡的人（離隊、幽靈回到地面的不算；還在走這一層的幽靈算）
-export const coopActive = run => run.members.filter(m => !m.out);
-// 能投票、能擲骰的人：還在、不是幽靈
-export const coopCanAct = m => !!m && !m.out && !m.ghost;
+// 還在地下的人（離隊、幽靈回到地面、留在監視器前的都不算；還在走這一層的幽靈算）
+export const coopActive = run => run.members.filter(m => !m.out && !m.guard);
+// 還在這一趟裡的人：地下的＋留守的（要寫回存檔、要送畫面的都是這些人）
+export const coopPresent = run => run.members.filter(m => !m.out);
+// 能投票、能擲骰的人：還在地下、不是幽靈
+export const coopCanAct = m => !!m && !m.out && !m.ghost && !m.guard;
 export const coopVoters = run => run.members.filter(coopCanAct);
 export const coopRoom = run => { const f = run && cellarFloor(run.floor); return f ? f.rooms[run.idx] || null : null; };
 // 這位隊員帶的佩佩有沒有某個選項（棒球帽、觸手帽是誰的）
@@ -147,7 +155,7 @@ export function coopPreview(run, Ps) {
 }
 // 每位隊員的理智、幽靈、壓力、房間的樣子跟 P 對齊（每一步最後叫）
 export function coopSync(run, Ps) {
-  run.members.forEach(m => { const P = Ps[m.id]; if (!P) return; m.san = P.sanity; m.max = maxSan(P); m.myth = P.myth; });
+  run.members.forEach(m => { const P = Ps[m.id]; if (!P || m.out === "left") return; m.san = P.sanity; m.max = maxSan(P); m.myth = P.myth; });
   run.pressure = coopPressure(run);
   run.room = run.phase === "vote" ? coopPreview(run, Ps) : null;
   return run;
@@ -161,10 +169,13 @@ export function coopFix(run) {
   if (!run || typeof run !== "object") return run;
   run.members = coopArr(run.members); run.team = coopArr(run.team); run.log = coopArr(run.log); run.cleared = coopArr(run.cleared);
   if (!run.used || typeof run.used !== "object") run.used = {};
-  ["over", "next", "leader", "last", "room", "pressure"].forEach(k => { if (run[k] === undefined) run[k] = null; });
+  ["over", "next", "leader", "last", "room", "pressure", "deadline", "report", "summary"].forEach(k => { if (run[k] === undefined) run[k] = null; });
+  if (!run.fresh || typeof run.fresh !== "object") run.fresh = {};
+  if (!run.votes || typeof run.votes !== "object") run.votes = {};
+  if (!run.acks || typeof run.acks !== "object") run.acks = {};
   run.step = run.step || 0;
   run.members.forEach(m => {
-    m.keys = coopArr(m.keys); m.ghost = !!m.ghost; m.out = m.out || null; m.rewarded = m.rewarded !== false;
+    m.keys = coopArr(m.keys); m.ghost = !!m.ghost; m.guard = !!m.guard; m.out = m.out || null; m.rewarded = m.rewarded !== false; m.skips = m.skips || 0;
     if (!m.used || typeof m.used !== "object") m.used = {};
     m.got = Object.assign({ insp: 0, sanLoss: 0, sanGain: 0, myth: 0, rooms: 0 }, m.got);
     m.got.injured = coopArr(m.got.injured);
@@ -181,6 +192,8 @@ export function canStartCoop(members, floor) {
   if (!cellarFloor(floor)) return { ok: false, reason: "這一層還沒開放" };
   const ids = new Set();
   let total = 0;
+  if (members.filter(m => m && m.guard).length > 1) return { ok: false, reason: "只能有壹個人留守" };
+  if (members.every(m => m && m.guard)) return { ok: false, reason: "要有人下去" };
   for (const m of members) {
     const who = m && m.id;
     if (!m || typeof m.id !== "string" || !m.id || ids.has(m.id)) return { ok: false, reason: "隊員的帳號重複了", who };
@@ -190,6 +203,7 @@ export function canStartCoop(members, floor) {
     if (isFree(P)) return { ok: false, reason: `${name} 在自由模式，不能一起下去`, who };
     if (!P.day) return { ok: false, reason: `${name} 的存檔還沒有「今天」（伺服器先跑 ensureDay）`, who };
     if (P.sanity <= 0) return { ok: false, reason: `${name} 的理智已經歸零了`, who };
+    if (m.guard) continue; // 留守的人不下去：不帶佩佩、也不看他走到哪一層
     if (floor > (P.cellar.best || 0) + 1) return { ok: false, reason: `${name} 要先走過 B${floor - 1}`, who };
     const keys = Array.isArray(m.keys) ? m.keys : [];
     if (keys.length < COOP.eachMin || keys.length > COOP.eachMax || new Set(keys).size !== keys.length) return { ok: false, reason: `${name} 要帶 ${COOP.eachMin}–${COOP.eachMax} 隻不一樣的佩佩`, who };
@@ -202,23 +216,25 @@ export function canStartCoop(members, floor) {
   if (total > COOP.teamMax) return { ok: false, reason: `隊伍最多 ${COOP.teamMax} 隻（現在 ${total} 隻）` };
   return { ok: true, total, helpers: Math.max(0, COOP.teamMin - total) };
 }
-export function startCoop(members, floor) {
+// opt.fun：打開好玩的機制（線索、幻覺、證據、留守的地圖、搬東西、報告）；伺服器都開，舊的測試、模擬不開就跟原本一模一樣。opt.id：這一趟的編號
+export function startCoop(members, floor, opt = {}) {
   const can = canStartCoop(members, floor);
   if (!can.ok) return can;
   const Ps = {};
+  const first = members.find(m => !m.guard);
   const run = {
-    v: 1, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
-    leader: members[0].id,
+    v: 1, id: opt.id || null, fun: !!opt.fun, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
+    leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
-      return { id: m.id, name: m.name || m.id, keys: m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null,
+      return { id: m.id, name: m.name || m.id, keys: m.guard ? [] : m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null, vid: m.P.vid || null, guard: !!m.guard, skips: 0,
         ghost: false, out: null, san: m.P.sanity, max: maxSan(m.P), myth: m.P.myth, startSan: m.P.sanity, used: {},
         got: { insp: 0, sanLoss: 0, sanGain: 0, myth: 0, injured: [], rooms: 0 } };
     }),
     team: [], used: {}, pressure: null, room: null, last: null, log: [], cleared: [],
   };
   run.team = coopTeam(run, Ps);
-  members.forEach(m => { if (m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
+  members.forEach(m => { if (!m.guard && m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
   coopSync(run, Ps);
   return { ok: true, run, events: coopNewEvents(run) };
 }
@@ -528,5 +544,7 @@ export function viewFor(run, id) {
   if (!run || !coopMember(coopFix(run), id)) return null;
   const v = JSON.parse(JSON.stringify(run));
   v.me = id;
+  if (v.last && v.last.events) v.last.events = { [id]: v.last.events[id] || [] }; // 事件只給他自己的
+  v.fresh = (run.fresh && run.fresh[id]) || [];
   return v;
 }

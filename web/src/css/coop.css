@@ -1,0 +1,133 @@
+/* ================================================================
+   合作地下收藏庫（多人版 M4，11-09）。隊伍的框、邀請卡在 party.css；舞台（.cs-*）在 theme3.css。
+   ================================================================ */
+
+/* 骰子要蓋在木框上面（平常骰子是 z-index 8000，木框 8800） */
+body.coop-on .fx-overlay { z-index: 8950; }
+body.coop-on .ask { z-index: 8960; }
+
+/* 地下收藏庫畫面上的入口 */
+.cx-entry { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--gold-lo); border-radius: 3px; background: rgba(20,10,8,.35); }
+.cx-entry p { margin: 0; flex: 1 1 260px; font-size: .875rem; line-height: 1.6; color: var(--on-wall-sub); }
+
+/* 木框：比一起融合大，底色是地下的暗 */
+.nb-frame.nb-coop { width: min(1240px, 100%); height: min(860px, calc(100vh - 20px)); height: min(860px, calc(100dvh - 20px)); }
+.nb-layer:has(.nb-coop) { padding: 10px; }
+.nb-coop .nb-surface { background-color: #241A14; background-image: radial-gradient(ellipse at 50% 0%, rgba(120,84,50,.28), rgba(0,0,0,0) 70%); padding: 10px 12px; overflow: hidden; }
+.nb-coop .nb-top { min-height: 56px; padding: 6px 0; }
+.cx-msg { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+
+/* ---------- 準備區 ---------- */
+.cx-members { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cx-member { padding: 10px 8px; min-height: 0; }
+.pt-member.wait.cx-member { min-height: 120px; }
+.cx-pets { display: flex; justify-content: center; gap: 4px; min-height: 76px; }
+.pt-pet.cx-mini { width: 72px; height: 72px; font-size: .75rem; }
+.cx-guard-mark { width: 72px; height: 72px; display: grid; place-items: center; color: #6E5020; }
+.cx-guard-mark svg { width: 44px; height: 44px; }
+.cx-row, .cx-invite { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cx-label { flex: 0 0 auto; font-size: .875rem; color: #FBEFD9; letter-spacing: .08em; }
+.cx-floors { display: flex; flex-wrap: wrap; gap: 8px; }
+.cx-floor { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 44px; padding: 6px 12px; border-radius: 3px; border: 1px solid rgba(200,162,90,.45); background: rgba(251,245,230,.1); color: #FBEFD9; font: inherit; font-size: .75rem; cursor: pointer; }
+.cx-floor b { font-family: var(--serif); font-size: 1rem; }
+.cx-floor.on { background: linear-gradient(180deg, #F0D995, #C8A25A); color: #2A1A0C; border-color: #F2DA9A; }
+.cx-floor:disabled { cursor: default; }
+.cx-floor.locked { opacity: .5; }
+.cx-grow { flex: 1 1 240px; }
+.cx-pw { font-size: .6875rem; color: var(--parch-sub); }
+.pt-opt.cx-hurt { opacity: .55; cursor: not-allowed; }
+
+/* ---------- 走一趟：左邊舞台和房間，右邊隊員 ---------- */
+.cx-run { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; }
+.cx-main { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 0 4px 6px; }
+.cx-side { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.cx-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cx-head h3 { margin: 0; font-family: var(--serif); font-size: 1.125rem; letter-spacing: .08em; color: #FBEFD9; }
+.cx-head .room-dots { margin: 0; }
+.cx-press { flex: 1 1 100%; margin: 0; padding: 4px 10px; border-left: 3px solid #C8A25A; font-size: .8125rem; color: #FBEFD9; background: rgba(0,0,0,.25); }
+.cx-press small { margin-left: 6px; opacity: .75; }
+.cx-press.lv2 { border-left-color: #D0645A; color: #FFD9CF; }
+.cx-press.lv3 { border-left-color: #E23B2E; color: #FFC2B5; background: rgba(90,10,6,.4); animation: cxThrob 2.4s ease-in-out infinite; }
+@keyframes cxThrob { 50% { background: rgba(120,16,8,.6); } }
+body.reduce-motion .cx-press.lv3 { animation: none; }
+
+/* 舞台：最多 6 隻（單人的舞台是 3 隻的排法） */
+.cx-stage { width: 100%; max-width: none; max-height: 34vh; margin: 0; overflow: hidden; border-radius: 3px; flex: 0 0 auto; }
+.cx-stage .cellar-scene { margin-top: -6%; }
+.cx-stage .cs-team { height: 72%; bottom: 4px; }
+.cx-stage .cs-frog { left: calc((var(--i) + .5) * (100% / var(--n)) - min(9%, 50% / var(--n))); width: min(18%, 100% / var(--n)); bottom: 0; }
+.cx-stage .cs-tag { opacity: 1; top: 2px; font-size: .6875rem; padding: 1px 6px; }
+.cs-frog.cx-mine .cs-tag { color: #FFE9A8; border-color: #F2DA9A; }
+.cs-frog.cx-helper { opacity: .85; }
+.cs-frog.cx-helper .cs-tag { color: #C9D6DA; }
+.cx-odd { position: absolute; left: 10px; top: 8px; right: 10px; margin: 0; font-family: var(--serif); font-size: .875rem; letter-spacing: .05em; color: #F3D8D0; text-shadow: 0 1px 3px #000, 0 0 12px rgba(180,40,30,.7); pointer-events: none; animation: cxOdd 8s ease-in-out both; }
+@keyframes cxOdd { 0% { opacity: 0; } 8% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: .35; } }
+body.reduce-motion .cx-odd { animation: none; }
+/* 全隊的理智壓力：畫面越來越暗、邊上發紅 */
+.cx-run.pr1 .cx-stage { filter: saturate(.8) brightness(.92); }
+.cx-run.pr2 .cx-stage { filter: saturate(.6) brightness(.82); box-shadow: inset 0 0 40px rgba(140,20,10,.5); }
+.cx-run.pr3 .cx-stage { filter: saturate(.45) brightness(.7) contrast(1.1); }
+.cx-run.pr3 .cx-stage .cellar-scene { animation: cxShake 7s linear infinite; }
+@keyframes cxShake { 0%, 92%, 100% { transform: none; } 93% { transform: translate(-3px, 1px); } 95% { transform: translate(3px, -2px); } 97% { transform: translate(-2px, 2px); } }
+body.reduce-motion .cx-run.pr3 .cx-stage .cellar-scene { animation: none; }
+
+.cx-card { margin: 0; padding: 12px 16px 10px; }
+.cx-card .room-title { margin: 4px 0; font-size: 1.125rem; }
+.cx-card .nc-text p { margin: 2px 0; font-size: .875rem; }
+.cx-leader { background: rgba(156,116,40,.2); }
+.cx-choices { margin-top: 8px; }
+.cx-choices .btn { min-height: 44px; }
+.btn.cx-on { outline: 3px solid var(--gold); outline-offset: 1px; }
+.cx-vs { display: inline-flex; flex-wrap: wrap; gap: 3px; margin-left: 6px; }
+.cx-vs:empty { display: none; }
+.cx-v { padding: 0 6px; border-radius: 999px; background: #9C7428; color: #FFF6E0; font-size: .6875rem; font-weight: 400; }
+.cx-card-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.cx-wait { flex: 1 1 auto; color: var(--parch-sub) !important; text-shadow: none !important; font-size: .8125rem !important; }
+.cx-clock { font-size: .8125rem; color: var(--parch-sub); font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+.nb-top .cx-clock { color: #FBEFD9; }
+.cx-clock.soon { color: #B4251C; font-weight: 700; }
+.nb-top .cx-clock.soon { color: #FFB9A8; }
+.cx-text { margin: 8px 0; font-size: 1rem; line-height: 1.7; }
+.pt-sub { margin: 2px 0; font-size: .8125rem; color: var(--parch-sub); }
+.cx-result.bad .cx-text { color: #8C1D14; }
+.cx-reward { margin: 6px 0; font-weight: 700; color: #6E5020; }
+.cx-hurtline { margin: 4px 0; font-size: .875rem; color: #8C1D14; }
+.cx-go { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.cx-table { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; font-size: .8125rem; }
+.cx-tr { display: grid; grid-template-columns: minmax(70px, auto) 1fr auto; gap: 10px; padding: 4px 8px; border-radius: 2px; background: rgba(156,116,40,.1); }
+.cx-tr.me { background: rgba(200,162,90,.28); }
+.cx-tr.ghost { opacity: .7; font-style: italic; }
+.cx-san { color: var(--parch-sub); white-space: nowrap; }
+
+/* 右邊的隊員 */
+.cx-mates { display: flex; flex-direction: column; gap: 6px; }
+.cx-mate { padding: 8px 10px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #EFE3C6); }
+.cx-mate.me { box-shadow: 0 0 0 2px var(--gold); }
+.cx-mate.off { opacity: .6; }
+.cx-mate.ghost { background: linear-gradient(180deg, #E4E6EE, #C4C8D8); }
+.cx-mate-top { display: flex; align-items: center; justify-content: space-between; }
+.cx-mate-top b { font-family: var(--serif); font-size: .9375rem; }
+.cx-did { color: #2F6E38; font-style: normal; font-weight: 700; }
+.cx-tags { display: flex; flex-wrap: wrap; gap: 3px; margin: 2px 0; }
+.cx-tags span { padding: 0 6px; border-radius: 999px; background: #6E5020; color: #FFF6E0; font-size: .6875rem; }
+.cx-bar { height: 6px; margin-top: 4px; border-radius: 3px; background: rgba(0,0,0,.18); overflow: hidden; }
+.cx-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8C1D14, #C8A25A); transition: width .5s; }
+.cx-mate-n { margin-top: 2px; font-size: .75rem; color: var(--parch-sub); }
+
+@media (max-width: 760px) {
+  .nb-layer:has(.nb-coop) { padding: 0; }
+  .nb-frame.nb-coop { height: 100vh; height: 100dvh; padding: 0 6px 6px; border-radius: 0; }
+  .nb-coop .nb-surface { padding: 6px; }
+  .nb-coop .nb-plaque h2 { font-size: 1rem; letter-spacing: .12em; }
+  .cx-members { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .cx-floor span { display: none; }
+  .cx-run { display: flex; flex-direction: column; overflow-y: auto; }
+  .cx-main { overflow: visible; flex: 0 0 auto; }
+  .cx-side { overflow: visible; flex: 0 0 auto; }
+  .cx-stage { max-height: 26vh; }
+  .cx-stage .cs-tag { font-size: .625rem; padding: 0 4px; }
+  .cx-mates { flex-direction: row; flex-wrap: wrap; }
+  .cx-mate { flex: 1 1 45%; }
+  .cx-tr { grid-template-columns: minmax(56px, auto) 1fr; }
+  .cx-san { grid-column: 2; }
+}

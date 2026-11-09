@@ -158,6 +158,7 @@ export async function startChallenge(name) {
 }
 export async function afterEnter() {
   if (!P) return;
+  if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }

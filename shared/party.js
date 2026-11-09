@@ -46,7 +46,9 @@ export function inviteOver(inv, now) {
 
 // ---------- 隊伍 ----------
 export function newParty({ pid, kind, leader, leaderNick, now }) {
-  return { pid, kind, leader, phase: "lobby", at: now, members: { [leader]: { nick: leaderNick, ready: false, pick: [], joinedAt: now } } };
+  const p = { pid, kind, leader, phase: "lobby", at: now, members: { [leader]: { nick: leaderNick, ready: false, pick: [], joinedAt: now } } };
+  if (kind === "cellar") p.floor = 1; // 合作地下：下到第幾層（隊長選，11-09）
+  return p;
 }
 // Realtime Database 讀回來的：補回空陣列、false
 export function fixParty(p) {
@@ -55,6 +57,7 @@ export function fixParty(p) {
   for (const m of Object.values(p.members)) {
     m.pick = Array.isArray(m.pick) ? m.pick.filter(k => typeof k === "string") : m.pick && typeof m.pick === "object" ? Object.values(m.pick).filter(k => typeof k === "string") : [];
     m.ready = !!m.ready;
+    m.guard = !!m.guard; // 合作地下：留在監視器前（好玩的機制 5）
   }
   p.phase = p.phase || "lobby";
   // 融合的結果：沒有突變時 mutations 是空陣列，存進去就不見了
@@ -105,8 +108,44 @@ export function partyReady(p, uid, ready) {
   const m = p.members[uid];
   if (!m) return { ok: false, reason: "你不在這個隊伍裡" };
   if (p.phase !== "lobby") return { ok: false, reason: "已經開始了" };
-  if (ready && !m.pick.length) return { ok: false, reason: "先選壹隻佩佩" };
+  if (ready && !m.pick.length && !m.guard) return { ok: false, reason: "先選壹隻佩佩" };
   m.ready = !!ready;
+  delete p.fail;
+  return { ok: true };
+}
+// ---------- 合作地下（kind "cellar"，11-09）：選層數、留守、看完之後再走一趟 ----------
+// 隊長選層數。層數看每個人自己的進度：這裡不擋，開始時伺服器照存檔再檢查（shared/coop.js 的 canStartCoop）
+export function partyFloor(p, uid, floor) {
+  if (p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能選層數" };
+  if (p.leader !== uid) return { ok: false, reason: "要隊長選層數" };
+  if (!Number.isInteger(floor) || floor < 1 || floor > 9) return { ok: false, reason: "沒有這壹層" };
+  p.floor = floor;
+  Object.values(p.members).forEach(m => { m.ready = false; }); // 換層數了，大家重新按準備
+  delete p.fail;
+  return { ok: true };
+}
+// 留守：壹隊最多壹個人，而且要有人下去；留守的人不帶佩佩
+export function partyGuard(p, uid, on) {
+  const m = p.members[uid];
+  if (!m) return { ok: false, reason: "你不在這個隊伍裡" };
+  if (p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能換" };
+  if (on) {
+    if (Object.keys(p.members).length < 2) return { ok: false, reason: "要有人下去：壹個人不能留守" };
+    const other = Object.entries(p.members).find(([id, x]) => id !== uid && x.guard);
+    if (other) return { ok: false, reason: `${other[1].nick} 已經留守了` };
+  }
+  m.guard = !!on;
+  if (on) m.pick = [];
+  m.ready = false;
+  delete p.fail;
+  return { ok: true };
+}
+// 這一趟結束了，隊長想再走一趟：回到準備的樣子
+export function partyBack(p, uid) {
+  if (p.phase !== "done") return { ok: false, reason: "這壹趟還沒結束" };
+  if (p.leader !== uid) return { ok: false, reason: "要隊長決定" };
+  p.phase = "lobby";
+  Object.values(p.members).forEach(m => { m.ready = false; m.pick = m.pick.slice(); });
   delete p.fail;
   return { ok: true };
 }
@@ -116,7 +155,7 @@ export function canStartParty(p, uid) {
   if (p.leader !== uid) return { ok: false, reason: "要隊長按開始" };
   const ms = partyMembers(p);
   if (ms.length < PARTY.minMembers[p.kind]) return { ok: false, reason: p.kind === "fusion" ? "壹起融合要兩個人" : "人不夠" };
-  const notReady = ms.find(m => !m.ready || !m.pick.length);
+  const notReady = ms.find(m => !m.ready || (!m.pick.length && !m.guard));
   if (notReady) return { ok: false, reason: `等 ${notReady.nick} 準備好`, waitFor: notReady.id }; // waitFor：等的是誰（是自己的話，畫面寫「等你準備好」）
   return { ok: true, members: ms };
 }
