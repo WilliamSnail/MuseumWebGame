@@ -9,7 +9,7 @@
 //    paid：這筆有沒有給主人來訪的靈感。likes：累計幾個讚。seenAt：主人上次看的時間（比它新的算「新的」）。
 //  「今天」、「現在」都由呼叫的人給（伺服器的時間），不信瀏覽器。玩家打的字（暱稱、留言）一律只當資料，畫面用純文字顯示。
 // ================================================================
-import { LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js";
 import { normKey, parsePillowKey, refPick } from "./logic.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
@@ -75,6 +75,15 @@ function cleanHallSlot(s) {
   if (!GIFT_KINDS.includes(s.kind) || !giftKeyOk(s.key)) return null;
   return { kind: s.kind, key: normKey(s.key), perfect: s.kind === "pepe" && !!s.perfect, title: s.kind === "pepe" ? title : null };
 }
+// 辦完的展覽海報（決定 0035）：別人存檔裡的東西，一樣要檢查過才給參觀的人
+function cleanPosters(list) {
+  return (Array.isArray(list) ? list : []).slice(0, NUM.guest.postersMax).filter(p => p && Object.prototype.hasOwnProperty.call(HALL_THEME_BONUS, p.theme)).map(p => ({
+    theme: p.theme,
+    tier: Math.max(1, Math.min(3, Math.floor(+p.tier) || 1)),
+    score: Math.max(0, Math.min(100, Math.floor(+p.score) || 0)),
+    date: typeof p.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : null,
+  }));
+}
 export function cleanHallView(view) {
   if (!view || !view.open) return { open: false };
   const worn = (id, slot) => (LIMITED_ITEMS.some(x => x.id === id && x.kind === "deco" && x.slot === slot) ? id : null);
@@ -85,6 +94,7 @@ export function cleanHallView(view) {
     theme: typeof view.theme === "string" ? view.theme : null,
     deco: worn(view.deco, "stand"),
     frame: worn(view.frame, "frame"),
+    posters: cleanPosters(view.posters),
   };
 }
 

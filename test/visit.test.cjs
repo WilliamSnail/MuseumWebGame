@@ -35,7 +35,7 @@ T("展廳：給別人的只有展台、分數、主題、裝飾，不漏靈感�
   });
   s.email = "someone@example.com";
   const v = J(G.cleanHallView(G.hallView(s)));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "score", "slots", "theme"]);
+  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "score", "slots", "theme"]);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
   assert.strictEqual(v.deco, "stand-velvet");
   assert.strictEqual(v.frame, "frame-vine");
@@ -351,6 +351,12 @@ T("跟館友學接上了：今天第一次走進去，對方拿手的比我高�
   assert.ok(G.learnText(r.learn, "小明").includes("跟 小明 學了壹招"));
   const r2 = visit(r.book, A, DAY, 2, { learn, mySave: mine, ownerSave: owner });
   assert.strictEqual(r2.learn, null); assert.strictEqual(mine.profiles.challenge.skills.偵查, 20 + G.NUM.shop.learnGain);
+});
+
+T("展覽海報：參觀時看得到，壞的、不認識的主題拿掉（別人存檔裡的東西）", () => {
+  const v = G.cleanHallView({ open: true, slots: [], score: 50, posters: [{ theme: "legend", tier: 3, score: 96, date: "2026-11-09" }, { theme: "<b>壞</b>", tier: 9 }, null, { theme: "joy", tier: 99, score: 500, date: "x" }] });
+  assert.deepStrictEqual(J(v.posters), [{ theme: "legend", tier: 3, score: 96, date: "2026-11-09" }, { theme: "joy", tier: 3, score: 100, date: null }]);
+  assert.deepStrictEqual(J(G.cleanHallView({ open: true, slots: [] }).posters), []);
 });
 
 console.log(`${pass} passed, ${fail} failed（參觀展廳、送佩佩、伺服器的信）`);
