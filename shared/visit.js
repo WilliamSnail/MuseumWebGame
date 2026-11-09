@@ -84,6 +84,20 @@ function cleanPosters(list) {
     date: typeof p.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : null,
   }));
 }
+// 掛在牆上的探險報告（決定 0036）：別人存檔裡的東西，檢查過、限制長度才給參觀的人。畫面一律當純文字
+const hallRepStr = (s, n) => (typeof s === "string" ? [...s].slice(0, n).join("") : "");
+const hallRepNum = v => Math.max(0, Math.min(999, Math.floor(+v) || 0));
+function cleanHallReport(r) {
+  if (!r || typeof r !== "object" || typeof r.title !== "string") return null;
+  const list = (x, n) => (Array.isArray(x) ? x : []).slice(0, n);
+  return {
+    id: hallRepStr(r.id, 40), title: hallRepStr(r.title, 40),
+    date: typeof r.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : null,
+    floors: list(r.floors, 5).map(hallRepNum).filter(Boolean),
+    members: list(r.members, 6).filter(m => m && typeof m === "object").map(m => ({ name: hallRepStr(m.name, 12) || "館友", ghost: !!m.ghost, guard: !!m.guard, san0: hallRepNum(m.san0), san1: hallRepNum(m.san1), insp: hallRepNum(m.insp) })),
+    lines: list(r.lines, 20).filter(l => l && typeof l.t === "string").map(l => ({ k: /^[a-zA-Z]{1,12}$/.test(l.k) ? l.k : "x", t: hallRepStr(l.t, 200) })),
+  };
+}
 export function cleanHallView(view) {
   if (!view || !view.open) return { open: false };
   const worn = (id, slot) => (LIMITED_ITEMS.some(x => x.id === id && x.kind === "deco" && x.slot === slot) ? id : null);
@@ -95,6 +109,7 @@ export function cleanHallView(view) {
     deco: worn(view.deco, "stand"),
     frame: worn(view.frame, "frame"),
     posters: cleanPosters(view.posters),
+    report: cleanHallReport(view.report),
   };
 }
 

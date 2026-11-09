@@ -294,5 +294,17 @@ T("畫面上的字：多久以前、台灣時間、玩了多久", G => {
   assert.strictEqual(G.adminPlayText("很久"), "不到 1 分鐘");
 });
 
+T("打字的檢舉：最新的在前、最多 50 筆、沒有 uid，壞資料不丟錯", G => {
+  const raw = { a: { name: "小華", text: "這裡……", from: "這裡安全", at: 1, reporter: "uid-secret", reporterNick: "小明", reportedAt: 5, by: "uid-secret2" }, b: { name: "小美", text: "嗨", reporter: "uid-secret", reporterNick: "小明", reportedAt: 9 }, c: "壞的" };
+  const out = J(G.adminCoopReports(raw));
+  assert.deepStrictEqual(out.map(r => r.name), ["小美", "小華"]);
+  assert.strictEqual(out[1].from, "這裡安全");
+  assert.ok(!JSON.stringify(out).includes("uid-secret"), "沒有 uid");
+  assert.deepStrictEqual(J(G.adminCoopReports(null)), []);
+  const many = {}; for (let i = 0; i < 80; i++) many["k" + i] = { name: "x", text: "y", reportedAt: i };
+  assert.strictEqual(G.adminCoopReports(many).length, 50);
+  assert.strictEqual(G.adminCoopReports(many)[0].reportedAt, 79);
+});
+
 console.log(`${pass} passed, ${fail} failed（管理員介面）`);
 process.exit(fail ? 1 : 0);

@@ -820,6 +820,7 @@ ADDONS.hall2 = root => {
   const rep = P && P.hallReport && (P.coopReports || []).find(r => r.id === P.hallReport);
   if (rep) root.append(h("div", { class: "cx-hall" }, h("h3", null, "掛在牆上的探險報告"), reportSheet(rep)));
 };
+ADDONS.reportSheet = reportSheet; // 參觀館友的展廳也看得到（ui_visit.js）
 ADDONS.friendsFoot = close => (UI.net ? btn("交誼廳：大家貼的探險報告", () => { close(); openLounge(); }, "small") : null);
 
 // ---------- 入口 ----------
