@@ -19,6 +19,8 @@
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |
 | 併 main：公告、日誌索引、測試清單的衝突自動解 | `npm run merge:main`（`ship` 也會用） |
 | 不開瀏覽器，直接用某人身分叫模擬器的 Functions | `npm run emu:call -- --set 8 --user 小明 casino '{"act":"peek"}'` |
+| 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令（不連真的 Discord） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/discord_fake.cjs --set 5`；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /） |
+| 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 
 `ship` 會真的合併、部署到正式站：只在該上線的分支跑。不准做的事照 `AGENTS.md` 第 6 節，腳本也不能繞過（不直接推 main、不跑 `firebase deploy`、不碰正式資料）。

@@ -298,6 +298,16 @@ export const NUM = {
     signNear: 5,            // 這週簽了幾天以上，才提醒「只差幾天就全勤」
     lowShare: 0.5,          // 有做的人不到這個比例，才算「大家做得不多」
   },
+  // Discord 聯動第一步（決定 0051，規則 shared/discord.js）
+  discord: {
+    linkBonus: 1000000,     // 綁定獎勵（籌碼）：每個遊戲帳號只送一次，解除再綁、換 Discord 都不再送（翊文 11-09：「送100萬」）
+    linkCodeMin: 10,        // 綁定碼（6 位數）幾分鐘內有效、只能用一次
+    triesMax: 5,            // 同一個 Discord 帳號在視窗內最多打錯幾次
+    triesWindowMin: 10,     // 打錯太多次的暫時擋：打錯的次數算多久（也是擋多久）
+    joinCodeMin: 30,        // 自己加入的連結幾分鐘內有效、只能用一次
+    joinPerDay: 5,          // 壹天（05:00 換日）最多幾人靠 Discord 自己加入
+    skewSec: 300,           // 簽名的時間戳跟伺服器差超過幾秒就拒絕
+  },
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）

@@ -40,6 +40,12 @@ Hosting：放 dist/，網址 專案名.web.app
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 | `calls/{uid}/items/{id}` | 「請你去看我的展廳」（11-09）：編號 `call-日期-請的人`，同一天同一位只有一則（再請就蓋過去、變回沒看過）。看過標 `seen`，不刪 | 沒有人（瀏覽器叫 `socialNews` 拿；沒寫進規則，走「一律不准」） | 只有 Functions |
 | `boards/{週}`、`boards/latest` | 每週排行榜（決定 0039）：榜單、建議、提醒、`posted`。只有暱稱和榜上的數字，沒有 uid、email。`latest` 是最新一週的整份複製 | 館友 | 只有 `tools/weekly_board.cjs`（Admin SDK） |
+| `discordLinks/{discordId}`、`discordUids/{uid}` | Discord 聯動（決定 0051）：Discord 帳號 ↔ 遊戲帳號，兩邊都唯一、可以解除 | 沒有人（只有 Functions；走最下面的「一律不准」） | 只有 Functions |
+| `discordCodes/{L碼、u uid、J碼、j discordId}` | 綁定碼（6 位數，10 分鐘）、自己加入的連結碼（16 個字，30 分鐘），用掉標記 | 沒有人 | 只有 Functions，交易 |
+| `discordTries/{discordId}` | 綁定碼打錯幾次（10 分鐘內 5 次暫時擋） | 沒有人 | 只有 Functions |
+| `discordBonus/{uid}` | 綁定獎勵領過了。**解除綁定不會刪**，所以每個遊戲帳號只送一次 | 沒有人 | 只有 Functions，跟錢包同一個交易 |
+| `discordJoins/{discordId}`、`discordJoinDay/{台灣日期}` | 這個 Discord 帳號靠連結加入過（或被擋）、今天靠 Discord 加入幾人（上限 5） | 沒有人 | 只有 Functions |
+| `discordTest/config` | **只有模擬器**：`tools/discord_fake.cjs` 放的測試公鑰和伺服器 ID。正式環境不讀 | 沒有人 | 模擬器的測試 |
 | `boards/{週}/private/people` | 那一週每個人的累計數字（圖鑑、書、展廳、地下），下週相減用。用 uid 當 key，所以放另一份：Firestore 的規則不能只擋一個欄位 | 沒有人（走最下面的「一律不准」） | 只有 `tools/weekly_board.cjs` |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
@@ -72,7 +78,9 @@ Hosting：放 dist/，網址 專案名.web.app
 
 | 名字 | 做什麼 | 哪一步 |
 |---|---|---|
-| `join` | 第一次登入：email 在邀請名單上 → 建 `members/{uid}` | M1 |
+| `join` | 第一次登入：email 在邀請名單上 → 建 `members/{uid}`。網址帶 `?join=碼`（Discord 的 `/pepe-加入`）時多傳 `{ code }`：碼有效就建館友、建 `invites`（`source: "discord"`）、綁定、發獎勵；沒帶碼完全照舊 | M1、決定 0051 |
+| `discordBot` | **不是 callable，是 HTTPS（`onRequest`）**：Discord 的 Interactions Endpoint。驗 ed25519 簽名（`req.rawBody`、`X-Signature-*`），過不了 401；沒設定 503；PING 回 PONG；只收設定的伺服器。八個 `/pepe-…` 指令當場讀寫、回覆（`functions/discord.js`、規則 `shared/discord.js`） | 決定 0051 |
+| `discordLinkCode`、`discordLinkState`、`discordUnlink` | 遊戲裡的「綁定 Discord」：拿 6 位數碼、看狀態（`configured` 是 false 就是還沒開通，畫面不顯示）、解除（`functions/discord_link.js`） | 決定 0051 |
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話和打字、檢舉、時間到、接回去、移出斷線的人（`shared/coop.js`、`coop_flow.js`、`coop_fun.js`） | M4 |
@@ -223,3 +231,22 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --
 ```
 
 有 `FIRESTORE_EMULATOR_HOST` 就一定不發 Discord，就算環境變數有金鑰也一樣。`--now` 只有連模擬器時能用。
+
+## 十一、Discord 聯動第一步（決定 0051）
+
+規劃在 `docs/Discord聯動規劃.md`。程式：`functions/discord.js`（入口 `discordBot`）、`discord_data.js`（Firestore 交易）、`discord_link.js`（遊戲裡的三個 callable）、`discord_config.js`（設定）；規則 `shared/discord.js`；畫面 `web/src/ui_discord.js`（選單 → 我的帳號 → Discord）。
+
+- **設定**：`functions/discord_config.js` 的 `DISCORD` 有三個欄位（Application ID、Public Key、Guild ID），**現在是空的**。都不是密碼，翊文給了就填進去。空的時候 `discordBot` 回 503、遊戲裡不顯示「綁定 Discord」，其他 Function 不受影響。Bot token 第一步用不到。
+- **3 秒**：不另開 codebase、不用 `FUNCTION_TARGET` 懶載入、不設 `minInstances`。量過：載入整個 `functions/index.js` 1.3 秒、只載入 `options.js` 加 Firebase 兩個套件 1.2 秒，差 0.1 秒，時間幾乎都花在 Firebase 的套件上，拆也省不了。指令都只讀、寫幾份文件就回，不先回「處理中」。正式環境的冷啟動還沒量；若常超過 3 秒，才設 `minInstances: 1`（要先查價再問翊文）。
+- **獎勵**：`discord_data.js` 的交易裡讀 `casinoWallets/{uid}`（沒有就用 `casWalletFix` 開一個：開場籌碼照給，再加 `NUM.discord.linkBonus`）和 `discordBonus/{uid}`，沒領過才寫兩份。跟賭場搶同一份文件，Firestore 會讓一邊重試。不從莊家扣。
+- **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
+- **Firestore 規則沒改**：這些集合都走最後一條「一律不准」（`test/discord_bot.test.cjs` 擋「規則裡不准出現 discord」）。
+
+### 要翊文做的（AI 碰不到）
+
+1. Discord 開發者頁面（discord.com/developers/applications → 選 Yuga Bot → General Information）：複製 **Application ID** 和 **Public Key**，給 AI。
+2. Discord 軟體 → 使用者設定 → 進階 → 開「開發者模式」→ 對佩佩博物館伺服器按右鍵 → 「複製伺服器 ID」，給 AI。AI 把三個填進 `functions/discord_config.js`、合併部署。
+3. 開發者頁面 → OAuth2 → URL Generator：Scopes 勾 `applications.commands`（加上 `bot` 如果還沒邀請過），用產生的網址重新邀請 bot 進伺服器（已經有 `applications.commands` 就不用）。
+4. GitHub → Actions →「註冊 Discord 斜線指令」→ Run workflow，填 Application ID 和伺服器 ID（`DISCORD_BOT_TOKEN` 用現有的 Secret）。成功後在 Discord 打 `/pepe` 會列出八個指令。
+5. 部署之後，開發者頁面 → General Information →「Interactions Endpoint URL」填 `https://asia-east1-pepe-museum.cloudfunctions.net/discordBot`（部署完以 Firebase 主控台 → Functions 顯示的網址為準）→ Save。Discord 會先送 PING 驗證；**第一次可能因為冷啟動超過 3 秒存不起來，再按一次 Save 就好**。
+6. 在真的頻道試：`/pepe-莊家`、`/pepe-加入`、遊戲裡拿碼再 `/pepe-綁定 碼`；請 AI 或自己看 Firebase 主控台 → Functions → `discordBot` 的紀錄，每個指令有一行「指令名 加毫秒」，那就是正式環境的回應時間。
