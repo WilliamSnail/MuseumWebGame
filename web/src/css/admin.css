@@ -77,3 +77,10 @@
   .adm-table .adm-wide { display: none; }
   .adm-detail-in { grid-template-columns: minmax(0, 1fr); padding: 8px 10px 12px; }
 }
+
+/* 合作地下：打字的檢舉（決定 0036） */
+.adm-reports { padding: 8px 12px; border: 1px solid rgba(238,215,156,.35); border-radius: 3px; color: #E8E2D2; font-size: .875rem; }
+.adm-reports summary { cursor: pointer; color: var(--gold-hi); }
+.adm-reports ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.adm-reports li { line-height: 1.5; overflow-wrap: anywhere; }
+.adm-reports small { display: block; opacity: .75; }

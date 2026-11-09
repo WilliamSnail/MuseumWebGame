@@ -17,27 +17,30 @@ import { PARTY, PARTY_KINDS, canStartParty, fixParty, inviteOver, inviteProblem,
 import { hashStr, mulberry32, setDayClock, setRng } from "./shared/logic.js";
 import { fuseTogether } from "./shared/logic3.js";
 
-const rtdb = () => getDatabase();
-const now = () => Date.now();
-const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
-const bad = reason => new HttpsError("failed-precondition", reason);
+// 合作地下（functions/coop.js）掛在這裡：離開隊伍之前要先把他從走到一半的那一趟拿掉；隊伍解散時收掉那一趟的東西
+export const partyHooks = { beforeLeave: null, closed: null };
 
-async function memberOf(uid) {
+export const rtdb = () => getDatabase();
+export const now = () => Date.now();
+export const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
+export const bad = reason => new HttpsError("failed-precondition", reason);
+
+export async function memberOf(uid) {
   const s = await getFirestore().doc(`members/${uid}`).get();
   return s.exists ? s.data() : null;
 }
-async function needMember(req) {
+export async function needMember(req) {
   if (!req.auth) throw new HttpsError("unauthenticated", "要先登入");
   const m = await memberOf(req.auth.uid);
   if (!m) throw new HttpsError("permission-denied", "你不在邀請名單上");
   return { uid: req.auth.uid, nick: m.nick };
 }
-const inbox = (uid, msg) => rtdb().ref(`inbox/${uid}`).push(Object.assign({ at: now() }, msg));
-const statusOf = async uid => (await rtdb().ref(`status/${uid}`).get()).val();
+export const inbox = (uid, msg) => rtdb().ref(`inbox/${uid}`).push(Object.assign({ at: now() }, msg));
+export const statusOf = async uid => (await rtdb().ref(`status/${uid}`).get()).val();
 const isOffline = st => !st || st.state === "offline";
 
 // 隊伍的改動一律用交易（兩個人同時按也不會亂）。fn(p) 回傳 { ok, reason }；不 ok 就不改
-async function changeParty(pid, fn) {
+export async function changeParty(pid, fn) {
   let reason = null, result = null;
   const tx = await rtdb().ref(`parties/${pid}`).transaction(cur => {
     if (cur === null) return cur; // 第一次拿到的可能是快取的空值，伺服器會再給一次真的
@@ -52,26 +55,30 @@ async function changeParty(pid, fn) {
   return { party: fixParty(tx.snapshot.val()), result };
 }
 // /partyOf/{uid} 還指著這一隊才拿掉（他可能已經換到別隊了）
-async function clearPartyOf(uid, pid) {
+export async function clearPartyOf(uid, pid) {
   const ref = rtdb().ref(`partyOf/${uid}`);
   if ((await ref.get()).val() === pid) await ref.remove();
 }
 // 把 uid 移出隊伍：沒人了就刪掉隊伍；還有人就通知他們「○○ 離開了隊伍」（why "offline"：斷線被移出去的）
-async function leaveParty(pid, uid, nick, why) {
+export async function leaveParty(pid, uid, nick, why) {
+  if (partyHooks.beforeLeave) await partyHooks.beforeLeave(pid, uid);
   const { party } = await changeParty(pid, p => partyLeave(p, uid));
-  if (party.phase === "closed") await rtdb().ref(`parties/${pid}`).remove();
+  if (party.phase === "closed") {
+    await rtdb().ref(`parties/${pid}`).remove();
+    if (partyHooks.closed) await partyHooks.closed(pid);
+  }
   else for (const m of partyMembers(party)) await inbox(m.id, Object.assign({ t: "party", pid, left: nick }, why ? { why } : {}));
   return party;
 }
 // 離開現在的隊伍（換隊、回邀請之前）
-async function leaveCurrent(uid, nick) {
+export async function leaveCurrent(uid, nick) {
   const pid = (await rtdb().ref(`partyOf/${uid}`).get()).val();
   if (!pid) return;
   try { await leaveParty(pid, uid, nick); } catch (e) { /* 隊伍已經不在了，或已經不在隊伍裡 */ }
   await rtdb().ref(`partyOf/${uid}`).remove();
 }
 // 這個人現在當隊長、還沒開始、種類一樣的隊伍（沒有就是 null）
-async function ledParty(uid, kind) {
+export async function ledParty(uid, kind) {
   const pid = (await rtdb().ref(`partyOf/${uid}`).get()).val();
   if (!pid) return null;
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
@@ -185,7 +192,7 @@ async function startParty(me, pid) {
   const { party } = await changeParty(pid, p => {
     const can = canStartParty(p, me.uid);
     if (!can.ok) return p.phase === "running" || p.phase === "done" ? { ok: false, reason: "已經開始了" } : can;
-    if (p.kind !== "fusion") return { ok: false, reason: "這種隊伍還不能開始" };
+    if (p.kind !== "fusion") return { ok: false, reason: "合作地下要走 coopStep" }; // 畫面不會走到這裡
     p.phase = "running";
     delete p.fail;
     return { ok: true };

@@ -35,7 +35,7 @@ T("展廳：給別人的只有展台、分數、主題、裝飾，不漏靈感�
   });
   s.email = "someone@example.com";
   const v = J(G.cleanHallView(G.hallView(s)));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "score", "slots", "theme"]);
+  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "report", "score", "slots", "theme"]);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
   assert.strictEqual(v.deco, "stand-velvet");
   assert.strictEqual(v.frame, "frame-vine");
@@ -357,6 +357,24 @@ T("展覽海報：參觀時看得到，壞的、不認識的主題拿掉（別�
   const v = G.cleanHallView({ open: true, slots: [], score: 50, posters: [{ theme: "legend", tier: 3, score: 96, date: "2026-11-09" }, { theme: "<b>壞</b>", tier: 9 }, null, { theme: "joy", tier: 99, score: 500, date: "x" }] });
   assert.deepStrictEqual(J(v.posters), [{ theme: "legend", tier: 3, score: 96, date: "2026-11-09" }, { theme: "joy", tier: 3, score: 100, date: null }]);
   assert.deepStrictEqual(J(G.cleanHallView({ open: true, slots: [] }).posters), []);
+});
+
+
+T("掛在牆上的探險報告：館友看得到，檢查過、限制長度；沒掛就沒有", () => {
+  const rep = { id: "r1", title: "走完了", date: "2026-11-09", floors: [1, 2], members: [{ name: "小明", san0: 50, san1: 41, insp: 12, secret: "不該給" }], lines: [{ k: "scary", t: "最驚險的壹間" }], extra: "不該給" };
+  const v = J(G.cleanHallView({ open: true, slots: [], score: 1, report: rep }));
+  assert.strictEqual(v.report.title, "走完了");
+  assert.strictEqual(v.report.members[0].san1, 41);
+  assert.ok(!JSON.stringify(v).includes("不該給"), "只給要的欄位");
+  const evil = J(G.cleanHallView({ open: true, slots: [], score: 1, report: { title: "字".repeat(500), date: "<img>", floors: ["x", 99999], members: [null, { name: 3 }], lines: [{ k: "<b>", t: "字".repeat(900) }, 7] } }));
+  assert.strictEqual(Array.from(evil.report.title).length, 40);
+  assert.strictEqual(evil.report.date, null);
+  assert.deepStrictEqual(evil.report.floors, [999]);
+  assert.strictEqual(evil.report.members[0].name, "館友");
+  assert.strictEqual(evil.report.lines.length, 1);
+  assert.strictEqual(evil.report.lines[0].k, "x");
+  assert.strictEqual(Array.from(evil.report.lines[0].t).length, 200);
+  assert.strictEqual(J(G.cleanHallView({ open: true, slots: [], score: 1 })).report, null);
 });
 
 console.log(`${pass} passed, ${fail} failed（參觀展廳、送佩佩、伺服器的信）`);

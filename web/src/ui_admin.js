@@ -152,6 +152,14 @@ function tableOf(data) {
   return h("div", { class: "adm-wrap", tabindex: "0", "aria-label": "大家的進度" }, h("table", { class: "adm-table" }, h("thead", null, h("tr", null, heads)), body));
 }
 
+// 打字的檢舉（決定 0036）：只能看。玩家打的字一律當純文字
+function reportsBox(list) {
+  return h("details", { class: "adm-reports" }, h("summary", null, `合作地下：打字的檢舉 ${list.length} 筆`),
+    h("ul", null, list.map(r => h("li", null,
+      h("b", null, r.name), `：「${r.text}」`, r.from && r.from !== r.text ? `（原文：「${r.from}」）` : "",
+      h("small", null, `${adminTimeText(r.at)} 說的，${r.reporter} 檢舉`)))));
+}
+
 async function loadOverview() {
   if (VIEW.busy) return;
   VIEW.busy = true;
@@ -181,6 +189,7 @@ export function openAdmin() {
       d ? h("div", { class: "adm-tiles" }, tile("總共", d.total), tile("今天上線", d.todayOnline), tile("現在在線", d.onlineNow)) : null,
       h("p", { class: "adm-note" }, "只能看、不能改。點壹列看細節。", d ? `資料時間 ${adminTimeText(d.at)}。` : ""),
       VIEW.error ? h("p", { class: "adm-err", role: "alert" }, VIEW.error) : null,
+      d && d.reports && d.reports.length ? reportsBox(d.reports) : null,
       d ? (d.rows.length ? tableOf(d) : h("p", { class: "nb-empty" }, "館裡還沒有人。")) : VIEW.busy ? h("p", { class: "nb-empty" }, "正在讀大家的進度……") : null,
     ].filter(Boolean));
     const now = m.surface.querySelector(".adm-wrap");

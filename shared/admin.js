@@ -152,6 +152,12 @@ export function adminSortRows(rows, key = "seen", dir = -1) {
 }
 // members：[{ uid, nick, joinedAt（毫秒） }]；saves：{ uid: { data, updatedAt } }；status：/status 整包。
 // 哪一列出了什麼事都不會讓整張表壞掉。回傳的列裡沒有 uid
+// 打字的檢舉（決定 0036）：說了什麼（變形後、原文）、誰說的、誰檢舉的。最新的在前，最多 50 筆。不回傳 uid、email
+export function adminCoopReports(raw) {
+  const str = (s, n) => (typeof s === "string" ? [...s].slice(0, n).join("") : "");
+  return (admObj(raw) ? Object.values(raw) : []).filter(admObj).sort((a, b) => admNum(b.reportedAt) - admNum(a.reportedAt)).slice(0, 50)
+    .map(r => ({ name: admNick(r.name), text: str(r.text, 80), from: str(r.from, 80), at: admNum(r.at, null), reporter: admNick(r.reporterNick), reportedAt: admNum(r.reportedAt, null) }));
+}
 export function adminOverviewOf(input, now = nowMs()) {
   const saves = admObj(input && input.saves) ? input.saves : {}, status = admObj(input && input.status) ? input.status : {};
   const list = asList(input && input.members).filter(admObj).slice().sort((a, b) => admNum(a.joinedAt) - admNum(b.joinedAt) || String(a.uid).localeCompare(String(b.uid)));
@@ -159,7 +165,7 @@ export function adminOverviewOf(input, now = nowMs()) {
     try { return adminRow(m, saves[m.uid] || null, status[m.uid], now, i + 1); }
     catch (e) { return { no: i + 1, nick: admNick(m.nick), state: "offline", room: null, lastSeenAt: null, savedAt: null, todayOnline: false, summary: { ok: false } }; }
   });
-  return { at: now, total: rows.length, todayOnline: rows.filter(r => r.todayOnline).length, onlineNow: rows.filter(r => r.state !== "offline").length, rows: adminSortRows(rows) };
+  return { at: now, total: rows.length, todayOnline: rows.filter(r => r.todayOnline).length, onlineNow: rows.filter(r => r.state !== "offline").length, rows: adminSortRows(rows), reports: adminCoopReports(input && input.reports) };
 }
 
 // ---------- 畫面上的字 ----------

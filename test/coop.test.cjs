@@ -562,8 +562,9 @@ T("viewFor：給隊員一份整份狀態的副本（現在大家看到的一樣�
   const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
   const v = G.viewFor(run, "a");
   assert.strictEqual(v.me, "a");
-  const { me, ...rest } = v;
-  assert.strictEqual(JSON.stringify(rest), JSON.stringify(run));
+  const { me, fresh, ...rest } = v; // fresh：這一步給他的事件（只有他的）
+  const { fresh: all, ...same } = J(run);
+  assert.strictEqual(JSON.stringify(rest), JSON.stringify(same));
   v.members[0].san = -5; v.team.length = 0;
   assert.strictEqual(run.members[0].san, Ps.a.sanity); assert.ok(run.team.length);
   assert.strictEqual(G.viewFor(run, "zzz"), null);
