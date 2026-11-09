@@ -405,7 +405,7 @@ export function updateBoardBadges() {
   const tab = $(".nav-board"), mb = $(".menu-btn");
   if (!tab || !SAVE) return;
   const today = realTodayStr(), list = visibleNotices(P, today), badge = boardBadge(noticeState(SAVE), list);
-  const mails = P ? (syncMail(P, list, today), unclaimedCount(P, today)) : 0;
+  const mails = P ? (syncMail(P, list, today), unclaimedCount(P, today) + (ADDONS.mailCount ? ADDONS.mailCount() : 0)) : 0; // mailCount：伺服器的信（館友送的，ui_visit.js）
   const boardTxt = badge.count ? `${badge.count} 則沒讀` : "";
   tab.classList.toggle("has-seal", badge.seal);
   tab.classList.toggle("has-dot", !badge.seal && badge.count > 0);

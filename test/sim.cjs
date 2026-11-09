@@ -13,6 +13,8 @@ const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, 
 // 每週劇情（11-09，shared/story.js）：STORY=0 不算。照備用週「常青1」真的內容算每天拿到多少（每日任務、全做完的那份、書、今日特展、B1 的房間、每週任務平均到每天），
 // 假設每天都做完；花的時間：讀書 60 秒一本、看特展 25 秒一幅、走一間房 90 秒。每日任務本身（做佩佩、交委託、看畫）本來就在下面的玩法裡，不另外算時間
 const STORY = process.env.STORY !== "0";
+// 館友來參觀（11-09，決定 0020）：VISITS=每天有幾位館友來（照 gifts.js 的 visitGain 算，一天最多 SOCIAL.visitInspMax 次），假設謝禮的信每天都領。預設 0：一個人玩
+const VISITS = Math.max(0, +process.env.VISITS || 0);
 const STORY_DAYS = (() => {
   if (!STORY) return null;
   const { readWeeks } = require("../tools/week_check.cjs");
@@ -50,11 +52,12 @@ function sim(seed) {
   const out = { t4: null, tAll: null, made: 0, legends: 0, epics: 0, perfects: 0, failed: 0, endings: 0, quirks: 0, minSan: 99, days: 1, unlockAt10: null };
   let dayStart = 0, visitorClock = 0;
   const storyDay = () => { if (!STORY_DAYS) return; const s = STORY_DAYS[day % 7]; P.insp += Math.round(s.insp); INC.story += Math.round(s.insp); t += s.sec; };
+  const friendsDay = () => { let paid = 0; for (let i = 0; i < VISITS; i++) { const g = G.visitGain({ open: true, paidToday: paid }); if (g) { paid++; P.insp += g; INC.friends += g; } } };
   const spend = sec => {
     t += sec; visitorClock += sec;
     G.tickAction(P); // 每個動作讓瘋狂發作倒數
     while (visitorClock >= G.NUM.visitorEvery) { visitorClock -= G.NUM.visitorEvery; const v = G.visitorArrive(P, rng); if (v) INC.visit += v.gain; }
-    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); signToday(); out.days++; storyDay(); shopDay(); }
+    if (t - dayStart >= SESSION) { day++; dayStart = t; date = G.addDays("2026-11-08", day); G.ensureDay(P, date); G.moodRecovery(P); signToday(); out.days++; storyDay(); shopDay(); friendsDay(); }
   };
   const san = (spec, src) => {
     const r = G.sanCheck(P, spec, src);
@@ -150,13 +153,13 @@ function sim(seed) {
   G.setRng(null);
   return out;
 }
-const INC={visit:0,deliver:0,view:0,read:0,badge:0,sign:0,story:0};globalThis.INC=INC;
+const INC={visit:0,deliver:0,view:0,read:0,badge:0,sign:0,story:0,friends:0};globalThis.INC=INC;
 const runs = Array.from({ length: RUNS }, (_, i) => sim(1000 + i));
 const q = (arr, p) => { const a = arr.filter(x => x != null).sort((x, y) => x - y); return a.length ? a[Math.floor((a.length - 1) * p)] : NaN; };
 const f = n => n.toFixed(1);
 const t4 = runs.map(r => r.t4), tAll = runs.map(r => r.tAll), at10 = runs.map(r => r.unlockAt10);
 const made = runs.reduce((s, r) => s + r.made, 0);
-console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${SIGNIN ? "，每天簽到" : "，不簽到"}）${STORY_DAYS ? `；每週劇情照備用週算，每天 ${STORY_DAYS.map(s => Math.round(s.insp)).join("、")} 靈感（STORY=0 不算）` : "；不算每週劇情"}${SHOP ? "；兌換所每天 1 枚週章（SHOP=0 不算）" : ""}${GEAR0.length ? `；第一天就穿著 ${GEAR0.join("、")}` : ""}`);
+console.log(`模擬 ${RUNS} 次（每天玩 ${SESSION / 60} 分鐘${SIGNIN ? "，每天簽到" : "，不簽到"}）${STORY_DAYS ? `；每週劇情照備用週算，每天 ${STORY_DAYS.map(s => Math.round(s.insp)).join("、")} 靈感（STORY=0 不算）` : "；不算每週劇情"}${SHOP ? "；兌換所每天 1 枚週章（SHOP=0 不算）" : ""}${GEAR0.length ? `；第一天就穿著 ${GEAR0.join("、")}` : ""}${VISITS ? `；每天 ${VISITS} 位館友來參觀` : ""}`);
 console.log(`玩 10 分鐘時解鎖了幾個：中位數 ${q(at10, .5)}（10%–90%：${q(at10, .1)}–${q(at10, .9)}）　目標 3–4`);
 console.log(`解鎖 4 個要幾分鐘：中位數 ${f(q(t4, .5))}（10%–90%：${f(q(t4, .1))}–${f(q(t4, .9))}）`);
 console.log(`全部解鎖（${LOCKED0} 個）要幾小時：中位數 ${f(q(tAll, .5) / 60)}（10%–90%：${f(q(tAll, .1) / 60)}–${f(q(tAll, .9) / 60)}）　目標 2–3 小時；沒解完 ${runs.filter(r => r.tAll == null).length} 次`);
