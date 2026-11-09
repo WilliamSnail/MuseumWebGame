@@ -21,6 +21,7 @@ import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, 
 import { overlay } from "./ui_board.js";
 import { reloadSave } from "./ui_login.js";
 import { roomHead } from "./ui_screens1.js";
+import { learnText } from "../../shared/shop.js";
 
 const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : ""); // "2026-11-09" → "11/9"
 const arrow = () => h("span", { "aria-hidden": "true" }, "→");
@@ -50,11 +51,11 @@ const stillHere = params => UI.screen === "hall" && UI.params === params;
 
 // 參觀完成時叫一次（走進來、讀到展廳之後）。ctx：{ owner: { id, nick }, view, first（今天第一次來這間）, gain, learn }
 // 跟館友學的接口（claude/兌換所和技能，合併時接）：伺服器的 visitHall 學到了就回傳 learn（functions/visit.js 的 LEARN_ON_VISIT），
-// 畫面的那一句話寫在 visitLearnLine（現在只寫 learn.text；合併時換成 ui_party.js 一起融合那邊的 learnLine）。要在參觀完成時多做什麼，加在 visitDone。
+// 跟館友學（決定 0032）：今天第一次走進這間展廳，伺服器叫 learnFromFriend；那一句話跟一起融合同一句（shared/shop.js 的 learnText）。要在參觀完成時多做什麼，加在 visitDone。
 function visitDone(ctx) { /* 現在沒有要多做的 */ }
-function visitLearnLine(learn) {
+function visitLearnLine(learn, who) {
   if (!learn) return null;
-  return h("p", { class: "fh-learn" }, String(learn.text || ""));
+  return h("p", { class: "fh-learn" + (learn.gained ? " got" : "") }, learnText(learn, who));
 }
 
 async function loadVisit(f, params) {
@@ -142,7 +143,7 @@ function friendHall(root, params) {
       h("p", { class: "fh-rule" }, `每天每間可以按讚壹次、留壹句話（${SOCIAL.noteMax} 字以內）。`), noteBox,
       d.first && d.gain ? h("p", { class: "fh-first" }, `你今天第壹次來：${nick} 的信箱多了壹封謝禮（靈感 +${d.gain}）。`) : null),
     h("h3", null, "館友留言"), notes);
-  root.append(roomHead(`${nick} 的展廳`, `評分 ${v.score}／100`, ...tools), plate, wall, h("div", { class: "hall-wrap fh-wrap" }, room, side), visitLearnLine(d.learn));
+  root.append(roomHead(`${nick} 的展廳`, `評分 ${v.score}／100`, ...tools), plate, wall, h("div", { class: "hall-wrap fh-wrap" }, room, side), visitLearnLine(d.learn, nick));
 }
 ADDONS.friendHall = friendHall;
 FRIEND_ACTIONS.push({ id: "visit", label: "參觀展廳", show: () => !!P, run: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) });

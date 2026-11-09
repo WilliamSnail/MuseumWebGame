@@ -200,6 +200,13 @@ export function learnFromFriend(P, friend) {
   return out;
 }
 
+// 跟館友學的那一句話（一起融合的結果、參觀展廳都用這句）。l ＝ learnFromFriend 的回傳、who ＝對方的暱稱
+export function learnText(l, who) {
+  if (l.gained) return `跟 ${who} 學了壹招：${l.skill} ${l.from} → ${l.to}`;
+  if (l.capped) return `${who} 的${l.skill}比你高，可是今天學夠了（壹天 ${NUM.shop.learnPerDay} 次）。`;
+  return `${who} 的${l.skill}比你高（${l.value}）。你在旁邊看，這次沒學會。`;
+}
+
 // ---------- 這週上架的限定頭飾 ----------
 export const shopLimitedIds = () => LIMITED_ITEMS.filter(x => x.shop).map(x => x.id);
 // W ＝這週（story.js 的 storyWeek，週包寫了 shop 就用它；沒有週包傳 null）。沒指定的週照週號輪流

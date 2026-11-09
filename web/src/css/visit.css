@@ -76,3 +76,4 @@ body.reduce-motion .lobby-guests { animation: none; }
   .gf-sel .btn { grid-column: 1 / -1; }
   .fh-use { flex-wrap: wrap; justify-content: flex-start; }
 }
+.fh-learn.got { color: var(--gold-hi); font-weight: 700; }

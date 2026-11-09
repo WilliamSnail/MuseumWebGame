@@ -17,14 +17,14 @@ import { randomUUID } from "node:crypto";
 import { NUM } from "./shared/config.js";
 import { hallView } from "./shared/gifts.js";
 import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "./shared/logic.js";
+import { friendTalent, learnFromFriend } from "./shared/shop.js";
 import { cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepSendGift, stepVisitHall } from "./shared/visit.js";
 
-// ---------- 跟館友學（接口，claude/兌換所和技能 那邊的規則，合併時接這裡） ----------
+// ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。
-// 合併時改成：const LEARN_ON_VISIT = (myP, ownerP) => learnFromFriend(myP, friendTalent(ownerP));（import 自 ./shared/shop.js）
 // 回傳非 null：這裡會把我的存檔寫回去（rev 加一）、送 save_changed，回傳值放進 learn，畫面在 ui_visit.js 的 visitLearnLine 寫出來。
-// 骰子：visitHall 算之前已經 setRng(同一位、同一間、同一天的種子)。現在是 null，所以不會讀、不會寫參觀者的存檔。
-const LEARN_ON_VISIT = null;
+// 骰子：visitHall 算之前已經 setRng(同一位、同一間、同一天的種子)。
+const LEARN_ON_VISIT = (myP, ownerP) => learnFromFriend(myP, friendTalent(ownerP));
 
 const newId = () => randomUUID().replace(/-/g, "").slice(0, 20);
 const bad = reason => new HttpsError("failed-precondition", reason);

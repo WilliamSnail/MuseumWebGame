@@ -339,5 +339,19 @@ T("存檔：領信不會弄壞舊存檔（沒有 mail、mailSeen 的舊資料）
   assert.strictEqual(back.profiles.challenge.mailSeen["gift-1"], true);
 });
 
+T("跟館友學接上了：今天第一次走進去，對方拿手的比我高就有機會；同一天再來不再學", () => {
+  const learn = (myP, ownerP) => G.learnFromFriend(myP, G.friendTalent(ownerP));
+  const job = p => { G.assignJob(p, "detective"); p.skills.偵查 = 20; };
+  const mine = saveWith(job), owner = saveWith(p => { G.assignJob(p, "detective"); p.skills.偵查 = 70; });
+  G.setRng(() => 0); // 擲到最小，一定學會
+  const r = visit(null, A, DAY, 1, { learn, mySave: mine, ownerSave: owner });
+  G.setRng(null);
+  assert.ok(r.learn && r.learn.gained);
+  assert.strictEqual(mine.profiles.challenge.skills.偵查, 20 + G.NUM.shop.learnGain);
+  assert.ok(G.learnText(r.learn, "小明").includes("跟 小明 學了壹招"));
+  const r2 = visit(r.book, A, DAY, 2, { learn, mySave: mine, ownerSave: owner });
+  assert.strictEqual(r2.learn, null); assert.strictEqual(mine.profiles.challenge.skills.偵查, 20 + G.NUM.shop.learnGain);
+});
+
 console.log(`${pass} passed, ${fail} failed（參觀展廳、送佩佩、伺服器的信）`);
 process.exit(fail ? 1 : 0);
