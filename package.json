@@ -13,6 +13,7 @@
     "now": "node tools/now.cjs",
     "version:bump": "node tools/bump_version.cjs",
     "emulators": "node tools/emulators.cjs",
+    "announce:sync": "node tools/announce.cjs --sync",
     "functions:shared": "node tools/copy_shared.cjs"
   },
   "devDependencies": {

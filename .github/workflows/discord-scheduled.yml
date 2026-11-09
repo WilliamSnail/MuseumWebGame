@@ -1,0 +1,44 @@
+# 預約公告：content/公告排程.json 寫的時間到了就發到 Discord（tools/announce.cjs）。
+# 只在每則公告自己的時間跑，平常不跑：repo 是私有的，定時檢查會用光免費的 Actions 額度（理由見 tools/announce.cjs）。
+# 發過的記在 Actions cache，到點和補的那次不會重發。
+name: Discord 預約公告
+
+on:
+  # >>> 預約公告的時間（tools/announce.cjs --sync 產生的，不要手改）
+  # <<< 預約公告的時間
+  workflow_dispatch:
+
+# 一次只跑一個，免得同一則發兩次
+concurrency:
+  group: discord-scheduled
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 讀哪些發過了
+        uses: actions/cache/restore@v4
+        with:
+          path: .announce-state
+          key: announce-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: announce-state-
+      - name: 發到時間的公告
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: node tools/announce.cjs
+      - name: 記下哪些發過了
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .announce-state
+          key: announce-state-${{ github.run_id }}-${{ github.run_attempt }}
