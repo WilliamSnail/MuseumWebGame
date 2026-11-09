@@ -47,7 +47,7 @@ export const ART = (() => {
     躺平: { cy: 160, rx: 76, ry: 27, ey: 136, ex: 24, er: 15, wr: 9.5, flat: 1, mo: 26, bo: 22, hs: .82, hold: [158, 174, "lay", 1, 1.2], parts: sym([["foot", 40, 181, 16, 6, -10, "b"], ["arm", 23, 166, 16, 7, -18, "b"]]) },
     比讚: { cy: 122, rx: 58, ry: 54, ey: 78, ex: 26, er: 18, wr: 11.5, thumb: 1, hold: [47, 146, "hang", -1], parts: sym([["foot", 80, 177, 15, 7, 0, "b"]]).concat([["arm", 46, 128, 10, 16, -12, "b"]]) },
     // 斯拉夫蹲：腳跟貼地、膝蓋大開、身體壓低、前臂擱在膝蓋上、手垂著
-    斯拉夫蹲: { cy: 134, rx: 54, ry: 44, ey: 92, ex: 26, er: 18, wr: 11.5, mo: 34, bo: 30, hold: [177, 156, "hang", 1, 1],
+    斯拉夫蹲: { cy: 134, rx: 54, ry: 44, ey: 92, ex: 26, er: 18, wr: 11.5, mo: 34, bo: 30, squat: 1, hold: [177, 156, "hang", 1, 1],
       parts: sym([["foot", 46, 182, 19, 6, 0, "f"], ["leg", 38, 165, 10, 17, 8, "f"], ["leg", 48, 149, 23, 13, -12, "f"], ["arm", 44, 137, 19, 6.5, 6, "f"], ["foot", 24, 151, 6, 9.5, 10, "f"]]) },
     // 倒立：用正立的座標畫，整隻轉 180°（手撐地、腳朝天）；帽子放在旁邊地上
     倒立: { cy: 120, rx: 54, ry: 50, ey: 78, ex: 26, er: 18, wr: 11.5, inv: 1, hold: [72, 190, "foot", 1, 1.1],
@@ -199,6 +199,55 @@ export const ART = (() => {
   };
   const beanie ={ h: 40, svg: h => `<path d="M68 ${h + 1}Q68 ${h - 36} 100 ${h - 36}Q132 ${h - 36} 132 ${h + 1}Z" fill="#5FAF68" stroke="#2F6E38" stroke-width="${SW}" stroke-linejoin="round"/><rect x="66" y="${h - 9}" width="68" height="11" rx="5" fill="#4C9A56" stroke="#2F6E38" stroke-width="${SW}"/>` + ln(`M78 ${h - 8}v9M90 ${h - 8}v9M100 ${h - 8}v9M110 ${h - 8}v9M122 ${h - 8}v9`, "#2F6E38", 1.2) + `<circle cx="100" cy="${h - 38}" r="7" fill="#F6F1D6" stroke="#2F6E38" stroke-width="${SW}"/>` };
   const hatOf = name => HATS[name] || beanie;
+  // ---------- 主題展、每週特展的限定配件（11-09，決定 0035，樣子都是草稿） ----------
+  // 帽子一樣畫在頭頂（h、svg）。首飾沒有 h，改寫 wear（g 是 wearGeo 算的位置）：畫在身體上，倒立時跟著身體轉。
+  const flowerAt = (x, y, r, c, core = "#F6D45A") => [0, 72, 144, 216, 288].map(a => `<circle cx="${n(x + r * Math.sin(a * Math.PI / 180))}" cy="${n(y - r * Math.cos(a * Math.PI / 180))}" r="${n(r * .72)}" fill="${c}" stroke="#B0708A" stroke-width=".8"/>`).join("") + `<circle cx="${x}" cy="${y}" r="${n(r * .7)}" fill="${core}" stroke="#A57C14" stroke-width=".8"/>`;
+  const miniPillow = (x, y, s, c = "#F3E6C4", d = "#A08A62") => `<g transform="translate(${n(x)} ${n(y)}) scale(${s})"><path d="M-13-9Q0-6 13-9Q10 0 13 9Q0 6-13 9Q-10 0-13-9Z" fill="${c}" stroke="${d}" stroke-width="1.8" stroke-linejoin="round"/><circle r="2.2" fill="${d}"/></g>`;
+  const bowTie = (g, c, d, rot, extra = "") => `<g transform="translate(100 ${n(g.ny + 2)}) rotate(${rot})"><path d="M-3-3L-22-12Q-26 0-22 12L-3 3Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/><path d="M3-3L22-12Q26 0 22 12L3 3Z" fill="${c}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/><rect x="-5" y="-5.5" width="10" height="11" rx="2.5" fill="${c}" stroke="${d}" stroke-width="2"/>${extra}</g>`;
+  // 瓜子串成一圈：沿著脖子的弧線擺
+  const seedNecklace = (g, fill, line, cord) => {
+    const q = t => { const x0 = 100 - g.nw + 5, x1 = 100 + g.nw - 5, y0 = g.ny - 12, yc = g.ny + 18; return [(1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * 100 + t * t * x1, (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * yc + t * t * y0]; };
+    const bead = (x, y, r, s) => `<g transform="translate(${n(x)} ${n(y)}) rotate(${n(r)}) scale(${s})"><path d="M-6 0Q-1-3.6 5 0Q-1 3.6-6 0Z" fill="${fill}" stroke="${line}" stroke-width=".5"/>` + ln("M-3.8-.9L2.8-.5M-3.8.9L2.8.5", line, .8) + `</g>`;
+    let s = ln(`M${n(q(0)[0])} ${n(q(0)[1])}Q100 ${n(g.ny + 18)} ${n(q(1)[0])} ${n(q(1)[1])}`, cord, 1.5);
+    [.1, .22, .34, .66, .78, .9].forEach(t => { const [x, y] = q(t), [x2, y2] = q(t + .02); s += bead(x, y, Math.atan2(y2 - y, x2 - x) * 180 / Math.PI + 90, 1); });
+    const [mx, my] = q(.5);
+    return s + bead(mx, my + 6, 90, 1.9);
+  };
+  Object.assign(HATS, {
+    傳說的金冠: { h: 46, svg: h => `<path d="M66 ${h}L61 ${h - 28}L80 ${h - 14}L87 ${h - 40}L100 ${h - 20}L113 ${h - 40}L120 ${h - 14}L139 ${h - 28}L134 ${h}Z" fill="#F2C744" stroke="#9A7010" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      `<path d="M65 ${h - 11}H135L134 ${h}H66Z" fill="#B3262E" stroke="#9A7010" stroke-width="1.5"/>` + [78, 100, 122].map((x, i) => `<circle cx="${x}" cy="${h - 5.5}" r="${i === 1 ? 3.6 : 2.6}" fill="${i === 1 ? "#E9F3FF" : "#FFE28A"}" stroke="#7A5A10" stroke-width=".9"/>`).join("") +
+      [[61, 28], [87, 40], [113, 40], [139, 28]].map(([x, y]) => `<circle cx="${x}" cy="${h - y - 1}" r="3" fill="#FFE28A" stroke="#9A7010" stroke-width="1"/>`).join("") + spark(100, h - 30, 4.5, "#FFF6CF") },
+    火氣頭帶: { h: 30, svg: h => `<path d="M140 ${h - 6}L156 ${h + 2}L150 ${h - 9}L158 ${h - 16}L140 ${h - 11}Z" fill="#B82C24" stroke="#7E1A14" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<path d="M63 ${h + 3}Q100 ${h - 7} 137 ${h + 3}L137 ${h - 9}Q100 ${h - 19} 63 ${h - 9}Z" fill="#D9382E" stroke="#8E1E18" stroke-width="${SW}" stroke-linejoin="round"/>` + ln(`M66 ${h - 4}Q100 ${h - 13} 134 ${h - 4}`, "#F58A6E", 1.2) +
+      `<path d="M100 ${h - 34}C90 ${h - 25} 88 ${h - 19} 91 ${h - 13}Q100 ${h - 9} 109 ${h - 13}C113 ${h - 21} 106 ${h - 24} 100 ${h - 34}Z" fill="#F58A2E" stroke="#B3451A" stroke-width="1.6" stroke-linejoin="round"/><path d="M100 ${h - 25}C96 ${h - 21} 95 ${h - 17} 97 ${h - 14}Q100 ${h - 12} 103 ${h - 14}C105 ${h - 18} 103 ${h - 21} 100 ${h - 25}Z" fill="#FFE28A"/>` },
+    淚滴耳環: { h: 0, wear: g => [-1, 1].map(sd => { const x = 100 + sd * g.ax, y = g.ay; return ln(`M${n(x)} ${n(y - 5)}Q${n(x + sd * 3)} ${n(y - 1)} ${n(x)} ${n(y + 2)}`, "#C99A2E", 1.8) + `<path d="M${n(x)} ${n(y + 2)}Q${n(x - 6.5)} ${n(y + 12)} ${n(x)} ${n(y + 17)}Q${n(x + 6.5)} ${n(y + 12)} ${n(x)} ${n(y + 2)}Z" fill="${TEAR}" stroke="#3E8FBE" stroke-width="1.5"/><ellipse cx="${n(x - 1.8)}" cy="${n(y + 10)}" rx="1.3" ry="2.6" fill="#fff" opacity=".85"/>`; }).join("") },
+    瓜子項鍊: { h: 0, wear: g => seedNecklace(g, "#2B2B2A", "#D9D6CC", "#6B5A3E") },
+    彩虹圍巾: { h: 0, wear: g => {
+      const cols = ["#D9463A", "#4FA34F", "#EDBE2E", "#2B2B2A"], tx = n(100 + g.nw * .42);
+      return cols.map((c, i) => ln(`M${n(100 - g.nw)} ${n(g.ny - 11 + i * 5)}Q100 ${n(g.ny + 7 + i * 5)} ${n(100 + g.nw)} ${n(g.ny - 11 + i * 5)}`, c, 5.4)).join("") +
+        `<g transform="translate(${tx} ${n(g.ny + 4)}) rotate(-8)">${cols.map((c, i) => `<rect x="${-11 + i * 5.5}" y="0" width="5.5" height="27" fill="${c}"/>`).join("")}${ln("M-9 27v5M-3.5 27v5M2 27v5M7.5 27v5", "#6B5A3E", 1.3)}</g>`;
+    } },
+    三層帽: { h: 62, svg: h => `<path d="M88 ${h - 42}L100 ${h - 62}L112 ${h - 42}Z" fill="#6B4FA8" stroke="#3F2A70" stroke-width="${SW}" stroke-linejoin="round"/><circle cx="100" cy="${h - 62}" r="2.6" fill="#E7B93E"/>` +
+      `<rect x="80" y="${h - 42}" width="40" height="16" rx="2" fill="#A33445" stroke="#5E1622" stroke-width="${SW}"/><ellipse cx="100" cy="${h - 42}" rx="24" ry="4" fill="#C8576A" stroke="#5E1622" stroke-width="1.6"/>` +
+      `<path d="M128 ${h - 3}Q158 ${h - 8} 172 ${h + 1}Q150 ${h + 6} 126 ${h + 3}Z" fill="#2F5BA8" stroke="#22427C" stroke-width="${SW}" stroke-linejoin="round"/><path d="M65 ${h + 2}Q64 ${h - 30} 100 ${h - 30}Q136 ${h - 30} 135 ${h + 2}Q100 ${h + 8} 65 ${h + 2}Z" fill="#3D6FC4" stroke="#22427C" stroke-width="${SW}" stroke-linejoin="round"/>` },
+    枕頭睡帽: { h: 50, svg: h => `<path d="M67 ${h + 2}Q70 ${h - 38} 110 ${h - 44}Q144 ${h - 48} 156 ${h - 18}Q138 ${h - 30} 128 ${h - 25}Q134 ${h - 10} 133 ${h + 2}Q100 ${h + 8} 67 ${h + 2}Z" fill="#EEF2FA" stroke="#5A6C96" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M75 ${h - 16}Q100 ${h - 26} 124 ${h - 12}M88 ${h - 33}Q110 ${h - 40} 130 ${h - 32}`, "#7E93C4", 4) + `<path d="M66 ${h - 4}Q100 ${h + 3} 134 ${h - 4}L134 ${h + 3}Q100 ${h + 10} 66 ${h + 3}Z" fill="#7E93C4" stroke="#5A6C96" stroke-width="1.6" stroke-linejoin="round"/>` + miniPillow(158, h - 10, .85) },
+    歡笑花環: { h: 16, svg: h => [[68, 4, "#F7B6C8"], [83, -3, "#FFFFFF"], [117, -3, "#FFFFFF"], [132, 4, "#F7B6C8"]].map(([x, dy, c]) => flowerAt(x, h + dy - 6, 6.2, c)).join("") + flowerAt(100, h - 9, 8.6, "#F58FB0") +
+      `<circle cx="97" cy="${h - 10.5}" r=".9" fill="#5E3A10"/><circle cx="103" cy="${h - 10.5}" r=".9" fill="#5E3A10"/>` + ln(`M96.6 ${h - 8.2}Q100 ${h - 5.6} 103.4 ${h - 8.2}`, "#5E3A10", 1) },
+    躺平眼罩: { h: 24, svg: h => ln(`M62 ${h + 1}Q100 ${h - 10} 138 ${h + 1}`, "#2A2F4A", 4) + `<path d="M70 ${h - 3}Q70 ${h - 22} 100 ${h - 22}Q130 ${h - 22} 130 ${h - 3}Q115 ${h + 2} 100 ${h - 3}Q85 ${h + 2} 70 ${h - 3}Z" fill="#3B4470" stroke="#1F2440" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M78 ${h - 12}Q85 ${h - 7} 92 ${h - 12}M108 ${h - 12}Q115 ${h - 7} 122 ${h - 12}`, "#E8E2C8", 2) + `<text x="133" y="${h - 16}" font-size="11" font-family="serif" fill="#8A95C8">z</text><text x="141" y="${h - 23}" font-size="8" font-family="serif" fill="#8A95C8">z</text>` },
+    縫過的領結: { h: 0, wear: g => bowTie(g, "#B8554A", "#6E2A22", -17, ln("M-16-5L-14-1M-12-7L-10-2M-8-6L-6-2", "#F3E6C4", 1.2) + ln("M-18-7L-5-3", "#F3E6C4", .9, ' stroke-dasharray="2 1.6"') + `<rect x="10" y="-5" width="9" height="9" fill="#D9B98A" stroke="#6E2A22" stroke-width="1" stroke-dasharray="1.8 1.4"/>`) },
+    // 每週特展的（換色共用畫法）：黑絨領結、金瓜子項鍊共用上面兩個；小枕頭髮夾用睡帽尾巴那顆枕頭
+    黑絨領結: { h: 0, wear: g => bowTie(g, "#2B2B2E", "#0E0E10", 0, ln("M-18-6L-7-2M18-6L7-2", "#55555C", 1.2) + `<circle r="2.2" fill="#E2B53E" stroke="#8A6512" stroke-width=".8"/>`) },
+    小枕頭髮夾: { h: 10, svg: h => ln(`M112 ${h + 2}L146 ${h - 7}`, "#C99A2E", 2.6) + miniPillow(130, h - 6, 1.05, "#F7CBD8", "#B0708A") },
+    金瓜子項鍊: { h: 0, wear: g => seedNecklace(g, "#E2B53E", "#8A6512", "#C99A2E") },
+  });
+  // 首飾的位置：ny、nw 是脖子（嘴巴下面）的高度、身體在那裡的半寬；ax、ay 是耳環掛的地方（眼睛外側，不超出身體）
+  const wearGeo = g => {
+    const half = y => g.rx * Math.sqrt(Math.max(0, 1 - ((y - g.cy) / g.ry) ** 2));
+    const ny = g.ey + (g.mo || 36) + (g.squat ? 14 : g.flat ? 12 : 24), ay = g.ey + (g.bo || 31) - 12; // 開心的嘴張得很大：脖子要再低一點，才不會蓋到嘴；蹲著的前臂擋在兩邊，只畫中間
+    return { ny, nw: g.squat ? Math.min(half(ny), 36) : half(ny), ax: Math.min(half(ay) - 1, g.ex + g.er + 7), ay };
+  };
 
   // ---------- 稀有度光暈（只有 o.fx 才畫） ----------
   const AURA = {
@@ -294,6 +343,7 @@ export const ART = (() => {
       if (g.seat) fig = seatSVG(sil) + fig; // 自己的圖坐著，也坐在坐墊上
       if (x && !sil) fig += mood({ ex: 40, ey: headTop + 34, my: headTop + 70, cy: 120, rx: 60, ry: 50, dark: dark0, fill: fill0, x: 1, img: 1 }).over || "";
       box = { top: headTop, head: IM.y + IM.h * .52, waist: IM.y + IM.h * .78, bottom: squat ? 189 : IM.y + IM.h };
+      if (H.wear) fig += sil ? flat(H.wear(wearGeo({ cy: IM.y + IM.h * .6, rx: IM.w * .36, ry: IM.h * .42, ey: IM.y + IM.h * .22, ex: IM.w * .17, er: 14, mo: IM.h * .28, bo: IM.h * .24 }))) : `<g${cls("f-wear")}>${H.wear(wearGeo({ cy: IM.y + IM.h * .6, rx: IM.w * .36, ry: IM.h * .42, ey: IM.y + IM.h * .22, ex: IM.w * .17, er: 14, mo: IM.h * .28, bo: IM.h * .24 }))}</g>`; // 自己的圖也戴得上首飾（決定 0035）：照圖的比例估
       if (g.inv) { fig = `<g transform="rotate(180 100 112)">${fig}</g>` + grp(E(52, 182, 12, 5) + E(148, 182, 12, 5)); headTop = 186; box = { top: 38, head: 186, waist: 186, bottom: 188, crop: { head: [100, 190], waist: [60, 190] } }; }
     } else {
       const xs = [100 - g.ex, 100 + g.ex], fl = !!o.failed;
@@ -327,6 +377,7 @@ export const ART = (() => {
         });
         fig += `<g${cls("f-eyes")}>${whites}<g${cls("f-pupils")}${print ? "" : " " + (inv ? PUPILS_INV : PUPILS)}>${pup}</g></g>` + (m.brow || "") + (m.mouth || "") + (m.over || "");
       } else fig += limbs("f");
+      if (H.wear) fig += sil ? flat(H.wear(wearGeo(g))) : `<g${cls("f-wear")}>${H.wear(wearGeo(g))}</g>`; // 首飾（決定 0035）：畫在倒立轉過去之前，會跟著身體轉
       box = { top: headTop, head: g.ey + (g.flat ? 34 : 48), waist: g.flat ? 190 : g.cy + g.ry * .38, bottom: g.flat ? 190 : 187 };
       if (inv) { fig = `<g transform="rotate(180 ${inv} 111)">${fig}</g>`; headTop = 186; box = { top: 30, head: 186, waist: 186, bottom: 188, crop: { head: [104, 190], waist: [56, 190] } }; }
     }

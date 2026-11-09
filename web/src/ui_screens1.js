@@ -660,6 +660,7 @@ SCREENS.workshop = (root, params) => {
     const o = optOf(cat, name);
     if (o.forbidden && st.state === "forbidden" && P.myth < o.myth - 4) return null; // 太遠的禁忌選項先不露面
     if (o.limited === "shop" && st.state !== "open") return null; // 兌換所的限定頭飾：買到了才出現（決定 0032；帽子那頁不會多一排鎖著的）
+    if (o.limited && o.limited !== "signin" && o.limited !== "shop" && st.state !== "open") return null; // 主題展、每週特展的配件：拿到才出現，下面壹行字說怎麼拿（決定 0035）
     const blocked = st.state === "open" && isBlocked(P, cat, name);
     const on = pick[cat] === name;
     const rolledTab = cat === ROLLED && !free;
@@ -708,6 +709,7 @@ SCREENS.workshop = (root, params) => {
     const list = allOpts(tab).map(n => cardFor(tab, n)).filter(Boolean);
     cards.replaceChildren(...list);
     afraidBox.replaceChildren(afraidBar(tab));
+    if (ADDONS.hatNote && tab === "帽子" && !free) cards.append(ADDONS.hatNote()); // 主題展的限定配件（決定 0035，ui_themeshow.js）
     if (tab === ROLLED && !free) cards.append(h("p", { class: "card-note" }, `稀有度不能選：按「做」之後擲 d100，01 是完美作品、${NUM.fumbleFrom}–100 是失敗作。可以花心情把骰子壓低。`));
   };
   cards.addEventListener("keydown", e => {

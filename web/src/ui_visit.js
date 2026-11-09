@@ -22,6 +22,7 @@ import { overlay } from "./ui_board.js";
 import { reloadSave } from "./ui_login.js";
 import { roomHead } from "./ui_screens1.js";
 import { learnText } from "../../shared/shop.js";
+import { posterWall } from "./ui_themeshow.js";
 
 const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : ""); // "2026-11-09" → "11/9"
 const arrow = () => h("span", { "aria-hidden": "true" }, "→");
@@ -143,7 +144,7 @@ function friendHall(root, params) {
       h("p", { class: "fh-rule" }, `每天每間可以按讚壹次、留壹句話（${SOCIAL.noteMax} 字以內）。`), noteBox,
       d.first && d.gain ? h("p", { class: "fh-first" }, `你今天第壹次來：${nick} 的信箱多了壹封謝禮（靈感 +${d.gain}）。`) : null),
     h("h3", null, "館友留言"), notes);
-  root.append(roomHead(`${nick} 的展廳`, `評分 ${v.score}／100`, ...tools), plate, wall, h("div", { class: "hall-wrap fh-wrap" }, room, side), visitLearnLine(d.learn, nick));
+  root.append(roomHead(`${nick} 的展廳`, `評分 ${v.score}／100`, ...tools), plate, wall, posterWall(v.posters || []), h("div", { class: "hall-wrap fh-wrap" }, room, side), visitLearnLine(d.learn, nick));
 }
 ADDONS.friendHall = friendHall;
 FRIEND_ACTIONS.push({ id: "visit", label: "參觀展廳", show: () => !!P, run: p => go("hall", { friend: { id: p.id, nick: p.nick } }, { action: false }) });

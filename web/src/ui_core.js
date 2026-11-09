@@ -456,6 +456,7 @@ export function updateStatus(instant) {
   syncFresh();
   updateBoardBadges();
   if (HOOKS.status) HOOKS.status();
+  if (HOOKS.themeShow) HOOKS.themeShow(); // 主題展的展期、換週結算（決定 0035，ui_themeshow.js）
   if (!P || !$("#status .st-row")) return;
   const amnesia = P.bout && P.bout.i === 0;
   const set = (id, val, text) => {
@@ -758,7 +759,7 @@ export async function showEvents(events) {
     else if (e.type === "unlock") {
       snd("unlock");
       if (e.how === "myth") later(() => snd("eerie"), 350);
-      const why = { myth: "佩佩神話打開了禁忌選項", free: "完美作品的獎勵", mutant: "突變", gift: "委託人送你", cellar: "地下收藏庫的獎勵", recipe: "配方" }[e.how] || "解鎖";
+      const why = { myth: "佩佩神話打開了禁忌選項", free: "完美作品的獎勵", mutant: "突變", gift: "委託人送你", cellar: "地下收藏庫的獎勵", recipe: "配方", show: "主題展的限定配件", week: "每週特展的限定配件" }[e.how] || "解鎖";
       const here = UI.screen === "workshop" ? "在這裡" : "在手作坊";
       const use = e.cat === ROLLED ? `${here}做佩佩時擲得到了` : `${freshWhere("workshop")}就能用`;
       note(`${why}：新的${e.cat}「${e.name}」，${use}（可能性 ${num(e.from)} → ${num(e.to)}）`, "good");

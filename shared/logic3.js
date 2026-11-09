@@ -6,6 +6,7 @@
 // ---------- 系統 K：工坊升級 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { CELLAR_POWER, CELLAR_REWARDS, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
+import { settleWeekShow } from "./themeshow.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
 import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
@@ -485,7 +486,10 @@ export function weeklyTheme(dateStr) { return WEEKLY_IDS[((weekIndex(dateStr) % 
 export function weeklyState(P) {
   const date = P.day ? P.day.date : todayStr();
   const w = weekIndex(date);
-  if (!P.weekly || P.weekly.w !== w) P.weekly = { w, theme: weeklyTheme(date), slots: [null, null, null, null, null, null], best: 0 };
+  if (!P.weekly || P.weekly.w !== w) {
+    if (P.weekly && P.weekly.w < w) settleWeekShow(P, P.weekly, date); // 換週：照上週的最高分結算（決定 0035，shared/themeshow.js）
+    P.weekly = { w, theme: weeklyTheme(date), slots: [null, null, null, null, null, null], best: 0 };
+  }
   return P.weekly;
 }
 export function weeklyAllows(theme, it) {

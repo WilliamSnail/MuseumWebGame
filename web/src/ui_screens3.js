@@ -712,6 +712,7 @@ export function weeklyHall(root, params) {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: `只能放：${T.rule}`, drag: true });
   root.append(roomHead("本週特展", `${T.name}：${T.rule}`, ...tools), shareBox, hallTabs("week"),
     h("div", { class: "hall-wall themed" }, h("div", { class: "theme-name" }, h("h2", null, T.name), h("p", null, `現在 ${sc.score} 分　本週最高 ${W.best} 分`))),
+    ...(ADDONS.weeklyShow ? [ADDONS.weeklyShow(W)] : []), // 到金拿這週的限定配件（決定 0035，ui_themeshow.js）
     room, strip);
 }
 
