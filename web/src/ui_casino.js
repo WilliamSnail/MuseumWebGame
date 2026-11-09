@@ -11,7 +11,8 @@
 import { NUM } from "../../shared/config.js";
 import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
-import { casCleanSouvenirs, casCleanTitle, casFoodOf } from "../../shared/casino_wallet.js";
+import { casCleanSouvenirs, casCleanTitle, casFoodWords } from "../../shared/casino_wallet.js";
+import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
@@ -458,7 +459,7 @@ function dinerPane() {
       h("p", { class: "cas-have" }, w.opened > 0 ? "今天的大禮包你開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"),
       h("ul", { class: "cas-menu" }, CAS_MENU.map(it => {
         const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
-        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([casFoodOf(it).mood ? `心情 +${casFoodOf(it).mood}` : "", casFoodOf(it).san ? `理智 +${casFoodOf(it).san}` : "", `${it.odds}% 機率抽到券`].filter(Boolean).join("・")))),
+        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([...casFoodWords(it), `${it.odds}% 機率抽到券`].join("・")))),
           h("span", { class: "cas-price" }, casNum(it.price)),
           btn("買", () => buy(it), "primary small", { disabled: lack || locked || S.busy ? true : null, title: lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null }));
       })),
@@ -468,14 +469,13 @@ function dinerPane() {
 
 // ---------- 換小獎 ----------
 const EX_NAME = { insp: "壹點靈感", canvas: "壹張舊畫布", foil: "壹片金箔" };
-// 換到要做什麼（翊文 11-09：「然後要說明用途」）
-const EX_USE = { insp: "馬上加到靈感，手作和上課都用得到。", canvas: "放進背包。到兌換所算 1 份，每 3 份換壹枚週章。", foil: "放進背包。到兌換所算 2 份，每 3 份換壹枚週章。" };
+
 function swapPane() {
   const w = S.w;
   return sec("籌碼換小獎", h("p", { class: "cas-note" }, "籌碼只換壹點點小東西，每週有上限（週壹 05:00 重算）。"), h("ul", { class: "cas-menu" }, w.ex.map(x => {
     const lack = w.chips < x.chips;
-    return h("li", null, h("span", { class: "cas-name" }, h("b", null, EX_NAME[x.id] || x.id), h("small", null, EX_USE[x.id] || ""), h("small", null, `這週還能換 ${x.left}／${x.perWeek} 次`)), h("span", { class: "cas-price" }, casNum(x.chips)),
-      btn("換", () => act("exchange", { id: x.id }, () => { snd("coin"); note(`換到${EX_NAME[x.id]}了。${EX_USE[x.id] || ""}`, "good"); }), "primary small", { disabled: lack || !x.left || S.busy ? true : null, title: !x.left ? "這週換完了" : lack ? "籌碼不夠" : null }));
+    return h("li", null, h("span", { class: "cas-name" }, h("b", null, EX_NAME[x.id] || x.id), h("small", null, exchangeUse(x.id)), h("small", null, `這週還能換 ${x.left}／${x.perWeek} 次`)), h("span", { class: "cas-price" }, casNum(x.chips)),
+      btn("換", () => act("exchange", { id: x.id }, () => { snd("coin"); note(`換到${EX_NAME[x.id]}了。${exchangeUse(x.id)}`, "good"); }), "primary small", { disabled: lack || !x.left || S.busy ? true : null, title: !x.left ? "這週換完了" : lack ? "籌碼不夠" : null }));
   })), P && P.mode === "free" ? h("p", { class: "cas-warn" }, "自由模式沒有靈感，要用挑戰模式的參觀者才換得到。") : null);
 }
 

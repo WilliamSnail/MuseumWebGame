@@ -104,6 +104,37 @@ T("餐車的吃的加心情、理智：有每天上限、換日重算、券和�
     assert.ok(G.dcFoodMenu("123456")[0].components[0].options.find(o => o.value === "juice").description.includes("心情 +4"));
     assert.ok(G.dcFoodMenu("123456")[0].components[0].options.find(o => o.value === "snack").description.includes("心情 +2"));
   }
+  { // 菜單寫的要跟真的加的壹樣：每壹樣都實際買過（翊文 11-09：屬性不要寫錯）
+    for (const it of G.CAS_MENU) {
+      if (it.ticket) { assert.strictEqual(G.casFoodWords(it).join("・"), "", `${it.id} 是券，沒有效果`); continue; }
+      const w3 = G.casWalletFix(null, DAY), h3 = { bankroll: 1e9 }, Q = G.newProfile("challenge");
+      w3.chips = 1e8; Q.mood = 10; Q.sanity = 10; Q.dark = false;
+      const m0 = Q.mood, s0 = Q.sanity, r = G.casBuy(w3, h3, it.n, DAY, undefined, Q);
+      assert.ok(r.ok, it.id);
+      const dm = Q.mood - m0, ds = Q.sanity - s0, want = [dm ? `心情 +${dm}` : "", ds ? `理智 +${ds}` : ""].filter(Boolean);
+      assert.strictEqual(G.casFoodWords(it).join("・"), want.join("・"), `${it.id}：菜單和真的加的不壹樣`);
+      assert.ok(dm > 0 || ds > 0, `${it.id}：是吃的就要有效果`);
+      if (dm) assert.ok(r.lines.some(l => l.includes(`心情 +${dm}`)), `${it.id}：買完要說心情加多少`);
+      const d = G.dcFoodMenu("123456")[0].components[0].options.find(o => o.value === it.id).description;
+      if (dm) assert.ok(d.includes(`心情 +${dm}`), `${it.id}：Discord 選單要寫心情`);
+      assert.ok(!d.includes("理智"), `${it.id}：Discord 不放理智`);
+    }
+    const fs = require("fs"), path = require("path"), src = f => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+    for (const f of ["web/src/ui_casino.js", "shared/discord_play.js"]) assert.ok(!/\bit\.(mood|san)\b/.test(src(f)), `${f}：效果的字要用 casFoodWords，不要自己組`);
+    // 換小獎的每壹樣都要有用途；背包材料的份數要跟真的換週章壹樣
+    for (const x of G.NUM.casino.exchange) {
+      const u = G.exchangeUse(x.id);
+      assert.ok(u, `${x.id} 沒有寫用途`);
+      if (x.reward.bag) {
+        const P2 = G.newProfile("challenge"), S2 = G.storyState(P2); S2.bag = { [x.reward.bag]: 1 };
+        assert.ok(u.includes(`算 ${G.matCount(P2)} 份`), `${x.id}：說明的份數和真的算的不壹樣`);
+      }
+    }
+    for (const id of Object.keys(G.STORY_ITEMS).filter(k => G.STORY_ITEMS[k].kind === "material")) {
+      const P2 = G.newProfile("challenge"), S2 = G.storyState(P2); S2.bag = { [id]: 1 };
+      assert.ok(G.itemDesc(id).includes(`算 ${G.matCount(P2)} 份`), `${id}：背包說明的份數不對`);
+    }
+  }
   const full = G.casBuy(w, house, 1, DAY, undefined, P);
   assert.strictEqual(full.mood, 0); assert.ok(full.lines.includes(G.CAS_TEXT.foodFull));
   assert.strictEqual(full.ok, true, "吃飽了還是買得到");
