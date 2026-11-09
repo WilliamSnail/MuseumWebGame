@@ -33,6 +33,8 @@ const commitText = (msg, ai = "Claude Opus 5.5") => `${String(msg).trim()}\n\nCo
 const prBody = body => { const b = String(body || "").trim(); return b.includes(FOOTER) ? b + "\n" : `${b}\n\n${FOOTER}\n`; };
 // main 不能直接動
 const branchOk = b => !!b && b !== "main" && b !== "master";
+// PR 剛開，GitHub 可能還沒登記 CI：這時 gh pr checks 會失敗，但不是真的失敗，要等
+const noChecksYet = text => /no checks reported/i.test(String(text || ""));
 
 function gh() {
   if (process.env.GH_BIN) return process.env.GH_BIN;
@@ -90,6 +92,12 @@ function main() {
   } else console.log(`已經有 PR ${n}`);
 
   say(`等 PR ${n} 的 CI`);
+  for (let i = 0; i < 18; i++) {
+    const c = run(gh(), ["pr", "checks", n, "--repo", REPO], { ok: true });
+    if (!noChecksYet(c.stdout + c.stderr)) break;
+    if (i === 17) throw new Error(`PR ${n} 等了 3 分鐘還是沒有 CI`);
+    sleep(10000);
+  }
   run(gh(), ["pr", "checks", n, "--repo", REPO, "--watch", "--interval", "10"]);
   if (o.flags.has("no-merge")) { console.log("\nCI 過了，沒有合併（--no-merge）。"); return; }
 
@@ -109,4 +117,4 @@ function main() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, branchOk };
+module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet };
