@@ -198,6 +198,12 @@ export function casOpenPacks(w, house, n, day) {
 // P 是這位參觀者（沒有、自由模式就沒有效果）。燈熄了的時候不加理智。回傳 { mood, san, full（今天的份吃完了） }
 // 這樣東西吃下去其實是哪壹樣（零食會變成烤雞，舊的梗）：菜單上的數字要跟實際加的壹樣
 export const casFoodOf = it => (it && it.redirect ? CAS_MENU.find(x => x.id === it.redirect) || it : it);
+// 這樣東西的效果說明，遊戲和 Discord 都用這壹份，不要各自組字（翊文 11-09：屬性不要寫錯）。
+// showSan：Discord 的頻道裡不放理智，傳 false。test/casino.test.cjs 會實際買過每壹樣，比對這裡寫的和真的加的
+export function casFoodWords(it, showSan = true) {
+  const f = casFoodOf(it);
+  return [f && f.mood ? `心情 +${f.mood}` : "", showSan && f && f.san ? `理智 +${f.san}` : ""].filter(Boolean);
+}
 // 今天還能靠吃東西加幾點心情
 export const casFoodLeft = (w, day) => Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0));
 export function casFoodEffect(w, it, P, day) {

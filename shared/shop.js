@@ -21,7 +21,7 @@ import { GEAR_TEXT, SHOP_TEXT, TRIAL_ROOMS } from "./content3.js";
 import { asList, isFree, parseDice, rollExpr, todayStr } from "./logic.js";
 import { canStartCellar, cellarFloor, jobSkill, weekIndex } from "./logic3.js";
 import { grantLimited, limitedInfo, ownsLimited } from "./signin.js";
-import { STORY_ITEMS, storyState } from "./story.js";
+import { STORY_ITEMS, itemDesc, storyState } from "./story.js";
 import { eventRunFix, eventScale } from "./events.js";
 
 const shopObj = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -237,6 +237,14 @@ export function buyLimited(P, id, onSale, today = todayStr()) {
 }
 // 給公告用：「黃雨帽、廚師帽」
 export function limitedNames(ids) { return asList(ids).map(id => (limitedInfo(id) || { name: id }).name).join("、"); }
+
+// 賭場「換小獎」換到的東西要做什麼（翊文 11-09：「然後要說明用途」）。背包的東西用背包的說明，份數才不會寫兩份
+export function exchangeUse(id) {
+  const x = NUM.casino.exchange.find(e => e.id === id), r = x && x.reward;
+  if (!r) return "";
+  if (r.bag) return `放進背包。${itemDesc(r.bag)}`;
+  return r.insp ? "馬上加到靈感，手作和上課都用得到。" : "";
+}
 
 // ---------- 材料換週章 ----------
 export function matCount(P) {
