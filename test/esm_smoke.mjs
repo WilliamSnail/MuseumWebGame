@@ -10,12 +10,13 @@ import * as fresh from "../shared/fresh.js";
 import * as holidays from "../shared/holidays.js";
 import * as signin from "../shared/signin.js";
 import * as story from "../shared/story.js";
+import * as admin from "../shared/admin.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -56,5 +57,13 @@ ok("簽到、節日接得上 logic、logic3（11-09，決定 0030）", () => {
   assert.ok(r.ok && r.holiday.key === "midautumn");
   assert.strictEqual(holidays.holidayOf("2026-09-25").name, "中秋節");
   assert.strictEqual(logic.exhibitById("hx-midautumn-0").holiday, "midautumn");
+});
+ok("管理員介面的摘要接得上每個規則檔（決定 0033）", () => {
+  const save = logic.newSave();
+  save.profiles.challenge = logic.newProfile("challenge");
+  const s = admin.adminSummary(JSON.stringify(save));
+  assert.ok(s.ok && s.entered);
+  assert.strictEqual(s.progress.codex.total, logic.CORE_TOTAL);
+  assert.strictEqual(admin.adminSummary("{壞掉").ok, false);
 });
 console.log(`${n} passed, 0 failed（ES 模組載入）`);

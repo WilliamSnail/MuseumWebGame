@@ -28,7 +28,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能讀 | 誰能寫 |
 |---|---|---|---|
 | `members/{uid}` | 這個帳號是館友：`nick`、`invisible`、`joinedAt` | 館友 | 只有 Functions（`join` 檢查邀請名單之後建） |
-| `invites/{email}` | 邀請名單 | 沒有人（只有 Functions） | 管理員（之後的管理介面） |
+| `invites/{email}` | 邀請名單；`admin: true` 的是管理員（第八節） | 沒有人（只有 Functions） | 翊文在 Firestore 後台（AI 碰不到） |
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
 | `halls/{uid}` | 展廳給別人看的那一小部分（M2） | 館友 | 自己存檔時一起寫 |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪、補償） | 自己 | 只有 Functions |
@@ -59,6 +59,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/logic3.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下的每一步（`shared/coop.js`） | M4 |
 | `sendGift`、`claimMail`、`visitHall` | 送佩佩、領信、來訪的靈感 | M2 |
+| `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
+| `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
 - **骰子**：`shared/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。
@@ -127,3 +129,24 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 - [ ] 開 GitHub repo（私人），把一起開發的朋友加進來。
 - [ ] 一起開發的朋友：`pepe-museum` 給「檢視者」（Viewer）。
 - [ ] 部署用的服務帳號和金鑰（上面「部署用的服務帳號」那一段）。
+
+## 八、管理員（翊文在後台設，決定 0033）
+
+管理員只看得到大家的進度，不能改（`functions/admin.js`、`shared/admin.js`、`web/src/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
+
+翊文怎麼把自己設成管理員（AI 不能做，AI 碰不到正式的 Firebase）：
+
+1. Firebase 主控台（專案 `pepe-museum`）→「Firestore Database」→ 集合 `invites`。
+2. 打開自己的 email 那一筆。文件 ID 要全部小寫，跟登入的 Google 帳號一樣。沒有那一筆就新增一筆。
+3. 按「新增欄位」：名稱 `admin`，類型 `boolean`，值 `true`。要選 boolean，不要打成字串。
+4. 回遊戲重新整理：進館後右上角「選單」多一項「管理員」。
+
+- 拿掉：把 `admin` 刪掉或改成 `false`，下次登入選單就沒有了；已經開著的畫面，按「重新整理」會變成「沒有權限」。
+- 那一筆有 `disabled` 就不算管理員。
+- Functions 看的是登入 token 的 email（小寫，`email_verified` 要是 true）。
+
+在模擬器測（只用假帳號）：
+
+1. 算出假帳號的 email：`node -e "console.log('dev-' + Buffer.from('測試管理').toString('hex').slice(0, 40) + '@dev.local')"`。
+2. http://127.0.0.1:4400/firestore → `invites` → 新增文件，文件 ID 是那個 email，欄位 `admin`，類型 boolean，值 true。
+3. 開 `http://localhost:5173/?user=測試管理`，進館 → 選單 → 管理員。

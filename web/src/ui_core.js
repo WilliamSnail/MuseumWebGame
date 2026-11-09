@@ -228,6 +228,7 @@ export function buildNav() {
     // 館友和帳號（M1，登入了才出現）
     h("p", { class: "md-h md-net", hidden: true }, "館友與帳號"),
     h("div", { class: "md-group md-net", hidden: true }, item("md-friends", "users", "館友", () => openPanel("friends")), item("md-switch", "refresh", "換參觀者", () => go("title", {}, { action: false })), item("md-account", "user", "我的帳號", () => openPanel("account"))),
+    ADDONS.adminMenu ? ADDONS.adminMenu(item) : null, // 管理員：只有管理員看得到（ui_admin.js，決定 0033）
     h("p", { class: "md-h" }, "設定"),
     h("div", { class: "md-group" }, roomItem(["settings", ROOM_NAMES.settings])));
   nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, sound, menu), drawer);
