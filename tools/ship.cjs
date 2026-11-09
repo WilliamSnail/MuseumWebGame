@@ -1,5 +1,5 @@
 // 把這個分支上線，一個指令走完（翊文 11-09：「有各種需要腳本加速，讓AI不用太多一步步做的地方都可以寫來重複利用」）
-//   本機測試 → commit → 併 origin/main → 推上去 → 開 PR → 等 CI → 合併 → 等部署
+//   本機測試 → commit → 併 origin/main（tools/merge_main.cjs，會自動解公告、索引的衝突） → 推上去 → 開 PR → 等 CI → 合併 → 等部署
 // 任何一步失敗就停在那裡，印出原因；再跑一次會從還沒做的地方接著走（commit、PR 做過就不重做）。
 // 會真的合併到 main、部署到正式站（AI 可以合併，決定 0024）：只在該上線的分支跑。
 //
@@ -10,10 +10,10 @@
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
 const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
+const { mergeMain: mergeFromMain } = require("./merge_main.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const REPO = "WilliamSnail/MuseumWebGame";
-const LOG_INDEX = "維護日誌/README.md";
 const FOOTER = "🤖 Generated with [Claude Code](https://claude.com/claude-code)";
 
 function parseArgs(argv) {
@@ -31,8 +31,6 @@ function parseArgs(argv) {
 }
 const commitText = (msg, ai = "Claude Opus 5.5") => `${String(msg).trim()}\n\nCo-Authored-By: ${ai} <noreply@anthropic.com>\nAI: ${ai}（Claude Code）\n`;
 const prBody = body => { const b = String(body || "").trim(); return b.includes(FOOTER) ? b + "\n" : `${b}\n\n${FOOTER}\n`; };
-// 衝突只有日誌索引的話可以自己解（重新產生就好）；其他的要人看
-const onlyIndexConflict = files => files.length > 0 && files.every(f => f === LOG_INDEX);
 // main 不能直接動
 const branchOk = b => !!b && b !== "main" && b !== "master";
 
@@ -41,26 +39,22 @@ function gh() {
   const win = "C:\\Program Files\\GitHub CLI\\gh.exe";
   return fs.existsSync(win) ? win : "gh";
 }
+// 失敗的時候印什麼：測試從第壹個 ✗ 開始（不然會被後面過的項目蓋掉），其他的印最後 25 行
+function failText(out) {
+  const lines = out.trim().split("\n"), i = lines.findIndex(l => l.startsWith("✗"));
+  return (i >= 0 ? lines.slice(i, i + 25) : lines.slice(-25)).join("\n");
+}
 function run(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { cwd: ROOT, encoding: "utf8", shell: opts.shell || false, input: opts.input, maxBuffer: 1 << 26 });
   if (r.error) throw r.error;
-  if (r.status !== 0 && !opts.ok) throw new Error(`${path.basename(cmd)} ${args.slice(0, 3).join(" ")} 失敗：\n${(r.stdout + r.stderr).trim().split("\n").slice(-25).join("\n")}`);
+  if (r.status !== 0 && !opts.ok) throw new Error(`${path.basename(cmd)} ${args.slice(0, 3).join(" ")} 失敗：\n${failText(r.stdout + r.stderr)}`);
   return Object.assign(r, { out: (r.stdout || "").trim() });
 }
 const git = (args, opts) => run("git", ["-c", "core.quotepath=false", ...args], opts);
 const say = t => console.log(`\n▶ ${t}`);
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
-function mergeMain(ai) {
-  git(["fetch", "-q", "origin"]);
-  const r = git(["merge", "--no-edit", "origin/main"], { ok: true });
-  if (r.status === 0) return;
-  const files = git(["diff", "--name-only", "--diff-filter=U"]).out.split("\n").filter(Boolean);
-  if (!onlyIndexConflict(files)) throw new Error(`跟 main 有衝突，要手動解：\n${files.join("\n")}`);
-  run(process.execPath, ["tools/log_index.cjs"]);
-  git(["add", LOG_INDEX]);
-  git(["commit", "-q", "-F", "-"], { input: commitText("併 main（日誌索引重新產生）", ai) });
-}
+const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
 function main() {
   const o = parseArgs(process.argv.slice(2)), ai = process.env.SHIP_AI || "Claude Opus 5.5";
@@ -115,4 +109,4 @@ function main() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, onlyIndexConflict, branchOk };
+module.exports = { parseArgs, commitText, prBody, branchOk };

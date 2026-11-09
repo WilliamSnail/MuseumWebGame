@@ -3,14 +3,15 @@
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { casExact, casNum } from "../../shared/casino.js";
-import { NUM } from "../../shared/config.js";
+import { LEGACY, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
+import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { markTokens } from "../../shared/logic.js";
-import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkMinsLeft, quirkName, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
+import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
+import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, noticeState, visibleNotices } from "../../shared/notices.js";
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
@@ -199,6 +200,7 @@ export function useProfile(mode) {
   SAVE.current = mode;
   P = SAVE.profiles[mode];
   const d = ensureDay(P);
+  if (d && d.retasked) noteRetasked(d.retasked);
   UI.pendingRecovery = !!(d && !d.firstEver);
   UI.pendingGrowth = UI.pendingRecovery;
   persist();
@@ -577,8 +579,8 @@ export function updateStatus(instant) {
     const chips = [];
     if (P.myth > 0) chips.push(h("span", { class: "chip", title: `理智上限＝99－佩佩神話＝${maxSan(P)}` }, `神話 ${P.myth}`));
     // 怪癖：名字＋要做的那件事＋剩幾分鐘（決定 0027；剩幾分鐘由 quirkTick 每分鐘換字，不重畫）
-    activeQuirks(P).forEach(q => chips.push(h("button", { type: "button", class: "chip warn qk-chip", title: `${quirkName(q)}：${quirkEffects(q).map(e => e[1]).join("；")}。${quirkCureText(q)}（點壹下看詳細）`, onClick: () => showQuirks() },
-      icon("eye"), h("span", { class: "qk-chip-n" }, quirkName(q)), h("small", { class: "qk-chip-sub" }, QUIRK_TASK_TEXT[q.task] ? QUIRK_TASK_TEXT[q.task].chip + "・" : "", quirkLeftNode(q, "s")))));
+    activeQuirks(P).forEach(q => chips.push(h("button", { type: "button", class: "chip warn qk-chip", title: `${quirkName(q)}：${quirkEffects(q).map(e => e[1]).join("；")}。${quirkCureText(q)}${quirkProgText(q)}${qf(QUIRK_PLAN_TEXT.leftNote, { d: quirkDaysLeft(q) })}（點壹下看詳細）`, onClick: () => showQuirks() },
+      icon("eye"), h("span", { class: "qk-chip-n" }, quirkName(q)), h("small", { class: "qk-chip-sub" }, QUIRK_TASK_TEXT[q.task] ? QUIRK_TASK_TEXT[q.task].chip + "・" : "", quirkProgText(q, "s") ? quirkProgText(q, "s") + "・" : "", quirkLeftNode(q, "s")))));
     extra.replaceChildren(...chips);
   }
   const dots = $("#st-bout");
@@ -959,13 +961,15 @@ export function quirkEffects(q) {
   }
   return [["bad", q.opt ? `手作坊不敢選「${q.opt}」：可能性變少` : `「${q.cat}」只敢選「${baseOpts(q.cat)[0]}」：可能性變少`]];
 }
-// ---------- 怪癖的治法：做完壹件事就好，不然 NUM.quirkMinutes 分鐘後自己消失（翊文 11-08，決定 0027；原本是連續 3 天抱抱枕） ----------
-// 規則在 shared/logic.js（q.task、q.until、cureByTask、expireQuirks）；文字在 content3.js 的 QUIRK_TASK_TEXT
+// ---------- 怪癖的治法：在 2 個不同的遊戲日各做壹次，不然壹週後自己消失（翊文 11-09，決定 0046；0027 是「做完壹件事、20 分鐘」） ----------
+// 規則在 shared/logic.js（q.task、q.done、q.until、cureByTask、retaskQuirks、expireQuirks）；文字在 content3.js 的 QUIRK_TASK_TEXT、QUIRK_PLAN_TEXT
+const qf = (t, o) => Object.keys(o).reduce((r, k) => r.split("{" + k + "}").join(String(o[k])), String(t)); // {n} 這種帶名字的填空（logic.js 的 fill 只有 {x}）
 export const QUIRK_TASK_ICON = { hug: "pillow", deliver: "commission", calm: "gallery" };
 // 「到畫廊看壹幅不可怕的畫就好了。」；這個怪癖沒有治法（得到時都做不到）是空字串
+// 治法要做 NUM.quirkTaskDays 個不同的日子：寫成「要在 2 個不同的日子，各到畫廊看壹幅不可怕的畫」
 export function quirkCureText(q) {
   const t = q && QUIRK_TASK_TEXT[q.task];
-  return t ? `到${t.where}${t.act}就好了。` : "";
+  return t ? qf(QUIRK_PLAN_TEXT.plan, { n: NUM.quirkTaskDays, where: t.where, act: t.act }) : "";
 }
 // 再說清楚壹點：不可怕的畫寫出是哪幾幅
 export function quirkHint(q) {
@@ -973,8 +977,17 @@ export function quirkHint(q) {
   if (!t) return "";
   return q.task === "calm" ? fill(t.hint, calmExhibits(P).map(ex => `「${ex.title}」`).join("、")) : t.hint;
 }
-// 剩幾分鐘：fmt "s"＝「18 分」（狀態列）、"n"＝「18 分鐘」（接在句子裡）、其他＝「還剩 18 分鐘」。data-until 讓 refreshQuirkLeft 每分鐘換字，不用重畫畫面
-export function quirkLeftText(q, fmt, now = nowMs()) { const n = quirkMinsLeft(q, now); return fmt === "s" ? `${n} 分` : fmt === "n" ? `${n} 分鐘` : `還剩 ${n} 分鐘`; }
+// 做事情的進度：fmt "s"＝狀態列的短版（「今天做過了」「還要 2 天」）；其他＝完整的壹句（「今天做過了，改天再做壹次就好。」）。沒有治法是空字串
+export function quirkProgText(q, fmt) {
+  if (!q || !QUIRK_TASK_TEXT[q.task]) return "";
+  const need = quirkNeedDays(q), today = quirkDoneToday(q);
+  if (fmt === "s") return today ? QUIRK_PLAN_TEXT.chipToday : qf(QUIRK_PLAN_TEXT.chipNeed, { need });
+  if (today) return need <= 1 ? QUIRK_PLAN_TEXT.todayDone : qf(QUIRK_PLAN_TEXT.todayDoneMore, { need });
+  return qf(QUIRK_PLAN_TEXT.need, { need });
+}
+// 剩幾天自己好：fmt "s"＝「5 天」（狀態列）、"n"＝「5 天」（接在句子裡）、其他＝「還有 5 天自己好」。
+// data-until 讓 refreshQuirkLeft 每秒看壹下，數字變了才換字，不用重畫畫面
+export function quirkLeftText(q, fmt, now = nowMs()) { const n = quirkDaysLeft(q, now); return fmt === "s" || fmt === "n" ? `${n} 天` : qf(QUIRK_PLAN_TEXT.left, { d: n }); }
 export function quirkLeftNode(q, fmt = "l") {
   return h("span", { class: "qk-left", dataset: { until: String(q.until), fmt } }, quirkLeftText(q, fmt));
 }
@@ -982,15 +995,25 @@ export function refreshQuirkLeft() {
   const now = nowMs();
   $$(".qk-left[data-until]").forEach(el => { const t = quirkLeftText({ until: Number(el.dataset.until) }, el.dataset.fmt, now); if (el.textContent !== t) el.textContent = t; });
 }
-// 卡片（得到時蓋的、狀態列點開的、館長室名片上的）：效果、怎麼治好、剩幾分鐘
+// 卡片（得到時蓋的、狀態列點開的、館長室名片上的）：效果、怎麼治好、做到哪、還有幾天自己好
 export function quirkCard(q) {
   const t = QUIRK_TASK_TEXT[q.task];
   return h("div", { class: "quirk-card " + q.type },
     h("div", { class: "qk-head" }, icon("eye"), h("b", { class: "qk-name" }, quirkName(q)), h("span", { class: "qk-type" }, q.type === "mania" ? "狂熱" : "恐懼症")),
     h("p", { class: "qk-flavor" }, fill(QUIRK_TEXT[q.type].gain, q.opt || q.cat)),
     h("ul", { class: "qk-fx" }, quirkEffects(q).map(([tone, s]) => h("li", { class: tone }, s))),
-    t ? h("p", { class: "qk-cure" }, icon(QUIRK_TASK_ICON[q.task] || "check"), h("span", null, h("b", null, "怎麼治好："), quirkCureText(q), h("small", { class: "qk-hint" }, quirkHint(q)))) : null,
-    h("p", { class: "qk-time" }, icon("hourglass"), h("span", null, h("b", null, t ? "沒做的話：" : "等它過去："), quirkLeftNode(q), "，時間到自己消失。")));
+    t ? h("p", { class: "qk-cure" }, icon(QUIRK_TASK_ICON[q.task] || "check"), h("span", null, h("b", null, "怎麼治好："), quirkCureText(q), h("b", { class: "qk-prog" }, quirkProgText(q)), h("small", { class: "qk-hint" }, quirkHint(q)))) : null,
+    h("p", { class: "qk-time" }, icon("hourglass"), h("span", null, h("b", null, t ? "不做的話：" : "等它過去："), quirkLeftNode(q), "。")));
+}
+// 提示換參觀者（決定 0046）：怪癖只在這位身上、時間照樣在走。換人不花任何東西；在門口選別位，或招新的。自由模式沒有參觀者的位子
+// onGo：按鈕先關掉視窗再去門口
+export function quirkSwitchTip(onGo) {
+  if (!P || !hasSlots(P)) return null;
+  const many = visitorTotal(P) > 1;
+  if (!many && !freeSlots(P).length) return null;
+  return h("div", { class: "qk-switch", role: "note" }, icon("user"),
+    h("p", null, many ? QUIRK_PLAN_TEXT.switchMany : qf(QUIRK_PLAN_TEXT.switchNone, { slots: LEGACY.slots })),
+    btn(many ? QUIRK_PLAN_TEXT.btnMany : QUIRK_PLAN_TEXT.btnNone, () => { if (onGo) onGo(); go("title", {}, { action: false }); }, "ghost"));
 }
 // 房間裡壹塊說明：在這裡做得到哪些怪癖的治法（抱枕工作台、委託櫃台、畫廊）
 export function quirkHereBox(task) {
@@ -999,22 +1022,36 @@ export function quirkHereBox(task) {
   if (!qs.length) return null;
   const t = QUIRK_TASK_TEXT[task];
   return h("div", { class: "qk-here", role: "note" }, icon(QUIRK_TASK_ICON[task] || "check"),
-    h("div", { class: "qk-here-lines" }, qs.map(q => h("span", null, h("b", null, `在這裡${t.act}，就能治好「${quirkName(q)}」`), "（不然 ", quirkLeftNode(q, "n"), "後也會自己消失）。")),
+    h("div", { class: "qk-here-lines" }, qs.map(q => h("span", null,
+      h("b", null, quirkDoneToday(q) ? `今天在這裡${t.act}過了` : `在這裡${t.act}，今天算壹天`), `（治好「${quirkName(q)}」`, " ", quirkProgText(q), " ", "不然 ", quirkLeftNode(q, "n"), "後也會自己好）。")),
       h("small", null, quirkHint(qs[0]))));
 }
 // 治好了：壹個壹則提示（hug、deliver、viewExhibit 回傳的 cured）
 export function noteCured(list) {
-  (list || []).forEach(c => note(`治好了「${quirkName(c.quirk)}」：${c.to !== c.from ? `可能性 ${num(c.from)} → ${num(c.to)}` : fill(QUIRK_TEXT[c.quirk.type].cure, c.quirk.opt || c.quirk.cat)}`, "good"));
+  (list || []).forEach(c => {
+    if (c.step) { // 今天算壹天了，還沒好（決定 0046）
+      const t = QUIRK_TASK_TEXT[c.quirk.task];
+      note(qf(QUIRK_PLAN_TEXT.step, { name: quirkName(c.quirk), rest: qf(c.need <= 1 ? QUIRK_PLAN_TEXT.stepOne : QUIRK_PLAN_TEXT.stepMore, { need: c.need, act: t ? t.act : "" }) }), "good");
+      return;
+    }
+    note(`治好了「${quirkName(c.quirk)}」：${c.to !== c.from ? `可能性 ${num(c.from)} → ${num(c.to)}` : fill(QUIRK_TEXT[c.quirk.type].cure, c.quirk.opt || c.quirk.cat)}`, "good");
+  });
+}
+// 換日時治法改了（retaskQuirks，ensureDay 回傳的 retasked）：壹個壹則提示
+export function noteRetasked(list) {
+  (list || []).forEach(r => {
+    const to = QUIRK_TASK_TEXT[r.to], from = QUIRK_TASK_TEXT[r.from];
+    note(qf(QUIRK_PLAN_TEXT.retask, { name: quirkName(r.quirk), to: to ? `到${to.where}${to.act}` : "", from: from ? from.act : "治法" }), "");
+  });
 }
 // 時間到（boot.js 的 tick 每秒叫）：拿掉、跳提示；有用到怪癖的房間，等沒有視窗蓋著時重畫壹次。
-// 剩幾分鐘：每秒看壹下，只有數字變了才換字（所以畫面上壹分鐘換壹次）。不重畫畫面。
-// 不能只在「時鐘換分」時才換：每個怪癖到期的秒數不壹樣，那樣同壹個畫面上會差 1 分鐘
+// 剩幾天：每秒看壹下，只有數字變了才換字（所以畫面上壹天換壹次）。不重畫畫面。
 export const QUIRK_SCREENS = ["workshop", "office", "pillow", "commission", "gallery"];
 export function quirkTick() {
   if (!P || isFree(P)) return;
   const gone = expireQuirks(P);
   if (gone.length) {
-    gone.forEach(g => note(`「${quirkName(g.quirk)}」自己消失了。${fill(QUIRK_TEXT[g.quirk.type].cure, g.quirk.opt || g.quirk.cat)}`, "good"));
+    gone.forEach(g => note(`「${quirkName(g.quirk)}」自己好了。${fill(QUIRK_TEXT[g.quirk.type].cure, g.quirk.opt || g.quirk.cat)}`, "good"));
     UI.quirkRedraw = QUIRK_SCREENS.includes(UI.screen);
     updateStatus(); persist();
   }
@@ -1038,13 +1075,15 @@ export function quirkLayer(title, sub, body, cls = "qk-modal", okText = "知道�
 // 得到怪癖：蓋壹張卡片在畫面上
 export function quirkGainFlow(g) {
   snd("eerie");
+  const close = () => { const b = $(".qk-modal .btn.primary"); if (b) b.click(); };
   return quirkLayer("你得到了怪癖", "壹天內掉的理智，超過了當天理智的 1/5。",
-    [quirkCard(g.quirk), g.to !== g.from ? h("p", { class: "qk-poss" }, `可能性 ${num(g.from)} → ${num(g.to)}`) : null]);
+    [quirkCard(g.quirk), g.to !== g.from ? h("p", { class: "qk-poss" }, `可能性 ${num(g.from)} → ${num(g.to)}`) : null, quirkSwitchTip(close)]);
 }
 // 狀態列的怪癖小牌子：點了看全部怪癖
 export function showQuirks() {
   if (!P || !activeQuirks(P).length) return;
-  return quirkLayer("你的怪癖", `做完卡片上寫的那件事就好；沒做的話，${NUM.quirkMinutes} 分鐘後自己消失。館長室的參觀者名片也看得到。`, activeQuirks(P).map(q => quirkCard(q)));
+  const close = () => { const b = $(".qk-modal .btn.primary"); if (b) b.click(); };
+  return quirkLayer("你的怪癖", `在 ${NUM.quirkTaskDays} 個不同的日子各做壹次卡片上寫的那件事就好；沒做的話，${NUM.quirkDays} 天後自己好。館長室的參觀者名片也看得到。`, activeQuirks(P).map(q => quirkCard(q)).concat([quirkSwitchTip(close)]));
 }
 // 手作坊：做這隻會因為怪癖多花或少花幾靈感
 export function quirkMakeBox(pick) {
@@ -1056,7 +1095,7 @@ export function quirkMakeBox(pick) {
     return h("div", { class: "qm-row " + (hit ? "good" : "bad") }, name,
       h("span", { class: "qm-fx" }, hit ? `這隻是「${q.opt}」：少花 1 靈感！` : `這隻不是「${q.opt}」：多花 1 靈感`),
       hit ? null : h("span", { class: "qm-tip" }, `換成「${q.opt}」只要 ${NUM.costPepe - 1} 靈感`),
-      h("span", { class: "qm-tip" }, quirkCureText(q) ? `${quirkCureText(q)}不然 ` : "", quirkLeftNode(q, "n"), "後自己消失。")); // 狂熱的治法（11-09，決定 0027）
+      h("span", { class: "qm-tip" }, quirkCureText(q) ? `${quirkCureText(q)}${quirkProgText(q)}不然 ` : "", quirkLeftNode(q, "n"), "後自己好。")); // 狂熱的治法（決定 0046）
   }));
 }
 // 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進起源室的《看懂的事》

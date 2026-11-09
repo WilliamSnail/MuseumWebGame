@@ -172,6 +172,7 @@ async function playResult(v) {
         outcome: { text: r.success ? `成功：扣 ${r.loss}` : `失敗：扣 ${r.loss}`, tone: r.success ? "good" : "bad" } });
     }
     tellEvents(v.fresh || []);
+    if (ADDONS.cellarFind && l.choice !== "retreat") ADDONS.cellarFind(l.room); // 撿籌碼（決定 0047）：跟單人同一個接口，不等伺服器；撤退不算
   } finally { if (S === s) { s.anim = false; draw(); } }
 }
 // 只有自己的事：發作、怪癖、看懂了、幽靈……

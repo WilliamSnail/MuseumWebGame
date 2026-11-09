@@ -9,10 +9,10 @@
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_FIND_TEXT, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
-import { todayStr } from "../../shared/logic.js";
+import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -161,7 +161,7 @@ function tablePane() {
     btn(`向 Yuga 借籌碼（今天還能借 ${w.reliefLeft} 次）`, () => act("relief", {}, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); }), "primary", { disabled: S.busy ? true : null })));
   else if (w.chips < NUM.casino.reliefBelow && !playing && !w.canRelief) parts.push(h("p", { class: "cas-relief" }, fill(CAS_TEXT.reliefNone, { n: NUM.casino.dailyPacks })));
   if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
-  parts.push(h("p", { class: "cas-rules" }, "規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。"));
+  parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情會好壹點，連輸 ${NUM.casino.streak.loseN} 把理智會掉壹點（平手不算，每天有上限）。`));
   return parts;
 }
 function resultCard(r) {
@@ -188,6 +188,10 @@ function celebrate(ach) {
   for (const a of ach || []) { note(`成就「${a.name}」！在「成就」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
   celebrateWk();
 }
+// 連勝連敗（決定 0049）：伺服器算好的文字；心情、理智已經寫進存檔，狀態列隨 save_changed 更新
+function streakNote(lines) {
+  for (const t of lines || []) note(t, t.includes("理智") ? "bad" : "good");
+}
 // 每週收藏有新的（伺服器在同一個交易裡發的）：牌翻完、錢算完才說
 function celebrateWk() {
   const s = S;
@@ -204,7 +208,7 @@ async function deal(text) {
     say([CAS_TEXT.dealHole, fill(CAS_TEXT.dealUp, { card: casCardName(v.dealer.cards[1]) })]);
     snd("flip");
     if (v.state === "done") await finish(v, r, { natural: true });
-    else if (r.settle) celebrate(r.settle.ach);
+    else if (r.settle) { celebrate(r.settle.ach); streakNote(r.settle.streak); }
   });
 }
 async function move(kind) {
@@ -253,7 +257,7 @@ async function finish(v, r, o) {
   if (S !== s) return;
   if (out.kind === "lose") snd("error"); else if (out.kind !== "push") snd("coin");
   if (r.ticket) say([CAS_TEXT.packWon]);
-  if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); }
+  if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); streakNote(r.settle.streak); }
   say(s.house || []);
   if (v.slips && v.slips.length) say([`牌翻回來了：你剛剛有 ${v.slips.length} 張牌看錯了。`]);
 }
@@ -439,5 +443,20 @@ async function askChips() {
   try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); }
   catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
 }
+// 走完地下的一個房間（單人：ui_screens3.js 的 resolveFlow；合作：ui_coop.js 的 playResult）：跟伺服器說「我走完這間了」（決定 0047）。
+// 有沒有、給多少、一天幾次都是伺服器的事，這裡只照回答跳通知、換狀態列的數字。不等它：離線、沒有 Functions、模擬器沒開，都安靜地算了，探險照走
+ADDONS.cellarFind = roomId => {
+  let ask;
+  try {
+    if (!roomId || !P || isFree(P) || !UI.net || !NET.loggedIn) return;
+    ask = NET.call("casino", { act: "cellarFind", room: String(roomId) });
+  } catch (e) { return; }
+  Promise.resolve(ask).then(r => {
+    if (!r || !r.ok || !(r.found > 0)) return;
+    if (typeof r.chips === "number") setChips(r.chips);
+    const lines = CAS_FIND_TEXT.lines;
+    note(`${lines[(r.t | 0) % lines.length]}（+${casNum(r.found)} 籌碼）`, "good");
+  }).catch(() => {});
+};
 NET.on("status", () => { if (NET.state === "online") askChips(); });
 NET.on("logout", () => { chipsAsked = false; setChips(null); });
