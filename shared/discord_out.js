@@ -12,7 +12,7 @@
 import { NUM } from "./config.js";
 import { dcNick, dcNum } from "./discord.js";
 
-export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate"];
+export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"];
 export const DC_OUT_TEXT = {
   broke: "💸 莊家破產了。Yuga 正在翻抽屜找零錢。想幫忙的人，到賭場的「拚經濟」。",
   breaker: "💥 {nick} 壹把把莊家打到破產了！荷官的手在抖。",
@@ -20,6 +20,8 @@ export const DC_OUT_TEXT = {
   join: "🚪 {nick} 加入了博物館。歡迎！",
   liveOn: "📺 {nick} 開播了！想看的人到賭場的「實況」，也可以斗內。",
   donate: "🎁 感謝 {from} 對 {to} 的斗內：{n} 籌碼！",
+  bj: "🃏 {nick} 打了壹手 21 點，{res}（{tail}）",
+  bjMany: "🃏 {nick} 連打了 {hands} 手 21 點：{wins} 勝 {losses} 敗 {pushes} 平（{tail}）",
 };
 const OUT_FILL = (t, v) => String(t).replace(/\{(\w+)\}/g, (m, k) => (v && v[k] != null ? String(v[k]) : m));
 const OUT_ID = /^[A-Za-z0-9_-]{1,80}$/;
@@ -32,7 +34,30 @@ export function dcOutEvent(kind, d) {
   const id = `${kind}-${key}`;
   if (!key || !OUT_ID.test(id)) return null;
   const v = { nick: dcNick(d.nick), from: dcNick(d.from), to: dcNick(d.to), n: dcNum(d.n) };
+  if (kind === "bj") { // 在 Discord 打完的 21 點：同壹個人 5 分鐘內併成壹則（Functions 發的時候併），所以事件要記這手的輸贏
+    const b = d.bj && typeof d.bj === "object" ? d.bj : {}, bk = ["win", "blackjack", "charlie", "lose", "push"].includes(b.kind) ? b.kind : "push", net = Math.trunc(Number.isFinite(+b.net) ? +b.net : 0);
+    return { id, kind, text: dcOutBjText(d.nick, dcOutBjAdd(null, bk, net)), bj: { kind: bk, net } };
+  }
   return { id, kind, text: OUT_FILL(DC_OUT_TEXT[kind], v) };
+}
+// ---------- 21 點的併單 ----------
+// agg：這個人這個 5 分鐘視窗裡累計的 { hands, wins, losses, pushes, net }。dcOutBjAdd 加壹手（agg 是 null 就從零開始），回傳新的，不改原本的
+export function dcOutBjAdd(agg, kind, net) {
+  const a = agg && typeof agg === "object" ? agg : {}, c = x => Math.max(0, Math.floor(+x || 0));
+  const win = kind === "win" || kind === "blackjack" || kind === "charlie";
+  return { hands: c(a.hands) + 1, wins: c(a.wins) + (win ? 1 : 0), losses: c(a.losses) + (kind === "lose" ? 1 : 0), pushes: c(a.pushes) + (kind === "push" ? 1 : 0), net: Math.trunc((+a.net || 0) + (Number.isFinite(+net) ? +net : 0)) };
+}
+// 壹手就說這手，多手就說「連打 N 手」。只有暱稱和輸贏，沒有籌碼餘額
+export function dcOutBjText(nick, agg) {
+  const net = agg.net || 0, tail = net > 0 ? `淨賺 ${dcNum(net)}` : net < 0 ? `輸了 ${dcNum(-net)}` : "不賺不賠";
+  if (agg.hands <= 1) return OUT_FILL(DC_OUT_TEXT.bj, { nick: dcNick(nick), res: agg.wins ? "贏了" : agg.losses ? "輸了" : "平手", tail });
+  return OUT_FILL(DC_OUT_TEXT.bjMany, { nick: dcNick(nick), hands: agg.hands, wins: agg.wins, losses: agg.losses, pushes: agg.pushes, tail });
+}
+// 這個視窗還在嗎：state 是 { since, messageId }。在 outBjMin 分鐘內、而且第壹則已經發出去（有 messageId）才併；沒有 messageId（第壹則還在發）不併
+export function dcOutBjWindow(state, nowMs) {
+  if (!state || typeof state !== "object" || !Number.isFinite(+state.since) || !Number.isFinite(nowMs)) return "new";
+  if (nowMs - +state.since >= NUM.discord.outBjMin * 60000) return "new";
+  return typeof state.messageId === "string" && state.messageId ? "merge" : "busy";
 }
 // 這種事件的冷卻（毫秒）：預設 outCooldownMin 分鐘最多壹則；斗內用 outDonateMin
 export function dcOutCooldownMs(kind) {

@@ -14,8 +14,9 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  放哪裡（都只有 Functions 碰得到）：discordOutbox/{id}（kind、text、status、at…）、discordOutboxState/{kind}（{ at }）、模擬器才有 discordTest/out、discordTestSent/{id}。
 // ================================================================
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import { getFirestore } from "firebase-admin/firestore";
-import { dcOutBody, dcOutEvent, dcOutGate, dcOutStale } from "./shared/discord_out.js";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { dcNick } from "./shared/discord.js";
+import { dcOutBjAdd, dcOutBjText, dcOutBjWindow, dcOutBody, dcOutEvent, dcOutGate, dcOutStale } from "./shared/discord_out.js";
 
 const db = () => getFirestore();
 const EMU = () => process.env.FUNCTIONS_EMULATOR === "true";
@@ -40,9 +41,13 @@ const channelOk = c => /^\d{5,25}$/.test(String(c));
 export async function discordCall(cfg, method, path, body, docId, fetcher) {
   if (cfg.fake) {
     if (cfg.fail) throw new Error("（模擬器）Discord 發送失敗");
-    const mid = method === "PATCH" ? path.split("/").pop() : "fake-" + docId;
-    await db().doc(`discordTestSent/${docId}`).set({ method, content: body.content, mentions: JSON.stringify(body.allowed_mentions), messageId: mid, at: Date.now() });
-    return { id: mid };
+    if (method === "PATCH") { // 編輯舊訊息：把當初那則（discordTestSent/{第一則的 outbox id}）的內容換掉，edits 加壹
+      const mid = decodeURIComponent(path.split("/").pop());
+      await db().doc(`discordTestSent/${mid.replace(/^fake-/, "")}`).set({ method, content: body.content, mentions: JSON.stringify(body.allowed_mentions), messageId: mid, edits: FieldValue.increment(1), at: Date.now() }, { merge: true });
+      return { id: mid };
+    }
+    await db().doc(`discordTestSent/${docId}`).set({ method, content: body.content, mentions: JSON.stringify(body.allowed_mentions), messageId: "fake-" + docId, edits: 0, at: Date.now() });
+    return { id: "fake-" + docId };
   }
   if (EMU()) throw new Error("模擬器不准連真的 Discord"); // 雙重保險
   if (typeof fetcher !== "function") fetcher = fetch;
@@ -65,7 +70,7 @@ const withTimeout = (p, ms) => { let t; return Promise.race([p, new Promise((_, 
 export async function outboxPut(ev, extra) {
   try {
     if (!ev) return false;
-    await withTimeout(outRef(ev.id).create(Object.assign({ kind: ev.kind, text: ev.text, status: "pending", at: Date.now() }, extra || {})), 3000);
+    await withTimeout(outRef(ev.id).create(Object.assign({ kind: ev.kind, text: ev.text, status: "pending", at: Date.now() }, extra || {})), 2000);
     return true;
   } catch (e) {
     if (!(e && (e.code === 6 || /already exists/i.test(String(e.message))))) console.error("discordOutbox：寫不進去", ev && ev.kind, e && e.message); // 6＝同壹件事寫過了，不是錯誤
@@ -86,11 +91,57 @@ export const outHouse = ({ before, after, nick, settled, rescued, t }) => safe(a
 export const outJoin = (uid, nick) => safe(() => outboxPut(dcOutEvent("join", { nick, key: uid })));
 export const outLiveOn = (seq, nick) => safe(() => outboxPut(dcOutEvent("liveOn", { nick, key: seq })));
 export const outDonate = (msgId, from, to, n) => safe(() => outboxPut(dcOutEvent("donate", { from, to, n, key: msgId })));
+// 在 Discord 打完的 21 點：round 的 id 當事件的身分。同一個人 5 分鐘內連打，發送的時候併成壹則（processBj）
+export const outBj = (uid, nick, roundId, kind, net) => safe(() => outboxPut(dcOutEvent("bj", { nick, key: roundId, bj: { kind, net } }), { uid: String(uid), nick: dcNick(nick), bjKind: kind, net: Math.trunc(+net || 0) }));
 
 // ---------- 發送 ----------
-// 回傳 { act: "sent"|"skipped"|"failed"|"already"|"gone", reason? }。測試也直接叫這個
+// 21 點打完的公開結果：同壹個人 5 分鐘內連打，編輯第壹則（累計幾手、幾勝、淨賺賠），不另外發。狀態放 discordOutboxState/bj-{uid}：{ since, messageId, agg }
+async function processBj(id, now, cfg, fetcher) {
+  const ref = outRef(id);
+  const verdict = await db().runTransaction(async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists) return { act: "gone" };
+    const d = s.data();
+    if (d.status !== "pending") return { act: "already" };
+    const skey = `bj-${String(d.uid || "").replace(/[^A-Za-z0-9_-]/g, "")}`;
+    const st = await tx.get(stateRef(skey)); // 讀都做完才寫
+    const skip = reason => { tx.update(ref, { status: "skipped", reason, doneAt: now }); return { act: "skipped", reason }; };
+    if (skey === "bj-" || typeof d.nick !== "string") return skip("empty");
+    if (dcOutStale(d.at, now)) return skip("old");
+    if (!cfg.token || (!cfg.fake && !channelOk(cfg.channel))) return skip("no-token");
+    const state = st.exists ? st.data() : null, win = dcOutBjWindow(state, now);
+    if (win === "busy") return skip("busy"); // 第壹則還在發，來不及併：這手不另外發
+    const agg = dcOutBjAdd(win === "merge" ? state.agg : null, d.bjKind, d.net);
+    tx.update(ref, { status: "sending", startedAt: now });
+    if (win === "merge") { tx.set(stateRef(skey), { since: state.since, messageId: state.messageId, agg }); return { act: "edit", text: dcOutBjText(d.nick, agg), messageId: state.messageId, skey }; }
+    tx.set(stateRef(skey), { since: now, messageId: "", agg });
+    return { act: "send", text: dcOutBjText(d.nick, agg), skey };
+  });
+  if (verdict.act !== "send" && verdict.act !== "edit") return verdict;
+  try {
+    if (verdict.act === "send") {
+      const r = await postMessage(cfg, verdict.text, id, fetcher);
+      const mid = r && r.id ? String(r.id) : "";
+      await stateRef(verdict.skey).update({ messageId: mid });
+      await ref.update({ status: "sent", doneAt: Date.now(), messageId: mid || null });
+      return { act: "sent" };
+    }
+    await editMessage(cfg, verdict.messageId, verdict.text, id, fetcher);
+    await ref.update({ status: "merged", doneAt: Date.now(), messageId: verdict.messageId });
+    return { act: "merged" };
+  } catch (e) {
+    const why = redact(e && e.message, cfg.token);
+    console.error("discordOutbox：發不出去", "bj", why);
+    try { await ref.update({ status: "failed", error: why, doneAt: Date.now() }); } catch (e2) { /* 記不下來也不影響 */ }
+    return { act: "failed", reason: why };
+  }
+}
+
+// 回傳 { act: "sent"|"merged"|"skipped"|"failed"|"already"|"gone", reason? }。測試也直接叫這個
 export async function processOutbox(id, now = Date.now(), fetcher) {
   const cfg = await outConfig(), ref = outRef(id);
+  const pre = await ref.get();
+  if (pre.exists && pre.data().kind === "bj") return processBj(id, now, cfg, fetcher);
   const verdict = await db().runTransaction(async tx => {
     const s = await tx.get(ref);
     if (!s.exists) return { act: "gone" };

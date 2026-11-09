@@ -22,6 +22,7 @@ import { DAY_DATA } from "./shared/day_data.js";
 import { NUM } from "./shared/config.js";
 import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "./shared/discord.js";
 import { taipeiDay } from "./shared/logic.js";
+import { PLAY_HANDLERS, onComponent } from "./discord_play.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組
 const HEX = /^[0-9a-fA-F]+$/;
@@ -93,7 +94,7 @@ async function cmdOnline() {
   const nicks = docs.filter(d => d.exists && d.data().invisible !== true).map(d => d.data().nick);
   return dcReply(dcOnlineText(nicks), false);
 }
-const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline, news: cmdNews };
+const HANDLERS = { link: cmdLink, unlink: cmdUnlink, join: cmdJoin, chips: cmdChips, house: cmdHouse, board: cmdBoard, today: cmdToday, online: cmdOnline, news: cmdNews, ...PLAY_HANDLERS };
 
 export const discordBot = onRequest({ cors: false }, async (req, res) => {
   const t0 = Date.now();
@@ -107,14 +108,14 @@ export const discordBot = onRequest({ cors: false }, async (req, res) => {
   const p = dcParse(body);
   if (p.kind === "ping") return J(res, 200, dcPong());
   if (p.guildId !== cfg.guildId || !p.discordId) return J(res, 200, dcReply(dcText("notHere"), true));
-  if (p.kind === "component") return J(res, 200, dcReply(dcText("noButton"), true));
-  if (p.kind !== "command" || !HANDLERS[p.key]) return J(res, 200, dcReply(dcText("unknown"), true));
+  if (p.kind !== "command" && p.kind !== "component") return J(res, 200, dcReply(dcText("unknown"), true));
+  if (p.kind === "command" && !HANDLERS[p.key]) return J(res, 200, dcReply(dcText("unknown"), true));
   try {
-    const out = await HANDLERS[p.key](p, Date.now());
-    console.log("discordBot", p.key, `${Date.now() - t0}ms`); // 指令名和時間，沒有人的資料
+    const out = p.kind === "component" ? await onComponent(p, Date.now()) : await HANDLERS[p.key](p, Date.now());
+    console.log("discordBot", p.key || "component", `${Date.now() - t0}ms`); // 指令名和時間，沒有人的資料
     return J(res, 200, out);
   } catch (e) {
-    console.error("discordBot：出錯", p.key, e && e.message);
+    console.error("discordBot：出錯", p.key || "component", e && e.message);
     return J(res, 200, dcReply(dcText("oops"), true));
   }
 });

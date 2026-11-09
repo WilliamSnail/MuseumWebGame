@@ -119,7 +119,7 @@ T("Functions 的發送：token 從 process.env 讀、不用 defineSecret、模�
 
 T("寫 outbox 在交易之後、不丟錯：呼叫的地方都在交易外面", () => {
   const c = read("functions/casino.js");
-  const play = c.slice(c.indexOf("async function play("), c.indexOf("// 稱號到處看得到"));
+  const play = c.slice(c.indexOf("export async function playCore("), c.indexOf("const play = (req"));
   const txEnd = play.indexOf("return Object.assign({}, r, { rev });");
   assert.ok(txEnd > 0 && play.indexOf("outHouse(") > txEnd, "play 裡 outHouse 要在 runTransaction 結束之後");
   const o = read("functions/discord_out.js");

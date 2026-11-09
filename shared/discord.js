@@ -21,9 +21,14 @@ import { noticeLive, NOTICES } from "./notices.js";
 
 export const DC_SITE = "https://pepe-museum.web.app";
 // 指令名字：全部小寫 pepe- 開頭（Discord 規定小寫），打 /pepe 就會列出全部
-export const DC_CMD = { link: "pepe-綁定", unlink: "pepe-解除綁定", join: "pepe-加入", chips: "pepe-籌碼", house: "pepe-莊家", board: "pepe-排行榜", today: "pepe-今日活動", online: "pepe-誰在線", news: "pepe-更新" };
+export const DC_CMD = { link: "pepe-綁定", unlink: "pepe-解除綁定", join: "pepe-加入", chips: "pepe-籌碼", house: "pepe-莊家", board: "pepe-排行榜", today: "pepe-今日活動", online: "pepe-誰在線", news: "pepe-更新",
+  bj: "pepe-21點", pack: "pepe-大禮包", food: "pepe-餐車", econ: "pepe-拚經濟", live: "pepe-實況", donate: "pepe-斗內" }; // 後面六個是第三步：綁定了才能玩（決定 0051）
 export const DC_LINK_OPT = "碼";
 export const DC_NEWS_OPT = "幾則";
+export const DC_BET_OPT = "下注";
+export const DC_PACK_OPT = "幾包";
+export const DC_LIVE_OPT = "動作";
+export const DC_LIVE_ON = "開播", DC_LIVE_OFF = "下播";
 export const DC_EPHEMERAL = 64; // flags：只有本人看得到
 
 // 要註冊給 Discord 的指令（guild commands）
@@ -38,6 +43,12 @@ export function dcCommands() {
     cmd(DC_CMD.board, "最近壹次的每週排行榜"),
     cmd(DC_CMD.today, "今天的館訊、限時活動、節日，和今天的現實世界"),
     cmd(DC_CMD.online, "現在在館裡的館友（隱身的不列）"),
+    cmd(DC_CMD.bj, "玩壹手 21 點（要先綁定；牌局只有你看得到，打完頻道會有壹行結果）", [{ type: 3, name: DC_BET_OPT, description: "下注的籌碼，例如 10000 或 10萬（接著打上壹手的話可以不填）", required: false, max_length: 24 }]),
+    cmd(DC_CMD.pack, "開今天的大禮包（要先綁定）", [{ type: 4, name: DC_PACK_OPT, description: `要開幾包（預設 1，最多 ${NUM.casino.maxPacksAtOnce}）`, required: false, min_value: 1, max_value: NUM.casino.maxPacksAtOnce }]),
+    cmd(DC_CMD.food, "去餐車買吃的（要先綁定；用選單選，只有你看得到）"),
+    cmd(DC_CMD.econ, "拚經濟：跟全館共用的莊家壹起拚（要先綁定，壹天幾次有上限）"),
+    cmd(DC_CMD.live, "開播或下播（要先綁定；全館壹次只有壹位實況主）", [{ type: 3, name: DC_LIVE_OPT, description: "開播或下播（不填就是開播）", required: false, choices: [{ name: DC_LIVE_ON, value: "on" }, { name: DC_LIVE_OFF, value: "off" }] }]),
+    cmd(DC_CMD.donate, "斗內給現在的實況主（要先綁定；金額隨機，壹天有次數上限）"),
     cmd(DC_CMD.news, "最近幾則館方的更新公告", [{ type: 4, name: DC_NEWS_OPT, description: `要看幾則（預設 ${NUM.discord.newsDefault}，最多 ${NUM.discord.newsMax}）`, required: false, min_value: 1, max_value: NUM.discord.newsMax }]),
   ];
 }
@@ -53,7 +64,7 @@ export function dcCommandKey(name) {
 const dcObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const dcSnow = v => (typeof v === "string" && /^\d{5,25}$/.test(v) ? v : "");
 export function dcParse(body) {
-  const out = { kind: "other", guildId: "", discordId: "", discordName: "", name: "", key: "", opts: {}, token: "" };
+  const out = { kind: "other", guildId: "", discordId: "", discordName: "", name: "", key: "", opts: {}, token: "", customId: "", componentType: 0, values: [] };
   if (!dcObj(body)) return out;
   if (body.type === 1) { out.kind = "ping"; return out; }
   out.guildId = dcSnow(body.guild_id);
@@ -68,7 +79,13 @@ export function dcParse(body) {
     (Array.isArray(body.data.options) ? body.data.options : []).forEach(o => {
       if (dcObj(o) && typeof o.name === "string" && (typeof o.value === "string" || typeof o.value === "number")) out.opts[o.name] = String(o.value);
     });
-  } else if (body.type === 3) out.kind = "component";
+  } else if (body.type === 3) {
+    out.kind = "component"; // 按鈕、選單：custom_id 是我們自己放的（動作:seq:Discord ID），values 是選單選的
+    const dd = dcObj(body.data) ? body.data : {};
+    out.customId = typeof dd.custom_id === "string" ? dd.custom_id.slice(0, 100) : "";
+    out.componentType = Number.isInteger(dd.component_type) ? dd.component_type : 0;
+    out.values = (Array.isArray(dd.values) ? dd.values : []).filter(v => typeof v === "string").slice(0, 5).map(v => v.slice(0, 100));
+  }
   return out;
 }
 
@@ -155,8 +172,14 @@ export function dcPlain(s, max = 60) {
 
 // ---------- 回覆 ----------
 // 一律不 @ 任何人（allowed_mentions）。ephemeral＝只有本人看得到
-export function dcReply(content, ephemeral) {
-  return { type: 4, data: { content: dcCap(String(content)), flags: ephemeral ? DC_EPHEMERAL : 0, allowed_mentions: { parse: [] } } };
+export function dcReply(content, ephemeral, components) {
+  const data = { content: dcCap(String(content)), flags: ephemeral ? DC_EPHEMERAL : 0, allowed_mentions: { parse: [] } };
+  if (Array.isArray(components) && components.length) data.components = components;
+  return { type: 4, data };
+}
+// 按了按鈕、選了選單：把原本那則訊息換成新的內容（type 7）。原本是本人才看得到的，換了也還是
+export function dcUpdate(content, components) {
+  return { type: 7, data: { content: dcCap(String(content)), components: Array.isArray(components) ? components : [], allowed_mentions: { parse: [] } } };
 }
 export const dcPong = () => ({ type: 1 });
 
@@ -164,7 +187,7 @@ export const dcPong = () => ({ type: 1 });
 export const DC_TEXT = {
   notHere: "Yuga Bot 只在佩佩博物館的伺服器裡工作。",
   unknown: "R？這個指令我不認得。打 /pepe 看看有哪些。",
-  noButton: "這個按鈕還沒開放。",
+  noButton: "這個按鈕已經過期了，重新打指令再來。",
   oops: "R……櫃檯出了壹點狀況，等壹下再試。",
   linkOk: "R。綁定好了：{nick}，你的 Discord 現在接著這個遊戲帳號。",
   linkBonus: "館方送你 {n} 籌碼（綁定獎勵，每個帳號只送壹次）。",
@@ -197,6 +220,36 @@ export const DC_TEXT = {
   newsHead: "最近的館方更新（{n} 則）",
   newsNone: "最近沒有新的更新公告。",
   newsFoot: "完整的內容在遊戲選單的「公佈欄」：{url}",
+  // ---- 第三步：在 Discord 玩（決定 0051）。沒有 email、理智、怪癖、靈感 ----
+  bjHead: "🃏 21 點　下注 {bet}",
+  bjYou: "你的牌：{cards}（{total}）",
+  bjDealer: "莊家：{cards}",
+  bjDealerDone: "莊家：{cards}（{total}）",
+  bjHit: "要牌",
+  bjStand: "停牌",
+  bjResume: "你還有壹手沒打完（可能是在遊戲裡開的），接著打。",
+  bjWarp: "眼睛有點花……牌好像不太對勁。",
+  bjSlips: "牌翻回來了：你剛剛有 {n} 張牌看錯了。",
+  bjWin: "淨賺 +{n} 籌碼",
+  bjWinBonus: "（含加成 +{b}）",
+  bjLose: "輸了 {n} 籌碼",
+  bjEven: "不賺不賠",
+  bjChips: "你現在有 {chips} 籌碼。",
+  bjStale: "（畫面不是最新的，已經換成最新的。）",
+  bjNotYours: "這不是你的。想玩的話，自己打 /pepe-21點 下注金額。",
+  bjAch: "🏅 解鎖：{names}",
+  bjNoBet: "R 要下多少？打 /pepe-21點 後面加下注金額，例如 10000 或 10萬。",
+  foodHead: "🚚 餐車。你現在有 {chips} 籌碼。選壹樣：",
+  foodPick: "選壹樣餐點",
+  foodNotYours: "這個選單不是你的。想買的話，自己打 /pepe-餐車。",
+  packHead: "🎁 {nick} 開大禮包：",
+  packRow: "・{name}　+{n}",
+  packTotal: "合計 +{total} 籌碼。剩下 {left} 個大禮包。",
+  econHead: "📈 {nick} 拚了壹次經濟：",
+  econLeft: "今天還能拚 {n} 次。",
+  liveOn: "📺 {nick} 開播了，播到 {t}。想看的到遊戲賭場的「實況」，也可以打 /pepe-斗內。",
+  liveOff: "📺 {nick} 下播了。",
+  donateOk: "🎁 {line}（實況主：{to}）",
   onlineNone: "館裡現在沒有人在線。",
   onlineSome: "現在在館裡的館友（{n} 位）：{names}",
   joinLink: "R，歡迎來博物館。點這個連結用 Google 登入，就成為館友（{m} 分鐘內有效、只能用壹次，不要轉給別人）：\n{url}",
