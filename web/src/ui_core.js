@@ -77,7 +77,7 @@ export function later(fn, ms) { const t = setTimeout(fn, ms); UI.timers.push(t);
 export function every(fn, ms) { const t = setInterval(fn, ms); UI.timers.push(t); return t; }
 export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearInterval(t); }); UI.timers = []; UI.cleanup.forEach(f => { try { f(); } catch (e) { /* 已經拿掉了 */ } }); UI.cleanup = []; }
 // 提示壹律至少 6.5 秒，字越多留越久（翊文 11-08：「你一天內掉太多理智了」這種說明太快消失，至少要 6 秒）
-export const note = (text, tone, ms) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90) });
+export const note = (text, tone, ms, action) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90), action }); // action：{ label, run }，toast 上多一顆按鈕（例如「去看看」）
 export const snd = (n, a) => FX.sound.play(n, a);
 
 // 說明牌上的字：偏執發作時都寫「牠們在看你」，理智低時偶爾歪掉、錯字
@@ -225,6 +225,8 @@ export function buildNav() {
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
     h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop")), item("md-rank", "star", "本週榜單", () => openPanel("rank"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）；本週榜單（決定 0039，ui_board_rank.js 登記 PANELS.rank）
+    h("p", { class: "md-h" }, "賭場"), // Hamachi 賭場（決定 0040，ui_casino.js 登記 PANELS.casino）
+    h("div", { class: "md-group" }, item("md-casino", "dice", "Hamachi 賭場", () => openPanel("casino"))),
     h("p", { class: "md-h md-rooms-h" }, "房間"),
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）

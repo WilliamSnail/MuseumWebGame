@@ -55,5 +55,8 @@ export { coopStep } from "./coop.js";
 export { coopTrace } from "./coop_trace.js";
 // ---------- 管理員介面（只看不改，決定 0033）：寫在 admin.js ----------
 export { adminCheck, adminOverview } from "./admin.js";
+// ---------- Hamachi 賭場（決定 0040）：寫在 casino.js ----------
+export { casino } from "./casino.js";
+export { casinoTable } from "./casino_table.js";
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
-export { claimMail, hallAct, sendGift, socialNews, visitHall } from "./visit.js";
+export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./visit.js";

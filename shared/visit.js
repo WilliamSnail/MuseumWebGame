@@ -11,8 +11,9 @@
 // ================================================================
 import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js";
 import { normKey, parsePillowKey, refPick } from "./logic.js";
-import { GIFT_KINDS, SOCIAL, checkHallAct, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
+import { GIFT_KINDS, SOCIAL, checkHallAct, checkHallCall, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
+import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
 
 // ---------- 訪客簿 ----------
 export function fixGuestBook(raw) {
@@ -110,7 +111,44 @@ export function cleanHallView(view) {
     frame: worn(view.frame, "frame"),
     posters: cleanPosters(view.posters),
     report: cleanHallReport(view.report),
+    souvenirs: casCleanSouvenirs(view.souvenirs), // 賭場的紀念品、稱號（決定 0040）：只收清單上的 id 和短短的純文字名字
+    title: casCleanTitle(view.title),
   };
+}
+
+// ---------- 比每週特展（Functions 的 weeklyView） ----------
+// 館友之間比特展：只給「這週的特展」那一小部分（gifts.js 的 weeklyView），不給整份存檔。不算來訪、不寄信。
+// 別人存檔裡的東西不能相信：格子走 cleanHallSlot，分數限制在 0–100；主題不用存檔裡的，用伺服器算的這週主題。
+// o：{ view（weeklyView 的結果）, me, owner, week（這週是第幾週，伺服器算）, theme（這週的主題，伺服器算） }
+// 回傳 { ok, open, started, week, theme, best, slots }：
+//   open false＝對方還沒用挑戰模式開館；started false＝對方這週還沒開始（沒擺過，或存的是別週的）：只回這兩個，不給舊資料。
+export function stepWeeklyView(o) {
+  if (o.me.uid === o.owner) return { ok: false, code: "self", reason: "這是你自己的特展。" };
+  const v = o.view;
+  if (!v || !v.open) return { ok: true, open: false, started: false };
+  const w = Math.floor(+v.w);
+  if (v.w === null || !Number.isFinite(w) || w !== o.week) return { ok: true, open: true, started: false };
+  return {
+    ok: true, open: true, started: true, week: o.week, theme: o.theme,
+    best: Math.max(0, Math.min(100, Math.floor(+v.best) || 0)),
+    slots: (Array.isArray(v.slots) ? v.slots : []).slice(0, 6).map(cleanHallSlot),
+  };
+}
+
+// ---------- 請館友來看我的展廳（Functions 的 hallCall） ----------
+// 通知存在對方的 calls/{對方}/items/{callId}：同一天同一個人只留一則，再請就蓋過去、變回沒看過。
+// 格式 { fromId, from（暱稱）, day, at, seen }。沒有獎勵。
+export const callId = (day, uid) => `call-${day}-${uid}`;
+// o：{ open（我的展廳開了沒）, me, to, today, at }。回傳 { ok, id, call } 或 { ok: false, code, reason }
+export function stepHallCall(o) {
+  const can = checkHallCall({ self: o.me.uid === o.to, open: !!o.open }); // 同一位可以一直請（翊文 11-09）；同一天同一個人只留一則，再請就蓋過去、變回沒看過
+  if (!can.ok) return can;
+  return { ok: true, id: callId(o.today, o.me.uid), call: { fromId: o.me.uid, from: o.me.nick, day: o.today, at: o.at, seen: false } };
+}
+// 通知給畫面看的樣子（資料庫裡多的欄位不給；壞掉的回 null）
+export function callRow(raw, id) {
+  if (!raw || typeof id !== "string" || typeof raw.fromId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw.fromId) || typeof raw.day !== "string") return null;
+  return { id, fromId: raw.fromId, from: [...String(raw.from || "館友")].slice(0, 12).join(""), day: raw.day, at: Math.max(0, +raw.at || 0) };
 }
 
 // ---------- 走進館友的展廳（Functions 的 visitHall） ----------

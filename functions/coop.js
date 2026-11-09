@@ -156,17 +156,17 @@ async function startRun(me, pid) {
 }
 
 // ---------- 離隊的掛鉤（functions/party.js 的 leaveParty 叫） ----------
-partyHooks.beforeLeave = async (pid, uid) => {
+partyHooks.beforeLeave.push(async (pid, uid) => {
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
   if (!p || p.kind !== "cellar") return;
   await rtdb().ref(viewPath(pid, uid)).remove().catch(() => {});
   if (p.phase !== "running") return;
   try { await runStep(pid, uid, "leave"); }
   catch (e) { if (!(e instanceof HttpsError)) console.error("合作地下離隊出錯", e); } // 這一趟已經不在了：照樣離開隊伍
-};
-partyHooks.closed = async pid => {
+});
+partyHooks.closed.push(async pid => {
   await clearRunStuff(pid);
-};
+});
 async function clearRunStuff(pid) {
   await rtdb().ref().update({ [`coopView/${pid}`]: null, [`coopChat/${pid}`]: null, [`coopChatLog/${pid}`]: null, [`coopChatAt/${pid}`]: null }).catch(() => {});
   await runRef(pid).delete().catch(() => {});

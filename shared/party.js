@@ -7,14 +7,14 @@
 
 export const PARTY = {
   inviteMs: 60000,                     // 邀請卡 60 秒（規劃第三節「直接邀請」）
-  maxMembers: { fusion: 2, cellar: 4 },
-  minMembers: { fusion: 2, cellar: 1 }, // 地下一個人也能下去（館方助手補位）
-  picks: { fusion: 1, cellar: 2 },      // 每人帶幾隻（一起融合 1 隻；地下 1–2 隻，決定 0020）
+  maxMembers: { fusion: 2, cellar: 4, table: 4 }, // table：賭場同桌（決定 0040），隊伍一直是 lobby，隨時有人進出
+  minMembers: { fusion: 2, cellar: 1, table: 1 }, // 地下一個人也能下去（館方助手補位）；賭場一個人也能開桌
+  picks: { fusion: 1, cellar: 2, table: 0 },      // 每人帶幾隻（一起融合 1 隻；地下 1–2 隻，決定 0020；賭場不帶）
   sayMax: 50,                           // 自由打字一句幾個字（決定 0020）
   offlineWaitMs: 10000,                 // 隊友斷線多久，畫面才請伺服器把他移出隊伍（11-09）
   offlineMinMs: 5000,                   // 伺服器自己確認：至少斷線這麼久才移（重新整理一下不會被踢）
 };
-export const PARTY_KINDS = ["fusion", "cellar"];
+export const PARTY_KINDS = ["fusion", "cellar", "table"];
 
 // 看不見的字：控制字元、零寬空白、方向控制、BOM（用字碼判斷，原始碼裡不寫那種跳脫）
 function hidden(ch) {

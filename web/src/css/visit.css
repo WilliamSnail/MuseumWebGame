@@ -77,3 +77,16 @@ body.reduce-motion .lobby-guests { animation: none; }
   .fh-use { flex-wrap: wrap; justify-content: flex-start; }
 }
 .fh-learn.got { color: var(--gold-hi); font-weight: 700; }
+
+/* ---------- 選館友的小窗（看館友的展廳、請館友來看、比特展、送館友共用）：版型沿用 net.css 的館友小卡 ---------- */
+.nb-frame.nb-pick { width: min(640px, 100%); }
+button.nf-card.nf-pickcard { width: 100%; box-sizing: border-box; flex-wrap: nowrap; border: 0; font: inherit; text-align: left; cursor: pointer; min-height: 56px; }
+button.nf-card.nf-pickcard:hover:not(:disabled), button.nf-card.nf-pickcard:focus-visible { box-shadow: inset 0 1px 0 rgba(255,250,225,.65), 0 0 0 2px #FFF3D6, 0 3px 8px rgba(0,0,0,.45); }
+button.nf-card.nf-pickcard:disabled { cursor: default; filter: saturate(.55); }
+.nf-pickcard .nf-body { flex: 1; }
+.nf-pick-go { flex: 0 0 auto; padding: 3px 12px; border-radius: 12px; font-size: .8125rem; color: #2A1A0C; background: rgba(255,250,230,.55); border: 1px solid rgba(110,80,32,.6); }
+.nf-pick-hint { margin: 0 0 12px; }
+.nb-pick .nf-list { grid-template-columns: 1fr; }
+.lgu-call { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.lgu-call b { flex: 1 1 160px; }
+.share-box .hall-room.visit { margin-top: 10px; }

@@ -6,8 +6,9 @@
 //    saves/{uid}             存檔。伺服器改了 rev 加一，再送 save_changed（原則 3）
 //    halls/{uid}             訪客簿：誰哪一天來過、按讚、留言（格式見 shared/visit.js）
 //    mail/{uid}/items/{id}   伺服器的信：送的佩佩、來訪的謝禮。領了標 claimed，不刪（資料庫只加不刪）
-//  通知（Realtime Database 的 /inbox/{uid}）：mail_new（有新的信）、hall_news（有人來過、按讚、留言）、save_changed。
-//  給別人的只有展廳那一小部分（hallView＋cleanHallView）：不給整份存檔，也不給 email。
+//    calls/{uid}/items/{id}  「請你去看我的展廳」：編號是 call-日期-請的人，所以一天一位只有一則。看過標 seen，不刪
+//  通知（Realtime Database 的 /inbox/{uid}）：mail_new（有新的信）、hall_news（有人來過、按讚、留言）、hall_call（請你去看展廳）、save_changed。
+//  給別人的只有展廳那一小部分（hallView＋cleanHallView）和本週特展那一小部分（weeklyView＋stepWeeklyView）：不給整份存檔，也不給 email。
 // ================================================================
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -15,10 +16,11 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
 import { NUM } from "./shared/config.js";
-import { hallView } from "./shared/gifts.js";
+import { dayPlus, hallView, weeklyView } from "./shared/gifts.js";
 import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "./shared/logic.js";
+import { weekIndex, weeklyTheme } from "./shared/logic3.js";
 import { friendTalent, learnFromFriend } from "./shared/shop.js";
-import { cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepSendGift, stepVisitHall } from "./shared/visit.js";
+import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "./shared/visit.js";
 
 // ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。
@@ -32,6 +34,7 @@ const db = () => getFirestore();
 const saveRef = uid => db().doc(`saves/${uid}`);
 const bookRef = uid => db().doc(`halls/${uid}`);
 const mailRef = (uid, id) => db().doc(`mail/${uid}/items/${id}`);
+const callRef = (uid, id) => db().doc(`calls/${uid}/items/${id}`);
 // 從瀏覽器來的編號：會拿去組路徑，不能有 /（模擬器和正式的 uid、信的編號都只有英數字和 -、_）
 const ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 function idArg(x, what) {
@@ -115,19 +118,63 @@ export const hallAct = onCall(async req => {
   return { ok: true, likes: out.likes, notes: out.notes, mine: out.mine };
 });
 
-// ---------- 我的新消息：還沒領的信、誰來過我的展廳 ----------
+// ---------- 比每週特展：只回對方這週特展那一小部分（唯讀，不算來訪、不寄信） ----------
+export const visitWeekly = onCall(async req => {
+  const me = await needMember(req);
+  const owner = idArg(req.data && req.data.owner, "要選壹位館友");
+  if (owner === me.uid) throw bad("這是你自己的特展。");
+  const nick = await memberNick(owner); // 一定要是館友（members 裡有的人）
+  if (!nick) throw bad("找不到這位館友");
+  const today = todayStr(nowMs());
+  const snap = await saveRef(owner).get();
+  let save = null;
+  if (snap.exists) {
+    const raw = JSON.parse(snap.data().data);
+    save = raw;
+    try { save = migrateSave(raw); } catch (e) { console.error("舊存檔整理不了，照原樣讀", e); }
+  }
+  const r = stepWeeklyView({ view: weeklyView(save), me, owner, week: weekIndex(today), theme: weeklyTheme(today) });
+  if (!r.ok) throw bad(r.reason);
+  return JSON.parse(JSON.stringify({ owner: { id: owner, nick }, open: r.open, started: r.started, week: r.week, theme: r.theme, best: r.best, slots: r.slots }));
+});
+
+// ---------- 請館友來看我的展廳：沒有獎勵；同一位可以一直請（翊文 11-09） ----------
+export const hallCall = onCall(async req => {
+  const me = await needMember(req);
+  const to = idArg(req.data && req.data.to, "要選壹位館友");
+  if (to === me.uid) throw bad("不能請自己。");
+  const toNick = await memberNick(to);
+  if (!toNick) throw bad("找不到這位館友");
+  const t = nowMs(), today = todayStr(t);
+  const { view } = hallOf(await saveRef(me.uid).get()); // 我的展廳開館了才有東西可看
+  const r = stepHallCall({ open: view.open, me, to, today, at: t });
+  if (!r.ok) throw bad(r.reason);
+  await callRef(to, r.id).set(Object.assign({}, r.call, { createdAt: FieldValue.serverTimestamp() }));
+  await notify(to, { t: "hall_call", from: me.nick, fromId: me.uid });
+  return { ok: true, toNick };
+});
+
+// ---------- 我的新消息：還沒領的信、誰來過我的展廳、誰請我去看展廳 ----------
 // seen: true：我看過了（把訪客簿的 seenAt 改成現在）。回傳的 fresh、unseen 是改之前的，畫面才標得出哪些是新的
+// seenCalls: [通知編號]：這幾則「請你去看展廳」我處理過了（標 seen，不刪）。只回今天、昨天還沒處理的
 export const socialNews = onCall(async req => {
   const me = await needMember(req);
   const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/Firebase做法.md 第三節）
-  const [mailSnap, bookSnap] = await Promise.all([
+  const seenCalls = Array.isArray(req.data && req.data.seenCalls) ? [...new Set(req.data.seenCalls.slice(0, 20).filter(x => typeof x === "string" && ID_RE.test(x)))] : [];
+  if (seenCalls.length) {
+    const snaps = await db().getAll(...seenCalls.map(id => callRef(me.uid, id)));
+    await Promise.all(snaps.filter(s => s.exists).map(s => s.ref.update({ seen: true })));
+  }
+  const [mailSnap, bookSnap, callSnap] = await Promise.all([
     db().collection(`mail/${me.uid}/items`).where("claimed", "==", false).limit(NUM.guest.mailListMax).get(),
     bookRef(me.uid).get(),
+    db().collection(`calls/${me.uid}/items`).where("seen", "==", false).limit(NUM.guest.callListMax * 3).get(),
   ]);
+  const calls = callSnap.docs.map(d => callRow(d.data(), d.id)).filter(c => c && c.day >= dayPlus(today, -1)).sort((a, b) => b.at - a.at).slice(0, NUM.guest.callListMax);
   const mail = mailSnap.docs.map(d => mailRow(d.data())).filter(m => m && m.expire >= today).sort((a, b) => b.sent.localeCompare(a.sent));
   const guests = guestNews(bookSnap.exists ? bookSnap.data() : null);
   if (req.data && req.data.seen && bookSnap.exists && guests.unseen) await bookRef(me.uid).set({ seenAt: t }, { merge: true });
-  return JSON.parse(JSON.stringify({ mail, guests, today }));
+  return JSON.parse(JSON.stringify({ mail, guests, calls, today }));
 });
 
 // ---------- 送佩佩：同一個交易從我的收藏拿掉、寄進對方的信箱 ----------

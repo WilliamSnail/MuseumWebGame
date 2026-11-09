@@ -50,7 +50,7 @@ export function hallView(save) {
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
   const hung = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) : null; // 掛在牆上的探險報告（決定 0036）
-  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P) }; // posters：辦完的展覽（決定 0035）
+  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
 }
 
 // ---------- 來訪、按讚、留言 ----------
@@ -82,6 +82,31 @@ export function checkHallAct(kind, s) {
   if (!s.open) return { ok: false, code: "not_open", reason: "這間展廳還沒開館。" };
   if (s.done) return { ok: false, code: "already", reason: kind === "note" ? "今天在這間留過言了，明天再來。" : "今天按過讚了，明天再來。" };
   return { ok: true };
+}
+
+// ---------- 請館友來看我的展廳 ----------
+// 沒有獎勵，只是寄一則通知。同一位可以一直請（翊文 11-09）；不能請自己，自己的展廳要開館。
+// s：{ self（請的是自己）, open（我的展廳開了沒） }。回傳 { ok } 或 { ok: false, code, reason }
+export function checkHallCall(s) {
+  if (!s || s.self) return { ok: false, code: "self", reason: "不能請自己。" };
+  if (!s.open) return { ok: false, code: "not_open", reason: "你的展廳還沒開館：先用挑戰模式擺幾件作品。" };
+  return { ok: true };
+}
+
+// ---------- 每週特展給館友比的那一小部分 ----------
+// save：整份存檔。只回傳 { open, w（第幾週）, theme, best（這週最高分）, slots }；不改存檔（不像 weeklyState 會換週）。
+// 沒有挑戰模式：{ open: false }。有挑戰模式但這週還沒擺過：w 是 null。slots 的格式跟 hallView 一樣（沒有名字）
+export function weeklyView(save) {
+  const P = save && save.profiles && save.profiles.challenge;
+  if (!P || typeof P !== "object" || isFree(P) || !Array.isArray(P.hall)) return { open: false }; // hallView 一樣：沒開館的存檔
+  const W = P.weekly;
+  if (!W || typeof W !== "object" || !Array.isArray(W.slots)) return { open: true, w: null, theme: null, best: 0, slots: [] };
+  const slots = W.slots.map(s => {
+    let it = null;
+    try { it = hallItem(P, s); } catch (e) { it = null; }
+    return it ? { kind: it.kind, key: it.key, perfect: !!it.perfect, title: null } : null;
+  });
+  return { open: true, w: W.w, theme: typeof W.theme === "string" ? W.theme : null, best: +W.best || 0, slots };
 }
 
 // ---------- 送佩佩：能不能送、拿出來、放進去 ----------

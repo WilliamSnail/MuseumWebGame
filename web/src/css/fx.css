@@ -185,6 +185,9 @@ html.fx-dragging, html.fx-dragging * { cursor: grabbing !important; -webkit-user
 .fx-toast.fx-tone-neutral .fx-toast-dot { display: none; }
 .fx-toast.fx-tone-good .fx-toast-dot { background: var(--accent); }
 .fx-toast.fx-tone-bad .fx-toast-dot { background: #B33A2E; }
+.fx-toast-act { flex: none; margin: -3px -8px -3px 0; padding: 4px 14px; border-radius: 14px; border: 1px solid var(--accent); background: var(--accent); color: #2A1A0C; font: inherit; font-size: 13px; letter-spacing: .04em; cursor: pointer; }
+.fx-toast-act:hover { filter: brightness(1.08); }
+.fx-toast-act:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* ============================================================ float text */
 .fx-float-layer { position: fixed; inset: 0; z-index: 9500; overflow: hidden; pointer-events: none; }

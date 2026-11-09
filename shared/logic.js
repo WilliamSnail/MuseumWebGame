@@ -1305,7 +1305,7 @@ export const SAVE_VERSION = 3;
 // dayMin：以前是「遊戲裡一天玩幾分鐘」（0 ＝ 真實的一天）。11-09 起一律真實的一天（決定 0019），欄位留著、固定 0，不再用
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
-    settings: { font: "m", reduceMotion: false, muted: false, dayMin: 0, holidayLook: true }, tutorialDone: false, gen2Migrated: false,
+    settings: { font: "m", reduceMotion: false, motionOffDone: true, muted: false, dayMin: 0, holidayLook: true }, tutorialDone: false, gen2Migrated: false,
     signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/signin.js）
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
@@ -1370,6 +1370,9 @@ export function migrateSave(o) {
   const s = Object.assign(newSave(), o);
   s.settings = Object.assign(newSave().settings, o.settings || {});
   s.settings.dayMin = 0; // 舊存檔的 15／30／60 不用了（11-09）。改成 0：還沒更新的舊畫面讀到，也是照真的日期，不會又跑到好幾天後
+  // 動畫減量預設關（翊文 11-09：「動畫減量預設都要關閉，所有人」）：舊存檔統一關一次；之後自己再打開就照自己的
+  if (!(o.settings && o.settings.motionOffDone)) s.settings.reduceMotion = false;
+  s.settings.motionOffDone = true;
   s.profiles = Object.assign({ challenge: null, free: null }, o.profiles || {});
   ["challenge", "free"].forEach(m => { if (s.profiles[m]) s.profiles[m] = fixProfile(s.profiles[m], m); });
   s.signin = fixSignin(o.signin); // 每日簽到（11-09，決定 0030）：舊存檔沒有就是空的

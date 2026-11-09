@@ -158,12 +158,15 @@ export async function startChallenge(name) {
 }
 export async function afterEnter() {
   if (!P) return;
+  if (PANELS.casinoResume && await PANELS.casinoResume()) return; // 賭場同桌坐到一半（重新整理過、斷線回來）：接回去（ui_casino_table.js）
   if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
   if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）
   await dailyRecovery();
+  if (PANELS.autoMail) await PANELS.autoMail(); // 館友寄來的信、請你去看展廳：大提示卡，排在公佈欄、簽到卡前面，關了才跳下一張（11-09，ui_visit.js）
+  if (UI.screen === "title" || !P) return;
   if (PANELS.autoBoard) PANELS.autoBoard(); // 公佈欄：有新公告就打開壹次（11-08）
   if (PANELS.autoSignin) PANELS.autoSignin(); // 簽到卡：公佈欄關了才跳；今天簽過就不跳（11-09，ui_signin.js）
 }

@@ -17,8 +17,8 @@ import { PARTY, PARTY_KINDS, canStartParty, fixParty, inviteOver, inviteProblem,
 import { hashStr, mulberry32, setDayClock, setRng } from "./shared/logic.js";
 import { fuseTogether } from "./shared/logic3.js";
 
-// 合作地下（functions/coop.js）掛在這裡：離開隊伍之前要先把他從走到一半的那一趟拿掉；隊伍解散時收掉那一趟的東西
-export const partyHooks = { beforeLeave: null, closed: null };
+// 合作地下（functions/coop.js）、賭場同桌（functions/casino_table.js）掛在這裡（各自 push 進去，每一種自己看 kind）：離開隊伍之前要先把他從走到一半的那一趟拿掉；隊伍解散時收掉那一趟的東西
+export const partyHooks = { beforeLeave: [], closed: [] };
 
 export const rtdb = () => getDatabase();
 export const now = () => Date.now();
@@ -61,11 +61,11 @@ export async function clearPartyOf(uid, pid) {
 }
 // 把 uid 移出隊伍：沒人了就刪掉隊伍；還有人就通知他們「○○ 離開了隊伍」（why "offline"：斷線被移出去的）
 export async function leaveParty(pid, uid, nick, why) {
-  if (partyHooks.beforeLeave) await partyHooks.beforeLeave(pid, uid);
+  for (const fn of partyHooks.beforeLeave) await fn(pid, uid);
   const { party } = await changeParty(pid, p => partyLeave(p, uid));
   if (party.phase === "closed") {
     await rtdb().ref(`parties/${pid}`).remove();
-    if (partyHooks.closed) await partyHooks.closed(pid);
+    for (const fn of partyHooks.closed) await fn(pid);
   }
   else for (const m of partyMembers(party)) await inbox(m.id, Object.assign({ t: "party", pid, left: nick }, why ? { why } : {}));
   return party;

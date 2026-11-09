@@ -35,7 +35,7 @@ T("展廳：給別人的只有展台、分數、主題、裝飾，不漏靈感�
   });
   s.email = "someone@example.com";
   const v = J(G.cleanHallView(G.hallView(s)));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "report", "score", "slots", "theme"]);
+  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "title"]);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
   assert.strictEqual(v.deco, "stand-velvet");
   assert.strictEqual(v.frame, "frame-vine");
@@ -375,6 +375,77 @@ T("掛在牆上的探險報告：館友看得到，檢查過、限制長度；�
   assert.strictEqual(evil.report.lines[0].k, "x");
   assert.strictEqual(Array.from(evil.report.lines[0].t).length, 200);
   assert.strictEqual(J(G.cleanHallView({ open: true, slots: [], score: 1 })).report, null);
+});
+
+// ---------- 比每週特展（11-09，取代特展碼） ----------
+const WEEK = 2900;
+const weekOf = (fn, week = WEEK) => { // 對方存檔 → 伺服器給的那一小部分
+  const s = saveWith(P => { P.weekly = { w: WEEK, theme: "start32", slots: [null, null, null, null, null, null], best: 61 }; if (fn) fn(P); });
+  return G.stepWeeklyView({ view: G.weeklyView(s), me: A, owner: "ub", week, theme: "start32" });
+};
+T("比特展：同一週給最高分和展台，不給存檔裡的主題、名字、收藏", () => {
+  const k = keyOf();
+  const r = J(weekOf(P => { P.pepes[k] = { n: 1, perfect: true, s: 1, d: DAY, title: "祕密名字" }; P.weekly.slots[1] = { kind: "pepe", key: k }; P.weekly.theme = "<b>亂寫</b>"; P.insp = 987654; }));
+  assert.strictEqual(r.ok, true); assert.strictEqual(r.open, true); assert.strictEqual(r.started, true);
+  assert.deepStrictEqual(Object.keys(r).sort(), ["best", "ok", "open", "slots", "started", "theme", "week"]);
+  assert.strictEqual(r.best, 61); assert.strictEqual(r.week, WEEK);
+  assert.strictEqual(r.theme, "start32", "主題用伺服器算的，不用存檔裡的");
+  assert.deepStrictEqual(r.slots[1], { kind: "pepe", key: k, perfect: true, title: null });
+  const txt = JSON.stringify(r);
+  for (const leak of ["祕密名字", "亂寫", "987654"]) assert.ok(!txt.includes(leak), "不該有 " + leak);
+});
+T("比特展：不是同一週、沒擺過、沒開館：只回旗標，不給舊資料", () => {
+  const old = J(weekOf(null, WEEK + 1)); // 對方存的是上一週
+  assert.deepStrictEqual(old, { ok: true, open: true, started: false });
+  const none = J(G.stepWeeklyView({ view: { open: true, w: null, theme: null, best: 0, slots: [] }, me: A, owner: "ub", week: WEEK, theme: "start32" }));
+  assert.deepStrictEqual(none, { ok: true, open: true, started: false });
+  const closed = J(G.stepWeeklyView({ view: { open: false }, me: A, owner: "ub", week: WEEK, theme: "start32" }));
+  assert.deepStrictEqual(closed, { ok: true, open: false, started: false });
+  assert.deepStrictEqual(J(G.stepWeeklyView({ view: null, me: A, owner: "ub", week: WEEK, theme: "x" })), { ok: true, open: false, started: false });
+});
+T("比特展：不能比自己；壞資料不丟錯、不能信（壞的格子、超大的分數、太多格子）", () => {
+  const self = G.stepWeeklyView({ view: { open: true, w: WEEK, best: 5, slots: [] }, me: A, owner: A.uid, week: WEEK, theme: "x" });
+  assert.strictEqual(self.ok, false); assert.strictEqual(self.code, "self");
+  const evil = "<img src=x onerror=alert(1)>";
+  const r = J(G.stepWeeklyView({ view: { open: true, w: String(WEEK), best: 99999, slots: [{ kind: "pepe", key: evil }, { kind: "hack", key: keyOf() }, "字串", null, null, null, { kind: "pepe", key: keyOf() }, { kind: "pepe", key: keyOf() }] }, me: A, owner: "ub", week: WEEK, theme: "start32" }));
+  assert.strictEqual(r.best, 100);
+  assert.strictEqual(r.slots.length, 6, "最多 6 格");
+  assert.deepStrictEqual(r.slots.slice(0, 3), [null, null, null]);
+  assert.deepStrictEqual(J(G.stepWeeklyView({ view: { open: true, w: "abc", best: -5, slots: "壞" }, me: A, owner: "ub", week: WEEK, theme: "x" })), { ok: true, open: true, started: false });
+  assert.strictEqual(J(G.stepWeeklyView({ view: { open: true, w: WEEK, best: -5, slots: "壞" }, me: A, owner: "ub", week: WEEK, theme: "x" })).best, 0);
+});
+
+// ---------- 請館友來看（11-09，取代分享碼） ----------
+const call = (more = {}) => G.stepHallCall(Object.assign({ open: true, me: A, to: "ub", today: DAY, at: 5000 }, more));
+T("請館友來看：給通知的內容，編號是日期加上請的人（同一天同一位只有一則）", () => {
+  const r = J(call());
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.id, G.callId(DAY, A.uid));
+  assert.deepStrictEqual(r.call, { fromId: A.uid, from: A.nick, day: DAY, at: 5000, seen: false });
+  assert.notStrictEqual(G.callId(DAY, A.uid), G.callId(NEXT, A.uid), "隔天是新的一則");
+  assert.notStrictEqual(G.callId(DAY, A.uid), G.callId(DAY, B.uid), "不同的人是不同的一則");
+  assert.ok(!JSON.stringify(r).includes("gift"), "沒有獎勵");
+});
+T("請館友來看：同一位可以一直請（翊文 11-09），還是同一則、變回沒看過；自己不行、自己的展廳沒開館不行", () => {
+  const first = J(call()), again = J(call({ at: 9000 }));
+  assert.strictEqual(again.ok, true);
+  assert.strictEqual(again.id, first.id, "同一天同一個人只留一則，不會堆起來");
+  assert.strictEqual(again.call.at, 9000);
+  assert.strictEqual(again.call.seen, false);
+  assert.strictEqual(call({ to: A.uid }).code, "self");
+  assert.strictEqual(call({ open: false }).code, "not_open");
+});
+T("請館友來看：通知給畫面看的樣子只留該給的欄位，壞的拿掉，暱稱最多 12 字", () => {
+  const raw = { fromId: "ua", from: "小明", day: DAY, at: 5000, seen: false, createdAt: "x", secret: "不該給" };
+  const row = J(G.callRow(raw, "call-1"));
+  assert.deepStrictEqual(row, { id: "call-1", fromId: "ua", from: "小明", day: DAY, at: 5000 });
+  assert.strictEqual(G.callRow(null, "c"), null);
+  assert.strictEqual(G.callRow({ fromId: "a/b", day: DAY }, "c"), null, "uid 有斜線不行（會拿去組路徑）");
+  assert.strictEqual(G.callRow({ fromId: "ua" }, "c"), null, "沒有日期不行");
+  assert.strictEqual(G.callRow(raw, 5), null, "編號不是字串不行");
+  assert.strictEqual(Array.from(G.callRow({ fromId: "ua", day: DAY, from: "字".repeat(60) }, "c").from).length, 12);
+  assert.strictEqual(G.callRow({ fromId: "ua", day: DAY, at: "x" }, "c").at, 0);
+  assert.strictEqual(G.callRow({ fromId: "ua", day: DAY }, "c").from, "館友");
 });
 
 console.log(`${pass} passed, ${fail} failed（參觀展廳、送佩佩、伺服器的信）`);
