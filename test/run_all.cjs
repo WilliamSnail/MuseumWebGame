@@ -36,6 +36,7 @@ const STEPS = [
   ["公告發到 Discord", ["test/discord.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
+  ["每週任務的旁白", ["test/story_words.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],
   ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/week_check.cjs"]],
