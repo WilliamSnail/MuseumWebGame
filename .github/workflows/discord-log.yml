@@ -30,11 +30,14 @@ jobs:
           SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           LINES: ${{ inputs.lines }}
         run: |
-          trap 'rm -f "$RUNNER_TEMP/sa.json"' EXIT
+          trap 'rm -f "$RUNNER_TEMP/sa.json" "$RUNNER_TEMP/raw.txt"' EXIT
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           case "$LINES" in ''|*[!0-9]*) LINES=300 ;; esac
-          npx firebase functions:log --project prod --lines "$LINES" 2>&1 \
+          npx firebase functions:log --project prod --lines "$LINES" > "$RUNNER_TEMP/raw.txt" 2>&1 || echo "firebase 回錯誤：$?"
+          echo "總行數 $(wc -l < "$RUNNER_TEMP/raw.txt")；第一行時間 $(head -1 "$RUNNER_TEMP/raw.txt" | cut -c1-27)；最後一行時間 $(tail -1 "$RUNNER_TEMP/raw.txt" | cut -c1-27)"
+          grep -iE '^Error|HTTP Error|permission' "$RUNNER_TEMP/raw.txt" | head -3 | cut -c1-160 || true
+          cat "$RUNNER_TEMP/raw.txt" \
             | grep -iE 'discordbot: ' \
             | grep -E 'discordBot [^ ]+ [0-9]+ms|discordBot：出錯|STARTUP|Starting new instance|no available instance' \
             | sed -E 's/\x1b\[[0-9;]*m//g' | cut -c1-140 || true
