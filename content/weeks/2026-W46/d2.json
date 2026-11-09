@@ -4,7 +4,7 @@
   "holiday": null,
   "board": "招領箱裡多了壹隻手套；B2 的帽架披上了圍巾；書架多了 2 本書。",
   "real": [
-    "台中的美術館從這個週末起有壹場藝術雙年展，展期會持續到年底。"
+    "台中的美術館上週末開了壹場亞洲藝術雙年展，免費參觀，展到明年二月底。"
   ],
   "casino": {
     "note": "招領櫃檯今天收到壹隻手套。荷官說，另壹隻也許在牌桌底下，還沒有找到。"
@@ -87,12 +87,13 @@
     "works": [
       {
         "id": "s2a",
+        "clue": "c-glove-own-hand",
         "frame": "wood",
         "fx": [],
         "title": "只有壹隻的手套",
         "lines": [
           "手套攤在燈下，指頭還微微彎著。",
-          "旁邊的釘子上掛著空空的繩圈，像是在等另壹隻。"
+          "旁邊的繩圈空著。標籤寫的尺寸，跟數它的那個人的手剛好壹樣大。"
         ],
         "svg": [
           "<svg viewBox='0 0 240 300'><defs>",
@@ -139,10 +140,10 @@
           "<path d='M96 160 Q120 176 146 160' fill='none' stroke='#4a4a48' stroke-width='2'/>",
           "<path d='M88 140 Q120 160 152 140 L154 160 Q120 182 86 160 Z' fill='#b3433a' stroke='#3a1512' stroke-width='3'/>",
           "<path d='M142 156 Q150 190 144 214 L134 212 Q140 186 134 160 Z' fill='#b3433a' stroke='#3a1512' stroke-width='2'/>",
-          "<ellipse cx='60' cy='262' rx='5' ry='3' fill='#06080b'/>",
-          "<ellipse cx='72' cy='270' rx='5' ry='3' fill='#06080b'/>",
-          "<ellipse cx='48' cy='274' rx='5' ry='3' fill='#06080b'/>",
-          "<ellipse cx='36' cy='284' rx='5' ry='3' fill='#06080b'/>",
+          "<ellipse cx='60' cy='262' rx='5' ry='3' fill='#3a4656'/>",
+          "<ellipse cx='72' cy='270' rx='5' ry='3' fill='#3a4656'/>",
+          "<ellipse cx='48' cy='274' rx='5' ry='3' fill='#3a4656'/>",
+          "<ellipse cx='36' cy='284' rx='5' ry='3' fill='#3a4656'/>",
           "</g>",
           "<rect width='240' height='300' fill='url(#vig)'/>",
           "<rect width='240' height='300' filter='url(#n)'/>",
