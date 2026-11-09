@@ -18,6 +18,10 @@
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |
 | **改很多處文字（首選）**：寫純文字計畫檔，反引號、`$`、引號都不用跳脫；有壹處對不上就壹個檔都不寫 | `npm run edits -- 計畫檔`（格式在 `tools/apply_edits.cjs` 開頭，`--check` 只檢查） |
+| 開工作資料夾、接好依賴（同時做好幾件事、子代理一人一個） | `npm run wt -- --dir 路徑 --branch claude/主題`（`--remove` 收掉） |
+| 按 GitHub 的手動流程，只認新的那一次、照結束碼回報 | `npm run wf -- discord-log.yml -f hours=2 --grep "^2026-"`（多行文字用 `--file 名字=檔案`） |
+| 看、改模擬器的資料（莊家破產、隱身、次數歸零） | `npm run emu:doc -- --set 8 data casinoHouse/main bankroll=-500000` |
+| Yuga Bot 每個指令花多久（正式環境的真實紀錄） | `npm run wf -- discord-log.yml -f hours=2 --grep "^2026-\|^=="` |
 | 併 main：公告、日誌索引、測試清單的衝突自動解 | `npm run merge:main`（`ship` 也會用） |
 | 不開瀏覽器，直接用某人身分叫模擬器的 Functions | `npm run emu:call -- --set 8 --user 小明 casino '{"act":"peek"}'` |
 | 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令、整手 21 點（按鈕、seq、別人的按鈕）、遊戲和 Discord 接續、次數共用、存檔、outbox（冷卻、失敗、沒 token）（不連真的 Discord，模擬器的 Function 把「會發的訊息」寫進 `discordTestSent`） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/discord_fake.cjs --set 5`（`--show` 印幾則回覆看長相）；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /）。**改了 `shared/` 或 `functions/` 要重開模擬器**（規則是開的時候才複製進去的） |
@@ -26,6 +30,10 @@
 
 **不要用腳本去改另壹支腳本，也不要把大段文字塞進程式字串或 shell 指令**（翊文 11-09：「修補腳本因為跳脫字元失敗，有沒有辦法以後不要發生」）。文字放純文字檔：改現有檔用 `npm run edits`；`doc:new` 的 JSON 用 Write 工具直接寫檔，或用 `JSON.stringify` 產生。`ship` 的訊息長就用 `--body-file`。
 
-**瀏覽器分頁是大家共用的**：預設分頁可能被別的子代理導走，畫面會莫名其妙關掉。要測就自己開新分頁（`tabs_create`，之後每個動作都帶 `tabId`）。
+**瀏覽器分頁是大家共用的**：預設分頁可能被別的子代理導走，畫面會莫名其妙關掉。要測就自己開新分頁（`tabs_create`，之後每個動作都帶 `tabId`）。怎麼快速進遊戲、測難走到的情況，看 `tools/browser_snippets.md`。
+
+**動手前先看 `docs/踩過的坑.md`**：部署、Discord、測試、改檔踩過的坑都在那裡。又踩到新的就寫進去。
+
+**要拿 `ship` 的結果，別接 `| tail`**（結束碼會被吃掉）：`npm run ship -- ... > log 2>&1; echo $?`，再找 `✓ PR`。
 
 `ship` 會真的合併、部署到正式站：只在該上線的分支跑。不准做的事照 `AGENTS.md` 第 6 節，腳本也不能繞過（不直接推 main、不跑 `firebase deploy`、不碰正式資料）。
