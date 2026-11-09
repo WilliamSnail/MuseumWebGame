@@ -44,8 +44,8 @@ function casinoLines(w, d, n) {
   return out;
 }
 
-// 訊息的文字。w ＝ week.json、d ＝ dN.json、n ＝第幾天、hol ＝ holidayOf 回傳的節日（沒有就 null）
-function dayMessage(w, d, n, hol, evs) {
+// 訊息的文字。w ＝ week.json、d ＝ dN.json、n ＝第幾天、hol ＝ holidayOf 回傳的節日（沒有就 null）、evs ＝活動、fun ＝ funDaysOf 回傳的趣味節日（沒有就不寫那壹行，決定 0044）
+function dayMessage(w, d, n, hol, evs, fun) {
   evs = evs || weekEvents(w);
   const lines = [];
   if (n === 1) {
@@ -59,6 +59,7 @@ function dayMessage(w, d, n, hol, evs) {
     lines.push("🏛 **佩佩博物館2　今日館訊**", `📜 〈${w.title}〉第 ${n} 日`, "", d.board || "");
   }
   if (hol) lines.push("", `🏮 【本日節慶】${hol.name}。${hol.words || ""}`);
+  if (fun && fun.length) lines.push("", `🎈 【今日冷知識】${fun.map(f => `${f.name}：${f.line}`).join("　")}`);
   casinoLines(w, d, n).today.forEach(t => lines.push("", t));
   // 活動當天：今日館訊後面多一段（日期用這週的週一往後算 n - 1 天；沒有活動就不加）
   const day = w && w.start ? shared().addDays(w.start, n - 1) : null;
@@ -111,10 +112,10 @@ async function main() {
   }
   const days = newDays(changedFiles());
   if (!days.length) { console.log("這次合併沒有新的一天，不發。"); return; }
-  const { holidayOf } = await import("../shared/holidays.js");
+  const { holidayOf, funDaysOf } = await import("../shared/holidays.js");
   for (const { week, n } of days) {
     const w = readJSON(`content/weeks/${week}/week.json`), d = readJSON(`content/weeks/${week}/d${n}.json`);
-    const ok = await send(dayMessage(w, d, n, d.date ? holidayOf(d.date) : null));
+    const ok = await send(dayMessage(w, d, n, d.date ? holidayOf(d.date) : null, undefined, d.date ? funDaysOf(d.date) : []));
     console.log(ok ? `發了 ${week} 第 ${n} 天。` : "沒發。");
   }
 }

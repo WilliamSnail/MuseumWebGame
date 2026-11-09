@@ -15,7 +15,7 @@
 //  文字在 content3.js 的 HOLIDAY_TEXT（草稿，Yuga 可以改）；獎勵的數字在 config.js 的 NUM.signin。
 // ================================================================
 import { NUM } from "./config.js";
-import { HOLIDAY_TEXT } from "./content3.js";
+import { HOLIDAY_TEXT, FUN_TEXT } from "./content3.js";
 
 export const HOLIDAY_YEARS = [2026, 2027, 2028];
 
@@ -151,5 +151,182 @@ export function holidayNotices(today) {
       cta: { label: "打開簽到日曆", panel: "calendar" },
     });
   });
+  return out;
+}
+
+// ================================================================
+//  趣味節日（決定 0044）：圓周率日、漢堡日這種冷門、奇怪的節日。
+//  翊文 11-09：「節日除了大節慶以外，那種什麼圓周率節，國際漢堡節那種的奇怪節日也可以一起都加進來嗎」
+//  跟上面的大節日分開：holidayOf／holidaysOn／holidayNotices 完全不看這張表。趣味節日不換外觀、不發獎勵、不貼公佈欄公告，
+//  只在大廳一小行、簽到日曆、Discord 今日館訊露出來；壹天可以有好幾個。
+//  規則：fixed ＝每年同壹天（"MM-DD"）；nth ＝ [月, 第幾個, 星期幾（0 是星期日）]，例如 [4, 1, 6] ＝ 4 月第壹個星期六。
+//  閏日（02-29）只有閏年才有那壹天，所以只有閏年碰得到。不限 HOLIDAY_YEARS：哪壹年都算得出來。
+//  文字在 content3.js 的 FUN_TEXT（名字、館內的話、有呼應的房間；草稿，Yuga 可以改）。日期的來源在 docs/決定/0044-趣味節日.md。
+// ================================================================
+export const FUN_INFO = [
+  { key: "birdday", fixed: "01-05" },
+  { key: "hatday", fixed: "01-15" },
+  { key: "penguinaware", fixed: "01-20" },
+  { key: "hugday", fixed: "01-21" },
+  { key: "squirrel", fixed: "01-21" },
+  { key: "pieday", fixed: "01-23" },
+  { key: "kazoo", fixed: "01-28" },
+  { key: "puzzleday", fixed: "01-29" },
+  { key: "groundhog", fixed: "02-02" },
+  { key: "carrotcake", fixed: "02-03" },
+  { key: "icebreakfast", nth: [2, 1, 6] },
+  { key: "almond", fixed: "02-16" },
+  { key: "lovepet", fixed: "02-20" },
+  { key: "pizza", fixed: "02-09" },
+  { key: "polarbear", fixed: "02-27" },
+  { key: "leap", fixed: "02-29" },
+  { key: "peanutbutter", fixed: "03-01" },
+  { key: "wildlife", fixed: "03-03" },
+  { key: "pi", fixed: "03-14" },
+  { key: "frog", fixed: "03-20" },
+  { key: "happiness", fixed: "03-20" },
+  { key: "sparrow", fixed: "03-20" },
+  { key: "poetry", fixed: "03-21" },
+  { key: "forests", fixed: "03-21" },
+  { key: "chipsdip", fixed: "03-23" },
+  { key: "waffle1", fixed: "03-25" },
+  { key: "aprilfools", fixed: "04-01" },
+  { key: "pillow", nth: [4, 1, 6] },
+  { key: "pbj", fixed: "04-02" },
+  { key: "beaver", fixed: "04-07" },
+  { key: "zoo", fixed: "04-08" },
+  { key: "grilledcheese", fixed: "04-12" },
+  { key: "bat", fixed: "04-17" },
+  { key: "cheeseball", fixed: "04-17" },
+  { key: "penguinday", fixed: "04-25" },
+  { key: "pretzel", fixed: "04-26" },
+  { key: "dance", fixed: "04-29" },
+  { key: "jazz", fixed: "04-30" },
+  { key: "candiedorange", fixed: "05-04" },
+  { key: "hoagie", fixed: "05-05" },
+  { key: "hummus", fixed: "05-13" },
+  { key: "museum", fixed: "05-18" },
+  { key: "bee", fixed: "05-20" },
+  { key: "tea", fixed: "05-21" },
+  { key: "turtle", fixed: "05-23" },
+  { key: "taffy", fixed: "05-23" },
+  { key: "paperairplane", fixed: "05-26" },
+  { key: "hamburger", fixed: "05-28" },
+  { key: "milk", fixed: "06-01" },
+  { key: "eggday", fixed: "06-03" },
+  { key: "bicycle", fixed: "06-03" },
+  { key: "doughnut", nth: [6, 1, 5] },
+  { key: "gingerbread", fixed: "06-05" },
+  { key: "oceans", fixed: "06-08" },
+  { key: "icedtea", fixed: "06-10" },
+  { key: "play", fixed: "06-11" },
+  { key: "fudge", fixed: "06-16" },
+  { key: "sushi", fixed: "06-18" },
+  { key: "yoga", fixed: "06-21" },
+  { key: "camel", fixed: "06-22" },
+  { key: "rainforest", fixed: "06-22" },
+  { key: "chocolate", fixed: "07-07" },
+  { key: "shark", fixed: "07-14" },
+  { key: "macncheese", fixed: "07-14" },
+  { key: "snake", fixed: "07-16" },
+  { key: "emoji", fixed: "07-17" },
+  { key: "icecream", nth: [7, 3, 0] },
+  { key: "appleturnover", fixed: "07-05" },
+  { key: "lollipop", fixed: "07-20" },
+  { key: "drivethru", fixed: "07-24" },
+  { key: "tiger", fixed: "07-29" },
+  { key: "lasagna", fixed: "07-29" },
+  { key: "friendship", fixed: "07-30" },
+  { key: "cheesecake", fixed: "07-30" },
+  { key: "cookie", fixed: "08-04" },
+  { key: "mustard", nth: [8, 1, 6] },
+  { key: "cat", fixed: "08-08" },
+  { key: "lion", fixed: "08-10" },
+  { key: "elephant", fixed: "08-12" },
+  { key: "lefthand", fixed: "08-13" },
+  { key: "potato", fixed: "08-19" },
+  { key: "waffle2", fixed: "08-24" },
+  { key: "bananasplit", fixed: "08-25" },
+  { key: "dog", fixed: "08-26" },
+  { key: "marshmallow", fixed: "08-30" },
+  { key: "trailmix", fixed: "08-31" },
+  { key: "cheesepizza", fixed: "09-05" },
+  { key: "salami", fixed: "09-07" },
+  { key: "sudoku", fixed: "09-09" },
+  { key: "teddy", fixed: "09-09" },
+  { key: "milkshake", fixed: "09-12" },
+  { key: "peanut", fixed: "09-13" },
+  { key: "cremedonut", fixed: "09-14" },
+  { key: "appledumpling", fixed: "09-17" },
+  { key: "cheeseburger", fixed: "09-18" },
+  { key: "redpanda", nth: [9, 3, 6] },
+  { key: "pirate", fixed: "09-19" },
+  { key: "quesadilla", fixed: "09-25" },
+  { key: "chocmilk", fixed: "09-27" },
+  { key: "dictionary", fixed: "10-16" },
+  { key: "coffee", fixed: "10-01" },
+  { key: "smile", nth: [10, 1, 5] },
+  { key: "farmanimals", fixed: "10-02" },
+  { key: "octopus", fixed: "10-08" },
+  { key: "sloth", fixed: "10-20" },
+  { key: "pasta", fixed: "10-25" },
+  { key: "mole", fixed: "10-23" },
+  { key: "candycorn", fixed: "10-30" },
+  { key: "sandwich", fixed: "11-03" },
+  { key: "nachos", fixed: "11-06" },
+  { key: "pickle", fixed: "11-14" },
+  { key: "bread", fixed: "11-17" },
+  { key: "toilet", fixed: "11-19" },
+  { key: "cranberry", fixed: "11-23" },
+  { key: "espresso", fixed: "11-23" },
+  { key: "parfait", fixed: "11-25" },
+  { key: "cake", fixed: "11-26" },
+  { key: "frenchtoast", fixed: "11-28" },
+  { key: "redapple", fixed: "12-01" },
+  { key: "fritters", fixed: "12-02" },
+  { key: "cookieday", fixed: "12-04" },
+  { key: "soil", fixed: "12-05" },
+  { key: "brownie", fixed: "12-08" },
+  { key: "pastry", fixed: "12-09" },
+  { key: "noodlering", fixed: "12-11" },
+  { key: "monkey", fixed: "12-14" },
+  { key: "crossword", fixed: "12-21" },
+  { key: "fruitcake", fixed: "12-27" },
+];
+
+// 某壹年某月的「第 n 個星期 wd」：回傳 "YYYY-MM-DD"，這個月沒有第 n 個就回傳 null
+export function funNthDate(year, month, n, wd) {
+  const first = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const day = 1 + ((wd - first + 7) % 7) + (n - 1) * 7;
+  const len = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return day > len ? null : `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+const funReal = date => {
+  const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(String(date));
+  return !!m && new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toISOString().slice(0, 10) === date;
+};
+const funText = key => (typeof FUN_TEXT !== "undefined" && FUN_TEXT[key]) || { name: key, line: "" };
+const funHits = (info, date) => {
+  if (info.fixed) return date.slice(5) === info.fixed;
+  const [mo, n, wd] = info.nth;
+  return +date.slice(5, 7) === mo && funNthDate(+date.slice(0, 4), mo, n, wd) === date;
+};
+// 這壹天的趣味節日（可以是 0 個、好幾個），照 FUN_INFO 的順序。每壹個：
+//   key、id（"fun-key-年"）、name、line（館內的話）、hint（跟遊戲哪間房有呼應，沒有就 ""）、kind（"趣味"）
+// date 不是真的日期（"2027-02-29"）回傳 []。純函式，不碰時鐘
+export function funDaysOf(date) {
+  if (!funReal(date)) return [];
+  return FUN_INFO.filter(info => funHits(info, date)).map(info => {
+    const T = funText(info.key);
+    return { key: info.key, id: `fun-${info.key}-${date.slice(0, 4)}`, name: T.name, line: T.line || "", hint: T.hint || "", kind: "趣味" };
+  });
+}
+// 某個月的趣味節日：{ "YYYY-MM-DD": [節日, …] }（month 從 1 算），給簽到日曆用
+export function funDaysInMonth(year, month) {
+  const len = new Date(Date.UTC(year, month, 0)).getUTCDate(), out = {};
+  for (let d = 1; d <= len; d++) {
+    const date = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`, list = funDaysOf(date);
+    if (list.length) out[date] = list;
+  }
   return out;
 }

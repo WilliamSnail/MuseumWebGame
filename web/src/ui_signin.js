@@ -14,7 +14,7 @@
 // ================================================================
 import { LIMITED_ITEMS } from "../../shared/config.js";
 import { SIGNIN_TEXT } from "../../shared/content3.js";
-import { HOLIDAY_YEARS, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
+import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
 import { cycleReward, limitedInfo, limitedCount, ownsLimited, signIn, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";
@@ -196,26 +196,28 @@ export function openCalendar(o = {}) {
     const grid = h("div", { class: "sg-grid", role: "grid", "aria-label": `${y} 年 ${mo} 月` },
       WEEK_HEAD.map(w => h("span", { class: "sg-gh", role: "columnheader" }, w)),
       mon.cells.map(c => {
-        const hol = c.hol[0];
+        const hol = c.hol[0], fun = funDaysOf(c.date); // fun：趣味節日（決定 0044），不換外觀、不發獎勵，只在格子角落標壹個小點
         const b = h("button", { type: "button", role: "gridcell", class: "sg-day" + (c.inMonth ? "" : " out") + (c.signed ? " on" : "") + (c.isToday ? " today" : "") + (c.future ? " future" : "") + (hol ? " hol" + (hol.look ? " look-" + hol.look : " quiet") : "") + (c.date === sel ? " sel" : ""),
-          "aria-pressed": String(c.date === sel), "aria-label": `${dayLabel(c.date)}${c.isToday ? "，今天" : ""}${c.signed ? `，簽到了（第 ${c.n} 次）` : ""}${hol ? "，" + c.hol.map(holName).join("、") : ""}`,
+          "aria-pressed": String(c.date === sel), "aria-label": `${dayLabel(c.date)}${c.isToday ? "，今天" : ""}${c.signed ? `，簽到了（第 ${c.n} 次）` : ""}${hol ? "，" + c.hol.map(holName).join("、") : ""}${fun.length ? "，趣味節日：" + fun.map(f => f.name).join("、") : ""}`,
           onClick: () => {
             sel = c.date; if (!c.inMonth) { y = +c.date.slice(0, 4); mo = +c.date.slice(5, 7); } draw();
             if (planPortrait()) { const det = m.surface.querySelector(".sg-detail"); if (det) det.scrollIntoView({ block: "start", behavior: motionOff() ? "auto" : "smooth" }); } // 手機：說明在日曆下面
           } },
           h("span", { class: "sg-dn" }, String(c.d)),
           c.signed ? h("span", { class: "sg-dm", html: ART.stamp("簽"), "aria-hidden": "true" }) : null,
+          fun.length ? h("span", { class: "sg-df", title: fun.map(f => f.name).join("、"), "aria-hidden": "true" }, fun.length > 1 ? String(fun.length) : "趣") : null,
           hol ? h("span", { class: "sg-dh" }, hol.look ? h("i", { html: ART.holidayIcon(hol.look), "aria-hidden": "true" }) : null, h("span", null, hol.dayName)) : null);
         return b;
       }));
     // 點的那一天
-    const hs = holidaysOn(sel), x = S.days[sel];
+    const hs = holidaysOn(sel), fs = funDaysOf(sel), x = S.days[sel];
     const detail = h("section", { class: "sg-detail", "aria-live": "polite" },
       h("h3", null, `${+sel.slice(0, 4)} 年 ${dayLabel(sel)}`, sel === today ? h("span", { class: "sg-tag" }, "今天") : null),
       h("p", { class: "sg-det-s" }, x ? `簽到了：累計第 ${x.n} 次（七天壹輪的第 ${x.k} 天）` : sel > today ? "還沒到。" : sel === today ? (canSign() ? "今天還沒簽到。" : SIGNIN_TEXT.freeMode) : "這天沒簽到。"),
-      hs.length ? hs.map(hh => holidayBox(hh, today, {})) : h("p", { class: "sg-det-n" }, "這天沒有節日。"),
+      hs.length ? hs.map(hh => holidayBox(hh, today, {})) : fs.length ? null : h("p", { class: "sg-det-n" }, "這天沒有節日。"),
+      fs.length ? funBox(fs) : null,
       sel === today && canSign() && !x ? btn([icon("check"), " ", SIGNIN_TEXT.sign], () => { m.close(); openSignin(); }, "primary sg-cal-sign") : null);
-    const legend = h("p", { class: "sg-legend" }, h("span", { class: "lg on" }, "蓋章＝簽到了"), h("span", { class: "lg today" }, "框起來＝今天"), h("span", { class: "lg hol" }, "有字＝節日（點了看活動）"),
+    const legend = h("p", { class: "sg-legend" }, h("span", { class: "lg on" }, "蓋章＝簽到了"), h("span", { class: "lg today" }, "框起來＝今天"), h("span", { class: "lg hol" }, "有字＝節日（點了看活動）"), h("span", { class: "lg fun" }, "趣＝趣味節日（只是好玩，沒有獎勵）"),
       nh ? h("span", { class: "lg next" }, nh.date === today ? `今天是${holName(nh.holiday)}` : `下壹個節日：${nh.holiday.name} ${md(nh.date)}（還有 ${daysBetween(today, nh.date)} 天）`) : null);
     m.surface.replaceChildren(summary, h("div", { class: "sg-cal" },
       h("div", { class: "sg-cal-main" },
@@ -264,10 +266,33 @@ function lobbySignin() {
 }
 // 大廳的簽到條換成現在的（換日、簽完）；不在大廳就不用
 export function refreshLobbySign() {
+  if (UI.screen !== "lobby") return;
   const old = document.querySelector(".lobby-sign");
-  if (!old || UI.screen !== "lobby") return;
-  const now = lobbySignin();
-  if (now) old.replaceWith(now); else old.remove();
+  if (old) { const now = lobbySignin(); if (now) old.replaceWith(now); else old.remove(); }
+  const oldF = document.querySelector(".lobby-fun"), nowF = funLine(); // 趣味節日的壹小行也跟著換日
+  if (oldF) { if (nowF) oldF.replaceWith(nowF); else oldF.remove(); }
+  else if (nowF) { const a = document.querySelector(".lobby-sign"); if (a) a.after(nowF); }
+}
+// 趣味節日（決定 0044）：大廳壹小行「今天是圓周率日：……」。好幾個就壹次顯示壹個，按鈕換下壹個；有呼應的房間在後面括號寫壹句
+function funLine() {
+  const list = funDaysOf(realTodayStr());
+  if (!list.length) return null;
+  let i = 0;
+  const box = h("div", { class: "lobby-fun", "aria-label": "今天的趣味節日" });
+  const draw = () => {
+    const f = list[i];
+    box.replaceChildren(
+      h("p", { class: "lf-text", title: list.map(x => x.name).join("、") }, h("b", null, `今天是${f.name}：`), f.line, f.hint ? h("span", { class: "lf-hint" }, `（${f.hint}）`) : null),
+      list.length > 1 ? btn(`下壹個（${i + 1}／${list.length}）`, () => { i = (i + 1) % list.length; draw(); }, "small ghost lf-next") : null);
+  };
+  draw();
+  return box;
+}
+// 日曆上點壹天看到的趣味節日
+function funBox(list) {
+  return h("div", { class: "sg-fun" }, list.map(f => h("div", { class: "sg-fun-i" },
+    h("b", null, `趣味節日：${f.name}`), h("p", null, f.line, f.hint ? h("span", { class: "lf-hint" }, `（${f.hint}）`) : null))),
+    h("p", { class: "sg-fun-n" }, "趣味節日只是好玩：不換館裡的樣子，也沒有獎勵。"));
 }
 const holChip = hol => h("button", { type: "button", class: "ls-hol" + (hol.look ? " look-" + hol.look : " quiet"), title: hol.words, onClick: () => openCalendar() },
   hol.look ? h("i", { html: ART.holidayIcon(hol.look), "aria-hidden": "true" }) : null, `今天是${holName(hol)}`);
@@ -316,7 +341,7 @@ function hallAddon(root, room) {
   if (head && head.nextSibling) root.insertBefore(bar, head.nextSibling); else root.append(bar);
 }
 
-ADDONS.lobby = lobbySignin;
+ADDONS.lobby = () => { const f = document.createDocumentFragment(); [lobbySignin(), funLine()].forEach(x => { if (x) f.append(x); }); return f; };
 ADDONS.gallery = galleryHoliday;
 ADDONS.hall = hallAddon;
 ADDONS.frameClass = () => { const f = P && wornDeco(P, "frame"); return f ? " lim-" + f : ""; };
