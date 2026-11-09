@@ -441,7 +441,7 @@
 /* ----- 點擊範圍至少 40px ----- */
 @media (max-height: 500px) and (orientation: landscape) {
   .seg-btn, .chip-btn, .strip-filter, .btn.small, .tab { min-height: 40px; }
-  .hold { width: 40px; height: 40px; }
+  .hold, .tab-wrap .hold { width: 40px; min-width: 40px; height: 40px; flex: 0 0 40px; }
   .seg-btn { min-width: 40px; }
   .chip-btn { min-width: 40px; justify-content: center; }
   .t-link { min-height: 40px; }
@@ -454,4 +454,30 @@
   .sg-cal { grid-template-columns: minmax(0, 1.5fr) minmax(210px, 1fr); gap: 10px; }
   .sg-day { min-height: 44px; }
   .sg-card { padding: 14px 16px 12px; gap: 10px; }
+}
+
+/* ----- 地下收藏庫（還沒下去）：先挑樓層和隊員，本週異狀放後面 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scr-cellar:not(:has(> .cellar-stage)) { display: flex; flex-direction: column; }
+  .scr-cellar:not(:has(> .cellar-stage)) > * { order: 6; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .room-head { order: 0; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .floors { order: 1; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .team-wrap { order: 2; }
+  .scr-cellar:not(:has(> .cellar-stage)) > .strip-wrap { order: 3; }
+  .floors { margin-bottom: 8px; }
+}
+
+/* ----- 畫廊靠近看：畫在左邊、說明在右邊 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .focus-layer { padding: 8px max(14px, env(safe-area-inset-left)); justify-content: flex-start; overflow-y: auto; }
+  .focus-layer > :first-child { margin-top: auto; }
+  .focus-layer > :last-child { margin-bottom: auto; }
+  .focus-inner { flex-direction: row; flex-wrap: nowrap; gap: 20px; align-items: center; justify-content: center; }
+  .focus-art { height: min(220px, 56vh); flex: 0 0 auto; }
+  .focus-info { min-width: 0; flex: 1 1 260px; max-width: 420px; gap: 6px; }
+  .focus-info .btn { min-height: 40px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .tab, .tab-wrap { white-space: nowrap; }
+  .tab-wrap { flex: 0 0 auto; }
 }
