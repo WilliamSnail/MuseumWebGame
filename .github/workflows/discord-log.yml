@@ -34,6 +34,7 @@ jobs:
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           case "$LINES" in ''|*[!0-9]*) LINES=300 ;; esac
-          npx firebase functions:log --project prod --only discordBot --lines "$LINES" 2>&1 \
+          npx firebase functions:log --project prod --lines "$LINES" 2>&1 \
+            | grep -iE 'discordbot: ' \
             | grep -E 'discordBot [^ ]+ [0-9]+ms|discordBot：出錯|STARTUP|Starting new instance|no available instance' \
             | sed -E 's/\x1b\[[0-9;]*m//g' | cut -c1-140 || true
