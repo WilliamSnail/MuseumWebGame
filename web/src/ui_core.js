@@ -276,8 +276,16 @@ export function navTo(room) {
   if (!SCREENS[room] && PANELS[room]) { PANELS[room](); return; } // 導覽圖上的賭場是蓋在畫面上的框（翊文 11-09：「Hamachi 賭場在大廳看不到」）
   go(room);
 }
+// 橫拿的手機放不下全部頁籤，導覽列自己橫向捲：換房間時把現在這間捲到看得到的地方（放得下的時候不動）
+function scrollNavToOn() {
+  const box = $(".nav-links"), on = box && $(".nav-link.on", box);
+  if (!on || box.scrollWidth <= box.clientWidth + 1) return;
+  const x = on.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft;
+  box.scrollLeft = Math.max(0, x - (box.clientWidth - on.offsetWidth) / 2);
+}
 export function markNav() {
   $$(".nav-link, .nav-drawer-link").forEach(a => a.classList.toggle("on", a.dataset.room === UI.screen || (UI.screen === "reveal" && a.dataset.room === "workshop")));
+  scrollNavToOn();
   markFreshNav();
 }
 

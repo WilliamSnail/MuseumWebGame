@@ -433,3 +433,25 @@
   .cx-tr { grid-template-columns: minmax(56px, auto) 1fr auto; }
   .cx-san { grid-column: auto; }
 }
+@media (max-height: 500px) and (orientation: landscape) {
+  .brand { display: inline-flex; align-items: center; min-height: 40px; }
+  .lf-chip { min-height: 40px; }
+}
+
+/* ----- 點擊範圍至少 40px ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .seg-btn, .chip-btn, .strip-filter, .btn.small, .tab { min-height: 40px; }
+  .hold { width: 40px; height: 40px; }
+  .seg-btn { min-width: 40px; }
+  .chip-btn { min-width: 40px; justify-content: center; }
+  .t-link { min-height: 40px; }
+}
+
+/* ----- 簽到日曆：摘要壹排、日曆和當天的細節左右分欄 ----- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sg-sum { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .sg-sum-c.prize { grid-column: auto; order: 0; }
+  .sg-cal { grid-template-columns: minmax(0, 1.5fr) minmax(210px, 1fr); gap: 10px; }
+  .sg-day { min-height: 44px; }
+  .sg-card { padding: 14px 16px 12px; gap: 10px; }
+}
