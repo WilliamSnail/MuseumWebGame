@@ -43,6 +43,8 @@ jobs:
         run: echo "還沒在 GitHub Secrets 放 FIREBASE_SERVICE_ACCOUNT，這次不部署。"
       - uses: actions/checkout@v4
         if: env.HAS_KEY == 'true'
+        with:
+          fetch-depth: 2 # 發 Discord 公告要看這次合併新加了哪幾天
       - uses: actions/setup-node@v4
         if: env.HAS_KEY == 'true'
         with:
@@ -65,3 +67,10 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
           rm -f "$RUNNER_TEMP/sa.json"
+      - name: 公告發到 Discord（這次有新的一天才發；發失敗不影響部署）
+        if: env.HAS_KEY == 'true' && github.event_name == 'push'
+        continue-on-error: true
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: node tools/discord_post.cjs

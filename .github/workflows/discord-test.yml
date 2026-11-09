@@ -1,0 +1,22 @@
+# 發一則測試訊息到 Discord（手動按，或 gh workflow run discord-test.yml）。確認 DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID 放對了、bot 有權限。
+name: Discord 測試訊息
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 發測試訊息
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: node tools/discord_post.cjs --test
