@@ -27,6 +27,7 @@ import * as casinoStreak from "../shared/casino_streak.js";
 import * as casinoWallet from "../shared/casino_wallet.js";
 import * as casinoTable from "../shared/casino_table.js";
 import * as casinoFind from "../shared/casino_find.js";
+import * as casinoEcon from "../shared/casino_econ.js";
 import * as board from "../shared/board.js";
 import * as titles from "../shared/titles.js";
 import * as events from "../shared/events.js";
@@ -36,7 +37,7 @@ let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, titles, casinoFind, events, discord })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, titles, casinoFind, events, discord , casinoEcon, events })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);
@@ -136,6 +137,13 @@ ok("地下撿籌碼接得上 config、content3、logic、casino_text（決定 00
   assert.ok(r.ok && r.found >= config.NUM.casino.cellarFind.min);
   assert.ok(!casinoFind.casCellarFind(w, null, room, "2026-11-09", () => 0).ok);
   logic.setRng(null);
+});
+ok("拚經濟接得上 config、casino_text、casino（決定 0052）", () => {
+  const w = casinoWallet.casWalletFix(casinoWallet.casWalletNew(), "2026-11-09");
+  const house = casinoWallet.casHouseNew(), h0 = house.bankroll;
+  const r = casinoEcon.casEconPlay(w, house, "2026-11-09", () => 0.999);
+  assert.ok(r.ok && r.win && house.bankroll === h0 + config.NUM.casino.econ.rMax * config.NUM.casino.econ.winPer);
+  assert.ok(r.lines.length >= 3);
 });
 ok("每週排行榜接得上 admin、story、shop、themeshow（決定 0039）", () => {
   const save = logic.newSave();
