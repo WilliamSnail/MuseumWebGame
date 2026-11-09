@@ -5,7 +5,7 @@
 // ================================================================
 
 // 導覽圖上有的房間（跟 web/src/art.js 的 PLAN 對得上）
-export const MATE_ROOMS = ["lobby", "origin", "gallery", "codex", "office", "workshop", "pillow", "commission", "cellar", "hall", "library", "fusion"];
+export const MATE_ROOMS = ["lobby", "origin", "gallery", "codex", "office", "workshop", "pillow", "commission", "cellar", "hall", "library", "fusion", "casino"];
 // 不在圖上、但可以寫「在別處」的：門口、設定
 export const MATE_ELSEWHERE = { title: "在門口", settings: "在設定" };
 
