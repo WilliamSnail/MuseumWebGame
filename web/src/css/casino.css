@@ -265,6 +265,16 @@ body.reduce-motion .sl-bulb, body.reduce-motion .sl-cell.sl-hit, body.reduce-mot
   .nav-link .ic, .nav-link .ic svg { width: 18px; height: 18px; }
   .nav-links { gap: 12px; }
 }
+/* ----- 拚經濟（決定 0052）：壹行壹行跳出來 ----- */
+.cas-econ-slogan { margin: 0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .18em; color: #F8E3A0; text-align: center; }
+.cas-econ-stage { min-height: 132px; max-height: 220px; }
+.cas-econ-stage p { animation: cas-econ-pop .28s ease-out; }
+.cas-econ-stage.k-win p.last { color: #FFE9A6; font-weight: 700; }
+.cas-econ-stage.k-fail p.last { color: #F3B8A0; }
+.cas-econ-go { min-height: 48px; padding: 0 28px; font-size: 1.0625rem; letter-spacing: .2em; }
+@keyframes cas-econ-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+body.reduce-motion .cas-econ-stage p { animation: none; }
+
 @media (max-width: 880px) and (min-width: 761px) {
   .nav-links { gap: 5px; }
   .nav-link { font-size: .6875rem; letter-spacing: .02em; }

@@ -2,14 +2,14 @@
 //  Hamachi 賭場的畫面（決定 0040；規則在 shared/casino*.js，伺服器在 functions/casino.js）
 //  這個檔只畫「伺服器給我的樣子」，什麼都不算：發牌、點數、派彩、錢包都在伺服器。畫面只拿得到看得到的牌，莊家的底牌結算才給。
 //  入口：右上角「選單」的「Hamachi 賭場」（ui_core.js 的 buildNav → PANELS.casino）。
-//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、餐車、換小獎、成就、財產。
+//  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、拚經濟、餐車、換小獎、成就、財產。
 //  「本週收藏」（決定 0042）：這週的收藏品和進度、集滿領週章、讀集滿的故事；畫在 ui_casino_week.js，進度和領獎都是伺服器的。
 //  荷官是 Yuga Bot，台詞是舊 Discord 21 點的（shared/casino_text.js）。理智低的時候伺服器給的牌會是假的，結算才翻回真的。
 //  籌碼跟靈感分開，沒有真錢。介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_FIND_TEXT, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle } from "../../shared/casino_wallet.js";
 import { isFree, todayStr } from "../../shared/logic.js";
@@ -23,7 +23,7 @@ import { slotMachine } from "./ui_casino_slot.js";
 
 const fill = casFill;
 const pick = a => a[Math.floor(Math.random() * a.length)]; // 荷官亂說話用，不影響結果（結果在伺服器）
-const TABS = [["table", "牌桌", "cards"], ["week", "本週收藏", "star"], ["packs", "大禮包", "gift"], ["diner", "餐車", "food"], ["swap", "換小獎", "exchange"], ["ach", "成就", "medal"], ["props", "財產", "gem"]]; // 頁籤的圖示（翊文 11-09）
+const TABS = [["table", "牌桌", "cards"], ["week", "本週收藏", "star"], ["packs", "大禮包", "gift"], ["econ", "拚經濟", "hammer"], ["diner", "餐車", "food"], ["swap", "換小獎", "exchange"], ["ach", "成就", "medal"], ["props", "財產", "gem"]]; // 頁籤的圖示（翊文 11-09）
 
 // ---------- 一張牌 ----------
 export function cardEl(c, o = {}) {
@@ -49,6 +49,7 @@ function sync(r) {
   if (r.wallet) S.w = r.wallet;
   if ("round" in r) S.round = r.round;
   if (r.house) S.house = r.house;
+  if (r.econ && Number.isFinite(r.econ.left)) S.ec = { left: r.econ.left, perDay: r.econ.perDay }; // 拚經濟今天還剩幾次（伺服器算的）
   if (r.wk) { setWkView(r.wk); S.wk = r.wk; } // 每週收藏的進度（伺服器算的）
   if (Array.isArray(r.wkNew) && r.wkNew.length) S.wkNew = (S.wkNew || []).concat(r.wkNew); // 新的收藏品：等牌翻完再告訴他（celebrate）
   if (r.wkDone) S.wkDone = true;
@@ -101,7 +102,7 @@ export async function openCasino(o) {
     const r = await call("open");
     if (S !== s) return;
     sync(r);
-    say([pick(CAS_TEXT.hello), pick(CAS_TEXT.idle)]);
+    say([pick(CAS_TEXT.hello), Math.random() < 0.5 ? pick(CAS_ECON.chat) : pick(CAS_TEXT.idle)]); // 荷官的身世壹點壹點露出來（拚經濟）
     if (r.round && r.round.state === "playing") say(["上次那壹手還沒打完，繼續吧。"]);
     s.busy = false; draw();
     if (r.legacy) legacyCard(r.legacy);
@@ -124,7 +125,7 @@ function draw() {
   const old = m.surface.querySelector(".cas-body"), keepY = old && old.dataset.tab === S.tab ? old.scrollTop : 0;
   const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name, ic]) =>
     h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => { S.tab = id; draw(); } }, icon(ic), " ", name)));
-  const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
+  const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   m.surface.replaceChildren(tabs, box, h("p", { class: "cas-foot" }, CAS_TEXT.series));
   box.scrollTop = keepY;
@@ -324,6 +325,54 @@ function packsPane() {
     S.packs ? sec("剛剛開到的", h("ul", { class: "cas-packs" }, S.packs.map(p => h("li", { class: "s" + p.stars }, h("span", { class: "cas-stars" }, "★".repeat(p.stars)), h("b", null, p.name), h("span", null, `+${casNum(p.chips)}`))))) : null,
     sec("機率", h("ul", { class: "cas-odds" }, rows)),
   ];
+}
+
+// ---------- 拚經濟（決定 0052） ----------
+// 按下去，伺服器擲好、改好莊家和錢包，回來壹串要跳的字；這裡壹行壹行跳出來（減少動態時幾乎立刻跳完）。籌碼和莊家的數字等跳完才變，不然會先爆雷
+function econPane() {
+  const ec = S.ec || { left: 0, perDay: NUM.casino.econ.perDay }, lines = S.ecLines || [], playing = !!S.ecPlaying;
+  const stage = h("div", { class: "cas-say cas-econ-stage" + (S.ecKind ? " k-" + S.ecKind : ""), role: "log", "aria-live": "polite", "aria-label": "拚經濟的過程" },
+    lines.length ? lines.map((l, i) => h("p", { class: i === lines.length - 1 ? "last" : "" }, l)) : h("p", null, "按下去，Yuga Bot 就開始拚。"));
+  const can = ec.left > 0 && !S.busy && !playing;
+  return [
+    sec(CAS_ECON.title, h("p", { class: "cas-econ-slogan" }, CAS_ECON.slogan), h("p", { class: "cas-note" }, CAS_ECON.intro), houseLine(), stage,
+      h("div", { class: "cas-acts" }, btn(playing ? "拚經濟中……" : "拚經濟", econGo, "primary cas-econ-go", { disabled: can ? null : true }),
+        h("span", { class: "cas-have" }, ec.left > 0 ? fill(CAS_ECON.left, { n: ec.left }) : CAS_ECON.none)),
+      h("p", { class: "cas-hint" }, CAS_ECON.rule)),
+    sec("為什麼要拚", h("p", { class: "cas-note" }, CAS_ECON.why)),
+    sec("怎麼拚", h("p", { class: "cas-note" }, CAS_ECON.how.join("、"), "。")),
+  ];
+}
+async function econGo() {
+  const s = S;
+  if (!s || s.busy || s.ecPlaying || !s.ec || s.ec.left < 1) return;
+  s.busy = true; s.ecPlaying = true; s.ecLines = []; s.ecKind = "";
+  draw();
+  let r = null;
+  try {
+    r = await NET.call("casino", { act: "econ" });
+    if (!r || !r.ok) { snd("error"); note((r && r.reason) || "沒拚成，等壹下再試。", "bad"); r = null; }
+  } catch (e) { snd("error"); note((e && e.message) || "沒拚成，等壹下再試。", "bad"); r = null; }
+  if (S !== s) return;
+  if (r) {
+    const ev = r.econ;
+    s.ecKind = ev.win ? "win" : "fail";
+    for (let i = 0; i < ev.lines.length; i++) {
+      if (S !== s) return;
+      s.ecLines.push(ev.lines[i]);
+      snd("flip");
+      draw();
+      await wait(i < 2 ? 700 : 620);
+    }
+    if (S !== s) return;
+    setChips(r.wallet.chips);
+    sync(r);
+    snd(ev.win ? "coin" : ev.loot ? "coin" : "error");
+    if (ev.rescued) { note("把莊家拚回來了！", "good"); snd("unlock"); }
+    celebrate([]);
+  }
+  s.ecPlaying = false; s.busy = false;
+  draw();
 }
 
 // ---------- 餐車 ----------

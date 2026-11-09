@@ -7,6 +7,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    casinoRounds/{uid}    現在這一手：洗好的牌、莊家的底牌都在裡面（畫面只拿到看得到的）
 //    casinoHouse/main      莊家的錢（大家共用）
 //    casinoLegacy/{小寫 email}   舊 Discord 21 點的籌碼、成就、財產，翊文之後放；認領後標 claimedBy
+//  拚經濟（決定 0052）：act econ，全館共用的莊家跟著拚，一人一天 3 次（shared/casino_econ.js）。
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
 //    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
@@ -21,6 +22,7 @@ import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
+import { casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
@@ -85,7 +87,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -108,6 +110,12 @@ export const casino = onCall(async req => {
     case "cellarFind": return play(req, me, {}, ctx => {
       const r = casCellarFind(ctx.w, ctx.house, d.room, ctx.day);
       return r.ok ? { ok: true, found: r.found, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
+    });
+    // 拚經濟（決定 0052）：結果、莊家的錢、錢包都在這個交易裡算；一人一天幾次、連點都在這裡擋（交易一個一個排隊，第二下看到的已經是新的次數）。畫面只拿到結果和要跳的字
+    case "econ": return play(req, me, {}, ctx => {
+      const r = casEconPlay(ctx.w, ctx.house, ctx.day, cryptoRng);
+      if (!r.ok) return no(r);
+      return shape(ctx, { econ: Object.assign(casEconView(ctx.w, ctx.day), { win: r.win, r: r.r, amount: r.amount, policy: r.policy, loot: r.loot, ticket: r.ticket, rescued: r.rescued, lines: r.lines }) });
     });
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {

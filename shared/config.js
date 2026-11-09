@@ -263,6 +263,8 @@ export const NUM = {
     // 地下探險撿籌碼（決定 0047，翊文 11-09：「讓地下探險劇情也有機會可以拿到一點點籌碼」）。先照這樣，等翊文：
     // 走完壹個房間擲壹次，chance 的機率撿到 min～max（每 step 壹級）；壹天最多撿 perDay 次。對照：最小的注 100、壹杯麥茶 1,750、免費大禮包最小 10,000、換壹點靈感 200,000，壹天最多也只有 6,000
     cellarFind: { chance: 0.25, min: 500, max: 2000, step: 100, perDay: 3 },
+    // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
+    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55 },
     foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
