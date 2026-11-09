@@ -11,6 +11,11 @@ import * as fresh from "../shared/fresh.js";
 import * as holidays from "../shared/holidays.js";
 import * as signin from "../shared/signin.js";
 import * as story from "../shared/story.js";
+import * as coop from "../shared/coop.js";
+import * as coopFlow from "../shared/coop_flow.js";
+import * as coopText from "../shared/coop_text.js";
+import * as coopFun from "../shared/coop_fun.js";
+import * as coopTrace from "../shared/coop_trace.js";
 import * as admin from "../shared/admin.js";
 import * as shop from "../shared/shop.js";
 import * as visit from "../shared/visit.js";
@@ -21,7 +26,7 @@ let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, admin, shop, visit, themeshow, board })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);

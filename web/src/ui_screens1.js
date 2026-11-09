@@ -158,6 +158,7 @@ export async function startChallenge(name) {
 }
 export async function afterEnter() {
   if (!P) return;
+  if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
@@ -210,6 +211,7 @@ SCREENS.lobby = root => {
   const imgs = Object.values(IMG).reduce((n, v) => n + asList(v).filter(Boolean).length, 0);
   progress.library = { text: imgs ? `你的圖 ${imgs} 張` : "還沒放圖", pct: null };
   const plan = h("div", { class: "plan" + (portrait ? " portrait" : ""), html: ART.floorPlan({ portrait, names: ROOM_NAMES, progress, fresh: freshRooms(P) }) }); // fresh：有新解開的東西的房間標「新」（11-08）
+  if (ADDONS.planMates) ADDONS.planMates(plan); // 導覽圖上的館友（ui_mates.js）
   const hint = h("p", { class: "lobby-hint", "aria-live": "polite" }, portrait ? "點一間房走進去。" : "把滑鼠移到房間上看看。");
   // 新玩家的下壹步（翊文 11-08「先改前三個」，介面檢查第 2 項）：大廳標題下面壹條，電腦和手機都看得到；導覽圖上那間房發光
   const step = nextStep(P);
@@ -426,19 +428,22 @@ SCREENS.origin = (root, params) => {
     forbList.push(b);
     for (let s = bookSequels().find(x => x.after === b.id); s; s = bookSequels().find(x => x.after === s.id)) forbList.push(s);
   });
+  // 續集接在哪壹本後面（翊文 11-09：「禁書的哪個是哪壹個的續集有點難看得出來」）：書背寫上第壹本的名字，也貼著那壹本放
+  const seriesRoot = b => { let r = b; while (r && r.after) { const id = r.after; r = forbList.find(x => x.id === id); } return r || b; };
+  const seriesTag = b => h("span", { class: "spine-of" }, `${seriesRoot(b).spine} 續集`);
   const forb = h("div", { class: "shelf forbidden" }, h("span", { class: "shelf-label" }, "禁書"),
     forbList.map(b => {
       if (b.after && !sequelVisible(P, b)) return null;
       if (b.after && !sequelOpen(P, b)) {
-        const sealed = h("button", { type: "button", class: "spine dark sealed", dataset: { seq: b.id }, "aria-label": `還打不開的續集。${b.hint}` }, h("span", { class: "spine-t" }, "續集"), icon("lock"));
+        const sealed = h("button", { type: "button", class: "spine dark sealed sequel", dataset: { seq: b.id }, "aria-label": `還打不開的《${seriesRoot(b).spine}》續集。${b.hint}` }, h("span", { class: "spine-of" }, seriesRoot(b).spine), h("span", { class: "spine-t" }, "續集"), icon("lock"));
         sealed.addEventListener("click", () => {
           $$(".spine.on", root).forEach(x => x.classList.remove("on")); sealed.classList.add("on"); snd("eerie", 1);
           reader.replaceChildren(h("div", { class: "book sealed-book" }, h("h2", { class: "book-title" }, "還打不開的續集"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, b.hint, b.need === "idleOrigin" ? `大約 ${NUM.idleBook} 秒。` : "")));
         });
         return sealed;
       }
-      const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": `禁書：${b.title}` },
-        h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null);
+      const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": b.after ? `禁書：${b.title}（《${seriesRoot(b).spine}》的續集）` : `禁書：${b.title}` },
+        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null);
       freshMark(el, isFresh(P, "origin", FRESH_KEY.book(b.id))); // 新的禁書、續集（11-08）
       el.addEventListener("click", () => openForbidden(b, reader));
       return el;
@@ -487,8 +492,9 @@ export function bookReader(reader, title, pages, o = {}) {
   let i = 0;
   const page = h("div", { class: "page" });
   const count = h("span", { class: "page-n" });
-  const prev = h("button", { type: "button", class: "icon-btn", "aria-label": "上一頁", onClick: () => flip(-1) }, icon("arrowLeft"));
-  const next = h("button", { type: "button", class: "icon-btn", "aria-label": "下一頁", onClick: () => flip(1) }, icon("arrowRight"));
+  // 翊文 11-09：「翻頁箭頭可以明顯一點嗎」：金色按鈕，箭頭旁邊寫字
+  const prev = h("button", { type: "button", class: "book-arrow prev", onClick: () => flip(-1) }, icon("arrowLeft"), h("span", null, "上壹頁"));
+  const next = h("button", { type: "button", class: "book-arrow next", onClick: () => flip(1) }, h("span", null, "下壹頁"), icon("arrowRight"));
   const draw = () => {
     page.replaceChildren(...String(pages[i]).split("\n").map(l => bookLine(l)));
     if (o.aside && i === pages.length - 1) page.append(h("p", { class: "pl-aside" }, ptNode(o.aside)));

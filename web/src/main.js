@@ -12,6 +12,7 @@ import "./css/board.css"; // 公佈欄、信箱、選單（11-08）
 import "./css/net.css"; // 登入、館友、我的帳號（多人版 M1，11-08）
 import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版 M1，11-08，決定 0018）
 import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
+import "./css/coop.css"; // 合作地下收藏庫（多人版 M4，11-09）
 import "./css/visit.css"; // 參觀館友的展廳、送佩佩（多人版 M2，11-09）
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
 import "./css/story.css"; // 每週劇情：書架的頁籤、今日特展、本週異狀、每週劇情面板（11-09）
@@ -19,6 +20,7 @@ import "./css/admin.css"; // 管理員介面（只看不改，決定 0033）
 import "./css/shop.css"; // 兌換所、上課、試煉房間（11-09，決定 0032）
 import "./css/themeshow.css"; // 主題展辦完：展期、三級、海報（11-09，決定 0035）
 import "./css/rank.css"; // 本週榜單（11-09，決定 0039）
+import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 
 import "./art.js";
 import "./fx.js";
@@ -32,12 +34,15 @@ import "./ui_board.js"; // 公佈欄、信箱（11-08）
 import "./ui_login.js"; // 登入、存檔放伺服器、館友（多人版 M1，11-08）
 import "./ui_visit.js"; // 參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，11-09）。放在 ui_party 前面：館友小卡上的按鈕照載入的順序
 import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
+import "./ui_trace.js"; // 留下痕跡（留言牌、影子、幽影，11-09）
+import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop.js，伺服器在 functions/coop.js
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來
 import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
 import "./ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
 import "./ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
+import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
 if (debugScreen) window.__PM_NODOOR__ = true; // 開發時直接進畫面，不放開館布幕

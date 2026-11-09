@@ -47,8 +47,40 @@
       ".write": false
     },
     "partyOf": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false
+      }
+    },
+    "traces": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false
+    },
+    "lounge": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false
+    },
+    "coopTalkLog": {
       ".read": false,
       ".write": false
+    },
+    "coopReports": {
+      ".read": false,
+      ".write": false
+    },
+    "coopChat": {
+      "$pid": {
+        ".read": "auth != null && root.child('parties').child($pid).child('members').child(auth.uid).exists()",
+        ".write": false
+      }
+    },
+    "coopView": {
+      "$pid": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
     }
   }
 }

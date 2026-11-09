@@ -83,7 +83,7 @@ T("展廳：只給展台、分數、主題；不給靈感、收藏、理智", ()
   P.hall[0] = { kind: "pepe", key: k };
   P.hall[2] = { kind: "pepe", key: "不存在|的|佩|佩|x|y|z" }; // 收藏裡沒有：當空的
   const v = J(G.hallView({ profiles: { challenge: P, free: null } }));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "score", "slots", "theme", "themes"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
+  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "report", "score", "slots", "theme", "themes"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
   assert.strictEqual(v.open, true);
   assert.strictEqual(v.slots.length, P.hall.length);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });

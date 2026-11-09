@@ -1,0 +1,15 @@
+/* 大廳導覽圖上的館友名牌（11-09）。畫在 <g class="fp-mates"> 裡，點下去穿過去，走進房間。 */
+.fp-mate-plate { fill: #FFF6DC; stroke: #8C6A2E; stroke-width: 1.1; filter: drop-shadow(0 1px 1.5px rgba(60,35,10,.4)); }
+.fp-mate-dot { fill: #4E8A55; stroke: #F8F0DC; stroke-width: 1; }
+.fp-mate-t { fill: #2A1E16; font-family: var(--serif); letter-spacing: .02em; }
+.fp-mate.away { opacity: .5; }
+.fp-mate.away .fp-mate-dot { fill: #B8A57A; }
+.fp-mate.more .fp-mate-plate { fill: #DDBA6C; stroke: #6E5020; }
+.fp-mate.more .fp-mate-t { font-weight: 700; }
+.fp-mate.is-new { animation: mateIn .45s var(--ease, ease) both; }
+@keyframes mateIn { from { opacity: 0; } }
+.fp-mate.away.is-new { animation-name: mateInAway; }
+@keyframes mateInAway { from { opacity: 0; } to { opacity: .5; } }
+body.reduce-motion .fp-mate.is-new { animation: none; }
+/* 不在圖上的人（門口、設定）：圖下面一行 */
+.plan-else { margin: 10px 0 0; text-align: center; font-size: .875rem; letter-spacing: .04em; color: #5A4320; }
