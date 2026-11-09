@@ -1083,7 +1083,7 @@ export function quirkGainFlow(g) {
 export function showQuirks() {
   if (!P || !activeQuirks(P).length) return;
   const close = () => { const b = $(".qk-modal .btn.primary"); if (b) b.click(); };
-  return quirkLayer("你的怪癖", `在 ${NUM.quirkTaskDays} 個不同的日子各做壹次卡片上寫的那件事就好；沒做的話，${NUM.quirkDays} 天後自己好。館長室的參觀者名片也看得到。`, activeQuirks(P).map(q => quirkCard(q)).concat([quirkSwitchTip(close)]));
+  return quirkLayer("你的怪癖", `在 ${NUM.quirkTaskDays} 個不同的日子各做壹次卡片上寫的那件事就好；沒做的話，恐懼症 ${NUM.quirkDays} 天、狂熱 ${NUM.quirkManiaDays} 天後自己好。館長室的參觀者名片也看得到。`, activeQuirks(P).map(q => quirkCard(q)).concat([quirkSwitchTip(close)]));
 }
 // 手作坊：做這隻會因為怪癖多花或少花幾靈感
 export function quirkMakeBox(pick) {

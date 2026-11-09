@@ -604,7 +604,7 @@ export function gainQuirk(P) {
   const left = cands.filter(q => !used.has(type + q.cat + q.opt));
   if (!left.length) return null;
   const before = possibilities(P);
-  const q = Object.assign({ type, since: todayStr() }, pickOne(left), { until: now + quirkSpan(), task: null, done: [] });
+  const q = Object.assign({ type, since: todayStr() }, pickOne(left), { until: now + quirkSpan(type), task: null, done: [] });
   P.quirks.push(q);
   q.task = pickQuirkTask(P); // 放進去之後才挑：新的恐懼症擋住的選項，委託也做不出來
   return { quirk: q, from: before, to: possibilities(P) };
@@ -630,13 +630,14 @@ export function cureQuirk(P, q) {
 //   calm     看一幅不可怕的畫：viewExhibit() 看了不用理智檢定的畫（ex.san 沒寫的）
 // 要加一種：這裡加名字、quirkTaskOk 加「現在做不做得到」、那個動作的函式叫 cureByTask、QUIRK_TASK_TEXT 加文字、test/content/check3.cjs 加 key
 export const QUIRK_TASKS = ["hug", "deliver", "calm"];
-export const quirkSpan = () => NUM.quirkDays * DAY_MS;
+export const quirkDaysOf = type => (type === "mania" ? NUM.quirkManiaDays : NUM.quirkDays); // 狂熱比較短（翊文 11-09：「狂熱縮成三天」）
+export const quirkSpan = type => quirkDaysOf(type) * DAY_MS;
 // 還沒過期（沒有 until 的當成還沒過期：測試、舊存檔在 fixQuirks 補上之前）
 export const quirkLive = (q, now = nowMs()) => !!q && !(typeof q.until === "number" && q.until <= now);
 export const activeQuirks = (P, now = nowMs()) => asList(P && P.quirks).filter(q => quirkLive(q, now));
 // 還剩幾天自己好（無條件進位：還剩 1 小時寫 1 天）；過期是 0。這是「時間」，不是遊戲日：到期的那一刻才好
 export function quirkDaysLeft(q, now = nowMs()) {
-  if (!q || typeof q.until !== "number" || !Number.isFinite(q.until)) return NUM.quirkDays;
+  if (!q || typeof q.until !== "number" || !Number.isFinite(q.until)) return quirkDaysOf(q && q.type);
   return Math.max(0, Math.ceil((q.until - now) / DAY_MS));
 }
 // 做事情的進度：做到過的遊戲日（不重複的日期字串）、還要幾個不同的日子、今天做過了沒
@@ -705,13 +706,13 @@ export function expireQuirks(P, now = nowMs()) {
 }
 // 舊存檔補欄位（fixProfile、visitors.js 的 fixPack 叫）：
 //   - 沒有 until（11-09 以前的怪癖）：從載入那一刻起算 NUM.quirkDays 天；已經有 until 的（20 分鐘版）照舊，不延長
-//   - until 比「現在＋NUM.quirkDays 天」還晚（電腦時鐘被往回調過）：拉回來
+//   - until 比「現在＋這種怪癖的天數」還晚（電腦時鐘被往回調過；或狂熱縮短之前得到的）：拉回來
 //   - 沒有 done（決定 0046 以前）：當 0 個日子；有的只留不重複的日期字串
 //   - 沒有 task：補「交一張委託」（原本的治法是交「治療委託」，最接近）；task 是 null（得到時都做不到）就留著 null
 export function fixQuirks(list, now = nowMs()) {
   return asList(list).filter(q => q && typeof q === "object" && !Array.isArray(q)).map(q => {
     const out = Object.assign({}, q);
-    if (typeof out.until !== "number" || !Number.isFinite(out.until) || out.until > now + quirkSpan()) out.until = now + quirkSpan();
+    if (typeof out.until !== "number" || !Number.isFinite(out.until) || out.until > now + quirkSpan(out.type)) out.until = now + quirkSpan(out.type); // 已經得到的狂熱，也會拉回 3 天
     if (out.task !== null && !QUIRK_TASKS.includes(out.task)) out.task = "deliver";
     out.done = [...new Set(asList(out.done).filter(s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s)))].slice(0, 20);
     return out;
