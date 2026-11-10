@@ -244,6 +244,20 @@ T("主旨：帳本沒有 main.theme 就擋；沒有 ties 只警告", () => {
   assert.ok(r.warnings.some(w => /沒有 ties：季節線是副劇情/.test(w)));
   expectErr(c => { c.ledger.weeks["2026-W47"].main = ""; }, /主線推到哪/);
 });
+T("故事線：沒寫本週疑點、梗、鉤子只警告；每日任務都不碰故事也警告", () => {
+  const a = regular();
+  assert.ok(warned(a, /2026-W47.*沒有 question/) && warned(a, /沒有 motifs/) && warned(a, /沒有 hooks/));
+  Object.assign(a.ledger.weeks["2026-W47"], { question: "箱子是誰的？", motifs: ["很小的字"], hooks: ["d1：空的欄位 → d2"] });
+  assert.ok(!warned(a, /沒有 question|沒有 motifs|沒有 hooks/));
+  assert.deepStrictEqual(run(a).errors, []);
+  const b = regular();
+  b.files["2026-W47/d3.json"].daily = [{ id: "x1", kind: "show", reward: { mood: 5 } }, { id: "x2", kind: "make", reward: { insp: 2 } }, { id: "x3", kind: "view", exhibit: "portrait", reward: { insp: 2 } }];
+  const r = run(b);
+  assert.deepStrictEqual(r.errors, []);
+  assert.ok(r.warnings.some(w => /d3.*沒有直接碰這週的故事/.test(w)));
+  b.files["2026-W47/d3.json"].daily[0] = { id: "x1", kind: "read", book: b.files["2026-W47/d3.json"].books[0].id, reward: { insp: 2 } };
+  assert.ok(!run(b).warnings.some(w => /d3.*沒有直接碰這週的故事/.test(w)));
+});
 T("舊帳本沒有 seasonal 照常", () => {
   const c = regular();
   delete c.ledger.seasonal;
