@@ -57,7 +57,7 @@ T("提示：壹條都沒拿到不顯示；拿到部分才顯示還差幾條和 h
   read(G, P, "1a");
   G.clueSync(P, L, TODAY);
   const v = G.understandView(P, L, TODAY);
-  assert.strictEqual(v.near.length, 1); assert.strictEqual(v.near[0].left, 2); assert.strictEqual(v.near[0].hint, "還有壹條在地下");
+  assert.strictEqual(v.near.length, 1); assert.strictEqual(v.near[0].left, 3); assert.strictEqual(v.near[0].hint, "還有壹條在地下");
   assert.ok(!JSON.stringify(v).includes("他沒有離開"), "快看懂的不給答案");
   found(G, P); viewed(G, P); read(G, P, "2a"); G.clueSync(P, L, TODAY);
   const w = G.understandView(P, L, TODAY);
@@ -82,10 +82,12 @@ T("舊週拿不到的不卡：過了那週沒找到的房間、沒看的畫，ne
   assert.strictEqual(G.understandView(Q, L, "2026-11-23").near[0].left, 1);
 });
 
-T("這週的畫：週日回顧展還看得到前幾天；平常的別天看不到就不卡", G => {
+T("這週的畫：前幾天的畫還看得到（特展下面，決定 0060），要看了才算", G => {
   const L = lib({ 3: { day: 3, books: [] } }), P = player(G);
   read(G, P, "1a"); found(G, P); read(G, P, "2a");
-  // W47 的第 3 天（不是當天也不是週日）：第 1 天的畫已經看不到 → 不卡
+  // W47 的第 3 天：第 1 天的畫收在特展下面，還看得到 → 要等
+  assert.strictEqual(G.clueSync(P, L, "2026-11-18").length, 0);
+  viewed(G, P);
   assert.strictEqual(G.clueSync(P, L, "2026-11-18").length, 1);
   const Q = player(G, "2026-11-22");
   read(G, Q, "1a"); found(G, Q); read(G, Q, "2a");
@@ -138,11 +140,11 @@ T("疑點簿：這週有疑點就列；只列撿到的出處和還差幾個地�
   let v = G.casebookView(P, L, TODAY);
   assert.strictEqual(v.weeks.length, 1);
   assert.deepStrictEqual([v.weeks[0].title, v.weeks[0].question, v.weeks[0].now, v.weeks[0].got.length], ["失物招領", "箱子是誰的？", true, 0]);
-  assert.strictEqual(v.weeks[0].left, 3, "今天是第 2 天：兩本書、壹個房間還拿得到；第 1 天的畫過了");
+  assert.strictEqual(v.weeks[0].left, 4, "今天是第 2 天：兩本書、壹個房間、第 1 天的畫都還拿得到");
   read(G, P, "1a"); G.clueNew(P, L, TODAY);
   v = G.casebookView(P, L, TODAY);
   assert.deepStrictEqual(J(v).weeks[0].got.map(g => [g.kind, g.title, g.day]), [["book", "甲", 1]]);
-  assert.strictEqual(v.weeks[0].left, 2);
+  assert.strictEqual(v.weeks[0].left, 3);
   assert.strictEqual(v.near.length, 1);
   assert.ok(!JSON.stringify(v).includes("他沒有離開"), "答案不在疑點簿裡");
   // 過了那壹週：撿到過的還在，沒疑點、沒撿到的週不列
