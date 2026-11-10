@@ -20,7 +20,7 @@ import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, c
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
-import { clueSync, understandView } from "../../shared/clues.js";
+import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
@@ -71,7 +71,13 @@ export function storyTick() {
   if (!W) { trackBar(); return; }
   const today = todayStr();
   const ev = syncStory(P, W, today);
-  const seen = clueSync(P, STORY_LIB, today); // 線索 → 你看懂了（拿線索悄悄記，集齊才有事件）
+  // 撿到線索：壹句很淡的話，不說是哪件事（剛進館補記的不說）。晚壹點再說，不然會被「讀完了」的提示蓋掉
+  const picked = clueNew(P, STORY_LIB, today);
+  if (picked.length) {
+    persist();
+    if (warm) setTimeout(() => note((picked.length > 1 ? "有幾個地方，你多看了壹眼。" : picked[0].text) + "（記進了疑點簿）"), 1200);
+  }
+  const seen = clueSync(P, STORY_LIB, today); // 線索 → 你看懂了（集齊才有事件）
   if (seen.length) { seen.forEach(() => markFresh(P, "origin", FRESH_KEY.understood, UI.screen)); markFreshNav(); cards.push(...seen); persist(); }
   if (ev.length) {
     ev.forEach(e => { if (e.type === "storyBook") markFresh(P, "origin", "story:" + e.book.id, UI.screen); });
@@ -184,7 +190,7 @@ function itemsFlow(ids, after) {
 }
 
 // ---------- 「每週劇情」面板 ----------
-const SP_TABS = [["week", "本週"], ["lines", "劇情線"], ["review", "劇情回顧"]];
+const SP_TABS = [["week", "本週"], ["lines", "劇情線"], ["case", "疑點簿"], ["review", "劇情回顧"]];
 export function openStory(o = {}) {
   if (!P) return;
   if (isFree(P)) { note("每週劇情在挑戰模式裡。"); return; }
@@ -199,7 +205,7 @@ export function openStory(o = {}) {
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "每週劇情" }, SP_TABS.map(([id, name]) =>
       h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : ""), onClick: () => { tab = id; draw(); } },
         name, dots[id] ? h("span", { class: "nb-dot", "aria-label": id === "week" ? "有獎勵可以領" : "有新的下壹步" }) : null)));
-    const body = tab === "week" ? weekPane(W, draw, m) : tab === "lines" ? linesPane(W, lines, draw, m) : reviewPane(m);
+    const body = tab === "week" ? weekPane(W, draw, m) : tab === "lines" ? linesPane(W, lines, draw, m) : tab === "case" ? casePane() : reviewPane(m);
     m.surface.replaceChildren(tabs, h("div", { class: "sp-body" }, body));
     if (tab === "lines") markLinesSeen(P, lines);
     persist();
@@ -208,6 +214,19 @@ export function openStory(o = {}) {
   snd("flip");
 }
 const sec = (title, ...kids) => h("section", { class: "sp-sec" }, h("h3", null, title), ...kids);
+// 疑點簿：只列問題和出處，不解釋（之後搬進典藏冊「看懂的事」那頁，決定 0058）
+const CB_KIND = { book: "書", room: "房間", work: "畫" };
+function casePane() {
+  const v = casebookView(P, STORY_LIB, todayStr());
+  if (!v.weeks.length) return h("p", { class: "nb-empty" }, "疑點簿還是空的。讀書、看今日特展、走地下收藏庫的時候，有些地方會讓你多看壹眼。");
+  return [h("p", { class: "sp-note cb-lead" }, "這裡只記問題，和你在哪裡多看了壹眼。答案不在這裡。"),
+    v.weeks.map(w => sec(`〈${w.title || w.week}〉${w.now ? "・這週" : ""}`,
+      w.question ? h("p", { class: "cb-q" }, w.question) : null,
+      w.got.length ? h("ul", { class: "cb-list" }, w.got.map(g => h("li", null, h("span", { class: "cb-kind" }, CB_KIND[g.kind] || "書"), h("b", null, g.title ? `〈${g.title}〉` : "沒有名字的地方"), h("small", null, `第 ${g.day} 天`))))
+        : h("p", { class: "sp-note" }, "還沒有多看壹眼的地方。"),
+      w.left ? h("p", { class: "sp-note" }, `這週還有 ${w.left} 個地方，你還沒留意到。`) : null)),
+    v.near.length ? sec("快要想通的", v.near.map(x => h("p", { class: "uk-near" }, `有件事快看懂了：還差 ${x.left} 條。`, x.hint ? h("span", { class: "uk-hint" }, ptNode(x.hint)) : null))) : null];
+}
 function taskRow(W, t, draw, m) {
   const S = storyState(P), st = S.tasks[t.id] || {}, n = taskCount(P, W, t), tgt = taskTarget(t, W);
   const r = Object.assign({}, t.reward, { stamps: t.weekly ? NUM.story.stampPerTask : 0 });
@@ -234,6 +253,7 @@ function weekPane(W, draw, m) {
   const head = h("div", { class: "sp-head" },
     h("p", { class: "sp-kicker" }, `本週地下收藏庫・第 ${W.dayNo} 天／7 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`),
     h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptMark(s))),
+    W.question ? h("p", { class: "sp-question" }, h("span", null, "本週疑點"), W.question) : null,
     h("div", { class: "sp-go" }, btn([icon("book"), " 起源室的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
       d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
       btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));

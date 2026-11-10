@@ -115,6 +115,14 @@
 .sp-go { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .sp-sec { padding: 12px 16px 14px; }
 .sp-sec h3 { margin: 0 0 8px; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .1em; color: #6E5020; }
+.sp-question { margin: 8px 0 0; padding: 6px 10px; border-left: 3px solid var(--parch-sub); font-family: var(--serif); line-height: 1.6; }
+.sp-question span { display: block; font-family: inherit; font-size: .75rem; letter-spacing: .08em; color: var(--parch-sub); }
+.cb-q { margin: 4px 0 8px; font-family: var(--serif); font-size: 1.0625rem; line-height: 1.6; }
+.cb-list { list-style: none; margin: 0; padding: 0; }
+.cb-list li { display: flex; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px dashed color-mix(in srgb, var(--parch-sub) 40%, transparent); }
+.cb-list b { font-family: var(--serif); font-weight: 600; flex: 1; }
+.cb-kind { flex: none; font-size: .75rem; padding: 0 6px; border: 1px solid var(--parch-sub); border-radius: 3px; color: var(--parch-sub); }
+.cb-list small { flex: none; color: var(--parch-sub); font-size: .8125rem; }
 .sp-anomaly b { font-family: var(--serif); }
 .sp-anomaly p { margin: 4px 0 0; line-height: 1.6; }
 .sp-tasks { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
@@ -186,3 +194,4 @@
   84% { box-shadow: 0 0 0 5px rgba(232, 197, 110, .55), 0 0 22px 6px rgba(232, 197, 110, .6); filter: brightness(1.28); }
 }
 body.reduce-motion .btn.sl-nudge { animation: none; }
+.sp-note.cb-lead { color: #d9cfb4; margin: 2px 4px 12px; } /* 這句直接寫在深色的板子上，不在紙上 */

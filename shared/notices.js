@@ -28,6 +28,22 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "casebook", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "每週劇情多了「疑點簿」", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "每週劇情多了壹頁**「疑點簿」**：寫著這週在追的那個問題，和你在哪本書、哪幅畫、哪個房間多看了壹眼。",
+        "讀到、看到、走到跟疑點有關的地方，畫面會冒出壹句很淡的話。它不會說是哪件事。",
+        "公佈欄的排序改了：新的公告排前面，不會再被前幾天的蓋住。",
+        "同壹天的小更新會合成壹則「某月某日的更新」，點開壹次看完。重要的事還是各自壹則。",
+      ]],
+      ["注意事項", [
+        "疑點簿只記問題和出處，不給答案。湊齊了，《看懂的事》會多壹行。",
+      ]],
+    ],
+    cta: { label: "打開疑點簿", panel: "story", params: { tab: "case" } },
+  },
+  {
     id: "today-list", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "新的「今天」：今天要做的事排在壹張", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
@@ -469,8 +485,40 @@ export function visibleNotices(P, today) {
   if (w) list.push(w);
   list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）
   NOTICE_EXTRA.forEach(f => { const n = f(P, today); if (n) list.push(n); });
-  return list.sort((a, b) => (!!b.pinned - !!a.pinned) || (RANK[b.importance] - RANK[a.importance]) || String(b.publish || "9999").localeCompare(String(a.publish || "9999")));
+  // 排序：置頂 → 新的在前 → 同壹天重要的在前 → 寫在前面的在前（翊文 11-10：「排序好像有點問題」——
+  // 原本先比重要程度，前幾天的「重要」壹直壓在今天的更新上面，新的公告要捲到第 10 則才看得到）
+  return list.sort((a, b) => (!!b.pinned - !!a.pinned) || String(b.publish || "9999").localeCompare(String(a.publish || "9999")) || (RANK[b.importance] - RANK[a.importance]));
 }
+
+// 公佈欄上要貼的：同壹天的小更新合成壹則「N 月 N 日的更新」（翊文 11-10：「同一整天的更新都合在同一則公告如何？」）
+//   合的：館方公告、有「更新」「已更新」標籤、普通或不重要、沒置頂、沒附獎勵；同壹天有 2 則以上才合
+//   不合的：重要的（要蓋火漆印、各自成壹則）、置頂、每週特展、節日、活動、附獎勵的
+//   合起來的那則：{ id: "day-日期", digest: true, parts: [原本的公告…] }。已讀照原本各則的記（isUnread、markRead 會看 parts），
+//   所以舊的已讀紀錄不用搬；當天又多壹項，那則會再變成沒讀。寄信、Discord 還是用 visibleNotices（壹則壹則）
+const DIGEST_TAGS = ["更新", "已更新"];
+function digestable(n) {
+  return n.cat === "館方公告" && !n.pinned && !n.weekly && !n.gift && !n.start && !n.end && typeof n.publish === "string" &&
+    RANK[n.importance] <= RANK.normal && (n.tags || []).some(t => DIGEST_TAGS.includes(t));
+}
+export function digestNotices(list) {
+  const by = {};
+  list.forEach(n => { if (digestable(n)) (by[n.publish] || (by[n.publish] = [])).push(n); });
+  const out = [], done = {};
+  list.forEach(n => {
+    const g = digestable(n) ? by[n.publish] : null;
+    if (!g || g.length < 2) { out.push(n); return; }
+    if (done[n.publish]) return;
+    done[n.publish] = true;
+    const [, m, d] = n.publish.split("-");
+    out.push({
+      id: "day-" + n.publish, digest: true, v: 1, cat: "館方公告", tags: ["更新"], publish: n.publish, parts: g,
+      importance: g.some(x => x.importance === "normal") ? "normal" : "low",
+      title: `${+m} 月 ${+d} 日的更新（${g.length} 項）`,
+    });
+  });
+  return out;
+}
+export function boardNotices(P, today) { return digestNotices(visibleNotices(P, today)); }
 
 // 活動期間的狀態：進行中／快開始／已結束；沒寫期間就是 null
 export function noticeStatus(n, today) {
@@ -487,8 +535,8 @@ export function noticeState(save) {
   if (!s.read || typeof s.read !== "object") s.read = {};
   return s;
 }
-export function isUnread(state, n) { return (state.read[n.id] || 0) < (n.v || 1); }
-export function markRead(state, n) { state.read[n.id] = n.v || 1; }
+export function isUnread(state, n) { return n.parts ? n.parts.some(x => isUnread(state, x)) : (state.read[n.id] || 0) < (n.v || 1); }
+export function markRead(state, n) { if (n.parts) n.parts.forEach(x => markRead(state, x)); else state.read[n.id] = n.v || 1; }
 export function markAllRead(state, list) { list.forEach(n => markRead(state, n)); }
 
 // 導覽列的「公佈欄」頁籤：火漆印（有沒讀的重要公告）、沒讀的數量（不算 low）

@@ -190,6 +190,7 @@ export function storyWeekAt(lib, label, today, fb) {
   const W = {
     label, start: monday, end: addDays(monday, 6), fallback: fbName, past, dayNo: past ? 8 : daysBetween(monday, today) + 1,
     title: wk.title || "", theme: wk.theme || "", summary: asList(wk.summary), holidayWeek: !!wk.holidayWeek,
+    question: typeof wk.question === "string" ? wk.question : "", // 本週疑點（排程說明 一之七）：本週那頁、疑點簿都會寫
     lines: [], days: [], books: [], rooms: [], works: [], daily: [],
     ending: { read: wk.ending && wk.ending.need && Number.isFinite(+wk.ending.need.read) ? +wk.ending.need.read : null },
     weeklyBonus: reward(wk.weeklyBonus), anomaly: null, events: reg ? cleanEvents(wk.events, monday, label) : [], // events：這週的限時活動（決定 0041，shared/events.js）
