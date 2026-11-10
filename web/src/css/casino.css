@@ -92,6 +92,7 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .bk-book .btn { min-height: 30px; padding: 0 12px; }
 .bk-book .btn:not(:disabled) { background: #1D2B45; color: #F3DFA6; border-color: #D6B25E; }
 .bk-book .btn:disabled { opacity: .45; }
+.bk-soon { color: #6B7894; font-size: .75rem; white-space: nowrap; }
 @media (max-width: 600px) {
   .bk-fig { padding: 6px 10px; } .bk-fig b { font-size: 1.0625rem; }
   .bk-name small { display: none; }

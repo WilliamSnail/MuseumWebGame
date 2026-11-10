@@ -202,12 +202,12 @@ export const actPack = (ctx, d) => {
 // 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino_wallet.js）
 // 決定 0064 之後是有利息的借款：Discord 沒有參數，借 NUM.casino.loan.discord 這麼多（casRelief）
 export const actRelief = ctx => {
-  const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
+  const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
 };
 // 遊戲的「跟 Yuga 借」：借多少玩家選（d.amt，"max" ＝借滿），額度、利息、幾天內還都在 casBorrow
 export const actBorrow = (ctx, d) => {
-  const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
+  const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
 };
 // 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀
@@ -222,7 +222,7 @@ export const actWork = (act, ctx, d) => {
 };
 // 還壹筆（d.id；沒給就還最早到期的）
 export const actRepay = (ctx, d) => {
-  const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
+  const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 export const actBuy = (ctx, d) => {

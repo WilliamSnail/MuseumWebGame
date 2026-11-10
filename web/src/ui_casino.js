@@ -164,7 +164,7 @@ function reliefBar() {
     h("div", { class: "bk-figs" },
       fig("可借金額", casNum(L.left), `信用額度 ${casNum(L.limit)}`),
       fig("未還本息", casNum(owed), L.list.length ? `最近到期 ${md(L.list[0].due)}` : "沒有借款"),
-      fig("利率・期限", `${L.pct}%`, `每筆固定・${L.days} 天內還清`)),
+      fig("利率・期限", `${L.pct}%`, `每筆固定・${NUM.casino.loan.repayAfterMin} 分鐘後可還・${L.days} 天內還清`)),
     h("div", { class: "bk-act" },
       why ? h("p", { class: "bk-why" }, why)
         : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts)]),
@@ -175,7 +175,7 @@ function reliefBar() {
       h("tbody", null, L.list.map(x => h("tr", { class: x.today ? "today" : "" },
         h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, h("b", null, casNum(x.owe))),
         h("td", null, x.today ? "今天" : md(x.due)),
-        h("td", null, btn("還款", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
+        h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
 }
 
 // ---------- 牌桌 ----------
