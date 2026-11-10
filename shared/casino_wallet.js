@@ -171,11 +171,15 @@ function casLoanFix(w) {
   L.seq = Math.max(0, Math.floor(casNz(L.seq)));
   L.ok = Math.max(0, Math.floor(casNz(L.ok))); L.late = Math.max(0, Math.floor(casNz(L.late)));
   L.list = (Array.isArray(L.list) ? L.list : []).filter(x => casIsObj(x) && Number.isFinite(+x.amt) && +x.amt > 0 && okDay(x.day) && okDay(x.due))
-    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: x.due }));
+    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: x.due, at: Number.isFinite(+x.at) && x.at != null ? +x.at : null }));
   L.notes = (Array.isArray(L.notes) ? L.notes : []).filter(s => typeof s === "string").slice(-5);
   if (!okDay(L.debtSince)) L.debtSince = null;
   if (w.chips >= 0) L.debtSince = null;
 }
+// 這筆最早什麼時候可以還（毫秒）；舊的借款沒記時間：馬上可以還
+export const casLoanFrom = x => (x && Number.isFinite(x.at) ? x.at + NUM.casino.loan.repayAfterMin * 60000 : null);
+// 準時還清壹筆之後的額度：多 limitPct%（無條件進位）
+export const casLoanNext = limit => Math.ceil(limit * (100 + NUM.casino.loan.limitPct) / 100);
 // 要還多少：本金加利息，無條件進位
 export const casLoanOwe = amt => Math.ceil(amt * (100 + NUM.casino.loan.interestPct) / 100);
 // 還沒還的本金加起來
@@ -216,7 +220,8 @@ export function casPoorReason(reason) {
   return [CAS_TEXT.betPoor, CAS_TEXT.dinerBroke, CAS_LIVE.poor, "籌碼不夠"].some(t => s.includes(t.split("{")[0]));
 }
 // 借：amt 是玩家要借的（字串、數字都收；"max" ＝借滿）。成功：籌碼加 amt，記壹筆要在 days 天內還 amt×(1+利息)
-export function casBorrow(w, amt, day, playing) {
+// t：伺服器現在的時間（毫秒）。借的時候記下來，repayAfterMin 分鐘之後才能還
+export function casBorrow(w, amt, day, playing, t) {
   const C = NUM.casino.loan;
   const why = casLoanWhyNot(w, playing);
   if (why) return { ok: false, reason: why };
@@ -225,29 +230,31 @@ export function casBorrow(w, amt, day, playing) {
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_TEXT.loanBad };
   if (n < C.min) return { ok: false, reason: casFill(CAS_TEXT.loanMin, { n: casNum(C.min) }) };
   n = Math.min(n, left);
-  const L = w.loan, x = { id: ++L.seq, amt: n, owe: casLoanOwe(n), day, due: casAddDays(day, C.days) };
+  const L = w.loan, x = { id: ++L.seq, amt: n, owe: casLoanOwe(n), day, due: casAddDays(day, C.days), at: Number.isFinite(t) ? t : null };
   L.list.push(x);
   w.chips += n;
   w.st.reliefs++; // 成就「Yuga 的朋友」：第壹次借
   return { ok: true, loan: x, lines: [CAS_TEXT.loanHello, casFill(CAS_TEXT.loanGive, { n: casNum(n), due: x.due.slice(5), owe: casNum(x.owe), pct: C.interestPct })], ach: casAchCheck(w, day) };
 }
-// 還：id 沒給就還最早到期的那筆。要壹次還清那壹筆（本金加利息）。準時還清（到期前都算準時），額度加 limitStep
-export function casRepay(w, id, day, playing) {
+// 還：id 沒給就還最早到期的那筆。要壹次還清那壹筆（本金加利息）。準時還清（到期前都算準時），額度多 limitPct%
+export function casRepay(w, id, day, playing, t) {
   if (playing) return { ok: false, reason: CAS_TEXT.loanPlaying };
   const L = w.loan;
   const x = id == null ? L.list.slice().sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : a.id - b.id))[0] : L.list.find(y => y.id === Math.floor(Number(id)));
   if (!x) return { ok: false, reason: CAS_TEXT.loanNone };
+  const from = casLoanFrom(x);
+  if (from && Number.isFinite(t) && t < from) return { ok: false, reason: casFill(CAS_TEXT.loanTooSoon, { n: NUM.casino.loan.repayAfterMin, left: Math.ceil((from - t) / 60000) }) };
   if (w.chips < x.owe) return { ok: false, reason: casFill(CAS_TEXT.loanPoor, { owe: casNum(x.owe) }) };
   w.chips -= x.owe;
   L.list = L.list.filter(y => y !== x);
   L.ok++;
-  L.limit += NUM.casino.loan.limitStep;
+  L.limit = casLoanNext(L.limit);
   return { ok: true, loan: x, lines: [casFill(CAS_TEXT.loanBack, { owe: casNum(x.owe), limit: casNum(L.limit) })] };
 }
 // 舊的名字：Discord 和舊的「relief」動作都走這裡，借 NUM.casino.loan.discord 這麼多（額度不夠借剩下的）
-export function casRelief(w, day, playing) {
+export function casRelief(w, day, playing, t) {
   const left = casLoanLeft(w);
-  return casBorrow(w, Math.min(NUM.casino.loan.discord, left), day, playing);
+  return casBorrow(w, Math.min(NUM.casino.loan.discord, left), day, playing, t);
 }
 // ---------- 欠款送參觀者去地下工作（決定 0064 第二部分） ----------
 // w.work：{ vid, name, job, san 現在的理智, san0 下去前的理智, base 開工那天的欠款（正的）, since 開工那天, last 算到哪天, paid 還了多少 }，沒有就 null
@@ -371,7 +378,8 @@ export function casLoanView(w, day) {
     limit: L.limit, left: casLoanLeft(w), pct: C.interestPct, days: C.days, min: C.min, quick: C.quick.slice(), ok: L.ok, late: L.late,
     debtSince: L.debtSince, debtDays: L.debtSince && okDay(day) ? casDaysBetween(L.debtSince, day) : 0,
     why: casLoanWhyNot(w, false), notes: L.notes.slice(),
-    list: L.list.slice().sort((a, b) => (a.due < b.due ? -1 : 1)).map(x => ({ id: x.id, amt: x.amt, owe: x.owe, day: x.day, due: x.due, today: x.due === day })),
+    list: L.list.slice().sort((a, b) => (a.due < b.due ? -1 : 1)).map(x => ({ id: x.id, amt: x.amt, owe: x.owe, day: x.day, due: x.due, today: x.due === day,
+      from: casLoanFrom(x) })), // from：最早什麼時候可以還（毫秒，null ＝馬上）；畫面照自己的時鐘決定按鈕，伺服器再擋壹次
   };
 }
 const casAddDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };

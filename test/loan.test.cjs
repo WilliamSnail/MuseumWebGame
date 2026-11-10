@@ -40,25 +40,37 @@ T("太少、亂打的不借；打牌中不借", G => {
   assert.strictEqual(w.loan.list.length, 0);
 });
 
-T("還：要壹次還清那筆；籌碼不夠不能還；準時還清額度加 limitStep", G => {
+T("還：要壹次還清那筆；籌碼不夠不能還；準時還清額度多 limitPct%", G => {
   const C = G.NUM.casino.loan, w = mk(G);
   G.casBorrow(w, 200000, D);
   const owe = w.loan.list[0].owe;
   w.chips = owe - 1;
   assert.ok(!G.casRepay(w, null, D).ok);
   w.chips = owe;
-  const r = G.casRepay(w, null, plus(D, C.days), false); // 最後壹天還，算準時
+  const r = G.casRepay(w, null, plus(D, C.days), false); // 最後壹天還，算準時（測試沒給時間：舊的借款當作馬上可以還）
   assert.ok(r.ok); assert.strictEqual(w.chips, 0);
   assert.strictEqual(w.loan.list.length, 0);
-  assert.strictEqual(w.loan.limit, C.limit + C.limitStep);
+  assert.strictEqual(w.loan.limit, Math.ceil(C.limit * (100 + C.limitPct) / 100));
+  assert.strictEqual(G.casLoanNext(G.casLoanNext(C.limit)), Math.ceil(Math.ceil(C.limit * (100 + C.limitPct) / 100) * (100 + C.limitPct) / 100), "壹次比壹次多");
   assert.strictEqual(w.loan.ok, 1);
-  assert.ok(!G.casRepay(w, 99, D).ok, "沒有這筆");
+  assert.ok(!G.casRepay(w, 99, plus(D, 1)).ok, "沒有這筆");
+});
+
+T("借了 repayAfterMin 分鐘之後才能還（照伺服器的時間）", G => {
+  const C = G.NUM.casino.loan, w = mk(G), t0 = Date.parse("2026-11-10T04:00:00Z");
+  G.casBorrow(w, 100000, D, false, t0);
+  const x = w.loan.list[0];
+  assert.strictEqual(x.at, t0);
+  assert.strictEqual(G.casLoanView(w, D).list[0].from, t0 + C.repayAfterMin * 60000);
+  const no = G.casRepay(w, null, D, false, t0 + (C.repayAfterMin - 1) * 60000);
+  assert.ok(!no.ok && no.reason.includes(String(C.repayAfterMin)) && no.reason.includes("1 分鐘"), no.reason);
+  assert.ok(G.casRepay(w, null, D, false, t0 + C.repayAfterMin * 60000).ok);
 });
 
 T("到期沒還：隔天換日直接扣，扣到負的也扣；額度退回；記下欠款從哪天開始；有壹句 Yuga 來收錢", G => {
   const C = G.NUM.casino.loan, w = mk(G);
   G.casBorrow(w, 500000, D);
-  w.loan.limit = C.limit + 3 * C.limitStep;
+  w.loan.limit = C.limit * 3;
   const owe = w.loan.list[0].owe;
   w.chips = 1000;
   G.casWalletFix(w, plus(D, C.days)); // 最後壹天還沒到期

@@ -657,8 +657,10 @@ async function all() {
     const g = await u.call("casino", { act: "borrow", amt: "max" }); assert.ok(g.ok && g.result.ok !== false, JSON.stringify(g)); // 遊戲借滿
     w = await walletOf(u.uid); assert.strictEqual(w.loan.list.reduce((a, x) => a + x.amt, 0), L.limit, "共用壹個額度");
     const full = await say("/pepe-借錢", u.did); assert.strictEqual(full.flags, 64); has(full.text, "額度用完了");
+    const soon = await u.call("casino", { act: "repay" }); assert.strictEqual(soon.result.ok, false, "借了 15 分鐘內不能還");
+    w = await walletOf(u.uid); w.loan.list.forEach(x => { x.at = Date.now() - 3600000; }); await fsSet(`casinoWallets/${u.uid}`, { data: JSON.stringify(w) }); // 當作壹小時前借的
     const back = await u.call("casino", { act: "repay" }); assert.ok(back.ok && back.result.ok !== false, JSON.stringify(back));
-    assert.strictEqual((await walletOf(u.uid)).loan.limit, L.limit + L.limitStep, "準時還清，額度變高");
+    assert.strictEqual((await walletOf(u.uid)).loan.limit, Math.ceil(L.limit * (100 + L.limitPct) / 100), "準時還清，額度多 limitPct%");
     await setChips(u, -100);
     const debt = await say("/pepe-借錢", u.did); has(debt.text, "Yuga Bot 借你"); // 欠款中也能借（翊文 11-10）
   });
