@@ -197,3 +197,7 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 .sp-note.cb-lead { color: #d9cfb4; margin: 2px 4px 12px; } /* 這句直接寫在深色的板子上，不在紙上 */
 
 .sp-day-h { margin: 10px 0 4px; font-family: var(--serif); font-size: .9375rem; letter-spacing: .1em; color: var(--parch-sub); } /* 前幾天的每日任務：第幾天（11-10，決定 0060） */
+
+/* 每週劇情右上角的兌換所（翊文 11-10：「太不明顯了」）：金色的主要按鈕 */
+.sp-shop .ic, .sp-shop .ic svg { width: 16px; height: 16px; }
+.sp-stamps { font-size: .9375rem; color: #F3DE9E; }

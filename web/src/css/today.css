@@ -51,3 +51,20 @@
   .lobby-today { margin: 0 0 8px; padding: 3px 8px; }
   .scr-lobby > .lobby-today { order: 2; } /* 手機橫拿：排在館內地圖上面（其他幾條在地圖下面） */
 }
+
+/* 導覽列的「兌換所」（翊文 11-10）：旁邊的數字是週章 */
+.nav-shop { position: relative; }
+.nav-shop[hidden] { display: none; }
+.nav-shop .ns-n { display: none; position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  background: var(--gold); color: #2a1a0e; font-size: 11px; line-height: 16px; font-weight: 700; text-align: center; pointer-events: none; }
+.nav-shop.has-n .ns-n { display: block; }
+.nav-shop.has-n { color: var(--gold-hi); }
+/* 狀態列的週章：可以按 */
+#st-stamps { cursor: pointer; }
+
+/* 彩色的小圖示（cicon）：保留原本的顏色 */
+.ic.cic svg { color: initial; }
+.hsh-ic .ic.cic, .hsh-ic .ic.cic svg { width: 24px; height: 24px; }
+.hsh-ic { background: rgba(255,250,235,.85) !important; }
+.st-stamps .st-label { display: inline-flex; align-items: center; gap: 3px; }
+.st-stamps .st-label .ic, .st-stamps .st-label .ic svg { width: 16px; height: 16px; }

@@ -13,7 +13,7 @@ import { PASS_TABS, passView } from "../../shared/pass.js";
 import { signinState } from "../../shared/signin.js";
 import { NET } from "./net_firebase.js";
 import { ART } from "./art.js";
-import { P, PANELS, SAVE, UI, btn, frogHTML, gearArt, go, h, icon, navTo, rdot, snd, titleTag } from "./ui_core.js";
+import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, navTo, rdot, snd, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
 import { whoOf } from "./ui_screens3.js";
@@ -29,7 +29,7 @@ export function openPass(o = {}) {
   const m = overlay("nb-story nb-pass", "館友證", "館友證和典藏冊", "user");
   let tab = PASS_TABS.some(t => t[0] === o.tab) ? o.tab : "card";
   const leave = fn => () => { m.close(); fn(); };
-  const goBtn = (label, fn, ic) => btn([ic ? icon(ic) : null, ic ? " " : null, label, " ", h("span", { "aria-hidden": "true" }, "→")], leave(fn), "small");
+  const goBtn = (label, fn, ic) => btn([ic ? (ic.endsWith(":c") ? cicon(ic.slice(0, -2)) : icon(ic)) : null, ic ? " " : null, label, " ", h("span", { "aria-hidden": "true" }, "→")], leave(fn), "small");
   const nick = () => (UI.net && NET.me && NET.me.nick) || "館友";
 
   const cardPane = v => {
@@ -68,7 +68,7 @@ export function openPass(o = {}) {
       sec(`裝備　${x.gear.length}／${x.gearMax}`, x.gear.length
         ? h("ul", { class: "pv-gear" }, x.gear.map(g => h("li", null, gearArt(g.id), h("span", null, h("b", null, g.name), h("small", null, g.desc)))))
         : h("p", { class: "sp-note" }, "還沒有穿東西。用週章到兌換所換。"),
-        h("div", { class: "sp-go" }, PANELS.shop ? goBtn("兌換所", () => PANELS.shop(), "medal") : null)),
+        h("div", { class: "sp-go" }, PANELS.shop ? goBtn("兌換所", () => PANELS.shop(), "shop:c") : null)),
       x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
         h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
       h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
@@ -119,7 +119,7 @@ export function openPass(o = {}) {
           h("div", { class: "sg-item-body" }, h("b", null, it.own ? it.name : "？？？"), h("span", { class: "sg-item-kind" }, it.kindName + (it.worn ? "・用著" : "")),
             it.own && !v.free ? btn("拿去用", () => useNow(it.id, m.close), "small") : null)))),
         h("p", { class: "sp-note" }, "這些只有每日簽到和兌換所拿得到。"),
-        h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null, PANELS.shop && !v.free ? goBtn("兌換所", () => PANELS.shop(), "medal") : null))];
+        h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null, PANELS.shop && !v.free ? goBtn("兌換所", () => PANELS.shop(), "shop:c") : null))];
   };
 
   const achPane = v => {

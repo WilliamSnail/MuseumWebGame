@@ -127,3 +127,16 @@
 .hub-today:not(.done) small { color: #4A3414; font-weight: 600; }
 .hub-today:not(.done):hover, .hub-today:not(.done):focus-visible { background: linear-gradient(180deg, #F6E3B0, #D4B26A); }
 body.reduce-motion .hub-today { animation: none; }
+
+/* 大廳的兌換所（翊文 11-10：「大廳的也很不明顯」）：小館友證下面壹顆金色的 */
+.hub-side { display: flex; flex-direction: column; min-width: 0; }
+.hub-side .hub-pass { flex: 1; }
+.hub-shop { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 0; padding: 8px 12px; border: 0; cursor: pointer; text-align: left; font: inherit;
+  color: #2A1A0C; background: linear-gradient(180deg, #F3DE9E, #C9A55A); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 0 0 1px #9C7428; }
+.hub-shop:hover, .hub-shop:focus-visible { filter: brightness(1.07); }
+.hsh-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(42,26,12,.85); color: #F3DE9E; }
+.hsh-ic .ic, .hsh-ic .ic svg { width: 20px; height: 20px; }
+.hsh-t { display: flex; flex-direction: column; min-width: 0; }
+.hsh-t b { font-family: var(--serif); font-size: 1rem; letter-spacing: .12em; }
+.hsh-t small { font-size: .75rem; color: #4A2E1A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hsh-go { font-size: 1.1rem; }
