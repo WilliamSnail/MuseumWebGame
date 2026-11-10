@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "streak-up", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "21 點連贏、連輸的效果變大了", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "**連贏 3 把**：心情 +10（以前 +2）。",
+        "**連輸 3 把**：理智 −10（以前 −1）。",
+        "平手不算。每天心情最多 +30、理智最多 −30，理智最低留 1。",
+      ]],
+    ],
+    cta: { label: "去賭場", panel: "casino" },
+  },
+  {
     id: "debt-meet", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "在地下收藏庫可能會遇到館友的參觀者在工作", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
