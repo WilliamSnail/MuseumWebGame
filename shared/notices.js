@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "pass-visitor", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "館友證多了「參觀者」那壹頁；裝備都有自己的圖", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "**館友證多了「參觀者」那壹頁**：職業、小優點和小缺點、心情和理智、技能、穿著的裝備、怪癖，館長室名片上有的這裡都看得到。",
+        "**每件裝備都有自己的圖**：放大鏡、幸運銅板、圍裙、算盤、護身符、搬運手套、探險燈、學習筆記，兌換所、館長室和館友證都換上了。",
+      ]],
+    ],
+    cta: { label: "打開館友證", panel: "pass", params: { tab: "visitor" } },
+  },
+  {
     id: "reread", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "讀過的禁書可以再翻開；《看懂的事》多了提示", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

@@ -890,9 +890,59 @@ export const ART = (() => {
 
   const silhouette = `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path fill="#000" d="M7 13a6 6 0 1 1 12 0a6 6 0 1 1-12 0ZM21 13a6 6 0 1 1 12 0a6 6 0 1 1-12 0ZM5 25a15 11 0 1 1 30 0a15 11 0 1 1-30 0ZM9 34.5a5 3 0 1 1 10 0a5 3 0 1 1-10 0ZM21 34.5a5 3 0 1 1 10 0a5 3 0 1 1-10 0Z"/></svg>`;
 
+  // ---------- 兌換所的裝備（48×48，彩色；翊文 11-10：「穿的裝備每個裝備都要有真正的圖示」「用svg畫」） ----------
+  // 壹件壹張自己的圖；名字在 content3.js 的 GEAR_TEXT。加新裝備時在這裡加壹筆，沒有的畫壹個布袋。
+  const GK = "#3A2A1A"; // 外框線
+  const GEAR = {
+    // 放大鏡：銅框、淡藍的鏡片、木柄
+    magnifier: `<path d="M29 29l11 11" stroke="${GK}" stroke-width="7.5" stroke-linecap="round"/><path d="M29.5 29.5l10.5 10.5" stroke="#9A6234" stroke-width="4.6" stroke-linecap="round"/><path d="M27 27l3.5 3.5" stroke="#D9B45C" stroke-width="5" stroke-linecap="butt"/>` +
+      `<circle cx="19.5" cy="19.5" r="13" fill="#CFE8F2" stroke="${GK}" stroke-width="1.6"/><circle cx="19.5" cy="19.5" r="11" fill="none" stroke="#D9B45C" stroke-width="3"/><circle cx="19.5" cy="19.5" r="9.4" fill="none" stroke="#8E6516" stroke-width=".7"/>` +
+      `<path d="M13 17a7 7 0 0 1 6-5" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/><circle cx="24.5" cy="24.5" r="1.3" fill="#FFFFFF" opacity=".8"/>`,
+    // 幸運銅板：方孔銅錢、紅繩、壹點亮光
+    coin: `<path d="M24 3v8M24 37v8" stroke="#B5382D" stroke-width="2.4" stroke-linecap="round"/><path d="M20.5 44.5l3.5-3 3.5 3" fill="none" stroke="#B5382D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<circle cx="24" cy="24" r="15" fill="#C98A3C" stroke="${GK}" stroke-width="1.6"/><circle cx="24" cy="24" r="12.2" fill="#E0A656" stroke="#8A5520" stroke-width=".9"/>` +
+      `<rect x="19.5" y="19.5" width="9" height="9" rx="1" fill="#F7EBD0" stroke="${GK}" stroke-width="1.4"/>` +
+      `<path d="M24 14.2v3M24 30.8v3M14.2 24h3M30.8 24h3" stroke="#8A5520" stroke-width="1.6" stroke-linecap="round"/><path d="M14.5 17.5a11.5 11.5 0 0 1 6-4.6" fill="none" stroke="#FFF1C9" stroke-width="1.8" stroke-linecap="round"/>` +
+      `<path d="M39 7.5c.3 2.4 1.2 3.3 3.6 3.6-2.4.3-3.3 1.2-3.6 3.6-.3-2.4-1.2-3.3-3.6-3.6 2.4-.3 3.3-1.2 3.6-3.6z" fill="#FFE08A" stroke="#B88A1E" stroke-width=".6"/>`,
+    // 圍裙：米色、掛脖子的帶子、口袋、兩邊的綁帶
+    apron: `<path d="M18 11c0-7 12-7 12 0" fill="none" stroke="#8A5A3A" stroke-width="2.2" stroke-linecap="round"/><path d="M12 23l-7 3M36 23l7 3" stroke="#8A5A3A" stroke-width="2.2" stroke-linecap="round"/>` +
+      `<path d="M17 10h14l2 9c1 2 3 3 4 4v19a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V23c1-1 3-2 4-4z" fill="#EBD9B4" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<path d="M17 28h14v8a3 3 0 0 1-3 3h-8a3 3 0 0 1-3-3z" fill="#DCC492" stroke="#6E5020" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 28v11" stroke="#6E5020" stroke-width="1" stroke-dasharray="1.6 1.6"/>` +
+      `<path d="M17.6 13h12.8" stroke="#B5382D" stroke-width="1.6"/><circle cx="30" cy="22.5" r="2.2" fill="#7FAE6A" stroke="#3E6A30" stroke-width=".8"/>`,
+    // 算盤：木框、橫樑、三種顏色的珠子
+    abacus: `<rect x="4" y="9" width="40" height="30" rx="2.5" fill="#8A5A3A" stroke="${GK}" stroke-width="1.6"/><rect x="7.5" y="12.5" width="33" height="23" rx="1" fill="#F2E3C0" stroke="#5A3A20" stroke-width="1"/>` +
+      [12.5, 20, 27.5, 35].map(x => `<path d="M${x} 12.5v23" stroke="#6E5020" stroke-width="1"/>`).join("") + `<path d="M7.5 20.5h33" stroke="#5A3A20" stroke-width="2"/>` +
+      [[12.5, 14.4, "#B5382D"], [20, 16.8, "#B5382D"], [27.5, 14.4, "#B5382D"], [35, 16.8, "#B5382D"],
+        [12.5, 24.4, "#3F6E8E"], [12.5, 28.4, "#3F6E8E"], [20, 28.6, "#D9A441"], [20, 32.6, "#D9A441"], [27.5, 24.4, "#3F6E8E"], [27.5, 32.6, "#D9A441"], [35, 28.6, "#D9A441"], [35, 32.6, "#3F6E8E"]]
+        .map(([x, y, c]) => `<ellipse cx="${x}" cy="${y}" rx="3.1" ry="1.9" fill="${c}" stroke="${GK}" stroke-width=".8"/>`).join(""),
+    // 護身符：紅色的布袋、金線的結、中間壹塊白布
+    amulet: `<path d="M24 3c-5 0-5 6 0 7 5-1 5-7 0-7z" fill="none" stroke="#D9A441" stroke-width="2"/><path d="M24 10v3" stroke="#D9A441" stroke-width="2"/>` +
+      `<path d="M15 14l4-2h10l4 2 2 27a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2z" fill="#B5382D" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<path d="M15.4 17h17.2" stroke="#D9A441" stroke-width="1.4"/><path d="M20 13.5l4 3 4-3" fill="none" stroke="#F3D58A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<rect x="18.5" y="21" width="11" height="17" rx="1" fill="#F7EBD0" stroke="#8E6516" stroke-width="1"/><path d="M24 24v11M21 27.5h6M21.5 32h5" stroke="#8E2C3A" stroke-width="1.5" stroke-linecap="round"/>` +
+      `<path d="M14.6 40h18.8" stroke="#D9A441" stroke-width="1.2" stroke-dasharray="2 1.6"/>`,
+    // 搬運手套：厚的工作手套、藍色的袖口
+    gloves: `<path d="M14 30V15a2.6 2.6 0 0 1 5.2 0V9.5a2.6 2.6 0 0 1 5.2 0V9a2.6 2.6 0 0 1 5.2 0v2.5a2.6 2.6 0 0 1 5.2 0V22l3-3.5a2.7 2.7 0 0 1 4.2 3.4L35 32v3H14z" fill="#E3B66A" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round" transform="translate(-3 0)"/>` +
+      `<path d="M16.2 15v9M21.4 10v13M26.6 10v13" stroke="#9A6E28" stroke-width="1.1" stroke-linecap="round"/><path d="M14 27.5c5 2.5 12 2.5 17 .5" fill="none" stroke="#9A6E28" stroke-width="1.1" stroke-linecap="round"/>` +
+      `<rect x="9.5" y="34" width="24" height="9.5" rx="2" fill="#3F6E8E" stroke="${GK}" stroke-width="1.6"/><path d="M9.8 38.7h23.4" stroke="#CFE2EE" stroke-width="1.4"/>`,
+    // 探險燈：提燈、亮著的火
+    lamp: `<circle cx="24" cy="27" r="16" fill="#FFD76A" opacity=".28"/><path d="M17 12c0-9 14-9 14 0" fill="none" stroke="${GK}" stroke-width="2" stroke-linecap="round"/>` +
+      `<path d="M18 12h12l3 4H15z" fill="#4A5560" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/><rect x="16" y="16" width="16" height="20" rx="2" fill="#FFF1B8" stroke="${GK}" stroke-width="1.6"/>` +
+      `<path d="M24 20c3.2 3.6 4.6 6 4.6 8.4a4.6 4.6 0 0 1-9.2 0c0-2.4 1.4-4.8 4.6-8.4z" fill="#F59A2E" stroke="#B5551A" stroke-width="1"/><path d="M24 25.5c1.5 1.8 2 2.8 2 3.8a2 2 0 0 1-4 0c0-1 .5-2 2-3.8z" fill="#FFE08A"/>` +
+      `<path d="M20.5 16v20M27.5 16v20" stroke="#4A5560" stroke-width="1.2" opacity=".55"/><path d="M13.5 36h21l2 6h-25z" fill="#4A5560" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/>`,
+    // 學習筆記：綠色的筆記本、書籤帶、壹枝鉛筆
+    notebook: `<path d="M9 8h24a3 3 0 0 1 3 3v29a3 3 0 0 1-3 3H9z" fill="#3C6E47" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8h4v35H9z" fill="#274A30" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<rect x="17" y="14" width="14" height="9" rx="1" fill="#F7EBD0" stroke="#274A30" stroke-width="1"/><path d="M19.5 17.3h9M19.5 20h6" stroke="#6E5020" stroke-width="1.1" stroke-linecap="round"/>` +
+      `<path d="M28 43v4l2-1.6 2 1.6v-4" fill="#B5382D" stroke="${GK}" stroke-width="1" stroke-linejoin="round"/>` +
+      `<g transform="rotate(28 39 26)"><path d="M36.5 10h5v25l-2.5 5-2.5-5z" fill="#F2C14E" stroke="${GK}" stroke-width="1.4" stroke-linejoin="round"/><path d="M36.5 35h5l-2.5 5z" fill="#F7EBD0" stroke="${GK}" stroke-width="1.4" stroke-linejoin="round"/><path d="M38.2 38.4l.8 1.6.8-1.6z" fill="${GK}"/><path d="M36.5 10h5v4h-5z" fill="#E58A8A" stroke="${GK}" stroke-width="1.4" stroke-linejoin="round"/></g>`,
+  };
+  const GEAR_FALLBACK = `<path d="M17 14h14l5 24a3 3 0 0 1-3 4H15a3 3 0 0 1-3-4z" fill="#C9A66B" stroke="${GK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 14c2-5 14-5 16 0" fill="none" stroke="${GK}" stroke-width="1.6"/><path d="M15.5 19h17" stroke="#6E5020" stroke-width="1.4"/>`;
+  // 裝飾用的圖：旁邊壹定有名字，所以不另外念（aria-hidden）
+  function gear(id) { return svgOpen("0 0 48 48", null, ' aria-hidden="true" class="gear-svg"') + (GEAR[id] || GEAR_FALLBACK) + "</svg>"; }
+
   return {
     frog, headTop, pillow, exhibit, exhibitDiffs, floorPlan, icon, stamp, silhouette, COLORS, RARITY_COLORS, TINT,
-    hatSpot, cellarScene, jobBadge, altar, altarSpots,
+    hatSpot, cellarScene, jobBadge, altar, altarSpots, gear, GEAR,
     holidayIcon, standDeco, nameCorner, // 第 4 版（11-09，決定 0030）：節日的小圖示、展台裝飾、名牌框
     // 登記表：設計者加新選項時可以直接加一筆（例如 ART.parts.HATS.牛仔帽 = { h: 30, svg: h => "..." }）
     parts: { POSE, MOODS, HATS, AURA, PSIZE, PFILL, PMAT, EXHIBITS, ICONS, BGS, ITEMS, GRAD, SCENES, JOBS, HOL },

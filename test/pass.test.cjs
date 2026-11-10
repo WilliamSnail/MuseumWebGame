@@ -47,5 +47,26 @@ T("自由模式：沒有週章，限定的東西都算有", G => {
 T("玩了多久的字", G => {
   assert.strictEqual(G.passPlayText(0), "0 分"); assert.strictEqual(G.passPlayText(59 * 60), "59 分"); assert.strictEqual(G.passPlayText(3600), "1 小時 0 分"); assert.strictEqual(G.passPlayText(undefined), "0 分");
 });
+T("參觀者那一頁：職業、技能、穿著的裝備照存檔；自由模式和沒選職業是 null；不改存檔", G => {
+  const P = fresh(G);
+  if (!P.job) assert.strictEqual(G.passVisitor(P), null);
+  P.job = G.JOBS[0].id; P.skills = P.skills || {}; P.skills[G.SKILLS[0]] = 40;
+  G.storyState(P).stamps = 99;
+  const gid = G.GEAR_ITEMS[0].id;
+  assert.ok(G.buyGear(P, gid).ok); assert.ok(G.wearGear(P, gid).ok);
+  const before = JSON.stringify(P);
+  const x = J(G.passView(P, { today: G.todayStr() })).visitor;
+  assert.strictEqual(JSON.stringify(P), before);
+  assert.strictEqual(x.jobName, G.jobInfo(P.job).name);
+  assert.strictEqual(x.skills.length, G.SKILLS.length);
+  assert.strictEqual(x.skills.find(k => k.s === G.SKILLS[0]).v, G.skillOf(P, G.SKILLS[0]));
+  assert.strictEqual(x.skills.filter(k => k.main).length, 1);
+  assert.strictEqual(x.gear.length, 1); assert.strictEqual(x.gear[0].id, gid); assert.ok(x.gear[0].name && !x.gear[0].desc.includes("{"));
+  assert.strictEqual(x.gearMax, G.NUM.shop.gearWorn);
+  assert.strictEqual(x.stats.length, 6);
+  assert.ok(G.PASS_TABS.some(t => t[0] === "visitor"));
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).visitor, null);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

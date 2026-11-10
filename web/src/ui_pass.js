@@ -12,9 +12,11 @@ import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { PASS_TABS, passView } from "../../shared/pass.js";
 import { signinState } from "../../shared/signin.js";
 import { NET } from "./net_firebase.js";
-import { P, PANELS, SAVE, UI, btn, frogHTML, go, h, icon, navTo, rdot, snd, titleTag } from "./ui_core.js";
+import { ART } from "./art.js";
+import { P, PANELS, SAVE, UI, btn, frogHTML, gearArt, go, h, icon, navTo, rdot, snd, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
+import { whoOf } from "./ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { casePane } from "./ui_story.js";
 
@@ -41,6 +43,7 @@ export function openPass(o = {}) {
           h("dl", null,
             h("dt", null, "入館日"), h("dd", null, c.created),
             h("dt", null, "今天是"), h("dd", null, `第 ${c.dayNo} 天`),
+            v.visitor ? [h("dt", null, "參觀者"), h("dd", null, `${v.visitor.name || `第 ${v.visitor.n} 位`}・${v.visitor.jobName}`)] : null,
             typeof UI.chips === "number" && UI.net ? [h("dt", null, "籌碼"), h("dd", null, casNum(UI.chips))] : null,
             c.stamps !== null ? [h("dt", null, "週章"), h("dd", null, `${c.stamps} 枚`)] : null))),
       h("div", { class: "ps-card-foot" }, v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`));
@@ -48,6 +51,27 @@ export function openPass(o = {}) {
       h("div", { class: "ps-open" }, btn(["翻開典藏冊 ", h("span", { "aria-hidden": "true" }, "→")], () => { tab = "pepe"; draw(); }, "primary")),
       sec("紀錄", h("div", { class: "ps-stats" }, v.records.map(([l, x]) => stat(l, x)))),
       UI.net ? sec("帳號", accountRows(draw, m.close)) : sec("帳號", h("p", { class: "sp-note" }, "現在沒有登入：存檔只放在這個瀏覽器。"))];
+  };
+
+  // 現在這位參觀者（翊文 11-10：「把館友證補齊」）：館長室名片上有的這裡都看得到；要改（脫裝備、退休）還是去館長室
+  const visitorPane = v => {
+    const x = v.visitor;
+    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))];
+    return [
+      sec(null, h("div", { class: "pv-head" },
+        h("div", { class: "pv-badge", html: ART.jobBadge(x.job), "aria-hidden": "true" }),
+        h("div", { class: "pv-who" }, h("b", null, `${whoOf(x.n, x.name)}・${x.jobName}`), x.desc ? h("span", null, x.desc) : null, x.motto ? h("i", null, `「${x.motto}」`) : null)),
+        x.traits.length ? h("div", { class: "pv-traits" }, x.traits.map(t => h("span", { class: "cand-trait " + t.kind }, h("b", null, `${t.kind === "perk" ? "小優點" : "小缺點"}・${t.name}`), h("span", null, t.desc)))) : null),
+      sec("現在的狀態", h("div", { class: "ps-stats" }, x.stats.map(([l, n]) => stat(l, n)))),
+      sec("技能", h("div", { class: "pv-skills" }, x.skills.map(k => h("div", { class: "pv-skill" + (k.main ? " main" : "") },
+        h("span", null, k.s, k.main ? "（拿手）" : ""), h("span", { class: "ps-bar", "aria-hidden": "true" }, h("i", { style: { width: k.v + "%" } })), h("b", null, String(k.v)), h("span", { class: "pv-tick", title: "今天用成功過，明天會擲成長" }, k.tick ? "✓" : ""))))),
+      sec(`裝備　${x.gear.length}／${x.gearMax}`, x.gear.length
+        ? h("ul", { class: "pv-gear" }, x.gear.map(g => h("li", null, gearArt(g.id), h("span", null, h("b", null, g.name), h("small", null, g.desc)))))
+        : h("p", { class: "sp-note" }, "還沒有穿東西。用週章到兌換所換。"),
+        h("div", { class: "sp-go" }, PANELS.shop ? goBtn("兌換所", () => PANELS.shop(), "medal") : null)),
+      x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
+        h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
+      h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
   };
 
   const pepePane = v => {
@@ -109,7 +133,7 @@ export function openPass(o = {}) {
         h("div", { class: "sp-go" }, PANELS.casino && UI.net ? goBtn("賭場的成就", () => PANELS.casino({ tab: "ach" }), "dice") : null, PANELS.rank ? goBtn("本週榜單", () => PANELS.rank(), "star") : null))];
   };
 
-  const PANES = { card: cardPane, pepe: pepePane, books: booksPane, souvenir: souvenirPane, deco: decoPane, ach: achPane };
+  const PANES = { card: cardPane, visitor: visitorPane, pepe: pepePane, books: booksPane, souvenir: souvenirPane, deco: decoPane, ach: achPane };
   function draw() {
     const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined });
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "典藏冊" }, PASS_TABS.map(([id, name]) =>

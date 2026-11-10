@@ -4,21 +4,40 @@
 //  賭場的籌碼、全部的紀念品、賭場成就在伺服器，這裡沒有：畫面自己接（籌碼）或連過去（紀念品、成就）。
 // ================================================================
 
-import { BADGES, LIMITED_ITEMS, RECIPES } from "./config.js";
+import { BADGES, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "./config.js";
 import { UNDERSTAND_TEXT } from "./content3.js";
-import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, codexCount, fromKey, gameDayNo, isFree, todayStr } from "./logic.js";
-import { roomProgress } from "./logic3.js";
+import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, gameDayNo, isFree, maxSan, quirkName, todayStr } from "./logic.js";
+import { jobInfo, jobSkill, roomProgress, skillOf } from "./logic3.js";
+import { traitById, traitDesc, traitName } from "./legacy.js";
+import { gearInfo, wornGear } from "./shop.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, wornDeco } from "./signin.js";
 import { storyState } from "./story.js";
 import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
 
 // 典藏冊的頁籤（第壹頁是館友證本身）
-export const PASS_TABS = [["card", "館友證"], ["pepe", "佩佩"], ["books", "書和看懂的事"], ["souvenir", "紀念品"], ["deco", "裝飾"], ["ach", "成就"]];
+export const PASS_TABS = [["card", "館友證"], ["visitor", "參觀者"], ["pepe", "佩佩"], ["books", "書和看懂的事"], ["souvenir", "紀念品"], ["deco", "裝飾"], ["ach", "成就"]];
 
 // 玩了多久：「3 小時 20 分」「45 分」
 export function passPlayText(sec) {
   const m = Math.floor((Number.isFinite(sec) && sec > 0 ? sec : 0) / 60), hr = Math.floor(m / 60);
   return hr ? `${hr} 小時 ${m % 60} 分` : `${m} 分`;
+}
+
+// 現在這位參觀者（翊文 11-10：「館長室跟館友證好像有重疊?」「也不是不行，把館友證補齊」）：館長室名片上有的，館友證也看得到。
+// 自由模式、還沒選職業：null。只讀，不改存檔。
+export function passVisitor(P) {
+  if (!P || isFree(P) || !P.job) return null;
+  const j = jobInfo(P.job), main = jobSkill(P.job), st = P.stats || {};
+  const trait = (id, kind) => (traitById(id) ? { id, kind, name: traitName(id), desc: traitDesc(id) } : null);
+  return {
+    n: P.visitor || 1, name: typeof P.vname === "string" ? P.vname : "", job: P.job, jobName: j.name, desc: j.desc || "", motto: j.motto || "",
+    traits: [trait(P.perk, "perk"), trait(P.flaw, "flaw")].filter(Boolean),
+    stats: [["心情", `${P.mood}／99`], ["理智", `${P.sanity}／${maxSan(P)}`], ["佩佩神話", String(P.myth)], ["靈感", String(P.insp)], ["做過", `${st.made || 0} 隻`], ["融合", `${st.fused || 0} 次`]],
+    skills: SKILLS.map(s => ({ s, v: skillOf(P, s), main: s === main, tick: !!(P.skillTicks && P.skillTicks[s]) })),
+    quirks: activeQuirks(P).map(q => ({ name: quirkName(q), type: q.type })),
+    gear: wornGear(P).map(g => gearInfo(g.id)).map(it => ({ id: it.id, name: it.name, desc: it.desc, tierName: it.tierName })),
+    gearMax: NUM.shop.gearWorn,
+  };
 }
 
 // o：{ today, signins（簽到幾天，存檔層級的，畫面給） }
@@ -48,6 +67,7 @@ export function passView(P, o = {}) {
     free,
     card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle) },
     records,
+    visitor: passVisitor(P),
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),
