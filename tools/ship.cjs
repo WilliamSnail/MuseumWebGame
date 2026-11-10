@@ -115,6 +115,19 @@ function main() {
   if (!id) throw new Error(`合併了（${sha.slice(0, 7)}），但找不到這次的部署`);
   run(gh(), ["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "10"]);
   console.log(`\n✓ PR ${n} 合併、部署成功（${sha.slice(0, 7)}）：https://github.com/${REPO}/pull/${n}`);
+  backToMain();
+}
+
+// 上線完回到 main、拉最新（11-10：每次都要手動做，OneDrive 還常鎖住 index，切到一半會留下壹堆「改過的檔」）。
+// 鎖住就等 2 秒重試；真的回不去只提醒，不算失敗（PR 已經上線了）。
+function backToMain() {
+  for (let i = 0; i < 6; i++) {
+    const a = git(["checkout", "main"], { ok: true });
+    const b = a.status === 0 ? git(["pull", "--ff-only"], { ok: true }) : a;
+    if (b.status === 0) { console.log("回到 main，拉到最新了。"); return; }
+    sleep(2000);
+  }
+  console.log("（沒能回到 main：等壹下自己跑 git checkout main、git pull）");
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }

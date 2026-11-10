@@ -27,3 +27,27 @@
   .td-row { grid-template-columns: 22px 1fr; }
   .td-row .btn { grid-column: 1 / -1; justify-self: end; }
 }
+
+/* 大廳最上面的「今天」壹條（11-10）：壹件事壹顆小牌子，排成壹行；手機排不下就左右滑 */
+.lobby-today { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 6px 10px; border-radius: 12px;
+  background: rgba(20,14,10,.55); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 4px 14px rgba(0,0,0,.3); }
+.lobby-today[hidden] { display: none; }
+.lt-head { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 8px; border: 0; border-radius: 8px; background: none; cursor: pointer;
+  color: var(--gold-hi); font: inherit; }
+.lt-head:hover, .lt-head:focus-visible { background: rgba(238,215,156,.12); }
+.lt-head svg { width: 20px; height: 20px; }
+.lt-head b { font-family: var(--serif); letter-spacing: .05em; }
+.lt-head span { font-size: .8125rem; color: #CDBE9F; white-space: nowrap; }
+.lt-chips { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.lt-chips::-webkit-scrollbar { display: none; }
+.lt-chip { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 11px; border: 0; border-radius: 18px; cursor: pointer; white-space: nowrap;
+  font: inherit; font-size: .8125rem; font-weight: 700; color: #3A2710; background: linear-gradient(180deg, #F7EFDD, #EAD9B0); box-shadow: inset 0 0 0 1px var(--gold-lo); }
+.lt-chip svg { width: 15px; height: 15px; }
+.lt-chip.ok { font-weight: 400; color: #CDBE9F; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(205,190,159,.25); }
+.lt-chip:hover, .lt-chip:focus-visible { filter: brightness(1.08); }
+/* 簽到了、今天不是節日：簽到條收起來，小牌子「簽到」打勾就夠了（點它開簽到日曆） */
+.lobby-today:not([hidden]) ~ .lobby-sign.done:not(:has(.hol-chip)) { display: none; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .lobby-today { margin: 0 0 8px; padding: 3px 8px; }
+  .scr-lobby > .lobby-today { order: 2; } /* 手機橫拿：排在館內地圖上面（其他幾條在地圖下面） */
+}

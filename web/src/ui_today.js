@@ -38,23 +38,24 @@ const mailCount = () => {
 export function todayItems() {
   const out = [];
   if (!P) return out;
-  const add = (key, ic, title, sub, todo, label, go) => out.push({ key, ic, title, sub, todo: !!todo, label, go });
+  // chip：大廳那壹條上的短字
+  const add = (key, ic, title, sub, todo, label, go, chip) => out.push({ key, ic, title, sub, todo: !!todo, label, go, chip });
   const sg = signinToday();
-  if (sg) add("signin", "calendar", sg.done ? "今天簽到了" : "每日簽到", sg.text, !sg.done, sg.done ? "簽到日曆" : "蓋章簽到", () => (sg.done ? PANELS.calendar : PANELS.signin)());
+  if (sg) add("signin", "calendar", sg.done ? "今天簽到了" : "每日簽到", sg.text, !sg.done, sg.done ? "簽到日曆" : "蓋章簽到", () => (sg.done ? PANELS.calendar : PANELS.signin)(), "簽到");
   const st = storyToday();
   if (st) {
-    if (st.claim) add("claim", "gift", "每週劇情有獎勵可以領", `${st.claim} 個`, true, "去領", () => openStory());
-    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "前往", () => (t.go ? goStep(t.go) : openStory())));
+    if (st.claim) add("claim", "gift", "每週劇情有獎勵可以領", `${st.claim} 個`, true, "去領", () => openStory(), `領獎勵 ${st.claim}`);
+    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "前往", () => (t.go ? goStep(t.go) : openStory()), "每日"));
     st.daily.filter(t => !t.yuga || t.done).forEach(t => add("daily-" + t.id, "book", t.done ? (t.claimed ? "每日任務（領過了）" : "每日任務做完了") : "每日任務", `${t.text}（${t.n}／${t.tgt}）`,
-      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "前往", () => (!t.done && t.go ? goStep(t.go) : openStory())));
-    add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openStory());
+      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "前往", () => (!t.done && t.go ? goStep(t.go) : openStory()), "每日"));
+    add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openStory(), `每週 ${st.weekly[0]}／${st.weekly[1]}`);
   }
   const mails = mailCount();
-  if (mails) add("mail", "mail", "信箱有東西沒領", `${mails} 封`, true, "打開信箱", () => PANELS.mail());
+  if (mails) add("mail", "mail", "信箱有東西沒領", `${mails} 封`, true, "打開信箱", () => PANELS.mail(), `信箱 ${mails}`);
   const c = casNow();
   if (c && PANELS.casino) {
-    add("packs", "gift", "Hamachi 賭場的大禮包", c.packs ? `今天還能開 ${c.packs} 包` : "今天的開完了", c.packs > 0, "去開", () => PANELS.casino({ tab: "packs" }));
-    add("econ", "hammer", "拚經濟", c.econ ? `今天還能拚 ${c.econ} 次` : "今天的拚完了", c.econ > 0, "去拚", () => PANELS.casino({ tab: "econ" }));
+    add("packs", "gift", "Hamachi 賭場的大禮包", c.packs ? `今天還能開 ${c.packs} 包` : "今天的開完了", c.packs > 0, "去開", () => PANELS.casino({ tab: "packs" }), `大禮包 ${c.packs}`);
+    add("econ", "hammer", "拚經濟", c.econ ? `今天還能拚 ${c.econ} 次` : "今天的拚完了", c.econ > 0, "去拚", () => PANELS.casino({ tab: "econ" }), `拚經濟 ${c.econ}`);
   }
   return out;
 }
@@ -67,8 +68,32 @@ ADDONS.todayCount = () => {
     if (tries.day !== day) tries = { day, n: 0 };
     if (tries.n < 3 && !tries.busy) { tries.n++; tries.busy = true; readCasino().then(c => { tries.busy = false; if (c) updateBoardBadges(); }); }
   }
-  return todayItems().filter(x => x.todo).length;
+  const n = todayItems().filter(x => x.todo).length;
+  const old = document.querySelector(".lobby-today"); // 大廳那壹條跟著換（做完壹件、賭場的讀到了）
+  if (old) old.replaceWith(lobbyToday());
+  return n;
 };
+
+// 大廳最上面壹條（翊文 11-10：「“今天” 在大廳裡也看得到應該比較好」「想辦法介面簡潔但資訊能都有，能一覽無遺」）
+// 壹件事壹顆小牌子排成壹行：還沒做的亮著，做完的打勾變淡，按了直接過去。每日任務好幾條合成壹顆「每日 做完／全部」。
+export function lobbyToday() {
+  if (!P || isFree(P)) return h("span", { class: "lobby-today", hidden: true });
+  const all = todayItems(), todo = all.filter(x => x.todo), chips = [];
+  all.forEach(x => {
+    if (x.chip !== "每日") return chips.push({ ic: x.ic, text: x.chip, todo: x.todo, go: x.go, tip: x.title + (x.sub ? "：" + x.sub : "") });
+    let c = chips.find(k => k.daily);
+    if (!c) chips.push(c = { daily: true, ic: "book", n: 0, of: 0, todo: false, go: null, tip: "每日任務" });
+    c.of++; if (x.todo) { c.todo = true; if (!c.go) c.go = x.go; } else c.n++;
+    if (!x.todo && !c.go) c.go = x.go;
+    c.text = `每日 ${c.n}／${c.of}`;
+  });
+  chips.sort((a, b) => (b.todo ? 1 : 0) - (a.todo ? 1 : 0));
+  return h("section", { class: "lobby-today" + (todo.length ? "" : " done"), "aria-label": "今天要做的事" },
+    h("button", { type: "button", class: "lt-head", title: "打開今天的清單", onClick: () => openToday() }, icon("calendar"), h("b", null, "今天"),
+      h("span", null, todo.length ? `還有 ${todo.length} 件` : "都做完了")),
+    h("div", { class: "lt-chips" }, chips.map(c => h("button", { type: "button", class: "lt-chip" + (c.todo ? "" : " ok"), title: c.tip, onClick: () => c.go() }, icon(c.todo ? c.ic : "check"), h("span", null, c.text)))));
+}
+ADDONS.lobbyToday = lobbyToday;
 
 function rowOf(x, m) {
   return h("li", { class: "td-row" + (x.todo ? "" : " done") },
