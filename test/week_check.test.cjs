@@ -37,7 +37,7 @@ const has = (r, re) => r.errors.some(e => re.test(e));
 const expectErr = (mutate, re) => { const c = regular(); mutate(c); const r = run(c); assert.ok(has(r, re), `應該擋下（${re}），結果：\n${r.errors.slice(0, 5).join("\n") || "沒擋"}`); };
 
 T("真的內容（content/）：都過", () => {
-  const r = run({ files: base.files, bad: base.bad, ledger: ledger0, settings: settings0, today: "2026-11-09" });
+  const r = run({ files: base.files, bad: base.bad, ledger: ledger0, settings: settings0, today: require("./load_shared.cjs").load().taipeiDay(Date.now()) });
   assert.deepStrictEqual(r.errors, []);
 });
 T("複製出來的正式週也過（底是好的，下面才看得出擋了什麼）", () => {
