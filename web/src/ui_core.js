@@ -949,7 +949,7 @@ export async function lossFlow(loss, src, o = {}, beforeTemp) {
   updateStatus(); applyBodyState(); persist();
   if (ev.zero) { snd("lightsOut"); note(SAN_ASIDES.bottomedOut, "bad"); await checkEnding(); return ev; }
   if (beforeTemp) { const p = beforeTemp(); if (p) await p; }
-  if (ev.temp) {
+  if (ev.temp && !o.noUk) { // noUk：重讀禁書剛看懂（決定 0063），這次掉再多也不再擲看懂檢定、不發作
     const u = understandCheck(P);
     await FX.rollOverlay({ title: "看懂檢定", sub: `壹次掉了 ${loss} 點，掉太多了。再擲壹次，看你「看懂了沒」：擲出 ≤ ${u.target} 就是看懂了，會暫時發瘋；擲得比它大就沒事。（50＋佩佩神話，懂得越多越容易看懂）`, spec: "d100", result: u.roll,
       outcome: { text: u.success ? "你看懂了。" : "你沒看懂。暫時沒事。", tone: u.success ? "bad" : "good" } });

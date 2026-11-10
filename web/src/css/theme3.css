@@ -672,7 +672,13 @@ body.reduce-motion .spine.sealed.stir { animation: none; }
 .uk-list li { line-height: 1.7; }
 .uk-list .uk-from { display: block; font-size: .8125rem; color: #6B3FA0; font-weight: 700; letter-spacing: .08em; }
 .uk-list .uk-line { font-family: var(--serif); }
-.uk-list li.unknown { color: var(--parch-sub); opacity: .6; }
+.uk-list li.unknown { color: var(--parch-sub); }
+.uk-list li.unknown .uk-line { opacity: .6; }
+.uk-list .uk-hint { display: block; font-size: .8125rem; line-height: 1.5; }
+.uk-list .uk-again, .spine .spine-again { color: #6B3FA0; font-weight: 700; }
+.uk-list .uk-again { margin-left: 8px; padding: 1px 8px; border-radius: 999px; font-size: .75rem; background: rgba(107,63,160,.12); }
+.spine.dark .spine-again { color: #E3C7FF; }
+.uk-book .uk-how { margin: 0 0 12px; font-size: .8125rem; line-height: 1.6; color: var(--parch-sub); }
 .uk-weeks { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--parch-sub); }
 .uk-sub { margin: 0 0 8px; font-size: 1rem; color: #6B3FA0; letter-spacing: .08em; }
 .uk-near { margin: 10px 0 0; line-height: 1.7; color: var(--parch-sub); font-family: var(--serif); }
@@ -1076,3 +1082,12 @@ button.st-item { cursor: pointer; }
 .mk-good { color: var(--mk-good, #A6E0AE); }
 .mk-bad { color: var(--mk-bad, #F3B3AA); }
 .st-tip, .nb-sheet, .placard { --mk-em: #7A4E12; --mk-good: #2F6E38; --mk-bad: #A8382D; }
+
+/* 禁書架：壹套書（原書＋續集）框在壹起（翊文 11-10） */
+/* 架子不夠寬就換到下壹排，壹套書不拆開 */
+.shelf.forbidden { flex-wrap: wrap; gap: 16px 14px; }
+.series { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 4px; position: relative; padding-top: 18px; }
+.series-cap { position: absolute; top: 0; left: 0; right: 0; padding-bottom: 2px; text-align: center; font-size: .6875rem; letter-spacing: 0; color: #C8B6F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(126,104,181,.7); box-shadow: inset 1px 0 0 rgba(126,104,181,.7), inset -1px 0 0 rgba(126,104,181,.7); }
+.series .spine { width: 36px; }
+.series .spine.sequel { margin-left: 0; }

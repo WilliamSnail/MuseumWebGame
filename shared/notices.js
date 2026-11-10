@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "reread", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "讀過的禁書可以再翻開；《看懂的事》多了提示", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "**讀過、還沒看懂的禁書，隔天可以再翻開壹次**：這次只擲看懂檢定。看懂了，要再擲壹次理智；沒看懂就沒事，明天再試。",
+        "可以再試的書，書背上會寫「再看壹次」。",
+        "**《看懂的事》會列出每壹件**：還沒看懂的還是「？？？」，下面多壹行提示，告訴你去哪裡看。",
+        "**禁書架整理過**：壹套書和它的續集框在壹起。",
+      ]],
+    ],
+    cta: { label: "去起源室", room: "origin", params: { tab: "forbidden" } },
+  },
+  {
     id: "jobchips", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "委託的賞金調了：靈感少壹點，多壹點籌碼", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
