@@ -1,0 +1,254 @@
+{
+  "day": 3,
+  "date": "2026-11-11",
+  "holiday": null,
+  "board": "雙 11：招領箱貼滿了標價牌，壹個價錢也不可信；箱子後面多了壹扇小門；書架多 2 本書。",
+  "casino": {
+    "note": "賭場的招領櫃檯也貼上標價牌，荷官說：這些都是非賣品，標價是別人貼的。",
+    "item": {
+      "id": "tag",
+      "name": "沒人買的標價牌",
+      "desc": "壹張貼在招領單上的標價牌，價錢欄空白，寫著「不賣」。荷官對了三遍，不是賭場的字。",
+      "when": {
+        "type": "meals",
+        "n": 2
+      }
+    }
+  },
+  "books": [
+    {
+      "id": "3a",
+      "line": "w46-lost",
+      "clue": "c-price-tag-hand",
+      "title": "標價牌",
+      "spine": "標價牌",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「雙 11。」\n「昨晚那行小字（請說另壹隻放哪），早上不見了。」",
+        "招領單上多了壹張標價牌：\n「手套壹隻，1 元。」\n字很小、很整齊，邊角沒有歪。",
+        "他往箱子裡看。\n圍巾、毛帽，每壹件都貼了價，\n每壹個價都不壹樣，沒有壹個說得通。",
+        "只有壹張價錢欄是空白的：\n「不賣。已有人排隊。」\n他數了壹遍隊伍，沒有人。",
+        "那件最厚的外套沒有標價牌，\n口袋鼓鼓的，他沒有碰。\n「明天再說。」他寫。"
+      ]
+    },
+    {
+      "id": "3b",
+      "line": "w46-door",
+      "title": "鈕扣門把",
+      "spine": "小門",
+      "unlock": {
+        "type": "find",
+        "room": "door"
+      },
+      "pages": [
+        "箱子後面的牆縫裂成了壹扇小門。\n門把是壹顆鈕扣，縫得很緊。",
+        "門外冷，門裡暖。\n裡面有壹張小櫃台，壹盞檯燈亮著，\n沒有人。",
+        "櫃台上攤著登記簿，分三欄：\n「拾得」「待領」「已領」。\n拾得欄寫滿了，待領欄寫了壹半。",
+        "已領那壹欄，壹個字都沒有。\n拾得欄的字，跟標價牌的字壹樣小，\n壹樣整齊。",
+        "他照著抄了壹行，把檯燈關了。\n再看時，檯燈又亮了。\n「我沒有再碰那個開關。」"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d3a",
+      "kind": "read",
+      "book": "3a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d3b",
+      "kind": "spot",
+      "room": "door",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d3c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w1",
+      "words": "雙 11 的標價牌貼滿了箱子，沒有人知道是誰貼的。"
+    },
+    {
+      "task": "w2",
+      "words": "牆縫不冷了，有人說裡面很暖。"
+    }
+  ],
+  "show": {
+    "title": "不賣的標價牌",
+    "intro": "雙 11 到了，招領箱旁邊掛起壹排畫。畫裡的東西都貼了價，只有幾樣不賣。",
+    "works": [
+      {
+        "id": "s3a",
+        "frame": "wood",
+        "fx": [],
+        "title": "壹排標價牌",
+        "lines": [
+          "四張標價牌掛在繩子上，三張寫著價，壹張紅邊的空白。",
+          "每張的字都很小、很整齊，繩結打得壹模壹樣。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<radialGradient id='lamp' cx='50%' cy='40%' r='65%'><stop offset='0' stop-color='#d9c48a'/><stop offset='.55' stop-color='#5a4a30'/><stop offset='1' stop-color='#15110b'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='5' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#lamp)'/>",
+          "<path d='M30 70 L210 70' stroke='#2a1a0e' stroke-width='3'/>",
+          "<g><path d='M40 70 L44 110' stroke='#c9a15a' stroke-width='2'/><rect x='24' y='108' width='40' height='56' fill='#efe6cf' stroke='#3a2a1a' stroke-width='3' transform='rotate(-3 44 136)'/><path d='M32 124 H56 M32 134 H52 M32 144 H56' stroke='#4a3a2a' stroke-width='2'/></g>",
+          "<g><path d='M92 70 L96 120' stroke='#c9a15a' stroke-width='2'/><rect x='76' y='118' width='40' height='56' fill='#efe6cf' stroke='#3a2a1a' stroke-width='3' transform='rotate(2 96 146)'/><path d='M84 134 H108 M84 144 H104 M84 154 H108' stroke='#4a3a2a' stroke-width='2'/></g>",
+          "<g><path d='M144 70 L148 104' stroke='#c9a15a' stroke-width='2'/><rect x='128' y='102' width='40' height='56' fill='#efe6cf' stroke='#3a2a1a' stroke-width='3' transform='rotate(-2 148 130)'/><path d='M136 118 H160 M136 128 H156 M136 138 H160' stroke='#4a3a2a' stroke-width='2'/></g>",
+          "<g><path d='M196 70 L196 140' stroke='#c9a15a' stroke-width='2'/><rect x='176' y='138' width='40' height='56' fill='#efe6cf' stroke='#8a2f2a' stroke-width='3'/><path d='M184 166 H208' stroke='#8a2f2a' stroke-width='3'/></g>",
+          "<path d='M30 250 L210 250' stroke='#2a1a0e' stroke-width='5'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s3b",
+        "clue": "c-door-light",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "門縫裡的燈",
+        "lines": [
+          "牆上的小門只開了壹條縫，縫裡透出暖暖的光。",
+          "門把是壹顆鈕扣。門前的地上很乾淨，壹個腳印也沒有。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='wall' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1c2530'/><stop offset='1' stop-color='#0c1016'/></linearGradient>",
+          "<radialGradient id='glow' cx='50%' cy='62%' r='50%'><stop offset='0' stop-color='#f0c878' stop-opacity='.95'/><stop offset='1' stop-color='#f0c878' stop-opacity='0'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.45' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.88'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#wall)'/>",
+          "<rect x='78' y='120' width='84' height='130' fill='#3a2a1c' stroke='#120c08' stroke-width='4'/>",
+          "<rect x='92' y='240' width='56' height='10' fill='#f0c878' opacity='.8'/>",
+          "<rect x='60' y='100' width='120' height='170' fill='url(#glow)'/>",
+          "<circle cx='146' cy='190' r='6' fill='#c9a15a' stroke='#3a2a1a' stroke-width='2'/>",
+          "<path d='M143 190 H149 M146 187 V193' stroke='#3a2a1a' stroke-width='1'/>",
+          "<rect x='40' y='252' width='160' height='8' fill='#0a0d12'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s3c",
+        "art": "frog",
+        "pick": {
+          "顏色": "黃",
+          "心情": "傷心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "sepia"
+        ],
+        "frame": "plain",
+        "title": "看標價牌的佩佩",
+        "lines": [
+          "牠站在箱子前，盯著壹張寫著「1 元」的牌子。",
+          "牠摸摸口袋，又摸摸口袋。"
+        ]
+      },
+      {
+        "id": "s3d",
+        "art": "portrait",
+        "variant": 2,
+        "fx": [
+          "dust"
+        ],
+        "frame": "gold",
+        "title": "不討價的肖像",
+        "lines": [
+          "畫中的人手裡握著壹張收據，什麼都沒買。",
+          "收據背面寫著「待領」，字很小、很整齊。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "door",
+      "clue": "c-claimed-blank",
+      "floor": 1,
+      "line": "w46-door",
+      "title": "招領箱後面的小門",
+      "hint": "去 B1，看看招領箱的後面",
+      "intro": "招領箱後面的牆縫裂成了壹扇小門，門把是壹顆鈕扣。門縫裡透出暖暖的光。",
+      "lines": [
+        "門外冷，門裡暖。小櫃台上亮著壹盞檯燈。",
+        "登記簿攤開著：拾得、待領、已領。已領那壹欄是空的。"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "翻看登記簿",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "拾得欄寫滿了，待領欄寫了壹半。已領那壹欄，從頭到尾壹個字都沒有。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "字太小，你看著看著就數岔了。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "伸手碰那顆鈕扣",
+          "check": {
+            "type": "power",
+            "target": 13
+          },
+          "success": {
+            "text": "鈕扣縫得很緊。門後面有人輕輕翻了壹頁紙。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "鈕扣燙了壹下，你把手縮了回來。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "在登記簿旁放壹包暖暖的東西",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你把東西放在櫃台上。檯燈亮了壹下，像是在說謝謝。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
