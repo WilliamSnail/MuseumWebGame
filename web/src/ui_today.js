@@ -23,6 +23,7 @@ async function readCasino() {
   try {
     const r = await NET.call("casino", { act: "peek" });
     if (r && typeof r.packs === "number") CAS = { packs: r.packs, econ: typeof r.econ === "number" ? r.econ : 0, day: realTodayStr() };
+    if (ADDONS.workPeek) ADDONS.workPeek(r); // 欠款要送人下去（決定 0064，ui_work.js）
   } catch (e) { /* 讀不到就先不列賭場的，下次打開再讀 */ }
   return CAS;
 }

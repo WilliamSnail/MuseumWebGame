@@ -266,6 +266,13 @@ export const NUM = {
       discord: 100000,      // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
+    // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino_wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
+    work: {
+      payPct: 34,           // 每天換日還「開工那天的欠款」的 34%（三天還完；翊文 11-10：「地下室工作每天可以欠下錢的34%」）
+      sanDay: 5,            // 工作的參觀者每天理智 −5
+      sanMin: 1,            // 工作中理智最低停在這裡，不會在地下發瘋
+      inspPerSan: 1,        // 花幾靈感補 1 點理智（靈感是博物館的，三位共用）
+    },
     dailyPacks: 2,          // 每天免費的大禮包幾包（舊的：每人 2 包；不累積，換日重算）
     maxPacksAtOnce: 11,     // 一次最多連開幾包（11 抽券）
     packWinOdds: 20,        // 贏一把有 20% 機率多一張大禮包券（舊的 rottery(20)；要先開過今天的大禮包）
