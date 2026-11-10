@@ -283,6 +283,9 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (t.done !== undefined) yuga(t.done, LIMITS.yugaDone, w + ".done");
     });
     if (daily.filter(t => isObj(t) && t.giver !== undefined).length > 1) E(where, "壹天最多壹個 Yuga Bot 交代的任務");
+    // 每日任務至少壹條直接碰這週的故事（排程說明 一之七；11-10 以前寫的不追）
+    if (o.date && o.date > "2026-11-10" && !daily.some(t => isObj(t) && (t.kind === "read" || t.kind === "spot" || t.giver !== undefined)))
+      W(where + ".daily", "3 個每日任務都沒有直接碰這週的故事：至少壹條用 read（今天的書）、spot（這週的房間），或讓 Yuga Bot 交代（排程說明 一之七）");
     books.forEach((b, i) => bookOk(`${where}.books[${i}]`, b, Object.assign({ spare: !!o.spare }, ctx), n));
     if (!o.spare && !books.some(b => b && ctx.weekLine.has(b.line))) E(where, "每天至少一本書接這週的線（line 是這週 kind week 或 floor 的線）");
     if (d.casino !== undefined) casinoDayOk(where + ".casino", d.casino, ctx, o);
@@ -522,6 +525,12 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (d.where >= "2026-W47" && (!rec || !asList(rec.world).length)) W(d.where, "帳本的 weeks 裡沒有 world：這週世界觀多露出了什麼（決定 0048）");
       if (d.where >= "2026-W47" && (!rec || !asList(rec.sideRefs).length)) W(d.where, "帳本的 weeks 裡沒有 sideRefs：哪些支線提到了主線新露出來的東西（決定 0048）");
       if (d.wk && d.wk.casino !== undefined && (!rec || !asList(rec.casino).length)) W(d.where, "帳本的 weeks 裡沒有 casino：這週賭場的收藏接劇情的哪一條線、碰到主軸的哪一點（決定 0042）");
+      // 故事要串成壹條線（排程說明 一之七）：本週疑點、能追的梗、每天留的鉤子
+      if (d.where >= "2026-W46") {
+        if (!rec || typeof rec.question !== "string" || !rec.question.trim()) W(d.where, "帳本的 weeks 裡沒有 question：這週在追的那壹個具體問句（排程說明 一之七）");
+        if (!rec || !asList(rec.motifs).length) W(d.where, "帳本的 weeks 裡沒有 motifs：這週反覆出現、能追的梗（排程說明 一之七）");
+        if (!rec || !asList(rec.hooks).length) W(d.where, "帳本的 weeks 裡沒有 hooks：每天的書結尾留了什麼、哪天接（排程說明 一之七）");
+      }
     });
     asList(L.foreshadow).forEach((f, i) => {
       if (!f || !f.id || !f.what || !f.planted || typeof f.closed !== "boolean") { E(`${lw}.foreshadow[${i}]`, "要有 id、what、planted、due、closed"); return; }
