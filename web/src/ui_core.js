@@ -13,7 +13,7 @@ import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, appl
 import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
-import { boardBadge, noticeState, visibleNotices } from "../../shared/notices.js";
+import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../shared/notices.js";
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { holidayClass, holidayOf } from "../../shared/holidays.js";
 import { titleName, titleText } from "../../shared/titles.js";
@@ -469,7 +469,7 @@ export function updateDayClock() {
 export function updateBoardBadges() {
   const tab = $(".nav-board"), mb = $(".menu-btn");
   if (!tab || !SAVE) return;
-  const today = realTodayStr(), list = visibleNotices(P, today), badge = boardBadge(noticeState(SAVE), list);
+  const today = realTodayStr(), list = visibleNotices(P, today), badge = boardBadge(noticeState(SAVE), boardNotices(P, today)); // 數字照公佈欄上看到的則數（同壹天的更新算壹則）
   const mails = P ? (syncMail(P, list, today), unclaimedCount(P, today) + (ADDONS.mailCount ? ADDONS.mailCount() : 0)) : 0; // mailCount：伺服器的信（館友送的，ui_visit.js）
   const boardTxt = badge.count ? `${badge.count} 則沒讀` : "";
   tab.classList.toggle("has-seal", badge.seal);

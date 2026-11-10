@@ -22,18 +22,19 @@ export const UNDERSTAND_ID_RE = /^u-[a-z0-9]+(-[a-z0-9]+)*$/;
 let clCache = { lib: null, today: null, cat: null };
 export function clueCatalog(lib, today) {
   if (clCache.lib === lib && clCache.today === today && clCache.cat) return clCache.cat;
-  const cat = { sources: [], defs: [] };
+  const cat = { sources: [], defs: [], weeks: {} };
   const weeks = lib && clObj(lib.weeks) ? lib.weeks : {};
   if (typeof today === "string") Object.keys(weeks).sort().forEach(label => {
     const monday = isoMonday(label), pack = weeks[label];
     if (!monday || !pack || !clObj(pack.days) || label < NUM.story.startWeek) return;
+    if (monday <= today) cat.weeks[label] = { title: clStr(clObj(pack.week) && pack.week.title), question: clStr(clObj(pack.week) && pack.week.question) };
     for (let n = 1; n <= 7; n++) {
       const d = pack.days[n], date = addDays(monday, n - 1);
       if (!clObj(d) || date > today) continue;
       const p = `${label}/`, at = { week: label, day: n, date };
-      clList(d.books).forEach(b => { if (clObj(b) && clStr(b.clue) && clStr(b.id)) cat.sources.push(Object.assign({ clue: b.clue, kind: "book", sid: p + b.id }, at)); });
-      clList(d.adds).forEach(r => { if (clObj(r) && clStr(r.clue) && clStr(r.id)) cat.sources.push(Object.assign({ clue: r.clue, kind: "room", sid: "s:" + p + r.id }, at)); });
-      clList(d.show && d.show.works).forEach(w => { if (clObj(w) && clStr(w.clue) && clStr(w.id)) cat.sources.push(Object.assign({ clue: w.clue, kind: "work", sid: p + w.id }, at)); });
+      clList(d.books).forEach(b => { if (clObj(b) && clStr(b.clue) && clStr(b.id)) cat.sources.push(Object.assign({ clue: b.clue, kind: "book", sid: p + b.id, title: clStr(b.title) }, at)); });
+      clList(d.adds).forEach(r => { if (clObj(r) && clStr(r.clue) && clStr(r.id)) cat.sources.push(Object.assign({ clue: r.clue, kind: "room", sid: "s:" + p + r.id, title: clStr(r.title) }, at)); });
+      clList(d.show && d.show.works).forEach(w => { if (clObj(w) && clStr(w.clue) && clStr(w.id)) cat.sources.push(Object.assign({ clue: w.clue, kind: "work", sid: p + w.id, title: clStr(w.title) }, at)); });
       clList(d.understand).forEach(u => {
         if (!clObj(u) || !clStr(u.id) || !clStr(u.text) || !clList(u.need).length) return;
         cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint) }, at));
@@ -72,6 +73,53 @@ export function gatherClues(P, lib, today) {
     if (!P.clues[s.clue] && clGot(S, s)) { P.clues[s.clue] = today; got.push(s.clue); }
   });
   return got;
+}
+
+// 撿到線索時那句很淡的話（翊文 11-10：「撿到線索時給一句很淡的話……不說是哪個謎」）。照線索 id 固定挑壹句，同壹條每次都壹樣
+export const CLUE_WHISPERS = {
+  book: ["這壹頁的字，你好像在哪裡看過。", "書合上了，有壹行還留在腦子裡。", "讀完了。你又回頭看了壹次那個數字。"],
+  room: ["這個房間裡，有壹樣東西擺得太整齊了。", "走出來以後，你還記得牆角的那壹樣。"],
+  work: ["這幅畫的角落，你多看了壹眼。", "畫裡有個地方，跟你記得的不太壹樣。"],
+};
+export function clueWhisper(kind, id) {
+  const list = CLUE_WHISPERS[kind] || CLUE_WHISPERS.book;
+  let n = 0;
+  for (const ch of String(id)) n = (n * 31 + ch.codePointAt(0)) % 9973;
+  return list[n % list.length];
+}
+// 記線索，回傳這次新撿到的：[{ clue, kind, title, text }]（text ＝那句很淡的話）。網頁在 clueSync 前面叫，有才提示
+export function clueNew(P, lib, today) {
+  if (!P || typeof P !== "object" || isFree(P) || typeof today !== "string") return [];
+  try {
+    const got = gatherClues(P, lib, today);
+    if (!got.length) return [];
+    const S = storyState(P), src = clueCatalog(lib, today).sources;
+    return got.map(id => { const s = src.find(x => x.clue === id && clGot(S, x)) || { kind: "book", title: "" }; return { clue: id, kind: s.kind, title: s.title || "", text: clueWhisper(s.kind, id) }; });
+  } catch (e) { return []; }
+}
+// 疑點簿要畫的（翊文 11-10：「只列開著的疑問和你已經撿到的線索出處……不解釋」）
+//   weeks：[{ week, title, question, now（是不是這週）, got: [{ sid, kind, title, day, date }], left（這週還拿得到、還沒撿的有幾個地方） }]，新的週在前
+//   這週有疑點就列（就算還沒撿到）；以前的週要撿到過才列。near 跟《看懂的事》同壹份（還差幾條、提示）
+export function casebookView(P, lib, today) {
+  const out = { weeks: [], near: [] };
+  if (!P || typeof P !== "object" || isFree(P) || typeof today !== "string") return out;
+  try {
+    const cat = clueCatalog(lib, today), S = storyState(P), cur = isoWeek(today), by = {};
+    const weekOf = label => by[label] || (by[label] = Object.assign({ week: label, title: "", question: "" }, cat.weeks[label], { now: label === cur, got: [], left: 0 }));
+    if (cat.weeks[cur] && cat.weeks[cur].question) weekOf(cur);
+    const leftSeen = new Set(); // 這週還拿得到、還沒撿的（這週沒列出來就不算）
+    cat.sources.forEach(s => {
+      if (clHeld(P, s.clue)) {
+        if (!clGot(S, s)) return; // 同壹條線索有好幾個出處：只列真的讀過、看過的
+        const w = weekOf(s.week);
+        if (!w.got.some(g => g.sid === s.sid)) w.got.push({ sid: s.sid, kind: s.kind, title: s.title, day: s.day, date: P.clues[s.clue] });
+      } else if (s.week === cur && clReachable(s, today)) leftSeen.add(s.clue);
+    });
+    if (by[cur]) by[cur].left = leftSeen.size;
+    out.weeks = Object.values(by).sort((a, b) => (a.week < b.week ? 1 : -1));
+    out.near = understandView(P, lib, today).near;
+  } catch (e) { /* 壞資料：畫空的 */ }
+  return out;
 }
 
 // 每次 updateStatus 叫（網頁的 storyTick）：記線索、看有沒有集齊。回傳 understood 事件（沒有就是空陣列）

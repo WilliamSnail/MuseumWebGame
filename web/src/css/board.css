@@ -148,6 +148,9 @@ body.reduce-motion .nb-layer, body.reduce-motion .nb-frame, body.reduce-motion .
 .nb-sec { margin: 14px 0 0; }
 .nb-sec h4 { margin: 0 0 6px; font-family: var(--serif); font-size: 1rem; letter-spacing: .1em; color: #6E5020; }
 .nb-sec p { margin: 0 0 6px; line-height: 1.8; }
+.nb-part { padding-top: 12px; border-top: 1px dashed rgba(110, 80, 32, .35); }
+.nb-part h4 { letter-spacing: .04em; }
+.nb-part-go { margin: 2px 0 4px; }
 .nb-cta { display: flex; justify-content: flex-end; margin-top: 20px; }
 .nb-sheet .btn:not(.primary), .nb-env .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.35); border-color: var(--gold-lo); }
 .nb-back { margin: 0 0 16px; }

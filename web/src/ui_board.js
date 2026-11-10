@@ -9,7 +9,7 @@
 //  ui_core 不能 import 這個檔（它在後面），所以這裡把自己登記進 ui_core 的 PANELS。
 // ================================================================
 import { realTodayStr } from "../../shared/logic.js";
-import { NOTICE_CATS, autoOpenPlan, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
+import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
 import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
@@ -62,12 +62,21 @@ export function overlay(kind, title, label, ic, onClose) {
 // 一則公告：釘在板子上的一張紙
 function sheet(n, today, close) {
   const st = noticeStatus(n, today);
-  const goCta = () => {
+  const goTo = cta => () => {
     close();
-    if (n.cta.panel && PANELS[n.cta.panel]) PANELS[n.cta.panel](n.cta.params);
-    else if (n.cta.params) go(n.cta.room, n.cta.params);
-    else navTo(n.cta.room);
+    if (cta.panel && PANELS[cta.panel]) PANELS[cta.panel](cta.params);
+    else if (cta.params) go(cta.room, cta.params);
+    else navTo(cta.room);
   };
+  const goCta = n.cta ? goTo(n.cta) : null;
+  // 同壹天的更新合成的壹則：壹項壹段（標題、內容、各自的「前往」）
+  if (n.parts) return h("article", { class: "nb-sheet" }, h("i", { class: "nb-pin l", "aria-hidden": "true" }), h("i", { class: "nb-pin r", "aria-hidden": "true" }),
+    h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" }, t))),
+    h("h3", null, n.title),
+    h("p", { class: "nb-date" }, `${md(n.publish)} 發布`),
+    n.parts.map(x => h("section", { class: "nb-sec nb-part" }, h("h4", null, x.title),
+      (x.sections || []).map(([, lines]) => lines.map(l => h("p", null, markText(l)))),
+      x.cta ? h("div", { class: "nb-part-go" }, btn([x.cta.label, " ", h("span", { "aria-hidden": "true" }, "→")], goTo(x.cta), "small")) : null)));
   return h("article", { class: "nb-sheet" }, h("i", { class: "nb-pin l", "aria-hidden": "true" }), h("i", { class: "nb-pin r", "aria-hidden": "true" }),
     h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" + (t === "重要" ? " hot" : "") }, t)), st ? h("span", { class: "nb-tag st" }, st) : null),
     h("h3", null, n.title),
@@ -80,8 +89,8 @@ function sheet(n, today, close) {
 // o.focus：先打開哪一則；o.auto：進館時自己打開的（下面多「今天不再自動打開」）
 export function openBoard(o = {}) {
   if (!SAVE) return;
-  const today = realTodayStr(), state = noticeState(SAVE), list = visibleNotices(P, today);
-  const focusN = o.focus ? list.find(n => n.id === o.focus) : null;
+  const today = realTodayStr(), state = noticeState(SAVE), list = boardNotices(P, today);
+  const focusN = o.focus ? list.find(n => n.id === o.focus || (n.parts && n.parts.some(x => x.id === o.focus))) : null;
   let tab = focusN ? focusN.cat : NOTICE_CATS[0];
   let cur = focusN ? focusN.id : null;
   const m = overlay("nb-board", "館內公佈欄");
@@ -199,7 +208,7 @@ export function autoBoard(tries = 0) {
   if (UI.screen !== "lobby") { updateBoardBadges(); return; }
   const today = realTodayStr(), list = visibleNotices(P, today), state = noticeState(SAVE);
   syncMail(P, list, today); persist(); updateBoardBadges();
-  const plan = autoOpenPlan(state, list, today);
+  const plan = autoOpenPlan(state, boardNotices(P, today), today);
   if (plan.urgent || plan.open) UI.autoPopups = (UI.autoPopups || 0) + 1; // 一次登入最多自動跳 2 個視窗
   if (plan.urgent) openUrgent(plan.urgent);
   else if (plan.open) openBoard({ focus: plan.focus, auto: true });

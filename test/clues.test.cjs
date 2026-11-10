@@ -121,6 +121,36 @@ T("存檔整理：舊存檔補 clues；週看懂不算進固定章節的 underst
   need.forEach(c => assert.ok(G.chapterOpen(P, c.id)));
 });
 
+const J = x => JSON.parse(JSON.stringify(x));
+T("撿到線索的那句話：clueNew 只回新撿到的，同壹條線索每次同壹句，不提是哪件事", G => {
+  const L = lib(), P = player(G);
+  assert.deepStrictEqual(J(G.clueNew(P, L, TODAY)), []);
+  read(G, P, "1a"); viewed(G, P);
+  const got = G.clueNew(P, L, TODAY);
+  assert.deepStrictEqual(J(got).map(x => [x.clue, x.kind, x.title]), [["c-b1", "book", "甲"], ["c-w1", "work", ""]]);
+  got.forEach(x => { assert.ok(G.CLUE_WHISPERS[x.kind].includes(x.text)); assert.strictEqual(x.text, G.clueWhisper(x.kind, x.clue)); assert.ok(!/招領|他沒有/.test(x.text)); });
+  assert.deepStrictEqual(J(G.clueNew(P, L, TODAY)), [], "第二次就沒有了");
+  assert.deepStrictEqual(J(G.clueNew(G.newProfile("free"), L, TODAY)), [], "自由模式沒有");
+});
+T("疑點簿：這週有疑點就列；只列撿到的出處和還差幾個地方，不給看懂的文字", G => {
+  const L = lib(), P = player(G);
+  L.weeks["2026-W47"].week = { title: "失物招領", question: "箱子是誰的？" };
+  let v = G.casebookView(P, L, TODAY);
+  assert.strictEqual(v.weeks.length, 1);
+  assert.deepStrictEqual([v.weeks[0].title, v.weeks[0].question, v.weeks[0].now, v.weeks[0].got.length], ["失物招領", "箱子是誰的？", true, 0]);
+  assert.strictEqual(v.weeks[0].left, 3, "今天是第 2 天：兩本書、壹個房間還拿得到；第 1 天的畫過了");
+  read(G, P, "1a"); G.clueNew(P, L, TODAY);
+  v = G.casebookView(P, L, TODAY);
+  assert.deepStrictEqual(J(v).weeks[0].got.map(g => [g.kind, g.title, g.day]), [["book", "甲", 1]]);
+  assert.strictEqual(v.weeks[0].left, 2);
+  assert.strictEqual(v.near.length, 1);
+  assert.ok(!JSON.stringify(v).includes("他沒有離開"), "答案不在疑點簿裡");
+  // 過了那壹週：撿到過的還在，沒疑點、沒撿到的週不列
+  const later = G.casebookView(P, L, "2026-11-24");
+  assert.deepStrictEqual(J(later).weeks.map(w => [w.week, w.now, w.left]), [["2026-W47", false, 0]]);
+  assert.deepStrictEqual(J(G.casebookView(player(G), lib(), TODAY).weeks), [], "沒寫疑點、也沒撿到：空的");
+  assert.deepStrictEqual(J(G.casebookView(null, L, TODAY)), { weeks: [], near: [] });
+});
 T("W46 第 1 天（真的內容）：招領單讀完拿到 c-small-hand-note；固定的《看懂的事》照舊", G => {
   const files = Object.fromEntries(Object.entries(readWeeks().files).filter(([k]) => k.startsWith("2026-W46/")));
   const L = G.storyLibrary(files);

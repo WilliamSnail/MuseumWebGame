@@ -47,6 +47,33 @@ T("登入時：緊急的直接打開；勾了今天不再打開就不打開", G 
   list.push({ id: "u", v: 1, importance: "urgent" });
   assert.strictEqual(G.autoOpenPlan(st, list, TODAY).urgent.id, "u", "緊急的就算勾了也打開");
 });
+T("公告排序：置頂之後，新的在前；同壹天重要的在前（不會被前幾天的「重要」壓住）", G => {
+  const list = G.visibleNotices(fresh(G), "2026-11-10").filter(n => !n.pinned && n.publish);
+  const R = { urgent: 3, important: 2, normal: 1, low: 0 };
+  for (let i = 1; i < list.length; i++) {
+    const a = list[i - 1], b = list[i];
+    assert.ok(a.publish > b.publish || (a.publish === b.publish && R[a.importance] >= R[b.importance]), `${a.id} 應該排在 ${b.id} 前面`);
+  }
+});
+T("同壹天的小更新合成壹則：重要的、置頂的不合；已讀照原本各則記，多壹項就再變沒讀", G => {
+  const P = fresh(G), raw = G.visibleNotices(P, "2026-11-10"), list = G.boardNotices(P, "2026-11-10");
+  const day = list.find(n => n.id === "day-2026-11-10");
+  assert.ok(day && day.digest && day.parts.length >= 2);
+  assert.ok(day.title.includes(`${day.parts.length} 項`));
+  assert.ok(day.parts.every(x => x.publish === "2026-11-10" && x.importance !== "important" && !x.pinned && !x.gift));
+  assert.ok(list.some(n => n.id === "discord-yuga") && list.some(n => n.id === "open4"), "重要、置頂的還是各自壹則");
+  assert.ok(!list.some(n => day.parts.includes(n)), "合進去的不再單獨出現");
+  assert.strictEqual(list.reduce((s, n) => s + (n.parts ? n.parts.length : 1), 0), raw.length, "壹則都沒少");
+  const state = G.noticeState({});
+  assert.ok(G.isUnread(state, day));
+  day.parts.slice(1).forEach(x => G.markRead(state, x));
+  assert.ok(G.isUnread(state, day), "還有壹項沒讀");
+  G.markRead(state, day);
+  assert.ok(!G.isUnread(state, day) && day.parts.every(x => !G.isUnread(state, x)));
+  // 只有壹則的那天不合
+  const one = G.digestNotices([day.parts[0]]);
+  assert.strictEqual(one.length, 1); assert.ok(!one[0].digest);
+});
 T("信箱：公告附的獎勵只寄壹次", G => {
   const P = fresh(G);
   const list = G.visibleNotices(P, TODAY);
