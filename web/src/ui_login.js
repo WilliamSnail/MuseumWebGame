@@ -277,10 +277,10 @@ function drawLobbyFriends(box) {
     btn("全部館友", () => openFriends(), "small lf-all"));
 }
 
-// ---------- 我的帳號（選單 → 我的帳號）：暱稱、隱身、上線提示、登出 ----------
-export function openAccount() {
-  if (!UI.net) return;
-  const m = overlay("nb-account", "我的帳號", "我的帳號", "user");
+// ---------- 帳號的設定（館友證最下面，ui_pass.js 叫）：暱稱、隱身、上線提示、綁定 Discord、登出 ----------
+// 11-10 以前是選單的「我的帳號」自己壹張紙；現在收進館友證（決定 0058）。redraw：改完要重畫；close：登出前先關掉框
+export function accountRows(redraw, close) {
+  if (!UI.net) return [];
   const row = (label, ctl) => h("div", { class: "na-row" }, h("span", { class: "na-l" }, label), ctl);
   const check = (text, on, fn) => {
     const c = h("input", { type: "checkbox" });
@@ -288,33 +288,31 @@ export function openAccount() {
     c.addEventListener("change", () => fn(c.checked));
     return h("label", { class: "na-check" }, c, " ", text);
   };
-  const draw = () => {
-    const me = NET.me || {};
-    const err = h("p", { class: "na-err", role: "alert" });
-    const nick = h("input", { class: "t-input na-input", maxlength: "12", "aria-label": "暱稱" });
-    nick.value = me.nick || "";
-    const saveNick = btn("改", async () => {
-      const v = nick.value.trim();
-      if (!v || v === me.nick) return;
-      try { await NET.updateMe({ nick: v }); note("暱稱改好了。", "good"); updateNetMenu(); draw(); }
-      catch (e) { err.textContent = e.message || "改不了。"; snd("error"); }
-    }, "small");
-    m.surface.replaceChildren(h("article", { class: "nb-sheet na-sheet" }, h("i", { class: "nb-pin l", "aria-hidden": "true" }), h("i", { class: "nb-pin r", "aria-hidden": "true" }),
-      h("h3", null, me.nick || ""),
-      row("暱稱", h("div", { class: "na-nick" }, nick, saveNick)),
-      err,
-      row("別人看到", check("隱身（館友的名單上你是離線）", !!me.invisible, async v => {
-        try { await NET.updateMe({ invisible: v }); note(v ? "隱身了：館友看到你離線。" : "不隱身了。"); }
-        catch (e) { note(e.message || "改不了。", "bad"); }
-        draw();
-      })),
-      row("提示", check("館友上線時提示我", SAVE.settings.arriveNote !== false, v => { SAVE.settings.arriveNote = v; persist(); })),
-      ADDONS.discordRow ? ADDONS.discordRow() : null, // 綁定 Discord（決定 0051，ui_discord.js）：伺服器沒開通就藏起來
-      h("div", { class: "nb-cta" }, btn("登出", () => { m.close(); logout(); }, "small"))));
-  };
-  draw();
-  snd("flip");
+  const me = NET.me || {};
+  const err = h("p", { class: "na-err", role: "alert" });
+  const nick = h("input", { class: "t-input na-input", maxlength: "12", "aria-label": "暱稱" });
+  nick.value = me.nick || "";
+  const saveNick = btn("改", async () => {
+    const v = nick.value.trim();
+    if (!v || v === me.nick) return;
+    try { await NET.updateMe({ nick: v }); note("暱稱改好了。", "good"); updateNetMenu(); redraw(); }
+    catch (e) { err.textContent = e.message || "改不了。"; snd("error"); }
+  }, "small");
+  return [
+    row("暱稱", h("div", { class: "na-nick" }, nick, saveNick)),
+    err,
+    row("別人看到", check("隱身（館友的名單上你是離線）", !!me.invisible, async v => {
+      try { await NET.updateMe({ invisible: v }); note(v ? "隱身了：館友看到你離線。" : "不隱身了。"); }
+      catch (e) { note(e.message || "改不了。", "bad"); }
+      redraw();
+    })),
+    row("提示", check("館友上線時提示我", SAVE.settings.arriveNote !== false, v => { SAVE.settings.arriveNote = v; persist(); })),
+    ADDONS.discordRow ? ADDONS.discordRow() : null, // 綁定 Discord（決定 0051，ui_discord.js）：伺服器沒開通就藏起來
+    h("div", { class: "nb-cta" }, btn("登出", () => { close(); logout(); }, "small")),
+  ];
 }
+// 舊的入口留著（別的地方叫 openPanel("account") 還是會到）：打開館友證
+export function openAccount() { if (PANELS.pass) PANELS.pass(); }
 
 PANELS.friends = openFriends;
 PANELS.account = openAccount;

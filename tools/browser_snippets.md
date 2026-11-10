@@ -40,7 +40,7 @@ const inp = [...document.querySelectorAll('input')].find(i => i.type === 'text')
 Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(inp, '阿測');
 inp.dispatchEvent(new Event('input', { bubbles: true }));
 // 一直按流程的按鈕（下壹步、擲骰、選職業、知道了）直到進大廳
-const skip = /選單|公佈欄|信箱|簽到|每週劇情|兌換所|榜單|賭場|館友|換參觀者|我的帳號|音樂|先用直的|登出|算了|自由模式|大廳/;
+const skip = /選單|公佈欄|信箱|簽到|每週劇情|兌換所|榜單|賭場|館友|換參觀者|我的帳號|館友證|音樂|先用直的|登出|算了|自由模式|大廳/;
 for (let i = 0; i < 45 && !document.querySelector('.lobby-side'); i++) {
   const list = [...document.querySelectorAll('button')].filter(b => vis(b) && !b.disabled && !skip.test(b.textContent) && !b.closest('nav,header'));
   if (list.length) list[list.length - 1].click();
