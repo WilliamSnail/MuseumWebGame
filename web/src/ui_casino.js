@@ -204,7 +204,7 @@ function tablePane() {
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   } else if (!playing && S.shown == null) parts.push(betBox());
   if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
-  parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情會好壹點，連輸 ${NUM.casino.streak.loseN} 把理智會掉壹點（平手不算，每天有上限）。`));
+  parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`));
   return parts;
 }
 function resultCard(r) {
