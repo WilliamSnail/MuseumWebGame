@@ -71,15 +71,16 @@ ADDONS.todayCount = () => {
   const n = todayItems().filter(x => x.todo).length;
   const old = document.querySelector(".lobby-today"); // 大廳那壹條跟著換（做完壹件、賭場的讀到了）
   if (old) old.replaceWith(lobbyToday());
+  if (ADDONS.hubRefresh) ADDONS.hubRefresh(); // 大廳的總覽（ui_hub.js）也跟著換
   return n;
 };
 
 // 大廳最上面壹條（翊文 11-10：「“今天” 在大廳裡也看得到應該比較好」「想辦法介面簡潔但資訊能都有，能一覽無遺」）
 // 壹件事壹顆小牌子排成壹行：還沒做的亮著，做完的打勾變淡，按了直接過去。每日任務好幾條合成壹顆「每日 做完／全部」。
-export function lobbyToday() {
-  if (!P || isFree(P)) return h("span", { class: "lobby-today", hidden: true });
-  const all = todayItems(), todo = all.filter(x => x.todo), chips = [];
-  all.forEach(x => {
+// 牌子：{ ic, text, todo, go, tip }。大廳的總覽（ui_hub.js）也用這壹份
+export function todayChips() {
+  const chips = [];
+  todayItems().forEach(x => {
     if (x.chip !== "每日") return chips.push({ ic: x.ic, text: x.chip, todo: x.todo, go: x.go, tip: x.title + (x.sub ? "：" + x.sub : "") });
     let c = chips.find(k => k.daily);
     if (!c) chips.push(c = { daily: true, ic: "book", n: 0, of: 0, todo: false, go: null, tip: "每日任務" });
@@ -88,6 +89,11 @@ export function lobbyToday() {
     c.text = `每日 ${c.n}／${c.of}`;
   });
   chips.sort((a, b) => (b.todo ? 1 : 0) - (a.todo ? 1 : 0));
+  return chips;
+}
+export function lobbyToday() {
+  if (!P || isFree(P)) return h("span", { class: "lobby-today", hidden: true });
+  const chips = todayChips(), todo = todayItems().filter(x => x.todo);
   return h("section", { class: "lobby-today" + (todo.length ? "" : " done"), "aria-label": "今天要做的事" },
     h("button", { type: "button", class: "lt-head", title: "打開今天的清單", onClick: () => openToday() }, icon("calendar"), h("b", null, "今天"),
       h("span", null, todo.length ? `還有 ${todo.length} 件` : "都做完了")),
