@@ -384,7 +384,8 @@ export function officeSheet() {
       [["心情", `${P.mood}／99`], ["理智", `${P.sanity}／${maxSan(P)}`], ["佩佩神話", String(P.myth)], ["靈感", String(P.insp)], ["做過", `${P.stats.made} 隻`], ["融合", `${P.stats.fused || 0} 次`]].map(([k, v]) => h("div", { class: "stat" }, h("span", null, k), h("b", null, v)))),
       // 怪癖放在數字正下方（翊文 11-08：「怪癖要上面一點才看的到」）
       // 11-09（決定 0027）：卡片上寫要做的那件事、還剩幾分鐘；時間到的不列
-      activeQuirks(P).length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), activeQuirks(P).map(q => quirkCard(q))) : null),
+      activeQuirks(P).length ? h("div", { class: "sheet-quirks" }, h("div", { class: "sq-title" }, icon("eye"), "怪癖"), activeQuirks(P).map(q => quirkCard(q))) : null,
+      ADDONS.sheet ? ADDONS.sheet() : null), // 穿了什麼裝備（決定 0032，ui_shop.js）。放左邊這壹欄：以前排在技能下面那壹列，左邊空壹大塊（翊文 11-10）
     h("div", { class: "skills placard" }, h("div", { class: "pl-title" }, "技能"),
       SKILLS.map(s => h("div", { class: "skill-row" + (s === main ? " main" : "") },
         h("span", { class: "skill-n" }, s, s === main ? "（拿手）" : ""),
@@ -393,7 +394,6 @@ export function officeSheet() {
         h("span", { class: "skill-tick", title: "今天用成功過，明天會擲成長" }, P.skillTicks[s] ? "✓" : ""),
         h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || "", traitHits(P, "skill:" + s).map(t => `（${traitTag(t)}）`).join("")))), // 放大鏡這種裝備（決定 0032）
       h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")),
-    ADDONS.sheet ? ADDONS.sheet() : null, // 穿了什麼裝備（決定 0032，ui_shop.js）
     retireBox()); // 退休（11-08，決定 0025）
 }
 export function officeUpgrades() {
