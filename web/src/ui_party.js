@@ -194,8 +194,9 @@ export function openParty(pid) {
   const picker = mine => {
     if (!canFuseHere()) return h("p", { class: "pt-hint" }, "要用挑戰模式的參觀者才能放佩佩。");
     const items = collectionItems("pepe").slice(0, 60);
-    const price = fusionPrice(P), left = fusionLeft(P);
+    const left = fusionLeft(P);
     const chosen = mine.pick[0] || null;
+    const price = fusionPrice(P, chosen && P.pepes[chosen] ? { pick: fromKey(chosen) } : null);
     // 靈感、今天的次數夠不夠（跟伺服器用同一個 canFuseOne 判斷）：不夠就寫出來，「準備好了」按不下去
     const check = items.length ? canFuseOne(P, { kind: "pepe", key: chosen || items[0].key }) : null;
     const why = check && !check.ok ? check.reason : null;
@@ -208,7 +209,7 @@ export function openParty(pid) {
       ? btn("取消準備", () => act("ready", { ready: false }), "small")
       : btn("準備好了", async () => { await NET.flush().catch(() => {}); act("ready", { ready: true }); }, "primary small", { disabled: !chosen || !!why });
     return h("div", { class: "pt-mine" },
-      h("p", { class: "pt-cost" }, `融合壹次 ${price} 靈感（你有 ${P.insp}）・今天還能融合 ${left} 次`),
+      h("p", { class: "pt-cost" }, `融合壹次至少 ${price} 靈感（你有 ${P.insp}；兩隻愈稀有愈貴，對方那隻也算）・今天還能融合 ${left} 次`),
       list, h("div", { class: "pt-mine-btns" }, why ? h("p", { class: "pt-hint pt-warn" }, why) : null, readyBtn));
   };
   const drawResult = (r, meId) => {

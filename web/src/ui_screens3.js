@@ -4,13 +4,13 @@
 
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_REWARDS, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
+import { CELLAR_REWARDS, COLOR_POWER, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
 import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
-import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionChances, fusionLeft, fusionLimit, fusionPrice, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchRecipe, memberPower, placeWeekly, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyState } from "../../shared/logic3.js";
+import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
@@ -306,16 +306,19 @@ SCREENS.fusion = root => {
       const mut = partOf(c).options.filter(o => o.mutant).map(o => o.name);
       return h("tr", null, h("td", null, c), h("td", null, A.pick[c]), h("td", null, B.pick[c]), h("td", { class: "sub" }, mut.length ? mut.join("、") : "隨機"));
     });
-    const blood = [A, B].filter(x => rarityRank(x.pick[ROLLED]) >= 1).length * NUM.blood;
+    const blood = fusionBlood(A, B), price = fusionPrice(P, A, B), extra = fusionRarityCost(A, B);
+    const mix = matchMix(A, B), mixOn = mix && !(rec && (rec.same || (rec.child && rec.child.顏色)));
     const can = canFuse(P, slots[0] && { kind: "pepe", key: slots[0].key }, slots[1] && { kind: "pepe", key: slots[1].key });
     info.append(
       placard([FUSION_TEXT.ready, `每一類：爸爸 ${ch.a}%、媽媽 ${ch.b}%、突變 ${ch.mutate}%`]),
       h("table", { class: "rtable fusion-table" }, h("thead", null, h("tr", null, h("td", null, ""), h("td", null, "爸爸"), h("td", null, "媽媽"), h("td", null, "突變"))), h("tbody", null, rows)),
-      h("p", { class: "sub" }, rec ? (P.recipes[rec.id] ? `配方「${rt ? rt.name : rec.id}」會發生。` : "這一對好像會發生什麼特別的事……") : "沒有對上配方。稀有度照樣擲 d100。"),
-      !isFree(P) ? h("p", { class: "sub" }, `血統 ${blood} 點（爸媽每一隻稀有以上給 ${NUM.blood} 點）　融合要 ${fusionPrice(P)} 靈感${traitHits(P, "fusion").map(t => `（${traitTag(t)}）`).join("")}，還要擲理智（${sanWords(rec && rec.san ? rec.san : NUM.fusionSan)}）`) : null,
+      h("p", { class: "sub" }, rec ? (P.recipes[rec.id] ? `配方「${rt ? rt.name : rec.id}」會發生。` : "這一對好像會發生什麼特別的事……") : mixOn ? "" : "沒有對上配方。稀有度照樣擲 d100。"),
+      mixOn ? h("p", { class: "sub pal-hit" }, P.recipes[mix.id] ? `這兩種顏色會調出「${mix.child.顏色}」。` : "這兩種顏色放在壹起，好像會調出沒看過的顏色……") : null,
+      !isFree(P) ? h("p", { class: "sub" }, `血統 ${blood} 點（爸媽愈稀有愈多：稀有 ${NUM.blood}、超稀有 ${NUM.blood * 2}、傳說 ${NUM.blood * 3}${mixOn ? `；調色 +${NUM.mixBlood}` : ""}）　融合要 ${price} 靈感${extra ? `（爸媽稀有，多收 ${extra}）` : ""}${traitHits(P, "fusion").map(t => `（${traitTag(t)}）`).join("")}，還要擲理智（${sanWords(rec && rec.san ? rec.san : NUM.fusionSan)}）`) : null,
       fusionPill(),
-      h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", fusionPrice(P))}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(fusionPrice(P)), can.ok ? null : h("p", { class: "warn-line" }, can.reason)));
+      h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", price)}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(price), can.ok ? null : h("p", { class: "warn-line" }, can.reason)));
   } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
+  info.append(palettePane());
   const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true,
     onPick: item => { const i = slots[0] ? (slots[1] ? 0 : 1) : 0; slots[i] = { key: item.key }; snd("submit"); rerender(); },
     selected: item => slots.some(s => s && s.key === item.key) });
@@ -795,6 +798,22 @@ export function teamRules() {
       R("heart", "心情相剋", "開心剋傷心、傷心剋生氣、生氣剋開心：", G("剋到 ×2"), "，", B("被剋 −1"), "。俄國8+9 ", G("不被剋"), "。顏色跟房間壹樣 ", G("+1"), "。"),
       R("hat", "帽子", "棒球帽", G("擋壹次"), "、皇冠", G("重擲壹次"), "、巫師帽 ", G("+2"), "、觸手帽 ", G("+5"), "（", B("扣理智"), "）、紳士帽", G("技能 +10"), "、毛帽", G("回理智"), "。"),
       R("hand", "姿勢", "比讚", G("全隊每隻 +1"), "、躺平", G("回理智"), "、斯拉夫蹲", G("不會被推倒"), "（擋壹次受傷）、倒立 ", G("+1"), "。毛帽、躺平：每壹層第壹次走時，各回 ", G("1D3 理智"), "。")));
+}
+
+// 融合室的調色盤（翊文 11-10：「現有的幾個融合起來有新顏色，可以給提示，像調色盤一樣解新顏色」）
+// 調出來過：寫出配方和色塊；兩種材料手上都有：給壹句提示（不說是哪兩種）；還缺材料：只說還缺
+export function palettePane() {
+  const dot = c => h("i", { class: "pal-dot", style: `background:${(ART.COLORS[c] || ["#888"])[0]}`, "aria-hidden": "true" });
+  const cells = paletteView(P).map(v => {
+    const t = (typeof RECIPE_TEXT !== "undefined" && RECIPE_TEXT[v.id]) || { name: v.id, hint: "" };
+    if (v.got) return h("li", { class: "pal-cell got" }, h("span", { class: "pal-mix" }, dot(v.a), "＋", dot(v.b), "＝", dot(v.color)), h("b", null, `${v.a}＋${v.b}＝${v.color}`), h("small", null, `調出來的顏色，在地下強度 +${COLOR_POWER[v.color] || 0}`));
+    if (v.ready) return h("li", { class: "pal-cell ready" }, h("span", { class: "pal-mix" }, h("i", { class: "pal-dot q", "aria-hidden": "true" }, "？")), h("b", null, "你手上的顏色調得出來"), h("small", null, t.hint));
+    return h("li", { class: "pal-cell" }, h("span", { class: "pal-mix" }, h("i", { class: "pal-dot q", "aria-hidden": "true" }, "？")), h("b", null, "？？？"), h("small", null, "還缺壹種顏色。先調出別的。"));
+  });
+  const n = cells.length, got = paletteView(P).filter(v => v.got).length;
+  return h("section", { class: "palette" }, h("h3", null, `調色盤（${got}／${n}）`),
+    h("p", { class: "sub" }, `兩隻佩佩的顏色對了，小孩就是新的顏色；調出來以後手作坊也能用。調色的那壹次血統多 ${NUM.mixBlood} 點。`),
+    h("ul", { class: "pal-list" }, cells));
 }
 
 // 融合室：今天還能融合幾次（翊文 11-08：每天的上限要寫出來）

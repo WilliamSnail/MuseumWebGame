@@ -62,6 +62,17 @@ body.reduce-motion .altar.fusing .altar-frog { animation: fadeout .3s forwards; 
 @keyframes fadeout { to { opacity: 0; } }
 .fusion-info { display: flex; flex-direction: column; gap: 12px; }
 .fusion-table td { color: var(--on-wall); }
+.palette { margin-top: 4px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 8px; }
+.palette h3 { margin: 0 0 4px; color: var(--gold); font-size: 1rem; letter-spacing: .08em; }
+.pal-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.pal-cell { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px dashed color-mix(in srgb, var(--on-wall) 30%, transparent); border-radius: 6px; color: var(--on-wall); opacity: .7; }
+.pal-cell.ready, .pal-cell.got { opacity: 1; }
+.pal-cell.got { border-style: solid; border-color: color-mix(in srgb, var(--gold) 55%, transparent); }
+.pal-cell small { font-size: .8125rem; line-height: 1.5; opacity: .85; }
+.pal-mix { display: flex; align-items: center; gap: 5px; }
+.pal-dot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .35); font-style: normal; font-size: .75rem; }
+.pal-dot.q { background: color-mix(in srgb, var(--on-wall) 15%, transparent); border-style: dashed; border-color: currentColor; }
+.pal-hit { color: var(--gold); }
 .fusion-table thead td { color: var(--gold); font-size: .75rem; letter-spacing: .1em; }
 
 /* 地下收藏庫 */

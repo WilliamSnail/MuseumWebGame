@@ -298,7 +298,7 @@ SCREENS.codex = (root, params) => {
   } else if (tab === "forbidden") {
     const list = Object.entries(P.pepes).map(([k, e]) => ({ kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect })).filter(i => i.pick && !isBasePick(i.pick));
     const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o) && !((o.limited === "show" || o.limited === "week") && !isUnlocked(P, c, o.name))).map(o => ({ c, o }))); // 主題展、每週特展的配件拿到才列（決定 0035）
-    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.limited ? ({ shop: "兌換所限定", show: "主題展限定", week: "每週特展限定" }[o.limited] || "簽到限定") : "委託人送的";
+    const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.mix ? "融合調色" : o.limited ? ({ shop: "兌換所限定", show: "主題展限定", week: "每週特展限定" }[o.limited] || "簽到限定") : "委託人送的";
     root.append(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), pepePlacard(it.pick, { perfect: it.perfect }))))
         : h("p", { class: "empty" }, "還沒有禁忌作品。"));

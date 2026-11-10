@@ -124,7 +124,7 @@ const paren = (s) => /^\(.+\)$/.test(s);
 // ---- FUSION_TEXT / RECIPE_TEXT / UPGRADE_TEXT ----
 keysExactly(C.FUSION_TEXT, ["intro", "empty", "ready", "sanSub", "mutate", "recipe", "limit", "samePair"], "FUSION_TEXT");
 {
-  const ids = ["yiqi", "twins", "rainbow", "tipsy", "handstand", "forbidden"];
+  const ids = ["yiqi", "twins", "rainbow", "tipsy", "handstand", "forbidden", "mixOrange", "mixBlue", "mixPurple", "mixWhite", "mixPink"]; // mix*：調色盤（11-10）
   keysExactly(C.RECIPE_TEXT, ids, "RECIPE_TEXT");
   for (const id of ids) keysExactly(C.RECIPE_TEXT[id], ["name", "hint", "found"], "RECIPE_TEXT." + id);
   if (C.RECIPE_TEXT.yiqi.name !== "義氣佩佩") err("RECIPE_TEXT.yiqi.name must be 義氣佩佩");

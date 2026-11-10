@@ -112,7 +112,7 @@ T("結局要讀的本數：新玩家讀得到才行", () => {
 T("今日特展：畫法、效果、理智檢定成功要不扣", () => {
   expectErr(c => { c.files["2026-W47/d1.json"].show.works[0].art = "pepe"; }, /art 只能是/);
   expectErr(c => { c.files["2026-W47/d1.json"].show.works[0].fx = ["explode"]; }, /fx「explode」不存在/);
-  expectErr(c => { c.files["2026-W47/d1.json"].show.works[0].pick = { 顏色: "藍" }; }, /不是手作坊的選項/);
+  expectErr(c => { c.files["2026-W47/d1.json"].show.works[0].pick = { 顏色: "螢光" }; }, /不是手作坊的選項/);
   expectErr(c => { c.files["2026-W47/d2.json"].show.works[3].san = "1/1D4"; }, /成功要不扣/);
   expectErr(c => { c.files["2026-W47/d2.json"].show.works[3].san = "0/1D20"; }, /失敗最多扣/);
   expectErr(c => { c.files["2026-W47/d1.json"].show.works = c.files["2026-W47/d1.json"].show.works.slice(0, 2); }, /works 要 3～5 幅/);

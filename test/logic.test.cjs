@@ -10,7 +10,7 @@ const d100 = N => { const t = N === 100 ? 0 : Math.floor(N / 10), u = N === 100 
 const dN = (v, n) => (v - 0.5) / n; // 讓 1Dn 擲出 v
 function seq(...vals) { const q = vals.flat(); return () => q.length ? q.shift() : Math.random(); }
 function fresh(mode = "challenge") { const P = G.newProfile(mode); G.ensureDay(P, "2026-11-08"); return P; }
-const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
+const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
 
 // ---------- A 解鎖 ----------
 T("A 一開始 32 種，解鎖巫師帽變 48", () => {
@@ -625,6 +625,45 @@ T("改名：舊存檔的俄國8 換成俄國8+9；斯拉夫蹲要先解鎖俄國
 // ================= 第 3 版 =================
 const P3 = () => { const P = fresh(); unlockAll(P); P.insp = 500; return P; };
 const mk = (P, o, nat = 50) => G.finishMake(P, Object.assign({ 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, o), { natural: nat });
+T("調色盤：兩種顏色調出新顏色、記進配方、解鎖；配方先決定顏色時照配方；調出來的顏色在地下強度多", () => {
+  const P = P3();
+  const base = { 心情: "開心", 帽子: "沒有", 姿勢: "站著", 稀有度: "普通" };
+  const a = mk(P, { 顏色: "紅" }).key, b = mk(P, { 顏色: "黃" }).key;
+  const A = { key: a, pick: G.fromKey(a) }, B = { key: b, pick: G.fromKey(b) };
+  assert.strictEqual(G.matchMix(A, B).id, "mixOrange"); assert.strictEqual(G.matchMix(B, A).id, "mixOrange");
+  assert.strictEqual(G.matchRecipe(A, B), null, "調色不算壹般的配方");
+  assert.strictEqual(G.isUnlocked(P, "顏色", "橘"), false);
+  assert.strictEqual(G.fusionBlood(A, B), G.NUM.mixBlood);
+  const pv = G.paletteView(P);
+  assert.strictEqual(pv.length, G.RECIPES.filter(r => r.mix).length);
+  assert.ok(pv.find(v => v.id === "mixOrange").ready && !pv.find(v => v.id === "mixOrange").got);
+  assert.ok(!pv.find(v => v.id === "mixPurple").ready, "還沒有藍，紫不能提示");
+  G.setRng(() => 0.99);
+  const f = G.startFusion(P, { kind: "pepe", key: a }, { kind: "pepe", key: b });
+  assert.ok(f.ok, f.reason);
+  assert.strictEqual(f.child.顏色, "橘"); assert.strictEqual(f.mix, "mixOrange"); assert.strictEqual(f.blood, G.NUM.mixBlood);
+  assert.ok(P.recipes.mixOrange); assert.strictEqual(G.isUnlocked(P, "顏色", "橘"), true);
+  assert.ok(f.events.some(e => e.type === "recipe" && e.id === "mixOrange"));
+  assert.ok(G.paletteView(P).find(v => v.id === "mixOrange").got);
+  // 配方先決定顏色（開心紅＋開心綠＝虹彩）時不會被調色蓋掉；調色的顏色不會被突變抽到
+  assert.ok(G.RECIPES.filter(r => r.mix).every(r => G.optOf("顏色", r.child.顏色).mix && !G.optOf("顏色", r.child.顏色).mutant && G.RECIPE_TEXT[r.id]));
+  assert.ok(!G.baseOpts("顏色").includes("橘"));
+  // 地下強度
+  const it = c => ({ pick: { ...base, 顏色: c }, perfect: false });
+  assert.strictEqual(G.memberPower(it("橘"), {}) - G.memberPower(it("紅"), {}), G.COLOR_POWER.橘);
+});
+T("融合加價：爸媽愈稀有愈貴、血統也愈多；不給爸媽就是基本價", () => {
+  const P = fresh();
+  const of = r => ({ pick: { 顏色: "紅", 心情: "開心", 帽子: "沒有", 姿勢: "站著", 稀有度: r } });
+  const C = G.NUM.fusionRarityCost, R = G.RARITY_ORDER.filter(r => r !== G.FAILED);
+  assert.strictEqual(G.fusionPrice(P), G.NUM.fusionCost);
+  assert.strictEqual(G.fusionPrice(P, of(R[0]), of(R[0])), G.NUM.fusionCost + C[0] * 2);
+  assert.strictEqual(G.fusionPrice(P, of(R[1]), of(R[2])), G.NUM.fusionCost + C[1] + C[2]);
+  assert.strictEqual(G.fusionBlood(of(R[1]), of(R[1])), G.NUM.blood * 2);
+  assert.strictEqual(G.fusionBlood(of(R[2]), of(R[0])), G.NUM.blood * 2);
+  assert.strictEqual(G.fusionBlood(of(R[0]), of(R[0])), 0);
+  assert.ok(C.every((v, i) => i === 0 || v >= C[i - 1]), "愈稀有不能愈便宜");
+});
 T("v3 新類別：一開始 ×1；拿到鑰匙組合 ×4；圖鑑還是 1,280 格", () => {
   const P = P3();
   assert.strictEqual(G.CORE_TOTAL, 1280); assert.strictEqual(G.BASE_TOTAL, 1280);
@@ -789,7 +828,7 @@ T("v3 大廳導覽圖的進度：畫廊、手作坊、地下收藏庫（樓梯�
   assert.strictEqual(pr.gallery.text, "看過 0／6");
   assert.strictEqual(pr.workshop.text, "選項 10／28"); // 跟手作坊頁籤一樣：2/4＋2/6×4
   assert.strictEqual(pr.cellar.text, "還沒下去"); assert.strictEqual(pr.cellar.pct, null); assert.strictEqual(pr.cellar.steps, 0);
-  assert.strictEqual(pr.fusion.text, "配方 0／6");
+  assert.strictEqual(pr.fusion.text, `配方 0／${G.RECIPES.length}`);
   P.seen.portrait = 1; P.seen.strange = 3; P.cellar.best = 2;
   pr = G.roomProgress(P);
   assert.strictEqual(pr.gallery.text, "看過 2／6"); assert.ok(Math.abs(pr.gallery.pct - 2 / 6) < 1e-9); assert.ok(!pr.gallery.done);

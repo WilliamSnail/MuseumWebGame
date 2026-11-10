@@ -125,7 +125,7 @@ export const PILLOW_CATS = PILLOW_PARTS.map(p => p.name);
 export const partOf = cat => PEPE_PARTS.find(p => p.name === cat);
 export const optOf = (cat, name) => (partOf(cat) || { options: [] }).options.find(o => o.name === name);
 export const allOpts = cat => partOf(cat).options.map(o => o.name);
-export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift || o.limited)); // limited：簽到限定（11-09，決定 0030）、兌換所限定（決定 0032）
+export const isSpecialOpt = o => !!(o && (o.forbidden || o.mutant || o.gift || o.limited || o.mix)); // limited：簽到限定（11-09，決定 0030）、兌換所限定（決定 0032）；mix：融合室調色盤（11-10）
 export const baseOpts = cat => partOf(cat).options.filter(o => !isSpecialOpt(o)).map(o => o.name);
 export function catOfOption(name) { const p = PEPE_PARTS.find(pp => pp.options.some(o => o.name === name)); return p ? p.name : null; }
 export const CORE_TOTAL = CORE_CATS.reduce((n, c) => n * baseOpts(c).length, 1); // 圖鑑的格數
@@ -186,10 +186,12 @@ export function catalogNo(pick) {
   // 主題展、每週特展的（決定 0035）再另外編「展 No.」，不改到簽到那幾頂的號碼
   const lateOf = (c, v) => { const l = (optOf(c, v) || {}).limited; return l === "show" || l === "week"; };
   const lim = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).limited), late = CORE_CATS.some(c => lateOf(c, pick[c]));
+  // 調色盤的顏色（11-10）再另外編「調 No.」：別的編號算的時候都不把調色的顏色算進去，舊的號碼才不會變
+  const mixed = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).mix), noMix = (c, n) => !optOf(c, n).mix;
   let idx = 0;
-  for (const c of CORE_CATS) { const list = late ? allOpts(c) : lim ? allOpts(c).filter(n => !lateOf(c, n)) : allOpts(c).filter(n => !optOf(c, n).limited); idx = idx * list.length + Math.max(0, list.indexOf(pick[c])); }
+  for (const c of CORE_CATS) { const list = mixed ? allOpts(c) : (late ? allOpts(c) : lim ? allOpts(c).filter(n => !lateOf(c, n)) : allOpts(c).filter(n => !optOf(c, n).limited)).filter(n => noMix(c, n)); idx = idx * list.length + Math.max(0, list.indexOf(pick[c])); }
   const forb = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).forbidden);
-  return (late ? "展" : lim ? "限" : forb ? "禁" : "異") + " No. " + pad(idx + 1);
+  return (mixed ? "調" : late ? "展" : lim ? "限" : forb ? "禁" : "異") + " No. " + pad(idx + 1);
 }
 export function hatWord(h) { return h === "沒有" ? "不戴帽" : h; }
 export function decoWord(cat, v) {
@@ -340,6 +342,7 @@ export function unlockState(P, cat, name) {
   if (isUnlocked(P, cat, name)) return { state: "open" };
   if (o.forbidden) return { state: "forbidden", text: `佩佩神話 ${o.myth} 以上才會出現`, myth: o.myth };
   if (o.mutant) return { state: "mutant", text: "只能在融合室突變出來" };
+  if (o.mix) return { state: "mutant", text: "要在融合室用兩種顏色調出來（融合室有調色盤）" };
   if (o.gift) { const l = typeof CLIENT_LINES !== "undefined" && CLIENT_LINES[o.gift]; return { state: "gift", text: `跟${l ? l.name : "委託人"}的委託走完才會收到` }; }
   if (o.key) return { state: "key", text: o.key === "bg" ? "地下收藏庫 B3 的鑰匙打開" : "地下收藏庫 B5 的鑰匙打開" };
   if (o.limited) return { state: "limited", text: o.limited === "shop" ? "兌換所限定：用週章換" : o.limited === "week" ? "每週特展限定：那週的特展到金才拿得到" : o.limited === "show" ? "主題展限定：辦到金才拿得到" : "簽到限定：每週全簽到拿得到" }; // 決定 0030、0032、0035
