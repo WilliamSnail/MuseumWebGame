@@ -8,7 +8,7 @@
 import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
 import { settleWeekShow } from "./themeshow.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
-import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
+import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, understandCheck, usable } from "./logic.js";
 import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
 import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
 
@@ -595,6 +595,35 @@ export function receiveGift(P, code) {
     else P.pillows[key] = (P.pillows[key] || 0) + 1;
     return { ok: true, kind, key, title: o.t, events: progressEvents(P) };
   } catch (e) { return { ok: false, reason: "bad" }; }
+}
+
+// ---------- 重讀禁書（翊文 11-10，決定 0063）----------
+// 讀過的禁書不再擲理智，所以原本只有第壹次讀那壹次機會看懂。現在：隔天以後再翻開，只擲看懂檢定；看懂了才再擲理智。壹天壹本試壹次。
+// P.mythFrom[書] 記最後壹次讀（或重讀）的日期；舊存檔的 true 當成以前讀的。
+export function rereadReady(P, book) {
+  if (!P || isFree(P) || !book || !P.mythFrom[book.id] || P.mythFrom[book.id] === todayStr()) return false;
+  return UNDERSTAND_TEXT.some(x => x.id === book.id) && !(P.understood || {})[book.id];
+}
+export function rereadTry(P, book) {
+  if (!rereadReady(P, book)) return null;
+  P.mythFrom[book.id] = todayStr();
+  return understandCheck(P);
+}
+// 《看懂的事》要列的：每壹件壹格。看懂的有出處和內容；還沒看懂的只有提示（不給出處和內容）。
+// again＝今天可以再去看壹次（讀過的禁書隔了壹天；看過的展品今天還沒被它嚇到）
+export const UK_EXHIBITS = ["strange", "statue", "hidden", "russia8"];
+export function understandList(P) {
+  const got = (P && P.understood) || {}, free = !P || isFree(P), today = todayStr();
+  return UNDERSTAND_TEXT.map(x => {
+    if (got[x.id]) return { id: x.id, got: true, from: x.from, text: x.text, hint: "", again: false };
+    const read = !free && /^book/.test(x.id) ? P.mythFrom[x.id] : null;
+    if (read) return read === today
+      ? { id: x.id, got: false, hint: "今天翻過這本禁書了，還沒看懂。明天再翻開壹次。", again: false }
+      : { id: x.id, got: false, hint: "你讀過這本禁書，還沒看懂。今天可以再翻開壹次。", again: true };
+    const seen = !free && UK_EXHIBITS.includes(x.id) && (P.seen[x.id] || 0) > 0;
+    const again = seen && !((P.day && P.day.exLoss && P.day.exLoss[x.id]) > 0);
+    return { id: x.id, got: false, hint: seen ? x.hint + (again ? "你看過了，還沒看懂。今天可以再看壹次。" : "今天看過了，還沒看懂。明天再來。") : x.hint, again };
+  });
 }
 
 // ---------- 看懂檢定：看懂了什麼（翊文 11-08）。文字在 content3.js 的 UNDERSTAND_TEXT ----------

@@ -553,8 +553,9 @@ export function applySan(P, loss, src) {
 }
 export function gainSan(P, n) { const before = P.sanity; P.sanity = clampN(P.sanity + n, 0, maxSan(P)); if (P.sanity > 0) P.dark = false; return P.sanity - before; }
 // 看懂檢定：50＋佩佩神話。看懂了才會瘋
+export function understandTarget(P) { return Math.min(99, NUM.understandBase + P.myth + traitSum(P, "understand")); } // 小缺點「怕黑」+10（11-08）
 export function understandCheck(P) {
-  const target = Math.min(99, NUM.understandBase + P.myth + traitSum(P, "understand")); // 小缺點「怕黑」+10（11-08）
+  const target = understandTarget(P);
   const roll = rollD100();
   return { roll, target, success: roll.total <= target };
 }
@@ -842,7 +843,7 @@ export function finishChapter(P, id) {
 }
 export function bookMyth(P, book) {
   if (isFree(P) || P.mythFrom[book.id]) return 0;
-  P.mythFrom[book.id] = true;
+  P.mythFrom[book.id] = todayStr(); // 記哪壹天讀的（決定 0063：隔天以後重讀可以再擲看懂檢定）。舊存檔是 true，當成以前讀的
   return book.myth;
 }
 

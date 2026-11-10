@@ -7,13 +7,13 @@ import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD
 import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
-import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
+import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, understandTarget, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
+import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, understandList, rereadTry, rereadReady, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
 import { traitDesc, traitName } from "../../shared/legacy.js";
-import { $, planPortrait, $$, ADDONS, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, quirkProgText, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, planPortrait, $$, ADDONS, understandFlow, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, quirkProgText, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "./ui_core.js";
 import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -436,8 +436,7 @@ SCREENS.origin = (root, params) => {
   // 續集接在哪壹本後面（翊文 11-09：「禁書的哪個是哪壹個的續集有點難看得出來」）：書背寫上第壹本的名字，也貼著那壹本放
   const seriesRoot = b => { let r = b; while (r && r.after) { const id = r.after; r = forbList.find(x => x.id === id); } return r || b; };
   const seriesTag = b => h("span", { class: "spine-of" }, `${seriesRoot(b).spine} 續集`);
-  const forb = h("div", { class: "shelf forbidden" }, h("span", { class: "shelf-label" }, "禁書"),
-    forbList.map(b => {
+  const forbSpine = b => {
       if (b.after && !sequelVisible(P, b)) return null;
       if (b.after && !sequelOpen(P, b)) {
         const sealed = h("button", { type: "button", class: "spine dark sealed sequel", dataset: { seq: b.id }, "aria-label": `還打不開的《${seriesRoot(b).spine}》續集。${b.hint}` }, h("span", { class: "spine-of" }, seriesRoot(b).spine), h("span", { class: "spine-t" }, "續集"), icon("lock"));
@@ -448,10 +447,18 @@ SCREENS.origin = (root, params) => {
         return sealed;
       }
       const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": b.after ? `禁書：${b.title}（《${seriesRoot(b).spine}》的續集）` : `禁書：${b.title}` },
-        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null);
+        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null,
+        rereadReady(P, b) ? h("span", { class: "spine-m spine-again", title: "讀過了還沒看懂：今天可以再翻開壹次" }, "再看壹次") : null);
       freshMark(el, isFresh(P, "origin", FRESH_KEY.book(b.id))); // 新的禁書、續集（11-08）
       el.addEventListener("click", () => openForbidden(b, reader));
       return el;
+    };
+  // 壹套書框在壹起（翊文 11-10：「書架區也整理一下」）：原書和它的續集放同壹格，有續集的上面寫這壹套的名字，套跟套之間留空
+  const forb = h("div", { class: "shelf forbidden" }, h("span", { class: "shelf-label" }, "禁書"),
+    forbList.filter(b => !b.after).map(r => {
+      const els = forbList.filter(b => seriesRoot(b) === r).map(forbSpine).filter(Boolean);
+      return h("div", { class: "series" + (els.length > 1 ? " multi" : ""), role: "group", "aria-label": `《${r.spine}》這壹套，${els.length} 本` },
+        els.length > 1 ? h("span", { class: "series-cap", "aria-hidden": "true" }, r.spine) : null, els);
     }));
   const opened = books.filter(b => b.gen1 || chapterOpen(P, b.id)), fbVis = forbList.filter(b => !b.after || sequelOpen(P, b));
   const counts = { shelf: [opened.length, opened.filter(b => !P.chaptersRead[b.id]).length, opened.filter(b => !b.gen1 && isFresh(P, "origin", FRESH_KEY.ch(b.id))).length + (isFresh(P, "origin", FRESH_KEY.understood) ? 1 : 0)],
@@ -485,13 +492,15 @@ export function armIdleSequel(root) {
 }
 // 《看懂的事》：看懂檢定看懂過的，照故事的順序排（翊文 11-08：故事線）
 export function openUnderstood(reader) {
-  const got = UNDERSTAND_TEXT.filter(x => P.understood[x.id]).length;
+  const list = understandList(P), got = list.filter(x => x.got).length;
   reader.replaceChildren(h("div", { class: "book uk-book" },
     h("h2", { class: "book-title" }, "看懂的事"),
     h("p", { class: "uk-count" }, `看懂了 ${got}／${UNDERSTAND_TEXT.length} 件。照發生的順序排，拼起來就是這間博物館的祕密。`),
-    h("ol", { class: "uk-list" }, UNDERSTAND_TEXT.map(x => P.understood[x.id]
+    h("p", { class: "uk-how" }, "怎麼看懂：被嚇到壹次掉 5 點以上的理智，再擲過看懂檢定。讀過的禁書，隔天再翻開可以直接擲看懂檢定。還沒看懂的，下面寫了去哪裡看。"),
+    h("ol", { class: "uk-list" }, list.map(x => x.got
       ? h("li", null, h("span", { class: "uk-from" }, x.from), h("span", { class: "uk-line" }, ptNode(x.text)))
-      : h("li", { class: "unknown" }, h("span", { class: "uk-line" }, "？？？（還沒看懂）")))),
+      : h("li", { class: "unknown" + (x.again ? " again" : "") }, h("span", { class: "uk-line" }, "？？？（還沒看懂）"), x.again ? h("span", { class: "uk-again" }, "再看壹次") : null,
+        x.hint ? h("span", { class: "uk-hint" }, "提示：" + x.hint) : null))),
     weekUnderstoodBox()));
 }
 // 每週劇情裡看懂的（線索集齊才會多壹件，shared/clues.js）。快看懂的只說還差幾條和提示，不給答案
@@ -544,6 +553,31 @@ export async function openForbidden(b, reader) {
   const first = !P.mythFrom[b.id];
   // 翊文 11-08：「禁書看過的再看一次應該不需要再減定san值一次，因為已經看過了」
   // 這位參觀者讀過的（P.mythFrom 記著），再翻開就直接讀，不用再擲理智。換下壹位參觀者時 mythFrom 會清掉：新的人第壹次讀還是要擲。
+  // 翊文 11-10（決定 0063）：這樣讀過的書就沒機會看懂了。隔天以後再翻開：只擲看懂檢定；看懂了才再擲壹次理智。沒看懂就沒事，明天再試
+  if (!first && rereadReady(P, b)) {
+    const T = understandTarget(P);
+    if (await ask(`再翻開《${b.title}》？你讀過它，還沒看懂。這次只擲看懂檢定（擲出 ≤ ${T} 就是看懂）：看懂了要再擲壹次理智（${sanWords(b.san)}）；沒看懂就沒事，明天可以再試。`, "翻開", "只是翻翻")) {
+      UI.busy = true;
+      try {
+        snd("eerie");
+        const u = rereadTry(P, b);
+        persist();
+        if (!u) return;
+        await FX.rollOverlay({ title: "看懂檢定", sub: `《${b.title}》：你讀過了，這次看你「看懂了沒」。擲出 ≤ ${u.target} 就是看懂了。（50＋佩佩神話，懂得越多越容易看懂）`, spec: "d100", result: u.roll,
+          outcome: { text: u.success ? "你看懂了。" : "你沒看懂。明天再翻開壹次。", tone: u.success ? "bad" : "good" } });
+        const sp = $$(".shelf.forbidden .spine-again").find(x => x.closest(".spine") && x.closest(".spine").classList.contains("on")); if (sp) sp.remove();
+        bookReader(reader, b.title, [b.lines.join("\n")], { aside: u.success ? "(字還是那些字。只是這次，你看懂了)" : "(字還在。你還是不知道它們要說什麼)" });
+        if (!u.success) { bookGain(reader, "還沒看懂：明天可以再翻開壹次", "neutral"); return; }
+        await understandFlow("book:" + b.id);
+        const res = await sanFlow(b.san, "book:" + b.id, `《${b.title}》`, { anchor: reader, occult: true, noUk: true });
+        if (!res || P.dark) return;
+        bookGain(reader, res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
+        updateStatus(); persist();
+        if (res.involuntary === "backout") { await wait(1400); go("lobby"); }
+      } finally { UI.busy = false; }
+      return;
+    }
+  }
   if (!first) {
     bookReader(reader, b.title, [b.lines.join("\n")], { aside: "(你讀過了。字還在，只是這次你知道它們要說什麼)" });
     bookGain(reader, "讀過了：這次不用擲理智", "good");
