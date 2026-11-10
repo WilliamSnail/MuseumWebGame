@@ -78,11 +78,11 @@ T("B 花心情：最多壓到 02；100 和孤注一擲不能花", () => {
   P.mood = 3; assert.strictEqual(G.spendRange(P, 60, false), 3);
 });
 T("B 做一隻：花 NUM.costPepe 靈感、花心情、新收藏", () => {
-  const P = fresh(); unlockAll(P); P.insp = 10; P.mood = 50;
+  const P = fresh(); unlockAll(P); P.insp = G.NUM.costPepe + 4; P.mood = 50;
   const pick = { 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" };
   G.setRng(seq(d100(7)));
   const s = G.startMake(P, pick);
-  assert.ok(s.ok); assert.strictEqual(s.roll.total, 7); assert.strictEqual(P.insp, 10 - G.NUM.costPepe);
+  assert.ok(s.ok); assert.strictEqual(s.roll.total, 7); assert.strictEqual(P.insp, 4);
   const res = G.finishMake(P, pick, { natural: 7, spent: 5, pushed: false });
   assert.strictEqual(res.pick.稀有度, "傳說級稀有"); assert.strictEqual(P.mood, 45); assert.ok(res.isNew);
   assert.ok(P.pepes[res.key]);

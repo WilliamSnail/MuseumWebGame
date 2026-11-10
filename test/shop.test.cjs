@@ -108,9 +108,9 @@ T("效果：護身符讓看懂檢定變難；搬運手套加隊伍強度；算�
   G.takeOffGear(P, "abacus");
   // 圍裙：骰到就不花靈感
   G.wearGear(P, "apron");
-  P.insp = 5; G.setRng(() => 0);
+  P.insp = G.NUM.costPillow + 3; G.setRng(() => 0);
   const pl = G.makePillow(P, { 尺寸: "標準", 材質: "棉布", 填充: "剛剛好" }, "p:" + keys[0]);
-  assert.ok(pl.ok && pl.free); assert.strictEqual(P.insp, 5);
+  assert.ok(pl.ok && pl.free); assert.strictEqual(P.insp, G.NUM.costPillow + 3);
   G.setRng(() => 0.999);
   assert.strictEqual(G.makePillow(P, { 尺寸: "小抱枕", 材質: "棉布", 填充: "剛剛好" }, "p:" + keys[0]).free, false);
   G.takeOffGear(P, "apron");
@@ -524,7 +524,7 @@ T("買到的頭飾真的做得出來；舊的展廳、圖鑑算法不會壞", G 
   const P = fresh(G);
   stamps(G, P, 99);
   G.buyLimited(P, "hat-chef", ["hat-chef"], DAY);
-  P.insp = 10;
+  P.insp = G.NUM.costPepe + 4;
   const pick = { 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "廚師帽", 姿勢: "站著" };
   assert.ok(G.startMake(P, pick).ok);
   const res = G.finishMake(P, pick, { natural: 50 });
