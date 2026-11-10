@@ -10,8 +10,9 @@
 import { nextStep } from "../../shared/guide.js";
 import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { passView } from "../../shared/pass.js";
+import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, freshTag, frogHTML, go, h, icon, navTo, titleTag } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, cicon, freshTag, frogHTML, go, h, icon, navTo, titleTag } from "./ui_core.js";
 import { hubExtras } from "./ui_signin.js";
 import { showToday, storyHub } from "./ui_story.js";
 import { openToday, todayChips, todayItems } from "./ui_today.js";
@@ -44,6 +45,14 @@ function showChip() {
   return { ic: "gallery", text: s.unseen ? `特展 ${s.unseen} 幅` : "特展 看完了", todo: s.unseen > 0, fresh: s.unseen > 0, tip: `畫廊的今日特展：${s.title}（${s.total - s.unseen}／${s.total} 幅看過）`, go: () => go("gallery", { show: true }) };
 }
 
+// 小館友證下面：兌換所（翊文 11-10：「大廳的也很不明顯」）
+function shopBtn() {
+  const n = storyState(P).stamps || 0;
+  return h("button", { type: "button", class: "hub-shop" + (n ? " has" : ""), onClick: () => PANELS.shop && PANELS.shop() },
+    h("span", { class: "hsh-ic", "aria-hidden": "true" }, cicon("shop")),
+    h("span", { class: "hsh-t" }, h("b", null, "兌換所"), h("small", null, n ? `週章 ${n} 枚，可以去換` : "做每週任務拿週章")),
+    h("span", { class: "hsh-go", "aria-hidden": "true" }, "→"));
+}
 export function lobbyHub() {
   if (!P || isFree(P)) return null;
   const step = nextStep(P), sc = showChip(), chips = todayChips().concat(sc ? [sc] : []).sort((a, b) => (b.todo ? 1 : 0) - (a.todo ? 1 : 0)), todo = todayItems().filter(x => x.todo).length, ex = hubExtras();
@@ -57,7 +66,7 @@ export function lobbyHub() {
     h("div", { class: "hub-tiles" }, chips.map(tile)),
     ex.hol);
   return h("section", { class: "lobby-hub", "aria-label": "總覽：館友證、下壹步、今天要做的事、本週劇情" },
-    passCard(), h("div", { class: "hub-main" }, stepRow, dayRow, storyHub(), ex.fun));
+    h("div", { class: "hub-side" }, passCard(), PANELS.shop ? shopBtn() : null), h("div", { class: "hub-main" }, stepRow, dayRow, storyHub(), ex.fun));
 }
 ADDONS.lobbyHub = lobbyHub;
 

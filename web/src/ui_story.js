@@ -19,7 +19,7 @@ import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
-import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
@@ -207,7 +207,7 @@ export function openStory(o = {}) {
     const W = curWeek(), S = storyState(P);
     const lines = W ? linesNow(W) : [];
     const dots = { week: claimables(W) > 0, lines: lines.some(l => l.fresh) };
-    m.setTop([h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，到兌換所換東西。" }, icon("medal"), ` 週章 ${S.stamps} 枚`), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null]);
+    m.setTop([h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。會存起來，到兌換所換東西。" }, cicon("stamp"), ` 週章 ${S.stamps} 枚`), PANELS.shop ? btn([cicon("shop"), " 兌換所"], () => PANELS.shop(), "primary small sp-shop") : null]);
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "每週劇情" }, SP_TABS.map(([id, name]) =>
       h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : ""), onClick: () => { tab = id; draw(); } },
         name, dots[id] ? h("span", { class: "nb-dot", "aria-label": id === "week" ? "有獎勵可以領" : "有新的下壹步" }) : null)));

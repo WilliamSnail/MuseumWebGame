@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "shop-visible", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "兌換所和週章更好找了", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "**導覽列多了「兌換所」**，旁邊的數字是你手上的週章。",
+        "**狀態列多了「週章」**，按了就打開兌換所。",
+        "**大廳的館友證下面多了壹顆「兌換所」**。",
+        "每週劇情右上角的兌換所變成金色的按鈕。兌換所和週章都有自己的彩色圖示。",
+      ]],
+    ],
+    cta: { label: "打開兌換所", panel: "shop" },
+  },
+  {
     id: "streak-up", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "21 點連贏、連輸的效果變大了", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

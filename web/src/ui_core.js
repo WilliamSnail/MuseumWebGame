@@ -17,6 +17,7 @@ import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../sha
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { holidayClass, holidayOf } from "../../shared/holidays.js";
 import { titleName, titleText } from "../../shared/titles.js";
+import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
@@ -76,6 +77,8 @@ export function h(tag, props, ...kids) {
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const icon = (name, cls) => h("span", { class: "ic " + (cls || ""), html: ART.icon(name), "aria-hidden": "true" });
+// 彩色的小圖示（兌換所、週章；art.js 的 CICONS）：大小跟 icon 壹樣，顏色是自己的
+export const cicon = (name, cls) => h("span", { class: "ic cic " + (cls || ""), html: ART.cicon(name), "aria-hidden": "true" });
 export const btn = (label, onClick, cls = "", extra = {}) => h("button", Object.assign({ class: "btn " + cls, type: "button", onClick }, extra), label);
 export const wait = ms => new Promise(r => setTimeout(r, motionOff() ? Math.min(ms, 120) : ms));
 export const motionOff = () => document.body.classList.contains("reduce-motion");
@@ -230,8 +233,11 @@ export function buildNav() {
   // 「館友證」（11-10，決定 0058，ui_pass.js 登記 PANELS.pass）：封面是證件，翻開是典藏冊
   const passTab = h("a", { href: "#", class: "nav-link nav-pass", "aria-haspopup": "dialog", dataset: { name: "館友證" }, onClick: e => { e.preventDefault(); openPanel("pass"); } },
     icon("user"), h("span", { class: "nl-t" }, "館友證"));
+  // 「兌換所」（翊文 11-10：「週章和兌換所太不明顯了，兌換所要有icon而且要在更多地方可以看的到」）：旁邊的數字是手上的週章
+  const shopTab = h("a", { href: "#", class: "nav-link nav-shop", "aria-haspopup": "dialog", dataset: { name: "兌換所" }, onClick: e => { e.preventDefault(); openPanel("shop"); } },
+    cicon("shop"), h("span", { class: "nl-t" }, "兌換所"), h("span", { class: "ns-n", "aria-hidden": "true" }));
   const tabs = NAV_ROOMS.map(roomLink);
-  tabs.splice(1, 0, todayTab, passTab, boardTab);
+  tabs.splice(1, 0, todayTab, passTab, shopTab, boardTab);
   const links = h("nav", { class: "nav-links", "aria-label": "房間" }, tabs);
   const sound = h("button", { class: "icon-btn", id: "soundBtn", type: "button", "aria-label": "聲音", onClick: () => { SAVE.settings.muted = !SAVE.settings.muted; applySettings(); persist(); } });
   // 選單（翊文 11-08：「可以做漢堡菜單，把設定和公告相關的放進去」）。每個寬度都有，放在右上角。
@@ -240,14 +246,14 @@ export function buildNav() {
   const menu = h("button", { class: "icon-btn menu-btn", type: "button", "aria-label": "選單", "aria-expanded": "false", "aria-controls": "navDrawer", onClick: () => toggleMenu() },
     icon("menu"), h("span", { class: "menu-t" }, "選單"), h("span", { class: "menu-n", "aria-hidden": "true" }), freshTag("nav-fresh menu-fresh"));
   const brand = h("a", { href: "#", class: "brand", onClick: e => { e.preventDefault(); navTo("lobby"); } }, "PEPE MUSEUM");
-  const item = (cls, ic, label, fn) => h("button", { type: "button", class: "md-item " + cls, onClick: () => { toggleMenu(false); fn(); } }, icon(ic), h("span", { class: "md-t" }, label), h("span", { class: "md-badge" }));
+  const item = (cls, ic, label, fn) => h("button", { type: "button", class: "md-item " + cls, onClick: () => { toggleMenu(false); fn(); } }, ic === "shop" ? cicon(ic) : icon(ic), h("span", { class: "md-t" }, label), h("span", { class: "md-badge" }));
   const roomItem = ([id, name]) => h("a", { href: "#", class: "nav-drawer-link md-item", dataset: { room: id, name }, onClick: e => { e.preventDefault(); toggleMenu(false); navTo(id); } }, icon(NAV_ICON[id] || "sparkle"), h("span", { class: "md-t" }, name), freshTag("nav-fresh"));
   const drawer = h("div", { class: "nav-drawer", id: "navDrawer", hidden: true, role: "region", "aria-label": "選單" },
     h("div", { class: "md-group" }, item("md-today", "calendar", "今天要做的事", () => openPanel("today")), item("md-account", "user", "館友證和典藏冊", () => openPanel("pass"))),
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
-    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "medal", "兌換所", () => openPanel("shop")), item("md-rank", "star", "本週榜單", () => openPanel("rank"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）；本週榜單（決定 0039，ui_board_rank.js 登記 PANELS.rank）
+    h("div", { class: "md-group" }, item("md-story", "book", "每週劇情和劇情線", () => openPanel("story")), item("md-shop", "shop", "兌換所", () => openPanel("shop")), item("md-rank", "star", "本週榜單", () => openPanel("rank"))), // 兌換所（11-09，ui_shop.js 登記 PANELS.shop）；本週榜單（決定 0039，ui_board_rank.js 登記 PANELS.rank）
     h("p", { class: "md-h md-casino-h" }, "賭場"), // Hamachi 賭場（決定 0040，ui_casino.js 登記 PANELS.casino）
     h("div", { class: "md-group md-casino-g" }, item("md-casino", "dice", "Hamachi 賭場", () => openPanel("casino"))),
     h("p", { class: "md-h md-rooms-h" }, "房間"),
@@ -427,11 +433,14 @@ export function buildStatus() {
     h("span", { class: "st-label" }, label), h("span", { class: "st-track" }, h("i", { class: "st-fill" }), h("i", { class: "st-dot" })), h("span", { class: "st-val" }, h("b", { class: "st-num" }, "0"), h("small", { class: "st-max" }, "／99")));
   const numItem = (id, label, onClick) => h(onClick ? "button" : "div", { class: "st-item", id: "st-" + id, type: onClick ? "button" : null, onClick },
     h("span", { class: "st-label" }, label), h("b", { class: "st-num" }, "0"));
+  // 週章（翊文 11-10）：彩色的獎章圖示，點了打開兌換所
+  const stampsItem = () => h("button", { class: "st-item st-stamps", id: "st-stamps", type: "button", onClick: () => openPanel("shop") },
+    h("span", { class: "st-label" }, cicon("stamp"), "週章"), h("b", { class: "st-num" }, "0"));
   const chipsItem = () => numItem("chips", "籌碼", () => { if (PANELS.casino) PANELS.casino(); }); // 賭場的籌碼（翊文 11-09），點了打開賭場
   const day = h("div", { class: "st-item st-day", id: "st-day" }, h("span", { class: "st-label" }, "天數"), h("b", { class: "st-num" }, "第 001 天"), h("b", { class: "st-num-s" }, "001天"), h("small", { class: "st-left" }, ""), h("small", { class: "st-left-s" }, "")); // 翊文 11-08：天數＋還有多久換日（-s 是手機用的短版）
   const items = free
     ? [day, h("div", { class: "st-item st-mode" }, "自由模式"), numItem("poss", "可能性"), numItem("own", "收藏"), chipsItem(), numItem("jobs", "委託", () => navTo("commission"))]
-    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), chipsItem(), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
+    : [day, bar("mood", "心情"), bar("san", "理智"), numItem("insp", "靈感"), stampsItem(), chipsItem(), numItem("poss", "可能性"), numItem("jobs", "委託", () => navTo("commission")),
       h("button", { type: "button", class: "st-item st-follow", id: "st-follow", hidden: true })]; // 每週劇情追蹤的那條線的下壹步（ui_story.js 的 trackBar）
   const extra = h("div", { class: "st-extra", id: "st-extra" });
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
@@ -539,6 +548,16 @@ export function drawChips() {
   $(".st-num", box).textContent = casNum(UI.chips);
   box.dataset.exact = casExact(UI.chips);
 }
+// 導覽列「兌換所」旁邊的週章數字（自由模式沒有）
+export function drawShopTab() {
+  const a = $(".nav-shop");
+  if (!a) return;
+  const n = P && !isFree(P) ? storyState(P).stamps || 0 : 0;
+  a.hidden = !P || isFree(P);
+  a.classList.toggle("has-n", n > 0);
+  const b = $(".ns-n", a); if (b) b.textContent = n > 99 ? "99+" : String(n);
+  a.title = n ? `兌換所：你有 ${n} 枚週章` : "兌換所";
+}
 export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }
 export function updateStatus(instant) {
   audioTrack(instant);
@@ -563,6 +582,7 @@ export function updateStatus(instant) {
   };
   updateDayClock();
   drawChips();
+  drawShopTab();
   const jobs = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
   if (isFree(P)) {
     set("poss", 0, `${num(possibilities(P))} 種`);
@@ -573,6 +593,7 @@ export function updateStatus(instant) {
     $("#st-san").style.setProperty("--max", (maxSan(P) / 99 * 100) + "%");
     const sm = $("#st-san .st-max"); if (sm) sm.textContent = amnesia ? "／??" : `／${maxSan(P)}`;
     set("insp", P.insp);
+    set("stamps", storyState(P).stamps || 0); // 週章（翊文 11-10：「週章和兌換所太不明顯了」）
     $$(".insp-have").forEach(refreshInspHave);
     const poss = $("#st-poss .st-num");
     if (poss) {

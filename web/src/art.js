@@ -742,12 +742,29 @@ export const ART = (() => {
     gift: `<rect x="3.5" y="8.5" width="17" height="4.5" rx="1"/>` + P("M5 13v7.5h14V13M12 8.5v12M12 8.5C10.6 5.4 8.8 3.4 7 4c-1.9.7-1.1 3.7 1 4.5M12 8.5c1.4-3.1 3.2-5.1 5-4.5 1.9.7 1.1 3.7-1 4.5"),
     food: P("M3 18h18M4.5 18a7.5 7.5 0 0 1 15 0M12 10.5V8.6M5.5 21h13") + `<circle cx="12" cy="7" r="1.6"/>`,
     exchange: P("M4 8.5h14.5L15 5M20 15.5H5.5L9 19"),
+    shop: P("M3.5 9.5l1.6-5h13.8l1.6 5M3.5 9.5c0 1.5 1.1 2.5 2.4 2.5s2.4-1 2.4-2.5c0 1.5 1.1 2.5 2.4 2.5h-.4c1.3 0 2.3-1 2.3-2.5 0 1.5 1.1 2.5 2.4 2.5s2.4-1 2.4-2.5c0 1.5 1.1 2.5 2.4 2.5M3.5 9.5h17M5 12v8.5h14V12") + `<circle cx="12" cy="16.3" r="2.4"/>` + P("M12 15.2v2.2"), // 兌換所（翊文 11-10：「兌換所要有icon」）
     gem: P("M7 4h10l4 6-9 10.5L3 10zM3 10h18M9 10l3 10.5L15 10M9 10l2-6M15 10l-2-6"),
     hourglass: P("M6.5 3.5h11M6.5 20.5h11M8 3.5V6c0 2.6 4 4.4 4 6s-4 3.4-4 6v2.5M16 3.5V6c0 2.6-4 4.4-4 6s4 3.4 4 6v2.5M9.8 18.6h4.4L12 16.4z"),
     lamp: `<rect x="7.5" y="8" width="9" height="10" rx="2"/>` + P("M9 8l1-3.5h4l1 3.5M10 18v2.5h4V18M12 11v3.5M8.5 4.5a4 3 0 0 1 7 0"), // 探險燈（兌換所，決定 0032）
   };
   ICONS.cellar = ICONS.stairs;
   ICONS.calendar = `<rect x="4" y="5.5" width="16" height="14.5" rx="2"/>` + P("M4 10.5h16M8.5 3.5v4M15.5 3.5v4M8 14h2M12 14h2M16 14h.5M8 17h2M12 17h2"); // 簽到日曆（11-09）
+  // ---------- 彩色的小圖示（24×24；翊文 11-10：「週章…兌換所 icon都要是彩色的SVG」） ----------
+  const CK = "#3A2A1A";
+  const CICONS = {
+    // 兌換所：紅白條紋的遮雨棚、木頭的店面、櫃台上壹枚金色的週章
+    shop: `<path d="M3 9.5L4.6 4h14.8L21 9.5z" fill="#F7EBD0" stroke="${CK}" stroke-width="1.1" stroke-linejoin="round"/>` +
+      `<path d="M6.4 4L5.6 9.5M9.8 4l-.4 5.5M14.2 4l.4 5.5M17.6 4l.8 5.5" stroke="#C63D2F" stroke-width="2.2"/>` +
+      `<path d="M3 9.5a2 2 0 0 0 4.5 0 2 2 0 0 0 4.5 0 2 2 0 0 0 4.5 0 2 2 0 0 0 4.5 0" fill="#C63D2F" stroke="${CK}" stroke-width="1.1" stroke-linejoin="round"/>` +
+      `<rect x="4.5" y="11.6" width="15" height="9" rx="1" fill="#B9824A" stroke="${CK}" stroke-width="1.1"/>` +
+      `<rect x="6.5" y="13.2" width="5" height="7.4" fill="#6B4426" stroke="${CK}" stroke-width=".9"/>` +
+      `<circle cx="16" cy="15.6" r="2.6" fill="#F2C94C" stroke="#8E6516" stroke-width=".9"/><path d="M16 14.3l.4.9 1 .1-.7.7.2 1-.9-.5-.9.5.2-1-.7-.7 1-.1z" fill="#FFF6D0"/>`,
+    // 週章：紅色的綬帶、金色的獎章、中間壹顆星
+    stamp: `<path d="M8 2.5l3 7h2l3-7z" fill="#C63D2F" stroke="${CK}" stroke-width="1" stroke-linejoin="round"/><path d="M10.4 2.5l1.6 4 1.6-4" fill="#3F6E8E" stroke="${CK}" stroke-width=".8" stroke-linejoin="round"/>` +
+      `<circle cx="12" cy="15" r="6.6" fill="#E3B341" stroke="#8E6516" stroke-width="1.1"/><circle cx="12" cy="15" r="4.9" fill="#F7D774" stroke="#B88A1E" stroke-width=".8"/>` +
+      `<path d="M12 11.8l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z" fill="#B5551A"/><path d="M7.6 12.6a5 5 0 0 1 2.6-2.7" stroke="#FFF6D0" stroke-width="1" stroke-linecap="round" fill="none"/>`,
+  };
+  const cicon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${CICONS[name] || ""}</svg>`;
   const icon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || `<circle cx="12" cy="12" r="4"/>`}</svg>`;
 
   // ---------- 平面圖：每間房是可以點的區塊（11 間 + 大廳） ----------
@@ -942,7 +959,7 @@ export const ART = (() => {
 
   return {
     frog, headTop, pillow, exhibit, exhibitDiffs, floorPlan, icon, stamp, silhouette, COLORS, RARITY_COLORS, TINT,
-    hatSpot, cellarScene, jobBadge, altar, altarSpots, gear, GEAR,
+    hatSpot, cellarScene, jobBadge, altar, altarSpots, gear, GEAR, cicon, CICONS,
     holidayIcon, standDeco, nameCorner, // 第 4 版（11-09，決定 0030）：節日的小圖示、展台裝飾、名牌框
     // 登記表：設計者加新選項時可以直接加一筆（例如 ART.parts.HATS.牛仔帽 = { h: 30, svg: h => "..." }）
     parts: { POSE, MOODS, HATS, AURA, PSIZE, PFILL, PMAT, EXHIBITS, ICONS, BGS, ITEMS, GRAD, SCENES, JOBS, HOL },
