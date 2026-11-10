@@ -67,7 +67,7 @@ T("借了 repayAfterMin 分鐘之後才能還（照伺服器的時間）", G => 
   assert.ok(G.casRepay(w, null, D, false, t0 + C.repayAfterMin * 60000).ok);
 });
 
-T("到期沒還：隔天換日直接扣，扣到負的也扣；額度退回；記下欠款從哪天開始；有壹句 Yuga 來收錢", G => {
+T("到期沒還：隔天換日直接扣，扣到負的也扣；額度降 latePct%；記下欠款從哪天開始；有壹句 Yuga 來收錢", G => {
   const C = G.NUM.casino.loan, w = mk(G);
   G.casBorrow(w, 500000, D);
   w.loan.limit = C.limit * 3;
@@ -80,7 +80,7 @@ T("到期沒還：隔天換日直接扣，扣到負的也扣；額度退回；�
   assert.strictEqual(w.loan.list.length, 0);
   assert.strictEqual(w.chips, 1000 - owe);
   assert.ok(w.chips < 0);
-  assert.strictEqual(w.loan.limit, C.limit);
+  assert.strictEqual(w.loan.limit, Math.floor(C.limit * 3 * (100 - C.latePct) / 100), "降 latePct%，不是退回壹開始的");
   assert.strictEqual(w.loan.late, 1);
   assert.strictEqual(w.loan.debtSince, plus(D, C.days + 1), "從到期的隔天算");
   assert.strictEqual(G.casLoanView(w, late).debtDays, 1);
