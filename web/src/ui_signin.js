@@ -262,7 +262,7 @@ function lobbySignin() {
       h("b", null, pv.already ? `今天簽到了（累計第 ${pv.n} 次）` : `今天還沒簽到（第 ${pv.n} 次：${rewardText(pv.reward)}）`),
       h("span", null, `這週 ${pv.week.n}／7`, pv.week.item ? `・全簽到拿「${limitedInfo(pv.week.item.id).name}」` : "", pv.week.claimed ? "（拿到了）" : "")),
     hol ? holChip(hol) : null,
-    pv.already ? btn([icon("calendar"), " 簽到日曆"], () => openCalendar(), "small ghost ls-btn") : btn([icon("check"), " ", SIGNIN_TEXT.sign], () => openSignin(), "primary small ls-btn"));
+    pv.already ? btn([icon("calendar"), " 簽到日曆"], () => openCalendar(), "small ghost ls-btn") : btn([icon("check"), " ", SIGNIN_TEXT.sign], () => openSignin(), "primary small ls-btn sl-nudge")); // 還沒簽到就跟「打開每週劇情」壹樣每 4 秒亮壹下（翊文 11-10）
 }
 // 大廳的簽到條換成現在的（換日、簽完）；不在大廳就不用
 export function refreshLobbySign() {

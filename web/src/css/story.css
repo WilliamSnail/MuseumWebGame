@@ -179,7 +179,7 @@
 .sp-t-yuga { display: block; opacity: .9; }
 .sp-t-yuga b { letter-spacing: .04em; }
 
-/* 大廳「打開每週劇情」：每 4 秒亮一下（還有事做才有 sl-nudge，動畫減量時不閃） */
+/* 大廳「打開每週劇情」、「今天還沒簽到」的簽到鈕：每 4 秒亮一下（還有事做才有 sl-nudge，動畫減量時不閃） */
 .btn.sl-nudge { animation: sl-nudge 4s ease-in-out infinite; }
 @keyframes sl-nudge {
   0%, 72%, 100% { box-shadow: 0 0 0 0 rgba(232, 197, 110, 0); filter: brightness(1); }

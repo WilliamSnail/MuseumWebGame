@@ -28,6 +28,13 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "signin-nudge", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "還沒簽到，簽到鈕會亮壹下", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["小改動", ["大廳的「蓋章簽到」在今天還沒簽到的時候，會跟「打開每週劇情」壹樣每隔幾秒亮壹下，比較不會忘記。簽完就不亮了。設定裡開了「動畫減量」就不會閃。"]],
+    ],
+  },
+  {
     id: "yuga-errands-borrow", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "Yuga Bot 有時會交代你事情；沒錢可以借", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
