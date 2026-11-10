@@ -1005,6 +1005,8 @@ export function refreshQuirkLeft() {
   const now = nowMs();
   $$(".qk-left[data-until]").forEach(el => { const t = quirkLeftText({ until: Number(el.dataset.until) }, el.dataset.fmt, now); if (el.textContent !== t) el.textContent = t; });
 }
+// 裝備的圖（兌換所、館長室名片、館友證共用；圖在 art.js 的 GEAR）
+export const gearArt = id => h("span", { class: "gear-art", html: ART.gear(id), "aria-hidden": "true" });
 // 卡片（得到時蓋的、狀態列點開的、館長室名片上的）：效果、怎麼治好、做到哪、還有幾天自己好
 export function quirkCard(q) {
   const t = QUIRK_TASK_TEXT[q.task];

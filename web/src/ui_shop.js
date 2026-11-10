@@ -13,7 +13,7 @@ import { isFree, todayStr } from "../../shared/logic.js";
 import { limitedInfo, ownsLimited } from "../../shared/signin.js";
 import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, ownsGear, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear, wornGear } from "../../shared/shop.js";
 import { storyState } from "../../shared/story.js";
-import { ADDONS, planPortrait, P, PANELS, UI, btn, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "./ui_core.js";
+import { ADDONS, planPortrait, P, PANELS, UI, btn, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "./ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
@@ -24,7 +24,6 @@ import { openCoopTrial } from "./ui_coop.js";
 
 const on = () => !!(P && !isFree(P));
 const fill = (s, o) => Object.keys(o).reduce((t, k) => t.split("{" + k + "}").join(String(o[k])), s);
-const GEAR_ICON = { magnifier: "magnifier", coin: "dice", apron: "pillow", abacus: "commission", amulet: "shield", gloves: "hand", lamp: "lamp", notebook: "book" };
 const costStamps = (verb, n) => `${verb}（花 ${n} 枚週章）`;
 const sec = (title, ...kids) => h("section", { class: "sp-sec" }, h("h3", null, title), ...kids);
 const stampsHave = need => { const have = storyState(P).stamps; return h("p", { class: "shp-have" + (need != null && have < need ? " short" : "") }, `你現在有 ${have} 枚週章`, need != null && have < need ? `，還差 ${need - have} 枚` : ""); };
@@ -91,7 +90,7 @@ function gearCard(it, draw) {
     snd("click"); persist(); updateStatus(); draw();
   };
   return h("li", { class: "shp-gear t-" + it.tier + (worn ? " worn" : "") + (own ? " own" : "") },
-    h("span", { class: "shp-ic" }, icon(GEAR_ICON[it.id] || "star")),
+    gearArt(it.id),
     h("span", { class: "shp-body" }, h("b", null, it.name, worn ? h("small", { class: "shp-tag" }, "穿著") : null), h("small", null, it.desc)),
     h("span", { class: "shp-act" }, own
       ? btn(worn ? "脫下來" : "穿上", toggle, worn ? "small" : "primary small")
@@ -208,7 +207,7 @@ function sheetGear() {
   if (!on()) return null;
   const worn = wornGear(P).map(g => gearInfo(g.id));
   return h("div", { class: "sheet-gear placard" }, h("div", { class: "pl-title" }, `裝備 ${worn.length}／${NUM.shop.gearWorn}`),
-    worn.length ? h("ul", { class: "sg-worn" }, worn.map(it => h("li", null, icon(GEAR_ICON[it.id] || "star"), h("span", null, h("b", null, it.name), h("small", null, it.desc)),
+    worn.length ? h("ul", { class: "sg-worn" }, worn.map(it => h("li", null, gearArt(it.id), h("span", null, h("b", null, it.name), h("small", null, it.desc)),
       btn("脫下來", () => { takeOffGear(P, it.id); snd("click"); persist(); updateStatus(); rerender(); }, "small ghost"))))
       : h("p", { class: "sub" }, "還沒有穿東西。用週章到兌換所換。"),
     btn([icon("medal"), " 到兌換所"], () => openShop(), "small"));
