@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "jobchips", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "委託的賞金調了：靈感少壹點，多壹點籌碼", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "**委託給的靈感少了大約四分之壹**：例如精準委託從 12 變成 9。委託單上寫的就是會拿到的。",
+        "**登入的館友交件會多拿到壹點籌碼**：壹張 1,000～2,000 枚，壹天最多 5 張。籌碼在 Hamachi 賭場用。",
+        "今天已經在委託板上的那幾張照舊，明天換新的才是新的數字。",
+      ]],
+    ],
+    cta: { label: "去委託櫃台", room: "commission" },
+  },
+  {
     id: "hub", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "大廳換了排法：今天的事壹眼看完", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

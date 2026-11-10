@@ -26,6 +26,7 @@ import { CAS_LIVE } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
+import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventsFromWeeks } from "./shared/events.js";
@@ -203,6 +204,11 @@ export const casino = onCall(async req => {
     case "cellarFind": return play(req, me, {}, ctx => {
       const r = casCellarFind(ctx.w, ctx.house, d.room, ctx.day);
       return r.ok ? { ok: true, found: r.found, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
+    });
+    // 交委託拿籌碼（決定 0062）：畫面只說交了今天的哪幾張，給多少、一天幾張、同一張不重複都是這裡算
+    case "job": return play(req, me, {}, ctx => {
+      const r = casJobChips(ctx.w, ctx.house, d.slots, ctx.day);
+      return r.ok ? { ok: true, found: r.found, n: r.n, chips: ctx.w.chips } : no(r);
     });
     // 拚經濟（決定 0052）：結果、莊家的錢、錢包都在這個交易裡算；一人一天幾次、連點都在這裡擋（交易一個一個排隊，第二下看到的已經是新的次數）。畫面只拿到結果和要跳的字
     case "econ": return play(req, me, {}, actEcon);
