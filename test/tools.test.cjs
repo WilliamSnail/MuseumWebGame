@@ -10,6 +10,7 @@ const { nextDecision, safeName, logText, decisionText } = require("../tools/new_
 const { editorOf } = require("../tools/edit_lib.cjs");
 const { parsePlan, planResult } = require("../tools/apply_edits.cjs");
 const { collectSvgs } = require("../tools/svg_preview.cjs");
+const { parseSizes, localOnly, shotName } = require("../tools/shot.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };
@@ -175,6 +176,14 @@ T("svg：找得到壹天、整週裡每幅 svg，標出在哪、叫什麼", () =
   assert.ok(all[0].where.includes("d1.json") && all[0].where.includes("works[0]"));
   assert.strictEqual(collectSvgs([path.join(dir, "d2.json")]).length, 1);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+T("shot：大小看得懂、只准 localhost、檔名帶畫面和大小", () => {
+  assert.deepStrictEqual(parseSizes("812x375, 375x812"), [{ w: 812, h: 375 }, { w: 375, h: 812 }]);
+  assert.strictEqual(parseSizes().length, 2, "沒給就照電腦和手機橫拿");
+  assert.throws(() => parseSizes("big"), /寬x高/);
+  assert.throws(() => localOnly("https://pepe-museum.web.app/"), /localhost/);
+  assert.ok(localOnly("http://localhost:5287/#lobby").includes("#lobby"));
+  assert.strictEqual(shotName("http://localhost:5287/#office:upgrades", { w: 812, h: 375 }), "shot_office_upgrades_812x375.png");
 });
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);
 process.exit(fail ? 1 : 0);

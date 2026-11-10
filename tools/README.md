@@ -12,7 +12,7 @@
 
 | 要做什麼 | 指令 |
 |---|---|
-| 上線：本機測試 → commit → 併 main → 推 → 開 PR → 等 CI → 合併 → 等部署 | `npm run ship -- --title "標題" --body "內容"`（放背景跑；`--no-merge` 不合併） |
+| 上線：本機測試 → commit → 併 main → 推 → 開 PR → 等 CI → 合併 → 等部署 → 回到 main 拉最新 | `npm run ship -- --title "標題" --body "內容"`（放背景跑；`--no-merge` 不合併） |
 | 開本機測試環境：模擬器、規則、網頁 | `npm run local -- --set 8 --port 5288`（放背景跑；`--stop` 關掉；測試請換到還沒開的 `--set`，不然會測到別的分支） |
 | 測限時活動：把一場移到 90 秒後開始 | `npm run local -- --event-now double11`（測完 `git checkout` 還原，不要 commit） |
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |
@@ -27,6 +27,7 @@
 | 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令、整手 21 點（按鈕、seq、別人的按鈕）、遊戲和 Discord 接續、次數共用、存檔、outbox（冷卻、失敗、沒 token）（不連真的 Discord，模擬器的 Function 把「會發的訊息」寫進 `discordTestSent`） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/discord_fake.cjs --set 5`（`--show` 印幾則回覆看長相）；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /）。**改了 `shared/` 或 `functions/` 要重開模擬器**（規則是開的時候才複製進去的） |
 | 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |
 | **用眼睛看今天新畫的 `svg`**：壹天或整週的畫排成壹張 PNG（太暗、跑版、看不出是什麼，這裡看得出來），再用 Read 打開看 | `npm run svg -- content/weeks/2026-W46/d2.json`（給資料夾就是整週；`--out x.png`；找不到 Edge／Chrome 只印 HTML） |
+| **不開瀏覽器分頁，把畫面照成 PNG**：壹次照電腦和手機橫拿（打開就看得到的樣子；要按按鈕、要登入的還是用瀏覽器走） | 先開著 `npm run local`，再 `npm run shot -- "http://localhost:5287/#lobby"`（`--size 800x1000,375x812`、`--out 資料夾`；只准 localhost），用 Read 打開 PNG 看 |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 
 **不要用腳本去改另壹支腳本，也不要把大段文字塞進程式字串或 shell 指令**（翊文 11-09：「修補腳本因為跳脫字元失敗，有沒有辦法以後不要發生」）。文字放純文字檔：改現有檔用 `npm run edits`；`doc:new` 的 JSON 用 Write 工具直接寫檔，或用 `JSON.stringify` 產生。`ship` 的訊息長就用 `--body-file`。
