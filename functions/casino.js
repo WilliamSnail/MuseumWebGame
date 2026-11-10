@@ -21,7 +21,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -174,10 +174,20 @@ export const actPack = (ctx, d) => {
   return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
 };
 // 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino_wallet.js）
+// 決定 0064 之後是有利息的借款：Discord 沒有參數，借 NUM.casino.loan.discord 這麼多（casRelief）
 export const actRelief = ctx => {
-  if (ctx.round && ctx.round.state === "playing") return { ok: false, reason: "先打完這壹手" };
-  const r = casRelief(ctx.w, ctx.day);
+  const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
+};
+// 遊戲的「跟 Yuga 借」：借多少玩家選（d.amt，"max" ＝借滿），額度、利息、幾天內還都在 casBorrow
+export const actBorrow = (ctx, d) => {
+  const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
+  return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
+};
+// 還壹筆（d.id；沒給就還最早到期的）
+export const actRepay = (ctx, d) => {
+  const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
+  return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 export const actBuy = (ctx, d) => {
   const r = casBuy(ctx.w, ctx.house, d.item, ctx.day, undefined, ctx.P);
@@ -220,13 +230,16 @@ export const casino = onCall(async req => {
     case "open": {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);
-        return shape(ctx, { legacy: peek, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
+        const loanNotes = casLoanTakeNotes(ctx.w); // 「Yuga 來收錢了」：進賭場時說壹次（決定 0064）
+        return shape(ctx, { legacy: peek, loanNotes, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
       });
     }
     case "deal": return play(req, me, { save: true }, ctx => actDeal(ctx, d));
     case "hit":
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, actRelief);
+    case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
+    case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
     case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {

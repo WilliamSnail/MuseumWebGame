@@ -64,6 +64,14 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 /* 沒錢了的借錢提示：每個頁籤上方壹條 */
 .cas-borrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 2px 0; padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,.3); border: 1px solid rgba(231,200,120,.6); color: #FFE9B0; }
 .cas-borrow-t { flex: 1 1 220px; min-width: 0; line-height: 1.5; font-size: .9375rem; }
+/* 跟 Yuga 借（決定 0064）：上面壹行說明和借的按鈕，下面列沒還的 */
+.cas-borrow { flex-direction: column; align-items: stretch; }
+.cas-borrow-row { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+.cas-borrow-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.cas-borrow.debt { border-color: rgba(220,90,70,.8); background: rgba(90,20,14,.45); }
+.cas-loans { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: .875rem; }
+.cas-loans li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px dashed rgba(255,255,255,.15); }
+.cas-loans li.today b { color: #FFB59A; }
 
 /* 清單：餐車、換小獎、成就、財產 */
 .cas-menu, .cas-list, .cas-packs, .cas-odds { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }

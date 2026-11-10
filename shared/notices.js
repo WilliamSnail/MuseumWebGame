@@ -28,6 +28,22 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "loan", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
+    title: "跟 Yuga 借籌碼要算利息了", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "**Hamachi 賭場每壹頁的上方都有「跟 Yuga 借」**，平常就看得到，有錢也能借。",
+        "**每筆利息 10%**：借 10 萬，要還 11 萬。",
+        "**3 天內要還**：借的那天加 3 天，那天結束前還清。按那筆旁邊的「還」。",
+        "**壹開始可以借到 100 萬**。準時還清壹筆，下次可以多借 20 萬。",
+        "**到期沒還，Yuga 會直接從籌碼扣**，扣到變負的也照扣，額度也退回 100 萬。",
+        "原本「沒錢了免費補到 2 萬」拿掉了。每天的免費大禮包照舊。",
+        "Discord 的 /pepe-借錢 壹次借 10 萬，還錢要到遊戲裡還。",
+      ]],
+    ],
+    cta: { label: "去賭場", panel: "casino" },
+  },
+  {
     id: "cost-up", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "做佩佩、做抱枕多花壹點靈感", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

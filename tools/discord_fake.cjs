@@ -649,34 +649,31 @@ async function all() {
   });
   // ---- 沒錢可以跟 Yuga 借（決定 0051 補）----
   const setChips = async (u, chips) => { const w = await walletOf(u.uid); w.chips = chips; await fsSet(`casinoWallets/${u.uid}`, { data: JSON.stringify(w) }); };
-  await check("/pepe-借錢：還有籌碼不能借；沒錢了借到 reliefTo、有成就；跟遊戲共用一天的次數；借完說今天借完了；只有本人看得到", async () => {
-    const C = NUMS.casino, u = await bindNew("借錢阿花");
-    const rich = await say("/pepe-借錢", u.did); assert.strictEqual(rich.flags, 64); has(rich.text, "你還有籌碼"); hasNot(rich.text, "理智", "@");
-    await setChips(u, 500);
-    const r = await say("/pepe-借錢", u.did); assert.strictEqual(r.flags, 64, r.text); has(r.text, "你沒錢了喔", "Yuga 借你", "今天還能借 " + (C.reliefPerDay - 1) + " 次", "你現在有 " + C.reliefTo.toLocaleString("en-US") + " 籌碼"); hasNot(r.text, "理智", "@");
-    let w = await walletOf(u.uid); assert.strictEqual(w.chips, C.reliefTo); assert.strictEqual(w.rel.n, 1); assert.ok(w.ach.relief, "成就「Yuga 的朋友」");
+  await check("/pepe-借錢（決定 0064）：有錢也能借，壹次借 loan.discord，記壹筆有利息的；跟遊戲共用額度；欠款中也能借；只有本人看得到", async () => {
+    const L = NUMS.casino.loan, u = await bindNew("借錢阿花");
+    const r = await say("/pepe-借錢", u.did); assert.strictEqual(r.flags, 64, r.text); has(r.text, "Yuga 借你", "利息"); hasNot(r.text, "理智", "@");
+    let w = await walletOf(u.uid); assert.strictEqual(w.loan.list.length, 1); assert.strictEqual(w.loan.list[0].amt, L.discord); assert.strictEqual(w.loan.list[0].owe, Math.ceil(L.discord * (100 + L.interestPct) / 100)); assert.ok(w.ach.relief, "成就「Yuga 的朋友」");
     has(r.text, "解鎖");
-    await setChips(u, 0);
-    const g = await u.call("casino", { act: "relief" }); assert.ok(g.ok && g.result.ok !== false, JSON.stringify(g)); // 遊戲借第 2 次
-    assert.strictEqual((await walletOf(u.uid)).rel.n, 2);
-    await setChips(u, 0);
-    const none = await say("/pepe-借錢", u.did); assert.strictEqual(none.flags, 64); has(none.text, "今天借完了"); assert.strictEqual((await walletOf(u.uid)).chips, 0, "借完了就不再補");
-    assert.strictEqual((await u.call("casino", { act: "relief" })).result.ok, false, "遊戲這邊也被擋");
+    const g = await u.call("casino", { act: "borrow", amt: "max" }); assert.ok(g.ok && g.result.ok !== false, JSON.stringify(g)); // 遊戲借滿
+    w = await walletOf(u.uid); assert.strictEqual(w.loan.list.reduce((a, x) => a + x.amt, 0), L.limit, "共用壹個額度");
+    const full = await say("/pepe-借錢", u.did); assert.strictEqual(full.flags, 64); has(full.text, "額度用完了");
+    const back = await u.call("casino", { act: "repay" }); assert.ok(back.ok && back.result.ok !== false, JSON.stringify(back));
+    assert.strictEqual((await walletOf(u.uid)).loan.limit, L.limit + L.limitStep, "準時還清，額度變高");
+    await setChips(u, -100);
+    const debt = await say("/pepe-借錢", u.did); has(debt.text, "Yuga 借你"); // 欠款中也能借（翊文 11-10）
   });
   await check("/pepe-借錢：21 點打到一半不能借（先打完）；打完才能借", async () => {
     const u = await bindNew("借錢打牌"); const r = await startHand(u, "1000");
-    await setChips(u, 300); const x = await say("/pepe-借錢", u.did); assert.strictEqual(x.flags, 64); has(x.text, "先打完"); assert.strictEqual((await walletOf(u.uid)).rel.n, 0);
+    await setChips(u, 300); const x = await say("/pepe-借錢", u.did); assert.strictEqual(x.flags, 64); has(x.text, "先打完"); assert.strictEqual((await walletOf(u.uid)).loan.list.length, 0);
     await finishHand(u, r); await setChips(u, 300); has((await say("/pepe-借錢", u.did)).text, "Yuga 借你");
   });
-  await check("買不起、下注不夠：借得到就多一行「打 /pepe-借錢 跟 Yuga 借」；有錢的人、借完的人、別的失敗都沒有", async () => {
+  await check("買不起、下注不夠：借得到就多一行「打 /pepe-借錢 跟 Yuga 借」；借不到的人、別的失敗都沒有", async () => {
     const u = await bindNew("借錢提醒"); await setChips(u, 500);
     const bj = await say("/pepe-21點 5000", u.did); assert.strictEqual(bj.flags, 64); has(bj.text, "你才沒那麼有錢", "/pepe-借錢"); hasNot(bj.text, "理智");
     const small = await say("/pepe-21點 5", u.did); has(small.text, "最少要下"); hasNot(small.text, "/pepe-借錢");
     const m = await say("/pepe-餐車", u.did), sel = m.comps[0].components[0];
     const buy = await press(sel.custom_id, u.did, { menu: true, values: ["tea"] }); assert.strictEqual(buy.type, 7); has(buy.text, "你沒有錢", "/pepe-借錢");
-    const rich = await bindNew("沒借錢提醒"); const rb = await say("/pepe-21點 2000萬", rich.did); has(rb.text, "你才沒那麼有錢"); hasNot(rb.text, "/pepe-借錢");
-    const used = await bindNew("借完不提醒"); await setChips(used, 100); has((await say("/pepe-借錢", used.did)).text, "Yuga 借你"); await setChips(used, 100); await u.call("casino", { act: "peek" });
-    await setChips(used, 100); has((await say("/pepe-借錢", used.did)).text, "Yuga 借你"); await setChips(used, 100);
+    const used = await bindNew("借完不提醒"); await used.call("casino", { act: "borrow", amt: "max" }); await setChips(used, 100);
     const ub = await say("/pepe-21點 5000", used.did); has(ub.text, "你才沒那麼有錢"); hasNot(ub.text, "/pepe-借錢");
   });
   await check("斗內給實況主但自己錢不夠：借得到就提醒可以借", async () => {
