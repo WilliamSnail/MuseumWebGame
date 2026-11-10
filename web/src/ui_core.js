@@ -227,8 +227,11 @@ export function buildNav() {
   // 「今天」（翊文 11-10，ui_today.js 登記 PANELS.today）：今天還沒做的事有幾項，數字寫在旁邊
   const todayTab = h("a", { href: "#", class: "nav-link nav-today", "aria-haspopup": "dialog", dataset: { name: "今天" }, onClick: e => { e.preventDefault(); openPanel("today"); } },
     icon("calendar"), h("span", { class: "nl-t" }, "今天"), h("span", { class: "nt-n", "aria-hidden": "true" }));
+  // 「館友證」（11-10，決定 0058，ui_pass.js 登記 PANELS.pass）：封面是證件，翻開是典藏冊
+  const passTab = h("a", { href: "#", class: "nav-link nav-pass", "aria-haspopup": "dialog", dataset: { name: "館友證" }, onClick: e => { e.preventDefault(); openPanel("pass"); } },
+    icon("user"), h("span", { class: "nl-t" }, "館友證"));
   const tabs = NAV_ROOMS.map(roomLink);
-  tabs.splice(1, 0, todayTab, boardTab);
+  tabs.splice(1, 0, todayTab, passTab, boardTab);
   const links = h("nav", { class: "nav-links", "aria-label": "房間" }, tabs);
   const sound = h("button", { class: "icon-btn", id: "soundBtn", type: "button", "aria-label": "聲音", onClick: () => { SAVE.settings.muted = !SAVE.settings.muted; applySettings(); persist(); } });
   // 選單（翊文 11-08：「可以做漢堡菜單，把設定和公告相關的放進去」）。每個寬度都有，放在右上角。
@@ -240,7 +243,7 @@ export function buildNav() {
   const item = (cls, ic, label, fn) => h("button", { type: "button", class: "md-item " + cls, onClick: () => { toggleMenu(false); fn(); } }, icon(ic), h("span", { class: "md-t" }, label), h("span", { class: "md-badge" }));
   const roomItem = ([id, name]) => h("a", { href: "#", class: "nav-drawer-link md-item", dataset: { room: id, name }, onClick: e => { e.preventDefault(); toggleMenu(false); navTo(id); } }, icon(NAV_ICON[id] || "sparkle"), h("span", { class: "md-t" }, name), freshTag("nav-fresh"));
   const drawer = h("div", { class: "nav-drawer", id: "navDrawer", hidden: true, role: "region", "aria-label": "選單" },
-    h("div", { class: "md-group" }, item("md-today", "calendar", "今天要做的事", () => openPanel("today"))),
+    h("div", { class: "md-group" }, item("md-today", "calendar", "今天要做的事", () => openPanel("today")), item("md-account", "user", "館友證和典藏冊", () => openPanel("pass"))),
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
@@ -251,7 +254,7 @@ export function buildNav() {
     h("div", { class: "md-group md-rooms" }, Object.entries(ROOM_NAMES).filter(([id]) => id !== "settings").map(roomItem)),
     // 館友和帳號（M1，登入了才出現）
     h("p", { class: "md-h md-net", hidden: true }, "館友與帳號"),
-    h("div", { class: "md-group md-net", hidden: true }, item("md-friends", "users", "館友", () => openPanel("friends")), item("md-switch", "refresh", "換參觀者", () => go("title", {}, { action: false })), item("md-account", "user", "我的帳號", () => openPanel("account"))),
+    h("div", { class: "md-group md-net", hidden: true }, item("md-friends", "users", "館友", () => openPanel("friends")), item("md-switch", "refresh", "換參觀者", () => go("title", {}, { action: false }))),
     ADDONS.adminMenu ? ADDONS.adminMenu(item) : null, // 管理員：只有管理員看得到（ui_admin.js，決定 0033）
     h("p", { class: "md-h" }, "設定"),
     h("div", { class: "md-group" }, roomItem(["settings", ROOM_NAMES.settings])));
@@ -507,11 +510,11 @@ export function titleTag(t, cls) {
 }
 // 這位館友（id）現在戴的稱號；名單還沒讀到、沒有就是 null
 export const titleOfId = id => { const p = NET.roster.find(x => x.id === id); return p && p.title ? p.title : null; };
-// 選單裡的「館友（N 人在線）」「我的帳號（暱稱）」：登入了才出現
+// 選單裡的「館友（N 人在線）」：登入了才出現。「館友證和典藏冊（暱稱）」每個人都有（11-10，決定 0058）
 export function updateNetMenu() {
   const on = !!UI.net;
   $$(".md-net").forEach(el => { el.hidden = !on; });
-  if (!on) return;
+  if (!on) { const a0 = $(".md-account"); if (a0 && $(".md-badge", a0)) $(".md-badge", a0).textContent = ""; return; }
   const n = NET.roster.filter(p => !p.me && p.status !== "offline").length;
   const f = $(".md-friends"), a = $(".md-account");
   if (f) { $(".md-badge", f).textContent = n ? n + " 人在線" : ""; f.classList.toggle("has-badge", n > 0); }

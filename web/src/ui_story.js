@@ -214,9 +214,9 @@ export function openStory(o = {}) {
   snd("flip");
 }
 const sec = (title, ...kids) => h("section", { class: "sp-sec" }, h("h3", null, title), ...kids);
-// 疑點簿：只列問題和出處，不解釋（之後搬進典藏冊「看懂的事」那頁，決定 0058）
+// 疑點簿：只列問題和出處，不解釋（典藏冊「書和看懂的事」那頁也放這壹份，ui_pass.js，決定 0058）
 const CB_KIND = { book: "書", room: "房間", work: "畫" };
-function casePane() {
+export function casePane() {
   const v = casebookView(P, STORY_LIB, todayStr());
   if (!v.weeks.length) return h("p", { class: "nb-empty" }, "疑點簿還是空的。讀書、看今日特展、走地下收藏庫的時候，有些地方會讓你多看壹眼。");
   return [h("p", { class: "sp-note cb-lead" }, "這裡只記問題，和你在哪裡多看了壹眼。答案不在這裡。"),

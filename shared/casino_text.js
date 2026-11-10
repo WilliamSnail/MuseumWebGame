@@ -199,7 +199,7 @@ export const CAS_LIVE = {
   until: "到 {t} 下播",
   you: "你正在實況",
   taken: "{name} 正在實況，等對方下播再接手",
-  invisible: "隱身的時候不能開播：大家看不到你在線上。先到「我的帳號」關掉隱身",
+  invisible: "隱身的時候不能開播：大家看不到你在線上。先到「館友證」關掉隱身",
   already: "你已經在實況了",
   notYou: "你不是現在的實況主",
   noWho: "沒辦法開播",
