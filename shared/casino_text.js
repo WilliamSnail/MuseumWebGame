@@ -94,7 +94,7 @@ export const CAS_TEXT = {
   loanNone: "沒有這筆借款",
   loanPoor: "籌碼不夠還這筆（要 {owe}）",
   loanTooSoon: "借了 {n} 分鐘之後才能還（還要等 {left} 分鐘）",
-  loanLate: "Yuga Bot 來收錢了：{day} 借的那筆到期沒還，從籌碼扣了 {owe}。額度退回 {limit}",
+  loanLate: "Yuga Bot 來收錢了：{day} 借的那筆到期沒還，從籌碼扣了 {owe}。額度降到 {limit}",
   loanDue: "{due} 前還 {owe}",
   loanDueToday: "今天要還 {owe}",
   reliefPoor: "可以借：上面的「Yuga Bot 銀行」",

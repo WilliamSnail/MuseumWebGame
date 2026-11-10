@@ -167,7 +167,7 @@ const okDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 function casLoanFix(w) {
   const L = w.loan, base = casLoanNew();
   for (const k of Object.keys(base)) if (L[k] == null) L[k] = base[k];
-  L.limit = Math.max(NUM.casino.loan.limit, Math.floor(casNz(L.limit, NUM.casino.loan.limit)));
+  L.limit = Math.max(0, Math.floor(casNz(L.limit, NUM.casino.loan.limit))); // 逾期會往下降，可以低於壹開始的 100 萬
   L.seq = Math.max(0, Math.floor(casNz(L.seq)));
   L.ok = Math.max(0, Math.floor(casNz(L.ok))); L.late = Math.max(0, Math.floor(casNz(L.late)));
   L.list = (Array.isArray(L.list) ? L.list : []).filter(x => casIsObj(x) && Number.isFinite(+x.amt) && +x.amt > 0 && okDay(x.day) && okDay(x.due))
@@ -186,7 +186,7 @@ export const casLoanOwe = amt => Math.ceil(amt * (100 + NUM.casino.loan.interest
 export const casLoanOpen = w => w.loan.list.reduce((s, x) => s + x.amt, 0);
 // 還能借多少
 export const casLoanLeft = w => Math.max(0, w.loan.limit - casLoanOpen(w));
-// 換日：到期（今天 > due）沒還的，從籌碼直接扣，扣到負的也扣；額度退回壹開始的。籌碼變負的記下哪天開始
+// 換日：到期（今天 > due）沒還的，從籌碼直接扣，扣到負的也扣；每扣壹筆額度降 latePct%。籌碼變負的記下哪天開始
 export function casLoanRoll(w, day) {
   const L = w.loan;
   if (!okDay(day)) return [];
@@ -194,7 +194,7 @@ export function casLoanRoll(w, day) {
   late.forEach(x => {
     w.chips -= x.owe;
     L.late++;
-    L.limit = NUM.casino.loan.limit;
+    L.limit = Math.floor(L.limit * (100 - NUM.casino.loan.latePct) / 100);
     L.notes.push(casFill(CAS_TEXT.loanLate, { day: x.day.slice(5), owe: casNum(x.owe), limit: casNum(L.limit) }));
   });
   if (late.length) { L.list = L.list.filter(x => !late.includes(x)); L.notes = L.notes.slice(-5); }
