@@ -122,3 +122,8 @@
 /* 有新的（今日特展）：右上角壹塊「新」 */
 .hub-tile { position: relative; }
 .hub-tile .fresh-tag.corner { position: absolute; top: -4px; right: -3px; }
+/* 「今天」還有事沒做：金色、每 4 秒亮壹下，跟「每週劇情」那顆壹樣（翊文 11-10）。都做完就回到暗的 */
+.hub-today:not(.done) { color: #2A1A0C; background: linear-gradient(180deg, #EED79C, #C9A55A); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); animation: sl-nudge 4s ease-in-out infinite; }
+.hub-today:not(.done) small { color: #4A3414; font-weight: 600; }
+.hub-today:not(.done):hover, .hub-today:not(.done):focus-visible { background: linear-gradient(180deg, #F6E3B0, #D4B26A); }
+body.reduce-motion .hub-today { animation: none; }
