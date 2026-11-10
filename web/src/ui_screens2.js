@@ -125,7 +125,7 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
+  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。登入的館友交件還會拿到壹點籌碼。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
@@ -165,6 +165,7 @@ export async function autoDeliverFlow(b) {
   const res = deliverAll(P, plan);
   if (!res.results.length) { snd("error"); note("委託換新了，再按壹次看看。", "bad"); rerender(); return; }
   snd("stamp");
+  if (ADDONS.jobChips) ADDONS.jobChips(res.results.map(x => x.c.id)); // 交委託拿壹點籌碼（決定 0062）
   applyBodyState(); updateStatus(); persist(); actionTick();
   if (UI.screen === "commission") rerender(); // 委託單蓋上「完成」、按鈕的張數跟著變
   await autoSummary(res);
@@ -202,7 +203,7 @@ export function noteCard(c, i) {
     c.intro ? h("p", { class: "nc-intro" }, ptNode(c.intro)) : null,
     h("p", { class: "nc-text" }, ptNode(c.text)),
     h("p", { class: "nc-client" }, `— ${c.client}`),
-    h("p", { class: "nc-reward" }, isFree(P) ? "交件可以收到評語" : `+${c.reward} 靈感${traitHits(P, "deal").map(t => `（${traitTag(t)}）`).join("")}・理智 +${NUM.commissionSan}`), // 嘴甜、不會講價（11-08）
+    h("p", { class: "nc-reward" }, isFree(P) ? "交件可以收到評語" : `+${c.reward} 靈感${traitHits(P, "deal").map(t => `（${traitTag(t)}）`).join("")}・理智 +${NUM.commissionSan}${ADDONS.chipsOn && ADDONS.chipsOn() ? "・壹點籌碼" : ""}`), // 嘴甜、不會講價（11-08）
     c.done ? h("div", { class: "nc-stamp", html: ART.stamp("完成") }) : null,
     c.done ? null : h("p", { class: "nc-drop" }, c.kind === "pillow" ? "把抱枕拖到這裡" : "把佩佩拖到這裡"));
   if (!c.done) placeTarget(card, c.kind === "pillow" ? ["pillow"] : ["pepe"], item => {
@@ -213,6 +214,7 @@ export function noteCard(c, i) {
     }
     if (!r.ok) { snd("error"); note(r.reason, "bad"); card.classList.remove("nope"); void card.offsetWidth; card.classList.add("nope"); return false; }
     snd("stamp");
+    if (ADDONS.jobChips) ADDONS.jobChips([c.id]); // 交委託拿壹點籌碼（決定 0062）
     card.append(h("div", { class: "nc-stamp in", html: ART.stamp("完成") }));
     if (r.reward) FX.floatText(card, `+${r.reward} 靈感`, "good");
     if (r.gain) later(() => FX.floatText(card, `理智 +${r.gain}`, "good"), 350);

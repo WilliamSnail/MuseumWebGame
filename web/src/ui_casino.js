@@ -588,5 +588,20 @@ ADDONS.cellarFind = roomId => {
     note(`${lines[(r.t | 0) % lines.length]}（+${casNum(r.found)} 籌碼）`, "good");
   }).catch(() => {});
 };
+// 交了委託（ui_screens2.js：手動交壹張、壹鍵交件交好幾張）：跟伺服器說交了今天的哪幾張（決定 0062）。給多少是伺服器的事；不等它，連不上就算了
+ADDONS.chipsOn = () => { try { return !!(P && !isFree(P) && UI.net && NET.loggedIn); } catch (e) { return false; } };
+ADDONS.jobChips = ids => {
+  let ask;
+  try {
+    const slots = (ids || []).map(id => String(id).split("#")[1]).filter(Boolean);
+    if (!slots.length || !ADDONS.chipsOn()) return;
+    ask = NET.call("casino", { act: "job", slots });
+  } catch (e) { return; }
+  Promise.resolve(ask).then(r => {
+    if (!r || !r.ok || !(r.found > 0)) return;
+    if (typeof r.chips === "number") setChips(r.chips);
+    note(`委託人順手塞了壹點籌碼給你（+${casNum(r.found)} 籌碼）`, "good");
+  }).catch(() => {});
+};
 NET.on("status", () => { if (NET.state === "online") askChips(); });
 NET.on("logout", () => { chipsAsked = false; setChips(null); });

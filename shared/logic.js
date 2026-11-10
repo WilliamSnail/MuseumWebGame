@@ -929,7 +929,7 @@ export function genPrecise(P, rng, date, slot) {
   const cl = pickOne(CLIENTS, rng);
   const hat = pick.帽子 === "沒有" ? "不戴帽子" : `戴${pick.帽子}`;
   const text = `一隻${pick.心情}的${pick.顏色}佩佩，${hat}，${pick.姿勢}。`;
-  return { id: `${date}#${slot}`, kind: "precise", client: cl.name, note: cl.note, text, need: pick, reward: NUM.reward.precise, comment: pickOne(CLIENT_COMMENTS, rng), done: false };
+  return { id: `${date}#${slot}`, kind: "precise", client: cl.name, note: cl.note, text, need: pick, reward: jobReward(NUM.reward.precise), comment: pickOne(CLIENT_COMMENTS, rng), done: false };
 }
 export function dailyCommissions(P, date = todayStr()) {
   if (P.daily && P.daily.date === date) return P.daily.list;
@@ -945,7 +945,7 @@ export function dailyCommissions(P, date = todayStr()) {
   const second = (Object.keys(P.pepes).length && rng() < 0.4 ? take(["pillow"]) : null) || take(["vague"]);
   const third = take(["riddle"]);
   [second, third].forEach((c, i) => {
-    if (c) list.push(Object.assign({}, c, { id: `${date}#${i + 1}`, src: c.id, reward: c.reward || NUM.reward[c.kind] || 5, done: false }));
+    if (c) list.push(Object.assign({}, c, { id: `${date}#${i + 1}`, src: c.id, reward: jobReward(c.reward || NUM.reward[c.kind] || 5), done: false }));
     else list.push(genPrecise(P, rng, date, i + 1));
   });
   if (hasUp(P, "board")) list.push(extraCommission(P, rng, date, list.length, used, take));
@@ -957,7 +957,7 @@ export function dailyCommissions(P, date = todayStr()) {
 // 升級「委託板加寬」：多一張（模糊或謎語，沒有就精準）
 export function extraCommission(P, rng, date, slot, used, take) {
   const c = take ? take(["vague", "riddle"]) : null;
-  if (c) return Object.assign({}, c, { id: `${date}#${slot}`, src: c.id, reward: c.reward || NUM.reward[c.kind] || 5, done: false });
+  if (c) return Object.assign({}, c, { id: `${date}#${slot}`, src: c.id, reward: jobReward(c.reward || NUM.reward[c.kind] || 5), done: false });
   return genPrecise(P, rng || RNG, date, slot);
 }
 // 白天才買的升級：今天的委託板馬上多一張
@@ -968,7 +968,7 @@ export function ensureBoardSize(P) {
   const used = new Set(normal.map(c => c.src).filter(Boolean));
   const pool = COMMISSION_POOL.filter(c => needSatisfiable(P, c) && !used.has(c.id) && ["vague", "riddle"].includes(c.kind));
   const c = pool.length ? pickOne(pool) : null;
-  const add = c ? Object.assign({}, c, { id: `${P.daily.date}#x`, src: c.id, reward: c.reward || NUM.reward[c.kind] || 5, done: false }) : genPrecise(P, RNG, P.daily.date, "x");
+  const add = c ? Object.assign({}, c, { id: `${P.daily.date}#x`, src: c.id, reward: jobReward(c.reward || NUM.reward[c.kind] || 5), done: false }) : genPrecise(P, RNG, P.daily.date, "x");
   const at = P.daily.list.findIndex(x => x.kind === "line");
   if (at >= 0) P.daily.list.splice(at, 0, add); else P.daily.list.push(add);
 }
@@ -983,7 +983,7 @@ export function lineCommission(P, date) {
     const L = CLIENT_LINES[id], step = P.lines[id] || 0, s = L.steps[step];
     const c = { kind: "line", need: s.need };
     if (!needSatisfiable(P, c)) continue;
-    return { id: `${date}#L`, kind: "line", line: id, step, client: L.name, text: s.text, need: s.need, reward: NUM.lineReward, comment: s.comment, intro: step === 0 ? L.intro : null, done: false };
+    return { id: `${date}#L`, kind: "line", line: id, step, client: L.name, text: s.text, need: s.need, reward: jobReward(NUM.lineReward), comment: s.comment, intro: step === 0 ? L.intro : null, done: false };
   }
   return null;
 }
@@ -1009,6 +1009,8 @@ export function checkDelivery(P, c, item) {
   const ip = itemPick(P, item);
   return matchPepe(c.need, ip.pick, ip.flags);
 }
+// 委託的靈感：照 NUM.rewardPct 打折（決定 0062：少給的那部分改給籌碼，casino_job.js）。產生委託時就算好，委託單上寫的就是拿到的
+export function jobReward(n) { return Math.max(1, Math.round((+n || 0) * NUM.rewardPct / 100)); }
 export function deliver(P, idx, item) {
   const list = dailyCommissions(P, P.day ? P.day.date : todayStr());
   const c = list[idx];
