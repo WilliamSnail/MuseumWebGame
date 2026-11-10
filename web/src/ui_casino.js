@@ -115,6 +115,7 @@ export async function openCasino(o) {
     s.busy = false; draw();
     if (s.tab === "live") liveLoad();
     if (r.legacy) legacyCard(r.legacy);
+    if (Array.isArray(r.loanNotes) && r.loanNotes.length) { say(r.loanNotes); snd("error"); draw(); } // 到期沒還，Yuga 收走了（決定 0064）
   } catch (e) {
     if (S !== s) return;
     m.surface.replaceChildren(h("p", { class: "nb-empty" }, (e && e.message) || "連不上賭場。"));
@@ -141,13 +142,23 @@ function draw() {
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
-// 沒錢了可以借（每個頁籤上方都看得到；規則在 shared/casino_wallet.js 的 casRelief，伺服器 act relief）。打牌打到一半借不了，不顯示
+// 跟 Yuga 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino_wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
+// 每個頁籤上方壹條：還能借多少、借的按鈕；有沒還的就列出來，每筆壹顆「還」。借不了的時候寫原因
 function reliefBar() {
-  const w = S.w, playing = S.round && S.round.state === "playing";
-  if (!w || !w.canRelief || playing) return null;
-  return h("div", { class: "cas-borrow", role: "status" },
-    h("span", { class: "cas-borrow-t" }, fill(CAS_TEXT.reliefTip, { left: w.reliefLeft })),
-    btn("向 Yuga 借籌碼", () => act("relief", {}, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); }), "primary small", { disabled: S.busy ? true : null }));
+  const w = S.w;
+  if (!w || !w.loan) return null;
+  const L = w.loan, playing = !!(S.round && S.round.state === "playing");
+  const why = playing ? CAS_TEXT.loanPlaying : L.why;
+  const off = S.busy ? true : null;
+  const borrow = amt => act("borrow", { amt }, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); });
+  const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`借滿 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
+  return h("div", { class: "cas-borrow" + (w.chips < 0 ? " debt" : ""), role: "region", "aria-label": "跟 Yuga 借" },
+    h("div", { class: "cas-borrow-row" },
+      h("span", { class: "cas-borrow-t" }, why || fill(CAS_TEXT.loanBar, { left: casNum(L.left), limit: casNum(L.limit), pct: L.pct, days: L.days })),
+      opts.length ? h("span", { class: "cas-borrow-acts" }, opts) : null),
+    L.list.length ? h("ul", { class: "cas-loans" }, L.list.map(x => h("li", { class: x.today ? "today" : "" },
+      h("span", null, `${x.day.slice(5)} 借 ${casNum(x.amt)}・`, h("b", null, x.today ? fill(CAS_TEXT.loanDueToday, { owe: casNum(x.owe) }) : fill(CAS_TEXT.loanDue, { due: x.due.slice(5), owe: casNum(x.owe) }))),
+      btn("還", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small ghost", { disabled: off || playing || w.chips < x.owe ? true : null })))) : null);
 }
 
 // ---------- 牌桌 ----------
@@ -175,7 +186,6 @@ function tablePane() {
       btn("要（加牌）", () => move("hit"), "primary", { disabled: S.busy ? true : null }), btn("不要", () => move("stand"), "", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   } else if (!playing && S.shown == null) parts.push(betBox());
-  if (w.chips < NUM.casino.reliefBelow && !playing && !w.canRelief) parts.push(h("p", { class: "cas-relief" }, fill(CAS_TEXT.reliefNone, { n: NUM.casino.dailyPacks })));
   if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
   parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情會好壹點，連輸 ${NUM.casino.streak.loseN} 把理智會掉壹點（平手不算，每天有上限）。`));
   return parts;

@@ -110,16 +110,12 @@ T("打包：copy_shared 只放 says 和 id，不放任務種類、答案、獎�
 });
 
 // ---------- 借錢 ----------
-T("借錢規則只有壹套：casCanRelief 跟 casRelief 同步，數字讀 NUM", G => {
-  const C = G.NUM.casino, w = G.casWalletFix(null, "2026-11-17");
-  assert.strictEqual(G.casCanRelief(w), false, "開場籌碼夠多");
-  w.chips = C.reliefBelow; assert.strictEqual(G.casCanRelief(w), false, "剛好等於門檻不能借");
-  w.chips = C.reliefBelow - 1; assert.strictEqual(G.casCanRelief(w), true);
+T("借錢規則只有壹套：casCanRelief 跟 casLoanWhyNot 同步，數字讀 NUM", G => {
+  const C = G.NUM.casino.loan, w = G.casWalletFix(null, "2026-11-17");
+  assert.strictEqual(G.casCanRelief(w), true, "有錢也能借（決定 0064）");
   assert.strictEqual(G.casWalletView(w, "2026-11-17").canRelief, true);
-  for (let i = 0; i < C.reliefPerDay; i++) { assert.strictEqual(G.casCanRelief(w), true); const r = G.casRelief(w, "2026-11-17"); assert.ok(r.ok); assert.strictEqual(w.chips, C.reliefTo); w.chips = 0; }
-  assert.strictEqual(G.casCanRelief(w), false, "今天借完了");
-  assert.strictEqual(G.casRelief(w, "2026-11-17").ok, false);
-  const w2 = G.casWalletFix(clone(w), "2026-11-18"); w2.chips = 5; assert.strictEqual(G.casCanRelief(w2), true, "換日重算");
+  w.chips = -1; assert.strictEqual(G.casCanRelief(w), true, "欠款中也能借（翊文 11-10）");
+  w.chips = 0; w.loan.limit = C.min - 1; assert.strictEqual(G.casCanRelief(w), false, "額度不夠");
   assert.strictEqual(G.casCanRelief(null), false);
 });
 T("錢不夠的原因認得出來（下注、餐車、換小獎、斗內），別的原因不是", G => {
@@ -132,11 +128,11 @@ T("Discord：dcBorrowTip 只有錢不夠而且借得到才有；/pepe-借錢 成
   const poor = G.casBetCheck("5000", 10).line;
   assert.ok(G.dcBorrowTip(poor, w).includes("/pepe-借錢"));
   assert.strictEqual(G.dcBorrowTip("最少要下 100", w), "");
-  const rich = G.casWalletFix(null, "2026-11-17"); assert.strictEqual(G.dcBorrowTip(poor, rich), "");
-  w.rel.n = G.NUM.casino.reliefPerDay; assert.strictEqual(G.dcBorrowTip(poor, w), "", "借完了不用提醒");
+  w.loan.limit = 0; assert.strictEqual(G.dcBorrowTip(poor, w), "", "借不到了不用提醒");
   const w3 = G.casWalletFix(null, "2026-11-17"); w3.chips = 0;
   const r = G.casRelief(w3, "2026-11-17"), txt = G.dcBorrowText(Object.assign({}, r, { wallet: { chips: w3.chips } }));
-  assert.ok(txt.includes("你沒錢了喔") && txt.includes("Yuga 借你") && txt.includes(G.dcNum(w3.chips)), txt);
+  assert.ok(txt.includes("Yuga 借你") && txt.includes("利息") && txt.includes(G.dcNum(w3.chips)), txt);
+  assert.strictEqual(w3.chips, G.NUM.casino.loan.discord, "Discord 壹次借 NUM.casino.loan.discord");
   assert.ok(!BAD.test(txt) && !BAD.test(G.DC_TEXT.borrowTip));
 });
 T("指令 /pepe-借錢：在清單裡、無選項、在 PLAY_COMMANDS 和 handler、走 playCore 同壹個動作", G => {
@@ -149,11 +145,11 @@ T("指令 /pepe-借錢：在清單裡、無選項、在 PLAY_COMMANDS 和 handle
   assert.ok(cs.includes("case \"relief\": return play(req, me, {}, actRelief)"), "遊戲跟 Discord 用同壹個動作");
   assert.ok(!/casRelief\(/.test(d), "Discord 不自己寫規則");
 });
-T("遊戲畫面：借錢提示在每個頁籤上方，牌桌的舊按鈕拿掉，打牌中不顯示", () => {
+T("遊戲畫面：借錢那壹條在每個頁籤上方，平常就看得到，借和還都走伺服器", () => {
   const u = read("web/src/ui_casino.js");
   assert.ok(u.includes("replaceChildren(...[tabs, reliefBar()"), "頁籤下面每頁都有");
-  assert.strictEqual((u.match(/act\("relief"/g) || []).length, 1, "只有壹顆借錢按鈕");
-  assert.ok(u.includes("!w.canRelief || playing) return null"));
+  assert.strictEqual((u.match(/act\("relief"/g) || []).length, 0, "遊戲改用 borrow");
+  assert.ok(u.includes('act("borrow"') && u.includes('act("repay"'));
   assert.ok(u.includes("casPoorReason(r.reason)"));
 });
 

@@ -378,7 +378,7 @@ T("統計只有 casSettle／casOpenPacks／casBuy 這些伺服器的規則會加
   assert.strictEqual(w.wk.c.wins, 1);
   // 餐車、大禮包、救濟失敗的請求不加
   const house = G.casHouseFix(G.casHouseNew(), "2026-11-10").house;
-  G.casBuy(w, house, 999, "2026-11-10"); G.casOpenPacks(w, house, 0, "2026-11-10"); G.casRelief(w, "2026-11-10");
+  G.casBuy(w, house, 999, "2026-11-10"); G.casOpenPacks(w, house, 0, "2026-11-10"); G.casBorrow(w, 0, "2026-11-10");
   assert.deepStrictEqual([w.wk.c.packs, w.wk.c.meals && Object.keys(w.wk.c.meals).length, w.wk.c.hands], [0, 0, 1]);
 });
 

@@ -50,7 +50,7 @@ export function dcCommands() {
     cmd(DC_CMD.econ, "拚經濟：跟全館共用的莊家壹起拚（要先綁定，壹天幾次有上限）"),
     cmd(DC_CMD.live, "開播或下播（要先綁定；全館壹次只有壹位實況主）", [{ type: 3, name: DC_LIVE_OPT, description: "開播或下播（不填就是開播）", required: false, choices: [{ name: DC_LIVE_ON, value: "on" }, { name: DC_LIVE_OFF, value: "off" }] }]),
     cmd(DC_CMD.donate, "斗內給現在的實況主（要先綁定；金額隨機，壹天有次數上限）"),
-    cmd(DC_CMD.borrow, `沒錢了跟 Yuga 借籌碼（要先綁定；籌碼不到 ${dcNum(NUM.casino.reliefBelow)} 才能借，壹天有次數上限）`),
+    cmd(DC_CMD.borrow, `跟 Yuga 借 ${dcNum(NUM.casino.loan.discord)} 籌碼（要先綁定；利息 ${NUM.casino.loan.interestPct}%，${NUM.casino.loan.days} 天內要還，在遊戲裡還）`),
     cmd(DC_CMD.news, "最近幾則館方的更新公告", [{ type: 4, name: DC_NEWS_OPT, description: `要看幾則（預設 ${NUM.discord.newsDefault}，最多 ${NUM.discord.newsMax}）`, required: false, min_value: 1, max_value: NUM.discord.newsMax }]),
   ];
 }

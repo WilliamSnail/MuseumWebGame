@@ -435,22 +435,16 @@ T("莊家被你打到破產：記成就；破產中換日 Yuga 借他重新開�
   assert.strictEqual(same.house.bankroll, -5, "同一天不重開");
 });
 
-// ---------- 錢包：破產救濟 ----------
-T("新玩家 NUM.casino.startChips；破產（低於門檻）可以領救濟，一天有上限，換日重算；有錢不能領", G => {
+// ---------- 錢包：跟 Yuga 借（決定 0064，取代救濟） ----------
+T("新玩家 NUM.casino.startChips；有錢也能借，借了籌碼增加、記壹筆要還的；第壹次借有成就", G => {
   const { w } = fresh(G);
   assert.strictEqual(w.chips, G.NUM.casino.startChips); assert.strictEqual(G.NUM.casino.startChips, 1000000);
-  assert.strictEqual(G.casRelief(w, DAY).ok, false, "有錢");
-  w.chips = 0;
-  for (let i = 0; i < G.NUM.casino.reliefPerDay; i++) {
-    const r = G.casRelief(w, DAY); assert.ok(r.ok, "第 " + (i + 1) + " 次"); assert.strictEqual(w.chips, G.NUM.casino.reliefTo); w.chips = 10;
-  }
-  const no = G.casRelief(w, DAY); assert.ok(!no.ok && no.reason.includes("明天")); assert.strictEqual(w.chips, 10);
-  G.casWalletFix(w, "2026-11-10");
-  assert.ok(G.casRelief(w, "2026-11-10").ok, "換日重算");
-  assert.ok(w.ach.relief);
+  const r = G.casBorrow(w, 100000, DAY);
+  assert.ok(r.ok); assert.strictEqual(w.chips, G.NUM.casino.startChips + 100000);
+  assert.strictEqual(w.loan.list.length, 1); assert.ok(w.ach.relief);
 });
 T("破產不會卡死：沒錢、救濟用完，每天還有免費大禮包", G => {
-  const { w, house } = fresh(G); w.chips = 0; w.rel.n = 99;
+  const { w, house } = fresh(G); w.chips = 0; w.loan.limit = 0; // 借不到了
   assert.ok(G.casPacksLeft(w) >= 1);
   seeded(G, 8);
   const r = G.casOpenPacks(w, house, 1, DAY);
@@ -640,7 +634,8 @@ T("認領進來的舊成就可以當稱號、舊財產可以掛展廳", G => {
 T("錢包讀回來缺欄位、壞掉都補得回來；每天的東西換日重算", G => {
   for (const bad of [null, {}, { chips: "abc" }, { chips: -50, pk: 5, ex: [], st: "x" }, { ach: [], props: 3 }]) {
     const w = G.casWalletFix(bad, DAY);
-    assert.ok(Number.isFinite(w.chips) && w.chips >= 0); assert.ok(w.pk.left >= 0 && w.st.hands === 0 && typeof w.ex.n === "object");
+    assert.ok(Number.isFinite(w.chips) && (w.chips >= 0 || bad.chips < 0)); // 負的籌碼是欠款，留著（決定 0064）
+    assert.ok(w.pk.left >= 0 && w.st.hands === 0 && typeof w.ex.n === "object");
     G.casWalletView(w, DAY);
   }
   const h = G.casHouseFix({ bankroll: "x" }, DAY).house; assert.strictEqual(h.bankroll, G.NUM.casino.houseStart);
