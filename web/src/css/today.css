@@ -1,0 +1,29 @@
+/* 「今天」清單（11-10，ui_today.js）和導覽列的「今天」 */
+.nav-today { position: relative; }
+.nav-today .nt-n { display: none; position: absolute; top: -4px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+  background: var(--gold); color: #2a1a0e; font-size: 11px; line-height: 16px; font-weight: 700; text-align: center; pointer-events: none; }
+.nav-today.has-n .nt-n { display: block; }
+.nav-today.has-n { color: var(--gold-hi); }
+
+/* 木框在 board.css（overlay）。照本週榜單（rank.css）：深色的底，壹件事壹張羊皮紙牌子 */
+.nb-frame.nb-today { width: min(640px, 100%); }
+.nb-today .nb-surface { background-color: #2C2320;
+  background-image: radial-gradient(rgba(0,0,0,.22) 1px, rgba(0,0,0,0) 1.5px), radial-gradient(ellipse at 50% 0%, rgba(238,215,156,.14), rgba(0,0,0,0) 60%);
+  background-size: 4px 4px, 100% 100%; }
+.td-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 2px 4px 8px; }
+.td-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.td-row { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 3px;
+  color: var(--parch-ink); background: linear-gradient(180deg, #F7EFDD, #EFE3C8); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 3px 10px rgba(0,0,0,.4); }
+.td-row.done { opacity: .62; }
+.td-ic { display: flex; justify-content: center; color: #6E4A12; }
+.td-ic svg { width: 20px; height: 20px; }
+.td-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.td-main b { font-family: var(--serif); color: #4A3418; letter-spacing: .03em; }
+.td-main small { color: var(--parch-sub); line-height: 1.45; overflow-wrap: anywhere; }
+.td-all { margin: 0; text-align: center; color: #EADFC6; font-family: var(--serif); }
+.td-done summary { cursor: pointer; color: #CDBE9F; margin-bottom: 8px; }
+.td-note { margin: 0; font-size: .8125rem; color: #CDBE9F; }
+@media (max-width: 600px) {
+  .td-row { grid-template-columns: 22px 1fr; }
+  .td-row .btn { grid-column: 1 / -1; justify-self: end; }
+}

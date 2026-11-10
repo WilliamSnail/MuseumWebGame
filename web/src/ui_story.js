@@ -284,6 +284,18 @@ function reviewPane(m) {
   }));
 }
 
+// ---------- 「今天」清單（ui_today.js）要的 ----------
+// 今天的每日任務壹條壹條（文字、做了沒、領了沒、進度、前往哪裡、Yuga Bot 交代的話）、每週任務做了幾個、可以領的獎勵。自由模式、沒有這週的劇情回 null
+export function storyToday() {
+  if (!on()) return null;
+  const W = curWeek();
+  if (!W) return null;
+  const S = storyState(P), d = todayOf(W);
+  const row = t => ({ id: t.id, text: taskText(t, W), done: taskDone(P, t), claimed: !!(S.tasks[t.id] && S.tasks[t.id].claimed), n: taskCount(P, W, t), tgt: taskTarget(t, W),
+    go: W.past ? null : taskGo(t, W), yuga: t.giver === "yuga" && t.says ? t.says : "" });
+  return { title: W.title, daily: (d ? d.daily : []).map(row), weekly: [W.weekly.filter(t => taskDone(P, t)).length, W.weekly.length], claim: claimables(W) };
+}
+
 // ---------- 大廳的小卡 ----------
 export function storyLobby() {
   if (!on()) return null;

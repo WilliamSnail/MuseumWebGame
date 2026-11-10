@@ -25,6 +25,7 @@ import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 import "./css/events.css"; // 限時活動（決定 0041）
 import "./css/casino.css"; // Hamachi 賭場（決定 0040）
 import "./css/discord.css"; // 我的帳號裡的「綁定 Discord」（決定 0051）
+import "./css/today.css"; // 「今天」清單和導覽列的「今天」（11-10）
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";
@@ -48,6 +49,7 @@ import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房
 import "./ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
 import "./ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
 import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
+import "./ui_today.js"; // 「今天」清單（11-10，整合的第 1 步）：簽到、劇情、任務、信箱、賭場剩幾次排在壹張，每項有「前往」
 import "./ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/events.js
 import "./ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
 import "./ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
