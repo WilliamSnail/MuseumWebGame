@@ -51,10 +51,12 @@ export function casWalletFix(w, day) {
   } else casWkRoll(w, null);
   return w;
 }
-export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0 });
+// budget：拚經濟的預算池（shared/casino_econ.js）。跟莊家放在同壹份，同壹個交易裡算；舊的莊家沒有就補 budgetStart。莊家破產重開不動它
+export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart });
 export function casHouseFix(h, day) {
   if (!casIsObj(h)) h = casHouseNew();
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
+  h.budget = Math.floor(casNz(h.budget, NUM.casino.econ.budgetStart));
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;

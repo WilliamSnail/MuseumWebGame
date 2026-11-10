@@ -265,7 +265,8 @@ export const NUM = {
     // 走完壹個房間擲壹次，chance 的機率撿到 min～max（每 step 壹級）；壹天最多撿 perDay 次。對照：最小的注 100、壹杯麥茶 1,750、免費大禮包最小 10,000、換壹點靈感 200,000，壹天最多也只有 6,000
     cellarFind: { chance: 0.25, min: 500, max: 2000, step: 100, perDay: 3 },
     // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
-    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55 },
+    // budgetStart：拚經濟的錢從「預算池」進出（翊文 11-10：「先設定一個地方，讓它其實從那邊扣錢，這個之後怎麼接上其他的，我們再討論」）。存在莊家同壹份（casinoHouse/main 的 budget）；先給這麼多，不夠可以是負的，只記帳不擋
+    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000 },
     // 實況和斗內（舊 Discord 21 點的玩法，決定 0053）：金額是 base + step×k，k 是 1～kMax 的整數（舊的：10000 + 10000×1～25，也就是 2 萬～26 萬），自己不能選。durationMs 開播多久自動下播；graceMs 實況主離線超過這麼久算下播（關掉遊戲）。perDay、receiveCap 是新的（等翊文）
     live: { base: 10000, step: 10000, kMax: 25, durationMs: 3600000, graceMs: 60000, perDay: 3, receiveCap: 1000000 },
     foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU

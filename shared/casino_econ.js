@@ -5,6 +5,8 @@
 //  否則失敗，莊家 -r×10000，約 55% 按的人撈到同額的籌碼（油水，這份是從莊家虧掉的那份流給他，所以兩邊加起來守恆）。
 //  新的：一人一天最多 perDay 次（舊的沒有上限）；一天用台灣 05:00 換日。
 //  莊家是負的（破產中）時拚回正：回 rescued，畫面說「把莊家拚回來了」。莊家的 houseReopen（換日還是負的，Yuga 借錢重開）不用改：拚回正之後就不會被借。
+//  錢從哪裡來（翊文 11-10，決定 0056）：成功時莊家多的那份從「預算池」（house.budget）扣；失敗時莊家虧的那份，被撈走的進錢包，沒撈走的回預算池。
+//  預算池、莊家、錢包三邊加起來不變（不再憑空生錢、憑空消失）。預算池不夠可以是負的，只記帳，玩法先不變；之後要接什麼再討論。
 //  文字界線（決定 0048）：沒有真人名字、綽號、頭銜、政黨；失敗和撈油水的句子不接任何政策名字。
 //  純函式：亂數用參數 rnd（預設 RNG，測試可以換）；「今天」從參數來。不碰網路和 DOM。
 //  錢包欄位 ec：{ day, n 今天拚幾次, wins 累計成功, fails 累計失敗, loot 累計撈到的油水, rescues 累計把莊家拚回正 }；舊錢包沒有，這裡補。
@@ -48,10 +50,11 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   if (e.n >= C.perDay) return { ok: false, reason: CAS_ECON.none };
   const before = house.bankroll, x = casEconRoll(rnd);
   e.n++;
-  const out = { ok: true, win: x.win, r: x.r, amount: x.amount, policy: null, loot: 0, ticket: false, rescued: false, houseBefore: before };
+  const out = { ok: true, win: x.win, r: x.r, amount: x.amount, policy: null, loot: 0, ticket: false, rescued: false, houseBefore: before, budgetBefore: house.budget };
   const lines = CAS_ECON.cheer.slice();
   if (x.win) {
     house.bankroll += x.amount;
+    house.budget -= x.amount; // 從預算池撥過來
     e.wins++;
     out.policy = x.policy;
     lines.push(casFill(CAS_ECON.okLine, { policy: CAS_ECON.policies[x.policy] }), casFill(CAS_ECON.okHouse, { n: casNum(x.amount) }));
@@ -66,10 +69,11 @@ export function casEconPlay(w, house, day, rnd = RNG) {
       out.loot = x.amount; w.chips += x.amount; e.loot += x.amount;
       if (w.st) w.st.chipsMax = Math.max(ecNum(w.st.chipsMax), w.chips);
       lines.push(casFill(CAS_ECON.failLoot, { n: casNum(x.amount) }));
-    }
+    } else house.budget += x.amount; // 石沉大海：沉回預算池
     lines.push(CAS_ECON.failEnd);
   }
   out.houseAfter = house.bankroll;
+  out.budgetAfter = house.budget;
   out.left = Math.max(0, C.perDay - e.n);
   out.lines = lines;
   return out;

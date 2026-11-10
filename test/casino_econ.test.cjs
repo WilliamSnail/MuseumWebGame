@@ -16,6 +16,30 @@ T("數字照舊：一天 3 次、r 0～100、30 以上才成功、成功 ×30000
   assert.deepStrictEqual([C.perDay, C.rMax, C.winAbove, C.winPer, C.losePer, C.ticketPct, C.lootPct], [3, 100, 30, 30000, 10000, 8, 55]);
   assert.ok((C.winAbove + 1) * C.winPer >= 930000 && C.rMax * C.winPer === 3000000, "成功約 93 萬～300 萬");
 });
+T("預算池（決定 0056）：成功從預算池扣、沒撈到沉回預算池；預算池＋莊家＋錢包加起來不變", G => {
+  const C = G.NUM.casino.econ;
+  const sum = s => s.house.budget + s.house.bankroll + s.w.chips;
+  let s = fresh(G); assert.strictEqual(s.house.budget, C.budgetStart);
+  let t0 = sum(s), b0 = s.house.budget;
+  let r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 50), 0.3, 0.99));
+  assert.ok(r.win); assert.strictEqual(s.house.budget, b0 - 50 * C.winPer); assert.strictEqual(sum(s), t0);
+  assert.strictEqual(r.budgetBefore, b0); assert.strictEqual(r.budgetAfter, s.house.budget);
+  s = fresh(G); t0 = sum(s); b0 = s.house.budget;
+  r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), C.lootPct / 100)); // 沒撈到
+  assert.ok(!r.win && !r.loot); assert.strictEqual(s.house.budget, b0 + 20 * C.losePer); assert.strictEqual(sum(s), t0);
+  s = fresh(G); t0 = sum(s); b0 = s.house.budget;
+  r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), 0)); // 撈到：預算池不動
+  assert.ok(r.loot); assert.strictEqual(s.house.budget, b0); assert.strictEqual(sum(s), t0);
+  // 不夠也照拚，變成負的（只記帳，先不擋）
+  s = fresh(G); s.house.budget = 100;
+  r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 40), 0, 0.99));
+  assert.ok(r.ok && r.win && s.house.budget === 100 - 40 * C.winPer);
+  // 舊的莊家沒有 budget：補上；壞資料也補；破產重開不動預算池
+  assert.strictEqual(G.casHouseFix({ v: 1, bankroll: 5 }, D1).house.budget, C.budgetStart);
+  assert.strictEqual(G.casHouseFix({ v: 1, bankroll: 5, budget: "壞" }, D1).house.budget, C.budgetStart);
+  const h = G.casHouseFix({ v: 1, bankroll: -9, budget: 123, day: D1 }, D2).house;
+  assert.ok(h.bankroll === G.NUM.casino.houseReset && h.budget === 123);
+});
 T("成功邊界：r = 31 成功、r = 30 失敗", G => {
   const C = G.NUM.casino.econ;
   assert.strictEqual(G.casEconRoll(seq(atR(G, C.winAbove + 1), 0, 0.99)).win, true);
