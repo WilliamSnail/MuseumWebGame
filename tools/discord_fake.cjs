@@ -651,7 +651,7 @@ async function all() {
   const setChips = async (u, chips) => { const w = await walletOf(u.uid); w.chips = chips; await fsSet(`casinoWallets/${u.uid}`, { data: JSON.stringify(w) }); };
   await check("/pepe-借錢（決定 0064）：有錢也能借，壹次借 loan.discord，記壹筆有利息的；跟遊戲共用額度；欠款中也能借；只有本人看得到", async () => {
     const L = NUMS.casino.loan, u = await bindNew("借錢阿花");
-    const r = await say("/pepe-借錢", u.did); assert.strictEqual(r.flags, 64, r.text); has(r.text, "Yuga 借你", "利息"); hasNot(r.text, "理智", "@");
+    const r = await say("/pepe-借錢", u.did); assert.strictEqual(r.flags, 64, r.text); has(r.text, "Yuga Bot 借你", "利息"); hasNot(r.text, "理智", "@");
     let w = await walletOf(u.uid); assert.strictEqual(w.loan.list.length, 1); assert.strictEqual(w.loan.list[0].amt, L.discord); assert.strictEqual(w.loan.list[0].owe, Math.ceil(L.discord * (100 + L.interestPct) / 100)); assert.ok(w.ach.relief, "成就「Yuga 的朋友」");
     has(r.text, "解鎖");
     const g = await u.call("casino", { act: "borrow", amt: "max" }); assert.ok(g.ok && g.result.ok !== false, JSON.stringify(g)); // 遊戲借滿
@@ -660,12 +660,12 @@ async function all() {
     const back = await u.call("casino", { act: "repay" }); assert.ok(back.ok && back.result.ok !== false, JSON.stringify(back));
     assert.strictEqual((await walletOf(u.uid)).loan.limit, L.limit + L.limitStep, "準時還清，額度變高");
     await setChips(u, -100);
-    const debt = await say("/pepe-借錢", u.did); has(debt.text, "Yuga 借你"); // 欠款中也能借（翊文 11-10）
+    const debt = await say("/pepe-借錢", u.did); has(debt.text, "Yuga Bot 借你"); // 欠款中也能借（翊文 11-10）
   });
   await check("/pepe-借錢：21 點打到一半不能借（先打完）；打完才能借", async () => {
     const u = await bindNew("借錢打牌"); const r = await startHand(u, "1000");
     await setChips(u, 300); const x = await say("/pepe-借錢", u.did); assert.strictEqual(x.flags, 64); has(x.text, "先打完"); assert.strictEqual((await walletOf(u.uid)).loan.list.length, 0);
-    await finishHand(u, r); await setChips(u, 300); has((await say("/pepe-借錢", u.did)).text, "Yuga 借你");
+    await finishHand(u, r); await setChips(u, 300); has((await say("/pepe-借錢", u.did)).text, "Yuga Bot 借你");
   });
   await check("買不起、下注不夠：借得到就多一行「打 /pepe-借錢 跟 Yuga 借」；借不到的人、別的失敗都沒有", async () => {
     const u = await bindNew("借錢提醒"); await setChips(u, 500);

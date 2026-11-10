@@ -142,7 +142,7 @@ function draw() {
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
-// 跟 Yuga 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino_wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
+// 跟 Yuga Bot 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino_wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
 // 每個頁籤上方壹條：還能借多少、借的按鈕；有沒還的就列出來，每筆壹顆「還」。借不了的時候寫原因
 function reliefBar() {
   const w = S.w;
@@ -151,14 +151,29 @@ function reliefBar() {
   const why = playing ? CAS_TEXT.loanPlaying : L.why;
   const off = S.busy ? true : null;
   const borrow = amt => act("borrow", { amt }, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); });
-  const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`借滿 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
-  return h("div", { class: "cas-borrow" + (w.chips < 0 ? " debt" : ""), role: "region", "aria-label": "跟 Yuga 借" },
-    h("div", { class: "cas-borrow-row" },
-      h("span", { class: "cas-borrow-t" }, why || fill(CAS_TEXT.loanBar, { left: casNum(L.left), limit: casNum(L.limit), pct: L.pct, days: L.days })),
-      opts.length ? h("span", { class: "cas-borrow-acts" }, opts) : null),
-    L.list.length ? h("ul", { class: "cas-loans" }, L.list.map(x => h("li", { class: x.today ? "today" : "" },
-      h("span", null, `${x.day.slice(5)} 借 ${casNum(x.amt)}・`, h("b", null, x.today ? fill(CAS_TEXT.loanDueToday, { owe: casNum(x.owe) }) : fill(CAS_TEXT.loanDue, { due: x.due.slice(5), owe: casNum(x.owe) }))),
-      btn("還", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small ghost", { disabled: off || playing || w.chips < x.owe ? true : null })))) : null);
+  const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`全額 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
+  // 銀行的樣子（翊文 11-10：「介面稍微在更精美一點，像銀行一點」）：行名和狀態、三格數字、借款金額、借款明細（像存摺）
+  const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);
+  const fig = (label, value, sub) => h("div", { class: "bk-fig" }, h("span", { class: "bk-fig-l" }, label), h("b", null, value), sub ? h("small", null, sub) : null);
+  const md = s => s.slice(5).replace("-", "/");
+  return h("section", { class: "cas-bank" + (debt ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
+    h("header", { class: "bk-head" },
+      h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
+      h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
+      h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好")),
+    h("div", { class: "bk-figs" },
+      fig("可借金額", casNum(L.left), `信用額度 ${casNum(L.limit)}`),
+      fig("未還本息", casNum(owed), L.list.length ? `最近到期 ${md(L.list[0].due)}` : "沒有借款"),
+      fig("利率・期限", `${L.pct}%`, `每筆固定・${L.days} 天內還清`)),
+    h("div", { class: "bk-act" },
+      why ? h("p", { class: "bk-why" }, why)
+        : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts)]),
+    L.list.length ? h("table", { class: "bk-book" },
+      h("thead", null, h("tr", null, ["借款日", "本金", "應還本息", "到期日", ""].map(t => h("th", { scope: "col" }, t)))),
+      h("tbody", null, L.list.map(x => h("tr", { class: x.today ? "today" : "" },
+        h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, h("b", null, casNum(x.owe))),
+        h("td", null, x.today ? "今天" : md(x.due)),
+        h("td", null, btn("還款", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
 }
 
 // ---------- 牌桌 ----------
