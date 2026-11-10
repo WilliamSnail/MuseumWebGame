@@ -100,7 +100,7 @@ export function visitorSlots(P) {
   if (!hasSlots(P)) return out;
   const card = (v, current) => ({ vid: v.vid, vname: v.vname || null, name: visitorName(v), slot: v.slot, visitor: v.visitor, job: v.job || null,
     perk: (traitById(v.perk) && v.perk) || null, flaw: (traitById(v.flaw) && v.flaw) || null,
-    sanity: v.sanity, maxSan: 99 - (v.myth || 0), mood: v.mood, myth: v.myth || 0, dark: !!v.dark, picking: !v.job, current });
+    sanity: v.sanity, maxSan: 99 - (v.myth || 0), mood: v.mood, myth: v.myth || 0, dark: !!v.dark, picking: !v.job, current, work: !current && isObj(v.work) ? v.work : null });
   [P].concat(asList(P.visitors)).forEach((v, i) => { if (v && okSlot(v.slot) && !out[v.slot]) out[v.slot] = card(v, i === 0); });
   return out;
 }
@@ -115,6 +115,7 @@ export function switchVisitor(P, vid) {
   const i = list.findIndex(v => v && v.vid === vid);
   if (i < 0) return false;
   const next = list[i];
+  if (next.work) return false; // 在地下室工作的不能上場（決定 0064）
   list[i] = packVisitor(P);
   P.visitors = list;
   wearVisitor(P, next);
@@ -137,6 +138,39 @@ export function addVisitor(P, name, slot) {
   wearVisitor(P, blankVisitor(P, { vid: "v" + n, vname: nm, slot: s, visitor: n, mood: r.total * 5, moodRoll: r.faces }));
   return Object.assign(r, { vid: P.vid, slot: s });
 }
+// ---------- 欠款送去地下工作（決定 0064 第二部分；錢和理智在伺服器的錢包 w.work，這裡只記「這位在工作」） ----------
+// 能送下去的：選過職業、燈沒熄、沒在工作的（現在這位也可以）
+export function workCandidates(P) {
+  if (!hasSlots(P)) return [];
+  return [P].concat(asList(P.visitors)).filter(v => v && v.job && !v.dark && !v.work);
+}
+// 現在這位被送下去時，可以換上場的（不在場、選過職業、燈沒熄、沒在工作）
+export const workBench = P => (hasSlots(P) ? asList(P.visitors).filter(v => v && v.job && !v.dark && !v.work) : []);
+// 誰在工作（不在場的那幾位裡）
+export const workingVisitor = P => (hasSlots(P) ? asList(P.visitors).find(v => v && isObj(v.work)) || null : null);
+// 送 vid 下去：現在這位的話先換別人上場（沒人可換回 null，畫面要先開壹位新的）。回傳那位（在 P.visitors 裡），不行回 null
+export function sendToWork(P, vid, day) {
+  if (!hasSlots(P) || workingVisitor(P)) return null;
+  if (P.vid === vid) {
+    if (!P.job || P.dark) return null;
+    const other = workBench(P)[0];
+    if (!other || !switchVisitor(P, other.vid)) return null;
+  }
+  const v = asList(P.visitors).find(x => x && x.vid === vid);
+  if (!v || !v.job || v.dark || v.work) return null;
+  v.work = { since: day };
+  return v;
+}
+// 回來：拿掉工作的記號，理智換成工作完的（夾在 1 和他的上限之間）。vid 沒給就是在工作的那位。回傳那位，沒有回 null
+export function backFromWork(P, vid, san) {
+  if (!hasSlots(P)) return null;
+  const v = asList(P.visitors).find(x => x && isObj(x.work) && (vid == null || x.vid === vid));
+  if (!v) return null;
+  delete v.work;
+  if (Number.isFinite(san)) v.sanity = Math.max(1, Math.min(99 - (v.myth || 0), Math.floor(san)));
+  return v;
+}
+
 // 改名字（現在這位或不在場的）。回傳改好的名字；名字不合格、找不到人回傳 null
 export function renameVisitor(P, vid, name) {
   if (!hasSlots(P)) return null;
@@ -165,6 +199,7 @@ function fixPack(P, v) {
   if (!isObj(v.legacy)) v.legacy = null;
   if (!isObj(v.dayVis)) v.dayVis = null;
   if (!isObj(v.cellarRun)) v.cellarRun = null;
+  if (v.work !== undefined && !(isObj(v.work) && typeof v.work.since === "string")) delete v.work; // 決定 0064：在地下工作的記號
   v.vname = cleanName(v.vname);
   return v;
 }

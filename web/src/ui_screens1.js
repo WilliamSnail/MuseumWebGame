@@ -2,6 +2,7 @@
 //  畫面 1–5、7：開場、大廳、畫廊、起源室、手作坊、揭曉
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
+import { CAS_TEXT } from "../../shared/casino_text.js";
 import { EXHIBITS, GALLERY_INTRO, GEN_TEXT, LEGACY, NUM, ORIGIN, RARITY_TABLE, UPGRADES } from "../../shared/config.js";
 import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD_RECOVER_TEXT, PERFECT_WORK_TEXT, ROOM_HINTS, SAN_ASIDES, TITLE_TAGLINE, TUTORIAL_TEXT } from "../../shared/content.js";
 import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
@@ -78,7 +79,7 @@ function slotCard(s) {
   const play = btn(VISITOR_TEXT.cont, () => playVisitor(s.vid), s.current ? "primary" : "");
   const ren = h("button", { type: "button", class: "t-link vs-rename", "aria-label": `${VISITOR_TEXT.rename}：${s.name}` }, VISITOR_TEXT.rename);
   ren.addEventListener("click", () => renameFlow(s));
-  return h("article", { class: "vs-card" + (s.current ? " cur" : "") + (s.dark ? " dark" : ""), "aria-label": `${s.name}・第 ${s.visitor} 位參觀者` },
+  return h("article", { class: "vs-card" + (s.current ? " cur" : "") + (s.dark ? " dark" : "") + (s.work ? " working" : ""), "aria-label": `${s.name}・第 ${s.visitor} 位參觀者` },
     s.current ? h("span", { class: "vs-last" }, VISITOR_TEXT.last) : null,
     h("div", { class: "vs-top" }, h("span", { class: "vs-badge", html: j && ART.jobBadge ? ART.jobBadge(s.job) : ART.icon("frog") }),
       h("div", { class: "vs-id" }, h("b", { class: "vs-name" }, s.name), h("span", { class: "vs-no" }, [s.vname ? `第 ${s.visitor} 位參觀者` : null, j ? j.name : "還沒選職業"].filter(Boolean).join("・")))),
@@ -86,8 +87,10 @@ function slotCard(s) {
     // 小優點、小缺點（決定 0028：每一位選職業時抽；0028 以前的第一位沒有，就不放）。效果寫在 title，館長室的名片上有完整的
     s.perk || s.flaw ? h("div", { class: "vs-traits" }, [["perk", s.perk], ["flaw", s.flaw]].filter(x => x[1]).map(([k, id]) =>
       h("span", { class: "vw-tag " + k, title: traitDesc(id) }, `${k === "perk" ? LEGACY_TEXT.perk : LEGACY_TEXT.flaw}・${traitName(id)}`))) : null,
-    s.dark ? h("p", { class: "vs-warn" }, VISITOR_TEXT.dark) : s.picking ? h("p", { class: "vs-warn" }, VISITOR_TEXT.picking) : null,
-    h("div", { class: "vs-acts" }, play, ren));
+    s.work ? h("p", { class: "vs-warn vs-work" }, (ADDONS.workLine && ADDONS.workLine()) || CAS_TEXT.workSlot)
+      : s.dark ? h("p", { class: "vs-warn" }, VISITOR_TEXT.dark) : s.picking ? h("p", { class: "vs-warn" }, VISITOR_TEXT.picking) : null,
+    // 在地下室工作的（決定 0064）：不能上場，改成「花靈感幫他」
+    h("div", { class: "vs-acts" }, s.work ? (ADDONS.workCheer && UI.work ? btn(CAS_TEXT.workCheer, () => ADDONS.workCheer(), "") : null) : play, ren));
 }
 function emptySlot(i) {
   const add = btn([icon("plus"), " ", VISITOR_TEXT.add], () => addVisitorFlow(i), "");
@@ -117,7 +120,7 @@ async function firstVisitor() {
   if (name) await startChallenge(name);
 }
 // 在空位子加一位：取名字 → 擲心情 → 選職業、抽小優缺點（跟第一位一樣，不用留遺物；決定 0028）
-async function addVisitorFlow(slot) {
+export async function addVisitorFlow(slot) {
   const C = SAVE.profiles.challenge;
   if (!C) { firstVisitor(); return; }
   if (!freeSlots(C).length) { note(VISITOR_TEXT.full, "bad"); refreshLogin(); return; }
@@ -161,6 +164,7 @@ export async function afterEnter() {
   if (PANELS.casinoResume && await PANELS.casinoResume()) return; // 賭場同桌坐到一半（重新整理過、斷線回來）：接回去（ui_casino_table.js）
   if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
+  if (!isFree(P) && ADDONS.workCheck) ADDONS.workCheck(); // 欠款中要送人去地下工作、在工作的還清了回來（決定 0064，ui_work.js）。不等它
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
   if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）

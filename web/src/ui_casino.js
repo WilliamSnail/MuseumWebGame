@@ -49,7 +49,7 @@ async function call(act, data) {
 }
 function sync(r) {
   if (!S || !r) return;
-  if (r.wallet) S.w = r.wallet;
+  if (r.wallet) { S.w = r.wallet; if (ADDONS.workPeek) ADDONS.workPeek(r.wallet); } // 欠款要送人下去、還清了回來（決定 0064，ui_work.js）
   if ("round" in r) S.round = r.round;
   if (r.house) S.house = r.house;
   if (r.econ && Number.isFinite(r.econ.left)) S.ec = { left: r.econ.left, perDay: r.econ.perDay }; // 拚經濟今天還剩幾次（伺服器算的）
@@ -168,6 +168,8 @@ function reliefBar() {
     h("div", { class: "bk-act" },
       why ? h("p", { class: "bk-why" }, why)
         : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts)]),
+    // 在地下室工作的那位（決定 0064 第二部分）
+    w.work ? h("div", { class: "bk-work" }, h("span", null, ADDONS.workLine ? ADDONS.workLine() : ""), ADDONS.workCheer ? btn(CAS_TEXT.workCheer, () => ADDONS.workCheer(), "small", { disabled: off }) : null) : null,
     L.list.length ? h("table", { class: "bk-book" },
       h("thead", null, h("tr", null, ["借款日", "本金", "應還本息", "到期日", ""].map(t => h("th", { scope: "col" }, t)))),
       h("tbody", null, L.list.map(x => h("tr", { class: x.today ? "today" : "" },
@@ -595,7 +597,7 @@ let chipsAsked = false;
 async function askChips() {
   if (chipsAsked || !UI.net || !NET.loggedIn) return;
   chipsAsked = true;
-  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); }
+  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); if (ADDONS.workPeek) ADDONS.workPeek(r); } // 欠款要送人下去、還清了回來（決定 0064，ui_work.js）
   catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
 }
 // 走完地下的一個房間（單人：ui_screens3.js 的 resolveFlow；合作：ui_coop.js 的 playResult）：跟伺服器說「我走完這間了」（決定 0047）。

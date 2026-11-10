@@ -21,7 +21,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -184,6 +184,16 @@ export const actBorrow = (ctx, d) => {
   const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
 };
+// 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀
+export const actWork = (act, ctx, d) => {
+  if (!ctx.P) return { ok: false, reason: "要用挑戰模式的參觀者" };
+  const r = act === "workStart" ? casWorkStart(ctx.w, ctx.P, String(d.vid || ""), ctx.day)
+    : act === "workCheer" ? casWorkCheer(ctx.w, ctx.P, d.n)
+    : casWorkEnd(ctx.w, ctx.P);
+  if (!r.ok) return Object.assign(no(r), { needNew: !!r.needNew });
+  ctx.saveDirty = true;
+  return shape(ctx, { lines: r.lines, n: r.n, back: r.back, name: r.name, san: r.san });
+};
 // 還壹筆（d.id；沒給就還最早到期的）
 export const actRepay = (ctx, d) => {
   const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"));
@@ -208,7 +218,7 @@ export const casino = onCall(async req => {
         const S = parse(await saveRef(me.uid).get());
         await publishTitle(me.uid, titlePublish(w, S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null));
       }
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())) }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
@@ -240,6 +250,9 @@ export const casino = onCall(async req => {
     case "relief": return play(req, me, {}, actRelief);
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
+    case "workStart":
+    case "workCheer":
+    case "workEnd": return play(req, me, { save: true }, ctx => actWork(act, ctx, d));
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
     case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {

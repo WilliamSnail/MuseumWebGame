@@ -28,6 +28,20 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "debt-work", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
+    title: "欠 Yuga Bot 的錢，要送參觀者去地下室工作", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "**借款到期還不出來，籌碼變成負的**，就要選壹位自己的參觀者送去地下室工作。不選不能繼續玩。",
+        "**每天換日他會還壹筆**：開工那天欠款的 34%，大約三天還完。還清了他就回來。",
+        "**工作的時候理智每天 −5**，最低停在 1，不會在地下發瘋。",
+        "**可以花博物館的靈感幫他**：1 靈感補 1 點理智。賭場的「Yuga Bot 銀行」和門口他的位子上都有按鈕。",
+        "只剩壹位參觀者的話，要先請壹位新的進來，再送他下去。",
+      ]],
+    ],
+    cta: { label: "去賭場", panel: "casino" },
+  },
+  {
     id: "loan", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
     title: "跟 Yuga Bot 借籌碼要算利息了", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

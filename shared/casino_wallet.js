@@ -15,6 +15,7 @@ import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoun
 import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
 import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
+import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
@@ -25,7 +26,7 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips,
-    rel: { day: null, n: 0 }, loan: casLoanNew(), pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
+    rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
@@ -39,6 +40,7 @@ export function casWalletFix(w, day) {
   w.tickets = Math.max(0, Math.floor(casNz(w.tickets)));
   for (const k of ["rel", "pk", "ex", "ach", "props", "meals", "st", "loan"]) if (!casIsObj(w[k])) w[k] = base[k];
   casLoanFix(w);
+  casWorkFix(w);
   for (const k of Object.keys(base.st)) if (!Number.isFinite(w.st[k])) w.st[k] = base.st[k];
   if (!casIsObj(w.ex.n)) w.ex.n = {};
   if (!Array.isArray(w.hung)) w.hung = [];
@@ -50,6 +52,7 @@ export function casWalletFix(w, day) {
     if (w.ex.week !== wk) w.ex = { week: wk, n: {} };
     casWkRoll(w, wk); // 每週收藏：週一 05:00 換週，上一週收進 wkLog，這週統計歸零（決定 0042）
     casLoanRoll(w, day); // 到期沒還的借款：直接扣（決定 0064）
+    casWorkRoll(w, day); // 在地下工作的參觀者：每天還壹點、理智 −壹點（決定 0064 第二部分）
   } else casWkRoll(w, null);
   return w;
 }
@@ -246,6 +249,87 @@ export function casRelief(w, day, playing) {
   const left = casLoanLeft(w);
   return casBorrow(w, Math.min(NUM.casino.loan.discord, left), day, playing);
 }
+// ---------- 欠款送參觀者去地下工作（決定 0064 第二部分） ----------
+// w.work：{ vid, name, job, san 現在的理智, san0 下去前的理智, base 開工那天的欠款（正的）, since 開工那天, last 算到哪天, paid 還了多少 }，沒有就 null
+function casWorkFix(w) {
+  const x = w.work;
+  if (!casIsObj(x) || !okDay(x.since) || !(Number(x.base) > 0)) { w.work = null; return; }
+  x.base = Math.floor(+x.base); x.san = Math.floor(casNz(x.san, 1)); x.san0 = Math.max(x.san, Math.floor(casNz(x.san0, x.san)));
+  x.paid = Math.max(0, Math.floor(casNz(x.paid)));
+  if (!okDay(x.last)) x.last = x.since;
+  x.vid = String(x.vid || ""); x.name = String(x.name || "").slice(0, 24); x.job = x.job == null ? null : String(x.job);
+}
+// 每天還多少
+export const casWorkPay = x => Math.ceil(x.base * NUM.casino.work.payPct / 100);
+// 現在要不要送人下去：籌碼是負的，又沒人在工作（翊文 11-10：到期還不出來、負的超過壹天都要送；現在只有到期會變負的，所以負的就要送）
+export const casMustWork = w => !!w && w.chips < 0 && !w.work;
+// 換日：從上次算到的那天到今天，每過壹天還壹次、理智 −sanDay（最低 sanMin）。還清（回到 0）就停
+export function casWorkRoll(w, day) {
+  const x = w.work, C = NUM.casino.work;
+  if (!x || !okDay(day) || day <= x.last) return 0;
+  let n = casDaysBetween(x.last, day), got = 0;
+  while (n-- > 0 && w.chips < 0) {
+    const pay = Math.min(casWorkPay(x), -w.chips);
+    w.chips += pay; x.paid += pay; got += pay;
+    x.san = Math.max(C.sanMin, x.san - C.sanDay);
+  }
+  x.last = day;
+  if (w.chips >= 0) w.loan.debtSince = null;
+  return got;
+}
+// 開工：P 是挑戰模式的存檔（伺服器在同壹個交易裡改）。vid 是要送下去的那位
+export function casWorkStart(w, P, vid, day) {
+  const C = NUM.casino.work;
+  if (!P) return { ok: false, reason: CAS_TEXT.workWho };
+  if (w.chips >= 0) return { ok: false, reason: CAS_TEXT.workNoDebt };
+  if (w.work) return { ok: false, reason: CAS_TEXT.workAlready };
+  const all = [P].concat(Array.isArray(P.visitors) ? P.visitors : []);
+  const who = all.find(v => v && v.vid === vid);
+  if (!who) return { ok: false, reason: CAS_TEXT.workWho };
+  if (!who.job || who.dark || who.work) return { ok: false, reason: CAS_TEXT.workCant };
+  const name = who.vname || `第 ${who.visitor || 1} 位參觀者`;
+  if (P.vid === vid && !workBench(P).length) return { ok: false, needNew: true, reason: casFill(CAS_TEXT.workNeedNew, { name }) };
+  const v = sendToWork(P, vid, day);
+  if (!v) return { ok: false, reason: CAS_TEXT.workCant };
+  w.work = { vid, name, job: v.job, san: Math.max(C.sanMin, Math.floor(casNz(v.sanity, C.sanMin))), san0: 0, base: -w.chips, since: day, last: day, paid: 0 };
+  w.work.san0 = w.work.san;
+  const pay = casWorkPay(w.work);
+  return { ok: true, name, lines: [casFill(CAS_TEXT.workSent, { name, pay: casNum(pay), days: Math.ceil(w.work.base / pay) })] };
+}
+// 花靈感補理智：n 是要補幾點（補到下去前的理智為止）。靈感從存檔的博物館扣
+export function casWorkCheer(w, P, n) {
+  const C = NUM.casino.work, x = w.work;
+  if (!x) return { ok: false, reason: CAS_TEXT.workNone };
+  if (!P) return { ok: false, reason: CAS_TEXT.workWho };
+  const room = x.san0 - x.san;
+  if (room <= 0) return { ok: false, reason: CAS_TEXT.workFull };
+  let k = Math.floor(Number(n));
+  if (!Number.isFinite(k) || k < 1) k = 1;
+  k = Math.min(k, room);
+  const cost = k * C.inspPerSan;
+  if (!(P.insp >= cost)) return { ok: false, reason: casFill(CAS_TEXT.workInsp, { n: cost }) };
+  P.insp -= cost;
+  x.san += k;
+  return { ok: true, n: k, cost, lines: [casFill(CAS_TEXT.workCheered, { name: x.name, n: k, san: x.san })] };
+}
+// 回來：還清了（籌碼 ≥ 0）才回來。存檔裡那位拿掉工作的記號、理智換成工作完的。錢包沒有工作、存檔還掛著記號的（壞掉的）也清掉
+export function casWorkEnd(w, P) {
+  const x = w.work;
+  if (x && w.chips < 0) return { ok: false, reason: casFill(CAS_TEXT.workLine, { name: x.name, san: x.san, san0: x.san0, debt: casNum(-w.chips), days: Math.ceil(-w.chips / casWorkPay(x)) }) };
+  const v = P ? backFromWork(P, x ? x.vid : null, x ? x.san : NaN) : null;
+  w.work = null;
+  return { ok: true, back: !!(x || v), name: x ? x.name : v ? (v.vname || `第 ${v.visitor || 1} 位參觀者`) : "", san: x ? x.san : v ? v.sanity : null,
+    lines: x || v ? [casFill(CAS_TEXT.workBack, { name: x ? x.name : v.vname || "參觀者", san: x ? x.san : v.sanity })] : [] };
+}
+// 畫面要的
+export function casWorkView(w) {
+  const x = w.work;
+  if (!x) return null;
+  const pay = casWorkPay(x);
+  return { vid: x.vid, name: x.name, job: x.job, san: x.san, san0: x.san0, base: x.base, pay, since: x.since, paid: x.paid, debt: Math.max(0, -w.chips), done: w.chips >= 0,
+    days: w.chips >= 0 ? 0 : Math.ceil(-w.chips / pay) };
+}
+
 // 「Yuga 來收錢了」的話：拿走（畫面說完就清掉）
 export function casLoanTakeNotes(w) { const n = w.loan.notes; w.loan.notes = []; return n; }
 // 畫面要的借款摘要
@@ -527,7 +611,7 @@ export function casWalletView(w, day) {
   return {
     foodMoodLeft: Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0)), foodSanLeft: Math.max(0, NUM.casino.foodCap.san - (w.food && w.food.day === day ? w.food.san : 0)),
     chips: w.chips, tickets: w.tickets, packsToday: w.pk.left, packsLeft: casPacksLeft(w), opened: w.pk.opened,
-    canRelief: casCanRelief(w), loan: casLoanView(w, day),
+    canRelief: casCanRelief(w), loan: casLoanView(w, day), work: casWorkView(w), mustWork: casMustWork(w),
     ex: C.exchange.map(x => ({ id: x.id, chips: x.chips, perWeek: x.perWeek, left: casExchangeLeft(w, x.id) })),
     ach: Object.keys(w.ach).map(id => Object.assign({ d: w.ach[id].d }, casAchInfo(w, id))).filter(a => a.name),
     props: Object.keys(w.props).map(id => Object.assign({ n: w.props[id].n, d: w.props[id].d, hung: w.hung.includes(id) }, casPropInfo(w, id))).filter(p => p.name),
