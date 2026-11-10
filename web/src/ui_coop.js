@@ -444,7 +444,12 @@ function phaseCard(v, me) {
 // 館友留下的痕跡（機制 7）：同一間重畫時不要重讀（留言牌的表單也不要被洗掉），留同一塊
 function roomTraces(id, canSign) {
   const s = S, key = id + (canSign ? ":done" : "");
-  if (s.traceKey !== key || !s.traceEl) { s.traceKey = key; s.traceEl = traceBox(id, { canSign }); }
+  if (s.traceKey !== key || !s.traceEl) {
+    s.traceKey = key; s.traceEl = traceBox(id, { canSign });
+    // 遇到館友在地下工作的參觀者（決定 0064 第三部分，ui_work.js）：跟痕跡放在壹起，同壹間重畫時留同壹塊
+    const meet = ADDONS.cellarMeet ? ADDONS.cellarMeet({ id }, "coop:" + (s.view && s.view.floor != null ? s.view.floor : "")) : null;
+    if (meet) s.traceEl = h("div", null, meet, s.traceEl);
+  }
   return s.traceEl;
 }
 // 門上的記號：只有自己看到的（真的只送這幾個給我，別人的、哪個是假的都不在我手上）

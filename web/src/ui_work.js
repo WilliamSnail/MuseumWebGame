@@ -136,3 +136,61 @@ ADDONS.workPeek = workPeek;
 ADDONS.workCheck = workCheck;
 ADDONS.workCheer = workCheerLayer;
 ADDONS.workLine = workLine;
+
+// ---------- 別的館友在地下遇到他（決定 0064 第三部分） ----------
+// 每壹層第壹次進房間時擲壹次：NUM.casino.work.meetPct% 會遇到壹位在工作的（不是自己的）。名單在 Realtime Database 的 workers（伺服器寫的）
+const meetPlan = new Map(); // 「第幾層」→ { uid, v, roomId } 或 null
+let workersAt = 0, workersVal = null;
+async function readWorkers() {
+  if (Date.now() - workersAt < 60000 && workersVal) return workersVal;
+  workersVal = (await NET.read("workers")) || {};
+  workersAt = Date.now();
+  return workersVal;
+}
+function meetCard(plan) {
+  const v = plan.v, box = h("div", { class: "meet-card", role: "group", "aria-label": `遇到${v.name}` });
+  const draw = (msg, tone) => {
+    const done = plan.done || {};
+    const act = async (kind, tpl) => {
+      if (plan.busy) return;
+      plan.busy = true;
+      try {
+        const r = await call("workMeet", { to: plan.uid, kind, tpl });
+        if (!r.ok) { snd("error"); draw(r.reason || "沒辦法", "bad"); }
+        else { plan.done = Object.assign({}, done, { [kind]: true }); if (Number.isFinite(r.san)) v.san = r.san; snd("coin"); draw(r.line, "good"); }
+      } catch (e) { draw((e && e.message) || "沒辦法", "bad"); }
+      plan.busy = false;
+    };
+    const W = NUM.casino.work;
+    const sel = h("select", { class: "meet-sel", "aria-label": "要留的話" }, CAS_TEXT.meetNotes.map((t, i) => h("option", { value: String(i) }, t)));
+    box.replaceChildren(
+      h("p", { class: "meet-see" }, fill(CAS_TEXT.meetSee, { name: v.name, owner: v.owner, san: v.san })),
+      h("div", { class: "meet-acts" },
+        btn(fill(CAS_TEXT.meetHello, { n: W.helloSan }), () => act("hello"), "small", { disabled: done.hello ? true : null }),
+        btn(fill(CAS_TEXT.meetGive, { n: casNum(W.giveChips) }), () => act("give"), "small", { disabled: done.give ? true : null }),
+        h("span", { class: "meet-note" }, sel, btn(CAS_TEXT.meetNote, () => act("note", Number(sel.value)), "small", { disabled: done.note ? true : null }))),
+      msg ? h("p", { class: "meet-msg " + (tone || "") }, msg) : null);
+  };
+  draw();
+  return box;
+}
+// 單人和合作的地下，每間房都叫：這壹層遇到的那間才回壹張卡，其他回 null（先放壹個空的，名單讀到了再填）
+export function cellarMeet(room, floor) {
+  if (!on() || !room) return null;
+  const key = String(floor);
+  if (meetPlan.has(key)) { const p = meetPlan.get(key); return p && p.roomId === room.id ? meetCard(p) : null; }
+  meetPlan.set(key, null);
+  if (Math.random() * 100 >= NUM.casino.work.meetPct) return null; // 這壹層沒遇到
+  const slot = h("div", { class: "meet-slot" });
+  readWorkers().then(all => {
+    const me = NET.me && NET.me.id;
+    const list = Object.keys(all || {}).filter(uid => uid !== me && all[uid] && all[uid].name).map(uid => ({ uid, v: all[uid] }));
+    if (!list.length) return;
+    const pick = list[Math.floor(Math.random() * list.length)];
+    const plan = { uid: pick.uid, v: Object.assign({}, pick.v), roomId: room.id };
+    meetPlan.set(key, plan);
+    if (slot.isConnected) slot.replaceWith(meetCard(plan));
+  }).catch(() => {});
+  return slot;
+}
+ADDONS.cellarMeet = cellarMeet;

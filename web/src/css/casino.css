@@ -346,3 +346,10 @@ body.reduce-motion .live-dot { animation: none; }
 .work-close { display: flex; justify-content: flex-end; }
 .vs-card.working { opacity: .85; }
 .vs-card.working .vs-work { color: #A8382D; }
+/* 地下遇到館友在工作的參觀者（決定 0064 第三部分，ui_work.js） */
+.meet-card { margin: 10px 0; padding: 10px 14px; border-radius: 8px; border: 1px dashed rgba(214,178,94,.7); background: rgba(20,32,54,.78); color: #EEF1F6; }
+.meet-see { margin: 0 0 8px; line-height: 1.6; }
+.meet-acts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.meet-note { display: inline-flex; gap: 6px; align-items: center; }
+.meet-sel { min-height: 32px; border-radius: 6px; border: 1px solid #C8A25A; background: #FBF7EA; color: #1B1B1B; padding: 0 6px; }
+.meet-msg { margin: 8px 0 0; font-size: .9375rem; } .meet-msg.good { color: #9FD8B0; } .meet-msg.bad { color: #FF9C8A; }
