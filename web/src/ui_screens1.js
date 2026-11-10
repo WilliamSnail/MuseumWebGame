@@ -667,7 +667,7 @@ SCREENS.workshop = (root, params) => {
     tabs.replaceChildren(...CATS.filter(c => !partOf(c).deco || decoOpen(P, c)).map(c => {
       const t = h("div", { class: "tab-wrap" + (c === tab ? " on" : "") },
         h("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(c === tab), onClick: () => { tab = c; UI.params.tab = c; drawTabs(); drawCards(); drawTools(); } },
-          icon(CAT_ICON[c] || "sparkle"), h("span", { class: "tab-t" }, c), h("span", { class: "tab-n" }, `${usable(P, c).length}/${allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited) || isUnlocked(P, c, n)).length}`), // 簽到限定的拿到了才算（11-09）
+          icon(CAT_ICON[c] || "sparkle"), h("span", { class: "tab-t" }, c), h("span", { class: "tab-n" }, `${usable(P, c).length}/${allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited || optOf(c, n).mix) || isUnlocked(P, c, n)).length}`), // 簽到限定的拿到了才算（11-09）
           freshUnder(P, "workshop", FRESH_KEY.opt(c, "")) || isFresh(P, "workshop", FRESH_KEY.cat(c)) ? freshTag("tab-fresh") : null), // 這頁有新選項（11-08）
         c === ROLLED && !free ? null : h("button", { type: "button", class: "hold" + (hold[c] ? " on" : ""), "aria-pressed": String(!!hold[c]), title: hold[c] ? "鎖住了：擲骰時這一類不變" : "鎖住這一類：擲骰時不變",
           onClick: () => { hold[c] = !hold[c]; drawTabs(); } }, icon(hold[c] ? "lock" : "unlock")));
@@ -678,6 +678,7 @@ SCREENS.workshop = (root, params) => {
     const st = unlockState(P, cat, name);
     const o = optOf(cat, name);
     if (o.forbidden && st.state === "forbidden" && P.myth < o.myth - 4) return null; // 太遠的禁忌選項先不露面
+    if (o.mix && st.state !== "open") return null; // 調色盤的顏色：調出來才出現（提示在融合室的調色盤）
     if (o.limited === "shop" && st.state !== "open") return null; // 兌換所的限定頭飾：買到了才出現（決定 0032；帽子那頁不會多一排鎖著的）
     if (o.limited && o.limited !== "signin" && o.limited !== "shop" && st.state !== "open") return null; // 主題展、每週特展的配件：拿到才出現，下面壹行字說怎麼拿（決定 0035）
     const blocked = st.state === "open" && isBlocked(P, cat, name);

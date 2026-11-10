@@ -5,7 +5,7 @@
 
 // ---------- 系統 K：工坊升級 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
 import { settleWeekShow } from "./themeshow.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, usable } from "./logic.js";
@@ -105,7 +105,11 @@ export function skillGrowth(P) {
 export const pairIdOf = (a, b) => [a.kind + ":" + a.key, b.kind + ":" + b.key].sort().join("&");
 export function fusionLeft(P) { return isFree(P) ? 99 : Math.max(0, fusionLimit(P) - ((P.day && P.day.fusions) || 0)); }
 // 融合一次要幾靈感：小優點「精打細算」少 1、小缺點「坐不住」多 1（11-08）
-export function fusionPrice(P) { return isFree(P) ? 0 : Math.max(0, NUM.fusionCost + traitSum(P, "fusion")); }
+// 爸媽愈稀有愈貴（翊文 11-10：「融合照親代稀有度加價　要」）：每一隻照 NUM.fusionRarityCost 加。A、B 沒給就是基本價
+export function fusionRarityCost(A, B) { return [A, B].reduce((s, x) => s + (x && x.pick ? NUM.fusionRarityCost[Math.max(0, rarityRank(x.pick[ROLLED]))] || 0 : 0), 0); }
+export function fusionPrice(P, A, B) { return isFree(P) ? 0 : Math.max(0, NUM.fusionCost + traitSum(P, "fusion") + fusionRarityCost(A, B)); }
+// 血統跟著變多：每一隻照稀有度給（稀有 1 份、超稀有 2 份…），這一對調得出新顏色再多 NUM.mixBlood
+export function fusionBlood(A, B) { return [A, B].reduce((s, x) => s + Math.max(0, rarityRank(x.pick[ROLLED])) * NUM.blood, 0) + (matchMix(A, B) ? NUM.mixBlood : 0); }
 export function fusionItem(P, item) {
   if (!item) return null;
   if (item.kind === "pepe" && P.pepes[item.key]) return Object.assign({ pick: fromKey(item.key), perfect: !!P.pepes[item.key].perfect }, item);
@@ -118,13 +122,23 @@ export function canFuse(P, a, b) {
   if (!isFree(P)) {
     if (!fusionLeft(P)) return { ok: false, reason: `今天的融合次數用完了（一天 ${fusionLimit(P)} 次）` };
     if (P.day.pairs[pairIdOf(A, B)]) return { ok: false, reason: "這一對今天已經融合過了" };
-    if (P.insp < fusionPrice(P)) return { ok: false, reason: `靈感不夠（融合一次要 ${fusionPrice(P)}）` };
+    if (P.insp < fusionPrice(P, A, B)) return { ok: false, reason: `靈感不夠（這一對融合要 ${fusionPrice(P, A, B)}）` };
   }
   return { ok: true, A, B };
 }
 export function needFits(need, pick) { return Object.keys(need || {}).every(c => specAllows(need[c], pick[c])); }
+// 調色盤：這一對的顏色調得出新顏色嗎（只看顏色；跟 matchRecipe 分開，兩個可以同時中）
+export function matchMix(A, B) {
+  return RECIPES.find(r => r.mix && ((needFits(r.a, A.pick) && needFits(r.b, B.pick)) || (needFits(r.a, B.pick) && needFits(r.b, A.pick)))) || null;
+}
+// 調色盤的每一格：got ＝調出來過；ready ＝兩種材料的顏色手上都有了（可以給提示）
+export function paletteView(P) {
+  const have = c => !!isUnlocked(P, "顏色", c);
+  return RECIPES.filter(r => r.mix).map(r => ({ id: r.id, color: r.child.顏色, a: r.a.顏色, b: r.b.顏色, got: !!(P.recipes && P.recipes[r.id]), ready: have(r.a.顏色) && have(r.b.顏色) }));
+}
 export function matchRecipe(A, B) {
   for (const r of RECIPES) {
+    if (r.mix) continue;
     if (r.same) { if (A.key === B.key) return r; continue; }
     if ((needFits(r.a, A.pick) && needFits(r.b, B.pick)) || (needFits(r.a, B.pick) && needFits(r.b, A.pick))) return r;
   }
@@ -134,7 +148,7 @@ export function fusionChances() { return { a: NUM.inherit, b: NUM.inherit, mutat
 // 融合分成三步（多人版 M3，11-08 拆開，給「兩個人一起融合」用）：扣靈感和次數 → 算小孩 → 記配方、打開選項。
 // 一個人融合（startFusion）照原本的順序叫，亂數用的順序跟以前一樣，模擬結果不變。
 export function chargeFusion(P, A, B) {
-  if (!isFree(P)) { P.insp -= fusionPrice(P); P.day.fusions = (P.day.fusions || 0) + 1; P.day.pairs[pairIdOf(A, B)] = true; }
+  if (!isFree(P)) { P.insp -= fusionPrice(P, A, B); P.day.fusions = (P.day.fusions || 0) + 1; P.day.pairs[pairIdOf(A, B)] = true; }
 }
 // 算小孩（不扣東西、不打開選項）。突變沒有專用選項時，從 P 能用的選項裡挑。
 export function fusionChild(P, A, B) {
@@ -163,14 +177,25 @@ export function fusionChild(P, A, B) {
     const rt = typeof RECIPE_TEXT !== "undefined" && RECIPE_TEXT[recipe.id];
     title = rt ? rt.name : recipe.id;
   }
+  // 調色盤：配方沒有決定顏色（也不是「壹模壹樣」那個配方）時，兩隻的顏色調得出來就換成新顏色
+  const mix = matchMix(A, B), mixed = !!mix && !(recipe && (recipe.same || (recipe.child && recipe.child.顏色)));
+  if (mixed) {
+    child.顏色 = mix.child.顏色; from.顏色 = "r";
+    const mt = typeof RECIPE_TEXT !== "undefined" && RECIPE_TEXT[mix.id];
+    if (!title) title = mt ? mt.name : mix.id;
+  }
   child[ROLLED] = A.pick[ROLLED];
-  const blood = [A, B].filter(x => rarityRank(x.pick[ROLLED]) >= 1).length * NUM.blood;
-  return { child, from, mutations, recipe, title, fixed, minRarity, blood, san };
+  const blood = fusionBlood(A, B);
+  return { child, from, mutations, recipe, mix: mixed ? mix : null, title, fixed, minRarity, blood, san };
 }
 // 融合的結果記到 P：配方第一次發現；小孩身上出現的突變、配方選項當場打開（以後手作坊也能用）
 export function fusionLearn(P, core) {
   const events = [];
-  if (core.recipe && !P.recipes[core.recipe.id]) { P.recipes[core.recipe.id] = todayStr(); events.push({ type: "recipe", id: core.recipe.id, name: core.title }); }
+  [core.recipe, core.mix].forEach(r => {
+    if (!r || P.recipes[r.id]) return;
+    const t = typeof RECIPE_TEXT !== "undefined" && RECIPE_TEXT[r.id];
+    P.recipes[r.id] = todayStr(); events.push({ type: "recipe", id: r.id, name: t ? t.name : r.id });
+  });
   CATS.filter(c => c !== ROLLED).forEach(c => {
     const o = optOf(c, core.child[c]);
     if (o && (o.mutant || isUnlocked(P, c, core.child[c]) === false && (core.from[c] === "r" || core.from[c] === "m"))) events.push(...grantOption(P, c, core.child[c], o.mutant ? "mutant" : "recipe"));
@@ -184,7 +209,7 @@ export function startFusion(P, a, b) {
   chargeFusion(P, A, B);
   const core = fusionChild(P, A, B);
   const events = fusionLearn(P, core);
-  return { ok: true, child: core.child, from: core.from, mutations: core.mutations, recipe: core.recipe ? core.recipe.id : null, title: core.title, fixed: core.fixed, minRarity: core.minRarity, blood: core.blood, san: core.san, roll: core.fixed ? null : rollD100(), events };
+  return { ok: true, child: core.child, from: core.from, mutations: core.mutations, recipe: core.recipe ? core.recipe.id : core.mix ? core.mix.id : null, mix: core.mix ? core.mix.id : null, title: core.title, fixed: core.fixed, minRarity: core.minRarity, blood: core.blood, san: core.san, roll: core.fixed ? null : rollD100(), events };
 }
 
 // ---------- 兩個人一起融合（多人版 M3，翊文 11-08：「好了，可以做多人遊戲模式了」） ----------
@@ -197,7 +222,7 @@ export function canFuseOne(P, item) {
   if (!A) return { ok: false, reason: "這隻佩佩不在收藏裡" };
   if (P.dark) return { ok: false, reason: "燈熄了，什麼都看不到" };
   if (!fusionLeft(P)) return { ok: false, reason: `今天的融合次數用完了（壹天 ${fusionLimit(P)} 次）` };
-  if (P.insp < fusionPrice(P)) return { ok: false, reason: `靈感不夠（融合壹次要 ${fusionPrice(P)}）` };
+  if (P.insp < fusionPrice(P, A)) return { ok: false, reason: `靈感不夠（這隻融合壹次至少要 ${fusionPrice(P, A)}）` };
   return { ok: true, A };
 }
 export function fuseTogether(PA, a, PB, b) {
@@ -207,11 +232,14 @@ export function fuseTogether(PA, a, PB, b) {
   const A = ca.A, B = cb.A;
   if (PA.day.pairs[pairIdOf(A, B)]) return { ok: false, who: "a", reason: "這壹對今天已經融合過了" };
   if (PB.day.pairs[pairIdOf(A, B)]) return { ok: false, who: "b", reason: "這壹對今天已經融合過了" };
+  // 兩隻都知道了才算得出加價（爸媽愈稀有愈貴），兩個人各付壹份
+  if (PA.insp < fusionPrice(PA, A, B)) return { ok: false, who: "a", reason: `靈感不夠（這壹對融合要 ${fusionPrice(PA, A, B)}）` };
+  if (PB.insp < fusionPrice(PB, A, B)) return { ok: false, who: "b", reason: `靈感不夠（這壹對融合要 ${fusionPrice(PB, A, B)}）` };
   chargeFusion(PA, A, B);
   chargeFusion(PB, A, B);
   const core = fusionChild(PA, A, B);
   const roll = core.fixed ? null : rollD100();
-  const fusion = { blood: core.blood, minRarity: core.minRarity, title: core.title, recipe: core.recipe ? core.recipe.id : null, fixed: core.fixed };
+  const fusion = { blood: core.blood, minRarity: core.minRarity, title: core.title, recipe: core.recipe ? core.recipe.id : core.mix ? core.mix.id : null, fixed: core.fixed };
   const out = { ok: true, child: core.child, from: core.from, mutations: core.mutations, recipe: fusion.recipe, title: core.title, fixed: core.fixed, roll };
   [[PA, "a"], [PB, "b"]].forEach(([P, side]) => {
     const events = fusionLearn(P, core);
@@ -267,6 +295,7 @@ export function memberPower(it, room) {
   }
   if (room && room.color && p.顏色 === room.color) s += 1;
   if (p.姿勢 === "倒立") s += 1;
+  s += COLOR_POWER[p.顏色] || 0; // 調色盤調出來的顏色
   return s;
 }
 export function teamPower(P, team, room) {
@@ -411,7 +440,7 @@ export function roomProgress(P) {
     // 跟手作坊頁籤上的數字一樣算：禁忌選項打開了才算進去
     let a = 0, b = 0;
     CATS.filter(c => !partOf(c).deco || decoOpen(P, c)).forEach(c => {
-      const all = allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited) || isUnlocked(P, c, n)); // 簽到限定的（決定 0030）拿到了才算
+      const all = allOpts(c).filter(n => !(optOf(c, n).forbidden || optOf(c, n).limited || optOf(c, n).mix) || isUnlocked(P, c, n)); // 簽到限定的（決定 0030）、調色盤的顏色拿到了才算
       b += all.length; a += all.filter(n => isUnlocked(P, c, n)).length;
     });
     out.workshop = frac(a, b, "選項");

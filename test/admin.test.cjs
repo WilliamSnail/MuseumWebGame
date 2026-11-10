@@ -22,8 +22,8 @@ const fresh = G => {
   return { save, P };
 };
 // 模擬用的「全部解鎖」算法（test/sim.cjs 的 baseLocked，一字不改）
-const baseLocked = (G, P) => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
-const lockable = G => G.CATS.flatMap(c => G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !o.start).map(o => [c, o.name]));
+const baseLocked = (G, P) => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
+const lockable = G => G.CATS.flatMap(c => G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !o.start).map(o => [c, o.name]));
 const pepe = (G, over) => G.pepeKey(Object.assign({}, G.DEFAULT_PICK, over));
 
 // 一間有各種進度的博物館

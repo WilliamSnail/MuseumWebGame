@@ -36,7 +36,7 @@ const STORY_DAYS = (() => {
 const SHOP = process.env.SHOP !== "0";
 const GEAR0 = (process.env.GEAR || "").split(",").filter(Boolean);
 const SHOP_BUY = ["apron", "abacus"];
-const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
+const baseLocked = P => G.CATS.reduce((n, c) => n + G.PEPE_PARTS.find(p => p.name === c).options.filter(o => !o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)).length, 0);
 const LOCKED0 = baseLocked(G.newProfile("challenge"));
 function pickRandom(P, rng) { const p = {}; G.CATS.forEach(c => { const u = G.usable(P, c); p[c] = u[Math.floor(rng() * u.length)]; }); return p; }
 function sim(seed) {

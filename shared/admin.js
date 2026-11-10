@@ -43,7 +43,7 @@ export function isAdminInvite(d) { return admObj(d) && d.admin === true && !d.di
 export function adminUnlock(P) {
   let have = 0, total = 0;
   CATS.forEach(c => PEPE_PARTS.find(p => p.name === c).options.forEach(o => {
-    if (o.forbidden || o.mutant || o.gift || o.limited || o.key || o.start) return;
+    if (o.forbidden || o.mutant || o.mix || o.gift || o.limited || o.key || o.start) return;
     total++;
     if (asList(P.unlocked && P.unlocked[c]).includes(o.name)) have++;
   }));

@@ -36,6 +36,12 @@ export const PEPE_PARTS = [
     { name: "黑", req: { badge: "fourMoods" } },
     { name: "虹彩", mutant: true },
     { name: "夜市金", gift: "youth" },
+    // 調色盤的顏色（mix）：只能在融合室用兩種顏色調出來，調出來以後手作坊也能用（配方在 RECIPES，翊文 11-10）
+    { name: "橘", mix: true },
+    { name: "藍", mix: true },
+    { name: "紫", mix: true },
+    { name: "白", mix: true },
+    { name: "粉", mix: true },
   ] },
   { name: "帽子", options: [
     { name: "沒有", start: true },
@@ -142,7 +148,9 @@ export const NUM = {
   fusionPerDay: 3,          // 一天可以融合幾次（升級「第二座融合爐」再 +3）
   fusionSan: "1/1D4",       // 融合要做的理智檢定（原本 0/1D4）
   inherit: 45,              // 每一類從爸爸、媽媽各遺傳的機率（%），剩下的是突變
-  blood: 5,                 // 爸媽每一隻是「稀有」以上，就多 5 點血統，可以像心情一樣壓低骰子
+  blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
+  fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）
+  mixBlood: 5,              // 調色盤：這一對調得出新顏色時，多給幾點血統
   diceRerolls: 3,           // 升級「骰子打磨」後，一天可以重擲十位骰幾次
   visitorFame: 120,         // 升級「名聲」後，參觀者幾秒來一位
   skillMain: "1D10", skillMainBase: 55, skillBase: "1D10", skillOtherBase: 15, // 職業技能 56–65；其他技能 16–25
@@ -399,7 +407,15 @@ export const RECIPES = [
   { id: "tipsy", a: { 心情: "開心", 姿勢: "躺平" }, b: { 心情: "傷心", 姿勢: "躺平" }, child: { 心情: "微醺", 姿勢: "躺平" } },
   { id: "rainbow", a: { 心情: "開心", 顏色: "紅" }, b: { 心情: "開心", 顏色: "綠" }, child: { 心情: "開心", 顏色: "虹彩" } },
   { id: "handstand", a: { 姿勢: "比讚" }, b: { 姿勢: "比讚" }, child: { 姿勢: "倒立" } },
+  // 調色盤（mix）：只看兩隻的顏色，可以跟上面的配方同時發生（上面的配方已經決定顏色時，照上面的）
+  { id: "mixOrange", mix: true, a: { 顏色: "紅" }, b: { 顏色: "黃" }, child: { 顏色: "橘" } },
+  { id: "mixBlue", mix: true, a: { 顏色: "綠" }, b: { 顏色: "黑" }, child: { 顏色: "藍" } },
+  { id: "mixPurple", mix: true, a: { 顏色: "紅" }, b: { 顏色: "藍" }, child: { 顏色: "紫" } },
+  { id: "mixWhite", mix: true, a: { 顏色: "橘" }, b: { 顏色: "藍" }, child: { 顏色: "白" } },
+  { id: "mixPink", mix: true, a: { 顏色: "紅" }, b: { 顏色: "白" }, child: { 顏色: "粉" } },
 ];
+// 調出來的顏色在地下收藏庫多幾點強度
+export const COLOR_POWER = { 橘: 1, 藍: 1, 紫: 1, 白: 1, 粉: 1 };
 
 // ---------- 第 3 版：參觀者的職業與技能（系統 L；名字、說明在 content3.js 的 JOBS） ----------
 export const SKILLS = ["偵查", "鑑賞", "神秘學", "幸運", "手工藝", "說服"];
