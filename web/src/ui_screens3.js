@@ -594,6 +594,7 @@ export function cellarRoom(root) {
   root.append(roomHead(`B${run.floor}　${f.name}`, run.extra ? run.extra.intro || "這週多出來的地方。" : run.idx === 0 && f.intro ? f.intro : null, dots, leave),
     stage,
     teamBar, card,
+    ADDONS.cellarMeet ? ADDONS.cellarMeet(room, run.floor) : null, // 遇到館友在地下工作的參觀者（決定 0064，ui_work.js）
     ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null); // 館友留下的痕跡（ui_trace.js）
 }
 // 誰讓理智多扣、少扣：「怕黑 +1、探險燈 −1」（只有一個就寫名字）

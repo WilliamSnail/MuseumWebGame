@@ -99,5 +99,31 @@ T("舊錢包、舊存檔：沒有 work 補 null；壞掉的記號拿掉", G => {
   assert.strictEqual(P.visitors[0].work, undefined);
 });
 
+T("別的館友遇到他：打招呼理智 +helloSan、塞籌碼從自己出、留話；每種壹天壹次；回來時看得到留言", G => {
+  const W = G.NUM.casino.work, P = two(G), w = debtW(G, -50000), me = G.casWalletFix(null, D);
+  G.casWorkStart(w, P, P.visitors[0].vid, D);
+  w.work.san = 20;
+  const who = { uid: "u2", nick: "小華" };
+  let r = G.casWorkMeet(me, w, "hello", null, D, who);
+  assert.ok(r.ok); assert.strictEqual(w.work.san, 20 + W.helloSan);
+  assert.ok(!G.casWorkMeet(me, w, "hello", null, D, who).ok, "壹天壹次");
+  const c0 = me.chips;
+  r = G.casWorkMeet(me, w, "give", null, D, who);
+  assert.ok(r.ok); assert.strictEqual(me.chips, c0 - W.giveChips); assert.strictEqual(w.chips, -50000 + W.giveChips);
+  r = G.casWorkMeet(me, w, "note", 1, D, who);
+  assert.ok(r.ok);
+  assert.ok(!G.casWorkMeet(me, w, "note", 99, plus(D, 1), who).ok, "沒有這句");
+  assert.ok(G.casWorkMeet(me, w, "hello", null, plus(D, 1), who).ok, "隔天又可以");
+  const pub = G.casWorkPublic(w, "小明");
+  assert.deepStrictEqual(Object.keys(pub).sort(), ["job", "name", "owner", "san"]);
+  w.chips = 0;
+  assert.strictEqual(G.casWorkPublic(w, "小明"), null, "還清了就不公開");
+  const end = G.casWorkEnd(w, P);
+  assert.ok(end.lines.join("").includes(G.CAS_TEXT.meetNotes[1]) && end.lines.join("").includes("小華"));
+  const poor = G.casWalletFix(null, D); poor.chips = 5;
+  const w2 = debtW(G, -10); G.casWorkStart(w2, two(G), "v1", D);
+  assert.ok(!G.casWorkMeet(poor, w2, "give", null, D, who).ok, "籌碼不夠");
+});
+
 console.log(`work.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

@@ -318,9 +318,41 @@ export function casWorkEnd(w, P) {
   if (x && w.chips < 0) return { ok: false, reason: casFill(CAS_TEXT.workLine, { name: x.name, san: x.san, san0: x.san0, debt: casNum(-w.chips), days: Math.ceil(-w.chips / casWorkPay(x)) }) };
   const v = P ? backFromWork(P, x ? x.vid : null, x ? x.san : NaN) : null;
   w.work = null;
+  const notes = x && Array.isArray(x.notes) ? x.notes.filter(n => CAS_TEXT.meetNotes[n.t]).map(n => `${n.nick}：「${CAS_TEXT.meetNotes[n.t]}」`) : [];
   return { ok: true, back: !!(x || v), name: x ? x.name : v ? (v.vname || `第 ${v.visitor || 1} 位參觀者`) : "", san: x ? x.san : v ? v.sanity : null,
-    lines: x || v ? [casFill(CAS_TEXT.workBack, { name: x ? x.name : v.vname || "參觀者", san: x ? x.san : v.sanity })] : [] };
+    lines: (x || v ? [casFill(CAS_TEXT.workBack, { name: x ? x.name : v.vname || "參觀者", san: x ? x.san : v.sanity })] : [])
+      .concat(notes.length ? [casFill(CAS_TEXT.meetGot, { name: x.name, list: notes.join("、") })] : []) };
 }
+// 別的館友在地下遇到他（決定 0064 第三部分）：me 是遇到的人的錢包，w 是工作的人的錢包。kind：hello、give、note（tpl 是第幾句）
+// 每位館友對同壹位工作的參觀者，每種壹天壹次（記在 w.work.met）
+export function casWorkMeet(me, w, kind, tpl, day, who) {
+  const C = NUM.casino.work, x = w && w.work;
+  if (!x) return { ok: false, reason: CAS_TEXT.meetGone };
+  if (!who || !who.uid) return { ok: false, reason: CAS_TEXT.meetGone };
+  if (!casIsObj(x.met) || x.met.day !== day) x.met = { day, by: {} };
+  const done = Array.isArray(x.met.by[who.uid]) ? x.met.by[who.uid] : [];
+  if (!["hello", "give", "note"].includes(kind)) return { ok: false, reason: CAS_TEXT.meetGone };
+  if (done.includes(kind)) return { ok: false, reason: CAS_TEXT.meetDone };
+  let line;
+  if (kind === "hello") {
+    x.san = Math.min(x.san0, x.san + C.helloSan);
+    line = casFill(CAS_TEXT.meetHelloOk, { name: x.name, n: C.helloSan });
+  } else if (kind === "give") {
+    if (!me || me.chips < C.giveChips) return { ok: false, reason: casFill(CAS_TEXT.meetPoor, { n: casNum(C.giveChips) }) };
+    me.chips -= C.giveChips; w.chips += C.giveChips;
+    line = casFill(CAS_TEXT.meetGiveOk, { name: x.name, n: casNum(C.giveChips) });
+  } else {
+    const t = CAS_TEXT.meetNotes[Math.floor(Number(tpl))];
+    if (!t) return { ok: false, reason: CAS_TEXT.meetGone };
+    if (!Array.isArray(x.notes)) x.notes = [];
+    x.notes = x.notes.concat([{ nick: String(who.nick || "館友").slice(0, 12), t: Math.floor(Number(tpl)), day }]).slice(-10);
+    line = casFill(CAS_TEXT.meetNoteOk, { name: x.name });
+  }
+  x.met.by[who.uid] = done.concat(kind);
+  return { ok: true, kind, line, san: x.san };
+}
+// 公開給館友看的（Realtime Database 的 workers/{uid}）：只放名字、職業、理智、館主暱稱
+export const casWorkPublic = (w, nick) => (w && w.work && w.chips < 0 ? { name: String(w.work.name || "參觀者").slice(0, 24), job: String(w.work.job || "").slice(0, 24), san: w.work.san, owner: String(nick || "館友").slice(0, 12) } : null);
 // 畫面要的
 export function casWorkView(w) {
   const x = w.work;

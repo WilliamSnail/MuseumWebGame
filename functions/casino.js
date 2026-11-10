@@ -21,8 +21,8 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
-import { CAS_LIVE } from "./shared/casino_text.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
@@ -89,6 +89,32 @@ export async function playCore(me, email, opts, fn) {
   } finally { setRng(null); }
 }
 const play = (req, me, opts, fn) => playCore(me, emailOf(req), opts, fn);
+// 在地下工作的參觀者公開在 Realtime Database 的 workers/{uid}（決定 0064 第三部分；館友讀得到，只有這裡寫得動）。寫不進去不影響賭場
+const publishWork = async (uid, w, nick) => {
+  try { const v = casWorkPublic(w, nick); await (v ? rtdb().ref(`workers/${uid}`).set(v) : rtdb().ref(`workers/${uid}`).remove()); }
+  catch (e) { console.warn("workers 寫不進去", e && e.message); }
+};
+// 別的館友在地下遇到他：兩個錢包在同壹個交易裡改
+async function workMeet(me, d) {
+  const to = String(d.to || ""), day = taipeiDay(now());
+  if (!to || to === me.uid) return { ok: false, reason: CAS_TEXT.meetSelf };
+  const out = await db().runTransaction(async tx => {
+    const [ms, ts] = await Promise.all([tx.get(walletRef(me.uid)), tx.get(walletRef(to))]);
+    if (!ts.exists) return { ok: false, reason: CAS_TEXT.meetGone };
+    const mine = casWalletFix(parse(ms), day), w = casWalletFix(parse(ts), day);
+    const r = casWorkMeet(mine, w, String(d.kind || ""), d.tpl, day, { uid: me.uid, nick: me.nick });
+    if (!r.ok) return r;
+    if (r.kind === "give") put(tx, walletRef(me.uid), mine);
+    put(tx, walletRef(to), w);
+    return Object.assign(r, { chips: mine.chips, w });
+  });
+  if (out.ok) {
+    let ownerNick = null;
+    try { const m = await db().doc(`members/${to}`).get(); ownerNick = m.exists ? m.data().nick : null; } catch (e) { /* 拿不到就寫館友 */ }
+    await publishWork(to, out.w, ownerNick); delete out.w;
+  }
+  return out;
+}
 // 稱號到處看得到（決定 0050）：現在戴的稱號公開在 Realtime Database 的 titles/{uid}（館友讀得到，只有這裡寫得動）。
 // 只放 { id, name }，名字是錢包裡的（不信存檔）。寫不進去不影響賭場本身，下次進館的 peek 會再補
 const publishTitle = async (uid, t) => {
@@ -218,6 +244,7 @@ export const casino = onCall(async req => {
         const S = parse(await saveRef(me.uid).get());
         await publishTitle(me.uid, titlePublish(w, S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null));
       }
+      if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
@@ -252,7 +279,13 @@ export const casino = onCall(async req => {
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
     case "workStart":
     case "workCheer":
-    case "workEnd": return play(req, me, { save: true }, ctx => actWork(act, ctx, d));
+    case "workEnd": {
+      let wAfter = null;
+      const r = await play(req, me, { save: true }, ctx => { const x = actWork(act, ctx, d); wAfter = ctx.w; return x; });
+      if (r && r.ok !== false && wAfter) await publishWork(me.uid, wAfter, me.nick); // 別的館友在地下看得到他（決定 0064 第三部分）
+      return r;
+    }
+    case "workMeet": return workMeet(me, d);
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
     case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {

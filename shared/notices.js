@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "debt-meet", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "在地下收藏庫可能會遇到館友的參觀者在工作", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "館友欠了 Yuga Bot 的錢、送參觀者去地下室工作的時候，你走地下收藏庫（單人、合作都算），每壹層有很大的機會遇到他。",
+        "**可以打招呼**：他理智 +2。",
+        "**可以塞 1 萬籌碼幫他還**：從你自己的籌碼出。",
+        "**可以留壹句話**：他回館的時候看得到是誰留的。",
+        "每種對同壹位壹天壹次。",
+      ]],
+    ],
+  },
+  {
     id: "debt-work", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
     title: "欠 Yuga Bot 的錢，要送參觀者去地下室工作", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
