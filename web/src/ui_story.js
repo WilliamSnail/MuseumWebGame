@@ -77,6 +77,12 @@ export function storyTick() {
     persist();
     if (warm) setTimeout(() => note((picked.length > 1 ? "有幾個地方，你多看了壹眼。" : picked[0].text) + "（記進了疑點簿）"), 1200);
   }
+  const sh = showToday();
+  if (sh) {
+    const box = (P.fresh && P.fresh.gallery) || {}, key = SHOW_FRESH(today);
+    Object.keys(box).forEach(k => { if (k.startsWith("show:") && k !== key) delete box[k]; }); // 前幾天的不留
+    if (sh.unseen && !(key in box)) { markFresh(P, "gallery", key, UI.screen); markFreshNav(); persist(); }
+  }
   const seen = clueSync(P, STORY_LIB, today); // 線索 → 你看懂了（集齊才有事件）
   if (seen.length) { seen.forEach(() => markFresh(P, "origin", FRESH_KEY.understood, UI.screen)); markFreshNav(); cards.push(...seen); persist(); }
   if (ev.length) {
@@ -286,7 +292,7 @@ function lineCard(l, draw, m) {
   return h("li", { class: "sp-line" + (l.done ? " done" : "") + (l.tracked ? " tracked" : "") },
     h("div", { class: "sp-l-head" }, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, l.name), l.fresh ? h("span", { class: "nb-dot", "aria-label": "新的下壹步" }) : null),
     h("p", { class: "sp-l-prog" }, l.kind === "casino" ? `收到了 ${l.read}／${l.books} 件` : `讀了 ${l.read}／${l.books} 本`, l.kind === "main" || l.kind === "season" || l.kind === "casino" ? null : `・${l.done ? "走完了" : `第 ${Math.min(7, curWeek() ? curWeek().dayNo : 7)} 天／7 天`}`),
-    l.next ? h("p", { class: "sp-l-next" }, h("span", null, "下壹步："), h("b", null, l.next.text)) : h("p", { class: "sp-l-next" }, l.done ? "這條線走完了，收進「劇情回顧」。" : ""),
+    l.next ? h("p", { class: "sp-l-next" }, h("span", null, "下壹步："), h("b", null, l.next.text)) : h("p", { class: "sp-l-next" }, l.done ? (l.kind === "casino" ? "這週的都收齊了。東西在賭場的「本週收藏」看得到。" : "這條線走完了，收進「劇情回顧」。") : ""),
     h("div", { class: "sp-l-act" },
       l.next && (l.next.room || l.next.panel) && !l.done ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); goStep(l.next); }, "primary small") : null,
       !l.done ? btn(l.tracked ? "不追蹤了" : "追蹤這條", () => { trackLine(P, l.id); persist(); trackBar(); draw(); }, l.tracked ? "ghost small" : "small") : null));
@@ -298,8 +304,10 @@ function linesPane(W, lines, draw, m) {
 }
 function reviewPane(m) {
   const past = storyPastWeeks(STORY_LIB, todayStr(), P), oldSeasons = seasonLines(P, allWeeks()).filter(l => l.done).reverse(); // 換季之後舊的季節線也收在這裡
-  if (!past.length && !oldSeasons.length) return h("p", { class: "nb-empty" }, "走完的劇情線會收在這裡，隨時可以回去重讀。");
-  return h("ul", { class: "sp-review" }, oldSeasons.map(l => h("li", null, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, `〈${l.name}〉`), h("small", null, `讀了 ${l.read}／${l.books} 本`),
+  const W = curWeek(), nowDone = W ? storyLines(P, W).filter(l => l.done) : []; // 這週就走完的（週日讀完結局）：先列出來，不用等到下週
+  if (!past.length && !oldSeasons.length && !nowDone.length) return h("p", { class: "nb-empty" }, "走完的劇情線會收在這裡，隨時可以回去重讀。這週的線要到週日才會走完。");
+  return h("ul", { class: "sp-review" }, nowDone.map(l => h("li", null, h("span", { class: "sp-l-kind" }, `本週・${W.label}`), h("b", null, `〈${l.name}〉`), h("small", null, `讀了 ${l.read}／${l.books} 本`),
+    btn("到書架看", () => { m.close(); go("origin", { tab: "weekly", week: W.label }); }, "small"))), oldSeasons.map(l => h("li", null, h("span", { class: "sp-l-kind" }, l.kindText), h("b", null, `〈${l.name}〉`), h("small", null, `讀了 ${l.read}／${l.books} 本`),
     btn("到書架看", () => { m.close(); go("origin", { tab: "season" }); }, "small"))), past.map(w => {
     const lines = storyLines(P, w);
     const read = w.books.filter(b => bookState(P, w, b) === "read").length;
@@ -321,7 +329,24 @@ export function storyToday() {
   return { title: W.title, daily: (d ? d.daily : []).map(row), weekly: [W.weekly.filter(t => taskDone(P, t)).length, W.weekly.length], claim: claimables(W) };
 }
 
-// ---------- 大廳的小卡 ----------
+// ---------- 大廳總覽（ui_hub.js）裡的那壹列：標題、剩幾天、劇情線的下壹步、按鈕。任務的數字在總覽的格子裡，這裡不重複 ----------
+export function storyHub() {
+  if (!on()) return null;
+  const W = curWeek();
+  if (!W) return null;
+  const d = todayOf(W), lines = linesNow(W);
+  const tracked = lines.find(l => l.tracked) || null, show = tracked || lines.find(l => l.next && !l.next.wait) || null;
+  const fresh = lines.some(l => l.fresh);
+  const pending = claimables(W) > 0 || fresh || (d ? d.daily : []).concat(W.weekly).some(t => !taskDone(P, t));
+  return h("div", { class: "hub-row hub-story" },
+    h("span", { class: "hst-head" }, h("small", null, icon("book"), `本週地下收藏庫・第 ${W.dayNo} 天・還剩 ${weekLeftText(nowMs(), W.start)}`),
+      h("b", null, `〈${W.title}〉`, fresh ? h("span", { class: "nb-dot", "aria-label": "有新的下壹步" }) : null)),
+    show && show.next ? h("button", { type: "button", class: "sl-track", onClick: () => goStep(show.next) }, icon("sparkle"),
+      h("span", null, `${tracked ? "追蹤" : "劇情線"}〈${show.name}〉：`, h("b", null, show.next.text)), show.next.room || show.next.panel ? h("span", { class: "sl-arrow", "aria-hidden": "true" }, "→") : null) : null,
+    h("div", { class: "hst-btns" }, btn("每週劇情", () => openStory(), "primary small" + (pending ? " sl-nudge" : "")), btn("劇情線", () => openStory({ tab: "lines" }), "small"), PANELS.shop ? btn("兌換所", () => PANELS.shop(), "small") : null));
+}
+
+// ---------- 大廳的小卡（有總覽之後大廳不放了；留著給沒有總覽的情況） ----------
 export function storyLobby() {
   if (!on()) return null;
   const W = curWeek();
@@ -511,6 +536,15 @@ export function storyShelf(tab, reader, params = {}) {
 }
 
 // ---------- 畫廊：今日特展 ----------
+const SHOW_FRESH = day => "show:" + day;
+// 今天的特展：標題、幾幅、還有幾幅沒看（大廳的總覽、「新」的標記用）。今天沒有特展就是 null
+export function showToday() {
+  if (!on()) return null;
+  const W = curWeek(), d = W ? todayOf(W) : null;
+  if (!d || !d.show) return null;
+  const S = storyState(P);
+  return { title: d.show.title, total: d.show.works.length, unseen: d.show.works.filter(w => !S.works[w.id]).length };
+}
 export function galleryTabs(active) {
   if (!on()) return null;
   const W = curWeek(), d = todayOf(W);
@@ -519,7 +553,7 @@ export function galleryTabs(active) {
   return h("div", { class: "seg hall-tabs big-tabs gallery-tabs" },
     h("button", { type: "button", class: "seg-btn" + (active === "main" ? " on" : ""), onClick: () => go("gallery", {}, { action: false }) }, icon("gallery"), h("span", null, "常設展")),
     h("button", { type: "button", class: "seg-btn" + (active === "show" ? " on" : ""), onClick: () => go("gallery", { show: true }, { action: false }) }, icon("star"), h("span", null, `今日特展：${d.show.title}`),
-      unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null));
+      unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag() : null));
 }
 let svgSeq = 0;
 function workArt(w) {

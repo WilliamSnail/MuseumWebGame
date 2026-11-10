@@ -267,6 +267,7 @@ function lobbySignin() {
 // 大廳的簽到條換成現在的（換日、簽完）；不在大廳就不用
 export function refreshLobbySign() {
   if (UI.screen !== "lobby") return;
+  if (ADDONS.hubRefresh) ADDONS.hubRefresh(); // 大廳的總覽（ui_hub.js）
   const old = document.querySelector(".lobby-sign");
   if (old) { const now = lobbySignin(); if (now) old.replaceWith(now); else old.remove(); }
   const oldF = document.querySelector(".lobby-fun"), nowF = funLine(); // 趣味節日的壹小行也跟著換日
@@ -341,6 +342,8 @@ function hallAddon(root, room) {
   if (head && head.nextSibling) root.insertBefore(bar, head.nextSibling); else root.append(bar);
 }
 
+// 大廳的總覽（ui_hub.js）要的：今天的節日牌子、趣味節日那壹小行（沒有就是 null）
+export function hubExtras() { const hol = holidayOf(realTodayStr()); return { hol: hol ? holChip(hol) : null, fun: funLine() }; }
 ADDONS.lobby = () => { const f = document.createDocumentFragment(); [lobbySignin(), funLine()].forEach(x => { if (x) f.append(x); }); return f; };
 ADDONS.gallery = galleryHoliday;
 ADDONS.hall = hallAddon;
