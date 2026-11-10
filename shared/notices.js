@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "update-bar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "館裡更新了會提醒你", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次有什麼新的", [
+        "網頁開著的時候館裡更新了，畫面上方會跳壹條「館裡更新了」。按「重新整理」就能看到新的東西，存檔不會不見。",
+        "現在不方便就按「等壹下」，過壹陣子會再提醒。",
+      ]],
+    ],
+  },
+  {
     id: "pass-visitor", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "館友證多了「參觀者」那壹頁；裝備都有自己的圖", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
@@ -659,3 +669,15 @@ export function autoOpenPlan(state, list, today) {
   return { urgent: null, open: true, focus: worth[0].id };
 }
 export function skipToday(state, today) { state.skip = today; }
+
+// ---------- 有新版本（翊文 11-10：「好，加提示」；畫面在 web/src/ui_update.js） ----------
+// 從 index.html（或 script 的 src 連在壹起的字）找打包後的程式檔名「/assets/index-xxxx.js」；找不到（開發時）是 null
+export function buildScript(text) {
+  const m = /\/assets\/index-[A-Za-z0-9_-]+\.js/.exec(String(text || ""));
+  return m ? m[0] : null;
+}
+// 新拿到的 index.html 裡的程式檔名跟現在跑的不壹樣，就是有新版本。拿不到檔名（伺服器回了別的東西）不算
+export function buildChanged(html, mine) {
+  const now = buildScript(html);
+  return !!(now && mine && now !== mine);
+}

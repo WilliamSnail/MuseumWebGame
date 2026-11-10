@@ -202,3 +202,11 @@ body.reduce-motion .nb-layer, body.reduce-motion .nb-frame, body.reduce-motion .
   .nb-env-stamp { width: 44px; height: 44px; }
   .nb-env-act { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 }
+
+/* 有新版本的提示（11-10，ui_update.js）：畫面上方中間，蓋在所有東西上面，不擋操作 */
+.upd-bar { position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 9900; display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 8px 12px;
+  width: max-content; max-width: calc(100vw - 24px); padding: 10px 14px; border-radius: 8px; color: #2A1E16;
+  background: linear-gradient(160deg, #FBF3DC, #EAD9B0); box-shadow: inset 0 0 0 1px #B89A66, 0 8px 24px rgba(0,0,0,.5); font-size: .9375rem; }
+.upd-bar b { font-family: var(--serif); letter-spacing: .06em; margin-right: 4px; }
+body:not(.reduce-motion) .upd-bar { animation: upd-in .35s ease-out; }
+@keyframes upd-in { from { opacity: 0; transform: translate(-50%, -10px); } }
