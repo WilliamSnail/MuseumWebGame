@@ -107,5 +107,16 @@ T("信箱：還剩幾天、禮物寫成字", G => {
   assert.strictEqual(G.giftText({ insp: 10, mood: 5 }), "靈感 +10、心情 +5");
 });
 
+T("有新版本：比對 index.html 裡的程式檔名；拿不到檔名不算", G => {
+  const html = n => `<script type="module" crossorigin src="/assets/index-${n}.js"></script><link rel="stylesheet" href="/assets/index-dj0VSzgV.css">`;
+  const mine = G.buildScript(html("BELxAzoR"));
+  assert.strictEqual(mine, "/assets/index-BELxAzoR.js");
+  assert.strictEqual(G.buildChanged(html("BELxAzoR"), mine), false);
+  assert.strictEqual(G.buildChanged(html("Xy_9-ab1"), mine), true);
+  assert.strictEqual(G.buildChanged("<html>維護中</html>", mine), false);
+  assert.strictEqual(G.buildChanged(html("Xy_9-ab1"), null), false, "開發時沒有檔名");
+  assert.strictEqual(G.buildScript("/src/main.js"), null);
+});
+
 console.log(`${pass} passed, ${fail} failed（公佈欄、信箱）`);
 process.exit(fail ? 1 : 0);
