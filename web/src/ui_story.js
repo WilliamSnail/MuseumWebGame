@@ -245,7 +245,7 @@ function bonusRow(text, state, reward, claim) {
     h("span", { class: "sp-check", "aria-hidden": "true" }, icon("star")),
     h("span", { class: "sp-t-main" }, h("span", { class: "sp-t-text" }, text), h("small", { class: "sp-t-r" }, rewardText(reward))),
     h("span", { class: "sp-t-n" }),
-    state === "claimed" ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了") : state === "ready" ? btn("領獎勵", claim, "primary small") : h("span", { class: "sp-wait" }, "還沒"));
+    state === "claimed" ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了") : state === "ready" ? btn("領獎勵", claim, "primary small") : h("span", { class: "sp-wait" }, state === "late" ? "補做的沒有" : "還沒"));
 }
 function weekPane(W, draw, m) {
   if (!W) return h("p", { class: "nb-empty" }, "這週還沒有地下收藏庫的劇情。");
@@ -262,13 +262,18 @@ function weekPane(W, draw, m) {
   const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
   const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow("3 個都做完，多壹份", dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
-    h("p", { class: "sp-note" }, "每日任務只有當天；做完了沒領的，這週裡都還能領。")) : null;
+    h("p", { class: "sp-note" }, "前幾天沒做的，這週裡都可以補做，獎勵照領。「3 個都做完，多壹份」只給當天做完的。")) : null;
   const wbr = Object.assign({}, W.weeklyBonus, { stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });
   const weekly = sec("每週任務", h("ul", { class: "sp-tasks" }, W.weekly.map(t => taskRow(W, t, draw, m)),
     bonusRow("5 個都做完：這週限定的那份", weekBonusState(P, W), wbr, () => claimFlow(claimWeekBonus(P, W, today), draw))),
     h("p", { class: "sp-note" }, `每週任務做完壹個拿 ${NUM.story.stampPerTask} 枚週章，全部做完再多 ${NUM.story.stampAllBonus} 枚。週章會存起來，可以到兌換所換裝備、提升技能。`));
-  const left = unclaimed(P, W).filter(t => t.daily && (!d || t.day !== d.n));
-  const old = left.length ? sec("前幾天做完、還沒領的", h("ul", { class: "sp-tasks" }, left.map(t => taskRow(W, t, draw, m)))) : null;
+  // 前幾天的每日任務：沒做的可以補做，做完沒領的可以領（決定 0060）。全部領過的那天不列
+  const open = t => !(S.tasks[t.id] && S.tasks[t.id].claimed);
+  const back = W.days.filter(x => x.n < W.dayNo && (x.daily.some(open) || dayBonusState(P, W, x.n) === "ready"));
+  const old = back.length ? sec("前幾天的每日任務（可以補做）", back.map(x => [h("h4", { class: "sp-day-h" }, `第 ${x.n} 天`),
+    h("ul", { class: "sp-tasks" }, x.daily.filter(open).map(t => taskRow(W, t, draw, m)),
+      bonusRow("3 個都在當天做完，多壹份", dayBonusState(P, W, x.n), x.dailyBonus, () => claimFlow(claimDayBonus(P, W, x.n, today), draw)))]),
+    h("p", { class: "sp-note" }, "補做的任務獎勵照領、書照樣解開；每週任務的「每日任務全部做完」只算當天做完的天。")) : null;
   const bag = Object.entries(S.bag).filter(([, n]) => n > 0);
   const bagSec = sec("背包", bag.length ? h("ul", { class: "sp-bag" }, bag.map(([id, n]) => {
     const can = itemUsable(P, id);
@@ -537,13 +542,13 @@ export function storyShow(root) {
   root.append(h("div", { class: "limit-box" },
     h("p", null, icon("star"), ptMark(show.intro)),
     h("p", null, icon("sparkle"), h("span", null, "第壹次看壹幅：", h("b", { class: "em good" }, `+${NUM.story.showInsp[0]}～+${NUM.story.showInsp[1]} 靈感`), `（要擲理智的比較多）。今日特展壹天最多拿 ${NUM.story.showInspDay} 靈感，今天拿了 ${S.showInsp[today] || 0}。`)),
-    h("p", null, icon("hourglass"), h("span", null, "今日特展只有今天，明天 05:00 換壹個主題。", W.dayNo >= 7 ? "週日旁邊有這週的回顧展。" : "這週的畫，週日會收進「本週回顧展」。"))));
+    h("p", null, icon("hourglass"), h("span", null, "今日特展明天 05:00 換壹個主題。這週前幾天的畫收在下面：只能看，不給靈感，補做任務用。"))));
   if (activeQuirks(P).some(q => q.task === "calm")) root.append(quirkHereBox("calm")); // 怪癖的治法是「看壹幅不可怕的畫」（決定 0027）
   const corridor = h("div", { class: "corridor show-corridor", tabindex: "0", "aria-label": "今日特展，可以左右滑動" }, show.works.map(w => workItem(W, w)));
   corridor.addEventListener("wheel", e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { corridor.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
   root.append(corridor);
   const review = weekReview(W);
-  if (review.length) root.append(h("h2", { class: "show-review-h" }, "本週回顧展"), h("p", { class: "hint" }, "這週前幾天的畫。只能看，不給靈感。"),
+  if (review.length) root.append(h("h2", { class: "show-review-h" }, W.dayNo >= 7 ? "本週回顧展" : "這週前幾天的畫"), h("p", { class: "hint" }, "這週前幾天的畫。只能看，不給靈感。"),
     h("div", { class: "corridor show-corridor small" }, review.map(w => workItem(W, w))));
   root.append(h("p", { class: "hint" }, "用滑鼠滾輪或手指左右滑，點壹幅靠近看。"));
   return true;

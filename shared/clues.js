@@ -46,12 +46,12 @@ export function clueCatalog(lib, today) {
 }
 
 const clHeld = (P, id) => clObj(P.clues) && !!P.clues[id];
-// 這個來源現在還拿不拿得到：書永遠讀得到（舊週的書補讀）；房間只有這週找得到；畫只有當天，或週日的回顧展
+// 這個來源現在還拿不拿得到：書永遠讀得到（舊週的書補讀）；房間只有這週找得到；畫是當天的，或這週前幾天的（畫廊特展下面，決定 0060）
 function clReachable(src, today) {
   if (src.kind === "book") return true;
   if (src.week !== isoWeek(today)) return false;
   if (src.kind === "room") return true;
-  return src.date === today || (weekDayNo(today) >= 7 && src.day < 7);
+  return src.date === today || src.day < weekDayNo(today);
 }
 function clGot(S, src) {
   if (src.kind === "book") return !!(S.books[src.sid] && S.books[src.sid].read);

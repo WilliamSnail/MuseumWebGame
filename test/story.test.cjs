@@ -226,6 +226,35 @@ T("領獎勵：靈感、心情、東西進背包；領過不能再領；每週�
   const later = G.storyWeekAt(LIB(G), "2026-W46", "2026-11-20");
   assert.strictEqual(G.claimTask(P, later, view.id, "2026-11-20").ok, false);
 });
+T("補做：前幾天的每日任務可以補、獎勵照領；多的那份和「全部做完 N 天」只算當天做完的（決定 0060）", G => {
+  const P = fresh(G, "2026-11-10"), W = G.storyWeek(LIB(G), "2026-11-10"), S = G.storyState(P);
+  G.syncStory(P, W, "2026-11-10");
+  const d1 = G.dayOf(W, 1), view = d1.daily.find(x => x.kind === "view"), show = d1.daily.find(x => x.kind === "show");
+  assert.ok(S.tasks[view.id], "第 1 天的任務也開著");
+  assert.ok(!W.days.filter(d => d.n > W.dayNo).some(d => d.daily.some(t => S.tasks[t.id])), "還沒到的天不開");
+  G.viewExhibit(P, G.exhibitById(view.exhibit));
+  G.syncStory(P, W, "2026-11-10");
+  assert.ok(G.taskDone(P, view));
+  assert.strictEqual(S.tasks[view.id].late, true, "記成補做的");
+  assert.ok(G.claimTask(P, W, view.id, "2026-11-10").ok, "補做的獎勵照領");
+  // 前幾天的畫看得到（不給靈感），看完就補到「看完特展」
+  assert.strictEqual(G.weekReview(W).length, d1.show.works.length);
+  const insp = P.insp;
+  d1.show.works.forEach(w => G.viewShowWork(P, W, w.id, "2026-11-10"));
+  assert.strictEqual(P.insp, insp, "補看不給靈感");
+  G.syncStory(P, W, "2026-11-10");
+  assert.ok(G.taskDone(P, show));
+  // 第 1 天全部補完：多的那份沒有
+  d1.daily.forEach(t => { if (!S.tasks[t.id].done) { S.tasks[t.id].done = "2026-11-10"; S.tasks[t.id].late = true; } });
+  assert.strictEqual(G.dayBonusState(P, W, 1), "late");
+  assert.strictEqual(G.claimDayBonus(P, W, 1, "2026-11-10").ok, false);
+  // 今天的當天做完：有
+  G.dayOf(W, 2).daily.forEach(t => { S.tasks[t.id].done = "2026-11-10"; delete S.tasks[t.id].late; });
+  assert.strictEqual(G.dayBonusState(P, W, 2), "ready");
+  assert.strictEqual(G.taskCount(P, W, { id: "2026-W46/x", kind: "dailyAll", n: 3, weekly: true }), 1, "只算當天做完的天");
+  G.NUM.story.lateBonus = true;
+  assert.strictEqual(G.dayBonusState(P, W, 1), "ready", "設定打開就都算");
+});
 T("3 個每日任務都做完：多一份；5 個每週任務都做完：限定的那份＋多的週章", G => {
   const P = fresh(G), W = G.storyWeek(LIB(G), "2026-11-09");
   G.syncStory(P, W, "2026-11-09");

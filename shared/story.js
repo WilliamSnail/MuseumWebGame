@@ -300,7 +300,7 @@ export function taskText(t, W) {
     case "pillow": return `做 ${n} 個抱枕`;
     case "hug": return `抱 ${n} 次抱枕`;
     case "view": { const ex = exhibitById(t.exhibit); return `在畫廊看「${ex ? ex.title : t.exhibit}」` + (n > 1 ? ` ${n} 次` : ""); }
-    case "show": { const s = showOfDay(W, t.day); return `看完今日特展${s ? `「${s.title}」（${s.works.length} 幅）` : ""}`; }
+    case "show": { const s = showOfDay(W, t.day), old = W && !W.past && t.day < W.dayNo; return `看完${old ? `第 ${t.day} 天的特展` : "今日特展"}${s ? `「${s.title}」（${s.works.length} 幅）` : ""}`; }
     case "read": { const b = bookOf(W, t.book); return `讀書架上的〈${b ? b.title : "？"}〉`; }
     case "cellar": return `在地下收藏庫走到 B${t.floor || 1}`;
     case "spot": { const r = roomOf(W, t.room); return r ? (r.hint || `去 B${r.floor} 看看`) : "找到這週多出來的地方"; }
@@ -347,6 +347,8 @@ function counterOf(P, t) {
   }
 }
 const allDailyDone = (S, d) => d.daily.length > 0 && d.daily.every(t => S.tasks[t.id] && S.tasks[t.id].done);
+// 都在當天做完（補做的不算）：「3 個都做完多一份」、「每日任務全部做完 N 天」看這個（決定 0060）
+const allDailyOnTime = (S, d) => allDailyDone(S, d) && (NUM.story.lateBonus || d.daily.every(t => !S.tasks[t.id].late));
 const showDone = (S, d) => !!(d.show && d.show.works.length && d.show.works.every(w => S.works[w.id]));
 // 任務現在做到多少（0 到 taskTarget）
 export function taskCount(P, W, t, S = storyState(P)) {
@@ -355,13 +357,13 @@ export function taskCount(P, W, t, S = storyState(P)) {
   const base = counterOf(P, t);
   if (base != null) n = st && Number.isFinite(st.base) ? base - st.base : 0;
   else switch (t.kind) {
-    case "hug": n = P.day && P.day.date === t.date ? Object.keys(P.day.hugs || {}).length : 0; break;
+    case "hug": n = P.day && t.date && P.day.date >= t.date ? Object.keys(P.day.hugs || {}).length : 0; break; // 補做的算補的那天抱的
     case "show": { const s = showOfDay(W, t.day); n = s ? s.works.filter(w => S.works[w.id]).length : 0; break; }
     case "read": n = S.books[t.book] && S.books[t.book].read ? 1 : 0; break;
-    case "cellar": { const dates = t.daily ? [t.date] : W.days.map(d => d.date); n = dates.some(d => (S.deep[d] || 0) >= (t.floor || 1)) ? 1 : 0; break; }
+    case "cellar": { const all = W.days.map(d => d.date), dates = t.daily ? all.filter(d => d >= t.date) : all; /* 每日的：那天或之後（補做） */ n = dates.some(d => (S.deep[d] || 0) >= (t.floor || 1)) ? 1 : 0; break; }
     case "spot": n = S.spots[t.room] ? 1 : 0; break;
     case "readWeek": n = W.books.filter(b => S.books[b.id] && S.books[b.id].read).length; break;
-    case "dailyAll": n = W.days.filter(d => allDailyDone(S, d)).length; break;
+    case "dailyAll": n = W.days.filter(d => allDailyOnTime(S, d)).length; break; // 只算當天做完的天
     case "showDays": n = W.days.filter(d => showDone(S, d)).length; break;
     case "ending": n = W.books.some(b => b.ending && S.books[b.id] && S.books[b.id].read) ? 1 : 0; break;
     default: n = 0;
@@ -426,9 +428,8 @@ export function syncStory(P, W, today) {
   if (run && !run.extra && run.floor) S.deep[today] = Math.max(S.deep[today] || 0, run.floor);
   // 這週多出來的房間：在地下收藏庫過了（P.cellar.won）就算找到
   W.rooms.forEach(r => { if (!S.spots[r.id] && P.cellar && P.cellar.won && P.cellar.won[r.id]) { S.spots[r.id] = today; ev.push({ type: "storySpot", room: r }); } });
-  // 任務：今天的每日任務、這週的每週任務。第一次看到時記下 base
-  const day = todayOf(W);
-  const live = (day ? day.daily : []).concat(W.weekly);
+  // 任務：這週到今天為止的每日任務（前幾天的可以補做，決定 0060）、這週的每週任務。第一次看到時記下 base
+  const live = W.days.filter(d => d.n <= W.dayNo).reduce((a, d) => a.concat(d.daily), []).concat(W.weekly);
   const books = () => W.books.forEach(b => {
     if (S.books[b.id] || !bookOpenNow(P, W, b, S)) return;
     S.books[b.id] = { got: today, read: null };
@@ -439,7 +440,7 @@ export function syncStory(P, W, today) {
     live.forEach(t => {
       let st = S.tasks[t.id];
       if (!st) { const c = counterOf(P, t); st = S.tasks[t.id] = { base: c == null ? 0 : c, done: null, claimed: null }; }
-      if (!st.done && taskCount(P, W, t, S) >= taskTarget(t, W)) { st.done = today; ev.push({ type: "storyTask", task: t }); }
+      if (!st.done && taskCount(P, W, t, S) >= taskTarget(t, W)) { st.done = today; if (t.daily && t.date && today > t.date) st.late = true; ev.push({ type: "storyTask", task: t }); }
     });
     books();
   }
@@ -509,12 +510,13 @@ export function dayBonusState(P, W, n) {
   const S = storyState(P), d = dayOf(W, n), rec = S.weeks[W.label];
   if (!d) return "none";
   if (rec && rec.bonus && rec.bonus[n]) return "claimed";
-  return allDailyDone(S, d) ? "ready" : "wait";
+  if (!allDailyDone(S, d)) return "wait";
+  return allDailyOnTime(S, d) ? "ready" : "late"; // late：有補做的，這壹份沒有
 }
 export function claimDayBonus(P, W, n, today) {
   if (!P || isFree(P) || !W || W.past) return { ok: false, reason: "這週已經過了" };
   const st = dayBonusState(P, W, n);
-  if (st !== "ready") return { ok: false, reason: st === "claimed" ? "領過了" : "3 個每日任務還沒都做完" };
+  if (st !== "ready") return { ok: false, reason: st === "claimed" ? "領過了" : st === "late" ? "有補做的，這壹份只給當天做完的" : "3 個每日任務還沒都做完" };
   const S = storyState(P), rec = S.weeks[W.label] || (S.weeks[W.label] = { fb: W.fallback, first: today, bonus: {} });
   if (!isPlain(rec.bonus)) rec.bonus = {};
   rec.bonus[n] = today;
@@ -592,8 +594,8 @@ export function viewShowWork(P, W, id, today) {
   if (!w.san) out.cured = cureByTask(P, "calm");
   return out;
 }
-// 週日：這週以前幾天的畫（本週回顧展）
-export function weekReview(W) { return W && W.dayNo >= 7 ? W.works.filter(w => w.day < 7) : []; }
+// 這週前幾天的畫：只能看、不給靈感（補做「看完特展」用，決定 0060）。週日叫「本週回顧展」
+export function weekReview(W) { return W ? W.works.filter(w => w.day < Math.min(W.dayNo, 7)) : []; }
 
 // ---------- 地下收藏庫：本週異狀、這週多出來的房間 ----------
 // 用遊戲已經有的房間（content3.js 的 CELLAR 那種格式）組出來，借單人地下收藏庫的流程走一間（P.cellar.run.extra，logic3.js 認得）
@@ -692,7 +694,7 @@ export function storyNotice(W, today, now) {
       ["這週怎麼玩", [
         "每天 05:00：起源室書架的「每週劇情」多 1～2 本書，3 個每日任務換新，畫廊的「今日特展」換壹個主題。",
         "每週任務 5 個，做完壹個拿壹枚週章（週章會存起來，到兌換所換裝備、提升技能）。週日讀到這週的結局。",
-        "錯過的天，書都還在，可以補讀；每日任務、今日特展只有當天。",
+        "錯過的天，書都還在，可以補讀；每日任務這週裡都能補做，獎勵照領。但「3 個都做完，多壹份」和每週任務的「每日任務全部做完」只算當天做完的。",
       ]],
       W.events.length ? ["限時活動", W.events.map(eventListLine).concat(["時間到了就回到平常的樣子；沒趕上也不會少什麼。"])] : null,
       ["兌換所", [`這週上架的限定頭飾：${limitedNames(shopOnSale(W, W.start))}。`]],
