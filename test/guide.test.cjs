@@ -7,7 +7,7 @@ const fresh = G => { const P = G.newProfile("challenge"); G.ensureDay(P, "2026-1
 
 T("新玩家：先去畫廊", G => { assert.strictEqual(G.nextStep(fresh(G)).room, "gallery"); });
 T("看過畫、靈感夠：去手作坊做第壹隻", G => {
-  const P = fresh(G); P.seen.portrait = 1; P.insp = 10;
+  const P = fresh(G); P.seen.portrait = 1; P.insp = G.NUM.costPepe + 4;
   assert.strictEqual(G.nextStep(P).room, "workshop");
 });
 T("看過畫、靈感不夠：再去畫廊", G => {
