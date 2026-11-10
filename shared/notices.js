@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "cost-up", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "做佩佩、做抱枕多花壹點靈感", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "**做壹隻佩佩**：2 靈感 → 3 靈感。",
+        "**做壹個抱枕**：1 靈感 → 2 靈感。",
+        "新來的館主壹開始有 3 靈感，還是夠做壹隻。已經有的靈感不會少。",
+      ]],
+    ],
+  },
+  {
     id: "update-bar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "館裡更新了會提醒你", publish: "2026-11-10", expire: "2027-12-31",
     sections: [
