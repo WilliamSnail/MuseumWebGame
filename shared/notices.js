@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "today-list", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "新的「今天」：今天要做的事排在壹張", publish: "2026-11-10", expire: "2027-12-31",
+    sections: [
+      ["新的東西", [
+        "導覽列「公佈欄」左邊多了「今天」，右上角選單最上面也有。打開是壹張清單：簽到、每週劇情的獎勵、Yuga Bot 交代的事、每日任務、每週任務、信箱，還有 Hamachi 賭場今天還能開幾包大禮包、拚幾次經濟。",
+        "每壹項都有「前往」，直接帶你過去。做完的收到最下面。",
+        "「今天」旁邊的數字是還有幾件事沒做。",
+      ]],
+    ],
+  },
+  {
     id: "signin-nudge", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "還沒簽到，簽到鈕會亮壹下", publish: "2026-11-10", expire: "2027-12-31",
     sections: [

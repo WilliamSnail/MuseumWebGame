@@ -345,6 +345,12 @@ ADDONS.lobby = () => { const f = document.createDocumentFragment(); [lobbySignin
 ADDONS.gallery = galleryHoliday;
 ADDONS.hall = hallAddon;
 ADDONS.frameClass = () => { const f = P && wornDeco(P, "frame"); return f ? " lim-" + f : ""; };
+// 「今天」清單（ui_today.js）要的：今天簽了沒、壹句說明。自由模式回 null
+export function signinToday() {
+  if (!canSign() || !SAVE) return null;
+  const pv = signPreview(SAVE, P, realTodayStr());
+  return { done: !!pv.already, text: pv.already ? `累計第 ${pv.n} 次・這週 ${pv.week.n}／7` : `第 ${pv.n} 次：${rewardText(pv.reward)}・這週 ${pv.week.n}／7` };
+}
 ADDONS.calBadge = () => (canSign() && SAVE && !signedOn(SAVE, realTodayStr()) ? "還沒簽到" : "");
 PANELS.signin = openSignin;
 PANELS.calendar = openCalendar;

@@ -21,12 +21,12 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
-import { casEconPlay, casEconView } from "./shared/casino_econ.js";
+import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
@@ -197,7 +197,7 @@ export const casino = onCall(async req => {
         const S = parse(await saveRef(me.uid).get());
         await publishTitle(me.uid, titlePublish(w, S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null));
       }
-      return { ok: true, chips: w.chips };
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
