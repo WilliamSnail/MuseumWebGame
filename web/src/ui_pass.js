@@ -70,7 +70,7 @@ export function openPass(o = {}) {
         stat("起源室的書", b.origin.text.replace(/^(✓ )?讀過 /, "")),
         b.week !== null ? stat("每週的書", `讀過 ${b.week} 本`) : null,
         stat("看懂的事", `${b.understood[0]}／${b.understood[1]}`)),
-        h("p", { class: "sp-note" }, "《看懂的事》放在起源室的書架上。"),
+        h("p", { class: "sp-note" }, "《看懂的事》放在起源室書架的「館藏」那壹頁，最右邊。"),
         h("div", { class: "sp-go" }, goBtn("起源室的書架", () => go("origin"), "book"), !v.free ? goBtn("每週的書", () => go("origin", { tab: "weekly" })) : null)),
       v.free ? null : h("h3", { class: "ps-h" }, "疑點簿"),
       v.free ? null : casePane()];

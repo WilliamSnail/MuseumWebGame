@@ -422,7 +422,7 @@ SCREENS.origin = (root, params) => {
       });
       return el;
     }));
-  if (!isFree(P) && (Object.keys(P.understood || {}).length || weekUnderstood().near.length)) {
+  if (!isFree(P)) { // 壹件都還沒看懂也放在書架上（翊文 11-10：館友證寫「放在起源室的書架上」卻找不到）；翻開都是「？？？」，不破梗
     const el = h("button", { type: "button", class: "spine uk-spine", "aria-label": "看懂的事" }, h("span", { class: "spine-t" }, "看懂的事"));
     freshMark(el, isFresh(P, "origin", FRESH_KEY.understood)); // 《看懂的事》多了壹件（11-08）
     el.addEventListener("click", () => { $$(".spine.on", root).forEach(x => x.classList.remove("on")); el.classList.add("on"); snd("eerie", 1); openUnderstood(reader); });
