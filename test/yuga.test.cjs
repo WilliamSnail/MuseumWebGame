@@ -131,7 +131,7 @@ T("Discord：dcBorrowTip 只有錢不夠而且借得到才有；/pepe-借錢 成
   w.loan.limit = 0; assert.strictEqual(G.dcBorrowTip(poor, w), "", "借不到了不用提醒");
   const w3 = G.casWalletFix(null, "2026-11-17"); w3.chips = 0;
   const r = G.casRelief(w3, "2026-11-17"), txt = G.dcBorrowText(Object.assign({}, r, { wallet: { chips: w3.chips } }));
-  assert.ok(txt.includes("Yuga 借你") && txt.includes("利息") && txt.includes(G.dcNum(w3.chips)), txt);
+  assert.ok(txt.includes("Yuga Bot 借你") && txt.includes("利息") && txt.includes(G.dcNum(w3.chips)), txt);
   assert.strictEqual(w3.chips, G.NUM.casino.loan.discord, "Discord 壹次借 NUM.casino.loan.discord");
   assert.ok(!BAD.test(txt) && !BAD.test(G.DC_TEXT.borrowTip));
 });
