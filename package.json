@@ -22,6 +22,7 @@
     "wf": "node tools/wf_run.cjs",
     "emu:doc": "node tools/emu_doc.cjs",
     "wt": "node tools/new_worktree.cjs",
+    "svg": "node tools/svg_preview.cjs",
     "merge:main": "node tools/merge_main.cjs",
     "emu:call": "node tools/emu_call.cjs",
     "functions:shared": "node tools/copy_shared.cjs"

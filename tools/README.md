@@ -26,6 +26,7 @@
 | 不開瀏覽器，直接用某人身分叫模擬器的 Functions | `npm run emu:call -- --set 8 --user 小明 casino '{"act":"peek"}'` |
 | 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令、整手 21 點（按鈕、seq、別人的按鈕）、遊戲和 Discord 接續、次數共用、存檔、outbox（冷卻、失敗、沒 token）（不連真的 Discord，模擬器的 Function 把「會發的訊息」寫進 `discordTestSent`） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/discord_fake.cjs --set 5`（`--show` 印幾則回覆看長相）；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /）。**改了 `shared/` 或 `functions/` 要重開模擬器**（規則是開的時候才複製進去的） |
 | 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |
+| **用眼睛看今天新畫的 `svg`**：壹天或整週的畫排成壹張 PNG（太暗、跑版、看不出是什麼，這裡看得出來），再用 Read 打開看 | `npm run svg -- content/weeks/2026-W46/d2.json`（給資料夾就是整週；`--out x.png`；找不到 Edge／Chrome 只印 HTML） |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 
 **不要用腳本去改另壹支腳本，也不要把大段文字塞進程式字串或 shell 指令**（翊文 11-09：「修補腳本因為跳脫字元失敗，有沒有辦法以後不要發生」）。文字放純文字檔：改現有檔用 `npm run edits`；`doc:new` 的 JSON 用 Write 工具直接寫檔，或用 `JSON.stringify` 產生。`ship` 的訊息長就用 `--body-file`。

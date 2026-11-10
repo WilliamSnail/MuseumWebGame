@@ -9,6 +9,7 @@ const { moveEventNow, rtdbPort, fnPort } = require("../tools/local_game.cjs");
 const { nextDecision, safeName, logText, decisionText } = require("../tools/new_doc.cjs");
 const { editorOf } = require("../tools/edit_lib.cjs");
 const { parsePlan, planResult } = require("../tools/apply_edits.cjs");
+const { collectSvgs } = require("../tools/svg_preview.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };
@@ -162,5 +163,18 @@ T("wt：分支要 claude/ 開頭；缺東西就停", () => {
   assert.throws(() => wt.parseArgs(["--dir", "d", "亂打"]), /看不懂/);
 });
 
+T("svg：找得到壹天、整週裡每幅 svg，標出在哪、叫什麼", () => {
+  const fs = require("fs"), os = require("os"), path = require("path");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "svgtest-"));
+  fs.writeFileSync(path.join(dir, "d1.json"), JSON.stringify({ show: { works: [{ id: "a", title: "甲", svg: ["<svg viewBox='0 0 1 1'>", "</svg>"] }, { id: "b", art: "frog" }] } }));
+  fs.writeFileSync(path.join(dir, "d2.json"), JSON.stringify({ books: [{ title: "乙", svg: "<svg></svg>" }] }));
+  fs.writeFileSync(path.join(dir, "week.json"), JSON.stringify({ svg: "<svg></svg>" }));
+  const all = collectSvgs([dir]);
+  assert.strictEqual(all.map(x => x.title).join(), "甲,乙", "只看 dN.json，按天排");
+  assert.strictEqual(all[0].svg, "<svg viewBox='0 0 1 1'></svg>", "陣列接起來");
+  assert.ok(all[0].where.includes("d1.json") && all[0].where.includes("works[0]"));
+  assert.strictEqual(collectSvgs([path.join(dir, "d2.json")]).length, 1);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);
 process.exit(fail ? 1 : 0);
