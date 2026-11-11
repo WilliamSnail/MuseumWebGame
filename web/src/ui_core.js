@@ -608,7 +608,7 @@ export function updateStatus(instant) {
   const extra = $("#st-extra");
   if (extra) {
     const chips = [];
-    if (P.myth > 0) chips.push(h("span", { class: "chip", title: `理智上限＝99－佩佩神話＝${maxSan(P)}` }, `神話 ${P.myth}`));
+    if (P.myth > 0) chips.push(h("span", { class: "chip chip-myth", title: `理智上限＝99－佩佩神話＝${maxSan(P)}` }, `神話 ${P.myth}`));
     // 怪癖：名字＋要做的那件事＋剩幾分鐘（決定 0027；剩幾分鐘由 quirkTick 每分鐘換字，不重畫）
     activeQuirks(P).forEach(q => chips.push(h("button", { type: "button", class: "chip warn qk-chip", title: `${quirkName(q)}：${quirkEffects(q).map(e => e[1]).join("；")}。${quirkCureText(q)}${quirkProgText(q)}${qf(QUIRK_PLAN_TEXT.leftNote, { d: quirkDaysLeft(q) })}（點壹下看詳細）`, onClick: () => showQuirks() },
       icon("eye"), h("span", { class: "qk-chip-n" }, quirkName(q)), h("small", { class: "qk-chip-sub" }, QUIRK_TASK_TEXT[q.task] ? QUIRK_TASK_TEXT[q.task].chip + "・" : "", quirkProgText(q, "s") ? quirkProgText(q, "s") + "・" : "", quirkLeftNode(q, "s")))));
