@@ -250,3 +250,17 @@ body.reduce-motion .tr-wisp { display: none; }
   .cx-tr { grid-template-columns: minmax(56px, auto) 1fr; }
   .cx-san { grid-column: 2; }
 }
+
+/* 壹起下去放大（翊文 11-11：「壹起下去其實是很重點的但太小了」）：地下收藏庫最上面壹大塊 */
+.cx-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center; padding: 18px 22px; border-radius: 10px;
+  border: 1px solid var(--gold); background: linear-gradient(135deg, rgba(60,36,20,.9), rgba(24,14,10,.92)); box-shadow: inset 0 0 0 1px rgba(255,220,150,.12), 0 8px 22px rgba(0,0,0,.4); }
+.cxh-t { margin: 0 0 6px; font-family: var(--serif); font-size: 1.5rem; letter-spacing: .12em; color: var(--gold-hi); display: flex; align-items: center; gap: 8px; }
+.cxh-t .ic, .cxh-t .ic svg { width: 26px; height: 26px; }
+.cxh-pts { margin: 0 0 10px; padding-left: 1.2em; line-height: 1.7; color: #EADBB8; font-size: .9375rem; }
+.cxh-acts { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
+.cxh-go { min-width: 220px; min-height: 56px; font-size: 1.15rem; letter-spacing: .14em; }
+.cxh-on { font-size: .85rem; color: #CDB98C; }
+.cxh-side { display: flex; flex-direction: column; gap: 8px; align-self: start; }
+.cx-hero .cx-entry p, .cx-hero p { flex: none; }
+@media (max-width: 760px) { .cx-hero { grid-template-columns: 1fr; } .cxh-side { flex-direction: row; } .cxh-go { min-width: 0; width: 100%; } }
+@media (max-height: 500px) and (orientation: landscape) { .cx-hero { padding: 10px 14px; } .cxh-t { font-size: 1.1rem; } .cxh-pts { font-size: .8rem; line-height: 1.5; margin-bottom: 6px; } .cxh-go { min-height: 42px; font-size: 1rem; } }
