@@ -269,16 +269,27 @@ export function newProfile(mode) {
 export const isFree = P => P.mode === "free";
 export const maxSan = P => 99 - P.myth;
 
+// 每天自己恢復理智（NUM.sanDayBack）：+n，最多到 cap。已經比 cap 高的不動；理智 0（熄燈）的不恢復；自由模式不算。回傳實際加了多少
+export function sanDayRecover(P) {
+  const c = NUM.sanDayBack;
+  if (!c || isFree(P) || P.sanity <= 0 || P.sanity >= c.cap) return 0;
+  const to = Math.min(P.sanity + c.n, c.cap, maxSan(P));
+  const gain = to - P.sanity;
+  if (gain > 0) P.sanity = to;
+  return Math.max(0, gain);
+}
 export function ensureDay(P, date = todayStr()) {
   if (P.day && P.day.date === date) return null;
   const back = rewindDays(P, date); // 舊存檔的日期比今天晚（以前 15 分鐘一天）：先拉回來
   const firstEver = !P.day;
+  const sanBack = firstEver ? 0 : sanDayRecover(P); // 換日時自己恢復的理智，要先加，今天的起點（startSan）才算進去
   P.day = { date, startSan: P.sanity, lost: 0, exLoss: {}, reviews: {}, views: {}, moodFx: {}, hugs: {}, mini: {}, diff: {}, quirkGiven: false,
     fusions: 0, pairs: {}, rerolls: 0, hints: {} };
   // 地下收藏庫受的傷，時間到了自己好
   Object.keys(P.injured || {}).forEach(k => { if (P.injured[k] <= date) delete P.injured[k]; });
   const retasked = retaskQuirks(P); // 怪癖留一週：治法換日時變成做不到，改抽一件（決定 0046）
-  return { firstEver, back, retasked };
+  P.day.sanBack = sanBack; // 留著給畫面說
+  return { firstEver, back, retasked, sanBack };
 }
 // ---------- 舊存檔：遊戲裡的日期跑到今天後面 ----------
 // 11-09 以前一天是「玩 15 分鐘」，遊戲裡的日期可能比真的日期晚好幾天。改成真實的一天之後，時間等於往回走。

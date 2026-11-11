@@ -181,6 +181,7 @@ export async function dailyRecovery() {
   const r = moodRecovery(P);
   await FX.rollOverlay({ title: "今天的心情", sub: `每天第一次進館：擲 1～100，擲出比心情 ${before} 大，心情就 +1～10`, spec: "d100", result: r.roll,
     outcome: r.up ? { text: `${MOOD_RECOVER_TEXT}：心情 +${r.gain.total}`, tone: "good" } : { text: "心情普普通通。", tone: "neutral" } });
+  if (P.day && P.day.sanBack > 0) note(`睡了一覺，理智 +${P.day.sanBack}`, "good");
   updateStatus(); persist();
   await growthFlow();
 }

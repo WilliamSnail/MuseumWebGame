@@ -463,7 +463,7 @@ T("F 同一天看過 NUM.habituate 次以上變成 0/1", () => {
   assert.strictEqual(G.viewExhibit(P, ex).san, "0/1");
 });
 T("F 一次掉 5 點以上要看懂檢定；一天掉 1/5 以上得到怪癖", () => {
-  const P = fresh(); P.sanity = 70; G.ensureDay(P, "2026-11-09");
+  const P = fresh(); G.ensureDay(P, "2026-11-09"); P.sanity = 70; P.day.startSan = 70; // 換日會自己恢復理智，所以換日之後才設
   const ev = G.applySan(P, 10, "statue");
   assert.ok(ev.temp); assert.ok(!ev.indef);
   const ev2 = G.applySan(P, 4, "strange");
@@ -508,6 +508,21 @@ T("F 理智 0 進俄國8 的房間，下一位參觀者重來但收藏留著", (
   G.nextVisitor(P);
   assert.strictEqual(P.visitor, 2); assert.strictEqual(P.sanity, G.NUM.startSanity); assert.strictEqual(P.myth, 0);
   assert.ok(P.mood >= 15 && P.mood <= 90); assert.ok(P.pepes[r.key]); assert.ok(!P.dark);
+});
+T("每天換日理智自己恢復：+5，最多到 75；比 75 高的不動；0 的不恢復", () => {
+  const c = G.NUM.sanDayBack;
+  const P = fresh(); P.sanity = 30;
+  const r = G.ensureDay(P, "2026-11-09");
+  assert.strictEqual(r.sanBack, c.n); assert.strictEqual(P.sanity, 30 + c.n); assert.strictEqual(P.day.sanBack, c.n);
+  assert.strictEqual(G.ensureDay(P, "2026-11-09"), null, "同一天不再加");
+  P.sanity = c.cap - 2; G.ensureDay(P, "2026-11-10");
+  assert.strictEqual(P.sanity, c.cap, "最多到上限");
+  P.sanity = c.cap + 10; G.ensureDay(P, "2026-11-11");
+  assert.strictEqual(P.sanity, c.cap + 10, "已經比上限高的不扣");
+  P.sanity = 0; G.ensureDay(P, "2026-11-12");
+  assert.strictEqual(P.sanity, 0, "熄燈的不恢復");
+  const N = G.newProfile("challenge");
+  assert.strictEqual(G.ensureDay(N, "2026-11-08").sanBack, 0, "第一次進館不加");
 });
 T("F 每天的心情恢復：擲出比心情大才 +1D10", () => {
   const P = fresh(); P.mood = 40;
