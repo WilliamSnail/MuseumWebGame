@@ -18,25 +18,25 @@ import { matesByRoom } from "../../shared/mates.js";
 import { passView } from "../../shared/pass.js";
 import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, UI, every, h, icon, navTo, titleTag } from "./ui_core.js";
+import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, UI, every, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
 
 const L = "/lobby/"; // 素材（web/public/lobby，打包時原樣複製）
-// 房間在底圖上的位置（底圖 1024×572 的像素；assets/floorplan/README.md 的對應）。icon：assets/rooms 有圖的才放
+// 房間在底圖上的位置：box 是橫式底圖（land.webp，1024×572）的像素，port 是直式底圖（port.webp，572×1024，手機直拿用）的像素。icon：assets/rooms 有圖的才放
 export const LOBBY2_ROOMS = [
-  { id: "gallery", icon: "gallery", box: [60, 48, 440, 200] },
-  { id: "hall", icon: null, box: [452, 48, 572, 134] },
-  { id: "fusion", icon: "fusion", box: [584, 48, 782, 198] },
-  { id: "pillow", icon: null, box: [794, 48, 972, 198] },
-  { id: "origin", icon: "library", box: [52, 208, 276, 356] },
-  { id: "codex", icon: null, box: [280, 208, 376, 326] },
-  { id: "cellar", icon: "cellar", box: [760, 208, 972, 326] },
-  { id: "workshop", icon: "workshop", box: [48, 364, 232, 524] },
-  { id: "commission", icon: "board", box: [238, 334, 442, 524] },
-  { id: "office", icon: "office", box: [584, 334, 782, 528] },
-  { id: "casino", icon: "casino", box: [794, 334, 972, 528] },
+  { id: "gallery", icon: "gallery", box: [60, 48, 440, 200], port: [35, 30, 540, 160] },
+  { id: "hall", icon: null, box: [452, 48, 572, 134], port: [345, 165, 540, 292] },
+  { id: "fusion", icon: "fusion", box: [584, 48, 782, 198], port: [35, 305, 162, 445] },
+  { id: "pillow", icon: null, box: [794, 48, 972, 198], port: [410, 305, 540, 445] },
+  { id: "origin", icon: "library", box: [52, 208, 276, 356], port: [35, 165, 230, 292] },
+  { id: "codex", icon: null, box: [280, 208, 376, 326], port: [35, 455, 225, 612] },
+  { id: "cellar", icon: "cellar", box: [760, 208, 972, 326], port: [350, 455, 540, 612] },
+  { id: "workshop", icon: "workshop", box: [48, 364, 232, 524], port: [35, 620, 225, 778] },
+  { id: "commission", icon: "board", box: [238, 334, 442, 524], port: [350, 620, 540, 778] },
+  { id: "office", icon: "office", box: [584, 334, 782, 528], port: [35, 785, 225, 948] },
+  { id: "casino", icon: "casino", box: [794, 334, 972, 528], port: [350, 785, 540, 948] },
 ];
 // 要不要用新的大廳（決定 0066）：總開關在 NUM.ui.newLobby（回滾用），玩家自己也可以選舊的
 export const useLobby2 = () => !!(NUM.ui && NUM.ui.newLobby) && !(SAVE && SAVE.settings && SAVE.settings.oldLobby);
@@ -87,10 +87,12 @@ function mapBox(step) {
   const imgs = Object.values(IMG).reduce((n, v) => n + (Array.isArray(v) ? v.filter(Boolean).length : v ? 1 : 0), 0);
   progress.library = { text: imgs ? `你的圖 ${imgs} 張` : "還沒放圖" };
   const fresh = new Set(Object.keys(freshRooms(P) || {})); // { 房間: 幾件新的 }
-  const map = h("div", { class: "l2-map", role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + "land.webp", "l2-land"));
+  // 手機直拿換成直式的底圖（翊文 11-11 生的 port.webp）；轉橫、轉直時 boot.js 會重畫大廳
+  const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
+  const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
   const whoBoxes = {};
   LOBBY2_ROOMS.forEach(r => {
-    const [x0, y0, x1, y1] = r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
+    const [x0, y0, x1, y1] = portrait ? r.port : r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
     const tag = h("span", { class: "l2-tag" + (r.icon ? "" : " noic") },
       r.icon ? img(`${L}room-${r.icon}.webp`) : null, h("span", { class: "l2-tn" }, name), sub ? h("small", null, sub) : null,
       fresh.has(r.id) ? h("span", { class: "l2-new" }, "新") : null); // 翊文 11-11：「新」寫在名字標籤的左上角
@@ -98,19 +100,11 @@ function mapBox(step) {
     whoBoxes[r.id] = who;
     const b = h("button", { type: "button", class: "l2-room fp-room" + (roomHasNew(r.id) ? " has-new" : "") + (step && step.room === r.id ? " is-goal" : ""), dataset: { room: r.id },
       "aria-label": `${name}${sub ? "，" + sub : ""}${fresh.has(r.id) ? "，有新東西" : ""}`,
-      style: { left: x0 / 10.24 + "%", top: y0 / 5.72 + "%", width: (x1 - x0) / 10.24 + "%", height: (y1 - y0) / 5.72 + "%" },
+      style: { left: x0 / W * 100 + "%", top: y0 / H * 100 + "%", width: (x1 - x0) / W * 100 + "%", height: (y1 - y0) / H * 100 + "%" },
       onClick: () => navTo(r.id) }, tag, who);
     map.append(b);
   });
   map.append(h("span", { class: "l2-me" }, "大廳・你在這裡"));
-  // 手機直拿（翊文 11-11：「手機直的時候大廳有畫面點擠」）：導覽圖上只放名字，下面多壹排房間小卡（名字、進度、新），手指好點。其他寬度 CSS 藏起來
-  const list = h("div", { class: "l2-roomlist", role: "list" }, LOBBY2_ROOMS.map(r => {
-    const name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
-    return h("button", { type: "button", role: "listitem", class: "l2-rcard" + (step && step.room === r.id ? " is-goal" : ""), onClick: () => navTo(r.id) },
-      r.icon ? img(`${L}room-${r.icon}.webp`) : img(`${L}nav-${r.id}.webp`),
-      h("span", null, h("b", null, name), sub ? h("small", null, sub) : null),
-      fresh.has(r.id) ? h("span", { class: "l2-new" }, "新") : null);
-  }));
   // 館友名牌（綠點）：名單有變就換
   const drawWho = () => {
     const by = matesByRoom(NET.roster || []);
@@ -121,7 +115,7 @@ function mapBox(step) {
     });
   };
   drawWho();
-  return { map, drawWho, list };
+  return { map, drawWho };
 }
 
 // ---------- 右邊壹欄 ----------
@@ -162,7 +156,7 @@ function seals() {
 // ---------- 整個大廳 ----------
 export function lobby2(root) {
   const step = isFree(P) ? null : nextStep(P);
-  const { map, drawWho, list } = mapBox(step);
+  const { map, drawWho } = mapBox(step);
   const mates = matesStrip();
   const live = ADDONS.lobbyLive ? ADDONS.lobbyLive() : null; // 有人在實況就壹小行（ui_casino_live.js）
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
@@ -170,7 +164,7 @@ export function lobby2(root) {
     h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)),
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
-    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map), list),
+    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap);
   document.body.classList.add("l2-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
