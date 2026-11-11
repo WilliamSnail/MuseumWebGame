@@ -4,14 +4,28 @@
 /* 捲軸出現、消失時寬度不變（導覽圖的高度跟著寬度走，不留的話 1366 寬會在「有捲軸／沒捲軸」之間來回跳，畫面停住） */
 html.ui2 { scrollbar-gutter: stable; }
 
-/* ---------- 頂欄：圖示放進圓形底座（html.ui2） ---------- */
-.ui2 #nav .nav-link > .ic:not(.cic) { width: 24px; height: 24px; display: grid; place-items: center; opacity: 1; color: #5A3E14;
-  background: url(/lobby/ring-normal.webp) center/contain no-repeat; }
-.ui2 #nav .nav-link > .ic:not(.cic) svg { width: 13px; height: 13px; }
-.ui2 #nav .nav-link > .ic.cic { width: 24px; height: 24px; padding: 4px; background: url(/lobby/ring-normal.webp) center/contain no-repeat; }
-.ui2 #nav .nav-link:hover > .ic, .ui2 #nav .nav-link:focus-visible > .ic { background-image: url(/lobby/ring-hover.webp); }
-.ui2 #nav .nav-link:active > .ic { background-image: url(/lobby/ring-pressed.webp); }
-.ui2 #nav .nav-link.on > .ic, .ui2 #nav .nav-link[aria-current] > .ic { background-image: url(/lobby/ring-hover.webp); }
+/* ---------- 頂欄：每格壹張彩色的圖（翊文 11-11 生的 assets/nav/_sheet-16.jpg；原本的圓形外圈讓圖案太小，拿掉了） ---------- */
+.ui2 #nav .nav-link > .ic, .ui2 #nav .menu-btn > .ic { width: 30px; height: 30px; opacity: 1; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.ui2 #nav .nav-link > .ic svg, .ui2 #nav .menu-btn > .ic svg { display: none; }
+.ui2 #nav .nav-link[data-room="lobby"] > .ic { background-image: url(/lobby/nav-lobby.webp); }
+.ui2 #nav .nav-link[data-room="gallery"] > .ic { background-image: url(/lobby/nav-gallery.webp); }
+.ui2 #nav .nav-link[data-room="origin"] > .ic { background-image: url(/lobby/nav-origin.webp); }
+.ui2 #nav .nav-link[data-room="workshop"] > .ic { background-image: url(/lobby/nav-workshop.webp); }
+.ui2 #nav .nav-link[data-room="fusion"] > .ic { background-image: url(/lobby/nav-fusion.webp); }
+.ui2 #nav .nav-link[data-room="pillow"] > .ic { background-image: url(/lobby/nav-pillow.webp); }
+.ui2 #nav .nav-link[data-room="hall"] > .ic { background-image: url(/lobby/nav-hall.webp); }
+.ui2 #nav .nav-link[data-room="codex"] > .ic { background-image: url(/lobby/nav-codex.webp); }
+.ui2 #nav .nav-link[data-room="cellar"] > .ic { background-image: url(/lobby/nav-cellar.webp); }
+.ui2 #nav .nav-link[data-room="casino"] > .ic { background-image: url(/lobby/nav-casino.webp); }
+.ui2 #nav .nav-link[data-room="office"] > .ic { background-image: url(/lobby/nav-office.webp); }
+.ui2 #nav .nav-today > .ic { background-image: url(/lobby/nav-today.webp); }
+.ui2 #nav .nav-pass > .ic { background-image: url(/lobby/nav-pass.webp); }
+.ui2 #nav .nav-shop > .ic { background-image: url(/lobby/nav-shop.webp); }
+.ui2 #nav .nav-board > .ic { background-image: url(/lobby/nav-board.webp); }
+.ui2 #nav .menu-btn > .ic { background-image: url(/lobby/nav-menu.webp); width: 24px; height: 24px; }
+.ui2 #nav .nav-link:hover > .ic, .ui2 #nav .nav-link:focus-visible > .ic { transform: translateY(-1px) scale(1.06); filter: drop-shadow(0 0 4px rgba(255,214,120,.6)); }
+.ui2 #nav .nav-link > .ic { transition: transform .15s, filter .15s; }
+body.reduce-motion.ui2 #nav .nav-link > .ic, html.ui2 body.reduce-motion #nav .nav-link > .ic { transition: none; }
 
 /* 圖示在上、字在下（加了圓形底座比較寬，橫排放不下全部的房間） */
 @media (min-width: 861px) and (min-height: 501px) {
@@ -134,7 +148,6 @@ body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { ani
 /* ---------- 手機橫拿（決定 0043）：導覽圖照高度縮，右欄窄壹點、可以捲 ---------- */
 @media (max-height: 500px) and (orientation: landscape) {
   .ui2 #nav .nav-link > .ic { width: 22px !important; height: 22px !important; }
-  .ui2 #nav .nav-link > .ic:not(.cic) svg { width: 12px; height: 12px; }
   .l2 { grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; }
   .l2-left { gap: 5px; }
   .l2-strips { gap: 5px; }
