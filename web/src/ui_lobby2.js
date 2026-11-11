@@ -103,6 +103,14 @@ function mapBox(step) {
     map.append(b);
   });
   map.append(h("span", { class: "l2-me" }, "大廳・你在這裡"));
+  // 手機直拿（翊文 11-11：「手機直的時候大廳有畫面點擠」）：導覽圖上只放名字，下面多壹排房間小卡（名字、進度、新），手指好點。其他寬度 CSS 藏起來
+  const list = h("div", { class: "l2-roomlist", role: "list" }, LOBBY2_ROOMS.map(r => {
+    const name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
+    return h("button", { type: "button", role: "listitem", class: "l2-rcard" + (step && step.room === r.id ? " is-goal" : ""), onClick: () => navTo(r.id) },
+      r.icon ? img(`${L}room-${r.icon}.webp`) : img(`${L}nav-${r.id}.webp`),
+      h("span", null, h("b", null, name), sub ? h("small", null, sub) : null),
+      fresh.has(r.id) ? h("span", { class: "l2-new" }, "新") : null);
+  }));
   // 館友名牌（綠點）：名單有變就換
   const drawWho = () => {
     const by = matesByRoom(NET.roster || []);
@@ -113,7 +121,7 @@ function mapBox(step) {
     });
   };
   drawWho();
-  return { map, drawWho };
+  return { map, drawWho, list };
 }
 
 // ---------- 右邊壹欄 ----------
@@ -154,7 +162,7 @@ function seals() {
 // ---------- 整個大廳 ----------
 export function lobby2(root) {
   const step = isFree(P) ? null : nextStep(P);
-  const { map, drawWho } = mapBox(step);
+  const { map, drawWho, list } = mapBox(step);
   const mates = matesStrip();
   const live = ADDONS.lobbyLive ? ADDONS.lobbyLive() : null; // 有人在實況就壹小行（ui_casino_live.js）
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
@@ -162,7 +170,7 @@ export function lobby2(root) {
     h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)),
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
-    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),
+    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map), list),
     side);
   root.append(wrap);
   document.body.classList.add("l2-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
