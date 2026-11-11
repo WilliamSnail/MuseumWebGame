@@ -59,8 +59,10 @@ body.reduce-motion.ui2 #nav .nav-link > .ic, html.ui2 body.reduce-motion #nav .n
 .l2-room::after { content: ""; position: absolute; inset: 0; border-radius: 4px; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(238,215,156,0); transition: box-shadow .15s, background .15s; }
 .l2-room:hover::after, .l2-room:focus-visible::after { box-shadow: inset 0 0 0 3px rgba(238,215,156,.9), 0 0 18px rgba(255,210,120,.45); background: rgba(255,230,170,.08); }
 .l2-room:focus-visible { outline: none; }
-.l2-room.is-goal::after { box-shadow: inset 0 0 0 3px rgba(255,214,120,.95); animation: l2-goal 1.8s ease-in-out infinite; }
-@keyframes l2-goal { 50% { box-shadow: inset 0 0 0 3px rgba(255,214,120,.4), 0 0 22px rgba(255,214,120,.5); } }
+/* 下壹步那間：框固定，外面的光只動透明度（以前動 box-shadow，每格都要重畫，很吃效能；翊文 11-11：「效能有點吃」） */
+.l2-room.is-goal::after { box-shadow: inset 0 0 0 3px rgba(255,214,120,.95); }
+.l2-room.is-goal::before { content: ""; position: absolute; inset: 0; border-radius: 4px; pointer-events: none; box-shadow: 0 0 22px rgba(255,214,120,.6), inset 0 0 18px rgba(255,214,120,.35); opacity: 0; animation: l2-pulse 1.8s ease-in-out infinite; will-change: opacity; }
+@keyframes l2-pulse { 50% { opacity: 1; } }
 .l2-tag { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px 2px 4px; border-radius: 14px; white-space: nowrap; pointer-events: none;
   background: linear-gradient(180deg, rgba(43,23,18,.92), rgba(28,15,11,.92)); box-shadow: inset 0 0 0 1px rgba(214,178,94,.85), 0 2px 6px rgba(0,0,0,.5); font-size: clamp(.68rem, 1vw, .9rem); color: #F3DFA6; letter-spacing: .06em; }
 .l2-tag.noic { padding-left: 10px; }
@@ -95,13 +97,14 @@ body.reduce-motion.ui2 #nav .nav-link > .ic, html.ui2 body.reduce-motion #nav .n
 .l2-todo:hover { transform: translateX(-2px); }
 .l2-todo b { display: block; font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .l2-todo small { display: block; font-size: .74rem; color: #6E5020; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.l2-todo.on { border-image-source: url(/lobby/card-active.webp); border-image-slice: 60 76 fill; animation: l2-glow 2.4s ease-in-out infinite; }
+.l2-todo.on { border-image-source: url(/lobby/card-active.webp); border-image-slice: 60 76 fill; }
+/* 第壹張的光：只動透明度（以前動 filter: drop-shadow，很吃效能） */
+.l2-todo.on::after { content: ""; position: absolute; inset: -12px; border-radius: 8px; pointer-events: none; box-shadow: 0 0 16px rgba(255,214,120,.55); opacity: .25; animation: l2-pulse 2.4s ease-in-out infinite; will-change: opacity; }
 .l2-todo.done { border-image-source: url(/lobby/card-done.webp); opacity: .62; }
 .l2-todo.done b { text-decoration: line-through; text-decoration-color: rgba(42,30,22,.5); }
 .l2-todo.done small { padding-right: 34px; }
-@keyframes l2-glow { 50% { filter: drop-shadow(0 0 8px rgba(255,214,120,.65)) brightness(1.04); } }
-body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { animation: none; }
-@media (prefers-reduced-motion: reduce) { .l2-todo.on, .l2-room.is-goal::after { animation: none; } }
+body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::before { animation: none; opacity: .7; }
+@media (prefers-reduced-motion: reduce) { .l2-todo.on::after, .l2-room.is-goal::before { animation: none; opacity: .7; } }
 .l2-empty { margin: 0; font-size: .85rem; color: #CDB98C; }
 .l2-seals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .l2-seal { border: 0; padding: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: inherit; font: inherit; }

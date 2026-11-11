@@ -31,7 +31,7 @@
 .ui2 .cellar-on .floor-door { position: relative; display: block; width: min(100%, 150px); margin: 0 auto; }
 .ui2 .cellar-on .floor-door img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
 .ui2 .cellar-on .fd-plate { position: absolute; top: 4.5%; left: 50%; transform: translateX(-50%); font-family: Georgia, serif; font-weight: 700; font-size: .85rem; color: #2A1A0C; letter-spacing: .08em; }
-.ui2 .cellar-on .floor > .floor-n { display: none; } /* 號碼寫在門上的銅牌 */
+.ui2 .cellar-on .floor.locked > .floor-n { display: none; } /* 鎖著的：號碼寫在門上的銅牌 */
 .ui2 .cellar-on .floor b { color: #F3DFA6; text-shadow: 0 1px 3px #000; }
 .ui2 .cellar-on .floor .sub { color: #D8C59A; text-shadow: 0 1px 2px #000; font-size: .78rem; }
 
@@ -84,3 +84,20 @@
 .ui2 .cellar-on .legend.placard .pl-title { margin-top: 6px; }
 .ui2 .cellar-on .story-cellar .sc-kicker { color: #7A1F1A; font-weight: 700; letter-spacing: .12em; }
 .ui2 .cellar-on .story-cellar .sc-kicker * { color: #7A1F1A; }
+
+/* 修（翊文 11-11：「這個看不太到字」）：試煉房間也是 .story-cellar，吃到了告示的深色字；它放在深色石面板上，字要淺、大壹點 */
+.ui2 .cellar-on .story-cellar.trial-box, .ui2 .cellar-on .story-cellar.trial-box * { color: #F3E6C4; }
+.ui2 .cellar-on .trial-box .trial-sum { font-size: 1.05rem; color: #F3DFA6; min-height: 34px; }
+.ui2 .cellar-on .trial-box .trial-sum * { color: #F3DFA6; }
+.ui2 .cellar-on .trial-box .trial-sum small { color: #D8C59A; font-size: .85rem; }
+.ui2 .cellar-on .trial-box .sc-room { background: rgba(0,0,0,.35); border-color: rgba(214,178,94,.45); }
+.ui2 .cellar-on .trial-box .sc-room small { color: #D8C59A; }
+.ui2 .cellar-on .trial-box .btn.primary, .ui2 .cellar-on .trial-box .btn.primary * { color: #2B1B0C; }
+.ui2 .cellar-on .trial-box .sc-floor { color: #2B1B0C; }
+
+/* 解開的樓層：照舊放那層的畫，框成鐵框；現在選的那層發光（翊文 11-11：名字跟圖案要留著） */
+.ui2 .cellar-on .floor:not(.locked) .floor-art { width: 100%; border-radius: 4px; box-shadow: 0 0 0 3px #2B2622, 0 0 0 5px #6E6458, 0 6px 14px rgba(0,0,0,.6); }
+.ui2 .cellar-on .floor.on:not(.locked) .floor-art { box-shadow: 0 0 0 3px #2B2622, 0 0 0 5px #E3B95A, 0 0 18px rgba(255,200,110,.55); }
+.ui2 .cellar-on .floor:not(.locked) .floor-n { display: block; margin-top: 6px; color: #F3DFA6; }
+.ui2 .cellar-on .floor.locked .floor-door { width: min(100%, 110px); }
+@media (max-height: 500px) and (orientation: landscape) { .ui2 .cellar-on .floor.locked .floor-door { width: min(100%, 52px); } }

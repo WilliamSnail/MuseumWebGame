@@ -523,7 +523,8 @@ SCREENS.cellar = root => {
     const r = CELLAR_REWARDS[n] || {};
     const reward = [r.insp ? `${r.insp} 靈感` : null, r.unlock ? `「${r.unlock[1]}」` : null, r.key ? `「${r.key === "bg" ? "背景" : "手上拿的東西"}」的鑰匙` : null, r.book ? "一本禁書" : null, r.ending ? "結局" : null].filter(Boolean).join("、");
     const el = h("button", { type: "button", class: "floor" + (UI.cellarFloor === n ? " on" : "") + (open ? "" : " locked") + (done ? " done" : ""), "aria-label": `B${n} ${f.name}` },
-      ui2 ? h("span", { class: "floor-door" }, h("img", { src: `/cellar/door-${!open ? "locked" : UI.cellarFloor === n ? "current" : "open"}.webp`, alt: "", draggable: "false" }), h("span", { class: "fd-plate" }, `B${n}`))
+      // 翊文 11-11：「這些名子跟圖案應該還是要留著比較好，至少解開來要看的到」：解開的樓層照舊放那層的畫；還不能去的才放上鎖的門
+      ui2 && !open ? h("span", { class: "floor-door" }, h("img", { src: "/cellar/door-locked.webp", alt: "", draggable: "false" }), h("span", { class: "fd-plate" }, `B${n}`))
         : h("span", { class: "floor-art", html: ART.cellarScene ? ART.cellarScene(n, { cleared: done }) : "" }),
       h("span", { class: "floor-n" }, `B${n}`), h("b", null, open ? f.name : "？？？"),
       h("span", { class: "sub" }, done ? "走過了" : open ? `第一次走完：${reward}` : `要先走過 B${n - 1}`));
