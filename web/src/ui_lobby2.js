@@ -9,7 +9,7 @@
 //  - 名字是玩家打的字：只用 h() 的字串（純文字）。介面文字照第 1 代用「壹」。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { eventBarText, eventBars } from "../../shared/events.js";
+import { eventBars, eventEffect, eventLeftText, eventRange, eventWhen } from "../../shared/events.js";
 import { freshRooms } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { codexCount, dailyCommissions, isFree, num, todayStr } from "../../shared/logic.js";
@@ -50,11 +50,17 @@ function eventStrip() {
   let last = null;
   const draw = () => {
     if (last !== null && !box.isConnected) { clearInterval(timer); return; }
-    const bars = eventBars(allEvents(), Date.now());
-    const text = bars.length ? bars.map(eventBarText).join("　") : "今天沒有限時活動。每週劇情、委託、地下收藏庫都在等你。";
-    if (text === last) return;
-    last = text;
-    box.replaceChildren(h("b", null, bars.length && bars[0].phase === "live" ? "活動進行中" : "活動預告"), h("span", null, text));
+    // 翊文 11-11：「活動細節不見了，可以上下寬壹點容納多點細節」：第壹行時間和名字，第二行效果和說明
+    const bars = eventBars(allEvents(), Date.now()), b = bars[0];
+    const key = b ? [b.phase, b.ev.id, b.phase === "live" ? eventLeftText(b.left) : ""].join("|") + bars.length : "none";
+    if (key === last) return;
+    last = key;
+    if (!b) { box.replaceChildren(h("b", null, "活動預告"), h("span", { class: "l2-ev-l" }, h("span", null, "今天沒有限時活動。每週劇情、委託、地下收藏庫都在等你。"))); return; }
+    const ev = b.ev;
+    box.replaceChildren(h("b", null, b.phase === "live" ? "活動進行中" : "活動預告"),
+      h("span", { class: "l2-ev-l" },
+        h("span", { class: "l2-ev-t" }, b.phase === "live" ? `${ev.title}・還剩 ${eventLeftText(b.left)}` : `${eventWhen(ev)} ${eventRange(ev)}・${ev.title}`, bars.length > 1 ? h("small", null, `（還有 ${bars.length - 1} 場）`) : null),
+        h("small", { class: "l2-ev-d" }, [eventEffect(ev), ev.words].filter(Boolean).join("　"))));
   };
   const timer = every(draw, 1000);
   draw();
@@ -159,6 +165,7 @@ export function lobby2(root) {
     h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap);
+  document.body.classList.add("l2-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
   // 名單有變：橫幅和名牌跟著換（換了房間就不再理）
   const offs = [];
   const onRoster = () => { if (!wrap.isConnected) { offs.forEach(f => f && f()); return; } mates.draw(); drawWho(); };

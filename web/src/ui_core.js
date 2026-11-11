@@ -718,6 +718,7 @@ export function render() {
   const chrome = !HIDE_CHROME.includes(UI.screen);
   $("#nav").hidden = !chrome; $("#status").hidden = !chrome || !P;
   document.body.classList.toggle("chrome", chrome);
+  document.body.classList.remove("l2-on"); // 新的大廳（ui_lobby2.js）畫的時候再加回去：大螢幕的大廳不受 #room 的寬度限制
   markNav();
   if (P) scanFresh(P, UI.screen); // 先看有沒有新東西，畫面上的小牌子才畫得到
   const screen = h("section", { class: "screen enter scr-" + UI.screen, "aria-label": ROOM_NAMES[UI.screen] || "" });
