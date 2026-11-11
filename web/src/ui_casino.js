@@ -137,7 +137,8 @@ function draw() {
     h("button", { type: "button", role: "tab", "aria-selected": String(id === S.tab), class: "nb-tab" + (id === S.tab ? " on" : ""), disabled: S.busy ? true : null, onClick: () => goTab(id) }, icon(ic), " ", name)));
   const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "live" ? livePane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
-  m.surface.replaceChildren(...[tabs, reliefBar(), box, h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
+  // 銀行放在右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）；窄的畫面照舊放在上面（css 的 order）
+  m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, reliefBar()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
   box.scrollTop = keepY;
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
