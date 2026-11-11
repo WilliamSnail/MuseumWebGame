@@ -167,3 +167,27 @@ body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { ani
   .l2-h { font-size: .68rem; margin-bottom: 4px; }
   .l2-s { width: 38px; height: 38px; font-size: .62rem; } .l2-seal small { font-size: .58rem; }
 }
+
+/* ---------- 狀態列：每格字前面壹個彩色小圖示（翊文 11-11 生的 assets/status/_icons-11.jpg） ---------- */
+.ui2 #status .st-label::before { content: ""; display: inline-block; width: 22px; height: 22px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.ui2 #st-day .st-label::before { background-image: url(/lobby/st-day.webp); }
+.ui2 #st-mood .st-label::before { background-image: url(/lobby/st-mood.webp); }
+.ui2 #st-san .st-label::before { background-image: url(/lobby/st-san.webp); }
+.ui2 #st-insp .st-label::before { background-image: url(/lobby/st-insp.webp); }
+.ui2 #st-stamps .st-label::before { background-image: url(/lobby/st-stamps.webp); }
+.ui2 #st-chips .st-label::before { background-image: url(/lobby/st-chips.webp); }
+.ui2 #st-poss .st-label::before { background-image: url(/lobby/st-poss.webp); }
+.ui2 #st-jobs .st-label::before { background-image: url(/lobby/st-jobs.webp); }
+.ui2 #st-own .st-label::before { background-image: url(/lobby/st-poss.webp); }
+.ui2 #st-stamps .st-label .ic { display: none; } /* 原本的小獎章換成上面那張 */
+.ui2 #status .chip-myth::before, .ui2 #status .qk-chip::before, .ui2 #st-follow::before { content: ""; flex: none; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; }
+.ui2 #status .chip-myth { display: inline-flex; align-items: center; }
+.ui2 #status .chip-myth::before { background-image: url(/lobby/st-myth.webp); }
+.ui2 #status .qk-chip::before { background-image: url(/lobby/st-quirk.webp); }
+.ui2 #status .qk-chip > .ic { display: none; }
+.ui2 #st-follow::before { background-image: url(/lobby/st-track.webp); }
+.ui2 #st-follow > .ic { display: none; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .ui2 #status .st-label::before { width: 16px; height: 16px; margin-right: 2px; vertical-align: -3px; }
+  .ui2 #status .chip-myth::before, .ui2 #status .qk-chip::before, .ui2 #st-follow::before { width: 15px; height: 15px; }
+}
