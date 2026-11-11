@@ -146,11 +146,25 @@ export function weeklyItem(wk) {
   const list = LIMITED_ITEMS.filter(x => x.kind === kind && !x.shop && !x.from); // shop：兌換所賣的（決定 0032）；from：主題展、每週特展給的（決定 0035）。全簽到都不會輪到
   return list.length ? list[mod(Math.floor(wk / kinds.length), list.length)] : null;
 }
-// 這一週簽了幾天：{ wk, dates, signed（七個 true/false）, n, item（這週的特別項目）, claimed（領過了沒） }
+// 這一週全簽到會拿到的全部東西（翊文 11-11：「應該要能自動追蹤會送的東西一起顯示」）：畫面照這份列，加了新的獎勵在這裡加壹筆就好
+//   { kind: "item", id }：這週的特別項目；{ kind: "chips", n, login: true }：賭場籌碼（伺服器發，要登入）
+export function weekRewards(wk) {
+  const out = [], it = weeklyItem(wk);
+  if (it) out.push({ kind: "item", id: it.id });
+  if (NUM.signin.weekChips > 0) out.push({ kind: "chips", n: NUM.signin.weekChips, login: true });
+  return out;
+}
+// 獎勵壹行字（特別項目另外畫成卡片）：「1,500 萬賭場籌碼（要登入）」
+export function weekRewardText(r) {
+  if (r.kind === "chips") { const n = r.n, s = n >= 10000 && n % 10000 === 0 ? (n / 10000).toLocaleString("en-US") + " 萬" : n.toLocaleString("en-US"); return `${s} 賭場籌碼${r.login ? "（要登入）" : ""}`; }
+  if (r.kind === "item") return (limitedInfo(r.id) || {}).name || r.id;
+  return "";
+}
+// 這一週簽了幾天：{ wk, dates, signed（七個 true/false）, n, item（這週的特別項目）, rewards（全簽到拿的全部，weekRewards）, claimed（領過了沒） }
 export function weekProgress(save, date) {
   const S = signinState(save), wk = weekIndex(date), dates = weekDates(date);
   const signed = dates.map(d => !!S.days[d]);
-  return { wk, dates, signed, n: signed.filter(Boolean).length, item: weeklyItem(wk), claimed: S.weeks[wk] || null };
+  return { wk, dates, signed, n: signed.filter(Boolean).length, item: weeklyItem(wk), rewards: weekRewards(wk), claimed: S.weeks[wk] || null };
 }
 
 // ---------- 簽到 ----------

@@ -15,7 +15,7 @@
 import { LIMITED_ITEMS, NUM } from "../../shared/config.js";
 import { SIGNIN_TEXT } from "../../shared/content3.js";
 import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
-import { cycleReward, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
+import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
 import { stampHow, storyState } from "../../shared/story.js";
 import { casNum } from "../../shared/casino.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
@@ -119,6 +119,11 @@ export function doMakeup(date) {
   return r;
 }
 // 這週的特別項目那一塊
+// 全簽到除了特別項目以外的獎勵（weekRewards 列的，翊文 11-11）：壹樣壹行，加了新的獎勵這裡自己會多壹行
+function weekExtras(wp) {
+  const list = (wp.rewards || []).filter(r => r.kind !== "item");
+  return list.length ? h("ul", { class: "sg-extras" }, list.map(r => h("li", null, r.kind === "chips" ? cicon("stamp") : null, " 再加 ", h("b", null, weekRewardText(r))))) : null;
+}
 function weekPrize(wp, today, close) {
   if (!wp.item) return null;
   const missed = wp.dates.some((d, i) => d < today && !wp.signed[i]);
@@ -129,7 +134,7 @@ function weekPrize(wp, today, close) {
   return h("div", { class: "sg-prize" + (wp.claimed ? " got" : "") },
     h("p", { class: "sg-prize-h" }, h("b", null, `這週全簽到（${wp.n}／7）可以拿`), h("span", null, SIGNIN_TEXT.week)),
     itemCard(wp.item.id, h("span", { class: "sg-item-note" }, limitedInfo(wp.item.id).desc)),
-    h("p", { class: "sg-prize-chips" }, cicon("stamp"), ` 另外加送 ${casNum(NUM.signin.weekChips)} 賭場籌碼（要登入）`),
+    weekExtras(wp),
     h("p", { class: "sg-prize-st" }, status, owned && !wp.claimed ? "（已經有了的話，換成靈感）" : ""),
     wp.claimed && !wp.claimed.dup ? useBtn(wp.item.id, close) : null);
 }
@@ -229,7 +234,7 @@ export function openCalendar(o = {}) {
     const summary = h("div", { class: "sg-sum" },
       h("div", { class: "sg-sum-c" }, h("small", null, "累計簽到"), h("b", null, `${S.count} 次`)),
       h("div", { class: "sg-sum-c" }, h("small", null, "這週"), h("b", null, `${wp.n}／7`), weekStrip(wp, today)),
-      wp.item ? h("div", { class: "sg-sum-c prize" }, h("small", null, "這週全簽到拿"), itemCard(wp.item.id, h("span", { class: "sg-item-note" }, wp.claimed ? "這週拿到了" : `還差 ${7 - wp.n} 天`))) : null,
+      wp.item ? h("div", { class: "sg-sum-c prize" }, h("small", null, "這週全簽到拿"), itemCard(wp.item.id, h("span", { class: "sg-item-note" }, wp.claimed ? "這週拿到了" : `還差 ${7 - wp.n} 天`)), weekExtras(wp)) : null,
       lc ? h("div", { class: "sg-sum-c" }, h("small", null, "限定收藏"), h("b", null, `${lc.have}／${lc.total}`), h("span", { class: "sg-sum-n" }, SIGNIN_TEXT.limitedNote)) : null);
     const grid = h("div", { class: "sg-grid", role: "grid", "aria-label": `${y} 年 ${mo} 月` },
       WEEK_HEAD.map(w => h("span", { class: "sg-gh", role: "columnheader" }, w)),
