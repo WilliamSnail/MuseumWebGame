@@ -354,3 +354,25 @@ body.reduce-motion .live-dot { animation: none; }
 .meet-note { display: inline-flex; gap: 6px; align-items: center; }
 .meet-sel { min-height: 32px; border-radius: 6px; border: 1px solid #C8A25A; background: #FBF7EA; color: #1B1B1B; padding: 0 6px; }
 .meet-msg { margin: 8px 0 0; font-size: .9375rem; } .meet-msg.good { color: #9FD8B0; } .meet-msg.bad { color: #FF9C8A; }
+
+/* 銀行放右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）。窄的畫面放在上面 */
+.cas-row { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.cas-row > .cas-bank { order: -1; flex: none; }
+@media (min-width: 1180px) and (min-height: 600px) {
+  .nb-frame.nb-casino { width: min(1280px, 100%); }
+  .cas-row { flex-direction: row; align-items: stretch; gap: 14px; }
+  .cas-row > .cas-body { flex: 1; min-width: 0; }
+  .cas-row > .cas-bank { order: 0; flex: 0 0 320px; align-self: flex-start; max-height: 100%; overflow-y: auto; margin: 6px 0 0; }
+  .cas-row .bk-name small { display: none; }
+  .cas-row .bk-figs { grid-template-columns: 1fr; }
+  .cas-row .bk-fig + .bk-fig { border-left: 0; border-top: 1px solid rgba(214,178,94,.22); }
+  .cas-row .bk-fig { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; padding: 6px 14px; }
+  .cas-row .bk-fig-l { flex: 0 0 100%; }
+  .cas-row .bk-act { flex-direction: column; align-items: stretch; }
+  .cas-row .bk-act-b { display: grid; grid-template-columns: 1fr 1fr; }
+  .cas-row .bk-act-b .btn.primary { grid-column: 1 / -1; }
+  .cas-row .bk-book { font-size: .78rem; }
+  .cas-row .bk-book th, .cas-row .bk-book td { padding: 4px 6px; }
+  .cas-row .bk-book th:nth-child(2), .cas-row .bk-book td:nth-child(2) { display: none; } /* 窄：本金那欄藏起來，看應還本息就好 */
+  .cas-row .bk-work { flex-direction: column; align-items: stretch; }
+}

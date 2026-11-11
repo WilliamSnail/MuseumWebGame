@@ -147,7 +147,7 @@ T("指令 /pepe-借錢：在清單裡、無選項、在 PLAY_COMMANDS 和 handle
 });
 T("遊戲畫面：借錢那壹條在每個頁籤上方，平常就看得到，借和還都走伺服器", () => {
   const u = read("web/src/ui_casino.js");
-  assert.ok(u.includes("replaceChildren(...[tabs, reliefBar()"), "頁籤下面每頁都有");
+  assert.ok(u.includes("h(\"div\", { class: \"cas-row\" }, box, reliefBar())"), "每頁都有（寬的畫面在右邊壹欄，窄的在上面）");
   assert.strictEqual((u.match(/act\("relief"/g) || []).length, 0, "遊戲改用 borrow");
   assert.ok(u.includes('act("borrow"') && u.includes('act("repay"'));
   assert.ok(u.includes("casPoorReason(r.reason)"));
