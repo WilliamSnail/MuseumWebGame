@@ -712,7 +712,7 @@ export const ART = (() => {
     gallery: `<rect x="3.5" y="5" width="17" height="14" rx="1"/><rect x="6.5" y="8" width="11" height="8"/>`,
     workshop: P("M20 4l-8.5 8.5M11.5 12.5c-2-.6-4 .4-4.6 2.4-.5 1.9-1.5 4-3.4 4.6 3 .6 6.5.1 7.8-2.1.9-1.5.8-3.4.2-4.9z"),
     lobby: P("M3 9l9-5 9 5zM5.5 9v9M9.8 9v9M14.2 9v9M18.5 9v9M3 20.5h18"),
-    origin: P("M12 20v-8M12 12C12 8 9 6 5 6c0 4 3 6 7 6zM12 14.5c0-3 2.5-5 6-5 0 3-2.5 5-6 5z"),
+    origin: P("M3.5 20.5h17M4.5 20.5V3.5h15v17M4.5 12h15M7 12V6M9.2 12V7M11.4 12V5.5M14 6.6l1.8 5.2M17.3 12V7.5M7 20.5v-5.5M9.4 20.5V14.5M12.2 20.5v-6M15 20.5l2-5.6"), // 圖書館的書架（翊文 11-11：「起源室改成圖書館，icon也改」；以前是發芽的小苗）
     library: `<rect x="7.5" y="3.5" width="13" height="13" rx="1.5"/>` + P("M4.5 7v11.5A1.5 1.5 0 0 0 6 20h11.5M10 14l3-3.5 2.5 2.5 1.5-1.5 2 2") + `<circle cx="11.3" cy="7.3" r="1.1"/>`,
     plus: P("M12 5v14M5 12h14"),
     minus: P("M5 12h14"),
@@ -768,7 +768,7 @@ export const ART = (() => {
   const icon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || `<circle cx="12" cy="12" r="4"/>`}</svg>`;
 
   // ---------- 平面圖：每間房是可以點的區塊（11 間 + 大廳） ----------
-  const NAMES = { casino: "賭場", gallery: "畫廊", origin: "起源室", workshop: "手作坊", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", library: "圖庫", fusion: "融合室", office: "館長室", cellar: "地下收藏庫", lobby: "大廳" };
+  const NAMES = { casino: "賭場", gallery: "畫廊", origin: "圖書館", workshop: "手作坊", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", library: "圖庫", fusion: "融合室", office: "館長室", cellar: "地下收藏庫", lobby: "大廳" };
   const PLAN = {
     land: { vb: "0 0 1000 600", fs: 22, isz: 34, ent: [570, 570], lobby: { d: "M330 280H670V570H470V440H330Z", box: [330, 280, 340, 160] },
       rooms: [["origin", 30, 30, 220, 170], ["gallery", 250, 30, 320, 170], ["codex", 570, 30, 220, 170], ["office", 790, 30, 180, 170], ["workshop", 30, 200, 300, 185], ["pillow", 30, 385, 170, 185], ["casino", 200, 385, 130, 185], ["commission", 330, 200, 340, 80], ["cellar", 330, 440, 140, 130], ["hall", 670, 200, 300, 123], ["library", 670, 323, 300, 124], ["fusion", 670, 447, 300, 123]],

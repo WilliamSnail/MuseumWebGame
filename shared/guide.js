@@ -22,6 +22,6 @@ export function nextStep(P) {
   if (!P.unlockCount) return { room: "workshop", text: "用靈感解鎖壹個新選項", why: "手作坊的卡片上寫著要花多少；選項越多，能做的佩佩越多。" };
   if (!(P.hall || []).some(Boolean)) return { room: "hall", text: "把壹隻佩佩擺進你的展廳", why: "參觀者會來看，留下靈感。" };
   if (!has(P.pillows)) return { room: "pillow", text: "做壹個抱枕", why: "做好之後按住抱壹下，可以補理智。" };
-  if (!has(P.chaptersRead)) return { room: "origin", text: "到起源室讀第壹章", why: "佩佩是從哪裡來的？" };
+  if (!has(P.chaptersRead)) return { room: "origin", text: "到圖書館讀第壹章", why: "佩佩是從哪裡來的？" };
   return null;
 }

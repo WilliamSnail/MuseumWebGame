@@ -4,7 +4,7 @@
 //    展廳：牆下面的展期、三級和獎勵（ADDONS.hallShow）、牆上的海報、主題小卡上的獎牌（ADDONS.themeCard）
 //    本週特展：到金拿什麼（ADDONS.weeklyShow）
 //    手作坊：帽子那頁的一行字（ADDONS.hatNote）
-//    起源室：書架的「策展」頁籤（ADDONS.curateShelf、ADDONS.curateCounts）
+//    圖書館：書架的「策展」頁籤（ADDONS.curateShelf、ADDONS.curateCounts）
 //    每次 updateStatus：看展期、換週，辦完蓋一張卡（HOOKS.themeShow）
 //  ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 ui_core 的 ADDONS、HOOKS。
 //  提示用現有的 note()，不亮小紅點；只有新的手記標「新」（跟每週劇情的新書一樣）。
@@ -89,7 +89,7 @@ function doneCard(e) {
   const close = () => { m.close(); persist(); updateStatus(); if (UI.screen === "hall") rerender(); later(pump, 300); }; // 展廳：海報、獎牌換新
   m.card.append(h("div", { class: "ts-medal t" + e.tier, "aria-label": `${SHOW_TIER_NAME[e.tier]}級` }, SHOW_TIER_NAME[e.tier]),
     e.gains.length ? h("ul", { class: "ts-gains" }, e.gains.map(g => gainLine(g, close))) : null,
-    e.note ? h("p", { class: "ts-note-line" }, icon("book"), h("span", null, `策展手記多了壹篇：〈${SHOW_NOTES[e.theme].title}〉（起源室的「策展」）`)) : null,
+    e.note ? h("p", { class: "ts-note-line" }, icon("book"), h("span", null, `策展手記多了壹篇：〈${SHOW_NOTES[e.theme].title}〉（圖書館的「策展」）`)) : null,
     e.tier < 3 ? h("p", { class: "sub" }, `掛著不動就是下壹場：再 ${NUM.show.days} 天，到 ${showTiers(e.theme)[e.tier]} 分拿${SHOW_TIER_NAME[e.tier + 1]}。`) : null,
     h("div", { class: "ts-card-btns" },
       e.note ? btn("讀策展手記", () => { close(); go("origin", { tab: "curate", note: e.theme }); }, e.gains.some(g => g.kind === "item") ? "small" : "primary small") : null,
@@ -189,7 +189,7 @@ function hatNote() {
   return h("p", { class: "card-note" }, `主題展限定配件 ${got}／${items.length}：主題展、每週特展辦到金才拿得到。耳環、項鍊、圍巾這些也戴在這壹頁，壹次戴壹樣。`);
 }
 
-// ---------- 起源室：策展手記 ----------
+// ---------- 圖書館：策展手記 ----------
 function themeKnown(t) { return t !== "russia8" || isUnlocked(P, "心情", "俄國8+9") || noteOpen(P, t); } // 還沒見過 8+9 的人不列（跟主題小卡壹樣）
 function noteSpine(theme, reader) {
   const N = SHOW_NOTES[theme], open = noteOpen(P, theme), unread = open && !noteRead(P, theme);

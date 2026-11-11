@@ -463,7 +463,7 @@ export function sequelCondition(P, s) {
   if (s.need === "gopnikSquat") return Object.keys(P.pepes).some(k => { const p = fromKey(k); return !!p && p.心情 === "俄國8+9" && p.姿勢 === "斯拉夫蹲"; });
   if (s.need === "hallGopnik") return P.hall.length > 0 && P.hall.every(it => it && it.kind === "pepe" && (fromKey(it.key) || {}).心情 === "俄國8+9");
   if (s.need === "cellarEnd") return !!(P.cellar && P.cellar.best >= 5);
-  return false; // idleOrigin（在起源室什麼都不做）、codexBeyond（圖鑑最後壹格的下壹格）：畫面那邊直接打開
+  return false; // idleOrigin（在圖書館什麼都不做）、codexBeyond（圖鑑最後壹格的下壹格）：畫面那邊直接打開
 }
 export const sequelOpen = (P, s) => isFree(P) || !!(P.keys && P.keys[s.id]);
 export const sequelVisible = (P, s) => isFree(P) || !!P.mythFrom[s.after] || sequelOpen(P, s); // 讀過上壹本，書架上才會出現蓋著的這本

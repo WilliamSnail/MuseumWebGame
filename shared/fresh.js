@@ -16,9 +16,9 @@ export const FRESH_KEY = {
   opt: (cat, name) => `opt:${cat}:${name}`, // 手作坊的選項
   cat: cat => `cat:${cat}`,                 // 手作坊多了壹頁（拿到鑰匙的裝飾類別）
   ex: id => `ex:${id}`,                     // 畫廊的展品
-  ch: id => `ch:${id}`,                     // 起源室的章節
-  book: id => `book:${id}`,                 // 起源室的禁書、續集
-  understood: "understood",                 // 起源室的《看懂的事》多了壹件
+  ch: id => `ch:${id}`,                     // 圖書館的章節
+  book: id => `book:${id}`,                 // 圖書館的禁書、續集
+  understood: "understood",                 // 圖書館的《看懂的事》多了壹件
   recipe: id => `recipe:${id}`,             // 圖鑑室的配方頁
   badge: id => `badge:${id}`,               // 圖鑑室的徽章頁
   up: id => `up:${id}`,                     // 館長室的工坊升級

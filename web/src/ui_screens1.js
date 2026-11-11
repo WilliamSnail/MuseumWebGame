@@ -1,5 +1,5 @@
 // ================================================================
-//  畫面 1–5、7：開場、大廳、畫廊、起源室、手作坊、揭曉
+//  畫面 1–5、7：開場、大廳、畫廊、圖書館、手作坊、揭曉
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { CAS_TEXT } from "../../shared/casino_text.js";
@@ -406,9 +406,9 @@ export function diffGame(ex, artBox, info) {
   });
 }
 
-// ---------- 4 起源室：書架 ----------
+// ---------- 4 圖書館：書架 ----------
 SCREENS.origin = (root, params) => {
-  root.append(roomHead("起源室", "書可以翻開。新章節解鎖時，書背會亮起來。"));
+  root.append(roomHead("圖書館", "書可以翻開。新章節解鎖時，書背會亮起來。"));
   const tab = ORIGIN_TABS.some(t => t[0] === params.tab) ? params.tab : "shelf"; // 書架分頁籤（11-09，docs/每週劇情.md 第九節）：館藏、禁書照舊，主線、每週劇情、節日在 ui_story.js
   const reader = h("div", { class: "reader", "aria-live": "polite" }, h("p", { class: "empty" }, "從書架上挑一本書。"));
   const books = [{ id: 0, title: "起源", spine: "起源", gen1: true }].concat(allChapters());
@@ -426,7 +426,7 @@ SCREENS.origin = (root, params) => {
       });
       return el;
     }));
-  if (!isFree(P)) { // 壹件都還沒看懂也放在書架上（翊文 11-10：館友證寫「放在起源室的書架上」卻找不到）；翻開都是「？？？」，不破梗
+  if (!isFree(P)) { // 壹件都還沒看懂也放在書架上（翊文 11-10：館友證寫「放在圖書館的書架上」卻找不到）；翻開都是「？？？」，不破梗
     const el = h("button", { type: "button", class: "spine uk-spine", "aria-label": "看懂的事" }, h("span", { class: "spine-t" }, "看懂的事"));
     freshMark(el, isFresh(P, "origin", FRESH_KEY.understood)); // 《看懂的事》多了壹件（11-08）
     el.addEventListener("click", () => { $$(".spine.on", root).forEach(x => x.classList.remove("on")); el.classList.add("on"); snd("eerie", 1); openUnderstood(reader); });
@@ -470,7 +470,7 @@ SCREENS.origin = (root, params) => {
   root.append(originTabs(tab, counts), h("div", { class: "origin-wrap" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };
-// 《佩佩起源考・補遺》：讀過上壹本之後，在起源室什麼都不做 NUM.idleBook 秒（點滑鼠、按鍵盤、滾輪會重來；移動滑鼠沒關係）
+// 《佩佩起源考・補遺》：讀過上壹本之後，在圖書館什麼都不做 NUM.idleBook 秒（點滑鼠、按鍵盤、滾輪會重來；移動滑鼠沒關係）
 // 等的時候：書架上蓋著的那本越來越亮、快好時會抖，書架下面浮出壹行字，壹半時有低語（翊文 11-08：等了看起來沒作用）
 export function armIdleSequel(root) {
   const s1 = bookSequels().find(x => x.need === "idleOrigin");

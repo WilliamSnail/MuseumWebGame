@@ -97,7 +97,7 @@ export function boardDiscordNick(n) {
 //   { ok: false }              讀不了
 //   { ok: true, entered: false } 還沒進館
 //   { ok: true, entered: true, codex, hall, deepest, books, storyRead, signWeek, stampsWeek, stamps, gear, walked, showAlmost }
-//     累計（存進快照）：codex 圖鑑、books 起源室＋禁書、hall 展廳分數、deepest 地下最深
+//     累計（存進快照）：codex 圖鑑、books 圖書館＋禁書、hall 展廳分數、deepest 地下最深
 //     這週（有日期可以直接算）：storyRead 這週讀完的劇情書、signWeek 這週簽幾天、stampsWeek 這週領到幾枚週章、walked 這週有沒有下地下
 //     提醒用：stamps 現在有幾枚、gear 有幾件裝備、showAlmost 主題展再 1 天就辦完
 export function boardStatsOf(raw, wk) {

@@ -757,7 +757,7 @@ export const SOUND_DEMOS = [
   ["做出來的佩佩", [["普通", "revCommon"], ["稀有", "revRare"], ["超稀有", "revSuper"], ["傳說級", "revLegend"], ["失敗作", "revFailed"], ["擲出 01", "crit01"], ["擲出失敗作", "fumble100"]]],
   ["地下收藏庫、融合", [["強度檢定", "drum"], ["受傷", "hurt"], ["擋下來", "block"], ["整層走完", "fanfare"], ["融合", "fuse"], ["突變", "mutate"], ["換房間的腳步", "steps"]]],
   ["奇怪的東西", [["倒著響的鐘", "eerie", 0], ["玻璃顫音", "eerie", 1], ["低語（理智 60）", "whisper", 2], ["低語（理智 25）", "whisper", 5], ["低語（理智 5）", "whisper", 7], ["遠處的門", "eerie", 3], ["不和諧的和弦", "eerie", 4]]],
-  ["環境音（各 6 秒）", [["開場音樂盒", "title"], ["大廳", "lobby"], ["畫廊", "gallery"], ["手作坊", "workshop"], ["抱枕工作台", "pillow"], ["委託櫃台", "commission"], ["圖鑑室", "codex"], ["起源室", "origin"], ["我的展廳", "hall"], ["圖庫", "library"], ["館長室", "office"], ["融合室", "fusion"], ["地下收藏庫", "cellar"], ["理智歸零", "zero"], ["設定（很安靜）", "room"]]],
+  ["環境音（各 6 秒）", [["開場音樂盒", "title"], ["大廳", "lobby"], ["畫廊", "gallery"], ["手作坊", "workshop"], ["抱枕工作台", "pillow"], ["委託櫃台", "commission"], ["圖鑑室", "codex"], ["圖書館", "origin"], ["我的展廳", "hall"], ["圖庫", "library"], ["館長室", "office"], ["融合室", "fusion"], ["地下收藏庫", "cellar"], ["理智歸零", "zero"], ["設定（很安靜）", "room"]]],
 ];
 export function demoBox() {
   return h("div", { class: "demo-list" }, SOUND_DEMOS.map(([group, items]) => h("div", { class: "demo-group" },

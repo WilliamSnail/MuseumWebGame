@@ -28,8 +28,8 @@ export function setImg(v) { IMG = v; return v; }
 export function setFit(v) { FIT = v; return v; }
 export const UI = { screen: "title", params: {}, held: null, undo: [], timers: [], lastInput: Date.now(), busy: false, cleanup: [] };
 export const RCOLOR = { 普通: "var(--r-common)", 稀有: "var(--r-rare)", 超稀有: "var(--r-epic)", 傳說級稀有: "var(--r-legend)", 不可名狀: "var(--r-eldritch)", 失敗作: "#B9B4AA", 修復品: "#9C8A6A" };
-export const ROOM_NAMES = { lobby: "大廳", gallery: "畫廊", origin: "起源室", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", casino: "賭場", office: "館長室", library: "圖庫", settings: "設定" };
-export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "起源"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["casino", "賭場"], ["office", "館長室"]];
+export const ROOM_NAMES = { lobby: "大廳", gallery: "畫廊", origin: "圖書館", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", casino: "賭場", office: "館長室", library: "圖庫", settings: "設定" };
+export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "圖書館"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["casino", "賭場"], ["office", "館長室"]];
 export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
 export const PANELS = {};
@@ -875,7 +875,7 @@ export async function showEvents(events) {
       const use = e.cat === ROLLED ? `${here}做佩佩時擲得到了` : `${freshWhere("workshop")}就能用`;
       note(`${why}：新的${e.cat}「${e.name}」，${use}（可能性 ${num(e.from)} → ${num(e.to)}）`, "good");
     }
-    else if (e.type === "chapter") note(`起源室的書架上，第 ${e.id} 章亮了起來`, "good");
+    else if (e.type === "chapter") note(`圖書館的書架上，第 ${e.id} 章亮了起來`, "good");
     else if (e.type === "exhibit") { later(() => snd("eerie", 0), 200); const ex = exhibitById(e.id); note(`畫廊多了一件展品：${ex ? ex.title : ""}`, "good"); }
     else if (e.type === "row") note(`「${e.opt}」整類全收集：理智 +${e.gain}（擲 ${diceWords(e.roll.spec)}）`, "good");
     else if (e.type === "theme") { const t = HALL_THEME_TEXT[e.id]; note(`展廳成立主題「${t ? t.name : e.id}」`, "good"); }
@@ -889,7 +889,7 @@ export async function showEvents(events) {
     else if (e.type === "book") {
       snd("eerie", 0);
       const title = e.title || (BOOK4 && e.id === BOOK4.id ? BOOK4.title : ""); // 地下收藏庫 B2 給的那本，事件裡沒有書名
-      note(title ? `起源室的禁書架上，多了壹本書：《${title}》` : "起源室的禁書架上，多了壹本書。", "good", 7000);
+      note(title ? `圖書館的禁書架上，多了壹本書：《${title}》` : "圖書館的禁書架上，多了壹本書。", "good", 7000);
     }
     // floor（地下收藏庫下壹層開放）：走完那層的牌子已經寫了「繼續往下到 B…」，不另外跳提示，只在樓層牌子上標「新」
   }
@@ -1131,23 +1131,23 @@ export function quirkMakeBox(pick) {
       h("span", { class: "qm-tip" }, quirkCureText(q) ? `${quirkCureText(q)}${quirkProgText(q)}不然 ` : "", quirkLeftNode(q, "n"), "後自己好。")); // 狂熱的治法（決定 0046）
   }));
 }
-// 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進起源室的《看懂的事》
+// 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進圖書館的《看懂的事》
 // 集齊線索看懂的（shared/clues.js）：跟看懂檢定同壹張大卡片，按了才關，不會錯過。不扣理智、不發作
 export function understoodCard(e) {
   snd("eerie", 2);
   return quirkLayer("你看懂了", e.from ? `來自：${e.from}` : "", [
     h("p", { class: "uk-text" }, ptNode(e.text)),
-    h("p", { class: "uk-note" }, `這件事記進了起源室書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}。`),
+    h("p", { class: "uk-note" }, `這件事記進了圖書館書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}。`),
   ], "uk-modal", "我看懂了");
 }
 export function understandFlow(src) {
   const u = understandLine(P, src);
-  if (u.isNew) { markFresh(P, "origin", FRESH_KEY.understood, UI.screen); markFreshNav(); } // 起源室書架上的《看懂的事》多了壹件
+  if (u.isNew) { markFresh(P, "origin", FRESH_KEY.understood, UI.screen); markFreshNav(); } // 圖書館書架上的《看懂的事》多了壹件
   persist();
   snd("eerie", 2);
   return quirkLayer("你看懂了", u.from ? `來自：${u.from}` : "", [
     h("p", { class: "uk-text" }, ptNode(u.text)),
-    h("p", { class: "uk-note" }, u.isNew ? `這件事記進了起源室書架上的《看懂的事》（${u.n}／${u.total}）。` : u.id ? "你早就看懂過這件事了。只是又想起來了。" : "這件事太大了，記不下來。"),
+    h("p", { class: "uk-note" }, u.isNew ? `這件事記進了圖書館書架上的《看懂的事》（${u.n}／${u.total}）。` : u.id ? "你早就看懂過這件事了。只是又想起來了。" : "這件事太大了，記不下來。"),
   ], "uk-modal", "我寧可沒看懂");
 }
 export async function boutFlow() {

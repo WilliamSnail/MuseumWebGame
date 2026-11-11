@@ -2,11 +2,11 @@
 //  每週劇情的畫面（規則在 shared/story.js；規劃 docs/每週劇情.md；內容 content/weeks/，格式 content/README.md）
 //  這個檔放：
 //    「每週劇情」面板（選單、大廳、公佈欄的「前往」打開）：本週、每日任務、每週任務、週章、背包、劇情線、劇情回顧
-//    起源室書架的頁籤（館藏、禁書、主線、每週劇情、節日）和合訂本
+//    圖書館書架的頁籤（館藏、禁書、主線、每週劇情、節日）和合訂本
 //    畫廊的「今日特展」、地下收藏庫的「本週異狀」和這週多出來的房間
 //    大廳的小卡、狀態列的「追蹤」那一行、公佈欄的「本週地下收藏庫」公告
 //    賭場的每週收藏（決定 0042）：劇情面板的「本週賭場收藏」、劇情線裡的一條「賭場收藏」、集滿後的小故事放書架的「每週劇情」（畫法在 ui_casino_week.js）
-//  舊的檔只加幾行接口：ui_core.js（HOOKS.status、選單、狀態列的格子）、ui_screens1.js（大廳、畫廊、起源室）、ui_screens3.js（地下收藏庫）。
+//  舊的檔只加幾行接口：ui_core.js（HOOKS.status、選單、狀態列的格子）、ui_screens1.js（大廳、畫廊、圖書館）、ui_screens3.js（地下收藏庫）。
 //  ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 ui_core 的 PANELS、HOOKS。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
@@ -114,7 +114,7 @@ function flushEvents() {
   ev.forEach(e => {
     if (e.type === "storyBook") {
       const l = lineById(W, e.book.line);
-      note(`書架多了壹本：〈${e.book.title}〉（起源室的「${shelfName(shelfTabOf(l))}」）`, "good", 7000);
+      note(`書架多了壹本：〈${e.book.title}〉（圖書館的「${shelfName(shelfTabOf(l))}」）`, "good", 7000);
     } else if (e.type === "storyTask") {
       snd("bell");
       note(`任務完成：${taskText(e.task, W)}。到「每週劇情」領獎勵。`, "good");
@@ -128,7 +128,7 @@ function flushEvents() {
   });
   persist();
 }
-// 《看懂的事》的「這些週看懂的」：已經看懂的、快看懂的（只有拿到部分線索才列，不給 text）。起源室的書用（shared/clues.js）
+// 《看懂的事》的「這些週看懂的」：已經看懂的、快看懂的（只有拿到部分線索才列，不給 text）。圖書館的書用（shared/clues.js）
 export function weekUnderstood() { return P && !isFree(P) ? understandView(P, STORY_LIB, todayStr()) : { done: [], near: [] }; }
 // 選單裡「每週劇情」的數字：可以領的獎勵（有新的劇情線、下一步只亮小點）
 function claimables(W) {
@@ -260,7 +260,7 @@ function weekPane(W, draw, m) {
     h("p", { class: "sp-kicker" }, `本週地下收藏庫・第 ${W.dayNo} 天／7 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`),
     h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptMark(s))),
     W.question ? h("p", { class: "sp-question" }, h("span", null, "本週疑點"), W.question) : null,
-    h("div", { class: "sp-go" }, btn([icon("book"), " 起源室的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
+    h("div", { class: "sp-go" }, btn([icon("book"), " 圖書館的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
       d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
       btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
   const events = eventListBox(W.events);
@@ -368,7 +368,7 @@ export function storyLobby() {
   return card;
 }
 
-// ---------- 起源室：書架的頁籤 ----------
+// ---------- 圖書館：書架的頁籤 ----------
 export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
 const shelfName = id => (ORIGIN_TABS.find(t => t[0] === id) || [id, id])[1];
 // 全部的週（今天這週＋以前的），舊的在前
