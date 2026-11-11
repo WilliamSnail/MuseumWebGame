@@ -191,3 +191,26 @@ body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { ani
   .ui2 #status .st-label::before { width: 16px; height: 16px; margin-right: 2px; vertical-align: -3px; }
   .ui2 #status .chip-myth::before, .ui2 #status .qk-chip::before, .ui2 #st-follow::before { width: 15px; height: 15px; }
 }
+
+/* ---------- 手機直拿（翊文 11-11：「手機直的時候大廳有畫面點擠」） ----------
+   導覽圖上只放房間名字；下面壹排房間小卡（名字、進度、新）；右欄、橫幅都排成壹欄 */
+.l2-roomlist { display: none; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2-strips { grid-template-columns: 1fr; }
+  .l2-tag { font-size: .62rem; padding: 1px 6px 1px 2px; gap: 3px; } .l2-tag small { display: none; } .l2-tag img { width: 1.25em; height: 1.25em; }
+  .l2-who { display: none; } /* 館友在哪間房：看上面的「館友在線」 */
+  .l2-me { font-size: .62rem; padding: 1px 6px; }
+  .l2-new { font-size: .58rem; }
+  .l2-roomlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .l2-rcard { position: relative; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px; border: 0; cursor: pointer; text-align: left; font: inherit; color: #F3DFA6;
+    background: linear-gradient(180deg, rgba(43,23,18,.92), rgba(28,15,11,.92)); box-shadow: inset 0 0 0 1px rgba(214,178,94,.6); min-width: 0; }
+  .l2-rcard img { width: 30px; height: 30px; flex: none; }
+  .l2-rcard > span:not(.l2-new) { display: flex; flex-direction: column; min-width: 0; }
+  .l2-rcard b { font-size: .85rem; letter-spacing: .04em; }
+  .l2-rcard small { font-size: .7rem; color: #CDB98C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .l2-rcard .l2-new { top: -.6em; left: -.3em; }
+  .l2-rcard.is-goal { box-shadow: inset 0 0 0 2px rgba(255,214,120,.95), 0 0 12px rgba(255,214,120,.4); }
+  .l2 { grid-template-columns: minmax(0, 1fr); }
+  .l2-side { display: flex; flex-direction: column; width: 100%; }
+  .l2-side > * { grid-column: auto !important; grid-row: auto !important; width: 100%; }
+}
