@@ -13,6 +13,7 @@ import { NUM } from "./config.js";
 import { CAS_ACH, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
 import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
+import { weekIndex } from "./logic3.js";
 import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
@@ -41,6 +42,7 @@ export function casWalletFix(w, day) {
   for (const k of ["rel", "pk", "ex", "ach", "props", "meals", "st", "loan"]) if (!casIsObj(w[k])) w[k] = base[k];
   casLoanFix(w);
   casWorkFix(w);
+  if (!casIsObj(w.signWk)) w.signWk = {}; // 全簽到送過籌碼的週（決定 0064 之後，翊文 11-11）
   for (const k of Object.keys(base.st)) if (!Number.isFinite(w.st[k])) w.st[k] = base.st[k];
   if (!casIsObj(w.ex.n)) w.ex.n = {};
   if (!Array.isArray(w.hung)) w.hung = [];
@@ -367,6 +369,23 @@ export function casWorkView(w) {
   const pay = casWorkPay(x);
   return { vid: x.vid, name: x.name, job: x.job, san: x.san, san0: x.san0, base: x.base, pay, since: x.since, paid: x.paid, debt: Math.max(0, -w.chips), done: w.chips >= 0,
     days: w.chips >= 0 ? 0 : Math.ceil(-w.chips / pay) };
+}
+
+// ---------- 全簽到壹週加送籌碼（翊文 11-11：「簽到一週加送1500萬」） ----------
+// save 是這個人的整份存檔（伺服器讀的），簽到記在 save.signin.weeks（壹週全簽到了才有那壹週）。
+// 只看這週和上壹週（換週那天才簽滿也領得到），壹週只送壹次，記在 w.signWk。籌碼憑空來（跟借款壹樣，不經過莊家）
+export function casSignWeekChips(w, save, day) {
+  const weeks = save && save.signin && save.signin.weeks && typeof save.signin.weeks === "object" ? save.signin.weeks : {};
+  if (!w.signWk || typeof w.signWk !== "object") w.signWk = {};
+  const cur = weekIndex(day), n = NUM.signin.weekChips, got = [];
+  [cur, cur - 1].forEach(wk => {
+    if (!weeks[wk] || w.signWk[wk]) return;
+    w.signWk[wk] = day;
+    w.chips += n;
+    got.push(wk);
+  });
+  Object.keys(w.signWk).map(Number).filter(k => k < cur - 8).forEach(k => delete w.signWk[k]); // 只留最近的
+  return { n: got.length, chips: got.length * n, weeks: got };
 }
 
 // 「Yuga 來收錢了」的話：拿走（畫面說完就清掉）

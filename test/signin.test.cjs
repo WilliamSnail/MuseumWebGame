@@ -341,5 +341,19 @@ T("週章怎麼拿：說明照 NUM 寫數字", G => {
   assert.ok(L[0].includes(String(G.NUM.story.stampPerTask)) && L[2].includes(String(G.NUM.shop.matToStamp)));
 });
 
+T("全簽到壹週加送籌碼（翊文 11-11）：伺服器看存檔的簽到，壹週只送壹次；上壹週的也補；更早的不給", G => {
+  const { save, P } = fresh(G, "2026-11-15");
+  const w = G.casWalletFix(null, "2026-11-15"), c0 = w.chips, n = G.NUM.signin.weekChips;
+  assert.strictEqual(G.casSignWeekChips(w, save, "2026-11-15").n, 0, "還沒全簽到");
+  ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"].forEach(d => { G.ensureDay(P, d); G.signIn(save, P, d); });
+  const r = G.casSignWeekChips(w, save, "2026-11-15");
+  assert.strictEqual(r.n, 1); assert.strictEqual(w.chips, c0 + n);
+  assert.strictEqual(G.casSignWeekChips(w, save, "2026-11-15").n, 0, "壹週只送壹次");
+  const w2 = G.casWalletFix(null, "2026-11-16");
+  assert.strictEqual(G.casSignWeekChips(w2, save, "2026-11-16").n, 1, "換週那天才連上，上壹週的照樣補");
+  const w3 = G.casWalletFix(null, "2026-11-30");
+  assert.strictEqual(G.casSignWeekChips(w3, save, "2026-11-30").n, 0, "太久以前的不補");
+});
+
 console.log(`\n${pass} passed, ${fail} failed（每日簽到、節日）`);
 process.exit(fail ? 1 : 0);
