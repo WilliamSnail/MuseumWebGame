@@ -86,10 +86,10 @@ T("固定的時間換回台灣時間是對的：今日館訊八點半左右；�
   assert.ok(run >= before, "19:53 跑的時候要已經可以發");
 });
 const addDays = (...x) => shared().addDays(...x);
-T("今日館訊：08:25 以前不發；當天都可以補；隔天 05:00 換日就不發，也不算漏發", () => {
+T("今日館訊：07:50 以前不發；當天都可以補；隔天 05:00 換日就不發，也不算漏發", () => {
   const e = [dayEntry("2026-W46", 2, "2026-11-10", addDays)];
-  assert.strictEqual(duePosts(e, [], ms("2026-11-10 08:24")).due.length, 0);
-  assert.strictEqual(duePosts(e, [], ms("2026-11-10 08:25")).due.length, 1);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-10 07:49")).due.length, 0);
+  assert.strictEqual(duePosts(e, [], ms("2026-11-10 07:50")).due.length, 1);
   assert.strictEqual(duePosts(e, [], ms("2026-11-10 23:30")).due.length, 1, "當天很晚才合併的");
   assert.strictEqual(duePosts(e, [], ms("2026-11-11 05:00")).due.length, 1, "最後一刻");
   const after = duePosts(e, [], ms("2026-11-11 05:01"));
