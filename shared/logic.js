@@ -269,20 +269,28 @@ export function newProfile(mode) {
 export const isFree = P => P.mode === "free";
 export const maxSan = P => 99 - P.myth;
 
-// 每天自己恢復理智（NUM.sanDayBack）：+n，最多到 cap。已經比 cap 高的不動；理智 0（熄燈）的不恢復；自由模式不算。回傳實際加了多少
-export function sanDayRecover(P) {
+// 每天自己恢復理智（NUM.sanDayBack）：每過一次 05:00 +n（days 次），最多到 cap。已經比 cap 高的不動；理智 0（熄燈）的不恢復。
+// 對象是壹個「參觀者的欄位包」：現在這位（P 自己）或不在場的（P.visitors 裡的）。回傳實際加了多少
+export function sanDayRecoverOne(v, days = 1) {
   const c = NUM.sanDayBack;
-  if (!c || isFree(P) || P.sanity <= 0 || P.sanity >= c.cap) return 0;
-  const to = Math.min(P.sanity + c.n, c.cap, maxSan(P));
-  const gain = to - P.sanity;
-  if (gain > 0) P.sanity = to;
+  if (!c || !(days > 0) || !(v.sanity > 0) || v.sanity >= c.cap) return 0;
+  const to = Math.min(v.sanity + c.n * days, c.cap, 99 - (v.myth || 0));
+  const gain = to - v.sanity;
+  if (gain > 0) v.sanity = to;
   return Math.max(0, gain);
+}
+// 現在這位加完，不在場的（P.visitors）、沒在地下室工作的也一起加（翊文 11-11：所有參觀者過五點都自己加）。自由模式不算。回傳現在這位加了多少
+export function sanDayRecover(P, days = 1) {
+  if (isFree(P)) return 0;
+  asList(P.visitors).forEach(v => { if (v && typeof v === "object" && !v.work) sanDayRecoverOne(v, days); });
+  return sanDayRecoverOne(P, days);
 }
 export function ensureDay(P, date = todayStr()) {
   if (P.day && P.day.date === date) return null;
   const back = rewindDays(P, date); // 舊存檔的日期比今天晚（以前 15 分鐘一天）：先拉回來
   const firstEver = !P.day;
-  const sanBack = firstEver ? 0 : sanDayRecover(P); // 換日時自己恢復的理智，要先加，今天的起點（startSan）才算進去
+  // 換日時自己恢復的理智，要先加，今天的起點（startSan）才算進去。隔了幾天沒進館就加幾次（舊存檔日期在今天後面的算 1 次）
+  const sanBack = firstEver ? 0 : sanDayRecover(P, Math.max(1, daysBetween(P.day.date, date)));
   P.day = { date, startSan: P.sanity, lost: 0, exLoss: {}, reviews: {}, views: {}, moodFx: {}, hugs: {}, mini: {}, diff: {}, quirkGiven: false,
     fusions: 0, pairs: {}, rerolls: 0, hints: {} };
   // 地下收藏庫受的傷，時間到了自己好

@@ -521,6 +521,14 @@ T("每天換日理智自己恢復：+5，最多到 75；比 75 高的不動；0 
   assert.strictEqual(P.sanity, c.cap + 10, "已經比上限高的不扣");
   P.sanity = 0; G.ensureDay(P, "2026-11-12");
   assert.strictEqual(P.sanity, 0, "熄燈的不恢復");
+  // 隔了幾天沒進館：每過一次 05:00 加一次；不在場的、沒在工作的也一起加
+  const Q = fresh(); Q.sanity = 20; Q.visitors = [{ vid: "v2", sanity: 40, myth: 0 }, { vid: "v3", sanity: 40, work: { last: "2026-11-08" } }, { vid: "v4", sanity: 0 }, { vid: "v5", sanity: 70, myth: 10 }];
+  G.ensureDay(Q, "2026-11-11");
+  assert.strictEqual(Q.sanity, 20 + c.n * 3, "隔 3 天加 3 次");
+  assert.strictEqual(Q.visitors[0].sanity, 40 + c.n * 3);
+  assert.strictEqual(Q.visitors[1].sanity, 40, "在地下室工作的不加");
+  assert.strictEqual(Q.visitors[2].sanity, 0, "熄燈的不加");
+  assert.strictEqual(Q.visitors[3].sanity, c.cap, "70 加完停在上限");
   const N = G.newProfile("challenge");
   assert.strictEqual(G.ensureDay(N, "2026-11-08").sanBack, 0, "第一次進館不加");
 });
