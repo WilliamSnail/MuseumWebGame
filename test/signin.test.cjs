@@ -355,5 +355,13 @@ T("全簽到壹週加送籌碼（翊文 11-11）：伺服器看存檔的簽到�
   assert.strictEqual(G.casSignWeekChips(w3, save, "2026-11-30").n, 0, "太久以前的不補");
 });
 
+T("全簽到會拿的全部列在 weekRewards：特別項目＋籌碼；weekProgress 帶著；字照 NUM", G => {
+  const wp = G.weekProgress(G.newSave(), "2026-11-11");
+  assert.ok(wp.rewards.some(r => r.kind === "item" && r.id === wp.item.id));
+  const c = wp.rewards.find(r => r.kind === "chips");
+  assert.ok(c && c.n === G.NUM.signin.weekChips);
+  assert.ok(G.weekRewardText(c).includes("萬") && G.weekRewardText(c).includes("籌碼"));
+});
+
 console.log(`\n${pass} passed, ${fail} failed（每日簽到、節日）`);
 process.exit(fail ? 1 : 0);
