@@ -466,6 +466,15 @@ export function rewardText(r) {
   asList(r.items).forEach(id => bits.push(itemName(id)));
   return bits.join("、");
 }
+// 週章怎麼拿（翊文 11-11：「週章怎麼拿也要有足夠提示」）：兌換所、大廳、補簽、狀態列共用。數字照 NUM
+export function stampHow() {
+  return [
+    `做完每週任務：壹個 ${NUM.story.stampPerTask} 枚，這週 5 個全做完再多 ${NUM.story.stampAllBonus} 枚（每週劇情的「本週」）`,
+    `Hamachi 賭場的「本週收藏」集滿：${NUM.casino.week.stamp} 枚`,
+    `背包裡的舊畫布、金線、金箔：每 ${NUM.shop.matToStamp} 份在兌換所換 1 枚（地下收藏庫、劇情撿得到）`,
+    "週章不會過期，可以壹直存著",
+  ];
+}
 function give(P, S, r, today, what) {
   if (r.insp) P.insp += r.insp;
   if (r.mood) P.mood = clampN((P.mood || 0) + r.mood, 0, 99);

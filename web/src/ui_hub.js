@@ -10,7 +10,7 @@
 import { nextStep } from "../../shared/guide.js";
 import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { passView } from "../../shared/pass.js";
-import { storyState } from "../../shared/story.js";
+import { stampHow, storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, cicon, freshTag, frogHTML, go, h, icon, navTo, titleTag } from "./ui_core.js";
 import { hubExtras } from "./ui_signin.js";
@@ -48,9 +48,9 @@ function showChip() {
 // 小館友證下面：兌換所（翊文 11-10：「大廳的也很不明顯」）
 function shopBtn() {
   const n = storyState(P).stamps || 0;
-  return h("button", { type: "button", class: "hub-shop" + (n ? " has" : ""), onClick: () => PANELS.shop && PANELS.shop() },
+  return h("button", { type: "button", class: "hub-shop" + (n ? " has" : ""), title: ["週章怎麼拿："].concat(stampHow()).join("\n"), onClick: () => PANELS.shop && PANELS.shop() },
     h("span", { class: "hsh-ic", "aria-hidden": "true" }, cicon("shop")),
-    h("span", { class: "hsh-t" }, h("b", null, "兌換所"), h("small", null, n ? `週章 ${n} 枚，可以去換` : "做每週任務拿週章")),
+    h("span", { class: "hsh-t" }, h("b", null, "兌換所"), h("small", null, n ? `週章 ${n} 枚，可以去換` : "做完每週任務拿週章")),
     h("span", { class: "hsh-go", "aria-hidden": "true" }, "→"));
 }
 export function lobbyHub() {

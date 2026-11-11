@@ -12,8 +12,8 @@ import { SHOP_TEXT, SKILL_TEXT } from "../../shared/content3.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { limitedInfo, ownsLimited } from "../../shared/signin.js";
 import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, ownsGear, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear, wornGear } from "../../shared/shop.js";
-import { storyState } from "../../shared/story.js";
-import { ADDONS, planPortrait, P, PANELS, UI, btn, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "./ui_core.js";
+import { stampHow, storyState } from "../../shared/story.js";
+import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "./ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
@@ -65,11 +65,13 @@ export function openShop(o = {}) {
   const draw = () => {
     const S = storyState(P);
     const old = m.surface.querySelector(".sp-body"), keepY = old && old.dataset.tab === tab ? old.scrollTop : 0; // 買東西、穿脫之後重畫：停在原本的地方，不要跳回最上面
-    m.setTop(h("span", { class: "sp-stamps", title: "做完每週任務拿的週章。" }, icon("medal"), ` 週章 ${S.stamps} 枚`));
+    m.setTop(h("span", { class: "sp-stamps", title: stampHow().join("\n") }, cicon("stamp"), ` 週章 ${S.stamps} 枚`));
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": SHOP_TEXT.title }, SHOP_TABS.map(([id, name]) =>
       h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : ""), onClick: () => { tab = id; draw(); } }, name)));
     const body = tab === "gear" ? gearPane(draw) : tab === "skill" ? skillPane(draw) : tab === "limited" ? limitedPane(draw) : matPane(draw);
-    const box = h("div", { class: "sp-body", dataset: { tab } }, h("p", { class: "sp-note shp-why" }, SHOP_TEXT.why), body);
+    // 週章怎麼拿（翊文 11-11）：手上沒有的時候自己打開
+    const how = h("details", { class: "shp-how", open: S.stamps < 1 ? true : null }, h("summary", null, cicon("stamp"), " 週章怎麼拿"), h("ul", null, stampHow().map(t => h("li", null, t))));
+    const box = h("div", { class: "sp-body", dataset: { tab } }, h("p", { class: "sp-note shp-why" }, SHOP_TEXT.why), how, body);
     m.surface.replaceChildren(tabs, box);
     box.scrollTop = keepY;
   };

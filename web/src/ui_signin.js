@@ -12,10 +12,11 @@
 //  蓋在畫面上的木框用 ui_board.js 的 overlay()。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { LIMITED_ITEMS } from "../../shared/config.js";
+import { LIMITED_ITEMS, NUM } from "../../shared/config.js";
 import { SIGNIN_TEXT } from "../../shared/content3.js";
 import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
-import { cycleReward, limitedInfo, limitedCount, ownsLimited, signIn, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
+import { cycleReward, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
+import { stampHow, storyState } from "../../shared/story.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
@@ -82,13 +83,37 @@ function weekStrip(wp, today) {
     title: `${dayLabel(d)}${wp.signed[i] ? "：簽到了" : d > today ? "：還沒到" : d === today ? "：今天" : "：沒簽到"}` },
     h("small", null, `週${WEEK_HEAD[i]}`), h("span", { class: "sg-wd-mark", html: wp.signed[i] ? ART.stamp("簽") : "" }))));
 }
+// 補簽（翊文 11-11）：這週有沒簽到、已經過去的日子，就放壹行和壹顆按鈕（go：要去哪裡補）
+function makeupRow(today, go) {
+  if (!canSign()) return null;
+  const miss = makeupDays(SAVE, today);
+  if (!miss.length) return null;
+  const S = storyState(P);
+  return h("div", { class: "sg-makeup" },
+    h("span", null, `這週有 ${miss.length} 天沒簽到。`, SIGNIN_TEXT.makeupWhy, `壹天 ${NUM.signin.makeupCost} 枚。`, `你有 ${S.stamps} 枚週章。`,
+      S.stamps < NUM.signin.makeupCost ? h("small", { class: "sg-mk-how" }, `週章怎麼拿：${stampHow()[0]}。`) : null),
+    btn([icon("calendar"), " ", SIGNIN_TEXT.makeup], go, "small"));
+}
+// 補簽壹天：花週章、拿那天的獎勵。成功回傳 signMakeup 的結果
+export function doMakeup(date) {
+  const r = signMakeup(SAVE, P, date, realTodayStr(), storyState(P));
+  if (!r.ok) { snd("error"); note(r.reason, "bad"); return null; }
+  snd("stamp");
+  if (r.weekly) setTimeout(() => snd("bell"), 420);
+  persistNow(); updateStatus(); updateBoardBadges();
+  const got = r.gains.map(g => g.kind === "insp" ? `靈感 +${g.n}` : g.kind === "mood" ? `心情 +${g.n}` : g.why === "week" ? `這週全簽到：${limitedInfo(g.id).name}` : "").filter(Boolean).join("、");
+  note(`補簽了 ${dayLabel(date)}（花了 ${r.cost} 枚週章）${got ? "：" + got : ""}`, "good", 6000);
+  if (r.events && r.events.length) setTimeout(() => showEvents(r.events), 600);
+  refreshLobbySign();
+  return r;
+}
 // 這週的特別項目那一塊
 function weekPrize(wp, today, close) {
   if (!wp.item) return null;
   const missed = wp.dates.some((d, i) => d < today && !wp.signed[i]);
   const left = wp.signed.filter(x => !x).length;
   const status = wp.claimed ? (wp.claimed.dup ? `這週拿過了（已經有，換成了靈感）` : "這週拿到了！")
-    : missed ? "這週錯過了幾天，下週壹 05:00 起每天簽到就拿得到。" : left === 0 ? "這週七天都簽到了！" : left === 1 && !wp.signed[wp.dates.indexOf(today)] ? "今天簽到就拿得到！" : `還要簽 ${left} 天（每天都要）`;
+    : missed ? `這週錯過了幾天：可以花週章補簽（壹天 ${NUM.signin.makeupCost} 枚），或下週壹 05:00 起每天簽到。` : left === 0 ? "這週七天都簽到了！" : left === 1 && !wp.signed[wp.dates.indexOf(today)] ? "今天簽到就拿得到！" : `還要簽 ${left} 天（每天都要）`;
   const owned = wp.item.kind !== "mat" && ownsLimited(P, wp.item.id);
   return h("div", { class: "sg-prize" + (wp.claimed ? " got" : "") },
     h("p", { class: "sg-prize-h" }, h("b", null, `這週全簽到（${wp.n}／7）可以拿`), h("span", null, SIGNIN_TEXT.week)),
@@ -156,7 +181,7 @@ export function openSignin(o = {}) {
       stamp, head, holidayBox(pv.holiday, today, { isToday: true, art: false }), // 藝術品在日曆、畫廊看
       pv.free ? null : cycleTrack(k, done),
       signBtn, gains, today2,
-      pv.free ? null : h("section", { class: "sg-weekbox" }, h("p", { class: "sg-week-h" }, h("b", null, `這週 ${wp.n}／7`), h("span", null, "週壹 05:00 換週")), weekStrip(wp, today), weekPrize(wp, today, m.close))));
+      pv.free ? null : h("section", { class: "sg-weekbox" }, h("p", { class: "sg-week-h" }, h("b", null, `這週 ${wp.n}／7`), h("span", null, "週壹 05:00 換週")), weekStrip(wp, today), makeupRow(today, () => { m.close(); openCalendar({ date: makeupDays(SAVE, today)[0] }); }), weekPrize(wp, today, m.close))));
     m.foot.replaceChildren(btn([icon("calendar"), " ", SIGNIN_TEXT.calendar], () => { m.close(); openCalendar(); }, "small sg-to-cal"), done || pv.free ? btn("收下了", () => m.close(), "small") : null);
   };
   const doSign = () => {
@@ -183,7 +208,7 @@ export function openCalendar(o = {}) {
   const minY = HOLIDAY_YEARS[0], maxY = HOLIDAY_YEARS[HOLIDAY_YEARS.length - 1];
   const m = overlay("nb-cal", SIGNIN_TEXT.calendar, SIGNIN_TEXT.calendar, "calendar");
   const draw = () => {
-    const S = signinState(SAVE), mon = signinMonth(SAVE, y, mo, today), wp = weekProgress(SAVE, today);
+    const S = signinState(SAVE), mon = signinMonth(SAVE, y, mo, today), wp = weekProgress(SAVE, today), miss = makeupDays(SAVE, today);
     const prev = mo === 1 ? [y - 1, 12] : [y, mo - 1], next = mo === 12 ? [y + 1, 1] : [y, mo + 1];
     const navBtn = (lab, ym, aria) => btn(lab, () => { [y, mo] = ym; draw(); }, "small ghost sg-cal-nav", { "aria-label": aria, disabled: ym[0] < minY || ym[0] > maxY ? true : null });
     const lc = P && !isFree(P) ? limitedCount(P) : null;
@@ -205,6 +230,7 @@ export function openCalendar(o = {}) {
           } },
           h("span", { class: "sg-dn" }, String(c.d)),
           c.signed ? h("span", { class: "sg-dm", html: ART.stamp("簽"), "aria-hidden": "true" }) : null,
+          !c.signed && canSign() && miss.includes(c.date) ? h("span", { class: "sg-dmk" }, "可補簽") : null,
           fun.length ? h("span", { class: "sg-df", title: fun.map(f => f.name).join("、"), "aria-hidden": "true" }, fun.length > 1 ? String(fun.length) : "趣") : null,
           hol ? h("span", { class: "sg-dh" }, hol.look ? h("i", { html: ART.holidayIcon(hol.look), "aria-hidden": "true" }) : null, h("span", null, hol.dayName)) : null);
         return b;
@@ -216,9 +242,21 @@ export function openCalendar(o = {}) {
       h("p", { class: "sg-det-s" }, x ? `簽到了：累計第 ${x.n} 次（七天壹輪的第 ${x.k} 天）` : sel > today ? "還沒到。" : sel === today ? (canSign() ? "今天還沒簽到。" : SIGNIN_TEXT.freeMode) : "這天沒簽到。"),
       hs.length ? hs.map(hh => holidayBox(hh, today, {})) : fs.length ? null : h("p", { class: "sg-det-n" }, "這天沒有節日。"),
       fs.length ? funBox(fs) : null,
-      sel === today && canSign() && !x ? btn([icon("check"), " ", SIGNIN_TEXT.sign], () => { m.close(); openSignin(); }, "primary sg-cal-sign") : null);
+      sel === today && canSign() && !x ? btn([icon("check"), " ", SIGNIN_TEXT.sign], () => { m.close(); openSignin(); }, "primary sg-cal-sign") : null,
+      makeupBox(sel));
     const legend = h("p", { class: "sg-legend" }, h("span", { class: "lg on" }, "蓋章＝簽到了"), h("span", { class: "lg today" }, "框起來＝今天"), h("span", { class: "lg hol" }, "有字＝節日（點了看活動）"), h("span", { class: "lg fun" }, "趣＝趣味節日（只是好玩，沒有獎勵）"),
       nh ? h("span", { class: "lg next" }, nh.date === today ? `今天是${holName(nh.holiday)}` : `下壹個節日：${nh.holiday.name} ${md(nh.date)}（還有 ${daysBetween(today, nh.date)} 天）`) : null);
+    // 補簽（翊文 11-11）：這週沒簽到、已經過去的那天
+    function makeupBox(date) {
+      if (!canSign() || x) return null;
+      const c = makeupCheck(SAVE, P, date, today, storyState(P));
+      if (c.reason === "還沒到" || c.reason === "今天直接簽到就好" || c.reason === "這天簽過了") return null;
+      if (!c.ok && !c.have && c.have !== 0) return h("p", { class: "sg-det-n" }, c.reason);
+      return h("div", { class: "sg-makeup" },
+        h("span", null, SIGNIN_TEXT.makeupWhy, `壹天 ${c.cost} 枚。`, `你有 ${storyState(P).stamps} 枚週章。`,
+          !c.ok ? h("small", { class: "sg-mk-how" }, `週章怎麼拿：${stampHow()[0]}。`) : null),
+        btn([icon("check"), " ", `${SIGNIN_TEXT.makeup}（花 ${c.cost} 枚週章）`], () => { if (doMakeup(date)) draw(); }, "primary small", { disabled: c.ok ? null : true }));
+    }
     m.surface.replaceChildren(summary, h("div", { class: "sg-cal" },
       h("div", { class: "sg-cal-main" },
         h("div", { class: "sg-cal-head" }, navBtn("‹", prev, "上個月"), h("b", null, `${y} 年 ${mo} 月`), navBtn("›", next, "下個月"),

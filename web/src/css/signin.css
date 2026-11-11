@@ -266,3 +266,8 @@ body.holiday-on .lobby-sign { border-color: var(--hol-a); box-shadow: 0 0 0 1px 
   .ls-btn { width: 100%; }
   .hg-head h2 { font-size: 1.0625rem; }
 }
+
+/* 補簽（翊文 11-11）：這週沒簽到的日子花週章補 */
+.sg-makeup { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; margin: 8px 0; padding: 8px 12px; border-radius: 6px; border: 1px dashed rgba(156,116,40,.6); background: rgba(217,180,92,.14); font-size: .875rem; line-height: 1.5; }
+.sg-dmk { position: absolute; left: 2px; right: 2px; bottom: 3px; font-size: .625rem; text-align: center; color: #A8382D; font-weight: 700; letter-spacing: .04em; }
+.sg-mk-how { display: block; margin-top: 2px; color: #6E5020; }

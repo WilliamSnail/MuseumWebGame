@@ -303,5 +303,43 @@ T("舊存檔：沒有簽到、限定欄位的讀得進來；壞掉的欄位補�
   assert.deepStrictEqual(J(back.signin), J(bad.signin));
 });
 
+// 補簽（翊文 11-11）
+T("補簽：只能補這週已經過去、沒簽到的；花 makeupCost 枚週章；拿七天壹輪的那份", G => {
+  const { save, P } = fresh(G, "2026-11-11");
+  const story = G.storyState(P), cost = G.NUM.signin.makeupCost;
+  G.signIn(save, P, "2026-11-11");
+  assert.deepStrictEqual(J(G.makeupDays(save, "2026-11-11")), ["2026-11-09", "2026-11-10"]);
+  story.stamps = 0;
+  const poor = G.signMakeup(save, P, "2026-11-09", "2026-11-11", story);
+  assert.ok(!poor.ok && poor.reason.includes("週章不夠"));
+  story.stamps = cost + 1;
+  assert.ok(!G.signMakeup(save, P, "2026-11-11", "2026-11-11", story).ok, "今天的直接簽");
+  assert.ok(!G.signMakeup(save, P, "2026-11-12", "2026-11-11", story).ok, "還沒到");
+  assert.ok(!G.signMakeup(save, P, "2026-11-08", "2026-11-11", story).ok, "上週的不行");
+  const insp0 = P.insp, count0 = G.signinState(save).count;
+  const r = G.signMakeup(save, P, "2026-11-09", "2026-11-11", story);
+  assert.ok(r.ok && r.makeup);
+  assert.strictEqual(story.stamps, 1);
+  assert.strictEqual(G.signinState(save).count, count0 + 1);
+  assert.strictEqual(P.insp, insp0 + G.cycleReward(r.k).insp);
+  assert.ok(G.signedOn(save, "2026-11-09"));
+  assert.ok(!G.signMakeup(save, P, "2026-11-09", "2026-11-11", story).ok, "補過了");
+  assert.ok(!G.makeupCheck(G.newSave(), G.newProfile("free"), "2026-11-09", "2026-11-11", story).ok, "自由模式");
+});
+T("補簽補滿七天，也拿得到這週的特別項目", G => {
+  const { save, P } = fresh(G, "2026-11-15");
+  const story = G.storyState(P); story.stamps = 10;
+  G.signIn(save, P, "2026-11-15");
+  ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13"].forEach(d => assert.ok(G.signMakeup(save, P, d, "2026-11-15", story).ok, d));
+  const last = G.signMakeup(save, P, "2026-11-14", "2026-11-15", story);
+  assert.ok(last.ok && last.weekly, "第七天補完拿特別項目");
+  assert.strictEqual(story.stamps, 10 - 6 * G.NUM.signin.makeupCost);
+});
+T("週章怎麼拿：說明照 NUM 寫數字", G => {
+  const L = G.stampHow();
+  assert.ok(L.length >= 3);
+  assert.ok(L[0].includes(String(G.NUM.story.stampPerTask)) && L[2].includes(String(G.NUM.shop.matToStamp)));
+});
+
 console.log(`\n${pass} passed, ${fail} failed（每日簽到、節日）`);
 process.exit(fail ? 1 : 0);
