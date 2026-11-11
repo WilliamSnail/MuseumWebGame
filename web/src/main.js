@@ -11,6 +11,7 @@ import "./css/theme3.css";
 import "./css/board.css"; // 公佈欄、信箱、選單（11-08）
 import "./css/net.css"; // 登入、館友、我的帳號（多人版 M1，11-08）
 import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版 M1，11-08，決定 0018）
+import "./css/title.css"; // 標題畫面的新外觀（11-11，拆開的素材組起來）
 import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./css/coop.css"; // 合作地下收藏庫（多人版 M4，11-09）
 import "./css/visit.css"; // 參觀館友的展廳、送佩佩（多人版 M2，11-09）
