@@ -17,10 +17,11 @@ import { SIGNIN_TEXT } from "../../shared/content3.js";
 import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
 import { cycleReward, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
 import { stampHow, storyState } from "../../shared/story.js";
+import { casNum } from "../../shared/casino.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
-import { $$, ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, cicon, go, h, icon, setChips, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { exInspLine, focusExhibit } from "./ui_screens1.js";
 
@@ -94,10 +95,20 @@ function makeupRow(today, go) {
       S.stamps < NUM.signin.makeupCost ? h("small", { class: "sg-mk-how" }, `週章怎麼拿：${stampHow()[0]}。`) : null),
     btn([icon("calendar"), " ", SIGNIN_TEXT.makeup], go, "small"));
 }
+// 這週全簽到：跟伺服器領加送的籌碼（翊文 11-11：「簽到一週加送1500萬」）。沒登入就算了（進賭場、下次登入也會補發）
+async function weekChips() {
+  if (!UI.net || !NET.loggedIn) return;
+  try {
+    await NET.flush().catch(() => {}); // 伺服器要先看到存檔裡這週簽滿了
+    const r = await NET.call("casino", { act: "signWeek" });
+    if (r && r.n) { note(`這週全簽到！Yuga Bot 加送你 ${casNum(r.got)} 籌碼。`, "good", 7000); snd("coin"); if (typeof r.chips === "number") setChips(r.chips); }
+  } catch (e) { /* 下次進賭場會補發 */ }
+}
 // 補簽壹天：花週章、拿那天的獎勵。成功回傳 signMakeup 的結果
 export function doMakeup(date) {
   const r = signMakeup(SAVE, P, date, realTodayStr(), storyState(P));
   if (!r.ok) { snd("error"); note(r.reason, "bad"); return null; }
+  if (r.weekly) weekChips();
   snd("stamp");
   if (r.weekly) setTimeout(() => snd("bell"), 420);
   persistNow(); updateStatus(); updateBoardBadges();
@@ -118,6 +129,7 @@ function weekPrize(wp, today, close) {
   return h("div", { class: "sg-prize" + (wp.claimed ? " got" : "") },
     h("p", { class: "sg-prize-h" }, h("b", null, `這週全簽到（${wp.n}／7）可以拿`), h("span", null, SIGNIN_TEXT.week)),
     itemCard(wp.item.id, h("span", { class: "sg-item-note" }, limitedInfo(wp.item.id).desc)),
+    h("p", { class: "sg-prize-chips" }, cicon("stamp"), ` 另外加送 ${casNum(NUM.signin.weekChips)} 賭場籌碼（要登入）`),
     h("p", { class: "sg-prize-st" }, status, owned && !wp.claimed ? "（已經有了的話，換成靈感）" : ""),
     wp.claimed && !wp.claimed.dup ? useBtn(wp.item.id, close) : null);
 }
@@ -186,6 +198,7 @@ export function openSignin(o = {}) {
   };
   const doSign = () => {
     const r = signIn(SAVE, P, today);
+    if (r.ok && r.weekly) weekChips();
     if (!r.ok) { if (!r.already) { snd("error"); note(r.reason, "bad"); } draw(); return; }
     result = r;
     snd("stamp");

@@ -20,8 +20,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
-import { casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casNum, casRoundView } from "./shared/casino.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -268,6 +268,8 @@ export const casino = onCall(async req => {
       return play(req, me, { legacy: true, save: true, writeAnyway: true }, ctx => {
         const peek = casLegacyPeek(ctx.w, ctx.legacy);
         const loanNotes = casLoanTakeNotes(ctx.w); // 「Yuga 來收錢了」：進賭場時說壹次（決定 0064）
+        const sw = casSignWeekChips(ctx.w, ctx.S, ctx.day); // 全簽到送籌碼：簽滿那時沒連上，進賭場補發（翊文 11-11）
+        if (sw.n) loanNotes.push(`這週全簽到，Yuga Bot 加送你 ${casNum(sw.chips)} 籌碼！`);
         return shape(ctx, { legacy: peek, loanNotes, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
       });
     }
@@ -286,6 +288,11 @@ export const casino = onCall(async req => {
       return r;
     }
     case "workMeet": return workMeet(me, d);
+    // 全簽到壹週加送籌碼（翊文 11-11）：伺服器讀存檔的簽到紀錄，壹週只送壹次
+    case "signWeek": return play(req, me, { save: true }, ctx => {
+      const r = casSignWeekChips(ctx.w, ctx.S, ctx.day);
+      return { ok: true, n: r.n, got: r.chips, chips: ctx.w.chips };
+    });
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
     case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
     case "exchange": return play(req, me, { save: true }, ctx => {
