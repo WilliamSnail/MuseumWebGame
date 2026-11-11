@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>新的大廳（草稿）</title>
+<!--
+  新的大廳介面草稿（翊文 11-11，Issue #154）。只給翊文看，不進遊戲、不進 dist/（不在 web/ 底下）。
+  素材在 ../../assets/（ui、floorplan、rooms、icons）；字全部由程式放，素材上沒有字。
+  資料是假的（寫在下面的 DEMO），之後接進遊戲時換成 P、SAVE 的真資料。
+  看法：在專案資料夾跑 python -m http.server 5291，打開 http://localhost:5291/drafts/新大廳/
+  網址加 ?rm=1 看「減少動畫」的樣子（等於 body.reduce-motion）。
+-->
+<style>
+:root {
+  --gold: #C8A25A; --gold-hi: #EED79C; --gold-lo: #8C6A2E; --ink: #2A1E16; --wall: #2B1712;
+  --serif: Georgia, "Times New Roman", "Songti TC", "Noto Serif TC", "Noto Serif CJK TC", "PMingLiU", serif;
+  --top: 64px; --st: 44px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: var(--serif); color: #F3E6C4; overflow-x: hidden;
+  background: radial-gradient(ellipse at 50% -10%, rgba(255,220,170,.12), transparent 55%), radial-gradient(ellipse at 50% 120%, rgba(0,0,0,.4), transparent 60%), var(--wall);
+  background-attachment: fixed; }
+button { font: inherit; color: inherit; }
+img { display: block; }
+
+/* ---------- 頂欄：圓形圖標按鈕 ---------- */
+.top { height: var(--top); display: flex; align-items: center; gap: 14px; padding: 0 18px;
+  background: linear-gradient(180deg, #3B2719, #24160F); border-bottom: 1px solid var(--gold-lo); box-shadow: 0 6px 18px rgba(0,0,0,.35); position: relative; z-index: 5; }
+.brand { font-size: 1.05rem; letter-spacing: .32em; color: var(--gold-hi); white-space: nowrap; }
+.brand small { display: block; font-size: .7rem; letter-spacing: .2em; color: #B89A66; }
+.rbtns { margin-left: auto; display: flex; gap: 6px; align-items: flex-start; }
+.rb { position: relative; width: 56px; padding: 0; border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.rb .ring { width: 40px; height: 40px; position: relative; background: url(../../assets/ui/ring-normal.png) center/contain no-repeat; display: grid; place-items: center; transition: transform .15s; }
+.rb:hover .ring, .rb:focus-visible .ring { background-image: url(../../assets/ui/ring-hover.png); transform: translateY(-1px); }
+.rb:active .ring { background-image: url(../../assets/ui/ring-pressed.png); transform: none; }
+.rb .ring img { width: 26px; height: 26px; }
+.rb .lab { font-size: .7rem; letter-spacing: .06em; color: #E7D3A2; white-space: nowrap; }
+.rb .cnt { position: absolute; top: -3px; right: 4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: url(../../assets/ui/dot-red.png) center/cover; color: #fff;
+  font-size: 11px; line-height: 18px; text-align: center; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.menu .ring::before { content: ""; width: 18px; height: 12px; border-top: 2px solid #6E5020; border-bottom: 2px solid #6E5020; box-shadow: inset 0 5px 0 -3px #6E5020; }
+
+/* ---------- 主體：導覽圖當主角＋右邊壹欄 ---------- */
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; padding: 10px 16px 12px; height: calc(100vh - var(--top) - var(--st)); }
+.left { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+/* 細橫幅：活動預告、館友在線（放在導覽圖外面） */
+.strips { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
+.strip { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 22px;
+  border: 10px solid transparent; border-image: url(../../assets/ui/banner-thin.png) 30 60 fill / 10px 22px stretch; font-size: .85rem; }
+.strip b { color: var(--gold-hi); white-space: nowrap; letter-spacing: .08em; }
+.strip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #EADBB8; }
+.strip .live { width: 10px; height: 10px; border-radius: 50%; background: url(../../assets/ui/dot-green.png) center/cover; flex: none; }
+.mates { display: flex; gap: 6px; overflow: hidden; }
+.mates i { font-style: normal; padding: 0 8px; border-radius: 10px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px rgba(200,162,90,.5); white-space: nowrap; font-size: .8rem; }
+
+/* 導覽圖：底圖＋程式畫的房間（標籤、名牌、綠點、「新」） */
+.mapbox { flex: 1; min-height: 0; display: grid; place-items: center; }
+.map { position: relative; height: 100%; max-width: 100%; aspect-ratio: 1024 / 572; border-radius: 6px; box-shadow: 0 0 0 2px var(--gold-lo), 0 0 0 5px #1a0f0b, 0 10px 30px rgba(0,0,0,.55); overflow: hidden; }
+.map > img { width: 100%; height: 100%; object-fit: cover; }
+.room { position: absolute; border: 0; padding: 0; background: transparent; cursor: pointer; border-radius: 4px; }
+.room::after { content: ""; position: absolute; inset: 0; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(238,215,156,0); transition: box-shadow .15s, background .15s; }
+.room:hover::after, .room:focus-visible::after { box-shadow: inset 0 0 0 3px rgba(238,215,156,.9), 0 0 18px rgba(255,210,120,.45); background: rgba(255,230,170,.08); }
+.room:focus-visible { outline: none; }
+.tag { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px 2px 4px; border-radius: 14px; white-space: nowrap;
+  background: linear-gradient(180deg, rgba(43,23,18,.92), rgba(28,15,11,.92)); box-shadow: inset 0 0 0 1px rgba(214,178,94,.85), 0 2px 6px rgba(0,0,0,.5); font-size: clamp(.68rem, 1.05vw, .9rem); color: #F3DFA6; letter-spacing: .06em; }
+.tag img { width: 1.6em; height: 1.6em; }
+.tag small { color: #CDB98C; font-size: .8em; letter-spacing: 0; }
+.room.here .tag { background: linear-gradient(180deg, #F3DE9E, #C9A55A); color: #2A1A0C; }
+.room.here .tag small { color: #4A2E1A; }
+.new { position: absolute; top: -.95em; left: -.5em; padding: 0 5px; line-height: 1.5; font-size: .7rem; font-weight: 700; color: #2A1A0C; background: linear-gradient(180deg, #F3DE9E, #C9A55A); border-radius: 3px; box-shadow: 0 0 0 1px #6E5020, 0 2px 4px rgba(0,0,0,.4); transform: rotate(6deg); }
+.who { position: absolute; top: 8%; left: 6%; display: flex; flex-direction: column; gap: 3px; }
+.who i { font-style: normal; display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px 1px 3px; border-radius: 9px; font-size: .68rem; color: #fff; background: rgba(20,12,8,.78); box-shadow: inset 0 0 0 1px rgba(159,216,176,.6); white-space: nowrap; }
+.who i::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: url(../../assets/ui/dot-green.png) center/cover; }
+.me { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); padding: 3px 10px; border-radius: 12px; background: rgba(20,12,8,.82); box-shadow: inset 0 0 0 1px var(--gold); font-size: .8rem; color: var(--gold-hi); pointer-events: none; }
+
+/* ---------- 右邊壹欄 ---------- */
+.side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; padding-right: 2px; }
+.pass { color: var(--ink); border: 18px solid transparent; border-image: url(../../assets/ui/panel-parch.png) 46 fill / 18px stretch; padding: 2px 4px; display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; cursor: pointer; background: none; text-align: left; }
+.pass .ph { width: 54px; height: 54px; border-radius: 50%; background: url(../../assets/ui/ring-normal.png) center/contain no-repeat; display: grid; place-items: center; }
+.pass .ph img { width: 32px; height: 32px; }
+.pass b { font-size: 1.05rem; letter-spacing: .06em; display: block; }
+.pass small { display: block; color: #6E5020; font-size: .78rem; line-height: 1.5; }
+.pass .ttl { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 8px; background: #6E1F2A; color: #F3DFA6; font-size: .7rem; vertical-align: 2px; }
+.sec-h { display: flex; align-items: center; gap: 8px; margin: 2px 2px -2px; color: var(--gold-hi); font-size: .85rem; letter-spacing: .12em; }
+.sec-h::after { content: ""; flex: 1; height: 10px; background: url(../../assets/ui/divider.png) center/100% 100% no-repeat; opacity: .8; }
+.todo { position: relative; display: block; width: 100%; border: 14px solid transparent; padding: 0 6px; min-height: 58px; text-align: left; cursor: pointer; background: none; color: var(--ink);
+  border-image: url(../../assets/ui/card-normal.png) 52 70 fill / 14px 18px stretch; transition: transform .15s; }
+.todo:hover { transform: translateX(-2px); }
+.todo b { display: block; font-size: .92rem; }
+.todo small { display: block; font-size: .74rem; color: #6E5020; }
+.todo.on { border-image-source: url(../../assets/ui/card-active.png); border-image-slice: 60 76 fill; animation: glow 2.4s ease-in-out infinite; }
+.todo.done { border-image-source: url(../../assets/ui/card-done.png); opacity: .62; }
+.todo.done b { text-decoration: line-through; text-decoration-color: rgba(42,30,22,.5); }
+.todo.done small { padding-right: 34px; }
+@keyframes glow { 50% { filter: drop-shadow(0 0 8px rgba(255,214,120,.65)) brightness(1.04); } }
+body.reduce-motion .todo.on { animation: none; filter: drop-shadow(0 0 6px rgba(255,214,120,.5)); }
+@media (prefers-reduced-motion: reduce) { .todo.on { animation: none; } }
+.todos { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.todo-box, .seal-box { display: flex; flex-direction: column; }
+.seals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.seal { border: 0; padding: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.seal .s { width: 58px; height: 58px; display: grid; place-items: center; background: center/contain no-repeat; font-size: .85rem; font-weight: 700; color: #FFF6DC; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+.seal small { font-size: .72rem; color: #E7D3A2; letter-spacing: .08em; }
+
+/* ---------- 狀態列（照現在的，縮矮） ---------- */
+.st { height: var(--st); display: flex; align-items: center; gap: 22px; padding: 0 20px; background: linear-gradient(180deg, #3B2719, #1E130D); border-top: 2px solid var(--gold-lo); font-size: .85rem; }
+.st b { font-size: 1.05rem; color: #FFF; margin-left: 6px; }
+.st .chips { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; } /* 籌碼（翊文 11-11：放在底下）：點了打開賭場 */
+.st .chips img { width: 22px; height: 22px; }
+.st .bar { width: 90px; height: 10px; display: inline-block; vertical-align: middle; margin-left: 6px; border-radius: 6px; background: url(../../assets/ui/bar-empty.png) center/100% 100%; position: relative; overflow: hidden; }
+.st .bar i { position: absolute; left: 2px; top: 2px; bottom: 2px; border-radius: 4px; background: url(../../assets/ui/bar-fill.png) center/100% 100%; }
+
+/* ---------- 平板（直的，約 800 寬）：導覽圖滿寬，右欄搬到下面排兩欄 ---------- */
+@media (max-width: 1000px) and (orientation: portrait), (max-width: 860px) and (min-height: 600px) {
+  .main { grid-template-columns: 1fr; height: auto; }
+  .map { height: auto; width: 100%; }
+  .side { overflow: visible; display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px 16px; }
+  .pass { grid-column: 1; grid-row: 1; }
+  .seal-box { grid-column: 1; grid-row: 2; }
+  .todo-box { grid-column: 2; grid-row: 1 / span 2; }
+  .rbtns .lab { display: none; }
+  .rb { width: 44px; }
+}
+/* ---------- 手機直拿（375 寬）：遊戲會請玩家轉橫（決定 0043），這裡排個能看的樣子 ---------- */
+@media (max-width: 480px) {
+  :root { --top: 52px; }
+  .brand { font-size: .9rem; letter-spacing: .2em; } .brand small { display: none; }
+  .rbtns { gap: 0; } .rb { width: 36px; } .rb .ring { width: 34px; height: 34px; } .rb .ring img { width: 20px; height: 20px; }
+  .rb.more { display: none; }
+  .main { padding: 8px 10px; }
+  .strips { grid-template-columns: 1fr; }
+  .side { grid-template-columns: 1fr; }
+  .pass, .seal-box, .todo-box { grid-column: 1; grid-row: auto; }
+  .mates i:nth-child(n+2) { display: none; }
+  .tag { padding: 1px 6px 1px 2px; } .tag small { display: none; } .tag img { width: 1.3em; height: 1.3em; }
+  .who { transform: scale(.85); transform-origin: top left; }
+  .st { gap: 12px; font-size: .75rem; overflow: hidden; } .st .bar { width: 46px; }
+}
+/* ---------- 手機橫拿（高 ≤ 500、橫著，決定 0043）：頂欄 40＋狀態列 36 ≈ 20% ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --top: 40px; --st: 36px; }
+  .top { padding: 0 10px; gap: 8px; }
+  .brand { font-size: .8rem; letter-spacing: .18em; } .brand small { display: none; }
+  .rbtns { gap: 2px; } .rb { width: 34px; } .rb .ring { width: 30px; height: 30px; } .rb .ring img { width: 18px; height: 18px; } .rb .lab { display: none; } .rb .cnt { transform: scale(.8); top: -5px; right: -2px; }
+  .main { grid-template-columns: minmax(0, 1fr) 210px; gap: 8px; padding: 6px 8px; }
+  .left { gap: 5px; }
+  .strips { gap: 5px; }
+  .strip { height: 24px; border-width: 6px; border-image-width: 6px 14px; padding: 0 12px; font-size: .7rem; }
+  .tag { font-size: .62rem; padding: 1px 6px 1px 2px; } .tag small { display: none; } .tag img { width: 1.3em; height: 1.3em; }
+  .who i { font-size: .58rem; } .new { font-size: .6rem; }
+  .side { gap: 6px; }
+  .todos { gap: 5px; margin-top: 5px; } .todo:nth-child(n+4) { display: none; } .seals { margin-top: 4px; }
+  .pass { border-width: 12px; border-image-width: 12px; grid-template-columns: 38px 1fr; gap: 6px; padding: 0; }
+  .pass .ph { width: 38px; height: 38px; } .pass .ph img { width: 22px; height: 22px; }
+  .pass b { font-size: .85rem; } .pass small { font-size: .66rem; line-height: 1.35; }
+  .todo { min-height: 40px; border-width: 9px; border-image-width: 9px 12px; padding: 0 4px; } .todo b { font-size: .74rem; } .todo small { font-size: .62rem; }
+  .sec-h { font-size: .7rem; }
+  .seal .s { width: 40px; height: 40px; font-size: .68rem; } .seal small { font-size: .6rem; }
+  .st { font-size: .7rem; gap: 12px; padding: 0 10px; } .st b { font-size: .85rem; } .st .bar { width: 50px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">佩佩博物館<small>館內導覽</small></div>
+  <nav class="rbtns" id="rbtns" aria-label="快捷"></nav>
+</header>
+
+<div class="main">
+  <section class="left" aria-label="大廳">
+    <div class="strips">
+      <div class="strip" role="status"><b>活動預告</b><span id="ev"></span></div>
+      <div class="strip"><i class="live" aria-hidden="true"></i><b>館友在線</b><span class="mates" id="mates"></span></div>
+    </div>
+    <div class="mapbox"><div class="map" id="map"><img src="../../assets/floorplan/land.webp" alt="館內導覽圖"></div></div>
+  </section>
+
+  <aside class="side" aria-label="今天">
+    <button type="button" class="pass" id="pass"></button>
+    <div class="todo-box"><div class="sec-h">今天要做的事</div><div class="todos" id="todos"></div></div>
+    <div class="seal-box"><div class="sec-h">手上有的</div><div class="seals" id="seals"></div></div>
+  </aside>
+</div>
+
+<footer class="st" id="st"></footer>
+
+<script>
+// ---------- 假資料（之後換成遊戲的 P、SAVE） ----------
+const DEMO = {
+  nick: "翊文", title: "牌桌常客", day: 3, have: 137, total: 1280, stamps: 4, chips: "1,530 萬", insp: 37, mood: 55, san: 64, maxSan: 96,
+  event: "雙 11 的招領箱加班夜・今晚 20:00～22:00・搬回來的靈感 ×1.5",
+  mates: [["小美", "fusion"], ["小華", "casino"], ["阿明", "cellar"]],
+  fresh: ["origin", "workshop"],
+  todos: [
+    { t: "去委託櫃台交壹張委託", s: "交了拿靈感，還會補壹點理智", st: "on" },
+    { t: "畫廊的今日特展：壹隻的手套", s: "還有 4 幅沒看", st: "" },
+    { t: "每週任務：讀招領單", s: "每週劇情・2／5", st: "" },
+    { t: "今天的簽到", s: "簽好了，心情 +3", st: "done" },
+  ],
+};
+// 房間在底圖上的位置（百分比，照 assets/floorplan/README.md 的對應；底圖 1024×572）
+const ROOMS = [
+  { id: "gallery", name: "畫廊", sub: "看過 3／6", icon: "../../assets/rooms/gallery.png", box: [60, 48, 440, 200] },
+  { id: "hall", name: "我的展廳", sub: "展台 2／6", icon: null, box: [452, 48, 572, 134] },
+  { id: "fusion", name: "融合室", sub: "配方 1／11", icon: "../../assets/rooms/fusion.png", box: [584, 48, 782, 198] },
+  { id: "pillow", name: "抱枕工作台", sub: "抱枕 0／27", icon: null, box: [794, 48, 972, 198] },
+  { id: "origin", name: "圖書館", sub: "讀過 2／9", icon: "../../assets/rooms/library.png", box: [52, 208, 276, 356] },
+  { id: "codex", name: "圖鑑室", sub: "收藏 137", icon: null, box: [280, 208, 376, 326] },
+  { id: "cellar", name: "地下收藏庫", sub: "走到地下 2 層", icon: "../../assets/rooms/cellar.png", box: [760, 208, 972, 326] },
+  { id: "workshop", name: "手作坊", sub: "選項 10／28", icon: "../../assets/rooms/workshop.png", box: [48, 364, 232, 524] },
+  { id: "commission", name: "委託櫃台", sub: "今天 0／3", icon: "../../assets/rooms/board.png", box: [238, 334, 442, 524] },
+  { id: "office", name: "館長室", sub: "升級 2／7", icon: "../../assets/rooms/office.png", box: [584, 334, 782, 528] },
+  { id: "casino", name: "賭場", sub: "籌碼 1,530 萬", icon: "../../assets/rooms/casino.png", box: [794, 334, 972, 528] },
+];
+// 頂欄的圓形按鈕：今天、館友證、兌換所、公佈欄、信箱、簽到、選單
+const TOP = [
+  { lab: "今天", img: "../../assets/icons/watch.png", n: 4 },
+  { lab: "館友證", img: "../../assets/icons/nameplate.png" },
+  { lab: "兌換所", img: "../../assets/icons/rosette.png", n: DEMO.stamps },
+  { lab: "公佈欄", img: "../../assets/icons/scroll.png", n: 2, more: 1 },
+  { lab: "信箱", img: "../../assets/props/postcard.png", more: 1 },
+  { lab: "簽到", img: "../../assets/icons/quill.png", more: 1 },
+  { lab: "選單", menu: 1 },
+];
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+if (/[?&]rm=1/.test(location.search)) document.body.classList.add("reduce-motion");
+
+TOP.forEach(b => {
+  const btn = el("button", "rb" + (b.menu ? " menu" : "") + (b.more ? " more" : ""));
+  btn.type = "button"; btn.title = b.lab; btn.setAttribute("aria-label", b.lab);
+  const ring = el("span", "ring"); if (b.img) { const i = el("img"); i.src = b.img; i.alt = ""; ring.append(i); }
+  btn.append(ring, el("span", "lab", b.lab));
+  if (b.n) btn.append(el("span", "cnt", String(b.n)));
+  $("#rbtns").append(btn);
+});
+
+$("#ev").textContent = DEMO.event;
+DEMO.mates.forEach(([n, r]) => { const i = el("i"); i.textContent = `${n}・${ROOMS.find(x => x.id === r).name}`; $("#mates").append(i); });
+
+const map = $("#map");
+ROOMS.forEach(r => {
+  const [x0, y0, x1, y1] = r.box, b = el("button", "room");
+  b.type = "button"; b.setAttribute("aria-label", `${r.name}，${r.sub}`);
+  Object.assign(b.style, { left: x0 / 10.24 + "%", top: y0 / 5.72 + "%", width: (x1 - x0) / 10.24 + "%", height: (y1 - y0) / 5.72 + "%" });
+  const tag = el("span", "tag");
+  if (r.icon) { const i = el("img"); i.src = r.icon; i.alt = ""; tag.append(i); } else tag.style.paddingLeft = "10px";
+  tag.append(document.createTextNode(r.name)); const sm = el("small", null); sm.textContent = r.sub; tag.append(sm);
+  b.append(tag);
+  if (DEMO.fresh.includes(r.id)) tag.append(el("span", "new", "新")); // 翊文 11-11：「新應該在有字的那邊左上方寫」：貼在名字標籤的左上角
+  const here = DEMO.mates.filter(m => m[1] === r.id);
+  if (here.length) { const w = el("span", "who"); here.forEach(([n]) => { const i = el("i"); i.textContent = n; w.append(i); }); b.append(w); }
+  map.append(b);
+});
+// 大廳本身（中間的八角形）：你在這裡
+const me = el("span", "me"); me.textContent = "大廳・你在這裡"; map.append(me);
+
+$("#pass").innerHTML = `<span class="ph"><img src="../../assets/icons/nameplate.png" alt=""></span><span><b>${DEMO.nick}<span class="ttl">${DEMO.title}</span></b><small>館友證・第 ${DEMO.day} 天</small><small>收藏 ${DEMO.have}／${DEMO.total.toLocaleString()}・週章 ${DEMO.stamps} 枚</small></span>`;
+DEMO.todos.forEach(t => { const b = el("button", "todo" + (t.st ? " " + t.st : "")); b.type = "button"; b.innerHTML = `<b></b><small></small>`; b.querySelector("b").textContent = t.t; b.querySelector("small").textContent = t.s; $("#todos").append(b); });
+[["週章", DEMO.stamps, "seal-gold"], ["委託", "0／3", "seal-wine"], ["靈感", DEMO.insp, "seal-green"], ["收藏", DEMO.have, "seal-dark"]].forEach(([lab, v, img]) => {
+  const b = el("button", "seal"); b.type = "button"; b.title = lab;
+  const s = el("span", "s"); s.style.backgroundImage = `url(../../assets/ui/${img}.png)`; s.textContent = v;
+  b.append(s, el("small", null, lab)); $("#seals").append(b);
+});
+$("#st").innerHTML = `<span>第 ${DEMO.day} 天</span><span>心情<span class="bar"><i style="width:${DEMO.mood}%"></i></span><b>${DEMO.mood}</b></span><span>理智<span class="bar"><i style="width:${DEMO.san}%"></i></span><b>${DEMO.san}</b>／${DEMO.maxSan}</span><span>靈感<b>${DEMO.insp}</b></span><span class="chips"><img src="../../assets/ui/seal-wine.png" alt="">籌碼<b>${DEMO.chips}</b></span>`;
+</script>
+</body>
+</html>

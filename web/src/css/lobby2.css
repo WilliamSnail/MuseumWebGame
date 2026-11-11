@@ -1,0 +1,124 @@
+/* 新的大廳（決定 0066，ui_lobby2.js；草稿在 drafts/新大廳/）。素材在 web/public/lobby/。
+   回滾：shared/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
+
+/* ---------- 頂欄：圖示放進圓形底座（html.ui2） ---------- */
+.ui2 #nav .nav-link > .ic:not(.cic) { width: 24px; height: 24px; display: grid; place-items: center; opacity: 1; color: #5A3E14;
+  background: url(/lobby/ring-normal.webp) center/contain no-repeat; }
+.ui2 #nav .nav-link > .ic:not(.cic) svg { width: 13px; height: 13px; }
+.ui2 #nav .nav-link > .ic.cic { width: 24px; height: 24px; padding: 4px; background: url(/lobby/ring-normal.webp) center/contain no-repeat; }
+.ui2 #nav .nav-link:hover > .ic, .ui2 #nav .nav-link:focus-visible > .ic { background-image: url(/lobby/ring-hover.webp); }
+.ui2 #nav .nav-link:active > .ic { background-image: url(/lobby/ring-pressed.webp); }
+.ui2 #nav .nav-link.on > .ic, .ui2 #nav .nav-link[aria-current] > .ic { background-image: url(/lobby/ring-hover.webp); }
+
+/* 圖示在上、字在下（加了圓形底座比較寬，橫排放不下全部的房間） */
+@media (min-width: 861px) and (min-height: 501px) {
+  .ui2 #nav .nav-link { flex-direction: column; gap: 1px; padding: 3px 4px; font-size: .72rem; letter-spacing: .04em; line-height: 1.15; }
+}
+/* ---------- 版面：導覽圖＋右邊壹欄 ---------- */
+/* 大廳的標題留給朗讀，畫面上收起來（高度留給導覽圖） */
+.room-head.l2-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; padding: 0; }
+.l2 { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.l2-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.l2-strips { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
+.l2-strip { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 20px; color: #EADBB8;
+  border: 10px solid transparent; border-image: url(/lobby/banner-thin.webp) 30 60 fill / 10px 22px stretch; font-size: .85rem; }
+.l2-strip b { color: var(--gold-hi); white-space: nowrap; letter-spacing: .08em; }
+.l2-strip > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.l2-mates { cursor: pointer; }
+.l2-live { width: 10px; height: 10px; border-radius: 50%; background: url(/lobby/dot-green.webp) center/cover; flex: none; }
+.l2-mlist { display: flex; gap: 6px; }
+.l2-mlist em { font-style: normal; padding: 0 8px; border-radius: 10px; background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px rgba(200,162,90,.5); white-space: nowrap; font-size: .8rem; }
+
+.l2-mapbox { display: grid; place-items: center; }
+.l2-map { position: relative; width: 100%; aspect-ratio: 1024 / 572; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 0 0 2px var(--gold-lo), 0 0 0 5px #1a0f0b, 0 10px 30px rgba(0,0,0,.55); }
+.l2-land { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+.l2-room { position: absolute; border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer; border-radius: 4px; color: inherit; font: inherit; }
+.l2-room::after { content: ""; position: absolute; inset: 0; border-radius: 4px; pointer-events: none; box-shadow: inset 0 0 0 2px rgba(238,215,156,0); transition: box-shadow .15s, background .15s; }
+.l2-room:hover::after, .l2-room:focus-visible::after { box-shadow: inset 0 0 0 3px rgba(238,215,156,.9), 0 0 18px rgba(255,210,120,.45); background: rgba(255,230,170,.08); }
+.l2-room:focus-visible { outline: none; }
+.l2-room.is-goal::after { box-shadow: inset 0 0 0 3px rgba(255,214,120,.95); animation: l2-goal 1.8s ease-in-out infinite; }
+@keyframes l2-goal { 50% { box-shadow: inset 0 0 0 3px rgba(255,214,120,.4), 0 0 22px rgba(255,214,120,.5); } }
+.l2-tag { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px 2px 4px; border-radius: 14px; white-space: nowrap; pointer-events: none;
+  background: linear-gradient(180deg, rgba(43,23,18,.92), rgba(28,15,11,.92)); box-shadow: inset 0 0 0 1px rgba(214,178,94,.85), 0 2px 6px rgba(0,0,0,.5); font-size: clamp(.68rem, 1vw, .9rem); color: #F3DFA6; letter-spacing: .06em; }
+.l2-tag.noic { padding-left: 10px; }
+.l2-tag img { width: 1.6em; height: 1.6em; }
+.l2-tag small { color: #CDB98C; font-size: .8em; letter-spacing: 0; }
+.l2-room.has-new .l2-tag { box-shadow: inset 0 0 0 1px rgba(255,222,140,1), 0 0 10px rgba(255,214,120,.55); }
+/* 「新」：名字標籤的左上角（翊文 11-11） */
+.l2-new { position: absolute; top: -.95em; left: -.5em; padding: 0 5px; line-height: 1.5; font-size: .7rem; font-weight: 700; color: #2A1A0C; letter-spacing: 0;
+  background: linear-gradient(180deg, #F3DE9E, #C9A55A); border-radius: 3px; box-shadow: 0 0 0 1px #6E5020, 0 2px 4px rgba(0,0,0,.4); transform: rotate(-6deg); }
+.l2-who { position: absolute; top: 7%; left: 5%; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; pointer-events: none; }
+.l2-who i { font-style: normal; display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px 1px 3px; border-radius: 9px; font-size: .68rem; color: #fff; max-width: 9em; overflow: hidden; text-overflow: ellipsis;
+  background: rgba(20,12,8,.8); box-shadow: inset 0 0 0 1px rgba(159,216,176,.6); white-space: nowrap; }
+.l2-who i::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: url(/lobby/dot-green.webp) center/cover; }
+.l2-who i.away { opacity: .6; }
+.l2-who i.more::before { display: none; }
+.l2-me { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); padding: 3px 10px; border-radius: 12px; background: rgba(20,12,8,.82); box-shadow: inset 0 0 0 1px var(--gold); font-size: .8rem; color: var(--gold-hi); pointer-events: none; white-space: nowrap; }
+
+/* ---------- 右邊壹欄 ---------- */
+.l2-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.l2-pass { color: #2A1E16; border: 18px solid transparent; border-image: url(/lobby/panel-parch.webp) 46 fill / 18px stretch; padding: 2px 4px; display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; cursor: pointer; background: none; text-align: left; font: inherit; }
+.l2-ph { width: 54px; height: 54px; border-radius: 50%; background: url(/lobby/ring-normal.webp) center/contain no-repeat; display: grid; place-items: center; }
+.l2-ph img { width: 32px; height: 32px; }
+.l2-pid { display: flex; flex-direction: column; min-width: 0; }
+.l2-pid b { font-size: 1.05rem; letter-spacing: .06em; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; overflow-wrap: anywhere; }
+.l2-pid small { color: #6E5020; font-size: .78rem; line-height: 1.5; }
+.l2-box { display: flex; flex-direction: column; }
+.l2-h { display: flex; align-items: center; gap: 8px; margin: 2px 2px 6px; color: var(--gold-hi); font-size: .85rem; letter-spacing: .12em; }
+.l2-h::after { content: ""; flex: 1; height: 10px; background: url(/lobby/divider.webp) center/100% 100% no-repeat; opacity: .8; }
+.l2-todos { display: flex; flex-direction: column; gap: 8px; }
+.l2-todo { position: relative; display: block; width: 100%; border: 14px solid transparent; padding: 0 6px; min-height: 58px; text-align: left; cursor: pointer; background: none; color: #2A1E16; font: inherit;
+  border-image: url(/lobby/card-normal.webp) 52 70 fill / 14px 18px stretch; transition: transform .15s; }
+.l2-todo:hover { transform: translateX(-2px); }
+.l2-todo b { display: block; font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.l2-todo small { display: block; font-size: .74rem; color: #6E5020; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.l2-todo.on { border-image-source: url(/lobby/card-active.webp); border-image-slice: 60 76 fill; animation: l2-glow 2.4s ease-in-out infinite; }
+.l2-todo.done { border-image-source: url(/lobby/card-done.webp); opacity: .62; }
+.l2-todo.done b { text-decoration: line-through; text-decoration-color: rgba(42,30,22,.5); }
+.l2-todo.done small { padding-right: 34px; }
+@keyframes l2-glow { 50% { filter: drop-shadow(0 0 8px rgba(255,214,120,.65)) brightness(1.04); } }
+body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { .l2-todo.on, .l2-room.is-goal::after { animation: none; } }
+.l2-empty { margin: 0; font-size: .85rem; color: #CDB98C; }
+.l2-seals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.l2-seal { border: 0; padding: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: inherit; font: inherit; }
+.l2-s { width: 58px; height: 58px; display: grid; place-items: center; background: center/contain no-repeat; font-size: .82rem; font-weight: 700; color: #FFF6DC; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+.l2-seal small { font-size: .72rem; color: #E7D3A2; letter-spacing: .08em; }
+
+/* ---------- 平板、直的畫面：導覽圖滿寬，右欄搬到下面排兩欄 ---------- */
+@media (max-width: 1000px) and (orientation: portrait), (max-width: 860px) and (min-height: 600px) {
+  .l2 { grid-template-columns: 1fr; }
+  .l2-side { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px 16px; }
+  .l2-pass { grid-column: 1; grid-row: 1; }
+  .l2-side > .l2-box:nth-child(2) { grid-column: 2; grid-row: 1 / span 2; }
+  .l2-side > .l2-box:nth-child(3) { grid-column: 1; grid-row: 2; }
+}
+@media (max-width: 480px) {
+  .l2-strips { grid-template-columns: 1fr; }
+  .l2-side { grid-template-columns: 1fr; }
+  .l2-side > * { grid-column: 1 !important; grid-row: auto !important; }
+  .l2-tag { padding: 1px 6px 1px 2px; } .l2-tag small { display: none; } .l2-tag img { width: 1.3em; height: 1.3em; }
+}
+/* ---------- 手機橫拿（決定 0043）：導覽圖照高度縮，右欄窄壹點、可以捲 ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .ui2 #nav .nav-link > .ic { width: 22px !important; height: 22px !important; }
+  .ui2 #nav .nav-link > .ic:not(.cic) svg { width: 12px; height: 12px; }
+  .l2 { grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; }
+  .l2-left { gap: 5px; }
+  .l2-strips { gap: 5px; }
+  .l2-strip { height: 24px; border-width: 6px; border-image-width: 6px 14px; padding: 0 12px; font-size: .68rem; }
+  .l2-mapbox { height: calc(100vh - 40px - 42px - 24px - 5px - 18px); height: calc(100dvh - 40px - 42px - 24px - 5px - 18px); }
+  .l2-map { width: auto; height: 100%; max-width: 100%; }
+  .l2-tag { font-size: .6rem; padding: 1px 6px 1px 2px; } .l2-tag small { display: none; } .l2-tag img { width: 1.3em; height: 1.3em; }
+  .l2-who i { font-size: .56rem; } .l2-new { font-size: .58rem; } .l2-me { font-size: .62rem; padding: 1px 6px; }
+  .l2-side { gap: 6px; max-height: calc(100dvh - 40px - 42px - 14px); overflow: auto; }
+  .l2-pass { border-width: 12px; border-image-width: 12px; grid-template-columns: 36px 1fr; gap: 6px; padding: 0; }
+  .l2-ph { width: 36px; height: 36px; } .l2-ph img { width: 22px; height: 22px; }
+  .l2-pid b { font-size: .82rem; } .l2-pid small { font-size: .64rem; line-height: 1.35; }
+  .l2-todos { gap: 5px; }
+  .l2-todo { min-height: 40px; border-width: 9px; border-image-width: 9px 12px; padding: 0 4px; } .l2-todo b { font-size: .72rem; } .l2-todo small { font-size: .6rem; }
+  .l2-todo:nth-child(n+4) { display: none; }
+  .l2-h { font-size: .68rem; margin-bottom: 4px; }
+  .l2-s { width: 38px; height: 38px; font-size: .62rem; } .l2-seal small { font-size: .58rem; }
+}
