@@ -1,6 +1,9 @@
 /* 新的大廳（決定 0066，ui_lobby2.js；草稿在 drafts/新大廳/）。素材在 web/public/lobby/。
    回滾：shared/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
 
+/* 捲軸出現、消失時寬度不變（導覽圖的高度跟著寬度走，不留的話 1366 寬會在「有捲軸／沒捲軸」之間來回跳，畫面停住） */
+html.ui2 { scrollbar-gutter: stable; }
+
 /* ---------- 頂欄：圖示放進圓形底座（html.ui2） ---------- */
 .ui2 #nav .nav-link > .ic:not(.cic) { width: 24px; height: 24px; display: grid; place-items: center; opacity: 1; color: #5A3E14;
   background: url(/lobby/ring-normal.webp) center/contain no-repeat; }
@@ -20,10 +23,15 @@
 .l2 { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
 .l2-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .l2-strips { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
-.l2-strip { display: flex; align-items: center; gap: 8px; min-width: 0; height: 34px; padding: 0 20px; color: #EADBB8;
+.l2-strip { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 52px; padding: 2px 20px; color: #EADBB8;
   border: 10px solid transparent; border-image: url(/lobby/banner-thin.webp) 30 60 fill / 10px 22px stretch; font-size: .85rem; }
 .l2-strip b { color: var(--gold-hi); white-space: nowrap; letter-spacing: .08em; }
 .l2-strip > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* 活動預告兩行：時間和名字、效果和說明（翊文 11-11） */
+.l2-ev-l { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.l2-ev-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #F3E6C4; }
+.l2-ev-t small { color: #CDB98C; margin-left: 4px; }
+.l2-ev-d { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #CDB98C; font-size: .78rem; }
 .l2-mates { cursor: pointer; }
 .l2-live { width: 10px; height: 10px; border-radius: 50%; background: url(/lobby/dot-green.webp) center/cover; flex: none; }
 .l2-mlist { display: flex; gap: 6px; }
@@ -86,6 +94,29 @@ body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { ani
 .l2-s { width: 58px; height: 58px; display: grid; place-items: center; background: center/contain no-repeat; font-size: .82rem; font-weight: 700; color: #FFF6DC; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
 .l2-seal small { font-size: .72rem; color: #E7D3A2; letter-spacing: .08em; }
 
+/* ---------- 大螢幕（翊文 11-11：「螢幕更大的時候反而介面就有點小了」）：不受 #room 的 1320px，導覽圖照螢幕高度放大 ---------- */
+@media (min-width: 1100px) and (min-height: 600px) {
+  body.l2-on #room { /* 不用 :has()：1366 寬時會讓畫面停住不畫 */ max-width: none; padding: 14px clamp(20px, 2.5vw, 56px) calc(var(--status-real, var(--status-h)) + 14px); }
+  .l2 { grid-template-columns: minmax(0, 1fr) clamp(300px, 21vw, 440px); gap: clamp(14px, 1.2vw, 28px); }
+  /* 導覽圖：寬度不超過「螢幕高度扣掉導覽列、狀態列、橫幅」能放的大小，置中 */
+  .l2 { --mapw: min(100%, calc((100vh - var(--nav-h) - var(--status-real, var(--status-h)) - 130px) * 1024 / 572)); }
+  .l2-map { width: var(--mapw); }
+  .l2-strips { width: var(--mapw); margin: 0 auto; }
+  .l2-tag { font-size: clamp(.72rem, .8vw, 1.15rem); }
+  .l2-me { font-size: clamp(.8rem, .75vw, 1.1rem); }
+  .l2-who i { font-size: clamp(.68rem, .62vw, .95rem); }
+  .l2-new { font-size: clamp(.7rem, .6vw, .95rem); }
+  .l2-strip { font-size: clamp(.85rem, .72vw, 1.05rem); }
+  .l2-pass b { font-size: clamp(1.05rem, .9vw, 1.35rem); }
+  .l2-pid small { font-size: clamp(.78rem, .65vw, .95rem); }
+  .l2-todo { min-height: clamp(58px, 4.4vw, 84px); }
+  .l2-todo b { font-size: clamp(.92rem, .78vw, 1.15rem); }
+  .l2-todo small { font-size: clamp(.74rem, .62vw, .92rem); }
+  .l2-h { font-size: clamp(.85rem, .7vw, 1.05rem); }
+  .l2-s { width: clamp(58px, 4.2vw, 84px); height: clamp(58px, 4.2vw, 84px); font-size: clamp(.82rem, .7vw, 1.05rem); }
+  .l2-seal small { font-size: clamp(.72rem, .6vw, .9rem); }
+}
+
 /* ---------- 平板、直的畫面：導覽圖滿寬，右欄搬到下面排兩欄 ---------- */
 @media (max-width: 1000px) and (orientation: portrait), (max-width: 860px) and (min-height: 600px) {
   .l2 { grid-template-columns: 1fr; }
@@ -107,7 +138,8 @@ body.reduce-motion .l2-todo.on, body.reduce-motion .l2-room.is-goal::after { ani
   .l2 { grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; }
   .l2-left { gap: 5px; }
   .l2-strips { gap: 5px; }
-  .l2-strip { height: 24px; border-width: 6px; border-image-width: 6px 14px; padding: 0 12px; font-size: .68rem; }
+  .l2-strip { min-height: 24px; height: 24px; border-width: 6px; border-image-width: 6px 14px; padding: 0 12px; font-size: .68rem; }
+  .l2-ev-d { display: none; }
   .l2-mapbox { height: calc(100vh - 40px - 42px - 24px - 5px - 18px); height: calc(100dvh - 40px - 42px - 24px - 5px - 18px); }
   .l2-map { width: auto; height: 100%; max-width: 100%; }
   .l2-tag { font-size: .6rem; padding: 1px 6px 1px 2px; } .l2-tag small { display: none; } .l2-tag img { width: 1.3em; height: 1.3em; }
