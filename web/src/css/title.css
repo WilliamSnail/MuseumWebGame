@@ -1,0 +1,36 @@
+/* 標題畫面的新外觀（翊文 11-11）：背景、窗簾、分隔線、三個位子的卡、按鈕都用拆開的圖組起來。
+   字、名字、數字都是程式放的，圖裡沒有字。素材原圖在 assets/title、assets/ui，這裡用的是縮成 webp 的版本（web/src/assets/title）。
+   只在大螢幕（寬 ≥ 900、高 ≥ 620）穿上新外觀；手機橫向、小視窗照舊（landscape.css 那套緊湊版面）。 */
+@media (min-width: 900px) and (min-height: 620px) {
+  .t-wrap { position: relative; isolation: isolate; }
+  /* 背景：花紋牆加暗角；窗簾蓋在兩邊 */
+  .t-wrap::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background: url("../assets/title/bg.webp") center / cover no-repeat; }
+  .t-wrap::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: url("../assets/title/curtain-left.webp") left -20px top -10px / auto min(84vh, 720px) no-repeat,
+                url("../assets/title/curtain-right.webp") right -20px top -10px / auto min(84vh, 720px) no-repeat; }
+  @media (max-width: 1199px) { .t-wrap::after { display: none; } }
+  /* 分隔線 */
+  .t-wrap .t-orn { width: min(460px, 70vw); height: 70px; margin-top: 4px; background: url("../assets/title/divider.webp") center / contain no-repeat; }
+  .t-wrap .vs-slots { margin-top: 26px; }
+  /* 三個位子的卡 */
+  .t-wrap .vs-card { border: 0; border-radius: 0; box-shadow: none; padding: 44px 42px 40px; gap: 12px;
+    background: url("../assets/title/card.webp") center / 100% 100% no-repeat; filter: drop-shadow(0 8px 14px rgba(0,0,0,.45)); }
+  .t-wrap .vs-card.cur { background-image: url("../assets/title/card-cur.webp"); }
+  .t-wrap .vs-card.empty { background-image: url("../assets/title/card-empty.webp"); --ink: #EED79C; color: #E8DAB9; }
+  .t-wrap .vs-card.empty .vs-name { color: var(--gold-hi); }
+  .t-wrap .vs-card.empty .vs-no { color: #C9B08E; }
+  .t-wrap .vs-last { top: -24px; left: 50%; transform: translateX(-50%); width: 158px; height: 42px; padding: 0 0 4px; border: 0; border-radius: 0;
+    display: grid; place-items: center; font-size: .75rem; color: #4A1E26; background: url("../assets/title/ribbon-last.webp") center / 100% 100% no-repeat; }
+  .t-wrap .vs-stat { padding: 8px 14px; border: 0; border-radius: 0; white-space: nowrap; background: url("../assets/title/stat.webp") center / 100% 100% no-repeat; }
+  .t-wrap .vs-stat small { font-size: .7rem; letter-spacing: .04em; }
+  .t-wrap .vs-stat b { font-size: .9rem; }
+  /* 卡裡的按鈕 */
+  .t-wrap .vs-card .btn { min-height: 52px; border: 0; border-radius: 0; box-shadow: none; letter-spacing: .2em; text-shadow: 0 1px 2px rgba(0,0,0,.8);
+    color: #C8A25A; background: url("../assets/title/btn.webp") center / 100% 100% no-repeat; }
+  .t-wrap .vs-card .btn.primary { color: #F7EDD2; background-image: url("../assets/title/btn-primary.webp"); }
+  .t-wrap .vs-card .btn:not(.primary):hover { color: #EED79C; background-color: transparent; }
+  .t-wrap .vs-card .btn:hover { filter: brightness(1.15); }
+  .t-wrap .vs-card .vs-rename { color: #6E5020; }
+}
+body.reduce-motion .t-wrap .vs-card .btn:hover { filter: none; }
