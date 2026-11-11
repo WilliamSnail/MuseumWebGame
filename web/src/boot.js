@@ -85,17 +85,19 @@ export function boot() {
 // ---------- 開館前的布幕（翊文 11-08：音樂壹開始要自動播放） ----------
 // 瀏覽器不准網頁在玩家點第壹下之前出聲。先試著自動播放：瀏覽器放行，布幕自己拉開、音樂直接響；
 // 不放行，就停在布幕「點壹下 推開館門」，點了布幕拉開、開場音樂和標題動畫壹起開始。
-// 靜音的人、測試截圖（__PM_NODOOR__）不放布幕。
+// 測試截圖（__PM_NODOOR__）、測試分頁（testMute）不放布幕。
+// 靜音的人也放（翊文 11-11：「原本開啟時主畫面拉布簾的動畫不見了，幫我加回去」；以前靜音的人整個跳過）：不用點，壹下子自己拉開，沒有音樂
 export function museumDoor(enter) {
-  if (SAVE.settings.muted || UI.testMute || window.__PM_NODOOR__) { enter(); return; }
+  if (UI.testMute || window.__PM_NODOOR__) { enter(); return; }
+  const muted = !!SAVE.settings.muted;
   let opened = false;
   const door = h("div", { class: "m-door", role: "button", tabindex: "0", "aria-label": "點壹下推開館門（開場有音樂）" },
     h("div", { class: "md-half l" }), h("div", { class: "md-half r" }),
     h("div", { class: "md-call" },
       h("div", { class: "md-name" }, GEN_TEXT.museum),
       h("div", { class: "md-orn", "aria-hidden": "true" }),
-      h("div", { class: "md-push" }, "點壹下　推開館門"),
-      h("div", { class: "md-sub" }, "♪ 開場有音樂，建議打開喇叭或戴耳機")));
+      h("div", { class: "md-push" }, muted ? "館門開了" : "點壹下　推開館門"),
+      h("div", { class: "md-sub" }, muted ? "現在是靜音（右上角的喇叭可以打開）" : "♪ 開場有音樂，建議打開喇叭或戴耳機")));
   const open = () => {
     if (opened) return;
     opened = true;
@@ -111,6 +113,7 @@ export function museumDoor(enter) {
   document.addEventListener("keydown", onKey, true);
   document.body.append(door);
   setTimeout(() => { if (!opened) door.focus({ preventScroll: true }); }, 30);
+  if (muted) { setTimeout(open, 700); return; } // 靜音：不用試著放音樂，看壹下布幕就拉開
   FX.sound.tryAutoplay().then(ok => { if (ok && !opened) open(); }); // 瀏覽器放行：自己拉開
 }
 if (typeof document !== "undefined" && typeof window !== "undefined" && !window.__PM_TEST__) {
