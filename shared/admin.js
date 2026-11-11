@@ -49,7 +49,7 @@ export function adminUnlock(P) {
   }));
   return { have, total };
 }
-// 讀了幾本書：起源室（跟 roomProgress 一樣算）＋這一位讀過的禁書（P.mythFrom 是每位自己的，換人就清）＋讀完的每週劇情
+// 讀了幾本書：圖書館（跟 roomProgress 一樣算）＋這一位讀過的禁書（P.mythFrom 是每位自己的，換人就清）＋讀完的每週劇情
 function admBooks(P, S) {
   const chapters = [0].concat(allChapters().map(c => c.id));
   const read = chapters.filter(id => P.chaptersRead[id]).length;

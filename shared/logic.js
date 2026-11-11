@@ -756,7 +756,7 @@ export function nextVisitor(P, endedBy = "russia8", leave = null) {
   return Object.assign(r, { entry, left });
 }
 
-// ---------- 畫廊、起源室 ----------
+// ---------- 畫廊、圖書館 ----------
 export function exhibitById(id) {
   const ex = EXHIBITS.find(e => e.id === id);
   if (!ex) return holidayExhibitById(id); // 節日的藝術品（shared/holidays.js，決定 0030）
@@ -764,7 +764,7 @@ export function exhibitById(id) {
   return Object.assign({}, extra, ex, { title: ex.title || extra.title, label: ex.label || extra.label, lines: ex.lines || extra.lines || [] });
 }
 export const GEN1_EXHIBITS = ["portrait", "strange", "rare", "statue"];
-// 起源室所有的章節（照章號排）：第壹～參章、第肆章（地下）、第伍～捌章（11-08）
+// 圖書館所有的章節（照章號排）：第壹～參章、第肆章（地下）、第伍～捌章（11-08）
 export function allChapters() {
   return STORY_CHAPTERS.concat(typeof CHAPTER4 !== "undefined" ? [CHAPTER4] : [], typeof MORE_CHAPTERS !== "undefined" ? MORE_CHAPTERS : []).sort((a, b) => a.id - b.id);
 }

@@ -89,7 +89,7 @@ function detailOf(r) {
     section("參觀者", [["幾位", `${v.count} 位`], ["現在這位", v.name], ["職業", orNone(v.job, "還沒選")], ["小優點", orNone(v.perk)], ["小缺點", orNone(v.flaw)],
       ["理智", `${num(v.sanity)}／${num(v.maxSan)}`], ["心情", num(v.mood)], ["靈感", num(v.insp)], ["佩佩神話", num(v.myth)], ["第幾天", `第 ${num(v.dayNo)} 天`], ["玩了多久", adminPlayText(v.playSec)]]),
     section("進度", [["圖鑑", frac(p.codex)], ["解鎖", frac(p.unlock)], ["地下", p.deepest ? `走到 B${p.deepest}` : "還沒下去"],
-      ["讀了幾本書", `${num(p.books.total)} 本（起源室 ${frac(p.books.chapters)}、這位的禁書 ${p.books.forbidden}、每週劇情 ${p.books.story}）`],
+      ["讀了幾本書", `${num(p.books.total)} 本（圖書館 ${frac(p.books.chapters)}、這位的禁書 ${p.books.forbidden}、每週劇情 ${p.books.story}）`],
       ["結局", p.endings.length ? p.endings.map(e => e.name).join("、") : "還沒有"], ["徽章", frac(p.badges)]]),
     section("這週", [["簽到累計", `${num(w.signCount)} 次`], ["這週簽到", `${w.signWeek}／7${w.signedToday ? "（今天簽了）" : "（今天還沒簽）"}`], ["每週劇情任務", `做完 ${num(w.tasksDone)} 個`], ["週章", `${num(w.stamps)} 枚`], ["這週的書", `讀了 ${num(w.booksRead)} 本`]]),
     h("section", { class: "adm-sec" }, h("h4", null, "有沒有卡住"),

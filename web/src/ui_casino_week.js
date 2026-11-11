@@ -46,7 +46,7 @@ export async function claimWeek(label) {
     if (!r || !r.ok) { snd("error"); note((r && r.reason) || "沒辦法。", "bad"); return null; }
     setWkView(r.wk);
     snd("unlock");
-    note(`領到了：週章 ${r.claimed.stamps} 枚。集滿的小故事放在起源室書架的「每週劇情」。`, "good");
+    note(`領到了：週章 ${r.claimed.stamps} 枚。集滿的小故事放在圖書館書架的「每週劇情」。`, "good");
     return r;
   } catch (e) { snd("error"); note((e && e.message) || "沒辦法。", "bad"); return null; }
 }
@@ -90,13 +90,13 @@ export function weekCollection(def, view, today, o = {}) {
   })));
   return h("div", { class: "cw-box" }, ...parts);
 }
-// 集滿後的小故事（領過週章才看得到；之後也在起源室書架的「每週劇情」）
+// 集滿後的小故事（領過週章才看得到；之後也在圖書館書架的「每週劇情」）
 export function storyBox(def) {
   const s = def.reward.story;
   if (!s || !s.pages.length) return null;
   return h("div", { class: "cw-story" }, h("h4", null, s.title ? `〈${s.title}〉` : "集滿的小故事"),
     ...s.pages.map(p => h("p", null, ...String(p).split("\n").flatMap((line, i) => (i ? [h("br"), line] : [line])))),
-    h("small", null, "起源室書架的「每週劇情」也讀得到。"));
+    h("small", null, "圖書館書架的「每週劇情」也讀得到。"));
 }
 
 // 劇情面板：標題＋收藏（compact）。自己去問伺服器進度，回來再畫，不卡畫面

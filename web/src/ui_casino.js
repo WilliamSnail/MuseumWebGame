@@ -311,7 +311,7 @@ function weekPane() {
   if (!def) return sec("本週收藏", h("p", { class: "cas-note" }, W ? "這週賭場沒有特別的收藏。" : "每週收藏在挑戰模式裡。"));
   const claim = label => act("wkclaim", { week: label }, r => {
     snd("unlock");
-    note(`領到了：週章 ${r.claimed.stamps} 枚。集滿的小故事放在起源室書架的「每週劇情」。`, "good");
+    note(`領到了：週章 ${r.claimed.stamps} 枚。集滿的小故事放在圖書館書架的「每週劇情」。`, "good");
   });
   return sec(def.title, weekCollection(def, S.wk || CAS_WK.view, todayStr(), { claim, pastDef: label => casinoDefOf(label), busy: S.busy }));
 }
