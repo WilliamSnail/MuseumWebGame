@@ -1,0 +1,86 @@
+/* 地下室改版（翊文 11-11：「地下室的有沒有更好的整體介面設計，我們來用元素組合」）。
+   素材在 web/public/cellar/（原圖 assets/cellar/）：石牆背景、鐵框石面板、釘在牆上的告示、鐵橫條、捲軸、門、台座、稀有度卡框、石階按鈕。
+   只在 html.ui2（NUM.ui.newLobby）＋ body.cellar-on（SCREENS.cellar 加、換房間拿掉）底下生效；回滾跟著 NUM.ui.newLobby。 */
+
+/* 石牆背景 */
+.ui2 body.cellar-on { background: #17110D url(/cellar/bg.webp) center top / cover fixed no-repeat; }
+
+/* 跟館友壹起下去：鐵框石面板 */
+.ui2 .cellar-on .cx-hero { border: 22px solid transparent; border-image: url(/cellar/panel-stone.webp) 46 fill / 22px stretch; background: none; box-shadow: none; padding: 6px 10px; border-radius: 0; }
+
+/* 本週異狀：釘在牆上的告示（羊皮紙，深色字） */
+.ui2 .cellar-on .story-cellar { border: 26px solid transparent; border-image: url(/cellar/notice.webp) 52 fill / 26px stretch; background: none; border-radius: 0; padding: 4px 12px; color: #2A1E16; box-shadow: none; }
+.ui2 .cellar-on .story-cellar * { color: #2A1E16; }
+.ui2 .cellar-on .story-cellar .sc-room { background: rgba(255,250,235,.45); border-color: rgba(110,80,32,.45); }
+.ui2 .cellar-on .story-cellar .sc-room small { color: #5A4020; }
+.ui2 .cellar-on .story-cellar .btn { color: #2A1E16; }
+.ui2 .cellar-on .story-cellar .btn.primary { color: #2B1B0C; }
+.ui2 .cellar-on .story-cellar .sc-floor { color: #F3DFA6; }
+.ui2 .cellar-on .story-cellar .em { color: #7A1F1A; }
+
+/* 試煉房間：鐵框石面板 */
+.ui2 .cellar-on .trial-box { border: 22px solid transparent; border-image: url(/cellar/panel-stone.webp) 46 fill / 22px stretch; background: none; border-radius: 0; padding: 4px 10px; }
+
+/* 樓層：壹排門（走過的開著、現在這層發光、還不能去的上鎖） */
+.ui2 .cellar-on .floors { gap: 14px; }
+.ui2 .cellar-on .floor { background: none; border: 0; padding: 0; align-items: center; text-align: center; gap: 2px; }
+.ui2 .cellar-on .floor:hover { transform: translateY(-3px); }
+.ui2 .cellar-on .floor.on { box-shadow: none; }
+.ui2 .cellar-on .floor.on .floor-door img { filter: drop-shadow(0 0 14px rgba(255,200,110,.6)); }
+.ui2 .cellar-on .floor.locked { opacity: .75; }
+.ui2 .cellar-on .floor-door { position: relative; display: block; width: min(100%, 150px); margin: 0 auto; }
+.ui2 .cellar-on .floor-door img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+.ui2 .cellar-on .fd-plate { position: absolute; top: 4.5%; left: 50%; transform: translateX(-50%); font-family: Georgia, serif; font-weight: 700; font-size: .85rem; color: #2A1A0C; letter-spacing: .08em; }
+.ui2 .cellar-on .floor > .floor-n { display: none; } /* 號碼寫在門上的銅牌 */
+.ui2 .cellar-on .floor b { color: #F3DFA6; text-shadow: 0 1px 3px #000; }
+.ui2 .cellar-on .floor .sub { color: #D8C59A; text-shadow: 0 1px 2px #000; font-size: .78rem; }
+
+/* 隊伍：三個展示台座，佩佩站在上面 */
+.ui2 .cellar-on .team-slot { background: none; border: 0; padding: 0 4px 6px; justify-content: flex-end; min-height: 220px; }
+.ui2 .cellar-on .team-slot .ped-base { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); width: min(100%, 170px); pointer-events: none; filter: drop-shadow(0 8px 10px rgba(0,0,0,.6)); }
+.ui2 .cellar-on .team-slot .ped-art { position: relative; z-index: 1; margin-bottom: 66px; }
+.ui2 .cellar-on .team-slot:not(.full) .ped-art { border: 0; width: 90px; height: 70px; margin: 0 0 80px; }
+.ui2 .cellar-on .team-slot .ped-label { position: relative; z-index: 1; }
+.ui2 .cellar-on .team-slot.fx-drop-hover .ped-base, .ui2 body.cellar-on.holding .team-slot .ped-base { filter: drop-shadow(0 0 14px rgba(255,214,120,.8)); }
+
+/* 下樓：石階按鈕（普通、滑過發光、按下、還不能按） */
+.ui2 .cellar-on .team-side > .btn.primary.big { border: 0; min-width: 260px; min-height: 64px; padding: 14px 30px 8px; color: #F3DFA6; font-size: 1.1rem; letter-spacing: .14em; text-shadow: 0 1px 3px #000; border-radius: 0;
+  background: url(/cellar/step-normal.webp) center / 100% 100% no-repeat; box-shadow: none; }
+.ui2 .cellar-on .team-side > .btn.primary.big:hover:not(:disabled) { background-image: url(/cellar/step-hover.webp); }
+.ui2 .cellar-on .team-side > .btn.primary.big:active:not(:disabled) { background-image: url(/cellar/step-pressed.webp); }
+.ui2 .cellar-on .team-side > .btn.primary.big:disabled { background-image: url(/cellar/step-disabled.webp); color: #CFC6B4; opacity: 1; }
+
+/* 挑隊員：鐵橫條當標題，卡片照稀有度換框 */
+.ui2 .cellar-on .strip-wrap { background: rgba(14,10,8,.55); border-color: rgba(120,110,100,.6); }
+.ui2 .cellar-on .strip-head { border: 10px solid transparent; border-image: url(/cellar/banner-iron.webp) 30 64 fill / 10px 24px stretch; padding: 2px 16px; }
+.ui2 .cellar-on .strip-item { border: 10px solid transparent; border-image: url(/cellar/card-common.webp) 40 fill / 10px stretch; background: none; box-shadow: none; border-radius: 0; }
+.ui2 .cellar-on .strip-item[data-r="稀有"] { border-image-source: url(/cellar/card-rare.webp); }
+.ui2 .cellar-on .strip-item[data-r="超稀有"] { border-image-source: url(/cellar/card-epic.webp); }
+.ui2 .cellar-on .strip-item[data-r="傳說級稀有"] { border-image-source: url(/cellar/card-legend.webp); }
+.ui2 .cellar-on .strip-item[data-r="不可名狀"] { border-image-source: url(/cellar/card-eldritch.webp); }
+.ui2 .cellar-on .strip-item.on { filter: drop-shadow(0 0 10px rgba(255,214,120,.75)); }
+.ui2 .cellar-on .strip-item * { color: #2A1E16; }
+
+/* 隊伍規則：捲軸 */
+.ui2 .cellar-on .legend.placard { border: 40px solid transparent; border-image: url(/cellar/scroll.webp) 56 60 fill / 40px 34px stretch; background: none; box-shadow: none; border-radius: 0; padding: 0 10px; }
+
+/* 手機橫拿：框小壹點 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .ui2 .cellar-on .cx-hero, .ui2 .cellar-on .trial-box { border-width: 14px; border-image-width: 14px; }
+  .ui2 .cellar-on .story-cellar { border-width: 16px; border-image-width: 16px; }
+  .ui2 .cellar-on .team-slot { min-height: 170px; }
+  .ui2 .cellar-on .team-slot .ped-base { width: min(100%, 120px); bottom: 30px; }
+  .ui2 .cellar-on .team-slot .ped-art { margin-bottom: 46px; }
+  .ui2 .cellar-on .team-side > .btn.primary.big { min-width: 200px; min-height: 48px; font-size: .95rem; }
+  .ui2 .cellar-on .floor-door { width: min(100%, 64px); } /* 門縮小：壹排門不要佔滿整個畫面 */
+  .ui2 .cellar-on .fd-plate { font-size: .6rem; }
+  .ui2 .cellar-on .floor b { font-size: .75rem; } .ui2 .cellar-on .floor .sub { font-size: .62rem; }
+}
+
+/* 修：卡片下半部是深色的，能力小標籤用淺色字；捲軸的標題往下，不被捲軸壓到；本週異狀的小標看得清楚 */
+.ui2 .cellar-on .strip-item .si-meta > *:not(.si-pw):not(.si-mood) { color: #F3DFA6; background: rgba(0,0,0,.35); border-color: rgba(214,178,94,.5); }
+.ui2 .cellar-on .strip-item .si-meta > *:not(.si-pw):not(.si-mood) * { color: #F3DFA6; }
+.ui2 .cellar-on .legend.placard { padding-top: 16px; }
+.ui2 .cellar-on .legend.placard .pl-title { margin-top: 6px; }
+.ui2 .cellar-on .story-cellar .sc-kicker { color: #7A1F1A; font-weight: 700; letter-spacing: .12em; }
+.ui2 .cellar-on .story-cellar .sc-kicker * { color: #7A1F1A; }
