@@ -55,3 +55,15 @@
 - 這些素材裡**沒有任何字**，字都由程式放。
 - 星章像警長徽章，不要拿去當警察的東西。
 - 授權要翊文確認；不要放 Pepe the Frog 的樣子（決定 0005）。
+
+## 從兩張總表切出來的（11-11，`tools/cut_sheet.py`）
+
+用 anaconda 的 python（要 PIL、numpy、scipy）：`python tools/cut_sheet.py 總表.jpg assets/ui 名字…`。只認很亮的純綠當背景（素材本身的綠色不會被去掉）、白色間隔也去掉、每塊只留自己（旁邊的角和雜線不會跟進來）、邊多留 6px。
+
+- 會拉伸的（`_sheet-stretch-12.jpg`，由上到下）：`btn-big-normal`、`btn-big-disabled`、`btn2-normal`、`btn2-hover`、`btn2-pressed`、`panel-dark`、`panel-parch`、`banner-thin`、`tab-on`、`tab-off`、`bar-empty`、`bar-fill`。
+- 固定大小的（`_sheet-fixed-24.jpg`，實際是 22 個）：
+  - 第 1 列：`ring-normal`、`ring-hover`、`ring-pressed`、`nameplate-brass`、`dot-red`、`dot-green`
+  - 第 2 列：`seal-check`、`lock`、`star-badge`、`ribbon`、`corner`、`seal-gold`
+  - 第 3 列：`seal-stone`、`seal-green`、`seal-wine`、`divider`
+  - 第 4 列：`seal-dark`、`seal-sage`、`seal-orange`、`gem-red`、`btn-arrow`、`btn-close`
+- 還要修：`ring-hover`、`btn2-hover` 外圈的光還帶壹點黃綠色（綠底混出來的），正式用之前要再調成暖金色。

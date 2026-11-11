@@ -1371,7 +1371,7 @@ export const SAVE_VERSION = 3;
 // dayMin：以前是「遊戲裡一天玩幾分鐘」（0 ＝ 真實的一天）。11-09 起一律真實的一天（決定 0019），欄位留著、固定 0，不再用
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
-    settings: { font: "m", reduceMotion: false, motionOffDone: true, muted: false, dayMin: 0, holidayLook: true }, tutorialDone: false, gen2Migrated: false,
+    settings: { font: "m", reduceMotion: false, motionOffDone: true, muted: false, dayMin: 0, holidayLook: true, oldLobby: false }, tutorialDone: false, gen2Migrated: false,
     signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/signin.js）
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項

@@ -540,6 +540,7 @@ SCREENS.settings = root => {
     h("div", { class: "set-list" },
       h("div", { class: "set-row" }, h("span", null, "字大小"), seg("font", [["s", "小"], ["m", "中"], ["l", "大"]])),
       h("div", { class: "set-row" }, h("span", null, "動畫減量"), seg("reduceMotion", [[false, "關"], [true, "開（只淡入）"]])),
+      NUM.ui && NUM.ui.newLobby ? h("div", { class: "set-row" }, h("span", null, "大廳的樣子"), h("div", null, h("div", { class: "seg" }, [[false, "新的"], [true, "舊的"]].map(([v, n]) => h("button", { type: "button", class: "seg-btn" + (!!s.oldLobby === v ? " on" : ""), onClick: () => set("oldLobby", v) }, n))), h("p", { class: "sub" }, "11-11 大廳改版了（導覽圖變大、右邊壹欄今天要做的事）。用不習慣可以先換回舊的。"))) : null,
       h("div", { class: "set-row" }, h("span", null, "節日外觀"), h("div", null, seg("holidayLook", [[true, "打開"], [false, "關"]]), h("p", { class: "sub" }, "節日那天（台灣時間 05:00 到隔天 05:00）館裡的顏色和裝飾換壹下。"))), // 11-09，決定 0030
       // 換日（11-08 翊文：「壹天多長 全部都要是真實的壹天」）：拿掉 15／30／60 分鐘的選項，只寫什麼時候換日（決定 0019）
       h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,

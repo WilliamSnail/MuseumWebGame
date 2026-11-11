@@ -28,6 +28,7 @@ import "./css/discord.css"; // 我的帳號裡的「綁定 Discord」（決定 0
 import "./css/today.css"; // 「今天」清單和導覽列的「今天」（11-10）
 import "./css/pass.css"; // 館友證和典藏冊（11-10，決定 0058）
 import "./css/hub.css"; // 大廳的總覽（11-10，決定 0061）
+import "./css/lobby2.css"; // 新的大廳（決定 0066）
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";
@@ -60,6 +61,7 @@ import "./ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、
 import "./ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino.js
 import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
 import "./ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord_link.js，規則在 shared/discord.js
+import "./ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
 import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino_wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 

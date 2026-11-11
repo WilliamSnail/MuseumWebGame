@@ -212,6 +212,11 @@ export function roomHasNew(id) {
   return false;
 }
 SCREENS.lobby = root => {
+  // 新的大廳（決定 0066，ui_lobby2.js）：總開關 NUM.ui.newLobby、玩家在設定頁選「舊的大廳」就走下面原本的
+  if (ADDONS.useLobby2 && ADDONS.useLobby2() && ADDONS.lobby2) { const jobs2 = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
+    const rh = roomHead("大廳", isFree(P) ? FREE_MODE_TEXT : `今天有 ${jobs2} 張委託　你已經打開的可能性 ${num(possibilities(P))}／${num(knownTotal(P))}`);
+    rh.classList.add("l2-sr"); // 標題留給朗讀，畫面上收起來：高度留給導覽圖
+    root.append(rh); ADDONS.lobby2(root); return; }
   const portrait = planPortrait();
   const jobs = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
   const sub = isFree(P) ? FREE_MODE_TEXT : `今天有 ${jobs} 張委託　你已經打開的可能性 ${num(possibilities(P))}／${num(knownTotal(P))}`;
