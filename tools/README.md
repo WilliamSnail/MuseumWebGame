@@ -28,6 +28,7 @@
 | 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |
 | **用眼睛看今天新畫的 `svg`**：壹天或整週的畫排成壹張 PNG（太暗、跑版、看不出是什麼，這裡看得出來），再用 Read 打開看 | `npm run svg -- content/weeks/2026-W46/d2.json`（給資料夾就是整週；`--out x.png`；找不到 Edge／Chrome 只印 HTML） |
 | **不開瀏覽器分頁，把畫面照成 PNG**：壹次照電腦和手機橫拿（打開就看得到的樣子；要按按鈕、要登入的還是用瀏覽器走） | 先開著 `npm run local`，再 `npm run shot -- "http://localhost:5287/#lobby"`（`--size 800x1000,375x812`、`--out 資料夾`；只准 localhost），用 Read 打開 PNG 看 |
+| 量某個畫面放著不動時瀏覽器有多忙（重畫幾次、幾毫秒；改前改後比效能） | `node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" --size 1920x1080 --secs 10` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 
 **不要用腳本去改另壹支腳本，也不要把大段文字塞進程式字串或 shell 指令**（翊文 11-09：「修補腳本因為跳脫字元失敗，有沒有辦法以後不要發生」）。文字放純文字檔：改現有檔用 `npm run edits`；`doc:new` 的 JSON 用 Write 工具直接寫檔，或用 `JSON.stringify` 產生。`ship` 的訊息長就用 `--body-file`。
