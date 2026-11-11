@@ -555,8 +555,8 @@ SCREENS.cellar = root => {
     snd("whoosh"); persist(); rerender();
   }, "primary big", { disabled: !full });
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
+    ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）：放最上面（翊文 11-11：「壹起下去其實是很重點的但太小了」）
     storyCellarBox(),
-    ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）
     ADDONS.cellar ? ADDONS.cellar() : null, // 試煉房間（決定 0032，ui_shop.js）
     h("div", { class: "floors" }, floorEls),
     h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },

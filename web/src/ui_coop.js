@@ -888,8 +888,20 @@ ADDONS.cellarTop = () => {
   if (!UI.net || !canPlay()) return null;
   claimMyLikes().catch(() => {}); // 有館友讚了我的牌子：領靈感（ui_trace.js）
   const boost = liveEvent("coopBoost"); // 限時活動（決定 0041）
-  return h("div", { class: "cx-entry" }, btn([icon("users"), " 壹起下去"], openNew, "primary"), h("p", null, "找館友壹起（壹個人也可以）：壹起投票、看同壹顆骰子。全隊的理智越低，下面越危險。"), boost ? h("p", { class: "ev-note" }, eventTagNode(boost), ` 「${boost.title}」：${eventBoostText(boost)}。`) : null,
-    btn("探險報告", openReports, "small"), btn("交誼廳", openLounge, "small"));
+  // 翊文 11-11：「壹起下去其實是很重點的但太小了」：地下收藏庫最上面壹大塊，按鈕做大，說明分三點
+  const online = (NET.roster || []).filter(p => p && !p.me && (p.status === "online" || p.status === "away")).length;
+  return h("section", { class: "cx-entry cx-hero", "aria-label": "壹起下去" },
+    h("div", { class: "cxh-main" },
+      h("h2", { class: "cxh-t" }, icon("users"), " 跟館友壹起下去"),
+      h("ul", { class: "cxh-pts" },
+        h("li", null, "最多 4 個人，每間房壹起投票，看同壹顆骰子"),
+        h("li", null, "壹個人也可以開，等館友加入"),
+        h("li", null, "全隊的理智越低，下面越危險")),
+      boost ? h("p", { class: "ev-note" }, eventTagNode(boost), ` 「${boost.title}」：${eventBoostText(boost)}。`) : null,
+      h("div", { class: "cxh-acts" },
+        btn([icon("users"), " 壹起下去"], openNew, "primary big cxh-go"),
+        h("span", { class: "cxh-on" }, online ? `現在有 ${online} 位館友在線` : "現在沒有別的館友在線，也可以先開好等人"))),
+    h("div", { class: "cxh-side" }, btn([icon("scroll"), " 探險報告"], openReports, "small"), btn([icon("users"), " 交誼廳"], openLounge, "small")));
 };
 FRIEND_ACTIONS.push({ id: "cellar", label: "邀請壹起打地下收藏庫", show: p => p.status !== "offline" && canPlay(), run: p => sendInvite(p, "cellar") });
 PARTY_HOOKS.cellar = {
