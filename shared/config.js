@@ -172,6 +172,7 @@ export const NUM = {
     holiday: { insp: 5, mood: 3, mat: 1 }, // 節日那天簽到多一份（mat ＝星光絨幾份）；紀念日沒有
     weekKinds: ["part", "deco", "mat"],    // 每週全簽到的特別項目，照週的號碼輪流（大家同一週同一種）
     dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
+    makeupCost: 1,                         // 補簽：這週已經過去、沒簽到的壹天，花幾枚週章補（翊文 11-11：「可以補這週沒有簽到的，花一個週章」）
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
   // 第 4 版（11-09）：參觀館友的展廳、伺服器的信（規則 shared/visit.js；來訪的靈感、留言字數這些在 gifts.js 的 SOCIAL）

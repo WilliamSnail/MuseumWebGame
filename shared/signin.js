@@ -206,6 +206,50 @@ export function signIn(save, P, today) {
   return { ok: true, n, k, reward, holiday, holidayGot, week, weekly, gains, events };
 }
 
+// ---------- 補簽（翊文 11-11：「做個補簽到機制，可以補這週沒有簽到的，花一個週章」） ----------
+// 只能補「這週」（週壹 05:00 起）已經過去、沒簽到的日子；花 NUM.signin.makeupCost 枚週章。
+// 補簽照樣拿七天壹輪的那壹份（累計次數 +1）、算進這週全簽到；節日那壹份不補（那是節日當天的）。
+// story：這個參觀者的每週劇情（story.js 的 storyState(P)，週章在 story.stamps）。由畫面傳進來，免得 signin.js 跟 story.js 互相 import
+export function makeupDays(save, today) {
+  return weekProgress(save, today).dates.filter(d => d < today && !signinState(save).days[d]);
+}
+export function makeupCheck(save, P, date, today, story) {
+  const cost = NUM.signin.makeupCost;
+  if (!P) return { ok: false, reason: "先進館才能補簽", cost };
+  if (isFree(P)) return { ok: false, reason: "自由模式不用簽到", cost, free: true };
+  if (!isDate(date) || !isDate(today)) return { ok: false, reason: "日期不對", cost };
+  if (signinState(save).days[date]) return { ok: false, reason: "這天簽過了", cost };
+  if (date >= today) return { ok: false, reason: date === today ? "今天直接簽到就好" : "還沒到", cost };
+  if (!weekDates(today).includes(date)) return { ok: false, reason: "只能補這週的（週壹 05:00 換週）", cost };
+  const have = story && Number.isFinite(story.stamps) ? story.stamps : 0;
+  if (have < cost) return { ok: false, reason: `週章不夠（要 ${cost} 枚，你有 ${have} 枚）`, cost, have };
+  return { ok: true, cost, have };
+}
+// 補簽：回傳跟 signIn 壹樣的形狀，多 { makeup: true, date, cost }
+export function signMakeup(save, P, date, today, story) {
+  const c = makeupCheck(save, P, date, today, story);
+  if (!c.ok) return c;
+  story.stamps -= c.cost;
+  const S = signinState(save);
+  S.count++;
+  const n = S.count, k = cycleDay(n), reward = cycleReward(k), gains = [], events = [];
+  if (reward.insp) { P.insp = (P.insp || 0) + reward.insp; gains.push({ kind: "insp", n: reward.insp, why: "day" }); }
+  if (reward.mood) { const b = P.mood || 0; P.mood = clampN(b + reward.mood, 0, 99); gains.push({ kind: "mood", n: P.mood - b, why: "day" }); }
+  const hol = holidayOf(date);
+  S.days[date] = { n, k, hol: hol ? hol.key : null, mk: today }; // mk：哪天補的
+  const week = weekProgress(save, today);
+  let weekly = null;
+  if (week.n === 7 && !S.weeks[week.wk] && week.item) {
+    const g = grantLimited(P, week.item.id, today);
+    S.weeks[week.wk] = { item: week.item.id, got: today, dup: g.dup };
+    weekly = { item: week.item, got: g };
+    gains.push({ kind: "item", id: week.item.id, n: g.n, dup: g.dup, insp: g.insp, why: "week" });
+    events.push(...g.events);
+    week.claimed = S.weeks[week.wk];
+  }
+  return { ok: true, makeup: true, date, cost: c.cost, n, k, reward, holiday: null, holidayGot: null, week, weekly, gains, events };
+}
+
 // ---------- 簽到日曆 ----------
 // 一個月一頁（週一開頭，前後補滿整週）。month 從 1 算。每一格：
 //   { date, d（幾號）, inMonth, signed, n（那天是累計第幾次）, isToday, future, hol（那天的節日，可能有兩個） }
