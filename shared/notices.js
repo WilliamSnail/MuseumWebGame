@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "hd-assets", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "館裡換上高畫質的新素材", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "館裡的新素材現在用 Gemini Nano Banana 生成，換成高畫質的全新樣子。之前大廳改版、地下室改版就已經開始實驗了。",
+        "框和板子改成壹塊壹塊的零件組起來：羊皮紙、鐵條、金框、圖釘、角上的雕花分開放，螢幕再寬、手機再窄都不會被拉長變形。",
+        "這次換的：地下室的「本週異狀」告示和「隊伍規則」捲軸（改成上下拉開），大廳的活動預告、館友在線。",
+      ]],
+    ],
+  },
+  {
     id: "cellar-panel-kit", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "地下室的石板框不會再被拉長了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [
