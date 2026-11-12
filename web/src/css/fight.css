@@ -284,3 +284,79 @@ body.reduce-motion .fg-pop, body.reduce-motion .fg-banner, body.reduce-motion .f
   .fg-head .fg-san { width: 60px; }
   .fg-stage .fg-seats { display: none; } /* 隊員在右邊那欄看得到；舞台只留牠的下一招、怪物、壓力條 */
 }
+
+/* ---------- 介面零件（翊文 11-13 用 Gemini 生的 3-8～3-17，原圖 assets/cellar2/，成品 web/public/cellar2/ui-*.webp） ---------- */
+/* 指令面板：深色木框＋銅角（九宮格）。底是深色的，裡面的字改淺色 */
+.fg-panel.cx-card { background: none; box-shadow: none; border: 18px solid transparent; border-image: url(/cellar2/ui-panel.webp) 64 fill / 18px stretch; color: #F3E6C8; padding: 2px 6px 4px; }
+.fg-panel .fg-now, .fg-panel .room-title { color: #FBEFD9; }
+.fg-panel .pt-sub, .fg-panel .pt-hint, .fg-panel .fg-tip { color: #D9C9A8; }
+.fg-panel .fg-report summary { background: rgba(0, 0, 0, .28); color: #F3E6C8; }
+.fg-panel .fg-report summary small { color: #D6B25E; }
+.fg-panel .fg-report ul { color: #E9DCC0; }
+.fg-panel .fg-sum { background: rgba(0, 0, 0, .28); color: #FBEFD9; }
+.fg-panel .fg-log.replay li.now { color: #FFD27A; }
+/* 四個大行動：銅牌（一般、選中、不能按），九宮格 */
+.fg-panel .fg-acts .fg-act { background: none; border: 10px solid transparent; border-image: url(/cellar2/ui-btn-1.webp) 34 fill / 10px stretch; border-radius: 0; color: #2A1E14; text-shadow: 0 1px 0 rgba(255, 240, 200, .5); }
+.fg-panel .fg-acts .fg-act small { color: #241606; font-weight: 600; text-shadow: 0 0 3px rgba(255, 236, 190, .9); } /* 銅牌有亮面：字加深、加一圈淡光才讀得到 */
+.fg-panel .fg-acts .fg-act.cx-on { border-image-source: url(/cellar2/ui-btn-2.webp); box-shadow: none; color: #FFF3E0; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.fg-panel .fg-acts .fg-act.cx-on small { color: #FFE2C0; }
+.fg-panel .fg-acts .fg-act:disabled { border-image-source: url(/cellar2/ui-btn-3.webp); opacity: 1; color: #6A5A44; }
+.fg-panel .fg-acts .fg-act:not(:disabled):hover { filter: brightness(1.08); }
+/* 小按鈕：圓銅框的徽章，名字寫在下面 */
+.fg-panel .fg-chips { gap: 2px; }
+.fg-panel .fg-chip { flex-direction: column; justify-content: flex-start; gap: 0; min-height: 0; width: 64px; padding: 0; border: 0; border-radius: 0; background: url(/cellar2/ui-ring-1.webp) center 0 / 54px 54px no-repeat; color: #F3E6C8; font-size: .6875rem; line-height: 1.2; white-space: normal; text-align: center; }
+.fg-panel .fg-chip .fg-ico { width: 34px; height: 34px; margin: 10px auto 10px; border-radius: 50%; box-shadow: none; outline: 0; } /* 圓銅框是底（中間是不透明的酒紅），圖示畫在上面 */
+.fg-panel .fg-chip.cx-on { background-image: url(/cellar2/ui-ring-2.webp); box-shadow: none; color: #FFD27A; }
+.fg-panel .fg-chip:disabled { opacity: .4; }
+.fg-panel .fg-chip .fg-ico.tm, .fg-panel .fg-chip .fg-ico.mv { background-size: 500% 100%; }
+.fg-panel .fg-chip .fg-ico.mv { background-size: 1600% 100%; }
+/* 逃跑、撤退：小銅牌 */
+.fg-panel .fg-exits .fg-exit { background: none; border: 8px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 22 fill / 8px stretch; border-radius: 0; color: #2A1E14; }
+/* 自己的狀態：膽量是油燈 */
+.fg-panel .fg-me { color: #F3E6C8; }
+.fg-brave::before { content: ""; display: inline-block; width: 14px; height: 18px; margin-right: 3px; vertical-align: -3px; background: url(/cellar2/ui-status.webp) 0 0 / 600% 100% no-repeat; }
+/* 怪物的名字：酒紅緞帶 */
+.fg-stage .fg-name { padding: 2px 4px; border: solid transparent; border-width: 4px 34px; border-image: url(/cellar2/ui-ribbon.webp) 22 110 fill / 4px 34px stretch; color: #FBEFD9; text-shadow: 0 1px 2px #000; }
+.fg-stage .fg-name small { color: #E9C9A0; }
+/* 個性的小圖示 */
+.fg-ticon { display: inline-block; width: 22px; height: 22px; margin-right: 4px; vertical-align: -5px; background: url(/cellar2/ui-trait.webp) 0 0 / 900% 100% no-repeat; }
+/* 隊伍：腳下是地毯（被瞄準的是紅的），名字在銅名牌上，選好了是勾、在想是沙漏 */
+.fg-stage .fg-seat .fg-pepes::before { left: -14px; right: -14px; bottom: -6px; height: 30px; border-radius: 0; background: url(/cellar2/ui-rug-1.webp) center / 100% 100% no-repeat; box-shadow: none; }
+.fg-stage .fg-seat.aimed .fg-pepes::before { background: url(/cellar2/ui-rug-2.webp) center / 100% 100% no-repeat; box-shadow: none; }
+.fg-stage .fg-seat .fg-who { border: solid transparent; border-width: 3px 10px; border-image: url(/cellar2/ui-plate.webp) 18 26 fill / 3px 10px stretch; border-radius: 0; background: none; color: #2A1E14; text-shadow: 0 1px 0 rgba(255, 240, 200, .5); box-shadow: none; }
+.fg-stage .fg-seat.me .fg-who { filter: drop-shadow(0 0 4px rgba(255, 210, 122, .9)); box-shadow: none; }
+.fg-stage .fg-ok { padding: 0 0 0 16px; background: none; color: #5A3A1A; position: relative; font-size: .6875rem; }
+.fg-stage .fg-ok::before { content: ""; position: absolute; left: 0; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); background: url(/cellar2/ui-status.webp) 100% 0 / 600% 100% no-repeat; }
+.fg-stage .fg-ok.on { background: none; color: #2E6A2A; }
+.fg-stage .fg-ok.on::before { background-position: 80% 0; }
+.fg-mark::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 3px; vertical-align: -2px; background: url(/cellar2/ui-status.webp) 20% 0 / 600% 100% no-repeat; }
+/* 手機直拿：零件換上後面板變厚，舞台裡壓扁幾樣，隊伍才站得進去 */
+@media (max-width: 760px) {
+  .fg-stage .fg-intent { font-size: .8125rem; border-width: 12px; padding: 0 6px; margin-top: 8px; }
+  .fg-stage .fg-name { white-space: nowrap; font-size: .875rem; padding: 0 2px; border-width: 3px 26px; }
+  .fg-stage .fg-name small { font-size: .75rem; }
+  .fg-stage .fg-trait small { display: none; }
+  .fg-stage .fg-foe { row-gap: 2px; }
+  .fg-panel.cx-card { border-width: 12px; border-image-width: 12px; }
+  .fg-head { flex-wrap: wrap; }
+  .fg-head .fg-now { flex: 1 1 60%; }
+  .fg-panel .fg-chip { width: 56px; }
+  .fg-panel .fg-chip { background-size: 46px 46px; }
+  .fg-panel .fg-chip .fg-ico { width: 30px; height: 30px; margin: 8px auto 8px; }
+}
+/* 手機橫拿：小圓鈕只留圖示（名字在 title），面板的框再細，舞台才留得下 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-panel.cx-card { border-width: 10px; border-image-width: 10px; }
+  .fg-panel .fg-chip { width: 38px; font-size: 0; background-size: 38px 38px; }
+  .fg-panel .fg-chip > span:not(.fg-ico) { display: none; }
+  .fg-panel .fg-chip .fg-ico { width: 24px; height: 24px; margin: 7px auto; }
+  .fg-panel .fg-acts .fg-act { border-width: 6px; border-image-width: 6px; min-height: 34px; }
+  .fg-stage .fg-name { border-width: 2px 22px; font-size: .8125rem; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-panel .fg-head .fg-now { font-size: .9375rem; margin: 0; }
+  .fg-panel { gap: 4px; padding-block: 4px; }
+  .fg-panel .fg-acts .fg-act { min-height: 30px; padding-block: 2px; }
+  .fg-panel .fg-chip { height: 38px; }
+  .fg-panel .fg-exit { min-height: 28px; padding-block: 0; }
+}

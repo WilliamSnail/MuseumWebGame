@@ -16,6 +16,8 @@ const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", fle
 // 合作的新行動圖示（素材 3-6，一條五格）、角色徽章（3-7，一條五格）
 const TEAM_ICON = { taunt: 0, inspire: 1, share: 2, comfort: 3, reveal: 4 };
 const ROLE_ICON = { tank: 0, support: 1, healer: 2, dps: 3, scout: 4 };
+// 怪物個性的小圖示（素材 3-16，一條九格，順序跟 FIGHT_TRAIT_KINDS 一樣）
+const TRAIT_ICON = { shell: 0, thick: 1, slippery: 2, stubborn: 3, grow: 4, steal: 5, mark: 6, veil: 7, blur: 8 };
 const teamIcon = act => (act in TEAM_ICON ? h("span", { class: "fg-ico tm", style: { backgroundPosition: `${TEAM_ICON[act] * 25}% 0` }, "aria-hidden": "true" }) : null);
 const roleBadge = r => h("span", { class: "fg-role", title: FIGHT_ROLE_TEXT[r] }, h("i", { style: { backgroundPosition: `${(ROLE_ICON[r] || 0) * 25}% 0` }, "aria-hidden": "true" }), FIGHT_ROLE_TEXT[r]);
 const MOVE_TEXT = { cap: "棒球帽：擋下這壹招", crown: "皇冠：這壹下骰子最大", tentacle: "觸手帽：大力推（自己扣理智）", wizard: "巫師帽：大家的推都加", beanie: "毛帽：回壹點理智", rest: "躺平：回壹點理智", squat: "斯拉夫蹲：這回合不會倒", cheer: "比讚：下回合大家的推都加" };
@@ -182,14 +184,14 @@ export function fightStage(v, mine = null) {
     f.mark && f.mark.id === s.id ? h("span", { class: "fg-mark" }, `被記上帳：${f.mark.left} 回合後`) : null,
     h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : "") + (p.beat ? " beat" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}${p.beat ? "（心情剋牠）" : ""}` },
       h("div", { class: "fg-art", html: itemHTML({ kind: "pepe", key: p.key, pick: p.pick, perfect: p.perfect }) }), h("small", null, p.down ? "受傷" : `強度 ${p.power}${p.beat ? "・剋牠" : ""}`))))));
-  const trait = fightTraitText(fightTraitOf(f));
+  const trait = fightTraitText(fightTraitOf(f)), traitKind = (fightTraitOf(f) || {}).kind;
   return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") },
     cur && cur.banner ? h("div", { class: "fg-banner", role: "status" }, cur.banner) : null,
     h("div", { class: "fg-foe" },
       play ? h("div", { class: "fg-intent k-none", role: "status" }, h("i", null, "結"), h("span", null, h("b", null, "結算中"))) : h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
       h("div", { class: "fg-foe-box" }, foeSprite(f, !!(cur && cur.lunge)), ...fxOn("foe"), ...popOn("foe")),
       h("h3", { class: "fg-name" }, fv.name || "？", f.boss ? h("small", null, f.phase === 2 ? "　第二階段" : "　守門") : h("small", null, `　等級 ${f.rank || 1}`)),
-      trait ? h("p", { class: "fg-trait", title: trait.text }, h("b", null, `個性：${trait.name}`), h("small", null, `　${trait.text}`)) : null,
+      trait ? h("p", { class: "fg-trait", title: trait.text }, traitKind in TRAIT_ICON ? h("span", { class: "fg-ticon", style: { backgroundPosition: `${TRAIT_ICON[traitKind] * 12.5}% 0` }, "aria-hidden": "true" }) : null, h("b", null, `個性：${trait.name}`), h("small", null, `　${trait.text}`)) : null,
       h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${hpNow}／${hpMaxNow}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${hpNow}／${hpMaxNow}`)),
       f.weak ? h("p", { class: "fg-flag" }, `弱點找到了：推 ×${NUM.fight.weakMult}`) : null),
     h("div", { class: "fg-seats" }, seats));

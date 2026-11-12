@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-ui-parts", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "打怪物的畫面換上新的木框和銅按鈕", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "指令面板換成雕花木框，四個大行動是銅牌按鈕，選好的那顆會發紅光。",
+        "幫隊友和招式的小按鈕換成銅圈，怪物的名字掛在紅緞帶上，名字旁邊有牠個性的小圖示。",
+        "隊伍腳下是小地毯，被瞄準的人地毯會發紅。",
+        "新的介面零件用 Gemini 生成。",
+      ]],
+    ],
+  },
+  {
     id: "fight-one-screen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "打怪物的畫面不用往下滑了", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
