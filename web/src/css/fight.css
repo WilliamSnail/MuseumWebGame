@@ -2,6 +2,17 @@
    規劃第八節：一眼看得出要怎麼做。能按的有框有字；按鈕在下半部、夠大（至少 44px 高）。 */
 .fg-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 12px 10px; border-radius: 12px; background: linear-gradient(#2A2230, #1B161F); color: #FBEFD9; overflow: hidden; }
 .fg-stage.p2 { background: linear-gradient(#3A1F26, #1B161F); }
+/* .cx-main 是會縮的直排框：不讓舞台和卡片被壓扁（壓扁了裡面的東西會溢到框外，深色字壓在深色底上） */
+.cx-main > .fg-stage, .cx-main > .fg-card { flex: none; }
+/* 夠寬的時候怪物在左、隊伍在右，整場不用捲 */
+@media (min-width: 900px) {
+  .fg-stage { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; }
+  .fg-seats { flex-direction: column; align-items: stretch; }
+  .fg-seat { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
+  .fg-seat .fg-pepes { margin-top: 0; }
+  .fg-foe-art { width: 124px; }
+  .fg-stage { padding-top: 10px; padding-bottom: 8px; }
+}
 .fg-foe { display: grid; justify-items: center; gap: 6px; }
 .fg-intent { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 8px 12px; border: 2px solid #D6B25E; border-radius: 10px; background: #FBEFD9; color: #2A1E14; font-size: 1rem; line-height: 1.35; }
 .fg-intent i { flex: none; display: grid; place-items: center; width: 2em; height: 2em; border-radius: 50%; background: #7A1F2B; color: #FBEFD9; font-style: normal; font-weight: 700; }
@@ -62,13 +73,35 @@ body.reduce-motion .fg-foe-art, body.reduce-motion .fg-eye { animation: none; }
 @media (max-width: 760px) {
   .fg-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fg-acts .fg-act { min-height: 64px; }
-  .fg-foe-art { width: min(40vw, 150px); }
-  .fg-seat { min-width: 84px; }
   .fg-moves { flex-wrap: nowrap; overflow-x: auto; }
+  /* 375 寬直拿：第一個畫面就要按得到四顆按鈕（第八節第 10 條）。舞台縮小；卡片裡按鈕先、上一回合的紀錄放後面 */
+  .fg-stage { gap: 6px; padding: 8px 8px 6px; }
+  .fg-foe { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "art intent" "art name" "bar bar"; align-items: center; justify-items: start; column-gap: 10px; }
+  .fg-intent { grid-area: intent; font-size: .9rem; padding: 6px 8px; } .fg-intent i { width: 1.8em; height: 1.8em; }
+  .fg-foe-art { grid-area: art; width: 76px; }
+  .fg-name { grid-area: name; font-size: 1rem; }
+  .fg-bar { grid-area: bar; width: 100%; }
+  .fg-flag { grid-column: 1 / -1; justify-self: center; }
+  .fg-seat { min-width: 0; flex: 1 1 0; padding: 4px 6px; }
+  .fg-pepe, .fg-art { width: 40px; } .fg-art { height: 40px; }
+  .fg-card { display: flex; flex-direction: column; }
+  .fg-card > .fg-now { order: 0; } .fg-card > .fg-acts { order: 1; } .fg-card > .fg-moves { order: 2; } .fg-card > .fg-foot { order: 3; }
+  .fg-card > .fg-log, .fg-card > .pt-sub, .fg-card > .pt-hint { order: 4; margin-top: 10px; }
+  .fg-card .fg-now { font-size: 1.05rem; }
 }
-/* 手機橫拿：舞台矮一點 */
+/* 手機橫拿：只有 375 高。舞台縮成壹條（小怪物、預告、壓力條、誰選好了；佩佩的小圖先收起來，右邊的隊員欄看得到），
+   四顆按鈕排成壹排，第壹個畫面就按得到 */
 @media (max-height: 500px) and (orientation: landscape) {
-  .fg-foe-art { width: 96px; }
-  .fg-stage { padding: 8px; }
-  .fg-acts .fg-act { min-height: 48px; }
+  .fg-stage { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 6px 8px; }
+  .fg-foe { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "art intent" "art name" "bar bar"; align-items: center; justify-items: start; column-gap: 8px; row-gap: 2px; }
+  .fg-intent { grid-area: intent; font-size: .8125rem; padding: 3px 8px; } .fg-intent i { width: 1.6em; height: 1.6em; }
+  .fg-foe-art { grid-area: art; width: 48px; animation: none; }
+  .fg-name { grid-area: name; font-size: .875rem; }
+  .fg-bar { grid-area: bar; width: 100%; height: 18px; } .fg-bar span { line-height: 14px; font-size: .75rem; }
+  .fg-seats { flex-direction: row; flex-wrap: nowrap; gap: 4px; }
+  .fg-seat { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 2px 4px; }
+  .fg-seat .fg-pepes { display: none; }
+  .fg-acts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .fg-acts .fg-act { min-height: 48px; padding: 4px; } .fg-acts .fg-act b { font-size: 1rem; }
+  .fg-card .fg-now { font-size: .9375rem; }
 }

@@ -22,10 +22,10 @@ function foeArt(f) {
 }
 const nameOf = (v, id) => (id === "helper" ? "館方助手" : (v.members.find(m => m.id === id) || {}).name || "");
 
-// 舞台：怪物、下壹招的牌子、壓力條、每個人的座位（誰選好了）
-export function fightStage(v) {
+// 舞台：怪物、下壹招的牌子、壓力條、每個人的座位（誰選好了）。mine ＝我這回合剛選的（畫面先記著的）
+export function fightStage(v, mine = null) {
   const f = v.fight, fv = v.fightView || {};
-  const waiting = fv.waiting || [];
+  const waiting = (fv.waiting || []).filter(id => !(mine && id === v.me)); // 自己按了就馬上算選好（不用等伺服器回來）
   const pct = Math.max(0, Math.min(100, Math.round(f.hp / Math.max(1, f.hpMax) * 100)));
   const myPush = (fv.options || []).find(o => o.act === "push");
   const cut = myPush ? Math.max(0, Math.round((f.hp - myPush.lo) / Math.max(1, f.hpMax) * 100)) : pct; // 你推了大概會扣到哪（淡色預告）

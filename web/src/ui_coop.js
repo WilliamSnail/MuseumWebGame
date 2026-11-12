@@ -379,7 +379,7 @@ function drawRun(v) {
     lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
-  const st = v.phase === "fight" && v.fight ? fightStage(v) : guard ? monitor(v) : stage(v);
+  const st = v.phase === "fight" && v.fight ? fightStage(v, S.pickKey === `${v.fight.foe}:${v.fight.phase}:${v.fight.round}` ? S.myPick : null) : guard ? monitor(v) : stage(v);
   const main = h("div", { class: "cx-main" }, head, st, phaseCard(v, me));
   // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
   const wispKey = `${v.floor}:${v.idx}`;
@@ -773,9 +773,10 @@ function floorCard(v, me) {
   const vote = go => { S.myVote = go; draw(); doAct("floor", { go }); };
   return h("div", { class: "note-card room-card cx-card cx-floor-done" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.last && v.last.fled ? (v.last.fled === "flee" ? "逃出來了" : "牠自己走掉了") : `B${f.floor} 走完了`),
-    v.last && v.last.fled ? h("p", { class: "cx-text" }, "守門的還在。這壹層不算走完，下次再來。") : v.fightLast && v.fightLast.over === "win" ? h("p", { class: "cx-reward" }, `登記了「${v.fightLast.name}」${v.fightLast.last ? "，最後壹下是 " + ((v.members.find(m => m.id === v.fightLast.last) || {}).name || "") : ""}`) : null,
-    f.clear ? h("p", { class: "cx-text" }, ptNode(f.clear)) : null,
-    truthLine(v),
+    v.last && v.last.fled ? h("p", { class: "cx-text" }, v.last.fled === "flee" ? "守門的還在。這壹層不算走完，下次再來。" : `打了 ${NUM.fight.maxRounds} 回合還沒讓牠安靜下來。守門的還在，這壹層不算走完，下次再來。`) : v.fightLast && v.fightLast.over === "win" ? h("p", { class: "cx-reward" }, `登記了「${v.fightLast.name}」${v.fightLast.last ? "，最後壹下是 " + ((v.members.find(m => m.id === v.fightLast.last) || {}).name || "") : ""}`) : null,
+    // 守門沒打贏：走完才看得到的那段話先不給（不然像是走完了）
+    f.clear && !(v.last && v.last.fled) ? h("p", { class: "cx-text" }, ptNode(f.clear)) : null,
+    v.last && v.last.fled ? null : truthLine(v),
     v.last && v.last.fled ? null : me.guard ? h("p", { class: "pt-sub" }, "你在監視器前，這層不算你走過。") : rw ? h("p", { class: "cx-reward" }, `第壹次走完：${rw}`) : h("p", { class: "pt-sub" }, "這層你走過了。"),
     me.ghost ? h("p", { class: "cx-hurtline" }, "你的參觀者撐到這裡。大家往下走的話，你就回到地面。") : null,
     h("div", { class: "cx-go" },
