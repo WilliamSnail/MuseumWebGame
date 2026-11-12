@@ -212,6 +212,14 @@ function fiIntent(fight) {
   return { move: mv.id, kind: mv.kind, to };
 }
 const fiMove = fight => { const foe = fightFoeOf(fight); return ((fight.phase === 2 && foe.moves2) || foe.moves).find(m => m.id === fight.intent.move) || null; };
+// 下壹招打到會怎樣（畫面在被打的人座位上預告「可能 −2～4 理智」，規劃第七節第 2 條）。
+// 看不清楚（blur）什麼都不給；蓋著布（veil）只給要對誰，不給扣多少
+export function fightIntentRisk(fight) {
+  const it = fight && fight.intent, hid = fightIntentHidden(fight);
+  if (!it || hid === "blur") return null;
+  const mv = fiMove(fight);
+  return { kind: it.kind, to: it.to || null, san: !hid && mv && mv.san ? String(mv.san) : null };
+}
 
 // 開打。o.pressure ＝全隊理智壓力的級數（0～3）；o.rest ＝這一層是不是第一次走（躺平、毛帽才能回理智）
 export function fightStart(foeId, seats, o = {}) {

@@ -14,7 +14,7 @@ import { addDays } from "./logic.js";
 import { injureDaysOf } from "./logic3.js";
 import { coopActive, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop.js";
 import { coopRouteBack } from "./coop_route.js";
-import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "./cellar_fight.js";
+import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "./cellar_fight.js";
 
 // 這一層還要不要打守門
 export const coopGateDue = run => !!(run && run.gate && !run.trial && !(run.gateDone && run.gateDone[run.floor]) && fightFoesOf(run.floor, true)[0]);
@@ -137,5 +137,5 @@ export function coopFightView(run, id) {
   const f = run && run.fight;
   if (!f) return null;
   const seat = fightSeatOf(f, id);
-  return { name: fightNameOf(f), intent: fightIntentText(f), options: seat ? fightOptions(f, id) : [], can: fightCanAct(seat), waiting: fightActors(f).filter(s => !(run.votes && run.votes[s.id])).map(s => s.id), fleeNeed: Math.ceil(fightActors(f).length / 2), limit: NUM.fight.maxRounds };
+  return { name: fightNameOf(f), intent: fightIntentText(f), risk: fightIntentRisk(f), options: seat ? fightOptions(f, id) : [], can: fightCanAct(seat), waiting: fightActors(f).filter(s => !(run.votes && run.votes[s.id])).map(s => s.id), fleeNeed: Math.ceil(fightActors(f).length / 2), limit: NUM.fight.maxRounds };
 }

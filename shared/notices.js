@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-rhythm", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "打怪物的每壹步看得出來了", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "面板最上面是回合軌道：① 牠亮招、② 你們選、③ 結算，亮著的是現在這壹步。",
+        "牠亮招的時候，木牌從上面掉下來，紅線指到要被打的人，座位上寫可能扣多少理智。演完按鈕才滑上來。",
+        "倒數換成計時圈，最後 5 秒變紅跳動。選好了會蓋「鎖定」章，大家都選好會列出這回合的順序。",
+        "結算時輪到的人會往前站，其他人變暗。",
+      ]],
+    ],
+  },
+  {
     id: "diner-odds", v: 1, cat: "館方公告", tags: ["調整"], importance: "normal",
     title: "數值調整：賭場餐車、不可名狀、展廳的靈感", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
