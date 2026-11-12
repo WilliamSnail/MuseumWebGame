@@ -116,6 +116,18 @@ export const NUM = {
   // 介面的版本（決定 0066，翊文 11-11：「把這個當大版本更新，之後有問題可以回滾」）。
   // newLobby：新的大廳（導覽圖底圖、右欄、圓形圖示）。有問題改成 false 就回到舊的大廳，舊的程式都還在
   ui: { newLobby: true },
+  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim_fight.cjs
+  //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
+  //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
+  //   seeMod、calmMod：看穿（偵查、神秘學取高的）、安撫（說服）的技能加多少；calmHp：安撫成功順便減多少壓力
+  //   guardDodge、softDodge：擋住、被安撫過的「撲」沒中的機率；理智類的招是減半（無條件進位）
+  //   wizard、cheer：巫師帽這回合、比讚下壹回合，每個人的「推」加多少；tentacleMult、tentacleSan：觸手帽強度乘多少、帶牠的人扣多少理智
+  //   rest：躺平、毛帽回多少理智（這壹層第壹次走才能用，界線「不要改回去」）；maxRounds：打到第幾回合怪物自己走掉
+  //   pressureSan：全隊理智壓力到第幾級，理智類的招多扣 1；injure：打完之後，倒下的佩佩真的受傷的機率
+  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 0.5 },
+  // 地下室的小地圖（shared/cellar_map.js）：rows 排；每排壹定有壹間探索房（翊文 11-12：「房間探索還是要保留喔，是個重點」），壹趟可以把這層的房間全部走完
+  //   wide：某壹排有 3 個點的機率（不然 2 個）；最後壹排是休息＋別的；最底是守門
+  cellarMap: { rows: 5, wide: 0.5 },
   sanDayBack: { n: 5, cap: 75 }, // 每天（05:00 換日）第一次進館，理智自己恢復 n 點，最多恢復到 cap；原本就比 cap 高的不扣、理智 0（熄燈）的不恢復（翊文 11-11：「每天自己會恢復 San 值 5 點，恢復最高加到 75」）
   startSanity: 50,          // 理智從 50 開始，CoC 的平均值（翊文 11-08：理智要更容易歸零；原本 70）
   startInsp: 12,            // 一開始的靈感（夠做一隻；11-10 做一隻 2 → 3 → 6 → 12，跟著改）
@@ -464,6 +476,27 @@ export const CELLAR_REWARDS = {
 export const CELLAR_POWER = { 普通: 1, 稀有: 2, 超稀有: 3, 傳說級稀有: 5, 不可名狀: 6, 失敗作: 0, perfect: 1 };
 // 心情相剋：前面的剋後面的（俄國8+9 不被剋）
 export const MOOD_BEATS = { 開心: "傷心", 傷心: "生氣", 生氣: "開心" };
+// ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 content3.js 的 FOE_TEXT；規則 shared/cellar_fight.js） ----------
+// hp ＝壓力（3 隻、1 個人的時候）；boss ＝守門，壓到零進第二階段（hp2、moves2）；mood、color ＝相剋照房間的算法（memberPower）
+// 招：kind "hit" 撲向壹個人的佩佩（倒下壹隻）、"scare" 壹個人扣理智 san、"all" 每個人扣理智 san、"grow" 壓力回 n；w ＝抽到的比重
+// 數字是草稿：node test/sim_fight.cjs 看 1～4 人的勝率和回合數
+export const CELLAR_FOES = [
+  { id: "f1a", floor: 1, hp: 38, mood: "傷心", color: "黃", moves: [{ id: "topple", kind: "hit", w: 2 }, { id: "dust", kind: "scare", san: "1D2", w: 2 }] },
+  { id: "f1b", floor: 1, hp: 36, mood: null, color: "紅", moves: [{ id: "cling", kind: "scare", san: "1D3", w: 2 }, { id: "pile", kind: "grow", n: 4, w: 1 }] },
+  { id: "f1g", floor: 1, boss: true, hp: 32, hp2: 22, mood: "生氣", color: "綠", moves: [{ id: "topple", kind: "hit", w: 1 }, { id: "count", kind: "grow", n: 5, w: 1 }, { id: "dust", kind: "scare", san: "1D3", w: 2 }], moves2: [{ id: "slide", kind: "all", san: "1D2", w: 2 }, { id: "topple", kind: "hit", w: 1 }] },
+  { id: "f2a", floor: 2, hp: 50, mood: "生氣", color: "黑", moves: [{ id: "shift", kind: "hit", w: 2 }, { id: "stare", kind: "scare", san: "1D3", w: 2 }] },
+  { id: "f2b", floor: 2, hp: 48, mood: "開心", color: null, moves: [{ id: "blank", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 5, w: 1 }] },
+  { id: "f2g", floor: 2, boss: true, hp: 36, hp2: 24, mood: null, color: "綠", moves: [{ id: "shift", kind: "hit", w: 1 }, { id: "stare", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 6, w: 1 }], moves2: [{ id: "unveil", kind: "all", san: "1D3", w: 2 }, { id: "shift", kind: "hit", w: 1 }] },
+  { id: "f3a", floor: 3, hp: 60, mood: "傷心", color: "黑", moves: [{ id: "step", kind: "hit", w: 2 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }] },
+  { id: "f3b", floor: 3, hp: 56, mood: "開心", color: "紅", moves: [{ id: "smear", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 6, w: 1 }] },
+  { id: "f3g", floor: 3, boss: true, hp: 50, hp2: 34, mood: "生氣", color: "黑", moves: [{ id: "step", kind: "hit", w: 1 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 7, w: 1 }], moves2: [{ id: "frame", kind: "all", san: "1D4", w: 2 }, { id: "step", kind: "hit", w: 1 }] },
+  { id: "f4a", floor: 4, hp: 68, mood: "傷心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 2 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }] },
+  { id: "f4b", floor: 4, hp: 66, mood: "生氣", color: "黑", moves: [{ id: "click", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 7, w: 1 }] },
+  { id: "f4g", floor: 4, boss: true, hp: 58, hp2: 38, mood: "開心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 1 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 8, w: 1 }], moves2: [{ id: "tally", kind: "all", san: "1D4", w: 2 }, { id: "soak", kind: "hit", w: 1 }] },
+  { id: "f5a", floor: 5, hp: 74, mood: "傷心", color: null, moves: [{ id: "queue", kind: "hit", w: 2 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }] },
+  { id: "f5b", floor: 5, hp: 72, mood: "生氣", color: "黃", moves: [{ id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 8, w: 1 }] },
+  { id: "f5g", floor: 5, boss: true, hp: 64, hp2: 42, mood: null, color: null, moves: [{ id: "queue", kind: "hit", w: 1 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 9, w: 1 }], moves2: [{ id: "nameless", kind: "all", san: "1D5", w: 2 }, { id: "queue", kind: "hit", w: 1 }] },
+];
 
 // ---------- 第 3 版：每週特展的主題（文字在 content3.js 的 WEEKLY_TEXT） ----------
 export const WEEKLY_IDS = ["start32", "allBlack", "allFlat", "failedOnly", "noHat", "noLegend", "pillowWeek", "gopnikWeek"];

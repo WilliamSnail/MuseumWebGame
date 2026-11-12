@@ -13,7 +13,7 @@ const unexport = t => t.replace(/^export\s+/gm, ""); // 第 4 版：拿掉 expor
 const src3 = unexport(raw3);
 
 const NAMES = ["BOARD_TEXT", "JOBS", "SKILL_TEXT", "JOB_TEXT", "FUSION_TEXT", "RECIPE_TEXT", "UPGRADE_TEXT", "CELLAR", "CHAPTER4", "BOOK4",
-  "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "STATUS_TIPS", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT", "QUIRK_TASK_TEXT", "QUIRK_PLAN_TEXT", "LIMITED_TEXT", "SIGNIN_TEXT", "HOLIDAY_TEXT", "FUN_TEXT", "GEAR_TEXT", "SHOP_TEXT", "TRIAL_ROOMS"]; // QUIRK_TASK_TEXT：怪癖的治法（11-09，決定 0027）；VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
+  "FOE_TEXT", "ENDING_CELLAR", "CLIENT_LINES", "WEEKLY_TEXT", "TRADE_TEXT", "NEW_OPTION_TEXT", "ROOM_HINTS3", "STATUS_TIPS", "BOOK_SEQUELS", "UNDERSTAND_TEXT", "UNDERSTAND_FALLBACK", "MORE_CHAPTERS", "TRAIT_TEXT", "LEGACY_TEXT", "VISITOR_TEXT", "QUIRK_TASK_TEXT", "QUIRK_PLAN_TEXT", "LIMITED_TEXT", "SIGNIN_TEXT", "HOLIDAY_TEXT", "FUN_TEXT", "GEAR_TEXT", "SHOP_TEXT", "TRIAL_ROOMS"]; // QUIRK_TASK_TEXT：怪癖的治法（11-09，決定 0027）；VISITOR_TEXT：多位參觀者的位子、取名字（11-08）；BOOK_SEQUELS：禁書的續集；UNDERSTAND_TEXT／FALLBACK：看懂檢定看懂了什麼；TRAIT_TEXT、LEGACY_TEXT：參觀者的小優缺點、換人的畫面（都是 11-08）
 
 const errors = [], warns = [];
 const err = (m) => errors.push(m);
@@ -74,7 +74,7 @@ const SIMPLIFIED = "个们这说时会来为发么门头见东还过对开进车
 const TRAD_OK = new Set([..."帽坐躺枕尺寸材填充稀奇硬干并宁范匙感窗准袋伙呢骨只台叶号里朴后术面才余云凶巩松仇佣刮制匀咏咸夸斗杰痴眯蝎郁霉首"]);
 const SIMP_SET = new Set([...SIMPLIFIED].filter((ch) => !TRAD_OK.has(ch)));
 const strings = [];
-const NAMED_OK = /^(TRAIT_TEXT|LEGACY_TEXT|VISITOR_TEXT|GEAR_TEXT|SHOP_TEXT|BOARD_TEXT|QUIRK_PLAN_TEXT)./; // 參觀者一位接一位（11-08）：數字由程式帶入，可以寫 {mood}、{from} 這種；VISITOR_TEXT 可以寫 {name}、{max}；GEAR_TEXT、SHOP_TEXT（決定 0032）可以寫 {n}、{cap}、{dice}
+const NAMED_OK = /^(TRAIT_TEXT|LEGACY_TEXT|VISITOR_TEXT|GEAR_TEXT|SHOP_TEXT|BOARD_TEXT|QUIRK_PLAN_TEXT|FOE_TEXT)./; // FOE_TEXT（決定 0067）：怪物下一招的字可以寫 {x}＝被點到的人 // 參觀者一位接一位（11-08）：數字由程式帶入，可以寫 {mood}、{from} 這種；VISITOR_TEXT 可以寫 {name}、{max}；GEAR_TEXT、SHOP_TEXT（決定 0032）可以寫 {n}、{cap}、{dice}
 function walk(v, p) {
   if (typeof v === "string") {
     strings.push([p, v]);
