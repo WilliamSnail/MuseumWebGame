@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "cellar-panel-kit", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "地下室的石板框不會再被拉長了", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "「跟館友壹起下去」和「試煉房間」的石板鐵框重新做過：石板、鐵條、角上的鐵片、鉚釘分開放，螢幕再寬、手機再窄都不會變形。",
+        "手機上「本週異狀」的房間卡，按鈕改放到下壹行，字不會再被擠成壹字壹行。",
+      ]],
+    ],
+  },
+  {
     id: "phone-tabbar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機直拿的介面換了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [

@@ -201,3 +201,10 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 /* 每週劇情右上角的兌換所（翊文 11-10：「太不明顯了」）：金色的主要按鈕 */
 .sp-shop .ic, .sp-shop .ic svg { width: 16px; height: 16px; }
 .sp-stamps { font-size: .9375rem; color: #F3DE9E; }
+
+/* 手機：地下室「本週異狀」的房間卡，按鈕換到下壹行（不然字被擠成壹字壹行，11-12 截圖看到的） */
+@media (max-width: 760px) {
+  .sc-room { flex-wrap: wrap; }
+  .sc-room .sc-body { flex: 1 1 calc(100% - 60px); }
+  .sc-room > .btn { flex: 1 1 100%; }
+}
