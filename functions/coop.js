@@ -267,7 +267,26 @@ export const coopStep = onCall(async req => {
     return { ok: true };
   }
   if (act === "again") {
-    await changeParty(pid, p => partyBack(p, me.uid));
+    // 再走壹趟：上壹趟挑的照留，但這壹趟受傷的佩佩先拿下來（不然開始的時候會卡在「帶的佩佩受傷了」，畫面上又取消不了）
+    const hurt = {};
+    try {
+      const db = getFirestore(), today = taipeiDay(now());
+      const cur = (await rtdb().ref(`parties/${pid}`).get()).val();
+      const ids = cur && cur.members ? Object.keys(cur.members) : [];
+      const snaps = await Promise.all(ids.map(id => db.doc(`saves/${id}`).get()));
+      snaps.forEach((s, i) => {
+        if (!s.exists) return;
+        const P = (JSON.parse(s.data().data).profiles || {}).challenge;
+        if (!P) return;
+        ensureDay(P, today); // 過期的傷先清掉，跟開始的時候用同一個判斷（P.injured[k] 有值就是受傷）
+        hurt[ids[i]] = Object.keys((P && P.injured) || {}).filter(k => P.injured[k]);
+      });
+    } catch (e) { /* 讀不到就照舊，開始的時候還是會擋 */ }
+    await changeParty(pid, p => {
+      const r = partyBack(p, me.uid);
+      if (r.ok) Object.entries(p.members || {}).forEach(([id, m]) => { if (hurt[id] && Array.isArray(m.pick)) m.pick = m.pick.filter(k => !hurt[id].includes(k)); });
+      return r;
+    });
     await clearRunStuff(pid);
     return { ok: true };
   }

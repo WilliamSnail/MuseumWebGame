@@ -331,6 +331,14 @@ function picker(mine, ms) {
     ? btn("取消準備", () => partyAct("ready", { ready: false }), "small")
     : btn("準備好了", async () => { await NET.flush().catch(() => {}); partyAct("ready", { ready: true }); }, "primary small", { disabled: !chosen.length && !mine.guard });
   if (mine.guard) return h("div", { class: "pt-mine" }, h("p", { class: "pt-cost" }, "你留在館長室的監視器前：看得到地圖和每間房的危險度，看不到房間裡的細節。要靠講的。"), h("div", { class: "pt-mine-btns" }, guardBtn, readyBtn));
+  // 「再走壹趟」會把上壹趟挑的原樣帶過來：裡面有這壹趟受傷的，自動拿下來（受傷的按鈕是灰的，自己取消不了，會卡住開不了）
+  const hurtPicked = chosen.filter(k => P.injured[k]);
+  if (hurtPicked.length && s && s.dropHurt !== chosen.join()) {
+    s.dropHurt = chosen.join();
+    partyAct("pick", { keys: chosen.filter(k => !P.injured[k]) });
+    if (mine.ready) partyAct("ready", { ready: false });
+    note(`上壹趟受傷的佩佩先拿下來了（${hurtPicked.length} 隻），換壹隻再準備。`);
+  }
   const items = collectionItems("pepe").slice().sort((a, b) => (!!P.injured[a.key] - !!P.injured[b.key]) || (memberPower(b, null) - memberPower(a, null))).slice(0, 60);
   const toggle = it => {
     if (P.injured[it.key]) { note("牠受傷了，先休息。", "bad"); return; }
