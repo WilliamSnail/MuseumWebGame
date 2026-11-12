@@ -18,6 +18,7 @@ import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop_fun.j
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "./shared/party.js";
 import { trialById } from "./shared/shop.js";
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
+import { NUM } from "./shared/config.js";
 import { switchVisitor } from "./shared/visitors.js";
 import { eventLive, eventRunOf, eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js"; // tools/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
@@ -131,7 +132,9 @@ async function startRun(me, pid) {
       // 合作試煉（隊長在準備區選了試煉房間）：吃試煉的活動，每個人的成長走完那一刻照自己的資格各算各的（shared/coop.js 的 coopTrialDone）
       const trial = party.trial && trialById(party.trial) ? { id: party.trial, date: today } : null;
       const event = eventRunOf(eventLive(eventsFromWeeks(EVENT_WEEKS), trial ? "trialBoost" : "coopBoost", t));
-      try { r = coopBegin(members, party.floor || 1, today, t, { id, fun: true, event, trial }); } finally { setRng(null); }
+      // 地下室改版（決定 0067）：房間探索完打守門。正式版照 NUM.ui.newCellar；開發時模擬器可以用 NEW_CELLAR=1 先打開
+      const gate = !!NUM.ui.newCellar || (process.env.FUNCTIONS_EMULATOR === "true" && process.env.NEW_CELLAR === "1");
+      try { r = coopBegin(members, party.floor || 1, today, t, { id, fun: true, event, trial, gate }); } finally { setRng(null); }
       if (!r.ok) throw bad(r.reason);
       r.run.rev = 1;
       tx.set(runRef(pid), { data: JSON.stringify(r.run), rev: 1, updatedAt: FieldValue.serverTimestamp() });
@@ -233,7 +236,7 @@ async function report(me, pid, key) {
   return { ok: true };
 }
 
-const FLOW_ACTS = ["vote", "knock", "carry", "guess", "ack", "floor", "tick", "resume"];
+const FLOW_ACTS = ["vote", "fight", "knock", "carry", "guess", "ack", "floor", "tick", "resume"];
 export const coopStep = onCall(async req => {
   const me = await needMember(req);
   const { pid, act, data } = req.data || {};
