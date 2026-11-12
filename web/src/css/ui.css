@@ -578,3 +578,10 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
   .end-stats { gap: 24px; }
 }
 @keyframes drawer { from { transform: translateY(40vh); opacity: .4; } }
+
+/* 瘋狂發作寫成字（翊文 11-12：「恐懼症這個怎麼只有列這樣? 不知道是什麼」）：點了跳說明 */
+.bout-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 12px; cursor: pointer; font: inherit; color: inherit;
+  background: rgba(120,20,16,.35); border: 1px solid rgba(224,122,110,.7); }
+.bout-chip .bout-name { font-size: .8rem; font-weight: 700; margin: 0; }
+.bout-opt, .bout-left { font-size: .72rem; color: #F3D0C8; white-space: nowrap; }
+.bout-dots { display: inline-flex; gap: 3px; }
