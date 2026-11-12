@@ -1,0 +1,74 @@
+/* 打怪物的畫面（地下室改版，決定 0067、0068；web/src/ui_fight.js）
+   規劃第八節：一眼看得出要怎麼做。能按的有框有字；按鈕在下半部、夠大（至少 44px 高）。 */
+.fg-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 12px 10px; border-radius: 12px; background: linear-gradient(#2A2230, #1B161F); color: #FBEFD9; overflow: hidden; }
+.fg-stage.p2 { background: linear-gradient(#3A1F26, #1B161F); }
+.fg-foe { display: grid; justify-items: center; gap: 6px; }
+.fg-intent { display: flex; align-items: center; gap: 8px; max-width: 100%; padding: 8px 12px; border: 2px solid #D6B25E; border-radius: 10px; background: #FBEFD9; color: #2A1E14; font-size: 1rem; line-height: 1.35; }
+.fg-intent i { flex: none; display: grid; place-items: center; width: 2em; height: 2em; border-radius: 50%; background: #7A1F2B; color: #FBEFD9; font-style: normal; font-weight: 700; }
+.fg-intent.k-grow i { background: #6A5A1E; } .fg-intent.k-scare i, .fg-intent.k-all i { background: #4B2E6B; }
+.fg-foe-art { width: min(34vw, 190px); aspect-ratio: 1; animation: fg-breathe 3.2s ease-in-out infinite; }
+.fg-foe-art svg { width: 100%; height: 100%; display: block; }
+.fg-eye { animation: fg-blink 4.6s steps(1) infinite; }
+.fg-name { margin: 0; font-size: 1.05rem; } .fg-name small { font-weight: 400; opacity: .8; }
+.fg-bar { position: relative; width: min(100%, 420px); height: 22px; border: 2px solid #D6B25E; border-radius: 11px; background: #120E15; overflow: hidden; }
+.fg-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 9px; transition: width var(--t, 240ms) var(--ease, ease); }
+.fg-bar .cut { background: rgba(214, 90, 74, .38); } /* 你推了大概會扣掉的那一段（淡色） */
+.fg-bar .now { background: linear-gradient(#C24A3C, #8E2A24); }
+.fg-bar span { position: relative; display: block; text-align: center; font-size: .8125rem; line-height: 18px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.fg-flag { margin: 0; padding: 2px 10px; border-radius: 999px; background: #D6B25E; color: #2A1E14; font-size: .875rem; font-weight: 700; }
+.fg-seats { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.fg-seat { min-width: 96px; padding: 6px 8px; border: 2px solid rgba(251, 239, 217, .25); border-radius: 10px; background: rgba(0, 0, 0, .25); text-align: center; }
+.fg-seat.me { border-color: #D6B25E; }
+.fg-seat.aimed { box-shadow: 0 0 0 3px #C24A3C; } /* 牠下一招要打的人 */
+.fg-seat.ghost, .fg-seat.gone { opacity: .55; }
+.fg-who { display: block; font-size: .875rem; }
+.fg-ok { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: rgba(251, 239, 217, .16); font-style: normal; font-weight: 400; font-size: .75rem; }
+.fg-ok.on { background: #3F8F4A; color: #fff; }
+.fg-pepes { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+.fg-pepe { width: 52px; } .fg-pepe small { display: block; font-size: .6875rem; opacity: .85; }
+.fg-art { width: 52px; height: 52px; } .fg-art > * { width: 100%; height: 100%; }
+.fg-pepe.down { opacity: .45; filter: grayscale(1); } .fg-pepe.down .fg-art { transform: rotate(80deg) translateY(8px); }
+
+.fg-card .fg-now { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 1.2rem; }
+.fg-log { margin: 6px 0 10px; padding: 8px 10px; border-left: 4px solid #D6B25E; background: rgba(0, 0, 0, .05); font-size: .9rem; }
+.fg-log ul { margin: 4px 0 0; padding-left: 1.2em; } .fg-log li { margin: 2px 0; }
+.fg-acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.fg-acts .fg-act, .fg-moves .fg-move, .fg-foot .fg-exit { display: grid; gap: 2px; justify-items: center; min-height: 56px; padding: 8px 6px; border: 2px solid #7A5A2A; border-radius: 10px; background: #FBEFD9; color: #2A1E14; text-align: center; line-height: 1.25; }
+.fg-acts .fg-act b { font-size: 1.15rem; } .fg-card small { font-size: .78rem; font-weight: 400; color: #5A4630; }
+.fg-acts .a-push { border-color: #8E2A24; } .fg-acts .a-see { border-color: #2F5C8A; } .fg-acts .a-calm { border-color: #3F8F4A; } .fg-acts .a-guard { border-color: #6A5A1E; }
+.fg-card button.cx-on { background: #D6B25E; box-shadow: 0 0 0 3px #7A5A2A inset; }
+.fg-card button:disabled { opacity: .5; }
+.fg-moves { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.fg-moves .fg-move { min-height: 44px; } .fg-lab { font-size: .8125rem; color: #5A4630; }
+.fg-foot { justify-content: space-between; }
+.fg-foot .fg-exit { min-height: 44px; background: transparent; }
+.fg-me { display: flex; align-items: center; gap: 8px; font-size: .875rem; }
+.fg-san { display: inline-block; width: 110px; height: 10px; border: 1px solid #7A5A2A; border-radius: 5px; background: #E9DCC0; overflow: hidden; } .fg-san i { display: block; height: 100%; background: #3E8C8A; }
+.fg-brave { padding: 0 8px; border-radius: 999px; background: #E9A23B; color: #2A1E14; font-weight: 700; }
+
+/* 抓時機：圈縮到金線的時候按 */
+.fg-tap { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 8px; border-radius: inherit; background: rgba(27, 22, 31, .92); color: #FBEFD9; text-align: center; }
+.fg-card { position: relative; }
+.fg-ring { position: relative; width: 150px; height: 150px; border: 0; border-radius: 50%; background: transparent; color: #FBEFD9; font-size: 1.2rem; cursor: pointer; }
+.fg-ring i { position: absolute; inset: 0; border-radius: 50%; }
+.fg-ring .goal { inset: 38px; border: 4px solid #D6B25E; }
+.fg-ring .shrink { border: 3px solid #FBEFD9; animation: fg-shrink linear forwards; }
+@keyframes fg-shrink { from { transform: scale(1.25); opacity: .6; } 78% { transform: scale(.5); opacity: 1; } to { transform: scale(.28); opacity: .2; } }
+@keyframes fg-breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.02); } }
+@keyframes fg-blink { 0%, 92% { opacity: 1; } 94%, 97% { opacity: 0; } 100% { opacity: 1; } }
+body.reduce-motion .fg-foe-art, body.reduce-motion .fg-eye { animation: none; }
+
+/* 手機直拿：按鈕 2×2，放在下半部 */
+@media (max-width: 760px) {
+  .fg-acts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fg-acts .fg-act { min-height: 64px; }
+  .fg-foe-art { width: min(40vw, 150px); }
+  .fg-seat { min-width: 84px; }
+  .fg-moves { flex-wrap: nowrap; overflow-x: auto; }
+}
+/* 手機橫拿：舞台矮一點 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-foe-art { width: 96px; }
+  .fg-stage { padding: 8px; }
+  .fg-acts .fg-act { min-height: 48px; }
+}

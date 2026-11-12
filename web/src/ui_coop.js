@@ -26,6 +26,7 @@ import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { claimMyLikes, traceBox, traceWisp } from "./ui_trace.js";
 import { afterEnter } from "./ui_screens1.js";
 import { stageAct, stageProp } from "./ui_screens3.js";
+import { fightCard, fightStage } from "./ui_fight.js";
 
 const canPlay = () => !!P && !isFree(P);
 const ROLL_HOLD = 1800; // 骰子自己擲（大家看同壹顆，不用等誰按），停多久自己關
@@ -143,6 +144,7 @@ function onView(v) {
   else if (!s.anim) {
     if (v.phase === "floorDone" || v.phase === "guess") snd("fanfare");
     else if (v.phase === "vote") snd("steps");
+    else if (v.phase === "fight") snd("drum");
     else if (v.phase === "carry") snd("whoosh");
     else if (v.phase === "carried" && v.carry && v.carry.result) { if (v.carry.result.woke) snd("hurt"); else if (v.carry.result.kind === "ok") snd("coin"); }
     tellEvents(v.fresh || []);
@@ -377,7 +379,7 @@ function drawRun(v) {
     lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
-  const st = guard ? monitor(v) : stage(v);
+  const st = v.phase === "fight" && v.fight ? fightStage(v) : guard ? monitor(v) : stage(v);
   const main = h("div", { class: "cx-main" }, head, st, phaseCard(v, me));
   // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
   const wispKey = `${v.floor}:${v.idx}`;
@@ -436,6 +438,12 @@ function phaseCard(v, me) {
   if (v.phase === "carried") return carriedCard(v, me);
   if (v.phase === "guess") return guessCard(v, me);
   if (v.phase === "floorDone") return floorCard(v, me);
+  // 打怪物（地下室改版）：我這回合選的先記在畫面上（S.myPick），伺服器回來之前按鈕就亮著；換回合就清掉
+  if (v.phase === "fight" && v.fight) {
+    const key = `${v.fight.foe}:${v.fight.phase}:${v.fight.round}`;
+    if (S.pickKey !== key) { S.pickKey = key; S.myPick = null; }
+    return fightCard(v, me, { mine: S.myPick, setMine: p => { S.myPick = p; draw(); }, act: data => doAct("fight", data) });
+  }
   if (v.role === "guard") return guardCard(v, me);
   if (v.phase === "vote") return voteCard(v, me);
   if (v.phase === "result") return resultCard(v, me);
@@ -764,10 +772,11 @@ function floorCard(v, me) {
   const namesFor = c => v.members.filter(m => v.votes && v.votes[m.id] === c).map(m => h("span", { class: "cx-v" }, m.name));
   const vote = go => { S.myVote = go; draw(); doAct("floor", { go }); };
   return h("div", { class: "note-card room-card cx-card cx-floor-done" }, h("i", { class: "pin" }),
-    h("h2", { class: "room-title" }, `B${f.floor} 走完了`),
+    h("h2", { class: "room-title" }, v.last && v.last.fled ? (v.last.fled === "flee" ? "逃出來了" : "牠自己走掉了") : `B${f.floor} 走完了`),
+    v.last && v.last.fled ? h("p", { class: "cx-text" }, "守門的還在。這壹層不算走完，下次再來。") : v.fightLast && v.fightLast.over === "win" ? h("p", { class: "cx-reward" }, `登記了「${v.fightLast.name}」${v.fightLast.last ? "，最後壹下是 " + ((v.members.find(m => m.id === v.fightLast.last) || {}).name || "") : ""}`) : null,
     f.clear ? h("p", { class: "cx-text" }, ptNode(f.clear)) : null,
     truthLine(v),
-    me.guard ? h("p", { class: "pt-sub" }, "你在監視器前，這層不算你走過。") : rw ? h("p", { class: "cx-reward" }, `第壹次走完：${rw}`) : h("p", { class: "pt-sub" }, "這層你走過了。"),
+    v.last && v.last.fled ? null : me.guard ? h("p", { class: "pt-sub" }, "你在監視器前，這層不算你走過。") : rw ? h("p", { class: "cx-reward" }, `第壹次走完：${rw}`) : h("p", { class: "pt-sub" }, "這層你走過了。"),
     me.ghost ? h("p", { class: "cx-hurtline" }, "你的參觀者撐到這裡。大家往下走的話，你就回到地面。") : null,
     h("div", { class: "cx-go" },
       v.next ? btn([icon("stairs"), ` 往下到 B${v.next}`, h("span", { class: "cx-vs" }, namesFor("down"))], () => vote("down"), "primary" + (mine === "down" ? " cx-on" : ""), { disabled: !can }) : null,

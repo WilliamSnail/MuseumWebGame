@@ -14,6 +14,7 @@ import "./css/visitors.css"; // 三個參觀者的位子、取名字（多人版
 import "./css/title.css"; // 標題畫面的新外觀（11-11，拆開的素材組起來）
 import "./css/party.css"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./css/coop.css"; // 合作地下收藏庫（多人版 M4，11-09）
+import "./css/fight.css"; // 打怪物（地下室改版，決定 0067、0068）
 import "./css/visit.css"; // 參觀館友的展廳、送佩佩（多人版 M2，11-09）
 import "./css/funday.css"; // 趣味節日（決定 0044）
 import "./css/signin.css"; // 每日簽到、簽到日曆、節日的外觀（11-09，決定 0030）
@@ -46,6 +47,7 @@ import "./ui_login.js"; // 登入、存檔放伺服器、館友（多人版 M1�
 import "./ui_visit.js"; // 參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，11-09）。放在 ui_party 前面：館友小卡上的按鈕照載入的順序
 import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08）
 import "./ui_trace.js"; // 留下痕跡（留言牌、影子、幽影，11-09）
+import "./ui_fight.js"; // 打怪物的畫面（地下室改版，決定 0067、0068）；ui_coop.js 在 fight 階段叫它
 import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop.js，伺服器在 functions/coop.js
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
