@@ -411,6 +411,12 @@ export function casPackDraw() {
   const chips = p.base + (p.extra ? Math.floor(RNG() * (p.extra + 1)) * p.step : 0);
   return { roll, stars: p.stars, name: p.name, chips };
 }
+// 壹包大禮包平均給多少籌碼（照 CAS_PACKS 算，不用模擬）：餐車的機率、券的價錢、贏牌抽券都照這個對（決定 0070）
+export function casPackEV() {
+  let prev = 0, ev = 0;
+  for (const p of CAS_PACKS) { ev += (p.upTo - prev) / 1000 * (p.base + p.extra * p.step / 2); prev = p.upTo; }
+  return ev;
+}
 export const casPacksLeft = w => w.pk.left + w.tickets;
 // 一次開 n 包：先用今天免費的，再用券
 export function casOpenPacks(w, house, n, day) {
@@ -490,17 +496,19 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
     casWkMeal(w, it.id);
     if (CAS_PROPS[it.id]) casAddProp(w, it.id, day);
     if (opened) {
-      if (1 + Math.floor(RNG() * 100) <= it.odds) { w.tickets += 3; gotTickets = 3; lines.push(casFill(CAS_TEXT.dinerWon, { p: it.odds, n: 3 })); }
+      if (RNG() * 100 < it.odds) { w.tickets += 3; gotTickets = 3; lines.push(casFill(CAS_TEXT.dinerWon, { p: it.odds, n: 3 })); }
       else lines.push(casFill(CAS_TEXT.dinerOdds, { p: it.odds }));
     }
   }
   lines.push(CAS_TEXT.dinerThanks);
   return { ok: true, item: it.id, price: it.price, lines: lines.filter(Boolean), tickets: gotTickets, ach: casAchCheck(w, day), mood: food.mood, san: food.san };
 }
-// 贏一把：有機率多一張券（舊的 rottery(20)；要先開過今天的大禮包）
-export function casWinTicket(w) {
+// 贏一把：有機率多一張券（舊的 rottery(20)；要先開過今天的大禮包）。
+// 機率照下的注（決定 0070）：券的期望值是注的 packWinEvPct %，最多 packWinOdds %。舊的不管注多少都是 20%，下 100 贏了也有 34 萬的期望值
+export const casWinOdds = bet => Math.min(NUM.casino.packWinOdds, Math.max(0, +bet || 0) * NUM.casino.packWinEvPct / casPackEV());
+export function casWinTicket(w, bet) {
   if (w.pk.opened < 1) return false;
-  if (1 + Math.floor(RNG() * 100) > NUM.casino.packWinOdds) return false;
+  if (!(RNG() * 100 < casWinOdds(bet))) return false;
   w.tickets += 1;
   return true;
 }
@@ -634,7 +642,7 @@ function casAfterMove(ctx) {
       settle.streak = sk.lines;
       if (sk.changed) ctx.saveDirty = true; // 心情、理智寫進存檔，同一個交易
     }
-    ticket = settle.ok && round.out && ["win", "blackjack", "charlie"].includes(round.out.kind) && casWinTicket(w);
+    ticket = settle.ok && round.out && ["win", "blackjack", "charlie"].includes(round.out.kind) && casWinTicket(w, round.bet);
   }
   return { ok: true, round, view: casRoundView(round, ctx.viewer || ""), settle, ticket };
 }

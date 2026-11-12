@@ -475,11 +475,17 @@ export function startMake(P, pick) {
   P.stats.rolls++;
   return { ok: true, cost: can.cost, roll: rollD100() };
 }
+// 不可名狀：原本擲出 01～這個數字才會出現（翊文 11-13：「要放寬」）。神話 10 是 01～02，之後每多 5 點寬壹格，最寬 01～05；神話不夠是 0
+export function eldritchUpTo(P) {
+  const eld = PEPE_PARTS.find(p => p.name === ROLLED).options.find(o => o.forbidden), E = NUM.eldritchRoll;
+  if (!eld || !P || (P.myth || 0) < eld.myth) return 0;
+  return Math.min(E.max, E.base + Math.floor(((P.myth || 0) - eld.myth) / E.perMyth));
+}
 export function rarityOfRoll(P, total, natural) {
   if (natural >= NUM.fumbleFrom) return { rarity: FAILED, failed: true };
   let r = (RARITY_TABLE.find(t => total <= t.max) || RARITY_TABLE[RARITY_TABLE.length - 1]).name;
   const eld = PEPE_PARTS.find(p => p.name === ROLLED).options.find(o => o.forbidden);
-  if (natural === 1 && eld && P.myth >= eld.myth && isUnlocked(P, ROLLED, eld.name)) r = eld.name;
+  if (eld && natural <= eldritchUpTo(P) && isUnlocked(P, ROLLED, eld.name)) r = eld.name;
   const want = r;
   let i = RARITY_ORDER.indexOf(r);
   while (i > 0 && !usable(P, ROLLED).includes(RARITY_ORDER[i])) i--;
@@ -1303,6 +1309,8 @@ export function placeInHall(P, slotIdx, item) {
   ev.push(...progressEvents(P));
   return { ok: true, hall: hs, events: ev };
 }
+// 展廳參觀者今天已經給了幾靈感（上限 NUM.visitorInspDay，換日歸零）
+export const visitorInspToday = (P, day = todayStr()) => (P && P.hallInsp && P.hallInsp.day === day ? +P.hallInsp.n || 0 : 0);
 export function visitorArrive(P, rng = RNG) {
   const hs = hallScore(P);
   if (!hs.items.length) return null;
@@ -1313,12 +1321,15 @@ export function visitorArrive(P, rng = RNG) {
   else if (r < 0.7 && hs.items.some(i => { const a = attrsOf(i); return a && (a[ROLLED] === "不可名狀" || a.帽子 === "觸手帽"); })) pool = VISITOR_COMMENTS.eldritch;
   else pool = VISITOR_COMMENTS[hs.score < 35 ? "low" : hs.score < 70 ? "mid" : "high"];
   const c = pickOne(pool, rng);
-  const gain = isFree(P) ? 0 : 1 + Math.floor(hs.score / NUM.visitorStep);
+  const day = todayStr(), got = visitorInspToday(P, day);
+  const want = isFree(P) ? 0 : 1 + Math.floor(hs.score / NUM.visitorStep), gain = Math.max(0, Math.min(want, NUM.visitorInspDay - got));
+  const full = !isFree(P) && gain < want; // 今天的份拿滿了：參觀者還是會來、留話，只是不給靈感
   P.insp += gain;
+  P.hallInsp = { day, n: got + gain };
   P.hallVisitors++;
-  P.visitorLog.unshift({ who: c.who, text: c.text, gain });
+  P.visitorLog.unshift({ who: c.who, text: c.text, gain, full });
   P.visitorLog = P.visitorLog.slice(0, 12);
-  return { who: c.who, text: c.text, gain, score: hs.score };
+  return { who: c.who, text: c.text, gain, full, score: hs.score };
 }
 // 分享碼：把展廳變成一串文字
 export const KIND_CODE = { pepe: "p", failed: "f", pillow: "l", repaired: "r" };

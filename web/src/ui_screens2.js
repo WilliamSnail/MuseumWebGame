@@ -421,7 +421,7 @@ export function pedestal(slot, i) {
   });
   return el;
 }
-export function visitorCard(v) { return h("div", { class: "visitor enter" }, h("p", null, `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}`)); }
+export function visitorCard(v) { return h("div", { class: "visitor enter" }, h("p", null, `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`)); }
 export function copyText(text, ta) {
   const ok = () => note("複製好了。", "good");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, () => { ta.select(); document.execCommand("copy"); ok(); });

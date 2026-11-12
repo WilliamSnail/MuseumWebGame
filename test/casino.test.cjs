@@ -419,8 +419,20 @@ T("全下並贏：記全下；贏了有機率多一張大禮包券（要先開�
   assert.ok(ctx.w.ach.allin && ctx.w.ach.bj && ctx.w.ach.win1);
   const w = ctx.w; w.pk.opened = 0;
   G.setRng(() => 0.0); assert.strictEqual(G.casWinTicket(w), false, "沒開過今天的大禮包：沒有");
-  w.pk.opened = 1; assert.strictEqual(G.casWinTicket(w), true); assert.strictEqual(w.tickets, 1);
-  G.setRng(() => 0.9999); assert.strictEqual(G.casWinTicket(w), false);
+  w.pk.opened = 1; assert.strictEqual(G.casWinTicket(w, 1e7), true); assert.strictEqual(w.tickets, 1);
+  G.setRng(() => 0.9999); assert.strictEqual(G.casWinTicket(w, 1e7), false);
+});
+T("決定 0070：餐車、大禮包券、贏牌抽券都不是穩賺的", G => {
+  const ev = G.casPackEV();
+  assert.strictEqual(Math.round(ev), 1714000, "壹包平均 1,714,000");
+  for (const it of G.CAS_MENU) {
+    const f = it.redirect ? G.CAS_MENU.find(x => x.id === it.redirect) : it;
+    const back = f.ticket ? f.ticket * ev : f.odds / 100 * 3 * ev;
+    assert.ok(back < f.price, `${it.id}：期望值 ${Math.round(back)} 不能大於價錢 ${f.price}`);
+    if (!f.ticket) assert.ok(back > f.price * 0.5, `${it.id}：期望值 ${Math.round(back)} 也不要低於價錢的壹半`);
+  }
+  [100, 1e4, 1e6, 1e7].forEach(bet => assert.ok(G.casWinOdds(bet) / 100 * ev <= bet * 0.0101, `下 ${bet} 贏了抽券的期望值不超過注的 1%`));
+  assert.ok(G.casWinOdds(1e7) > 5 && G.casWinOdds(1e7) <= 20);
 });
 T("莊家被你打到破產：記成就；破產中換日 Yuga 借他重新開張", G => {
   const ctx = ctxOf(G); ctx.house.bankroll = 500; ctx.w.chips = 100000;
@@ -659,7 +671,7 @@ T("文字：不出現酒、炸雞、手機和餐廳品牌、真錢的字；畫�
   assert.ok(G.CAS_TEXT.series.includes("Casino Hamachi System") && G.CAS_TEXT.series.includes("Museum Series"));
   assert.strictEqual(G.CAS_MENU.length, 9); assert.strictEqual(G.CAS_PACKS.length, 5);
   eq(G.CAS_PACKS.map(p => p.upTo), [500, 800, 945, 990, 1000]);
-  eq(G.CAS_MENU.map(m => m.price), [3000, 1750, 20000, 100000, 50, 2000000, 2000, 1500000, 10000000]);
+  eq(G.CAS_MENU.map(m => m.price), [3000, 1750, 20000, 100000, 50, 2000000, 2000, 2000000, 20000000]); // 券的價錢 11-13 改了（決定 0070）
   assert.ok(G.CAS_TEXT.idle.includes("可是我肚子還是有點痛") && G.CAS_TEXT.bust === "你爆了ㄏㄏ" && G.CAS_TEXT.dealerBust[0] === "RRRRR我爆了");
 });
 T("每個成就、財產都有名字和說明；成就 id 不重複", G => {
