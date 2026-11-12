@@ -21,6 +21,7 @@ import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopS
 import { eventExtraTurns, eventRunFix } from "./events.js";
 import { trialById } from "./shop.js";
 import { coopFightRound } from "./coop_fight.js";
+import { coopRest, coopRouteBack, coopRouteGo, coopRouteOptions } from "./coop_route.js";
 import { fightActors, fightSeatOf } from "./cellar_fight.js";
 import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
 
@@ -48,7 +49,7 @@ export function coopBegin(members, floor, today, now, opt = {}) {
     const extra = eventExtraTurns(eventRunFix(opt.event)); // 限時活動：開始這一刻在活動內，多 1 趟有獎勵
     members.forEach(m => { m.rewarded = coopTakeTurn(m.P, today, extra); });
   }
-  const s = startCoop(members, floor, opt);
+  const s = startCoop(members, floor, Object.assign({ day: today }, opt)); // day：今天的地圖（地下室改版）
   if (!s.ok) return s;
   s.run.at = now;
   coopArm(s.run, now);
@@ -56,7 +57,7 @@ export function coopBegin(members, floor, today, now, opt = {}) {
 }
 
 // ---------- 計時 ----------
-export const coopPhaseMs = phase => ({ fight: COOP.fightMs, vote: COOP.voteMs, result: COOP.resultMs, carried: COOP.resultMs, floorDone: COOP.floorMs, carry: COOP.carry.ms, guess: COOP.truth.guessMs })[phase] || null;
+export const coopPhaseMs = phase => ({ route: COOP.voteMs, rest: COOP.voteMs, chest: COOP.resultMs, fight: COOP.fightMs, vote: COOP.voteMs, result: COOP.resultMs, carried: COOP.resultMs, floorDone: COOP.floorMs, carry: COOP.carry.ms, guess: COOP.truth.guessMs })[phase] || null;
 export function coopArm(run, now) {
   const ms = coopPhaseMs(run.phase);
   run.votes = {}; run.acks = {};
@@ -104,6 +105,30 @@ const everyPicked = run => { const as = run.fight ? fightActors(run.fight).filte
 function doFight(run, Ps, now, out) {
   const r = coopFightRound(run, Ps, run.votes || {});
   if (!r.ok) return r;
+  afterRule(run, r, out);
+  if (run.phase !== "over") coopArm(run, now);
+  return r;
+}
+// 地圖選路（地下室改版）：大家都投了下一個點、休息都選了、寶箱看完了
+function doRoute(run, Ps, now, out) {
+  const votes = run.votes || {};
+  coopVoters(run).forEach(m => { m.skips = votes[m.id] === undefined ? (m.skips || 0) + 1 : 0; });
+  const r = coopRouteGo(run, Ps, votes);
+  if (!r.ok) return r;
+  afterRule(run, r, out);
+  coopVoters(run).filter(m => m.skips >= COOP.maxSkips).forEach(m => { coopLeave(run, Ps, m.id); out.dropped.push(m.id); }); // 掛機：連 3 次沒投
+  if (run.phase !== "over") coopArm(run, now);
+  return r;
+}
+function doRest(run, Ps, now, out) {
+  const r = coopRest(run, Ps, run.votes || {});
+  if (!r.ok) return r;
+  afterRule(run, r, out);
+  if (run.phase !== "over") coopArm(run, now);
+  return r;
+}
+function doChestDone(run, Ps, now, out) {
+  const r = coopRouteBack(run, Ps);
   afterRule(run, r, out);
   if (run.phase !== "over") coopArm(run, now);
   return r;
@@ -164,6 +189,18 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
     if (v !== "retreat" && !(Number.isInteger(v) && room && room.choices[v])) return { ok: false, reason: "沒有這個選項" };
     run.votes[uid] = v;
     if (everyVoted(run)) r = doResolve(run, Ps, now, out);
+  } else if (act === "route") {
+    if (run.phase !== "route") return { ok: false, reason: "現在不是選路的時候" };
+    if (!m || m.ghost || m.guard) return { ok: false, reason: "你現在不能投票" };
+    if (typeof data.node !== "string" || (data.node !== "retreat" && !coopRouteOptions(run).includes(data.node))) return { ok: false, reason: "那裡走不過去" };
+    run.votes[uid] = data.node;
+    if (everyVoted(run)) r = doRoute(run, Ps, now, out);
+  } else if (act === "rest") {
+    if (run.phase !== "rest") return { ok: false, reason: "現在不是休息的時候" };
+    if (!m || m.ghost || m.guard) return { ok: false, reason: "你現在不能選" };
+    if (data.pick !== "san" && data.pick !== "heal") return { ok: false, reason: "要選回理智或治傷" };
+    run.votes[uid] = data.pick;
+    if (everyVoted(run)) r = doRest(run, Ps, now, out);
   } else if (act === "fight") {
     if (run.phase !== "fight" || !run.fight) return { ok: false, reason: "現在沒有在打" };
     const seat = fightSeatOf(run.fight, uid);
@@ -186,9 +223,9 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
     run.votes[uid] = data.id;
     if (everyVoted(run)) r = doGuess(run, Ps, now, out);
   } else if (act === "ack") {
-    if (run.phase !== "result" && run.phase !== "carried") { out.noop = true; return out; }
+    if (run.phase !== "result" && run.phase !== "carried" && run.phase !== "chest") { out.noop = true; return out; }
     run.acks[uid] = true;
-    if (everyAcked(run)) r = doAdvance(run, Ps, now, out);
+    if (everyAcked(run)) r = run.phase === "chest" ? doChestDone(run, Ps, now, out) : doAdvance(run, Ps, now, out);
   } else if (act === "floor") {
     if (run.phase !== "floorDone") return { ok: false, reason: "現在不用決定這個" };
     if (!m || m.ghost || m.guard) return { ok: false, reason: "你現在不能投票" };
@@ -198,6 +235,9 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
   } else if (act === "tick") {
     if (!run.deadline || now < run.deadline - 300) { out.noop = true; return out; } // 伺服器自己看時間：還沒到就不做
     if (run.phase === "vote") r = doResolve(run, Ps, now, out);
+    else if (run.phase === "route") r = doRoute(run, Ps, now, out);
+    else if (run.phase === "rest") r = doRest(run, Ps, now, out);
+    else if (run.phase === "chest") r = doChestDone(run, Ps, now, out);
     else if (run.phase === "fight") r = doFight(run, Ps, now, out);
     else if (run.phase === "result" || run.phase === "carried") r = doAdvance(run, Ps, now, out);
     else if (run.phase === "floorDone") r = doFloor(run, Ps, now, out);
@@ -215,6 +255,9 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
     out.dropped.push(uid);
     // 他是最後一個還沒投的：不用再等了
     if (run.phase === "vote" && everyVoted(run)) r = doResolve(run, Ps, now, out);
+    else if (run.phase === "route" && everyVoted(run)) r = doRoute(run, Ps, now, out);
+    else if (run.phase === "rest" && everyVoted(run)) r = doRest(run, Ps, now, out);
+    else if (run.phase === "chest" && everyAcked(run)) r = doChestDone(run, Ps, now, out);
     else if (run.phase === "fight" && run.fight && everyPicked(run)) r = doFight(run, Ps, now, out);
     else if (run.phase === "floorDone" && everyVoted(run)) r = doFloor(run, Ps, now, out);
     else if ((run.phase === "result" || run.phase === "carried") && everyAcked(run)) r = doAdvance(run, Ps, now, out);

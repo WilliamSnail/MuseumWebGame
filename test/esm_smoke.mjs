@@ -39,12 +39,13 @@ import * as discordPlay from "../shared/discord_play.js";
 import * as cellarFight from "../shared/cellar_fight.js";
 import * as coopFight from "../shared/coop_fight.js";
 import * as cellarMap from "../shared/cellar_map.js";
+import * as coopRoute from "../shared/coop_route.js";
 
 let n = 0;
 const ok = (name, fn) => { fn(); n++; };
 
 ok("每個模組都有匯出東西，而且沒有 undefined", () => {
-  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, clues, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, titles, casinoFind, events, discord, discordOut, discordPlay, casinoEcon, events, cellarFight, cellarMap, coopFight })) {
+  for (const [name, mod] of Object.entries({ config, content, content3, logic, logic3, fresh, story, clues, coop, coopFlow, coopText, coopFun, coopTrace, admin, shop, visit, themeshow, board, casinoText, casino, casinoWeek, casinoStreak, casinoWallet, casinoTable, titles, casinoFind, events, discord, discordOut, discordPlay, casinoEcon, events, cellarFight, cellarMap, coopFight, coopRoute })) {
     const keys = Object.keys(mod);
     assert.ok(keys.length > 0, name + " 沒有匯出");
     for (const k of keys) assert.notStrictEqual(mod[k], undefined, `${name}.${k} 是 undefined`);

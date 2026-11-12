@@ -236,7 +236,7 @@ async function report(me, pid, key) {
   return { ok: true };
 }
 
-const FLOW_ACTS = ["vote", "fight", "knock", "carry", "guess", "ack", "floor", "tick", "resume"];
+const FLOW_ACTS = ["vote", "route", "rest", "fight", "knock", "carry", "guess", "ack", "floor", "tick", "resume"];
 export const coopStep = onCall(async req => {
   const me = await needMember(req);
   const { pid, act, data } = req.data || {};

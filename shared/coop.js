@@ -33,6 +33,7 @@ import { trialById, trialState, trialWin } from "./shop.js";
 import { coopCanGuess, coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
 import { coopFightFix, coopFightStart, coopFightView, coopGateDue } from "./coop_fight.js";
 import { fightFoesOf } from "./cellar_fight.js";
+import { coopRouteBack, coopRouteBegin, coopRouteFix, coopRouteMapView, coopRouteOn } from "./coop_route.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
 export const COOP = {
@@ -205,6 +206,7 @@ export function coopFix(run) {
   run.trial = run.trial && typeof run.trial === "object" && trialById(run.trial.id) ? run.trial : null; // 合作試煉（決定 0041）：{ id, skill, date, elig, fx }
   if (run.trial) { if (!run.trial.elig || typeof run.trial.elig !== "object") run.trial.elig = {}; if (!run.trial.fx || typeof run.trial.fx !== "object") run.trial.fx = null; }
   coopFightFix(run); // 打怪物（地下室改版）：run.gate、run.gateDone、run.fight
+  coopRouteFix(run); // 地圖選路（地下室改版）：run.cmap、run.node、run.path
   run.event = eventRunFix(run.event); // 限時活動（決定 0041）：開始那一刻在活動內，這一趟就照活動算到走完
   run.members.forEach(m => {
     m.keys = coopArr(m.keys); m.ghost = !!m.ghost; m.guard = !!m.guard; m.out = m.out || null; m.rewarded = m.rewarded !== false; m.skips = m.skips || 0;
@@ -260,7 +262,7 @@ export function startCoop(members, floor, opt = {}) {
   const Ps = {};
   const first = members.find(m => !m.guard);
   const run = {
-    v: 1, id: opt.id || null, fun: !!opt.fun, gate: !!opt.gate && !tr, gateDone: {}, fight: null, event: eventRunFix(opt.event), trial: null, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
+    v: 1, id: opt.id || null, fun: !!opt.fun, gate: !!opt.gate && !tr, gateDone: {}, fight: null, day: opt.day || null, cmap: null, node: null, path: [], chest: null, rest: null, event: eventRunFix(opt.event), trial: null, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
     leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
@@ -278,6 +280,7 @@ export function startCoop(members, floor, opt = {}) {
   }
   run.team = coopTeam(run, Ps);
   if (run.fun) coopStart(run, Ps);
+  if (coopRouteOn(run)) coopRouteBegin(run, Ps); // 地下室改版：先選路（coop_route.js）
   members.forEach(m => { if (!m.guard && m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
   coopSync(run, Ps);
   return { ok: true, run, events: coopNewEvents(run) };
@@ -562,6 +565,7 @@ export function coopAdvance(run, Ps) {
     coopSync(run, Ps);
     return { ok: true, run, carry: true, events };
   }
+  if (coopRouteOn(run) && run.cmap) return coopRouteBack(run, Ps, events); // 地下室改版：這一間走完，回到地圖選下一個點
   run.idx++;
   if (run.idx < f.rooms.length) {
     coopNextLeader(run);
@@ -613,6 +617,7 @@ export function coopContinue(run, Ps) {
   coopNextLeader(run);
   run.phase = "vote";
   if (run.fun) coopStart(run, Ps);
+  if (coopRouteOn(run)) coopRouteBegin(run, Ps); // 地下室改版：新的一層先選路
   coopSync(run, Ps);
   return { ok: true, run, events };
 }
@@ -651,5 +656,6 @@ export function viewFor(run, id) {
   v.fresh = (run.fresh && run.fresh[id]) || [];
   if (run.fun) coopFilterView(v, run, id); // 不該看到的東西在這裡拿掉：線索、幻覺、地圖（coop_fun.js）
   if (run.phase === "fight" && run.fight) { v.fightView = coopFightView(run, id); v.votes = { [id]: (run.votes || {})[id] || null }; } // 打怪物：別人選了什麼結算前看不到，只知道誰選好了（fightView.waiting）
+  if (run.cmap) v.cmap = coopRouteMapView(run); // 地圖（地下室改版；v.map 是留守看的房間地圖，不一樣）：只給種類和等級，不寫怪物是誰
   return v;
 }

@@ -27,6 +27,7 @@ import { claimMyLikes, traceBox, traceWisp } from "./ui_trace.js";
 import { afterEnter } from "./ui_screens1.js";
 import { stageAct, stageProp } from "./ui_screens3.js";
 import { fightCard, fightFx, fightStage } from "./ui_fight.js";
+import { chestCard, restCard, routeCard, routeStage } from "./ui_route.js";
 
 const canPlay = () => !!P && !isFree(P);
 const ROLL_HOLD = 1800; // 骰子自己擲（大家看同壹顆，不用等誰按），停多久自己關
@@ -136,7 +137,7 @@ function onView(v) {
   if (!s.view) { s.view = v; s.shown = v.step; draw(); return; } // 剛接回來：不重演
   const newStep = v.step > s.shown;
   s.view = v;
-  if (v.deadline !== s.lastDeadline) { s.lastDeadline = v.deadline; s.myVote = null; s.tickAt = 0; }
+  if (v.deadline !== s.lastDeadline) { s.lastDeadline = v.deadline; s.myVote = null; s.myRoute = null; s.routeSel = null; s.tickAt = 0; }
   if (!newStep) { if (!s.anim) draw(); return; }
   s.shown = v.step;
   s.pending.push(...(v.fresh || []).filter(e => ["badge", "unlock", "chapter", "exhibit", "row", "theme", "recipe", "key", "book"].includes(e.type)));
@@ -383,13 +384,14 @@ function drawRun(v) {
   const head = h("div", { class: "cx-head" },
     h("h3", null, guard ? `B${v.floor}　監視器` : v.trial ? `B${v.floor}　試煉：${f ? f.name : ""}（${v.trial.skill}）` : `B${v.floor}　${f ? f.name : ""}`),
     // 下去的人看不到地圖：這隊有人留守的話，連走到第幾間的小點也不給（要靠講）
-    f && !(v.hasGuard && !guard) ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
+    f && !v.cmap && !(v.hasGuard && !guard) ? h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < v.idx ? "done" : i === v.idx && v.phase !== "floorDone" ? "now" : v.phase === "floorDone" ? "done" : "" }))) : null,
     v.trial ? h("p", { class: "ev-note" }, "每個人各自擲、各自算成長：", v.members.filter(m => !m.guard && m.out !== "left").map(m => h("span", { class: "cx-tw" }, `${m.name}${m.id === v.me ? "（你）" : ""}：${trialWhy(v.trial.elig && v.trial.elig[m.id])}　`))) : null,
     v.event ? h("p", { class: "ev-note" }, eventTagNode(v.event), ` ${v.event.title}：${eventBoostText(v.event)}`) : null, // 這一趟是在限時活動中開始的，照活動算到走完（決定 0041）
     lv && !v.ended ? h("p", { class: "cx-press lv" + lv }, COOP_PRESSURE_TEXT[lv].hint, h("small", null, `（平均理智 ${v.pressure.avg}）`)) : null,
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
-  const st = v.phase === "fight" && v.fight ? fightStage(v, S.pickKey === `${v.fight.foe}:${v.fight.phase}:${v.fight.round}` ? S.myPick : null) : guard ? monitor(v) : stage(v);
+  // 地圖選路（地下室改版，ui_route.js）：選路的時候上面是地圖
+  const st = v.phase === "route" && v.cmap ? routeStage(v, S.routeSel, id => { S.routeSel = id; draw(); }) : v.phase === "fight" && v.fight ? fightStage(v, S.pickKey === `${v.fight.foe}:${v.fight.phase}:${v.fight.round}` ? S.myPick : null) : guard ? monitor(v) : stage(v);
   const main = h("div", { class: "cx-main" }, head, st, phaseCard(v, me));
   // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
   const wispKey = `${v.floor}:${v.idx}`;
@@ -448,6 +450,9 @@ function phaseCard(v, me) {
   if (v.phase === "carried") return carriedCard(v, me);
   if (v.phase === "guess") return guessCard(v, me);
   if (v.phase === "floorDone") return floorCard(v, me);
+  if (v.phase === "route") return routeCard(v, me, { sel: S.routeSel, mine: S.myRoute, go: node => { S.myRoute = node; if (node !== "retreat") S.routeSel = node; draw(); doAct("route", { node }); snd("click"); } });
+  if (v.phase === "rest") return restCard(v, me, { mine: S.myRoute, pick: p => { S.myRoute = p; draw(); doAct("rest", { pick: p }); snd("click"); } });
+  if (v.phase === "chest") return chestCard(v, me, { ack: () => doAct("ack") });
   // 打怪物（地下室改版）：我這回合選的先記在畫面上（S.myPick），伺服器回來之前按鈕就亮著；換回合就清掉
   if (v.phase === "fight" && v.fight) {
     const key = `${v.fight.foe}:${v.fight.phase}:${v.fight.round}`;
