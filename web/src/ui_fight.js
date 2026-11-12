@@ -10,7 +10,7 @@ import { NUM } from "../../shared/config.js";
 import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar_fight.js";
 import { COOP } from "../../shared/coop.js";
 import { nowMs } from "../../shared/logic.js";
-import { btn, h, itemHTML, snd } from "./ui_core.js";
+import { btn, diceWords, h, itemHTML, snd } from "./ui_core.js";
 
 const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點", taunt: "引開", inspire: "鼓舞", share: "分膽", comfort: "安慰", reveal: "看清" };
 // 合作的新行動圖示（素材 3-6，一條五格）、角色徽章（3-7，一條五格）
@@ -130,7 +130,7 @@ function summaryOf(v, r) {
 export function fightReplaySync(v) {
   if (v && v.fight) lastFightV = v;
   const key = roundKey(v);
-  if (!key || key === RP.key) return;
+  if (!key || key === RP.key) { beatSync(v); return; }
   const r = v.last.round;
   if (RP.timer) clearTimeout(RP.timer);
   Object.assign(RP, { key, round: r, steps: r.events.map(e => stepOf(v, e)).filter(s => s.line || s.banner), i: -1, hp: r.hpBefore != null ? r.hpBefore : r.hp, hpMax: r.hpMaxBefore || r.hpMax, finished: false, summary: summaryOf(v, r), v: v.fight ? null : lastFightV, timer: null });
@@ -143,10 +143,65 @@ export function fightReplaySync(v) {
       if (s.setHp != null) { RP.hp = s.setHp; RP.hpMax = s.setHp; } else RP.hp = Math.max(0, Math.min(RP.hpMax, RP.hp + s.dhp));
       snd(s.lunge ? "hurt" : s.dhp < 0 ? "click" : "tick");
       RP.timer = setTimeout(tick, NUM.fight.replayStep);
-    } else { RP.timer = setTimeout(() => { RP.finished = true; RP.timer = null; redraw(); }, NUM.fight.replayTail); }
+    } else { RP.timer = setTimeout(() => { RP.finished = true; RP.timer = null; if (lastFightV) beatSync(lastFightV); redraw(); }, NUM.fight.replayTail); }
     redraw();
   };
   RP.timer = setTimeout(tick, 300);
+}
+
+// ---------- 每壹步的節奏（規劃第七節；翊文 11-12：「要讓玩家知道每個步驟要開始了，不是瞬間就切換了」） ----------
+// 回合軌道：① 牠亮招 → ② 你們選（選好了蓋「鎖定」）→ ③ 結算。
+// 新的壹招出來的時候先演 REVEAL_MS（木牌掉下來、紅線指到要被打的人、座位閃紅、低沉的鼓），演完按鈕才從底下滑上來。
+// 進度放在 BEAT（模組裡），畫面重畫時照進度畫回來。重新整理、斷線回來時，那壹招早就亮過了就不重演
+const REVEAL_MS = 1200;
+const BEAT = { key: null, until: 0, entered: null, timer: null };
+const intentKey = v => (v && v.fight ? `${v.id || ""}:${v.fight.foe}:${v.fight.phase}:${v.fight.round}` : null);
+function beatSync(v) {
+  const k = intentKey(v);
+  if (!k || replaying(v) || k === BEAT.key) return;
+  BEAT.key = k; BEAT.until = 0;
+  if (BEAT.timer) { clearTimeout(BEAT.timer); BEAT.timer = null; }
+  const started = v.deadline ? v.deadline - COOP.fightMs : 0; // 這壹回合開始倒數的時間
+  if (reduceMotion() || (started && nowMs() > started + 4000)) { BEAT.entered = k; return; }
+  BEAT.until = nowMs() + REVEAL_MS;
+  snd("drum");
+  BEAT.timer = setTimeout(() => { BEAT.timer = null; redraw(); }, REVEAL_MS);
+}
+const revealing = v => intentKey(v) === BEAT.key && nowMs() < BEAT.until;
+// 現在在第幾步：1 亮招、2 選、3 結算
+const stepOf3 = v => (replaying(v) ? 3 : revealing(v) ? 1 : 2);
+const TRACK = ["牠亮招", "你們選", "結算"], TRACK_NO = ["①", "②", "③"];
+function fightTrack(step, text) {
+  return h("span", { class: "fg-track", role: "status" }, TRACK.map((t, i) => h("span", { class: "fg-tk" + (i + 1 === step ? " on" : i + 1 < step ? " done" : ""), title: `${TRACK_NO[i]} ${t}` },
+    h("i", null, TRACK_NO[i]), i + 1 === step ? h("b", null, text || t) : h("small", null, t))));
+}
+// 下壹招會打到誰、可能扣多少（fightView.risk，伺服器給的；看不清楚就沒有）
+function riskText(fv, seatId) {
+  const r = fv.risk;
+  if (!r || !(r.to === seatId || r.kind === "all")) return null;
+  if (r.kind === "hit") return "可能壹隻佩佩倒下";
+  if (r.san) return `可能理智 −${diceWords(r.san)}`;
+  return r.kind === "scare" || r.kind === "all" ? "要扣理智" : null;
+}
+// 紅線：從怪物拉到要被打的人（畫好之後量位置再畫；舞台重畫就重量）
+function drawAim(st) {
+  if (!st.isConnected) return;
+  st.querySelectorAll(".fg-aim").forEach(x => x.remove());
+  const foe = st.querySelector(".fg-foe-box"), seats = [...st.querySelectorAll(".fg-seat.aimed")];
+  if (!foe || !seats.length) return;
+  const R = st.getBoundingClientRect(), a = foe.getBoundingClientRect(), NS = "http://www.w3.org/2000/svg";
+  if (!R.width || !a.width) return;
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "fg-aim"); svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("viewBox", `0 0 ${R.width} ${R.height}`);
+  const x0 = a.left + a.width / 2 - R.left, y0 = a.top + a.height * 0.7 - R.top;
+  seats.forEach(s => {
+    const b = s.getBoundingClientRect(), x1 = b.left + b.width / 2 - R.left, y1 = (b.top > a.bottom ? b.top : b.top + b.height / 2) - R.top;
+    const p = document.createElementNS(NS, "path");
+    p.setAttribute("d", `M${x0.toFixed(1)},${y0.toFixed(1)} Q${((x0 + x1) / 2).toFixed(1)},${(Math.min(y0, y1) - 10).toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`);
+    svg.append(p);
+  });
+  st.append(svg);
 }
 // 跳過：直接到小結（again ＝要不要重畫）
 export function fightReplaySkip(again = true) {
@@ -169,7 +224,7 @@ export function fightStage(v, mine = null) {
   const waiting = (fv.waiting || []).filter(id => !(mine && id === v.me)); // 自己按了就馬上算選好（不用等伺服器回來）
   const it = f.intent || {};
   // 結算演出（RP）：現在演到哪壹格；那壹格的特效、跳出來的字、亮起來的座位
-  const play = replaying(v), cur = play ? RP.steps[RP.i] || null : null;
+  const play = replaying(v), cur = play ? RP.steps[RP.i] || null : null, rev = !play && revealing(v);
   const fxOn = on => (cur ? cur.fxs.filter(x => x.on === on).map(x => fightFx(x.kind, on === "foe" ? "" : "on-seat")) : []);
   const popOn = on => (cur ? cur.pops.filter(x => x.on === on).map(x => h("span", { class: "fg-pop " + x.cls }, x.text)) : []);
   const hpNow = play ? RP.hp : f.hp, hpMaxNow = play ? RP.hpMax : f.hpMax;
@@ -178,6 +233,7 @@ export function fightStage(v, mine = null) {
   const cut = myPush ? Math.max(0, Math.round((f.hp - myPush.lo) / Math.max(1, f.hpMax) * 100)) : pct; // 你推了大概會扣到哪（淡色預告）
   const seats = f.seats.map(s => h("div", { class: "fg-seat" + (s.id === v.me ? " me" : "") + (s.ghost ? " ghost" : "") + (s.out ? " gone" : "") + (!play && it.to === s.id ? " aimed" : "") + (cur && cur.who === s.id ? " acting" : "") + (cur && (cur.shake || []).includes(s.id) ? " shake" : "") },
     ...fxOn(s.id), ...popOn(s.id),
+    !play && riskText(fv, s.id) ? h("span", { class: "fg-risk" }, riskText(fv, s.id)) : null,
     h("b", { class: "fg-who" }, s.helper ? "館方助手" : nameOf(v, s.id) + (s.id === v.me ? "（你）" : ""),
       s.helper || play ? null : h("i", { class: "fg-ok" + (waiting.includes(s.id) ? "" : " on") }, s.out ? "走了" : s.ghost ? "倒了" : waiting.includes(s.id) ? "在想…" : "選好了")),
     !s.helper && (s.roles || []).length ? h("div", { class: "fg-roles" }, h("small", null, "適合"), s.roles.map(roleBadge)) : null,
@@ -185,7 +241,8 @@ export function fightStage(v, mine = null) {
     h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : "") + (p.beat ? " beat" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}${p.beat ? "（心情剋牠）" : ""}` },
       h("div", { class: "fg-art", html: itemHTML({ kind: "pepe", key: p.key, pick: p.pick, perfect: p.perfect }) }), h("small", null, p.down ? "受傷" : `強度 ${p.power}${p.beat ? "・剋牠" : ""}`))))));
   const trait = fightTraitText(fightTraitOf(f)), traitKind = (fightTraitOf(f) || {}).kind;
-  return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") },
+  const focusFoe = !!(cur && (cur.lunge || cur.fxs.some(x => x.on === "foe")));
+  const st = h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") + (rev ? " reveal" : "") + (cur && cur.who ? " has-actor" : "") + (focusFoe ? " focus-foe" : "") },
     cur && cur.banner ? h("div", { class: "fg-banner", role: "status" }, cur.banner) : null,
     h("div", { class: "fg-foe" },
       play ? h("div", { class: "fg-intent k-none", role: "status" }, h("i", null, "結"), h("span", null, h("b", null, "結算中"))) : h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
@@ -195,6 +252,8 @@ export function fightStage(v, mine = null) {
       h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${hpNow}／${hpMaxNow}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${hpNow}／${hpMaxNow}`)),
       f.weak ? h("p", { class: "fg-flag" }, `弱點找到了：推 ×${NUM.fight.weakMult}`) : null),
     h("div", { class: "fg-seats" }, seats));
+  if (!play && typeof requestAnimationFrame === "function") requestAnimationFrame(() => drawAim(st));
+  return st;
 }
 
 // 上壹回合發生了什麼：壹行壹件事，寫得出為什麼
@@ -270,13 +329,13 @@ export function fightCard(v, me, api) {
   if (replaying(v)) {
     const r = RP.round, steps = RP.steps;
     card.append(
-      h("h2", { class: "room-title fg-now" }, `結算中：第 ${r.round - (r.over ? 0 : 1)} 回合`, btn("跳過", () => fightReplaySkip(), "ghost small fg-skip")),
+      h("h2", { class: "room-title fg-now" }, fightTrack(3, `結算：第 ${r.round - (r.over ? 0 : 1)} 回合`), btn("跳過", () => fightReplaySkip(), "ghost small fg-skip")),
       h("div", { class: "fg-log replay" }, h("ul", null, steps.map((st, i) => (st.line ? h("li", { class: i < RP.i ? "done" : i === RP.i ? "now" : "later" }, st.line) : null)))),
       RP.i >= steps.length ? h("p", { class: "fg-sum" }, RP.summary) : h("p", { class: "pt-hint" }, "演完才開始倒數，大家都有完整的時間選。"));
     return card;
   }
   const send = (pick, o) => {
-    const go = tap => { api.setMine(Object.assign({}, pick, { tap })); api.act(Object.assign({}, pick, { tap })); snd("click"); };
+    const go = tap => { api.setMine(Object.assign({}, pick, { tap })); api.act(Object.assign({}, pick, { tap })); snd("stamp"); }; // 鎖定「喀」
     if (o && o.tap && (pick.act === "push" || pick.act === "crown" || pick.act === "tentacle")) { const ring = tapRing(go); if (ring) card.append(ring); }
     else go(0);
   };
@@ -311,17 +370,31 @@ export function fightCard(v, me, api) {
     { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) });
   const sum = RP.summary && RP.key === roundKey(v) ? RP.summary : null;
   const roundNo = v.last && v.last.round ? v.last.round.round - (v.last.round.over ? 0 : 1) : 0;
+  // 第幾步：亮招中按鈕先藏著（位置留著，不會跳）；亮完第壹次畫出來時從底下滑上來（之後有人選、整個重畫就不再滑）
+  const step = stepOf3(v), hold = step === 1;
+  const enter = !hold && BEAT.key === intentKey(v) && BEAT.entered !== BEAT.key;
+  if (enter) { BEAT.entered = BEAT.key; snd("whoosh"); }
+  const allIn = picked && !waiting.length;
   card.classList.add("fg-panel");
+  if (hold) card.classList.add("hold");
+  if (enter) { card.classList.add("enter"); setTimeout(() => card.classList.remove("enter"), 700); } // 滑完就拿掉（分頁在背景時動畫會停住，不拿掉按鈕會卡在半路）
+  if (picked) card.classList.add("locked");
   card.append(
     h("div", { class: "fg-head" },
-      h("h2", { class: "room-title fg-now" }, title),
-      h("span", { class: "cx-clock" }),
+      h("h2", { class: "room-title fg-now" }, fightTrack(step, hold ? "牠亮招了" : title)),
+      h("span", { class: "fg-timer", "aria-hidden": "true" }, h("b", { class: "fg-sec" })),
+      h("span", { class: "cx-clock fg-clock-text" }),
       h("div", { class: "fg-me" }, h("span", null, `理智 ${seat.san ?? "—"}`), h("i", { class: "fg-san" }, h("i", { style: { width: sanPct + "%" } })), seat.brave ? h("span", { class: "fg-brave", title: "有隊友壯膽：扣理智的時候先扣膽量" }, `膽量 ${seat.brave}`) : null),
       h("div", { class: "fg-exits" }, exits.map(o => btn(ACT_TEXT[o.act], () => send({ act: o.act }, o), "ghost small fg-exit" + (mine && mine.act === o.act ? " cx-on" : ""), { title: desc(o), "aria-pressed": String(!!(mine && mine.act === o.act)) })))),
     last.length ? h("details", { class: "fg-report" }, h("summary", null, h("b", null, `第 ${roundNo} 回合　`), sum || last[last.length - 1], h("small", null, "　戰報 ▾")), h("ul", null, last.map(l => h("li", null, l))))
       : h("p", { class: "pt-sub fg-tip" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
     h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
     team.length || moves.length ? h("div", { class: "fg-chips" }, team.map(chip), moves.map(chip)) : null);
+  // 大家都鎖定了：列出這回合的順序（別人選什麼結算前看不到，只寫誰）
+  if (allIn) card.append(h("ol", { class: "fg-order", "aria-label": "這回合的順序" },
+    f.seats.filter(s => !s.helper && !s.out && !s.ghost).map(s => h("li", null, nameOf(v, s.id) + (s.id === v.me && mine ? `：${ACT_TEXT[mine.act] || (MOVE_TEXT[mine.act] || mine.act).split("：")[0]}` : ""))),
+    f.seats.some(s => s.helper) ? h("li", null, "館方助手：推") : null,
+    h("li", { class: "foe" }, `牠：${fv.intent || "……"}`)));
   return card;
 }
 export const fightMoveNames = () => Object.keys(FIGHT_MOVES);

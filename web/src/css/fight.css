@@ -360,3 +360,98 @@ body.reduce-motion .fg-pop, body.reduce-motion .fg-banner, body.reduce-motion .f
   .fg-panel .fg-chip { height: 38px; }
   .fg-panel .fg-exit { min-height: 28px; padding-block: 0; }
 }
+
+/* ---------- 每壹步的節奏（規劃第七節，ui_fight.js 的 BEAT） ---------- */
+/* 回合軌道：① 牠亮招 ② 你們選 ③ 結算。亮著的那壹步是銅牌（ui-plaque-2），其他是小圓圈 */
+.fg-track { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.fg-tk { display: inline-flex; align-items: center; gap: 4px; min-width: 0; color: rgba(251, 239, 217, .5); font-size: .75rem; white-space: nowrap; }
+.fg-tk i { flex: none; font-style: normal; font-size: 1rem; line-height: 1; }
+.fg-tk + .fg-tk::before { content: ""; width: 10px; height: 2px; margin-right: 2px; background: rgba(214, 178, 94, .45); }
+.fg-tk.done { color: rgba(214, 178, 94, .8); }
+.fg-tk.on { min-width: 0; padding: 2px 12px 2px 8px; border: 10px solid transparent; border-image: url(/cellar2/ui-plaque-2.webp) 30 fill / 10px stretch; margin: -6px 0; color: #3A1E10; font-size: inherit; }
+.fg-tk.on b { overflow: hidden; text-overflow: ellipsis; }
+.fg-tk:not(.on) small { display: none; } /* 沒亮的兩步只留號碼（名字在 title），標題才不會把逃跑、撤退擠到下壹行 */
+.fg-panel.enter .fg-tk.on, .fg-panel.hold .fg-tk.on { animation: fg-tk-in .35s ease-out; }
+@keyframes fg-tk-in { from { transform: translateY(-8px); opacity: 0; } }
+/* 計時圈（ui-timer）：--p ＝還剩幾成，ui_coop.js 的 tickClock 每 0.25 秒更新；最後 5 秒變紅跳動 */
+.fg-timer { --p: 1; position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; background: url(/cellar2/ui-timer.webp) center / contain no-repeat; }
+.fg-timer::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: conic-gradient(#E3B65A calc(var(--p) * 360deg), transparent 0); -webkit-mask: radial-gradient(circle, transparent 52%, #000 54%); mask: radial-gradient(circle, transparent 52%, #000 54%); transition: background .25s linear; }
+.fg-timer .fg-sec { position: relative; color: #FBEFD9; font-size: .875rem; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.fg-timer.soon::before { background: conic-gradient(#D23A2C calc(var(--p) * 360deg), transparent 0); }
+.fg-timer.soon { animation: fg-beat .5s ease-in-out infinite alternate; }
+@keyframes fg-beat { to { transform: scale(1.12); } }
+.fg-head .fg-clock-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } /* 讀螢幕的人還是聽得到「還有 N 秒」 */
+.fg-panel.hold .fg-timer, .fg-panel.hold .fg-timer::before { visibility: hidden; }
+/* ① 亮招：木牌從上面掉下來、怪物抬起來、被瞄準的座位往前壹步閃紅；按鈕先藏著（位置留著） */
+.fg-stage.reveal .fg-intent { animation: fg-drop .6s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes fg-drop { from { transform: translateY(-60px); opacity: 0; } }
+.fg-stage.reveal .fg-foe-art { animation: fg-rise .6s ease-out; }
+@keyframes fg-rise { 40% { transform: translateY(-8px) scale(1.04); } }
+.fg-stage .fg-seat.aimed { transform: translateY(-4px); transition: transform .3s; }
+.fg-stage.reveal .fg-seat.aimed { animation: fg-aimed .4s ease-in-out 3; }
+@keyframes fg-aimed { 50% { box-shadow: 0 0 0 4px #E04A3A, 0 0 18px rgba(224, 74, 58, .8); } }
+.fg-risk { position: absolute; z-index: 3; left: 50%; bottom: 100%; transform: translate(-50%, -2px); padding: 1px 8px; border-radius: 999px; background: #7A1F2B; color: #FFE6DA; font-size: .6875rem; font-weight: 700; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); pointer-events: none; }
+.fg-aim { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; overflow: visible; }
+.fg-aim path { fill: none; stroke: #E04A3A; stroke-width: 3; stroke-dasharray: 8 6; stroke-linecap: round; opacity: .85; filter: drop-shadow(0 0 3px rgba(224, 74, 58, .7)); animation: fg-ants 1s linear infinite; }
+@keyframes fg-ants { to { stroke-dashoffset: -28; } }
+.fg-stage.reveal .fg-aim path { animation: fg-draw .6s ease-out both, fg-ants 1s linear .6s infinite; stroke-dasharray: 600; }
+@keyframes fg-draw { from { stroke-dashoffset: 600; } to { stroke-dashoffset: 0; } }
+.fg-panel.hold .fg-acts, .fg-panel.hold .fg-chips, .fg-panel.hold .fg-exits { visibility: hidden; }
+/* ② 你們選：按鈕從底下滑上來（亮完第壹次畫的時候） */
+.fg-panel.enter .fg-acts > *, .fg-panel.enter .fg-chips { animation: fg-up .35s cubic-bezier(.2, .9, .3, 1.15) both; }
+.fg-panel.enter .fg-acts > :nth-child(2) { animation-delay: .05s; } .fg-panel.enter .fg-acts > :nth-child(3) { animation-delay: .1s; } .fg-panel.enter .fg-acts > :nth-child(4) { animation-delay: .15s; } .fg-panel.enter .fg-chips { animation-delay: .2s; }
+@keyframes fg-up { from { transform: translateY(24px); opacity: 0; } }
+/* 鎖定：沒選的按鈕變暗，選的那顆蓋「鎖定」章 */
+.fg-panel.locked .fg-acts .fg-act:not(.cx-on), .fg-panel.locked .fg-chip:not(.cx-on) { opacity: .5; filter: saturate(.5); }
+.fg-panel.locked .fg-act.cx-on, .fg-panel.locked .fg-chip.cx-on { position: relative; }
+.fg-panel.locked .fg-act.cx-on::after { content: "鎖定"; position: absolute; top: -6px; right: -4px; padding: 0 6px; border: 2px solid #8E2A24; border-radius: 4px; background: #FBEFD9; color: #8E2A24; font-size: .6875rem; font-weight: 700; transform: rotate(8deg); animation: fg-stamp .25s ease-out; }
+@keyframes fg-stamp { from { transform: rotate(8deg) scale(2); opacity: 0; } }
+/* 大家都鎖定了：這回合的順序 */
+.fg-order { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 6px 0 0; padding: 4px 8px 4px 1.6em; border-radius: 6px; background: rgba(122, 90, 42, .12); font-size: .8125rem; }
+.fg-order li.foe { color: #8E2A24; }
+/* ③ 結算：輪到的人往前，其他人變暗；打到怪物的時候鏡頭拉近壹點；小結從旁邊滑進來 */
+.fg-stage.has-actor .fg-seat:not(.acting) { opacity: .5; transition: opacity .2s; }
+.fg-stage .fg-seat.acting { transform: translateY(-6px); transition: transform .2s; z-index: 2; }
+.fg-stage .fg-foe-box { transition: transform .25s; }
+.fg-stage.focus-foe .fg-foe-box { transform: scale(1.06); }
+.fg-sum { animation: fg-slide .4s ease-out both; }
+@keyframes fg-slide { from { transform: translateX(40px); opacity: 0; } }
+body.reduce-motion .fg-stage.reveal .fg-intent, body.reduce-motion .fg-stage.reveal .fg-foe-art, body.reduce-motion .fg-stage.reveal .fg-seat.aimed,
+body.reduce-motion .fg-aim path, body.reduce-motion .fg-panel.enter .fg-acts > *, body.reduce-motion .fg-panel.enter .fg-chips, body.reduce-motion .fg-timer.soon,
+body.reduce-motion .fg-act.cx-on::after, body.reduce-motion .fg-sum, body.reduce-motion .fg-tk.on { animation: none; }
+body.reduce-motion .fg-stage.focus-foe .fg-foe-box { transform: none; }
+@media (max-width: 760px) {
+  .fg-tk:not(.on) small { display: none; } /* 手機：沒亮的那兩步只留號碼 */
+  .fg-timer { width: 34px; height: 34px; } .fg-timer::before { inset: 6px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-tk:not(.on) small { display: none; }
+  .fg-tk.on { border-width: 6px; margin: -4px 0; }
+  .fg-timer { width: 30px; height: 30px; } .fg-timer::before { inset: 5px; } .fg-timer .fg-sec { font-size: .75rem; }
+  .fg-order { display: none; }
+  .fg-risk { font-size: .625rem; }
+}
+/* 結算時的卡片是淺色紙：軌道的號碼改深色 */
+.fg-card:not(.fg-panel) .fg-tk { color: rgba(42, 30, 20, .4); }
+.fg-card:not(.fg-panel) .fg-tk.done { color: #7A5A2A; }
+.fg-card:not(.fg-panel) .fg-tk + .fg-tk::before { background: rgba(122, 90, 42, .4); }
+/* 軌道和計時圈排同壹行（軌道太長就省略亮著那壹步的字），手機才不會多壹行 */
+.fg-head .fg-now { min-width: 0; }
+.fg-head .fg-now .fg-track { overflow: hidden; }
+.fg-tk.on { flex: 0 1 auto; }
+@media (max-width: 760px) {
+  .fg-head .fg-now { flex: 1 1 0; }
+  .fg-tk.on b { white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  .fg-head .fg-now { flex: 1 1 calc(100% - 50px); }
+  .fg-tk.on { border-width: 7px; margin: -5px 0; padding: 0 8px 0 4px; }
+}
+@media (max-width: 760px) {
+  .fg-head .fg-me .fg-san { display: none; } /* 手機：理智只留數字，跟逃跑、撤退排同壹行 */
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-head { flex-wrap: nowrap; }
+  .fg-head .fg-now { flex: 1 1 0; } /* 橫拿：軌道、計時圈、理智、逃跑撤退擠壹行，舞台才不會再變矮；字太長就省略 */
+  .fg-head .fg-me .fg-san { display: none; }
+}

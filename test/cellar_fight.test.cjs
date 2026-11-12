@@ -368,6 +368,8 @@ T("下一招的字：{x} 換成被點到的人的名字", G => {
   const f = start(G, [seat(G, "小明", [{}])]);
   aim(G, f, "cling", "小明");
   assert.ok(G.fightIntentText(f).includes("小明") && !G.fightIntentText(f).includes("{x}"));
+  const r = G.fightIntentRisk(f);
+  assert.ok(r && r.to === "小明" && r.kind === f.intent.kind, "預告：要打誰、哪壹種");
 });
 T("fightSeat：從存檔做座位，只讀不改", G => {
   const P = G.newProfile("challenge");

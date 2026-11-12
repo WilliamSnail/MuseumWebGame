@@ -86,10 +86,12 @@ T("蓋著布（f2a）：只說要對誰；看不清楚（f5a）：前 n 回合�
   aim(G, f, "hit", "a");
   assert.strictEqual(G.fightIntentHidden(f), "veil");
   assert.strictEqual(G.fightIntentText(f), "要對a做壹件事");
+  assert.deepStrictEqual([G.fightIntentRisk(f).to, G.fightIntentRisk(f).san], ["a", null], "蓋著布：預告只給要對誰，不給扣多少");
   f = G.fightStart("f5a", [seat(G, "a", [{}], { skills: { 偵查: 90 } })]);
   aim(G, f, "hit", "a");
   assert.strictEqual(G.fightIntentHidden(f), "blur");
   assert.strictEqual(G.fightIntentText(f), "看不清楚牠要做什麼");
+  assert.strictEqual(G.fightIntentRisk(f), null, "看不清楚：什麼都不預告");
   assert.ok(G.fightOptions(f, "a").find(o => o.act === "reveal").ok);
   f.hp = f.hpMax = 999; G.setRng(() => 0.15);
   const r = G.fightRound(f, { a: { act: "reveal" } });

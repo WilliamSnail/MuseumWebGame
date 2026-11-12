@@ -202,6 +202,13 @@ function tickClock() {
   if (!s || !s.view || s.view.ended) return;
   const v = s.view, left = secLeft(v);
   if (s.m && s.m.layer.isConnected) s.m.surface.querySelectorAll(".cx-clock").forEach(el => { el.textContent = left == null ? "" : `還有 ${left} 秒`; el.classList.toggle("soon", left != null && left <= 5); });
+  // 打怪的計時圈（ui_fight.js）：--p ＝還剩幾成，最後 5 秒變紅跳動
+  if (s.m && s.m.layer.isConnected) s.m.surface.querySelectorAll(".fg-timer").forEach(el => {
+    const ms = v.deadline ? Math.max(0, v.deadline - nowMs()) : 0;
+    el.style.setProperty("--p", String(Math.min(1, ms / COOP.fightMs)));
+    el.classList.toggle("soon", left != null && left <= 5);
+    const b = el.querySelector(".fg-sec"); if (b) b.textContent = left == null ? "" : String(Math.min(left, Math.ceil(COOP.fightMs / 1000)));
+  });
   if (!v.deadline || s.anim) return;
   // 大家不要同時叫：照隊員順序差一點點；叫過了 4 秒還沒動再叫一次
   const i = Math.max(0, v.members.findIndex(m => m.id === v.me));
