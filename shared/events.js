@@ -22,6 +22,7 @@ export const EVENT_KINDS = {
   coopBoost: { name: "合作地下收藏庫", where: "地下收藏庫的「壹起下去」" },
   trialBoost: { name: "試煉房間", where: "地下收藏庫的試煉房間" },
   casinoBoost: { name: "賭場", where: "Hamachi 賭場的大禮包" },
+  cellarChips: { name: "地下收藏庫的籌碼", where: "地下收藏庫的房間（單人、多人都算）" },
 };
 const EV_KINDS = Object.keys(EVENT_KINDS);
 const EV_ID = /^[A-Za-z0-9_-]{1,32}$/, EV_HM = /^([01]\d|2[0-3]):([0-5]\d)$/, EV_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -147,7 +148,13 @@ export function eventEffect(ev) {
   if (ev && ev.kind === "coopBoost") return `記號對上、猜對、搬回來的靈感 ×${evNum(c.mult || 1)}，當天多 ${c.extraTurns || 0} 趟有獎勵`;
   if (ev && ev.kind === "trialBoost") return `試煉房間過關的技能成長 ×${evNum(c.mult || 1)}`;
   if (ev && ev.kind === "casinoBoost") return `賭場多 ${c.extraPacks || 1} 包免費大禮包（籌碼不是錢）`;
+  if (ev && ev.kind === "cellarChips") return cellarChipsText();
   return "";
+}
+// 地下撿籌碼加碼的壹句話（「約 100 萬」：取 min、max 的中間，換成萬）
+export function cellarChipsText() {
+  const c = NUM.events.cellarChips || {}, mid = Math.round(((c.min || 0) + (c.max || 0)) / 2 / 10000);
+  return `走完地下的房間撿到籌碼時，每次多約 ${mid} 萬（單人、多人都算）`;
 }
 // 開跑通知的字
 export const eventNoticeText = ev => `限時活動開跑：${ev.title}。${eventEffect(ev)}。`;
@@ -158,6 +165,7 @@ export function eventBoostText(boost) {
   if (boost.kind === "coopBoost") return `記號對上、猜對、搬回來的靈感 ×${m}${eventExtraTurns(boost) ? `，今天多 ${eventExtraTurns(boost)} 趟有獎勵` : ""}`;
   if (boost.kind === "trialBoost") return `試煉房間過關的技能成長 ×${m}`;
   if (boost.kind === "casinoBoost") return `賭場多 ${NUM.events.casinoBoost.extraPacks} 包免費大禮包`;
+  if (boost.kind === "cellarChips") return cellarChipsText();
   return "";
 }
 // 畫面上標籤用的短句：「限時活動 ×1.5」

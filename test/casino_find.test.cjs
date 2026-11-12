@@ -154,5 +154,28 @@ T("文字：幾句輪流、畫面用壹、不寫錢和賭博多賺、不鼓勵�
   L.forEach(s => banned.forEach(b => assert.ok(!s.includes(b), `「${s}」不能有「${b}」`)));
 });
 
+// 限時活動 cellarChips（翊文 11-12）：撿到的那次多 min～max；沒撿到不給；別種活動、沒有活動都照舊；莊家照樣守恆
+T("限時活動：撿到的那次多壹把，沒撿到不給", G => {
+  const C = G.NUM.casino.cellarFind, B = G.NUM.events.cellarChips, EV = { kind: "cellarChips", id: "w/x" };
+  assert.ok(B.min > 0 && B.max >= B.min && B.step > 0);
+  let s = fresh(G); const c0 = s.w.chips, h0 = s.house.bankroll;
+  let r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, HIT, EV);
+  assert.ok(r.ok && r.bonus === B.min && r.found === C.min + B.min);
+  assert.strictEqual(s.w.chips, c0 + r.found); assert.strictEqual(s.house.bankroll, h0 - r.found);
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, seq(0, 0, 0, 0.999999), EV);
+  assert.strictEqual(r.bonus, B.max, "最大那級");
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, MISS, EV);
+  assert.ok(r.ok && r.found === 0);
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, HIT, { kind: "casinoBoost" });
+  assert.strictEqual(r.bonus, 0); assert.strictEqual(r.found, C.min);
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, HIT);
+  assert.strictEqual(r.bonus, 0);
+});
+T("限時活動的字：約幾萬、單人多人都算", G => {
+  const t = G.eventEffect({ kind: "cellarChips" }), B = G.NUM.events.cellarChips;
+  assert.ok(t.includes(String(Math.round((B.min + B.max) / 2 / 10000))) && t.includes("多人"), t);
+  assert.ok(G.EVENT_KINDS.cellarChips);
+});
+
 console.log(`${pass} passed, ${fail} failed（地下撿籌碼）`);
 process.exit(fail ? 1 : 0);

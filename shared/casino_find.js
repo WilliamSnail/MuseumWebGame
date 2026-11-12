@@ -32,7 +32,8 @@ export function casFindLeft(w, day) {
 }
 // 走完一個房間：擲一次。
 // 回傳 { ok: false, reason, dup?, capped? }（什麼都沒改）、{ ok: true, found: 0 }（擲了沒撿到，記下這個房間）、{ ok: true, found: 籌碼數, t: 第幾句 }
-export function casCellarFind(w, house, roomId, day, rnd = RNG) {
+// boost：進行中的 cellarChips 限時活動（伺服器用自己的時間找，沒有就 null）：撿到的那次另外多 NUM.events.cellarChips 的 min～max，回傳裡的 bonus
+export function casCellarFind(w, house, roomId, day, rnd = RNG, boost = null) {
   const C = NUM.casino.cellarFind;
   if (!C || typeof rnd !== "function") return { ok: false, reason: "沒有這個設定" };
   if (!casFindRoomOk(roomId)) return { ok: false, reason: "不認得這個房間" };
@@ -42,8 +43,11 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG) {
   cf.rooms.push(roomId);
   if (!(rnd() < C.chance)) return { ok: true, found: 0 };
   const steps = Math.floor((C.max - C.min) / C.step) + 1;
-  const found = Math.min(C.max, C.min + C.step * Math.min(steps - 1, Math.floor(rnd() * steps)));
+  let found = Math.min(C.max, C.min + C.step * Math.min(steps - 1, Math.floor(rnd() * steps)));
   const t = Math.min(CAS_FIND_TEXT.lines.length - 1, Math.floor(rnd() * CAS_FIND_TEXT.lines.length));
+  const B = boost && boost.kind === "cellarChips" ? NUM.events.cellarChips : null;
+  const bonus = B ? B.min + B.step * Math.floor(rnd() * (Math.floor((B.max - B.min) / B.step) + 1)) : 0;
+  found += bonus;
   cf.n++;
   w.chips += found;
   if (house) house.bankroll -= found; // 莊家出，跟大禮包一樣
@@ -51,5 +55,5 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG) {
   w.st.finds = Math.floor(cfNum(w.st.finds)) + 1;
   w.st.findChips = Math.floor(cfNum(w.st.findChips)) + found;
   w.st.chipsMax = Math.max(cfNum(w.st.chipsMax), w.chips);
-  return { ok: true, found, t };
+  return { ok: true, found, t, bonus };
 }

@@ -613,7 +613,7 @@ ADDONS.cellarFind = roomId => {
     if (!r || !r.ok || !(r.found > 0)) return;
     if (typeof r.chips === "number") setChips(r.chips);
     const lines = CAS_FIND_TEXT.lines;
-    note(`${lines[(r.t | 0) % lines.length]}（+${casNum(r.found)} 籌碼）`, "good");
+    note(`${lines[(r.t | 0) % lines.length]}（+${casNum(r.found)} 籌碼${r.bonus > 0 ? `，其中 ${casNum(r.bonus)} 是限時活動多的` : ""}）`, "good");
   }).catch(() => {});
 };
 // 交了委託（ui_screens2.js：手動交壹張、壹鍵交件交好幾張）：跟伺服器說交了今天的哪幾張（決定 0062）。給多少是伺服器的事；不等它，連不上就算了
