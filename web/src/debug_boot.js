@@ -13,7 +13,7 @@ import { overlay } from "./ui_board.js";
 import { fightCard, fightStage } from "./ui_fight.js";
 
 // #fight：不連伺服器，直接打開合作地下的守門打怪（地下室改版的畫面，ui_fight.js）。跟你壹隊的「小華」會自己選推。
-//   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）
+//   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）；#fight:f3g　換成那隻怪物、那壹層的舞台（看圖用，數字不準）
 // 規則照樣跑 shared/ 的 coopBegin、coopAct，只是存檔不存、不送伺服器。看排版、按鈕、結算的字用。
 function fightPreview(arg) {
   const today = todayStr();
@@ -33,6 +33,7 @@ function fightPreview(arg) {
     else if (run.phase === "carry") ids.forEach(id => coopAct(run, Ps, id, "carry", { side: "skip" }, ++clock));
     else ids.forEach(id => coopAct(run, Ps, id, "ack", {}, ++clock));
   }
+  if (/^f[1-5][abg]$/.test(arg || "") && run.fight) { run.fight.foe = arg; run.floor = Number(arg[1]); }
   if (arg === "p2") for (let i = 0; i < 12 && run.phase === "fight" && run.fight.phase === 1; i++) ids.forEach(id => coopAct(run, Ps, id, "fight", { act: "push" }, ++clock));
   const m = overlay("nb-party nb-coop", "地下收藏庫（開發用：打怪預覽）", "打怪預覽", "stairs");
   let pick = null;

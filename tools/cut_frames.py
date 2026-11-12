@@ -9,6 +9,7 @@
 #   python tools/cut_frames.py 原圖 輸出.webp --rows 3 [--cell 300] [--split]
 #   --cell   每格最大邊（縮小用，不放大）
 #   --split  另外每格存一個檔：輸出-1.webp、輸出-2.webp…
+#   --box x0,y0,x1,y1  不照排切，只拿這一塊（零件大小不一樣時，一個零件跑一次）
 # 會印一行 JSON：{"n":格數,"w":格寬,"h":格高}。CSS：background-size: (n×100%) 100%，第 i 格 background-position: i/(n-1)×100%。
 import sys, json, argparse
 import numpy as np
@@ -17,7 +18,8 @@ from scipy import ndimage
 
 ap = argparse.ArgumentParser()
 ap.add_argument("src"); ap.add_argument("out")
-ap.add_argument("--rows", required=True)
+ap.add_argument("--rows", default="1")
+ap.add_argument("--box", action="append", default=[], help="x0,y0,x1,y1：只拿這一塊（可以寫好幾個，每個一格）")
 ap.add_argument("--cell", type=int, default=0)
 ap.add_argument("--split", action="store_true")
 a = ap.parse_args()
@@ -56,12 +58,17 @@ def cuts(proj, n, length):
         out.append(int(cand[np.argmin(np.abs(cand - ideal))]))
     return [0] + out + [length]
 
-ys = cuts(mask.sum(1), len(rows), H)
 cells = []  # (y0, y1, x0, x1)
-for ri, n in enumerate(rows):
-    y0, y1 = ys[ri], ys[ri + 1]
-    xs = cuts(mask[y0:y1].sum(0), n, W)
-    for k in range(n): cells.append((y0, y1, xs[k], xs[k + 1]))
+if a.box:
+    for bx in a.box:
+        x0, y0, x1, y1 = [int(v) for v in bx.split(",")]
+        cells.append((y0, y1, x0, x1))
+else:
+    ys = cuts(mask.sum(1), len(rows), H)
+    for ri, n in enumerate(rows):
+        y0, y1 = ys[ri], ys[ri + 1]
+        xs = cuts(mask[y0:y1].sum(0), n, W)
+        for k in range(n): cells.append((y0, y1, xs[k], xs[k + 1]))
 
 # 每格內容的範圍（相對格子的左上角），取聯集；格子大小不一樣時，用格子的中心對齊
 boxes = []
