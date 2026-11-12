@@ -10,9 +10,10 @@ import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, setP, s
 import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";
 import { overlay } from "./ui_board.js";
-import { fightCard, fightStage } from "./ui_fight.js";
+import { fightCard, fightOnRedraw, fightReplaySync, fightStage } from "./ui_fight.js";
 import { routeCard, routeStage } from "./ui_route.js";
 import { coopRouteOptions } from "../../shared/coop_route.js";
+import { cmapNode } from "../../shared/cellar_map.js";
 
 // #fight：不連伺服器，直接打開合作地下的守門打怪（地下室改版的畫面，ui_fight.js）。跟你壹隊的「小華」會自己選推。
 //   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）；#fight:f3g　換成那隻怪物、那壹層的舞台（看圖用，數字不準）
@@ -27,21 +28,21 @@ function routePreview(arg) {
   const s = coopBegin([{ id: "me", name: "小明", P, keys: mine }], 1, today, clock, { gate: true });
   if (!s.ok) { console.warn("#route 開不了：", s.reason); return; }
   const run = s.run, Ps = { me: P };
-  if (floor > 1) { run.floor = floor; run.cmap = null; run.phase = "floorDone"; run.next = floor; run.floor = floor - 1; run.votes = {}; coopAct(run, Ps, "me", "floor", { go: "down" }, ++clock); }
+  if (floor > 1) { run.floor = floor; run.cmap = null; run.phase = "floorDone"; run.next = floor; run.floor = floor - 1; run.votes = {}; coopAct(run, Ps, "me", "floor", { go: "down" }, (clock = Math.max(clock + 1, nowMs()))); }
   const m = overlay("nb-party nb-coop", "地下收藏庫（開發用：地圖預覽）", "地圖預覽", "stairs");
   let sel = null;
   const finish = () => { // 把現在這個點做完
     for (let i = 0; i < 80 && run.phase !== "route" && run.phase !== "over" && run.phase !== "floorDone"; i++) {
-      if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); coopAct(run, Ps, "me", "vote", { choice: c }, ++clock); }
-      else if (run.phase === "fight") coopAct(run, Ps, "me", "fight", { act: "push" }, ++clock);
-      else if (run.phase === "rest") coopAct(run, Ps, "me", "rest", { pick: "san" }, ++clock);
-      else if (run.phase === "carry") coopAct(run, Ps, "me", "carry", { side: "skip" }, ++clock);
-      else coopAct(run, Ps, "me", "ack", {}, ++clock);
+      if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); coopAct(run, Ps, "me", "vote", { choice: c }, (clock = Math.max(clock + 1, nowMs()))); }
+      else if (run.phase === "fight") coopAct(run, Ps, "me", "fight", { act: "push" }, (clock = Math.max(clock + 1, nowMs())));
+      else if (run.phase === "rest") coopAct(run, Ps, "me", "rest", { pick: "san" }, (clock = Math.max(clock + 1, nowMs())));
+      else if (run.phase === "carry") coopAct(run, Ps, "me", "carry", { side: "skip" }, (clock = Math.max(clock + 1, nowMs())));
+      else coopAct(run, Ps, "me", "ack", {}, (clock = Math.max(clock + 1, nowMs())));
     }
   };
   const draw = () => {
     const v = viewFor(run, "me"), me = v.members.find(x => x.id === "me");
-    const body = run.phase === "route" ? [routeStage(v, sel, id => { sel = id; draw(); }), routeCard(v, me, { sel, mine: null, go: node => { coopAct(run, Ps, "me", "route", { node }, ++clock); sel = null; finish(); draw(); } })]
+    const body = run.phase === "route" ? [routeStage(v, sel, id => { sel = id; draw(); }), routeCard(v, me, { sel, mine: null, go: node => { coopAct(run, Ps, "me", "route", { node }, (clock = Math.max(clock + 1, nowMs()))); sel = null; finish(); draw(); } })]
       : [h("p", { class: "nb-empty" }, `走完了（${run.phase}）`)];
     m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body),
       h("aside", { class: "cx-side" }, h("p", { class: "pt-hint" }, `（預覽：能走 ${coopRouteOptions(run).length} 個點；真的遊戲這壹欄是隊員、證據和聊天）`))));
@@ -61,23 +62,30 @@ function fightPreview(arg) {
   const s = coopBegin(members, 1, today, clock, { gate: true });
   if (!s.ok) { console.warn("#fight 開不了：", s.reason); return; }
   const run = s.run;
-  for (let i = 0; i < 30 && run.phase !== "fight" && run.phase !== "floorDone" && run.phase !== "over"; i++) { // 房間都選安全的走完
-    if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); ids.forEach(id => coopAct(run, Ps, id, "vote", { choice: c }, ++clock)); }
-    else if (run.phase === "carry") ids.forEach(id => coopAct(run, Ps, id, "carry", { side: "skip" }, ++clock));
-    else ids.forEach(id => coopAct(run, Ps, id, "ack", {}, ++clock));
+  for (let i = 0; i < 80 && run.phase !== "fight" && run.phase !== "floorDone" && run.phase !== "over"; i++) { // 房間都選安全的走完
+    if (run.phase === "route") { // 地圖選路：壹路走探索房、最後休息，再來是守門
+      const opts = coopRouteOptions(run), kind = id => cmapNode(run.cmap, id).kind;
+      const pick = opts.find(id => kind(id) === "explore") || opts.find(id => kind(id) === "rest") || opts.find(id => kind(id) === "gate") || opts[0];
+      ids.forEach(id => { if (run.phase === "route") coopAct(run, Ps, id, "route", { node: pick }, (clock = Math.max(clock + 1, nowMs()))); });
+    } else if (run.phase === "rest") ids.forEach(id => coopAct(run, Ps, id, "rest", { pick: "san" }, (clock = Math.max(clock + 1, nowMs()))));
+    else if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); ids.forEach(id => coopAct(run, Ps, id, "vote", { choice: c }, (clock = Math.max(clock + 1, nowMs())))); }
+    else if (run.phase === "carry") ids.forEach(id => coopAct(run, Ps, id, "carry", { side: "skip" }, (clock = Math.max(clock + 1, nowMs()))));
+    else ids.forEach(id => coopAct(run, Ps, id, "ack", {}, (clock = Math.max(clock + 1, nowMs()))));
   }
   if (/^f[1-5][abg]$/.test(arg || "") && run.fight) { run.fight.foe = arg; run.floor = Number(arg[1]); }
-  if (arg === "p2") for (let i = 0; i < 12 && run.phase === "fight" && run.fight.phase === 1; i++) ids.forEach(id => coopAct(run, Ps, id, "fight", { act: "push" }, ++clock));
+  if (arg === "p2") for (let i = 0; i < 12 && run.phase === "fight" && run.fight.phase === 1; i++) ids.forEach(id => coopAct(run, Ps, id, "fight", { act: "push" }, (clock = Math.max(clock + 1, nowMs()))));
   const m = overlay("nb-party nb-coop", "地下收藏庫（開發用：打怪預覽）", "打怪預覽", "stairs");
   let pick = null;
   const draw = () => {
     const v = viewFor(run, "me"), me = v.members.find(x => x.id === "me");
+    fightReplaySync(v);
     const body = run.phase === "fight" && v.fight
-      ? [fightStage(v, pick), fightCard(v, me, { mine: pick, setMine: p => { pick = p; draw(); }, act: d => { coopAct(run, Ps, "me", "fight", d, ++clock); setTimeout(() => { if (run.phase === "fight" && ids.includes("mate")) coopAct(run, Ps, "mate", "fight", { act: "push" }, ++clock); pick = null; draw(); }, 1500); } })]
+      ? [fightStage(v, pick), fightCard(v, me, { mine: pick, setMine: p => { pick = p; draw(); }, act: d => { coopAct(run, Ps, "me", "fight", d, (clock = Math.max(clock + 1, nowMs()))); setTimeout(() => { if (run.phase === "fight" && ids.includes("mate")) coopAct(run, Ps, "mate", "fight", { act: "push" }, (clock = Math.max(clock + 1, nowMs()))); pick = null; draw(); }, 1500); } })]
       : [h("p", { class: "nb-empty" }, `打完了（${run.phase}）：${JSON.stringify(run.fightLast || run.last && run.last.fled || "")}`)];
     m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body),
       h("aside", { class: "cx-side" }, h("p", { class: "pt-hint" }, "（預覽：真的遊戲這壹欄是隊員、證據和聊天）"))));
   };
+  fightOnRedraw(() => draw());
   draw();
 }
 

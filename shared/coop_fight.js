@@ -66,7 +66,7 @@ export function coopFightRound(run, Ps, picks) {
   run.step++;
   // 已經離隊的人：座位算走了
   fight.seats.forEach(s => { const m = coopMember(run, s.id); if (!s.helper && (!m || m.out)) s.out = true; });
-  const before = {};
+  const before = {}, hpBefore = fight.hp, hpMaxBefore = fight.hpMax, phaseBefore = fight.phase; // 畫面演出從這一回合開始時的壓力演起
   fight.seats.forEach(s => { before[s.id] = s.out; });
   const r = fightRound(fight, picks || {});
   if (!r.ok) return r;
@@ -90,7 +90,7 @@ export function coopFightRound(run, Ps, picks) {
   });
   // 這回合選「撤」的人：帶著拿到的回地面
   fight.seats.forEach(s => { if (!s.helper && s.out && !before[s.id]) { const m = coopMember(run, s.id); if (m && !m.out) coopLeave(run, Ps, s.id); } });
-  const shared = { type: "fightRound", round: fight.round, hp: fight.hp, hpMax: fight.hpMax, phase: fight.phase, events: r.events, over: fight.over };
+  const shared = { type: "fightRound", round: fight.round, hp: fight.hp, hpMax: fight.hpMax, phase: fight.phase, hpBefore, hpMaxBefore, phaseBefore, events: r.events, over: fight.over };
   run.members.forEach(m => { if (events[m.id]) events[m.id].push(shared); });
   run.last = { fight: true, round: shared };
   if (!fight.over) { coopSync(run, Ps); return { ok: true, run, events }; }
@@ -127,6 +127,11 @@ export function coopFightRound(run, Ps, picks) {
   return { ok: true, run, events, fightOver: fight.over };
 }
 
+// 這一回合的結算要演多久（毫秒）：演完才開始倒數，伺服器加進下一回合的期限（翊文 11-12：「演完才開始倒數」）
+export function coopReplayMs(run) {
+  const ev = (run && run.last && run.last.round && run.last.round.events) || [], F = NUM.fight;
+  return ev.length ? Math.min(F.replayMax, ev.length * F.replayStep + F.replayTail) : 0;
+}
 // 送給畫面的：這個人現在可以選什麼、下一招的字、怪物的名字（規劃第八節：按之前就看得到會發生什麼）
 export function coopFightView(run, id) {
   const f = run && run.fight;

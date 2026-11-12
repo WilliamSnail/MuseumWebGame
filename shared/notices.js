@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-replay", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "打怪物的結算，會壹件壹件演出來了", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "大家都選好之後，誰做了什麼會壹件壹件演：座位亮起來、跳出數字、壓力條慢慢掉，被打的人座位會震壹下。",
+        "演完有壹行小結：這回合壓力少了多少、誰推了多少、你的理智少了多少。",
+        "演完才開始下壹回合的倒數，大家都有完整的時間選。不想看可以按「跳過」。",
+      ]],
+    ],
+  },
+  {
     id: "cellar-bag", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "地下收藏庫：背包和撤退的代價", publish: "2026-11-12", expire: "2027-12-31",
     sections: [

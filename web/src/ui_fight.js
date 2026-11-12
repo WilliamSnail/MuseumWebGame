@@ -8,6 +8,8 @@
 // ================================================================
 import { NUM } from "../../shared/config.js";
 import { FIGHT_MOVES } from "../../shared/cellar_fight.js";
+import { COOP } from "../../shared/coop.js";
+import { nowMs } from "../../shared/logic.js";
 import { btn, h, itemHTML, snd } from "./ui_core.js";
 
 const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點" };
@@ -25,16 +27,6 @@ const MOVE_ICON = { cap: 0, crown: 1, tentacle: 2, wizard: 3, beanie: 4, rest: 5
 export const moveIcon = mv => (mv in MOVE_ICON ? h("span", { class: "fg-ico mv", style: { backgroundPosition: `${(MOVE_ICON[mv] * 100 / 15).toFixed(3)}% 0` }, "aria-hidden": "true" }) : null);
 export const actIcon = act => (act in ACT_ICON ? h("span", { class: "fg-ico", style: { backgroundPosition: `${ACT_ICON[act] * 20}% 0` }, "aria-hidden": "true" }) : null);
 export const fightFx = (kind, cls = "") => (FX_ART[kind] ? h("div", { class: `fg-fx k-${kind} ${cls}`, style: { "--n": FX_ART[kind] }, "aria-hidden": "true" }) : null);
-// 新的一回合結算出來才演一次（畫面每次有人選都會重畫，不能每次都演）
-let shownRound = "";
-function freshRound(v) {
-  const r = v.last && v.last.round;
-  if (!r || !r.events) return null;
-  const key = `${v.fight.foe}:${r.round}:${v.fight.phase}`;
-  if (key === shownRound) return null;
-  shownRound = key;
-  return r;
-}
 // 怪物：有圖的用圖（三個姿勢），還沒有圖的先畫壹塊蓋著布的剪影，兩點反光。第二階段布滑下來壹點
 function foeSprite(f, lunge) {
   const a = FOE_ART[f.foe];
@@ -48,44 +40,144 @@ function foeArt(f) {
 }
 const nameOf = (v, id) => (id === "helper" ? "館方助手" : (v.members.find(m => m.id === id) || {}).name || "");
 
+// ---------- 結算演出（docs/打怪演出規劃.md；翊文 11-12：「每回合的動畫，還有戰鬥結算以及動畫」「演完才開始倒數」） ----------
+// 伺服器每回合給壹串事件（v.last.round.events）。這裡把它變成壹格壹格的步驟：誰在動、跳什麼數字、播什麼特效、壓力條變多少，
+// 每 NUM.fight.replayStep 毫秒播壹格，最後停在回合小結（replayTail），播完才開放下壹回合（伺服器的期限也加了這段時間）。
+// 畫面壹有人選就整個重畫：進度放在 RP（模組裡），重畫時照進度畫回來。
+// 打完最後壹回合（v.fight 已經沒了）：fightHold(v) 給還在演的那壹份，ui_coop.js 先畫它，演完才換到下壹步。
+const RP = { key: null, steps: [], i: -1, hp: 0, hpMax: 1, finished: true, summary: null, v: null, timer: null, round: null };
+let lastFightV = null, redrawFn = null;
+export const fightOnRedraw = fn => { redrawFn = fn; };
+const redraw = () => { if (redrawFn) redrawFn(); };
+const roundKey = v => {
+  const r = v && v.last && v.last.round, foe = (v.fight && v.fight.foe) || (v.fightLast && v.fightLast.foe) || "";
+  return r && r.events && r.events.length ? `${v.id || ""}:${foe}:${r.phaseBefore || r.phase}:${r.round}:${r.hp}` : null;
+};
+const reduceMotion = () => typeof document !== "undefined" && document.body.classList.contains("reduce-motion");
+// 壹件事 → 壹格：who（亮起來的座位）、pops（跳出來的字，on ＝座位 id 或 "foe"）、fxs（特效）、dhp（壓力變多少）、lunge（怪物出招）
+function stepOf(v, e) {
+  const me = v.me, s = { who: e.id || null, pops: [], fxs: [], dhp: 0, lunge: false, line: lineOf(v, e) };
+  const pop = (on, text, cls) => s.pops.push({ on, text, cls });
+  const fx = (kind, on) => s.fxs.push({ kind, on });
+  if (e.t === "push") { fx("push", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; if (e.san) pop(e.id, `理智 −${e.san}`, "hurt"); }
+  else if (e.t === "calm") { if (e.ok) { fx("calm", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; } else pop(e.id, "沒用", "miss"); }
+  else if (e.t === "see") { if (e.ok) { fx("see", "foe"); pop("foe", "弱點！", "good"); } else pop(e.id, "沒看出來", "miss"); }
+  else if (e.t === "point") { fx("see", "foe"); pop("foe", "弱點！", "good"); }
+  else if (e.t === "guard") { fx("guard", e.for || e.id); pop(e.for || e.id, "擋", "good"); }
+  else if (e.t === "move") pop(e.id, (MOVE_TEXT[e.move] || e.move).split("：")[0] + (e.n ? ` +${e.n}` : ""), "good");
+  else if (e.t === "auto") pop(e.id, "沒選：擋", "miss");
+  else if (e.t === "retreat") pop(e.id, "撤回地面", "miss");
+  else if (e.t === "ghost") pop(e.id, "倒了", "hurt");
+  else if (e.t === "flee") { s.who = null; s.banner = e.ok ? "逃掉了！" : "沒逃掉"; if (e.ok) fx("flee", "foe"); }
+  else if (e.t === "phase") { s.who = null; fx("phase", "foe"); s.banner = "第二階段"; s.setHp = e.hp; }
+  else if (e.t === "win") { s.who = null; s.banner = "牠安靜下來了"; }
+  else if (e.t === "over") { s.who = null; s.banner = e.over === "away" ? "牠自己走掉了" : e.over === "lose" ? "大家都倒了" : null; }
+  else if (e.t === "foe") {
+    s.who = null; s.lunge = !e.cancel;
+    if (e.cancel) { fx("calm", "foe"); pop("foe", "沒出手", "good"); }
+    else if (e.kind === "grow") { fx("grow", "foe"); pop("foe", `+${e.n}`, "up"); s.dhp = e.n; }
+    else {
+      const hits = e.kind === "all" ? (e.hits || []).map(x => ({ id: x.id, san: x.san, blocked: x.blocked })) : [{ id: e.blocked || e.hit, san: e.san, blocked: e.blocked, miss: e.miss || e.dodge, down: e.down, scare: e.kind === "scare" }];
+      hits.forEach(x => {
+        if (!x.id) return;
+        if (x.blocked) { fx("guard", x.id); pop(x.id, "擋下了", "good"); }
+        else if (x.miss) pop(x.id, "躲開了", "good");
+        else if (x.san) { if (x.id === me) fx("san", x.id); pop(x.id, `理智 −${x.san}`, "hurt"); }
+        else if (x.scare || e.kind === "all") { if (x.id === me) fx("brave", x.id); pop(x.id, "膽量擋住了", "good"); }
+        else if (x.down) pop(x.id, "壹隻倒下", "hurt");
+        else pop(x.id, "沒事", "good");
+        s.shake = (s.shake || []).concat(x.id);
+      });
+    }
+  }
+  return s;
+}
+// 回合小結：壓力 −X（誰推了多少）／你：理智變多少
+function summaryOf(v, r) {
+  const by = {}; let down = 0, up = 0, mine = 0;
+  r.events.forEach(e => {
+    if ((e.t === "push" || (e.t === "calm" && e.ok)) && e.n) { by[e.id] = (by[e.id] || 0) + e.n; down += e.n; if (e.t === "push" && e.san && e.id === v.me) mine += e.san; }
+    if (e.t === "foe" && !e.cancel) {
+      if (e.kind === "grow") up += e.n || 0;
+      if (e.hit === v.me && e.san) mine += e.san;
+      (e.hits || []).forEach(x => { if (x.id === v.me && x.san) mine += x.san; });
+    }
+  });
+  const who = Object.keys(by).map(id => `${nameOf(v, id)} −${by[id]}`).join("、");
+  return `這回合：壓力 −${down}${who ? `（${who}）` : ""}${up ? `，牠又多了 +${up}` : ""}／你：${mine ? `理智 −${mine}` : "理智沒少"}`;
+}
+// 每次畫之前叫：有新的一回合就開始演（重新整理、斷線回來時，那一回合早就演完的就不重播）
+export function fightReplaySync(v) {
+  if (v && v.fight) lastFightV = v;
+  const key = roundKey(v);
+  if (!key || key === RP.key) return;
+  const r = v.last.round;
+  if (RP.timer) clearTimeout(RP.timer);
+  Object.assign(RP, { key, round: r, steps: r.events.map(e => stepOf(v, e)).filter(s => s.line || s.banner), i: -1, hp: r.hpBefore != null ? r.hpBefore : r.hp, hpMax: r.hpMaxBefore || r.hpMax, finished: false, summary: summaryOf(v, r), v: v.fight ? null : lastFightV, timer: null });
+  const late = v.deadline && v.fight && nowMs() > v.deadline - COOP.fightMs; // 演出的時間早就過了（斷線回來）
+  if (reduceMotion() || late || !RP.steps.length) { fightReplaySkip(false); return; }
+  const tick = () => {
+    RP.i++;
+    const s = RP.steps[RP.i];
+    if (s) {
+      if (s.setHp != null) { RP.hp = s.setHp; RP.hpMax = s.setHp; } else RP.hp = Math.max(0, Math.min(RP.hpMax, RP.hp + s.dhp));
+      snd(s.lunge ? "hurt" : s.dhp < 0 ? "click" : "tick");
+      RP.timer = setTimeout(tick, NUM.fight.replayStep);
+    } else { RP.timer = setTimeout(() => { RP.finished = true; RP.timer = null; redraw(); }, NUM.fight.replayTail); }
+    redraw();
+  };
+  RP.timer = setTimeout(tick, 300);
+}
+// 跳過：直接到小結（again ＝要不要重畫）
+export function fightReplaySkip(again = true) {
+  if (RP.timer) clearTimeout(RP.timer);
+  RP.timer = null; RP.i = RP.steps.length; RP.finished = true;
+  if (RP.round) { RP.hp = RP.round.hp; RP.hpMax = RP.round.hpMax; }
+  if (again) redraw();
+}
+const replaying = v => !RP.finished && RP.key === roundKey(v);
+// 打完最後一回合、還在演：給演出用的那一份（最後一回合開始時的樣子＋這一回合的事件）
+export function fightHold(v) {
+  if (!v || v.fight || !replaying(v) || !RP.v) return null;
+  return Object.assign({}, RP.v, { last: v.last, fightLast: v.fightLast, members: v.members });
+}
+
+
 // 舞台：怪物、下壹招的牌子、壓力條、每個人的座位（誰選好了）。mine ＝我這回合剛選的（畫面先記著的）
 export function fightStage(v, mine = null) {
   const f = v.fight, fv = v.fightView || {};
   const waiting = (fv.waiting || []).filter(id => !(mine && id === v.me)); // 自己按了就馬上算選好（不用等伺服器回來）
-  const pct = Math.max(0, Math.min(100, Math.round(f.hp / Math.max(1, f.hpMax) * 100)));
-  const myPush = (fv.options || []).find(o => o.act === "push");
-  const cut = myPush ? Math.max(0, Math.round((f.hp - myPush.lo) / Math.max(1, f.hpMax) * 100)) : pct; // 你推了大概會扣到哪（淡色預告）
   const it = f.intent || {};
-  // 剛結算的這一回合：怪物有出手就換「出招」的姿勢一下；推、看穿成功、自己扣理智各演一次特效
-  const fresh = freshRound(v), ev = fresh ? fresh.events : [];
-  const foeHit = ev.some(e => e.t === "foe" && !e.cancel);
-  const pushed = ev.some(e => e.t === "push"), saw = ev.some(e => e.t === "see" && e.ok);
-  const myLoss = ev.some(e => e.t === "foe" && ((e.hit === v.me && e.san) || (e.hits || []).some(x => x.id === v.me && x.san)));
-  // 膽量把這一下擋住了（沒扣理智）：自己座位上的燈亮起來
-  const myBrave = ev.some(e => e.t === "foe" && (e.kind === "scare" || e.kind === "all") && ((e.hit === v.me && !e.san && !e.blocked) || (e.hits || []).some(x => x.id === v.me && !x.san && !x.blocked)));
-  const calmed = ev.some(e => e.t === "calm" && e.ok), grew = ev.some(e => e.t === "foe" && e.kind === "grow" && !e.cancel), phased = ev.some(e => e.t === "phase");
-  const guards = new Set(ev.filter(e => e.t === "guard").map(e => e.for || e.id));
-  const seats = f.seats.map(s => h("div", { class: "fg-seat" + (s.id === v.me ? " me" : "") + (s.ghost ? " ghost" : "") + (s.out ? " gone" : "") + (it.to === s.id ? " aimed" : "") },
-    s.id === v.me && myLoss ? fightFx("san", "on-seat") : s.id === v.me && myBrave ? fightFx("brave", "on-seat") : guards.has(s.id) ? fightFx("guard", "on-seat") : null,
+  // 結算演出（RP）：現在演到哪壹格；那壹格的特效、跳出來的字、亮起來的座位
+  const play = replaying(v), cur = play ? RP.steps[RP.i] || null : null;
+  const fxOn = on => (cur ? cur.fxs.filter(x => x.on === on).map(x => fightFx(x.kind, on === "foe" ? "" : "on-seat")) : []);
+  const popOn = on => (cur ? cur.pops.filter(x => x.on === on).map(x => h("span", { class: "fg-pop " + x.cls }, x.text)) : []);
+  const hpNow = play ? RP.hp : f.hp, hpMaxNow = play ? RP.hpMax : f.hpMax;
+  const pct = Math.max(0, Math.min(100, Math.round(hpNow / Math.max(1, hpMaxNow) * 100)));
+  const myPush = play ? null : (fv.options || []).find(o => o.act === "push");
+  const cut = myPush ? Math.max(0, Math.round((f.hp - myPush.lo) / Math.max(1, f.hpMax) * 100)) : pct; // 你推了大概會扣到哪（淡色預告）
+  const seats = f.seats.map(s => h("div", { class: "fg-seat" + (s.id === v.me ? " me" : "") + (s.ghost ? " ghost" : "") + (s.out ? " gone" : "") + (!play && it.to === s.id ? " aimed" : "") + (cur && cur.who === s.id ? " acting" : "") + (cur && (cur.shake || []).includes(s.id) ? " shake" : "") },
+    ...fxOn(s.id), ...popOn(s.id),
     h("b", { class: "fg-who" }, s.helper ? "館方助手" : nameOf(v, s.id) + (s.id === v.me ? "（你）" : ""),
-      s.helper ? null : h("i", { class: "fg-ok" + (waiting.includes(s.id) ? "" : " on") }, s.out ? "走了" : s.ghost ? "倒了" : waiting.includes(s.id) ? "在想…" : "選好了")),
+      s.helper || play ? null : h("i", { class: "fg-ok" + (waiting.includes(s.id) ? "" : " on") }, s.out ? "走了" : s.ghost ? "倒了" : waiting.includes(s.id) ? "在想…" : "選好了")),
     h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}` },
       h("div", { class: "fg-art", html: itemHTML({ kind: "pepe", key: p.key, pick: p.pick, perfect: p.perfect }) }), h("small", null, p.down ? "受傷" : `強度 ${p.power}`))))));
-  return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") },
+  return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") },
+    cur && cur.banner ? h("div", { class: "fg-banner", role: "status" }, cur.banner) : null,
     h("div", { class: "fg-foe" },
-      h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
-      h("div", { class: "fg-foe-box" }, foeSprite(f, foeHit), phased ? fightFx("phase") : pushed ? fightFx("push") : null, saw ? fightFx("see") : calmed ? fightFx("calm") : null, grew ? fightFx("grow") : null),
+      play ? h("div", { class: "fg-intent k-none", role: "status" }, h("i", null, "結"), h("span", null, h("b", null, "結算中"))) : h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
+      h("div", { class: "fg-foe-box" }, foeSprite(f, !!(cur && cur.lunge)), ...fxOn("foe"), ...popOn("foe")),
       h("h3", { class: "fg-name" }, fv.name || "？", f.boss ? h("small", null, f.phase === 2 ? "　第二階段" : "　守門") : h("small", null, `　等級 ${f.rank || 1}`)),
-      h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${f.hp}／${f.hpMax}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${f.hp}／${f.hpMax}`)),
+      h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${hpNow}／${hpMaxNow}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${hpNow}／${hpMaxNow}`)),
       f.weak ? h("p", { class: "fg-flag" }, `弱點找到了：推 ×${NUM.fight.weakMult}`) : null),
     h("div", { class: "fg-seats" }, seats));
 }
 
 // 上壹回合發生了什麼：壹行壹件事，寫得出為什麼
-function roundLines(v, r) {
-  if (!r || !r.events) return [];
+function roundLines(v, r) { return r && r.events ? r.events.map(e => lineOf(v, e)).filter(Boolean) : []; }
+function lineOf(v, e) {
   const n = id => nameOf(v, id);
-  return r.events.map(e => {
+  {
     if (e.t === "auto") return `${n(e.id)} 沒選，當成擋`;
     if (e.t === "retreat") return `${n(e.id)} 撤回地面`;
     if (e.t === "flee") return !e.enough ? "想逃的人不到壹半，沒逃" : e.ok ? "逃掉了" : `沒逃掉（擲 ${e.roll}，要 ${e.target} 以下）`;
@@ -112,7 +204,7 @@ function roundLines(v, r) {
       return `牠撲過來。${who}${e.down ? "壹隻佩佩倒下，受傷了" : "沒事"}${soft}`;
     }
     return null;
-  }).filter(Boolean);
+  }
 }
 
 // 有些回合可以按時機：圈縮到金線的時候按。只加不扣；動畫減量的人不用按，直接算「按得好」
@@ -138,6 +230,15 @@ export function fightCard(v, me, api) {
   const picked = !!mine;
   const title = !fv.can && !opts.length ? "你在旁邊看" : seat.ghost ? "你倒了。可以指壹次弱點" : picked ? (waiting.length ? `選好了。等 ${waiting.join("、")}` : "結算中……") : "現在：選你這回合的行動";
   const card = h("div", { class: "note-card room-card cx-card fg-card" }, h("i", { class: "pin" }));
+  // 結算演出中：只放「現在演到哪壹件」的紀錄和跳過；演完才開放選行動（倒數也是演完才開始）
+  if (replaying(v)) {
+    const r = RP.round, steps = RP.steps;
+    card.append(
+      h("h2", { class: "room-title fg-now" }, `結算中：第 ${r.round - (r.over ? 0 : 1)} 回合`, btn("跳過", () => fightReplaySkip(), "ghost small fg-skip")),
+      h("div", { class: "fg-log replay" }, h("ul", null, steps.map((st, i) => (st.line ? h("li", { class: i < RP.i ? "done" : i === RP.i ? "now" : "later" }, st.line) : null)))),
+      RP.i >= steps.length ? h("p", { class: "fg-sum" }, RP.summary) : h("p", { class: "pt-hint" }, "演完才開始倒數，大家都有完整的時間選。"));
+    return card;
+  }
   const send = (pick, o) => {
     const go = tap => { api.setMine(Object.assign({}, pick, { tap })); api.act(Object.assign({}, pick, { tap })); snd("click"); };
     if (o && o.tap && (pick.act === "push" || pick.act === "crown" || pick.act === "tentacle")) { const ring = tapRing(go); if (ring) card.append(ring); }
@@ -162,7 +263,7 @@ export function fightCard(v, me, api) {
   const sanPct = Math.max(0, Math.min(100, seat.san || 0));
   card.append(
     h("h2", { class: "room-title fg-now" }, title, h("span", { class: "cx-clock" })),
-    last.length ? h("div", { class: "fg-log" }, h("b", null, `第 ${v.last.round.round - (v.last.round.over ? 0 : 1)} 回合`), h("ul", null, last.map(l => h("li", null, l)))) : h("p", { class: "pt-sub" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
+    last.length ? h("div", { class: "fg-log" }, h("b", null, `第 ${v.last.round.round - (v.last.round.over ? 0 : 1)} 回合`), RP.summary && RP.key === roundKey(v) ? h("p", { class: "fg-sum" }, RP.summary) : null, h("ul", null, last.map(l => h("li", null, l)))) : h("p", { class: "pt-sub" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
     h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
     moves.length ? h("div", { class: "fg-moves" }, h("span", { class: "fg-lab" }, "招式（壹場壹次）"), moves.map(o => mk(o, "fg-move small"))) : null,
     h("div", { class: "cx-card-foot fg-foot" },
