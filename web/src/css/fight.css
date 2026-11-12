@@ -4,13 +4,15 @@
 .fg-stage.p2 { background: linear-gradient(#3A1F26, #1B161F); }
 /* .cx-main 是會縮的直排框：不讓舞台和卡片被壓扁（壓扁了裡面的東西會溢到框外，深色字壓在深色底上） */
 .cx-main > .fg-stage, .cx-main > .fg-card { flex: none; }
+/* 螢幕比內容高：舞台跟著長高（怪物也變大），卡片一樣貼在下面，下面不會空一塊（翊文 11-12：「為什麼畫面沒有占滿?」） */
+.cx-main > .fg-stage { flex: 1 0 auto; align-content: center; }
 /* 夠寬的時候怪物在左、隊伍在右，整場不用捲 */
 @media (min-width: 900px) {
   .fg-stage { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; }
   .fg-seats { flex-direction: column; align-items: stretch; }
   .fg-seat { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
   .fg-seat .fg-pepes { margin-top: 0; }
-  .fg-foe-art { width: 124px; } .fg-foe-art:has(.fg-sprite) { --foe-h: 176px; }
+  .fg-foe-art { width: 124px; } .fg-foe-art:has(.fg-sprite) { --foe-h: clamp(176px, calc(100vh - 640px), 300px); }
   .fg-stage { padding-top: 10px; padding-bottom: 8px; }
 }
 .fg-foe { display: grid; justify-items: center; gap: 6px; }
