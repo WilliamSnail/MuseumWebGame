@@ -218,6 +218,9 @@ T("/pepe-更新：列最近幾則玩家看得到的公告（日期、標題、�
   assert.strictEqual(G.dcNewsList("2026-11-09", 0).length, G.NUM.discord.newsDefault);
   assert.strictEqual(G.dcNewsList("2026-11-09", "abc").length, G.NUM.discord.newsDefault);
   // 日期排序：新的在前；同一天寫在後面的比較新
+  { // 同壹天的：NOTICES 裡寫在前面的（新加的）排前面（11-12 修：以前排反了）
+    const day = G.NOTICES.find(n => n.publish === "2026-11-11").publish, same = G.dcNewsList("2026-11-12", 99).filter(n => n.publish === day);
+    const idx = same.map(n => G.NOTICES.indexOf(n)); assert.deepStrictEqual(idx, idx.slice().sort((a, b) => a - b), "同壹天照 NOTICES 的順序"); }
   const all = G.dcNewsList("2027-01-01", 10), pub = all.map(n => n.publish);
   assert.deepStrictEqual(pub, pub.slice().sort().reverse());
   // 未發布的不列：發布日之前什麼都沒有
