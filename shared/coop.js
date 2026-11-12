@@ -31,6 +31,8 @@ import { cellarDarkLoss, traitHits, traitTag } from "./legacy.js";
 import { eventRunFix } from "./events.js";
 import { trialById, trialState, trialWin } from "./shop.js";
 import { coopCanGuess, coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
+import { coopFightFix, coopFightStart, coopFightView, coopGateDue } from "./coop_fight.js";
+import { fightFoesOf } from "./cellar_fight.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
 export const COOP = {
@@ -60,6 +62,7 @@ export const COOP = {
   ],
   // 伺服器走一趟的時間（shared/coop_flow.js，docs/多人實作.md 的 M4）：投票 30 秒、棄權連 3 次離隊、斷線 60 秒
   voteMs: 30000, resultMs: 20000, floorMs: 30000, resumeMs: 15000,
+  fightMs: 25000,          // 打怪物：每回合選行動的時間（地下室改版，決定 0067）
   maxSkips: 3,             // 連幾次沒投票算掛機、自動離隊
   offlineMs: 60000,        // 斷線多久才移出隊伍（伺服器自己看 /status 再確認）
   staleMs: 600000,         // 這麼久沒有人動：這一趟算結束（大家都走了，回來才收）
@@ -201,6 +204,7 @@ export function coopFix(run) {
   run.step = run.step || 0;
   run.trial = run.trial && typeof run.trial === "object" && trialById(run.trial.id) ? run.trial : null; // 合作試煉（決定 0041）：{ id, skill, date, elig, fx }
   if (run.trial) { if (!run.trial.elig || typeof run.trial.elig !== "object") run.trial.elig = {}; if (!run.trial.fx || typeof run.trial.fx !== "object") run.trial.fx = null; }
+  coopFightFix(run); // 打怪物（地下室改版）：run.gate、run.gateDone、run.fight
   run.event = eventRunFix(run.event); // 限時活動（決定 0041）：開始那一刻在活動內，這一趟就照活動算到走完
   run.members.forEach(m => {
     m.keys = coopArr(m.keys); m.ghost = !!m.ghost; m.guard = !!m.guard; m.out = m.out || null; m.rewarded = m.rewarded !== false; m.skips = m.skips || 0;
@@ -256,7 +260,7 @@ export function startCoop(members, floor, opt = {}) {
   const Ps = {};
   const first = members.find(m => !m.guard);
   const run = {
-    v: 1, id: opt.id || null, fun: !!opt.fun, event: eventRunFix(opt.event), trial: null, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
+    v: 1, id: opt.id || null, fun: !!opt.fun, gate: !!opt.gate && !tr, gateDone: {}, fight: null, event: eventRunFix(opt.event), trial: null, step: 0, floor, idx: 0, phase: "vote", over: null, next: null,
     leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
@@ -567,7 +571,17 @@ export function coopAdvance(run, Ps) {
     return { ok: true, run, floorDone: false, events };
   }
   if (run.trial) return coopTrialDone(run, Ps, events); // 合作試煉：沒有「第一次走完這一層」的獎勵，只有各人的技能成長
-  // 整層走完：每個人（還在走這一層的幽靈也算，他走過了）拿自己的第一次過關獎勵
+  // 地下室改版（決定 0067）：房間都探索完了，先打這一層的守門；打贏才算走完（coop_fight.js 打贏之後叫 coopFloorComplete）
+  if (coopGateDue(run) && coopVoters(run).length) {
+    run.idx = f.rooms.length - 1;
+    const g = coopFightStart(run, Ps, fightFoesOf(run.floor, true)[0].id, "gate");
+    if (g.ok) { Object.keys(g.events).forEach(id => { events[id] = (events[id] || []).concat(g.events[id]); }); return { ok: true, run, fight: true, floorDone: false, events }; }
+  }
+  return coopFloorComplete(run, Ps, events);
+}
+// 整層走完：每個人（還在走這一層的幽靈也算，他走過了）拿自己的第一次過關獎勵
+export function coopFloorComplete(run, Ps, events) {
+  const f = coopFloorOf(run);
   const floor = run.floor, rewards = {};
   run.idx = f.rooms.length - 1;
   coopActive(run).forEach(m => {
@@ -636,5 +650,6 @@ export function viewFor(run, id) {
   if (v.last && v.last.events) v.last.events = { [id]: v.last.events[id] || [] }; // 事件只給他自己的
   v.fresh = (run.fresh && run.fresh[id]) || [];
   if (run.fun) coopFilterView(v, run, id); // 不該看到的東西在這裡拿掉：線索、幻覺、地圖（coop_fun.js）
+  if (run.phase === "fight" && run.fight) { v.fightView = coopFightView(run, id); v.votes = { [id]: (run.votes || {})[id] || null }; } // 打怪物：別人選了什麼結算前看不到，只知道誰選好了（fightView.waiting）
   return v;
 }

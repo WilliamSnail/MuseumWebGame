@@ -20,6 +20,8 @@
 import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopSaveReport } from "./coop_fun.js";
 import { eventExtraTurns, eventRunFix } from "./events.js";
 import { trialById } from "./shop.js";
+import { coopFightRound } from "./coop_fight.js";
+import { fightActors, fightSeatOf } from "./cellar_fight.js";
 import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
 
 // ---------- 每天前幾趟有獎勵（照帳號：P.coopDay 不跟著參觀者換，決定 0020） ----------
@@ -54,7 +56,7 @@ export function coopBegin(members, floor, today, now, opt = {}) {
 }
 
 // ---------- 計時 ----------
-export const coopPhaseMs = phase => ({ vote: COOP.voteMs, result: COOP.resultMs, carried: COOP.resultMs, floorDone: COOP.floorMs, carry: COOP.carry.ms, guess: COOP.truth.guessMs })[phase] || null;
+export const coopPhaseMs = phase => ({ fight: COOP.fightMs, vote: COOP.voteMs, result: COOP.resultMs, carried: COOP.resultMs, floorDone: COOP.floorMs, carry: COOP.carry.ms, guess: COOP.truth.guessMs })[phase] || null;
 export function coopArm(run, now) {
   const ms = coopPhaseMs(run.phase);
   run.votes = {}; run.acks = {};
@@ -86,7 +88,7 @@ function doFloor(run, Ps, now, out) {
   const count = { down: 0, up: 0 };
   coopVoters(run).forEach(m => { const v = run.votes[m.id]; if (v === "down" || v === "up") count[v]++; });
   const go = count.down > count.up ? "down" : count.up > count.down ? "up" : run.votes[run.leader] === "down" ? "down" : "up"; // 平手領隊；都沒投就回地面
-  if (go === "down") {
+  if (go === "down" && run.next) { // 沒有下一層可以走（最底層，或守門沒打贏）：投往下也是回地面
     const r = coopContinue(run, Ps);
     if (!r.ok) return r;
     afterRule(run, r, out);
@@ -96,6 +98,15 @@ function doFloor(run, Ps, now, out) {
   }
   coopArm(run, now);
   return { ok: true };
+}
+// 打怪物的一回合：大家都選了（或時間到）就結算。沒選的當「擋」，不算掛機（打怪的時候站著不動也是一種選擇）
+const everyPicked = run => { const as = run.fight ? fightActors(run.fight).filter(s => { const m = coopMember(run, s.id); return m && !m.out; }) : []; return as.every(s => run.votes[s.id] !== undefined); }; // 已經離隊的人不用等
+function doFight(run, Ps, now, out) {
+  const r = coopFightRound(run, Ps, run.votes || {});
+  if (!r.ok) return r;
+  afterRule(run, r, out);
+  if (run.phase !== "over") coopArm(run, now);
+  return r;
 }
 function doCarry(run, Ps, now, out) {
   const r = coopCarryDo(run, Ps);
@@ -153,6 +164,13 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
     if (v !== "retreat" && !(Number.isInteger(v) && room && room.choices[v])) return { ok: false, reason: "沒有這個選項" };
     run.votes[uid] = v;
     if (everyVoted(run)) r = doResolve(run, Ps, now, out);
+  } else if (act === "fight") {
+    if (run.phase !== "fight" || !run.fight) return { ok: false, reason: "現在沒有在打" };
+    const seat = fightSeatOf(run.fight, uid);
+    if (!seat || seat.out) return { ok: false, reason: "你不在這壹場裡" };
+    if (typeof data.act !== "string" || data.act.length > 20) return { ok: false, reason: "要選壹個行動" };
+    run.votes[uid] = { act: data.act, for: typeof data.for === "string" ? data.for.slice(0, 80) : null, tap: data.tap === 2 ? 2 : data.tap === 1 ? 1 : 0 };
+    if (everyPicked(run)) r = doFight(run, Ps, now, out);
   } else if (act === "knock") {
     const k = coopKnock(run, uid, data.choice);
     if (!k.ok) return k;
@@ -180,6 +198,7 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
   } else if (act === "tick") {
     if (!run.deadline || now < run.deadline - 300) { out.noop = true; return out; } // 伺服器自己看時間：還沒到就不做
     if (run.phase === "vote") r = doResolve(run, Ps, now, out);
+    else if (run.phase === "fight") r = doFight(run, Ps, now, out);
     else if (run.phase === "result" || run.phase === "carried") r = doAdvance(run, Ps, now, out);
     else if (run.phase === "floorDone") r = doFloor(run, Ps, now, out);
     else if (run.phase === "carry") r = doCarry(run, Ps, now, out);
@@ -196,6 +215,7 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
     out.dropped.push(uid);
     // 他是最後一個還沒投的：不用再等了
     if (run.phase === "vote" && everyVoted(run)) r = doResolve(run, Ps, now, out);
+    else if (run.phase === "fight" && run.fight && everyPicked(run)) r = doFight(run, Ps, now, out);
     else if (run.phase === "floorDone" && everyVoted(run)) r = doFloor(run, Ps, now, out);
     else if ((run.phase === "result" || run.phase === "carried") && everyAcked(run)) r = doAdvance(run, Ps, now, out);
     else if (run.phase === "guess" && everyVoted(run)) r = doGuess(run, Ps, now, out);
