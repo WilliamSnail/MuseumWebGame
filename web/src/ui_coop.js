@@ -773,7 +773,7 @@ function floorCard(v, me) {
   const vote = go => { S.myVote = go; draw(); doAct("floor", { go }); };
   return h("div", { class: "note-card room-card cx-card cx-floor-done" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.last && v.last.fled ? (v.last.fled === "flee" ? "逃出來了" : "牠自己走掉了") : `B${f.floor} 走完了`),
-    v.last && v.last.fled ? h("p", { class: "cx-text" }, v.last.fled === "flee" ? "守門的還在。這壹層不算走完，下次再來。" : `打了 ${NUM.fight.maxRounds} 回合還沒讓牠安靜下來。守門的還在，這壹層不算走完，下次再來。`) : v.fightLast && v.fightLast.over === "win" ? h("p", { class: "cx-reward" }, fightFx("stamp"), `登記了「${v.fightLast.name}」${v.fightLast.last ? "，最後壹下是 " + ((v.members.find(m => m.id === v.fightLast.last) || {}).name || "") : ""}`) : null,
+    v.last && v.last.fled ? h("p", { class: "cx-text" }, v.last.fled === "flee" ? fightFx("flee", "inline") : null, v.last.fled === "flee" ? "守門的還在。這壹層不算走完，下次再來。" : `打了 ${NUM.fight.maxRounds} 回合還沒讓牠安靜下來。守門的還在，這壹層不算走完，下次再來。`) : v.fightLast && v.fightLast.over === "win" ? h("p", { class: "cx-reward" }, fightFx("stamp"), `登記了「${v.fightLast.name}」${v.fightLast.last ? "，最後壹下是 " + ((v.members.find(m => m.id === v.fightLast.last) || {}).name || "") : ""}`) : null,
     // 守門沒打贏：走完才看得到的那段話先不給（不然像是走完了）
     f.clear && !(v.last && v.last.fled) ? h("p", { class: "cx-text" }, ptNode(f.clear)) : null,
     v.last && v.last.fled ? null : truthLine(v),

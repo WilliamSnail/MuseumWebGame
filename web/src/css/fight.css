@@ -130,3 +130,38 @@ body.reduce-motion .fg-foe-art, body.reduce-motion .fg-eye { animation: none; }
   .fg-acts .fg-act { min-height: 48px; padding: 4px; } .fg-acts .fg-act b { font-size: 1rem; }
   .fg-card .fg-now { font-size: .9375rem; }
 }
+
+/* ---------- 11-12 第二批素材（翊文生的；原圖 assets/cellar2/，成品 web/public/cellar2/） ---------- */
+/* 特效：格數跟 ui_fight.js 的 FX_ART 一樣 */
+.fg-fx.k-calm { background-image: url(/cellar2/fx-calm.webp); animation: fg-fx 900ms steps(6, jump-none) forwards, fg-fade 900ms forwards; }
+.fg-fx.k-grow { background-image: url(/cellar2/fx-grow.webp); width: 110%; animation: fg-fx 800ms steps(6, jump-none) forwards, fg-fade 800ms forwards; }
+.fg-fx.k-phase { background-image: url(/cellar2/fx-phase.webp); width: 170%; animation: fg-fx 1100ms steps(8, jump-none) forwards, fg-fade 1100ms forwards; }
+.fg-fx.k-guard { background-image: url(/cellar2/fx-guard.webp); width: 80px; animation: fg-fx 700ms steps(6, jump-none) forwards, fg-fade 700ms forwards; }
+.fg-fx.k-brave { background-image: url(/cellar2/fx-brave.webp); width: 56px; aspect-ratio: 99 / 160; animation: fg-fx 900ms steps(12, jump-none) forwards, fg-fade 900ms forwards; }
+.fg-fx.k-flee { background-image: url(/cellar2/fx-flee.webp); animation: fg-fx 800ms steps(6, jump-none) forwards; }
+.fg-fx.on-seat { z-index: 4; }
+.fg-fx.inline { position: relative; left: auto; top: auto; transform: none; display: inline-block; width: 64px; aspect-ratio: 220 / 130; vertical-align: middle; margin-right: 6px; }
+body.reduce-motion .fg-fx.inline { animation: none; background-position: 100% 0; }
+/* 招式的圖示：一條 16 格 */
+.fg-ico.mv { background-image: url(/cellar2/move.webp); background-size: 1600% 100%; border-radius: 50%; }
+/* 抓時機：金線換成金圈 */
+.fg-ring .goal { border: 0; background: url(/cellar2/ring.webp) center / contain no-repeat; inset: 30px; }
+/* 壓力條、理智條：鐵槽、紅色餘燼、青色的水，兩頭是金色的蓋子 */
+.fg-bar { border: 0; border-radius: 0; background: url(/cellar2/bar-channel.webp) repeat-x 0 0 / auto 100%; overflow: visible; }
+.fg-bar i { top: 4px; bottom: 4px; left: 6px; border-radius: 3px; max-width: calc(100% - 12px); }
+.fg-bar .now { background: url(/cellar2/bar-red.webp) repeat-x 0 50% / auto 260%; }
+.fg-bar::before, .fg-bar::after { content: ""; position: absolute; top: 50%; width: 22px; height: 30px; transform: translateY(-50%); background: url(/cellar2/bar-cap.webp) no-repeat 0 0 / 200% 100%; z-index: 1; }
+.fg-bar::before { left: -12px; } .fg-bar::after { right: -12px; background-position: 100% 0; }
+.fg-bar span { z-index: 2; }
+.fg-san { height: 12px; border: 0; border-radius: 0; background: url(/cellar2/bar-channel.webp) repeat-x 0 0 / auto 100%; padding: 2px 3px; box-sizing: border-box; }
+.fg-san i { border-radius: 2px; background: url(/cellar2/bar-teal.webp) repeat-x 0 50% / auto 260%; }
+/* 下一招的牌子：九宮格（不拉伸），上面兩條鐵鍊掛著 */
+.fg-intent { position: relative; border: 18px solid transparent; border-image: url(/cellar2/sign.webp) 40 fill / 14px round; border-radius: 0; background: none; padding: 4px 8px; margin-top: 12px; }
+.fg-intent::before, .fg-intent::after { content: ""; position: absolute; bottom: 100%; width: 8px; height: 26px; background: url(/cellar2/sign-chain.webp) center bottom / 100% 100% no-repeat; }
+.fg-intent::before { left: 18%; } .fg-intent::after { right: 18%; }
+/* 每一層的舞台背景（B1 在上面）。怪物站的地方有一圈暖光 */
+.fg-stage.fl2 { background: linear-gradient(rgba(27, 22, 31, .5), rgba(27, 22, 31, .86)), url(/cellar2/stage-b2.webp) center 60% / cover; }
+.fg-stage.fl3 { background: linear-gradient(rgba(27, 22, 31, .5), rgba(27, 22, 31, .86)), url(/cellar2/stage-b3.webp) center 60% / cover; }
+.fg-stage.fl4 { background: linear-gradient(rgba(27, 22, 31, .5), rgba(27, 22, 31, .86)), url(/cellar2/stage-b4.webp) center 60% / cover; }
+.fg-stage.fl5 { background: linear-gradient(rgba(27, 22, 31, .4), rgba(27, 22, 31, .8)), url(/cellar2/stage-b5.webp) center 60% / cover; }
+@media (max-height: 500px) and (orientation: landscape) { .fg-intent { margin-top: 8px; border-width: 12px; } .fg-intent::before, .fg-intent::after { height: 14px; } }
