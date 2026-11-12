@@ -268,7 +268,7 @@ export function buildNav() {
   if (!UI.menuWired) {
     UI.menuWired = true;
     // 點選單外面就關起來
-    document.addEventListener("click", e => { const d = $("#navDrawer"); if (d && !d.hidden && !e.target.closest("#navDrawer, .menu-btn")) toggleMenu(false); });
+    document.addEventListener("click", e => { const d = $("#navDrawer"); if (d && !d.hidden && !e.target.closest("#navDrawer, .menu-btn, .tb-menu")) toggleMenu(false); });
   }
   applySettings();
   markFreshNav();
@@ -283,6 +283,7 @@ export function toggleMenu(force) {
   d.hidden = !open;
   b.setAttribute("aria-expanded", String(open));
   b.classList.toggle("on", open);
+  const tm = $(".tb-menu"); if (tm) { tm.classList.toggle("on", open); tm.setAttribute("aria-expanded", String(open)); }
   if (open) { updateBoardBadges(); const f = d.querySelector(".md-item"); if (f) f.focus({ preventScroll: true }); }
   else if (hadFocus) b.focus({ preventScroll: true });
 }
@@ -300,7 +301,7 @@ function scrollNavToOn() {
   box.scrollLeft = Math.max(0, x - (box.clientWidth - on.offsetWidth) / 2);
 }
 export function markNav() {
-  $$(".nav-link, .nav-drawer-link").forEach(a => a.classList.toggle("on", a.dataset.room === UI.screen || (UI.screen === "reveal" && a.dataset.room === "workshop")));
+  $$(".nav-link, .nav-drawer-link, .tb-room").forEach(a => a.classList.toggle("on", a.dataset.room === UI.screen || (UI.screen === "reveal" && a.dataset.room === "workshop")));
   scrollNavToOn();
   markFreshNav();
 }
@@ -444,11 +445,43 @@ export function buildStatus() {
       h("button", { type: "button", class: "st-item st-follow", id: "st-follow", hidden: true })]; // 每週劇情追蹤的那條線的下壹步（ui_story.js 的 trackBar）
   const extra = h("div", { class: "st-extra", id: "st-extra" });
   const dots = h("div", { class: "st-bout", id: "st-bout", "aria-live": "polite" });
-  const toggle = h("button", { class: "st-toggle", type: "button", "aria-label": "展開狀態", onClick: () => st.classList.toggle("open") }, icon("info"));
-  st.replaceChildren(h("div", { class: "st-row" }, items, extra, dots), toggle);
+  // 展開鈕（翊文 11-12：「這個 i 太小了，玩家不壹定知道這是可以按的按鈕」）：有框、有字、箭頭朝上，展開後變「收起」
+  const toggle = h("button", { class: "st-toggle", type: "button", "aria-expanded": "false", "aria-label": "展開狀態列，看全部的數字", onClick: () => openStatus(!st.classList.contains("open")) }, icon("chevUp"), h("span", { class: "stt-t" }, "更多"));
+  // 手機的狀態列收成壹行（心情、理智、靈感、籌碼），點空白的地方展開全部（翊文 11-12 選 A）
+  const row = h("div", { class: "st-row", onClick: e => { if (!phoneTabs() || st.classList.contains("open") || e.target.closest("button")) return; openStatus(true); } }, items, extra, dots);
+  st.replaceChildren(row, toggle, tabBar());
   statusTips(st);
   updateStatus(true);
   watchStatusHeight();
+}
+// 狀態列展開／收起（手機）：按鈕上的字跟著換
+export function openStatus(on) {
+  const st = $("#status"), t = st && $(".st-toggle", st);
+  if (!st) return;
+  st.classList.toggle("open", on);
+  if (t) { t.setAttribute("aria-expanded", String(on)); t.setAttribute("aria-label", on ? "收起狀態列" : "展開狀態列，看全部的數字"); $(".stt-t", t).textContent = on ? "收起" : "更多"; }
+}
+// 手機的底部分頁列（翊文 11-12：「整個手機的介面可能都要再想壹下」，選 A）：大廳、今天、兌換所、賭場、選單五顆大按鈕。
+// 放在狀態列裡面最下面壹排，狀態列的高度（--status-real）就把它算進去，各頁底下的留白、跳出的框不用另外改。
+// 只有 html.ui2 而且寬度 760 以下看得到（css/lobby2.css）；回滾跟著 NUM.ui.newLobby
+export const phoneTabs = () => typeof matchMedia !== "undefined" && document.documentElement.classList.contains("ui2") && matchMedia("(max-width: 760px)").matches;
+function tabBar() {
+  const tb = (cls, ic, label, fn, extra) => h("button", { type: "button", class: "tb-btn " + cls, onClick: e => { e.stopPropagation(); fn(); }, ...extra },
+    ic === "shop" ? cicon(ic) : icon(ic), h("span", { class: "tb-t" }, label), h("span", { class: "tb-n", "aria-hidden": "true" }));
+  return h("nav", { class: "tabbar", "aria-label": "常用" },
+    tb("tb-room", "lobby", "大廳", () => navTo("lobby"), { dataset: { room: "lobby" } }),
+    tb("tb-today", "calendar", "今天", () => openPanel("today")),
+    tb("tb-shop", "shop", "兌換所", () => openPanel("shop")),
+    tb("tb-room", "dice", "賭場", () => navTo("casino"), { dataset: { room: "casino" } }),
+    tb("tb-menu", "menu", "選單", () => toggleMenu(), { "aria-controls": "navDrawer", "aria-expanded": "false" }));
+}
+// 分頁列上的數字：今天還沒做的、手上的週章、選單裡沒看的（updateBoardBadges、drawShopTab 順手更新）
+function setTab(sel, n, label) {
+  const b = $(sel);
+  if (!b) return;
+  $(".tb-n", b).textContent = n > 99 ? "99+" : n ? String(n) : "";
+  b.classList.toggle("has-n", n > 0);
+  b.setAttribute("aria-label", n ? `${label}（${n}）` : label);
 }
 // 狀態列真正的高度 → CSS 變數 --status-real（翊文 11-08 介面檢查第 3 項）：
 // 狀態列在某些寬度會排成兩排，原本各頁底下的留白、跳出的視窗都照固定的 --status-h 算，就被蓋住。
@@ -509,7 +542,10 @@ export function updateBoardBadges() {
     mb.classList.toggle("has-seal", badge.seal);
     $(".menu-n", mb).textContent = n > 99 ? "99+" : n ? String(n) : "";
     labelMenu();
+    setTab(".tb-menu", n, "選單");
+    const tm = $(".tb-menu"); if (tm) tm.classList.toggle("has-seal", badge.seal);
   }
+  setTab(".tb-today", tn, "今天");
 }
 // 稱號小標籤（決定 0050）：館友名單、小卡、選館友、榜單、隊伍、牌桌共用。沒有稱號就回傳 null（版面不變）。
 // 字很長就在 css 裡縮成「…」（.ttl），完整的字放在滑鼠停上去的提示。稱號是玩家的成就名，一律純文字
@@ -556,6 +592,8 @@ export function drawShopTab() {
   a.hidden = !P || isFree(P);
   a.classList.toggle("has-n", n > 0);
   const b = $(".ns-n", a); if (b) b.textContent = n > 99 ? "99+" : String(n);
+  setTab(".tb-shop", n, "兌換所");
+  const ts = $(".tb-shop"); if (ts) ts.hidden = !P || isFree(P);
   a.title = n ? `兌換所：你有 ${n} 枚週章` : "兌換所";
 }
 export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }

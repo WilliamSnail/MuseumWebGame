@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "phone-tabbar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "手機直拿的介面換了", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "手機直拿時，最下面多了壹排大按鈕：大廳、今天、兌換所、賭場、選單。數字是還沒做的事、手上的週章、沒看的公告和信。",
+        "狀態列收成薄薄壹行，只放心情、理智、靈感（登入了還有籌碼）。點壹下狀態列，或按右邊的 ⓘ，就展開全部。",
+        "選單改成從底下拉上來；大廳先放「今天要做的事」，再放導覽圖。",
+      ]],
+    ],
+  },
+  {
     id: "bout-chip", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "狀態列的瘋狂發作寫清楚了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [
