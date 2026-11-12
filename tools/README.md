@@ -18,6 +18,7 @@
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |
 | **改很多處文字（首選）**：寫純文字計畫檔，反引號、`$`、引號都不用跳脫；有壹處對不上就壹個檔都不寫 | `npm run edits -- 計畫檔`（格式在 `tools/apply_edits.cjs` 開頭，`--check` 只檢查） |
+| 一張好幾格的綠底素材切成一條（怪物姿勢、特效、圖示） | `~/anaconda3/python.exe tools/cut_frames.py 原圖 輸出.webp --rows 6 [--cell 200]`（`--rows 4,3` 每排幾格；用法在檔案開頭） |
 | 給翊文生素材：Prompt 做成網頁，每張有參考圖、「複製參考圖」「複製 Prompt」兩顆鈕 | `node tools/flat_prompts.cjs` → `docs/地下室素材Prompt.html`（從 `docs/地下室素材清單.md` 產生，不要手改） |
 | **每天的排程做新關卡**：幾個旋鈕 → 地下今天的怪物；自動調難度、模擬 1～4 人、印出玩家會看到什麼、寫進當天的檔 | `npm run level:new -- 規格.json`（`--write` 寫進 `dN.json`；`--styles` 列出打法；格式在 `tools/new_level.cjs` 開頭；步驟在 `content/排程說明.md` 一之八） |
 | 打怪物的模擬（改 `NUM.fight`、`CELLAR_FOES` 之後跑） | `node test/sim_fight.cjs 200`（`RANK=3` 看 3 級的） |

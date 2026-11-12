@@ -15,7 +15,30 @@ const MOVE_TEXT = { cap: "棒球帽：擋下這壹招", crown: "皇冠：這壹�
 const INTENT_ICON = { hit: "撲", scare: "嚇", all: "全", grow: "多" };
 const odds = n => (n >= 85 ? "幾乎壹定成" : n >= 65 ? "大概七成" : n >= 45 ? "大概壹半" : n >= 25 ? "大概三成" : "很難");
 
-// 怪物：還沒有圖，先畫壹塊蓋著布的剪影，兩點反光。第二階段布滑下來壹點
+// 生好的圖（翊文 11-12，原圖 assets/cellar2/，tools/cut_frames.py 切成一條）：
+//   怪物一張三格：平常、出招、安靜下來（[格寬, 格高]）；特效一條 n 格；行動圖示一條六格
+const FOE_ART = { f1a: [300, 284], f1b: [300, 270], f1g: [188, 300] };
+const FX_ART = { push: 7, see: 6, san: 6, stamp: 6 };
+const ACT_ICON = { push: 0, see: 1, calm: 2, guard: 3, flee: 4, retreat: 5 };
+export const actIcon = act => (act in ACT_ICON ? h("span", { class: "fg-ico", style: { backgroundPosition: `${ACT_ICON[act] * 20}% 0` }, "aria-hidden": "true" }) : null);
+export const fightFx = (kind, cls = "") => (FX_ART[kind] ? h("div", { class: `fg-fx k-${kind} ${cls}`, style: { "--n": FX_ART[kind] }, "aria-hidden": "true" }) : null);
+// 新的一回合結算出來才演一次（畫面每次有人選都會重畫，不能每次都演）
+let shownRound = "";
+function freshRound(v) {
+  const r = v.last && v.last.round;
+  if (!r || !r.events) return null;
+  const key = `${v.fight.foe}:${r.round}:${v.fight.phase}`;
+  if (key === shownRound) return null;
+  shownRound = key;
+  return r;
+}
+// 怪物：有圖的用圖（三個姿勢），還沒有圖的先畫壹塊蓋著布的剪影，兩點反光。第二階段布滑下來壹點
+function foeSprite(f, lunge) {
+  const a = FOE_ART[f.foe];
+  if (!a) return h("div", { class: "fg-foe-art", html: foeArt(f) });
+  return h("div", { class: "fg-foe-art", role: "img", "aria-label": "怪物" },
+    h("div", { class: "fg-sprite" + (lunge ? " lunge" : ""), style: { backgroundImage: `url(/cellar2/foe-${f.foe}.webp)`, "--ar": (a[0] / a[1]).toFixed(3) } }));
+}
 function foeArt(f) {
   const dim = f.phase === 2 ? 0.55 : 0.82;
   return `<svg viewBox="0 0 200 200" role="img" aria-label="看不清楚的東西"><ellipse cx="100" cy="184" rx="62" ry="9" fill="rgba(0,0,0,.28)"/><path d="M38 182 C34 120 52 46 100 40 C148 46 166 120 162 182 C140 172 126 190 100 180 C74 190 60 172 38 182 Z" fill="rgba(34,26,40,${dim})" stroke="rgba(214,178,94,.55)" stroke-width="2"/><path d="M58 150 C70 132 78 160 92 140 M110 146 C120 128 132 158 144 138" fill="none" stroke="rgba(214,178,94,.25)" stroke-width="2"/><circle class="fg-eye" cx="84" cy="96" r="4" fill="#F6E6B4"/><circle class="fg-eye" cx="116" cy="96" r="4" fill="#F6E6B4"/></svg>`;
@@ -30,7 +53,13 @@ export function fightStage(v, mine = null) {
   const myPush = (fv.options || []).find(o => o.act === "push");
   const cut = myPush ? Math.max(0, Math.round((f.hp - myPush.lo) / Math.max(1, f.hpMax) * 100)) : pct; // 你推了大概會扣到哪（淡色預告）
   const it = f.intent || {};
+  // 剛結算的這一回合：怪物有出手就換「出招」的姿勢一下；推、看穿成功、自己扣理智各演一次特效
+  const fresh = freshRound(v), ev = fresh ? fresh.events : [];
+  const foeHit = ev.some(e => e.t === "foe" && !e.cancel);
+  const pushed = ev.some(e => e.t === "push"), saw = ev.some(e => e.t === "see" && e.ok);
+  const myLoss = ev.some(e => e.t === "foe" && ((e.hit === v.me && e.san) || (e.hits || []).some(x => x.id === v.me && x.san)));
   const seats = f.seats.map(s => h("div", { class: "fg-seat" + (s.id === v.me ? " me" : "") + (s.ghost ? " ghost" : "") + (s.out ? " gone" : "") + (it.to === s.id ? " aimed" : "") },
+    s.id === v.me && myLoss ? fightFx("san", "on-seat") : null,
     h("b", { class: "fg-who" }, s.helper ? "館方助手" : nameOf(v, s.id) + (s.id === v.me ? "（你）" : ""),
       s.helper ? null : h("i", { class: "fg-ok" + (waiting.includes(s.id) ? "" : " on") }, s.out ? "走了" : s.ghost ? "倒了" : waiting.includes(s.id) ? "在想…" : "選好了")),
     h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}` },
@@ -38,7 +67,7 @@ export function fightStage(v, mine = null) {
   return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") },
     h("div", { class: "fg-foe" },
       h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
-      h("div", { class: "fg-foe-art", html: foeArt(f) }),
+      h("div", { class: "fg-foe-box" }, foeSprite(f, foeHit), pushed ? fightFx("push") : null, saw ? fightFx("see") : null),
       h("h3", { class: "fg-name" }, fv.name || "？", f.boss ? h("small", null, f.phase === 2 ? "　第二階段" : "　守門") : h("small", null, `　等級 ${f.rank || 1}`)),
       h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${f.hp}／${f.hpMax}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${f.hp}／${f.hpMax}`)),
       f.weak ? h("p", { class: "fg-flag" }, `弱點找到了：推 ×${NUM.fight.weakMult}`) : null),
@@ -120,7 +149,7 @@ export function fightCard(v, me, api) {
   const big = opts.filter(o => ["push", "see", "calm", "guard", "point"].includes(o.act));
   const moves = opts.filter(o => o.move);
   const exits = opts.filter(o => o.act === "flee" || o.act === "retreat");
-  const mk = (o, cls) => btn([h("b", null, o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
+  const mk = (o, cls) => btn([h("b", null, o.move ? null : actIcon(o.act), o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
     () => send({ act: o.act }, o), cls + (mine && mine.act === o.act ? " cx-on" : ""), { disabled: !o.ok, "aria-pressed": String(!!(mine && mine.act === o.act)) });
   const last = v.last && v.last.round ? roundLines(v, v.last.round) : [];
   const sanPct = Math.max(0, Math.min(100, seat.san || 0));

@@ -10,7 +10,7 @@
   .fg-seats { flex-direction: column; align-items: stretch; }
   .fg-seat { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
   .fg-seat .fg-pepes { margin-top: 0; }
-  .fg-foe-art { width: 124px; }
+  .fg-foe-art { width: 124px; } .fg-foe-art:has(.fg-sprite) { --foe-h: 176px; }
   .fg-stage { padding-top: 10px; padding-bottom: 8px; }
 }
 .fg-foe { display: grid; justify-items: center; gap: 6px; }
@@ -19,6 +19,31 @@
 .fg-intent.k-grow i { background: #6A5A1E; } .fg-intent.k-scare i, .fg-intent.k-all i { background: #4B2E6B; }
 .fg-foe-art { width: min(34vw, 190px); aspect-ratio: 1; animation: fg-breathe 3.2s ease-in-out infinite; }
 .fg-foe-art svg { width: 100%; height: 100%; display: block; }
+/* 生好的圖：怪物一張三格（平常、出招、安靜下來），平常停在第一格；剛出手換第二格一下 */
+.fg-foe-box { position: relative; display: grid; place-items: end center; }
+.fg-foe-art:has(.fg-sprite) { aspect-ratio: auto; width: auto; height: var(--foe-h, 170px); display: grid; place-items: end center; }
+.fg-sprite { height: var(--foe-h, 170px); width: calc(var(--foe-h, 170px) * var(--ar, 1)); background: no-repeat 0 0 / 300% 100%; position: relative; filter: drop-shadow(0 0 3px rgba(246, 230, 180, .55)) drop-shadow(0 8px 10px rgba(0, 0, 0, .6)); }
+.fg-sprite.lunge { animation: fg-lunge 900ms steps(1) forwards; }
+@keyframes fg-lunge { 0% { background-position: 50% 0; transform: translateY(-4px) scale(1.06); } 80% { background-position: 50% 0; transform: none; } 100% { background-position: 0 0; } }
+.fg-stage.p2 .fg-sprite { background-position: 50% 0; } /* 第二階段一直是出招的樣子 */
+/* 特效：一條 n 格，一格一格播完就消失 */
+.fg-fx { position: absolute; left: 50%; top: 50%; width: 150%; aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; background: no-repeat 0 0 / calc(var(--n) * 100%) 100%; z-index: 3; }
+.fg-fx.k-push { background-image: url(/cellar2/fx-push.webp); animation: fg-fx 700ms steps(7, jump-none) forwards, fg-fade 700ms forwards; }
+.fg-fx.k-see { background-image: url(/cellar2/fx-see.webp); animation: fg-fx 700ms steps(6, jump-none) forwards, fg-fade 700ms forwards; }
+.fg-fx.k-san { background-image: url(/cellar2/fx-san.webp); width: 110%; animation: fg-fx 700ms steps(6, jump-none) forwards, fg-fade 700ms forwards; }
+.fg-fx.k-stamp { background-image: url(/cellar2/fx-stamp.webp); position: relative; left: auto; top: auto; transform: none; display: inline-block; width: 46px; aspect-ratio: 105 / 220; vertical-align: middle; margin-right: 6px; animation: fg-fx 900ms steps(6, jump-none) forwards; }
+.fg-seat { position: relative; }
+@keyframes fg-fx { from { background-position: 0 0; } to { background-position: 100% 0; } }
+@keyframes fg-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+body.reduce-motion .fg-fx:not(.k-stamp) { display: none; }
+body.reduce-motion .fg-sprite.lunge { animation: none; }
+body.reduce-motion .fg-fx.k-stamp { animation: none; background-position: 100% 0; }
+/* 行動按鈕的圖示：一條六格 */
+.fg-ico { display: inline-block; width: 1.6em; height: 1.6em; margin-right: 6px; vertical-align: -0.45em; border-radius: 6px; background: url(/cellar2/act.webp) no-repeat 0 0 / 600% 100%; }
+/* B1 的舞台背景（2-1） */
+/* 怪物是紙箱、背景也有紙箱：背景壓暗、怪物站的地方打一圈暖光，才分得出來 */
+.fg-stage.fl1 { background: linear-gradient(rgba(27, 22, 31, .62), rgba(27, 22, 31, .88)), url(/cellar2/stage-b1.webp) center 60% / cover; }
+.fg-foe-box::before { content: ""; position: absolute; left: 50%; bottom: -6%; width: 170%; height: 60%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 214, 140, .32), rgba(255, 214, 140, 0)); pointer-events: none; }
 .fg-eye { animation: fg-blink 4.6s steps(1) infinite; }
 .fg-name { margin: 0; font-size: 1.05rem; } .fg-name small { font-weight: 400; opacity: .8; }
 .fg-bar { position: relative; width: min(100%, 420px); height: 22px; border: 2px solid #D6B25E; border-radius: 11px; background: #120E15; overflow: hidden; }
@@ -78,7 +103,7 @@ body.reduce-motion .fg-foe-art, body.reduce-motion .fg-eye { animation: none; }
   .fg-stage { gap: 6px; padding: 8px 8px 6px; }
   .fg-foe { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "art intent" "art name" "bar bar"; align-items: center; justify-items: start; column-gap: 10px; }
   .fg-intent { grid-area: intent; font-size: .9rem; padding: 6px 8px; } .fg-intent i { width: 1.8em; height: 1.8em; }
-  .fg-foe-art { grid-area: art; width: 76px; }
+  .fg-foe-box { grid-area: art; } .fg-foe-art { width: 76px; } .fg-foe-art:has(.fg-sprite) { --foe-h: 72px; }
   .fg-name { grid-area: name; font-size: 1rem; }
   .fg-bar { grid-area: bar; width: 100%; }
   .fg-flag { grid-column: 1 / -1; justify-self: center; }
@@ -95,7 +120,7 @@ body.reduce-motion .fg-foe-art, body.reduce-motion .fg-eye { animation: none; }
   .fg-stage { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 6px 8px; }
   .fg-foe { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "art intent" "art name" "bar bar"; align-items: center; justify-items: start; column-gap: 8px; row-gap: 2px; }
   .fg-intent { grid-area: intent; font-size: .8125rem; padding: 3px 8px; } .fg-intent i { width: 1.6em; height: 1.6em; }
-  .fg-foe-art { grid-area: art; width: 48px; animation: none; }
+  .fg-foe-box { grid-area: art; } .fg-foe-art { width: 48px; animation: none; } .fg-foe-art:has(.fg-sprite) { --foe-h: 54px; }
   .fg-name { grid-area: name; font-size: .875rem; }
   .fg-bar { grid-area: bar; width: 100%; height: 18px; } .fg-bar span { line-height: 14px; font-size: .75rem; }
   .fg-seats { flex-direction: row; flex-wrap: nowrap; gap: 4px; }
