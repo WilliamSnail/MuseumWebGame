@@ -78,7 +78,7 @@ export function openCoop(pid, o = {}) {
   }));
   s.offs.push(NET.watch(`coopView/${pid}/${meId}`, v => { if (S === s && v && v.j) onView(JSON.parse(v.j)); }));
   s.offs.push(NET.watch(`coopChat/${pid}`, v => { if (S === s) onChat(v); }));
-  s.offs.push(NET.on("roster", () => { if (S === s) { watchOff(); drawSide(); } }));
+  s.offs.push(NET.on("roster", () => { if (S === s) { watchOff(); drawSide(); refreshInvite(); } }));
   s.clock = setInterval(tickClock, 250);
   if (o.resumed) call("resume").catch(() => {});
   draw();
@@ -343,6 +343,16 @@ function picker(mine, ms) {
       h("span", { class: "pt-opt-art", html: itemHTML(it) }), h("span", { class: "pt-opt-t" }, describePepe(it.pick).title), h("span", { class: "cx-pw" }, hurt ? "受傷" : `強度 ${memberPower(it, null)}`));
   })) : h("p", { class: "pt-hint" }, "收藏裡還沒有佩佩：先去手作坊做壹隻。");
   return h("div", { class: "pt-mine" }, h("p", { class: "pt-cost" }, `挑 ${COOP.eachMin}–${COOP.eachMax} 隻（已經挑了 ${chosen.length} 隻）。你的理智 ${P.sanity}。`), list, h("div", { class: "pt-mine-btns" }, guardBtn, readyBtn));
+}
+// 館友上線或下線時，只換準備區的邀請那一列（整頁重畫會丟掉挑佩佩的捲動位置）
+function refreshInvite() {
+  const s = S;
+  if (!s || !s.m || !s.m.layer.isConnected || s.anim || s.out || !s.party || s.view || s.party.phase !== "lobby") return;
+  const old = s.m.surface.querySelector(".cx-invite");
+  const nu = inviteBox(partyMembers(s.party));
+  if (old && nu) old.replaceWith(nu);
+  else if (old) old.remove();
+  else if (nu) draw(); // 原本滿員沒有這一列，現在有空位：整頁重畫
 }
 // 邀請在線的館友（也可以從館友的小卡邀請）
 function inviteBox(ms) {
