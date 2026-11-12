@@ -26,17 +26,17 @@ import { todayItems } from "./ui_today.js";
 const L = "/lobby/"; // 素材（web/public/lobby，打包時原樣複製）
 // 房間在底圖上的位置：box 是橫式底圖（land.webp，1024×572）的像素，port 是直式底圖（port.webp，572×1024，手機直拿用）的像素。icon：assets/rooms 有圖的才放
 export const LOBBY2_ROOMS = [
-  { id: "gallery", icon: "gallery", box: [60, 48, 440, 200], port: [35, 30, 540, 160] },
-  { id: "hall", icon: null, box: [452, 48, 572, 134], port: [345, 165, 540, 292] },
-  { id: "fusion", icon: "fusion", box: [584, 48, 782, 198], port: [35, 305, 162, 445] },
+  // cut／pcut：橫式／直式底圖上不是方的房間，照牆畫的多邊形（底圖像素）。靠中間八角大廳的房間有壹角是斜牆（翊文 11-13：「右上方不太對」「還有其他房間也是有這個問題」）
+  { id: "gallery", icon: "gallery", box: [60, 48, 440, 200], port: [35, 30, 540, 160], cut: [[60, 48], [440, 48], [440, 134], [378, 200], [60, 200]] },
+  { id: "hall", icon: null, box: [452, 48, 572, 134], port: [345, 165, 540, 292], pcut: [[345, 165], [540, 165], [540, 292], [394, 292], [345, 246]] },
+  { id: "fusion", icon: "fusion", box: [584, 48, 782, 198], port: [35, 305, 162, 445], cut: [[584, 48], [782, 48], [782, 198], [652, 198], [584, 120]] },
   { id: "pillow", icon: null, box: [794, 48, 972, 198], port: [410, 305, 540, 445] },
-  { id: "origin", icon: "library", box: [52, 208, 276, 356], port: [35, 165, 230, 292] },
-  { id: "codex", icon: null, box: [280, 208, 376, 326], port: [35, 455, 225, 612] },
-  { id: "cellar", icon: "cellar", box: [760, 208, 972, 326], port: [350, 455, 540, 612] },
+  { id: "origin", icon: "library", box: [52, 208, 276, 356], port: [35, 165, 230, 292], cut: [[52, 208], [276, 208], [276, 332], [236, 332], [236, 356], [52, 356]], pcut: [[35, 165], [230, 165], [230, 238], [176, 292], [35, 292]] },
+  { id: "codex", icon: null, box: [280, 208, 376, 326], port: [35, 455, 225, 612], pcut: [[35, 455], [183, 455], [225, 498], [225, 612], [35, 612]] },
+  { id: "cellar", icon: "cellar", box: [760, 208, 972, 326], port: [350, 455, 540, 612], pcut: [[375, 455], [540, 455], [540, 612], [350, 612], [350, 481]] },
   { id: "workshop", icon: "workshop", box: [48, 364, 232, 524], port: [35, 620, 225, 778] },
-  // cut：橫式底圖上不是方的房間，照牆畫的多邊形（底圖像素）。委託櫃台右上角是斜的（翊文 11-13：「右上方不太對」）
   { id: "commission", icon: "board", box: [238, 334, 442, 524], port: [350, 620, 540, 778], cut: [[238, 334], [374, 334], [442, 407], [442, 524], [238, 524]] },
-  { id: "office", icon: "office", box: [584, 334, 782, 528], port: [35, 785, 225, 948] },
+  { id: "office", icon: "office", box: [584, 334, 782, 528], port: [35, 785, 225, 948], cut: [[650, 334], [782, 334], [782, 528], [584, 528], [584, 405]] },
   { id: "casino", icon: "casino", box: [794, 334, 972, 528], port: [350, 785, 540, 948] },
 ];
 // 要不要用新的大廳（決定 0066）：總開關在 NUM.ui.newLobby（回滾用），玩家自己也可以選舊的
@@ -103,7 +103,7 @@ function mapBox(step) {
       "aria-label": `${name}${sub ? "，" + sub : ""}${fresh.has(r.id) ? "，有新東西" : ""}`,
       style: { left: x0 / W * 100 + "%", top: y0 / H * 100 + "%", width: (x1 - x0) / W * 100 + "%", height: (y1 - y0) / H * 100 + "%" },
       onClick: () => navTo(r.id) }, tag, who);
-    const cut = !portrait && r.cut;
+    const cut = portrait ? r.pcut : r.cut;
     if (cut) { // 點得到的範圍和金框都照牆的形狀：按鈕用 clip-path 切掉角，框用 SVG 畫（box-shadow 畫不出斜邊）
       const w = x1 - x0, ht = y1 - y0, pts = cut.map(([x, y]) => [x - x0, y - y0]);
       b.classList.add("cut");
