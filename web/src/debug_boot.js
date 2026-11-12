@@ -11,10 +11,43 @@ import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";
 import { overlay } from "./ui_board.js";
 import { fightCard, fightStage } from "./ui_fight.js";
+import { routeCard, routeStage } from "./ui_route.js";
+import { coopRouteOptions } from "../../shared/coop_route.js";
 
 // #fight：不連伺服器，直接打開合作地下的守門打怪（地下室改版的畫面，ui_fight.js）。跟你壹隊的「小華」會自己選推。
 //   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）；#fight:f3g　換成那隻怪物、那壹層的舞台（看圖用，數字不準）
 // 規則照樣跑 shared/ 的 coopBegin、coopAct，只是存檔不存、不送伺服器。看排版、按鈕、結算的字用。
+// #route：不連伺服器，直接打開今天的地圖選路（地下室改版，ui_route.js）。按「走這裡」之後那個點自動做完（房間選安全的、打怪都推、休息回理智、寶箱按繼續），再回到地圖
+//   #route　B1；#route:3　第 3 層的地圖。看地圖的樣子用
+function routePreview(arg) {
+  const today = todayStr();
+  let clock = nowMs();
+  const floor = Math.max(1, Math.min(5, Number(arg) || 1));
+  const mine = collectionItems("pepe").slice(0, 2).map(i => i.key);
+  const s = coopBegin([{ id: "me", name: "小明", P, keys: mine }], 1, today, clock, { gate: true });
+  if (!s.ok) { console.warn("#route 開不了：", s.reason); return; }
+  const run = s.run, Ps = { me: P };
+  if (floor > 1) { run.floor = floor; run.cmap = null; run.phase = "floorDone"; run.next = floor; run.floor = floor - 1; run.votes = {}; coopAct(run, Ps, "me", "floor", { go: "down" }, ++clock); }
+  const m = overlay("nb-party nb-coop", "地下收藏庫（開發用：地圖預覽）", "地圖預覽", "stairs");
+  let sel = null;
+  const finish = () => { // 把現在這個點做完
+    for (let i = 0; i < 80 && run.phase !== "route" && run.phase !== "over" && run.phase !== "floorDone"; i++) {
+      if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); coopAct(run, Ps, "me", "vote", { choice: c }, ++clock); }
+      else if (run.phase === "fight") coopAct(run, Ps, "me", "fight", { act: "push" }, ++clock);
+      else if (run.phase === "rest") coopAct(run, Ps, "me", "rest", { pick: "san" }, ++clock);
+      else if (run.phase === "carry") coopAct(run, Ps, "me", "carry", { side: "skip" }, ++clock);
+      else coopAct(run, Ps, "me", "ack", {}, ++clock);
+    }
+  };
+  const draw = () => {
+    const v = viewFor(run, "me"), me = v.members.find(x => x.id === "me");
+    const body = run.phase === "route" ? [routeStage(v, sel, id => { sel = id; draw(); }), routeCard(v, me, { sel, mine: null, go: node => { coopAct(run, Ps, "me", "route", { node }, ++clock); sel = null; finish(); draw(); } })]
+      : [h("p", { class: "nb-empty" }, `走完了（${run.phase}）`)];
+    m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body),
+      h("aside", { class: "cx-side" }, h("p", { class: "pt-hint" }, `（預覽：能走 ${coopRouteOptions(run).length} 個點；真的遊戲這壹欄是隊員、證據和聊天）`))));
+  };
+  draw();
+}
 function fightPreview(arg) {
   const today = todayStr();
   let clock = nowMs();
@@ -79,6 +112,7 @@ function fightPreview(arg) {
     if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 5 * 86400000 + 5000, task: "calm", done: [] }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 2 * 86400000 + 5000, task: "hug", done: [P.day.date] }]; // 怪癖（決定 0046）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
     setRng(null);
+    if (screen === "route") { go("lobby", {}, { action: false }); setTimeout(() => routePreview(arg), 300); return; }
     if (screen === "fight") { go("lobby", {}, { action: false }); setTimeout(() => fightPreview(arg), 300); return; }
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
     if (screen === "fusion2") { const it = collectionItems("pepe"); UI.fusion = [{ key: it[0].key }, { key: it[1].key }]; go("fusion", {}, { action: false }); return; }
