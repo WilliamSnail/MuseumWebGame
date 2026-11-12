@@ -261,3 +261,9 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   /* 導覽圖上面的待辦只放前兩張，其他的按底下的「今天」 */
   .l2-todobox .l2-todo:nth-child(n+3) { display: none; }
 }
+
+/* ---------- 框改成九宮格零件（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材生成.md、tools/build_panel_kits.py） ----------
+   gold9.webp：金框條（角固定、邊重複接，不 fill）；底另外鋪酒紅花紋 wine.webp 或羊皮紙 parch.webp。gold-orn-*：大的框角上疊的雕花。 */
+.l2-strip { border: 9px solid transparent; border-image: url(/kit/gold9.webp) 52 / 9px round;
+  background: #3A0E16 url(/kit/wine.webp) 0 0 / 256px padding-box; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+/* 館友證、待辦卡：翊文 11-12 覺得原本的框比較好看，照舊用 /lobby/panel-parch、card-*（之後用舊框當參考重新生成零件） */
