@@ -7,14 +7,19 @@
 //  怪物的圖還沒生成（docs/地下室素材清單.md）：先用程式畫的剪影。素材好了換 foeArt 就好。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { FIGHT_MOVES } from "../../shared/cellar_fight.js";
+import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar_fight.js";
 import { COOP } from "../../shared/coop.js";
 import { nowMs } from "../../shared/logic.js";
 import { btn, h, itemHTML, snd } from "./ui_core.js";
 
-const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點" };
+const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點", taunt: "引開", inspire: "鼓舞", share: "分膽", comfort: "安慰", reveal: "看清" };
+// 合作的新行動圖示（素材 3-6，一條五格）、角色徽章（3-7，一條五格）
+const TEAM_ICON = { taunt: 0, inspire: 1, share: 2, comfort: 3, reveal: 4 };
+const ROLE_ICON = { tank: 0, support: 1, healer: 2, dps: 3, scout: 4 };
+const teamIcon = act => (act in TEAM_ICON ? h("span", { class: "fg-ico tm", style: { backgroundPosition: `${TEAM_ICON[act] * 25}% 0` }, "aria-hidden": "true" }) : null);
+const roleBadge = r => h("span", { class: "fg-role", title: FIGHT_ROLE_TEXT[r] }, h("i", { style: { backgroundPosition: `${(ROLE_ICON[r] || 0) * 25}% 0` }, "aria-hidden": "true" }), FIGHT_ROLE_TEXT[r]);
 const MOVE_TEXT = { cap: "棒球帽：擋下這壹招", crown: "皇冠：這壹下骰子最大", tentacle: "觸手帽：大力推（自己扣理智）", wizard: "巫師帽：大家的推都加", beanie: "毛帽：回壹點理智", rest: "躺平：回壹點理智", squat: "斯拉夫蹲：這回合不會倒", cheer: "比讚：下回合大家的推都加" };
-const INTENT_ICON = { hit: "撲", scare: "嚇", all: "全", grow: "多" };
+const INTENT_ICON = { hit: "撲", scare: "嚇", all: "全", grow: "多", veil: "？", blur: "？" };
 const odds = n => (n >= 85 ? "幾乎壹定成" : n >= 65 ? "大概七成" : n >= 45 ? "大概壹半" : n >= 25 ? "大概三成" : "很難");
 
 // 生好的圖（翊文 11-12，原圖 assets/cellar2/，tools/cut_frames.py 切成一條）：
@@ -59,7 +64,20 @@ function stepOf(v, e) {
   const me = v.me, s = { who: e.id || null, pops: [], fxs: [], dhp: 0, lunge: false, line: lineOf(v, e) };
   const pop = (on, text, cls) => s.pops.push({ on, text, cls });
   const fx = (kind, on) => s.fxs.push({ kind, on });
-  if (e.t === "push") { fx("push", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; if (e.san) pop(e.id, `理智 −${e.san}`, "hurt"); }
+  if (e.t === "push") { fx("push", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; if (e.san) pop(e.id, `理智 −${e.san}`, "hurt"); if (e.shell) pop(e.id, "殼擋掉壹些", "miss"); else if (e.thick) pop(e.id, `被擋掉 ${e.thick}`, "miss"); else if (e.inspired) pop(e.id, `鼓舞 +${e.inspired}`, "good"); }
+  else if (e.t === "inspire") { pop(e.for, `鼓舞 +${e.n}`, "good"); }
+  else if (e.t === "share") { fx("brave", e.for); pop(e.for, `膽量 +${e.n}`, "good"); }
+  else if (e.t === "comfort") { fx("calm", e.for); pop(e.for, `理智 +${e.n}`, "good"); }
+  else if (e.t === "reveal") { if (e.ok) { fx("see", "foe"); pop("foe", "看清了", "good"); } else pop(e.id, "還是看不清", "miss"); }
+  else if (e.t === "green") { s.who = null; (e.ids || []).forEach(id => pop(id, `理智 +${e.n}`, "good")); }
+  else if (e.t === "trait") {
+    s.who = null;
+    if (e.kind === "grow") { fx("grow", "foe"); pop("foe", `+${e.n}`, "up"); s.dhp = e.n; }
+    else if (e.kind === "steal") { fx("flee", e.id); pop(e.id, `${(MOVE_TEXT[e.move] || e.move).split("：")[0]}被拿走了`, "hurt"); s.shake = [e.id]; }
+    else if (e.kind === "mark") { fx("stamp", e.id); pop(e.id, `被記上帳（${e.left} 回合）`, "hurt"); }
+    else if (e.kind === "markHit") { s.lunge = true; fx("san", e.id); pop(e.id, `記帳到期：理智 −${e.san}`, "hurt"); s.shake = [e.id]; }
+    else if (e.kind === "unmark") { fx("calm", e.id); pop(e.id, "帳塗掉了", "good"); }
+  }
   else if (e.t === "calm") { if (e.ok) { fx("calm", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; } else pop(e.id, "沒用", "miss"); }
   else if (e.t === "see") { if (e.ok) { fx("see", "foe"); pop("foe", "弱點！", "good"); } else pop(e.id, "沒看出來", "miss"); }
   else if (e.t === "point") { fx("see", "foe"); pop("foe", "弱點！", "good"); }
@@ -160,14 +178,18 @@ export function fightStage(v, mine = null) {
     ...fxOn(s.id), ...popOn(s.id),
     h("b", { class: "fg-who" }, s.helper ? "館方助手" : nameOf(v, s.id) + (s.id === v.me ? "（你）" : ""),
       s.helper || play ? null : h("i", { class: "fg-ok" + (waiting.includes(s.id) ? "" : " on") }, s.out ? "走了" : s.ghost ? "倒了" : waiting.includes(s.id) ? "在想…" : "選好了")),
-    h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}` },
-      h("div", { class: "fg-art", html: itemHTML({ kind: "pepe", key: p.key, pick: p.pick, perfect: p.perfect }) }), h("small", null, p.down ? "受傷" : `強度 ${p.power}`))))));
+    !s.helper && (s.roles || []).length ? h("div", { class: "fg-roles" }, h("small", null, "適合"), s.roles.map(roleBadge)) : null,
+    f.mark && f.mark.id === s.id ? h("span", { class: "fg-mark" }, `被記上帳：${f.mark.left} 回合後`) : null,
+    h("div", { class: "fg-pepes" }, s.pepes.map(p => h("div", { class: "fg-pepe" + (p.down ? " down" : "") + (p.beat ? " beat" : ""), title: p.down ? "倒下了（受傷）" : `強度 ${p.power}${p.beat ? "（心情剋牠）" : ""}` },
+      h("div", { class: "fg-art", html: itemHTML({ kind: "pepe", key: p.key, pick: p.pick, perfect: p.perfect }) }), h("small", null, p.down ? "受傷" : `強度 ${p.power}${p.beat ? "・剋牠" : ""}`))))));
+  const trait = fightTraitText(fightTraitOf(f));
   return h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") },
     cur && cur.banner ? h("div", { class: "fg-banner", role: "status" }, cur.banner) : null,
     h("div", { class: "fg-foe" },
       play ? h("div", { class: "fg-intent k-none", role: "status" }, h("i", null, "結"), h("span", null, h("b", null, "結算中"))) : h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
       h("div", { class: "fg-foe-box" }, foeSprite(f, !!(cur && cur.lunge)), ...fxOn("foe"), ...popOn("foe")),
       h("h3", { class: "fg-name" }, fv.name || "？", f.boss ? h("small", null, f.phase === 2 ? "　第二階段" : "　守門") : h("small", null, `　等級 ${f.rank || 1}`)),
+      trait ? h("p", { class: "fg-trait", title: trait.text }, h("b", null, `個性：${trait.name}`), h("small", null, `　${trait.text}`)) : null,
       h("div", { class: "fg-bar", role: "img", "aria-label": `壓力 ${hpNow}／${hpMaxNow}` }, h("i", { class: "cut", style: { width: pct + "%" } }), h("i", { class: "now", style: { width: cut + "%" } }), h("span", null, `壓力 ${hpNow}／${hpMaxNow}`)),
       f.weak ? h("p", { class: "fg-flag" }, `弱點找到了：推 ×${NUM.fight.weakMult}`) : null),
     h("div", { class: "fg-seats" }, seats));
@@ -186,7 +208,19 @@ function lineOf(v, e) {
     if (e.t === "see") return `${n(e.id)} 看穿（${e.skill}，擲 ${e.roll}，要 ${e.target} 以下）：${e.ok ? "找到弱點" : "沒看出來"}`;
     if (e.t === "calm") return `${n(e.id)} 安撫（擲 ${e.roll}，要 ${e.target} 以下）：${e.ok ? `牠靜了壹點，壓力 −${e.n}` : "沒用"}`;
     if (e.t === "guard") return e.for && e.for !== e.id ? `${n(e.id)} 擋在 ${n(e.for)} 前面` : `${n(e.id)} 擋著`;
-    if (e.t === "push") return `${n(e.id)} 推：壓力 −${e.n}${e.weak ? "（打到弱點）" : ""}${e.mode === "crown" ? "（皇冠）" : e.mode === "tentacle" ? "（觸手帽）" : ""}${e.tap ? "（時機抓得好 +" + e.tap + "）" : ""}${e.san ? `，自己理智 −${e.san}` : ""}`;
+    if (e.t === "inspire") return `${n(e.id)} 鼓舞 ${n(e.for)}：這回合推 +${e.n}`;
+    if (e.t === "share") return `${n(e.id)} 把膽量分給 ${n(e.for)}：+${e.n}`;
+    if (e.t === "comfort") return `${n(e.id)} 安慰 ${n(e.for)}：理智 +${e.n}`;
+    if (e.t === "reveal") return `${n(e.id)} 看清（偵查，擲 ${e.roll}，要 ${e.target} 以下）：${e.ok ? "看清楚牠要做什麼了" : "還是看不清"}`;
+    if (e.t === "green") return `綠色的佩佩讓 ${(e.ids || []).map(n).join("、")} 理智 +${e.n}`;
+    if (e.t === "trait") {
+      if (e.kind === "grow") return `牠自己又多了壹點：壓力 +${e.n}`;
+      if (e.kind === "steal") return `牠把 ${n(e.id)} 的${(MOVE_TEXT[e.move] || e.move).split("：")[0]}拿走了`;
+      if (e.kind === "mark") return `牠把 ${n(e.id)} 寫進帳裡：${e.left} 回合後會重重打他（安撫成功可以塗掉）`;
+      if (e.kind === "markHit") return `記帳到期：${n(e.id)} 理智 −${e.san}`;
+      if (e.kind === "unmark") return `${n(e.by)} 安撫成功，帳上 ${n(e.id)} 的名字塗掉了`;
+    }
+    if (e.t === "push") return `${n(e.id)} 推：壓力 −${e.n}${e.shell ? "（殼擋掉壹些）" : ""}${e.thick ? `（被擋掉 ${e.thick}）` : ""}${e.inspired ? `（鼓舞 +${e.inspired}）` : ""}${e.weak ? "（打到弱點）" : ""}${e.mode === "crown" ? "（皇冠）" : e.mode === "tentacle" ? "（觸手帽）" : ""}${e.tap ? "（時機抓得好 +" + e.tap + "）" : ""}${e.san ? `，自己理智 −${e.san}` : ""}`;
     if (e.t === "phase") return "布滑了下來。牠還沒完：第二階段";
     if (e.t === "win") return "牠安靜下來了。可以登記了";
     if (e.t === "ghost") return `${n(e.id)} ${e.why === "san" ? "撐不住了" : "帶的佩佩都倒了"}`;
@@ -198,7 +232,7 @@ function lineOf(v, e) {
       if (e.kind === "all") return "牠對大家出手：" + (e.hits || []).map(x => `${n(x.id)} ${x.blocked ? "被擋下" : x.san ? "理智 −" + x.san : "膽量擋住了"}`).join("、") + soft;
       if (e.miss) return "牠撲了個空";
       if (e.blocked) return `${n(e.blocked)} 擋下了這壹招`;
-      const who = e.cover ? `${n(e.cover)} 替 ${n(e.to)} 擋：` : `${n(e.hit)}：`;
+      const who = e.taunt ? `${n(e.taunt)} 把牠引開：` : e.cover ? `${n(e.cover)} 替 ${n(e.to)} 擋：` : `${n(e.hit)}：`;
       if (e.kind === "scare") return `牠嚇人。${who}${e.san ? "理智 −" + e.san : "膽量擋住了"}${soft}`;
       if (e.dodge) return `牠撲過來。${who}躲開了${soft}`;
       return `牠撲過來。${who}${e.down ? "壹隻佩佩倒下，受傷了" : "沒事"}${soft}`;
@@ -252,19 +286,26 @@ export function fightCard(v, me, api) {
     if (o.act === "flee") return `${odds(o.chance)}。要 ${fv.fleeNeed || 1} 個人壹起選；沒有獎勵`;
     if (o.act === "retreat") return "你自己回地面，拿到的都留著";
     if (o.act === "point") return o.ok ? "隊友的推會變強" : o.why;
+    if (o.act === "taunt") return o.ok ? "牠這壹招改打你，你算有擋" : o.why;
+    if (o.act === "inspire") return `${o.forName} 這回合推 +${o.n}`;
+    if (o.act === "share") return o.ok ? `分 ${o.n} 點膽量給 ${o.forName}` : o.why;
+    if (o.act === "comfort") return `${o.forName} 理智 +${o.n}`;
+    if (o.act === "reveal") return o.ok ? `${odds(o.chance)}。看清牠的下壹招` : o.why;
     return o.ok ? "" : o.why;
   };
   const big = opts.filter(o => ["push", "see", "calm", "guard", "point"].includes(o.act));
   const moves = opts.filter(o => o.move);
+  const team = opts.filter(o => o.team && (o.ok || o.act === "taunt")); // 合作的新行動：不能用的不放（引開例外：寫為什麼不行）
   const exits = opts.filter(o => o.act === "flee" || o.act === "retreat");
-  const mk = (o, cls) => btn([h("b", null, o.move ? moveIcon(o.act) : actIcon(o.act), o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
-    () => send({ act: o.act }, o), cls + (mine && mine.act === o.act ? " cx-on" : ""), { disabled: !o.ok, "aria-pressed": String(!!(mine && mine.act === o.act)) });
+  const mk = (o, cls) => btn([h("b", null, o.move ? moveIcon(o.act) : o.team ? teamIcon(o.act) : actIcon(o.act), o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] + (o.left > 1 ? `（還有 ${o.left} 次）` : "") : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
+    () => send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o), cls + (mine && mine.act === o.act ? " cx-on" : ""), { disabled: !o.ok, "aria-pressed": String(!!(mine && mine.act === o.act)) });
   const last = v.last && v.last.round ? roundLines(v, v.last.round) : [];
   const sanPct = Math.max(0, Math.min(100, seat.san || 0));
   card.append(
     h("h2", { class: "room-title fg-now" }, title, h("span", { class: "cx-clock" })),
     last.length ? h("div", { class: "fg-log" }, h("b", null, `第 ${v.last.round.round - (v.last.round.over ? 0 : 1)} 回合`), RP.summary && RP.key === roundKey(v) ? h("p", { class: "fg-sum" }, RP.summary) : null, h("ul", null, last.map(l => h("li", null, l)))) : h("p", { class: "pt-sub" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
     h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
+    team.length ? h("div", { class: "fg-moves fg-team" }, h("span", { class: "fg-lab" }, "幫隊友"), team.map(o => mk(o, "fg-move small"))) : null,
     moves.length ? h("div", { class: "fg-moves" }, h("span", { class: "fg-lab" }, "招式（壹場壹次）"), moves.map(o => mk(o, "fg-move small"))) : null,
     h("div", { class: "cx-card-foot fg-foot" },
       h("div", { class: "fg-me" }, h("span", null, `理智 ${seat.san ?? "—"}`), h("i", { class: "fg-san" }, h("i", { style: { width: sanPct + "%" } })), seat.brave ? h("span", { class: "fg-brave", title: "有隊友壯膽：扣理智的時候先扣膽量" }, `膽量 ${seat.brave}`) : null),

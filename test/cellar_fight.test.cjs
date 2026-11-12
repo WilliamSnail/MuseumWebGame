@@ -15,7 +15,7 @@ function seat(G, id, picks, skills = {}, san = 60, brave = 0) {
 }
 const helper = (G, n = 1) => G.fightHelperSeat(Array.from({ length: n }, (_, i) => G.coopHelperItem(i)));
 const FOE = "f1b"; // 沒有心情、顏色是紅：預設的佩佩（俄國8+9、黃）不剋也不被剋
-const start = (G, seats, o) => G.fightStart(FOE, seats, o);
+const start = (G, seats, o) => G.fightStart(FOE, seats, Object.assign({ noTrait: true }, o)); // 基本規則：關掉怪物的個性（個性另外測：test/cellar_traits.test.cjs）
 const aim = (G, f, moveId, to) => { const mv = G.fightFoe(f.foe).moves.concat(G.fightFoe(f.foe).moves2 || []).find(m => m.id === moveId); f.intent = { move: mv.id, kind: mv.kind, to: to || null }; return mv; };
 const evOf = (r, t) => r.events.filter(e => e.t === t);
 

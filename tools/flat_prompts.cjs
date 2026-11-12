@@ -5,7 +5,10 @@
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
 const SRC = path.join(ROOT, "docs", "地下室素材清單.md");
-const OUT = path.join(ROOT, "docs", "地下室素材Prompt.html");
+// --only 3-6,3-7 --out 檔名.html：只放這幾張（新加的一批另外給翊文，不跟生好的混在一起）
+const argOf = k => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
+const ONLY = (argOf("--only") || "").split(",").map(x => x.trim()).filter(Boolean);
+const OUT = path.join(ROOT, "docs", argOf("--out") || "地下室素材Prompt.html");
 const STYLE = "Match the art style of the attached reference image.";
 
 const lines = fs.readFileSync(SRC, "utf8").split(/\r?\n/);
@@ -58,7 +61,8 @@ for (const s of items) {
 const FIRST = ["2-1 B1", "2-2 f1a", "2-2 f1b", "2-2 f1g", "3-1", "2-3 推", "2-3 看穿", "2-3 扣理智", "2-3 登記", "1-2", "1-3"];
 const isFirst = o => FIRST.some(k => o.key === k || o.key.startsWith(k + " "));
 const rank = o => { const n = FIRST.findIndex(k => o.key === k || o.key.startsWith(k + " ")); return n < 0 ? 999 : n; };
-const first = out.filter(isFirst).sort((a, b) => rank(a) - rank(b)), rest = out.filter(o => !isFirst(o));
+const onlyHit = o => ONLY.some(k => o.key === k || o.key.startsWith(k + " "));
+const first = ONLY.length ? out.filter(onlyHit) : out.filter(isFirst).sort((a, b) => rank(a) - rank(b)), rest = ONLY.length ? [] : out.filter(o => !isFirst(o));
 
 
 const fileOf = o => (o.key.startsWith("2-2 ") ? o.key.split(" ").slice(0, 2) : o.key.split(" ")).join("_") + ".png"; // 怪物只用 id（f1a），不用名字
@@ -107,9 +111,9 @@ button.ok{background:#3c7a4a;border-color:#2c5a36}
 </style></head><body><main>
 <h1>地下室素材：一張一張貼</h1>
 <div class="how">每一張照順序做：<b>①</b> 按「複製參考圖」，到 Gemini 貼上（Ctrl+V）；<b>②</b> 按「複製 Prompt」，貼在同一則訊息；送出。<b>③</b> 生好的圖傳給 AI，說「這是第幾張」。一次傳一張，等 AI 回了再傳下一張。<br>勾「生好了」會記在這台電腦上，下次打開還在。</div>
-<h2>第一批：先生這 ${first.length} 張（夠做 B1 的打怪畫面）</h2>
+<h2>${ONLY.length ? `這次要生的 ${first.length} 張` : `第一批：先生這 ${first.length} 張（夠做 B1 的打怪畫面）`}</h2>
 ${first.map(card).join("\n")}
-<h2>其他（B1 玩過、覺得風格對了再生）</h2>
+${rest.length ? "<h2>其他（B1 玩過、覺得風格對了再生）</h2>" : ""}
 ${rest.map(card).join("\n")}
 </main>
 <script>

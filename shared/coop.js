@@ -32,7 +32,7 @@ import { eventRunFix } from "./events.js";
 import { trialById, trialState, trialWin } from "./shop.js";
 import { coopCanGuess, coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./coop_fun.js";
 import { coopFightFix, coopFightStart, coopFightView, coopGateDue } from "./coop_fight.js";
-import { fightFoesOf } from "./cellar_fight.js";
+import { fightFoesOf, fightIntentHidden } from "./cellar_fight.js";
 import { coopRouteBack, coopRouteBegin, coopRouteFix, coopRouteMapView, coopRouteOn } from "./coop_route.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
@@ -675,6 +675,9 @@ export function viewFor(run, id) {
   v.fresh = (run.fresh && run.fresh[id]) || [];
   if (run.fun) coopFilterView(v, run, id); // 不該看到的東西在這裡拿掉：線索、幻覺、地圖（coop_fun.js）
   if (run.phase === "fight" && run.fight) { v.fightView = coopFightView(run, id); v.votes = { [id]: (run.votes || {})[id] || null }; } // 打怪物：別人選了什麼結算前看不到，只知道誰選好了（fightView.waiting）
+  // 怪物的個性「蓋著布」「看不清楚」：下一招是哪一種（甚至要對誰）不送出去，開發者工具也看不到
+  const hid = run.phase === "fight" && run.fight ? fightIntentHidden(run.fight) : null;
+  if (hid && v.fight && v.fight.intent) v.fight.intent = hid === "veil" ? { kind: "veil", to: v.fight.intent.to } : { kind: "blur", to: null };
   if (run.cmap) v.cmap = coopRouteMapView(run); // 地圖（地下室改版；v.map 是留守看的房間地圖，不一樣）：只給種類和等級，不寫怪物是誰
   return v;
 }
