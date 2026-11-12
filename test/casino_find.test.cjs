@@ -164,6 +164,10 @@ T("限時活動：撿到的那次多壹把，沒撿到不給", G => {
   assert.strictEqual(s.w.chips, c0 + r.found); assert.strictEqual(s.house.bankroll, h0 - r.found);
   s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, seq(0, 0, 0, 0.999999), EV);
   assert.strictEqual(r.bonus, B.max, "最大那級");
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, () => B.chance - 1e-9, EV);
+  assert.ok(r.found > 0, "活動中的機率是 B.chance");
+  s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, () => B.chance - 1e-9);
+  if (B.chance > G.NUM.casino.cellarFind.chance) assert.strictEqual(r.found, 0, "沒有活動照平常的機率");
   s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, MISS, EV);
   assert.ok(r.ok && r.found === 0);
   s = fresh(G); r = G.casCellarFind(s.w, s.house, rooms(G)[0], D1, HIT, { kind: "casinoBoost" });

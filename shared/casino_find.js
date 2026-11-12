@@ -41,11 +41,11 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG, boost = null) {
   if (cf.rooms.includes(roomId)) return { ok: false, dup: true, reason: "這個房間今天走過了" };
   if (cf.n >= C.perDay) return { ok: false, capped: true, reason: "今天撿夠了" };
   cf.rooms.push(roomId);
-  if (!(rnd() < C.chance)) return { ok: true, found: 0 };
+  const B = boost && boost.kind === "cellarChips" ? NUM.events.cellarChips : null;
+  if (!(rnd() < (B && Number.isFinite(B.chance) ? B.chance : C.chance))) return { ok: true, found: 0 }; // 限時活動中機率另外算（翊文 11-12）
   const steps = Math.floor((C.max - C.min) / C.step) + 1;
   let found = Math.min(C.max, C.min + C.step * Math.min(steps - 1, Math.floor(rnd() * steps)));
   const t = Math.min(CAS_FIND_TEXT.lines.length - 1, Math.floor(rnd() * CAS_FIND_TEXT.lines.length));
-  const B = boost && boost.kind === "cellarChips" ? NUM.events.cellarChips : null;
   const bonus = B ? B.min + B.step * Math.floor(rnd() * (Math.floor((B.max - B.min) / B.step) + 1)) : 0;
   found += bonus;
   cf.n++;
