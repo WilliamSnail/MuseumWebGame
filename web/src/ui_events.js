@@ -63,6 +63,7 @@ function markSeen(id) {
 // 按鈕帶去該去的地方；已經在那裡就不放按鈕
 function eventGo(ev) {
   if (ev.kind === "casinoBoost") return { label: "去賭場", run: () => PANELS.casino && PANELS.casino() };
+  // cellarChips：跟合作、試煉壹樣去地下
   return UI.screen === "cellar" ? undefined : { label: "去地下", run: () => navTo("cellar") };
 }
 function eventNoticeTick() {

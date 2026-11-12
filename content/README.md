@@ -64,7 +64,7 @@ content/
 }
 ```
 
-- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）和 `trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
+- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
   - Functions 拿得到同一份：`tools/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
 
 - **賭場的每週收藏 `casino`**（決定 0042，規則 `shared/casino_week.js`）：選填，沒有的舊週照常。格式：

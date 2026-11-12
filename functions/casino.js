@@ -29,7 +29,7 @@ import { casCellarFind } from "./shared/casino_find.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
-import { eventsFromWeeks } from "./shared/events.js";
+import { eventLive, eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
@@ -249,8 +249,9 @@ export const casino = onCall(async req => {
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
-      const r = casCellarFind(ctx.w, ctx.house, d.room, ctx.day);
-      return r.ok ? { ok: true, found: r.found, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
+      const boost = eventLive(eventsFromWeeks(EVENT_WEEKS), "cellarChips", ctx.t); // 限時活動（翊文 11-12）：伺服器的時間說了算
+      const r = casCellarFind(ctx.w, ctx.house, d.room, ctx.day, undefined, boost);
+      return r.ok ? { ok: true, found: r.found, bonus: r.bonus || 0, t: r.t == null ? null : r.t, chips: ctx.w.chips } : no(r);
     });
     // 交委託拿籌碼（決定 0062）：畫面只說交了今天的哪幾張，給多少、一天幾張、同一張不重複都是這裡算
     case "job": return play(req, me, {}, ctx => {
