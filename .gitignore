@@ -16,3 +16,6 @@ database-debug.log
 ui-debug.log
 functions/node_modules/
 functions/shared/
+
+# AI 的子代理開的工作區（11-12：上線腳本的 git add -A 曾經把它當子專案 commit 進來）
+.claude/worktrees/
