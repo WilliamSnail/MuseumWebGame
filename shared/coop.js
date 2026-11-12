@@ -627,9 +627,28 @@ export function coopEnd(run, Ps, why = "done") {
   if (!run) return { ok: false, reason: "沒有這一趟" };
   coopFix(run);
   if (run.phase !== "over") { coopFinish(run, why); run.step++; }
+  coopBagSettle(run, Ps);
   coopSync(run, Ps);
   const summary = run.members.map(m => ({ id: m.id, name: m.name, ghost: m.ghost, out: m.out, startSan: m.startSan, san: m.san, got: m.got }));
   return { ok: true, run, summary, ghosts: run.members.filter(m => m.ghost).map(m => m.id), cleared: run.cleared.slice() };
+}
+// 背包（地下室改版，規劃第五節；翊文 11-12：「會加背包和撤退的代價」）：這一趟拿到的靈感都算在背包裡（m.got.insp）。
+//   大家一起撤、走完回地面：全拿。自己先走（out "left"）：帶著自己的背包回去，不扣。留守的人在地面上，不扣。
+//   全隊都倒了（over "lost"）：每個人的背包剩一半，扣掉的從靈感拿回來（不會扣到負的）。第一次走完一層的鑰匙、禁書不扣。
+//   只有新的地下室（run.gate）才算；太久沒人動自己結束的（stale）不算倒下。只算一次（run.bagDone）
+export function coopBagSettle(run, Ps) {
+  if (!run || run.over !== "lost" || !run.gate || run.bagDone) return [];
+  run.bagDone = true;
+  const out = [];
+  run.members.forEach(m => {
+    if (m.out === "left" || m.guard) return;
+    const P = Ps[m.id], lose = Math.floor((m.got.insp || 0) / NUM.cellarMap.bagKeep);
+    if (!P || lose <= 0) return;
+    const take = Math.min(lose, Math.max(0, P.insp));
+    P.insp -= take; m.got.insp -= take; m.got.bagLost = take;
+    out.push({ id: m.id, lost: take });
+  });
+  return out;
 }
 // 有人中途離隊：他拿到的已經寫進他的 P；他的佩佩離開隊伍、館方助手補位；領隊交給下一位
 export function coopLeave(run, Ps, id) {

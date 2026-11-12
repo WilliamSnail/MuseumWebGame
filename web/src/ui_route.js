@@ -94,6 +94,8 @@ function lastLine(v) {
   return null;
 }
 
+// 背包：這壹趟拿到的靈感。回到地面才算數；全隊都倒了剩壹半（規劃第五節）
+export const bagLine = me => (me && !me.guard ? h("p", { class: "rt-bag" }, h("b", null, "背包"), `　靈感 +${(me.got && me.got.insp) || 0}`, h("small", null, "　壹起撤退、走完回地面都全拿；全隊都倒了剩壹半；自己先走拿自己的")) : null);
 // 選路的卡片。api ＝ { sel, mine：我投的, go(node)：投票 }
 export function routeCard(v, me, api) {
   const map = v.cmap || { rows: [], next: [] };
@@ -115,6 +117,7 @@ export function routeCard(v, me, api) {
   return h("div", { class: "note-card room-card cx-card rt-card" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title fg-now" }, title, h("span", { class: "cx-clock" })),
     lastLine(v),
+    bagLine(me),
     leader ? h("p", { class: "pt-sub" }, `大家投票；平手 ${leader.name}（領隊）決定；沒投的時候先走探索房。`) : null,
     info,
     h("div", { class: "cx-card-foot" },

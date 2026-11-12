@@ -28,6 +28,23 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "cellar-bag", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "地下收藏庫：背包和撤退的代價", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "這壹趟拿到的靈感先放在背包裡，選路的時候看得到背包裡有多少。",
+        "大家壹起撤退、或走完回到地面：背包全拿。",
+        "自己先離隊：帶著自己的背包回去，不會少。",
+        "全隊都倒了：每個人的背包只剩壹半。",
+      ]],
+      ["所以", [
+        "要不要再往下走壹個點，現在要想壹下了。理智低的時候，先撤也是壹種選擇。",
+        "第壹次走完壹層拿到的鑰匙、禁書不會少。",
+      ]],
+    ],
+    cta: { label: "去地下收藏庫", room: "cellar" },
+  },
+  {
     id: "cellar-open-play", v: 1, cat: "館方公告", tags: ["重要", "活動"], importance: "important",
     title: "新的地下收藏庫開放了：揪館友壹起下去", publish: "2026-11-12", expire: "2027-12-31",
     sections: [

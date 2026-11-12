@@ -155,6 +155,35 @@ T("選路時也能撤：過半投撤退就壹起回地面，不到壹半照走",
   act(run, Ps, "a", "route", { node: "retreat" }); act(run, Ps, "b", "route", { node: G.coopRouteOptions(run)[0] });
   assert.notStrictEqual(run.phase, "over", "平手不撤");
 });
+T("背包：全隊都倒了剩壹半（扣回靈感）；壹起撤退全拿；先走的人和留守的不扣；只算壹次", () => {
+  let { run, Ps } = party(["a", "b", "c"]);
+  run.members.forEach(m => { m.got.insp = 9; Ps[m.id].insp = 100; });
+  run.members[1].out = "left"; // b 先走了
+  run.members.forEach(m => { if (m.id !== "b") m.ghost = true; });
+  G.coopFinish(run, "lost");
+  G.coopEnd(run, Ps, "lost");
+  assert.strictEqual(Ps.a.insp, 100 - 4, "9 的壹半（取整數）是 4");
+  assert.strictEqual(run.members[0].got.insp, 5);
+  assert.strictEqual(run.members[0].got.bagLost, 4);
+  assert.strictEqual(Ps.b.insp, 100, "先走的不扣");
+  G.coopEnd(run, Ps, "lost");
+  assert.strictEqual(Ps.a.insp, 96, "只扣壹次");
+  ({ run, Ps } = party(["a", "b"]));
+  run.members.forEach(m => { m.got.insp = 8; Ps[m.id].insp = 50; });
+  G.coopFinish(run, "retreat"); G.coopEnd(run, Ps, "retreat");
+  assert.strictEqual(Ps.a.insp, 50, "壹起撤退全拿");
+  ({ run, Ps } = party(["a"], { gate: false }));
+  run.members[0].got.insp = 8; Ps.a.insp = 50; run.members[0].ghost = true;
+  G.coopFinish(run, "lost"); G.coopEnd(run, Ps, "lost");
+  assert.strictEqual(Ps.a.insp, 50, "舊的地下室不算");
+});
+T("背包：不會扣到負的", () => {
+  const { run, Ps } = party(["a"]);
+  run.members[0].got.insp = 10; Ps.a.insp = 2; run.members[0].ghost = true;
+  G.coopFinish(run, "lost"); G.coopEnd(run, Ps, "lost");
+  assert.strictEqual(Ps.a.insp, 0);
+  assert.strictEqual(run.members[0].got.bagLost, 2);
+});
 T("送給畫面的地圖不寫怪物是誰（打開開發者工具也看不到）", () => {
   const { run } = party(["a", "b"]);
   const v = G.viewFor(run, "a");

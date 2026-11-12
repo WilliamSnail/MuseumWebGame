@@ -823,11 +823,12 @@ function overCard(v, me) {
   return h("div", { class: "note-card room-card cx-card cx-over" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.over === "lost" ? "這壹趟到這裡" : "回到地面了"),
     h("p", { class: "cx-text" }, COOP_OVER_TEXT[v.over] || COOP_OVER_TEXT.done),
+    me.got && me.got.bagLost ? h("p", { class: "cx-hurtline" }, `大家都倒下了，背包掉了壹半：靈感 −${me.got.bagLost}（留下 ${me.got.insp}）`) : null,
     truthLine(v),
     trialResult(v),
     v.report ? reportSheet(v.report, { live: true }) : null,
     v.report ? null : h("div", { class: "cx-table" }, sum.map(x => h("div", { class: "cx-tr" + (x.id === v.me ? " me" : "") + (x.ghost ? " ghost" : "") }, h("b", null, x.name),
-      h("span", null, `理智 ${x.startSan} → ${x.san}，靈感 +${x.got.insp}${x.got.injured.length ? `，${x.got.injured.length} 隻受傷` : ""}`), h("span", { class: "cx-san" }, x.ghost ? "理智歸零" : x.out === "left" ? "先走了" : "")))),
+      h("span", null, `理智 ${x.startSan} → ${x.san}，靈感 +${x.got.insp}${x.got.bagLost ? `（背包掉了壹半：−${x.got.bagLost}）` : ""}${x.got.injured.length ? `，${x.got.injured.length} 隻受傷` : ""}`), h("span", { class: "cx-san" }, x.ghost ? "理智歸零" : x.out === "left" ? "先走了" : "")))),
     h("div", { class: "cx-card-foot" },
       isLeader && !me.ghost && !(P && P.dark) ? btn([icon("stairs"), " 再走壹趟"], () => doAct("again"), "small") : null,
       btn("回去", () => s.m.close(), "primary")));
