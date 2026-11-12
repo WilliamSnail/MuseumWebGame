@@ -106,6 +106,12 @@ T("B 不可名狀：神話 10 以上、原本擲出 01 才會出現", () => {
   assert.ok(P.unlocked.稀有度.includes("不可名狀"));
   assert.strictEqual(G.rarityOfRoll(P, 1, 1).rarity, "不可名狀");
   assert.strictEqual(G.rarityOfRoll(P, 2, 7).rarity, "傳說級稀有");
+  assert.strictEqual(G.rarityOfRoll(P, 2, 2).rarity, "不可名狀", "神話 10：01～02");
+  assert.notStrictEqual(G.rarityOfRoll(P, 3, 3).rarity, "不可名狀");
+  assert.strictEqual(G.rarityOfRoll(P, 2, 2).perfect, false, "02 不是完美作品");
+  G.addMyth(P, 5); assert.strictEqual(G.eldritchUpTo(P), 3, "神話 15：01～03");
+  G.addMyth(P, 50); assert.strictEqual(G.eldritchUpTo(P), 5, "最寬 01～05");
+  const Q = fresh(); unlockAll(Q); Q.myth = 9; assert.strictEqual(G.eldritchUpTo(Q), 0);
 });
 T("B 靈感不夠不能做；收藏狂發作不能做重複的", () => {
   const P = fresh(); P.insp = 1;
@@ -431,6 +437,11 @@ T("E 參觀者給靈感", () => {
   const before = P.insp;
   const v = G.visitorArrive(P);
   assert.ok(v && v.text); assert.ok(P.insp > before);
+  for (let i = 0; i < 100; i++) G.visitorArrive(P);
+  assert.strictEqual(G.visitorInspToday(P), G.NUM.visitorInspDay, "壹天最多 visitorInspDay");
+  const b2 = P.insp, v2 = G.visitorArrive(P);
+  assert.ok(v2.text && v2.gain === 0 && v2.full && P.insp === b2, "滿了還是會來，只是不給");
+  P.hallInsp.day = "2000-01-01"; assert.strictEqual(G.visitorInspToday(P), 0, "換日歸零");
 });
 
 // ---------- F 理智與心情（CoC 第 7 版） ----------

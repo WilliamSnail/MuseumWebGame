@@ -121,7 +121,7 @@ export function casTFinish(t, ctx, now) {
     if (w) {
       const r = casSettle(w, ctx.house, { bet: s.bet, out: s.out, allin: s.allin, settled: false }, { day: ctx.day, withOthers });
       s.ach = r.ach || [];
-      s.ticket = !!(r.ok && ["win", "blackjack", "charlie"].includes(o.kind) && casWinTicket(w));
+      s.ticket = !!(r.ok && ["win", "blackjack", "charlie"].includes(o.kind) && casWinTicket(w, s.bet));
     }
   }
   t.phase = "result";

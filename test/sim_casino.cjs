@@ -84,4 +84,8 @@ let sum = 0, stars = [0, 0, 0, 0, 0, 0];
 const PN = 1000000;
 for (let i = 0; i < PN; i++) { const d = casPackDraw(); sum += d.chips; stars[d.stars]++; }
 console.log(`\n大禮包 ${PN} 包：平均 ${Math.round(sum / PN).toLocaleString()} 籌碼／包；星級 ${[1, 2, 3, 4, 5].map(s => `${s}星 ${(stars[s] / PN * 100).toFixed(2)}%`).join("、")}`);
-console.log(`  買 1 抽券 ${G.CAS_MENU.find(x => x.id === "ticket1").price.toLocaleString()}、買 11 抽券 ${G.CAS_MENU.find(x => x.id === "ticket11").price.toLocaleString()}（舊的價錢）；11 包平均 ${Math.round(sum / PN * 11).toLocaleString()}`);
+console.log(`  買 1 抽券 ${G.CAS_MENU.find(x => x.id === "ticket1").price.toLocaleString()}、買 11 抽券 ${G.CAS_MENU.find(x => x.id === "ticket11").price.toLocaleString()}；11 包平均 ${Math.round(sum / PN * 11).toLocaleString()}`);
+// 餐車每壹樣：花多少、抽到券平均拿回多少（決定 0070：要小於 100%）
+const EV = G.casPackEV();
+console.log(`\n餐車（壹包算 ${Math.round(EV).toLocaleString()}）：` + G.CAS_MENU.filter(x => !x.redirect).map(x => { const back = x.ticket ? x.ticket * EV : x.odds / 100 * 3 * EV; return `${x.name} ${(back / x.price * 100).toFixed(0)}%`; }).join("、"));
+console.log(`贏牌抽券：` + [1e4, 1e5, 1e6, 1e7].map(b => `下 ${b.toLocaleString()} → ${G.casWinOdds(b).toFixed(3)}%`).join("、"));
