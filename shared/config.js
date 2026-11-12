@@ -123,11 +123,17 @@ export const NUM = {
   //   guardDodge、softDodge：擋住、被安撫過的「撲」沒中的機率；理智類的招是減半（無條件進位）
   //   wizard、cheer：巫師帽這回合、比讚下壹回合，每個人的「推」加多少；tentacleMult、tentacleSan：觸手帽強度乘多少、帶牠的人扣多少理智
   //   rest：躺平、毛帽回多少理智（這壹層第壹次走才能用，界線「不要改回去」）；maxRounds：打到第幾回合怪物自己走掉
-  //   pressureSan：全隊理智壓力到第幾級，理智類的招多扣 1；injure：打完之後，倒下的佩佩真的受傷的機率
-  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 0.5 },
+  //   pressureSan：全隊理智壓力到第幾級，理智類的招多扣 1；injure：打完之後，倒下的佩佩真的受傷的機率（翊文 11-12：「倒下的是真的受傷」，所以是 1）
+  //   決定 0068（翊文 11-12 回答的）：
+  //   rankHp、rankSan：怪物的等級 1～3（地圖上看得到大概多強），壓力乘多少、理智類的招多扣多少；rankInsp：打贏比較強的多給多少靈感
+  //   flee、fleeBoss：逃跑成功的機率（百分比）；要有壹半以上的人選逃跑才會擲
+  //   courage：壯膽，每多壹個真人隊友，每個人多這麼多「膽量」，先替理智擋（這壹趟用完就沒了，不會留在存檔）；coopInsp：每多壹個真人隊友，打贏多給多少靈感
+  //   tap：有些回合可以按時機（「有時候 B」）：chance ＝下壹回合可以按的機率，找到弱點的下壹回合壹定可以；good、great ＝按得好、按得很準，「推」多加多少。只加不扣，不按也沒事
+  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 1, rankHp: [1, 1.35, 1.7], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 } },
   // 地下室的小地圖（shared/cellar_map.js）：rows 排；每排壹定有壹間探索房（翊文 11-12：「房間探索還是要保留喔，是個重點」），壹趟可以把這層的房間全部走完
   //   wide：某壹排有 3 個點的機率（不然 2 個）；最後壹排是休息＋別的；最底是守門
-  cellarMap: { rows: 5, wide: 0.5 },
+  //   rank2、rank3：遭遇的怪物是 2 級、3 級的機率 ＝ [第壹排的機率, 每往下壹排多多少]
+  cellarMap: { rows: 5, wide: 0.5, rank2: [0.2, 0.12], rank3: [0, 0.06] },
   sanDayBack: { n: 5, cap: 75 }, // 每天（05:00 換日）第一次進館，理智自己恢復 n 點，最多恢復到 cap；原本就比 cap 高的不扣、理智 0（熄燈）的不恢復（翊文 11-11：「每天自己會恢復 San 值 5 點，恢復最高加到 75」）
   startSanity: 50,          // 理智從 50 開始，CoC 的平均值（翊文 11-08：理智要更容易歸零；原本 70）
   startInsp: 12,            // 一開始的靈感（夠做一隻；11-10 做一隻 2 → 3 → 6 → 12，跟著改）

@@ -8,9 +8,10 @@ const LOW = () => 0, HIGH = () => 0.999999, MID = () => 0.3; // LOW：骰子最�
 const JS = x => JSON.parse(JSON.stringify(x));
 const same = (a, b, m) => assert.deepStrictEqual(JS(a), JS(b), m); // 規則在另一個 vm 裡跑，陣列要先轉過才比得了（docs/踩過的坑.md）
 // 一個座位：picks ＝帶的佩佩（只寫要的欄位），skills ＝偵查、神秘學、說服
-function seat(G, id, picks, skills = {}, san = 60) {
+// brave ＝膽量（壯膽）。測試預設 0，才看得到真的扣多少理智；要測壯膽的自己寫 null（照人數給）
+function seat(G, id, picks, skills = {}, san = 60, brave = 0) {
   const pepes = picks.map(p => { const key = G.pepeKey(G.fullPick(Object.assign({ 稀有度: "稀有", 心情: "俄國8+9", 顏色: "黃", 帽子: "沒有", 姿勢: "站著" }, p))); return { key, pick: G.fromKey(key), perfect: false, power: 0, down: false }; });
-  return { id, name: id, helper: false, san, skills: Object.assign({ 偵查: 20, 神秘學: 20, 說服: 20 }, skills), pepes, used: {}, out: false, ghost: false };
+  return { id, name: id, helper: false, san, brave, skills: Object.assign({ 偵查: 20, 神秘學: 20, 說服: 20 }, skills), pepes, used: {}, out: false, ghost: false };
 }
 const helper = (G, n = 1) => G.fightHelperSeat(Array.from({ length: n }, (_, i) => G.coopHelperItem(i)));
 const FOE = "f1b"; // 沒有心情、顏色是紅：預設的佩佩（俄國8+9、黃）不剋也不被剋
@@ -263,7 +264,97 @@ T("拖太久：到 maxRounds 怪物自己走掉", G => {
   for (let i = 0; i < G.NUM.fight.maxRounds && !f.over; i++) { aim(G, f, "pile"); G.fightRound(f, { a: { act: "guard" } }); }
   assert.strictEqual(f.over, "away");
 });
-T("打完：倒下的佩佩照 NUM.fight.injure 的機率受傷；沒倒的不會", G => {
+T("怪物的等級：越高壓力越多、理智扣越多、打贏多給的靈感越多；守門不分等級", G => {
+  const F = G.NUM.fight, base = G.fightFoe(FOE).hp;
+  assert.strictEqual(F.rankHp.length, 3); assert.strictEqual(F.rankSan.length, 3); assert.strictEqual(F.rankInsp.length, 3);
+  const hp = [1, 2, 3].map(rank => start(G, [seat(G, "a", [{}, {}, {}])], { rank }).hpMax);
+  assert.strictEqual(hp[0], base);
+  assert.ok(hp[0] < hp[1] && hp[1] < hp[2]);
+  assert.strictEqual(hp[2], Math.round(base * F.rankHp[2]));
+  assert.strictEqual(start(G, [seat(G, "a", [{}])], { rank: 99 }).rank, 3);
+  assert.strictEqual(start(G, [seat(G, "a", [{}])], {}).rank, 1);
+  assert.strictEqual(G.fightStart("f1g", [seat(G, "a", [{}])], { rank: 3 }).rank, 1);
+  G.setRng(HIGH);
+  const loss = rank => { const f = start(G, [seat(G, "a", [{}])], { rank }); const mv = aim(G, f, "cling", "a"); return [G.fightRound(f, { a: { act: "push" } }).fx.a.san, G.maxExpr(mv.san)]; };
+  [1, 2, 3].forEach(rank => { const [got, max] = loss(rank); assert.strictEqual(got, max + F.rankSan[rank - 1]); });
+  assert.ok(G.fightWinInsp(1, 3) > G.fightWinInsp(1, 1));
+});
+T("壯膽：每多一個真人隊友多 courage 點膽量，先替理智擋；一個人沒有；館方助手不算人", G => {
+  const F = G.NUM.fight;
+  assert.strictEqual(G.fightCourage(1), 0); assert.strictEqual(G.fightCourage(3), F.courage * 2);
+  G.setRng(HIGH);
+  let f = start(G, [seat(G, "a", [{}], {}, 60, null), helper(G, 2)]);
+  assert.strictEqual(f.seats[0].brave, 0, "一個人加助手沒有膽量");
+  f = start(G, [seat(G, "a", [{}], {}, 60, null), seat(G, "b", [{}], {}, 60, null)]);
+  assert.strictEqual(f.seats[0].brave, F.courage);
+  f.hp = f.hpMax = 9999;
+  const mv = aim(G, f, "cling", "a"), full = G.maxExpr(mv.san);
+  const r = G.fightRound(f, { a: { act: "push" }, b: { act: "push" } });
+  assert.strictEqual(r.fx.a.brave + r.fx.a.san, full, "擋掉的＋真的扣的＝這一招");
+  assert.strictEqual(r.fx.a.brave, Math.min(full, F.courage));
+  assert.strictEqual(f.seats[0].san, 60 - r.fx.a.san);
+  assert.strictEqual(f.seats[0].brave, F.courage - r.fx.a.brave);
+  // 這一趟帶進來的膽量照用（用完了就是 0，不會再補）
+  f = start(G, [seat(G, "a", [{}], {}, 60, 0), seat(G, "b", [{}], {}, 60, 2)]);
+  assert.strictEqual(f.seats[0].brave, 0); assert.strictEqual(f.seats[1].brave, 2);
+});
+T("合作多給的靈感：一個人不多，每多一個人多 coopInsp", G => {
+  const F = G.NUM.fight;
+  assert.strictEqual(G.fightWinInsp(1, 1), F.rankInsp[0]);
+  assert.strictEqual(G.fightWinInsp(4, 1) - G.fightWinInsp(1, 1), F.coopInsp * 3);
+  assert.ok(F.coopInsp > 0 && F.coopInsp <= 2, "只多一點點");
+});
+T("逃跑：一半以上的人選了才擲；成功離開這一場、怪物打不到；沒成功怪物照打", G => {
+  G.setRng(MID); // d100 擲三十幾：60 的機率會過
+  assert.ok(G.NUM.fight.flee > 40 && G.NUM.fight.fleeBoss < G.NUM.fight.flee);
+  let f = start(G, [seat(G, "a", [{}])]);
+  aim(G, f, "cling", "a");
+  let r = G.fightRound(f, { a: { act: "flee" } });
+  assert.strictEqual(f.over, "flee"); assert.ok(evOf(r, "flee")[0].ok);
+  assert.strictEqual(evOf(r, "foe").length, 0); assert.ok(!r.fx.a);
+  assert.ok(!f.seats[0].out, "逃跑不是回地面");
+  // 四個人只有一個想逃：不擲
+  f = start(G, ["a", "b", "c", "d"].map(id => seat(G, id, [{}])));
+  f.hp = f.hpMax = 9999; aim(G, f, "pile");
+  r = G.fightRound(f, { a: { act: "flee" }, b: { act: "push" }, c: { act: "push" }, d: { act: "push" } });
+  assert.ok(!evOf(r, "flee")[0].enough && !f.over);
+  // 兩個人都選、沒成功：怪物照打
+  G.setRng(HIGH);
+  f = start(G, [seat(G, "a", [{}]), seat(G, "b", [{}])]);
+  aim(G, f, "cling", "a");
+  r = G.fightRound(f, { a: { act: "flee" }, b: { act: "flee" } });
+  assert.ok(evOf(r, "flee")[0].enough && !evOf(r, "flee")[0].ok && !f.over);
+  assert.ok(r.fx.a.san > 0);
+  assert.strictEqual(G.fightFleeChance(G.fightStart("f1g", [seat(G, "a", [{}])])), G.NUM.fight.fleeBoss);
+});
+T("有些回合可以按時機：可以按的回合按得好「推」多一點；不能按的回合送了也不算；不按不扣", G => {
+  const F = G.NUM.fight;
+  G.setRng(HIGH); // 0.99 ≥ chance：下一回合不能按
+  const f = start(G, [seat(G, "a", [{}])]);
+  f.hp = f.hpMax = 9999;
+  assert.ok(!f.tap);
+  aim(G, f, "pile");
+  let e = evOf(G.fightRound(f, { a: { act: "push", tap: 2 } }), "push")[0];
+  assert.strictEqual(e.tap, 0); assert.strictEqual(e.n, G.fightPower(f.seats[0]) + e.die);
+  f.tap = true; aim(G, f, "pile");
+  assert.ok(G.fightOptions(f, "a").find(o => o.act === "push").tap);
+  e = evOf(G.fightRound(f, { a: { act: "push", tap: 2 } }), "push")[0];
+  assert.strictEqual(e.n, G.fightPower(f.seats[0]) + e.die + F.tap.great);
+  f.tap = true; aim(G, f, "pile");
+  e = evOf(G.fightRound(f, { a: { act: "push", tap: 1 } }), "push")[0];
+  assert.strictEqual(e.n, G.fightPower(f.seats[0]) + e.die + F.tap.good);
+  f.tap = true; aim(G, f, "pile");
+  e = evOf(G.fightRound(f, { a: { act: "push", tap: 99 } }), "push")[0];
+  assert.strictEqual(e.n, G.fightPower(f.seats[0]) + e.die, "亂送的不算");
+  assert.ok(F.tap.great <= 3, "只是一點點，不按也打得贏");
+  // 找到弱點的下一回合一定可以按
+  f.seats[0].skills.偵查 = 99; G.setRng(MID); f.tap = false; aim(G, f, "pile");
+  G.setRng(() => 0.3); // 看穿會過；0.3 ≥ chance 0.25，照機率不會給
+  G.fightRound(f, { a: { act: "see" } });
+  assert.ok(f.weak && f.tap);
+});
+T("打完：倒下的佩佩照 NUM.fight.injure 的機率受傷（現在是一定受傷，決定 0068）；沒倒的不會", G => {
+  assert.strictEqual(G.NUM.fight.injure, 1);
   const f = start(G, [seat(G, "a", [{}, {}])]);
   f.seats[0].pepes[0].down = true;
   G.setRng(LOW);
@@ -352,6 +443,24 @@ T("房間探索是重點：這一層的房間每一間都在地圖上，而且�
       assert.ok(G.cmapPathOk(m, ex.map(x => x.id).concat([rest.id, m.gate.id])), `B${n} x${d} 探索房要一路連到守門`);
     }
   });
+});
+T("地圖上看得到怪物大概多強（等級、心情、顏色），看不到是誰；登記過的才看得到", G => {
+  let seen = new Set(), n = 0;
+  for (let d = 0; d < 80; d++) {
+    const m = G.cmapOfDay(3, "r" + d);
+    m.rows.flat().filter(x => x.kind === "foe").forEach(x => {
+      n++; seen.add(x.rank);
+      const p = G.cmapPeek(m, x.id);
+      assert.strictEqual(p.rank, x.rank); assert.ok(!("foe" in p), "沒登記過不說是誰");
+      assert.ok("mood" in p && "color" in p);
+      assert.strictEqual(G.cmapPeek(m, x.id, [x.foe]).foe, x.foe);
+    });
+    assert.ok(!("foe" in G.cmapPeek(m, m.gate.id)));
+    const ex = m.rows.flat().find(x => x.kind === "explore");
+    assert.strictEqual(G.cmapPeek(m, ex.id).room, ex.room);
+  }
+  assert.ok(n > 50 && seen.has(1) && seen.has(2) && seen.has(3), "三種等級都會出現");
+  assert.strictEqual(G.cmapPeek(G.cmapOfDay(1, "x"), "沒有這個點"), null);
 });
 T("地圖：下一步只能走連得到的點；亂走不行；壞的地圖檢查得出來", G => {
   const m = G.cmapOfDay(1, "2026-11-12");
