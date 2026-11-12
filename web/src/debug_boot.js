@@ -1,12 +1,50 @@
 // 開發用：網址後面加 #畫面 就直接打開那個畫面，並放好假的收藏。只在 npm run dev 時載入（main.js），不會進正式打包。
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { STORY_CHAPTERS } from "../../shared/content.js";
-import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, visitorArrive } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, ensureDay, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, todayStr, visitorArrive } from "../../shared/logic.js";
+import { coopRoom, viewFor } from "../../shared/coop.js";
+import { coopAct, coopBegin } from "../../shared/coop_flow.js";
 import { assignJob, hallSize, startCellar } from "../../shared/logic3.js";
 import { storyState } from "../../shared/story.js";
-import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, setP, setSave, useProfile } from "./ui_core.js";
+import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";
+import { overlay } from "./ui_board.js";
+import { fightCard, fightStage } from "./ui_fight.js";
+
+// #fight：不連伺服器，直接打開合作地下的守門打怪（地下室改版的畫面，ui_fight.js）。跟你壹隊的「小華」會自己選推。
+//   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）
+// 規則照樣跑 shared/ 的 coopBegin、coopAct，只是存檔不存、不送伺服器。看排版、按鈕、結算的字用。
+function fightPreview(arg) {
+  const today = todayStr();
+  let clock = nowMs();
+  const mate = newProfile("challenge"); ensureDay(mate, today); mate.tutorialDone = true; mate.sanity = 66; assignJob(mate, "detective"); mate.day.quirkGiven = true;
+  const mk = o => finishMake(mate, Object.assign({ 稀有度: "普通", 心情: "開心", 顏色: "綠", 帽子: "巫師帽", 姿勢: "站著" }, o), { natural: 40 }).key;
+  const mine = collectionItems("pepe").slice(0, 2).map(i => i.key);
+  const members = [{ id: "me", name: "小明", P, keys: mine }];
+  if (arg !== "solo") members.push({ id: "mate", name: "小華", P: mate, keys: [mk({}), mk({ 顏色: "黃", 帽子: "棒球帽" })] });
+  const Ps = { me: P, mate };
+  const ids = members.map(m => m.id);
+  const s = coopBegin(members, 1, today, clock, { gate: true });
+  if (!s.ok) { console.warn("#fight 開不了：", s.reason); return; }
+  const run = s.run;
+  for (let i = 0; i < 30 && run.phase !== "fight" && run.phase !== "floorDone" && run.phase !== "over"; i++) { // 房間都選安全的走完
+    if (run.phase === "vote") { const r = coopRoom(run), c = Math.max(0, r.choices.findIndex(x => x.check.type === "none")); ids.forEach(id => coopAct(run, Ps, id, "vote", { choice: c }, ++clock)); }
+    else if (run.phase === "carry") ids.forEach(id => coopAct(run, Ps, id, "carry", { side: "skip" }, ++clock));
+    else ids.forEach(id => coopAct(run, Ps, id, "ack", {}, ++clock));
+  }
+  if (arg === "p2") for (let i = 0; i < 12 && run.phase === "fight" && run.fight.phase === 1; i++) ids.forEach(id => coopAct(run, Ps, id, "fight", { act: "push" }, ++clock));
+  const m = overlay("nb-party nb-coop", "地下收藏庫（開發用：打怪預覽）", "打怪預覽", "stairs");
+  let pick = null;
+  const draw = () => {
+    const v = viewFor(run, "me"), me = v.members.find(x => x.id === "me");
+    const body = run.phase === "fight" && v.fight
+      ? [fightStage(v, pick), fightCard(v, me, { mine: pick, setMine: p => { pick = p; draw(); }, act: d => { coopAct(run, Ps, "me", "fight", d, ++clock); setTimeout(() => { if (run.phase === "fight" && ids.includes("mate")) coopAct(run, Ps, "mate", "fight", { act: "push" }, ++clock); pick = null; draw(); }, 1500); } })]
+      : [h("p", { class: "nb-empty" }, `打完了（${run.phase}）：${JSON.stringify(run.fightLast || run.last && run.last.fled || "")}`)];
+    m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body)));
+  };
+  draw();
+}
 
 (function () {
   const want = decodeURIComponent((location.hash || "").slice(1));
@@ -39,6 +77,7 @@ import { pickJob } from "./ui_screens3.js";
     if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 5 * 86400000 + 5000, task: "calm", done: [] }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 2 * 86400000 + 5000, task: "hug", done: [P.day.date] }]; // 怪癖（決定 0046）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
     setRng(null);
+    if (screen === "fight") { go("lobby", {}, { action: false }); setTimeout(() => fightPreview(arg), 300); return; }
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
     if (screen === "fusion2") { const it = collectionItems("pepe"); UI.fusion = [{ key: it[0].key }, { key: it[1].key }]; go("fusion", {}, { action: false }); return; }
     if (screen === "jobpick") { P.job = null; P.perk = null; P.flaw = null; go("lobby", {}, { action: false }); setTimeout(() => pickJob(), 200); return; }
