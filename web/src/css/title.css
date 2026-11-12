@@ -1,11 +1,11 @@
 /* 標題畫面的新外觀（翊文 11-11）：背景、窗簾、分隔線、三個位子的卡、按鈕都用拆開的圖組起來。
    字、名字、數字都是程式放的，圖裡沒有字。素材原圖在 assets/title、assets/ui，這裡用的是縮成 webp 的版本（web/src/assets/title）。
    只在大螢幕（寬 ≥ 900、高 ≥ 620）穿上新外觀；手機橫向、小視窗照舊（landscape.css 那套緊湊版面）。 */
+/* 背景：花紋牆加暗角。每種大小都放（翊文 11-12：「手機直式時登入介面的背景跟橫式的不一樣」；以前只有大螢幕有） */
+.t-wrap { position: relative; isolation: isolate; }
+.t-wrap::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background: url("../assets/title/bg.webp") center / cover no-repeat; }
 @media (min-width: 900px) and (min-height: 620px) {
-  .t-wrap { position: relative; isolation: isolate; }
-  /* 背景：花紋牆加暗角（窗簾不放靜態圖了，開館前的布幕動畫照原本的；翊文 11-11） */
-  .t-wrap::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
-    background: url("../assets/title/bg.webp") center / cover no-repeat; }
   /* 分隔線 */
   .t-wrap .t-orn { width: min(460px, 70vw); height: 70px; margin-top: 4px; background: url("../assets/title/divider.webp") center / contain no-repeat; }
   .t-wrap .vs-slots { margin-top: 26px; }

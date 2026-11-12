@@ -585,3 +585,10 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
 .bout-chip .bout-name { font-size: .8rem; font-weight: 700; margin: 0; }
 .bout-opt, .bout-left { font-size: .72rem; color: #F3D0C8; white-space: nowrap; }
 .bout-dots { display: inline-flex; gap: 3px; }
+
+/* 手機：狀態列收起來（ⓘ 沒展開）時，發作的牌子浮在狀態列上面，壹直看得到（翊文 11-12） */
+@media (max-width: 760px) {
+  #status:not(.open) .st-bout:not(:empty) { display: flex; position: absolute; left: 8px; bottom: calc(100% + 6px); z-index: 2; }
+  #status:not(.open) .bout-chip { box-shadow: 0 4px 10px rgba(0,0,0,.5); background: rgba(70,14,10,.92); }
+  #status:not(.open) .bout-opt, #status:not(.open) .bout-dots { display: none; }
+}
