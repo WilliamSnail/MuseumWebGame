@@ -29,28 +29,59 @@ function roomTitle(v, n) {
 const icon = kind => h("span", { class: "rt-ico", style: { backgroundPosition: `${(NODE_ICON[kind] || 0) * 25}% 0` }, "aria-hidden": "true" });
 const claws = rank => h("span", { class: "rt-rank", title: `等級 ${rank}`, style: { backgroundPosition: `${(Math.max(1, Math.min(3, rank)) - 1) * 20}% 0` }, "aria-label": `等級 ${rank}` });
 
-// 上面的地圖：從上往下，現在站的點發亮，能走的下一個點會跳、有框、寫名字
+// 上面的地圖：畫成真正的地圖（翊文 11-12：「這看起來不太像地圖耶?」）
+//   底是這一層的地板材質（1-1，web/public/cellar2/map-bN.webp），點是圓形徽章照位置散開，路用虛線連起來；
+//   走過的路是實線、能走的下一段會亮；棋子（map-mark 第 4 格）站在你們現在的點上，還沒出發站在入口。
+//   位置不用量 DOM：第 r 排在 (r+1)/(排數+1) 的高度，同一排平均分開，再照點的 id 偏一點點（每次畫都一樣），線用同一組座標畫。
 // sel ＝我點開來看的那一個；onSel(id) 點了
+const rtHash = s => { let x = 0; for (const c of String(s)) x = (x * 31 + c.charCodeAt(0)) >>> 0; return x; };
+function rtLayout(map) {
+  const rows = map.rows.concat([[map.gate]]), R = rows.length + 1, pos = {};
+  pos.start = { x: 50, y: 100 / (R * 2) };
+  rows.forEach((row, r) => row.forEach((n, i) => {
+    const j = rtHash(n.id), dx = row.length > 1 ? ((j % 9) - 4) * 1.2 : 0, dy = ((j >> 4) % 5 - 2) * 0.5;
+    pos[n.id] = { x: (i + 0.5) / row.length * 100 + dx, y: (r + 1) / R * 100 + dy };
+  }));
+  return { rows, pos };
+}
 export function routeStage(v, sel, onSel) {
   const map = v.cmap;
   if (!map) return h("div", { class: "rt-map" });
-  const next = map.next || [], path = map.path || [];
+  const next = map.next || [], path = map.path || [], at = map.at;
+  const { rows, pos } = rtLayout(map);
+  // 走過的路：入口 → path[0] → path[1] ……
+  const walked = new Set(), seq = ["start"].concat(path);
+  for (let i = 0; i + 1 < seq.length; i++) walked.add(`${seq[i]}>${seq[i + 1]}`);
+  const segs = [];
+  const add = (a, b) => { const k = `${a}>${b}`, cls = walked.has(k) ? "walked" : (a === (at || "start") && next.includes(b)) ? "open" : ""; segs.push({ a: pos[a], b: pos[b], cls }); };
+  rows[0].forEach(n => add("start", n.id));
+  Object.keys(map.links).forEach(a => (map.links[a] || []).forEach(b => { if (pos[a] && pos[b]) add(a, b); }));
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("class", "rt-lines"); svg.setAttribute("viewBox", "0 0 100 100"); svg.setAttribute("preserveAspectRatio", "none"); svg.setAttribute("aria-hidden", "true");
+  segs.sort((p, q) => (p.cls ? 1 : 0) - (q.cls ? 1 : 0)).forEach(s => { // 亮的線畫在上面
+    const l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", s.a.x); l.setAttribute("y1", s.a.y); l.setAttribute("x2", s.b.x); l.setAttribute("y2", s.b.y);
+    l.setAttribute("class", "rt-line " + s.cls); l.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.append(l);
+  });
+  const place = p => ({ left: p.x + "%", top: p.y + "%" });
   const node = n => {
-    const can = next.includes(n.id), done = path.includes(n.id) && n.id !== map.at, here = n.id === map.at;
+    const can = next.includes(n.id), done = path.includes(n.id) && n.id !== at, here = n.id === at;
     const who = voterNames(v, n.id);
     const label = n.kind === "explore" && (can || done || here) ? ptNode(roomTitle(v, n)) : COOP_ROUTE_KIND[n.kind];
     return h("button", { type: "button", class: `rt-node k-${n.kind}` + (can ? " next" : "") + (done ? " done" : "") + (here ? " here" : "") + (sel === n.id ? " sel" : "") + (n.daily ? " daily" : ""),
-      disabled: !can, "aria-pressed": String(sel === n.id), onClick: () => { if (can) { onSel(n.id); snd("click"); } } },
-      icon(n.kind),
+      style: place(pos[n.id]), disabled: !can, "aria-pressed": String(sel === n.id), "aria-label": `${COOP_ROUTE_KIND[n.kind]}${can ? "（可以走）" : ""}`,
+      onClick: () => { if (can) { onSel(n.id); snd("click"); } } },
+      h("span", { class: "rt-medal" }, icon(n.kind), n.kind === "foe" ? claws(n.rank || 1) : null, here ? h("span", { class: "rt-pawn", "aria-hidden": "true" }) : null),
       h("b", { class: "rt-name" }, label),
-      n.kind === "foe" ? claws(n.rank || 1) : null,
       n.daily ? h("span", { class: "rt-today" }, "今天") : null,
-      here ? h("span", { class: "rt-here" }, "你們在這裡") : null,
       who.length ? h("span", { class: "rt-votes" }, who.join("、")) : null);
   };
-  return h("div", { class: "rt-map fl" + v.floor, role: "group", "aria-label": `B${v.floor} 的地圖` },
-    map.rows.map((row, i) => h("div", { class: "rt-row" + (row.some(n => next.includes(n.id)) ? " now" : "") }, h("span", { class: "rt-step" }, `${i + 1}`), row.map(node))),
-    h("div", { class: "rt-row rt-gate" + (next.includes(map.gate.id) ? " now" : "") }, h("span", { class: "rt-step" }, "門"), node(map.gate)));
+  return h("div", { class: "rt-map fl" + v.floor, role: "group", "aria-label": `B${v.floor} 的地圖`, style: { "--rows": rows.length + 1 } },
+    svg,
+    h("div", { class: "rt-start", style: place(pos.start) }, at ? null : h("span", { class: "rt-pawn", "aria-hidden": "true" }), h("small", null, "樓梯口")),
+    rows.flat().map(node));
 }
 
 // 剛打完的路上怪物：壹行寫結果

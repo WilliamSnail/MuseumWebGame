@@ -53,3 +53,60 @@ body.reduce-motion .rt-node.next { animation: none; }
   .rt-node { min-height: 40px; }
   .rt-ico { width: 28px; height: 28px; }
 }
+
+/* ---------- 真正的地圖（翊文 11-12：「這看起來不太像地圖耶?」）：地板材質當底、圓形徽章散開、虛線連路、棋子 ---------- */
+.rt-map { display: block; height: calc(var(--rows, 7) * 86px); min-height: 360px; padding: 0; overflow: hidden; border: 3px solid #5A3E22; border-radius: 14px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, .65), 0 2px 8px rgba(0, 0, 0, .4);
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 220, 150, .12), rgba(20, 14, 18, .55) 75%), url(/cellar2/map-b1.webp) 0 0 / 256px; }
+.rt-map.fl2 { background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 220, 150, .12), rgba(20, 14, 18, .55) 75%), url(/cellar2/map-b2.webp); }
+.rt-map.fl3 { background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 220, 150, .1), rgba(20, 14, 18, .6) 75%), url(/cellar2/map-b3.webp); }
+.rt-map.fl4 { background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 220, 150, .1), rgba(20, 14, 18, .6) 75%), url(/cellar2/map-b4.webp); }
+.rt-map.fl5 { background-image: radial-gradient(ellipse at 50% 45%, rgba(255, 220, 150, .08), rgba(20, 14, 18, .45) 75%), url(/cellar2/map-b5.webp); }
+.rt-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.rt-line { stroke: rgba(251, 239, 217, .28); stroke-width: 2.5; stroke-dasharray: 2 7; stroke-linecap: round; }
+.rt-line.walked { stroke: #D6B25E; stroke-width: 4; stroke-dasharray: none; }
+.rt-line.open { stroke: #FBEFD9; stroke-width: 3.5; stroke-dasharray: 3 6; animation: rt-march 1.2s linear infinite; }
+@keyframes rt-march { to { stroke-dashoffset: -18; } }
+.rt-row, .rt-step { display: none; } /* 舊的一排一排 */
+.rt-node { --m: 52px; position: absolute; transform: translate(-50%, calc(var(--m) / -2)); grid-template-columns: none; display: grid; justify-items: center; gap: 2px; width: 112px; min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; text-align: center; opacity: .55; animation: none; z-index: 1; }
+.rt-node.next { opacity: 1; animation: none; z-index: 2; }
+.rt-node.sel { background: none; box-shadow: none; color: inherit; }
+.rt-medal { position: relative; display: block; width: var(--m); height: var(--m); border-radius: 50%; box-shadow: 0 3px 6px rgba(0, 0, 0, .55); }
+.rt-medal .rt-ico { display: block; width: 100%; height: 100%; } /* span 是行內的：不設 block 寬高不會生效 */
+.rt-ico { display: inline-block; vertical-align: middle; }
+.rt-node.next .rt-medal { box-shadow: 0 0 0 3px #D6B25E, 0 0 14px 4px rgba(214, 178, 94, .55); animation: rt-pulse 1.6s ease-in-out infinite; }
+.rt-node.sel .rt-medal { box-shadow: 0 0 0 4px #FBEFD9, 0 0 0 7px #7A1F2B, 0 0 16px 6px rgba(122, 31, 43, .6); animation: none; }
+.rt-node.done .rt-medal { filter: grayscale(.7) brightness(.8); }
+.rt-node.done .rt-name::after { content: "　✓"; color: #9FD39A; }
+.rt-node.here { opacity: 1; }
+.rt-node.here .rt-medal { box-shadow: 0 0 0 3px #FBEFD9, 0 3px 8px rgba(0, 0, 0, .6); }
+.rt-node.k-gate { --m: 64px; }
+@keyframes rt-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.rt-name { max-width: 112px; padding: 1px 8px; border-radius: 6px; background: rgba(27, 20, 16, .78); color: #FBEFD9; font-size: .8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rt-node.next .rt-name { background: #FBEFD9; color: #2A1E14; font-weight: 700; }
+.rt-medal .rt-rank { position: absolute; right: -10px; top: -6px; width: 18px; height: 32px; filter: drop-shadow(0 1px 2px #000); }
+.rt-pawn { position: absolute; left: 50%; bottom: 62%; width: 30px; height: 52px; transform: translateX(-50%); background: url(/cellar2/map-mark.webp) no-repeat 60% 0 / 600% 100%; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .7)); z-index: 3; animation: rt-bob 2.4s ease-in-out infinite; }
+@keyframes rt-bob { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -3px); } }
+.rt-start { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; color: #FBEFD9; }
+.rt-start small { padding: 0 8px; border-radius: 6px; background: rgba(27, 20, 16, .78); font-size: .75rem; }
+.rt-start .rt-pawn { position: relative; left: auto; bottom: auto; transform: none; animation: none; }
+.rt-node .rt-votes { bottom: auto; top: 100%; margin-top: 2px; }
+.rt-node .rt-today { position: absolute; left: -6px; top: -4px; }
+body.reduce-motion .rt-line.open, body.reduce-motion .rt-node.next .rt-medal, body.reduce-motion .rt-pawn { animation: none; }
+@media (max-width: 760px) {
+  .rt-map { height: calc(var(--rows, 7) * 62px); min-height: 300px; }
+  .rt-node { width: 84px; }
+  .rt-node { --m: 46px; } .rt-node.k-gate { --m: 56px; }
+  .rt-name { max-width: 84px; font-size: .75rem; padding: 0 5px; }
+  .rt-pawn { width: 24px; height: 42px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .rt-map { height: calc(var(--rows, 7) * 52px); min-height: 0; }
+  .rt-node { --m: 40px; } .rt-node.k-gate { --m: 48px; }
+  .rt-node { width: 80px; }
+}
+/* 舊的一排一排的樣式留下的框和底色：地圖上的點不要 */
+.rt-map .rt-node, .rt-map .rt-node.next, .rt-map .rt-node.here, .rt-map .rt-node.sel, .rt-map .rt-node.done { border: 0; background: none; box-shadow: none; outline-offset: 4px; }
+.rt-map .rt-node:hover .rt-medal, .rt-map .rt-node:focus-visible .rt-medal { box-shadow: 0 0 0 3px #FBEFD9, 0 0 14px 4px rgba(214, 178, 94, .7); }
+.rt-map .rt-pawn { width: 40px; height: 64px; bottom: 55%; }
+@media (max-width: 760px) { .rt-map .rt-pawn { width: 30px; height: 48px; } }

@@ -28,7 +28,7 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
-    id: "cellar-route", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    id: "cellar-route", v: 2, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "地下收藏庫：每壹層可以選路了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [
       ["這次改了什麼", [
@@ -41,7 +41,14 @@ export const NOTICES = [
       ["要注意", [
         "遭遇的點看得到怪物大概多強（爪痕越多越強），是哪壹隻要打過才知道。",
         "選路的時候也可以撤退，要過半的人投才會壹起回地面。",
-        "地圖現在還是簡單的樣子，之後會換成真正的地圖。",
+      ]],
+      ["地圖換成真正的地圖了", [
+        "底是每壹層自己的地板，點是圓形的徽章，路用虛線連起來；走過的路會變成金色的實線。",
+        "棋子站在你們現在的位置，能走的下壹個點會發亮。",
+      ]],
+      ["幕後", [
+        "這次是用新模型 Fable 5.2 規劃的完整地下室探險系統更新。Fable 規劃了大概壹成，Token 就通通燒完了，後面改回 Opus 5.5 接著做。",
+        "地圖、怪物、舞台、特效這些精美素材，都是用 Gemini 生成的。",
       ]],
     ],
     cta: { label: "去地下收藏庫", room: "cellar" },
