@@ -205,3 +205,82 @@ body.reduce-motion .fg-fx.inline { animation: none; background-position: 100% 0;
 .fg-sum { margin: 6px 0; padding: 8px 10px; border-radius: 8px; background: rgba(122, 90, 42, .14); color: #2A1E14; font-weight: 700; }
 .fg-card .fg-now .fg-skip { margin-left: auto; min-height: 36px; }
 body.reduce-motion .fg-pop, body.reduce-motion .fg-banner, body.reduce-motion .fg-seat.shake { animation: none; }
+
+/* ---------- 一個畫面放得下（翊文 11-12：「排版沒辦法一次看到所有選項，要往下滑才行不太方便」；整張介面 assets/cellar2/ui-電腦.webp 當方向） ----------
+   左欄固定三層：標題 → 舞台（用剩下的高度）→ 指令面板（貼底、整塊看得到）。舞台裡的東西照舞台的高度縮放（container query 的 cqh） */
+.cx-main:has(> .fg-stage) { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); overflow: hidden; gap: 6px; min-width: 0; }
+.cx-main:has(> .fg-stage) > * { min-width: 0; } /* 格子不要照裡面最寬的東西撐寬（手機上會比螢幕還寬） */
+.cx-main > .fg-stage { grid-row: 2; container-type: size; min-height: 0; height: auto; align-content: stretch; }
+.cx-main > .fg-card { grid-row: 3; } /* 有沒有最上面的標題列，舞台都在第二層、面板都在第三層 */
+.fg-stage .fg-foe-art:has(.fg-sprite) { --foe-h: min(46cqh, 300px); }
+/* 隊伍站在舞台的地板上：佩佩大一點、腳下一塊地毯、名牌掛在下面（零件 3-12 來之前，地毯先用 CSS 畫） */
+.fg-stage .fg-seats { align-self: end; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 4px 14px; }
+.fg-stage .fg-seat { display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; min-width: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.fg-stage .fg-seat .fg-who { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border: 1px solid #8C6A2E; border-radius: 6px; background: linear-gradient(#5C4524, #3A2A16); color: #FBEFD9; font-size: .8125rem; white-space: nowrap; }
+.fg-stage .fg-seat.me .fg-who { border-color: #FFD27A; box-shadow: 0 0 0 2px rgba(255, 210, 122, .35); }
+.fg-stage .fg-seat .fg-pepes { position: relative; gap: 2px; padding-bottom: 6px; }
+.fg-stage .fg-seat .fg-pepes::before { content: ""; position: absolute; left: -8px; right: -8px; bottom: 0; height: 18px; border-radius: 50%; background: radial-gradient(closest-side, rgba(190, 150, 100, .75), rgba(120, 85, 50, .55) 70%, transparent); z-index: 0; }
+.fg-stage .fg-seat.aimed { box-shadow: none; }
+.fg-stage .fg-seat.aimed .fg-pepes::before { background: radial-gradient(closest-side, rgba(255, 90, 70, .9), rgba(180, 40, 30, .6) 70%, transparent); box-shadow: 0 0 18px rgba(255, 80, 60, .55); }
+.fg-stage .fg-pepe { position: relative; z-index: 1; width: min(15cqh, 72px); }
+.fg-stage .fg-art { width: min(15cqh, 72px); height: min(15cqh, 72px); }
+.fg-stage .fg-pepe small { font-size: .625rem; text-shadow: 0 1px 2px #000; }
+.fg-stage .fg-roles { margin-top: 0; }
+.fg-stage .fg-seat.acting .fg-pepes { transform: translateY(-6px) scale(1.06); transition: transform .2s; }
+/* 指令面板 */
+.fg-panel { padding: 8px 12px 10px; }
+.fg-panel > .pin { display: none; }
+.fg-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+.fg-head .fg-now { flex: 1 1 auto; margin: 0; font-size: 1.05rem; }
+.fg-head .fg-me { font-size: .8125rem; }
+.fg-exits { display: flex; gap: 6px; }
+.fg-exits .fg-exit { min-height: 36px; padding: 2px 12px; }
+.fg-report { margin: 4px 0 6px; font-size: .875rem; }
+.fg-report summary { cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 4px 8px; border-radius: 6px; background: rgba(122, 90, 42, .12); list-style: none; }
+.fg-report summary::-webkit-details-marker { display: none; }
+.fg-report summary small { color: #7A5A2A; }
+.fg-report ul { max-height: 22vh; overflow: auto; margin: 4px 0 0; padding-left: 1.2em; }
+.fg-tip { margin: 4px 0 6px; font-size: .8125rem; }
+.fg-panel .fg-acts .fg-act { min-height: 52px; padding: 4px 6px; }
+.fg-panel .fg-acts .fg-act small { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fg-chips { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 6px; overflow-x: auto; padding-bottom: 2px; }
+.fg-chip { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 10px 2px 4px; border: 2px solid #7A5A2A; border-radius: 999px; background: #FBEFD9; color: #2A1E14; font-size: .875rem; white-space: nowrap; }
+.fg-chip.team { border-color: #3F8F4A; }
+.fg-chip .fg-ico { margin-right: 0; }
+.fg-chip:disabled { opacity: .45; }
+.fg-chip.cx-on { background: #D6B25E; box-shadow: 0 0 0 3px #7A5A2A inset; }
+/* 手機直拿：整個左欄就是一個螢幕高 */
+@media (max-width: 760px) {
+  .cx-main:has(> .fg-stage) { height: calc(100dvh - 92px); overflow: hidden; }
+  .fg-stage .fg-foe-art:has(.fg-sprite) { --foe-h: min(34cqh, 140px); }
+  .fg-panel .fg-acts .fg-act { min-height: 50px; }
+  .fg-card > .fg-chips { order: 2; } /* 大按鈕在上、小按鈕在下（舊的手機排序規則會把它排到前面） */
+  .fg-tip { display: none; }
+  .fg-head .fg-now { font-size: .95rem; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-stage .fg-pepe, .fg-stage .fg-art { width: min(20cqh, 44px); }
+  .fg-stage .fg-art { height: min(20cqh, 44px); }
+  .fg-stage .fg-seat .fg-pepes { display: flex; }
+  .fg-report, .fg-tip { display: none; }
+}
+/* 手機橫拿只有 375 高：面板壓扁（大按鈕只寫名字、說明滑過去才看得到），舞台留下來 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-panel { padding: 4px 8px 6px; }
+  .fg-head { gap: 2px 8px; }
+  .fg-head .fg-now { font-size: .875rem; }
+  .fg-head .fg-me { font-size: .75rem; }
+  .fg-exits .fg-exit { min-height: 30px; padding: 0 8px; font-size: .8125rem; }
+  .fg-panel .fg-acts { gap: 4px; }
+  .fg-panel .fg-acts .fg-act { min-height: 38px; padding: 2px 4px; }
+  .fg-panel .fg-acts .fg-act small { display: none; }
+  .fg-chips { margin-top: 4px; gap: 4px; }
+  .fg-chip { min-height: 32px; font-size: .75rem; padding: 0 8px 0 2px; }
+  .fg-chip .fg-ico { width: 1.4em; height: 1.4em; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-head { flex-wrap: nowrap; }
+  .fg-head .fg-now { flex: 1 1 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .fg-head .fg-san { width: 60px; }
+  .fg-stage .fg-seats { display: none; } /* 隊員在右邊那欄看得到；舞台只留牠的下一招、怪物、壓力條 */
+}

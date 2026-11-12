@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-one-screen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "打怪物的畫面不用往下滑了", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "牠的下壹招、怪物、隊伍、所有按鈕，電腦和手機（直拿、橫拿）壹個畫面都看得到。",
+        "隊伍站在舞台的地板上，被瞄準的人腳下會發紅。",
+        "上壹回合只留壹行小結，完整的「戰報」點壹下才展開。",
+        "幫隊友和招式改成壹排小按鈕，說明滑過去（或長按）就看得到。",
+      ]],
+    ],
+  },
+  {
     id: "fight-roles", v: 1, cat: "館方公告", tags: ["更新", "重要"], importance: "important",
     title: "打怪物更好玩了：怪物有個性、佩佩有特長、隊友可以分工", publish: "2026-11-12", expire: "2027-12-31",
     sections: [

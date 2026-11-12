@@ -69,10 +69,12 @@ const fileOf = o => (o.key.startsWith("2-2 ") ? o.key.split(" ").slice(0, 2) : o
 
 // 每張附哪一張參考圖：地圖零件、介面零件附地下室石板框；舞台、怪物、特效附大廳導覽圖
 const REFS = {
+  ui: { file: "assets/cellar2/ui-電腦.webp", name: "整張介面（翊文生的）" },
   land: { file: "web/public/lobby/land.webp", name: "大廳導覽圖" },
   stone: { file: "assets/panel-kit/stone-raw.webp", name: "地下室石板框" },
 };
-const refOf = o => (/^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
+// 3-8 以後是打怪介面的零件：附翊文生的整張介面（風格、配色照它）
+const refOf = o => (/^3-(8|9|1\d)$/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
 const dataUrl = f => "data:image/webp;base64," + fs.readFileSync(path.join(ROOT, f)).toString("base64");
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -82,7 +84,7 @@ const card = o => {
   return `<article class="c" id="n${i}">
   <header><b>第 ${i} 張</b>　${esc(o.key)}　<small>${esc(o.sec.title.replace(/^\S+\s*/, ""))}</small><label><input type="checkbox" data-done="${i}"> 生好了</label></header>
   <div class="row">
-    <figure><img class="ref" data-ref="${r}" alt=""><figcaption>參考圖：${REFS[r].name}</figcaption><button data-img="${r}">① 複製參考圖</button></figure>
+    <figure><img class="ref" data-ref="${r}" src="${dataUrl(REFS[r].file)}" alt="參考圖：${REFS[r].name}"><figcaption>參考圖：${REFS[r].name}</figcaption><button data-img="${r}">① 複製參考圖</button></figure>
     <div class="p"><pre>${esc(o.text)}</pre><button data-txt="${i}">② 複製 Prompt</button></div>
   </div>
   <p class="send">③ 生好傳給 AI 時說「這是第 ${i} 張」（AI 存成 <code>assets/cellar2/${esc(fileOf(o))}</code>）</p>

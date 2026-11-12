@@ -301,16 +301,25 @@ export function fightCard(v, me, api) {
     () => send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o), cls + (mine && mine.act === o.act ? " cx-on" : ""), { disabled: !o.ok, "aria-pressed": String(!!(mine && mine.act === o.act)) });
   const last = v.last && v.last.round ? roundLines(v, v.last.round) : [];
   const sanPct = Math.max(0, Math.min(100, seat.san || 0));
+  // 指令面板（翊文 11-12：「排版沒辦法一次看到所有選項，要往下滑才行不太方便」）：
+  //   一行標題（要做什麼、倒數、自己的理智和膽量、逃跑撤退）→ 上一回合壹行小結（完整的在「戰報」點開）→ 四個大行動 → 幫隊友和招式的小按鈕壹排
+  //   小按鈕只寫名字，說明放在 title（滑過去、長按看得到）
+  const chip = o => btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
+    () => send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o), "fg-chip" + (o.team ? " team" : "") + (mine && mine.act === o.act ? " cx-on" : ""),
+    { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) });
+  const sum = RP.summary && RP.key === roundKey(v) ? RP.summary : null;
+  const roundNo = v.last && v.last.round ? v.last.round.round - (v.last.round.over ? 0 : 1) : 0;
+  card.classList.add("fg-panel");
   card.append(
-    h("h2", { class: "room-title fg-now" }, title, h("span", { class: "cx-clock" })),
-    last.length ? h("div", { class: "fg-log" }, h("b", null, `第 ${v.last.round.round - (v.last.round.over ? 0 : 1)} 回合`), RP.summary && RP.key === roundKey(v) ? h("p", { class: "fg-sum" }, RP.summary) : null, h("ul", null, last.map(l => h("li", null, l)))) : h("p", { class: "pt-sub" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
-    h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
-    team.length ? h("div", { class: "fg-moves fg-team" }, h("span", { class: "fg-lab" }, "幫隊友"), team.map(o => mk(o, "fg-move small"))) : null,
-    moves.length ? h("div", { class: "fg-moves" }, h("span", { class: "fg-lab" }, "招式（壹場壹次）"), moves.map(o => mk(o, "fg-move small"))) : null,
-    h("div", { class: "cx-card-foot fg-foot" },
+    h("div", { class: "fg-head" },
+      h("h2", { class: "room-title fg-now" }, title),
+      h("span", { class: "cx-clock" }),
       h("div", { class: "fg-me" }, h("span", null, `理智 ${seat.san ?? "—"}`), h("i", { class: "fg-san" }, h("i", { style: { width: sanPct + "%" } })), seat.brave ? h("span", { class: "fg-brave", title: "有隊友壯膽：扣理智的時候先扣膽量" }, `膽量 ${seat.brave}`) : null),
-      exits.map(o => mk(o, "ghost small fg-exit"))),
-    picked ? h("p", { class: "pt-hint" }, "時間到之前可以改。") : null);
+      h("div", { class: "fg-exits" }, exits.map(o => btn(ACT_TEXT[o.act], () => send({ act: o.act }, o), "ghost small fg-exit" + (mine && mine.act === o.act ? " cx-on" : ""), { title: desc(o), "aria-pressed": String(!!(mine && mine.act === o.act)) })))),
+    last.length ? h("details", { class: "fg-report" }, h("summary", null, h("b", null, `第 ${roundNo} 回合　`), sum || last[last.length - 1], h("small", null, "　戰報 ▾")), h("ul", null, last.map(l => h("li", null, l))))
+      : h("p", { class: "pt-sub fg-tip" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
+    h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
+    team.length || moves.length ? h("div", { class: "fg-chips" }, team.map(chip), moves.map(chip)) : null);
   return card;
 }
 export const fightMoveNames = () => Object.keys(FIGHT_MOVES);
