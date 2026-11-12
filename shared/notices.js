@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bout-chip", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "狀態列的瘋狂發作寫清楚了", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "瘋狂發作的時候，狀態列會寫「發作中・恐懼症・不敢碰「紅」・還剩 10 步」，不再只有壹排點點。",
+        "點壹下會跳出說明：發作是暫時的，每換壹個房間、每做壹件事算壹步，走完就好。",
+      ]],
+    ],
+  },
+  {
     id: "ui-1111b", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "地下收藏庫改版，整個館的介面也換新了", publish: "2026-11-11", expire: "2027-12-31",
     sections: [

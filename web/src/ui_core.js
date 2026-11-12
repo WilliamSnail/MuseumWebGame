@@ -616,10 +616,15 @@ export function updateStatus(instant) {
   }
   const dots = $("#st-bout");
   if (dots) {
+    // 翊文 11-12（附「恐懼症 ●●●●」的截圖）：「恐懼症這個怎麼只有列這樣? 不知道是什麼」：寫成字，點了跳說明
     if (P.bout) {
-      const name = MADNESS_TEXT[P.bout.i].name;
-      dots.replaceChildren(h("span", { class: "bout-name" }, name), ...Array.from({ length: Math.min(P.bout.left, 10) }, () => h("i", { class: "bout-dot" })));
-      dots.title = `瘋狂發作：${name}，還剩 ${P.bout.left} 個動作`;
+      const t = MADNESS_TEXT[P.bout.i], name = t.name, opt = P.bout.opt || "", left = P.bout.left;
+      const what = fill(t.start, opt);
+      const show = () => { const m = miniLayer(`瘋狂發作：${name}`, what); m.card.append(h("p", null, `這是暫時的，跟會留好幾天的「怪癖」不壹樣。還剩 ${left} 步就會好：每換壹個房間、每做壹件事（做佩佩、看畫、融合……）算壹步。`), btn("知道了", () => m.close(), "primary")); };
+      dots.replaceChildren(h("button", { type: "button", class: "bout-chip", title: `瘋狂發作：${name}。${what} 還剩 ${left} 步。`, onClick: show },
+        h("span", { class: "bout-name" }, `發作中・${name}`), opt ? h("small", { class: "bout-opt" }, `不敢碰「${opt}」`) : null,
+        h("span", { class: "bout-left" }, `還剩 ${left} 步`), h("span", { class: "bout-dots", "aria-hidden": "true" }, ...Array.from({ length: Math.min(left, 10) }, () => h("i", { class: "bout-dot" })))));
+      dots.title = "";
     } else dots.replaceChildren();
   }
 }
