@@ -161,7 +161,7 @@ export function lobby2(root) {
   const live = ADDONS.lobbyLive ? ADDONS.lobbyLive() : null; // 有人在實況就壹小行（ui_casino_live.js）
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
     passCard(),
-    h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)),
+    h("div", { class: "l2-box l2-todobox" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)), // 手機直拿：排到導覽圖上面（css/lobby2.css）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
     h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),

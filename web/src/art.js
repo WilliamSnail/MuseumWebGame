@@ -718,6 +718,7 @@ export const ART = (() => {
     minus: P("M5 12h14"),
     arrowLeft: P("M19 12H5M11 6l-6 6 6 6"),
     arrowRight: P("M5 12h14M13 6l6 6-6 6"),
+    chevUp: P("M6 15l6-6 6 6"),
     info: `<circle cx="12" cy="12" r="8.5"/>` + P("M12 11v5.5") + dot(12, 7.9, 1),
     sparkle: P(SPK + "M19 3v3.5M17.25 4.75h3.5"),
     refresh: P("M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4"),

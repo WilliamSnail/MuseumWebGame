@@ -592,3 +592,14 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
   #status:not(.open) .bout-chip { box-shadow: 0 4px 10px rgba(0,0,0,.5); background: rgba(70,14,10,.92); }
   #status:not(.open) .bout-opt, #status:not(.open) .bout-dots { display: none; }
 }
+
+/* 狀態列的「更多 ▲」（翊文 11-12：ⓘ 太小，看不出能按）：金色框、有字，展開後箭頭朝下、字變「收起」 */
+@media (max-width: 760px) {
+  .st-toggle { width: auto; min-width: 56px; height: 40px; padding: 0 8px; margin: 4px 6px 0 auto; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+    border: 1px solid rgba(227,185,90,.75); border-radius: 8px; background: rgba(227,185,90,.14); color: #F3DFA6; font: inherit; font-size: .68rem; letter-spacing: .08em; line-height: 1.1; cursor: pointer; }
+  .st-toggle .ic, .st-toggle .ic svg { width: 18px; height: 18px; }
+  .st-toggle .ic { transition: transform .2s; }
+  #status.open .st-toggle .ic { transform: rotate(180deg); }
+  #status.open .st-toggle { background: rgba(227,185,90,.28); }
+  body.reduce-motion .st-toggle .ic { transition: none; }
+}
