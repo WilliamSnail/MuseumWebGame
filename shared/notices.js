@@ -10,7 +10,7 @@
 //    cat        "館方公告" 或 "特展活動"
 //    tags       小標籤：重要、維護、更新、活動、館長的話、已更新
 //    importance "low"（只在公佈欄裡標）、"normal"、"important"（導覽列的「公佈欄」蓋火漆印）、"urgent"（登入時直接打開）
-//    pinned     置頂（最多一兩則）
+//    pinned     置頂標記（11-12 起不影響排序，公佈欄壹律新的在最上面；只剩「不併進某日的更新」的作用）
 //    title      標題（兩行以內）
 //    publish／expire  發布、下架的日期（台灣日期，含當天；跟 todayStr 一樣台灣時間 05:00 換日）
 //    start／end 活動期間（可以不填）
@@ -27,6 +27,15 @@ export const NOTICE_CATS = ["館方公告", "特展活動"];
 const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
+  {
+    id: "board-order", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "公佈欄的公告改成最新的在最上面", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "公佈欄的公告改成最新的在最上面，不會再有舊的置頂公告壓在前面。",
+      ]],
+    ],
+  },
   {
     id: "hd-assets", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "館裡換上高畫質的新素材", publish: "2026-11-12", expire: "2027-12-31",
@@ -780,16 +789,17 @@ export function weeklyNotice(P) {
 export const NOTICE_EXTRA = [];
 // 這則今天看得到嗎：已經發布、還沒下架（日期含當天）。Discord 的 /pepe-更新 也用這個判斷
 export function noticeLive(n, today) { return !!n && (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire); }
-// 現在看得到的公告：已經發布、還沒下架；置頂的、重要的排前面，再照發布日期新的在前
+// 現在看得到的公告：已經發布、還沒下架；照發布日期新的在前
 export function visibleNotices(P, today) {
   const list = NOTICES.filter(n => noticeLive(n, today));
   const w = weeklyNotice(P);
   if (w) list.push(w);
   list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）
   NOTICE_EXTRA.forEach(f => { const n = f(P, today); if (n) list.push(n); });
-  // 排序：置頂 → 新的在前 → 同壹天重要的在前 → 寫在前面的在前（翊文 11-10：「排序好像有點問題」——
-  // 原本先比重要程度，前幾天的「重要」壹直壓在今天的更新上面，新的公告要捲到第 10 則才看得到）
-  return list.sort((a, b) => (!!b.pinned - !!a.pinned) || String(b.publish || "9999").localeCompare(String(a.publish || "9999")) || (RANK[b.importance] - RANK[a.importance]));
+  // 排序：新的在前 → 同壹天重要的在前 → 寫在前面的在前。置頂（pinned）不再影響排序
+  // （翊文 11-12：「最新的要在最上面」——11-10 的版本是置頂優先，置頂的「開館」「結伴下樓」壓在 11-12 的更新上面）
+  // 沒寫發布日的（每週特展）視為最新。Array.sort 是穩定的，同日同重要程度照寫的先後
+  return list.sort((a, b) => String(b.publish || "9999").localeCompare(String(a.publish || "9999")) || (RANK[b.importance] - RANK[a.importance]));
 }
 
 // 公佈欄上要貼的：同壹天的小更新合成壹則「N 月 N 日的更新」（翊文 11-10：「同一整天的更新都合在同一則公告如何？」）

@@ -6,11 +6,11 @@ const T = (name, fn) => { try { fn(load()); pass++; } catch (e) { fail++; consol
 const fresh = G => { const P = G.newProfile("challenge"); G.ensureDay(P, "2026-11-08"); return P; };
 const TODAY = "2026-11-08";
 
-T("公告：照發布、下架日期出現；置頂的排第壹", G => {
+T("公告：照發布、下架日期出現；有發布日的，新的排前面", G => {
   const P = fresh(G);
   const list = G.visibleNotices(P, TODAY);
   assert.ok(list.length >= 2);
-  assert.strictEqual(list[0].id, "open4");
+  assert.strictEqual(list.filter(n => n.publish)[0].id, "open4", "11-08 當天最新的是開館");
   assert.ok(list.some(n => n.weekly), "有本週特展");
   assert.strictEqual(G.visibleNotices(P, "2026-11-07").some(n => n.id === "open4"), false, "還沒發布的看不到");
   assert.strictEqual(G.visibleNotices(P, "2028-01-01").some(n => n.id === "open4"), false, "下架的看不到");
@@ -47,8 +47,11 @@ T("登入時：緊急的直接打開；勾了今天不再打開就不打開", G 
   list.push({ id: "u", v: 1, importance: "urgent" });
   assert.strictEqual(G.autoOpenPlan(st, list, TODAY).urgent.id, "u", "緊急的就算勾了也打開");
 });
-T("公告排序：置頂之後，新的在前；同壹天重要的在前（不會被前幾天的「重要」壓住）", G => {
-  const list = G.visibleNotices(fresh(G), "2026-11-10").filter(n => !n.pinned && n.publish);
+T("公告排序：發布日新的在最上面（置頂的也不例外）；同壹天重要的在前", G => {
+  const list = G.visibleNotices(fresh(G), "2026-11-12").filter(n => n.publish);
+  assert.ok(list.some(n => n.pinned), "要有置頂的公告才測得到");
+  const board = G.boardNotices(fresh(G), "2026-11-12").filter(n => n.publish);
+  for (let i = 1; i < board.length; i++) assert.ok(board[i - 1].publish >= board[i].publish, "公佈欄上也是新的在前");
   const R = { urgent: 3, important: 2, normal: 1, low: 0 };
   for (let i = 1; i < list.length; i++) {
     const a = list[i - 1], b = list[i];
