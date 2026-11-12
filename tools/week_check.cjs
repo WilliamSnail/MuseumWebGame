@@ -14,7 +14,7 @@ const LEDGER = path.join(ROOT, "content", "story", "帳本.json");
 const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 
 // 字數（畫面上看得到的字；書頁不算換行）
-const LIMITS = { weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
+const LIMITS = { foeName: 12, foeText: 40, foeCard: 80, weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3,
   understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6, // 線索和看懂（shared/clues.js）
@@ -289,6 +289,20 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     books.forEach((b, i) => bookOk(`${where}.books[${i}]`, b, Object.assign({ spare: !!o.spare }, ctx), n));
     if (!o.spare && !books.some(b => b && ctx.weekLine.has(b.line))) E(where, "每天至少一本書接這週的線（line 是這週 kind week 或 floor 的線）");
     if (d.casino !== undefined) casinoDayOk(where + ".casino", d.casino, ctx, o);
+    if (d.cellar !== undefined) { // 地下今天多壹隻怪物（決定 0067，content/README.md「地下的今日怪物」；用 npm run level:new 產生）
+      const c = d.cellar, w = where + ".cellar";
+      if (o.spare || !o.date) E(w, "備用週、備用的壹天不能放今天的怪物（不知道那天劇情走到哪）");
+      G.fightDailyCheck(c, [...ctx.lineIds]).forEach(m => E(w, m));
+      if (isObj(c) && isObj(c.foe)) {
+        ids("怪物", c.foe.id);
+        const who = s => (typeof s === "string" ? s.split("{x}").join("某人") : s);
+        text(w + ".foe.name", c.foe.name, LIMITS.foeName);
+        text(w + ".foe.intro", c.foe.intro, LIMITS.foeText);
+        if (c.foe.phase2 !== undefined) text(w + ".foe.phase2", c.foe.phase2, LIMITS.foeText);
+        asList(c.foe.moves).concat(asList(c.foe.moves2)).forEach((m, i) => { if (isObj(m)) text(`${w}.foe 第 ${i + 1} 招`, who(m.text), LIMITS.foeText); });
+        asList(c.card).forEach((s, i) => text(`${w}.card[${i}]`, s, LIMITS.foeCard));
+      }
+    }
     if (d.weeklyWords !== undefined) { // 每週任務的旁白（決定 0048）
       if (o.spare) E(where, "備用的壹天不能寫 weeklyWords（不知道那週有哪些任務）");
       else if (!Array.isArray(d.weeklyWords) || d.weeklyWords.length > 2) E(where + ".weeklyWords", "要是陣列，壹天最多 2 句");

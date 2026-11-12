@@ -40,6 +40,22 @@ export const FIGHT_ACTS = ["push", "see", "calm", "guard", "flee", "retreat", "p
 export const fightFoe = id => CELLAR_FOES.find(f => f.id === id) || null;
 export const fightFoesOf = (floor, boss = false) => CELLAR_FOES.filter(f => f.floor === floor && !!f.boss === !!boss);
 export const fightFoeName = id => (FOE_TEXT[id] || {}).name || "說不出名字的東西";
+// 每天的內容（content/weeks/週/dN.json）的 cellar 那一塊：今天地下多一隻怪物。回傳問題的清單
+//   { floor: 1～5, rank?: 1～3, foe: 怪物（fightFoeCheck）, card: [登記卡的字 1～3 段], line: 這週的劇情線 id }
+//   lineIds：這週有哪些劇情線（不給就不檢查 line）。字數、禁用字由 tools/week_check.cjs 另外檢查
+export function fightDailyCheck(c, lineIds = null) {
+  if (!c || typeof c !== "object" || Array.isArray(c)) return ["cellar 要是壹個物件"];
+  const bad = [];
+  Object.keys(c).forEach(k => { if (!["floor", "rank", "foe", "card", "line"].includes(k)) bad.push("不認得「" + k + "」（只有 floor、rank、foe、card、line）"); });
+  if (!(Number.isInteger(c.floor) && CELLAR_FOES.some(f => f.floor === c.floor))) bad.push("floor 要是有的樓層");
+  if (c.rank != null && !(Number.isInteger(c.rank) && c.rank >= 1 && c.rank <= NUM.fight.rankHp.length)) bad.push("rank 要是 1～" + NUM.fight.rankHp.length);
+  fightFoeCheck(c.foe).forEach(m => bad.push("foe：" + m));
+  if (c.foe && c.foe.boss && c.rank != null && c.rank !== 1) bad.push("守門等級的不分 rank");
+  if (!Array.isArray(c.card) || c.card.length < 1 || c.card.length > 3 || c.card.some(x => typeof x !== "string" || !x.trim())) bad.push("card 要 1～3 段字（登記之後寫進《補登的帳》）");
+  if (typeof c.line !== "string" || !c.line) bad.push("line 要寫這週的劇情線（故事要接得起來）");
+  else if (lineIds && !lineIds.includes(c.line)) bad.push("line「" + c.line + "」不是這週的劇情線");
+  return bad;
+}
 // 這一場的怪物：內建的照 id 找；每天的內容自己寫的（content/weeks 的 dN.json，規劃第十二節）整份放在 fight.custom
 export const fightFoeOf = fight => (fight && fight.custom) || fightFoe(fight && fight.foe);
 export const fightNameOf = fight => (fight && fight.custom && fight.custom.name) || fightFoeName(fight && fight.foe);
