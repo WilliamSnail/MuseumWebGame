@@ -77,6 +77,19 @@ export function cmapMake(floor, rnd = RNG) {
 // 今天這一層的地圖（同一天、同一層，每個人都一樣）
 export const cmapOfDay = (floor, day) => cmapMake(floor, mulberry32(hashStr(`cmap:${day}:${floor}`)));
 
+// 今天多出來的一個點（每天的內容的 cellar 那一塊，fightDailyCheck 檢查過的）：放在中間那一排，
+// 上一排每個點都走得到它，它也走得到下一排每個點（想打的人一定打得到，不想打的照原本的路走）。回傳新的地圖，不改原本的
+export function cmapAddDaily(map, daily) {
+  if (!map || !daily || !daily.foe || daily.floor !== map.floor) return map;
+  const m = JSON.parse(JSON.stringify(map)), r = Math.floor(m.rows.length / 2);
+  const node = { id: `${m.floor}-${r}-today`, kind: "foe", foe: daily.foe.id, rank: daily.foe.boss ? 1 : (daily.rank || 1), daily: true };
+  if (m.rows[r].some(n => n.id === node.id)) return m;
+  m.rows[r].push(node);
+  (r === 0 ? [] : m.rows[r - 1]).forEach(n => { if (!m.links[n.id].includes(node.id)) m.links[n.id].push(node.id); });
+  m.links[node.id] = (m.rows[r + 1] || [m.gate]).map(n => n.id);
+  m.daily = { foe: daily.foe };
+  return m;
+}
 export const cmapNodes = map => map.rows.flat().concat([map.gate]);
 export const cmapNode = (map, id) => cmapNodes(map).find(n => n.id === id) || null;
 // 走到之前看得到什麼：種類；遭遇多看得到等級和心情、顏色（決定帶誰、要不要接戰）。
@@ -87,7 +100,8 @@ export function cmapPeek(map, id, known = []) {
   const out = { id: n.id, kind: n.kind };
   if (n.kind === "explore") out.room = n.room;
   if (n.kind === "foe") {
-    const foe = fightFoesOf(map.floor).find(f => f.id === n.foe);
+    const foe = n.daily && map.daily ? map.daily.foe : fightFoesOf(map.floor).find(f => f.id === n.foe);
+    if (n.daily) out.daily = true; // 畫面標「今天」
     out.rank = n.rank || 1;
     if (foe) { out.mood = foe.mood || null; out.color = foe.color || null; }
     if ((known || []).includes(n.foe)) out.foe = n.foe;
@@ -118,6 +132,7 @@ export function cmapCheck(map) {
     if (n.kind === "explore" && !f.rooms.some(r => r.id === n.room)) bad.push(`${n.id} 的房間不在這壹層`);
     if (n.kind === "foe" && !(Number.isInteger(n.rank) && n.rank >= 1 && n.rank <= 3)) bad.push(`${n.id} 的等級不對`);
     (map.links[n.id] || []).forEach(t => { if (!ids.has(t)) bad.push(`${n.id} 連到不存在的 ${t}`); });
+    if (n.daily && !(map.daily && map.daily.foe && map.daily.foe.id === n.foe)) bad.push(`${n.id} 是今天的點，地圖上要帶著那隻怪物`);
     if (n.kind !== "gate" && !(map.links[n.id] || []).length) bad.push(`${n.id} 沒有路往下`);
   });
   // 每個點都走得到

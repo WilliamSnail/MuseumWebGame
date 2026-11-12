@@ -26,7 +26,8 @@
     "shot": "node tools/shot.cjs",
     "merge:main": "node tools/merge_main.cjs",
     "emu:call": "node tools/emu_call.cjs",
-    "functions:shared": "node tools/copy_shared.cjs"
+    "functions:shared": "node tools/copy_shared.cjs",
+    "level:new": "node tools/new_level.cjs"
   },
   "devDependencies": {
     "acorn": "^8.19.0",

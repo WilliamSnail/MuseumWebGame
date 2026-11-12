@@ -18,6 +18,8 @@
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |
 | **改很多處文字（首選）**：寫純文字計畫檔，反引號、`$`、引號都不用跳脫；有壹處對不上就壹個檔都不寫 | `npm run edits -- 計畫檔`（格式在 `tools/apply_edits.cjs` 開頭，`--check` 只檢查） |
+| **每天的排程做新關卡**：幾個旋鈕 → 地下今天的怪物；自動調難度、模擬 1～4 人、印出玩家會看到什麼、寫進當天的檔 | `npm run level:new -- 規格.json`（`--write` 寫進 `dN.json`；`--styles` 列出打法；格式在 `tools/new_level.cjs` 開頭；步驟在 `content/排程說明.md` 一之八） |
+| 打怪物的模擬（改 `NUM.fight`、`CELLAR_FOES` 之後跑） | `node test/sim_fight.cjs 200`（`RANK=3` 看 3 級的） |
 | 開工作資料夾、接好依賴（同時做好幾件事、子代理一人一個） | `npm run wt -- --dir 路徑 --branch claude/主題`（`--remove` 收掉） |
 | 按 GitHub 的手動流程，只認新的那一次、照結束碼回報 | `npm run wf -- discord-log.yml -f hours=2 --grep "^2026-"`（多行文字用 `--file 名字=檔案`） |
 | 看、改模擬器的資料（莊家破產、隱身、次數歸零） | `npm run emu:doc -- --set 8 data casinoHouse/main bankroll=-500000` |
