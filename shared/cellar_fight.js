@@ -19,7 +19,7 @@
 //    fightAfter(f)                       打完：倒下的佩佩哪幾隻真的受傷
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
-import { CELLAR_FOES, NUM } from "./config.js";
+import { CELLAR_FOES, MOOD_BEATS, NUM } from "./config.js";
 import { FOE_TEXT } from "./content3.js";
 import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "./logic.js";
 import { memberPower, skillOf } from "./logic3.js";
@@ -35,7 +35,58 @@ export const FIGHT_MOVES = {
   squat: { cat: "姿勢", v: "斯拉夫蹲" },  // 這回合自己的佩佩不會倒
   cheer: { cat: "姿勢", v: "比讚" },      // 下一回合每個人的推 +cheer
 };
-export const FIGHT_ACTS = ["push", "see", "calm", "guard", "flee", "retreat", "point"].concat(Object.keys(FIGHT_MOVES));
+// 合作的新行動（docs/打怪玩法規劃.md 第四節）：引開（坦）、鼓舞、分膽（輔助）、安慰（治療）、看清（偵查）
+export const FIGHT_TEAM_ACTS = ["taunt", "inspire", "share", "comfort", "reveal"];
+export const FIGHT_ACTS = ["push", "see", "calm", "guard", "flee", "retreat", "point"].concat(FIGHT_TEAM_ACTS, Object.keys(FIGHT_MOVES));
+// 角色（開打時照帶的佩佩和職業算「你適合」，第四節）
+export const FIGHT_ROLE_TEXT = { tank: "坦", support: "輔助", healer: "治療", dps: "輸出", scout: "偵查" };
+
+// ---------- 怪物的個性（docs/打怪玩法規劃.md 第二節；CELLAR_FOES[].trait） ----------
+export const FIGHT_TRAIT_KINDS = ["shell", "thick", "slippery", "stubborn", "grow", "steal", "mark", "veil", "blur"];
+export function fightTraitText(t) {
+  if (!t) return null;
+  const T = {
+    shell: ["殼很硬", `沒看穿之前，推只有 ${Math.round(NUM.fight.shellMult * 10)} 成`],
+    thick: ["很硬", `每回合第壹下推少 ${t.n}`],
+    slippery: ["看不出弱點", `看穿比較難（−${t.mod}%）`],
+    stubborn: ["很固執", `安撫比較難（−${t.mod}%）`],
+    grow: ["越來越多", `每 ${t.every} 回合自己多 ${t.n} 壓力`],
+    steal: ["會拿東西", `每 ${t.every} 回合拿走壹個人還沒用的招式`],
+    mark: ["會記帳", `把壹個人寫進帳裡，${t.every} 回合後重重打他；安撫成功可以塗掉`],
+    veil: ["蓋著布", "下壹招只看得到要對誰"],
+    blur: ["看不清楚", `前 ${t.n} 回合看不到牠的下壹招`],
+  }[t.kind];
+  return T ? { name: T[0], text: T[1] } : null;
+}
+export const fightTraitOf = fight => { if (!fight || fight.noTrait) return null; const f = fightFoeOf(fight); return (f && f.trait) || null; }; // noTrait：開打時 o.noTrait（測試基本規則用）
+// 下壹招現在看不看得到：veil 只看得到要對誰；blur 前 n 回合全都看不到。看清（reveal）成功的這壹回合和下壹回合看得到
+export function fightIntentHidden(fight) {
+  const t = fight && fightTraitOf(fight);
+  if (!t || (fight.reveal && fight.reveal >= fight.round)) return null;
+  if (t.kind === "veil") return "veil";
+  if (t.kind === "blur" && fight.round <= (t.n || 1)) return "blur";
+  return null;
+}
+// 這個人（或全隊湊到兩隻以上）有沒有這個顏色的佩佩（第三節）
+export const fightHasColor = (fight, s, c) => !!fight && !!s && !s.helper && (fightUp(s).some(p => p.pick.顏色 === c) || !!(fight && fight.colors && fight.colors[c] >= 2));
+// 招式可以用幾次：帶那頂帽子、那個姿勢的佩佩是完美的，可以用兩次
+export const fightMoveUses = (s, m) => (fightUp(s).some(p => p.perfect && p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v) ? 2 : 1);
+const fiUsed = (s, m) => (s.used[m] === true ? 1 : +s.used[m] || 0);
+const fiUse = (s, m) => { s.used[m] = fiUsed(s, m) + 1; };
+// 你適合：帶的佩佩、招式、職業加起來，取最高的兩個
+export function fightRoles(s) {
+  if (!s || s.helper) return [];
+  const up = s.pepes, col = c => up.filter(p => p.pick.顏色 === c).length, has = m => fightHasMove(s, m) ? 1 : 0, job = s.job;
+  const sc = {
+    tank: col("黑") + has("squat") + has("cap") + (job === "artisan" ? 2 : 0),
+    support: has("wizard") + has("cheer") + (job === "salesman" ? 2 : 0),
+    healer: col("綠") + has("beanie") + has("rest") + (job === "occultist" ? 2 : 0),
+    dps: col("紅") + has("crown") + has("tentacle") + (job === "gambler" ? 2 : 0),
+    scout: col("黃") + (job === "detective" || job === "historian" ? 2 : 0),
+  };
+  const top = Object.keys(sc).filter(k => sc[k] > 0).sort((a, b) => sc[b] - sc[a]).slice(0, 2);
+  return top.length ? top : ["dps"];
+}
 
 export const fightFoe = id => CELLAR_FOES.find(f => f.id === id) || null;
 export const fightFoesOf = (floor, boss = false) => CELLAR_FOES.filter(f => f.floor === floor && !!f.boss === !!boss);
@@ -86,6 +137,15 @@ export function fightFoeCheck(d) {
   };
   movesOk(d.moves, "moves");
   if (d.boss || d.hp2 != null || d.moves2) { if (!hpOk(d.hp2)) bad.push("守門要有 hp2"); movesOk(d.moves2, "moves2"); }
+  // 個性（可以不寫）：種類要認得，數字在合理的範圍
+  if (d.trait != null) {
+    const t = d.trait, num = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+    if (!t || !FIGHT_TRAIT_KINDS.includes(t.kind)) bad.push("trait 的 kind 要是 " + FIGHT_TRAIT_KINDS.join("、"));
+    else if (["thick", "grow"].includes(t.kind) && !num(t.n, 1, 10)) bad.push("trait 的 n 要是 1～10");
+    else if (["slippery", "stubborn"].includes(t.kind) && !num(t.mod, 5, 40)) bad.push("trait 的 mod 要是 5～40");
+    else if (["grow", "steal", "mark"].includes(t.kind) && !num(t.every, 1, 5)) bad.push("trait 的 every 要是 1～5");
+    else if (t.kind === "blur" && !num(t.n, 1, 4)) bad.push("trait 的 n 要是 1～4");
+  }
   return bad;
 }
 // 下一招的預告：{x} 換成被點到的人
@@ -95,6 +155,9 @@ export function fightIntentText(fight) {
   const mv = fight.custom ? (fight.custom.moves || []).concat(fight.custom.moves2 || []).find(m => m.id === it.move) : null;
   const t = (mv && mv.text) || ((FOE_TEXT[fight.foe] || {}).moves || {})[it.move] || "";
   const to = it.to ? fightSeatOf(fight, it.to) : null;
+  const hid = fightIntentHidden(fight); // 蓋著布：只說要對誰；看不清楚：什麼都不說
+  if (hid === "veil") return `要對${to ? to.name : "大家"}做壹件事`;
+  if (hid === "blur") return "看不清楚牠要做什麼";
   return t.split("{x}").join(to ? to.name : "大家");
 }
 
@@ -103,7 +166,7 @@ export function fightSeat(P, id, name, keys) {
   const pepes = (keys || []).map(k => { const e = P && P.pepes && P.pepes[k], pick = fromKey(k); return e && pick ? { key: k, pick, perfect: !!e.perfect, power: 0, down: false } : null; }).filter(Boolean);
   const skills = {};
   ["偵查", "神秘學", "說服"].forEach(s => { skills[s] = skillOf(P, s); });
-  return { id, name: name || "", helper: false, san: P ? P.sanity : 0, brave: null, skills, pepes, used: {}, out: false, ghost: false };
+  return { id, name: name || "", helper: false, san: P ? P.sanity : 0, brave: null, skills, pepes, used: {}, out: false, ghost: false, job: (P && P.job) || null, roles: [] };
 }
 // 館方助手：只會推，不扣理智
 export function fightHelperSeat(items, name = "館方助手") {
@@ -158,9 +221,15 @@ export function fightStart(foeId, seats, o = {}) {
   if (!foe || !Array.isArray(seats) || !seats.some(s => !s.helper && s.pepes.length)) return null;
   const lv = clampN(Math.floor(+o.pressure || 0), 0, 3);
   const rank = foe.boss ? 1 : fightRankOf(o.rank);
-  const fight = { foe: foe.id, boss: !!foe.boss, rank, tap: false, phase: 1, phases: foe.hp2 ? 2 : 1, hp: 0, hpMax: 0, round: 1, weak: false, cheer: 0, rest: !!o.rest, lv, seats, intent: null, over: null, last: null };
+  const fight = { foe: foe.id, boss: !!foe.boss, rank, tap: false, phase: 1, phases: foe.hp2 ? 2 : 1, hp: 0, hpMax: 0, round: 1, weak: false, cheer: 0, rest: !!o.rest, lv, seats, intent: null, over: null, last: null, mark: null, reveal: 0, colors: {}, moodCombo: false };
   if (custom) fight.custom = custom;
-  seats.forEach(s => { s.used = {}; s.out = false; s.ghost = !s.pepes.length; s.pepes.forEach(p => { p.down = false; p.power = memberPower(p, foe); }); });
+  if (o.noTrait) fight.noTrait = true;
+  seats.forEach(s => { s.used = {}; s.out = false; s.ghost = !s.pepes.length; s.pepes.forEach(p => { p.down = false; p.power = memberPower(p, foe); p.beat = !!foe.mood && MOOD_BEATS[p.pick.心情] === foe.mood; }); });
+  // 隊伍組合（第三節）：全隊每個顏色幾隻、湊到幾種心情
+  const moods = new Set();
+  seats.forEach(s => s.pepes.forEach(p => { fight.colors[p.pick.顏色] = (fight.colors[p.pick.顏色] || 0) + 1; if (MOOD_BEATS[p.pick.心情]) moods.add(p.pick.心情); }));
+  fight.moodCombo = moods.size >= 3;
+  seats.forEach(s => { s.roles = fightRoles(s); });
   const z = fiSize(fight);
   // 膽量：這一趟帶進來的（接合作流程的那一步會傳）照用；沒有就照人數給
   seats.forEach(s => { if (!s.helper) s.brave = typeof s.brave === "number" && Number.isFinite(s.brave) ? Math.max(0, s.brave) : fightCourage(z.players); });
@@ -170,13 +239,19 @@ export function fightStart(foeId, seats, o = {}) {
 }
 
 // 看穿、安撫的成功率（百分比）
-export const fightSeeChance = s => clampN(Math.max(s.skills.偵查 || 0, s.skills.神秘學 || 0) + NUM.fight.seeMod, 5, 95);
-export const fightCalmChance = s => clampN((s.skills.說服 || 0) + NUM.fight.calmMod, 5, 95);
+// 黃色的佩佩 +；怪物的個性「看不出弱點」「很固執」−
+const fiTraitMod = (fight, kind) => { const t = fight && fightTraitOf(fight); return t && t.kind === kind ? t.mod || 0 : 0; };
+export const fightSeeChance = (s, fight = null) => clampN(Math.max(s.skills.偵查 || 0, s.skills.神秘學 || 0) + NUM.fight.seeMod + (fightHasColor(fight, s, "黃") ? NUM.fight.color.yellow : 0) - fiTraitMod(fight, "slippery"), 5, 95);
+export const fightCalmChance = (s, fight = null) => clampN((s.skills.說服 || 0) + NUM.fight.calmMod + (fightHasColor(fight, s, "黃") ? NUM.fight.color.yellow : 0) - fiTraitMod(fight, "stubborn"), 5, 95);
+export const fightRevealChance = (s, fight = null) => clampN((s.skills.偵查 || 0) + NUM.fight.revealMod + (fightHasColor(fight, s, "黃") ? NUM.fight.color.yellow : 0), 5, 95);
+// 推的加成：紅色的佩佩、全隊湊到三種心情、隊友的鼓舞
+const fiPushBonus = (fight, s) => (s.helper ? 0 : (fightHasColor(fight, s, "紅") ? NUM.fight.color.red : 0) + (fight.moodCombo ? NUM.fight.moodCombo : 0));
+const fiShell = fight => { const t = fightTraitOf(fight); return !!t && t.kind === "shell" && !fight.weak; };
 // 推會扣多少：[最少, 最多]。mode："crown" 骰子當最大、"tentacle" 強度乘倍
 export function fightPushRange(fight, s, mode = "", bonus = 0) {
   const F = NUM.fight, top = maxExpr(F.die);
-  const base = fightPower(s) * (mode === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus;
-  const mult = fight.weak && !s.helper ? F.weakMult : 1;
+  const base = fightPower(s) * (mode === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + fiPushBonus(fight, s);
+  const mult = (fight.weak && !s.helper ? F.weakMult : 1) * (fiShell(fight) ? F.shellMult : 1);
   const tap = fight.tap && !s.helper ? F.tap.great : 0; // 這回合可以按時機：最多再多這麼多
   return [Math.round((base + (mode === "crown" ? top : 1)) * mult), Math.round((base + top + tap) * mult)];
 }
@@ -190,12 +265,27 @@ export function fightOptions(fight, id) {
   const out = [];
   const pr = fightPushRange(fight, s);
   out.push({ act: "push", ok: true, lo: pr[0], hi: pr[1], tap: !!fight.tap });
-  out.push({ act: "see", ok: !fight.weak, why: fight.weak ? "弱點已經找到了" : "", chance: fightSeeChance(s) });
-  out.push({ act: "calm", ok: true, chance: fightCalmChance(s) });
+  out.push({ act: "see", ok: !fight.weak, why: fight.weak ? "弱點已經找到了" : "", chance: fightSeeChance(s, fight) });
+  out.push({ act: "calm", ok: true, chance: fightCalmChance(s, fight) });
   out.push({ act: "guard", ok: true });
+  // 合作的新行動：對象先幫你挑好（畫面寫在按鈕上，也可以改）
+  const others = fightActors(fight).filter(x => x.id !== s.id);
+  const it = fight.intent || {}, single = it.kind === "hit" || it.kind === "scare";
+  out.push({ act: "taunt", team: true, ok: single, why: single ? "" : "牠下壹招不是打壹個人" });
+  if (others.length) {
+    const strong = others.slice().sort((a, b) => fightPower(b) - fightPower(a))[0];
+    out.push({ act: "inspire", team: true, ok: true, for: strong.id, forName: strong.name, n: NUM.fight.inspire });
+    const scared = others.slice().sort((a, b) => (a.brave || 0) - (b.brave || 0))[0];
+    out.push({ act: "share", team: true, ok: (s.brave || 0) >= 2, why: (s.brave || 0) >= 2 ? "" : "膽量不夠分", for: scared.id, forName: scared.name, n: Math.floor((s.brave || 0) / 2) });
+  }
+  const low = fightActors(fight).slice().sort((a, b) => a.san - b.san)[0] || s;
+  out.push({ act: "comfort", team: true, ok: true, for: low.id, forName: low.id === s.id ? "自己" : low.name, n: (k => `${1 + k}～${maxExpr(NUM.fight.comfort) + k}`)(Math.floor((s.skills.說服 || 0) / NUM.fight.comfortDiv)) });
+  const hid = fightIntentHidden(fight);
+  out.push({ act: "reveal", team: true, ok: !!hid, why: hid ? "" : "下壹招看得到", chance: fightRevealChance(s, fight) });
   Object.keys(FIGHT_MOVES).forEach(m => {
     if (!fightHasMove(s, m)) return;
-    const o = { act: m, move: true, ok: !s.used[m], why: s.used[m] ? "這場用過了" : "" };
+    const left = fightMoveUses(s, m) - fiUsed(s, m);
+    const o = { act: m, move: true, ok: left > 0, why: left > 0 ? "" : fiUsed(s, m) > 9 ? "被拿走了" : "這場用過了", left };
     if ((m === "rest" || m === "beanie") && !fight.rest && o.ok) { o.ok = false; o.why = "這壹層回過了"; }
     if (m === "crown" || m === "tentacle") { const r = fightPushRange(fight, s, m); o.lo = r[0]; o.hi = r[1]; }
     out.push(o);
@@ -216,12 +306,14 @@ export function fightRound(fight, picks) {
   const foe = fightFoeOf(fight);
   const acts = {};
   // 每個人選的：不能選的、沒選的都當「擋」
+  // 館方助手：隊伍裡沒有人適合坦、而牠下壹招要打人的時候，助手引開；不然推（第四節：助手補位）
+  const itNow = fight.intent || {}, tankless = !fight.seats.some(s => !s.helper && !s.out && !s.ghost && (s.roles || []).includes("tank"));
   fight.seats.forEach(s => {
-    if (s.helper) { if (!s.out && fightUp(s).length) acts[s.id] = { act: "push" }; return; }
+    if (s.helper) { if (!s.out && fightUp(s).length) acts[s.id] = { act: tankless && (itNow.kind === "hit" || itNow.kind === "scare") && itNow.to && itNow.to !== s.id ? "taunt" : "push" }; return; }
     if (s.out) return;
     const p = (picks && picks[s.id]) || null, opts = fightOptions(fight, s.id);
     const hit = p && opts.find(o => o.act === p.act && o.ok);
-    if (hit) acts[s.id] = { act: p.act, for: typeof p.for === "string" && fightSeatOf(fight, p.for) ? p.for : null, tap: fight.tap ? (p.tap === 2 ? 2 : p.tap === 1 ? 1 : 0) : 0 };
+    if (hit) acts[s.id] = { act: p.act, for: typeof p.for === "string" && fightSeatOf(fight, p.for) ? p.for : hit.for || null, tap: fight.tap ? (p.tap === 2 ? 2 : p.tap === 1 ? 1 : 0) : 0 };
     else if (!s.ghost) { acts[s.id] = { act: "guard", for: null, auto: true }; ev.push({ t: "auto", id: s.id }); }
   });
   const doing = act => fight.seats.filter(s => acts[s.id] && acts[s.id].act === act);
@@ -240,14 +332,20 @@ export function fightRound(fight, picks) {
   let bonus = 0, cheerNext = 0;
   const shield = {}, firm = {}, guard = {};
   doing("point").forEach(s => { s.used.point = true; fight.weak = true; ev.push({ t: "point", id: s.id }); });
-  doing("wizard").forEach(s => { s.used.wizard = true; bonus += F.wizard; ev.push({ t: "move", id: s.id, move: "wizard", n: F.wizard }); });
-  doing("cheer").forEach(s => { s.used.cheer = true; cheerNext += F.cheer; ev.push({ t: "move", id: s.id, move: "cheer", n: F.cheer }); });
-  doing("squat").forEach(s => { s.used.squat = true; firm[s.id] = true; ev.push({ t: "move", id: s.id, move: "squat" }); });
-  doing("cap").forEach(s => { s.used.cap = true; shield[acts[s.id].for || s.id] = s.id; ev.push({ t: "move", id: s.id, move: "cap", for: acts[s.id].for || s.id }); });
-  ["rest", "beanie"].forEach(m => doing(m).forEach(s => { s.used[m] = true; const n = rollExpr(F.rest).total; fxOf(s.id).gain += n; s.san += n; ev.push({ t: "move", id: s.id, move: m, n }); }));
+  doing("wizard").forEach(s => { fiUse(s, "wizard"); bonus += F.wizard; ev.push({ t: "move", id: s.id, move: "wizard", n: F.wizard }); });
+  doing("cheer").forEach(s => { fiUse(s, "cheer"); cheerNext += F.cheer; ev.push({ t: "move", id: s.id, move: "cheer", n: F.cheer }); });
+  doing("squat").forEach(s => { fiUse(s, "squat"); firm[s.id] = true; ev.push({ t: "move", id: s.id, move: "squat" }); });
+  doing("cap").forEach(s => { fiUse(s, "cap"); shield[acts[s.id].for || s.id] = s.id; ev.push({ t: "move", id: s.id, move: "cap", for: acts[s.id].for || s.id }); });
+  ["rest", "beanie"].forEach(m => doing(m).forEach(s => { fiUse(s, m); const n = rollExpr(F.rest).total; fxOf(s.id).gain += n; s.san += n; ev.push({ t: "move", id: s.id, move: m, n }); }));
+  // 合作的新行動：鼓舞、分膽、安慰、看清（第四節）
+  const inspired = {};
+  doing("inspire").forEach(s => { const t = fightSeatOf(fight, acts[s.id].for); if (!t || t.out) return; inspired[t.id] = (inspired[t.id] || 0) + F.inspire; ev.push({ t: "inspire", id: s.id, for: t.id, n: F.inspire }); });
+  doing("share").forEach(s => { const t = fightSeatOf(fight, acts[s.id].for); const n = Math.floor((s.brave || 0) / 2); if (!t || t.out || t.helper || n <= 0) return; s.brave -= n; t.brave = (t.brave || 0) + n; ev.push({ t: "share", id: s.id, for: t.id, n }); });
+  doing("comfort").forEach(s => { const t = fightSeatOf(fight, acts[s.id].for) || s; if (t.out || t.helper) return; const n = rollExpr(F.comfort).total + Math.floor((s.skills.說服 || 0) / F.comfortDiv); t.san += n; fxOf(t.id).gain += n; fxOf(s.id).ticks.push("說服"); ev.push({ t: "comfort", id: s.id, for: t.id, n }); });
+  doing("reveal").forEach(s => { const target = fightRevealChance(s, fight), roll = rollD100().total, ok = roll <= target; if (ok) { fight.reveal = fight.round + 1; fxOf(s.id).ticks.push("偵查"); } ev.push({ t: "reveal", id: s.id, roll, target, ok }); });
   // 看穿
   doing("see").forEach(s => {
-    const target = fightSeeChance(s), roll = rollD100().total, ok = roll <= target;
+    const target = fightSeeChance(s, fight), roll = rollD100().total, ok = roll <= target;
     const skill = (s.skills.偵查 || 0) >= (s.skills.神秘學 || 0) ? "偵查" : "神秘學";
     if (ok) { fight.weak = true; fxOf(s.id).ticks.push(skill); }
     ev.push({ t: "see", id: s.id, skill, roll, target, ok });
@@ -255,24 +353,31 @@ export function fightRound(fight, picks) {
   // 安撫：成功的人數決定怪物這一招變弱還是取消；每成功一次順便減一點壓力
   let calmed = 0;
   doing("calm").forEach(s => {
-    const target = fightCalmChance(s), roll = rollD100().total, ok = roll <= target;
+    const target = fightCalmChance(s, fight), roll = rollD100().total, ok = roll <= target;
     if (ok) { calmed++; fight.hp -= F.calmHp; fxOf(s.id).ticks.push("說服"); fight.last = s.id; }
     ev.push({ t: "calm", id: s.id, roll, target, ok, n: ok ? F.calmHp : 0 });
+    if (ok && fight.mark) { ev.push({ t: "trait", kind: "unmark", id: fight.mark.id, by: s.id }); fight.mark = null; } // 會記帳：安撫成功塗掉
   });
   // 擋
   doing("guard").forEach(s => { guard[s.id] = acts[s.id].for || s.id; if (!acts[s.id].auto) ev.push({ t: "guard", id: s.id, for: guard[s.id] }); });
   // 推（含皇冠、觸手帽）
+  const trait = fightTraitOf(fight);
+  let thickLeft = trait && trait.kind === "thick" ? trait.n || 0 : 0; // 很硬：每回合第壹下推少 n
   ["push", "crown", "tentacle"].forEach(a => doing(a).forEach(s => {
     if (!fightUp(s).length) return;
-    if (a !== "push") s.used[a] = true;
+    if (a !== "push") fiUse(s, a);
     const die = a === "crown" ? maxExpr(F.die) : rollExpr(F.die).total;
     const tap = s.helper ? 0 : [0, F.tap.good, F.tap.great][acts[s.id].tap || 0];
-    const base = fightPower(s) * (a === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + tap;
-    const weak = fight.weak && !s.helper;
-    const n = Math.max(0, Math.round((base + die) * (weak ? F.weakMult : 1)));
+    const base = fightPower(s) * (a === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + tap + fiPushBonus(fight, s) + (inspired[s.id] || 0);
+    const weak = fight.weak && !s.helper, shell = fiShell(fight);
+    let n = Math.max(0, Math.round((base + die) * (weak ? F.weakMult : 1) * (shell ? F.shellMult : 1)));
+    const thick = Math.min(thickLeft, n); n -= thick; thickLeft = 0;
     fight.hp -= n;
     if (!s.helper) fight.last = s.id;
     const e = { t: "push", id: s.id, mode: a, die, n, weak, tap };
+    if (shell) e.shell = true;
+    if (thick) e.thick = thick;
+    if (inspired[s.id]) e.inspired = inspired[s.id];
     if (a === "tentacle") { const loss = rollExpr(F.tentacleSan).total; e.san = lose(s, loss); e.brave = loss - e.san; }
     ev.push(e);
   }));
@@ -294,6 +399,7 @@ export function fightRound(fight, picks) {
     const half = n => Math.ceil(n / 2);
     const sanHit = (s, n, guarded) => {
       let loss = n + (fight.lv >= F.pressureSan ? 1 : 0) + F.rankSan[fightRankOf(fight.rank) - 1];
+      if (fightHasColor(fight, s, "黑")) loss = Math.max(0, loss - F.color.black); // 黑色的佩佩：被嚇少扣
       if (guarded) loss = half(loss);
       if (soft) loss = half(loss);
       return lose(s, loss);
@@ -314,6 +420,9 @@ export function fightRound(fight, picks) {
       // 點一個人：有人幫他擋就打到擋的人身上
       let t = it.to ? fightSeatOf(fight, it.to) : null;
       const e = { t: "foe", move: mv.id, kind: mv.kind, to: it.to, soft };
+      // 引開（坦）：有人引開，就改打他，他算有擋
+      const taunter = doing("taunt").find(x => x !== t && !x.out && !x.ghost && fightUp(x).length);
+      if (taunter) { e.taunt = taunter.id; t = taunter; guard[t.id] = t.id; }
       if (!t || t.out || t.ghost) e.miss = true;
       else if (shield[t.id]) e.blocked = shield[t.id];
       else {
@@ -331,7 +440,11 @@ export function fightRound(fight, picks) {
       }
       ev.push(e);
     }
+    fiTraitTick(fight, ev, lose);
   }
+  // 綠色的佩佩：每回合結束回壹點理智
+  const greens = fightActors(fight).filter(s => fightHasColor(fight, s, "綠"));
+  if (greens.length && !fight.over) { greens.forEach(s => { s.san += F.color.green; fxOf(s.id).gain += F.color.green; }); ev.push({ t: "green", ids: greens.map(s => s.id), n: F.color.green }); }
   // 倒下：帶的佩佩都倒了，或理智用完
   fight.seats.forEach(s => {
     if (s.helper || s.out || s.ghost) return;
@@ -353,6 +466,30 @@ export function fightRound(fight, picks) {
   return { ok: true, fight, events: ev, fx, foeActed: acted };
 }
 
+// 回合結束，怪物的個性動壹下：越來越多、會拿東西、會記帳
+function fiTraitTick(fight, ev, lose) {
+  const t = fightTraitOf(fight);
+  if (!t || fight.over) return;
+  const every = Math.max(1, t.every || 1), due = fight.round % every === 0;
+  if (t.kind === "grow" && due) { const n = Math.min(t.n || 0, fight.hpMax - fight.hp); if (n > 0) { fight.hp += n; ev.push({ t: "trait", kind: "grow", n }); } }
+  if (t.kind === "steal" && due) {
+    const can = fightActors(fight).flatMap(s => Object.keys(FIGHT_MOVES).filter(m => fightHasMove(s, m) && fiUsed(s, m) < fightMoveUses(s, m)).map(m => ({ s, m })));
+    if (can.length) { const c = can[Math.min(can.length - 1, Math.floor(RNG() * can.length))]; c.s.used[c.m] = 99; ev.push({ t: "trait", kind: "steal", id: c.s.id, move: c.m }); }
+  }
+  if (t.kind === "mark") {
+    if (fight.mark) {
+      fight.mark.left--;
+      if (fight.mark.left <= 0) {
+        const s = fightSeatOf(fight, fight.mark.id);
+        if (s && fightCanAct(s)) ev.push({ t: "trait", kind: "markHit", id: s.id, san: lose(s, rollExpr(t.san || "2D3").total) });
+        fight.mark = null;
+      }
+    } else {
+      const pool = fightActors(fight);
+      if (pool.length) { const s = pool[Math.min(pool.length - 1, Math.floor(RNG() * pool.length))]; fight.mark = { id: s.id, left: every }; ev.push({ t: "trait", kind: "mark", id: s.id, left: every }); }
+    }
+  }
+}
 // 打完：倒下的佩佩，每一隻有 NUM.fight.injure 的機率真的受傷（要休息幾天由接的那一步用 injureDaysOf 算）
 export function fightAfter(fight) {
   const out = {};

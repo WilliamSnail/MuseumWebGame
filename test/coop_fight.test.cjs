@@ -153,7 +153,7 @@ T("膽量一趟一份：兩個人各有 courage，被扣的先扣它；用掉的
   ids.forEach(id => G.coopAct(run, Ps, id, "fight", { act: "push" }, ++clock));
   const full = G.maxExpr(scare.san);
   assert.strictEqual(G.coopMember(run, "a").brave, Math.max(0, C - full));
-  assert.strictEqual(san0 - Ps.a.sanity, Math.max(0, full - C), "膽量擋掉的不扣理智");
+  assert.strictEqual(san0 - Ps.a.sanity, Math.max(0, full - C) - G.NUM.fight.color.green, "膽量擋掉的不扣理智（帶了綠色的佩佩：回合結束回壹點）");
   assert.ok(run.fresh.a.some(e => e.type === "brave"));
   // 再開一場：膽量照剩下的
   const left = G.coopMember(run, "a").brave;

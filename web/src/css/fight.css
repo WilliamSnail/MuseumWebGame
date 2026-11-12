@@ -40,6 +40,20 @@
 body.reduce-motion .fg-fx:not(.k-stamp) { display: none; }
 body.reduce-motion .fg-sprite.lunge { animation: none; }
 body.reduce-motion .fg-fx.k-stamp { animation: none; background-position: 100% 0; }
+/* 合作的新行動圖示（3-6）、角色徽章（3-7） */
+.fg-ico.tm { background-image: url(/cellar2/act-team.webp); background-size: 500% 100%; }
+.fg-roles { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; margin-top: 3px; font-size: .6875rem; }
+.fg-roles > small { opacity: .75; }
+.fg-role { display: inline-flex; align-items: center; gap: 2px; padding: 0 5px 0 1px; border-radius: 999px; background: rgba(214, 178, 94, .18); }
+.fg-role i { width: 18px; height: 18px; background: url(/cellar2/role.webp) no-repeat 0 0 / 500% 100%; }
+.fg-mark { display: block; margin-top: 2px; padding: 1px 6px; border-radius: 6px; background: #7A1F2B; color: #FBEFD9; font-size: .6875rem; }
+.fg-pepe.beat small { color: #FFD27A; font-weight: 700; }
+.fg-trait { margin: 0; max-width: 100%; text-align: center; font-size: .8125rem; line-height: 1.35; }
+.fg-trait b { color: #FFD27A; }
+.fg-trait small { opacity: .85; }
+.fg-team .fg-move { border-color: #3F8F4A; }
+@media (max-width: 760px) { .fg-trait small { display: block; } .fg-roles > small { display: none; } }
+@media (max-height: 500px) and (orientation: landscape) { .fg-trait small, .fg-roles { display: none; } }
 /* 行動按鈕的圖示：一條六格 */
 .fg-ico { display: inline-block; width: 1.6em; height: 1.6em; margin-right: 6px; vertical-align: -0.45em; border-radius: 6px; background: url(/cellar2/act.webp) no-repeat 0 0 / 600% 100%; }
 /* B1 的舞台背景（2-1） */
