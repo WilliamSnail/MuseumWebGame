@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "phone-menu-fix", v: 1, cat: "館方公告", tags: ["維護"], importance: "low",
+    title: "手機直拿時「選單」按不出來的問題", publish: "2026-11-12", expire: "2027-12-31",
+    sections: [
+      ["修了什麼", [
+        "有些手機瀏覽器（例如 Edge）直拿的時候，按底下的「選單」看起來沒反應。",
+        "現在選單會固定貼在底下那排上面。如果還是按不出來，跟館方說是哪壹支手機、哪個瀏覽器。",
+      ]],
+    ],
+  },
+  {
     id: "fight-replay", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "打怪物的結算，會壹件壹件演出來了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [
