@@ -28,6 +28,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "lobby-commission-cut", v: 1, cat: "館方公告", tags: ["修正"], importance: "low",
+    title: "大廳導覽圖：委託櫃台的金框對齊牆了", publish: "2026-11-13", expire: "2027-06-30",
+    sections: [
+      ["這次改了什麼", [
+        "委託櫃台右上角的牆是斜的，滑鼠移上去的金框以前是方的、會跑到走廊上。現在照著牆的斜邊畫，點走廊那一角也不會再走進委託櫃台。",
+      ]],
+    ],
+  },
+  {
     id: "fight-ui-parts", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "打怪物的畫面換上新的木框和銅按鈕", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
