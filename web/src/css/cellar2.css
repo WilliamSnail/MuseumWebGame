@@ -101,3 +101,26 @@
 .ui2 .cellar-on .floor:not(.locked) .floor-n { display: block; margin-top: 6px; color: #F3DFA6; }
 .ui2 .cellar-on .floor.locked .floor-door { width: min(100%, 110px); }
 @media (max-height: 500px) and (orientation: landscape) { .ui2 .cellar-on .floor.locked .floor-door { width: min(100%, 52px); } }
+
+/* ---------- 石板鐵框改成零件組的（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材生成.md） ----------
+   零件在 web/public/cellar/kit/（原圖 assets/panel-kit/）：石板鋪滿、鐵條重複接、邊上的鉚釘平均排開、四個角疊在最上面。
+   都不拉伸，所以寬扁的、方的都不變形。--kb 鐵條厚、--kc 角的寬（零件是兩倍大，畫面上縮壹半）。 */
+.ui2 .cellar-on .cx-hero, .ui2 .cellar-on .trial-box { --kb: 22px; --kc: 100px;
+  border: 0; border-image: none; border-radius: 0; padding: calc(var(--kb) + 12px) calc(var(--kb) + 16px);
+  background-color: #262A2E;
+  background-image: url(/cellar/kit/corner-tl.webp), url(/cellar/kit/corner-tr.webp), url(/cellar/kit/corner-bl.webp), url(/cellar/kit/corner-br.webp),
+    url(/cellar/kit/rivet-h.webp), url(/cellar/kit/rivet-h.webp), url(/cellar/kit/rivet-v.webp), url(/cellar/kit/rivet-v.webp),
+    url(/cellar/kit/bar-h.webp), url(/cellar/kit/bar-h.webp), url(/cellar/kit/bar-v.webp), url(/cellar/kit/bar-v.webp), url(/cellar/kit/stone.webp);
+  background-position: left top, right top, left bottom, right bottom,
+    center top, center bottom, left center, right center,
+    left top, left bottom, left top, right top, left top;
+  background-size: var(--kc) auto, var(--kc) auto, var(--kc) auto, var(--kc) auto,
+    calc(var(--kb) * 5) var(--kb), calc(var(--kb) * 5) var(--kb), var(--kb) calc(var(--kb) * 5), var(--kb) calc(var(--kb) * 5),
+    auto var(--kb), auto var(--kb), var(--kb) auto, var(--kb) auto, 256px 256px;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat,
+    space no-repeat, space no-repeat, no-repeat space, no-repeat space,
+    repeat-x, repeat-x, repeat-y, repeat-y, repeat;
+  box-shadow: 0 10px 24px rgba(0,0,0,.55); }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .ui2 .cellar-on .cx-hero, .ui2 .cellar-on .trial-box { --kb: 14px; --kc: 64px; }
+}
