@@ -154,7 +154,8 @@ export function eventEffect(ev) {
 // 地下撿籌碼加碼的壹句話（「約 100 萬」：取 min、max 的中間，換成萬）
 export function cellarChipsText() {
   const c = NUM.events.cellarChips || {}, mid = Math.round(((c.min || 0) + (c.max || 0)) / 2 / 10000);
-  return `走完地下的房間撿到籌碼時，每次多約 ${mid} 萬（單人、多人都算）`;
+  const pc = Number.isFinite(c.chance) ? `，撿到的機會提高到 ${Math.round(c.chance * 100)}%` : "";
+  return `走完地下的房間撿到籌碼時，每次多約 ${mid} 萬${pc}（單人、多人都算）`;
 }
 // 開跑通知的字
 export const eventNoticeText = ev => `限時活動開跑：${ev.title}。${eventEffect(ev)}。`;
