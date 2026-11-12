@@ -264,6 +264,7 @@ export function buildNav() {
     ADDONS.adminMenu ? ADDONS.adminMenu(item) : null, // 管理員：只有管理員看得到（ui_admin.js，決定 0033）
     h("p", { class: "md-h" }, "設定"),
     h("div", { class: "md-group" }, roomItem(["settings", ROOM_NAMES.settings])));
+  document.querySelectorAll("body > #navDrawer").forEach(e => e.remove()); // 手機上搬到外層的舊選單（toggleMenu）：重畫時拿掉，不然有兩個 #navDrawer
   nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, sound, menu), drawer);
   if (!UI.menuWired) {
     UI.menuWired = true;
@@ -276,16 +277,19 @@ export function buildNav() {
 }
 export function toggleMenu(force) {
   const d = $("#navDrawer"), b = $(".menu-btn");
-  if (!d || !b) return;
+  if (!d) return; // 右上角的選單按鈕（.menu-btn）手機直拿時藏起來了：沒有它也要打得開（底下那排的「選單」）
   const open = force != null ? force : d.hidden;
   if (open === !d.hidden) return;
+  // 手機直拿：選單搬到 <body> 最外層。放在標題列（#nav）裡面時，標題列的效果（模糊背景、sticky）會讓有些瀏覽器把
+  //   position: fixed 算成相對標題列，選單畫到螢幕外面，看起來就像按不出來（翊文 11-12：手機 Edge 直拿按不出選單）
+  if (open && phoneTabs() && d.parentElement !== document.body) document.body.append(d);
   const hadFocus = d.contains(document.activeElement);
   d.hidden = !open;
-  b.setAttribute("aria-expanded", String(open));
-  b.classList.toggle("on", open);
+  if (!open && d.parentElement === document.body) { const n = $("#nav"); if (n) n.append(d); } // 關起來放回原位（轉成橫拿時照原本的排法）
+  if (b) { b.setAttribute("aria-expanded", String(open)); b.classList.toggle("on", open); }
   const tm = $(".tb-menu"); if (tm) { tm.classList.toggle("on", open); tm.setAttribute("aria-expanded", String(open)); }
   if (open) { updateBoardBadges(); const f = d.querySelector(".md-item"); if (f) f.focus({ preventScroll: true }); }
-  else if (hadFocus) b.focus({ preventScroll: true });
+  else if (hadFocus && b) b.focus({ preventScroll: true });
 }
 export function navTo(room) {
   if (!P) { go("title"); return; }
