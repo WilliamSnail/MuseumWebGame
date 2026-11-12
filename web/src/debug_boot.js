@@ -42,7 +42,8 @@ function fightPreview(arg) {
     const body = run.phase === "fight" && v.fight
       ? [fightStage(v, pick), fightCard(v, me, { mine: pick, setMine: p => { pick = p; draw(); }, act: d => { coopAct(run, Ps, "me", "fight", d, ++clock); setTimeout(() => { if (run.phase === "fight" && ids.includes("mate")) coopAct(run, Ps, "mate", "fight", { act: "push" }, ++clock); pick = null; draw(); }, 1500); } })]
       : [h("p", { class: "nb-empty" }, `打完了（${run.phase}）：${JSON.stringify(run.fightLast || run.last && run.last.fled || "")}`)];
-    m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body)));
+    m.surface.replaceChildren(h("div", { class: "cx-run" }, h("div", { class: "cx-main" }, ...body),
+      h("aside", { class: "cx-side" }, h("p", { class: "pt-hint" }, "（預覽：真的遊戲這壹欄是隊員、證據和聊天）"))));
   };
   draw();
 }

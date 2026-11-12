@@ -116,8 +116,8 @@ export const NUM = {
   // 介面的版本（決定 0066，翊文 11-11：「把這個當大版本更新，之後有問題可以回滾」）。
   // newLobby：新的大廳（導覽圖底圖、右欄、圓形圖示）。有問題改成 false 就回到舊的大廳，舊的程式都還在
   // newCellar：地下室改版（決定 0067、0068）。true ＝合作地下每一層的房間探索完之後要打守門，打贏才算走完。
-  //   畫面還沒做好之前是 false（正式版照舊）；開發時在模擬器用環境變數 NEW_CELLAR=1 打開（functions/coop.js）
-  ui: { newLobby: true, newCellar: false },
+  //   11-12 翊文說直接打開，不用先自己測（決定 0069）。有問題改回 false 就回到舊的（房間走完直接算這一層走完），舊的程式都還在
+  ui: { newLobby: true, newCellar: true },
   // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim_fight.cjs
   //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
   //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
