@@ -110,3 +110,6 @@ body.reduce-motion .rt-line.open, body.reduce-motion .rt-node.next .rt-medal, bo
 .rt-map .rt-node:hover .rt-medal, .rt-map .rt-node:focus-visible .rt-medal { box-shadow: 0 0 0 3px #FBEFD9, 0 0 14px 4px rgba(214, 178, 94, .7); }
 .rt-map .rt-pawn { width: 40px; height: 64px; bottom: 55%; }
 @media (max-width: 760px) { .rt-map .rt-pawn { width: 30px; height: 48px; } }
+/* 背包（規劃第五節）：選路的時候一直看得到 */
+.rt-bag { margin: 4px 0 6px; padding: 6px 10px; border-radius: 8px; background: rgba(122, 90, 42, .12); color: #3A2A1A; }
+.rt-bag small { color: #5A4630; }
