@@ -321,12 +321,13 @@ export function dcTodayText(day, events, info) {
   return lines.join("\n");
 }
 export const DC_HIDE_WORDS = /理智|怪癖|靈感/;
-// /pepe-更新：最近幾則玩家看得到的館方公告（已發布、還沒下架；跟遊戲的公佈欄同一個判斷 noticeLive）。新的在前（同一天的，寫在後面的比較新）
+// /pepe-更新：最近幾則玩家看得到的館方公告（已發布、還沒下架；跟遊戲的公佈欄同一個判斷 noticeLive）。新的在前。
+// 同一天的：寫在 NOTICES 前面的比較新（AGENTS.md：新的公告加在最前面）。11-12 修：以前寫反了，同一天只列出最舊的那幾則
 export function dcNewsList(today, limit) {
   const k = Math.min(NUM.discord.newsMax, Math.max(1, Math.floor(+limit) || NUM.discord.newsDefault));
   // 標題有理智、怪癖、靈感的不列（頻道裡不放這三樣的字；那幾則在遊戲的公佈欄看得到）
   return NOTICES.map((n, i) => ({ n, i })).filter(x => noticeLive(x.n, today) && !DC_HIDE_WORDS.test(String(x.n.title)))
-    .sort((a, b) => String(b.n.publish || "").localeCompare(String(a.n.publish || "")) || b.i - a.i).slice(0, k).map(x => x.n);
+    .sort((a, b) => String(b.n.publish || "").localeCompare(String(a.n.publish || "")) || a.i - b.i).slice(0, k).map(x => x.n);
 }
 export function dcNewsText(today, limit) {
   const list = dcNewsList(today, limit);
