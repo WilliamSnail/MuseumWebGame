@@ -12,14 +12,16 @@ const OUT = path.join(ROOT, "docs", argOf("--out") || "地下室素材Prompt.htm
 const STYLE = "Match the art style of the attached reference image.";
 
 const lines = fs.readFileSync(SRC, "utf8").split(/\r?\n/);
-// 共用的結尾：第〇節裡第一個程式框
-let ending = "";
+// 共用的結尾：第〇節裡第一個程式框；第二個是介面零件（3-8 以後）多接的零件結尾（11-13）
+let ending = "", partsEnding = "";
 {
   const a = lines.findIndex(l => l.startsWith("## 〇"));
-  const s = lines.findIndex((l, i) => i > a && l.startsWith("```"));
-  const e = lines.findIndex((l, i) => i > s && l.startsWith("```"));
-  ending = lines.slice(s + 1, e).join(" ").trim();
+  const b = lines.findIndex((l, i) => i > a && l.startsWith("## ") && !l.startsWith("## 〇"));
+  const blocks = [];
+  for (let i = a; i < b; i++) if (lines[i].startsWith("```")) { const e = lines.findIndex((l, j) => j > i && l.startsWith("```")); blocks.push(lines.slice(i + 1, e).join(" ").trim()); i = e; }
+  [ending, partsEnding = ""] = blocks;
 }
+const isPart = key => /^3-(8|9|1\d)$/.test(key.split(" ")[0]);
 
 // 第一～三節的每個 ### 小節：程式框 + 後面的表格
 const items = [];
@@ -50,7 +52,7 @@ const out = [];
 for (const s of items) {
   const p = s.prompts[0];
   if (!p) continue;
-  const finish = t => [STYLE, t.replace("【結尾】", ending)].join(" ").replace(/\s+/g, " ").trim();
+  const finish = t => [STYLE, t.replace("【結尾】", isPart(s.id) && partsEnding ? `${ending} ${partsEnding}` : ending)].join(" ").replace(/\s+/g, " ").trim();
   const hole = /\{[A-Z]+\}/.exec(p);
   if (hole && s.rows.length) {
     s.rows.forEach(r => out.push({ key: `${s.id} ${r.label}`, sec: s, text: finish(p.replace(hole[0], r.value)) }));
@@ -74,7 +76,7 @@ const REFS = {
   stone: { file: "assets/panel-kit/stone-raw.webp", name: "地下室石板框" },
 };
 // 3-8 以後是打怪介面的零件：附翊文生的整張介面（風格、配色照它）
-const refOf = o => (/^3-(8|9|1\d)$/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
+const refOf = o => (isPart(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
 const dataUrl = f => "data:image/webp;base64," + fs.readFileSync(path.join(ROOT, f)).toString("base64");
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
