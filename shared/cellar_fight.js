@@ -13,7 +13,9 @@
 //    const f = fightStart("f1a", seats, { pressure: 全隊理智壓力的級數, rest: 這一層是不是第一次走 })
 //    fightOptions(f, id)                 這個人現在可以選什麼、按了大概會怎樣（給畫面寫在按鈕上）
 //    fightRound(f, { id: { act, for } }) 一回合；沒選、選了不能選的都當「擋」。回傳 { ok, fight, events, fx }
-//    f.over：null（還在打）、"win"、"lose"（都倒了）、"retreat"（有人撤、剩下的都倒了或都撤了）、"away"（拖太久，怪物走了）
+//    f.over：null（還在打）、"win"、"lose"（都倒了）、"flee"（逃跑成功，離開這一場）、"retreat"（有人撤回地面、剩下的都倒了或都撤了）、"away"（拖太久，怪物走了）
+//    fx 的 san ＝真的要扣的理智；brave ＝被膽量擋掉的（壯膽，決定 0068）
+//    picks 可以帶 tap（0／1／2）：這回合 fight.tap 是 true 才算，按得好「推」多一點點
 //    fightAfter(f)                       打完：倒下的佩佩哪幾隻真的受傷
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
@@ -33,7 +35,7 @@ export const FIGHT_MOVES = {
   squat: { cat: "姿勢", v: "斯拉夫蹲" },  // 這回合自己的佩佩不會倒
   cheer: { cat: "姿勢", v: "比讚" },      // 下一回合每個人的推 +cheer
 };
-export const FIGHT_ACTS = ["push", "see", "calm", "guard", "retreat", "point"].concat(Object.keys(FIGHT_MOVES));
+export const FIGHT_ACTS = ["push", "see", "calm", "guard", "flee", "retreat", "point"].concat(Object.keys(FIGHT_MOVES));
 
 export const fightFoe = id => CELLAR_FOES.find(f => f.id === id) || null;
 export const fightFoesOf = (floor, boss = false) => CELLAR_FOES.filter(f => f.floor === floor && !!f.boss === !!boss);
@@ -85,7 +87,7 @@ export function fightSeat(P, id, name, keys) {
   const pepes = (keys || []).map(k => { const e = P && P.pepes && P.pepes[k], pick = fromKey(k); return e && pick ? { key: k, pick, perfect: !!e.perfect, power: 0, down: false } : null; }).filter(Boolean);
   const skills = {};
   ["偵查", "神秘學", "說服"].forEach(s => { skills[s] = skillOf(P, s); });
-  return { id, name: name || "", helper: false, san: P ? P.sanity : 0, skills, pepes, used: {}, out: false, ghost: false };
+  return { id, name: name || "", helper: false, san: P ? P.sanity : 0, brave: null, skills, pepes, used: {}, out: false, ghost: false };
 }
 // 館方助手：只會推，不扣理智
 export function fightHelperSeat(items, name = "館方助手") {
@@ -100,11 +102,20 @@ export const fightActors = fight => fight.seats.filter(fightCanAct);
 // 這個人有沒有這個招式（還站著的佩佩有那頂帽子、那個姿勢）
 export const fightHasMove = (s, m) => !!FIGHT_MOVES[m] && fightUp(s).some(p => p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v);
 
-// 怪物的壓力照隊伍放大
-export function fightHp(base, pepes, players, lv = 0) {
+// 怪物的等級 1～3（守門不分等級，當 1）
+export const fightRankOf = n => clampN(Math.floor(+n || 1), 1, NUM.fight.rankHp.length);
+// 怪物的壓力照隊伍放大，再乘等級
+export function fightHp(base, pepes, players, lv = 0, rank = 1) {
   const F = NUM.fight;
-  return Math.max(1, Math.round(base * pepes / F.baseTeam * (1 + F.perPlayer * Math.max(0, players - 1))) + F.pressureHp * lv);
+  return Math.max(1, Math.round(base * F.rankHp[fightRankOf(rank) - 1] * pepes / F.baseTeam * (1 + F.perPlayer * Math.max(0, players - 1))) + F.pressureHp * lv);
 }
+// 壯膽（翊文 11-12：「每多合作一個玩家就高五點的理智」）：每多一個真人隊友，每個人多 courage 點膽量。
+// 膽量先替理智擋，這一趟用完就沒了、不寫進存檔（不然一直開隊伍就能刷理智；界線：理智歸零要算容易出現）
+export const fightCourage = players => NUM.fight.courage * Math.max(0, Math.floor(players) - 1);
+// 合作多給的靈感：每多一個真人隊友，打贏多 coopInsp；比較強的怪物多 rankInsp
+export const fightWinInsp = (players, rank = 1) => NUM.fight.coopInsp * Math.max(0, Math.floor(players) - 1) + NUM.fight.rankInsp[fightRankOf(rank) - 1];
+// 逃跑成功的機率（百分比）
+export const fightFleeChance = fight => (fight.boss ? NUM.fight.fleeBoss : NUM.fight.flee);
 function fiSize(fight) { return { pepes: fight.seats.reduce((n, s) => n + s.pepes.length, 0), players: fight.seats.filter(s => !s.helper).length }; }
 
 // 抽下一招、點一個人。hit 可以點到館方助手，理智類的只點真人
@@ -130,11 +141,14 @@ export function fightStart(foeId, seats, o = {}) {
   const foe = custom || fightFoe(foeId);
   if (!foe || !Array.isArray(seats) || !seats.some(s => !s.helper && s.pepes.length)) return null;
   const lv = clampN(Math.floor(+o.pressure || 0), 0, 3);
-  const fight = { foe: foe.id, boss: !!foe.boss, phase: 1, phases: foe.hp2 ? 2 : 1, hp: 0, hpMax: 0, round: 1, weak: false, cheer: 0, rest: !!o.rest, lv, seats, intent: null, over: null, last: null };
+  const rank = foe.boss ? 1 : fightRankOf(o.rank);
+  const fight = { foe: foe.id, boss: !!foe.boss, rank, tap: false, phase: 1, phases: foe.hp2 ? 2 : 1, hp: 0, hpMax: 0, round: 1, weak: false, cheer: 0, rest: !!o.rest, lv, seats, intent: null, over: null, last: null };
   if (custom) fight.custom = custom;
   seats.forEach(s => { s.used = {}; s.out = false; s.ghost = !s.pepes.length; s.pepes.forEach(p => { p.down = false; p.power = memberPower(p, foe); }); });
   const z = fiSize(fight);
-  fight.hpMax = fight.hp = fightHp(foe.hp, z.pepes, z.players, lv);
+  // 膽量：這一趟帶進來的（接合作流程的那一步會傳）照用；沒有就照人數給
+  seats.forEach(s => { if (!s.helper) s.brave = typeof s.brave === "number" && Number.isFinite(s.brave) ? Math.max(0, s.brave) : fightCourage(z.players); });
+  fight.hpMax = fight.hp = fightHp(foe.hp, z.pepes, z.players, lv, rank);
   fight.intent = fiIntent(fight);
   return fight;
 }
@@ -147,7 +161,8 @@ export function fightPushRange(fight, s, mode = "", bonus = 0) {
   const F = NUM.fight, top = maxExpr(F.die);
   const base = fightPower(s) * (mode === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus;
   const mult = fight.weak && !s.helper ? F.weakMult : 1;
-  return [Math.round((base + (mode === "crown" ? top : 1)) * mult), Math.round((base + top) * mult)];
+  const tap = fight.tap && !s.helper ? F.tap.great : 0; // 這回合可以按時機：最多再多這麼多
+  return [Math.round((base + (mode === "crown" ? top : 1)) * mult), Math.round((base + top + tap) * mult)];
 }
 
 // 這個人現在可以選什麼。每一項：{ act, ok, why（不能選的原因）, lo、hi（推會扣多少）, chance（成功率）}
@@ -158,7 +173,7 @@ export function fightOptions(fight, id) {
   if (s.ghost) return [{ act: "point", ok: !s.used.point && !fight.weak, why: s.used.point ? "這場指過了" : fight.weak ? "弱點已經找到了" : "" }];
   const out = [];
   const pr = fightPushRange(fight, s);
-  out.push({ act: "push", ok: true, lo: pr[0], hi: pr[1] });
+  out.push({ act: "push", ok: true, lo: pr[0], hi: pr[1], tap: !!fight.tap });
   out.push({ act: "see", ok: !fight.weak, why: fight.weak ? "弱點已經找到了" : "", chance: fightSeeChance(s) });
   out.push({ act: "calm", ok: true, chance: fightCalmChance(s) });
   out.push({ act: "guard", ok: true });
@@ -169,7 +184,8 @@ export function fightOptions(fight, id) {
     if (m === "crown" || m === "tentacle") { const r = fightPushRange(fight, s, m); o.lo = r[0]; o.hi = r[1]; }
     out.push(o);
   });
-  out.push({ act: "retreat", ok: true });
+  out.push({ act: "flee", ok: true, chance: fightFleeChance(fight) }); // 逃跑：離開這一場，要一半以上的人一起選
+  out.push({ act: "retreat", ok: true });                              // 撤退：自己回地面
   return out;
 }
 
@@ -178,7 +194,9 @@ export function fightOptions(fight, id) {
 export function fightRound(fight, picks) {
   if (!fight || fight.over) return { ok: false, reason: "這壹場已經結束了" };
   const F = NUM.fight, ev = [], fx = {};
-  const fxOf = id => fx[id] || (fx[id] = { san: 0, gain: 0, downs: [], ticks: [] });
+  const fxOf = id => fx[id] || (fx[id] = { san: 0, brave: 0, gain: 0, downs: [], ticks: [] });
+  // 扣理智：膽量先擋，擋不完的才真的扣。回傳真的扣了多少
+  const lose = (s, n) => { const a = Math.min(Math.max(0, s.brave || 0), n); s.brave = (s.brave || 0) - a; const x = fxOf(s.id); x.brave += a; x.san += n - a; s.san -= n - a; return n - a; };
   const foe = fightFoeOf(fight);
   const acts = {};
   // 每個人選的：不能選的、沒選的都當「擋」
@@ -187,11 +205,19 @@ export function fightRound(fight, picks) {
     if (s.out) return;
     const p = (picks && picks[s.id]) || null, opts = fightOptions(fight, s.id);
     const hit = p && opts.find(o => o.act === p.act && o.ok);
-    if (hit) acts[s.id] = { act: p.act, for: typeof p.for === "string" && fightSeatOf(fight, p.for) ? p.for : null };
+    if (hit) acts[s.id] = { act: p.act, for: typeof p.for === "string" && fightSeatOf(fight, p.for) ? p.for : null, tap: fight.tap ? (p.tap === 2 ? 2 : p.tap === 1 ? 1 : 0) : 0 };
     else if (!s.ghost) { acts[s.id] = { act: "guard", for: null, auto: true }; ev.push({ t: "auto", id: s.id }); }
   });
   const doing = act => fight.seats.filter(s => acts[s.id] && acts[s.id].act === act);
   const actingBefore = fightActors(fight).length;
+  // 逃跑：一半以上的人選了才擲；成功就離開這一場（沒有獎勵），這回合怪物打不到
+  const fleers = doing("flee");
+  if (fleers.length) {
+    const enough = fleers.length * 2 >= actingBefore, target = fightFleeChance(fight);
+    const roll = enough ? rollD100().total : null, ok = enough && roll <= target;
+    ev.push({ t: "flee", ids: fleers.map(s => s.id), enough, roll, target, ok });
+    if (ok) { fight.over = "flee"; fight.intent = null; fight.cheer = 0; fight.tap = false; ev.push({ t: "over", over: "flee" }); return { ok: true, fight, events: ev, fx, foeActed: false }; }
+  }
   // 撤：先走，怪物這回合打不到
   doing("retreat").forEach(s => { s.out = true; ev.push({ t: "retreat", id: s.id }); });
   // 招式
@@ -224,13 +250,14 @@ export function fightRound(fight, picks) {
     if (!fightUp(s).length) return;
     if (a !== "push") s.used[a] = true;
     const die = a === "crown" ? maxExpr(F.die) : rollExpr(F.die).total;
-    const base = fightPower(s) * (a === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus;
+    const tap = s.helper ? 0 : [0, F.tap.good, F.tap.great][acts[s.id].tap || 0];
+    const base = fightPower(s) * (a === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + tap;
     const weak = fight.weak && !s.helper;
     const n = Math.max(0, Math.round((base + die) * (weak ? F.weakMult : 1)));
     fight.hp -= n;
     if (!s.helper) fight.last = s.id;
-    const e = { t: "push", id: s.id, mode: a, die, n, weak };
-    if (a === "tentacle") { const loss = rollExpr(F.tentacleSan).total; fxOf(s.id).san += loss; s.san -= loss; e.san = loss; }
+    const e = { t: "push", id: s.id, mode: a, die, n, weak, tap };
+    if (a === "tentacle") { const loss = rollExpr(F.tentacleSan).total; e.san = lose(s, loss); e.brave = loss - e.san; }
     ev.push(e);
   }));
   // 壓到零：過了，或進第二階段（這回合怪物不出招）
@@ -239,7 +266,7 @@ export function fightRound(fight, picks) {
     if (fight.phase < fight.phases) {
       const z = fiSize(fight);
       fight.phase = 2; fight.weak = false;
-      fight.hpMax = fight.hp = fightHp(foe.hp2, z.pepes, z.players, fight.lv);
+      fight.hpMax = fight.hp = fightHp(foe.hp2, z.pepes, z.players, fight.lv, fight.rank);
       ev.push({ t: "phase", phase: 2, hp: fight.hp });
     } else { fight.hp = 0; fight.over = "win"; ev.push({ t: "win", last: fight.last }); }
   } else {
@@ -250,11 +277,10 @@ export function fightRound(fight, picks) {
     acted = true;
     const half = n => Math.ceil(n / 2);
     const sanHit = (s, n, guarded) => {
-      let loss = n + (fight.lv >= F.pressureSan ? 1 : 0);
+      let loss = n + (fight.lv >= F.pressureSan ? 1 : 0) + F.rankSan[fightRankOf(fight.rank) - 1];
       if (guarded) loss = half(loss);
       if (soft) loss = half(loss);
-      fxOf(s.id).san += loss; s.san -= loss;
-      return loss;
+      return lose(s, loss);
     };
     if (!mv || cancel) ev.push({ t: "foe", move: it.move, kind: it.kind, cancel: true });
     else if (mv.kind === "grow") {
@@ -302,8 +328,12 @@ export function fightRound(fight, picks) {
     else if (fight.round >= F.maxRounds) fight.over = "away";
     if (fight.over) ev.push({ t: "over", over: fight.over });
   }
-  if (!fight.over) { fight.round++; fight.intent = fiIntent(fight); }
-  else fight.intent = null;
+  if (!fight.over) {
+    fight.round++; fight.intent = fiIntent(fight);
+    // 下一回合可不可以按時機（「有時候 B」）：這回合剛找到弱點一定可以，不然照機率
+    const found = ev.some(e => (e.t === "see" && e.ok) || e.t === "point");
+    fight.tap = RNG() < F.tap.chance || found;
+  } else { fight.intent = null; fight.tap = false; }
   return { ok: true, fight, events: ev, fx, foeActed: acted };
 }
 

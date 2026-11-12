@@ -32,10 +32,14 @@ export function cmapMake(floor, rnd = RNG) {
   const M = NUM.cellarMap, foes = fightFoesOf(floor), boss = fightFoesOf(floor, true)[0] || null;
   const rooms = cmShuffle(f.rooms.map(r => r.id), rnd);
   const nRows = Math.max(M.rows, rooms.length + 1); // 房間比排數多的話多加幾排，每一間都放得進去
-  const side = () => (foes.length && rnd() < 0.6 ? { kind: "foe", foe: cmPick(foes, rnd).id } : { kind: "chest" });
+  // 遭遇的怪物有等級 1～3，越下面越容易遇到強的；地圖上看得到等級（cmapPeek），可以決定要不要接戰
+  const rankAt = r => 1 + (rnd() < M.rank2[0] + M.rank2[1] * r ? 1 : 0) + (rnd() < M.rank3[0] + M.rank3[1] * r ? 1 : 0);
+  let rowNow = 0;
+  const side = () => (foes.length && rnd() < 0.6 ? { kind: "foe", foe: cmPick(foes, rnd).id, rank: rankAt(rowNow) } : { kind: "chest" });
   const rows = [];
   for (let r = 0; r < nRows; r++) {
     const last = r === nRows - 1;
+    rowNow = r;
     const width = rnd() < M.wide ? 3 : 2;
     let row;
     if (last) row = [{ kind: "rest" }].concat(Array.from({ length: width - 1 }, side));
@@ -75,6 +79,22 @@ export const cmapOfDay = (floor, day) => cmapMake(floor, mulberry32(hashStr(`cma
 
 export const cmapNodes = map => map.rows.flat().concat([map.gate]);
 export const cmapNode = (map, id) => cmapNodes(map).find(n => n.id === id) || null;
+// 走到之前看得到什麼：種類；遭遇多看得到等級和心情、顏色（決定帶誰、要不要接戰）。
+// 怪物是誰不說（保持神祕）；known ＝這個人已經登記過的怪物 id，登記過的才看得到是哪一隻。守門只說是守門
+export function cmapPeek(map, id, known = []) {
+  const n = map && cmapNode(map, id);
+  if (!n) return null;
+  const out = { id: n.id, kind: n.kind };
+  if (n.kind === "explore") out.room = n.room;
+  if (n.kind === "foe") {
+    const foe = fightFoesOf(map.floor).find(f => f.id === n.foe);
+    out.rank = n.rank || 1;
+    if (foe) { out.mood = foe.mood || null; out.color = foe.color || null; }
+    if ((known || []).includes(n.foe)) out.foe = n.foe;
+  }
+  if (n.kind === "gate" && (known || []).includes(n.foe)) out.foe = n.foe;
+  return out;
+}
 // 現在站在 at（還沒出發是 null），下一步可以走哪幾個點
 export function cmapNext(map, at) {
   if (!map) return [];
@@ -96,6 +116,7 @@ export function cmapCheck(map) {
   all.forEach(n => {
     if (!CMAP_KINDS.includes(n.kind)) bad.push(`${n.id} 的種類不認得`);
     if (n.kind === "explore" && !f.rooms.some(r => r.id === n.room)) bad.push(`${n.id} 的房間不在這壹層`);
+    if (n.kind === "foe" && !(Number.isInteger(n.rank) && n.rank >= 1 && n.rank <= 3)) bad.push(`${n.id} 的等級不對`);
     (map.links[n.id] || []).forEach(t => { if (!ids.has(t)) bad.push(`${n.id} 連到不存在的 ${t}`); });
     if (n.kind !== "gate" && !(map.links[n.id] || []).length) bad.push(`${n.id} 沒有路往下`);
   });
