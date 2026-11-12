@@ -131,7 +131,9 @@ export const NUM = {
   //   flee、fleeBoss：逃跑成功的機率（百分比）；要有壹半以上的人選逃跑才會擲
   //   courage：壯膽，每多壹個真人隊友，每個人多這麼多「膽量」，先替理智擋（這壹趟用完就沒了，不會留在存檔）；coopInsp：每多壹個真人隊友，打贏多給多少靈感
   //   tap：有些回合可以按時機（「有時候 B」）：chance ＝下壹回合可以按的機率，找到弱點的下壹回合壹定可以；good、great ＝按得好、按得很準，「推」多加多少。只加不扣，不按也沒事
-  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 1, rankHp: [1, 1.35, 1.7], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 } },
+  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 1, rankHp: [1, 1.35, 1.7], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 },
+    // 結算演出（docs/打怪演出規劃.md）：每件事演 replayStep 毫秒，最後小結 replayTail，最多 replayMax。演完才開始倒數：伺服器把這段時間加進下一回合的期限
+    replayStep: 750, replayTail: 1600, replayMax: 9000 },
   // 地下室的小地圖（shared/cellar_map.js）：rows 排；每排壹定有壹間探索房（翊文 11-12：「房間探索還是要保留喔，是個重點」），壹趟可以把這層的房間全部走完
   //   wide：某壹排有 3 個點的機率（不然 2 個）；最後壹排是休息＋別的；最底是守門
   //   rank2、rank3：遭遇的怪物是 2 級、3 級的機率 ＝ [第壹排的機率, 每往下壹排多多少]

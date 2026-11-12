@@ -20,7 +20,7 @@
 import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopSaveReport } from "./coop_fun.js";
 import { eventExtraTurns, eventRunFix } from "./events.js";
 import { trialById } from "./shop.js";
-import { coopFightRound } from "./coop_fight.js";
+import { coopFightRound, coopReplayMs } from "./coop_fight.js";
 import { coopRest, coopRouteBack, coopRouteGo, coopRouteOptions } from "./coop_route.js";
 import { fightActors, fightSeatOf } from "./cellar_fight.js";
 import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
@@ -107,6 +107,7 @@ function doFight(run, Ps, now, out) {
   if (!r.ok) return r;
   afterRule(run, r, out);
   if (run.phase !== "over") coopArm(run, now);
+  if (run.phase === "fight" && run.deadline) run.deadline += coopReplayMs(run); // 演完才開始倒數
   return r;
 }
 // 地圖選路（地下室改版）：大家都投了下一個點、休息都選了、寶箱看完了

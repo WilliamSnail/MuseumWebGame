@@ -26,7 +26,7 @@ import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { claimMyLikes, traceBox, traceWisp } from "./ui_trace.js";
 import { afterEnter } from "./ui_screens1.js";
 import { stageAct, stageProp } from "./ui_screens3.js";
-import { fightCard, fightFx, fightStage } from "./ui_fight.js";
+import { fightCard, fightFx, fightHold, fightOnRedraw, fightReplaySync, fightStage } from "./ui_fight.js";
 import { chestCard, restCard, routeCard, routeStage } from "./ui_route.js";
 
 const canPlay = () => !!P && !isFree(P);
@@ -81,6 +81,7 @@ export function openCoop(pid, o = {}) {
   s.offs.push(NET.watch(`coopChat/${pid}`, v => { if (S === s) onChat(v); }));
   s.offs.push(NET.on("roster", () => { if (S === s) { watchOff(); drawSide(); refreshInvite(); } }));
   s.clock = setInterval(tickClock, 250);
+  fightOnRedraw(() => { if (S === s && s.view) draw(); }); // 結算演出壹格壹格重畫
   if (o.resumed) call("resume").catch(() => {});
   draw();
   snd("flip");
@@ -386,6 +387,8 @@ function oddLine(v) {
 }
 function drawRun(v) {
   const s = S, me = meOf(v), f = floorOf(v), lv = v.pressure ? v.pressure.lv : 0;
+  fightReplaySync(v); // 打怪物：新的壹回合結算出來，開始演（docs/打怪演出規劃.md）
+  const hold = fightHold(v); // 打完最後壹回合還在演：先畫打怪的舞台，演完才換到下壹步
   const top = [h("span", { class: "cx-clock" }), v.ended ? null : btn("離隊", leaveRun, "small")];
   s.m.setTop(top);
   const guard = v.role === "guard";
@@ -399,8 +402,8 @@ function drawRun(v) {
     v.pressure && v.pressure.woke ? h("p", { class: "cx-press lv2" }, COOP_CARRY_TEXT.woke) : null,
     v.hasGuard && !guard ? h("p", { class: "cx-press" }, COOP_GUARD_TEXT.below) : null);
   // 地圖選路（地下室改版，ui_route.js）：選路的時候上面是地圖
-  const st = v.phase === "route" && v.cmap ? routeStage(v, S.routeSel, id => { S.routeSel = id; draw(); }) : v.phase === "fight" && v.fight ? fightStage(v, S.pickKey === `${v.fight.foe}:${v.fight.phase}:${v.fight.round}` ? S.myPick : null) : guard ? monitor(v) : stage(v);
-  const main = h("div", { class: "cx-main" }, head, st, phaseCard(v, me));
+  const st = hold ? fightStage(hold, null) : v.phase === "route" && v.cmap ? routeStage(v, S.routeSel, id => { S.routeSel = id; draw(); }) : v.phase === "fight" && v.fight ? fightStage(v, S.pickKey === `${v.fight.foe}:${v.fight.phase}:${v.fight.round}` ? S.myPick : null) : guard ? monitor(v) : stage(v);
+  const main = h("div", { class: "cx-main" }, head, st, hold ? fightCard(hold, meOf(hold), { mine: null, setMine: () => {}, act: () => {} }) : phaseCard(v, me));
   // 幽影：走進新的一間，偶爾有館友的佩佩半透明走過去
   const wispKey = `${v.floor}:${v.idx}`;
   if (!guard && v.phase === "vote" && s.wispKey !== wispKey) { s.wispKey = wispKey; setTimeout(() => { if (S === s) traceWisp(s.m.surface.querySelector(".cellar-stage"), v.floor); }, 1500); }
