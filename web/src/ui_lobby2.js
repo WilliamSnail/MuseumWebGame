@@ -34,7 +34,8 @@ export const LOBBY2_ROOMS = [
   { id: "codex", icon: null, box: [280, 208, 376, 326], port: [35, 455, 225, 612] },
   { id: "cellar", icon: "cellar", box: [760, 208, 972, 326], port: [350, 455, 540, 612] },
   { id: "workshop", icon: "workshop", box: [48, 364, 232, 524], port: [35, 620, 225, 778] },
-  { id: "commission", icon: "board", box: [238, 334, 442, 524], port: [350, 620, 540, 778] },
+  // cut：橫式底圖上不是方的房間，照牆畫的多邊形（底圖像素）。委託櫃台右上角是斜的（翊文 11-13：「右上方不太對」）
+  { id: "commission", icon: "board", box: [238, 334, 442, 524], port: [350, 620, 540, 778], cut: [[238, 334], [374, 334], [442, 407], [442, 524], [238, 524]] },
   { id: "office", icon: "office", box: [584, 334, 782, 528], port: [35, 785, 225, 948] },
   { id: "casino", icon: "casino", box: [794, 334, 972, 528], port: [350, 785, 540, 948] },
 ];
@@ -102,6 +103,16 @@ function mapBox(step) {
       "aria-label": `${name}${sub ? "，" + sub : ""}${fresh.has(r.id) ? "，有新東西" : ""}`,
       style: { left: x0 / W * 100 + "%", top: y0 / H * 100 + "%", width: (x1 - x0) / W * 100 + "%", height: (y1 - y0) / H * 100 + "%" },
       onClick: () => navTo(r.id) }, tag, who);
+    const cut = !portrait && r.cut;
+    if (cut) { // 點得到的範圍和金框都照牆的形狀：按鈕用 clip-path 切掉角，框用 SVG 畫（box-shadow 畫不出斜邊）
+      const w = x1 - x0, ht = y1 - y0, pts = cut.map(([x, y]) => [x - x0, y - y0]);
+      b.classList.add("cut");
+      b.style.clipPath = `polygon(${pts.map(([x, y]) => `${x / w * 100}% ${y / ht * 100}%`).join(",")})`;
+      const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg"), pg = document.createElementNS(NS, "polygon");
+      svg.setAttribute("class", "l2-cut"); svg.setAttribute("viewBox", `0 0 ${w} ${ht}`); svg.setAttribute("preserveAspectRatio", "none"); svg.setAttribute("aria-hidden", "true");
+      pg.setAttribute("points", pts.map(p => p.join(",")).join(" ")); pg.setAttribute("vector-effect", "non-scaling-stroke");
+      svg.append(pg); b.append(svg);
+    }
     map.append(b);
   });
   map.append(h("span", { class: "l2-me" }, "大廳・你在這裡"));
