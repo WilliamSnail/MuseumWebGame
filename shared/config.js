@@ -126,12 +126,13 @@ export const NUM = {
   //   wizard、cheer：巫師帽這回合、比讚下壹回合，每個人的「推」加多少；tentacleMult、tentacleSan：觸手帽強度乘多少、帶牠的人扣多少理智
   //   rest：躺平、毛帽回多少理智（這壹層第壹次走才能用，界線「不要改回去」）；maxRounds：打到第幾回合怪物自己走掉
   //   pressureSan：全隊理智壓力到第幾級，理智類的招多扣 1；injure：打完之後，倒下的佩佩真的受傷的機率（翊文 11-12：「倒下的是真的受傷」，所以是 1）
+  //   11-13 調過勝率（模擬用 sim_fight.cjs 的 full 選法：看穿、安撫、逃跑、撤退都會用）：普通 65～80%、菁英（rank 2）45～60%、守門 30～45%。perPlayer 0.35 → 0.5、maxRounds 12 → 15、rankHp [1, 1.35, 1.7] → [1, 1.3, 1.55]、每隻怪物的壓力在 CELLAR_FOES
   //   決定 0068（翊文 11-12 回答的）：
   //   rankHp、rankSan：怪物的等級 1～3（地圖上看得到大概多強），壓力乘多少、理智類的招多扣多少；rankInsp：打贏比較強的多給多少靈感
   //   flee、fleeBoss：逃跑成功的機率（百分比）；要有壹半以上的人選逃跑才會擲
   //   courage：壯膽，每多壹個真人隊友，每個人多這麼多「膽量」，先替理智擋（這壹趟用完就沒了，不會留在存檔）；coopInsp：每多壹個真人隊友，打贏多給多少靈感
   //   tap：有些回合可以按時機（「有時候 B」）：chance ＝下壹回合可以按的機率，找到弱點的下壹回合壹定可以；good、great ＝按得好、按得很準，「推」多加多少。只加不扣，不按也沒事
-  fight: { baseTeam: 3, perPlayer: 0.35, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 12, pressureSan: 2, injure: 1, rankHp: [1, 1.35, 1.7], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 },
+  fight: { baseTeam: 3, perPlayer: 0.5, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 15, pressureSan: 2, injure: 1, rankHp: [1, 1.3, 1.55], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 },
     // 結算演出（docs/打怪演出規劃.md）：每件事演 replayStep 毫秒，最後小結 replayTail，最多 replayMax。演完才開始倒數：伺服器把這段時間加進下一回合的期限
     replayStep: 750, replayTail: 1600, replayMax: 9000,
     // 佩佩身上的（docs/打怪玩法規劃.md 第三節）：red 推 +；green 每回合結束理智 +；yellow 看穿、安撫 +％；black 被嚇少扣；moodCombo 全隊湊到三種心情推 +
@@ -499,21 +500,21 @@ export const MOOD_BEATS = { 開心: "傷心", 傷心: "生氣", 生氣: "開心"
 // 招：kind "hit" 撲向壹個人的佩佩（倒下壹隻）、"scare" 壹個人扣理智 san、"all" 每個人扣理智 san、"grow" 壓力回 n；w ＝抽到的比重
 // 數字是草稿：node test/sim_fight.cjs 看 1～4 人的勝率和回合數
 export const CELLAR_FOES = [
-  { id: "f1a", floor: 1, trait: { kind: "shell" }, hp: 38, mood: "傷心", color: "黃", moves: [{ id: "topple", kind: "hit", w: 2 }, { id: "dust", kind: "scare", san: "1D2", w: 2 }] },
-  { id: "f1b", floor: 1, trait: { kind: "steal", every: 2 }, hp: 36, mood: null, color: "紅", moves: [{ id: "cling", kind: "scare", san: "1D3", w: 2 }, { id: "pile", kind: "grow", n: 4, w: 1 }] },
-  { id: "f1g", floor: 1, trait: { kind: "grow", every: 3, n: 4 }, boss: true, hp: 32, hp2: 22, mood: "生氣", color: "綠", moves: [{ id: "topple", kind: "hit", w: 1 }, { id: "count", kind: "grow", n: 5, w: 1 }, { id: "dust", kind: "scare", san: "1D3", w: 2 }], moves2: [{ id: "slide", kind: "all", san: "1D2", w: 2 }, { id: "topple", kind: "hit", w: 1 }] },
-  { id: "f2a", floor: 2, trait: { kind: "veil" }, hp: 50, mood: "生氣", color: "黑", moves: [{ id: "shift", kind: "hit", w: 2 }, { id: "stare", kind: "scare", san: "1D3", w: 2 }] },
-  { id: "f2b", floor: 2, trait: { kind: "slippery", mod: 20 }, hp: 48, mood: "開心", color: null, moves: [{ id: "blank", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 5, w: 1 }] },
-  { id: "f2g", floor: 2, trait: { kind: "thick", n: 3 }, boss: true, hp: 36, hp2: 24, mood: null, color: "綠", moves: [{ id: "shift", kind: "hit", w: 1 }, { id: "stare", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 6, w: 1 }], moves2: [{ id: "unveil", kind: "all", san: "1D3", w: 2 }, { id: "shift", kind: "hit", w: 1 }] },
-  { id: "f3a", floor: 3, trait: { kind: "stubborn", mod: 20 }, hp: 60, mood: "傷心", color: "黑", moves: [{ id: "step", kind: "hit", w: 2 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }] },
-  { id: "f3b", floor: 3, trait: { kind: "grow", every: 2, n: 3 }, hp: 56, mood: "開心", color: "紅", moves: [{ id: "smear", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 6, w: 1 }] },
-  { id: "f3g", floor: 3, trait: { kind: "thick", n: 4 }, boss: true, hp: 50, hp2: 34, mood: "生氣", color: "黑", moves: [{ id: "step", kind: "hit", w: 1 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 7, w: 1 }], moves2: [{ id: "frame", kind: "all", san: "1D4", w: 2 }, { id: "step", kind: "hit", w: 1 }] },
-  { id: "f4a", floor: 4, trait: { kind: "slippery", mod: 25 }, hp: 68, mood: "傷心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 2 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }] },
-  { id: "f4b", floor: 4, trait: { kind: "grow", every: 2, n: 4 }, hp: 66, mood: "生氣", color: "黑", moves: [{ id: "click", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 7, w: 1 }] },
-  { id: "f4g", floor: 4, trait: { kind: "mark", every: 2, san: "2D3" }, boss: true, hp: 58, hp2: 38, mood: "開心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 1 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 8, w: 1 }], moves2: [{ id: "tally", kind: "all", san: "1D4", w: 2 }, { id: "soak", kind: "hit", w: 1 }] },
-  { id: "f5a", floor: 5, trait: { kind: "blur", n: 2 }, hp: 74, mood: "傷心", color: null, moves: [{ id: "queue", kind: "hit", w: 2 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }] },
-  { id: "f5b", floor: 5, trait: { kind: "veil" }, hp: 72, mood: "生氣", color: "黃", moves: [{ id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 8, w: 1 }] },
-  { id: "f5g", floor: 5, trait: { kind: "blur", n: 3 }, boss: true, hp: 64, hp2: 42, mood: null, color: null, moves: [{ id: "queue", kind: "hit", w: 1 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 9, w: 1 }], moves2: [{ id: "nameless", kind: "all", san: "1D5", w: 2 }, { id: "queue", kind: "hit", w: 1 }] },
+  { id: "f1a", floor: 1, trait: { kind: "shell" }, hp: 44, mood: "傷心", color: "黃", moves: [{ id: "topple", kind: "hit", w: 2 }, { id: "dust", kind: "scare", san: "1D2", w: 2 }] },
+  { id: "f1b", floor: 1, trait: { kind: "steal", every: 2 }, hp: 93, mood: null, color: "紅", moves: [{ id: "cling", kind: "scare", san: "1D3", w: 2 }, { id: "pile", kind: "grow", n: 4, w: 1 }] },
+  { id: "f1g", floor: 1, trait: { kind: "grow", every: 3, n: 4 }, boss: true, hp: 75, hp2: 51, mood: "生氣", color: "綠", moves: [{ id: "topple", kind: "hit", w: 1 }, { id: "count", kind: "grow", n: 5, w: 1 }, { id: "dust", kind: "scare", san: "1D3", w: 2 }], moves2: [{ id: "slide", kind: "all", san: "1D2", w: 2 }, { id: "topple", kind: "hit", w: 1 }] },
+  { id: "f2a", floor: 2, trait: { kind: "veil" }, hp: 65, mood: "生氣", color: "黑", moves: [{ id: "shift", kind: "hit", w: 2 }, { id: "stare", kind: "scare", san: "1D3", w: 2 }] },
+  { id: "f2b", floor: 2, trait: { kind: "slippery", mod: 20 }, hp: 74, mood: "開心", color: null, moves: [{ id: "blank", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 5, w: 1 }] },
+  { id: "f2g", floor: 2, trait: { kind: "thick", n: 3 }, boss: true, hp: 50, hp2: 34, mood: null, color: "綠", moves: [{ id: "shift", kind: "hit", w: 1 }, { id: "stare", kind: "scare", san: "1D4", w: 2 }, { id: "rename", kind: "grow", n: 6, w: 1 }], moves2: [{ id: "unveil", kind: "all", san: "1D3", w: 2 }, { id: "shift", kind: "hit", w: 1 }] },
+  { id: "f3a", floor: 3, trait: { kind: "stubborn", mod: 20 }, hp: 96, mood: "傷心", color: "黑", moves: [{ id: "step", kind: "hit", w: 2 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }] },
+  { id: "f3b", floor: 3, trait: { kind: "grow", every: 2, n: 3 }, hp: 201, mood: "開心", color: "紅", moves: [{ id: "smear", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 6, w: 1 }] },
+  { id: "f3g", floor: 3, trait: { kind: "thick", n: 4 }, boss: true, hp: 82, hp2: 56, mood: "生氣", color: "黑", moves: [{ id: "step", kind: "hit", w: 1 }, { id: "follow", kind: "scare", san: "1D4", w: 2 }, { id: "repaint", kind: "grow", n: 7, w: 1 }], moves2: [{ id: "frame", kind: "all", san: "1D4", w: 2 }, { id: "step", kind: "hit", w: 1 }] },
+  { id: "f4a", floor: 4, trait: { kind: "slippery", mod: 25 }, hp: 85, mood: "傷心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 2 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }] },
+  { id: "f4b", floor: 4, trait: { kind: "grow", every: 2, n: 4 }, hp: 194, mood: "生氣", color: "黑", moves: [{ id: "click", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 7, w: 1 }] },
+  { id: "f4g", floor: 4, trait: { kind: "mark", every: 2, san: "2D3" }, boss: true, hp: 98, hp2: 65, mood: "開心", color: "黃", moves: [{ id: "soak", kind: "hit", w: 1 }, { id: "blur", kind: "scare", san: "1D5", w: 2 }, { id: "carry", kind: "grow", n: 8, w: 1 }], moves2: [{ id: "tally", kind: "all", san: "1D4", w: 2 }, { id: "soak", kind: "hit", w: 1 }] },
+  { id: "f5a", floor: 5, trait: { kind: "blur", n: 2 }, hp: 125, mood: "傷心", color: null, moves: [{ id: "queue", kind: "hit", w: 2 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }] },
+  { id: "f5b", floor: 5, trait: { kind: "veil" }, hp: 230, mood: "生氣", color: "黃", moves: [{ id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 8, w: 1 }] },
+  { id: "f5g", floor: 5, trait: { kind: "blur", n: 3 }, boss: true, hp: 95, hp2: 63, mood: null, color: null, moves: [{ id: "queue", kind: "hit", w: 1 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 9, w: 1 }], moves2: [{ id: "nameless", kind: "all", san: "1D5", w: 2 }, { id: "queue", kind: "hit", w: 1 }] },
 ];
 
 // ---------- 第 3 版：每週特展的主題（文字在 content3.js 的 WEEKLY_TEXT） ----------

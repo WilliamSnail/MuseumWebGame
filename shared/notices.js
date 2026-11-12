@@ -28,6 +28,20 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-balance", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "打怪物的強度重新量過了", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "館方助手找了很多組人實際模擬打怪，把每隻怪物的壓力重新調過，壹個人、兩個人、三四個人打起來的難度比較接近。",
+        "回合也從 12 回合放寬到 15 回合，人多的時候比較不會還沒打完怪物就走了。",
+        "大約的勝率：普通的怪物七成上下，比較強的（菁英）五成多，守門四成左右。",
+      ]],
+      ["所以", [
+        "看穿、安撫、撤退這些行動現在都有用處：怪物要出大招就安撫，快撐不住就逃跑或撤退，回到地面再來。",
+      ]],
+    ],
+  },
+  {
     id: "lobby-commission-cut", v: 1, cat: "館方公告", tags: ["修正"], importance: "low",
     title: "大廳導覽圖：委託櫃台的金框對齊牆了", publish: "2026-11-13", expire: "2027-06-30",
     sections: [
