@@ -28,7 +28,7 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
-    id: "cellar-gate-fight", v: 1, cat: "館方公告", tags: ["更新", "重要"], importance: "important",
+    id: "cellar-gate-fight", v: 2, cat: "館方公告", tags: ["更新", "重要"], importance: "important",
     title: "地下收藏庫改版：每壹層的守門醒了", publish: "2026-11-12", expire: "2027-12-31",
     sections: [
       ["這次改了什麼", [
@@ -45,6 +45,11 @@ export const NOTICES = [
       ["要注意", [
         "被撲倒的佩佩有機會真的受傷，受傷的要休息幾天才能再下去。",
         "有館友壹起下去的時候，扣理智之前會先扣「膽量」。",
+      ]],
+      ["幕後", [
+        "這次是用新模型 Fable 5.2 規劃的完整地下室探險系統更新：選路的小地圖、回合制打怪、背包和撤退，每壹樣都是 1～4 人壹起玩的版本。",
+        "Fable 規劃了大概壹成，Token 就通通燒完了，後面改回 Opus 5.5 接著做。",
+        "先上線的是守門打怪，選路、路上的遭遇、寶箱和背包會陸續接上。",
       ]],
     ],
     cta: { label: "去地下收藏庫", room: "cellar" },
