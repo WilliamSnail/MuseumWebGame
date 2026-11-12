@@ -27,8 +27,13 @@ const safe = run => { const c = G.coopRoom(run).choices.findIndex(x => x.check.t
 let clock = NOW;
 // 把這一層的房間都走完（都選安全的），停在下一個不是 vote／result 的階段
 function walkRooms(run, Ps, ids) {
-  for (let i = 0; i < 20 && (run.phase === "vote" || run.phase === "result" || run.phase === "carry" || run.phase === "carried"); i++) {
-    if (run.phase === "vote") { const c = safe(run); ids.forEach(id => G.coopAct(run, Ps, id, "vote", { choice: c }, ++clock)); }
+  for (let i = 0; i < 40 && ["vote", "result", "carry", "carried", "route", "rest", "chest"].includes(run.phase); i++) {
+    if (run.phase === "route") { // 地圖選路（coop_route.js）：壹路走探索房，最後壹排走休息，再來是守門
+      const opts = G.coopRouteOptions(run), kindOf = id => G.cmapNode(run.cmap, id).kind;
+      const pick = opts.find(id => kindOf(id) === "explore") || opts.find(id => kindOf(id) === "rest") || opts.find(id => kindOf(id) === "gate") || opts[0];
+      ids.forEach(id => { if (run.phase === "route") G.coopAct(run, Ps, id, "route", { node: pick }, ++clock); });
+    } else if (run.phase === "rest") ids.forEach(id => G.coopAct(run, Ps, id, "rest", { pick: "san" }, ++clock));
+    else if (run.phase === "vote") { const c = safe(run); ids.forEach(id => G.coopAct(run, Ps, id, "vote", { choice: c }, ++clock)); }
     else if (run.phase === "carry") ids.forEach(id => G.coopAct(run, Ps, id, "carry", { side: "skip" }, ++clock));
     else ids.forEach(id => G.coopAct(run, Ps, id, "ack", {}, ++clock));
   }
@@ -47,7 +52,7 @@ T("沒開守門（舊的）：房間走完直接是 floorDone，跟以前一樣"
 });
 T("開了守門：房間都探索完才開打，是這一層的守門；還沒打贏不算走完這一層", () => {
   const { run, Ps, ids } = party(["a", "b"]);
-  assert.strictEqual(run.phase, "vote", "壹開始還是探索房間");
+  assert.strictEqual(run.phase, "route", "壹開始先選路（地圖，coop_route.js）");
   walkRooms(run, Ps, ids);
   assert.strictEqual(run.phase, "fight");
   assert.strictEqual(run.fight.foe, G.fightFoesOf(1, true)[0].id);
@@ -104,7 +109,7 @@ T("打贏守門：才算走完這一層，拿第一次過關的獎勵；合作�
   assert.ok(G.isUnlocked(Ps.a, "帽子", "毛帽"), "第一層的獎勵照舊");
   // 往下一層：又是先探索，走完再打那一層的守門
   ids.forEach(id => G.coopAct(run, Ps, id, "floor", { go: "down" }, ++clock));
-  assert.strictEqual(run.phase, "vote"); assert.strictEqual(run.floor, 2);
+  assert.strictEqual(run.phase, "route"); assert.strictEqual(run.floor, 2); // 新的壹層也是先選路
   walkRooms(run, Ps, ids);
   assert.strictEqual(run.phase, "fight");
   assert.strictEqual(run.fight.foe, G.fightFoesOf(2, true)[0].id);

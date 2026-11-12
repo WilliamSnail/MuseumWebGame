@@ -13,6 +13,7 @@ import { NUM } from "./config.js";
 import { addDays } from "./logic.js";
 import { injureDaysOf } from "./logic3.js";
 import { coopActive, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop.js";
+import { coopRouteBack } from "./coop_route.js";
 import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "./cellar_fight.js";
 
 // 這一層還要不要打守門
@@ -109,8 +110,13 @@ export function coopFightRound(run, Ps, picks) {
       const done = coopFloorComplete(run, Ps, events);
       return Object.assign(done, { fightOver: "win" });
     }
+    if (kind === "foe") return Object.assign(coopRouteBack(run, Ps, events), { fightOver: "win" }); // 路上的怪物：打贏繼續選路
   } else if (fight.over === "lose" || fight.over === "retreat" || !coopVoters(run).length) {
     coopFinish(run, fight.over === "retreat" ? "retreat" : "lost");
+  } else if (kind === "foe") {
+    // 路上的怪物：逃掉、牠自己走掉都沒關係，繼續選路（沒有獎勵）
+    run.last = Object.assign({}, run.last, { fled: fight.over, foe: true });
+    return Object.assign(coopRouteBack(run, Ps, events), { fightOver: fight.over });
   } else {
     // 逃跑成功、怪物走掉：這一層不算走完，只能回地面
     run.next = null;
