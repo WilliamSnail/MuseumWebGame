@@ -1,0 +1,257 @@
+{
+  "day": 4,
+  "date": "2026-11-12",
+  "holiday": null,
+  "board": "招領箱裡那件厚外套有了招領單；小門旁多了壹張溫的椅子；書架多 2 本書。",
+  "casino": {
+    "note": "賭場的牌桌邊也有壹台號碼機，吐出來的號碼比客人多壹個。荷官說：那張先留著。"
+  },
+  "books": [
+    {
+      "id": "4a",
+      "line": "w46-lost",
+      "clue": "c-coat-pocket-low",
+      "title": "外套的招領單",
+      "spine": "厚外套",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「雙 11 過了。」\n「那件厚外套，今天終於有招領單。」",
+        "招領單的字很小、很整齊：\n「失主：壹位蹲著的先生。」\n「特徵：口袋鼓鼓的，半包瓜子。」",
+        "他伸手進口袋。\n瓜子是溫的，殼都剝好了，排得很整齊。\n口袋的位置很低，低到要蹲下來才摸得到。",
+        "他把外套抖了抖。\n另壹個口袋掉出壹張紙條：\n「9」。\n他數了數箱邊的人，今天來領的有 8 位。",
+        "他在值班紀錄寫上「9」，沒有劃掉。\n失主欄還是空的。\n小門那邊，檯燈亮著。"
+      ]
+    },
+    {
+      "id": "4b",
+      "line": "w46-door",
+      "title": "號碼牌",
+      "spine": "號碼牌",
+      "unlock": {
+        "type": "find",
+        "room": "chair"
+      },
+      "pages": [
+        "小門旁邊的牆上，不知什麼時候掛了壹台號碼機。\n機器吐出壹張紙：「9」。",
+        "今天排隊的有 8 位，都蹲在箱子旁邊。\n警衛把 8 位都登記了壹遍。",
+        "他又數了壹遍，還是 8。\n可是下壹個叫到的號碼，是 9。",
+        "沒有人站起來。\n椅子上的溫度，剛好夠壹個人坐。",
+        "他把 9 號的紙條放在椅墊上。\n再看時，紙條還在，椅墊涼了壹點。\n「我沒有再碰那張椅子。」"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d4a",
+      "kind": "read",
+      "book": "4a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d4b",
+      "kind": "spot",
+      "room": "chair",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d4c",
+      "kind": "make",
+      "need": {
+        "顏色": "紅"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:金線"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w1",
+      "words": "箱邊排了壹列人，號碼機吐出的紙比人多壹張。"
+    },
+    {
+      "task": "w2",
+      "words": "牆縫那邊今天有人剝瓜子，聲音很輕。"
+    }
+  ],
+  "show": {
+    "title": "排隊的人",
+    "intro": "今天的畫都跟排隊有關：外套、號碼、握過的手。有的畫，人比號碼少壹個。",
+    "works": [
+      {
+        "id": "s4a",
+        "clue": "c-handshake-count",
+        "frame": "wood",
+        "fx": [
+          "dust"
+        ],
+        "title": "握過的手",
+        "lines": [
+          "九隻手排成兩行，壹行米白，壹行暗紅，中間壹條金線。",
+          "警衛數了兩遍都是九隻，第三遍，他自己的手也在裡面。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3a3226'/><stop offset='1' stop-color='#120e0a'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<g fill='#e8d3a8' stroke='#2a1a0e' stroke-width='3'><rect x='20' y='150' width='36' height='40' rx='10'/><rect x='64' y='150' width='36' height='40' rx='10'/><rect x='108' y='150' width='36' height='40' rx='10'/><rect x='152' y='150' width='36' height='40' rx='10'/><rect x='196' y='150' width='36' height='40' rx='10'/></g>",
+          "<g fill='#7a2f2a' stroke='#2a1a0e' stroke-width='3'><rect x='42' y='196' width='36' height='40' rx='10'/><rect x='86' y='196' width='36' height='40' rx='10'/><rect x='130' y='196' width='36' height='40' rx='10'/><rect x='174' y='196' width='36' height='40' rx='10'/></g>",
+          "<path d='M20 120 H220' stroke='#c9a15a' stroke-width='3'/><path d='M30 110 V120 M54 110 V120 M78 110 V120 M102 110 V120 M126 110 V120' stroke='#c9a15a' stroke-width='2'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s4b",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "9 號的口袋",
+        "lines": [
+          "壹件厚外套掛在牆上，低低的口袋鼓著，瓜子殼落了壹地。",
+          "外套旁貼著壹張紙條，字很小、很整齊。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2e3a'/><stop offset='1' stop-color='#0e1016'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<path d='M120 40 V70' stroke='#c9a15a' stroke-width='4'/><path d='M104 40 Q120 24 136 40' fill='none' stroke='#c9a15a' stroke-width='4'/>",
+          "<path d='M70 80 L120 68 L170 80 L196 220 L150 226 L146 150 L134 230 L106 230 L94 150 L90 226 L44 220 Z' fill='#5a4636' stroke='#1c130c' stroke-width='4'/>",
+          "<path d='M120 68 V228' stroke='#2e2218' stroke-width='3'/>",
+          "<rect x='60' y='186' width='34' height='30' fill='#4a3a2c' stroke='#1c130c' stroke-width='3'/>",
+          "<path d='M66 186 L70 176 L78 188 L86 176 L90 186' fill='#d9c48a' stroke='#3a2a1a' stroke-width='1'/>",
+          "<g fill='#d9c48a' stroke='#3a2a1a' stroke-width='1'><ellipse cx='40' cy='262' rx='6' ry='3'/><ellipse cx='64' cy='268' rx='6' ry='3'/><ellipse cx='88' cy='262' rx='6' ry='3'/><ellipse cx='112' cy='268' rx='6' ry='3'/><ellipse cx='136' cy='262' rx='6' ry='3'/><ellipse cx='160' cy='268' rx='6' ry='3'/></g>",
+          "<rect x='170' y='120' width='40' height='54' fill='#efe6cf' stroke='#3a2a1a' stroke-width='3' transform='rotate(4 190 147)'/><path d='M176 136 H204 M176 146 H200 M176 156 H204' stroke='#4a3a2a' stroke-width='2'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s4c",
+        "frame": "gold",
+        "fx": [],
+        "title": "號碼機",
+        "lines": [
+          "紅色的號碼機吐出壹張 9，下面壹排籌碼，壹顆也沒少。",
+          "機器上沒有按鈕，是自己響的。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a3040'/><stop offset='1' stop-color='#0c0f16'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<rect x='80' y='60' width='80' height='110' rx='8' fill='#8a2f2a' stroke='#1c0c0a' stroke-width='4'/>",
+          "<rect x='96' y='84' width='48' height='30' fill='#efe6cf' stroke='#3a2a1a' stroke-width='2'/><text x='120' y='108' font-size='22' text-anchor='middle' fill='#3a2a1a'>9</text>",
+          "<rect x='100' y='136' width='40' height='8' fill='#1c0c0a'/>",
+          "<path d='M104 144 L100 200 L142 204 L138 144 Z' fill='#efe6cf' stroke='#3a2a1a' stroke-width='2'/><text x='120' y='180' font-size='22' text-anchor='middle' fill='#3a2a1a'>9</text>",
+          "<g fill='#d9c48a' stroke='#3a2a1a' stroke-width='2'><circle cx='40' cy='250' r='9'/><circle cx='70' cy='250' r='9'/><circle cx='100' cy='250' r='9'/><circle cx='130' cy='250' r='9'/><circle cx='160' cy='250' r='9'/><circle cx='190' cy='250' r='9'/><circle cx='220' cy='250' r='9'/></g>",
+          "<path d='M20 270 H220' stroke='#0a0d12' stroke-width='6'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s4d",
+        "art": "frog",
+        "pick": {
+          "顏色": "紅",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "sepia"
+        ],
+        "frame": "plain",
+        "title": "領到號碼的佩佩",
+        "lines": [
+          "牠捏著壹張紙，笑得很開心。",
+          "牠回頭看了看，後面沒有人。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "chair",
+      "clue": "c-shell-line",
+      "floor": 1,
+      "line": "w46-door",
+      "title": "溫的空椅子",
+      "hint": "去 B1，看看小門旁邊的那張椅子",
+      "intro": "小門旁邊放著壹張椅子，椅墊是溫的。椅腳邊有壹小堆瓜子殼，壹路排向小櫃台。",
+      "lines": [
+        "瓜子殼排成壹列，每壹粒的開口都朝同壹個方向。",
+        "椅子旁的牆上掛著壹台小小的號碼機，吐出來的紙條寫著 9。"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "數壹數瓜子殼",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "殼比昨天多了壹粒。排頭那壹粒，已經靠到櫃台的腳邊。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "你數到第二遍，數字跟第壹遍差了壹個。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "撕下號碼機的那張紙條",
+          "check": {
+            "type": "power",
+            "target": 13
+          },
+          "success": {
+            "text": "紙條寫著 9。你看了看，房裡只有你壹個人。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "紙條縮了回去，機器吐出壹張新的，還是 9。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "坐在椅子旁邊等壹下",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你站了壹會兒。椅墊的溫度慢慢涼下去，又慢慢回來。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
