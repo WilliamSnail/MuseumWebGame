@@ -338,7 +338,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
    只在電腦（寬 1100 以上、高 600 以上）；手機照舊
    ================================================================ */
 @media (min-width: 1100px) and (min-height: 600px) {
-  .l2-side { padding: 38px 16px 38px; border: 0; border-image: none; background: url(/ui2/ui2-lobby-column.webp) center / 100% 100% no-repeat; background-origin: border-box; box-sizing: border-box; align-self: stretch; gap: 8px; }
+  .l2-side { padding: 38px 16px 38px; border: 0; border-image: none; background: url(/ui2/ui2-lobby-column.webp) center top / auto 100% no-repeat, linear-gradient(90deg, rgba(20,8,24,.0), rgba(20,8,24,.35) 50%, rgba(20,8,24,0)); background-origin: border-box; box-sizing: border-box; align-self: stretch; gap: 8px; }
   .l2-h { justify-content: center; margin: 0 0 4px; padding: 6px 18px 8px; color: #3A2410; font-weight: 700; text-align: center; border: 10px solid transparent; border-image: url(/ui2/ui2-lobby-ribbon.webp) 40 70 fill / 10px 34px stretch; letter-spacing: .14em; }
   .l2-h::after { display: none; }
   .l2-todo { border: 12px solid transparent; border-image: url(/ui2/ui2-task-card.webp) 36 fill / 12px stretch; min-height: 54px; }
