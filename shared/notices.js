@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "codex-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "圖鑑室：壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "圖鑑室不用再往下滑：頁籤壹排在上面，圖鑑的格子放在中間的框裡（格子很多，在框裡面滑），點壹格，右邊就顯示說明牌。",
+        "篩選收成壹顆銅牌按鈕，上面寫現在篩了什麼，按下去才展開整排選項。",
+        "手機直拿：格子在上面，篩選和說明牌在下面；點壹格，說明牌縮成壹小條，旁邊就是「去做這隻」。",
+      ]],
+    ],
+    cta: { label: "去圖鑑室", room: "codex" },
+  },
+  {
     id: "cellar-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "地下收藏庫：壹個畫面看得完，佩佩的強度和加成寫清楚", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
