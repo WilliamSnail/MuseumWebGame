@@ -128,5 +128,23 @@ T("舊錢包、壞資料：補欄位，不丟錯", G => {
   assert.doesNotThrow(() => G.casStockRoll(house, "bad", {}));
   assert.doesNotThrow(() => G.casStockView(w, house, D, OPEN));
 });
+T("每支照自己的資料動，不會七支全部壹樣（11-14：股票清單讀到空的，全變 9,996）", G => {
+  const C = G.NUM.casino.stock, s = fresh(G);
+  // 真的資料長這樣：每支的漲跌都不同
+  const daily = { days: { "2026-11-12": { greeneye: -4.34, redclaw: 5.86, nightindex: -0.39, islandforge: -2.3, silverapple: -0.21, flashcar: 1.69, squarewin: 0.36 } } };
+  assert.strictEqual(G.outStockReady(daily, "2026-11-13"), true, "前壹天有資料就算到了");
+  const moves = G.outStockMovesFor(daily, "2026-11-13", G.STOCK_IDS);
+  assert.strictEqual(Object.keys(moves).length, G.STOCK_IDS.length, "每支都要有");
+  assert.ok(new Set(Object.values(moves)).size > 1, "漲跌不能全部壹樣");
+  G.casStockRoll(s.house, "2026-11-13", moves);
+  const px = G.STOCK_IDS.map(id => s.house.stk.px[id]);
+  assert.ok(new Set(px).size > 1, "股價不能全部壹樣：" + px.join(","));
+  assert.ok(s.house.stk.px.greeneye < s.house.stk.px.redclaw, "跌的要比漲的低");
+  // 清單給空的（以前的 bug）：全部只剩 drag，七支壹模壹樣
+  const s2 = fresh(G);
+  G.casStockRoll(s2.house, "2026-11-13", G.outStockMovesFor(daily, "2026-11-13", []));
+  assert.strictEqual(new Set(G.STOCK_IDS.map(id => s2.house.stk.px[id])).size, 1, "空清單的話就會全部壹樣，這就是當時的災情");
+  assert.strictEqual(s2.house.stk.px.greeneye, Math.round(C.start * (1 - C.drag / 100)), "9,996");
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
