@@ -36,3 +36,30 @@ console.log("\n== 4 莊家曝險：N 個人各買 M 幅同級的畫，持有 D �
 for (const [name, c] of Object.entries(SETS)) { console.log(name);
   for (const [N, M, base, D] of [[10, 5, 2500000, 150], [20, 10, 6000000, 300], [20, 20, 15000000, 300]]) { const paid = N * M * base * (1 + dBuy), pay = N * M * base * (1 + gain(c, D) + dSell) * c.sell;
     console.log(`  ${N} 人 × ${M} 幅（底價 ${base / 10000} 萬）持有 ${D} 天：莊家收過 ${(paid / 1e8).toFixed(2)} 億，一天付 ${(pay / 1e8).toFixed(2)} 億（${pct(pay / paid - 1)}）；占 1 億 bankroll 的 ${pct(pay / 1e8)}`); } }
+
+// ---- 畫的下一版：讓長期持有也有機會虧錢（規劃 2.10c）。基準＝新曲線（賣回 90%、前 14 天 +0.85%/天、之後 +0.04%/天、上限 +15%）
+console.log("\n== 5 長期持有也有機會虧錢的幾種做法：持有 N 天賣回的淨報酬（平均／賠錢的比例／最差 5%）；每種跑 20000 次");
+{
+  const base = SETS["翊文要的 (賣回90% 前14天+0.85% 之後+0.04% 上限15%)"], TRIALS = 20000;
+  const g = d => gain(base, d);
+  const opts = {
+    "0 現在（只有價差）": () => 0,
+    "A 隨機漫步 每天 ±0.4%（夾 ±20%）": (d, st) => { st.w = Math.max(-0.2, Math.min(0.2, (st.w || 0) + 0.004 * nrm())); return st.w; },
+    "A2 隨機漫步 每天 ±0.8%（夾 ±20%）": (d, st) => { st.w = Math.max(-0.2, Math.min(0.2, (st.w || 0) + 0.008 * nrm())); return st.w; },
+    "B 贗品疑雲：每天 0.25% 機率 −10～30%（不回來）": (d, st) => { if (rnd() < 0.0025) st.hit = (st.hit || 0) + 0.1 + rnd() * 0.2; return -(st.hit || 0); },
+    "C 保管費 每天 0.03%": d => -0.0003 * d,
+    "E 建議：A(0.4%)＋B(每天 0.1% 機率 −10～30%)": (d, st) => { st.w = Math.max(-0.2, Math.min(0.2, (st.w || 0) + 0.004 * nrm())); if (rnd() < 0.001) st.hit = (st.hit || 0) + 0.1 + rnd() * 0.2; return st.w - (st.hit || 0); },
+    "D A(0.4%)＋B(0.25%)": (d, st) => { st.w = Math.max(-0.2, Math.min(0.2, (st.w || 0) + 0.004 * nrm())); if (rnd() < 0.0025) st.hit = (st.hit || 0) + 0.1 + rnd() * 0.2; return st.w - (st.hit || 0); },
+  };
+  console.log("做法".padEnd(44), "持有天數:   14天(平均/賠錢%/最差5%)        100天                      300天");
+  for (const [name, f] of Object.entries(opts)) {
+    const row = [];
+    for (const D of [14, 100, 300]) {
+      const out = [];
+      for (let t = 0; t < TRIALS; t++) { const st = {}; let extra = 0; for (let d = 1; d <= D; d++) extra = f(d, st); const price = 1 + g(D) + 0.015 + extra; out.push(base.sell * price / 1.01 - 1); }
+      out.sort((a, b) => a - b); const m = out.reduce((a, b) => a + b, 0) / TRIALS, loss = out.filter(x => x < 0).length / TRIALS;
+      row.push(`${pct(m)}/${(loss * 100).toFixed(0)}%/${pct(out[Math.floor(TRIALS * 0.05)])}`.padEnd(27));
+    }
+    console.log(name.padEnd(44), row.join(""));
+  }
+}
