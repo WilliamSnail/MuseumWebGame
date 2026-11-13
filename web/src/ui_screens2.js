@@ -15,7 +15,7 @@ import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
-import { afterEnter, roomHead, u2Drawer } from "./ui_screens1.js";
+import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -127,17 +127,17 @@ SCREENS.commission = root => {
   }, "ghost");
   // 壹個畫面看得完（翊文 11-13：「目前每個廳都要很多訊息，要往上下滑才能看到全部」，docs/介面整合規劃.md 第六步）：
   //   標題壹行｜中間軟木板（委託單）＋右邊側欄（老主顧、怪癖的治法、壹鍵交件、上課和兌換所收起來）｜最下面收藏的抽屜（平常壹排，按拉環拉開才有頁籤和篩選）
-  //   零件是翊文生的 assets/ui2/P-1～P-3（切好的在 web/public/ui2/），樣式在 css/ui2.css
+  //   零件是翊文生的 assets/ui2/P-1～P-3（切好的在 web/public/ui2/），樣式在 css/onescreen.css
   // 上課和兌換所（決定 0032，ui_shop.js）：標題列右邊兩顆銅牌按鈕（翊文 11-13：「上課，兌換所就不構明顯」），上課的細節點了才跳出來
   const lesson = ADDONS.commission ? ADDONS.commission() : null;
   const lessonLeft = lesson && lesson.querySelector(".day-limit b") ? lesson.querySelector(".day-limit b").textContent.replace(/（.*）/, "").replace(/，.*/, "") : "";
   const learn = [
-    lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("u2-lesson-layer"); m.card.append(lesson); }, "u2-big") : null,
-    PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "u2-big") : null];
-  const side = h("aside", { class: "u2-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
-  const drawer = u2Drawer(strip);
-  root.classList.add("u2r"); // 不能叫 ui2：html 本身就有 .ui2（新大廳）
-  root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "u2-main" }, board, side), drawer);
+    lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("onescreen-lesson-layer"); m.card.append(lesson); }, "onescreen-big") : null,
+    PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "onescreen-big") : null];
+  const side = h("aside", { class: "onescreen-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
+  const drawer = onescreenDrawer(strip);
+  root.classList.add("onescreen-room"); // 以前叫 u2r。名字不能跟 html 上的 new-lobby-on 撞，也不要用兩個字母的縮寫（docs/class名單.md）
+  root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "onescreen-main" }, board, side), drawer);
   syncStatusHeight(); setTimeout(syncStatusHeight, 300); // 抽屜要停在狀態列上面：狀態列排成兩排時也量對（分頁在背景時 requestAnimationFrame 不會跑，所以直接量）
 };
 
@@ -411,7 +411,7 @@ SCREENS.hall = (root, params) => {
   ].filter(Boolean) : [];
   // 壹個畫面看得完（翊文 11-13，docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架）：
   //   標題壹行（評分、常設展／本週特展的頁籤、看館友的展廳）｜中間牆和展台｜右邊側欄（主題怎麼擺、參觀者留言、館友來過、館主名牌、探險報告、賭場的稱號）｜最下面收藏的抽屜
-  root.classList.add("u2r", "hall-u2");
+  root.classList.add("onescreen-room", "hall-onescreen");
   root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, hallTabs("main"), ...tools));
   const wall = h("div", { class: "hall-wall" + (theme ? " themed" : "") },
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
@@ -422,9 +422,9 @@ SCREENS.hall = (root, params) => {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true });
   // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
   const guide = themeGuide(hs);
-  const themes = h("details", { class: "u2-card hall-themes" }, h("summary", null, theme ? `主題：${theme.name}` : "主題：還沒有（看怎麼擺）"), guide);
-  const side = h("aside", { class: "u2-side" }, themes, visitors);
-  root.append(h("div", { class: "u2-main" }, h("div", { class: "hall-stage" }, wall, room), side), u2Drawer(strip));
+  const themes = h("details", { class: "onescreen-card hall-themes" }, h("summary", null, theme ? `主題：${theme.name}` : "主題：還沒有（看怎麼擺）"), guide);
+  const side = h("aside", { class: "onescreen-side" }, themes, visitors);
+  root.append(h("div", { class: "onescreen-main" }, h("div", { class: "hall-stage" }, wall, room), side), onescreenDrawer(strip));
   if (ADDONS.hall) ADDONS.hall(side, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）：名牌放側欄
   if (ADDONS.hall2) ADDONS.hall2(side); // 掛在牆上的探險報告（ui_coop.js）
   if (ADDONS.hall3) ADDONS.hall3(side); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
