@@ -271,7 +271,7 @@ function stockRows(list, cur, S) {
     list.forEach((s, i) => {
       if (gk(s) !== k) return;
       const closed = s.session && s.session.state !== "open";
-      rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; rerender(); } },
+      rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
         h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : h("small", { class: "ln" }, s.line)),
         h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
     });
@@ -426,7 +426,7 @@ function holdPanel(v, S, list) {
   const hs = list.filter(x => x.mine > 0), H = UI.bankHold || (UI.bankHold = { a: "total", b: "unit", c: "value" });
   const tog = (k, a, b, la, lb) => h("button", { type: "button", class: "bank-hh", onClick: () => { H[k] = H[k] === a ? b : a; rerender(); }, "aria-label": `切換：${la}、${lb}` }, h("span", null, H[k] === a ? la : lb), h("i", { "aria-hidden": "true" }, "⇄"));
   const sum = (key) => hs.reduce((n, x) => n + (Number(x[key]) || 0), 0), tv = sum("value"), tc = sum("costTotal"), tp = sum("pnl"), td = sum("dayChg");
-  const rows = hs.map(s => h("button", { type: "button", class: "bank-row holdings", role: "row", onClick: () => { UI.bankLeft = "market"; UI.bankStock = list.indexOf(s); rerender(); } },
+  const rows = hs.map(s => h("button", { type: "button", class: "bank-row holdings", role: "row", onClick: () => { UI.bankLeft = "market"; UI.bankPV = "trade"; UI.bankStock = list.indexOf(s); rerender(); } },
     h("span", null, h("b", null, s.name), s.market ? h("i", { class: "bank-mk" }, s.market === "tw" ? "台股" : s.market === "us" ? "美股" : "館內") : null),
     h("span", { class: "bank-tab-num" }, H.c === "value" ? fmt(s.value) : `${fmt(s.mine)} 股`),
     h("span", { class: "bank-tab-num" }, H.b === "unit" ? dec2(s.avgCost) : fmt(s.costTotal)),
@@ -446,11 +446,10 @@ function stockPane(v) {
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
   const phone = window.innerWidth < 761 || window.innerHeight < 501;
   const left = UI.bankLeft === "hold" ? "hold" : "market";
+  const marketPanel = panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks"));
   const table = h("div", { class: "bank-leftcol" }, seg([["market", "行情"], ["hold", "持倉"]], left, k => { UI.bankLeft = k; rerender(); }, "kind"),
-    left === "hold" ? holdPanel(v, S, list) : panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks")));
-  return h("div", { class: "bank-cols stocks", dataset: { trade: tab } },
-    phone ? h("details", { class: "bank-allstocks" }, h("summary", null, h("b", null, "行情・持倉"), h("span", null, "點開 ▾")), table) : table,
-    h("div", { class: "bank-stack" },
+    left === "hold" ? holdPanel(v, S, list) : marketPanel);
+  const stackEl = h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
         cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價大約是真實價的 ${cur.mult} 倍。`) : null) : null,
@@ -464,14 +463,19 @@ function stockPane(v) {
         h("p", { class: "bank-hint" }, cur.real ? "遊戲價只跟著真實漲跌的一部分，再加上館裡自己的小波動，每天開盤會往真實價拉回一點，所以遊戲的漲跌和真實的不會一樣。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
-      positionsPanel(S), ordersPanel(S)));
+      positionsPanel(S), ordersPanel(S));
+  if (phone) {
+    const pv = UI.bankPV === "market" || UI.bankPV === "hold" ? UI.bankPV : "trade";
+    return h("div", { class: "bank-cols stocks phone", dataset: { trade: tab, pv } }, seg([["trade", "交易"], ["market", "行情"], ["hold", "持倉"]], pv, k => { UI.bankPV = k; rerender(); }, "kind"), pv === "trade" ? stackEl : pv === "market" ? marketPanel : holdPanel(v, S, list));
+  }
+  return h("div", { class: "bank-cols stocks", dataset: { trade: tab } }, table, stackEl);
 }
 // 世界市場（遊戲內版本的世界股市新聞，每天由劇情排程寫；PR 339）。標題最多 14 字、壹句話最多 40 字、沒有數字；refs 是遊戲裡的股票名，點了跳去那支
 const TONE_MARK = { up: ["▲", "up"], down: ["▼", "down"], flat: ["－", ""] };
 function goStock(v, id) {
   const list = v.stocks ? v.stocks.list : [], i = list.findIndex(x => x.id === id);
   if (i < 0) return;
-  UI.bankTab = "stock"; UI.bankStock = i; rerender();
+  UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender();
 }
 const isPhone = () => window.innerWidth < 761 || window.innerHeight < 501;
 // 手機：把壹塊收成壹行，點開才看（電腦照舊整塊畫）
@@ -529,7 +533,7 @@ function creditPanel(c) {
 function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
   const list = v.stocks ? v.stocks.list : [];
   return h("div", { class: "bank-ticker" + (dup ? " dup" : ""), "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情"),
-    list.map((s, i) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; rerender(); } },
+    list.map((s, i) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
       h("small", null, s.name), h("b", null, fmt(s.price)), upDown(s.chg))));
 }
 
