@@ -311,21 +311,26 @@ SCREENS.fusion = root => {
     const can = canFuse(P, slots[0] && { kind: "pepe", key: slots[0].key }, slots[1] && { kind: "pepe", key: slots[1].key });
     info.append(
       placard([FUSION_TEXT.ready, `每一類：爸爸 ${ch.a}%、媽媽 ${ch.b}%、突變 ${ch.mutate}%`]),
-      h("table", { class: "rtable fusion-table" }, h("thead", null, h("tr", null, h("td", null, ""), h("td", null, "爸爸"), h("td", null, "媽媽"), h("td", null, "突變"))), h("tbody", null, rows)),
+      h("details", { class: "onescreen-card fusion-cmp" }, h("summary", null, h("b", null, "爸媽對照"), h("span", { class: "fusion-pal-open" }, "點開看每一類 ▾"), h("span", { class: "fusion-pal-close" }, "收起來 ▴")), h("table", { class: "rtable fusion-table" }, h("thead", null, h("tr", null, h("td", null, ""), h("td", null, "爸爸"), h("td", null, "媽媽"), h("td", null, "突變"))), h("tbody", null, rows))),
       h("p", { class: "sub" }, rec ? (P.recipes[rec.id] ? `配方「${rt ? rt.name : rec.id}」會發生。` : "這一對好像會發生什麼特別的事……") : mixOn ? "" : "沒有對上配方。稀有度照樣擲 d100。"),
       mixOn ? h("p", { class: "sub pal-hit" }, P.recipes[mix.id] ? `這兩種顏色會調出「${mix.child.顏色}」。` : "這兩種顏色放在壹起，好像會調出沒看過的顏色……") : null,
       !isFree(P) ? h("p", { class: "sub" }, `血統 ${blood} 點（爸媽愈稀有愈多：稀有 ${NUM.blood}、超稀有 ${NUM.blood * 2}、傳說 ${NUM.blood * 3}${mixOn ? `；調色 +${NUM.mixBlood}` : ""}）　融合要 ${price} 靈感${extra ? `（爸媽稀有，多收 ${extra}）` : ""}${traitHits(P, "fusion").map(t => `（${traitTag(t)}）`).join("")}，還要擲理智（${sanWords(rec && rec.san ? rec.san : NUM.fusionSan)}）`) : null,
       fusionPill(),
       h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", price)}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(price), can.ok ? null : h("p", { class: "warn-line" }, can.reason)));
   } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
-  info.append(palettePane());
+  // 調色盤收起來（壹個畫面看得完，docs/介面整合規劃.md 第六步）：點開才有
+  info.append(h("details", { class: "onescreen-card fusion-palette" }, h("summary", null, h("b", null, "調色盤"), h("span", { class: "fusion-pal-open" }, "點開看顏色怎麼調 ▾"), h("span", { class: "fusion-pal-close" }, "收起來 ▴")), palettePane()));
   const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true,
     onPick: item => { const i = slots[0] ? (slots[1] ? 0 : 1) : 0; slots[i] = { key: item.key }; snd("submit"); rerender(); },
     selected: item => slots.some(s => s && s.key === item.key) });
   const newRecipes = freshUnder(P, "codex", FRESH_KEY.recipe("")); // 圖鑑室的配方頁有新的：按鈕上也標「新」（11-08）
+  // 壹個畫面看得完（翊文 11-13，U-5 魔法陣＋P-6 零件）：標題壹行｜左邊魔法陣和兩座石台｜右邊說明和融合按鈕｜最下面收藏抽屜
+  root.classList.add("onescreen-room", "fusion-onescreen");
   root.append(roomHead("融合室", FUSION_TEXT.intro, btn([icon("scroll"), " 配方圖鑑", newRecipes ? freshTag("tab-fresh") : null], () => go("codex", { tab: "recipes" }), "ghost")),
-    h("p", { class: "sub" }, `配對的可能性：收藏 ${num(n)} 隻 × ${num(n)} 隻 ＝ ${num(n * n)} 種`),
-    h("div", { class: "fusion-wrap" }, altar, info), strip);
+    h("div", { class: "onescreen-main" },
+      h("div", { class: "fusion-stage" }, altar, h("p", { class: "fusion-count" }, `配對的可能性：收藏 ${num(n)} 隻 × ${num(n)} 隻 ＝ ${num(n * n)} 種`)),
+      h("aside", { class: "onescreen-side fusion-side" }, info)),
+    onescreenDrawer(strip, "你的收藏"));
 };
 export function fusionItemUI(key) { const e = P.pepes[key]; return e ? { kind: "pepe", key, pick: fromKey(key), perfect: !!e.perfect } : null; }
 export async function doFusion() {

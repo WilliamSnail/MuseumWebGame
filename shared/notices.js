@@ -41,6 +41,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "fusion-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "融合室：魔法陣、壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "融合室不用再往下滑：左邊是發光的魔法陣和兩座石台（爸爸、媽媽），兩隻都放好，水晶球就會亮；右邊是說明、機率和融合按鈕；收藏收在最下面的抽屜。",
+        "「爸媽對照」和「調色盤」收成銅牌按鈕，點了才展開。",
+      ]],
+    ],
+  },
+  {
     id: "house-health", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "莊家缺錢的時候，免費大禮包會少發", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
