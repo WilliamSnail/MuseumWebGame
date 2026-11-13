@@ -1,0 +1,203 @@
+/* ================================================================
+   Yuga Bot 銀行廳（11-13，美術統籌；ui_bank.js；版面草稿：Design 畫布「Yuga Bot 銀行廳：版面草稿」）
+   延續賭場銀行（casino.css 的 .cas-bank）的深藍底：深藍面板＋金色字和金線，存摺是米色表格。
+   骨架：.screen.onescreen-room.bank-onescreen（onescreen.css）。前綴 bank-（docs/class名單.md）
+   ================================================================ */
+.bank-onescreen { --bank-navy: #1D2B45; --bank-navy-2: #142036; --bank-navy-3: #0F192B; --bank-gold: #D6B25E; --bank-gold-hi: #F3DFA6; --bank-mute: #A9B4C8; --bank-text: #EEF1F6;
+  --bank-paper: #F6F1E3; --bank-paper-2: #E9E1CB; --bank-ink: #26324A; --bank-ink-soft: #6B7894; --bank-up: #A32F1E; --bank-down: #1F5A2C; }
+/* 房間的底：深藍，不用大廳的紫紅花紋 */
+.bank-onescreen { background: none; }
+body[data-screen="bank"] { background: #0F192B url(/ui2/ui2-bg-bank.webp) center top / cover fixed no-repeat; }
+
+/* 面板：深藍漸層、金色內框 */
+.bank-panel { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px 16px; color: var(--bank-text); border-radius: 10px; background: linear-gradient(160deg, var(--bank-navy) 0%, var(--bank-navy-2) 60%, var(--bank-navy-3) 100%);
+  box-shadow: inset 0 0 0 1px rgba(214, 178, 94, .75), inset 0 0 0 3px var(--bank-navy-2), inset 0 0 0 4px rgba(214, 178, 94, .35), 0 4px 14px rgba(0, 0, 0, .35); }
+.bank-ph { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(214, 178, 94, .45); }
+.bank-ph b { font-family: var(--serif, Georgia, serif); font-size: var(--type-head, 1.05rem); letter-spacing: .12em; color: var(--bank-gold-hi); }
+.bank-ph small { font-size: var(--type-small, .75rem); color: var(--bank-mute); }
+.bank-num { font-family: Georgia, "Times New Roman", serif; font-variant-numeric: tabular-nums; color: #FFFFFF; font-size: var(--type-head, 1.05rem); }
+.bank-num.big { font-size: 2rem; line-height: 1.1; }
+.bank-meta { margin: 0; font-size: var(--type-body, .875rem); color: #C9D1DE; }
+.bank-meta b { color: #FFFFFF; }
+.bank-hint, .bank-why { margin: 0; font-size: var(--type-small, .75rem); line-height: 1.5; color: var(--bank-mute); }
+.bank-why { color: #FFD9CC; }
+.bank-line, .bank-news { margin: 0; font-size: var(--type-body, .875rem); line-height: 1.6; color: #C9D1DE; }
+.bank-empty { margin: 8px 0; text-align: center; color: var(--bank-ink-soft); }
+.bank-onescreen .good { color: #9FD8B0; } .bank-onescreen .bad { color: #FF9C8A; }
+.bank-quote { display: flex; align-items: baseline; gap: 10px; }
+.bank-quote small { color: var(--bank-mute); }
+/* 漲跌：紅漲綠跌（台灣習慣），一定有 ▲▼。深藍底上用淺色，米色底上用深色 */
+.bank-chg { font-weight: 700; font-size: var(--type-body, .875rem); color: var(--bank-mute); }
+.bank-panel > .bank-quote .bank-chg.up, .bank-side .bank-chg.up { color: #FF8A78; }
+.bank-panel > .bank-quote .bank-chg.down, .bank-side .bank-chg.down { color: #7FD39B; }
+.bank-book .bank-chg.up, .bank-tk .bank-chg.up { color: var(--bank-up); }
+.bank-book .bank-chg.down, .bank-tk .bank-chg.down { color: var(--bank-down); }
+
+/* 按鈕：看得出能按（翊文 11-13：「借款跟存款可以明顯一點嗎，有點看不到像是按鈕」）。深藍底金邊、字加粗，主要的是金色 */
+.bank-onescreen .bank-btn { min-height: 44px; padding: 0 16px; border: 1px solid var(--bank-gold); border-radius: 6px; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: var(--bank-gold-hi); font-weight: 700; font-size: var(--type-body, .875rem); letter-spacing: .08em; cursor: pointer; box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 2px 4px rgba(0, 0, 0, .35); }
+.bank-onescreen .bank-btn:hover:not(:disabled) { filter: brightness(1.15); }
+.bank-onescreen .bank-btn.gold { background: linear-gradient(180deg, #F0D995, #C8A25A 48%, #A07C34); color: #1D2B45; border-color: #7A5A2A; text-shadow: 0 1px 0 rgba(255, 240, 200, .5); }
+.bank-onescreen .bank-btn.small { min-height: 40px; padding: 0 12px; }
+.bank-onescreen .bank-btn:disabled { opacity: .45; cursor: not-allowed; }
+.bank-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.bank-acts .bank-btn { flex: 1 1 0; min-width: 88px; }
+
+/* 頁籤：金色的選中、深藍的其他，有框有字才像按鈕 */
+.bank-tabs { flex: none; display: flex; gap: 6px; margin: 0 0 6px; overflow-x: auto; scrollbar-width: none; }
+.bank-tabbtn { position: relative; flex: none; min-height: 44px; padding: 0 22px; border: 1px solid var(--bank-gold); border-bottom: 0; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #C9D1DE; font-weight: 700; font-size: var(--type-body, .875rem); letter-spacing: .1em; cursor: pointer; }
+.bank-tabbtn.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); color: #1D2B45; text-shadow: 0 1px 0 rgba(255, 240, 200, .5); }
+.bank-tabbtn:hover:not(.on) { color: #FFFFFF; }
+.bank-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #FF6A55; box-shadow: 0 0 0 2px #1D2B45; }
+
+/* 主區：兩欄（左右各一張面板），格子太多時在裡面捲 */
+.bank-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr) 300px; }
+.bank-stage { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.bank-demo { margin: 0; padding: 4px 10px; border-radius: 6px; background: rgba(214, 178, 94, .18); color: var(--bank-gold-hi); font-size: var(--type-small, .75rem); }
+.bank-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.bank-cols.stocks { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.bank-stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* 存摺：米色表格 */
+.bank-book { display: grid; background: var(--bank-paper); color: var(--bank-ink); border-radius: 4px; overflow: hidden; font-variant-numeric: tabular-nums; }
+.bank-bh, .bank-row { display: grid; grid-template-columns: 1.1fr 1.5fr .9fr; align-items: center; column-gap: 8px; padding: 0 10px; }
+.bank-bh { min-height: 30px; font-size: var(--type-small, .75rem); letter-spacing: .12em; color: var(--bank-ink-soft); background: var(--bank-paper-2); border-bottom: 1px solid #C9B98F; }
+.bank-row { min-height: 54px; border: 0; border-bottom: 1px dashed #D3C7A6; background: none; color: inherit; font: inherit; font-size: var(--type-body, .875rem); text-align: left; }
+.bank-row b { font-weight: 700; }
+.bank-row small { display: block; font-size: var(--type-small, .75rem); color: var(--bank-ink-soft); }
+.bank-row small.bad { color: var(--bank-up); }
+.bank-row.empty { background: rgba(214, 178, 94, .12); }
+.bank-row.two { grid-template-columns: 1fr auto; min-height: 40px; }
+.bank-r { text-align: right; }
+.bank-tab-num { font-variant-numeric: tabular-nums; }
+.bank-book.stocks .bank-bh, .bank-book.stocks .bank-row { grid-template-columns: 1.6fr .9fr 1fr .9fr; }
+.bank-row.stock { cursor: pointer; width: 100%; }
+.bank-row.stock.on { background: #F3E3B0; box-shadow: inset 3px 0 0 var(--bank-up); }
+.bank-row.stock:hover:not(.on) { background: rgba(214, 178, 94, .15); }
+.bank-onescreen .bank-book .bank-btn { border-color: var(--bank-gold); }
+
+/* 股價小折線、進度條、景氣條 */
+.bank-spark { display: flex; align-items: flex-end; gap: 5px; height: 56px; }
+.bank-spark i { flex: 1; background: #6B7894; border-radius: 2px 2px 0 0; }
+.bank-spark i.last { background: #FF8A78; }
+.bank-meter { height: 12px; border-radius: 6px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(214, 178, 94, .5); overflow: hidden; }
+.bank-meter i { display: block; height: 100%; background: linear-gradient(90deg, #2D8F8F, #5CC4B4); }
+.bank-gauge { position: relative; height: 10px; margin: 8px 0 2px; border-radius: 5px; background: linear-gradient(90deg, #7FD39B, var(--bank-gold) 50%, #FF8A78); }
+.bank-gauge i { position: absolute; top: -2px; width: 4px; height: 14px; margin-left: -2px; background: #FFFFFF; }
+.bank-gl { display: flex; justify-content: space-between; font-size: var(--type-tiny, .6875rem); color: var(--bank-mute); }
+.bank-check { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: var(--type-small, .75rem); color: #C9D1DE; }
+.bank-check input { width: 20px; height: 20px; }
+.bank-who { margin: 0; padding: 0; list-style: none; font-size: var(--type-small, .75rem); line-height: 1.7; color: #C9D1DE; }
+.bank-who b { margin-right: 8px; color: var(--bank-gold-hi); }
+
+/* 右欄 */
+.bank-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.bank-acct { display: grid; gap: 0; }
+.bank-acct p { display: flex; justify-content: space-between; margin: 0; font-size: var(--type-body, .875rem); line-height: 1.8; }
+.bank-acct p span { color: var(--bank-mute); }
+.bank-acct p.net { margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(214, 178, 94, .45); }
+
+/* 最下面：今日行情，八支壹排；點壹支，股票頁籤就切到那支 */
+.bank-ticker { flex: none; display: flex; align-items: stretch; gap: 8px; margin-top: 8px; padding: 8px 12px; color: var(--bank-text); border-radius: 10px; background: linear-gradient(160deg, var(--bank-navy) 0%, var(--bank-navy-3) 100%); box-shadow: inset 0 0 0 1px rgba(214, 178, 94, .75), 0 4px 14px rgba(0, 0, 0, .35); overflow-x: auto; scrollbar-width: thin; }
+.bank-tl { flex: none; align-self: center; width: 3em; font-size: var(--type-small, .75rem); letter-spacing: .1em; color: var(--bank-gold-hi); }
+.bank-tk { flex: 1 0 96px; min-width: 96px; display: grid; gap: 0; justify-items: start; padding: 5px 8px; border: 2px solid var(--bank-gold); border-radius: 4px; background: var(--bank-paper); color: var(--bank-ink); font: inherit; text-align: left; cursor: pointer; }
+.bank-tk small { font-size: var(--type-small, .75rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bank-tk b { font-family: Georgia, serif; font-size: 1.0625rem; }
+.bank-tk.on { border-color: var(--bank-up); background: #F3E3B0; }
+
+/* 手機直拿：右欄收成壹行淨值，主區壹欄 */
+@media (max-width: 760px) {
+  .bank-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .bank-side { flex-direction: row; overflow: visible; }
+  .bank-side > .bank-panel:not(:first-child) { display: none; }
+  .bank-side .bank-acct p:not(.net) { display: none; }
+  .bank-side .bank-ph { display: none; }
+  .bank-side > .bank-panel { padding: 6px 14px; flex: 1; }
+  .bank-side .bank-acct p.net { margin: 0; padding: 0; border: 0; }
+  .bank-cols, .bank-cols.stocks { grid-template-columns: minmax(0, 1fr); }
+  .bank-tabbtn { padding: 0 14px; }
+  .bank-num.big { font-size: 1.5rem; }
+  .bank-ticker { margin-top: 4px; padding: 4px 8px; }
+  .bank-tl { display: none; }
+  .bank-tk { flex: 0 0 84px; min-width: 84px; }
+}
+/* 手機橫拿 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr) 200px; }
+  .bank-panel { padding: 6px 10px; }
+  .bank-num.big { font-size: 1.4rem; }
+  .bank-tabbtn { min-height: 34px; padding: 0 12px; }
+  .bank-row { min-height: 40px; }
+  .bank-ticker { padding: 3px 8px; margin-top: 4px; }
+  .bank-hint { display: none; }
+}
+/* 標題銅牌：廳名太長會被省略，讓廳名完整、說明條縮 */
+.bank-onescreen > .room-head h1 { flex: none; white-space: nowrap; }
+/* 房間的底：背景圖用在整頁，不要被 #room 的紫紅蓋掉 */
+body[data-screen="bank"] #room { background: none; }
+/* 右欄放不下的時候在自己裡面捲；景氣和新聞固定在帳戶下面 */
+.bank-side .bank-panel { flex: none; }
+/* 股票表：每支壹行，八支放得下不用捲 */
+.bank-book.stocks .bank-row { min-height: 34px; }
+.bank-book.stocks .bank-row small.ln { display: inline; margin-left: 6px; font-size: var(--type-tiny, .6875rem); }
+.bank-book.stocks .bank-bh { min-height: 26px; }
+.bank-row.two { min-height: 30px; }
+.bank-spark { height: 40px; }
+.bank-stage > .bank-cols > .bank-stack > .bank-panel .bank-hint { display: none; }
+@media (min-width: 761px) and (min-height: 501px) { .bank-demo { padding: 2px 10px; } .bank-panel { padding: 10px 14px; } }
+/* 手機直拿：壓緊，存款、借款、館債壹頁放得下；股票、財報放不下的部分在主區裡捲 */
+@media (max-width: 760px) {
+  .bank-hint, .bank-demo { display: none; }
+  .bank-panel { padding: 8px 12px; gap: 4px; }
+  .bank-ph { padding-bottom: 3px; }
+  .bank-onescreen .bank-btn { min-height: 44px; }
+  .bank-row { min-height: 44px; }
+  .bank-row.two { min-height: 32px; }
+  .bank-bh { min-height: 24px; }
+  .bank-meta { font-size: var(--type-small, .75rem); }
+  .bank-tk { padding: 3px 6px; } .bank-tk b { font-size: .9375rem; }
+  .bank-book.stocks .bank-row { min-height: 40px; } .bank-book.stocks .bank-row small.ln { display: none; }
+  .bank-spark { height: 32px; }
+  .bank-stage { gap: 6px; }
+}
+@media (max-width: 760px) {
+  .bank-bh, .bank-row { grid-template-columns: .85fr 1.5fr auto; }
+  .bank-onescreen .bank-book .bank-btn { white-space: nowrap; padding: 0 10px; min-height: 40px; }
+  .bank-row { min-height: 40px; }
+  .bank-tk { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 6px; flex: 0 0 96px; min-width: 96px; }
+  .bank-tk small { flex: 1 0 100%; }
+  .bank-tk b { font-size: .875rem; } .bank-tk .bank-chg { font-size: var(--type-tiny, .6875rem); }
+  .bank-ticker { padding: 3px 6px; gap: 4px; }
+  .bank-side > .bank-panel { padding: 4px 12px; }
+}
+/* 手機橫拿：高度只有 375。標題和頁籤壓成薄薄兩行，今日行情收掉（股票頁籤裡就有），淨值放右欄 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-onescreen > .room-head { flex-wrap: nowrap; margin-bottom: 2px; }
+  .bank-onescreen > .room-head .sub { display: none; }
+  .bank-onescreen > .room-head .rh-row { order: 0; margin-left: auto; }
+  .bank-tabs { margin-bottom: 4px; }
+  .bank-tabbtn { min-height: 32px; font-size: var(--type-small, .75rem); }
+  .bank-ticker, .bank-demo { display: none; }
+  .bank-side { flex-direction: column; overflow-y: auto; }
+  .bank-side > .bank-panel:not(:first-child) { display: none; }
+  .bank-onescreen .bank-btn { min-height: 36px; }
+  .bank-row { min-height: 36px; }
+  .bank-panel { padding: 6px 10px; gap: 3px; }
+  .bank-cols, .bank-cols.stocks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-cols, .bank-cols.stocks { grid-template-columns: minmax(0, 1fr); }
+  .bank-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr) 150px; }
+}
+/* P-12 的零件：活存的錢罐、定存的保險箱、定存格的鎖 */
+.bank-pic { flex: none; display: block; object-fit: contain; }
+.bank-big { display: flex; align-items: center; gap: 12px; }
+.bank-pic.jar { width: 54px; height: 60px; }
+.bank-safe { display: flex; align-items: center; gap: 10px; }
+.bank-pic.safe { width: 56px; height: 52px; }
+.bank-safe small { font-size: var(--type-small, .75rem); color: var(--bank-mute); }
+.bank-pic.lock { float: left; width: 22px; height: 28px; margin: 4px 8px 0 0; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .bank-safe, .bank-pic.jar { display: none; } .bank-pic.lock { width: 18px; height: 22px; } }
+.bank-tabbtn { display: inline-flex; align-items: center; gap: 6px; }
+.bank-ti { display: inline-flex; }
+@media (max-width: 760px) { .bank-tabbtn { padding: 0 10px; gap: 4px; } .bank-ti svg { width: 16px; height: 16px; } }
+@media (max-width: 400px) { .bank-ti { display: none; } .bank-tabbtn { padding: 0 12px; } }
