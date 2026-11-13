@@ -9,7 +9,7 @@ import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
 import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
@@ -125,7 +125,7 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。登入的館友交件還會拿到壹點籌碼。", cBtn), commentsBox, quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
+  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。登入的館友交件還會拿到壹點籌碼。", cBtn), commentsBox, regularsStrip(list), quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
@@ -196,9 +196,38 @@ export function autoSummary(res) {
     res.skipped ? h("p", { class: "ad-note" }, `有 ${res.skipped} 張沒交成（委託換新了）。`) : null,
   ], "ad-modal", "好");
 }
+// ---------- 老主顧（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」；規劃 docs/銀行特展老主顧招領規劃.md 第三節） ----------
+// 委託櫃台上面壹條：三張名片，名字、第幾段（●●○○○）、今天在不在。還沒來過的不寫他是誰。點來過的那位，重讀他說過的話
+export function regularsStrip(list) {
+  const v = regularsView(P, list);
+  if (!v) return null;
+  if (!v.open) return h("div", { class: "rg-strip off" }, h("b", { class: "rg-h" }, "老主顧"), h("span", null, `再解開 ${Math.max(1, v.need - v.have)} 個選項，會有老主顧開始來櫃台。他們壹人有壹段故事，壹次說壹段。`));
+  return h("div", { class: "rg-strip", role: "group", "aria-label": "老主顧" }, h("b", { class: "rg-h" }, "老主顧"),
+    v.list.map(x => {
+      const dots = h("span", { class: "rg-dots", "aria-label": `第 ${x.step}／${x.of} 段` }, Array.from({ length: x.of }, (_, k) => h("i", { class: k < x.step ? "on" : "" })));
+      const state = x.done ? "故事走完了" : x.today === "here" ? "今天在櫃台" : x.today === "done" ? "今天交過了" : x.met ? "下次再來" : "還沒來過";
+      return btn([h("b", { class: "rg-name" }, x.met ? x.name : "？？？"), dots, h("small", null, state)], () => regularsStory(x),
+        "rg-card" + (x.today === "here" ? " here" : "") + (x.done ? " done" : ""), x.met ? { title: "重讀他說過的話" } : { disabled: true });
+    }));
+}
+function regularsStory(x) {
+  return quirkLayer(x.name, x.done ? `故事走完了。他送你的：${x.gift}` : `走到第 ${x.step}／${x.of} 段`, [
+    h("p", { class: "rg-intro" }, `「${x.intro}」`),
+    ...x.said.map((s, k) => h("div", { class: "rg-step" }, h("small", null, `第 ${k + 1} 段`), h("p", null, ptNode(s.text)), h("blockquote", null, `「${s.comment}」`))),
+    x.finale ? h("p", { class: "rg-finale" }, `「${x.finale}」`) : h("p", { class: "hint" }, x.today === "here" ? "他今天在櫃台等你，下面那張就是。" : "下壹段還沒來。他會輪流來，按順序說。"),
+  ], "rg-modal", "好");
+}
+// 交完老主顧的壹段：跳壹張小卡，他說的話、第幾段、下次再來（走完的那段寫結尾）
+function regularDone(line, comment) {
+  return quirkLayer(line.name, line.finale ? "故事走完了" : `第 ${line.step}／${line.of} 段`, [
+    h("blockquote", { class: "rg-say" }, `「${comment}」`),
+    line.finale ? h("p", { class: "rg-finale" }, `「${line.finale}」`) : h("p", { class: "hint" }, "他點點頭，說下次再來。"),
+  ], "rg-modal", "好");
+}
 export function noteCard(c, i) {
-  const card = h("div", { class: "note-card" + (c.done ? " done" : ""), "aria-label": `委託：${c.text}` },
+  const card = h("div", { class: "note-card" + (c.done ? " done" : "") + (c.kind === "line" ? " line" : ""), "aria-label": `委託：${c.text}` },
     h("i", { class: "pin" }),
+    c.kind === "line" ? h("span", { class: "nc-ribbon" }, `老主顧・第 ${c.step + 1} 段`) : null,
     h("div", { class: "nc-tags" }, h("span", { class: "tag" }, c.kind === "line" ? `${c.client} ${c.step + 1}／${CLIENT_LINES[c.line].steps.length}` : KIND_NAME[c.kind] || c.kind), h("span", { class: "stars", title: "難度" }, "★".repeat(QUEST_STARS[c.kind] || 1))), // 「治療委託」的標籤拿掉了（11-09，決定 0027）：治法是交委託的話，哪壹張都算
     c.intro ? h("p", { class: "nc-intro" }, ptNode(c.intro)) : null,
     h("p", { class: "nc-text" }, ptNode(c.text)),
@@ -209,9 +238,7 @@ export function noteCard(c, i) {
   if (!c.done) placeTarget(card, c.kind === "pillow" ? ["pillow"] : ["pepe"], item => {
     const r = deliver(P, i, item);
     if (r.ok && r.skill) note(`說服 ${r.skill.roll.total} ≤ ${r.skill.target}？${r.skill.success ? "成功：賞金多三成" : "沒談成，照原價"}`, r.skill.success ? "good" : "neutral");
-    if (r.ok && r.line) {
-      later(() => note(r.line.finale ? `${r.line.name}：「${r.line.finale}」` : `${r.line.name}的故事 ${r.line.step}／${r.line.of}`, "good"), 900);
-    }
+    if (r.ok && r.line) later(() => regularDone(r.line, r.comment), 1500); // 等委託單飛走、畫面重畫完才跳
     if (!r.ok) { snd("error"); note(r.reason, "bad"); card.classList.remove("nope"); void card.offsetWidth; card.classList.add("nope"); return false; }
     snd("stamp");
     if (ADDONS.jobChips) ADDONS.jobChips([c.id]); // 交委託拿壹點籌碼（決定 0062）

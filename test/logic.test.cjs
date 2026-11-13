@@ -429,6 +429,26 @@ T("E 分享碼來回一致", () => {
   assert.strictEqual(G.scoreItems(v.items).score, G.hallScore(P).score);
   assert.strictEqual(G.parseHallCode("亂打的"), null);
 });
+T("E 老主顧：還沒開放、今天在櫃台、交過的段落、走完", () => {
+  const P = fresh(); P.unlockCount = 0;
+  let v = G.regularsView(P, []);
+  assert.ok(v && !v.open && v.need === G.NUM.linesFrom && v.list.length === Object.keys(G.CLIENT_LINES).length);
+  assert.ok(v.list.every(x => !x.met && x.step === 0 && x.said.length === 0));
+  P.unlockCount = G.NUM.linesFrom;
+  const id = Object.keys(G.CLIENT_LINES)[0], L = G.CLIENT_LINES[id];
+  v = G.regularsView(P, [{ kind: "line", line: id, done: false }]);
+  const a = v.list.find(x => x.id === id);
+  assert.ok(v.open && a.met && a.today === "here" && !a.done);
+  P.lines[id] = 2;
+  v = G.regularsView(P, [{ kind: "line", line: id, done: true }]);
+  const b = v.list.find(x => x.id === id);
+  assert.strictEqual(b.today, "done"); assert.strictEqual(b.said.length, 2); assert.strictEqual(b.said[1].comment, L.steps[1].comment);
+  assert.strictEqual(b.finale, null);
+  P.lines[id] = L.steps.length + 3; // 壞資料：多出來的不算
+  const c = G.regularsView(P, []).list.find(x => x.id === id);
+  assert.ok(c.done && c.step === L.steps.length && c.finale === L.finale && c.said.length === L.steps.length);
+  assert.strictEqual(G.regularsView(G.newProfile("free"), []), null, "自由模式沒有");
+});
 T("E 參觀者給靈感", () => {
   const P = fresh();
   assert.strictEqual(G.visitorArrive(P), null);

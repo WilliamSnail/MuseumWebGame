@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "regulars", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "委託櫃台：老主顧的故事看得到了", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "委託櫃台上面多了壹條「老主顧」：三張名片，寫他走到第幾段（●●○○○）、今天在不在櫃台。還沒來過的只寫「？？？」。",
+        "點來過的那位，可以重讀他說過的話：他要的是什麼、交了之後他說了什麼。",
+        "老主顧的委託單掛紅緞帶「老主顧・第幾段」；交完會跳壹張小卡，寫他說的話。",
+        "老主顧今天在櫃台，大廳的「今天要做的事」也會寫出來。",
+      ]],
+    ],
+  },
+  {
     id: "nameplate-blank", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "合作地下：理智用完的隊員改叫「名牌空白」", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
