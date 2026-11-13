@@ -91,15 +91,12 @@ export async function stockTwBackfill(nowMs, fetchFn, dbx) {
   return await D.runTransaction(async tx => {
     const s = await tx.get(ref), old = s.exists ? s.data() : null;
     const doc = old ? twDocRoll(old, old.day && old.day < today ? today : old.day, 5) : twDocNew(today);
-    if (!twBackfill(doc, got.day, got.close, got.prev)) return "不用補";
+    if (got.day >= today || !twBackfill(doc, got.day, got.close, got.prev)) return "不用補"; // 今天的（09:00 開始有成交了）不當成收盤
     doc.updatedAt = nowMs;
     tx.set(ref, doc);
     return "補了 " + got.day;
   });
 }
-export const stockTwBackfillTick = onSchedule({ schedule: "5 6 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
-  console.log("stockTwBackfill", await stockTwBackfill(Date.now()));
-});
 
 let secretMem = null;
 // 亂數種子用的伺服器祕密（見檔頭）
@@ -123,7 +120,7 @@ export async function twSecret() {
 export async function stockTwRun(nowMs, fetchFn, secretFn, dbx) {
   const D = dbx || db(), ref = D.doc("stocksTw/latest");
   const day = taipeiDay(nowMs), idx = twIdx(nowMs);
-  if (outStockWeekend(day) || idx == null || idx < 0 || idx > 270) return "不在盤中";
+  if (outStockWeekend(day) || idx == null || idx < 0 || idx > 272) return "不在盤中";
   const snap = await ref.get();
   const doc0 = twDocRoll(snap.exists ? snap.data() : null, day, 5);
   let need = twNeed(doc0, idx);
@@ -157,7 +154,9 @@ export async function stockTwRun(nowMs, fetchFn, secretFn, dbx) {
 }
 
 export const stockTwTick = onSchedule({ schedule: "* 9-13 * * 1-5", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
-  console.log("stockTwTick", await stockTwRun(Date.now()));
+  const now = Date.now(), r = await stockTwRun(now);
+  if (/^09:00$/.test(new Date(now + 8 * 3600000).toISOString().slice(11, 16))) console.log("stockTwBackfill", await stockTwBackfill(now)); // 排程只留 3 個（Cloud Scheduler 3 個以內免費）：台股補收盤併進這個每分鐘的排程，09:00 做壹次
+  console.log("stockTwTick", r);
 });
 
 // ---------- 給 functions/casino.js 讀 ----------

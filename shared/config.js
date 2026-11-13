@@ -463,7 +463,8 @@ export const NUM = {
       // 台股盤中（11-14，規劃 2.8d，shared/stocks_tw.js）：from／len 開盤、收盤（台灣時間 09:00 起算的分鐘，09:00～13:30 ＝ 0～270）；seg 幾分鐘壹個真實錨點；
       //   giveUp 開盤後超過幾分鐘還沒抓到第壹個價，當天不開；retry 錨點時間過了幾分鐘內重抓，再抓不到這壹段真實成分當 0；
       //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
-      tw: { from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
+      // noOpenIdx：台股 13:25（第 265 分鐘）起不能新開槓桿、放空（收盤集合競價那五分鐘，翊文 11-14）；13:30 用官方收盤價平倉（收盤後再抓壹次，twNeed 的 fin）
+      tw: { noOpenIdx: 265, from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
         sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3 } },
       // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；

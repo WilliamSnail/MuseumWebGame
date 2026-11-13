@@ -102,5 +102,23 @@ T("補最近壹次收盤：休市時也有真實價（casStockSetReal 看得到�
   assert.ok(reals && typeof reals === "object");
 });
 
+T("台股收盤：13:30 後再抓壹次官方收盤價，最後壹分鐘改成它（只抓壹到兩次）；13:25 起不能新開槓桿", G => {
+  const doc = G.twDocNew(W);
+  feed(G, doc, 0, 1000); for (let i = 1; i <= 270; i++) feed(G, doc, i, 1000 + i % 7);
+  assert.strictEqual(G.twNeed(doc, 270), null);
+  assert.strictEqual(JSON.stringify(G.twNeed(doc, 271)), JSON.stringify({ kind: "fin", fetch: true }));
+  assert.ok(G.twApply(doc, G.twNeed(doc, 271), 271, { [TW]: { open: 1, prev: 1000, px: 1033, lag: 0 } }, "祕密"));
+  assert.strictEqual(doc.ser[TW][270], 1.033, "最後壹分鐘 ＝ 官方收盤價"); assert.ok(doc.fin); assert.strictEqual(G.twNeed(doc, 272), null, "只做壹次");
+  const d2 = G.twDocNew(W); feed(G, d2, 0, 1000); for (let i = 1; i <= 270; i++) feed(G, d2, i, 1000);
+  G.twApply(d2, G.twNeed(d2, 271), 271, null, "祕密"); assert.ok(!d2.fin, "抓不到再試"); G.twApply(d2, G.twNeed(d2, 272), 272, null, "祕密"); assert.ok(d2.fin, "第二次還抓不到就算了");
+  // 13:25 不能新開
+  const C = G.NUM.casino.stock.tw; assert.strictEqual(C.noOpenIdx, 265);
+  const w = G.casWalletFix(G.casWalletNew(), W); w.chips = 5e8; const house = mkHouse(G, W); house.bankroll = 5e8;
+  const src = { now: id => ({ px: 24000, idx: 260, open: true, lag: 0, stale: false }), path: () => [], close: () => null };
+  const at = idx => Date.parse(W + "T09:00:00+08:00") + idx * 60000;
+  const ok = G.casLevOpen(w, house, { id: TW, side: "long", lev: 2, qty: 1 }, W, at(264), src); assert.ok(ok.ok, ok.reason);
+  const no = G.casLevOpen(w, house, { id: TW, side: "long", lev: 2, qty: 1 }, W, at(265), src); assert.ok(!no.ok && /13:25/.test(no.reason), no.reason);
+});
+
 console.log(`${pass} passed, ${fail} failed（直接用真實價）`);
 process.exit(fail ? 1 : 0);
