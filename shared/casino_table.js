@@ -10,8 +10,9 @@
 //  ctx：{ wallets: { uid: 錢包 }, house, day }（會改）。
 // ================================================================
 import { NUM } from "./config.js";
+import { CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casDealerPlay, casHand, casOutcome, casPayout, casPoint, casShown, casShuffle } from "./casino.js";
-import { casSettle, casWinTicket } from "./casino_wallet.js";
+import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./casino_wallet.js";
 
 export const CAS_QUICK = ["加油", "好牌", "莊家別爆", "再來壹把", "我不行了", "運氣來了"]; // 快速短句（自由打字另外走 cleanSay）
 
@@ -35,7 +36,9 @@ export function casTBet(t, uid, text, info, ctx, now) {
   if (!s || !w) return { ok: false, reason: "你不在這桌" };
   if (t.phase !== "bet") return { ok: false, reason: "這局已經開始了，等下一局" };
   if (s.bet > 0) return { ok: false, reason: "你已經下注了" };
-  const chk = casBetCheck(text, w.chips);
+  const hs = ctx.house, left = hs ? casPayLeft(hs, ctx.day) : Infinity, top = hs ? Math.min(casBetMax(hs), left === Infinity ? Infinity : Math.floor(left / NUM.casino.risk.betMult)) : Infinity;
+  if (hs && (left <= 0 || top < NUM.casino.minBet)) return { ok: false, gag: true, reason: CAS_TEXT.payCapDone };
+  const chk = casBetCheck(text, w.chips, top);
   if (!chk.ok) return { ok: false, gag: true, reason: chk.line };
   s.allin = chk.bet === w.chips;
   w.chips -= chk.bet;

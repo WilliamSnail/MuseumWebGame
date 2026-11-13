@@ -4,7 +4,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; G.NUM.casino.grants = []; // 這裡測的是舊的換日重開（11-14 預設關掉）；文化部補助另外測
+const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; G.NUM.casino.houseLoan.on = false; G.NUM.casino.grants = []; // 這裡測的是舊的換日重開（11-14 預設關掉）；文化部補助另外測
   try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } finally { G.setRng(null); } };
 const D0 = "2026-11-09";
 const plus = (d, n) => { const [y, m, x] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, x + n)).toISOString().slice(0, 10); };
@@ -197,7 +197,7 @@ T("壞資料、舊資料：沒有 led 的舊錢包／莊家會補；casMint 不�
   const w = G.casWalletFix({ v: 1, chips: 5 }, D0);
   assert.strictEqual(JSON.stringify(w.led), '{"mint":{},"burn":{}}');
   const h = G.casHouseFix({ bankroll: 1 }, D0).house;
-  assert.strictEqual(JSON.stringify(h.led), '{"mint":{},"flow":{}}');
+  assert.strictEqual(JSON.stringify(h.led), '{"mint":{},"flow":{},"burn":{}}');
   assert.strictEqual(G.casMint(w, "x", -5), 0); assert.strictEqual(G.casMint(w, "x", NaN), 0);
   assert.strictEqual(G.casMint(w, "x", 5.9), 5); assert.strictEqual(w.chips, 10);
   assert.strictEqual(G.casBurn(w, "y", 3), 3); assert.strictEqual(w.chips, 7);
