@@ -36,7 +36,7 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
-import { casStockBuy, casStockRoll, casStockSell, casStockView } from "./shared/casino_stock.js";
+import { STOCK_IDS, casStockBuy, casStockRoll, casStockSell, casStockView } from "./shared/casino_stock.js";
 import { outStockMovesFor, outStockReady } from "./shared/stocks.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
@@ -239,7 +239,8 @@ async function stocksDaily() {
 // 股票換日調價（shared/casino_stock.js）：資料到了才調，沒到就先不動（排程晚了的時候不要用「缺資料」的做法把今天定死）
 export function casStockRollIfReady(house, day, daily) {
   if (!daily || !outStockReady(daily, day)) return false;
-  const moves = outStockMovesFor(daily, day, Object.keys((house.stk && house.stk.px) || {}));
+  // 清單要用 OUT_IDS，不能讀 house.stk.px：第壹次調價時 house.stk 還沒建起來，讀到空的，七支就全部拿到 0（翊文 11-14 回報「怎麼價格通通一樣」）
+  const moves = outStockMovesFor(daily, day, STOCK_IDS);
   return casStockRoll(house, day, moves).done;
 }
 // 股票買賣：d.op 是 buy、sell；d.id 哪壹支、d.n 幾股（"max" ＝全賣）
