@@ -266,3 +266,33 @@
 .onescreen-side .ad-bar.off .ad-btn:disabled { opacity: 1; filter: none; color: #4A3220; background: #D9C9A3; border: 2px dashed #8A6A3A; box-shadow: none; cursor: not-allowed; }
 .onescreen-side .ad-bar.off .ad-btn:disabled .ic { opacity: .75; }
 .onescreen-side .ad-bar.off .ad-why { color: #8E2A24; font-weight: 700; }
+
+/* 展廳側欄看得清楚（翊文 11-13：「右邊的主題展也不夠明顯，提示這是一個可以展開的告示也不夠」）：
+   側欄是淺色羊皮紙，裡面原本照深色牆寫的字（--on-wall 這些）換成深色 */
+.hall-onescreen .onescreen-side { --on-wall: #2E2014; --on-wall-sub: #5A4030; --gold-hi: #8E2A24; --gold: #7A5A2A; color: #3A2A20; }
+/* 主題那條：整條是壹顆銅牌按鈕，右邊寫「點開看怎麼擺 ▾」 */
+.hall-onescreen .onescreen-side .hall-themes { padding: 6px 8px; }
+.hall-onescreen .onescreen-side .hall-themes summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 4px 12px; border: 10px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 10px stretch; color: #3A1E10; list-style: none; cursor: pointer; }
+.hall-onescreen .onescreen-side .hall-themes summary::-webkit-details-marker { display: none; }
+.hall-onescreen .onescreen-side .hall-themes summary b { font-size: 1rem; }
+.hall-onescreen .onescreen-side .hall-themes summary span { flex: none; font-size: .78rem; font-weight: 700; color: #8E2A24; }
+.hall-onescreen .onescreen-side .hall-themes:not([open]) summary { animation: themes-call 2.4s ease-in-out 3; }
+@keyframes themes-call { 50% { filter: brightness(1.15) drop-shadow(0 0 6px rgba(238, 190, 90, .8)); } }
+.hall-onescreen .onescreen-side .hall-themes .hall-themes-close, .hall-onescreen .onescreen-side .hall-themes[open] .hall-themes-open { display: none; }
+.hall-onescreen .onescreen-side .hall-themes[open] .hall-themes-close { display: inline; }
+body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animation: none; }
+/* 主題的小卡：淺底深字 */
+.hall-onescreen .onescreen-side .tg-title b { color: #8E2A24; }
+.hall-onescreen .onescreen-side .tg-title span:not(.ic) { color: #5A4030; font-size: .8125rem; }
+.hall-onescreen .onescreen-side .tg-grid { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.hall-onescreen .onescreen-side .tg-card { background: rgba(255, 250, 236, .7); border-color: rgba(122, 90, 42, .45); }
+.hall-onescreen .onescreen-side .tg-card.ok { background: #F1E2B8; border-color: #B38A3E; }
+.hall-onescreen .onescreen-side .tg-card.top { background: #EBD49A; border-color: #8E2A24; }
+.hall-onescreen .onescreen-side .tg-card.top .tg-name, .hall-onescreen .onescreen-side .tg-card.top .tg-have { color: #5A1A12; }
+.hall-onescreen .onescreen-side .tg-name { color: #2E2014; }
+.hall-onescreen .onescreen-side .tg-bonus { color: #2E6B3A; border-color: rgba(46, 107, 58, .6); }
+.hall-onescreen .onescreen-side .tg-bar { background: rgba(122, 90, 42, .2); }
+.hall-onescreen .onescreen-side .tg-have { color: #7A5A2A; }
+/* 館友來過：名字、日期深色 */
+.hall-onescreen .onescreen-side .hall-guests h3 small, .hall-onescreen .onescreen-side .hall-guests small, .hall-onescreen .onescreen-side .hall-guests time { color: #7A5A2A; opacity: 1; }
+.hall-onescreen .onescreen-side .hall-guests b, .hall-onescreen .onescreen-side .hall-guests a { color: #2E2014; }
