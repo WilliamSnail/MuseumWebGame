@@ -20,6 +20,7 @@ import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, cl
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { CAS_AUC } from "../../shared/casino_auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
@@ -27,7 +28,7 @@ import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
-import { artMarketOpen, artMarketRow, artMarketShelf } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
+import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
 // 節日接上每週劇情（11-09）：那一天是節日，週包的那天就帶著節日（名字、節日的話、藝術品），書和公告可以提到它
 setStoryHolidayOf(holidayOf);
@@ -547,14 +548,73 @@ export function showToday() {
   return { title: d.show.title, total: d.show.works.length, unseen: d.show.works.filter(w => !S.works[w.id]).length };
 }
 export function galleryTabs(active) {
-  if (!on()) return null;
-  const W = curWeek(), d = todayOf(W);
-  if (!d || !d.show) return null;
-  const S = storyState(P), unseen = d.show.works.filter(w => !S.works[w.id]).length;
+  const W = on() ? curWeek() : null, d = W ? todayOf(W) : null, show = d && d.show ? d.show : null;
+  if (!show && !collectOn() && !auctionOn()) return null;
+  const S = show ? storyState(P) : null, unseen = show ? show.works.filter(w => !S.works[w.id]).length : 0;
+  const tab = (id, ic, label, onClick, ...more) => h("button", { type: "button", class: "seg-btn" + (active === id ? " on" : ""), "aria-pressed": String(active === id), onClick }, icon(ic), h("span", null, label), ...more);
   return h("div", { class: "seg hall-tabs big-tabs gallery-tabs" },
-    h("button", { type: "button", class: "seg-btn" + (active === "main" ? " on" : ""), onClick: () => go("gallery", {}, { action: false }) }, icon("gallery"), h("span", null, "常設展")),
-    h("button", { type: "button", class: "seg-btn" + (active === "show" ? " on" : ""), onClick: () => go("gallery", { show: true }, { action: false }) }, icon("star"), h("span", null, `今日特展：${d.show.title}`),
-      unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag() : null));
+    tab("main", "gallery", "常設展", () => go("gallery", {}, { action: false })),
+    show ? tab("show", "star", `今日特展：${show.title}`, () => go("gallery", { show: true }, { action: false }), unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag() : null) : null,
+    collectOn() ? tab("collect", "hall", "我收藏的畫", () => go("gallery", { tab: "collect" }, { action: false })) : null,
+    auctionOn() ? tab("auction", "medal", "拍賣", () => go("gallery", { tab: "auction" }, { action: false })) : null);
+}
+// 畫廊的骨架（介面重塑，翊文 11-14：「畫廊要有好的新介面」）：標題壹行｜頁籤｜左邊壹面牆（畫框排成壹排，左右滑）｜右邊側欄（怎麼看、怪癖的治法）。整頁不捲
+// 手機（直拿、橫拿）把側欄收成壹條，點開才看。main、side 是要放進去的元素（null 會被略過）
+export function galleryShell(root, active, sub, main, side) {
+  root.classList.add("onescreen-room", "gallery-onescreen");
+  const wall = h("div", { class: "gal-wall" }, ...main.filter(Boolean)), aside = h("aside", { class: "onescreen-side gal-side" }, ...(side || []).filter(Boolean));
+  root.append(...[roomHead("畫廊", sub), galleryTabs(active), h("div", { class: "onescreen-main gal-main" }, wall, aside)].filter(Boolean));
+  wall.querySelectorAll(".gal-corridor").forEach(fitFrames);
+}
+// 畫框的寬度跟著畫的比例走（翊文 11-14：高螢幕上框被拉得又高又窄，畫只佔中間壹小塊）：框的高度是牆給的，寬度＝畫的內高×畫的寬高比＋框邊。
+// 畫的比例看 svg 的 viewBox；牆的大小變了（轉向、縮放視窗）就重算
+function fitFrames(corr) {
+  const run = () => {
+    if (!corr.isConnected) { if (ro) ro.disconnect(); window.removeEventListener("resize", run); return; }
+    corr.querySelectorAll(".frame").forEach(f => {
+      const svg = f.querySelector("svg"), vb = svg && svg.viewBox && svg.viewBox.baseVal;
+      if (!vb || !vb.width || !vb.height) return;
+      const cs = getComputedStyle(f), px = k => parseFloat(cs[k]) || 0;
+      const padX = px("borderLeftWidth") + px("borderRightWidth") + px("paddingLeft") + px("paddingRight"), padY = px("borderTopWidth") + px("borderBottomWidth") + px("paddingTop") + px("paddingBottom");
+      const innerH = f.getBoundingClientRect().height - padY;
+      if (innerH > 0) f.style.width = Math.round(innerH * vb.width / vb.height + padX) + "px";
+    });
+  };
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(run) : null;
+  if (ro) ro.observe(corr);
+  window.addEventListener("resize", run);
+  requestAnimationFrame(run);
+}
+// 側欄的「怎麼看」：電腦展開，手機收起來（點開 ▾）
+export function galleryRules(title, ...lines) {
+  const phone = window.innerWidth < 761 || window.innerHeight < 501;
+  return h("details", { class: "onescreen-card gal-rules", open: phone ? null : "" }, h("summary", null, h("b", null, title), h("span", { class: "gal-open" }, "點開 ▾"), h("span", { class: "gal-close" }, "收起來 ▴")), ...lines);
+}
+// 我收藏的畫（藝術市場）
+export function galleryCollect(root) {
+  artMarketOpen();
+  galleryShell(root, "collect", "買下的畫收在這裡，隨時可以賣回館方。",
+    [artMarketShelf()],
+    [galleryRules("怎麼運作", h("p", null, "畫是避險資產：價錢安安靜靜，不閃、不跳。"), h("p", null, "買下、賣回都在「今日特展」每幅畫的下面；收藏的畫在這裡看，回本還要幾天也寫在這裡。"))]);
+}
+// 收藏的畫也能看（翊文 11-14）：照今日特展的看畫流程走（viewShowWork：第壹次看拿靈感、可怕的畫擲理智）。找不到畫（那週的畫已經收起來了）就說壹聲
+ART_HOOKS.view = id => {
+  const weeks = allWeeks();
+  let found = null;
+  weeks.forEach(W => { const w = W.works && W.works.find(x => x.id === id); if (w && !found) found = [W, w]; });
+  if (!found && import.meta.env.DEV) { const W = curWeek(), d = W ? todayOf(W) : null; if (d && d.show && d.show.works[0]) found = [W, d.show.works[0]]; } // 開發的示範資料：拿今天的第壹幅頂
+  if (!found) { note("這幅畫已經收進庫房，現在看不到。"); return; }
+  focusWork(found[0], found[1]);
+};
+const aucRule = () => CAS_AUC.rule.replace("{days}", NUM.auction.closeDays).replace("{hour}", NUM.auction.closeHour).replace("{lo}", NUM.auction.floorPct).replace("{hi}", NUM.auction.ceilPct).replace("{fee}", NUM.auction.feePct).replace("{age}", NUM.auction.minAge);
+// 拍賣的畫架上放這幅畫的縮圖（ui_art.js 沒有畫的內容，這裡登記壹個）
+ART_HOOKS.art = id => { let html = null; allWeeks().forEach(W => { const w = W.works && W.works.find(x => x.id === id); if (w && html == null) html = workArt(w); }); return html; };
+// 拍賣（封閉式出價，每幅稀有畫壹場 3 天，玩家也能拍自己的畫，只公開得標價）
+export function galleryAuction(root) {
+  auctionOpen();
+  galleryShell(root, "auction", "封閉式出價：沒有人看得到別人出多少。",
+    [auctionPane()],
+    [galleryRules("拍賣規則", h("p", null, CAS_AUC.sub), h("p", null, aucRule()), h("p", null, "你也可以把收藏裡的畫拿來拍：在「我收藏的畫」按「拿去拍」。"))]);
 }
 let svgSeq = 0;
 function workArt(w) {
@@ -573,20 +633,18 @@ export function storyShow(root) {
   const W = curWeek(), d = todayOf(W);
   if (!d || !d.show) return false;
   const S = storyState(P), show = d.show, today = todayStr();
-  root.append(roomHead("畫廊", `今日特展：${show.title}`), galleryTabs("show"));
-  root.append(h("div", { class: "limit-box" },
-    h("p", null, icon("star"), ptMark(show.intro)),
-    h("p", null, icon("sparkle"), h("span", null, "第壹次看壹幅：", h("b", { class: "em good" }, `+${NUM.story.showInsp[0]}～+${NUM.story.showInsp[1]} 靈感`), `（要擲理智的比較多）。今日特展壹天最多拿 ${NUM.story.showInspDay} 靈感，今天拿了 ${S.showInsp[today] || 0}。`)),
-    h("p", null, icon("hourglass"), h("span", null, "今日特展明天 05:00 換壹個主題。這週前幾天的畫收在下面：只能看，不給靈感，補做任務用。"))));
-  if (activeQuirks(P).some(q => q.task === "calm")) root.append(quirkHereBox("calm")); // 怪癖的治法是「看壹幅不可怕的畫」（決定 0027）
   artMarketOpen(); // 藝術市場：背景問一次報價，回來再把每幅畫下面的價格畫出來
-  const corridor = h("div", { class: "corridor show-corridor", tabindex: "0", "aria-label": "今日特展，可以左右滑動" }, show.works.map(w => h("div", { class: "show-cell" }, workItem(W, w), artMarketRow(w.id))));
+  const corridor = h("div", { class: "corridor show-corridor gal-corridor", tabindex: "0", "aria-label": "今日特展，可以左右滑動" }, show.works.map(w => h("div", { class: "show-cell" }, workItem(W, w), artMarketRow(w.id))));
   corridor.addEventListener("wheel", e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { corridor.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
-  root.append(corridor, artMarketShelf());
   const review = weekReview(W);
-  if (review.length) root.append(h("h2", { class: "show-review-h" }, W.dayNo >= 7 ? "本週回顧展" : "這週前幾天的畫"), h("p", { class: "hint" }, "這週前幾天的畫。只能看，不給靈感。"),
-    h("div", { class: "corridor show-corridor small" }, review.map(w => workItem(W, w))));
-  root.append(h("p", { class: "hint" }, "用滑鼠滾輪或手指左右滑，點壹幅靠近看。"));
+  const side = [
+    galleryRules("今日特展", h("p", null, icon("star"), ptMark(show.intro)),
+      h("p", null, icon("sparkle"), h("span", null, "第壹次看壹幅：", h("b", { class: "em good" }, `+${NUM.story.showInsp[0]}～+${NUM.story.showInsp[1]} 靈感`), `（要擲理智的比較多）。今日特展壹天最多拿 ${NUM.story.showInspDay} 靈感，今天拿了 ${S.showInsp[today] || 0}。`)),
+      h("p", null, icon("hourglass"), h("span", null, "明天 05:00 換壹個主題。這週前幾天的畫收在「回顧展」：只能看，不給靈感，補做任務用。"))),
+    activeQuirks(P).some(q => q.task === "calm") ? quirkHereBox("calm") : null, // 怪癖的治法是「看壹幅不可怕的畫」（決定 0027）
+    review.length ? h("details", { class: "onescreen-card gal-review" }, h("summary", null, h("b", null, W.dayNo >= 7 ? "本週回顧展" : "這週前幾天的畫"), h("span", { class: "gal-open" }, "點開 ▾"), h("span", { class: "gal-close" }, "收起來 ▴")),
+      h("div", { class: "corridor show-corridor small" }, review.map(w => workItem(W, w)))) : null];
+  galleryShell(root, "show", `今日特展：${show.title}`, [corridor, h("p", { class: "hint gal-hint" }, "用滑鼠滾輪或手指左右滑，點壹幅靠近看。")], side);
   return true;
 }
 function workItem(W, w) {

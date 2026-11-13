@@ -195,6 +195,12 @@ export const NUM = {
   art: { tiers: [{ name: "尋常", base: 1000000 }, { name: "少見", base: 2500000 }, { name: "珍藏", base: 6000000 }, { name: "孤品", base: 15000000 }],
     ageFastPct: 0.85, ageFastDays: 14, ageUpPct: 0.04, ageCapPct: 15, moodPct: 1, demandPct: 0.2, demandCapPct: 2, sellPct: 90, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
     sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40 },
+  // 藝術市場第二步：畫的拍賣（11-14，shared/casino_auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
+  //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
+  //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。
+  //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
+  //   帳號要開 minAge 天；成交抽 feePct % 進預算池；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
+  auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40, recent: 12, unit: 1000 },
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
   blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
   fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）
@@ -380,6 +386,12 @@ export const NUM = {
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
+    // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
+    //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
+    //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
+    //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
+    stockIn: { start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
+      from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8g 起，不再有全館 22:00～05:00 的停盤）

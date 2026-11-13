@@ -103,6 +103,7 @@ function artData() {
           if (w.san) x.san = w.san;
           if (w.clue) x.clue = w.clue;
           if (Number.isFinite(+w.rarity)) x.rarity = +w.rarity;
+          if (w.auction) x.auction = true;
           out[name + "/" + w.id] = x;
         }
       } catch (e) { console.error("藝術市場：讀不出來", df, e.message); }
