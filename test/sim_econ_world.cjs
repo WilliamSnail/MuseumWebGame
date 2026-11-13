@@ -32,6 +32,7 @@ function world(N, cfg, seed) {
       const t = Math.floor((house.bankroll - TAX_FROM) * TAX);
       G.casHouseMove(house, "tax", -t); house.budget += t; out.taxIn += t;
     }
+    G.NUM.casino.econ.freezeKeep = cfg.freeze ? Math.round(FREEZE * 100) : 100; // 真的規則（casEconPlay）
     const frozen = cfg.freeze && house.budget <= 0;
     if (frozen) out.frozenDays++;
     for (const w of wallets) {
@@ -40,13 +41,7 @@ function world(N, cfg, seed) {
       const c0 = w.chips;
       G.casOpenPacks(w, house, 2, day);
       for (let k = 0; k < 3; k++) {
-        // 凍結時：成功也只撥平常的 FREEZE 成（照 casEconPlay 的結果縮小，差額不動預算池）
-        const hb = house.bankroll, bb = house.budget;
         G.casEconPlay(w, house, day);
-        if (frozen && house.budget < bb) {
-          const win = bb - house.budget, keep = Math.floor(win * FREEZE);
-          house.budget = bb - keep; house.bankroll = hb + keep; // 莊家只收到 keep
-        }
       }
       G.casCellarFind(w, house, room[d % room.length], day);
       G.casJobChips(w, house, ["0", "1", "2", "3", "4"], day);
