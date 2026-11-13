@@ -30,7 +30,7 @@
 //    畫面：casStockLevView(w, house, day, t)。
 // ================================================================
 import { NUM } from "./config.js";
-import { casBurn, casCount, casHouseMove, casMint } from "./casino_book.js";
+import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
 import { IN_IDS, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeries } from "./casino_stock_in.js";
@@ -309,8 +309,8 @@ function lqSettle(w, house, S, pos, px, t, why) {
   if (hn !== null) IH.net = { day: pos.day, n: hn + eff };
   // 錢：先把保證金放回籌碼，再跟對手盤算損益，最後扣平倉手續費
   w.chips += pos.margin;
-  if (eff > 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casMint(w, "stockLevWin", eff); }
-  else if (eff < 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casBurn(w, "stockLevLoss", -eff); }
+  if (eff > 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldOut(w, house, "stockLevWin", eff, NUM.casino.world); }
+  else if (eff < 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
   const equity = pos.margin + eff, feeDue = Math.ceil(pos.qty * px * lqFeePct() / 100), fee = Math.min(feeDue, Math.max(0, equity));
   w.chips -= fee; house.budget += fee; casCount(house, "levFee", fee);
   const back = equity - fee;

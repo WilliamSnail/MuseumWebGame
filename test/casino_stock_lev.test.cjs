@@ -162,12 +162,12 @@ T("台股用外面世界當對手盤：賺 mint（stockLevWin）、賠 burn（st
   const r = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), fakeSrc(P)); assert.ok(r.ok, r.reason);
   P.px[TW] = 104000; P.idx = 12;
   const c = G.casLevClose(s.w, s.h, r.pos.no, D0, at(D0, 11), fakeSrc(P)); assert.ok(c.ok);
-  assert.strictEqual(c.pnl, 40000); assert.strictEqual(s.w.led.mint.stockLevWin, 40000); assert.strictEqual(s.h.bankroll, bank0, "莊家完全沒動");
+  assert.strictEqual(c.pnl, 40000); assert.strictEqual(-s.h.led.world.stockLevWin, 40000); assert.strictEqual(s.h.bankroll, bank0, "莊家完全沒動");
   assert.strictEqual(G.casBookGap(snap(s), op), 0);
   const r2 = G.casLevOpen(s.w, s.h, { id: TW, side: "short", lev: 5, qty: 10 }, D0, at(D0, 12), fakeSrc(P)); assert.ok(r2.ok, r2.reason);
   P.px[TW] = 106000; P.idx = 20;
   const c2 = G.casLevClose(s.w, s.h, r2.pos.no, D0, at(D0, 12, 30), fakeSrc(P)); assert.ok(c2.ok, c2.reason);
-  assert.strictEqual(c2.pnl, -20000); assert.strictEqual(s.w.led.burn.stockLevLoss, 20000); assert.strictEqual(s.h.bankroll, bank0);
+  assert.strictEqual(c2.pnl, -20000); assert.strictEqual(s.h.led.world.stockLevLoss, 20000); assert.strictEqual(s.h.bankroll, bank0);
   assert.strictEqual(G.casBookGap(snap(s), op), 0);
   assert.strictEqual(G.casLevHouseFix(s.h).in, 0, "台股不佔莊家的曝險");
 });
@@ -177,7 +177,7 @@ T("台股淨賺上限：壹天賺超過上限的部分不給；賠的不設限�
   const r = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), fakeSrc(P)); assert.ok(r.ok);
   P.px[TW] = 105000; P.idx = 1;
   const c = G.casLevClose(s.w, s.h, r.pos.no, D0, at(D0, 10, 5), fakeSrc(P));
-  assert.strictEqual(c.pnl, 30000, "上限 3 萬"); assert.strictEqual(c.clipped, 20000); assert.strictEqual(s.w.led.mint.stockLevWin, 30000);
+  assert.strictEqual(c.pnl, 30000, "上限 3 萬"); assert.strictEqual(c.clipped, 20000); assert.strictEqual(-s.h.led.world.stockLevWin, 30000);
   const r2 = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 11), fakeSrc(P)); P.px[TW] = 106000; P.idx = 2;
   const c2 = G.casLevClose(s.w, s.h, r2.pos.no, D0, at(D0, 11, 5), fakeSrc(P)); assert.strictEqual(c2.pnl, 0, "上限用完了，賺的不給");
   const r3 = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 12), fakeSrc(P)); P.px[TW] = 100000; P.idx = 3;

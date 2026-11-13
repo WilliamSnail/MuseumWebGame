@@ -69,6 +69,73 @@ export function casHouseBurn(house, src, n) {
   bkAdd(casLedFix(house, ["mint", "flow", "burn"]).burn, src, n);
   return n;
 }
+// ---------- 外面世界的池子（規劃 2.12）：house.world。錢進出外面世界是「搬」，不再憑空／消失；只有 casWorldGrow 是真正憑空的 ----------
+// house.led.world[來源]：這個來源讓外面世界的池子變多少（正＝進外面世界，負＝出外面世界）
+const bkW = house => { house.world = bkNz(house.world); return casLedFix(house, ["mint", "flow", "burn", "world"]).world; };
+// 池子現在算吃緊嗎（低於起始的 lowPct%）。cfg 從呼叫的人給（這個檔不 import 別的檔）
+export const casWorldLow = (house, cfg) => bkNz(house.world) < Math.floor(bkNz(cfg.start) * bkNz(cfg.lowPct) / 100);
+// 今天池子還能付出多少（不吃緊＝池子全部；吃緊＝今天的上限 lowPayPct% 扣掉今天已經付的）。壹天的上限用「今天第壹次問的時候的池子」算
+export function casWorldRoom(house, cfg) {
+  const w = Math.max(0, bkNz(house.world));
+  if (!casWorldLow(house, cfg)) return w;
+  const day = house.day || null;
+  if (!bkBox(house.wpay) || house.wpay.day !== day) house.wpay = { day, cap: Math.floor(w * bkNz(cfg.lowPayPct) / 100), n: 0 };
+  return Math.max(0, Math.min(w, bkNz(house.wpay.cap) - bkNz(house.wpay.n)));
+}
+const bkWPaid = (house, cfg, n) => { if (casWorldLow(house, cfg) && bkBox(house.wpay)) house.wpay.n = bkNz(house.wpay.n) + n; };
+// 錢包 → 外面世界（買股、槓桿賠）。回傳 n
+export function casWorldIn(w, house, src, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  w.chips -= n; house.world = bkNz(house.world) + n;
+  bkAdd(bkW(house), src, n);
+  return n;
+}
+// 外面世界 → 錢包（賣股、槓桿賺、門票）。池子不夠或吃緊的上限到了，只付得出的部分；回傳實際付的
+export function casWorldOut(w, house, src, n, cfg) {
+  n = Math.min(bkNz(n), casWorldRoom(house, cfg));
+  if (n <= 0) return 0;
+  bkWPaid(house, cfg, n);
+  w.chips += n; house.world = bkNz(house.world) - n;
+  bkAdd(bkW(house), src, -n);
+  return n;
+}
+// 外面世界 → 莊家（撥款、貸款）
+export function casHouseWorldOut(house, src, n, cfg) {
+  n = Math.min(bkNz(n), Math.max(0, bkNz(house.world)));
+  if (n <= 0) return 0;
+  house.bankroll += n; house.world = bkNz(house.world) - n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).flow, src, n); // 莊家這邊記成流入
+  bkAdd(bkW(house), src, -n);
+  return n;
+}
+// 莊家 → 外面世界（還款）。莊家這邊記成流出
+export function casHouseWorldIn(house, src, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house.bankroll -= n; house.world = bkNz(house.world) + n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).flow, src, -n);
+  bkAdd(bkW(house), src, n);
+  return n;
+}
+// 外面世界 → 預算池／館方帳（參觀者的門票）
+export function casPoolWorldOut(house, pool, src, n) {
+  n = Math.min(bkNz(n), Math.max(0, bkNz(house.world)));
+  if (n <= 0) return 0;
+  house[pool] = bkNz(house[pool]) + n; house.world = bkNz(house.world) - n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).flow, src, n);
+  bkAdd(bkW(house), src, -n);
+  return n;
+}
+// 外面世界每天成長（真正憑空，記 mint.worldGrow）
+export function casWorldGrow(house, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house.world = bkNz(house.world) + n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).mint, "worldGrow", n);
+  return n;
+}
+
 // 莊家憑空多 n（破產重開）
 export function casHouseMint(house, src, n) {
   n = bkNz(n);
@@ -90,7 +157,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut) } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), world: house.world == null ? null : bkNz(house.world), wflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
@@ -102,12 +169,12 @@ export function casBookSnap(wallets, house, inplay, day) {
   }
   // 館內股的 NPC（規劃 2.8k）：最近壹天每家店有幾位旅客，和劇情日那天的事。日報寫「昨天館外來了 N 位旅客」用
   if (bkBox(house.sin) && bkBox(house.sin.npc)) { const ds = Object.keys(house.sin.npc).sort(), d = ds[ds.length - 1]; if (d) s.house.npcLast = { day: d, n: Object.assign({}, house.sin.npc[d]), ev: bkBox(house.sin.npcEv) && bkBox(house.sin.npcEv[d]) ? Object.assign({}, house.sin.npcEv[d]) : null }; }
-  if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
+  if (bkBox(house.led)) { bkMerge(s.house.wflow, house.led.world); bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
 // 全館的錢（含莊家、預算池、海底）
-export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum);
+export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.world);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
 export const casBookBurned = s => bkSumObj(s.burn) + bkSumObj(s.house && s.house.burn);
@@ -135,6 +202,7 @@ export function casBookDiff(a, b) {
     budget: bkNz(b.house.budget) - bkNz(a.house.budget),
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),
     museum: bkNz(b.house.museum) - bkNz(a.house.museum),
+    world: bkNz(b.house.world) - bkNz(a.house.world), wflow: bkDiffObj(a.house.wflow, b.house.wflow),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
     houseMint: bkDiffObj(a.house.mint, b.house.mint), houseBurn: bkDiffObj(a.house.burn, b.house.burn), flow: bkDiffObj(a.house.flow, b.house.flow),
     act: bkDiffObj(a.house.act, b.house.act), active7: bkNz(b.active7),

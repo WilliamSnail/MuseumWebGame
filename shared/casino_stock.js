@@ -4,8 +4,8 @@
 //  館內五家店、槓桿、放空、當沖、盤中價格是後面幾步，規劃在 docs/經濟體系規劃.md 2.8。
 //
 //  錢怎麼動（shared/casino_book.js）：跟「外面世界」買賣（翊文 11-14：「股票不是跟"外面世界"買的嗎?」→「好更改」）。
-//    買：股價×股數 流出館外（casBurn，來源 stockBuy），手續費進預算池（搬）。
-//    賣：股價×股數 從館外進來（casMint，來源 stockSell），扣手續費進預算池（搬）。
+//    買：股價×股數 錢給外面世界（casWorldIn，來源 stockBuy），手續費進預算池（搬）。
+//    賣：股價×股數 外面世界付（casWorldOut，來源 stockSell），扣手續費進預算池（搬）。
 //    莊家完全不出錢，所以沒有「全館持股 ≤ 莊家 50%」那種上限（以前莊家當對手盤時要有，莊家壹窮股市就停擺）。
 //    外面世界就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的 drag、每人每天賣出上限。
 //    記帳照樣對得上：憑空的、消失的都有來源，日報看得到股市每天讓館裡多了或少了多少。
@@ -24,7 +24,7 @@
 //    成交價壹律用觸發的那個價（跳空比掛的價更好或更差都照它）。house.stk.hist { 日期: { id: 股價 } } 留最近幾天，隔幾天才上線的人，中間日子的價也算。
 // ================================================================
 import { NUM } from "./config.js";
-import { casBurn, casCount, casMint } from "./casino_book.js";
+import { casCount, casWorldIn, casWorldOut, casWorldRoom } from "./casino_book.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
@@ -224,7 +224,7 @@ export function casStockPegSync(w, house) {
     if (sh > 0) {
       const value = sh * e.from, ns = Math.floor(value / e.to), rem = value - ns * e.to;
       if (ns > 0) S.own[e.id] = ns; else delete S.own[e.id];
-      if (rem > 0) casMint(w, "stockRebase", rem);
+      if (rem > 0) casWorldOut(w, house, "stockRebase", rem, NUM.casino.world);
       stNote(S, casFill(CAS_STOCK.peg.split, { name, from: casNum(sh), to: casNum(ns), rem: casNum(rem) }));
     }
     S.peg = e.seq;
@@ -268,7 +268,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   const px = H.px[id], cost = px * n, fee = stFee(cost);
   if (cost + fee > w.chips) return { ok: false, reason: CAS_STOCK.poor };
   stSeed(S, H);
-  casBurn(w, "stockBuy", cost); // 流出館外（給外面世界）
+  casWorldIn(w, house, "stockBuy", cost); // 錢給外面世界（池子變多，不是燒掉）
   w.chips -= fee; house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（搬，不是憑空；拚經濟也是這樣直接動預算池）
   S.own[id] = stN(S.own[id]) + n;
   S.cost[id] = stN(S.cost[id]) + cost + fee; // 總成本含買進手續費
@@ -294,7 +294,8 @@ export function casStockSell(w, house, id, shares, day, t) {
   const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0, net = gross - fee - tax;
   // 壹人壹天賣出上限
   if (stSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { n: casNum(Math.max(0, C.sellDay - stSoldToday(S, day))) }) };
-  casMint(w, "stockSell", gross); // 從館外進來（外面世界付）
+  if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
+  casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 外面世界付（池子變少）
   w.chips -= fee + tax; house.budget += fee + tax; casCount(house, "stockFee", fee);
   if (tax > 0) casCount(house, "stockTax", tax); // 稅進預算池（搬，不是 burn）；日報看 house.act.stockTax
   S.own[id] = have0 - n;

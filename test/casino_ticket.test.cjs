@@ -13,7 +13,7 @@ const hallP = () => {
 };
 const mk = () => ({ w: G.casWalletFix(G.casWalletNew(), D1), house: G.casHouseFix(G.casHouseNew(), D1).house });
 const total = s => G.casBookTotal(G.casBookSnap([s.w], s.house, 0, D1));
-const gap = s => G.casBookGap(G.casBookSnap([s.w], s.house, 0, D1), G.NUM.casino.houseStart + G.NUM.casino.econ.budgetStart);
+const gap = s => G.casBookGap(G.casBookSnap([s.w], s.house, 0, D1), G.NUM.casino.houseStart + G.NUM.casino.econ.budgetStart + G.NUM.casino.world.start);
 
 T("設定：三份加起來不超過 100，館方帳是剩下的", () => {
   assert.ok(C().ownerPct >= 0 && C().budgetPct >= 0 && C().ownerPct + C().budgetPct <= 100 && C().perDay > 0 && C().perScore > 0);
@@ -60,7 +60,7 @@ T("舊錢包、舊莊家沒有 tix／museum：補上；日報有館方帳一段"
   const s = mk(), P = hallP(); P.hallVisitors = 0; G.casTicketClaim(s.w, s.house, P, D1); P.hallVisitors = 3; G.casTicketClaim(s.w, s.house, P, D1);
   const snap = G.casBookSnap([s.w], s.house, 0, D1), v = G.casReportView({ day: D1, at: Date.UTC(2026, 10, 14), snap, diff: G.casBookDiff(null, snap) });
   assert.ok(v.secs.some(x => x.t === "館方帳" && /館方帳有 [0-9,]+ 籌碼/.test(x.lines.join(""))));
-  assert.ok(v.secs.map(x => x.lines.join("|")).join("|").includes("參觀者門票（進館方帳）"));
+  assert.ok(v.secs.map(x => x.lines.join("|")).join("|").includes("參觀者門票（館方帳）"));
 });
 console.log(`參觀者門票：${pass} 過，${fail} 沒過`);
 process.exit(fail ? 1 : 0);

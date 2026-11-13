@@ -58,7 +58,7 @@ T("限價買成交：價格跌破就買，鎖多的退回，用觸發價（跳�
   const m = G.casStockMatch(s.w, s.house, D2, at(D2, 10));
   assert.strictEqual(m.fills, 1);
   assert.strictEqual(s.w.stk.own[ID], 10); assert.strictEqual(s.w.stk.orders.length, 0); assert.strictEqual(s.w.stk.hold, 0);
-  assert.strictEqual(s.w.led.burn.stockBuy, gapPx * 10, "按跳空後的價買，不是限價");
+  assert.strictEqual(s.house.led.world.stockBuy, gapPx * 10, "按跳空後的價買，不是限價");
   assert.strictEqual(gap(G, s, op), 0);
   assert.strictEqual(G.casStockTakeNotes(s.w).length, 1);
 });
@@ -71,7 +71,7 @@ T("停損賣：跳空穿過停損價，按跳空後的價賣（不抹掉損失�
   const before = s.w.chips;
   const m = G.casStockMatch(s.w, s.house, D2, at(D2, 10));
   assert.strictEqual(m.fills, 1);
-  assert.strictEqual(s.w.led.mint.stockSell, low * 10, "按跳空後的價賣，不是停損價");
+  assert.strictEqual(-s.house.led.world.stockSell, low * 10, "按跳空後的價賣，不是停損價");
   assert.ok(s.w.chips > before);
   assert.strictEqual(s.w.stk.own[ID] || 0, 0);
   assert.strictEqual(gap(G, s, op), 0);
@@ -85,7 +85,7 @@ T("限價賣：漲到才賣；沒到就留著；隔幾天才上線也會照中�
   newDay(G, s, addDay(D, 2), px - 400); // 第三天又跌回來，人到這時才上線
   const m = G.casStockMatch(s.w, s.house, addDay(D, 2), at(addDay(D, 2), 10));
   assert.strictEqual(m.fills, 1, "第二天的價有到");
-  assert.strictEqual(s.w.led.mint.stockSell, (px + 800) * 5, "用當天的價成交");
+  assert.strictEqual(-s.house.led.world.stockSell, (px + 800) * 5, "用當天的價成交");
   assert.strictEqual(gap(G, s, op), 0);
 });
 T("過期：有效 1 天，今天下的單看明天 05:00 的價，沒成交就取消退回（翊文 11-13）", G => {

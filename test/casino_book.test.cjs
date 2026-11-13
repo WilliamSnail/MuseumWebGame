@@ -8,7 +8,7 @@ const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; 
   try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } finally { G.setRng(null); } };
 const D0 = "2026-11-09";
 const plus = (d, n) => { const [y, m, x] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, x + n)).toISOString().slice(0, 10); };
-const opening = G => G.NUM.casino.houseStart + G.NUM.casino.econ.budgetStart;
+const opening = G => G.NUM.casino.houseStart + G.NUM.casino.econ.budgetStart + G.NUM.casino.world.start; // 外面世界的池子也算（規劃 2.12）
 
 // 一個世界：幾個錢包、一個莊家、打到一半的局
 const world = (G, n = 3, day = D0) => {

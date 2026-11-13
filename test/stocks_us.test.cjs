@@ -305,7 +305,7 @@ T("買賣守恆：美股盤中買賣照樣記帳對得上、手續費進預算�
   assert.ok(G.casStockSell(w, house, ID, "max", W, tm(G, W, 250)).ok);
   assert.ok(house.budget > b0);
   assert.strictEqual(G.casBookGap(snap(), op), 0);
-  assert.ok(w.led.burn.stockBuy > 0 && w.led.mint.stockSell > 0);
+  assert.ok(house.led.world.stockBuy > 0 && house.led.world.stockSell < 0);
 });
 T("view：美股有盤中序列、usState、halted；外層 us 和 usOpenAt；台股欄位照舊；fresh 照舊", G => {
   const house = house0(G, W), doc = runDay(G, "祕密", W, { gap: 0.02 }), w = wallet(G);

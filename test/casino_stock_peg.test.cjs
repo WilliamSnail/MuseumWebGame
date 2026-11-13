@@ -51,7 +51,7 @@ T("錢包照比例換股數：市值不變（零頭用籌碼補、從外面世�
   if (nsTw > 0) assert.strictEqual(S.own[TWID], nsTw); else assert.strictEqual(S.own[TWID], undefined);
   assert.strictEqual(S.orders.filter(o => o.id === ID).length, 0, "這支的掛單取消"); assert.strictEqual(S.orders.filter(o => o.id === "redclaw").length, 1, "別支的掛單不動");
   assert.strictEqual(S.hold, 9045, "鎖住的籌碼只剩別支的"); assert.strictEqual(s.w.chips, c0 + 90500 + rem + remTw, "退回鎖住的籌碼，加上零頭");
-  assert.strictEqual(s.w.led.mint.stockRebase, rem + remTw, "零頭記成從館外進來（stockRebase）");
+  assert.strictEqual(-h.led.world.stockRebase, rem + remTw, "零頭從外面世界來（stockRebase）");
   assert.ok(S.notes.some(x => /照真實股價的比例/.test(x)), "留話給玩家");
   assert.strictEqual(S.peg, h.stk.peg.seq);
   const snap1 = G.casBookSnap([s.w], h, 0, null); assert.strictEqual(G.casBookTotal(snap1) - G.casBookMinted(snap1) + G.casBookBurned(snap1), t0, "守恆（零頭有記 mint）");

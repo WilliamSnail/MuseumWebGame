@@ -8,7 +8,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { hallScore, isFree } from "./logic.js";
-import { casCount, casLedFix, casMint, casPoolMint } from "./casino_book.js";
+import { casCount, casLedFix, casPoolWorldOut, casWorldOut } from "./casino_book.js";
 import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 
 const tkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
@@ -35,9 +35,9 @@ export function casTicketClaim(w, house, P, day) {
   t.n += n;
   casCount(house, "ticketPeople", n);
   const owner = Math.floor(total * C.ownerPct / 100), budget = Math.floor(total * C.budgetPct / 100), museum = total - owner - budget;
-  casMint(w, "ticket", owner);
-  casPoolMint(house, "budget", "ticketBudget", budget);
-  casPoolMint(house, "museum", "ticketMuseum", museum);
+  casWorldOut(w, house, "ticket", owner, NUM.casino.world); // 參觀者是外面世界來的客人：門票從外面世界付（池子變少）
+  casPoolWorldOut(house, "budget", "ticketBudget", budget);
+  casPoolWorldOut(house, "museum", "ticketMuseum", museum);
   casLedFix(w, ["mint", "burn"]);
   return { ok: true, n, price, total, owner, budget, museum };
 }

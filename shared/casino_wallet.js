@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
+import { casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldLow } from "./casino_book.js";
 import { casInUsed } from "./casino_stock_in.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
@@ -65,7 +65,7 @@ export function casWalletFix(w, day) {
 }
 // budget：拚經濟的預算池（shared/casino_econ.js）；sea：拚經濟失敗、沒被撈走的錢沉到這裡（決定 0057，從 0 開始）。
 // 都跟莊家放在同壹份，同壹個交易裡算；舊的莊家沒有就補。莊家破產重開不動它們
-export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, museum: 0, econ: { b: 0 }, pol: null, led: { mint: {}, flow: {} } });
+export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, museum: 0, world: NUM.casino.world.start, econ: { b: 0 }, pol: null, led: { mint: {}, flow: {} } });
 export function casHouseFix(h, day) {
   if (!casIsObj(h)) h = casHouseNew();
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
@@ -76,6 +76,7 @@ export function casHouseFix(h, day) {
   h.econ.b = Math.max(-1, Math.min(1, casNz(h.econ.b)));
   if (!casIsObj(h.pol)) h.pol = null; // 最近一次拚經濟成功抽到的政策 { idx, fx, day }
   h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
+  h.world = Math.floor(casNz(h.world, NUM.casino.world.start)); // 外面世界的池子（規劃 2.12）；舊的莊家第壹次碰到時給起始
   casLedFix(h, ["mint", "flow", "burn"]);
   // 莊家的債（規劃 2.11）：budget 跟預算池借的、culture 文化部借款、world 外面世界貸款（含利息）。loansOut：借出去還沒收回的本金。pay：今天已經賠付多少
   if (!casIsObj(h.debt)) h.debt = {};
@@ -92,7 +93,7 @@ export function casHouseFix(h, day) {
   if (!casIsObj(h.grantDebt)) h.grantDebt = {};
   for (const g of NUM.casino.grants || []) {
     if (!g || !g.id) continue;
-    if (!h.grants[g.id] && casHouseMint(h, "grant", g.amt) > 0) h.grants[g.id] = day || true;
+    if (!h.grants[g.id] && casHouseWorldOut(h, "grant", g.amt, NUM.casino.world) > 0) h.grants[g.id] = day || true; // 外面世界撥的（池子少了），不是憑空
     if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
   }
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
@@ -109,7 +110,10 @@ function casHouseDaily(h, day) {
     return reopen;
   }
   const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
-  // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利
+  // 0 外面世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
+  { const WC = C.world; casWorldGrow(h, Math.floor(WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)) * days)); }
+  // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
+  if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));
   // 2 莊家有賺（超過準備金）：壹半還債。先預算池、再文化部借款、最後外面世界（燒掉）
   if (h.bankroll > H.reserve) {
@@ -117,9 +121,9 @@ function casHouseDaily(h, day) {
     const a = Math.min(pay, h.debt.budget);
     if (a > 0) { casHouseMove(h, "budgetRepay", -a); h.budget += a; h.debt.budget -= a; pay -= a; }
     const b = Math.min(pay, h.debt.culture);
-    if (b > 0) { casHouseBurn(h, "cultureRepay", b); h.debt.culture -= b; pay -= b; }
+    if (b > 0) { casHouseWorldIn(h, "cultureRepay", b); h.debt.culture -= b; pay -= b; }
     const c = Math.min(pay, h.debt.world);
-    if (c > 0) { casHouseBurn(h, "worldRepay", c); h.debt.world -= c; }
+    if (c > 0) { casHouseWorldIn(h, "worldRepay", c); h.debt.world -= c; }
   }
   // 3 破產：先跟預算池借（閒錢的壹小部分），再跟外面世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
   if (h.bankroll < 0) {
@@ -128,8 +132,8 @@ function casHouseDaily(h, day) {
     const x = Math.min(need, Math.floor(spare * H.budgetPct / 100), H.budgetMax);
     if (x > 0) { h.budget -= x; casHouseMove(h, "budgetLoan", x); h.debt.budget += x; need -= x; got += x; }
     const room = Math.max(0, casHouseCredit(h) - h.debt.world);
-    const y = Math.min(need, room);
-    if (y > 0) { casHouseMint(h, "worldLoan", y); h.debt.world += y; got += y; }
+    const y = casWorldLow(h, C.world) ? 0 : Math.min(need, room); // 外面世界吃緊時暫停貸款
+    if (y > 0) { const z = casHouseWorldOut(h, "worldLoan", y, C.world); h.debt.world += z; got += z; }
     if (h.bankroll >= 0) { h.reopened++; reopen = casFill(CAS_TEXT.houseReopenLoan, { n: casNum(got) }); }
     else reopen = CAS_TEXT.houseStillBroke;
   }
