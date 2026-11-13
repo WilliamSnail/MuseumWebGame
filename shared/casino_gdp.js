@@ -90,3 +90,42 @@ export function casFxPolicy(house, day, kind) {
 }
 // 政策的白話（日報和拚經濟的畫面用）
 export const CAS_FX_TEXT = { tourism: "門票多一成", cellar: "地下撿到的籌碼多一成", grant: "拚經濟的撥款多一成", tighten: "拚經濟的撥款少一成，預算池少花一些" };
+
+// ---------- 銀行廳的「財報」頁（11-14，翊文：「接著做: 股票、財報」） ----------
+// 資料是日報產生時寫進莊家的 house.econ（b、perDay、g、rows…），這裡只整理成畫面要的格式。
+// 回傳 null＝還沒有第壹份日報，畫面會寫「即將開放」。
+// 回傳 { gdp 每天的館內 GDP, growth 成長率（小數，沒資料是 0）, idx 景氣 −1～+1, news 壹句話, report [[項目, 數字]…] }
+export function casBankEcon(house) {
+  const e = house && house.econ;
+  if (!e || typeof e !== "object" || !e.day) return null;
+  const idx = gdClamp(+e.b || 0, -1, 1);
+  const rows = (Array.isArray(e.rows) ? e.rows : []).filter(r => Array.isArray(r) && r.length === 2).map(r => [String(r[0]), String(r[1])]);
+  return { gdp: gdNz(e.perDay), growth: typeof e.g === "number" && isFinite(e.g) ? e.g : 0, idx, news: casEconNews(e), report: rows };
+}
+// 今天的壹句新聞：照景氣、昨天最熱鬧的那件事、預算池的狀況挑。純函式，不抽亂數（每個人看到的壹樣）
+export function casEconNews(e) {
+  const T = CAS_NEWS, idx = gdClamp(+(e && e.b) || 0, -1, 1);
+  const parts = [idx > 0.3 ? T.good : idx < -0.3 ? T.bad : T.flat];
+  if (e && e.top) parts.push(gdFill(T.top[e.top.key] || T.top.other, { n: gdNum(e.top.n) }));
+  if (e && e.frozen) parts.push(T.frozen);
+  else if (e && typeof e.g === "number" && isFinite(e.g) && Math.abs(e.g) >= 0.05) parts.push(gdFill(e.g > 0 ? T.up : T.down, { p: Math.abs(e.g * 100).toFixed(0) }));
+  return parts.join("");
+}
+const gdNum = n => Number(gdNz(n)).toLocaleString("en-US");
+const gdFill = (s, o) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in o ? String(o[k]) : m));
+// 新聞的句子。草稿，Yuga 可以改
+export const CAS_NEWS = {
+  good: "館裡這幾天熱鬧，帳上看得出來。",
+  flat: "館裡壹切照舊，帳也照舊。",
+  bad: "館裡冷清了些，帳上的數字跟著縮。",
+  top: {
+    food: "餐車昨天賣了 {n} 份，窗口前面排了隊。",
+    bjHands: "昨天牌桌上打了 {n} 手，荷官的手沒停過。",
+    econWin: "拚經濟昨天成功 {n} 次，Yuga Bot 很得意。",
+    ticketPeople: "昨天有 {n} 位參觀者買票進來。",
+    other: "",
+  },
+  up: "館內 GDP 比前七天多了 {p}%。",
+  down: "館內 GDP 比前七天少了 {p}%。",
+  frozen: "預算池見底，拚經濟的撥款凍結中。",
+};
