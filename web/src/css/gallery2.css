@@ -138,5 +138,14 @@
 
 /* 畫框的高度有上限（高螢幕不要拉成長條），壹列畫在牆裡上下置中；寬度由 fitFrames（ui_story.js）照畫的比例算 */
 .gallery-onescreen .gal-corridor > .exhibit, .gallery-onescreen .gal-corridor > .show-cell { justify-content: center; }
-.gallery-onescreen .gal-corridor .frame { flex: 1 1 0; max-height: 520px; }
+.gallery-onescreen .gal-corridor .frame { flex: 1 1 0; max-height: 440px; }
 .gallery-onescreen .gal-corridor .frame svg { max-width: none; }
+
+/* 拍賣真資料版 */
+.artmarket-lock { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px dashed var(--gold, #C8A25A); border-radius: 6px; color: var(--gold-hi, #F3DFA6); font-size: var(--type-small, .75rem); white-space: nowrap; }
+.gal-msg { grid-column: 1 / -1; margin: 0; padding: 6px 10px; border-radius: 6px; background: rgba(0, 0, 0, .3); color: var(--paper-gold, #F3DFA6); font-size: var(--type-small, .75rem); }
+.gal-msg.bad { color: #F2B8A8; }
+.gal-hold { margin: 0; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
+.gal-lot.mine-seller { border-style: dashed; }
+.gal-range { margin: 0; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
+.gallery-onescreen .gal-corridor .frame { max-height: 440px; }
