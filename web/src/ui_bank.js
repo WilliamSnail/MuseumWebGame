@@ -173,7 +173,7 @@ const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即
 // 壹股都買不了的原因：分開講，不要把兩種混在壹起（翊文 11-14）
 function whyNoBuy(v, S, cur) {
   if (S.houseBroke) return `莊家現在破產中（剩 ${fmt(S.bankroll)}），暫停買進。賣出照常。`;
-  if (S.exposeLeft < cur.price) return `莊家的錢不夠接更多股票了：全館持股最多是莊家的壹半，莊家現在有 ${fmt(S.bankroll)}，今天還能接 ${fmt(S.exposeLeft)}。莊家賺回來就能再買。`;
+  if (S.exposeLeft != null && S.exposeLeft < cur.price) return `莊家的錢不夠接更多股票了：全館持股最多是莊家的壹半，莊家現在有 ${fmt(S.bankroll)}，今天還能接 ${fmt(S.exposeLeft)}。莊家賺回來就能再買。`;
   if (v.cash < Math.ceil(cur.price * (1 + S.fee))) return `籌碼不夠：壹股 ${fmt(cur.price)}，加手續費要 ${fmt(Math.ceil(cur.price * (1 + S.fee)))}。`;
   return "現在買不了。";
 }
@@ -184,7 +184,7 @@ function stockPane(v) {
     h("span", null, h("b", null, s.name), h("small", { class: "ln" }, s.line)), h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
   const trade = (op, n) => bankDo("stock", { op, id: cur.id, n });
   // 買幾股：照手上的籌碼和曝險算得出來的最大值，給幾顆好按的
-  const max = Math.max(0, Math.min(Math.floor(v.cash / Math.ceil(cur.price * (1 + S.fee))), Math.floor(S.exposeLeft / Math.max(1, cur.price))));
+  const max = Math.max(0, Math.min(Math.floor(v.cash / Math.ceil(cur.price * (1 + S.fee))), S.exposeLeft == null ? Infinity : Math.floor(S.exposeLeft / Math.max(1, cur.price)))); // exposeLeft null＝跟外面世界買，沒有莊家上限（11-14）
   const buys = [1, 10, 100].filter(n => n <= max).map(n => btn(`買 ${n} 股`, () => trade("buy", n), "big bank-btn"))
     .concat(max > 0 ? [btn(`買滿 ${fmt(max)} 股`, () => trade("buy", max), "primary big bank-btn gold")] : []);
   const sells = cur.mine > 0 ? [1, 10, 100].filter(n => n <= cur.mine).map(n => btn(`賣 ${n} 股`, () => trade("sell", n), "big bank-btn"))
