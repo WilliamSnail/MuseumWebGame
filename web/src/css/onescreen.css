@@ -787,7 +787,10 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
   .fusion-onescreen .fusion-stage { border-width: 10px; }
   .fusion-onescreen .fusion-count { display: none; }
 }
-.fusion-onescreen .altar { height: 100%; width: auto; max-width: 100%; }
+/* 魔法陣的大小跟著舞台框走：舞台是 container，魔法陣寬度＝min(舞台寬, 舞台高×320/230)。
+   以前用 height:100% + width:auto，高的螢幕（2000×1020）算出來比舞台還寬，右邊的底座和魔法陣被切掉（翊文 11-14 截圖） */
+.fusion-onescreen .fusion-stage { container-type: size; }
+.fusion-onescreen .altar { width: min(100cqw, 139.13cqh); height: auto; max-height: none; max-width: none; }
 /* 手機：底下那條（次數＋融合鈕）壓成兩行小的，不蓋住上面的說明（測試 session：375×740、740×375） */
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
   .fusion-onescreen .fusion-foot { gap: 4px; padding-top: 8px; }
