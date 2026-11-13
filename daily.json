@@ -1,0 +1,205 @@
+{
+ "updated": "2026-11-13T07:43:36.348Z",
+ "source": "Yahoo Finance chart API（免金鑰）",
+ "note": "pct＝真實漲跌幅（%）；null＝那天休市；key＝市場所在地的日期",
+ "days": {
+  "2026-10-14": {
+   "greeneye": -3.16,
+   "redclaw": -5.73,
+   "nightindex": -1.88,
+   "islandforge": 0,
+   "silverapple": 0.5,
+   "flashcar": -2.15,
+   "squarewin": -1.8
+  },
+  "2026-10-15": {
+   "greeneye": -1.84,
+   "redclaw": -1.5,
+   "nightindex": 0.08,
+   "islandforge": -2.01,
+   "silverapple": -0.28,
+   "flashcar": -1.29,
+   "squarewin": 1.08
+  },
+  "2026-10-16": {
+   "greeneye": -1.43,
+   "redclaw": -5.95,
+   "nightindex": -2.15,
+   "islandforge": -0.82,
+   "silverapple": 0.43,
+   "flashcar": -2.13,
+   "squarewin": -1.93
+  },
+  "2026-10-19": {
+   "greeneye": 1.38,
+   "redclaw": 1.76,
+   "nightindex": 1.11,
+   "islandforge": 0,
+   "silverapple": -0.15,
+   "flashcar": 3.76,
+   "squarewin": 0.84
+  },
+  "2026-10-20": {
+   "greeneye": -0.29,
+   "redclaw": -0.62,
+   "nightindex": -0.02,
+   "islandforge": -0.62,
+   "silverapple": -1,
+   "flashcar": 1.54,
+   "squarewin": -0.31
+  },
+  "2026-10-21": {
+   "greeneye": 2.54,
+   "redclaw": 3.36,
+   "nightindex": 1.05,
+   "islandforge": 0.62,
+   "silverapple": 1.32,
+   "flashcar": 3.41,
+   "squarewin": 0.2
+  },
+  "2026-10-22": {
+   "greeneye": -4.4,
+   "redclaw": -8.1,
+   "nightindex": -2.6,
+   "islandforge": -1.45,
+   "silverapple": 1.23,
+   "flashcar": -3.08,
+   "squarewin": -2.23
+  },
+  "2026-10-23": {
+   "greeneye": -0.59,
+   "redclaw": 1.74,
+   "nightindex": -0.21,
+   "islandforge": 0,
+   "silverapple": -0.14,
+   "flashcar": -0.63,
+   "squarewin": 0.66
+  },
+  "2026-10-26": {
+   "greeneye": 2.39,
+   "redclaw": 2.8,
+   "nightindex": 0.82,
+   "islandforge": null,
+   "silverapple": -1.1,
+   "flashcar": 5.21,
+   "squarewin": 1.54
+  },
+  "2026-10-27": {
+   "greeneye": 0.9,
+   "redclaw": 5.45,
+   "nightindex": 1.18,
+   "islandforge": 0.63,
+   "silverapple": 0.93,
+   "flashcar": 4.04,
+   "squarewin": -0.24
+  },
+  "2026-10-28": {
+   "greeneye": -1.17,
+   "redclaw": 3.24,
+   "nightindex": 0.27,
+   "islandforge": 1.04,
+   "silverapple": -0.94,
+   "flashcar": -0.8,
+   "squarewin": -0.06
+  },
+  "2026-10-29": {
+   "greeneye": -0.8,
+   "redclaw": -2.08,
+   "nightindex": -1.38,
+   "islandforge": -0.41,
+   "silverapple": 1.48,
+   "flashcar": -0.23,
+   "squarewin": -0.16
+  },
+  "2026-10-30": {
+   "greeneye": -4.22,
+   "redclaw": -10.88,
+   "nightindex": -2.86,
+   "islandforge": -1.86,
+   "silverapple": -1.23,
+   "flashcar": -0.87,
+   "squarewin": -1.55
+  },
+  "2026-11-02": {
+   "greeneye": -1.26,
+   "redclaw": -7.52,
+   "nightindex": -1.07,
+   "islandforge": -1.69,
+   "silverapple": -1.83,
+   "flashcar": 1,
+   "squarewin": -2.83
+  },
+  "2026-11-03": {
+   "greeneye": 2.29,
+   "redclaw": 3.65,
+   "nightindex": 0.83,
+   "islandforge": -1.5,
+   "silverapple": -1.9,
+   "flashcar": -1.32,
+   "squarewin": 2.74
+  },
+  "2026-11-04": {
+   "greeneye": -3.17,
+   "redclaw": 1.01,
+   "nightindex": 1.44,
+   "islandforge": -1.53,
+   "silverapple": 5.31,
+   "flashcar": -3.34,
+   "squarewin": 6.68
+  },
+  "2026-11-05": {
+   "greeneye": -9.26,
+   "redclaw": -17.26,
+   "nightindex": -5.52,
+   "islandforge": -0.88,
+   "silverapple": -1.53,
+   "flashcar": -10.77,
+   "squarewin": -3.58
+  },
+  "2026-11-06": {
+   "greeneye": 2.78,
+   "redclaw": 11.04,
+   "nightindex": 1.09,
+   "islandforge": -4.69,
+   "silverapple": -0.52,
+   "flashcar": 4.23,
+   "squarewin": -0.99
+  },
+  "2026-11-09": {
+   "greeneye": -4.27,
+   "redclaw": 13.26,
+   "nightindex": 2.74,
+   "islandforge": 4.68,
+   "silverapple": 2.43,
+   "flashcar": 5.54,
+   "squarewin": 2.75
+  },
+  "2026-11-10": {
+   "greeneye": -5.47,
+   "redclaw": 1.3,
+   "nightindex": -0.74,
+   "islandforge": 2.24,
+   "silverapple": -0.62,
+   "flashcar": 0.46,
+   "squarewin": -2.2
+  },
+  "2026-11-11": {
+   "greeneye": 2.87,
+   "redclaw": 7.32,
+   "nightindex": 1.6,
+   "islandforge": 4.81,
+   "silverapple": 2.04,
+   "flashcar": 2.91,
+   "squarewin": -2.26
+  },
+  "2026-11-12": {
+   "greeneye": -4.34,
+   "redclaw": 5.86,
+   "nightindex": -0.39,
+   "islandforge": -2.3,
+   "silverapple": -0.21,
+   "flashcar": 1.69,
+   "squarewin": 0.36
+  }
+ }
+}
