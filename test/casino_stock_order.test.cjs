@@ -160,9 +160,11 @@ T("壹次撮合：前面的成交、後面的過期，退回的鎖也要真的�
   G.casStockBuy(s.w, s.house, ID, 5, D, OPEN);
   G.casStockOrder(s.w, s.house, "stop", ID, 3, px - 500, D, OPEN);
   G.casStockOrder(s.w, s.house, "buy", ID, 10, px - 3000, D, OPEN);
-  const D4 = addDay(D, 2); // 最後有效日當天收盤停盤：沒成交的就過期
-  s.house.stk.px[ID] = px - 1000; s.house.stk.day = D4; s.house.stk.hist[D4] = Object.assign({}, s.house.stk.px);
-  const m = G.casStockMatch(s.w, s.house, D4, at(D4, 23));
+  // 隔天跌了（hist 有那天的價），再隔壹天才上線：停損吃到跌的那天，買單沒到價、也過了有效日，退回去刪掉
+  const D1 = addDay(D, 1), D2 = addDay(D, 2);
+  s.house.stk.hist[D1] = Object.assign({}, s.house.stk.px, { [ID]: px - 1000 });
+  s.house.stk.day = D1; // 有效日的價已經調進來
+  const m = G.casStockMatch(s.w, s.house, D2, at(D2, 10));
   assert.strictEqual(m.fills, 1); assert.strictEqual(m.cancels, 1);
   assert.strictEqual(s.w.stk.orders.length, 0); assert.strictEqual(G.casStockFix(s.w).hold, 0);
   assert.strictEqual(gap(G, s, op), 0);
