@@ -567,8 +567,9 @@ SCREENS.cellar = root => {
   const rulesBtn = btn([icon("scroll"), h("span", null, "隊伍規則", h("small", null, "強度、相剋、帽子"))], () => {
     const m = miniLayer("隊伍規則", "");
     m.card.classList.add("cellar-rules-layer");
-    legend.append(h("div", { class: "rv-btns" }, btn("知道了", m.close, "primary"))); // 整個內容寫在卷軸裡：標題、規則、按鈕（翊文 11-13：「不用背景加卷軸」）
-    m.card.append(legend);
+    const scroll = teamRules(); // 每次打開都做新的：不然壹直往同壹份卷軸後面加「知道了」（11-13 翊文截圖：按鈕疊了好幾顆）
+    scroll.append(h("div", { class: "rv-btns" }, btn("知道了", m.close, "primary"))); // 整個內容寫在卷軸裡：標題、規則、按鈕（翊文 11-13：「不用背景加卷軸」）
+    m.card.append(scroll);
     m.layer.addEventListener("click", e => { if (e.target === m.layer) m.close(); });
   }, "onescreen-big");
   const side = h("aside", { class: "onescreen-side" },

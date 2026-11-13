@@ -28,6 +28,24 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-hall", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "Yuga Bot 銀行開幕：大廳多了壹間銀行", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["怎麼去", [
+        "大廳導覽圖八角大廳的正下方，多了壹間「銀行」。賭場裡的銀行也有「去銀行」按鈕。",
+      ]],
+      ["銀行裡有什麼", [
+        "存款：活存每天 0.1%，定存 3 天 1%、7 天 3%。",
+        "借款：跟 Yuga Bot 借，幾天內還。",
+        "館債：借錢給莊家，每週壹期，下週壹還本金加利息。",
+        "右邊看得到自己的帳戶和淨值。股票和財報即將開放。",
+      ]],
+      ["賭場裡的銀行", [
+        "平常收成壹條，不會再擋到牌桌；要用就按「展開」，或「去銀行」看完整的。",
+      ]],
+    ],
+  },
+  {
     id: "lobby-column", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "大廳右欄換新樣子", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
