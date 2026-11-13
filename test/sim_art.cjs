@@ -4,15 +4,20 @@
 let s = 77; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 const nrm = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
 const pct = x => (x * 100).toFixed(1) + "%";
-const SETS = { "現在 (賣回80% 每天+0.2% 上限30%)": { sell: 0.8, up: 0.002, cap: 0.30 }, "建議 (賣回90% 每天+0.15% 上限45%)": { sell: 0.9, up: 0.0015, cap: 0.45 }, "折衷 (賣回85% 每天+0.2% 上限40%)": { sell: 0.85, up: 0.002, cap: 0.40 } };
-const mood = 0, dBuy = 0.01, dSell = 0.015; // 買的時候別人持有 → +1%；賣的時候多了自己 → +1.5%
+// fast：前 fd 天每天漲 fast；之後每天漲 up；最多漲 cap（都是小數）
+const SETS = { "舊草稿 (賣回80% 每天+0.2% 上限30%)": { sell: 0.8, fast: 0.002, fd: 1e9, up: 0.002, cap: 0.30, mood: 0.02, dcap: 0.05 }, "上一版建議 (賣回90% 每天+0.1% 上限30%)": { sell: 0.9, fast: 0.001, fd: 1e9, up: 0.001, cap: 0.30, mood: 0.02, dcap: 0.05 }, "翊文要的 (賣回90% 前14天+0.85% 之後+0.04% 上限15%)": { sell: 0.9, fast: 0.0085, fd: 14, up: 0.0004, cap: 0.15, mood: 0.01, dcap: 0.03 } };
+const gain = (c, d) => Math.min(c.cap, d <= c.fd ? d * c.fast : c.fd * c.fast + (d - c.fd) * c.up);
+const dBuy = 0.01, dSell = 0.015; // 買的時候別人持有 → +1%；賣的時候多了自己 → +1.5%
 console.log("== 1 持有 N 天賣回的總報酬（景氣 0、搶手大約 +1%→+1.5%）；對照：活存 0.1%／天、定存 7 天 3%（約 0.43%／天）");
-console.log("設定".padEnd(36), "回本天數", "  30天   90天   180天   300天   500天");
+console.log("設定".padEnd(36), "回本天數", "  1天    3天   14天   30天   100天  300天");
 for (const [name, c] of Object.entries(SETS)) {
-  const ret = d => c.sell * (1 + Math.min(c.cap, d * c.up) + dSell) / (1 + dBuy) - 1;
+  const ret = d => c.sell * (1 + gain(c, d) + dSell) / (1 + dBuy) - 1;
   let be = null; for (let d = 0; d < 2000; d++) if (ret(d) >= 0) { be = d; break; }
-  console.log(name.padEnd(30), String(be === null ? "永遠" : be).padStart(6), [30, 90, 180, 300, 500].map(d => pct(ret(d)).padStart(8)).join(""));
+  console.log(name.padEnd(30), String(be === null ? "永遠" : be).padStart(6), [1, 3, 14, 30, 100, 300].map(d => pct(ret(d)).padStart(8)).join(""));
 }
+console.log("== 1b 短線最壞的情況：買在景氣最好（−mood）、沒人持有；賣在景氣最差（+mood）、搶手到上限。看第 N 天賣回");
+for (const [name, c] of Object.entries(SETS)) console.log(name.padEnd(36), [1, 2, 3, 5, 7, 10, 14].map(d => "第" + d + "天 " + pct(c.sell * (1 + gain(c, d) + c.mood + c.dcap) / (1 - c.mood) - 1)).join("  "));
+console.log("== 1c 長期對照：活存每天 0.1%（本金最多算 1,000 萬）、定存 7 天 3%；畫的 100 天、300 天總報酬見上表");
 // 2 景氣 B 的過程和相關性
 console.log("\n== 2 畫和股票的日報酬相關性（館內股：0.1×活動比 + 0.3%×B + 噪音；畫：放久了 −2%×ΔB）");
 { const N = 200000; let B = 0, Bp = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, sxo = 0, sxxo = 0, sxyo = 0, so = 0, soo = 0, n = 0;
@@ -29,5 +34,5 @@ for (const [name, c] of Object.entries(SETS)) {
 // 4 莊家：全部人買了同一天一起賣回
 console.log("\n== 4 莊家曝險：N 個人各買 M 幅同級的畫，持有 D 天後同一天全部賣回（景氣 0）；看莊家一天要付多少、和收到多少的差");
 for (const [name, c] of Object.entries(SETS)) { console.log(name);
-  for (const [N, M, base, D] of [[10, 5, 2500000, 150], [20, 10, 6000000, 300], [20, 20, 15000000, 300]]) { const paid = N * M * base * (1 + dBuy), pay = N * M * base * (1 + Math.min(c.cap, D * c.up) + dSell) * c.sell;
+  for (const [N, M, base, D] of [[10, 5, 2500000, 150], [20, 10, 6000000, 300], [20, 20, 15000000, 300]]) { const paid = N * M * base * (1 + dBuy), pay = N * M * base * (1 + gain(c, D) + dSell) * c.sell;
     console.log(`  ${N} 人 × ${M} 幅（底價 ${base / 10000} 萬）持有 ${D} 天：莊家收過 ${(paid / 1e8).toFixed(2)} 億，一天付 ${(pay / 1e8).toFixed(2)} 億（${pct(pay / paid - 1)}）；占 1 億 bankroll 的 ${pct(pay / 1e8)}`); } }
