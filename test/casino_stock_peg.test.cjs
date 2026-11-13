@@ -1,7 +1,7 @@
 // 館外股票照「真實股價的比例」（11-14，規劃 2.8h）：node test/casino_stock_peg.test.cjs（npm test 也會跑）
 // 第壹次換比例（價位、持股照比例換股數市值不變、零頭用籌碼補、掛單取消退回、記帳）、之後每天開盤拉回（上限小於手續費加 drag，賺不到）、真實價怎麼拿、畫面欄位、守恆。數字讀 NUM。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", D2 = "2026-11-16", ID = "greeneye", TWID = "handbrain";

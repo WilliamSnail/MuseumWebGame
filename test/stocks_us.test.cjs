@@ -2,7 +2,7 @@
 // 美東開盤時間（冬令、夏令、換日光節約的前後）、整個交易日的模擬（含 DST 日、國定假日）、停盤、掛單當天有效、05:00 換日不重複算、view 欄位、守恆、解析行情。數字讀 NUM。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
-const { load } = require("./load_shared.cjs");
+const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x);
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
