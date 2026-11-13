@@ -657,8 +657,11 @@ export function storyCellarBox() {
       h("span", { class: "sc-body" }, h("b", null, found ? r.title : r.hint), h("small", null, found ? markText(`找到了${spotClaimed(P, W, r.id) && rewardText(r.reward) ? `（${rewardText(r.reward)}）` : ""}`) : !open ? `要先走到 B${r.floor}` : r.anomaly ? "本週異狀" : `第 ${r.day} 天多出來的地方`)),
       open ? btn([icon("stairs"), found ? " 再去壹次" : " 帶隊伍進去"], go_, found ? "ghost small" : "primary small") : h("span", { class: "sc-lock" }, icon("lock")));
   };
-  return h("section", { class: "story-cellar", "aria-label": "本週異狀" },
-    W.anomaly ? h("div", { class: "sc-anomaly" }, h("p", { class: "sc-kicker" }, icon("eye"), " 本週異狀"), h("b", null, W.anomaly.title), W.anomaly.text.map(t => h("p", null, ptMark(t)))) : null,
+  // 收得起來（地下收藏庫壹個畫面看得完，11-13）：電腦預設打開；手機（直拿、橫拿）預設收著，點了從上面展開。打開過就記著
+  const openN = W.rooms.filter(r => roomOpen(P, r) && !S.spots[r.id]).length;
+  return h("details", { class: "story-cellar", "aria-label": "本週異狀", open: UI.storyCellarOpen == null ? !matchMedia("(max-width: 760px), (max-height: 500px)").matches : UI.storyCellarOpen, onToggle: e => { UI.storyCellarOpen = e.target.open; } },
+    h("summary", { class: "story-cellar-sum" }, icon("eye"), W.anomaly ? " 本週異狀" : " 這週多出來的地方", h("small", null, openN ? `還有 ${openN} 間可以去` : "都找過了"), h("span", { class: "story-cellar-more", "aria-hidden": "true" }, "▾")),
+    W.anomaly ? h("div", { class: "sc-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(t => h("p", null, ptMark(t)))) : null,
     W.rooms.length ? h("ul", { class: "sc-rooms" }, W.rooms.map(card)) : null,
     h("p", { class: "sc-hint" }, markText("用下面挑好的 **3 隻**進去，只走那壹間；**過了就算找到**。已經走過的樓層，也可能多出新的地方。")));
 }
