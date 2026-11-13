@@ -146,6 +146,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 1. Google Cloud 主控台（專案選 `pepe-museum`）→「IAM 與管理」→「服務帳戶」→「建立服務帳戶」，名字 `github-deploy`。
 2. 給它這些角色：**Firebase 管理員**、**Cloud Functions 管理員**、**服務帳戶使用者**。第一次部署如果說少了權限，照錯誤訊息再加（常見的是「Artifact Registry 管理員」「服務使用情形消費者」）。
+   - **Cloud Scheduler 管理員**（11-13 加）：有排程的 Function（台股盤中 `stockTwTick`）要它。專案也要先開 Cloud Scheduler API（https://console.cloud.google.com/apis/library/cloudscheduler.googleapis.com?project=pepe-museum）；部署帳號自己開不了，翊文開。沒有的話整次部署失敗（錯誤：Permissions denied enabling cloudscheduler.googleapis.com，或少 cloudscheduler.jobs.update）。
 3. 點進這個服務帳戶 →「金鑰」→「新增金鑰」→ JSON，會下載一個檔。
 4. GitHub repo →「Settings」→「Secrets and variables」→「Actions」→「New repository secret」：名字 `FIREBASE_SERVICE_ACCOUNT`，內容貼那個 JSON 檔的全部文字。
 5. 下載的那個檔刪掉（不要放進專案資料夾、不要傳給任何人，包括 AI）。
