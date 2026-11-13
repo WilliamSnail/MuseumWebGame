@@ -339,7 +339,6 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
    ================================================================ */
 @media (min-width: 1100px) and (min-height: 600px) {
   .l2-side { padding: 38px 16px 38px; border: 0; border-image: none; background: url(/ui2/ui2-lobby-column.webp) center / 100% 100% no-repeat; background-origin: border-box; box-sizing: border-box; align-self: stretch; gap: 8px; }
-  .l2-pass { border: 12px solid transparent; border-image: url(/ui2/ui2-lobby-card.webp) 36 fill / 12px stretch; padding: 0 2px; }
   .l2-h { justify-content: center; margin: 0 0 4px; padding: 6px 18px 8px; color: #3A2410; font-weight: 700; text-align: center; border: 10px solid transparent; border-image: url(/ui2/ui2-lobby-ribbon.webp) 40 70 fill / 10px 34px stretch; letter-spacing: .14em; }
   .l2-h::after { display: none; }
   .l2-todo { border: 12px solid transparent; border-image: url(/ui2/ui2-task-card.webp) 36 fill / 12px stretch; min-height: 54px; }
@@ -352,10 +351,9 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 @media (min-width: 1100px) and (min-height: 600px) {
   .l2-side { padding: 30px 14px 28px; gap: 5px; }
   .l2-h { padding: 2px 16px 4px; border-width: 8px; border-image-width: 8px 28px; font-size: .78rem; margin: 0 0 2px; }
-  .l2-pass { border-width: 9px; }
+  /* 館友證：換回原本的羊皮紙卡（翊文 11-13：「館友證變形的很嚴重，換回原本的好了」），只把高度壓緊 */
+  .l2-pass { border-width: 12px; border-image-width: 12px; }
   .l2-pid small:nth-of-type(2) { display: none; }
-  .l2-ph { width: 40px; height: 40px; } .l2-ph img { width: 24px; height: 24px; }
-  .l2-pass { grid-template-columns: 40px 1fr; gap: 6px; }
   .l2-todos { gap: 4px; }
   .l2-todo { min-height: 46px; border-width: 9px; padding: 0 4px; }
   .l2-todo b { font-size: .82rem; } .l2-todo small { font-size: .68rem; }
