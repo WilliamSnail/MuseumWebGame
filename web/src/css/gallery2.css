@@ -135,3 +135,8 @@
   .gallery-onescreen .gal-wall { padding: 4px 4px 2px; }
   .gallery-onescreen .gal-corridor { padding: 2px 12px; gap: 16px; }
 }
+
+/* 畫框的高度有上限（高螢幕不要拉成長條），壹列畫在牆裡上下置中；寬度由 fitFrames（ui_story.js）照畫的比例算 */
+.gallery-onescreen .gal-corridor > .exhibit, .gallery-onescreen .gal-corridor > .show-cell { justify-content: center; }
+.gallery-onescreen .gal-corridor .frame { flex: 1 1 0; max-height: 520px; }
+.gallery-onescreen .gal-corridor .frame svg { max-width: none; }
