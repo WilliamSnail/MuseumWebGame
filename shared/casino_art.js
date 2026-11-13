@@ -3,7 +3,7 @@
 //  規劃：docs/經濟體系規劃.md 2.10 節。這份只做「跟館方買賣」；稀有的畫之後另外開拍賣（還沒做）。
 //  定位：畫是避險資產，不是賭博。價格每天只動一點點、景氣差的時候撐住（甚至微漲）、買賣有價差，所以短線進出一定虧，放著才有一點點增值。
 //  價格（casArtPrice）＝ 底價 × (1 ＋ 放久了 ＋ 景氣 ＋ 搶手)：
-//    底價：照稀有度四級（casArtTier）。放久了：展出後每天 ＋ageUpPct%，最多 ＋ageCapPct%。
+//    底價：照稀有度四級（casArtTier）。放久了（casArtAge）：展出後前 ageFastDays 天每天 ＋ageFastPct%（為了兩個禮拜內回本），之後每天只 ＋ageUpPct%，最多 ＋ageCapPct%（到頂就停，不是穩賺）。
 //    景氣：反向，景氣差（house.econ.b < 0）畫價微漲、景氣好微跌，最多 ±moodPct%（casFxMood 只讀）。
 //    搶手：全館現在有幾個人持有這幅，每人 ＋demandPct%，最多 ＋demandCapPct%（house.art.own）。
 //  錢怎麼動（守恆，shared/casino_book.js）：買＝錢包 → 莊家（casHouseMove "art"）；賣回＝莊家 → 錢包，只付 sellPct%，差額留在莊家。
@@ -44,15 +44,26 @@ export const CAS_ART = {
   full: "收藏架放滿了（最多 {n} 幅），先賣回壹幅。",
   none: "你沒有收藏這幅畫。",
   houseShort: "館方現在手頭緊，收不起這幅，過幾天再來。",
+  quota: "館方今天收的畫夠多了，明天再來。",
+  sellCap: "今天已經賣回 {n} 幅，明天再來。",
+  heldFull: "館方的收藏架現在放不下更多畫，過幾天再來。",
+  be: "再放 {n} 天，賣回才回本",
+  beDone: "現在賣回已經拿得回買進價",
   empty: "還沒收藏任何畫。",
-  rule: "壹天最多買 {perDay} 幅，最多收藏 {holdMax} 幅，壹幅畫壹個人只能收壹份。賣回只拿現價的 {sellPct}%。",
+  rule: "壹天最多買 {perDay} 幅，最多收藏 {holdMax} 幅，壹幅畫壹個人只能收壹份。賣回只拿現價的 {sellPct}%，大約放兩個禮拜才回本；回本之後漲得很慢，不是賺錢的東西。",
 };
 
-// 稀有度 0～3。內容可以直接寫 rarity（0～3）；沒寫的話：金色畫框、有理智檢定、藏著線索各算壹級
+// 稀有度 0～3。內容可以直接寫 rarity（0～3）；沒寫的話：金色畫框、有理智檢定、藏著線索，有任何壹個就是「少見」（1），都沒有是「尋常」（0）。
+// 珍藏（2）、孤品（3）只能手寫 rarity（11-14 數值平衡：三個標記各加壹級的話孤品永遠不會出現，少見又太多）
 export function casArtTier(w) {
   if (!arBox(w)) return 0;
   if (w.rarity != null && Number.isFinite(+w.rarity)) return arTierOf(w.rarity);
-  return arTierOf((w.frame === "gold" ? 1 : 0) + (w.san ? 1 : 0) + (w.clue ? 1 : 0));
+  return w.frame === "gold" || w.san || w.clue ? 1 : 0;
+}
+// 展出 d 天的「放久了」漲幅（%）：前 ageFastDays 天每天 ageFastPct，之後每天 ageUpPct，最多 ageCapPct
+export function casArtAge(d) {
+  const C = NUM.art, n = Math.max(0, Number.isFinite(+d) ? +d : 0), f = Math.min(n, C.ageFastDays);
+  return Math.min(C.ageCapPct, f * C.ageFastPct + (n - f) * C.ageUpPct);
 }
 
 // 存檔：P.art 補欄位、丟掉壞的。P 不是物件就回 null
@@ -72,6 +83,9 @@ export function casArtFix(P) {
   const buys = {};
   if (arBox(A.buys)) for (const d of Object.keys(A.buys)) if (arDay(d) && arN(A.buys[d]) > 0) buys[d] = arN(A.buys[d]);
   A.buys = buys;
+  const sells = {};
+  if (arBox(A.sells)) for (const d of Object.keys(A.sells)) if (arDay(d) && arN(A.sells[d]) > 0) sells[d] = arN(A.sells[d]);
+  A.sells = sells;
   return A;
 }
 // 莊家：house.art 補欄位
@@ -79,13 +93,16 @@ export function casArtHouse(house) {
   if (!arBox(house.art)) house.art = {};
   if (!arBox(house.art.own)) house.art.own = {};
   for (const id of Object.keys(house.art.own)) { const n = arN(house.art.own[id]); if (n > 0) house.art.own[id] = n; else delete house.art.own[id]; }
+  house.art.paid = arN(house.art.paid); // 全館持有的畫的買進價合計
+  if (!arBox(house.art.out) || !arDay(house.art.out.day)) house.art.out = { day: "", n: 0 }; // 今天館方已經付出去的賣回金額
+  house.art.out.n = arN(house.art.out.n);
   return house.art;
 }
 
 // 現價。item：{ tier, date }（畫出現的那天）；id：算「搶手」用的
 export function casArtPrice(item, id, day, house) {
   const C = NUM.art, base = C.tiers[arTierOf(item && item.tier)].base;
-  const age = arDay(item && item.date) && arDay(day) ? Math.min(C.ageCapPct, Math.max(0, arDiff(item.date, day)) * C.ageUpPct) : 0;
+  const age = arDay(item && item.date) && arDay(day) ? casArtAge(Math.max(0, arDiff(item.date, day))) : 0;
   const b = casFxMood(house), mood = Number.isFinite(b) ? -b * C.moodPct : 0;
   const own = house && arBox(house.art) && arBox(house.art.own) ? arN(house.art.own[id]) : 0;
   const demand = Math.min(C.demandCapPct, own * C.demandPct);
@@ -93,6 +110,18 @@ export function casArtPrice(item, id, day, house) {
 }
 // 賣回館方拿多少
 export const casArtSellPrice = price => Math.floor(arN(price) * NUM.art.sellPct / 100);
+// 再放幾天，賣回才拿得回買進價（paid）。照「現在的景氣和搶手」往後算；已經拿得回就是 0；四百天內都不行就是 null
+export function casArtBreakEven(item, id, day, house, paid) {
+  if (!arDay(day) || !(arN(paid) > 0)) return null;
+  const cur = arN(paid);
+  for (let n = 0; n <= 400; n++) {
+    const d = new Date(arUTC(day) + n * 86400000).toISOString().slice(0, 10);
+    if (casArtSellPrice(casArtPrice(item, id, d, house)) >= cur) return n;
+  }
+  return null;
+}
+// 賣回壹天全館最多付多少：莊家的錢 × sellQuotaPct% ＋ sellQuotaBase（當天第壹筆不受限，不然比額度貴的畫永遠賣不掉）
+const arQuota = house => Math.floor(Math.max(0, Number.isFinite(+house.bankroll) ? +house.bankroll : 0) * NUM.art.sellQuotaPct / 100) + NUM.art.sellQuotaBase;
 
 const buysToday = (A, day) => arN(A.buys[day]);
 // 買。work：{ id, date, tier, title }（伺服器從登記的畫裡查，不信瀏覽器）
@@ -109,7 +138,8 @@ export function casArtBuy(w, house, P, work, day) {
   const tier = arTierOf(work.tier), title = String(work.title || "").slice(0, 40);
   const price = casArtPrice({ tier, date: work.date }, work.id, day, house);
   if (!Number.isFinite(+w.chips) || w.chips < price) return { ok: false, reason: CAS_ART.poor };
-  w.chips -= price; casHouseMove(house, "art", price);
+  if (house.art.paid + price > Math.max(0, Number.isFinite(+house.bankroll) ? +house.bankroll : 0) * C.heldPct / 100) return { ok: false, reason: CAS_ART.heldFull };
+  w.chips -= price; casHouseMove(house, "art", price); house.art.paid += price;
   house.art.own[work.id] = arN(house.art.own[work.id]) + 1;
   A.own[work.id] = { tier, date: work.date, d: day, paid: price, title };
   A.buys[day] = buysToday(A, day) + 1;
@@ -125,8 +155,13 @@ export function casArtSell(w, house, P, id, day) {
   if (!x) return { ok: false, reason: CAS_ART.none };
   casArtHouse(house);
   const pay = casArtSellPrice(casArtPrice(x, id, day, house));
+  if (arN(A.sells[day]) >= NUM.art.sellPerDay) return { ok: false, reason: arFill(CAS_ART.sellCap, { n: NUM.art.sellPerDay }) };
   if (!Number.isFinite(+house.bankroll) || house.bankroll < pay) return { ok: false, reason: CAS_ART.houseShort };
+  if (house.art.out.day !== day) house.art.out = { day, n: 0 };
+  if (house.art.out.n > 0 && house.art.out.n + pay > arQuota(house)) return { ok: false, reason: CAS_ART.quota };
   casHouseMove(house, "art", -pay); w.chips += pay;
+  house.art.out.n += pay; house.art.paid = Math.max(0, house.art.paid - arN(x.paid)); A.sells[day] = arN(A.sells[day]) + 1;
+  for (const d of Object.keys(A.sells)) if (arDiff(d, day) > 14) delete A.sells[d];
   delete A.own[id];
   const left = arN(house.art.own[id]) - 1;
   if (left > 0) house.art.own[id] = left; else delete house.art.own[id];
@@ -144,7 +179,7 @@ export function casArtView(w, house, P, works, day) {
   });
   const mine = Object.keys(own).filter(id => arBox(own[id]) && arDay(own[id].date)).map(id => {
     const x = own[id], price = casArtPrice(x, id, day, house);
-    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price) };
+    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)) };
   });
   return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips };
 }

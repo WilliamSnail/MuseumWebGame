@@ -186,12 +186,15 @@ export const NUM = {
   fusionSan: "1/1D4",       // 融合要做的理智檢定（原本 0/1D4）
   inherit: 45,              // 每一類從爸爸、媽媽各遺傳的機率（%），剩下的是突變
   lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3", perOwner: 2, returnsDay: 2 }, // 招領（shared/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定；防刷（翊文：「不能讓玩家用一直歸零來刷」）：壹個館友最多 perOwner 張、送的人壹天最多 returnsDay 次拿靈感
-  // 藝術市場（11-14，shared/casino_art.js，規劃 2.10 節；翊文：畫是避險資產，像富人買來避險）。初稿，等數值平衡再調。
-  //   tiers：稀有度四級的底價（尋常 100 萬 ＝ 新玩家一開場的籌碼，所以是「有錢之後才做的事」）；ageUpPct：展出後每天漲 %、ageCapPct：最多漲到 %（放著慢慢增值）；
-  //   moodPct：景氣反向 ±%（景氣差微漲）；demandPct／demandCapPct：全館每多一人持有漲 %、最多 %；sellPct：賣回只拿現價幾 %（價差，短線進出一定虧）；
-  //   perDay：一天最多買幾幅；holdMax：最多收藏幾幅；shelfDays：特展出現後幾天內館方賣（1 ＝ 只有當天）；unit：價格進位。
+  // 藝術市場（11-14，shared/casino_art.js，規劃 2.10、2.10a 節；翊文：畫是避險資產，像富人買來避險；「最好一兩個禮拜內回本」）。
+  //   tiers：稀有度四級的底價（尋常 100 萬 ＝ 新玩家一開場的籌碼，所以是「有錢之後才做的事」）。
+  //   放久了（casArtAge）：展出後前 ageFastDays 天每天漲 ageFastPct %，之後每天只漲 ageUpPct %，最多漲到 ageCapPct %（到頂就不再漲，所以不是穩賺）。
+  //   moodPct：景氣反向 ±%（景氣差微漲）；demandPct／demandCapPct：全館每多一人持有漲 %、最多 %；sellPct：賣回只拿現價幾 %（價差，短線進出一定虧）。
+  //   perDay：一天最多買幾幅；sellPerDay：一天最多賣回幾幅；holdMax：最多收藏幾幅；shelfDays：特展出現後幾天內館方賣（1 ＝ 只有當天）；unit：價格進位。
+  //   莊家的保護：賣回一天全館最多付 莊家的錢 × sellQuotaPct% ＋ sellQuotaBase（股票共用額度之後再接）；全館持有的畫買進價合計超過 莊家的錢 × heldPct% 就先不收新的。
   art: { tiers: [{ name: "尋常", base: 1000000 }, { name: "少見", base: 2500000 }, { name: "珍藏", base: 6000000 }, { name: "孤品", base: 15000000 }],
-    ageUpPct: 0.2, ageCapPct: 30, moodPct: 2, demandPct: 0.5, demandCapPct: 5, sellPct: 80, perDay: 2, holdMax: 20, shelfDays: 1, unit: 1000 },
+    ageFastPct: 0.85, ageFastDays: 14, ageUpPct: 0.04, ageCapPct: 15, moodPct: 1, demandPct: 0.2, demandCapPct: 2, sellPct: 90, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
+    sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40 },
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
   blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
   fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）
