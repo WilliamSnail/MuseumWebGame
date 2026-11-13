@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.stockLev.levByCredit = [[0, 5]]; /* 舊測試用 5× 開，倍數跟信用的規則在 casino_stock_lev_owed.test.cjs 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const SEC = "test-secret", D0 = "2026-11-16";
 const addDay = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const at = (day, hh, mm = 0) => { const [y, m, d] = day.split("-").map(Number); return Date.UTC(y, m - 1, d, hh - 8, mm); }; // 台灣時間
@@ -276,7 +276,7 @@ T("畫面：lev、positions、credit 的形狀，數字跟部位對得上；不�
   for (const k of ["no", "id", "name", "market", "side", "lev", "qty", "entry", "margin", "now", "pnl", "maintPct", "liqPx", "openedDay", "dayTrade"]) assert.ok(k in a, k);
   assert.strictEqual(a.market, "in"); assert.strictEqual(a.side, "long"); assert.strictEqual(a.now, 950); assert.strictEqual(a.pnl, -5000); assert.strictEqual(a.maintPct, 75); assert.strictEqual(a.liqPx, 900); assert.strictEqual(a.dayTrade, true); assert.strictEqual(a.openedDay, D0);
   assert.strictEqual(b.market, "tw"); assert.strictEqual(b.side, "short"); assert.strictEqual(b.pnl, 3000); assert.ok(b.liqPx > b.entry);
-  assert.strictEqual(J(Object.keys(v.credit)), J(["level", "name", "maxLev", "next", "why", "pts", "posLimit", "posUsed"]));
+  assert.strictEqual(J(Object.keys(v.credit)), J(["level", "name", "maxLev", "next", "nextUnlock", "nextText", "why", "pts", "posLimit", "posUsed"]));
   assert.strictEqual(v.credit.level, 0); assert.strictEqual(v.credit.maxLev, 5); assert.strictEqual(v.credit.next, 5); assert.strictEqual(v.credit.posLimit, 20000000); assert.strictEqual(v.credit.posUsed, 100000 + 300000);
   assert.strictEqual(typeof v.credit.name, "string");
   assert.strictEqual(G.casLevTakeNotes(s.w).length, 0);
