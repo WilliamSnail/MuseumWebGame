@@ -563,6 +563,26 @@ export function galleryShell(root, active, sub, main, side) {
   root.classList.add("onescreen-room", "gallery-onescreen");
   const wall = h("div", { class: "gal-wall" }, ...main.filter(Boolean)), aside = h("aside", { class: "onescreen-side gal-side" }, ...(side || []).filter(Boolean));
   root.append(...[roomHead("畫廊", sub), galleryTabs(active), h("div", { class: "onescreen-main gal-main" }, wall, aside)].filter(Boolean));
+  wall.querySelectorAll(".gal-corridor").forEach(fitFrames);
+}
+// 畫框的寬度跟著畫的比例走（翊文 11-14：高螢幕上框被拉得又高又窄，畫只佔中間壹小塊）：框的高度是牆給的，寬度＝畫的內高×畫的寬高比＋框邊。
+// 畫的比例看 svg 的 viewBox；牆的大小變了（轉向、縮放視窗）就重算
+function fitFrames(corr) {
+  const run = () => {
+    if (!corr.isConnected) { if (ro) ro.disconnect(); window.removeEventListener("resize", run); return; }
+    corr.querySelectorAll(".frame").forEach(f => {
+      const svg = f.querySelector("svg"), vb = svg && svg.viewBox && svg.viewBox.baseVal;
+      if (!vb || !vb.width || !vb.height) return;
+      const cs = getComputedStyle(f), px = k => parseFloat(cs[k]) || 0;
+      const padX = px("borderLeftWidth") + px("borderRightWidth") + px("paddingLeft") + px("paddingRight"), padY = px("borderTopWidth") + px("borderBottomWidth") + px("paddingTop") + px("paddingBottom");
+      const innerH = f.getBoundingClientRect().height - padY;
+      if (innerH > 0) f.style.width = Math.round(innerH * vb.width / vb.height + padX) + "px";
+    });
+  };
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(run) : null;
+  if (ro) ro.observe(corr);
+  window.addEventListener("resize", run);
+  requestAnimationFrame(run);
 }
 // 側欄的「怎麼看」：電腦展開，手機收起來（點開 ▾）
 export function galleryRules(title, ...lines) {
