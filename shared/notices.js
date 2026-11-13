@@ -28,6 +28,22 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "art-market", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "畫廊多了「藝術市場」：特展的畫可以收藏", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["怎麼用", [
+        "畫廊的「今日特展」，每幅畫下面多了「買下」和「賣回」，旁邊寫館方現在的價錢。用籌碼買。",
+        "買到的畫收在特展下面的「藝術市場」，隨時可以賣回館方。",
+      ]],
+      ["要知道的", [
+        "畫是放著的東西：價錢壹天只動壹點點，景氣差的時候反而撐得住，放得越久慢慢多壹點。",
+        "賣回館方只拿現價的八成，所以買了馬上賣會虧。壹天最多買 2 幅，最多收藏 20 幅，壹幅畫只能收壹份。",
+        "最便宜的壹幅也要 100 萬，有錢之後再來。稀有的畫之後會另外開拍賣。",
+      ]],
+    ],
+    cta: { label: "去畫廊", room: "gallery", params: { show: true } },
+  },
+  {
     id: "stock-out", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "銀行開放股票：先開館外七支", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
