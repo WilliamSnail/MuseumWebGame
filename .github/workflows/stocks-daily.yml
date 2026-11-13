@@ -1,6 +1,7 @@
 # 館外股票的每日資料（11-13）：抓前一個交易日的真實漲跌幅，存成 JSON（tools/stocks_fetch.cjs）。
 # 抓資料不用金鑰。結果放在資料分支 stocks-data 的 daily.json（不推 main、不觸發部署），也寫進正式資料庫的 stocksDaily/latest 給伺服器讀（金鑰在 GitHub Secrets，只做這壹件事）。
 # 台灣 05:30 跑一次（美股冬令 05:00 收盤，夏令 04:00；遊戲 05:00 換日），06:30 補一次；沒變就不 commit。
+# 每次都重抓最近一個月（range=1mo），漏跑幾天下一次會自己補回來；最後一步檢查資料有沒有落後超過 3 天，落後就讓這次失敗。
 # 也可以手動按（Actions → 館外股票每日資料 → Run workflow）。
 name: 館外股票每日資料
 
@@ -63,3 +64,5 @@ jobs:
           if git rev-parse -q --verify HEAD >/dev/null && [ "$(git show HEAD:daily.json | node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0,"utf8")).days))')" = "$(node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync("daily.json","utf8")).days))')" ]; then echo "只有時間變，不 commit"; exit 0; fi
           git commit -qm "館外股票每日資料 $(date -u +%F)"
           git push origin stocks-data
+      - name: 檢查資料新不新（落後超過 3 天就讓這次失敗，GitHub 會寄信）
+        run: node tools/stocks_fetch.cjs --fresh content/stocks/daily.json

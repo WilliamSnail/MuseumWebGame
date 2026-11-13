@@ -9,6 +9,7 @@ export const OUT_STOCK_NUM = {
   scale: 1, // 真實漲跌乘上這個再算上限；1＝照真的。想讓世界比較平靜就調小
   keep: 40, // daily.json 留幾個市場日期（舊的刪掉）
   floor: 1, // 股價最低 1，不會變 0
+  staleDays: 3, // 資料比「該有的最新一天」落後超過這麼多天，算斷了，伺服器要在記錄裡喊（outStockAgeDays）
 };
 
 // 真實漲跌幅（%）→ 遊戲裡的漲跌（小數，+0.03＝漲 3%）。壞資料（null、字串、NaN）當作沒動
@@ -34,28 +35,41 @@ export function outStockWeekend(d) {
 // 遊戲日期 gameDate 這一天，每一家動多少：{ id: 小數 }。
 //   用的是「前一天」的市場資料。
 //   那天這家休市（null）→ 不動；週末沒有資料 → 不動；
-//   平日卻整天沒資料（沒抓到）→ 用資料裡最近壹天有這家漲跌的那一筆（資料缺的時候用前一天的）；完全沒有就不動。
+//   平日卻整天沒資料（沒抓到）→ 不動（0），不拿別天的漲跌頂替：頂替等於編一個那天沒發生的漲跌。
+//   哪幾家是「沒資料」才不動，用 outStockStale 問，畫面要標出來，不要讓人以為真的沒漲跌。
 export function outStockMovesFor(daily, gameDate, ids) {
   const days = daily && daily.days && typeof daily.days === "object" ? daily.days : {};
   const out = {};
   const M = outStockAddDay(gameDate, -1);
   const row = days[M];
-  const keys = Object.keys(days).filter(k => k < M).sort();
   for (const id of ids) {
     let pct = null;
-    if (row && typeof row === "object") pct = Object.prototype.hasOwnProperty.call(row, id) ? row[id] : undefined;
-    else if (outStockWeekend(M)) pct = null;
-    else pct = undefined; // 平日整天沒資料＝缺
-    if (pct === undefined) { // 缺：往前找最近壹筆有數字的
-      pct = null;
-      for (let i = keys.length - 1; i >= 0; i--) {
-        const r = days[keys[i]], v = r && typeof r === "object" ? r[id] : undefined;
-        if (typeof v === "number" && isFinite(v)) { pct = v; break; }
-      }
-    }
+    if (row && typeof row === "object") pct = Object.prototype.hasOwnProperty.call(row, id) ? row[id] : null;
     out[id] = outStockMove(pct);
   }
   return out;
+}
+
+// 遊戲日期 gameDate 這一天，哪幾家「沒有新資料」（不是休市）：平日整天沒資料，或那天的資料裡少了這家。
+// 休市（null）、週末不算。回傳 id 陣列。畫面用它標「今天沒有新資料」。
+export function outStockStale(daily, gameDate, ids) {
+  const days = daily && daily.days && typeof daily.days === "object" ? daily.days : {};
+  const M = outStockAddDay(gameDate, -1);
+  const row = days[M];
+  if (row && typeof row === "object") return ids.filter(id => !Object.prototype.hasOwnProperty.call(row, id));
+  return outStockWeekend(M) ? [] : ids.slice();
+}
+
+// 資料斷了幾天：該有的最新市場日（gameDate 的前一天；它是週末就往前找到週五）減掉資料裡最新的一天。0＝沒斷。
+// 超過 OUT_STOCK_NUM.staleDays 就該在伺服器記錄裡喊（console.error）。沒有任何資料回傳 Infinity。
+export function outStockAgeDays(daily, gameDate) {
+  const days = daily && daily.days && typeof daily.days === "object" ? daily.days : {};
+  let want = outStockAddDay(gameDate, -1);
+  while (outStockWeekend(want)) want = outStockAddDay(want, -1);
+  const have = Object.keys(days).filter(k => days[k] && typeof days[k] === "object").sort().pop();
+  if (!have) return Infinity;
+  const ms = d => { const [y, m, dd] = d.split("-").map(Number); return Date.UTC(y, m - 1, dd); };
+  return Math.max(0, Math.round((ms(want) - ms(have)) / 86400000));
 }
 
 // 股價乘上漲跌，四捨五入成整數，最低 floor
