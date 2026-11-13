@@ -334,7 +334,7 @@ function levTrade(v, S, cur) {
   const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : halt ? haltText(S, cur) : L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
   return [
     seg([["long", "做多 ▲"], ["short", "放空 ▼"]], f.dir, k => { f.dir = k; rerender(); }),
-    h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips([1, 2, 3, 5].filter(n => n <= maxLev), lev, n => { f.lev = n; rerender(); }, n => `${n}×`)),
+    h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips(Array.from({ length: Math.max(0, Math.min(10, Math.floor(maxLev))) }, (_, i) => i + 1), lev, n => { f.lev = n; rerender(); }, n => `${n}×`)),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "保證金"), chips([100000, 500000, 1000000, 5000000].filter(n => n <= maxMargin), Math.min(f.margin, maxMargin), n => { f.margin = n; rerender(); }, n => fmt(n / 10000) + " 萬")),
     sum,
     h("div", { class: "bank-ocos" },
@@ -473,14 +473,17 @@ function goStock(v, id) {
   if (i < 0) return;
   UI.bankTab = "stock"; UI.bankStock = i; rerender();
 }
+const isPhone = () => window.innerWidth < 761 || window.innerHeight < 501;
+// 手機：把壹塊收成壹行，點開才看（電腦照舊整塊畫）
+const fold = (title, node) => (isPhone() && node ? h("details", { class: "bank-fold" }, h("summary", null, h("b", null, title), h("span", null, "點開 ▾")), node) : node);
 function worldPanel(v) {
   const W = v.world;
   if (!W) return null;
   const days = Array.isArray(W.days) ? W.days.filter(d => d && Array.isArray(d.items) && d.items.length) : [];
   if (!days.length) return panel("世界市場", "每天由館方整理", h("p", { class: "bank-empty-dark" }, "今天還沒有世界市場的消息。"));
   return panel("世界市場", "外面世界的股市消息，不寫數字",
-    h("div", { class: "bank-worlddays" }, days.map((d, di) => h("section", { class: "bank-wday" },
-      h("h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5)),
+    h("div", { class: "bank-worlddays" }, days.map((d, di) => h(isPhone() && di > 0 ? "details" : "section", { class: "bank-wday" + (isPhone() && di > 0 ? " old" : "") },
+      h(isPhone() && di > 0 ? "summary" : "h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5) + (isPhone() ? "　點開 ▾" : "")),
       h("ul", { class: "bank-world" }, d.items.map(it => { const m = TONE_MARK[it.tone] || TONE_MARK.flat; return h("li", { class: "tone-" + (it.tone || "flat") },
         h("i", { class: "bank-tone " + m[1], "aria-hidden": "true" }, m[0]),
         h("span", null, h("b", null, it.title), h("small", null, it.line),
@@ -496,9 +499,9 @@ function reportPane(v) {
         h("div", { class: "bank-quote" }, num("big", fmt(e.gdp)), upDown(e.growth, true), h("span", { class: "bank-mood " + (e.idx > 0.3 ? "up" : e.idx < -0.3 ? "down" : "") }, `景氣 ${tone}`)),
         h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天"),
         h("p", { class: "bank-line" }, e.news)),
-      panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))]))),
+      fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))])))),
     h("div", { class: "bank-stack" }, world,
-      v.stocks && v.stocks.maker ? panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does)))) : null));
+      v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
 
