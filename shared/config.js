@@ -382,9 +382,9 @@ export const NUM = {
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
-    //   feePct 手續費（進預算池）、haltFrom／haltTo 台灣時間幾點停盤（22:00～05:00，不然晚上看完真實收盤再下單等於穩賺）
+    //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8g 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
-    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, haltFrom: 22, haltTo: 5,
+    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5,
       exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
       // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
       order: { max: 10, perStock: 3, days: 1, cancelDay: 20 }, // days：有效到下壹次價格變動（翊文 11-13：「應該每張單有效 1 天 跟真實的依樣」）
@@ -394,7 +394,13 @@ export const NUM = {
       //   giveUp 開盤後超過幾分鐘還沒抓到第壹個價，當天不開；retry 錨點時間過了幾分鐘內重抓，再抓不到這壹段真實成分當 0；
       //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
       tw: { from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
-        sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3 } } },
+        sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3 } },
+      // 美股盤中（11-14，規劃 2.8g）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
+      //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
+      //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
+      us: { open: 570, len: 390, seg: 15, giveUp: 30, retry: 3, band: 10,
+        minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06 },
+        sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
