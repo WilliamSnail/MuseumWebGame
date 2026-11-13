@@ -3,23 +3,24 @@
 //  這壹步只做館外七支（shared/stocks_text.js 的 OUT_STOCKS，每天的真實漲跌由 shared/stocks.js 換算）。
 //  館內五家店、槓桿、放空、當沖、盤中價格是後面幾步，規劃在 docs/經濟體系規劃.md 2.8。
 //
-//  錢怎麼動（守恆，shared/casino_book.js）：莊家當對手盤。
-//    買：錢包付 股價×股數 ＋ 手續費；股價×股數 進莊家（casHouseMove "stock"），手續費進預算池。
-//    賣：莊家付 股價×股數；錢包拿 股價×股數 － 手續費，手續費進預算池。
-//    股價漲跌不搬錢（持股市值是帳面的），所以總量永遠不變。
+//  錢怎麼動（shared/casino_book.js）：跟「外面世界」買賣（翊文 11-14：「股票不是跟"外面世界"買的嗎?」→「好更改」）。
+//    買：股價×股數 流出館外（casBurn，來源 stockBuy），手續費進預算池（搬）。
+//    賣：股價×股數 從館外進來（casMint，來源 stockSell），扣手續費進預算池（搬）。
+//    莊家完全不出錢，所以沒有「全館持股 ≤ 莊家 50%」那種上限（以前莊家當對手盤時要有，莊家壹窮股市就停擺）。
+//    外面世界就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的 drag、每人每天賣出上限。
+//    記帳照樣對得上：憑空的、消失的都有來源，日報看得到股市每天讓館裡多了或少了多少。
 //
 //  停盤（數值平衡 11-14）：真實美股台灣時間 22:30～05:00 就看得到收盤，遊戲 05:00 才調價。
 //    不擋的話晚上看完盤再下單等於穩賺，所以台灣時間 22:00～05:00 不能買賣。
 //
-//  莊家的曝險上限（數值平衡 11-14）：全館持股總市值超過莊家的 exposePct% 就不能再買；
-//    壹人壹天賣出上限 sellDay；全館壹天淨賣出上限 bankroll×netSellPct% ＋ netSellFlat；莊家 ≤ 0 停買、賣照付。
+//  上限：壹人壹天賣出 sellDay（擋多頭時壹口氣印太多錢）。
 //
 //  純函式：「今天」和「現在幾點」從參數來，不碰資料庫和 DOM。
 //  莊家 house.stk：{ day, px: { id: 股價 }, prev: { id: 昨天的股價 }, held: { id: 全館持股 }, net: { day, n 今天全館淨賣出 } }
 //  錢包 w.stk：{ own: { id: 股數 }, sold: { day, n 今天賣出的錢 }, fee 累計手續費, gain 累計賣出賺賠 }
 // ================================================================
 import { NUM } from "./config.js";
-import { casCount, casHouseMove } from "./casino_book.js";
+import { casBurn, casCount, casMint } from "./casino_book.js";
 import { CAS_STOCK } from "./casino_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { casFill, casNum } from "./casino.js";
@@ -101,15 +102,12 @@ export function casStockBuy(w, house, id, shares, day, t) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockHalt(t)) return { ok: false, reason: CAS_STOCK.halt };
-  if (house.bankroll <= 0) return { ok: false, reason: CAS_STOCK.houseBroke };
   const n = Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_STOCK.bad };
   const px = H.px[id], cost = px * n, fee = stFee(cost);
   if (cost + fee > w.chips) return { ok: false, reason: CAS_STOCK.poor };
-  if (casStockExposure(house) + cost > Math.floor(house.bankroll * C.exposePct / 100)) return { ok: false, reason: CAS_STOCK.exposed };
-  w.chips -= cost + fee;
-  casHouseMove(house, "stock", cost);
-  house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（錢包已經扣掉了，是搬不是憑空；拚經濟也是這樣直接動預算池）
+  casBurn(w, "stockBuy", cost); // 流出館外（給外面世界）
+  w.chips -= fee; house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（搬，不是憑空；拚經濟也是這樣直接動預算池）
   S.own[id] = stN(S.own[id]) + n;
   S.fee += fee;
   H.held[id] = stN(H.held[id]) + n;
@@ -129,12 +127,8 @@ export function casStockSell(w, house, id, shares, day, t) {
   const px = H.px[id], gross = px * n, fee = stFee(gross), net = gross - fee;
   // 壹人壹天賣出上限
   if (stSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { n: casNum(Math.max(0, C.sellDay - stSoldToday(S, day))) }) };
-  // 全館壹天淨賣出上限（買會把額度加回來，所以是「淨」）
-  const cap = Math.floor(Math.max(0, house.bankroll) * C.netSellPct / 100) + C.netSellFlat;
-  if (stNetToday(H, day) + gross > cap) return { ok: false, reason: CAS_STOCK.queue };
-  casHouseMove(house, "stock", -gross);
-  w.chips += net;
-  house.budget += fee; casCount(house, "stockFee", fee);
+  casMint(w, "stockSell", gross); // 從館外進來（外面世界付）
+  w.chips -= fee; house.budget += fee; casCount(house, "stockFee", fee);
   S.own[id] = have - n;
   if (S.own[id] <= 0) delete S.own[id];
   S.fee += fee;
@@ -158,8 +152,8 @@ export function casStockView(w, house, day, t, stale) {
   return {
     list, fee: C.feePct / 100, halt: casStockHalt(t), haltFrom: C.haltFrom, haltTo: C.haltTo,
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
-    exposeLeft: Math.max(0, Math.floor(house.bankroll * C.exposePct / 100) - casStockExposure(house)),
-    bankroll: house.bankroll, houseBroke: house.bankroll <= 0, // 買不了的時候畫面要說清楚是哪個原因（翊文 11-14：有錢卻壹直說「籌碼不夠，或莊家手上的股票已經夠多了」）
+    exposeLeft: null, // 跟外面世界買賣（11-14）：沒有莊家的上限了
+    bankroll: house.bankroll, houseBroke: false,
     sellLeft: Math.max(0, C.sellDay - stSoldToday(S, day)),
     soon: CAS_STOCK.soon, // 館內五家店、槓桿、放空、當沖還沒做
   };

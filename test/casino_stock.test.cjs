@@ -10,6 +10,8 @@ const D = "2026-11-14", ID = "greeneye";
 const at = (d, h) => Date.parse(`${d}T${String(h).padStart(2, "0")}:30:00+08:00`);
 const OPEN = at(D, 14); // 停盤以外的時間
 const fresh = G => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; w.chips = 500000000; G.casStockHouseFix(house); return { w, house }; };
+const gap = (G, s, opening) => G.casBookGap(G.casBookSnap([s.w], s.house, 0, null), opening);
+const open0 = (G, s) => G.casBookOpening(G.casBookSnap([s.w], s.house, 0, null));
 const total = (G, s) => G.casBookTotal(G.casBookSnap([s.w], s.house, 0, null));
 
 T("停盤：台灣 22:00～05:00 不能買賣，白天可以", G => {
@@ -24,30 +26,31 @@ T("停盤：台灣 22:00～05:00 不能買賣，白天可以", G => {
   const r = G.casStockBuy(s.w, s.house, ID, 1, D, at(D, 23));
   assert.ok(!r.ok && r.reason.includes("停盤"));
 });
-T("買：錢包付股價加手續費，股價進莊家、手續費進預算池，總量不變", G => {
-  const C = G.NUM.casino.stock, s = fresh(G), t0 = total(G, s), c0 = s.w.chips, h0 = s.house.bankroll, b0 = s.house.budget;
+T("買：股價流出館外（記成消失、來源 stockBuy），手續費進預算池；莊家不動；帳對得上", G => {
+  const C = G.NUM.casino.stock, s = fresh(G), op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, b0 = s.house.budget;
   const px = s.house.stk.px[ID];
   const r = G.casStockBuy(s.w, s.house, ID, 10, D, OPEN);
   assert.ok(r.ok, r.reason);
   const cost = px * 10, fee = Math.ceil(cost * C.feePct / 100);
   assert.strictEqual(s.w.chips, c0 - cost - fee);
-  assert.strictEqual(s.house.bankroll, h0 + cost);
+  assert.strictEqual(s.house.bankroll, h0, "莊家不出錢也不收錢（跟外面世界買）");
   assert.strictEqual(s.house.budget, b0 + fee);
-  assert.strictEqual(total(G, s), t0, "總量不變（手續費只是搬到預算池）");
+  assert.strictEqual(s.w.led.burn.stockBuy, cost, "流出館外記成消失");
+  assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], 10);
-  assert.strictEqual(s.house.stk.held[ID], 10);
 });
-T("賣：莊家付錢、手續費還是進預算池，總量不變；賣光清掉欄位", G => {
+T("賣：從館外進來（記成憑空、來源 stockSell），手續費進預算池；莊家不動；帳對得上；賣光清掉欄位", G => {
   const C = G.NUM.casino.stock, s = fresh(G);
   G.casStockBuy(s.w, s.house, ID, 10, D, OPEN);
-  const t0 = total(G, s), c0 = s.w.chips, px = s.house.stk.px[ID];
+  const op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, px = s.house.stk.px[ID];
   const r = G.casStockSell(s.w, s.house, ID, "max", D, OPEN);
   assert.ok(r.ok, r.reason);
   const gross = px * 10, fee = Math.ceil(gross * C.feePct / 100);
   assert.strictEqual(s.w.chips, c0 + gross - fee);
-  assert.strictEqual(total(G, s), t0);
+  assert.strictEqual(s.house.bankroll, h0, "莊家不付錢");
+  assert.strictEqual(s.w.led.mint.stockSell, gross, "從館外進來記成憑空");
+  assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], undefined, "賣光就不留欄位");
-  assert.strictEqual(s.house.stk.held[ID], 0);
   assert.ok(!G.casStockSell(s.w, s.house, ID, 1, D, OPEN).ok, "沒有了就不能賣");
 });
 T("買了馬上賣壹定虧（手續費兩次）", G => {
@@ -78,26 +81,15 @@ T("什麼都不動的時候，每天會慢慢扣 drag（抱著不會穩賺）", 
   for (let i = 1; i <= 30; i++) { day = `2026-12-${String(i).padStart(2, "0")}`; G.casStockRoll(s.house, day, {}); }
   assert.ok(s.house.stk.px[ID] < px, `30 天後要比 ${px} 低，實際 ${s.house.stk.px[ID]}`);
 });
-T("上限：莊家曝險、壹人壹天賣出、全館淨賣出、莊家破產", G => {
-  const C = G.NUM.casino.stock;
-  const s = fresh(G); s.house.bankroll = 1000000; // 莊家只有 100 萬：曝險上限 50 萬
-  const r = G.casStockBuy(s.w, s.house, ID, 1000, D, OPEN); // 1000 股 × 10,000 ＝ 1,000 萬
-  assert.ok(!r.ok && r.reason.includes("夠多"), "超過曝險上限");
-  const s2 = fresh(G); s2.house.bankroll = -1;
-  assert.ok(!G.casStockBuy(s2.w, s2.house, ID, 1, D, OPEN).ok, "莊家破產停買");
-  // 壹人壹天賣出上限
-  const s3 = fresh(G); s3.house.bankroll = 100000000000;
+T("上限：莊家窮也買得了（跟外面世界買）；壹人壹天賣出上限還在", G => {
+  const s = fresh(G); s.house.bankroll = -100; // 莊家破產
+  assert.ok(G.casStockBuy(s.w, s.house, ID, 1000, D, OPEN).ok, "莊家破產也照買（11-14：以前莊家壹窮股市就停擺）");
+  const s3 = fresh(G);
   G.casStockBuy(s3.w, s3.house, ID, 5000, D, OPEN); // 5,000 萬
   const sold = G.casStockSell(s3.w, s3.house, ID, 2000, D, OPEN); // 2,000 萬，剛好上限
   assert.ok(sold.ok, sold.reason);
   const over = G.casStockSell(s3.w, s3.house, ID, 1, D, OPEN);
   assert.ok(!over.ok && over.reason.includes("2,000 萬"), "超過壹天賣出上限");
-  // 全館淨賣出上限：莊家 bankroll 小的時候很快就滿
-  const s4 = fresh(G); s4.house.bankroll = 10000000; // 上限 ＝ 50 萬 ＋ 500 萬
-  s4.w.stk = { own: { [ID]: 10000 }, sold: { day: null, n: 0 }, fee: 0, gain: 0 };
-  s4.house.stk.held[ID] = 10000;
-  const q = G.casStockSell(s4.w, s4.house, ID, 1000, D, OPEN); // 1,000 萬 > 550 萬
-  assert.ok(!q.ok && q.reason.includes("明天"), "全館淨賣出滿了要排到明天");
 });
 T("畫面要的：行情、漲跌、我的持股、停盤", G => {
   const s = fresh(G);
@@ -146,13 +138,10 @@ T("每支照自己的資料動，不會七支全部壹樣（11-14：股票清單
   assert.strictEqual(new Set(G.STOCK_IDS.map(id => s2.house.stk.px[id])).size, 1, "空清單的話就會全部壹樣，這就是當時的災情");
   assert.strictEqual(s2.house.stk.px.greeneye, Math.round(C.start * (1 - C.drag / 100)), "9,996");
 });
-T("買不了的時候畫面拿得到原因：莊家破產、莊家的錢接不了、籌碼不夠（11-14）", G => {
+T("畫面：莊家的錢不影響能不能買（exposeLeft 是 null、houseBroke 是 false）", G => {
   const s1 = fresh(G); s1.house.bankroll = -5;
-  let v = G.casStockView(s1.w, s1.house, D, OPEN);
-  assert.strictEqual(v.houseBroke, true); assert.strictEqual(v.exposeLeft, 0);
-  const s2 = fresh(G); s2.house.bankroll = 10000; // 壹半是 5,000，壹股都接不了
-  v = G.casStockView(s2.w, s2.house, D, OPEN);
-  assert.strictEqual(v.houseBroke, false); assert.ok(v.exposeLeft < v.list[0].price); assert.strictEqual(v.bankroll, 10000);
+  const v = G.casStockView(s1.w, s1.house, D, OPEN);
+  assert.strictEqual(v.exposeLeft, null); assert.strictEqual(v.houseBroke, false);
 });
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
