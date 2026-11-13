@@ -299,6 +299,20 @@ T("台股真的用莊家的資料：house.stk 的盤中價、path 跟 now 一致
   T0.st = "pending"; assert.ok(!G.casLevOpen(s.w, h, { id: TW, side: "long", lev: 2, qty: 1 }, D0, at(D0, 9, 5), G.casLevSrc(h, D0, at(D0, 9, 5), SEC)).ok, "還沒開盤不能開");
 });
 
+T("價位換成真實比例（2.8h，house.stk.peg.ev）：開著的台股槓桿單用換之前最後看到的價平倉，不會拿新比例的價跟舊的開倉價比；之後開的單不受影響；帳對得上", G => {
+  const s = fresh(G), op = G.casBookOpening(snap(s)), h = s.h, SH = G.casStockHouseFix(h), T0 = SH.tw;
+  T0.day = D0; T0.st = "open"; T0.from = 0; T0.idx = 5; T0.ser = { [TW]: [100000, 100100, 100200, 100300, 100400, 100500] }; SH.px[TW] = 100500;
+  const t = at(D0, 9, 5), r = G.casLevOpen(s.w, h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, t, G.casLevSrc(h, D0, t, SEC)); assert.ok(r.ok, r.reason);
+  // 價位換成 ×24 之類的新比例：收盤價變了很多倍；沒處理的話會被當成賺爆（或賠光）
+  SH.peg.seq += 1; SH.peg.ev.push({ seq: SH.peg.seq, id: TW, from: 100500, to: 250000 });
+  T0.idx = 8; T0.ser[TW] = T0.ser[TW].concat([250000, 251000, 252000]); SH.px[TW] = 252000;
+  const t2 = at(D0, 9, 8), out = G.casLevSweep(s.w, h, D0, t2, G.casLevSrc(h, D0, t2, SEC));
+  assert.strictEqual(out.length, 1); assert.strictEqual(out[0].why, "flat"); assert.strictEqual(out[0].px, 100500, "換之前最後看到的價"); assert.strictEqual(out[0].pnl, 0);
+  assert.strictEqual(s.w.lev.pos.length, 0); assert.strictEqual(G.casBookGap(snap(s), op), 0);
+  const r2 = G.casLevOpen(s.w, h, { id: TW, side: "short", lev: 2, qty: 1 }, D0, at(D0, 9, 30), G.casLevSrc(h, D0, at(D0, 9, 30), SEC)); assert.ok(r2.ok, r2.reason);
+  assert.strictEqual(r2.pos.peg, SH.peg.seq);
+  assert.strictEqual(G.casLevSweep(s.w, h, D0, at(D0, 9, 31), G.casLevSrc(h, D0, at(D0, 9, 31), SEC)).length, 0, "換比例以後才開的不受影響");
+});
 T("亂數壓力：館內股和台股一起、隨機開平、隨機價格路徑、多個錢包，全館的錢永遠對得上；鎖住的保證金永遠等於部位的保證金總和", G => {
   let x = 7; const rnd = () => (x = (x * 1103515245 + 12345) % 2147483648) / 2147483648;
   const house = G.casHouseFix(G.casHouseNew(), D0).house; house.bankroll = 300000000;
