@@ -37,7 +37,6 @@ export const NOTICES = [
         "只是看帳，沒有改任何賺賠的數字。",
       ]],
     ],
-    ],
   },
   {
     id: "cellar-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
