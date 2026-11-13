@@ -3,7 +3,8 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } finally { G.setRng(null); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; // 這裡測的是舊的換日重開（11-14 預設關掉）
+  try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } finally { G.setRng(null); } };
 const D1 = "2026-11-09", D2 = "2026-11-10";
 const fresh = (G, day = D1) => ({ w: G.casWalletFix(G.casWalletNew(), day), house: G.casHouseFix(G.casHouseNew(), day).house });
 const seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; };
