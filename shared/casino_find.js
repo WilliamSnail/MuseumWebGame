@@ -10,6 +10,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
+import { casInUsed } from "./casino_stock_in.js";
 import { casFxPolicy } from "./casino_gdp.js";
 import { CAS_FIND_TEXT } from "./casino_text.js";
 import { CELLAR } from "./content3.js";
@@ -43,6 +44,7 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG, boost = null) {
   if (cf.rooms.includes(roomId)) return { ok: false, dup: true, reason: "這個房間今天走過了" };
   if (cf.n >= C.perDay) return { ok: false, capped: true, reason: "今天撿夠了" };
   cf.rooms.push(roomId);
+  casInUsed(w, house, "cellar", day); // 館內股票：今天有這個人走過地下
   const B = boost && boost.kind === "cellarChips" ? NUM.events.cellarChips : null;
   if (!(rnd() < (B && Number.isFinite(B.chance) ? B.chance : C.chance))) return { ok: true, found: 0 }; // 限時活動中機率另外算（翊文 11-12）
   const steps = Math.floor((C.max - C.min) / C.step) + 1;

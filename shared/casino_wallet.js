@@ -19,6 +19,7 @@ import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState }
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
+import { casInUsed } from "./casino_stock_in.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -229,6 +230,7 @@ export function casSettle(w, house, round, ctx = {}) {
   round.settled = true;
   w.chips += o.payout;
   casHouseMove(house, "bj", round.bet - o.payout);
+  casInUsed(w, house, "bj", ctx.day); // 館內股票：今天有這個人打過牌（壹人壹天只算壹次）
   if (o.payout > round.bet) casPayAdd(house, ctx.day, o.payout - round.bet); // 今天賠付了多少（莊家吃緊／破產時有上限）
   house.hands++;
   casCount(house, "bjHands");
@@ -630,6 +632,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   if (w.chips < it.price) return { ok: false, reason: casFill(CAS_TEXT.dinerBroke, { chips: casNum(w.chips) }) };
   w.chips -= it.price;
   casHouseMove(house, "food", it.price);
+  casInUsed(w, house, "food", day); // 館內股票：今天有這個人吃過餐車
   casCount(house, "food");
   lines.push(it.line || "");
   let gotTickets = 0;
