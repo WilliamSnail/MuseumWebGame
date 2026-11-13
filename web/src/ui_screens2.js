@@ -14,7 +14,7 @@ import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } f
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
-import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
@@ -125,7 +125,23 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  root.append(roomHead("委託櫃台", "每天 3 張，同一天每次打開都一樣，隔天換新的。越精準賞越多。登入的館友交件還會拿到壹點籌碼。", cBtn), commentsBox, regularsStrip(list), quirkHereBox("deliver"), autoBar(), board, ADDONS.commission ? ADDONS.commission() : null, strip); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）；ADDONS.commission：上課和兌換所的入口（決定 0032，ui_shop.js）
+  // 壹個畫面看得完（翊文 11-13：「目前每個廳都要很多訊息，要往上下滑才能看到全部」，docs/介面整合規劃.md 第六步）：
+  //   標題壹行｜中間軟木板（委託單）＋右邊側欄（老主顧、怪癖的治法、壹鍵交件、上課和兌換所收起來）｜最下面收藏的抽屜（平常壹排，按拉環拉開才有頁籤和篩選）
+  //   零件是翊文生的 assets/ui2/P-1～P-3（切好的在 web/public/ui2/），樣式在 css/ui2.css
+  // 上課和兌換所（決定 0032，ui_shop.js）：標題列右邊兩顆銅牌按鈕（翊文 11-13：「上課，兌換所就不構明顯」），上課的細節點了才跳出來
+  const lesson = ADDONS.commission ? ADDONS.commission() : null;
+  const lessonLeft = lesson && lesson.querySelector(".day-limit b") ? lesson.querySelector(".day-limit b").textContent.replace(/（.*）/, "").replace(/，.*/, "") : "";
+  const learn = [
+    lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("u2-lesson-layer"); m.card.append(lesson); }, "u2-big") : null,
+    PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "u2-big") : null];
+  const side = h("aside", { class: "u2-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
+  const drawer = h("div", { class: "u2-drawer" });
+  const pull = h("button", { type: "button", class: "u2-pull", "aria-expanded": "false", title: "拉開：換頁籤、篩選" }, h("span", null, "你的收藏"));
+  pull.addEventListener("click", () => { const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open)); });
+  drawer.append(pull, strip);
+  root.classList.add("ui2");
+  root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "u2-main" }, board, side), drawer);
+  syncStatusHeight(); setTimeout(syncStatusHeight, 300); // 抽屜要停在狀態列上面：狀態列排成兩排時也量對（分頁在背景時 requestAnimationFrame 不會跑，所以直接量）
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
