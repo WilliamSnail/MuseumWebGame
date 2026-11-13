@@ -51,7 +51,8 @@ export function casStockIdHalt(house, id, day, t) {
   if (!(T && T.day === day && T.st === "open")) return true;
   return !!(NUM.casino.stock.direct && T.stale && T.stale[id]); // 直接用真實價：超過 staleMin 分鐘沒有新價，這支暫停（價停在最後一個價）
 }
-const stHaltWhy = id => (stockIsTw(id) ? CAS_STOCK.twHalt : CAS_STOCK.usHalt);
+// 盤中開著、但這支超過 staleMin 分鐘沒有新的真實價（直接用真實價）：說「暫停」，不要說「現在沒有開盤」（11-14 測試：10:07 開著，訊息卻說沒開盤）
+const stHaltWhy = (house, id, day) => { const mk = stMk(id), T = house && house.stk && house.stk[mk]; return NUM.casino.stock.direct && T && T.day === day && T.st === "open" && T.stale && T.stale[id] ? CAS_STOCK.staleHalt : stockIsTw(id) ? CAS_STOCK.twHalt : CAS_STOCK.usHalt; };
 
 // ---------- 補欄位 ----------
 export function casStockFix(w) {
@@ -262,7 +263,7 @@ const stLocked = (S, id) => S.orders.reduce((a, o) => a + (o.kind !== "buy" && o
 export function casStockBuy(w, house, id, shares, day, t) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
-  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(id) };
+  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
   const n = Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_STOCK.bad };
   const px = H.px[id], cost = px * n, fee = stFee(cost);
@@ -281,7 +282,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
 export function casStockSell(w, house, id, shares, day, t) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
-  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(id) };
+  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
   const have0 = stN(S.own[id]), have = Math.max(0, have0 - stLocked(S, id)); // 掛單鎖住的股不能賣
   if (have0 <= 0) return { ok: false, reason: CAS_STOCK.none };
   if (have <= 0) return { ok: false, reason: casFill(CAS_STOCK.order.noShares, { n: 0 }) };
@@ -371,7 +372,7 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
   if (IN_IDS.includes(id)) return casInOrder(w, house, kind, id, shares, px, day, t); // 館內五家店：莊家當對手盤（規劃 2.8g）
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w), H = casStockHouseFix(house);
   if (!ORDER_KINDS.includes(kind) || !stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
-  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(id) };
+  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
   const num = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
   const n = num(shares), p = num(px);
   if (!Number.isFinite(n) || n <= 0 || !Number.isFinite(p) || p < C.floor) return { ok: false, reason: CAS_STOCK.bad };
@@ -402,7 +403,7 @@ export function casStockCancel(w, no, day, t, house) {
   const o = S.orders.find(x => x.no === stN(no));
   if (!o) return { ok: false, reason: O.noOrder };
   if (casInOrderHalt(o.id, t)) return { ok: false, reason: CAS_STOCK_IN.halt }; // 館內店休市（23:30～05:00）也不准取消
-  if (house && casStockIdHalt(house, o.id, day, t)) return { ok: false, reason: stHaltWhy(o.id) }; // 休市時間不准取消（不然看著盤外的行情再取消就是偷看）
+  if (house && casStockIdHalt(house, o.id, day, t)) return { ok: false, reason: stHaltWhy(house, o.id, day) }; // 休市時間不准取消（不然看著盤外的行情再取消就是偷看）
   if (S.cx.day !== day) S.cx = { day, n: 0 };
   if (S.cx.n >= C.order.cancelDay) return { ok: false, reason: casFill(O.cancelDay, { n: C.order.cancelDay }) };
   S.cx.n++;

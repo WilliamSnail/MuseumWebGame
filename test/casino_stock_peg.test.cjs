@@ -128,5 +128,16 @@ T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
     assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
   }
 });
+T("直接用真實價：盤中開著卻超過 3 分鐘沒新價，買賣擋下來說「暫停」，不說「沒有開盤」（11-14 實測）", G => {
+  G.NUM.casino.stock.direct = true;
+  const s = fresh(G), H = s.house.stk, t = Date.parse(D0 + "T10:07:00+08:00");
+  H.day = D0; H.tw = Object.assign(H.tw || {}, { day: D0, st: "open", stale: { [TWID]: true } });
+  const r = G.casStockBuy(s.w, s.house, TWID, 1, D0, t);
+  assert.ok(!r.ok); assert.ok(r.reason.includes("3 分鐘") && r.reason.includes("暫停"), r.reason); assert.ok(!r.reason.includes("現在沒有開盤"));
+  H.tw.stale = {}; // 新價回來
+  assert.notStrictEqual(G.casStockBuy(s.w, s.house, TWID, 1, D0, t).reason, r.reason);
+  H.tw.st = "closed"; H.tw.stale = { [TWID]: true }; // 真的沒開盤：還是說沒開盤
+  assert.ok(G.casStockBuy(s.w, s.house, TWID, 1, D0, t).reason.includes("沒有開盤"));
+});
 console.log(`casino_stock_peg.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
