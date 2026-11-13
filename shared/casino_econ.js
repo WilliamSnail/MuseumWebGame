@@ -13,7 +13,7 @@
 //  錢包欄位 ec：{ day, n 今天拚幾次, wins 累計成功, fails 累計失敗, loot 累計撈到的油水, rescues 累計把莊家拚回正 }；舊錢包沒有，這裡補。
 // ================================================================
 import { NUM } from "./config.js";
-import { casHouseMove } from "./casino_book.js";
+import { casCount, casHouseMove } from "./casino_book.js";
 import { CAS_ECON } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { RNG } from "./logic.js";
@@ -61,6 +61,7 @@ export function casEconPlay(w, house, day, rnd = RNG) {
     casHouseMove(house, "econWin", x.amount);
     house.budget -= x.amount; // 從預算池撥過來
     e.wins++;
+    casCount(house, "econWin");
     out.policy = x.policy;
     lines.push(casFill(CAS_ECON.okLine, { policy: CAS_ECON.policies[x.policy] }), casFill(CAS_ECON.okHouse, { n: casNum(x.amount) }));
     if (frozen) lines.push(CAS_ECON.okFrozen);
@@ -69,6 +70,7 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   } else {
     casHouseMove(house, x.loot ? "econLoot" : "econSea", -x.amount);
     e.fails++;
+    casCount(house, "econFail");
     lines.push(CAS_ECON.failBudget, CAS_ECON.failBudget, CAS_ECON.failBudget);
     lines.push(x.amount > 0 ? casFill(CAS_ECON.failSink, { n: casNum(x.amount) }) : CAS_ECON.failNone);
     if (x.loot) { // 同額，從莊家虧掉的那份流出來：莊家已經少了 amount，錢包多 amount
