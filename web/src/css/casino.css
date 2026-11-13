@@ -398,3 +398,12 @@ body.reduce-motion .live-dot { animation: none; }
   .cas-row .bk-book th:nth-child(2), .cas-row .bk-book td:nth-child(2) { display: none; } /* 窄：本金那欄藏起來，看應還本息就好 */
   .cas-row .bk-work { flex-direction: column; align-items: stretch; }
 }
+
+/* 賭場銀行的頁籤和按鈕做成看得出能按（翊文 11-13：「借款跟存款可以明顯一點嗎，有點看不到像是按鈕」）：
+   頁籤有金邊、有底色，選中的是金色；金額按鈕有金邊、淺藍底、粗體；主要按鈕本來就是金色。跟新的銀行廳（css/bank.css）同一套 */
+.bk-tabs { gap: 6px; padding: 8px 10px 0; border-top: 1px solid rgba(214, 178, 94, .22); }
+.bk-tab { border: 1px solid #D6B25E; border-bottom: 0; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #C9D1DE; font-weight: 700; letter-spacing: .1em; box-shadow: 0 -1px 0 rgba(255, 255, 255, .12) inset; }
+.bk-tab.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); color: #1D2B45; border-bottom-color: transparent; text-shadow: 0 1px 0 rgba(255, 240, 200, .5); }
+.bk-tab:hover:not(.on) { color: #FFFFFF; filter: brightness(1.15); }
+.cas-bank .bk-act-b .btn:not(.primary) { background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #F3DFA6; border: 1px solid #D6B25E; font-weight: 700; box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 2px 4px rgba(0, 0, 0, .35); }
+.cas-bank .bk-act-b .btn:not(.primary):hover:not(:disabled) { filter: brightness(1.2); }

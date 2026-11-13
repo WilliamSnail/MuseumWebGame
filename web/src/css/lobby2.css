@@ -331,3 +331,33 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .l2 { height: calc(100dvh - var(--status-real, 105px) - 134px); align-items: stretch; }
   .l2-mapbox { align-self: stretch; width: 100%; }
 }
+
+/* ================================================================
+   大廳電腦版（11-13，翊文生的 U-8、P-10、P-11；導覽圖留現在這張）
+   右欄換成深色木欄（上下銅頭）、「今天要做的事」寫在羊皮紙緞帶上、館友證用新的羊皮紙卡、任務卡用新的金邊卡（平常、發亮、完成變灰）
+   只在電腦（寬 1100 以上、高 600 以上）；手機照舊
+   ================================================================ */
+@media (min-width: 1100px) and (min-height: 600px) {
+  .l2-side { padding: 38px 16px 38px; border: 0; border-image: none; background: url(/ui2/ui2-lobby-column.webp) center / 100% 100% no-repeat; background-origin: border-box; box-sizing: border-box; align-self: stretch; gap: 8px; }
+  .l2-pass { border: 12px solid transparent; border-image: url(/ui2/ui2-lobby-card.webp) 36 fill / 12px stretch; padding: 0 2px; }
+  .l2-h { justify-content: center; margin: 0 0 4px; padding: 6px 18px 8px; color: #3A2410; font-weight: 700; text-align: center; border: 10px solid transparent; border-image: url(/ui2/ui2-lobby-ribbon.webp) 40 70 fill / 10px 34px stretch; letter-spacing: .14em; }
+  .l2-h::after { display: none; }
+  .l2-todo { border: 12px solid transparent; border-image: url(/ui2/ui2-task-card.webp) 36 fill / 12px stretch; min-height: 54px; }
+  .l2-todo.on { border-image-source: url(/ui2/ui2-task-card-on.webp); border-image-slice: 36 fill; }
+  .l2-todo.done { border-image-source: url(/ui2/ui2-task-card-done.webp); }
+  .l2-todo.on::after { inset: -8px; }
+  .l2-todo b { color: #2E2014; } .l2-todo small { color: #5A4030; }
+  .l2-seal small { color: #F3DFA6; }
+}
+@media (min-width: 1100px) and (min-height: 600px) {
+  .l2-side { padding: 30px 14px 28px; gap: 5px; }
+  .l2-h { padding: 2px 16px 4px; border-width: 8px; border-image-width: 8px 28px; font-size: .78rem; margin: 0 0 2px; }
+  .l2-pass { border-width: 9px; }
+  .l2-pid small:nth-of-type(2) { display: none; }
+  .l2-ph { width: 40px; height: 40px; } .l2-ph img { width: 24px; height: 24px; }
+  .l2-pass { grid-template-columns: 40px 1fr; gap: 6px; }
+  .l2-todos { gap: 4px; }
+  .l2-todo { min-height: 46px; border-width: 9px; padding: 0 4px; }
+  .l2-todo b { font-size: .82rem; } .l2-todo small { font-size: .68rem; }
+  .l2-s { width: 44px; height: 44px; font-size: .74rem; } .l2-seal small { font-size: .66rem; }
+}
