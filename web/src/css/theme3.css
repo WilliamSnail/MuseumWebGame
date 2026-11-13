@@ -1091,3 +1091,26 @@ button.st-item { cursor: pointer; }
   border-bottom: 1px solid rgba(126,104,181,.7); box-shadow: inset 1px 0 0 rgba(126,104,181,.7), inset -1px 0 0 rgba(126,104,181,.7); }
 .series .spine { width: 36px; }
 .series .spine.sequel { margin-left: 0; }
+
+/* ---------- 老主顧（委託櫃台上面壹條，翊文 11-13；ui_screens2.js 的 regularsStrip） ---------- */
+.rg-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; padding: 8px 12px; border-radius: 8px; background: rgba(42, 30, 20, .55); border: 1px solid rgba(214, 178, 94, .45); color: #F3E6C4; }
+.rg-strip.off { font-size: .875rem; color: #CDB98C; }
+.rg-h { color: var(--gold-hi, #EED79C); letter-spacing: .1em; white-space: nowrap; }
+.rg-card { display: grid; gap: 2px; justify-items: start; min-width: 132px; min-height: 56px; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(214, 178, 94, .5); background: #FBEFD9; color: #3A2A20; text-align: left; cursor: pointer; }
+.rg-card:disabled { opacity: .55; cursor: default; background: #E9DCC0; }
+.rg-card.here { border: 2px solid #B4251C; box-shadow: 0 0 0 3px rgba(180, 37, 28, .2), 0 0 12px rgba(214, 120, 60, .45); }
+.rg-card.done { background: #EADBB8; }
+.rg-card small { color: #7A5A2A; font-size: .75rem; }
+.rg-card.here small { color: #B4251C; font-weight: 700; }
+.rg-dots { display: inline-flex; gap: 3px; }
+.rg-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid #7A5A2A; background: transparent; }
+.rg-dots i.on { background: #B38A3E; border-color: #7A5A2A; }
+.note-card.line { box-shadow: 0 0 0 2px rgba(180, 37, 28, .55), 0 10px 18px rgba(0,0,0,.45); }
+.nc-ribbon { position: absolute; z-index: 2; top: -12px; right: -6px; padding: 2px 12px 2px 10px; background: #8E2A24; color: #FFF3E0; font-size: .75rem; letter-spacing: .05em; box-shadow: 0 2px 4px rgba(0,0,0,.35); clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 6px 50%); }
+.rg-modal .rg-intro, .rg-modal .rg-finale { font-style: italic; color: #5A4030; }
+.rg-modal .rg-step { margin: 10px 0; padding-top: 8px; border-top: 1px dashed rgba(122, 90, 42, .4); }
+.rg-modal .rg-step small { color: #8E2A24; }
+.rg-modal .rg-step p { margin: 2px 0; }
+.rg-modal blockquote { margin: 4px 0 0 0; padding-left: 10px; border-left: 3px solid #B38A3E; color: #3A2A20; }
+.rg-modal .rg-say { font-size: 1.1rem; }
+@media (max-width: 760px) { .rg-h { flex-basis: 100%; } .rg-card { min-width: 0; flex: 1 1 0; padding: 6px 8px; } .rg-card .rg-name { font-size: .875rem; } .rg-dots i { width: 7px; height: 7px; } .rg-strip { gap: 6px; } }

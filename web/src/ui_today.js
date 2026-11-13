@@ -9,9 +9,9 @@
 // ================================================================
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { visibleNotices } from "../../shared/notices.js";
-import { isFree, realTodayStr } from "../../shared/logic.js";
+import { dailyCommissions, isFree, realTodayStr, regularsView } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, btn, h, icon, snd, updateBoardBadges } from "./ui_core.js";
+import { ADDONS, P, PANELS, btn, h, icon, navTo, snd, updateBoardBadges } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { goStep, openStory, storyToday } from "./ui_story.js";
 import { signinToday } from "./ui_signin.js";
@@ -51,6 +51,10 @@ export function todayItems() {
       !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "前往", () => (!t.done && t.go ? goStep(t.go) : openStory()), "每日"));
     add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openStory(), `每週 ${st.weekly[0]}／${st.weekly[1]}`);
   }
+  // 老主顧今天在櫃台（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」）
+  const rv = !isFree(P) && P.day ? regularsView(P, dailyCommissions(P, P.day.date)) : null;
+  const here = rv && rv.open ? rv.list.find(x => x.today === "here") : null;
+  if (here) add("regular", "commission", "老主顧在委託櫃台", `${here.name}：第 ${here.step + 1}／${here.of} 段`, true, "去櫃台", () => navTo("commission"), "老主顧");
   const mails = mailCount();
   if (mails) add("mail", "mail", "信箱有東西沒領", `${mails} 封`, true, "打開信箱", () => PANELS.mail(), `信箱 ${mails}`);
   const c = casNow();

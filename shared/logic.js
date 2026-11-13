@@ -998,6 +998,20 @@ export function ensureBoardSize(P) {
   const at = P.daily.list.findIndex(x => x.kind === "line");
   if (at >= 0) P.daily.list.splice(at, 0, add); else P.daily.list.push(add);
 }
+// 老主顧三位現在走到哪（委託櫃台上面那壹條、大廳「今天要做的事」用；翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」）。
+// today ＝今天的委託（dailyCommissions）。met ＝來過了（交過至少壹段，或今天就在櫃台）；還沒來過的畫面不寫他是誰。
+// said ＝交過的那幾段（他要的、他說的），重讀用；走完了才有 finale
+export function regularsView(P, today) {
+  if (!P || isFree(P) || typeof CLIENT_LINES === "undefined") return null;
+  const list = Object.keys(CLIENT_LINES).map(id => {
+    const L = CLIENT_LINES[id], step = Math.min((P.lines && P.lines[id]) || 0, L.steps.length);
+    const c = asList(today).find(x => x && x.kind === "line" && x.line === id);
+    return { id, name: L.name, step, of: L.steps.length, met: step > 0 || !!c, done: step >= L.steps.length,
+      today: c ? (c.done ? "done" : "here") : null, intro: L.intro, finale: step >= L.steps.length ? L.finale : null, gift: L.gift,
+      said: L.steps.slice(0, step).map(s => ({ text: s.text, comment: s.comment })) };
+  });
+  return { open: (P.unlockCount || 0) >= NUM.linesFrom, need: NUM.linesFrom, have: P.unlockCount || 0, list };
+}
 // 委託人關係線：每天一張，輪流出現，按故事順序
 export function lineCommission(P, date) {
   if (isFree(P) || typeof CLIENT_LINES === "undefined" || P.unlockCount < NUM.linesFrom) return null;
