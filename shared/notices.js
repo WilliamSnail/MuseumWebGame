@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "ui2-hall", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "我的展廳換新樣子：壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "展台換成新的木頭展台，拖作品過去的時候展台會亮起來。電腦上排成壹排；手機上左右滑。",
+        "「常設展」「本週特展」移到最上面。右邊是主題（點開看怎麼擺）、參觀者留言、館友來過、館主名牌。",
+        "你的收藏收進最下面的抽屜，跟委託櫃台壹樣：平常是壹排，按拉環拉開才有頁籤和篩選。",
+      ]],
+    ],
+  },
+  {
     id: "ui2-commission", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "委託櫃台換新樣子：壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

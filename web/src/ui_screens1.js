@@ -21,6 +21,14 @@ import { enliven } from "./ui_curio.js";
 import { lobbyFriends, loginArea, refreshLogin } from "./ui_login.js";
 import { ORIGIN_TABS, galleryTabs, originTabs, storyLobby, storyShelf, storyShow, weekUnderstood } from "./ui_story.js"; // 每週劇情（11-09）
 
+// 介面重塑（翊文 11-13，docs/介面整合規劃.md 第六步）：最下面收藏的抽屜。平常壹排縮圖，按銅拉環拉開才有頁籤和篩選（css/ui2.css 的 .u2-drawer）
+export function u2Drawer(strip, label = "你的收藏") {
+  const drawer = h("div", { class: "u2-drawer" });
+  const pull = h("button", { type: "button", class: "u2-pull", "aria-expanded": "false", title: "拉開：換頁籤、篩選" }, h("span", null, label));
+  pull.addEventListener("click", () => { const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open)); });
+  drawer.append(pull, strip);
+  return drawer;
+}
 export function roomHead(title, sub, ...extra) {
   const back = UI.screen && UI.screen !== "lobby" && !HIDE_CHROME.includes(UI.screen) && P ? btn([icon("lobby"), " 回大廳"], () => navTo("lobby"), "ghost small rh-back") : null;
   return h("header", { class: "room-head" }, h("h1", null, title), sub ? h("p", { class: "sub" }, sub) : null, back ? h("div", { class: "rh-row" }, back) : null, extra.length ? h("div", { class: "head-tools" }, extra) : null); // 回大廳在標題下面靠左，每個房間同壹個位置

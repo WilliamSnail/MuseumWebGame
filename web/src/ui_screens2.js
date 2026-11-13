@@ -15,7 +15,7 @@ import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
-import { afterEnter, roomHead } from "./ui_screens1.js";
+import { afterEnter, roomHead, u2Drawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -135,10 +135,7 @@ SCREENS.commission = root => {
     lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("u2-lesson-layer"); m.card.append(lesson); }, "u2-big") : null,
     PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "u2-big") : null];
   const side = h("aside", { class: "u2-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
-  const drawer = h("div", { class: "u2-drawer" });
-  const pull = h("button", { type: "button", class: "u2-pull", "aria-expanded": "false", title: "拉開：換頁籤、篩選" }, h("span", null, "你的收藏"));
-  pull.addEventListener("click", () => { const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open)); });
-  drawer.append(pull, strip);
+  const drawer = u2Drawer(strip);
   root.classList.add("u2r"); // 不能叫 ui2：html 本身就有 .ui2（新大廳）
   root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "u2-main" }, board, side), drawer);
   syncStatusHeight(); setTimeout(syncStatusHeight, 300); // 抽屜要停在狀態列上面：狀態列排成兩排時也量對（分頁在背景時 requestAnimationFrame 不會跑，所以直接量）
@@ -412,19 +409,26 @@ SCREENS.hall = (root, params) => {
     ADDONS.hallCall ? btn([icon("share"), " 請館友來看"], () => PANELS.pickFriend({ title: "請館友來看", hint: "選一位館友，請他來看你的展廳。沒有獎勵；他在線上會馬上看到，不在線的下次進館看到。",
       keep: true, onPick: p => ADDONS.hallCall.send(p) }), "ghost") : null,
   ].filter(Boolean) : [];
-  root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, ...tools));
+  // 壹個畫面看得完（翊文 11-13，docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架）：
+  //   標題壹行（評分、常設展／本週特展的頁籤、看館友的展廳）｜中間牆和展台｜右邊側欄（主題怎麼擺、參觀者留言、館友來過、館主名牌、探險報告、賭場的稱號）｜最下面收藏的抽屜
+  root.classList.add("u2r", "hall-u2");
+  root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, hallTabs("main"), ...tools));
   const wall = h("div", { class: "hall-wall" + (theme ? " themed" : "") },
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
-      : h("p", { class: "theme-hint big" }, "牆上還沒有主題。", h("b", null, "擺對主題"), "，牆上會浮出主題名，", h("b", { class: "good" }, "評分 +10～+20"), "。看下面哪壹個最接近 ↓"));
-  const room = h("div", { class: "hall-room" }, P.hall.map((s, i) => pedestal(s, i)));
-  const visitors = h("aside", { class: "visitors", id: "visitors" }, h("h3", null, "參觀者留言"),
+      : h("p", { class: "theme-hint big" }, "牆上還沒有主題。", h("b", null, "擺對主題"), "，牆上會浮出主題名，", h("b", { class: "good" }, "評分 +10～+20"), "。點「主題」看哪壹個最接近。"));
+  const room = h("div", { class: "hall-room", style: { "--n": String(P.hall.length) } }, P.hall.map((s, i) => pedestal(s, i)));
+  const visitors = h("section", { class: "visitors", id: "visitors" }, h("h3", null, "參觀者留言"),
     P.visitorLog.length ? P.visitorLog.slice(0, 6).map(v => visitorCard(v)) : h("p", { class: "empty" }, hs.items.length ? "參觀者快來了。" : "擺上作品，參觀者就會來。"));
-  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點一件、再點展台", drag: true });
-  root.append(hallTabs("main"), wall, themeGuide(hs), h("div", { class: "hall-wrap" }, room, visitors), strip);
-  if (ADDONS.hall) ADDONS.hall(root, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）
-  if (ADDONS.hall2) ADDONS.hall2(root); // 掛在牆上的探險報告（ui_coop.js）
-  if (ADDONS.hall3) ADDONS.hall3(root); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
-  if (ADDONS.hallGuests) ADDONS.hallGuests(root); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
+  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true });
+  // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
+  const guide = themeGuide(hs);
+  const themes = h("details", { class: "u2-card hall-themes" }, h("summary", null, theme ? `主題：${theme.name}` : "主題：還沒有（看怎麼擺）"), guide);
+  const side = h("aside", { class: "u2-side" }, themes, visitors);
+  root.append(h("div", { class: "u2-main" }, h("div", { class: "hall-stage" }, wall, room), side), u2Drawer(strip));
+  if (ADDONS.hall) ADDONS.hall(side, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）：名牌放側欄
+  if (ADDONS.hall2) ADDONS.hall2(side); // 掛在牆上的探險報告（ui_coop.js）
+  if (ADDONS.hall3) ADDONS.hall3(side); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
+  if (ADDONS.hallGuests) ADDONS.hallGuests(side); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
   if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
