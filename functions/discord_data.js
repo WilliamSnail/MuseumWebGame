@@ -21,6 +21,7 @@ import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js";
 import { taipeiDay } from "./shared/logic.js";
 import { casWalletFix } from "./shared/casino_wallet.js";
+import { casMint } from "./shared/casino_book.js";
 import { dcExpireAt, dcExpired, dcJoinCodeMake, dcJoinFull, dcLinkCodeMake, dcLinkCodeOf, dcTriesFail, dcTriesState } from "./shared/discord.js";
 
 const db = () => getFirestore();
@@ -42,7 +43,7 @@ function bonusWrites(tx, uid, bonusSnap, walletSnap, day, now) {
   if (bonusSnap.exists) return 0;
   const amount = NUM.discord.linkBonus;
   const w = casWalletFix(walletSnap.exists ? JSON.parse(walletSnap.data().data) : null, day);
-  w.chips += amount;
+  casMint(w, "discord", amount);
   if (w.chips > w.st.chipsMax) w.st.chipsMax = w.chips;
   tx.set(walletRef(uid), { data: JSON.stringify(w), updatedAt: FieldValue.serverTimestamp() });
   tx.set(bonusRef(uid), { at: now, amount });

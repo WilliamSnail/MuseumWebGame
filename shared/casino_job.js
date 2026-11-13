@@ -9,6 +9,7 @@
 //  純函式：亂數用 RNG（測試可以換，也可以從參數 rnd 傳）；「今天」從參數來。籌碼不是錢，這裡沒有任何換成現實東西的路。
 // ================================================================
 import { NUM } from "./config.js";
+import { casHouseMove } from "./casino_book.js";
 import { RNG } from "./logic.js";
 
 const cjBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -46,7 +47,7 @@ export function casJobChips(w, house, slots, day, rnd = RNG) {
   });
   if (!n) return { ok: true, found: 0, n: 0 };
   w.chips += found;
-  if (house) house.bankroll -= found; // 莊家出，跟大禮包一樣
+  if (house) casHouseMove(house, "job", -found); // 莊家出，跟大禮包一樣
   if (!cjBox(w.st)) w.st = {};
   w.st.jobs = Math.floor(cjNum(w.st.jobs)) + n;
   w.st.jobChips = Math.floor(cjNum(w.st.jobChips)) + found;

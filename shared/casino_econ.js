@@ -13,6 +13,7 @@
 //  錢包欄位 ec：{ day, n 今天拚幾次, wins 累計成功, fails 累計失敗, loot 累計撈到的油水, rescues 累計把莊家拚回正 }；舊錢包沒有，這裡補。
 // ================================================================
 import { NUM } from "./config.js";
+import { casHouseMove } from "./casino_book.js";
 import { CAS_ECON } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { RNG } from "./logic.js";
@@ -54,7 +55,7 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   const out = { ok: true, win: x.win, r: x.r, amount: x.amount, policy: null, loot: 0, ticket: false, rescued: false, houseBefore: before, budgetBefore: house.budget, seaBefore: house.sea };
   const lines = CAS_ECON.cheer.slice();
   if (x.win) {
-    house.bankroll += x.amount;
+    casHouseMove(house, "econWin", x.amount);
     house.budget -= x.amount; // 從預算池撥過來
     e.wins++;
     out.policy = x.policy;
@@ -62,7 +63,7 @@ export function casEconPlay(w, house, day, rnd = RNG) {
     if (x.ticketRoll && w.pk && w.pk.opened > 0) { w.tickets += 1; out.ticket = true; lines.push(CAS_ECON.okTicket); } // 舊的：要先開過今天的大禮包
     if (before < 0 && house.bankroll >= 0) { out.rescued = true; e.rescues++; lines.push(CAS_ECON.okRescue, CAS_ECON.okRescueSub); }
   } else {
-    house.bankroll -= x.amount;
+    casHouseMove(house, x.loot ? "econLoot" : "econSea", -x.amount);
     e.fails++;
     lines.push(CAS_ECON.failBudget, CAS_ECON.failBudget, CAS_ECON.failBudget);
     lines.push(x.amount > 0 ? casFill(CAS_ECON.failSink, { n: casNum(x.amount) }) : CAS_ECON.failNone);

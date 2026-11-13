@@ -19,6 +19,7 @@ import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setChips, snd, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
+import { loadReport, reportNodes } from "./ui_casino_report.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
 import { casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
 import { slotMachine } from "./ui_casino_slot.js";
@@ -114,6 +115,7 @@ export async function openCasino(o) {
     if (yl) { say([yl.text]); if (yl.kind === "done") { yugaMarkSaid(P, yl.id, todayStr()); persist(); } }
     s.busy = false; draw();
     if (s.tab === "live") liveLoad();
+    if (s.tab === "econ") reportLoad();
     if (r.legacy) legacyCard(r.legacy);
     if (Array.isArray(r.loanNotes) && r.loanNotes.length) { say(r.loanNotes); snd("error"); draw(); } // 到期沒還，Yuga 收走了（決定 0064）
   } catch (e) {
@@ -384,6 +386,7 @@ function econPane() {
       h("p", { class: "cas-hint" }, CAS_ECON.rule)),
     sec("為什麼要拚", h("p", { class: "cas-note" }, CAS_ECON.why)),
     sec("怎麼拚", h("p", { class: "cas-note" }, CAS_ECON.how.join("、"), "。")),
+    sec("Yuga Bot 日報", ...reportNodes()), // 館方的帳（11-13）：莊家、預算池、海底，結算過的
   ];
 }
 // 跳字區矮的時候（手機橫拿），讓最新壹行留在看得到的地方，不然會看不到結果
@@ -433,7 +436,17 @@ function goTab(id) {
   if (!S) return;
   S.tab = id;
   if (id === "live") liveLoad();
+  if (id === "econ") reportLoad();
   draw();
+}
+// 拚經濟頁籤最下面的日報：進這個頁籤才問伺服器，回來再畫
+async function reportLoad() {
+  const s = S;
+  if (!s) return;
+  const p = loadReport();
+  draw();
+  await p;
+  if (S === s && s.tab === "econ" && !s.busy && s.m.layer.isConnected) draw();
 }
 async function liveLoad() {
   const s = S;

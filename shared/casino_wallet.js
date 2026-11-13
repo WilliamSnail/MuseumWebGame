@@ -18,6 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
+import { casBurn, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -26,7 +27,7 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 // ---------- 錢包 ----------
 export function casWalletNew() {
   return {
-    v: 1, chips: NUM.casino.startChips,
+    v: 1, chips: NUM.casino.startChips, led: { mint: { start: NUM.casino.startChips }, burn: {} },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
@@ -36,10 +37,12 @@ export function casWalletNew() {
 export function casWalletFix(w, day) {
   const base = casWalletNew();
   if (!casIsObj(w)) w = base;
+  else if (w.led == null) w.led = { mint: {}, burn: {} }; // 記帳上線（11-13）以前的錢包：以前的籌碼不補記，從上線那天開始算
   for (const k of Object.keys(base)) if (w[k] == null) w[k] = base[k];
   w.chips = Math.floor(casNz(w.chips)); // 可以是負的：借款到期沒還，Yuga 照扣（決定 0064）
   w.tickets = Math.max(0, Math.floor(casNz(w.tickets)));
   for (const k of ["rel", "pk", "ex", "ach", "props", "meals", "st", "loan"]) if (!casIsObj(w[k])) w[k] = base[k];
+  casLedFix(w, ["mint", "burn"]); // 記帳（shared/casino_book.js）；舊錢包的開場籌碼沒記，不補（快照只看之後的變化）
   casLoanFix(w);
   casWorkFix(w);
   if (!casIsObj(w.signWk)) w.signWk = {}; // 全簽到送過籌碼的週（決定 0064 之後，翊文 11-11）
@@ -60,16 +63,17 @@ export function casWalletFix(w, day) {
 }
 // budget：拚經濟的預算池（shared/casino_econ.js）；sea：拚經濟失敗、沒被撈走的錢沉到這裡（決定 0057，從 0 開始）。
 // 都跟莊家放在同壹份，同壹個交易裡算；舊的莊家沒有就補。莊家破產重開不動它們
-export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0 });
+export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, led: { mint: {}, flow: {} } });
 export function casHouseFix(h, day) {
   if (!casIsObj(h)) h = casHouseNew();
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
   h.budget = Math.floor(casNz(h.budget, NUM.casino.econ.budgetStart));
   h.sea = Math.floor(casNz(h.sea, 0));
+  casLedFix(h, ["mint", "flow"]);
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;
-  if (day && h.day && h.day !== day && h.bankroll < 0) { h.bankroll = NUM.casino.houseReset; h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
+  if (day && h.day && h.day !== day && h.bankroll < 0) { casHouseMint(h, "reset", NUM.casino.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
   if (day) h.day = day;
   return { house: h, reopen };
 }
@@ -125,7 +129,7 @@ export function casSettle(w, house, round, ctx = {}) {
   const o = round.out, st = w.st, before = house.bankroll;
   round.settled = true;
   w.chips += o.payout;
-  house.bankroll += round.bet - o.payout;
+  casHouseMove(house, "bj", round.bet - o.payout);
   house.hands++;
   st.hands++;
   st.net += o.net;
@@ -239,7 +243,7 @@ export function casBorrow(w, amt, day, playing, t, house) {
   const L = w.loan, x = { id: ++L.seq, amt: n, owe: casLoanOwe(n), day, due: casAddDays(day, C.days), at: Number.isFinite(t) ? t : null };
   L.list.push(x);
   w.chips += n;
-  if (house) house.bankroll -= n; // 從莊家出（莊家可以借到變負的：破產中，換日 Yuga 借他重新開張）
+  if (house) casHouseMove(house, "loan", -n); // 從莊家出（莊家可以借到變負的：破產中，換日 Yuga 借他重新開張）
   w.st.reliefs++; // 成就「Yuga 的朋友」：第壹次借
   return { ok: true, loan: x, lines: [CAS_TEXT.loanHello, casFill(CAS_TEXT.loanGive, { n: casNum(n), due: x.due.slice(5), owe: casNum(x.owe), pct: C.interestPct })], ach: casAchCheck(w, day) };
 }
@@ -253,7 +257,7 @@ export function casRepay(w, id, day, playing, t, house) {
   if (from && Number.isFinite(t) && t < from) return { ok: false, reason: casFill(CAS_TEXT.loanTooSoon, { n: NUM.casino.loan.repayAfterMin, left: Math.ceil((from - t) / 60000) }) };
   if (w.chips < x.owe) return { ok: false, reason: casFill(CAS_TEXT.loanPoor, { owe: casNum(x.owe) }) };
   w.chips -= x.owe;
-  if (house) house.bankroll += x.owe; // 本金加利息回到莊家
+  if (house) casHouseMove(house, "loanBack", x.owe); // 本金加利息回到莊家
   L.list = L.list.filter(y => y !== x);
   L.ok++;
   L.limit = casLoanNext(L.limit);
@@ -269,7 +273,7 @@ export function casLoanToHouse(w, house) {
   const L = w && w.loan;
   if (!L || !house || !(L.toHouse > 0)) return 0;
   const n = Math.floor(L.toHouse);
-  house.bankroll += n; L.toHouse = 0;
+  casHouseMove(house, "loanBack", n); L.toHouse = 0;
   return n;
 }
 // ---------- 欠款送參觀者去地下工作（決定 0064 第二部分） ----------
@@ -293,7 +297,7 @@ export function casWorkRoll(w, day) {
   let n = casDaysBetween(x.last, day), got = 0;
   while (n-- > 0 && w.chips < 0) {
     const pay = Math.min(casWorkPay(x), -w.chips);
-    w.chips += pay; x.paid += pay; got += pay;
+    casMint(w, "work", pay); x.paid += pay; got += pay; // 憑空：欠款被扣、工作補回 0（經濟規劃發現 4）
     x.san = Math.max(C.sanMin, x.san - C.sanDay);
   }
   x.last = day;
@@ -395,7 +399,7 @@ export function casSignWeekChips(w, save, day) {
   [cur, cur - 1].forEach(wk => {
     if (!weeks[wk] || w.signWk[wk]) return;
     w.signWk[wk] = day;
-    w.chips += n;
+    casMint(w, "signWeek", n);
     got.push(wk);
   });
   Object.keys(w.signWk).map(Number).filter(k => k < cur - 8).forEach(k => delete w.signWk[k]); // 只留最近的
@@ -446,7 +450,7 @@ export function casOpenPacks(w, house, n, day) {
     w.pk.opened++;
     const d = casPackDraw();
     w.chips += d.chips;
-    house.bankroll -= d.chips;
+    casHouseMove(house, "pack", -d.chips);
     if (d.stars === 5) w.st.star5++;
     packs.push(d);
   }
@@ -493,7 +497,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   }
   if (w.chips < it.price) return { ok: false, reason: casFill(CAS_TEXT.dinerBroke, { chips: casNum(w.chips) }) };
   w.chips -= it.price;
-  house.bankroll += it.price;
+  casHouseMove(house, "food", it.price);
   lines.push(it.line || "");
   let gotTickets = 0;
   const food = casFoodEffect(w, it, P, day);
@@ -537,7 +541,7 @@ export function casExchange(w, id, P) {
   if (!P || isFree(P)) return { ok: false, reason: "要用挑戰模式的參觀者進館，才能換" };
   if (casExchangeLeft(w, id) < 1) return { ok: false, reason: "這週換完了（每週壹到週一 05:00 重算）" };
   if (w.chips < it.chips) return { ok: false, reason: `籌碼不夠（要 ${casNum(it.chips)}）` };
-  w.chips -= it.chips;
+  casBurn(w, "exchange", it.chips); // 唯一消失籌碼的地方
   w.ex.n[id] = casNz(w.ex.n[id]) + 1;
   casGiveReward(P, it.reward);
   return { ok: true, reward: it.reward, left: casExchangeLeft(w, id) };
@@ -611,7 +615,7 @@ export function casLegacyClaim(w, doc, uid, day) {
   if (casIsObj(doc) && doc.claimedBy) return { ok: false, reason: "已經認領過了" };
   const c = casLegacyClean(doc);
   if (!c) return { ok: false, reason: "沒有舊的資料" };
-  w.chips += c.chips;
+  casMint(w, "legacy", c.chips);
   w.st.chipsMax = Math.max(w.st.chipsMax, w.chips);
   for (const name of c.ach) { const id = casLegacyId("a", name); if (!w.ach[id]) w.ach[id] = { d: day, name }; }
   for (const p of c.props) { const id = casLegacyId("p", p.name); for (let i = 0; i < p.n; i++) casAddProp(w, id, day, p.name); }
