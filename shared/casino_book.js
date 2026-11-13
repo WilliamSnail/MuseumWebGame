@@ -118,6 +118,15 @@ export function casHouseWorldIn(house, src, n) {
   bkAdd(bkW(house), src, n);
   return n;
 }
+// 預算池／館方帳 → 外面世界（館方投資買股）
+export function casPoolWorldIn(house, pool, src, n) {
+  n = Math.min(bkNz(n), Math.max(0, bkNz(house[pool])));
+  if (n <= 0) return 0;
+  house[pool] = bkNz(house[pool]) - n; house.world = bkNz(house.world) + n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).flow, src, -n);
+  bkAdd(bkW(house), src, n);
+  return n;
+}
 // 外面世界 → 預算池／館方帳（參觀者的門票）
 export function casPoolWorldOut(house, pool, src, n) {
   n = Math.min(bkNz(n), Math.max(0, bkNz(house.world)));
@@ -169,6 +178,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   }
   // 館內股的 NPC（規劃 2.8k）：最近壹天每家店有幾位旅客，和劇情日那天的事。日報寫「昨天館外來了 N 位旅客」用
   if (bkBox(house.sin) && bkBox(house.sin.npc)) { const ds = Object.keys(house.sin.npc).sort(), d = ds[ds.length - 1]; if (d) s.house.npcLast = { day: d, n: Object.assign({}, house.sin.npc[d]), ev: bkBox(house.sin.npcEv) && bkBox(house.sin.npcEv[d]) ? Object.assign({}, house.sin.npcEv[d]) : null }; }
+  if (bkBox(house.inv) && (bkBox(house.inv.last) || bkBox(house.inv.sum))) s.house.inv = { last: bkBox(house.inv.last) ? house.inv.last : null, sum: bkBox(house.inv.sum) ? house.inv.sum : null }; // 館方投資（shared/casino_invest.js）：昨天買賣了什麼、現在持有
   if (bkBox(house.led)) { bkMerge(s.house.wflow, house.led.world); bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
