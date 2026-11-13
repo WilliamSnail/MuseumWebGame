@@ -149,3 +149,9 @@
 .gal-lot.mine-seller { border-style: dashed; }
 .gal-range { margin: 0; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
 .gallery-onescreen .gal-corridor .frame { max-height: 440px; }
+
+/* 頁籤的字要看得清楚（翊文 11-14：「這些字不太明顯」）：未選中的銅牌偏暗，字改最深的褐、加粗、加淺色描邊；選中的金牌字照舊深褐 */
+.screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn { color: #1A0F06; font-weight: 800; opacity: 1; filter: none; text-shadow: 0 1px 0 rgba(255, 240, 200, .75), 0 0 6px rgba(255, 240, 200, .35); }
+.screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn .ic, .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn svg { color: #1A0F06; opacity: 1; }
+.screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn:not(.on) { filter: brightness(1.18) contrast(1.05); }
+.screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn .tab-c { color: #3A1F10; font-weight: 700; }
