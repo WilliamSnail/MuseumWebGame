@@ -9,7 +9,7 @@
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_BANK, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino_wallet.js";
 import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
@@ -58,6 +58,8 @@ function sync(r) {
   if (Array.isArray(r.wkNew) && r.wkNew.length) S.wkNew = (S.wkNew || []).concat(r.wkNew); // 新的收藏品：等牌翻完再告訴他（celebrate）
   if (r.wkDone) S.wkDone = true;
   if (r.reopen) say([r.reopen]);
+  if (r.bank) S.bank = r.bank; // Yuga Bot 銀行的活存、定存（伺服器算的，shared/casino_bank.js）
+  if (Array.isArray(r.bankNotes) && r.bankNotes.length) say(r.bankNotes); // 利息入帳、定存到期
 }
 function say(lines) {
   if (!S) return;
@@ -159,11 +161,17 @@ function reliefBar() {
   const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);
   const fig = (label, value, sub) => h("div", { class: "bk-fig" }, h("span", { class: "bk-fig-l" }, label), h("b", null, value), sub ? h("small", null, sub) : null);
   const md = s => s.slice(5).replace("-", "/");
+  // 借款、存款兩個頁籤（11-13，Yuga Bot 銀行的活存、定存）
+  const bt = S.bankTab === "save" && S.bank ? "save" : "loan";
+  const btab = (id, name) => h("button", { type: "button", role: "tab", class: "bk-tab" + (bt === id ? " on" : ""), "aria-selected": String(bt === id), onClick: () => { S.bankTab = id; draw(); } }, name);
+  const head = h("header", { class: "bk-head" },
+    h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
+    h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
+    h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好"));
+  const tabsRow = S.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("loan", CAS_BANK.tabLoan), btab("save", `${CAS_BANK.tabSave}${S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`)) : null;
+  if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, tabsRow, savePane(fig, md, off));
   return h("section", { class: "cas-bank" + (debt ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
-    h("header", { class: "bk-head" },
-      h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
-      h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
-      h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好")),
+    head, tabsRow,
     h("div", { class: "bk-figs" },
       fig("可借金額", casNum(L.left), `信用額度 ${casNum(L.limit)}`),
       fig("未還本息", casNum(owed), L.list.length ? `最近到期 ${md(L.list[0].due)}` : "沒有借款"),
@@ -179,6 +187,34 @@ function reliefBar() {
         h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, h("b", null, casNum(x.owe))),
         h("td", null, x.today ? "今天" : md(x.due)),
         h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
+}
+
+// Yuga Bot 銀行的存款頁（活存、定存）。規則在 shared/casino_bank.js，伺服器 act bank（op：put、take、term、break）
+function savePane(fig, md, off) {
+  const B = S.bank, w = S.w;
+  const bank = (op, extra) => act("bank", Object.assign({ op }, extra), r2 => { say(r2.lines); snd("coin"); });
+  const can = n => n <= w.chips;
+  const puts = B.quick.filter(n => n >= B.min).map(n => btn(casNum(n), () => bank("put", { amt: n }), "small", { disabled: off || !can(n) ? true : null }))
+    .concat(w.chips >= B.min ? [btn(`全部 ${casNum(w.chips)}`, () => bank("put", { amt: "max" }), "small", { disabled: off })] : []);
+  const takes = B.save > 0 ? [btn(`全部領出 ${casNum(B.save)}`, () => bank("take", { amt: "max" }), "small", { disabled: off })] : [];
+  const kinds = B.kinds.map(k => {
+    const amt = Math.min(B.termCap, Math.max(0, w.chips));
+    return btn(`${k.days} 天 ${k.pct}%`, () => bank("term", { amt, kind: k.i }), "small", { disabled: off || amt < B.termMin || B.terms.length >= B.termMax ? true : null, title: `把籌碼 ${casNum(amt)} 存 ${k.days} 天（壹筆最多 ${casNum(B.termCap)}）` });
+  });
+  return h("div", { class: "bk-save" },
+    h("div", { class: "bk-figs" },
+      fig(CAS_BANK.save, casNum(B.save), `每天 ${B.savePct}%・明天約 +${casNum(B.perDay)}`),
+      fig(CAS_BANK.term, casNum(B.terms.reduce((s, x) => s + x.amt, 0)), `${B.terms.length}／${B.termMax} 筆`),
+      fig("累計利息", casNum(B.earned), "莊家付的")),
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "存活存"), h("span", { class: "bk-act-b" }, puts.length ? puts : h("small", null, CAS_BANK.poor)), takes.length ? h("span", { class: "bk-act-b" }, takes) : null),
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "開定存（用手上的籌碼）"), h("span", { class: "bk-act-b" }, kinds)),
+    B.terms.length ? h("table", { class: "bk-book" },
+      h("thead", null, h("tr", null, ["期間", "本金", "利息", "到期", ""].map(t => h("th", { scope: "col" }, t)))),
+      h("tbody", null, B.terms.map(x => h("tr", null,
+        h("td", null, `${x.days} 天`), h("td", null, casNum(x.amt)), h("td", null, h("b", null, "+" + casNum(x.int))),
+        h("td", null, x.left ? `${md(x.due)}（${x.left} 天）` : "今天換日"),
+        h("td", null, btn("解約", () => bank("break", { id: x.id }), "small", { disabled: off, title: CAS_BANK.termSub })))))) : null,
+    h("p", { class: "bk-rule" }, CAS_BANK.rule));
 }
 
 // ---------- 牌桌 ----------

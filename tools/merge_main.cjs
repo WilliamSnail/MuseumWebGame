@@ -29,16 +29,34 @@ function mergeListLine(oursLine, theirsLine) {
 const oneLine = s => s.split("\n").length === 2 && s.endsWith("\n");
 function keepBoth(text, how = "plain") {
   return text.replace(MARK, (m, ours, theirs) => {
-    if (how === "notice") { // git 會把兩邊共同的收尾（"    ],\n  },"）留在衝突外面：我這邊要自己補上才是完整的壹則
-      const whole = /^ {2}\},\n$/m.test(ours.slice(ours.lastIndexOf("\n", ours.length - 2) + 1));
-      // 兩邊共同的收尾其實是「      ]],  ],  },」三行（段落的 ]] 也算）：我這邊最後一行是內文字串時，連 ]] 也要補（11-13 踩到：PR 231、241 的公告少了 ]]，CI 才發現）
-      const lastLine = ours.trimEnd().split("\n").pop();
-      const close = /^ {8}"/.test(lastLine) ? "      ]],\n    ],\n  },\n" : "    ],\n  },\n";
-      return `${ours}${whole ? "" : close}  {\n${theirs}`;
+    if (how === "notice") { // git 會把兩邊共同的收尾（"      ]],\n    ],\n  }," 的壹部分）留在衝突外面：我這邊要自己補上才是完整的壹則
+      return `${ours}${noticeCloser(ours)}  {\n${theirs}`;
     }
     if (how === "list" && oneLine(ours) && oneLine(theirs)) return mergeListLine(ours.trimEnd(), theirs.trimEnd()) + "\n";
     return ours + theirs;
   });
+}
+// 公告衝突裡我這邊的那壹段（開頭的 "  {" 在衝突外面）還有哪些括號沒關，照公告的排法補上。
+// 11-13 兩次 PR 掉了 "      ]],"：以前只補 "    ],\n  },"，共同的收尾連段落的 "]]," 都在外面時就少壹行
+function noticeCloser(ours) {
+  const st = ["{"];
+  let q = null;
+  for (let i = 0; i < ours.length; i++) {
+    const c = ours[i];
+    if (q) { if (c === "\\") i++; else if (c === q) q = null; continue; }
+    if (c === "\"" || c === "'" || c === "`") q = c;
+    else if (c === "{" || c === "[") st.push(c);
+    else if (c === "}" || c === "]") st.pop();
+  }
+  if (!st.length) return "";
+  const cl = st.reverse().map(c => (c === "{" ? "}" : "]"));
+  // 最外面的 "}" 在 2 格、它前面壹個 "]"（sections）在 4 格，再裡面的併成壹行在 6 格（"]],"）
+  const lines = [];
+  const outer = cl.pop(), mid = cl.length ? cl.pop() : null;
+  if (cl.length) lines.push(" ".repeat(6) + cl.join("") + ",");
+  if (mid) lines.push("    " + mid + ",");
+  lines.push("  " + outer + ",");
+  return lines.join("\n") + "\n";
 }
 function git(args, opts = {}) {
   const r = spawnSync("git", ["-c", "core.quotepath=false", ...args], { cwd: ROOT, encoding: "utf8", input: opts.input });
@@ -73,4 +91,4 @@ if (require.main === module) {
   try { const f = mergeMain(); console.log(f.length ? `併好了，自動解了：${f.join("、")}` : "併好了。"); }
   catch (e) { console.error(e.message); process.exit(1); }
 }
-module.exports = { keepBoth, canAuto, mergeMain, resolveConflicts };
+module.exports = { keepBoth, canAuto, mergeMain, resolveConflicts, noticeCloser };

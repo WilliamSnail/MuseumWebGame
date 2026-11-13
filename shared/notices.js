@@ -28,6 +28,23 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-save", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "Yuga Bot 銀行開放存款：活存、定存", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["怎麼存", [
+        "賭場右邊的 Yuga Bot 銀行多了「存款」頁籤。",
+        "活存：隨時存、隨時領，每天換日給 0.1% 利息（本金最多算 1,000 萬）。",
+        "定存：存 3 天拿 1%、存 7 天拿 3%，到期自動回到活存；提早解約只拿回本金。同時最多 3 筆。",
+      ]],
+      ["要注意", [
+        "存在銀行的籌碼不能下注。",
+        "利息是莊家付的：莊家破產的時候沒有利息。",
+        "不用每天回來領，換日自動算，下次進賭場會告訴你。",
+        "接下來還有館債和股票，慢慢開放。",
+      ]],
+    ],
+  },
+  {
     id: "cellar-filter", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "地下收藏庫：挑隊員可以篩選能力", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

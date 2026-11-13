@@ -341,6 +341,11 @@ export const NUM = {
     job: { min: 1000, max: 2000, step: 100, perDay: 5 },
     // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
     // budgetStart：拚經濟的錢從「預算池」進出（翊文 11-10：「先設定一個地方，讓它其實從那邊扣錢，這個之後怎麼接上其他的，我們再討論」）。存在莊家同壹份（casinoHouse/main 的 budget）；先給這麼多，不夠可以是負的，只記帳不擋
+    // Yuga Bot 銀行（11-13，翊文：「可以投資了」；shared/casino_bank.js，規劃玩法 2）。利息從莊家出，莊家 ≤ 0 不給
+    //   savePct：活存每天 %（本金最多算 saveCap）；terms：定存的種類；houseCapPct：壹次最多付莊家的 %；catchup：太久沒來最多補幾天
+    //   利率順序（測試擋）：活存 < 定存 < 借款（loan.interestPct／loan.days），借錢來存不會賺
+    bank: { savePct: 0.1, saveCap: 10000000, min: 10000, quick: [100000, 1000000, 5000000],
+      terms: [{ days: 3, pct: 1 }, { days: 7, pct: 3 }], termMax: 3, termMin: 100000, termCap: 10000000, houseCapPct: 0.05, catchup: 30 },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },

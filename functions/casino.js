@@ -33,6 +33,7 @@ import { casReportView } from "./shared/casino_report.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
+import { casBankAccrue, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
@@ -70,6 +71,7 @@ export async function playCore(me, email, opts, fn) {
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
+      casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
@@ -178,7 +180,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankNotes: casBankTakeNotes(ctx.w), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -215,6 +217,13 @@ export const actRelief = ctx => {
 export const actBorrow = (ctx, d) => {
   const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); // 從莊家出（決定 0071）
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
+};
+// Yuga Bot 銀行（shared/casino_bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
+export const actBank = (ctx, d) => {
+  const op = String(d.op || "");
+  const r = op === "put" ? casBankPut(ctx.w, d.amt) : op === "take" ? casBankTake(ctx.w, d.amt)
+    : op === "term" ? casBankTerm(ctx.w, d.amt, d.kind, ctx.day) : op === "break" ? casBankBreak(ctx.w, d.id) : { ok: false, reason: "沒有這個動作" };
+  return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀
 export const actWork = (act, ctx, d) => {
@@ -319,6 +328,7 @@ export const casino = onCall(async req => {
     case "hit":
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, actRelief);
+    case "bank": return play(req, me, {}, ctx => actBank(ctx, d)); // Yuga Bot 銀行：活存、定存（11-13）
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
     case "workStart":

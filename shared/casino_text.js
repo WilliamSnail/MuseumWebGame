@@ -200,6 +200,30 @@ export const CAS_FIND_TEXT = {
 // ---------- 拚經濟（舊 Discord 21 點的梗，決定 0048、0052）----------
 // 界線（決定 0048）：不寫真人的名字、綽號、頭銜、政黨。失敗和撈油水的句子不接任何政策名字，不能變成在指控誰貪污。
 // 政策口號沒有人名；只在「成功」的那一句出現。戶頭裡的「油水」只在失敗那邊，跟政策名字不會在同一句。
+// Yuga Bot 銀行的活存、定存（11-13，shared/casino_bank.js）。草稿，Yuga 可以改
+export const CAS_BANK = {
+  tabLoan: "借款",
+  tabSave: "存款",
+  save: "活存",
+  saveSub: "隨時存、隨時領，每天換日給利息",
+  term: "定存",
+  termSub: "鎖住幾天，到期自動回到活存；提早解約只拿回本金",
+  bad: "金額看不懂。",
+  min: "最少 {n}。",
+  poor: "籌碼不夠。",
+  takePoor: "活存沒有這麼多。",
+  termMany: "定存同時最多 {n} 筆。",
+  termCap: "壹筆定存最多 {n}。",
+  noTerm: "找不到這筆定存。",
+  putOk: "存進活存 {n}。活存現在 {save}。",
+  takeOk: "從活存領出 {n}。活存還有 {save}。",
+  termOk: "定存 {n}，{days} 天，{due} 換日到期，利息 {int}。",
+  breakOk: "解約了，本金 {n} 還你，利息沒有。",
+  noteInt: "銀行通知：活存利息 {n} 入帳。",
+  noteBack: "銀行通知：{days} 天的定存到期，本金 {amt} 加利息 {int} 放回活存。",
+  noteBroke: "銀行通知：莊家現在沒錢，利息少給了。帳記著，下次不補。",
+  rule: "存在銀行的籌碼不能下注。利息由莊家出，莊家破產時沒有利息。不用每天回來領，換日自動算。",
+};
 export const CAS_ECON = {
   title: "拚經濟",
   slogan: "拚 經濟，做 就對了",
