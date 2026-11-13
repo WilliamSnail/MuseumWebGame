@@ -69,6 +69,8 @@ function dayData() {
         if (typeof d.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) continue;
         const real = Array.isArray(d.real) ? d.real.filter(s => typeof s === "string" && s.trim()).slice(0, 3) : [];
         out[d.date] = { title, n, board: typeof d.board === "string" ? d.board : "", real };
+        // 世界股市新聞（財報頁，shared/casino_gdp.js 的 casWorldNews）：壞的在那邊丟掉；檢查在 tools/week_check.cjs
+        if (Array.isArray(d.market) && d.market.length) out[d.date].market = d.market.slice(0, 5);
         // Yuga Bot 交代的任務：只放 { id, says }（荷官那句話），不放任務種類、答案、獎勵；week 是為了拼出存檔裡的任務 id（週/任務 id）
         const g = Array.isArray(d.daily) ? d.daily.find(t => t && t.giver === "yuga" && typeof t.says === "string" && t.says.trim() && typeof t.id === "string") : null;
         if (g) { out[d.date].week = name; out[d.date].yuga = { id: g.id, says: g.says.trim().slice(0, 40) }; }
