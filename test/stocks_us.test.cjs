@@ -1,4 +1,4 @@
-// 美股盤中（11-14，規劃 2.8g）：node test/stocks_us.test.cjs（npm test 也會跑）
+// 美股盤中（11-14，規劃 2.8i）：node test/stocks_us.test.cjs（npm test 也會跑）
 // 美東開盤時間（冬令、夏令、換日光節約的前後）、整個交易日的模擬（含 DST 日、國定假日）、停盤、掛單當天有效、05:00 換日不重複算、view 欄位、守恆、解析行情。數字讀 NUM。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");

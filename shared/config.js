@@ -394,7 +394,7 @@ export const NUM = {
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
-    //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8g 起，不再有全館 22:00～05:00 的停盤）
+    //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
     stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5,
       exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
@@ -407,7 +407,7 @@ export const NUM = {
       //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
       tw: { from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
         sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3 } },
-      // 美股盤中（11-14，規劃 2.8g）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
+      // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
       us: { open: 570, len: 390, seg: 15, giveUp: 30, retry: 3, band: 10,

@@ -67,7 +67,7 @@ export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   const tw = await stocksTw(); // 台股盤中（11-14，規劃 2.8d）：伺服器每分鐘排程算好的價，同樣交易外面讀（有快取）
-  const us = await stocksUs(); // 美股盤中（11-14，規劃 2.8g）：同上，美東 09:30～16:00 的價
+  const us = await stocksUs(); // 美股盤中（11-14，規劃 2.8i）：同上，美東 09:30～16:00 的價
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {

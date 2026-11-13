@@ -1,4 +1,4 @@
-// 美股也用這一份（11-14，規劃 2.8g）：同樣的模型、同樣的錨點加橋，只是時間是美東 09:30～16:00（算日光節約，見 usOpenMs），
+// 美股也用這一份（11-14，規劃 2.8i）：同樣的模型、同樣的錨點加橋，只是時間是美東 09:30～16:00（算日光節約，見 usOpenMs），
 // 每個市場的設定各一份（NUM.casino.stock.tw／us），函式最後多一個參數 mk（"tw" 預設、"us"）。真實成分 X 兩邊共用 twX。
 // 美股那一天的「日期」＝ 美東的日期＝ 遊戲日期（台灣 05:00 換日）：美東 09:30～16:00 換成台灣時間是 21:30～04:00（夏令）或 22:30～05:00（冬令），
 // 都落在同一個遊戲日裡（冬令收盤剛好是隔天 05:00 換日那一刻）。
@@ -219,7 +219,7 @@ export function usParseChart(json, day, nowMs) {
   return { open, prev, px, lag: Math.max(0, (nowMs - last) / 60000 - 1) };
 }
 
-// ---------- 美股（規劃 2.8g）：同樣的函式，換成美股的名單和設定 ----------
+// ---------- 美股（規劃 2.8i）：同樣的函式，換成美股的名單和設定 ----------
 export const usDocNew = twDocNew;
 export const usDocRoll = twDocRoll;
 export const usNeed = (doc, idx) => twNeed(doc, idx, "us");

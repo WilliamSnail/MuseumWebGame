@@ -114,7 +114,7 @@ T("舊錢包、壞資料：補欄位，不丟錯", G => {
   assert.doesNotThrow(() => G.casStockRoll(house, "bad", {}));
   assert.doesNotThrow(() => G.casStockView(w, house, D, OPEN));
 });
-T("換日調價不看每日資料：每支都只扣 drag（漲跌都在盤中動，不會一天動兩遍；11-14 規劃 2.8g）", G => {
+T("換日調價不看每日資料：每支都只扣 drag（漲跌都在盤中動，不會一天動兩遍；11-14 規劃 2.8i）", G => {
   const C = G.NUM.casino.stock, s = fresh(G);
   const daily = { days: { "2026-11-12": { greeneye: -4.34, redclaw: 5.86, nightindex: -0.39, islandforge: -2.3, silverapple: -0.21, flashcar: 1.69, squarewin: 0.36 } } };
   const moves = G.outStockMovesFor(daily, "2026-11-13", G.STOCK_IDS); // 這個函式還在（每日資料的檢查用），但換日不吃它
