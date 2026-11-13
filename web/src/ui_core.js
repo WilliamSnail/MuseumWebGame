@@ -832,23 +832,29 @@ export function collectionStrip(o) {
   let cur = o.start || tabs[0];
   let limit = 40;
   let sortBy = o.sorts ? o.sorts[0][0] : null; // o.sorts：[[id, 名字, 比較函式]]
-  const filt = { 顏色: "", 姿勢: "" }; // 收藏列的篩選（翊文 11-08）：空字串 ＝ 全部
   const pickOf = it => it.kind === "pillow" ? ((parsePillowKey(it.key).print || {}).pick || null) : it.pick;
+  // 收藏列的篩選（翊文 11-08：顏色、姿勢）：空字串 ＝ 全部。o.filters：[[名字, 取值函式]]，地下收藏庫挑隊員用「強度、心情、帽子、姿勢」（翊文 11-13：「應該要能篩選 pepe 的能力，這樣才好選擇」）
+  const fdefs = o.filters || [["顏色", it => (pickOf(it) || {}).顏色], ["姿勢", it => (pickOf(it) || {}).姿勢]];
+  // o.filterKey：篩選記在 UI 裡，挑了壹隻、畫面重畫之後還在（地下收藏庫挑隊員：選了「帽子：巫師帽」再挑幾隻，不會被洗掉）
+  const saved = o.filterKey ? ((UI.stripFilt || (UI.stripFilt = {}))[o.filterKey] || (UI.stripFilt[o.filterKey] = {})) : null;
+  const filt = Object.fromEntries(fdefs.map(([n]) => [n, (saved && saved[n]) || ""]));
+  const anyFilt = () => Object.values(filt).some(Boolean);
   const wrap = h("div", { class: "strip-wrap" });
   const head = h("div", { class: "strip-head" });
   const strip = h("div", { class: "strip", role: "list" });
   const fillStrip = () => {
     const all = collectionItems(cur);
-    let items = all.filter(it => Object.entries(filt).every(([c, v]) => !v || (pickOf(it) || {})[c] === v));
+    let items = all.filter(it => fdefs.every(([c, g]) => !filt[c] || String(g(it)) === filt[c]));
     // 顏色、姿勢的下拉選單：只列出這個頁籤裡有的
-    const filterSel = c => {
-      const have = new Set(all.map(it => (pickOf(it) || {})[c]).filter(Boolean));
+    const filterSel = ([c, g]) => {
+      const have = new Set(all.map(it => g(it)).filter(v => v !== undefined && v !== null && v !== "").map(String));
       if (have.size < 2 && !filt[c]) return null;
-      const opts = allOpts(c).filter(n => have.has(n)).concat([...have].filter(n => !allOpts(c).includes(n)));
+      const known = o.filters ? [] : allOpts(c);
+      const opts = known.filter(n => have.has(n)).concat([...have].filter(n => !known.includes(n)).sort((a, b) => (isNaN(a) || isNaN(b) ? 0 : b - a))); // 數字（強度）大的在前
       const sel = h("select", { class: "strip-filter" + (filt[c] ? " on" : ""), "aria-label": "篩選" + c },
         h("option", { value: "" }, `${c}：全部`), ...opts.map(n => h("option", { value: n }, `${c}：${n}`)));
       sel.value = filt[c];
-      sel.addEventListener("change", () => { filt[c] = sel.value; limit = 40; fillStrip(); });
+      sel.addEventListener("change", () => { filt[c] = sel.value; if (saved) saved[c] = sel.value; limit = 40; fillStrip(); });
       return sel;
     };
     const srt = o.sorts && o.sorts.find(s => s[0] === sortBy);
@@ -857,9 +863,9 @@ export function collectionStrip(o) {
       h("span", { class: "strip-title" }, (o.titles && o.titles[cur]) || o.title || "你的收藏"), // o.titles：每個頁籤自己的標題（11-08，抱枕工作台）
       tabs.length > 1 ? h("div", { class: "seg" }, tabs.map(t => h("button", { type: "button", class: "seg-btn" + (t === cur ? " on" : ""), onClick: () => { cur = t; limit = 40; fillStrip(); } }, `${names[t]} ${collectionItems(t).length}`))) : null,
       o.sorts ? h("div", { class: "seg strip-sort" }, o.sorts.map(([id, label]) => h("button", { type: "button", class: "seg-btn" + (id === sortBy ? " on" : ""), onClick: () => { sortBy = id; fillStrip(); } }, label))) : null,
-      h("div", { class: "strip-filters" }, filterSel("顏色"), filterSel("姿勢"), filt.顏色 || filt.姿勢 ? h("span", { class: "strip-count" }, `符合 ${items.length} 件`) : null),
+      h("div", { class: "strip-filters" }, ...fdefs.map(filterSel), anyFilt() ? h("span", { class: "strip-count" }, `符合 ${items.length} 件`) : null),
       (o.hints && o.hints[cur]) || o.hint ? h("span", { class: "strip-hint" }, (o.hints && o.hints[cur]) || o.hint) : null);
-    if (!items.length && all.length) { strip.replaceChildren(h("p", { class: "empty" }, "沒有符合篩選的。把上面的「顏色」「姿勢」改回「全部」看看。")); return; }
+    if (!items.length && all.length) { strip.replaceChildren(h("p", { class: "empty" }, "沒有符合篩選的。把上面的篩選改回「全部」看看。")); return; }
     if (!items.length) {
       strip.replaceChildren(h("p", { class: "empty" }, cur === "pillow" ? "還沒有抱枕，去抱枕工作台做一個。" : cur === "failed" ? `還沒有失敗作（擲出 ${NUM.fumbleFrom}–100 才會有）。` : "還沒有佩佩，去手作坊做一隻。"));
       return;
