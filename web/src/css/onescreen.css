@@ -742,3 +742,56 @@ body.reduce-motion .screen.onescreen-room.cellar-onescreen .onescreen-side .stor
   .hall-onescreen .hall-room { flex: 1 1 auto; align-content: center; min-height: 140px; }
   .hall-onescreen .ped-art { width: 72px; height: 72px; margin-bottom: -12px; }
 }
+
+/* ================================================================
+   融合室（11-13，翊文生的 U-5 魔法陣、P-6 零件；ui_screens3.js 的 SCREENS.fusion）
+   左邊：地板上的魔法陣、兩座石台（放爸爸、媽媽）、中間的水晶球｜右邊：說明、機率、融合按鈕、調色盤（收起來）｜最下面：收藏的抽屜
+   ================================================================ */
+.fusion-onescreen .onescreen-main { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.fusion-onescreen .fusion-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; border: 22px solid transparent; border-image: url(/cellar2/ui-panel.webp) 64 fill / 22px stretch; }
+.fusion-onescreen .fusion-count { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; text-align: center; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
+/* 融合台：不用原本的 SVG，用魔法陣當地板 */
+.fusion-onescreen .altar { position: relative; width: min(100%, 130vh); max-height: 100%; aspect-ratio: 320 / 230; margin: 0; }
+.fusion-onescreen .altar-art { display: none; }
+.fusion-onescreen .altar::before { content: ""; position: absolute; left: 14%; right: 14%; bottom: 6%; aspect-ratio: 900 / 500; background: url(/ui2/ui2-magic-circle.webp) center / 100% 100% no-repeat; filter: drop-shadow(0 0 12px rgba(238, 190, 90, .45)); }
+.fusion-onescreen .altar::after { content: ""; position: absolute; left: 50%; top: 14%; width: 17%; aspect-ratio: 1; transform: translateX(-50%); background: url(/ui2/ui2-orb.webp) center / contain no-repeat; filter: drop-shadow(0 0 10px rgba(255, 210, 140, .6)); opacity: .75; animation: fusion-orb 3s ease-in-out infinite; }
+.fusion-onescreen .altar.ready::after { opacity: 1; filter: drop-shadow(0 0 22px rgba(255, 220, 150, .95)); }
+@keyframes fusion-orb { 50% { transform: translateX(-50%) translateY(-6px); } }
+body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
+/* 兩座石台：爸爸在左、媽媽在右；放了佩佩，台面就亮 */
+.fusion-onescreen .altar-slot { bottom: 18%; width: 30%; z-index: 1; }
+.fusion-onescreen .altar-slot.s0 { left: 2%; } .fusion-onescreen .altar-slot.s1 { right: 2%; }
+.fusion-onescreen .altar-slot::before { content: ""; position: absolute; left: 4%; right: 4%; bottom: -8%; aspect-ratio: 280 / 220; background: url(/ui2/ui2-pedestal-dim.webp) center bottom / 100% 100% no-repeat; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); z-index: -1; }
+.fusion-onescreen .altar-slot.full::before, .fusion-onescreen .altar-slot.fx-drop-hover::before, body.holding .fusion-onescreen .altar-slot::before { background-image: url(/ui2/ui2-pedestal-lit.webp); }
+.fusion-onescreen .altar-frog { width: 72%; margin: 0 auto 8%; }
+.fusion-onescreen .altar-slot:not(.full) .altar-frog { width: 50%; margin: 6% auto 12%; border-color: rgba(238, 215, 156, .35); }
+.fusion-onescreen .altar-label { margin-top: 2px; padding: 2px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(20, 12, 8, .72); color: var(--paper, #F3E6C4); font-size: var(--type-small, .75rem); }
+/* 右欄：說明、機率表、按鈕都在自己裡面捲 */
+.fusion-onescreen .fusion-side { display: block; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+.fusion-onescreen .fusion-info { gap: 8px; }
+.fusion-onescreen .fusion-info .placard { margin: 0; }
+.fusion-onescreen .fusion-table td { padding: 2px 6px; font-size: var(--type-small, .75rem); }
+.fusion-onescreen .fusion-info .sub { margin: 0; font-size: var(--type-small, .75rem); }
+.fusion-onescreen .fusion-palette summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px; border: 10px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 10px stretch; color: var(--ink, #2E2014); list-style: none; cursor: pointer; }
+.fusion-onescreen .fusion-palette summary::-webkit-details-marker { display: none; }
+.fusion-onescreen .fusion-palette summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
+.fusion-onescreen .fusion-palette summary span { flex: none; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
+.fusion-onescreen .fusion-palette[open] .fusion-pal-open, .fusion-onescreen .fusion-palette:not([open]) .fusion-pal-close { display: none; }
+.fusion-onescreen .fusion-palette .palette { margin-top: 6px; }
+@media (max-width: 760px) {
+  .fusion-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .fusion-onescreen .fusion-stage { border-width: 12px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fusion-onescreen .onescreen-main { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .fusion-onescreen .fusion-stage { border-width: 10px; }
+  .fusion-onescreen .fusion-count { display: none; }
+}
+.fusion-onescreen .altar { height: 100%; width: auto; max-width: 100%; }
+.fusion-onescreen .fusion-cmp summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px; border: 10px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 10px stretch; color: var(--ink, #2E2014); list-style: none; cursor: pointer; }
+.fusion-onescreen .fusion-cmp summary::-webkit-details-marker { display: none; }
+.fusion-onescreen .fusion-cmp summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
+.fusion-onescreen .fusion-cmp summary span { flex: none; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
+.fusion-onescreen .fusion-cmp[open] .fusion-pal-open, .fusion-onescreen .fusion-cmp:not([open]) .fusion-pal-close { display: none; }
+/* 融合按鈕貼在右欄下面，說明長了也看得到（翊文 11-13：每個廳壹個畫面） */
+.fusion-onescreen .fusion-info > .rv-btns { position: sticky; bottom: 0; z-index: 2; padding: 8px 4px 2px; background: linear-gradient(180deg, rgba(60, 24, 36, 0), rgba(60, 24, 36, .96) 40%); }
