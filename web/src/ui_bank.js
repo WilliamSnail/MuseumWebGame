@@ -22,7 +22,7 @@ const TAB_ICON = {
   stock: SVG('<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>'), // 往上的折線
   report: SVG('<path d="M5 4h13v16H5z"/><path d="M8 8h7M8 12h7M8 16h4"/><path d="M5 4v16"/>'), // 帳本
 };
-const TABS = [["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["stock", "股票"], ["report", "財報"]];
+const TABS = [["report", "財報"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"]]; // 翊文 11-14：財報最左邊第一個，第二個是股票
 const pctText = p => `${(p * 100).toFixed(p * 100 % 1 ? 1 : 0)}%`;
 
 // ---------- 示範資料（伺服器還沒給 bankHall 的時候用；格式照 Yuga 說的 bankHall） ----------
@@ -497,7 +497,7 @@ SCREENS.bank = root => {
     root.append(roomHead("Yuga Bot 銀行", "存錢有利息，借錢要還。"), h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, h("p", { class: "bank-demo" }, "正在跟銀行拿資料……"))));
     return;
   }
-  const v = view(), tab = UI.bankTab || "save";
+  const v = view(), tab = UI.bankTab || "report";
   const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { UI.bankTab = id; rerender(); } },
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "bond" && v.bonds ? h("i", { class: "bank-dot", "aria-label": "有新的一期" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
