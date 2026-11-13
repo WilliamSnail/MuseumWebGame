@@ -2,34 +2,34 @@
    回滾：shared/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
 
 /* 捲軸出現、消失時寬度不變（導覽圖的高度跟著寬度走，不留的話 1366 寬會在「有捲軸／沒捲軸」之間來回跳，畫面停住） */
-html.ui2 { scrollbar-gutter: stable; }
+html.new-lobby-on { scrollbar-gutter: stable; }
 
 /* ---------- 頂欄：每格壹張彩色的圖（翊文 11-11 生的 assets/nav/_sheet-16.jpg；原本的圓形外圈讓圖案太小，拿掉了） ---------- */
-.ui2 #nav .nav-link > .ic, .ui2 #nav .menu-btn > .ic { width: 30px; height: 30px; opacity: 1; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
-.ui2 #nav .nav-link > .ic svg, .ui2 #nav .menu-btn > .ic svg { display: none; }
-.ui2 #nav .nav-link[data-room="lobby"] > .ic { background-image: url(/lobby/nav-lobby.webp); }
-.ui2 #nav .nav-link[data-room="gallery"] > .ic { background-image: url(/lobby/nav-gallery.webp); }
-.ui2 #nav .nav-link[data-room="origin"] > .ic { background-image: url(/lobby/nav-origin.webp); }
-.ui2 #nav .nav-link[data-room="workshop"] > .ic { background-image: url(/lobby/nav-workshop.webp); }
-.ui2 #nav .nav-link[data-room="fusion"] > .ic { background-image: url(/lobby/nav-fusion.webp); }
-.ui2 #nav .nav-link[data-room="pillow"] > .ic { background-image: url(/lobby/nav-pillow.webp); }
-.ui2 #nav .nav-link[data-room="hall"] > .ic { background-image: url(/lobby/nav-hall.webp); }
-.ui2 #nav .nav-link[data-room="codex"] > .ic { background-image: url(/lobby/nav-codex.webp); }
-.ui2 #nav .nav-link[data-room="cellar"] > .ic { background-image: url(/lobby/nav-cellar.webp); }
-.ui2 #nav .nav-link[data-room="casino"] > .ic { background-image: url(/lobby/nav-casino.webp); }
-.ui2 #nav .nav-link[data-room="office"] > .ic { background-image: url(/lobby/nav-office.webp); }
-.ui2 #nav .nav-today > .ic { background-image: url(/lobby/nav-today.webp); }
-.ui2 #nav .nav-pass > .ic { background-image: url(/lobby/nav-pass.webp); }
-.ui2 #nav .nav-shop > .ic { background-image: url(/lobby/nav-shop.webp); }
-.ui2 #nav .nav-board > .ic { background-image: url(/lobby/nav-board.webp); }
-.ui2 #nav .menu-btn > .ic { background-image: url(/lobby/nav-menu.webp); width: 24px; height: 24px; }
-.ui2 #nav .nav-link:hover > .ic, .ui2 #nav .nav-link:focus-visible > .ic { transform: translateY(-1px) scale(1.06); filter: drop-shadow(0 0 4px rgba(255,214,120,.6)); }
-.ui2 #nav .nav-link > .ic { transition: transform .15s, filter .15s; }
-body.reduce-motion.ui2 #nav .nav-link > .ic, html.ui2 body.reduce-motion #nav .nav-link > .ic { transition: none; }
+.new-lobby-on #nav .nav-link > .ic, .new-lobby-on #nav .menu-btn > .ic { width: 30px; height: 30px; opacity: 1; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.new-lobby-on #nav .nav-link > .ic svg, .new-lobby-on #nav .menu-btn > .ic svg { display: none; }
+.new-lobby-on #nav .nav-link[data-room="lobby"] > .ic { background-image: url(/lobby/nav-lobby.webp); }
+.new-lobby-on #nav .nav-link[data-room="gallery"] > .ic { background-image: url(/lobby/nav-gallery.webp); }
+.new-lobby-on #nav .nav-link[data-room="origin"] > .ic { background-image: url(/lobby/nav-origin.webp); }
+.new-lobby-on #nav .nav-link[data-room="workshop"] > .ic { background-image: url(/lobby/nav-workshop.webp); }
+.new-lobby-on #nav .nav-link[data-room="fusion"] > .ic { background-image: url(/lobby/nav-fusion.webp); }
+.new-lobby-on #nav .nav-link[data-room="pillow"] > .ic { background-image: url(/lobby/nav-pillow.webp); }
+.new-lobby-on #nav .nav-link[data-room="hall"] > .ic { background-image: url(/lobby/nav-hall.webp); }
+.new-lobby-on #nav .nav-link[data-room="codex"] > .ic { background-image: url(/lobby/nav-codex.webp); }
+.new-lobby-on #nav .nav-link[data-room="cellar"] > .ic { background-image: url(/lobby/nav-cellar.webp); }
+.new-lobby-on #nav .nav-link[data-room="casino"] > .ic { background-image: url(/lobby/nav-casino.webp); }
+.new-lobby-on #nav .nav-link[data-room="office"] > .ic { background-image: url(/lobby/nav-office.webp); }
+.new-lobby-on #nav .nav-today > .ic { background-image: url(/lobby/nav-today.webp); }
+.new-lobby-on #nav .nav-pass > .ic { background-image: url(/lobby/nav-pass.webp); }
+.new-lobby-on #nav .nav-shop > .ic { background-image: url(/lobby/nav-shop.webp); }
+.new-lobby-on #nav .nav-board > .ic { background-image: url(/lobby/nav-board.webp); }
+.new-lobby-on #nav .menu-btn > .ic { background-image: url(/lobby/nav-menu.webp); width: 24px; height: 24px; }
+.new-lobby-on #nav .nav-link:hover > .ic, .new-lobby-on #nav .nav-link:focus-visible > .ic { transform: translateY(-1px) scale(1.06); filter: drop-shadow(0 0 4px rgba(255,214,120,.6)); }
+.new-lobby-on #nav .nav-link > .ic { transition: transform .15s, filter .15s; }
+body.reduce-motion.new-lobby-on #nav .nav-link > .ic, html.new-lobby-on body.reduce-motion #nav .nav-link > .ic { transition: none; }
 
 /* 圖示在上、字在下（加了圓形底座比較寬，橫排放不下全部的房間） */
 @media (min-width: 861px) and (min-height: 501px) {
-  .ui2 #nav .nav-link { flex-direction: column; gap: 1px; padding: 3px 4px; font-size: .72rem; letter-spacing: .04em; line-height: 1.15; }
+  .new-lobby-on #nav .nav-link { flex-direction: column; gap: 1px; padding: 3px 4px; font-size: .72rem; letter-spacing: .04em; line-height: 1.15; }
 }
 /* ---------- 版面：導覽圖＋右邊壹欄 ---------- */
 /* 大廳的標題留給朗讀，畫面上收起來（高度留給導覽圖） */
@@ -119,7 +119,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 
 /* ---------- 大螢幕（翊文 11-11：「螢幕更大的時候反而介面就有點小了」）：不受 #room 的 1320px，導覽圖照螢幕高度放大 ---------- */
 @media (min-width: 1100px) and (min-height: 600px) {
-  body.l2-on #room { /* 不用 :has()：1366 寬時會讓畫面停住不畫 */ max-width: none; padding: 14px clamp(20px, 2.5vw, 56px) calc(var(--status-real, var(--status-h)) + 14px); }
+  body.lobby-wide-on #room { /* 不用 :has()：1366 寬時會讓畫面停住不畫 */ max-width: none; padding: 14px clamp(20px, 2.5vw, 56px) calc(var(--status-real, var(--status-h)) + 14px); }
   .l2 { grid-template-columns: minmax(0, 1fr) clamp(300px, 21vw, 440px); gap: clamp(14px, 1.2vw, 28px); }
   /* 導覽圖：寬度不超過「螢幕高度扣掉導覽列、狀態列、橫幅」能放的大小，置中 */
   .l2 { --mapw: min(100%, calc((100vh - var(--nav-h) - var(--status-real, var(--status-h)) - 130px) * 1024 / 572)); }
@@ -156,7 +156,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 }
 /* ---------- 手機橫拿（決定 0043）：導覽圖照高度縮，右欄窄壹點、可以捲 ---------- */
 @media (max-height: 500px) and (orientation: landscape) {
-  .ui2 #nav .nav-link > .ic { width: 22px !important; height: 22px !important; }
+  .new-lobby-on #nav .nav-link > .ic { width: 22px !important; height: 22px !important; }
   .l2 { grid-template-columns: minmax(0, 1fr) 200px; gap: 8px; }
   .l2-left { gap: 5px; }
   .l2-strips { gap: 5px; }
@@ -178,27 +178,27 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 }
 
 /* ---------- 狀態列：每格字前面壹個彩色小圖示（翊文 11-11 生的 assets/status/_icons-11.jpg） ---------- */
-.ui2 #status .st-label::before { content: ""; display: inline-block; width: 22px; height: 22px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
-.ui2 #st-day .st-label::before { background-image: url(/lobby/st-day.webp); }
-.ui2 #st-mood .st-label::before { background-image: url(/lobby/st-mood.webp); }
-.ui2 #st-san .st-label::before { background-image: url(/lobby/st-san.webp); }
-.ui2 #st-insp .st-label::before { background-image: url(/lobby/st-insp.webp); }
-.ui2 #st-stamps .st-label::before { background-image: url(/lobby/st-stamps.webp); }
-.ui2 #st-chips .st-label::before { background-image: url(/lobby/st-chips.webp); }
-.ui2 #st-poss .st-label::before { background-image: url(/lobby/st-poss.webp); }
-.ui2 #st-jobs .st-label::before { background-image: url(/lobby/st-jobs.webp); }
-.ui2 #st-own .st-label::before { background-image: url(/lobby/st-poss.webp); }
-.ui2 #st-stamps .st-label .ic { display: none; } /* 原本的小獎章換成上面那張 */
-.ui2 #status .chip-myth::before, .ui2 #status .qk-chip::before, .ui2 #st-follow::before { content: ""; flex: none; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; }
-.ui2 #status .chip-myth { display: inline-flex; align-items: center; }
-.ui2 #status .chip-myth::before { background-image: url(/lobby/st-myth.webp); }
-.ui2 #status .qk-chip::before { background-image: url(/lobby/st-quirk.webp); }
-.ui2 #status .qk-chip > .ic { display: none; }
-.ui2 #st-follow::before { background-image: url(/lobby/st-track.webp); }
-.ui2 #st-follow > .ic { display: none; }
+.new-lobby-on #status .st-label::before { content: ""; display: inline-block; width: 22px; height: 22px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.new-lobby-on #st-day .st-label::before { background-image: url(/lobby/st-day.webp); }
+.new-lobby-on #st-mood .st-label::before { background-image: url(/lobby/st-mood.webp); }
+.new-lobby-on #st-san .st-label::before { background-image: url(/lobby/st-san.webp); }
+.new-lobby-on #st-insp .st-label::before { background-image: url(/lobby/st-insp.webp); }
+.new-lobby-on #st-stamps .st-label::before { background-image: url(/lobby/st-stamps.webp); }
+.new-lobby-on #st-chips .st-label::before { background-image: url(/lobby/st-chips.webp); }
+.new-lobby-on #st-poss .st-label::before { background-image: url(/lobby/st-poss.webp); }
+.new-lobby-on #st-jobs .st-label::before { background-image: url(/lobby/st-jobs.webp); }
+.new-lobby-on #st-own .st-label::before { background-image: url(/lobby/st-poss.webp); }
+.new-lobby-on #st-stamps .st-label .ic { display: none; } /* 原本的小獎章換成上面那張 */
+.new-lobby-on #status .chip-myth::before, .new-lobby-on #status .qk-chip::before, .new-lobby-on #st-follow::before { content: ""; flex: none; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -5px; background: center/contain no-repeat; }
+.new-lobby-on #status .chip-myth { display: inline-flex; align-items: center; }
+.new-lobby-on #status .chip-myth::before { background-image: url(/lobby/st-myth.webp); }
+.new-lobby-on #status .qk-chip::before { background-image: url(/lobby/st-quirk.webp); }
+.new-lobby-on #status .qk-chip > .ic { display: none; }
+.new-lobby-on #st-follow::before { background-image: url(/lobby/st-track.webp); }
+.new-lobby-on #st-follow > .ic { display: none; }
 @media (max-height: 500px) and (orientation: landscape) {
-  .ui2 #status .st-label::before { width: 16px; height: 16px; margin-right: 2px; vertical-align: -3px; }
-  .ui2 #status .chip-myth::before, .ui2 #status .qk-chip::before, .ui2 #st-follow::before { width: 15px; height: 15px; }
+  .new-lobby-on #status .st-label::before { width: 16px; height: 16px; margin-right: 2px; vertical-align: -3px; }
+  .new-lobby-on #status .chip-myth::before, .new-lobby-on #status .qk-chip::before, .new-lobby-on #st-follow::before { width: 15px; height: 15px; }
 }
 
 /* ---------- 手機直拿（翊文 11-11）：換成直式的底圖（port.webp，572×1024）；右欄、橫幅排成壹欄 ---------- */
@@ -220,10 +220,10 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 /* ---------- 手機（760 寬以下）：底部分頁列＋壹行狀態列（翊文 11-12 選 A；ui_core.js 的 tabBar） ---------- */
 .tabbar { display: none; }
 @media (max-width: 760px) {
-  .ui2 #status { flex-wrap: wrap; padding: 0 0 env(safe-area-inset-bottom); }
-  .ui2 #status .st-row { flex: 1 1 0; min-width: 0; padding: 6px 0 6px 12px; gap: 0; cursor: pointer; }
-  .ui2 #status .st-toggle { height: 40px; }
-  .ui2 #status .tabbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); flex: 0 0 100%; order: 9;
+  .new-lobby-on #status { flex-wrap: wrap; padding: 0 0 env(safe-area-inset-bottom); }
+  .new-lobby-on #status .st-row { flex: 1 1 0; min-width: 0; padding: 6px 0 6px 12px; gap: 0; cursor: pointer; }
+  .new-lobby-on #status .st-toggle { height: 40px; }
+  .new-lobby-on #status .tabbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); flex: 0 0 100%; order: 9;
     border-top: 1px solid rgba(200,162,90,.45); background: linear-gradient(180deg, #2A1B12, #160E09); }
   .tb-btn { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; padding: 4px 2px; border: 0; background: none;
     color: #D8C59A; font: inherit; font-size: .72rem; letter-spacing: .04em; cursor: pointer; }
@@ -242,16 +242,16 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .tb-btn.has-n .tb-n { display: block; }
   .tb-menu.has-seal .tb-n { background: #B23A2E; color: #FFF3E6; }
   /* 上面那排的選單按鈕：底下有了就不用 */
-  .ui2 #nav .menu-btn { display: none; }
+  .new-lobby-on #nav .menu-btn { display: none; }
   /* 選單從底下拉上來（貼在狀態列上面） */
-  .ui2 #nav { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .ui2 .nav-drawer { position: fixed; top: auto; bottom: var(--status-real, 120px); left: 0; right: 0; width: auto; max-height: calc(100vh - var(--status-real, 120px) - var(--nav-h)); max-height: calc(100dvh - var(--status-real, 120px) - var(--nav-h));
+  .new-lobby-on #nav { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .new-lobby-on .nav-drawer { position: fixed; top: auto; bottom: var(--status-real, 120px); left: 0; right: 0; width: auto; max-height: calc(100vh - var(--status-real, 120px) - var(--nav-h)); max-height: calc(100dvh - var(--status-real, 120px) - var(--nav-h));
     overflow-y: auto; border-radius: 12px 12px 0 0; border: 1px solid var(--gold-lo, #8C6A2E); border-bottom: 0; box-shadow: 0 -12px 30px rgba(0,0,0,.5); z-index: 40; }
   /* 狀態列收起來：只留心情、理智、靈感、籌碼，平均排開；其他的點了展開才看得到 */
-  .ui2 #status:not(.open) :is(#st-day, #st-stamps, #st-jobs, #st-follow, .st-mode) { display: none; }
-  .ui2 #status:not(.open) #st-mood ~ #st-poss { display: none; }
-  .ui2 #status:not(.open) .st-item { flex: 1 1 0; min-width: 0; align-items: center; }
-  .ui2 #status:not(.open) .st-item .st-label { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .new-lobby-on #status:not(.open) :is(#st-day, #st-stamps, #st-jobs, #st-follow, .st-mode) { display: none; }
+  .new-lobby-on #status:not(.open) #st-mood ~ #st-poss { display: none; }
+  .new-lobby-on #status:not(.open) .st-item { flex: 1 1 0; min-width: 0; align-items: center; }
+  .new-lobby-on #status:not(.open) .st-item .st-label { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   /* 大廳直拿：先活動預告、再今天要做的事、再導覽圖，館友證和手上有的放最後 */
   .l2, .l2-left, .l2-side { display: flex; flex-direction: column; gap: 10px; }
   .l2-left, .l2-side { display: contents; }
@@ -259,11 +259,11 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 }
 @media (max-width: 760px) {
   /* 收起來：每格只放圖示＋數字，排成薄薄壹行 */
-  .ui2 #status:not(.open) .st-item { flex-direction: row; justify-content: center; gap: 4px; min-height: 32px; }
-  .ui2 #status:not(.open) .st-item .st-label { font-size: 0; }
-  .ui2 #status:not(.open) .st-item .st-label::before { margin-right: 0; }
-  .ui2 #status:not(.open) .st-row { padding: 4px 0 4px 8px; }
-  .ui2 #status.open .st-row { gap: 10px 18px; }
+  .new-lobby-on #status:not(.open) .st-item { flex-direction: row; justify-content: center; gap: 4px; min-height: 32px; }
+  .new-lobby-on #status:not(.open) .st-item .st-label { font-size: 0; }
+  .new-lobby-on #status:not(.open) .st-item .st-label::before { margin-right: 0; }
+  .new-lobby-on #status:not(.open) .st-row { padding: 4px 0 4px 8px; }
+  .new-lobby-on #status.open .st-row { gap: 10px 18px; }
   /* 導覽圖上面的待辦只放前兩張，其他的按底下的「今天」 */
   .l2-todobox .l2-todo:nth-child(n+3) { display: none; }
 }

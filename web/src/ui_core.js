@@ -467,8 +467,8 @@ export function openStatus(on) {
 }
 // 手機的底部分頁列（翊文 11-12：「整個手機的介面可能都要再想壹下」，選 A）：大廳、今天、兌換所、賭場、選單五顆大按鈕。
 // 放在狀態列裡面最下面壹排，狀態列的高度（--status-real）就把它算進去，各頁底下的留白、跳出的框不用另外改。
-// 只有 html.ui2 而且寬度 760 以下看得到（css/lobby2.css）；回滾跟著 NUM.ui.newLobby
-export const phoneTabs = () => typeof matchMedia !== "undefined" && document.documentElement.classList.contains("ui2") && matchMedia("(max-width: 760px)").matches;
+// 只有 html.new-lobby-on 而且寬度 760 以下看得到（css/lobby2.css）；回滾跟著 NUM.ui.newLobby
+export const phoneTabs = () => typeof matchMedia !== "undefined" && document.documentElement.classList.contains("new-lobby-on") && matchMedia("(max-width: 760px)").matches;
 function tabBar() {
   const tb = (cls, ic, label, fn, extra) => h("button", { type: "button", class: "tb-btn " + cls, onClick: e => { e.stopPropagation(); fn(); }, ...extra },
     ic === "shop" ? cicon(ic) : icon(ic), h("span", { class: "tb-t" }, label), h("span", { class: "tb-n", "aria-hidden": "true" }));
@@ -687,7 +687,7 @@ export function applyBodyState() {
   root.style.setProperty("--wallNow", mixHex("4A1E26", "1E2832", t));
   root.style.setProperty("--dim", (t * 0.42).toFixed(3));
   b.classList.toggle("lowsan", !free && s < 40 && s > 0);
-  b.classList.toggle("dark", !!(P && P.dark && !free) && UI.screen !== "ending");
+  b.classList.toggle("lights-out", !!(P && P.dark && !free) && UI.screen !== "ending");
   b.classList.toggle("bout", !!(P && P.bout));
   for (let i = 0; i < 10; i++) b.classList.toggle("bout-" + i, !!(P && P.bout && P.bout.i === i));
   FX.drag.shaky = !!(P && P.bout && P.bout.i === 1);
@@ -767,8 +767,8 @@ export function render() {
   const room = $("#room");
   const chrome = !HIDE_CHROME.includes(UI.screen);
   $("#nav").hidden = !chrome; $("#status").hidden = !chrome || !P;
-  document.body.classList.toggle("chrome", chrome);
-  document.body.classList.remove("l2-on", "cellar-on"); // 新的大廳（ui_lobby2.js）畫的時候再加回去：大螢幕的大廳不受 #room 的寬度限制
+  document.body.classList.toggle("room-frame-on", chrome);
+  document.body.classList.remove("lobby-wide-on", "cellar-on"); // 新的大廳（ui_lobby2.js）畫的時候再加回去：大螢幕的大廳不受 #room 的寬度限制
   markNav();
   if (P) scanFresh(P, UI.screen); // 先看有沒有新東西，畫面上的小牌子才畫得到
   const screen = h("section", { class: "screen enter scr-" + UI.screen, "aria-label": ROOM_NAMES[UI.screen] || "" });

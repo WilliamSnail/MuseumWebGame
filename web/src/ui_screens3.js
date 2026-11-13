@@ -511,8 +511,8 @@ export function historyCard(x, made) {
 SCREENS.cellar = root => {
   if (P.cellar.run) { cellarRoom(root); return; }
   // 地下室改版（翊文 11-11 生的素材 web/public/cellar/，css/cellar2.css）：跟新大廳同壹個總開關 NUM.ui.newLobby
-  const ui2 = !!(NUM.ui && NUM.ui.newLobby);
-  if (ui2) document.body.classList.add("cellar-on"); // 石牆背景；換房間時 ui_core 的 render 會拿掉
+  const newLobby = !!(NUM.ui && NUM.ui.newLobby);
+  if (newLobby) document.body.classList.add("cellar-on"); // 石牆背景；換房間時 ui_core 的 render 會拿掉
   const team = UI.cellarTeam || (UI.cellarTeam = [null, null, null]);
   team.forEach((k, i) => { if (k && (!P.pepes[k] || P.injured[k])) team[i] = null; });
   const best = P.cellar.best || 0;
@@ -524,7 +524,7 @@ SCREENS.cellar = root => {
     const reward = [r.insp ? `${r.insp} 靈感` : null, r.unlock ? `「${r.unlock[1]}」` : null, r.key ? `「${r.key === "bg" ? "背景" : "手上拿的東西"}」的鑰匙` : null, r.book ? "一本禁書" : null, r.ending ? "結局" : null].filter(Boolean).join("、");
     const el = h("button", { type: "button", class: "floor" + (UI.cellarFloor === n ? " on" : "") + (open ? "" : " locked") + (done ? " done" : ""), "aria-label": `B${n} ${f.name}` },
       // 翊文 11-11：「這些名子跟圖案應該還是要留著比較好，至少解開來要看的到」：解開的樓層照舊放那層的畫；還不能去的才放上鎖的門
-      ui2 && !open ? h("span", { class: "floor-door" }, h("img", { src: "/cellar/door-locked.webp", alt: "", draggable: "false" }), h("span", { class: "fd-plate" }, `B${n}`))
+      newLobby && !open ? h("span", { class: "floor-door" }, h("img", { src: "/cellar/door-locked.webp", alt: "", draggable: "false" }), h("span", { class: "fd-plate" }, `B${n}`))
         : h("span", { class: "floor-art", html: ART.cellarScene ? ART.cellarScene(n, { cleared: done }) : "" }),
       h("span", { class: "floor-n" }, `B${n}`), h("b", null, open ? f.name : "？？？"),
       h("span", { class: "sub" }, done ? "走過了" : open ? `第一次走完：${reward}` : `要先走過 B${n - 1}`));
@@ -535,7 +535,7 @@ SCREENS.cellar = root => {
   const items = team.map(k => k ? { kind: "pepe", key: k, pick: fromKey(k), perfect: !!(P.pepes[k] || {}).perfect } : null);
   const slotEls = items.map((it, i) => {
     const el = h("div", { class: "team-slot" + (it ? " full" : ""), "aria-label": it ? `隊員 ${i + 1}：${itemTitle(it)}` : `隊員 ${i + 1}：空的` },
-      ui2 ? h("img", { class: "ped-base", src: `/cellar/ped-${it ? "glow" : "normal"}.webp`, alt: "", draggable: "false" }) : null, // 展示台座（地下室改版）
+      newLobby ? h("img", { class: "ped-base", src: `/cellar/ped-${it ? "glow" : "normal"}.webp`, alt: "", draggable: "false" }) : null, // 展示台座（地下室改版）
       h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }),
       h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? h("b", null, itemTitle(it)) : "空位", it ? h("span", null, `強度 ${memberPower(it, null)}・${it.pick.帽子}・${it.pick.姿勢}`) : null),
       it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "換下來", onClick: e => { e.stopPropagation(); team[i] = null; rerender(); } }, icon("close")) : null);

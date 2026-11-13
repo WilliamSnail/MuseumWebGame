@@ -178,7 +178,7 @@ export function lobby2(root) {
     h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap);
-  document.body.classList.add("l2-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
+  document.body.classList.add("lobby-wide-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
   // 名單有變：橫幅和名牌跟著換（換了房間就不再理）
   const offs = [];
   const onRoster = () => { if (!wrap.isConnected) { offs.forEach(f => f && f()); return; } mates.draw(); drawWho(); };
@@ -188,4 +188,4 @@ ADDONS.lobby2 = lobby2;
 ADDONS.useLobby2 = useLobby2;
 
 // 頂欄的圖示換成圓形底座（決定 0066）：總開關打開時，整個遊戲都是
-if (NUM.ui && NUM.ui.newLobby) document.documentElement.classList.add("ui2");
+if (NUM.ui && NUM.ui.newLobby) document.documentElement.classList.add("new-lobby-on");
