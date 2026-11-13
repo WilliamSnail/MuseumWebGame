@@ -28,6 +28,20 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "moc-grant", v: 1, cat: "館方公告", tags: ["重要"], importance: "normal",
+    title: "文化部補助本館 10 億：賭場莊家重新站穩", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["發生了什麼", [
+        "最近館裡借貸太熱，莊家把錢都借了出去，帳上變成負的。",
+        "文化部看好佩佩博物館帶動的在地經濟，從外面世界撥了壹筆 10 億的補助給本館，交給賭場莊家周轉。",
+      ]],
+      ["對大家的影響", [
+        "莊家不再是破產中，大家照常玩。",
+        "這筆錢是從館外進來的，日報「從館外進來」那段看得到。借出去的錢到期照樣要還。",
+      ]],
+    ],
+  },
+  {
     id: "bank-stock-ui", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "銀行的股票頁改版：買進、賣出分開、有走勢線", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

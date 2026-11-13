@@ -151,5 +151,12 @@ T("莊家破產換日不再印錢（11-14：翊文「這不行，莊家要跟整
   assert.strictEqual(r.reopen, null);
   assert.ok(!(r.house.led && r.house.led.mint && r.house.led.mint.reset), "沒有印錢");
 });
+T("文化部補助 10 億只撥壹次、記成館外進來（11-13 翊文）", G => {
+  const h = G.casHouseNew(); h.bankroll = -830000000; delete h.grants;
+  const r = G.casHouseFix(h, "2026-11-14").house;
+  assert.strictEqual(r.bankroll, -830000000 + 1000000000, "撥了 10 億");
+  assert.strictEqual(r.led.mint.grant, 1000000000, "記成館外進來，來源 grant");
+  assert.strictEqual(G.casHouseFix(r, "2026-11-15").house.bankroll, 170000000, "第二次不再撥");
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
