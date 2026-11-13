@@ -44,6 +44,25 @@ export function usOpenMs(day) {
   const C = NUM.casino.stock.us;
   return (usOpenCache[day] = Date.UTC(y, mo, d, 0, C.open, 0) - off * 60000);
 }
+// 美股提早收盤日（NYSE：13:00 美東收）：感恩節（11 月第 4 個星期四）的隔天、12/24（星期一～四；星期五那年 12/25 是星期六，12/24 整天休市）、7/3（星期一～四；星期五那年 7/4 是星期六，7/3 整天休市）。
+// day 是 YYYY-MM-DD（美東的日期）。休市的整天（國定假日）資料裡本來就沒有，不用在這裡處理
+export function usEarlyClose(day) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day));
+  if (!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3], wd = new Date(Date.UTC(y, mo - 1, d)).getUTCDay(); // 0 日 … 6 六
+  if (mo === 12 && d === 24) return wd >= 1 && wd <= 4;
+  if (mo === 7 && d === 3) return wd >= 1 && wd <= 4;
+  if (mo === 11 && wd === 5) { // 感恩節 ＝ 11 月第 4 個星期四；隔天（星期五）提早收盤
+    const first = new Date(Date.UTC(y, 10, 1)).getUTCDay(), thanks = 1 + ((4 - first + 7) % 7) + 21;
+    return d === thanks + 1;
+  }
+  return false;
+}
+// 這個市場那天盤中有幾分鐘（台股 len；美股平常 len、提早收盤日 earlyLen）
+export function mkLen(mk, day) {
+  const C = mk === "us" ? NUM.casino.stock.us : NUM.casino.stock.tw;
+  return mk === "us" && usEarlyClose(day) && C.earlyLen > 0 ? C.earlyLen : C.len;
+}
 // 美東現在是哪一天（YYYY-MM-DD）
 export function usNyDay(ms) {
   usFmtDay = usFmtDay || new Intl.DateTimeFormat("en-CA", { timeZone: US_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
@@ -114,10 +133,11 @@ export function twDocRoll(old, day, keep) {
 //   fetch false ＝ 錨點時間過了 retry 分鐘還沒抓到：不抓了，這壹段真實成分當 0 直接算
 export function twNeed(doc, idx, mk) {
   const C = MKS[mk || "tw"].C();
-  if (!doc || doc.closed || idx == null || idx < 0 || idx > C.len) return null;
+  const LEN = mkLen(mk || "tw", doc && doc.day);
+  if (!doc || doc.closed || idx == null || idx < 0 || idx > LEN) return null;
   if (doc.openIdx == null) return idx >= C.giveUp ? { kind: "giveup" } : { kind: "open", fetch: true };
   const j = doc.k + 1;
-  if (j >= C.len / C.seg) return null;
+  if (j >= LEN / C.seg) return null;
   if (idx < j * C.seg) return null;
   return { kind: "seg", j, fetch: idx - j * C.seg < C.retry };
 }
@@ -126,14 +146,14 @@ export function twNeed(doc, idx, mk) {
 function twPad(arr, upto, a) { while (arr.length <= upto) arr.push(a); }
 
 // 建第 j 段的橋，回傳下壹個錨點。ser 已經補到起點。
-function twBuild(doc, id, j, secret, ret, x, hasReal, C) {
+function twBuild(doc, id, j, secret, ret, x, hasReal, C, LEN) {
   const sd15 = (C.sd15[id] || 0.5) / 100;
   const r = twRng(twSeed(`${secret}|${doc.day}|${id}|${j}`));
   const amp = hasReal ? sd15 * Math.sqrt(1 - x * x) : sd15;
   const a = doc.A[id];
   const b = twRound(twClamp(a * (1 + (hasReal ? x * ret : 0) + amp * twNorm(r)), C));
   const arr = doc.ser[id];
-  const s = arr.length - 1, e = Math.min(C.len, (j + 1) * C.seg);
+  const s = arr.length - 1, e = Math.min(LEN, (j + 1) * C.seg);
   const n = e - s;
   if (n > 0) {
     // 布朗橋：W 是隨機走，橋 ＝ W(i) − (i/n)·W(n)，兩端回到 0
@@ -196,7 +216,7 @@ function twSegment(doc, j, idx, g, secret, opening, mk) {
       doc.R[id] = { px: row.px, seg: j };
     } else stale[id] = true;
     if (opening && doc.stale[id]) stale[id] = true;
-    twBuild(doc, id, j, secret, ret, x, hasReal, C);
+    twBuild(doc, id, j, secret, ret, x, hasReal, C, mkLen(mk, doc.day));
   }
   doc.stale = stale;
   doc.k = j;
@@ -211,7 +231,7 @@ export function usParseChart(json, day, nowMs) {
   const r = json && json.chart && json.chart.result && json.chart.result[0];
   const q = r && r.indicators && r.indicators.quote && r.indicators.quote[0];
   if (!r || !q || !Array.isArray(r.timestamp) || !Array.isArray(q.close)) return null;
-  const o0 = usOpenMs(day), end = o0 + NUM.casino.stock.us.len * 60000;
+  const o0 = usOpenMs(day), end = o0 + mkLen("us", day) * 60000;
   let open = null, px = null, last = null;
   r.timestamp.forEach((t, i) => {
     const ms = t * 1000;

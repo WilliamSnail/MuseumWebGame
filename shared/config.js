@@ -428,7 +428,8 @@ export const NUM = {
       // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
-      us: { open: 570, len: 390, seg: 15, giveUp: 30, retry: 3, band: 10,
+      // earlyLen：美股提早收盤日（13:00 美東收，壹年約 3 天：感恩節隔天、聖誕夜、7 月 3 日；shared/stocks_tw.js 的 usEarlyClose）那天盤中有幾分鐘（570 → 780 ＝ 210）
+      us: { open: 570, len: 390, earlyLen: 210, seg: 15, giveUp: 30, retry: 3, band: 10,
         minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06 },
         sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
