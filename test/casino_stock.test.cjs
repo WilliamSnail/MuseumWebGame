@@ -146,5 +146,13 @@ T("文化部借款 10 億只撥壹次、記成館外進來、記成債（11-13 �
   assert.strictEqual(n.led.mint.grant, 1000000000, "第二次不再撥");
   assert.ok(n.debt.culture < 1000000000, "莊家有賺就還");
 });
+T("大廳的「新」：館外幾支股票的價自從上次看過之後變過；看過歸零，價再變又加（11-13）", G => {
+  const w = G.casWalletFix(G.casWalletNew(), D), h = G.casHouseFix(G.casHouseNew(), D).house; G.casStockHouseFix(h);
+  assert.strictEqual(G.casStockFreshN(w, h), G.OUT_STOCKS.length, "沒看過：全部算新");
+  G.casStockSeen(w, h);
+  assert.strictEqual(G.casStockFreshN(w, h), 0, "看過了");
+  h.stk.px[ID] += 7;
+  assert.strictEqual(G.casStockFreshN(w, h), 1, "壹支變了");
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

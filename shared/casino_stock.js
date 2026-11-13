@@ -473,3 +473,10 @@ export function casStockUsSettle(house, us, day) {
   if (!H.day || H.day === day || !stDay(day)) return;
   casStockUsApply(house, us, H.day, usOpenMs(H.day) + (mkLen("us", H.day) + 1) * 60000);
 }
+
+// 大廳導覽圖銀行的「新」（11-13，美術統籌要的）：館外有幾支股票的價格自從玩家上次按「看過了」之後變過。
+//   跟 casStockView 的 fresh 同壹個算法，只回數字；價是莊家文件現在記的價（盤中最後碰到的那壹下），不另外讀行情
+export function casStockFreshN(w, house) {
+  const S = casStockFix(w), H = casStockHouseFix(house);
+  return OUT_STOCKS.reduce((n, d) => n + (S.seen[d.id] !== H.px[d.id] ? 1 : 0), 0);
+}
