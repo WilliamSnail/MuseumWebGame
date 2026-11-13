@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.art.walkSd = 0; G.NUM.art.hoaxPct = 0; /* 這份大部分測的是確定的曲線；隨機的部分（贗品疑雲、小隨機走）在下面另外開 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const eq = (a, b) => assert.deepStrictEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b))); // 不同 vm 的物件不能直接比
 const DAY = "2026-11-16", add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
 const work = (id = "2026-W47/s1a", tier = 0, date = DAY) => ({ id, date, tier, title: "測試的畫" + id });
@@ -244,6 +244,63 @@ T("數字順序：價差大於放久了的上限（短線一定虧）；一天�
   assert.ok(C.sellPct / 100 * (1 + C.ageCapPct / 100) < 1.1);
   assert.ok(C.moodPct <= 3 && C.ageFastPct <= 1 && C.ageUpPct <= 0.1 && C.demandPct <= 1, "價格每天變動要小（避險資產），回本之後漲得很慢");
   assert.ok(C.tiers[0].base >= G.NUM.casino.startChips, "最便宜的畫也要一開場的籌碼那麼多，是有錢之後才做的事");
+});
+T("隨機走勢：每天小小地漲跌（種子有祕密）、同樣的祕密永遠壹樣、換祕密不壹樣、夾 ±walkCap、展出當天沒有隨機", G => {
+  const C = G.NUM.art, h = G.casHouseFix(G.casHouseNew(), DAY).house, it = { tier: 1, date: DAY };
+  C.walkSd = 0.4;
+  G.casArtSecret("A");
+  const det = d => G.casArtPrice(it, "w1", d, h, true), real = d => G.casArtPrice(it, "w1", d, h);
+  assert.strictEqual(real(DAY), det(DAY), "展出當天沒有隨機");
+  let diff = 0, n = 0; for (let i = 1; i <= 60; i++) { if (real(add(DAY, i)) !== det(add(DAY, i))) diff++; n++; }
+  assert.ok(diff > 40, "大部分日子有偏離：" + diff);
+  const a = real(add(DAY, 30)); assert.strictEqual(real(add(DAY, 30)), a, "同樣的祕密壹樣");
+  G.casArtSecret("B"); assert.notStrictEqual(real(add(DAY, 30)), a, "換祕密不壹樣"); G.casArtSecret("A");
+  // 壹天的變動很小（比股票安靜）：跟前壹天的隨機部分差 ≤ 5 個標準差
+  for (let i = 1; i <= 60; i++) { const r1 = real(add(DAY, i)) / det(add(DAY, i)), r0 = real(add(DAY, i - 1)) / det(add(DAY, i - 1)); assert.ok(Math.abs(r1 / r0 - 1) < 5 * C.walkSd / 100 + 0.003, "第 " + i + " 天跳太多"); }
+  // 夾在 ±walkCap
+  C.walkSd = 50; C.walkCap = 20; for (let i = 1; i <= 40; i++) { const r = real(add(DAY, i)) / det(add(DAY, i)); assert.ok(r <= 1.2 + 0.003 && r >= 0.8 - 0.003, "夾住：" + r); }
+  // 平均不偏：很多幅畫的隨機部分平均 ≈ 0
+  C.walkSd = 0.4; C.walkCap = 20; let s = 0; for (let k = 0; k < 300; k++) s += G.casArtPrice(it, "p" + k, add(DAY, 60), h) / G.casArtPrice(it, "p" + k, add(DAY, 60), h, true) - 1;
+  assert.ok(Math.abs(s / 300) < 0.012, "平均不偏：" + s / 300);
+});
+T("贗品疑雲：價格壹次掉 hoaxMin～hoaxMax、不回來；機率約 hoaxPct；前壹天有線索；沒有祕密猜不到", G => {
+  const C = G.NUM.art, h = G.casHouseFix(G.casHouseNew(), DAY).house, it = { tier: 2, date: DAY };
+  G.casArtSecret("A"); C.hoaxPct = 100;
+  const det = d => G.casArtPrice(it, "w", d, h, true), real = d => G.casArtPrice(it, "w", d, h);
+  const d1 = real(add(DAY, 1)) / det(add(DAY, 1));
+  assert.ok(d1 <= 1 - C.hoaxMin / 100 + 0.002 && d1 >= 1 - C.hoaxMax / 100 - 0.002, "壹次掉 " + d1);
+  const d3 = real(add(DAY, 3)) / det(add(DAY, 3)); assert.ok(d3 < d1 && d3 >= Math.pow(1 - C.hoaxMax / 100, 3) - 0.003, "每天都有的話連續掉（不回來）");
+  assert.strictEqual(G.casArtHoaxTomorrow(it, "w", DAY), true, "前壹天有線索"); assert.strictEqual(G.casArtHoaxTomorrow({ tier: 2, date: add(DAY, 5) }, "w", DAY), false, "還沒展出");
+  C.hoaxPct = 0; assert.strictEqual(real(add(DAY, 30)), det(add(DAY, 30))); assert.strictEqual(G.casArtHoaxTomorrow(it, "w", DAY), false);
+  // 機率：10,000 幅畫的壹天，約 hoaxPct%
+  C.hoaxPct = 0.1; let hit = 0; for (let k = 0; k < 20000; k++) if (G.casArtHoaxTomorrow(it, "q" + k, DAY)) hit++;
+  assert.ok(hit > 8 && hit < 40, "20000 幅壹天約 20 次：" + hit);
+  G.casArtSecret("B"); let hit2 = 0; for (let k = 0; k < 20000; k++) if (G.casArtHoaxTomorrow(it, "q" + k, DAY)) hit2++; assert.ok(hit2 > 8 && hit2 < 40);
+  assert.notStrictEqual(hit, hit2 + 0.5, "不同祕密不同結果（不必然不同數字）");
+  G.casArtSecret("A"); const set = k => new Set(Array.from({ length: 5000 }, (_, i) => i).filter(i => G.casArtHoaxTomorrow(it, "q" + i, DAY))); const sa = set(), sb = (G.casArtSecret("B"), set()); assert.ok([...sa].some(x => !sb.has(x)) || sa.size === 0, "祕密不同，哪幾幅有事也不同");
+});
+T("畫面：收藏的畫在贗品疑雲前壹天有線索；有「畫也有風險」；回本天數不洩漏未來的隨機", G => {
+  const C = G.NUM.art, s = fresh(G), it = work("h1", 1);
+  G.casArtSecret("A"); C.hoaxPct = 100; C.walkSd = 0;
+  assert.ok(G.casArtBuy(s.w, s.house, s.P, it, DAY).ok);
+  const v = G.casArtView(s.w, s.house, s.P, [], DAY);
+  assert.ok(/不是原作/.test(v.mine[0].hint), "有線索：" + v.mine[0].hint); assert.ok(/畫也有風險/.test(v.risk));
+  C.hoaxPct = 0; const v2 = G.casArtView(s.w, s.house, s.P, [], DAY); assert.strictEqual(v2.mine[0].hint, null, "沒有事就沒有線索");
+  // 回本天數：展出當天看，不管未來有沒有贗品都壹樣（只用確定的部分）
+  const it2 = { tier: 1, date: DAY }, base = G.casArtBreakEven(it2, "z", DAY, s.house, G.NUM.art.tiers[1].base);
+  C.hoaxPct = 100; assert.strictEqual(G.casArtBreakEven(it2, "z", DAY, s.house, G.NUM.art.tiers[1].base), base, "不洩漏未來");
+});
+T("短線還是一定虧：買了隔天賣回，加上隨機走勢（最壞情況）也虧；兩個禮拜內回本沒變", G => {
+  const C = G.NUM.art; C.walkSd = 0.4; C.hoaxPct = 0.1;
+  for (const sec of ["A", "B", "C", "D", "E"]) {
+    G.casArtSecret(sec);
+    for (let k = 0; k < 200; k++) {
+      const s = fresh(G); s.house.econ.b = 1; G.casArtBuy(s.w, s.house, s.P, work("m" + k, 1), DAY); s.house.econ.b = -1; s.house.art.own["m" + k] = 9999;
+      const r = G.casArtSell(s.w, s.house, s.P, "m" + k, add(DAY, 1)); assert.ok(r.ok && r.pay < r.paid, "隔天賣要虧：" + r.pay + " vs " + r.paid);
+    }
+  }
+  const be = G.casArtBreakEven({ tier: 1, date: DAY }, "r", DAY, G.casHouseFix(G.casHouseNew(), DAY).house, C.tiers[1].base);
+  assert.ok(be >= 10 && be <= 14, "回本 " + be);
 });
 console.log(`藝術市場：${pass} 項過，${fail} 項沒過`);
 if (fail) process.exit(1);

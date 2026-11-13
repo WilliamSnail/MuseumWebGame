@@ -7,7 +7,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import { casArtBuy, casArtSell, casArtTier, casArtView } from "./shared/casino_art.js";
+import { casArtBuy, casArtSecret, casArtSell, casArtTier, casArtView } from "./shared/casino_art.js";
+import { twSecret } from "./stock_tw.js";
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
 import { ART_WORKS } from "./shared/art_data.js";
 import { NUM } from "./shared/config.js";
@@ -56,6 +57,7 @@ export const art = onCall(async req => {
     const [ws, hs, ss] = await Promise.all([db().doc(`casinoWallets/${me.uid}`).get(), db().doc("casinoHouse/main").get(), db().doc(`saves/${me.uid}`).get()]);
     const S = parse(ss), P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
     const w = casWalletFix(parse(ws), day), house = casHouseFix(parse(hs), day).house;
+    casArtSecret(await twSecret()); // 價格含隨機走勢，要用跟交易同一個祕密
     return { ok: true, chips: w.chips, art: P ? casArtView(w, house, P, shelfWorks(day), day) : null };
   }
   if (act === "auctions") return auctionView(me);
