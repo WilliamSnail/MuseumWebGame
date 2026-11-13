@@ -37,7 +37,7 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
-import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
+import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { casArtSecret } from "./shared/casino_art.js";
 import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
@@ -259,13 +259,14 @@ export const actBorrow = (ctx, d) => {
 // 掛單：d.op 是 order（d.kind 是 buy 限價買、sell 限價賣、stop 停損賣；d.id、d.n、d.px 價）、cancel（d.no 第幾張）
 export const actStock = (ctx, d) => {
   const op = String(d.op || ""), id = String(d.id || "");
-  if (op === "open" || op === "close") { // 槓桿、放空、當沖（規劃 2.8j）：open 帶 id、side（或 dir）、lev、qty（或 margin）；close 帶單號 no（或畫面的 pid "p3"）
-    const r = op === "open" ? casLevOpen(ctx.w, ctx.house, d, ctx.day, ctx.t) : casLevClose(ctx.w, ctx.house, d.no != null ? d.no : parseInt(String(d.pid == null ? "" : d.pid).replace(/\D/g, ""), 10), ctx.day, ctx.t);
+  if (op === "open" || op === "close" || op === "levset") { // 槓桿、放空、當沖（規劃 2.8j）：open 帶 id、side（或 dir）、lev、qty（或 margin）、可選 stop／take（停損價、停利價）；close 帶單號 no（或畫面的 pid "p3"）；levset 帶 no／pid、stop、take（改停損停利，空值＝清掉）
+    const r = op === "open" ? casLevOpen(ctx.w, ctx.house, d, ctx.day, ctx.t) : op === "levset" ? casLevSet(ctx.w, ctx.house, d, ctx.day, ctx.t) : casLevClose(ctx.w, ctx.house, d.no != null ? d.no : parseInt(String(d.pid == null ? "" : d.pid).replace(/\D/g, ""), 10), ctx.day, ctx.t);
     return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
   }
-  if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣；限價單、槓桿、放空還沒做
-    const x = op === "buy" ? casInBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? casInSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : null;
-    if (!x) return no({ reason: op === "order" ? "館內股票還不能掛單" : "沒有這個動作" });
+  if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣、限價單、停損單（op order，跟館外股同格式）；槓桿、放空走上面的 open／close／levset
+    const x = op === "buy" ? casInBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? casInSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t)
+      : op === "order" ? casStockOrder(ctx.w, ctx.house, String(d.kind || ""), id, d.n, d.px, ctx.day, ctx.t) : op === "cancel" ? casStockCancel(ctx.w, d.no, ctx.day, ctx.t, ctx.house) : null;
+    if (!x) return no({ reason: "沒有這個動作" });
     return x.ok ? shape(ctx, { lines: x.lines }) : no(x);
   }
   const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)

@@ -25,6 +25,7 @@ import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
+import { CAS_STOCK } from "./casino_text.js";
 
 // 亂數的祕密：伺服器每次處理前用 casInSecret(...) 設進來（Functions 的 stocksTwSecret/main，玩家讀不到）。沒設的時候（網頁、測試）用壹個固定字串——網頁拿不到真的曲線，只拿到伺服器算好的價
 let SECRET = "in-secret-unset";
@@ -83,6 +84,11 @@ export function casInHouseFix(house) {
   for (const d of Object.keys(H.use)) { if (!inDay(d) || !inBox(H.use[d])) delete H.use[d]; else for (const s of Object.keys(H.use[d])) { const n = inN(H.use[d][s]); if (n > 0 && IN_STORES.includes(s)) H.use[d][s] = n; else delete H.use[d][s]; } }
   const days = Object.keys(H.use).sort(); // 只留最近 histDays 天
   for (const d of days.slice(0, Math.max(0, days.length - C.histDays))) delete H.use[d];
+  // 前壹天的開盤價（掛單、停損停利隔天補查前壹天盤中碰過的價用；更早的不留）
+  if (!inBox(H.pre)) H.pre = { day: null, open: {} };
+  H.pre.day = inDay(H.pre.day) ? H.pre.day : null;
+  if (!inBox(H.pre.open)) H.pre.open = {};
+  for (const id of Object.keys(H.pre.open)) { const n = inN(H.pre.open[id]); if (n > 0 && IN_IDS.includes(id)) H.pre.open[id] = n; else delete H.pre.open[id]; }
   if (!inBox(H.net)) H.net = { day: null, n: 0 };
   H.net.day = inDay(H.net.day) ? H.net.day : null;
   H.net.n = Number.isFinite(+H.net.n) ? Math.floor(+H.net.n) : 0;
@@ -132,10 +138,11 @@ export function casInRoll(house, day, B, secret = SECRET) {
     for (const id of IN_IDS) { H.close[id] = H.open[id]; H.jump[id] = 0; H.quiet[id] = true; }
     return { done: true, day, jump: {} };
   }
-  let d = H.day;
+  let d = H.day, pre = null;
   const n = Math.min(30, Math.max(1, inDiff(H.day, day)));
   for (let i = 0; i < n; i++) {
     const next = inAdd(d, 1);
+    pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
     for (const id of IN_IDS) {
       const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1];
       const j = casInJump(H, id, next, B, secret);
@@ -145,6 +152,7 @@ export function casInRoll(house, day, B, secret = SECRET) {
     }
     d = next;
   }
+  H.pre = pre && pre.day === inAdd(day, -1) ? pre : { day: null, open: {} }; // 只留「昨天」的開盤價；隔很多天沒人碰的，昨天本身沒有記錄
   H.day = day; // 隔了超過 30 天：直接當今天
   return { done: true, day, jump: Object.assign({}, H.jump) };
 }
@@ -167,13 +175,16 @@ export const casInExposeCap = house => (house.bankroll > 0 ? Math.max(NUM.casino
 const inNetCap = house => Math.floor(Math.max(0, house.bankroll) * NUM.casino.stock.netSellPct / 100) + NUM.casino.stock.netSellFlat;
 const inNetToday = (H, day) => (H.net.day === day ? H.net.n : 0);
 const inSoldToday = (S, day) => (S.sold.day === day ? S.sold.n : 0);
+// 館內股被掛單（限價賣、停損賣）鎖住的股數。掛單記在 w.stk.orders（跟館外股同壹張清單，單號、張數上限、取消次數共用）
+const inLocked = (w, id) => (inBox(w.stk) && Array.isArray(w.stk.orders) ? w.stk.orders.reduce((a, o) => a + (o && o.kind !== "buy" && o.id === id ? inN(o.n) : 0), 0) : 0);
 const inShares = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
 
-export function casInBuy(w, house, id, shares, day, t, secret = SECRET) {
+// px0：掛單成交時給的價（觸發的那個價，不看現在幾點）；平常不給
+export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   const C = NUM.casino.stockIn, S = casInFix(w), H = casInHouseFix(house), T = CAS_STOCK_IN;
   if (!inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
   if (H.day !== day) return { ok: false, reason: T.halt };
-  const pr = casInPrice(house, id, day, t, secret);
+  const pr = px0 > 0 ? { px: px0, halted: false } : casInPrice(house, id, day, t, secret);
   if (pr.halted) return { ok: false, reason: T.halt };
   if (!(house.bankroll > 0)) return { ok: false, reason: T.houseBroke };
   const n = inShares(shares);
@@ -191,27 +202,106 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET) {
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少
   return { ok: true, n, px, cost, fee, lines: [casFill(T.buyOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
-export function casInSell(w, house, id, shares, day, t, secret = SECRET) {
+export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0) {
   const C = NUM.casino.stock, S = casInFix(w), H = casInHouseFix(house), T = CAS_STOCK_IN;
   if (!inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
   if (H.day !== day) return { ok: false, reason: T.halt };
-  const pr = casInPrice(house, id, day, t, secret);
+  const pr = px0 > 0 ? { px: px0, halted: false } : casInPrice(house, id, day, t, secret);
   if (pr.halted) return { ok: false, reason: T.halt };
-  const have = inN(S.own[id]);
-  if (have <= 0) return { ok: false, reason: T.none };
+  const have0 = inN(S.own[id]), have = Math.max(0, have0 - inLocked(w, id)); // 掛單鎖住的股不能賣
+  if (have0 <= 0) return { ok: false, reason: T.none };
+  if (have <= 0) return { ok: false, reason: casFill(CAS_STOCK.order.noShares, { n: 0 }) };
   const n = shares === "max" ? have : inShares(shares);
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: T.bad };
-  if (n > have) return { ok: false, reason: casFill(T.notEnough, { n: casNum(have) }) };
+  if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : T.notEnough, { n: casNum(have) }) };
   const px = pr.px, gross = px * n, fee = inFee(gross), net = gross - fee;
   if (inSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, C.sellDay - inSoldToday(S, day))) }) };
   if (inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
   casHouseMove(house, "stockIn", -gross);
   w.chips += net; house.budget += fee; casCount(house, "stockFee", fee);
-  S.own[id] = have - n; if (S.own[id] <= 0) delete S.own[id];
+  S.own[id] = have0 - n; if (S.own[id] <= 0) delete S.own[id];
   S.fee += fee; S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
   H.net = { day, n: inNetToday(H, day) + gross };
   return { ok: true, n, px, gross, fee, net, lines: [casFill(T.sellOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee) })] };
+}
+
+// ---------- 限價單、停損單（11-14，規劃 2.8c、2.8g：跟館外股壹樣，對手盤是莊家） ----------
+// 單記在 w.stk.orders（kind buy 限價買、sell 限價賣、stop 停損賣；id 是館內店），單號 w.stk.seq、鎖住的籌碼 w.stk.hold、取消次數 w.stk.cx、成交的話 w.stk.notes 都跟館外股共用。
+// 下單時鎖住籌碼（買）或股數（賣、停損）；有效到當天 23:30 收盤，沒成交就取消退回。
+// 對照的價：下單之後每個 15 分鐘的價（casInSeries）；成交價用觸發的那個價（跳空比掛的更好或更差都照那個價）；成交時照市價單的做法走壹遍，莊家的上限（曝險、全館淨賣出）、
+// 壹人壹家 cap、壹天賣出上限擋住就取消退回（跟館外股壹樣）。
+const inOrdBox = w => {
+  if (!inBox(w.stk)) w.stk = { own: {}, sold: { day: null, n: 0 }, fee: 0, gain: 0, orders: [], seq: 0, hold: 0, cx: { day: null, n: 0 }, notes: [] };
+  const S = w.stk;
+  if (!Array.isArray(S.orders)) S.orders = [];
+  S.seq = inN(S.seq); S.hold = inN(S.hold);
+  if (!inBox(S.cx)) S.cx = { day: null, n: 0 };
+  if (!Array.isArray(S.notes)) S.notes = [];
+  return S;
+};
+const inNote = (S, line) => { S.notes.push(line); S.notes = S.notes.slice(-8); };
+const inDrop = (w, S, o) => { if (o.hold > 0) { w.chips += o.hold; S.hold = Math.max(0, S.hold - o.hold); o.hold = 0; } S.orders = S.orders.filter(x => x.no !== o.no); };
+const inKindName = k => CAS_STOCK.order.kinds[k];
+export function casInOrder(w, house, kind, id, shares, px, day, t, secret = SECRET) {
+  const C = NUM.casino.stock, O = CAS_STOCK.order, T = CAS_STOCK_IN, S = inOrdBox(w), H = casInHouseFix(house), Z = casInFix(w);
+  if (!["buy", "sell", "stop"].includes(kind) || !inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
+  if (H.day !== day) return { ok: false, reason: T.halt };
+  const pr = casInPrice(house, id, day, t, secret);
+  if (pr.halted || pr.idx === null) return { ok: false, reason: T.halt };
+  const num = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
+  const n = num(shares), p = num(px);
+  if (!Number.isFinite(n) || n <= 0 || !Number.isFinite(p) || p < NUM.casino.stockIn.floor) return { ok: false, reason: T.bad };
+  if (S.orders.length >= C.order.max) return { ok: false, reason: casFill(O.full, { n: C.order.max }) };
+  if (S.orders.filter(o => o.id === id).length >= C.order.perStock) return { ok: false, reason: casFill(O.fullStock, { n: C.order.perStock }) };
+  const now = pr.px;
+  if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: casFill(O.px, { px: casNum(now) }) };
+  const o = { no: S.seq + 1, kind, id, n, px: p, day, exp: inAdd(day, C.order.days - 1), hold: 0, at: pr.idx };
+  if (kind === "buy") {
+    if (inN(Z.own[id]) + n > NUM.casino.stockIn.cap) return { ok: false, reason: casFill(T.cap, { n: casNum(NUM.casino.stockIn.cap), have: casNum(inN(Z.own[id])) }) };
+    o.hold = p * n + inFee(p * n);
+    if (o.hold > w.chips) return { ok: false, reason: T.poor };
+    w.chips -= o.hold; S.hold += o.hold;
+  } else {
+    const free = inN(Z.own[id]) - inLocked(w, id);
+    if (n > free) return { ok: false, reason: casFill(O.noShares, { n: casNum(Math.max(0, free)) }) };
+  }
+  S.seq += 1; S.orders.push(o);
+  return { ok: true, order: o, lines: [casFill(kind === "buy" ? O.buyOk : kind === "sell" ? O.sellOk : O.stopOk, { name: inDef(id).name, n: casNum(n), px: casNum(p), lock: casNum(o.hold) })] };
+}
+// 玩家取消壹張館內股的單時，休市中不行（casStockCancel 呼叫；其他規則在那邊）
+export const casInOrderHalt = (id, t) => !!inDef(id) && t != null && Number.isFinite(+t) && casInIdx(t) === null;
+// 照價格檢查這個錢包所有館內股的單（casStockMatch 呼叫，在 casInRoll 之後、錢包被碰到時）。回傳 { fills, cancels }
+export function casInMatch(w, house, day, t, secret = SECRET) {
+  const O = CAS_STOCK.order, S = inOrdBox(w), H = casInHouseFix(house), out = { fills: 0, cancels: 0 };
+  if (!inDay(day) || H.day !== day) return out; // 今天的價還沒算：等
+  const idx = casInIdx(t), closed = t != null && Number.isFinite(+t) && idx === null, last = idx !== null ? idx : closed ? NUM.casino.stockIn.ticks - 1 : 0; // 今天看到第幾個價；沒給時間（測試）只看開盤價
+  for (const no of S.orders.map(x => x.no).sort((a, b) => a - b)) {
+    const o = S.orders.find(x => x.no === no);
+    if (!o || !inDef(o.id)) continue;
+    // 要檢查的價：下單那天（昨天的開盤價記在 H.pre，更早的不知道）下單之後的價，加上今天到現在的價
+    const ser = d => (d === H.day ? casInSeries(H.open[o.id], d, o.id, secret) : H.pre.day === d && H.pre.open[o.id] > 0 ? casInSeries(H.pre.open[o.id], d, o.id, secret) : null);
+    const pts = [];
+    for (const d of [inAdd(day, -1), day]) {
+      if (d < o.day || d > o.exp) continue;
+      const a = ser(d); if (!a) continue;
+      for (let i = (d === o.day && o.at != null ? o.at + 1 : 0); i <= (d === day ? last : a.length - 1); i++) pts.push(a[i]);
+    }
+    const hit = pts.find(p => (o.kind === "sell" ? p >= o.px : p <= o.px)); // 限價買、停損：碰到或低於；限價賣：碰到或高於
+    if (hit === undefined) {
+      if (day > o.exp || (day === o.exp && closed)) { inDrop(w, S, o); inNote(S, casFill(O.expire, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(o.n) })); out.cancels++; }
+      continue;
+    }
+    // 成交：先把鎖住的還回去，再照市價單的做法走壹遍（手續費、記帳、上限都跟市價單壹樣），用 hit 當成交價
+    inDrop(w, S, o);
+    const r = o.kind === "buy" ? casInBuy(w, house, o.id, o.n, day, null, secret, hit) : casInSell(w, house, o.id, o.n, day, null, secret, hit);
+    if (r.ok) {
+      out.fills++;
+      inNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: inDef(o.id).name, n: casNum(r.n), px: casNum(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
+        : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee) }));
+    } else { out.cancels++; inNote(S, casFill(O.capCancel, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(o.n) })); }
+  }
+  return out;
 }
 
 // ---------- 畫面要的 ----------
