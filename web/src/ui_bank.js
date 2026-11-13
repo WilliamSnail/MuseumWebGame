@@ -53,7 +53,7 @@ export function fakeBankHall() {
     stocks: { list: stocks, fee: 0.005, halt: false, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
       lev: { max: 5, opensLeft: 2, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5 }, credit: { pts: 17, level: 3, next: 3, posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", sid: "neon", side: "long", lev: 5, margin: 1000000, n: 21645, entry: 231, ratio: 0.82, liq: 208, pnl: -180000, stop: 224, take: 245 }, { id: "p2", sid: "mtk", side: "short", lev: 3, margin: 2000000, n: 4800, entry: 1240, ratio: 0.64, liq: 1280, pnl: -320000, stop: null, take: 1150 }],
-      orders: [{ id: "o1", kind: "buy", sid: "sand", px: 60, n: 5000, lock: 301500, until: "還有 2 天", state: "" }, { id: "o2", kind: "stop", sid: "food", px: 95, n: 20, lock: 0, until: "還有 3 天", state: "" }], locked: { chips: 301500, shares: { food: 20 } }, fresh: { n: 1, ids: ["neon"], seq: 3 }, margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
+      orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500, fresh: { n: 1, ids: ["neon"], seq: 3 }, margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
@@ -195,7 +195,7 @@ const SESS_TEXT = { closed: s => `今天已收盤（${s.to}）。`, pre: s => `�
 // 這支現在能不能買賣：整個市場停盤，或這支的場次不是 open（台股收盤、還沒開、不開）
 const stockHalt = (S, s) => !!S.halt || !!(s.session && s.session.state !== "open");
 const haltText = (S, s) => S.halt ? `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。` : (s.session && SESS_TEXT[s.session.state] ? SESS_TEXT[s.session.state](s.session) : "現在不能買賣。");
-// 走勢線：有 session（台股盤中）就照 from～to 的時間軸畫，右邊還沒走到的留白；沒有就畫 intraday／hist。紅漲綠跌：整體比第壹點高畫紅。底圖是翊文生的 ui2-bank-chart
+// 走勢線：有 session（台股盤中）就照 from～to 的時間軸畫，右邊還沒走到的留白；沒有就畫 intraday／hist。紅漲綠跌：整體比第壹點高畫紅。底圖用 CSS 畫的深藍格線（翊文 11-14：ui2-bank-chart 那張外框背景有點醜）
 function chart(s) {
   const pts = (s.intraday && s.intraday.length > 1 ? s.intraday : s.hist) || [], ss = s.session;
   const W = 240, H = 56, pad = 4;
@@ -204,9 +204,9 @@ function chart(s) {
   if (pts.length > 1 && !(ss && ss.state === "noopen")) {
     const lo = Math.min(...pts), hi = Math.max(...pts), span = Math.max(1e-9, hi - lo);
     const xy = pts.map((p, i) => [pad + i / Math.max(1, slots - 1) * (W - 2 * pad), H - pad - (p - lo) / span * (H - 2 * pad)]);
-    const up = pts[pts.length - 1] >= pts[0], col = up ? "#D8452F" : "#2E8A4A", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1];
+    const up = pts[pts.length - 1] >= pts[0], col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1];
     const oy = H - pad - (pts[0] - lo) / span * (H - 2 * pad); // 開盤價的虛線
-    body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#8A7A58" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${pad},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".14"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
+    body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${pad},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
   const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, hhmm(Math.round((toMin(ss.from) + toMin(ss.to)) / 2))), h("span", null, ss.to)) : null;
   const label = ss ? (ss.state === "open" ? `盤中，每 ${ss.step || 15} 分鐘更新一次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "";
@@ -255,17 +255,17 @@ function numField(label, value, onChange, opts = {}) {
 const chips = (list, cur, onPick, fmtFn) => h("div", { class: "bank-chips" }, list.map(n => h("button", { type: "button", class: "bank-chip" + (n === cur ? " on" : ""), "aria-pressed": String(n === cur), onClick: () => onPick(n) }, fmtFn ? fmtFn(n) : fmt(n))));
 // ---------- 交易：現股 ----------
 function spotTrade(v, S, cur) {
-  const side = UI.bankSide === "sell" && cur.mine > 0 ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
+  const side = UI.bankSide === "sell" && (cur.free != null ? cur.free : cur.mine) > 0 ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
   const trade = (op, n) => bankDo("stock", { op, id: cur.id, n });
   const halt = stockHalt(S, cur), one = unitCost(cur, S.fee);
   const maxBuy = halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), S.exposeLeft != null ? Math.floor(S.exposeLeft / Math.max(1, cur.price)) : Infinity));
-  const maxSell = halt ? 0 : Math.max(0, Math.min(cur.mine, S.sellLeft != null ? Math.floor(S.sellLeft / Math.max(1, cur.price)) : Infinity));
+  const maxSell = halt ? 0 : Math.max(0, Math.min(cur.free != null ? cur.free : cur.mine, S.sellLeft != null ? Math.floor(S.sellLeft / Math.max(1, cur.price)) : Infinity));
   const max = side === "buy" ? maxBuy : maxSell;
   const steps = [1, 10, 100].map(n => btn(`${n} 股`, () => trade(side, n), "big bank-btn", { disabled: n > max ? true : null }));
   steps.push(btn(max > 0 ? `${side === "buy" ? "買滿" : "全賣"} ${fmt(max)}` : `${side === "buy" ? "買滿" : "全賣"}`, () => trade(side, side === "buy" ? max : "max"), "primary big bank-btn gold", { disabled: max > 0 ? null : true }));
   const sellNote = S.sellLeft != null ? `今天還能賣出約 ${fmt(S.sellLeft)} 的股票。` : "";
   return [
-    seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankSide = k; rerender(); }),
+    seg([["buy", "買進"], ["sell", "賣出", !(cur.free != null ? cur.free : cur.mine)]], side, k => { UI.bankSide = k; rerender(); }),
     h("div", { class: "bank-acts" }, steps),
     max < 1 ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
     h("p", { class: "bank-meta sm" }, side === "buy" ? `買 1 股要 ${fmt(one)}（含手續費）。` : sellNote)];
@@ -303,7 +303,8 @@ function levTrade(v, S, cur) {
     h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.kind === "tw" ? "台股 13:30" : "22:00"} 前沒平，系統會替你平。`)];
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
-const KIND_TEXT = { buy: "限價買", sell: "限價賣", stop: "停損賣", cover: "停損買回" };
+const KIND_TEXT = { buy: "限價買", sell: "限價賣", stop: "停損賣" };
+const expText = d => (d ? String(d).slice(5).replace("-", "/") : ""); // 2026-11-17 → 11/17
 function orderTrade(v, S, cur) {
   const f = form(), k = f.okind, halt = stockHalt(S, cur);
   if (f.opx === "" || f.opxFor !== cur.id + k) { f.opx = Math.max(1, Math.round(cur.price * (k === "buy" ? 0.98 : k === "sell" ? 1.02 : 0.97))); f.opxFor = cur.id + k; f.on = f.on || 1; }
@@ -315,15 +316,18 @@ function orderTrade(v, S, cur) {
     return n > 0 && px > 0;
   };
   const okNow = calc();
-  const lockNow = k === "buy" ? Math.ceil((f.opx || 0) * (f.on || 0) * (1 + S.fee)) : 0, free = k === "buy" ? v.cash - ((S.locked && S.locked.chips) || 0) : cur.mine - ((S.locked && S.locked.shares && S.locked.shares[cur.id]) || 0);
-  const why = halt ? haltText(S, cur) : (S.orders || []).length >= 10 ? "掛著的單滿 10 張了，先取消壹些。" : (k === "buy" ? lockNow > free : (f.on || 0) > free) ? (k === "buy" ? "錢不夠鎖。" : "你沒有那麼多股可以鎖。") : "";
+  const lockNow = k === "buy" ? Math.ceil((f.opx || 0) * (f.on || 0) * (1 + S.fee)) : 0, free = k === "buy" ? v.cash : (cur.free != null ? cur.free : cur.mine); // 真資料的 cash 已經扣掉鎖在買單裡的
+  const mineHere = (S.orders || []).filter(o => o.id === cur.id).length, px = f.opx || 0, n = f.on || 0;
+  const why = halt ? haltText(S, cur) : (S.orderLeft != null ? S.orderLeft < 1 : (S.orders || []).length >= (S.orderMax || 10)) ? `掛著的單滿 ${S.orderMax || 10} 張了，先取消壹些。` : mineHere >= (S.orderPerStock || 3) ? `這支最多掛 ${S.orderPerStock || 3} 張，先取消壹張。`
+    : k === "sell" && px <= cur.price ? `賣的價要比現價（${fmt(cur.price)}）高，現在就想賣請用「現股」。` : k !== "sell" && px >= cur.price ? `${k === "buy" ? "買" : "停損"}的價要比現價（${fmt(cur.price)}）低，現在就想買請用「現股」。`
+    : (k === "buy" ? lockNow > free : n > free) ? (k === "buy" ? "錢不夠鎖。" : "你沒有那麼多股可以鎖。") : "";
   return [
-    seg([["buy", "限價買"], ["sell", "限價賣", !cur.mine], ["stop", "停損賣", !cur.mine]], k, x => { f.okind = x; f.opx = ""; rerender(); }),
+    seg([["buy", "限價買"], ["sell", "限價賣", !(cur.free != null ? cur.free : cur.mine)], ["stop", "停損賣", !(cur.free != null ? cur.free : cur.mine)]], k, x => { f.okind = x; f.opx = ""; rerender(); }),
     h("div", { class: "bank-fields" }, numField("跌到", f.opx, x => { f.opx = x; calc(); }, { unit: "就" + (k === "buy" ? "買" : "賣"), min: 1, step: 1 }), numField("股數", f.on, x => { f.on = x; calc(); }, { unit: "股", min: 1, step: 1 })),
     info,
     h("div", { class: "bank-acts one" }, btn("掛單", () => bankDo("stock", { op: "order", id: cur.id, kind: k, px: f.opx, n: f.on }), "primary big bank-btn gold", { disabled: why || !okNow ? true : null })),
     why ? h("p", { class: "bank-why" }, why) : null,
-    h("p", { class: "bank-meta sm" }, "現股的單最多掛 3 天；成交才收手續費，取消全額退回。停盤時不能掛、不能取消。")];
+    h("p", { class: "bank-meta sm" }, S.orderRule || `現股的單最多掛 ${S.orderDays || 3} 天；成交才收手續費，取消全額退回。停盤時不能掛、不能取消。`)];
 }
 // ---------- 我的部位、掛著的單 ----------
 function positionCard(S, p, list) {
@@ -344,13 +348,12 @@ function positionsPanel(S) {
 }
 function ordersPanel(S) {
   if (!S.orders) return null;
-  const os = S.orders, lockText = o => o.kind === "buy" ? `鎖 ${fmt(o.lock)} 籌碼` : `鎖 ${fmt(o.n)} 股`;
-  return panel("掛著的單", os.length ? `${os.length}／10 張` : "沒有掛單",
-    os.length ? h("div", { class: "bank-orders" }, os.map(o => { const s = S.list.find(x => x.id === o.sid) || { name: o.sid };
-      return h("div", { class: "bank-order " + (o.state || "") },
-        h("span", null, h("i", { class: "bank-kind " + o.kind }, KIND_TEXT[o.kind] || o.kind), h("b", null, s.name)),
-        h("span", { class: "bank-order-d" }, `${o.kind === "sell" ? "≥" : "≤"} ${fmt(o.px)} × ${fmt(o.n)} 股`, h("small", null, `${lockText(o)}・${o.until}`)),
-        btn("取消", () => bankDo("stock", { op: "cancel", oid: o.id }), "small bank-btn")); })) : h("p", { class: "bank-empty-dark" }, "價格到了你設的數字才會成交，掛好就可以關掉遊戲。"));
+  const os = S.orders, lockText = o => (o.kind === "buy" ? `鎖 ${fmt(o.lock)} 籌碼` : `鎖 ${fmt(o.lockShares != null ? o.lockShares : o.n)} 股`);
+  return panel("掛著的單", os.length ? `${os.length}／${S.orderMax || 10} 張${S.cancelLeft != null ? `・今天還能取消 ${S.cancelLeft} 次` : ""}` : "沒有掛單",
+    os.length ? h("div", { class: "bank-orders" }, os.map(o => h("div", { class: "bank-order " + (o.state || "") },
+      h("span", null, h("i", { class: "bank-kind " + o.kind }, o.kindName || KIND_TEXT[o.kind] || o.kind), h("b", null, o.name || o.id)),
+      h("span", { class: "bank-order-d" }, `${o.kind === "sell" ? "≥" : "≤"} ${fmt(o.px)} × ${fmt(o.n)} 股`, h("small", null, `${lockText(o)}・現價 ${fmt(o.now)}・到 ${expText(o.exp)}`)),
+      btn("取消", () => bankDo("stock", { op: "cancel", no: o.no }), "small bank-btn", { disabled: S.halt ? true : null })))) : h("p", { class: "bank-empty-dark" }, "價格到了你設的數字才會成交，掛好就可以關掉遊戲。"));
 }
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
@@ -364,7 +367,7 @@ function stockPane(v) {
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
-        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
+        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
         h("p", { class: "bank-hint" }, "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
