@@ -39,6 +39,17 @@ export const NOTICES = [
     ],
   },
   {
+    id: "ws-bg-hit", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "修好：手作坊選背景之後常常按不到", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["修了什麼", [
+        "佩佩有背景的時候，背景看不到的部分也會擋住點擊，蓋到旁邊的卡片和頁籤，所以常常按不到。",
+        "現在只有框裡看得到的背景點得到。點背景的互動（例如雪夜下壹陣雪）照舊。",
+        "謝謝回報的館友。",
+      ]],
+    ],
+  },
+  {
     id: "fight-chips", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "手機打怪：小圓鈕寫上名字，第壹次點先看說明", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

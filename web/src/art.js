@@ -283,7 +283,10 @@ export const ART = (() => {
     if (full) return B;
     return `<filter id="${id}f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="2.2"/></filter><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200"><rect x="17" y="17" width="166" height="166" rx="16" fill="#fff" filter="url(#${id}f)"/></mask>` +
       `<radialGradient id="${id}v" cx=".5" cy=".45" r=".72"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></radialGradient>` +
-      `<g class="f-bg" mask="url(#${id}m)">${B}<rect x="16" y="16" width="168" height="168" fill="url(#${id}v)"/><rect x="22" y="22" width="156" height="156" rx="11" fill="none" stroke="#E8D7A8" stroke-width="1" opacity=".35"/></g>`;
+      // clip-path 也要：mask 只管畫面、不管點擊。背景畫滿 -100..300，青蛙的 svg 又是 overflow: visible，只有 mask 的時候看不到的部分還是點得到，
+      // 會蓋住旁邊的卡片和頁籤（玩家 11-13 回報手作坊常常按不到）。clip-path 會連點擊範圍壹起剪掉
+      `<clipPath id="${id}c"><rect x="16" y="16" width="168" height="168" rx="16"/></clipPath>` +
+      `<g class="f-bg" clip-path="url(#${id}c)" mask="url(#${id}m)">${B}<rect x="16" y="16" width="168" height="168" fill="url(#${id}v)"/><rect x="22" y="22" width="156" height="156" rx="11" fill="none" stroke="#E8D7A8" stroke-width="1" opacity=".35"/></g>`;
   };
 
   // ---------- 手上拿的東西：(0,0) 是手握的地方，東西往下垂 ----------
