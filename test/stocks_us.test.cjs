@@ -123,6 +123,14 @@ T("今天換過日、卻沒有今天的基準價（11-13 美股第壹晚）：�
   assert.ok(house.stk.hist[W] && house.stk.hist[W][ID] === p0, "補了基準價");
   assert.ok(Array.isArray(house.stk.us.ser[ID]) && house.stk.us.ser[ID].length > 1, "盤中有價");
 });
+T("「今天」漲跌跟今天的開盤基準比，不是跟 H.prev（11-14 盤中壹路跌卻顯示漲）", G => {
+  const house = house0(G, W), doc = runDay(G, "x", W, {}), w = wallet(G, W);
+  house.stk.prev[ID] = Math.round(house.stk.hist[W][ID] / 1.05); // 舊做法：05:00 換日時把昨晚的漲幅（+5%）套進去了
+  G.casStockUsApply(house, doc, W, tm(G, W, 200));
+  const v = G.casStockView(w, house, W, tm(G, W, 200)).list.find(x => x.id === ID);
+  const want = (house.stk.px[ID] - house.stk.hist[W][ID]) / house.stk.hist[W][ID];
+  assert.ok(Math.abs(v.chg - want) < 1e-9, v.chg + " vs " + want);
+});
 T("國定假日（沒有開盤價）：整天休市，狀態 closed、買賣下單都擋，價只剩 drag", G => {
   const house = house0(G, HOL), doc = runDay(G, "x", HOL, { never: true }), w = wallet(G, HOL);
   assert.strictEqual(doc.closed, true); assert.strictEqual(doc.openIdx, null);

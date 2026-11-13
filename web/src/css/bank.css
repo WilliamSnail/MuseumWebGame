@@ -382,3 +382,10 @@ body[data-screen="bank"] #room { background: none; }
 .bank-row.holdings .bank-mk { margin-left: 6px; color: var(--bank-ink-soft); border-color: #A88A52; }
 .bank-pos-f small.has-oco { color: var(--bank-gold-hi); }
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .bank-pos-f small.has-oco { display: inline; } }
+/* 財報手機收斂（11-14）：昨天發生的事、莊家和投資人收成壹行；世界市場舊的壹天收起來 */
+.bank-fold > summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; list-style: none; cursor: pointer; border: 1px solid var(--bank-gold); border-radius: 8px; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: var(--bank-gold-hi); font-size: var(--type-body, .875rem); }
+.bank-fold > summary::-webkit-details-marker { display: none; }
+.bank-fold > summary span { margin-left: auto; font-size: var(--type-small, .75rem); font-weight: 700; }
+.bank-fold[open] > summary { margin-bottom: 6px; }
+.bank-wday.old > summary { cursor: pointer; list-style: none; }
+.bank-wday.old > summary::-webkit-details-marker { display: none; }
