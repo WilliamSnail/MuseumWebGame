@@ -81,7 +81,11 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .bk-tab { flex: 1; min-height: 34px; border: 0; background: rgba(0,0,0,.18); color: #A9B4C8; font: inherit; font-size: .875rem; letter-spacing: .12em; cursor: pointer; border-bottom: 2px solid transparent; }
 .bk-tab.on { color: #F2D58A; background: rgba(214,178,94,.12); border-bottom-color: #D6B25E; }
 .bk-tab:hover:not(.on) { color: #E8EDF6; }
-@media (max-width: 480px) { .bk-save .bk-book th, .bk-save .bk-book td { padding: 5px 6px; white-space: nowrap; } }
+@media (max-width: 480px) {
+  .bk-save .bk-book th, .bk-save .bk-book td { padding: 5px 6px; white-space: nowrap; }
+  .bk-save .bk-fig small { white-space: normal; } /* 「明天約 +N」手機直拿要看得到（測試 11-13） */
+  .cas-bank .btn, .cas-bank .btn.small, .cas-bank .bk-book .btn, .bk-tab { min-height: 44px; } /* 手機上按鈕至少 44px（測試 11-13） */
+}
 .bk-rule { margin: 0; padding: 8px 14px; font-size: .75rem; line-height: 1.6; color: #A9B4C8; border-top: 1px solid rgba(214,178,94,.22); }
 .bk-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .bk-fig { display: flex; flex-direction: column; gap: 1px; padding: 8px 14px; min-width: 0; }
