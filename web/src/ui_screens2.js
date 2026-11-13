@@ -422,7 +422,7 @@ SCREENS.hall = (root, params) => {
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true });
   // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
   const guide = themeGuide(hs);
-  const themes = h("details", { class: "onescreen-card hall-themes" }, h("summary", null, theme ? `主題：${theme.name}` : "主題：還沒有（看怎麼擺）"), guide);
+  const themes = h("details", { class: "onescreen-card hall-themes" }, h("summary", null, h("b", null, theme ? `主題：${theme.name}` : "主題：還沒有"), h("span", { class: "hall-themes-open" }, "點開看怎麼擺 ▾"), h("span", { class: "hall-themes-close" }, "收起來 ▴")), guide);
   const side = h("aside", { class: "onescreen-side" }, themes, visitors);
   root.append(h("div", { class: "onescreen-main" }, h("div", { class: "hall-stage" }, wall, room), side), onescreenDrawer(strip));
   if (ADDONS.hall) ADDONS.hall(side, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）：名牌放側欄
@@ -430,6 +430,7 @@ SCREENS.hall = (root, params) => {
   if (ADDONS.hall3) ADDONS.hall3(side); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
   if (ADDONS.hallGuests) ADDONS.hallGuests(side); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
   if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）
+  side.prepend(themes); // 主題放側欄最上面（館友來過那塊會自己插到最前面，這裡再搬回來；翊文 11-13：「右邊的主題展也不夠明顯」）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）
 // 還沒見過「俄國8+9」的人不列那個主題，只留壹張「？？？」；沒解鎖「不可名狀」就不提它
