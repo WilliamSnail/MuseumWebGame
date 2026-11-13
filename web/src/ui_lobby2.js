@@ -90,6 +90,7 @@ function mapBox(step) {
   const imgs = Object.values(IMG).reduce((n, v) => n + (Array.isArray(v) ? v.filter(Boolean).length : v ? 1 : 0), 0);
   progress.library = { text: imgs ? `你的圖 ${imgs} 張` : "還沒放圖" };
   const fresh = new Set(Object.keys(freshRooms(P) || {})); // { 房間: 幾件新的 }
+  if (UI.bankFresh > 0) fresh.add("bank"); // 銀行的股票有新行情（伺服器的 peek 給 stockFresh；打開股票頁按「看過了」才清掉）
   // 手機直拿換成直式的底圖（翊文 11-11 生的 port.webp）；轉橫、轉直時 boot.js 會重畫大廳
   const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
   const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
@@ -193,3 +194,12 @@ ADDONS.useLobby2 = useLobby2;
 
 // 頂欄的圖示換成圓形底座（決定 0066）：總開關打開時，整個遊戲都是
 if (NUM.ui && NUM.ui.newLobby) document.documentElement.classList.add("new-lobby-on");
+
+// 大廳已經畫好了才收到 peek 的 stockFresh：直接補一個「新」在銀行的名字標籤上，不用整個大廳重畫
+ADDONS.bankFresh = () => {
+  const tag = document.querySelector('.l2-room[data-room="bank"] .l2-tag');
+  if (!tag) return;
+  const old = tag.querySelector(".l2-new");
+  if (UI.bankFresh > 0 && !old) tag.append(h("span", { class: "l2-new" }, "新"));
+  else if (!(UI.bankFresh > 0) && old) old.remove();
+};
