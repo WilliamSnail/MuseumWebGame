@@ -28,6 +28,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "lobby-column", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "大廳右欄換新樣子", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "電腦版大廳的右邊壹欄換成深色的木欄：今天要做的事壹張壹張金邊卡，第壹件會發亮；完成的變灰。館友證和標題也換了新的羊皮紙樣子。導覽圖照舊。",
+      ]],
+    ],
+  },
+  {
     id: "economy-effects", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "景氣開始影響拚經濟、門票和存款利率", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
