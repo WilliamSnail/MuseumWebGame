@@ -84,5 +84,32 @@ function economyData() {
   try { const d = JSON.parse(fs.readFileSync(f, "utf8")); return d.gdp ? { gdp: d.gdp } : {}; } catch (e) { console.error("economy.json：讀不出來", e.message); return {}; }
 }
 fs.writeFileSync(path.join(to, "economy_data.js"), "// copy_shared.cjs 產生的，不要改。content/economy.json（外面世界的景氣，給 Functions 算景氣指數）\nexport const ECONOMY = " + JSON.stringify(economyData()) + ";\n");
+// 藝術市場（11-14，shared/casino_art.js）：每日特展的畫登記起來給伺服器查價（不放 svg 和畫的內容）。id 跟存檔的 P.story.works 一樣（週/畫 id），只收正式的週（備用週的 id 會變，先不賣）。
+function artData() {
+  const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (!/^[0-9]{4}-W[0-9]{2}$/.test(name)) continue;
+    for (let n = 1; n <= 7; n++) {
+      const df = path.join(dir, name, "d" + n + ".json");
+      if (!fs.existsSync(df)) continue;
+      try {
+        const d = JSON.parse(fs.readFileSync(df, "utf8"));
+        if (!isDay(d.date) || !d.show || !Array.isArray(d.show.works)) continue;
+        for (const w of d.show.works) {
+          if (!w || typeof w.id !== "string") continue;
+          const x = { date: d.date, title: typeof w.title === "string" ? w.title : "" };
+          if (typeof w.frame === "string") x.frame = w.frame;
+          if (w.san) x.san = w.san;
+          if (w.clue) x.clue = w.clue;
+          if (Number.isFinite(+w.rarity)) x.rarity = +w.rarity;
+          out[name + "/" + w.id] = x;
+        }
+      } catch (e) { console.error("藝術市場：讀不出來", df, e.message); }
+    }
+  }
+  return out;
+}
+fs.writeFileSync(path.join(to, "art_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每日特展的畫（id、日期、畫框、理智、線索、稀有度、名字），給藝術市場查價\nexport const ART_WORKS = " + JSON.stringify(artData()) + ";\n");
 fs.writeFileSync(path.join(to, "README.md"), "這個資料夾是 tools/copy_shared.cjs 從 shared/ 複製來的，不要改這裡，改 shared/。\n");
 if (require.main === module) console.log(`複製了 ${n} 個規則檔到 functions/shared/`);

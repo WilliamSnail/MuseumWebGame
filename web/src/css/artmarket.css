@@ -1,0 +1,34 @@
+/* 藝術市場（11-14，ui_art.js）：畫廊今日特展每幅畫下面的買賣、「我收藏的畫」。
+   定位是避險資產：安靜、不閃、不跳，價錢只是寫一個數字。按鈕要看得出能按（有框、有字、至少 44px 高）。 */
+.show-cell { flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.artmarket-row { width: min(100%, 300px); min-width: 230px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(200,162,90,.45); background: rgba(0,0,0,.28); color: var(--on-wall); }
+.artmarket-row[hidden], .artmarket-shelf[hidden] { display: none; }
+.artmarket-info { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px; font-size: .875rem; }
+.artmarket-tier { padding: 1px 8px; border-radius: 999px; border: 1px solid rgba(200,162,90,.5); font-size: .75rem; letter-spacing: .08em; color: var(--gold-hi); }
+.artmarket-tier.t2, .artmarket-tier.t3 { background: rgba(200,162,90,.18); }
+.artmarket-price { font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+.artmarket-own { color: var(--gold-hi); font-weight: 700; }
+.artmarket-acts { display: flex; gap: 8px; }
+.artmarket-acts .btn { flex: 1 1 0; min-height: 44px; padding: 0 10px; white-space: nowrap; border-color: var(--gold); color: var(--on-wall); background: rgba(255,255,255,.06); }
+.artmarket-acts .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.artmarket-acts .btn:hover:not(:disabled) { background: var(--gold); color: #2A1A0C; }
+.artmarket-acts .btn.primary:hover:not(:disabled) { background: #357A3F; color: #fff; }
+.artmarket-acts .btn small, .artmarket-item .btn small { font-size: .75rem; opacity: .85; }
+.artmarket-why { margin: 0; text-align: center; font-size: .8125rem; color: var(--on-wall-sub); }
+.artmarket-shelf { margin: 8px 0 0; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(200,162,90,.45); background: rgba(0,0,0,.22); display: flex; flex-direction: column; gap: 8px; color: var(--on-wall); }
+.artmarket-h { margin: 0; font-family: var(--serif); letter-spacing: .12em; color: var(--gold-hi); font-size: 1.25rem; }
+.artmarket-held-h { margin: 6px 0 0; font-weight: 700; letter-spacing: .06em; }
+.artmarket-msg { margin: 0; padding: 6px 10px; border-radius: 8px; background: rgba(0,0,0,.28); }
+.artmarket-msg.bad { color: #F2B8A8; }
+.artmarket-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px; }
+.artmarket-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(200,162,90,.35); background: rgba(0,0,0,.22); }
+.artmarket-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.artmarket-name b { overflow-wrap: anywhere; }
+.artmarket-name small { color: var(--on-wall-sub); }
+.artmarket-item .btn { flex: 0 0 auto; min-height: 44px; padding: 0 14px; white-space: nowrap; border-color: var(--gold); color: var(--on-wall); background: rgba(255,255,255,.06); }
+.artmarket-item .btn:hover:not(:disabled) { background: var(--gold); color: #2A1A0C; }
+@media (max-width: 760px) {
+  .artmarket-row { min-width: 210px; }
+  .artmarket-item { flex-wrap: wrap; }
+  .artmarket-item .btn { flex: 1 1 100%; }
+}
