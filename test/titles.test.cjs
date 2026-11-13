@@ -178,7 +178,8 @@ T("規則：status 沒有開 title 欄位（在線狀態還是只能寫原本那
   assert.strictEqual(rules.status["$uid"]["$other"][".validate"], false);
 });
 T("規則：其他地方沒被放寬（頂層的鍵、根目錄還是不能讀寫、members 還是讀不到）", G => {
-  assert.deepStrictEqual(Object.keys(rules).sort(), [".read", ".write", "casinoChat", "casinoLive", "casinoView", "coopChat", "coopReports", "coopTalkLog", "coopView", "inbox", "invites", "lounge", "members", "partyOf", "parties", "status", "titles", "traces", "workers"].sort());
+  assert.deepStrictEqual(Object.keys(rules).sort(), [".read", ".write", "casinoChat", "casinoLive", "casinoView", "coopChat", "coopReports", "coopTalkLog", "coopView", "inbox", "invites", "lostFound", "lounge", "members", "partyOf", "parties", "status", "titles", "traces", "workers"].sort());
+  assert.strictEqual(rules.lostFound[".write"], false, "招領單只有伺服器寫得動（ui_lost.js、functions/lostfound.js）");
   assert.strictEqual(rules[".read"], false);
   assert.strictEqual(rules[".write"], false);
   assert.strictEqual(rules.members[".read"], false);

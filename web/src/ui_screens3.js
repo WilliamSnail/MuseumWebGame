@@ -601,6 +601,7 @@ export function cellarRoom(root) {
     stage,
     teamBar, card,
     ADDONS.cellarMeet ? ADDONS.cellarMeet(room, run.floor) : null, // 遇到館友在地下工作的參觀者（決定 0064，ui_work.js）
+    ADDONS.cellarLost ? ADDONS.cellarLost(room, run.floor) : null, // 招領單：別的館友以前理智歸零的參觀者（翊文 11-13，ui_lost.js）
     ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null); // 館友留下的痕跡（ui_trace.js）
 }
 // 誰讓理智多扣、少扣：「怕黑 +1、探險燈 −1」（只有一個就寫名字）

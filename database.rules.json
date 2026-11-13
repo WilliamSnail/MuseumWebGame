@@ -56,6 +56,10 @@
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false
     },
+    "lostFound": {
+      ".read": "auth != null && root.child('members').child(auth.uid).exists()",
+      ".write": false
+    },
     "workers": {
       ".read": "auth != null && root.child('members').child(auth.uid).exists()",
       ".write": false

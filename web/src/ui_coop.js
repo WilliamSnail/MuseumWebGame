@@ -490,6 +490,9 @@ function roomTraces(id, canSign) {
     // 遇到館友在地下工作的參觀者（決定 0064 第三部分，ui_work.js）：跟痕跡放在壹起，同壹間重畫時留同壹塊
     const meet = ADDONS.cellarMeet ? ADDONS.cellarMeet({ id }, "coop:" + (s.view && s.view.floor != null ? s.view.floor : "")) : null;
     if (meet) s.traceEl = h("div", null, meet, s.traceEl);
+    // 招領單：別的館友以前理智歸零的參觀者（翊文 11-13，ui_lost.js）
+    const lost = ADDONS.cellarLost ? ADDONS.cellarLost({ id }, "coop:" + (s.view && s.view.floor != null ? s.view.floor : "")) : null;
+    if (lost) s.traceEl = h("div", null, lost, s.traceEl);
   }
   return s.traceEl;
 }
