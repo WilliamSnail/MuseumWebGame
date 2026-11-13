@@ -411,7 +411,8 @@ export const NUM = {
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
-    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5,
+    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, taxPct: 5, // taxPct 資本利得稅（11-14，翊文：「抽5%就好」）：館外股票賣出時，（賣出拿到的錢 − 這些股的成本）> 0 的部分抽 taxPct% 進預算池（搬，不是 burn）；賠錢不退；館內股、槓桿不抽
+     
       exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
       // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
       order: { max: 10, perStock: 3, days: 1, cancelDay: 20 }, // days：有效到下壹次價格變動（翊文 11-13：「應該每張單有效 1 天 跟真實的依樣」）

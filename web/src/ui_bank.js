@@ -201,7 +201,7 @@ function realBit(s) {
   const r = s.real;
   if (!r) return null;
   const c = typeof r.chg === "number" ? r.chg : null;
-  return h("span", { class: "bank-real" }, h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
+  return h("span", { class: "bank-real" }, h("i", { class: "bank-realtag", title: "真實：外面那支股票今天的漲跌。遊戲價只跟著真實漲跌的一部分，再加上館裡自己的小波動，每天開盤會往真實價拉回一點，所以兩個數字不會一樣。" }, "真實"), h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
     c != null ? h("em", { class: c > 0 ? "up" : c < 0 ? "down" : "" }, `${c > 0 ? "▲" : c < 0 ? "▼" : "－"} ${(Math.abs(c) * 100).toFixed(1)}%`) : null);
 }
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -312,11 +312,13 @@ function levTrade(v, S, cur) {
   const byM = L.byMarket && L.byMarket[cur.market], maxLev = byM != null ? byM : L.max, lev = Math.max(1, Math.min(f.lev, maxLev)), long = f.dir === "long"; // 各市場最高幾倍（美股 0＝不能開，寫 usWhy）
   const roomMargin = S.credit ? Math.max(0, Math.floor((S.credit.posLimit - S.credit.posUsed) / Math.max(1, lev))) : Infinity;
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
-  const sum = h("div", { class: "bank-sum" });
+  const phone = window.innerWidth < 761 || window.innerHeight < 501;
+  const sum = h("details", { class: "bank-sum", open: phone ? null : "" });
   const calc = () => {
     const m = Math.min(f.margin || 0, maxMargin), pos = m * lev, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
     const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     sum.replaceChildren(
+      h("summary", null, h("b", null, `部位 ${fmt(pos)}`), h("span", null, `強平價約 ${fmt(Math.round(liq))}`), h("span", { class: "bank-sum-open" }, "點開 ▾")),
       h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${lev}× 保證金 ${fmt(m)}`)),
       h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(L.fee)}，${long ? "利息 " + pctText(L.interest) : "借券費 " + pctText(L.borrow)}）`)),
       h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fmt(Math.round(liq))}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)));
@@ -332,6 +334,7 @@ function levTrade(v, S, cur) {
     sum,
     h("div", { class: "bank-acts one" }, btn(`${long ? "開多單" : "開空單"} ${lev}×`, open, "primary big bank-btn gold", { disabled: why || m0 <= 0 ? true : null })),
     why ? h("p", { class: "bank-why" }, why) : null,
+    S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・部位 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
     h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
@@ -404,12 +407,14 @@ function stockPane(v) {
   const inShop = cur.market === "in"; // 館內股只有現股
   const tabs = [["spot", "現股"]].concat(S.lev ? [["lev", "槓桿・放空"]] : [], S.orders && !inShop ? [["order", "掛單"]] : []);
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
-  return h("div", { class: "bank-cols stocks" },
-    panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "股價", "今天", "持股"], stockRows(list, cur, S), "stocks")),
+  const phone = window.innerWidth < 761 || window.innerHeight < 501;
+  const table = panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks"));
+  return h("div", { class: "bank-cols stocks", dataset: { trade: tab } },
+    phone ? h("details", { class: "bank-allstocks" }, h("summary", null, h("b", null, "全部股票"), h("span", null, "點開換一支 ▾")), table) : table,
     h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
-        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實行情　", realBit(cur), cur.mult ? h("small", null, `　（遊戲價是真實價的 ${cur.mult} 倍）`) : null) : null,
+        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價大約是真實價的 ${cur.mult} 倍。`) : null) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "沒調價　"), "昨天來這家店的人太少，今天價格先不動。") : null,
@@ -417,7 +422,7 @@ function stockPane(v) {
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
-        h("p", { class: "bank-hint" }, "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
+        h("p", { class: "bank-hint" }, cur.real ? "遊戲價只跟著真實漲跌的一部分，再加上館裡自己的小波動，每天開盤會往真實價拉回一點，所以遊戲的漲跌和真實的不會一樣。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       positionsPanel(S), ordersPanel(S)));
