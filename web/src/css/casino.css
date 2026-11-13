@@ -407,3 +407,20 @@ body.reduce-motion .live-dot { animation: none; }
 .bk-tab:hover:not(.on) { color: #FFFFFF; filter: brightness(1.15); }
 .cas-bank .bk-act-b .btn:not(.primary) { background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #F3DFA6; border: 1px solid #D6B25E; font-weight: 700; box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 2px 4px rgba(0, 0, 0, .35); }
 .cas-bank .bk-act-b .btn:not(.primary):hover:not(:disabled) { filter: brightness(1.2); }
+
+/* 賭場手機：「發牌」要在第一屏（測試 session 11-13：375×740 直拿在 y=774、740×375 橫拿在 396，都差一點點）
+   做法：分頁列不折行、橫向滑；荷官說話框收矮；規則和頁尾的小字收起來。沒有在瀏覽器量（賭場要伺服器的錢包，開發預覽打不開），請測試 session 複測 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-casino .nb-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin-bottom: 6px; scrollbar-width: none; }
+  .nb-casino .nb-tab { flex: none; min-height: 40px; padding: 0 10px; transform: none; }
+  .nb-casino .cas-say { min-height: 40px; max-height: 72px; padding: 6px 10px; }
+  .nb-casino .cas-foot, .nb-casino .cas-rules { display: none; }
+  .nb-casino .cas-felt { padding: 6px 10px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-casino .nb-tabs { flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin-bottom: 4px; scrollbar-width: none; }
+  .nb-casino .nb-tab { flex: none; min-height: 34px; padding: 0 10px; transform: none; }
+  .nb-casino .cas-say { min-height: 32px; max-height: 52px; padding: 4px 10px; }
+  .nb-casino .cas-foot, .nb-casino .cas-rules, .nb-casino .cas-hint { display: none; }
+  .nb-casino .cas-felt { padding: 4px 8px; }
+}
