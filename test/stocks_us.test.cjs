@@ -115,6 +115,14 @@ T("抓不到的壹段：真實成分當 0、標沒資料；開盤價晚到、超
   const g = runDay(G, "x", W, { openAt: 31 });
   assert.strictEqual(g.openIdx, null); assert.strictEqual(g.closed, true);
 });
+T("今天換過日、卻沒有今天的基準價（11-13 美股第壹晚）：用現在的價補上，盤中照樣畫得出來", G => {
+  const house = house0(G, W), doc = runDay(G, "x", W, {});
+  delete house.stk.hist[W];
+  const p0 = house.stk.px[ID];
+  G.casStockUsApply(house, doc, W, tm(G, W, 60));
+  assert.ok(house.stk.hist[W] && house.stk.hist[W][ID] === p0, "補了基準價");
+  assert.ok(Array.isArray(house.stk.us.ser[ID]) && house.stk.us.ser[ID].length > 1, "盤中有價");
+});
 T("國定假日（沒有開盤價）：整天休市，狀態 closed、買賣下單都擋，價只剩 drag", G => {
   const house = house0(G, HOL), doc = runDay(G, "x", HOL, { never: true }), w = wallet(G, HOL);
   assert.strictEqual(doc.closed, true); assert.strictEqual(doc.openIdx, null);

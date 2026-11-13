@@ -433,6 +433,9 @@ export function casStockIntraApply(house, mk, data, day, t) {
   else if (cur && cur.closed) st = "closed";
   else st = m < MC.giveUp ? "pending" : "closed";
   T.day = day; T.st = st; T.from = 0; T.idx = 0; T.ser = {};
+  // 今天換過日、卻沒有今天的基準價（11-13：換日在「記基準價」的程式上線之前跑的，美股第壹晚整晚畫不出盤中）：用現在的價補上。
+  //   沒有基準價時盤中價不會動到 H.px（下面那段跑不到），所以這時的 H.px 就是今天換日後的開盤基準
+  if (rolled && !H.hist[day]) H.hist[day] = Object.assign({}, H.px);
   if (cur && cur.openIdx != null && m >= cur.openIdx && H.hist[day]) {
     T.from = cur.openIdx; T.idx = Math.min(m, MC.len);
     for (const id of M.ids) {
