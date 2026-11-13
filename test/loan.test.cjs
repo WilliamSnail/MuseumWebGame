@@ -119,5 +119,24 @@ T("Discord 的借（casRelief）：壹次借 NUM.casino.loan.discord，額度不
   assert.strictEqual(G.casRelief(w, D).loan.amt, C.min);
 });
 
+T("決定 0071：借的錢從莊家出、還的本金加利息回莊家、到期被扣的下次碰到莊家時交過去", G => {
+  const w = G.casWalletFix(null, D), house = G.casHouseNew(), h0 = house.bankroll;
+  const r = G.casBorrow(w, 100000, D, false, null, house);
+  assert.ok(r.ok); assert.strictEqual(house.bankroll, h0 - 100000);
+  w.loan.list[0].at = null; // 不用等 repayAfterMin
+  const back = G.casRepay(w, null, D, false, null, house);
+  assert.ok(back.ok); assert.strictEqual(house.bankroll, h0 - 100000 + back.loan.owe, "本金加利息回莊家");
+  // 到期沒還：換日扣籌碼，記在 toHouse；碰到莊家時交過去
+  const w2 = G.casWalletFix(null, D), h2 = G.casHouseNew(), b2 = h2.bankroll;
+  const x = G.casBorrow(w2, 100000, D, false, null, h2).loan;
+  const later = G.casAddDaysForTest ? G.casAddDaysForTest(x.due, 1) : null;
+  const day2 = later || (d => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + 1)).toISOString().slice(0, 10); })(x.due);
+  G.casWalletFix(w2, day2);
+  assert.strictEqual(w2.loan.toHouse, x.owe);
+  assert.strictEqual(G.casLoanToHouse(w2, h2), x.owe);
+  assert.strictEqual(h2.bankroll, b2 - 100000 + x.owe); assert.strictEqual(w2.loan.toHouse, 0);
+  assert.strictEqual(G.casLoanToHouse(w2, h2), 0, "交過就沒了");
+  const old = G.casWalletFix(null, D); delete old.loan.toHouse; G.casWalletFix(old, D); assert.strictEqual(old.loan.toHouse, 0, "舊錢包補 0");
+});
 console.log(`loan.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
