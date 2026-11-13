@@ -12,13 +12,13 @@ import { NUM } from "../../shared/config.js";
 import { eventBars, eventEffect, eventLeftText, eventRange, eventWhen } from "../../shared/events.js";
 import { freshRooms } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
-import { codexCount, dailyCommissions, isFree, num, todayStr } from "../../shared/logic.js";
+import { codexCount, dailyCommissions, fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { roomProgress } from "../../shared/logic3.js";
 import { matesByRoom } from "../../shared/mates.js";
 import { passView } from "../../shared/pass.js";
 import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
+import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, frogHTML, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
@@ -137,7 +137,8 @@ function passCard() {
   const v = passView(P, { today: todayStr() }), c = v.card;
   const nick = (UI.net && NET.me && NET.me.nick) || "館友";
   return h("button", { type: "button", class: "l2-pass", onClick: () => PANELS.pass && PANELS.pass() },
-    h("span", { class: "l2-ph" }, img(L + "ic-nameplate.webp")),
+    // 有挑頭像（11-13）就畫那隻佩佩；沒有就是原本的名牌
+    c.avatar ? h("span", { class: "l2-ph l2-av", "aria-hidden": "true", html: frogHTML(fromKey(c.avatar)) }) : h("span", { class: "l2-ph" }, img(L + "ic-nameplate.webp")),
     h("span", { class: "l2-pid" },
       h("b", null, nick, c.title ? titleTag(c.title, "ps-ttl") : null),
       h("small", null, isFree(P) ? "自由模式" : `館友證・第 ${c.dayNo} 天`),

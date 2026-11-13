@@ -68,5 +68,27 @@ T("參觀者那一頁：職業、技能、穿著的裝備照存檔；自由模�
   assert.strictEqual(G.passView(fresh(G, "free"), {}).visitor, null);
 });
 
+T("館友證頭像：挑收藏的可以、沒收藏的不收、不用頭像就清掉", G => {
+  const P = fresh(G); assert.strictEqual(P.avatar, "");
+  const base = Object.assign({}, G.DEFAULT_PICK);
+  const k1 = G.pepeKey({ ...base, 稀有度: G.RARITY_ORDER[0] }), k2 = G.pepeKey({ ...base, 稀有度: G.RARITY_ORDER[1] });
+  P.pepes[k1] = { count: 1, perfect: false, first: "2026-11-01" }; P.pepes[k2] = { count: 1, perfect: false, first: "2026-11-05" };
+  assert.deepStrictEqual(J(G.avatarChoices(P)), [k2, k1]);
+  assert.strictEqual(G.passPhoto(P), k2); assert.strictEqual(J(G.passView(P, {})).card.avatar, null);
+  assert.strictEqual(G.setPassAvatar(P, k1), true); assert.strictEqual(P.avatar, k1);
+  assert.strictEqual(G.passPhoto(P), k1); assert.strictEqual(J(G.passView(P, {})).card.avatar, k1);
+  assert.strictEqual(G.setPassAvatar(P, "不在|收藏|裡"), false); assert.strictEqual(P.avatar, k1);
+  assert.strictEqual(G.setPassAvatar(P, ""), true); assert.strictEqual(P.avatar, ""); assert.strictEqual(G.passPhoto(P), k2);
+});
+T("館友證頭像：舊存檔沒有欄位能讀；選的那隻後來不在收藏就退回沒有", G => {
+  const base = Object.assign({}, G.DEFAULT_PICK), k1 = G.pepeKey({ ...base, 稀有度: G.RARITY_ORDER[0] });
+  const old = G.newProfile("challenge"); delete old.avatar; old.pepes[k1] = { count: 1, perfect: false, first: "2026-11-01" };
+  const a = G.fixProfile(J(old), "challenge"); assert.strictEqual(a.avatar, ""); assert.strictEqual(G.passAvatar(a), "");
+  old.avatar = k1; const b = G.fixProfile(J(old), "challenge"); assert.strictEqual(b.avatar, k1); assert.strictEqual(G.passAvatar(b), k1);
+  const bad = J(b); bad.avatar = 123; assert.strictEqual(G.fixProfile(bad, "challenge").avatar, "");
+  delete b.pepes[k1]; assert.strictEqual(G.passAvatar(b), ""); assert.strictEqual(G.passPhoto(b), "");
+  const save = G.newSave(); save.profiles.challenge = J(old); assert.strictEqual(G.migrateSave(J(save)).profiles.challenge.avatar, k1);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

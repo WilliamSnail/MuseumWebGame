@@ -9,11 +9,11 @@
 // ================================================================
 import { casNum } from "../../shared/casino.js";
 import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
-import { PASS_TABS, passView } from "../../shared/pass.js";
+import { PASS_TABS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../shared/pass.js";
 import { signinState } from "../../shared/signin.js";
 import { NET } from "./net_firebase.js";
 import { ART } from "./art.js";
-import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, navTo, rdot, snd, titleTag } from "./ui_core.js";
+import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, navTo, persist, rdot, rerender, snd, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
 import { whoOf } from "./ui_screens3.js";
@@ -37,7 +37,7 @@ export function openPass(o = {}) {
     const card = h("div", { class: "ps-card" },
       h("div", { class: "ps-card-top" }, h("span", null, "PEPE MUSEUM"), h("span", null, "館友證")),
       h("div", { class: "ps-card-main" },
-        h("div", { class: "ps-photo", "aria-hidden": "true", html: v.pepe.recent[0] ? frogHTML(fromKey(v.pepe.recent[0])) : "" }, v.pepe.recent[0] ? null : icon("user")),
+        h("div", { class: "ps-photo", "aria-hidden": "true", html: c.photo ? frogHTML(fromKey(c.photo)) : "" }, c.photo ? null : icon("user")),
         h("div", { class: "ps-id" },
           h("h3", null, nick(), c.title ? titleTag(c.title, "ps-ttl") : null),
           h("dl", null,
@@ -48,7 +48,7 @@ export function openPass(o = {}) {
             c.stamps !== null ? [h("dt", null, "週章"), h("dd", null, `${c.stamps} 枚`)] : null))),
       h("div", { class: "ps-card-foot" }, v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`));
     return [card,
-      h("div", { class: "ps-open" }, btn(["翻開典藏冊 ", h("span", { "aria-hidden": "true" }, "→")], () => { tab = "pepe"; draw(); }, "primary")),
+      h("div", { class: "ps-open" }, btn([icon("user"), " 換頭像"], () => pickAvatar(), "ps-av-btn"), btn(["翻開典藏冊 ", h("span", { "aria-hidden": "true" }, "→")], () => { tab = "pepe"; draw(); }, "primary")),
       sec("紀錄", h("div", { class: "ps-stats" }, v.records.map(([l, x]) => stat(l, x)))),
       UI.net ? sec("帳號", accountRows(draw, m.close)) : sec("帳號", h("p", { class: "sp-note" }, "現在沒有登入：存檔只放在這個瀏覽器。"))];
   };
@@ -133,6 +133,23 @@ export function openPass(o = {}) {
         h("div", { class: "sp-go" }, PANELS.casino && UI.net ? goBtn("賭場的成就", () => PANELS.casino({ tab: "ach" }), "dice") : null, PANELS.rank ? goBtn("本週榜單", () => PANELS.rank(), "star") : null))];
   };
 
+  // 換頭像（11-13）：小視窗，列出收藏過的佩佩，點壹隻就設成頭像；「不用頭像」清掉。小視窗掛在這個框上，框關了它也跟著沒了
+  function pickAvatar() {
+    const layer = m.surface.closest(".nb-layer");
+    if (!layer || layer.querySelector(".ps-pick")) return;
+    const list = avatarChoices(P), cur = passAvatar(P);
+    const choose = k => { if (!setPassAvatar(P, k)) return; persist(); pop.remove(); draw(); snd("flip"); if (UI.screen === "lobby") rerender(); };
+    const pop = h("div", { class: "ps-pick", role: "dialog", "aria-modal": "true", "aria-label": "換頭像", onClick: e => { if (e.target === pop) pop.remove(); } },
+      h("div", { class: "ps-pick-box" },
+        h("h3", null, "挑壹隻當頭像"),
+        list.length
+          ? h("div", { class: "ps-pick-grid" }, list.map(k => h("button", { type: "button", class: "ps-pick-i" + (k === cur ? " on" : ""), "aria-pressed": String(k === cur), title: k.split("|").join("・"), onClick: () => choose(k), html: frogHTML(fromKey(k)) })))
+          : h("p", { class: "sp-note" }, "還沒有收藏的佩佩。去手作坊捏壹隻，就能拿來當頭像。"),
+        h("div", { class: "ps-pick-foot" }, btn("不用頭像", () => choose(""), "small"), btn("關掉", () => pop.remove(), "small primary"))));
+    layer.append(pop);
+    const first = pop.querySelector(".ps-pick-i.on") || pop.querySelector(".ps-pick-i") || pop.querySelector(".btn");
+    first && first.focus();
+  }
   const PANES = { card: cardPane, visitor: visitorPane, pepe: pepePane, books: booksPane, souvenir: souvenirPane, deco: decoPane, ach: achPane };
   function draw() {
     const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined });

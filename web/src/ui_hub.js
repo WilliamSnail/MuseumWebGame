@@ -19,7 +19,7 @@ import { openToday, todayChips, todayItems } from "./ui_today.js";
 
 // 左邊的小館友證
 function passCard() {
-  const v = passView(P, { today: todayStr() }), c = v.card, top = v.pepe.recent[0];
+  const v = passView(P, { today: todayStr() }), c = v.card, top = c.photo; // 有挑頭像用頭像（11-13）
   const nick = (UI.net && NET.me && NET.me.nick) || "館友";
   return h("button", { type: "button", class: "hub-pass", title: "打開館友證和典藏冊", onClick: () => PANELS.pass && PANELS.pass() },
     h("span", { class: "hp-top" }, h("span", null, "館友證"), h("span", { class: "hp-open" }, "典藏冊 →")),
