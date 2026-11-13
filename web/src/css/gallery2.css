@@ -155,3 +155,46 @@
 .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn .ic, .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn svg { color: #1A0F06; opacity: 1; }
 .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn:not(.on) { filter: brightness(1.18) contrast(1.05); }
 .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn .tab-c { color: #3A1F10; font-weight: 700; }
+
+/* 拍我的畫、收標結果：可以收起來（手機預設收起來） */
+.gal-sell > summary, .gal-last > summary { display: flex; align-items: center; gap: 8px; min-height: 36px; list-style: none; cursor: pointer; }
+.gal-sell > summary::-webkit-details-marker, .gal-last > summary::-webkit-details-marker { display: none; }
+.gal-sum span { margin-left: auto; font-family: inherit; font-size: var(--type-small, .75rem); letter-spacing: 0; color: var(--gold-hi, #F3DFA6); font-weight: 700; }
+.gal-sum .gal-close { margin-left: auto; }
+.gal-sum .gal-open + .gal-close { margin-left: 0; }
+details[open] > .gal-sum .gal-open, details:not([open]) > .gal-sum .gal-close { display: none; }
+.gal-sell[open] > summary, .gal-last[open] > summary { margin-bottom: 6px; }
+/* 手機橫拿：拍賣的畫排成壹排橫著滑，壹眼看得到好幾場；下面兩塊收起來 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gal-auction { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 6px; padding: 2px; }
+  .gal-lots, .gal-sell, .gal-last { grid-column: 1; grid-row: auto; }
+  .gal-lots { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(300px, 1fr); overflow-x: auto; gap: 8px; }
+  .gal-lot { grid-template-columns: 56px minmax(0, 1fr); padding: 4px 8px; gap: 8px; } .gal-easel { width: 56px; }
+  .gal-lot-info { gap: 2px; } .gal-in, .gal-btn { min-height: 32px; }
+  .gal-sell, .gal-last { padding: 4px 8px; }
+}
+/* 財報（11-14） */
+.bank-mood { margin-left: auto; padding: 1px 10px; border: 1px solid var(--bank-gold); border-radius: 999px; font-size: var(--type-small, .75rem); font-weight: 700; color: var(--bank-gold-hi); }
+.bank-mood.up { color: #FF8A78; border-color: #FF8A78; } .bank-mood.down { color: #7FD39B; border-color: #7FD39B; }
+.bank-world { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.bank-world li { display: flex; align-items: center; gap: 8px; font-size: var(--type-body, .875rem); line-height: 1.5; color: #C9D1DE; }
+.bank-world li b { color: var(--bank-gold-hi); }
+.bank-world li > span { flex: 1 1 auto; min-width: 0; }
+.bank-mk { flex: none; padding: 0 7px; border-radius: 3px; border: 1px solid var(--bank-gold); font-style: normal; font-size: var(--type-tiny, .6875rem); font-weight: 800; color: var(--bank-gold-hi); }
+
+/* 手機橫拿：拍賣、收藏頁不放側欄（規則在標題旁的說明），畫牆多出壹條；拍我的畫、收標結果並排；每場壓成三行 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gallery-onescreen.gal-tab-auction .gal-side, .gallery-onescreen.gal-tab-collect .gal-side { display: none; }
+  .gallery-onescreen.gal-tab-auction > .onescreen-main.gal-main, .gallery-onescreen.gal-tab-collect > .onescreen-main.gal-main { grid-template-rows: minmax(0, 1fr); }
+  .gal-auction { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: start; }
+  .gal-auction > .gal-msg, .gal-auction > .gal-lots { grid-column: 1 / -1; }
+  .gal-sell, .gal-last { grid-column: auto; align-self: start; }
+  .gal-lot-info > .gal-lot-m:nth-of-type(2) { display: none; }
+  .gal-lot-info .gal-bid { gap: 4px; }
+}
+/* 手機直拿：拍我的畫、收標結果（收起來只有壹行）放在最上面，不用滑過幾場拍賣才找得到 */
+@media (max-width: 760px) {
+  .gal-auction > .gal-msg { order: -3; }
+  .gal-auction > .gal-sell { order: -2; }
+  .gal-auction > .gal-last { order: -1; }
+}

@@ -561,7 +561,7 @@ export function galleryTabs(active) {
 // 畫廊的骨架（介面重塑，翊文 11-14：「畫廊要有好的新介面」）：標題壹行｜頁籤｜左邊壹面牆（畫框排成壹排，左右滑）｜右邊側欄（怎麼看、怪癖的治法）。整頁不捲
 // 手機（直拿、橫拿）把側欄收成壹條，點開才看。main、side 是要放進去的元素（null 會被略過）
 export function galleryShell(root, active, sub, main, side) {
-  root.classList.add("onescreen-room", "gallery-onescreen");
+  root.classList.add("onescreen-room", "gallery-onescreen", "gal-tab-" + active);
   const wall = h("div", { class: "gal-wall" }, ...main.filter(Boolean)), aside = h("aside", { class: "onescreen-side gal-side" }, ...(side || []).filter(Boolean));
   root.append(...[roomHead("畫廊", sub), galleryTabs(active), h("div", { class: "onescreen-main gal-main" }, wall, aside)].filter(Boolean));
   wall.querySelectorAll(".gal-corridor").forEach(fitFrames);

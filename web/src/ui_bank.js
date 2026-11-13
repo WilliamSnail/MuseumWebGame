@@ -57,7 +57,8 @@ export function fakeBankHall() {
       lev: { max: 5, opensLeft: 2, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5 }, credit: { pts: 17, level: 3, next: 3, posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", sid: "neon", side: "long", lev: 5, margin: 1000000, n: 21645, entry: 231, ratio: 0.82, liq: 208, pnl: -180000, stop: 224, take: 245 }, { id: "p2", sid: "handbrain", side: "short", lev: 3, margin: 2000000, n: 4800, entry: 1240, ratio: 0.64, liq: 1280, pnl: -320000, stop: null, take: 1150 }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
-    econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]] },
+    econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
+      world: { day: "2026-11-14", items: [{ market: "tw", title: "電子股走強　", text: "聯發科帶頭，台股收紅。", chg: 0.012 }, { market: "us", title: "晶片股回檔　", text: "美股科技股收黑。", chg: -0.008 }] } },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
 }
@@ -412,15 +413,27 @@ function stockPane(v) {
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       positionsPanel(S), ordersPanel(S)));
 }
+// 世界市場（遊戲內版本的世界股市新聞，每天由劇情排程寫）：欄位還沒定，先假設 econ.world = { day, items: [{ market: "tw"|"us"|"世界", title, text, chg }] }（items 也可以是字串）。沒有資料就不畫這壹塊
+function worldPanel(W) {
+  const items = W && Array.isArray(W.items) ? W.items : [];
+  if (!items.length) return null;
+  return panel("世界市場", W.day ? `${String(W.day).slice(5)} 的消息` : "今天的消息",
+    h("ul", { class: "bank-world" }, items.map(it => { const o = typeof it === "string" ? { text: it } : it; return h("li", null,
+      o.market ? h("i", { class: "bank-mk" }, o.market === "tw" ? "台股" : o.market === "us" ? "美股" : o.market) : null,
+      h("span", null, o.title ? h("b", null, o.title) : null, o.text || ""), typeof o.chg === "number" ? upDown(o.chg) : null); })));
+}
 function reportPane(v) {
-  const e = v.econ;
-  if (!e) return soon("財報", "館內 GDP、景氣和每天的新聞正在準備，開放時館方公告會說。");
-  return h("div", { class: "bank-cols" },
-    panel("今天的館內經濟", "每天 05:00 結算昨天",
-      h("div", { class: "bank-quote" }, num("big", fmt(e.gdp)), upDown(e.growth)), h("p", { class: "bank-meta" }, "館內 GDP（標準活動值）　成長是近 7 天對前 7 天"),
-      h("p", { class: "bank-line" }, e.news)),
+  const e = v.econ, world = worldPanel(e && e.world);
+  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), world);
+  const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
+  return h("div", { class: "bank-cols report" },
     h("div", { class: "bank-stack" },
-      panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))))),
+      panel("今天的館內經濟", "每天 05:00 結算昨天",
+        h("div", { class: "bank-quote" }, num("big", fmt(e.gdp)), upDown(e.growth, true), h("span", { class: "bank-mood " + (e.idx > 0.3 ? "up" : e.idx < -0.3 ? "down" : "") }, `景氣 ${tone}`)),
+        h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天"),
+        h("p", { class: "bank-line" }, e.news)),
+      panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))]))),
+    h("div", { class: "bank-stack" }, world,
       v.stocks && v.stocks.maker ? panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does)))) : null));
 }
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
