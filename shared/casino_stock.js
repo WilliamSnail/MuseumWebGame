@@ -146,11 +146,14 @@ export function casStockSell(w, house, id, shares, day, t) {
 
 // ---------- 畫面要的 ----------
 // 回傳 { list: [{ id, name, line, kind, price, chg, mine, value }], fee, halt, exposeLeft, sellLeft, total }
-export function casStockView(w, house, day, t) {
+// stale：哪幾支今天沒有新資料（shared/stocks.js 的 outStockStale）。標出來，不要讓人以為真的沒漲跌
+export function casStockView(w, house, day, t, stale) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
+  const old = Array.isArray(stale) ? stale : [];
   const list = OUT_STOCKS.map(d => {
     const price = H.px[d.id], prev = H.prev[d.id], mine = stN(S.own[d.id]);
-    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine };
+    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,
+      stale: old.includes(d.id) ? CAS_STOCK.stale : null };
   });
   return {
     list, fee: C.feePct / 100, halt: casStockHalt(t), haltFrom: C.haltFrom, haltTo: C.haltTo,
