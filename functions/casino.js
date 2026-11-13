@@ -39,6 +39,7 @@ import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { casArtSecret } from "./shared/casino_art.js";
+import { NPC_DAYS } from "./shared/npc_data.js";
 import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
@@ -95,7 +96,7 @@ export async function playCore(me, email, opts, fn) {
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
-      casInRoll(house, day, house.econ && house.econ.b); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
@@ -209,7 +210,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 // 畫面的 positions[].id 是「單號」p3（平倉送 pid），股票的 id 是 sid；其餘欄位（no、name、market、side、lev、qty、entry、margin、now、pnl、maintPct、liqPx、openedDay、dayTrade）一起給
 const levStock = ctx => {
   const v = casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), L = casStockLevView(ctx.w, ctx.house, ctx.day, ctx.t);
-  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id, stop: null, take: null })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
+  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
 };
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);

@@ -210,5 +210,68 @@ T("股票畫面合起來：館內五家店排前面、館外七支在後面，�
   assert.ok(G.casStockValue(w, h) >= G.casInValueApprox(w, h) && G.casInValueApprox(w, h) > 0, "持股合計含館內股");
   const out = G.casStockView(w, h, D0, t, []); assert.strictEqual(out.list.length, G.STOCK_IDS.length, "原本的 casStockView 不變");
 });
+T("NPC：每家每天 Poisson(λ)，平均約 λ；種子有祕密（同祕密壹樣、換祕密不壹樣）；沒有館友就沒有 NPC", G => {
+  const C = G.NUM.casino.stockIn; assert.strictEqual(C.npcLambda, 2); assert.strictEqual(C.npcShareMax, 40);
+  const mk = (players, day) => { const h = house(G), H = G.casInHouseFix(h); for (const s of G.IN_STORES) { H.use[day] = H.use[day] || {}; H.use[day][s] = players; } return H; };
+  let sum = 0, n = 0; for (let d = 0; d < 400; d++) { const day = add(D0, d), H = mk(100, day); const o = G.casInNpcFor(H, day, SEC); for (const s of G.IN_STORES) { sum += o[s]; n++; } }
+  assert.ok(Math.abs(sum / n - 2) < 0.15, "平均 " + sum / n);
+  const H1 = mk(10, D0), a = JSON.stringify(G.casInNpcFor(H1, D0, "A")), H2 = mk(10, D0), b = JSON.stringify(G.casInNpcFor(H2, D0, "A")), H3 = mk(10, D0), c = JSON.stringify(G.casInNpcFor(H3, D0, "B"));
+  assert.strictEqual(a, b, "同祕密壹樣"); assert.notStrictEqual(a, c, "換祕密不壹樣");
+  const H0 = mk(0, D0); assert.ok(Object.values(G.casInNpcFor(H0, D0, SEC)).every(x => x === 0), "沒有館友就沒有 NPC");
+  assert.strictEqual(G.casInNpcFor(H1, D0, "Z")[G.IN_STORES[0]], JSON.parse(a)[G.IN_STORES[0]], "算過就存起來，不會再抽");
+});
+T("NPC：最多占這家店人數的 npcShareMax%（館友 3 位最多 2 個 NPC）", G => {
+  const C = G.NUM.casino.stockIn; C.npcLambda = 50; // 抽很多，看上限
+  for (const [players, max] of [[3, 2], [5, 3], [10, 6], [0, 0]]) {
+    const H = G.casInHouseFix(house(G)); H.use[D0] = { food: players }; const n = G.casInNpcFor(H, D0, SEC).food;
+    assert.strictEqual(n, max, players + " 位館友 → NPC 最多 " + max); assert.ok(n / (players + n || 1) <= C.npcShareMax / 100 + 1e-9);
+  }
+});
+T("NPC：算進「不同的人」：館友 2 位加 NPC 3 位 ＝ 5 位就不算「人太少」；前 7 個有效日的平均也含 NPC", G => {
+  const C = G.NUM.casino.stockIn, h = house(G), H = G.casInHouseFix(h), day = add(D0, 10);
+  for (let i = 2; i <= 8; i++) { H.use[add(day, -i)] = { food: 4 }; H.npc[add(day, -i)] = { food: 4 }; } // 館友 4 ＋ NPC 4 ＝ 8
+  H.use[add(day, -1)] = { food: 2 }; H.npc[add(day, -1)] = { food: 3 };
+  const j = G.casInJump(H, "food", day, 0, SEC); assert.ok(!j.quiet, "5 位不算人太少");
+  assert.ok(Math.abs(j.m - C.k * (5 / 8 - 1)) <= C.noise / 100 + 1e-9, "跳空照 K×(5÷8−1)：" + j.m);
+  H.npc[add(day, -1)] = { food: 2 }; assert.ok(G.casInJump(H, "food", day, 0, SEC).quiet, "館友 2 ＋ NPC 2 ＝ 4 位：人太少");
+});
+T("NPC 劇情日：那家店那天多去 round(b × 前 7 個有效日平均)，b 在 npcBoostMin～npcBoostMax；別家不加；事件記下來", G => {
+  const C = G.NUM.casino.stockIn, h = house(G), H = G.casInHouseFix(h), day = add(D0, 10);
+  for (let i = 1; i <= 8; i++) { H.use[add(day, -i)] = { food: 10, bj: 10 }; H.npc[add(day, -i)] = { food: 0, bj: 0 }; }
+  H.use[day] = { food: 10, bj: 10 };
+  const ev = { [day]: { store: "food", name: "賣傘的老闆的餐車日" } };
+  const base = JSON.stringify(G.casInNpcFor(G.casInHouseFix(Object.assign(house(G), { sin: JSON.parse(JSON.stringify(H)) })), day, SEC));
+  const o = G.casInNpcFor(H, day, SEC, ev);
+  const lo = Math.round(C.npcBoostMin * 10), hi = Math.round(C.npcBoostMax * 10);
+  assert.ok(o.food >= lo && o.food <= hi + Math.floor(10 * C.npcShareMax / (100 - C.npcShareMax)), "食 " + o.food);
+  assert.ok(H.npcEv[day] && H.npcEv[day].store === "food" && H.npcEv[day].name === "賣傘的老闆的餐車日" && H.npcEv[day].n === o.food, "事件記下來");
+  assert.ok(!H.npcEv[add(day, 1)]); assert.ok(o.bj <= Math.floor(10 * C.npcShareMax / (100 - C.npcShareMax)), "別家照舊只有基本的 NPC");
+  assert.ok(base && o.food >= JSON.parse(base).food, "劇情日比沒有劇情日多");
+  // 一百天的劇情日，b 的範圍：大小在 [0.15, 0.30] × 平均（平均 10）
+  let bmin = 9, bmax = 0; for (let k = 0; k < 300; k++) { const hh = G.casInHouseFix(house(G)); for (let i = 1; i <= 8; i++) { hh.use[add(day, -i)] = { food: 10 }; hh.npc[add(day, -i)] = { food: 0 }; } hh.use[day] = { food: 0 }; const x = G.casInNpcFor(hh, day, "s" + k, ev).food; bmin = Math.min(bmin, x); bmax = Math.max(bmax, x); }
+  assert.ok(bmin >= Math.round(C.npcBoostMin * 10) - 1 && bmax <= Math.round(C.npcBoostMax * 10) + 1, "加成在 [0.15, 0.30]×平均：" + bmin + "～" + bmax);
+});
+T("NPC 劇情日不能被預先進場套利：預期跳空 K × npcBoostMax ＜ 來回成本（手續費 2×feePct ＋ drag）", G => {
+  const C = G.NUM.casino.stockIn, S = G.NUM.casino.stock, cost = (2 * S.feePct + S.drag) / 100;
+  assert.ok(C.k * C.npcBoostMax < cost, "K×b＝" + C.k * C.npcBoostMax + " ＜ " + cost); assert.ok(C.npcBoostMax <= 0.33);
+});
+T("NPC：casInRoll 換日時算昨天的 NPC，用劇情日；日報有「館外來了 N 位旅客」和劇情日的句子", G => {
+  const h = house(G), H = G.casInHouseFix(h); G.casInRoll(h, D0, 0, SEC);
+  for (const s of G.IN_STORES) { H.use[D0] = H.use[D0] || {}; H.use[D0][s] = 8; }
+  G.casInRoll(h, add(D0, 1), 0, SEC, { [D0]: { store: "cellar", name: "清點日" } });
+  assert.ok(H.npc[D0] && G.IN_STORES.every(s => Number.isFinite(H.npc[D0][s])), "昨天的 NPC 算好了");
+  assert.ok(H.npcEv[D0] && H.npcEv[D0].store === "cellar");
+  const snap = G.casBookSnap([], h, 0, null); assert.strictEqual(snap.house.npcLast.day, D0);
+  const diff = G.casBookDiff(null, snap), v = G.casReportView({ day: add(D0, 1), snap, diff }), txt = JSON.stringify(v);
+  assert.ok(/《清點日》在地下收藏庫辦了活動，館外來了 [0-9]+ 位旅客/.test(txt), txt.slice(0, 400));
+  const h2 = house(G), H2 = G.casInHouseFix(h2); G.casInRoll(h2, D0, 0, SEC); H2.use[D0] = { food: 8 }; G.casInRoll(h2, add(D0, 1), 0, SEC);
+  const v2 = JSON.stringify(G.casReportView({ day: add(D0, 1), snap: G.casBookSnap([], h2, 0, null), diff: G.casBookDiff(null, G.casBookSnap([], h2, 0, null)) }));
+  assert.ok(/昨天館外來了 [0-9]+ 位旅客逛各家店|昨天館外來了/.test(v2) || !/[0-9] 位旅客/.test(v2), "沒有劇情日：平常的句子（或 0 位時不寫）");
+});
+T("NPC：舊的／壞的 house.sin 補欄位；npc 只留最近 histDays 天", G => {
+  const h = G.casHouseFix({ bankroll: 5, sin: { npc: { "2026-11-16": { food: 3, 壞: 5, bj: -1 }, 壞: {} }, npcEv: { "2026-11-16": { store: "food", name: 12, n: "x" }, "2026-11-17": { store: "不存在" } } } }, D0).house;
+  const H = G.casInHouseFix(h); assert.deepStrictEqual(JSON.parse(JSON.stringify(H.npc)), { "2026-11-16": { food: 3, bj: 0 } }); assert.deepStrictEqual(JSON.parse(JSON.stringify(H.npcEv)), { "2026-11-16": { store: "food", name: "", n: 0 } });
+  const old = house(G), O = G.casInHouseFix(old); for (let i = 0; i < 40; i++) O.npc[add(D0, -i)] = { food: 1 }; assert.ok(Object.keys(G.casInHouseFix(old).npc).length <= G.NUM.casino.stockIn.histDays);
+});
 console.log(`casino_stock_in.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

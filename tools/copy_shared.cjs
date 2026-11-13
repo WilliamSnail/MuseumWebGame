@@ -114,5 +114,21 @@ function artData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "art_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每日特展的畫（id、日期、畫框、理智、線索、稀有度、名字），給藝術市場查價\nexport const ART_WORKS = " + JSON.stringify(artData()) + ";\n");
+// 館內股的 NPC 劇情日（11-14，shared/casino_stock_in.js）：content/weeks/*/week.json 的 npc { store, date, name } → { 日期: { store, name } }。內容檢查在 tools/week_check.cjs
+function npcData() {
+  const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (!/^[0-9]{4}-W[0-9]{2}$/.test(name)) continue;
+    const f = path.join(dir, name, "week.json");
+    if (!fs.existsSync(f)) continue;
+    try {
+      const w = JSON.parse(fs.readFileSync(f, "utf8")), n = w && w.npc;
+      if (n && typeof n === "object" && isDay(n.date) && typeof n.store === "string") out[n.date] = { store: n.store, name: typeof n.name === "string" ? n.name : "" };
+    } catch (e) { console.error("NPC 劇情日：讀不出來", f, e.message); }
+  }
+  return out;
+}
+fs.writeFileSync(path.join(to, "npc_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 的 week.json.npc（館內股的 NPC 劇情日）\nexport const NPC_DAYS = " + JSON.stringify(npcData()) + ";\n");
 fs.writeFileSync(path.join(to, "README.md"), "這個資料夾是 tools/copy_shared.cjs 從 shared/ 複製來的，不要改這裡，改 shared/。\n");
 if (require.main === module) console.log(`複製了 ${n} 個規則檔到 functions/shared/`);
