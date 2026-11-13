@@ -339,3 +339,32 @@ body[data-screen="bank"] #room { background: none; }
 .bank-row.stock small.ln.real { display: block; }
 
 .bank-realtag { padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; font-style: normal; font-size: var(--type-tiny, .6875rem); font-weight: 800; opacity: .85; }
+
+/* 手機：槓桿頁收斂（測試 11-14：直拿內容 1843、可視 341；橫拿 1535、可視 209） */
+.bank-sum > summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 10px; min-height: 30px; list-style: none; cursor: pointer; font-size: var(--type-small, .75rem); color: var(--bank-mute); }
+.bank-sum > summary::-webkit-details-marker { display: none; }
+.bank-sum > summary b { color: #FFF; font-family: Georgia, serif; font-size: var(--type-body, .875rem); }
+.bank-sum > summary .bank-sum-open { margin-left: auto; color: var(--bank-gold-hi); font-weight: 700; }
+.bank-sum[open] > summary .bank-sum-open { display: none; }
+.bank-sum[open] > summary { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid rgba(214, 178, 94, .3); }
+.bank-allstocks > summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; list-style: none; cursor: pointer; border: 1px solid var(--bank-gold); border-radius: 8px; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: var(--bank-gold-hi); font-weight: 700; font-size: var(--type-body, .875rem); }
+.bank-allstocks > summary::-webkit-details-marker { display: none; }
+.bank-allstocks > summary span { margin-left: auto; font-size: var(--type-small, .75rem); }
+.bank-allstocks[open] > summary { margin-bottom: 6px; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .bank-creditline { margin: 0; }
+  .bank-pos { padding: 5px 8px; gap: 3px; }
+  .bank-pos-m span:nth-child(2) { display: none; }
+  .bank-pos-f small { display: none; }
+  .bank-ratio { height: 14px; } .bank-ratio span { line-height: 12px; }
+  .bank-cols.stocks .bank-stack > .bank-panel { padding: 6px 10px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-cols.stocks[data-trade="lev"] .bank-chartbox { display: none; }
+}
+@media (max-width: 760px) {
+  .bank-cols.stocks[data-trade="lev"] .bank-chartbox, .bank-cols.stocks[data-trade="order"] .bank-chartbox { display: none; }
+  .bank-pos-h { gap: 6px; } .bank-pos-m { gap: 0 8px; }
+  .bank-fld { gap: 4px; } .bank-chip { min-height: 32px; padding: 0 9px; }
+  .bank-stack > .bank-panel > .bank-ph { margin-bottom: 0; }
+}
