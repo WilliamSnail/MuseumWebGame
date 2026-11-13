@@ -380,6 +380,12 @@ export const NUM = {
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
+    // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
+    //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
+    //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
+    //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
+    stockIn: { start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
+      from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進預算池）、haltFrom／haltTo 台灣時間幾點停盤（22:00～05:00，不然晚上看完真實收盤再下單等於穩賺）
