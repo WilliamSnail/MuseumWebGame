@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "loan-from-house", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "Yuga Bot 銀行借的錢，改從莊家出", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "跟 Yuga 借的籌碼，現在是莊家借你的；還錢的時候，本金加利息還給莊家。到期沒還被直接扣的，也是回到莊家。",
+        "借多少、利息、幾天要還都沒變。",
+      ]],
+    ],
+  },
+  {
     id: "notices-merge", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "公佈欄：同壹天的更新併成壹張", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
