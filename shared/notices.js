@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "budget-freeze", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "拚經濟：預算用完會凍結", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "館方的預算池用完（剩 0 以下）的時候，拚經濟成功只撥平常的兩成，畫面會寫「預算凍結中」。預算池還有錢的時候完全照舊。",
+        "賭場「拚經濟」頁籤最下面的 Yuga Bot 日報，也會寫預算有沒有凍結。",
+      ]],
+    ],
+  },
+  {
     id: "fight-landscape", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機橫拿的打怪畫面重排", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
