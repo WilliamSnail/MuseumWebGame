@@ -728,3 +728,13 @@ body.reduce-motion .screen.onescreen-room.cellar-onescreen .onescreen-side .stor
   .screen.onescreen-room.cellar-onescreen .floor.locked .floor-door { width: min(100%, 5vh); }
   .screen.onescreen-room.cellar-onescreen .team-slot { --cellar-pepe: min(64px, 8.4vh); }
 }
+
+/* 展廳手機直拿（測試 session 11-13 複測）：舞台只有 206px，牆上的說明和「辦壹場主題展」占掉大半，展台上的佩佩被蓋住，看不到展品。
+   直拿把這兩段收掉（主題怎麼擺在上面「主題」那條點開看），舞台留給展台 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .hall-onescreen .hall-wall .theme-hint, .hall-onescreen .hall-wall .theme-name p, .hall-onescreen .ts-panel { display: none; }
+  .hall-onescreen .hall-wall { padding: 0; }
+  .hall-onescreen .hall-stage { gap: 2px; }
+  .hall-onescreen .hall-room { flex: 1 1 auto; align-content: center; min-height: 140px; }
+  .hall-onescreen .ped-art { width: 72px; height: 72px; margin-bottom: -12px; }
+}
