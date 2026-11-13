@@ -1,7 +1,7 @@
 // 股票（11-14，館外七支）：node test/casino_stock.test.cjs（npm test 也會跑）
 // 買賣守恆、手續費進預算池、換日調價和 drag、停盤時段、各種上限、舊錢包壞資料。數字讀 NUM。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x); // load() 的沙箱裡做出來的陣列原型不同，deepStrictEqual 過不了
 const T = (name, fn) => { const G = load(); G.US_IDS.length = 0; /* 11-14 起美股也有盤中（test/stocks_us.test.cjs 測）；這份測的是買賣、掛單、記帳的通用機制，用「沒有盤中」的股票（把美股名單清空）跑 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };

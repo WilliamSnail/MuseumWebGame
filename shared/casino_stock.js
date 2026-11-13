@@ -48,7 +48,8 @@ export function casStockIdHalt(house, id, day, t) {
   if (t == null || !Number.isFinite(+t)) return false;
   const mk = stMk(id), T = mk && house && house.stk && house.stk[mk];
   if (!mk) return false;
-  return !(T && T.day === day && T.st === "open");
+  if (!(T && T.day === day && T.st === "open")) return true;
+  return !!(NUM.casino.stock.direct && T.stale && T.stale[id]); // 直接用真實價：超過 staleMin 分鐘沒有新價，這支暫停（價停在最後一個價）
 }
 const stHaltWhy = id => (stockIsTw(id) ? CAS_STOCK.twHalt : CAS_STOCK.usHalt);
 
@@ -100,6 +101,7 @@ export function casStockHouseFix(house) {
   if (!stBox(H.peg)) H.peg = { seq: 0, done: {}, ev: [] };
   H.peg.seq = stN(H.peg.seq); if (!stBox(H.peg.done)) H.peg.done = {}; if (!Array.isArray(H.peg.ev)) H.peg.ev = [];
   H.peg.ev = H.peg.ev.filter(e => stBox(e) && stDef(e.id) && stN(e.from) > 0 && stN(e.to) > 0 && stN(e.seq) > 0).map(e => ({ seq: stN(e.seq), id: e.id, from: stN(e.from), to: stN(e.to) }));
+  if (!stBox(H.peg.dir)) H.peg.dir = {}; // dir[id]：這支已經換成「直接用真實價」（換過比例）
   if (!stBox(H.real)) H.real = {};
   for (const k of Object.keys(H.real)) { const r = H.real[k]; if (!STOCK_IDS.includes(k) || !stBox(r) || !(+r.px > 0)) delete H.real[k]; else H.real[k] = { sym: typeof r.sym === "string" ? r.sym.slice(0, 12) : "", px: +r.px, chg: Number.isFinite(+r.chg) ? +r.chg : 0 }; }
   if (!stBox(H.net)) H.net = { day: null, n: 0 };
@@ -125,7 +127,14 @@ export function casStockRoll(house, day, moves, reals) {
     const before = H.px[id], real = reals && reals[id], mult = stPegMult(id);
     H.prev[id] = before;
     let px = Math.max(C.floor, Math.round(before * (1 + m)));
-    if (real && real.px > 0 && mult > 0) {
+    if (C.direct) { // 直接用真實價（規劃 2.8l）：價 ＝ 倍數 × 前壹天收盤的真實價；沒有 drag、沒有拉回。第壹次換成這個價時錢包照比例換股數（市值不變）；真實價沒有（假日、還沒抓過）就維持原價
+      px = before;
+      if (real && real.px > 0 && mult > 0) {
+        const target = Math.max(C.floor, Math.round(mult * real.px));
+        stPegDirect(H, id, target, before);
+        px = target; H.prev[id] = target;
+      }
+    } else if (real && real.px > 0 && mult > 0) {
       const target = Math.max(C.floor, Math.round(mult * real.px));
       if (!H.peg.done[id]) { // 第壹次：換成真實的比例
         H.peg.seq++; H.peg.done[id] = H.peg.seq; H.peg.ev.push({ seq: H.peg.seq, id, from: before, to: target });
@@ -149,6 +158,17 @@ export function casStockRoll(house, day, moves, reals) {
   return { done: true, day, moves: used };
 }
 
+// 第壹次換成「直接用真實價」（規劃 2.8l）：價從 before 換成 target，記壹筆換股數（錢包照比例換、市值不變）、歷史價同比例換、全館持股數同比例換。之後不再換
+function stPegDirect(H, id, target, before) {
+  if (H.peg.dir[id]) return false;
+  H.peg.dir[id] = true;
+  if (!(before > 0) || target === before) return false;
+  H.peg.seq++; H.peg.done[id] = H.peg.seq; H.peg.ev.push({ seq: H.peg.seq, id, from: before, to: target });
+  const scale = target / before;
+  for (const d of Object.keys(H.hist)) if (H.hist[d][id] > 0) H.hist[d][id] = Math.max(NUM.casino.stock.floor, Math.round(H.hist[d][id] * scale));
+  H.held[id] = Math.floor(stN(H.held[id]) * before / target);
+  return true;
+}
 // ---------- 照真實股價的比例（規劃 2.8h） ----------
 const stPegMult = id => (stockIsTw(id) ? NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
 // 壹天最多拉回幾（小數）：2 × 手續費 − drag，小於來回手續費加 drag；手續費改了自動跟著降
@@ -178,7 +198,7 @@ export function casStockSetReal(house, tw, us, day, syms) {
     let src = null;
     if (doc.day === day && doc.R) src = { R: doc.R, prev: doc.prevReal };
     else {
-      const old = doc.day && doc.day < day ? { R: doc.R, prev: doc.prevReal, day: doc.day } : null;
+      const old = doc.day && doc.day < day && doc.R && Object.keys(doc.R).length ? { R: doc.R, prev: doc.prevReal, day: doc.day } : null;
       const key = doc.days ? Object.keys(doc.days).filter(d => d < day && doc.days[d].close).sort().pop() : null;
       src = old && (!key || old.day >= key) ? old : key ? { R: Object.fromEntries(Object.entries(doc.days[key].close).map(([k, v]) => [k, { px: v }])), prev: doc.days[key].prev } : null;
     }
@@ -210,6 +230,21 @@ export function casStockPegSync(w, house) {
     S.peg = e.seq;
   }
   S.peg = Math.max(S.peg, H.peg.seq);
+  casStockHoldCost(w, house, S, H);
+}
+// 持有成本（規劃 2.8l，取代 drag）：每過壹天（換日），館外股票持股市值的 holdPct% 從錢包搬進預算池（搬，不是燒掉）。壹次最多補 7 天；
+// 第壹次碰到（沒有記錄）只記今天，不補扣。持股市值用現在的價算（換日後第壹次碰到錢包時扣）
+function casStockHoldCost(w, house, S, H) {
+  const C = NUM.casino.stock;
+  if (!C.direct || !stDay(H.day)) return;
+  const last = stDay(S.hold0) ? S.hold0 : null;
+  S.hold0 = H.day;
+  if (!last || last >= H.day) return;
+  const days = Math.min(7, Math.round((Date.parse(H.day + "T00:00:00Z") - Date.parse(last + "T00:00:00Z")) / 86400000));
+  let mv = 0;
+  for (const id of Object.keys(S.own)) if (stDef(id) && H.px[id] > 0) mv += S.own[id] * H.px[id];
+  const cost = Math.min(Math.max(0, w.chips), Math.floor(mv * C.holdPct / 100 * days));
+  if (cost > 0) { w.chips -= cost; house.budget += cost; casCount(house, "stockHold", cost); }
 }
 
 // ---------- 買賣 ----------
@@ -461,7 +496,13 @@ export function casStockIntraApply(house, mk, data, day, t) {
   if (cur && cur.openIdx != null && m >= cur.openIdx && H.hist[day]) {
     T.from = cur.openIdx; T.idx = Math.min(m, mkLen(mk, day));
     for (const id of M.ids) {
-      const arr = cur.ser && cur.ser[id], base = H.hist[day][id];
+      const arr = cur.ser && cur.ser[id];
+      let base = H.hist[day][id];
+      if (C.direct && cur.prevReal && stOkPx(cur.prevReal[id])) { // 直接用真實價：基準 ＝ 倍數 × 真實前壹收盤，今天的漲跌 ＝ 真實的漲跌（同壹個前壹收盤）
+        base = Math.max(C.floor, Math.round(stPegMult(id) * cur.prevReal[id]));
+        stPegDirect(H, id, base, H.hist[day][id]); // 換日時沒有真實價（第壹次、休市），第壹次開盤才換比例
+        H.hist[day][id] = base; H.prev[id] = base;
+      }
       if (!Array.isArray(arr) || !arr.length || !(base > 0)) continue;
       const i = Math.min(T.idx, arr.length - 1);
       T.ser[id] = arr.slice(cur.openIdx, i + 1).map(r => stTwPx(base, r));
@@ -475,7 +516,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
     const r = rec(d);
     if (!r || r.openIdx == null || !r.ser) continue;
     T.past[d] = {}; T.pastFrom[d] = r.openIdx;
-    for (const id of M.ids) if (Array.isArray(r.ser[id]) && H.hist[d][id] > 0) T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(H.hist[d][id], x));
+    for (const id of M.ids) { const b = C.direct && r.prev && stOkPx(r.prev[id]) ? Math.max(C.floor, Math.round(stPegMult(id) * r.prev[id])) : H.hist[d][id]; if (Array.isArray(r.ser[id]) && b > 0) T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(b, x)); }
   }
   return T;
 }

@@ -18,7 +18,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
 import { taipeiDay } from "./shared/logic.js";
 import { outStockWeekend } from "./shared/stocks.js";
-import { TW_IDS, twApply, twDocRoll, twIdx, twNeed } from "./shared/stocks_tw.js";
+import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "./shared/stocks_tw.js";
 
 const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");
@@ -58,6 +58,48 @@ export async function fetchMis(nowMs) {
   if (!r.ok) throw new Error("證交所回 " + r.status);
   return parseMis(await r.json(), ymd, nowMs);
 }
+
+// 補最近壹次收盤（規劃 2.8l）：證交所介面在休市時回「上壹個交易日」的資料（d 是那天的日期、z 是最後成交價、y 是前壹收盤）。
+// 回傳 { day: YYYY-MM-DD, close: { id: z }, prev: { id: y } }；沒有就 null
+export function parseMisClose(json) {
+  const arr = json && Array.isArray(json.msgArray) ? json.msgArray : [];
+  const num = v => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? n : null; };
+  const close = {}, prev = {};
+  let day = null;
+  for (const it of arr) {
+    const id = Object.keys(TW_SYMBOLS).find(k => TW_SYMBOLS[k] === it.c), m = /^(\d{4})(\d{2})(\d{2})$/.exec(String(it.d || ""));
+    if (!id || !m || num(it.z) == null || num(it.y) == null) continue;
+    const d = m[1] + "-" + m[2] + "-" + m[3];
+    if (day && d !== day) continue;
+    day = d; close[id] = num(it.z); prev[id] = num(it.y);
+  }
+  return day ? { day, close, prev } : null;
+}
+export async function fetchMisClose(nowMs) {
+  const ex = Object.values(TW_SYMBOLS).map(c => `tse_${c}.tw`).join("|");
+  const r = await fetch(`${MIS_URL}?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${nowMs}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error("證交所回 " + r.status);
+  return parseMisClose(await r.json());
+}
+// 每天早上補壹次（休市、週末也補）：最近壹次收盤寫進 stocksTw/latest 的 days（twBackfill）。回傳做了什麼的字串
+export async function stockTwBackfill(nowMs, fetchFn, dbx) {
+  const D = dbx || db(), ref = D.doc("stocksTw/latest");
+  let got = null;
+  try { got = await (fetchFn || fetchMisClose)(nowMs); } catch (e) { console.error("台股最近壹次收盤抓不到：" + String((e && e.message) || e).slice(0, 200)); return "抓不到"; }
+  if (!got) return "沒資料";
+  const today = taipeiDay(nowMs);
+  return await D.runTransaction(async tx => {
+    const s = await tx.get(ref), old = s.exists ? s.data() : null;
+    const doc = old ? twDocRoll(old, old.day && old.day < today ? today : old.day, 5) : twDocNew(today);
+    if (!twBackfill(doc, got.day, got.close, got.prev)) return "不用補";
+    doc.updatedAt = nowMs;
+    tx.set(ref, doc);
+    return "補了 " + got.day;
+  });
+}
+export const stockTwBackfillTick = onSchedule({ schedule: "5 6 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
+  console.log("stockTwBackfill", await stockTwBackfill(Date.now()));
+});
 
 let secretMem = null;
 // 亂數種子用的伺服器祕密（見檔頭）
@@ -121,7 +163,7 @@ export const stockTwTick = onSchedule({ schedule: "* 9-13 * * 1-5", timeZone: "A
 // ---------- 給 functions/casino.js 讀 ----------
 // 今天的資料放在記憶體 TW_CACHE_MS 毫秒（錨點每 15 分鐘才變，價是用時間算的，不必每次都讀）。讀不到就用舊的，沒有就當沒資料（台股不開）
 let twCache = null, twCacheAt = 0;
-const TW_CACHE_MS = 20 * 1000;
+const TW_CACHE_MS = 8 * 1000; // 直接用真實價：價每分鐘變，快取壹下下就好
 export async function stocksTw() {
   if (twCache && Date.now() - twCacheAt < TW_CACHE_MS) return twCache;
   try { const s = await docRef().get(); twCache = s.exists ? s.data() : null; }
