@@ -14,7 +14,7 @@ import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } f
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
-import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
@@ -132,7 +132,7 @@ SCREENS.commission = root => {
   const lesson = ADDONS.commission ? ADDONS.commission() : null;
   const lessonLeft = lesson && lesson.querySelector(".day-limit b") ? lesson.querySelector(".day-limit b").textContent.replace(/（.*）/, "").replace(/，.*/, "") : "";
   const learn = [
-    lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("onescreen-lesson-layer"); m.card.append(lesson); }, "onescreen-big") : null,
+    lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("onescreen-lesson-layer"); m.card.prepend(h("button", { type: "button", class: "mini-x", "aria-label": "關閉", title: "關閉", onClick: () => m.close() }, "×")); m.card.append(lesson, btn("關閉", () => m.close(), "primary")); closeOnOutside(m); }, "onescreen-big") : null,
     PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "onescreen-big") : null];
   const side = h("aside", { class: "onescreen-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
   const drawer = onescreenDrawer(strip);

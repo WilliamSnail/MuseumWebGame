@@ -92,6 +92,10 @@
 .onescreen-room .onescreen-big small { font-weight: 400; font-size: .72rem; color: #5A4030; }
 .onescreen-room .onescreen-big:hover { filter: brightness(1.08); }
 .onescreen-lesson-layer .lesson-box { margin: 0; }
+/* 上課的視窗比畫面高時在自己裡面捲；右上角的 × 壹直看得到（翊文 11-13：「委託櫃檯沒有退出鍵」） */
+.onescreen-lesson-layer { position: relative; max-height: calc(100dvh - 32px); overflow-y: auto; }
+.onescreen-lesson-layer .mini-x { position: sticky; top: 0; align-self: flex-end; flex: none; margin: -8px -8px -36px 0; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--gold-deep, #8C6A2E); background: var(--parch, #F6EBD0); color: var(--gold-deep, #8C6A2E); font-size: 1.4rem; line-height: 1; cursor: pointer; z-index: 2; }
+.onescreen-lesson-layer .mini-x:hover { background: #FFF6DE; }
 /* 擠壹點：抽屜的縮圖小壹點、壹鍵交件的說明最多兩行、側欄的框細壹點 */
 .onescreen-room .onescreen-drawer .strip-item { width: 76px; min-width: 76px; height: 86px; padding: 6px; }
 .onescreen-room .onescreen-drawer .strip-item .si-art { width: 56px; height: 56px; }
