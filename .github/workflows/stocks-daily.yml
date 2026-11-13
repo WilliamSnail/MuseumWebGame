@@ -1,0 +1,55 @@
+# 館外股票的每日資料（11-13）：抓前一個交易日的真實漲跌幅，存成 JSON（tools/stocks_fetch.cjs）。
+# 不用金鑰、不碰正式 Firebase。結果放在獨立的資料分支 stocks-data 的 daily.json（不推 main、不觸發部署）。
+# 台灣 05:30 跑一次（美股冬令 05:00 收盤，夏令 04:00；遊戲 05:00 換日），06:30 補一次；沒變就不 commit。
+# 也可以手動按（Actions → 館外股票每日資料 → Run workflow）。
+name: 館外股票每日資料
+
+on:
+  schedule:
+    - cron: "30 21 * * *" # 台灣每天 05:30
+    - cron: "30 22 * * *" # 補一次：台灣 06:30
+  workflow_dispatch:
+
+concurrency:
+  group: stocks-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: write # 只推 stocks-data 這個資料分支
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 接上資料分支的舊資料
+        run: |
+          if git fetch --depth=1 origin stocks-data 2>/dev/null; then
+            git show FETCH_HEAD:daily.json > content/stocks/daily.json
+          fi
+      - name: 抓資料
+        run: node tools/stocks_fetch.cjs
+      - name: 檢查格式
+        run: node tools/stocks_fetch.cjs --check
+      - name: 存到 stocks-data 分支
+        run: |
+          cp content/stocks/daily.json "$RUNNER_TEMP/daily.json"
+          git config user.name "stocks-bot"
+          git config user.email "stocks-bot@users.noreply.github.com"
+          if git fetch --depth=1 origin stocks-data 2>/dev/null; then
+            git checkout -f -B stocks-data FETCH_HEAD
+          else
+            git checkout --orphan stocks-data
+            git rm -rfq . 
+          fi
+          cp "$RUNNER_TEMP/daily.json" daily.json
+          git add daily.json
+          # updated 欄位每次都會變，只有 days 變了才算有新資料
+          if git diff --cached --quiet; then echo "沒有變"; exit 0; fi
+          if git rev-parse -q --verify HEAD >/dev/null && [ "$(git show HEAD:daily.json | node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0,"utf8")).days))')" = "$(node -e 'process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync("daily.json","utf8")).days))')" ]; then echo "只有時間變，不 commit"; exit 0; fi
+          git commit -qm "館外股票每日資料 $(date -u +%F)"
+          git push origin stocks-data
