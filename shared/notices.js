@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "us-early-close-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "美股提早收盤日：11/27、12/24 這種日子，美股 13:00（美東）就收盤", publish: "2026-11-24", expire: "2026-11-30",
+    sections: [
+      ["改了什麼", [
+        "真實的美股在感恩節隔天（11/27）、聖誕夜（12/24）、7/3 這幾天提早在美東 13:00 收盤。遊戲裡的美股也照真實的收盤：那幾天只動到 13:00 美東（台灣時間冬令隔天 02:00），收盤之後不動，掛單沒成交就取消。",
+        "其他日子照舊（美東 09:30～16:00）。",
+      ]],
+    ],
+  },
+  {
     id: "bank-lev", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "股票多了槓桿、放空、當沖", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

@@ -30,7 +30,7 @@ import { CAS_STOCK } from "./casino_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { casFill, casNum } from "./casino.js";
 import { outStockWeekend } from "./stocks.js";
-import { TW_IDS, US_IDS, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "./stocks_tw.js";
+import { TW_IDS, US_IDS, mkLen, usEarlyClose, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "./stocks_tw.js";
 
 const stBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const stN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -279,7 +279,7 @@ export function casStockView(w, house, day, t, stale) {
   return {
     list, fee: C.feePct / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
     tw: { state: H.tw.day === day ? H.tw.st : "closed", from: C.tw.from, len: C.tw.len },
-    us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: C.us.len }, // from：美東當天 00:00 起算的分鐘（570 ＝ 09:30）；len 390 分鐘
+    us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: mkLen("us", day), early: usEarlyClose(day) }, // from：美東當天 00:00 起算的分鐘（570 ＝ 09:30）；len 390 分鐘
     usOpenAt: usOpenMs(day), // 這個遊戲日美股開盤的毫秒（日光節約已算進去；畫面要顯示台灣時間幾點開盤用 new Date(usOpenAt)，收盤 ＝ usOpenAt ＋ len×60000）
    
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
@@ -429,7 +429,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
   let st;
   if (outStockWeekend(day) || !rolled) st = m < 0 ? "pre" : "closed";
   else if (m < 0) st = "pre";
-  else if (cur && cur.openIdx != null) st = m < cur.openIdx ? "pending" : m < MC.len ? "open" : "closed";
+  else if (cur && cur.openIdx != null) st = m < cur.openIdx ? "pending" : m < mkLen(mk, day) ? "open" : "closed";
   else if (cur && cur.closed) st = "closed";
   else st = m < MC.giveUp ? "pending" : "closed";
   T.day = day; T.st = st; T.from = 0; T.idx = 0; T.ser = {};
@@ -437,7 +437,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
   //   沒有基準價時盤中價不會動到 H.px（下面那段跑不到），所以這時的 H.px 就是今天換日後的開盤基準
   if (rolled && !H.hist[day]) H.hist[day] = Object.assign({}, H.px);
   if (cur && cur.openIdx != null && m >= cur.openIdx && H.hist[day]) {
-    T.from = cur.openIdx; T.idx = Math.min(m, MC.len);
+    T.from = cur.openIdx; T.idx = Math.min(m, mkLen(mk, day));
     for (const id of M.ids) {
       const arr = cur.ser && cur.ser[id], base = H.hist[day][id];
       if (!Array.isArray(arr) || !arr.length || !(base > 0)) continue;
@@ -471,5 +471,5 @@ export function casStockTwSettle(house, tw, day) {
 export function casStockUsSettle(house, us, day) {
   const H = casStockHouseFix(house);
   if (!H.day || H.day === day || !stDay(day)) return;
-  casStockUsApply(house, us, H.day, usOpenMs(H.day) + (NUM.casino.stock.us.len + 1) * 60000);
+  casStockUsApply(house, us, H.day, usOpenMs(H.day) + (mkLen("us", H.day) + 1) * 60000);
 }
