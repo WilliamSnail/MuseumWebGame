@@ -11,7 +11,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
-import { casFxMul } from "./casino_gdp.js";
+import { casBankEcon, casFxMul } from "./casino_gdp.js";
 import { CAS_BANK } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
@@ -129,7 +129,7 @@ export function casBankBreak(w, id) {
 export function casBankHall(w, day, house) {
   const save = casBankView(w, day), loan = casLoanView(w, day), bonds = house ? casBondView(w, house, day) : null;
   const owe = loan.list.reduce((s, x) => s + x.owe, 0), held = save.save + save.terms.reduce((s, x) => s + x.amt, 0) + casBondHeld(w) + (bonds ? bonds.iou : 0);
-  return { cash: w.chips, save, loan, bonds, stocks: null, econ: null, net: w.chips + held - owe };
+  return { cash: w.chips, save, loan, bonds, stocks: null, econ: house ? casBankEcon(house) : null, net: w.chips + held - owe };
 }
 // 畫面要的
 export function casBankView(w, day) {
