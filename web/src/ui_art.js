@@ -173,7 +173,7 @@ export function auctionPane() {
   const draw = () => {
     if (!ready() && !fake()) { box.replaceChildren(mk("gal-empty", h("p", null, "登入之後才看得到拍賣。"))); return; }
     if (!auc) { box.replaceChildren(mk("gal-empty", h("p", null, aucFailed ? "現在連不上拍賣行，晚點再來。" : "翻拍賣目錄中……"))); return; }
-    const A = auc;
+    const A = auc, phone = window.innerWidth < 761 || window.innerHeight < 501; // 手機：拍我的畫、收標結果收起來，點開才看（測試 11-14：表單在很下面要捲很遠）
     const lot = l => {
       const own = !!l.mineSeller, art = ART_HOOKS.art ? ART_HOOKS.art(l.work) : null;
       const inp = h("input", { type: "number", inputmode: "numeric", class: "gal-in", min: String(l.reserve), step: String(NUM.auction.unit || 1000), value: aucForm.bid[l.id] != null ? String(aucForm.bid[l.id]) : l.mine != null ? String(l.mine) : String(l.reserve), "aria-label": `出價（底價 ${casNum(l.reserve)}）`, onInput: e => { aucForm.bid[l.id] = e.target.value === "" ? null : Number(e.target.value); } });
@@ -204,11 +204,11 @@ export function auctionPane() {
     box.replaceChildren(
       aucMsg && aucMsg.text ? h("p", { class: "gal-msg " + aucMsg.tone, role: "status" }, aucMsg.text) : null,
       h("div", { class: "gal-lots" }, A.open.length ? A.open.map(lot) : h("p", { class: "gal-empty" }, aucFill(CAS_AUC.rule, { days: NUM.auction.closeDays, hour: NUM.auction.closeHour, lo: A.floorPct || 80, hi: A.ceilPct || 150, fee: A.feePct || NUM.auction.feePct, age: A.minAge || NUM.auction.minAge }))),
-      h("div", { class: "gal-sell" },
-        h("h3", { class: "gal-h" }, "拍我的畫"),
+      h("details", { class: "gal-sell", open: !phone || aucForm.listId ? "" : null },
+        h("summary", { class: "gal-h gal-sum" }, "拍我的畫", h("span", { class: "gal-open" }, "點開 ▾"), h("span", { class: "gal-close" }, "收起來 ▴")),
         h("p", { class: "gal-hold" }, `還能同時拍 ${A.listLeft} 幅${A.hold ? `・出價鎖住 ${casNum(A.hold)} 籌碼` : ""}`),
         h("div", { class: "gal-sell-row" }, sel, resv, range, btn(`${CAS_AUC.list}（${NUM.auction.closeDays} 天）`, () => aucDo("list", { id: listId, reserve: Number(aucForm.reserve) }), "small gal-btn primary", { disabled: canList ? null : true }))),
-      h("div", { class: "gal-last" }, h("h3", { class: "gal-h" }, "收標結果（只公開得標價）"),
+      h("details", { class: "gal-last", open: phone ? null : "" }, h("summary", { class: "gal-h gal-sum" }, "收標結果（只公開得標價）", h("span", { class: "gal-open" }, "點開 ▾"), h("span", { class: "gal-close" }, "收起來 ▴")),
         A.done && A.done.length ? h("ul", null, A.done.map(x => h("li", null, h("b", null, x.title), h("i", { class: "gal-tier" }, x.tierName), x.price != null ? h("span", null, casNum(x.price)) : h("span", { class: "gal-flow" }, "流標"), h("small", null, fmtWhen(x.closedAt).split(" ")[0])))) : h("p", { class: "gal-range" }, "還沒有收標的拍賣。")));
   };
   const rerenderAuc = () => draw();

@@ -129,3 +129,37 @@ export const CAS_NEWS = {
   down: "館內 GDP 比前七天少了 {p}%。",
   frozen: "預算池見底，拚經濟的撥款凍結中。",
 };
+
+// ---------- 世界股市新聞（11-14，翊文：「館內訊息以外可以抓最新世界相關股市訊息改成遊戲內版本」） ----------
+// 每天排劇情的排程把「昨天外面股市發生的事」改寫成遊戲裡的新聞，寫在 content/weeks/<週>/dN.json 的 market（3～5 則）。
+// 只描述已經發生的事、用模糊的話，不放真名、不放數字、不預測。格式和規矩看 content/README.md、content/排程說明.md 一之十。
+// copy_shared.cjs 把它打包進 functions/shared/day_data.js（依日期），這裡只負責挑出要給畫面的樣子。
+export const WORLD_NEWS = { min: 3, max: 5, title: 14, line: 40, days: 3, tones: ["up", "down", "flat"] };
+// 整理壹則新聞（壞的回 null）。refs 換成 [{ id, name }]，只留遊戲裡有的股票（OUT_STOCKS 的 id）
+export function casWorldItem(x, stocks) {
+  if (!x || typeof x !== "object" || typeof x.title !== "string" || typeof x.line !== "string") return null;
+  const title = x.title.trim(), line = x.line.trim();
+  if (!title || !line) return null;
+  const tone = WORLD_NEWS.tones.includes(x.tone) ? x.tone : "flat";
+  const ids = Array.isArray(x.ref) ? x.ref : typeof x.ref === "string" ? [x.ref] : [];
+  const refs = [];
+  for (const id of ids) { const s = (stocks || []).find(d => d.id === id); if (s && !refs.some(r => r.id === id)) refs.push({ id: s.id, name: s.name }); }
+  return { title: [...title].slice(0, WORLD_NEWS.title).join(""), line: [...line].slice(0, WORLD_NEWS.line).join(""), tone, refs };
+}
+// 給銀行廳「財報」頁的世界新聞：dayData ＝ { "YYYY-MM-DD": { market: [...] } }（functions/shared/day_data.js 的 DAY_DATA）。
+// 回 { days: [{ day, items: [{ title, line, tone: "up"|"down"|"flat", refs: [{ id, name }] }] }] }：今天（或最近有寫的那天）起往前最多 3 天，新的在前；沒有就是空陣列
+export function casWorldNews(dayData, day, stocks) {
+  const days = [];
+  if (!dayData || typeof dayData !== "object" || !day) return { days };
+  const keys = Object.keys(dayData).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && k <= day).sort().reverse();
+  for (const k of keys) {
+    const m = dayData[k] && dayData[k].market;
+    if (!Array.isArray(m)) continue;
+    if (gdDaysBetween(k, day) > 7) break; // 太久以前的不放
+    const items = m.slice(0, WORLD_NEWS.max).map(x => casWorldItem(x, stocks)).filter(Boolean);
+    if (items.length) days.push({ day: k, items });
+    if (days.length >= WORLD_NEWS.days) break;
+  }
+  return { days };
+}
+const gdDaysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);

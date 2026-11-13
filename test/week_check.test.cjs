@@ -79,6 +79,31 @@ T("今天的現實世界 real：最多 3 則、50 字、照新聞的禁用字；
   expectErr(c => { c.files["2026-W47/d2.json"].real = ["壹樣的", "壹樣的"]; }, /重複/);
   expectErr(c => { c.files["備用/一天/插曲1.json"].real = ["台北有展覽。"]; }, /備用的一天不能寫 real/);
 });
+T("世界股市新聞 market：3～5 則、字數、遊戲內 id、真名和預測和數字都擋；備用的一天不能寫", () => {
+  const it = (title, line, tone = "up", ref = ["handbrain"]) => ({ title, line, tone, ref });
+  const ok = () => [it("掌心晶片鋪傳出訂單", "島上傳出新壹批單。"), it("夜光街發涼", "攤位傳出擔心。", "down", ["nightindex"]), it("電話行照常", "壹切照舊。", "flat", "linetower")];
+  const good = regular(); good.files["2026-W47/d2.json"].market = ok();
+  assert.ok(!has(run(good), /market/), "好的要過：" + run(good).errors.join(" / "));
+  const bad = (m, re) => expectErr(c => { c.files["2026-W47/d2.json"].market = m; }, re);
+  bad("x", /market.*陣列/);
+  bad(ok().slice(0, 2), /3～5 則/);
+  bad(ok().concat(ok()), /3～5 則/);
+  bad(ok().map((x, i) => i ? x : it("壹".repeat(15), "壹")), /太長了/);
+  bad(ok().map((x, i) => i ? x : it("好", "壹".repeat(41))), /太長了/);
+  bad(ok().map((x, i) => i ? x : it("好", "壹", "sideways")), /tone/);
+  bad(ok().map((x, i) => i ? x : it("好", "壹", "up", ["NVDA"])), /不是遊戲裡的館外股票 id/);
+  bad(ok().map((x, i) => i ? x : it("輝達新晶片", "壹")), /不能寫的字「輝達」/);
+  bad(ok().map((x, i) => i ? x : it("好", "台積電漲了")), /禁用字「台積電」/);
+  bad(ok().map((x, i) => i ? x : it("好", "島上鑄晶坊明天會漲")), /不能寫的字「明天會」/);
+  bad(ok().map((x, i) => i ? x : it("好", "漲了 3 個百分點")), /數字/);
+  bad(ok().map((x, i) => i ? x : it("好", "漲了二%")), /數字/);
+  bad(ok().map((x, i) => i ? x : it("好", "NVDA 大漲")), /英文字母/);
+  bad(ok().map((x, i) => i ? x : { title: "好", line: "壹", tone: "up", url: "x" }), /不認得的欄位/);
+  const dup = ok(); dup[1] = dup[0]; bad(dup, /重複/);
+  const nameOk = regular(); nameOk.files["2026-W47/d2.json"].market = ok().map((x, i) => i ? x : it("銀蘋果工坊排隊", "壹群人在排。", "up", ["silverapple"]));
+  assert.ok(!has(run(nameOk), /market/), "遊戲裡的名字（銀蘋果）不能被當成真名擋掉");
+  expectErr(c => { c.files["備用/一天/插曲1.json"].market = ok(); }, /備用的一天不能寫 market/);
+});
 T("任務：種類要存在、每日任務做得完、不放一定要掉理智的", () => {
   expectErr(c => { c.files["2026-W47/d1.json"].daily[0].kind = "visitFriend"; }, /沒有「visitFriend」這種任務/);
   expectErr(c => { c.files["2026-W47/d1.json"].daily[0] = { id: "d1a", kind: "view", exhibit: "strange", reward: { insp: 2 } }; }, /一定要掉理智/);

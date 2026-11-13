@@ -32,12 +32,13 @@ import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/c
 import { casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
+import { DAY_DATA } from "./shared/day_data.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
-import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockRoll, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
+import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -45,8 +46,8 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
-import { stocksTw, twSecret, twStale } from "./stock_tw.js";
-import { stocksUs, usStale } from "./stock_us.js";
+import { TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js";
+import { US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
@@ -85,10 +86,12 @@ export async function playCore(me, email, opts, fn) {
       casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
       casStockTwSettle(house, tw, day); // 換日以前先把上一天台股的收盤價套上去
       casStockUsSettle(house, us, day); // 美股也是（冬令收盤剛好是 05:00 換日那一刻，這裡補上最後一個價）
-      casStockRoll(house, day, {}); // 股票換日：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino_stock.js）
+      casStockRoll(house, day, {}, casStockReals(house, tw, us)); // 股票換日（照真實比例換價位、開盤拉回，規劃 2.8h）：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino_stock.js）
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
       casInRoll(house, day, house.econ && house.econ.b); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
+      casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
@@ -199,7 +202,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale), stock: casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), stock: casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
