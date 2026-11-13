@@ -102,8 +102,9 @@ function casHidden(ch) {
   const n = ch.codePointAt(0);
   return n < 0x20 || n === 0x7f || (n >= 0x200b && n <= 0x200f) || (n >= 0x2028 && n <= 0x202e) || (n >= 0x2060 && n <= 0x206f) || n === 0xfeff;
 }
-export function casBetCheck(text, chips) {
-  const C = NUM.casino;
+// maxBet：這一手實際的最大注（莊家吃緊／破產時比 NUM.casino.maxBet 小）；沒給就用 NUM.casino.maxBet
+export function casBetCheck(text, chips, maxBet) {
+  const C = NUM.casino, top = Number.isFinite(+maxBet) && maxBet != null ? Math.min(C.maxBet, Math.floor(+maxBet)) : C.maxBet;
   const raw = typeof text === "number" ? String(text) : String(text == null ? "" : text);
   const typed = [...raw].filter(ch => !casHidden(ch)).join("").replace(/,/g, "").trim().slice(0, 24);
   const unit = /^([0-9]+(?:[.][0-9]+)?)\s*(萬|億)$/.exec(typed); // 也可以打「10萬」「1.5億」
@@ -115,7 +116,7 @@ export function casBetCheck(text, chips) {
   if (!(n > 0) || !Number.isInteger(n)) return { ok: false, line: CAS_TEXT.betWeird };
   if (n > chips) return { ok: false, line: casFill(CAS_TEXT.betPoor, { chips: casNum(chips) }) };
   if (n < C.minBet) return { ok: false, line: casFill(CAS_TEXT.betSmall, { min: casNum(C.minBet) }) };
-  if (n > C.maxBet) return { ok: false, line: casFill(CAS_TEXT.betBig, { max: casNum(C.maxBet) }) };
+  if (n > top) return { ok: false, line: casFill(top < C.maxBet ? CAS_TEXT.betBigRisk : CAS_TEXT.betBig, { max: casNum(top) }) };
   return { ok: true, bet: n };
 }
 

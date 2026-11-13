@@ -61,6 +61,14 @@ export function casHouseMove(house, src, n) {
   bkAdd(casLedFix(house, ["mint", "flow"]).flow, src, n);
   return n;
 }
+// 莊家的錢消失 n（還外面世界的貸款：本金加利息，流回館外）。house.led.burn 記來源
+export function casHouseBurn(house, src, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house.bankroll -= n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn"]).burn, src, n);
+  return n;
+}
 // 莊家憑空多 n（破產重開）
 export function casHouseMint(house, src, n) {
   n = bkNz(n);
@@ -71,7 +79,7 @@ export function casHouseMint(house, src, n) {
 }
 
 // 存在銀行的（跟 casino_bank.js 的 casBankHeld 壹樣；這個檔不 import 別的檔，所以自己算）
-const bkHeld = w => (bkBox(w.bank) ? bkNz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, x) => s + bkNz(x && x.amt), 0) : 0) : 0);
+const bkHeld = w => bkNz(bkBox(w.stk) ? w.stk.hold : 0) + (bkBox(w.bank) ? bkNz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, x) => s + bkNz(x && x.amt), 0) : 0) : 0);
 const bkDaysBetween = (a, b) => { const f = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); };
 const bkSumObj = o => Object.values(bkBox(o) ? o : {}).reduce((s, x) => s + bkNz(x), 0);
 export const casBookSumObj = bkSumObj;
@@ -82,7 +90,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {}, act: {} } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
@@ -92,7 +100,7 @@ export function casBookSnap(wallets, house, inplay, day) {
     s.bank += bkHeld(w); // 存在 Yuga Bot 銀行的（活存＋定存，shared/casino_bank.js）：還是玩家的錢
     if (bkBox(w.led)) { bkMerge(s.mint, w.led.mint); bkMerge(s.burn, w.led.burn); }
   }
-  if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); }
+  if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
@@ -100,7 +108,7 @@ export function casBookSnap(wallets, house, inplay, day) {
 export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
-export const casBookBurned = s => bkSumObj(s.burn);
+export const casBookBurned = s => bkSumObj(s.burn) + bkSumObj(s.house && s.house.burn);
 // 守恆：total － minted ＋ burned 應該等於開場的總和（budgetStart ＋ houseStart；各錢包的開場籌碼也算 mint，所以不用另外加）。回傳差多少（0＝對）
 export const casBookGap = (s, opening) => casBookTotal(s) - casBookMinted(s) + casBookBurned(s) - opening;
 
@@ -126,7 +134,7 @@ export function casBookDiff(a, b) {
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),
     museum: bkNz(b.house.museum) - bkNz(a.house.museum),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
-    houseMint: bkDiffObj(a.house.mint, b.house.mint), flow: bkDiffObj(a.house.flow, b.house.flow),
+    houseMint: bkDiffObj(a.house.mint, b.house.mint), houseBurn: bkDiffObj(a.house.burn, b.house.burn), flow: bkDiffObj(a.house.flow, b.house.flow),
     act: bkDiffObj(a.house.act, b.house.act), active7: bkNz(b.active7),
   };
 }

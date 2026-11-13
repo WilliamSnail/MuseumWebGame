@@ -308,9 +308,19 @@ export const NUM = {
     // 換日印錢補莊家先關掉（翊文 11-14：莊家 −8.3 億，換日會印 8 億多補回來，「這不行，莊家要跟整個經濟系統接軌才行」）。
     // false＝莊家破產就停在負的，不印錢；接軌的做法（跟館方或外面世界借、要還）設計好再改。
     houseResetMint: false,
+    // 莊家跟整個經濟接軌（規劃 2.11，翊文 11-14「好這三次都做」）：破產過了換日不印錢，改借錢、記債、用賺的錢還。
+    //   reserve 重開補到多少；先跟預算池借（預算池超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
+    //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
+    //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先預算池、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
+    houseLoan: { on: true, reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
+    // 莊家破產／吃緊的時候限制流出（規劃 2.11 第二點）：不是處罰玩家，是不讓莊家掉得更深。贏的錢不收回。
+    //   吃緊（0 ～ health.low）：最大注 max(betMin, 莊家的錢 × betTightPct%)、壹天總賠付（21 點贏的＋大禮包）≤ 莊家的錢 × payTightPct% ＋ payFlat、壹包最多賠 max(drawFlat, 莊家的錢 ÷ 2)
+    //   破產（≤ 0）：最大注 betBroke、壹天總賠付 ≤ payBrokeFlat、壹包最多賠 drawFlat。betMult：壹手最多可能賠幾倍的注（雙倍、分牌），用來算這手會不會超過今天的額度
+    risk: { betTightPct: 2, betMin: 1000000, betBroke: 1000000, payTightPct: 5, payFlat: 5000000, payBrokeFlat: 5000000, drawFlat: 5000000, betMult: 3 },
     // 外面世界壹次撥給莊家的錢（翊文 11-13：「先編個理由，比如文化部補助博物館從世界經濟撥給10億給博物館」）。
     // 每個 id 只撥壹次（記在 house.grants），記成館外進來（casHouseMint，來源 grant），日報「從館外進來」看得到。
-    grants: [{ id: "moc-2026-11", amt: 1000000000 }],
+    // 11-14 翊文：「好，那改成文化部借款」：記成債（house.debt.culture，不計利息），莊家超過準備金的部分拿去還（先預算池、再這個、最後外面世界貸款），還的時候燒掉。
+    grants: [{ id: "moc-2026-11", amt: 1000000000, name: "文化部借款" }],
     // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino_wallet.js 的 casBorrow、casRepay、casLoanRoll
     loan: {
       limit: 1000000,       // 壹開始的額度（沒還的本金加起來不能超過）。翊文 11-10：「借款最高可以100萬」，問答選「壹開始就能借 100 萬」
@@ -320,12 +330,16 @@ export const NUM = {
       interestPct: 10,      // 利息：每筆固定 10%（借 10 萬還 11 萬，提早還也是）
       days: 3,              // 第 D 天借的，第 D+3 天結束前要還；第 D+4 天還沒還就從籌碼直接扣，扣到負的也扣
       min: 10000,           // 壹次最少借多少
+      // 額度上限和莊家的限制（規劃 2.11a，翊文 11-14「好」）：capMax 額度最多；levelPerDay 壹個人壹天最多升幾級（當天借當天還的不升）；
+      // outPct／outMin：全館沒還的本金 ≤ max(outMin, 莊家的錢 × outPct%)；借款要莊家的錢夠（莊家 ≤ 0 暫停）；欠款中（錢包是負的）額度鎖在 limit
+      capMax: 20000000, levelPerDay: 3, outPct: 30, outMin: 5000000,
       quick: [100000, 300000, 500000], // 畫面上的快速按鈕（另外有「借滿」）
       discord: 100000,      // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
     // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino_wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
     work: {
+      payMax: 3000000,      // 每天最多還這麼多（規劃 2.11a：欠 3 億的人不能三天就印 3 億）。取 payPct% 和這個比較小的
       payPct: 34,           // 每天換日還「開工那天的欠款」的 34%（三天還完；翊文 11-10：「地下室工作每天可以欠下錢的34%」）
       sanDay: 5,            // 工作的參觀者每天理智 −5
       sanMin: 1,            // 工作中理智最低停在這裡，不會在地下發瘋
@@ -372,6 +386,8 @@ export const NUM = {
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
     stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, haltFrom: 22, haltTo: 5,
       exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
+      // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
+      order: { max: 10, perStock: 3, days: 3, cancelDay: 20 },
       // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低
       twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }] },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
