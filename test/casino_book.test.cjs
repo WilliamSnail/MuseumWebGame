@@ -4,7 +4,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; // 這裡測的是舊的換日重開（11-14 預設關掉）
+const T = (name, fn) => { const G = load(); G.NUM.casino.houseResetMint = true; G.NUM.casino.grants = []; // 這裡測的是舊的換日重開（11-14 預設關掉）；文化部補助另外測
   try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } finally { G.setRng(null); } };
 const D0 = "2026-11-09";
 const plus = (d, n) => { const [y, m, x] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, x + n)).toISOString().slice(0, 10); };

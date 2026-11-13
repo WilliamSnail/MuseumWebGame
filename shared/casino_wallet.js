@@ -80,6 +80,9 @@ export function casHouseFix(h, day) {
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;
   if (day && h.day && h.day !== day && h.bankroll < 0 && NUM.casino.houseResetMint) { casHouseMint(h, "reset", NUM.casino.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
+  // 外面世界的補助（NUM.casino.grants）：每個 id 只撥壹次
+  if (!casIsObj(h.grants)) h.grants = {};
+  for (const g of NUM.casino.grants || []) if (g && g.id && !h.grants[g.id] && casHouseMint(h, "grant", g.amt) > 0) h.grants[g.id] = day || true;
   if (day) h.day = day;
   return { house: h, reopen };
 }
