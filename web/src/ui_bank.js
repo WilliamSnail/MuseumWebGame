@@ -39,6 +39,7 @@ export function fakeBankHall() {
     { id: "sand", name: "紅砂晶片", stale: "今天沒有新行情（外面的資料還沒到），股價先停著。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
     { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
     { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
+    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", price: 9971, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
     { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
   stocks.forEach(x => { x.value = x.price * x.mine; });
@@ -52,7 +53,7 @@ export function fakeBankHall() {
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], state: "健康" },
-    stocks: { list: stocks, fee: 0.005, halt: false, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
+    stocks: { list: stocks, fee: 0.005, halt: false, usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
       lev: { max: 5, opensLeft: 2, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5 }, credit: { pts: 17, level: 3, next: 3, posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", sid: "neon", side: "long", lev: 5, margin: 1000000, n: 21645, entry: 231, ratio: 0.82, liq: 208, pnl: -180000, stop: 224, take: 245 }, { id: "p2", sid: "handbrain", side: "short", lev: 3, margin: 2000000, n: 4800, entry: 1240, ratio: 0.64, liq: 1280, pnl: -320000, stop: null, take: 1150 }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
@@ -188,24 +189,34 @@ const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即
 //   S.positions = [{ id, sid, side: "long"|"short", lev, margin, n, entry, ratio, liq, pnl, stop, take }]   ratio＝剩下的保證金 ÷ 原本的（1＝100%；到 force 強平）
 //   S.orders = [{ id, kind: "buy"|"sell"|"stop"|"cover", sid, px, n, lock, until, state }]（沒有就不畫「掛單」頁籤）  S.locked = { chips, shares: { sid: n } }
 //   S.credit = { pts, level, next, posLimit, posUsed }  動作：op "open"、"close"、"order"、"cancel"（參數見下）
-const STOCK_GROUPS = { out: "美股", in: "館內五家店", tw: "台股" };
-const STOCK_GROUP_ORDER = ["in", "tw", "out"];
+const STOCK_GROUPS = { out: "其他", us: "美股", in: "館內五家店", tw: "台股" };
+const STOCK_GROUP_ORDER = ["in", "tw", "us", "out"];
 const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付的（含手續費）
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const toMin = t => { const [a, b] = String(t).split(":").map(Number); return a * 60 + (b || 0); };
-const SESS_TEXT = { closed: s => `今天已收盤（${s.to}）。`, pre: s => `還沒開盤：${s.from} 開，拿到開盤價才開放買賣。`, pending: () => "已經開盤，還在等開盤價，拿到之前先不能買賣。", noopen: () => "今天台股沒有開市。", halt: () => "停盤中（23:30～05:00），明天 05:00 開盤。", holiday: () => "今天休市。" };
+const MK_NAME = { tw: "台股", us: "美股", in: "館內店" };
+const SESS_TEXT = { closed: s => `今天已收盤（${s.to}）。`, pre: s => `${s.mk === "us" ? "美股台灣時間" : MK_NAME[s.mk] || ""} ${s.from} 開盤，拿到開盤價才開放買賣。`, pending: () => "已經開盤，還在等開盤價，拿到之前先不能買賣。", noopen: s => `今天${MK_NAME[s.mk] || ""}沒有開市。`, holiday: () => "今天休市。", halt: () => "停盤中（23:30～05:00），明天 05:00 開盤。" };
 // 台股的場次（伺服器給 market "tw"、twState、intraday 每分鐘一個價、intradayFrom；外層 S.tw = { from: 540, len: 270 }）→ 畫面用的 session
+const twClock = ms => { const t = new Date(ms + 8 * 3600000); return `${String(t.getUTCHours()).padStart(2, "0")}:${String(t.getUTCMinutes()).padStart(2, "0")}`; }; // 毫秒 → 台灣時間 HH:MM
 function twSess(S, s) {
-  // 場次：台股 S.tw = { from: 540, len: 270 }（每分鐘一個價）；館內店 S.inDay = { from: 300, len: 75, step: 15 }（05:00 起每 15 分鐘一個價，到 22:00）
-  const tw = s.market === "tw", g = tw ? Object.assign({ from: 540, len: 270, step: 1 }, S.tw) : s.market === "in" ? Object.assign({ from: 300, len: 75, step: 15 }, S.inDay) : null;
+  // 場次：台股 S.tw = { from: 540, len: 270 }（每分鐘一個價）；美股 S.us = { state, from: 570, len: 390 } 加 S.usOpenAt（開盤的毫秒，含夏令時間；intradayFrom 是距離開盤的分鐘）；館內店 S.inDay = { from: 300, len: 75, step: 15 }
+  const tw = s.market === "tw", us = s.market === "us", n = (s.intraday || []).length, off = s.intradayFrom || 0;
+  if (us) {
+    const g = Object.assign({ from: 570, len: 390 }, S.us), open = S.usOpenAt;
+    const raw = s.usState || (S.us && S.us.state) || "closed", state = raw === "closed" && !n ? "noopen" : raw;
+    if (!open) return { state, mk: "us", from: "", to: "", mid: "", slots: g.len, step: 1, offset: off, at: "" };
+    return { state, mk: "us", from: twClock(open), to: twClock(open + g.len * 60000), mid: twClock(open + g.len * 30000), slots: g.len, step: 1, offset: off, at: n ? twClock(open + (off + n - 1) * 60000) : "" };
+  }
+  const g = tw ? Object.assign({ from: 540, len: 270, step: 1 }, S.tw) : s.market === "in" ? Object.assign({ from: 300, len: 75, step: 15 }, S.inDay) : null;
   if (!g) return null;
-  const n = (s.intraday || []).length, off = s.intradayFrom || 0, step = g.step || 1;
+  const step = g.step || 1;
   const state = tw ? (s.twState === "closed" && !n ? "noopen" : s.twState || "closed") : s.halted ? "halt" : "open";
-  return { state, from: hhmm(g.from), to: hhmm(g.from + (step === 1 ? g.len : (g.len - 1) * step)), slots: g.len, step, offset: off, at: n ? hhmm(g.from + (off + n - 1) * step) : "" };
+  const to = g.from + (step === 1 ? g.len : (g.len - 1) * step);
+  return { state, mk: s.market, from: hhmm(g.from), to: hhmm(to), mid: hhmm(Math.round((g.from + to) / 2)), slots: g.len, step, offset: off, at: n ? hhmm(g.from + (off + n - 1) * step) : "" };
 }
 // 這支現在能不能買賣：伺服器給的 halted 最準；沒有（示範資料）就看整個市場停盤或場次
 const stockHalt = (S, s) => (s.halted != null ? !!s.halted : !!S.halt || !!(s.session && s.session.state !== "open"));
-const haltText = (S, s) => (s.session && s.session.state !== "open" && SESS_TEXT[s.session.state] ? SESS_TEXT[s.session.state](s.session) : S.halt ? `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。` : "現在不能買賣。");
+const haltText = (S, s) => (s.session && s.session.state !== "open" && SESS_TEXT[s.session.state] ? SESS_TEXT[s.session.state](s.session) : S.halt ? "停盤中，等開盤再買賣。" : "現在不能買賣。");
 // 走勢線：台股照 09:00～13:30 的時間軸畫（每分鐘一個價，右邊還沒走到的留白）；其他有 hist 就畫 hist。紅漲綠跌：整體比第壹點高畫紅。底圖用 CSS 畫的深藍格線
 function chart(s) {
   const ss = s.session, pts = (ss ? s.intraday : s.hist) || [];
@@ -218,7 +229,7 @@ function chart(s) {
     const oy = H - pad - (pts[0] - lo) / span * (H - 2 * pad); // 開盤價的虛線
     body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${first[0].toFixed(1)},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
-  const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, hhmm(Math.round((toMin(ss.from) + toMin(ss.to)) / 2))), h("span", null, ss.to)) : null;
+  const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, ss.mid), h("span", null, ss.to)) : null;
   const label = ss ? (ss.state === "open" ? `盤中，每${ss.step > 1 ? ` ${ss.step} ` : ""}分鐘更新一次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "";
   if (!body && !ss) return null;
   return h("div", { class: "bank-chartbox" },
@@ -239,7 +250,7 @@ function whyNoSell(S, cur) {
   return "現在賣不了。";
 }
 function stockRows(list, cur, S) {
-  const gk = s => (s.market === "tw" ? "tw" : s.kind);
+  const gk = s => (s.market === "tw" ? "tw" : s.market === "us" ? "us" : s.kind);
   const kinds = STOCK_GROUP_ORDER.filter(k => list.some(s => gk(s) === k)).concat([...new Set(list.map(gk))].filter(k => !STOCK_GROUP_ORDER.includes(k)));
   const rows = [], fresh = UI.bankFreshSnap || new Set();
   kinds.forEach(k => {
@@ -377,7 +388,7 @@ function markSeen(v, list) {
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
   const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
-  list.forEach(x => { if (x.market === "tw" || x.market === "in") x.session = twSess(S, x); });
+  list.forEach(x => { if (x.market === "tw" || x.market === "in" || x.market === "us") x.session = twSess(S, x); });
   markSeen(v, list);
   const tabs = [["spot", "現股"]].concat(S.lev ? [["lev", "槓桿・放空"]] : [], S.orders ? [["order", "掛單"]] : []);
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
