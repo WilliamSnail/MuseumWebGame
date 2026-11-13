@@ -196,7 +196,7 @@ function trialBox() {
   };
   // 收得起來：手機上、還沒有能挑戰的（新玩家）預設收著（下面還有樓層和隊伍，不要擠下去）；打開過就記著，重畫之後還是開的
   const openN = rooms.filter(r => trialState(P, r.id).state === "open").length;
-  const box = h("details", { class: "story-cellar trial-box", "aria-label": "試煉房間", open: UI.trialOpen == null ? openN > 0 && !planPortrait() : UI.trialOpen, onToggle: e => { UI.trialOpen = e.target.open; } },
+  const box = h("details", { class: "story-cellar trial-box", "aria-label": "試煉房間", open: UI.trialOpen == null ? openN > 0 && !matchMedia("(max-width: 760px), (max-height: 500px)").matches : UI.trialOpen, onToggle: e => { UI.trialOpen = e.target.open; } },
     h("summary", { class: "sc-kicker trial-sum" }, icon("key"), " 試煉房間", h("small", null, openN ? `現在可以挑戰 ${openN} 間` : "現在沒有可以挑戰的")),
     boost ? h("p", { class: "ev-note" }, eventTagNode(boost), ` ${boost.title}：${eventBoostText(boost)}。`) : null,
     h("p", { class: "trial-why" }, fill(SHOP_TEXT.trialWhy, { dice: rangeWords(NUM.shop.trialSkill), n: NUM.shop.trialPerWeek })),

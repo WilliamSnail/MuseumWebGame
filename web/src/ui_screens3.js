@@ -4,7 +4,7 @@
 
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_REWARDS, COLOR_POWER, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
 import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
@@ -15,7 +15,7 @@ import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
 import { $, $$, ADDONS, P, PANELS, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
-import { roomHead } from "./ui_screens1.js";
+import { onescreenDrawer, roomHead } from "./ui_screens1.js";
 import { SOCIAL } from "../../shared/gifts.js";
 import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 
@@ -537,7 +537,7 @@ SCREENS.cellar = root => {
     const el = h("div", { class: "team-slot" + (it ? " full" : ""), "aria-label": it ? `隊員 ${i + 1}：${itemTitle(it)}` : `隊員 ${i + 1}：空的` },
       newLobby ? h("img", { class: "ped-base", src: `/cellar/ped-${it ? "glow" : "normal"}.webp`, alt: "", draggable: "false" }) : null, // 展示台座（地下室改版）
       h("div", { class: "ped-art", html: it ? itemHTML(it) : "" }),
-      h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? h("b", null, itemTitle(it)) : "空位", it ? h("span", null, `強度 ${memberPower(it, null)}・${it.pick.帽子}・${it.pick.姿勢}`) : null),
+      h("div", { class: "ped-label" + (it ? "" : " empty") }, it ? h("b", null, itemTitle(it)) : "空位", it ? memberFacts(it) : h("span", null, "從下面的抽屜點壹隻")),
       it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "換下來", onClick: e => { e.stopPropagation(); team[i] = null; rerender(); } }, icon("close")) : null);
     placeTarget(el, ["pepe"], item => {
       if (item.kind !== "pepe") { note("只帶佩佩下去。", "bad"); return false; }
@@ -560,16 +560,34 @@ SCREENS.cellar = root => {
     if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
     snd("whoosh"); persist(); rerender();
   }, "primary big", { disabled: !full });
-  root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。"),
-    ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）：放最上面（翊文 11-11：「壹起下去其實是很重點的但太小了」）
+  // 壹個畫面看得完（docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架；css/onescreen.css 的 .cellar-onescreen）：
+  //   標題壹行（隊伍規則收成按鈕）｜中間樓層的門和隊伍的展示台｜右邊側欄（壹起下去、本週異狀、試煉房間）｜最下面挑隊員的抽屜
+  const rulesBtn = btn([icon("scroll"), h("span", null, "隊伍規則", h("small", null, "強度、相剋、帽子"))], () => {
+    const m = miniLayer("隊伍規則", "放哪 3 隻、戴什麼帽子，會影響在地下的強度。");
+    m.card.classList.add("cellar-rules-layer");
+    m.card.append(legend, h("div", { class: "rv-btns" }, btn("知道了", m.close, "primary")));
+    m.layer.addEventListener("click", e => { if (e.target === m.layer) m.close(); });
+  }, "onescreen-big");
+  const side = h("aside", { class: "onescreen-side" },
+    ADDONS.cellarTop ? ADDONS.cellarTop() : null, // 壹起下去（ui_coop.js）：側欄最上面（翊文 11-11：「壹起下去其實是很重點的但太小了」）
     storyCellarBox(),
-    ADDONS.cellar ? ADDONS.cellar() : null, // 試煉房間（決定 0032，ui_shop.js）
-    h("div", { class: "floors" }, floorEls),
-    h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" },
-      tp ? h("p", { class: "poss" }, h("span", { class: "poss-l" }, "隊伍強度（還沒算房間的相剋、顏色）"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null) : h("p", { class: "sub" }, "放滿 3 隻就能下去。"),
-      go_)),
-    strip, // 翊文 11-09：挑隊員要在隊伍正下方，不用滑到最下面
-    legend);
+    ADDONS.cellar ? ADDONS.cellar() : null); // 試煉房間（決定 0032，ui_shop.js）
+  // 隊伍強度：總數大大的，每壹項加成（比讚、巫師帽……）壹顆小牌（翊文 11-13：「Pepe 的各種強度、Buff 等等的資料也要能顯示清楚」）
+  const powerBox = tp ? h("div", { class: "poss cellar-power" },
+    h("span", { class: "poss-l" }, "隊伍強度"), h("b", { class: "poss-n" }, String(tp.total)),
+    h("span", { class: "cellar-power-sum" }, tp.parts.map(x => String(x.s)).join("＋") + (tp.notes.length ? "＋加成" : "")),
+    tp.notes.length ? h("span", { class: "cellar-buffs" }, tp.notes.map(n => h("span", { class: "cellar-buff" }, n))) : null,
+    h("small", { class: "cellar-power-hint" }, "還沒算房間的心情相剋、顏色"))
+    : h("p", { class: "sub cellar-power-empty" }, `放滿 3 隻就能下去（還差 ${team.filter(k => !k).length} 隻）。`);
+  root.classList.add("onescreen-room", "cellar-onescreen");
+  if (!side.children.length) root.classList.add("cellar-no-side");
+  root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。", rulesBtn),
+    h("div", { class: "onescreen-main" },
+      h("div", { class: "cellar-entry" },
+        h("div", { class: "floors" }, floorEls),
+        h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" }, powerBox, go_))),
+      side),
+    onescreenDrawer(strip, "挑隊員")); // 翊文 11-09：挑隊員要在隊伍正下方：抽屜就在展示台下面
 };
 export function cellarRoom(root) {
   const run = P.cellar.run, f = cellarFloor(run.floor), room = currentRoom(P);
@@ -782,6 +800,24 @@ export function stageOutcome(stage, res, fx, team) {
 // ---------- 挑隊員：每隻底下的小卡（強度、心情相剋、能力、狀態） ----------
 export const HAT_AB = { 棒球帽: "擋壹次", 皇冠: "重擲壹次", 巫師帽: "全隊 +2", 觸手帽: "全隊 +5・扣理智", 紳士帽: "技能 +10", 毛帽: "回理智" };
 export const POSE_AB = { 比讚: "全隊每隻 +1", 躺平: "回理智", 斯拉夫蹲: "不會被推倒", 倒立: "強度 +1" };
+// 強度怎麼來的：「稀有 2＋完美 1＋倒立 1」（照 memberPower 的算法，不算房間）
+export function powerWhy(item) {
+  const p = item.pick, parts = [`${String(p[ROLLED]).replace("傳說級稀有", "傳說級")} ${CELLAR_POWER[p[ROLLED]] ?? 1}`];
+  if (item.perfect) parts.push(`完美 ${CELLAR_POWER.perfect}`);
+  if (p.姿勢 === "倒立") parts.push("倒立 1");
+  if (COLOR_POWER[p.顏色]) parts.push(`${p.顏色} ${COLOR_POWER[p.顏色]}`);
+  return parts.join("＋");
+}
+// 壹隻佩佩在地下的資料（展示台上的名牌用）：強度、心情剋誰、顏色、帽子和姿勢的效果
+export function memberFacts(item) {
+  const p = item.pick, beats = MOOD_BEATS[p.心情];
+  const buffs = [HAT_AB[p.帽子] ? [p.帽子, HAT_AB[p.帽子]] : null, POSE_AB[p.姿勢] ? [p.姿勢, POSE_AB[p.姿勢]] : null].filter(Boolean);
+  return h("span", { class: "cellar-facts" },
+    h("span", { class: "cellar-fact pw" }, h("i", null, "強度"), h("b", null, String(memberPower(item, null))), h("small", null, `＝${powerWhy(item)}`)),
+    h("span", { class: "cellar-fact" }, h("i", null, "心情"), p.心情 === "俄國8+9" ? "俄國8+9・不被剋" : beats ? `${p.心情}・剋${beats}` : p.心情, p.顏色 ? h("span", { class: "cellar-color" }, `・${p.顏色}`) : null),
+    buffs.length ? h("span", { class: "cellar-fact-buffs" }, buffs.map(([k, v]) => h("span", { class: "cellar-buff", title: `${k}：${v}` }, `${k}：${v}`)))
+      : h("span", { class: "cellar-fact none" }, h("i", null, "加成"), "沒有（帽子、姿勢沒有效果）"));
+}
 export function teamMeta(item, team) {
   const p = item.pick, hurt = P.injured[item.key], inTeam = team.includes(item.key);
   const beats = MOOD_BEATS[p.心情];

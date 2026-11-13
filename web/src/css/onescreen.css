@@ -12,6 +12,13 @@
 .onescreen-room > .onescreen-main > * { max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
 .onescreen-room > .onescreen-drawer { flex: none; }
 
+/* ---------- 字色、字級（11-13，docs/介面配色.md；翊文：「各種顏色、字體等等的有沒有平衡也要看看」） ----------
+   淺色底（羊皮紙、銅牌）上用 --ink 這組；深色底（木頭、石牆）上用 --paper 這組。不要在淺底上用淺字（11-13 展廳側欄踩過）。
+   字級只用四級：--type-tiny（最小，標籤）、--type-small（說明）、--type-body（內文）、--type-head（標題）。 */
+.onescreen-room, .cellar-rules-layer { --ink: #2E2014; --ink-soft: #5A4030; --ink-accent: #8E2A24; --ink-good: #1F5A2C;
+  --paper: #F3E6C4; --paper-soft: #D8C59A; --paper-gold: #F3DFA6;
+  --type-tiny: .6875rem; --type-small: .75rem; --type-body: .875rem; --type-head: 1.05rem; }
+
 /* ---------- 標題壹行 ---------- */
 .onescreen-room > .room-head { flex-wrap: nowrap; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 0; }
 .onescreen-room > .room-head::after { display: none; }
@@ -296,3 +303,250 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
 /* 館友來過：名字、日期深色 */
 .hall-onescreen .onescreen-side .hall-guests h3 small, .hall-onescreen .onescreen-side .hall-guests small, .hall-onescreen .onescreen-side .hall-guests time { color: #7A5A2A; opacity: 1; }
 .hall-onescreen .onescreen-side .hall-guests b, .hall-onescreen .onescreen-side .hall-guests a { color: #2E2014; }
+
+/* ================================================================
+   地下收藏庫入口（11-13，第三個套骨架的廳；ui_screens3.js 的 SCREENS.cellar）
+   中間：上面壹排樓層的門、下面三座展示台＋隊伍強度＋下樓的石階按鈕｜右邊側欄：壹起下去、本週異狀、試煉房間｜最下面挑隊員的抽屜
+   地下照舊用石牆、石板（cellar2.css）；這裡只排位置、縮大小。cellar2.css 是三個 class，這裡寫四個才蓋得過
+   ================================================================ */
+.screen.onescreen-room.cellar-onescreen > .onescreen-main { grid-template-columns: minmax(0, 1fr) 300px; }
+.screen.onescreen-room.cellar-no-side > .onescreen-main { grid-template-columns: minmax(0, 1fr); }
+.screen.onescreen-room.cellar-no-side > .onescreen-main > .onescreen-side { display: none; }
+.screen.onescreen-room.cellar-onescreen .cellar-entry { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-height: 0; }
+/* 樓層：壹排五個，畫小壹點 */
+.screen.onescreen-room.cellar-onescreen .floors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.screen.onescreen-room.cellar-onescreen .floor { min-width: 0; padding: 0; gap: 0; }
+.screen.onescreen-room.cellar-onescreen .floor-art { display: block; width: 100%; max-height: 13vh; overflow: hidden; }
+.screen.onescreen-room.cellar-onescreen .floor-art svg { display: block; width: 100%; height: auto; }
+.screen.onescreen-room.cellar-onescreen .floor.locked .floor-door { width: min(100%, 13vh * .8); }
+.screen.onescreen-room.cellar-onescreen .floor .floor-n { margin-top: 2px; font-size: .75rem; }
+.screen.onescreen-room.cellar-onescreen .floor b { display: block; font-size: .875rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen.onescreen-room.cellar-onescreen .floor .sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .75rem; line-height: 1.3; }
+/* 隊伍：三座展示台在左，強度和按鈕在右 */
+.screen.onescreen-room.cellar-onescreen .team-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 12px; align-items: end; margin: 0; }
+.screen.onescreen-room.cellar-onescreen .team { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.screen.onescreen-room.cellar-onescreen .team-slot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-height: 0; padding: 0 2px 2px; }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-base { bottom: auto; top: calc(min(92px, 12vh) - 26px); width: min(100%, 150px); }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-art { width: min(92px, 12vh); height: min(92px, 12vh); margin: 0 0 min(52px, 7vh); }
+.screen.onescreen-room.cellar-onescreen .team-slot:not(.full) .ped-art { width: min(92px, 12vh); height: min(92px, 12vh); margin: 0 0 min(52px, 7vh); }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-x { position: absolute; top: 0; right: 4px; z-index: 2; }
+/* 名牌：羊皮紙底、深色字，壹行壹項（強度、心情、顏色、帽子、姿勢） */
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-label { display: grid; gap: 1px; width: 100%; max-width: 210px; margin: 0; padding: 6px 8px; border: 10px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 10px stretch; color: var(--ink); text-align: left; font-size: .75rem; line-height: 1.3; text-shadow: none; }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-label > b { color: var(--ink); font-size: .875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-label.empty { color: var(--ink-soft); text-align: center; font-weight: 700; }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-label.empty > span { font-weight: 400; font-size: .75rem; }
+.cellar-onescreen .cellar-facts { display: grid; gap: 1px; }
+.cellar-onescreen .cellar-fact { display: flex; gap: 4px; min-width: 0; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cellar-onescreen .cellar-fact > i { flex: none; min-width: 2.6em; font-style: normal; color: var(--ink-soft); }
+.cellar-onescreen .cellar-fact.pw b { color: var(--ink-accent); font-size: .875rem; line-height: 1.1; }
+.cellar-onescreen .cellar-fact.pw small { color: var(--ink-soft); font-size: .6875rem; align-self: center; }
+.cellar-onescreen .cellar-fact.buff { color: var(--ink-good); font-weight: 700; }
+.cellar-onescreen .cellar-fact.buff > i { color: var(--ink-good); font-weight: 400; }
+/* 隊伍強度：大數字＋每壹項加成壹顆小牌 */
+.screen.onescreen-room.cellar-onescreen .team-side { display: grid; gap: 8px; justify-items: stretch; margin: 0; }
+.screen.onescreen-room.cellar-onescreen .cellar-power { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 2px 8px; margin: 0; padding: 8px 12px; border: 14px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 14px stretch; background: none; color: var(--ink); }
+.cellar-onescreen .cellar-power .poss-l { grid-column: 1 / -1; color: var(--ink-accent); font-weight: 700; font-size: .875rem; }
+.cellar-onescreen .cellar-power .poss-n { color: var(--ink); font-size: 2rem; line-height: 1; }
+.cellar-onescreen .cellar-power-sum { color: var(--ink-soft); font-size: .875rem; }
+.cellar-onescreen .cellar-buffs { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; }
+.cellar-onescreen .cellar-buff { padding: 1px 8px; border: 1px solid var(--ink-good); border-radius: 999px; background: rgba(46, 107, 58, .12); color: var(--ink-good); font-size: .75rem; font-weight: 700; }
+.cellar-onescreen .cellar-power-hint { grid-column: 1 / -1; color: var(--ink-soft); font-size: .6875rem; }
+.cellar-onescreen .cellar-power-empty { margin: 0; color: var(--paper-gold); text-shadow: 0 1px 2px #000; text-align: center; }
+.screen.onescreen-room.cellar-onescreen .team-side > .btn.primary.big { min-width: 0; width: 100%; }
+/* 側欄：壹起下去、本週異狀、試煉房間，太多就在側欄裡捲 */
+.screen.onescreen-room.cellar-onescreen .onescreen-side > * { margin: 0; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero { display: grid; gap: 6px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-pts { margin: 2px 0; padding-left: 1.1em; font-size: .75rem; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-side { display: flex; gap: 6px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar { font-size: .875rem; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-rooms { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room { grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; padding: 6px 8px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .btn, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .sc-btns, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .sc-lock { grid-column: 1 / -1; justify-self: stretch; }
+/* 隊伍規則的彈窗 */
+.cellar-rules-layer .legend.placard { margin: 8px 0; }
+/* 名牌第三行：帽子、姿勢的效果，綠色小牌 */
+.cellar-onescreen .cellar-fact-buffs { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 1px; }
+.cellar-onescreen .cellar-fact.none { color: var(--ink-soft); font-size: .6875rem; }
+.cellar-onescreen .cellar-color { color: var(--ink-soft); }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-label { padding: 2px 6px; border-width: 9px; }
+/* 側欄的本週異狀、試煉房間：框細壹點，每壹間是兩行（名字、按鈕） */
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar:not(.trial-box) { border-width: 22px; border-image-width: 22px; padding: 0 4px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room { flex-wrap: wrap; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .sc-body { flex: 1 1 0; min-width: 0; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .btn, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room > .sc-btns { flex: 1 1 100%; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-anomaly p { margin: 2px 0; }
+/* 樓層的說明只留壹行 */
+.screen.onescreen-room.cellar-onescreen .floor .sub { -webkit-line-clamp: 1; }
+.screen.onescreen-room.cellar-onescreen .floor-art { max-height: 10vh; }
+.screen.onescreen-room.cellar-onescreen .floor.locked .floor-door { width: min(100%, 8vh); }
+/* 高度給名牌：佩佩小壹點、台座跟名牌疊壹點 */
+.screen.onescreen-room.cellar-onescreen .team-slot { --cellar-pepe: min(80px, 10.5vh); }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-art, .screen.onescreen-room.cellar-onescreen .team-slot:not(.full) .ped-art { width: var(--cellar-pepe); height: var(--cellar-pepe); margin: 0 0 calc(var(--cellar-pepe) * .4); }
+.screen.onescreen-room.cellar-onescreen .team-slot .ped-base { top: calc(var(--cellar-pepe) * .62); width: min(100%, 130px); }
+.screen.onescreen-room.cellar-onescreen .floor-art { max-height: 8vh; }
+.screen.onescreen-room.cellar-onescreen .floor.locked .floor-door { width: min(100%, 6.5vh); }
+/* 挑隊員的抽屜：每隻是橫的小卡，左邊圖、右邊強度、心情、帽子和姿勢的效果（翊文 11-13：「Pepe 的各種強度、Buff 等等的資料也要能顯示清楚」） */
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 6px; width: 176px; min-width: 176px; height: 86px; padding: 4px 6px; text-align: left; overflow: hidden; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta .si-art { width: 52px; height: 52px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta { display: grid; gap: 1px; min-width: 0; margin: 0; font-size: .6875rem; line-height: 1.25; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta > * { min-width: 0; margin: 0; padding: 0; border: 0; background: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-pw { color: var(--ink-accent); font-weight: 700; font-size: .875rem; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-pw small { font-weight: 400; font-size: .625rem; color: var(--ink-soft); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-mood { color: var(--ink); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-ab { color: var(--ink-good); font-weight: 700; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-st.bad { color: var(--ink-accent); font-weight: 700; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta .si-st.good { color: var(--ink-good); font-weight: 700; }
+/* 小卡用地下原本的卡框（淺色、照稀有度換顏色），不用深色的收藏格：深底上的深色字看不到 */
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item { border: 8px solid transparent; border-image: url(/cellar/card-common.webp) 40 fill / 8px stretch; background: none; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item[data-r="稀有"] { border-image-source: url(/cellar/card-rare.webp); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item[data-r="超稀有"] { border-image-source: url(/cellar/card-epic.webp); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item[data-r="傳說級稀有"] { border-image-source: url(/cellar/card-legend.webp); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item[data-r="不可名狀"] { border-image-source: url(/cellar/card-eldritch.webp); }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.on { background: none; filter: drop-shadow(0 0 8px rgba(255, 214, 120, .85)); }
+/* 卡框的中間下半是酒紅色，橫的小卡會變成半紅：只用框，中間自己鋪羊皮紙色 */
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item { border-image-slice: 40; background: #EFE3C4; background-clip: padding-box; }
+.screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.on { background: #F6E7B8; background-clip: padding-box; }
+/* 本週異狀、試煉房間的標題：整條是壹顆銅牌按鈕，右邊 ▾，看得出可以收起來、打開 */
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 2px 10px; border: 9px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 9px stretch; color: var(--ink); font-weight: 700; letter-spacing: .06em; list-style: none; cursor: pointer; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary::-webkit-details-marker { display: none; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary, .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary * { color: var(--ink) !important; } /* .sc-kicker（試煉房間的標題）在 story.css 是 !important 的金色，銅牌上看不到 */
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary small { margin-left: auto; font-size: .75rem; font-weight: 400; letter-spacing: 0; color: var(--ink-accent); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary::after { content: "▾"; margin-left: 4px; color: var(--ink-accent); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] > summary::after { content: "▴"; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar-more { display: none; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar:hover > summary { filter: brightness(1.08); }
+
+/* ---------- 地下入口：手機直拿 ---------- */
+@media (max-width: 760px) {
+  /* 標題壹行：廳名、回大廳、規則 */
+  .screen.onescreen-room.cellar-onescreen > .room-head { flex-wrap: nowrap; }
+  .screen.onescreen-room.cellar-onescreen > .room-head .head-tools { flex: 0 1 auto; order: 0; margin-left: auto; }
+  .screen.onescreen-room.cellar-onescreen > .room-head .onescreen-big { min-height: 34px; padding: 0 8px; }
+  .screen.onescreen-room.cellar-onescreen > .onescreen-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .screen.onescreen-room.cellar-onescreen > .onescreen-main > * { overflow: visible; max-height: none; }
+  .screen.onescreen-room.cellar-onescreen > .onescreen-main > .cellar-entry { overflow-y: auto; }
+  /* 側欄變成上面壹排按鈕；點開的內容從按鈕下面蓋在畫面上，不推動下面 */
+  .screen.onescreen-room.cellar-onescreen .onescreen-side { position: relative; z-index: 5; display: flex; gap: 6px; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side > * { flex: 1 1 0; min-width: 0; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar { display: block; border: 0; border-image: none; padding: 0; background: none; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { min-height: 36px; padding: 0 6px; font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary small { display: none; }
+  /* 打開的那壹塊蓋住這壹排，往下展開成壹張羊皮紙；再點標題收起來 */
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { position: absolute; top: 0; left: 0; right: 0; z-index: 6; display: flex; max-height: 62dvh; overflow-y: auto; padding: 6px 8px 10px; border: 14px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 14px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] > summary { position: sticky; top: -6px; z-index: 1; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open], .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open] * { color: var(--ink); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open] .sc-room { background: rgba(255, 250, 235, .5); border-color: rgba(110, 80, 32, .45); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open] .sc-room small { color: var(--ink-soft); }
+  /* 壹起下去：只留按鈕 */
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero { padding: 0; border-width: 0; border-image: none; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-t, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-pts, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-on, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-side, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .ev-note { display: none; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-go { min-height: 36px; width: 100%; padding: 0 6px; font-size: .75rem; }
+  /* 樓層：壹排小門 */
+  .screen.onescreen-room.cellar-onescreen .floors { gap: 4px; }
+  .screen.onescreen-room.cellar-onescreen .floor-art { max-height: 44px; }
+  .screen.onescreen-room.cellar-onescreen .floor.locked .floor-door { width: 34px; }
+  .screen.onescreen-room.cellar-onescreen .floor b { font-size: .6875rem; }
+  .screen.onescreen-room.cellar-onescreen .floor .sub { display: none; }
+  .screen.onescreen-room.cellar-onescreen .floor .floor-n { font-size: .625rem; margin: 0; }
+  /* 隊伍：三隻並排，下面壹排是強度和下樓 */
+  .screen.onescreen-room.cellar-onescreen .team-wrap { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .screen.onescreen-room.cellar-onescreen .team { gap: 4px; }
+  .screen.onescreen-room.cellar-onescreen .team-slot { --cellar-pepe: 54px; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-base { width: min(100%, 90px); }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-label { padding: 0 3px; border-width: 7px; font-size: .625rem; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-label > b { font-size: .6875rem; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-x { width: 26px; height: 26px; min-height: 0; }
+  .cellar-onescreen .cellar-fact > i { display: none; }
+  .cellar-onescreen .cellar-fact.pw small { display: none; }
+  .cellar-onescreen .cellar-fact.pw::after { content: " 強度"; color: var(--ink-soft); font-size: .625rem; align-self: center; }
+  .cellar-onescreen .cellar-buff { padding: 0 4px; font-size: .625rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cellar-onescreen .cellar-fact.none { font-size: .625rem; }
+  .screen.onescreen-room.cellar-onescreen .team-side { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+  .screen.onescreen-room.cellar-onescreen .cellar-power { padding: 2px 8px; border-width: 9px; grid-template-columns: auto auto 1fr; }
+  .cellar-onescreen .cellar-power .poss-l { grid-column: auto; font-size: .6875rem; }
+  .cellar-onescreen .cellar-power .poss-n { font-size: 1.4rem; }
+  .cellar-onescreen .cellar-power-sum, .cellar-onescreen .cellar-power-hint { display: none; }
+  .cellar-onescreen .cellar-buffs { grid-column: 1 / -1; }
+  .screen.onescreen-room.cellar-onescreen .team-side > .btn.primary.big { width: auto; min-width: 120px; min-height: 48px; padding: 10px 12px 4px; font-size: .875rem; letter-spacing: .06em; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta { width: 150px; min-width: 150px; height: 74px; grid-template-columns: 42px minmax(0, 1fr); gap: 4px; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta .si-art { width: 42px; height: 42px; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item .si-meta { font-size: .625rem; }
+}
+@media (max-width: 760px) {
+  /* 手機的名牌：心情那行可以折成兩行，不要被切掉 */
+  .cellar-onescreen .cellar-fact { white-space: normal; line-height: 1.2; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-label > b { font-size: .625rem; }
+}
+
+/* ---------- 地下入口：手機橫拿（很矮）：左邊樓層小牌子＋三隻並排，中間強度和下樓，右邊壹欄放本週異狀、試煉 ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.cellar-onescreen > .room-head .rh-row { order: 0; }
+  .screen.onescreen-room.cellar-onescreen > .onescreen-main { grid-template-columns: minmax(0, 1fr) 150px; grid-template-rows: minmax(0, 1fr); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side { order: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 6px; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { left: auto; right: 0; width: min(440px, 80vw); max-height: 78dvh; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { min-height: 32px; }
+  .screen.onescreen-room.cellar-onescreen .cellar-entry { gap: 4px; justify-content: flex-start; }
+  /* 樓層：不放畫，壹排小牌子 */
+  .screen.onescreen-room.cellar-onescreen .floors { gap: 4px; }
+  .screen.onescreen-room.cellar-onescreen .floor { flex-direction: row; justify-content: center; gap: 4px; min-height: 28px; padding: 2px 4px; border: 1px solid rgba(214, 178, 94, .45); border-radius: 4px; background: rgba(0, 0, 0, .45); }
+  .screen.onescreen-room.cellar-onescreen .floor.on { border-color: #E3B95A; box-shadow: 0 0 8px rgba(255, 200, 110, .5); }
+  .screen.onescreen-room.cellar-onescreen .floor .floor-art, .screen.onescreen-room.cellar-onescreen .floor .floor-door { display: none; }
+  .screen.onescreen-room.cellar-onescreen .floor > .floor-n, .screen.onescreen-room.cellar-onescreen .floor.locked > .floor-n { display: inline; margin: 0; color: var(--paper-gold); font-size: .6875rem; }
+  .screen.onescreen-room.cellar-onescreen .floor b { font-size: .6875rem; }
+  .screen.onescreen-room.cellar-onescreen .floor:hover { transform: none; }
+  /* 隊伍：三隻＋右邊強度和下樓 */
+  .screen.onescreen-room.cellar-onescreen .team-wrap { grid-template-columns: minmax(0, 1fr) 128px; gap: 6px; align-items: end; }
+  .screen.onescreen-room.cellar-onescreen .team-slot { --cellar-pepe: 44px; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-base { width: min(100%, 80px); }
+  .screen.onescreen-room.cellar-onescreen .team-side { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .screen.onescreen-room.cellar-onescreen .cellar-power { grid-template-columns: auto 1fr; padding: 0 6px; }
+  .cellar-onescreen .cellar-power .poss-n { font-size: 1.2rem; }
+  .screen.onescreen-room.cellar-onescreen .team-side > .btn.primary.big { width: 100%; min-width: 0; min-height: 40px; padding: 8px 6px 2px; font-size: .875rem; }
+  .cellar-onescreen .cellar-power-empty { font-size: .6875rem; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta { width: 140px; min-width: 140px; height: 62px; grid-template-columns: 36px minmax(0, 1fr); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-drawer .strip-item.has-meta .si-art { width: 36px; height: 36px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.cellar-onescreen .team-slot { --cellar-pepe: 38px; }
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-label > b { display: none; } /* 太矮：名字不放，滑過去看 title；強度、心情、加成留著 */
+  .screen.onescreen-room.cellar-onescreen .team-slot .ped-label { border-width: 6px; }
+}
+@media (max-width: 760px) { .cellar-onescreen .cellar-fact:not(.pw) { display: block; } } /* 心情和顏色接成同壹段字，折行才不會亂 */
+/* 側欄的石板（壹起下去、試煉房間）：鐵條細壹點、上下排，不要左右排（側欄只有 300px，標題會被擠成直的） */
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero, .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-box { --kb: 14px; --kc: 64px; padding: calc(var(--kb) + 6px) calc(var(--kb) + 8px); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-t { margin: 0; font-size: 1.05rem; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-acts { display: grid; gap: 4px; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-go { width: 100%; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-on { font-size: .75rem; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-side { flex-direction: row; }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-side .btn { flex: 1 1 0; min-width: 0; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero { padding: 0; background: none; box-shadow: none; }
+}
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-side .btn { white-space: nowrap; padding: 0 6px; font-size: .75rem; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  /* 手機：側欄那壹排每顆都是壹樣高的按鈕；石板底拿掉（打開的那塊另外鋪羊皮紙） */
+  .screen.onescreen-room.cellar-onescreen .onescreen-side { align-items: start; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-main, .screen.onescreen-room.cellar-onescreen .onescreen-side .cx-hero .cxh-acts { display: block; margin: 0; padding: 0; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-box { padding: 0; background: none; box-shadow: none; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-box[open] { padding: 6px 8px 10px; }
+}
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { flex-wrap: nowrap; min-height: 36px; font-size: .75rem; } .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary small { display: none; } }
+.mini-card.cellar-rules-layer { max-height: 92dvh; overflow-y: auto; }
+.cellar-rules-layer .legend.placard .pl-title { display: none; } /* 彈窗的標題已經寫了「隊伍規則」 */
+/* 地下入口：別的檔案帶進來的字級收進四級（本來有 16 種大小） */
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room small, .screen.onescreen-room.cellar-onescreen .floor .sub, .screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-on { font-size: var(--type-tiny); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-pts, .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-why, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-hint { font-size: var(--type-small); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room b, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-anomaly p { font-size: var(--type-body); }
+.screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-t, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-anomaly b, .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-sum { font-size: var(--type-head); }
+.screen.onescreen-room.cellar-onescreen .fd-plate { font-size: var(--type-small); }
+@media (max-width: 760px) { .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { font-size: var(--type-small); } }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  /* 展開的那張是羊皮紙（淺底）：字壹律深色，不靠 cellar2.css（新大廳的開關關掉時那邊不生效） */
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] :is(p, b, small, li, .sc-body, .em) { color: var(--ink); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] :is(small, .sc-hint) { color: var(--ink-soft); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] .sc-anomaly b { color: var(--ink-accent); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] .sc-room { background: rgba(255, 250, 235, .5); border-color: rgba(110, 80, 32, .45); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] .sc-floor { color: var(--ink); }
+}
