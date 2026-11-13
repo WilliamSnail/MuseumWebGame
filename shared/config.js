@@ -341,6 +341,10 @@ export const NUM = {
     // 外面世界的池子（11-14，規劃 2.12，翊文：「外面世界也是個經濟體系，從那裏扣錢」）：house.world。start 起始、growBase 每天成長（再 ×（1 ＋ growExtPct% × 外部景氣）；真正憑空的，記 worldGrow）、
     //   lowPct 池子低於起始的幾 % 算吃緊；吃緊時賣股、槓桿賺的錢壹天最多付池子的 lowPayPct%，莊家向外面世界貸款暫停（買股照收）。
     world: { start: 10000000000, growBase: 5000000, growExtPct: 20, lowPct: 10, lowPayPct: 1 },
+    // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、預算池超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
+    //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
+    //   持股總賺賠虧超過 stopPct% 暫停買進 stopDays 天。on:false 整個關掉
+    invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 15, takeProfitPct: 30, stopPct: 10, stopDays: 7 },
     houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
     houseReset: 10000000,   // 莊家破產中（小於 0）過了換日，Yuga 借他這麼多重新開張
     // 換日印錢補莊家先關掉（翊文 11-14：莊家 −8.3 億，換日會印 8 億多補回來，「這不行，莊家要跟整個經濟系統接軌才行」）。

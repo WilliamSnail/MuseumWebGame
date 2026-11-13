@@ -16,7 +16,7 @@ export const CAS_REPORT = {
   mint: { worldGrow: "外面世界每天成長", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
   // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
-  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（預算池）", ticketMuseum: "參觀者門票（館方帳）", npcArt: "旅客買畫、賣畫" },
+  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（預算池）", ticketMuseum: "參觀者門票（館方帳）", npcArt: "旅客買畫、賣畫", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "預算池投資（買）", budgetInvestSell: "預算池投資（賣）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
   flow: { stockIn: "館內股票（莊家當對手盤）", budgetLoan: "跟預算池借（莊家破產重開）", budgetRepay: "還預算池", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
@@ -57,6 +57,12 @@ export function casReportView(doc) {
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" }, tot = Object.values(H.npcLast.n).reduce((a, b) => a + (+b || 0), 0), ev = H.npcLast.ev;
     if (ev && nm[ev.store]) hl.push(`昨天${ev.name ? "《" + ev.name + "》在" : ""}${nm[ev.store]}辦了活動，館外來了 ${rpN(ev.n)} 位旅客。`);
     else if (tot > 0) hl.push(`昨天館外來了 ${rpN(tot)} 位旅客逛各家店。`);
+  }
+  if (H.inv && (H.inv.last || (H.inv.sum && (H.inv.sum.hold || []).length))) { // 館方投資外面世界（規劃 2.8f，延遲壹天：寫昨天的）
+    const L = H.inv.last, nm = x => x.name + " " + rpN(x.n) + " 股", sum = H.inv.sum || { hold: [], pnl: 0 };
+    if (L && ((L.buy || []).length || (L.sell || []).length)) hl.push("昨天館方投資外面世界：" + [(L.buy || []).length ? "買 " + L.buy.map(nm).join("、") : "", (L.sell || []).length ? "賣 " + L.sell.map(nm).join("、") : ""].filter(Boolean).join("；") + "。");
+    else if (L && L.paused && (L.paused.house || L.paused.budget)) hl.push("昨天館方沒有買股票（" + (L.paused.house === "world" || L.paused.budget === "world" ? "外面世界資金吃緊" : "暫停買進") + "）。");
+    if ((sum.hold || []).length) hl.push("館方現在持有：" + sum.hold.map(nm).join("、") + "；累計賺賠 " + rpSign(sum.pnl) + "。");
   }
   hl.push(`${s.wallets} 位館友的錢包合計 ${rpN(s.chips)} 籌碼。`);
   secs.push({ t: "莊家", lines: hl });
