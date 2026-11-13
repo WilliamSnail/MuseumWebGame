@@ -33,6 +33,7 @@ import "./css/pass.css"; // 館友證和典藏冊（11-10，決定 0058）
 import "./css/hub.css"; // 大廳的總覽（11-10，決定 0061）
 import "./css/lobby2.css";
 import "./css/cellar2.css"; // 地下室改版（11-11） // 新的大廳（決定 0066）
+import "./css/ui2.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";

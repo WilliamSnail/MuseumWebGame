@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "ui2-commission", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "委託櫃台換新樣子：壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "委託單貼在軟木板上，旁邊是老主顧和壹鍵交件，不用再往下滑。",
+        "「上課」和「兌換所」移到最上面，變成兩顆銅牌按鈕。",
+        "你的收藏收進最下面的抽屜：平常是壹排，按拉環拉開才有頁籤和篩選。拖到委託單上交件跟以前壹樣。",
+        "手機直拿時，委託單左右滑。新的介面零件是用 Gemini 生的。",
+      ]],
+    ],
+  },
+  {
     id: "regulars", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "委託櫃台：老主顧的故事看得到了", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

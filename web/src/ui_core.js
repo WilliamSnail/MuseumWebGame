@@ -491,14 +491,17 @@ function setTab(sel, n, label) {
 // 狀態列在某些寬度會排成兩排，原本各頁底下的留白、跳出的視窗都照固定的 --status-h 算，就被蓋住。
 // 手機上點 ⓘ 展開狀態列時不更新（那是暫時蓋在上面的）。
 let statusRO = null;
+// 量壹次狀態列現在多高，寫進 --status-real（ResizeObserver 沒叫到的時候也能自己叫，例如壹個畫面看得完的廳剛畫好）
+export function syncStatusHeight() {
+  const st = $("#status");
+  if (!st || st.hidden || st.classList.contains("open")) return;
+  const hgt = Math.round(st.getBoundingClientRect().height);
+  if (hgt > 0) document.documentElement.style.setProperty("--status-real", hgt + "px");
+}
 export function watchStatusHeight() {
   const st = $("#status");
   if (!st || statusRO || typeof ResizeObserver === "undefined") return;
-  statusRO = new ResizeObserver(() => {
-    if (st.hidden || st.classList.contains("open")) return;
-    const hgt = Math.round(st.getBoundingClientRect().height);
-    if (hgt > 0) document.documentElement.style.setProperty("--status-real", hgt + "px");
-  });
+  statusRO = new ResizeObserver(() => syncStatusHeight());
   statusRO.observe(st);
 }
 // 狀態列的「第 001 天」和「還有 N 小時換日」；每秒由 boot.js 的 tick() 呼叫，只在字變了才改。
