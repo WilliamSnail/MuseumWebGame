@@ -30,7 +30,8 @@ import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/casino_book.js";
 import { casReportView } from "./shared/casino_report.js";
-import { casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
+import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
+import { ECONOMY } from "./shared/economy_data.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
@@ -257,7 +258,9 @@ async function reportSnap(day) {
     let inplay = 0;
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
-    return casBookSnap(wallets, house, inplay, day);
+    const snap = casBookSnap(wallets, house, inplay, day);
+    snap.pol = house.pol || null; // 現在有效的政策（日報要寫）
+    return snap;
   }, { readOnly: true });
 }
 export async function casReport() {
@@ -271,10 +274,20 @@ export async function casReport() {
     const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: prev ? prev.opening : casBookOpening(snap) };
     doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino_gdp.js）
     const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
-    doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7);
+    const ext = casGdpExt(ECONOMY, day); // 外面世界的景氣（content/economy.json，每日排劇情的排程更新）
+    doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7, ext.b);
+    doc.ext = { ok: ext.ok, quarter: ext.quarter || "", stale: !!ext.stale };
     doc.gap = casBookGap(snap, doc.opening);
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
-    try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); } catch (e) { /* 別人先建了：讀他的 */ }
+    let made = false;
+    try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); made = true; } catch (e) { /* 別人先建了：讀他的 */ }
+    if (made) { // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino_gdp.js 的 casFxMul）
+      await db().runTransaction(async tx => {
+        const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house;
+        h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day };
+        put(tx, houseRef(), h);
+      });
+    }
     s = await ref.get();
   }
   return casReportView(JSON.parse(s.data().data));
@@ -293,6 +306,7 @@ export const casino = onCall(async req => {
     });
     case "report": return { ok: true, report: await casReport() };
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
+      await casReport().catch(e => console.error("日報：產生失敗", e && e.message)); // 每天第一個進館的人觸發日報（景氣指數靠它每天更新）
       const ws = await walletRef(me.uid).get();
       const w = casWalletFix(parse(ws), taipeiDay(now()));
       if (w.title) { // 有戴稱號的人，進館時把稱號補到 titles（以前戴的、上次沒寫成功的）；沒稱號的人不多讀存檔

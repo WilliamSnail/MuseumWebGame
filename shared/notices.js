@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "economy-effects", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "景氣開始影響拚經濟、門票和存款利率", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "Yuga Bot 日報算出來的景氣，現在會影響三件事：拚經濟成功的撥款、展廳參觀者的門票、銀行的存款利息。景氣好多壹成，景氣差少壹成，普通就照舊。",
+        "景氣壹半看館裡這壹週熱不熱鬧，壹半看外面世界這幾季的景氣。",
+        "拚經濟成功抽到的政策，現在真的有效果，持續到隔天：有的讓門票多壹成，有的讓地下撿到的籌碼多壹成，有的讓撥款多或少壹成。拚經濟成功時畫面會寫效果，日報也會寫現在有效的政策。",
+      ]],
+    ],
+  },
+  {
     id: "report-economy-index", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "Yuga Bot 日報多了「景氣」", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

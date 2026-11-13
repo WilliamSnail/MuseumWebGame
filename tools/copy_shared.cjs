@@ -78,5 +78,11 @@ function dayData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "day_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每天的館訊（board）和現實消息（real），依日期查（給 Discord 的 /pepe-今日活動）\nexport const DAY_DATA = " + JSON.stringify(dayData()) + ";\n");
+// 外面世界的經濟（11-14）：content/economy.json 的 gdp（台灣最新一季 GDP 年增率），每日排劇情的排程更新，給景氣指數的外部景氣用（shared/casino_gdp.js 的 casGdpExt）。
+function economyData() {
+  const f = path.join(ROOT, "content", "economy.json");
+  try { const d = JSON.parse(fs.readFileSync(f, "utf8")); return d.gdp ? { gdp: d.gdp } : {}; } catch (e) { console.error("economy.json：讀不出來", e.message); return {}; }
+}
+fs.writeFileSync(path.join(to, "economy_data.js"), "// copy_shared.cjs 產生的，不要改。content/economy.json（外面世界的景氣，給 Functions 算景氣指數）\nexport const ECONOMY = " + JSON.stringify(economyData()) + ";\n");
 fs.writeFileSync(path.join(to, "README.md"), "這個資料夾是 tools/copy_shared.cjs 從 shared/ 複製來的，不要改這裡，改 shared/。\n");
 if (require.main === module) console.log(`複製了 ${n} 個規則檔到 functions/shared/`);

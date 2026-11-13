@@ -9,6 +9,7 @@
 import { NUM } from "./config.js";
 import { hallScore, isFree } from "./logic.js";
 import { casCount, casLedFix, casMint, casPoolMint } from "./casino_book.js";
+import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 
 const tkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
 // 一位參觀者的票價
@@ -29,7 +30,7 @@ export function casTicketClaim(w, house, P, day) {
   const fresh = visitors - t.seen;
   t.seen = visitors; // 沒收到的超過上限的，不留到明天
   const n = Math.min(fresh, casTicketLeft(w, day));
-  const price = casTicketPrice(hallScore(P).score), total = n * price;
+  const price = Math.floor(casTicketPrice(hallScore(P).score) * casFxMul(house) * casFxPolicy(house, day, "ticket")), total = n * price; // 景氣 ±10%、政策（振興觀光）多一成
   if (!(total > 0)) return { ok: true, n: 0, price, total: 0, owner: 0, budget: 0, museum: 0 };
   t.n += n;
   casCount(house, "ticketPeople", n);
