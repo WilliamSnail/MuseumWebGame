@@ -21,7 +21,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { casNum, casRoundView } from "./shared/casino.js";
-import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -64,6 +64,7 @@ export async function playCore(me, email, opts, fn) {
       const evPacks = casEventPacks(w, eventsFromWeeks(EVENT_WEEKS), t); // 限時活動（casinoBoost）：伺服器的時間說了算
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
+      casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
@@ -202,12 +203,12 @@ export const actPack = (ctx, d) => {
 // 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino_wallet.js）
 // 決定 0064 之後是有利息的借款：Discord 沒有參數，借 NUM.casino.loan.discord 這麼多（casRelief）
 export const actRelief = ctx => {
-  const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
+  const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house);
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
 };
 // 遊戲的「跟 Yuga 借」：借多少玩家選（d.amt，"max" ＝借滿），額度、利息、幾天內還都在 casBorrow
 export const actBorrow = (ctx, d) => {
-  const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
+  const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); // 從莊家出（決定 0071）
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
 };
 // 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀
@@ -222,7 +223,7 @@ export const actWork = (act, ctx, d) => {
 };
 // 還壹筆（d.id；沒給就還最早到期的）
 export const actRepay = (ctx, d) => {
-  const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t);
+  const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); // 還給莊家（決定 0071）
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 export const actBuy = (ctx, d) => {
