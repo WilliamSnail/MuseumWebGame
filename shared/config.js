@@ -265,6 +265,8 @@ export const NUM = {
       collector: { label: "藏家", perDay: [1500000, 3000000], max: [1000000, 3000000] },
     },
     arcNeed: { commissions: 500, hallVisits: 5000 },
+    // 展廳的旅客（11-14，shared/npc.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
+    hallStory: 0.4, newsMax: 2,
   },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {
