@@ -17,6 +17,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casFxMood } from "./casino_gdp.js";
 import { casNum } from "./casino.js";
+import { hashStr, mulberry32 } from "./logic.js";
 
 const arBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const arN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -35,6 +36,8 @@ export const CAS_ART = {
   price: "館方價", back: "賣回拿",
   buyOk: "買下「{title}」，付了 {n}。放著就好。",
   sellOk: "「{title}」賣回館方，拿回 {n}（買的時候付了 {paid}）。",
+  hoaxHint: "有人說《{title}》可能不是原作，館方明天要重新鑑定。",
+  risk: "畫也有風險：價格每天會小小地漲跌；偶爾有「贗品疑雲」，壹次掉一到三成，前壹天會先有線索。",
   bad: "這幅畫沒辦法買賣。",
   nomode: "要用挑戰模式的參觀者才能收藏畫。",
   notToday: "這幅畫已經不在今天的特展，館方不收新的。",
@@ -105,24 +108,54 @@ export function casArtHouse(house) {
   return house.art;
 }
 
-// 現價。item：{ tier, date }（畫出現的那天）；id：算「搶手」用的
-export function casArtPrice(item, id, day, house) {
+// 隨機的祕密：伺服器每次處理前設進來（Functions 的 stocksTwSecret/main，玩家讀不到）。沒設（網頁、測試）用壹個固定字串——網頁拿不到真的走勢，只拿伺服器算好的價
+let ART_SECRET = "art-secret-unset";
+export function casArtSecret(s) { if (typeof s === "string" && s) ART_SECRET = s; return ART_SECRET; }
+const arGauss = rnd => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+// 那天（d）這幅畫有沒有贗品疑雲：回傳掉的比例（0 ＝ 沒有）。種子 ＝ 祕密＋畫＋日期，沒有祕密猜不到
+function arHoax(id, d) {
+  const C = NUM.art;
+  if (!(C.hoaxPct > 0)) return 0;
+  const rnd = mulberry32(hashStr(`${ART_SECRET}|${id}|${d}|hoax`));
+  return rnd() < C.hoaxPct / 100 ? (C.hoaxMin + rnd() * (C.hoaxMax - C.hoaxMin)) / 100 : 0;
+}
+const arAddDays = (s, n) => new Date(arUTC(s) + n * 86400000).toISOString().slice(0, 10);
+// 隨機的部分：展出後到 day，每天 walkSd% 的隨機走（累計夾 ±walkCap%）、贗品疑雲的掉價。回傳乘在價格上的倍數
+function arRandom(item, id, day) {
+  const C = NUM.art, n = Math.min(400, Math.max(0, arDiff(item.date, day)));
+  let w = 0, hit = 1;
+  for (let i = 1; i <= n; i++) {
+    const d = arAddDays(item.date, i);
+    if (C.walkSd > 0) w = Math.max(-C.walkCap / 100, Math.min(C.walkCap / 100, w + C.walkSd / 100 * arGauss(mulberry32(hashStr(`${ART_SECRET}|${id}|${d}|walk`)))));
+    hit *= 1 - arHoax(id, d);
+  }
+  return (1 + w) * hit;
+}
+// 明天這幅有贗品疑雲嗎（前壹天的線索，畫面給收藏的畫看）：回傳 true／false
+export function casArtHoaxTomorrow(item, id, day) {
+  if (!arBox(item) || !arDay(item.date) || !arDay(day)) return false;
+  const d = arAddDays(day, NUM.art.hoaxHintDays);
+  return arDiff(item.date, d) >= 1 && arHoax(id, d) > 0;
+}
+// 現價。item：{ tier, date }（畫出現的那天）；id：算「搶手」和隨機用的；det：true ＝ 不算隨機的部分（算回本天數的預測用，不洩漏未來）
+export function casArtPrice(item, id, day, house, det) {
   const C = NUM.art, base = C.tiers[arTierOf(item && item.tier)].base;
   const age = arDay(item && item.date) && arDay(day) ? casArtAge(Math.max(0, arDiff(item.date, day))) : 0;
   const b = casFxMood(house), mood = Number.isFinite(b) ? -b * C.moodPct : 0;
   const own = house && arBox(house.art) && arBox(house.art.own) ? arN(house.art.own[id]) : 0;
   const demand = Math.min(C.demandCapPct, own * C.demandPct);
-  return Math.max(C.unit, Math.round(base * (1 + (age + mood + demand) / 100) / C.unit) * C.unit);
+  const rnd = !det && arDay(item && item.date) && arDay(day) && typeof id === "string" ? arRandom(item, id, day) : 1;
+  return Math.max(C.unit, Math.round(base * (1 + (age + mood + demand) / 100) * rnd / C.unit) * C.unit);
 }
 // 賣回館方拿多少
 export const casArtSellPrice = price => Math.floor(arN(price) * NUM.art.sellPct / 100);
 // 再放幾天，賣回才拿得回買進價（paid）。照「現在的景氣和搶手」往後算；已經拿得回就是 0；四百天內都不行就是 null
 export function casArtBreakEven(item, id, day, house, paid) {
   if (!arDay(day) || !(arN(paid) > 0)) return null;
-  const cur = arN(paid);
+  const cur = arN(paid), now = casArtPrice(item, id, day, house), nowDet = casArtPrice(item, id, day, house, true), k = nowDet > 0 ? now / nowDet : 1; // k：現在已經發生的隨機偏離（未來的隨機不能預測，不算）
   for (let n = 0; n <= 400; n++) {
-    const d = new Date(arUTC(day) + n * 86400000).toISOString().slice(0, 10);
-    if (casArtSellPrice(casArtPrice(item, id, d, house)) >= cur) return n;
+    const d = arAddDays(day, n), p = n === 0 ? now : Math.round(casArtPrice(item, id, d, house, true) * k);
+    if (casArtSellPrice(p) >= cur) return n;
   }
   return null;
 }
@@ -187,7 +220,7 @@ export function casArtView(w, house, P, works, day) {
   });
   const mine = Object.keys(own).filter(id => arBox(own[id]) && arDay(own[id].date)).map(id => {
     const x = own[id], price = casArtPrice(x, id, day, house);
-    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), lock: typeof x.lock === "string" && x.lock ? x.lock : null, breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)) };
+    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), lock: typeof x.lock === "string" && x.lock ? x.lock : null, breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)), hint: casArtHoaxTomorrow(x, id, day) ? arFill(CAS_ART.hoaxHint, { title: String(x.title || id) }) : null };
   });
-  return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips };
+  return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips, risk: CAS_ART.risk };
 }
