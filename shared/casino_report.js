@@ -13,7 +13,7 @@ import { CAS_ECON } from "./casino_text.js";
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
-  mint: { start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
+  mint: { stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
   flow: { stockIn: "館內股票（莊家當對手盤）", budgetLoan: "跟預算池借（莊家破產重開）", budgetRepay: "還預算池", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
