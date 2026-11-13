@@ -286,7 +286,13 @@ export async function casReport() {
     if (made) { // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino_gdp.js 的 casFxMul）
       await db().runTransaction(async tx => {
         const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house;
-        h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day };
+        // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
+        const A = doc.diff.act || {}, g = doc.gdp;
+        const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`],
+          ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
+        const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
+        h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
+          perDay: doc.index.perDay, g: doc.index.g, rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
         put(tx, houseRef(), h);
       });
     }

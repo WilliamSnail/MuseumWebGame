@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-report", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "銀行多了「財報」：看得到館內景氣", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["看得到什麼", [
+        "Yuga Bot 銀行的「財報」頁開了：館內 GDP、跟前七天比的成長、今天的景氣，還有每天壹句新聞。",
+        "下面列昨天發生的事：餐車賣幾份、21 點打幾手、拚經濟成功幾次、幾位參觀者買票。",
+        "景氣會影響拚經濟的撥款、門票和存款利率。",
+      ]],
+    ],
+  },
+  {
     id: "pass-avatar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "館友證可以選佩佩當頭像", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
@@ -96,6 +107,7 @@ export const NOTICES = [
     sections: [
       ["這次改了什麼", [
         "電腦版大廳的右邊壹欄換成深色的木欄：今天要做的事壹張壹張金邊卡，第壹件會發亮；完成的變灰。館友證和標題也換了新的羊皮紙樣子。導覽圖照舊。",
+        "（修正）右邊的木柱以前被拉得太寬、花紋變形，現在照原本的比例畫在欄子中間。",
       ]],
     ],
   },
