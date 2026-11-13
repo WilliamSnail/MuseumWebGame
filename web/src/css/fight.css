@@ -501,3 +501,28 @@ body.reduce-motion .fg-stage.focus-foe .fg-foe-box { transform: none; }
   .cx-run:has(.fg-stage) .fg-stage .fg-seat .fg-who { max-width: 86px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .6875rem; }
   .cx-run:has(.fg-stage) .fg-stage .fg-seat .fg-roles, .cx-run:has(.fg-stage) .fg-stage .fg-seat .fg-pepe small { display: none; }
 }
+@media (max-height: 500px) and (orientation: landscape) {
+  /* 底下那排小圓鈕（引開、鼓舞、分膽、安慰、帽子的技能）要寫字：翊文 11-13「手機裡這些功能是什麼看不太出來」。以前橫拿為了擠高度把字拿掉了 */
+  .fg-panel .fg-chips { flex-wrap: wrap; overflow: visible; gap: 2px 4px; justify-content: flex-start; }
+  .fg-panel .fg-chip { width: 58px; height: auto; min-height: 0; font-size: .6875rem; line-height: 1.15; background-size: 40px 40px; padding-bottom: 1px; }
+  .fg-panel .fg-chip > span:not(.fg-ico) { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; color: #F3E6C8; text-shadow: 0 1px 2px #000; }
+  .fg-panel .fg-chip .fg-ico { width: 26px; height: 26px; margin: 7px auto 6px; }
+  .fg-panel .fg-chip.cx-on > span:not(.fg-ico) { color: #FFD27A; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-panel .fg-chips { flex-wrap: nowrap; gap: 1px; justify-content: space-between; }
+  .fg-panel .fg-chip { width: 40px; flex: 1 1 0; min-width: 0; font-size: .625rem; background-size: 34px 34px; }
+  .fg-panel .fg-chip .fg-ico { width: 22px; height: 22px; margin: 6px auto 5px; }
+}
+/* 手機：小按鈕第一次點出來的說明（fg-chip-tip），再點壹次才送出；點過的小圈亮壹圈 */
+.fg-chip-tip { display: none; margin: 4px 0 0; padding: 4px 8px; border-radius: 6px; background: rgba(0, 0, 0, .35); color: #F3E6C8; font-size: .75rem; line-height: 1.35; }
+.fg-chip-tip.on { display: block; }
+.fg-chip-tip b { color: #FFD27A; }
+.fg-chip-tip small { color: #D6B25E; }
+.fg-panel .fg-chip.armed { background-image: url(/cellar2/ui-ring-2.webp); }
+.fg-panel .fg-chip.armed > span:not(.fg-ico) { color: #FFD27A; }
+@media (max-height: 500px) and (orientation: landscape) {
+  /* 說明那一行出現時不要讓面板變高：說明蓋在小圓鈕那一排上面（絕對定位，貼著面板底），小圓鈕被蓋住的時候不用看 */
+  .fg-panel { position: relative; }
+  .fg-panel .fg-chip-tip.on { position: absolute; left: 6px; right: 6px; bottom: 6px; margin: 0; z-index: 3; background: rgba(20, 12, 8, .96); border: 1px solid #C8A25A; }
+}
