@@ -14,7 +14,7 @@
 python -m http.server 5291 --bind 127.0.0.1
 ```
 
-打開 `http://localhost:5291/drafts/新大廳/`。網址加 `?rm=1` 看「減少動畫」的樣子。
+（11-13：草稿網頁 index.html 已經刪掉，新大廳在遊戲裡 web/src/ui_lobby2.js；要看當時的草稿用 git 找 PR 155。）打開 `http://localhost:5291/drafts/新大廳/` 已經不能用。網址加 `?rm=1` 看「減少動畫」的樣子。
 
 ## 版面
 

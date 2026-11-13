@@ -281,7 +281,15 @@ SCREENS.codex = (root, params) => {
   const tabFresh = { recipes: freshUnder(P, "codex", FRESH_KEY.recipe("")), badges: freshUnder(P, "codex", FRESH_KEY.badge("")) }; // 這頁有新東西（11-08）
   const tabs = h("div", { class: "seg big-tabs" }, [["pepe", "佩佩"], ["failed", "失敗作"], ["repaired", "修復品"], ["forbidden", "禁忌・突變"], ["recipes", "配方"], ["pillow", "抱枕"], ["badges", "徽章"]].map(([id, n]) =>
     h("button", { type: "button", class: "seg-btn" + (id === tab ? " on" : ""), "aria-pressed": String(id === tab), onClick: () => go("codex", { tab: id }, { action: false }) }, icon(TAB_IC[id]), h("span", null, n), tabN[id] ? h("small", { class: "tab-c" }, String(tabN[id])) : null, tabFresh[id] ? freshTag("tab-fresh") : null)));
-  root.append(roomHead("圖鑑室", `收藏 ${num(count)}／${num(CORE_TOTAL)}（${pct}%）　徽章 ${Object.keys(P.badges).length}／${BADGES.length}`, tabs));
+  // 壹個畫面看得完（docs/介面整合規劃.md 第六步）：標題壹行｜頁籤壹排｜主區（圖鑑的格子，太多的時候在自己裡面捲）＋側欄（篩選收起來、點壹格的說明牌）
+  root.classList.add("onescreen-room", "codex-onescreen");
+  root.append(roomHead("圖鑑室", `收藏 ${num(count)}／${num(CORE_TOTAL)}（${pct}%）　徽章 ${Object.keys(P.badges).length}／${BADGES.length}`), tabs);
+  // 沒有側欄的頁籤（修復品、配方、禁忌、徽章）：內容放主區；同壹頁再 append 就接在後面
+  const stageOnly = (...kids) => {
+    let stage = $(".codex-stage", root);
+    if (!stage) { root.classList.add("codex-no-side"); stage = h("div", { class: "codex-stage" }); root.append(h("div", { class: "onescreen-main" }, stage)); }
+    stage.append(...kids.filter(Boolean));
+  };
   const detail = h("div", { class: "cx-detail", "aria-live": "polite" }, h("p", { class: "empty" }, "點一格放大看說明牌。"));
   if (tab === "pepe" || tab === "failed") {
     const failed = tab === "failed";
@@ -323,14 +331,20 @@ SCREENS.codex = (root, params) => {
       const pick = codexPick(+b.dataset.i); if (failed) pick[ROLLED] = FAILED;
       showCodexCell(detail, pick, failed);
     });
-    root.append(chips, h("p", { class: "sub" }, `顯示 ${num(shown)} 格，收藏了 ${num(own)} 格`), h("div", { class: "cx-wrap" }, grid, detail));
+    // 篩選：整條是壹顆銅牌按鈕，寫現在篩了什麼；點開才是整排選項（翊文 11-13：可以展開的東西要看得出能展開）
+    const nowFilter = CATS.map(c => filt[c]).filter(Boolean).join("、") || "全部（沒有篩）";
+    const filterBox = h("details", { class: "onescreen-card codex-filter", open: !!UI.codexFilterOpen, onToggle: e => { UI.codexFilterOpen = e.target.open; } },
+      h("summary", null, h("b", null, "篩選"), h("span", { class: "codex-filter-now" }, nowFilter), h("span", { class: "codex-filter-more" }, "點開 ▾"), h("span", { class: "codex-filter-less" }, "收起來 ▴")), chips);
+    root.append(h("div", { class: "onescreen-main" },
+      h("div", { class: "codex-stage" }, h("p", { class: "sub codex-count" }, `顯示 ${num(shown)} 格，收藏了 ${num(own)} 格`), grid),
+      h("aside", { class: "onescreen-side" }, filterBox, detail)));
   } else if (tab === "repaired") {
     const list = collectionItems("repaired");
-    root.append(h("p", { class: "sub" }, hasUp(P, "repair") ? "在館長室的修復台把失敗作修好，就會放到這裡。" : "在館長室買「修復台」之後，失敗作可以修成修復品。"),
+    stageOnly(h("p", { class: "sub" }, hasUp(P, "repair") ? "在館長室的修復台把失敗作修好，就會放到這裡。" : "在館長室買「修復台」之後，失敗作可以修成修復品。"),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), placard([describePepe(it.pick).title, "修復品"]))))
         : h("p", { class: "empty" }, "還沒有修復品。"));
   } else if (tab === "recipes") {
-    root.append(h("p", { class: "sub" }, `在融合室試出來的配方。發現了 ${Object.keys(P.recipes).length}／${RECIPES.length} 個。`),
+    stageOnly(h("p", { class: "sub" }, `在融合室試出來的配方。發現了 ${Object.keys(P.recipes).length}／${RECIPES.length} 個。`),
       h("div", { class: "badge-grid" }, RECIPES.map(r => {
         const t = (typeof RECIPE_TEXT !== "undefined" && RECIPE_TEXT[r.id]) || { name: r.id, hint: "" };
         const got = P.recipes[r.id];
@@ -341,7 +355,7 @@ SCREENS.codex = (root, params) => {
     const list = Object.entries(P.pepes).map(([k, e]) => ({ kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect })).filter(i => i.pick && !isBasePick(i.pick));
     const forb = CATS.flatMap(c => partOf(c).options.filter(o => isSpecialOpt(o) && !((o.limited === "show" || o.limited === "week") && !isUnlocked(P, c, o.name))).map(o => ({ c, o }))); // 主題展、每週特展的配件拿到才列（決定 0035）
     const how = o => o.forbidden ? `神話 ${o.myth}` : o.mutant ? "融合突變" : o.mix ? "融合調色" : o.limited ? ({ shop: "兌換所限定", show: "主題展限定", week: "每週特展限定" }[o.limited] || "簽到限定") : "委託人送的";
-    root.append(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
+    stageOnly(h("p", { class: "sub" }, `禁忌、突變、委託人送的選項不算在 ${num(CORE_TOTAL)} 格裡：` + forb.map(({ c, o }) => `${o.name}（${c}，${how(o)}）${isUnlocked(P, c, o.name) ? "已打開" : ""}`).join("、")),
       list.length ? h("div", { class: "item-grid" }, list.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }), pepePlacard(it.pick, { perfect: it.perfect }))))
         : h("p", { class: "empty" }, "還沒有禁忌作品。"));
   } else if (tab === "pillow") {
@@ -363,13 +377,15 @@ SCREENS.codex = (root, params) => {
       });
       return cell;
     }));
-    root.append(h("p", { class: "sub" }, `抱枕 ${Object.keys(P.pillows).length} 種（27 格，每格顯示印過幾種佩佩）`), h("div", { class: "cx-wrap" }, grid, detail));
+    root.append(h("div", { class: "onescreen-main" },
+      h("div", { class: "codex-stage" }, h("p", { class: "sub codex-count" }, `抱枕 ${Object.keys(P.pillows).length} 種（27 格，每格顯示印過幾種佩佩）`), grid),
+      h("aside", { class: "onescreen-side" }, detail)));
   } else {
-    root.append(h("div", { class: "badge-grid" }, BADGES.map(b => freshMark(h("div", { class: "badge" + (P.badges[b.id] ? " got" : "") },
+    stageOnly(h("div", { class: "badge-grid" }, BADGES.map(b => freshMark(h("div", { class: "badge" + (P.badges[b.id] ? " got" : "") },
       icon(P.badges[b.id] ? "star" : "lock"), h("b", null, b.name), h("p", { class: "sub" }, b.desc), h("p", { class: "sub" }, P.badges[b.id] ? `拿到了・${P.badges[b.id]}` : b.insp ? `獎勵 +${b.insp} 靈感` : "")),
       !!P.badges[b.id] && isFresh(P, "codex", FRESH_KEY.badge(b.id)))))); // 新拿到的徽章：角上「新」（11-08）
     const rows = Object.keys(P.fullRows);
-    root.append(h("p", { class: "sub" }, `整類全收集（每類 +${NUM.fullRowSan} 理智）：${rows.length ? rows.map(r => r.split(":")[1]).join("、") : "還沒有"}`));
+    stageOnly(h("p", { class: "sub" }, `整類全收集（每類 +${NUM.fullRowSan} 理智）：${rows.length ? rows.map(r => r.split(":")[1]).join("、") : "還沒有"}`));
   }
 };
 export function showCodexCell(detail, pick, failed) {
