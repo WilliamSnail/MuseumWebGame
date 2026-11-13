@@ -8,11 +8,12 @@ const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { f
 const ids = G => G.OUT_STOCKS.map(s => s.id);
 
 T("名字表：6～8 檔、id 不重複、有名字有介紹、不寫真公司名和代號", G => {
-  const L = G.OUT_STOCKS; assert.ok(L.length >= 6 && L.length <= 8);
+  const L = G.OUT_STOCKS; assert.ok(L.length >= 6 && L.length <= 12);
   assert.strictEqual(new Set(ids(G)).size, L.length);
   const bad = /NVIDIA|AMD|Nasdaq|NASDAQ|TSMC|台積|Apple|Tesla|Microsoft|輝達|超微|蘋果公司|特斯拉|微軟|NVDA|AAPL|TSLA|MSFT|\b[A-Z]{3,5}\b|\d{4}\.TW/;
   L.forEach(s => { assert.ok(s.name && s.intro && ["stock", "index"].includes(s.kind)); assert.ok(!bad.test(s.name + s.intro), s.id); });
-  assert.strictEqual(Object.keys(F.SYMBOLS).sort().join(), ids(G).sort().join(), "抓資料腳本和名字表的 id 要一樣");
+  assert.ok(Object.keys(F.SYMBOLS).every(k => ids(G).includes(k)), "抓資料腳本的 id 都要在名字表裡");
+  assert.ok(ids(G).filter(i => !G.stockIsTw(i)).every(k => k in F.SYMBOLS), "美股和指數都要有每日資料（台股新增的 4 支走盤中，不靠每日資料）");
 });
 T("縮放和上限：照真的、超過 10% 截斷、壞值當不動", G => {
   const C = G.OUT_STOCK_NUM;

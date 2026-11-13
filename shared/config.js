@@ -389,7 +389,12 @@ export const NUM = {
       // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
       order: { max: 10, perStock: 3, days: 3, cancelDay: 20 },
       // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低
-      twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }] },
+      twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }],
+      // 台股盤中（11-14，規劃 2.8d，shared/stocks_tw.js）：from／len 開盤、收盤（台灣時間 09:00 起算的分鐘，09:00～13:30 ＝ 0～270）；seg 幾分鐘壹個真實錨點；
+      //   giveUp 開盤後超過幾分鐘還沒抓到第壹個價，當天不開；retry 錨點時間過了幾分鐘內重抓，再抓不到這壹段真實成分當 0；
+      //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
+      tw: { from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
+        sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },

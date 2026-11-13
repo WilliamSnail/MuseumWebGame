@@ -34,7 +34,7 @@ T("下單價格要比現價有利；停盤不能下單；張數上限", G => {
   assert.ok(!h.ok && h.reason.includes("停盤"));
   for (let i = 0; i < 3; i++) assert.ok(G.casStockOrder(s.w, s.house, "buy", ID, 1, px - 1 - i, D, OPEN).ok);
   assert.ok(!G.casStockOrder(s.w, s.house, "buy", ID, 1, px - 9, D, OPEN).ok, "同壹支最多 3 張");
-  const ids = G.STOCK_IDS.filter(x => x !== ID);
+  const ids = G.STOCK_IDS.filter(x => x !== ID && !G.stockIsTw(x)); // 台股要等開盤才能下單，另外在 stocks_tw.test 測
   let n = 3;
   for (const id of ids) for (let i = 0; i < 3 && n < 10; i++) { assert.ok(G.casStockOrder(s.w, s.house, "buy", id, 1, s.house.stk.px[id] - 1, D, OPEN).ok); n++; }
   assert.strictEqual(s.w.stk.orders.length, 10);

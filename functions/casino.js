@@ -36,7 +36,8 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
-import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockRoll, casStockSell, casStockTakeNotes, casStockView } from "./shared/casino_stock.js";
+import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockRoll, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockView } from "./shared/casino_stock.js";
+import { TW_IDS } from "./shared/stocks_tw.js";
 import { OUT_STOCK_NUM, outStockAgeDays, outStockMovesFor, outStockReady, outStockStale } from "./shared/stocks.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
@@ -45,6 +46,7 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
+import { stocksTw, twStale } from "./stock_tw.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
@@ -66,6 +68,7 @@ export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   const daily = await stocksDaily(); // 館外股票的每日資料：交易外面先讀好（有快取），交易裡只算
+  const tw = await stocksTw(); // 台股盤中（11-14，規劃 2.8d）：伺服器每分鐘排程算好的價，同樣交易外面讀（有快取）
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
@@ -79,11 +82,13 @@ export async function playCore(me, email, opts, fn) {
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
       casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
+      casStockTwSettle(house, tw, day); // 換日以前先把上一天台股的收盤價套上去
       casStockRollIfReady(house, day, daily); // 股票：換日照外面世界的行情調價（shared/casino_stock.js）
+      casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
-      const stale = outStockStale(daily, day, STOCK_IDS); // 哪幾支今天沒有新資料（畫面要標出來，不要讓人以為真的沒漲跌）
+      const stale = outStockStale(daily, day, STOCK_IDS.filter(id => !TW_IDS.includes(id))).concat(twStale(tw, day)); // 台股不靠每日資料，沒資料看 twStale // 哪幾支今天沒有新資料（畫面要標出來，不要讓人以為真的沒漲跌）
       const ctx = { w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
       const r = fn(ctx);
@@ -245,7 +250,7 @@ export function casStockRollIfReady(house, day, daily) {
   // 資料斷太久要在記錄裡喊壹聲，不然沒有人會發現（11-14）
   const age = outStockAgeDays(daily, day);
   if (age > OUT_STOCK_NUM.staleDays) console.error(`館外股票的資料落後 ${age === Infinity ? "很久（壹筆都沒有）" : age + " 天"}，股價不準。看 stocks-daily.yml 這幾天有沒有跑成功。`);
-  const moves = outStockMovesFor(daily, day, STOCK_IDS);
+  const moves = outStockMovesFor(daily, day, STOCK_IDS); // 台股的跳空不在這裡（casStockRoll 把台股的漲跌當 0）
   return casStockRoll(house, day, moves).done;
 }
 // 股票買賣：d.op 是 buy、sell；d.id 哪壹支、d.n 幾股（"max" ＝全賣）。
@@ -255,7 +260,8 @@ export const actStock = (ctx, d) => {
   const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
     : op === "sell" ? casStockSell(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
     : op === "order" ? casStockOrder(ctx.w, ctx.house, String(d.kind || ""), String(d.id || ""), d.n, d.px, ctx.day, ctx.t)
-    : op === "cancel" ? casStockCancel(ctx.w, d.no, ctx.day, ctx.t) : { ok: false, reason: "沒有這個動作" };
+    : op === "cancel" ? casStockCancel(ctx.w, d.no, ctx.day, ctx.t, ctx.house)
+    : op === "seen" ? casStockSeen(ctx.w, ctx.house) : { ok: false, reason: "沒有這個動作" };
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // Yuga Bot 銀行（shared/casino_bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
