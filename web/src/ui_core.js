@@ -1236,6 +1236,15 @@ export function trackGaze(e) {
 // 留著是給還在叫它的地方；SAVE.settings.dayMin 也留著，只是不用
 export const dayMins = () => 0;
 // 小遊戲共用的框（原本在 ui_screens2.js）
+// 小視窗點外面、按 Esc 也能關（翊文 11-13：「委託櫃檯沒有退出鍵」）。只給可以隨時關的視窗用（選職業、調色這種要做完的不要）
+export function closeOnOutside(m) {
+  const esc = e => { if (e.key === "Escape") done(); };
+  const done = () => { document.removeEventListener("keydown", esc); m.close(); };
+  m.layer.addEventListener("click", e => { if (e.target === m.layer) done(); });
+  document.addEventListener("keydown", esc);
+  const close0 = m.close; m.close = () => { document.removeEventListener("keydown", esc); close0(); };
+  return m;
+}
 export function miniLayer(title, sub) {
   const card = h("div", { class: "mini-card enter", role: "dialog", "aria-label": title }, h("h2", null, title), h("p", { class: "sub" }, sub));
   const layer = h("div", { class: "mini-layer" }, card);
