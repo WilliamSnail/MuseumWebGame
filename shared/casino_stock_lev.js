@@ -61,7 +61,7 @@ export function casLevFix(w, day) {
   // 就地補（不換物件：呼叫的人手上拿著的 pos 還是同壹個）
   S.pos = (Array.isArray(S.pos) ? S.pos : []).filter(lqBox).map(p => Object.assign(p, {
     no: lqN(p.no), mk: casLevMarket(p.id), side: p.side === "short" ? "short" : "long", lev: Math.max(1, lqN(p.lev)), qty: lqN(p.qty), entry: lqN(p.entry), notional: lqN(p.notional),
-    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), px: lqN(p.px) || lqN(p.entry) }))
+    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), peg: lqN(p.peg), px: lqN(p.px) || lqN(p.entry) }))
     .filter(p => p.mk && p.qty > 0 && p.entry > 0 && p.margin > 0 && p.day);
   S.seq = lqN(S.seq);
   S.hold = S.pos.reduce((a, p) => a + p.margin, 0); // 永遠由部位算出來，不會對不上
@@ -230,7 +230,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   w.chips -= margin + cost.total;
   house.budget += cost.total; casCount(house, "levFee", cost.total); // 手續費和利息搬進預算池（不是 burn）
   S.seq += 1;
-  const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), px };
+  const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), peg: lqN(casStockHouseFix(house).peg.seq), px };
   S.pos.push(pos); S.hold += margin; S.fee += cost.total;
   S.opens = { day, n: opensToday + 1 };
   if (H) H.in += notional;
@@ -289,6 +289,8 @@ export function casLevSweep(w, house, day, t, src) {
   const S = casLevFix(w, day), out = [];
   src = src || casLevSrc(house, day, t);
   for (const pos of S.pos.slice()) {
+    // 價位換成真實比例（規劃 2.8h，house.stk.peg.ev）時還有這檔的部位：之後的價是新的比例，不能跟開倉價比。保守做法：用換之前最後看到的價平倉
+    if (pos.mk !== "in" && casStockHouseFix(house).peg.ev.some(e => e.id === pos.id && e.seq > pos.peg)) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, pos.px, t, "flat"))); continue; }
     const path = src.path(pos.id, pos.day, pos.chk) || [];
     const h = casLevCheck(pos, path);
     if (h.hit) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, h.px, t, "liq"))); continue; }

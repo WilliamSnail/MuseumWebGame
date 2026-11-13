@@ -37,6 +37,7 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
+import { casLevClose, casLevCreditAdd, casLevOpen, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
@@ -82,13 +83,16 @@ export async function playCore(me, email, opts, fn) {
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
-      casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
-      casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
+      const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
+      const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
+      if ((bankEv && bankEv.back && bankEv.back.length) || (bondEv && bondEv.back && bondEv.back.length)) casLevCreditAdd(w, day); // 定存、館債準時到期：信用點 +1（壹天最多 1，規劃 2.8b、2.8j）
       casStockTwSettle(house, tw, day); // 換日以前先把上一天台股的收盤價套上去
       casStockUsSettle(house, us, day); // 美股也是（冬令收盤剛好是 05:00 換日那一刻，這裡補上最後一個價）
+      casLevSweep(w, house, day, t); // 槓桿、放空、當沖（規劃 2.8j）：強平、昨天以前沒平的收盤平倉。要在換日調價、館內股換日、價位換比例「之前」，用的是昨天的價
       casStockRoll(house, day, {}, casStockReals(house, tw, us)); // 股票換日（照真實比例換價位、開盤拉回，規劃 2.8h）：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino_stock.js）
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
+      casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
       casInRoll(house, day, house.econ && house.econ.b); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
@@ -199,10 +203,16 @@ export async function liveAct(me, act, rnd, opts = {}) {
 // 畫面要的：錢包摘要、這一手、莊家
 // 每一步成功的回答都經過這裡：先同步每週收藏（統計夠了就發），再把摘要、這一手、莊家一起給畫面
 export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
+// 股票的畫面：現股、館內店的 casStockViewAll ＋ 槓桿頁要的 lev、positions、credit（casStockLevView；規劃 2.8j）。
+// 畫面的 positions[].id 是「單號」p3（平倉送 pid），股票的 id 是 sid；其餘欄位（no、name、market、side、lev、qty、entry、margin、now、pnl、maintPct、liqPx、openedDay、dayTrade）一起給
+const levStock = ctx => {
+  const v = casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), L = casStockLevView(ctx.w, ctx.house, ctx.day, ctx.t);
+  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id, stop: null, take: null })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
+};
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), stock: casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), stock: levStock(ctx), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w), casLevTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -244,9 +254,13 @@ export const actBorrow = (ctx, d) => {
 // 掛單：d.op 是 order（d.kind 是 buy 限價買、sell 限價賣、stop 停損賣；d.id、d.n、d.px 價）、cancel（d.no 第幾張）
 export const actStock = (ctx, d) => {
   const op = String(d.op || ""), id = String(d.id || "");
+  if (op === "open" || op === "close") { // 槓桿、放空、當沖（規劃 2.8j）：open 帶 id、side（或 dir）、lev、qty（或 margin）；close 帶單號 no（或畫面的 pid "p3"）
+    const r = op === "open" ? casLevOpen(ctx.w, ctx.house, d, ctx.day, ctx.t) : casLevClose(ctx.w, ctx.house, d.no != null ? d.no : parseInt(String(d.pid == null ? "" : d.pid).replace(/D/g, ""), 10), ctx.day, ctx.t);
+    return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
+  }
   if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣；限價單、槓桿、放空還沒做
     const x = op === "buy" ? casInBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? casInSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : null;
-    if (!x) return no({ reason: op === "order" || op === "open" ? "館內股票還不能掛單或槓桿" : "沒有這個動作" });
+    if (!x) return no({ reason: op === "order" ? "館內股票還不能掛單" : "沒有這個動作" });
     return x.ok ? shape(ctx, { lines: x.lines }) : no(x);
   }
   const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
