@@ -165,6 +165,7 @@ export async function afterEnter() {
   if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && ADDONS.workCheck) ADDONS.workCheck(); // 欠款中要送人去地下工作、在工作的還清了回來（決定 0064，ui_work.js）。不等它
+  if (!isFree(P) && ADDONS.lostSync) ADDONS.lostSync(); // 招領單：把自己館裡最近理智歸零的參觀者寫上去（翊文 11-13，ui_lost.js）。不等它
   if (!isFree(P) && !P.job) await pickJob(); // 進階版搬過來的存檔、下一位參觀者：先選職業
   if (!isFree(P) && !SAVE.tutorialDone) { await wait(500); await tutorial(); }
   if (UI.screen === "title" || !P) return; // 教學走到一半回到門口了：今天的心情、公告等進館再說（11-08 修）

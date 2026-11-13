@@ -69,6 +69,7 @@ import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 
 import "./ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord_link.js，規則在 shared/discord.js
 import "./ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
 import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino_wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
+import "./ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/lostfound.js）
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 
 import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊網頁跳「館裡更新了」；判斷在 shared/notices.js
