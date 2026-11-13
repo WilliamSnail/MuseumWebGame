@@ -141,5 +141,33 @@ T("舊錢包沒有 orders、壞資料", G => {
   const S = G.casStockFix(w);
   assert.strictEqual(S.orders.length, 1); assert.strictEqual(S.hold, 100);
 });
+T("壹次撮合兩張單都成交：後面那張也要真的刪掉，不會變幽靈單再成交壹次（11-14 實測發現）", G => {
+  const s = fresh(G), op = open0(G, s), px = s.house.stk.px[ID];
+  G.casStockBuy(s.w, s.house, ID, 5, D, OPEN);
+  G.casStockOrder(s.w, s.house, "stop", ID, 3, px - 500, D, OPEN);
+  G.casStockOrder(s.w, s.house, "buy", ID, 10, px - 1000, D, OPEN);
+  s.house.stk.px[ID] = px - 2000;
+  const m = G.casStockMatch(s.w, s.house, D, OPEN);
+  assert.strictEqual(m.fills, 2);
+  assert.strictEqual(s.w.stk.orders.length, 0, "兩張都要刪掉");
+  assert.strictEqual(G.casStockFix(s.w).hold, 0); assert.strictEqual(s.w.stk.own[ID], 12);
+  const again = G.casStockMatch(s.w, s.house, D, OPEN);
+  assert.strictEqual(again.fills, 0, "不會再成交壹次");
+  assert.strictEqual(gap(G, s, op), 0);
+});
+T("壹次撮合：前面的成交、後面的過期，退回的鎖也要真的刪掉單", G => {
+  const s = fresh(G), op = open0(G, s), px = s.house.stk.px[ID];
+  G.casStockBuy(s.w, s.house, ID, 5, D, OPEN);
+  G.casStockOrder(s.w, s.house, "stop", ID, 3, px - 500, D, OPEN);
+  G.casStockOrder(s.w, s.house, "buy", ID, 10, px - 3000, D, OPEN);
+  // 隔天跌了（hist 有那天的價），再隔壹天才上線：停損吃到跌的那天，買單沒到價、也過了有效日，退回去刪掉
+  const D1 = addDay(D, 1), D2 = addDay(D, 2);
+  s.house.stk.hist[D1] = Object.assign({}, s.house.stk.px, { [ID]: px - 1000 });
+  s.house.stk.day = D1; // 有效日的價已經調進來
+  const m = G.casStockMatch(s.w, s.house, D2, at(D2, 10));
+  assert.strictEqual(m.fills, 1); assert.strictEqual(m.cancels, 1);
+  assert.strictEqual(s.w.stk.orders.length, 0); assert.strictEqual(G.casStockFix(s.w).hold, 0);
+  assert.strictEqual(gap(G, s, op), 0);
+});
 console.log(`casino_stock_order.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

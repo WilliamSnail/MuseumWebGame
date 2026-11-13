@@ -242,7 +242,7 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
   return { ok: true, order: o, lines: [line] };
 }
 // 退回鎖住的籌碼，從清單拿掉
-const stDrop = (w, S, o) => { if (o.hold > 0) { w.chips += o.hold; S.hold -= o.hold; o.hold = 0; } S.orders = S.orders.filter(x => x !== o); };
+const stDrop = (w, S, o) => { if (o.hold > 0) { w.chips += o.hold; S.hold -= o.hold; o.hold = 0; } S.orders = S.orders.filter(x => x.no !== o.no); };
 // 取消壹張（玩家自己取消：停盤不行、壹天最多 cancelDay 次、不收費）
 export function casStockCancel(w, no, day, t, house) {
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w);
@@ -263,7 +263,10 @@ export function casStockMatch(w, house, day, t) {
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w), H = casStockHouseFix(house);
   const out = { fills: 0, cancels: 0 };
   if (!stDay(day) || !S.orders.length) return out;
-  for (const o of S.orders.slice().sort((a, b) => a.no - b.no)) {
+  // 成交時 casStockBuy／casStockSell 會再呼叫 casStockFix，把 S.orders 換成新的物件：不能拿壹開始的舊物件，要照單號每次重新找（11-14 測試發現：後面的單退了鎖卻刪不掉，變成幽靈單，下次又成交壹次）
+  for (const no of S.orders.map(x => x.no).sort((a, b) => a - b)) {
+    const o = S.orders.find(x => x.no === no);
+    if (!o) continue;
     // 要檢查的價：下單之後每天的價（不含超過最後有效日的）和現價
     const okPts = [];
     const tw = stockIsTw(o.id), T = H.tw;
