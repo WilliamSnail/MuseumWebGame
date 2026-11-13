@@ -6,7 +6,9 @@
 //  動作：存款 act bank（op put／take／term／break）、借款 borrow、repay。還沒接上，按了只跳提示。
 //  規則不寫在這裡：這個檔只畫畫面，數字都從 view 來。
 // ================================================================
-import { ADDONS, SCREENS, UI, btn, h, icon, navTo, note, rerender } from "./ui_core.js";
+import { ADDONS, SCREENS, UI, btn, closeOnOutside, h, icon, miniLayer, navTo, note, rerender, setChips } from "./ui_core.js";
+import { NET } from "./net_firebase.js";
+import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
 
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
@@ -50,9 +52,57 @@ export function fakeBankHall() {
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
 }
+// ---------- 接上伺服器（11-13，主 session）：casino act bankHall 的回答換成畫面要的格式 ----------
+// 伺服器的 % 是「幾 %」（0.1 ＝ 0.1%），畫面的 pctText 吃小數（0.001），這裡換；還沒做的（股票、財報）給 null，頁籤寫「即將開放」
+const P100 = x => (Number(x) || 0) / 100;
+export function bankHallView(b) {
+  if (!b) return null;
+  const s = b.save, l = b.loan, d = b.bonds;
+  const md = x => (x ? String(x).slice(5) : "");
+  const bonds = d && d.issue && d.issue.open ? {
+    issue: { name: d.issue.name, line: CAS_BOND.sub, pct: P100(d.issue.pct), left: Math.max(0, d.issue.cap - d.issue.sold), cap: d.issue.cap, mine: d.mine, due: md(d.due), unit: d.unit, perUser: d.perUser, young: d.young },
+    held: d.list.map((x, i) => ({ id: i, amt: x.amt, int: x.int, due: md(x.due) })), iou: d.iou,
+    state: d.issue.pct <= 4 ? "健康" : d.issue.pct <= 6 ? "吃緊" : "缺錢",
+  } : null;
+  return {
+    demo: false, cash: b.cash, net: b.net,
+    save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
+    loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
+    bonds, stocks: null, econ: null,
+  };
+}
 const view = () => UI.bankHall || fakeBankHall();
-// 伺服器動作還沒接上：按了跳提示（接上之後這裡改成 NET.call("casino", { act: "bank", ... }) 然後 UI.bankHall = 回答）
-const todo = what => note(`${what}：還沒接上伺服器（現在是示範畫面）。`);
+// 跟伺服器拿壹次（進銀行廳時）。拿不到（沒登入、開發的 #bank）就留示範資料
+async function bankLoad() {
+  if (UI.bankLoading) return;
+  UI.bankLoading = true; UI.bankAt = Date.now(); UI.bankErr = null;
+  try { const r = await NET.call("casino", { act: "bankHall" }); if (r && r.bankHall) { UI.bankHall = bankHallView(r.bankHall); if (r.wallet) setChips(r.wallet.chips); } }
+  catch (e) { UI.bankErr = (e && e.message) || "連不上銀行"; }
+  finally { UI.bankLoading = false; if (UI.screen === "bank") rerender(); }
+}
+// 做壹件事：act 是 casino 的動作（bank、borrow、repay），回答有 bankHall 就換上
+async function bankDo(act, data) {
+  if (!UI.bankHall || UI.bankHall.demo) { note("示範資料：登入之後才能動錢。"); return; }
+  if (UI.bankBusy) return;
+  UI.bankBusy = true;
+  try {
+    const r = await NET.call("casino", Object.assign({ act }, data));
+    if (!r || !r.ok) { note((r && r.reason) || "沒辦法", "bad"); return; }
+    if (r.bankHall) UI.bankHall = bankHallView(r.bankHall);
+    if (r.wallet) setChips(r.wallet.chips);
+    (r.lines || []).concat(r.bankNotes || []).forEach(t => note(t, "good"));
+  } catch (e) { note((e && e.message) || "連不上銀行", "bad"); }
+  finally { UI.bankBusy = false; if (UI.screen === "bank") rerender(); }
+}
+// 挑金額的小視窗：amts 是 [金額, 文字]，按了叫 then(金額)
+function pickAmt(title, sub, amts, then) {
+  const m = miniLayer(title, sub);
+  const ok = amts.filter(([n]) => n > 0);
+  m.card.append(h("div", { class: "bank-acts bank-pick" }, ok.length ? ok.map(([n, t]) => btn(t || fmt(n), () => { m.close(); then(n); }, "big bank-btn")) : h("p", { class: "bank-why" }, "金額不夠。")),
+    btn("取消", () => m.close(), "small"));
+  closeOnOutside(m);
+}
+const quickOf = (list, max, min = 1) => [...new Set(list)].filter(n => n >= min && n <= max).map(n => [n]);
 
 // ---------- 小零件 ----------
 const num = (cls, n) => h("b", { class: "bank-num " + (cls || "") }, n);
@@ -69,13 +119,15 @@ function savePane(v) {
   const termRows = s.terms.map(t => h("div", { class: "bank-row", role: "row" },
     h("span", null, pic("lock", "lock"), h("b", null, `${t.days} 天・${pctText(t.pct)}`), h("small", { class: t.left <= 1 ? "bad" : "" }, t.left <= 1 ? "明天到期" : `還有 ${t.left} 天`)),
     h("span", { class: "bank-tab-num" }, `${fmt(t.amt)} → ${fmt(t.amt + t.int)}`),
-    h("span", { class: "bank-r" }, btn("提早解約", () => todo("提早解約"), "small bank-btn"))));
-  for (let i = 0; i < free; i++) termRows.push(h("div", { class: "bank-row empty", role: "row" }, h("span", null, pic("lock-open", "lock"), h("b", null, "空的"), h("small", null, "還可以開一筆")), h("span", null, "—"), h("span", { class: "bank-r" }, btn("＋ 新增", () => todo("新增定存"), "small bank-btn gold"))));
+    h("span", { class: "bank-r" }, btn("提早解約", () => bankDo("bank", { op: "break", id: t.id }), "small bank-btn", { title: "只拿回本金，利息沒有" }))));
+  for (let i = 0; i < free; i++) termRows.push(h("div", { class: "bank-row empty", role: "row" }, h("span", null, pic("lock-open", "lock"), h("b", null, "空的"), h("small", null, "還可以開一筆")), h("span", null, "—"), h("span", { class: "bank-r" }, btn("＋ 新增", () => pickAmt("開壹筆定存", `用手上的籌碼，壹筆 ${fmt(s.termMin)}～${fmt(s.termCap)}`, quickOf([s.termMin].concat(s.quick), Math.min(s.termCap, v.cash), s.termMin),
+  amt => { const m = miniLayer(`定存 ${fmt(amt)}`, "存幾天？到期自動回到活存。"); m.card.append(h("div", { class: "bank-acts bank-pick" }, s.kinds.map(k => btn(`${k.days} 天 ${pctText(k.pct)}（+${fmt(Math.floor(amt * k.pct))}）`, () => { m.close(); bankDo("bank", { op: "term", amt, kind: k.i }); }, "big bank-btn gold"))), btn("取消", () => m.close(), "small")); closeOnOutside(m); }), "small bank-btn gold"))));
   return h("div", { class: "bank-cols" },
     panel("活存", "隨時可以領，每天 05:00 給利息",
       h("div", { class: "bank-big" }, pic("jar", "jar"), num("big", fmt(s.save))),
       h("p", { class: "bank-meta" }, "利率 ", h("b", { class: "good" }, `${pctText(s.savePct)}／天`), "　昨天利息 ", h("b", { class: "good" }, sign(s.earned))),
-      h("div", { class: "bank-acts" }, btn("存入", () => todo("存入"), "primary big bank-btn gold"), btn("提出", () => todo("提出"), "big bank-btn")),
+      h("div", { class: "bank-acts" }, btn("存入", () => pickAmt("存進活存", "從手上的籌碼搬進活存", quickOf(s.quick, v.cash, s.min).concat(v.cash >= s.min ? [[v.cash, `全部 ${fmt(v.cash)}`]] : []), amt => bankDo("bank", { op: "put", amt })), "primary big bank-btn gold"),
+        btn("提出", () => pickAmt("從活存領出", "搬回手上的籌碼", quickOf(s.quick, s.save).concat(s.save > 0 ? [[s.save, `全部 ${fmt(s.save)}`]] : []), amt => bankDo("bank", { op: "take", amt })), "big bank-btn")),
       h("p", { class: "bank-hint" }, "利息由莊家付。莊家缺錢的時候，利息會停發，這裡會寫「莊家吃緊」。")),
     panel("定存", `3 天 1%、7 天 3%，同時最多 ${s.termMax} 筆`,
       h("div", { class: "bank-safe" }, pic("safe", "safe"), h("small", null, `存了 ${s.terms.length} 筆，鎖到期才領得到利息`)),
@@ -86,13 +138,13 @@ function loanPane(v) {
   const rows = l.list.map(x => h("div", { class: "bank-row", role: "row" },
     h("span", null, h("b", null, `借 ${fmt(x.amt)}`), h("small", null, `${x.day} 借自${x.from}`)),
     h("span", { class: "bank-tab-num" }, `要還 ${fmt(x.owe)}`, h("small", { class: x.today ? "bad" : "" }, x.today ? "今天到期" : `${x.due} 到期`)),
-    h("span", { class: "bank-r" }, btn("還錢", () => todo("還錢"), "small bank-btn gold"))));
+    h("span", { class: "bank-r" }, btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold", { disabled: v.cash < x.owe || (x.at && Date.now() < x.at) ? true : null, title: x.at && Date.now() < x.at ? "借了 15 分鐘後才能還" : "" }))));
   if (!rows.length) rows.push(h("p", { class: "bank-empty" }, "沒有欠款。"));
   return h("div", { class: "bank-cols" },
     panel("借款", `${l.days} 天內還，利息 ${pctText(l.pct)}`,
       num("big", fmt(l.left)),
       h("p", { class: "bank-meta" }, "還可以借　上限 ", h("b", null, fmt(l.limit))),
-      h("div", { class: "bank-acts" }, l.quick.map(q => btn(fmt(q), () => todo("借款"), "big bank-btn"))),
+      h("div", { class: "bank-acts" }, l.why ? null : l.quick.filter(q => q <= l.left).map(q => btn(fmt(q), () => bankDo("borrow", { amt: q }), "big bank-btn"))),
       l.why ? h("p", { class: "bank-why" }, l.why) : h("p", { class: "bank-hint" }, "借的錢從莊家出，到期沒還會被直接扣；借款利息比存款、館債都高。")),
     panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)));
 }
@@ -106,12 +158,17 @@ function bondPane(v) {
       h("p", { class: "bank-meta" }, "這期利率 ", h("b", { class: "good" }, `${pctText(i.pct)}／週`), "　莊家", h("b", null, b.state || "健康")),
       h("div", { class: "bank-meter", role: "img", "aria-label": `已發 ${(used * 100).toFixed(0)}%` }, h("i", { style: { width: used * 100 + "%" } })),
       h("p", { class: "bank-meta" }, `還剩 ${fmt(i.left)} ／ 一共 ${fmt(i.cap)}`),
-      h("div", { class: "bank-acts" }, btn("買 100,000", () => todo("買館債"), "primary big bank-btn gold"), btn("買 500,000", () => todo("買館債"), "big bank-btn")),
+      h("div", { class: "bank-acts" }, i.young ? h("p", { class: "bank-why" }, `帳號開了 3 天以上才能買（還要 ${i.young} 天）。`) : null,
+        btn("買 100,000", () => bankDo("bank", { op: "bond", amt: 100000 }), "primary big bank-btn gold", { disabled: i.young || v.cash < 100000 || i.left < 100000 ? true : null }),
+        btn("買 500,000", () => bankDo("bank", { op: "bond", amt: 500000 }), "big bank-btn", { disabled: i.young || v.cash < 500000 || i.left < 500000 ? true : null })),
       h("p", { class: "bank-hint" }, "到期還本金加利息；不能提早贖回、不能轉讓。")),
     panel("我持有的", `共 ${fmt(i.mine)}`,
       ledger(["金額", "到期拿到", ""], b.held.map(x => h("div", { class: "bank-row", role: "row" }, h("span", null, h("b", null, fmt(x.amt))), h("span", { class: "bank-tab-num" }, `${fmt(x.amt + x.int)}（${x.due}）`), h("span", null)))) ));
 }
+// 還沒做的頁籤（股票、財報）：伺服器給 null 的時候
+const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即將開放", h("p", { class: "bank-empty" }, what)));
 function stockPane(v) {
+  if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
   const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
   const rows = list.map((s, i) => h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", onClick: () => { UI.bankStock = i; rerender(); } },
     h("span", null, h("b", null, s.name), h("small", { class: "ln" }, s.line)), h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
@@ -126,6 +183,7 @@ function stockPane(v) {
 }
 function reportPane(v) {
   const e = v.econ;
+  if (!e) return soon("財報", "館內 GDP、景氣和每天的新聞正在準備，開放時館方公告會說。");
   return h("div", { class: "bank-cols" },
     panel("今天的館內經濟", "每天 05:00 結算昨天",
       h("div", { class: "bank-quote" }, num("big", fmt(e.gdp)), upDown(e.growth)), h("p", { class: "bank-meta" }, "館內 GDP（標準活動值）　成長是近 7 天對前 7 天"),
@@ -157,15 +215,16 @@ function ticker(v) {
 
 // ---------- 整個畫面 ----------
 SCREENS.bank = root => {
+  if (!UI.localPlay && !UI.bankLoading && Date.now() - (UI.bankAt || 0) > 20000) bankLoad(); // 進來先跟伺服器拿；拿到前畫示範資料（上面寫著）
   const v = view(), tab = UI.bankTab || "save";
   root.classList.add("onescreen-room", "bank-onescreen");
   const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { UI.bankTab = id; rerender(); } },
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "bond" && v.bonds ? h("i", { class: "bank-dot", "aria-label": "有新的一期" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
     tabs,
-    h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, "示範資料：還沒接上伺服器，按鈕不會動錢。") : null, PANES[tab](v)), side(v)),
+    h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
     ticker(v));
 };
 // 導覽圖上的「銀行」熱區要不要放：伺服器的 bankHall 接上之後，Yuga 主 session 把這個改成 true（現在是示範資料，不給玩家點進來）
-ADDONS.bankOpen = false;
+ADDONS.bankOpen = true; // 11-13 接上伺服器了（存款、借款、館債）；股票、財報寫「即將開放」
 ADDONS.bankHall = { fake: fakeBankHall, open: () => navTo("bank") }; // 賭場那顆「去銀行」可以用（Yuga 主 session）
