@@ -8,7 +8,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { hallScore, isFree } from "./logic.js";
-import { casLedFix, casMint, casPoolMint } from "./casino_book.js";
+import { casCount, casLedFix, casMint, casPoolMint } from "./casino_book.js";
 
 const tkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
 // 一位參觀者的票價
@@ -32,6 +32,7 @@ export function casTicketClaim(w, house, P, day) {
   const price = casTicketPrice(hallScore(P).score), total = n * price;
   if (!(total > 0)) return { ok: true, n: 0, price, total: 0, owner: 0, budget: 0, museum: 0 };
   t.n += n;
+  casCount(house, "ticketPeople", n);
   const owner = Math.floor(total * C.ownerPct / 100), budget = Math.floor(total * C.budgetPct / 100), museum = total - owner - budget;
   casMint(w, "ticket", owner);
   casPoolMint(house, "budget", "ticketBudget", budget);
