@@ -75,11 +75,12 @@ const fileOf = o => (o.key.startsWith("2-2 ") ? o.key.split(" ").slice(0, 2) : o
 // 每張附哪一張參考圖：地圖零件、介面零件附地下室石板框；舞台、怪物、特效附大廳導覽圖
 const REFS = {
   ui: { file: "assets/cellar2/ui-電腦.webp", name: "整張介面（翊文生的）" },
+  ui2: { file: "assets/ui2/U-2.webp", name: "委託櫃台的整張介面（翊文生的）" }, // 介面重塑的零件（P-、T-）
   land: { file: "web/public/lobby/land.webp", name: "大廳導覽圖" },
   stone: { file: "assets/panel-kit/stone-raw.webp", name: "地下室石板框" },
 };
 // 3-8 以後是打怪介面的零件：附翊文生的整張介面（風格、配色照它）
-const refOf = o => (isPart(o.key) || /^U-/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
+const refOf = o => (/^[PT]-/.test(o.key) ? "ui2" : isPart(o.key) || /^U-/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
 const dataUrl = f => "data:image/webp;base64," + fs.readFileSync(path.join(ROOT, f)).toString("base64");
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
