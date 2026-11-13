@@ -27,7 +27,7 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 // ---------- 錢包 ----------
 export function casWalletNew() {
   return {
-    v: 1, chips: NUM.casino.startChips, led: { mint: { start: NUM.casino.startChips }, burn: {} },
+    v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, led: { mint: { start: NUM.casino.startChips }, burn: {} },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
@@ -63,12 +63,13 @@ export function casWalletFix(w, day) {
 }
 // budget：拚經濟的預算池（shared/casino_econ.js）；sea：拚經濟失敗、沒被撈走的錢沉到這裡（決定 0057，從 0 開始）。
 // 都跟莊家放在同壹份，同壹個交易裡算；舊的莊家沒有就補。莊家破產重開不動它們
-export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, led: { mint: {}, flow: {} } });
+export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, museum: 0, led: { mint: {}, flow: {} } });
 export function casHouseFix(h, day) {
   if (!casIsObj(h)) h = casHouseNew();
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
   h.budget = Math.floor(casNz(h.budget, NUM.casino.econ.budgetStart));
   h.sea = Math.floor(casNz(h.sea, 0));
+  h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
   casLedFix(h, ["mint", "flow"]);
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）

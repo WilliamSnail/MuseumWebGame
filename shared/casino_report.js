@@ -11,8 +11,8 @@ import { casBookSumObj } from "./casino_book.js";
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
-  mint: { start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
-  houseMint: { reset: "莊家破產後重新開張" },
+  mint: { start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
+  houseMint: { reset: "莊家破產後重新開張", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
   burn: { exchange: "換小獎" },
   flow: { bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
@@ -49,6 +49,7 @@ export function casReportView(doc) {
     if (!first && d.budget < 0) { const days = Math.floor(H.budget / (-d.budget / span)); bl.push(`照這個速度，大約還撐 ${rpN(days)} 天。`); }
   }
   secs.push({ t: "預算池（館方）", lines: bl });
+  secs.push({ t: "館方帳", lines: [`館方帳有 ${rpN(H.museum || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.museum || 0)}）`}。來自參觀者的門票，之後用在修繕、捐款、預算公投。`] });
   // 海底：只給水位
   const cm = Math.floor(Math.max(0, H.sea) / C.seaPerCm), dcm = first ? 0 : Math.floor(Math.max(0, H.sea) / C.seaPerCm) - Math.floor(Math.max(0, H.sea - d.sea) / C.seaPerCm);
   secs.push({ t: "海底（B4 的水下）", lines: [`水位 ${rpN(cm)} 公分${dcm > 0 ? `，這段時間升了 ${rpN(dcm)} 公分` : ""}。`, !first && d.sea > 0 ? CAS_REPORT.seaNote : ""].filter(Boolean) });
