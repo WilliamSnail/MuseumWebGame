@@ -43,6 +43,8 @@ export const CAS_ART = {
   dayCap: "今天已經買了 {n} 幅，明天再來。",
   full: "收藏架放滿了（最多 {n} 幅），先賣回壹幅。",
   none: "你沒有收藏這幅畫。",
+  rare: "這幅是稀有的畫，只在拍賣買得到。",
+  locked: "這幅畫正在拍賣，不能賣回。",
   houseShort: "館方現在手頭緊，收不起這幅，過幾天再來。",
   quota: "館方今天收的畫夠多了，明天再來。",
   sellCap: "今天已經賣回 {n} 幅，明天再來。",
@@ -77,6 +79,7 @@ export function casArtFix(P) {
       const x = A.own[id];
       if (id === "__proto__" || !arBox(x) || !arDay(x.date)) continue;
       own[id] = { tier: arTierOf(x.tier), date: x.date, d: arDay(x.d) ? x.d : x.date, paid: arN(x.paid), title: typeof x.title === "string" ? x.title.slice(0, 40) : "" };
+      if (typeof x.lock === "string" && x.lock) own[id].lock = x.lock.slice(0, 40); // 正在拍賣（shared/casino_auction.js）：不能賣回、不能再拍
     }
   }
   A.own = own;
@@ -86,6 +89,9 @@ export function casArtFix(P) {
   const sells = {};
   if (arBox(A.sells)) for (const d of Object.keys(A.sells)) if (arDay(d) && arN(A.sells[d]) > 0) sells[d] = arN(A.sells[d]);
   A.sells = sells;
+  const prem = {}; // 靠拍賣收到的溢價（每天，shared/casino_auction.js）
+  if (arBox(A.prem)) for (const d of Object.keys(A.prem)) if (arDay(d) && arN(A.prem[d]) > 0) prem[d] = arN(A.prem[d]);
+  if (Object.keys(prem).length) A.prem = prem; else delete A.prem;
   return A;
 }
 // 莊家：house.art 補欄位
@@ -131,6 +137,7 @@ export function casArtBuy(w, house, P, work, day) {
   if (!arDay(day) || !arBox(work) || typeof work.id !== "string" || !work.id || !arDay(work.date)) return { ok: false, reason: CAS_ART.bad };
   if (arDiff(work.date, day) < 0 || arDiff(work.date, day) >= C.shelfDays) return { ok: false, reason: CAS_ART.notToday };
   if (work.id === "__proto__") return { ok: false, reason: CAS_ART.bad };
+  if (work.auction) return { ok: false, reason: CAS_ART.rare }; // 稀有的畫（伺服器查登記時標 auction：珍藏孤品或內容標了）只在拍賣買
   if (arHas(A.own, work.id)) return { ok: false, reason: CAS_ART.dup };
   if (buysToday(A, day) >= C.perDay) return { ok: false, reason: arFill(CAS_ART.dayCap, { n: C.perDay }) };
   if (Object.keys(A.own).length >= C.holdMax) return { ok: false, reason: arFill(CAS_ART.full, { n: C.holdMax }) };
@@ -153,6 +160,7 @@ export function casArtSell(w, house, P, id, day) {
   if (!arDay(day)) return { ok: false, reason: CAS_ART.bad };
   const x = typeof id === "string" && arHas(A.own, id) ? A.own[id] : null;
   if (!x) return { ok: false, reason: CAS_ART.none };
+  if (x.lock) return { ok: false, reason: CAS_ART.locked };
   casArtHouse(house);
   const pay = casArtSellPrice(casArtPrice(x, id, day, house));
   if (arN(A.sells[day]) >= NUM.art.sellPerDay) return { ok: false, reason: arFill(CAS_ART.sellCap, { n: NUM.art.sellPerDay }) };
@@ -175,11 +183,11 @@ export function casArtView(w, house, P, works, day) {
   const tierName = t => C.tiers[arTierOf(t)].name;
   const items = (Array.isArray(works) ? works : []).filter(x => arBox(x) && typeof x.id === "string" && arDay(x.date)).map(x => {
     const price = casArtPrice(x, x.id, day, house), mine = arBox(own[x.id]);
-    return { id: x.id, tier: arTierOf(x.tier), tierName: tierName(x.tier), price, owned: mine, sellPrice: mine ? casArtSellPrice(casArtPrice(own[x.id], x.id, day, house)) : 0, canBuy: !mine && bought < C.perDay && chips >= price };
+    return { id: x.id, tier: arTierOf(x.tier), tierName: tierName(x.tier), price, owned: mine, sellPrice: mine ? casArtSellPrice(casArtPrice(own[x.id], x.id, day, house)) : 0, canBuy: !mine && !x.auction && bought < C.perDay && chips >= price, auction: !!x.auction };
   });
   const mine = Object.keys(own).filter(id => arBox(own[id]) && arDay(own[id].date)).map(id => {
     const x = own[id], price = casArtPrice(x, id, day, house);
-    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)) };
+    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), lock: typeof x.lock === "string" && x.lock ? x.lock : null, breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)) };
   });
   return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips };
 }

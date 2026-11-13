@@ -195,6 +195,12 @@ export const NUM = {
   art: { tiers: [{ name: "尋常", base: 1000000 }, { name: "少見", base: 2500000 }, { name: "珍藏", base: 6000000 }, { name: "孤品", base: 15000000 }],
     ageFastPct: 0.85, ageFastDays: 14, ageUpPct: 0.04, ageCapPct: 15, moodPct: 1, demandPct: 0.2, demandCapPct: 2, sellPct: 90, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
     sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40 },
+  // 藝術市場第二步：畫的拍賣（11-14，shared/casino_auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
+  //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
+  //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。
+  //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
+  //   帳號要開 minAge 天；成交抽 feePct % 進預算池；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
+  auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40, recent: 12, unit: 1000 },
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
   blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
   fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）
