@@ -355,7 +355,11 @@ export const NUM = {
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
     // 館內 GDP 和景氣指數（11-13，規劃 2.7 節）：每項活動 次數×標準值，不看隨機的賺賠。foodAvg 餐車每份、bjHand 21 點每手、econWin 拚經濟成功平均撥款（r 31～100 平均 65.5 × 30,000）、econSink 失敗沉下去的平均（平均 r 15 × 10,000 × 沒被撈走的 45%）、investPct 銀行存款淨增加算幾 % 進投資；growthFull 成長率 10% ＝ 指數 1；minPeople 過去 7 天來過的人少於這個，館內指數維持 0。標準值是我先定的，等有幾天真的數字再調
-    gdp: { foodAvg: 100000, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3 },
+    gdp: { foodAvg: 100000, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
+      // 景氣的影響（11-14，規劃 2.7 節）：景氣 B（−1～+1）對拚經濟撥款、門票、存款利率各 ±fxPct%；拚經濟成功抽到的政策持續 polDays 天（到明天），效果 ±polPct%。
+      // extSpread：外部景氣＝（最新一季年增率 − 最近四季平均）÷ extSpread（百分點），夾在 ±1。policyFx 是 CAS_ECON.policies 每一項對應的效果（我配的，Yuga 可以改）：tourism 門票、cellar 地下撿、grant 拚經濟撥款多、tighten 撥款少（預算池因此少花）
+      fxPct: 10, polPct: 10, polDays: 1, extSpread: 3, extStaleDays: 200,
+      policyFx: ["tourism", "tourism", "grant", "grant", "grant", "cellar", "cellar", "tighten"] },
     // Yuga Bot 日報（11-13，數值平衡）：海底只給水位，每 seaPerCm 籌碼算壹公分（不給數字，規劃第五節問題 12 等翊文）
     report: { seaPerCm: 100000 },
     // 實況和斗內（舊 Discord 21 點的玩法，決定 0053）：金額是 base + step×k，k 是 1～kMax 的整數（舊的：10000 + 10000×1～25，也就是 2 萬～26 萬），自己不能選。durationMs 開播多久自動下播；graceMs 實況主離線超過這麼久算下播（關掉遊戲）。perDay、receiveCap 是新的（等翊文）
