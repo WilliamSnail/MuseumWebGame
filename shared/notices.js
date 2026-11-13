@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "npc-named-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "館裡的旅客和委託人都有名字和自己的故事了", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "來逛展廳的旅客現在有名字了：賣傘的老闆、白伯、阿鴨、錢姐……有時候他們留的不是評語，而是他們自己的事。",
+        "每位旅客和委託人都有自己的故事，會隨著日子往下走。展廳側欄的「館裡最近」會寫他們這幾天的近況。",
+        "靈感照舊，每天的上限也照舊，只是來的人有了名字。",
+      ]],
+    ],
+  },
+  {
     id: "office-new", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "館長室換新介面：壹個畫面看完名片", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

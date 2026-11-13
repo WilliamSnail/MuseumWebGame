@@ -10,6 +10,7 @@ import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../sha
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { npcNews } from "../../shared/npc.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
@@ -433,7 +434,9 @@ SCREENS.hall = (root, params) => {
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
       : h("p", { class: "theme-hint big" }, "牆上還沒有主題。", h("b", null, "擺對主題"), "，牆上會浮出主題名，", h("b", { class: "good" }, "評分 +10～+20"), "。點「主題」看哪壹個最接近。"));
   const room = h("div", { class: "hall-room", style: { "--n": String(P.hall.length) } }, P.hall.map((s, i) => pedestal(s, i)));
+  const news = npcNews(todayStr(), null); // 館內近況（11-14，shared/npc.js）：旅客和委託人現在的故事，壹兩句小字
   const visitors = h("section", { class: "visitors", id: "visitors" }, h("h3", null, "參觀者留言"),
+    news.length ? h("p", { class: "sub npc-news" }, "館裡最近：" + news.map(x => x.news).join(" ")) : null,
     P.visitorLog.length ? P.visitorLog.slice(0, 6).map(v => visitorCard(v)) : h("p", { class: "empty" }, hs.items.length ? "參觀者快來了。" : "擺上作品，參觀者就會來。"));
   const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true });
   // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
@@ -491,7 +494,7 @@ export function pedestal(slot, i) {
   });
   return el;
 }
-export function visitorCard(v) { return h("div", { class: "visitor enter" }, h("p", null, `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`)); }
+export function visitorCard(v) { return h("div", { class: "visitor enter" + (v.story ? " story" : "") }, h("p", null, v.story ? v.text : `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`)); }
 export function copyText(text, ta) {
   const ok = () => note("複製好了。", "good");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, () => { ta.select(); document.execCommand("copy"); ok(); });
