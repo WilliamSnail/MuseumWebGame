@@ -99,11 +99,20 @@ function main() {
     if (i === 17) throw new Error(`PR ${n} 等了 3 分鐘還是沒有 CI`);
     sleep(10000);
   }
-  run(gh(), ["pr", "checks", n, "--repo", REPO, "--watch", "--interval", "10"]);
-  if (o.flags.has("no-merge")) { console.log("\nCI 過了，沒有合併（--no-merge）。"); return; }
-
-  say("合併");
-  run(gh(), ["pr", "merge", n, "--repo", REPO, "--merge"]);
+  // 等 CI、合併。等 CI 的時候 main 常常又動了（好幾個 session 同時上線），合併會因為衝突失敗：
+  //   這時再併壹次 main（自動解公告、日誌總表）、推上去、重等 CI，最多 4 次（11-14：美術統籌壹輪撞了四次都要手動解）
+  for (let tryN = 1; ; tryN++) {
+    run(gh(), ["pr", "checks", n, "--repo", REPO, "--watch", "--interval", "10"]);
+    if (o.flags.has("no-merge")) { console.log("\nCI 過了，沒有合併（--no-merge）。"); return; }
+    say("合併");
+    const m = run(gh(), ["pr", "merge", n, "--repo", REPO, "--merge"], { ok: true });
+    if (m.status === 0) break;
+    if (tryN >= 4) throw new Error(`PR ${n} 合併失敗 ${tryN} 次：${(m.stdout + m.stderr).trim().slice(-300)}`);
+    say(`合併失敗（main 動了），再併壹次 main 重來（第 ${tryN + 1} 次）`);
+    mergeMain(ai);
+    git(["push", "-q", "origin", branch]);
+    sleep(15000);
+  }
   const sha = run(gh(), ["pr", "view", n, "--repo", REPO, "--json", "mergeCommit", "--jq", ".mergeCommit.oid"]).out;
 
   say("等部署");
