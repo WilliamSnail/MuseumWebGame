@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "hall-tickets", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "展廳的參觀者開始付門票", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "展廳每來一位參觀者，會付門票：展廳評分越高，票價越高。門票的三成直接分紅給展廳主（進你的籌碼），兩成進館方的預算池，其餘進館方自己的帳。",
+        "館方的帳之後用在修繕、捐款、預算公投。",
+        "每人每天最多收 20 位的門票。門票是壹陣子收壹次，不用特別去哪裡領。只有挑戰模式的參觀者有。",
+      ]],
+    ],
+  },
+  {
     id: "lobby-landscape", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機橫拿的大廳：導覽圖放回左邊", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
