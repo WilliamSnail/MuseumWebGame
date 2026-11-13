@@ -424,15 +424,15 @@ function holdPanel(v, S, list) {
   const hs = list.filter(x => x.mine > 0), H = UI.bankHold || (UI.bankHold = { a: "total", b: "unit", c: "value" });
   const tog = (k, a, b, la, lb) => h("button", { type: "button", class: "bank-hh", onClick: () => { H[k] = H[k] === a ? b : a; rerender(); }, "aria-label": `切換：${la}、${lb}` }, h("span", null, H[k] === a ? la : lb), h("i", { "aria-hidden": "true" }, "⇄"));
   const sum = (key) => hs.reduce((n, x) => n + (Number(x[key]) || 0), 0), tv = sum("value"), tc = sum("costTotal"), tp = sum("pnl"), td = sum("dayChg");
-  const rows = hs.map(s => h("button", { type: "button", class: "bank-row hold", role: "row", onClick: () => { UI.bankLeft = "market"; UI.bankStock = list.indexOf(s); rerender(); } },
+  const rows = hs.map(s => h("button", { type: "button", class: "bank-row holdings", role: "row", onClick: () => { UI.bankLeft = "market"; UI.bankStock = list.indexOf(s); rerender(); } },
     h("span", null, h("b", null, s.name), s.market ? h("i", { class: "bank-mk" }, s.market === "tw" ? "台股" : s.market === "us" ? "美股" : "館內") : null),
     h("span", { class: "bank-tab-num" }, H.c === "value" ? fmt(s.value) : `${fmt(s.mine)} 股`),
     h("span", { class: "bank-tab-num" }, H.b === "unit" ? dec2(s.avgCost) : fmt(s.costTotal)),
     H.a === "day" ? plBit(s.dayChg, s.dayPct) : plBit(s.pnl, s.pnlPct)));
-  return panel("持倉", S.taxPct ? `賣出賺的部分課 ${Math.round(S.taxPct * 100)}% 資本利得稅` : "", h("div", { class: "bank-book hold", role: "table" },
+  return panel("持倉", S.taxPct ? `賣出賺的部分課 ${Math.round(S.taxPct * 100)}% 資本利得稅` : "", h("div", { class: "bank-book holdings", role: "table" },
     h("div", { class: "bank-bh", role: "row" }, h("span", null, "名稱"), tog("c", "value", "qty", "市值", "數量"), tog("b", "unit", "total", "單位成本", "總成本"), tog("a", "day", "total", "當日變更", "總漲跌")),
     hs.length ? rows : h("div", { class: "bank-row empty", role: "row" }, h("span", null, "你還沒有持股"), h("span", null, "—")),
-    hs.length ? h("div", { class: "bank-row hold sum", role: "row" }, h("span", null, h("b", null, "合計")), h("span", { class: "bank-tab-num" }, fmt(tv)), h("span", { class: "bank-tab-num" }, fmt(tc)), H.a === "day" ? plBit(td) : plBit(tp, tc > 0 ? tp / tc : null)) : null));
+    hs.length ? h("div", { class: "bank-row holdings sum", role: "row" }, h("span", null, h("b", null, "合計")), h("span", { class: "bank-tab-num" }, fmt(tv)), h("span", { class: "bank-tab-num" }, fmt(tc)), H.a === "day" ? plBit(td) : plBit(tp, tc > 0 ? tp / tc : null)) : null));
 }
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
