@@ -1,3 +1,7 @@
+// 美股也用這一份（11-14，規劃 2.8i）：同樣的模型、同樣的錨點加橋，只是時間是美東 09:30～16:00（算日光節約，見 usOpenMs），
+// 每個市場的設定各一份（NUM.casino.stock.tw／us），函式最後多一個參數 mk（"tw" 預設、"us"）。真實成分 X 兩邊共用 twX。
+// 美股那一天的「日期」＝ 美東的日期＝ 遊戲日期（台灣 05:00 換日）：美東 09:30～16:00 換成台灣時間是 21:30～04:00（夏令）或 22:30～05:00（冬令），
+// 都落在同一個遊戲日裡（冬令收盤剛好是隔天 05:00 換日那一刻）。
 // 台股盤中價格（11-14，規劃 2.8d；翊文：「盤中也動」「每十五分鐘，但中間可以是隨機的」）。
 // 只算數字，不碰時間（時間由呼叫的人傳進來）、不碰亂數函式（用「種子＋伺服器祕密」算，同樣的輸入同樣的輸出，方便驗算）。
 //
@@ -19,6 +23,38 @@ import { OUT_STOCKS } from "./stocks_text.js";
 
 export const TW_IDS = OUT_STOCKS.filter(s => s.market === "tw").map(s => s.id);
 export const stockIsTw = id => TW_IDS.includes(id);
+export const US_IDS = OUT_STOCKS.filter(s => s.market === "us").map(s => s.id);
+export const stockIsUs = id => US_IDS.includes(id);
+// 兩個市場各自的名單和設定（設定每次現讀 NUM，測試改了數字馬上生效）
+const MKS = { tw: { ids: TW_IDS, C: () => NUM.casino.stock.tw }, us: { ids: US_IDS, C: () => NUM.casino.stock.us } };
+
+// ---------- 美股的時間（美東 America/New_York，日光節約由 Intl 算，不寫死 UTC 差） ----------
+const US_TZ = "America/New_York";
+let usFmtHour = null, usFmtDay = null;
+const usOpenCache = {};
+// 美東那天（日期 YYYY-MM-DD）正常盤開盤（09:30）的毫秒。用那天 17:00 UTC 時美東牆上的幾點判斷冬令（12 點）或夏令（13 點）；日光節約都在凌晨 2 點換，不影響 09:30
+export function usOpenMs(day) {
+  if (usOpenCache[day] != null) return usOpenCache[day];
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day));
+  if (!m) return null;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3];
+  usFmtHour = usFmtHour || new Intl.DateTimeFormat("en-US", { timeZone: US_TZ, hourCycle: "h23", hour: "numeric" });
+  const wallH = +usFmtHour.formatToParts(new Date(Date.UTC(y, mo, d, 17))).find(p => p.type === "hour").value;
+  const off = (wallH - 17) * 60; // 冬令 −300、夏令 −240（分鐘）
+  const C = NUM.casino.stock.us;
+  return (usOpenCache[day] = Date.UTC(y, mo, d, 0, C.open, 0) - off * 60000);
+}
+// 美東現在是哪一天（YYYY-MM-DD）
+export function usNyDay(ms) {
+  usFmtDay = usFmtDay || new Intl.DateTimeFormat("en-CA", { timeZone: US_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+  return usFmtDay.format(new Date(ms));
+}
+// 距離美東 day 那天 09:30 幾分鐘（09:30 ＝ 0，16:00 ＝ 390；開盤前是負的）。沒給時間回 null
+export function usIdx(t, day) {
+  if (t == null || !Number.isFinite(+t)) return null;
+  const o = usOpenMs(day);
+  return o == null ? null : Math.floor((+t - o) / 60000);
+}
 
 // 台灣時間距離 09:00 幾分鐘（09:00 ＝ 0，13:30 ＝ 270；開盤前是負的）。沒給時間回 null
 export function twIdx(t) {
@@ -48,7 +84,8 @@ function twRng(seed) {
 }
 const twNorm = r => { const u = Math.max(1e-12, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const twRound = x => Math.round(x * 100000) / 100000;
-const twClamp = x => { const b = NUM.casino.stock.tw.band / 100; return Math.max(1 - b, Math.min(1 + b, x)); };
+const twClamp = (x, C) => { const b = C.band / 100; return Math.max(1 - b, Math.min(1 + b, x)); };
+const twMinSd = (C, id) => (typeof C.minSd === "object" ? C.minSd[id] : C.minSd) || 0.1; // 美股每支不一樣
 const okPx = v => typeof v === "number" && isFinite(v) && v > 0;
 
 // ---------- 這一天的資料 ----------
@@ -69,8 +106,8 @@ export function twDocRoll(old, day, keep) {
 
 // 這個分鐘（idx）要做什麼：null＝沒事；{ kind: "giveup" }；{ kind: "open", fetch: true }；{ kind: "seg", j, fetch: true|false }
 //   fetch false ＝ 錨點時間過了 retry 分鐘還沒抓到：不抓了，這壹段真實成分當 0 直接算
-export function twNeed(doc, idx) {
-  const C = NUM.casino.stock.tw;
+export function twNeed(doc, idx, mk) {
+  const C = MKS[mk || "tw"].C();
   if (!doc || doc.closed || idx == null || idx < 0 || idx > C.len) return null;
   if (doc.openIdx == null) return idx >= C.giveUp ? { kind: "giveup" } : { kind: "open", fetch: true };
   const j = doc.k + 1;
@@ -83,23 +120,23 @@ export function twNeed(doc, idx) {
 function twPad(arr, upto, a) { while (arr.length <= upto) arr.push(a); }
 
 // 建第 j 段的橋，回傳下壹個錨點。ser 已經補到起點。
-function twBuild(doc, id, j, secret, ret, x, hasReal) {
-  const C = NUM.casino.stock.tw, sd15 = (C.sd15[id] || 0.5) / 100;
+function twBuild(doc, id, j, secret, ret, x, hasReal, C) {
+  const sd15 = (C.sd15[id] || 0.5) / 100;
   const r = twRng(twSeed(`${secret}|${doc.day}|${id}|${j}`));
   const amp = hasReal ? sd15 * Math.sqrt(1 - x * x) : sd15;
   const a = doc.A[id];
-  const b = twRound(twClamp(a * (1 + (hasReal ? x * ret : 0) + amp * twNorm(r))));
+  const b = twRound(twClamp(a * (1 + (hasReal ? x * ret : 0) + amp * twNorm(r)), C));
   const arr = doc.ser[id];
   const s = arr.length - 1, e = Math.min(C.len, (j + 1) * C.seg);
   const n = e - s;
   if (n > 0) {
     // 布朗橋：W 是隨機走，橋 ＝ W(i) − (i/n)·W(n)，兩端回到 0
     const W = [0];
-    for (let i = 1; i <= n; i++) W.push(W[i - 1] + twNorm(r) * C.minSd / 100);
+    for (let i = 1; i <= n; i++) W.push(W[i - 1] + twNorm(r) * twMinSd(C, id) / 100);
     const base = arr[s];
     for (let i = 1; i <= n; i++) {
       const u = i / n, line = base * Math.pow(b / base, u);
-      arr.push(i === n ? b : twRound(twClamp(line * Math.exp(W[i] - u * W[n]))));
+      arr.push(i === n ? b : twRound(twClamp(line * Math.exp(W[i] - u * W[n]), C)));
     }
   }
   doc.A[id] = b;
@@ -108,19 +145,20 @@ function twBuild(doc, id, j, secret, ret, x, hasReal) {
 // 做完 need 該做的事。got：抓到的資料 { id: { open, prev, px, lag(分鐘) } } 或 null（沒抓到）。回傳新的 doc（會改傳進來的 doc）。
 // open：got[id].open 是真實開盤價、prev 是真實前壹收盤；seg：got[id].px 是這次抓到的真實價。壞資料（非數字）當作這支沒抓到。
 // 回傳 false＝沒做成（open 沒有任何壹支有資料，下壹分鐘再試）
-export function twApply(doc, need, idx, got, secret) {
-  const C = NUM.casino.stock.tw;
+export function twApply(doc, need, idx, got, secret, mk) {
+  mk = mk || "tw";
+  const C = MKS[mk].C(), IDS = MKS[mk].ids;
   if (!need) return true;
   if (need.kind === "giveup") { doc.closed = true; return true; }
   const g = got && typeof got === "object" ? got : {};
   if (need.kind === "open") {
-    const okIds = TW_IDS.filter(id => g[id] && okPx(g[id].open) && okPx(g[id].prev));
+    const okIds = IDS.filter(id => g[id] && okPx(g[id].open) && okPx(g[id].prev));
     if (!okIds.length) return false;
     const j = Math.floor(idx / C.seg);
     doc.openIdx = idx; doc.k = j - 1; doc.stale = {};
-    for (const id of TW_IDS) {
+    for (const id of IDS) {
       const ok = okIds.includes(id);
-      doc.A[id] = ok ? twRound(twClamp(g[id].open / g[id].prev)) : 1;
+      doc.A[id] = ok ? twRound(twClamp(g[id].open / g[id].prev, C)) : 1;
       doc.prevReal[id] = ok ? g[id].prev : null;
       doc.R[id] = ok ? { px: g[id].open, seg: j } : null;
       doc.lag[id] = ok && Number.isFinite(+g[id].lag) ? +g[id].lag : null;
@@ -128,15 +166,15 @@ export function twApply(doc, need, idx, got, secret) {
       doc.ser[id] = [];
       twPad(doc.ser[id], idx, doc.A[id]);
     }
-    return twSegment(doc, j, idx, null, secret, true);
+    return twSegment(doc, j, idx, null, secret, true, mk);
   }
-  return twSegment(doc, need.j, idx, need.fetch ? g : null, secret, false);
+  return twSegment(doc, need.j, idx, need.fetch ? g : null, secret, false, mk);
 }
 
-function twSegment(doc, j, idx, g, secret, opening) {
-  const C = NUM.casino.stock.tw;
+function twSegment(doc, j, idx, g, secret, opening, mk) {
+  const C = MKS[mk].C(), IDS = MKS[mk].ids;
   const stale = opening ? Object.assign({}, doc.stale) : {};
-  for (const id of TW_IDS) {
+  for (const id of IDS) {
     const row = g && g[id], arr = doc.ser[id];
     twPad(arr, Math.max(j * C.seg, Math.min(idx, j * C.seg + C.seg - 1)), doc.A[id]); // 錨點時間到了才抓到：先平的補到現在，這段時間玩家看到的就是平的
     let ret = 0, x = 0, hasReal = false;
@@ -152,10 +190,37 @@ function twSegment(doc, j, idx, g, secret, opening) {
       doc.R[id] = { px: row.px, seg: j };
     } else stale[id] = true;
     if (opening && doc.stale[id]) stale[id] = true;
-    twBuild(doc, id, j, secret, ret, x, hasReal);
+    twBuild(doc, id, j, secret, ret, x, hasReal, C);
   }
   doc.stale = stale;
   doc.k = j;
-  doc.log = (doc.log || []).concat([{ j, idx, lag: Math.max(0, ...TW_IDS.map(id => Number.isFinite(+doc.lag[id]) ? +doc.lag[id] : 0)), stale: Object.keys(stale).length }]).slice(-40);
+  doc.log = (doc.log || []).concat([{ j, idx, lag: Math.max(0, ...IDS.map(id => Number.isFinite(+doc.lag[id]) ? +doc.lag[id] : 0)), stale: Object.keys(stale).length }]).slice(-40);
   return true;
 }
+
+// 把壹檔的圖表回應（Yahoo 的 v8 chart，1 分鐘 K 棒；格式的解析放這裡好測，不含股票代號，代號在 functions/stock_us.js）變成 { open, prev, px, lag }；day 是美東今天的日期，不是今天的 K 棒（假日、還沒開盤時介面回上壹個交易日）就當沒資料（回 null）。
+//   open：今天第壹根 K 棒的開盤價；prev：前壹收盤（meta.chartPreviousClose）；px：最後壹根有價的 K 棒的收盤價；
+//   lag：落後幾分鐘 ＝ 現在 − 最後壹根 K 棒的開始時間 − 1 分鐘（那壹根還在走的話，價就是現在的價，落後 0）。
+export function usParseChart(json, day, nowMs) {
+  const r = json && json.chart && json.chart.result && json.chart.result[0];
+  const q = r && r.indicators && r.indicators.quote && r.indicators.quote[0];
+  if (!r || !q || !Array.isArray(r.timestamp) || !Array.isArray(q.close)) return null;
+  const o0 = usOpenMs(day), end = o0 + NUM.casino.stock.us.len * 60000;
+  let open = null, px = null, last = null;
+  r.timestamp.forEach((t, i) => {
+    const ms = t * 1000;
+    if (ms < o0 || ms > end) return; // 盤前盤後、別天的不算（也擋掉「今天還沒開盤，回的是昨天」）
+    const c = q.close[i], o = q.open && q.open[i];
+    if (open == null && typeof o === "number" && o > 0) open = o;
+    if (typeof c === "number" && isFinite(c) && c > 0) { px = c; last = ms; }
+  });
+  const prev = r.meta && (r.meta.chartPreviousClose || r.meta.previousClose);
+  if (open == null || px == null || !(prev > 0)) return null;
+  return { open, prev, px, lag: Math.max(0, (nowMs - last) / 60000 - 1) };
+}
+
+// ---------- 美股（規劃 2.8i）：同樣的函式，換成美股的名單和設定 ----------
+export const usDocNew = twDocNew;
+export const usDocRoll = twDocRoll;
+export const usNeed = (doc, idx) => twNeed(doc, idx, "us");
+export const usApply = (doc, need, idx, got, secret) => twApply(doc, need, idx, got, secret, "us");

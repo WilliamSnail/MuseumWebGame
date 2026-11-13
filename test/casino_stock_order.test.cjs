@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.US_IDS.length = 0; /* 11-14 起美股也有盤中（test/stocks_us.test.cjs 測）；這份測的是買賣、掛單、記帳的通用機制，用「沒有盤中」的股票（把美股名單清空）跑 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D = "2026-11-14", ID = "greeneye";
 const at = (d, h) => Date.parse(`${d}T${String(h).padStart(2, "0")}:30:00+08:00`);
 const OPEN = at(D, 14);
@@ -30,8 +30,8 @@ T("下單價格要比現價有利；停盤不能下單；張數上限", G => {
   assert.ok(!G.casStockOrder(s.w, s.house, "buy", ID, 1, px, D, OPEN).ok, "限價買 ≥ 現價不行");
   assert.ok(!G.casStockOrder(s.w, s.house, "sell", ID, 1, px + 1, D, OPEN).ok, "沒有股不能賣");
   assert.ok(!G.casStockOrder(s.w, s.house, "stop", ID, 1, px + 1, D, OPEN).ok);
-  const h = G.casStockOrder(s.w, s.house, "buy", ID, 1, px - 1, D, at(D, 23));
-  assert.ok(!h.ok && h.reason.includes("停盤"));
+  const h = G.casStockOrder(s.w, s.house, "buy", "handbrain", 1, s.house.stk.px.handbrain - 1, D, at(D, 23));
+  assert.ok(!h.ok && h.reason.includes("09:00"), "沒開盤的股票不能下單（台股、美股的詳細在 stocks_tw、stocks_us 測）");
   for (let i = 0; i < 3; i++) assert.ok(G.casStockOrder(s.w, s.house, "buy", ID, 1, px - 1 - i, D, OPEN).ok);
   assert.ok(!G.casStockOrder(s.w, s.house, "buy", ID, 1, px - 9, D, OPEN).ok, "同壹支最多 3 張");
   const ids = G.STOCK_IDS.filter(x => x !== ID && !G.stockIsTw(x)); // 台股要等開盤才能下單，另外在 stocks_tw.test 測
@@ -110,10 +110,9 @@ T("過期：有效 1 天，今天下的單看明天 05:00 的價，沒成交就�
   assert.strictEqual(G.casStockMatch(t.w, t.house, D3, at(D3, 10)).fills, 0, "過期後的低價不算");
   assert.strictEqual(t.w.stk.orders.length, 0);
 });
-T("取消：退回、不收費、停盤不行、一天 20 次", G => {
+T("取消：退回、不收費、一天 20 次（休市不能取消在 stocks_tw、stocks_us 測）", G => {
   const s = fresh(G), op = open0(G, s), px = s.house.stk.px[ID], c0 = s.w.chips;
   const o = G.casStockOrder(s.w, s.house, "buy", ID, 10, px - 1, D, OPEN).order;
-  assert.ok(!G.casStockCancel(s.w, o.no, D, at(D, 23)).ok, "停盤不能取消");
   assert.ok(G.casStockCancel(s.w, o.no, D, OPEN).ok);
   assert.strictEqual(s.w.chips, c0); assert.strictEqual(gap(G, s, op), 0);
   assert.ok(!G.casStockCancel(s.w, o.no, D, OPEN).ok, "已經取消了");

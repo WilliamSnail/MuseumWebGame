@@ -4,7 +4,7 @@ const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x); // load() 的沙箱裡做出來的陣列原型不同，deepStrictEqual 過不了
-const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.US_IDS.length = 0; /* 11-14 起美股也有盤中（test/stocks_us.test.cjs 測）；這份測的是買賣、掛單、記帳的通用機制，用「沒有盤中」的股票（把美股名單清空）跑 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D = "2026-11-14", ID = "greeneye";
 // 台灣時間某天幾點的毫秒（台灣是 UTC+8）
 const at = (d, h) => Date.parse(`${d}T${String(h).padStart(2, "0")}:30:00+08:00`);
@@ -14,17 +14,13 @@ const gap = (G, s, opening) => G.casBookGap(G.casBookSnap([s.w], s.house, 0, nul
 const open0 = (G, s) => G.casBookOpening(G.casBookSnap([s.w], s.house, 0, null));
 const total = (G, s) => G.casBookTotal(G.casBookSnap([s.w], s.house, 0, null));
 
-T("停盤：台灣 22:00～05:00 不能買賣，白天可以", G => {
+T("停盤：沒有全館 22:00～05:00 了，每支只在自己的盤中交易；沒有盤中的股票不看時間", G => {
   const C = G.NUM.casino.stock;
-  assert.strictEqual(C.haltFrom, 22); assert.strictEqual(C.haltTo, 5);
-  assert.strictEqual(G.casStockHalt(at(D, 23)), true, "晚上 23 點停盤");
-  assert.strictEqual(G.casStockHalt(at(D, 3)), true, "凌晨 3 點停盤");
-  assert.strictEqual(G.casStockHalt(at(D, 14)), false, "下午不停盤");
-  assert.strictEqual(G.casStockHalt(at(D, 5)), false, "05:30 開盤");
-  assert.strictEqual(G.casStockHalt(null), false, "沒給時間就不擋（舊程式、測試）");
+  assert.strictEqual(C.haltFrom, undefined); assert.strictEqual(C.haltTo, undefined);
   const s = fresh(G);
-  const r = G.casStockBuy(s.w, s.house, ID, 1, D, at(D, 23));
-  assert.ok(!r.ok && r.reason.includes("停盤"));
+  assert.ok(G.casStockBuy(s.w, s.house, ID, 1, D, at(D, 23)).ok, "沒有盤中的股票（測試把美股名單清空）晚上也能買");
+  const r = G.casStockBuy(s.w, s.house, "handbrain", 1, D, at(D, 23));
+  assert.ok(!r.ok && r.reason.includes("09:00"), "台股沒開盤不能買");
 });
 T("買：股價流出館外（記成消失、來源 stockBuy），手續費進預算池；莊家不動；帳對得上", G => {
   const C = G.NUM.casino.stock, s = fresh(G), op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, b0 = s.house.budget;
@@ -59,20 +55,17 @@ T("買了馬上賣壹定虧（手續費兩次）", G => {
   G.casStockSell(s.w, s.house, ID, "max", D, OPEN);
   assert.ok(s.w.chips < c0, "來回壹趟要虧手續費");
 });
-T("換日調價：照真實漲跌，再扣 drag，夾在 ±outCap；同壹天只調壹次", G => {
+T("換日調價：只扣 drag，不再照真實漲跌跳（盤中已經動完了）；同壹天只調壹次", G => {
   const C = G.NUM.casino.stock, s = fresh(G);
   const px0 = s.house.stk.px[ID];
-  const r = G.casStockRoll(s.house, D, { [ID]: 0.02 });
+  const r = G.casStockRoll(s.house, D, { [ID]: 0.02 }); // 舊程式還會傳 moves，現在不看
   assert.ok(r.done);
-  const m = 0.02 - C.drag / 100;
-  assert.strictEqual(s.house.stk.px[ID], Math.round(px0 * (1 + m)));
+  assert.strictEqual(s.house.stk.px[ID], Math.round(px0 * (1 - C.drag / 100)));
   assert.strictEqual(s.house.stk.prev[ID], px0);
   assert.strictEqual(G.casStockRoll(s.house, D, { [ID]: 0.5 }).done, false, "同壹天不再調");
   const s2 = fresh(G); G.casStockRoll(s2.house, D, { [ID]: 5 });
-  assert.strictEqual(s2.house.stk.px[ID], Math.round(10000 * (1 + C.outCap / 100)), "夾在上限");
-  const s3 = fresh(G); G.casStockRoll(s3.house, D, { [ID]: -5 });
-  assert.strictEqual(s3.house.stk.px[ID], Math.round(10000 * (1 - C.outCap / 100)), "跌也夾");
-  const s4 = fresh(G); s4.house.stk.px[ID] = 1; G.casStockRoll(s4.house, D, { [ID]: -1 });
+  assert.strictEqual(s2.house.stk.px[ID], Math.round(10000 * (1 - C.drag / 100)), "大漲的 moves 也不看");
+  const s4 = fresh(G); s4.house.stk.px[ID] = 1; G.casStockRoll(s4.house, D, {});
   assert.ok(s4.house.stk.px[ID] >= C.floor, "不會跌到 0");
 });
 T("什麼都不動的時候，每天會慢慢扣 drag（抱著不會穩賺）", G => {
@@ -94,14 +87,15 @@ T("上限：莊家窮也買得了（跟外面世界買）；壹人壹天賣出�
 T("畫面要的：行情、漲跌、我的持股、停盤", G => {
   const s = fresh(G);
   G.casStockBuy(s.w, s.house, ID, 3, D, OPEN);
-  G.casStockRoll(s.house, "2026-11-15", { [ID]: 0.05 });
+  G.casStockRoll(s.house, "2026-11-15", {});
+  s.house.stk.px[ID] += 500; // 盤中漲了
   const v = G.casStockView(s.w, s.house, "2026-11-15", OPEN);
   assert.strictEqual(v.list.length, 11);
   const x = v.list.find(y => y.id === ID);
   assert.strictEqual(x.mine, 3); assert.ok(x.chg > 0); assert.strictEqual(x.value, x.price * 3);
   assert.strictEqual(v.total, x.value, "只有這支有持股");
   assert.strictEqual(v.halt, false);
-  assert.strictEqual(G.casStockView(s.w, s.house, D, at(D, 23)).halt, true);
+  assert.strictEqual(v.list.find(y => y.id === "handbrain").halted, true, "台股沒開盤：這支停盤");
 });
 T("舊錢包、壞資料：補欄位，不丟錯", G => {
   const w = G.casWalletFix(G.casWalletNew(), D); delete w.stk;
@@ -120,23 +114,13 @@ T("舊錢包、壞資料：補欄位，不丟錯", G => {
   assert.doesNotThrow(() => G.casStockRoll(house, "bad", {}));
   assert.doesNotThrow(() => G.casStockView(w, house, D, OPEN));
 });
-T("每支照自己的資料動，不會七支全部壹樣（11-14：股票清單讀到空的，全變 9,996）", G => {
+T("換日調價不看每日資料：每支都只扣 drag（漲跌都在盤中動，不會一天動兩遍；11-14 規劃 2.8i）", G => {
   const C = G.NUM.casino.stock, s = fresh(G);
-  // 真的資料長這樣：每支的漲跌都不同
   const daily = { days: { "2026-11-12": { greeneye: -4.34, redclaw: 5.86, nightindex: -0.39, islandforge: -2.3, silverapple: -0.21, flashcar: 1.69, squarewin: 0.36 } } };
-  assert.strictEqual(G.outStockReady(daily, "2026-11-13"), true, "前壹天有資料就算到了");
-  const moves = G.outStockMovesFor(daily, "2026-11-13", G.STOCK_IDS);
-  assert.strictEqual(Object.keys(moves).length, G.STOCK_IDS.length, "每支都要有");
-  assert.ok(new Set(Object.values(moves)).size > 1, "漲跌不能全部壹樣");
+  const moves = G.outStockMovesFor(daily, "2026-11-13", G.STOCK_IDS); // 這個函式還在（每日資料的檢查用），但換日不吃它
+  assert.ok(new Set(Object.values(moves)).size > 1);
   G.casStockRoll(s.house, "2026-11-13", moves);
-  const px = G.STOCK_IDS.map(id => s.house.stk.px[id]);
-  assert.ok(new Set(px).size > 1, "股價不能全部壹樣：" + px.join(","));
-  assert.ok(s.house.stk.px.greeneye < s.house.stk.px.redclaw, "跌的要比漲的低");
-  // 清單給空的（以前的 bug）：全部只剩 drag，七支壹模壹樣
-  const s2 = fresh(G);
-  G.casStockRoll(s2.house, "2026-11-13", G.outStockMovesFor(daily, "2026-11-13", []));
-  assert.strictEqual(new Set(G.STOCK_IDS.map(id => s2.house.stk.px[id])).size, 1, "空清單的話就會全部壹樣，這就是當時的災情");
-  assert.strictEqual(s2.house.stk.px.greeneye, Math.round(C.start * (1 - C.drag / 100)), "9,996");
+  for (const id of G.STOCK_IDS) assert.strictEqual(s.house.stk.px[id], Math.round(C.start * (1 - C.drag / 100)), id);
 });
 T("畫面：莊家的錢不影響能不能買（exposeLeft 是 null、houseBroke 是 false）", G => {
   const s1 = fresh(G); s1.house.bankroll = -5;
