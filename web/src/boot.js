@@ -11,6 +11,7 @@ import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySetti
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
+import { ticketPing } from "./ui_ticket.js";
 
 export function normalizeImages(o) {
   const out = {};
@@ -45,6 +46,7 @@ export function tick() {
         snd("coin");
       } else P.news.hall = true;
       updateStatus(); persist();
+      ticketPing(); // 參觀者付門票（11-13）：隔一陣子叫伺服器收一次
     }
   }
   if (P.activeSec % 20 === 0) persist();

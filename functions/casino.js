@@ -30,6 +30,7 @@ import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/casino_book.js";
 import { casReportView } from "./shared/casino_report.js";
+import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBankAccrue, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
@@ -280,6 +281,11 @@ export const casino = onCall(async req => {
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
+    // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和預算池、館方帳在同一個交易裡加（shared/casino_ticket.js）
+    case "tickets": return play(req, me, { save: true }, ctx => {
+      const r = casTicketClaim(ctx.w, ctx.house, ctx.P, ctx.day);
+      return r.ok ? Object.assign({ chips: ctx.w.chips }, r) : no(r);
+    });
     case "report": return { ok: true, report: await casReport() };
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
       const ws = await walletRef(me.uid).get();

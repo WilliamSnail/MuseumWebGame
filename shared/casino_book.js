@@ -23,6 +23,15 @@ export function casLedFix(x, keys) {
 }
 const bkAdd = (obj, src, n) => { obj[src] = bkNz(obj[src]) + n; };
 
+// 預算池、館方帳憑空多 n（pool："budget"｜"museum"，門票這類館外進來的錢）
+export function casPoolMint(house, pool, src, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house[pool] = bkNz(house[pool]) + n;
+  bkAdd(casLedFix(house, ["mint", "flow"]).mint, src, n);
+  return n;
+}
+
 // 錢包憑空多 n（n 要是正整數）。回傳 n
 export function casMint(w, src, n) {
   n = bkNz(n);
@@ -66,7 +75,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), mint: {}, flow: {} } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {} } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
@@ -79,7 +88,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   return s;
 }
 // 全館的錢（含莊家、預算池、海底）
-export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea;
+export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
 export const casBookBurned = s => bkSumObj(s.burn);
@@ -106,6 +115,7 @@ export function casBookDiff(a, b) {
     bankroll: bkNz(b.house.bankroll) - bkNz(a.house.bankroll),
     budget: bkNz(b.house.budget) - bkNz(a.house.budget),
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),
+    museum: bkNz(b.house.museum) - bkNz(a.house.museum),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
     houseMint: bkDiffObj(a.house.mint, b.house.mint), flow: bkDiffObj(a.house.flow, b.house.flow),
   };
