@@ -19,7 +19,7 @@ import { colorGame } from "./ui_screens2.js";
 import { askVisitorName, growthFlow, legacyFill, pickJob, visitorLabel } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 import { lobbyFriends, loginArea, refreshLogin } from "./ui_login.js";
-import { ORIGIN_TABS, galleryTabs, originTabs, storyLobby, storyShelf, storyShow, weekUnderstood } from "./ui_story.js"; // 每週劇情（11-09）
+import { ORIGIN_TABS, galleryAuction, galleryCollect, galleryRules, galleryShell, originTabs, storyLobby, storyShelf, storyShow, weekUnderstood } from "./ui_story.js"; // 每週劇情（11-09）
 
 // 介面重塑（翊文 11-13，docs/介面整合規劃.md 第六步）：最下面收藏的抽屜。平常壹排縮圖，按銅拉環拉開才有頁籤和篩選（css/onescreen.css 的 .onescreen-drawer）
 export function onescreenDrawer(strip, label = "你的收藏") {
@@ -263,18 +263,20 @@ SCREENS.lobby = root => {
 
 // ---------- 3 畫廊：橫向走廊 ----------
 SCREENS.gallery = (root, params) => {
+  if (params.tab === "collect") return galleryCollect(root, params); // 我收藏的畫（藝術市場）
+  if (params.tab === "auction") return galleryAuction(root, params); // 拍賣
   if ((params.show || params.tab === "show") && storyShow(root, params)) return; // 今日特展（每週劇情，11-09，ui_story.js）
-  root.append(roomHead("畫廊", GALLERY_INTRO), galleryTabs("main"));
+  const sideBox = [];
   if (!isFree(P)) {
     const g0 = NUM.galleryInsp[0], gN = NUM.galleryInsp[NUM.galleryInsp.length - 1];
-    root.append(h("div", { class: "limit-box" },
+    sideBox.push(galleryRules("怎麼看",
       h("p", null, icon("sparkle"), h("span", null, h("b", { class: "em good" }, "越危險的畫，靈感越多"), `：不用理智檢定的畫，再看壹次 +${g0.review}；最危險的 +${gN.review}。第壹次看更多（+${g0.first}～+${gN.first}）。`)),
       h("p", null, icon("hourglass"), h("span", null, "同壹件展品，", h("b", { class: "em" }, `壹天最多再拿 ${g0.perDay}～${gN.perDay} 次靈感`), "（每幅畫底下寫著今天還剩幾次）。")),
       h("p", null, icon("eye"), h("span", null, "同壹天看同壹幅可怕的畫", h("b", { class: "em" }, `超過 ${NUM.habituate} 次`), "，就不怕了（理智只扣 0/1）；", h("b", { class: "em bad" }, "隔天又會怕"), "。"))));
   }
   const calmCure = !isFree(P) && activeQuirks(P).some(q => q.task === "calm"); // 有怪癖的治法是「看壹幅不可怕的畫」（11-09，決定 0027）
-  if (calmCure) root.append(quirkHereBox("calm"));
-  const corridor = h("div", { class: "corridor", tabindex: "0", "aria-label": "走廊，可以左右滑動" });
+  if (calmCure) sideBox.push(quirkHereBox("calm"));
+  const corridor = h("div", { class: "corridor gal-corridor", tabindex: "0", "aria-label": "走廊，可以左右滑動" });
   EXHIBITS.forEach(e => {
     const ex = exhibitById(e.id);
     const open = exhibitOpen(P, ex);
@@ -300,8 +302,8 @@ SCREENS.gallery = (root, params) => {
     if (e.key === "ArrowLeft") { corridor.scrollBy({ left: -320, behavior: "smooth" }); e.preventDefault(); }
   });
   corridor.addEventListener("scroll", () => { UI.params.scroll = corridor.scrollLeft; });
-  root.append(corridor, h("p", { class: "hint" }, "用滑鼠滾輪或手指左右滑，點展品靠近看。"));
-  if (ADDONS.gallery) root.append(ADDONS.gallery()); // 節日特展：只有節日那天（11-09，ui_signin.js）
+  if (ADDONS.gallery) sideBox.push(ADDONS.gallery()); // 節日特展：只有節日那天（11-09，ui_signin.js）
+  galleryShell(root, "main", GALLERY_INTRO, [corridor, h("p", { class: "hint gal-hint" }, "用滑鼠滾輪或手指左右滑，點展品靠近看。")], sideBox);
   if (params.scroll) requestAnimationFrame(() => { corridor.scrollLeft = params.scroll; });
 };
 // 每幅畫底下的靈感那壹行
