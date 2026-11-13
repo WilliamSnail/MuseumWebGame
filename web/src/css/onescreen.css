@@ -818,3 +818,6 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
 @media (max-height: 500px) and (orientation: landscape) { .fusion-onescreen > .onescreen-main { min-height: 120px; } }
 /* 右欄的「今天還能融合 N 次」：貼著融合按鈕壹起在下面，不用捲才看得到 */
 
+/* 館內 NPC（11-14）：展廳側欄的「館裡最近」小字、旅客說自己的故事（不加引號、斜體） */
+.hall-onescreen .onescreen-side .npc-news { margin: 2px 0 6px; color: #7A5A2A; font-size: .72rem; line-height: 1.5; }
+.visitor.story > p:first-child { font-style: italic; }

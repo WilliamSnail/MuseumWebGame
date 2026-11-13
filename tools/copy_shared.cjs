@@ -3,6 +3,7 @@
 // 規則只改 shared/，不要改 functions/shared/（每次都會被蓋掉）。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
+require("./npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc_roster.js）先跟上 content/npc/
 const from = path.join(ROOT, "shared"), to = path.join(ROOT, "functions", "shared");
 fs.mkdirSync(to, { recursive: true });
 let n = 0;
