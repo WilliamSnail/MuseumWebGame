@@ -43,3 +43,7 @@ console.log("\n== 7 同一個看盤的人，改限制台股的最大槓桿（進
 { const four = ["2330", "2454", "2317", "2308"].filter(id => all[id]); const nd = Math.min(...four.map(id => all[id].length));
   for (const X of [0.5, 0.4]) for (const L of [1, 2, 3, 5]) { const TH = 0.01 + 0.0015 * (L - 1) / L; let tot = 0; for (let d = 0; d < nd; d++) { const gs = []; for (const id of four) { const a = all[id][d]; for (let i = 3; i < a.length; i += 3) { const r = a[i] / a[i - 3] - 1; if (Math.abs(X * r) > TH) gs.push(L * (Math.abs(X * r) - TH)); } } gs.sort((p, q) => q - p); tot += gs.slice(0, 3).reduce((s, v) => s + v, 0); }
     console.log(`X=${X} 槓桿 ${L}×：一天平均賺保證金的 ${pct(tot / nd)}`); } }
+console.log("\n== 8 如果免費行情本身比真實慢（Yahoo 的台股常見慢約 20 分鐘），有即時報價的人領先更多：有效落後 15／30／45 分鐘，X=0.4，同一個盯盤的人一天賺保證金的 %（一天最多 3 筆；段別不重疊用整段）");
+{ const four = ["2330", "2454", "2317", "2308"].filter(id => all[id]); const nd = Math.min(...four.map(id => all[id].length));
+  for (const L of [2, 5]) for (const [k, name] of [[3, "15 分鐘"], [6, "30 分鐘"], [9, "45 分鐘"]]) { const X = 0.4, TH = 0.01 + 0.0015 * (L - 1) / L; let tot = 0; for (let d = 0; d < nd; d++) { const gs = []; for (const id of four) { const a = all[id][d]; for (let i = k; i < a.length; i += k) { const r = a[i] / a[i - k] - 1; if (Math.abs(X * r) > TH) gs.push(L * (Math.abs(X * r) - TH)); } } gs.sort((p, q) => q - p); tot += gs.slice(0, 3).reduce((s, v) => s + v, 0); }
+    console.log(`槓桿 ${L}× 落後 ${name}：${pct(tot / nd)}`); } }
