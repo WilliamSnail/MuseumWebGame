@@ -4,7 +4,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.cultureInterestPct = 0; /* 文化部利息另外在 casino_world.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
 const house = (G, bank, day = D0) => { const h = G.casHouseFix(G.casHouseNew(), day).house; h.bankroll = bank; return h; };
 const wallet = (G, chips = 50000000, day = D0) => { const w = G.casWalletFix(G.casWalletNew(), day); w.chips = chips; w.st.hands = 1; return w; };
@@ -21,7 +21,7 @@ T("破產換日：先跟預算池借閒錢的壹小部分，不夠再跟外面�
   assert.strictEqual(r.house.debt.world, H.reserve + 50000000 - fromBudget, "剩下的外面世界貸款");
   assert.strictEqual(r.house.budget, G.NUM.casino.econ.budgetStart - fromBudget, "預算池少了");
   assert.ok(!(r.house.led.mint.reset), "沒有印錢補回");
-  assert.strictEqual(r.house.led.mint.worldLoan, r.house.debt.world, "外面世界貸款記成館外進來");
+  assert.strictEqual(r.house.led.flow.worldLoan, r.house.debt.world, "外面世界貸款記成從外面世界流進莊家"); assert.strictEqual(r.house.led.world.worldLoan, -r.house.debt.world, "外面世界的池子少了這麼多");
   assert.ok(/借/.test(r.reopen), r.reopen);
   assert.strictEqual(r.house.reopened, 1);
   // 守恆：預算池→莊家是搬，貸款是 mint
@@ -70,10 +70,10 @@ T("還債：換日時超過準備金的部分壹半拿去還，順序預算池�
   assert.strictEqual(r.debt.world, world, "最後才是外面世界（先加壹天利息）");
   assert.strictEqual(r.bankroll, H.reserve + 300000000 - pay, "莊家的錢少了還掉的");
   assert.strictEqual(r.budget, 500000000, "預算池收回借出去的");
-  assert.strictEqual(r.led.burn.cultureRepay, 40000000); assert.strictEqual(r.led.burn.worldRepay, pay - 70000000);
+  assert.strictEqual(r.led.flow.cultureRepay, -40000000); assert.strictEqual(r.led.flow.worldRepay, -(pay - 70000000));
   const s1 = G.casBookSnap([], r, 0, null);
   assert.strictEqual(G.casBookTotal(s1) - G.casBookMinted(s1) + G.casBookBurned(s1), t0, "燒掉的有記帳，守恆");
-  assert.ok(G.casBookBurned(s1) === pay - 30000000, "燒掉＝還文化部＋外面世界");
+  assert.strictEqual(G.casBookBurned(s1), 0, "還款是搬回外面世界，不是燒掉"); assert.strictEqual(r.world, G.NUM.casino.world.start + pay - 30000000 + G.NUM.casino.world.growBase, "外面世界收回還文化部＋外面世界的錢，加上今天成長");
 });
 T("莊家沒超過準備金就不還（虧錢的日子不還）", G => {
   const H = G.NUM.casino.houseLoan, h = house(G, H.reserve - 1000); h.debt.world = 5000000;
@@ -85,12 +85,12 @@ T("文化部借款：撥壹次，記成債（不計利息）；以前撥過沒�
   G.NUM.casino.grants = [{ id: "moc-t", amt: 1000000000, name: "文化部借款" }];
   const h = G.casHouseNew(); h.bankroll = -50000000;
   const r = G.casHouseFix(h, D0).house;
-  assert.strictEqual(r.bankroll, 950000000); assert.strictEqual(r.led.mint.grant, 1000000000); assert.strictEqual(r.debt.culture, 1000000000);
+  assert.strictEqual(r.bankroll, 950000000); assert.strictEqual(r.led.flow.grant, 1000000000); assert.strictEqual(r.debt.culture, 1000000000); assert.strictEqual(r.world, G.NUM.casino.world.start - 1000000000, "撥款是外面世界的池子少 10 億");
   const again = G.casHouseFix(r, D0).house; assert.strictEqual(again.debt.culture, 1000000000, "不重複記");
-  assert.strictEqual(again.led.mint.grant, 1000000000, "不重複撥");
+  assert.strictEqual(again.led.flow.grant, 1000000000, "不重複撥");
   // 以前撥過（house.grants 有、沒有 grantDebt）
-  const old = G.casHouseNew(); old.grants = { "moc-t": D0 }; old.led = { mint: { grant: 1000000000 }, flow: {} }; old.bankroll = 300000000;
-  const o = G.casHouseFix(old, D0).house; assert.strictEqual(o.debt.culture, 1000000000, "補記壹次債"); assert.strictEqual(o.led.mint.grant, 1000000000, "沒有再 mint");
+  const old = G.casHouseNew(); old.grants = { "moc-t": D0 }; old.led = { mint: { grant: 1000000000 }, flow: {} }; old.bankroll = 300000000; /* 以前是 mint，這次不補撥 */
+  const o = G.casHouseFix(old, D0).house; assert.strictEqual(o.debt.culture, 1000000000, "補記壹次債"); assert.strictEqual(o.led.mint.grant, 1000000000, "以前的 mint 記錄不動"); assert.ok(!o.led.flow.grant, "沒有再撥");
   // 隔天莊家超過準備金：壹半拿去還文化部
   const n = G.casHouseFix(o, D1).house;
   assert.strictEqual(n.debt.culture, 1000000000 - Math.floor((300000000 - G.NUM.casino.houseLoan.reserve) * G.NUM.casino.houseLoan.repayPct / 100));

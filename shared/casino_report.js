@@ -13,8 +13,10 @@ import { CAS_ECON } from "./casino_text.js";
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
-  mint: { stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
+  mint: { worldGrow: "外面世界每天成長", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
+  // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
+  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（預算池）", ticketMuseum: "參觀者門票（館方帳）", npcArt: "旅客買畫、賣畫" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
   flow: { stockIn: "館內股票（莊家當對手盤）", budgetLoan: "跟預算池借（莊家破產重開）", budgetRepay: "還預算池", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
@@ -41,7 +43,7 @@ export function casReportView(doc) {
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
   const flow = rpList(d.flow, CAS_REPORT.flow, true);
   if (flow.length) hl.push("進出：", ...flow);
-  const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
+  const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部持有的館債", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
   if (debts.length) hl.push("莊家欠的錢（賺了錢會先還）：" + debts.map(x => `${x[0]} ${rpN(x[1])}`).join("、") + "。");
   if (H.loansOut > 0) hl.push(`莊家借出去、還沒收回的本金 ${rpN(H.loansOut)}。`);
   // 莊家健康度：從玩家流進來的（21 點、餐車、借款還回）對流出給玩家的（大禮包、委託、地下撿、借出、拚經濟油水、利息）
@@ -70,13 +72,23 @@ export function casReportView(doc) {
   // 海底：只給水位
   const cm = Math.floor(Math.max(0, H.sea) / C.seaPerCm), dcm = first ? 0 : Math.floor(Math.max(0, H.sea) / C.seaPerCm) - Math.floor(Math.max(0, H.sea - d.sea) / C.seaPerCm);
   secs.push({ t: "海底（B4 的水下）", lines: [`水位 ${rpN(cm)} 公分${dcm > 0 ? `，這段時間升了 ${rpN(dcm)} 公分` : ""}。`, !first && d.sea > 0 ? CAS_REPORT.seaNote : ""].filter(Boolean) });
+  // 外面世界（規劃 2.12）：現在有多少、這段時間怎麼進出。有帳以前的日報沒有這一段
+  if (H.world != null) {
+    const wl = [`外面世界現在有 ${rpN(H.world)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.world)}）`}。`];
+    if (H.world < Math.floor(NUM.casino.world.start * NUM.casino.world.lowPct / 100)) wl.push("外面世界資金吃緊：賣股、槓桿賺的錢壹天只付得出壹部分，也暫停借錢給莊家。");
+    const into = {}, out = {};
+    for (const [k, v] of Object.entries(d.wflow || {})) { if (v > 0) into[k] = v; else if (v < 0) out[k] = -v; }
+    if (Object.keys(into).length) wl.push("進外面世界：", ...rpList(into, CAS_REPORT.world, false));
+    if (Object.keys(out).length) wl.push("從外面世界出來：", ...rpList(out, CAS_REPORT.world, false));
+    secs.push({ t: "跟外面世界的往來", lines: wl });
+  }
   // 憑空、消失
   const minted = Object.assign({}, d.mint, d.houseMint), mintNames = Object.assign({}, CAS_REPORT.mint, CAS_REPORT.houseMint);
   const ml = [];
   const burnAll = Object.assign({}, d.burn, d.houseBurn), mTotal = casBookSumObj(minted), bTotal = casBookSumObj(d.burn) + casBookSumObj(d.houseBurn);
   ml.push(mTotal ? `從館外進來 ${rpN(mTotal)} 籌碼：` : "這段時間沒有從館外進來的籌碼。", ...rpList(minted, mintNames, false));
   ml.push(bTotal ? `消失 ${rpN(bTotal)} 籌碼：` : "這段時間沒有消失的籌碼。", ...rpList(burnAll, CAS_REPORT.burn, false));
-  secs.push({ t: "館外進來的、消失的", lines: ml });
+  secs.push({ t: H.world != null ? "真的憑空來的、真的消失的" : "館外進來的、消失的", lines: ml });
   if (doc.gdp && doc.index) {
     const x = doc.index, g = doc.gdp, per = x.perDay;
     const gl = [`今天的景氣：${x.label}（指數 ${x.b > 0 ? "＋" : x.b < 0 ? "－" : ""}${Math.abs(x.b).toFixed(2)}）。`];

@@ -336,6 +336,9 @@ export const NUM = {
     startChips: 1000000,    // 新玩家的籌碼。舊程式裡沒有預設（錢包檔是手動建的）；20 個舊錢包裡有 3 個剛好是 1,000,000（沒動過的起始值），所以沿用
     minBet: 100,            // 等翊文：最小的注
     maxBet: 10000000,       // 等翊文：最大的注（舊的沒有上限，只看錢包）
+    // 外面世界的池子（11-14，規劃 2.12，翊文：「外面世界也是個經濟體系，從那裏扣錢」）：house.world。start 起始、growBase 每天成長（再 ×（1 ＋ growExtPct% × 外部景氣）；真正憑空的，記 worldGrow）、
+    //   lowPct 池子低於起始的幾 % 算吃緊；吃緊時賣股、槓桿賺的錢壹天最多付池子的 lowPayPct%，莊家向外面世界貸款暫停（買股照收）。
+    world: { start: 10000000000, growBase: 5000000, growExtPct: 20, lowPct: 10, lowPayPct: 1 },
     houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
     houseReset: 10000000,   // 莊家破產中（小於 0）過了換日，Yuga 借他這麼多重新開張
     // 換日印錢補莊家先關掉（翊文 11-14：莊家 −8.3 億，換日會印 8 億多補回來，「這不行，莊家要跟整個經濟系統接軌才行」）。
@@ -345,7 +348,7 @@ export const NUM = {
     //   reserve 重開補到多少；先跟預算池借（預算池超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
     //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
     //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先預算池、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
-    houseLoan: { on: true, reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
+    houseLoan: { on: true, cultureInterestPct: 0.02, reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
     // 莊家破產／吃緊的時候限制流出（規劃 2.11 第二點）：不是處罰玩家，是不讓莊家掉得更深。贏的錢不收回。
     //   吃緊（0 ～ health.low）：最大注 max(betMin, 莊家的錢 × betTightPct%)、壹天總賠付（21 點贏的＋大禮包）≤ 莊家的錢 × payTightPct% ＋ payFlat、壹包最多賠 max(drawFlat, 莊家的錢 ÷ 2)
     //   破產（≤ 0）：最大注 betBroke、壹天總賠付 ≤ payBrokeFlat、壹包最多賠 drawFlat。betMult：壹手最多可能賠幾倍的注（雙倍、分牌），用來算這手會不會超過今天的額度

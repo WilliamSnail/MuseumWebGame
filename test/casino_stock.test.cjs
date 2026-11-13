@@ -31,7 +31,7 @@ T("買：股價流出館外（記成消失、來源 stockBuy），手續費進�
   assert.strictEqual(s.w.chips, c0 - cost - fee);
   assert.strictEqual(s.house.bankroll, h0, "莊家不出錢也不收錢（跟外面世界買）");
   assert.strictEqual(s.house.budget, b0 + fee);
-  assert.strictEqual(s.w.led.burn.stockBuy, cost, "流出館外記成消失");
+  assert.strictEqual(s.house.led.world.stockBuy, cost, "錢給外面世界（池子變多），不是燒掉"); assert.ok(!s.w.led.burn.stockBuy);
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], 10);
 });
@@ -44,7 +44,7 @@ T("賣：從館外進來（記成憑空、來源 stockSell），手續費進預�
   const gross = px * 10, fee = Math.ceil(gross * C.feePct / 100);
   assert.strictEqual(s.w.chips, c0 + gross - fee);
   assert.strictEqual(s.house.bankroll, h0, "莊家不付錢");
-  assert.strictEqual(s.w.led.mint.stockSell, gross, "從館外進來記成憑空");
+  assert.strictEqual(s.house.led.world.stockSell, -gross, "外面世界付（池子變少），不是憑空"); assert.ok(!s.w.led.mint.stockSell);
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], undefined, "賣光就不留欄位");
   assert.ok(!G.casStockSell(s.w, s.house, ID, 1, D, OPEN).ok, "沒有了就不能賣");
@@ -140,10 +140,10 @@ T("文化部借款 10 億只撥壹次、記成館外進來、記成債（11-13 �
   const h = G.casHouseNew(); h.bankroll = -830000000; delete h.grants;
   const r = G.casHouseFix(h, "2026-11-14").house;
   assert.strictEqual(r.bankroll, -830000000 + 1000000000, "撥了 10 億");
-  assert.strictEqual(r.led.mint.grant, 1000000000, "記成館外進來，來源 grant");
+  assert.strictEqual(r.led.flow.grant, 1000000000, "外面世界撥給莊家，來源 grant");
   assert.strictEqual(r.debt.culture, 1000000000, "記成債");
   const n = G.casHouseFix(r, "2026-11-15").house;
-  assert.strictEqual(n.led.mint.grant, 1000000000, "第二次不再撥");
+  assert.strictEqual(n.led.flow.grant, 1000000000, "第二次不再撥");
   assert.ok(n.debt.culture < 1000000000, "莊家有賺就還");
 });
 T("大廳的「新」：館外幾支股票的價自從上次看過之後變過；看過歸零，價再變又加（11-13）", G => {
