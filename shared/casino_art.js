@@ -17,7 +17,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casFxMood } from "./casino_gdp.js";
 import { casNum } from "./casino.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { galleryInsp, hashStr, mulberry32 } from "./logic.js";
 
 const arBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const arN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -95,6 +95,11 @@ export function casArtFix(P) {
   const prem = {}; // 靠拍賣收到的溢價（每天，shared/casino_auction.js）
   if (arBox(A.prem)) for (const d of Object.keys(A.prem)) if (arDay(d) && arN(A.prem[d]) > 0) prem[d] = arN(A.prem[d]);
   if (Object.keys(prem).length) A.prem = prem; else delete A.prem;
+  // 再看畫的紀錄（viewed：畫 → 最後領靈感的日子；inspDay：今天收藏合計領了幾點）。viewed 只留最近的 60 幅
+  const viewed = {};
+  if (arBox(A.viewed)) Object.keys(A.viewed).filter(id => id !== "__proto__" && arDay(A.viewed[id])).sort((a, b) => (A.viewed[b] < A.viewed[a] ? -1 : 1)).slice(0, 60).forEach(id => { viewed[id] = A.viewed[id]; });
+  if (Object.keys(viewed).length) A.viewed = viewed; else delete A.viewed;
+  if (arBox(A.inspDay) && arDay(A.inspDay.day) && arN(A.inspDay.n) > 0) A.inspDay = { day: A.inspDay.day, n: Math.floor(arN(A.inspDay.n)) }; else delete A.inspDay;
   return A;
 }
 // 莊家：house.art 補欄位
@@ -224,3 +229,24 @@ export function casArtView(w, house, P, works, day) {
   });
   return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips, risk: CAS_ART.risk };
 }
+
+// ---------- 再看收藏的畫（規劃 2.10b；翊文 11-14：「我收藏的畫也可以看，而且也可以扣理智或加靈感」）----------
+// 壹幅畫壹天最多領壹次靈感（今日特展看同壹幅也算，共用 P.art.viewed）；全部收藏壹天合計 NUM.art.viewInspDay；
+// 靈感 ＝ 這個人沒看過這幅用 .first、看過用 .review（危險度照 galleryInsp），再加稀有度（viewRarityBonus）；
+// 可怕的畫每次看都擲理智；上限滿了之後只剩文字：沒有靈感也不擲理智。
+// 回傳 { insp, again（今天這幅領過了）, capped（今天收藏的靈感滿了）, roll（要不要擲理智） }
+export function casArtViewCredit(P, id, tier, first, ex, today) {
+  const A = casArtFix(P), out = { insp: 0, again: false, capped: false, roll: true };
+  if (!A || !today) return out;
+  const used = A.inspDay && A.inspDay.day === today ? A.inspDay.n : 0, room = Math.max(0, NUM.art.viewInspDay - used);
+  if (A.viewed && A.viewed[id] === today) { out.again = true; return out; }
+  if (room <= 0) { out.capped = true; out.roll = false; return out; }
+  const gi = galleryInsp(ex), want = (first ? gi.first : gi.review) + (NUM.art.viewRarityBonus[Math.min(NUM.art.viewRarityBonus.length - 1, arTierOf(tier))] || 0);
+  out.insp = Math.min(want, room);
+  P.insp += out.insp;
+  if (!A.viewed) A.viewed = {};
+  A.viewed[id] = today; A.inspDay = { day: today, n: used + out.insp };
+  return out;
+}
+// 今日特展那邊領了靈感：同壹天收藏的再看不再給（沒有存檔的 P.art 就先補好）
+export function casArtMarkViewed(P, id, today) { const A = casArtFix(P); if (A) { if (!A.viewed) A.viewed = {}; A.viewed[id] = today; } }

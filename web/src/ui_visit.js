@@ -406,6 +406,7 @@ const mailBusy = () => UI.busy || document.querySelector(".mini-layer, .ask, .nb
 function mailLine(m) {
   const from = m.from || "館友";
   if (String(m.id).startsWith("visit-")) return `${from} 來看了你的展廳，謝禮在信箱`; // 來訪謝禮不算「送」
+  if (String(m.id).startsWith("auc-")) return `${from}：${m.note || m.title}`; // 拍賣收標的通知（沒有附件）
   if (m.gift && m.gift.pepe) return `${from} 送了你 ${m.note || "壹隻佩佩"}`;
   return `${from} 寄了信給你${m.title ? `：${m.title}` : ""}`;
 }
@@ -496,6 +497,7 @@ NET.on("message", m => {
     note(`${m.from} 請你去看他的展廳。`, "good", 20000, { label: "去看看", run: () => visitFriend({ id: m.fromId, nick: String(m.from || "館友") }) });
     return;
   }
+  if (m.t === "mail_new" && m.kind === "auction") { snd("bell"); note(`${m.from}：${m.text}`, "good", 20000, { label: "去看信", run: () => PANELS.mail && PANELS.mail() }); return; }
   if (m.t === "mail_new") { snd("bell"); note(`${m.from} 送你壹隻佩佩：${m.text}。到信箱領。`, "good", 20000, { label: "去看信", run: () => PANELS.mail && PANELS.mail() }); return; } // 已經在線：清楚的通知（有按鈕）加信箱紅點，不跳大卡，免得打斷手上的事
   if (m.what === "visit") note(`${m.from} 來參觀你的展廳${m.insp ? `：信箱多了壹封謝禮（靈感 +${m.insp}）` : ""}。`);
   else if (m.what === "like") note(`${m.from} 給你的展廳按了讚。`, "good");
