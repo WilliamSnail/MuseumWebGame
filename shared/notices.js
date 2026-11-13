@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "yuga-daily-report", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "賭場多了「Yuga Bot 日報」", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "賭場「拚經濟」頁籤最下面，多了壹份 Yuga Bot 日報：莊家有多少、預算池剩多少、海底的水位幾公分、這段時間有多少籌碼從館外進來、多少消失了。",
+        "壹天算壹次，看到的是結算過的數字，不是現在的。",
+        "只是看帳，沒有改任何賺賠的數字。",
+      ]],
+    ],
+  },
+  {
     id: "loan-from-house", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "Yuga Bot 銀行借的錢，改從莊家出", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

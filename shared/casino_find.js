@@ -9,6 +9,7 @@
 //  純函式：亂數用 RNG（測試可以換，也可以從參數 rnd 傳）；「今天」從參數來。籌碼不是錢，這裡沒有任何換成現實東西的路。
 // ================================================================
 import { NUM } from "./config.js";
+import { casHouseMove } from "./casino_book.js";
 import { CAS_FIND_TEXT } from "./casino_text.js";
 import { CELLAR } from "./content3.js";
 import { RNG } from "./logic.js";
@@ -50,7 +51,7 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG, boost = null) {
   found += bonus;
   cf.n++;
   w.chips += found;
-  if (house) house.bankroll -= found; // 莊家出，跟大禮包一樣
+  if (house) casHouseMove(house, "find", -found); // 莊家出，跟大禮包一樣
   if (!cfBox(w.st)) w.st = {};
   w.st.finds = Math.floor(cfNum(w.st.finds)) + 1;
   w.st.findChips = Math.floor(cfNum(w.st.findChips)) + found;

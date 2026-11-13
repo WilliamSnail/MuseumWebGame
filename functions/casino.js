@@ -13,6 +13,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    /casinoLive（Realtime Database）  同一份的公開鏡像（只有暱稱和 uid，館友讀得到），交易成功之後寫；用 seq 擋掉晚到的舊資料。畫面聽這裡，跳「感謝」和大廳的「正在實況」
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
 //    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
+//  Yuga Bot 日報（11-13）：act report。每天第一個來問的人觸發壹次「全館快照」（一致讀取所有錢包、莊家、打到一半的注），存 casinoReport/{day}（data：JSON），跟上一份相減就是那段時間的帳。
+//    錢包的 led、莊家的 led 記了每一條憑空、消失、莊家進出的路（shared/casino_book.js）；快照加起來對不上開場就 console.error（守恆壞了）
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
 //  連勝連敗（決定 0049）：結算的同一個交易裡，心情、理智寫進存檔（deal、hit、stand 都讀存檔）。
 //  改到存檔的（換小獎的靈感、稱號、掛紀念品）：同一個交易寫存檔（rev 加一），交易成功才通知 save_changed。
@@ -26,6 +28,8 @@ import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
+import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/casino_book.js";
+import { casReportView } from "./shared/casino_report.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
@@ -232,12 +236,42 @@ export const actBuy = (ctx, d) => {
   return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach, mood: r.mood, san: r.san }) : no(r);
 };
 
+// ---------- Yuga Bot 日報（shared/casino_report.js） ----------
+// 一致讀取（readOnly 交易）全館：錢包、莊家、打到一半的注。不鎖東西，也不會讀到壹半
+async function reportSnap(day) {
+  return db().runTransaction(async tx => {
+    const [hs, ws, rs, ts] = await Promise.all([tx.get(houseRef()), tx.get(db().collection("casinoWallets")), tx.get(db().collection("casinoRounds")), tx.get(db().collection("casinoTables"))]);
+    const house = casHouseFix(parse(hs), null).house;
+    const wallets = ws.docs.map(d => casWalletFix(JSON.parse(d.data().data), null));
+    let inplay = 0;
+    rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
+    ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
+    return casBookSnap(wallets, house, inplay, day);
+  }, { readOnly: true });
+}
+export async function casReport() {
+  const t = now(), day = taipeiDay(t), ref = db().doc(`casinoReport/${day}`);
+  let s = await ref.get();
+  if (!s.exists) {
+    const snap = await reportSnap(day);
+    const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(1).get();
+    const prev = prevQ.empty ? null : JSON.parse(prevQ.docs[0].data().data);
+    const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: prev ? prev.opening : casBookOpening(snap) };
+    doc.gap = casBookGap(snap, doc.opening);
+    if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
+    try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); } catch (e) { /* 別人先建了：讀他的 */ }
+    s = await ref.get();
+  }
+  return casReportView(JSON.parse(s.data().data));
+}
+
 export const casino = onCall(async req => {
   const me = await needMember(req);
   const { act } = req.data || {};
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
+    case "report": return { ok: true, report: await casReport() };
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
       const ws = await walletRef(me.uid).get();
       const w = casWalletFix(parse(ws), taipeiDay(now()));
