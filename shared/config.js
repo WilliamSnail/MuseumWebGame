@@ -392,14 +392,14 @@ export const NUM = {
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
     // 股票槓桿、放空、當沖（11-14，shared/casino_stock_lev.js；規劃 2.8b、2.8d、2.8e、2.8f、2.8j；規則先做，還沒接到伺服器和畫面）。
-    //   maxLev 各市場最多幾倍（0 ＝ 不開放；美股先不開，等整體的錢重新算過）；forcePct 剩下的保證金不到原本的幾 % 就強制平倉；
+    //   maxLev 各市場最多幾倍（0 ＝ 不開放；美股 11-14 翊文決定開，照信用解鎖，部位上限同台股）；maxLagMin 台股、美股真實行情落後超過幾分鐘就暫停「新開」（已開的、平倉、強平照常）；forcePct 剩下的保證金不到原本的幾 % 就強制平倉；
     //   levByCredit 信用等級對應的倍數上限 [[等級 ≥, 倍數], …]（翊文 11-14：「新手 2 倍，信用升級解鎖」；跟 maxLev 取小的，已開的部位不受影響）；
     //   interestPct 借的錢（部位 − 保證金）的利息 %，borrowPct 放空的借券費（占部位）%，手續費沿用 stock.feePct；
     //   opensDay 壹天最多開幾筆、coolMin 同壹檔平倉後幾分鐘內不能再開；
     //   posLimit 部位（做多＋放空合計）上限、profitCap 壹天當沖淨賺最多算多少，都乘 (1 ＋ stepPct% × 信用等級)；
     //   houseExposePct／houseFloor 莊家接館內股槓桿＋放空部位的上限（max(莊家的錢 × %, 保底)，莊家 ≤ 0 不接）；
     //   credit：ptsPerLevel 幾點升壹級、maxLevel 最高幾級、dayGain 壹天最多加幾點、lateLoss 借款逾期壹次扣幾點。
-    stockLev: { maxLev: { in: 5, tw: 5, us: 0 }, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 3, coolMin: 15,
+    stockLev: { maxLev: { in: 5, tw: 5, us: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 3, coolMin: 15,
       posLimit: 20000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
       credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 1, lateLoss: 3 } },
     // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。

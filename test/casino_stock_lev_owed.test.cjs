@@ -53,10 +53,10 @@ T2("隔天補發：莊家今天 ≤ 0 時賺的錢整筆記欠條；壞資料的
   assert.strictEqual(c.pnl, 0); assert.strictEqual(c.owed, 10000); assert.strictEqual(s.w.lev.owed[0].amt, 10000);
   s.w.lev.owed = [null, { day: "x", amt: 5 }, { day: D0, amt: -3 }, { day: D0, amt: 7 }]; assert.strictEqual(J(G.casLevFix(s.w).owed), J([{ day: D0, amt: 7 }]));
 });
-T2("倍數跟信用等級：0～1 級 2×、2～3 級 3×、4 級以上 5×；市場上限照樣管（美股 0）", G => {
+T2("倍數跟信用等級：0～1 級 2×、2～3 級 3×、4 級以上 5×；市場上限照樣管", G => {
   const C = G.NUM.casino.stockLev; assert.strictEqual(J(C.levByCredit), J([[0, 2], [2, 3], [4, 5]]));
   const exp = [[0, 2], [1, 2], [2, 3], [3, 3], [4, 5], [10, 5]];
-  for (const [lv, m] of exp) { assert.strictEqual(G.casLevMaxLev("in", lv), m, "in " + lv); assert.strictEqual(G.casLevMaxLev("tw", lv), m); assert.strictEqual(G.casLevMaxLev("us", lv), 0); }
+  for (const [lv, m] of exp) { assert.strictEqual(G.casLevMaxLev("in", lv), m, "in " + lv); assert.strictEqual(G.casLevMaxLev("tw", lv), m); assert.strictEqual(G.casLevMaxLev("us", lv), m); }
   C.maxLev.tw = 4; assert.strictEqual(G.casLevMaxLev("tw", 10), 4, "市場上限比較低就用市場的");
   const s = fresh(G), src = fakeSrc({ px: { [IN]: 1000 }, idx: 0 }), t = at(D0, 6);
   const o = lev => G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev, qty: 10 }, D0, t + lev * 1e8, src);
@@ -70,11 +70,11 @@ T2("倍數：畫面的 byMarket、maxLev 跟著目前的信用等級；credit.ne
   const s = fresh(G), src = fakeSrc({ px: { [IN]: 1000, [TW]: 100000 }, idx: 0 });
   s.w.lev = null; G.casLevFix(s.w, D0); s.w.lev.pos.push(pos(G, { lev: 5, no: 1 })); s.w.lev.seq = 1; G.casLevFix(s.w, D0);
   let v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src);
-  assert.strictEqual(J(v.lev.byMarket), J({ in: 2, tw: 2, us: 0 })); assert.strictEqual(v.lev.max, 2); assert.strictEqual(v.credit.maxLev, 2);
+  assert.strictEqual(J(v.lev.byMarket), J({ in: 2, tw: 2, us: 2 })); assert.strictEqual(v.lev.max, 2); assert.strictEqual(v.credit.maxLev, 2);
   assert.strictEqual(J(v.credit.nextUnlock), J({ level: 2, lev: 3, pts: 10 })); assert.ok(v.credit.nextText.includes("3×") && v.credit.nextText.includes("2 級"), v.credit.nextText);
   assert.strictEqual(v.positions.length, 1); assert.strictEqual(v.positions[0].lev, 5, "已經開的 5× 照舊");
   assert.strictEqual(G.casLevSweep(s.w, s.h, D0, at(D0, 6), src).length, 0); assert.strictEqual(s.w.lev.pos[0].lev, 5, "不會被強制改倍數或平倉");
-  s.w.lev.cr.pts = 10; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(J(v.lev.byMarket), J({ in: 3, tw: 3, us: 0 })); assert.strictEqual(v.credit.nextUnlock.lev, 5); assert.ok(v.credit.nextText.includes("4 級"));
+  s.w.lev.cr.pts = 10; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(J(v.lev.byMarket), J({ in: 3, tw: 3, us: 3 })); assert.strictEqual(v.credit.nextUnlock.lev, 5); assert.ok(v.credit.nextText.includes("4 級"));
   s.w.lev.cr.pts = 20; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(v.credit.maxLev, 5); assert.strictEqual(v.credit.nextUnlock, null); assert.ok(v.credit.nextText.includes("全部解鎖"));
 });
 console.log(`casino_stock_lev_owed.test：${pass} 過，${fail} 沒過`);
