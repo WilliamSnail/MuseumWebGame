@@ -216,6 +216,7 @@ export const CAS_ECON = {
   cheer: ["拚 經濟，做 就對了！", "Yuga Bot：我們來拚經濟！"],
   okLine: "「{policy}」執行成功！",
   okHouse: "莊家入帳：+{n}",
+  okFrozen: "（預算凍結中，館方只撥了壹點）",
   okTicket: "還多了壹張大禮包券！",
   okRescue: "把莊家拚回來了！莊家的帳回到正的了！",
   okRescueSub: "（全館壹起拚的，謝謝大家）",
