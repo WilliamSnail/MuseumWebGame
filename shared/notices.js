@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "art-fast", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "畫改成大約兩個禮拜回本", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "畫廊買的畫，前兩個禮拜漲得比較快，之後慢慢漲到頂。賣回館方拿現價的九成。",
+        "大約放到第 13 天賣回就能回本；買了隔天就賣壹定虧。",
+        "收藏清單會寫「再放幾天賣回才回本」。",
+        "畫是放錢的地方，不是賺錢的工具：放久了報酬還是比銀行的活存、定存低。",
+      ]],
+    ],
+  },
+  {
     id: "art-market", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "畫廊多了「藝術市場」：特展的畫可以收藏", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

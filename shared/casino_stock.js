@@ -159,6 +159,7 @@ export function casStockView(w, house, day, t, stale) {
     list, fee: C.feePct / 100, halt: casStockHalt(t), haltFrom: C.haltFrom, haltTo: C.haltTo,
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
     exposeLeft: Math.max(0, Math.floor(house.bankroll * C.exposePct / 100) - casStockExposure(house)),
+    bankroll: house.bankroll, houseBroke: house.bankroll <= 0, // 買不了的時候畫面要說清楚是哪個原因（翊文 11-14：有錢卻壹直說「籌碼不夠，或莊家手上的股票已經夠多了」）
     sellLeft: Math.max(0, C.sellDay - stSoldToday(S, day)),
     soon: CAS_STOCK.soon, // 館內五家店、槓桿、放空、當沖還沒做
   };

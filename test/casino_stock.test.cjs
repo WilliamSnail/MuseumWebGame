@@ -146,5 +146,13 @@ T("每支照自己的資料動，不會七支全部壹樣（11-14：股票清單
   assert.strictEqual(new Set(G.STOCK_IDS.map(id => s2.house.stk.px[id])).size, 1, "空清單的話就會全部壹樣，這就是當時的災情");
   assert.strictEqual(s2.house.stk.px.greeneye, Math.round(C.start * (1 - C.drag / 100)), "9,996");
 });
+T("買不了的時候畫面拿得到原因：莊家破產、莊家的錢接不了、籌碼不夠（11-14）", G => {
+  const s1 = fresh(G); s1.house.bankroll = -5;
+  let v = G.casStockView(s1.w, s1.house, D, OPEN);
+  assert.strictEqual(v.houseBroke, true); assert.strictEqual(v.exposeLeft, 0);
+  const s2 = fresh(G); s2.house.bankroll = 10000; // 壹半是 5,000，壹股都接不了
+  v = G.casStockView(s2.w, s2.house, D, OPEN);
+  assert.strictEqual(v.houseBroke, false); assert.ok(v.exposeLeft < v.list[0].price); assert.strictEqual(v.bankroll, 10000);
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

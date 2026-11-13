@@ -170,6 +170,13 @@ function bondPane(v) {
 }
 // 還沒做的頁籤（股票、財報）：伺服器給 null 的時候
 const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即將開放", h("p", { class: "bank-empty" }, what)));
+// 壹股都買不了的原因：分開講，不要把兩種混在壹起（翊文 11-14）
+function whyNoBuy(v, S, cur) {
+  if (S.houseBroke) return `莊家現在破產中（剩 ${fmt(S.bankroll)}），暫停買進。賣出照常。`;
+  if (S.exposeLeft < cur.price) return `莊家的錢不夠接更多股票了：全館持股最多是莊家的壹半，莊家現在有 ${fmt(S.bankroll)}，今天還能接 ${fmt(S.exposeLeft)}。莊家賺回來就能再買。`;
+  if (v.cash < Math.ceil(cur.price * (1 + S.fee))) return `籌碼不夠：壹股 ${fmt(cur.price)}，加手續費要 ${fmt(Math.ceil(cur.price * (1 + S.fee)))}。`;
+  return "現在買不了。";
+}
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
   const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
@@ -189,7 +196,7 @@ function stockPane(v) {
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : null,
         cur.stale ? h("p", { class: "bank-why" }, cur.stale) : null,
         S.halt ? h("p", { class: "bank-why" }, `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`)
-          : h("div", { class: "bank-acts" }, buys.length ? buys : h("small", null, "籌碼不夠，或莊家手上的股票已經夠多了。"), sells),
+          : h("div", { class: "bank-acts" }, buys.length ? buys : h("small", { class: "bank-why" }, whyNoBuy(v, S, cur)), sells),
         h("p", { class: "bank-hint" }, "股價每天 05:00 動壹次，照外面世界前壹天的行情。買賣各收手續費，進館方的預算池。"),
         h("p", { class: "bank-hint" }, S.soon)))); 
 }
