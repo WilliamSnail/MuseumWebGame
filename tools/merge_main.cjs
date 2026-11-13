@@ -31,7 +31,10 @@ function keepBoth(text, how = "plain") {
   return text.replace(MARK, (m, ours, theirs) => {
     if (how === "notice") { // git 會把兩邊共同的收尾（"    ],\n  },"）留在衝突外面：我這邊要自己補上才是完整的壹則
       const whole = /^ {2}\},\n$/m.test(ours.slice(ours.lastIndexOf("\n", ours.length - 2) + 1));
-      return `${ours}${whole ? "" : "    ],\n  },\n"}  {\n${theirs}`;
+      // 兩邊共同的收尾其實是「      ]],  ],  },」三行（段落的 ]] 也算）：我這邊最後一行是內文字串時，連 ]] 也要補（11-13 踩到：PR 231、241 的公告少了 ]]，CI 才發現）
+      const lastLine = ours.trimEnd().split("\n").pop();
+      const close = /^ {8}"/.test(lastLine) ? "      ]],\n    ],\n  },\n" : "    ],\n  },\n";
+      return `${ours}${whole ? "" : close}  {\n${theirs}`;
     }
     if (how === "list" && oneLine(ours) && oneLine(theirs)) return mergeListLine(ours.trimEnd(), theirs.trimEnd()) + "\n";
     return ours + theirs;
