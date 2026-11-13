@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-landscape", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "手機橫拿的打怪畫面重排", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "手機橫拿打怪時，怪物和隊員站在左邊（占六成），選行動的面板在右邊，不再上下疊成壹條細縫。",
+        "隊員和聊天那欄收起來了，點右上角「隊員和聊天」會從右邊蓋出來。",
+      ]],
+    ],
+  },
+  {
     id: "phone-layout-fixes", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "手機版面調整：展廳、委託櫃台、打怪", publish: "2026-11-13", expire: "2027-12-31",
     sections: [

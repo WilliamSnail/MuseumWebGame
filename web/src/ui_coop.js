@@ -421,10 +421,12 @@ function drawRun(v) {
   let runEl = s.m.surface.querySelector(".cx-run");
   if (runEl) old.replaceWith(main);
   else {
-    runEl = h("div", { class: "cx-run" }, main, h("aside", { class: "cx-side" }, h("div", { class: "cx-side-top" }), chatPanel()));
+    // 手機橫拿的打怪畫面：舞台在左、指令面板在右（docs/生成 的 U-7），隊員和聊天那欄收起來，點右上角的按鈕蓋上來（fight.css 最後壹段）
+    const sideBtn = h("button", { type: "button", class: "cx-side-toggle", "aria-expanded": "false", onClick: () => { const on = runEl.classList.toggle("side-open"); sideBtn.setAttribute("aria-expanded", String(on)); } }, "隊員和聊天");
+    runEl = h("div", { class: "cx-run" }, main, h("aside", { class: "cx-side" }, h("div", { class: "cx-side-top" }), chatPanel()), sideBtn);
     s.m.surface.replaceChildren(runEl);
   }
-  runEl.className = "cx-run pr" + lv + (v.role ? " role-" + v.role : "");
+  runEl.className = "cx-run pr" + lv + (v.role ? " role-" + v.role : "") + (runEl.classList.contains("side-open") ? " side-open" : "");
   runEl.querySelector(".cx-side-top").replaceChildren(sideBox(v), evidenceBox(v));
   refreshChat(v);
   if (same && oldScroll) { main.scrollTop = oldScroll[0]; runEl.scrollTop = oldScroll[1]; }
