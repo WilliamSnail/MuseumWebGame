@@ -36,6 +36,8 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
+import { casStockBuy, casStockRoll, casStockSell, casStockView } from "./shared/casino_stock.js";
+import { outStockMovesFor, outStockReady } from "./shared/stocks.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -63,6 +65,7 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
+  const daily = await stocksDaily(); // 館外股票的每日資料：交易外面先讀好（有快取），交易裡只算
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
@@ -76,6 +79,7 @@ export async function playCore(me, email, opts, fn) {
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
       casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
+      casStockRollIfReady(house, day, daily); // 股票：換日照外面世界的行情調價（shared/casino_stock.js）
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
@@ -184,7 +188,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -221,6 +225,29 @@ export const actRelief = ctx => {
 export const actBorrow = (ctx, d) => {
   const r = casBorrow(ctx.w, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); // 從莊家出（決定 0071）
   return r.ok ? shape(ctx, { lines: r.lines, ach: r.ach }) : no(r);
+};
+// 館外股票的每日資料（tools/stocks_publish.cjs 每天寫進 stocksDaily/latest）。壹天只變壹次，所以在記憶體放 stockCacheMs 毫秒
+let stockCache = null, stockCacheAt = 0;
+const STOCK_CACHE_MS = 10 * 60 * 1000;
+async function stocksDaily() {
+  if (stockCache && Date.now() - stockCacheAt < STOCK_CACHE_MS) return stockCache;
+  try { const s = await db().doc("stocksDaily/latest").get(); stockCache = s.exists ? s.data() : { days: {} }; }
+  catch (e) { console.warn("stocksDaily 讀不到", e && e.message); stockCache = stockCache || { days: {} }; }
+  stockCacheAt = Date.now();
+  return stockCache;
+}
+// 股票換日調價（shared/casino_stock.js）：資料到了才調，沒到就先不動（排程晚了的時候不要用「缺資料」的做法把今天定死）
+export function casStockRollIfReady(house, day, daily) {
+  if (!daily || !outStockReady(daily, day)) return false;
+  const moves = outStockMovesFor(daily, day, Object.keys((house.stk && house.stk.px) || {}));
+  return casStockRoll(house, day, moves).done;
+}
+// 股票買賣：d.op 是 buy、sell；d.id 哪壹支、d.n 幾股（"max" ＝全賣）
+export const actStock = (ctx, d) => {
+  const op = String(d.op || "");
+  const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
+    : op === "sell" ? casStockSell(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t) : { ok: false, reason: "沒有這個動作" };
+  return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // Yuga Bot 銀行（shared/casino_bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
 export const actBank = (ctx, d) => {
@@ -356,7 +383,8 @@ export const casino = onCall(async req => {
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, actRelief);
     case "bank": return play(req, me, {}, ctx => actBank(ctx, d)); // Yuga Bot 銀行：活存、定存（11-13）
-    case "bankHall": return play(req, me, {}, ctx => shape(ctx)); // 銀行廳打開時拿壹次（回答裡的 bankHall，每個賭場動作的回答也都有）
+    case "bankHall": return play(req, me, {}, ctx => shape(ctx));
+    case "stock": return play(req, me, {}, ctx => actStock(ctx, d)); // 股票：買、賣（11-14） // 銀行廳打開時拿壹次（回答裡的 bankHall，每個賭場動作的回答也都有）
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
     case "workStart":

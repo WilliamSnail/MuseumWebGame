@@ -351,6 +351,12 @@ export const NUM = {
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
+    // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
+    //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
+    //   feePct 手續費（進預算池）、haltFrom／haltTo 台灣時間幾點停盤（22:00～05:00，不然晚上看完真實收盤再下單等於穩賺）
+    //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
+    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, haltFrom: 22, haltTo: 5,
+      exposePct: 50, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000 },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
