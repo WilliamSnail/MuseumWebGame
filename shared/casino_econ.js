@@ -54,12 +54,16 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   e.n++;
   const out = { ok: true, win: x.win, r: x.r, amount: x.amount, policy: null, loot: 0, ticket: false, rescued: false, houseBefore: before, budgetBefore: house.budget, seaBefore: house.sea };
   const lines = CAS_ECON.cheer.slice();
+  // 預算凍結（翊文 11-13 同意方向，規劃 2.6 節）：預算池用完（≤ 0）的時候，成功也只撥平常的 freezeKeep%，不再把錢印出來
+  const frozen = house.budget <= 0 && C.freezeKeep < 100;
+  if (x.win && frozen) { x.amount = Math.floor(x.amount * C.freezeKeep / 100); out.amount = x.amount; out.frozen = true; }
   if (x.win) {
     casHouseMove(house, "econWin", x.amount);
     house.budget -= x.amount; // 從預算池撥過來
     e.wins++;
     out.policy = x.policy;
     lines.push(casFill(CAS_ECON.okLine, { policy: CAS_ECON.policies[x.policy] }), casFill(CAS_ECON.okHouse, { n: casNum(x.amount) }));
+    if (frozen) lines.push(CAS_ECON.okFrozen);
     if (x.ticketRoll && w.pk && w.pk.opened > 0) { w.tickets += 1; out.ticket = true; lines.push(CAS_ECON.okTicket); } // 舊的：要先開過今天的大禮包
     if (before < 0 && house.bankroll >= 0) { out.rescued = true; e.rescues++; lines.push(CAS_ECON.okRescue, CAS_ECON.okRescueSub); }
   } else {
