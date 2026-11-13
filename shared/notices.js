@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-world", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "銀行財報開放：館內經濟和世界市場新聞", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["看得到什麼", [
+        "Yuga Bot 銀行的「財報」頁現在有兩塊：館內經濟（館內 GDP、成長、景氣、昨天發生的事），和「世界市場」：外面世界的股市消息，館方每天整理幾則，最多看到 3 天。",
+        "世界市場只寫發生了什麼、不寫數字；每則下面有相關股票的名字，點了就跳到那支。",
+        "股票頁每支股票旁邊也寫了真實的代號、真實價和真實漲跌，台股寫元、美股寫美元；遊戲價是真實價的倍數（美股 4 倍、台股 24 倍），別拿遊戲價自己除。",
+      ]],
+    ],
+  },
+  {
     id: "stock-peg-2026-11", v: 1, cat: "館方公告", tags: ["重要", "更新"], importance: "important",
     title: "館外股票改成照真實股價的比例：美股 ×4、台股 ×24", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
