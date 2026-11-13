@@ -89,21 +89,18 @@ export async function stockUsBackfill(nowMs, fetchFn, dbx) {
   return await D.runTransaction(async tx => {
     const s = await tx.get(ref), old = s.exists ? s.data() : null;
     const doc = old ? usDocRoll(old, old.day && old.day < today ? today : old.day, 5) : usDocNew(today);
-    if (!twBackfill(doc, got.day, got.close, got.prev)) return "不用補";
+    if (got.day >= today || !twBackfill(doc, got.day, got.close, got.prev)) return "不用補";
     doc.updatedAt = nowMs;
     tx.set(ref, doc);
     return "補了 " + got.day;
   });
 }
-export const stockUsBackfillTick = onSchedule({ schedule: "30 6 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
-  console.log("stockUsBackfill", await stockUsBackfill(Date.now()));
-});
 
 // 做壹次（每分鐘壹次）。fetchFn、secretFn 可以換掉（測試用）。回傳做了什麼的字串（排程記錄用）
 export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
   const D = dbx || db(), ref = D.doc("stocksUs/latest");
   const day = usNyDay(nowMs), idx = usIdx(nowMs, day), C = NUM.casino.stock.us;
-  if (outStockWeekend(day) || idx == null || idx < 0 || idx > mkLen("us", day)) return "不在盤中";
+  if (outStockWeekend(day) || idx == null || idx < 0 || idx > mkLen("us", day) + 2) return "不在盤中";
   const snap = await ref.get();
   const doc0 = usDocRoll(snap.exists ? snap.data() : null, day, 5);
   let need = usNeed(doc0, idx);
@@ -138,7 +135,9 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
 
 // 美東週一到週五 09:00～16:59 每分鐘跑壹次（09:00～09:29 和收盤後那幾分鐘 stockUsRun 自己會跳過）。時區用 Cloud Scheduler 的 timeZone，日光節約由它處理
 export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "America/New_York", retryCount: 0, timeoutSeconds: 30 }, async () => {
-  console.log("stockUsTick", await stockUsRun(Date.now()));
+  const now = Date.now(), r = await stockUsRun(now);
+  if (/^09:00$/.test(new Date(now).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" }))) console.log("stockUsBackfill", await stockUsBackfill(now)); // 美股補收盤併進這個排程（美東 09:00 做壹次，開盤前）
+  console.log("stockUsTick", r);
 });
 
 // ---------- 給 functions/casino.js 讀 ----------

@@ -249,6 +249,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (!Number.isFinite(lev) || lev < 1 || lev > maxLev) return { ok: false, reason: casFill(T.levBad, { max: maxLev }) };
   const nw = src.now(id);
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.halt };
+  if (mk === "tw" && lqT(t) && twIdx(t) >= NUM.casino.stock.tw.noOpenIdx && twIdx(t) <= NUM.casino.stock.tw.len) return { ok: false, reason: T.closeAuction };
   const lagWhy = mk === "in" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
   const px = nw.px;
   let qty = Math.floor(+A.qty);

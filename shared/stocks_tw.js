@@ -134,6 +134,7 @@ export function twDocRoll(old, day, keep) {
 export function twNeed(doc, idx, mk) {
   const C = MKS[mk || "tw"].C();
   const LEN = mkLen(mk || "tw", doc && doc.day);
+  if (doc && !doc.closed && doc.openIdx != null && NUM.casino.stock.direct && idx != null && idx > LEN && idx <= LEN + 2 && !doc.fin) return { kind: "fin", fetch: true }; // 收盤後再抓壹次：官方收盤價（台股 13:30 集合競價撮合後；平倉用）
   if (!doc || doc.closed || idx == null || idx < 0 || idx > LEN) return null;
   if (doc.openIdx == null) return idx >= C.giveUp ? { kind: "giveup" } : { kind: "open", fetch: true };
   if (NUM.casino.stock.direct) return idx > doc.k ? { kind: "min", fetch: true } : null; // 直接用真實價：開盤後每分鐘抓壹次（doc.k ＝ 已經做到第幾分鐘）
@@ -201,6 +202,12 @@ export function twApply(doc, need, idx, got, secret, mk) {
     return twSegment(doc, j, idx, null, secret, true, mk);
   }
   if (need.kind === "min") return twMinute(doc, idx, g, mk);
+  if (need.kind === "fin") { // 把最後壹分鐘的價改成官方收盤價（抓到才改；抓不到下壹分鐘再試，最多兩次）
+    const LEN = mkLen(mk, doc.day);
+    for (const id of IDS) { const row = g[id], prev = doc.prevReal[id], arr = doc.ser[id]; if (Array.isArray(arr) && okPx(prev) && row && okPx(row.px) && row.px / prev >= NUM.casino.stock.sane[0] && row.px / prev <= NUM.casino.stock.sane[1]) { twPad(arr, LEN, arr[arr.length - 1]); arr[LEN] = twRound(row.px / prev); doc.R[id] = { px: row.px, seg: LEN }; } }
+    if (Object.keys(g).length || idx >= LEN + 2) doc.fin = true;
+    return true;
+  }
   return twSegment(doc, need.j, idx, need.fetch ? g : null, secret, false, mk);
 }
 
