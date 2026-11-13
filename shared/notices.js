@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "notices-merge", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "公佈欄：同壹天的更新併成壹張", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "同壹天發布的館方公告，現在合成壹張「N 月 N 日的更新」，上面先列這天有哪幾項，下面再接各項的內容。",
+        "點開這壹張，裡面每壹項都算讀過；紅點和數字照合併後的張數算。",
+        "重要的公告還是各自壹張。",
+      ]],
+    ],
+  },
+  {
     id: "ui2-commission", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "委託櫃台換新樣子：壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
@@ -1073,14 +1084,14 @@ export function visibleNotices(P, today) {
 }
 
 // 公佈欄上要貼的：同壹天的小更新合成壹則「N 月 N 日的更新」（翊文 11-10：「同一整天的更新都合在同一則公告如何？」）
-//   合的：館方公告、有「更新」「已更新」標籤、普通或不重要、沒置頂、沒附獎勵；同壹天有 2 則以上才合
+//   合的：館方公告、普通或不重要、沒置頂、沒附獎勵；同壹天有 2 則以上才合
 //   不合的：重要的（要蓋火漆印、各自成壹則）、置頂、每週特展、節日、活動、附獎勵的
 //   合起來的那則：{ id: "day-日期", digest: true, parts: [原本的公告…] }。已讀照原本各則的記（isUnread、markRead 會看 parts），
 //   所以舊的已讀紀錄不用搬；當天又多壹項，那則會再變成沒讀。寄信、Discord 還是用 visibleNotices（壹則壹則）
-const DIGEST_TAGS = ["更新", "已更新"];
+//   11-13 起不看標籤：以前只收「更新」「已更新」，標「調整」「修正」「維護」的就單獨成壹張，11-13 壹天十幾張
 function digestable(n) {
   return n.cat === "館方公告" && !n.pinned && !n.weekly && !n.gift && !n.start && !n.end && typeof n.publish === "string" &&
-    RANK[n.importance] <= RANK.normal && (n.tags || []).some(t => DIGEST_TAGS.includes(t));
+    RANK[n.importance] <= RANK.normal;
 }
 export function digestNotices(list) {
   const by = {};

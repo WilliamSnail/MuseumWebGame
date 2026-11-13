@@ -77,6 +77,35 @@ T("同壹天的小更新合成壹則：重要的、置頂的不合；已讀照�
   const one = G.digestNotices([day.parts[0]]);
   assert.strictEqual(one.length, 1); assert.ok(!one[0].digest);
 });
+T("同壹天合壹張：不看標籤（調整、修正、維護也合）；不同天分開；重要的不合；點開算全部讀過；數字照張數", G => {
+  const mk = (id, publish, tags, importance, extra) => Object.assign({ id, v: 1, cat: "館方公告", tags, importance, title: id, publish, sections: [["x", ["y"]]] }, extra);
+  const list = [
+    mk("a", "2026-11-13", ["更新"], "normal"), mk("b", "2026-11-13", ["調整"], "normal"), mk("c", "2026-11-13", ["修正"], "low"),
+    mk("d", "2026-11-13", ["維護"], "low"), mk("imp", "2026-11-13", ["重要"], "important"), mk("pin", "2026-11-13", ["更新"], "normal", { pinned: true }),
+    mk("e", "2026-11-12", ["更新"], "low"), mk("f", "2026-11-12", ["調整"], "low"), mk("solo", "2026-11-11", ["修正"], "low"),
+    { id: "act", v: 1, cat: "特展活動", tags: ["活動"], importance: "normal", publish: "2026-11-13", title: "act", sections: [] },
+  ];
+  const out = G.digestNotices(list), ids = out.map(n => n.id);
+  const d13 = out.find(n => n.id === "day-2026-11-13"), d12 = out.find(n => n.id === "day-2026-11-12");
+  assert.strictEqual(d13.parts.map(x => x.id).join(), "a,b,c,d", "11-13 的四則併成壹張，順序不變");
+  assert.strictEqual(d12.parts.map(x => x.id).join(), "e,f", "不同天分開");
+  assert.ok(ids.includes("imp") && ids.includes("pin") && ids.includes("act") && ids.includes("solo"), "重要、置頂、活動、單壹則的不併");
+  assert.strictEqual(out.length, 6);
+  const state = G.noticeState({});
+  const b0 = G.boardBadge(state, out);
+  assert.strictEqual(b0.count, 4, "d13、imp、pin、act 各算壹張（d12、solo 是 low 不算）");
+  assert.ok(b0.seal);
+  G.markRead(state, d13);
+  assert.ok(["a", "b", "c", "d"].every(i => state.read[i] === 1), "點開合起來的，每則都記讀過");
+  assert.strictEqual(G.boardBadge(state, out).count, 3);
+  // 舊存檔：只有各則的讀過紀錄也能讀
+  const old = G.noticeState({ notices: { read: { a: 1, b: 1, c: 1, d: 1 } } });
+  assert.ok(!G.isUnread(old, d13));
+  // 真資料：11-13 壹天只剩壹張合併卡
+  const real = G.boardNotices(fresh(G), "2026-11-13").filter(n => n.publish === "2026-11-13");
+  assert.strictEqual(real.filter(n => n.digest).length, 1);
+  assert.ok(real.every(n => n.digest || n.pinned || n.importance === "important" || n.cat !== "館方公告"));
+});
 T("信箱：公告附的獎勵只寄壹次", G => {
   const P = fresh(G);
   const list = G.visibleNotices(P, TODAY);
