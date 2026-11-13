@@ -1,0 +1,56 @@
+{
+  "id": "v-zhou",
+  "name": "老周",
+  "kind": "visitor",
+  "story": "退休的船員，把存摺放在最貼身的口袋。",
+  "likes": [
+    "bank",
+    "auction",
+    "少見"
+  ],
+  "route": {
+    "bank": 5,
+    "auction": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 1200000,
+    "max": 800000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他每天在銀行大廳站壹下，說看著數字會讓他想起浪。",
+      "news": "老周在銀行大廳看了壹會兒數字。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-07",
+      "text": "他說海上的帳最難算，因為每次回港，船上的人數都要數兩遍。",
+      "news": "老周說，船上的人數要數兩遍。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-21",
+      "text": "他這次只數壹遍，就把筆放下，說有些數目不要數得太清楚。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 200
+      },
+      "news": "老周這次只數了壹遍。",
+      "ties": [
+        "m-count"
+      ],
+      "route": {
+        "bank": 4,
+        "auction": 4,
+        "hall": 2
+      }
+    }
+  ]
+}

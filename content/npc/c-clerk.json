@@ -1,0 +1,55 @@
+{
+  "id": "c-clerk",
+  "name": "便利商店店員",
+  "kind": "client",
+  "note": "上大夜班，很需要有誰陪。",
+  "story": "櫃台下面藏著壹本很小的帳。",
+  "likes": [
+    "job",
+    "hall"
+  ],
+  "route": {
+    "job": 4,
+    "hall": 3,
+    "food": 2
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 60000,
+    "max": 30000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "凌晨三點的店裡很安靜，他把今天的零錢又數了壹遍。",
+      "news": "便利商店店員在大夜班數了兩次零錢。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-30",
+      "text": "兩次都差壹枚，他決定把那枚硬幣放進失物招領。",
+      "need": {
+        "metric": "commissions",
+        "n": 3
+      },
+      "news": "便利商店店員把差的那壹枚放進了招領箱。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-14",
+      "text": "硬幣被人取走了，留下壹張很小的收據，字很整齊。",
+      "need": {
+        "metric": "commissions",
+        "n": 18
+      },
+      "news": "便利商店店員收到壹張字很整齊的收據。",
+      "ties": [
+        "m-accountant"
+      ]
+    }
+  ]
+}

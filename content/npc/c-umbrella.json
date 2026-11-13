@@ -1,0 +1,61 @@
+{
+  "id": "c-umbrella",
+  "name": "賣傘的老闆",
+  "kind": "client",
+  "note": "只在下雨天開門。",
+  "story": "在巷口賣傘，傘架上總有壹把沒標價。",
+  "likes": [
+    "food",
+    "hall",
+    "尋常"
+  ],
+  "route": {
+    "food": 5,
+    "hall": 3,
+    "job": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 240000,
+    "max": 150000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "下雨的日子他收攤特別早，說雨天要把位子留給來躲雨的人。",
+      "news": "賣傘的老闆在餐車門口收起了傘。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-23",
+      "text": "他問起 B1 那把沒人認領的傘，說傘骨少了壹根，撐開來剛好夠壹個人。",
+      "need": {
+        "metric": "commissions",
+        "n": 3
+      },
+      "news": "賣傘的老闆問起招領箱裡的傘。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-07",
+      "text": "他把傘留在招領箱旁邊，附了張字條：先幫我數數，傘骨有幾根。",
+      "need": {
+        "metric": "commissions",
+        "n": 10
+      },
+      "news": "賣傘的老闆把傘留在了 B1。",
+      "ties": [
+        "m-count"
+      ],
+      "route": {
+        "hall": 4,
+        "cellar": 3,
+        "food": 2
+      }
+    }
+  ]
+}

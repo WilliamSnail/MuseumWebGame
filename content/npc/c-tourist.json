@@ -1,0 +1,31 @@
+{
+  "id": "c-tourist",
+  "name": "迷路的觀光客",
+  "kind": "client",
+  "note": "說他從莫斯科來，但地圖拿反了。",
+  "story": "壹手拿地圖，壹手拿餐車的紙袋。",
+  "likes": [
+    "hall",
+    "food",
+    "bank"
+  ],
+  "route": {
+    "hall": 4,
+    "food": 3,
+    "bank": 2,
+    "craft": 1
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 120000,
+    "max": 60000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他把地圖轉了壹圈，發現銀行在展廳的背後，很開心。",
+      "news": "迷路的觀光客終於找到了銀行。"
+    }
+  ]
+}

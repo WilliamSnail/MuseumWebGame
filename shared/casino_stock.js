@@ -314,7 +314,10 @@ export function casStockView(w, house, day, t, stale) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   const old = Array.isArray(stale) ? stale : [];
   const list = OUT_STOCKS.map(d => {
-    const mk = stMk(d.id), tw = mk === "tw", price = H.px[d.id], prev = H.prev[d.id], mine = stN(S.own[d.id]);
+    const mk = stMk(d.id), tw = mk === "tw", price = H.px[d.id], mine = stN(S.own[d.id]);
+    // 「今天」的漲跌跟今天的開盤基準比（盤中價就是從這個基準算的），不是跟 H.prev。11-14 翊文：紅爪晶片盤中壹路跌卻顯示 ▲0.4%——
+    //   11-13 那天 05:00 換日還是舊做法（把前壹晚美股的漲跌套進價格），H.prev 是那之前的價，所以「今天」把昨晚的漲幅也算進來了
+    const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
     const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : price * mine) : 0, dayChg = prev > 0 ? mine * (price - prev) : 0; // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
     return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,
       costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: price * mine - costTotal, pnlPct: costTotal > 0 ? (price * mine - costTotal) / costTotal : 0, tax: C.taxPct / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),

@@ -1,0 +1,15 @@
+{
+  "id": "t-yuga",
+  "name": "Yuga Bot（荷官）",
+  "kind": "trace",
+  "ledger": "Yuga Bot（荷官）",
+  "story": "賭場的荷官兼莊家，說話短、愛開玩笑；日報和賭場的話由它說。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

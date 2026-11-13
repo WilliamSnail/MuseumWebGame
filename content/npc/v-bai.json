@@ -1,0 +1,29 @@
+{
+  "id": "v-bai",
+  "name": "白伯",
+  "kind": "visitor",
+  "story": "擺舊書攤的老先生，書裡夾的書籤比書還貴。",
+  "likes": [
+    "auction",
+    "孤品",
+    "hall"
+  ],
+  "route": {
+    "auction": 5,
+    "hall": 3,
+    "bank": 1
+  },
+  "budget": {
+    "tier": "collector",
+    "perDay": 2700000,
+    "max": 2000000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在預展翻了半天，最後只買了壹枚舊書籤。",
+      "news": "白伯在拍賣預展買了壹枚書籤。"
+    }
+  ]
+}

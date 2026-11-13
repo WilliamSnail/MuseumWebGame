@@ -1,0 +1,30 @@
+{
+  "id": "c-kinder",
+  "name": "幼稚園園長",
+  "kind": "client",
+  "note": "負責檢查每隻佩佩夠不夠可愛。",
+  "story": "身上永遠別著三枝不同顏色的筆。",
+  "likes": [
+    "hall",
+    "pillows",
+    "joy"
+  ],
+  "route": {
+    "hall": 5,
+    "craft": 3,
+    "food": 1
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 550000,
+    "max": 300000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她檢查完展廳，在每隻佩佩旁邊貼了壹顆小星星。",
+      "news": "幼稚園園長替展廳的佩佩貼了星星。"
+    }
+  ]
+}
