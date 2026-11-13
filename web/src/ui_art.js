@@ -190,7 +190,9 @@ export function auctionPane() {
     const mine = ((data && data.mine) || []).filter(x => !x.lock);
     const listId = aucForm.listId && mine.some(x => x.id === aucForm.listId) ? aucForm.listId : "";
     const pick = mine.find(x => x.id === listId);
-    const lo = pick ? Math.floor(pick.price * (A.floorPct || 80) / 100) : 0, hi = pick ? Math.floor(pick.price * (A.ceilPct || 150) / 100) : 0;
+    // 範圍要跟伺服器一樣（shared/casino_auction.js 的 casAucRange）：下限進位、上限不超過現價加溢價上限、都照 unit 進位（11-14 測試：畫面寫 200.24 萬，伺服器要 200.3 萬）
+    const unit = NUM.auction.unit || 1000, prem = A.premiumDay || NUM.auction.premiumDay;
+    const lo = pick ? Math.ceil(pick.price * (A.floorPct || 80) / 100 / unit) * unit : 0, hi = pick ? Math.floor(Math.min(pick.price * (A.ceilPct || 150) / 100, pick.price + prem) / unit) * unit : 0;
     const resv = h("input", { type: "number", inputmode: "numeric", class: "gal-in", min: String(lo), step: String(NUM.auction.unit || 1000), placeholder: "底價", value: aucForm.reserve === "" ? "" : String(aucForm.reserve), "aria-label": "底價", onInput: e => { aucForm.reserve = e.target.value === "" ? "" : Number(e.target.value); } });
     const range = h("p", { class: "gal-range" });
     const setRange = () => { range.textContent = pick ? aucFill(CAS_AUC.priceRange, { lo: A.floorPct || 80, hi: A.ceilPct || 150, a: casNum(lo), b: casNum(hi) }) : "先選壹幅收藏的畫。"; };
