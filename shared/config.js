@@ -365,7 +365,9 @@ export const NUM = {
     //   feePct 手續費（進預算池）、haltFrom／haltTo 台灣時間幾點停盤（22:00～05:00，不然晚上看完真實收盤再下單等於穩賺）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
     stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, haltFrom: 22, haltTo: 5,
-      exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000 },
+      exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
+      // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低
+      twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }] },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
