@@ -38,8 +38,8 @@ export function fakeBankHall() {
     { id: "neon", name: "霓虹顯卡", line: "館外・世界版", fresh: true, market: "us", price: 231, chg: 0.017, hist: [220, 224, 226, 225, 227, 227, 231], mine: 0, kind: "out" },
     { id: "sand", name: "紅砂晶片", stale: "今天沒有新行情（外面的資料還沒到），股價先停著。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
     { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
-    { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
-    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", price: 9971, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
+    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", px: 189.52, chg: -0.003 }, mult: 4, price: 9971, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
     { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
   stocks.forEach(x => { x.value = x.price * x.mine; });
@@ -58,7 +58,8 @@ export function fakeBankHall() {
       positions: [{ id: "p1", sid: "neon", side: "long", lev: 5, margin: 1000000, n: 21645, entry: 231, ratio: 0.82, liq: 208, pnl: -180000, stop: 224, take: 245 }, { id: "p2", sid: "handbrain", side: "short", lev: 3, margin: 2000000, n: 4800, entry: 1240, ratio: 0.64, liq: 1280, pnl: -320000, stop: null, take: 1150 }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
-      world: { day: "2026-11-14", items: [{ market: "tw", title: "電子股走強　", text: "聯發科帶頭，台股收紅。", chg: 0.012 }, { market: "us", title: "晶片股回檔　", text: "美股科技股收黑。", chg: -0.008 }] } },
+},
+    world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
 }
@@ -78,7 +79,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, econ: b.econ,
+    bonds, stocks: b.stocks, econ: b.econ, world: b.world || null,
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -193,6 +194,15 @@ const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即
 const STOCK_GROUPS = { out: "其他", us: "美股", in: "館內五家店", tw: "台股" };
 const STOCK_GROUP_ORDER = ["in", "tw", "us", "out"];
 const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付的（含手續費）
+// 真實行情的壹小段：代號、真實價（台股寫元、美股寫美元）、真實漲跌%。沒資料（null）就只寫代號
+const realPx = (n, mk) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${mk === "tw" ? "元" : "美元"}`;
+function realBit(s) {
+  const r = s.real;
+  if (!r) return null;
+  const c = typeof r.chg === "number" ? r.chg : null;
+  return h("span", { class: "bank-real" }, h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
+    c != null ? h("em", { class: c > 0 ? "up" : c < 0 ? "down" : "" }, `${c > 0 ? "▲" : c < 0 ? "▼" : "－"} ${(Math.abs(c) * 100).toFixed(1)}%`) : null);
+}
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const toMin = t => { const [a, b] = String(t).split(":").map(Number); return a * 60 + (b || 0); };
 const MK_NAME = { tw: "台股", us: "美股", in: "館內店" };
@@ -261,7 +271,7 @@ function stockRows(list, cur, S) {
       if (gk(s) !== k) return;
       const closed = s.session && s.session.state !== "open";
       rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; rerender(); } },
-        h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, h("small", { class: "ln" }, s.line)),
+        h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : h("small", { class: "ln" }, s.line)),
         h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
     });
   });
@@ -401,6 +411,7 @@ function stockPane(v) {
     h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
+        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實行情　", realBit(cur), cur.mult ? h("small", null, `　（遊戲價是真實價的 ${cur.mult} 倍）`) : null) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "沒調價　"), "昨天來這家店的人太少，今天價格先不動。") : null,
@@ -413,17 +424,28 @@ function stockPane(v) {
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       positionsPanel(S), ordersPanel(S)));
 }
-// 世界市場（遊戲內版本的世界股市新聞，每天由劇情排程寫）：欄位還沒定，先假設 econ.world = { day, items: [{ market: "tw"|"us"|"世界", title, text, chg }] }（items 也可以是字串）。沒有資料就不畫這壹塊
-function worldPanel(W) {
-  const items = W && Array.isArray(W.items) ? W.items : [];
-  if (!items.length) return null;
-  return panel("世界市場", W.day ? `${String(W.day).slice(5)} 的消息` : "今天的消息",
-    h("ul", { class: "bank-world" }, items.map(it => { const o = typeof it === "string" ? { text: it } : it; return h("li", null,
-      o.market ? h("i", { class: "bank-mk" }, o.market === "tw" ? "台股" : o.market === "us" ? "美股" : o.market) : null,
-      h("span", null, o.title ? h("b", null, o.title) : null, o.text || ""), typeof o.chg === "number" ? upDown(o.chg) : null); })));
+// 世界市場（遊戲內版本的世界股市新聞，每天由劇情排程寫；PR 339）。標題最多 14 字、壹句話最多 40 字、沒有數字；refs 是遊戲裡的股票名，點了跳去那支
+const TONE_MARK = { up: ["▲", "up"], down: ["▼", "down"], flat: ["－", ""] };
+function goStock(v, id) {
+  const list = v.stocks ? v.stocks.list : [], i = list.findIndex(x => x.id === id);
+  if (i < 0) return;
+  UI.bankTab = "stock"; UI.bankStock = i; rerender();
+}
+function worldPanel(v) {
+  const W = v.world;
+  if (!W) return null;
+  const days = Array.isArray(W.days) ? W.days.filter(d => d && Array.isArray(d.items) && d.items.length) : [];
+  if (!days.length) return panel("世界市場", "每天由館方整理", h("p", { class: "bank-empty-dark" }, "今天還沒有世界市場的消息。"));
+  return panel("世界市場", "外面世界的股市消息，不寫數字",
+    h("div", { class: "bank-worlddays" }, days.map((d, di) => h("section", { class: "bank-wday" },
+      h("h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5)),
+      h("ul", { class: "bank-world" }, d.items.map(it => { const m = TONE_MARK[it.tone] || TONE_MARK.flat; return h("li", { class: "tone-" + (it.tone || "flat") },
+        h("i", { class: "bank-tone " + m[1], "aria-hidden": "true" }, m[0]),
+        h("span", null, h("b", null, it.title), h("small", null, it.line),
+          it.refs && it.refs.length ? h("span", { class: "bank-refs" }, it.refs.map(r => h("button", { type: "button", class: "bank-ref", onClick: () => goStock(v, r.id), "aria-label": `看 ${r.name}` }, r.name))) : null)); }))))));
 }
 function reportPane(v) {
-  const e = v.econ, world = worldPanel(e && e.world);
+  const e = v.econ, world = worldPanel(v);
   if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), world);
   const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
   return h("div", { class: "bank-cols report" },
