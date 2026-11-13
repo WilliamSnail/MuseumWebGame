@@ -312,11 +312,13 @@ function levTrade(v, S, cur) {
   const byM = L.byMarket && L.byMarket[cur.market], maxLev = byM != null ? byM : L.max, lev = Math.max(1, Math.min(f.lev, maxLev)), long = f.dir === "long"; // 各市場最高幾倍（美股 0＝不能開，寫 usWhy）
   const roomMargin = S.credit ? Math.max(0, Math.floor((S.credit.posLimit - S.credit.posUsed) / Math.max(1, lev))) : Infinity;
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
-  const sum = h("div", { class: "bank-sum" });
+  const phone = window.innerWidth < 761 || window.innerHeight < 501;
+  const sum = h("details", { class: "bank-sum", open: phone ? null : "" });
   const calc = () => {
     const m = Math.min(f.margin || 0, maxMargin), pos = m * lev, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
     const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     sum.replaceChildren(
+      h("summary", null, h("b", null, `部位 ${fmt(pos)}`), h("span", null, `強平價約 ${fmt(Math.round(liq))}`), h("span", { class: "bank-sum-open" }, "點開 ▾")),
       h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${lev}× 保證金 ${fmt(m)}`)),
       h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(L.fee)}，${long ? "利息 " + pctText(L.interest) : "借券費 " + pctText(L.borrow)}）`)),
       h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fmt(Math.round(liq))}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)));
@@ -332,6 +334,7 @@ function levTrade(v, S, cur) {
     sum,
     h("div", { class: "bank-acts one" }, btn(`${long ? "開多單" : "開空單"} ${lev}×`, open, "primary big bank-btn gold", { disabled: why || m0 <= 0 ? true : null })),
     why ? h("p", { class: "bank-why" }, why) : null,
+    S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・部位 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
     h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
@@ -404,8 +407,10 @@ function stockPane(v) {
   const inShop = cur.market === "in"; // 館內股只有現股
   const tabs = [["spot", "現股"]].concat(S.lev ? [["lev", "槓桿・放空"]] : [], S.orders && !inShop ? [["order", "掛單"]] : []);
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
-  return h("div", { class: "bank-cols stocks" },
-    panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks")),
+  const phone = window.innerWidth < 761 || window.innerHeight < 501;
+  const table = panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks"));
+  return h("div", { class: "bank-cols stocks", dataset: { trade: tab } },
+    phone ? h("details", { class: "bank-allstocks" }, h("summary", null, h("b", null, "全部股票"), h("span", null, "點開換一支 ▾")), table) : table,
     h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
