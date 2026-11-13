@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "cellar-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "地下收藏庫：壹個畫面看得完，佩佩的強度和加成寫清楚", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "地下收藏庫的入口不用再往下滑：上面壹排樓層，中間三座展示台，挑隊員收在最下面的抽屜（按拉環可以拉開）。",
+        "展示台上每隻佩佩寫出強度怎麼算（例如「稀有 2＋倒立 1」）、心情剋誰、顏色，還有帽子和姿勢的效果（綠色小牌）。",
+        "隊伍強度旁邊壹項壹項列出加成，像「巫師帽的魔法 +2」。抽屜裡每隻佩佩也寫強度、心情和效果。",
+        "壹起下去、本週異狀、試煉房間搬到右邊；手機上是壹排按鈕，點了才展開。隊伍規則改成標題旁邊的按鈕。",
+      ]],
+    ],
+    cta: { label: "去地下收藏庫", room: "cellar" },
+  },
+  {
     id: "loan-from-house", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "Yuga Bot 銀行借的錢，改從莊家出", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
