@@ -391,6 +391,7 @@ function markSeen(v, list) {
   const now = Date.now();
   if (now - (UI.bankSeenAt || 0) < 60000) return;
   UI.bankSeenAt = now; UI.bankFreshSnap = new Set(list.filter(x => x.fresh).map(x => x.id));
+  UI.bankFresh = 0; if (ADDONS.bankFresh) ADDONS.bankFresh(); // 看過了：導覽圖銀行的「新」清掉（回大廳時重畫）
   if (v.demo || !UI.bankFreshSnap.size) return;
   NET.call("casino", { act: "stock", op: "seen" }).then(r => { if (r && r.bankHall) UI.bankHall = bankHallView(r.bankHall); }).catch(() => {});
 }
