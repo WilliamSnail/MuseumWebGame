@@ -267,7 +267,7 @@ export const CAS_STOCK = {
   sellDay: "壹天最多賣 2,000 萬，今天還能賣 {n}。",
   queue: "今天全館賣太多了，莊家付不過來，明天再賣。",
   buyOk: "買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}。",
-  sellOk: "賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}。",
+  sellOk: "賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}{taxText}。",
   stale: "今天沒有新行情（外面的資料還沒到），股價先停著。",
   order: {
     full: "掛單最多 {n} 張，先取消壹張。",
@@ -282,7 +282,7 @@ export const CAS_STOCK = {
     cancelOk: "取消了，鎖住的已退回。",
     kinds: { buy: "限價買", sell: "限價賣", stop: "停損賣" },
     fillBuy: "限價單成交：買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}。",
-    fillSell: "{kind}成交：賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}。",
+    fillSell: "{kind}成交：賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}{taxText}。",
     expire: "「{name}」{kind} {n} 股到期沒成交，取消了，鎖住的已退回。",
     capCancel: "「{name}」{kind} {n} 股成交時賣出額度不夠，取消了，鎖住的已退回。",
     rule: "掛單最多 10 張、同壹支最多 3 張，當天有效（台股 13:30、美股美國收盤時沒成交就取消，跟真實的當日有效單壹樣；隔幾天才回來，中間盤中碰過的價也算）；成交價用觸發的那個價（跳空比你掛的更好或更差都照那個價）；手續費照舊，取消不收費。",
