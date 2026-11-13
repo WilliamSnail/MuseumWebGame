@@ -32,6 +32,7 @@ import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/c
 import { casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
+import { DAY_DATA } from "./shared/day_data.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
@@ -196,7 +197,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 

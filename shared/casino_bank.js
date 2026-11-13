@@ -11,7 +11,8 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
-import { casBankEcon, casFxMul } from "./casino_gdp.js";
+import { casBankEcon, casFxMul, casWorldNews } from "./casino_gdp.js";
+import { OUT_STOCKS } from "./stocks_text.js";
 import { CAS_BANK } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
@@ -127,12 +128,13 @@ export function casBankBreak(w, id) {
 // 銀行廳（美術統籌在做 web/src/ui_bank.js）要的全部：現金、存款、借款；館債、股票、景氣還沒做先給 null。
 // net：淨值 ＝ 現金 ＋ 活存 ＋ 定存 －（沒還的本金加利息）。之後加持股市值
 // house 給的話多館債（bonds）；淨值也加上館債本金和憑證
-export function casBankHall(w, day, house, t, stale) {
+// dayData 給的話多 world（財報頁的世界股市新聞，shared/casino_gdp.js 的 casWorldNews；dayData ＝ functions/shared/day_data.js 的 DAY_DATA）
+export function casBankHall(w, day, house, t, stale, dayData) {
   const save = casBankView(w, day), loan = casLoanView(w, day), bonds = house ? casBondView(w, house, day) : null;
   const stocks = house ? casStockView(w, house, day, t, stale) : null;
   const owe = loan.list.reduce((s, x) => s + x.owe, 0);
   const held = save.save + save.terms.reduce((s, x) => s + x.amt, 0) + casBondHeld(w) + (bonds ? bonds.iou : 0) + (house ? casStockValue(w, house) : 0);
-  return { cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, net: w.chips + held - owe };
+  return { cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, world: casWorldNews(dayData, day, OUT_STOCKS), net: w.chips + held - owe };
 }
 // 畫面要的
 export function casBankView(w, day) {
