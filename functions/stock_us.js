@@ -17,7 +17,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { outStockWeekend } from "./shared/stocks.js";
-import { US_IDS, mkLen, usApply, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
+import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
 import { NUM } from "./shared/config.js";
 import { twSecret } from "./stock_tw.js";
 
@@ -54,6 +54,50 @@ export async function fetchYahoo(nowMs) {
   for (const id of Object.keys(out)) out[id].lag = lag;
   return out;
 }
+
+// 補最近壹次收盤（規劃 2.8l）：圖表介面 meta 有最後壹個交易日的收盤（regularMarketPrice）、前壹收盤（chartPreviousClose）、時間（regularMarketTime）。
+// 回傳 { day: 美東日期, close: { id }, prev: { id } }；沒有就 null
+export function parseYahooClose(json, id) {
+  const m = json && json.chart && json.chart.result && json.chart.result[0] && json.chart.result[0].meta;
+  if (!m || !(m.regularMarketPrice > 0) || !(m.chartPreviousClose > 0) || !(m.regularMarketTime > 0)) return null;
+  return { day: usNyDay(m.regularMarketTime * 1000), id, px: m.regularMarketPrice, prev: m.chartPreviousClose };
+}
+export async function fetchYahooClose() {
+  const rows = await Promise.allSettled(US_IDS.map(async id => {
+    let err = null;
+    for (const host of HOSTS) {
+      try {
+        const r = await fetch(`https://${host}/v8/finance/chart/${encodeURIComponent(US_SYMBOLS[id])}?interval=1d&range=5d`, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(8000) });
+        if (!r.ok) throw new Error(host + " 回 " + r.status);
+        return parseYahooClose(await r.json(), id);
+      } catch (e) { err = e; }
+    }
+    throw err;
+  }));
+  const ok = rows.filter(x => x.status === "fulfilled" && x.value).map(x => x.value);
+  if (!ok.length) return null;
+  const day = ok.map(x => x.day).sort().pop(), close = {}, prev = {};
+  for (const x of ok) if (x.day === day) { close[x.id] = x.px; prev[x.id] = x.prev; }
+  return { day, close, prev };
+}
+export async function stockUsBackfill(nowMs, fetchFn, dbx) {
+  const D = dbx || db(), ref = D.doc("stocksUs/latest");
+  let got = null;
+  try { got = await (fetchFn || fetchYahooClose)(nowMs); } catch (e) { console.error("美股最近壹次收盤抓不到：" + String((e && e.message) || e).slice(0, 200)); return "抓不到"; }
+  if (!got) return "沒資料";
+  const today = usNyDay(nowMs);
+  return await D.runTransaction(async tx => {
+    const s = await tx.get(ref), old = s.exists ? s.data() : null;
+    const doc = old ? usDocRoll(old, old.day && old.day < today ? today : old.day, 5) : usDocNew(today);
+    if (!twBackfill(doc, got.day, got.close, got.prev)) return "不用補";
+    doc.updatedAt = nowMs;
+    tx.set(ref, doc);
+    return "補了 " + got.day;
+  });
+}
+export const stockUsBackfillTick = onSchedule({ schedule: "30 6 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
+  console.log("stockUsBackfill", await stockUsBackfill(Date.now()));
+});
 
 // 做壹次（每分鐘壹次）。fetchFn、secretFn 可以換掉（測試用）。回傳做了什麼的字串（排程記錄用）
 export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
@@ -100,7 +144,7 @@ export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "A
 // ---------- 給 functions/casino.js 讀 ----------
 // 今天的資料放在記憶體 US_CACHE_MS 毫秒（錨點每 15 分鐘才變，價是用時間算的，不必每次都讀）。讀不到就用舊的，沒有就當沒資料（美股不開）
 let usCache = null, usCacheAt = 0;
-const US_CACHE_MS = 20 * 1000;
+const US_CACHE_MS = 8 * 1000; // 直接用真實價：價每分鐘變，快取壹下下就好
 export async function stocksUs() {
   if (usCache && Date.now() - usCacheAt < US_CACHE_MS) return usCache;
   try { const s = await docRef().get(); usCache = s.exists ? s.data() : null; }

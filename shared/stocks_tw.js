@@ -136,6 +136,7 @@ export function twNeed(doc, idx, mk) {
   const LEN = mkLen(mk || "tw", doc && doc.day);
   if (!doc || doc.closed || idx == null || idx < 0 || idx > LEN) return null;
   if (doc.openIdx == null) return idx >= C.giveUp ? { kind: "giveup" } : { kind: "open", fetch: true };
+  if (NUM.casino.stock.direct) return idx > doc.k ? { kind: "min", fetch: true } : null; // 直接用真實價：開盤後每分鐘抓壹次（doc.k ＝ 已經做到第幾分鐘）
   const j = doc.k + 1;
   if (j >= LEN / C.seg) return null;
   if (idx < j * C.seg) return null;
@@ -192,9 +193,38 @@ export function twApply(doc, need, idx, got, secret, mk) {
       doc.ser[id] = [];
       twPad(doc.ser[id], idx, doc.A[id]);
     }
+    if (NUM.casino.stock.direct) { // 直接用真實價：開盤那壹分鐘的價 ＝ 真實開盤價（沒有隨機、沒有橋）
+      doc.k = idx; doc.last = {};
+      for (const id of IDS) if (okIds.includes(id)) { doc.last[id] = idx; doc.R[id] = { px: okPx(g[id].px) ? g[id].px : g[id].open, seg: idx }; doc.ser[id] = []; twPad(doc.ser[id], idx, twRound(doc.R[id].px / g[id].prev)); }
+      return true;
+    }
     return twSegment(doc, j, idx, null, secret, true, mk);
   }
+  if (need.kind === "min") return twMinute(doc, idx, g, mk);
   return twSegment(doc, need.j, idx, need.fetch ? g : null, secret, false, mk);
+}
+
+// 直接用真實價：這壹分鐘（idx）每支的 rel ＝ 真實價 ÷ 真實前壹收盤。抓不到（或資料落後超過 staleMin 分鐘）這壹分鐘價平的接上去；
+// 超過 staleMin 分鐘沒有新價的那支標 stale（遊戲暫停那支的買賣）。lag 每分鐘更新
+function twMinute(doc, idx, g, mk) {
+  const IDS = MKS[mk].ids, S = NUM.casino.stock, sm = S.staleMin;
+  if (!doc.last || typeof doc.last !== "object") doc.last = {};
+  const stale = {};
+  for (const id of IDS) {
+    const arr = doc.ser[id], prev = doc.prevReal[id], row = g[id];
+    if (!Array.isArray(arr) || !okPx(prev)) { stale[id] = true; continue; } // 開盤時就沒有這支：整天停著
+    const rel = row && okPx(row.px) ? row.px / prev : null;
+    const fresh = rel != null && rel >= S.sane[0] && rel <= S.sane[1] && !(Number.isFinite(+row.lag) && +row.lag > sm);
+    if (Number.isFinite(+(row && row.lag))) doc.lag[id] = +row.lag;
+    const lastRel = arr.length ? arr[arr.length - 1] : 1;
+    twPad(arr, idx - 1, lastRel);
+    if (fresh) { arr[idx] = twRound(rel); doc.last[id] = idx; doc.R[id] = { px: row.px, seg: idx }; }
+    else arr[idx] = lastRel;
+    if (doc.last[id] == null || idx - doc.last[id] > sm) stale[id] = true;
+  }
+  doc.stale = stale; doc.k = idx;
+  doc.log = (doc.log || []).concat([{ j: idx, idx, lag: Math.max(0, ...IDS.map(id => Number.isFinite(+doc.lag[id]) ? +doc.lag[id] : 0)), stale: Object.keys(stale).length }]).slice(-40);
+  return true;
 }
 
 function twSegment(doc, j, idx, g, secret, opening, mk) {
@@ -221,6 +251,19 @@ function twSegment(doc, j, idx, g, secret, opening, mk) {
   doc.stale = stale;
   doc.k = j;
   doc.log = (doc.log || []).concat([{ j, idx, lag: Math.max(0, ...IDS.map(id => Number.isFinite(+doc.lag[id]) ? +doc.lag[id] : 0)), stale: Object.keys(stale).length }]).slice(-40);
+  return true;
+}
+
+// 補「最近壹次收盤」（11-14，規劃 2.8l：週末、假日、還沒開過盤的時候畫面也要有真實價）：d 那天的收盤價 close { id: 價 }、前壹收盤 prev { id: 價 } 寫進 doc.days[d]
+// （跟 twDocRoll 收進去的同壹個樣子，只是沒有盤中的 ser）。今天的資料就是 d、或 days 已經有 d 的收盤，就不動。回傳有沒有寫
+export function twBackfill(doc, d, close, prev) {
+  if (!doc || !/^\d{4}-\d{2}-\d{2}$/.test(String(d)) || doc.day === d) return false;
+  if (doc.days && doc.days[d] && doc.days[d].close && Object.keys(doc.days[d].close).length) return false;
+  const c = {}, p = {};
+  for (const id of Object.keys(close || {})) if (okPx(close[id])) { c[id] = close[id]; if (prev && okPx(prev[id])) p[id] = prev[id]; }
+  if (!Object.keys(c).length) return false;
+  doc.days = Object.assign({}, doc.days);
+  doc.days[d] = { openIdx: null, ser: {}, close: c, prev: p };
   return true;
 }
 

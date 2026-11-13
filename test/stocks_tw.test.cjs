@@ -1,7 +1,7 @@
 // 台股盤中（11-14，規劃 2.8d）：node test/stocks_tw.test.cjs（npm test 也會跑）
 // 開盤價才開、15 分鐘錨點加隨機、橋、種子祕密、停盤、掛單照盤中價檢查、view 的盤中資料、守恆。數字讀 NUM。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x);
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
