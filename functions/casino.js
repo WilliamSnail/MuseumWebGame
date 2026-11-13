@@ -210,7 +210,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 // 畫面的 positions[].id 是「單號」p3（平倉送 pid），股票的 id 是 sid；其餘欄位（no、name、market、side、lev、qty、entry、margin、now、pnl、maintPct、liqPx、openedDay、dayTrade）一起給
 const levStock = ctx => {
   const v = casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), L = casStockLevView(ctx.w, ctx.house, ctx.day, ctx.t);
-  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id, stop: null, take: null })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
+  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
 };
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
