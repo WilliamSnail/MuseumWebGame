@@ -101,9 +101,9 @@ export function artMarketShelf() {
       kids.push(h("p", { class: "artmarket-held-h" }, `${CAS_ART.held}（${data.mine.length}／${data.holdMax}）`));
       if (!data.mine.length) kids.push(h("p", { class: "hint" }, CAS_ART.empty));
       else kids.push(h("ul", { class: "artmarket-list" }, data.mine.map(x => h("li", { class: "artmarket-item" },
-        mk("artmarket-name", h("b", null, x.title || x.id), h("small", null, `${x.tierName}　買進 ${casNum(x.paid)}　現價 ${casNum(x.price)}`), h("small", { class: "artmarket-be" }, x.breakEven == null ? "" : x.breakEven <= 0 ? CAS_ART.beDone : CAS_ART.be.replace("{n}", x.breakEven))),
+        mk("artmarket-name", h("b", null, x.title || x.id), h("small", null, `${x.tierName}　買進 ${casNum(x.paid)}　現價 ${casNum(x.price)}`), h("small", { class: "artmarket-be" }, x.breakEven == null ? "" : x.breakEven <= 0 ? CAS_ART.beDone : CAS_ART.be.replace("{n}", x.breakEven)), x.hint ? h("small", { class: "artmarket-be" }, x.hint) : null),
         h("div", { class: "artmarket-btns" }, btn("看畫", () => ART_HOOKS.view && ART_HOOKS.view(x.id), "small primary", { "aria-label": `看${x.title}` }), x.lock ? h("span", { class: "artmarket-lock" }, "拍賣中") : btn(CAS_AUC.list, () => { aucForm.listId = x.id; aucForm.reserve = ""; go("gallery", { tab: "auction" }, { action: false }); }, "small", { "aria-label": `${CAS_AUC.list}：${x.title}` }), btn([CAS_ART.sell, h("small", null, ` ${casNum(x.sellPrice)}`)], () => trade("sell", x.id), "small", { disabled: busy || !!x.lock, "aria-label": `${CAS_ART.sell}${x.title}，拿回 ${casNum(x.sellPrice)} 籌碼` }))))));
-      kids.push(h("p", { class: "hint" }, CAS_ART.rule.replace("{perDay}", data.perDay).replace("{holdMax}", data.holdMax).replace("{sellPct}", data.sellPct)));
+      kids.push(h("p", { class: "hint" }, CAS_ART.rule.replace("{perDay}", data.perDay).replace("{holdMax}", data.holdMax).replace("{sellPct}", data.sellPct) + (data.risk ? " " + data.risk : "")));
     }
     box.replaceChildren(...kids);
   };

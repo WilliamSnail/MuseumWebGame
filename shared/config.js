@@ -193,7 +193,10 @@ export const NUM = {
   //   perDay：一天最多買幾幅；sellPerDay：一天最多賣回幾幅；holdMax：最多收藏幾幅；shelfDays：特展出現後幾天內館方賣（1 ＝ 只有當天）；unit：價格進位。
   //   莊家的保護：賣回一天全館最多付 莊家的錢 × sellQuotaPct% ＋ sellQuotaBase（股票共用額度之後再接）；全館持有的畫買進價合計超過 莊家的錢 × heldPct% 就先不收新的。
   art: { tiers: [{ name: "尋常", base: 1000000 }, { name: "少見", base: 2500000 }, { name: "珍藏", base: 6000000 }, { name: "孤品", base: 15000000 }],
-    ageFastPct: 0.85, ageFastDays: 14, ageUpPct: 0.04, ageCapPct: 15, moodPct: 1, demandPct: 0.2, demandCapPct: 2, sellPct: 90, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
+    ageFastPct: 0.85, ageFastDays: 14, ageUpPct: 0.04, ageCapPct: 15, moodPct: 1, demandPct: 0.2, demandCapPct: 2, sellPct: 90,
+    // 畫也有風險（規劃 2.10c，翊文 11-14 選 E）：每幅畫每天自己小小地隨機動（walkSd %，累計夾在 ±walkCap %），另外每天每幅有 hoaxPct% 的機率「贗品疑雲」：價格壹次掉 hoaxMin～hoaxMax %（不回來）。
+    // 前壹天（hoaxHintDays 天）先放線索，想避險的可以先賣回。種子含伺服器祕密（casArtSecret）。
+    walkSd: 0.4, walkCap: 20, hoaxPct: 0.1, hoaxMin: 10, hoaxMax: 30, hoaxHintDays: 1, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
     sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40 },
   // 藝術市場第二步：畫的拍賣（11-14，shared/casino_auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
   //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
