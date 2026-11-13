@@ -524,5 +524,17 @@ T("Yuga 交代的任務：備用週不能放", () => {
   assert.ok(has(run(c), /備用週、備用的壹天不能讓 Yuga Bot 交任務/));
 });
 
+T("館內股的 NPC 劇情日（week.json.npc）：對的過；店不對、日期不在這週、多寫欄位（想自己寫大小）、備用週都擋", () => {
+  const ok = c => { c.files["2026-W47/week.json"].npc = { store: "food", date: "2026-11-18", name: "賣傘的老闆的餐車日" }; };
+  const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的 npc 要過");
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc.store = "bank"; }, /store 要是/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc.date = "2026-11-25"; }, /date 要是這週內的日期/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc.date = "壞"; }, /date 要是這週內的日期/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc.b = 0.9; }, /不認得「b」/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc.name = "這是壹個" + "非常".repeat(20) + "長的活動名字"; }, /太長了/);
+  expectErr(c => { c.files["2026-W47/week.json"].npc = [{ store: "food" }]; }, /要寫成 \{ store, date, name \}/);
+  expectErr(c => { c.files["備用/常青1/week.json"].npc = { store: "food", date: "2026-11-18", name: "x" }; }, /備用週不寫 npc/);
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

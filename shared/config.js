@@ -407,6 +407,9 @@ export const NUM = {
     //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
     //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
     stockIn: { start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
+      // NPC（規劃 2.8k、docs/館內NPC規劃.md 步驟 1、2）：每家店每天有 Poisson(npcLambda) 個 NPC 去逛（種子含伺服器祕密），算進昨天「不同的人」；NPC 最多占這家店人數的 npcShareMax%（館友太少就更少）；
+      //   劇情日（week.json 的 npc）那天 NPC 多去 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 之間隨機（預期跳空 k×b ＜ 來回成本，預先進場賺不到；b 不能超過 0.33）
+      npcLambda: 2, npcShareMax: 40, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
