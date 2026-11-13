@@ -4,9 +4,12 @@
 // 清單改了就重跑，不要手改產出的檔。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const SRC = path.join(ROOT, "docs", "地下室素材清單.md");
 // --only 3-6,3-7 --out 檔名.html：只放這幾張（新加的一批另外給翊文，不跟生好的混在一起）
+// --src docs/別的清單.md：讀別的清單（11-13 介面重塑：docs/介面重塑素材清單.md）；--dir assets/ui2：生好的圖存到哪個資料夾
 const argOf = k => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
+const SRC = path.join(ROOT, argOf("--src") || path.join("docs", "地下室素材清單.md"));
+const DIR = (argOf("--dir") || "assets/cellar2").replace(/\/+$/, "");
+const NAME = path.basename(SRC, ".md").replace(/清單$/, "");
 const ONLY = (argOf("--only") || "").split(",").map(x => x.trim()).filter(Boolean);
 const OUT = path.join(ROOT, "docs", argOf("--out") || "地下室素材Prompt.html");
 const STYLE = "Match the art style of the attached reference image.";
@@ -21,13 +24,13 @@ let ending = "", partsEnding = "";
   for (let i = a; i < b; i++) if (lines[i].startsWith("```")) { const e = lines.findIndex((l, j) => j > i && l.startsWith("```")); blocks.push(lines.slice(i + 1, e).join(" ").trim()); i = e; }
   [ending, partsEnding = ""] = blocks;
 }
-const isPart = key => /^3-(8|9|1\d)$/.test(key.split(" ")[0]);
+const isPart = key => /^(3-(8|9|1\d)|P-\d+)$/.test(key.split(" ")[0]); // P-：介面重塑的共通零件
 
 // 第一～三節的每個 ### 小節：程式框 + 後面的表格
 const items = [];
 let sec = null, i = 0;
 const startAt = lines.findIndex(l => l.startsWith("## 一"));
-const stopAt = lines.findIndex(l => l.startsWith("## 四"));
+const stopAt = (i => (i < 0 ? lines.length : i))(lines.findIndex(l => l.startsWith("## 四"))); // 沒有第四節（別的清單）就讀到最後
 for (i = startAt; i < stopAt; i++) {
   const l = lines[i];
   if (l.startsWith("### ")) { sec = { title: l.slice(4).trim(), id: l.slice(4).trim().split(" ")[0], prompts: [], rows: [], notes: [] }; items.push(sec); continue; }
@@ -76,7 +79,7 @@ const REFS = {
   stone: { file: "assets/panel-kit/stone-raw.webp", name: "地下室石板框" },
 };
 // 3-8 以後是打怪介面的零件：附翊文生的整張介面（風格、配色照它）
-const refOf = o => (isPart(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
+const refOf = o => (isPart(o.key) || /^U-/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
 const dataUrl = f => "data:image/webp;base64," + fs.readFileSync(path.join(ROOT, f)).toString("base64");
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -89,12 +92,12 @@ const card = o => {
     <figure><img class="ref" data-ref="${r}" src="${dataUrl(REFS[r].file)}" alt="參考圖：${REFS[r].name}"><figcaption>參考圖：${REFS[r].name}</figcaption><button data-img="${r}">① 複製參考圖</button></figure>
     <div class="p"><pre>${esc(o.text)}</pre><button data-txt="${i}">② 複製 Prompt</button></div>
   </div>
-  <p class="send">③ 生好傳給 AI 時說「這是第 ${i} 張」（AI 存成 <code>assets/cellar2/${esc(fileOf(o))}</code>）</p>
+  <p class="send">③ 生好傳給 AI 時說「這是第 ${i} 張」（AI 存成 <code>${esc(DIR)}/${esc(fileOf(o))}</code>）</p>
 </article>`;
 };
 const html = `<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>地下室素材：一張一張貼</title>
+<title>${esc(NAME)}：一張一張貼</title>
 <style>
 body{margin:0;background:#2a1d22;color:#f3e6c8;font:16px/1.6 "Noto Sans TC","Microsoft JhengHei",sans-serif}
 main{max-width:980px;margin:0 auto;padding:20px}
@@ -113,7 +116,7 @@ button{font:inherit;font-size:16px;padding:10px 16px;min-height:44px;border-radi
 button.ok{background:#3c7a4a;border-color:#2c5a36}
 .send{margin:8px 0 0;font-size:14px;color:#5a4030}code{font-size:13px}
 </style></head><body><main>
-<h1>地下室素材：一張一張貼</h1>
+<h1>${esc(NAME)}：一張一張貼</h1>
 <div class="how">每一張照順序做：<b>①</b> 按「複製參考圖」，到 Gemini 貼上（Ctrl+V）；<b>②</b> 按「複製 Prompt」，貼在同一則訊息；送出。<b>③</b> 生好的圖傳給 AI，說「這是第幾張」。一次傳一張，等 AI 回了再傳下一張。<br>勾「生好了」會記在這台電腦上，下次打開還在。</div>
 <h2>${ONLY.length ? `這次要生的 ${first.length} 張` : `第一批：先生這 ${first.length} 張（夠做 B1 的打怪畫面）`}</h2>
 ${first.map(card).join("\n")}
@@ -138,7 +141,7 @@ document.addEventListener("click", async e => {
     if (b.dataset.img) { await navigator.clipboard.write([new ClipboardItem({ "image/png": pngOf(REF[b.dataset.img]) })]); flash(b, "複製好了，去貼上"); }
   } catch (err) { flash(b, "這個瀏覽器不能複製：在圖上按右鍵「複製圖片」"); }
 });
-const KEY = "cellar2-prompts-done";
+const KEY = ${JSON.stringify(NAME === "地下室素材" ? "cellar2-prompts-done" : "prompts-done-" + NAME)}; // 每份清單的「生好了」分開記
 const done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
 document.querySelectorAll("[data-done]").forEach(cb => {
   const c = cb.closest(".c"); cb.checked = done.has(cb.dataset.done); c.classList.toggle("done", cb.checked);
