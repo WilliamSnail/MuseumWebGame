@@ -356,7 +356,7 @@ export function casLevClose(w, house, no, day, t, src) {
 export function casLevSet(w, house, args, day, t, src) {
   const T = CAS_STOCK_LEV, A = args || {}, S = casLevFix(w, day);
   src = src || casLevSrc(house, day, t);
-  const no = A.no != null ? lqN(A.no) : lqN(String(A.pid == null ? "" : A.pid).replace(/\D/g, ""));
+  const no = A.no != null ? lqN(A.no) : lqN(casLevPidNo(A.pid));
   const had = S.pos.find(p => p.no === no);
   if (!had) return { ok: false, reason: T.none };
   const swept = casLevSweep(w, house, day, t, src);
@@ -394,3 +394,5 @@ export function casStockLevView(w, house, day, t, src) {
 }
 // 把這次平倉、強平的話拿走（畫面下次拿到就說）
 export function casLevTakeNotes(w) { const S = casLevFix(w), n = S.notes; S.notes = []; return n; }
+// 畫面平倉送的單號是 "p3"（stock view 的 positions[].id）：只留數字。以前伺服器寫 /D/g（只去掉大寫 D），"p3" 變 NaN，平倉鈕永遠「找不到這筆部位」（11-14 測試發現）
+export const casLevPidNo = pid => parseInt(String(pid == null ? "" : pid).replace(/\D/g, ""), 10);

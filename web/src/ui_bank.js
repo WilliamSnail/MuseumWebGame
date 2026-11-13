@@ -6,7 +6,7 @@
 //  動作：存款 act bank（op put／take／term／break）、借款 borrow、repay。還沒接上，按了只跳提示。
 //  規則不寫在這裡：這個檔只畫畫面，數字都從 view 來。
 // ================================================================
-import { ADDONS, SCREENS, UI, btn, closeOnOutside, h, icon, miniLayer, navTo, note, rerender, setChips } from "./ui_core.js";
+import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo, note, rerender, setChips } from "./ui_core.js";
 import { NET } from "./net_firebase.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
@@ -20,9 +20,10 @@ const TAB_ICON = {
   loan: SVG('<path d="M4 8h13l-3-3M20 16H7l3 3"/><circle cx="12" cy="12" r="0.8"/>'), // 借出、還回的兩個箭頭
   bond: SVG('<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>'), // 債券（壹張紙）
   stock: SVG('<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>'), // 往上的折線
+  auction: SVG('<path d="M4 20h10M7 20v-3h4v3"/><path d="m5 11 6 6M8 6l6 6M13 4l5 5-3 3-5-5z"/><path d="M16 18h4"/>'), // 拍賣槌
   report: SVG('<path d="M5 4h13v16H5z"/><path d="M8 8h7M8 12h7M8 16h4"/><path d="M5 4v16"/>'), // 帳本
 };
-const TABS = [["report", "財報"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"]]; // 翊文 11-14：財報最左邊第一個，第二個是股票
+const TABS = [["report", "財報"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
 const pctText = p => `${(p * 100).toFixed(p * 100 % 1 ? 1 : 0)}%`;
 
 // ---------- 示範資料（伺服器還沒給 bankHall 的時候用；格式照 Yuga 說的 bankHall） ----------
@@ -495,7 +496,7 @@ SCREENS.bank = root => {
     return;
   }
   const v = view(), tab = UI.bankTab || "report";
-  const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { UI.bankTab = id; rerender(); } },
+  const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { if (id === "auction") { go("gallery", { tab: "auction" }, { action: false }); return; } UI.bankTab = id; rerender(); } },
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "bond" && v.bonds ? h("i", { class: "bank-dot", "aria-label": "有新的一期" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
     tabs,

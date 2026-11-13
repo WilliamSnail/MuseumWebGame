@@ -17,7 +17,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { outStockWeekend } from "./shared/stocks.js";
-import { US_IDS, usApply, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
+import { US_IDS, mkLen, usApply, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
 import { NUM } from "./shared/config.js";
 import { twSecret } from "./stock_tw.js";
 
@@ -59,7 +59,7 @@ export async function fetchYahoo(nowMs) {
 export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
   const D = dbx || db(), ref = D.doc("stocksUs/latest");
   const day = usNyDay(nowMs), idx = usIdx(nowMs, day), C = NUM.casino.stock.us;
-  if (outStockWeekend(day) || idx == null || idx < 0 || idx > C.len) return "不在盤中";
+  if (outStockWeekend(day) || idx == null || idx < 0 || idx > mkLen("us", day)) return "不在盤中";
   const snap = await ref.get();
   const doc0 = usDocRoll(snap.exists ? snap.data() : null, day, 5);
   let need = usNeed(doc0, idx);
