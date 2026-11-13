@@ -33,10 +33,28 @@ T("週末沒資料不動：11-14（六）用週五，11-15（日）、11-16（�
   assert.strictEqual(G.outStockMovesFor(d, "2026-11-15", ["a"]).a, 0);
   assert.strictEqual(G.outStockMovesFor(d, "2026-11-16", ["a"]).a, 0);
 });
-T("平日整天沒資料＝缺：用最近一筆有數字的；完全沒有就不動；b 最近有數字的是 11-11 的 4", G => {
+T("平日整天沒資料＝缺：不拿別天頂替，一律不動", G => {
   const m = G.outStockMovesFor(daily, "2026-11-14", ["a", "b"]); // 市場日 11-13（五）沒資料
-  assert.ok(Math.abs(m.a - G.outStockMove(5)) < 1e-12); assert.ok(Math.abs(m.b - G.outStockMove(4)) < 1e-12);
+  assert.strictEqual(m.a, 0, "不能拿 11-12 的 +5% 當 11-13 的漲跌"); assert.strictEqual(m.b, 0);
   assert.strictEqual(G.outStockMovesFor({ days: {} }, "2026-11-13", ["a"]).a, 0);
+  const part = { days: { "2026-11-12": { a: 5 } } }; // 那天的資料裡少了 b
+  assert.strictEqual(G.outStockMovesFor(part, "2026-11-13", ["a", "b"]).b, 0);
+});
+T("哪幾家沒有新資料：缺的算，休市（null）和週末不算", G => {
+  assert.strictEqual(JSON.stringify(G.outStockStale(daily, "2026-11-14", ["a", "b"])), JSON.stringify(["a", "b"]), "平日整天沒資料");
+  assert.strictEqual(JSON.stringify(G.outStockStale(daily, "2026-11-13", ["a", "b"])), JSON.stringify([]), "b 是休市 null，不算缺");
+  assert.strictEqual(JSON.stringify(G.outStockStale({ days: { "2026-11-12": { a: 5 } } }, "2026-11-13", ["a", "b"])), JSON.stringify(["b"]), "那天少了 b");
+  assert.strictEqual(JSON.stringify(G.outStockStale(daily, "2026-11-15", ["a"])), JSON.stringify([]), "前一天是週六");
+  assert.strictEqual(JSON.stringify(G.outStockStale(null, "2026-11-13", ["a"])), JSON.stringify(["a"]));
+});
+T("資料斷了幾天：週末不算斷，超過容許天數要喊", G => {
+  assert.strictEqual(G.outStockAgeDays(daily, "2026-11-13"), 0);
+  assert.strictEqual(G.outStockAgeDays(daily, "2026-11-14"), 1, "11-13（五）該有卻沒有");
+  assert.strictEqual(G.outStockAgeDays(daily, "2026-11-15"), 1, "週六、日不算，該有的最新是週五 11-13");
+  assert.strictEqual(G.outStockAgeDays(daily, "2026-11-16"), 1);
+  assert.strictEqual(G.outStockAgeDays(daily, "2026-11-20"), 7);
+  assert.strictEqual(G.outStockAgeDays({ days: {} }, "2026-11-13"), Infinity); assert.strictEqual(G.outStockAgeDays(null, "2026-11-13"), Infinity);
+  assert.ok(G.OUT_STOCK_NUM.staleDays >= 2, "週五資料要撐過週末；至少容許 2 天");
 });
 T("壞資料不丟錯", G => {
   [null, undefined, {}, { days: null }, { days: { "2026-11-12": "x" } }, 5].forEach(d => {
@@ -75,5 +93,20 @@ T("寫進資料庫的文件：只有 updated 和 days、格式壞的不寫", G =
   const d = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "content", "stocks", "daily.json"), "utf8"));
   const doc = P.buildDoc(Object.assign({ extra: 1 }, d)); assert.strictEqual(Object.keys(doc).sort().join(), "days,updated");
   assert.throws(() => P.buildDoc({ days: { "2026-11-12": { nope: 1 } } })); assert.throws(() => P.buildDoc({ days: {} })); assert.throws(() => P.buildDoc(null));
+});
+T("全部休市的平日（假日）補一列 null；週末不補；抓失敗的家不寫", G => {
+  const f = (pct, last) => ({ pct, last, today: "2026-11-30" });
+  const m = F.merge(null, { greeneye: f({ "2026-11-25": 1, "2026-11-27": 2 }, "2026-11-27"), redclaw: f({ "2026-11-25": 1, "2026-11-27": 2 }, "2026-11-27"), flashcar: null }, "t");
+  assert.deepStrictEqual(m.days["2026-11-26"], { greeneye: null, redclaw: null }, "11-26 兩家都沒有 K 棒＝休市");
+  assert.ok(!("2026-11-28" in m.days) && !("2026-11-29" in m.days), "週末不補");
+  const m2 = F.merge({ days: { "2026-11-26": { greeneye: 3 } } }, { greeneye: f({ "2026-11-25": 1 }, "2026-11-25") }, "t");
+  assert.strictEqual(m2.days["2026-11-26"].greeneye, 3, "已經有的列不動");
+  assert.deepStrictEqual(F.check(m), []);
+});
+T("抓資料腳本的 ageDays：和 shared 的 outStockAgeDays 對得上（台灣 05:00 換日）", G => {
+  const at = iso => Date.parse(iso);
+  for (const [iso, game] of [["2026-11-13T20:59:00Z", "2026-11-13"], ["2026-11-13T21:00:00Z", "2026-11-14"], ["2026-11-17T01:00:00Z", "2026-11-17"], ["2026-11-20T10:00:00Z", "2026-11-20"]]) {
+    assert.strictEqual(F.ageDays(daily, at(iso)), G.outStockAgeDays(daily, game), iso);
+  }
 });
 console.log(`${pass} passed, ${fail} failed（館外股票）`); process.exit(fail ? 1 : 0);
