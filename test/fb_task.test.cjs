@@ -6,7 +6,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
-  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger"]);
+  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status"]);
   assert.deepStrictEqual(parseTask({ action: "stock-reroll" }), { action: "stock-reroll" }, "重算股價不用 email");
   // 工作流程的下拉選單要跟程式的清單壹樣，不然按得到的動作程式不認得（或反過來）
   const yml = require("fs").readFileSync(require("path").join(__dirname, "..", ".github/workflows/firebase-task.yml"), "utf8");

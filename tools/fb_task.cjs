@@ -12,10 +12,31 @@
 //   house-ledger  只讀：莊家、預算池、海底、館方帳現在多少；莊家每個來源累計進出多少；
 //                 每個錢包的籌碼、借款、憑空和消失的來源。不印名字、uid、email，錢包用 #1、#2 代替（照籌碼排）。
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
+//   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status"];
+
+// 只讀：台股、美股盤中的伺服器紀錄（stocksTw/latest、stocksUs/latest）。不讀亂數祕密，什麼都不寫
+//   什麼時候用：股票沒更新、整天休市，要知道是抓不到行情還是別的原因（11-13 美股第壹晚整天休市）
+async function stockStatus(db) {
+  const short = v => { const s = JSON.stringify(v); return s && s.length > 300 ? s.slice(0, 300) + "…" : s; };
+  for (const [name, p] of [["台股", "stocksTw/latest"], ["美股", "stocksUs/latest"]]) {
+    const s = await db.doc(p).get();
+    if (!s.exists) { console.log(name + "：還沒有紀錄"); continue; }
+    const d = s.data() || {};
+    const at = d.updatedAt ? new Date(d.updatedAt).toISOString() : "-";
+    console.log(name + "：日期 " + (d.day || "-") + "　開盤第幾分鐘 " + (d.openIdx == null ? "沒開" : d.openIdx) + "　休市 " + !!d.closed + "　第幾段 " + (d.k == null ? "-" : d.k) + "　最後更新 " + at);
+    console.log("  錯誤：" + (d.err || "（沒有）"));
+    console.log("  落後分鐘：" + (short(d.lag) || "-"));
+    console.log("  沒新行情的：" + (short(d.stale) || "-"));
+    const log = Array.isArray(d.log) ? d.log.slice(-15) : [];
+    console.log("  最近的紀錄：" + (log.length ? "" : "（沒有）"));
+    log.forEach(l => console.log("    " + (typeof l === "string" ? l : short(l))));
+    console.log("  有哪些天：" + Object.keys(d.days || {}).sort().join("、"));
+  }
+}
 
 // 只讀：看錢流去哪。什麼都不寫
 async function houseLedger(db) {
@@ -133,6 +154,7 @@ async function main() {
   if (task.action === "stats") { await stats(db); return; }
   if (task.action === "stock-reroll") { await stockReroll(db); return; }
   if (task.action === "house-ledger") { await houseLedger(db); return; }
+  if (task.action === "stock-status") { await stockStatus(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
