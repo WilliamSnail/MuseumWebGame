@@ -795,3 +795,10 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
 .fusion-onescreen .fusion-cmp[open] .fusion-pal-open, .fusion-onescreen .fusion-cmp:not([open]) .fusion-pal-close { display: none; }
 /* 融合按鈕貼在右欄下面，說明長了也看得到（翊文 11-13：每個廳壹個畫面） */
 .fusion-onescreen .fusion-info > .rv-btns { position: sticky; bottom: 0; z-index: 2; padding: 8px 4px 2px; background: linear-gradient(180deg, rgba(60, 24, 36, 0), rgba(60, 24, 36, .96) 40%); }
+
+/* 融合室：抽屜拉開時舞台縮到 75px 高（測試 session 複測 PR 274）。抽屜拉開只放壹排收藏（頁籤、篩選那排不放），舞台至少留 210px */
+.fusion-onescreen > .onescreen-drawer.open .strip-head { display: none; }
+.fusion-onescreen > .onescreen-main { min-height: 210px; }
+@media (max-height: 500px) and (orientation: landscape) { .fusion-onescreen > .onescreen-main { min-height: 120px; } }
+/* 右欄的「今天還能融合 N 次」：貼著融合按鈕壹起在下面，不用捲才看得到 */
+.fusion-onescreen .fusion-info > .day-limit { position: sticky; bottom: 56px; z-index: 2; background: rgba(60, 24, 36, .92); }
