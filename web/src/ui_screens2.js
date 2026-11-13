@@ -139,7 +139,7 @@ SCREENS.commission = root => {
   const pull = h("button", { type: "button", class: "u2-pull", "aria-expanded": "false", title: "拉開：換頁籤、篩選" }, h("span", null, "你的收藏"));
   pull.addEventListener("click", () => { const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open)); });
   drawer.append(pull, strip);
-  root.classList.add("ui2");
+  root.classList.add("u2r"); // 不能叫 ui2：html 本身就有 .ui2（新大廳）
   root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "u2-main" }, board, side), drawer);
   syncStatusHeight(); setTimeout(syncStatusHeight, 300); // 抽屜要停在狀態列上面：狀態列排成兩排時也量對（分頁在背景時 requestAnimationFrame 不會跑，所以直接量）
 };
