@@ -66,5 +66,64 @@ T("日報有「景氣」一段；第一份沒有 gdp 就沒有這一段", G => {
   const sec = view.secs.find(s => s.t.includes("景氣"));
   assert.ok(sec && sec.lines[0].includes("景氣普通") && sec.lines.join("").includes("14 天") && sec.lines.join("").includes("來的人太少"));
 });
+
+const ECON = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "content", "economy.json"), "utf8"));
+T("content/economy.json 的格式（每日排劇情的排程會改它）：季別、年增率、最近四季、公布日；年增率在合理範圍", G => {
+  const g = ECON.gdp;
+  assert.ok(/^[0-9]{4}Q[1-4]$/.test(g.quarter), "quarter：" + g.quarter);
+  assert.ok(typeof g.yoy === "number" && g.yoy > -30 && g.yoy < 40, "yoy：" + g.yoy);
+  assert.ok(Array.isArray(g.history) && g.history.length >= 2 && g.history.length <= 8 && g.history.every(x => typeof x === "number" && x > -30 && x < 40));
+  assert.strictEqual(g.history[g.history.length - 1], g.yoy, "history 最後一個是最新這一季");
+  assert.ok(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(g.published));
+  assert.ok(G.casGdpExt(ECON, g.published).ok);
+});
+T("外部景氣：最新一季對最近四季平均，差 extSpread 個百分點＝1；太久沒更新或資料壞掉＝0", G => {
+  const K = G.NUM.casino.gdp, mk = (yoy, h, published = "2026-10-30") => ({ gdp: { quarter: "2026Q3", yoy, history: h, published } });
+  const e = G.casGdpExt(mk(10, [10, 10, 10, 10])); assert.strictEqual(e.b, 0);
+  const up = G.casGdpExt(mk(14, [10, 10, 10, 14])); near(up.mean, 11); near(up.b, Math.min(1, 3 / K.extSpread), 1e-3);
+  assert.strictEqual(G.casGdpExt(mk(20, [1, 1, 1, 20])).b, 1); assert.strictEqual(G.casGdpExt(mk(-9, [10, 10, 10, -9])).b, -1);
+  assert.strictEqual(G.casGdpExt(mk(5, [5]), "2026-11-01").b, 0, "只有一季沒辦法比");
+  const old = G.casGdpExt(mk(14, [10, 10, 10, 14]), plus("2026-10-30", K.extStaleDays + 1)); assert.strictEqual(old.b, 0); assert.ok(old.stale);
+  assert.strictEqual(G.casGdpExt(null).b, 0); assert.strictEqual(G.casGdpExt({ gdp: { history: "x" } }).b, 0);
+});
+T("景氣的影響：拚經濟撥款、門票、存款利率 ×(1 ± fxPct%)；沒有景氣（b＝0）完全照舊", G => {
+  const K = G.NUM.casino.gdp, seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; }, atR = r => (r + 0.5) / (G.NUM.casino.econ.rMax + 1);
+  const play = b => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; house.econ.b = b; const r = G.casEconPlay(w, house, D, seq(atR(50), 0.3, 0.99)); return { r, house }; };
+  const base = play(0).r.amount; assert.strictEqual(base, 50 * G.NUM.casino.econ.winPer);
+  const hi = play(1).r; assert.strictEqual(hi.amount, Math.floor(base * (1 + K.fxPct / 100)));
+  const lo = play(-1).r; assert.strictEqual(lo.amount, Math.floor(base * (1 - K.fxPct / 100)));
+  assert.strictEqual(G.casFxMul({ econ: { b: 5 } }), 1 + K.fxPct / 100, "夾在 ±1"); assert.strictEqual(G.casFxMul(null), 1);
+  const bank = b => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; house.econ.b = b; w.bank = { save: 1000000, terms: [], seq: 0, day: D, earned: 0, notes: [] }; G.casBankAccrue(w, house, plus(D, 1)); return w.bank.earned; };
+  assert.strictEqual(bank(0), Math.floor(1000000 * G.NUM.casino.bank.savePct / 100));
+  assert.strictEqual(bank(1), Math.floor(1000000 * G.NUM.casino.bank.savePct / 100 * (1 + K.fxPct / 100)));
+});
+T("政策：拚經濟成功抽到的政策持續到隔天；振興觀光門票多、整修地下地下撿多、撥款多／少；第三天失效", G => {
+  const K = G.NUM.casino.gdp, mk = () => ({ w: G.casWalletFix(G.casWalletNew(), D), house: G.casHouseFix(G.casHouseNew(), D).house });
+  assert.strictEqual(K.policyFx.length, G.CAS_ECON.policies.length, "每項政策都有對應的效果");
+  const s = mk(); const seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; }, atR = r => (r + 0.5) / (G.NUM.casino.econ.rMax + 1);
+  const pol = idx => (idx + 0.5) / G.CAS_ECON.policies.length;
+  const r = G.casEconPlay(s.w, s.house, D, seq(atR(50), pol(1), 0.99)); // 第 1 項：兩岸觀光客自由行 → tourism
+  assert.strictEqual(r.fx, "tourism"); assert.ok(r.lines.some(l => l.includes("政策效果")));
+  assert.strictEqual(G.casFxPolicy(s.house, D, "ticket"), 1 + K.polPct / 100); assert.strictEqual(G.casFxPolicy(s.house, plus(D, 1), "ticket"), 1 + K.polPct / 100);
+  assert.strictEqual(G.casFxPolicy(s.house, plus(D, 2), "ticket"), 1, "第三天失效"); assert.strictEqual(G.casFxPolicy(s.house, D, "find"), 1);
+  const t = (house, d) => { const w = G.casWalletFix(G.casWalletNew(), d), P = G.newProfile("challenge"); P.hallVisitors = 0; const { buildProfile } = require("./sim_cellar.cjs"); void buildProfile; return { w, P }; };
+  void t;
+  const tix = pol2 => { const { G: G2, buildProfile } = require("./sim_cellar.cjs"); const w = G2.casWalletFix(G2.casWalletNew(), D), house = G2.casHouseFix(G2.casHouseNew(), D).house; if (pol2) house.pol = { idx: 1, fx: "tourism", day: D };
+    const P = buildProfile(G2.mulberry32(3), "mid"); Object.keys(P.pepes).slice(0, 6).forEach((k, i) => G2.placeInHall(P, i, { kind: "pepe", key: k })); P.hallVisitors = 0; G2.casTicketClaim(w, house, P, D); P.hallVisitors = 4; return G2.casTicketClaim(w, house, P, D); };
+  const a = tix(false), b = tix(true); assert.ok(a.total > 0 && b.total > a.total && b.price === Math.floor(a.price * (1 + K.polPct / 100)));
+  const f = (pol3) => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; if (pol3) house.pol = { idx: 5, fx: "cellar", day: D }; return G.casCellarFind(w, house, G.CELLAR[0].rooms[0].id, D, () => 0.01).found; };
+  assert.ok(f(true) > f(false) && f(true) === Math.floor(f(false) * (1 + K.polPct / 100)));
+  const tight = mk(); tight.house.pol = { idx: 7, fx: "tighten", day: D };
+  assert.strictEqual(G.casEconPlay(tight.w, tight.house, D, seq(atR(50), 0.3, 0.99)).amount, Math.floor(50 * G.NUM.casino.econ.winPer * (1 - K.polPct / 100)));
+});
+T("日報景氣段：外面世界的景氣、景氣的影響、有效的政策", G => {
+  const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house;
+  house.pol = { idx: 1, fx: "tourism", day: D };
+  const snap = G.casBookSnap([w], house, 0, D); snap.pol = house.pol;
+  const diff = G.casBookDiff(null, snap), idx = G.casGdpIndex([{ from: null, to: D, total: 0 }], 0, 5, 0.5);
+  const sec = G.casReportView({ day: D, at: Date.UTC(2026, 10, 14), snap, diff, gdp: G.casGdpOf(diff), index: idx, ext: { ok: true, quarter: "2026Q3" } }).secs.find(s => s.t.includes("景氣"));
+  const text = sec.lines.join("|");
+  assert.ok(text.includes("外面世界的景氣：比前幾季熱") && text.includes("景氣的影響：拚經濟撥款") && text.includes("有效的政策") && text.includes("門票多一成"), text);
+});
 console.log(`館內 GDP 和景氣指數：${pass} 過，${fail} 沒過`);
 process.exit(fail ? 1 : 0);

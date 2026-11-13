@@ -10,6 +10,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
+import { casFxPolicy } from "./casino_gdp.js";
 import { CAS_FIND_TEXT } from "./casino_text.js";
 import { CELLAR } from "./content3.js";
 import { RNG } from "./logic.js";
@@ -49,6 +50,7 @@ export function casCellarFind(w, house, roomId, day, rnd = RNG, boost = null) {
   const t = Math.min(CAS_FIND_TEXT.lines.length - 1, Math.floor(rnd() * CAS_FIND_TEXT.lines.length));
   const bonus = B ? B.min + B.step * Math.floor(rnd() * (Math.floor((B.max - B.min) / B.step) + 1)) : 0;
   found += bonus;
+  if (house) found = Math.floor(found * casFxPolicy(house, day, "find")); // 政策（整修地下）多一成
   cf.n++;
   w.chips += found;
   if (house) casHouseMove(house, "find", -found); // 莊家出，跟大禮包一樣

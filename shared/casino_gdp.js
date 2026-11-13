@@ -58,3 +58,35 @@ export function casGdpIndex(hist, prevBIn, active, bExt = 0) {
   out.label = casGdpLabel(out.b);
   return out;
 }
+
+// ---------- 外部景氣（content/economy.json，每日排劇情的排程更新） ----------
+// econ：{ gdp: { quarter, yoy, history[…最近四季，最後一個是最新], published } }。回傳 { b（−1～+1）, ok, quarter, yoy, mean }
+export function casGdpExt(econ, day) {
+  const K = NUM.casino.gdp, g = econ && econ.gdp, none = { b: 0, ok: false, quarter: g && g.quarter ? String(g.quarter) : "" };
+  if (!g || !Array.isArray(g.history)) return none;
+  const h = g.history.map(Number).filter(Number.isFinite);
+  if (h.length < 2) return none;
+  if (day && typeof g.published === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(g.published) && gdDays(g.published, day) > K.extStaleDays) return Object.assign({}, none, { stale: true }); // 太久沒更新：當 0
+  const mean = h.reduce((a, b) => a + b, 0) / h.length, yoy = Number.isFinite(+g.yoy) ? +g.yoy : h[h.length - 1];
+  return { b: Math.round(gdClamp((yoy - mean) / K.extSpread, -1, 1) * 1000) / 1000, ok: true, quarter: String(g.quarter || ""), yoy, mean };
+}
+
+// ---------- 景氣的影響 ----------
+// 莊家文件裡：house.econ.b（最新的景氣，日報產生時寫），house.pol { idx, fx, day }（最近一次拚經濟成功抽到的政策）
+export const casFxMood = house => gdClamp(+((house && house.econ && house.econ.b) || 0), -1, 1);
+// 景氣對錢的倍率：1 ± fxPct%
+export const casFxMul = house => 1 + NUM.casino.gdp.fxPct / 100 * casFxMood(house);
+// 政策現在有沒有效（抽到那天和 polDays 天內）
+export const casFxPolicyOn = (house, day) => !!(house && house.pol && typeof house.pol.day === "string" && day && gdDays(house.pol.day, day) >= 0 && gdDays(house.pol.day, day) <= NUM.casino.gdp.polDays);
+// 政策對某項的倍率。kind："ticket"（門票）、"find"（地下撿）、"econ"（拚經濟撥款）
+export function casFxPolicy(house, day, kind) {
+  if (!casFxPolicyOn(house, day)) return 1;
+  const fx = house.pol.fx, p = NUM.casino.gdp.polPct / 100;
+  if (kind === "ticket" && fx === "tourism") return 1 + p;
+  if (kind === "find" && fx === "cellar") return 1 + p;
+  if (kind === "econ" && fx === "grant") return 1 + p;
+  if (kind === "econ" && fx === "tighten") return 1 - p;
+  return 1;
+}
+// 政策的白話（日報和拚經濟的畫面用）
+export const CAS_FX_TEXT = { tourism: "門票多一成", cellar: "地下撿到的籌碼多一成", grant: "拚經濟的撥款多一成", tighten: "拚經濟的撥款少一成，預算池少花一些" };

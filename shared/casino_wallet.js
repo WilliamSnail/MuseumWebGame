@@ -64,13 +64,16 @@ export function casWalletFix(w, day) {
 }
 // budget：拚經濟的預算池（shared/casino_econ.js）；sea：拚經濟失敗、沒被撈走的錢沉到這裡（決定 0057，從 0 開始）。
 // 都跟莊家放在同壹份，同壹個交易裡算；舊的莊家沒有就補。莊家破產重開不動它們
-export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, museum: 0, led: { mint: {}, flow: {} } });
+export const casHouseNew = () => ({ v: 1, bankroll: NUM.casino.houseStart, hands: 0, day: null, reopened: 0, budget: NUM.casino.econ.budgetStart, sea: 0, museum: 0, econ: { b: 0 }, pol: null, led: { mint: {}, flow: {} } });
 export function casHouseFix(h, day) {
   if (!casIsObj(h)) h = casHouseNew();
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
   h.budget = Math.floor(casNz(h.budget, NUM.casino.econ.budgetStart));
   h.sea = Math.floor(casNz(h.sea, 0));
   if (!casIsObj(h.act)) h.act = {}; // 活動次數（景氣指數）
+  if (!casIsObj(h.econ)) h.econ = { b: 0 }; // 最新的景氣（shared/casino_gdp.js，日報產生時寫）
+  h.econ.b = Math.max(-1, Math.min(1, casNz(h.econ.b)));
+  if (!casIsObj(h.pol)) h.pol = null; // 最近一次拚經濟成功抽到的政策 { idx, fx, day }
   h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
   casLedFix(h, ["mint", "flow"]);
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));

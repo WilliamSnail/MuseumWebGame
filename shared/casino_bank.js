@@ -11,6 +11,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
+import { casFxMul } from "./casino_gdp.js";
 import { CAS_BANK } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
@@ -59,12 +60,12 @@ export function casBankAccrue(w, house, day) {
   for (let i = first; i <= n; i++) {
     const d = cbkAddDays(B.day, i);
     // 活存：照前壹天結束時的餘額
-    const base = Math.min(B.save, C.saveCap), want = Math.floor(base * C.savePct / 100);
+    const base = Math.min(B.save, C.saveCap), want = Math.floor(base * C.savePct / 100 * casFxMul(house)); // 利率隨景氣 ±10%
     if (want > 0) { const got = cbkPay(house, want); if (got < want) broke = true; B.save += got; B.earned += got; out.int += got; }
     // 定存：到期日 ≤ 今天的放回活存
     const due = B.terms.filter(x => x.due <= d);
     for (const x of due) {
-      const want2 = Math.floor(x.amt * x.pct / 100), got = cbkPay(house, want2);
+      const want2 = Math.floor(x.amt * x.pct / 100 * casFxMul(house)), got = cbkPay(house, want2);
       if (got < want2) broke = true;
       B.save += x.amt + got; B.earned += got;
       out.back.push({ amt: x.amt, int: got, days: x.days });

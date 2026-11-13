@@ -7,6 +7,8 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casBookSumObj } from "./casino_book.js";
+import { CAS_FX_TEXT } from "./casino_gdp.js";
+import { CAS_ECON } from "./casino_text.js";
 
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
@@ -65,7 +67,13 @@ export function casReportView(doc) {
     const gl = [`今天的景氣：${x.label}（指數 ${x.b > 0 ? "＋" : x.b < 0 ? "－" : ""}${Math.abs(x.b).toFixed(2)}）。`];
     gl.push(`館內 GDP 平均每天 ${rpN(per)}。` + (x.g === null ? "資料還不夠 14 天，指數先維持原樣。" : `比前 7 天${x.g >= 0 ? "多" : "少"}了 ${Math.abs(x.g * 100).toFixed(1)}%。`));
     gl.push(`組成：消費 ${rpN(g.C)}、投資 ${rpN(g.I)}、政府支出 ${rpN(g.G)}、淨出口 ${rpN(g.NX)}（這段時間合計）。`);
-    if (x.active < NUM.casino.gdp.minPeople) gl.push("最近來的人太少，景氣先不算。");
+    if (x.active < NUM.casino.gdp.minPeople) gl.push("最近來的人太少，館內的景氣先不算。");
+    if (doc.ext && doc.ext.ok) gl.push(`外面世界的景氣：${x.bExt > 0.3 ? "比前幾季熱" : x.bExt < -0.3 ? "比前幾季冷" : "跟前幾季差不多"}（${doc.ext.quarter}）。`);
+    else gl.push("外面世界的景氣：還沒有消息。");
+    const K = NUM.casino.gdp, mul = 1 + K.fxPct / 100 * x.b, pct = v => `${v >= 1 ? "×" : "×"}${v.toFixed(2)}`;
+    gl.push(`景氣的影響：拚經濟撥款 ${pct(mul)}、門票 ${pct(mul)}、存款利率 ${pct(mul)}。`);
+    const pol = doc.snap && doc.snap.pol;
+    if (pol && pol.fx && CAS_FX_TEXT[pol.fx] && doc.day && pol.day && rpDays(pol.day, doc.day) >= 0 && rpDays(pol.day, doc.day) <= K.polDays) gl.push(`有效的政策：「${CAS_ECON.policies[pol.idx] || "某項政策"}」，${CAS_FX_TEXT[pol.fx]}（${pol.day.slice(5)} 抽到，持續到隔天）。`);
     secs.push({ t: "景氣（館內 GDP）", lines: gl });
   }
   secs.push({ t: "對帳", lines: [CAS_REPORT.gag] });
