@@ -41,6 +41,13 @@ export function casReportView(doc) {
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
   const flow = rpList(d.flow, CAS_REPORT.flow, true);
   if (flow.length) hl.push("進出：", ...flow);
+  // 莊家健康度：從玩家流進來的（21 點、餐車、借款還回）對流出給玩家的（大禮包、委託、地下撿、借出、拚經濟油水、利息）
+  const fl = d.flow || {}, inn = Math.max(0, fl.bj || 0) + (fl.food || 0) + (fl.loanBack || 0), outg = -((fl.pack || 0) + (fl.job || 0) + (fl.find || 0) + (fl.loan || 0) + (fl.econLoot || 0) + (fl.bankInt || 0));
+  if (!first && outg > 0) {
+    const ratio = inn / outg;
+    hl.push(`莊家健康度：玩家輸給莊家 ${rpN(inn)}，莊家發給玩家 ${rpN(outg)}（比值 ${ratio.toFixed(2)}，${ratio >= 1 ? "健康" : ratio >= 0.6 ? "吃緊" : "失血"}）。`);
+    if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
+  }
   hl.push(`${s.wallets} 位館友的錢包合計 ${rpN(s.chips)} 籌碼。`);
   secs.push({ t: "莊家", lines: hl });
   // 預算池

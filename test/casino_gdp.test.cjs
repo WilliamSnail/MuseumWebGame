@@ -4,7 +4,7 @@ const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { G.setRng(G.mulberry32(9)); fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } finally { G.setRng(null); } };
-const D = "2026-11-14";
+const D = "2026-11-14", D0 = D;
 const plus = (d, n) => { const [y, m, x] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, x + n)).toISOString().slice(0, 10); };
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${b}`);
 
@@ -124,6 +124,32 @@ T("日報景氣段：外面世界的景氣、景氣的影響、有效的政策",
   const sec = G.casReportView({ day: D, at: Date.UTC(2026, 10, 14), snap, diff, gdp: G.casGdpOf(diff), index: idx, ext: { ok: true, quarter: "2026Q3" } }).secs.find(s => s.t.includes("景氣"));
   const text = sec.lines.join("|");
   assert.ok(text.includes("外面世界的景氣：比前幾季熱") && text.includes("景氣的影響：拚經濟撥款") && text.includes("有效的政策") && text.includes("門票多一成"), text);
+});
+T("莊家缺錢保護：莊家少於 low 免費大禮包只發 lowPacks 包、破產只發 brokePacks 包；買來的券不受影響；錢回來就恢復", G => {
+  const H = G.NUM.casino.health, D = G.NUM.casino.dailyPacks, mk = bank => { const w = G.casWalletFix(G.casWalletNew(), D0), house = G.casHouseFix(G.casHouseNew(), D0).house; house.bankroll = bank; return { w, house }; };
+  const open = (s, n = 2) => G.casOpenPacks(s.w, s.house, n, D0);
+  assert.strictEqual(G.casPackCut(null), 0); assert.strictEqual(G.casPackCut(mk(H.low).house), 0);
+  let s = mk(H.low * 2); let r = open(s); assert.ok(r.ok && r.packs.length === D, "健康：全發");
+  s = mk(H.low - 1); r = open(s); assert.ok(r.ok && r.packs.length === H.lowPacks, "缺錢：只發 lowPacks 包"); assert.ok(!open(s).ok); assert.ok(open(s).reason.includes("莊家現在缺錢"));
+  s = mk(0); r = open(s); assert.strictEqual(r.ok, H.brokePacks > 0, "破產：brokePacks 包");
+  s = mk(-5); s.w.tickets = 3; r = open(s, 2); assert.ok(r.ok && r.packs.length === 2 && s.w.tickets === 1 && s.w.pk.left === D, "破產時買來的券還能開，免費的不動");
+  s = mk(H.low - 1); open(s); s.house.bankroll = H.low * 2; r = open(s); assert.ok(r.ok && r.packs.length === D - H.lowPacks, "錢回來就恢復（今天剩下的）");
+});
+
+T("預算池硬下限：低到 budgetFloor，拚經濟成功完全不撥款（失敗照舊）；高一點只是凍結", G => {
+  const C = G.NUM.casino.econ, seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; }, atR = r => (r + 0.5) / (C.rMax + 1);
+  const mk = b => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; house.budget = b; return { w, house }; };
+  let s = mk(C.budgetFloor); let r = G.casEconPlay(s.w, s.house, D, seq(atR(50), 0.3, 0.99));
+  assert.ok(r.win && r.amount === 0 && r.dead && s.house.budget === C.budgetFloor && s.house.bankroll === G.NUM.casino.houseStart); assert.ok(r.lines.some(l => l.includes("見底")));
+  s = mk(C.budgetFloor + 1); r = G.casEconPlay(s.w, s.house, D, seq(atR(50), 0.3, 0.99)); assert.ok(r.amount > 0 && r.frozen && !r.dead);
+  s = mk(C.budgetFloor); r = G.casEconPlay(s.w, s.house, D, seq(atR(10), 0.99)); assert.ok(!r.win && s.house.sea > 0, "失敗不受影響");
+});
+T("日報的莊家健康度：流入／流出比值，低於 0.6 寫失血；第一份不寫", G => {
+  const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house, a = G.casBookSnap([w], house, 0, D);
+  G.casHouseMove(house, "pack", -1000); G.casHouseMove(house, "bj", 300);
+  const b = G.casBookSnap([w], house, 0, plus(D, 1)), view = G.casReportView({ day: plus(D, 1), at: Date.UTC(2026, 10, 15), snap: b, diff: G.casBookDiff(a, b) });
+  const text = view.secs[0].lines.join("|"); assert.ok(text.includes("比值 0.30") && text.includes("失血") && text.includes("免費大禮包每天少發"), text);
+  const first = G.casReportView({ day: D, at: 0, snap: b, diff: G.casBookDiff(null, b) }); assert.ok(!first.secs[0].lines.join("").includes("健康度"));
 });
 console.log(`館內 GDP 和景氣指數：${pass} 過，${fail} 沒過`);
 process.exit(fail ? 1 : 0);
