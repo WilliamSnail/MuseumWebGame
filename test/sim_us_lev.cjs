@@ -1,6 +1,6 @@
-// 美股槓桿、放空、當沖的錢算一次（11-14，數值平衡；規劃 2.8l）
+// 美股槓桿、放空、當沖的錢算一次（11-14，數值平衡；規劃 2.8m）
 // node test/sim_us_lev.cjs [資料夾]     資料夾裡要有 <代號>_1m.json、<代號>_5m.json（Yahoo chart：interval=1m&range=7d、interval=5m&range=60d）
-//   預設資料夾 .claude/scratch/usdata（不進 repo；抓法見 2.8l：query1.finance.yahoo.com/v8/finance/chart/<代號>?interval=..&range=..，User-Agent Mozilla/5.0）
+//   預設資料夾 .claude/scratch/usdata（不進 repo；抓法見 2.8m：query1.finance.yahoo.com/v8/finance/chart/<代號>?interval=..&range=..，User-Agent Mozilla/5.0）
 // 假設：遊戲價 ＝ 倍數 × 真實價、每分鐘更新（設計 a）；所以只用報酬率，倍數不影響。外面世界（池子或 mint/burn）當對手盤：玩家賺的錢從那邊來。
 // 規則照 NUM.casino.stockLev：手續費開平各 0.5%（算部位）、做多利息 0.15%（借的部分）、放空借券 0.3%、保證金剩 50% 強平、一天 3 筆、部位上限 2,000 萬、淨賺上限 1,000 萬。
 const fs = require("fs"), path = require("path");
