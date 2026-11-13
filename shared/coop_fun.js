@@ -383,7 +383,7 @@ export function coopSaveReport(P, report) {
 export function coopKnock(run, id, choice) {
   const m = coopMember(run, id), room = coopRoom(run);
   if (run.phase !== "vote" || !room) return { ok: false, reason: "現在不能敲" };
-  if (!m || !m.ghost || m.out) return { ok: false, reason: "只有幽靈能敲" };
+  if (!m || !m.ghost || m.out) return { ok: false, reason: "只有名牌空白的人能敲" };
   if (!Number.isInteger(choice) || !room.choices[choice]) return { ok: false, reason: "沒有這個選項" };
   run.knocks = run.knocks || {};
   if (run.knocks[id] !== undefined) return { ok: false, reason: "這壹間敲過了" };
@@ -448,7 +448,7 @@ export function coopSayBuild(run, id, data) {
   const m = coopMember(run, id);
   if (!m || m.out) return { ok: false, reason: "你不在這壹趟裡" };
   if (run.ended) return { ok: false, reason: "這壹趟已經結束了" };
-  if (m.ghost) return { ok: false, reason: "幽靈不能說話" };
+  if (m.ghost) return { ok: false, reason: "名牌空白的人不能說話" };
   const d = data || {};
   if (d.text !== undefined) { // 自由打字：清過才算；只當資料
     if (typeof d.text !== "string") return { ok: false, reason: "要打字" };

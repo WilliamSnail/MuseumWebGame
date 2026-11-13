@@ -68,6 +68,23 @@ T("送到招領處：送的人 +靈感、記成看過；原本的館友收到壹
   assert.strictEqual(G.lostReturnStep({ card: c, me: { uid: "u3", nick: "小美" }, finderP: free, today: D }).insp, 0, "自由模式不給靈感");
 });
 
+T("防刷：壹個館友最多 perOwner 張（最新的）；送的人壹天最多 returnsDay 次拿靈感，之後信照寄", G => {
+  const L = G.NUM.lost, { S, P } = saveOf(G);
+  const base = P.history[0];
+  P.history = Array.from({ length: 6 }, (_, i) => Object.assign({}, base, { n: 20 - i })); // 新的在前面
+  const cards = G.lostCards(S, "u1", "Jerry", D);
+  assert.strictEqual(cards.length, L.perOwner);
+  assert.strictEqual(cards[0].n, 20, "留最新的");
+  const me = G.newProfile("challenge"); me.job = G.JOBS[1].id; const i0 = me.insp;
+  const many = Array.from({ length: L.returnsDay + 2 }, (_, i) => Object.assign({}, cards[0], { id: "x" + i }));
+  const rs = many.map(c => G.lostReturnStep({ card: c, me: { uid: "u2", nick: "小華" }, finderP: me, today: D }));
+  assert.ok(rs.every(r => r.ok && r.mail.gift.mood === L.ownerMood), "都送得出去、信照寄");
+  assert.strictEqual(me.insp, i0 + L.finderInsp * L.returnsDay, "靈感只給 returnsDay 次");
+  assert.strictEqual(rs[rs.length - 1].insp, 0);
+  const next = G.lostReturnStep({ card: Object.assign({}, cards[0], { id: "y" }), me: { uid: "u2", nick: "小華" }, finderP: me, today: G.addDays(D, 1) });
+  assert.strictEqual(next.insp, L.finderInsp, "隔天重新算");
+});
+
 T("畫面上的字用壹不用一", G => {
   Object.values(G.LOST_TEXT).forEach(s => assert.ok(!String(s).includes("一"), s));
 });

@@ -765,7 +765,7 @@ function memberTable(v) {
     if (f.sanGain) parts.push(`理智 +${f.sanGain}`);
     if (f.insp) parts.push(`+${f.insp} 靈感`);
     if (f.myth) parts.push(`神話 +${f.myth}`);
-    return h("div", { class: "cx-tr" + (m.id === v.me ? " me" : "") + (m.ghost ? " ghost" : "") }, h("b", null, m.name), h("span", null, parts.join("，") || "沒事"), h("span", { class: "cx-san" }, m.ghost ? "幽靈" : `理智 ${m.san}`));
+    return h("div", { class: "cx-tr" + (m.id === v.me ? " me" : "") + (m.ghost ? " ghost" : "") }, h("b", null, m.name), h("span", null, parts.join("，") || "沒事"), h("span", { class: "cx-san" }, m.ghost ? "名牌空白" : `理智 ${m.san}`));
   }));
 }
 function resultCard(v, me) {
@@ -851,7 +851,7 @@ function sideBox(v) {
   const meId = v.me;
   return h("div", { class: "cx-mates" }, v.members.filter(m => m.out !== "left").map(m => {
     const off = m.id !== meId && offline(m.id), pct = Math.round(100 * Math.max(0, m.san) / Math.max(1, m.max || 99));
-    const tags = [m.id === v.leader && v.phase === "vote" ? "領隊" : null, m.guard ? "留守" : null, m.ghost ? "幽靈" : null, m.out === "ghost" ? "回到地面了" : null, off ? "不在線" : null].filter(Boolean);
+    const tags = [m.id === v.leader && v.phase === "vote" ? "領隊" : null, m.guard ? "留守" : null, m.ghost ? "名牌空白" : null, m.out === "ghost" ? "回到地面了" : null, off ? "不在線" : null].filter(Boolean);
     const did = v.phase === "vote" || v.phase === "floorDone" ? v.votes && v.votes[m.id] !== undefined : v.phase === "result" ? v.acks && v.acks[m.id] : false;
     return h("div", { class: "cx-mate" + (m.id === meId ? " me" : "") + (off ? " off" : "") + (m.ghost ? " ghost" : "") },
       h("div", { class: "cx-mate-top" }, h("b", null, m.name), did ? h("i", { class: "cx-did", "aria-label": "好了" }, "✓") : null),

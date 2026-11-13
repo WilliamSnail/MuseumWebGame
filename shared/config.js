@@ -185,7 +185,7 @@ export const NUM = {
   fusionPerDay: 3,          // 一天可以融合幾次（升級「第二座融合爐」再 +3）
   fusionSan: "1/1D4",       // 融合要做的理智檢定（原本 0/1D4）
   inherit: 45,              // 每一類從爸爸、媽媽各遺傳的機率（%），剩下的是突變
-  lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3" }, // 招領（shared/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定
+  lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3", perOwner: 2, returnsDay: 2 }, // 招領（shared/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定；防刷（翊文：「不能讓玩家用一直歸零來刷」）：壹個館友最多 perOwner 張、送的人壹天最多 returnsDay 次拿靈感
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
   blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
   fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）

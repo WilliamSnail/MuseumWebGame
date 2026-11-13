@@ -34,6 +34,7 @@ export const LOST_TEXT = {
   where: "最後在 B{floor}。",
   whereHall: "最後在館裡。",
   retLine: "你把號碼牌送到招領處。櫃台的人在本子上補了壹行，沒有抬頭。（+{insp} 靈感）",
+  retFull: "你把號碼牌送到招領處。櫃台的人在本子上補了壹行。（今天送回去的靈感拿滿了）",
   mailTitle: "招領處：有人送回了壹張號碼牌",
   mailNote: "{finder} 在地下撿到你以前的參觀者{name}（第 {n} 位）留下的號碼牌，送到招領處了。登記簿上那壹行，終於有人看過。",
   self: "這是你自己館裡的，不能送。",
@@ -60,7 +61,8 @@ export function lostCards(save, uid, nick, today) {
       id: lostId(uid, +x.n), owner: uid, ownerNick: String(nick || "館友").slice(0, 12), n: +x.n,
       name: String(x.name || "").slice(0, 12), job: x.job ? String((jobInfo(x.job) || {}).name || "").slice(0, 12) : "",
       floor: lostFloor(x.where, x.deepest), made: Number.isFinite(+x.madeThis) ? +x.madeThis : null, d: x.d,
-    }));
+    }))
+    .slice(0, L.perOwner); // 壹個館友最多 perOwner 張（最新的）：故意壹直歸零也不會多出招領單（翊文 11-13：「不能讓玩家用一直歸零來刷」）
 }
 // 這張招領單現在還能不能遇到：不是自己的、還在 days 天內、還沒送回去、這位參觀者還沒看過
 export function lostOpen(c, me, today, seen) {
@@ -97,13 +99,16 @@ export function lostReturnStep(o) {
   if (c.back) return { ok: false, reason: LOST_TEXT.done };
   if (c.d < addDays(o.today, -(L.days - 1))) return { ok: false, reason: LOST_TEXT.old };
   const P = o.finderP, free = !P || isFree(P);
-  const insp = free ? 0 : L.finderInsp;
-  if (P && insp) P.insp = (P.insp || 0) + insp;
+  // 送的人壹天最多拿 returnsDay 次靈感（之後還是可以送，信照寄，只是不給靈感）。P.lostDay ＝ { day, n }
+  if (P && (!P.lostDay || P.lostDay.day !== o.today)) P.lostDay = { day: o.today, n: 0 };
+  const capped = !free && P.lostDay.n >= L.returnsDay;
+  const insp = free || capped ? 0 : L.finderInsp;
+  if (P && insp) { P.insp = (P.insp || 0) + insp; P.lostDay.n++; }
   if (P) lostMarkSeen(P, c.id, o.today);
   const mail = {
     id: `lost-${c.id}`, from: "招領處", title: LOST_TEXT.mailTitle,
     note: lostFill(LOST_TEXT.mailNote, { finder: String(o.me.nick || "館友").slice(0, 12), name: c.name ? `「${c.name}」` : "", n: c.n }),
     gift: { insp: 0, mood: L.ownerMood }, sent: o.today, expire: addDays(o.today, o.mailDays || 30), claimed: false,
   };
-  return { ok: true, insp, mail, line: lostFill(LOST_TEXT.retLine, { insp }) };
+  return { ok: true, insp, mail, line: capped ? LOST_TEXT.retFull : lostFill(LOST_TEXT.retLine, { insp }) };
 }
