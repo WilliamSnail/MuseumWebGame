@@ -30,6 +30,7 @@ import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/casino_book.js";
 import { casReportView } from "./shared/casino_report.js";
+import { casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
@@ -266,9 +267,13 @@ export async function casReport() {
   let s = await ref.get();
   if (!s.exists) {
     const snap = await reportSnap(day);
-    const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(1).get();
-    const prev = prevQ.empty ? null : JSON.parse(prevQ.docs[0].data().data);
+    const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(14).get();
+    const olds = prevQ.docs.map(d => JSON.parse(d.data().data)).reverse(); // 由舊到新（最多 14 份，算景氣指數的成長率用）
+    const prev = olds.length ? olds[olds.length - 1] : null;
     const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: prev ? prev.opening : casBookOpening(snap) };
+    doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino_gdp.js）
+    const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
+    doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7);
     doc.gap = casBookGap(snap, doc.opening);
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
     try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); } catch (e) { /* 別人先建了：讀他的 */ }

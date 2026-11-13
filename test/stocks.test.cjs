@@ -70,4 +70,10 @@ T("repo 裡的 content/stocks/daily.json 格式沒問題", G => {
   const d = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "content", "stocks", "daily.json"), "utf8"));
   assert.deepStrictEqual(F.check(d), []);
 });
+T("寫進資料庫的文件：只有 updated 和 days、格式壞的不寫", G => {
+  const P = require("../tools/stocks_publish.cjs");
+  const d = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "content", "stocks", "daily.json"), "utf8"));
+  const doc = P.buildDoc(Object.assign({ extra: 1 }, d)); assert.strictEqual(Object.keys(doc).sort().join(), "days,updated");
+  assert.throws(() => P.buildDoc({ days: { "2026-11-12": { nope: 1 } } })); assert.throws(() => P.buildDoc({ days: {} })); assert.throws(() => P.buildDoc(null));
+});
 console.log(`${pass} passed, ${fail} failed（館外股票）`); process.exit(fail ? 1 : 0);

@@ -23,6 +23,12 @@ export function casLedFix(x, keys) {
 }
 const bkAdd = (obj, src, n) => { obj[src] = bkNz(obj[src]) + n; };
 
+// 活動次數（景氣指數 shared/casino_gdp.js 要用，不是錢）：莊家的文件裡累計，每天快照相減
+export function casCount(house, key, n = 1) {
+  if (!bkBox(house.act)) house.act = {};
+  house.act[key] = bkNz(house.act[key]) + bkNz(n);
+}
+
 // 預算池、館方帳憑空多 n（pool："budget"｜"museum"，門票這類館外進來的錢）
 export function casPoolMint(house, pool, src, n) {
   n = bkNz(n);
@@ -66,6 +72,7 @@ export function casHouseMint(house, src, n) {
 
 // 存在銀行的（跟 casino_bank.js 的 casBankHeld 壹樣；這個檔不 import 別的檔，所以自己算）
 const bkHeld = w => (bkBox(w.bank) ? bkNz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, x) => s + bkNz(x && x.amt), 0) : 0) : 0);
+const bkDaysBetween = (a, b) => { const f = s => { const [y, m, d] = String(s).split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); };
 const bkSumObj = o => Object.values(bkBox(o) ? o : {}).reduce((s, x) => s + bkNz(x), 0);
 export const casBookSumObj = bkSumObj;
 const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o : {})) bkAdd(into, k, bkNz(v)); };
@@ -74,17 +81,19 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 // 回傳快照：{ day, wallets: n 個錢包, chips 錢包籌碼總和, transit 在路上的, inplay, mint {來源}, burn {來源},
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
-  const s = { day: day || null, wallets: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {} } };
+  const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), mint: {}, flow: {}, act: {} } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
+    if (day && typeof w.seen === "string" && bkDaysBetween(w.seen, day) <= 6) s.active7++; // 過去 7 天（含今天）來過的人
     s.chips += bkNz(w.chips);
     s.transit += bkNz(w.loan && w.loan.toHouse);
     s.bank += bkHeld(w); // 存在 Yuga Bot 銀行的（活存＋定存，shared/casino_bank.js）：還是玩家的錢
     if (bkBox(w.led)) { bkMerge(s.mint, w.led.mint); bkMerge(s.burn, w.led.burn); }
   }
   if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); }
+  if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
 // 全館的錢（含莊家、預算池、海底）
@@ -105,7 +114,7 @@ const bkDiffObj = (a, b) => {
 };
 // 兩份快照相減（a 較早，b 較晚）＝這段時間的帳。a 沒有（第一天）就從 0 算
 export function casBookDiff(a, b) {
-  const z = { chips: 0, transit: 0, bank: 0, inplay: 0, wallets: 0, mint: {}, burn: {}, house: { bankroll: 0, budget: 0, sea: 0, mint: {}, flow: {} } };
+  const z = { chips: 0, transit: 0, bank: 0, inplay: 0, wallets: 0, mint: {}, burn: {}, house: { bankroll: 0, budget: 0, sea: 0, mint: {}, flow: {}, act: {} } };
   a = a || z;
   return {
     from: a.day || null, to: b.day || null,
@@ -118,6 +127,7 @@ export function casBookDiff(a, b) {
     museum: bkNz(b.house.museum) - bkNz(a.house.museum),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
     houseMint: bkDiffObj(a.house.mint, b.house.mint), flow: bkDiffObj(a.house.flow, b.house.flow),
+    act: bkDiffObj(a.house.act, b.house.act), active7: bkNz(b.active7),
   };
 }
 // 第一份快照當起點：開場總和 ＝ 現在的總和 － 憑空 ＋ 消失（開始記帳以前的籌碼不補記）

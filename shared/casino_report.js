@@ -60,6 +60,14 @@ export function casReportView(doc) {
   ml.push(mTotal ? `從館外進來 ${rpN(mTotal)} 籌碼：` : "這段時間沒有從館外進來的籌碼。", ...rpList(minted, mintNames, false));
   ml.push(bTotal ? `消失 ${rpN(bTotal)} 籌碼：` : "這段時間沒有消失的籌碼。", ...rpList(d.burn, CAS_REPORT.burn, false));
   secs.push({ t: "館外進來的、消失的", lines: ml });
+  if (doc.gdp && doc.index) {
+    const x = doc.index, g = doc.gdp, per = x.perDay;
+    const gl = [`今天的景氣：${x.label}（指數 ${x.b > 0 ? "＋" : x.b < 0 ? "－" : ""}${Math.abs(x.b).toFixed(2)}）。`];
+    gl.push(`館內 GDP 平均每天 ${rpN(per)}。` + (x.g === null ? "資料還不夠 14 天，指數先維持原樣。" : `比前 7 天${x.g >= 0 ? "多" : "少"}了 ${Math.abs(x.g * 100).toFixed(1)}%。`));
+    gl.push(`組成：消費 ${rpN(g.C)}、投資 ${rpN(g.I)}、政府支出 ${rpN(g.G)}、淨出口 ${rpN(g.NX)}（這段時間合計）。`);
+    if (x.active < NUM.casino.gdp.minPeople) gl.push("最近來的人太少，景氣先不算。");
+    secs.push({ t: "景氣（館內 GDP）", lines: gl });
+  }
   secs.push({ t: "對帳", lines: [CAS_REPORT.gag] });
   return { day: doc.day, at: doc.at, span, from: d.from, title: CAS_REPORT.title, intro: CAS_REPORT.intro, stamp: `結算到 ${rpTime(doc.at)}${d.from ? `（從 ${d.from.slice(5)} 算起）` : "（第壹份，從開始記帳算）"}`, secs };
 }

@@ -28,6 +28,26 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "lesson-close", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "修好：委託櫃台的上課視窗可以關了", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "上課的視窗右上角有 ×，最下面也有「關閉」；點外面或按 Esc 也能關。",
+      ]],
+    ],
+  },
+  {
+    id: "report-economy-index", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "Yuga Bot 日報多了「景氣」", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "賭場「拚經濟」頁籤最下面的 Yuga Bot 日報，多了壹段景氣：館內這壹週比上壹週熱鬧還是冷清，算出壹個景氣（好、普通、差）。",
+        "算的是大家做了多少事（拚經濟、餐車、21 點、參觀者、存款），不是輸贏的金額。",
+        "現在只是看，景氣還不影響任何數字。",
+      ]],
+    ],
+  },
+  {
     id: "bank-term-pick", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "定存先挑金額，不會壹按就全部存進去", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
