@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "lobby-portrait", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "手機直拿的大廳：導覽圖在中間，不用滑", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "手機直拿時，大廳的導覽圖放在畫面中間，上面是活動預告，下面是今天要做的前兩件事，不用再往下滑才看到導覽圖。",
+        "館友在線的橫幅、館友證和「手上有的」那幾塊，直拿先收起來了。",
+      ]],
+    ],
+  },
+  {
     id: "lobby-landscape", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機橫拿的大廳：導覽圖放回左邊", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
