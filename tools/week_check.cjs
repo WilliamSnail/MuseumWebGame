@@ -445,6 +445,20 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         });
       }
     }
+    // 館內股的 NPC 劇情日（規劃 2.8k、docs/館內NPC規劃.md）：每週最多一家店一天，那天 NPC 多去（數字在 NUM.casino.stockIn，內容不能自己寫大小）。可以不寫
+    if (wk.npc !== undefined) {
+      const nw = where + "/week.json.npc";
+      if (o.fallback) E(nw, "備用週不寫 npc（沒有日期）");
+      else if (!isObj(wk.npc) || Array.isArray(wk.npc)) E(nw, "要寫成 { store, date, name }");
+      else {
+        Object.keys(wk.npc).forEach(k => { if (!["store", "date", "name"].includes(k)) E(nw, `不認得「${k}」：只能寫 store、date、name；加成的大小是 NUM.casino.stockIn.npcBoostMin～npcBoostMax，內容不能自己寫`); });
+        if (!G.IN_STORES.includes(wk.npc.store)) E(nw, `store 要是 ${G.IN_STORES.join("、")} 其中一個（food 餐車、bj 牌桌、job 委託櫃台、cellar 地下收藏庫、craft 手作坊）`);
+        const mon = G.isoMonday(name);
+        if (typeof wk.npc.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(wk.npc.date) || wk.npc.date < mon || wk.npc.date > G.addDays(mon, 6)) E(nw, "date 要是這週內的日期（YYYY-MM-DD）");
+        text(nw + ".name", wk.npc.name, 24);
+        if (G.NUM.casino.stockIn.npcBoostMax > 0.33) E(nw, "NUM.casino.stockIn.npcBoostMax 不能超過 0.33（再大，預先進場就賺得到，規劃 2.8k）");
+      }
+    }
     // 賭場的每週收藏（決定 0042）：3～5 件、條件認得、字數、畫面用「壹」、禁用字、集滿的獎勵。可以不寫（舊的週照常）；每天的 casino 在 dayOk
     ctx.casIds = new Set();
     ctx.hasCasino = wk.casino !== undefined;
