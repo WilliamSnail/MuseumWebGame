@@ -54,8 +54,8 @@ export function fakeBankHall() {
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], state: "健康" },
     stocks: { list: stocks, fee: 0.005, halt: false, inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
-      lev: { max: 5, opensLeft: 2, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5 }, credit: { pts: 17, level: 3, next: 3, posLimit: 32000000, posUsed: 11000000 },
-      positions: [{ id: "p1", sid: "neon", side: "long", lev: 5, margin: 1000000, n: 21645, entry: 231, ratio: 0.82, liq: 208, pnl: -180000, stop: 224, take: 245 }, { id: "p2", sid: "handbrain", side: "short", lev: 3, margin: 2000000, n: 4800, entry: 1240, ratio: 0.64, liq: 1280, pnl: -320000, stop: null, take: 1150 }],
+      lev: { max: 5, byMarket: { in: 2, tw: 5, us: 0 }, usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 5, next: 3, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
+      positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
 },
@@ -308,34 +308,30 @@ function spotTrade(v, S, cur) {
 // ---------- 交易：槓桿、放空（當沖：當天平倉，23:30 前系統會自動平，台股 13:30 前） ----------
 function levTrade(v, S, cur) {
   const L = S.lev, f = form(), halt = stockHalt(S, cur);
-  const maxLev = Math.min(L.max, cur.maxLev || L.max), lev = Math.min(f.lev, maxLev), long = f.dir === "long";
+  const byM = L.byMarket && L.byMarket[cur.market], maxLev = byM != null ? byM : L.max, lev = Math.max(1, Math.min(f.lev, maxLev)), long = f.dir === "long"; // 各市場最高幾倍（美股 0＝不能開，寫 usWhy）
   const roomMargin = S.credit ? Math.max(0, Math.floor((S.credit.posLimit - S.credit.posUsed) / Math.max(1, lev))) : Infinity;
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
   const sum = h("div", { class: "bank-sum" });
   const calc = () => {
     const m = Math.min(f.margin || 0, maxMargin), pos = m * lev, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
-    const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev), stop = f.stopOn ? cur.price * (long ? 1 - f.stop / 100 : 1 + f.stop / 100) : null, take = f.takeOn ? cur.price * (long ? 1 + f.take / 100 : 1 - f.take / 100) : null;
+    const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     sum.replaceChildren(
       h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${lev}× 保證金 ${fmt(m)}`)),
       h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(L.fee)}，${long ? "利息 " + pctText(L.interest) : "借券費 " + pctText(L.borrow)}）`)),
-      h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fmt(Math.round(liq))}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)),
-      stop ? h("p", null, h("span", null, "停損"), h("b", null, fmt(Math.round(stop)))) : null, take ? h("p", null, h("span", null, "停利"), h("b", null, fmt(Math.round(take)))) : null);
+      h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fmt(Math.round(liq))}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)));
     return m;
   };
   const m0 = calc();
-  const open = () => bankDo("stock", { op: "open", id: cur.id, dir: f.dir, lev, margin: Math.min(f.margin, maxMargin), stop: f.stopOn ? f.stop : null, take: f.takeOn ? f.take : null });
-  const why = halt ? haltText(S, cur) : L.opensLeft < 1 ? "今天開倉的 3 筆用完了，明天再來。" : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
+  const open = () => bankDo("stock", { op: "open", id: cur.id, dir: f.dir, lev, margin: Math.min(f.margin, maxMargin) });
+  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : halt ? haltText(S, cur) : L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
   return [
     seg([["long", "做多 ▲"], ["short", "放空 ▼"]], f.dir, k => { f.dir = k; rerender(); }),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips([1, 2, 3, 5].filter(n => n <= maxLev), lev, n => { f.lev = n; rerender(); }, n => `${n}×`)),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "保證金"), chips([100000, 500000, 1000000, 5000000].filter(n => n <= maxMargin), Math.min(f.margin, maxMargin), n => { f.margin = n; rerender(); }, n => fmt(n / 10000) + " 萬")),
     sum,
-    h("div", { class: "bank-ocos" },
-      h("label", { class: "bank-check" }, h("input", { type: "checkbox", checked: f.stopOn ? "" : null, onChange: e => { f.stopOn = e.target.checked; rerender(); } }), "順便設停損"), f.stopOn ? numField("虧", f.stop, x => { f.stop = x || 0; calc(); }, { unit: "% 就賣", min: 0.1, step: 0.5 }) : null,
-      h("label", { class: "bank-check" }, h("input", { type: "checkbox", checked: f.takeOn ? "" : null, onChange: e => { f.takeOn = e.target.checked; rerender(); } }), "順便設停利"), f.takeOn ? numField("賺", f.take, x => { f.take = x || 0; calc(); }, { unit: "% 就賣", min: 0.1, step: 0.5 }) : null),
     h("div", { class: "bank-acts one" }, btn(`${long ? "開多單" : "開空單"} ${lev}×`, open, "primary big bank-btn gold", { disabled: why || m0 <= 0 ? true : null })),
     why ? h("p", { class: "bank-why" }, why) : null,
-    h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.kind === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
+    h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
 const KIND_TEXT = { buy: "限價買", sell: "限價賣", stop: "停損賣" };
@@ -366,15 +362,15 @@ function orderTrade(v, S, cur) {
 }
 // ---------- 我的部位、掛著的單 ----------
 function positionCard(S, p, list) {
-  const s = list.find(x => x.id === p.sid) || { name: p.sid, price: p.entry }, long = p.side === "long", force = S.lev ? S.lev.force : 0.5;
-  const danger = p.ratio <= 0.7, meter = Math.max(0, Math.min(1, (p.ratio - force) / (1 - force)));
+  const st = list.find(x => x.id === p.sid) || { name: p.name, price: p.now, market: p.market }, long = p.side === "long", force = S.lev ? S.lev.force : 0.5;
+  const price = p.now != null ? p.now : st.price, liq = p.liqPx != null ? p.liqPx : p.liq, danger = p.ratio <= 0.7, meter = Math.max(0, Math.min(1, (p.ratio - force) / (1 - force)));
   return h("div", { class: "bank-pos" + (danger ? " danger" : "") },
-    h("div", { class: "bank-pos-h" }, h("b", null, s.name), h("i", { class: "bank-dir " + (long ? "long" : "short") }, `${long ? "做多" : "放空"} ${p.lev}×`), h("span", { class: "bank-pos-pnl " + (p.pnl > 0 ? "up" : p.pnl < 0 ? "down" : "") }, `${p.pnl > 0 ? "▲ +" : p.pnl < 0 ? "▼ −" : ""}${fmt(Math.abs(p.pnl))}`)),
-    h("p", { class: "bank-pos-m" }, h("span", null, `保證金 ${fmt(p.margin)}`), h("span", null, `進場 ${fmt(p.entry)}`), h("span", null, `現價 ${fmt(s.price)}`), h("span", { class: "warn" }, `強平價 ${fmt(p.liq)}`)),
+    h("div", { class: "bank-pos-h" }, h("b", null, p.name || st.name), h("i", { class: "bank-dir " + (long ? "long" : "short") }, `${long ? "做多" : "放空"} ${p.lev}×`), h("span", { class: "bank-pos-pnl " + (p.pnl > 0 ? "up" : p.pnl < 0 ? "down" : "") }, `${p.pnl > 0 ? "▲ +" : p.pnl < 0 ? "▼ −" : ""}${fmt(Math.abs(p.pnl))}`)),
+    h("p", { class: "bank-pos-m" }, h("span", null, `保證金 ${fmt(p.margin)}`), h("span", null, `進場 ${fmt(p.entry)}`), h("span", null, `現價 ${fmt(price)}`), h("span", { class: "warn" }, `強平價 ${fmt(liq)}`)),
     h("div", { class: "bank-ratio", role: "img", "aria-label": `維持率 ${Math.round(p.ratio * 100)}%` }, h("i", { style: { width: meter * 100 + "%" } }), h("span", null, `維持率 ${Math.round(p.ratio * 100)}%`)),
     danger ? h("p", { class: "bank-why" }, `保證金快不夠了：剩 ${Math.round(force * 100)}% 就會被強制平倉。`) : null,
-    h("div", { class: "bank-pos-f" }, h("small", null, [p.stop ? `停損 ${fmt(p.stop)}` : null, p.take ? `停利 ${fmt(p.take)}` : null].filter(Boolean).join("　") || "沒設停損停利"),
-      btn("平倉", () => bankDo("stock", { op: "close", pid: p.id }), "small bank-btn gold", { disabled: stockHalt(S, s) ? true : null })));
+    h("div", { class: "bank-pos-f" }, h("small", null, `${p.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平${p.stop || p.take ? `　停損 ${p.stop ? fmt(p.stop) : "—"}・停利 ${p.take ? fmt(p.take) : "—"}` : ""}`),
+      btn("平倉", () => bankDo("stock", { op: "close", pid: p.id }), "small bank-btn gold", { disabled: stockHalt(S, st) ? true : null })));
 }
 function positionsPanel(S) {
   if (!S.lev) return null;
@@ -395,6 +391,7 @@ function markSeen(v, list) {
   const now = Date.now();
   if (now - (UI.bankSeenAt || 0) < 60000) return;
   UI.bankSeenAt = now; UI.bankFreshSnap = new Set(list.filter(x => x.fresh).map(x => x.id));
+  UI.bankFresh = 0; if (ADDONS.bankFresh) ADDONS.bankFresh(); // 看過了：導覽圖銀行的「新」清掉（回大廳時重畫）
   if (v.demo || !UI.bankFreshSnap.size) return;
   NET.call("casino", { act: "stock", op: "seen" }).then(r => { if (r && r.bankHall) UI.bankHall = bankHallView(r.bankHall); }).catch(() => {});
 }
@@ -404,7 +401,7 @@ function stockPane(v) {
   list.forEach(x => { if (x.market === "tw" || x.market === "in" || x.market === "us") x.session = twSess(S, x); });
   markSeen(v, list);
   const inShop = cur.market === "in"; // 館內股只有現股
-  const tabs = [["spot", "現股"]].concat(S.lev && !inShop ? [["lev", "槓桿・放空"]] : [], S.orders && !inShop ? [["order", "掛單"]] : []);
+  const tabs = [["spot", "現股"]].concat(S.lev ? [["lev", "槓桿・放空"]] : [], S.orders && !inShop ? [["order", "掛單"]] : []);
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
   return h("div", { class: "bank-cols stocks" },
     panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "股價", "今天", "持股"], stockRows(list, cur, S), "stocks")),
@@ -476,10 +473,10 @@ function side(v) {
 }
 // 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
 function creditPanel(c) {
-  const into = c.pts % 5;
-  return panel("信用", `${c.level} 級`, h("div", { class: "bank-meter", role: "img", "aria-label": `信用點 ${into}／5` }, h("i", { style: { width: into / 5 * 100 + "%" } })),
-    h("p", { class: "bank-meta sm" }, c.level >= 10 ? "已經是最高級。" : `再 ${5 - into} 點升 ${c.level + 1} 級。準時還款、定存到期都會加點。`),
-    h("p", { class: "bank-meta sm" }, `槓桿部位 ${fmt(Math.round(c.posUsed / 10000))} 萬／${fmt(Math.round(c.posLimit / 10000))} 萬`));
+  return panel("信用", `${c.level} 級${c.name ? "・" + c.name : ""}`,
+    h("p", { class: "bank-meta sm" }, c.next > 0 ? `再 ${c.next} 點升 ${c.level + 1} 級（信用點 ${c.pts}）。` : `已經是最高級（信用點 ${c.pts}）。`),
+    h("p", { class: "bank-meta sm" }, `槓桿最高 ${c.maxLev}×・部位 ${fmt(Math.round(c.posUsed / 10000))} 萬／${fmt(Math.round(c.posLimit / 10000))} 萬`),
+    c.why ? h("p", { class: "bank-hint" }, c.why) : null);
 }
 function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
   const list = v.stocks ? v.stocks.list : [];
