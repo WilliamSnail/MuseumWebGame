@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "fight-chips", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "手機打怪：小圓鈕寫上名字，第壹次點先看說明", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "打怪畫面底下那排小圓鈕（引開、鼓舞、分膽、安慰、帽子的技能），在手機橫拿時也寫上名字了。",
+        "手機上第壹次點某顆小圓鈕，會先在面板底下出壹行說明；再點同壹顆才真的用。電腦壹點就用，說明還是滑過去看。",
+      ]],
+    ],
+  },
+  {
     id: "fight-landscape", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機橫拿的打怪畫面重排", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
