@@ -387,7 +387,7 @@ export const NUM = {
     stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, haltFrom: 22, haltTo: 5,
       exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
       // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
-      order: { max: 10, perStock: 3, days: 3, cancelDay: 20 },
+      order: { max: 10, perStock: 3, days: 1, cancelDay: 20 }, // days：有效到下壹次價格變動（翊文 11-13：「應該每張單有效 1 天 跟真實的依樣」）
       // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低
       twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }] },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
