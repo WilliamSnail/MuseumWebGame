@@ -1,0 +1,61 @@
+{
+  "id": "c-cafe",
+  "name": "咖啡店老闆",
+  "kind": "client",
+  "note": "拉花只會拉佩佩。",
+  "story": "店裡壹共七張桌子，只有壹張從來沒有人坐。",
+  "likes": [
+    "food",
+    "craft",
+    "rainbow"
+  ],
+  "route": {
+    "food": 5,
+    "craft": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 700000,
+    "max": 400000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在拿鐵上拉出壹隻佩佩，說這是第壹百隻，數了壹下，只有九十九。",
+      "news": "咖啡店老闆數了壹遍拉花，少了壹隻。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-30",
+      "text": "他發現每天打烊時杯子都少壹個，卻找不到少的是哪壹個。",
+      "need": {
+        "metric": "commissions",
+        "n": 5
+      },
+      "news": "咖啡店老闆說，杯子總是少壹個。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-14",
+      "text": "他開始在每個杯底寫號碼，隔天，多出壹個沒有號碼的杯子。",
+      "need": {
+        "metric": "commissions",
+        "n": 10
+      },
+      "news": "咖啡店老闆的杯子多了壹個。",
+      "ties": [
+        "m-count"
+      ],
+      "route": {
+        "food": 4,
+        "cellar": 2,
+        "craft": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "v-mimi",
+  "name": "米米",
+  "kind": "visitor",
+  "story": "大學生，領到打工薪水那天才敢進餐車。",
+  "likes": [
+    "food",
+    "bj",
+    "joy"
+  ],
+  "route": {
+    "food": 5,
+    "bj": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 70000,
+    "max": 30000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她今天點了平常不敢點的那壹份，吃得很慢。",
+      "news": "米米在餐車點了平常不敢點的餐。"
+    }
+  ]
+}

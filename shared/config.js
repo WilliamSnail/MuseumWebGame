@@ -244,6 +244,28 @@ export const NUM = {
     giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
     callListMax: 10,        // 「請你去看展廳」的通知一次列幾則（今天、昨天沒看的）
   },
+  // 館內 NPC 的內容規則（11-14，docs/館內NPC規劃.md 步驟 3；內容在 content/npc/，檢查在 tools/npc_check.cjs）。這裡只放「內容能寫的範圍」，不碰股票、拍賣的程式。
+  //   kinds：visitor 旅客、client 委託人、trace 劇情角色（只留痕跡、不算人數、不出價）；places：去哪（hall 展廳、五家店 food/bj/job/cellar/craft、bank 銀行、auction 拍賣）；
+  //   likeThemes：展廳主題（HALL_THEME_BONUS 的 id）；likeRarity：畫的稀有度（尋常、少見、珍藏、孤品）；routeMax：route 每個地方的權重 0～routeMax。
+  //   tiers：預算分級（單位：籌碼）。perDay 壹天最多花多少、max 單筆最多（出價、買畫），都落在那一級的範圍內，而且 max ≤ perDay；每個 NPC 的 perDay 不能跟別人壹樣
+  //   （翊文：「每個 NPC 根據他是誰，可以拿的數目壹定不壹樣」）；數字取壹千的倍數。none 只給劇情角色（沒有錢）。全館壹天 NPC 買畫總額的上限在拍賣那壹步訂，不在這裡。
+  //   arcNeed：故事線要全館的進度才往下走（不看個別玩家）：commissions 全館累計完成這位委託人的委託幾次、hallVisits 全館累計參觀展廳幾人次，n 的上限。
+  npc: {
+    kinds: ["visitor", "client", "trace"],
+    places: ["hall", "food", "bj", "job", "cellar", "craft", "bank", "auction"],
+    likeThemes: ["legend", "angry", "tears", "russia8", "rainbow", "hats", "pillows", "joy", "flat", "failed"],
+    likeRarity: ["尋常", "少見", "珍藏", "孤品"],
+    routeMax: 10, likesMax: 5, arcMax: 6,
+    limits: { name: 12, note: 40, story: 60, arcText: 90, arcNews: 36 },
+    tiers: {
+      none: { label: "不帶錢", perDay: [0, 0], max: [0, 0] },
+      drifter: { label: "路人", perDay: [20000, 200000], max: [10000, 150000] },
+      modest: { label: "小資", perDay: [100000, 600000], max: [50000, 400000] },
+      comfortable: { label: "小康", perDay: [500000, 1500000], max: [300000, 1000000] },
+      collector: { label: "藏家", perDay: [1500000, 3000000], max: [1000000, 3000000] },
+    },
+    arcNeed: { commissions: 500, hallVisits: 5000 },
+  },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）

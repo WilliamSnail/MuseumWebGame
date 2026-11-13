@@ -1,0 +1,15 @@
+{
+  "id": "t-squat",
+  "name": "蹲著的先生",
+  "kind": "trace",
+  "ledger": "蹲著的先生",
+  "story": "只留下痕跡：瓜子殼、溫的椅墊。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

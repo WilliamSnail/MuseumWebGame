@@ -1,0 +1,15 @@
+{
+  "id": "t-extra",
+  "name": "多出來的那壹隻",
+  "kind": "trace",
+  "ledger": "多出來的那壹隻",
+  "story": "只在痕跡和別人的轉述裡被提到，不說話。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}
