@@ -100,6 +100,8 @@ export function casBookSnap(wallets, house, inplay, day) {
     s.bank += bkHeld(w); // 存在 Yuga Bot 銀行的（活存＋定存，shared/casino_bank.js）：還是玩家的錢
     if (bkBox(w.led)) { bkMerge(s.mint, w.led.mint); bkMerge(s.burn, w.led.burn); }
   }
+  // 館內股的 NPC（規劃 2.8k）：最近壹天每家店有幾位旅客，和劇情日那天的事。日報寫「昨天館外來了 N 位旅客」用
+  if (bkBox(house.sin) && bkBox(house.sin.npc)) { const ds = Object.keys(house.sin.npc).sort(), d = ds[ds.length - 1]; if (d) s.house.npcLast = { day: d, n: Object.assign({}, house.sin.npc[d]), ev: bkBox(house.sin.npcEv) && bkBox(house.sin.npcEv[d]) ? Object.assign({}, house.sin.npcEv[d]) : null }; }
   if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
