@@ -89,6 +89,7 @@ export { adminCheck, adminOverview } from "./admin.js";
 // ---------- Hamachi 賭場（決定 0040）：寫在 casino.js ----------
 export { casino } from "./casino.js";
 export { casinoTable } from "./casino_table.js";
+export { art } from "./art.js"; // 藝術市場：跟館方買賣每日特展的畫（11-14，shared/casino_art.js）
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
 export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./visit.js";
 export { lostReturn, lostSync } from "./lostfound.js"; // 招領（翊文 11-13，shared/lostfound.js）

@@ -14,7 +14,18 @@ T("導覽圖上的每間房都認得；名單和 art.js 的 PLAN 對得上", G =
   const keys = [...plan.matchAll(/\["([a-z]+)", \d+, \d+, \d+, \d+\]/g)].map(m => m[1]);
   assert.ok(keys.length >= 11);
   for (const k of keys) assert.strictEqual(G.mateSpot(k), k, k);
-  for (const k of G.MATE_ROOMS.filter(x => x !== "lobby")) assert.ok(keys.includes(k), k + " 不在 PLAN");
+  const lob = fs.readFileSync(require("path").join(__dirname, "..", "web/src/ui_lobby2.js"), "utf8");
+  const newKeys = [...lob.matchAll(/{ id: "([a-z]+)"/g)].map(m => m[1]);
+  // 新大廳（ui_lobby2.js）的房間不壹定在舊的平面圖（art.js 的 PLAN）裡，例如 11-14 加的銀行
+  for (const k of G.MATE_ROOMS.filter(x => x !== "lobby")) assert.ok(keys.includes(k) || newKeys.includes(k), k + " 兩張導覽圖都沒有");
+});
+T("大廳導覽圖上的每間房都要在 MATE_ROOMS（11-14：銀行廳漏掉，在那裡的館友整個不見）", G => {
+  const fs = require("fs");
+  const lob = fs.readFileSync(require("path").join(__dirname, "..", "web/src/ui_lobby2.js"), "utf8");
+  const rooms = [...lob.matchAll(/{ id: "([a-z]+)"/g)].map(m => m[1]);
+  assert.ok(rooms.length >= 10, "抓得到大廳的房間清單");
+  for (const r of rooms) assert.ok(G.mateSpot(r), `大廳點得進去的「${r}」不在 MATE_ROOMS，在那間房的館友會被丟掉`);
+  assert.strictEqual(G.matesByRoom([{ id: "1", nick: "小明", status: "online", room: "bank" }]).bank.length, 1, "在銀行的館友要算得到");
 });
 T("reveal 算手作坊、cellar:b2 算地下收藏庫、門口和設定放「在別處」", G => {
   assert.strictEqual(G.mateSpot("reveal"), "workshop");

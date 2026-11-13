@@ -27,6 +27,7 @@ import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
+import { artMarketOpen, artMarketRow, artMarketShelf } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
 // 節日接上每週劇情（11-09）：那一天是節日，週包的那天就帶著節日（名字、節日的話、藝術品），書和公告可以提到它
 setStoryHolidayOf(holidayOf);
@@ -578,9 +579,10 @@ export function storyShow(root) {
     h("p", null, icon("sparkle"), h("span", null, "第壹次看壹幅：", h("b", { class: "em good" }, `+${NUM.story.showInsp[0]}～+${NUM.story.showInsp[1]} 靈感`), `（要擲理智的比較多）。今日特展壹天最多拿 ${NUM.story.showInspDay} 靈感，今天拿了 ${S.showInsp[today] || 0}。`)),
     h("p", null, icon("hourglass"), h("span", null, "今日特展明天 05:00 換壹個主題。這週前幾天的畫收在下面：只能看，不給靈感，補做任務用。"))));
   if (activeQuirks(P).some(q => q.task === "calm")) root.append(quirkHereBox("calm")); // 怪癖的治法是「看壹幅不可怕的畫」（決定 0027）
-  const corridor = h("div", { class: "corridor show-corridor", tabindex: "0", "aria-label": "今日特展，可以左右滑動" }, show.works.map(w => workItem(W, w)));
+  artMarketOpen(); // 藝術市場：背景問一次報價，回來再把每幅畫下面的價格畫出來
+  const corridor = h("div", { class: "corridor show-corridor", tabindex: "0", "aria-label": "今日特展，可以左右滑動" }, show.works.map(w => h("div", { class: "show-cell" }, workItem(W, w), artMarketRow(w.id))));
   corridor.addEventListener("wheel", e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { corridor.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
-  root.append(corridor);
+  root.append(corridor, artMarketShelf());
   const review = weekReview(W);
   if (review.length) root.append(h("h2", { class: "show-review-h" }, W.dayNo >= 7 ? "本週回顧展" : "這週前幾天的畫"), h("p", { class: "hint" }, "這週前幾天的畫。只能看，不給靈感。"),
     h("div", { class: "corridor show-corridor small" }, review.map(w => workItem(W, w))));
