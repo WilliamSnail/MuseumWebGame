@@ -96,5 +96,13 @@ T("記帳快照：銀行裡的錢算在 bank，相減看得到", G => {
   const b = G.casBookSnap([s.w], s.house, 0, add(D1, 1));
   assert.strictEqual(G.casBookDiff(a, b).bank, -100000);
 });
+T("銀行廳的資料：現金、存款、借款、淨值；還沒做的給 null", G => {
+  const s = fresh(G); G.casBankPut(s.w, 300000); G.casBankTerm(s.w, 200000, 0, D1);
+  G.casBorrow(s.w, 100000, D1, false, null, s.house);
+  const v = G.casBankHall(s.w, D1), owe = v.loan.list.reduce((a, x) => a + x.owe, 0);
+  assert.strictEqual(v.cash, s.w.chips); assert.strictEqual(v.save.save, 300000); assert.strictEqual(v.save.terms.length, 1);
+  assert.strictEqual(v.net, s.w.chips + 300000 + 200000 - owe);
+  assert.ok(v.bonds === null && v.stocks === null && v.econ === null);
+});
 console.log(`casino_bank.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
