@@ -177,3 +177,87 @@
   .u2r .cm-board .note-card .nc-drop { font-size: .6875rem; border-width: 6px; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .u2r .cm-board .note-card { overflow-y: auto; scrollbar-width: none; } }
+
+/* ================================================================
+   我的展廳（11-13，第二個套骨架的廳；ui_screens2.js 的 SCREENS.hall）
+   中間：牆（主題名）＋展台（翊文生的 P-5 展台，拖過去的時候換發光的那個）；右邊側欄；最下面抽屜
+   ================================================================ */
+/* 標題列的頁籤（常設展、本週特展）：銅牌頁籤 P-4 */
+.u2r .seg.hall-tabs { display: flex; gap: 4px; padding: 0; background: none; border: 0; box-shadow: none; }
+.u2r .seg.hall-tabs .seg-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: #3A2410; font-weight: 700; box-shadow: none; border-radius: 0; }
+.u2r .seg.hall-tabs .seg-btn.on { border-image-source: url(/ui2/ui2-tab-2.webp); color: #2A1608; }
+/* 中間：深色的展示牆，框用打怪那套木框 */
+.hall-u2 .hall-stage { display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 8px 14px 6px; border: 22px solid transparent; border-image: url(/cellar2/ui-panel.webp) 64 fill / 22px stretch; }
+.hall-u2 .hall-wall { min-height: 0; flex: none; padding: 2px 0; }
+.hall-u2 .hall-wall .theme-name h2 { margin: 0; font-size: 1.15rem; }
+.hall-u2 .hall-wall .theme-name p, .hall-u2 .hall-wall .theme-hint { margin: 2px 0 0; font-size: .8125rem; }
+.hall-u2 .hall-room { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(min(var(--n, 6), 4), minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 4px 10px; padding: 0; align-items: end; }
+.hall-u2 .ped-slot { padding-top: 0; justify-content: flex-end; min-height: 0; }
+.hall-u2 .ped-art { width: min(110px, 12vh); height: min(110px, 12vh); margin-bottom: -18px; }
+.hall-u2 .ped-slot:not(.full) .ped-art { width: 70px; height: 70px; margin: 0 0 -8px; border-color: rgba(214, 178, 94, .45); }
+.hall-u2 .ped-block { width: min(150px, 100%); height: auto; aspect-ratio: 235 / 190; background: url(/ui2/ui2-ped-1.webp) center bottom / contain no-repeat; box-shadow: none; border-radius: 0; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .45)); }
+.hall-u2 .ped-slot.fx-drop-hover .ped-block, .hall-u2 .ped-slot:hover .ped-block { background-image: url(/ui2/ui2-ped-2.webp); box-shadow: none; }
+.hall-u2 .ped-label { margin-top: 2px; font-size: .75rem; line-height: 1.25; color: #F3E6C4; max-width: 100%; }
+.hall-u2 .ped-label b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hall-u2 .ped-label span { color: #CDB98C; font-size: .6875rem; }
+/* 側欄：主題清單收起來、參觀者留言、館友來過、館主名牌 */
+.hall-u2 .u2-side > * { margin: 0; }
+.hall-u2 .u2-side .hall-themes summary { cursor: pointer; font-weight: 700; color: #8E2A24; }
+.hall-u2 .u2-side .hall-themes[open] summary { margin-bottom: 6px; }
+.hall-u2 .u2-side .hall-themes .theme-guide { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+.hall-u2 .u2-side .visitors, .hall-u2 .u2-side .hall-guests, .hall-u2 .u2-side .hall-limited, .hall-u2 .u2-side .cx-hall, .hall-u2 .u2-side .cas-shelf { position: static; display: grid; gap: 6px; padding: 8px 12px; border: 14px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 14px stretch; background: none; color: #3A2A20; box-shadow: none; border-radius: 0; max-height: none; }
+.hall-u2 .u2-side .visitors h3, .hall-u2 .u2-side .hall-guests h3, .hall-u2 .u2-side .cx-hall h3 { margin: 0; font-size: .875rem; color: #8E2A24; }
+.hall-u2 .u2-side .visitor { margin: 0; padding: 4px 0; border: 0; border-top: 1px dashed rgba(122, 90, 42, .35); background: none; color: #3A2A20; font-size: .8125rem; }
+.hall-u2 .u2-side .visitor .sub { color: #7A5A2A; font-size: .72rem; }
+.hall-u2 .u2-side .visitors .visitor:nth-of-type(n+4) { display: none; } /* 只放最近三則 */
+
+@media (max-width: 760px) {
+  .hall-u2 > .room-head .seg.hall-tabs .seg-btn { min-height: 34px; padding: 0 8px; font-size: .78rem; }
+  .hall-u2 .hall-room { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hall-u2 .hall-stage { border-width: 14px; padding: 4px 6px; }
+  .hall-u2 .ped-art { width: 64px; height: 64px; margin-bottom: -12px; }
+  .hall-u2 .ped-slot:not(.full) .ped-art { width: 44px; height: 44px; }
+  .hall-u2 .ped-label { font-size: .6875rem; }
+  .hall-u2 .ped-label span { display: none; }
+  /* 手機：側欄只留主題那壹條，其他的收起來（點主題那條打開） */
+  .hall-u2 .u2-side { grid-template-columns: minmax(0, 1fr); }
+  .hall-u2 .u2-side > :not(.hall-themes) { display: none; }
+  .hall-u2 .u2-side .hall-themes { border-width: 10px; padding: 2px 8px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .hall-u2 > .u2-main { grid-template-columns: minmax(0, 1fr) 200px; }
+  .hall-u2 .hall-wall .theme-name p, .hall-u2 .hall-wall .theme-hint { display: none; }
+  .hall-u2 .hall-room { grid-template-columns: repeat(min(var(--n, 6), 6), minmax(0, 1fr)); }
+  .hall-u2 .ped-art { width: 54px; height: 54px; }
+  .hall-u2 .u2-side > :not(.hall-themes) { display: grid; }
+}
+/* 電腦：展台排壹排（寬度夠），高度給展台 */
+@media (min-width: 761px) {
+  .hall-u2 .hall-room { grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); grid-auto-rows: auto; align-content: end; overflow: visible; }
+  .hall-u2 .hall-stage { justify-content: space-between; overflow: hidden; }
+  .hall-u2 .ped-art { width: min(100px, 13vh); height: min(100px, 13vh); }
+  .hall-u2 .ts-panel { margin: 0; padding: 4px 10px; font-size: .8125rem; }
+}
+@media (max-width: 760px) {
+  /* 手機：牆上的說明和主題展只留壹行，展台要有高度 */
+  .hall-u2 .hall-wall .theme-name p, .hall-u2 .hall-wall .theme-hint { font-size: .72rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hall-u2 .ts-panel { flex: none; max-height: 2.6em; overflow: hidden; margin: 0; padding: 2px 8px; font-size: .72rem; }
+  .hall-u2 .hall-room { grid-auto-rows: auto; align-content: space-evenly; }
+}
+@media (max-width: 760px) {
+  .hall-u2 .hall-room { display: flex; align-items: flex-end; gap: 6px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; padding-bottom: 4px; }
+  .hall-u2 .hall-room .ped-slot { flex: 0 0 31%; scroll-snap-align: start; }
+  .hall-u2 .ped-art { width: 74px; height: 74px; }
+}
+@media (max-width: 760px) { .hall-u2 .ped-art { width: 62px; height: 62px; margin-bottom: -10px; } .hall-u2 .hall-room { padding-top: 10px; } }
+@media (max-height: 500px) and (orientation: landscape) {
+  .hall-u2 .hall-wall, .hall-u2 .ts-panel { display: none; }
+  .hall-u2 .hall-stage { border-width: 12px; padding: 2px 6px; }
+  .hall-u2 .hall-room { flex: 1 1 auto; padding-top: 4px; }
+  .hall-u2 .hall-room .ped-slot { flex: 0 0 22%; }
+  .hall-u2 .ped-art { width: 46px; height: 46px; margin-bottom: -8px; }
+  .hall-u2 .ped-label { font-size: .625rem; }
+  .hall-u2 > .room-head .seg.hall-tabs .seg-btn { min-height: 28px; padding: 0 6px; font-size: .6875rem; border-width: 6px; }
+  .hall-u2 > .room-head .seg.hall-tabs .seg-btn .ic, .hall-u2 > .room-head .seg.hall-tabs .seg-btn svg { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) { .hall-u2 .ped-block { width: 64px; } .hall-u2 .ped-label b { font-size: .625rem; } }
