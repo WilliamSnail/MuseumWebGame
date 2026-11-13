@@ -1,5 +1,5 @@
 // 股票槓桿、放空、當沖、信用等級（11-14，規劃 2.8b、2.8j）：node test/casino_stock_lev.test.cjs（npm test 也會跑）
-// 保證金算術、強平價、盤中檢查（含跳空穿過）、收盤自動平倉、放空損益、各種上限、信用等級、美股擋掉、館內股（莊家）和台股（外面世界）兩種對手盤的帳都對得上。
+// 保證金算術、強平價、盤中檢查（含跳空穿過）、收盤自動平倉、放空損益、各種上限、信用等級、館內股（莊家）和台股（外面世界）兩種對手盤的帳都對得上。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -11,7 +11,7 @@ const fresh = (G, chips = 500000000, bank = 500000000) => { const h = G.casHouse
 const snap = s => s.G.casBookSnap([s.w], s.h, 0, null);
 // 假的價格來源：P.px 現價、P.idx 現在第幾個價、P.open、P.ser[id] 整天的價（idx ＝ 陣列的位置）、P.close
 const fakeSrc = P => ({
-  now: id => ({ px: P.px[id], idx: P.idx, open: P.open !== false }),
+  now: id => ({ px: P.px[id], idx: P.idx, open: P.open !== false, lag: P.lag && P.lag[id] != null ? P.lag[id] : null, stale: !!(P.stale && P.stale[id]) }),
   path: (id, d, from) => (P.ser && P.ser[id] && d === P.day ? P.ser[id].slice(from + 1, (P.upto != null ? P.upto : P.idx) + 1) : []),
   close: (id, d) => (P.close && d === P.close.day ? P.close[id] : null),
 });
@@ -19,9 +19,9 @@ const IN = "food", TW = "handbrain", US = "greeneye";
 const pos = (G, o) => Object.assign({ no: 1, id: IN, mk: "in", side: "long", lev: 5, qty: 100, entry: 1000, notional: 100000, margin: 20000, fee: 0, day: D0, at: 0, chk: 0, px: 1000 }, o);
 const J = JSON.stringify;
 
-T("NUM.casino.stockLev：5 倍、強平 50%、利息 0.15%、借券 0.3%、壹天 3 筆、15 分鐘、部位 2,000 萬、淨賺 1,000 萬、美股不開", G => {
+T("NUM.casino.stockLev：5 倍、強平 50%、利息 0.15%、借券 0.3%、壹天 3 筆、15 分鐘、部位 2,000 萬、淨賺 1,000 萬、美股同台股 5 倍、行情落後 3 分鐘暫停新開", G => {
   const C = G.NUM.casino.stockLev;
-  assert.strictEqual(C.maxLev.in, 5); assert.strictEqual(C.maxLev.tw, 5); assert.strictEqual(C.maxLev.us, 0);
+  assert.strictEqual(C.maxLev.in, 5); assert.strictEqual(C.maxLev.tw, 5); assert.strictEqual(C.maxLev.us, 5); assert.strictEqual(C.maxLagMin, 3);
   assert.strictEqual(C.forcePct, 50); assert.strictEqual(C.interestPct, 0.15); assert.strictEqual(C.borrowPct, 0.3);
   assert.strictEqual(C.opensDay, 3); assert.strictEqual(C.coolMin, 15); assert.strictEqual(C.posLimit, 20000000); assert.strictEqual(C.profitCap, 10000000);
   assert.strictEqual(C.houseExposePct, 20); assert.strictEqual(C.houseFloor, 3000000); assert.strictEqual(G.NUM.casino.stock.feePct, 0.5);
@@ -235,13 +235,36 @@ T("莊家這邊的上限：館內股槓桿＋放空部位 ≤ max(莊家的錢 �
   const w2 = fresh(G, 500000000, 0); assert.ok(G.casLevOpen(w2.w, w2.h, { id: TW, side: "long", lev: 5, qty: 1 }, D0, at(D0, 10), fakeSrc({ px: { [TW]: 100000 }, idx: 0 })).ok, "台股對手是外面世界，莊家沒錢也可以");
 });
 
-T("美股現在不開放槓桿和放空，講清楚原因；市場判斷", G => {
-  const s = fresh(G), r = G.casLevOpen(s.w, s.h, { id: US, side: "long", lev: 2, qty: 1 }, D0, at(D0, 22, 40), fakeSrc({ px: { [US]: 66500 }, idx: 5 }));
-  assert.ok(!r.ok); assert.ok(r.reason.includes("美股") && r.reason.includes("還沒開放") && r.reason.includes("觀察"), r.reason);
-  const r2 = G.casLevOpen(s.w, s.h, { id: US, side: "short", lev: 1, qty: 1 }, D0, at(D0, 22, 40), fakeSrc({ px: { [US]: 66500 }, idx: 5 })); assert.ok(!r2.ok);
+T("美股照信用解鎖開做多、放空（同台股）；市場判斷", G => {
+  G.NUM.casino.stockLev.levByCredit = [[0, 2], [2, 3], [4, 5]]; const src = fakeSrc({ px: { [US]: 66500 }, idx: 5 }), t = at(D0, 22, 40);
+  const s = fresh(G); // 信用 0 級：2×
+  const r = G.casLevOpen(s.w, s.h, { id: US, side: "long", lev: 2, qty: 1 }, D0, t, src); assert.ok(r.ok, r.reason); assert.strictEqual(r.pos.mk, "us");
+  const r2 = G.casLevOpen(s.w, s.h, { id: US, side: "short", lev: 2, qty: 1 }, D0, t + 1e8, src); assert.ok(r2.ok, r2.reason); assert.strictEqual(r2.pos.side, "short");
+  const r3 = G.casLevOpen(s.w, s.h, { id: US, side: "long", lev: 5, qty: 1 }, D0, t + 2e8, src); assert.ok(!r3.ok, "x"); assert.ok(r3.reason.includes("信用"), r3.reason);
+  const s5 = fresh(G); s5.w.lev = null; G.casLevFix(s5.w, D0); s5.w.lev.cr.pts = 20;
+  const r4 = G.casLevOpen(s5.w, s5.h, { id: US, side: "short", lev: 5, qty: 1 }, D0, t, src); assert.ok(r4.ok, r4.reason); assert.strictEqual(r4.pos.lev, 5);
   assert.strictEqual(G.casLevMarket(US), "us"); assert.strictEqual(G.casLevMarket(TW), "tw"); assert.strictEqual(G.casLevMarket(IN), "in"); assert.strictEqual(G.casLevMarket("x"), null);
-  const v = G.casStockLevView(s.w, s.h, D0, at(D0, 22, 40), fakeSrc({ px: {}, idx: 0 })); assert.strictEqual(v.lev.byMarket.us, 0); assert.ok(v.lev.usWhy.includes("美股"));
-  assert.strictEqual(s.w.lev.pos.length, 0);
+  const v = G.casStockLevView(s.w, s.h, D0, t, fakeSrc({ px: {}, idx: 0 })); assert.strictEqual(v.lev.byMarket.us, 2); assert.strictEqual(v.lev.usWhy, null);
+});
+
+T("行情落後超過 3 分鐘：台股、美股新開被擋；剛好 3 分鐘、沒資料可開；已開的部位平倉、停損、強平照常；館內股不受影響", G => {
+  const t = at(D0, 22, 40), mk = (id, lag, stale) => fakeSrc({ px: { [id]: 66500 }, idx: 5, lag: { [id]: lag }, stale: stale ? { [id]: true } : null });
+  for (const id of [US, TW]) {
+    const s = fresh(G), op = lag => G.casLevOpen(s.w, s.h, { id, side: "long", lev: 2, qty: 1 }, D0, t, mk(id, lag));
+    let r = op(3.01); assert.ok(!r.ok && r.reason.includes("落後") && r.reason.includes("3 分鐘"), r.reason);
+    assert.ok(!G.casLevOpen(s.w, s.h, { id, side: "short", lev: 2, qty: 1 }, D0, t, mk(id, 10)).ok);
+    assert.ok(!G.casLevOpen(s.w, s.h, { id, side: "long", lev: 2, qty: 1 }, D0, t, mk(id, 0, true)).ok, "這段沒抓到真實價也擋");
+    assert.strictEqual(s.w.lev.pos.length, 0); assert.strictEqual(s.w.lev.opens.n, 0, "被擋不算開倉次數");
+    assert.ok(op(3).ok, "剛好 3 分鐘可以"); 
+    const s2 = fresh(G); assert.ok(G.casLevOpen(s2.w, s2.h, { id, side: "long", lev: 2, qty: 1 }, D0, t, mk(id, null)).ok, "沒有落後資料（null）不擋");
+    // 已開的部位：行情落後時照樣平倉
+    const no = s.w.lev.pos[0].no, c = G.casLevClose(s.w, s.h, no, D0, t + 1e8, mk(id, 30)); assert.ok(c.ok, c.reason); assert.strictEqual(s.w.lev.pos.length, 0);
+    const v = G.casStockLevView(s2.w, s2.h, D0, t, mk(id, 30)); assert.ok(v.lev.lagWhy[id].includes("落後"), "畫面知道哪檔暫停"); assert.strictEqual(v.lev.maxLagMin, 3);
+  }
+  const s = fresh(G), r = G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 2, qty: 1 }, D0, at(D0, 12), fakeSrc({ px: { [IN]: 1000 }, idx: 28, lag: { [IN]: 99 } })); assert.ok(r.ok, r.reason);
+  const sl = fresh(G), src = fakeSrc({ px: { [US]: 1000 }, idx: 1, lag: { [US]: 0 } }); G.casLevOpen(sl.w, sl.h, { id: US, side: "long", lev: 5 > 2 ? 2 : 5, qty: 10, stop: 900 }, D0, t, src);
+  const lagged = fakeSrc({ px: { [US]: 880 }, idx: 2, lag: { [US]: 40 }, ser: { [US]: [1000, 1000, 880] }, day: D0 });
+  assert.strictEqual(G.casLevSweep(sl.w, sl.h, D0, t + 6e4, lagged).length, 1, "落後時停損、強平照常");
 });
 
 T("信用等級：準時還款壹天 +1、逾期 −3、不會變負、5 點 1 級、最高 10 級；部位上限和淨賺上限照等級放大；第壹次碰到不補算以前的", G => {
