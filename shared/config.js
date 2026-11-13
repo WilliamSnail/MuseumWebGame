@@ -197,7 +197,9 @@ export const NUM = {
     // 畫也有風險（規劃 2.10c，翊文 11-14 選 E）：每幅畫每天自己小小地隨機動（walkSd %，累計夾在 ±walkCap %），另外每天每幅有 hoaxPct% 的機率「贗品疑雲」：價格壹次掉 hoaxMin～hoaxMax %（不回來）。
     // 前壹天（hoaxHintDays 天）先放線索，想避險的可以先賣回。種子含伺服器祕密（casArtSecret）。
     walkSd: 0.4, walkCap: 20, hoaxPct: 0.1, hoaxMin: 10, hoaxMax: 30, hoaxHintDays: 1, perDay: 2, sellPerDay: 3, holdMax: 20, shelfDays: 1, unit: 1000,
-    sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40 },
+    sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40,
+    // 再看收藏的畫（規劃 2.10b，翊文 11-14）：壹幅壹天壹次靈感（跟今日特展同壹件共用）；全部收藏壹天合計 viewInspDay；稀有度（尋常、少見、珍藏、孤品）加的靈感；超過上限只剩文字
+    viewInspDay: 6, viewRarityBonus: [0, 0, 1, 2] },
   // 藝術市場第二步：畫的拍賣（11-14，shared/casino_auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
   //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
   //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。

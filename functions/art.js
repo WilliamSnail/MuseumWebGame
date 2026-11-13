@@ -76,8 +76,9 @@ export const art = onCall(async req => {
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FieldValue } from "firebase-admin/firestore";
-import { casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "./shared/casino_auction.js";
+import { casAucMails, casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "./shared/casino_auction.js";
 import { inbox } from "./party.js";
+import { MAIL_DAYS } from "./shared/mailbox.js";
 
 const aucRef = () => db().doc("casinoAuction/main");
 const walletRef = uid => db().doc(`casinoWallets/${uid}`);
@@ -121,9 +122,13 @@ async function settleOne(id, t, day) {
     const revs = {}; // 存檔有動的：得標的人（拿到畫）、賣家（畫賣出或解鎖）
     for (const u of [r.winner, a.seller]) if (u && !revs[u] && saveSnaps[u] && saves[u]) revs[u] = saveWrite(tx, u, saveSnaps[u], S[u]);
     put(tx, houseRef(), house); put(tx, aucRef(), doc);
-    return { revs };
+    // 收標通知信（得標、賣家、沒拍到的各壹封；編號用拍賣編號，同壹場不會寄兩次）。只寄信，不發 Discord
+    const mails = casAucMails(id, a, r.notes, day, MAIL_DAYS);
+    for (const x of mails) tx.set(db().doc(`mail/${x.uid}/items/${x.mail.id}`), Object.assign(JSON.parse(JSON.stringify(x.mail)), { fromId: null, createdAt: FieldValue.serverTimestamp() }));
+    return { revs, mails };
   });
   if (done) for (const u of Object.keys(done.revs)) { try { await inbox(u, { t: "save_changed", rev: done.revs[u], why: "auction" }); } catch (e) { console.warn("拍賣：通知不到", u, e && e.message); } }
+  if (done) for (const x of done.mails) { try { await inbox(x.uid, { t: "mail_new", kind: "auction", from: x.mail.from, text: x.mail.note }); } catch (e) { /* 信已經寫了，通知晚點看信箱也看得到 */ } }
   return !!done;
 }
 // 摸壹下：補開館方的拍賣、收時間到的。回傳目前的拍賣文件（只讀用）

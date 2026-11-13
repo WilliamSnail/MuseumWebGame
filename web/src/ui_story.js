@@ -16,7 +16,7 @@ import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { casWkBase } from "../../shared/casino_week.js";
 import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
@@ -595,16 +595,17 @@ export function galleryCollect(root) {
   artMarketOpen();
   galleryShell(root, "collect", "買下的畫收在這裡，隨時可以賣回館方。",
     [artMarketShelf()],
-    [galleryRules("怎麼運作", h("p", null, "畫是避險資產：價錢安安靜靜，不閃、不跳。"), h("p", null, "買下、賣回都在「今日特展」每幅畫的下面；收藏的畫在這裡看，回本還要幾天也寫在這裡。"))]);
+    [galleryRules("怎麼運作", h("p", null, "畫是避險資產：價錢安安靜靜，不閃、不跳。"), h("p", null, "買下、賣回都在「今日特展」每幅畫的下面；收藏的畫在這裡看，回本還要幾天也寫在這裡。"), h("p", null, `「看畫」：壹幅壹天只領壹次靈感（今日特展看過就不再給），珍藏多 +1、孤品多 +2，全部收藏壹天最多 ${NUM.art.viewInspDay} 點；可怕的畫每次都擲理智，靈感拿滿之後就只看畫、不擲。`))]);
 }
-// 收藏的畫也能看（翊文 11-14）：照今日特展的看畫流程走（viewShowWork：第壹次看拿靈感、可怕的畫擲理智）。找不到畫（那週的畫已經收起來了）就說壹聲
+// 收藏的畫也能看（翊文 11-14，規劃 2.10b）：viewCollectWork——壹幅壹天壹次靈感（跟今日特展共用）、收藏壹天合計 6 點、可怕的畫每次擲理智，上限滿了只剩文字。找不到畫（那週的畫已經收起來了）就說壹聲
 ART_HOOKS.view = id => {
   const weeks = allWeeks();
   let found = null;
   weeks.forEach(W => { const w = W.works && W.works.find(x => x.id === id); if (w && !found) found = [W, w]; });
   if (!found && import.meta.env.DEV) { const W = curWeek(), d = W ? todayOf(W) : null; if (d && d.show && d.show.works[0]) found = [W, d.show.works[0]]; } // 開發的示範資料：拿今天的第壹幅頂
   if (!found) { note("這幅畫已經收進庫房，現在看不到。"); return; }
-  focusWork(found[0], found[1]);
+  const own = P && P.art && P.art.own && P.art.own[id];
+  focusWork(found[0], found[1], own ? own.tier || 0 : 0);
 };
 const aucRule = () => CAS_AUC.rule.replace("{days}", NUM.auction.closeDays).replace("{hour}", NUM.auction.closeHour).replace("{lo}", NUM.auction.floorPct).replace("{hi}", NUM.auction.ceilPct).replace("{fee}", NUM.auction.feePct).replace("{age}", NUM.auction.minAge);
 // 拍賣的畫架上放這幅畫的縮圖（ui_art.js 沒有畫的內容，這裡登記壹個）
@@ -658,7 +659,7 @@ function workItem(W, w) {
   item.addEventListener("click", () => focusWork(W, w));
   return item;
 }
-async function focusWork(W, w) {
+async function focusWork(W, w, tier) { // tier 有給 ＝ 從「我收藏的畫」看（viewCollectWork）；沒給 ＝ 今日特展
   if (UI.busy) return;
   UI.busy = true;
   const host = document.getElementById("room");
@@ -676,11 +677,13 @@ async function focusWork(W, w) {
   requestAnimationFrame(() => layer.classList.add("in"));
   try {
     closeBtn.disabled = true;
-    const v = viewShowWork(P, W, w.id, todayStr());
+    const v = tier != null ? viewCollectWork(P, W, w.id, tier, todayStr()) : viewShowWork(P, W, w.id, todayStr());
     snd("flip");
     info.replaceChildren(placard([w.title].concat(w.lines || []), { cls: "big" }), gains);
     if (v.insp) { gain(`+${v.insp} 靈感`, "good"); snd("coin"); }
-    else if (v.first && v.capped) gain(`今日特展的靈感今天拿完了（壹天 ${NUM.story.showInspDay}）`, "");
+    else if (tier != null && v.capped) gain(`收藏的畫今天的靈感拿完了（壹天 ${NUM.art.viewInspDay}），這次只看畫`, "");
+    else if (tier != null && v.again) gain("這幅畫今天領過靈感了，明天再來", "");
+    else if (tier == null && v.first && v.capped) gain(`今日特展的靈感今天拿完了（壹天 ${NUM.story.showInspDay}）`, "");
     if (v.cured.length) { v.cured.filter(c => !c.step).forEach(() => gain("治好了怪癖", "good")); noteCured(v.cured); }
     updateStatus(); persist();
     if (v.san) {
