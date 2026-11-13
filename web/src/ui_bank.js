@@ -34,9 +34,10 @@ export function fakeBankHall() {
     { id: "cellar", name: "地下收藏庫", line: "館內店", price: 87, chg: -0.032, hist: [94, 93, 92, 91, 90, 90, 87], mine: 0, kind: "in" },
     { id: "work", name: "手作坊", line: "館內店", price: 120, chg: 0.05, hist: [100, 104, 103, 108, 110, 114, 120], mine: 10, kind: "in" },
     { id: "neon", name: "霓虹顯卡", line: "館外・世界版", price: 231, chg: 0.017, hist: [220, 224, 226, 225, 227, 227, 231], mine: 0, kind: "out" },
-    { id: "sand", name: "紅砂晶片", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
+    { id: "sand", name: "紅砂晶片", stale: "今天沒有新行情（外面的資料還沒到），股價先停著。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
     { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
   ];
+  stocks.forEach(x => { x.value = x.price * x.mine; });
   const stockVal = stocks.reduce((n, s) => n + s.price * s.mine, 0) * 100;
   return {
     demo: true,
@@ -47,7 +48,7 @@ export function fakeBankHall() {
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], state: "健康" },
-    stocks: { list: stocks, fee: 0.005, margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
+    stocks: { list: stocks, fee: 0.005, halt: false, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400, fresh: { n: 1, ids: ["neon"], seq: 3 }, margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
@@ -170,35 +171,77 @@ function bondPane(v) {
 }
 // 還沒做的頁籤（股票、財報）：伺服器給 null 的時候
 const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即將開放", h("p", { class: "bank-empty" }, what)));
-// 壹股都買不了的原因：分開講，不要把兩種混在壹起（翊文 11-14）
+// ---------- 股票頁（11-14 美術統籌重做；資料格式見 docs/經濟體系規劃.md 2.8） ----------
+// 左：行情表，依來源分組（現在只有館外；之後館內五家店、台股會多出自己的組）。右：選的那支，走勢線、買賣。
+const STOCK_GROUPS = { out: "館外・世界版", in: "館內五家店", tw: "台股" };
+const STOCK_GROUP_ORDER = ["in", "tw", "out"];
+const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付的（含手續費）
+// 走勢線：有 intraday（盤中）就畫盤中，沒有就畫 hist（每天收盤）；兩個都沒有就不畫。紅漲綠跌：整體比第壹點高畫紅
+function chart(s) {
+  const pts = (s.intraday && s.intraday.length > 1 ? s.intraday : s.hist) || [];
+  if (pts.length < 2) return null;
+  const lo = Math.min(...pts), hi = Math.max(...pts), span = Math.max(1e-9, hi - lo), W = 240, H = 56, pad = 4;
+  const xy = pts.map((p, i) => [pad + i / (pts.length - 1) * (W - 2 * pad), H - pad - (p - lo) / span * (H - 2 * pad)]);
+  const up = pts[pts.length - 1] >= pts[0], col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" ");
+  const last = xy[xy.length - 1];
+  return h("div", { class: "bank-chart", role: "img", "aria-label": `走勢：從 ${fmt(pts[0])} 到 ${fmt(pts[pts.length - 1])}`, html:
+    `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polygon points="${pad},${H} ${line} ${W - pad},${H}" fill="${col}" opacity=".16"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/></svg>` });
+}
+// 買不了、賣不了的原因：壹次只講壹個（翊文 11-14：有錢卻壹直說「籌碼不夠」）
 function whyNoBuy(v, S, cur) {
-  if (S.houseBroke) return `莊家現在破產中（剩 ${fmt(S.bankroll)}），暫停買進。賣出照常。`;
-  if (S.exposeLeft < cur.price) return `莊家的錢不夠接更多股票了：全館持股最多是莊家的壹半，莊家現在有 ${fmt(S.bankroll)}，今天還能接 ${fmt(S.exposeLeft)}。莊家賺回來就能再買。`;
-  if (v.cash < Math.ceil(cur.price * (1 + S.fee))) return `籌碼不夠：壹股 ${fmt(cur.price)}，加手續費要 ${fmt(Math.ceil(cur.price * (1 + S.fee)))}。`;
+  if (S.halt) return `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`;
+  if (v.cash < unitCost(cur, S.fee)) return `錢不夠：壹股 ${fmt(cur.price)}，加手續費要 ${fmt(unitCost(cur, S.fee))}，你現在有 ${fmt(v.cash)}。`;
+  if (S.exposeLeft != null && S.exposeLeft < cur.price) return "全館持股今天到上限了，晚點再來買。";
   return "現在買不了。";
+}
+function whyNoSell(S, cur) {
+  if (S.halt) return `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`;
+  if (!cur.mine) return "你還沒有這支股票。";
+  if (S.sellLeft != null && S.sellLeft < cur.price) return `今天賣出的額度用完了（壹天最多賣 ${fmt(S.sellDay || 0)}），明天再賣。`;
+  return "現在賣不了。";
+}
+function stockRows(list, cur, S) {
+  const kinds = STOCK_GROUP_ORDER.filter(k => list.some(s => s.kind === k)).concat([...new Set(list.map(s => s.kind))].filter(k => !STOCK_GROUP_ORDER.includes(k)));
+  const rows = [], fresh = new Set((S.fresh && S.fresh.ids) || []);
+  kinds.forEach(k => {
+    if (kinds.length > 1) rows.push(h("div", { class: "bank-grp" }, STOCK_GROUPS[k] || "其他"));
+    list.forEach((s, i) => {
+      if (s.kind !== k) return;
+      rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; rerender(); } },
+        h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, h("small", { class: "ln" }, s.line)),
+        h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
+    });
+  });
+  return rows;
 }
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
   const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
-  const rows = list.map((s, i) => h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", onClick: () => { UI.bankStock = i; rerender(); } },
-    h("span", null, h("b", null, s.name), h("small", { class: "ln" }, s.line)), h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
+  const side = UI.bankSide === "sell" && cur.mine > 0 ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
   const trade = (op, n) => bankDo("stock", { op, id: cur.id, n });
-  // 買幾股：照手上的籌碼和曝險算得出來的最大值，給幾顆好按的
-  const max = Math.max(0, Math.min(Math.floor(v.cash / Math.ceil(cur.price * (1 + S.fee))), Math.floor(S.exposeLeft / Math.max(1, cur.price))));
-  const buys = [1, 10, 100].filter(n => n <= max).map(n => btn(`買 ${n} 股`, () => trade("buy", n), "big bank-btn"))
-    .concat(max > 0 ? [btn(`買滿 ${fmt(max)} 股`, () => trade("buy", max), "primary big bank-btn gold")] : []);
-  const sells = cur.mine > 0 ? [1, 10, 100].filter(n => n <= cur.mine).map(n => btn(`賣 ${n} 股`, () => trade("sell", n), "big bank-btn"))
-    .concat([btn(`全賣 ${fmt(cur.mine)} 股`, () => trade("sell", "max"), "big bank-btn")]) : [];
+  const one = unitCost(cur, S.fee);
+  const maxBuy = S.halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), S.exposeLeft != null ? Math.floor(S.exposeLeft / Math.max(1, cur.price)) : Infinity));
+  const maxSell = S.halt ? 0 : Math.max(0, Math.min(cur.mine, S.sellLeft != null ? Math.floor(S.sellLeft / Math.max(1, cur.price)) : Infinity));
+  const max = side === "buy" ? maxBuy : maxSell, word = side === "buy" ? "買" : "賣";
+  const steps = [1, 10, 100].map(n => btn(`${n} 股`, () => trade(side, n), "big bank-btn", { disabled: n > max ? true : null }));
+  steps.push(btn(max > 0 ? `${side === "buy" ? "買滿" : "全賣"} ${fmt(max)}` : `${side === "buy" ? "買滿" : "全賣"}`, () => trade(side, side === "buy" ? max : "max"), "primary big bank-btn gold", { disabled: max > 0 ? null : true }));
+  const seg = [["buy", "買進"], ["sell", "賣出"]].map(([k, t]) => h("button", { type: "button", role: "tab", "aria-selected": String(k === side), class: "bank-seg" + (k === side ? " on" : ""), disabled: k === "sell" && !cur.mine ? true : null, onClick: () => { UI.bankSide = k; rerender(); } }, t));
+  const sellNote = S.sellLeft != null ? `今天還能賣出約 ${fmt(S.sellLeft)} 的股票。` : "";
   return h("div", { class: "bank-cols stocks" },
-    panel("行情", `手續費 ${pctText(S.fee)}`, ledger(["名稱", "股價", "今天", "持股"], rows, "stocks")),
+    panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "股價", "今天", "持股"], stockRows(list, cur, S), "stocks")),
     h("div", { class: "bank-stack" },
-      panel(cur.name, cur.line, h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg)),
-        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : null,
-        cur.stale ? h("p", { class: "bank-why" }, cur.stale) : null,
-        S.halt ? h("p", { class: "bank-why" }, `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`)
-          : h("div", { class: "bank-acts" }, buys.length ? buys : h("small", { class: "bank-why" }, whyNoBuy(v, S, cur)), sells),
-        h("p", { class: "bank-hint" }, "股價每天 05:00 動壹次，照外面世界前壹天的行情。買賣各收手續費，進館方的預算池。"),
-        h("p", { class: "bank-hint" }, S.soon)))); 
+      panel(cur.name, cur.line,
+        h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg)),
+        chart(cur),
+        cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
+        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
+        S.halt ? h("p", { class: "bank-why" }, whyNoBuy(v, S, cur)) : null,
+        h("div", { class: "bank-segs", role: "tablist" }, seg),
+        h("div", { class: "bank-acts" }, steps),
+        !S.halt && max < 1 ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
+        h("p", { class: "bank-meta sm" }, side === "buy" ? `買 1 股要 ${fmt(one)}（含手續費）。` : sellNote),
+        h("p", { class: "bank-hint" }, "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
+        S.soon ? h("p", { class: "bank-hint" }, S.soon) : null)));
 }
 function reportPane(v) {
   const e = v.econ;
@@ -209,7 +252,7 @@ function reportPane(v) {
       h("p", { class: "bank-line" }, e.news)),
     h("div", { class: "bank-stack" },
       panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))))),
-      v.stocks ? panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, v.stocks.maker.map(x => h("li", null, h("b", null, x.who), x.does)))) : null));
+      v.stocks && v.stocks.maker ? panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does)))) : null));
 }
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
 
@@ -226,9 +269,9 @@ function side(v) {
       h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通"}` }, h("i", { style: { left: gauge + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好"))) : null,
     e ? panel("今日新聞", "", h("p", { class: "bank-news" }, e.news)) : null);
 }
-function ticker(v) {
+function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
   const list = v.stocks ? v.stocks.list : [];
-  return h("div", { class: "bank-ticker", "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情"),
+  return h("div", { class: "bank-ticker" + (dup ? " dup" : ""), "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情"),
     list.map((s, i) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; rerender(); } },
       h("small", null, s.name), h("b", null, fmt(s.price)), upDown(s.chg))));
 }
@@ -248,7 +291,7 @@ SCREENS.bank = root => {
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
     tabs,
     h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
-    v.stocks ? ticker(v) : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
+    v.stocks ? ticker(v, tab === "stock") : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
 };
 // 導覽圖上的「銀行」熱區要不要放：伺服器的 bankHall 接上之後，Yuga 主 session 把這個改成 true（現在是示範資料，不給玩家點進來）
 ADDONS.bankOpen = true; // 11-13 接上伺服器了（存款、借款、館債）；股票、財報寫「即將開放」

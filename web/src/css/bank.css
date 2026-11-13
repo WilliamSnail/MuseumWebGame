@@ -204,3 +204,49 @@ body[data-screen="bank"] #room { background: none; }
 .bank-ti { display: inline-flex; }
 @media (max-width: 760px) { .bank-tabbtn { padding: 0 10px; gap: 4px; } .bank-ti svg { width: 16px; height: 16px; } }
 @media (max-width: 400px) { .bank-ti { display: none; } .bank-tabbtn { padding: 0 12px; } }
+
+/* ---- 股票頁（11-14 重做） ---- */
+.bank-grp { padding: 3px 10px; background: var(--bank-paper-2); border-bottom: 1px solid #C9B98F; font-size: var(--type-small, .75rem); letter-spacing: .12em; color: var(--bank-ink-soft); }
+.bank-new, .bank-stale-tag { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; font-style: normal; font-size: var(--type-tiny, .6875rem); font-weight: 700; vertical-align: 1px; }
+.bank-new { background: #A32F1E; color: #FFF; }
+.bank-stale-tag { border: 1px solid #8A6A24; color: #7A5A1A; background: #F3E3B0; }
+.bank-chart { height: 56px; border-radius: 4px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(214, 178, 94, .3); }
+.bank-chart svg { display: block; width: 100%; height: 100%; }
+.bank-stale { margin: 0; padding: 4px 10px; border-radius: 4px; background: rgba(214, 178, 94, .2); border: 1px solid rgba(214, 178, 94, .6); color: var(--bank-gold-hi); font-size: var(--type-small, .75rem); line-height: 1.5; }
+.bank-segs { display: flex; gap: 0; }
+.bank-seg { flex: 1; min-height: 40px; border: 1px solid var(--bank-gold); background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #C9D1DE; font: inherit; font-weight: 700; font-size: var(--type-body, .875rem); letter-spacing: .2em; cursor: pointer; }
+.bank-seg:first-child { border-radius: 6px 0 0 6px; } .bank-seg:last-child { border-radius: 0 6px 6px 0; border-left: 0; }
+.bank-seg.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); color: #1D2B45; }
+.bank-seg:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 760px) { .bank-chart { height: 40px; } .bank-seg { min-height: 36px; } }
+.bank-meta.sm { font-size: var(--type-small, .75rem); color: var(--bank-mute); }
+.bank-cols.stocks .bank-stack .bank-acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.bank-cols.stocks .bank-stack .bank-acts .bank-btn { min-width: 0; padding: 0 4px; white-space: nowrap; }
+.bank-cols.stocks .bank-stack .bank-acts .bank-btn.gold { grid-column: span 1; }
+.bank-row.stock > span:first-child { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* 股票頁籤：行情表和今日行情重複，電腦只留表；手機直拿把選中的那支放最上面（買賣在第壹屏），今日行情留著拿來換股 */
+.bank-ticker.dup { display: none; }
+@media (max-width: 760px) {
+  .bank-ticker.dup { display: flex; }
+  .bank-cols.stocks > .bank-stack { order: -1; }
+}
+@media (max-height: 500px) and (orientation: landscape) { .bank-ticker.dup { display: none; } }
+.bank-cols.stocks .bank-stack .bank-acts { grid-template-columns: 1fr 1fr 1fr 1.7fr; }
+.bank-cols.stocks .bank-stack .bank-acts .bank-btn { letter-spacing: 0; }
+/* 手機橫拿：標題、回大廳、頁籤擠在同一行，主區多出壹排的高度（交接筆記：主區只剩 174px） */
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-onescreen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; align-content: stretch; }
+  .bank-onescreen > .room-head { display: flex; grid-column: 1; grid-row: 1; margin: 0; min-width: 0; }
+  .bank-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .bank-onescreen > .room-head .rh-row { margin: 0; }
+  .bank-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+  .bank-onescreen > .bank-tabs { grid-column: 2; grid-row: 1; align-self: end; margin: 0; min-width: 0; }
+  .bank-onescreen > .onescreen-main { grid-column: 1 / -1; grid-row: 2; min-height: 0; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .bank-cols.stocks .bank-chart { height: 26px; }
+  .bank-cols.stocks .bank-seg { min-height: 30px; }
+  .bank-cols.stocks .bank-stack .bank-acts .bank-btn { min-height: 34px; }
+  .bank-cols.stocks .bank-stack > .bank-panel { gap: 3px; }
+  .bank-cols.stocks .bank-quote .bank-num.big { font-size: 1.2rem; }
+}

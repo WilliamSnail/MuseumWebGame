@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-stock-ui", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "銀行的股票頁改版：買進、賣出分開、有走勢線", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "股票頁多了「買進／賣出」兩個切換，下面只留壹排按鈕：1 股、10 股、100 股、買滿（或全賣）。",
+        "選中的那支有走勢線；今天沒有新行情的股票會標「未更新」，不會讓你以為真的沒漲跌。",
+        "買不了的時候只講真正的原因（錢不夠、停盤、今天賣出額度用完）。手機直拿把選中的那支放最上面，買賣不用捲。",
+      ]],
+    ],
+  },
+  {
     id: "art-fast", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "畫改成大約兩個禮拜回本", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
