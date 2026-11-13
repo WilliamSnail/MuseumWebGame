@@ -268,7 +268,7 @@ T("打字：幽靈不能打，只能敲；離隊的、走完的也不能", () =>
   run.members[1].ghost = true; Ps.b.sanity = 0;
   const r = G.coopSayBuild(run, "b", { text: "救命" });
   assert.strictEqual(r.ok, false);
-  assert.ok(r.reason.includes("幽靈"));
+  assert.ok(r.reason.includes("名牌空白"));
   run.members[2].out = "left";
   assert.strictEqual(G.coopSayBuild(run, "c", { text: "哈囉" }).ok, false);
   run.ended = true;

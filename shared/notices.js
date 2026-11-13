@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "nameplate-blank", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "合作地下：理智用完的隊員改叫「名牌空白」", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "壹起走地下的時候，理智用完的隊員以前叫「幽靈」，現在叫「名牌空白」：人還在隊上，只是名字已經寫不上去。",
+        "能做的事都壹樣：看得到真正的記號、不能說話、可以敲壹下讓壹個選項發抖。",
+      ]],
+      ["招領單的上限", [
+        "壹位館友最多同時有 2 張招領單（最新的兩位）。送到招領處，壹天最多拿 2 次靈感；之後還是可以送，信照寄。",
+      ]],
+    ],
+  },
+  {
     id: "lost-found", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "地下多了招領單：理智用完的參觀者，號碼牌還留在館裡", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
