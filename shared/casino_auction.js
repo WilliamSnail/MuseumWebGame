@@ -32,6 +32,7 @@ const auUnit = n => Math.floor(n / NUM.auction.unit) * NUM.auction.unit;
 
 export const CAS_AUC = {
   title: "拍賣", sub: "稀有的畫另外開拍。每人寫壹個價，收標時最高價得標、付第二高的價；沒有人看得到別人出多少。",
+  mailFrom: "拍賣行", mailTitle: "拍賣收標：{title}",
   house: "館方", player: "館友", bid: "出價", raise: "加價", cancel: "取消", list: "拿去拍", mine: "我的出價", ends: "收標", bidders: "{n} 人出價", none: "還沒有人出價",
   bidOk: "「{title}」出價 {n}，鎖住 {lock} 籌碼，收標前不能撤。", raiseOk: "「{title}」的出價加到 {n}。",
   listOk: "「{title}」放上拍賣，底價 {n}，{when}收標。", cancelOk: "「{title}」取消拍賣，畫回到你手上。",
@@ -240,6 +241,20 @@ export function casAucSettle(doc, id, ctx) {
   doc.done.push({ id, kind: a.kind, work: a.work, title: a.title, tier: a.tier, price: sold ? sold.price : null, closedAt: ctx.nowMs });
   doc.done = doc.done.slice(-C.recent);
   return { ok: true, sold: !!sold, winner: sold ? sold.winner : null, price: sold ? sold.price : null, fee: sold ? sold.fee : 0, touched: Array.from(touched), notes };
+}
+
+// 收標通知信（11-14，翊文：得標的、賣家、沒拍到的都要收到通知）：casAucSettle 回傳的 notes（{ uid: [句子] }）每人寫成壹封信，
+// 寄到伺服器的信箱（mail/{uid}/items/{id}，跟招領、來訪謝禮同壹套）。沒有附件、領了就收進自己的信箱。
+// 編號 auc-拍賣編號（壹場壹人壹封，重跑不會寄兩次）。只有被收標的人收到，不貼 Discord。回傳 [{ uid, mail }]
+export function casAucMails(id, a, notes, day, days) {
+  const mid = ("auc-" + String(id)).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100), out = [];
+  const [y, m, d] = String(day).split("-").map(Number), exp = new Date(Date.UTC(y, m - 1, d) + (days || 30) * 86400000).toISOString().slice(0, 10);
+  for (const uid of Object.keys(notes || {})) {
+    const lines = notes[uid];
+    if (!Array.isArray(lines) || !lines.length) continue;
+    out.push({ uid, mail: { id: mid, from: CAS_AUC.mailFrom, title: auFill(CAS_AUC.mailTitle, { title: (a && a.title) || "" }), note: lines.join(" "), gift: { insp: 0, mood: 0 }, sent: day, expire: exp, claimed: false } });
+  }
+  return out;
 }
 
 // ---------- 畫面要的（只讀）----------
