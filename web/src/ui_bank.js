@@ -188,7 +188,7 @@ const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即
 //   S.positions = [{ id, sid, side: "long"|"short", lev, margin, n, entry, ratio, liq, pnl, stop, take }]   ratio＝剩下的保證金 ÷ 原本的（1＝100%；到 force 強平）
 //   S.orders = [{ id, kind: "buy"|"sell"|"stop"|"cover", sid, px, n, lock, until, state }]（沒有就不畫「掛單」頁籤）  S.locked = { chips, shares: { sid: n } }
 //   S.credit = { pts, level, next, posLimit, posUsed }  動作：op "open"、"close"、"order"、"cancel"（參數見下）
-const STOCK_GROUPS = { out: "館外・世界版", in: "館內五家店", tw: "台股" };
+const STOCK_GROUPS = { out: "美股", in: "館內五家店", tw: "台股" };
 const STOCK_GROUP_ORDER = ["in", "tw", "out"];
 const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付的（含手續費）
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
