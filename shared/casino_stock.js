@@ -203,7 +203,7 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
   if (S.orders.filter(o => o.id === id).length >= C.order.perStock) return { ok: false, reason: casFill(O.fullStock, { n: C.order.perStock }) };
   const now = H.px[id];
   if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: casFill(O.px, { px: casNum(now) }) };
-  const o = { no: ++S.seq, kind, id, n, px: p, day, exp: stAddDays(day, C.order.days - 1), hold: 0 };
+  const o = { no: ++S.seq, kind, id, n, px: p, day, exp: stAddDays(day, C.order.days), hold: 0 }; // 有效到下壹次換日調價（美股那壹晚的收盤）：今天下的單看明天 05:00 的價
   if (kind === "buy") {
     o.hold = p * n + stFee(p * n);
     if (o.hold > w.chips) { S.seq--; return { ok: false, reason: CAS_STOCK.poor }; }
@@ -247,7 +247,8 @@ export function casStockMatch(w, house, day, t) {
     let hit = null;
     for (const p of okPts) if (o.kind === "buy" ? p <= o.px : o.kind === "sell" ? p >= o.px : p <= o.px) { hit = p; break; }
     if (hit == null) {
-      if (day > o.exp || (day === o.exp && casStockHalt(t))) { stDrop(w, S, o); stNote(S, casFill(O.expire, { name: stOrderName(o), kind: stKind(o), n: casNum(o.n) })); out.cancels++; }
+      // 過期：最後有效日的價已經調進來（H.day ≥ exp）而且沒成交；行情晚到就多等壹天
+      if ((H.day && H.day >= o.exp) || day > stAddDays(o.exp, 1)) { stDrop(w, S, o); stNote(S, casFill(O.expire, { name: stOrderName(o), kind: stKind(o), n: casNum(o.n) })); out.cancels++; }
       continue;
     }
     // 成交：先把鎖住的還回去，再照市價單的做法走壹遍（手續費、記帳都跟市價單壹樣）。用 hit 當成交價
