@@ -368,3 +368,17 @@ body[data-screen="bank"] #room { background: none; }
   .bank-fld { gap: 4px; } .bank-chip { min-height: 32px; padding: 0 9px; }
   .bank-stack > .bank-panel > .bank-ph { margin-bottom: 0; }
 }
+
+/* 持倉（像券商 App）、停損停利（11-14） */
+.bank-leftcol { display: grid; gap: 8px; min-width: 0; align-content: start; }
+.bank-book.hold .bank-bh, .bank-row.hold { grid-template-columns: 1.2fr 1fr 1fr 1.1fr; }
+.bank-hh { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 0 6px; border: 1px solid #A88A52; border-radius: 4px; background: rgba(255, 255, 255, .5); color: var(--bank-ink); font: inherit; font-size: var(--type-small, .75rem); font-weight: 700; letter-spacing: 0; cursor: pointer; }
+.bank-hh i { font-style: normal; color: var(--bank-up); }
+.bank-row.hold { cursor: pointer; width: 100%; }
+.bank-row.hold.sum { cursor: default; background: var(--bank-paper-2); border-top: 1px solid #C9B98F; }
+.bank-pl { display: grid; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bank-pl small { font-size: var(--type-tiny, .6875rem); }
+.bank-pl.up { color: var(--bank-up); } .bank-pl.down { color: var(--bank-down); }
+.bank-row.hold .bank-mk { margin-left: 6px; color: var(--bank-ink-soft); border-color: #A88A52; }
+.bank-pos-f small.has-oco { color: var(--bank-gold-hi); }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .bank-pos-f small.has-oco { display: inline; } }
