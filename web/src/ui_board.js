@@ -74,6 +74,7 @@ function sheet(n, today, close) {
     h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" }, t))),
     h("h3", null, n.title),
     h("p", { class: "nb-date" }, `${md(n.publish)} 發布`),
+    h("ol", { class: "nb-toc" }, n.parts.map(x => h("li", null, x.title))),
     n.parts.map(x => h("section", { class: "nb-sec nb-part" }, h("h4", null, x.title),
       (x.sections || []).map(([, lines]) => lines.map(l => h("p", null, markText(l)))),
       x.cta ? h("div", { class: "nb-part-go" }, btn([x.cta.label, " ", h("span", { "aria-hidden": "true" }, "→")], goTo(x.cta), "small")) : null)));
