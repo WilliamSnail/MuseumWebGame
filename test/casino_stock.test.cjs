@@ -143,20 +143,24 @@ T("畫面：莊家的錢不影響能不能買（exposeLeft 是 null、houseBroke
   const v = G.casStockView(s1.w, s1.house, D, OPEN);
   assert.strictEqual(v.exposeLeft, null); assert.strictEqual(v.houseBroke, false);
 });
-T("莊家破產換日不再印錢（11-14：翊文「這不行，莊家要跟整個經濟系統接軌才行」）", G => {
+T("莊家破產換日不再印錢（11-14：翊文「這不行，莊家要跟整個經濟系統接軌才行」）：改借錢、記債", G => {
   assert.strictEqual(G.NUM.casino.houseResetMint, false, "預設關掉");
-  const h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = -830000000;
+  const h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = -830000000; h.econ.perDay = 0;
   const r = G.casHouseFix(h, "2026-11-15");
-  assert.strictEqual(r.house.bankroll, -830000000, "停在負的");
-  assert.strictEqual(r.reopen, null);
-  assert.ok(!(r.house.led && r.house.led.mint && r.house.led.mint.reset), "沒有印錢");
+  assert.ok(!(r.house.led && r.house.led.mint && r.house.led.mint.reset), "沒有印錢補回（reset）");
+  assert.strictEqual(r.house.debt.budget + r.house.debt.world, r.house.bankroll + 830000000, "借了多少，債就記多少");
+  assert.ok(r.house.bankroll < G.NUM.casino.houseLoan.reserve, "借不夠補到準備金（外面世界有上限）");
+  assert.ok(r.house.debt.world + r.house.debt.budget > 0, "借的記成債");
 });
-T("文化部補助 10 億只撥壹次、記成館外進來（11-13 翊文）", G => {
+T("文化部借款 10 億只撥壹次、記成館外進來、記成債（11-13 翊文；11-14 改成借款）", G => {
   const h = G.casHouseNew(); h.bankroll = -830000000; delete h.grants;
   const r = G.casHouseFix(h, "2026-11-14").house;
   assert.strictEqual(r.bankroll, -830000000 + 1000000000, "撥了 10 億");
   assert.strictEqual(r.led.mint.grant, 1000000000, "記成館外進來，來源 grant");
-  assert.strictEqual(G.casHouseFix(r, "2026-11-15").house.bankroll, 170000000, "第二次不再撥");
+  assert.strictEqual(r.debt.culture, 1000000000, "記成債");
+  const n = G.casHouseFix(r, "2026-11-15").house;
+  assert.strictEqual(n.led.mint.grant, 1000000000, "第二次不再撥");
+  assert.ok(n.debt.culture < 1000000000, "莊家有賺就還");
 });
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

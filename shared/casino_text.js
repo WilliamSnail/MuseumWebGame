@@ -45,6 +45,11 @@ export const CAS_TEXT = {
   houseGot: "莊家得：{n}",
   houseLost: "莊家輸了：{n}",
   houseReopen: "莊家破產了，Yuga 借他 {n} 重新開張",
+  houseReopenLoan: "莊家破產了，Yuga 跟館方和外面世界借了 {n}，莊家重新開張。借的錢要還。",
+  houseStillBroke: "莊家破產了，外面世界的信用額度用完了，借不到錢，先停業整頓。",
+  betBigRisk: "莊家現在手頭緊，最多只能下 {max}",
+  payCapDone: "莊家今天賠付的額度用完了，明天再來。輸給莊家的照收，贏的錢不會收回。",
+  payCapBet: "莊家今天剩下的賠付額度只夠下 {max}",
   // 救濟（新的）
   // 跟 Yuga 借錢（決定 0064）
   loanHello: "R 要借錢喔",
@@ -91,6 +96,9 @@ export const CAS_TEXT = {
   loanMin: "壹次最少借 {n}",
   loanBad: "要借多少？輸入數字",
   loanPlaying: "先打完這壹手",
+  loanHouseNone: "莊家手上沒有錢，借款先暫停。",
+  loanHouseShort: "莊家手上的錢不夠借那麼多，最多 {max}",
+  loanOutFull: "莊家借出去的錢已經夠多了，過幾天再來。",
   loanNone: "沒有這筆借款",
   loanPoor: "籌碼不夠還這筆（要 {owe}）",
   loanTooSoon: "借了 {n} 分鐘之後才能還（還要等 {left} 分鐘）",

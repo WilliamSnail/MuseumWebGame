@@ -14,9 +14,9 @@ export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
   mint: { start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
-  houseMint: { reset: "莊家破產後重新開張", grant: "文化部補助（外面世界撥款）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
-  burn: { exchange: "換小獎" },
-  flow: { bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
+  houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
+  burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
+  flow: { budgetLoan: "跟預算池借（莊家破產重開）", budgetRepay: "還預算池", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
   seaNote: "水面底下有人在數東西。",
 };
@@ -41,6 +41,9 @@ export function casReportView(doc) {
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
   const flow = rpList(d.flow, CAS_REPORT.flow, true);
   if (flow.length) hl.push("進出：", ...flow);
+  const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
+  if (debts.length) hl.push("莊家欠的錢（賺了錢會先還）：" + debts.map(x => `${x[0]} ${rpN(x[1])}`).join("、") + "。");
+  if (H.loansOut > 0) hl.push(`莊家借出去、還沒收回的本金 ${rpN(H.loansOut)}。`);
   // 莊家健康度：從玩家流進來的（21 點、餐車、借款還回）對流出給玩家的（大禮包、委託、地下撿、借出、拚經濟油水、利息）
   const fl = d.flow || {}, inn = Math.max(0, fl.bj || 0) + (fl.food || 0) + (fl.loanBack || 0), outg = -((fl.pack || 0) + (fl.job || 0) + (fl.find || 0) + (fl.loan || 0) + (fl.econLoot || 0) + (fl.bankInt || 0));
   if (!first && outg > 0) {
@@ -65,9 +68,9 @@ export function casReportView(doc) {
   // 憑空、消失
   const minted = Object.assign({}, d.mint, d.houseMint), mintNames = Object.assign({}, CAS_REPORT.mint, CAS_REPORT.houseMint);
   const ml = [];
-  const mTotal = casBookSumObj(minted), bTotal = casBookSumObj(d.burn);
+  const burnAll = Object.assign({}, d.burn, d.houseBurn), mTotal = casBookSumObj(minted), bTotal = casBookSumObj(d.burn) + casBookSumObj(d.houseBurn);
   ml.push(mTotal ? `從館外進來 ${rpN(mTotal)} 籌碼：` : "這段時間沒有從館外進來的籌碼。", ...rpList(minted, mintNames, false));
-  ml.push(bTotal ? `消失 ${rpN(bTotal)} 籌碼：` : "這段時間沒有消失的籌碼。", ...rpList(d.burn, CAS_REPORT.burn, false));
+  ml.push(bTotal ? `消失 ${rpN(bTotal)} 籌碼：` : "這段時間沒有消失的籌碼。", ...rpList(burnAll, CAS_REPORT.burn, false));
   secs.push({ t: "館外進來的、消失的", lines: ml });
   if (doc.gdp && doc.index) {
     const x = doc.index, g = doc.gdp, per = x.perDay;
