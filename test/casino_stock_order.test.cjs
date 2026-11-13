@@ -88,21 +88,26 @@ T("限價賣：漲到才賣；沒到就留著；隔幾天才上線也會照中�
   assert.strictEqual(s.w.led.mint.stockSell, (px + 800) * 5, "用當天的價成交");
   assert.strictEqual(gap(G, s, op), 0);
 });
-T("過期：第 3 天停盤時取消退回，不是第 2 天", G => {
+T("過期：有效 1 天，今天下的單看明天 05:00 的價，沒成交就取消退回（翊文 11-13）", G => {
   const s = fresh(G), op = open0(G, s), px = s.house.stk.px[ID], c0 = s.w.chips;
   G.casStockOrder(s.w, s.house, "buy", ID, 10, px - 500, D, OPEN);
-  const D2 = addDay(D, 1), D3 = addDay(D, 2), D4 = addDay(D, 3);
-  newDay(G, s, D2, px); assert.strictEqual(G.casStockMatch(s.w, s.house, D2, at(D2, 23)).cancels, 0, "第 2 天 23:00 還有效");
-  newDay(G, s, D3, px); assert.strictEqual(G.casStockMatch(s.w, s.house, D3, at(D3, 14)).cancels, 0, "第 3 天白天還有效");
-  const m = G.casStockMatch(s.w, s.house, D3, at(D3, 23));
-  assert.strictEqual(m.cancels, 1, "第 3 天 22:00 後取消");
+  const D2 = addDay(D, 1), D3 = addDay(D, 2);
+  assert.strictEqual(G.casStockMatch(s.w, s.house, D, at(D, 23)).cancels, 0, "當天 23:00 還有效（明天的價還沒來）");
+  assert.strictEqual(G.casStockMatch(s.w, s.house, D2, at(D2, 5)).cancels, 0, "隔天行情還沒調進來：等");
+  newDay(G, s, D2, px);
+  const m = G.casStockMatch(s.w, s.house, D2, at(D2, 6));
+  assert.strictEqual(m.cancels, 1, "隔天的價沒觸發：取消");
   assert.strictEqual(s.w.chips, c0); assert.strictEqual(s.w.stk.hold, 0);
   assert.strictEqual(gap(G, s, op), 0);
   assert.ok(G.casStockTakeNotes(s.w)[0].includes("取消"));
-  // 第 4 天才上線的人：過期，第 4 天的低價不算
+  // 隔天的價有觸發：成交
+  const u = fresh(G); const p0 = u.house.stk.px[ID]; G.casStockOrder(u.w, u.house, "buy", ID, 1, p0 - 500, D, OPEN);
+  newDay(G, u, D2, p0 - 600);
+  assert.strictEqual(G.casStockMatch(u.w, u.house, D2, at(D2, 6)).fills, 1, "隔天跌到限價以下：成交");
+  // 第 3 天才上線的人：隔天的價有算，第 3 天的低價不算
   const t = fresh(G); G.casStockOrder(t.w, t.house, "buy", ID, 1, t.house.stk.px[ID] - 500, D, OPEN);
-  newDay(G, t, D2, t.house.stk.px[ID]); newDay(G, t, D3, t.house.stk.px[ID]); newDay(G, t, D4, 1);
-  assert.strictEqual(G.casStockMatch(t.w, t.house, D4, at(D4, 10)).fills, 0, "過期後的低價不算");
+  newDay(G, t, D2, t.house.stk.px[ID]); newDay(G, t, D3, 1);
+  assert.strictEqual(G.casStockMatch(t.w, t.house, D3, at(D3, 10)).fills, 0, "過期後的低價不算");
   assert.strictEqual(t.w.stk.orders.length, 0);
 });
 T("取消：退回、不收費、停盤不行、一天 20 次", G => {

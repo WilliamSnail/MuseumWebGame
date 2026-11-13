@@ -258,5 +258,28 @@ T("舊錢包、壞資料：補欄位不丟錯（at、seen、house.stk.tw）", G 
   assert.doesNotThrow(() => G.casStockTwApply(house, null, D, at(D, 10, 0)));
   assert.doesNotThrow(() => G.casStockTwApply(house, {}, D, null));
 });
+T("掛單有效到當天收盤：台股 13:30 沒成交就取消退回；美股還是看明天 05:00", G => {
+  const house = house0(G, D), doc = TW(G), w = wallet(G);
+  G.casStockTwApply(house, doc, D, at(D, 9, 5));
+  const px = house.stk.px[TWID], c0 = w.chips;
+  const o = G.casStockOrder(w, house, "buy", TWID, 1, 1, D, at(D, 9, 5));
+  assert.ok(o.ok, o.reason); assert.strictEqual(o.order.exp, D, "台股當天有效");
+  const u = G.casStockOrder(w, house, "buy", USID, 1, 1, D, at(D, 9, 5));
+  assert.ok(u.ok); assert.strictEqual(u.order.exp, "2026-11-17", "美股有效到下壹次換日");
+  G.casStockTwApply(house, doc, D, at(D, 13, 29)); G.casStockMatch(w, house, D, at(D, 13, 29));
+  assert.strictEqual(w.stk.orders.length, 2, "13:30 以前還有效");
+  G.casStockTwApply(house, doc, D, at(D, 13, 31)); G.casStockMatch(w, house, D, at(D, 13, 31));
+  assert.strictEqual(w.stk.orders.length, 1, "台股那張收盤取消"); assert.strictEqual(w.stk.orders[0].id, USID);
+  assert.ok(px > 1 && w.chips > c0 - 10, "鎖住的退回了");
+});
+T("掛單有效到當天收盤：隔天才回來也取消（先檢查前壹天盤中的價）", G => {
+  const house = house0(G, D), doc = TW(G), w = wallet(G);
+  G.casStockTwApply(house, doc, D, at(D, 9, 5));
+  assert.ok(G.casStockOrder(w, house, "buy", TWID, 1, 1, D, at(D, 9, 5)).ok);
+  const D2 = "2026-11-17", doc2 = G.twDocRoll(doc, D2, 5);
+  G.casStockTwSettle(house, doc2, D2); G.casStockRoll(house, D2, {}); G.casStockTwApply(house, doc2, D2, at(D2, 5, 30));
+  G.casStockMatch(w, house, D2, at(D2, 5, 30));
+  assert.strictEqual(w.stk.orders.length, 0); assert.strictEqual(w.stk.hold, 0);
+});
 console.log(`${pass} passed, ${fail} failed（台股盤中）`);
 process.exit(fail ? 1 : 0);
