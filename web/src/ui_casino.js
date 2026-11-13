@@ -197,9 +197,13 @@ function savePane(fig, md, off) {
   const puts = B.quick.filter(n => n >= B.min).map(n => btn(casNum(n), () => bank("put", { amt: n }), "small", { disabled: off || !can(n) ? true : null }))
     .concat(w.chips >= B.min ? [btn(`全部 ${casNum(w.chips)}`, () => bank("put", { amt: "max" }), "small", { disabled: off })] : []);
   const takes = B.save > 0 ? [btn(`全部領出 ${casNum(B.save)}`, () => bank("take", { amt: "max" }), "small", { disabled: off })] : [];
+  // 定存先挑金額再挑天數（測試 11-13：以前壹按就把手上籌碼全存進去，新手容易誤觸）。預設最少的那壹檔
+  const termAmts = [...new Set([B.termMin].concat(B.quick).filter(n => n >= B.termMin && n <= B.termCap))].sort((a, b) => a - b);
+  if (!termAmts.includes(S.termAmt)) S.termAmt = termAmts[0];
+  const amtBtns = termAmts.map(n => btn(casNum(n), () => { S.termAmt = n; draw(); }, "small" + (S.termAmt === n ? " primary" : ""), { disabled: off || n > w.chips ? true : null, "aria-pressed": String(S.termAmt === n) }));
   const kinds = B.kinds.map(k => {
-    const amt = Math.min(B.termCap, Math.max(0, w.chips));
-    return btn(`${k.days} 天 ${k.pct}%`, () => bank("term", { amt, kind: k.i }), "small", { disabled: off || amt < B.termMin || B.terms.length >= B.termMax ? true : null, title: `把籌碼 ${casNum(amt)} 存 ${k.days} 天（壹筆最多 ${casNum(B.termCap)}）` });
+    const amt = S.termAmt, int = Math.floor(amt * k.pct / 100);
+    return btn(`存 ${casNum(amt)}・${k.days} 天 ${k.pct}%（+${casNum(int)}）`, () => bank("term", { amt, kind: k.i }), "small", { disabled: off || amt > w.chips || B.terms.length >= B.termMax ? true : null });
   });
   return h("div", { class: "bk-save" },
     h("div", { class: "bk-figs" },
@@ -207,7 +211,7 @@ function savePane(fig, md, off) {
       fig(CAS_BANK.term, casNum(B.terms.reduce((s, x) => s + x.amt, 0)), `${B.terms.length}／${B.termMax} 筆`),
       fig("累計利息", casNum(B.earned), "莊家付的")),
     h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "存活存"), h("span", { class: "bk-act-b" }, puts.length ? puts : h("small", null, CAS_BANK.poor)), takes.length ? h("span", { class: "bk-act-b" }, takes) : null),
-    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "開定存（用手上的籌碼）"), h("span", { class: "bk-act-b" }, kinds)),
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "開定存：先挑金額"), h("span", { class: "bk-act-b" }, amtBtns), h("span", { class: "bk-act-b" }, kinds)),
     B.terms.length ? h("table", { class: "bk-book" },
       h("thead", null, h("tr", null, ["期間", "本金", "利息", "到期", ""].map(t => h("th", { scope: "col" }, t)))),
       h("tbody", null, B.terms.map(x => h("tr", null,
