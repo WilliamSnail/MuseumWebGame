@@ -35,3 +35,29 @@ for (const [N, q] of [[5, 0.6], [10, 0.5], [20, 0.5]]) for (const K of [0.1, 0.0
   const a = run(N, q, K, "t22"), b = run(N, q, K, "t2330");
   console.log(String(N).padStart(2), q, String(K).padEnd(5), pct(a.pred).padStart(9), "          ", pct(b.pred).padStart(9), "          ", pct(a.self).padStart(8));
 }
+
+// ---- NPC 也算進「不同的人」（規劃 2.8k）：每家店每天有 Poisson(λ) 個 NPC 去逛，加進 a 和前 7 個有效日的平均
+console.log("\n== NPC：每家店每天 Poisson(λ) 個 NPC。K＝0.03。人太少（< minPeople）不調價的天數比例；看盤的人預測／自己操縱的每天賺（只在預測跳空 > 1% 才進場）");
+{
+  const pois = l => { let L = Math.exp(-l), k = 0, p = 1; do { k++; p *= rnd(); } while (p > L); return k - 1; };
+  console.log("N   λ(NPC)   不調價的天數   預測每天賺   自己操縱 +1 人");
+  for (const [N, q] of [[3, 0.6], [5, 0.6], [10, 0.5], [20, 0.5]]) for (const lam of [0, 1.5, 3]) {
+    const K = 0.03; let quiet = 0, n = 0, pred = 0, self = 0, selfN = 0; const hist = [];
+    for (let d = 0; d < DAYS; d++) {
+      const players = bin(N, q), npc = lam ? pois(lam) : 0, a = players + npc, aT = Math.round(players * 0.9) + npc * 0; // 看盤的人：知道自己看得到的玩家（約九成），不知道 NPC
+      n++;
+      if (a < MINP) { quiet++; if (a >= MINP) hist.push(a); continue; }
+      if (hist.length >= 3) {
+        const avg = hist.slice(-7).reduce((x, y) => x + y, 0) / Math.min(7, hist.length);
+        const m = Math.max(-0.05, Math.min(0.05, K * (a / avg - 1) + (rnd() - 0.5) * 0.02));
+        const est = K * ((aT + (N * q) * 0.1 + lam) / avg - 1);
+        if (Math.abs(est) > FEE) pred += (est > 0 ? m : -m) - FEE;
+        const m2 = Math.max(-0.05, Math.min(0.05, K * ((a + 1) / avg - 1) + (rnd() - 0.5) * 0.02)); self += m2 - FEE; selfN++;
+      }
+      hist.push(a);
+    }
+    console.log(String(N).padStart(2), String(lam).padStart(6), "  ", pct(quiet / n).padStart(8), "   ", pct(pred / n).padStart(7), "      ", pct(self / Math.max(1, selfN)).padStart(8));
+  }
+  console.log("\n劇情那天（公開的日程）NPC 多去 b × 平均：看盤的人預先知道，預期跳空 ＝ K × b；要小於來回成本 1.04% 才不被套利");
+  for (const b of [0.2, 0.3, 0.35, 0.5, 1.0]) console.log("b ＝", b, "預期跳空", pct(0.03 * b), "→ 預先進場每次賺", pct(Math.max(0, 0.03 * b - FEE)));
+}
