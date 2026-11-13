@@ -55,6 +55,8 @@ export function casHouseMint(house, src, n) {
   return n;
 }
 
+// 存在銀行的（跟 casino_bank.js 的 casBankHeld 壹樣；這個檔不 import 別的檔，所以自己算）
+const bkHeld = w => (bkBox(w.bank) ? bkNz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, x) => s + bkNz(x && x.amt), 0) : 0) : 0);
 const bkSumObj = o => Object.values(bkBox(o) ? o : {}).reduce((s, x) => s + bkNz(x), 0);
 export const casBookSumObj = bkSumObj;
 const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o : {})) bkAdd(into, k, bkNz(v)); };
@@ -63,20 +65,21 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 // 回傳快照：{ day, wallets: n 個錢包, chips 錢包籌碼總和, transit 在路上的, inplay, mint {來源}, burn {來源},
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
-  const s = { day: day || null, wallets: 0, chips: 0, transit: 0, inplay: bkNz(inplay), mint: {}, burn: {},
+  const s = { day: day || null, wallets: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
     house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), mint: {}, flow: {} } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
     s.chips += bkNz(w.chips);
     s.transit += bkNz(w.loan && w.loan.toHouse);
+    s.bank += bkHeld(w); // 存在 Yuga Bot 銀行的（活存＋定存，shared/casino_bank.js）：還是玩家的錢
     if (bkBox(w.led)) { bkMerge(s.mint, w.led.mint); bkMerge(s.burn, w.led.burn); }
   }
   if (bkBox(house.led)) { bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); }
   return s;
 }
 // 全館的錢（含莊家、預算池、海底）
-export const casBookTotal = s => s.chips + s.transit + s.inplay + s.house.bankroll + s.house.budget + s.house.sea;
+export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea;
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
 export const casBookBurned = s => bkSumObj(s.burn);
@@ -93,12 +96,13 @@ const bkDiffObj = (a, b) => {
 };
 // 兩份快照相減（a 較早，b 較晚）＝這段時間的帳。a 沒有（第一天）就從 0 算
 export function casBookDiff(a, b) {
-  const z = { chips: 0, transit: 0, inplay: 0, wallets: 0, mint: {}, burn: {}, house: { bankroll: 0, budget: 0, sea: 0, mint: {}, flow: {} } };
+  const z = { chips: 0, transit: 0, bank: 0, inplay: 0, wallets: 0, mint: {}, burn: {}, house: { bankroll: 0, budget: 0, sea: 0, mint: {}, flow: {} } };
   a = a || z;
   return {
     from: a.day || null, to: b.day || null,
     wallets: bkNz(b.wallets) - bkNz(a.wallets),
     chips: bkNz(b.chips) - bkNz(a.chips),
+    bank: bkNz(b.bank) - bkNz(a.bank),
     bankroll: bkNz(b.house.bankroll) - bkNz(a.house.bankroll),
     budget: bkNz(b.house.budget) - bkNz(a.house.budget),
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),

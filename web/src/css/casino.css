@@ -76,6 +76,13 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .bk-name small { font-size: .75rem; letter-spacing: .1em; color: #A9B4C8; white-space: nowrap; }
 .bk-state { flex: none; padding: 2px 10px; border-radius: 999px; font-size: .75rem; letter-spacing: .08em; border: 1px solid currentColor; }
 .bk-state.good { color: #9FD8B0; } .bk-state.open { color: #F3DFA6; } .bk-state.bad { color: #FF9C8A; background: rgba(255,120,100,.12); }
+/* 借款、存款頁籤（11-13 Yuga Bot 銀行的活存、定存） */
+.bk-tabs { display: flex; gap: 0; border-top: 1px solid rgba(214,178,94,.22); }
+.bk-tab { flex: 1; min-height: 34px; border: 0; background: rgba(0,0,0,.18); color: #A9B4C8; font: inherit; font-size: .875rem; letter-spacing: .12em; cursor: pointer; border-bottom: 2px solid transparent; }
+.bk-tab.on { color: #F2D58A; background: rgba(214,178,94,.12); border-bottom-color: #D6B25E; }
+.bk-tab:hover:not(.on) { color: #E8EDF6; }
+@media (max-width: 480px) { .bk-save .bk-book th, .bk-save .bk-book td { padding: 5px 6px; white-space: nowrap; } }
+.bk-rule { margin: 0; padding: 8px 14px; font-size: .75rem; line-height: 1.6; color: #A9B4C8; border-top: 1px solid rgba(214,178,94,.22); }
 .bk-figs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .bk-fig { display: flex; flex-direction: column; gap: 1px; padding: 8px 14px; min-width: 0; }
 .bk-fig + .bk-fig { border-left: 1px solid rgba(214,178,94,.22); }
