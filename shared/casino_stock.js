@@ -25,7 +25,8 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casBurn, casCount, casMint } from "./casino_book.js";
-import { casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
+import { IN_IDS, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
+import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { casFill, casNum } from "./casino.js";
@@ -64,7 +65,7 @@ export function casStockFix(w) {
   S.gain = Number.isFinite(+S.gain) ? Math.floor(+S.gain) : 0; // 可以是負的
   S.seq = stN(S.seq);
   S.orders = (Array.isArray(S.orders) ? S.orders : []).map(o => stBox(o) ? { no: stN(o.no), kind: o.kind, id: o.id, n: stN(o.n), px: stN(o.px), day: stDay(o.day) ? o.day : null, exp: stDay(o.exp) ? o.exp : null, hold: o.kind === "buy" ? stN(o.hold) : 0, at: o.at == null ? null : stN(o.at) } : null)
-    .filter(o => o && ORDER_KINDS.includes(o.kind) && stDef(o.id) && o.n > 0 && o.px > 0 && o.day && o.exp);
+    .filter(o => o && ORDER_KINDS.includes(o.kind) && (stDef(o.id) || IN_IDS.includes(o.id)) && o.n > 0 && o.px > 0 && o.day && o.exp);
   S.hold = S.orders.reduce((a, o) => a + o.hold, 0); // 永遠由單算出來，不會和單對不上
   if (!stBox(S.cx)) S.cx = { day: null, n: 0 };
   S.cx.day = stDay(S.cx.day) ? S.cx.day : null; S.cx.n = stN(S.cx.n);
@@ -286,7 +287,7 @@ export function casStockView(w, house, day, t, stale) {
     exposeLeft: null, // 跟外面世界買賣（11-14）：沒有莊家的上限了
     bankroll: house.bankroll, houseBroke: false,
     sellLeft: Math.max(0, C.sellDay - stSoldToday(S, day)),
-    orders: S.orders.map(o => ({ no: o.no, kind: o.kind, kindName: CAS_STOCK.order.kinds[o.kind], id: o.id, name: stDef(o.id).name, n: o.n, px: o.px, now: H.px[o.id], day: o.day, exp: o.exp, lock: o.kind === "buy" ? o.hold : 0, lockShares: o.kind === "buy" ? 0 : o.n })),
+    orders: S.orders.map(o => ({ no: o.no, market: IN_IDS.includes(o.id) ? "in" : stMk(o.id) || "us", kind: o.kind, kindName: CAS_STOCK.order.kinds[o.kind], id: o.id, name: stOrderName(o), n: o.n, px: o.px, now: IN_IDS.includes(o.id) ? casInPrice(house, o.id, day, t).px : H.px[o.id], day: o.day, exp: o.exp, lock: o.kind === "buy" ? o.hold : 0, lockShares: o.kind === "buy" ? 0 : o.n })),
     orderLeft: Math.max(0, C.order.max - S.orders.length), orderMax: C.order.max, orderPerStock: C.order.perStock, orderDays: C.order.days,
     cancelLeft: Math.max(0, C.order.cancelDay - (S.cx.day === day ? S.cx.n : 0)), lockChips: S.hold,
     orderRule: CAS_STOCK.order.rule,
@@ -307,11 +308,12 @@ export function casStockTakeNotes(w) { const S = casStockFix(w); const n = S.not
 
 
 // ---------- 限價單、停損單（規劃 2.8c，只做現股） ----------
-const stOrderName = o => stDef(o.id).name;
+const stOrderName = o => (stDef(o.id) || IN_STOCKS.find(s => s.id === o.id)).name; // 館內店的單也在這張清單裡（shared/casino_stock_in.js 的 casInOrder）
 const stKind = o => CAS_STOCK.order.kinds[o.kind];
 const stNote = (S, line) => { S.notes.push(line); S.notes = S.notes.slice(-8); };
 // 下單。kind：buy 限價買、sell 限價賣、stop 停損賣；px 限價（整數）。下單時價格要比現價「更有利」，不然就等於市價單（會變成偷看價格的洞）
 export function casStockOrder(w, house, kind, id, shares, px, day, t) {
+  if (IN_IDS.includes(id)) return casInOrder(w, house, kind, id, shares, px, day, t); // 館內五家店：莊家當對手盤（規劃 2.8g）
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w), H = casStockHouseFix(house);
   if (!ORDER_KINDS.includes(kind) || !stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(id) };
@@ -344,6 +346,7 @@ export function casStockCancel(w, no, day, t, house) {
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w);
   const o = S.orders.find(x => x.no === stN(no));
   if (!o) return { ok: false, reason: O.noOrder };
+  if (casInOrderHalt(o.id, t)) return { ok: false, reason: CAS_STOCK_IN.halt }; // 館內店休市（23:30～05:00）也不准取消
   if (house && casStockIdHalt(house, o.id, day, t)) return { ok: false, reason: stHaltWhy(o.id) }; // 休市時間不准取消（不然看著盤外的行情再取消就是偷看）
   if (S.cx.day !== day) S.cx = { day, n: 0 };
   if (S.cx.n >= C.order.cancelDay) return { ok: false, reason: casFill(O.cancelDay, { n: C.order.cancelDay }) };
@@ -357,11 +360,13 @@ export function casStockCancel(w, no, day, t, house) {
 export function casStockMatch(w, house, day, t) {
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w), H = casStockHouseFix(house);
   const out = { fills: 0, cancels: 0 };
+  const inr = casInMatch(w, house, day, t); // 館內店的單另外檢查（15 分鐘的價）
+  out.fills += inr.fills; out.cancels += inr.cancels;
   if (!stDay(day) || !S.orders.length) return out;
   // 成交時 casStockBuy／casStockSell 會再呼叫 casStockFix，把 S.orders 換成新的物件：不能拿壹開始的舊物件，要照單號每次重新找（11-14 測試發現：後面的單退了鎖卻刪不掉，變成幽靈單，下次又成交壹次）
   for (const no of S.orders.map(x => x.no).sort((a, b) => a - b)) {
     const o = S.orders.find(x => x.no === no);
-    if (!o) continue;
+    if (!o || IN_IDS.includes(o.id)) continue;
     // 要檢查的價：下單之後每天的價（不含超過最後有效日的）和現價
     const okPts = [];
     const mk = stMk(o.id), tw = !!mk, T = mk ? H[mk] : null; // tw：這支有盤中（台股、美股）

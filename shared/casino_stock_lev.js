@@ -23,6 +23,7 @@
 //    src.close(id, day)      → day 那天最後壹個價，不知道給 null
 //
 //  接線的人看這裡（還沒接）：
+//    停損、停利（11-14）：開倉帶 stop、take（價，可不給）；之後 op "levset"（pid 或 no、stop、take）→ casLevSet。掃描時第壹個碰到的價就平倉（跳空穿過用跳空後的價，跟強平壹樣）。
 //    開單／平倉 op："open" → casLevOpen(w, house, args, day, t)；"close" → casLevClose(w, house, no, day, t)。
 //    每次碰到錢包、換日「之前」（casStockTwSettle／casStockUsSettle／casInRoll 之前）叫 casLevSweep(w, house, day, t)：先強平、再把收盤的自動平倉。
 //    畫面：casStockLevView(w, house, day, t)。
@@ -61,7 +62,7 @@ export function casLevFix(w, day) {
   // 就地補（不換物件：呼叫的人手上拿著的 pos 還是同壹個）
   S.pos = (Array.isArray(S.pos) ? S.pos : []).filter(lqBox).map(p => Object.assign(p, {
     no: lqN(p.no), mk: casLevMarket(p.id), side: p.side === "short" ? "short" : "long", lev: Math.max(1, lqN(p.lev)), qty: lqN(p.qty), entry: lqN(p.entry), notional: lqN(p.notional),
-    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), peg: lqN(p.peg), px: lqN(p.px) || lqN(p.entry) }))
+    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), peg: lqN(p.peg), px: lqN(p.px) || lqN(p.entry), stop: lqN(p.stop) || null, take: lqN(p.take) || null }))
     .filter(p => p.mk && p.qty > 0 && p.entry > 0 && p.margin > 0 && p.day);
   S.seq = lqN(S.seq);
   S.hold = S.pos.reduce((a, p) => a + p.margin, 0); // 永遠由部位算出來，不會對不上
@@ -127,9 +128,18 @@ export function casLevLiqPx(p) {
 }
 // 維持率（%）：保證金加損益 ÷ 原本的保證金。開倉是 100，到 forcePct（50）強平
 export const casLevMaint = (p, px) => Math.round(casLevEquity(p, px) / p.margin * 100);
+// 停損、停利（11-14，規劃 2.8j）：p.stop、p.take 是價（沒設是 null）。做多：跌到 stop 以下停損、漲到 take 以上停利；放空相反。
+// 碰到的判斷全用整數比較。同壹個價同時碰到強平和停損（跳空穿過兩個），算強平（最壞的那個說法），成交價都一樣是那個價
+export function casLevTrig(p, px) {
+  if (casLevHit(p, px)) return "liq";
+  const L = p.side === "long";
+  if (p.stop > 0 && (L ? px <= p.stop : px >= p.stop)) return "stop";
+  if (p.take > 0 && (L ? px >= p.take : px <= p.take)) return "take";
+  return null;
+}
 // 盤中檢查：給壹串價（開倉之後依序的價），回傳第壹個碰到強平的 { hit: true, k, px }，沒有就 { hit: false }。跳空穿過就是跳空後的那個價
 export function casLevCheck(p, path) {
-  for (let k = 0; k < (path || []).length; k++) if (casLevHit(p, path[k])) return { hit: true, k, px: path[k] };
+  for (let k = 0; k < (path || []).length; k++) { const why = casLevTrig(p, path[k]); if (why) return { hit: true, k, px: path[k], why }; }
   return { hit: false };
 }
 
@@ -161,8 +171,8 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     path(id, d, from) {
       const mk = casLevMarket(id);
       if (mk === "in") {
-        if (IH.day !== d) return []; // 那天的開盤價已經不在了（隔了壹天以上沒碰）：不知道，不編
-        const ser = inSer(id);
+        const ser = IH.day === d ? inSer(id) : IH.pre && IH.pre.day === d && IH.pre.open[id] > 0 ? casInSeries(IH.pre.open[id], d, id, secret) : null; // 前壹天的開盤價莊家還記著（IH.pre）；更早的不知道，不編
+        if (!ser) return [];
         const upto = d < day ? ser.length - 1 : (lqT(t) ? (casInIdx(t) === null ? ser.length - 1 : casInIdx(t)) : -1);
         return ser.slice(from + 1, upto + 1);
       }
@@ -176,6 +186,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
       const mk = casLevMarket(id);
       if (mk === "in") {
         if (IH.day === d) return inSer(id)[C.ticks - 1];
+        if (IH.pre && IH.pre.day === d && IH.pre.open[id] > 0) return casInSeries(IH.pre.open[id], d, id, secret)[C.ticks - 1];
         if (lqDay(d) && IH.day === lqAdd(d, 1) && IH.close[id] > 0) return IH.close[id]; // 已經換日：莊家記著前壹天的收盤
         return null;
       }
@@ -184,6 +195,21 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     },
   };
 }
+
+// ---------- 停損、停利的設定檢查 ----------
+// 價的輸入：沒給／空字串／0／null ＝ 沒設（null）；不是正整數回 undefined（看不懂）
+const lqPxArg = v => { if (v == null || v === "" || v === 0 || v === "0") return null; const n = Math.floor(Number(String(v).replace(/[,，\s]/g, ""))); return Number.isFinite(n) && n >= 1 ? n : undefined; };
+// 檢查壹組 stop、take（都可以是 null）。ref ＝ 參考價（開倉時是開倉價，之後改是現價）。回傳 null ＝ 合格，不然原因。
+// 規則：做多要「停損 < 參考價 < 停利」，放空相反（停利 < 參考價 < 停損）；停損一定要比強制平倉價更靠近參考價（不然會先被強平，等於沒設，直接拒絕）
+function lqStopWhy(pos, ref, stop, take) {
+  const T = CAS_STOCK_LEV, L = pos.side === "long";
+  if (stop === undefined || take === undefined) return T.stopBad;
+  if (stop != null && !(L ? stop < ref : stop > ref)) return casFill(L ? T.stopLong : T.stopShort, { px: casNum(ref) });
+  if (take != null && !(L ? take > ref : take < ref)) return casFill(L ? T.takeLong : T.takeShort, { px: casNum(ref) });
+  if (stop != null) { const liq = casLevLiqPx(pos); if (L ? stop <= liq : stop >= liq) return casFill(T.stopLiq, { liq: casNum(liq) }); }
+  return null;
+}
+const lqStopText = (stop, take) => casFill(CAS_STOCK_LEV.stopSet, { stop: stop ? casNum(stop) : CAS_STOCK_LEV.unset, take: take ? casNum(take) : CAS_STOCK_LEV.unset });
 
 // ---------- 開倉 ----------
 const lqOpenPos = S => S.pos.reduce((a, p) => a + p.notional, 0);
@@ -196,7 +222,7 @@ const lqHouseCap = house => (house.bankroll > 0 ? Math.max(lqC().houseFloor, Mat
 // 現在能開單嗎（不管哪一檔）：回 null ＝ 可以，不然回原因。逾期欠款、錢包是負的都不行
 const lqDebtWhy = (w, day) => ((w.chips < 0 || (lqBox(w.loan) && Array.isArray(w.loan.list) && w.loan.list.some(x => lqDay(day) && day > x.due))) ? CAS_STOCK_LEV.debt : null);
 
-// args：{ id, side "long"｜"short", lev, qty }（也收 dir、margin：給 margin 沒給 qty 時，股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去）。回傳 { ok, pos, lines } 或 { ok:false, reason }
+// args：{ id, side "long"｜"short", lev, qty, stop, take（停損價、停利價，可以不給）}（也收 dir、margin：給 margin 沒給 qty 時，股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去）。回傳 { ok, pos, lines } 或 { ok:false, reason }
 export function casLevOpen(w, house, args, day, t, src) {
   const C = lqC(), T = CAS_STOCK_LEV, A = args || {}, S = casLevFix(w, day);
   src = src || casLevSrc(house, day, t);
@@ -226,20 +252,23 @@ export function casLevOpen(w, house, args, day, t, src) {
   }
   const cost = lqCostOf(side, notional, margin);
   if (w.chips < margin + cost.total) return { ok: false, reason: casFill(T.poor, { need: casNum(margin + cost.total), margin: casNum(margin), fee: casNum(cost.total) }) };
+  const stop = lqPxArg(A.stop), take = lqPxArg(A.take);
+  const probe = { side, entry: px, qty, margin }, sWhy = lqStopWhy(probe, px, stop, take); // 停損停利有問題就整張單不開
+  if (sWhy) return { ok: false, reason: sWhy };
   // 成交
   w.chips -= margin + cost.total;
   house.budget += cost.total; casCount(house, "levFee", cost.total); // 手續費和利息搬進預算池（不是 burn）
   S.seq += 1;
-  const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), peg: lqN(casStockHouseFix(house).peg.seq), px };
+  const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), peg: lqN(casStockHouseFix(house).peg.seq), px, stop, take };
   S.pos.push(pos); S.hold += margin; S.fee += cost.total;
   S.opens = { day, n: opensToday + 1 };
   if (H) H.in += notional;
   casCount(house, "levOpen");
-  return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casNum(px), margin: casNum(margin), fee: casNum(cost.total), liq: casNum(casLevLiqPx(pos)) })] };
+  return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casNum(px), margin: casNum(margin), fee: casNum(cost.total), liq: casNum(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
 }
 
 // ---------- 結算壹筆（平倉、強平、收盤自動平倉共用） ----------
-// why："close"｜"liq"｜"flat"。回傳 { px, pnl 實際算的損益（含賠到保證金為止、賺有上限）, back 拿回的籌碼, fee 平倉手續費, bad 壞帳, clipped 超過上限沒給的 }
+// why："close"｜"liq"｜"stop"｜"take"｜"flat"。回傳 { px, pnl 實際算的損益（含賠到保證金為止、賺有上限）, back 拿回的籌碼, fee 平倉手續費, bad 壞帳, clipped 超過上限沒給的 }
 function lqSettle(w, house, S, pos, px, t, why) {
   const T = CAS_STOCK_LEV, C = lqC();
   const raw = casLevPnl(pos, px);
@@ -276,6 +305,8 @@ function lqSettle(w, house, S, pos, px, t, why) {
   const sideW = pos.side === "long" ? T.long : T.short;
   const out = { px, pnl: eff, back, fee, bad, clipped, why };
   if (why === "liq") S.notes.push(casFill(T.liqNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
+  if (why === "stop") S.notes.push(casFill(T.stopNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
+  if (why === "take") S.notes.push(casFill(T.takeNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
   if (why === "flat") S.notes.push(casFill(T.flatNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
   if (clipped > 0) S.notes.push(casFill(T.capNote, { over: casNum(clipped) }));
   S.notes = S.notes.slice(-8);
@@ -293,14 +324,13 @@ export function casLevSweep(w, house, day, t, src) {
     if (pos.mk !== "in" && casStockHouseFix(house).peg.ev.some(e => e.id === pos.id && e.seq > pos.peg)) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, pos.px, t, "flat"))); continue; }
     const path = src.path(pos.id, pos.day, pos.chk) || [];
     const h = casLevCheck(pos, path);
-    if (h.hit) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, h.px, t, "liq"))); continue; }
+    if (h.hit) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, h.px, t, h.why))); continue; }
     pos.chk += path.length;
     if (path.length) pos.px = path[path.length - 1];
     const nw = src.now(pos.id), stale = lqDay(day) && pos.day < day, closed = stale || (lqT(t) && nw && !nw.open);
     if (!closed) { if (!stale && nw && nw.px > 0) pos.px = nw.px; continue; }
     const cp = src.close(pos.id, pos.day), px = cp > 0 ? cp : pos.px; // 收盤價不知道（隔了很久沒碰）：用最後看到的價
-    if (casLevHit(pos, px)) out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, px, t, "liq")));
-    else out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, px, t, "flat")));
+    out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, px, t, casLevTrig(pos, px) || "flat")));
   }
   return out;
 }
@@ -320,6 +350,26 @@ export function casLevClose(w, house, no, day, t, src) {
   return Object.assign({ ok: true }, r, { lines: [casFill(T.closeOk, { name: lqName(had.id), side: sideW, px: casNum(r.px), pnlWord: r.pnl > 0 ? T.winWord : r.pnl < 0 ? T.loseWord : T.evenWord, pnl: casNum(Math.abs(r.pnl)), back: casNum(r.back), fee: casNum(r.fee) })] });
 }
 
+// ---------- 改停損、停利 ----------
+// args：{ no（或 pid "p3"）, stop, take }。沒給的欄位（undefined）不動；給 null、0、空字串 ＝ 清掉。
+// 先掃描（該強平、停損、停利、收盤的先處理）；還在的話用「現價」當參考價檢查（做多 停損 < 現價 < 停利）；休市中不能改（不然收盤後看著行情改就是偷看）。新的價只管「之後」的價
+export function casLevSet(w, house, args, day, t, src) {
+  const T = CAS_STOCK_LEV, A = args || {}, S = casLevFix(w, day);
+  src = src || casLevSrc(house, day, t);
+  const no = A.no != null ? lqN(A.no) : lqN(String(A.pid == null ? "" : A.pid).replace(/\D/g, ""));
+  const had = S.pos.find(p => p.no === no);
+  if (!had) return { ok: false, reason: T.none };
+  const swept = casLevSweep(w, house, day, t, src);
+  if (swept.some(r => r.pos === had)) return { ok: false, reason: T.setGone, lines: [S.notes[S.notes.length - 1]] };
+  const nw = src.now(had.id);
+  if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.setHalt };
+  const stop = A.stop === undefined ? had.stop : lqPxArg(A.stop), take = A.take === undefined ? had.take : lqPxArg(A.take);
+  const why = lqStopWhy(had, nw.px, stop, take);
+  if (why) return { ok: false, reason: why };
+  had.stop = stop; had.take = take;
+  return { ok: true, pos: had, stop, take, lines: [casFill(T.setOk, { name: lqName(had.id), text: stop || take ? lqStopText(stop, take) : T.setClear })] };
+}
+
 // ---------- 畫面 ----------
 // 回傳 { lev: { max, byMarket, usWhy, opensLeft, fee, interest, borrow, force, rule }, positions: [...], credit: {...}, posLimit, posUsed, profitCap, netToday, notes }
 // positions 的每項：{ no, id, name, market, side, lev, qty, entry, margin, now, pnl, maintPct, liqPx, openedDay, dayTrade }（另外給 sid、n、ratio、liq，名字照現在畫面的假資料）
@@ -331,7 +381,7 @@ export function casStockLevView(w, house, day, t, src) {
   const positions = S.pos.map(p => {
     const nw = src.now(p.id), now = nw && nw.px > 0 && p.day === day ? nw.px : p.px;
     return { no: p.no, id: p.id, name: lqName(p.id), market: p.mk, side: p.side, lev: p.lev, qty: p.qty, entry: p.entry, margin: p.margin, now, pnl: casLevPnl(p, now), maintPct: casLevMaint(p, now),
-      liqPx: casLevLiqPx(p), openedDay: p.day, dayTrade: true, sid: p.id, n: p.qty, ratio: casLevEquity(p, now) / p.margin, liq: casLevLiqPx(p) };
+      liqPx: casLevLiqPx(p), stop: p.stop || null, take: p.take || null, openedDay: p.day, dayTrade: true, sid: p.id, n: p.qty, ratio: casLevEquity(p, now) / p.margin, liq: casLevLiqPx(p) };
   });
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
