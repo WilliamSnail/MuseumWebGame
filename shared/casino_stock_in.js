@@ -63,6 +63,8 @@ export function casInFix(w) {
   for (const k of Object.keys(S.own)) { const n = inN(S.own[k]); if (n > 0 && IN_IDS.includes(k)) S.own[k] = n; else delete S.own[k]; }
   if (!inBox(S.sold)) S.sold = { day: null, n: 0 };
   S.sold.day = inDay(S.sold.day) ? S.sold.day : null; S.sold.n = inN(S.sold.n);
+  if (!inBox(S.cost)) S.cost = {}; // 每家的總成本（買進花的錢 ＋ 買進手續費；賣出時照比例扣）。畫面的單位成本、損益用；館內股不抽資本利得稅
+  for (const k of Object.keys(S.cost)) { const n = inN(S.cost[k]); if (n > 0 && S.own[k] > 0 && IN_IDS.includes(k)) S.cost[k] = n; else delete S.cost[k]; }
   S.fee = inN(S.fee);
   if (!inBox(S.seen)) S.seen = {};
   for (const k of Object.keys(S.seen)) { const n = inN(S.seen[k]); if (n > 0 && IN_IDS.includes(k)) S.seen[k] = n; else delete S.seen[k]; }
@@ -168,6 +170,8 @@ export function casInPrice(house, id, day, t, secret = SECRET) {
 }
 
 // ---------- 買賣 ----------
+// 有持股卻沒有成本記錄的舊持股：成本 ＝ 第壹次碰到時的價（今天的開盤價）× 股數
+export function casInCostSeed(w, house) { const S = casInFix(w), H = casInHouseFix(house); for (const id of Object.keys(S.own)) if (S.cost[id] == null) S.cost[id] = H.open[id] * S.own[id]; }
 const inHeld = (H, house) => IN_IDS.reduce((s, id) => s + inN(H.held[id]) * H.open[id], 0); // 全館持股市值（用開盤價估，夠用來擋上限）
 // 莊家能接多少館內股（規劃 2.8e）：max(exposeFloor, 莊家的錢 × exposePct%)；莊家 ≤ 0 時不接
 export const casInExposeCap = house => (house.bankroll > 0 ? Math.max(NUM.casino.stockIn.exposeFloor, Math.floor(house.bankroll * NUM.casino.stock.exposePct / 100)) : 0);
@@ -194,7 +198,9 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   const px = pr.px, cost = px * n, fee = inFee(cost);
   if (!(w.chips >= cost + fee)) return { ok: false, reason: T.poor };
   if (inHeld(H, house) + cost > casInExposeCap(house)) return { ok: false, reason: T.exposed };
+  casInCostSeed(w, house);
   w.chips -= cost + fee;
+  S.cost[id] = inN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   casHouseMove(house, "stockIn", cost); // 買進的錢進莊家（莊家當對手盤）
   house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（搬）
   S.own[id] = have + n; S.fee += fee;
@@ -217,9 +223,11 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0) {
   const px = pr.px, gross = px * n, fee = inFee(gross), net = gross - fee;
   if (inSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, C.sellDay - inSoldToday(S, day))) }) };
   if (inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
+  casInCostSeed(w, house);
+  const costOut = n >= have0 ? inN(S.cost[id]) : Math.floor(inN(S.cost[id]) * n / have0);
   casHouseMove(house, "stockIn", -gross);
   w.chips += net; house.budget += fee; casCount(house, "stockFee", fee);
-  S.own[id] = have0 - n; if (S.own[id] <= 0) delete S.own[id];
+  S.own[id] = have0 - n; if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, inN(S.cost[id]) - costOut);
   S.fee += fee; S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
   H.net = { day, n: inNetToday(H, day) + gross };
@@ -298,7 +306,7 @@ export function casInMatch(w, house, day, t, secret = SECRET) {
     if (r.ok) {
       out.fills++;
       inNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: inDef(o.id).name, n: casNum(r.n), px: casNum(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
-        : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee) }));
+        : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: "" }));
     } else { out.cancels++; inNote(S, casFill(O.capCancel, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(o.n) })); }
   }
   return out;
@@ -313,7 +321,9 @@ export function casInView(w, house, day, t, secret = SECRET) {
   const list = IN_STOCKS.map(d => {
     const ser = ready ? casInSeries(H.open[d.id], day, d.id, secret) : [], upto = idx !== null ? idx : (closed ? ser.length - 1 : 0);
     const price = ready ? ser[Math.min(upto, ser.length - 1)] : H.open[d.id], mine = inN(S.own[d.id]);
-    return { id: d.id, name: d.name, line: d.intro, kind: "in", market: "in", price, chg: H.close[d.id] > 0 ? (price - H.close[d.id]) / H.close[d.id] : 0, mine, value: price * mine,
+    const prev = H.close[d.id], costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : price * mine) : 0; // 持股明細欄位跟館外股壹樣（casStockView）；prev ＝ 昨天收盤
+    return { id: d.id, name: d.name, line: d.intro, kind: "in", market: "in", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,
+      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg: prev > 0 ? mine * (price - prev) : 0, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: price * mine - costTotal, pnlPct: costTotal > 0 ? (price * mine - costTotal) / costTotal : 0, tax: 0,
       halted: !ready || (t != null && idx === null), intraday: ready ? ser.slice(0, upto + 1) : [], intradayFrom: 0, fresh: S.seen[d.id] !== price, stale: null, quiet: !!H.quiet[d.id], jump: H.jump[d.id] };
   });
   return { list, inDay: { from: C.from, len: C.ticks, step: C.step }, cap: C.cap, total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee, feePct: NUM.casino.stock.feePct / 100,
