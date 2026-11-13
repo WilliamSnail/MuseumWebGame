@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.stockLev.levByCredit = [[0, 5]]; /* 舊測試用 5× 開，倍數跟信用的規則在 T2 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const J = JSON.stringify;
 const SEC = "test-secret", D0 = "2026-11-16", IN = "food";
 const addDay = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
@@ -19,7 +19,7 @@ const fakeSrc = P => ({
 
 // ---------- 槓桿的停損、停利 ----------
 const openL = (s, side, extra, px = 1000, qty = 100) => s.G.casLevOpen(s.w, s.h, Object.assign({ id: IN, side, lev: 5, qty }, extra), D0, at(D0, 6), fakeSrc({ px: { [IN]: px }, idx: 0 }));
-const longPos = extra => { const G = load(); G.NUM.casino.grants = []; const s = fresh(G), r = openL(s, "long", extra); assert.ok(r.ok, r.reason); return { s, G, pos: r.pos }; };
+const longPos = extra => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.stockLev.levByCredit = [[0, 5]]; const s = fresh(G), r = openL(s, "long", extra); assert.ok(r.ok, r.reason); return { s, G, pos: r.pos }; };
 T("開倉帶停損停利：存進部位，開倉訊息說出來；沒設是 null", G => {
   const s = fresh(G), r = openL(s, "long", { stop: 950, take: 1100 });
   assert.ok(r.ok, r.reason); assert.strictEqual(r.pos.stop, 950); assert.strictEqual(r.pos.take, 1100);

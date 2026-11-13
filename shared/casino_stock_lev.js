@@ -77,6 +77,7 @@ export function casLevFix(w, day) {
   if (!lqBox(S.cr)) S.cr = { pts: 0, day: null, ok: null, late: null };
   S.cr.pts = lqN(S.cr.pts); S.cr.day = lqDay(S.cr.day) ? S.cr.day : null;
   S.cr.ok = S.cr.ok == null ? null : lqN(S.cr.ok); S.cr.late = S.cr.late == null ? null : lqN(S.cr.late);
+  S.owed = (Array.isArray(S.owed) ? S.owed : []).filter(lqBox).map(e => ({ day: lqDay(e.day) ? e.day : null, amt: lqN(e.amt) })).filter(e => e.day && e.amt > 0).sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
   S.notes = (Array.isArray(S.notes) ? S.notes : []).filter(x => typeof x === "string").slice(-8);
   if (day) casLevCredit(w, day);
   return S;
@@ -111,7 +112,12 @@ export const casLevLevel = w => { const K = lqC().credit; return Math.min(K.maxL
 const lqScale = level => (100 + lqC().stepPct * level) / 100;
 export const casLevPosLimit = level => Math.floor(lqC().posLimit * lqScale(level));
 export const casLevProfitCap = level => Math.floor(lqC().profitCap * lqScale(level));
-export const casLevMaxLev = mk => Math.max(0, lqN((lqC().maxLev || {})[mk]));
+// 信用等級對應的倍數上限（11-14，翊文：「新手 2 倍，信用升級解鎖」）：NUM.casino.stockLev.levByCredit ＝ [[等級, 倍數], …]，取「等級 ≥ 門檻」裡最大的門檻那列
+export const casLevCreditCap = level => { let cap = 1; for (const [lv, m] of (lqC().levByCredit || [[0, 5]])) if (level >= lv) cap = m; return cap; };
+// 下一個倍數解鎖：{ level 幾級, lev 幾倍 } 或 null（已經是最高）
+export const casLevNextUnlock = level => { const cur = casLevCreditCap(level); const nx = (lqC().levByCredit || []).filter(([lv, m]) => lv > level && m > cur).sort((a, b) => a[0] - b[0])[0]; return nx ? { level: nx[0], lev: nx[1] } : null; };
+// 這個市場、這個信用等級最多幾倍：市場上限（maxLev）和信用等級上限（levByCredit）取小的。不給 level ＝ 只看市場
+export const casLevMaxLev = (mk, level) => { const m = Math.max(0, lqN((lqC().maxLev || {})[mk])); return level == null ? m : Math.min(m, casLevCreditCap(level)); };
 
 // ---------- 一筆部位的算術（全部用整數比較，沒有浮點的邊界問題） ----------
 const lqSide = s => (s === "short" || s === "空" ? "short" : s === "long" || s === "多" ? "long" : null);
@@ -228,10 +234,11 @@ export function casLevOpen(w, house, args, day, t, src) {
   src = src || casLevSrc(house, day, t);
   const id = A.id, mk = casLevMarket(id), side = lqSide(A.side || A.dir);
   if (!mk || !side || !lqDay(day)) return { ok: false, reason: T.bad };
-  const maxLev = casLevMaxLev(mk);
+  const marketMax = casLevMaxLev(mk), maxLev = casLevMaxLev(mk, casLevLevel(w));
   if (mk === "us") return { ok: false, reason: T.us };
-  if (maxLev <= 0) return { ok: false, reason: T.off };
+  if (marketMax <= 0) return { ok: false, reason: T.off };
   const lev = Math.floor(+A.lev);
+  if (Number.isFinite(lev) && lev > maxLev && lev <= marketMax) { const nx = casLevNextUnlock(casLevLevel(w)); return { ok: false, reason: casFill(T.levCredit, { max: maxLev, level: casLevLevel(w), next: nx ? casFill(T.levNext, { level: nx.level, lev: nx.lev }) : "" }) }; }
   if (!Number.isFinite(lev) || lev < 1 || lev > maxLev) return { ok: false, reason: casFill(T.levBad, { max: maxLev }) };
   const nw = src.now(id);
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.halt };
@@ -274,7 +281,7 @@ function lqSettle(w, house, S, pos, px, t, why) {
   const raw = casLevPnl(pos, px);
   let eff = Math.max(raw, -pos.margin); // 賠最多賠保證金
   const bad = raw < -pos.margin ? -pos.margin - raw : 0;
-  let clipped = 0;
+  let clipped = 0, owe = 0;
   const IH = pos.mk === "in" ? casInHouseFix(house) : null;
   const hn = IH && !(IH.net.day > pos.day) ? (IH.net.day === pos.day ? IH.net.n : 0) : null; // 莊家今天的淨賠付；null ＝ 已經是更晚的日子，不算
   if (eff > 0) {
@@ -282,8 +289,12 @@ function lqSettle(w, house, S, pos, px, t, why) {
     if (S.net.day !== pos.day) S.net = { day: pos.day, n: 0 };
     let room = Math.max(0, casLevProfitCap(casLevLevel(w)) - S.net.n);
     // 館內股：莊家壹天淨賠付上限（規劃 2.8a 第 7 條，跟股票的賣出共用壹個數）。H.net 已經是更晚的日子（換日後才結算）就不算
-    if (hn !== null) room = Math.min(room, Math.max(0, Math.floor(Math.max(0, house.bankroll) * NUM.casino.stock.netSellPct / 100) + NUM.casino.stock.netSellFlat - hn));
-    clipped = Math.max(0, eff - room); eff = Math.min(eff, room);
+    clipped = Math.max(0, eff - room); eff = Math.min(eff, room); // 自己的壹天淨賺上限：多的不給
+    if (hn !== null) { // 莊家壹天淨賠付上限：多的不是不給，記成欠條，之後的日子有空間再補發（11-14，翊文：隔天補發）
+      const hroom = house.bankroll > 0 ? Math.max(0, Math.floor(house.bankroll * NUM.casino.stock.netSellPct / 100) + NUM.casino.stock.netSellFlat - hn) : 0;
+      owe = Math.max(0, eff - hroom); eff = Math.min(eff, hroom); clipped += owe;
+      if (owe > 0) { const e = S.owed.find(x => x.day === pos.day); if (e) e.amt += owe; else S.owed.push({ day: pos.day, amt: owe }); S.owed.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0)); }
+    }
   }
   if (S.net.day !== pos.day) S.net = { day: pos.day, n: 0 };
   S.net.n += eff;
@@ -308,9 +319,35 @@ function lqSettle(w, house, S, pos, px, t, why) {
   if (why === "stop") S.notes.push(casFill(T.stopNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
   if (why === "take") S.notes.push(casFill(T.takeNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
   if (why === "flat") S.notes.push(casFill(T.flatNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
-  if (clipped > 0) S.notes.push(casFill(T.capNote, { over: casNum(clipped) }));
+  if (clipped - owe > 0) S.notes.push(casFill(T.capNote, { over: casNum(clipped - owe) }));
+  if (owe > 0) S.notes.push(casFill(T.owedNote, { over: casNum(owe) }));
   S.notes = S.notes.slice(-8);
+  out.owed = owe;
   return out;
+}
+
+// ---------- 隔天補發（11-14，翊文：館內股賺的超過莊家壹天淨賠付上限，多的記欠條，之後有空間再補發） ----------
+// w.lev.owed ＝ [{ day 那筆平倉的日子, amt 還欠多少 }]，舊的在前。欠條是莊家欠玩家的承諾，不是錢：還沒付之前不算玩家的錢（casBookGap 看不到，莊家的錢也還在莊家那邊）。
+// 每次碰到錢包叫壹次（casLevSweep 開頭）：只付「日子比今天早」的，從最舊的開始，付到今天的全館淨賠付上限用完、莊家的錢不夠（莊家 ≤ 0 不付）為止，可以只付壹部分。
+// 補發的錢算進莊家今天的淨賠付（跟股票賣出共用壹個數），但不算玩家自己的壹天淨賺上限（那個上限是開倉那天的事）。回傳這次付了多少
+export function casLevPayOwed(w, house, day) {
+  const S = casLevFix(w), T = CAS_STOCK_LEV;
+  if (!S.owed.length || !lqDay(day) || !(house.bankroll > 0)) return 0;
+  const IH = casInHouseFix(house), hn = IH.net.day === day ? IH.net.n : (IH.net.day && IH.net.day > day ? null : 0);
+  if (hn === null) return 0;
+  let room = Math.min(Math.floor(house.bankroll), Math.floor(house.bankroll * NUM.casino.stock.netSellPct / 100) + NUM.casino.stock.netSellFlat - hn), paid = 0;
+  for (const e of S.owed) {
+    if (!(e.day < day) || room <= 0) continue;
+    const n = Math.min(e.amt, room);
+    e.amt -= n; room -= n; paid += n;
+  }
+  S.owed = S.owed.filter(e => e.amt > 0);
+  if (paid > 0) {
+    casHouseMove(house, "stockLev", -paid); w.chips += paid; IH.net = { day, n: hn + paid };
+    S.gain += paid; casCount(house, "levOwedPaid", paid);
+    S.notes.push(casFill(T.paidNote, { paid: casNum(paid), left: S.owed.length ? casFill(T.paidLeft, { left: casNum(S.owed.reduce((a, e) => a + e.amt, 0)) }) : "" })); S.notes = S.notes.slice(-8);
+  }
+  return paid;
 }
 
 // ---------- 掃描：強制平倉、收盤自動平倉 ----------
@@ -318,6 +355,7 @@ function lqSettle(w, house, S, pos, px, t, why) {
 // 然後這支如果已經收盤（今天還沒收盤的不動）、或是日子過了，用那天最後壹個價自動平倉。回傳平掉的 [{ pos, ...結算 }]
 export function casLevSweep(w, house, day, t, src) {
   const S = casLevFix(w, day), out = [];
+  casLevPayOwed(w, house, day);
   src = src || casLevSrc(house, day, t);
   for (const pos of S.pos.slice()) {
     // 價位換成真實比例（規劃 2.8h，house.stk.peg.ev）時還有這檔的部位：之後的價是新的比例，不能跟開倉價比。保守做法：用換之前最後看到的價平倉
@@ -377,7 +415,9 @@ export function casLevSet(w, house, args, day, t, src) {
 export function casStockLevView(w, house, day, t, src) {
   const C = lqC(), T = CAS_STOCK_LEV, S = casLevFix(w), K = C.credit;
   src = src || casLevSrc(house, day, t);
-  const level = casLevLevel(w), pts = S.cr.pts, byMarket = { in: casLevMaxLev("in"), tw: casLevMaxLev("tw"), us: casLevMaxLev("us") };
+  const level = casLevLevel(w), pts = S.cr.pts, byMarket = { in: casLevMaxLev("in", level), tw: casLevMaxLev("tw", level), us: casLevMaxLev("us", level) }; // 倍數上限跟信用等級有關（levByCredit）
+  const nxU = casLevNextUnlock(level), maxLevNow = Math.max(byMarket.in, byMarket.tw, byMarket.us);
+  const owedTotal = S.owed.reduce((a, e) => a + e.amt, 0);
   const positions = S.pos.map(p => {
     const nw = src.now(p.id), now = nw && nw.px > 0 && p.day === day ? nw.px : p.px;
     return { no: p.no, id: p.id, name: lqName(p.id), market: p.mk, side: p.side, lev: p.lev, qty: p.qty, entry: p.entry, margin: p.margin, now, pnl: casLevPnl(p, now), maintPct: casLevMaint(p, now),
@@ -385,10 +425,12 @@ export function casStockLevView(w, house, day, t, src) {
   });
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
-    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us), byMarket, usWhy: byMarket.us > 0 ? null : T.us, opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
+    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.us, owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
       fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, force: C.forcePct / 100, rule: T.rule },
     positions,
-    credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: Math.max(byMarket.in, byMarket.tw, byMarket.us), next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts, why: T.creditWhy, pts, posLimit, posUsed },
+    credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: maxLevNow, next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts,
+      nextUnlock: nxU ? { level: nxU.level, lev: nxU.lev, pts: Math.max(0, nxU.level * K.ptsPerLevel - pts) } : null,
+      nextText: nxU ? casFill(T.unlockNext, { level: nxU.level, lev: nxU.lev, pts: Math.max(0, nxU.level * K.ptsPerLevel - pts) }) : T.unlockAll, why: T.creditWhy, pts, posLimit, posUsed },
     posLimit, posUsed, profitCap: casLevProfitCap(level), netToday: S.net.day === day ? S.net.n : 0, notes: S.notes.slice(),
   };
 }
