@@ -1,0 +1,61 @@
+{
+  "id": "c-sculptor",
+  "name": "雕刻家",
+  "kind": "client",
+  "note": "雕像那件事，他不想再提。",
+  "story": "手上的繭很厚，握茶杯會抖。",
+  "likes": [
+    "hall",
+    "auction",
+    "珍藏"
+  ],
+  "route": {
+    "hall": 4,
+    "auction": 4,
+    "craft": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 900000,
+    "max": 600000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他來展廳站在雕像前，什麼也沒說就走了。",
+      "news": "雕刻家在展廳的雕像前站了很久。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-23",
+      "text": "他說最近睡不好，夢裡有座雕像在幫他遞工具。",
+      "need": {
+        "metric": "commissions",
+        "n": 3
+      },
+      "news": "雕刻家說，他的夢裡有人幫忙遞工具。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-07",
+      "text": "他帶來壹塊還沒動過的石頭，說這次不雕臉。",
+      "need": {
+        "metric": "commissions",
+        "n": 14
+      },
+      "news": "雕刻家帶來了壹塊石頭，說這次不雕臉。",
+      "ties": [
+        "m-queue"
+      ],
+      "route": {
+        "auction": 5,
+        "craft": 4,
+        "hall": 2
+      }
+    }
+  ]
+}

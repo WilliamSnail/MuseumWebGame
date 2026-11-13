@@ -657,6 +657,7 @@ function main() {
   const { files, bad } = readWeeks();
   const r = checkContent({ files, bad, ledger: fs.existsSync(LEDGER) ? readJSON(LEDGER) : null, settings: fs.existsSync(SETTINGS) ? readJSON(SETTINGS) : null });
   r.errors.push(...checkBundle());
+  { const N = require("./npc_check.cjs"), nr = N.readNpc(); const nc = N.checkNpc({ npcs: nr.npcs, bad: nr.bad, banned: BANNED, ledger: fs.existsSync(LEDGER) ? readJSON(LEDGER) : null }); r.errors.push(...nc.errors); r.warnings.push(...nc.warnings); } // 館內 NPC（content/npc/，11-14）
   r.warnings.forEach(w => console.log("警告 " + w));
   if (r.errors.length) { console.error(r.errors.join("\n")); console.error(`${r.errors.length} 個問題`); process.exit(1); }
   const n = Object.keys(r.lib.weeks).length, f = Object.keys(r.lib.fallback).length, s = Object.keys(r.lib.spare).length;

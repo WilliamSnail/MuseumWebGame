@@ -1,0 +1,15 @@
+{
+  "id": "t-accountant",
+  "name": "會計（第二位收藏者）",
+  "kind": "trace",
+  "ledger": "會計（第二位收藏者）",
+  "story": "只留下字跡和算盤聲，字很小、很整齊。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

@@ -1,0 +1,30 @@
+{
+  "id": "c-priest",
+  "name": "某位祭司",
+  "kind": "client",
+  "note": "堅稱自己從來沒坐過那輛車。",
+  "story": "穿著長袍，說話很慢，總把話說到壹半。",
+  "likes": [
+    "hall",
+    "auction",
+    "珍藏"
+  ],
+  "route": {
+    "hall": 3,
+    "auction": 4,
+    "bank": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 800000,
+    "max": 500000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在拍賣預展站了很久，說壹半的話，留給別人接。",
+      "news": "某位祭司在拍賣預展說了壹半的話。"
+    }
+  ]
+}

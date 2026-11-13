@@ -1,0 +1,61 @@
+{
+  "id": "c-guardday",
+  "name": "博物館的警衛",
+  "kind": "client",
+  "note": "值夜班時，總覺得展品在動。",
+  "story": "白天補眠，下班後常來逛，說這樣才不會緊張。",
+  "likes": [
+    "hall",
+    "cellar",
+    "bj"
+  ],
+  "route": {
+    "hall": 4,
+    "cellar": 3,
+    "bj": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 160000,
+    "max": 90000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他說值夜班走過大廳，展品好像跟著他往同壹個方向看。",
+      "news": "博物館的警衛說展品會跟著他看。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-23",
+      "text": "他把巡邏簿借給別人看，簿子上有壹行不是他寫的字，很整齊。",
+      "need": {
+        "metric": "commissions",
+        "n": 5
+      },
+      "news": "博物館的警衛的巡邏簿多了壹行字。",
+      "ties": [
+        "m-accountant"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-07",
+      "text": "他今天不再提那行字，只問可不可以在簿子上多留壹格。",
+      "need": {
+        "metric": "commissions",
+        "n": 16
+      },
+      "news": "博物館的警衛想在簿子上多留壹格。",
+      "ties": [
+        "m-count"
+      ],
+      "route": {
+        "hall": 3,
+        "cellar": 4,
+        "bj": 1
+      }
+    }
+  ]
+}

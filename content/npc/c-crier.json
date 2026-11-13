@@ -1,0 +1,30 @@
+{
+  "id": "c-crier",
+  "name": "愛哭的高中生",
+  "kind": "client",
+  "note": "看什麼都會哭，包括說明書。",
+  "story": "口袋裡總有衛生紙，壹包拆了，壹包沒拆。",
+  "likes": [
+    "hall",
+    "craft",
+    "tears"
+  ],
+  "route": {
+    "hall": 5,
+    "craft": 3,
+    "food": 1
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 40000,
+    "max": 20000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在展廳看到壹隻傷心的佩佩，哭得比牠還大聲。",
+      "news": "愛哭的高中生在展廳哭了壹場。"
+    }
+  ]
+}
