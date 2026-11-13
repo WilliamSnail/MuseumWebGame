@@ -273,3 +273,31 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 .l2-strip { border: 9px solid transparent; border-image: url(/kit/gold9.webp) 52 / 9px round;
   background: #3A0E16 url(/kit/wine.webp) 0 0 / 256px padding-box; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 /* 館友證、待辦卡：翊文 11-12 覺得原本的框比較好看，照舊用 /lobby/panel-parch、card-*（之後用舊框當參考重新生成零件） */
+
+/* ================================================================
+   大廳手機橫拿（11-13，翊文生的 U-9；docs/介面整合規劃.md 第六步）
+   量到的：740×375 是 711 高、要捲。原因：上面「手機（760 寬以下）」那段把右欄拆開（display: contents）排成壹直條，橫拿 740 寬也中了。
+   橫拿改回左右兩欄：導覽圖滿高在左，右邊壹欄放館友證、今天要做的事、手上有的
+   ================================================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .l2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 8px; align-items: stretch; height: calc(100dvh - var(--nav-h, 42px) - var(--status-real, var(--status-h, 40px)) - 12px); }
+  .l2-left { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 0; }
+  .l2-side { display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 0; max-height: none; overflow-y: auto; }
+  .l2-side > * { order: 0 !important; width: auto; }
+  .l2-strips { order: 0; grid-template-columns: 1fr 1fr; }
+  .l2-mapbox { flex: 1 1 0; min-height: 0; height: auto; display: grid; place-items: center; }
+  .l2-map { height: 100%; width: auto; max-width: 100%; }
+  .l2-todobox .l2-todo:nth-child(n+3) { display: none; }
+  .l2-todobox .l2-todo:nth-child(n+4) { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .l2 { height: calc(100dvh - var(--nav-h, 42px) - var(--status-real, var(--status-h, 40px)) - 30px); }
+  .l2-pass { min-height: 0; }
+  .l2-pass .l2-ph { width: 30px; height: 30px; }
+  .l2-pid small:nth-of-type(2) { display: none; } /* 收藏、週章壹行放不下就收起來：下面「手上有的」有 */
+  .l2-todo { min-height: 34px; }
+  .l2-todo small { display: none; }
+  .l2-box .l2-h { margin: 2px 0 3px; }
+  .l2-seals { gap: 4px; }
+  .l2-s { width: 34px; height: 34px; }
+}
