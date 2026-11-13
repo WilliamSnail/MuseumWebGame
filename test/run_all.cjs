@@ -46,6 +46,7 @@ const STEPS = [
   ["class 名字（全域 class 不能當 css 前綴、往 html／body 加 class 要先登記，11-13，docs/class名單.md）", ["test/class_names.test.cjs"]],
   ["參觀者門票（第一次只記起點、票價照展廳評分、三份分法、每天上限、守恆，11-13）", ["test/casino_ticket.test.cjs"]],
   ["賭場的記帳（每條會動籌碼的路都要記到帳上、守恆、快照相減，11-13）", ["test/casino_book.test.cjs"]],
+  ["館外股票的每日漲跌（名字表、縮放和上限、休市不動、缺資料用前一天、資料到了沒、抓資料整理，11-13）", ["test/stocks.test.cjs"]],
   ["賭場的拚經濟（成功、失敗、油水的機率邊界、每日上限、換日、莊家和錢包金額、莊家拚回正、文字界線，決定 0052）", ["test/casino_econ.test.cjs"]],
   ["Yuga Bot 銀行的活存、定存（存領、到期、解約、利息從莊家出、破產不給、補算、守恆、利率順序）", ["test/casino_bank.test.cjs"]],
   ["賭場的實況和斗內（開播、搶不走、到期和離線算下播、斗內金額範圍和守恆、不能斗自己、不夠錢、每日上限、收款上限、換日、壞資料、實況主沒有錢包、資料庫規則，決定 0053）", ["test/casino_live.test.cjs"]],
