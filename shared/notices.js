@@ -41,6 +41,17 @@ export const NOTICES = [
     ],
   },
   {
+    id: "bank-fix", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "銀行小修：帳戶多壹列館債、借款寫幾點起可還", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "右邊的帳戶多壹列「館債」，買了看得到錢在哪。",
+        "剛借的錢 15 分鐘內不能還，現在會寫幾點起可以還。",
+        "進銀行時不會先閃壹組假的數字。",
+      ]],
+    ],
+  },
+  {
     id: "fusion-onescreen", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "融合室：魔法陣、壹個畫面看得完", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
