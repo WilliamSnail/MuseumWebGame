@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "house-health", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "莊家缺錢的時候，免費大禮包會少發", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "莊家的錢少於 3,000 萬時，每人每天的免費大禮包只發 1 包；莊家破產中，免費的先停。買來的券、拚經濟抽到的券不受影響。莊家的錢回來就恢復。",
+        "館方的預算低到某個程度（欠 1 億），拚經濟成功完全不撥款。",
+        "日報的莊家那一段，多了「莊家健康度」：玩家輸給莊家多少，莊家發給玩家多少。",
+      ]],
+    ],
+  },
+  {
     id: "economy-effects", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "景氣開始影響拚經濟、門票和存款利率", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

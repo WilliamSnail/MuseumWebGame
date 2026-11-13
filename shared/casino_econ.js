@@ -59,7 +59,9 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   if (x.win) { x.amount = Math.floor(x.amount * casFxMul(house) * casFxPolicy(house, day, "econ")); out.amount = x.amount; }
   // 預算凍結（翊文 11-13 同意方向，規劃 2.6 節）：預算池用完（≤ 0）的時候，成功也只撥平常的 freezeKeep%，不再把錢印出來
   const frozen = house.budget <= 0 && C.freezeKeep < 100;
-  if (x.win && frozen) { x.amount = Math.floor(x.amount * C.freezeKeep / 100); out.amount = x.amount; out.frozen = true; }
+  const dead = x.win && house.budget <= C.budgetFloor; // 預算池低到硬下限：完全不撥款（不再欠館方更多）
+  if (dead) { x.amount = 0; out.amount = 0; out.frozen = true; out.dead = true; }
+  else if (x.win && frozen) { x.amount = Math.floor(x.amount * C.freezeKeep / 100); out.amount = x.amount; out.frozen = true; }
   if (x.win) {
     casHouseMove(house, "econWin", x.amount);
     house.budget -= x.amount; // 從預算池撥過來
@@ -69,7 +71,8 @@ export function casEconPlay(w, house, day, rnd = RNG) {
     const fx = NUM.casino.gdp.policyFx[x.policy];
     if (fx) { house.pol = { idx: x.policy, fx, day }; out.fx = fx; }
     lines.push(casFill(CAS_ECON.okLine, { policy: CAS_ECON.policies[x.policy] }), casFill(CAS_ECON.okHouse, { n: casNum(x.amount) }));
-    if (frozen) lines.push(CAS_ECON.okFrozen);
+    if (dead) lines.push(CAS_ECON.okDead);
+    else if (frozen) lines.push(CAS_ECON.okFrozen);
     if (fx) lines.push(`政策效果：${CAS_FX_TEXT[fx]}，到明天。`);
     if (x.ticketRoll && w.pk && w.pk.opened > 0) { w.tickets += 1; out.ticket = true; lines.push(CAS_ECON.okTicket); } // 舊的：要先開過今天的大禮包
     if (before < 0 && house.bankroll >= 0) { out.rescued = true; e.rescues++; lines.push(CAS_ECON.okRescue, CAS_ECON.okRescueSub); }

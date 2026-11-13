@@ -351,9 +351,12 @@ export const NUM = {
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
-    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
+    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
+    // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
+    // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
+    health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
     // 館內 GDP 和景氣指數（11-13，規劃 2.7 節）：每項活動 次數×標準值，不看隨機的賺賠。foodAvg 餐車每份、bjHand 21 點每手、econWin 拚經濟成功平均撥款（r 31～100 平均 65.5 × 30,000）、econSink 失敗沉下去的平均（平均 r 15 × 10,000 × 沒被撈走的 45%）、investPct 銀行存款淨增加算幾 % 進投資；growthFull 成長率 10% ＝ 指數 1；minPeople 過去 7 天來過的人少於這個，館內指數維持 0。標準值是我先定的，等有幾天真的數字再調
     gdp: { foodAvg: 100000, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
       // 景氣的影響（11-14，規劃 2.7 節）：景氣 B（−1～+1）對拚經濟撥款、門票、存款利率各 ±fxPct%；拚經濟成功抽到的政策持續 polDays 天（到明天），效果 ±polPct%。

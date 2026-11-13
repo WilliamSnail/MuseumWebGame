@@ -444,16 +444,24 @@ export function casPackEV() {
 }
 export const casPacksLeft = w => w.pk.left + w.tickets;
 // 一次開 n 包：先用今天免費的，再用券
+// 莊家缺錢時，今天的免費大禮包少發幾包（NUM.casino.health）。house 沒給就是 0
+export function casPackCut(house) {
+  const H = NUM.casino.health, D = NUM.casino.dailyPacks;
+  if (!house || !H) return 0;
+  if (house.bankroll <= 0) return Math.max(0, D - H.brokePacks);
+  if (house.bankroll < H.low) return Math.max(0, D - H.lowPacks);
+  return 0;
+}
 export function casOpenPacks(w, house, n, day) {
-  const C = NUM.casino;
+  const C = NUM.casino, cut = casPackCut(house), freeLeft = Math.max(0, w.pk.left - cut), avail = freeLeft + w.tickets;
   n = Math.floor(+n);
   if (!(n >= 1)) return { ok: false, reason: "要開幾包？" };
   if (n > C.maxPacksAtOnce) n = C.maxPacksAtOnce;
-  if (casPacksLeft(w) < 1) return { ok: false, reason: CAS_TEXT.packNone };
-  n = Math.min(n, casPacksLeft(w));
+  if (avail < 1) return { ok: false, reason: casPacksLeft(w) >= 1 && cut > 0 ? CAS_TEXT.packHouse : CAS_TEXT.packNone };
+  n = Math.min(n, avail);
   const packs = [];
   for (let i = 0; i < n; i++) {
-    if (w.pk.left > 0) w.pk.left--; else w.tickets--;
+    if (w.pk.left - cut > 0) w.pk.left--; else w.tickets--;
     w.pk.opened++;
     const d = casPackDraw();
     w.chips += d.chips;
