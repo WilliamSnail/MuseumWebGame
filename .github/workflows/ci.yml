@@ -2,10 +2,9 @@
 # 免費帳號的私人 repo 鎖不住 main；部署在 deploy.yml，合併到 main 後先重跑測試，過了才部署。
 name: CI
 
+# 合併到 main 不再跑：deploy.yml 合併後本來就會先跑同一套測試，兩邊都跑等於測兩次（翊文 11-13 同意，Actions 分鐘用到 90%）
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
