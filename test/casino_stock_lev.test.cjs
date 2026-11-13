@@ -237,7 +237,7 @@ T("莊家這邊的上限：館內股槓桿＋放空部位 ≤ max(莊家的錢 �
 
 T("美股現在不開放槓桿和放空，講清楚原因；市場判斷", G => {
   const s = fresh(G), r = G.casLevOpen(s.w, s.h, { id: US, side: "long", lev: 2, qty: 1 }, D0, at(D0, 22, 40), fakeSrc({ px: { [US]: 66500 }, idx: 5 }));
-  assert.ok(!r.ok); assert.ok(r.reason.includes("美股") && r.reason.includes("重新算"), r.reason);
+  assert.ok(!r.ok); assert.ok(r.reason.includes("美股") && r.reason.includes("還沒開放") && r.reason.includes("觀察"), r.reason);
   const r2 = G.casLevOpen(s.w, s.h, { id: US, side: "short", lev: 1, qty: 1 }, D0, at(D0, 22, 40), fakeSrc({ px: { [US]: 66500 }, idx: 5 })); assert.ok(!r2.ok);
   assert.strictEqual(G.casLevMarket(US), "us"); assert.strictEqual(G.casLevMarket(TW), "tw"); assert.strictEqual(G.casLevMarket(IN), "in"); assert.strictEqual(G.casLevMarket("x"), null);
   const v = G.casStockLevView(s.w, s.h, D0, at(D0, 22, 40), fakeSrc({ px: {}, idx: 0 })); assert.strictEqual(v.lev.byMarket.us, 0); assert.ok(v.lev.usWhy.includes("美股"));
