@@ -1,6 +1,5 @@
 // npm test：一次跑全部的檢查。任何一項沒過，整個就算沒過（CI 也是跑這個）。
 // 模擬（sim*.cjs）比較久，不在這裡跑；改數值時自己跑：node test/sim.cjs 1000
-const { spawnSync } = require("child_process");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
@@ -80,14 +79,47 @@ const STEPS = [
   ["維護日誌的格式", ["tools/log_check.cjs"]],
 ];
 
-let failed = 0;
-for (const [name, args] of STEPS) {
-  const r = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8" });
-  const out = (r.stdout + r.stderr).trim().split("\n");
-  const ok = r.status === 0;
-  if (!ok) failed++;
-  console.log(`${ok ? "✓" : "✗"} ${name}：${out[out.length - 1] || ""}`);
-  if (!ok) console.log(out.map(l => "    " + l).join("\n"));
+// 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。
+// 每項本來就是自己的 Node 程式；會寫檔的（tools.test、server.test）都用自己的暫存資料夾、伺服器用隨機 port，同時跑不會打架。
+// 結果還是照上面的順序印。TEST_JOBS=1 ＝ 照舊壹項壹項跑（懷疑同時跑出問題時用）。--slow：最後列出最慢的 10 項。
+const os = require("os");
+const { spawn } = require("child_process");
+const JOBS = Math.max(1, Number(process.env.TEST_JOBS) || Math.max(2, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1));
+const t0 = Date.now();
+const results = new Array(STEPS.length);
+let next = 0, printed = 0, failed = 0;
+function flush() {
+  while (printed < STEPS.length && results[printed]) {
+    const { name, ok, out } = results[printed];
+    console.log(`${ok ? "✓" : "✗"} ${name}：${out[out.length - 1] || ""}`);
+    if (!ok) console.log(out.map(l => "    " + l).join("\n"));
+    printed++;
+  }
 }
-console.log(failed ? `\n${failed} 項沒過` : "\n全部通過");
-process.exit(failed ? 1 : 0);
+function runOne(i) {
+  const [name, args] = STEPS[i], t = Date.now();
+  return new Promise(done => {
+    const p = spawn(process.execPath, args, { cwd: root });
+    let buf = "";
+    p.stdout.setEncoding("utf8"); p.stderr.setEncoding("utf8");
+    p.stdout.on("data", d => { buf += d; }); p.stderr.on("data", d => { buf += d; });
+    p.on("error", e => { buf += String(e && e.message); });
+    p.on("close", code => {
+      const ok = code === 0;
+      if (!ok) failed++;
+      results[i] = { name, ok, out: buf.trim().split("\n"), ms: Date.now() - t };
+      flush();
+      done();
+    });
+  });
+}
+async function worker() { while (next < STEPS.length) await runOne(next++); }
+Promise.all(Array.from({ length: Math.min(JOBS, STEPS.length) }, worker)).then(() => {
+  const sec = ((Date.now() - t0) / 1000).toFixed(1);
+  if (process.argv.includes("--slow")) {
+    console.log("\n最慢的 10 項：");
+    results.slice().sort((a, b) => b.ms - a.ms).slice(0, 10).forEach(r => console.log(`  ${(r.ms / 1000).toFixed(1)} 秒　${r.name}`));
+  }
+  console.log(failed ? `\n${failed} 項沒過（${sec} 秒，同時跑 ${JOBS} 項）` : `\n全部通過（${sec} 秒，同時跑 ${JOBS} 項）`);
+  process.exit(failed ? 1 : 0);
+});
