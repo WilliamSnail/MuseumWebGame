@@ -154,5 +154,11 @@ T("大廳的「新」：館外幾支股票的價自從上次看過之後變過�
   h.stk.px[ID] += 7;
   assert.strictEqual(G.casStockFreshN(w, h), 1, "壹支變了");
 });
+T("掛單的價和股數輸入：逗號、空白、全形逗號都清掉；字母 s 不會被吃掉（以前正則少了反斜線）", G => {
+  const s = fresh(G), H = s.house.stk, px = H.px[ID];
+  const r = G.casStockOrder(s.w, s.house, "buy", ID, "1 0", Math.floor(px * 0.9).toLocaleString("en-US"), D, OPEN);
+  assert.ok(r.ok, r.reason); assert.strictEqual(r.order.n, 10); assert.strictEqual(r.order.px, Math.floor(px * 0.9));
+  const bad = G.casStockOrder(s.w, s.house, "buy", ID, "1s0", px - 1, D, OPEN); assert.ok(!bad.ok, "帶字母 s 的股數要被擋，不是被吃成 10");
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

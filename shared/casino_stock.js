@@ -333,7 +333,7 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
   const C = NUM.casino.stock, O = CAS_STOCK.order, S = casStockFix(w), H = casStockHouseFix(house);
   if (!ORDER_KINDS.includes(kind) || !stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(id) };
-  const num = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，s]/g, "")));
+  const num = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
   const n = num(shares), p = num(px);
   if (!Number.isFinite(n) || n <= 0 || !Number.isFinite(p) || p < C.floor) return { ok: false, reason: CAS_STOCK.bad };
   if (S.orders.length >= C.order.max) return { ok: false, reason: casFill(O.full, { n: C.order.max }) };
