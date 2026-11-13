@@ -26,6 +26,9 @@ import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 
+// 亂數的祕密：伺服器每次處理前用 casInSecret(...) 設進來（Functions 的 stocksTwSecret/main，玩家讀不到）。沒設的時候（網頁、測試）用壹個固定字串——網頁拿不到真的曲線，只拿到伺服器算好的價
+let SECRET = "in-secret-unset";
+export function casInSecret(s) { if (typeof s === "string" && s) SECRET = s; return SECRET; }
 const inBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const inN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const inDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -47,7 +50,6 @@ export function casInUsed(w, house, store, day) {
     const H = casInHouseFix(house);
     if (!inBox(H.use[day])) H.use[day] = {};
     H.use[day][store] = inN(H.use[day][store]) + 1;
-    casCount(house, "inUse");
   }
   return true;
 }
@@ -99,7 +101,7 @@ export const casInHalt = t => (t == null || !Number.isFinite(+t) ? false : casIn
 
 // ---------- 盤中價格（整天的曲線，種子有祕密） ----------
 const inGauss = rnd => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
-export function casInSeries(open, day, id, secret) {
+export function casInSeries(open, day, id, secret = SECRET) {
   const C = NUM.casino.stockIn, step = C.daySd / 100 / Math.sqrt(C.ticks - 1), rnd = mulberry32(hashStr(`${secret}|${day}|${id}|series`));
   const lo = open * (1 - C.dayCap / 100), hi = open * (1 + C.dayCap / 100), out = [Math.max(C.floor, Math.round(open))];
   let p = open;
@@ -109,7 +111,7 @@ export function casInSeries(open, day, id, secret) {
 
 // ---------- 05:00 的跳空 ----------
 // 昨天這家店不同的人數 a，對照前 avgDays 個「有效日」（人數 ≥ minPeople）的平均。回傳 { m, quiet }
-export function casInJump(H, id, day, B, secret) {
+export function casInJump(H, id, day, B, secret = SECRET) {
   const C = NUM.casino.stockIn, y = inAdd(day, -1), a = inN(H.use[y] && H.use[y][id]);
   const valid = [];
   for (let i = 2; i <= C.histDays && valid.length < C.avgDays; i++) { const n = inN(H.use[inAdd(day, -i)] && H.use[inAdd(day, -i)][id]); if (n >= C.minPeople) valid.push(n); }
@@ -122,7 +124,7 @@ export function casInJump(H, id, day, B, secret) {
 
 // 換日：算今天的開盤價。同壹天只算壹次；隔了好幾天（沒人來）壹天壹天補（最多 30 天，沒人去＝不調價）。
 // B：景氣（house.econ.b）。回傳 { done, day, jump: { id: m } }
-export function casInRoll(house, day, B, secret) {
+export function casInRoll(house, day, B, secret = SECRET) {
   const C = NUM.casino.stockIn, H = casInHouseFix(house);
   if (!inDay(day) || H.day === day) return { done: false, day: H.day, jump: {} };
   if (H.day === null) { // 第壹天：照起始價開
@@ -148,7 +150,7 @@ export function casInRoll(house, day, B, secret) {
 }
 
 // 現在這支的價：{ px, idx, halted }。house 還沒算今天（H.day ≠ day）：用最後壹次算的開盤價
-export function casInPrice(house, id, day, t, secret) {
+export function casInPrice(house, id, day, t, secret = SECRET) {
   const C = NUM.casino.stockIn, H = casInHouseFix(house);
   if (!inDef(id)) return { px: 0, idx: null, halted: true };
   const idx = casInIdx(t), ser = casInSeries(H.open[id], H.day || day, id, secret);
@@ -167,7 +169,7 @@ const inNetToday = (H, day) => (H.net.day === day ? H.net.n : 0);
 const inSoldToday = (S, day) => (S.sold.day === day ? S.sold.n : 0);
 const inShares = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
 
-export function casInBuy(w, house, id, shares, day, t, secret) {
+export function casInBuy(w, house, id, shares, day, t, secret = SECRET) {
   const C = NUM.casino.stockIn, S = casInFix(w), H = casInHouseFix(house), T = CAS_STOCK_IN;
   if (!inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
   if (H.day !== day) return { ok: false, reason: T.halt };
@@ -189,7 +191,7 @@ export function casInBuy(w, house, id, shares, day, t, secret) {
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少
   return { ok: true, n, px, cost, fee, lines: [casFill(T.buyOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
-export function casInSell(w, house, id, shares, day, t, secret) {
+export function casInSell(w, house, id, shares, day, t, secret = SECRET) {
   const C = NUM.casino.stock, S = casInFix(w), H = casInHouseFix(house), T = CAS_STOCK_IN;
   if (!inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
   if (H.day !== day) return { ok: false, reason: T.halt };
@@ -215,7 +217,7 @@ export function casInSell(w, house, id, shares, day, t, secret) {
 // ---------- 畫面要的 ----------
 // 回傳 { list: [{ id, name, line, kind, market: "in", price, chg, mine, value, halted, intraday, intradayFrom, fresh, stale, quiet, jump }], inDay: { from, len, step }, ... }
 // intraday：今天 05:00 到現在每 15 分鐘的價（不給未來的）；intradayFrom：從第幾個價開始（0 ＝ 05:00）。chg：跟昨天收盤比
-export function casInView(w, house, day, t, secret) {
+export function casInView(w, house, day, t, secret = SECRET) {
   const C = NUM.casino.stockIn, S = casInFix(w), H = casInHouseFix(house);
   const ready = H.day === day, idx = casInIdx(t), closed = t != null && Number.isFinite(+t) && idx === null;
   const list = IN_STOCKS.map(d => {
@@ -228,9 +230,11 @@ export function casInView(w, house, day, t, secret) {
     sellLeft: Math.max(0, NUM.casino.stock.sellDay - inSoldToday(S, day)), exposeLeft: Math.max(0, casInExposeCap(house) - inHeld(H, house)), bankroll: house.bankroll, houseBroke: !(house.bankroll > 0), rule: CAS_STOCK_IN.rule };
 }
 // 玩家按「看過了」：記下現在的價（fresh 用）
-export function casInSeen(w, house, day, t, secret) {
+export function casInSeen(w, house, day, t, secret = SECRET) {
   const S = casInFix(w);
   for (const d of IN_STOCKS) { const p = casInPrice(house, d.id, day, t, secret).px; if (p > 0) S.seen[d.id] = p; }
 }
 // 存在館內股票的錢（記帳快照用）：持股市值是帳面的，錢其實在莊家那裡，所以不加進總額——只給畫面看
-export const casInValue = (w, house, day, t, secret) => { const S = casInFix(w); return IN_IDS.reduce((s, id) => s + inN(S.own[id]) * casInPrice(house, id, day, t, secret).px, 0); };
+export const casInValue = (w, house, day, t, secret = SECRET) => { const S = casInFix(w); return IN_IDS.reduce((s, id) => s + inN(S.own[id]) * casInPrice(house, id, day, t, secret).px, 0); };
+// 存在館內股票的錢（記帳快照、銀行廳的「持股合計」用）：不知道現在幾點時，用今天的開盤價估
+export const casInValueApprox = (w, house) => { const S = casInFix(w), H = casInHouseFix(house); return IN_IDS.reduce((s, id) => s + inN(S.own[id]) * H.open[id], 0); };

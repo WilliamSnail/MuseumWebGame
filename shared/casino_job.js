@@ -10,6 +10,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
+import { casInUsed } from "./casino_stock_in.js";
 import { RNG } from "./logic.js";
 
 const cjBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -46,6 +47,7 @@ export function casJobChips(w, house, slots, day, rnd = RNG) {
     found += Math.min(C.max, C.min + C.step * Math.min(steps - 1, Math.floor(rnd() * steps)));
   });
   if (!n) return { ok: true, found: 0, n: 0 };
+  casInUsed(w, house, "job", day); // 館內股票：今天有這個人交過委託
   w.chips += found;
   if (house) casHouseMove(house, "job", -found); // 莊家出，跟大禮包一樣
   if (!cjBox(w.st)) w.st = {};

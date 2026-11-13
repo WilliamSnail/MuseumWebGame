@@ -189,5 +189,26 @@ T("文字：不出現真公司名、「一」要用「壹」；名字不重複",
   assert.strictEqual(new Set(G.IN_STOCKS.map(x => x.name)).size, 5); assert.strictEqual(new Set(G.IN_STOCKS.map(x => x.id)).size, 5);
   assert.ok(G.IN_STOCKS.every(x => G.IN_STORES.includes(x.id)));
 });
+T("接上：餐車、牌桌、委託櫃台、地下、手作坊各自記「今天去過」，壹人壹天壹家只算壹次", G => {
+  const h = house(G), w = wallet(G); const H = G.casInHouseFix(h);
+  assert.ok(G.casBuy(w, h, G.CAS_MENU[0].id, D0).ok !== undefined);
+  assert.strictEqual(H.use[D0] && H.use[D0].food, 1, "吃餐車算壹次"); G.casBuy(w, h, G.CAS_MENU[0].id, D0); assert.strictEqual(H.use[D0].food, 1, "再吃不重複");
+  G.casSettle(w, h, { bet: 100000, out: { payout: 0, net: -100000, kind: "lose" }, settled: false }, { day: D0 }); assert.strictEqual(H.use[D0].bj, 1, "打壹手牌算壹次");
+  const j = G.casJobChips(w, h, [G.CAS_JOB_SLOTS[0]], D0, () => 0.5); assert.ok(j.ok); assert.strictEqual(H.use[D0].job, 1, "交委託算壹次");
+  const room = G.CELLAR[0].rooms[0].id; const f = G.casCellarFind(w, h, room, D0, () => 0.99); assert.ok(f.ok); assert.strictEqual(H.use[D0].cellar, 1, "走地下算壹次");
+  const w2 = wallet(G); G.casBuy(w2, h, G.CAS_MENU[0].id, D0); assert.strictEqual(H.use[D0].food, 2, "另壹個人再算壹次");
+  G.casBuy(w, h, "不存在", D0); assert.strictEqual(H.use[D0].food, 2, "買失敗不算");
+});
+T("股票畫面合起來：館內五家店排前面、館外七支在後面，外層有 inDay、total 加總、casStockValue 含館內持股", G => {
+  const h = house(G), w = wallet(G); G.casInRoll(h, D0, 0, SEC); G.casInSecret(SEC);
+  const t = at(D0, 10, 0); assert.ok(G.casInBuy(w, h, "food", 10, D0, t).ok);
+  const v = G.casStockViewAll(w, h, D0, t, []);
+  assert.deepStrictEqual(v.list.slice(0, 5).map(x => x.id), G.IN_STOCKS.map(x => x.id)); assert.ok(v.list.slice(0, 5).every(x => x.market === "in"));
+  assert.strictEqual(v.list.length, 5 + G.STOCK_IDS.length); assert.ok(v.list.slice(5).every(x => x.market !== "in"));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(v.inDay)), { from: 300, len: 75, step: 15 });
+  const food = v.list[0]; assert.strictEqual(food.mine, 10); assert.strictEqual(v.total >= food.value, true);
+  assert.ok(G.casStockValue(w, h) >= G.casInValueApprox(w, h) && G.casInValueApprox(w, h) > 0, "持股合計含館內股");
+  const out = G.casStockView(w, h, D0, t, []); assert.strictEqual(out.list.length, G.STOCK_IDS.length, "原本的 casStockView 不變");
+});
 console.log(`casino_stock_in.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

@@ -36,7 +36,8 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
-import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockRoll, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockView } from "./shared/casino_stock.js";
+import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
+import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockRoll, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -44,7 +45,7 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
-import { stocksTw, twStale } from "./stock_tw.js";
+import { stocksTw, twSecret, twStale } from "./stock_tw.js";
 import { stocksUs, usStale } from "./stock_us.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
@@ -68,6 +69,7 @@ export async function playCore(me, email, opts, fn) {
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   const tw = await stocksTw(); // 台股盤中（11-14，規劃 2.8d）：伺服器每分鐘排程算好的價，同樣交易外面讀（有快取）
   const us = await stocksUs(); // 美股盤中（11-14，規劃 2.8i）：同上，美東 09:30～16:00 的價
+  casInSecret(await twSecret()); // 館內五家店盤中曲線的祕密種子（跟台股共用 stocksTwSecret/main，玩家讀不到）
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
@@ -86,6 +88,7 @@ export async function playCore(me, email, opts, fn) {
       casStockRoll(house, day, {}); // 股票換日：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino_stock.js）
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
+      casInRoll(house, day, house.econ && house.econ.b); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
@@ -196,7 +199,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale), stock: casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -237,12 +240,18 @@ export const actBorrow = (ctx, d) => {
 // 股票買賣：d.op 是 buy、sell；d.id 哪壹支、d.n 幾股（"max" ＝全賣）。
 // 掛單：d.op 是 order（d.kind 是 buy 限價買、sell 限價賣、stop 停損賣；d.id、d.n、d.px 價）、cancel（d.no 第幾張）
 export const actStock = (ctx, d) => {
-  const op = String(d.op || "");
+  const op = String(d.op || ""), id = String(d.id || "");
+  if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣；限價單、槓桿、放空還沒做
+    const x = op === "buy" ? casInBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? casInSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : null;
+    if (!x) return no({ reason: op === "order" || op === "open" ? "館內股票還不能掛單或槓桿" : "沒有這個動作" });
+    return x.ok ? shape(ctx, { lines: x.lines }) : no(x);
+  }
   const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
     : op === "sell" ? casStockSell(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
     : op === "order" ? casStockOrder(ctx.w, ctx.house, String(d.kind || ""), String(d.id || ""), d.n, d.px, ctx.day, ctx.t)
     : op === "cancel" ? casStockCancel(ctx.w, d.no, ctx.day, ctx.t, ctx.house)
     : op === "seen" ? casStockSeen(ctx.w, ctx.house) : { ok: false, reason: "沒有這個動作" };
+  if (op === "seen" && r.ok) casInSeen(ctx.w, ctx.house, ctx.day, ctx.t); // 館內股也記「看過了」
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // Yuga Bot 銀行（shared/casino_bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
@@ -380,6 +389,11 @@ export const casino = onCall(async req => {
     case "relief": return play(req, me, {}, actRelief);
     case "bank": return play(req, me, {}, ctx => actBank(ctx, d)); // Yuga Bot 銀行：活存、定存（11-13）
     case "bankHall": return play(req, me, {}, ctx => shape(ctx));
+    case "used": return play(req, me, { writeAnyway: true }, ctx => { // 館內股票：手作坊今天有人做過佩佩（網頁做完壹隻叫壹次；壹天壹次，其他店伺服器自己記）
+      if (String(d.store || "") !== "craft") return no({ reason: "沒有這個動作" });
+      casInUsed(ctx.w, ctx.house, "craft", ctx.day);
+      return shape(ctx);
+    });
     case "stock": return play(req, me, {}, ctx => actStock(ctx, d)); // 股票：買、賣（11-14） // 銀行廳打開時拿壹次（回答裡的 bankHall，每個賭場動作的回答也都有）
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
