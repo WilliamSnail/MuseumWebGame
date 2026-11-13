@@ -1,0 +1,137 @@
+/* ================================================================
+   畫廊重做（11-14，美術統籌；翊文：「先直接做，讓我們畫廊有好的新介面」）
+   骨架：.screen.onescreen-room.gallery-onescreen（onescreen.css）。前綴 gal-（docs/class名單.md）
+   零件：翊文生的 P-5：ui2-frame（畫框）、ui2-easel（畫架）。畫排成壹排，左右滑；畫框高度跟著牆走，整頁不捲。
+   ================================================================ */
+.gallery-onescreen .gal-main { grid-template-columns: minmax(0, 1fr) 280px; align-items: stretch; }
+.gallery-onescreen .gal-wall { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 0; padding: 8px 6px 6px; border-radius: 10px; background: linear-gradient(180deg, rgba(20, 8, 12, .55), rgba(34, 14, 20, .35)); box-shadow: inset 0 0 0 1px rgba(200, 162, 90, .4), inset 0 0 30px rgba(0, 0, 0, .35); overflow: hidden; }
+.onescreen-room > .gal-main > .gal-wall { overflow: hidden; }
+.gallery-onescreen .gal-hint { flex: none; margin: 0; text-align: center; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
+
+/* 走廊：畫框壹排，高度＝牆的高度（畫框 flex:1，caption 自己的高度） */
+.gallery-onescreen .gal-corridor { flex: 1 1 auto; min-height: 0; margin: 0; padding: 6px 18px 4px; gap: 26px; align-items: stretch; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; background: none; }
+.gallery-onescreen .gal-corridor > .exhibit, .gallery-onescreen .gal-corridor > .show-cell { height: 100%; min-height: 0; gap: 6px; }
+.gallery-onescreen .gal-corridor .show-cell { display: flex; flex-direction: column; align-items: center; }
+.gallery-onescreen .gal-corridor .show-cell > .exhibit { flex: 1 1 0; min-height: 0; }
+.gallery-onescreen .gal-corridor .exhibit { gap: 6px; }
+.gallery-onescreen .gal-corridor .frame { flex: 1 1 0; min-height: 0; height: auto; box-sizing: border-box; padding: 3px; border: 26px solid transparent; border-image: url(/ui2/ui2-frame.webp) 62 / 26px stretch; background: #EFE5CF; background-clip: padding-box; box-shadow: none; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .5)); }
+.gallery-onescreen .gal-corridor .frame.art-statue, .gallery-onescreen .gal-corridor .frame.art-hidden, .gallery-onescreen .gal-corridor .frame.art-russia8 { border: 0; padding: 0; background: transparent; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .5)); }
+.gallery-onescreen .gal-corridor .frame.st-frame.fr-dark, .gallery-onescreen .gal-corridor .frame.st-frame.fr-wood, .gallery-onescreen .gal-corridor .frame.st-frame.fr-plain { border-width: 14px; }
+.gallery-onescreen .gal-corridor .frame svg { height: 100%; width: auto; max-width: 100%; }
+.gallery-onescreen .gal-corridor .exhibit:hover .frame { box-shadow: none; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .5)) brightness(1.08); }
+/* 還沒開放的：換成畫架 */
+.gallery-onescreen .gal-corridor .exhibit.locked .frame { width: auto; aspect-ratio: 149 / 257; border: 0; padding: 0; background: url(/ui2/ui2-easel.webp) center bottom / contain no-repeat; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .45)); }
+.gallery-onescreen .gal-corridor .ex-cap { flex: none; min-width: 0; max-width: 240px; padding: 3px 10px 4px; gap: 1px; }
+.gallery-onescreen .gal-corridor .ex-cap .ex-title { font-size: var(--type-body, .875rem); }
+.gallery-onescreen .gal-corridor .ex-insp { margin-top: 2px; padding: 1px 8px; font-size: var(--type-small, .75rem); }
+.gallery-onescreen .gal-corridor .artmarket-row { flex: none; min-width: 0; width: min(100%, 240px); padding: 6px 8px; gap: 5px; }
+.gallery-onescreen .gal-corridor .artmarket-acts .btn { min-height: 38px; }
+
+/* 側欄：怎麼看（電腦展開，手機收起來） */
+.gallery-onescreen .gal-side { align-content: start; overflow-y: auto; scrollbar-width: thin; }
+.gallery-onescreen .gal-rules summary, .gallery-onescreen .gal-review summary { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 2px 8px; list-style: none; cursor: pointer; border: 1px solid #A88A52; border-radius: 6px; background: rgba(255, 255, 255, .35); color: var(--ink, #2E2014); }
+.gallery-onescreen .gal-rules summary::-webkit-details-marker, .gallery-onescreen .gal-review summary::-webkit-details-marker { display: none; }
+.gallery-onescreen .gal-rules summary b, .gallery-onescreen .gal-review summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
+.gallery-onescreen .gal-open, .gallery-onescreen .gal-close { flex: none; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
+.gallery-onescreen details[open] .gal-open, .gallery-onescreen details:not([open]) .gal-close { display: none; }
+.gallery-onescreen .gal-rules p { margin: 6px 0 0; display: flex; gap: 6px; font-size: var(--type-small, .75rem); line-height: 1.5; color: var(--ink, #2E2014); }
+.gallery-onescreen .gal-rules p .ic, .gallery-onescreen .gal-rules p .ic svg { flex: none; width: 16px; height: 16px; }
+.gallery-onescreen .gal-review .corridor.small { display: flex; gap: 14px; margin: 8px 0 0; padding: 4px; overflow-x: auto; }
+
+/* 我收藏的畫 */
+.gallery-onescreen .gal-wall > .artmarket-shelf { flex: 1 1 auto; min-height: 0; margin: 0; overflow-y: auto; scrollbar-width: thin; background: transparent; border: 0; }
+
+/* 拍賣（示範資料版）：畫架上的畫、封閉出價欄 */
+.gal-auction { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; align-content: start; overflow-y: auto; padding: 4px; scrollbar-width: thin; }
+.gal-lots { grid-column: 1; grid-row: 1 / span 2; display: grid; gap: 10px; align-content: start; }
+.gal-lot { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(200, 162, 90, .4); color: var(--paper, #F3E6C4); }
+.gal-lot.has-bid { border-color: var(--gold-hi, #F3DFA6); }
+.gal-easel { position: relative; width: 96px; aspect-ratio: 149 / 257; background: url(/ui2/ui2-easel.webp) center / 100% 100% no-repeat; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); }
+.gal-easel-art { position: absolute; left: 22%; right: 22%; top: 22%; height: 34%; border: 3px solid #C8A25A; background: #EFE5CF; overflow: hidden; }
+.gal-easel-art svg { display: block; width: 100%; height: 100%; }
+.gal-lot-info { display: grid; gap: 4px; align-content: start; min-width: 0; }
+.gal-lot-info p { margin: 0; }
+.gal-lot-t { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--type-body, .875rem); }
+.gal-lot-t b { color: var(--paper-gold, #F3DFA6); font-family: var(--serif, Georgia, serif); }
+.gal-lot-m { font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); }
+.gal-tier, .gal-self { padding: 0 7px; border-radius: 999px; border: 1px solid rgba(200, 162, 90, .6); font-style: normal; font-size: var(--type-tiny, .6875rem); color: var(--paper-gold, #F3DFA6); }
+.gal-self { background: rgba(200, 162, 90, .25); }
+.gal-bid { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.gal-in { min-width: 0; box-sizing: border-box; min-height: 38px; padding: 0 8px; border: 1px solid #A88A52; border-radius: 6px; background: #F6F1E3; color: #2E2014; font: inherit; font-size: var(--type-body, .875rem); font-weight: 700; }
+.gal-bid .gal-in { flex: 1 1 110px; width: 110px; text-align: right; }
+.gal-btn { min-height: 38px; padding: 0 12px; white-space: nowrap; border: 1px solid var(--gold, #C8A25A); border-radius: 6px; background: rgba(255, 255, 255, .08); color: var(--paper, #F3E6C4); font-weight: 700; cursor: pointer; }
+.gal-btn.primary { background: linear-gradient(180deg, #F0D995, #C8A25A 48%, #A07C34); color: #2A1E16; border-color: #7A5A2A; }
+.gal-sealed { font-size: var(--type-small, .75rem); color: #BFE6C8; }
+.gal-sell, .gal-last { grid-column: 2; padding: 10px; border-radius: 8px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(200, 162, 90, .4); display: grid; gap: 8px; align-content: start; color: var(--paper, #F3E6C4); }
+.gal-h { margin: 0; font-family: var(--serif, Georgia, serif); font-size: var(--type-head, 1.05rem); letter-spacing: .1em; color: var(--paper-gold, #F3DFA6); }
+.gal-sell-row { display: grid; gap: 6px; }
+.gal-last ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: var(--type-small, .75rem); }
+.gal-last li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.gal-last li span { margin-left: auto; font-family: Georgia, serif; font-weight: 700; color: #FFF; }
+.gal-last small { color: var(--paper-soft, #D8C59A); }
+.gal-empty { margin: auto; text-align: center; color: var(--paper-soft, #D8C59A); }
+
+/* 手機直拿：側欄收成牆下面壹條 */
+@media (max-width: 760px) {
+  .gallery-onescreen .gal-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .gallery-onescreen .gal-side { max-height: 40vh; }
+  .gallery-onescreen .gal-corridor { padding: 4px 12px; gap: 18px; }
+  .gallery-onescreen .gal-corridor .frame { border-width: 18px; border-image-width: 18px; }
+  .gallery-onescreen .gal-corridor .ex-cap { max-width: 200px; }
+  .gal-auction { grid-template-columns: minmax(0, 1fr); }
+  .gal-lots, .gal-sell, .gal-last { grid-column: 1; grid-row: auto; }
+  .gal-lot { grid-template-columns: 72px minmax(0, 1fr); } .gal-easel { width: 72px; }
+}
+/* 手機橫拿：高度只有 375，頁籤、標題擠成薄薄壹排；側欄收成壹條 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gallery-onescreen .gal-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .gallery-onescreen .gal-corridor .frame { border-width: 14px; border-image-width: 14px; }
+  .gallery-onescreen .gal-corridor .ex-cap .ex-san, .gallery-onescreen .gal-corridor .ex-cap .ex-hab, .gallery-onescreen .gal-corridor .ex-cap .ex-cure { display: none; }
+  .gallery-onescreen .gal-hint { display: none; }
+  .gallery-onescreen .gal-side { max-height: 30vh; }
+  .gallery-onescreen > .gallery-tabs { margin-bottom: 4px; }
+}
+
+/* 頁籤：壹排，放不下就左右滑（跟圖鑑室壹樣的做法） */
+.screen.onescreen-room.gallery-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
+.gallery-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: var(--ink, #2E2014); font-size: var(--type-body, .875rem); font-weight: 700; box-shadow: none; border-radius: 0; white-space: nowrap; }
+.gallery-onescreen > .seg.big-tabs .seg-btn.on { border-image-source: url(/ui2/ui2-tab-2.webp); }
+.gallery-onescreen > .seg.big-tabs .seg-btn .tab-c { color: var(--ink-soft, #5A4030); font-size: var(--type-tiny, .6875rem); font-weight: 400; }
+@media (max-width: 760px) {
+  .gallery-onescreen > .seg.big-tabs .seg-btn { min-height: 38px; padding: 2px 10px; font-size: var(--type-small, .75rem); }
+  .gallery-onescreen > .seg.big-tabs .seg-btn .ic, .gallery-onescreen > .seg.big-tabs .seg-btn svg { display: none; }
+  .gallery-onescreen > .seg.big-tabs { margin-bottom: 4px; }
+  .gallery-onescreen .gal-side { order: 2; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .gallery-onescreen > .seg.big-tabs .seg-btn { min-height: 30px; padding: 0 8px; border-width: 6px; font-size: var(--type-tiny, .6875rem); }
+  .gallery-onescreen > .seg.big-tabs { margin-bottom: 2px; }
+  .gallery-onescreen .gal-side { order: 2; }
+}
+.artmarket-btns { display: flex; gap: 6px; flex: 0 0 auto; }
+.artmarket-item .artmarket-btns .btn { min-height: 44px; }
+@media (max-width: 760px) { .artmarket-btns { flex: 1 1 100%; } .artmarket-btns .btn { flex: 1 1 0; } }
+
+/* 手機橫拿（高度只有 375）：標題、回大廳、頁籤擠成壹行，畫牆佔剩下的，怎麼看收成牆下面壹條 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.gallery-onescreen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; align-content: stretch; }
+  .screen.gallery-onescreen > .room-head { display: flex; grid-column: 1; grid-row: 1; margin: 0; min-width: 0; }
+  .screen.gallery-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.gallery-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.gallery-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+  .screen.gallery-onescreen > .seg.big-tabs { grid-column: 2; grid-row: 1; align-self: end; margin: 0; min-width: 0; }
+  .screen.gallery-onescreen > .onescreen-main.gal-main { grid-column: 1 / -1; grid-row: 2; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
+  .gallery-onescreen .gal-side { max-height: 56px; overflow: hidden; }
+  .gallery-onescreen .gal-rules summary, .gallery-onescreen .gal-review summary { min-height: 28px; }
+  .gallery-onescreen .gal-side > .onescreen-card { padding: 2px 6px; border-width: 10px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .gallery-onescreen .gal-corridor .ex-cap { padding: 1px 8px; min-width: 120px; }
+  .gallery-onescreen .gal-corridor .ex-cap .ex-title { font-size: var(--type-small, .75rem); }
+  .gallery-onescreen .gal-corridor .ex-cap .ex-insp, .gallery-onescreen .gal-corridor .ex-cap .ex-new { display: none; }
+  .gallery-onescreen .gal-corridor .artmarket-info { display: none; }
+  .gallery-onescreen .gal-side { max-height: 44px; }
+  .gallery-onescreen .gal-side > .onescreen-card { padding: 0 4px; border-width: 6px; border-image-width: 6px; }
+  .gallery-onescreen .gal-wall { padding: 4px 4px 2px; }
+  .gallery-onescreen .gal-corridor { padding: 2px 12px; gap: 16px; }
+}
