@@ -1,5 +1,5 @@
 // 新的大廳（決定 0066）：node test/lobby2.test.cjs（npm test 也會跑）
-// 回滾用的總開關在、舊的大廳程式還在、11 間房都對得到、素材都在 web/public/lobby、設定頁有「舊的大廳」。只讀檔案，不開瀏覽器。
+// 回滾用的總開關在、舊的大廳程式還在、12 間房都對得到、素材都在 web/public/lobby、設定頁有「舊的大廳」。只讀檔案，不開瀏覽器。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
@@ -18,10 +18,10 @@ T("舊的大廳還在（回滾就走它）：SCREENS.lobby 先問 useLobby2，�
   const body = s.slice(i, j);
   assert.ok(body.includes("ADDONS.useLobby2()") && body.includes("ART.floorPlan("), "新舊兩條路都在");
 });
-T("新大廳的 11 間房：都是遊戲裡的房間，不重複；房間按鈕保留 .fp-room（教學找得到）", () => {
+T("新大廳的 12 間房（11 間加銀行，銀行的熱區等 SCREENS.bank 才放）：都是遊戲裡的房間，不重複；房間按鈕保留 .fp-room（教學找得到）", () => {
   const s = read("web/src/ui_lobby2.js");
   const ids = [...s.matchAll(/\{ id: "([a-z]+)", icon:/g)].map(m => m[1]);
-  assert.deepStrictEqual(ids.slice().sort(), ["casino", "cellar", "codex", "commission", "fusion", "gallery", "hall", "office", "origin", "pillow", "workshop"]);
+  assert.deepStrictEqual(ids.slice().sort(), ["bank", "casino", "cellar", "codex", "commission", "fusion", "gallery", "hall", "office", "origin", "pillow", "workshop"]);
   assert.ok(s.includes('"l2-room fp-room"'));
 });
 T("用到的素材都在 web/public/lobby（打包時原樣複製）", () => {
