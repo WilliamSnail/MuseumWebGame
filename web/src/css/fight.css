@@ -455,3 +455,18 @@ body.reduce-motion .fg-stage.focus-foe .fg-foe-box { transform: none; }
   .fg-head .fg-now { flex: 1 1 0; } /* 橫拿：軌道、計時圈、理智、逃跑撤退擠壹行，舞台才不會再變矮；字太長就省略 */
   .fg-head .fg-me .fg-san { display: none; }
 }
+
+/* 11-13 測試 session 回報：手機橫拿回合軌道被擠成「① ②現…」、下壹招牌子的字右邊被切；手機直拿牌子第二行貼邊 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-head { flex-wrap: wrap; }
+  .fg-head .fg-now { flex: 1 1 100%; }
+  .fg-head .fg-now .fg-track { overflow: visible; }
+  .fg-stage .fg-intent { max-width: 96%; padding: 0 4px; line-height: 1.2; }
+  .fg-stage .fg-intent > :not(i) { min-width: 0; white-space: normal; overflow-wrap: anywhere; font-size: .75rem; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .fg-stage .fg-intent { padding-bottom: 6px; line-height: 1.3; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .fg-stage .fg-intent { font-size: .75rem; white-space: normal; overflow-wrap: anywhere; padding: 0 12px 0 6px; box-sizing: border-box; }
+}
