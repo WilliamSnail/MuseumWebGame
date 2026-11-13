@@ -34,6 +34,7 @@ import { casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
+import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -73,6 +74,7 @@ export async function playCore(me, email, opts, fn) {
       const { house, reopen } = casHouseFix(parse(hs), day);
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
+      casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
@@ -181,7 +183,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day), bankNotes: casBankTakeNotes(ctx.w), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -223,7 +225,7 @@ export const actBorrow = (ctx, d) => {
 export const actBank = (ctx, d) => {
   const op = String(d.op || "");
   const r = op === "put" ? casBankPut(ctx.w, d.amt) : op === "take" ? casBankTake(ctx.w, d.amt)
-    : op === "term" ? casBankTerm(ctx.w, d.amt, d.kind, ctx.day) : op === "break" ? casBankBreak(ctx.w, d.id) : { ok: false, reason: "沒有這個動作" };
+    : op === "term" ? casBankTerm(ctx.w, d.amt, d.kind, ctx.day) : op === "bond" ? casBondBuy(ctx.w, ctx.house, d.amt, ctx.day) : op === "break" ? casBankBreak(ctx.w, d.id) : { ok: false, reason: "沒有這個動作" };
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀

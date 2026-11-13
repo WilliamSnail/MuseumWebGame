@@ -9,7 +9,7 @@
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_BANK, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
 import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino_wallet.js";
 import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
@@ -59,6 +59,7 @@ function sync(r) {
   if (r.wkDone) S.wkDone = true;
   if (r.reopen) say([r.reopen]);
   if (r.bank) S.bank = r.bank; // Yuga Bot 銀行的活存、定存（伺服器算的，shared/casino_bank.js）
+  if (r.bond) S.bond = r.bond; // 館債（shared/casino_bond.js）
   if (Array.isArray(r.bankNotes) && r.bankNotes.length) say(r.bankNotes); // 利息入帳、定存到期
 }
 function say(lines) {
@@ -218,7 +219,30 @@ function savePane(fig, md, off) {
         h("td", null, `${x.days} 天`), h("td", null, casNum(x.amt)), h("td", null, h("b", null, "+" + casNum(x.int))),
         h("td", null, x.left ? `${md(x.due)}（${x.left} 天）` : "今天換日"),
         h("td", null, btn("解約", () => bank("break", { id: x.id }), "small", { disabled: off, title: CAS_BANK.termSub })))))) : null,
-    h("p", { class: "bk-rule" }, CAS_BANK.rule));
+    h("p", { class: "bk-rule" }, CAS_BANK.rule),
+    bondBlock(fig, md, off));
+}
+// 館債（11-13）：這期的名字、利率、還剩多少、我買了多少；買的按鈕（壹張壹張、或買滿）。銀行廳上線後搬過去
+function bondBlock(fig, md, off) {
+  const D = S.bond, w = S.w;
+  if (!D) return null;
+  const buy = amt => act("bank", { op: "bond", amt }, r2 => { say(r2.lines); snd("coin"); });
+  const I = D.issue;
+  const room = I.open ? Math.max(0, Math.min(I.cap - I.sold, D.perUser - D.mine, w.chips)) : 0;
+  const why = !I.open ? CAS_BOND.none : D.young ? casFill(CAS_BOND.young, { n: NUM.casino.bond.minAge }) : null;
+  const one = (n, label) => btn(label, () => buy(n), "small", { disabled: off || why || n > room || n <= 0 ? true : null });
+  return h("div", { class: "bk-bond" },
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, CAS_BOND.title), h("small", { class: "bk-bond-sub" }, CAS_BOND.sub)),
+    h("div", { class: "bk-figs" },
+      fig(I.open ? `這期：${I.name}` : "這期", I.open ? `${I.pct}%` : "暫停", I.open ? `持有到 ${md(D.due)}（還有 ${D.daysLeft} 天）` : ""),
+      fig("這期還能買", I.open ? casNum(Math.max(0, I.cap - I.sold)) : "0", `總額 ${I.open ? casNum(I.cap) : "0"}`),
+      fig("我持有", casNum(D.list.reduce((s, x) => s + x.amt, 0)), D.iou ? `債權憑證 ${casNum(D.iou)}` : `累計利息 ${casNum(D.earned)}`)),
+    h("div", { class: "bk-act" }, why ? h("p", { class: "bk-why" }, why)
+      : h("span", { class: "bk-act-b" }, one(D.unit, `買 ${casNum(D.unit)}`), one(D.unit * 10, `買 ${casNum(D.unit * 10)}`), one(Math.floor(room / D.unit) * D.unit, `買滿 ${casNum(Math.floor(room / D.unit) * D.unit)}`))),
+    D.list.length ? h("table", { class: "bk-book" },
+      h("thead", null, h("tr", null, ["買的日子", "本金", "利率", "到期", "利息"].map(t => h("th", { scope: "col" }, t)))),
+      h("tbody", null, D.list.map(x => h("tr", null, h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, `${x.pct}%`), h("td", null, md(x.due)), h("td", null, h("b", null, "+" + casNum(x.int))))))) : null,
+    h("p", { class: "bk-rule" }, CAS_BOND.rule));
 }
 
 // ---------- 牌桌 ----------

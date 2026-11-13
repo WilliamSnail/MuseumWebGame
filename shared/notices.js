@@ -28,6 +28,21 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bond-open", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "Yuga Bot 銀行開賣館債：借錢給莊家", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["怎麼玩", [
+        "賭場銀行「存款」頁最下面有「館債」：每週壹期，壹張 10 萬，下週壹換日還本金加利息。",
+        "利率照莊家有多少錢：莊家越缺錢，利率越高（4%～8%）。莊家破產的那週不發。",
+        "利息照持有天數算，越早買越多。壹個人壹期最多 500 萬。",
+      ]],
+      ["要注意", [
+        "不能提早贖回、不能轉讓。帳號要開了 3 天以上才能買。",
+        "莊家到期還不出來，館方先墊；再不夠會開「債權憑證」，莊家回穩後自動補給你。",
+      ]],
+    ],
+  },
+  {
     id: "lesson-close", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "修好：委託櫃台的上課視窗可以關了", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
