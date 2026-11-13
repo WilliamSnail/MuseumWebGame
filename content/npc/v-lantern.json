@@ -1,0 +1,57 @@
+{
+  "id": "v-lantern",
+  "name": "阿茶",
+  "kind": "visitor",
+  "story": "夜間導覽員，提著壹盞小燈，不太愛說話。",
+  "likes": [
+    "cellar",
+    "hall"
+  ],
+  "route": {
+    "cellar": 5,
+    "hall": 3,
+    "food": 1
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 260000,
+    "max": 160000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "導覽地下收藏庫時，他總把燈留到最後才熄。",
+      "news": "阿茶導覽完畢，最後才熄了燈。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-30",
+      "text": "他說有時候隊伍走完，回頭還多壹個腳步聲，他習慣了。",
+      "news": "阿茶說，導覽的隊伍裡總多壹個腳步聲。",
+      "ties": [
+        "m-queue",
+        "m-guard"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-14",
+      "text": "他今天把燈放在櫃台，說是替那位晚到的客人留的。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 100
+      },
+      "news": "阿茶把燈留在了櫃台。",
+      "ties": [
+        "m-queue",
+        "arc-squat"
+      ],
+      "route": {
+        "cellar": 4,
+        "hall": 3,
+        "food": 2
+      }
+    }
+  ]
+}

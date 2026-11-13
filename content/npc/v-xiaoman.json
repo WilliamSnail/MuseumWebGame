@@ -1,0 +1,57 @@
+{
+  "id": "v-xiaoman",
+  "name": "小滿",
+  "kind": "visitor",
+  "story": "國中美術老師，帶學生來看佩佩的顏色。",
+  "likes": [
+    "hall",
+    "craft",
+    "rainbow",
+    "pillows"
+  ],
+  "route": {
+    "hall": 5,
+    "craft": 4,
+    "food": 1
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 650000,
+    "max": 400000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她要學生各畫壹隻佩佩，收回來壹數，多了壹張沒署名的。",
+      "news": "小滿的美術課多了壹張沒署名的畫。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 2,
+      "from": "2026-11-30",
+      "text": "她把那張畫貼在教室後面，說誰認得自己的畫，隨時來領。",
+      "news": "小滿把無名的畫貼上了牆。"
+    },
+    {
+      "step": 3,
+      "from": "2026-12-21",
+      "text": "壹個月過去沒人來領，畫的角落卻多了壹行小字：謝謝你替我貼起來。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 150
+      },
+      "news": "小滿的牆上有壹行新的小字。",
+      "ties": [
+        "m-queue"
+      ],
+      "route": {
+        "hall": 4,
+        "craft": 3,
+        "auction": 2
+      }
+    }
+  ]
+}

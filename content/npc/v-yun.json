@@ -1,0 +1,30 @@
+{
+  "id": "v-yun",
+  "name": "雲雲",
+  "kind": "visitor",
+  "story": "週末帶孩子來的媽媽，包包裡有壹整袋貼紙。",
+  "likes": [
+    "hall",
+    "craft",
+    "joy",
+    "pillows"
+  ],
+  "route": {
+    "hall": 5,
+    "craft": 4,
+    "food": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 400000,
+    "max": 250000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "孩子在展廳把貼紙貼在佩佩的肚子上，她趕緊跟館方道歉。",
+      "news": "雲雲帶孩子逛了展廳。"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "c-postman",
+  "name": "退休的郵差",
+  "kind": "client",
+  "note": "記得每一戶人家的佩佩。",
+  "story": "還留著壹只舊郵袋，袋底縫過三次。",
+  "likes": [
+    "hall",
+    "food"
+  ],
+  "route": {
+    "hall": 5,
+    "food": 3,
+    "job": 1
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 90000,
+    "max": 40000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他走遍每個展廳，把每隻佩佩的樣子默默記在心裡。",
+      "news": "退休的郵差逛完了所有展廳。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-07",
+      "text": "他在郵袋底翻出壹封沒寄出的信，收件地址是地下收藏庫。",
+      "need": {
+        "metric": "commissions",
+        "n": 5
+      },
+      "news": "退休的郵差找到壹封沒寄出的信。",
+      "ties": [
+        "m-world"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-21",
+      "text": "他把信放在櫃台，說郵戳上的日期，比這間館開張還要早。",
+      "need": {
+        "metric": "commissions",
+        "n": 14
+      },
+      "news": "退休的郵差把信留在了櫃台。",
+      "ties": [
+        "m-world"
+      ],
+      "route": {
+        "hall": 3,
+        "cellar": 3,
+        "food": 2
+      }
+    }
+  ]
+}

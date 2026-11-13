@@ -1,0 +1,15 @@
+{
+  "id": "t-guard",
+  "name": "守夜的警衛",
+  "kind": "trace",
+  "ledger": "守夜的警衛",
+  "story": "只在值班紀錄和別人的轉述裡出現，說話短、客氣。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

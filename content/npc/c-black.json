@@ -1,0 +1,62 @@
+{
+  "id": "c-black",
+  "name": "穿黑衣服的人",
+  "kind": "client",
+  "note": "不說名字，付靈感很爽快。",
+  "story": "從頭到腳都是黑的，只有手套是灰的。",
+  "likes": [
+    "auction",
+    "孤品",
+    "珍藏",
+    "bank"
+  ],
+  "route": {
+    "auction": 6,
+    "bank": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "collector",
+    "perDay": 2400000,
+    "max": 1800000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在拍賣預展站了很久，什麼也沒標。",
+      "news": "穿黑衣服的人在拍賣預展站了壹整天。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-07",
+      "text": "他留下壹個空的號碼牌，說是替壹位晚到的朋友占位。",
+      "need": {
+        "metric": "commissions",
+        "n": 5
+      },
+      "news": "穿黑衣服的人替朋友留了壹個號碼牌。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-21",
+      "text": "朋友沒有來，號碼牌被人悄悄收走了，他點點頭，沒有追問。",
+      "need": {
+        "metric": "commissions",
+        "n": 18
+      },
+      "news": "穿黑衣服的人的號碼牌不見了。",
+      "ties": [
+        "m-queue"
+      ],
+      "route": {
+        "auction": 5,
+        "bank": 3,
+        "hall": 1
+      }
+    }
+  ]
+}

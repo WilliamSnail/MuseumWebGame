@@ -1,0 +1,60 @@
+{
+  "id": "c-nightmarket",
+  "name": "夜市的阿姨",
+  "kind": "client",
+  "note": "攤位上永遠多擺一張椅子。",
+  "story": "說椅子多擺壹張，是給晚到的人。",
+  "likes": [
+    "food",
+    "bj"
+  ],
+  "route": {
+    "food": 6,
+    "bj": 3,
+    "hall": 1
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 150000,
+    "max": 80000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她今天收攤特別晚，椅子上放了壹包熱的花生。",
+      "news": "夜市的阿姨在餐車旁多擺了壹張椅子。"
+    },
+    {
+      "step": 2,
+      "from": "2026-11-23",
+      "text": "她說有位客人每天來坐，從來不點東西，只是坐著。",
+      "need": {
+        "metric": "commissions",
+        "n": 6
+      },
+      "news": "夜市的阿姨說，那張椅子每天都是溫的。",
+      "ties": [
+        "arc-squat"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-14",
+      "text": "她把那張椅子搬到展廳門口，說椅子會自己找到要坐的人。",
+      "need": {
+        "metric": "commissions",
+        "n": 16
+      },
+      "news": "夜市的阿姨把椅子搬到了展廳門口。",
+      "ties": [
+        "arc-squat"
+      ],
+      "route": {
+        "hall": 5,
+        "food": 3,
+        "bj": 1
+      }
+    }
+  ]
+}

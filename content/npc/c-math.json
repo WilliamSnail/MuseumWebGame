@@ -1,0 +1,60 @@
+{
+  "id": "c-math",
+  "name": "數學老師",
+  "kind": "client",
+  "note": "相信每一題的答案都是壹隻佩佩。",
+  "story": "粉筆永遠用到只剩指甲大才肯換。",
+  "likes": [
+    "hall",
+    "bank"
+  ],
+  "route": {
+    "hall": 4,
+    "bank": 3,
+    "job": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 600000,
+    "max": 350000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在黑板寫下今天的題目：佩佩壹隻，再來壹隻，總共幾隻？",
+      "news": "數學老師在展廳出了壹道題。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-07",
+      "text": "學生說答案是三，他想了很久，沒有糾正。",
+      "need": {
+        "metric": "commissions",
+        "n": 6
+      },
+      "news": "數學老師沒有糾正學生的答案。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2026-12-28",
+      "text": "他來問圖鑑最後壹格的編號，說他的算式怎麼算都多壹格。",
+      "need": {
+        "metric": "commissions",
+        "n": 12
+      },
+      "news": "數學老師來問圖鑑的最後壹格。",
+      "ties": [
+        "m-count"
+      ],
+      "route": {
+        "hall": 3,
+        "bank": 3,
+        "cellar": 3
+      }
+    }
+  ]
+}
