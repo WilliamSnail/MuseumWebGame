@@ -18,7 +18,7 @@ import { matesByRoom } from "../../shared/mates.js";
 import { passView } from "../../shared/pass.js";
 import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, UI, every, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
+import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
@@ -37,6 +37,8 @@ export const LOBBY2_ROOMS = [
   { id: "workshop", icon: "workshop", box: [48, 364, 232, 524], port: [35, 620, 225, 778] },
   { id: "commission", icon: "board", box: [238, 334, 442, 524], port: [350, 620, 540, 778], cut: [[238, 334], [374, 334], [442, 407], [442, 524], [238, 524]] },
   { id: "office", icon: "office", box: [584, 334, 782, 528], port: [35, 785, 225, 948], cut: [[650, 334], [782, 334], [782, 528], [584, 528], [584, 405]] },
+  // 銀行（Yuga Bot 銀行廳，翊文 11-13：放八角大廳正下方的小門廳；圖已經貼在 land.webp、port.webp）：銀行廳的畫面（SCREENS.bank）做好之前不放熱區，免得點了走到不存在的畫面
+  { id: "bank", icon: null, box: [446, 408, 576, 506], port: [233, 810, 345, 947] },
   { id: "casino", icon: "casino", box: [794, 334, 972, 528], port: [350, 785, 540, 948] },
 ];
 // 要不要用新的大廳（決定 0066）：總開關在 NUM.ui.newLobby（回滾用），玩家自己也可以選舊的
@@ -92,7 +94,7 @@ function mapBox(step) {
   const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
   const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
   const whoBoxes = {};
-  LOBBY2_ROOMS.forEach(r => {
+  LOBBY2_ROOMS.filter(r => r.id !== "bank" || SCREENS.bank).forEach(r => {
     const [x0, y0, x1, y1] = portrait ? r.port : r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
     const tag = h("span", { class: "l2-tag" + (r.icon ? "" : " noic") },
       r.icon ? img(`${L}room-${r.icon}.webp`) : null, h("span", { class: "l2-tn" }, name), sub ? h("small", null, sub) : null,
@@ -120,6 +122,7 @@ function mapBox(step) {
   const drawWho = () => {
     const by = matesByRoom(NET.roster || []);
     LOBBY2_ROOMS.forEach(r => {
+      if (!whoBoxes[r.id]) return; // 銀行的熱區還沒放
       const list = (by[r.id] || []).slice(0, 3);
       const more = (by[r.id] || []).length - list.length;
       whoBoxes[r.id].replaceChildren(...list.map(m => h("i", { class: m.status === "away" ? "away" : "" }, m.nick)), more > 0 ? h("i", { class: "more" }, `+${more}`) : "");
