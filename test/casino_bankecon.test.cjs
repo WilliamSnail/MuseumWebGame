@@ -49,5 +49,22 @@ T("銀行廳的資料帶財報；沒有日報時是 null", G => {
   const v = G.casBankHall(w, D, house(G, { b: 0.2, perDay: 100, day: D }));
   assert.ok(v.econ && v.econ.idx === 0.2);
 });
+T("銀行廳帶世界股市新聞：最近 3 天、新的在前、只留遊戲裡的股票、壞的丟掉", G => {
+  const w = G.casWalletFix(G.casWalletNew(), D);
+  const mk = (t, ref) => ({ title: t, line: "壹句話。", tone: "up", ref });
+  const dd = {
+    "2026-11-09": { market: [mk("最舊", ["handbrain"])] }, "2026-11-11": { market: [mk("壹", ["greeneye", "NVDA"])] },
+    "2026-11-12": { market: [mk("貳", "handbrain"), null, { title: "壞", line: 5 }, { title: "怪調", line: "x", tone: "boom" }] },
+    "2026-11-13": { market: [mk("參", ["nightindex"])] }, "2026-11-14": { market: [mk("明天的", [])] }, "2026-11-10": { board: "沒有 market" },
+  };
+  const v = G.casBankHall(w, "2026-11-13", house(G), 0, false, dd).world;
+  assert.strictEqual(J(v.days.map(d => d.day)), J(["2026-11-13", "2026-11-12", "2026-11-11"]), "最近 3 天、不放未來");
+  assert.strictEqual(v.days[0].items[0].refs[0].name, "夜光科技指數");
+  assert.strictEqual(v.days[1].items.length, 2, "壞的丟掉");
+  assert.strictEqual(v.days[1].items[1].tone, "flat", "不認得的 tone 變 flat");
+  assert.strictEqual(v.days[2].items[0].refs.length, 1, "不在遊戲裡的 id 丟掉");
+  assert.strictEqual(G.casBankHall(w, D, house(G)).world.days.length, 0, "沒給資料就是空的");
+  assert.strictEqual(G.casBankHall(w, "2026-12-20", house(G), 0, false, dd).world.days.length, 0, "太久以前的不放");
+});
 console.log(`casino_bankecon.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

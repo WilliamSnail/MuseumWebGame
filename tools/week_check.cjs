@@ -31,6 +31,9 @@ const BANNED = [
   "佩佩蛙", "納粹", "卍", "希特勒",
   "賓士", "全家", "萊爾富", "星巴克", "麥當勞", "肯德基", "鼎泰豐", "臉書", "任天堂", "迪士尼", "寶可夢", "台積電", "可口可樂", "蘋果手機",
 ];
+// 世界股市新聞（market）多擋的：真實的公司、人名、指數、機構（對照 functions/stock_tw.js、stock_us.js 的真實代號；名字只在這裡擋，不進遊戲），
+// 預測和買賣建議（只能寫已經發生的事）。遊戲裡的名字（銀蘋果工坊等）先拿掉再比，免得「蘋果」誤擋。數字和百分比壹律不准寫（不能像真實價格）
+const MARKET_BANNED = ["輝達", "超微", "聯發科", "鴻海", "台達電", "中華電", "台積", "蘋果公司", "特斯拉", "微軟", "谷歌", "亞馬遜", "英特爾", "那斯達克", "納斯達克", "道瓊", "標普", "費半", "費城半導體", "加權指數", "台灣加權", "華爾街", "聯準會", "央行", "證交所", "證券交易所", "馬斯克", "黃仁勳", "蘇姿丰", "庫克", "蓋茲", "巴菲特", "目標價", "預測", "預期", "預計", "將會", "明天會", "明日", "看漲", "看跌", "買進", "賣出", "建議", "推薦", "穩賺", "必漲", "必跌", "利多", "利空"];
 const MOODS = [null, "開心", "傷心", "生氣"];
 const POWER = { 1: [11, 13], 2: [15, 16], 3: [17, 19], 4: [19, 21], 5: [20, 23] }; // 跟 test/content/check3.cjs 的 RANGES 一樣
 const isObj = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -319,6 +322,37 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         d.real.forEach((s, i) => text(`${where}.real[${i}]`, s, LIMITS.real));
         if (new Set(d.real).size !== d.real.length) E(where + ".real", "有重複的");
         d.real.forEach((s, i) => { if (typeof s === "string" && /[@<>`*_~|\\]|:\/\//.test(s)) E(`${where}.real[${i}]`, "不要有連結、@、markdown 符號"); });
+      }
+    }
+    if (d.market !== undefined) { // 世界股市新聞（財報頁；content/排程說明.md 一之十）。可以不寫
+      const W = G.WORLD_NEWS, mk = where + ".market";
+      if (o.spare) E(mk, "備用的一天不能寫 market（那不是真的某一天）");
+      else if (!Array.isArray(d.market) || d.market.length < W.min || d.market.length > W.max) E(mk, `要是陣列，${W.min}～${W.max} 則（沒有合適的就整個不要寫）`);
+      else {
+        const stocks = G.OUT_STOCKS, ids = stocks.map(x => x.id), names = stocks.map(x => x.name).concat(G.IN_STOCKS.map(x => x.name));
+        const seen = new Set();
+        d.market.forEach((x, i) => {
+          const w = `${mk}[${i}]`;
+          if (!isObj(x)) { E(w, "要是物件 { title, line, tone, ref }"); return; }
+          Object.keys(x).filter(k => !["title", "line", "tone", "ref"].includes(k)).forEach(k => E(w, `不認得的欄位「${k}」`));
+          text(w + ".title", x.title, W.title); text(w + ".line", x.line, W.line);
+          if (!W.tones.includes(x.tone)) E(w + ".tone", `要是 ${W.tones.join("、")} 其中壹個`);
+          if (x.ref !== undefined) {
+            const r = Array.isArray(x.ref) ? x.ref : [x.ref];
+            if (r.length > 3) E(w + ".ref", "最多 3 個");
+            r.forEach(id => { if (!ids.includes(id)) E(w + ".ref", `「${id}」不是遊戲裡的館外股票 id（${ids.join("、")}）`); });
+          }
+          [x.title, x.line].forEach(t => {
+            if (typeof t !== "string") return;
+            const bare = names.reduce((a, n) => a.split(n).join(""), t);
+            const hit = MARKET_BANNED.find(b => bare.includes(b));
+            if (hit) E(w, `有不能寫的字「${hit}」（真實名字、預測、買賣建議；content/排程說明.md 一之十）`);
+            if (/[0-9０-９%％]/.test(t)) E(w, "不要寫數字和百分比（不能像真實的價格）");
+            if (/[@<>`*_~|\\]|:\/\//.test(t)) E(w, "不要有連結、@、markdown 符號");
+          });
+          const key = x.title + "|" + x.line;
+          if (seen.has(key)) E(w, "跟前面的重複"); seen.add(key);
+        });
       }
     }
     rewardOk(where + ".dailyBonus", d.dailyBonus);
@@ -615,4 +649,4 @@ function main() {
   console.log(`每週劇情：正式週 ${n} 週、備用週 ${f} 週、備用的一天 ${s} 天，都過了${r.warnings.length ? `（${r.warnings.length} 個警告）` : ""}`);
 }
 if (require.main === module) main();
-module.exports = { checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };
+module.exports = { MARKET_BANNED, checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };
