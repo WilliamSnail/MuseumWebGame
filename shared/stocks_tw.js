@@ -98,7 +98,13 @@ export function twDocRoll(old, day, keep) {
   const doc = twDocNew(day);
   if (old && typeof old === "object") {
     doc.days = Object.assign({}, old.days);
-    if (old.day && old.openIdx != null && old.ser) doc.days[old.day] = { openIdx: old.openIdx, ser: old.ser };
+    // close：那天最後壹次抓到的真實價（遊戲價「已經算進去」的那個），prev：真實前壹收盤；2.8h 每天開盤拉回要用
+    if (old.day && old.openIdx != null && old.ser) {
+      const close = {}, prev = {};
+      for (const id of Object.keys(old.R || {})) if (old.R[id] && okPx(old.R[id].px)) close[id] = old.R[id].px;
+      for (const id of Object.keys(old.prevReal || {})) if (okPx(old.prevReal[id])) prev[id] = old.prevReal[id];
+      doc.days[old.day] = { openIdx: old.openIdx, ser: old.ser, close, prev };
+    }
     for (const d of Object.keys(doc.days).sort().slice(0, -(keep || 5))) delete doc.days[d];
   }
   return doc;
