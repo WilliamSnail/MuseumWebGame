@@ -788,17 +788,30 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
   .fusion-onescreen .fusion-count { display: none; }
 }
 .fusion-onescreen .altar { height: 100%; width: auto; max-width: 100%; }
+/* 手機：底下那條（次數＋融合鈕）壓成兩行小的，不蓋住上面的說明（測試 session：375×740、740×375） */
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .fusion-onescreen .fusion-foot { gap: 4px; padding-top: 8px; }
+  .fusion-onescreen .fusion-foot .day-limit { padding: 4px 10px; gap: 6px; font-size: var(--type-small, .75rem); line-height: 1.3; }
+  .fusion-onescreen .fusion-foot .day-limit small { display: none; }
+  .fusion-onescreen .fusion-foot .rv-btns { gap: 6px 10px; align-items: center; flex-wrap: nowrap; }
+  .fusion-onescreen .fusion-foot .rv-btns .btn { min-height: 40px; flex: 1 1 auto; padding: 4px 10px; font-size: var(--type-body, .875rem); white-space: nowrap; }
+  .fusion-onescreen .fusion-foot .rv-btns .insp-have { flex: 0 1 auto; margin: 0; font-size: var(--type-small, .75rem); white-space: nowrap; }
+  .fusion-onescreen .fusion-foot .rv-btns .insp-have b { font-size: 1em; }
+  .fusion-onescreen .fusion-foot .rv-btns .warn-line { flex-basis: 100%; }
+}
 .fusion-onescreen .fusion-cmp summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px; border: 10px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 10px stretch; color: var(--ink, #2E2014); list-style: none; cursor: pointer; }
 .fusion-onescreen .fusion-cmp summary::-webkit-details-marker { display: none; }
 .fusion-onescreen .fusion-cmp summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
 .fusion-onescreen .fusion-cmp summary span { flex: none; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
 .fusion-onescreen .fusion-cmp[open] .fusion-pal-open, .fusion-onescreen .fusion-cmp:not([open]) .fusion-pal-close { display: none; }
 /* 融合按鈕貼在右欄下面，說明長了也看得到（翊文 11-13：每個廳壹個畫面） */
-.fusion-onescreen .fusion-info > .rv-btns { position: sticky; bottom: 0; z-index: 2; padding: 8px 4px 2px; background: linear-gradient(180deg, rgba(60, 24, 36, 0), rgba(60, 24, 36, .96) 40%); }
+.fusion-onescreen .fusion-foot { position: sticky; bottom: 0; z-index: 2; display: grid; gap: 6px; padding: 10px 4px 2px; background: linear-gradient(180deg, rgba(60, 24, 36, 0), rgba(60, 24, 36, .96) 14px); }
+.fusion-onescreen .fusion-foot > * { margin: 0; }
+.fusion-onescreen .fusion-foot .insp-have, .fusion-onescreen .fusion-foot .insp-have b { color: var(--paper, #F3E6C4); }
 
 /* 融合室：抽屜拉開時舞台縮到 75px 高（測試 session 複測 PR 274）。抽屜拉開只放壹排收藏（頁籤、篩選那排不放），舞台至少留 210px */
 .fusion-onescreen > .onescreen-drawer.open .strip-head { display: none; }
 .fusion-onescreen > .onescreen-main { min-height: 210px; }
 @media (max-height: 500px) and (orientation: landscape) { .fusion-onescreen > .onescreen-main { min-height: 120px; } }
 /* 右欄的「今天還能融合 N 次」：貼著融合按鈕壹起在下面，不用捲才看得到 */
-.fusion-onescreen .fusion-info > .day-limit { position: sticky; bottom: 56px; z-index: 2; background: rgba(60, 24, 36, .92); }
+

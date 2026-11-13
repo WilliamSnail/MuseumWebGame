@@ -315,8 +315,8 @@ SCREENS.fusion = root => {
       h("p", { class: "sub" }, rec ? (P.recipes[rec.id] ? `配方「${rt ? rt.name : rec.id}」會發生。` : "這一對好像會發生什麼特別的事……") : mixOn ? "" : "沒有對上配方。稀有度照樣擲 d100。"),
       mixOn ? h("p", { class: "sub pal-hit" }, P.recipes[mix.id] ? `這兩種顏色會調出「${mix.child.顏色}」。` : "這兩種顏色放在壹起，好像會調出沒看過的顏色……") : null,
       !isFree(P) ? h("p", { class: "sub" }, `血統 ${blood} 點（爸媽愈稀有愈多：稀有 ${NUM.blood}、超稀有 ${NUM.blood * 2}、傳說 ${NUM.blood * 3}${mixOn ? `；調色 +${NUM.mixBlood}` : ""}）　融合要 ${price} 靈感${extra ? `（爸媽稀有，多收 ${extra}）` : ""}${traitHits(P, "fusion").map(t => `（${traitTag(t)}）`).join("")}，還要擲理智（${sanWords(rec && rec.san ? rec.san : NUM.fusionSan)}）`) : null,
-      fusionPill(),
-      h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", price)}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(price), can.ok ? null : h("p", { class: "warn-line" }, can.reason)));
+      h("div", { class: "fusion-foot" }, fusionPill(),
+      h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", price)}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(price), can.ok ? null : h("p", { class: "warn-line" }, can.reason))));
   } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
   // 調色盤收起來（壹個畫面看得完，docs/介面整合規劃.md 第六步）：點開才有
   info.append(h("details", { class: "onescreen-card fusion-palette" }, h("summary", null, h("b", null, "調色盤"), h("span", { class: "fusion-pal-open" }, "點開看顏色怎麼調 ▾"), h("span", { class: "fusion-pal-close" }, "收起來 ▴")), palettePane()));
