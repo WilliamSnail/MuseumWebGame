@@ -1,0 +1,77 @@
+/* ================================================================
+   館長室重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。前綴 off-（docs/class名單.md）
+   標題壹行｜頁籤壹排（跟畫廊壹樣的銅牌）｜內容在 .off-stage 裡面捲：名片兩欄（左：名片、數字、怪癖、裝備；右：技能）、退休收成壹行
+   ================================================================ */
+.office-onescreen .off-main { display: block; }
+.office-onescreen .off-stage { min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: 2px 4px 8px 2px; }
+.office-onescreen > .onescreen-main > .off-stage { max-height: 100%; }
+
+/* 頁籤：壹排，放不下左右滑（跟畫廊、圖鑑室壹樣） */
+.screen.onescreen-room.office-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
+.office-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: #1A0F06; font-size: var(--type-body, .875rem); font-weight: 800; box-shadow: none; border-radius: 0; white-space: nowrap; text-shadow: 0 1px 0 rgba(255, 240, 200, .75); }
+.office-onescreen > .seg.big-tabs .seg-btn.on { border-image-source: url(/ui2/ui2-tab-2.webp); }
+.office-onescreen > .seg.big-tabs .seg-btn .tab-c, .office-onescreen > .seg.big-tabs .seg-btn .tab-fresh { font-weight: 400; }
+
+/* 名片：左右兩欄放得下，間距收緊 */
+.office-onescreen .sheet { gap: 12px; align-items: start; }
+.office-onescreen .sheet-head { padding: 10px 14px; gap: 12px; }
+.office-onescreen .sheet-badge { width: 64px; height: 64px; }
+.office-onescreen .sheet-left { gap: 10px; }
+.office-onescreen .sheet-stats { gap: 6px; }
+.office-onescreen .skills { padding-top: 8px; padding-bottom: 8px; }
+.office-onescreen .skill-row { padding: 4px 0; }
+.office-onescreen .skill-desc { font-size: var(--type-small, .75rem); line-height: 1.35; }
+.office-onescreen .skills > p.sub { margin: 6px 0 0; font-size: var(--type-small, .75rem); }
+
+/* 退休：收成壹行 */
+.retire-fold { grid-column: 1 / -1; }
+.retire-fold > summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; list-style: none; cursor: pointer; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .9); color: var(--ink, #2E2014); }
+.retire-fold > summary::-webkit-details-marker { display: none; }
+.retire-fold > summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
+.retire-fold > summary span { color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
+.retire-fold[open] .off-open, .retire-fold:not([open]) .off-close { display: none; }
+.retire-fold[open] > summary { margin-bottom: 6px; }
+
+/* 手機：名片壹欄 */
+@media (max-width: 760px) {
+  .office-onescreen .sheet { grid-template-columns: minmax(0, 1fr); }
+  .office-onescreen > .seg.big-tabs .seg-btn { min-height: 38px; padding: 2px 10px; font-size: var(--type-small, .75rem); }
+  .office-onescreen > .seg.big-tabs .seg-btn .ic, .office-onescreen > .seg.big-tabs .seg-btn svg { display: none; }
+  .office-onescreen > .seg.big-tabs { margin-bottom: 4px; }
+}
+/* 手機橫拿：標題、回大廳、頁籤擠成壹行 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.office-onescreen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; align-content: stretch; }
+  .screen.office-onescreen > .room-head { display: flex; grid-column: 1; grid-row: 1; margin: 0; min-width: 0; }
+  .screen.office-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.office-onescreen > .room-head .sub { display: none; }
+  .screen.office-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.office-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+  .screen.office-onescreen > .seg.big-tabs { grid-column: 2; grid-row: 1; align-self: end; margin: 0; min-width: 0; }
+  .screen.office-onescreen > .onescreen-main.off-main { grid-column: 1 / -1; grid-row: 2; min-height: 0; }
+  .office-onescreen > .seg.big-tabs .seg-btn { min-height: 30px; padding: 0 8px; border-width: 6px; font-size: var(--type-tiny, .6875rem); }
+  .office-onescreen .sheet { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+/* 電腦：技能說明壹行（多的省略），數字格矮壹點，名片壹眼看完 */
+@media (min-width: 761px) and (min-height: 501px) {
+  .office-onescreen .skill-desc { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .office-onescreen .sheet-stats > * { padding-top: 6px; padding-bottom: 6px; }
+}
+@media (min-width: 761px) and (min-height: 501px) {
+  .office-onescreen .skill-row { padding: 2px 0; gap: 0 10px; }
+  .office-onescreen .skill-desc { font-size: var(--type-tiny, .6875rem); }
+  .office-onescreen .skills > .pl-title { margin-bottom: 2px; }
+  .office-onescreen .skills > p.sub { display: none; }
+  .office-onescreen .sheet-head { padding: 6px 12px; }
+  .office-onescreen .sheet-badge { width: 52px; height: 52px; }
+  .office-onescreen .sheet { gap: 8px 12px; }
+}
+/* 手機：數字格三欄、小壹點；名片頭壓緊 */
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .office-onescreen .sheet-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .office-onescreen .sheet-stats > * { padding: 6px 8px; }
+  .office-onescreen .sheet-stats > * b, .office-onescreen .sheet-stats > * strong { font-size: 1.1rem; }
+  .office-onescreen .sheet-head { padding: 6px 10px; gap: 8px; }
+  .office-onescreen .sheet-badge { width: 48px; height: 48px; }
+  .office-onescreen .sheet-head .pl-line, .office-onescreen .sheet-head .pl-aside { font-size: var(--type-small, .75rem); margin: 2px 0 0; }
+}

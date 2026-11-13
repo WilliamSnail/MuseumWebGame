@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "office-new", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "館長室換新介面：壹個畫面看完名片", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館長室套了新的版面：標題壹行、頁籤壹排（跟畫廊壹樣的銅牌），名片、技能、裝備、怪癖左右兩欄放得下，整頁不用往下捲。",
+        "「退休」收成壹行，點開才看，不會再不小心按到。",
+        "工坊升級、修復台、送館友、歷任參觀者照舊，內容多的時候在框裡面捲。手機也照這個排。",
+      ]],
+    ],
+  },
+  {
     id: "stock-direct-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "館外股票的價格改成直接照真實價", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

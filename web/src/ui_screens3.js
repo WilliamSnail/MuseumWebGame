@@ -366,12 +366,9 @@ SCREENS.office = (root, params) => {
   const tabs = h("div", { class: "seg big-tabs" }, [["sheet", "參觀者名片"], ["upgrades", "工坊升級"], ["repair", "修復台"], ["trade", "送館友"], ["history", JOB_TEXT.history]].filter(([id]) => id !== "trade" || UI.net).map(([id, n]) =>
     h("button", { type: "button", class: "seg-btn" + (id === tab ? " on" : ""), "aria-pressed": String(id === tab), onClick: () => go("office", { tab: id }, { action: false }) }, icon(OFFICE_IC[id]), h("span", null, n),
       (id === "upgrades" && freshUnder(P, "office", FRESH_KEY.up(""))) || (id === "history" && freshUnder(P, "office", "wall:")) ? freshTag("tab-fresh") : null))); // 有第壹次買得起的升級（11-08）；牆上多了一位參觀者（11-08，key 是 "wall:第幾位"）
-  root.append(roomHead("館長室", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.office) || "", tabs));
-  if (tab === "sheet") root.append(officeSheet());
-  else if (tab === "upgrades") root.append(officeUpgrades());
-  else if (tab === "repair") root.append(officeRepair());
-  else if (tab === "trade") root.append(officeTrade());
-  else root.append(officeHistory());
+  root.classList.add("onescreen-room", "office-onescreen", "off-tab-" + tab);
+  const body = tab === "sheet" ? officeSheet() : tab === "upgrades" ? officeUpgrades() : tab === "repair" ? officeRepair() : tab === "trade" ? officeTrade() : officeHistory();
+  root.append(roomHead("館長室", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.office) || ""), tabs, h("div", { class: "onescreen-main off-main" }, h("div", { class: "off-stage" }, body)));
 };
 export function officeSheet() {
   if (isFree(P)) return placard(["自由模式", "自由模式沒有職業，也不擲骰。"]);
@@ -399,7 +396,7 @@ export function officeSheet() {
         h("span", { class: "skill-tick", title: "今天用成功過，明天會擲成長" }, P.skillTicks[s] ? "✓" : ""),
         h("span", { class: "skill-desc sub" }, (typeof SKILL_TEXT !== "undefined" && SKILL_TEXT[s]) || "", traitHits(P, "skill:" + s).map(t => `（${traitTag(t)}）`).join("")))), // 放大鏡這種裝備（決定 0032）
       h("p", { class: "sub" }, "擲 d100 ≤ 技能值就成功。用成功過的技能打勾，明天第一次進館擲成長。")),
-    retireBox()); // 退休（11-08，決定 0025）
+    h("details", { class: "retire-fold" }, h("summary", null, h("b", null, LEGACY_TEXT.officeTitle), h("span", { class: "off-open" }, "點開 ▾"), h("span", { class: "off-close" }, "收起來 ▴")), retireBox())); // 退休（11-08，決定 0025）
 }
 export function officeUpgrades() {
   return h("div", null, inspHave(), h("div", { class: "badge-grid" }, UPGRADES.map(u => {
