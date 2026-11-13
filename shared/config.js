@@ -346,6 +346,11 @@ export const NUM = {
     //   利率順序（測試擋）：活存 < 定存 < 借款（loan.interestPct／loan.days），借錢來存不會賺
     bank: { savePct: 0.1, saveCap: 10000000, min: 10000, quick: [100000, 1000000, 5000000],
       terms: [{ days: 3, pct: 1 }, { days: 7, pct: 3 }], termMax: 3, termMin: 100000, termCap: 10000000, houseCapPct: 0.05, catchup: 30 },
+    // 館債（11-13，shared/casino_bond.js，規劃玩法 3）：每週壹期，利率照莊家的錢（bankroll ÷ houseStart 的 %）由好到壞；壹張 unit；
+    //   壹個人每期最多 perUser、帳號要開了 minAge 天；有憑證的話，莊家回到起始的 iouAtPct% 以上補付。
+    //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
+    bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
+      tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
