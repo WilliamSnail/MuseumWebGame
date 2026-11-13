@@ -446,6 +446,12 @@ SCREENS.hall = (root, params) => {
   if (ADDONS.hall3) ADDONS.hall3(side); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
   if (ADDONS.hallGuests) ADDONS.hallGuests(side); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
   if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）
+  // 手機：側欄只留主題那壹條，其他（館友來過、參觀者留言、探險報告…）收在「館友和留言」按鈕後面，點了從下面蓋上來（測試 session 11-13：手機看不到館友來過）
+  const others = [...side.children].filter(c => c !== themes);
+  if (others.length) {
+    const more = h("details", { class: "hall-more" }, h("summary", null, h("b", null, "館友和留言"), h("span", { class: "hall-more-open" }, "點開 ▾"), h("span", { class: "hall-more-close" }, "收起來 ▴")), h("div", { class: "hall-more-body" }, others));
+    side.append(more);
+  }
   side.prepend(themes); // 主題放側欄最上面（館友來過那塊會自己插到最前面，這裡再搬回來；翊文 11-13：「右邊的主題展也不夠明顯」）
 };
 // 主題展的小卡（翊文 11-08：「擺對主題，牆上會浮出主題名……這個要顯示清楚一點」）

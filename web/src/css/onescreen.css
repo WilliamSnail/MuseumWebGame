@@ -640,3 +640,52 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .codex-onescreen .onescreen-side .cx-detail { padding: 4px 8px; gap: 2px; }
   .codex-onescreen .onescreen-side .cx-detail .btn { min-height: 32px; }
 }
+
+/* ================================================================
+   版面問題修正（11-13，測試 session 實測回報；docs/測試清單.md）
+   ================================================================ */
+/* 手機橫拿：拉開抽屜不要把上面的版面擠光（委託單、展台才拖得到）：只拉開壹排收藏，篩選和頁籤那排不放 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .onescreen-room > .onescreen-drawer.open { padding: 8px 10px 2px; min-height: 0; }
+  .onescreen-room > .onescreen-drawer.open .strip-wrap { display: block; }
+  .onescreen-room > .onescreen-drawer.open .strip-head { display: none; }
+  .onescreen-room > .onescreen-drawer.open .strip { padding: 2px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  /* 抽屜拉開的時候，委託單縮成「標題加放收藏的格子」，格子才拖得到 */
+  .onescreen-room:has(> .onescreen-drawer.open) .cm-board { padding-top: 10px; padding-bottom: 4px; overflow-y: hidden; align-items: stretch; }
+  .onescreen-room:has(> .onescreen-drawer.open) .cm-board .note-card { padding-top: 12px; padding-bottom: 4px; }
+  .onescreen-room:has(> .onescreen-drawer.open) .cm-board .note-card :is(.nc-text, .nc-tags, .nc-reward, .nc-intro, .nc-client) { display: none; }
+  .onescreen-room:has(> .onescreen-drawer.open) .cm-board .note-card .nc-drop { margin-top: 2px; }
+}
+/* 展廳側欄：館友來過、參觀者留言收進「館友和留言」（手機才用；電腦照舊攤開） */
+.hall-onescreen .onescreen-side .hall-more { display: contents; }
+.hall-onescreen .onescreen-side .hall-more > summary { display: none; }
+.hall-onescreen .onescreen-side .hall-more-body { display: contents; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .hall-onescreen .onescreen-side { position: relative; }
+  .hall-onescreen .onescreen-side > :not(.hall-themes):not(.hall-more) { display: none; }
+  .hall-onescreen .onescreen-side .hall-more { display: block; }
+  .hall-onescreen .onescreen-side .hall-more > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 12px; border: 10px solid transparent; border-image: url(/cellar2/ui-sbtn.webp) 30 fill / 10px stretch; color: var(--ink); list-style: none; cursor: pointer; }
+  .hall-onescreen .onescreen-side .hall-more > summary::-webkit-details-marker { display: none; }
+  .hall-onescreen .onescreen-side .hall-more > summary b { flex: 1 1 auto; font-size: var(--type-body); white-space: nowrap; }
+  .hall-onescreen .onescreen-side .hall-more > summary span { flex: none; color: var(--ink-accent); font-size: var(--type-small); font-weight: 700; white-space: nowrap; }
+  .hall-onescreen .onescreen-side .hall-more[open] .hall-more-open, .hall-onescreen .onescreen-side .hall-more:not([open]) .hall-more-close { display: none; }
+  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; display: grid; gap: 6px; max-height: 55dvh; overflow-y: auto; padding: 6px; border: 12px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 12px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
+  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body > * { display: grid; }
+}
+/* 手機橫拿：側欄窄，「主題：還沒有」不要一個字一行 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hall-onescreen .onescreen-side .hall-themes summary, .hall-onescreen .onescreen-side .hall-more > summary { min-height: 34px; padding: 2px 8px; border-width: 8px; flex-wrap: nowrap; }
+  .hall-onescreen .onescreen-side .hall-themes summary b { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-small); }
+  .hall-onescreen .onescreen-side .hall-themes summary span, .hall-onescreen .onescreen-side .hall-more > summary span { font-size: var(--type-tiny); }
+  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { left: auto; right: 0; width: min(420px, 78vw); max-height: 70dvh; }
+}
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more { position: relative; } }
+@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { top: auto; bottom: 100%; max-height: 60dvh; } }
+@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { max-height: 44dvh; } }
+/* 電腦：有老主顧的單（多壹段開場白）時，單比板子高，板子出現直的捲軸，第 4 張的收藏格被切（測試 session 11-13）：開場白、委託人最多兩行 */
+@media (min-width: 761px) {
+  .onescreen-room .cm-board .note-card .nc-intro, .onescreen-room .cm-board .note-card .nc-client { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .onescreen-room .cm-board { overflow-y: auto; scrollbar-width: thin; scrollbar-gutter: stable both-edges; }
+}

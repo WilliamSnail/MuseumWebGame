@@ -28,6 +28,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "phone-layout-fixes", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
+    title: "手機版面調整：展廳、委託櫃台、打怪", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "手機的展廳多了「館友和留言」按鈕，點開就看得到「館友來過」和「參觀者留言」（以前直拿時看不到）。",
+        "手機橫拿的委託櫃台：拉開收藏抽屜時，委託單縮成標題加放收藏的格子，拖得到。",
+        "手機橫拿的打怪畫面：回合的三個步驟不再被擠成看不懂的字，「下壹招」牌子的字不再被切掉。",
+      ]],
+    ],
+  },
+  {
     id: "yuga-daily-report", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "賭場多了「Yuga Bot 日報」", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
