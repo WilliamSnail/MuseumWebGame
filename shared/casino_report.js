@@ -43,7 +43,7 @@ export function casReportView(doc) {
   secs.push({ t: "莊家", lines: hl });
   // 預算池
   const bl = [];
-  if (H.budget <= 0) bl.push(`預算池剩 ${rpN(H.budget)}。預算用完了，追加預算中。`);
+  if (H.budget <= 0) bl.push(`預算池剩 ${rpN(H.budget)}。預算凍結中：拚經濟成功只撥平常的 ${NUM.casino.econ.freezeKeep}%。`);
   else {
     bl.push(`預算池剩 ${rpN(H.budget)}${first ? "" : `（這段時間 ${rpSign(d.budget)}）`}。`);
     if (!first && d.budget < 0) { const days = Math.floor(H.budget / (-d.budget / span)); bl.push(`照這個速度，大約還撐 ${rpN(days)} 天。`); }

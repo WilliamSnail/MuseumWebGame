@@ -217,7 +217,7 @@ T("日報：莊家、預算池給數字；海底只給水位公分，不出現�
   assert.ok(/大約還撐 [0-9,]+ 天/.test(text), "照這個速度還撐幾天");
   assert.ok(v.stamp.includes("11-10 09:00"), "台灣時間：" + v.stamp);
   const dry = JSON.parse(JSON.stringify(doc)); dry.snap.house.budget = -5;
-  assert.ok(G.casReportView(dry).secs.map(s => s.lines.join("")).join("").includes("追加預算中"));
+  assert.ok(G.casReportView(dry).secs.map(s => s.lines.join("")).join("").includes("預算凍結中"));
   const first = G.casReportView({ day: W.day, at: doc.at, snap: b, diff: G.casBookDiff(null, b) });
   assert.ok(!first.secs[0].lines[0].includes("這段時間") && !first.secs[1].lines.join("").includes("這段時間"), "第壹份沒有上一份，不寫變多少");
   assert.strictEqual(G.casReportView(null), null);
