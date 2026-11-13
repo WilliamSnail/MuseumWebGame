@@ -1,0 +1,277 @@
+{
+  "day": 5,
+  "date": "2026-11-13",
+  "holiday": null,
+  "board": "招領箱多了壹張缺角的單；樓上開過老燈的說明會，鈴多響了壹下；書架多 2 本書。",
+  "real": [
+    "嘉義這兩週有壹場藝術週，七處展覽都在市區，到這個週日。"
+  ],
+  "casino": {
+    "note": "賭場櫃檯的帳頁右下角缺了壹塊。荷官量了量，缺口跟壹枚籌碼壹樣大。",
+    "item": {
+      "id": "corner",
+      "name": "缺壹角的帳頁",
+      "desc": "櫃檯那張帳頁，右下角被撕走了。荷官說不是客人撕的，客人撕不了這麼整齊。",
+      "when": {
+        "type": "push",
+        "n": 1
+      }
+    }
+  },
+  "books": [
+    {
+      "id": "5a",
+      "line": "w46-lost",
+      "clue": "c-corner-half-sign",
+      "title": "缺角的招領單",
+      "spine": "缺角的單",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「9 號的紙條還在椅墊上。」\n「椅墊比昨天又涼了壹點。我沒有碰。」",
+        "樓上昨天開了說明會，講地下那盞老燈要不要重新點亮。\n兩尊展品輪流說，算盤珠撥完就按鈴。\n鈴響的次數，比發言的多壹下。",
+        "今天箱子裡沒有多東西，只多了壹張招領單。\n單子很硬，不是紙，\n是壹塊畫的右下角，邊是撕的。",
+        "正面的字很小、很整齊：\n「拾得：畫壹幅。現存：壹角。」\n失主欄是空的。",
+        "他把碎片翻過來。\n背面有半個簽名，前面的字撕掉了，\n只剩最後壹個：「……計」。筆畫很細，像量過。",
+        "他拿去比箱邊的畫，每壹幅的角都在。\n「缺角的那幅，不在這壹層。」他寫。\n碎片底下還壓著壹張單，只露出兩個字：「失物」。"
+      ]
+    },
+    {
+      "id": "5b",
+      "line": "w46-lost",
+      "title": "差壹角的畫框",
+      "spine": "畫框",
+      "unlock": {
+        "type": "find",
+        "room": "frame"
+      },
+      "pages": [
+        "B3 的走廊盡頭掛著壹個畫框。\n畫布是空的，右下角缺了壹塊，\n缺口的邊是撕的。",
+        "警衛把那塊碎片拿下來比。\n邊對得上，壹絲都不差。\n他沒有把它黏回去。",
+        "畫框的背板上有字，很小、很整齊：\n「收，壹幅。差，壹角。」\n簽名的地方，剛好在缺的那壹角。",
+        "他把碎片對上去，簽名還是只有半個。\n前面那個字，兩邊都沒有。\n「撕的人只帶走了壹個字。」",
+        "他在值班紀錄寫：\n「B3，畫框壹個，角壹個，字半個。」\n數了兩遍。畫布上的空白，比他記得的小了壹點。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d5a",
+      "kind": "read",
+      "book": "5a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d5b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "giver": "yuga",
+      "says": "R，我的帳頁右下角缺壹塊。你去畫廊幫我看壹下肖像的角。",
+      "done": "R。角都在？那缺的是我這張。算了，先收著。",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d5c",
+      "kind": "show",
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:金箔"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w1",
+      "words": "箱子裡今天沒多東西，只多了壹張很硬的招領單。"
+    },
+    {
+      "task": "w2",
+      "words": "牆縫那邊傳來鈴聲，樓上在講地下的老燈要不要點亮。"
+    }
+  ],
+  "show": {
+    "title": "缺了壹點的畫",
+    "intro": "今天的畫都缺了壹點：壹個角、半個簽名、半邊的燈。缺的地方都很整齊。",
+    "works": [
+      {
+        "id": "s5a",
+        "frame": "plain",
+        "fx": [],
+        "title": "差壹角的畫",
+        "lines": [
+          "金色的畫框裡，畫布是空的，右下角被撕走了壹塊。",
+          "缺口後面露出牆。牆上那壹小塊，比別的地方乾淨。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#34302a'/><stop offset='1' stop-color='#100d0a'/></linearGradient>",
+          "<linearGradient id='c' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#e6d8b0'/><stop offset='1' stop-color='#b8a67a'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<path d='M120 20 V44' stroke='#6a5a40' stroke-width='2'/><circle cx='120' cy='20' r='3' fill='#c9a15a'/>",
+          "<rect x='36' y='46' width='168' height='200' fill='#17110b' stroke='#c9a15a' stroke-width='9'/>",
+          "<rect x='46' y='56' width='148' height='180' fill='#4a4438'/>",
+          "<path d='M46 56 H194 V168 L182 174 L178 188 L164 192 L160 206 L146 210 L142 224 L130 228 L128 236 H46 Z' fill='url(#c)' stroke='#3a2a1a' stroke-width='2'/>",
+          "<path d='M60 150 H150 M60 164 H120' stroke='#a8956a' stroke-width='2' opacity='.6'/>",
+          "<path d='M30 272 H210' stroke='#0a0806' stroke-width='6'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s5b",
+        "clue": "c-half-sign-ruler",
+        "frame": "wood",
+        "fx": [
+          "dust"
+        ],
+        "title": "半個簽名",
+        "lines": [
+          "壹塊撕下來的畫角放在燈下，上面的筆畫很細。",
+          "旁邊擺著壹把尺。每壹筆的長度，都剛好落在刻度上。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<radialGradient id='lamp' cx='50%' cy='45%' r='65%'><stop offset='0' stop-color='#d9c48a'/><stop offset='.55' stop-color='#5a4a30'/><stop offset='1' stop-color='#15110b'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='13' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#lamp)'/>",
+          "<path d='M62 112 L78 96 L92 110 L108 92 L124 106 L146 90 L186 98 V214 H56 L64 192 L52 172 L66 152 L54 132 Z' fill='#efe6cf' stroke='#3a2a1a' stroke-width='3'/>",
+          "<g stroke='#2a1c10' stroke-width='3' fill='none'><path d='M84 128 L90 134'/><path d='M76 144 H104'/><path d='M80 156 H100'/><path d='M80 166 H100'/><path d='M80 178 H100 V194 H80 Z'/><path d='M116 154 H170'/><path d='M143 124 V198'/></g>",
+          "<rect x='40' y='236' width='160' height='16' fill='#8a6a3a' stroke='#2a1a0e' stroke-width='2'/>",
+          "<path d='M50 236 V246 M60 236 V242 M70 236 V242 M80 236 V242 M90 236 V242 M100 236 V246 M110 236 V242 M120 236 V242 M130 236 V242 M140 236 V242 M150 236 V246 M160 236 V242 M170 236 V242 M180 236 V242 M190 236 V246' stroke='#2a1a0e' stroke-width='2'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s5c",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "只亮半邊的老燈",
+        "lines": [
+          "壹盞老燈吊在走廊中間，只亮了半邊。",
+          "燈下的算盤珠排成壹列。最右邊那壹顆，比別的新。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#141c26'/><stop offset='1' stop-color='#07090d'/></linearGradient>",
+          "<radialGradient id='glow' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#f0c878' stop-opacity='.9'/><stop offset='1' stop-color='#f0c878' stop-opacity='0'/></radialGradient>",
+          "<clipPath id='half'><rect x='0' y='0' width='120' height='300'/></clipPath>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.45' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.88'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='17' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<path d='M0 250 L70 210 H170 L240 250' fill='none' stroke='#232c38' stroke-width='3'/>",
+          "<path d='M70 0 V210 M170 0 V210' stroke='#1c242e' stroke-width='3'/>",
+          "<g clip-path='url(#half)'><circle cx='120' cy='120' r='110' fill='url(#glow)'/></g>",
+          "<path d='M120 0 V84' stroke='#6a5a40' stroke-width='3'/>",
+          "<path d='M96 112 L106 84 H134 L144 112 Z' fill='#5a4a30' stroke='#1c130c' stroke-width='3'/>",
+          "<path d='M100 112 H120 V128 Q108 128 100 112 Z' fill='#f6dc98'/>",
+          "<path d='M120 112 H140 Q132 128 120 128 Z' fill='#2a2a2e' stroke='#1c130c' stroke-width='1'/>",
+          "<path d='M24 262 H216' stroke='#8a6a3a' stroke-width='4'/>",
+          "<g fill='#6a4a2a' stroke='#1c130c' stroke-width='2'><ellipse cx='40' cy='262' rx='9' ry='7'/><ellipse cx='62' cy='262' rx='9' ry='7'/><ellipse cx='84' cy='262' rx='9' ry='7'/><ellipse cx='106' cy='262' rx='9' ry='7'/><ellipse cx='128' cy='262' rx='9' ry='7'/><ellipse cx='150' cy='262' rx='9' ry='7'/><ellipse cx='172' cy='262' rx='9' ry='7'/><ellipse cx='194' cy='262' rx='9' ry='7'/></g>",
+          "<ellipse cx='214' cy='262' rx='9' ry='7' fill='#c9a15a' stroke='#1c130c' stroke-width='2'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s5d",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "傷心",
+          "姿勢": "坐著"
+        },
+        "fx": [
+          "sepia"
+        ],
+        "frame": "gold",
+        "title": "捏著壹個角的佩佩",
+        "lines": [
+          "牠坐在畫框底下，手裡捏著壹小塊畫布。",
+          "牠舉起來比了比，又放下來。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "frame",
+      "clue": "c-frame-back-blank",
+      "floor": 3,
+      "line": "w46-lost",
+      "title": "差壹角的畫框",
+      "hint": "去 B3，看看走廊盡頭那個缺角的畫框",
+      "intro": "B3 的走廊盡頭掛著壹個畫框。畫布是空的，右下角缺了壹塊，缺口的邊是撕的。",
+      "lines": [
+        "畫框底下的地板很乾淨，沒有碎屑。",
+        "背板上有壹行字，很小、很整齊：「收，壹幅。差，壹角。」"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "看畫框的背板",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "該簽名的地方，剛好就是缺的那壹角。剩下的背板上，壹個名字也沒有。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "字太小了。你湊近去看，畫布上的空白好像也湊了過來。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把畫框拿下來",
+          "check": {
+            "type": "power",
+            "target": 18
+          },
+          "success": {
+            "text": "畫框後面的牆上，有壹塊跟缺角壹樣大的地方比較乾淨。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "畫框動也不動，像是從另壹面被人扶著。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "站遠壹點看就好",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你退了兩步。從遠處看，缺的那壹角剛好夠放壹張招領單。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
