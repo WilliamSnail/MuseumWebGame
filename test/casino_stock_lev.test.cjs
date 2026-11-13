@@ -61,8 +61,8 @@ T("強制平倉價：做多 5× 在 −10%、放空 5× 在 +10%；倍數越小�
 T("盤中檢查：照價格走過的路找第壹個碰到強平的價；沒碰到就沒事", G => {
   const p = pos(G, {});
   assert.strictEqual(J(G.casLevCheck(p, [990, 950, 905, 901, 1200])), J({ hit: false }));
-  assert.strictEqual(J(G.casLevCheck(p, [990, 950, 905, 899, 700])), J({ hit: true, k: 3, px: 899 }));
-  assert.strictEqual(J(G.casLevCheck(pos(G, { side: "short" }), [1010, 1099, 1100, 1300])), J({ hit: true, k: 2, px: 1100 }));
+  assert.strictEqual(J(G.casLevCheck(p, [990, 950, 905, 899, 700])), J({ hit: true, k: 3, px: 899, why: "liq" }));
+  assert.strictEqual(J(G.casLevCheck(pos(G, { side: "short" }), [1010, 1099, 1100, 1300])), J({ hit: true, k: 2, px: 1100, why: "liq" }));
   assert.strictEqual(G.casLevCheck(p, []).hit, false); assert.strictEqual(G.casLevCheck(p, null).hit, false);
 });
 
