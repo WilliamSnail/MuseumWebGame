@@ -1,0 +1,60 @@
+// ================================================================
+//  館內 GDP 和景氣指數（11-13，數值平衡；docs/經濟體系規劃.md 2.7 節，翊文同意）
+//  純函式，只讀每天快照相減的結果（shared/casino_book.js 的 casBookDiff）。
+//  為什麼用「活動量」不用金額：拚經濟一次撥多少、21 點一把賺賠都是亂數，直接加金額，每週成長率的標準差有 34～59%，景氣指數等於擲硬幣
+//  （test/sim_gdp.cjs）。所以每項活動用「次數 × 固定的標準值」，運氣不算進去。
+//    GDP ＝ 消費 ＋ 投資 ＋ 政府支出 ＋ 淨出口
+//    消費 ＝ 餐車購買數 × foodAvg ＋ 21 點手數 × bjHand
+//    投資 ＝ max(0, 這段時間銀行存款的淨增加) × investPct%
+//    政府支出 ＝ 拚經濟成功次數 × econWin
+//    淨出口 ＝ 門票收入（館外進來的，三份加起來）－ 拚經濟失敗次數 × econSink（沉到海底的平均）
+//  景氣指數 B（−1～+1）＝ 0.5 × 館內指數 ＋ 0.5 × 外部景氣（台灣 GDP 年增率；還沒接資料，先當 0）
+//    館內指數 B_in ＝ 0.5 × 昨天的 B_in ＋ 0.5 × clamp(成長率 ÷ growthFull, −1, 1)
+//    成長率 ＝（近 7 天合計 － 前 7 天合計）÷ 前 7 天合計；過去 7 天來過的人少於 minPeople 時 B_in ＝ 0（樣本太少）
+//  影響（拚經濟撥款、門票、利率、股價）下一個 PR 接，這裡只算指數。
+// ================================================================
+import { NUM } from "./config.js";
+
+const gdNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
+const gdClamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const gdAddDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+const gdDays = (a, b) => { const f = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); };
+
+// 這段時間的 GDP（diff：casBookDiff 的結果）。回傳 { C, I, G, NX, total }（總共；除以天數是每天）
+export function casGdpOf(diff) {
+  const K = NUM.casino.gdp, a = (diff && diff.act) || {}, mint = (diff && diff.mint) || {}, hm = (diff && diff.houseMint) || {};
+  const C = gdNz(a.food) * K.foodAvg + gdNz(a.bjHands) * K.bjHand;
+  const I = Math.floor(Math.max(0, gdNz(diff && diff.bank)) * K.investPct / 100);
+  const G = gdNz(a.econWin) * K.econWin;
+  const ticket = gdNz(mint.ticket) + gdNz(hm.ticketBudget) + gdNz(hm.ticketMuseum);
+  const NX = ticket - gdNz(a.econFail) * K.econSink;
+  return { C, I, G, NX, total: C + I + G + NX };
+}
+// 景氣的字
+export const casGdpLabel = b => (b > 0.3 ? "景氣好" : b < -0.3 ? "景氣差" : "景氣普通");
+
+// hist：之前每一份快照的 { from, to, total }（from 是上一份的日期，第一份是 null），照時間由舊到新，最後一份是今天（to＝day）。
+// 每一份蓋了好幾天（很久沒人來看）就平均分到每一天。prevBIn：昨天的館內指數（沒有就 0）。active：過去 7 天來過幾個人
+// 回傳 { perDay（今天這份平均每天的 GDP）, g（成長率，不夠資料是 null）, bIn, bExt, b, label, active }
+export function casGdpIndex(hist, prevBIn, active, bExt = 0) {
+  const K = NUM.casino.gdp, days = {};
+  (hist || []).forEach(h => {
+    if (!h || !h.to) return;
+    const span = h.from ? Math.max(1, gdDays(h.from, h.to)) : 1; // 第一份沒有 from：當一天
+    for (let i = 0; i < span; i++) days[gdAddDays(h.to, -i)] = gdNz(h.total) / span;
+  });
+  const last = hist && hist.length ? hist[hist.length - 1] : null;
+  const end = last && last.to;
+  const out = { perDay: end ? Math.floor(days[end] || 0) : 0, g: null, bIn: 0, bExt: gdClamp(+bExt || 0, -1, 1), b: 0, label: "", active: gdNz(active) };
+  if (end) {
+    const sum = (from, n) => { let t = 0, c = 0; for (let i = 0; i < n; i++) { const k = gdAddDays(from, -i); if (k in days) { t += days[k]; c++; } } return { t, c }; };
+    const now = sum(end, 7), before = sum(gdAddDays(end, -7), 7);
+    if (now.c === 7 && before.c === 7 && before.t > 0) out.g = (now.t - before.t) / before.t; // 兩段都有 7 天的資料才算
+  }
+  if (out.g !== null && out.active >= K.minPeople) out.bIn = 0.5 * gdClamp(+prevBIn || 0, -1, 1) + 0.5 * gdClamp(out.g / K.growthFull, -1, 1);
+  else if (out.g === null) out.bIn = gdClamp(+prevBIn || 0, -1, 1); // 資料還不夠：維持昨天的
+  out.b = Math.round((0.5 * out.bIn + 0.5 * out.bExt) * 1000) / 1000;
+  out.bIn = Math.round(out.bIn * 1000) / 1000;
+  out.label = casGdpLabel(out.b);
+  return out;
+}

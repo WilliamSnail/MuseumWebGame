@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casBurn, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
+import { casBurn, casCount, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -27,7 +27,7 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 // ---------- 錢包 ----------
 export function casWalletNew() {
   return {
-    v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, led: { mint: { start: NUM.casino.startChips }, burn: {} },
+    v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {} },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
@@ -51,6 +51,7 @@ export function casWalletFix(w, day) {
   if (!Array.isArray(w.hung)) w.hung = [];
   casSkFix(w, day); // 連勝連敗（決定 0049）：舊錢包沒有 sk，補；換日重算今天的份
   if (day) {
+    w.seen = day; // 最後來的一天（景氣指數算「過去 7 天有幾個人」）
     if (w.rel.day !== day) w.rel = { day, n: 0 };
     if (w.pk.day !== day) w.pk = { day, left: NUM.casino.dailyPacks, opened: 0 }; // 舊的：每人 2 包、不會換日重算（bug）；這裡每天 2 包，沒開的不累積
     const wk = isoWeek(day);
@@ -69,6 +70,7 @@ export function casHouseFix(h, day) {
   h.bankroll = Math.floor(casNz(h.bankroll, NUM.casino.houseStart));
   h.budget = Math.floor(casNz(h.budget, NUM.casino.econ.budgetStart));
   h.sea = Math.floor(casNz(h.sea, 0));
+  if (!casIsObj(h.act)) h.act = {}; // 活動次數（景氣指數）
   h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
   casLedFix(h, ["mint", "flow"]);
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
@@ -132,6 +134,7 @@ export function casSettle(w, house, round, ctx = {}) {
   w.chips += o.payout;
   casHouseMove(house, "bj", round.bet - o.payout);
   house.hands++;
+  casCount(house, "bjHands");
   st.hands++;
   st.net += o.net;
   const win = o.kind === "win" || o.kind === "blackjack" || o.kind === "charlie";
@@ -499,6 +502,7 @@ export function casBuy(w, house, pick, day, name = CAS_TEXT.dealer, P = null) {
   if (w.chips < it.price) return { ok: false, reason: casFill(CAS_TEXT.dinerBroke, { chips: casNum(w.chips) }) };
   w.chips -= it.price;
   casHouseMove(house, "food", it.price);
+  casCount(house, "food");
   lines.push(it.line || "");
   let gotTickets = 0;
   const food = casFoodEffect(w, it, P, day);
