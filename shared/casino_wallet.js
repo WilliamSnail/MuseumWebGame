@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casBurn, casCount, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
+import { casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casLedFix, casMint } from "./casino_book.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -75,16 +75,106 @@ export function casHouseFix(h, day) {
   h.econ.b = Math.max(-1, Math.min(1, casNz(h.econ.b)));
   if (!casIsObj(h.pol)) h.pol = null; // 最近一次拚經濟成功抽到的政策 { idx, fx, day }
   h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
-  casLedFix(h, ["mint", "flow"]);
+  casLedFix(h, ["mint", "flow", "burn"]);
+  // 莊家的債（規劃 2.11）：budget 跟預算池借的、culture 文化部借款、world 外面世界貸款（含利息）。loansOut：借出去還沒收回的本金。pay：今天已經賠付多少
+  if (!casIsObj(h.debt)) h.debt = {};
+  for (const k of ["budget", "culture", "world"]) h.debt[k] = Math.max(0, Math.floor(casNz(h.debt[k])));
+  h.loansOut = Math.max(0, Math.floor(casNz(h.loansOut)));
+  if (!casIsObj(h.pay) || typeof h.pay.day !== "string") h.pay = { day: "", n: 0 };
+  h.pay.n = Math.max(0, Math.floor(casNz(h.pay.n)));
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;
-  if (day && h.day && h.day !== day && h.bankroll < 0 && NUM.casino.houseResetMint) { casHouseMint(h, "reset", NUM.casino.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
-  // 外面世界的補助（NUM.casino.grants）：每個 id 只撥壹次
+  // 外面世界撥的錢（NUM.casino.grants）：每個 id 只撥壹次，記成文化部借款（債，house.debt.culture，不計利息，莊家賺的錢先還預算池、再還這個）。
+  // 已經撥過、當時沒記債的（11-14 之前），補記壹次債（grantDebt）。
   if (!casIsObj(h.grants)) h.grants = {};
-  for (const g of NUM.casino.grants || []) if (g && g.id && !h.grants[g.id] && casHouseMint(h, "grant", g.amt) > 0) h.grants[g.id] = day || true;
+  if (!casIsObj(h.grantDebt)) h.grantDebt = {};
+  for (const g of NUM.casino.grants || []) {
+    if (!g || !g.id) continue;
+    if (!h.grants[g.id] && casHouseMint(h, "grant", g.amt) > 0) h.grants[g.id] = day || true;
+    if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
+  }
+  if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
   return { house: h, reopen };
+}
+// ---------- 莊家跟整個經濟接軌（規劃 2.11） ----------
+// 換日：利息、還債、破產了就借錢重開。回傳要告訴玩家的壹句（沒有就 null）
+function casHouseDaily(h, day) {
+  const C = NUM.casino, H = C.houseLoan;
+  let reopen = null;
+  if (!H || !H.on) {
+    if (h.bankroll < 0 && C.houseResetMint) { casHouseMint(h, "reset", C.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(C.houseReset) }); }
+    return reopen;
+  }
+  const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
+  // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利
+  if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));
+  // 2 莊家有賺（超過準備金）：壹半還債。先預算池、再文化部借款、最後外面世界（燒掉）
+  if (h.bankroll > H.reserve) {
+    let pay = Math.floor((h.bankroll - H.reserve) * H.repayPct / 100);
+    const a = Math.min(pay, h.debt.budget);
+    if (a > 0) { casHouseMove(h, "budgetRepay", -a); h.budget += a; h.debt.budget -= a; pay -= a; }
+    const b = Math.min(pay, h.debt.culture);
+    if (b > 0) { casHouseBurn(h, "cultureRepay", b); h.debt.culture -= b; pay -= b; }
+    const c = Math.min(pay, h.debt.world);
+    if (c > 0) { casHouseBurn(h, "worldRepay", c); h.debt.world -= c; }
+  }
+  // 3 破產：先跟預算池借（閒錢的壹小部分），再跟外面世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
+  if (h.bankroll < 0) {
+    let need = H.reserve - h.bankroll, got = 0;
+    const spare = Math.max(0, h.budget - Math.floor(C.econ.budgetStart * H.budgetKeepPct / 100));
+    const x = Math.min(need, Math.floor(spare * H.budgetPct / 100), H.budgetMax);
+    if (x > 0) { h.budget -= x; casHouseMove(h, "budgetLoan", x); h.debt.budget += x; need -= x; got += x; }
+    const room = Math.max(0, casHouseCredit(h) - h.debt.world);
+    const y = Math.min(need, room);
+    if (y > 0) { casHouseMint(h, "worldLoan", y); h.debt.world += y; got += y; }
+    if (h.bankroll >= 0) { h.reopened++; reopen = casFill(CAS_TEXT.houseReopenLoan, { n: casNum(got) }); }
+    else reopen = CAS_TEXT.houseStillBroke;
+  }
+  return reopen;
+}
+// 外面世界願意借莊家多少（累計的債不超過這個）：max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）
+export function casHouseCredit(h) {
+  const H = NUM.casino.houseLoan, e = casIsObj(h.econ) ? h.econ : {};
+  const gdp = Math.max(0, Math.floor(casNz(e.perDay))), ext = Math.max(-1, Math.min(1, casNz(e.bExt)));
+  return Math.max(0, Math.floor(Math.max(H.creditMin, H.creditDays * gdp) * (1 + H.creditExtPct / 100 * ext)));
+}
+// 莊家現在是哪一級：ok 健康（≥ health.low）、tight 吃緊、broke 破產（≤ 0，含停業整頓）
+export function casHouseLevel(h) {
+  const b = casNz(h && h.bankroll);
+  return b <= 0 ? "broke" : b < NUM.casino.health.low ? "tight" : "ok";
+}
+// 這壹手最大能下多少（健康：NUM.casino.maxBet）
+export function casBetMax(h) {
+  const R = NUM.casino.risk, lv = casHouseLevel(h);
+  if (lv === "ok") return NUM.casino.maxBet;
+  if (lv === "broke") return Math.min(NUM.casino.maxBet, R.betBroke);
+  return Math.min(NUM.casino.maxBet, Math.max(R.betMin, Math.floor(h.bankroll * R.betTightPct / 100)));
+}
+// 壹天總賠付上限（21 點贏的＋大禮包）。健康：null（不限）
+export function casPayCap(h) {
+  const R = NUM.casino.risk, lv = casHouseLevel(h);
+  if (lv === "ok") return null;
+  return lv === "broke" ? R.payBrokeFlat : Math.floor(h.bankroll * R.payTightPct / 100) + R.payFlat;
+}
+// 今天還能賠付多少（不限就是 Infinity）
+export function casPayLeft(h, day) {
+  const cap = casPayCap(h);
+  if (cap == null) return Infinity;
+  return Math.max(0, cap - (h.pay && h.pay.day === day ? h.pay.n : 0));
+}
+export function casPayAdd(h, day, n) {
+  n = Math.floor(casNz(n));
+  if (!(n > 0) || !day) return;
+  if (!casIsObj(h.pay) || h.pay.day !== day) h.pay = { day, n: 0 };
+  h.pay.n += n;
+}
+// 壹包大禮包最多賠多少（健康：不限，null）
+export function casDrawCap(h) {
+  const R = NUM.casino.risk, lv = casHouseLevel(h);
+  if (lv === "ok") return null;
+  return lv === "broke" ? R.drawFlat : Math.max(R.drawFlat, Math.floor(h.bankroll / 2));
 }
 export const casHouseLines = h => [casFill(CAS_TEXT.houseNow, { n: casNum(h.bankroll) })].concat(h.bankroll < 0 ? [CAS_TEXT.houseBroke] : []);
 
@@ -139,6 +229,7 @@ export function casSettle(w, house, round, ctx = {}) {
   round.settled = true;
   w.chips += o.payout;
   casHouseMove(house, "bj", round.bet - o.payout);
+  if (o.payout > round.bet) casPayAdd(house, ctx.day, o.payout - round.bet); // 今天賠付了多少（莊家吃緊／破產時有上限）
   house.hands++;
   casCount(house, "bjHands");
   st.hands++;
@@ -188,6 +279,10 @@ function casLoanFix(w) {
   L.seq = Math.max(0, Math.floor(casNz(L.seq)));
   L.ok = Math.max(0, Math.floor(casNz(L.ok))); L.late = Math.max(0, Math.floor(casNz(L.late)));
   L.toHouse = Math.max(0, Math.floor(casNz(L.toHouse)));
+  L.toHouseAmt = Math.max(0, Math.floor(casNz(L.toHouseAmt))); // 被扣掉那幾筆的本金（交給莊家時，莊家借出去還沒收回的本金跟著減）
+  L.limit = Math.min(L.limit, NUM.casino.loan.capMax); // 額度上限（規劃 2.11a）：比上限高的立刻降下來，沒到期的借款照舊
+  if (!casIsObj(L.lv) || (L.lv.day !== "" && !okDay(L.lv.day))) L.lv = { day: "", n: 0 };
+  L.lv.n = Math.max(0, Math.floor(casNz(L.lv.n)));
   L.list = (Array.isArray(L.list) ? L.list : []).filter(x => casIsObj(x) && Number.isFinite(+x.amt) && +x.amt > 0 && okDay(x.day) && okDay(x.due))
     .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: x.due, at: Number.isFinite(+x.at) && x.at != null ? +x.at : null }));
   L.notes = (Array.isArray(L.notes) ? L.notes : []).filter(s => typeof s === "string").slice(-5);
@@ -197,13 +292,16 @@ function casLoanFix(w) {
 // 這筆最早什麼時候可以還（毫秒）；舊的借款沒記時間：馬上可以還
 export const casLoanFrom = x => (x && Number.isFinite(x.at) ? x.at + NUM.casino.loan.repayAfterMin * 60000 : null);
 // 準時還清壹筆之後的額度：多 limitPct%（無條件進位）
-export const casLoanNext = limit => Math.ceil(limit * (100 + NUM.casino.loan.limitPct) / 100);
+export const casLoanNext = limit => Math.min(NUM.casino.loan.capMax, Math.ceil(limit * (100 + NUM.casino.loan.limitPct) / 100));
 // 要還多少：本金加利息，無條件進位
 export const casLoanOwe = amt => Math.ceil(amt * (100 + NUM.casino.loan.interestPct) / 100);
 // 還沒還的本金加起來
 export const casLoanOpen = w => w.loan.list.reduce((s, x) => s + x.amt, 0);
 // 還能借多少
-export const casLoanLeft = w => Math.max(0, w.loan.limit - casLoanOpen(w));
+// 欠款中（錢包是負的）額度鎖在壹開始的額度（規劃 2.11a）
+export const casLoanLeft = w => Math.max(0, (w.chips < 0 ? Math.min(w.loan.limit, NUM.casino.loan.limit) : w.loan.limit) - casLoanOpen(w));
+// 全館沒還的本金最多多少：max(outMin, 莊家的錢 × outPct%)
+const casLoanOutCap = house => Math.max(NUM.casino.loan.outMin, Math.floor(Math.max(0, house.bankroll) * NUM.casino.loan.outPct / 100));
 // 換日：到期（今天 > due）沒還的，從籌碼直接扣，扣到負的也扣；每扣壹筆額度降 latePct%。籌碼變負的記下哪天開始
 export function casLoanRoll(w, day) {
   const L = w.loan;
@@ -212,6 +310,7 @@ export function casLoanRoll(w, day) {
   late.forEach(x => {
     w.chips -= x.owe;
     L.toHouse += x.owe; // 扣掉的錢是還給莊家的（決定 0071），下壹次碰到莊家時交過去
+    L.toHouseAmt += x.amt;
     L.late++;
     L.limit = Math.floor(L.limit * (100 - NUM.casino.loan.latePct) / 100);
     L.notes.push(casFill(CAS_TEXT.loanLate, { day: x.day.slice(5), owe: casNum(x.owe), limit: casNum(L.limit) }));
@@ -222,10 +321,11 @@ export function casLoanRoll(w, day) {
   return late;
 }
 // 現在借得到嗎：可以的話回 null，不行回原因（畫面上那壹條、Discord 都用這個）
-export function casLoanWhyNot(w, playing) {
+export function casLoanWhyNot(w, playing, house) {
   const C = NUM.casino.loan;
   if (!w) return CAS_TEXT.loanBad;
   if (playing) return CAS_TEXT.loanPlaying;
+  if (house && !(house.bankroll > 0)) return CAS_TEXT.loanHouseNone; // 莊家沒有現金：借款暫停（規劃 2.11）
   // 欠款中（籌碼是負的）也可以借（翊文 11-10：「欠款中可以借」），壹樣受額度限制
   if (w.loan.list.length >= C.maxOpen) return casFill(CAS_TEXT.loanMany, { n: w.loan.list.length });
   if (casLoanLeft(w) < C.min) return CAS_TEXT.loanFull;
@@ -243,17 +343,23 @@ export function casPoorReason(reason) {
 // house：莊家（決定 0071，翊文 11-13：「從莊家來才對」）。借出去的錢從莊家出，還回來的本金加利息回到莊家。不給 house 只動錢包（舊的測試）
 export function casBorrow(w, amt, day, playing, t, house) {
   const C = NUM.casino.loan;
-  const why = casLoanWhyNot(w, playing);
+  const why = casLoanWhyNot(w, playing, house);
   if (why) return { ok: false, reason: why };
   const left = casLoanLeft(w);
   let n = amt === "max" ? left : Math.floor(Number(String(amt == null ? "" : amt).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_TEXT.loanBad };
   if (n < C.min) return { ok: false, reason: casFill(CAS_TEXT.loanMin, { n: casNum(C.min) }) };
   n = Math.min(n, left);
+  if (house) { // 莊家的現金要夠；全館沒還的本金不超過上限（規劃 2.11a）
+    const room = Math.min(house.bankroll, casLoanOutCap(house) - Math.max(0, Math.floor(casNz(house.loansOut))));
+    if (room < C.min) return { ok: false, reason: CAS_TEXT.loanOutFull };
+    if (amt !== "max" && n > room) return { ok: false, reason: casFill(CAS_TEXT.loanHouseShort, { max: casNum(room) }) };
+    n = Math.min(n, room);
+  }
   const L = w.loan, x = { id: ++L.seq, amt: n, owe: casLoanOwe(n), day, due: casAddDays(day, C.days), at: Number.isFinite(t) ? t : null };
   L.list.push(x);
   w.chips += n;
-  if (house) casHouseMove(house, "loan", -n); // 從莊家出（莊家可以借到變負的：破產中，換日 Yuga 借他重新開張）
+  if (house) { casHouseMove(house, "loan", -n); house.loansOut = Math.max(0, Math.floor(casNz(house.loansOut))) + n; } // 從莊家出（莊家可以借到變負的：破產中，換日 Yuga 借他重新開張）
   w.st.reliefs++; // 成就「Yuga 的朋友」：第壹次借
   return { ok: true, loan: x, lines: [CAS_TEXT.loanHello, casFill(CAS_TEXT.loanGive, { n: casNum(n), due: x.due.slice(5), owe: casNum(x.owe), pct: C.interestPct })], ach: casAchCheck(w, day) };
 }
@@ -267,10 +373,13 @@ export function casRepay(w, id, day, playing, t, house) {
   if (from && Number.isFinite(t) && t < from) return { ok: false, reason: casFill(CAS_TEXT.loanTooSoon, { n: NUM.casino.loan.repayAfterMin, left: Math.ceil((from - t) / 60000) }) };
   if (w.chips < x.owe) return { ok: false, reason: casFill(CAS_TEXT.loanPoor, { owe: casNum(x.owe) }) };
   w.chips -= x.owe;
-  if (house) casHouseMove(house, "loanBack", x.owe); // 本金加利息回到莊家
+  if (house) { casHouseMove(house, "loanBack", x.owe); house.loansOut = Math.max(0, Math.floor(casNz(house.loansOut)) - x.amt); } // 本金加利息回到莊家
   L.list = L.list.filter(y => y !== x);
   L.ok++;
-  L.limit = casLoanNext(L.limit);
+  // 額度升級（規劃 2.11a）：當天借當天還的不升；壹天最多升 levelPerDay 級
+  if (!casIsObj(L.lv)) L.lv = { day: "", n: 0 };
+  if (L.lv.day !== day) L.lv = { day, n: 0 };
+  if (x.day !== day && L.lv.n < NUM.casino.loan.levelPerDay) { L.limit = casLoanNext(L.limit); L.lv.n++; }
   return { ok: true, loan: x, lines: [casFill(CAS_TEXT.loanBack, { owe: casNum(x.owe), limit: casNum(L.limit) })] };
 }
 // 舊的名字：Discord 和舊的「relief」動作都走這裡，借 NUM.casino.loan.discord 這麼多（額度不夠借剩下的）
@@ -284,6 +393,7 @@ export function casLoanToHouse(w, house) {
   if (!L || !house || !(L.toHouse > 0)) return 0;
   const n = Math.floor(L.toHouse);
   casHouseMove(house, "loanBack", n); L.toHouse = 0;
+  house.loansOut = Math.max(0, Math.floor(casNz(house.loansOut)) - Math.floor(casNz(L.toHouseAmt))); L.toHouseAmt = 0;
   return n;
 }
 // ---------- 欠款送參觀者去地下工作（決定 0064 第二部分） ----------
@@ -297,7 +407,7 @@ function casWorkFix(w) {
   x.vid = String(x.vid || ""); x.name = String(x.name || "").slice(0, 24); x.job = x.job == null ? null : String(x.job);
 }
 // 每天還多少
-export const casWorkPay = x => Math.ceil(x.base * NUM.casino.work.payPct / 100);
+export const casWorkPay = x => Math.min(Math.ceil(x.base * NUM.casino.work.payPct / 100), NUM.casino.work.payMax);
 // 現在要不要送人下去：籌碼是負的，又沒人在工作（翊文 11-10：到期還不出來、負的超過壹天都要送；現在只有到期會變負的，所以負的就要送）
 export const casMustWork = w => !!w && w.chips < 0 && !w.work;
 // 換日：從上次算到的那天到今天，每過壹天還壹次、理智 −sanDay（最低 sanMin）。還清（回到 0）就停
@@ -462,16 +572,20 @@ export function casOpenPacks(w, house, n, day) {
   if (n > C.maxPacksAtOnce) n = C.maxPacksAtOnce;
   if (avail < 1) return { ok: false, reason: casPacksLeft(w) >= 1 && cut > 0 ? CAS_TEXT.packHouse : CAS_TEXT.packNone };
   n = Math.min(n, avail);
-  const packs = [];
+  const packs = [], dcap = house ? casDrawCap(house) : null;
   for (let i = 0; i < n; i++) {
+    if (house && casPayLeft(house, day) <= 0) break; // 莊家今天賠付的額度用完了：剩下的包明天再開
     if (w.pk.left - cut > 0) w.pk.left--; else w.tickets--;
     w.pk.opened++;
     const d = casPackDraw();
+    if (dcap != null && d.chips > dcap) d.chips = dcap; // 莊家手頭緊：壹包最多賠這麼多（五星億萬大禮包縮水）
     w.chips += d.chips;
     casHouseMove(house, "pack", -d.chips);
+    if (house) casPayAdd(house, day, d.chips);
     if (d.stars === 5) w.st.star5++;
     packs.push(d);
   }
+  if (!packs.length) return { ok: false, reason: CAS_TEXT.payCapDone };
   w.st.chipsMax = Math.max(w.st.chipsMax, w.chips);
   casWkPacks(w, packs);
   return { ok: true, packs, total: packs.reduce((s, p) => s + p.chips, 0), left: casPacksLeft(w), ach: casAchCheck(w, day) };
@@ -649,8 +763,10 @@ export function casStepDeal(ctx, text) {
   const { w, house, round, P, day } = ctx;
   if (w.tablePid) return { ok: false, reason: "你還坐在牌桌上，先離桌" };
   if (round && round.state === "playing") return { ok: false, reason: "還有壹手沒打完" };
-  const chk = casBetCheck(text, w.chips);
-  if (!chk.ok) return { ok: false, gag: true, reason: chk.line };
+  const left = casPayLeft(house, day), top = Math.min(casBetMax(house), left === Infinity ? Infinity : Math.floor(left / NUM.casino.risk.betMult));
+  if (left <= 0 || top < NUM.casino.minBet) return { ok: false, gag: true, reason: CAS_TEXT.payCapDone };
+  const chk = casBetCheck(text, w.chips, top);
+  if (!chk.ok) return { ok: false, gag: true, reason: left !== Infinity && top < casBetMax(house) && /最多/.test(chk.line) ? casFill(CAS_TEXT.payCapBet, { max: casNum(top) }) : chk.line };
   const san = P && Number.isFinite(P.sanity) && !isFree(P) ? P.sanity : 99;
   const allin = chk.bet === w.chips; // 全部的籌碼都壓上去
   w.chips -= chk.bet;
