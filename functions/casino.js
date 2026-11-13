@@ -37,7 +37,7 @@ import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { STOCK_IDS, casStockBuy, casStockRoll, casStockSell, casStockView } from "./shared/casino_stock.js";
-import { outStockMovesFor, outStockReady } from "./shared/stocks.js";
+import { OUT_STOCK_NUM, outStockAgeDays, outStockMovesFor, outStockReady, outStockStale } from "./shared/stocks.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -82,7 +82,8 @@ export async function playCore(me, email, opts, fn) {
       casStockRollIfReady(house, day, daily); // 股票：換日照外面世界的行情調價（shared/casino_stock.js）
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
-      const ctx = { w, house, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
+      const stale = outStockStale(daily, day, STOCK_IDS); // 哪幾支今天沒有新資料（畫面要標出來，不要讓人以為真的沒漲跌）
+      const ctx = { w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
       const r = fn(ctx);
       ha = ctx.house.bankroll;
@@ -188,7 +189,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
-    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
+    econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale), stock: casStockView(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
 export const no = r => ({ ok: false, reason: r.reason || "沒辦法" });
 
@@ -240,6 +241,9 @@ async function stocksDaily() {
 export function casStockRollIfReady(house, day, daily) {
   if (!daily || !outStockReady(daily, day)) return false;
   // 清單要用 OUT_IDS，不能讀 house.stk.px：第壹次調價時 house.stk 還沒建起來，讀到空的，七支就全部拿到 0（翊文 11-14 回報「怎麼價格通通一樣」）
+  // 資料斷太久要在記錄裡喊壹聲，不然沒有人會發現（11-14）
+  const age = outStockAgeDays(daily, day);
+  if (age > OUT_STOCK_NUM.staleDays) console.error(`館外股票的資料落後 ${age === Infinity ? "很久（壹筆都沒有）" : age + " 天"}，股價不準。看 stocks-daily.yml 這幾天有沒有跑成功。`);
   const moves = outStockMovesFor(daily, day, STOCK_IDS);
   return casStockRoll(house, day, moves).done;
 }

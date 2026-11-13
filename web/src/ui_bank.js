@@ -187,6 +187,7 @@ function stockPane(v) {
     h("div", { class: "bank-stack" },
       panel(cur.name, cur.line, h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg)),
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : null,
+        cur.stale ? h("p", { class: "bank-why" }, cur.stale) : null,
         S.halt ? h("p", { class: "bank-why" }, `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`)
           : h("div", { class: "bank-acts" }, buys.length ? buys : h("small", null, "籌碼不夠，或莊家手上的股票已經夠多了。"), sells),
         h("p", { class: "bank-hint" }, "股價每天 05:00 動壹次，照外面世界前壹天的行情。買賣各收手續費，進館方的預算池。"),

@@ -6,13 +6,28 @@
 //   disable    停用邀請（還沒加入的進不來、管理員失效；已經加入的還進得去，踢人要另外做）
 //   enable     恢復邀請
 //   stats      看大家合起來的數字（只有數字，沒有 email、名字）
+//   stock-reroll  清掉莊家「今天調過股價了」的記號，下壹個進賭場的人會重新照當天的行情算壹次。
+//                 只動 casinoHouse/main 的 stk.day，不碰股價、不碰任何人的錢包。
+//                 什麼時候用：調價那天算錯了（例如 11-14 七支全變 9,996），修好之後要當天就重算，不想等隔天換日。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll"];
 const NEEDS_EMAIL = ["invite", "admin-on", "admin-off", "disable", "enable"];
 const EMAIL_RE = /^[^\s@/]+@[^\s@/]+\.[^\s@/.]+$/;
 
+// 清掉「今天調過股價了」的記號。只改 casinoHouse/main 的 stk.day，股價、持股、錢包都不動
+async function stockReroll(db) {
+  const ref = db.doc("casinoHouse/main");
+  const snap = await ref.get();
+  if (!snap.exists) { console.log("莊家的文件還不存在，不用清"); return; }
+  const h = JSON.parse(snap.data().data || "{}");
+  if (!h.stk || !h.stk.day) { console.log("本來就沒有「今天調過了」的記號，不用清"); return; }
+  const was = h.stk.day;
+  delete h.stk.day;
+  await ref.set({ data: JSON.stringify(h) }, { merge: true });
+  console.log(`清掉了：本來記著 ${was} 調過價。下壹個進賭場的人會重算壹次。`);
+}
 // 整理輸入。不合規矩丟錯誤（錯誤訊息不含 email）
 function parseTask(inputs) {
   const o = inputs || {};
@@ -86,6 +101,7 @@ async function main() {
   initializeApp({ credential: applicationDefault(), projectId: sa.project_id });
   const db = getFirestore();
   if (task.action === "stats") { await stats(db); return; }
+  if (task.action === "stock-reroll") { await stockReroll(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());

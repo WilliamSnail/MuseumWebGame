@@ -10,9 +10,9 @@ on:
         description: 要做什麼
         required: true
         type: choice
-        options: [stats, invite, admin-on, admin-off, disable, enable]
+        options: [stats, invite, admin-on, admin-off, disable, enable, stock-reroll]
       email:
-        description: Gmail（stats 不用填）
+        description: Gmail（stats、stock-reroll 不用填）
         required: false
       name:
         description: 名字（邀請時可以填）
