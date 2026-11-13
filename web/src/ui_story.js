@@ -20,6 +20,7 @@ import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, cl
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { CAS_AUC } from "../../shared/casino_auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
@@ -27,7 +28,7 @@ import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
-import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
+import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
 // 節日接上每週劇情（11-09）：那一天是節日，週包的那天就帶著節日（名字、節日的話、藝術品），書和公告可以提到它
 setStoryHolidayOf(holidayOf);
@@ -605,12 +606,15 @@ ART_HOOKS.view = id => {
   if (!found) { note("這幅畫已經收進庫房，現在看不到。"); return; }
   focusWork(found[0], found[1]);
 };
+const aucRule = () => CAS_AUC.rule.replace("{days}", NUM.auction.closeDays).replace("{hour}", NUM.auction.closeHour).replace("{lo}", NUM.auction.floorPct).replace("{hi}", NUM.auction.ceilPct).replace("{fee}", NUM.auction.feePct).replace("{age}", NUM.auction.minAge);
+// 拍賣的畫架上放這幅畫的縮圖（ui_art.js 沒有畫的內容，這裡登記壹個）
+ART_HOOKS.art = id => { let html = null; allWeeks().forEach(W => { const w = W.works && W.works.find(x => x.id === id); if (w && html == null) html = workArt(w); }); return html; };
 // 拍賣（封閉式出價，每幅稀有畫壹場 3 天，玩家也能拍自己的畫，只公開得標價）
 export function galleryAuction(root) {
-  artMarketOpen();
-  galleryShell(root, "auction", "封閉式出價：別人看不到你出多少。",
+  auctionOpen();
+  galleryShell(root, "auction", "封閉式出價：沒有人看得到別人出多少。",
     [auctionPane()],
-    [galleryRules("拍賣規則", h("p", null, "每幅稀有的畫壹場，開 3 天。"), h("p", null, "封閉式：你出的價只有你自己看得到，結束時只公開得標價。"), h("p", null, "你也可以把自己收藏的畫拿來拍。"))]);
+    [galleryRules("拍賣規則", h("p", null, CAS_AUC.sub), h("p", null, aucRule()), h("p", null, "你也可以把收藏裡的畫拿來拍：在「我收藏的畫」按「拿去拍」。"))]);
 }
 let svgSeq = 0;
 function workArt(w) {
