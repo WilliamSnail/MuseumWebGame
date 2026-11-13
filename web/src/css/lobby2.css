@@ -301,3 +301,33 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .l2-seals { gap: 4px; }
   .l2-s { width: 34px; height: 34px; }
 }
+
+/* ================================================================
+   大廳手機直拿（11-13，翊文生的 U-10；docs/介面整合規劃.md 第六步）
+   量到的：375×740 是 1407 高、導覽圖在最下面要捲。改成一個畫面：活動預告壹條｜導覽圖（用剩下的高度，寬度照直式底圖的比例縮）｜今天要做的事壹排兩張｜（分頁列、狀態列在 #status 裡）
+   館友在線、館友證、手上有的：直拿放不下，到「館友證」「今天」「選單」看
+   ================================================================ */
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2 { height: calc(100dvh - var(--nav-h, 0px) - var(--status-real, var(--status-h, 120px)) - 26px); gap: 6px; flex-wrap: nowrap; }
+  .l2-strips { grid-template-columns: 1fr; order: 1; flex: none; }
+  .l2-strips .l2-mates { display: none; }
+  .l2-strip { min-height: 34px; height: 34px; }
+  .l2-ev-d { display: none; }
+  .l2-mapbox { order: 2; flex: 1 1 0; min-height: 0; display: grid; place-items: center; }
+  .l2-map.port { height: 100%; width: auto; max-width: 100%; aspect-ratio: 572 / 1024; }
+  .l2-todobox { order: 3; flex: none; }
+  .l2-todobox .l2-h { display: none; }
+  .l2-todos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .l2-todobox .l2-todo { min-height: 56px; }
+  .l2-todobox .l2-todo small { display: none; }
+  .l2-todobox .l2-todo b { font-size: .8125rem; line-height: 1.25; }
+  .l2-pass, .l2-side > .l2-box:not(.l2-todobox) { display: none; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2 { height: calc(100dvh - var(--status-real, 105px) - 94px); }
+  .l2-mapbox { display: flex; justify-content: center; align-items: center; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2 { height: calc(100dvh - var(--status-real, 105px) - 134px); align-items: stretch; }
+  .l2-mapbox { align-self: stretch; width: 100%; }
+}
