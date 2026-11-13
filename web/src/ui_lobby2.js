@@ -94,7 +94,7 @@ function mapBox(step) {
   const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
   const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
   const whoBoxes = {};
-  LOBBY2_ROOMS.filter(r => r.id !== "bank" || SCREENS.bank).forEach(r => {
+  LOBBY2_ROOMS.filter(r => r.id !== "bank" || (SCREENS.bank && ADDONS.bankOpen)).forEach(r => {
     const [x0, y0, x1, y1] = portrait ? r.port : r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
     const tag = h("span", { class: "l2-tag" + (r.icon ? "" : " noic") },
       r.icon ? img(`${L}room-${r.icon}.webp`) : null, h("span", { class: "l2-tn" }, name), sub ? h("small", null, sub) : null,

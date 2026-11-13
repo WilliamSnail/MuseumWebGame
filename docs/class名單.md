@@ -72,6 +72,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `hall-` | `onescreen.css`、`signin.css` | 我的展廳；`hall-onescreen`（展廳套骨架）以前叫 `hall-u2`。`signin.css` 的是展廳的簽到 |
 | `lobby-` | `hub.css` | 大廳 |
 | `hub-` | `hub.css` | 大廳的導覽圖 |
+| `bank-` | `bank.css` | Yuga Bot 銀行廳（`ui_bank.js`）：`bank-onescreen`（套骨架）、`bank-panel`（深藍面板）、`bank-book`（米色存摺表格）、`bank-ticker`（最下面的今日行情）。賭場銀行用的是 `cas-bank`、`bk-`，不要搞混 |
 | `cellar-` | `cellar2.css`、`onescreen.css` | 地下收藏庫入口；`cellar-onescreen`（套骨架）、`cellar-entry`、`cellar-facts`、`cellar-buff`、`cellar-power` 在 `onescreen.css` |
 | `codex-` | `onescreen.css` | 圖鑑室套骨架：`codex-onescreen`、`codex-stage`（主區的框）、`codex-filter`（篩選）、`codex-no-side`（沒有側欄的頁籤）。不要跟 `cx-`（地下探險）搞混 |
 | `room-` | `onescreen.css`、`landscape.css` | 各房間共用的標題列（`room-head`） |

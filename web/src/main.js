@@ -33,6 +33,7 @@ import "./css/pass.css"; // 館友證和典藏冊（11-10，決定 0058）
 import "./css/hub.css"; // 大廳的總覽（11-10，決定 0061）
 import "./css/lobby2.css";
 import "./css/cellar2.css"; // 地下室改版（11-11） // 新的大廳（決定 0066）
+import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
 import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
@@ -42,6 +43,7 @@ import "./ui_core.js";
 import "./ui_screens1.js";
 import "./ui_screens2.js";
 import "./ui_screens3.js";
+import "./ui_bank.js"; // Yuga Bot 銀行廳（11-13）：先用示範資料，伺服器的 bankHall 接上後換掉
 import "./ui_curio.js";
 import "./ui_odd.js";
 import "./ui_board.js"; // 公佈欄、信箱（11-08）
