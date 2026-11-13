@@ -11,7 +11,8 @@
 //    平倉：損益 ＝ 做多 (平倉價 − 開倉價) × 股數；放空 ＝ (開倉價 − 平倉價) × 股數。賠最多賠保證金（不欠莊家、不欠外面世界）。
 //      館內股（mk "in"）：對手盤是莊家（casHouseMove "stockLev"）；莊家付的賺、收的賠，壹天的淨賠付算進全館壹天淨賣出上限（規劃 2.8b）。
 //      台股（mk "tw"）：對手盤是外面世界（賺＝casMint "stockLevWin"，賠＝casBurn "stockLevLoss"）；期望值 0，手續費和利息是搬進預算池，不是 burn。
-//      美股（mk "us"）：現在不開放（maxLev.us ＝ 0；翊文 11-14：等整體的錢重新算過）。
+//      美股（mk "us"）：跟台股一樣（對手盤是外面世界）；11-14 翊文決定開放做多、放空，倍數照信用解鎖，部位上限同台股（maxLev.us ＝ 5）。
+//      行情落後安全閥（11-14）：台股、美股這檔真實行情落後超過 NUM.casino.stockLev.maxLagMin 分鐘（或這段沒抓到真實價），暫停「新開」槓桿單；已開的部位、平倉、停損停利、強平照常。
 //    壞帳（價格跳過強平價、賠超過保證金的那壹段）：沒有人付，只記 house.act.levBadDebt（次數／金額，不是錢）。
 //  強制平倉：保證金加浮動損益剩不到原本的 forcePct%（50%），在「第壹個碰到的價」平倉（跳空穿過就用跳空後的價，不是強平價）。
 //  當沖：壹律當天結束。市場收盤（台股 13:30、館內 23:30）或日子過了還沒平的，用那天最後壹個價自動平倉（casLevSweep）。
@@ -170,7 +171,8 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
       if (mk === "tw" || mk === "us") {
         const T = SH[mk], a = T && T.day === day && T.ser && Array.isArray(T.ser[id]) ? T.ser[id] : null;
         const m = lqT(t) ? (mk === "tw" ? twIdx(t) : usIdx(t, day)) : null;
-        return { px: SH.px[id], idx: a && a.length ? lqN(T.from) + a.length - 1 : lqN(m), open: !casStockIdHalt(house, id, day, t) };
+        const lg = T && T.day === day && T.lag ? T.lag[id] : null;
+        return { px: SH.px[id], idx: a && a.length ? lqN(T.from) + a.length - 1 : lqN(m), open: !casStockIdHalt(house, id, day, t), lag: Number.isFinite(+lg) && lg !== null ? +lg : null, stale: !!(T && T.day === day && T.stale && T.stale[id]) };
       }
       return { px: 0, idx: 0, open: false };
     },
@@ -228,6 +230,12 @@ const lqHouseCap = house => (house.bankroll > 0 ? Math.max(lqC().houseFloor, Mat
 // 現在能開單嗎（不管哪一檔）：回 null ＝ 可以，不然回原因。逾期欠款、錢包是負的都不行
 const lqDebtWhy = (w, day) => ((w.chips < 0 || (lqBox(w.loan) && Array.isArray(w.loan.list) && w.loan.list.some(x => lqDay(day) && day > x.due))) ? CAS_STOCK_LEV.debt : null);
 
+// 行情落後安全閥：台股、美股這檔的真實行情落後超過 maxLagMin 分鐘、或這段沒抓到真實價 → 回原因（暫停新開）；否則 null。館內股沒有外面的行情，不受影響
+export const casLevLagWhy = nw => {
+  if (!nw || (nw.lag == null && !nw.stale)) return null;
+  const max = lqN(lqC().maxLagMin);
+  return max > 0 && (nw.stale || nw.lag > max) ? casFill(CAS_STOCK_LEV.lag, { n: max }) : null;
+};
 // args：{ id, side "long"｜"short", lev, qty, stop, take（停損價、停利價，可以不給）}（也收 dir、margin：給 margin 沒給 qty 時，股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去）。回傳 { ok, pos, lines } 或 { ok:false, reason }
 export function casLevOpen(w, house, args, day, t, src) {
   const C = lqC(), T = CAS_STOCK_LEV, A = args || {}, S = casLevFix(w, day);
@@ -235,13 +243,13 @@ export function casLevOpen(w, house, args, day, t, src) {
   const id = A.id, mk = casLevMarket(id), side = lqSide(A.side || A.dir);
   if (!mk || !side || !lqDay(day)) return { ok: false, reason: T.bad };
   const marketMax = casLevMaxLev(mk), maxLev = casLevMaxLev(mk, casLevLevel(w));
-  if (mk === "us") return { ok: false, reason: T.us };
   if (marketMax <= 0) return { ok: false, reason: T.off };
   const lev = Math.floor(+A.lev);
   if (Number.isFinite(lev) && lev > maxLev && lev <= marketMax) { const nx = casLevNextUnlock(casLevLevel(w)); return { ok: false, reason: casFill(T.levCredit, { max: maxLev, level: casLevLevel(w), next: nx ? casFill(T.levNext, { level: nx.level, lev: nx.lev }) : "" }) }; }
   if (!Number.isFinite(lev) || lev < 1 || lev > maxLev) return { ok: false, reason: casFill(T.levBad, { max: maxLev }) };
   const nw = src.now(id);
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.halt };
+  const lagWhy = mk === "in" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
   const px = nw.px;
   let qty = Math.floor(+A.qty);
   if (!(qty > 0) && A.margin != null) qty = Math.floor(Math.floor(+A.margin) * lev / px);
@@ -413,6 +421,7 @@ export function casLevSet(w, house, args, day, t, src) {
 // positions 的每項：{ no, id, name, market, side, lev, qty, entry, margin, now, pnl, maintPct, liqPx, openedDay, dayTrade }（另外給 sid、n、ratio、liq，名字照現在畫面的假資料）
 // 不改任何東西（要強平、收盤平倉要先叫 casLevSweep）。要拿走的話（notes）由接線的人叫 casLevTakeNotes
 export function casStockLevView(w, house, day, t, src) {
+  const lagMap = s => { const o = {}; for (const id of [...TW_IDS, ...US_IDS]) { const nw = s.now(id), r = nw && nw.open ? casLevLagWhy(nw) : null; if (r) o[id] = r; } return o; }; // 哪幾檔現在因為行情落後暫停新開
   const C = lqC(), T = CAS_STOCK_LEV, S = casLevFix(w), K = C.credit;
   src = src || casLevSrc(house, day, t);
   const level = casLevLevel(w), pts = S.cr.pts, byMarket = { in: casLevMaxLev("in", level), tw: casLevMaxLev("tw", level), us: casLevMaxLev("us", level) }; // 倍數上限跟信用等級有關（levByCredit）
@@ -425,7 +434,7 @@ export function casStockLevView(w, house, day, t, src) {
   });
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
-    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.us, owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
+    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
       fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, force: C.forcePct / 100, rule: T.rule },
     positions,
     credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: maxLevNow, next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts,
