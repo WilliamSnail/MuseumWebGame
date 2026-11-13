@@ -9,10 +9,40 @@
 //   stock-reroll  清掉莊家「今天調過股價了」的記號，下壹個進賭場的人會重新照當天的行情算壹次。
 //                 只動 casinoHouse/main 的 stk.day，不碰股價、不碰任何人的錢包。
 //                 什麼時候用：調價那天算錯了（例如 11-14 七支全變 9,996），修好之後要當天就重算，不想等隔天換日。
+//   house-ledger  只讀：莊家、預算池、海底、館方帳現在多少；莊家每個來源累計進出多少；
+//                 每個錢包的籌碼、借款、憑空和消失的來源。不印名字、uid、email，錢包用 #1、#2 代替（照籌碼排）。
+//                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger"];
+
+// 只讀：看錢流去哪。什麼都不寫
+async function houseLedger(db) {
+  const nz = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
+  const fmt = n => nz(n).toLocaleString("en-US");
+  const list = o => Object.entries(o || {}).filter(([, v]) => nz(v)).sort((a, b) => Math.abs(nz(b[1])) - Math.abs(nz(a[1]))).map(([k, v]) => `    ${k}：${fmt(v)}`);
+  const hs = await db.doc("casinoHouse/main").get();
+  const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
+  console.log(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　館方帳 ${fmt(h.museum)}　莊家記的日子 ${h.day || "-"}`);
+  const led = h.led || {};
+  console.log("莊家每個來源累計（正＝進莊家，負＝出莊家）：");
+  (list(led.flow).length ? list(led.flow) : ["    （沒有）"]).forEach(l => console.log(l));
+  console.log("莊家憑空多的（重開）：");
+  (list(led.mint).length ? list(led.mint) : ["    （沒有）"]).forEach(l => console.log(l));
+  const ws = await db.collection("casinoWallets").get();
+  const rows = ws.docs.map(d => { try { return JSON.parse(d.data().data || "{}"); } catch (e) { return {}; } })
+    .map(w => ({ chips: nz(w.chips), loan: (w.loan && Array.isArray(w.loan.list) ? w.loan.list : []).reduce((s, x) => s + nz(x && x.owe), 0),
+      limit: nz(w.loan && w.loan.limit), mint: (w.led && w.led.mint) || {}, burn: (w.led && w.led.burn) || {} }))
+    .sort((a, b) => b.chips - a.chips);
+  console.log(`錢包 ${rows.length} 個，籌碼合計 ${fmt(rows.reduce((s, r) => s + r.chips, 0))}`);
+  rows.forEach((r, i) => {
+    console.log(`  #${i + 1}　籌碼 ${fmt(r.chips)}　沒還的借款 ${fmt(r.loan)}　借款額度 ${fmt(r.limit)}`);
+    const m = list(r.mint), b = list(r.burn);
+    if (m.length) { console.log("    憑空多的："); m.forEach(l => console.log("  " + l)); }
+    if (b.length) { console.log("    消失的："); b.forEach(l => console.log("  " + l)); }
+  });
+}
 const NEEDS_EMAIL = ["invite", "admin-on", "admin-off", "disable", "enable"];
 const EMAIL_RE = /^[^\s@/]+@[^\s@/]+\.[^\s@/.]+$/;
 
@@ -102,6 +132,7 @@ async function main() {
   const db = getFirestore();
   if (task.action === "stats") { await stats(db); return; }
   if (task.action === "stock-reroll") { await stockReroll(db); return; }
+  if (task.action === "house-ledger") { await houseLedger(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());

@@ -143,5 +143,13 @@ T("畫面：莊家的錢不影響能不能買（exposeLeft 是 null、houseBroke
   const v = G.casStockView(s1.w, s1.house, D, OPEN);
   assert.strictEqual(v.exposeLeft, null); assert.strictEqual(v.houseBroke, false);
 });
+T("莊家破產換日不再印錢（11-14：翊文「這不行，莊家要跟整個經濟系統接軌才行」）", G => {
+  assert.strictEqual(G.NUM.casino.houseResetMint, false, "預設關掉");
+  const h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = -830000000;
+  const r = G.casHouseFix(h, "2026-11-15");
+  assert.strictEqual(r.house.bankroll, -830000000, "停在負的");
+  assert.strictEqual(r.reopen, null);
+  assert.ok(!(r.house.led && r.house.led.mint && r.house.led.mint.reset), "沒有印錢");
+});
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

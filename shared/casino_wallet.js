@@ -79,7 +79,7 @@ export function casHouseFix(h, day) {
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;
-  if (day && h.day && h.day !== day && h.bankroll < 0) { casHouseMint(h, "reset", NUM.casino.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
+  if (day && h.day && h.day !== day && h.bankroll < 0 && NUM.casino.houseResetMint) { casHouseMint(h, "reset", NUM.casino.houseReset - h.bankroll); h.reopened++; reopen = casFill(CAS_TEXT.houseReopen, { n: casNum(NUM.casino.houseReset) }); }
   if (day) h.day = day;
   return { house: h, reopen };
 }
