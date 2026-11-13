@@ -551,6 +551,8 @@ SCREENS.cellar = root => {
   const tp = full ? teamPower(P, items, null) : null;
   const legend = teamRules();
   const strip = collectionStrip({ tabs: ["pepe"], title: "挑隊員", hint: "點壹隻放進隊伍；受傷的不能下去", drag: true,
+    // 篩選能力（翊文 11-13：「應該要能篩選 pepe 的能力，這樣才好選擇，現在是壹次看全部」）：強度、心情、帽子、姿勢
+    filterKey: "cellarTeam", filters: [["強度", it => (it.pick ? memberPower(it, null) : "")], ["心情", it => (it.pick || {}).心情], ["帽子", it => (it.pick || {}).帽子], ["姿勢", it => (it.pick || {}).姿勢]],
     meta: item => teamMeta(item, team),
     sorts: [["power", "強度高的先", (a, b) => (!!P.injured[a.key] - !!P.injured[b.key]) || (memberPower(b, null) - memberPower(a, null))], ["new", "照收藏順序", null]],
     onPick: item => { if (P.injured[item.key]) { note("牠受傷了，先休息。", "bad"); return; } if (team.includes(item.key)) return; const i = team.indexOf(null); team[i < 0 ? 2 : i] = item.key; snd("submit"); rerender(); },
@@ -563,9 +565,10 @@ SCREENS.cellar = root => {
   // 壹個畫面看得完（docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架；css/onescreen.css 的 .cellar-onescreen）：
   //   標題壹行（隊伍規則收成按鈕）｜中間樓層的門和隊伍的展示台｜右邊側欄（壹起下去、本週異狀、試煉房間）｜最下面挑隊員的抽屜
   const rulesBtn = btn([icon("scroll"), h("span", null, "隊伍規則", h("small", null, "強度、相剋、帽子"))], () => {
-    const m = miniLayer("隊伍規則", "放哪 3 隻、戴什麼帽子，會影響在地下的強度。");
+    const m = miniLayer("隊伍規則", "");
     m.card.classList.add("cellar-rules-layer");
-    m.card.append(legend, h("div", { class: "rv-btns" }, btn("知道了", m.close, "primary")));
+    legend.append(h("div", { class: "rv-btns" }, btn("知道了", m.close, "primary"))); // 整個內容寫在卷軸裡：標題、規則、按鈕（翊文 11-13：「不用背景加卷軸」）
+    m.card.append(legend);
     m.layer.addEventListener("click", e => { if (e.target === m.layer) m.close(); });
   }, "onescreen-big");
   const side = h("aside", { class: "onescreen-side" },
