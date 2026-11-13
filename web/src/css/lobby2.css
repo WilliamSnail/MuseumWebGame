@@ -17,6 +17,7 @@ html.new-lobby-on { scrollbar-gutter: stable; }
 .new-lobby-on #nav .nav-link[data-room="codex"] > .ic { background-image: url(/lobby/nav-codex.webp); }
 .new-lobby-on #nav .nav-link[data-room="cellar"] > .ic { background-image: url(/lobby/nav-cellar.webp); }
 .new-lobby-on #nav .nav-link[data-room="casino"] > .ic { background-image: url(/lobby/nav-casino.webp); }
+.new-lobby-on #nav .nav-link[data-room="bank"] > .ic { background-image: url(/lobby/nav-bank.webp); }
 .new-lobby-on #nav .nav-link[data-room="office"] > .ic { background-image: url(/lobby/nav-office.webp); }
 .new-lobby-on #nav .nav-today > .ic { background-image: url(/lobby/nav-today.webp); }
 .new-lobby-on #nav .nav-pass > .ic { background-image: url(/lobby/nav-pass.webp); }

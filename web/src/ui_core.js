@@ -8,7 +8,7 @@ import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } fr
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { markTokens } from "../../shared/logic.js";
+import { markTokens, taipeiDay } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
@@ -29,7 +29,7 @@ export function setFit(v) { FIT = v; return v; }
 export const UI = { screen: "title", params: {}, held: null, undo: [], timers: [], lastInput: Date.now(), busy: false, cleanup: [] };
 export const RCOLOR = { 普通: "var(--r-common)", 稀有: "var(--r-rare)", 超稀有: "var(--r-epic)", 傳說級稀有: "var(--r-legend)", 不可名狀: "var(--r-eldritch)", 失敗作: "#B9B4AA", 修復品: "#9C8A6A" };
 export const ROOM_NAMES = { lobby: "大廳", gallery: "畫廊", origin: "圖書館", workshop: "手作坊", fusion: "融合室", pillow: "抱枕工作台", commission: "委託櫃台", codex: "圖鑑室", hall: "我的展廳", cellar: "地下收藏庫", casino: "賭場", bank: "銀行", office: "館長室", library: "圖庫", settings: "設定" };
-export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "圖書館"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["casino", "賭場"], ["office", "館長室"]];
+export const NAV_ROOMS = [["lobby", "大廳"], ["gallery", "畫廊"], ["origin", "圖書館"], ["workshop", "手作坊"], ["fusion", "融合"], ["pillow", "抱枕"], ["hall", "展廳"], ["codex", "圖鑑"], ["cellar", "地下"], ["casino", "賭場"], ["bank", "銀行"], ["office", "館長室"]];
 export const SCREENS = {};
 // 蓋在畫面上的面板（公佈欄、信箱…）：後面的檔（ui_board.js）載入時登記進來，ui_core 只負責叫（ui_core 不能 import 後面的檔）
 export const PANELS = {};
@@ -171,6 +171,15 @@ export function pepePlacard(pick, o = {}) {
 export function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
 // 存檔。登入了（UI.net，ui_login.js 讀到伺服器的存檔之後才設）：送到伺服器（3 秒內存好幾次只送一次）。
 // 沒登入（標題畫面、開發用的 #畫面）：照舊存在這台電腦。
+// 館內股票（規劃 2.8g）：手作坊今天有人做過佩佩，叫伺服器記壹次（算「昨天去手作坊的不同的人」）。壹天只送壹次；伺服器也會擋重複。沒登入就不送
+let craftNoted = "";
+export function noteCraft() {
+  if (!UI.net || !NET.call) return;
+  const day = taipeiDay(Date.now());
+  if (craftNoted === day) return;
+  craftNoted = day;
+  NET.call("casino", { act: "used", store: "craft" }).catch(() => { craftNoted = ""; });
+}
 // 登入後不寫這台電腦的舊存檔：留著給「搬上去」用，也不會被兩個分頁（兩個帳號）互相蓋掉。
 export function persist() {
   if (UI.net) { if (!UI.saveHold) NET.saveSoon(SAVE); return; } // saveHold：伺服器正在寫我的存檔（合作地下走到一半），這邊不要存，不然會撞 rev（ui_coop.js）
@@ -213,7 +222,7 @@ export function useProfile(mode) {
 
 // ---------- 導覽列 ----------
 // 導覽列的圖示（翊文 11-08：「這個也可以加 icon 嗎」）；手機的選單也用同壹套
-export const NAV_ICON = { lobby: "lobby", gallery: "gallery", origin: "origin", workshop: "workshop", fusion: "fusion", pillow: "pillow", hall: "hall", codex: "codex", cellar: "stairs", casino: "dice", office: "office",
+export const NAV_ICON = { lobby: "lobby", gallery: "gallery", origin: "origin", workshop: "workshop", fusion: "fusion", pillow: "pillow", hall: "hall", codex: "codex", cellar: "stairs", casino: "dice", bank: "bank", office: "office",
   commission: "commission", library: "library", settings: "gear" };
 // 公佈欄、信箱是蓋在整個畫面上的（ui_board.js 登記在 PANELS），不是房間
 export function openPanel(name) {
@@ -743,6 +752,7 @@ export function go(name, params = {}, opts = {}) {
   if (pm && !pm.done && P) {
     pm.done = true;
     const r = finishMake(P, pm.pick, { natural: pm.natural, spent: pm.spent, pushed: pm.pushed, fusion: pm.fusion || null });
+    noteCraft();
     later(() => { note(`你離開前，作品已經做好放進收藏了：${describePepe(r.pick, { failed: r.failed }).full}`); showEvents(r.events); }, 300);
   }
   UI.pendingMake = null;

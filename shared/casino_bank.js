@@ -17,7 +17,7 @@ import { CAS_BANK } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
 import { casBondHeld, casBondView } from "./casino_bond.js";
-import { casStockValue, casStockView } from "./casino_stock.js";
+import { casStockValue, casStockViewAll } from "./casino_stock.js";
 
 const cbkBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cbkN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -131,7 +131,7 @@ export function casBankBreak(w, id) {
 // dayData 給的話多 world（財報頁的世界股市新聞，shared/casino_gdp.js 的 casWorldNews；dayData ＝ functions/shared/day_data.js 的 DAY_DATA）
 export function casBankHall(w, day, house, t, stale, dayData) {
   const save = casBankView(w, day), loan = casLoanView(w, day), bonds = house ? casBondView(w, house, day) : null;
-  const stocks = house ? casStockView(w, house, day, t, stale) : null;
+  const stocks = house ? casStockViewAll(w, house, day, t, stale) : null;
   const owe = loan.list.reduce((s, x) => s + x.owe, 0);
   const held = save.save + save.terms.reduce((s, x) => s + x.amt, 0) + casBondHeld(w) + (bonds ? bonds.iou : 0) + (house ? casStockValue(w, house) : 0);
   return { cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, world: casWorldNews(dayData, day, OUT_STOCKS), net: w.chips + held - owe };

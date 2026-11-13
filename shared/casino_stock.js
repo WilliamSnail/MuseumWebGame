@@ -25,6 +25,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casBurn, casCount, casMint } from "./casino_book.js";
+import { casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK } from "./casino_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { casFill, casNum } from "./casino.js";
@@ -204,8 +205,16 @@ export function casStockView(w, house, day, t, stale) {
     soon: CAS_STOCK.soon, // 館內五家店、槓桿、放空、當沖還沒做
   };
 }
+// 館外七支＋館內五家店壹起給畫面（館內店排前面）。館內股的格式：market "in"、intraday（每 inDay.step 分鐘一個價）、intradayFrom、halted、fresh；外層 inDay
+export function casStockViewAll(w, house, day, t, stale) {
+  const v = casStockView(w, house, day, t, stale), iv = casInView(w, house, day, t);
+  v.list = iv.list.concat(v.list);
+  v.inDay = iv.inDay; v.inCap = iv.cap; v.inSellLeft = iv.sellLeft; v.inExposeLeft = iv.exposeLeft; v.inRule = iv.rule;
+  v.total += iv.total; v.feePaid += iv.feePaid;
+  return v;
+}
 // 存在股票裡的錢（記帳快照用：持股市值是帳面的，錢其實在莊家那裡，所以不加進總額）
-export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * stN(S.own[id]), 0) + S.hold; }; // 鎖在買單裡的籌碼也算玩家的
+export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * stN(S.own[id]), 0) + S.hold + casInValueApprox(w, house); }; // 鎖在買單裡的籌碼也算玩家的
 export function casStockTakeNotes(w) { const S = casStockFix(w); const n = S.notes; S.notes = []; return n; }
 
 
