@@ -201,7 +201,7 @@ function realBit(s) {
   const r = s.real;
   if (!r) return null;
   const c = typeof r.chg === "number" ? r.chg : null;
-  return h("span", { class: "bank-real" }, h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
+  return h("span", { class: "bank-real" }, h("i", { class: "bank-realtag", title: "這是外面世界那支股票的真實行情，不是遊戲裡的價格" }, "真實"), h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
     c != null ? h("em", { class: c > 0 ? "up" : c < 0 ? "down" : "" }, `${c > 0 ? "▲" : c < 0 ? "▼" : "－"} ${(Math.abs(c) * 100).toFixed(1)}%`) : null);
 }
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
@@ -405,11 +405,11 @@ function stockPane(v) {
   const tabs = [["spot", "現股"]].concat(S.lev ? [["lev", "槓桿・放空"]] : [], S.orders && !inShop ? [["order", "掛單"]] : []);
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
   return h("div", { class: "bank-cols stocks" },
-    panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "股價", "今天", "持股"], stockRows(list, cur, S), "stocks")),
+    panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天（遊戲）", "持股"], stockRows(list, cur, S), "stocks")),
     h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
-        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實行情　", realBit(cur), cur.mult ? h("small", null, `　（遊戲價是真實價的 ${cur.mult} 倍）`) : null) : null,
+        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "外面世界的真實行情：", realBit(cur), cur.mult ? h("small", null, `　（遊戲價大約是真實價的 ${cur.mult} 倍，漲跌幅會因遊戲的規則不一樣）`) : null) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "沒調價　"), "昨天來這家店的人太少，今天價格先不動。") : null,

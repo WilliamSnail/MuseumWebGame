@@ -337,3 +337,5 @@ body[data-screen="bank"] #room { background: none; }
 .bank-panel .bank-real em.up { color: #FF8A78; } .bank-panel .bank-real em.down { color: #7FD39B; }
 .bank-realline { display: flex; flex-wrap: wrap; align-items: baseline; }
 .bank-row.stock small.ln.real { display: block; }
+
+.bank-realtag { padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; font-style: normal; font-size: var(--type-tiny, .6875rem); font-weight: 800; opacity: .85; }
