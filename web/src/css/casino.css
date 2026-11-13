@@ -424,3 +424,15 @@ body.reduce-motion .live-dot { animation: none; }
   .nb-casino .cas-foot, .nb-casino .cas-rules, .nb-casino .cas-hint { display: none; }
   .nb-casino .cas-felt { padding: 4px 8px; }
 }
+
+/* 修 PR 275 的退步：分頁列改成橫向滑之後，外層（flex 欄、grid）的最小寬度被分頁列撐開，視窗比螢幕寬（直拿 461px、螢幕 375），「去銀行」「發牌」被切在螢幕外。
+   做法：整串外層都 min-width: 0、max-width: 100%，分頁列自己捲 */
+.nb-frame.nb-casino, .nb-casino .nb-surface, .nb-casino .cas-row, .nb-casino .cas-body, .nb-casino .nb-tabs { min-width: 0; max-width: 100%; box-sizing: border-box; }
+@media (max-width: 760px) and (orientation: portrait) { .nb-frame.nb-casino { width: 100%; } .nb-casino .nb-tabs { width: 100%; } }
+/* 手機橫拿再收 13px：荷官框、牌桌的上下間距再縮壹點 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-casino .cas-say { max-height: 44px; min-height: 28px; }
+  .nb-casino .nb-surface { padding-top: 6px; padding-bottom: 6px; }
+  .nb-casino .cas-betbox { gap: 4px; }
+  .nb-casino .cas-quick { gap: 4px; }
+}
