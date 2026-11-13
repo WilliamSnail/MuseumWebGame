@@ -261,3 +261,8 @@
   .hall-onescreen > .room-head .seg.hall-tabs .seg-btn .ic, .hall-onescreen > .room-head .seg.hall-tabs .seg-btn svg { display: none; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .ped-block { width: 64px; } .hall-onescreen .ped-label b { font-size: .625rem; } }
+/* 壹鍵交件沒有符合的（翊文 11-13：「這個就算沒有符合的應該也要明顯一點，看不太到」）：按鈕還是看得清楚的銅牌，只是暗壹點、虛線框；說明用深紅粗體 */
+.onescreen-side .ad-bar.off { border-style: solid; }
+.onescreen-side .ad-bar.off .ad-btn:disabled { opacity: 1; filter: none; color: #4A3220; background: #D9C9A3; border: 2px dashed #8A6A3A; box-shadow: none; cursor: not-allowed; }
+.onescreen-side .ad-bar.off .ad-btn:disabled .ic { opacity: .75; }
+.onescreen-side .ad-bar.off .ad-why { color: #8E2A24; font-weight: 700; }
