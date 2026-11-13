@@ -346,5 +346,9 @@ T("舊錢包／壞資料：沒有 lev 欄位補得出來；壞的部位被丟掉
   const h = G.casHouseFix(G.casHouseNew(), D0).house; assert.strictEqual(G.casBookSnap([w], h, 0, null).bank, 250);
   assert.strictEqual(G.casLevHouseFix({ bankroll: 5 }).in, 0);
 });
+T("畫面平倉的單號 p3 要解得出來（11-14 實測：伺服器把 p3 解成 NaN，平倉鈕永遠找不到部位）", G => {
+  assert.strictEqual(G.casLevPidNo("p3"), 3); assert.strictEqual(G.casLevPidNo("p12"), 12); assert.strictEqual(G.casLevPidNo("D7"), 7); assert.strictEqual(G.casLevPidNo(5), 5);
+  assert.ok(Number.isNaN(G.casLevPidNo(null)) && Number.isNaN(G.casLevPidNo("")));
+});
 console.log(`casino_stock_lev.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
