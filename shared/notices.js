@@ -28,6 +28,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "cellar-filter", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "地下收藏庫：挑隊員可以篩選能力", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["這次改了什麼", [
+        "挑隊員那排多了四個篩選：強度、心情、帽子、姿勢。選了就只看符合的佩佩，不用壹隻壹隻找。手機要拉開「挑隊員」的抽屜才看得到。",
+        "「本週異狀」的標題上，還有幾間可以去，改成紅色的小牌，更顯眼。",
+        "「隊伍規則」只剩壹張卷軸，標題、規則和按鈕都在裡面。",
+      ]],
+    ],
+    cta: { label: "去地下收藏庫", room: "cellar" },
+  },
+  {
     id: "lobby-portrait", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "手機直拿的大廳：導覽圖在中間，不用滑", publish: "2026-11-13", expire: "2027-12-31",
     sections: [
