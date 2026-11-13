@@ -37,6 +37,7 @@ import { casTicketClaim } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
+import { casArtSecret } from "./shared/casino_art.js";
 import { IN_IDS, casInBuy, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockCancel, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
@@ -70,7 +71,8 @@ export async function playCore(me, email, opts, fn) {
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   const tw = await stocksTw(); // 台股盤中（11-14，規劃 2.8d）：伺服器每分鐘排程算好的價，同樣交易外面讀（有快取）
   const us = await stocksUs(); // 美股盤中（11-14，規劃 2.8i）：同上，美東 09:30～16:00 的價
-  casInSecret(await twSecret()); // 館內五家店盤中曲線的祕密種子（跟台股共用 stocksTwSecret/main，玩家讀不到）
+  const sec = await twSecret(); // 祕密種子（stocksTwSecret/main，玩家讀不到）：館內五家店盤中曲線、畫的隨機走勢和贗品疑雲都用它
+  casInSecret(sec); casArtSecret(sec);
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
