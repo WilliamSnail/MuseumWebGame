@@ -688,6 +688,7 @@ export const ART = (() => {
   const P = d => `<path d="${d}"/>`;
   const SPK = "M12 3.5c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z";
   const ICONS = {
+    bank: P("M3.5 9.5 12 4l8.5 5.5z") + P("M5.5 11v7M9.5 11v7M14.5 11v7M18.5 11v7M3.5 20.5h17") + `<circle cx="12" cy="8.2" r="0.9" fill="currentColor" stroke="none"/>`,
     dice: `<rect x="4" y="4" width="16" height="16" rx="3"/>` + dot(8.5, 8.5) + dot(15.5, 8.5) + dot(12, 12) + dot(8.5, 15.5) + dot(15.5, 15.5),
     lock: `<rect x="5" y="11" width="14" height="9" rx="2"/>` + P("M8 11V8a4 4 0 0 1 8 0v3M12 14.5v2"),
     unlock: `<rect x="5" y="11" width="14" height="9" rx="2"/>` + P("M8 11V8a4 4 0 0 1 7.6-1.7M12 14.5v2"),
