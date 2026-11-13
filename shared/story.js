@@ -18,6 +18,7 @@ import { NUM, SKILLS } from "./config.js";
 import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan } from "./logic.js";
 import { canStartCellar, cellarFloor, weekIndex } from "./logic3.js";
 import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
+import { casArtMarkViewed, casArtViewCredit } from "./casino_art.js";
 import { cleanEvents, eventListLine } from "./events.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
@@ -599,7 +600,25 @@ export function viewShowWork(P, W, id, today) {
     const want = NUM.story.showInsp[w.san ? 1 : 0] || 0, left = Math.max(0, NUM.story.showInspDay - (S.showInsp[today] || 0));
     out.insp = Math.min(want, left); out.capped = want > left;
     P.insp += out.insp; S.showInsp[today] = (S.showInsp[today] || 0) + out.insp;
+    if (out.insp) casArtMarkViewed(P, id, today); // 今天這幅的靈感領過了：收藏再看不重複給（規劃 2.10b）
   }
+  if (!w.san) out.cured = cureByTask(P, "calm");
+  return out;
+}
+// 再看收藏的畫（規劃 2.10b）：規則在 casino_art.js 的 casArtViewCredit。tier ＝收藏那幅的稀有度。可怕的畫每次都擲理智（out.san；habituate 次以上同壹天變 0/1），
+// 上限滿了（out.capped）就不給靈感也不擲理智。看過的記成看過（今日特展那邊就不再當第壹次）
+export function viewCollectWork(P, W, id, tier, today) {
+  const S = storyState(P), w = W ? W.works.find(x => x.id === id) : null;
+  if (!w) return { ok: false };
+  const first = !S.works[id];
+  if (first) S.works[id] = today;
+  const out = { ok: true, first, insp: 0, san: w.san || null, cured: [], capped: false, again: false };
+  if (isFree(P)) return out;
+  if (P.day) { P.day.views = P.day.views || {}; P.day.views["art:" + id] = (P.day.views["art:" + id] || 0) + 1; }
+  const c = casArtViewCredit(P, id, tier, first, w, today);
+  out.insp = c.insp; out.capped = c.capped; out.again = c.again;
+  if (!c.roll) out.san = null;
+  else if (w.san && P.day && P.day.views["art:" + id] > NUM.habituate) out.san = "0/1";
   if (!w.san) out.cured = cureByTask(P, "calm");
   return out;
 }
