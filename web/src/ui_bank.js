@@ -120,7 +120,7 @@ function savePane(v) {
     h("span", null, pic("lock", "lock"), h("b", null, `${t.days} 天・${pctText(t.pct)}`), h("small", { class: t.left <= 1 ? "bad" : "" }, t.left <= 1 ? "明天到期" : `還有 ${t.left} 天`)),
     h("span", { class: "bank-tab-num" }, `${fmt(t.amt)} → ${fmt(t.amt + t.int)}`),
     h("span", { class: "bank-r" }, btn("提早解約", () => bankDo("bank", { op: "break", id: t.id }), "small bank-btn", { title: "只拿回本金，利息沒有" }))));
-  for (let i = 0; i < free; i++) termRows.push(h("div", { class: "bank-row empty", role: "row" }, h("span", null, pic("lock-open", "lock"), h("b", null, "空的"), h("small", null, "還可以開一筆")), h("span", null, "—"), h("span", { class: "bank-r" }, btn("＋ 新增", () => pickAmt("開壹筆定存", `用手上的籌碼，壹筆 ${fmt(s.termMin)}～${fmt(s.termCap)}`, quickOf([s.termMin].concat(s.quick), Math.min(s.termCap, v.cash), s.termMin),
+  for (let i = 0; i < free; i++) termRows.push(h("div", { class: "bank-row empty", role: "row" }, h("span", null, pic("lock-open", "lock"), h("b", null, "空的"), h("small", null, "還可以開壹筆")), h("span", { class: "bank-r" }, btn("＋ 新增", () => pickAmt("開壹筆定存", `用手上的籌碼，壹筆 ${fmt(s.termMin)}～${fmt(s.termCap)}`, quickOf([s.termMin].concat(s.quick), Math.min(s.termCap, v.cash), s.termMin),
   amt => { const m = miniLayer(`定存 ${fmt(amt)}`, "存幾天？到期自動回到活存。"); m.card.append(h("div", { class: "bank-acts bank-pick" }, s.kinds.map(k => btn(`${k.days} 天 ${pctText(k.pct)}（+${fmt(Math.floor(amt * k.pct))}）`, () => { m.close(); bankDo("bank", { op: "term", amt, kind: k.i }); }, "big bank-btn gold"))), btn("取消", () => m.close(), "small")); closeOnOutside(m); }), "small bank-btn gold"))));
   return h("div", { class: "bank-cols" },
     panel("活存", "隨時可以領，每天 05:00 給利息",
@@ -138,7 +138,10 @@ function loanPane(v) {
   const rows = l.list.map(x => h("div", { class: "bank-row", role: "row" },
     h("span", null, h("b", null, `借 ${fmt(x.amt)}`), h("small", null, `${x.day} 借自${x.from}`)),
     h("span", { class: "bank-tab-num" }, `要還 ${fmt(x.owe)}`, h("small", { class: x.today ? "bad" : "" }, x.today ? "今天到期" : `${x.due} 到期`)),
-    h("span", { class: "bank-r" }, btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold", { disabled: v.cash < x.owe || (x.at && Date.now() < x.at) ? true : null, title: x.at && Date.now() < x.at ? "借了 15 分鐘後才能還" : "" }))));
+    // 借了 15 分鐘內不能還：寫幾點起可以還，不要只把按鈕淡掉（測試 11-13）；籌碼不夠也寫出來
+    h("span", { class: "bank-r" }, x.at && Date.now() < x.at
+      ? h("small", { class: "bank-soon" }, `${new Date(x.at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`)
+      : v.cash < x.owe ? h("small", { class: "bank-soon bad" }, "籌碼不夠還") : btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold"))));
   if (!rows.length) rows.push(h("p", { class: "bank-empty" }, "沒有欠款。"));
   return h("div", { class: "bank-cols" },
     panel("借款", `${l.days} 天內還，利息 ${pctText(l.pct)}`,
@@ -198,10 +201,11 @@ const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane
 function side(v) {
   const stockVal = v.stocks ? v.stocks.list.reduce((n, s) => n + s.price * s.mine, 0) * 100 : 0;
   const termSum = v.save.terms.reduce((n, t) => n + t.amt, 0), owe = v.loan.list.reduce((n, x) => n + x.owe, 0) + (v.stocks && v.stocks.margin ? v.stocks.margin.owe : 0);
-  const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["持股市值", stockVal], ["借款", -owe]];
+  const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
+  // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
   const e = v.econ, gauge = e ? 50 + e.idx * 50 : 50;
   return h("aside", { class: "onescreen-side bank-side" },
-    panel("我的帳戶", "", h("div", { class: "bank-acct" }, rows.map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))))),
+    panel("我的帳戶", "", h("div", { class: "bank-acct" }, rows.map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))))),
     e ? panel("館內景氣", "", h("div", { class: "bank-quote" }, num("", sign(e.growth * 100).replace(/^([+−])0*/, "$1") + "%"), h("small", null, "近 7 天 GDP 成長")),
       h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通"}` }, h("i", { style: { left: gauge + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好"))) : null,
     e ? panel("今日新聞", "", h("p", { class: "bank-news" }, e.news)) : null);
@@ -216,14 +220,19 @@ function ticker(v) {
 // ---------- 整個畫面 ----------
 SCREENS.bank = root => {
   if (!UI.localPlay && !UI.bankLoading && Date.now() - (UI.bankAt || 0) > 20000) bankLoad(); // 進來先跟伺服器拿；拿到前畫示範資料（上面寫著）
-  const v = view(), tab = UI.bankTab || "save";
   root.classList.add("onescreen-room", "bank-onescreen");
+  // 登入了、第壹次還沒拿到：只寫「正在拿」，不先畫示範數字（測試 11-13：會先閃壹組假數字）
+  if (!UI.bankHall && !UI.localPlay && !UI.bankErr) {
+    root.append(roomHead("Yuga Bot 銀行", "存錢有利息，借錢要還。"), h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, h("p", { class: "bank-demo" }, "正在跟銀行拿資料……"))));
+    return;
+  }
+  const v = view(), tab = UI.bankTab || "save";
   const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { UI.bankTab = id; rerender(); } },
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "bond" && v.bonds ? h("i", { class: "bank-dot", "aria-label": "有新的一期" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
     tabs,
     h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
-    ticker(v));
+    v.stocks ? ticker(v) : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
 };
 // 導覽圖上的「銀行」熱區要不要放：伺服器的 bankHall 接上之後，Yuga 主 session 把這個改成 true（現在是示範資料，不給玩家點進來）
 ADDONS.bankOpen = true; // 11-13 接上伺服器了（存款、借款、館債）；股票、財報寫「即將開放」

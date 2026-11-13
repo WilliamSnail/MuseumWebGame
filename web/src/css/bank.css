@@ -65,7 +65,10 @@ body[data-screen="bank"] { background: #0F192B url(/ui2/ui2-bg-bank.webp) center
 .bank-row b { font-weight: 700; }
 .bank-row small { display: block; font-size: var(--type-small, .75rem); color: var(--bank-ink-soft); }
 .bank-row small.bad { color: var(--bank-up); }
-.bank-row.empty { background: rgba(214, 178, 94, .12); }
+.bank-row.empty { background: rgba(214, 178, 94, .12); grid-template-columns: 1fr auto; } /* 空列只有兩格，窄欄也不會壹字壹行（測試 11-13） */
+.bank-row.empty > span:first-child { white-space: nowrap; }
+.bank-soon { display: block; font-size: var(--type-small, .75rem); color: var(--bank-ink-soft); text-align: right; white-space: nowrap; }
+.bank-soon.bad { color: var(--bank-up); }
 .bank-row.two { grid-template-columns: 1fr auto; min-height: 40px; }
 .bank-r { text-align: right; }
 .bank-tab-num { font-variant-numeric: tabular-nums; }
