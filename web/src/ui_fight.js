@@ -365,9 +365,25 @@ export function fightCard(v, me, api) {
   // 指令面板（翊文 11-12：「排版沒辦法一次看到所有選項，要往下滑才行不太方便」）：
   //   一行標題（要做什麼、倒數、自己的理智和膽量、逃跑撤退）→ 上一回合壹行小結（完整的在「戰報」點開）→ 四個大行動 → 幫隊友和招式的小按鈕壹排
   //   小按鈕只寫名字，說明放在 title（滑過去、長按看得到）
-  const chip = o => btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
-    () => send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o), "fg-chip" + (o.team ? " team" : "") + (mine && mine.act === o.act ? " cx-on" : ""),
-    { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) });
+  // 手機：小按鈕第一次點先出說明（翊文 11-13：「手機裡這些功能是什麼看不太出來」→「好可以」），再點壹次才送出；電腦照舊壹點就送，說明在 title
+  const tipEl = h("p", { class: "fg-chip-tip", "aria-live": "polite" });
+  let armed = null;
+  const previewFirst = () => typeof matchMedia === "function" && matchMedia("(pointer: coarse), (max-width: 760px), (max-height: 500px)").matches;
+  const chipClick = (o, el) => {
+    const name = o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act;
+    const tip = o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o);
+    if (previewFirst() && armed !== o.act && tip) {
+      armed = o.act;
+      tipEl.replaceChildren(h("b", null, name + "："), tip, h("small", null, "　再點壹次就用"));
+      tipEl.classList.add("on");
+      el.parentNode && [...el.parentNode.children].forEach(c => c.classList.toggle("armed", c === el));
+      return;
+    }
+    send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o);
+  };
+  const chip = o => { const b = btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
+    () => chipClick(o, b), "fg-chip" + (o.team ? " team" : "") + (mine && mine.act === o.act ? " cx-on" : ""),
+    { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) }); return b; };
   const sum = RP.summary && RP.key === roundKey(v) ? RP.summary : null;
   const roundNo = v.last && v.last.round ? v.last.round.round - (v.last.round.over ? 0 : 1) : 0;
   // 第幾步：亮招中按鈕先藏著（位置留著，不會跳）；亮完第壹次畫出來時從底下滑上來（之後有人選、整個重畫就不再滑）
@@ -389,7 +405,8 @@ export function fightCard(v, me, api) {
     last.length ? h("details", { class: "fg-report" }, h("summary", null, h("b", null, `第 ${roundNo} 回合　`), sum || last[last.length - 1], h("small", null, "　戰報 ▾")), h("ul", null, last.map(l => h("li", null, l))))
       : h("p", { class: "pt-sub fg-tip" }, `牠先亮出下壹招，大家再各選壹個行動，壹起結算。最多打 ${fv.limit || NUM.fight.maxRounds} 回合。`),
     h("div", { class: "fg-acts" }, big.map(o => mk(o, "fg-act a-" + o.act))),
-    team.length || moves.length ? h("div", { class: "fg-chips" }, team.map(chip), moves.map(chip)) : null);
+    team.length || moves.length ? h("div", { class: "fg-chips" }, team.map(chip), moves.map(chip)) : null,
+    team.length || moves.length ? tipEl : null);
   // 大家都鎖定了：列出這回合的順序（別人選什麼結算前看不到，只寫誰）
   if (allIn) card.append(h("ol", { class: "fg-order", "aria-label": "這回合的順序" },
     f.seats.filter(s => !s.helper && !s.out && !s.ghost).map(s => h("li", null, nameOf(v, s.id) + (s.id === v.me && mine ? `：${ACT_TEXT[mine.act] || (MOVE_TEXT[mine.act] || mine.act).split("：")[0]}` : ""))),
