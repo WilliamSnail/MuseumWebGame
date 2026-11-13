@@ -154,6 +154,18 @@ function reliefBar() {
   const w = S.w;
   if (!w || !w.loan) return null;
   const L = w.loan, playing = !!(S.round && S.round.state === "playing");
+  // 平常收成壹條（翊文 11-13：賭場要能快速切換遊戲和銀行，不要互相擋；「簡易銀行也可以按一個按鈕到完整銀行」）：
+  // 存款、未還兩個數字＋「展開」「去銀行」。展開才是下面整塊；完整的在銀行廳（ui_bank.js）
+  if (!S.bankOpen) {
+    const held = S.bank ? S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0) : 0, owed0 = L.list.reduce((s, x) => s + x.owe, 0);
+    const goBank = ADDONS.bankHall && ADDONS.bankOpen ? () => { S.m.close(); ADDONS.bankHall.open(); } : null;
+    return h("section", { class: "cas-bank slim" + (w.chips < 0 ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
+      h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
+      h("span", { class: "bk-slim-t" }, h("b", null, CAS_TEXT.bankName),
+        h("small", null, `存款 ${casNum(held)}・未還 ${casNum(owed0)}${L.left >= L.min && !L.why ? `・可借 ${casNum(L.left)}` : ""}`)),
+      btn("展開", () => { S.bankOpen = true; draw(); }, "small", { "aria-expanded": "false" }),
+      goBank ? btn("去銀行", goBank, "small primary") : null);
+  }
   const why = playing ? CAS_TEXT.loanPlaying : L.why;
   const off = S.busy ? true : null;
   const borrow = amt => act("borrow", { amt }, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); });
@@ -169,10 +181,11 @@ function reliefBar() {
     h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
     h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
     h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好"));
+  const fold = h("div", { class: "bk-fold" }, btn("收起來", () => { S.bankOpen = false; draw(); }, "small"), ADDONS.bankHall && ADDONS.bankOpen ? btn("去銀行（完整）", () => { S.m.close(); ADDONS.bankHall.open(); }, "small primary") : null);
   const tabsRow = S.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("loan", CAS_BANK.tabLoan), btab("save", `${CAS_BANK.tabSave}${S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`)) : null;
-  if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, tabsRow, savePane(fig, md, off));
+  if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, fold, tabsRow, savePane(fig, md, off));
   return h("section", { class: "cas-bank" + (debt ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
-    head, tabsRow,
+    head, fold, tabsRow,
     h("div", { class: "bk-figs" },
       fig("可借金額", casNum(L.left), `信用額度 ${casNum(L.limit)}`),
       fig("未還本息", casNum(owed), L.list.length ? `最近到期 ${md(L.list[0].due)}` : "沒有借款"),
