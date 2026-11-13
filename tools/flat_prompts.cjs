@@ -85,7 +85,7 @@ const REFS = {
 };
 // 3-8 以後是打怪介面的零件：附翊文生的整張介面（風格、配色照它）
 // 11-13：第三批零件和房間背景附各自那一廳的整張介面（U-4 圖鑑室、U-5 融合室、U-6 圖書館）
-const REF_OF_KEY = { "P-6": "u5", "P-7": "u4", "P-8": "u6", "P-9": "u6", "B-1": "u4", "B-2": "u5", "B-3": "u6", "P-10": "u8", "P-11": "u8", "B-4": "u8", "U-8": "land", "U-9": "land", "U-10": "land" }; // U-8～U-10 大廳：附現在的導覽圖
+const REF_OF_KEY = { "B-6": "u4", "P-12": "ui2", "B-5": "land", "P-6": "u5", "P-7": "u4", "P-8": "u6", "P-9": "u6", "B-1": "u4", "B-2": "u5", "B-3": "u6", "P-10": "u8", "P-11": "u8", "B-4": "u8", "U-8": "land", "U-9": "land", "U-10": "land" }; // U-8～U-10 大廳：附現在的導覽圖
 const refOf = o => REF_OF_KEY[o.key.split(" ")[0]] || (/^[PT]-/.test(o.key) ? "ui2" : isPart(o.key) || /^U-/.test(o.key) ? "ui" : /^(1-2|1-3|1-4|2-4|3-)/.test(o.key) ? "stone" : "land");
 const dataUrl = f => "data:image/webp;base64," + fs.readFileSync(path.join(ROOT, f)).toString("base64");
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
