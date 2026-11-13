@@ -238,7 +238,7 @@ export function newProfile(mode) {
     mood: free ? 50 : moodRoll.total * 5, moodRoll: moodRoll.faces,
     sanity: NUM.startSanity, myth: 0, insp: free ? 0 : NUM.startInsp,
     unlocked, unlockCount: 0,
-    pepes: {}, failed: {}, pillows: {}, serial: 0,
+    pepes: {}, failed: {}, pillows: {}, serial: 0, avatar: "", // avatar：館友證的頭像，壹隻收藏過的佩佩的 key；空字串＝不用頭像（11-13）
     seen: {}, chaptersRead: {}, mythFrom: {}, understood: {}, clues: {},
     day: null, hugDays: [], badges: {}, done: 0, comments: [], // hugDays：11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027）；舊存檔有，先留著
     daily: null, quirks: [], bout: null, swapNext: false, dark: false, // quirks：{ type, cat, opt, since, until, task }，見 gainQuirk
@@ -1444,6 +1444,7 @@ export function fixProfile(P, mode) {
   // 第 3 版：key 補成七類
   out.pepes = normMap(out.pepes, normKey); out.failed = normMap(out.failed, normKey); out.repaired = normMap(out.repaired, normKey);
   out.pillows = normMap(out.pillows, normPillowKey); out.injured = normMap(out.injured, normKey);
+  out.avatar = typeof out.avatar === "string" && out.avatar ? normKey(out.avatar) : ""; // 館友證頭像（11-13）：舊存檔沒有就是沒有；選的那隻不在收藏裡，passAvatar 會當成沒有
   const n = hallSize(out);
   out.hall = Array.from({ length: n }, (_, i) => { const s = (out.hall || [])[i]; return s ? Object.assign({}, s, { key: s.kind === "pillow" ? normPillowKey(s.key) : normKey(s.key) }) : null; });
   if (out.plPrint) out.plPrint = out.plPrint.slice(0, 2) + normKey(out.plPrint.slice(2));

@@ -40,6 +40,25 @@ export function passVisitor(P) {
   };
 }
 
+// 館友證的頭像（11-13）：玩家自己挑壹隻收藏過的佩佩。存檔 P.avatar 是那隻的 key。
+// 選的那隻不在收藏裡（舊存檔、或之後被拿掉）就當成沒有頭像，回空字串；不會去改存檔。
+export function passAvatar(P) {
+  const k = P && typeof P.avatar === "string" ? P.avatar : "";
+  return k && P.pepes && P.pepes[k] && fromKey(k) ? k : "";
+}
+// 設頭像：key 是空字串＝不用頭像。不在收藏裡的不收，回 false。
+export function setPassAvatar(P, key) {
+  if (key === "" || key === null || key === undefined) { P.avatar = ""; return true; }
+  if (typeof key !== "string" || !P.pepes || !P.pepes[key] || !fromKey(key)) return false;
+  P.avatar = key; return true;
+}
+// 挑頭像的清單：全部收藏，最近收進來的排前面
+export function avatarChoices(P) {
+  return Object.keys(P.pepes || {}).filter(k => fromKey(k)).sort((x, y) => { const fx = (P.pepes[x] && P.pepes[x].first) || "", fy = (P.pepes[y] && P.pepes[y].first) || ""; return fx < fy ? 1 : fx > fy ? -1 : 0; });
+}
+// 館友證上要畫的那隻：有挑頭像用頭像，沒有就用最近收進來的
+export function passPhoto(P) { return passAvatar(P) || avatarChoices(P)[0] || ""; }
+
 // o：{ today, signins（簽到幾天，存檔層級的，畫面給） }
 export function passView(P, o = {}) {
   const today = typeof o.today === "string" ? o.today : todayStr();
@@ -65,7 +84,7 @@ export function passView(P, o = {}) {
   const lim = limitedCount(P);
   return {
     free,
-    card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle) },
+    card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle), avatar: passAvatar(P) || null, photo: passPhoto(P) || null },
     records,
     visitor: passVisitor(P),
     pepe: {

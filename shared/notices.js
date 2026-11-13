@@ -28,6 +28,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "pass-avatar", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "館友證可以選佩佩當頭像", publish: "2026-11-13", expire: "2027-12-31",
+    sections: [
+      ["怎麼用", [
+        "打開「館友證」，按「換頭像」，從你收藏過的佩佩裡點壹隻，就是你的頭像。不想要就按「不用頭像」。",
+        "沒有挑的話，照舊用最近收進來的那壹隻。大廳右邊的小館友證也會跟著換。",
+      ]],
+      ["要注意", [
+        "頭像現在只有你自己看得到，別的館友還看不到。",
+      ]],
+    ],
+  },
+  {
     id: "house-health", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
     title: "莊家缺錢的時候，免費大禮包會少發", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
