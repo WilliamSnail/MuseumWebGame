@@ -68,7 +68,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: null, econ: null,
+    bonds, stocks: b.stocks, econ: b.econ,
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -88,7 +88,7 @@ async function bankDo(act, data) {
   try {
     const r = await NET.call("casino", Object.assign({ act }, data));
     if (!r || !r.ok) { note((r && r.reason) || "沒辦法", "bad"); return; }
-    if (r.bankHall) UI.bankHall = bankHallView(r.bankHall);
+    if (r.bankHall) { UI.bankHall = bankHallView(r.bankHall); UI.bankAt = Date.now(); }
     if (r.wallet) setChips(r.wallet.chips);
     (r.lines || []).concat(r.bankNotes || []).forEach(t => note(t, "good"));
   } catch (e) { note((e && e.message) || "連不上銀行", "bad"); }
@@ -175,14 +175,22 @@ function stockPane(v) {
   const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
   const rows = list.map((s, i) => h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", onClick: () => { UI.bankStock = i; rerender(); } },
     h("span", null, h("b", null, s.name), h("small", { class: "ln" }, s.line)), h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
-  const m = S.margin;
+  const trade = (op, n) => bankDo("stock", { op, id: cur.id, n });
+  // 買幾股：照手上的籌碼和曝險算得出來的最大值，給幾顆好按的
+  const max = Math.max(0, Math.min(Math.floor(v.cash / Math.ceil(cur.price * (1 + S.fee))), Math.floor(S.exposeLeft / Math.max(1, cur.price))));
+  const buys = [1, 10, 100].filter(n => n <= max).map(n => btn(`買 ${n} 股`, () => trade("buy", n), "big bank-btn"))
+    .concat(max > 0 ? [btn(`買滿 ${fmt(max)} 股`, () => trade("buy", max), "primary big bank-btn gold")] : []);
+  const sells = cur.mine > 0 ? [1, 10, 100].filter(n => n <= cur.mine).map(n => btn(`賣 ${n} 股`, () => trade("sell", n), "big bank-btn"))
+    .concat([btn(`全賣 ${fmt(cur.mine)} 股`, () => trade("sell", "max"), "big bank-btn")]) : [];
   return h("div", { class: "bank-cols stocks" },
     panel("行情", `手續費 ${pctText(S.fee)}`, ledger(["名稱", "股價", "今天", "持股"], rows, "stocks")),
     h("div", { class: "bank-stack" },
-      panel(cur.name, cur.line, h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg)), spark(cur.hist),
-        h("p", { class: "bank-hint" }, "股價每天 05:00 調一次。"),
-        h("div", { class: "bank-acts" }, btn("買進", () => todo("買進"), "primary big bank-btn gold"), btn("賣出", () => todo("賣出"), "big bank-btn")),
-        h("label", { class: "bank-check" }, h("input", { type: "checkbox", onClick: () => todo("借錢買") }), `借錢買（每天利息 ${pctText(m.pct)}，維持率低於 130% 會被強制賣出）`))));
+      panel(cur.name, cur.line, h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg)),
+        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value))) : null,
+        S.halt ? h("p", { class: "bank-why" }, `停盤中（台灣時間 ${S.haltFrom}:00～${S.haltTo}:00），明天開盤再買賣。`)
+          : h("div", { class: "bank-acts" }, buys.length ? buys : h("small", null, "籌碼不夠，或莊家手上的股票已經夠多了。"), sells),
+        h("p", { class: "bank-hint" }, "股價每天 05:00 動壹次，照外面世界前壹天的行情。買賣各收手續費，進館方的預算池。"),
+        h("p", { class: "bank-hint" }, S.soon)))); 
 }
 function reportPane(v) {
   const e = v.econ;
@@ -199,7 +207,7 @@ const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane
 
 // ---------- 右欄 ----------
 function side(v) {
-  const stockVal = v.stocks ? v.stocks.list.reduce((n, s) => n + s.price * s.mine, 0) * 100 : 0;
+  const stockVal = v.stocks ? (v.stocks.total != null ? v.stocks.total : v.stocks.list.reduce((n, s) => n + s.price * s.mine, 0)) : 0; // 伺服器給 total；示範資料沒有就自己算
   const termSum = v.save.terms.reduce((n, t) => n + t.amt, 0), owe = v.loan.list.reduce((n, x) => n + x.owe, 0) + (v.stocks && v.stocks.margin ? v.stocks.margin.owe : 0);
   const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
   // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
