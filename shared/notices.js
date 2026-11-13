@@ -39,7 +39,6 @@ export const NOTICES = [
       ]],
     ],
     cta: { label: "去地下收藏庫", room: "cellar" },
-    ],
   },
   {
     id: "loan-from-house", v: 1, cat: "館方公告", tags: ["調整"], importance: "low",
