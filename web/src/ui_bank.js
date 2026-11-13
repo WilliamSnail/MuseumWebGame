@@ -331,7 +331,7 @@ function levTrade(v, S, cur) {
   const stopP = f.stopOn && f.stop > 0 ? Math.round(cur.price * (long ? 1 - f.stop / 100 : 1 + f.stop / 100)) : null, takeP = f.takeOn && f.take > 0 ? Math.round(cur.price * (long ? 1 + f.take / 100 : 1 - f.take / 100)) : null;
   const ocoBad = f.stopOn && f.stop >= liqPct ? `停損要比強平價更靠近現價：最多 ${(liqPct - 0.1).toFixed(1)}%。` : "";
   const open = () => bankDo("stock", { op: "open", id: cur.id, dir: f.dir, lev, margin: Math.min(f.margin, maxMargin), stop: stopP, take: takeP });
-  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : halt ? haltText(S, cur) : L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
+  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : (L.lagWhy && L.lagWhy[cur.id]) ? L.lagWhy[cur.id] : halt ? haltText(S, cur) : L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
   return [
     seg([["long", "做多 ▲"], ["short", "放空 ▼"]], f.dir, k => { f.dir = k; rerender(); }),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips([1, 2, 3, 5].filter(n => n <= maxLev), lev, n => { f.lev = n; rerender(); }, n => `${n}×`)),

@@ -454,6 +454,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
   else if (cur && cur.closed) st = "closed";
   else st = m < MC.giveUp ? "pending" : "closed";
   T.day = day; T.st = st; T.from = 0; T.idx = 0; T.ser = {};
+  T.lag = cur && cur.lag ? Object.assign({}, cur.lag) : {}; T.stale = cur && cur.stale ? Object.assign({}, cur.stale) : {}; // 真實行情落後幾分鐘、這段沒抓到真實價的（槓桿單的安全閥讀，shared/casino_stock_lev.js）
   // 今天換過日、卻沒有今天的基準價（11-13：換日在「記基準價」的程式上線之前跑的，美股第壹晚整晚畫不出盤中）：用現在的價補上。
   //   沒有基準價時盤中價不會動到 H.px（下面那段跑不到），所以這時的 H.px 就是今天換日後的開盤基準
   if (rolled && !H.hist[day]) H.hist[day] = Object.assign({}, H.px);
