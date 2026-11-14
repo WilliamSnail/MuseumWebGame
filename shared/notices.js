@@ -1873,14 +1873,16 @@ export function visibleNotices(P, today) {
 }
 
 // 公佈欄上要貼的：同壹天的小更新合成壹則「N 月 N 日的更新」（翊文 11-10：「同一整天的更新都合在同一則公告如何？」）
-//   合的：館方公告、普通或不重要、沒置頂、沒附獎勵；同壹天有 2 則以上才合
-//   不合的：重要的（要蓋火漆印、各自成壹則）、置頂、每週特展、節日、活動、附獎勵的
+//   合的：館方公告（不重要、普通、重要都合）、沒置頂、沒附獎勵；同壹天有 2 則以上才合
+//   不合的：緊急的（登入直接打開）、置頂、每週特展、節日、活動、附獎勵的
+//   11-14 翊文：「可以之後自動把 同一天的公告放在同一篇裡面嗎」：重要的也合進去（以前重要的各自壹張，11-14 壹天七、八張），
+//   合起來那張的重要度取裡面最高的，所以有重要的就照樣蓋火漆印
 //   合起來的那則：{ id: "day-日期", digest: true, parts: [原本的公告…] }。已讀照原本各則的記（isUnread、markRead 會看 parts），
 //   所以舊的已讀紀錄不用搬；當天又多壹項，那則會再變成沒讀。寄信、Discord 還是用 visibleNotices（壹則壹則）
 //   11-13 起不看標籤：以前只收「更新」「已更新」，標「調整」「修正」「維護」的就單獨成壹張，11-13 壹天十幾張
 function digestable(n) {
   return n.cat === "館方公告" && !n.pinned && !n.weekly && !n.gift && !n.start && !n.end && typeof n.publish === "string" &&
-    RANK[n.importance] <= RANK.normal;
+    RANK[n.importance] <= RANK.important;
 }
 export function digestNotices(list) {
   const by = {};
@@ -1894,7 +1896,7 @@ export function digestNotices(list) {
     const [, m, d] = n.publish.split("-");
     out.push({
       id: "day-" + n.publish, digest: true, v: 1, cat: "館方公告", tags: ["更新"], publish: n.publish, parts: g,
-      importance: g.some(x => x.importance === "normal") ? "normal" : "low",
+      importance: g.some(x => x.importance === "important") ? "important" : g.some(x => x.importance === "normal") ? "normal" : "low",
       title: `${+m} 月 ${+d} 日的更新（${g.length} 項）`,
     });
   });
