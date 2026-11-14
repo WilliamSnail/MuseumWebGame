@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-14-77405e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行的信用等級變明顯了", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行右邊的「信用」卡片，等級改成金色大徽章，壹眼就看得到自己幾級。",
+      ]],
+    ],
+  },
+  {
     id: "gift-rarity-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "送佩佩的畫面寫出稀有度", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
