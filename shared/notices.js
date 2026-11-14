@@ -59,6 +59,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "us-stock-usd-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "美股同時顯示美金", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "美股的價格旁邊多了美金價（US$），行情表的價格下面也有壹行小字。",
+        "館外股票改成照真實台幣價之後，美股的大數字就是台幣，旁邊的美金是外面那支股票現在的價格。",
+      ]],
+    ],
+  },
+  {
     id: "hall-ticket-500-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "展廳門票改成每位 500，散客多很多", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
