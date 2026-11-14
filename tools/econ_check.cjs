@@ -7,7 +7,7 @@
 const fs = require("fs");
 const { load } = require("../test/load_shared.cjs");
 
-const G = load(), N = G.NUM, C = N.casino;
+const G = load({ __realMoney: true }), N = G.NUM, C = N.casino;
 const rows = [];
 const check = (name, ok, detail, level = "fail") => rows.push({ name, ok: !!ok, detail, level });
 const pct = x => (Math.round(x * 1000) / 1000) + "%";
@@ -30,6 +30,7 @@ check("館外股票：超過幾分鐘沒新價暫停（staleMin）不超過槓�
 // 利率順序：活存 < 定存 < 館債最低壹週 < 借款（都換成壹週）
 const save7 = C.bank.savePct * 7, term7 = (C.bank.terms.find(t => t.days === 7) || C.bank.terms[C.bank.terms.length - 1]).pct, bondMin = Math.min(...C.bond.tiers.map(t => t.pct)), loan7 = C.loan.interestPct * 7 / C.loan.days;
 check("利率順序：活存 ＜ 定存 ＜ 館債（最低壹週）＜ 借款", save7 < term7 && term7 <= bondMin && bondMin < loan7, `壹週：活存 ${pct(save7)}、定存 ${pct(term7)}、館債最低 ${pct(bondMin)}、借款 ${pct(loan7)}`);
+check("文化部補助新玩家：全館補助的總額 ＝ 起始籌碼 × 人數上限 ≤ 外面世界起始的 40%（不會把池子補光）", !C.culture.on || C.startChips * C.culture.maxPlayers <= C.world.start * 0.4, `${fmt(C.startChips)} × ${C.culture.maxPlayers} 位 ＝ ${fmt(C.startChips * C.culture.maxPlayers)}；池子起始 ${fmt(C.world.start)} 的 ${pct(C.startChips * C.culture.maxPlayers / C.world.start * 100)}`);
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
 // 畫：賣回只拿現價的 sellPct%（短線必虧）

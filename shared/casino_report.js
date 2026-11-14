@@ -16,7 +16,7 @@ import { casFill } from "./casino.js";
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
-  mint: { worldGrow: "外面世界每天成長", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
+  mint: { worldGrow: "外面世界每天成長", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
   // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
   world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（預算池）", ticketMuseum: "參觀者門票（館方帳）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（預算池）", npcTicketMuseum: "NPC 的門票（館方帳）", npcCrowdBudget: "散客的門票（預算池）", npcCrowdMuseum: "散客的門票（館方帳）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "預算池投資（買）", budgetInvestSell: "預算池投資（賣）" },
