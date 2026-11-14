@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "culture-bond-30d-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "文化部館債：30 天內還清", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "文化部持有的館債，現在要在 12-13 以前還清（從 11-13 撥款起算 30 天，每天計 0.02% 利息）。莊家每天換日至少還「剩下的本息 ÷ 剩下天數」，錢夠就多還；莊家的錢不夠當天那期，先由預算池墊，再不夠就記成逾期。",
+        "日報會寫「文化部館債：剩多少、幾天後到期、今天還了多少」，逾期也會寫出來。館方投資不會動到還款要用的錢。",
+      ]],
+    ],
+  },
+  {
     id: "house-invest-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "館方也開始投資外面世界", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
