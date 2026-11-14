@@ -74,10 +74,14 @@ function sheet(n, today, close) {
     h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" }, t))),
     h("h3", null, n.title),
     h("p", { class: "nb-date" }, `${md(n.publish)} 發布`),
-    h("ol", { class: "nb-toc" }, n.parts.map(x => h("li", null, x.title))),
-    n.parts.map(x => h("section", { class: "nb-sec nb-part" }, h("h4", null, x.title),
-      (x.sections || []).map(([, lines]) => lines.map(l => h("p", null, markText(l)))),
-      x.cta ? h("div", { class: "nb-part-go" }, btn([x.cta.label, " ", h("span", { "aria-hidden": "true" }, "→")], goTo(x.cta), "small")) : null)));
+    // 目錄：每個分類壹行「股票與銀行（12）」，點了跳到那壹段（每則都在某壹段）
+    n.groups ? h("nav", { class: "nb-toc nb-areas", "aria-label": "這壹天的更新分類" }, n.groups.map((g, i) => h("button", { type: "button", class: "nb-area-go", onClick: e => { const sec = e.currentTarget.closest(".nb-sheet").querySelector(`[data-area="${i}"]`); if (sec) sec.scrollIntoView({ block: "start", behavior: "smooth" }); } }, `${g.area}（${g.parts.length}）`)))
+      : h("ol", { class: "nb-toc" }, n.parts.map(x => h("li", null, x.title))),
+    (n.groups || [{ area: null, parts: n.parts }]).map((g, i) => h("div", { class: "nb-group", dataset: { area: String(i) } },
+      g.area ? h("h3", { class: "nb-area-h" }, `${g.area}（${g.parts.length}）`) : null,
+      g.parts.map(x => h("section", { class: "nb-sec nb-part" }, h("h4", null, x.title),
+        (x.sections || []).map(([, lines]) => lines.map(l => h("p", null, markText(l)))),
+        x.cta ? h("div", { class: "nb-part-go" }, btn([x.cta.label, " ", h("span", { "aria-hidden": "true" }, "→")], goTo(x.cta), "small")) : null)))));
   return h("article", { class: "nb-sheet" }, h("i", { class: "nb-pin l", "aria-hidden": "true" }), h("i", { class: "nb-pin r", "aria-hidden": "true" }),
     h("div", { class: "nb-tags" }, (n.tags || []).map(t => h("span", { class: "nb-tag" + (t === "重要" ? " hot" : "") }, t)), st ? h("span", { class: "nb-tag st" }, st) : null),
     h("h3", null, n.title),
