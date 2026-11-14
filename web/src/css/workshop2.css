@@ -1,0 +1,93 @@
+/* ================================================================
+   手作坊重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
+   標題壹行｜上：佩佩的展台（吃剩下的高度）＋右邊名牌、可能性、做｜下：選項托盤（類別頁籤、卡片壹排左右滑、工具）
+   前綴 ws-（docs/class名單.md）；根 class workshop-onescreen。舊的 ui.css、landscape.css 用 .scr-workshop 排版，這裡要蓋掉。
+   ================================================================ */
+.screen.scr-workshop.workshop-onescreen { display: flex; flex-direction: column; }
+.screen.workshop-onescreen > .onescreen-main.ws-main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: stretch; }
+.workshop-onescreen .ws-stage { position: relative; min-height: 0; height: 100%; max-height: 100%; justify-content: flex-end; align-items: center; padding: 0; order: 0; grid-column: auto; grid-row: auto; top: auto; }
+.workshop-onescreen .ws-stage .frog { height: calc(100% - 30px); width: auto; max-width: 100%; aspect-ratio: 1; margin-bottom: -22px; }
+.workshop-onescreen .ws-stage .pedestal { flex: none; width: min(320px, 70%); height: 46px; }
+.workshop-onescreen .ws-stage::before { height: 100%; top: 0; }
+.workshop-onescreen .ws-info { order: 0; margin: 0; gap: 8px; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; grid-template-columns: none; }
+.workshop-onescreen .ws-info .placard { max-width: none; margin: 0; }
+.workshop-onescreen .ws-info .poss, .workshop-onescreen .ws-info .ws-make { grid-column: auto; grid-row: auto; margin: 0; }
+
+/* 托盤：深色底、金色細框；類別頁籤一排、卡片一排左右滑、工具一排 */
+.workshop-onescreen .ws-tray { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 8px; border: 1px solid rgba(214, 178, 94, .55); border-radius: 8px; background: linear-gradient(180deg, rgba(24, 14, 12, .82), rgba(36, 22, 18, .82)); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .3); min-width: 0; }
+.workshop-onescreen .ws-tabs { order: 0; margin: 0; padding: 0; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; border: 0; }
+.workshop-onescreen .tab-wrap { flex: none; margin: 0; border: 1px solid #A88A52; border-radius: 8px; background: rgba(243, 230, 196, .12); }
+.workshop-onescreen .tab-wrap.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); border-color: #8A6A28; }
+.workshop-onescreen .tab { min-height: 40px; padding: 0 4px 0 10px; color: var(--paper, #F3E6C4); font-size: var(--type-body, .875rem); font-weight: 700; letter-spacing: .04em; }
+.workshop-onescreen .tab-wrap.on .tab { color: #1A0F06; }
+.workshop-onescreen .tab-n { color: inherit; opacity: .8; font-size: var(--type-small, .75rem); }
+.workshop-onescreen .hold { width: 30px; height: 30px; color: var(--paper-soft, #D8C59A); }
+.workshop-onescreen .tab-wrap.on .hold { color: #1A0F06; }
+.workshop-onescreen .ws-afraid { order: 1; margin: 0; }
+.workshop-onescreen .ws-cards { order: 2; margin: 0; flex-wrap: nowrap; overflow-x: auto; min-height: 0; padding: 4px 2px 8px; gap: 10px; scrollbar-width: thin; align-items: stretch; }
+.workshop-onescreen .card { flex: none; width: 108px; padding: 6px 4px 8px; }
+.workshop-onescreen .card .thumb { width: 72px; height: 72px; }
+.workshop-onescreen .card-note { flex: none; align-self: center; max-width: 260px; color: var(--paper-soft, #D8C59A); }
+.workshop-onescreen .ws-tools { order: 3; margin: 0; gap: 8px; align-items: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.workshop-onescreen .ws-tools .btn { flex: none; min-height: 38px; }
+.workshop-onescreen .hold-hint { margin: 0; flex: 1 1 auto; min-width: 0; font-size: var(--type-small, .75rem); color: var(--paper-soft, #D8C59A); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 手機直拿：標題收小，佩佩、「做」、名牌在上面（主區自己捲），選項托盤固定在下面 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.workshop-onescreen > .room-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0 0 4px; }
+  .screen.workshop-onescreen > .room-head h1 { font-size: .75rem; padding: 2px 8px 4px; border-width: 10px; min-width: 0; }
+  .screen.workshop-onescreen > .room-head .sub { display: none; }
+  .screen.workshop-onescreen > .room-head .rh-row { margin: 0; flex: none; }
+  .screen.workshop-onescreen > .room-head .btn { min-height: 34px; padding: 0 8px; font-size: .75rem; }
+  .screen.workshop-onescreen > .onescreen-main.ws-main { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+  .screen.workshop-onescreen > .onescreen-main.ws-main > * { max-height: none; overflow: visible; }
+  .workshop-onescreen .ws-stage { flex: none; height: 130px; }
+  .workshop-onescreen .ws-stage .frog { height: 110px; margin-bottom: -16px; }
+  .workshop-onescreen .ws-stage .pedestal { height: 34px; width: 150px; }
+  .workshop-onescreen .ws-flag { top: 0; }
+  .workshop-onescreen .ws-info { flex: none; overflow: visible; gap: 4px; }
+  .workshop-onescreen .ws-info .poss { display: none; }
+  .workshop-onescreen .ws-info .ws-make { order: -1; }
+  .workshop-onescreen .ws-info .placard { padding: 8px 12px; }
+  .workshop-onescreen .ws-tray { padding: 6px 8px; gap: 4px; }
+  .workshop-onescreen .tab { min-height: 34px; font-size: var(--type-small, .75rem); }
+  .workshop-onescreen .card { width: 84px; padding: 4px 3px 5px; }
+  .workshop-onescreen .card .thumb { width: 52px; height: 52px; }
+  .workshop-onescreen .ws-cards { padding-bottom: 4px; }
+  .workshop-onescreen .ws-tools .btn { min-height: 34px; }
+  .workshop-onescreen .hold-hint { display: none; }
+}
+/* 手機橫拿：三欄——左佩佩、中間選項托盤、右名牌和「做」 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.scr-workshop.workshop-onescreen { display: grid; grid-template-columns: minmax(110px, 150px) minmax(0, 1fr) minmax(190px, 230px); grid-template-rows: auto minmax(0, 1fr); column-gap: 10px; align-content: stretch; }
+  .screen.workshop-onescreen > .room-head { display: flex; flex-wrap: nowrap; align-items: center; margin: 0 0 4px; gap: 8px; grid-column: 1 / -1; grid-row: 1; }
+  .screen.workshop-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.workshop-onescreen > .room-head .sub { display: none; }
+  .screen.workshop-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.workshop-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+  .screen.workshop-onescreen > .onescreen-main.ws-main { display: contents; }
+  .workshop-onescreen .ws-stage { grid-column: 1; grid-row: 2; height: auto; max-height: 100%; align-self: end; }
+  .workshop-onescreen .ws-stage .frog { width: 100%; height: auto; margin-bottom: -14px; }
+  .workshop-onescreen .ws-stage .pedestal { width: 100%; height: 30px; }
+  .workshop-onescreen .ws-tray { grid-column: 2; grid-row: 2; min-height: 0; overflow: hidden; padding: 4px 8px; gap: 3px; }
+  .workshop-onescreen .ws-cards { flex: 1 1 auto; min-height: 0; padding-bottom: 4px; }
+  .workshop-onescreen .tab { min-height: 30px; padding: 0 2px 0 8px; font-size: var(--type-small, .75rem); }
+  .workshop-onescreen .hold { width: 24px; height: 24px; }
+  .workshop-onescreen .card { width: 84px; padding: 3px; }
+  .workshop-onescreen .card .thumb { width: 52px; height: 52px; }
+  .workshop-onescreen .c-name { font-size: .75rem; }
+  .workshop-onescreen .ws-tools .btn { min-height: 28px; padding: 0 8px; font-size: .75rem; }
+  .workshop-onescreen .hold-hint, .workshop-onescreen .ws-info .poss { display: none; }
+  .workshop-onescreen .ws-info { grid-column: 3; grid-row: 2; overflow-y: auto; gap: 4px; }
+  .workshop-onescreen .ws-info .placard { padding: 6px 10px; }
+  .workshop-onescreen .ws-info .ws-make { order: -1; }
+}
+/* landscape.css（最後載入）的 .scr-workshop .ws-info 把名牌區排成兩欄：這裡用更高的權重改回壹欄 */
+.screen.scr-workshop.workshop-onescreen .ws-info { display: flex; flex-direction: column; grid-template-columns: none; }
+.screen.scr-workshop.workshop-onescreen .ws-info .ws-make { grid-column: auto; grid-row: auto; }
+.screen.scr-workshop.workshop-onescreen .ws-info .ws-make .btn { width: 100%; }
+/* 「你現在有 37 靈感」在深色底上要用亮色 */
+.workshop-onescreen .ws-make > :not(.btn), .workshop-onescreen .ws-make > :not(.btn) b { color: var(--paper-soft, #D8C59A); }
+.workshop-onescreen .ws-make > :not(.btn) b { color: var(--paper-gold, #F3DFA6); }
+.workshop-onescreen .ws-info .poss, .workshop-onescreen .ws-info .poss-l, .workshop-onescreen .ws-info .poss-f, .workshop-onescreen .ws-info .poss-of { color: var(--paper-soft, #D8C59A); }
+.workshop-onescreen .ws-info .poss-n { color: var(--paper-gold, #F3DFA6); }
