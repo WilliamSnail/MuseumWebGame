@@ -229,6 +229,7 @@ body[data-screen="bank"] #room { background: none; }
 @media (max-width: 760px) {
   .bank-ticker.dup { display: flex; }
   .bank-cols.stocks > .bank-stack { order: -1; }
+  .bank-cols.stocks.phone > .bank-segs { order: -2; } /* 交易／行情／持倉三顆永遠在最上面（翊文 11-14：切到交易會跑到下面） */
 }
 @media (max-height: 500px) and (orientation: landscape) { .bank-ticker.dup { display: none; } }
 .bank-cols.stocks .bank-stack .bank-acts { grid-template-columns: 1fr 1fr 1fr 1.7fr; }

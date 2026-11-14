@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "bank-stock-subtabs-top-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "手機看股票：交易、行情、持倉固定在最上面", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機上的股票頁籤，切到「交易」時，「交易／行情／持倉」三顆會跑到最下面。現在三顆都固定在最上面，切哪壹個都在同壹個位置。",
+      ]],
+    ],
+  },
+  {
     id: "casino-mp-side-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭場同桌：不用往下滑、邀人合成壹顆", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
