@@ -45,19 +45,27 @@ function counts() {
   const tourists = named ? Math.max(0, Number(named.hall) || 0) : 0;
   const crowd = now && now.crowd ? { n: Math.max(0, Number(now.crowd.n) || 0), groups: Array.isArray(now.crowd.groups) ? now.crowd.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0 })) : [] } : { n: 0, groups: [] };
   const people = now && typeof now.total === "number" ? Math.max(0, now.total) : tourists + crowd.n;
-  return { mates, tourists, crowd, names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
+  const casino = now && now.casino && Array.isArray(now.casino.names) ? now.casino.names.map(String) : []; // PR 465：被邀去賭場的 NPC
+  return { mates, tourists, crowd, casino, canInvite: !!(named && Array.isArray(named.ids) ? named.ids.length : tourists), names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
 }
 // 散客的描述：label 已經寫了人數（三位學生、一對情侶、2 人）就不再補「N 位」；沒寫的（旅行團、退休的長輩們）才補
 const HAS_COUNT = /[0-9０-９一二兩三四五六七八九十壹貳參肆伍陸柒捌玖拾百]|一對/;
 export const crowdText = g => (HAS_COUNT.test(g.label) ? g.label : `${g.label} ${g.n} 位`);
+// 「邀去賭場」：看得出能按的鈕。邀不邀得動由伺服器的名單決定（ui_casino_table.js 的 openNpcInvite），沒登入、沒人在館裡就不放
+function inviteBtn(c, before) {
+  if (!ADDONS.npcInvite || !NET.me || !c.canInvite) return null;
+  return btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀去賭場"], () => { if (before) before(); ADDONS.npcInvite(); }, "small primary hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" });
+}
 function openAll() {
   const c = counts(), list = reviewData() || [];
   const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
   m.card.append(
     c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.join("、")) : null,
+    c.casino.length ? h("p", { class: "hn-names" }, h("b", null, "在賭場："), c.casino.join("、")) : null,
     c.crowd.groups.length ? h("p", { class: "hn-names" }, h("b", null, "散客："), c.crowd.groups.map(crowdText).join("、")) : null,
     c.mates.length ? h("p", { class: "hn-names" }, h("b", null, "館友："), c.mates.map(x => x.nick).join("、")) : null,
+    inviteBtn(c, () => m.close()),
     list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, "還沒有評價。旅客走進展廳的時候，會留一句話。"),
     h("div", { class: "hn-acts" }, btn("知道了", () => m.close(), "primary")));
   closeOnOutside(m);
@@ -76,6 +84,8 @@ export function hallNowBox(mode) {
     box.replaceChildren(
       h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}${c.crowd.n ? `・散客 ${c.crowd.n}` : ""}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.slice(0, 4).join("、"), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
+      c.casino.length ? h("p", { class: "hn-names hn-casino" }, h("b", null, "在賭場："), c.casino.slice(0, 3).join("、"), c.casino.length > 3 ? `…等 ${c.casino.length} 位` : "") : null,
+      inviteBtn(c),
       lobby ? null : h("div", { class: "hn-h hn-h2" }, "最近的評價"),
       list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, all ? "還沒有評價。" : "還沒有讀到。"),
       pol ? h("p", { class: "hn-policy", title: `${pol.name}：${pol.effect}` }, h("b", null, "本日政策"), ` ${pol.effect}${mdText(pol.until) ? `・到 ${mdText(pol.until)}` : ""}・${pol.name}`) : null,
