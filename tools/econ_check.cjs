@@ -79,7 +79,10 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   { // 展廳有人嗎（翊文 11-14：延長停留＋多加 NPC；目標展廳平均 ≥ 2 位、0 人的時間 < 20%）；用現在 content/npc 的名單，每 10 分鐘看壹次
     let hs = 0, hz = 0, n = 0;
     for (let d = 0; d < 40; d++) { const v = G.npcVisitsToday(add("2026-11-16", d), "p" + d, list, null); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; hs += k; if (!k) hz++; n++; } }
-    check("模擬：展廳平均 ≥ 2 位、0 人的時間 < 20%（現在的 NPC 名單）", hs / n >= 2 && hz / n < 0.2, `平均 ${(hs / n).toFixed(2)} 位；0 人 ${pct(hz / n * 100)}`);
+    const CR = C.npcSpend.crowd; let cs = 0, cn = 0, cz = 0; for (let d = 0; d < 40; d++) { const day = add("2026-11-16", d), v = G.npcVisitsToday(day, "p" + d, list, null), g = G.crowdVisitsToday(day, "p" + d); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length + g.filter(x => x.start <= m && m < x.end).reduce((a, x) => a + x.n, 0); cs += k; if (!k) cz++; cn++; } }
+    check("模擬：含散客，展廳平均 ≥ 2 位、0 人的時間 < 20%", cs / cn >= 2 && cz / cn < 0.2, `平均 ${(cs / cn).toFixed(2)} 位；0 人 ${pct(cz / cn * 100)}`);
+    check("散客門票：壹天上限 ≤ 外面世界每天成長的 10%", CR.dayCap <= grow * 0.1, `${fmt(CR.dayCap)} ≤ ${fmt(grow * 0.1)}`);
+    check("模擬：展廳平均 ≥ 2 位、0 人的時間 < 20%（只算有名字的 NPC）", hs / n >= 2 && hz / n < 0.2, `平均 ${(hs / n).toFixed(2)} 位；0 人 ${pct(hz / n * 100)}`);
   }
   check("模擬：NPC 來館花錢的平均每天 ≤ 全館上限，且 ≤ 外面世界每天成長的 20%", tot / days <= npcDay && tot / days <= grow * 0.2, `平均每天 ${fmt(tot / days)}；上限 ${fmt(npcDay)}；成長 ${fmt(grow)}`);
 })();
