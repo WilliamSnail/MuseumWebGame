@@ -65,6 +65,27 @@ function hallPotOpen(house, day, key, n, amt) {
   if (!house.hallPot || typeof house.hallPot !== "object" || house.hallPot.day !== day) house.hallPot = { day, keys: {} };
   if (amt > 0 && !house.hallPot.keys[key]) house.hallPot.keys[key] = { n, left: amt };
 }
+// 逛店的散客（翊文 11-14）：每家店各自抽，跟展廳那幾組分開（不顯示在展廳）。每家店每天 Poisson(perStore ÷ 這家店平均壹組幾位) 組；壹組的類型照這家店的個性（CROWD_PREF）
+const CROWD_PREF = { food: [4, 4, 5, 5, 4, 1, 3], craft: [3, 2, 3, 0, 2, 2, 0], bj: [1, 0, 0, 3, 3, 0, 0], job: [1, 0, 0, 0, 0, 3, 2], cellar: [0, 2, 0, 2, 0, 3, 4] }; // 順序同 CROWD_KINDS：三位學生、壹對情侶、帶小孩的家庭、旅行團、兩位朋友、獨自、退休長輩
+function crowdPois(r, lam) { const L = Math.exp(-lam); let k = 0, p = 1; do { k++; p *= r(); } while (p > L && k < 60); return k - 1; }
+export function crowdShopToday(day, secret) {
+  const C = NUM.casino.npcSpend.crowd, S = C && C.shop, out = [];
+  if (!S || !(S.perStore > 0)) return out;
+  for (const store of Object.keys(CROWD_PREF)) {
+    const W = CROWD_PREF[store], tot = W.reduce((a, b) => a + b, 0), avg = W.reduce((a, w, i) => a + w * (CROWD_KINDS[i].n[0] + CROWD_KINDS[i].n[1]) / 2, 0) / tot;
+    const rnd = mulberry32(hashStr(`${secret}|${day}|${store}|cshop`)), g = crowdPois(rnd, S.perStore / avg);
+    for (let i = 0; i < g; i++) {
+      let r = rnd() * tot, k = 0; for (; k < W.length - 1; k++) { r -= W[k]; if (r < 0) break; }
+      const kd = CROWD_KINDS[k], n = kd.n[0] + Math.floor(rnd() * (kd.n[1] - kd.n[0] + 1)), stay = S.stay[0] + Math.floor(rnd() * (S.stay[1] - S.stay[0] + 1));
+      let h = 0, rr = rnd() * C.weights.reduce((a, b) => a + b, 0); for (; h < C.weights.length - 1; h++) { rr -= C.weights[h]; if (rr < 0) break; }
+      const start = Math.max(0, Math.min(DAY_MIN - stay, h * 60 + Math.floor(rnd() * 60)));
+      out.push({ key: `cshop|${store}|${i}`, store, label: kd.label, n, start, end: start + stay });
+    }
+  }
+  return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
+}
+// 這壹天逛店的散客在各家店各有幾位（館內股「昨天不同的人」用，整天的總數；現在在場幾位不給）
+export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
 export function npcPresence(day, nowMs, secret, list, counters) {
   const m = (nowMs - npcDayStartMs(day)) / 60000, v = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end);
@@ -126,6 +147,15 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     house.npcc.hall = nsN(house.npcc.hall) + gv.n; hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
     L.crowd.ticket += got; L.crowd.people += gv.n; L.crowd.groups++; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
+  // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap
+  const CS = CR && CR.shop;
+  if (CS && !low) for (const sv of crowdShopToday(day, secret)) {
+    if (sv.start > m || L.done[sv.key]) continue;
+    L.done[sv.key] = 1;
+    const amt = Math.min(sv.n * CS.spend, Math.max(0, CS.dayCap - nsN(L.crowd.shop))); if (amt <= 0 || !SHOP[sv.store]) continue;
+    const got = SHOP[sv.store][0] === "house" ? casHouseWorldOut(house, SHOP[sv.store][1], amt, W) : casPoolWorldOut(house, SHOP[sv.store][0], SHOP[sv.store][1], amt);
+    L.crowd.shop = nsN(L.crowd.shop) + got; L.sources[SHOP[sv.store][1]] = nsN(L.sources[SHOP[sv.store][1]]) + got;
+  }
   for (const v of npcVisitsToday(day, secret, list, counters)) {
     if (v.start > m || L.done[v.key]) continue;
     L.done[v.key] = 1;
@@ -155,7 +185,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
       house.reviewsOut.push(house.reviews[house.reviews.length - 1]);
     }
   }
-  if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups) }, by: Object.assign({}, L.sources) };
+  if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources) };
   return L;
 }
 
