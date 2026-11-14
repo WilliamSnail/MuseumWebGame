@@ -590,7 +590,8 @@ function reportPane(v) {
     h("div", { class: "bank-stack" },
       panel("今天的館內經濟", "每天 05:00 結算昨天",
         h("div", { class: "bank-quote" }, num("big", fmt(e.gdp)), upDown(e.growth, true), h("span", { class: "bank-mood " + (e.idx > 0.3 ? "up" : e.idx < -0.3 ? "down" : "") }, `景氣 ${tone}`)),
-        h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天"),
+        h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${tone}` }, h("i", { style: { left: 50 + e.idx * 50 + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好")),
+        h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天；上面的條是景氣（差、普通、好）"),
         h("p", { class: "bank-line" }, e.news)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))])))),
     h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world,
@@ -604,12 +605,10 @@ function side(v) {
   const termSum = v.save.terms.reduce((n, t) => n + t.amt, 0), owe = v.loan.list.reduce((n, x) => n + x.owe, 0) + (v.stocks && v.stocks.margin ? v.stocks.margin.owe : 0);
   const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
   // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
-  const e = v.econ, gauge = e ? 50 + e.idx * 50 : 50;
+  const e = v.econ;
   return h("aside", { class: "onescreen-side bank-side" },
     panel("我的帳戶", "", h("div", { class: "bank-acct" }, rows.map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))))),
     v.stocks && v.stocks.credit ? creditPanel(v.stocks.credit) : null,
-    e ? panel("館內景氣", "", h("div", { class: "bank-quote" }, num("", sign(e.growth * 100).replace(/^([+−])0*/, "$1") + "%"), h("small", null, "近 7 天 GDP 成長")),
-      h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通"}` }, h("i", { style: { left: gauge + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好"))) : null,
     e ? panel("今日新聞", "", h("p", { class: "bank-news" }, e.news)) : null);
 }
 // 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
