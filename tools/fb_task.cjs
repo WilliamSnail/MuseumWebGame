@@ -13,10 +13,12 @@
 //                 每個錢包的籌碼、借款、憑空和消失的來源。不印名字、uid、email，錢包用 #1、#2 代替（照籌碼排）。
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
+//   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
+//                 印成兩行 JSON（ECON_HOUSE_JSON、ECON_REPORT_JSON），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status"];
 
 // 只讀：台股、美股盤中的伺服器紀錄（stocksTw/latest、stocksUs/latest）。不讀亂數祕密，什麼都不寫
 //   什麼時候用：股票沒更新、整天休市，要知道是抓不到行情還是別的原因（11-13 美股第壹晚整天休市）
@@ -36,6 +38,29 @@ async function stockStatus(db) {
     log.forEach(l => console.log("    " + (typeof l === "string" ? l : short(l))));
     console.log("  有哪些天：" + Object.keys(d.days || {}).sort().join("、"));
   }
+}
+
+// 只讀：經濟用到的欄位（白名單，不是整份文件）。格式給 tools/econ_check.cjs --ledger 吃
+function econPick(h) {
+  const o = {}, nz = v => (Number.isFinite(+v) ? Math.floor(+v) : 0), obj = v => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+  for (const k of ["bankroll", "budget", "museum", "sea", "world", "loansOut", "cultureLate"]) if (h[k] != null) o[k] = nz(h[k]);
+  if (typeof h.day === "string") o.day = h.day;
+  const d = obj(h.debt); o.debt = { budget: nz(d.budget), culture: nz(d.culture), world: nz(d.world) };
+  if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null };
+  if (h.npcs) o.npcs = { day: obj(h.npcs).day || null, ticket: nz(obj(h.npcs).ticket), shop: nz(obj(h.npcs).shop), total: nz(obj(h.npcs).total), people: nz(obj(h.npcs).people) };
+  const sum = obj(obj(h.inv).sum); if (Object.keys(sum).length) o.inv = { sum: { hold: (Array.isArray(sum.hold) ? sum.hold : []).map(x => ({ name: String(obj(x).name || "").slice(0, 20), n: nz(obj(x).n) })), pnl: Number.isFinite(+sum.pnl) ? Math.floor(+sum.pnl) : 0 } };
+  const w = obj(obj(h.led).world); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])) };
+  return o;
+}
+async function econStatus(db) {
+  const hs = await db.doc("casinoHouse/main").get();
+  const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
+  console.log("ECON_HOUSE_JSON " + JSON.stringify(econPick(h)));
+  const q = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
+  if (q.empty) { console.log("ECON_REPORT_JSON null"); return; }
+  const r = JSON.parse(q.docs[0].data().data || "{}"), sh = (r.snap && r.snap.house) || {};
+  const pick = econPick(Object.assign({}, sh, { led: { world: sh.wflow || {} }, cultureLate: sh.culLate, inv: sh.inv }));
+  console.log("ECON_REPORT_JSON " + JSON.stringify({ day: r.day || null, gap: Number.isFinite(+r.gap) ? Math.floor(+r.gap) : null, opening: Number.isFinite(+r.opening) ? Math.floor(+r.opening) : null, house: pick }));
 }
 
 // 只讀：看錢流去哪。什麼都不寫
@@ -155,6 +180,7 @@ async function main() {
   if (task.action === "stock-reroll") { await stockReroll(db); return; }
   if (task.action === "house-ledger") { await houseLedger(db); return; }
   if (task.action === "stock-status") { await stockStatus(db); return; }
+  if (task.action === "econ-status") { await econStatus(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
@@ -164,4 +190,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { ACTIONS, parseTask, planTask };
+module.exports = { ACTIONS, parseTask, planTask, econPick };
