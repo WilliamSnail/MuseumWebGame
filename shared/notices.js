@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "start-chips-10m-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "新進玩家起始籌碼改成 1,000 萬", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "新加入的館友，錢包壹開始有 1,000 萬籌碼（前壹版是 2.5 萬）。",
+        "已經在玩的人錢包不變。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-14-05b1db", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行的景氣條搬進館內經濟", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
