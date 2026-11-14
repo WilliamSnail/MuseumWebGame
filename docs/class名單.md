@@ -122,10 +122,10 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `ps-` | `pass.css` | 通行證卡（pass） |
 | `pv-` | `pass.css` | 通行證預覽（pass view） |
 | `qk-` | `theme3.css` | 怪癖（quirk） |
-| `ws-` | `ui.css` | 手作坊（workshop） |
 | `sc-` | `story.css`、`shop.css`、`cellar2.css` | 劇情卡裡的房間列（story card）、兌換所 |
 | `md-` | `theme3.css`、`board.css` | 彈窗裡的管理區（modal） |
 | `rk-` | `rank.css` | 排行榜（rank） |
+| `ws-` | `ui.css`、`workshop2.css` | 手作坊；重做（11-14，`ui_screens1.js` 的 `SCREENS.workshop`）：`workshop-onescreen`（套骨架）、`ws-main`（上：佩佩和名牌）、`ws-tray`（下：類別頁籤、卡片、工具） |
 | `pl-` | `ui.css`、`pillow2.css` | 展示牌（placard）；抱枕工作台重做（11-14）：`pillow-onescreen`（套骨架）、`pl-main`（左抱枕和選項、右名牌）、`pl-left` |
 | `shp-` | `shop.css` | 兌換所（shop） |
 | `nf-` | `net.css` | 館友動態（net feed） |

@@ -692,8 +692,10 @@ SCREENS.workshop = (root, params) => {
   const cards = h("div", { class: "ws-cards", role: "listbox", "aria-label": "選項" });
   const afraidBox = h("div", { class: "ws-afraid" }); // 不敢碰的說明放在卡片列外面（卡片列在手機上是橫的，放裡面會被擠成直條）
   const tools = h("div", { class: "ws-tools" });
+  // 壹個畫面看得完（11-14，onescreen 骨架）：標題壹行｜上：佩佩的展台＋右邊名牌、可能性、做｜下：選項的托盤（類別頁籤、卡片壹排左右滑、工具）
+  root.classList.add("onescreen-room", "workshop-onescreen");
   root.append(roomHead(GEN_TEXT.workshop, free ? "自由模式：什麼都能直接選。" : "點卡片換選項；帽子可以直接拖到頭上。稀有度做出來才知道。"),
-    h("div", { class: "ws-top" }, stage, info), tabs, afraidBox, cards, tools);
+    h("div", { class: "onescreen-main ws-main" }, stage, info), h("div", { class: "ws-tray" }, tabs, afraidBox, cards, tools));
 
   const drawFrog = anim => {
     frogBox.innerHTML = frogHTML(pick, free ? { fx: true } : {});
