@@ -446,6 +446,7 @@ SCREENS.hall = (root, params) => {
   root.append(h("div", { class: "onescreen-main" }, h("div", { class: "hall-stage" }, wall, room), side), onescreenDrawer(strip));
   if (ADDONS.hall) ADDONS.hall(side, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）：名牌放側欄
   if (ADDONS.hall2) ADDONS.hall2(side); // 掛在牆上的探險報告（ui_coop.js）
+  if ((UI.net || import.meta.env.DEV) && ADDONS.hallReviews) ADDONS.hallReviews(side); // 展廳現在幾人、NPC 的即時評價（ui_hallnow.js）
   if (ADDONS.hall3) ADDONS.hall3(side); // 賭場的稱號和紀念品（決定 0040，ui_casino.js）
   if (ADDONS.hallGuests) ADDONS.hallGuests(side); // 館友來過、留了什麼話（多人版 M2，ui_visit.js）
   if (ADDONS.hallShow) ADDONS.hallShow(wall); // 主題展的展期、三級、海報（11-09，決定 0035，ui_themeshow.js）

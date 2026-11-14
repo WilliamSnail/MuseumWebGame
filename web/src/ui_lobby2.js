@@ -151,7 +151,7 @@ function todoCards(step) {
   if (step) cards.push({ t: step.text, s: step.why, go: () => navTo(step.room), todo: true });
   items.filter(x => x.todo).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: true }));
   items.filter(x => !x.todo).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: false }));
-  const shown = cards.slice(0, 4); // 最多 4 張：再多右欄就擠出畫面（全部在導覽列的「今天」）
+  const shown = cards.slice(0, ADDONS.hallNowBox ? 2 : 4); // 最多 2 張（右欄多了展廳現在、最近的評價）；再多右欄就擠出畫面：再多右欄就擠出畫面（全部在導覽列的「今天」）
   if (!shown.length) return h("p", { class: "l2-empty" }, isFree(P) ? "自由模式：所有選項都打開了，到手作坊捏佩佩。" : "今天的事都做完了。");
   return h("div", { class: "l2-todos" }, shown.map((c, i) => h("button", { type: "button", class: "l2-todo" + (c.todo && i === 0 ? " on" : "") + (c.todo ? "" : " done"), onClick: () => c.go && c.go() },
     h("b", null, c.t), c.s ? h("small", null, c.s) : null)));
@@ -178,6 +178,7 @@ export function lobby2(root) {
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
     passCard(),
     h("div", { class: "l2-box l2-todobox" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)), // 手機直拿：排到導覽圖上面（css/lobby2.css）
+    isFree(P) || !(UI.net || import.meta.env.DEV) || !ADDONS.hallNowBox ? null : h("div", { class: "l2-box l2-hnbox" }, ADDONS.hallNowBox("lobby")), // 展廳現在幾人、最近的評價（ui_hallnow.js；登入了才有）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
     h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),

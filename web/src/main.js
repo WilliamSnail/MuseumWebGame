@@ -39,6 +39,7 @@ import "./css/origin2.css"; // 圖書館重做（11-14，ui_screens1.js）
 import "./css/office2.css"; // 館長室重做（11-14，ui_screens3.js） // 畫廊重做（11-14，ui_story.js、ui_art.js）
 import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
 import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
+import "./css/hallnow.css"; // 展廳現在、評價（11-14，ui_hallnow.js）
 import "./css/tabx.css"; // 頁籤牌子六種材質（11-14，docs/頁籤牌子素材.md）
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
@@ -75,6 +76,7 @@ import "./ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、
 import "./ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino.js
 import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
 import "./ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord_link.js，規則在 shared/discord.js
+import "./ui_hallnow.js"; // 展廳現在幾人、NPC 的即時評價（11-14，伺服器 PR 418）
 import "./ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
 import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino_wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
 import "./ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/lostfound.js）
