@@ -7,6 +7,10 @@
 //   --body-file 檔案   內容太長時放檔案
 //   --no-merge        只開 PR、等 CI，不合併
 //   --skip-local      不跑本機的 npm test 和 vite build（CI 還是會跑）
+//   沒給 --body：拿這個分支新加的維護日誌的「為什麼要改」「改了什麼」當 PR 說明（11-14：常常忘了給說明被擋）
+//   --say "文字"／--say-file 檔案   部署成功後發 Discord（tools/say.cjs；翊文：每次上線都要發）
+//   --after-deploy "指令"           部署成功後再跑壹條指令（每日排程用：--after-deploy "gh workflow run discord-scheduled.yml --ref main"）
+//   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒動 shared/notices.js 會印警告，不擋）
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
 const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
@@ -22,8 +26,8 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith("--")) throw new Error(`看不懂「${a}」`);
     const k = a.slice(2);
-    if (["skip-local", "no-merge"].includes(k)) { out.flags.add(k); continue; }
-    if (!["title", "body", "body-file", "message"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
+    if (["skip-local", "no-merge", "no-notice"].includes(k)) { out.flags.add(k); continue; }
+    if (!["title", "body", "body-file", "message", "say", "say-file", "after-deploy"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
     if (argv[i + 1] === undefined) throw new Error(`--${k} 後面要有內容`);
     out[k] = argv[++i];
   }
@@ -59,11 +63,28 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
+// 維護日誌的兩段拿來當 PR 說明（純函式，測試用）
+function bodyFromLog(md) {
+  const parts = ("\n" + String(md || "")).split("\n## ");
+  const sec = name => { const p = parts.find(x => x.startsWith(name)); return p ? p.slice(name.length).trim() : ""; };
+  const why = sec("為什麼要改"), what = sec("改了什麼");
+  return why || what ? [why, what].filter(Boolean).join("\n\n") : "";
+}
+// 改了玩家看得到的地方卻沒加公告（純函式，測試用）：回傳要印的警告，沒事回空字串
+function noticeWarning(files) {
+  const f = files.filter(Boolean);
+  if (f.includes("shared/notices.js")) return "";
+  const seen = f.filter(x => /^(web\/|functions\/|shared\/)/.test(x) && !/\.test\.|^shared\/npc_roster\.js$/.test(x));
+  return seen.length ? `⚠ 改了 ${seen.slice(0, 3).join("、")}${seen.length > 3 ? ` 等 ${seen.length} 個檔` : ""}，但沒有加館方公告（npm run notice -- …）。不是玩家看得到的就加 --no-notice。` : "";
+}
+const changedFiles = () => git(["diff", "--name-only", "origin/main...HEAD"], { ok: true }).out.split("\n").map(s => s.trim()).filter(Boolean);
+
 function main() {
   const o = parseArgs(process.argv.slice(2)), ai = process.env.SHIP_AI || "Claude Opus 5.5";
   if (!titleOk(o.title)) throw new Error("--title 要寫真的標題：它會變成 commit 訊息和 PR 標題，推上去就改不回來");
-  const body = o["body-file"] ? fs.readFileSync(o["body-file"], "utf8") : o.body;
-  if (!body) throw new Error("要有 --body 或 --body-file");
+  let body = o["body-file"] ? fs.readFileSync(o["body-file"], "utf8") : o.body;
+  const sayText = o["say-file"] ? fs.readFileSync(o["say-file"], "utf8") : o.say;
+  if (sayText) require("./say.cjs").checkText(sayText); // 先檢查，免得上線完才發現發不出去
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
 
@@ -79,6 +100,15 @@ function main() {
   }
   say("併 origin/main");
   mergeMain(ai);
+  const files = changedFiles();
+  if (!body) {
+    const log = files.find(f => /^維護日誌\/\d{4}\/.+\.md$/.test(f));
+    body = log ? bodyFromLog(fs.readFileSync(path.join(ROOT, log), "utf8")) : "";
+    if (!body) throw new Error("要有 --body 或 --body-file（這個分支也沒有新的維護日誌可以拿來當說明）");
+    console.log(`PR 說明用維護日誌：${log}`);
+  }
+  const nw = o.flags.has("no-notice") ? "" : noticeWarning(files);
+  if (nw) console.log(nw);
   say("推上去");
   git(["push", "-q", "-u", "origin", branch]);
 
@@ -124,12 +154,29 @@ function main() {
   if (!id) throw new Error(`合併了（${sha.slice(0, 7)}），但找不到這次的部署`);
   run(gh(), ["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "10"]);
   console.log(`\n✓ PR ${n} 合併、部署成功（${sha.slice(0, 7)}）：https://github.com/${REPO}/pull/${n}`);
+  let after = true;
+  if (sayText) {
+    say("發 Discord");
+    try { const r = require("./say.cjs").sayDiscord(sayText); console.log(r.ok ? "✓ Discord 發好了" : `✗ Discord 沒發成功：${r.url}`); after = after && r.ok; }
+    catch (e) { console.log(`✗ Discord 沒發成功：${e.message}`); after = false; }
+  }
+  if (o["after-deploy"]) {
+    say(`部署後：${o["after-deploy"]}`);
+    const r = spawnSync(o["after-deploy"], { cwd: ROOT, encoding: "utf8", shell: true });
+    console.log(((r.stdout || "") + (r.stderr || "")).trim().slice(-500));
+    if (r.status !== 0) { console.log("✗ 部署後的指令失敗了（PR 已經上線）"); after = false; }
+  }
   backToMain();
+  if (!after) { nw && console.log(nw); throw new Error("PR 上線了，但部署後要做的事有壹件沒成功（看上面）"); }
+  if (nw) console.log(`\n${nw}`);
 }
 
 // 上線完回到 main、拉最新（11-10：每次都要手動做，OneDrive 還常鎖住 index，切到一半會留下壹堆「改過的檔」）。
 // 鎖住就等 2 秒重試；真的回不去只提醒，不算失敗（PR 已經上線了）。
 function backToMain() {
+  // worktree 裡不切：main 被主資料夾佔著，切了壹定失敗（11-14 每次都印「沒能回到 main」）
+  const gd = git(["rev-parse", "--git-dir"], { ok: true }).out, cd = git(["rev-parse", "--git-common-dir"], { ok: true }).out;
+  if (gd && cd && path.resolve(ROOT, gd) !== path.resolve(ROOT, cd)) { console.log("（在 worktree 裡：不切回 main，用完可以 git worktree remove）"); return; }
   for (let i = 0; i < 6; i++) {
     const a = git(["checkout", "main"], { ok: true });
     const b = a.status === 0 ? git(["pull", "--ff-only"], { ok: true }) : a;
@@ -140,4 +187,4 @@ function backToMain() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk };
+module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk, bodyFromLog, noticeWarning };

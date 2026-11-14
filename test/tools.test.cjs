@@ -193,5 +193,44 @@ T("shot：大小看得懂、只准 localhost、檔名帶畫面和大小", () => 
   assert.ok(localOnly("http://localhost:5287/#lobby").includes("#lobby"));
   assert.strictEqual(shotName("http://localhost:5287/#office:upgrades", { w: 812, h: 375 }), "shot_office_upgrades_812x375.png");
 });
+// 11-14：ship 的 --say、--after-deploy、公告警告、日誌當說明；npm run say、npm run notice
+const SH = require("../tools/ship.cjs"), SAY = require("../tools/say.cjs"), NO = require("../tools/notice.cjs");
+T("ship：新選項 --say、--after-deploy、--no-notice", () => {
+  const o = SH.parseArgs(["--title", "標題標題", "--say", "🎲 上線", "--after-deploy", "gh workflow run x.yml", "--no-notice"]);
+  assert.strictEqual(o.say, "🎲 上線"); assert.strictEqual(o["after-deploy"], "gh workflow run x.yml"); assert.ok(o.flags.has("no-notice"));
+});
+T("ship：沒給說明就拿維護日誌的兩段", () => {
+  const md = "---\n日期: x\n---\n\n## 為什麼要改\n\n> 「這個」\n\n## 改了什麼\n\n- 甲\n- 乙\n\n## 怎麼確認的\n\n- 跑過\n";
+  assert.strictEqual(SH.bodyFromLog(md), "> 「這個」\n\n- 甲\n- 乙");
+  assert.strictEqual(SH.bodyFromLog("沒有段落"), "");
+});
+T("ship：改了玩家看得到的檔卻沒公告會警告；有公告、只改 tools 不警告", () => {
+  assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/ui_bank.js", "維護日誌/2026/x.md"])));
+  assert.strictEqual(SH.noticeWarning(["web/src/ui_bank.js", "shared/notices.js"]), "");
+  assert.strictEqual(SH.noticeWarning(["tools/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
+});
+T("say：空的、太長、@ 人都擋下來", () => {
+  assert.strictEqual(SAY.checkText("  🎲 好  "), "🎲 好");
+  assert.throws(() => SAY.checkText(""), /沒有/);
+  assert.throws(() => SAY.checkText("x".repeat(2000)), /太長/);
+  assert.throws(() => SAY.checkText("大家 @everyone"), /@/);
+  assert.throws(() => SAY.checkText("<@123456>"), /@/);
+});
+T("notice：組出公告、area 要對、id 不重複、預設日期", () => {
+  const env = { areas: ["賭場", "其他"], cats: ["館方公告", "特展活動"], today: "2026-11-14", existingIds: ["dup-id"] };
+  const n = NO.build(NO.parse(["--area", "賭場", "--title", "賭場的新東西", "第壹句", "第二句"]), env);
+  assert.strictEqual(n.publish, "2026-11-14"); assert.strictEqual(n.expire, "2027-12-31"); assert.strictEqual(n.importance, "low");
+  assert.deepStrictEqual(n.sections, [["改了什麼", ["第壹句", "第二句"]]]);
+  assert.ok(/^upd-2026-11-14-[0-9a-f]{6}$/.test(n.id));
+  assert.throws(() => NO.build(NO.parse(["--area", "亂寫", "--title", "賭場的新東西", "x"]), env), /area/);
+  assert.throws(() => NO.build(NO.parse(["--area", "賭場", "--title", "賭場的新東西", "--id", "dup-id", "x"]), env), /已經有了/);
+  assert.throws(() => NO.build(NO.parse(["--area", "賭場", "--title", "賭場的新東西"]), env), /至少/);
+  const src = "export const NOTICES = [\n  {\n    id: \"old\",\n  },\n];\n";
+  const out = NO.insert(src, NO.render(n));
+  assert.ok(out.indexOf(n.id) < out.indexOf("\"old\""));
+  // 寫出來的那段要是合法的 JS 物件
+  const obj = Function(`return ${NO.render(n).trim().replace(/,$/, "")}`)();
+  assert.strictEqual(obj.area, "賭場"); assert.strictEqual(obj.sections[0][1][1], "第二句");
+});
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);
 process.exit(fail ? 1 : 0);
