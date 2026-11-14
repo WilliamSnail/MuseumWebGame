@@ -514,3 +514,16 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-ni-empty { margin: 0; font-size: .875rem; line-height: 1.5; }
 .cas-ni-acts { display: flex; justify-content: flex-end; }
 @media (max-height: 500px) and (orientation: landscape) { .cas-npcinv { max-height: 94dvh; padding: 10px 14px; } .cas-npcinv > .sub { display: none; } .cas-bub { font-size: .75rem; padding: 4px 8px; } }
+
+/* 邀旅客的大按鈕和空位（11-14，翊文：「邀旅客一起玩的按鈕再明顯一點」） */
+.cas-inv { display: grid; gap: 4px; margin: 4px 0; }
+.cas-inv-b { width: 100%; min-height: 52px; font-size: 1.0625rem; letter-spacing: .06em; }
+.cas-inv-ic { font-size: 1.25rem; }
+.cas-inv-n { margin-left: 6px; font-style: normal; font-size: .8125rem; opacity: .85; }
+.cas-inv-why { margin: 0; text-align: center; }
+.cas-seat.tb.cas-empty-seat { display: grid; place-content: center; justify-items: center; gap: 2px; min-height: 76px; border: 2px dashed rgba(231, 200, 120, .75); background: rgba(231, 200, 120, .12); color: #F8E3A0; cursor: pointer; font: inherit; }
+.cas-seat.tb.cas-empty-seat b { font-size: 1.125rem; letter-spacing: .06em; }
+.cas-empty-seat:hover { background: rgba(231, 200, 120, .24); }
+@media (max-height: 500px) and (orientation: landscape) { .cas-inv-b { min-height: 44px; } .cas-empty-seat { min-height: 52px; } }
+.cas-inv-why { margin: 0; text-align: center; color: #F8E3A0; font-size: .8125rem; line-height: 1.4; }
+.cas-inv-b:disabled { filter: grayscale(.6); opacity: .75; }

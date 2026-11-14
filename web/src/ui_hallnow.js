@@ -46,7 +46,7 @@ function counts() {
   const crowd = now && now.crowd ? { n: Math.max(0, Number(now.crowd.n) || 0), groups: Array.isArray(now.crowd.groups) ? now.crowd.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0 })) : [] } : { n: 0, groups: [] };
   const people = now && typeof now.total === "number" ? Math.max(0, now.total) : tourists + crowd.n;
   const casino = now && now.casino && Array.isArray(now.casino.names) ? now.casino.names.map(String) : []; // PR 465：被邀去賭場的 NPC
-  return { mates, tourists, crowd, casino, canInvite: !!(named && Array.isArray(named.ids) ? named.ids.length : tourists), names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
+  return { mates, tourists, crowd, casino, canInvite: !!(named && Array.isArray(named.ids) ? named.ids.length : tourists), inviteN: named && Array.isArray(named.ids) ? named.ids.length : 0, names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
 }
 // 散客的描述：label 已經寫了人數（三位學生、一對情侶、2 人）就不再補「N 位」；沒寫的（旅行團、退休的長輩們）才補
 const HAS_COUNT = /[0-9０-９一二兩三四五六七八九十壹貳參肆伍陸柒捌玖拾百]|一對/;
@@ -54,7 +54,7 @@ export const crowdText = g => (HAS_COUNT.test(g.label) ? g.label : `${g.label} $
 // 「邀去賭場」：看得出能按的鈕。邀不邀得動由伺服器的名單決定（ui_casino_table.js 的 openNpcInvite），沒登入、沒人在館裡就不放
 function inviteBtn(c, before) {
   if (!ADDONS.npcInvite || !NET.me || !c.canInvite) return null;
-  return btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀去賭場"], () => { if (before) before(); ADDONS.npcInvite(); }, "small primary hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" });
+  return btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀旅客去賭場", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], () => { if (before) before(); ADDONS.npcInvite(); }, "primary big hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" });
 }
 function openAll() {
   const c = counts(), list = reviewData() || [];
