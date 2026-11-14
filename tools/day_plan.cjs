@@ -52,7 +52,7 @@ function beatInfo(ledger, week, monday, G) {
   return { kind, beat: here, prev, closing, plannedDay: planned ? planned.day || "d3" : null, planned: !!planned, echoOf: rec && rec.echoOf || null };
 }
 
-// 哪些 NPC 該補故事段：沒有排到下週以後的段、而且還沒到 6 段。旅客數量也看一下（8～12）
+// 哪些 NPC 該補故事段：沒有排到下週以後的段、而且還沒到 6 段。旅客數量也看一下（25～30，翊文 11-14：展廳要常有人）
 function npcNeeds(npcs, date, monday, G) {
   const sunday = G.addDays(monday, 6), people = asList(npcs).filter(n => isObj(n) && n.kind !== "trace");
   const row = n => { const arc = asList(n.arc), up = arc.filter(a => a.from > date); return { id: n.id, name: n.name, kind: n.kind, steps: arc.length, upcoming: up.length, last: arc.length ? arc[arc.length - 1].from : null, ties: arc.length ? asList(arc[arc.length - 1].ties) : [] }; };
@@ -62,7 +62,7 @@ function npcNeeds(npcs, date, monday, G) {
   people.forEach(n => asList(n.arc).forEach(a => { if (a.from >= monday && a.from <= sunday) thisWeek.push({ id: n.id, name: n.name, step: a.step, from: a.from, ties: asList(a.ties) }); }));
   thisWeek.sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.id < b.id ? -1 : 1));
   const visitors = people.filter(n => n.kind === "visitor").length;
-  return { need, thisWeek, visitors, visitorsLow: visitors < 8, visitorsFull: visitors >= 12 };
+  return { need, thisWeek, visitors, visitorsLow: visitors < 25, visitorsFull: visitors >= 30 };
 }
 // 揭露週：帳本 channels 指定的 NPC，這週有沒有段可以回應
 function beatNpcGaps(beat, npcs, monday, G) {
@@ -236,7 +236,7 @@ function format(p) {
   B(""); B("【NPC（content/npc/）】");
   { const tw = p.npc.thisWeek, tied = tw.filter(x => x.ties.length); B(`  本週會上線的段：共 ${tw.length} 段${tied.length ? "；有掛謎的：" + tied.map(x => `${x.from.slice(5)} ${x.name}#${x.step}→${x.ties.join("/")}`).join("；") : ""}`); }
   B(`  最需要補壹段的（沒有排到之後的段、不到 6 段；今天最多推 2 位）：${p.npc.need.slice(0, 6).map(x => `${x.id}（${x.name}，${x.steps} 段）`).join("、") || "（都有排）"}`);
-  B(`  旅客 ${p.npc.visitors} 位：${p.npc.visitorsLow ? "★少於 8，補新的（每週最多新增 2 位）" : p.npc.visitorsFull ? "已滿 12 位，不用補" : "夠了（8～12）"}`);
+  B(`  旅客 ${p.npc.visitors} 位：${p.npc.visitorsLow ? "★少於 25，補新的（每週最多新增 2 位）" : p.npc.visitorsFull ? "已滿 30 位，不用補" : "夠了（25～30）"}`);
   B(""); B("【每天都要有】");
   B(`  ☐ 至少壹條 clue（書、房間、今日特展）　☐ 政治梗壹個，記進 weeks.${p.week}.memes（搜不到要在 PR 寫原因）　☐ 世界觀 world、sideRefs、ties、hooks`);
   B(`  ☐ market 世界股市新聞 3～5 則${p.market.weekend ? "（週末休市，可以不寫）" : ""}　☐ real 今天的現實世界（查得到才寫）　☐ 今日特展至少 1～2 幅新畫（npm run svg 看過）`);
