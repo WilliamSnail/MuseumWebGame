@@ -17,7 +17,8 @@
 //  純函式：「今天」「現在」從參數來。伺服器入口在 functions/art.js。
 // ================================================================
 import { NUM } from "./config.js";
-import { casCount, casHouseMove } from "./casino_book.js";
+import { casCount, casHouseMove, casHouseWorldOut, casPoolWorldOut, casWorldOut, casWorldRoom } from "./casino_book.js";
+import { hashStr, mulberry32 } from "./logic.js";
 import { casArtFix, casArtHouse, casArtPrice } from "./casino_art.js";
 import { casBondFix } from "./casino_bond.js";
 import { casNum } from "./casino.js";
@@ -174,7 +175,29 @@ export function casAucCancel(doc, P, uid, id) {
 export const casAucDue = (doc, nowMs) => doc.open.filter(a => nowMs >= a.closeAt).map(a => a.id);
 // 這場收標要動到哪些人（伺服器先讀好他們的錢包、存檔）：出價的人、賣家
 export const casAucPeople = a => Array.from(new Set(Object.keys(a.bids).concat(a.seller ? [a.seller] : [])));
-// 算壹場。ctx：{ house, wallets: { uid: 錢包 }, saves: { uid: 存檔的 P（挑戰模式的，沒有就沒這個 key） }, day, nowMs }
+// NPC 買家（步驟 4）：回 { npc, amt } 或 null。ref 是參考價（玩家的畫：現價；館方的畫：底價）。種子有祕密，收標前沒人知道
+export function casAucNpcBid(a, ref, house, ctx) {
+  const C = NUM.auction, list = ctx.npcList, day = ctx.day;
+  if (!Array.isArray(list) || !list.length || !(ref > 0) || !C.npcJoinPct) return null;
+  const rnd = mulberry32(hashStr(`${ctx.secret || ""}|${a.id}|npcbuy`));
+  if (rnd() * 100 >= C.npcJoinPct) return null;
+  const A = house.art, spent = A.npcPaid && A.npcPaid.day === day ? A.npcPaid : { day, n: 0, by: {} };
+  const dayCap = Math.floor(C.npcDay * Math.max(0, 1 + C.npcExtPct / 100 * (+(house.econ && house.econ.b) || 0)));
+  const tierName = (NUM.art.tiers[a.tier] || {}).name || "";
+  const cand = list.filter(n => n && n.kind !== "trace" && n.budget && n.budget.max > 0 && n.route && +n.route.auction > 0);
+  const total = cand.reduce((s, n) => s + n.route.auction, 0);
+  if (!total) return null;
+  let r = rnd() * total, npc = cand[cand.length - 1];
+  for (const n of cand) { r -= n.route.auction; if (r < 0) { npc = n; break; } }
+  const like = (npc.likes || []).includes(tierName) ? 1 + C.npcLikePct / 100 : 1 - C.npcLikePct / 100;
+  const mult = a.kind === "player" ? 0.8 + 0.2 * rnd() : 1 + 0.1 * rnd();
+  let amt = auUnit(ref * mult * like);
+  amt = Math.min(amt, npc.budget.max, npc.budget.perDay - auN(spent.by[npc.id]), dayCap - auN(spent.n));
+  if (amt < a.reserve || amt <= 0) return null;
+  if (a.kind === "player" && amt > casWorldRoom(house, NUM.casino.world)) return null; // 玩家賣給 NPC：外面世界付，吃緊時付不出就不出價
+  return { npc, amt };
+}
+// 算壹場。ctx：{ house, wallets: { uid: 錢包 }, saves: { uid: 存檔的 P（挑戰模式的，沒有就沒這個 key） }, day, nowMs, npcList?: NPC 名單, secret?: 伺服器祕密 }
 // 會改 doc、錢包、P、house，壹次做完：open 搬到 done，鎖退回，得標的付第二高價。
 // 回傳 { ok, sold, winner, price, fee, touched: [要寫回的 uid], notes: { uid: [話] } }
 export function casAucSettle(doc, id, ctx) {
@@ -203,8 +226,26 @@ export function casAucSettle(doc, id, ctx) {
   });
   const keep = a.kind === "player" ? !!(sellerA && wallets[seller] && auHas(sellerA.own, a.work) && sellerA.own[a.work].lock === id) : true; // 賣家的畫不見了：流標
   let sold = null;
-  if (keep && ranks.length) {
-    const top = ranks[0], second = ranks.length > 1 ? ranks[1].amt : a.reserve;
+  // NPC 買家：出價比最高的玩家高才得標（同價玩家先），得標的 NPC 付的是外面世界的錢
+  const refPx = a.kind === "player" ? (sellerA && auHas(sellerA.own, a.work) ? casArtPrice(sellerA.own[a.work], a.work, day, house) : 0) : a.reserve;
+  const nb = keep ? casAucNpcBid(a, refPx, house, ctx) : null;
+  if (nb && (!ranks.length || nb.amt > ranks[0].amt)) {
+    const price = Math.max(a.reserve, ranks.length ? ranks[0].amt : a.reserve), name = nb.npc.name;
+    if (a.kind === "player") {
+      const fee = Math.floor(price * C.feePct / 100), x = sellerA.own[a.work];
+      casWorldOut(wallets[seller], house, "npcArt", price - fee, NUM.casino.world); casPoolWorldOut(house, "budget", "npcArt", fee); casCount(house, "artFee", fee); casCount(house, "artAuction");
+      house.art.paid = Math.max(0, house.art.paid - auN(x.paid)); house.art.own[a.work] = Math.max(0, auN(house.art.own[a.work]) - 1); if (!house.art.own[a.work]) delete house.art.own[a.work]; // 變成館外收藏家的收藏
+      delete sellerA.own[a.work]; touched.add(seller);
+      say(seller, auFill(CAS_AUC.soldLine, { title: a.title, n: casNum(price - fee), fee: casNum(fee) }) + "（買家是館外的收藏家：" + name + "）");
+      sold = { price, fee, winner: null, npc: name };
+    } else {
+      casHouseWorldOut(house, "npcArtBuy", price, NUM.casino.world); casCount(house, "artAuction");
+      sold = { price, fee: 0, winner: null, npc: name };
+    }
+    const A = house.art, sp = A.npcPaid && A.npcPaid.day === day ? A.npcPaid : { day, n: 0, by: {} };
+    sp.n += price; sp.by[nb.npc.id] = auN(sp.by[nb.npc.id]) + price; A.npcPaid = sp;
+  } else if (keep && ranks.length) {
+    const top = ranks[0], second = Math.max(ranks.length > 1 ? ranks[1].amt : a.reserve, nb ? nb.amt : 0); // NPC 沒贏也會把價格抬到他的出價
     let price = Math.max(a.reserve, Math.min(top.amt, second)), prem = 0;
     if (a.kind === "player") { // 賣家每天靠拍賣收的溢價有上限；超過就照上限算，低過底價就不賣
       const cur = casArtPrice(sellerA.own[a.work], a.work, day, house), room = Math.max(0, C.premiumDay - auPremToday(sellerA, day));
@@ -238,9 +279,9 @@ export function casAucSettle(doc, id, ctx) {
     if (auHas(sellerA.own, a.work) && sellerA.own[a.work].lock === id) delete sellerA.own[a.work].lock;
     touched.add(seller); say(seller, auFill(CAS_AUC.unsoldLine, { title: a.title }));
   }
-  doc.done.push({ id, kind: a.kind, work: a.work, title: a.title, tier: a.tier, price: sold ? sold.price : null, closedAt: ctx.nowMs });
+  doc.done.push({ id, kind: a.kind, work: a.work, title: a.title, tier: a.tier, price: sold ? sold.price : null, closedAt: ctx.nowMs, buyer: sold && sold.npc ? sold.npc : undefined }); // buyer：NPC 買家的名字（公告「得標：館外的收藏家（名字）」）
   doc.done = doc.done.slice(-C.recent);
-  return { ok: true, sold: !!sold, winner: sold ? sold.winner : null, price: sold ? sold.price : null, fee: sold ? sold.fee : 0, touched: Array.from(touched), notes };
+  return { ok: true, sold: !!sold, npc: sold && sold.npc ? sold.npc : null, winner: sold ? sold.winner : null, price: sold ? sold.price : null, fee: sold ? sold.fee : 0, touched: Array.from(touched), notes };
 }
 
 // 收標通知信（11-14，翊文：得標的、賣家、沒拍到的都要收到通知）：casAucSettle 回傳的 notes（{ uid: [句子] }）每人寫成壹封信，

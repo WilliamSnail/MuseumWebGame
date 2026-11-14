@@ -205,7 +205,10 @@ export const NUM = {
   //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。
   //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
   //   帳號要開 minAge 天；成交抽 feePct % 進預算池；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
-  auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40, recent: 12, unit: 1000 },
+  auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40,
+    // NPC 買家（11-14，docs/館內NPC規劃.md 步驟 4、翊文：NPC 的錢從外面世界來）：每場最多壹位 NPC 出價，出價機率 npcJoinPct%；出價 ＝ 參考價 ×（玩家的畫 0.80～1.00／館方的畫 1.00～1.10）× 喜歡這個稀有度（×1.05，否則 ×0.95），
+    //   不超過這位 NPC 的 budget.max、也不超過他壹天剩下的 perDay；全館壹天 NPC 買畫總額 ≤ npcDay ×（1 ＋ npcExtPct% × 景氣）；錢從外面世界池子付、付回池子（吃緊時付不出的場不出價）
+    npcJoinPct: 60, npcDay: 3000000, npcExtPct: 20, npcLikePct: 5, recent: 12, unit: 1000 },
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
   blood: 5,                 // 血統：爸媽每一隻照稀有度給（稀有 5、超稀有 10、傳說 15、不可名狀 20），可以像心情一樣壓低骰子
   fusionRarityCost: [0, 1, 2, 3, 4], // 融合加價：爸媽每一隻照稀有度多收幾靈感（普通、稀有、超稀有、傳說、不可名狀；失敗作不加）
@@ -441,6 +444,9 @@ export const NUM = {
     stockIn: { start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
       // NPC（規劃 2.8k、docs/館內NPC規劃.md 步驟 1、2）：每家店每天有 Poisson(npcLambda) 個 NPC 去逛（種子含伺服器祕密），算進昨天「不同的人」；NPC 最多占這家店人數的 npcShareMax%（館友太少就更少）；
       //   劇情日（week.json 的 npc）那天 NPC 多去 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 之間隨機（預期跳空 k×b ＜ 來回成本，預先進場賺不到；b 不能超過 0.33）
+      // 突發大事件 C（翊文 11-14：不預告）：每家店每天有 npcBurstPct% 的機率突然多來 round(b × 前 7 個有效日的平均) 位旅客，b 在 npcBurstMin～npcBurstMax；
+      //   事先不知道是哪天（種子有祕密），預先進場賺不到；事後日報寫「昨天餐車突然來了一大批旅客」
+      npcBurstPct: 0.3, npcBurstMin: 0.5, npcBurstMax: 1.0,
       npcLambda: 2, npcShareMax: 40, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
