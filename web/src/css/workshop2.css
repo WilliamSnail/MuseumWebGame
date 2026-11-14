@@ -91,3 +91,21 @@
 .workshop-onescreen .ws-make > :not(.btn) b { color: var(--paper-gold, #F3DFA6); }
 .workshop-onescreen .ws-info .poss, .workshop-onescreen .ws-info .poss-l, .workshop-onescreen .ws-info .poss-f, .workshop-onescreen .ws-info .poss-of { color: var(--paper-soft, #D8C59A); }
 .workshop-onescreen .ws-info .poss-n { color: var(--paper-gold, #F3DFA6); }
+
+/* 在地下的效果（11-14，cellarFxBox）：資訊欄裡壹塊可以收起來的小卡；選項卡片上的短標 */
+.ws-fx > summary { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; cursor: pointer; list-style: none; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .9); color: var(--ink, #2E2014); }
+.ws-fx > summary::-webkit-details-marker { display: none; }
+.ws-fx > summary b { flex: 1 1 auto; font-size: var(--type-body, .875rem); }
+.ws-fx > summary::after { content: "點開 ▾"; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
+.ws-fx[open] > summary::after { content: "收起來 ▴"; }
+.ws-fx > summary { white-space: nowrap; }
+.ws-fx-n { color: var(--ink-soft, #5A4030); font-size: var(--type-small, .75rem); }
+.ws-fx > :not(summary) { margin: 6px 4px 0; }
+.ws-fx-pow, .ws-fx-none { font-size: var(--type-small, .75rem); line-height: 1.5; color: var(--ink-soft, #5A4030); }
+.ws-fx-list { padding: 0; list-style: none; display: grid; gap: 4px; font-size: var(--type-small, .75rem); line-height: 1.45; color: var(--ink, #2E2014); }
+.ws-fx-w { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 999px; background: var(--ink-accent, #8E2A24); color: #fff; font-style: normal; font-size: .6875rem; font-weight: 700; }
+.c-fx { margin-top: 2px; padding: 0 6px; border-radius: 999px; background: rgba(142, 42, 36, .14); color: var(--ink-accent, #8E2A24); font-size: .6875rem; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+.ws-fx { border-radius: 6px; background: rgba(243, 230, 196, .96); color: var(--ink, #2E2014); }
+.ws-fx > summary { background: none; }
+.ws-fx[open] > summary { border-bottom-color: transparent; }
+.ws-fx > :not(summary) { padding-bottom: 4px; }
