@@ -492,7 +492,9 @@ export const NUM = {
     npcSpend: { on: true, ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 24, hallStay: [60, 180], shopStay: [30, 120],
       // 不具名的散客（翊文 11-14：「不具名的也可以有一些」「散客要付門票」）：每天 groupsDay 組（週末 ×weekendMult）、壹組幾位看類型；只在展廳、待 stay 分鐘；到的時間午後和晚上多（weights）。
       //   ticket 每位散客付的門票（外面世界付，ticketBudgetPct% 預算池、其餘館方帳）；dayCap 全館散客門票壹天上限（要 ≤ 外面世界每天成長的 10%，econ:check）。不留評價、不算館內股人數、不花錢。
-      crowd: { groupsDay: 4, weekendMult: 1.5, stay: [30, 120], ticket: 10000, dayCap: 500000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）
+      // 散客也逛店（翊文 11-14：「散客去店裡、算進股價」）：跟展廳那幾組「分開」抽（逛店的散客不顯示在展廳，不然看展廳的組別就能猜到哪家店明天的人數）：每家店每天平均 shop.perStore 位散客，
+      //   壹組幾位、什麼類型看這家店的個性（學生愛餐車和手作坊、旅行團愛餐車和牌桌、退休長輩愛地下收藏庫…）；每位進店花 shop.spend（餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap；算進這家店「昨天不同的人」
+      crowd: { shop: { perStore: 1.5, stay: [30, 120], spend: 3000, dayCap: 300000 }, groupsDay: 4, weekendMult: 1.5, stay: [30, 120], ticket: 10000, dayCap: 500000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）
       // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
     // 展廳參觀者門票（11-14 改版，決定 0079 取代 0073 的分法）：到訪的人（有名字的 NPC、散客，每位）自己付壹張票（npcSpend.ticket／crowd.ticket，外面世界付，到的那刻）；

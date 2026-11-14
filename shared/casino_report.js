@@ -64,7 +64,7 @@ export function casReportView(doc) {
     hl.push("預告：" + H.festUp.map(f => `${+f.date.slice(5, 7)} 月 ${+f.date.slice(8, 10)} 日《${f.name}》可能在${nm[f.store] || f.store}舉辦`).join("；") + "。");
   }
   if (doc.openingFix) hl.push(`對帳基準校正了 ${rpSign(doc.openingFix)}（外面世界池子上線那天的快照多算了池子當天的進出，不是錢不見）。`);
-  if (H.npcs && H.npcs.crowd && H.npcs.crowd.ticket > 0) hl.push(`昨天 ${rpN(H.npcs.crowd.people)} 位散客（${rpN(H.npcs.crowd.groups)} 組）逛了展廳，散客門票 ${rpN(H.npcs.crowd.ticket)}。`);
+  if (H.npcs && H.npcs.crowd && H.npcs.crowd.ticket > 0) hl.push(`昨天 ${rpN(H.npcs.crowd.people)} 位散客（${rpN(H.npcs.crowd.groups)} 組）逛了展廳，散客門票 ${rpN(H.npcs.crowd.ticket)}${H.npcs.crowd.shop > 0 ? `、散客在店裡花了 ${rpN(H.npcs.crowd.shop)}` : ""}。`);
   if (H.npcs && H.npcs.total > 0) hl.push(`昨天 ${rpN(H.npcs.people)} 位館外的旅客來館，付了門票、在店裡花了，帶進館 ${rpN(H.npcs.total)} 籌碼（門票 ${rpN(H.npcs.ticket)}、店裡 ${rpN(H.npcs.shop)}）。`);
   if (H.npcLast && H.npcLast.fest && H.npcLast.fest.length) { // 昨天預告的活動辦成了沒
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };

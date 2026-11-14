@@ -13,9 +13,9 @@ T("來館的 NPC 付門票、去的店花錢：預算池／莊家／館方帳收
   const h = mk(G), t0 = inv(G, h), w0 = h.world, b0 = h.budget, k0 = h.bankroll, m0 = h.museum;
   const r = G.casNpcSpend(h, D0, "s", LIST, null);
   assert.ok(r.total > 0 && r.people > 0 && r.ticket > 0 && r.shop > 0, JSON.stringify(r));
-  assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket); assert.strictEqual(inv(G, h), t0, "守恆");
-  assert.strictEqual((h.budget - b0) + (h.bankroll - k0) + (h.museum - m0), r.total + r.crowd.ticket, "錢進預算池／莊家／館方帳");
-  assert.ok(h.museum > m0, "門票有進館方帳"); assert.strictEqual(G.casNpcSpend(h, D0, "s", LIST, null), h.npcs); assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket, "不重複");
+  assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket - r.crowd.shop); assert.strictEqual(inv(G, h), t0, "守恆");
+  assert.strictEqual((h.budget - b0) + (h.bankroll - k0) + (h.museum - m0), r.total + r.crowd.ticket + r.crowd.shop, "錢進預算池／莊家／館方帳");
+  assert.ok(h.museum > m0, "門票有進館方帳"); assert.strictEqual(G.casNpcSpend(h, D0, "s", LIST, null), h.npcs); assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket - r.crowd.shop, "不重複");
 });
 T("上限：每位 NPC 壹天 ≤ perDay×dayPct%、全館壹天 ≤ dayCap；吃緊的池子不花；沒名單／關掉不花", G => {
   const C = G.NUM.casino.npcSpend; let h = mk(G);
@@ -27,7 +27,7 @@ T("上限：每位 NPC 壹天 ≤ perDay×dayPct%、全館壹天 ≤ dayCap；�
 T("GDP：店裡花的算消費 C、門票算淨出口 NX；日報壹句「帶進館」", G => {
   const h = mk(G), s0 = G.casBookSnap([], h, 0, D0); const r = G.casNpcSpend(h, D0, "s", LIST, null);
   const s1 = G.casBookSnap([], h, 0, add(D0, 1)), d = G.casBookDiff(s0, s1), g = G.casGdpOf(d), z = G.casGdpOf({ act: {}, wflow: {} });
-  assert.strictEqual(g.C - z.C, r.shop); assert.strictEqual(g.NX - z.NX, r.ticket + r.crowd.ticket);
+  assert.strictEqual(g.C - z.C, r.shop + r.crowd.shop); assert.strictEqual(g.NX - z.NX, r.ticket + r.crowd.ticket);
   const txt = G.casReportView({ day: add(D0, 1), at: 0, snap: s1, diff: d, opening: 0 }).secs.map(x => x.lines.join("|")).join("\n");
   assert.ok(txt.includes("帶進館"), txt.slice(0, 300));
 });
@@ -68,7 +68,7 @@ T("惰性結算：到了才付錢和留評價、冪等、不重複；整天結�
   assert.ok(n1 >= 3 && n1 < V.length, "只結到了的：" + n1); G.casNpcLive(h, D0, early, "s", LIST, null); assert.strictEqual(h.world, w1, "同壹刻再叫不重複付");
   G.casNpcLive(h, D0, G.npcDayStartMs(D0) + (last.start) * 60000, "s", LIST, null); assert.ok(Object.keys(h.npcLive.done).length > n1);
   const part = h.world; G.casNpcLive(h, D0, Infinity, "s", LIST, null); const tot = G.casNpcSpend(h, D0, "s", LIST, null);
-  assert.strictEqual(Object.keys(h.npcLive.done).length, V.length + G.crowdVisitsToday(D0, "s").length); assert.ok(h.world <= part && tot.total === h.npcs.total && tot.day === D0);
+  assert.strictEqual(Object.keys(h.npcLive.done).length, V.length + G.crowdVisitsToday(D0, "s").length + G.crowdShopToday(D0, "s").length); assert.ok(h.world <= part && tot.total === h.npcs.total && tot.day === D0);
   assert.strictEqual(inv(G, h), t0, "守恆"); G.casNpcLive(h, D0, Infinity, "s", LIST, null); assert.strictEqual(h.npcs.total, tot.total);
   const R = h.reviews; assert.ok(R.length >= 1 && R.length <= 20); for (const r of R) { assert.ok(r.who && r.text && r.stars >= 1 && r.stars <= 5); assert.ok(R.filter(x => x.npc === r.npc && x.day === r.day).length <= G.NUM.casino.npcSpend.reviewDay); }
   for (let i = 1; i < 12; i++) G.casNpcSpend(h, add(D0, i), "s" + i, LIST, null); assert.ok(h.reviews.length <= 20, "最多 20 則");
@@ -93,5 +93,16 @@ if (process.argv[2] === "sim") {
   for (let i = 0; i < N; i++) { const r = G.casNpcSpend(h, add(D0, i), "x" + i, LIST, null); tot += r.total; tk += r.ticket; shop += r.shop; ppl += r.people; }
   console.log(`${LIST.filter(n => n.kind !== "trace").length} 位 NPC、${N} 天：平均每天 ${Math.round(tot / N)}（門票 ${Math.round(tk / N)}、店裡 ${Math.round(shop / N)}）、${(ppl / N).toFixed(1)} 位花錢；全館上限 ${G.NUM.casino.npcSpend.dayCap}；外面世界每天成長 ${G.NUM.casino.world.growBase}`);
 }
+T("散客逛店：每家店每天平均 perStore 位、類型照店的個性（餐車多學生/家庭/旅行團，地下收藏庫多退休長輩）、跟展廳那幾組分開（不顯示）；算進館內股「昨天不同的人」但合計不超過 40%；花錢進莊家或預算池、有上限", G => {
+  const S = G.NUM.casino.npcSpend.crowd.shop, tot = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, kinds = { food: {}, cellar: {} };
+  for (let i = 0; i < 200; i++) { for (const g of G.crowdShopToday(add(D0, i), "x" + i)) { tot[g.store] += g.n; if (kinds[g.store]) kinds[g.store][g.label] = (kinds[g.store][g.label] || 0) + 1; assert.ok(g.start >= 0 && g.end <= 1110); } }
+  for (const s of Object.keys(tot)) assert.ok(Math.abs(tot[s] / 200 - S.perStore) < 0.6, s + " 平均 " + tot[s] / 200);
+  assert.ok((kinds.cellar["退休的長輩們"] || 0) > (kinds.cellar["三位學生"] || 0), "地下收藏庫退休長輩多於學生"); assert.ok(!kinds.food["退休的長輩們"] || kinds.food["三位學生"] > 0);
+  assert.ok(G.crowdVisitsToday(D0, "s").every(g => !g.key.startsWith("cshop")), "展廳的組不含逛店的組");
+  const h = G.casHouseFix(G.casHouseNew(), D0).house, H = G.casInHouseFix(h); for (let i = 1; i <= 7; i++) H.use[add(D0, -i)] = { food: 10 };
+  G.NUM.casino.stockIn.npcBurstPct = 0; const c0 = G.casInNpcFor(H, D0, "s", {}, { list: LIST, counters: null }).food; H.use[D0] = { food: 3 };
+  const lim = Math.floor(3 * G.NUM.casino.stockIn.npcShareMax / (100 - G.NUM.casino.stockIn.npcShareMax)); delete H.npc[D0]; assert.ok(G.casInNpcFor(H, D0, "s", {}, { list: LIST, counters: null }).food <= lim, "合計不超過 40%");
+  const h2 = mk(G), b0 = h2.bankroll, k0 = h2.budget; G.casNpcLive(h2, D0, Infinity, "s", LIST, null); assert.ok(h2.npcs.crowd.shop > 0 && h2.npcs.crowd.shop <= S.dayCap); assert.ok(c0 >= 0);
+});
 console.log(`${pass} passed, ${fail} failed（NPC 花錢）`);
 process.exit(fail ? 1 : 0);

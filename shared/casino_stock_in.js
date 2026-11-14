@@ -25,7 +25,7 @@ import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { npcTrips } from "./npc_trip.js";
-import { casNpcSpend } from "./npc_spend.js";
+import { casNpcSpend, crowdShopCounts } from "./npc_spend.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 
@@ -168,11 +168,12 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
   if (inBox(H.npc[d])) return H.npc[d];
   const out = {}, ev = npcDays && inBox(npcDays[d]) ? npcDays[d] : null;
   const trip = npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length ? npcTrips(d, secret, npcCtx.list, npcCtx.counters) : null; // 有名單：每位 NPC 各抽今天去哪幾家（npc_trip.js）；沒有：Poisson
+  const crowdShop = crowdShopCounts(d, secret);
   const fests = npcCtx && npcCtx.fest && Array.isArray(npcCtx.fest[d]) ? npcCtx.fest[d] : [], X = {};
   for (const id of IN_STORES) {
     const players = inN(H.use[d] && H.use[d][id]), rnd = mulberry32(hashStr(`${secret}|${d}|${id}|npc`));
     const cap = Math.floor(players * C.npcShareMax / (100 - C.npcShareMax));
-    let n = Math.min(cap, trip ? trip.counts[id] : inPois(rnd, C.npcLambda));
+    let n = Math.min(cap, (trip ? trip.counts[id] : inPois(rnd, C.npcLambda)) + (npcCtx && npcCtx.crowd !== false ? crowdShop[id] : 0)); // 有名字的 NPC ＋ 逛店的散客（照人數），合計最多占 npcShareMax%
     if (ev && ev.store === id) {
       const valid = [];
       for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inAvgTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
