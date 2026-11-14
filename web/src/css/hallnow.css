@@ -103,3 +103,7 @@
 .hn-hall .hn-policy b { color: var(--ink-accent, #8E2A24); }
 /* 大廳右欄多一行：把這塊的上下留白收一點，整頁仍然放得下 */
 .hn-lobby { padding: 6px 12px 6px; gap: 3px; }
+
+/* 「邀去賭場」鈕和「在賭場」那行（11-14） */
+.hn-inv { margin-top: 6px; min-height: 36px; }
+.hn-casino { margin: 4px 0 0; font-size: .75rem; }
