@@ -73,7 +73,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   npcs.forEach((n, i) => {
     const id = isObj(n) && typeof n.id === "string" ? n.id : "", w = `content/npc/${isObj(n) && n.__file || "第 " + (i + 1) + " 筆"}`;
     if (!isObj(n)) { E(w, "要是物件"); return; }
-    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "arc", "__file"];
+    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "arc", "casino", "__file"];
     Object.keys(n).forEach(k => { if (!allowed.includes(k)) E(w, `不認得欄位「${k}」（只能 ${allowed.filter(x => x !== "__file").join("、")}）`); });
     if (!/^[a-z][a-z0-9-]{2,23}$/.test(id)) { E(w, "id 要是英文小寫、數字、-（3～24 字，開頭是字母）"); return; }
     if (n.__file && n.__file !== id + ".json") E(w, `檔名要跟 id 壹樣（${id}.json）`);
@@ -106,6 +106,27 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
       if (!trace && Number.isInteger(b.perDay)) { if (perDays.has(b.perDay)) E(bw, `perDay ${b.perDay} 跟「${perDays.get(b.perDay)}」壹樣（每個 NPC 能拿的數目要不壹樣）`); else perDays.set(b.perDay, n.name); }
       Object.keys(b).forEach(k => { if (!["tier", "perDay", "max"].includes(k)) E(bw, `不認得「${k}」`); });
     }
+
+    // 賭場打法和台詞（旅客、委託人才有；劇情角色不放）
+    if (n.casino !== undefined) {
+      const cw = w + ".casino", c = n.casino, CATS = ["accept", "refuse", "sit", "win", "lose", "bust", "bj", "push", "cheer", "leave"];
+      if (trace) E(cw, "劇情角色不去賭場，不要寫 casino");
+      else if (!isObj(c)) E(cw, "要寫成 { style, lines }");
+      else {
+        Object.keys(c).forEach(k => { if (!["style", "lines"].includes(k)) E(cw, `不認得「${k}」（只能 style、lines）`); });
+        if (!["careful", "basic", "bold", "wild"].includes(c.style)) E(cw + ".style", "要是 careful、basic、bold、wild 其中壹個");
+        if (!isObj(c.lines)) E(cw + ".lines", "要是物件");
+        else {
+          Object.keys(c.lines).forEach(k => { if (!CATS.includes(k)) E(cw + ".lines", `不認得「${k}」（只能 ${CATS.join("、")}）`); });
+          CATS.forEach(k => {
+            const a = c.lines[k];
+            if (!Array.isArray(a) || a.length < 2 || a.length > 4) { E(`${cw}.lines.${k}`, "要是 2～4 句的陣列"); return; }
+            a.forEach((s, i) => { if (typeof s !== "string" || !s.trim() || [...s].length > 30) E(`${cw}.lines.${k}[${i}]`, "每句要是 1～30 字的文字"); });
+          });
+        }
+      }
+    }
+    if (!trace && n.casino === undefined) E(w, "旅客、委託人要有 casino（賭場打法和台詞）");
 
     // 故事線
     const arc = n.arc;
