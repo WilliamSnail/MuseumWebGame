@@ -20,5 +20,13 @@ T("帳面：吃 econ-status 的輸出（ECON_HOUSE_JSON／ECON_REPORT_JSON 兩�
   fs.writeFileSync(f, mk(0)); let r = run(["--ledger", f]); assert.strictEqual(r.status, 0, r.stdout); assert.ok(r.stdout.includes("對帳差 0"));
   fs.writeFileSync(f, mk(12)); r = run(["--ledger", f]); assert.strictEqual(r.status, 1); assert.ok(/對帳差不是 0/.test(r.stdout)); fs.unlinkSync(f);
 });
+T("帳面：econ-status 的 base64 分行輸出（行前有時間、中間夾別的字）接得回來；少壹行會說被截斷", () => {
+  const f = path.join(os.tmpdir(), "econ3_" + process.pid + ".txt"), NL = "\n", h = { bankroll: 2e9, budget: 1e9, museum: 0, sea: 0, world: 10000000000, day: "2026-11-20", debt: { budget: 0, culture: 9e8, world: 0 }, led: { world: { stockBuy: 1 } }, pad: "x".repeat(900) };
+  const enc = (kind, o) => { const b = Buffer.from(JSON.stringify(o)).toString("base64"), n = Math.ceil(b.length / 160), L = []; for (let i = 0; i < n; i++) L.push("2026-11-14T10:00:0" + (i % 10) + "Z ECON_B64 " + kind + " " + (i + 1) + "/" + n + " " + b.slice(i * 160, (i + 1) * 160)); return L; };
+  fs.writeFileSync(f, ["Run stuff", ...enc("H", h), "中間的別的字", ...enc("R", { day: "2026-11-20", gap: 0, house: h }), ""].join(NL));
+  let r = run(["--ledger", f]); assert.strictEqual(r.status, 0, r.stdout + r.stderr); assert.ok(r.stdout.includes("對帳差 0"));
+  const lines = fs.readFileSync(f, "utf8").split(NL); fs.writeFileSync(f, lines.filter(l => !l.includes("ECON_B64 H 2/")).join(NL));
+  r = run(["--ledger", f]); assert.notStrictEqual(r.status, 0); assert.ok(/少了幾行/.test(r.stdout + r.stderr), r.stdout + r.stderr); fs.unlinkSync(f);
+});
 console.log(`${pass} passed, ${fail} failed（經濟自我檢查）`);
 process.exit(fail ? 1 : 0);
