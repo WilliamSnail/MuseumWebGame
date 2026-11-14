@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "casino-mp-side-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場「跟館友同桌」不用往下滑了", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "牌桌頁籤的「跟館友同桌」搬到右邊，在銀行下面，壹打開就看得到「開壹桌」或「回到牌桌」。",
+        "手機畫面：銀行照舊在上面，「跟館友同桌」固定在牌桌下方，不用滑到底。",
+      ]],
+    ],
+  },
+  {
     id: "casino-table-gone-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭場回到牌桌不再卡住", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
