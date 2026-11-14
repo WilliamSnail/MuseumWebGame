@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-14-05b1db", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行的景氣條搬進館內經濟", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "財報頁的「今天的館內經濟」卡現在把景氣條也放進來了，GDP、成長、景氣好壞壹眼看完。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-14-77405e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行的信用等級變明顯了", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
