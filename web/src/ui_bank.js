@@ -548,7 +548,7 @@ SCREENS.bank = root => {
   }
   const v = view(), tab = UI.bankTab || "report";
   const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { if (id === "auction") { go("gallery", { tab: "auction" }, { action: false }); return; } UI.bankTab = id; rerender(); } },
-    h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "bond" && v.bonds ? h("i", { class: "bank-dot", "aria-label": "有新的一期" }) : null)));
+    h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "stock" && tab !== "stock" && v.stocks && v.stocks.list.some(x => x.fresh) ? h("i", { class: "bank-dot", "aria-label": "有股票的價格變了" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
     tabs,
     h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
