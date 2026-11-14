@@ -167,5 +167,33 @@ T("day:check：NPC 打包跟真的內容壹致", () => {
   const r = C.packFresh(); assert.ok(r.ok, r.message);
 });
 
+// npm run ledger（tools/ledger.cjs）：只看這週、壹次改壹個欄位
+const LG = require("../tools/ledger.cjs");
+T("ledger：get／set／push 用點路徑，陣列可以用 id", () => {
+  const L = { weeks: { "2026-W47": { hooks: ["d1：a"] } }, foreshadow: [{ id: "f-page", due: "2026-W50", closed: false }] };
+  assert.strictEqual(LG.get(L, "foreshadow.f-page.due"), "2026-W50");
+  assert.strictEqual(LG.get(L, "foreshadow.0.id"), "f-page");
+  LG.push(L, "weeks.2026-W47.hooks", "d2：b");
+  assert.deepStrictEqual(L.weeks["2026-W47"].hooks, ["d1：a", "d2：b"]);
+  LG.push(L, "weeks.2026-W48.hooks", "d1：c"); // 沒有的就建
+  assert.deepStrictEqual(L.weeks["2026-W48"].hooks, ["d1：c"]);
+  LG.set(L, "foreshadow.f-page.closed", LG.parseVal("true"));
+  assert.strictEqual(L.foreshadow[0].closed, true);
+  assert.strictEqual(LG.parseVal("d3：純文字"), "d3：純文字");
+  assert.throws(() => LG.get(L, "foreshadow.f-none.due"), /找不到/);
+});
+T("ledger today：只挑這週的、還沒收的伏筆；這週還沒寫就給上週的鉤子", () => {
+  const L = { main: { theme: "差壹隻", seasons: [{ season: 1, weeks: ["2026-W47"], chapters: [{ week: "2026-W47", title: "第壹章" }, { week: "2026-W48", title: "第貳章" }] }] },
+    weeks: { "2026-W46": { hooks: ["d7：翻過來"], question: "q" } },
+    foreshadow: [{ id: "a", closed: true }, { id: "b", closed: false }],
+    mysteries: { list: [{ id: "m1", clues: [{ week: "2026-W47" }] }, { id: "m2", clues: [{ week: "2026-W49" }] }] } };
+  const out = Object.fromEntries(LG.today(L, "2026-W47", "2026-W46").map(([t, v]) => [t.split(" ")[0], v]));
+  assert.strictEqual(out["主線的主旨"], "差壹隻");
+  assert.deepStrictEqual(out["這週那章"].map(c => c.title), ["第壹章"]);
+  assert.deepStrictEqual(out["還沒收的伏筆"].map(f => f.id), ["b"]);
+  assert.deepStrictEqual(out["mysteries.list"].map(m => m.id), ["m1"]);
+  assert.deepStrictEqual(out["上週"].hooks, ["d7：翻過來"]);
+});
+
 console.log(`${pass} passed, ${fail} failed（day_plan、day_check）`);
 process.exit(fail ? 1 : 0);

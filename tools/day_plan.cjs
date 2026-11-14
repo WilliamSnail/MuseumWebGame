@@ -181,6 +181,7 @@ function planDay(input) {
 function commandsFor(p) {
   const c = [];
   c.push(`git fetch origin && git checkout -b ${p.branch} origin/main`);
+  c.push("npm run ledger -- today    （帳本只看跟這週有關的；改帳本用 npm run ledger -- set／push <路徑> <值>，不要整份重寫）");
   c.push(`npm run svg -- ${p.dayFile}    （今日特展有畫新圖才跑；用 Read 打開 PNG 親眼看過）`);
   c.push("npm run day:check    （所有內容檢查壹次跑完；沒過不要往下）");
   c.push(`npm run doc:new -- <日誌.json>    （類型「內容」；會順便跑 log:index）`);
