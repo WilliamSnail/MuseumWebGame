@@ -146,11 +146,13 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   if (CR && !low) for (const gv of crowdVisitsToday(day, secret)) {
     if (gv.start > m || L.done[gv.key]) continue;
     L.done[gv.key] = 1;
+    // 人次照算（故事線的全館累計、日報的人數）；門票到了全館上限就不再收（11-14：散客壹天上千位，上限會碰到）
+    if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
+    house.npcc.hall = nsN(house.npcc.hall) + gv.n; L.crowd.people += gv.n; L.crowd.groups++;
     const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0) continue;
     const b = Math.floor(amt * C.ticketBudgetPct / 100), got = casPoolWorldOut(house, "budget", "npcCrowdBudget", b) + casPoolWorldOut(house, "museum", "npcCrowdMuseum", amt - b);
-    if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
-    house.npcc.hall = nsN(house.npcc.hall) + gv.n; hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
-    L.crowd.ticket += got; L.crowd.people += gv.n; L.crowd.groups++; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
+    hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
+    L.crowd.ticket += got; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
   // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap
   const CS = CR && CR.shop;
