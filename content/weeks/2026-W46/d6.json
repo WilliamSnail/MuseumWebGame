@@ -1,0 +1,332 @@
+{
+  "day": 6,
+  "date": "2026-11-14",
+  "holiday": null,
+  "board": "招領箱多了壹張「失物：壹個名字」；B1 的牆貼滿標語，每張都要署名；書架多 2 本書。",
+  "real": [
+    "嘉義的藝術週到了最後兩天，這個週末在市區多了壹場藝術市集。"
+  ],
+  "market": [
+    {
+      "title": "綠眼顯卡又滑壹段",
+      "line": "綠眼顯卡這陣子壹路往下滑，昨夜又滑了壹小段，街上的人都在看。",
+      "tone": "down",
+      "ref": [
+        "greeneye"
+      ]
+    },
+    {
+      "title": "夜光街暗了壹些",
+      "line": "夜光街的科技攤位昨夜收得比較早，整條街比前壹晚暗。",
+      "tone": "down",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "島上鑄晶坊跟著收低",
+      "line": "島上鑄晶坊擺在外面的攤子也跟著收低，爐火小了壹點。",
+      "tone": "down",
+      "ref": [
+        "islandforge"
+      ]
+    },
+    {
+      "title": "老街的老店還撐著",
+      "line": "不賣晶片的老店昨夜沒有跟著暗下去，門口的燈還亮著。",
+      "tone": "flat"
+    },
+    {
+      "title": "週末攤位都收了",
+      "line": "今天是週末，外面的攤位都收了，街上只剩掃地的聲音。",
+      "tone": "flat"
+    }
+  ],
+  "casino": {
+    "note": "賭場櫃檯的招領單今天多了壹欄「署名」。荷官每張都簽了，簽到最後壹張，筆沒水了。"
+  },
+  "books": [
+    {
+      "id": "6a",
+      "line": "w46-lost",
+      "clue": "c-lost-name-slip",
+      "title": "失物：壹個名字",
+      "spine": "壹個名字",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「9 號的紙條還在椅墊上。椅墊跟地板壹樣涼了。」\n「昨天那塊缺角的單，我拿起來了。」",
+        "底下壓著的那張，昨天只露出「失物」兩個字。\n他把它抽出來，攤在燈下。\n字很小、很整齊，比前幾張又小了壹點。",
+        "「失物：壹個名字。」\n「數量：壹。」\n「特徵：還沒有人叫過。」",
+        "「拾得地點：櫃台。」\n失主欄是空的。\n他把箱子翻了壹遍。圍巾、手套、外套、畫的壹角，每壹件都摸得到。只有這壹件，箱子裡沒有。",
+        "他上樓去看大廳的櫃台。\n壹串鑰匙，壹塊名牌，壹支筆。\n名牌是空白的。他把招領單放在旁邊，沒有拿筆。",
+        "回到 B1，他照樣登記：「名字，壹個，未尋獲。」\n箱子比早上輕。箱底有壹張紙，比招領單大，字朝下。\n「先把今天的寫完，再翻。」"
+      ]
+    },
+    {
+      "id": "6b",
+      "line": "w46-lost",
+      "title": "沒署名的那壹張",
+      "spine": "沒署名",
+      "unlock": {
+        "type": "find",
+        "room": "posters"
+      },
+      "pages": [
+        "B1 的牆壹夜之間貼滿了標語。\n壹張寫「燈要亮壹點」，隔壁那張寫「燈暗壹點才睡得著」。\n兩張壹樣大，貼得壹樣高。",
+        "箱子旁多了壹張告示：\n「標語請署名。沒署名的，會收走。」\n警衛拿著登記簿，壹張壹張對。雕像簽了字，佩佩按的是腳印。",
+        "對到最後壹張。\n它貼得很低，低到要蹲下來才看得到。\n紙上沒有主張，只畫了壹條署名用的橫線。線上是空的。",
+        "「沒有主張，不算標語。」\n他照規矩，沒有收。\n橫線底下那壹小塊牆比別的地方乾淨，剛好是壹塊名牌的大小。",
+        "他在值班紀錄寫：\n「B1，標語二十三張，署名二十三個。另有壹張，不算。」\n數了兩遍。寫完再抬頭數，牆上是二十四張。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d6a",
+      "kind": "read",
+      "book": "6a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d6b",
+      "kind": "spot",
+      "room": "posters",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d6c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w3",
+      "words": "牆上的標語都署了名。箱裡那張單，失主欄還是空的。"
+    },
+    {
+      "task": "w5",
+      "words": "箱子快空了。箱底還有壹張紙，字朝下。"
+    }
+  ],
+  "show": {
+    "title": "等人署名的東西",
+    "intro": "今天的畫都在等壹個名字：牆上的標語、櫃台上的名牌、箱底的那張紙。",
+    "works": [
+      {
+        "id": "s6a",
+        "frame": "wood",
+        "fx": [],
+        "title": "貼滿標語的牆",
+        "lines": [
+          "B1 的牆貼滿了紙，每壹張最下面都有壹行署名。",
+          "最低的那張貼在牆腳，上面只有壹條橫線。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#3b3a34'/><stop offset='1' stop-color='#15140f'/></linearGradient>",
+          "<radialGradient id='lamp' cx='50%' cy='0%' r='80%'><stop offset='0' stop-color='#e8c878' stop-opacity='.55'/><stop offset='1' stop-color='#e8c878' stop-opacity='0'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='21' result='t'/><feDisplacementMap in='SourceGraphic' in2='t' scale='4' xChannelSelector='R' yChannelSelector='G'/></filter>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='23' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<rect width='240' height='300' fill='url(#lamp)'/>",
+          "<path d='M0 252 H240 V300 H0 Z' fill='#0e0c09'/>",
+          "<path d='M0 252 H240' stroke='#5a4a30' stroke-width='3'/>",
+          "<g filter='url(#r)' stroke='#2a1c10' stroke-width='2'>",
+          "<rect x='18' y='26' width='58' height='74' fill='#e6d8b0' transform='rotate(-3 47 63)'/>",
+          "<rect x='90' y='20' width='58' height='74' fill='#d9c79a' transform='rotate(2 119 57)'/>",
+          "<rect x='162' y='28' width='58' height='74' fill='#e6d8b0' transform='rotate(-2 191 65)'/>",
+          "<rect x='26' y='112' width='58' height='74' fill='#d2bf90' transform='rotate(3 55 149)'/>",
+          "<rect x='98' y='106' width='58' height='74' fill='#e6d8b0' transform='rotate(-2 127 143)'/>",
+          "<rect x='168' y='114' width='54' height='70' fill='#d9c79a' transform='rotate(4 195 149)'/>",
+          "</g>",
+          "<g stroke='#6a5236' stroke-width='3' fill='none'>",
+          "<path d='M28 44 H66 M28 56 H60 M100 38 H138 M100 50 H128 M172 46 H210 M172 58 H200 M36 130 H74 M36 142 H66 M108 124 H146 M108 136 H138 M178 132 H212 M178 144 H204'/>",
+          "</g>",
+          "<g stroke='#2a1c10' stroke-width='2' fill='none'>",
+          "<path d='M40 88 q6 -6 12 0 t12 0 M112 82 q6 -6 12 0 t12 0 M184 90 q6 -6 12 0 t12 0 M48 174 q6 -6 12 0 t12 0 M120 168 q6 -6 12 0 t12 0 M188 172 q6 -6 12 0 t10 0'/>",
+          "</g>",
+          "<rect x='150' y='212' width='40' height='34' fill='#f3ead2' stroke='#2a1c10' stroke-width='2'/>",
+          "<path d='M157 236 H183' stroke='#2a1c10' stroke-width='2'/>",
+          "<rect x='156' y='248' width='28' height='4' fill='#6a6456'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s6b",
+        "clue": "c-nameplate-worn-back",
+        "frame": "gold",
+        "fx": [
+          "dust"
+        ],
+        "title": "空白的名牌",
+        "lines": [
+          "櫃台上放著壹串鑰匙、壹塊名牌、壹支筆。名牌的正面是空白的，擦得很亮。",
+          "它立在鏡子前面。鏡子裡的背面，磨得很舊。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='bg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a1e1a'/><stop offset='1' stop-color='#120c0a'/></linearGradient>",
+          "<linearGradient id='desk' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#7a5230'/><stop offset='1' stop-color='#3a2412'/></linearGradient>",
+          "<linearGradient id='mir' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#5e6a6c'/><stop offset='1' stop-color='#262e30'/></linearGradient>",
+          "<linearGradient id='brass' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#f2dc98'/><stop offset='1' stop-color='#b8923e'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='29' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#bg)'/>",
+          "<rect x='44' y='30' width='152' height='130' fill='url(#mir)' stroke='#c9a15a' stroke-width='6'/>",
+          "<path d='M60 44 L96 44 L60 92 Z' fill='#8a9698' opacity='.25'/>",
+          "<rect x='78' y='112' width='84' height='40' fill='#6e5a2c' stroke='#1c130c' stroke-width='2'/>",
+          "<path d='M86 122 H150 M90 130 H142 M84 138 H154 M96 145 H138' stroke='#3a2c12' stroke-width='2' opacity='.8'/>",
+          "<path d='M88 118 L100 148 M118 116 L128 150 M140 118 L150 146' stroke='#2a200c' stroke-width='1' opacity='.7'/>",
+          "<path d='M0 190 H240 V300 H0 Z' fill='url(#desk)'/>",
+          "<path d='M0 190 H240' stroke='#c9a15a' stroke-width='2' opacity='.6'/>",
+          "<path d='M70 228 L78 176 H162 L170 228 Z' fill='url(#brass)' stroke='#1c130c' stroke-width='3'/>",
+          "<path d='M70 228 H170 L174 236 H66 Z' fill='#5a431c' stroke='#1c130c' stroke-width='2'/>",
+          "<path d='M88 186 L98 186 L84 214 Z' fill='#fff7d8' opacity='.6'/>",
+          "<circle cx='34' cy='246' r='11' fill='none' stroke='#b8a880' stroke-width='3'/>",
+          "<path d='M42 254 L60 266 M54 262 L50 268 M58 265 L54 271' stroke='#b8a880' stroke-width='3'/>",
+          "<path d='M30 256 L26 276 M26 276 L32 278' stroke='#9a8a66' stroke-width='3'/>",
+          "<path d='M150 262 L214 244' stroke='#1c130c' stroke-width='7' stroke-linecap='round'/>",
+          "<path d='M150 262 L140 265' stroke='#d9c48a' stroke-width='4' stroke-linecap='round'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s6c",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "箱底的紙",
+        "lines": [
+          "從上面看下去，箱子快空了。箱底有壹張紙，字朝下。",
+          "紙比箱子舊。四個角都被壓平了。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<radialGradient id='pit' cx='50%' cy='52%' r='60%'><stop offset='0' stop-color='#1e2a30'/><stop offset='1' stop-color='#05080a'/></radialGradient>",
+          "<linearGradient id='wood' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6a4a2a'/><stop offset='1' stop-color='#2e1e10'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.45' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.88'/></radialGradient>",
+          "<filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.04' numOctaves='3' seed='31' result='t'/><feDisplacementMap in='SourceGraphic' in2='t' scale='4' xChannelSelector='R' yChannelSelector='G'/></filter>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='37' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='#0b0a08'/>",
+          "<g filter='url(#r)'>",
+          "<path d='M14 30 H226 V270 H14 Z' fill='url(#wood)' stroke='#120b06' stroke-width='4'/>",
+          "<path d='M14 30 L70 96 M226 30 L170 96 M14 270 L70 204 M226 270 L170 204' stroke='#120b06' stroke-width='3'/>",
+          "<path d='M40 30 L84 96 M200 30 L156 96 M14 150 H70 M170 150 H226' stroke='#3e2a16' stroke-width='2' opacity='.7'/>",
+          "<path d='M70 96 H170 V204 H70 Z' fill='url(#pit)' stroke='#120b06' stroke-width='3'/>",
+          "<path d='M92 118 L150 112 L154 184 L96 190 Z' fill='#c9bb92' stroke='#3a2a1a' stroke-width='2'/>",
+          "</g>",
+          "<path d='M100 130 L144 126 M101 142 L145 138 M102 154 L146 150 M103 166 L130 164' stroke='#a39670' stroke-width='2' opacity='.55'/>",
+          "<path d='M18 60 q40 26 20 70' fill='none' stroke='#8a2a22' stroke-width='7' stroke-linecap='round' opacity='.8'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s6d",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "faded"
+        ],
+        "frame": "plain",
+        "title": "按了腳印的佩佩",
+        "lines": [
+          "牠在自己那張標語下面按了壹個腳印，當作署名。",
+          "牠退後看了看，很滿意。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "posters",
+      "clue": "c-blank-sign-line",
+      "floor": 1,
+      "line": "w46-lost",
+      "title": "貼滿標語的牆",
+      "hint": "去 B1，看看貼滿標語的那面牆",
+      "intro": "B1 的牆壹夜之間貼滿了標語。箱子旁有壹張告示：「標語請署名。沒署名的，會收走。」",
+      "lines": [
+        "每壹張標語最下面都有署名。有的是字，有的是腳印。",
+        "牆腳還有壹張，貼得很低。紙上只有壹條署名用的橫線。"
+      ],
+      "mood": null,
+      "color": "綠",
+      "choices": [
+        {
+          "label": "蹲下來看最低的那張",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 10
+          },
+          "success": {
+            "text": "橫線上是空的。貼它的高度，剛好是蹲著的人伸手搆得到的地方。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "你蹲下去，覺得旁邊也有誰跟著蹲了下來。轉頭看，只有牆。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把擋住牆腳的箱子挪開",
+          "check": {
+            "type": "power",
+            "target": 12
+          },
+          "success": {
+            "text": "箱子比前幾天輕多了。橫線底下那壹小塊牆很乾淨，剛好是壹塊名牌的大小。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "箱子沒有動。箱底有紙磨過木板的聲音。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把牆上的署名數壹遍",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你數了壹遍署名，又數了壹遍標語。標語比署名多壹張。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
