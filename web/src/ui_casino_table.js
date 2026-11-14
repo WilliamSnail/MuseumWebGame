@@ -276,7 +276,7 @@ async function openNew() {
 }
 ADDONS.casinoTable = () => {
   const cs = casinoState(), tp = cs && cs.w && cs.w.tablePid;
-  return h("div", { class: "cas-sec" }, h("h3", null, "跟館友同桌"),
+  return h("section", { class: "cas-sec cas-mp", "aria-label": "跟館友同桌" }, h("h3", null, icon("users"), " 跟館友同桌"),
     h("p", { class: "cas-note" }, "1 到 4 人同壹張桌、同壹副牌、同壹個莊家：各下各的注，輪流要牌，每次有時間限制；斷線、超時當停牌；有人離桌不影響別人。壹個人也可以開。"),
     h("div", { class: "cas-acts" }, tp ? btn("回到牌桌", () => openTable(tp), "primary") : btn([icon("users"), " 開壹桌"], openNew, "primary"),
       h("small", { class: "cas-hint" }, "開好桌之後，在「館友」名單按「邀請同桌」。")));

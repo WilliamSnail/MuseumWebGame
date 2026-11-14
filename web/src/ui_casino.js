@@ -143,7 +143,7 @@ function draw() {
   const body = S.tab === "table" ? tablePane() : S.tab === "week" ? weekPane() : S.tab === "packs" ? packsPane() : S.tab === "econ" ? econPane() : S.tab === "live" ? livePane() : S.tab === "diner" ? dinerPane() : S.tab === "swap" ? swapPane() : S.tab === "ach" ? achPane() : propsPane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   // 銀行放在右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）；窄的畫面照舊放在上面（css 的 order）
-  m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, reliefBar()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
+  m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, sideCol()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
   box.scrollTop = keepY;
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
@@ -153,6 +153,11 @@ const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3
 // 賭場的銀行：整塊（平常收成壹條）。賭場和畫廊的拍賣頁籤用同壹份（bankBar）；賭場這邊的狀態是 S，動作是 act、say、draw
 const CAS_IO = { act: (...a) => act(...a), say: l => say(l), draw: () => draw(), leave: () => S.m.close() };
 function reliefBar() { return bankBar(S, CAS_IO); }
+// 右邊壹欄：銀行＋牌桌頁籤的「跟館友同桌」（翊文 11-14：「一覽就看到不用滑到底下」）。窄的畫面：銀行在上、同桌釘在下面（css）
+function sideCol() {
+  const mp = S.tab === "table" && ADDONS.casinoTable ? ADDONS.casinoTable() : null;
+  return mp ? h("div", { class: "cas-side" }, reliefBar(), mp) : reliefBar();
+}
 // ---------- 簡易銀行（11-14，翊文：「畫廊的拍賣那個頁籤裡面加入像賭場裡的那個簡易銀行」）----------
 // 畫廊拍賣頁籤放壹條：存款・未還・可借、展開（借款、存款）、去銀行。資料和動作跟賭場同壹條（casino act open、borrow、repay、bank）；
 // 賭場的牌桌那壹手打到壹半的限制在賭場裡才有，這裡不會有（round 是 null）。回傳節點，畫面離開就不再更新
@@ -314,7 +319,6 @@ function tablePane() {
       btn("要（加牌）", () => move("hit"), "primary", { disabled: S.busy ? true : null }), btn("不要", () => move("stand"), "", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   } else if (!playing && S.shown == null) parts.push(betBox());
-  if (ADDONS.casinoTable) parts.push(ADDONS.casinoTable());
   parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`));
   return parts;
 }

@@ -527,3 +527,21 @@ body.reduce-motion .cas-bub { animation: none; }
 @media (max-height: 500px) and (orientation: landscape) { .cas-inv-b { min-height: 44px; } .cas-empty-seat { min-height: 52px; } }
 .cas-inv-why { margin: 0; text-align: center; color: #F8E3A0; font-size: .8125rem; line-height: 1.4; }
 .cas-inv-b:disabled { filter: grayscale(.6); opacity: .75; }
+
+/* 跟館友同桌放右邊壹欄、銀行下面（翊文 11-14：「一覽就看到不用滑到底下」）。窄的畫面：銀行照舊在上，同桌釘在牌桌下面、只留標題和按鈕 */
+.cas-side { display: contents; }
+.cas-side > .cas-bank { order: -1; flex: none; }
+.cas-side > .cas-mp { order: 1; flex: none; padding: 8px 12px; }
+.cas-side > .cas-mp h3 { margin: 0; font-size: 1rem; }
+.cas-side > .cas-mp .cas-note, .cas-side > .cas-mp .cas-hint { display: none; }
+.cas-side > .cas-mp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+.cas-side > .cas-mp .cas-acts { margin: 0; }
+@media (min-width: 1180px) and (min-height: 600px) {
+  .cas-side { display: flex; flex-direction: column; gap: 12px; flex: 0 0 320px; align-self: flex-start; max-height: 100%; overflow-y: auto; margin: 6px 0 0; min-height: 0; }
+  .cas-side > .cas-bank { margin: 0; max-height: none; overflow: visible; }
+  .cas-side > .cas-mp { display: block; padding: 14px 16px; }
+  .cas-side > .cas-mp h3 { margin: 0 0 6px; }
+  .cas-side > .cas-mp .cas-note, .cas-side > .cas-mp .cas-hint { display: block; }
+  .cas-side > .cas-mp .cas-note { font-size: .875rem; }
+  .cas-side > .cas-mp .cas-acts { margin-top: 8px; flex-direction: column; align-items: stretch; }
+}
