@@ -42,14 +42,15 @@ function weekGaps(wk) {
 function beatInfo(ledger, week, monday, G) {
   const list = asList(ledger && ledger.revealBeats && ledger.revealBeats.list), mys = asList(ledger && ledger.mysteries && ledger.mysteries.list);
   const prevWeek = G.isoWeek(G.addDays(monday, -7));
-  const here = list.find(b => b && b.week === week) || null, prev = list.find(b => b && b.week === prevWeek) || null;
+  const here = list.find(b => b && b.week === week && !b.extra) || null, prev = list.find(b => b && b.week === prevWeek && !b.extra) || null;
+  const extras = list.filter(b => b && b.week === week && b.extra && b.status !== "skipped"); // 加開的揭露（翊文 11-14：館外壹個月內揭）
   const closing = mys.filter(m => m && m.closeBy === week && m.status !== "closed").map(m => m.id);
   const rec = ledger && ledger.weeks && ledger.weeks[week], planned = rec && isObj(rec.beat) ? rec.beat : null;
   let kind = "一般週";
   if (closing.length) kind = "大揭曉週";
   else if (here && here.status !== "skipped") kind = "揭露週";
   else if (prev && prev.status !== "skipped") kind = "回聲週";
-  return { kind, beat: here, prev, closing, plannedDay: planned ? planned.day || "d3" : null, planned: !!planned, echoOf: rec && rec.echoOf || null };
+  return { kind, beat: here, extras, prev, closing, plannedDay: planned ? planned.day || "d3" : null, planned: !!planned, echoOf: rec && rec.echoOf || null };
 }
 
 // 哪些 NPC 該補故事段：沒有排到下週以後的段、而且還沒到 6 段。旅客數量也看一下（25～30，翊文 11-14：展廳要常有人）
@@ -216,6 +217,7 @@ function format(p) {
   } else if (p.beat.kind === "大揭曉週") {
     B(`  收線：${p.beat.closing.join("、")}（照 mysteries 的 closeBy，在當天 dN.json 加 understand；2027-W43 收尾前先問翊文）`);
   } else B("  不是揭露週也不是回聲週：照原來排，每天至少壹條 clue。");
+  asList(p.beat.extras).forEach(x => { B(`  加開（extra，館外壹個月內揭）${x.id}（${x.mystery}）：${x.detail}`); B(`    放的地方：${asList(x.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}；放完壹樣改 revealed、revealedOn、clues；不另外發 Discord`); if (x.concrete) B(`    更具體（concrete）：${x.safe}`); });
   if (p.chapters.length) { B(""); B("【季節線】"); p.chapters.forEach(c => B(`  ${c.line}「${c.title}」：${c.written ? "已放（" + c.written + "）" : "★還沒放書，這週某壹天放，放了把 written 填書的 id"}`)); }
   if (p.isMonday) {
     B(""); B("【週一要排的（week.json）】");

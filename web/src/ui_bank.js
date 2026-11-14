@@ -12,6 +12,7 @@ import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
 import { NUM } from "../../shared/config.js";
 import { casNum } from "../../shared/casino.js";
+import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
 
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
 const sign = n => (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n));
@@ -355,13 +356,15 @@ function levTrade(v, S, cur) {
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
   const phone = window.innerWidth < 761 || window.innerHeight < 501;
   const sum = h("details", { class: "bank-sum", open: phone ? null : "" });
+  // 整股（11-14 測試：以前畫面寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：股數 ＝ 保證金×倍數÷價 無條件捨去，部位 ＝ 股數×價，保證金 ＝ 部位÷倍數 進位（跟 shared/casino_stock_lev.js 的 casLevOpen 壹樣）
+  const levSize = m0 => { const z = casLevSizeOf(m0, lev, cur.price); return { qty: z.qty, pos: z.notional, mg: z.margin }; };
   const calc = () => {
-    const m = Math.min(f.margin || 0, maxMargin), pos = m * lev, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
+    const sz = levSize(Math.min(f.margin || 0, maxMargin)), m = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
     const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     const stopPx = f.stopOn && f.stop > 0 ? Math.round(cur.price * (long ? 1 - f.stop / 100 : 1 + f.stop / 100)) : null, takePx = f.takeOn && f.take > 0 ? Math.round(cur.price * (long ? 1 + f.take / 100 : 1 - f.take / 100)) : null;
     sum.replaceChildren(
       h("summary", null, h("b", null, `部位 ${fmt(pos)}`), h("span", null, `強平價約 ${fmt(Math.round(liq))}`), h("span", { class: "bank-sum-open" }, "點開 ▾")),
-      h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${lev}× 保證金 ${fmt(m)}`)),
+      h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${fmt(sz.qty)} 股 × ${fmt(cur.price)}（${lev}× 保證金 ${fmt(m)}）`)),
       h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(L.fee)}，${long ? "利息 " + pctText(L.interest) : "借券費 " + pctText(L.borrow)}）`)),
       h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fmt(Math.round(liq))}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)),
       stopPx ? h("p", null, h("span", null, "停損價"), h("b", null, fmt(stopPx))) : null, takePx ? h("p", null, h("span", null, "停利價"), h("b", null, fmt(takePx))) : null);
@@ -373,9 +376,10 @@ function levTrade(v, S, cur) {
   const ocoBad = f.stopOn && f.stop >= liqPct ? `停損要比強平價更靠近現價：最多 ${(liqPct - 0.1).toFixed(1)}%。` : "";
   const doOpen = () => bankDo("stock", { op: "open", id: cur.id, dir: f.dir, lev, margin: Math.min(f.margin, maxMargin), stop: stopP, take: takeP });
   const open = () => {
-    const mg = Math.min(f.margin, maxMargin), pos = mg * lev, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - mg : pos) * (long ? L.interest : L.borrow)), liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
+    const sz = levSize(Math.min(f.margin, maxMargin)), mg = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - mg : pos) * (long ? L.interest : L.borrow)), liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
+    if (sz.qty < 1) { note("保證金不夠買壹股，加壹點再開。", "bad"); return; }
     confirmTrade(`${long ? "開多單" : "開空單"} ${cur.name} ${lev}×`, [
-      ["保證金（先扣）", fmt(mg)], ["部位", fmt(pos)], ["手續費＋" + (long ? "利息" : "借券費") + "（約）", fmt(feeAmt + carry)],
+      ["股數", `${fmt(sz.qty)} 股（每股 ${fmt(cur.price)}）`], ["保證金（先扣）", fmt(mg)], ["部位", fmt(pos)], ["手續費＋" + (long ? "利息" : "借券費") + "（約）", fmt(feeAmt + carry)],
       ["強制平倉價（約）", fmt(Math.round(liq)), "warn"], stopP ? ["停損價", fmt(stopP)] : null, takeP ? ["停利價", fmt(takeP)] : null,
       ["今天一定平倉", cur.market === "tw" ? "台股 13:30 前" : "23:30 前"]], long ? "確認開多單" : "確認開空單", doOpen);
   };

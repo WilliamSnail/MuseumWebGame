@@ -373,5 +373,13 @@ T("畫面平倉的單號 p3 要解得出來（11-14 實測：伺服器把 p3 解
   assert.strictEqual(G.casLevPidNo("p3"), 3); assert.strictEqual(G.casLevPidNo("p12"), 12); assert.strictEqual(G.casLevPidNo("D7"), 7); assert.strictEqual(G.casLevPidNo(5), 5);
   assert.ok(Number.isNaN(G.casLevPidNo(null)) && Number.isNaN(G.casLevPidNo("")));
 });
+T("給保證金開倉：整股（畫面的確認單用 casLevSizeOf）：保證金 10 萬、2×、價 28,800 → 6 股、部位 172,800、保證金 86,400；跟 casLevOpen 實際開出來的壹樣", G => {
+  assert.strictEqual(J(G.casLevSizeOf(100000, 2, 28800)), J({ qty: 6, notional: 172800, margin: 86400 }));
+  assert.strictEqual(J(G.casLevSizeOf(100000, 5, 1000)), J({ qty: 500, notional: 500000, margin: 100000 }));
+  assert.strictEqual(J(G.casLevSizeOf(100, 2, 28800)), J({ qty: 0, notional: 0, margin: 0 }), "不夠買壹股");
+  assert.strictEqual(J(G.casLevSizeOf(0, 2, 100)), J({ qty: 0, notional: 0, margin: 0 })); assert.strictEqual(J(G.casLevSizeOf(100, 0, 100)), J({ qty: 0, notional: 0, margin: 0 }));
+  const s = fresh(G), r = G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 2, margin: 100000 }, D0, at(D0, 12), fakeSrc({ px: { [IN]: 28800 }, idx: 28 })), z = G.casLevSizeOf(100000, 2, 28800);
+  assert.ok(r.ok, r.reason); assert.strictEqual(r.pos.qty, z.qty); assert.strictEqual(r.pos.notional, z.notional); assert.strictEqual(r.pos.margin, z.margin);
+});
 console.log(`casino_stock_lev.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
