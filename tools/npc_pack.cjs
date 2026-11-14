@@ -13,6 +13,7 @@ function roster(dir = path.join(ROOT, "content", "npc")) {
     let o; try { o = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")); } catch (e) { console.error("NPC：讀不出來", f, e.message); continue; }
     if (!o || typeof o.id !== "string" || o.kind === "trace") continue;
     const r = {}; KEEP.forEach(k => { if (o[k] !== undefined) r[k] = o[k]; });
+    if (Array.isArray(r.arc)) r.arc = r.arc.map(g => { const { early, ...rest } = g; return rest; }); // early 是給排程和審的人看的理由，不進遊戲
     out.push(r);
   }
   return out.sort((a, b) => (a.id < b.id ? -1 : 1));
