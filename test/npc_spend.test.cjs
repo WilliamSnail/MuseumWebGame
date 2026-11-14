@@ -41,6 +41,11 @@ T("即時在場：每位 NPC 的幾站排成壹串不重疊、在營業時間內
   assert.ok(p.hall >= 1 && p.names.includes(hv.name), JSON.stringify(p)); assert.strictEqual(G.npcPresence(D0, G.npcDayStartMs(D0) - 1000, "s", LIST, null).hall, 0, "05:00 以前沒人");
   assert.ok(!("shops" in p), "不給各家店現在的人數");
 });
+T("停留時間在設定的範圍內（展廳 60～180、店 30～120，除非碰到營業時間結束被截短）；展廳平均 ≥ 2 位", G => {
+  const SP = G.NUM.casino.npcSpend; let hs = 0, n = 0;
+  for (let d = 0; d < 12; d++) { const V = G.npcVisitsToday(add(D0, d), "t" + d, LIST, null); for (const v of V) { const r = v.place === "hall" ? SP.hallStay : SP.shopStay, len = v.end - v.start; assert.ok(len <= r[1] && (len >= r[0] || v.end === 1110), JSON.stringify(v)); } for (let m = 0; m < 1110; m += 10) { hs += V.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; n++; } }
+  assert.ok(hs / n >= 2, "展廳平均 " + hs / n);
+});
 T("惰性結算：到了才付錢和留評價、冪等、不重複；整天結完等於收進 house.npcs；評價最多 20 則、壹位壹天 ≤ reviewDay", G => {
   const h = mk(G), t0 = inv(G, h), V = G.npcVisitsToday(D0, "s", LIST, null), last = V[V.length - 1];
   const early = G.npcDayStartMs(D0) + (V[2].start) * 60000;

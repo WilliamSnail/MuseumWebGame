@@ -489,7 +489,7 @@ export const NUM = {
     // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進預算池、其餘館方帳）；
     //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進預算池）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
     //   dayCap 全館壹天最多（×（1＋extPct%×景氣）），hallLambda 展廳壹天平均來幾位 NPC。都從外面世界池子搬
-    npcSpend: { on: true, ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 4,
+    npcSpend: { on: true, ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 24, hallStay: [60, 180], shopStay: [30, 120], // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）
       // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },

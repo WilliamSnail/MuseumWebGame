@@ -76,6 +76,11 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   const list = fs.readdirSync(__dirname + "/../content/npc").filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(__dirname + "/../content/npc/" + f, "utf8")));
   const h = G.casHouseFix(G.casHouseNew(), "2026-11-16").house; let tot = 0; const days = 120;
   for (let i = 0; i < days; i++) tot += G.casNpcSpend(h, add("2026-11-16", i), "n" + i, list, null).total;
+  { // 展廳有人嗎（翊文 11-14：延長停留＋多加 NPC；目標展廳平均 ≥ 2 位、0 人的時間 < 20%）；用現在 content/npc 的名單，每 10 分鐘看壹次
+    let hs = 0, hz = 0, n = 0;
+    for (let d = 0; d < 40; d++) { const v = G.npcVisitsToday(add("2026-11-16", d), "p" + d, list, null); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; hs += k; if (!k) hz++; n++; } }
+    check("模擬：展廳平均 ≥ 2 位、0 人的時間 < 20%（現在的 NPC 名單）", hs / n >= 2 && hz / n < 0.2, `平均 ${(hs / n).toFixed(2)} 位；0 人 ${pct(hz / n * 100)}`);
+  }
   check("模擬：NPC 來館花錢的平均每天 ≤ 全館上限，且 ≤ 外面世界每天成長的 20%", tot / days <= npcDay && tot / days <= grow * 0.2, `平均每天 ${fmt(tot / days)}；上限 ${fmt(npcDay)}；成長 ${fmt(grow)}`);
 })();
 
