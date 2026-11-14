@@ -194,6 +194,12 @@ T("ledger today：只挑這週的、還沒收的伏筆；這週還沒寫就給�
   assert.deepStrictEqual(out["mysteries.list"].map(m => m.id), ["m1"]);
   assert.deepStrictEqual(out["上週"].hooks, ["d7：翻過來"]);
 });
+T("ledger today：長篇支線每條都列，給下壹段", () => {
+  const L = { sideArcs: { 說明: "x", list: [{ id: "arc-a", name: "甲", ties: ["m1"], at: 1, stages: ["壹", "貳"] }, { id: "arc-b", name: "乙", at: 2, stages: ["壹", "貳"] }] } };
+  const arcs = LG.today(L, "2026-W47", "2026-W46").find(([t]) => t.startsWith("長篇支線"))[1];
+  assert.deepStrictEqual(arcs.map(a => [a.id, a.next]), [["arc-a", "貳"], ["arc-b", "（已經走完）"]]);
+  LG.set(L, "sideArcs.list.arc-a.at", 2); assert.strictEqual(L.sideArcs.list[0].at, 2);
+});
 
 console.log(`${pass} passed, ${fail} failed（day_plan、day_check）`);
 process.exit(fail ? 1 : 0);
