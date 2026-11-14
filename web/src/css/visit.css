@@ -94,3 +94,5 @@ button.nf-card.nf-pickcard:disabled { cursor: default; filter: saturate(.55); }
 /* 送佩佩：選好的那隻下面，地下的數值（11-14，ui_screens1.js 的 cellarFxBox） */
 .gf-foot { display: grid; gap: 8px; }
 .gf-foot .ws-fx-list { max-height: 140px; overflow-y: auto; }
+/* 木框裡 --ink 是淺色（給深底用），效果卡自己是米色底，字要用深色 */
+.gf-foot .ws-fx { --ink: #2E2014; --ink-soft: #5A4030; --ink-accent: #8E2A24; }
