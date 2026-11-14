@@ -223,3 +223,13 @@ export function casBookDiff(a, b) {
 }
 // 第一份快照當起點：開場總和 ＝ 現在的總和 － 憑空 ＋ 消失（開始記帳以前的籌碼不補記）
 export const casBookOpening = s => casBookTotal(s) - casBookMinted(s) + casBookBurned(s);
+// 新壹天的日報要用哪個「開場總和」（對帳基準）。prev：前壹份日報（{ opening, gap, wfix, snap }）；snap：今天的快照；worldStart：外面世界池子的起始（NUM.casino.world.start）。回傳 { opening, fix, wfix }
+//   外面世界有帳的那壹天（前壹份快照還沒有 world）：基準加「起始」（不是現在的餘額——餘額已經含了當天買賣股票搬進搬出的錢，11-14 加成餘額多算了 7.6 億的假差額）。
+//   已經加錯的（前壹份有 world、沒有 wfix 記號、對帳差 ≠ 0）：壹次把前壹份的差額校正掉（fix），並記下來（日報寫），之後差額要是 0；再有差就是真的有路沒記帳。
+export function casBookOpeningNext(prev, snap, worldStart) {
+  if (!prev) return { opening: casBookOpening(snap), fix: 0, wfix: true };
+  const pw = prev.snap && prev.snap.house ? prev.snap.house.world : null;
+  if (pw == null) return { opening: bkNz(prev.opening) + bkNz(worldStart), fix: 0, wfix: true };
+  if (!prev.wfix && Number.isFinite(+prev.gap) && +prev.gap !== 0) return { opening: bkNz(prev.opening) + Math.floor(+prev.gap), fix: Math.floor(+prev.gap), wfix: true };
+  return { opening: bkNz(prev.opening), fix: 0, wfix: true };
+}

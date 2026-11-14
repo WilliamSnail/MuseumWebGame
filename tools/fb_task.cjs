@@ -14,7 +14,7 @@
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 //   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
-//                 印成兩行 JSON（ECON_HOUSE_JSON、ECON_REPORT_JSON），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
+//                 印成 base64 的幾行（ECON_B64 H＝莊家、R＝日報；GitHub 會把 { } 遮成 ***，所以不能直接印 JSON），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
@@ -55,12 +55,14 @@ function econPick(h) {
 async function econStatus(db) {
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
-  console.log("ECON_HOUSE_JSON " + JSON.stringify(econPick(h)));
+  // GitHub 會把「祕密裡出現過的字」遮成 ***（金鑰 JSON 裡有大括號，輸出的 { } 全被遮掉），所以輸出 base64，每行 160 字、標第幾份／共幾份，econ_check 照順序接回來
+  const emit = (kind, obj) => { const b = Buffer.from(JSON.stringify(obj), "utf8").toString("base64"), n = Math.max(1, Math.ceil(b.length / 160)); for (let i = 0; i < n; i++) console.log(`ECON_B64 ${kind} ${i + 1}/${n} ${b.slice(i * 160, (i + 1) * 160)}`); };
+  emit("H", econPick(h));
   const q = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
-  if (q.empty) { console.log("ECON_REPORT_JSON null"); return; }
+  if (q.empty) { console.log("ECON_B64 R 1/1 " + Buffer.from("null").toString("base64")); return; }
   const r = JSON.parse(q.docs[0].data().data || "{}"), sh = (r.snap && r.snap.house) || {};
   const pick = econPick(Object.assign({}, sh, { led: { world: sh.wflow || {} }, cultureLate: sh.culLate, inv: sh.inv }));
-  console.log("ECON_REPORT_JSON " + JSON.stringify({ day: r.day || null, gap: Number.isFinite(+r.gap) ? Math.floor(+r.gap) : null, opening: Number.isFinite(+r.opening) ? Math.floor(+r.opening) : null, house: pick }));
+  emit("R", { day: r.day || null, gap: Number.isFinite(+r.gap) ? Math.floor(+r.gap) : null, opening: Number.isFinite(+r.opening) ? Math.floor(+r.opening) : null, house: pick });
 }
 
 // 只讀：看錢流去哪。什麼都不寫
