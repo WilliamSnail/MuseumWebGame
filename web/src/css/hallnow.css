@@ -40,3 +40,25 @@
 @media (min-width: 761px) and (min-height: 501px) {
   .hall-onescreen .onescreen-side .hall-more::details-content { content-visibility: visible; display: contents; }
 }
+
+/* 旅客留言簿（圖書館的頁籤）：左邊篩選（旅客、日期）、右邊留言，各自在裡面捲 */
+.screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: 14px; }
+.hn-gb { display: contents; }
+.hn-gb-side, .hn-gb-main { min-height: 0; overflow-y: auto; scrollbar-width: thin; border: 12px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 12px stretch; padding: 4px 6px; color: var(--ink, #2E2014); }
+.hn-gb-side h3 { margin: 6px 0 4px; font-size: var(--type-body, .875rem); color: var(--ink-accent, #8E2A24); }
+.hn-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hn-chip { min-height: 34px; padding: 0 12px; border: 1px solid #A88A52; border-radius: 999px; background: rgba(255, 255, 255, .55); color: var(--ink, #2E2014); font: inherit; font-size: var(--type-small, .75rem); font-weight: 700; cursor: pointer; }
+.hn-chip.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); border-color: #8A6A28; }
+.hn-note { margin: 10px 0 2px; font-size: var(--type-small, .75rem); color: var(--ink-soft, #5A4030); line-height: 1.5; }
+.hn-gb-head { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 8px; color: var(--ink-accent, #8E2A24); font-size: var(--type-head, 1.05rem); }
+.hn-gb-head small { color: var(--ink-soft, #5A4030); font-size: var(--type-small, .75rem); }
+.hn-gb .hn-rv { font-size: var(--type-body, .875rem); padding: 8px 4px; border-bottom: 1px dashed rgba(120, 90, 50, .4); }
+.hn-gb .hn-st { color: #B07A10; font-size: var(--type-body, .875rem); }
+.hn-gb .hn-tx { -webkit-line-clamp: unset; display: block; }
+.hn-gb .hn-by { font-size: var(--type-small, .75rem); }
+@media (max-width: 760px) {
+  .screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
+  .hn-gb-side { max-height: 150px; }
+  .hn-gb-side .hn-note { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) { .screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 10px; } }

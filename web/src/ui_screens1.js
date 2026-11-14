@@ -485,6 +485,11 @@ SCREENS.origin = (root, params) => {
   const opened = books.filter(b => b.gen1 || chapterOpen(P, b.id)), fbVis = forbList.filter(b => !b.after || sequelOpen(P, b));
   const counts = { shelf: [opened.length, opened.filter(b => !P.chaptersRead[b.id]).length, opened.filter(b => !b.gen1 && isFresh(P, "origin", FRESH_KEY.ch(b.id))).length + (isFresh(P, "origin", FRESH_KEY.understood) ? 1 : 0)],
     forbidden: [fbVis.length, isFree(P) ? 0 : fbVis.filter(b => !P.mythFrom[b.id]).length, fbVis.filter(b => isFresh(P, "origin", FRESH_KEY.book(b.id))).length] }; // 頁籤上的「幾本・幾本沒讀」
+  if (tab === "guestbook" && ADDONS.guestbook) { // 旅客留言簿（11-14）：NPC 的歷史評價，按旅客、按日期篩（ui_hallnow.js）
+    root.classList.add("origin-gb-on");
+    root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb" }, ADDONS.guestbook()));
+    return;
+  }
   root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };

@@ -75,3 +75,36 @@ ADDONS.hallNowBox = hallNowBox;
 ADDONS.hallReviews = side => { side.insertBefore(hallNowBox("hall"), side.children[1] || null); }; // 放在「主題」下面、參觀者留言上面 // 展廳的側欄（ui_screens2.js 的 SCREENS.hall）
 // 館友名單有變：展廳的人數也跟著算
 NET.on && NET.on("roster", () => { if (ADDONS.hallNowDraw) ADDONS.hallNowDraw(); });
+
+// ---------- 旅客留言簿（圖書館的頁籤，11-14）----------
+// 先用 peek 給的最近 20 則；NPC 所有的歷史評價（可以按日期翻、按 NPC 篩）等伺服器的歷史 API 好了再接（資料格式跟 reviews 一樣就不用改版面）
+function guestbook() {
+  const gb = UI.gb || (UI.gb = { who: "", day: "" });
+  const root = h("div", { class: "hn-gb" });
+  const draw = () => {
+    const all = (reviewData() || []).slice().sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));
+    const whos = [...new Set(all.map(x => String(x.who || "旅客")))], days = [...new Set(all.map(x => String(x.day ?? "")).filter(Boolean))];
+    if (gb.who && !whos.includes(gb.who)) gb.who = "";
+    if (gb.day && !days.includes(gb.day)) gb.day = "";
+    const list = all.filter(x => (!gb.who || String(x.who || "旅客") === gb.who) && (!gb.day || String(x.day ?? "") === gb.day));
+    const chip = (label, on, fn) => h("button", { type: "button", class: "hn-chip" + (on ? " on" : ""), "aria-pressed": String(!!on), onClick: fn }, label);
+    root.replaceChildren(
+      h("aside", { class: "hn-gb-side" },
+        h("h3", null, "旅客"), h("div", { class: "hn-chips" }, chip("全部", !gb.who, () => { gb.who = ""; draw(); }), whos.map(w => chip(w, gb.who === w, () => { gb.who = w; draw(); }))),
+        days.length ? [h("h3", null, "日期"), h("div", { class: "hn-chips" }, chip("全部", !gb.day, () => { gb.day = ""; draw(); }), days.map(d => chip(d, gb.day === d, () => { gb.day = d; draw(); })))] : null,
+        h("p", { class: "hn-note" }, "現在只有最近 20 則。更早的留言之後會放在這裡，可以按日期翻。")),
+      h("section", { class: "hn-gb-main", "aria-label": "旅客留言" },
+        h("div", { class: "hn-gb-head" }, h("b", null, "旅客留言簿"), h("small", null, `${list.length} 則`)),
+        list.length ? h("ul", { class: "hn-list hn-gb-list" }, list.map(x => h("li", { class: "hn-rv" },
+          h("span", { class: "hn-st", role: "img", "aria-label": `${Math.round(Number(x.stars) || 0)} 顆星` }, starText(x.stars)),
+          h("span", { class: "hn-tx" }, String(x.text || "")),
+          h("small", { class: "hn-by" }, `${String(x.who || "旅客")}・${agoText(x.at)}${x.day ? "・" + String(x.day) : ""}`))))
+          : h("p", { class: "hn-empty" }, all.length ? "這個篩選沒有留言。" : "還沒有留言。旅客走進展廳的時候，會留一句話。")));
+  };
+  ADDONS.hallNowDraw = draw; // 讀到新的 peek 就重畫
+  if (ADDONS.peekAgain) ADDONS.peekAgain().then(draw);
+  every(() => { if (ADDONS.peekAgain) ADDONS.peekAgain().then(draw); }, REFRESH_MS);
+  draw();
+  return root;
+}
+ADDONS.guestbook = guestbook;
