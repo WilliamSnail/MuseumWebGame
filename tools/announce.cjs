@@ -122,7 +122,7 @@ function autoEntries(dir = path.join(ROOT, "content", "weeks")) {
       if (date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) out.push(dayEntry(week, n, date, G.addDays));
     }
     beats.forEach((b, idx) => {
-      if (!b || b.week !== week || b.status === "skipped" || typeof b.id !== "string") return;
+      if (!b || b.week !== week || b.status === "skipped" || b.extra || typeof b.id !== "string") return; // 加開的（extra）不另外發提醒
       const date = b.status === "revealed" && /^\d{4}-\d{2}-\d{2}$/.test(b.revealedOn || "") ? b.revealedOn : G.addDays(w.start, 2), n = Math.round((Date.parse(date) - Date.parse(w.start)) / 86400000) + 1;
       if (n >= 1 && n <= 7 && date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) out.push(beatEntry(b, date, idx, G.addDays));
     });

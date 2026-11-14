@@ -28,7 +28,7 @@
     },
     {
       "step": 2,
-      "from": "2027-03-08",
+      "from": "2026-12-07",
       "text": "這次的郵戳壹半被水印蓋住，看不清楚是從哪裡寄來的。",
       "need": {
         "metric": "commissions",
@@ -49,7 +49,7 @@
       },
       "news": "第壹位收藏者要壹道門縫。",
       "ties": [
-        "m-world"
+        "m-ledger"
       ],
       "route": {
         "cellar": 6,
