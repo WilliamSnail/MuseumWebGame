@@ -211,3 +211,10 @@ body.reduce-motion .nb-layer, body.reduce-motion .nb-frame, body.reduce-motion .
 .upd-bar b { font-family: var(--serif); letter-spacing: .06em; margin-right: 4px; }
 body:not(.reduce-motion) .upd-bar { animation: upd-in .35s ease-out; }
 @keyframes upd-in { from { opacity: 0; transform: translate(-50%, -10px); } }
+
+/* 同壹天的更新：目錄（每個分類壹顆小鈕）和分段標題（11-14） */
+.nb-areas { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; padding: 0; }
+.nb-area-go { min-height: 34px; padding: 0 12px; border: 1px solid #A88A52; border-radius: 999px; background: rgba(255, 255, 255, .5); color: #3A2410; font: inherit; font-size: .8125rem; font-weight: 700; cursor: pointer; }
+.nb-area-go:hover { background: #F0D995; }
+.nb-area-h { margin: 14px 0 4px; padding: 4px 10px; border-left: 4px solid #8E2A24; background: rgba(142, 42, 36, .1); font-size: 1rem; }
+.nb-group:first-of-type .nb-area-h { margin-top: 4px; }
