@@ -10,6 +10,7 @@
     "server": "node server/main.js",
     "test": "node test/run_all.cjs",
     "log:index": "node tools/log_index.cjs",
+    "econ:check": "node tools/econ_check.cjs",
     "now": "node tools/now.cjs",
     "version:bump": "node tools/bump_version.cjs",
     "emulators": "node tools/emulators.cjs",
