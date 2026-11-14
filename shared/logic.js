@@ -1302,6 +1302,13 @@ export function itemPoints(it) {
   if (it.kind === "pillow") return HALL_POINTS.pillow + (it.print ? Math.round(pts(attrsOf(it)) * 0.8) : 0);
   return pts(attrsOf(it)) + (it.perfect ? HALL_POINTS.perfect : 0);
 }
+// 收藏的畫給展廳評分加幾分（拍賣中的、壞資料不算；總共最多 NUM.hallArt.cap）
+export function hallArtBonus(P) {
+  const own = P && P.art && typeof P.art === "object" && P.art.own && typeof P.art.own === "object" && !Array.isArray(P.art.own) ? P.art.own : {}, C = NUM.hallArt;
+  let b = 0;
+  for (const id of Object.keys(own)) { const x = own[id]; if (id === "__proto__" || !x || typeof x !== "object" || x.lock) continue; b += C.pts[Math.max(0, Math.min(C.pts.length - 1, Math.floor(+x.tier) || 0))]; }
+  return Math.round(Math.min(C.cap, b) * 10) / 10;
+}
 export function hallScore(P, slots) {
   const items = (slots || P.hall).map(s => hallItem(P, s)).filter(Boolean);
   if (!items.length) return { score: 0, items, themes: [], theme: null };
@@ -1310,8 +1317,9 @@ export function hallScore(P, slots) {
   const variety = new Set(at.map(a => a.顏色)).size + new Set(at.map(a => a.心情)).size;
   const sum = items.reduce((s, it) => s + itemPoints(it), 0);
   const theme = themes[0] || null;
-  const score = Math.min(100, Math.round(sum + variety + (theme ? HALL_THEME_BONUS[theme] : 0)));
-  return { score, items, themes, theme, sum, variety };
+  const artBonus = hallArtBonus(P); // 掛畫（11-14）：收藏的畫加壹點點，有上限
+  const score = Math.min(100, Math.round(sum + variety + (theme ? HALL_THEME_BONUS[theme] : 0) + artBonus));
+  return { score, items, themes, theme, sum, variety, artBonus };
 }
 export function placeInHall(P, slotIdx, item) {
   if (slotIdx < 0 || slotIdx >= P.hall.length) return { ok: false };

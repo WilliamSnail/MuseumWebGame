@@ -83,7 +83,7 @@ T("展廳：只給展台、分數、主題；不給靈感、收藏、理智", ()
   P.hall[0] = { kind: "pepe", key: k };
   P.hall[2] = { kind: "pepe", key: "不存在|的|佩|佩|x|y|z" }; // 收藏裡沒有：當空的
   const v = J(G.hallView({ profiles: { challenge: P, free: null } }));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "themes", "title"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
+  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "artBonus", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "themes", "title"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
   assert.strictEqual(v.open, true);
   assert.strictEqual(v.slots.length, P.hall.length);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
@@ -339,6 +339,15 @@ T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒
   const v = JSON.parse(JSON.stringify(G.cleanHallView({ open: true, slots: [], score: 5, art: a.concat([{ id: "x", title: "y", tier: 99, paid: 5, price: 7 }, null, { title: "沒有 id" }]) })));
   assert.ok(v.art.length === 4 && v.art[3].tier === 3 && !JSON.stringify(v.art).includes("paid") && !JSON.stringify(v.art).includes("price"), JSON.stringify(v.art));
   assert.strictEqual(G.hallArt(null).length, 0); assert.strictEqual(G.hallArt({ art: { own: "壞" } }).length, 0);
+});
+T("掛畫加展廳評分：照稀有度加分、總共有上限、拍賣中的不算、展廳沒東西不加；hallView／cleanHallView 給 artBonus；分數跟 hallScore 同壹個算法", () => {
+  const { buildProfile } = require("./sim_cellar.cjs"); void buildProfile;
+  const C = G.NUM.hallArt, P = G.newProfile("challenge"); Object.keys(G.CATS ? {} : {});
+  assert.strictEqual(G.hallArtBonus(P), 0); assert.strictEqual(G.hallArtBonus(null), 0);
+  P.art = { v: 1, own: { a: { tier: 0, date: "2026-11-01" }, b: { tier: 3, date: "2026-11-01" } } }; assert.strictEqual(G.hallArtBonus(P), C.pts[0] + C.pts[3]);
+  P.art.own.b.lock = "p~1"; assert.strictEqual(G.hallArtBonus(P), C.pts[0], "拍賣中的不算");
+  for (let i = 0; i < 20; i++) P.art.own["z" + i] = { tier: 3, date: "2026-11-01" }; assert.strictEqual(G.hallArtBonus(P), C.cap, "總共最多 cap 點");
+  P.art.own = { x: { tier: 99 }, "__proto__": { tier: 3 } }; assert.ok(G.hallArtBonus(P) <= C.cap);
 });
 console.log(`${pass} passed, ${fail} failed（送佩佩、參觀展廳）`);
   process.exit(fail ? 1 : 0);

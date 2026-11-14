@@ -35,7 +35,7 @@ T("展廳：給別人的只有展台、分數、主題、裝飾，不漏靈感�
   });
   s.email = "someone@example.com";
   const v = J(G.cleanHallView(G.hallView(s)));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "title"]);
+  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "artBonus", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "title"]);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
   assert.strictEqual(v.deco, "stand-velvet");
   assert.strictEqual(v.frame, "frame-vine");

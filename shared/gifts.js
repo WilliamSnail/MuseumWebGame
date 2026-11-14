@@ -51,7 +51,7 @@ export function hallView(save) {
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
   const hung = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) : null; // 掛在牆上的探險報告（決定 0036）
-  return { open: true, art: hallArt(P), slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
+  return { open: true, art: hallArt(P), artBonus: hs.artBonus || 0, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
 }
 
 // 展廳主人收藏的畫（翊文 11-14：「大家的展廳也可以看到買的畫」「其他人參觀別人展廳時也可以看到」）：只給畫的 id、名字、稀有度、拍賣中與否；
@@ -59,7 +59,7 @@ export function hallView(save) {
 export function hallArt(P) {
   const own = P && P.art && typeof P.art === "object" && P.art.own && typeof P.art.own === "object" && !Array.isArray(P.art.own) ? P.art.own : {};
   return Object.keys(own).filter(id => id !== "__proto__" && own[id] && typeof own[id] === "object").map(id => ({ id: String(id).slice(0, 60), title: String(own[id].title || "").slice(0, 40), tier: Math.max(0, Math.min(3, Math.floor(+own[id].tier) || 0)), auction: !!own[id].lock, d: String(own[id].d || own[id].date || "") }))
-    .sort((a, b) => b.tier - a.tier || (a.d < b.d ? -1 : a.d > b.d ? 1 : 0) || (a.id < b.id ? -1 : 1)).slice(0, (NUM.art && NUM.art.holdMax) || 20).map(({ id, title, tier, auction }) => ({ id, title, tier, tierName: ((NUM.art.tiers[tier] || {}).name) || "", auction }));
+    .sort((a, b) => b.tier - a.tier || (a.d < b.d ? -1 : a.d > b.d ? 1 : 0) || (a.id < b.id ? -1 : 1)).slice(0, (NUM.art && NUM.art.holdMax) || 20).map(({ id, title, tier, auction }) => ({ id, title, tier, tierName: ((NUM.art.tiers[tier] || {}).name) || "", auction, ...(auction ? { lock: true } : {}) }));
 }
 // ---------- 來訪、按讚、留言 ----------
 // 這次來參觀，展廳主人拿幾點靈感。o：
