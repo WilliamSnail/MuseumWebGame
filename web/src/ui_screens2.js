@@ -20,6 +20,7 @@ import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
+import { crowdText } from "./ui_hallnow.js"; // 散客的描述（label 已含人數就不補「N 位」）
 
 SCREENS.pillow = (root, params = {}) => {
   const pick = P.plPick;
@@ -497,7 +498,7 @@ export function pedestal(slot, i) {
   });
   return el;
 }
-export function visitorCard(v) { return h("div", { class: "visitor enter" + (v.story ? " story" : "") }, h("p", null, v.story ? v.text : `「${v.text}」`), h("p", { class: "sub" }, `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`)); }
+export function visitorCard(v) { return h("div", { class: "visitor enter" + (v.story ? " story" : "") + (v.crowd ? " crowd" : "") }, h("p", null, v.story ? v.text : `「${v.text}」`), h("p", { class: "sub" }, v.crowd ? [h("span", { class: "vis-crowd" }, "散客"), ` ${crowdText({ label: v.who, n: v.crowd })}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`] : `— ${v.who}${v.gain ? `　+${v.gain} 靈感` : ""}${v.full ? `　（今天參觀者給的靈感滿 ${NUM.visitorInspDay} 了，明天再來）` : ""}`)); }
 export function copyText(text, ta) {
   const ok = () => note("複製好了。", "good");
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, () => { ta.select(); document.execCommand("copy"); ok(); });
