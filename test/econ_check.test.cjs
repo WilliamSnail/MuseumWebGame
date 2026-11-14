@@ -28,5 +28,18 @@ T("帳面：econ-status 的 base64 分行輸出（行前有時間、中間夾別
   const lines = fs.readFileSync(f, "utf8").split(NL); fs.writeFileSync(f, lines.filter(l => !l.includes("ECON_B64 H 2/")).join(NL));
   r = run(["--ledger", f]); assert.notStrictEqual(r.status, 0); assert.ok(/少了幾行/.test(r.stdout + r.stderr), r.stdout + r.stderr); fs.unlinkSync(f);
 });
+T("帳面：econ-status 的 hex 輸出（行前有時間、結尾有「.」）接得回來；少一行、被遮成 ***、檢查碼對不上都會明講；已知的過渡期假差額不紅字", () => {
+  const { econCrc } = require("../tools/fb_task.cjs"), f = path.join(os.tmpdir(), "econ4_" + process.pid + ".txt"), NL = "\n", W = 10000000000;
+  const h = { bankroll: 2e9, budget: 1e9, museum: 0, sea: 0, world: W + 764291250, day: "2026-11-20", debt: { budget: 0, culture: 9e8, world: 0 }, led: { world: { stockBuy: 1 } }, pad: "x".repeat(700) };
+  const enc = (kind, o) => { const b = Buffer.from(JSON.stringify(o)).toString("hex"), n = Math.ceil(b.length / 120), L = []; for (let i = 0; i < n; i++) L.push("2026-11-14T10:00:0" + (i % 10) + "Z ECON_HEX " + kind + " " + (i + 1) + "/" + n + " " + b.length + " " + econCrc(b) + " " + b.slice(i * 120, (i + 1) * 120) + " ."); return L; };
+  const mk = gap => ["Run", ...enc("H", h), "別的字", ...enc("R", { day: "2026-11-14", gap, house: h }), ""].join(NL);
+  fs.writeFileSync(f, mk(-764291250)); let r = run(["--ledger", f]); assert.strictEqual(r.status, 0, r.stdout + r.stderr); assert.ok(r.stdout.includes("已知的過渡期假差額"), r.stdout);
+  fs.writeFileSync(f, mk(-5)); r = run(["--ledger", f]); assert.strictEqual(r.status, 1); assert.ok(/對帳差不是 0/.test(r.stdout));
+  const good = mk(0).split(NL);
+  fs.writeFileSync(f, good.filter(l => !l.includes("ECON_HEX H 2/")).join(NL)); r = run(["--ledger", f]); assert.ok(/少了幾行/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+  fs.writeFileSync(f, good.map(l => (l.includes("ECON_HEX H 1/") ? l.replace(/ [0-9a-f]{20}/, " ***") : l)).join(NL)); r = run(["--ledger", f]); assert.ok(/\*\*\*|遮/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+  fs.writeFileSync(f, good.map(l => (l.includes("ECON_HEX H 1/") ? l.replace(/ [0-9a-f]{120} \./, " " + "0".repeat(120) + " .") : l)).join(NL)); r = run(["--ledger", f]); assert.ok(/檢查碼對不上/.test(r.stdout + r.stderr), r.stdout + r.stderr);
+  fs.unlinkSync(f);
+});
 console.log(`${pass} passed, ${fail} failed（經濟自我檢查）`);
 process.exit(fail ? 1 : 0);

@@ -80,10 +80,26 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
 })();
 
 // ---------- 帳面 ----------
+function econCrc(s) { let c = 7; for (let i = 0; i < s.length; i++) c = (Math.imul(c, 31) + s.charCodeAt(i)) >>> 0; return c.toString(16).padStart(8, "0"); }
 function readLedger(file) {
   const text = fs.readFileSync(file, "utf8");
   // 固定動作 econ-status 的輸出（整份 log 存成檔也行）：ECON_B64 H|R 第幾份/共幾份 base64（GitHub 的 log 每行前面有時間，所以不從行首比）；舊的 ECON_*_JSON 兩行也讀
-  const parts = { H: [], R: [] };
+  const parts = { H: [], R: [] }, hx = { H: [], R: [] };
+  for (const m of text.matchAll(/ECON_HEX ([HR]) (\d+)\/(\d+) (\d+) ([0-9a-f]{8}) ([0-9a-f*]*)/g)) hx[m[1]][+m[2] - 1] = { n: +m[3], len: +m[4], crc: m[5], s: m[6] };
+  const decHex = k => {
+    const a = hx[k]; if (!a.length) return undefined;
+    const name = k === "H" ? "莊家" : "日報", n = a[0].n, got = Array.from({ length: n }, (_, i) => a[i]);
+    if (got.some(x => !x)) throw new Error("econ-status 的輸出（" + name + "）少了幾行（共 " + n + " 行，只有 " + got.filter(Boolean).length + " 行）：log 被截斷了？");
+    const hex = got.map(x => x.s).join("");
+    if (hex.includes("*")) throw new Error("econ-status 的輸出（" + name + "）有 *** ：GitHub 把某段遮掉了（有祕密的值剛好出現在輸出裡），請回報這壹次的 run");
+    if (hex.length !== a[0].len || econCrc(hex) !== a[0].crc) throw new Error("econ-status 的輸出（" + name + "）長度或檢查碼對不上：被改過或截斷");
+    return JSON.parse(Buffer.from(hex, "hex").toString("utf8"));
+  };
+  const hexH = decHex("H"), hexR = decHex("R");
+  if (hexH !== undefined || hexR !== undefined) {
+    const house = hexH || null, rep = hexR || null;
+    return house ? Object.assign({}, house, { day: house.day, __gap: rep ? rep.gap : null, __repDay: rep ? rep.day : null, __repWorld: rep && rep.house ? rep.house.world : null, __fix: rep ? rep.openingFix : null }) : (rep ? Object.assign({}, rep.house, { day: rep.day, __gap: rep.gap, __repDay: rep.day, __repWorld: rep.house ? rep.house.world : null }) : null);
+  }
   for (const m of text.matchAll(/ECON_B64 ([HR]) (\d+)\/(\d+) ([A-Za-z0-9+/=]+)/g)) parts[m[1]][+m[2] - 1] = { n: +m[3], s: m[4] };
   const dec = k => { const a = parts[k]; if (!a.length) return undefined; if (a.length < a[0].n || Array.from({ length: a[0].n }, (_, i) => a[i]).some(x => !x)) throw new Error("econ-status 的輸出 " + (k === "H" ? "莊家" : "日報") + " 少了幾行（共 " + a[0].n + " 行，只有 " + a.filter(Boolean).length + " 行）：log 被截斷了？"); return JSON.parse(Buffer.from(a.map(x => x.s).join(""), "base64").toString("utf8")); };
   const b64h = dec("H"), b64r = dec("R");
@@ -109,7 +125,8 @@ function ledger(file) {
   if (isReport) out.push(`日報 ${doc.day}　對帳差 ${fmt(doc.gap)}（0 才對）`);
   const D = h.debt || {};
   out.push(`莊家欠：預算池 ${fmt(D.budget)}、文化部館債 ${fmt(D.culture)}、外面世界 ${fmt(D.world)}　借出去沒收回 ${fmt(h.loansOut)}`);
-  if (!isReport && doc.__gap != null) { out.push(`最新日報 ${doc.__repDay}　對帳差 ${fmt(doc.__gap)}（0 才對）`); flag(doc.__gap !== 0, `對帳差不是 0：${fmt(doc.__gap)}（有壹條動籌碼的路沒記到帳上）`); }
+  if (!isReport && doc.__gap != null) { out.push(`最新日報 ${doc.__repDay}　對帳差 ${fmt(doc.__gap)}（0 才對）`); const known = doc.__repWorld != null && doc.__gap === -(doc.__repWorld - W.start); // 11-14 外面世界上線那天快照多算了池子當天進出（casBookOpeningNext 在下壹份日報校正）
+    if (known) out.push(`  （這是已知的過渡期假差額：等於 −(外面世界 ${fmt(doc.__repWorld)} − 起始 ${fmt(W.start)})，下壹份日報會校正，不是錢不見）`); else flag(doc.__gap !== 0, `對帳差不是 0：${fmt(doc.__gap)}（有壹條動籌碼的路沒記到帳上）`); }
   if (isReport) flag(doc.gap !== 0, `對帳差不是 0：${fmt(doc.gap)}（有壹條動籌碼的路沒記到帳上）`);
   flag(h.bankroll < 0, "莊家破產中（< 0）");
   if (h.world != null) flag(h.world < Math.floor(W.start * W.lowPct / 100), `外面世界資金吃緊：${fmt(h.world)} ＜ 起始的 ${W.lowPct}%`);
