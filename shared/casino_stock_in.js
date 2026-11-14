@@ -25,6 +25,7 @@ import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { npcTrips } from "./npc_trip.js";
+import { casNpcSpend } from "./npc_spend.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 
@@ -225,6 +226,7 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
   for (let i = 0; i < n; i++) {
     const next = inAdd(d, 1);
     pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
+    if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（外面世界的錢，shared/npc_spend.js）
     casInNpcFor(H, d, secret, npcDays, npcCtx); // 這壹天去逛的 NPC（算進這壹天「不同的人」，明天的跳空看它）
     for (const id of IN_IDS) {
       const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1];
