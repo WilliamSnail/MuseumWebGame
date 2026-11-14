@@ -38,6 +38,7 @@ npm run version:bump   # 換版本號（version.json）
 npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md
 npm run log:index      # 重產日誌索引（不要手改）
 node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
+npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/econ_check.cjs --ledger 檔案.json（docs/經濟自我檢查.md）
 ```
 
 - **在瀏覽器看**：`npm run dev`，網址加 `#畫面` 直接進那個畫面、放好假收藏，例如 `#lobby`、`#cellarrun`、`#fusion2`、`#office:upgrades`、`#gallery:lowsan`。**這會清掉這個瀏覽器在 localhost:5173 的存檔**。完整清單見 `docs/架構.md` 第 3 節。
