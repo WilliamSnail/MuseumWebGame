@@ -294,6 +294,7 @@ export async function openNpcInvite(pidGiven) {
   if (!UI.net || !NET.loggedIn) { note("要登入才能邀請。", "bad"); return; }
   const m = miniLayer("邀旅客一起玩 21 點", "在館裡的旅客和委託人，可以邀他來賭場同桌。他答不答應，要看他自己。");
   m.card.classList.add("cas-npcinv");
+  m.layer.classList.add("sp-top"); // 從牌桌裡按「邀旅客一起玩」時，牌桌（z 8800）會蓋住預設的小視窗（z 80）
   closeOnOutside(m);
   let pid = pidGiven || null, who = null, said = null, busy = null, failed = "";
   const load = async () => {
