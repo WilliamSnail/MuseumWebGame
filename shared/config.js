@@ -493,12 +493,12 @@ export const NUM = {
     //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進預算池）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
     //   dayCap 全館壹天最多（×（1＋extPct%×景氣）），hallLambda 展廳壹天平均來幾位 NPC。都從外面世界池子搬
     //   npcWeights：有名字的 NPC 第壹站幾點到的比重（05:00 起每小時壹個；白天晚上平均，00:00～04:00 少但有，翊文 11-14「深夜也要有人」）
-    npcSpend: { on: true, npcWeights: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.3, 0.3, 0.3, 0.3, 0.3], ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 24, hallStay: [60, 180], shopStay: [30, 120],
+    npcSpend: { on: true, npcWeights: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.3, 0.3, 0.3, 0.3, 0.3], ticket: 500, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 24, hallStay: [60, 180], shopStay: [30, 120],
       // 不具名的散客（翊文 11-14：「不具名的也可以有一些」「散客要付門票」）：每天 groupsDay 組（週末 ×weekendMult）、壹組幾位看類型；只在展廳、待 stay 分鐘；到的時間午後和晚上多（weights）。
       //   ticket 每位散客付的門票（外面世界付，ticketBudgetPct% 預算池、其餘館方帳）；dayCap 全館散客門票壹天上限（要 ≤ 外面世界每天成長的 10%，econ:check）。不留評價、不算館內股人數、不花錢。
       // 散客也逛店（翊文 11-14：「散客去店裡、算進股價」）：跟展廳那幾組「分開」抽（逛店的散客不顯示在展廳，不然看展廳的組別就能猜到哪家店明天的人數）：每家店每天平均 shop.perStore 位散客，
       //   壹組幾位、什麼類型看這家店的個性（學生愛餐車和手作坊、旅行團愛餐車和牌桌、退休長輩愛地下收藏庫…）；每位進店花 shop.spend（餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap；算進這家店「昨天不同的人」
-      crowd: { shop: { perStore: 1.5, stay: [30, 120], spend: 3000, dayCap: 300000 }, groupsDay: 10, weekendMult: 1.5, stay: [30, 120], ticket: 4000, dayCap: 500000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1, 1, 0.5, 0.5, 0.5, 0.5] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）；groupsDay 4→10、ticket 1 萬→4 千（翊文 11-14：「增加散客數量，降低門票價格」，人變 2.5 倍、門票總收入差不多）；weights 是 05:00 起每小時的比重，最後五個是 00:00～04:00（翊文 11-14：「深夜也要有人」，少但不是零）
+      crowd: { shop: { perStore: 1.5, stay: [30, 120], spend: 3000, dayCap: 300000 }, groupsDay: 300, weekendMult: 1.5, stay: [30, 120], ticket: 500, dayCap: 500000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1, 1, 0.5, 0.5, 0.5, 0.5] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）；門票旅客、散客都 500（翊文 11-14：「都500，我想要籌碼跟台幣感覺相當，增加散客數量來補足賺錢的部分」「補滿」）：groupsDay 300（每天約 1,500 位散客）；dayCap 照舊 50 萬（econ:check：散客門票 ≤ 外面世界每天成長的 10%），約 1,000 位以後的散客不再付錢，門票總收入約原本的七成；weights 是 05:00 起每小時的比重，最後五個是 00:00～04:00（翊文 11-14：「深夜也要有人」，少但不是零）
       // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
     // 展廳參觀者門票（11-14 改版，決定 0079 取代 0073 的分法）：到訪的人（有名字的 NPC、散客，每位）自己付壹張票（npcSpend.ticket／crowd.ticket，外面世界付，到的那刻）；
