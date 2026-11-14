@@ -495,7 +495,10 @@ export const NUM = {
       crowd: { groupsDay: 4, weekendMult: 1.5, stay: [30, 120], ticket: 10000, dayCap: 500000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）
       // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
-    ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
+    // 展廳參觀者門票（11-14 改版，決定 0079 取代 0073 的分法）：到訪的人（有名字的 NPC、散客，每位）自己付壹張票（npcSpend.ticket／crowd.ticket，外面世界付，到的那刻）；
+    //   票的 ownerPct% 放進「那壹位的分紅池」，那壹刻真的在看展廳、領了這個 key 的線上玩家分：先領的拿池子剩下的 firstPct%（再領的拿再剩下的 firstPct%…，總額不超過池子）；
+    //   perDay 壹個人壹天最多領幾位的分紅（壹組散客壹組算人數，用到幾位算幾位）。沒人領的池子留在預算池（票的預算池那份）。
+    ticket: { perDay: 20, ownerPct: 30, firstPct: 50 },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },

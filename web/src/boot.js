@@ -7,6 +7,8 @@ import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../shared/logic.js";
 import { visitorEvery } from "../../shared/logic3.js";
+import { nowMs } from "../../shared/logic.js";
+import { NET } from "./net_firebase.js";
 import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, noteRetasked, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
@@ -21,6 +23,36 @@ export function normalizeImages(o) {
     if (l.length) out[slot] = asList(out[slot]).concat(l);
   });
   return out;
+}
+// 展廳來了壹位（或壹組）：畫面插壹張卡、聲音、狀態列、存檔
+function showVisitor(v, key) {
+  if (UI.screen === "hall") {
+    const box = $("#visitors");
+    if (box) { $(".empty", box) && $(".empty", box).remove(); box.insertBefore(visitorCard(v), box.children[1] || null); }
+    snd("coin");
+  } else P.news.hall = true;
+  updateStatus(); persist();
+  ticketPing(key); // 參觀者付門票（11-13）：隔一陣子叫伺服器收一次（11-14：夾著看到的 key，領分紅）
+}
+// 伺服器的展廳時刻表（11-14，翊文：「每 150 秒…接到散客裡」「就不用每 150 秒了」）：每 90 秒左右問壹次（只有在玩、登入的時候），之後每秒看有沒有到了還沒看過的，到了就放人進展廳。
+// 有名字的 NPC 壹位算壹次到訪；散客壹組 n 位算 n 次（靈感照人數，visitorArrive 的 entry）。看過的 key 記在存檔（P.hallSeen，今天的），重開網頁不會重發。離線、沒登入：不會來人
+let feedAt = 0, feedBusy = false, FEED = [];
+async function pollFeed() {
+  feedBusy = true;
+  try { const r = await NET.call("casino", { act: "hallFeed" }); if (r && r.ok && Array.isArray(r.feed)) { FEED = r.feed; UI.hallIn = r.in || null; feedAt = Date.now(); } } catch (e) { /* 下次再問 */ }
+  feedBusy = false;
+}
+function hallFeedTick() {
+  if (!feedBusy && Date.now() - feedAt > 90000) pollFeed();
+  const day = todayStr();
+  if (!P.hallSeen || P.hallSeen.day !== day) P.hallSeen = { day, keys: [] };
+  const t = nowMs();
+  for (const e of FEED) {
+    if (e.at > t || P.hallSeen.keys.includes(e.key)) continue;
+    P.hallSeen.keys.push(e.key); P.hallSeen.keys = P.hallSeen.keys.slice(-80);
+    const v = visitorArrive(P, undefined, e);
+    if (v) showVisitor(v, e.key);
+  }
 }
 export function tick() {
   if (document.hidden) return;
@@ -37,17 +69,10 @@ export function tick() {
   if (Date.now() - UI.lastInput > 60000) return; // 沒在玩就不算時間（展廳的參觀者、這一位玩了幾秒）
   P.activeSec++;
   if (P.visit && typeof P.visit.sec === "number") P.visit.sec++; // 這一位玩了幾秒（多位參觀者，11-08；activeSec 是整間博物館的）
-  if (P.activeSec % visitorEvery(P) === 0) {
+  if (UI.net && NET.loggedIn) hallFeedTick(); // 登入了：展廳的參觀者照伺服器的時刻表來（11-14）
+  else if (P.activeSec % visitorEvery(P) === 0) { // 沒登入（單機）：照舊每 150 秒來一位
     const v = visitorArrive(P);
-    if (v) {
-      if (UI.screen === "hall") {
-        const box = $("#visitors");
-        if (box) { $(".empty", box) && $(".empty", box).remove(); box.insertBefore(visitorCard(v), box.children[1] || null); }
-        snd("coin");
-      } else P.news.hall = true;
-      updateStatus(); persist();
-      ticketPing(); // 參觀者付門票（11-13）：隔一陣子叫伺服器收一次
-    }
+    if (v) showVisitor(v);
   }
   if (P.activeSec % 20 === 0) persist();
 }

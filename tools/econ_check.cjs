@@ -45,6 +45,7 @@ check("槓桿：全館壹天淨賺上限、部位上限有設", C.stockLev.profi
 // 外面世界的池子和各種流量
 const W = C.world, grow = W.growBase, npcDay = C.npcSpend.dayCap * (1 + C.npcSpend.extPct / 100), npcArt = N.auction.npcDay * (1 + N.auction.npcExtPct / 100);
 check("外面世界：NPC 壹天花費上限（來館花錢＋買畫）≤ 池子每天成長（翊文 11-14 決定維持現在的數字：超過也只是上限，實際遠小於）", npcDay + npcArt <= grow || npcDay + npcArt <= grow * 1.2, `花錢 ${fmt(npcDay)} ＋ 買畫 ${fmt(npcArt)} ＝ ${fmt(npcDay + npcArt)}；每天成長 ${fmt(grow)}（容許到 1.2 倍；再大就紅字）`);
+check("展廳門票：玩家分紅池比例 ≤ 票的預算池份額（分紅是從預算池搬給玩家，池子永遠不會超過預算池收到的）", C.ticket.ownerPct <= C.npcSpend.ticketBudgetPct && C.ticket.firstPct <= 100, `分紅池 ${C.ticket.ownerPct}% ≤ 預算池份額 ${C.npcSpend.ticketBudgetPct}%；先領的拿剩下的 ${C.ticket.firstPct}%`);
 check("外面世界：吃緊線（lowPct）和賣出上限（lowPayPct）合理", W.lowPct > 0 && W.lowPct < 50 && W.lowPayPct > 0 && W.lowPayPct <= 5, `低於 ${W.lowPct}%；吃緊時壹天最多付 ${W.lowPayPct}%`);
 check("外面世界：每年成長占起始 ≤ 30%（不是印錢機）", grow * 365 / W.start <= 0.3, `${pct(grow * 365 / W.start * 100)}`);
 check("館方投資：持股成本上限 ≤ 超過部分的 50%；每天投 ≤ 10%", C.invest.holdCapPct <= 50 && C.invest.dailyPct <= 10, `holdCap ${C.invest.holdCapPct}%、daily ${C.invest.dailyPct}%`);
