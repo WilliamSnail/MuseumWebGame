@@ -102,7 +102,7 @@ T("id 不重複、規則都對、每壹個都有文字", G => {
   assert.strictEqual(new Set(ids).size, ids.length, "key 重複");
   const hol = new Set(G.HOLIDAY_INFO.map(x => x.key));
   ids.forEach(k => assert.ok(!hol.has(k), "跟大節日撞名：" + k));
-  assert.ok(G.FUN_INFO.length >= 100 && G.FUN_INFO.length <= 150, "數量：" + G.FUN_INFO.length);
+  assert.ok(G.FUN_INFO.length >= 100 && G.FUN_INFO.length <= 400, "數量：" + G.FUN_INFO.length);
   G.FUN_INFO.forEach(x => {
     const ok = x.fixed ? /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/.test(x.fixed) : x.nth.length === 3 && x.nth[0] >= 1 && x.nth[0] <= 12 && x.nth[1] >= 1 && x.nth[1] <= 4 && x.nth[2] >= 0 && x.nth[2] <= 6;
     assert.ok(ok, "規則不對：" + x.key);

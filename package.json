@@ -12,6 +12,8 @@
     "log:index": "node tools/log_index.cjs",
     "econ:check": "node tools/econ_check.cjs",
     "now": "node tools/now.cjs",
+    "day:plan": "node tools/day_plan.cjs",
+    "day:check": "node tools/day_check.cjs",
     "version:bump": "node tools/bump_version.cjs",
     "emulators": "node tools/emulators.cjs",
     "announce:sync": "node tools/announce.cjs --sync",
