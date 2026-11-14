@@ -43,7 +43,7 @@ import { npcCounters, npcPublic } from "./shared/npc.js";
 import { FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
-import { casInvestRun } from "./shared/casino_invest.js";
+import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
@@ -370,6 +370,7 @@ export async function casReport() {
         const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`],
           ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
         const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
+        h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
         h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
           perDay: doc.index.perDay, g: doc.index.g, rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
         put(tx, houseRef(), h);
