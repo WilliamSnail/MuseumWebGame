@@ -1,7 +1,7 @@
 // 劇情帳本的小工具（翊文 11-14：「看看給每日劇情排程的需不需要優化，有沒有腳本之類的讓他方便使用」）
 // 帳本 content/story/帳本.json 有 13 萬多字，排程每天整份讀、手改 JSON、整份重寫（日誌每天寫「帳本用 indent 2 重寫」）。
 // 這個工具讓排程只看今天要用的那幾段、壹次改壹個欄位，不用整份讀進來：
-//   npm run ledger -- today [--date 2026-11-17]   今天要看的：主旨、這季這章、這週 weeks、還沒收的伏筆、所有提到這週的東西
+//   npm run ledger -- today [--date 2026-11-17]   今天要看的：主旨、這季這章、這週 weeks、還沒收的伏筆、每條長篇支線的下壹段、所有提到這週的東西
 //   npm run ledger -- get weeks.2026-W47.hooks     印某壹段（路徑用點；陣列可以用數字，或 id，例如 foreshadow.f-page）
 //   npm run ledger -- set weeks.2026-W47.question "……"   設某壹段（值能當 JSON 讀就當 JSON，例如 true、[…]、{…}；不然當字串）
 //   npm run ledger -- push weeks.2026-W47.hooks "d3：……"  往陣列尾巴加壹筆（陣列不存在就建）
@@ -55,7 +55,10 @@ function today(L, week, prevWeek) {
   if (prevWeek && !(L.weeks && L.weeks[week])) add(`上週 weeks.${prevWeek}（這週還沒寫，先接上週的鉤子）`, L.weeks && L.weeks[prevWeek] && { hooks: L.weeks[prevWeek].hooks, question: L.weeks[prevWeek].question, motifs: L.weeks[prevWeek].motifs });
   add("還沒收的伏筆 foreshadow（closed 不是 true）", (L.foreshadow || []).filter(f => !f.closed));
   // 其他大段：只印提到這週的那幾筆
-  for (const [key, arrPath] of [["seasonal", "lines"], ["mysteries", "list"], ["newsThreads", "list"], ["revealBeats", "list"], ["sideArcs", null], ["calendar", null], ["lines", null]]) {
+  // 長篇支線：每條都列（條數少），只給走到哪、下壹段要寫什麼；排程照這個挑這週推哪壹兩條（11-15：之前 sideArcs 是 { 說明, list }，被下面那段略過了）
+  const arcs = L.sideArcs && Array.isArray(L.sideArcs.list) ? L.sideArcs.list : [];
+  add("長篇支線 sideArcs（走到第幾段、下壹段；挑這週推哪壹兩條，推完 set sideArcs.list.<id>.at）", arcs.map(a => ({ id: a.id, name: a.name, ties: a.ties, at: a.at, next: Array.isArray(a.stages) ? a.stages[a.at] || "（已經走完）" : null, ...(a.note ? { note: a.note } : {}) })));
+  for (const [key, arrPath] of [["seasonal", "lines"], ["mysteries", "list"], ["newsThreads", "list"], ["revealBeats", "list"], ["calendar", null], ["lines", null]]) {
     const base = L[key]; if (!base) continue;
     const arr = arrPath ? base[arrPath] : base;
     if (!Array.isArray(arr)) continue;
