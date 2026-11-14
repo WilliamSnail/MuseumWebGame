@@ -43,13 +43,16 @@ function counts() {
   const people = now && typeof now.total === "number" ? Math.max(0, now.total) : tourists + crowd.n;
   return { mates, tourists, crowd, names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
 }
+// 散客的描述：label 已經寫了人數（三位學生、一對情侶、2 人）就不再補「N 位」；沒寫的（旅行團、退休的長輩們）才補
+const HAS_COUNT = /[0-9０-９一二兩三四五六七八九十壹貳參肆伍陸柒捌玖拾百]|一對/;
+const crowdText = g => (HAS_COUNT.test(g.label) ? g.label : `${g.label} ${g.n} 位`);
 function openAll() {
   const c = counts(), list = reviewData() || [];
   const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
   m.card.append(
     c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.join("、")) : null,
-    c.crowd.groups.length ? h("p", { class: "hn-names" }, h("b", null, "散客："), c.crowd.groups.map(g => `${g.label} ${g.n} 位`).join("、")) : null,
+    c.crowd.groups.length ? h("p", { class: "hn-names" }, h("b", null, "散客："), c.crowd.groups.map(crowdText).join("、")) : null,
     c.mates.length ? h("p", { class: "hn-names" }, h("b", null, "館友："), c.mates.map(x => x.nick).join("、")) : null,
     list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, "還沒有評價。旅客走進展廳的時候，會留一句話。"),
     h("div", { class: "hn-acts" }, btn("知道了", () => m.close(), "primary")));
