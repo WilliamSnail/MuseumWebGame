@@ -51,6 +51,7 @@ export function casJobChips(w, house, slots, day, rnd = RNG) {
   w.chips += found;
   if (house) casHouseMove(house, "job", -found); // 莊家出，跟大禮包一樣
   if (!cjBox(w.st)) w.st = {};
+  if (house) { if (!cjBox(house.npcc)) house.npcc = { comm: 0, hall: 0 }; house.npcc.comm = Math.floor(cjNum(house.npcc.comm)) + n; } // 全館累計完成幾張委託（NPC 故事線解鎖用）
   w.st.jobs = Math.floor(cjNum(w.st.jobs)) + n;
   w.st.jobChips = Math.floor(cjNum(w.st.jobChips)) + found;
   w.st.chipsMax = Math.max(cjNum(w.st.chipsMax), w.chips);
