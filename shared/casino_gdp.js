@@ -23,12 +23,13 @@ const gdDays = (a, b) => { const f = s => { const [y, m, d] = s.split("-").map(N
 // 這段時間的 GDP（diff：casBookDiff 的結果）。回傳 { C, I, G, NX, total }（總共；除以天數是每天）
 export function casGdpOf(diff) {
   const K = NUM.casino.gdp, a = (diff && diff.act) || {}, mint = (diff && diff.mint) || {}, hm = (diff && diff.houseMint) || {};
-  const C = gdNz(a.food) * K.foodAvg + gdNz(a.bjHands) * K.bjHand;
+  const wf0 = (diff && diff.wflow) || {}, npcShop = -["npcFood", "npcBj", "npcJob", "npcCellar", "npcCraft"].reduce((s, k) => s + gdNz(wf0[k]), 0), npcTk = -(gdNz(wf0.npcTicketBudget) + gdNz(wf0.npcTicketMuseum)); // NPC 來館花的錢（外面世界付，wflow 是負的）：店裡 ＝ 消費、門票 ＝ 淨出口
+  const C = gdNz(a.food) * K.foodAvg + gdNz(a.bjHands) * K.bjHand + Math.max(0, npcShop);
   const wf = (diff && diff.wflow) || {}, net = (...ks) => ks.reduce((s, k) => s + gdNz(wf[k]), 0); // 外面世界的池子（規劃 2.12）：正＝錢進外面世界
   // 投資 ＝ 銀行存款淨增加 ＋ 股票淨流向外面世界（玩家買 − 賣、館方投資買 − 賣；只算淨流入，當沖互相抵銷）
   const I = Math.floor((Math.max(0, gdNz(diff && diff.bank)) + Math.max(0, net("stockBuy", "stockSell")) + Math.max(0, net("houseInvestBuy", "houseInvestSell", "budgetInvestBuy", "budgetInvestSell"))) * K.investPct / 100);
   const G = gdNz(a.econWin) * K.econWin;
-  const ticket = gdNz(mint.ticket) + gdNz(hm.ticketBudget) + gdNz(hm.ticketMuseum) - net("ticket", "ticketBudget", "ticketMuseum"); // 門票：以前是 mint，外面世界有帳後是從池子付（wflow 負的）
+  const ticket = gdNz(mint.ticket) + gdNz(hm.ticketBudget) + gdNz(hm.ticketMuseum) - net("ticket", "ticketBudget", "ticketMuseum") + Math.max(0, npcTk); // 門票：以前是 mint，外面世界有帳後是從池子付（wflow 負的）
   const NX = ticket - gdNz(a.econFail) * K.econSink;
   return { C, I, G, NX, total: C + I + G + NX };
 }
