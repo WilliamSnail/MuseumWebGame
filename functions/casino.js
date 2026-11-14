@@ -42,6 +42,7 @@ import { casArtSecret } from "./shared/casino_art.js";
 import { npcCounters, npcPublic } from "./shared/npc.js";
 import { FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
+import { casNpcLive, casReviewsFix, npcPresence } from "./shared/npc_spend.js";
 import { casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
@@ -71,6 +72,17 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 // fn 回傳 { ok: false, ... }：什麼都不寫，原樣回給畫面（不是錯誤：荷官的話也是這樣回）
 // fn 回傳 { ok: true, ... }：ctx.round 有改（ctx.roundDirty）就寫；錢包、莊家一定寫；ctx.saveDirty 就寫存檔
 // 核心吃 { uid, nick } 和 email（只有認領舊資料用）：遊戲（casino 這個 Function）和 Discord（functions/discord_play.js）各包一層，規則只有這壹份
+// 大廳要的「現在展廳有誰」和最近的評價（peek 回給畫面；只讀，不結算）。now { hall 展廳現在有幾位 NPC、names 他們的名字、around 現在在館裡的 NPC 共幾位 }、reviews 最近的評價（新的在前，最多 20 則 { who, text, stars, at, day }）。
+// 各家店現在幾位 NPC 不給（那是今天的人數，會洩漏明天的跳空）；還沒結算的（到了、還沒有人碰莊家文件）評價也在 reviews 裡補上
+async function npcNowView(h) {
+  try {
+    const t = now(), day = taipeiDay(t), sec = await twSecret(), counters = npcCounters(h && h.npcc);
+    const p = npcPresence(day, t, sec, NPC_LIST, counters);
+    const house = { reviews: h && Array.isArray(h.reviews) ? h.reviews.slice() : [], npcLive: h ? JSON.parse(JSON.stringify(h.npcLive || null)) : null, world: h ? h.world : 0, econ: h && h.econ, led: {}, budget: 0, bankroll: 0, museum: 0 };
+    casNpcLive(house, day, t, sec, NPC_LIST, counters); // 複本上算：已經到、還沒寫進莊家文件的評價補進來（不寫回去、不動錢）
+    return { now: { hall: p.hall, names: p.names, around: p.around }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
+  } catch (e) { console.warn("npcNowView", e && e.message); return { now: null, reviews: [] }; }
+}
 export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
@@ -100,6 +112,7 @@ export async function playCore(me, email, opts, fn) {
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
       casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
@@ -385,7 +398,7 @@ export const casino = onCall(async req => {
       if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       const hs = await houseRef().get(); // 大廳導覽圖銀行的「新」：館外幾支股票的價自從上次看過之後變過（只讀，不寫）
       const stockFresh = hs.exists ? casStockFreshN(w, parse(hs)) : 0;
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, npcc: hs.exists ? npcPublic(parse(hs).npcc) : null }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
