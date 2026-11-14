@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "hall-late-night-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "展廳深夜也有人來；散客變多、門票變便宜", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "以前 23:30 到隔天 05:00 展廳沒有人來。現在深夜也會有旅客和散客，只是比白天、晚上少。",
+        "散客變多了，大約是原本的 2.5 倍；散客門票從每位 1 萬降到 4 千。旅客的門票不變（2 萬）。",
+        "門票總收入跟以前差不多，看展廳時領到的分紅也照舊算。館內五家店的股票營業時間不變（05:00～23:30）。",
+      ]],
+    ],
+  },
+  {
     id: "bank-stock-subtabs-top-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "手機看股票：交易、行情、持倉固定在最上面", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

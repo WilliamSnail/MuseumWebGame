@@ -1,7 +1,7 @@
 // ================================================================
 //  NPC 來館：什麼時候在哪、付門票、在店裡花錢、在展廳留評價（11-14，docs/館內NPC規劃.md；翊文：「NPC 和參觀者可以在伺服器上有隨機時間正在參觀…大廳加一個現在展廳有多少人」）
 //  純函式。每天（台灣 05:00 換日）每位 NPC 的行程（shared/npc_trip.js：今天去哪幾處）再各抽「幾點到、待多久」：
-//    營業時間 05:00～23:30（分鐘 0～1110，從 05:00 起算），壹位 NPC 的幾站排成壹串不重疊（先後順序、中間空壹下都是亂數）；店待 shopStay（30～120）分鐘、展廳 hallStay（60～180）分鐘。
+//    整天都可能有人（05:00 到隔天 05:00，分鐘 0～1440，從 05:00 起算；翊文 11-14：「深夜也要有人」。館內股的營業時間另外是 05:00～23:30，跟這個無關），壹位 NPC 的幾站排成壹串不重疊（先後順序、中間空壹下都是亂數）；店待 shopStay（30～120）分鐘、展廳 hallStay（60～180）分鐘。
 //    種子含伺服器祕密：玩家算不出誰幾點在哪。「現在誰在哪」只看時間算得出來，不用排程、不用存（npcPresence）。
 //  錢和評價在「到了」的那壹刻才發生（惰性結算 casNpcLive：任何壹個碰到莊家文件的交易，把已經到時間、還沒結算的幾站結掉；house.npcLive.done 記哪些做過了，冪等）：
 //    壹位 NPC 當天第壹站付壹張門票 ticket（不分紅給玩家：ticketBudgetPct% 預算池、其餘館方帳）；
@@ -20,7 +20,8 @@ import { npcTrips } from "./npc_trip.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
-const DAY_MIN = 1110; // 05:00～23:30
+export const NPC_DAY_MIN = 1440; // 05:00 到隔天 05:00（遊戲的壹天）
+const DAY_MIN = NPC_DAY_MIN;
 export const npcDayStartMs = day => Date.parse(day + "T05:00:00+08:00");
 
 // 今天每位 NPC 的每壹站：[{ key, id, name, place, start, end }]（分鐘，從 05:00 起算）。只由「日期、祕密、名單、全館進度」決定
@@ -32,7 +33,9 @@ export function npcVisitsToday(day, secret, list, counters) {
     const rnd = mulberry32(hashStr(`${secret}|${day}|${id}|when`)), places = trip.visits[id].map(p => ({ p, r: rnd() })).sort((a, b) => a.r - b.r).map(x => x.p);
     const SP = NUM.casino.npcSpend, stay = places.map(p => { const r = p === "hall" ? SP.hallStay : SP.shopStay; return r[0] + Math.floor(rnd() * (r[1] - r[0] + 1)); }), gaps = places.map(() => Math.floor(rnd() * 31));
     const total = stay.reduce((a, b) => a + b, 0) + gaps.reduce((a, b) => a + b, 0);
-    let cur = total < DAY_MIN ? Math.floor(rnd() * (DAY_MIN - total)) : 0;
+    // 第壹站幾點到：照 npcWeights 每小時的比重（白天晚上平均、深夜少但有；翊文 11-14「深夜也要有人」），不是 24 小時平均撒（那樣白天會變少）
+    const W = NUM.casino.npcSpend.npcWeights; let h = 0, wr = rnd() * W.reduce((a, b) => a + b, 0); for (; h < W.length - 1; h++) { wr -= W[h]; if (wr < 0) break; }
+    let cur = total < DAY_MIN ? Math.min(DAY_MIN - total, h * 60 + Math.floor(rnd() * 60)) : 0;
     places.forEach((p, i) => { cur += gaps[i]; out.push({ key: id + "|" + p, id, name: n.name, place: p, start: cur, end: Math.min(DAY_MIN, cur + stay[i]) }); cur += stay[i]; });
   }
   return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
