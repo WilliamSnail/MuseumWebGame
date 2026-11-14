@@ -1,0 +1,70 @@
+/* ================================================================
+   抱枕工作台重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
+   標題壹行｜左：抱枕（吃剩下的高度）＋三排選項（材質、尺寸、填充）｜右：名牌、可能性、做的鈕、抱抱的提示｜最下面：收藏的抽屜
+   前綴 pl-（docs/class名單.md）；根 class pillow-onescreen
+   ================================================================ */
+.screen.pillow-onescreen > .onescreen-main.pl-main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: stretch; }
+.pillow-onescreen .pl-left { display: flex; flex-direction: column; gap: 8px; min-height: 0; max-height: 100%; overflow: visible; }
+.pillow-onescreen .pl-stage { flex: 1 1 auto; min-height: 0; align-items: center; padding: 6px 0 12px; }
+.pillow-onescreen .pl-stage::before { height: 100%; }
+.pillow-onescreen .pillow-art { height: min(100%, 360px); width: auto; aspect-ratio: 1; max-width: 90%; }
+.pillow-onescreen .pl-shadow { display: none; }
+.pillow-onescreen .pl-info { gap: 10px; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+.pillow-onescreen .pl-info .placard { margin: 0; }
+.pillow-onescreen .pl-rows { flex: none; margin: 0; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(20, 10, 12, .45); border: 1px solid rgba(214, 178, 94, .35); }
+.pillow-onescreen .pl-row { gap: 10px; }
+.pillow-onescreen .pl-row-l { width: 3em; color: var(--paper-gold, #F3DFA6); font-size: var(--type-body, .875rem); }
+.pillow-onescreen .pl-row .seg { flex-wrap: wrap; gap: 6px; }
+.pillow-onescreen .pl-row .seg-btn { min-height: 38px; padding: 0 14px; font-size: var(--type-body, .875rem); }
+.pillow-onescreen .poss { margin: 0; }
+.pillow-onescreen .ws-make { margin: 0; }
+
+/* 手機直拿：壹欄，整塊在主區裡捲（抱枕縮小，選項排得下） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.pillow-onescreen > .onescreen-main.pl-main { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+  .screen.pillow-onescreen > .onescreen-main.pl-main > * { max-height: none; overflow: visible; }
+  .pillow-onescreen .pl-left { flex: none; }
+  .pillow-onescreen .pl-stage { flex: none; padding: 2px 0 6px; }
+  .pillow-onescreen .pillow-art { height: min(190px, 30vh); width: min(190px, 30vh); }
+  .pillow-onescreen .pl-row { flex-wrap: nowrap; }
+  .pillow-onescreen .pl-row .seg { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .pillow-onescreen .pl-row .seg-btn { flex: none; min-height: 40px; padding: 0 10px; font-size: var(--type-small, .75rem); }
+}
+/* 手機橫拿：左抱枕和選項、右名牌和做 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.pillow-onescreen > .onescreen-main.pl-main { grid-template-columns: minmax(0, 1fr) minmax(210px, 280px); gap: 10px; }
+  .pillow-onescreen .pillow-art { height: min(100%, 140px); }
+  .pillow-onescreen .pl-rows { padding: 4px 8px; gap: 3px; }
+  .pillow-onescreen .pl-row .seg-btn { min-height: 30px; padding: 0 8px; font-size: var(--type-small, .75rem); }
+  .pillow-onescreen .pl-stage { padding: 0 0 4px; }
+}
+/* 手機直拿：順序改成 抱枕 → 名牌和「做」→ 選項（「做」不要在最下面） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .pillow-onescreen .pl-left { display: contents; }
+  .pillow-onescreen .pl-stage { order: 1; }
+  .pillow-onescreen .pl-info { order: 2; flex: none; overflow: visible; gap: 6px; }
+  .pillow-onescreen .pl-rows { order: 3; }
+  .pillow-onescreen .pl-info .poss, .pillow-onescreen .pl-info .hug-more { display: none; }
+  .pillow-onescreen .pl-row .btn { white-space: nowrap; flex: none; }
+}
+
+/* 手機橫拿：標題和「回大廳」擠在壹行（說明字收掉） */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.pillow-onescreen > .room-head { display: flex; flex-wrap: nowrap; align-items: center; margin: 0 0 4px; gap: 8px; }
+  .screen.pillow-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.pillow-onescreen > .room-head .sub { display: none; }
+  .screen.pillow-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.pillow-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .pillow-onescreen .pl-info .poss, .pillow-onescreen .pl-info .hug-more { display: none; }
+  .pillow-onescreen .pl-info { gap: 4px; }
+  .pillow-onescreen .pl-info .placard { padding: 8px 12px; }
+  .pillow-onescreen .pl-info .placard .pl-title { font-size: .9375rem; }
+  .pillow-onescreen .pl-info .placard .pl-line, .pillow-onescreen .pl-info .placard .pl-count { font-size: .75rem; margin: 0; }
+  .pillow-onescreen .pl-row .seg-btn { min-height: 26px; padding: 0 6px; }
+  .pillow-onescreen .pl-row .btn { min-height: 26px; padding: 0 8px; font-size: .75rem; }
+  .pillow-onescreen .pl-row-l { font-size: .75rem; }
+  .pillow-onescreen .pl-rows { gap: 2px; padding: 3px 8px; }
+  .pillow-onescreen .ws-make .btn { min-height: 38px; }
+}
