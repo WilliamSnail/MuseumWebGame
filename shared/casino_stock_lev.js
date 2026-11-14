@@ -237,6 +237,13 @@ export const casLevLagWhy = nw => {
   return max > 0 && (nw.stale || nw.lag > max) ? casFill(CAS_STOCK_LEV.lag, { n: max }) : null;
 };
 // args：{ id, side "long"｜"short", lev, qty, stop, take（停損價、停利價，可以不給）}（也收 dir、margin：給 margin 沒給 qty 時，股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去）。回傳 { ok, pos, lines } 或 { ok:false, reason }
+// 給保證金開倉時的整股算法（畫面的確認單也用這個，11-14 測試：畫面以前寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：
+//   股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去；部位 ＝ 股數 × 價；保證金 ＝ 部位 ÷ 倍數 進位
+export function casLevSizeOf(margin, lev, px) {
+  const L = Math.floor(+lev), P = +px, M = Math.floor(+margin);
+  const qty = L >= 1 && P > 0 && M > 0 ? Math.floor(M * L / P) : 0, notional = qty * (P > 0 ? P : 0);
+  return { qty, notional, margin: L >= 1 ? Math.ceil(notional / L) : 0 };
+}
 export function casLevOpen(w, house, args, day, t, src) {
   const C = lqC(), T = CAS_STOCK_LEV, A = args || {}, S = casLevFix(w, day);
   src = src || casLevSrc(house, day, t);
@@ -253,7 +260,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   const lagWhy = mk === "in" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
   const px = nw.px;
   let qty = Math.floor(+A.qty);
-  if (!(qty > 0) && A.margin != null) qty = Math.floor(Math.floor(+A.margin) * lev / px);
+  if (!(qty > 0) && A.margin != null) qty = casLevSizeOf(A.margin, lev, px).qty;
   if (!Number.isFinite(qty) || qty <= 0) return { ok: false, reason: T.qtyBad };
   const why = lqDebtWhy(w, day); if (why) return { ok: false, reason: why };
   const opensToday = S.opens.day === day ? S.opens.n : 0;
