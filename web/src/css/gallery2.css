@@ -198,3 +198,7 @@ details[open] > .gal-sum .gal-open, details:not([open]) > .gal-sum .gal-close { 
   .gal-auction > .gal-sell { order: -2; }
   .gal-auction > .gal-last { order: -1; }
 }
+
+/* 收標結果：得標者、館外收藏小標（11-14） */
+.gal-last li span.gal-won { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; justify-content: flex-end; }
+.gal-last .gal-npc { font-style: normal; font-weight: 700; font-size: var(--type-tiny, .6875rem); padding: 0 6px; border: 1px solid rgba(200, 162, 90, .7); border-radius: 999px; color: var(--paper-soft, #D8C59A); }

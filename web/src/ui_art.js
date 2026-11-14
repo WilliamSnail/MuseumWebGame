@@ -122,7 +122,7 @@ const FAKE_AUC = {
     { id: "au2", kind: "house", sellerName: "館方", work: "x2", title: "雨夜的窗", tierName: "孤品", reserve: 1200000, ceil: 0, closeAt: Date.now() + 1.1 * 86400000, bidders: 0, mine: null, mineSeller: false, canCancel: false },
     { id: "au3", kind: "player", sellerName: "館友", work: "d1", title: "無名的肖像", tierName: "珍藏", reserve: 350000, ceil: 600000, closeAt: Date.now() + 2.8 * 86400000, bidders: 1, mine: null, mineSeller: true, canCancel: false },
   ],
-  done: [{ id: "d1", kind: "house", sellerName: "館方", work: "y1", title: "紅色的晚餐", tierName: "珍藏", price: 610000, closedAt: Date.now() - 86400000 }, { id: "d2", kind: "player", sellerName: "館友", work: "y2", title: "靜物與佩佩", tierName: "孤品", price: null, closedAt: Date.now() - 2 * 86400000 }],
+  done: [{ id: "d1", kind: "house", sellerName: "館方", work: "y1", title: "紅色的晚餐", tierName: "珍藏", price: 610000, buyerName: "小華", closedAt: Date.now() - 86400000 }, { id: "d3", kind: "house", sellerName: "館方", work: "y3", title: "夜班的燈", tierName: "珍藏", price: 480000, buyerName: "館外藏家", npcBuyer: true, closedAt: Date.now() - 86400000 }, { id: "d2", kind: "player", sellerName: "館友", work: "y2", title: "靜物與佩佩", tierName: "孤品", price: null, closedAt: Date.now() - 2 * 86400000 }],
   notes: [], hold: 520000, listLeft: 1, minAge: 3, feePct: 5, floorPct: 80, ceilPct: 150,
 };
 const fmtWhen = ms => { const t = new Date(ms + 8 * 3600000); return `${t.getUTCMonth() + 1}/${t.getUTCDate()} ${String(t.getUTCHours()).padStart(2, "0")}:00`; };
@@ -209,7 +209,7 @@ export function auctionPane() {
         h("p", { class: "gal-hold" }, `還能同時拍 ${A.listLeft} 幅${A.hold ? `・出價鎖住 ${casNum(A.hold)} 籌碼` : ""}`),
         h("div", { class: "gal-sell-row" }, sel, resv, range, btn(`${CAS_AUC.list}（${NUM.auction.closeDays} 天）`, () => aucDo("list", { id: listId, reserve: Number(aucForm.reserve) }), "small gal-btn primary", { disabled: canList ? null : true }))),
       h("details", { class: "gal-last", open: phone ? null : "" }, h("summary", { class: "gal-h gal-sum" }, "收標結果（只公開得標價）", h("span", { class: "gal-open" }, "點開 ▾"), h("span", { class: "gal-close" }, "收起來 ▴")),
-        A.done && A.done.length ? h("ul", null, A.done.map(x => h("li", null, h("b", null, x.title), h("i", { class: "gal-tier" }, x.tierName), x.price != null ? h("span", null, casNum(x.price)) : h("span", { class: "gal-flow" }, "流標"), h("small", null, fmtWhen(x.closedAt).split(" ")[0])))) : h("p", { class: "gal-range" }, "還沒有收標的拍賣。")));
+        A.done && A.done.length ? h("ul", null, A.done.map(x => h("li", null, h("b", null, x.title), h("i", { class: "gal-tier" }, x.tierName), x.price != null ? h("span", { class: "gal-won" }, x.buyerName ? `得標：${x.buyerName}　${casNum(x.price)}` : casNum(x.price), x.npcBuyer ? h("i", { class: "gal-npc" }, "館外收藏") : null) : h("span", { class: "gal-flow" }, "流標"), h("small", null, fmtWhen(x.closedAt).split(" ")[0])))) : h("p", { class: "gal-range" }, "還沒有收標的拍賣。")));
   };
   const rerenderAuc = () => draw();
   views.add(draw); draw();
