@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldLow } from "./casino_book.js";
+import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldLow } from "./casino_book.js";
 import { casInUsed } from "./casino_stock_in.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
@@ -28,11 +28,22 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 // ---------- 錢包 ----------
 export function casWalletNew() {
   return {
-    v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {} },
+    v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {}, cult: 1 },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
+}
+// 新玩家的起始籌碼是文化部補助（決定 0082）：新錢包帶 led.cult＝1 的記號，第壹次碰到莊家（house）時，把「憑空給的」改記成外面世界出的（來源 cultureStart）。
+// 舊錢包沒有記號，不動。全館最多補助 NUM.casino.culture.maxPlayers 位（house.cult.n），超過的還是記憑空。回傳這次轉的籌碼
+export function casCultureFund(w, house) {
+  if (!w || !w.led || !w.led.cult) return 0;
+  delete w.led.cult;
+  const C = NUM.casino.culture, H = house.cult && typeof house.cult === "object" ? house.cult : (house.cult = { n: 0, total: 0 });
+  if (!C || !C.on || casNz(H.n) >= C.maxPlayers) return 0;
+  const got = casWorldFund(w, house, "cultureStart", w.led.mint && w.led.mint.start, NUM.casino.world);
+  if (got > 0) { H.n = casNz(H.n) + 1; H.total = casNz(H.total) + got; }
+  return got;
 }
 // 讀回來的錢包：補欄位、換日重算（今天的免費大禮包、救濟；這週的換小獎）。day 是台灣的今天
 export function casWalletFix(w, day) {

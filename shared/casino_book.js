@@ -100,6 +100,19 @@ export function casWorldOut(w, house, src, n, cfg) {
   bkAdd(bkW(house), src, -n);
   return n;
 }
+// 把錢包「憑空給的」開場籌碼改記成外面世界出的（決定 0082，新玩家的起始籌碼是文化部補助）：錢包的籌碼不動，
+// 只是帳上「憑空 mint.start」減 n、外面世界池子減 n（來源 src 記 −n）。總量不變、憑空的也同步減，所以對帳差不變。回傳實際轉的 n
+// （池子吃緊付不出就少轉，剩下的還是記憑空）
+export function casWorldFund(w, house, src, n, cfg) {
+  const led = bkBox(w.led) && bkBox(w.led.mint) ? w.led.mint : null;
+  if (!led) return 0;
+  n = Math.min(bkNz(n), bkNz(led.start), casWorldRoom(house, cfg));
+  if (n <= 0) return 0;
+  bkWPaid(house, cfg, n);
+  led.start = bkNz(led.start) - n; house.world = bkNz(house.world) - n;
+  bkAdd(bkW(house), src, -n);
+  return n;
+}
 // 外面世界 → 莊家（撥款、貸款）
 export function casHouseWorldOut(house, src, n, cfg) {
   n = Math.min(bkNz(n), Math.max(0, bkNz(house.world)));

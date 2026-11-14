@@ -351,6 +351,8 @@ export const NUM = {
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
     //   持股總賺賠虧超過 stopPct% 暫停買進 stopDays 天。on:false 整個關掉
     invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 15, takeProfitPct: 30, stopPct: 10, stopDays: 7 },
+    // 新玩家的起始籌碼是文化部補助（決定 0082）：從外面世界池子搬、來源記 cultureStart，不再憑空。on:false ＝照舊憑空給。maxPlayers：全館最多補助幾位（超過的記憑空，池子不會被補光）
+    culture: { on: true, name: "文化部", maxPlayers: 300 },
     houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
     houseReset: 10000000,   // 莊家破產中（小於 0）過了換日，Yuga 借他這麼多重新開張
     // 換日印錢補莊家先關掉（翊文 11-14：莊家 −8.3 億，換日會印 8 億多補回來，「這不行，莊家要跟整個經濟系統接軌才行」）。
