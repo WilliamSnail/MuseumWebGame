@@ -1,0 +1,58 @@
+{
+  "id": "v-noodle",
+  "name": "蓮姨",
+  "kind": "visitor",
+  "story": "開深夜麵攤的老闆娘，收攤前總會多煮壹碗。",
+  "likes": [
+    "food",
+    "bj",
+    "cellar"
+  ],
+  "route": {
+    "food": 4,
+    "bj": 3,
+    "cellar": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 520000,
+    "max": 350000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她打烊後把最後壹碗麵端到館門口，說這是規矩，不用問為什麼。",
+      "news": "蓮姨把最後壹碗麵端到了館門口。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-21",
+      "text": "隔天她去收碗，碗洗得乾乾淨淨，筷子還擺得整整齊齊。",
+      "news": "蓮姨收回了洗好的碗和筷子。",
+      "ties": [
+        "arc-squat"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-01-18",
+      "text": "她今天把那碗麵加了壹顆蛋，說冬天了，總不能讓他餓著等。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 170
+      },
+      "news": "蓮姨替門口那碗麵多加了壹顆蛋。",
+      "ties": [
+        "arc-squat"
+      ],
+      "route": {
+        "food": 4,
+        "bj": 2,
+        "cellar": 3,
+        "hall": 3
+      }
+    }
+  ]
+}

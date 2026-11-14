@@ -1,0 +1,57 @@
+{
+  "id": "v-kid",
+  "name": "糯糯",
+  "kind": "visitor",
+  "story": "小學二年級，書包上掛著三隻自己縫的小佩佩。",
+  "likes": [
+    "hall",
+    "food",
+    "craft",
+    "pillows"
+  ],
+  "route": {
+    "hall": 6,
+    "food": 3,
+    "craft": 3
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 25000,
+    "max": 10000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "她在展廳數佩佩的腳趾，數到壹半被媽媽牽走，下次要接著數。",
+      "news": "糯糯在展廳數佩佩的腳趾。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-21",
+      "text": "她說她的書包有三隻小佩佩，可是出門前數過，是四隻，她決定不告訴老師。",
+      "news": "糯糯說書包裡多了壹隻佩佩。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-01-18",
+      "text": "她替那隻多出來的佩佩縫了壹顆鈕扣當名牌，鈕扣上還沒有字。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 150
+      },
+      "news": "糯糯替小佩佩縫了壹顆名牌鈕扣。",
+      "ties": [
+        "m-count"
+      ],
+      "likes": [
+        "hall",
+        "pillows",
+        "craft"
+      ]
+    }
+  ]
+}
