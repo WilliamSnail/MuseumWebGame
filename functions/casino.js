@@ -35,7 +35,7 @@ import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
 import { casTicketClaimKeys } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
-import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
+import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { casArtSecret } from "./shared/casino_art.js";
@@ -422,7 +422,7 @@ export const casino = onCall(async req => {
       if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       const hs = await houseRef().get(); // 大廳導覽圖銀行的「新」：館外幾支股票的價自從上次看過之後變過（只讀，不寫）
       const stockFresh = hs.exists ? casStockFreshN(w, parse(hs)) : 0;
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, policy: hs.exists ? casPolicyView(parse(hs), taipeiDay(now())) : null, npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
