@@ -402,3 +402,18 @@ body[data-screen="bank"] #room { background: none; }
 .bank-seg, .bank-seg:first-child, .bank-seg:last-child { border: 1px solid var(--bank-gold); border-radius: 8px; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
 .bank-seg.on { border-color: #7A5A2A; box-shadow: 0 2px 0 #7A5A2A, 0 0 10px rgba(240, 217, 149, .35); }
 .bank-seg:not(.on):hover:not(:disabled) { filter: brightness(1.18); }
+
+/* 規則與小提示（11-14）：標題列右邊的金色按鈕，點開是一張卡，上面一排小頁籤、下面照段落列重點 */
+.bank-helpbtn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; white-space: nowrap; }
+.bank-help-q { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #1D2B45; color: var(--bank-gold-hi, #F0D995); font-weight: 800; font-size: .8125rem; }
+.mini-card.bank-help { width: min(640px, 94vw); max-height: min(86dvh, 640px); display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.bank-help .bank-help-tabs { flex: none; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.bank-help-chip { flex: none; min-height: 36px; padding: 0 14px; border: 1px solid #A88A52; border-radius: 999px; background: rgba(255, 255, 255, .55); color: var(--parch-ink, #2B1B0C); font: inherit; font-size: var(--type-small, .75rem); font-weight: 700; cursor: pointer; }
+.bank-help-chip.on { background: linear-gradient(180deg, #F0D995, #D6B25E 60%, #B8923E); border-color: #8A6A28; color: #1D2B45; }
+.bank-help-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; display: grid; gap: 10px; align-content: start; padding-right: 4px; }
+.bank-help-sec h3 { margin: 0 0 4px; font-size: var(--type-body, .875rem); color: var(--ink-accent, #8E2A24); }
+.bank-help-sec ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: var(--type-body, .875rem); line-height: 1.5; }
+.bank-help .bank-acts { flex: none; margin-top: 0; }
+@media (max-width: 760px) { .bank-helpbtn { min-height: 34px; padding: 0 10px; font-size: .75rem; } .bank-help-q { width: 16px; height: 16px; font-size: .6875rem; } }
+@media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help { max-height: 94dvh; padding: 10px 14px; } .bank-help-chip { min-height: 30px; } .bank-help .bank-acts .bank-btn { min-height: 34px; } .bank-helpbtn { min-height: 30px; padding: 0 8px; font-size: .75rem; } }
+@media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help > .sub { display: none; } .mini-card.bank-help > h2 { font-size: 1rem; margin: 0; } .bank-help-sec ul { font-size: var(--type-small, .75rem); line-height: 1.4; } }
