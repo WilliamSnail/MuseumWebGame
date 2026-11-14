@@ -192,6 +192,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "casino-phone", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "賭場手機版：頁籤全部看得到、發牌不用捲", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿：賭場最上面的九個頁籤排成兩排，不用左右滑；「輸入下注金額」和「發牌」在第一個畫面就按得到。",
+        "手機橫拿：九個頁籤排成一排，一次全看得到。",
+      ]],
+    ],
+  },
+  {
     id: "casino-look", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "賭場的頁籤換成墨綠絲絨牌", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
