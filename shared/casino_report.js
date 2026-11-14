@@ -43,6 +43,10 @@ export function casReportView(doc) {
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
   const flow = rpList(d.flow, CAS_REPORT.flow, true);
   if (flow.length) hl.push("進出：", ...flow);
+  if (H.debt && H.debt.culture > 0 && NUM.casino.houseLoan.cultureDue) { // 文化部館債（30 天內還清）
+    const dueD = NUM.casino.houseLoan.cultureDue, dl = doc.day ? Math.max(0, rpDays(doc.day, dueD)) : null, c = H.cul || {};
+    hl.push(`文化部館債：剩 ${rpN(H.debt.culture)}，${dl === null ? "" : dl + " 天後"}到期（${dueD.slice(5)}），今天還了 ${rpN(c.paid || 0)}。` + (H.culLate > 0 ? `逾期累計 ${rpN(H.culLate)}。` : ""));
+  }
   const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部持有的館債", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
   if (debts.length) hl.push("莊家欠的錢（賺了錢會先還）：" + debts.map(x => `${x[0]} ${rpN(x[1])}`).join("、") + "。");
   if (H.loansOut > 0) hl.push(`莊家借出去、還沒收回的本金 ${rpN(H.loansOut)}。`);
