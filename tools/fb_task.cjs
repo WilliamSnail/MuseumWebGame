@@ -14,7 +14,7 @@
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 //   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
-//                 印成 base64 的幾行（ECON_B64 H＝莊家、R＝日報；GitHub 會把 { } 遮成 ***，所以不能直接印 JSON），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
+//                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
@@ -41,6 +41,8 @@ async function stockStatus(db) {
 }
 
 // 只讀：經濟用到的欄位（白名單，不是整份文件）。格式給 tools/econ_check.cjs --ledger 吃
+// 簡單的檢查碼（不是密碼學的）：econ_check 重算壹次，對不上就說輸出被改過或截斷
+function econCrc(s) { let c = 7; for (let i = 0; i < s.length; i++) c = (Math.imul(c, 31) + s.charCodeAt(i)) >>> 0; return c.toString(16).padStart(8, "0"); }
 function econPick(h) {
   const o = {}, nz = v => (Number.isFinite(+v) ? Math.floor(+v) : 0), obj = v => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
   for (const k of ["bankroll", "budget", "museum", "sea", "world", "loansOut", "cultureLate"]) if (h[k] != null) o[k] = nz(h[k]);
@@ -56,10 +58,11 @@ async function econStatus(db) {
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
   // GitHub 會把「祕密裡出現過的字」遮成 ***（金鑰 JSON 裡有大括號，輸出的 { } 全被遮掉），所以輸出 base64，每行 160 字、標第幾份／共幾份，econ_check 照順序接回來
-  const emit = (kind, obj) => { const b = Buffer.from(JSON.stringify(obj), "utf8").toString("base64"), n = Math.max(1, Math.ceil(b.length / 160)); for (let i = 0; i < n; i++) console.log(`ECON_B64 ${kind} ${i + 1}/${n} ${b.slice(i * 160, (i + 1) * 160)}`); };
+  // 第二次：base64 結尾的「fQ==」剛好等於某個祕密的值，被遮成 ***。改成 hex（只有 0-9a-f）、每行結尾加「.」、帶總長度和檢查碼（econ_check 驗，被改過會說）
+  const emit = (kind, obj) => { const b = Buffer.from(JSON.stringify(obj), "utf8").toString("hex"), n = Math.max(1, Math.ceil(b.length / 120)), crc = econCrc(b); for (let i = 0; i < n; i++) console.log(`ECON_HEX ${kind} ${i + 1}/${n} ${b.length} ${crc} ${b.slice(i * 120, (i + 1) * 120)} .`); };
   emit("H", econPick(h));
   const q = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
-  if (q.empty) { console.log("ECON_B64 R 1/1 " + Buffer.from("null").toString("base64")); return; }
+  if (q.empty) { emit("R", null); return; }
   const r = JSON.parse(q.docs[0].data().data || "{}"), sh = (r.snap && r.snap.house) || {};
   const pick = econPick(Object.assign({}, sh, { led: { world: sh.wflow || {} }, cultureLate: sh.culLate, inv: sh.inv }));
   emit("R", { day: r.day || null, gap: Number.isFinite(+r.gap) ? Math.floor(+r.gap) : null, opening: Number.isFinite(+r.opening) ? Math.floor(+r.opening) : null, house: pick });
@@ -192,4 +195,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { ACTIONS, parseTask, planTask, econPick };
+module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc };
