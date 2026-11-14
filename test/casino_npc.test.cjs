@@ -122,6 +122,7 @@ T("桌子收了：casTNpcDrop 把還沒結算的 NPC 注退回外面世界、NPC
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); G.casTBet(m.t, "a", "1000", { san: 99, bonusPct: 0 }, m.ctx, f.at);
   const t0 = total(G, m); m.ctx.says.length = 0; G.casTNpcDrop(m.t, m.ctx); assert.ok(!Object.values(m.t.seats).some(s => s.npc)); assert.ok(!G.npcCasAway(m.house, f.at).has(f.id)); assert.strictEqual(m.ctx.says.length, 0);
   assert.strictEqual(total(G, m), t0 + 0 - 0, "守恆（退回後不再算打牌中）");
+  G.casTNpcDrop(m.t, m.ctx); assert.strictEqual(total(G, m), t0, "11-14：孤兒桌（隊伍不在）再收壹次也不會多退（dropStale 會叫它）");
 });
 T("桌上只有 NPC 下了注時不開局（館友沒下注 NPC 不會自己打）", G => {
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); assert.ok(!G.casTAdvance(m.t, m.ctx, m.t.deadline + 1) || m.t.phase === "bet");
