@@ -262,6 +262,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "casino-invite-btn", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場邀旅客的按鈕變大了", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "牌桌上的「邀旅客壹起玩」改成金色大按鈕，後面寫現在有幾位可以邀；桌上還有空位時，空位直接寫「＋ 邀旅客」，點了就開邀請。館裡現在沒人能邀的時候按鈕變灰，下面寫原因。",
+        "大廳、展廳的「邀旅客去賭場」也放大了，寫館裡有幾位旅客。",
+      ]],
+    ],
+  },
+  {
     id: "gallery-bank", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "畫廊的拍賣頁籤多了簡易銀行", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

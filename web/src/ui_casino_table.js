@@ -44,7 +44,7 @@ async function doAct(act, data) {
 export function openTable(pid) {
   if (T && T.pid === pid) { if (!T.m.layer.isConnected) mount(); return; }
   if (T) endTable(false);
-  T = { bub: {}, bubFrom: Date.now() - 4000, pid, m: null, view: null, chips: null, party: null, chat: [], offs: [], timers: {}, clock: null, busy: false, tickKey: "", gone: false, bet: "10000", gag: null, noted: "" };
+  T = { who: null, bub: {}, bubFrom: Date.now() - 4000, pid, m: null, view: null, chips: null, party: null, chat: [], offs: [], timers: {}, clock: null, busy: false, tickKey: "", gone: false, bet: "10000", gag: null, noted: "" };
   mount();
   const s = T, meId = NET.me && NET.me.id;
   s.offs.push(NET.watch(`parties/${pid}`, v => {
@@ -58,6 +58,7 @@ export function openTable(pid) {
   s.clock = setInterval(tickClock, 250);
   draw();
   snd("flip");
+  refreshWho(s);
   // 入座（被邀請、重新整理、斷線回來都是這個）
   call("join").then(r => { if (T === s && r.view) onView(r.view); }).catch(e => { if (T === s) note((e && e.message) || "入座不了。", "bad"); });
 }
@@ -71,7 +72,7 @@ async function endTable(leave) {
   if (!s) return;
   T = null;
   s.offs.forEach(f => { try { f(); } catch (e) { /* 已經停了 */ } });
-  clearInterval(s.clock);
+  clearInterval(s.clock); clearTimeout(s.whoT);
   Object.values(s.timers).forEach(x => clearTimeout(x.t));
   if (s.m && s.m.layer.isConnected) s.m.close();
   if (leave && !s.gone) { try { await NET.call("partyAction", { pid: s.pid, act: "leave" }); } catch (e) { /* 隊伍已經不在了 */ } }
@@ -142,6 +143,21 @@ async function askPrune(id) {
   if (T === s && s.timers[id] === x && !(r && r.pruned) && x.tries < 3 && offlineId(id)) x.t = setTimeout(() => askPrune(id), PARTY.offlineWaitMs);
 }
 
+// 現在邀得動幾位（伺服器 npcWho 的名單）。失敗就當不知道（按鈕照常能按，按下去由伺服器說原因）
+async function refreshWho(s) {
+  clearTimeout(s.whoT);
+  try { const r = await NET.call("casinoTable", { act: "npcWho", pid: s.pid }); if (T === s && r && r.ok && Array.isArray(r.who)) { s.who = r.who.length; draw(); } } catch (e) { /* 當不知道 */ }
+  if (T === s) s.whoT = setTimeout(() => refreshWho(s), 60000);
+}
+// 邀旅客的大按鈕：金色主按鈕，圖示＋字＋可邀幾位；沒有人能邀就變灰、寫原因
+function inviteBtn(s, v) {
+  const none = s.who === 0, full = !!v.full, guests = v.seats.filter(x => x.npc).length >= 2;
+  const off = none || full || guests;
+  const why = full ? "這桌坐滿了" : guests ? "這桌的客人夠多了（最多 2 位）" : none ? "現在館裡沒有旅客能邀（他們在館裡的時間有限，晚點再來看看）" : "";
+  return h("div", { class: "cas-inv" },
+    btn([h("span", { class: "cas-inv-ic", "aria-hidden": "true" }, "♠"), " 邀旅客一起玩", s.who ? h("i", { class: "cas-inv-n" }, " " + s.who + " 位可邀") : null], () => openNpcInvite(s.pid), "primary big cas-inv-b", { disabled: off ? true : null, title: why || "邀館裡的旅客、委託人來這桌同桌打 21 點" }),
+    why ? h("small", { class: "cas-inv-why" }, why) : null);
+}
 // 新來的話（比開桌前幾秒新、比上次記的新）在座位頭上冒泡泡，BUBBLE_MS 後收起來
 function bubbles(s) {
   let fresh = false;
@@ -180,7 +196,8 @@ function draw() {
   parts.push(h("div", { class: "cas-felt" },
     h("div", { class: "cas-seat dealer" }, h("div", { class: "cas-who" }, h("b", null, CAS_TEXT.dealer), v.dealer.total != null ? h("small", null, `點數 ${v.dealer.total}`) : v.dealer.up != null ? h("small", null, `明牌 ${v.dealer.up}`) : null),
       v.dealer.cards.length ? handEl(v.dealer.cards, { label: "莊家的牌" }) : h("p", { class: "cas-empty" }, "下注，荷官就發牌。")),
-    h("div", { class: "cas-tb-seats" }, v.seats.map(x => seatCard(x, v)))));
+    h("div", { class: "cas-tb-seats" }, v.seats.map(x => seatCard(x, v)), !v.full && v.seats.filter(x => x.npc).length < 2 && s.who !== 0 ? h("button", { type: "button", class: "cas-seat tb cas-empty-seat", onClick: () => openNpcInvite(s.pid), "aria-label": "空位：邀旅客一起玩" }, h("b", null, "＋ 邀旅客"), h("small", null, s.who ? `${s.who} 位可邀` : "空位")) : null)),
+    inviteBtn(s, v));
   if (v.phase === "result" && me && me.out) parts.push(h("p", { class: "cas-dealer-line" }, h("b", null, CAS_TEXT.dealer + "："), dealerLine(me.out)));
   // 我能做的事
   if (v.phase === "bet" && me && !me.bet) parts.push(betBox(s));
@@ -194,7 +211,6 @@ function draw() {
   const inTable = new Set(mem.map(x => x.id));
   const online = NET.roster.filter(x => !x.me && x.status !== "offline" && !inTable.has(x.id));
   parts.push(h("div", { class: "cas-invite" }, h("small", { class: "cas-hint" }, mem.length ? `桌上：${mem.map(x => x.nick).join("、")}` : ""),
-    h("div", { class: "cas-quick" }, btn([icon("users"), " 邀旅客一起玩"], () => openNpcInvite(s.pid), "small")),
     online.length && !v.full ? h("div", { class: "cas-quick" }, h("small", { class: "cas-hint" }, "邀請："), online.map(x => btn([icon("users"), " ", x.nick], () => sendInvite(x, "table"), "small ghost"))) : h("small", { class: "cas-hint" }, v.full ? "這桌坐滿了。" : "現在沒有別的館友在線。")));
   parts.push(h("p", { class: "cas-rules" }, "同桌：壹副牌、壹個莊家，照入座的順序輪流；時間到、斷線都當停牌；有人離桌不影響別人。"));
   s.m.surface.replaceChildren(h("div", { class: "cas-body", dataset: { tab: "table" } }, parts), h("p", { class: "cas-foot" }, CAS_TEXT.series));
@@ -314,7 +330,7 @@ export async function openNpcInvite(pidGiven) {
       const r = await NET.call("casinoTable", { act: "npcInvite", pid, npc: x.id });
       if (r && r.ok && r.invite) {
         said = { name: r.invite.name || x.name, line: r.invite.line || "", ok: !!r.invite.accepted };
-        if (r.invite.accepted) { snd("coin"); busy = null; m.close(); openTable(pid); note(`${said.name}：${said.line}`, "good"); return; }
+        if (r.invite.accepted) { snd("coin"); busy = null; m.close(); openTable(pid); if (T && T.pid === pid) refreshWho(T); note(`${said.name}：${said.line}`, "good"); return; }
         snd("error");
         who = who.filter(w => w.id !== x.id); // 剛拒絕：30 分鐘內不能再邀
       } else { said = { name: x.name, line: (r && r.reason) || "邀不了。", ok: false, reason: true }; snd("error"); }

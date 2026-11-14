@@ -107,3 +107,5 @@
 /* 「邀去賭場」鈕和「在賭場」那行（11-14） */
 .hn-inv { margin-top: 6px; min-height: 36px; }
 .hn-casino { margin: 4px 0 0; font-size: .75rem; }
+.hn-inv { width: 100%; min-height: 48px; font-size: 1rem; }
+.hn-inv-n { font-style: normal; font-size: .75rem; opacity: .85; }
