@@ -697,7 +697,7 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
     }
     const m = mys.find(x => x.id === b.mystery);
     if (!m) E(w, `mystery「${b.mystery}」不在 mysteries 裡`);
-    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && b.week >= m.closeBy) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露`);
+    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && (b.extra ? b.week > m.closeBy : b.week >= m.closeBy)) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露（加開 extra 的可以放在收線週）`);
     const d = typeof b.detail === "string" ? b.detail.trim() : "";
     if (d.length < 8 || d.length > 120) E(w, "detail 要寫壹句具體看得到的細節（8～120 字）");
     else {

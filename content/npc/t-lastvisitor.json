@@ -1,0 +1,15 @@
+{
+  "id": "t-lastvisitor",
+  "name": "上一位參觀者",
+  "kind": "trace",
+  "ledger": "上一位參觀者",
+  "story": "只留編號和貼著編號的遺物。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

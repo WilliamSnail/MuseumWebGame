@@ -1,0 +1,58 @@
+{
+  "id": "v-auctioneer",
+  "name": "老駝",
+  "kind": "visitor",
+  "story": "拍賣預展的老拍賣師，槌子握得很穩，話很少。",
+  "likes": [
+    "auction",
+    "孤品",
+    "hall"
+  ],
+  "route": {
+    "auction": 6,
+    "hall": 3,
+    "bank": 1
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 1100000,
+    "max": 800000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-12-14",
+      "text": "他把預展的壹件拍品擺正，說落款欄留空，是留給得標的人。",
+      "news": "老駝說落款欄留給得標的人。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 2,
+      "from": "2027-01-18",
+      "need": {
+        "metric": "hallVisits",
+        "n": 500
+      },
+      "text": "他說價錢是大家壹起說出來的，東西自己從來沒有開過口。",
+      "news": "老駝說東西自己沒開過口。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-04-12",
+      "need": {
+        "metric": "hallVisits",
+        "n": 1200
+      },
+      "text": "借出去的畫回來了，他在歸還單前看了很久，說簽收的字不像館章。",
+      "news": "老駝在歸還單前站了很久。",
+      "ties": [
+        "m-ledger"
+      ]
+    }
+  ]
+}
