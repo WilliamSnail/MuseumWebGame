@@ -150,40 +150,71 @@ function draw() {
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
 // 跟 Yuga Bot 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino_wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
 // 每個頁籤上方壹條：還能借多少、借的按鈕；有沒還的就列出來，每筆壹顆「還」。借不了的時候寫原因
-function reliefBar() {
-  const w = S.w;
+// 賭場的銀行：整塊（平常收成壹條）。賭場和畫廊的拍賣頁籤用同壹份（bankBar）；賭場這邊的狀態是 S，動作是 act、say、draw
+const CAS_IO = { act: (...a) => act(...a), say: l => say(l), draw: () => draw(), leave: () => S.m.close() };
+function reliefBar() { return bankBar(S, CAS_IO); }
+// ---------- 簡易銀行（11-14，翊文：「畫廊的拍賣那個頁籤裡面加入像賭場裡的那個簡易銀行」）----------
+// 畫廊拍賣頁籤放壹條：存款・未還・可借、展開（借款、存款）、去銀行。資料和動作跟賭場同壹條（casino act open、borrow、repay、bank）；
+// 賭場的牌桌那壹手打到壹半的限制在賭場裡才有，這裡不會有（round 是 null）。回傳節點，畫面離開就不再更新
+export function casinoBankBox() {
+  const box = h("div", { class: "cas-bank-host" });
+  const C = { w: null, bank: null, bond: null, round: null, busy: false, bankOpen: false, bankTab: "loan", termAmt: null, failed: false };
+  const sync2 = r => { if (!r) return; if (r.wallet) { C.w = r.wallet; if (typeof r.wallet.chips === "number") setChips(r.wallet.chips); } if (r.bank) C.bank = r.bank; if (r.bond) C.bond = r.bond; };
+  const io = {
+    draw: () => { if (!box.isConnected && C.w) return; box.replaceChildren(...(C.w ? [bankBar(C, io)].filter(Boolean) : C.failed ? [] : [h("p", { class: "cas-bank-wait" }, "翻存摺中……")])); },
+    say: lines => (lines || []).forEach(l => l && note(String(l), "good")),
+    leave: () => {},
+    act: async (name, data, then) => {
+      if (C.busy) return null;
+      C.busy = true; io.draw();
+      let r = null;
+      try {
+        r = await NET.call("casino", Object.assign({ act: name }, data || {}));
+        if (r && r.ok === false) { snd("error"); note(r.reason || "沒辦法。", "bad"); } else { sync2(r); if (then) await then(r); }
+      } catch (e) { snd("error"); note((e && e.message) || "沒辦法。", "bad"); }
+      C.busy = false; io.draw();
+      return r;
+    },
+  };
+  io.draw();
+  if (UI.net && NET.loggedIn) NET.call("casino", { act: "open" }).then(r => { sync2(r); io.draw(); }).catch(() => { C.failed = true; io.draw(); });
+  return box;
+}
+ADDONS.casinoBankBox = casinoBankBox;
+export function bankBar(C, io) {
+  const w = C.w;
   if (!w || !w.loan) return null;
-  const L = w.loan, playing = !!(S.round && S.round.state === "playing");
+  const L = w.loan, playing = !!(C.round && C.round.state === "playing");
   // 平常收成壹條（翊文 11-13：賭場要能快速切換遊戲和銀行，不要互相擋；「簡易銀行也可以按一個按鈕到完整銀行」）：
   // 存款、未還兩個數字＋「展開」「去銀行」。展開才是下面整塊；完整的在銀行廳（ui_bank.js）
-  if (!S.bankOpen) {
-    const held = S.bank ? S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0) : 0, owed0 = L.list.reduce((s, x) => s + x.owe, 0);
-    const goBank = ADDONS.bankHall && ADDONS.bankOpen ? () => { S.m.close(); ADDONS.bankHall.open(); } : null;
+  if (!C.bankOpen) {
+    const held = C.bank ? C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0) : 0, owed0 = L.list.reduce((s, x) => s + x.owe, 0);
+    const goBank = ADDONS.bankHall && ADDONS.bankOpen ? () => { io.leave(); ADDONS.bankHall.open(); } : null;
     return h("section", { class: "cas-bank slim" + (w.chips < 0 ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
       h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
       h("span", { class: "bk-slim-t" }, h("b", null, CAS_TEXT.bankName),
         h("small", null, `存款 ${casNum(held)}・未還 ${casNum(owed0)}${L.left >= L.min && !L.why ? `・可借 ${casNum(L.left)}` : ""}`)),
-      btn("展開", () => { S.bankOpen = true; draw(); }, "small", { "aria-expanded": "false" }),
+      btn("展開", () => { C.bankOpen = true; io.draw(); }, "small", { "aria-expanded": "false" }),
       goBank ? btn("去銀行", goBank, "small primary") : null);
   }
   const why = playing ? CAS_TEXT.loanPlaying : L.why;
-  const off = S.busy ? true : null;
-  const borrow = amt => act("borrow", { amt }, r2 => { say(r2.lines); snd("coin"); celebrate(r2.ach); });
+  const off = C.busy ? true : null;
+  const borrow = amt => io.act("borrow", { amt }, r2 => { io.say(r2.lines); snd("coin"); celebrate(r2.ach); });
   const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`全額 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
   // 銀行的樣子（翊文 11-10：「介面稍微在更精美一點，像銀行一點」）：行名和狀態、三格數字、借款金額、借款明細（像存摺）
   const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);
   const fig = (label, value, sub) => h("div", { class: "bk-fig" }, h("span", { class: "bk-fig-l" }, label), h("b", null, value), sub ? h("small", null, sub) : null);
   const md = s => s.slice(5).replace("-", "/");
   // 借款、存款兩個頁籤（11-13，Yuga Bot 銀行的活存、定存）
-  const bt = S.bankTab === "save" && S.bank ? "save" : "loan";
-  const btab = (id, name) => h("button", { type: "button", role: "tab", class: "bk-tab" + (bt === id ? " on" : ""), "aria-selected": String(bt === id), onClick: () => { S.bankTab = id; draw(); } }, name);
+  const bt = C.bankTab === "save" && C.bank ? "save" : "loan";
+  const btab = (id, name) => h("button", { type: "button", role: "tab", class: "bk-tab" + (bt === id ? " on" : ""), "aria-selected": String(bt === id), onClick: () => { C.bankTab = id; io.draw(); } }, name);
   const head = h("header", { class: "bk-head" },
     h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
     h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
     h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好"));
-  const fold = h("div", { class: "bk-fold" }, btn("收起來", () => { S.bankOpen = false; draw(); }, "small"), ADDONS.bankHall && ADDONS.bankOpen ? btn("去銀行（完整）", () => { S.m.close(); ADDONS.bankHall.open(); }, "small primary") : null);
-  const tabsRow = S.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("loan", CAS_BANK.tabLoan), btab("save", `${CAS_BANK.tabSave}${S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(S.bank.save + S.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`)) : null;
-  if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, fold, tabsRow, savePane(fig, md, off));
+  const fold = h("div", { class: "bk-fold" }, btn("收起來", () => { C.bankOpen = false; io.draw(); }, "small"), ADDONS.bankHall && ADDONS.bankOpen ? btn("去銀行（完整）", () => { io.leave(); ADDONS.bankHall.open(); }, "small primary") : null);
+  const tabsRow = C.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("loan", CAS_BANK.tabLoan), btab("save", `${CAS_BANK.tabSave}${C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`)) : null;
+  if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, fold, tabsRow, savePane(C, io, fig, md, off));
   return h("section", { class: "cas-bank" + (debt ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
     head, fold, tabsRow,
     h("div", { class: "bk-figs" },
@@ -200,23 +231,23 @@ function reliefBar() {
       h("tbody", null, L.list.map(x => h("tr", { class: x.today ? "today" : "" },
         h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, h("b", null, casNum(x.owe))),
         h("td", null, x.today ? "今天" : md(x.due)),
-        h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => act("repay", { id: x.id }, r2 => { say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
+        h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => io.act("repay", { id: x.id }, r2 => { io.say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
 }
 
 // Yuga Bot 銀行的存款頁（活存、定存）。規則在 shared/casino_bank.js，伺服器 act bank（op：put、take、term、break）
-function savePane(fig, md, off) {
-  const B = S.bank, w = S.w;
-  const bank = (op, extra) => act("bank", Object.assign({ op }, extra), r2 => { say(r2.lines); snd("coin"); });
+function savePane(C, io, fig, md, off) {
+  const B = C.bank, w = C.w;
+  const bank = (op, extra) => io.act("bank", Object.assign({ op }, extra), r2 => { io.say(r2.lines); snd("coin"); });
   const can = n => n <= w.chips;
   const puts = B.quick.filter(n => n >= B.min).map(n => btn(casNum(n), () => bank("put", { amt: n }), "small", { disabled: off || !can(n) ? true : null }))
     .concat(w.chips >= B.min ? [btn(`全部 ${casNum(w.chips)}`, () => bank("put", { amt: "max" }), "small", { disabled: off })] : []);
   const takes = B.save > 0 ? [btn(`全部領出 ${casNum(B.save)}`, () => bank("take", { amt: "max" }), "small", { disabled: off })] : [];
   // 定存先挑金額再挑天數（測試 11-13：以前壹按就把手上籌碼全存進去，新手容易誤觸）。預設最少的那壹檔
   const termAmts = [...new Set([B.termMin].concat(B.quick).filter(n => n >= B.termMin && n <= B.termCap))].sort((a, b) => a - b);
-  if (!termAmts.includes(S.termAmt)) S.termAmt = termAmts[0];
-  const amtBtns = termAmts.map(n => btn(casNum(n), () => { S.termAmt = n; draw(); }, "small" + (S.termAmt === n ? " primary" : ""), { disabled: off || n > w.chips ? true : null, "aria-pressed": String(S.termAmt === n) }));
+  if (!termAmts.includes(C.termAmt)) C.termAmt = termAmts[0];
+  const amtBtns = termAmts.map(n => btn(casNum(n), () => { C.termAmt = n; io.draw(); }, "small" + (C.termAmt === n ? " primary" : ""), { disabled: off || n > w.chips ? true : null, "aria-pressed": String(C.termAmt === n) }));
   const kinds = B.kinds.map(k => {
-    const amt = S.termAmt, int = Math.floor(amt * k.pct / 100);
+    const amt = C.termAmt, int = Math.floor(amt * k.pct / 100);
     return btn(`存 ${casNum(amt)}・${k.days} 天 ${k.pct}%（+${casNum(int)}）`, () => bank("term", { amt, kind: k.i }), "small", { disabled: off || amt > w.chips || B.terms.length >= B.termMax ? true : null });
   });
   return h("div", { class: "bk-save" },
@@ -233,13 +264,13 @@ function savePane(fig, md, off) {
         h("td", null, x.left ? `${md(x.due)}（${x.left} 天）` : "今天換日"),
         h("td", null, btn("解約", () => bank("break", { id: x.id }), "small", { disabled: off, title: CAS_BANK.termSub })))))) : null,
     h("p", { class: "bk-rule" }, CAS_BANK.rule),
-    bondBlock(fig, md, off));
+    bondBlock(C, io, fig, md, off));
 }
 // 館債（11-13）：這期的名字、利率、還剩多少、我買了多少；買的按鈕（壹張壹張、或買滿）。銀行廳上線後搬過去
-function bondBlock(fig, md, off) {
-  const D = S.bond, w = S.w;
+function bondBlock(C, io, fig, md, off) {
+  const D = C.bond, w = C.w;
   if (!D) return null;
-  const buy = amt => act("bank", { op: "bond", amt }, r2 => { say(r2.lines); snd("coin"); });
+  const buy = amt => io.act("bank", { op: "bond", amt }, r2 => { io.say(r2.lines); snd("coin"); });
   const I = D.issue;
   const room = I.open ? Math.max(0, Math.min(I.cap - I.sold, D.perUser - D.mine, w.chips)) : 0;
   const why = !I.open ? CAS_BOND.none : D.young ? casFill(CAS_BOND.young, { n: NUM.casino.bond.minAge }) : null;

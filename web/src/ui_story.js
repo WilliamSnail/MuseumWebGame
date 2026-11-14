@@ -616,7 +616,7 @@ ART_HOOKS.art = id => { let html = null; allWeeks().forEach(W => { const w = W.w
 export function galleryAuction(root) {
   auctionOpen();
   galleryShell(root, "auction", "封閉式出價：沒有人看得到別人出多少。",
-    [auctionPane()],
+    [ADDONS.casinoBankBox ? ADDONS.casinoBankBox() : null, auctionPane()].filter(Boolean), // 簡易銀行（11-14，ui_casino.js）：出價前不用離開就能看錢、借、存、提
     [galleryRules("拍賣規則", h("p", null, CAS_AUC.sub), h("p", null, aucRule()), h("p", null, "你也可以把收藏裡的畫拿來拍：在「我收藏的畫」按「拿去拍」。"))]);
 }
 let svgSeq = 0;
