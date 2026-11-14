@@ -21,7 +21,7 @@
 // node tools/announce.cjs --any-due  現在有沒有該發還沒發的（有：結束碼 0。部署完用，只看不發）
 // node tools/announce.cjs --preview "2026-11-10 08:30"  那個時間會發什麼，印出來不發（只看內容，當作都還沒發過）
 const fs = require("fs"), path = require("path");
-const { send, footer, MAX, dayPost, eventPost, readJSON, shared } = require("./discord_post.cjs");
+const { send, footer, MAX, dayPost, eventPost, beatPost, readJSON, shared } = require("./discord_post.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const SCHEDULE_FILE = path.join(ROOT, "content", "公告排程.json");
@@ -101,18 +101,31 @@ function dayEntry(week, n, date, addDays) {
   const at = `${date} ${DAY_POST_AT}`;
   return { id: `day-${week}-d${n}`, at, atMs: parseAt(at), until: parseAt(`${addDays(date, 1)} 05:00`), isDay: true, make: () => dayPost(week, n) };
 }
+// 揭露週（帳本 revealBeats，docs/劇情揭露節奏.md，決定 0078）：那天的今日館訊後面多發壹則「館裡有些不一樣了」。只提醒大家來找，不寫細節。
+// 日期：排程放進遊戲那天（revealedOn）；還沒標就當週三。那天的 dN.json 還沒有就不發；skipped 的不發。idx：第幾次揭露，換不同的句子
+function beatEntry(b, date, idx, addDays) {
+  const at = `${date} ${DAY_POST_AT}`;
+  return { id: `beat-${b.id}`, at, atMs: parseAt(at), until: parseAt(`${addDays(date, 1)} 05:00`), isDay: true, make: () => beatPost(idx) };
+}
 const eventEntry = ev => ({ id: `event-${ev.id}`, at: `${ev.date} ${ev.from}`, atMs: ev.start - EVENT_EARLY_MIN * MIN, until: ev.end, make: () => eventPost(ev) });
 // content/weeks 裡的正式週 → 自動要發的（備用週沒有日期，不算）
 function autoEntries(dir = path.join(ROOT, "content", "weeks")) {
   const G = shared(), out = [];
+  let beats = [];
+  try { const L = readJSON("content/story/帳本.json"); beats = (L.revealBeats && Array.isArray(L.revealBeats.list)) ? L.revealBeats.list : []; } catch (e) { beats = []; }
   fs.readdirSync(dir).filter(n => /^\d{4}-W\d{2}$/.test(n)).sort().forEach(week => {
     let w = null;
-    try { w = readJSON(`content/weeks/${week}/week.json`); } catch (e) { console.error(`${week}：讀不到 week.json`); }
+    try { w = JSON.parse(fs.readFileSync(path.join(dir, week, "week.json"), "utf8")); } catch (e) { console.error(`${week}：讀不到 week.json`); }
     if (!w || !w.start) return;
     for (let n = 1; n <= 7; n++) {
       const date = G.addDays(w.start, n - 1);
       if (date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) out.push(dayEntry(week, n, date, G.addDays));
     }
+    beats.forEach((b, idx) => {
+      if (!b || b.week !== week || b.status === "skipped" || typeof b.id !== "string") return;
+      const date = b.status === "revealed" && /^\d{4}-\d{2}-\d{2}$/.test(b.revealedOn || "") ? b.revealedOn : G.addDays(w.start, 2), n = Math.round((Date.parse(date) - Date.parse(w.start)) / 86400000) + 1;
+      if (n >= 1 && n <= 7 && date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) out.push(beatEntry(b, date, idx, G.addDays));
+    });
     G.cleanEvents(w.events, w.start, week).forEach(ev => out.push(eventEntry(ev))); // 活動的 id 已經帶週（2026-W46/double11）
   });
   return out;
@@ -196,4 +209,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };
+module.exports = { beatEntry, parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };
