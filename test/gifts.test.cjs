@@ -83,7 +83,7 @@ T("展廳：只給展台、分數、主題；不給靈感、收藏、理智", ()
   P.hall[0] = { kind: "pepe", key: k };
   P.hall[2] = { kind: "pepe", key: "不存在|的|佩|佩|x|y|z" }; // 收藏裡沒有：當空的
   const v = J(G.hallView({ profiles: { challenge: P, free: null } }));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "themes", "title"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
+  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "themes", "title"]); // deco、frame：簽到拿的展台裝飾、名牌框（只是好看，11-09，決定 0030）
   assert.strictEqual(v.open, true);
   assert.strictEqual(v.slots.length, P.hall.length);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
@@ -332,6 +332,14 @@ T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒
     assert.ok(B.pepes[k] && !A.pepes[k]);
     pass++;
   } catch (e) { fail++; console.log("FAIL ES 模組載得起來、接得上\n   ", e.message); }
-  console.log(`${pass} passed, ${fail} failed（送佩佩、參觀展廳）`);
+  T("展廳的畫（hallArt）：給 id、名字、稀有度、拍賣中；不給買價、現價、日期、籌碼；稀有的在前；清過的資料（cleanHallView）也一樣", () => {
+  const P = { art: { v: 1, own: { "a/1": { tier: 1, date: "2026-11-10", d: "2026-11-12", paid: 2500000, title: "少見的畫" }, "a/2": { tier: 3, date: "2026-11-11", d: "2026-11-13", paid: 15000000, title: "孤品", lock: "p~1" }, "a/3": { tier: 1, date: "2026-11-09", d: "2026-11-11", paid: 1, title: "更早買的少見" } } } };
+  const a = G.hallArt(P); assert.strictEqual(a.length, 3); assert.strictEqual(a[0].id, "a/2"); assert.strictEqual(a[0].tierName, G.NUM.art.tiers[3].name); assert.strictEqual(a[0].auction, true); assert.strictEqual(a[1].id, "a/3", "同稀有度：買得早的在前"); assert.strictEqual(a[2].auction, false);
+  const s = JSON.stringify(a); for (const bad of ["paid", "15000000", "date", "\"d\"", "price"]) assert.ok(!s.includes(bad), "不該給：" + bad);
+  const v = JSON.parse(JSON.stringify(G.cleanHallView({ open: true, slots: [], score: 5, art: a.concat([{ id: "x", title: "y", tier: 99, paid: 5, price: 7 }, null, { title: "沒有 id" }]) })));
+  assert.ok(v.art.length === 4 && v.art[3].tier === 3 && !JSON.stringify(v.art).includes("paid") && !JSON.stringify(v.art).includes("price"), JSON.stringify(v.art));
+  assert.strictEqual(G.hallArt(null).length, 0); assert.strictEqual(G.hallArt({ art: { own: "壞" } }).length, 0);
+});
+console.log(`${pass} passed, ${fail} failed（送佩佩、參觀展廳）`);
   process.exit(fail ? 1 : 0);
 })();
