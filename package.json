@@ -20,6 +20,8 @@
     "announce:sync": "node tools/announce.cjs --sync",
     "announce:preview": "node tools/announce.cjs --preview",
     "ship": "node tools/ship.cjs",
+    "say": "node tools/say.cjs",
+    "notice": "node tools/notice.cjs",
     "local": "node tools/local_game.cjs",
     "doc:new": "node tools/new_doc.cjs",
     "edits": "node tools/apply_edits.cjs",

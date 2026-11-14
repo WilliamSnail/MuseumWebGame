@@ -185,8 +185,7 @@ function commandsFor(p) {
   c.push(`npm run svg -- ${p.dayFile}    （今日特展有畫新圖才跑；用 Read 打開 PNG 親眼看過）`);
   c.push("npm run day:check    （所有內容檢查壹次跑完；沒過不要往下）");
   c.push(`npm run doc:new -- <日誌.json>    （類型「內容」；會順便跑 log:index）`);
-  c.push(`npm run ship -- --title "${p.title}" --body-file <PR 說明.md>    （測試、合併、等部署都在裡面；PR 說明要貼檢查的警告）`);
-  c.push("gh workflow run discord-scheduled.yml --ref main    （部署成功才跑；今日館訊會發出，揭露週那天後面多壹則「館裡有些不壹樣了」）");
+  c.push(`npm run ship -- --title "${p.title}" --body-file <PR 說明.md> --no-notice --after-deploy "gh workflow run discord-scheduled.yml --ref main"    （測試、合併、等部署，部署成功後發今日館訊〔揭露週那天後面多壹則「館裡有些不壹樣了」〕；PR 說明要貼檢查的警告）`);
   return c;
 }
 
