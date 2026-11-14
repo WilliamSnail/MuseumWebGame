@@ -1,0 +1,78 @@
+{
+  "id": "v-bell",
+  "name": "小鈴",
+  "kind": "visitor",
+  "story": "遠方來核對帳的人，隨身壹本跟館裡很像的帳。",
+  "likes": [
+    "hall",
+    "bank",
+    "少見"
+  ],
+  "route": {
+    "hall": 4,
+    "bank": 3,
+    "auction": 2,
+    "cellar": 1
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 300000,
+    "max": 200000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-12-02",
+      "text": "她在巷口把這條街的人家數了壹遍，數完翻到下壹頁，說她那邊的本子也是這樣寫的。",
+      "news": "小鈴在巷口數完了這條街。",
+      "ties": [
+        "m-world"
+      ]
+    },
+    {
+      "step": 2,
+      "from": "2027-01-04",
+      "need": {
+        "metric": "hallVisits",
+        "n": 400
+      },
+      "text": "她在簽到簿前停了很久，問館裡的名牌是誰寫的，沒有人答得出來。",
+      "news": "小鈴問了壹句名牌的事。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-02-22",
+      "need": {
+        "metric": "hallVisits",
+        "n": 900
+      },
+      "text": "她翻到值班紀錄的簽名欄，問為什麼只有章，沒有名字。",
+      "news": "小鈴問為什麼簽名欄只有章。",
+      "ties": [
+        "m-guard"
+      ]
+    },
+    {
+      "step": 4,
+      "from": "2027-06-07",
+      "need": {
+        "metric": "hallVisits",
+        "n": 1600
+      },
+      "text": "她把本子放在櫃台，說有幾行是借出去的，要壹行壹行點名。",
+      "news": "小鈴說借出去的要點名。",
+      "ties": [
+        "m-ledger"
+      ],
+      "route": {
+        "hall": 3,
+        "bank": 3,
+        "auction": 2,
+        "cellar": 2
+      }
+    }
+  ]
+}

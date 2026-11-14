@@ -459,6 +459,27 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         if (G.NUM.casino.stockIn.npcBoostMax > 0.33) E(nw, "NUM.casino.stockIn.npcBoostMax 不能超過 0.33（再大，預先進場就賺得到，規劃 2.8k）");
       }
     }
+    // 劇情經濟事件（翊文 11-14，shared/econ_events.js）：econ [{ kind, date, level, name }]。排程只選種類、日期、等級，數字全在 NUM.casino.econEvent；動錢的每週最多 perWeek 個、同種壹週壹個
+    if (wk.econ !== undefined) {
+      const ew = where + "/week.json.econ", mon = o.fallback ? null : G.isoMonday(name), EV = G.NUM.casino.econEvent;
+      if (o.fallback) E(ew, "備用週不寫 econ（沒有日期）");
+      else if (!Array.isArray(wk.econ) || wk.econ.length > 4) E(ew, "要寫成最多 4 個的陣列 [{ kind, date, level, name }]");
+      else {
+        const kinds = new Set();
+        wk.econ.forEach((e, i) => {
+          const w2 = `${ew}[${i}]`;
+          if (!isObj(e)) return E(w2, "要寫成 { kind, date, level, name }");
+          Object.keys(e).forEach(k => { if (!["kind", "date", "level", "name"].includes(k)) E(w2, `不認得「${k}」：只能寫 kind、date、level、name；數字（比例、天數）在 NUM.casino.econEvent，內容不能自己寫`); });
+          if (!G.ECON_KINDS.includes(e.kind)) E(w2, `kind 要是 ${G.ECON_KINDS.join("、")} 其中壹個`);
+          if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date) || e.date < mon || e.date > G.addDays(mon, 6)) E(w2, "date 要是這週內的日期");
+          const lvMax = e.kind === "artFreeze" ? EV.freezeMax : e.kind === "bondWindow" ? EV.windowMax : e.kind === "audit" ? 1 : 3;
+          if (!Number.isInteger(e.level) || e.level < 1 || e.level > lvMax) E(w2, `${e.kind} 的 level 要是 1～${lvMax} 的整數`);
+          text(w2 + ".name", e.name, 24);
+          if (kinds.has(e.kind)) E(w2, "同種的事件壹週只能壹個"); kinds.add(e.kind);
+        });
+        if (wk.econ.filter(e => isObj(e) && G.ECON_MONEY.includes(e.kind)).length > EV.perWeek) E(ew, `會動錢或價格的事件壹週最多 ${EV.perWeek} 個`);
+      }
+    }
     // 預告的活動（規劃 2.8k，翊文 11-14）：每週最多 2 個，{ store, date, name }；日報提前幾天預告，當天 NUM.casino.stockIn.festP 的機率辦成（結果和人數大小不是內容決定的）。可以不寫
     if (wk.fest !== undefined) {
       const fw = where + "/week.json.fest", mon = o.fallback ? null : G.isoMonday(name);
@@ -697,7 +718,7 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
     }
     const m = mys.find(x => x.id === b.mystery);
     if (!m) E(w, `mystery「${b.mystery}」不在 mysteries 裡`);
-    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && b.week >= m.closeBy) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露`);
+    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && (b.extra ? b.week > m.closeBy : b.week >= m.closeBy)) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露（加開 extra 的可以放在收線週）`);
     const d = typeof b.detail === "string" ? b.detail.trim() : "";
     if (d.length < 8 || d.length > 120) E(w, "detail 要寫壹句具體看得到的細節（8～120 字）");
     else {
