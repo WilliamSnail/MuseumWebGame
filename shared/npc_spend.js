@@ -87,11 +87,13 @@ export function crowdShopToday(day, secret) {
 // 這壹天逛店的散客在各家店各有幾位（館內股「昨天不同的人」用，整天的總數；現在在場幾位不給）
 export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
-export function npcPresence(day, nowMs, secret, list, counters) {
-  const m = (nowMs - npcDayStartMs(day)) / 60000, v = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end);
+// away：現在被館友邀去賭場的 NPC id（Set，shared/casino_npc.js 的 npcCasAway）：他們不算在展廳、也不算在館裡別的地方，另外列在 casino
+export function npcPresence(day, nowMs, secret, list, counters, away) {
+  const aw = away && typeof away.has === "function" ? away : new Set(), m = (nowMs - npcDayStartMs(day)) / 60000, v0 = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end), v = v0.filter(x => !aw.has(x.id));
   const hall = v.filter(x => x.place === "hall");
   const cg = crowdVisitsToday(day, secret).filter(x => x.start <= m && m < x.end), cn = cg.reduce((a, x) => a + x.n, 0);
-  return { hall: hall.length, names: hall.map(x => x.name), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) } };
+  const cas = Array.from(aw).map(id => { const n = list.find(x => x && x.id === id); return n ? n.name : ""; }).filter(Boolean);
+  return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) } };
 }
 
 function npcLiveFix(house, day) {

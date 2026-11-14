@@ -507,6 +507,11 @@ export const NUM = {
     //   freezeMax 畫價凍結最多幾天；repayPct 莊家提早還貸款占「超過健康線 ×2 的部分」的 %（等級 1～3）；perWeek 每週最多幾個動錢的事件；ahead 事先公告的天數
     econEvent: { foreignPct: [15, 20, 30], windowMax: 3, redeemPct: 50, freezeMax: 7, repayPct: [5, 10, 20], perWeek: 2, ahead: { foreign: 2, bondWindow: 3, artFreeze: 2 } },
     ticket: { perDay: 20, ownerPct: 30, firstPct: 50 },
+    // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080，shared/casino_npc.js、casino_table.js；翊文：「賭場邀請 NPC 一起來」「也可以參與多人賭桌」）：
+    //   perNpcDay 壹位 NPC 壹天最多答應幾次；tableMax 壹桌最多幾位 NPC；stay 壹次待幾分鐘；coolMs 被拒之後同壹位館友 30 分鐘才能再邀；baseP／likeP 答應的機率 %（愛玩牌桌 likes bj 再加 likeP）；
+    //   lossPct／winPct 壹位 NPC 壹天最多輸／贏他 perDay 的幾 %（到了就說離開台詞走人）；dayCap 全館 NPC 壹天在賭場淨輸或淨贏的上限（任壹邊到了，今天不再答應、在桌上的也走）；
+    //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
+    npcCas: { on: true, perNpcDay: 3, tableMax: 2, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
