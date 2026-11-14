@@ -62,6 +62,8 @@ export function fakeBankHall() {
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
 },
+    houseInv: { asOf: "2026-11-13", hold: [{ id: "chipshop", name: "掌心晶片鋪", n: 2000, cost: 2400000, value: 2500000, pnl: 100000, pnlPct: 0.0417 }, { id: "applework", name: "銀蘋果工坊", n: 300, cost: 3000000, value: 2850000, pnl: -150000, pnlPct: -0.05 }, { id: "nightidx", name: "夜市指數", n: 800, cost: 420000, value: 432000, pnl: 12000, pnlPct: 0.0286 }],
+      cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
   };
@@ -82,7 +84,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, econ: b.econ, world: b.world || null,
+    bonds, stocks: b.stocks, econ: b.econ, world: b.world || null, houseInv: b.houseInv || null,
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -539,9 +541,32 @@ function worldPanel(v) {
         h("span", null, h("b", null, it.title), h("small", null, it.line),
           it.refs && it.refs.length ? h("span", { class: "bank-refs" }, it.refs.map(r => h("button", { type: "button", class: "bank-ref", onClick: () => goStock(v, r.id), "aria-label": `看 ${r.name}` }, r.name))) : null)); }))))));
 }
+// 館方投資（翊文 11-14：「館方也有投資外面世界，銀行裡怎麼我們看不到」）：數值平衡 PR 445 的 houseInv。昨天的快照，不是現在，所以標「截至」
+const PAUSE_TEXT = { stop: "館方虧太多，暫停買進", world: "外面世界資金吃緊，暫停買進" };
+const POOL_TEXT = { house: "莊家", budget: "預算池" };
+function houseInvPanel(v) {
+  const I = v.houseInv;
+  if (!I) return null; // 第一份日報產生前沒有快照
+  const plc = n => (n > 0 ? "up" : n < 0 ? "down" : ""), money = n => (n < 0 ? "−" : n > 0 ? "+" : "") + fmt(Math.abs(Math.round(n))), pct = n => (n == null ? "" : `${n > 0 ? "+" : n < 0 ? "−" : ""}${(Math.abs(n) * 100).toFixed(1)}%`);
+  const hold = Array.isArray(I.hold) ? I.hold : [], ys = Array.isArray(I.yesterday) ? I.yesterday : [];
+  const paused = Object.keys(I.paused || {}).map(k => `${POOL_TEXT[k] || k}：${PAUSE_TEXT[I.paused[k]] || "暫停買進"}`);
+  const empty = !hold.length && !ys.length;
+  return panel("館方投資", `截至 ${String(I.asOf || "").slice(5).replace("-", "/")}（昨天的資料，不是現在）`,
+    empty ? h("p", { class: "bank-empty" }, "館方還沒有投資。") : [
+      h("div", { class: "bank-invsum" },
+        h("p", null, h("span", null, "總成本"), h("b", null, fmt(I.cost))), h("p", null, h("span", null, "總市值"), h("b", null, fmt(I.value))),
+        h("p", null, h("span", null, "帳面損益"), h("b", { class: plc(I.pnl) }, `${money(I.pnl)} ${pct(I.pnlPct)}`)),
+        h("p", null, h("span", null, "累計賺賠"), h("b", { class: plc(I.pnlTotal) }, money(I.pnlTotal)))),
+      paused.length ? h("p", { class: "bank-stale" }, h("b", null, "暫停　"), paused.join("；")) : null,
+      hold.length ? ledger(["持有", "股數", "市值", "損益"], hold.map(x => h("div", { class: "bank-row inv", role: "row" },
+        h("span", null, h("b", null, x.name)), h("span", { class: "bank-tab-num" }, `${fmt(x.n)} 股`), h("span", { class: "bank-tab-num" }, fmt(x.value)),
+        h("span", { class: "bank-pl " + plc(x.pnl) }, h("b", null, money(x.pnl)), h("small", null, pct(x.pnlPct))))), "inv") : null,
+      h("div", { class: "bank-invy" }, h("b", null, `昨天買賣（用掉 ${fmt(I.spent || 0)}）`),
+        ys.length ? h("ul", null, ys.map(y => h("li", null, h("i", { class: "bank-dir " + (y.side === "buy" ? "long" : "short") }, y.side === "buy" ? "買進" : "賣出"), ` ${y.name} ${fmt(y.n)} 股・成交價 ${fmt(y.px)}`))) : h("p", { class: "bank-meta sm" }, "昨天沒有買賣。"))]);
+}
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
-  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), world);
+  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world));
   const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
   return h("div", { class: "bank-cols report" },
     h("div", { class: "bank-stack" },
@@ -550,7 +575,7 @@ function reportPane(v) {
         h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天"),
         h("p", { class: "bank-line" }, e.news)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))])))),
-    h("div", { class: "bank-stack" }, world,
+    h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world,
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };

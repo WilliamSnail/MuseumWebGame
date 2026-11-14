@@ -427,3 +427,13 @@ body[data-screen="bank"] #room { background: none; }
 .bank-custom { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: end; margin-top: 6px; }
 .bank-custom .bank-qinfo { grid-column: 1 / -1; margin: 0; min-height: 1.3em; }
 .bank-custom .bank-field { min-width: 0; }
+
+/* 館方投資（財報頁，11-14） */
+.bank-invsum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 14px; margin-bottom: 6px; }
+.bank-invsum p { display: flex; justify-content: space-between; gap: 8px; margin: 0; padding: 3px 0; border-bottom: 1px dashed rgba(214, 178, 94, .25); font-size: var(--type-body, .875rem); }
+.bank-invsum p span { color: var(--bank-text-soft, #C9D1DE); }
+.bank-invsum b.up, .bank-pl.up { color: var(--bank-up); } .bank-invsum b.down, .bank-pl.down { color: var(--bank-down); }
+.bank-book.inv .bank-bh, .bank-row.inv { grid-template-columns: 1.4fr .8fr 1fr 1fr; }
+.bank-row.inv { min-height: 44px; }
+.bank-invy { margin-top: 8px; font-size: var(--type-small, .75rem); }
+.bank-invy ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: var(--type-body, .875rem); }
