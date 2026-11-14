@@ -77,34 +77,59 @@ ADDONS.hallReviews = side => { side.insertBefore(hallNowBox("hall"), side.childr
 NET.on && NET.on("roster", () => { if (ADDONS.hallNowDraw) ADDONS.hallNowDraw(); });
 
 // ---------- 旅客留言簿（圖書館的頁籤，11-14）----------
-// 先用 peek 給的最近 20 則；NPC 所有的歷史評價（可以按日期翻、按 NPC 篩）等伺服器的歷史 API 好了再接（資料格式跟 reviews 一樣就不用改版面）
+// 伺服器 casino act "reviews"（PR 421）：{ day, who, limit ≤ 50 } → { ok, day（沒給＝有資料的最新一天；沒資料＝null）, items: [{ id, who, npc, text, stars, at, day }], total, prevDay, nextDay }
+// 按日期前後翻（prevDay／nextDay）、可以只看一位旅客；沒登入的開發環境用示範資料
+async function loadReviews(gb) {
+  if (fake()) {
+    const all = FAKE_RV().map(x => Object.assign({ day: "2026-11-14", npc: x.who }, x)).filter(x => !gb.who || x.who === gb.who);
+    return { ok: true, day: all.length ? "2026-11-14" : null, items: all, total: all.length, prevDay: null, nextDay: null };
+  }
+  const q = { act: "reviews", limit: 50 };
+  if (gb.day) q.day = gb.day;
+  if (gb.who) q.who = gb.who;
+  return NET.call("casino", q);
+}
 function guestbook() {
-  const gb = UI.gb || (UI.gb = { who: "", day: "" });
+  const gb = UI.gb || (UI.gb = { day: null, who: "", known: [], data: null, busy: false, failed: false });
   const root = h("div", { class: "hn-gb" });
+  const remember = names => names.forEach(n => { if (n && !gb.known.includes(n)) gb.known.push(n); });
+  const go = patch => { Object.assign(gb, patch); fetchIt(); };
+  const fetchIt = async () => {
+    if (gb.busy) return;
+    gb.busy = true; gb.failed = false; draw();
+    try {
+      const r = await loadReviews(gb);
+      if (r && r.ok) { gb.data = r; gb.day = r.day || null; remember((r.items || []).map(x => String(x.who || ""))); }
+      else gb.failed = true;
+    } catch (e) { gb.failed = true; }
+    gb.busy = false;
+    if (root.isConnected || !gb.data) draw();
+  };
   const draw = () => {
-    const all = (reviewData() || []).slice().sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));
-    const whos = [...new Set(all.map(x => String(x.who || "旅客")))], days = [...new Set(all.map(x => String(x.day ?? "")).filter(Boolean))];
-    if (gb.who && !whos.includes(gb.who)) gb.who = "";
-    if (gb.day && !days.includes(gb.day)) gb.day = "";
-    const list = all.filter(x => (!gb.who || String(x.who || "旅客") === gb.who) && (!gb.day || String(x.day ?? "") === gb.day));
-    const chip = (label, on, fn) => h("button", { type: "button", class: "hn-chip" + (on ? " on" : ""), "aria-pressed": String(!!on), onClick: fn }, label);
+    const d = gb.data, items = d && Array.isArray(d.items) ? d.items : [];
+    remember((Array.isArray(UI.reviews) ? UI.reviews : []).map(x => String(x.who || "")));
+    const chip = (label, on, fn) => h("button", { type: "button", class: "hn-chip" + (on ? " on" : ""), "aria-pressed": String(!!on), disabled: gb.busy ? "" : null, onClick: fn }, label);
+    const nav = (label, day) => h("button", { type: "button", class: "hn-chip hn-nav", disabled: day && !gb.busy ? null : "", onClick: () => go({ day }) }, label);
     root.replaceChildren(
       h("aside", { class: "hn-gb-side" },
-        h("h3", null, "旅客"), h("div", { class: "hn-chips" }, chip("全部", !gb.who, () => { gb.who = ""; draw(); }), whos.map(w => chip(w, gb.who === w, () => { gb.who = w; draw(); }))),
-        days.length ? [h("h3", null, "日期"), h("div", { class: "hn-chips" }, chip("全部", !gb.day, () => { gb.day = ""; draw(); }), days.map(d => chip(d, gb.day === d, () => { gb.day = d; draw(); })))] : null,
-        h("p", { class: "hn-note" }, "現在只有最近 20 則。更早的留言之後會放在這裡，可以按日期翻。")),
+        h("h3", null, "日期"),
+        h("div", { class: "hn-daynav" }, nav("‹ 前一天", d && d.prevDay), h("b", { class: "hn-day" }, d && d.day ? String(d.day) : "—"), nav("後一天 ›", d && d.nextDay)),
+        h("h3", null, "旅客"),
+        h("div", { class: "hn-chips" }, chip("全部", !gb.who, () => go({ who: "", day: null })), gb.known.map(w => chip(w, gb.who === w, () => go({ who: w, day: null })))),
+        h("p", { class: "hn-note" }, "按「前一天」「後一天」翻日期；選一位旅客，只看他留的話。")),
       h("section", { class: "hn-gb-main", "aria-label": "旅客留言" },
-        h("div", { class: "hn-gb-head" }, h("b", null, "旅客留言簿"), h("small", null, `${list.length} 則`)),
-        list.length ? h("ul", { class: "hn-list hn-gb-list" }, list.map(x => h("li", { class: "hn-rv" },
-          h("span", { class: "hn-st", role: "img", "aria-label": `${Math.round(Number(x.stars) || 0)} 顆星` }, starText(x.stars)),
-          h("span", { class: "hn-tx" }, String(x.text || "")),
-          h("small", { class: "hn-by" }, `${String(x.who || "旅客")}・${agoText(x.at)}${x.day ? "・" + String(x.day) : ""}`))))
-          : h("p", { class: "hn-empty" }, all.length ? "這個篩選沒有留言。" : "還沒有留言。旅客走進展廳的時候，會留一句話。")));
+        h("div", { class: "hn-gb-head" }, h("b", null, "旅客留言簿"), h("small", null, d ? `${d.day || ""}　共 ${Number(d.total) || items.length} 則` : "")),
+        gb.busy && !d ? h("p", { class: "hn-empty" }, "翻留言簿中……")
+          : gb.failed ? h("p", { class: "hn-empty" }, "現在讀不到留言簿，晚點再來。")
+          : items.length ? h("ul", { class: "hn-list hn-gb-list" }, items.map(x => h("li", { class: "hn-rv" },
+            h("span", { class: "hn-st", role: "img", "aria-label": `${Math.round(Number(x.stars) || 0)} 顆星` }, starText(x.stars)),
+            h("span", { class: "hn-tx" }, String(x.text || "")),
+            h("small", { class: "hn-by" }, `${String(x.who || "旅客")}・${agoText(x.at)}`))))
+          : h("p", { class: "hn-empty" }, "還沒有旅客留言。旅客走進展廳的時候，會留一句話。")));
   };
-  ADDONS.hallNowDraw = draw; // 讀到新的 peek 就重畫
-  if (ADDONS.peekAgain) ADDONS.peekAgain().then(draw);
-  every(() => { if (ADDONS.peekAgain) ADDONS.peekAgain().then(draw); }, REFRESH_MS);
+  ADDONS.hallNowDraw = () => { if (root.isConnected && !gb.data) fetchIt(); };
   draw();
+  fetchIt();
   return root;
 }
 ADDONS.guestbook = guestbook;

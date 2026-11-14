@@ -62,3 +62,18 @@
   .hn-gb-side .hn-note { display: none; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 10px; } }
+
+/* 大廳右欄的那塊要有底（翊文 11-14：「可以給個底，不然有點難看的到字」）：深色木板底、金色細框，字用亮色 */
+.hn-lobby { padding: 8px 12px 8px; border: 1px solid rgba(214, 178, 94, .75); border-radius: 6px; background: linear-gradient(180deg, rgba(24, 14, 12, .92), rgba(40, 24, 18, .92)); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .35), 0 3px 8px rgba(0, 0, 0, .45); }
+.hn-lobby .hn-h { color: #F6E4B0; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
+.hn-lobby .hn-h small { color: #E2D0A2; opacity: 1; }
+.hn-lobby .hn-tx { color: #F3E6C4; }
+.hn-lobby .hn-by { color: #D8C59A; opacity: 1; }
+.hn-lobby .hn-empty { color: #E2D0A2; opacity: 1; }
+.hn-lobby .hn-more { background: rgba(0, 0, 0, .35); border-color: rgba(214, 178, 94, .85); color: #F6E4B0; }
+.l2-hnbox { padding: 0; }
+
+/* 留言簿的日期翻頁：「‹ 前一天」日期「後一天 ›」 */
+.hn-daynav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.hn-day { text-align: center; font-size: var(--type-body, .875rem); font-variant-numeric: tabular-nums; }
+.hn-chip:disabled { opacity: .45; cursor: not-allowed; }
