@@ -9,7 +9,7 @@ import { CAS_ART } from "../../shared/casino_art.js";
 import { NET } from "./net_firebase.js";
 import { CAS_AUC } from "../../shared/casino_auction.js";
 import { NUM } from "../../shared/config.js";
-import { UI, btn, go, h, note, setChips, snd } from "./ui_core.js";
+import { ADDONS, UI, btn, go, h, note, setChips, snd } from "./ui_core.js";
 import { reloadSave } from "./ui_login.js";
 
 let data = null; // 最近一次的報價 { items, mine, left, perDay, holdMax, sellPct, chips }；重畫畫廊時先用這份，背景再問一次
@@ -108,6 +108,34 @@ export function artMarketShelf() {
     box.replaceChildren(...kids);
   };
   views.add(draw); draw();
+  return box;
+}
+
+// ---------- 展廳的「收藏的畫」畫牆（翊文 11-14：「大家的展廳也可以看到買的畫」）----------
+// 自己的展廳：用上面報價的 mine（畫的 id、畫名、稀有度、拍賣中的 lock），點畫＝看畫（ART_HOOKS.view，照收藏的看畫規則）。
+// 別人的展廳：list 是伺服器給的 [{ id, title, tierName, lock? }]（只有畫名和畫，不給價錢），只能看、不能點。
+// 回傳壹個 <details>（預設收起來，標題寫幾幅）；沒有畫就回 null
+export function hallArtWall(list) {
+  const mine = !list;
+  const box = mk("hall-art-box");
+  const draw = () => {
+    if (mine && !ready() && !fake()) { box.replaceChildren(); box.hidden = true; return; }
+    const arr = mine ? (data ? data.mine : null) : list;
+    if (!Array.isArray(arr) || !arr.length) { box.replaceChildren(); box.hidden = true; return; }
+    box.hidden = false;
+    const open = box.firstChild && box.firstChild.open;
+    const frames = arr.map(x => {
+      const svg = ART_HOOKS.art ? ART_HOOKS.art(x.id) : null;
+      const el = h(mine ? "button" : "div", Object.assign({ class: "hall-art" + (x.lock ? " lock" : "") }, mine ? { type: "button", "aria-label": `看畫：${x.title || x.id}`, onClick: () => ART_HOOKS.view && ART_HOOKS.view(x.id) } : {}),
+        h("span", { class: "hall-art-f", html: svg || "" }), h("b", null, x.title || x.id), h("small", null, x.lock ? "拍賣中" : x.tierName || ""));
+      return el;
+    });
+    box.replaceChildren(h("details", { class: "onescreen-card hall-art-d", open: open ? "" : null },
+      h("summary", null, h("b", null, mine ? "我收藏的畫" : "他收藏的畫"), h("span", { class: "hall-art-n" }, `${arr.length} 幅`), h("span", { class: "hall-art-open" }, "點開 ▾"), h("span", { class: "hall-art-close" }, "收起來 ▴")),
+      h("div", { class: "hall-art-grid" }, frames)));
+  };
+  if (mine) { views.add(draw); quote(); }
+  draw();
   return box;
 }
 
@@ -215,3 +243,4 @@ export function auctionPane() {
   views.add(draw); draw();
   return box;
 }
+ADDONS.hallArtWall = hallArtWall; // 館友的展廳（ui_visit.js）用

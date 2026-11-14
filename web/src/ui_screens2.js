@@ -20,7 +20,8 @@ import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
-import { crowdText } from "./ui_hallnow.js"; // 散客的描述（label 已含人數就不補「N 位」）
+import { crowdText } from "./ui_hallnow.js";
+import { collectOn, hallArtWall } from "./ui_art.js"; // 展廳的收藏畫牆（11-14） // 散客的描述（label 已含人數就不補「N 位」）
 
 SCREENS.pillow = (root, params = {}) => {
   const pick = P.plPick;
@@ -445,7 +446,8 @@ SCREENS.hall = (root, params) => {
   // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
   const guide = themeGuide(hs);
   const themes = h("details", { class: "onescreen-card hall-themes" }, h("summary", null, h("b", null, theme ? `主題：${theme.name}` : "主題：還沒有"), h("span", { class: "hall-themes-open" }, "點開看怎麼擺 ▾"), h("span", { class: "hall-themes-close" }, "收起來 ▴")), guide);
-  const side = h("aside", { class: "onescreen-side" }, themes, visitors);
+  const artWall = !isFree(P) && collectOn() ? hallArtWall() : null; // 11-14：展廳也看得到自己買的畫（ui_art.js；登入了才有）
+  const side = h("aside", { class: "onescreen-side" }, themes, artWall, visitors);
   root.append(h("div", { class: "onescreen-main" }, h("div", { class: "hall-stage" }, wall, room), side), onescreenDrawer(strip));
   if (ADDONS.hall) ADDONS.hall(side, room); // 簽到拿的展台裝飾、館主名牌（11-09，ui_signin.js）：名牌放側欄
   if (ADDONS.hall2) ADDONS.hall2(side); // 掛在牆上的探險報告（ui_coop.js）
