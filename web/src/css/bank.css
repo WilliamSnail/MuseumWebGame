@@ -389,3 +389,16 @@ body[data-screen="bank"] #room { background: none; }
 .bank-fold[open] > summary { margin-bottom: 6px; }
 .bank-wday.old > summary { cursor: pointer; list-style: none; }
 .bank-wday.old > summary::-webkit-details-marker { display: none; }
+/* 股票列的真實行情壹行（翊文 11-14）：名稱、狀態小牌、代號、真實價排在同壹行，不擠成兩行；窄的時候省略真實漲跌（詳情裡有） */
+.bank-row.stock small.ln.real { display: inline; margin-left: 8px; }
+.bank-row.stock .bank-realtag { display: none; }
+.bank-row.stock .bank-real { display: inline; }
+.bank-row.stock .bank-real > * + * { margin-left: 6px; }
+.bank-book.stocks .bank-bh, .bank-book.stocks .bank-row { grid-template-columns: 2.3fr .8fr 1fr .8fr; }
+@media (max-width: 1240px) { .bank-row.stock .bank-real em { display: none; } }
+
+/* 切換鈕（行情／持倉、買進／賣出、做多／放空…）各自有框、中間留縫，壹眼看得出是兩顆鈕（翊文 11-14） */
+.bank-segs { gap: 8px; }
+.bank-seg, .bank-seg:first-child, .bank-seg:last-child { border: 1px solid var(--bank-gold); border-radius: 8px; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+.bank-seg.on { border-color: #7A5A2A; box-shadow: 0 2px 0 #7A5A2A, 0 0 10px rgba(240, 217, 149, .35); }
+.bank-seg:not(.on):hover:not(:disabled) { filter: brightness(1.18); }

@@ -9,7 +9,7 @@ import { NUM } from "./config.js";
 import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON } from "./casino_text.js";
-import { npcNews } from "./npc.js";
+import { npcCounters, npcNews } from "./npc.js";
 
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
@@ -58,7 +58,7 @@ export function casReportView(doc) {
     hl.push(`莊家健康度：玩家輸給莊家 ${rpN(inn)}，莊家發給玩家 ${rpN(outg)}（比值 ${ratio.toFixed(2)}，${ratio >= 1 ? "健康" : ratio >= 0.6 ? "吃緊" : "失血"}）。`);
     if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
   }
-  if (H.npcc && doc.day) { const nw = npcNews(doc.day, { commissions: H.npcc.comm, hallVisits: H.npcc.hall }, 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
+  if (H.npcc && doc.day) { const nw = npcNews(doc.day, npcCounters(H.npcc), 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
   if (Array.isArray(H.festUp) && H.festUp.length) { // 預告的活動（規劃 2.8k）：可能辦成，也可能沒辦成，辦成才會多來壹批旅客
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
     hl.push("預告：" + H.festUp.map(f => `${+f.date.slice(5, 7)} 月 ${+f.date.slice(8, 10)} 日《${f.name}》可能在${nm[f.store] || f.store}舉辦`).join("；") + "。");

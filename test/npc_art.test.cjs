@@ -24,6 +24,8 @@ T("沒人出價、NPC 出價：NPC 以底價買走館方的畫，錢從外面世
   assert.strictEqual(W.house.world, w0 - r.price); assert.strictEqual(W.house.bankroll, b0 + r.price);
   assert.strictEqual(sum(G, W), t0, "守恆"); assert.strictEqual(W.doc.done[0].buyer, "白伯");
   assert.strictEqual(W.house.art.npcPaid.n, r.price);
+  const v = G.casAucView(W.doc, W.wallets.u1, "u1", "2026-11-19", T0 + 4 * 86400000).done[0];
+  assert.strictEqual(v.buyerName, "館外的收藏家 白伯"); assert.strictEqual(v.npcBuyer, true); assert.ok(!JSON.stringify(v).includes("u1"));
 });
 T("NPC 預算不夠（max 小於底價）、機率 0、全館壹天上限用完：不出價，照舊流標", G => {
   G.NUM.auction.npcJoinPct = 100; G.NUM.auction.npcDay = 1e9;
