@@ -220,6 +220,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "gallery-bank-tab", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "畫廊多了「銀行」頁籤", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "畫廊的頁籤最右邊多了「銀行」，按了直接進銀行，看手上的錢、存款或借款，不用先回大廳。",
+        "銀行那邊本來就有「拍賣」頁籤會直接到畫廊的拍賣，兩邊現在可以來回切。",
+      ]],
+    ],
+  },
+  {
     id: "board-areas", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "公佈欄：同一天的更新分段了，最上面有目錄", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

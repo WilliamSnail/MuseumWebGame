@@ -556,7 +556,9 @@ export function galleryTabs(active) {
     tab("main", "gallery", "常設展", () => go("gallery", {}, { action: false })),
     show ? tab("show", "star", `今日特展：${show.title}`, () => go("gallery", { show: true }, { action: false }), unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag() : null) : null,
     collectOn() ? tab("collect", "hall", "我收藏的畫", () => go("gallery", { tab: "collect" }, { action: false })) : null,
-    auctionOn() ? tab("auction", "medal", "拍賣", () => go("gallery", { tab: "auction" }, { action: false })) : null);
+    auctionOn() ? tab("auction", "medal", "拍賣", () => go("gallery", { tab: "auction" }, { action: false })) : null,
+    // 銀行不是這個廳的頁籤：按了直接進銀行（翊文 11-14：「在畫廊拍賣那邊也加一個頁籤連結到銀行」，跟銀行的「拍賣」頁籤對稱）
+    auctionOn() ? tab("bank", "bank", "銀行", () => go("bank", {}, { action: false })) : null);
 }
 // 畫廊的骨架（介面重塑，翊文 11-14：「畫廊要有好的新介面」）：標題壹行｜頁籤｜左邊壹面牆（畫框排成壹排，左右滑）｜右邊側欄（怎麼看、怪癖的治法）。整頁不捲
 // 手機（直拿、橫拿）把側欄收成壹條，點開才看。main、side 是要放進去的元素（null 會被略過）
