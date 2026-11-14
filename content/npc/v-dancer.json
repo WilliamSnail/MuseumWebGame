@@ -1,0 +1,29 @@
+{
+  "id": "v-dancer",
+  "name": "阿飛",
+  "kind": "visitor",
+  "story": "街舞少年，鞋底磨得發亮，在大廳壹轉身就是壹個圈。",
+  "likes": [
+    "hall",
+    "bj",
+    "craft"
+  ],
+  "route": {
+    "hall": 5,
+    "bj": 3,
+    "craft": 2
+  },
+  "budget": {
+    "tier": "drifter",
+    "perDay": 170000,
+    "max": 100000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在展廳的空地上練舞，說這裡的地磚會回聲，像有人在打拍子。",
+      "news": "阿飛在展廳的空地練舞。"
+    }
+  ]
+}

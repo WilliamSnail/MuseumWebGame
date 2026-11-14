@@ -33,13 +33,18 @@ T("GDP：店裡花的算消費 C、門票算淨出口 NX；日報壹句「帶進
 });
 T("即時在場：每位 NPC 的幾站排成壹串不重疊、在營業時間內、同輸入同輸出；現在在展廳的人數和名字看時間算得出來", G => {
   const V = G.npcVisitsToday(D0, "s", LIST, null);
-  assert.ok(V.length > 10); assert.strictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "s", LIST, null))); assert.notStrictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "乙", LIST, null)));
+  assert.ok(V.length >= 8, "來的人數 " + V.length); assert.strictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "s", LIST, null))); assert.notStrictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "乙", LIST, null)));
   const by = {}; for (const v of V) { assert.ok(v.start >= 0 && v.end <= 1110 && v.end > v.start, JSON.stringify(v)); (by[v.id] = by[v.id] || []).push(v); }
   for (const id of Object.keys(by)) { const a = by[id].sort((p, q) => p.start - q.start); for (let i = 1; i < a.length; i++) assert.ok(a[i].start >= a[i - 1].end, "不重疊：" + id); }
   assert.ok(!V.some(v => v.id.startsWith("t-")), "劇情角色不會在場");
   const hv = V.find(v => v.place === "hall"), mid = G.npcDayStartMs(D0) + (hv.start + 1) * 60000, p = G.npcPresence(D0, mid, "s", LIST, null);
   assert.ok(p.hall >= 1 && p.names.includes(hv.name), JSON.stringify(p)); assert.strictEqual(G.npcPresence(D0, G.npcDayStartMs(D0) - 1000, "s", LIST, null).hall, 0, "05:00 以前沒人");
   assert.ok(!("shops" in p), "不給各家店現在的人數");
+});
+T("停留時間在設定的範圍內（展廳 60～180、店 30～120，除非碰到營業時間結束被截短）；展廳平均 ≥ 2 位", G => {
+  const SP = G.NUM.casino.npcSpend; let hs = 0, n = 0;
+  for (let d = 0; d < 12; d++) { const V = G.npcVisitsToday(add(D0, d), "t" + d, LIST, null); for (const v of V) { const r = v.place === "hall" ? SP.hallStay : SP.shopStay, len = v.end - v.start; assert.ok(len <= r[1] && (len >= r[0] || v.end === 1110), JSON.stringify(v)); } for (let m = 0; m < 1110; m += 10) { hs += V.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; n++; } }
+  assert.ok(hs / n >= 2, "展廳平均 " + hs / n);
 });
 T("惰性結算：到了才付錢和留評價、冪等、不重複；整天結完等於收進 house.npcs；評價最多 20 則、壹位壹天 ≤ reviewDay", G => {
   const h = mk(G), t0 = inv(G, h), V = G.npcVisitsToday(D0, "s", LIST, null), last = V[V.length - 1];

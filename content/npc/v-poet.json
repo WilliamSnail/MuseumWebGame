@@ -1,0 +1,56 @@
+{
+  "id": "v-poet",
+  "name": "阿墨",
+  "kind": "visitor",
+  "story": "寫小詩的年輕人，習慣把句子寫在收據的背面。",
+  "likes": [
+    "hall",
+    "cellar",
+    "bank"
+  ],
+  "route": {
+    "hall": 4,
+    "cellar": 3,
+    "bank": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 280000,
+    "max": 180000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他把壹首小詩放在展廳的留言簿裡，署名只寫了壹個墨點。",
+      "news": "阿墨在留言簿放了壹首小詩。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-21",
+      "text": "他說收據背面的詩，隔天會多出壹行，字很小、很整齊，不是他寫的。",
+      "news": "阿墨的詩被人悄悄多寫了壹行。",
+      "ties": [
+        "m-accountant"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-01-18",
+      "text": "他決定把那壹行留著，替它寫了第壹句，說這首詩終於有兩個人寫。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 160
+      },
+      "news": "阿墨替那壹行詩接上了第壹句。",
+      "ties": [
+        "m-accountant"
+      ],
+      "route": {
+        "hall": 4,
+        "cellar": 4,
+        "bank": 1
+      }
+    }
+  ]
+}

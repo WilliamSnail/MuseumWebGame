@@ -1,0 +1,60 @@
+{
+  "id": "v-writer",
+  "name": "阿稿",
+  "kind": "visitor",
+  "story": "趕稿的自由作家，筆記本上寫著壹排劃了又寫的人名。",
+  "likes": [
+    "food",
+    "bj",
+    "hall",
+    "job"
+  ],
+  "route": {
+    "food": 3,
+    "bj": 3,
+    "hall": 3,
+    "job": 2
+  },
+  "budget": {
+    "tier": "modest",
+    "perDay": 360000,
+    "max": 220000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在牌桌旁觀察每個人的手勢，說這比採訪更誠實。",
+      "news": "阿稿在牌桌旁觀察大家的手勢。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-28",
+      "text": "他的小說卡在壹個角色，那人什麼都沒做，卻出現在每壹頁的角落。",
+      "news": "阿稿說有個角色出現在每壹頁的角落。",
+      "ties": [
+        "m-accountant"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-01-25",
+      "text": "他把那人的名字空著，在稿子裡留了壹格，說替他寫名字的人還沒來。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 190
+      },
+      "news": "阿稿在稿子裡替那人空了壹格。",
+      "ties": [
+        "m-accountant",
+        "m-count"
+      ],
+      "route": {
+        "food": 3,
+        "bj": 2,
+        "hall": 4,
+        "job": 2
+      }
+    }
+  ]
+}

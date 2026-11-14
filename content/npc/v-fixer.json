@@ -1,0 +1,60 @@
+{
+  "id": "v-fixer",
+  "name": "老鍾",
+  "kind": "visitor",
+  "story": "修老鐘錶的師傅，耳朵比眼睛還靈，鐘走偏半秒都聽得出來。",
+  "likes": [
+    "craft",
+    "auction",
+    "cellar",
+    "珍藏"
+  ],
+  "route": {
+    "craft": 4,
+    "auction": 3,
+    "cellar": 3,
+    "hall": 2
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 780000,
+    "max": 500000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在手作坊坐了壹會兒，說這裡的敲打聲，比壹般的鐘還穩。",
+      "news": "老鍾在手作坊聽了壹會兒敲打聲。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-21",
+      "text": "他說館裡有壹面看不見的鐘，每晚多走壹格，他怎麼調都調不回來。",
+      "news": "老鍾說館裡有面鐘每晚多走壹格。",
+      "ties": [
+        "m-queue"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-01-18",
+      "text": "他今天沒有調，只是把鐘面擦乾淨，說讓它走吧，多的那壹格也許有用。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 150
+      },
+      "news": "老鍾決定讓那面鐘多走壹格。",
+      "ties": [
+        "m-queue",
+        "m-count"
+      ],
+      "route": {
+        "craft": 4,
+        "auction": 3,
+        "cellar": 3,
+        "hall": 3
+      }
+    }
+  ]
+}
