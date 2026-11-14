@@ -424,6 +424,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-confirm p b { font-variant-numeric: tabular-nums; }
 .bank-confirm p.total { border-bottom: 0; padding-top: 8px; font-size: 1.05rem; color: var(--ink-accent, #8E2A24); }
 .bank-confirm p.warn { color: var(--ink-accent, #8E2A24); }
+/* 手機橫拿（高 375）：槓桿確認單有 7 行，原本 423px 高、確認／取消鈕掉到畫面外（11-14 測試）：行距縮小讓整張放得進去 */
+@media (max-height: 500px) and (orientation: landscape) { .bank-confirm { gap: 0; margin: 2px 0 0; } .bank-confirm p { padding: 2px 0; font-size: var(--type-small, .8125rem); } .bank-confirm p.total { padding-top: 4px; font-size: .95rem; } }
 .bank-custom { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: end; margin-top: 6px; }
 .bank-custom .bank-qinfo { grid-column: 1 / -1; margin: 0; min-height: 1.3em; }
 .bank-custom .bank-field { min-width: 0; }
