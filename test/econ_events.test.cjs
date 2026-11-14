@@ -31,6 +31,7 @@ T("館債簽收窗口：窗口內提早拿回本金加照比例的利息（不�
   const r = G.casBondRedeem(w, h, D); assert.ok(r.ok && r.n === 1 && r.amt === 1000000);
   const full = Math.floor(1000000 * 4 / 100 * 7 / 7); assert.ok(r.int > 0 && r.int < full, `利息 ${r.int} ＜ 到期 ${full}`); assert.strictEqual(r.int, Math.floor(full * 3 / 7));
   assert.strictEqual(w.chips - c0, r.amt + r.int); assert.strictEqual(w.bond.list.length, 0); assert.strictEqual(inv(G, h, w), t0, "守恆");
+  assert.ok(w.bond.notes.some(x => x.includes("提早贖回") && !x.includes("到期")), "通知寫提早贖回，不寫到期：" + JSON.stringify(w.bond.notes));
   const h2 = G.casHouseFix(G.casHouseNew(), D).house, w2 = G.casWalletFix(G.casWalletNew(), D); h2.bankroll = G.NUM.casino.houseLoan.reserve + 100; w2.bond = JSON.parse(JSON.stringify(w.bond)); w2.bond.list = [{ mon: add(D, -3), amt: 1000000, day: add(D, -3), pct: 4, due: add(D, 4) }];
   G.casEconRun(h2, D, ev([D, "bondWindow", 1, ""])); assert.ok(!G.casBondRedeem(w2, h2, D).ok, "莊家超過準備金的部分太少：不給");
   assert.ok(G.casBondView(w, h, D).window, "畫面看得到窗口開著"); assert.ok(!G.casBondView(w, h, add(D, 5)).window);

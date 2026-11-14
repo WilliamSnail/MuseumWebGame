@@ -118,7 +118,7 @@ export function casBondRedeem(w, house, day) {
     const span = Math.max(1, cbdDiff(x.day, x.due)), held = Math.max(0, cbdDiff(x.day, day)), i = Math.floor(casBondInt(x) * Math.min(held, span) / span), owe = x.amt + i;
     if (owe > room) continue;
     casHouseMove(house, "bond", -owe); w.chips += owe; room -= owe; B.list = B.list.filter(y => y !== x); B.earned += i; n++; amt += x.amt; int += i;
-    B.notes.push(casFill(CAS_BOND.noteBack, { amt: casNum(x.amt), int: casNum(i), short: 0 }));
+    B.notes.push(casFill(CAS_BOND.noteEarly, { amt: casNum(x.amt), int: casNum(i), short: 0 }));
   }
   if (!house.ev.redeemed || house.ev.redeemed.day !== day) house.ev.redeemed = { day, n: 0 };
   house.ev.redeemed.n += amt + int;
