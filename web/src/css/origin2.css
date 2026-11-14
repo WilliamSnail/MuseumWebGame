@@ -1,0 +1,80 @@
+/* ================================================================
+   圖書館重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
+   標題壹行｜頁籤壹排（銅牌，跟畫廊、館長室壹樣）｜左：書架（翊文生的書背、銅邊隔板）、右：讀書的地方，各自在裡面捲。
+   前綴：origin-（docs/class名單.md）
+   ================================================================ */
+.screen.origin-onescreen > .onescreen-main.origin-main { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.origin-onescreen .origin-main > .shelves { gap: 26px; padding: 0 6px 24px 0; align-content: start; min-height: 0; }
+.origin-onescreen .origin-main > .reader { min-height: 0; align-items: flex-start; justify-content: center; padding: 0 4px 10px; }
+.origin-onescreen .origin-main > .reader > .empty { align-self: center; }
+
+/* 頁籤：壹排銅牌，放不下左右滑 */
+.screen.onescreen-room.origin-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
+.origin-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: #1A0F06; font-size: var(--type-body, .875rem); font-weight: 800; box-shadow: none; border-radius: 0; white-space: nowrap; text-shadow: 0 1px 0 rgba(255, 240, 200, .75); position: relative; }
+.origin-onescreen > .seg.big-tabs .seg-btn.on { border-image-source: url(/ui2/ui2-tab-2.webp); }
+.origin-onescreen > .seg.big-tabs .seg-btn .tab-c, .origin-onescreen > .seg.big-tabs .seg-btn .tab-fresh { font-weight: 400; }
+.origin-onescreen > .seg.big-tabs .seg-btn .tab-fresh { position: absolute; top: -6px; right: -4px; }
+
+/* 書架：暗色格子＋銅邊木隔板，書立在隔板上 */
+.origin-onescreen .shelf { background: linear-gradient(180deg, rgba(14, 9, 12, .78), rgba(30, 20, 22, .6)); padding: 30px 14px 6px; border-radius: 4px; border: 1px solid rgba(168, 138, 82, .45); box-shadow: inset 0 10px 18px rgba(0, 0, 0, .5); position: relative; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
+.origin-onescreen .shelf::after { content: ""; position: absolute; left: -6px; right: -6px; bottom: -20px; height: 26px; background: url(/ui2/ui2-shelf-board.webp) center / 100% 100% no-repeat; pointer-events: none; z-index: 0; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .45)); }
+.origin-onescreen .shelf > :not(.shelf-label):not(.shelf-pager) { position: relative; z-index: 1; }
+.origin-onescreen .shelf-label { position: absolute; }
+.origin-onescreen .shelf-label { top: 7px; left: 14px; color: var(--paper-gold, #F3DFA6); font-size: var(--type-small, .75rem); letter-spacing: .2em; }
+
+/* 書背：用翊文生的書的圖（直的、窄的那幾本輪流用），字壓在上面用深色小牌保證看得清楚 */
+.origin-onescreen .spine { width: 56px; height: 168px; border: 0; border-radius: 3px 3px 0 0; background: url(/ui2/ui2-book-6.webp) center / 100% 100% no-repeat; box-shadow: none; filter: drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); padding: 18px 0 14px; }
+.origin-onescreen .spine:nth-child(3n) { height: 156px; } .origin-onescreen .spine:nth-child(4n) { height: 176px; }
+.origin-onescreen .spine:nth-child(2) { background-image: url(/ui2/ui2-book-2.webp); }
+.origin-onescreen .spine:nth-child(3) { background-image: url(/ui2/ui2-book-3.webp); }
+.origin-onescreen .spine:nth-child(4) { background-image: url(/ui2/ui2-book-9.webp); }
+.origin-onescreen .spine:nth-child(5) { background-image: url(/ui2/ui2-book-5.webp); }
+.origin-onescreen .spine:nth-child(6) { background-image: url(/ui2/ui2-book-11.webp); }
+.origin-onescreen .spine:nth-child(7) { background-image: url(/ui2/ui2-book-1.webp); }
+.origin-onescreen .spine:nth-child(8) { background-image: url(/ui2/ui2-book-8.webp); }
+.origin-onescreen .spine:nth-child(9) { background-image: url(/ui2/ui2-book-10.webp); }
+.origin-onescreen .spine:nth-child(10) { background-image: url(/ui2/ui2-book-12.webp); }
+.origin-onescreen .spine .spine-t { padding: 6px 2px; border-radius: 3px; background: rgba(18, 10, 6, .62); color: var(--paper-gold, #F3DFA6); font-size: var(--type-small, .75rem); letter-spacing: .22em; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
+.origin-onescreen .spine:hover { transform: translateY(-6px); }
+.origin-onescreen .spine.on { transform: translateY(-12px); filter: drop-shadow(0 0 10px rgba(238, 215, 156, .8)) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+.origin-onescreen .spine.lit { filter: drop-shadow(0 0 12px rgba(238, 215, 156, .95)) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+.origin-onescreen .spine.locked { opacity: .6; filter: grayscale(.6) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+/* 禁書：暗紫的書圖（色調濾鏡只加在底圖上，字不跟著變暗） */
+.origin-onescreen .spine.dark, .origin-onescreen .spine.dark:nth-child(n) { background: none; }
+.origin-onescreen .spine.dark::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 3px 3px 0 0; background: url(/ui2/ui2-book-9.webp) center / 100% 100% no-repeat; filter: hue-rotate(250deg) saturate(1.1) brightness(1.15); }
+.origin-onescreen .spine.dark .spine-t { color: #E6DBFA; }
+.origin-onescreen .spine.dark.on { filter: drop-shadow(0 0 10px rgba(180, 150, 240, .85)) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+.origin-onescreen .series .spine { width: 40px; }
+
+/* 手機直拿：書架壹排左右滑，下面是讀書的地方 */
+@media (max-width: 760px) {
+  .screen.origin-onescreen > .onescreen-main.origin-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
+  .origin-onescreen .origin-main > .shelves { gap: 8px; padding: 0 0 4px; max-height: 210px; overflow-y: auto; }
+  .origin-onescreen .shelf { flex-wrap: nowrap; overflow-x: auto; padding-top: 26px; margin-bottom: 8px; scrollbar-width: thin; }
+  .origin-onescreen .shelf::after { bottom: -14px; height: 20px; }
+  .origin-onescreen .spine { flex: none; width: 46px; height: 120px; padding: 10px 0 8px; }
+  .origin-onescreen .spine:nth-child(3n), .origin-onescreen .spine:nth-child(4n) { height: 120px; }
+  .origin-onescreen > .seg.big-tabs .seg-btn { min-height: 38px; padding: 2px 10px; font-size: var(--type-small, .75rem); }
+  .origin-onescreen > .seg.big-tabs { margin-bottom: 4px; }
+}
+/* 手機橫拿：標題、回大廳、頁籤擠成壹行；左書架右讀書 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room.origin-onescreen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; align-content: stretch; }
+  .screen.origin-onescreen > .room-head { display: flex; grid-column: 1; grid-row: 1; margin: 0; min-width: 0; }
+  .screen.origin-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.origin-onescreen > .room-head .sub { display: none; }
+  .screen.origin-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.origin-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+  .screen.origin-onescreen > .seg.big-tabs { grid-column: 2; grid-row: 1; align-self: end; margin: 0; min-width: 0; }
+  .screen.origin-onescreen > .onescreen-main.origin-main { grid-column: 1 / -1; grid-row: 2; min-height: 0; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: 12px; }
+  .origin-onescreen > .seg.big-tabs .seg-btn { min-height: 30px; padding: 0 8px; border-width: 6px; font-size: var(--type-tiny, .6875rem); }
+  .origin-onescreen .spine, .origin-onescreen .spine:nth-child(3n), .origin-onescreen .spine:nth-child(4n) { width: 42px; height: 110px; padding: 8px 0 6px; }
+  .origin-onescreen .origin-main > .shelves { max-height: none; }
+  .origin-onescreen .shelf { padding-top: 24px; }
+}
+
+/* 頁籤的「幾本・幾本沒讀」：不要灰色小圓牌壓在銅牌上，直接用深色字寫在名字後面（翊文 11-14：「這個感覺很奇怪」） */
+.origin-onescreen > .seg.big-tabs .seg-btn { padding: 4px 22px 2px; gap: 8px; letter-spacing: .06em; }
+.origin-onescreen > .seg.big-tabs .seg-btn .tab-c { min-width: 0; padding: 0; background: none; color: #4A2A14; font-size: var(--type-small, .75rem); font-weight: 700; letter-spacing: 0; text-shadow: 0 1px 0 rgba(255, 240, 200, .6); }
+.origin-onescreen > .seg.big-tabs .seg-btn .tab-c::before { content: "｜"; opacity: .45; margin-right: 4px; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .origin-onescreen > .seg.big-tabs .seg-btn { padding: 2px 14px; gap: 5px; } }
