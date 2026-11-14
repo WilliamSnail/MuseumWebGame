@@ -43,5 +43,15 @@ T("GDP：投資 I 加股票淨流入外面世界（玩家和館方）；門票�
   assert.strictEqual(G.casGdpOf({ act: {}, wflow: { stockBuy: 100, stockSell: -900 } }).I, z.I, "淨流出不算");
   assert.strictEqual(G.casGdpOf({ act: {}, wflow: { ticket: -300, ticketBudget: -200, ticketMuseum: -500 } }).NX - z.NX, 1000);
 });
+T("突發大事件 C：機率 100% 時每家店都多來 b×平均 位（b 0.5～1.0）；機率 0 不發生；日報寫「突然來了一大批旅客」", G => {
+  const C = G.NUM.casino.stockIn, h = G.casHouseFix(G.casHouseNew(), D0).house, H = G.casInHouseFix(h);
+  for (let i = 1; i <= 7; i++) H.use[add(D0, -i)] = { food: 10 };
+  C.npcBurstPct = 0; const a = G.casInNpcFor(H, D0, "s", {}, null).food; assert.ok(!H.npcEv[D0]);
+  delete H.npc[D0]; C.npcBurstPct = 100; const b = G.casInNpcFor(H, D0, "s", {}, null).food - a;
+  assert.ok(b >= Math.round(10 * C.npcBurstMin) && b <= Math.round(10 * C.npcBurstMax), "多來 " + b);
+  assert.ok(H.npcEv[D0] && H.npcEv[D0].burst);
+  const s = G.casBookSnap([], h, 0, D0); s.house.npcLast = { day: D0, n: H.npc[D0], ev: H.npcEv[D0] };
+  const txt = G.casReportView({ day: add(D0, 1), at: 0, snap: s, diff: G.casBookDiff(null, s), opening: 0 }).secs.map(x => x.lines.join("|")).join("\n"); assert.ok(txt.includes("突然來了一大批旅客"), txt.slice(0, 300));
+});
 console.log(`${pass} passed, ${fail} failed（NPC 經濟接線）`);
 process.exit(fail ? 1 : 0);

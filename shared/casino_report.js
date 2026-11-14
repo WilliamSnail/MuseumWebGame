@@ -61,7 +61,8 @@ export function casReportView(doc) {
   if (H.npcc && doc.day) { const nw = npcNews(doc.day, { commissions: H.npcc.comm, hallVisits: H.npcc.hall }, 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
   if (H.npcLast && H.npcLast.n) { // 館內股的 NPC（規劃 2.8k）：昨天館外來了幾位旅客；劇情日那天寫活動
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" }, tot = Object.values(H.npcLast.n).reduce((a, b) => a + (+b || 0), 0), ev = H.npcLast.ev;
-    if (ev && nm[ev.store]) hl.push(`昨天${ev.name ? "《" + ev.name + "》在" : ""}${nm[ev.store]}辦了活動，館外來了 ${rpN(ev.n)} 位旅客。`);
+    if (ev && nm[ev.store] && ev.burst) hl.push(`昨天${nm[ev.store]}突然來了一大批旅客（${rpN(ev.n)} 位）。`);
+    else if (ev && nm[ev.store]) hl.push(`昨天${ev.name ? "《" + ev.name + "》在" : ""}${nm[ev.store]}辦了活動，館外來了 ${rpN(ev.n)} 位旅客。`);
     else if (tot > 0) hl.push(`昨天館外來了 ${rpN(tot)} 位旅客逛各家店。`);
   }
   if (H.inv && (H.inv.last || (H.inv.sum && (H.inv.sum.hold || []).length))) { // 館方投資外面世界（規劃 2.8f，延遲壹天：寫昨天的）
