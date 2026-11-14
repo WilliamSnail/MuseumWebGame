@@ -28,7 +28,7 @@ import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
-import { casBookDiff, casBookGap, casBookOpening, casBookSnap } from "./shared/casino_book.js";
+import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino_book.js";
 import { casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
@@ -347,7 +347,8 @@ export async function casReport() {
     const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(14).get();
     const olds = prevQ.docs.map(d => JSON.parse(d.data().data)).reverse(); // 由舊到新（最多 14 份，算景氣指數的成長率用）
     const prev = olds.length ? olds[olds.length - 1] : null;
-    const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: prev ? prev.opening + (prev.snap && prev.snap.house && prev.snap.house.world == null ? Math.max(0, Math.floor(+snap.house.world) || 0) : 0) : casBookOpening(snap) }; // 外面世界有帳的第壹天：起始的池子算進開場總和（規劃 2.12）
+    const ob = casBookOpeningNext(prev, snap, NUM.casino.world.start); // 對帳基準（外面世界有帳的那壹天起算；見 shared/casino_book.js）
+    const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: ob.opening, wfix: true, openingFix: ob.fix }; // 外面世界有帳的第壹天：起始的池子算進開場總和（規劃 2.12）
     doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino_gdp.js）
     const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
     const ext = casGdpExt(ECONOMY, day); // 外面世界的景氣（content/economy.json，每日排劇情的排程更新）

@@ -48,7 +48,8 @@ export function casInvestFix(house) {
 
 const ivName = id => (OUT_STOCKS.find(s => s.id === id) || { name: id }).name;
 const ivList = rec => Object.entries(rec || {}).map(([k, n]) => { const [pool, id] = k.split(":"); return { pool, id, name: ivName(id), n }; });
-const ivAvail = (house, pool) => (pool === "house" ? Math.max(0, ivN(house.bankroll) - NUM.casino.invest.reserve - ivN(house.debt && house.debt.culture)) : Math.max(0, ivN(house.budget) - NUM.casino.invest.budgetKeep));
+// 莊家：超過準備金、扣掉文化部館債；預算池：超過保留金、扣掉「莊家還文化部館債時預算池要墊的」（館債剩下的 − 莊家現金），不然預算池壹邊墊款壹邊拿去投資，墊不出來
+const ivAvail = (house, pool) => (pool === "house" ? Math.max(0, ivN(house.bankroll) - NUM.casino.invest.reserve - ivN(house.debt && house.debt.culture)) : Math.max(0, ivN(house.budget) - NUM.casino.invest.budgetKeep - Math.max(0, ivN(house.debt && house.debt.culture) - Math.max(0, ivN(house.bankroll)))));
 const ivFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 const ivCostSum = P => Object.values(P.cost).reduce((s, x) => s + ivN(x), 0);
 // 持股現值（用現在的價）

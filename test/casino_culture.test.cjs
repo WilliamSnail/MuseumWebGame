@@ -35,5 +35,19 @@ T("館方投資不動還款要用的錢（莊家超過準備金的部分扣掉�
   G.casStockHouseFix(h); G.casStockRoll(h, "2026-11-14", {}); G.casInvestRun(h, G.casStockHouseFix(h), "2026-11-14", "s", 0);
   assert.strictEqual(Object.keys(G.casInvestFix(h).pool.house.own).length, 0, "沒有可投的");
 });
+T("館方投資：預算池要墊文化部館債的部分不能拿去投資（預算池可投 ＝ 超過保留金 − (館債 − 莊家現金)）", G => {
+  const C = G.NUM.casino.invest, h = G.casHouseFix(G.casHouseNew(), "2026-11-14").house; h.bankroll = C.reserve; h.budget = C.budgetKeep + 450000000; h.debt.culture = 883000000;
+  G.casStockHouseFix(h); G.casStockRoll(h, "2026-11-14", {}); G.casInvestRun(h, G.casStockHouseFix(h), "2026-11-14", "s", 0);
+  assert.strictEqual(Object.keys(G.casInvestFix(h).pool.budget.own).length, 0, "館債要墊的錢大於預算池超過保留的部分：不投");
+  h.debt.culture = 0; h.day = "2026-11-15"; G.casInvestRun(h, G.casStockHouseFix(h), "2026-11-15", "s", 0); assert.ok(Object.keys(G.casInvestFix(h).pool.budget.own).length > 0, "沒館債就照投");
+});
+T("日報對帳基準（casBookOpeningNext）：外面世界有帳的那天加「起始」不是餘額；已經加錯的壹次校正；之後不再動", G => {
+  const WS = G.NUM.casino.world.start, mkSnap = w => ({ chips: 0, transit: 0, bank: 0, inplay: 0, mint: {}, burn: {}, house: { bankroll: 5, budget: 0, sea: 0, museum: 0, world: w, mint: {}, flow: {}, burn: {} } });
+  let r = G.casBookOpeningNext({ opening: 1000, gap: 0, snap: mkSnap(null) }, mkSnap(WS + 764291250), WS); assert.strictEqual(r.opening, 1000 + WS); assert.strictEqual(r.fix, 0);
+  r = G.casBookOpeningNext({ opening: 1000 + WS + 764291250, gap: -764291250, snap: mkSnap(WS + 764291250) }, mkSnap(WS + 800000000), WS); assert.strictEqual(r.opening, 1000 + WS, "壹次校正掉前壹份的差額"); assert.strictEqual(r.fix, -764291250);
+  r = G.casBookOpeningNext({ opening: 1000 + WS, gap: 0, wfix: true, snap: mkSnap(WS) }, mkSnap(WS), WS); assert.strictEqual(r.opening, 1000 + WS); assert.strictEqual(r.fix, 0);
+  r = G.casBookOpeningNext({ opening: 1000 + WS, gap: 55, wfix: true, snap: mkSnap(WS) }, mkSnap(WS), WS); assert.strictEqual(r.fix, 0, "已經校正過：之後的差額不再被吃掉");
+  assert.ok(G.casBookOpeningNext(null, mkSnap(WS), WS).opening > 0);
+});
 console.log(`${pass} passed, ${fail} failed（文化部館債）`);
 process.exit(fail ? 1 : 0);

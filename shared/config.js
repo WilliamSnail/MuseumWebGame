@@ -357,7 +357,7 @@ export const NUM = {
     //   reserve 重開補到多少；先跟預算池借（預算池超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
     //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
     //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先預算池、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
-    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2026-12-13", // 文化部館債 30 天內還清（翊文 11-14）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由預算池墊，再不夠記逾期
+    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", // 文化部館債（翊文 11-14：30 天 → 「借久一點 60 天」，從 11-13 撥款起算到 2027-01-12）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由預算池墊，再不夠記逾期
        reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
     // 莊家破產／吃緊的時候限制流出（規劃 2.11 第二點）：不是處罰玩家，是不讓莊家掉得更深。贏的錢不收回。
     //   吃緊（0 ～ health.low）：最大注 max(betMin, 莊家的錢 × betTightPct%)、壹天總賠付（21 點贏的＋大禮包）≤ 莊家的錢 × payTightPct% ＋ payFlat、壹包最多賠 max(drawFlat, 莊家的錢 ÷ 2)

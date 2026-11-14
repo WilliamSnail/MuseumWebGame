@@ -51,7 +51,12 @@ check("館方投資：持股成本上限 ≤ 超過部分的 50%；每天投 ≤
 check("館方投資：保留金 ≥ 莊家借款的準備金（不動到重開的底）", C.invest.reserve >= C.houseLoan.reserve, `${fmt(C.invest.reserve)} ≥ ${fmt(C.houseLoan.reserve)}`);
 check("借款額度上限 ≤ 莊家壹開始的錢（壹個人借光不會讓莊家破產）", C.loan.capMax <= C.houseStart, `capMax ${fmt(C.loan.capMax)}、莊家 ${fmt(C.houseStart)}`);
 const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
-check("文化部館債：30 天還清的每天分期 ≤ 莊家開場＋撥款的現金 ÷ 5（單靠現金能撐）", !C.houseLoan.cultureDue || grants === 0 || grants / 30 <= (C.houseStart + grants) / 5, `每天約 ${fmt(grants / 30)}；現金 ${fmt(C.houseStart + grants)}`, "warn");
+{ // 文化部館債分期：單靠現金撐得住嗎？撐不住的部分由預算池墊（墊到保留金為止），再不夠要靠莊家的收入
+  const days = C.houseLoan.cultureDue ? Math.max(1, Math.round((Date.parse(C.houseLoan.cultureDue) - Date.parse("2026-11-13")) / 86400000)) : 1, owed = grants * Math.pow(1 + C.houseLoan.cultureInterestPct / 100, days / 2) , cash = C.houseStart + grants, padRoom = Math.max(0, C.budgetStart !== undefined ? C.budgetStart : C.econ.budgetStart) - C.invest.budgetKeep;
+  const needIncome = Math.max(0, owed - C.houseStart - padRoom) / days;
+  check("文化部館債：每天分期 ≤ 預算池起始的 20%（壹天墊得起）", !C.houseLoan.cultureDue || grants === 0 || owed / days <= C.econ.budgetStart * 0.2, `${days} 天，平均每天約 ${fmt(owed / days)}；預算池起始 ${fmt(C.econ.budgetStart)}`);
+  check("文化部館債：現金加預算池可墊的部分（保留 " + fmt(C.invest.budgetKeep) + "）夠還；不夠的要靠莊家收入", needIncome === 0, `${days} 天；莊家現金 ${fmt(C.houseStart)}＋預算池可墊 ${fmt(padRoom)} 不夠時，莊家每天至少要賺 ${fmt(needIncome)}（最壞情況：館債全額、莊家沒有別的收入；實際看日報的莊家現金）`, "warn");
+}
 
 // 小模擬（固定種子，幾秒）：預告活動預先進場、NPC 來館花錢的總量
 (function sims() {
@@ -77,7 +82,16 @@ check("文化部館債：30 天還清的每天分期 ≤ 莊家開場＋撥款�
 // ---------- 帳面 ----------
 function readLedger(file) {
   const text = fs.readFileSync(file, "utf8");
-  const hm = /^ECON_HOUSE_JSON (.*)$/m.exec(text), rm = /^ECON_REPORT_JSON (.*)$/m.exec(text); // 固定動作 econ-status 的輸出（整份 log 存成檔也行）
+  // 固定動作 econ-status 的輸出（整份 log 存成檔也行）：ECON_B64 H|R 第幾份/共幾份 base64（GitHub 的 log 每行前面有時間，所以不從行首比）；舊的 ECON_*_JSON 兩行也讀
+  const parts = { H: [], R: [] };
+  for (const m of text.matchAll(/ECON_B64 ([HR]) (\d+)\/(\d+) ([A-Za-z0-9+/=]+)/g)) parts[m[1]][+m[2] - 1] = { n: +m[3], s: m[4] };
+  const dec = k => { const a = parts[k]; if (!a.length) return undefined; if (a.length < a[0].n || Array.from({ length: a[0].n }, (_, i) => a[i]).some(x => !x)) throw new Error("econ-status 的輸出 " + (k === "H" ? "莊家" : "日報") + " 少了幾行（共 " + a[0].n + " 行，只有 " + a.filter(Boolean).length + " 行）：log 被截斷了？"); return JSON.parse(Buffer.from(a.map(x => x.s).join(""), "base64").toString("utf8")); };
+  const b64h = dec("H"), b64r = dec("R");
+  if (b64h !== undefined || b64r !== undefined) {
+    const house = b64h || null, rep = b64r || null;
+    return house ? Object.assign({}, house, { day: house.day, __gap: rep ? rep.gap : null, __repDay: rep ? rep.day : null }) : (rep ? Object.assign({}, rep.house, { day: rep.day, __gap: rep.gap, __repDay: rep.day }) : null);
+  }
+  const hm = /ECON_HOUSE_JSON (.*)$/m.exec(text), rm = /ECON_REPORT_JSON (.*)$/m.exec(text);
   if (hm || rm) {
     const house = hm ? JSON.parse(hm[1]) : null, rep = rm && rm[1] !== "null" ? JSON.parse(rm[1]) : null;
     return house ? Object.assign({}, house, { day: house.day, __gap: rep ? rep.gap : null, __repDay: rep ? rep.day : null }) : (rep ? Object.assign({}, rep.house, { day: rep.day, __gap: rep.gap, __repDay: rep.day }) : null);
