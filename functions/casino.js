@@ -42,7 +42,7 @@ import { casArtSecret } from "./shared/casino_art.js";
 import { npcCounters, npcPublic } from "./shared/npc.js";
 import { FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
-import { casNpcLive, casReviewsFix, npcPresence } from "./shared/npc_spend.js";
+import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, npcPresence } from "./shared/npc_spend.js";
 import { casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
@@ -124,7 +124,11 @@ export async function playCore(me, email, opts, fn) {
       hb = ctx.house.bankroll;
       const r = fn(ctx);
       ha = ctx.house.bankroll;
+      const newRv = casNpcTakeReviews(ctx.house); // 這次新寫的 NPC 評價：合進完整歷史 npcReviews/{日期}（先讀、後面壹起寫；冪等）
       if (!r.ok && !opts.writeAnyway) return r;
+      const rvDocs = {};
+      for (const d of Array.from(new Set(newRv.map(x => x.day)))) { const rs0 = await tx.get(db().doc("npcReviews/" + d)); rvDocs[d] = rs0.exists ? rs0.data() : null; }
+      for (const d of Object.keys(rvDocs)) tx.set(db().doc("npcReviews/" + d), casReviewsMerge(rvDocs[d], newRv.filter(x => x.day === d), d));
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
       if (ctx.roundDirty || !rs.exists) { if (ctx.round) put(tx, roundRef(me.uid), ctx.round); }
@@ -388,6 +392,18 @@ export const casino = onCall(async req => {
       return r.ok ? Object.assign({ chips: ctx.w.chips }, r) : no(r);
     });
     case "report": return { ok: true, report: await casReport() };
+    // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
+    // 回 { ok, day, items: [{ id, who, npc, text, stars, at, day }]（新的在前）, total 這壹天符合的共幾則, prevDay／nextDay 前後有資料的日子或 null }
+    case "reviews": {
+      const col = db().collection("npcReviews"), want = typeof d.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d.day) ? d.day : null;
+      let doc = null, day = want;
+      if (want) { const s = await col.doc(want).get(); doc = s.exists ? s.data() : null; }
+      else { const q = await col.orderBy("day", "desc").limit(1).get(); if (!q.empty) { doc = q.docs[0].data(); day = doc.day || q.docs[0].id; } }
+      if (!day) return { ok: true, day: null, items: [], total: 0, prevDay: null, nextDay: null };
+      const pq = await col.where("day", "<", day).orderBy("day", "desc").limit(1).get(), nq = await col.where("day", ">", day).orderBy("day", "asc").limit(1).get();
+      const pick = casReviewsPick(doc && doc.items, typeof d.who === "string" ? d.who.slice(0, 40) : "", d.limit);
+      return { ok: true, day, items: pick.items, total: pick.total, prevDay: pq.empty ? null : pq.docs[0].id, nextDay: nq.empty ? null : nq.docs[0].id };
+    }
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
       await casReport().catch(e => console.error("日報：產生失敗", e && e.message)); // 每天第一個進館的人觸發日報（景氣指數靠它每天更新）
       const ws = await walletRef(me.uid).get();
