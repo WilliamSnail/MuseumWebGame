@@ -68,6 +68,11 @@ function dayPost(week, n) {
   const w = readJSON(`content/weeks/${week}/week.json`), d = readJSON(`content/weeks/${week}/d${n}.json`), G = shared();
   return dayMessage(w, d, n, d.date ? G.holidayOf(d.date) : null, undefined, d.date ? G.funDaysOf(d.date) : []);
 }
+// 揭露週的提醒（決定 0078）：「館裡有些不一樣了」。只叫大家去找，不寫是什麼、不寫哪個謎。idx 換句子，不要每次壹樣
+const BEAT_LINES = ["這幾天，館裡有些地方跟上週不壹樣了。", "有壹件小東西，悄悄換了位置。", "館長室的紀錄多了壹行，沒有人說得出是誰寫的。", "好像有什麼被擺到了該被看見的地方。"];
+function beatPost(idx = 0) {
+  return ["🔎 **館裡有些不壹樣了**", BEAT_LINES[Math.abs(idx) % BEAT_LINES.length], "去書、房間、今日特展走走看。誰先發現都好，錯過了也補得到。", "", "館長室 敬啟", "", footer()].join("\n");
+}
 // 限時活動開跑（決定 0045）。可能早幾分鐘或晚幾分鐘發，所以寫時間，不寫「現在開始了」
 function eventPost(ev) {
   const G = shared();
@@ -112,4 +117,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { dayMessage, dayPost, eventPost, readJSON, shared, send, footer, MAX };
+module.exports = { dayMessage, dayPost, eventPost, beatPost, readJSON, shared, send, footer, MAX };

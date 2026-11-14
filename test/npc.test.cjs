@@ -47,13 +47,14 @@ eq(G.npcLikesNow(T, "2026-12-30", null), ["b"], "喜好：第 3 段蓋掉");
 
 // 4. 現在的名單、新聞
 const cur = G.npcCurrent("2026-11-20", null);
-ok(cur.length === G.NPC_PEOPLE.length && cur.every(c => c.arc && c.arc.step === 1), "11-20 每位都到第 1 段");
+ok(cur.length === G.NPC_PEOPLE.length && cur.filter(c => c.arc).every(c => c.arc.step >= 1), "11-20 名單全在，有解鎖的都從第 1 段起");
+ok(G.npcCurrent("2026-12-14", null).every(c => c.arc && c.arc.step >= 1), "12-14（揭露對齊後最晚的第 1 段）每位都到第 1 段");
 ok(G.npcCurrent("2026-11-14", null).every(c => c.arc === null), "11-14 還沒有人有故事段落");
 const nw = G.npcNews("2026-11-20", null, 2);
 ok(nw.length === 2 && nw.every(x => x.news), "近況最多 2 則、都有字");
 eq(G.npcNews("2026-11-20", null, 2), nw, "同壹天的近況不變");
 ok(G.npcNews("2026-11-14", null).length === 0, "故事還沒開始就沒有近況");
-ok(G.npcNews("2026-11-20", null, 99).length === cur.filter(c => c.arc.news).length, "max 夠大就全列");
+ok(G.npcNews("2026-11-20", null, 99).length === cur.filter(c => c.arc && c.arc.news).length, "max 夠大就全列");
 
 // 5. 抽展廳旅客：照 route.hall 的權重、權重 0 不來、換人
 const L = [{ id: "a", name: "甲", kind: "visitor", route: { hall: 3 }, arc: [] }, { id: "b", name: "乙", kind: "client", route: { hall: 1 }, arc: [] }, { id: "c", name: "丙", kind: "visitor", route: { food: 9 }, arc: [] }, { id: "t", name: "痕", kind: "trace", route: { hall: 9 }, arc: [] }];

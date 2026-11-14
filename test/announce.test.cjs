@@ -119,6 +119,22 @@ T("讀真的週：改版之前發過的今日館訊不會重發；排好的活�
   assert.ok(ids.includes("event-2026-W46/double11"));
   assert.ok(ids.includes("event-2026-W46/winter-trial"));
 });
+T("揭露週：那天的今日館訊後面多壹則「館裡有些不壹樣了」，不寫細節；沒有那天的檔、跳過的不發", () => {
+  const { beatPost } = require("../tools/discord_post.cjs");
+  const os = require("os"), dir = fs.mkdtempSync(path.join(os.tmpdir(), "beat-"));
+  fs.mkdirSync(path.join(dir, "2026-W47"));
+  fs.writeFileSync(path.join(dir, "2026-W47", "week.json"), JSON.stringify({ start: "2026-11-16" }));
+  assert.ok(!autoEntries(dir).some(e => e.id.startsWith("beat-")), "週三的檔還沒有就不發");
+  fs.writeFileSync(path.join(dir, "2026-W47", "d3.json"), "{}");
+  const b = autoEntries(dir).find(e => e.id === "beat-b01");
+  assert.ok(b && b.at === "2026-11-18 07:50" && b.isDay, "週一排的揭露週：d3 那天發");
+  const m = b.make();
+  assert.ok(m.includes("館裡有些不壹樣了") && m.includes("pepe-museum.web.app"));
+  const detail = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "story", "帳本.json"), "utf8")).revealBeats.list[0].detail;
+  assert.ok(!m.includes(detail.slice(0, 8)) && !/正字|高度|B1/.test(m), "訊息不能帶出揭露的內容");
+  assert.notStrictEqual(beatPost(0), beatPost(1), "每次換句子");
+  fs.rmSync(dir, { recursive: true, force: true });
+});
 T("活動的時間開得到開跑公告嗎：平日 20:00，週末 14:00、20:00", () => {
   assert.ok(eventSlotOk("2026-11-11", "20:00"), "週三");
   assert.ok(!eventSlotOk("2026-11-11", "14:00"), "週三下午沒有檢查");
