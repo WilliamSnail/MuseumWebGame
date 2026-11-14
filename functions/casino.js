@@ -36,11 +36,12 @@ import { DAY_DATA } from "./shared/day_data.js";
 import { casTicketClaimKeys } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "./shared/casino_econ.js";
-import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
+import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { casArtSecret } from "./shared/casino_art.js";
 import { npcCounters, npcPublic } from "./shared/npc.js";
-import { FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
+import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
+import { casEconActive, casEconRun, casEconUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
@@ -112,6 +113,7 @@ export async function playCore(me, email, opts, fn) {
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
       casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/econ_events.js）
       casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
@@ -303,7 +305,7 @@ export const actStock = (ctx, d) => {
 export const actBank = (ctx, d) => {
   const op = String(d.op || "");
   const r = op === "put" ? casBankPut(ctx.w, d.amt) : op === "take" ? casBankTake(ctx.w, d.amt)
-    : op === "term" ? casBankTerm(ctx.w, d.amt, d.kind, ctx.day) : op === "bond" ? casBondBuy(ctx.w, ctx.house, d.amt, ctx.day) : op === "break" ? casBankBreak(ctx.w, d.id) : { ok: false, reason: "沒有這個動作" };
+    : op === "term" ? casBankTerm(ctx.w, d.amt, d.kind, ctx.day) : op === "bond" ? casBondBuy(ctx.w, ctx.house, d.amt, ctx.day) : op === "break" ? casBankBreak(ctx.w, d.id) : op === "bondRedeem" ? casBondRedeem(ctx.w, ctx.house, ctx.day) : { ok: false, reason: "沒有這個動作" };
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
 // 欠款送參觀者去地下工作（決定 0064 第二部分）：存檔在同壹個交易裡改（誰在工作、靈感），畫面收到 save_changed 重新讀
@@ -338,6 +340,7 @@ async function reportSnap(day) {
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
     const snap = casBookSnap(wallets, house, inplay, day);
+    snap.house.econUp = casEconUpcoming(ECON_EVENTS, day); // 要提前公告的劇情經濟事件（日報寫）
     snap.house.festUp = casInFestUp(FEST_DAYS, day); // 預告的活動（日報寫「幾號某店可能舉辦…」）
     snap.pol = house.pol || null; // 現在有效的政策（日報要寫）
     return snap;
@@ -359,6 +362,7 @@ export async function casReport() {
     doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7, ext.b);
     doc.ext = { ok: ext.ok, quarter: ext.quarter || "", stale: !!ext.stale };
     doc.gap = casBookGap(snap, doc.opening);
+    doc.audit = !!casEconActive(ECON_EVENTS, day).audit; // 全館對帳日（E8）：日報多印壹行對帳差
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
     let made = false;
     try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); made = true; } catch (e) { /* 別人先建了：讀他的 */ }

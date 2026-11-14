@@ -10,6 +10,8 @@ import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON } from "./casino_text.js";
 import { npcCounters, npcNews } from "./npc.js";
+import { CAS_ECON_EV, casEconUpText } from "./econ_events.js";
+import { casFill } from "./casino.js";
 
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
@@ -59,6 +61,8 @@ export function casReportView(doc) {
     if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
   }
   if (H.npcc && doc.day) { const nw = npcNews(doc.day, npcCounters(H.npcc), 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
+  if (Array.isArray(H.econUp) && H.econUp.length) hl.push("預告：" + casEconUpText(H.econUp).join("")); // 劇情經濟事件的預告（shared/econ_events.js）
+  if (doc.audit) hl.push(casFill(CAS_ECON_EV.audit, { gap: rpSign(doc.gap || 0) })); // 全館對帳日（E8）
   if (Array.isArray(H.festUp) && H.festUp.length) { // 預告的活動（規劃 2.8k）：可能辦成，也可能沒辦成，辦成才會多來壹批旅客
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
     hl.push("預告：" + H.festUp.map(f => `${+f.date.slice(5, 7)} 月 ${+f.date.slice(8, 10)} 日《${f.name}》可能在${nm[f.store] || f.store}舉辦`).join("；") + "。");

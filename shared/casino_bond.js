@@ -106,6 +106,25 @@ export function casBondSettle(w, house, day) {
   B.notes = B.notes.slice(-5);
   return out;
 }
+// 簽收窗口（劇情經濟事件 bondWindow，shared/econ_events.js）：窗口內可以提早拿回館債，本金加「已持有天數」照比例的利息（利率不變，不會比到期多）；
+// 莊家壹天最多付 redeemPct% 的（bankroll ＋ 超過準備金的部分）；付不出的留著，不開憑證、不動預算池。回傳 { ok, n 幾張, amt 本金, int 利息 }
+export function casBondRedeem(w, house, day) {
+  const E = NUM.casino.econEvent, W = house && house.ev && house.ev.window;
+  if (!W || !(day >= W.from && day <= W.until)) return { ok: false, reason: "現在不是館債的簽收窗口" };
+  const B = casBondFix(w, day), room0 = Math.max(0, Math.floor((house.bankroll - NUM.casino.houseLoan.reserve) * E.redeemPct / 100)), paidToday = house.ev.redeemed && house.ev.redeemed.day === day ? cbdN(house.ev.redeemed.n) : 0;
+  let room = Math.max(0, room0 - paidToday), n = 0, amt = 0, int = 0;
+  for (const x of B.list.slice()) {
+    if (x.due <= day) continue; // 今天到期的換日會自己還
+    const span = Math.max(1, cbdDiff(x.day, x.due)), held = Math.max(0, cbdDiff(x.day, day)), i = Math.floor(casBondInt(x) * Math.min(held, span) / span), owe = x.amt + i;
+    if (owe > room) continue;
+    casHouseMove(house, "bond", -owe); w.chips += owe; room -= owe; B.list = B.list.filter(y => y !== x); B.earned += i; n++; amt += x.amt; int += i;
+    B.notes.push(casFill(CAS_BOND.noteBack, { amt: casNum(x.amt), int: casNum(i), short: 0 }));
+  }
+  if (!house.ev.redeemed || house.ev.redeemed.day !== day) house.ev.redeemed = { day, n: 0 };
+  house.ev.redeemed.n += amt + int;
+  B.notes = B.notes.slice(-5);
+  return n ? { ok: true, n, amt, int } : { ok: false, reason: "沒有可以提早拿回的館債（或莊家今天付不出）" };
+}
 export function casBondTakeNotes(w) { const B = casBondFix(w, null); const n = B.notes; B.notes = []; return n; }
 // 存在館債裡的本金（記帳快照：這是莊家欠玩家的，不是錢；錢在莊家那裡，所以快照不另外加）
 export const casBondHeld = w => (cbdBox(w && w.bond) && Array.isArray(w.bond.list) ? w.bond.list.reduce((s, x) => s + cbdN(x && x.amt), 0) : 0);
@@ -122,5 +141,6 @@ export function casBondView(w, house, day) {
     issue, due, daysLeft: due && cbdDay(day) ? cbdDiff(day, due) : null, unit: C.unit, perUser: C.perUser,
     mine: mon ? cbdHeldThisWeek(B, mon) : 0, young: cbdDay(B.born) && cbdDay(day) ? Math.max(0, C.minAge - cbdDiff(B.born, day)) : 0,
     list: B.list.map(x => ({ amt: x.amt, pct: x.pct, day: x.day, due: x.due, int: casBondInt(x) })), iou: B.iou, earned: B.earned,
+    window: house && house.ev && house.ev.window && cbdDay(day) && day >= house.ev.window.from && day <= house.ev.window.until ? { from: house.ev.window.from, until: house.ev.window.until } : null, // 簽收窗口開著（bank op bondRedeem）
   };
 }

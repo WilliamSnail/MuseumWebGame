@@ -10,6 +10,8 @@ import { getFirestore } from "firebase-admin/firestore";
 import { casArtBuy, casArtSecret, casArtSell, casArtTier, casArtView } from "./shared/casino_art.js";
 import { twSecret } from "./stock_tw.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
+import { ECON_EVENTS } from "./shared/npc_data.js";
+import { casEconActive } from "./shared/econ_events.js";
 import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
 import { ART_WORKS } from "./shared/art_data.js";
 import { NUM } from "./shared/config.js";
@@ -117,7 +119,7 @@ async function settleOne(id, t, day) {
       const ss = rest[people.length + i];
       if (ss.exists) { saveSnaps[u] = ss; S[u] = parse(ss); const P = profileOf(S[u]); if (P) saves[u] = P; }
     });
-    const r = casAucSettle(doc, id, { house, wallets, saves, day, nowMs: t, npcList: NPC_LIST, secret: await twSecret() });
+    const r = casAucSettle(doc, id, { house, wallets, saves, day, nowMs: t, npcList: NPC_LIST, secret: await twSecret(), econ: casEconActive(ECON_EVENTS, day) });
     if (!r.ok) return null;
     for (const u of r.touched) if (wallets[u]) put(tx, walletRef(u), wallets[u]);
     const revs = {}; // 存檔有動的：得標的人（拿到畫）、賣家（畫賣出或解鎖）
