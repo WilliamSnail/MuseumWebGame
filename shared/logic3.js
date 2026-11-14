@@ -5,7 +5,7 @@
 
 // ---------- 系統 K：工坊升級 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, MOOD_BEATS, NUM, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
 import { settleWeekShow } from "./themeshow.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, understandCheck, usable } from "./logic.js";
@@ -294,7 +294,7 @@ export function memberPower(it, room) {
     else if (MOOD_BEATS[room.mood] === p.心情) s = Math.max(0, s - 1);
   }
   if (room && room.color && p.顏色 === room.color) s += 1;
-  if (p.姿勢 === "倒立") s += 1;
+  if (p.姿勢 === "倒立") s += NUM.cellarFx.handstand;
   s += COLOR_POWER[p.顏色] || 0; // 調色盤調出來的顏色
   return s;
 }
@@ -303,8 +303,8 @@ export function teamPower(P, team, room) {
   let total = parts.reduce((n, x) => n + x.s, 0);
   const notes = [];
   if (team.some(it => it.pick.姿勢 === "比讚")) { total += team.length; notes.push("比讚鼓舞全隊 +" + team.length); }
-  if (team.some(it => it.pick.帽子 === "巫師帽")) { total += 2; notes.push("巫師帽的魔法 +2"); }
-  if (team.some(it => it.pick.帽子 === "觸手帽")) { total += 5; notes.push("觸手帽 +5（要付理智）"); }
+  if (team.some(it => it.pick.帽子 === "巫師帽")) { total += NUM.cellarFx.wizard; notes.push(`巫師帽的魔法 +${NUM.cellarFx.wizard}`); }
+  if (team.some(it => it.pick.帽子 === "觸手帽")) { total += NUM.cellarFx.tentacle; notes.push(`觸手帽 +${NUM.cellarFx.tentacle}（要付理智）`); }
   // 小優點「力氣大」、小缺點「沒力氣」（11-08）
   traitHits(P, "power").forEach(t => { total = Math.max(0, total + t.v); notes.push(traitTag(t)); });
   return { total, parts, notes };
@@ -331,12 +331,12 @@ export function cellarResolve(P, choiceIdx) {
       out.firstRoll = out.roll; out.roll = rollOnce(); out.total = tp.total + out.roll.total; out.success = out.total >= out.target; out.rerolled = true;
       out.notes.push("皇冠號令：重擲一次");
     }
-    if (teamHas(team, "帽子", "觸手帽")) out.extraSan = "1D3";
+    if (teamHas(team, "帽子", "觸手帽")) out.extraSan = NUM.fight.tentacleSan;
   } else if (ch.check.type === "skill") {
-    const mod = (ch.check.mod || 0) + (teamHas(team, "帽子", "紳士帽") ? 10 : 0);
+    const mod = (ch.check.mod || 0) + (teamHas(team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0);
     const sc = skillCheck(P, ch.check.skill, mod);
     out.roll = sc.roll; out.target = sc.target; out.skill = ch.check.skill; out.success = !!sc.success;
-    if (mod !== (ch.check.mod || 0)) out.notes.push("紳士帽的禮貌 +10");
+    if (mod !== (ch.check.mod || 0)) out.notes.push(`紳士帽的禮貌 +${NUM.cellarFx.gent}`);
     if (!out.success && teamHas(team, "帽子", "皇冠") && once("crown")) {
       const again = skillCheck(P, ch.check.skill, mod); out.firstRoll = out.roll; out.roll = again.roll; out.success = !!again.success; out.rerolled = true;
       out.notes.push("皇冠號令：重擲一次");
@@ -643,4 +643,53 @@ export function understandLine(P, src) {
   if (isNew) P.understood[id] = todayStr();
   if (P.visit) { P.visit.understood = P.visit.understood || {}; P.visit.understood[id] = true; } // 這一位看懂了幾件（歷任參觀者牆，11-08）
   return { id, from: e.from, text: e.text, isNew, n: count(), total };
+}
+
+// ---------- 手作坊顯示「這個選項在地下收藏庫的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值」）----------
+// 數字全部讀上面實際在算的設定（NUM.cellarFx、NUM.fight、NUM.cellarRest、CELLAR_POWER、COLOR_POWER、MOOD_BEATS），畫面不另外寫壹份。
+// 回傳 [{ where: "強度"|"探索"|"打怪", text }]：強度＝自己的強度（兩種玩法都用）；探索＝走房間；打怪＝一場一次的招式（cellar_fight.js 的 FIGHT_MOVES）。沒有地下效果的選項回 []
+export function cellarPartFx(cat, name) {
+  const F = NUM.fight, X = NUM.cellarFx, out = [];
+  const add = (where, text) => out.push({ where, text });
+  if (cat === ROLLED) { if (CELLAR_POWER[name] != null && name !== "失敗作") add("強度", `強度 ${CELLAR_POWER[name]}（完美作品再 +${CELLAR_POWER.perfect}）`); }
+  else if (cat === "心情") {
+    const beats = MOOD_BEATS[name], beaten = Object.keys(MOOD_BEATS).find(k => MOOD_BEATS[k] === name);
+    if (beats) add("強度", `剋「${beats}」的房間或怪物：強度 ×2；被「${beaten}」的剋：強度 −1`);
+    else add("強度", "不被剋，也不剋誰");
+  }
+  else if (cat === "顏色") {
+    if (COLOR_POWER[name]) add("強度", `強度 +${COLOR_POWER[name]}`);
+    add("強度", "跟房間或怪物的顏色一樣：強度 +1");
+  }
+  else if (cat === "帽子") {
+    if (name === "巫師帽") { add("探索", `全隊強度 +${X.wizard}`); add("打怪", `招式：這回合每個人的推 +${F.wizard}`); }
+    else if (name === "觸手帽") { add("探索", `全隊強度 +${X.tentacle}，每個房間多扣 ${NUM.fight.tentacleSan} 理智`); add("打怪", `招式：推的強度 ×${F.tentacleMult}，自己扣 ${F.tentacleSan} 理智`); }
+    else if (name === "紳士帽") add("探索", `技能檢定 +${X.gent}`);
+    else if (name === "皇冠") { add("探索", "檢定失敗可以重擲壹次"); add("打怪", "招式：推的骰子當最大"); }
+    else if (name === "棒球帽") { add("探索", "擋下壹次損失"); add("打怪", "招式：擋下這回合打到自己的招"); }
+    else if (name === "毛帽") { add("探索", `每壹層第壹次走：回 ${NUM.cellarRest} 理智`); add("打怪", `招式：回 ${F.rest} 理智`); }
+  }
+  else if (cat === "姿勢") {
+    if (name === "比讚") { add("探索", "全隊強度 + 帶下去的人數"); add("打怪", `招式：下回合每個人的推 +${F.cheer}`); }
+    else if (name === "斯拉夫蹲") { add("探索", "穩住壹次，沒有人被推倒"); add("打怪", "招式：這回合自己的佩佩不會倒"); }
+    else if (name === "躺平") { add("探索", `每壹層第壹次走：回 ${NUM.cellarRest} 理智`); add("打怪", `招式：回 ${F.rest} 理智`); }
+    else if (name === "倒立") add("強度", `強度 +${X.handstand}`);
+  }
+  return out;
+}
+// 卡片上的短標（壹眼看得到）：沒有效果回 ""
+export function cellarFxShort(cat, name) {
+  const F = NUM.fight, X = NUM.cellarFx;
+  if (cat === ROLLED) return CELLAR_POWER[name] != null && name !== "失敗作" ? `強度 ${CELLAR_POWER[name]}` : "";
+  if (cat === "顏色") return COLOR_POWER[name] ? `強度 +${COLOR_POWER[name]}` : "";
+  if (cat === "心情") return MOOD_BEATS[name] ? "剋" + MOOD_BEATS[name] : "";
+  const T = { 巫師帽: `全隊 +${X.wizard}`, 觸手帽: `全隊 +${X.tentacle}`, 紳士帽: `檢定 +${X.gent}`, 皇冠: "重擲", 棒球帽: "擋壹次", 毛帽: "回理智", 比讚: "全隊 +人數", 斯拉夫蹲: "穩住", 躺平: "回理智", 倒立: `強度 +${X.handstand}` };
+  return cat === "帽子" || cat === "姿勢" ? T[name] || "" : "";
+}
+// 壹隻整隻的地下效果：lines＝每個有效果的選項的說明；power＝這隻自己的強度（沒有房間的時候；稀有度還沒擲就不算進去，rarityKnown 才含稀有度與完美）
+export function cellarPickFx(pick, o = {}) {
+  const lines = [];
+  PEPE_PARTS.forEach(pt => { if (pt.deco || (pt.name === ROLLED && !o.rarityKnown)) return; cellarPartFx(pt.name, pick[pt.name]).forEach(f => lines.push({ cat: pt.name, name: pick[pt.name], where: f.where, text: f.text })); });
+  const base = Object.assign({}, pick, o.rarityKnown ? {} : { [ROLLED]: "失敗作" });
+  return { lines, power: memberPower({ pick: base, perfect: !!o.perfect }, null) };
 }

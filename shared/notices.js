@@ -15,6 +15,7 @@
 //    publish／expire  發布、下架的日期（台灣日期，含當天；跟 todayStr 一樣台灣時間 05:00 換日）
 //    start／end 活動期間（可以不填）
 //    sections   [[段落名, [句子, …]], …]，畫面會寫成「〓段落名〓」
+//    area       （選填，11-14 起）同壹天的更新合成壹張時，歸在哪壹段：NOTICE_AREAS 其中壹個。沒寫就照 id 的關鍵字自動歸（noticeArea），歸不了的進「其他」。新公告請寫
 //    cta        「前往」按鈕：{ label, room, params } 或 { label, panel: "mail" }
 //    gift       附在信箱的獎勵：{ id, title, insp, mood }（shared/mailbox.js 會寄出去，一個 id 只寄一次）
 //  介面文字照第 1 代用「壹」。
@@ -24,11 +25,28 @@ import { weekIndex, weeklyTheme } from "./logic3.js";
 import { holidayNotices } from "./holidays.js";
 
 export const NOTICE_CATS = ["館方公告", "特展活動"];
+// 同壹天的更新合成壹張時的分段（翊文 11-14：「保持一張但分段加目錄」）：順序就是畫面上的順序
+export const NOTICE_AREAS = ["股票與銀行", "NPC 與展廳", "畫廊與拍賣", "賭場", "各廳新介面", "地下與劇情", "其他"];
+// 這則公告歸哪壹段：明寫的 area 優先；沒寫就看 id（先中先贏，順序重要：「gallery-new」是介面、「hall-art」是畫）
+const AREA_RULES = [
+  ["賭場", /casino|yuga-daily|policy/],
+  ["各廳新介面", /onescreen|ui2|-new$|landscape|portrait|layout|lobby|library|workshop|pillow|fusion|office|gallery|ws-|pass-avatar/],
+  ["股票與銀行", /stock|bank|lev|bond|house-inv|world-pool|loan|moc-|culture|economy|report-economy|budget|house-health/],
+  ["畫廊與拍賣", /art|auction/],
+  ["地下與劇情", /cellar|lost-found|nameplate|regulars|commission|lesson|fight|story|week|coop/],
+  ["NPC 與展廳", /npc|crowd|hall|review|visitor|fest|guest/],
+];
+export function noticeArea(n) {
+  if (n && NOTICE_AREAS.includes(n.area)) return n.area;
+  const id = String((n && n.id) || "");
+  for (const [area, re] of AREA_RULES) if (re.test(id)) return area;
+  return "其他";
+}
 const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
-    id: "casino-npc-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    id: "casino-npc-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal", area: "賭場",
     title: "賭場可以邀館裡的客人壹起玩 21 點", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
       ["改了什麼", [
@@ -40,7 +58,7 @@ export const NOTICES = [
     ],
   },
   {
-    id: "hall-art-score-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    id: "hall-art-score-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal", area: "畫廊與拍賣",
     title: "收藏的畫，也讓展廳評分加壹點", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
       ["改了什麼", [
@@ -214,12 +232,42 @@ export const NOTICES = [
     ],
   },
   {
+    id: "board-areas", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "公佈欄：同一天的更新分段了，最上面有目錄", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "「11 月 14 日的更新」這種一天一張的公告，現在照內容分成「股票與銀行」「NPC 與展廳」「畫廊與拍賣」「賭場」「各廳新介面」等幾段，最上面有目錄，點一下就跳到那一段。",
+        "每一段裡，比較重要的排在前面。已讀、未讀的記法沒變。",
+      ]],
+    ],
+  },
+  {
     id: "hall-art", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "展廳看得到你收藏的畫", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
       ["改了什麼", [
         "「我的展廳」右邊多一塊「我收藏的畫」：你在畫廊買的畫，用金色畫框掛在這裡，點一幅可以看畫；正在拍賣的畫會標「拍賣中」。",
         "走進館友的展廳時，也會看到他收藏的畫（只有畫和畫名，看不到價錢），只能看、不能改。",
+      ]],
+    ],
+  },
+  {
+    id: "gift-fx", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "送佩佩的時候，選好的那隻會顯示地下的數值", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "送佩佩給館友時，選好一隻之後，下面多了「在地下的效果」：這隻自己的強度，還有帽子、姿勢、顏色、心情在地下探索和打怪的效果。送之前可以看清楚再決定。失敗作不會顯示。",
+      ]],
+    ],
+  },
+  {
+    id: "workshop-cellar-fx", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "手作坊看得到帽子、姿勢在地下的效果和數字", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手作坊的選項卡片，帽子和姿勢下面多了一個小標（例如「全隊 +2」「擋壹次」），做之前就看得到。",
+        "右邊多了一塊「在地下的效果」：點開看每個選項在探索和打怪各是什麼效果、數字多少，還有這壹隻自己的強度。做好的成品揭曉時也會寫合計。",
+        "稀有度要做出來才知道，所以做之前只列出普通到傳說各是強度 1 到 5。",
       ]],
     ],
   },
@@ -2181,6 +2229,8 @@ export function digestNotices(list) {
       id: "day-" + n.publish, digest: true, v: 1, cat: "館方公告", tags: ["更新"], publish: n.publish, parts: g,
       importance: g.some(x => x.importance === "important") ? "important" : g.some(x => x.importance === "normal") ? "normal" : "low",
       title: `${+m} 月 ${+d} 日的更新（${g.length} 項）`,
+      // 分段（目錄用）：每段裡重要的排前面（同重要度照原本的順序），段的順序照 NOTICE_AREAS；每則都在某壹段、壹則只在壹段
+      groups: NOTICE_AREAS.map(area => ({ area, parts: g.filter(x => noticeArea(x) === area).sort((a, b) => RANK[b.importance] - RANK[a.importance]) })).filter(x => x.parts.length),
     });
   });
   return out;

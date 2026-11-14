@@ -9,7 +9,7 @@ import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, understandTarget, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
-import { bookSequels, cellarFloors, fusionLeft, hasTalent, hasUp, understandList, rereadTry, rereadReady, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
+import { bookSequels, cellarFloors, cellarFxShort, cellarPartFx, cellarPickFx, fusionLeft, hasTalent, hasUp, understandList, rereadTry, rereadReady, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
@@ -663,6 +663,16 @@ function afraidBar(cat) {
   if (byBout.length) lines.push(h("span", null, h("b", null, byBout.map(n => `「${n}」`).join("、") + "不敢碰"), `：恐懼症發作中，再 ${P.bout ? P.bout.left : 1} 個動作就好。`));
   return h("div", { class: "afraid-bar", role: "note" }, icon("eye"), h("div", { class: "afraid-lines" }, lines));
 }
+// 「在地下的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值，讓大家參考來製作」）
+// 數字全部來自 shared/logic3.js 的 cellarPickFx（跟地下實際算的同壹份）。opts.rarityKnown：做好的成品才有稀有度和完美，沒做之前不把稀有度算進去
+export function cellarFxBox(pick, opts = {}) {
+  const fx = cellarPickFx(pick, opts), known = !!opts.rarityKnown;
+  return h("details", { class: "onescreen-card ws-fx", open: known ? "" : null },
+    h("summary", null, h("b", null, "在地下的效果"), h("span", { class: "ws-fx-n" }, known ? `強度 ${fx.power}` : `強度加成 +${fx.power}`)),
+    h("p", { class: "ws-fx-pow" }, known ? `這壹隻自己的強度：${fx.power}（含稀有度）。房間或怪物的心情、顏色對上了還會再變。` : `顏色、姿勢帶來的強度加成：+${fx.power}。稀有度做出來才知道：普通 1、稀有 2、超稀有 3、傳說 5，完美作品再 +1。`),
+    fx.lines.length ? h("ul", { class: "ws-fx-list" }, fx.lines.map(f => h("li", null, h("i", { class: "ws-fx-w" }, f.where), h("b", null, f.name), " ", f.text)))
+      : h("p", { class: "ws-fx-none" }, "這壹隻的帽子和姿勢沒有地下的效果，只是好看。"));
+}
 SCREENS.workshop = (root, params) => {
   const free = isFree(P);
   const pick = P.wsPick;
@@ -719,6 +729,7 @@ SCREENS.workshop = (root, params) => {
     const can = canMake(P, pick);
     info.replaceChildren(
       placard([d.title, d.extra, third]),
+      cellarFxBox(pick), // 11-14：選項在地下的效果和數字，做之前就看得到
       h("div", { class: "poss" }, h("span", { class: "poss-l" }, "你已經打開的可能性"),
         h("b", { class: "poss-n", id: "wsPoss", dataset: { v: poss } }, `${num(poss)}`), h("span", { class: "poss-of" }, `／${num(knownTotal(P))}`),
         h("div", { class: "poss-f" }, counts.join(" × "))),
@@ -761,7 +772,7 @@ SCREENS.workshop = (root, params) => {
       : h("span", { class: "thumb", html: st.state === "open" ? frogHTML(preview) : ART.frog(preview, { silhouette: true }) });
     const card = h("button", { type: "button", class: `card${on && !rolledTab ? " on" : ""}${st.state !== "open" ? " locked" : ""}${blocked ? " afraid" : ""}${o.forbidden ? " forbidden" : ""}`,
       role: "option", "aria-selected": String(on), "aria-label": `${cat}：${name}${st.state !== "open" ? "（" + (st.text || "鎖住") + "）" : ""}` },
-      art, h("span", { class: "c-name" }, name), sub);
+      art, h("span", { class: "c-name" }, name), sub, st.state === "open" && !rolledTab && cellarFxShort(cat, name) ? h("span", { class: "c-fx", title: cellarPartFx(cat, name).map(f => f.where + "：" + f.text).join("\n") }, cellarFxShort(cat, name)) : null);
     freshMark(card, isFresh(P, "workshop", FRESH_KEY.opt(cat, name))); // 新解開的選項、剛能解鎖的選項：卡片角上「新」（11-08）
     let armed = false;
     const activate = () => {
@@ -1022,7 +1033,7 @@ SCREENS.reveal = (root, params) => {
       flavor ? h("div", { class: "pl-aside" }, flavor) : null,
       h("div", { class: "pl-foot" }, fill(GEN_TEXT.done, d.full), " ", GEN_TEXT.gift),
       h("div", { class: "pl-count" + (res.isNew ? " new" : "") }, res.isNew ? `新收藏！${total}` : "這種你已經有了")], { gold: res.perfect, cls: "rv-placard" });
-    panel.replaceChildren(pl);
+    panel.replaceChildren(pl, res.failed ? null : cellarFxBox(res.pick, { rarityKnown: true, perfect: res.perfect })); // 11-14：做好的成品，地下的效果合計
     await wait(600);
     dot.classList.add("lit");
     if (res.isNew && !legend) snd("unlock");

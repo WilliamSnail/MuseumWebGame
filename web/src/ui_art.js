@@ -113,7 +113,7 @@ export function artMarketShelf() {
 
 // ---------- 展廳的「收藏的畫」畫牆（翊文 11-14：「大家的展廳也可以看到買的畫」）----------
 // 自己的展廳：用上面報價的 mine（畫的 id、畫名、稀有度、拍賣中的 lock），點畫＝看畫（ART_HOOKS.view，照收藏的看畫規則）。
-// 別人的展廳：list 是伺服器給的 [{ id, title, tierName, lock? }]（只有畫名和畫，不給價錢），只能看、不能點。
+// 別人的展廳：list 是伺服器 visitHall 給的 view.art：[{ id, title, tier, tierName, auction }]（auction ＝ 正在拍賣；只有畫名和畫，不給價錢），只能看、不能點。
 // 回傳壹個 <details>（預設收起來，標題寫幾幅）；沒有畫就回 null
 export function hallArtWall(list) {
   const mine = !list;
@@ -126,8 +126,8 @@ export function hallArtWall(list) {
     const open = box.firstChild && box.firstChild.open;
     const frames = arr.map(x => {
       const svg = ART_HOOKS.art ? ART_HOOKS.art(x.id) : null;
-      const el = h(mine ? "button" : "div", Object.assign({ class: "hall-art" + (x.lock ? " lock" : "") }, mine ? { type: "button", "aria-label": `看畫：${x.title || x.id}`, onClick: () => ART_HOOKS.view && ART_HOOKS.view(x.id) } : {}),
-        h("span", { class: "hall-art-f", html: svg || "" }), h("b", null, x.title || x.id), h("small", null, x.lock ? "拍賣中" : x.tierName || ""));
+      const el = h(mine ? "button" : "div", Object.assign({ class: "hall-art" + (x.lock || x.auction ? " lock" : "") }, mine ? { type: "button", "aria-label": `看畫：${x.title || x.id}`, onClick: () => ART_HOOKS.view && ART_HOOKS.view(x.id) } : {}),
+        h("span", { class: "hall-art-f", html: svg || "" }), h("b", null, x.title || x.id), h("small", null, x.lock || x.auction ? "拍賣中" : x.tierName || ""));
       return el;
     });
     box.replaceChildren(h("details", { class: "onescreen-card hall-art-d", open: open ? "" : null },

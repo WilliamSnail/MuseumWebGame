@@ -58,6 +58,24 @@ T("公告排序：發布日新的在最上面（置頂的也不例外）；同�
     assert.ok(a.publish > b.publish || (a.publish === b.publish && R[a.importance] >= R[b.importance]), `${a.id} 應該排在 ${b.id} 前面`);
   }
 });
+T("同壹天那張分段加目錄（11-14）：每則都在某壹段、只在壹段、同壹天仍只有壹張；明寫的 area 優先、沒寫的照 id 關鍵字、歸不了進其他", G => {
+  const P = fresh(G), list = G.boardNotices(P, "2026-11-14"), day = list.find(n => n.id === "day-2026-11-14");
+  assert.ok(day && day.groups && day.groups.length >= 3, "有分段");
+  assert.strictEqual(list.filter(n => n.digest && n.publish === "2026-11-14").length, 1, "同壹天仍只有壹張");
+  const ids = day.groups.flatMap(g => g.parts.map(x => x.id));
+  assert.strictEqual(ids.length, day.parts.length, "壹則都沒漏");
+  assert.strictEqual(new Set(ids).size, ids.length, "壹則只在壹段");
+  assert.ok(day.groups.every(g => G.NOTICE_AREAS.includes(g.area) && g.parts.every(x => G.noticeArea(x) === g.area)), "段名都在清單裡、每則都歸在自己那壹段");
+  assert.deepStrictEqual(day.groups.map(g => G.NOTICE_AREAS.indexOf(g.area)), day.groups.map(g => G.NOTICE_AREAS.indexOf(g.area)).slice().sort((a, b) => a - b), "段的順序照 NOTICE_AREAS");
+  const other = day.groups.find(g => g.area === "其他");
+  assert.ok(!other || other.parts.length <= Math.ceil(day.parts.length * 0.15), "歸到「其他」的不超過壹成半（關鍵字規則要跟著新公告補）：" + (other ? other.parts.map(x => x.id).join() : ""));
+  assert.strictEqual(G.noticeArea({ id: "zzz", area: "賭場" }), "賭場", "明寫的 area 優先");
+  assert.strictEqual(G.noticeArea({ id: "foo-new", area: "亂寫" }), "各廳新介面", "area 不在清單就當沒寫、照 id");
+  assert.strictEqual(G.noticeArea({ id: "qqq" }), "其他");
+  const first = day.groups.find(g => g.parts.length > 1);
+  const rank = { urgent: 3, important: 2, normal: 1, low: 0 };
+  assert.ok(first.parts.every((x, i) => i === 0 || rank[first.parts[i - 1].importance] >= rank[x.importance]), "每段裡重要的排前面");
+});
 T("同壹天的更新合成壹則：重要的也合（11-14）、置頂的不合；已讀照原本各則記，多壹項就再變沒讀", G => {
   const P = fresh(G), raw = G.visibleNotices(P, "2026-11-10"), list = G.boardNotices(P, "2026-11-10");
   const day = list.find(n => n.id === "day-2026-11-10");
