@@ -446,6 +446,10 @@ export const NUM = {
       //   劇情日（week.json 的 npc）那天 NPC 多去 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 之間隨機（預期跳空 k×b ＜ 來回成本，預先進場賺不到；b 不能超過 0.33）
       // 突發大事件 C（翊文 11-14：不預告）：每家店每天有 npcBurstPct% 的機率突然多來 round(b × 前 7 個有效日的平均) 位旅客，b 在 npcBurstMin～npcBurstMax；
       //   事先不知道是哪天（種子有祕密），預先進場賺不到；事後日報寫「昨天餐車突然來了一大批旅客」
+      // 預告的活動（翊文 11-14：「某店可能舉辦什麼活動，那天有機率進壹大批旅客」；week.json.fest，每週最多 2 天）：日報提前 festAhead 天預告，當天 festP 的機率真的辦成（種子有祕密，隔天 05:00 才知道），
+      //   辦成就多來 round(b × 前 7 個有效日的平均) 位旅客，b 在 festMin～festMax；沒辦成照常。預先進場的期望報酬 ≈ K × festP × b（0.03 × 0.3 × 0.75 ≈ 0.68%）＜ 來回成本 1.04%。
+      //   活動多來的旅客不算進平均（避免之後幾天股價被拉低、被放空賺走），見 casInRoll
+      festP: 0.3, festMin: 0.5, festMax: 1.0, festAhead: 2,
       npcBurstPct: 0.3, npcBurstMin: 0.5, npcBurstMax: 1.0,
       npcLambda: 2, npcShareMax: 40, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },

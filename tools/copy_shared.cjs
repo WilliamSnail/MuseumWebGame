@@ -130,7 +130,20 @@ function npcData() {
   }
   return out;
 }
-fs.writeFileSync(path.join(to, "npc_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 的 week.json.npc（館內股的 NPC 劇情日）\nexport const NPC_DAYS = " + JSON.stringify(npcData()) + ";\n");
+// 預告的活動（規劃 2.8k）：week.json.fest [{ store, date, name }] → { 日期: [{ store, name }] }
+function festData() {
+  const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
+  if (!fs.existsSync(dir)) return out;
+  for (const name of fs.readdirSync(dir).sort()) {
+    if (!/^[0-9]{4}-W[0-9]{2}$/.test(name)) continue;
+    const f = path.join(dir, name, "week.json");
+    if (!fs.existsSync(f)) continue;
+    try { const w = JSON.parse(fs.readFileSync(f, "utf8")); for (const e of Array.isArray(w && w.fest) ? w.fest.slice(0, 2) : []) if (e && isDay(e.date) && typeof e.store === "string") (out[e.date] = out[e.date] || []).push({ store: e.store, name: typeof e.name === "string" ? e.name : "" }); }
+    catch (e) { console.error("預告活動：讀不出來", f, e.message); }
+  }
+  return out;
+}
+fs.writeFileSync(path.join(to, "npc_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 的 week.json.npc（館內股的 NPC 劇情日）\nexport const NPC_DAYS = " + JSON.stringify(npcData()) + ";\nexport const FEST_DAYS = " + JSON.stringify(festData()) + ";\n");
 // 館內 NPC 名單（11-14，docs/館內NPC規劃.md 步驟 3）：content/npc/*.json 整份打包成 NPC_LIST（照 id 排序）。給伺服器算行程、預算、故事線（步驟 3 以後的程式用）。
 // 讀不出來或沒過 tools/npc_check.cjs 的不放進去（檢查會在 npm test 擋下來）。只放遊戲資料，不放 __file。劇情角色（kind trace）也在裡面：算人數、出價時要自己跳過 kind trace。
 function npcList() {
