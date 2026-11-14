@@ -12,13 +12,13 @@ let hallSum = 0, hallZero = 0, samples = 0, eSum = 0, eZero = 0, eS = 0, aroundS
 const store = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 };
 const h = G.casHouseFix(G.casHouseNew(), D0).house;
 for (let d = 0; d < DAYS; d++) {
-  const day = add(D0, d), v = G.npcVisitsToday(day, "s" + d, LIST, null);
+  const day = add(D0, d), cr = G.crowdVisitsToday(day, "s" + d), v = G.npcVisitsToday(day, "s" + d, LIST, null);
   for (const x of v) if (store[x.place] != null) store[x.place]++; vtot += v.filter(x => x.place === "hall").length;
-  for (let m = 0; m < 1110; m += 10) { const hall = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length, ar = new Set(v.filter(x => x.start <= m && m < x.end).map(x => x.id)).size; hallSum += hall; aroundSum += ar; samples++; if (!hall) hallZero++; if (m >= 780) { eSum += hall; eS++; if (!hall) eZero++; } }
+  for (let m = 0; m < 1110; m += 10) { const hall = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length + cr.filter(x => x.start <= m && m < x.end).reduce((a, x) => a + x.n, 0), ar = new Set(v.filter(x => x.start <= m && m < x.end).map(x => x.id)).size; hallSum += hall; aroundSum += ar; samples++; if (!hall) hallZero++; if (m >= 780) { eSum += hall; eS++; if (!hall) eZero++; } }
   G.casNpcSpend(h, day, "s" + d, LIST, null);
 }
 const sp = G.casReviewsFix(h);
 console.log(`NPC ${people} 位（旅客 ${LIST.filter(n => n.kind === "visitor").length}）、${DAYS} 天：`);
-console.log(`展廳平均 ${(hallSum / samples).toFixed(2)} 位；0 人的時間 ${(hallZero / samples * 100).toFixed(0)}%；晚上 18:00～23:30 平均 ${(eSum / eS).toFixed(2)} 位、0 人 ${(eZero / eS * 100).toFixed(0)}%；館裡平均 ${(aroundSum / samples).toFixed(2)} 位`);
+console.log(`（含散客）展廳平均 ${(hallSum / samples).toFixed(2)} 位；0 人的時間 ${(hallZero / samples * 100).toFixed(0)}%；晚上 18:00～23:30 平均 ${(eSum / eS).toFixed(2)} 位、0 人 ${(eZero / eS * 100).toFixed(0)}%；館裡平均 ${(aroundSum / samples).toFixed(2)} 位`);
 console.log(`展廳每天來 ${(vtot / DAYS).toFixed(1)} 位；每家店每天平均 NPC：` + Object.entries(store).map(([k, n]) => `${k} ${(n / DAYS).toFixed(2)}`).join("、") + `（館內股 λ ＝ ${G.NUM.casino.stockIn.npcLambda}）`);
 console.log(`每天帶進館（${DAYS} 天最後壹天 ${h.npcs.total}，上限 ${G.NUM.casino.npcSpend.dayCap}）；最近評價 ${sp.length} 則`);

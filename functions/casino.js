@@ -80,7 +80,7 @@ async function npcNowView(h) {
     const p = npcPresence(day, t, sec, NPC_LIST, counters);
     const house = { reviews: h && Array.isArray(h.reviews) ? h.reviews.slice() : [], npcLive: h ? JSON.parse(JSON.stringify(h.npcLive || null)) : null, world: h ? h.world : 0, econ: h && h.econ, led: {}, budget: 0, bankroll: 0, museum: 0 };
     casNpcLive(house, day, t, sec, NPC_LIST, counters); // 複本上算：已經到、還沒寫進莊家文件的評價補進來（不寫回去、不動錢）
-    return { now: { hall: p.hall, names: p.names, around: p.around }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
+    return { now: { hall: p.hall, names: p.names, around: p.around, named: { hall: p.hall, names: p.names }, crowd: p.crowd, total: p.hall + p.crowd.n }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
   } catch (e) { console.warn("npcNowView", e && e.message); return { now: null, reviews: [] }; }
 }
 export async function playCore(me, email, opts, fn) {
