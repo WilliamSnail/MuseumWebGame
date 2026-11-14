@@ -44,6 +44,7 @@ const STEPS = [
   ["新的大廳（回滾的總開關、舊的大廳還在、11 間房、素材都在、沒有英文字，決定 0066）", ["test/lobby2.test.cjs"]],
   ["class 名字（全域 class 不能當 css 前綴、往 html／body 加 class 要先登記，11-13，docs/class名單.md）", ["test/class_names.test.cjs"]],
   ["館內 GDP 和景氣指數（活動次數、四塊算法、成長率要兩段各 7 天、平滑、人太少不算、日報有景氣一段，11-13）", ["test/casino_gdp.test.cjs"]],
+  ["邀請 NPC 去賭場（誰邀得動、答應或拒絕、坐進桌子、注從外面世界出、守恆、輸贏上限、離桌退注、台詞，決定 0080，11-14）", ["test/casino_npc.test.cjs"]],
   ["參觀者門票（第一次只記起點、票價照展廳評分、三份分法、每天上限、守恆，11-13）", ["test/casino_ticket.test.cjs"]],
   ["賭場的記帳（每條會動籌碼的路都要記到帳上、守恆、快照相減，11-13）", ["test/casino_book.test.cjs"]],
   ["館外股票的每日漲跌（名字表、縮放和上限、休市不動、缺資料用前一天、資料到了沒、抓資料整理，11-13）", ["test/stocks.test.cjs"]],

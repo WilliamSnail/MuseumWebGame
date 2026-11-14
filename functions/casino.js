@@ -43,6 +43,7 @@ import { npcCounters, npcPublic } from "./shared/npc.js";
 import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { casEconActive, casEconRun, casEconUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
+import { npcCasAway } from "./shared/casino_npc.js";
 import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -78,10 +79,10 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 async function npcNowView(h) {
   try {
     const t = now(), day = taipeiDay(t), sec = await twSecret(), counters = npcCounters(h && h.npcc);
-    const p = npcPresence(day, t, sec, NPC_LIST, counters);
+    const p = npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(h || {}, t)); // 被館友邀去賭場的不算在展廳（決定 0080）
     const house = { reviews: h && Array.isArray(h.reviews) ? h.reviews.slice() : [], npcLive: h ? JSON.parse(JSON.stringify(h.npcLive || null)) : null, world: h ? h.world : 0, econ: h && h.econ, led: {}, budget: 0, bankroll: 0, museum: 0 };
     casNpcLive(house, day, t, sec, NPC_LIST, counters); // 複本上算：已經到、還沒寫進莊家文件的評價補進來（不寫回去、不動錢）
-    return { now: { hall: p.hall, names: p.names, around: p.around, named: { hall: p.hall, names: p.names }, crowd: p.crowd, total: p.hall + p.crowd.n }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
+    return { now: { hall: p.hall, names: p.names, around: p.around, named: { hall: p.hall, names: p.names, ids: p.ids }, casino: p.casino, crowd: p.crowd, total: p.hall + p.crowd.n }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
   } catch (e) { console.warn("npcNowView", e && e.message); return { now: null, reviews: [] }; }
 }
 export async function playCore(me, email, opts, fn) {
@@ -338,7 +339,7 @@ async function reportSnap(day) {
     const wallets = ws.docs.map(d => casWalletFix(JSON.parse(d.data().data), null));
     let inplay = 0;
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
-    ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
+    ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && !s.npc && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
     const snap = casBookSnap(wallets, house, inplay, day);
     snap.house.econUp = casEconUpcoming(ECON_EVENTS, day); // 要提前公告的劇情經濟事件（日報寫）
     snap.house.festUp = casInFestUp(FEST_DAYS, day); // 預告的活動（日報寫「幾號某店可能舉辦…」）
@@ -401,7 +402,7 @@ export const casino = onCall(async req => {
     // 看到了就把 key 夾在下壹次 tickets 回報領分紅。只讀。回 { ok, now（伺服器現在毫秒）, feed: [{ key, kind, at, until, npc?, who?, label?, n }]（at 在現在前 120 秒到後 240 秒之間）, in: 現在展廳的人 }
     case "hallFeed": {
       const t = now(), day = taipeiDay(t), sec = await twSecret(), hs = await houseRef().get(), counters = npcCounters(hs.exists ? parse(hs).npcc : null);
-      return { ok: true, now: t, day, feed: hallFeed(day, sec, NPC_LIST, counters, t - 120000, t + 240000), in: npcPresence(day, t, sec, NPC_LIST, counters) };
+      return { ok: true, now: t, day, feed: hallFeed(day, sec, NPC_LIST, counters, t - 120000, t + 240000), in: npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(hs.exists ? parse(hs) : {}, t)) };
     }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
