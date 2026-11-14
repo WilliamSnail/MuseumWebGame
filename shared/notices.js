@@ -291,6 +291,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "bank-rule-btn-move", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行的「規則與小提示」換位置了", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行頂端的「規則與小提示」按鈕搬到標題旁邊，壹進銀行就看得到（電腦和平板寬度；手機維持原樣）。",
+      ]],
+    ],
+  },
+  {
     id: "casino-invite-btn", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭場邀旅客的按鈕變大了", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

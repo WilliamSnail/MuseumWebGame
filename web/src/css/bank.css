@@ -450,3 +450,9 @@ body[data-screen="bank"] #room { background: none; }
 /* 館債：簽收窗口開著的「提早贖回」（11-14） */
 .bank-redeem { display: grid; gap: 6px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--bank-gold, #D6B25E); border-radius: 8px; background: rgba(214, 178, 94, .12); }
 .bank-redeem p { margin: 0; }
+/* 「規則與小提示」放在標題牌右邊（翊文 11-14：不是搬分頁，是把這顆搬到 Yuga Bot 銀行 標題的右邊）。手機直拿、橫拿維持原本的排法 */
+@media (min-width: 761px) and (min-height: 501px) {
+  .bank-onescreen > .room-head .head-tools { order: 1; }
+  .bank-onescreen > .room-head .sub { order: 2; }
+  .bank-onescreen > .room-head .rh-row { order: 3; }
+}
