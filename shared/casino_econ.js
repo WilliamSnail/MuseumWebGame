@@ -14,7 +14,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casCount, casHouseMove } from "./casino_book.js";
-import { CAS_FX_TEXT, casFxMul, casFxPolicy } from "./casino_gdp.js";
+import { CAS_FX_TEXT, casFxMul, casFxPolicy, casFxPolicyOn } from "./casino_gdp.js";
 import { CAS_ECON } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { RNG } from "./logic.js";
@@ -95,4 +95,13 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   out.left = Math.max(0, C.perDay - e.n);
   out.lines = lines;
   return out;
+}
+
+// 大廳要顯示的「現在有效的政策」（11-14，翊文：「這些政策效果能也在大廳展示嗎」，附拚經濟成功抽到「兩岸服務業、貨品貿易協定」、政策效果「門票多一成，到明天」的截圖）。
+//   回傳 null＝現在沒有有效的政策；{ name 政策名稱, effect 效果白話, day 哪天抽到, until 有效到哪天（含） }
+export function casPolicyView(house, day) {
+  if (!casFxPolicyOn(house, day)) return null;
+  const p = house.pol, name = CAS_ECON.policies[p.idx] || "";
+  const until = new Date(Date.parse(p.day + "T00:00:00Z") + NUM.casino.gdp.polDays * 86400000).toISOString().slice(0, 10);
+  return { name, effect: CAS_FX_TEXT[p.fx] || "", day: p.day, until };
 }
