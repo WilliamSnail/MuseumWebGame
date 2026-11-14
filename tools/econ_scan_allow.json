@@ -1,0 +1,6 @@
+{
+  "_說明": "econ:scan 的白名單。files：整個檔不掃（路徑前綴）；lines：\"檔名:行\" 不報；values：這些數字不報。舊公告是當時的事實，不改；ui_bank 的假資料只用在 #bank 畫面預覽。",
+  "files": ["shared/notices.js", "content/weeks/", "content/story/", "content/stocks/", "content/npc/", "shared/legacy.js", "shared/npc_roster.js", "web/src/art.js"],
+  "lines": ["web/src/ui_bank.js:59", "web/src/ui_bank.js:60", "web/src/ui_bank.js:61", "web/src/ui_bank.js:62", "web/src/ui_bank.js:63", "web/src/ui_bank.js:64", "web/src/ui_signin.js:104", "web/src/ui_signin.js:116"],
+  "values": [1128]
+}
