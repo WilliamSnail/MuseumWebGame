@@ -1,0 +1,58 @@
+{
+  "id": "v-ke",
+  "name": "老柯",
+  "kind": "visitor",
+  "story": "退休的圖書館員，借書證用到卡片邊緣都泛白了。",
+  "likes": [
+    "auction",
+    "cellar",
+    "hall",
+    "少見"
+  ],
+  "route": {
+    "auction": 3,
+    "cellar": 4,
+    "hall": 3
+  },
+  "budget": {
+    "tier": "comfortable",
+    "perDay": 1350000,
+    "max": 900000
+  },
+  "arc": [
+    {
+      "step": 1,
+      "from": "2026-11-16",
+      "text": "他在拍賣預展用手背擦過畫框，說習慣了，書的邊緣也是這樣摸的。",
+      "news": "老柯在拍賣預展細看了畫框。"
+    },
+    {
+      "step": 2,
+      "from": "2026-12-28",
+      "text": "他說有壹本目錄的最後壹頁，號碼比書架上的少壹個，書卻是滿的。",
+      "news": "老柯說有壹本目錄少了壹個號碼。",
+      "ties": [
+        "m-count"
+      ]
+    },
+    {
+      "step": 3,
+      "from": "2027-02-01",
+      "text": "他把借書證遞給櫃台，說壹張就好，替那個沒有證的人先借著。",
+      "need": {
+        "metric": "hallVisits",
+        "n": 210
+      },
+      "news": "老柯替沒有借書證的人借了書。",
+      "ties": [
+        "m-count",
+        "arc-hall"
+      ],
+      "route": {
+        "auction": 3,
+        "cellar": 4,
+        "hall": 4
+      }
+    }
+  ]
+}
