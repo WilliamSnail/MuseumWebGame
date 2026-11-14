@@ -6,7 +6,7 @@
 //  故事線 arc[]：每壹段 { step, from, text, news, need?, route?, likes?, ties? }
 //    第 1 段只看日期（from ≤ 今天）；之後的段落要日期到了，而且（有 need 的話）全館的進度也到了：need { metric, n }
 //    全館進度 counters：{ commissions: { 委託人 id: 累計完成他的委託幾次 }（也可以是壹個數字＝全部委託人加起來）, hallVisits: 全館累計參觀展廳幾人次 }
-//    counters 沒給（null、undefined）就「只看日期」：目前全館的進度還沒有人在算（要伺服器記，見維護日誌），所以網頁現在都走這條路。
+//    counters 沒給（null、undefined）就「只看日期」。伺服器記 house.npcc；網頁從 casino peek 收到（npcWebSet），沒登入或還沒收到才只看日期。
 //    壹段壹段往下解鎖，前壹段沒到後面就不算。
 //  route、likes：最新那壹段有寫就蓋掉最上層的（例：第 3 段之後他不再去地下）。
 // ================================================================
@@ -30,6 +30,23 @@ export function npcNeedMet(need, counters, npcId) {
   if (need.metric === "hallVisits") return (+counters.hallVisits || 0) >= n;
   return false; // 不認得的項目：不解鎖
 }
+// 全館進度（house.npcc ＝ { comm 全部加起來, hall, cl 每位委託人 }）換成 npcArcNow 要的 counters。有 cl 就用每位委託人自己的數；沒有（舊資料）就用全部加起來的 comm
+export function npcCounters(npcc) {
+  if (!npcc || typeof npcc !== "object") return null;
+  const cl = npcc.cl && typeof npcc.cl === "object" && !Array.isArray(npcc.cl) ? npcc.cl : null;
+  return { commissions: cl && Object.keys(cl).length ? cl : npcc.comm, hallVisits: npcc.hall };
+}
+// 給網頁看的 house.npcc：只留數字（comm、hall、cl）
+export function npcPublic(npcc) {
+  if (!npcc || typeof npcc !== "object") return null;
+  const nz = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0), o = { comm: nz(npcc.comm), hall: nz(npcc.hall), cl: {} };
+  if (npcc.cl && typeof npcc.cl === "object" && !Array.isArray(npcc.cl)) Object.keys(npcc.cl).forEach(k => { o.cl[k] = nz(npcc.cl[k]); });
+  return o;
+}
+// 網頁收到伺服器的 peek（casino act）裡的 npcc 才有全館進度；還沒收到（或沒登入）就是 null＝只看日期
+let WEB_NPCC = null;
+export const npcWebSet = npcc => { WEB_NPCC = npcc && typeof npcc === "object" ? npcc : null; };
+export const npcWebCounters = () => npcCounters(WEB_NPCC);
 // 現在解鎖到第幾段（陣列裡的位置，-1＝都還沒到）。date 是 "YYYY-MM-DD"（台灣 05:00 換日的「今天」）
 export function npcArcIndex(npc, date, counters) {
   const arc = arcList(npc);

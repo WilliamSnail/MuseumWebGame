@@ -308,6 +308,6 @@ export function casAucView(doc, w, uid, day, nowMs) {
     reserve: a.reserve, ceil: a.ceil, closeAt: a.closeAt, bidders: Object.keys(a.bids).length,
     mine: auHas(a.bids, uid) ? a.bids[uid].amt : null, mineSeller: a.seller === uid, canCancel: a.seller === uid && Object.keys(a.bids).length === 0,
   }));
-  const done = doc.done.slice().reverse().map(x => ({ id: x.id, kind: x.kind, sellerName: x.kind === "house" ? CAS_AUC.house : CAS_AUC.player, work: x.work, title: x.title, tier: x.tier, tierName: tierName(x.tier), price: x.price, closedAt: x.closedAt }));
+  const done = doc.done.slice().reverse().map(x => ({ id: x.id, kind: x.kind, sellerName: x.kind === "house" ? CAS_AUC.house : CAS_AUC.player, work: x.work, title: x.title, tier: x.tier, tierName: tierName(x.tier), price: x.price, closedAt: x.closedAt, buyerName: x.price == null ? null : x.buyer ? "館外的收藏家 " + x.buyer : "館友", npcBuyer: !!x.buyer })); // buyerName：成交了才有——NPC 買家「館外的收藏家 某某」、玩家壹律匿名「館友」；流標是 null
   return { notes: w && auBox(w.auc) && Array.isArray(w.auc.notes) ? w.auc.notes.filter(s => typeof s === "string").slice(-5) : [], open, done, hold: Object.values(bids).reduce((s, n) => s + auN(n), 0), listLeft: Math.max(0, C.listPerSeller - doc.open.filter(a => a.seller === uid).length), minAge: C.minAge, feePct: C.feePct, floorPct: C.floorPct, ceilPct: C.ceilPct, premiumDay: C.premiumDay, closeDays: C.closeDays, closeHour: C.closeHour, day };
 }
