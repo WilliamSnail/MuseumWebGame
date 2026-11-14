@@ -35,11 +35,11 @@ export function casWalletNew() {
   };
 }
 // 新玩家的起始籌碼是文化部補助（決定 0082）：新錢包帶 led.cult＝1 的記號，第壹次碰到莊家（house）時，把「憑空給的」改記成外面世界出的（來源 cultureStart）。
-// 舊錢包沒有記號，不動。全館最多補助 NUM.casino.culture.maxPlayers 位（house.cult.n），超過的還是記憑空。回傳這次轉的籌碼
+// 舊錢包沒有記號，不動。全館最多補助 NUM.casino.culture.maxPlayers 位（house.cultStart.n），超過的還是記憑空。回傳這次轉的籌碼
 export function casCultureFund(w, house) {
   if (!w || !w.led || !w.led.cult) return 0;
   delete w.led.cult;
-  const C = NUM.casino.culture, H = house.cult && typeof house.cult === "object" ? house.cult : (house.cult = { n: 0, total: 0 });
+  const C = NUM.casino.culture, H = house.cultStart && typeof house.cultStart === "object" ? house.cultStart : (house.cultStart = { n: 0, total: 0 });
   if (!C || !C.on || casNz(H.n) >= C.maxPlayers) return 0;
   const got = casWorldFund(w, house, "cultureStart", w.led.mint && w.led.mint.start, NUM.casino.world);
   if (got > 0) { H.n = casNz(H.n) + 1; H.total = casNz(H.total) + got; }

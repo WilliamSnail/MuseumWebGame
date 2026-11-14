@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-14-53b43b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "新玩家的起始籌碼由文化部補助", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "新加入的館友，起始籌碼 1,000 萬改成由文化部補助（從外面世界來），數字不變。",
+        "文化部也是博物館的館債債主。",
+      ]],
+    ],
+  },
+  {
     id: "start-chips-10m-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "新進玩家起始籌碼改成 1,000 萬", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
