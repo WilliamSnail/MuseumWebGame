@@ -56,7 +56,7 @@ export function fakeBankHall() {
       kinds: [{ i: 0, days: 3, pct: 0.01 }, { i: 1, days: 7, pct: 0.03 }] },
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
-    bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], state: "健康" },
+    bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], window: { from: "2026-11-14", until: "2026-11-15" }, state: "健康" },
     stocks: { list: stocks, taxPct: 0.05, fee: 0.005, halt: false, inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
       lev: { max: 5, byMarket: { in: 2, tw: 5, us: 0 }, owed: 120000, owedText: "館內股今天賺的超過館方當天能賠的上限，還有 120,000 記成欠條，明天補發。", usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 3, next: 3, nextText: "再 3 點信用升到 4 級，就能開到 5×。", nextUnlock: { level: 4, lev: 5, pts: 20 }, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
@@ -78,7 +78,7 @@ export function bankHallView(b) {
   const md = x => (x ? String(x).slice(5) : "");
   const bonds = d && d.issue && d.issue.open ? {
     issue: { name: d.issue.name, line: CAS_BOND.sub, pct: P100(d.issue.pct), left: Math.max(0, d.issue.cap - d.issue.sold), cap: d.issue.cap, mine: d.mine, due: md(d.due), unit: d.unit, perUser: d.perUser, young: d.young },
-    held: d.list.map((x, i) => ({ id: i, amt: x.amt, int: x.int, due: md(x.due) })), iou: d.iou,
+    held: d.list.map((x, i) => ({ id: i, amt: x.amt, int: x.int, due: md(x.due) })), iou: d.iou, window: d.window || null,
     state: d.issue.pct <= 4 ? "健康" : d.issue.pct <= 6 ? "吃緊" : "缺錢",
   } : null;
   return {
@@ -190,9 +190,13 @@ function bondPane(v) {
       h("div", { class: "bank-acts" }, i.young ? h("p", { class: "bank-why" }, `帳號開了 3 天以上才能買（還要 ${i.young} 天）。`) : null,
         btn("買 100,000", () => bankDo("bank", { op: "bond", amt: 100000 }), "primary big bank-btn gold", { disabled: i.young || v.cash < 100000 || i.left < 100000 ? true : null }),
         btn("買 500,000", () => bankDo("bank", { op: "bond", amt: 500000 }), "big bank-btn", { disabled: i.young || v.cash < 500000 || i.left < 500000 ? true : null })),
-      h("p", { class: "bank-hint" }, "到期還本金加利息；不能提早贖回、不能轉讓。")),
+      h("p", { class: "bank-hint" }, "到期還本金加利息；" + (b.window ? "現在簽收窗口開著，可以到右邊「我持有的」提早贖回。" : "平常不能提早贖回、不能轉讓（簽收窗口開著的時候才可以）。"))),
     panel("我持有的", `共 ${fmt(i.mine)}`,
-      ledger(["金額", "到期拿到", ""], b.held.map(x => h("div", { class: "bank-row", role: "row" }, h("span", null, h("b", null, fmt(x.amt))), h("span", { class: "bank-tab-num" }, `${fmt(x.amt + x.int)}（${x.due}）`), h("span", null)))) ));
+      ledger(["金額", "到期拿到", ""], b.held.map(x => h("div", { class: "bank-row", role: "row" }, h("span", null, h("b", null, fmt(x.amt))), h("span", { class: "bank-tab-num" }, `${fmt(x.amt + x.int)}（${x.due}）`), h("span", null)))), b.window ? h("div", { class: "bank-redeem" },
+        h("p", { class: "bank-line" }, h("b", null, "現在可以提早贖回"), b.window.until ? `（到 ${String(b.window.until).slice(5).replace("-", "/")}）` : ""),
+        h("p", { class: "bank-meta sm" }, "拿回本金，加上已經持有的天數照比例算的利息，不會比到期多。館方一天能付的有限，付不出就明天再試。"),
+        btn("提早贖回", () => confirmTrade("提早贖回館債", [["持有", fmt(b.held.reduce((n, x) => n + x.amt, 0))], ["拿回", "本金＋照持有天數算的利息（以伺服器算的為準）"]], "確認贖回", () => bankDo("bank", { op: "bondRedeem" })), "primary big bank-btn gold", { disabled: b.held.length ? null : true }),
+        b.held.length ? null : h("p", { class: "bank-why" }, "你還沒有買這一期的館債。")) : null));
 }
 // 還沒做的頁籤（股票、財報）：伺服器給 null 的時候
 const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即將開放", h("p", { class: "bank-empty" }, what)));
@@ -291,7 +295,13 @@ function stockRows(list, cur, S) {
   return rows;
 }
 // ---------- 小零件：頁籤、數字欄、選項 ----------
-const seg = (items, cur, onPick, cls) => h("div", { class: "bank-segs " + (cls || ""), role: "tablist" }, items.map(([k, t, dis]) => h("button", { type: "button", role: "tab", "aria-selected": String(k === cur), class: "bank-seg" + (k === cur ? " on" : ""), disabled: dis ? true : null, onClick: () => onPick(k) }, t)));
+// 兩頁／三頁小切換鈕前面的圖示（翊文 11-14：「這兩個也做一個 Icon」）：行情＝K 線、持倉＝錢包裡的股票、交易＝兩個箭頭。沒有對到的鍵就不放圖示
+const SEG_ICON = {
+  market: SVG('<path d="M6 4v3M6 13v3M6 7h0M4 7h4v6H4zM12 6v3M12 15v3M10 9h4v6h-4zM18 3v3M18 11v3M16 6h4v5h-4z" transform="translate(0 2)"/>'),
+  hold: SVG('<path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3"/><path d="M8 13l2 2 2-3 3 3 1-2"/>'),
+  trade: SVG('<path d="M4 8h13l-3-3M20 16H7l3 3"/>'),
+};
+const seg = (items, cur, onPick, cls) => h("div", { class: "bank-segs " + (cls || ""), role: "tablist" }, items.map(([k, t, dis]) => h("button", { type: "button", role: "tab", "aria-selected": String(k === cur), class: "bank-seg" + (k === cur ? " on" : ""), disabled: dis ? true : null, onClick: () => onPick(k) }, SEG_ICON[k] && cls === "kind" ? h("span", { class: "bank-segi", html: SEG_ICON[k], "aria-hidden": "true" }) : null, t)));
 const form = () => (UI.bankForm || (UI.bankForm = { lev: 2, dir: "long", margin: 1000000, stopOn: true, stop: 3, takeOn: false, take: 5, okind: "buy", opx: "", on: "" }));
 // 數字欄：打字的時候只更新旁邊的算式（不整頁重畫，不然游標會跑掉）
 function numField(label, value, onChange, opts = {}) {

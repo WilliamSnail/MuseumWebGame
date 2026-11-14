@@ -439,3 +439,13 @@ body[data-screen="bank"] #room { background: none; }
 .bank-row.inv { min-height: 44px; }
 .bank-invy { margin-top: 8px; font-size: var(--type-small, .75rem); }
 .bank-invy ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: var(--type-body, .875rem); }
+
+/* 行情／持倉／交易 小切換鈕的圖示（11-14） */
+.bank-segs.kind .bank-seg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.bank-segi { display: inline-flex; flex: none; }
+.bank-segi svg { width: 20px; height: 20px; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .bank-segi svg { width: 17px; height: 17px; } .bank-segs.kind .bank-seg { gap: 5px; } }
+
+/* 館債：簽收窗口開著的「提早贖回」（11-14） */
+.bank-redeem { display: grid; gap: 6px; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--bank-gold, #D6B25E); border-radius: 8px; background: rgba(214, 178, 94, .12); }
+.bank-redeem p { margin: 0; }
