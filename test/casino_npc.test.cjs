@@ -49,6 +49,8 @@ T("被拒絕：回他的拒絕台詞、30 分鐘內同壹位館友不能再邀�
   assert.ok(rej, "擲了很多次都沒被拒絕"); assert.ok(rej.r.line && !m.t.seats["n~" + f.id]);
   const again = G.casTNpcInvite(m.t, m.ctx, "a", f.id, rej.t0 + 60000); assert.ok(!again.ok && again.reason.includes("剛拒絕"), JSON.stringify(again));
   assert.ok(G.npcCasCoolLeft(m.house, DAY, "a", f.id, rej.t0 + 60000) > 0 && G.npcCasCoolLeft(m.house, DAY, "a", f.id, rej.t0 + C(G).coolMs + 1) === 0);
+  const t1 = rej.t0 + 60000, all = G.casTNpcWho(m.ctx, t1); // 11-14：名單不再列「剛拒絕過我」的人（按了只會得到「N 分鐘後再邀」）
+  if (all.some(x => x.id === f.id)) { assert.ok(!G.casTNpcWho(m.ctx, t1, "a").some(x => x.id === f.id), "被拒絕的不在我的名單"); assert.ok(G.casTNpcWho(m.ctx, t1, "b").some(x => x.id === f.id), "別的館友還看得到他"); }
 });
 T("壹位館友壹位客人、壹桌最多 tableMax 位客人、坐滿了不能再邀、同壹位 NPC 不能同時跟兩桌", G => {
   const m = mk(G, 7, 3); const f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at);

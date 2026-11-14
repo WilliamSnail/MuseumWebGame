@@ -241,8 +241,10 @@ export function casTAdvance(t, ctx, now) {
 
 // ---------- 邀請在場的 NPC（決定 0080） ----------
 // 現在邀得動誰：[{ id, name }]（在館裡、不在賭場、今天還有額度）。不給他在哪家店（各家店現在幾位 NPC 是明天的跳空，不外洩）
-export function casTNpcWho(ctx, now) {
-  return npcCasInvitable(ctx.house, ctx.day, now, ctx.secret || "", Array.isArray(ctx.npcList) ? ctx.npcList : [], ctx.counters || null);
+// uid 有給：他剛拒絕過這位館友、30 分鐘還沒到的，不列出來（不然按下去只得到「N 分鐘後再邀」）
+export function casTNpcWho(ctx, now, uid) {
+  const l = npcCasInvitable(ctx.house, ctx.day, now, ctx.secret || "", Array.isArray(ctx.npcList) ? ctx.npcList : [], ctx.counters || null);
+  return uid ? l.filter(x => !(npcCasCoolLeft(ctx.house, ctx.day, uid, x.id, now) > 0)) : l;
 }
 // 館友 uid 邀 npcId 壹起玩。回傳 { ok: false, reason }（邀不了：不在桌上、沒位子、他不在館裡…，什麼都沒改）
 //   或 { ok: true, accepted, name, line }（accepted ＝ 答應了、坐下了；沒答應就是被拒絕，line 是他的拒絕台詞，同壹位 30 分鐘內不能再邀）

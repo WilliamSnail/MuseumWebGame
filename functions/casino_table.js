@@ -172,7 +172,7 @@ export const casinoTable = onCall(async req => {
     case "hit": case "stand": r = await tableTxn(pid, me.uid, {}, ({ t, ctx, now: t0 }) => casTAct(t, me.uid, act, Number.isInteger(d.seq) ? d.seq : -1, ctx, t0)); break;
     case "tick": r = await tableTxn(pid, me.uid, {}, () => ({ ok: true, write: false })); break;
     // 邀請在場的 NPC（決定 0080）：npcWho ＝ 現在邀得動誰（只讀）；npcInvite ＝ 邀 d.npc 壹起玩（答應了他就坐進這桌，說的話進聊天；被拒絕他的拒絕台詞在 line，30 分鐘後才能再邀）
-    case "npcWho": r = await tableTxn(pid, me.uid, {}, ({ ctx, now: t0 }) => ({ ok: true, write: false, who: casTNpcWho(ctx, t0) })); break;
+    case "npcWho": r = await tableTxn(pid, me.uid, {}, ({ ctx, now: t0 }) => ({ ok: true, write: false, who: casTNpcWho(ctx, t0, me.uid) })); break;
     case "npcInvite": r = await tableTxn(pid, me.uid, {}, ({ t, ctx, now: t0 }) => { const x = casTNpcInvite(t, ctx, me.uid, String(d.npc || ""), t0); return x.ok ? Object.assign({}, x, { invite: { accepted: x.accepted, name: x.name, line: x.line } }) : Object.assign({ write: false }, x); }); break;
     default: throw new HttpsError("invalid-argument", "不認得的動作");
   }
