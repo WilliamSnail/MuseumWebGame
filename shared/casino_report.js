@@ -59,6 +59,14 @@ export function casReportView(doc) {
     if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
   }
   if (H.npcc && doc.day) { const nw = npcNews(doc.day, npcCounters(H.npcc), 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
+  if (Array.isArray(H.festUp) && H.festUp.length) { // 預告的活動（規劃 2.8k）：可能辦成，也可能沒辦成，辦成才會多來壹批旅客
+    const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
+    hl.push("預告：" + H.festUp.map(f => `${+f.date.slice(5, 7)} 月 ${+f.date.slice(8, 10)} 日《${f.name}》可能在${nm[f.store] || f.store}舉辦`).join("；") + "。");
+  }
+  if (H.npcLast && H.npcLast.fest && H.npcLast.fest.length) { // 昨天預告的活動辦成了沒
+    const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
+    for (const f of H.npcLast.fest) hl.push(f.ok ? `昨天《${f.name}》在${nm[f.store]}辦成了，館外來了 ${rpN(f.n)} 位旅客。` : `昨天預告的《${f.name}》最後沒在${nm[f.store]}辦成，一切照常。`);
+  }
   if (H.npcLast && H.npcLast.n) { // 館內股的 NPC（規劃 2.8k）：昨天館外來了幾位旅客；劇情日那天寫活動
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" }, tot = Object.values(H.npcLast.n).reduce((a, b) => a + (+b || 0), 0), ev = H.npcLast.ev;
     if (ev && nm[ev.store] && ev.burst) hl.push(`昨天${nm[ev.store]}突然來了一大批旅客（${rpN(ev.n)} 位）。`);

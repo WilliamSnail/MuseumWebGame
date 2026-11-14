@@ -77,5 +77,19 @@ T("突發大事件 C：機率 100% 時每家店都多來 b×平均 位（b 0.5�
   const s = G.casBookSnap([], h, 0, D0); s.house.npcLast = { day: D0, n: H.npc[D0], ev: H.npcEv[D0] };
   const txt = G.casReportView({ day: add(D0, 1), at: 0, snap: s, diff: G.casBookDiff(null, s), opening: 0 }).secs.map(x => x.lines.join("|")).join("\n"); assert.ok(txt.includes("突然來了一大批旅客"), txt.slice(0, 300));
 });
+T("預告的活動：festP＝1 必辦成（多來 b×平均、不算進之後的平均）、festP＝0 沒辦成；日報寫預告和結果；預告提前 festAhead 天", G => {
+  const C = G.NUM.casino.stockIn, mk = () => { const h = G.casHouseFix(G.casHouseNew(), D0).house, H = G.casInHouseFix(h); for (let i = 1; i <= 7; i++) H.use[add(D0, -i)] = { food: 10 }; return { h, H }; };
+  const ctx = { fest: { [D0]: [{ store: "food", name: "夜市週" }] } };
+  C.npcBurstPct = 0; C.festP = 1; let { h, H } = mk(); const base = G.casInNpcFor(mk().H, D0, "s", {}, null).food, c = G.casInNpcFor(H, D0, "s", {}, ctx).food;
+  assert.ok(c - base >= Math.round(10 * C.festMin) && c - base <= Math.round(10 * C.festMax), "多來 " + (c - base));
+  assert.ok(H.npcFest[D0][0].ok && H.npcX[D0].food === c - base, "多來的記在 npcX，算平均時扣掉");
+  C.festP = 0; ({ h, H } = mk()); G.casInNpcFor(H, D0, "s", {}, ctx); assert.ok(!H.npcFest[D0][0].ok && H.npcFest[D0][0].n === 0);
+  const up = G.casInFestUp({ [add(D0, 1)]: [{ store: "bj", name: "牌桌夜" }], [add(D0, 9)]: [{ store: "food", name: "太遠" }] }, D0);
+  assert.strictEqual(up.length, 1); assert.strictEqual(up[0].store, "bj");
+  const s = G.casBookSnap([], h, 0, D0); s.house.festUp = up; s.house.npcLast = { day: D0, n: H.npc[D0], ev: null, fest: H.npcFest[D0] };
+  const txt = G.casReportView({ day: add(D0, 1), at: 0, snap: s, diff: G.casBookDiff(null, s), opening: 0 }).secs.map(x => x.lines.join("|")).join("\n");
+  assert.ok(/預告：\d+ 月 \d+ 日《牌桌夜》可能在牌桌舉辦/.test(txt) && txt.includes("《夜市週》最後沒在餐車辦成"), txt.slice(0, 400));
+  const mf = G.NUM.casino.stockIn.festP; assert.ok(G.NUM.casino.stockIn.k * mf * 1 * 100 < 2 * G.NUM.casino.stock.feePct + G.NUM.casino.stock.holdPct);
+});
 console.log(`${pass} passed, ${fail} failed（NPC 經濟接線）`);
 process.exit(fail ? 1 : 0);
