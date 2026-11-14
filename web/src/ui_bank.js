@@ -614,7 +614,10 @@ function side(v) {
 }
 // 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
 function creditPanel(c) {
-  return panel("信用", `${c.level} 級${c.name ? "・" + c.name : ""}`,
+  return panel("信用", "",
+    // 等級放大成壹枚金色徽章（翊文 11-14：「信用的等級數字可以明顯一點嗎」）
+    h("div", { class: "bank-lv" }, h("span", { class: "bank-lv-seal", "aria-hidden": "true" }, h("b", null, String(c.level)), h("i", null, "級")),
+      h("span", { class: "bank-lv-t" }, h("b", null, `信用 ${c.level} 級`), c.name ? h("em", null, c.name) : null, h("small", null, `信用點 ${c.pts}`))),
     h("p", { class: "bank-meta sm" }, c.nextText || (c.next > 0 ? `再 ${c.next} 點升 ${c.level + 1} 級（信用點 ${c.pts}）。` : `已經是最高級（信用點 ${c.pts}）。`), c.nextText ? `（信用點 ${c.pts}）` : ""),
     h("p", { class: "bank-meta sm" }, `槓桿最高 ${c.maxLev}×・部位 ${fmt(Math.round(c.posUsed / 10000))} 萬／${fmt(Math.round(c.posLimit / 10000))} 萬`),
     c.why ? h("p", { class: "bank-hint" }, c.why) : null);

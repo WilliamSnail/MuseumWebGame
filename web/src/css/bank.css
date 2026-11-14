@@ -461,3 +461,13 @@ body[data-screen="bank"] #room { background: none; }
 .bank-quote .bank-cur { font-size: .8125rem; }
 .bank-usd { margin-left: auto; padding: 2px 8px; border: 1px solid rgba(214, 178, 94, .45); border-radius: 6px; color: #E9D9A6; font-size: .875rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bank-usd-sm { display: block; color: var(--bank-mute); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 信用的等級徽章（11-14，creditPanel） */
+.bank-lv { display: flex; align-items: center; gap: 12px; margin: 2px 0 6px; }
+.bank-lv-seal { flex: none; display: grid; grid-template-columns: auto auto; align-items: baseline; justify-content: center; align-content: center; gap: 2px; width: 64px; height: 64px; border-radius: 50%; border: 3px double #6B4A14; background: radial-gradient(circle at 35% 30%, #F8E3A0, #D9AE4E 60%, #A97A22); color: #3A2410; box-shadow: 0 2px 6px rgba(0, 0, 0, .45); }
+.bank-lv-seal b { font-variant-numeric: lining-nums; font-size: 2rem; line-height: 1; font-family: var(--font-num, inherit); }
+.bank-lv-seal i { font-style: normal; font-size: .8125rem; font-weight: 700; }
+.bank-lv-t { display: grid; gap: 1px; min-width: 0; }
+.bank-lv-t b { font-variant-numeric: lining-nums; font-size: 1.25rem; color: #F8E3A0; letter-spacing: .06em; }
+.bank-lv-t em { font-style: normal; font-size: .9375rem; color: #E7C878; }
+.bank-lv-t small { font-size: .8125rem; opacity: .85; }
+@media (max-height: 500px) and (orientation: landscape) { .bank-lv-seal { width: 48px; height: 48px; } .bank-lv-seal b { font-size: 1.5rem; } .bank-lv-t b { font-size: 1.0625rem; } }
