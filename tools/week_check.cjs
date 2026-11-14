@@ -606,6 +606,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (!rec || typeof rec.main !== "string" || !rec.main.trim()) E(d.where, "帳本的 weeks 裡要寫這週主線推到哪（main）：每週至少把主線往前推一步（第十二節）");
       if (!rec || !asList(rec.ties).length) W(d.where, "帳本的 weeks 裡沒有 ties：這週的線、每天的書碰到主軸的哪一點（決定 0037）");
       if (d.where >= "2026-W47" && (!rec || !asList(rec.world).length)) W(d.where, "帳本的 weeks 裡沒有 world：這週世界觀多露出了什麼（決定 0048）");
+      if (d.where >= "2026-W47" && isObj(L.main) && L.main.subthemes != null && (!rec || !isObj(rec.subthemes))) W(d.where, "帳本的 weeks 裡沒有 subthemes：這週主打哪條子主旨、陪襯哪條（排程說明 一之四之二）");
       if (d.where >= "2026-W47" && (!rec || !asList(rec.sideRefs).length)) W(d.where, "帳本的 weeks 裡沒有 sideRefs：哪些支線提到了主線新露出來的東西（決定 0048）");
       if (d.wk && d.wk.casino !== undefined && (!rec || !asList(rec.casino).length)) W(d.where, "帳本的 weeks 裡沒有 casino：這週賭場的收藏接劇情的哪一條線、碰到主軸的哪一點（決定 0042）");
       // 故事要串成壹條線（排程說明 一之七）：本週疑點、能追的梗、每天留的鉤子
@@ -626,6 +627,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     });
     // 揭露節奏（決定 0078）：沒有 revealBeats 的舊帳本照常。格式錯、揭露太像謎底、露臉、地方太少都擋
     if (L.revealBeats != null) checkRevealBeats(L, G, E, W, `${lw}.revealBeats`, nowWeek);
+    // 子主旨和世界的層（docs/世界觀主旨.md）：沒有 main.subthemes 的舊帳本照常
+    checkSubthemes(L, E, W, lw);
     // 季節線（決定 0037）：沒有 seasonal 的舊帳本照常
     if (L.seasonal != null) {
       const sl = isObj(L.seasonal) ? L.seasonal.lines : null;
@@ -674,7 +677,7 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
   const mys = asList(L.mysteries && L.mysteries.list), MARKS = /[\s，。、；：！？「」『』（）()\[\]【】《》…—,.;:!?"'·]/g;
   const grams = new Set();
   mys.forEach(m => [m.truth, m.understood].forEach(t => { if (typeof t !== "string") return; const x = t.replace(MARKS, ""); for (let i = 0; i + 6 <= x.length; i++) grams.add(x.slice(i, i + 6)); }));
-  const firstMon = G.isoMonday(BEAT_FIRST), seen = new Set(), ids = new Set();
+  const firstMon = G.isoMonday(BEAT_FIRST), seen = new Set(), seenX = new Set(), ids = new Set();
   let prev = "";
   R.list.forEach((b, i) => {
     const w = `${lw}.list[${i}]`;
@@ -684,9 +687,12 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
     if (!mon) E(w, "week 要是週的名字（例如 2026-W47）");
     else {
       const k = Math.round((Date.parse(mon) - Date.parse(firstMon)) / 604800000);
-      if (k < 0 || k % 2) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週）`);
-      if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露）`); seen.add(b.week);
-      if (prev && b.week <= prev) E(w, "要照週的順序排");
+      // extra：翊文 11-14 指定提前揭的線（館外世界），不受「每隔壹週」限制，壹週最多壹筆加開，可以跟正常的壹筆同週
+      if (b.extra !== undefined && b.extra !== true) E(w, "extra 只能是 true");
+      if (k < 0 || (!b.extra && k % 2)) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週；加開的要寫 extra: true）`);
+      if (b.extra) { if (seenX.has(b.week)) E(w, `${b.week} 已經有壹筆加開了（壹週最多壹筆加開）`); seenX.add(b.week); }
+      else { if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露；要加開寫 extra: true）`); seen.add(b.week); }
+      if (prev && b.week < prev) E(w, "要照週的順序排");
       prev = b.week;
     }
     const m = mys.find(x => x.id === b.mystery);
@@ -718,6 +724,66 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
     if (b.status === "planned" && /^\d{4}-W\d{2}$/.test(b.week || "") && b.week < nowWeek) W(w, `${b.week} 已經過了，還是 planned：放了就改 revealed，沒放就改 skipped`);
   });
 }
+
+// 帳本的 main.subthemes、world.layers、weeks.<週>.subthemes（docs/世界觀主旨.md，翊文 11-14）：只檢查格式和對得上，不看寫得好不好
+const SUB_ID = /^st-[a-z]+$/, DAYS = ["d1", "d2", "d3", "d4", "d5", "d6", "d7"];
+function checkSubthemes(L, E, W, lw) {
+  const S = isObj(L.main) ? L.main.subthemes : null;
+  const mysIds = new Set(asList(L.mysteries && L.mysteries.list).map(m => m && m.id));
+  const arcIds = new Set(asList(L.sideArcs && L.sideArcs.list).map(a => a && a.id));
+  const fsIds = new Set(asList(L.foreshadow).map(f => f && f.id));
+  const ids = new Set();
+  if (S != null) {
+    const sw = `${lw}.main.subthemes`;
+    if (!isObj(S) || !Array.isArray(S.list) || !S.list.length) E(sw, "要是 { list: [...] }，至少壹條");
+    else S.list.forEach((s, i) => {
+      const w = `${sw}.list[${i}]`;
+      if (!isObj(s)) { E(w, "要是物件"); return; }
+      if (!SUB_ID.test(s.id || "")) E(w, "id 要是 st-xxx（小寫英文）"); else if (ids.has(s.id)) E(w, `id「${s.id}」重複`); else ids.add(s.id);
+      ["name", "question", "dilemma", "guard"].forEach(k => { if (typeof s[k] !== "string" || !s[k].trim()) E(w, `${k} 要有字`); });
+      if (!Array.isArray(s.deeper) || s.deeper.length < 2 || s.deeper.length > 3 || s.deeper.some(x => typeof x !== "string" || !x.trim())) E(w, "deeper 要是 2～3 個問句");
+      if (!Array.isArray(s.places) || !s.places.length) E(w, "places 要列出館裡看得到的地方");
+      if (!isObj(s.sides) || Object.keys(s.sides).length < 2) E(w, "sides 要寫兩邊以上各由誰代表");
+      const se = isObj(s.seasons) ? s.seasons : {};
+      ["main", "side"].forEach(k => { if (!Array.isArray(se[k]) || se[k].some(n => !Number.isInteger(n) || n < 1 || n > 4)) E(w, `seasons.${k} 要是 1～4 的整數陣列`); });
+      if (Array.isArray(se.main) && Array.isArray(se.side) && se.main.length + se.side.length === 0) E(w, "seasons 不能全空");
+      const ti = isObj(s.ties) ? s.ties : {};
+      if (!asList(ti.mysteries).length) E(w, "ties.mysteries 至少要連壹個謎");
+      asList(ti.mysteries).forEach(m => { if (!mysIds.has(m)) E(w, `ties.mysteries「${m}」不在 mysteries 裡`); });
+      asList(ti.sideArcs).forEach(a => { if (!arcIds.has(a)) E(w, `ties.sideArcs「${a}」不在 sideArcs 裡`); });
+      asList(ti.foreshadow).forEach(f => { if (!fsIds.has(f)) E(w, `ties.foreshadow「${f}」不在 foreshadow 裡`); });
+      if (s.earliest != null && !/^\d{4}-W\d{2}$/.test(s.earliest)) E(w, "earliest 要是週的名字");
+    });
+  }
+  const WL = L.world;
+  if (WL != null) {
+    const ww = `${lw}.world`;
+    if (!isObj(WL) || !Array.isArray(WL.layers) || !WL.layers.length) E(ww, "要是 { layers: [...] }");
+    else { const lid = new Set(); WL.layers.forEach((y, i) => {
+      const w = `${ww}.layers[${i}]`;
+      if (!isObj(y)) { E(w, "要是物件"); return; }
+      if (!/^L\d$/.test(y.id || "")) E(w, "id 要是 L0、L1 這種"); else if (lid.has(y.id)) E(w, `id「${y.id}」重複`); else lid.add(y.id);
+      ["name", "what", "seen"].forEach(k => { if (typeof y[k] !== "string" || !y[k].trim()) E(w, `${k} 要有字`); });
+      if (!isObj(y.reveal) || ["1", "2", "3", "4"].some(k => typeof y.reveal[k] !== "string" || !y.reveal[k].trim())) E(w, "reveal 要寫第 1～4 季各露什麼");
+    }); }
+  }
+  // 每週的 subthemes：main 要是已定義的子主旨，side 最多 1 條且不等於 main，touched 的天是 d1～d7
+  const weeks = isObj(L.weeks) ? L.weeks : {}, order = Object.keys(weeks).filter(k => /^\d{4}-W\d{2}$/.test(k)).sort();
+  let prevMain = null, prevWeek = null;
+  order.forEach(k => {
+    const r = weeks[k], x = isObj(r) ? r.subthemes : null;
+    if (x == null) { prevMain = null; return; }
+    const w = `${lw}.weeks.${k}.subthemes`;
+    if (!isObj(x)) { E(w, "要是 { main, side, touched, note }"); return; }
+    if (S != null && !ids.has(x.main)) E(w, `main「${x.main}」不在 main.subthemes 裡`);
+    if (!Array.isArray(x.side) || x.side.length > 1) E(w, "side 要是陣列，最多 1 條");
+    else x.side.forEach(s => { if (S != null && !ids.has(s)) E(w, `side「${s}」不在 main.subthemes 裡`); if (s === x.main) E(w, "side 不能跟 main 同壹條"); });
+    if (x.touched != null) { if (!isObj(x.touched)) E(w, "touched 要是 { d1: [id], ... }"); else Object.entries(x.touched).forEach(([d, a]) => { if (!DAYS.includes(d)) E(w, `touched 的「${d}」要是 d1～d7`); else if (!Array.isArray(a) || a.some(s => S != null && !ids.has(s))) E(w, `touched.${d} 要是子主旨 id 的陣列`); }); }
+    if (prevMain && prevWeek && x.main === prevMain && prevWeek === prevIsoWeek(k)) W(w, `連續兩週主打同壹條（${x.main}）：規則是不連續兩週同壹條 main（排程說明 一之四之二）`);
+    prevMain = x.main; prevWeek = k;
+  });
+}
+function prevIsoWeek(k) { try { return G.isoWeek(G.addDays(G.isoMonday(k), -7)); } catch (e) { return null; } }
 
 // 畫面的程式不能 import 帳本（不打包進網頁，第六節）
 function checkBundle() {

@@ -93,7 +93,7 @@ T("季節節奏：ties 到後面季節的謎、日期又比前壹季收線早 �
   assert.ok(!run(c).warnings.some(hit), "有 early 不警告");
   delete st.early;
   const w = run(c).warnings.filter(hit);
-  assert.strictEqual(w.length, 1); assert.ok(w[0].includes("m-world") && w[0].includes("第 3 季") && w[0].includes("2027-01-31"), w[0]);
+  assert.strictEqual(w.length, 1); assert.ok(w[0].includes("m-ledger") && w[0].includes("第 3 季") && w[0].includes("2027-01-31"), w[0]);
   st.from = "2027-02-08"; // 晚到前壹季收線之後：不警告
   assert.ok(!run(c).warnings.some(hit));
   st.early = 5; assert.ok(run(c).errors.some(e => /early/.test(e)), "early 不是字串要擋");

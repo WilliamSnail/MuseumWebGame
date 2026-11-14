@@ -542,7 +542,7 @@ T("帳本 revealBeats：真的帳本過；格式錯、不是揭露週、破梗�
   expectErr(c => { first(c).id = "x1"; }, /id 要是 b01/);
   expectErr(c => { c.ledger.revealBeats.list[1].id = "b01"; }, /重複/);
   expectErr(c => { first(c).week = "2026-W48"; }, /不是揭露週/);
-  expectErr(c => { c.ledger.revealBeats.list[1].week = "2026-W47"; }, /已經有壹筆/);
+  expectErr(c => { c.ledger.revealBeats.list.find(b => b.id === "b02").week = "2026-W47"; }, /已經有壹筆/);
   expectErr(c => { first(c).mystery = "m-nope"; }, /不在 mysteries 裡/);
   expectErr(c => { c.ledger.revealBeats.list.find(b => b.week === "2026-W49").week = "2026-W51"; c.ledger.revealBeats.list.find(b => b.id === "b02").mystery = "m-count"; }, /不早於|照週的順序/);
   expectErr(c => { first(c).detail = "短"; }, /8～120 字/);
@@ -560,6 +560,29 @@ T("帳本 revealBeats：真的帳本過；格式錯、不是揭露週、破梗�
   expectErr(c => { c.ledger.revealBeats = { list: "x" }; }, /revealBeats 要是/);
   const ok = regular(); first(ok).status = "revealed"; first(ok).revealedOn = "2026-11-18"; first(ok).clues = ["c-tally"];
   assert.deepStrictEqual(run(ok).errors, [], "放了的揭露填好日期和 clue 就過");
+});
+
+T("帳本 加開的揭露（extra）和子主旨 subthemes／world.layers：真的帳本過；格式錯、重複、對不上都擋", () => {
+  const B = c => c.ledger.revealBeats.list, X = c => B(c).find(b => b.id === "b24"), S = c => c.ledger.main.subthemes.list[0];
+  assert.deepStrictEqual(run(regular()).errors, [], "真的帳本過");
+  expectErr(c => { X(c).extra = false; }, /已經有壹筆/);
+  expectErr(c => { X(c).extra = "yes"; }, /extra 只能是 true/);
+  expectErr(c => { B(c).find(b => b.id === "b25").extra = undefined; }, /不是揭露週/);
+  expectErr(c => { const b = B(c).find(b => b.id === "b25"); b.week = "2026-W47"; }, /已經有壹筆加開|要照週的順序/);
+  expectErr(c => { S(c).id = "x"; }, /id 要是 st-/);
+  expectErr(c => { c.ledger.main.subthemes.list[1].id = S(c).id; }, /重複/);
+  expectErr(c => { S(c).deeper = ["只有壹個問題？"]; }, /2～3 個問句/);
+  expectErr(c => { S(c).sides = { 壹邊: ["a"] }; }, /兩邊以上/);
+  expectErr(c => { S(c).ties.mysteries = ["m-nope"]; }, /不在 mysteries 裡/);
+  expectErr(c => { S(c).seasons.main = [5]; }, /1～4 的整數/);
+  expectErr(c => { c.ledger.world.layers[0].id = "層"; }, /L0、L1/);
+  expectErr(c => { delete c.ledger.world.layers[1].reveal["3"]; }, /第 1～4 季/);
+  expectErr(c => { c.ledger.weeks["2026-W46"].subthemes = { main: "st-nope", side: [] }; }, /不在 main.subthemes 裡/);
+  expectErr(c => { c.ledger.weeks["2026-W46"].subthemes = { main: "st-trace", side: ["st-trace"] }; }, /不能跟 main 同壹條/);
+  expectErr(c => { c.ledger.weeks["2026-W46"].subthemes = { main: "st-trace", side: ["st-price", "st-name"] }; }, /最多 1 條/);
+  expectErr(c => { c.ledger.weeks["2026-W46"].subthemes = { main: "st-trace", side: [], touched: { d9: ["st-trace"] } }; }, /d1～d7/);
+  const w = regular(); w.ledger.weeks["2026-W47"] = Object.assign({}, w.ledger.weeks["2026-W46"], { subthemes: { main: "st-trace", side: [] } });
+  assert.ok(run(w).warnings.some(x => /連續兩週主打同壹條/.test(x)), "連續兩週同壹條主打要警告");
 });
 
 T("預告的活動（week.json.fest）：對的過；最多 2 個、店不對、日期不在這週、多寫欄位（想自己寫機率）、同店同天、跟劇情日同店同天、備用週都擋", () => {
