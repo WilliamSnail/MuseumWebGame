@@ -43,6 +43,7 @@ export function casInvestFix(house) {
   const y = I.last; // 昨天的（給日報，已經換成有名字的清單）
   I.last = ivBox(y) && ivDay(y.day) ? { day: y.day, buy: Array.isArray(y.buy) ? y.buy : [], sell: Array.isArray(y.sell) ? y.sell : [], paused: ivBox(y.paused) ? y.paused : {} } : null;
   if (!ivBox(I.sum)) I.sum = { hold: [], pnl: 0 };
+  for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = Math.floor(+m[id]); } // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
   return I;
 }
 
@@ -87,6 +88,7 @@ export function casInvestRun(house, stkH, day, secret, b) {
   I.day = day;
   if (I.cur && I.cur.day < day) I.last = { day: I.cur.day, buy: ivList(I.cur.buy), sell: ivList(I.cur.sell), paused: I.cur.paused }; // 昨天的收進 last（日報寫昨天的，延遲壹天）
   I.cur = { day, buy: {}, sell: {}, paused: {} };
+  I.lastPx = I.px; I.px = Object.fromEntries(IV_IDS.filter(id => +stkH.px[id] > 0).map(id => [id, Math.floor(stkH.px[id])]));
   const px = stkH.px, cfg = NUM.casino;
   for (const pool of IV_POOLS) {
     const P = I.pool[pool], avail = ivAvail(house, pool);
@@ -132,6 +134,25 @@ export function casInvestRun(house, stkH, day, secret, b) {
   return { ran: true };
 }
 
+// 銀行財報頁的「館方投資」（翊文 11-14：「銀行裡怎麼我們看不到館方投資了什麼」）：延遲壹天公開——日報產生那壹刻拍壹張快照（house.invPub），之後整天不變，不給即時的（避免跟單套利）。
+// 兩個池子（莊家、預算池）合併。回傳 { asOf, hold: [{ id, name, n, cost, value, pnl, pnlPct }], cost, value, pnl, pnlPct, pnlTotal 累計賺賠（已實現＋帳面）, spent 昨天買進用掉多少, yesterday: [{ side: "buy"|"sell", id, name, n, px }], paused: { house?, budget?: "stop"|"world" } }
+export function casInvestPublic(house, day) {
+  if (!ivBox(house.inv)) return null;
+  const I = casInvestFix(house), px = (house.stk && house.stk.px) || {}, hold = {};
+  let realized = 0;
+  for (const k of IV_POOLS) { const P = I.pool[k]; realized += P.pnl; for (const id of Object.keys(P.own)) { const h = hold[id] || (hold[id] = { id, name: ivName(id), n: 0, cost: 0 }); h.n += P.own[id]; h.cost += ivN(P.cost[id]); } }
+  const rows = Object.values(hold).map(h => { const value = h.n * (px[h.id] || 0); return Object.assign(h, { value, pnl: value - h.cost, pnlPct: h.cost > 0 ? Math.round((value / h.cost - 1) * 1000) / 10 : 0 }); }).sort((a, b) => b.value - a.value);
+  const cost = rows.reduce((s, h) => s + h.cost, 0), value = rows.reduce((s, h) => s + h.value, 0);
+  const side = (arr, s) => (arr || []).map(x => ({ side: s, id: x.id, name: x.name, n: x.n, px: (I.lastPx && I.lastPx[x.id]) || 0 }));
+  const yesterday = I.last ? side(I.last.buy, "buy").concat(side(I.last.sell, "sell")) : [];
+  return { asOf: day || null, hold: rows, cost, value, pnl: value - cost, pnlPct: cost > 0 ? Math.round((value / cost - 1) * 1000) / 10 : 0, pnlTotal: realized + value - cost, spent: yesterday.filter(x => x.side === "buy").reduce((s, x) => s + x.n * x.px, 0), yesterday, paused: I.cur && I.cur.paused ? Object.assign({}, I.cur.paused) : {} };
+}
+// 銀行畫面讀的（house.invPub，日報產生時寫）；沒有就 null
+export function casInvestPubView(house) {
+  const p = house && house.invPub;
+  if (!ivBox(p) || !ivDay(p.asOf)) return null;
+  return { asOf: p.asOf, hold: (Array.isArray(p.hold) ? p.hold : []).slice(0, 12), cost: ivN(p.cost), value: ivN(p.value), pnl: Math.floor(+p.pnl) || 0, pnlPct: +p.pnlPct || 0, pnlTotal: Math.floor(+p.pnlTotal) || 0, spent: ivN(p.spent), yesterday: (Array.isArray(p.yesterday) ? p.yesterday : []).slice(0, 20), paused: ivBox(p.paused) ? p.paused : {} };
+}
 // 給日報的：昨天館方買賣了什麼、現在持有什麼、累計賺賠（延遲壹天；沒有就 null）
 export function casInvestView(house, px) {
   if (!ivBox(house.inv)) return null;

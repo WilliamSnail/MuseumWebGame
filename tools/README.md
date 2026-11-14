@@ -33,6 +33,7 @@
 | **用眼睛看今天新畫的 `svg`**：壹天或整週的畫排成壹張 PNG（太暗、跑版、看不出是什麼，這裡看得出來），再用 Read 打開看 | `npm run svg -- content/weeks/2026-W46/d2.json`（給資料夾就是整週；`--out x.png`；找不到 Edge／Chrome 只印 HTML） |
 | **不開瀏覽器分頁，把畫面照成 PNG**：壹次照電腦和手機橫拿（打開就看得到的樣子；要按按鈕、要登入的還是用瀏覽器走） | 先開著 `npm run local`，再 `npm run shot -- "http://localhost:5287/#lobby"`（`--size 800x1000,375x812`、`--out 資料夾`；只准 localhost），用 Read 打開 PNG 看 |
 | **照手機直拿（375 寬）**：shot.cjs 窄過 500 照不了；這支模擬觸控手機，可以先跑 JS（按按鈕、拿掉提示泡泡）再照 | `node tools/shot_phone.cjs "http://localhost:5287/?x=1#lobby" --js "document.querySelector('.tb-menu').click()" --out a.png`（`--size`、`--wait`、`--full`；會自動略過「請轉橫」） |
+| **登入後的畫面照成 PNG**（賭場每一頁、銀行、展廳…；先用 `emu:call` 建帳號、`emu:doc` 給籌碼，最後才照；說明在 `docs/本機模擬器實測.md`） | `node tools/shot_login.cjs --url http://localhost:5393 --user 賭場甲 --room 賭場 --tab 成就 --size 375x740 --out a.png`（`--mode 新參觀者`、`--size 1366x768／740x375`） |
 | 量某個畫面放著不動時瀏覽器有多忙（重畫幾次、幾毫秒；改前改後比效能） | `node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" --size 1920x1080 --secs 10` |
 | **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/測試清單.md`） | `node tools/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/qa_casino_ev.cjs 400000` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |

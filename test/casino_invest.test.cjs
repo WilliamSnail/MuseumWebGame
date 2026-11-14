@@ -80,5 +80,16 @@ T("種子有祕密：同樣的祕密同樣的買法、不同的祕密隨機那�
   assert.strictEqual(run2("甲"), run2("甲"));
   assert.ok([1, 2, 3, 4, 5, 6].some(i => run2("甲") !== run2("乙" + i)), "不同祕密有時不同");
 });
+T("銀行的館方投資（延遲壹天）：日報那壹刻拍快照 house.invPub；持股合併兩個池子、成本、市值、損益；昨天買賣有成交價；bankHall 讀得到、沒快照是 null；快照之後的買賣不會立刻看到", G => {
+  const C = G.NUM.casino.invest, h = mk(G, C.reserve + 1000000000, C.budgetKeep + 500000000), H = G.casStockHouseFix(h);
+  run(G, h, D0); run(G, h, D1);
+  const pub = G.casInvestPublic(h, D1); assert.ok(pub && pub.hold.length > 0 && pub.cost > 0); assert.strictEqual(pub.asOf, D1);
+  const sumN = Object.values(G.casInvestFix(h).pool).reduce((s, P) => s + Object.values(P.own).reduce((a, b) => a + b, 0), 0); assert.strictEqual(pub.hold.reduce((s, x) => s + x.n, 0), sumN);
+  for (const x of pub.hold) { assert.strictEqual(x.value, x.n * H.px[x.id]); assert.strictEqual(x.pnl, x.value - x.cost); assert.ok(x.name); }
+  assert.strictEqual(pub.pnl, pub.value - pub.cost); assert.ok(pub.yesterday.length > 0 && pub.yesterday.every(y => y.px > 0 && (y.side === "buy" || y.side === "sell")), JSON.stringify(pub.yesterday));
+  const w = G.casWalletFix(G.casWalletNew(), D1); assert.strictEqual(G.casBankHall(w, D1, h, Date.parse(D1 + "T12:00:00+08:00"), []).houseInv, null, "還沒有快照");
+  h.invPub = pub; const bh = G.casBankHall(w, D1, h, Date.parse(D1 + "T12:00:00+08:00"), []); assert.ok(bh.houseInv && bh.houseInv.hold.length === pub.hold.length && bh.houseInv.asOf === D1);
+  const before = JSON.stringify(bh.houseInv); run(G, h, D2); assert.strictEqual(JSON.stringify(G.casBankHall(w, D1, h, Date.parse(D1 + "T12:00:00+08:00"), []).houseInv), before, "快照之後館方再買賣，銀行看到的不變（延遲）");
+});
 console.log(`${pass} passed, ${fail} failed（館方投資）`);
 process.exit(fail ? 1 : 0);
