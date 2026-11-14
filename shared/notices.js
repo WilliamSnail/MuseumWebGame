@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "casino-table-gone-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場回到牌桌不再卡住", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "以前如果你記著的那張牌桌已經收了，按「回到牌桌」會卡在「正在入座」，跳出「你不在這桌的隊伍裡」。現在會自動幫你開新的一桌，並提示壹句「那桌已經收了」。",
+      ]],
+    ],
+  },
+  {
     id: "casino-npc-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal", area: "賭場",
     title: "賭場可以邀館裡的客人壹起玩 21 點", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

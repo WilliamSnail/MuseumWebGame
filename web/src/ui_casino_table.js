@@ -60,7 +60,15 @@ export function openTable(pid) {
   snd("flip");
   refreshWho(s);
   // 入座（被邀請、重新整理、斷線回來都是這個）
-  call("join").then(r => { if (T === s && r.view) onView(r.view); }).catch(e => { if (T === s) note((e && e.message) || "入座不了。", "bad"); });
+  call("join").then(r => { if (T !== s) return; if (r && r.gone) { freshTable(s); return; } if (r.view) onView(r.view); }).catch(e => { if (T === s) note((e && e.message) || "入座不了。", "bad"); });
+}
+// 記著的桌子已經收了（伺服器回 gone，錢包上的舊記錄它已經清掉）：不要卡在「正在入座」，直接開新的一桌
+async function freshTable(s) {
+  const cs = casinoState();
+  if (cs && cs.w) cs.w.tablePid = null;
+  await endTable(false);
+  note("那桌已經收了，幫你開了新的一桌。");
+  await openNew();
 }
 function mount() {
   T.m = overlay("nb-casino nb-table", "Hamachi 賭場・同桌", "Hamachi 賭場同桌", "dice", (...a) => { NET.where(netRoom(UI.screen)); return onFrameClose(...a); });

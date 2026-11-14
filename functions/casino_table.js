@@ -105,11 +105,23 @@ partyHooks.beforeLeave.push(async (pid, uid) => {
     await publish(r.t, r.wallets);
   } catch (e) { if (!(e instanceof HttpsError)) console.error("賭場離桌出錯", e); } // 這桌已經收了：照樣離開隊伍
 });
-partyHooks.closed.push(async pid => {
+async function closeTable(pid) {
   try { await tableTxn(pid, null, {}, ({ t, ctx }) => { casTNpcDrop(t, ctx); return { ok: true }; }); } catch (e) { if (!(e instanceof HttpsError)) console.error("賭場收桌退 NPC 的注出錯", e); } // 還沒結算的 NPC 注退回外面世界、NPC 從「在賭場」名單拿掉
   await rtdb().ref().update({ [`casinoView/${pid}`]: null, [`casinoChat/${pid}`]: null, [`casinoChatAt/${pid}`]: null }).catch(() => {});
   await tableRef(pid).delete().catch(() => {});
-});
+}
+partyHooks.closed.push(closeTable);
+// 錢包記著一張桌子、可是那桌的隊伍已經不在（或他已經不在隊伍裡）：把記錄清掉。隊伍整個不在了，桌子也順手收掉（NPC 的注退回去）
+async function dropStale(uid, pid) {
+  const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
+  if (!p || p.kind !== "table") await closeTable(pid);
+  await rtdb().ref(viewPath(pid, uid)).remove().catch(() => {});
+  await db().runTransaction(async tx => {
+    const ws = await tx.get(walletRef(uid));
+    const w = parse(ws);
+    if (w && w.tablePid === pid) { w.tablePid = null; put(tx, walletRef(uid), w); }
+  });
+}
 
 // ---------- 說話：快速短句、自由打字（純文字、清過、有間隔） ----------
 async function say(me, pid, d) {
@@ -163,7 +175,11 @@ export const casinoTable = onCall(async req => {
   const pid = d.pid;
   if (typeof pid !== "string" || !pid) throw new HttpsError("invalid-argument", "少了牌桌的號碼");
   if (act === "say") return say(me, pid, d);
-  await inParty(pid, me.uid);
+  try { await inParty(pid, me.uid); } catch (e) {
+    if (!(e instanceof HttpsError)) throw e;
+    await dropStale(me.uid, pid); // 那桌已經收了：不要讓畫面以為還在桌上（畫面看到 gone 就改開新桌）
+    return { ok: false, gone: true, reason: "那桌已經收了" };
+  }
   let r;
   switch (act) {
     // 入座（被邀請、重新整理、斷線回來都走這裡）
