@@ -29,6 +29,10 @@ const reviewItem = r => h("li", { class: "hn-rv" },
 // 開發的時候沒登入：用示範資料把畫面畫出來（玩家看不到）
 const fake = () => import.meta.env.DEV && !NET.me;
 const FAKE_NOW = { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], around: 5, named: { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"] }, crowd: { n: 15, groups: [{ label: "三位學生", n: 3 }, { label: "旅行團", n: 12 }] }, total: 17 };
+const FAKE_POLICY = { name: "兩岸服務業、貨品貿易協定", effect: "門票多一成", day: "2026-11-14", until: "2026-11-15" };
+const policyData = () => (UI.policy !== undefined ? UI.policy : fake() ? FAKE_POLICY : null);
+// 「2026-11-15」→「11/15」
+const mdText = d => { const m = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(d || "")); return m ? `${+m[2]}/${+m[3]}` : ""; };
 const FAKE_RV = () => [{ who: "夜班的畫商", text: "牆上的畫掛得很正，燈也剛好。下次想看看更暗的那一幅。", stars: 4, at: Date.now() - 3 * 60000, day: 1 }, { who: "戴帽子的旅客", text: "走進來就安靜了。", stars: 5, at: Date.now() - 41 * 60000, day: 1 }, { who: "撐傘的人", text: "有點冷。", stars: 2, at: Date.now() - 3 * 3600000, day: 1 }];
 const nowData = () => (UI.hallNow !== undefined ? UI.hallNow : fake() ? FAKE_NOW : null);
 const reviewData = () => (Array.isArray(UI.reviews) ? UI.reviews : fake() ? FAKE_RV() : null);
@@ -67,12 +71,14 @@ export function hallNowBox(mode) {
     if (shown && !box.isConnected) return; // 換了房間：不再畫（計時器會被 clearTimers 清掉）
     if (box.isConnected) shown = true;
     const c = counts(), all = reviewData(), lobby = true, list = (all || []).slice(0, lobby ? 1 : 2);
+    const pol = policyData();
     const more = (all && all.length) || c.names.length || c.mates.length || c.crowd.n ? btn("看全部", openAll, "ghost small hn-more") : null;
     box.replaceChildren(
       h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}${c.crowd.n ? `・散客 ${c.crowd.n}` : ""}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.slice(0, 4).join("、"), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
       lobby ? null : h("div", { class: "hn-h hn-h2" }, "最近的評價"),
       list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, all ? "還沒有評價。" : "還沒有讀到。"),
+      pol ? h("p", { class: "hn-policy", title: `${pol.name}：${pol.effect}` }, h("b", null, "本日政策"), ` ${pol.effect}${mdText(pol.until) ? `・到 ${mdText(pol.until)}` : ""}・${pol.name}`) : null,
       lobby ? null : more);
   };
   ADDONS.hallNowDraw = draw; // 讀到新的 peek：ui_today.js 叫這個，畫著的小區塊就跟著換
