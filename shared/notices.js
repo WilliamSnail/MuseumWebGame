@@ -192,6 +192,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "casino-look", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "賭場的頁籤換成墨綠絲絨牌", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場最上面的九個頁籤（牌桌、本週收藏、大禮包、拚經濟…）換成墨綠絲絨、金邊的牌子，跟賭桌的綠色是同一國。",
+        "電腦螢幕比較矮的時候（例如 1366×768），牌桌頁的「輸入下注金額」和「發牌」、快速下注的按鈕不用再往下捲才找得到。",
+      ]],
+    ],
+  },
+  {
     id: "bank-house-inv", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "銀行財報看得到「館方投資」", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
