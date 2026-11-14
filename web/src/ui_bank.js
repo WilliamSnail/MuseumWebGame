@@ -1,7 +1,7 @@
 // ================================================================
 //  Yuga Bot 銀行廳（11-13，美術統籌；版面草稿在 Design 畫布「Yuga Bot 銀行廳：版面草稿」）
 //  翊文 11-13：「銀行功能多了可以直接開成另一個新大廳，賭場裡面的簡單銀行功能少點沒關係」「用現有的延伸」。
-//  壹個畫面看得完（docs/介面整合規劃.md 第六步，onescreen 骨架）：標題壹行｜頁籤（存款、借款、館債、股票、財報）｜主區：頁籤的內容｜右欄：我的帳戶、景氣、今日新聞｜最下面：今日行情
+//  壹個畫面看得完（docs/介面整合規劃.md 第六步，onescreen 骨架）：標題壹行｜頁籤（存款、借款、館債、股票、財報）｜主區：頁籤的內容｜右欄：我的帳戶、信用｜最下面：今日行情
 //  資料：伺服器的 casino act "bankHall" 回 { bankHall }（格式：docs/經濟體系規劃.md 2.7；Yuga 主 session 定）。還沒接上的時候用示範資料（畫面上寫「示範資料」）。
 //  動作：存款 act bank（op put／take／term／break）、借款 borrow、repay。還沒接上，按了只跳提示。
 //  規則不寫在這裡：這個檔只畫畫面，數字都從 view 來。
@@ -605,11 +605,9 @@ function side(v) {
   const termSum = v.save.terms.reduce((n, t) => n + t.amt, 0), owe = v.loan.list.reduce((n, x) => n + x.owe, 0) + (v.stocks && v.stocks.margin ? v.stocks.margin.owe : 0);
   const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
   // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
-  const e = v.econ;
   return h("aside", { class: "onescreen-side bank-side" },
     panel("我的帳戶", "", h("div", { class: "bank-acct" }, rows.map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))))),
-    v.stocks && v.stocks.credit ? creditPanel(v.stocks.credit) : null,
-    e ? panel("今日新聞", "", h("p", { class: "bank-news" }, e.news)) : null);
+    v.stocks && v.stocks.credit ? creditPanel(v.stocks.credit) : null); // 11-15：「今日新聞」拿掉（跟財報卡裡的新聞是同壹句）
 }
 // 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
 function creditPanel(c) {
