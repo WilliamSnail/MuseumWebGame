@@ -9,6 +9,7 @@
 | 2026-11-14 15:00:00 | 翊文 | Claude Sonnet 5.5（Claude Code） | 新功能 | [散客](2026/11-14_%E7%BF%8A%E6%96%87_%E6%95%A3%E5%AE%A2.md) | 待合併 | 2026.11.11-1 |
 | 2026-11-14 14:00:00 | 翊文 | Claude Sonnet 5.5（Claude Code） | 平衡 | [NPC停留與人數](2026/11-14_%E7%BF%8A%E6%96%87_NPC%E5%81%9C%E7%95%99%E8%88%87%E4%BA%BA%E6%95%B8.md) | 待合併 | 2026.11.11-1 |
 | 2026-11-14 13:00:00 | 翊文 | Claude Sonnet 5.5（Claude Code） | 修正 | [econ-status改十六進位](2026/11-14_%E7%BF%8A%E6%96%87_econ-status%E6%94%B9%E5%8D%81%E5%85%AD%E9%80%B2%E4%BD%8D.md) | 待合併 | 2026.11.11-1 |
+| 2026-11-14 12:38:05 | 測試 | Claude Sonnet 5.5（Claude Code） | 文件 | [展廳時刻表實測和存檔放展台的選項](2026/11-14_%E6%B8%AC%E8%A9%A6_%E5%B1%95%E5%BB%B3%E6%99%82%E5%88%BB%E8%A1%A8%E5%AF%A6%E6%B8%AC%E5%92%8C%E5%AD%98%E6%AA%94%E6%94%BE%E5%B1%95%E5%8F%B0%E7%9A%84%E9%81%B8%E9%A0%85.md) | 待合併 | 2026.11.11-1 |
 | 2026-11-14 12:22:37 | 翊文 | Claude Sonnet 5.5（Claude Code） | 新功能 | [圖庫和設定套onescreen骨架](2026/11-14_%E7%BF%8A%E6%96%87_%E5%9C%96%E5%BA%AB%E5%92%8C%E8%A8%AD%E5%AE%9A%E5%A5%97onescreen%E9%AA%A8%E6%9E%B6.md) | 待合併 | 2026.11.11-1 |
 | 2026-11-14 12:13:05 | 翊文 | Claude Sonnet 5.5（Claude Code） | 新功能 | [展廳現在加散客](2026/11-14_%E7%BF%8A%E6%96%87_%E5%B1%95%E5%BB%B3%E7%8F%BE%E5%9C%A8%E5%8A%A0%E6%95%A3%E5%AE%A2.md) | 待合併 | 2026.11.11-1 |
 | 2026-11-14 12:05:44 | 翊文 | Claude Sonnet 5.5（Claude Code） | 新功能 | [手作坊套onescreen骨架](2026/11-14_%E7%BF%8A%E6%96%87_%E6%89%8B%E4%BD%9C%E5%9D%8A%E5%A5%97onescreen%E9%AA%A8%E6%9E%B6.md) | 待合併 | 2026.11.11-1 |

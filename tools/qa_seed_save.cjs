@@ -1,6 +1,6 @@
 // QA：給模擬器裡的某位館友放一份「有 N 隻佩佩的挑戰存檔」，測合作地下、打怪、委託、展廳不用先做佩佩。
 // 只連 127.0.0.1 的模擬器。
-//   node tools/qa_seed_save.cjs --set 3 --nick 小明 [--pepes 12] [--sanity 64] [--insp 50]
+//   node tools/qa_seed_save.cjs --set 3 --nick 小明 [--pepes 12] [--sanity 64] [--insp 50] [--hall 3]
 // 沒有這位的存檔就新建（要先登入過一次、或用 npm run emu:call 叫過任何東西，members 才有這個人）。
 const { load } = require("../test/load_shared.cjs");
 const { toFs, fromFs, firestorePort } = require("./emu_doc.cjs");
@@ -12,6 +12,7 @@ const P = G.newProfile("challenge");
 G.CATS.forEach(c => G.partOf(c).options.forEach(o => { if (!o.forbidden && !o.mix && o.limited !== "show" && o.limited !== "week" && !P.unlocked[c].includes(o.name) && o.name !== "皇冠" && o.name !== "斯拉夫蹲") P.unlocked[c].push(o.name); }));
 P.unlockCount = 8;
 for (let i = 0; i < N; i++) G.finishMake(P, G.codexPick(Math.floor(G.RNG() * G.BASE_TOTAL)), { natural: 30 + Math.floor(G.RNG() * 60) });
+if (arg("hall", null) != null) Object.keys(P.pepes).slice(0, Number(arg("hall", 3)) || 3).forEach((k, i) => G.placeInHall(P, i, { kind: "pepe", key: k })); // --hall 3：把前 3 隻放上展台（測展廳參觀者）
 P.sanity = Number(arg("sanity", 64)); P.mood = 60; P.insp = Number(arg("insp", 50));
 G.setRng(null);
 (async () => {
