@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "gift-rarity-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "送佩佩的畫面寫出稀有度", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "送館友佩佩時，每壹隻的卡片上多了稀有度（色點加名字），失敗作、修復品也照樣寫。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-14-0204f4", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal", area: "賭場",
     title: "價格改成台幣的感覺", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

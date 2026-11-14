@@ -263,6 +263,8 @@ export function openGift(friend) {
     busy = false;
     if (m.layer.isConnected) draw();
   };
+  // 稀有度（翊文 11-14：「稀有度可以寫嗎」）：色點＋字；失敗作、修復品照它們自己的名字
+  const giftRarity = it => { const r = it.kind === "failed" ? FAILED : it.kind === "repaired" ? "修復品" : it.pick && it.pick[ROLLED]; return r ? h("span", { class: "gf-r" }, rdot(r), " ", r) : null; };
   const draw = () => {
     if (!m.layer.isConnected || !canGiftHere()) return;
     m.setTop(h("span", { class: "nf-count" }, `給 ${friend.nick}`));
@@ -276,6 +278,7 @@ export function openGift(friend) {
       return h("button", { type: "button", class: "pt-opt gf-opt" + (on ? " on" : "") + (can.ok ? "" : " no"), title: can.ok ? describePepe(it.pick, { failed: it.kind === "failed" }).full : can.reason, "aria-pressed": String(on),
         onClick: () => { if (!can.ok) { snd("error"); note(can.reason, "bad"); return; } sel = on ? null : it; sent = null; draw(); } },
         h("span", { class: "pt-opt-art", html: itemHTML(it) }), h("span", { class: "pt-opt-t" }, titleOf(it)),
+        giftRarity(it),
         h("span", { class: "gf-n" }, can.ok ? (n > 1 ? `有 ${n} 隻` : "最後壹隻") : NO_GIVE[can.code] || "不能送"));
     };
     const list = items.length ? h("div", { class: "pt-pick gf-pick" }, items.slice(0, limit).map(tile), items.length > limit ? btn(`再多列（還有 ${items.length - limit} 隻）`, () => { limit += NUM.guest.giftListMax; draw(); }, "small gf-more") : null)

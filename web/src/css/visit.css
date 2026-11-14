@@ -32,6 +32,7 @@
 .pt-opt.gf-opt.no { opacity: .6; cursor: not-allowed; }
 .gf-n { font-size: .6875rem; color: #6E5020; font-weight: 700; }
 .gf-opt.no .gf-n { color: #9A231C; }
+.gf-r { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; color: #4A3418; font-weight: 700; } /* 稀有度（翊文 11-14） */
 .gf-more { grid-column: 1 / -1; }
 .gf-sel { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FBF5E6, #EFE3C6); box-shadow: 0 3px 8px rgba(0,0,0,.4); }
 .gf-sel-art { width: 72px; height: 72px; }
