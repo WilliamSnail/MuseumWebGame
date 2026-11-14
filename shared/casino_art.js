@@ -144,6 +144,14 @@ export function casArtHoaxTomorrow(item, id, day) {
 }
 // 現價。item：{ tier, date }（畫出現的那天）；id：算「搶手」和隨機用的；det：true ＝ 不算隨機的部分（算回本天數的預測用，不洩漏未來）
 export function casArtPrice(item, id, day, house, det) {
+  // 借展期間畫價凍結（劇情經濟事件 artFreeze，shared/econ_events.js）：窗口內第壹次報的價記下來，窗口內都用它（不漲不跌）
+  const fz = house && arBox(house.art) && arBox(house.art.freeze) ? house.art.freeze : null;
+  if (fz && !det && typeof id === "string" && arDay(day) && day >= fz.from && day <= fz.until && arBox(fz.cache) && fz.cache[id] > 0) return fz.cache[id];
+  const p = casArtPriceRaw(item, id, day, house, det);
+  if (fz && !det && typeof id === "string" && arDay(day) && day >= fz.from && day <= fz.until && arBox(fz.cache)) fz.cache[id] = p;
+  return p;
+}
+function casArtPriceRaw(item, id, day, house, det) {
   const C = NUM.art, base = C.tiers[arTierOf(item && item.tier)].base;
   const age = arDay(item && item.date) && arDay(day) ? casArtAge(Math.max(0, arDiff(item.date, day))) : 0;
   const b = casFxMood(house), mood = Number.isFinite(b) ? -b * C.moodPct : 0;

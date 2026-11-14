@@ -597,5 +597,17 @@ T("預告的活動（week.json.fest）：對的過；最多 2 個、店不對、
   expectErr(c => { c.files["備用/常青1/week.json"].fest = [{ store: "food", date: "2026-11-18", name: "x" }]; }, /備用週不寫 fest/);
 });
 
+T("劇情經濟事件（week.json.econ）：對的過；種類不認得、日期不在這週、等級超過、多寫欄位（想自己寫比例）、同種兩個、動錢的超過每週上限、備用週都擋", () => {
+  const ok = c => { c.files["2026-W47/week.json"].econ = [{ kind: "foreign", date: "2026-11-18", level: 2, name: "外面來的客人" }, { kind: "audit", date: "2026-11-20", level: 1, name: "對帳日" }]; };
+  const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的 econ 要過");
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ[0].kind = "printMoney"; }, /kind 要是/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ[0].date = "2026-11-25"; }, /date 要是這週內/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ[0].level = 9; }, /level 要是 1～3/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ[0].pct = 90; }, /不認得「pct」/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ.push({ kind: "foreign", date: "2026-11-19", level: 1, name: "又" }); }, /同種的事件壹週只能壹個/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].econ.push({ kind: "bondWindow", date: "2026-11-19", level: 1, name: "窗" }, { kind: "artFreeze", date: "2026-11-21", level: 3, name: "凍" }); }, /壹週最多 2 個/);
+  expectErr(c => { c.files["備用/常青1/week.json"].econ = [{ kind: "audit", date: "2026-11-18", level: 1, name: "x" }]; }, /備用週不寫 econ/);
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

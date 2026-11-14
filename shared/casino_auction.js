@@ -180,9 +180,10 @@ export function casAucNpcBid(a, ref, house, ctx) {
   const C = NUM.auction, list = ctx.npcList, day = ctx.day;
   if (!Array.isArray(list) || !list.length || !(ref > 0) || !C.npcJoinPct) return null;
   const rnd = mulberry32(hashStr(`${ctx.secret || ""}|${a.id}|npcbuy`));
-  if (rnd() * 100 >= C.npcJoinPct) return null;
+  const fp = ctx.econ && ctx.econ.foreign ? ctx.econ.foreign.pct : 0; // 外資 NPC 來得多（劇情經濟事件 foreign）：出價機率和壹天總額都 ×（1＋pct%）
+  if (rnd() * 100 >= Math.min(100, C.npcJoinPct * (1 + fp / 100))) return null;
   const A = house.art, spent = A.npcPaid && A.npcPaid.day === day ? A.npcPaid : { day, n: 0, by: {} };
-  const dayCap = Math.floor(C.npcDay * Math.max(0, 1 + C.npcExtPct / 100 * (+(house.econ && house.econ.b) || 0)));
+  const dayCap = Math.floor(C.npcDay * (1 + fp / 100) * Math.max(0, 1 + C.npcExtPct / 100 * (+(house.econ && house.econ.b) || 0)));
   const tierName = (NUM.art.tiers[a.tier] || {}).name || "";
   const cand = list.filter(n => n && n.kind !== "trace" && n.budget && n.budget.max > 0 && n.route && +n.route.auction > 0);
   const total = cand.reduce((s, n) => s + n.route.auction, 0);
