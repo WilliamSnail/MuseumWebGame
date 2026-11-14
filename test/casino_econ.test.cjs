@@ -234,5 +234,13 @@ T("文字：沒有真人名字、頭銜、政黨、Pepe；介面文字用「壹�
   const ui = [G.CAS_ECON.intro, G.CAS_ECON.rule, ...G.CAS_ECON.chat, ...G.CAS_ECON.cheer, G.CAS_ECON.okRescue, G.CAS_ECON.okRescueSub, G.CAS_ECON.failLoot, G.CAS_ECON.failNone, G.CAS_ECON.okTicket];
   for (const l of ui) assert.ok(!/一[張個次點下起]/.test(l), "該用壹：" + l);
 });
+T("大廳的政策：有效時給名稱、效果、到哪天；過期或沒有給 null（11-14）", G => {
+  const h = G.casHouseFix(G.casHouseNew(), "2026-11-14").house;
+  assert.strictEqual(G.casPolicyView(h, "2026-11-14"), null);
+  h.pol = { idx: 0, fx: "tourism", day: "2026-11-14" };
+  const v = G.casPolicyView(h, "2026-11-14");
+  assert.ok(v && v.name && v.effect === G.CAS_FX_TEXT.tourism && v.day === "2026-11-14" && v.until >= "2026-11-14");
+  assert.strictEqual(G.casPolicyView(h, "2026-12-30"), null, "過期");
+});
 console.log(`拚經濟：${pass} 過，${fail} 失敗`);
 process.exit(fail ? 1 : 0);
