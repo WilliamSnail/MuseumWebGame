@@ -1326,9 +1326,21 @@ export function placeInHall(P, slotIdx, item) {
 }
 // 展廳參觀者今天已經給了幾靈感（上限 NUM.visitorInspDay，換日歸零）
 export const visitorInspToday = (P, day = todayStr()) => (P && P.hallInsp && P.hallInsp.day === day ? +P.hallInsp.n || 0 : 0);
-export function visitorArrive(P, rng = RNG) {
+export function visitorArrive(P, rng = RNG, entry = null) {
   const hs = hallScore(P);
   if (!hs.items.length) return null;
+  if (entry) { // 伺服器的展廳時刻表來的人（11-14，翊文：「靈感照人數算」「就不用每 150 秒了」）：有名字的 NPC 壹位算壹次；散客壹組 n 位算 n 次（旅行團 12 位＝12 次），每次的靈感照舊，每日上限不動
+    const day = todayStr(), got = visitorInspToday(P, day), n = Math.max(1, Math.min(40, Math.floor(+entry.n) || 1));
+    let c;
+    if (entry.kind === "npc") { const sl = npcStoryLine(entry.npc, day, npcWebCounters()); c = sl ? { who: sl.who, text: sl.text, npc: sl.npc, story: true } : { who: entry.who || "旅客", text: "逛了壹圈展廳。", npc: entry.npc }; }
+    else c = { who: entry.label || "散客", text: n > 1 ? `壹共 ${n} 位，安靜地逛完了壹圈。` : "安靜地逛了壹圈。" };
+    const want = isFree(P) ? 0 : (1 + Math.floor(hs.score / NUM.visitorStep)) * n, gain = Math.max(0, Math.min(want, NUM.visitorInspDay - got)), full = !isFree(P) && gain < want;
+    P.insp += gain; P.hallInsp = { day, n: got + gain }; P.hallVisitors += n;
+    const ex = c.npc ? { npc: c.npc, story: !!c.story } : {};
+    P.visitorLog.unshift({ who: c.who, text: c.text, gain, full, ...ex });
+    P.visitorLog = P.visitorLog.slice(0, 12);
+    return { who: c.who, text: c.text, gain, full, score: hs.score, ...ex };
+  }
   let pool;
   const r = rng();
   if (hs.theme && r < 0.45 && VISITOR_COMMENTS.themes[hs.theme]) pool = VISITOR_COMMENTS.themes[hs.theme];

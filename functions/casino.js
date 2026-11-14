@@ -33,7 +33,7 @@ import { casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
-import { casTicketClaim } from "./shared/casino_ticket.js";
+import { casTicketClaimKeys } from "./shared/casino_ticket.js";
 import { casJobChips } from "./shared/casino_job.js";
 import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
@@ -42,7 +42,7 @@ import { casArtSecret } from "./shared/casino_art.js";
 import { npcCounters, npcPublic } from "./shared/npc.js";
 import { FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
-import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, npcPresence } from "./shared/npc_spend.js";
+import { casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
@@ -120,7 +120,7 @@ export async function playCore(me, email, opts, fn) {
       const S = ss ? parse(ss) : null;
       const P = S && S.profiles && S.profiles.challenge ? S.profiles.challenge : null;
       const stale = twStale(tw, day).concat(usStale(us, day)); // 哪幾支這壹段沒有新行情（畫面要標出來，不要讓人以為真的沒漲跌）
-      const ctx = { w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
+      const ctx = { secret: sec, w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
       const r = fn(ctx);
       ha = ctx.house.bankroll;
@@ -388,9 +388,16 @@ export const casino = onCall(async req => {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
     // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和預算池、館方帳在同一個交易裡加（shared/casino_ticket.js）
     case "tickets": return play(req, me, { save: true }, ctx => {
-      const r = casTicketClaim(ctx.w, ctx.house, ctx.P, ctx.day);
+      const sec2 = ctx.secret;
+      const r = casTicketClaimKeys(ctx.w, ctx.house, ctx.P, ctx.day, d.keys, sec2, NPC_LIST, npcCounters(ctx.house.npcc), ctx.t);
       return r.ok ? Object.assign({ chips: ctx.w.chips }, r) : no(r);
     });
+    // 展廳到訪時刻表（11-14，翊文：「每 150 秒來一位…接到散客裡」「就不用每 150 秒了」）：瀏覽器每 90 秒左右問壹次，照表在 at 那刻放人進展廳（有名字的 NPC＝壹位、散客壹組＝n 位），
+    // 看到了就把 key 夾在下壹次 tickets 回報領分紅。只讀。回 { ok, now（伺服器現在毫秒）, feed: [{ key, kind, at, until, npc?, who?, label?, n }]（at 在現在前 120 秒到後 240 秒之間）, in: 現在展廳的人 }
+    case "hallFeed": {
+      const t = now(), day = taipeiDay(t), sec = await twSecret(), hs = await houseRef().get(), counters = npcCounters(hs.exists ? parse(hs).npcc : null);
+      return { ok: true, now: t, day, feed: hallFeed(day, sec, NPC_LIST, counters, t - 120000, t + 240000), in: npcPresence(day, t, sec, NPC_LIST, counters) };
+    }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
     // 回 { ok, day, items: [{ id, who, npc, text, stars, at, day }]（新的在前）, total 這壹天符合的共幾則, prevDay／nextDay 前後有資料的日子或 null }

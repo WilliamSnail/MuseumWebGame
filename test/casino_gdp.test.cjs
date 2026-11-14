@@ -109,9 +109,8 @@ T("政策：拚經濟成功抽到的政策持續到隔天；振興觀光門票�
   assert.strictEqual(G.casFxPolicy(s.house, plus(D, 2), "ticket"), 1, "第三天失效"); assert.strictEqual(G.casFxPolicy(s.house, D, "find"), 1);
   const t = (house, d) => { const w = G.casWalletFix(G.casWalletNew(), d), P = G.newProfile("challenge"); P.hallVisitors = 0; const { buildProfile } = require("./sim_cellar.cjs"); void buildProfile; return { w, P }; };
   void t;
-  const tix = pol2 => { const { G: G2, buildProfile } = require("./sim_cellar.cjs"); const w = G2.casWalletFix(G2.casWalletNew(), D), house = G2.casHouseFix(G2.casHouseNew(), D).house; if (pol2) house.pol = { idx: 1, fx: "tourism", day: D };
-    const P = buildProfile(G2.mulberry32(3), "mid"); Object.keys(P.pepes).slice(0, 6).forEach((k, i) => G2.placeInHall(P, i, { kind: "pepe", key: k })); P.hallVisitors = 0; G2.casTicketClaim(w, house, P, D); P.hallVisitors = 4; return G2.casTicketClaim(w, house, P, D); };
-  const a = tix(false), b = tix(true); assert.ok(a.total > 0 && b.total > a.total && b.price === Math.floor(a.price * (1 + K.polPct / 100)));
+  const tix = pol2 => { const house = G.casHouseFix(G.casHouseNew(), D).house; if (pol2) house.pol = { idx: 1, fx: "tourism", day: D }; G.casNpcLive(house, D, Infinity, "s", [], null); return { total: house.npcs.crowd.ticket }; }; // 11-14：門票改成到訪的人自己付（shared/npc_spend.js），政策照樣讓票價多壹成
+  const a = tix(false), b = tix(true); assert.ok(a.total > 0 && b.total > a.total, `${a.total} → ${b.total}`);
   const f = (pol3) => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; if (pol3) house.pol = { idx: 5, fx: "cellar", day: D }; return G.casCellarFind(w, house, G.CELLAR[0].rooms[0].id, D, () => 0.01).found; };
   assert.ok(f(true) > f(false) && f(true) === Math.floor(f(false) * (1 + K.polPct / 100)));
   const tight = mk(); tight.house.pol = { idx: 7, fx: "tighten", day: D };
