@@ -77,3 +77,10 @@
 .hn-daynav { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
 .hn-day { text-align: center; font-size: var(--type-body, .875rem); font-variant-numeric: tabular-nums; }
 .hn-chip:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .hn-gb-side { max-height: none; }
+  .hn-gb-side h3 { margin: 4px 0 2px; font-size: var(--type-small, .75rem); }
+  .hn-gb-side .hn-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .hn-gb-side .hn-chip { flex: none; }
+  .screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-rows: auto minmax(0, 1fr); }
+}

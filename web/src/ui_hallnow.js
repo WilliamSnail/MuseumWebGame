@@ -8,6 +8,7 @@
 //  - 名字、評語是 NPC 說的話，也當不可信的字：只用 h() 的字串。
 // ================================================================
 import { matesByRoom } from "../../shared/mates.js";
+import { NPC_ROSTER } from "../../shared/npc_roster.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "./ui_core.js";
 
@@ -81,7 +82,7 @@ NET.on && NET.on("roster", () => { if (ADDONS.hallNowDraw) ADDONS.hallNowDraw();
 // 按日期前後翻（prevDay／nextDay）、可以只看一位旅客；沒登入的開發環境用示範資料
 async function loadReviews(gb) {
   if (fake()) {
-    const all = FAKE_RV().map(x => Object.assign({ day: "2026-11-14", npc: x.who }, x)).filter(x => !gb.who || x.who === gb.who);
+    const all = FAKE_RV().map(x => Object.assign({ day: "2026-11-14", npc: x.who }, x)).filter(x => !gb.who || x.who === ((NPC_ROSTER.find(n => n.id === gb.who) || {}).name || gb.who));
     return { ok: true, day: all.length ? "2026-11-14" : null, items: all, total: all.length, prevDay: null, nextDay: null };
   }
   const q = { act: "reviews", limit: 50 };
@@ -89,25 +90,26 @@ async function loadReviews(gb) {
   if (gb.who) q.who = gb.who;
   return NET.call("casino", q);
 }
+// 選一位 NPC：名單是 shared/npc_roster.js（旅客 visitor、委託人 client；劇情角色 trace 不留評價，不在名單裡，這裡也擋掉）
+const npcsOf = kind => NPC_ROSTER.filter(n => n.kind === kind && n.kind !== "trace");
 function guestbook() {
-  const gb = UI.gb || (UI.gb = { day: null, who: "", known: [], data: null, busy: false, failed: false });
+  const gb = UI.gb || (UI.gb = { day: null, who: "", data: null, busy: false, failed: false }); // who：NPC 的 id（shared/npc_roster.js）
   const root = h("div", { class: "hn-gb" });
-  const remember = names => names.forEach(n => { if (n && !gb.known.includes(n)) gb.known.push(n); });
   const go = patch => { Object.assign(gb, patch); fetchIt(); };
   const fetchIt = async () => {
     if (gb.busy) return;
     gb.busy = true; gb.failed = false; draw();
     try {
       const r = await loadReviews(gb);
-      if (r && r.ok) { gb.data = r; gb.day = r.day || null; remember((r.items || []).map(x => String(x.who || ""))); }
+      if (r && r.ok) { gb.data = r; gb.day = r.day || null; }
       else gb.failed = true;
     } catch (e) { gb.failed = true; }
     gb.busy = false;
     if (root.isConnected || !gb.data) draw();
   };
+  const npcChips = (kind, chip) => npcsOf(kind).map(n => chip(n.name, gb.who === n.id, () => go({ who: n.id, day: null })));
   const draw = () => {
     const d = gb.data, items = d && Array.isArray(d.items) ? d.items : [];
-    remember((Array.isArray(UI.reviews) ? UI.reviews : []).map(x => String(x.who || "")));
     const chip = (label, on, fn) => h("button", { type: "button", class: "hn-chip" + (on ? " on" : ""), "aria-pressed": String(!!on), disabled: gb.busy ? "" : null, onClick: fn }, label);
     const nav = (label, day) => h("button", { type: "button", class: "hn-chip hn-nav", disabled: day && !gb.busy ? null : "", onClick: () => go({ day }) }, label);
     root.replaceChildren(
@@ -115,7 +117,9 @@ function guestbook() {
         h("h3", null, "日期"),
         h("div", { class: "hn-daynav" }, nav("‹ 前一天", d && d.prevDay), h("b", { class: "hn-day" }, d && d.day ? String(d.day) : "—"), nav("後一天 ›", d && d.nextDay)),
         h("h3", null, "旅客"),
-        h("div", { class: "hn-chips" }, chip("全部", !gb.who, () => go({ who: "", day: null })), gb.known.map(w => chip(w, gb.who === w, () => go({ who: w, day: null })))),
+        h("div", { class: "hn-chips" }, chip("全部", !gb.who, () => go({ who: "", day: null })), npcChips("visitor", chip)),
+        h("h3", null, "委託人"),
+        h("div", { class: "hn-chips" }, npcChips("client", chip)),
         h("p", { class: "hn-note" }, "按「前一天」「後一天」翻日期；選一位旅客，只看他留的話。")),
       h("section", { class: "hn-gb-main", "aria-label": "旅客留言" },
         h("div", { class: "hn-gb-head" }, h("b", null, "旅客留言簿"), h("small", null, d ? `${d.day || ""}　共 ${Number(d.total) || items.length} 則` : "")),
