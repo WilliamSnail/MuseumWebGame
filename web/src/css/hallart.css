@@ -19,3 +19,10 @@ button.hall-art:hover .hall-art-f { filter: brightness(1.12); transform: transla
 /* 館友的展廳（沒有側欄的版型）：照樣是壹塊 */
 .fh-wrap ~ .hall-art-box, .hall-art-box { margin: 0; }
 .fh-wrap ~ .hall-art-box { max-width: 560px; margin: 12px auto 0; }
+
+/* 整張卡鋪羊皮紙底（館友展廳的牆是深色，畫名不能直接寫在牆上）；手機寬度時不超出畫面 */
+.hall-art-d { box-sizing: border-box; max-width: 100%; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .95); color: var(--ink, #2E2014); overflow: hidden; }
+.hall-art-d > summary { border: 0; border-radius: 0; background: none; }
+.hall-art-d[open] > summary { margin-bottom: 0; border-bottom: 1px dashed rgba(122, 90, 42, .4); }
+.hall-art-grid { padding: 10px 10px 8px; }
+@media (max-width: 760px) { .hall-art-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); max-height: 220px; } }
