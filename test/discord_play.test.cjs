@@ -100,7 +100,7 @@ T("餐車選單：9 樣、值是餐點的 id、字數合規定；選單上沒有
   assert.ok(sel.options.length <= 25);
   assert.deepStrictEqual(sel.options.map(o => o.value), J(G.CAS_MENU.map(it => it.id)));
   assert.ok(sel.options.every(o => o.label.length <= 100 && o.description.length <= 100 && o.value.length <= 100 && !BAD.test(o.label + o.description)));
-  assert.ok(sel.options.find(o => o.value === "tea").label.includes("1,750"));
+  assert.ok(sel.options.find(o => o.value === "tea").label.includes("45"));
   const t = G.dcFoodText(1000000, ["您好，餐車收銀是 Yuga Bot", "給你壹杯冰涼麥茶！", "心情 +1，理智 +1", "謝謝"]);
   assert.ok(t.includes("冰涼麥茶") && t.includes("心情 +1") && t.includes("1,000,000") && !BAD.test(t), t);
   assert.ok(G.dcFoodText(5).includes("你現在有 5 籌碼"));

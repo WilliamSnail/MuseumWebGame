@@ -672,7 +672,7 @@ T("文字：不出現酒、炸雞、手機和餐廳品牌、真錢的字；畫�
   assert.ok(G.CAS_TEXT.series.includes("Casino Hamachi System") && G.CAS_TEXT.series.includes("Museum Series"));
   assert.strictEqual(G.CAS_MENU.length, 9); assert.strictEqual(G.CAS_PACKS.length, 5);
   eq(G.CAS_PACKS.map(p => p.upTo), [500, 800, 945, 990, 1000]);
-  eq(G.CAS_MENU.map(m => m.price), [3000, 1750, 20000, 100000, 50, 2000000, 2000, 2000000, 20000000]); // 券的價錢 11-13 改了（決定 0070）
+  eq(G.CAS_MENU.map(m => m.price), [100, 45, 500, 2500, 50, 2000000, 50, 2000000, 20000000]); // 餐點降價 11-14（決定 0081） // 券的價錢 11-13 改了（決定 0070）
   assert.ok(G.CAS_TEXT.idle.includes("可是我肚子還是有點痛") && G.CAS_TEXT.bust === "你爆了ㄏㄏ" && G.CAS_TEXT.dealerBust[0] === "RRRRR我爆了");
 });
 T("每個成就、財產都有名字和說明；成就 id 不重複", G => {

@@ -132,7 +132,7 @@ export function casStockRoll(house, day, moves, reals) {
       px = before;
       if (real && real.px > 0 && mult > 0) {
         const target = Math.max(C.floor, Math.round(mult * real.px));
-        stPegDirect(H, id, target, before);
+        stPegDirect(H, id, target, before, mult);
         px = target; H.prev[id] = target;
       }
     } else if (real && real.px > 0 && mult > 0) {
@@ -160,9 +160,10 @@ export function casStockRoll(house, day, moves, reals) {
 }
 
 // 第壹次換成「直接用真實價」（規劃 2.8l）：價從 before 換成 target，記壹筆換股數（錢包照比例換、市值不變）、歷史價同比例換、全館持股數同比例換。之後不再換
-function stPegDirect(H, id, target, before) {
-  if (H.peg.dir[id]) return false;
-  H.peg.dir[id] = true;
+// dir[id] 記這支換成的倍數（舊的是 true ＝ 換過、倍數不記）；倍數改了（NUM.casino.stock.peg，決定 0081 把台股 ×24 改 ×1、美股 ×4 改 ×32）就再換壹次，錢包照 peg.ev 補換股數、市值不變
+function stPegDirect(H, id, target, before, mult) {
+  if (H.peg.dir[id] === mult) return false;
+  H.peg.dir[id] = mult;
   if (!(before > 0) || target === before) return false;
   H.peg.seq++; H.peg.done[id] = H.peg.seq; H.peg.ev.push({ seq: H.peg.seq, id, from: before, to: target });
   const scale = target / before;
@@ -505,7 +506,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
       let base = H.hist[day][id];
       if (C.direct && cur.prevReal && stOkPx(cur.prevReal[id])) { // 直接用真實價：基準 ＝ 倍數 × 真實前壹收盤，今天的漲跌 ＝ 真實的漲跌（同壹個前壹收盤）
         base = Math.max(C.floor, Math.round(stPegMult(id) * cur.prevReal[id]));
-        stPegDirect(H, id, base, H.hist[day][id]); // 換日時沒有真實價（第壹次、休市），第壹次開盤才換比例
+        stPegDirect(H, id, base, H.hist[day][id], stPegMult(id)); // 換日時沒有真實價（第壹次、休市），第壹次開盤才換比例
         H.hist[day][id] = base; H.prev[id] = base;
       }
       if (!Array.isArray(arr) || !arr.length || !(base > 0)) continue;

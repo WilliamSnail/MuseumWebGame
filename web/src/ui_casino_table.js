@@ -243,7 +243,7 @@ function betBox(s) {
   input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
   return h("div", { class: "cas-betbox" }, h("p", { class: "cas-ask" }, "輸入下注金額："),
     h("div", { class: "cas-betrow" }, input, btn("下注", go, "primary", { disabled: s.busy ? true : null })),
-    h("div", { class: "cas-quick" }, [1000, 10000, 100000, 1000000].filter(n => s.chips == null || n <= s.chips).map(n => btn(casNum(n), () => { input.value = String(n); s.bet = String(n); }, "small ghost")),
+    h("div", { class: "cas-quick" }, [100, 1000, 10000, 100000].filter(n => (s.chips == null || n <= s.chips) && n >= NUM.casino.minBet && n <= NUM.casino.maxBet).map(n => btn(casNum(n), () => { input.value = String(n); s.bet = String(n); }, "small ghost")),
       btn("全下", () => { const n = Math.min(s.chips || 0, NUM.casino.maxBet); input.value = String(n); s.bet = String(n); }, "small ghost")),
     s.gag ? h("p", { class: "cas-warn", role: "alert" }, h("b", null, CAS_TEXT.dealer + "："), s.gag) : null);
 }

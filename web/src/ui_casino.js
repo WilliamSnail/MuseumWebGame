@@ -335,7 +335,7 @@ function betBox() {
   input.addEventListener("input", () => { S.lastBet = input.value; });
   const go = () => { S.lastBet = input.value; deal(input.value); };
   input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
-  const quick = [1000, 10000, 100000, 1000000].filter(n => n <= w.chips && n >= NUM.casino.minBet);
+  const quick = [100, 1000, 10000, 100000].filter(n => n <= w.chips && n >= NUM.casino.minBet && n <= NUM.casino.maxBet);
   return h("div", { class: "cas-betbox" },
     h("p", { class: "cas-ask" }, "輸入下注金額："),
     h("div", { class: "cas-betrow" }, input, btn("發牌", go, "primary", { disabled: S.busy ? true : null })),
