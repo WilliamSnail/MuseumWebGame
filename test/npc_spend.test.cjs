@@ -59,6 +59,15 @@ T("跨天：換日時前壹天剩下的結完收起來；沒人來好幾天只�
   assert.strictEqual(h.npcs.day, D0, "前壹天收進 npcs"); assert.strictEqual(h.npcLive.day, add(D0, 1));
   G.casNpcLive(h, add(D0, 5), G.npcDayStartMs(add(D0, 5)) + 60000, "s", LIST, null); assert.strictEqual(h.npcs.day, add(D0, 1)); assert.strictEqual(h.npcLive.day, add(D0, 5));
 });
+T("評價完整歷史：新寫的評價取得走、合進當天文件（冪等、以 id 去重、照時間排）、留言簿可以篩人、最多 50 則", G => {
+  const h = mk(G); G.casNpcLive(h, D0, Infinity, "s", LIST, null);
+  const nw = G.casNpcTakeReviews(h); assert.ok(nw.length >= 1 && nw.every(r => r.id && r.day === D0 && r.who)); assert.strictEqual(G.casNpcTakeReviews(h).length, 0, "取走就沒了、也不在莊家文件裡"); assert.ok(!("reviewsOut" in h));
+  let d = G.casReviewsMerge(null, nw, D0); assert.strictEqual(d.items.length, nw.length); const again = G.casReviewsMerge(d, nw, D0); assert.strictEqual(JSON.stringify(again), JSON.stringify(d), "重複合進去不變（冪等）");
+  for (let i = 1; i < d.items.length; i++) assert.ok(d.items[i].at >= d.items[i - 1].at);
+  const one = nw[0], p = G.casReviewsPick(d.items, one.who, 50); assert.ok(p.items.length >= 1 && p.items.every(r => r.who === one.who)); assert.strictEqual(G.casReviewsPick(d.items, one.npc, 50).total, p.total, "名字或 id 都可以");
+  const many = Array.from({ length: 80 }, (_, i) => ({ id: "x" + i, at: i, day: D0, npc: "n", who: "甲", text: "t", stars: 5 })); assert.strictEqual(G.casReviewsPick(many, "", 999).items.length, 50); assert.strictEqual(G.casReviewsPick(many, "", 999).items[0].at, 79, "新的在前");
+  assert.strictEqual(G.casReviewsMerge(null, [{ id: "a", at: 1, day: D0, who: "", text: "x" }, "壞", null], D0).items.length, 0, "壞資料不收");
+});
 if (process.argv[2] === "sim") {
   const G = load(); G.NUM.casino.grants = []; const h = mk(G); let tot = 0, tk = 0, shop = 0, ppl = 0; const N = 200;
   for (let i = 0; i < N; i++) { const r = G.casNpcSpend(h, add(D0, i), "x" + i, LIST, null); tot += r.total; tk += r.ticket; shop += r.shop; ppl += r.people; }

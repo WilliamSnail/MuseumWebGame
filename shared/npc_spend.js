@@ -49,9 +49,25 @@ function npcLiveFix(house, day) {
   const x = house.npcLive; if (!x.done || typeof x.done !== "object") x.done = {}; if (!x.byNpc || typeof x.byNpc !== "object") x.byNpc = {}; if (!x.by || typeof x.by !== "object") x.by = {};
   return x;
 }
+// 完整歷史（11-14，翊文：「圖書館留個位置放所有他們的歷史留言」）：npcReviews/{日期} 每天壹份 { day, items: [...] }，照時間排，以 id 去重（冪等）。
+// 取走這次新寫的評價（伺服器把它們合進 npcReviews；取走之後不會存進莊家文件）
+export function casNpcTakeReviews(house) { const a = Array.isArray(house.reviewsOut) ? house.reviewsOut : []; delete house.reviewsOut; return a; }
+const rvItem = r => ({ id: String(r.id || r.npc + "|" + r.at).slice(0, 80), at: nsN(r.at), day: String(r.day || ""), npc: String(r.npc || "").slice(0, 40), who: String(r.who || "").slice(0, 20), text: String(r.text || "").slice(0, 80), stars: Math.max(1, Math.min(5, nsN(r.stars) || 3)) });
+// 把新的評價合進這壹天的文件內容（old 可以是 null）。回傳 { day, items }（items 照 at 排、id 不重複）
+export function casReviewsMerge(old, add, day) {
+  const seen = new Set(), items = [];
+  for (const r of [].concat(old && Array.isArray(old.items) ? old.items : [], Array.isArray(add) ? add : [])) { if (!r || typeof r !== "object") continue; const x = rvItem(r); if (!x.who || !x.text || seen.has(x.id)) continue; seen.add(x.id); items.push(x); }
+  items.sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
+  return { day, items };
+}
+// 給「旅客留言簿」：從壹天的 items 挑（who 可以是名字或 id）、新的在前、最多 limit 則（預設 50，最多 50）。回傳 { items, total }
+export function casReviewsPick(items, who, limit) {
+  const list = (Array.isArray(items) ? items : []).filter(r => !who || r.who === who || r.npc === who).slice().sort((a, b) => b.at - a.at), lim = Math.max(1, Math.min(50, nsN(limit) || 50));
+  return { items: list.slice(0, lim).map(r => ({ id: r.id, who: r.who, npc: r.npc, text: r.text, stars: r.stars, at: r.at, day: r.day })), total: list.length };
+}
 export function casReviewsFix(house) {
   if (!Array.isArray(house.reviews)) house.reviews = [];
-  house.reviews = house.reviews.filter(r => r && typeof r === "object" && typeof r.who === "string" && typeof r.text === "string").slice(-20).map(r => ({ day: String(r.day || ""), at: nsN(r.at), npc: String(r.npc || ""), who: r.who.slice(0, 20), text: r.text.slice(0, 80), stars: Math.max(1, Math.min(5, nsN(r.stars) || 3)) }));
+  house.reviews = house.reviews.filter(r => r && typeof r === "object" && typeof r.who === "string" && typeof r.text === "string").slice(-20).map(r => ({ id: String(r.id || "").slice(0, 80), day: String(r.day || ""), at: nsN(r.at), npc: String(r.npc || ""), who: r.who.slice(0, 20), text: r.text.slice(0, 80), stars: Math.max(1, Math.min(5, nsN(r.stars) || 3)) }));
   return house.reviews;
 }
 
@@ -85,8 +101,10 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     room -= paid; L.byNpc[v.id] = nsN(L.byNpc[v.id]) + paid; if (first) L.people++;
     if (v.place === "hall" && C.reviewDay > 0 && reviews.filter(r => r.npc === v.id && r.day === day).length < C.reviewDay) { // 到展廳：留壹則評價（故事線現在這壹段的字；還沒有就說他是誰）
       const rr = mulberry32(hashStr(`${secret}|${day}|${v.id}|${v.key}|review`)), line = npcStoryLine(v.id, day, counters, list);
-      if (line) reviews.push({ day, at: npcDayStartMs(day) + v.start * 60000, npc: v.id, who: n.name, text: line.text.slice(0, 80), stars: Math.min(5, 3 + (npcLikesNow(n, day, counters).includes("hall") ? 1 : 0) + (rr() < 0.4 ? 1 : 0)) });
+      if (line) reviews.push({ id: v.id + "|" + (npcDayStartMs(day) + v.start * 60000), day, at: npcDayStartMs(day) + v.start * 60000, npc: v.id, who: n.name, text: line.text.slice(0, 80), stars: Math.min(5, 3 + (npcLikesNow(n, day, counters).includes("hall") ? 1 : 0) + (rr() < 0.4 ? 1 : 0)) });
       house.reviews = reviews.slice(-C.reviewKeep);
+      if (!Array.isArray(house.reviewsOut)) house.reviewsOut = []; // 這次新寫的（伺服器寫進完整歷史 npcReviews/{日期} 後取走；不存在莊家文件裡）
+      house.reviewsOut.push(house.reviews[house.reviews.length - 1]);
     }
   }
   if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), by: Object.assign({}, L.sources) };
