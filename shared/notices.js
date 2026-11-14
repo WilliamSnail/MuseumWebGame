@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "hall-ticket-500-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "展廳門票改成每位 500，散客多很多", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "旅客和散客的門票都改成每位 500（以前旅客 2 萬、散客 4 千）。",
+        "散客變成每天大約 1,000～1,500 位，熱門時段展廳會同時有幾十組人。",
+        "看展廳時領到的分紅照門票的比例算，所以每位的分紅也跟著變小。",
+      ]],
+    ],
+  },
+  {
     id: "hall-late-night-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "展廳深夜也有人來；散客變多、門票變便宜", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
