@@ -536,6 +536,32 @@ T("館內股的 NPC 劇情日（week.json.npc）：對的過；店不對、日�
   expectErr(c => { c.files["備用/常青1/week.json"].npc = { store: "food", date: "2026-11-18", name: "x" }; }, /備用週不寫 npc/);
 });
 
+T("帳本 revealBeats：真的帳本過；格式錯、不是揭露週、破梗、露臉、地方太少都擋（docs/劇情揭露節奏.md）", () => {
+  const first = k => k.ledger.revealBeats.list[0];
+  assert.ok(ledger0.revealBeats.list.length >= 23, "帳本要有揭露節奏");
+  expectErr(c => { first(c).id = "x1"; }, /id 要是 b01/);
+  expectErr(c => { c.ledger.revealBeats.list[1].id = "b01"; }, /重複/);
+  expectErr(c => { first(c).week = "2026-W48"; }, /不是揭露週/);
+  expectErr(c => { c.ledger.revealBeats.list[1].week = "2026-W47"; }, /已經有壹筆/);
+  expectErr(c => { first(c).mystery = "m-nope"; }, /不在 mysteries 裡/);
+  expectErr(c => { c.ledger.revealBeats.list.find(b => b.week === "2026-W49").week = "2026-W51"; c.ledger.revealBeats.list.find(b => b.id === "b02").mystery = "m-count"; }, /不早於|照週的順序/);
+  expectErr(c => { first(c).detail = "短"; }, /8～120 字/);
+  expectErr(c => { first(c).detail = "差的那壹隻不是東西，是在數的那個人，牆上寫著。"; }, /破梗/);
+  expectErr(c => { first(c).detail = "B1 牆上的記號旁邊，有壹張很清楚的臉在看著它。"; }, /不露臉|不能寫「臉」/);
+  expectErr(c => { first(c).buildsOn = []; }, /buildsOn/);
+  expectErr(c => { first(c).channels = first(c).channels.slice(0, 2); }, /至少要三種/);
+  expectErr(c => { first(c).channels = [{ where: "公佈欄", clue: true }, { where: "賭場收藏" }, { where: "每週任務旁白" }]; }, /不能放 clue/);
+  expectErr(c => { first(c).channels.forEach(x => { delete x.clue; }); }, /至少壹個要能放 clue/);
+  expectErr(c => { first(c).channels[0].where = "大廳"; }, /不認得/);
+  expectErr(c => { first(c).status = "done"; }, /status 要是/);
+  expectErr(c => { first(c).status = "revealed"; first(c).revealedOn = "2026-11-25"; first(c).clues = ["c-x"]; }, /那壹週裡的日期/);
+  expectErr(c => { first(c).status = "revealed"; first(c).revealedOn = "2026-11-18"; first(c).clues = []; }, /clues 要填/);
+  expectErr(c => { c.ledger.revealBeats.list.find(b => b.concrete).safe = ""; }, /safe/);
+  expectErr(c => { c.ledger.revealBeats = { list: "x" }; }, /revealBeats 要是/);
+  const ok = regular(); first(ok).status = "revealed"; first(ok).revealedOn = "2026-11-18"; first(ok).clues = ["c-tally"];
+  assert.deepStrictEqual(run(ok).errors, [], "放了的揭露填好日期和 clue 就過");
+});
+
 T("預告的活動（week.json.fest）：對的過；最多 2 個、店不對、日期不在這週、多寫欄位（想自己寫機率）、同店同天、跟劇情日同店同天、備用週都擋", () => {
   const ok = c => { c.files["2026-W47/week.json"].fest = [{ store: "food", date: "2026-11-18", name: "夜市週" }, { store: "bj", date: "2026-11-19", name: "牌桌夜" }]; };
   const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的 fest 要過");

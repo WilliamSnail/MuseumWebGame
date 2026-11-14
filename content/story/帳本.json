@@ -803,12 +803,12 @@
             "what": "B2 雕像的名牌只有一塊空白；旁邊有蹲過的痕跡"
           },
           {
-            "week": "第 2 季",
+            "week": "2026-W51",
             "where": "書",
             "what": "歷任館長的簽到簿：每一位第一天的字都像剛學會寫字"
           },
           {
-            "week": "第 2 季",
+            "week": "2026-W53",
             "where": "今日特展",
             "what": "歷任館長的肖像，畫框下都有一塊被磨亮的地板，高度是蹲著的高度"
           },
@@ -857,22 +857,22 @@
             "what": "值班紀錄的簽名欄永遠是空的，只蓋一個章"
           },
           {
-            "week": "第 2 季",
+            "week": "2027-W02",
             "where": "每週任務旁白",
             "what": "排班表每一任館長都在變，夜班從來沒換過人"
           },
           {
-            "week": "第 2 季",
+            "week": "2027-W08",
             "where": "房間",
             "what": "B1 帽架上警衛的帽子，尺寸跟蹲著的那一隻一樣"
           },
           {
-            "week": "第 3 季",
+            "week": "2027-W12",
             "where": "書",
             "what": "紀錄裡有一天不是他的字：那天有人替他值班，寫『他今天去排隊看了一下，又回來了』"
           },
           {
-            "week": "第 3 季",
+            "week": "2027-W16",
             "where": "限時活動",
             "what": "活動的話裡夾一句值班紀錄的語氣：『今晚人多，我站遠一點。』"
           }
@@ -893,17 +893,17 @@
             "what": "帳本頁碼不是從 1 開始，是很大的數字"
           },
           {
-            "week": "第 2 季",
+            "week": "2027-W18",
             "where": "季節線",
-            "what": "明信片的郵戳是別的城，字跡不同，開頭都寫『這邊也差壹隻』"
+            "what": "年節賀年卡的郵戳是別的城（地名被蓋住、格式不是本城的），字跡不同（揭露 b06）。『這邊也差壹隻』先不寫，往後挪到 2027-W20 之後（比 b12 館際通知晚）"
           },
           {
-            "week": "第 2 季",
+            "week": "2027-W10",
             "where": "房間",
             "what": "B4 的水聲：八下、停、九下（接《莫斯科手記・第十年》）"
           },
           {
-            "week": "第 3 季",
+            "week": "2027-W14",
             "where": "今日特展",
             "what": "別的館借展的畫，背面蓋著沒看過的館章，編號比我們的圖鑑大"
           },
@@ -913,9 +913,14 @@
             "what": "館際通知：請各館核對本季差額"
           },
           {
-            "week": "第 3 季",
+            "week": "2027-W22",
             "where": "賭場台詞",
             "what": "禮包大災難的那天，Yuga Bot 收到一張不是我們館的對帳單；它一直以為是詐騙"
+          },
+          {
+            "week": "2027-W20",
+            "where": "季節線",
+            "what": "夏天的第壹張卡開頭寫『這邊也差壹隻』（原本排在第 2 季，太接近 understood，挪到 b12 之後）"
           }
         ],
         "understood": "不是只有這裡差壹隻。水閘的聲音，是別的館在回答。"
@@ -962,7 +967,7 @@
         "season": 2,
         "name": "空白的名牌",
         "weeks": "2026-W51～2027-W04",
-        "main": "誰在寫名牌：m-queue 收；開始露 m-guard、m-world 的線索。接第 1 季結尾『牠在排隊』"
+        "main": "誰在寫名牌：m-queue 收；開始露 m-guard、m-world 的線索。接第 1 季結尾『牠在排隊』；m-guard 的第壹次揭露 2027-W02（b05）。m-world 的第壹次揭露挪到 2027-W06（b06）"
       },
       {
         "season": 3,
@@ -1437,6 +1442,744 @@
             "草稿": "d3 公報送到；d5 政見會最後壹天；d6 投票日（早上領票蓋章、不能拉票、標語蓋白布；晚上「開票夜」活動）；d7 開票後：多壹票、名牌還是空白、燈亮了壹下又暗"
           }
         ]
+      }
+    ]
+  },
+  "revealBeats": {
+    "說明": "揭露節奏（翊文 2026-11-14：「劇情規劃每兩週要揭露一些些更細節的事情」，決定 0078）。每兩週壹次，每次壹件小的、具體的、可驗證的細節；大揭曉還是季末。規則看 docs/劇情揭露節奏.md。**只在帳本，不進遊戲，也不要貼進 PR 說明或 Discord。** 排程週一先看這週有沒有 beat，有就照 detail 和 channels 排；放進遊戲那天把 status 改成 revealed。答案不能寫在 detail 裡。翊文 11-14 同意「可以再具體」：偶爾可以給稱呼或壹點原因，但不給謎底、不寫總數、trace 角色不露臉；有 concrete 的那幾筆在 safe 寫了為什麼還是不破梗。",
+    "rule": "2026-W47 起每隔壹週（2026 有 W53，所以 W53 之後是 2027-W02）。大揭曉週（W50、2027-W04、W17、W30、W43）不在 list 裡，照 mysteries 的 closeBy 收線。",
+    "list": [
+      {
+        "id": "b01",
+        "week": "2026-W47",
+        "mystery": "m-count",
+        "detail": "B1 牆上正字記號，每數八畫多出來的那壹畫，高度跟站在那裡數的人壹樣高。",
+        "buildsOn": [
+          "c-glove-own-hand",
+          "c-handshake-count"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-eighth",
+              "c-clerk"
+            ]
+          }
+        ],
+        "echo": "2026-W48：賭場收藏（荷官對籌碼的帳差壹點，剛好是荷官自己那份）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b02",
+        "week": "2026-W49",
+        "mystery": "m-accountant",
+        "detail": "B3 回來的畫上簽名補齊了，完整寫著「會計」，筆跡跟招領單的小字是同壹隻手，墨還是濕的。",
+        "buildsOn": [
+          "f-sign",
+          "c-corner-half-sign",
+          "c-price-tag-hand"
+        ],
+        "channels": [
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-guardday",
+              "v-qian"
+            ]
+          }
+        ],
+        "echo": "2026-W50：大揭曉週（B4 的帳本最後壹行還在往下寫）",
+        "concrete": true,
+        "safe": "只確認那個人的稱呼和筆跡，以及墨是新的。他在 B4 還沒算完、為什麼字還在變多，都沒說；怎麼想到那裡由玩家自己連。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b03",
+        "week": "2026-W51",
+        "mystery": "m-queue",
+        "detail": "歷任館長的簽到簿：每壹位第壹天那壹行的字都像剛學會寫字，墨色比同頁別的字深，像描過兩遍。",
+        "buildsOn": [
+          "f-name",
+          "c-lost-name-slip",
+          "c-nameplate-wear",
+          "c-blank-sign-line"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "賭場收藏"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-black",
+              "c-bus",
+              "v-fog"
+            ]
+          }
+        ],
+        "echo": "2026-W52：冬至的湯圓（季節線）：碗邊壹樣描過兩遍的字",
+        "concrete": true,
+        "safe": "加了「描過兩遍」這個可量的細節，沒說是誰描的、為什麼；沒說這壹位館長曾經是什麼，也沒說「交接」。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b04",
+        "week": "2026-W53",
+        "mystery": "m-queue",
+        "detail": "歷任館長肖像下面，地板被磨亮壹小塊，高度是蹲著的高度。",
+        "buildsOn": [
+          "b03",
+          "c-coat-pocket-low",
+          "c-shell-line"
+        ],
+        "channels": [
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-sculptor",
+              "v-fog"
+            ]
+          }
+        ],
+        "echo": "2027-W01：賭場收藏（溫的空椅子）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b05",
+        "week": "2027-W02",
+        "mystery": "m-guard",
+        "detail": "排班表從第壹任到現任，夜班那壹欄蓋的都是同壹枚章，章面的字磨到只剩壹個「守」字。",
+        "buildsOn": [
+          "值班紀錄簽名欄空白只蓋章"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "v-lantern"
+            ]
+          }
+        ],
+        "echo": "2027-W03：值班室的壹句話（旁白）",
+        "concrete": true,
+        "safe": "只說章面剩壹個字，這是紙上的磨損；沒說誰蓋的、為什麼從不換人。他的真身（也是排隊的那壹隻）還隔著三步。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b06",
+        "week": "2027-W06",
+        "mystery": "m-world",
+        "detail": "年節的賀年卡，郵戳是別的城（只看得到格式不是本城的，地名被蓋住）。",
+        "buildsOn": [
+          "帳本頁碼是很大的數字"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-postman"
+            ]
+          }
+        ],
+        "echo": "2027-W07：公佈欄（有人說這張卡不是寄給我們的）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b07",
+        "week": "2027-W08",
+        "mystery": "m-guard",
+        "detail": "B1 帽架上警衛的帽子，大小跟蹲著那壹格的高度剛好對上；帽簷內側用鉛筆寫著「借的」。",
+        "buildsOn": [
+          "b05",
+          "c-coat-pocket-low"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "v-lantern",
+              "c-nightmarket"
+            ]
+          }
+        ],
+        "echo": "2027-W09：每週任務旁白",
+        "concrete": true,
+        "safe": "「借的」只是帽簷上的壹個字，沒說跟誰借、借來做什麼；帽子還是只有尺寸，沒有人的樣子。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b08",
+        "week": "2027-W10",
+        "mystery": "m-world",
+        "detail": "B4 的水聲有固定的節奏：連響八下，停壹拍，再響九下，每次都壹樣。",
+        "buildsOn": [
+          "《莫斯科手記．第十年》"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-first",
+              "c-postman"
+            ]
+          }
+        ],
+        "echo": "2027-W11：公佈欄",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b09",
+        "week": "2027-W12",
+        "mystery": "m-guard",
+        "detail": "值班紀錄裡有壹天不是他的字，寫著「他今天去排隊看了壹下，又回來了」。",
+        "buildsOn": [
+          "b05",
+          "b07"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-guardday"
+            ]
+          }
+        ],
+        "echo": "2027-W13：每週任務旁白",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b10",
+        "week": "2027-W14",
+        "mystery": "m-world",
+        "detail": "別的館借展的畫，背面的館章沒看過，編號從「圖鑑格數的下壹號」開始。",
+        "buildsOn": [
+          "b06",
+          "b08"
+        ],
+        "channels": [
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "拍賣預展"
+          },
+          {
+            "where": "賭場收藏"
+          }
+        ],
+        "echo": "2027-W15：拍賣預展說明",
+        "concrete": true,
+        "safe": "編號只說從哪壹號起，沒說有幾間、在哪裡、誰在管；總數不寫。「別的館」只出現在書和特展，NPC 日報不寫。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b11",
+        "week": "2027-W16",
+        "mystery": "m-guard",
+        "detail": "限時活動的話裡夾壹句值班紀錄的語氣：「今晚人多，我站遠壹點。」",
+        "buildsOn": [
+          "b09"
+        ],
+        "channels": [
+          {
+            "where": "限時活動"
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-nightmarket"
+            ]
+          }
+        ],
+        "echo": "2027-W17：大揭曉週（m-guard 收線）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b12",
+        "week": "2027-W18",
+        "mystery": "m-world",
+        "detail": "公佈欄貼出「館際通知：請各館核對本季差額」。",
+        "buildsOn": [
+          "b10"
+        ],
+        "channels": [
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-first"
+            ]
+          }
+        ],
+        "echo": "2027-W19：賭場收藏",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b13",
+        "week": "2027-W20",
+        "mystery": "m-you",
+        "detail": "B2 多壹尊蓋著白布的雕像，白布的折法跟參觀者上次蓋的壹樣；腳邊的名牌是空白的，旁邊壓著壹張字條寫「代為保管」。",
+        "buildsOn": [
+          "《看懂的事》：B2 的雕像是以前的參觀者"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-sculptor"
+            ]
+          }
+        ],
+        "echo": "2027-W21：季節線（夏天）",
+        "concrete": true,
+        "safe": "「代為保管」只說有人替這尊保管，沒說保管的是誰的什麼，也沒說玩家被記在哪壹本帳上；折法是歷任參觀者共同的，不個人化。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b14",
+        "week": "2027-W22",
+        "mystery": "m-world",
+        "detail": "賭場收到壹張不是我們館的對帳單（禮包大災難那天）；荷官壹直以為是詐騙。",
+        "buildsOn": [
+          "arc-yuga 第 6 段"
+        ],
+        "channels": [
+          {
+            "where": "賭場台詞"
+          },
+          {
+            "where": "賭場收藏"
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "NPC 日報"
+          }
+        ],
+        "echo": "2027-W23：每週任務旁白",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b15",
+        "week": "2027-W24",
+        "mystery": "m-you",
+        "detail": "歷任參觀者牆：每壹格上的名字，筆跡都跟前壹格那位參觀者的壹樣，不是自己寫的。",
+        "buildsOn": [
+          "b13",
+          "圖書館第捌章『名牌上的名字，從來不是自己寫的』"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          }
+        ],
+        "echo": "2027-W25：公佈欄",
+        "concrete": true,
+        "safe": "點出「名字是前壹位替後壹位寫的」這個做法（圖書館第捌章已經說過），但只放在參觀者的牆上；沒說玩家有沒有在上面，也沒說誰來寫玩家的。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b16",
+        "week": "2027-W26",
+        "mystery": "m-world",
+        "detail": "第壹位收藏者最後壹張卡的郵戳，日期是他「搬去莫斯科」之後第三年，地名不是莫斯科。",
+        "buildsOn": [
+          "《莫斯科手記．第十年》",
+          "c-first 的 NPC 線"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "NPC 日報",
+            "npc": [
+              "c-postman",
+              "c-first"
+            ]
+          }
+        ],
+        "echo": "2027-W27：每週任務旁白",
+        "concrete": true,
+        "safe": "多了日期和「不是莫斯科」兩個可以核對的事實，沒說他在哪裡、做什麼、跟誰在壹起；他是被載去別的館值班這件事要到 W30。",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b17",
+        "week": "2027-W28",
+        "mystery": "m-world",
+        "detail": "B4 的水聲「停」的那壹下，這次在 B2 也聽得到。",
+        "buildsOn": [
+          "b08"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          }
+        ],
+        "echo": "2027-W29：公佈欄",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b18",
+        "week": "2027-W32",
+        "mystery": "m-you",
+        "detail": "荷官的帳：你的籌碼都對上了，只有「你這個人」那壹欄沒有對上。",
+        "buildsOn": [
+          "2026-W50 帳本最後壹行"
+        ],
+        "channels": [
+          {
+            "where": "賭場收藏"
+          },
+          {
+            "where": "賭場台詞"
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "NPC 日報"
+          }
+        ],
+        "echo": "2027-W33：每週任務旁白",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b19",
+        "week": "2027-W34",
+        "mystery": "m-you",
+        "detail": "圖書館多了壹本「參觀者帳」：每隻做過的佩佩、每幅看過的畫都有登記，最後壹行是空的。",
+        "buildsOn": [
+          "b18"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          }
+        ],
+        "echo": "2027-W35：公佈欄（不個人化的版本）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b20",
+        "week": "2027-W36",
+        "mystery": "m-you",
+        "detail": "退休的參觀者留下的遺物，每壹樣都貼著壹個編號，最後壹個編號停在你前面。",
+        "buildsOn": [
+          "b15"
+        ],
+        "channels": [
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "NPC 日報"
+          }
+        ],
+        "echo": "2027-W37：季節線（秋天）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b21",
+        "week": "2027-W38",
+        "mystery": "m-you",
+        "detail": "中秋寫給還沒出生的佩佩的卡片：收件人欄都是「下壹位」，筆跡是歷任參觀者的。",
+        "buildsOn": [
+          "f-name",
+          "m-queue 的大揭曉"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "今日特展",
+            "clue": true
+          },
+          {
+            "where": "季節線"
+          },
+          {
+            "where": "NPC 日報"
+          }
+        ],
+        "echo": "2027-W39：每週任務旁白",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b22",
+        "week": "2027-W40",
+        "mystery": "m-you",
+        "detail": "櫃台上空白的名牌旁，那支筆的筆桿是溫的。",
+        "buildsOn": [
+          "c-shell-line",
+          "W53 跨年夜櫃台上的筆"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "公佈欄"
+          },
+          {
+            "where": "賭場收藏"
+          }
+        ],
+        "echo": "2027-W41：每週任務旁白",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
+      },
+      {
+        "id": "b23",
+        "week": "2027-W42",
+        "mystery": "m-you",
+        "detail": "名牌旁多了壹張登記單，三個欄位都空著、沒有標題（接 W48 選舉時「票多壹票」）。",
+        "buildsOn": [
+          "b22",
+          "2026-W48 的票多壹票"
+        ],
+        "channels": [
+          {
+            "where": "書",
+            "clue": true
+          },
+          {
+            "where": "房間",
+            "clue": true
+          },
+          {
+            "where": "每週任務旁白"
+          },
+          {
+            "where": "NPC 日報"
+          }
+        ],
+        "echo": "2027-W43：大揭曉週（玩家自己選，收尾前先問翊文）",
+        "status": "planned",
+        "revealedOn": null,
+        "clues": []
       }
     ]
   }

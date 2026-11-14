@@ -88,7 +88,7 @@ T("警告：帳本多了角色但沒有 trace", () => { const c = base(); c.ledg
 // 打包給伺服器：tools/copy_shared.cjs → functions/shared/npc_list_data.js
 T("季節節奏：ties 到後面季節的謎、日期又比前壹季收線早 → 警告；寫了 early 就不警告；early 格式不對 → 擋", () => {
   const c = base(), st = get(c, "c-first").arc[2];
-  assert.ok(st.early, "現在這段標了 early（排程和翊文看過）");
+  st.from = "2026-12-21"; st.early = "測試：排程和翊文看過"; // 揭露對齊後真的檔都不早了，這裡用壞的來測
   const hit = x => x.includes("c-first.json.arc[2]");
   assert.ok(!run(c).warnings.some(hit), "有 early 不警告");
   delete st.early;

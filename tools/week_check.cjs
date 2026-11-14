@@ -624,6 +624,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (!isObj(m) || !m.id) { E(`${lw}.mysteries.list[${i}]`, "要有 id"); return; }
       if (m.status !== "closed" && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && m.closeBy < nowWeek) W(`${lw}.mysteries「${m.id}」`, `預計 ${m.closeBy} 收，到期了還沒收（status 還是 ${m.status}）`);
     });
+    // 揭露節奏（決定 0078）：沒有 revealBeats 的舊帳本照常。格式錯、揭露太像謎底、露臉、地方太少都擋
+    if (L.revealBeats != null) checkRevealBeats(L, G, E, W, `${lw}.revealBeats`, nowWeek);
     // 季節線（決定 0037）：沒有 seasonal 的舊帳本照常
     if (L.seasonal != null) {
       const sl = isObj(L.seasonal) ? L.seasonal.lines : null;
@@ -661,6 +663,62 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   return { errors, warnings, lib };
 }
 
+// 帳本的 revealBeats（docs/劇情揭露節奏.md）：每兩週壹次小揭露。只檢查格式和不破梗，不看遊戲裡有沒有放（那是排程的事）
+const BEAT_WHERE = ["書", "房間", "今日特展", "每週任務旁白", "公佈欄", "賭場收藏", "賭場台詞", "NPC 日報", "季節線", "拍賣預展", "限時活動"];
+const BEAT_CLUE_WHERE = ["書", "房間", "今日特展"]; // 遊戲只記這三種的 clue
+const BEAT_FACE = ["長相", "臉", "眼睛", "模樣", "樣子", "走進來", "現身", "露面"]; // 劇情角色不露臉
+const BEAT_FIRST = "2026-W47"; // 第壹個揭露週；之後每隔壹週
+function checkRevealBeats(L, G, E, W, lw, nowWeek) {
+  const R = L.revealBeats;
+  if (!isObj(R) || !Array.isArray(R.list)) { E(lw, "revealBeats 要是 { list: [...] }"); return; }
+  const mys = asList(L.mysteries && L.mysteries.list), MARKS = /[\s，。、；：！？「」『』（）()\[\]【】《》…—,.;:!?"'·]/g;
+  const grams = new Set();
+  mys.forEach(m => [m.truth, m.understood].forEach(t => { if (typeof t !== "string") return; const x = t.replace(MARKS, ""); for (let i = 0; i + 6 <= x.length; i++) grams.add(x.slice(i, i + 6)); }));
+  const firstMon = G.isoMonday(BEAT_FIRST), seen = new Set(), ids = new Set();
+  let prev = "";
+  R.list.forEach((b, i) => {
+    const w = `${lw}.list[${i}]`;
+    if (!isObj(b)) { E(w, "要是物件"); return; }
+    if (!/^b\d{2}$/.test(b.id || "")) E(w, "id 要是 b01、b02 這種"); else if (ids.has(b.id)) E(w, `id「${b.id}」重複`); else ids.add(b.id);
+    const mon = G.isoMonday(b.week);
+    if (!mon) E(w, "week 要是週的名字（例如 2026-W47）");
+    else {
+      const k = Math.round((Date.parse(mon) - Date.parse(firstMon)) / 604800000);
+      if (k < 0 || k % 2) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週）`);
+      if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露）`); seen.add(b.week);
+      if (prev && b.week <= prev) E(w, "要照週的順序排");
+      prev = b.week;
+    }
+    const m = mys.find(x => x.id === b.mystery);
+    if (!m) E(w, `mystery「${b.mystery}」不在 mysteries 裡`);
+    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && b.week >= m.closeBy) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露`);
+    const d = typeof b.detail === "string" ? b.detail.trim() : "";
+    if (d.length < 8 || d.length > 120) E(w, "detail 要寫壹句具體看得到的細節（8～120 字）");
+    else {
+      const x = d.replace(MARKS, ""); for (let a = 0; a + 6 <= x.length; a++) if (grams.has(x.slice(a, a + 6))) { E(w, `破梗：detail 的「${x.slice(a, a + 6)}」跟 mysteries 的謎底字句壹樣（揭露只寫看到的，不寫為什麼）`); break; }
+      const fc = BEAT_FACE.find(t => d.includes(t)); if (fc) E(w, `detail 不能寫「${fc}」：劇情角色不露臉，只留痕跡`);
+    }
+    if (!Array.isArray(b.buildsOn) || !b.buildsOn.length) E(w, "buildsOn 要寫接在哪些線索上（clue id 或舊的那壹筆 b 號）");
+    const ch = asList(b.channels);
+    if (!Array.isArray(b.channels) || ch.some(c => !isObj(c))) E(w, "channels 要是 [{ where, clue?, npc? }]");
+    else {
+      const wh = ch.map(c => c.where);
+      wh.forEach(x => { if (!BEAT_WHERE.includes(x)) E(w, `channels 的 where「${x}」不認得（${BEAT_WHERE.join("、")}）`); });
+      if (new Set(wh).size < 3) E(w, "channels 至少要三種不同的地方");
+      ch.forEach(c => { if (c.clue && !BEAT_CLUE_WHERE.includes(c.where)) E(w, `「${c.where}」不能放 clue（只有 ${BEAT_CLUE_WHERE.join("、")}）`); });
+      if (!ch.some(c => c.clue)) E(w, "channels 至少壹個要能放 clue（書、房間、今日特展）");
+    }
+    if (!["planned", "revealed", "skipped"].includes(b.status)) E(w, "status 要是 planned、revealed、skipped");
+    else if (b.status === "revealed") {
+      const ok = mon && /^\d{4}-\d{2}-\d{2}$/.test(b.revealedOn || "") && b.revealedOn >= mon && b.revealedOn <= G.addDays(mon, 6);
+      if (!ok) E(w, "revealed 的 revealedOn 要是那壹週裡的日期");
+      if (!asList(b.clues).length) E(w, "revealed 的 clues 要填實際放進遊戲的 clue id");
+    } else if (b.status === "planned" && b.revealedOn) E(w, "planned 的 revealedOn 要是空的");
+    if (b.concrete && (typeof b.safe !== "string" || !b.safe.trim())) E(w, "concrete 的揭露要在 safe 寫為什麼還是不破梗");
+    if (b.status === "planned" && /^\d{4}-W\d{2}$/.test(b.week || "") && b.week < nowWeek) W(w, `${b.week} 已經過了，還是 planned：放了就改 revealed，沒放就改 skipped`);
+  });
+}
+
 // 畫面的程式不能 import 帳本（不打包進網頁，第六節）
 function checkBundle() {
   const errs = [], dir = path.join(ROOT, "web", "src");
@@ -684,4 +742,4 @@ function main() {
   console.log(`每週劇情：正式週 ${n} 週、備用週 ${f} 週、備用的一天 ${s} 天，都過了${r.warnings.length ? `（${r.warnings.length} 個警告）` : ""}`);
 }
 if (require.main === module) main();
-module.exports = { MARKET_BANNED, checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };
+module.exports = { MARKET_BANNED, checkRevealBeats, checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };
