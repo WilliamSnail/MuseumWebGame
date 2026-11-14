@@ -43,7 +43,7 @@ export function fakeBankHall() {
     { id: "sand", name: "紅砂晶片", stale: "今天沒有新行情（外面的資料還沒到），股價先停著。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
     { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
     { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
-    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", px: 189.52, chg: -0.003 }, mult: 4, price: 9971, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
     { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
   stocks.forEach(x => { x.value = x.price * x.mine; x.tax = x.market === "in" ? 0 : 0.05; if (x.mine > 0) { x.avgCost = Math.round(x.price * 0.93 * 100) / 100; x.costTotal = Math.round(x.avgCost * x.mine); x.dayChg = Math.round(x.value * x.chg / (1 + x.chg)); x.dayPct = x.chg; x.pnl = x.value - x.costTotal; x.pnlPct = x.pnl / x.costTotal; } });
@@ -213,6 +213,9 @@ const STOCK_GROUP_ORDER = ["in", "tw", "us", "out"];
 const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付的（含手續費）
 // 真實行情的壹小段：代號、真實價（台股寫元、美股寫美元）、真實漲跌%。沒資料（null）就只寫代號
 const realPx = (n, mk) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${mk === "tw" ? "元" : "美元"}`;
+// 美股：遊戲價旁邊同時寫美金（翊文 11-14：「美股換算台幣，那美股那邊同時顯示美金和台幣」）。倍數 ≥ 30 才算「台幣」（決定 0081 美股 ×32＝美元換台幣），之前的倍數只寫「籌碼」
+const usTwd = s => s && s.market === "us" && Number(s.mult) >= 30;
+const usdText = s => (s && s.market === "us" && s.real && s.real.px != null ? `US$ ${Number(s.real.px).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
 function realBit(s) {
   const r = s.real;
   if (!r) return null;
@@ -289,7 +292,7 @@ function stockRows(list, cur, S) {
       const closed = s.session && s.session.state !== "open";
       rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
         h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : h("small", { class: "ln" }, s.line)),
-        h("span", { class: "bank-tab-num" }, fmt(s.price)), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
+        h("span", { class: "bank-tab-num" }, fmt(s.price), usdText(s) ? h("small", { class: "bank-usd-sm" }, usdText(s)) : null), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
     });
   });
   return rows;
@@ -513,7 +516,8 @@ function stockPane(v) {
     left === "hold" ? holdPanel(v, S, list) : marketPanel);
   const stackEl = h("div", { class: "bank-stack" },
       panel(cur.name, cur.line,
-        h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), upDown(cur.chg, true)),
+        h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), cur.market === "us" ? h("small", { class: "bank-cur" }, usTwd(cur) ? "台幣" : "籌碼") : null, upDown(cur.chg, true),
+          usdText(cur) ? h("span", { class: "bank-usd", title: "外面那支美股現在的美金價格" }, usdText(cur)) : null),
         cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價＝真實價 × ${cur.mult}，每分鐘跟著更新。`) : null) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,

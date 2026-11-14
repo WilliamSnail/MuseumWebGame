@@ -456,3 +456,8 @@ body[data-screen="bank"] #room { background: none; }
   .bank-onescreen > .room-head .sub { order: 2; }
   .bank-onescreen > .room-head .rh-row { order: 3; }
 }
+/* 美股同時寫美金（翊文 11-14）：大字價旁邊壹個小的「US$ 189.52」，行情表的價格下面壹行小字 */
+.bank-quote { flex-wrap: wrap; }
+.bank-quote .bank-cur { font-size: .8125rem; }
+.bank-usd { margin-left: auto; padding: 2px 8px; border: 1px solid rgba(214, 178, 94, .45); border-radius: 6px; color: #E9D9A6; font-size: .875rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bank-usd-sm { display: block; color: var(--bank-mute); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
