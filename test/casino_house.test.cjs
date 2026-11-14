@@ -4,7 +4,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.cultureInterestPct = 0; /* 文化部利息另外在 casino_world.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ G.NUM.casino.houseLoan.cultureInterestPct = 0; /* 文化部利息另外在 casino_world.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
 const house = (G, bank, day = D0) => { const h = G.casHouseFix(G.casHouseNew(), day).house; h.bankroll = bank; return h; };
 const wallet = (G, chips = 50000000, day = D0) => { const w = G.casWalletFix(G.casWalletNew(), day); w.chips = chips; w.st.hands = 1; return w; };
