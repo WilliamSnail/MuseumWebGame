@@ -39,6 +39,7 @@ import "./css/origin2.css"; // 圖書館重做（11-14，ui_screens1.js）
 import "./css/office2.css"; // 館長室重做（11-14，ui_screens3.js） // 畫廊重做（11-14，ui_story.js、ui_art.js）
 import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
 import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
+import "./css/tabx.css"; // 頁籤牌子六種材質（11-14，docs/頁籤牌子素材.md）
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";
