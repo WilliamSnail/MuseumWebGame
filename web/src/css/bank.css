@@ -417,3 +417,13 @@ body[data-screen="bank"] #room { background: none; }
 @media (max-width: 760px) { .bank-helpbtn { min-height: 34px; padding: 0 10px; font-size: .75rem; } .bank-help-q { width: 16px; height: 16px; font-size: .6875rem; } }
 @media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help { max-height: 94dvh; padding: 10px 14px; } .bank-help-chip { min-height: 30px; } .bank-help .bank-acts .bank-btn { min-height: 34px; } .bank-helpbtn { min-height: 30px; padding: 0 8px; font-size: .75rem; } }
 @media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help > .sub { display: none; } .mini-card.bank-help > h2 { font-size: 1rem; margin: 0; } .bank-help-sec ul { font-size: var(--type-small, .75rem); line-height: 1.4; } }
+
+/* 買賣先確認的小視窗、自訂股數（11-14） */
+.bank-confirm { display: grid; gap: 4px; margin: 6px 0 4px; }
+.bank-confirm p { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 4px 0; border-bottom: 1px dashed rgba(120, 90, 50, .35); font-size: var(--type-body, .875rem); }
+.bank-confirm p b { font-variant-numeric: tabular-nums; }
+.bank-confirm p.total { border-bottom: 0; padding-top: 8px; font-size: 1.05rem; color: var(--ink-accent, #8E2A24); }
+.bank-confirm p.warn { color: var(--ink-accent, #8E2A24); }
+.bank-custom { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 8px; align-items: end; margin-top: 6px; }
+.bank-custom .bank-qinfo { grid-column: 1 / -1; margin: 0; min-height: 1.3em; }
+.bank-custom .bank-field { min-width: 0; }
