@@ -389,3 +389,10 @@ body[data-screen="bank"] #room { background: none; }
 .bank-fold[open] > summary { margin-bottom: 6px; }
 .bank-wday.old > summary { cursor: pointer; list-style: none; }
 .bank-wday.old > summary::-webkit-details-marker { display: none; }
+/* 股票列的真實行情壹行（翊文 11-14）：名稱、狀態小牌、代號、真實價排在同壹行，不擠成兩行；窄的時候省略真實漲跌（詳情裡有） */
+.bank-row.stock small.ln.real { display: inline; margin-left: 8px; }
+.bank-row.stock .bank-realtag { display: none; }
+.bank-row.stock .bank-real { display: inline; }
+.bank-row.stock .bank-real > * + * { margin-left: 6px; }
+.bank-book.stocks .bank-bh, .bank-book.stocks .bank-row { grid-template-columns: 2.3fr .8fr 1fr .8fr; }
+@media (max-width: 1240px) { .bank-row.stock .bank-real em { display: none; } }
