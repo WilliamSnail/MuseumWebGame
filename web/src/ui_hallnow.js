@@ -28,22 +28,28 @@ const reviewItem = r => h("li", { class: "hn-rv" },
 
 // 開發的時候沒登入：用示範資料把畫面畫出來（玩家看不到）
 const fake = () => import.meta.env.DEV && !NET.me;
-const FAKE_NOW = { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], around: 5 };
+const FAKE_NOW = { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], around: 5, named: { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"] }, crowd: { n: 15, groups: [{ label: "三位學生", n: 3 }, { label: "旅行團", n: 12 }] }, total: 17 };
 const FAKE_RV = () => [{ who: "夜班的畫商", text: "牆上的畫掛得很正，燈也剛好。下次想看看更暗的那一幅。", stars: 4, at: Date.now() - 3 * 60000, day: 1 }, { who: "戴帽子的旅客", text: "走進來就安靜了。", stars: 5, at: Date.now() - 41 * 60000, day: 1 }, { who: "撐傘的人", text: "有點冷。", stars: 2, at: Date.now() - 3 * 3600000, day: 1 }];
 const nowData = () => (UI.hallNow !== undefined ? UI.hallNow : fake() ? FAKE_NOW : null);
 const reviewData = () => (Array.isArray(UI.reviews) ? UI.reviews : fake() ? FAKE_RV() : null);
 // 展廳現在的人：館友（名單裡在展廳的）＋旅客（now.hall）
 function counts() {
   const mates = (matesByRoom(NET.roster || []).hall || []);
-  const now = nowData(), tourists = now ? Math.max(0, Number(now.hall) || 0) : 0;
-  return { mates, tourists, names: now && Array.isArray(now.names) ? now.names.map(String) : [], total: mates.length + tourists, known: !!now };
+  const now = nowData();
+  // PR 430：now.named（有名字的 NPC）、now.crowd（散客，不具名的團體）、now.total（展廳總人數）；舊的 now.hall／names 只算有名字的
+  const named = now && now.named ? now.named : now ? { hall: now.hall, names: now.names } : null;
+  const tourists = named ? Math.max(0, Number(named.hall) || 0) : 0;
+  const crowd = now && now.crowd ? { n: Math.max(0, Number(now.crowd.n) || 0), groups: Array.isArray(now.crowd.groups) ? now.crowd.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0 })) : [] } : { n: 0, groups: [] };
+  const people = now && typeof now.total === "number" ? Math.max(0, now.total) : tourists + crowd.n;
+  return { mates, tourists, crowd, names: named && Array.isArray(named.names) ? named.names.map(String) : [], total: mates.length + people, known: !!now };
 }
 function openAll() {
   const c = counts(), list = reviewData() || [];
-  const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}）。` : "現在算不出展廳的人數。");
+  const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
   m.card.append(
     c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.join("、")) : null,
+    c.crowd.groups.length ? h("p", { class: "hn-names" }, h("b", null, "散客："), c.crowd.groups.map(g => `${g.label} ${g.n} 位`).join("、")) : null,
     c.mates.length ? h("p", { class: "hn-names" }, h("b", null, "館友："), c.mates.map(x => x.nick).join("、")) : null,
     list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, "還沒有評價。旅客走進展廳的時候，會留一句話。"),
     h("div", { class: "hn-acts" }, btn("知道了", () => m.close(), "primary")));
@@ -58,9 +64,9 @@ export function hallNowBox(mode) {
     if (shown && !box.isConnected) return; // 換了房間：不再畫（計時器會被 clearTimers 清掉）
     if (box.isConnected) shown = true;
     const c = counts(), all = reviewData(), lobby = true, list = (all || []).slice(0, lobby ? 1 : 2);
-    const more = (all && all.length) || c.names.length || c.mates.length ? btn("看全部", openAll, "ghost small hn-more") : null;
+    const more = (all && all.length) || c.names.length || c.mates.length || c.crowd.n ? btn("看全部", openAll, "ghost small hn-more") : null;
     box.replaceChildren(
-      h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
+      h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}${c.crowd.n ? `・散客 ${c.crowd.n}` : ""}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.slice(0, 4).join("、"), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
       lobby ? null : h("div", { class: "hn-h hn-h2" }, "最近的評價"),
       list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, all ? "還沒有評價。" : "還沒有讀到。"),
