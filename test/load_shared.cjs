@@ -22,7 +22,19 @@ function load(extra = {}) {
   vm.createContext(ctx);
   const getters = names().map(n => `get ${n}() { return ${n}; }`).join(",\n");
   vm.runInContext(source() + `\n;globalThis.__G = {\n${getters}\n};`, ctx, { filename: "shared（接起來）.js" });
+  if (!extra.__realMoney) legacyMoney(ctx.__G.NUM);
   return ctx.__G;
+}
+
+// 決定 0081（價格照台幣感覺調、餘額不動）：舊的測試都用「新玩家有 100 萬、最大注 1,000 萬」的量級寫的，
+// 測試的重點是規則、不是數字，所以預設把這幾個「起點、上限」換回舊的量級。要看真正的新數字，load({ __realMoney: true })。
+function legacyMoney(NUM) {
+  const C = NUM.casino;
+  C.startChips = 1000000; C.minBet = 100; C.maxBet = 10000000;
+  Object.assign(C.loan, { limit: 1000000, min: 10000, quick: [100000, 300000, 500000], discord: 100000 });
+  Object.assign(C.bank, { min: 10000, termMin: 100000, quick: [100000, 1000000, 5000000] });
+  NUM.signin.weekChips = 15000000;
+  C.gdp.foodAvg = 100000;
 }
 
 module.exports = { load, ORDER, DIR, strip, exportsOf };

@@ -11,7 +11,7 @@ const total = (G, s) => G.casBookTotal(G.casBookSnap([s.w], s.house, 0, null));
 
 T("倍數與拉回上限：美股 ×4、台股 ×24；每天最多拉回 2×手續費−drag（小於來回手續費加 drag）", G => {
   const C = G.NUM.casino.stock;
-  assert.strictEqual(C.peg.us, 4); assert.strictEqual(C.peg.tw, 24); assert.strictEqual(C.peg.lamPct, 30);
+  assert.strictEqual(C.peg.us, 32); assert.strictEqual(C.peg.tw, 1); assert.strictEqual(C.peg.lamPct, 30);
   assert.ok(Math.abs(G.casStockPullMax() - (2 * C.feePct - C.drag) / 100) < 1e-12);
   assert.ok(G.casStockPullMax() < (2 * C.feePct + C.drag) / 100, "拉回量小於來回成本，看盤的人賺不到");
   const f = C.feePct; C.feePct = 0.2; assert.ok(G.casStockPullMax() < 0.01 && G.casStockPullMax() > 0, "手續費降了，上限跟著降"); C.feePct = f;
@@ -20,8 +20,8 @@ T("第壹次換比例：價位 ＝ 倍數 × 真實價（再扣 drag）；昨天
   const C = G.NUM.casino.stock, s = fresh(G), h = s.house, H = h.stk;
   const old = H.px[ID], oldTw = H.px[TWID];
   roll(G, h, D1, { [ID]: { px: 166.19 }, [TWID]: { px: 4120 } });
-  const to = Math.round(4 * 166.19), toTw = Math.round(24 * 4120);
-  assert.strictEqual(H.px[ID], Math.round(to * (1 - C.drag / 100)), "美股 ×4"); assert.strictEqual(H.px[TWID], Math.round(toTw * (1 - C.drag / 100)), "台股 ×24");
+  const to = Math.round(C.peg.us * 166.19), toTw = Math.round(C.peg.tw * 4120);
+  assert.strictEqual(H.px[ID], Math.round(to * (1 - C.drag / 100)), "美股 ×倍數"); assert.strictEqual(H.px[TWID], Math.round(toTw * (1 - C.drag / 100)), "台股 ×倍數");
   assert.strictEqual(H.prev[ID], to, "昨天收盤換成新比例，漲跌 % 才對");
   assert.strictEqual(H.hist[D1][ID], H.px[ID]);
   assert.strictEqual(JSON.stringify(H.peg.ev.map(e => [e.id, e.from, e.to]).sort()), JSON.stringify([[ID, old, to], [TWID, oldTw, toTw]].sort()));
@@ -40,7 +40,7 @@ T("錢包照比例換股數：市值不變（零頭用籌碼補、從外面世�
   const snap0 = G.casBookSnap([s.w], h, 0, null), t0 = G.casBookTotal(snap0) - G.casBookMinted(snap0) + G.casBookBurned(snap0);
   const c0 = s.w.chips, px0 = h.stk.px[ID], pxTw0 = h.stk.px[TWID];
   roll(G, h, D1, { [ID]: { px: 166.19 }, [TWID]: { px: 4120 } });
-  const to = Math.round(4 * 166.19), toTw = Math.round(24 * 4120);
+  const to = Math.round(G.NUM.casino.stock.peg.us * 166.19), toTw = Math.round(G.NUM.casino.stock.peg.tw * 4120);
   G.casStockPegSync(s.w, h);
   const S = s.w.stk;
   const valueBefore = 1000 * px0; // 換之前用「昨天收盤」的價（H.prev 已換成新比例，這裡用 ev.from）
@@ -67,7 +67,7 @@ T("新錢包（沒有持股）、壞資料：不丟錯；之後才建的錢包�
 });
 T("開盤拉回：往「倍數 × 真實價」拉 lamPct% 的差距，壹天不超過 pullMax；方向對", G => {
   const C = G.NUM.casino.stock, cap = G.casStockPullMax(), lam = C.peg.lamPct / 100;
-  const target = Math.round(4 * 166.19);
+  const target = Math.round(C.peg.us * 166.19);
   const s = fresh(G); roll(G, s.house, D1, { [ID]: { px: 166.19 } }); // 先換比例
   const H = s.house.stk;
   // 小差距（在 cap/lam 以內）：拉回 λ×差距
@@ -87,7 +87,7 @@ T("拉回賺不到（性質）：不管差距多大，壹天的拉回量 ≤ pul
   const C = G.NUM.casino.stock, cap = G.casStockPullMax(), cost = (2 * C.feePct + C.drag) / 100;
   for (const D of [-0.7, -0.3, -0.05, -0.01, 0, 0.01, 0.05, 0.3, 1, 3]) {
     const s = fresh(G); roll(G, s.house, D1, { [ID]: { px: 166.19 } });
-    const target = Math.round(4 * 166.19), px0 = Math.max(1, Math.round(target * (1 + D)));
+    const target = Math.round(C.peg.us * 166.19), px0 = Math.max(1, Math.round(target * (1 + D)));
     s.house.stk.px[ID] = px0; roll(G, s.house, D2, { [ID]: { px: 166.19 } });
     const afterDrag = Math.max(1, Math.round(px0 * (1 - C.drag / 100))), pull = Math.abs(s.house.stk.px[ID] / afterDrag - 1);
     assert.ok(pull <= cap + 1e-3, `D=${D} 拉回 ${pull}`); assert.ok(pull < cost, "小於來回成本");
@@ -118,8 +118,8 @@ T("畫面：館外每支多 real（代號、真實價、真實漲跌）和 mult�
   assert.ok(v0.list.every(x => x.real === null && x.mult > 0), "沒有資料：null");
   G.casStockSetReal(h, null, { day: D0, prevReal: { [ID]: 160 }, R: { [ID]: { px: 166.19 } }, days: {} }, D0, { [ID]: "XYZ" });
   const x = G.casStockView(s.w, h, D0, Date.parse(`${D0}T14:30:00+08:00`), []).list.find(y => y.id === ID);
-  assert.strictEqual(x.real.sym, "XYZ"); assert.strictEqual(x.real.px, 166.19); assert.strictEqual(x.mult, 4);
-  assert.strictEqual(G.casStockView(s.w, h, D0, null, []).list.find(y => y.id === TWID).mult, 24);
+  assert.strictEqual(x.real.sym, "XYZ"); assert.strictEqual(x.real.px, 166.19); assert.strictEqual(x.mult, G.NUM.casino.stock.peg.us);
+  assert.strictEqual(G.casStockView(s.w, h, D0, null, []).list.find(y => y.id === TWID).mult, G.NUM.casino.stock.peg.tw);
 });
 T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
   const fs = require("fs"), path = require("path");

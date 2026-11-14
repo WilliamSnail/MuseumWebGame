@@ -32,7 +32,7 @@ T("遊戲價 ＝ 倍數 × 真實價；遊戲漲跌和真實漲跌壹模壹樣�
   feed(G, doc, 0, 1000); for (let i = 1; i <= 20; i++) feed(G, doc, i, 1000 + i * 3);
   G.casStockTwApply(house, doc, W, tAt(20));
   const H = house.stk;
-  assert.strictEqual(H.px[TW], Math.round(C.peg.tw * 1060), "價 ＝ 24 × 1060");
+  assert.strictEqual(H.px[TW], Math.round(C.peg.tw * 1060), "價 ＝ 倍數 × 1060");
   G.casStockSetReal(house, doc, null, W, { [TW]: "x" });
   const game = H.px[TW] / H.prev[TW] - 1, real = H.real[TW].chg;
   assert.ok(Math.abs(game - 0.06) < 1e-9 && Math.abs(real - 0.06) < 1e-9, `遊戲 ${game} 真實 ${real}`);

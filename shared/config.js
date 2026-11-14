@@ -235,7 +235,7 @@ export const NUM = {
     holiday: { insp: 5, mood: 3, mat: 1 }, // 節日那天簽到多一份（mat ＝星光絨幾份）；紀念日沒有
     weekKinds: ["part", "deco", "mat"],    // 每週全簽到的特別項目，照週的號碼輪流（大家同一週同一種）
     dupInsp: 10,                           // 這週的特別項目已經有了（帽子、裝飾）：換成靈感
-    weekChips: 15000000,                   // 這週七天都簽到（含補簽），另外送賭場籌碼（翊文 11-11：「簽到一週加送1500萬」）。伺服器發，要登入
+    weekChips: 375000,                     // 這週七天都簽到（含補簽），另外送賭場籌碼（翊文 11-11：「簽到一週加送1500萬」）。伺服器發，要登入
     makeupCost: 1,                         // 補簽：這週已經過去、沒簽到的壹天，花幾枚週章補（翊文 11-11：「可以補這週沒有簽到的，花一個週章」）
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
@@ -341,8 +341,8 @@ export const NUM = {
   // 第 4 版（11-09，決定 0040）：Hamachi 賭場（規則 shared/casino*.js，伺服器 functions/casino*.js）。籌碼跟靈感分開，沒有真錢。
   // 標「等翊文」的是我先定的數字，翊文看過再改。賠率、禮包機率、餐點價錢是舊 Discord bot 的（packs、MENU 在 shared/casino_text.js）
   casino: {
-    startChips: 1000000,    // 新玩家的籌碼。舊程式裡沒有預設（錢包檔是手動建的）；20 個舊錢包裡有 3 個剛好是 1,000,000（沒動過的起始值），所以沿用
-    minBet: 100,            // 等翊文：最小的注
+    startChips: 25000,      // 新玩家的籌碼。舊程式裡沒有預設（錢包檔是手動建的）；20 個舊錢包裡有 3 個剛好是 1,000,000（沒動過的起始值），所以沿用
+    minBet: 10,             // 等翊文：最小的注
     maxBet: 10000000,       // 等翊文：最大的注（舊的沒有上限，只看錢包）
     // 外面世界的池子（11-14，規劃 2.12，翊文：「外面世界也是個經濟體系，從那裏扣錢」）：house.world。start 起始、growBase 每天成長（再 ×（1 ＋ growExtPct% × 外部景氣）；真正憑空的，記 worldGrow）、
     //   lowPct 池子低於起始的幾 % 算吃緊；吃緊時賣股、槓桿賺的錢壹天最多付池子的 lowPayPct%，莊家向外面世界貸款暫停（買股照收）。
@@ -372,18 +372,18 @@ export const NUM = {
     grants: [{ id: "moc-2026-11", amt: 1000000000, name: "文化部借款" }],
     // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino_wallet.js 的 casBorrow、casRepay、casLoanRoll
     loan: {
-      limit: 1000000,       // 壹開始的額度（沒還的本金加起來不能超過）。翊文 11-10：「借款最高可以100萬」，問答選「壹開始就能借 100 萬」
+      limit: 25000,         // 壹開始的額度（沒還的本金加起來不能超過）。翊文 11-10：「借款最高可以100萬」，問答選「壹開始就能借 100 萬」
       limitPct: 50,         // 準時還清壹筆，額度多 50%（翊文 11-10：「改成多20%」→「50% 好了」；以前是固定 +20 萬）。沒有上限，無條件進位到整數
       latePct: 10,          // 到期沒還被扣壹次，額度降這麼多 %（翊文 11-10：「額度退回 100 萬……這個不要，只要降10%就好」）。無條件捨去，可以降到 100 萬以下
       repayAfterMin: 15,    // 借了幾分鐘之後才能還（翊文 11-10：「每筆要一天之後才能還」→「改成至少 15分鐘後才能還」）。時間照伺服器的
       interestPct: 10,      // 利息：每筆固定 10%（借 10 萬還 11 萬，提早還也是）
       days: 3,              // 第 D 天借的，第 D+3 天結束前要還；第 D+4 天還沒還就從籌碼直接扣，扣到負的也扣
-      min: 10000,           // 壹次最少借多少
+      min: 250,             // 壹次最少借多少
       // 額度上限和莊家的限制（規劃 2.11a，翊文 11-14「好」）：capMax 額度最多；levelPerDay 壹個人壹天最多升幾級（翊文 11-13：「那兩級好了」，100 萬到 2,000 萬大約 4 天；當天借當天還的不升）；
       // outPct／outMin：全館沒還的本金 ≤ max(outMin, 莊家的錢 × outPct%)；借款要莊家的錢夠（莊家 ≤ 0 暫停）；欠款中（錢包是負的）額度鎖在 limit
       capMax: 20000000, levelPerDay: 2, outPct: 30, outMin: 5000000,
-      quick: [100000, 300000, 500000], // 畫面上的快速按鈕（另外有「借滿」）
-      discord: 100000,      // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
+      quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）
+      discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
     // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino_wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
@@ -422,8 +422,8 @@ export const NUM = {
     // Yuga Bot 銀行（11-13，翊文：「可以投資了」；shared/casino_bank.js，規劃玩法 2）。利息從莊家出，莊家 ≤ 0 不給
     //   savePct：活存每天 %（本金最多算 saveCap）；terms：定存的種類；houseCapPct：壹次最多付莊家的 %；catchup：太久沒來最多補幾天
     //   利率順序（測試擋）：活存 < 定存 < 借款（loan.interestPct／loan.days），借錢來存不會賺
-    bank: { savePct: 0.1, saveCap: 10000000, min: 10000, quick: [100000, 1000000, 5000000],
-      terms: [{ days: 3, pct: 1 }, { days: 7, pct: 3 }], termMax: 3, termMin: 100000, termCap: 10000000, houseCapPct: 0.05, catchup: 30 },
+    bank: { savePct: 0.1, saveCap: 10000000, min: 250, quick: [2500, 25000, 125000],
+      terms: [{ days: 3, pct: 1 }, { days: 7, pct: 3 }], termMax: 3, termMin: 2500, termCap: 10000000, houseCapPct: 0.05, catchup: 30 },
     // 館債（11-13，shared/casino_bond.js，規劃玩法 3）：每週壹期，利率照莊家的錢（bankroll ÷ houseStart 的 %）由好到壞；壹張 unit；
     //   壹個人每期最多 perUser、帳號要開了 minAge 天；有憑證的話，莊家回到起始的 iouAtPct% 以上補付。
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
@@ -469,7 +469,7 @@ export const NUM = {
       twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }],
       // 照真實股價的比例（11-14，規劃 2.8h，翊文「美股×4、台股×24」「可以（拉回）」）：遊戲價 ＝ 倍數 × 真實價。第壹次換日時把價位換成這個比例（持股照比例換股數、市值不變）；
       //   之後每天開盤把遊戲價往「倍數 × 真實價」拉回 lamPct% 的差距，壹天最多拉回 2 × feePct − 0.04（%）：拉回量小於來回手續費加 drag，看盤的人收盤前知道方向也賺不到（test/sim_peg.cjs）
-      peg: { us: 4, tw: 24, lamPct: 30 },
+      peg: { us: 32, tw: 1, lamPct: 30 },
       // 直接用真實價（11-14，規劃 2.8l，翊文：「維持，直接用真實價即時成交」）：direct 開＝遊戲價 ＝ 倍數 × 真實價（每分鐘抓、即時成交；下面的錨點、橋、拉回、drag 都不用，測試設 false 走舊的）。
       //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進預算池（持有成本，取代 drag；%）。
       //   換比例零頭 stockRebase 照舊。真實價的合理範圍 sane（相對前壹收盤的倍數）：超出的當壞資料不收
@@ -517,7 +517,7 @@ export const NUM = {
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
     // 館內 GDP 和景氣指數（11-13，規劃 2.7 節）：每項活動 次數×標準值，不看隨機的賺賠。foodAvg 餐車每份、bjHand 21 點每手、econWin 拚經濟成功平均撥款（r 31～100 平均 65.5 × 30,000）、econSink 失敗沉下去的平均（平均 r 15 × 10,000 × 沒被撈走的 45%）、investPct 銀行存款淨增加算幾 % 進投資；growthFull 成長率 10% ＝ 指數 1；minPeople 過去 7 天來過的人少於這個，館內指數維持 0。標準值是我先定的，等有幾天真的數字再調
-    gdp: { foodAvg: 100000, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
+    gdp: { foodAvg: 150, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
       // 景氣的影響（11-14，規劃 2.7 節）：景氣 B（−1～+1）對拚經濟撥款、門票、存款利率各 ±fxPct%；拚經濟成功抽到的政策持續 polDays 天（到明天），效果 ±polPct%。
       // extSpread：外部景氣＝（最新一季年增率 − 最近四季平均）÷ extSpread（百分點），夾在 ±1。policyFx 是 CAS_ECON.policies 每一項對應的效果（我配的，Yuga 可以改）：tourism 門票、cellar 地下撿、grant 拚經濟撥款多、tighten 撥款少（預算池因此少花）
       fxPct: 10, polPct: 10, polDays: 1, extSpread: 3, extStaleDays: 200,
