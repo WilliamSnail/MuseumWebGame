@@ -240,6 +240,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "gift-fx", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "送佩佩的時候，選好的那隻會顯示地下的數值", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "送佩佩給館友時，選好一隻之後，下面多了「在地下的效果」：這隻自己的強度，還有帽子、姿勢、顏色、心情在地下探索和打怪的效果。送之前可以看清楚再決定。失敗作不會顯示。",
+      ]],
+    ],
+  },
+  {
     id: "workshop-cellar-fx", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "手作坊看得到帽子、姿勢在地下的效果和數字", publish: "2026-11-14", expire: "2027-12-31",
     sections: [

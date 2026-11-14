@@ -90,3 +90,7 @@ button.nf-card.nf-pickcard:disabled { cursor: default; filter: saturate(.55); }
 .lgu-call { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .lgu-call b { flex: 1 1 160px; }
 .share-box .hall-room.visit { margin-top: 10px; }
+
+/* 送佩佩：選好的那隻下面，地下的數值（11-14，ui_screens1.js 的 cellarFxBox） */
+.gf-foot { display: grid; gap: 8px; }
+.gf-foot .ws-fx-list { max-height: 140px; overflow-y: auto; }
