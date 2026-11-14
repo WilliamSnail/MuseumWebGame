@@ -192,6 +192,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "lobby-policy", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
+    title: "大廳看得到「本日政策」", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場拚經濟抽到政策（例如「門票多一成」）之後，大廳右邊「展廳現在有幾人」那塊的最下面多一行「本日政策」：效果、到幾月幾日、政策名字。沒有人抽到的時候不顯示。",
+      ]],
+    ],
+  },
+  {
     id: "library-set-new", v: 1, cat: "館方公告", tags: ["更新"], importance: "low",
     title: "圖庫和設定改版：一個畫面看得完", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
