@@ -8,11 +8,9 @@
 .origin-onescreen .origin-main > .reader { min-height: 0; align-items: flex-start; justify-content: center; padding: 0 4px 10px; }
 .origin-onescreen .origin-main > .reader > .empty { align-self: center; }
 
-/* 頁籤：壹排銅牌，放不下左右滑 */
+/* 頁籤：壹排牌子，放不下左右滑（牌子的圖和字色在 tabx.css） */
 .screen.onescreen-room.origin-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
-.origin-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: #1A0F06; font-size: var(--type-body, .875rem); font-weight: 800; box-shadow: none; border-radius: 0; white-space: nowrap; text-shadow: 0 1px 0 rgba(255, 240, 200, .75); position: relative; }
-.origin-onescreen > .seg.big-tabs .seg-btn.on { border-image-source: url(/ui2/ui2-tab-2.webp); }
-.origin-onescreen > .seg.big-tabs .seg-btn .tab-c, .origin-onescreen > .seg.big-tabs .seg-btn .tab-fresh { font-weight: 400; }
+.origin-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; white-space: nowrap; position: relative; }
 .origin-onescreen > .seg.big-tabs .seg-btn .tab-fresh { position: absolute; top: -6px; right: -4px; }
 
 /* 書架：暗色格子＋銅邊木隔板，書立在隔板上 */
@@ -54,7 +52,6 @@
   .origin-onescreen .shelf::after { bottom: -14px; height: 20px; }
   .origin-onescreen .spine { flex: none; width: 46px; height: 120px; padding: 10px 0 8px; }
   .origin-onescreen .spine:nth-child(3n), .origin-onescreen .spine:nth-child(4n) { height: 120px; }
-  .origin-onescreen > .seg.big-tabs .seg-btn { min-height: 38px; padding: 2px 10px; font-size: var(--type-small, .75rem); }
   .origin-onescreen > .seg.big-tabs { margin-bottom: 4px; }
 }
 /* 手機橫拿：標題、回大廳、頁籤擠成壹行；左書架右讀書 */
@@ -67,7 +64,6 @@
   .screen.origin-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
   .screen.origin-onescreen > .seg.big-tabs { grid-column: 2; grid-row: 1; align-self: end; margin: 0; min-width: 0; }
   .screen.origin-onescreen > .onescreen-main.origin-main { grid-column: 1 / -1; grid-row: 2; min-height: 0; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: 12px; }
-  .origin-onescreen > .seg.big-tabs .seg-btn { min-height: 30px; padding: 0 8px; border-width: 6px; font-size: var(--type-tiny, .6875rem); }
   .origin-onescreen .spine, .origin-onescreen .spine:nth-child(3n), .origin-onescreen .spine:nth-child(4n) { width: 42px; height: 110px; padding: 8px 0 6px; }
   .origin-onescreen .origin-main > .shelves { max-height: none; }
   .origin-onescreen .shelf { padding-top: 24px; }
@@ -78,3 +74,14 @@
 .origin-onescreen > .seg.big-tabs .seg-btn .tab-c { min-width: 0; padding: 0; background: none; color: #4A2A14; font-size: var(--type-small, .75rem); font-weight: 700; letter-spacing: 0; text-shadow: 0 1px 0 rgba(255, 240, 200, .6); }
 .origin-onescreen > .seg.big-tabs .seg-btn .tab-c::before { content: "｜"; opacity: .45; margin-right: 4px; }
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .origin-onescreen > .seg.big-tabs .seg-btn { padding: 2px 14px; gap: 5px; } }
+
+/* ----- 照 U-6：房間是 B-3（暗木牆、吊燈、藍光的窗），書架是壹座木框大書櫃，隔板把書分成幾層 ----- */
+.origin-onescreen { background: none; }
+body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center top / cover fixed no-repeat; }
+.origin-onescreen .origin-main > .shelves { padding: 0; gap: 0; border: 22px solid transparent; border-image: url(/ui2/ui2-shelf-frame.webp) 34 / 22px stretch; background: rgba(14, 9, 8, .78); box-shadow: 0 10px 26px rgba(0, 0, 0, .55); overflow-y: auto; scrollbar-width: thin; align-content: start; }
+.origin-onescreen .origin-main > .shelves > .shelf { background: none; border: 0; box-shadow: none; border-radius: 0; margin: 0 0 22px; padding-left: 8px; padding-right: 8px; }
+.origin-onescreen .origin-main > .shelves > .shelf::after { left: -22px; right: -22px; }
+.origin-onescreen .origin-main > .shelves > .shelf:last-child { margin-bottom: 8px; }
+.origin-onescreen .origin-main > .reader { padding: 0 4px 10px; }
+@media (max-width: 760px) { .origin-onescreen .origin-main > .shelves { border-width: 14px; border-image-width: 14px; } .origin-onescreen .origin-main > .shelves > .shelf::after { left: -14px; right: -14px; } }
+@media (max-height: 500px) and (orientation: landscape) { .origin-onescreen .origin-main > .shelves { border-width: 12px; border-image-width: 12px; } .origin-onescreen .origin-main > .shelves > .shelf::after { left: -12px; right: -12px; } }

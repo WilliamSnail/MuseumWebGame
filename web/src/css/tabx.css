@@ -1,0 +1,33 @@
+/* ================================================================
+   頁籤牌子：六種材質，每個廳挑一種（翊文 11-14 生的 P-13；分類和理由在 docs/頁籤牌子素材.md）
+   用法：廳的根 class 設四個變數；牌子的圖、字色都從變數來，不要每個廳各抄一份 border-image。
+   圖：web/public/ui2/ui2-tabx-<材質>-1（平常）、-2（選好）。放在最後面載入，蓋過各廳舊的黃銅牌。
+   ================================================================ */
+.origin-onescreen   { --tabx-1: url(/ui2/ui2-tabx-wood-1.webp);      --tabx-2: url(/ui2/ui2-tabx-wood-2.webp);      --tabx-ink: #F3E0B0; --tabx-ink-on: #2A1608; --tabx-sh: rgba(0, 0, 0, .65); --tabx-sh-on: rgba(255, 240, 200, .5); }
+.gallery-onescreen  { --tabx-1: url(/ui2/ui2-tabx-brass-1.webp);     --tabx-2: url(/ui2/ui2-tabx-brass-2.webp);     --tabx-ink: #1A0F06; --tabx-ink-on: #1A0F06; --tabx-sh: rgba(255, 240, 200, .7); --tabx-sh-on: rgba(255, 240, 200, .7); }
+.office-onescreen   { --tabx-1: url(/ui2/ui2-tabx-leather-1.webp);   --tabx-2: url(/ui2/ui2-tabx-leather-2.webp);   --tabx-ink: #F7E3B0; --tabx-ink-on: #FFF1C8; --tabx-sh: rgba(0, 0, 0, .65); --tabx-sh-on: rgba(60, 10, 0, .7); }
+.codex-onescreen    { --tabx-1: url(/ui2/ui2-tabx-parchment-1.webp); --tabx-2: url(/ui2/ui2-tabx-parchment-2.webp); --tabx-ink: #3A2410; --tabx-ink-on: #3A2410; --tabx-sh: rgba(255, 255, 255, .5); --tabx-sh-on: rgba(255, 255, 255, .5); }
+.bank-onescreen     { --tabx-1: url(/ui2/ui2-tabx-slate-1.webp);     --tabx-2: url(/ui2/ui2-tabx-slate-2.webp);     --tabx-ink: #E6EEF4; --tabx-ink-on: #F4FAFF; --tabx-sh: rgba(0, 0, 0, .65); --tabx-sh-on: rgba(0, 20, 50, .7); }
+
+/* 共同的牌子（big-tabs：圖書館、畫廊、館長室、圖鑑室；銀行是自己的 .bank-tabbtn，下面另外寫） */
+.screen.onescreen-room > .seg.big-tabs .seg-btn,
+.bank-onescreen > .bank-tabs .bank-tabbtn { border: 14px solid transparent; border-image: var(--tabx-1) 30 40 fill / 14px 22px stretch; border-radius: 0; background: none; box-shadow: none; filter: none; opacity: 1; color: var(--tabx-ink); text-shadow: 0 1px 0 var(--tabx-sh); font-weight: 800; }
+.screen.onescreen-room > .seg.big-tabs .seg-btn.on,
+.bank-onescreen > .bank-tabs .bank-tabbtn.on { border-image-source: var(--tabx-2); color: var(--tabx-ink-on); text-shadow: 0 1px 0 var(--tabx-sh-on); }
+.screen.onescreen-room > .seg.big-tabs .seg-btn:not(.on):hover,
+.bank-onescreen > .bank-tabs .bank-tabbtn:not(.on):hover { filter: brightness(1.12); color: var(--tabx-ink); }
+.screen.onescreen-room > .seg.big-tabs .seg-btn { min-height: 46px; padding: 2px 22px; gap: 8px; letter-spacing: .06em; }
+.bank-onescreen > .bank-tabs .bank-tabbtn { min-height: 46px; padding: 2px 20px; gap: 8px; }
+/* 計數：直接寫在牌子上的小字，不要小圓牌 */
+.screen.onescreen-room > .seg.big-tabs .seg-btn .tab-c { min-width: 0; padding: 0; background: none; color: inherit; opacity: .85; font-size: var(--type-small, .75rem); font-weight: 700; letter-spacing: 0; }
+.screen.onescreen-room > .seg.big-tabs .seg-btn svg, .screen.onescreen-room > .seg.big-tabs .seg-btn .ic { color: inherit; }
+.screen.onescreen-room > .seg.big-tabs .seg-btn .tab-c::before { content: "｜"; opacity: .45; margin-right: 4px; }
+.bank-onescreen > .bank-tabs .bank-tabbtn .bank-ti { color: inherit; }
+.bank-onescreen > .bank-tabs .bank-dot { box-shadow: 0 0 0 2px rgba(20, 28, 40, .9); top: 2px; right: 2px; }
+
+@media (max-width: 760px) {
+  .screen.onescreen-room > .seg.big-tabs .seg-btn, .bank-onescreen > .bank-tabs .bank-tabbtn { border-width: 9px; border-image-width: 9px 16px; min-height: 40px; padding: 0 12px; gap: 5px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room > .seg.big-tabs .seg-btn, .bank-onescreen > .bank-tabs .bank-tabbtn { border-width: 7px; border-image-width: 7px 12px; min-height: 32px; padding: 0 10px; gap: 4px; }
+}
