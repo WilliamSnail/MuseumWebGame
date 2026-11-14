@@ -84,3 +84,9 @@
   .hn-gb-side .hn-chip { flex: none; }
   .screen.origin-onescreen > .onescreen-main.origin-gb { grid-template-rows: auto minmax(0, 1fr); }
 }
+
+/* 名單最多十位：小字壹行，太長用省略號，完整的在「看全部」裡 */
+.hn-h > span { min-width: 0; }
+.hn-sub { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hn-hall .hn-sub { max-width: 160px; }
+.hn-layer .hn-names { line-height: 1.6; }
