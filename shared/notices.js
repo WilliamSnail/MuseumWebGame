@@ -262,6 +262,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "gallery-bank", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "畫廊的拍賣頁籤多了簡易銀行", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "畫廊「拍賣」頁籤最上面多了壹條 Yuga Bot 銀行，跟賭場裡的壹樣：寫著存款、未還、可借多少。按「展開」可以借款、還款、存款、提款，出價之前不用離開畫廊。",
+        "要看完整的銀行，按旁邊的「去銀行」。",
+      ]],
+    ],
+  },
+  {
     id: "gift-fx", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "送佩佩的時候，選好的那隻會顯示地下的數值", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
