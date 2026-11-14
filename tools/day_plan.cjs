@@ -216,6 +216,7 @@ function format(p) {
     B(`  上次的 echo 提示：${p.beat.prev.echo || "（沒寫）"}`);
   } else if (p.beat.kind === "大揭曉週") {
     B(`  收線：${p.beat.closing.join("、")}（照 mysteries 的 closeBy，在當天 dN.json 加 understand；2027-W43 收尾前先問翊文）`);
+    if (p.beat.beat) B(`  同週還有揭露 ${p.beat.beat.id}（${p.beat.beat.mystery}）：${p.beat.beat.detail}（放的地方：${asList(p.beat.beat.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}）`);
   } else B("  不是揭露週也不是回聲週：照原來排，每天至少壹條 clue。");
   asList(p.beat.extras).forEach(x => { B(`  加開（extra，館外壹個月內揭）${x.id}（${x.mystery}）：${x.detail}`); B(`    放的地方：${asList(x.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}；放完壹樣改 revealed、revealedOn、clues；不另外發 Discord`); if (x.concrete) B(`    更具體（concrete）：${x.safe}`); });
   if (p.chapters.length) { B(""); B("【季節線】"); p.chapters.forEach(c => B(`  ${c.line}「${c.title}」：${c.written ? "已放（" + c.written + "）" : "★還沒放書，這週某壹天放，放了把 written 填書的 id"}`)); }

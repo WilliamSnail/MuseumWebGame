@@ -1,0 +1,15 @@
+{
+  "id": "t-receipt",
+  "name": "回條（債主的代理人）",
+  "kind": "trace",
+  "ledger": "回條（債主的代理人）",
+  "story": "只留簽收章和回條，字很短、很客氣。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

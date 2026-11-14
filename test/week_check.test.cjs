@@ -569,6 +569,8 @@ T("帳本 加開的揭露（extra）和子主旨 subthemes／world.layers：真�
   expectErr(c => { X(c).extra = "yes"; }, /extra 只能是 true/);
   expectErr(c => { B(c).find(b => b.id === "b25").extra = undefined; }, /不是揭露週/);
   expectErr(c => { const b = B(c).find(b => b.id === "b25"); b.week = "2026-W47"; }, /已經有壹筆加開|要照週的順序/);
+  expectErr(c => { B(c).find(b => b.id === "b02").mystery = "m-world"; }, /不早於/); // 正常的揭露不能放在收線週
+  expectErr(c => { X(c).week = "2026-W50"; }, /不早於|照週的順序/); // 加開的也不能晚過收線週
   expectErr(c => { S(c).id = "x"; }, /id 要是 st-/);
   expectErr(c => { c.ledger.main.subthemes.list[1].id = S(c).id; }, /重複/);
   expectErr(c => { S(c).deeper = ["只有壹個問題？"]; }, /2～3 個問句/);
