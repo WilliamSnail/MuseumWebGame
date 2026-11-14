@@ -536,5 +536,17 @@ T("館內股的 NPC 劇情日（week.json.npc）：對的過；店不對、日�
   expectErr(c => { c.files["備用/常青1/week.json"].npc = { store: "food", date: "2026-11-18", name: "x" }; }, /備用週不寫 npc/);
 });
 
+T("預告的活動（week.json.fest）：對的過；最多 2 個、店不對、日期不在這週、多寫欄位（想自己寫機率）、同店同天、跟劇情日同店同天、備用週都擋", () => {
+  const ok = c => { c.files["2026-W47/week.json"].fest = [{ store: "food", date: "2026-11-18", name: "夜市週" }, { store: "bj", date: "2026-11-19", name: "牌桌夜" }]; };
+  const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的 fest 要過");
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].fest.push({ store: "job", date: "2026-11-20", name: "x" }); }, /最多 2 個/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].fest[0].store = "bank"; }, /store 要是/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].fest[0].date = "2026-11-25"; }, /date 要是這週內/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].fest[0].p = 0.9; }, /不認得「p」/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].fest[1] = { store: "food", date: "2026-11-18", name: "又一個" }; }, /同一家店同一天/);
+  expectErr(c => { ok(c); c.files["2026-W47/week.json"].npc = { store: "bj", date: "2026-11-19", name: "劇情日" }; }, /跟劇情日/);
+  expectErr(c => { c.files["備用/常青1/week.json"].fest = [{ store: "food", date: "2026-11-18", name: "x" }]; }, /備用週不寫 fest/);
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

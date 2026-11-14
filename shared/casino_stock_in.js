@@ -94,6 +94,13 @@ export function casInHouseFix(house) {
   if (!inBox(H.npcEv)) H.npcEv = {};
   for (const d of Object.keys(H.npcEv)) { const e = H.npcEv[d]; if (!inDay(d) || !inBox(e) || !IN_STORES.includes(e.store)) delete H.npcEv[d]; else H.npcEv[d] = { ...(e.burst ? { burst: true } : {}), store: e.store, name: typeof e.name === "string" ? e.name.slice(0, 40) : "", n: inN(e.n) }; }
   const ed = Object.keys(H.npcEv).sort(); for (const d of ed.slice(0, Math.max(0, ed.length - C.histDays))) delete H.npcEv[d];
+  // 活動、突發事件多來的旅客（算平均時扣掉）：npcX[日期][店]；預告的活動結果：npcFest[日期] ＝ [{ store, name, ok, n }]
+  if (!inBox(H.npcX)) H.npcX = {};
+  for (const d of Object.keys(H.npcX)) { if (!inDay(d) || !inBox(H.npcX[d])) delete H.npcX[d]; else for (const s of Object.keys(H.npcX[d])) { const n = inN(H.npcX[d][s]); if (IN_STORES.includes(s) && n > 0) H.npcX[d][s] = n; else delete H.npcX[d][s]; } }
+  const xd = Object.keys(H.npcX).sort(); for (const d of xd.slice(0, Math.max(0, xd.length - C.histDays))) delete H.npcX[d];
+  if (!inBox(H.npcFest)) H.npcFest = {};
+  for (const d of Object.keys(H.npcFest)) { const L = H.npcFest[d]; if (!inDay(d) || !Array.isArray(L)) delete H.npcFest[d]; else H.npcFest[d] = L.filter(e => inBox(e) && IN_STORES.includes(e.store)).slice(0, 2).map(e => ({ store: e.store, name: typeof e.name === "string" ? e.name.slice(0, 40) : "", ok: !!e.ok, n: inN(e.n) })); }
+  const fd = Object.keys(H.npcFest).sort(); for (const d of fd.slice(0, Math.max(0, fd.length - C.histDays))) delete H.npcFest[d];
   // 前壹天的開盤價（掛單、停損停利隔天補查前壹天盤中碰過的價用；更早的不留）
   if (!inBox(H.pre)) H.pre = { day: null, open: {} };
   H.pre.day = inDay(H.pre.day) ? H.pre.day : null;
@@ -129,12 +136,21 @@ export function casInSeries(open, day, id, secret = SECRET) {
 // 昨天這家店不同的人數 a，對照前 avgDays 個「有效日」（人數 ≥ minPeople）的平均。回傳 { m, quiet }
 // 那天這家店「不同的人」＝ 館友 ＋ NPC
 const inTot = (H, d, id) => inN(H.use[d] && H.use[d][id]) + inN(H.npc && H.npc[d] && H.npc[d][id]);
+// 算「平均」用的人數：扣掉活動、突發事件那天多來的旅客（H.npcX），不然壹次大事件會把之後 7 天的平均墊高，之後每天的跳空都偏負，被放空賺走
+const inAvgTot = (H, d, id) => Math.max(0, inTot(H, d, id) - inN(H.npcX && H.npcX[d] && H.npcX[d][id]));
+// 接下來幾天預告的活動（日報用）：festDays { 日期: [{ store, name }] }（content/weeks 的 week.json.fest）；回傳 day 起 ahead 天內的 [{ date, store, name }]
+export function casInFestUp(festDays, day, ahead = NUM.casino.stockIn.festAhead) {
+  const out = [];
+  if (!inDay(day) || !inBox(festDays)) return out;
+  for (let i = 0; i <= ahead; i++) { const d = inAdd(day, i); for (const f of Array.isArray(festDays[d]) ? festDays[d] : []) if (inBox(f) && IN_STORES.includes(f.store)) out.push({ date: d, store: f.store, name: typeof f.name === "string" ? f.name.slice(0, 40) : "" }); }
+  return out;
+}
 // Poisson 亂數（用種子的亂數函式）
 function inPois(rnd, lam) { const L = Math.exp(-lam); let k = 0, p = 1; do { k++; p *= rnd(); } while (p > L && k < 60); return k - 1; }
 export function casInJump(H, id, day, B, secret = SECRET) {
   const C = NUM.casino.stockIn, y = inAdd(day, -1), a = inTot(H, y, id);
   const valid = [];
-  for (let i = 2; i <= C.histDays && valid.length < C.avgDays; i++) { const n = inTot(H, inAdd(day, -i), id); if (n >= C.minPeople) valid.push(n); }
+  for (let i = 2; i <= C.histDays && valid.length < C.avgDays; i++) { const n = inAvgTot(H, inAdd(day, -i), id); if (n >= C.minPeople) valid.push(n); }
   if (a < C.minPeople || valid.length < C.minDays) return { m: 0, quiet: true };
   const avg = valid.reduce((s, x) => s + x, 0) / valid.length, rnd = mulberry32(hashStr(`${secret}|${day}|${id}|jump`));
   const b = Number.isFinite(+B) ? Math.max(-1, Math.min(1, +B)) : 0;
@@ -151,28 +167,44 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
   if (inBox(H.npc[d])) return H.npc[d];
   const out = {}, ev = npcDays && inBox(npcDays[d]) ? npcDays[d] : null;
   const trip = npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length ? npcTrips(d, secret, npcCtx.list, npcCtx.counters) : null; // 有名單：每位 NPC 各抽今天去哪幾家（npc_trip.js）；沒有：Poisson
+  const fests = npcCtx && npcCtx.fest && Array.isArray(npcCtx.fest[d]) ? npcCtx.fest[d] : [], X = {};
   for (const id of IN_STORES) {
     const players = inN(H.use[d] && H.use[d][id]), rnd = mulberry32(hashStr(`${secret}|${d}|${id}|npc`));
     const cap = Math.floor(players * C.npcShareMax / (100 - C.npcShareMax));
     let n = Math.min(cap, trip ? trip.counts[id] : inPois(rnd, C.npcLambda));
     if (ev && ev.store === id) {
       const valid = [];
-      for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
+      for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inAvgTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
       const avg = valid.length ? valid.reduce((s, x) => s + x, 0) / valid.length : players, b = C.npcBoostMin + rnd() * (C.npcBoostMax - C.npcBoostMin);
       const extra = Math.round(Math.min(b, 0.33) * avg);
-      n += extra;
+      n += extra; X[id] = (X[id] || 0) + extra;
       H.npcEv[d] = { store: id, name: typeof ev.name === "string" ? ev.name.slice(0, 40) : "", n: 0 };
     }
     if (!(ev && ev.store === id) && C.npcBurstPct > 0) { // 突發大事件（不預告）：獨立的亂數，不影響上面的抽法
       const br = mulberry32(hashStr(`${secret}|${d}|${id}|burst`));
       if (br() * 100 < C.npcBurstPct) {
         const valid = [];
-        for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
-        if (valid.length) { n += Math.round(Math.min(C.npcBurstMax, C.npcBurstMin + br() * (C.npcBurstMax - C.npcBurstMin)) * valid.reduce((s, x) => s + x, 0) / valid.length); if (!H.npcEv[d]) H.npcEv[d] = { store: id, name: "", n: 0, burst: true }; }
+        for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inAvgTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
+        if (valid.length) { const ex = Math.round(Math.min(C.npcBurstMax, C.npcBurstMin + br() * (C.npcBurstMax - C.npcBurstMin)) * valid.reduce((s, x) => s + x, 0) / valid.length); X[id] = (X[id] || 0) + ex; n += Math.round(Math.min(C.npcBurstMax, C.npcBurstMin + br() * (C.npcBurstMax - C.npcBurstMin)) * valid.reduce((s, x) => s + x, 0) / valid.length); if (!H.npcEv[d]) H.npcEv[d] = { store: id, name: "", n: 0, burst: true }; }
       }
+    }
+    // 預告的活動：這家店今天有活動，festP 的機率辦成（種子有祕密）
+    for (const f of fests.filter(f => f && f.store === id).slice(0, 2)) {
+      const fr = mulberry32(hashStr(`${secret}|${d}|${id}|fest`)), ok = fr() < C.festP;
+      let extra = 0;
+      if (ok) {
+        const valid = [];
+        for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inAvgTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
+        const avg = valid.length ? valid.reduce((s, x) => s + x, 0) / valid.length : players;
+        extra = Math.round((C.festMin + fr() * (C.festMax - C.festMin)) * avg);
+      }
+      n += extra; X[id] = (X[id] || 0) + extra;
+      if (!Array.isArray(H.npcFest[d])) H.npcFest[d] = [];
+      H.npcFest[d].push({ store: id, name: typeof f.name === "string" ? f.name.slice(0, 40) : "", ok, n: extra });
     }
     out[id] = n;
   }
+  for (const id of Object.keys(X)) if (X[id] > 0) { if (!inBox(H.npcX[d])) H.npcX[d] = {}; H.npcX[d][id] = X[id]; }
   H.npc[d] = out;
   if (H.npcEv[d]) H.npcEv[d].n = out[H.npcEv[d].store];
   return out;

@@ -459,6 +459,26 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         if (G.NUM.casino.stockIn.npcBoostMax > 0.33) E(nw, "NUM.casino.stockIn.npcBoostMax 不能超過 0.33（再大，預先進場就賺得到，規劃 2.8k）");
       }
     }
+    // 預告的活動（規劃 2.8k，翊文 11-14）：每週最多 2 個，{ store, date, name }；日報提前幾天預告，當天 NUM.casino.stockIn.festP 的機率辦成（結果和人數大小不是內容決定的）。可以不寫
+    if (wk.fest !== undefined) {
+      const fw = where + "/week.json.fest", mon = o.fallback ? null : G.isoMonday(name);
+      if (o.fallback) E(fw, "備用週不寫 fest（沒有日期）");
+      else if (!Array.isArray(wk.fest) || wk.fest.length > 2) E(fw, "要寫成最多 2 個的陣列 [{ store, date, name }]");
+      else {
+        const seen = new Set();
+        wk.fest.forEach((f, i) => {
+          const w2 = `${fw}[${i}]`;
+          if (!isObj(f)) return E(w2, "要寫成 { store, date, name }");
+          Object.keys(f).forEach(k => { if (!["store", "date", "name"].includes(k)) E(w2, `不認得「${k}」：只能寫 store、date、name；機率和人數是 NUM.casino.stockIn 的 festP、festMin～festMax，內容不能自己寫`); });
+          if (!G.IN_STORES.includes(f.store)) E(w2, `store 要是 ${G.IN_STORES.join("、")} 其中一個`);
+          if (typeof f.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(f.date) || f.date < mon || f.date > G.addDays(mon, 6)) E(w2, "date 要是這週內的日期");
+          text(w2 + ".name", f.name, 24);
+          const key = f.store + "|" + f.date; if (seen.has(key)) E(w2, "同一家店同一天不能有兩個活動"); seen.add(key);
+          if (wk.npc && wk.npc.store === f.store && wk.npc.date === f.date) E(w2, "跟劇情日（npc）同一家店同一天，兩個加成會疊在一起");
+        });
+        if (G.NUM.casino.stockIn.festP * (G.NUM.casino.stockIn.festMin + G.NUM.casino.stockIn.festMax) / 2 * G.NUM.casino.stockIn.k * 100 >= 2 * G.NUM.casino.stock.feePct + G.NUM.casino.stock.holdPct) E(fw, "festP × b 太大：預先進場的期望報酬超過來回成本（規劃 2.8k）");
+      }
+    }
     // 賭場的每週收藏（決定 0042）：3～5 件、條件認得、字數、畫面用「壹」、禁用字、集滿的獎勵。可以不寫（舊的週照常）；每天的 casino 在 dayOk
     ctx.casIds = new Set();
     ctx.hasCasino = wk.casino !== undefined;
