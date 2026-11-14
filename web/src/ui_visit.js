@@ -24,7 +24,7 @@ import { NET } from "./net_firebase.js";
 import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { RANK, ago, reloadSave } from "./ui_login.js";
-import { roomHead } from "./ui_screens1.js";
+import { cellarFxBox, roomHead } from "./ui_screens1.js";
 import { learnText } from "../../shared/shop.js";
 import { posterWall } from "./ui_themeshow.js";
 
@@ -290,6 +290,8 @@ export function openGift(friend) {
       foot = h("div", { class: "gf-sel" }, h("span", { class: "gf-sel-art", html: itemHTML(sel) }),
         h("div", { class: "gf-sel-body" }, h("b", null, titleOf(sel)), lines.map(t => h("p", null, t)), h("p", null, "送出去就拿不回來。")),
         btn(busy ? "寄送中……" : `送給 ${friend.nick}`, send, "primary", { disabled: busy || undefined }));
+      // 11-14：送之前看得到這隻在地下的數值（強度、帽子姿勢的效果；失敗作不能下地下就不放）
+      if (sel.kind !== "failed") foot = h("div", { class: "gf-foot" }, foot, cellarFxBox(sel.pick, { rarityKnown: true, perfect: !!can.perfect }));
     } else foot = h("p", { class: "pt-hint gf-hint" }, sent ? `寄出去了：${sent}。還要再送的話，再選壹隻。` : "先選壹隻。");
     m.surface.replaceChildren(h("div", { class: "pt-wrap gf-wrap" },
       h("p", { class: "nb-hint pt-intro" }, `寄到 ${friend.nick} 的信箱：他不在線也收得到，上線後自己領（${SOCIAL.mailDays} 天沒領就不見）。受傷的、在地下的不能送；擺在展台上的，只有壹隻要先拿下來。`),
