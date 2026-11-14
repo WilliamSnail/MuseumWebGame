@@ -196,3 +196,12 @@
 7. **NPC 占一家店人數的上限 40%**（`npcShareMax`）。
 
 **還沒決定、等步驟 3 上線之後看**：NPC 要不要買股票（建議不要，會讓館內股變成機器人在玩）；NPC 的好感和成長（步驟 5）；NPC 買畫公告寫不寫名字（建議寫）。
+
+---
+
+## 七、接線收尾（11-14）
+
+- **每位委託人自己的進度**：`house.npcc.cl = { 委託人 id: 張數 }`（`comm` 是全館總數，`hall` 是展廳人次，都還在）。伺服器算不出每張委託是誰（要看玩家的存檔），所以交委託時網頁一起說「委託人的名字」（`act: "job"` 的 `clients`，跟 `slots` 壹對壹），伺服器用名單認人，不認得的只算進 `comm`。`npcCounters(house.npcc)`（shared/npc.js）：有 `cl` 就用每位自己的數，沒有（舊資料）就用 `comm` 總數。
+- **網頁也知道進度**：`casino` 的 `peek` 多回 `npcc: { comm, hall, cl }`，`ui_today.js` 存進 `npcWebSet`，展廳的故事留言、館內近況、參觀者都用 `npcWebCounters()`。沒登入或還沒收到就只看日期。
+- **委託櫃台每天平均 2 位**：後期故事線把 `job` 權重換掉，櫃台只剩約 1.5 位；補了幾位的 `route.job`。`node tools/npc_avg.cjs` 看五家店平均（目標 2）。
+- **拍賣成交者**：`casAucView().done[]` 多 `buyerName`（NPC「館外的收藏家 某某」、玩家壹律「館友」、流標是 null）和 `npcBuyer`。

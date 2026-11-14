@@ -6,6 +6,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const D0 = "2026-11-16";
+const same = (a, b) => assert.strictEqual(JSON.stringify(a), JSON.stringify(b)); // G 在另壹個 vm，物件的原型不同，不能直接 deepStrictEqual
 
 T("行程：平均每家店每天約 npcLambda 位；有些 NPC 哪裡都不去；劇情角色跳過；同樣輸入同樣輸出、換祕密不同", G => {
   const lam = G.NUM.casino.stockIn.npcLambda, list = G.NPC_ROSTER.concat([{ id: "t-x", name: "影", kind: "trace", route: { food: 10 }, arc: [] }]);
@@ -17,7 +18,7 @@ T("行程：平均每家店每天約 npcLambda 位；有些 NPC 哪裡都不去�
     none += list.filter(n => n.kind !== "trace" && !r.visits[n.id]).length;
   }
   let near = 0; for (const s of Object.keys(tot)) { const m = tot[s] / days; assert.ok(m > 1 && m < lam + 0.35, `${s} 平均 ${m}`); if (Math.abs(m - lam) < 0.35) near++; } // 名單裡愛去這家店的人太少時（每個人機率封頂 1），平均會低於 λ
-  assert.ok(near >= 3, "至少三家平均約 λ");
+  assert.strictEqual(near, 5, "五家店都平均約 λ（委託櫃台以前只有 1.5，11-14 補了 route.job）");
   assert.ok(none > 0, "有的 NPC 有的日子哪裡都不去");
   assert.strictEqual(JSON.stringify(G.npcTrips(D0, "甲", list, null)), JSON.stringify(G.npcTrips(D0, "甲", list, null)));
   assert.notStrictEqual(JSON.stringify(G.npcTrips(D0, "甲", list, null)), JSON.stringify(G.npcTrips(D0, "乙", list, null)));
@@ -35,6 +36,29 @@ T("全館計數：交委託、收門票時累加 house.npcc（故事線解鎖用
   assert.ok(G.casJobChips(w, h, ["0", "1"], D0).ok); assert.strictEqual(h.npcc.comm, 2);
   const s = G.casBookSnap([w], h, 0, D0), doc = { day: "2026-12-01", at: 0, snap: s, diff: G.casBookDiff(null, s), opening: 0 };
   const txt = G.casReportView(doc).secs.map(x => x.lines.join("|")).join("\n"); assert.ok(txt.includes("館內近況："), txt.slice(0, 300));
+});
+T("全館計數 per client：交委託帶委託人名字，記到他名下；不認得的只算全館；npcCounters 有 cl 用 cl、沒有用舊的總數", G => {
+  const h = G.casHouseFix(G.casHouseNew(), D0).house, w = G.casWalletFix(G.casWalletNew(), D0);
+  assert.ok(G.casJobChips(w, h, ["0", "1", "2"], D0, undefined, ["數學老師", "數學老師", "路人甲"]).ok);
+  assert.strictEqual(h.npcc.comm, 3); same(h.npcc.cl, { "c-math": 2 });
+  assert.ok(G.casJobChips(w, h, ["0", "3"], D0, undefined, ["數學老師", "賣傘的老闆"]).ok); // 0 今天交過了：不重複算
+  same(h.npcc.cl, { "c-math": 2, "c-umbrella": 1 }); assert.strictEqual(h.npcc.comm, 4);
+  assert.ok(G.casJobChips(w, h, ["4"], D0, undefined, ["亂".repeat(50)]).ok); assert.strictEqual(Object.keys(h.npcc.cl).length, 2, "亂寫的名字不記"); assert.strictEqual(h.npcc.comm, 5);
+  const w2 = G.casWalletFix(G.casWalletNew(), D0); assert.ok(G.casJobChips(w2, h, ["0"], D0).ok); assert.strictEqual(h.npcc.comm, 6); assert.strictEqual(Object.keys(h.npcc.cl).length, 2); // 沒帶名字（舊版網頁）：只算全館
+  same(G.npcCounters(h.npcc).commissions, h.npcc.cl);
+  same(G.npcCounters({ comm: 5, hall: 2 }), { commissions: 5, hallVisits: 2 }); assert.strictEqual(G.npcCounters(null), null);
+  const s = G.casBookSnap([w], h, 0, D0); same(s.house.npcc.cl, h.npcc.cl);
+  const n = G.npcById("c-math"), step = G.npcArcIndex(n, "2027-06-01", { commissions: { "c-umbrella": 99 }, hallVisits: 0 });
+  assert.strictEqual(step, 0, "別的委託人交再多，數學老師的第 2 段（要 6 張）也不解鎖");
+  assert.ok(G.npcArcIndex(n, "2027-06-01", { commissions: { "c-math": 6 }, hallVisits: 0 }) >= 1);
+  const pub = G.npcPublic({ comm: 3.7, hall: "x", cl: { a: 2, b: -1 }, secret: 1 }); same(pub, { comm: 3, hall: 0, cl: { a: 2, b: 0 } });
+});
+T("網頁收到 peek 的 npcc 之後，展廳的故事線照全館進度解鎖（沒收到就只看日期）", G => {
+  const n = G.npcById("c-math"), day = "2027-06-01";
+  assert.strictEqual(G.npcWebCounters(), null); const open = G.npcArcIndex(n, day, G.npcWebCounters());
+  G.npcWebSet({ comm: 0, hall: 0, cl: { "c-math": 1 } }); assert.ok(G.npcArcIndex(n, day, G.npcWebCounters()) < open, "進度不夠：停在前面");
+  G.npcWebSet({ comm: 99, hall: 99, cl: { "c-math": 99 } }); assert.strictEqual(G.npcArcIndex(n, day, G.npcWebCounters()), open);
+  G.npcWebSet(null); assert.strictEqual(G.npcWebCounters(), null);
 });
 T("GDP：投資 I 加股票淨流入外面世界（玩家和館方）；門票從外面世界付也算淨出口", G => {
   const K = G.NUM.casino.gdp, z = G.casGdpOf({ act: {}, wflow: {} });

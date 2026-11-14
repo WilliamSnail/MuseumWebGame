@@ -5,7 +5,7 @@
 // ---------- 小工具 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_PARTS, PILLOW_PARTS, RARITY_TABLE, RENAMED, UPGRADES } from "./config.js";
-import { npcByName, npcPickHall, npcStoryLine } from "./npc.js";
+import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, QUIRK_TEXT, STORY_CHAPTERS, VISITOR_COMMENTS } from "./content.js";
 import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
 import { hallSize, hasTalent, hasUp, sequelEvents, skillCheck } from "./logic3.js";
@@ -1339,8 +1339,8 @@ export function visitorArrive(P, rng = RNG) {
   const day = todayStr(), got = visitorInspToday(P, day);
   // 館內 NPC（11-14，shared/npc.js）：來的人有名字。照 route.hall 的權重抽壹位（跟上壹位不同）；NUM.npc.hallStory 的機率說自己的故事（現在這壹段的字，還沒有就說身分），其餘照舊留壹般的評語。
   //   壹般評語的 who 剛好是某位 NPC（老派收藏家、數學老師…）就算是他說的（npc 欄）。不改靈感、不改來的間隔
-  const last = P.visitorLog[0], np = npcPickHall(rng, day, null, undefined, last && last.npc);
-  const sl = np && rng() < NUM.npc.hallStory ? npcStoryLine(np.id, day, null) : null;
+  const last = P.visitorLog[0], np = npcPickHall(rng, day, npcWebCounters(), undefined, last && last.npc);
+  const sl = np && rng() < NUM.npc.hallStory ? npcStoryLine(np.id, day, npcWebCounters()) : null;
   if (sl) c = sl; else { const nm = npcByName(c.who); if (nm) c = { who: c.who, text: c.text, npc: nm.id }; }
   const want = isFree(P) ? 0 : 1 + Math.floor(hs.score / NUM.visitorStep), gain = Math.max(0, Math.min(want, NUM.visitorInspDay - got));
   const full = !isFree(P) && gain < want; // 今天的份拿滿了：參觀者還是會來、留話，只是不給靈感

@@ -12,7 +12,8 @@
   "route": {
     "hall": 5,
     "craft": 3,
-    "food": 1
+    "food": 1,
+    "job": 2
   },
   "budget": {
     "tier": "comfortable",

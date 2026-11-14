@@ -10,7 +10,8 @@
   "route": {
     "food": 5,
     "hall": 2,
-    "bj": 1
+    "bj": 2,
+    "job": 2
   },
   "budget": {
     "tier": "drifter",

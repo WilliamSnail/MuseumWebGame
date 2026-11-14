@@ -10,6 +10,7 @@
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { visibleNotices } from "../../shared/notices.js";
 import { dailyCommissions, isFree, realTodayStr, regularsView } from "../../shared/logic.js";
+import { npcWebSet } from "../../shared/npc.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, icon, navTo, snd, updateBoardBadges } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
@@ -24,6 +25,7 @@ async function readCasino() {
     const r = await NET.call("casino", { act: "peek" });
     if (r && typeof r.packs === "number") CAS = { packs: r.packs, econ: typeof r.econ === "number" ? r.econ : 0, day: realTodayStr() };
     if (ADDONS.workPeek) ADDONS.workPeek(r); // 欠款要送人下去（決定 0064，ui_work.js）
+    if (r && r.npcc) npcWebSet(r.npcc); // 館內 NPC 故事線的全館進度（house.npcc，shared/npc.js）：展廳的故事留言、館內近況用
     if (r && typeof r.stockFresh === "number") { UI.bankFresh = r.stockFresh; if (ADDONS.bankFresh) ADDONS.bankFresh(); } // 銀行股票有幾支價格變過（導覽圖銀行的「新」，PR 353）
   } catch (e) { /* 讀不到就先不列賭場的，下次打開再讀 */ }
   return CAS;

@@ -39,6 +39,7 @@ import { casEconLeft, casEconPlay, casEconView } from "./shared/casino_econ.js";
 import { casBondBuy, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
 import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
 import { casArtSecret } from "./shared/casino_art.js";
+import { npcCounters, npcPublic } from "./shared/npc.js";
 import { NPC_DAYS } from "./shared/npc_data.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { casInvestRun } from "./shared/casino_invest.js";
@@ -98,7 +99,7 @@ export async function playCore(me, email, opts, fn) {
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
-      casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, counters: { commissions: house.npcc && house.npcc.comm, hallVisits: house.npcc && house.npcc.hall } }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
@@ -383,7 +384,7 @@ export const casino = onCall(async req => {
       if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       const hs = await houseRef().get(); // 大廳導覽圖銀行的「新」：館外幾支股票的價自從上次看過之後變過（只讀，不寫）
       const stockFresh = hs.exists ? casStockFreshN(w, parse(hs)) : 0;
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, npcc: hs.exists ? npcPublic(parse(hs).npcc) : null }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
@@ -393,7 +394,7 @@ export const casino = onCall(async req => {
     });
     // 交委託拿籌碼（決定 0062）：畫面只說交了今天的哪幾張，給多少、一天幾張、同一張不重複都是這裡算
     case "job": return play(req, me, {}, ctx => {
-      const r = casJobChips(ctx.w, ctx.house, d.slots, ctx.day);
+      const r = casJobChips(ctx.w, ctx.house, d.slots, ctx.day, undefined, d.clients);
       return r.ok ? { ok: true, found: r.found, n: r.n, chips: ctx.w.chips } : no(r);
     });
     // 拚經濟（決定 0052）：結果、莊家的錢、錢包都在這個交易裡算；一人一天幾次、連點都在這裡擋（交易一個一個排隊，第二下看到的已經是新的次數）。畫面只拿到結果和要跳的字
