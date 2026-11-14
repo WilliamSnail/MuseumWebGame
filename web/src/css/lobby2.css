@@ -360,3 +360,8 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .l2-todo b { font-size: .82rem; } .l2-todo small { font-size: .68rem; }
   .l2-s { width: 44px; height: 44px; font-size: .74rem; } .l2-seal small { font-size: .66rem; }
 }
+
+/* 銀行的牌子大壹點、金邊加光暈（翊文 11-14：「銀行可以再稍微大壹點讓他比較明顯嗎」）：它放在暗暗的小門廳裡，跟別的房間壹樣大就看不到 */
+.l2-room[data-room="bank"] .l2-tag { transform: translateX(-50%) scale(1.3); transform-origin: 50% 100%; bottom: 10%; box-shadow: inset 0 0 0 1px rgba(255, 222, 140, .95), 0 0 12px rgba(255, 214, 120, .5); }
+.l2-room[data-room="bank"] .l2-tag img { width: 1.9em; height: 1.9em; }
+.l2-room[data-room="bank"] .l2-tn { font-weight: 800; }
