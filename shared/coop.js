@@ -169,7 +169,7 @@ export function coopPreview(run, Ps) {
   const room = coopRoom(run);
   if (!room) return null;
   const tp = coopPower(run, Ps, room), pr = run.pressure || coopPressure(run);
-  const gent = teamHas(run.team, "帽子", "紳士帽") ? 10 : 0;
+  const gent = teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0;
   const choices = room.choices.map((c, i) => {
     const k = c.check, o = { i, type: k.type };
     if (k.type === "power") Object.assign(o, { base: k.target, target: coopTargetOf(run, k.target), power: tp.total });
@@ -336,10 +336,10 @@ export function coopCheck(run, Ps, room, ch, bonus = null) {
     out.tentacle = coopVoters(run).filter(m => coopOwns(run, m.id, "帽子", "觸手帽")).map(m => m.id); // 這幾個人要付理智
   } else if (k.type === "skill") {
     const by = coopRoller(run, Ps, k.skill), P = Ps[by];
-    const gent = teamHas(run.team, "帽子", "紳士帽") ? 10 : 0;
+    const gent = teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0;
     const mod = (k.mod || 0) + gent + pr.skill + (bonus ? bonus.skill : 0);
     if (bonus) out.notes.push(`記號對上了：技能 +${bonus.skill}`);
-    if (gent) out.notes.push("紳士帽的禮貌 +10");
+    if (gent) out.notes.push(`紳士帽的禮貌 +${NUM.cellarFx.gent}`);
     if (pr.skill) out.notes.push(`理智壓力 ${pr.skill}`);
     let sc = skillCheck(P, k.skill, mod);
     out.by = by; out.skill = k.skill; out.roll = sc.roll; out.target = sc.target; out.success = !!sc.success;
