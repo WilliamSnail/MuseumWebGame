@@ -10,6 +10,8 @@ import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo
 import { NET } from "./net_firebase.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
+import { NUM } from "../../shared/config.js";
+import { casNum } from "../../shared/casino.js";
 
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
 const sign = n => (n > 0 ? "+" : n < 0 ? "−" : "") + fmt(Math.abs(n));
@@ -537,6 +539,137 @@ function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只
       h("small", null, s.name), h("b", null, fmt(s.price)), upDown(s.chg))));
 }
 
+// ---------- 規則與小提示（翊文 11-14：「這個銀行裡面有沒有一個按鈕可以把這些小tip給玩家參考」）----------
+// 數字都從 shared/config.js 的 NUM 讀；伺服器 view 有給的（開收盤、倍數上限）優先用 view 的
+const clock = m => { const t = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; };
+const pc = n => `${Number(n)}%`;
+function helpSections(v) {
+  const C = NUM.casino, S = C.stock, L = C.stockLev, I = C.stockIn, B = C.bank, LN = C.loan, W = C.work, BD = C.bond, A = NUM.auction;
+  const sv = (v && v.stocks) || {}, inDt = sv.inDay || { from: I.from, len: I.ticks, step: I.step }, inD = { from: inDt.from, len: (inDt.len - 1) * (inDt.step || I.step) }, tw = sv.tw || { from: S.tw.from, len: S.tw.len };
+  const usLen = (sv.us && sv.us.len) || S.us.len;
+  // 美股：美東 S.us.open 分鐘開盤；台灣時間冬令 +13 小時、夏令 +12 小時
+  const usTime = off => `${clock(S.us.open + off * 60)}～${clock(S.us.open + usLen + off * 60)}`;
+  const lev = L.levByCredit.map(([lv, n]) => `信用 ${lv} 級起 ${n} 倍`).join("、");
+  const twNoOpen = clock(tw.from + S.tw.noOpenIdx), twClose = clock(tw.from + tw.len);
+  return [
+    { id: "stock", name: "股票", blocks: [
+      ["什麼時候能買賣", [
+        `館內五家店：每天 ${clock(inD.from)}～${clock(inD.from + inD.len)}。`,
+        `台股：${clock(tw.from)}～${twClose}。`,
+        `美股（台灣時間）：冬令 ${usTime(13)}，夏令 ${usTime(12)}。`,
+        "沒開盤的時候看得到價，但不能買賣。",
+        `館外的價錢超過 ${S.staleMin} 分鐘沒更新，這一支會暫停買賣，標「未更新」；等新價來了才能動。`]],
+      ["價錢怎麼來", [
+        `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 ×${S.peg.us}、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
+        "館內股：看昨天來了多少不同的人，見「館內股」那一頁。"]],
+      ["要付的錢", [
+        `手續費 ${pc(S.feePct)}，買和賣各收一次。`,
+        `持有成本：每天從持股市值扣 ${pc(S.holdPct)}。`,
+        `資本利得稅 ${pc(S.taxPct)}：賣館外股票「賺到的部分」要繳，賠錢不用繳也不退；館內股不抽。`,
+        `一個人一天最多賣出價值約 ${casNum(S.sellDay)}的股票。`]],
+    ] },
+    { id: "order", name: "掛單", blocks: [
+      ["限價單、停損單", [
+        "掛一個價錢，價到了才成交，不用一直盯著看。",
+        `同時最多 ${S.order.max} 張，同一支最多 ${S.order.perStock} 張；一天最多取消 ${S.order.cancelDay} 次。`]],
+      ["什麼時候作廢", [
+        `美股和台股的單：當天收盤沒成交就取消（台股 ${twClose}）。`,
+        `館內股的單：當天 ${clock(inD.from + inD.len)} 沒成交就取消。`,
+        "取消的單，鎖住的錢或股票會還給你。"]],
+    ] },
+    { id: "lev", name: "槓桿", blocks: [
+      ["開之前", [
+        `倍數看信用等級：${lev}。信用在財報頁看。`,
+        `信用升級：每 ${L.credit.ptsPerLevel} 點升一級，一天最多加 ${L.credit.dayGain} 點，借款逾期一次扣 ${L.credit.lateLoss} 點。`,
+        `一天最多開 ${L.opensDay} 筆；同一支平倉後要等 ${L.coolMin} 分鐘才能再開。`,
+        `部位（做多加放空）上限 ${casNum(L.posLimit)}、一天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高一級再多 ${L.stepPct}%。`,
+        `台股、美股行情落後超過 ${L.maxLagMin} 分鐘，暫停「新開」；已經開的、平倉、強平照常。`,
+        `台股 ${twNoOpen} 起不能新開（收盤前最後五分鐘是集合競價）。`]],
+      ["會發生什麼事", [
+        `借的錢（部位減保證金）每天收利息 ${pc(L.interestPct)}；放空另外收借券費 ${pc(L.borrowPct)}。`,
+        `保證金剩下不到一半（${L.forcePct}%）就強制平倉，錢拿不回來。`,
+        "當沖：收盤前沒平，系統自動幫你平倉。",
+        `台股收盤（${twClose}）用官方收盤價平倉，可能跟你看到的最後一個價不一樣。`,
+        "停損、停利要比強平價更靠近現價才有用；放空的方向相反。"]],
+    ] },
+    { id: "inshop", name: "館內股", blocks: [
+      ["價錢怎麼動", [
+        "每天看「昨天」來了多少「不同的人」，跟平常比：比較多會漲、比較少會跌。",
+        "旅客也算人。",
+        `昨天不到 ${I.minPeople} 位不同的人，這家就不調價。`,
+        `每次最多跳 ${pc(I.jumpCap)}；盤中每 ${I.step} 分鐘一個價，整天走動大約 ${pc(I.daySd)}。`]],
+      ["限制", [
+        `每人每家最多持有 ${fmt(I.cap)} 股。`,
+        "館內股的對手盤是莊家，莊家接得下的量有上限，滿了就暫時買不到。",
+        "館內股不抽資本利得稅。"]],
+    ] },
+    { id: "save", name: "存款", blocks: [
+      ["活存", [
+        `每天利息 ${pc(B.savePct)}，本金最多算到 ${casNum(B.saveCap)}。想領隨時領。`,
+        "利息是從莊家出的，莊家沒錢的時候不給。"]],
+      ["定存", [
+        B.terms.map(t => `${t.days} 天 ${pc(t.pct)}`).join("、") + `；最少 ${casNum(B.termMin)}，一筆最多 ${casNum(B.termCap)}，同時最多 ${B.termMax} 筆。`,
+        "到期自動回到活存。提早解約只拿回本金，沒有利息。"]],
+    ] },
+    { id: "loan", name: "借款", blocks: [
+      ["額度", [
+        `一開始最多借 ${casNum(LN.limit)}，每次最少 ${casNum(LN.min)}，同時最多 ${LN.maxOpen} 筆沒還。`,
+        `準時還清一筆，額度多 ${pc(LN.limitPct)}，最多到 ${casNum(LN.capMax)}；一個人一天最多升 ${LN.levelPerDay} 級（當天借當天還的不算）。`,
+        `到期沒還，額度降 ${pc(LN.latePct)}，信用也會被扣。`]],
+      ["怎麼還", [
+        `每筆固定利息 ${pc(LN.interestPct)}（借 10 萬還 ${casNum(100000 * (1 + LN.interestPct / 100))}），提早還也一樣。`,
+        `借了 ${LN.repayAfterMin} 分鐘以後才能還；第 ${LN.days} 天結束前要還，過了就直接從錢包扣，扣成負的也扣。`,
+        `錢包變負的（欠款）：額度鎖住，換日派參觀者去地下工作還，一天最多還 ${casNum(W.payMax)}（或欠款的 ${pc(W.payPct)}，取小的）。`]],
+    ] },
+    { id: "bond", name: "館債", blocks: [
+      ["怎麼買", [
+        `每週一期，一張 ${casNum(BD.unit)}；一個人每期最多 ${casNum(BD.perUser)}，帳號要開了 ${BD.minAge} 天。`,
+        "不能提早贖回、不能轉讓。利息照持有天數算，越早買越多。"]],
+      ["利率", [
+        "照莊家有多少錢：莊家越有錢，利率越低；莊家越缺錢，利率越高、能買的越多。",
+        BD.tiers.map((t, i) => `${t.fromPct > 0 ? `莊家的錢有起始的 ${t.fromPct}% 以上` : `莊家的錢不到起始的 ${BD.tiers[i - 1].fromPct}%`}：利率 ${pc(t.pct)}（全館最多賣 ${casNum(t.cap)}）`).join("；") + "。",
+        `莊家還不出來時，館方先墊；再不夠就開債權憑證，莊家回到起始的 ${BD.iouAtPct}% 以上再補付。`]],
+    ] },
+    { id: "report", name: "財報", blocks: [
+      ["怎麼看", [
+        "景氣：好、普通、差，會帶動館內股一點點漲跌。",
+        "昨天發生的事：館內昨天進出的錢和今天的數字。",
+        "莊家和投資人在買什麼：看大家的動向，只能當參考。",
+        "世界市場：館外世界每天發生的事，跟外面的股票有關。有附相關股票的，就是會影響它。"]],
+      ["小提示", [
+        "股票那一頁的紅點代表有股票的價錢變了。",
+        "財報的數字是昨天的，今天要用行情頁的價錢。"]],
+    ] },
+    { id: "auction", name: "拍賣", blocks: [
+      ["規則", [
+        "封閉式：每人寫一個價，沒有人看得到別人出多少。",
+        `從展出那天起算 ${A.closeDays} 天後，台灣時間 ${A.closeHour}:00 收標；最高價得標，付「第二高」的價；只有一人出價就付底價。`,
+        `出價時錢會先鎖住，收標後退回；得標的才付款，成交要抽 ${pc(A.feePct)}。`]],
+      ["拍自己的畫", [
+        `底價要在這幅畫館方現價的 ${pc(A.floorPct)}～${pc(A.ceilPct)} 之間；同時最多拍 ${A.listPerSeller} 幅，帳號要開了 ${A.minAge} 天。`,
+        "沒人出價就是流標，畫還是你的。"]],
+    ] },
+  ];
+}
+function openHelp(v) {
+  const secs = helpSections(v), cur = { id: UI.bankHelp && secs.some(x => x.id === UI.bankHelp) ? UI.bankHelp : ({ stock: "stock", save: "save", loan: "loan", bond: "bond", report: "report" }[UI.bankTab] || "stock") };
+  const m = miniLayer("規則與小提示", "數字是現在的設定，改了這裡會跟著變。");
+  m.card.classList.add("bank-help");
+  const chips = h("div", { class: "bank-help-tabs", role: "tablist" });
+  const body = h("div", { class: "bank-help-body" });
+  const draw = () => {
+    UI.bankHelp = cur.id;
+    const sec = secs.find(x => x.id === cur.id);
+    chips.replaceChildren(...secs.map(x => h("button", { type: "button", role: "tab", "aria-selected": String(x.id === cur.id), class: "bank-help-chip" + (x.id === cur.id ? " on" : ""), onClick: () => { cur.id = x.id; draw(); } }, x.name)));
+    body.replaceChildren(...sec.blocks.map(([title, items]) => h("section", { class: "bank-help-sec" }, h("h3", null, title), h("ul", null, items.map(t => h("li", null, t))))));
+    body.scrollTop = 0;
+  };
+  draw();
+  m.card.append(chips, body, h("div", { class: "bank-acts" }, btn("知道了", () => m.close(), "big bank-btn gold")));
+  closeOnOutside(m);
+}
+const helpBtn = v => btn([h("span", { class: "bank-help-q", "aria-hidden": "true" }, "？"), "規則與小提示"], () => openHelp(v), "small bank-btn gold bank-helpbtn");
+
 // ---------- 整個畫面 ----------
 SCREENS.bank = root => {
   if (!UI.localPlay && !UI.bankLoading && Date.now() - (UI.bankAt || 0) > 20000) bankLoad(); // 進來先跟伺服器拿；拿到前畫示範資料（上面寫著）
@@ -549,7 +682,7 @@ SCREENS.bank = root => {
   const v = view(), tab = UI.bankTab || "report";
   const tabs = h("div", { class: "bank-tabs", role: "tablist" }, TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "bank-tabbtn" + (id === tab ? " on" : ""), onClick: () => { if (id === "auction") { go("gallery", { tab: "auction" }, { action: false }); return; } UI.bankTab = id; rerender(); } },
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "stock" && tab !== "stock" && v.stocks && v.stocks.list.some(x => x.fresh) ? h("i", { class: "bank-dot", "aria-label": "有股票的價格變了" }) : null)));
-  root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。"),
+  root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。", helpBtn(v)),
     tabs,
     h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
     v.stocks ? ticker(v, tab === "stock") : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
