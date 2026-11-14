@@ -86,6 +86,18 @@ T("擋：JSON 壞掉的檔", () => { const c = base(); c.bad = ["content/npc/x.j
 T("警告：帳本多了角色但沒有 trace", () => { const c = base(); c.ledger = clone(ledger); c.ledger.characters.push({ name: "新來的人", how: "測試" }); assert.ok(run(c).warnings.some(w => /新來的人/.test(w))); });
 
 // 打包給伺服器：tools/copy_shared.cjs → functions/shared/npc_list_data.js
+T("季節節奏：ties 到後面季節的謎、日期又比前壹季收線早 → 警告；寫了 early 就不警告；early 格式不對 → 擋", () => {
+  const c = base(), st = get(c, "c-first").arc[2];
+  assert.ok(st.early, "現在這段標了 early（排程和翊文看過）");
+  const hit = x => x.includes("c-first.json.arc[2]");
+  assert.ok(!run(c).warnings.some(hit), "有 early 不警告");
+  delete st.early;
+  const w = run(c).warnings.filter(hit);
+  assert.strictEqual(w.length, 1); assert.ok(w[0].includes("m-world") && w[0].includes("第 3 季") && w[0].includes("2027-01-31"), w[0]);
+  st.from = "2027-02-08"; // 晚到前壹季收線之後：不警告
+  assert.ok(!run(c).warnings.some(hit));
+  st.early = 5; assert.ok(run(c).errors.some(e => /early/.test(e)), "early 不是字串要擋");
+});
 (async () => {
   try {
     require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "tools", "copy_shared.cjs")], { stdio: "pipe" });

@@ -40,6 +40,11 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   const truths = mysteries.flatMap(m => [m.truth, m.understood]).filter(s => typeof s === "string").map(s => s.replace(MARKS, ""));
   const grams = new Set(); truths.forEach(t => { for (let i = 0; i + 6 <= t.length; i++) grams.add(t.slice(i, i + 6)); });
   const ledgerChars = asList(ledger && ledger.characters).map(c => c && c.name);
+  // 季節的節奏（11-14，翊文：「可以留，要跟每日排程整合」）：故事段 ties 到第 N 季的謎（N ≥ 2）時，日期（from）不該早於第 N−1 季的謎都收線之後（closeBy 那週的週日）。
+  //   只警告、不擋：帳本說第 1 季季末就知道「多出來的在排隊」，所以第 2 季的謎早一點碰到可以，但要排程自己看過、PR 裡說一聲。
+  const isoSunday = w => { const m = /^(\d{4})-W(\d{2})$/.exec(String(w || "")); if (!m) return null; const jan4 = Date.UTC(+m[1], 0, 4), dow = (new Date(jan4).getUTCDay() + 6) % 7, mon = jan4 - dow * 86400000 + (+m[2] - 1) * 7 * 86400000; return new Date(mon + 6 * 86400000).toISOString().slice(0, 10); };
+  const seasonOf = {}, seasonEnd = {};
+  mysteries.forEach(m => { const n = +m.season; if (!(n >= 1)) return; seasonOf[m.id] = n; const d = isoSunday(m.closeBy); if (d && (!seasonEnd[n] || d > seasonEnd[n])) seasonEnd[n] = d; });
 
   // 畫面上的字：壹不用一、不能有真人品牌政黨、不能有英文字母（名字例外：劇情角色的名字是帳本的）、不破梗
   const text = (w, s, max, o = {}) => {
@@ -109,7 +114,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
     arc.forEach((s, j) => {
       const sw = `${w}.arc[${j}]`;
       if (!isObj(s)) { E(sw, "要是物件"); return; }
-      Object.keys(s).forEach(k => { if (!["step", "from", "need", "text", "news", "ties", "route", "likes"].includes(k)) E(sw, `不認得「${k}」（只能 step、from、need、text、news、ties、route、likes）`); });
+      Object.keys(s).forEach(k => { if (!["step", "from", "need", "text", "news", "ties", "route", "likes", "early"].includes(k)) E(sw, `不認得「${k}」（只能 step、from、need、text、news、ties、route、likes、early）`); });
       if (s.step !== j + 1) E(sw, `step 要照順序（這壹段是 ${j + 1}）`);
       if (typeof s.from !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s.from) || G.addDays(s.from, 0) !== s.from) E(sw, "from 要是日期（YYYY-MM-DD）：這壹天起才解鎖");
       else { if (prev && s.from <= prev) E(sw, "from 要比上壹段晚"); prev = s.from; }
@@ -124,6 +129,8 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
       if (s.ties !== undefined) {
         if (!Array.isArray(s.ties) || !s.ties.length) E(sw + ".ties", "要是陣列");
         else s.ties.forEach(t => { if (ledger && !tieIds.has(t)) E(sw + ".ties", `「${t}」不在帳本的 mysteries／sideArcs 裡`); });
+        if (s.early !== undefined && (typeof s.early !== "string" || !s.early.trim() || [...s.early].length > 60)) E(sw + ".early", "early 要是壹句理由（60 字以內）：說明為什麼要比那季早碰到（排程看過、翊文同意才寫）");
+        if (Array.isArray(s.ties) && typeof s.from === "string" && !s.early) s.ties.forEach(t => { const N = seasonOf[t], gate = N >= 2 ? seasonEnd[N - 1] : null; if (gate && s.from <= gate) W(sw + ".ties", `「${t}」是第 ${N} 季的謎，這段從 ${s.from} 就解鎖，比第 ${N - 1} 季收線（${gate}）還早：確定要這麼早碰到嗎？（只寫痕跡、不收；PR 裡說一聲）`); });
       }
       if (s.route !== undefined) route(sw + ".route", s.route, { need: true });
       if (s.likes !== undefined) likes(sw + ".likes", s.likes, { need: true });
