@@ -60,7 +60,7 @@ export function hallNowBox(mode) {
     const c = counts(), all = reviewData(), lobby = true, list = (all || []).slice(0, lobby ? 1 : 2);
     const more = (all && all.length) || c.names.length || c.mates.length ? btn("看全部", openAll, "ghost small hn-more") : null;
     box.replaceChildren(
-      h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", null, `館友 ${c.mates.length}・旅客 ${c.tourists}`) : null), lobby ? more : null),
+      h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), c.names.slice(0, 4).join("、"), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
       lobby ? null : h("div", { class: "hn-h hn-h2" }, "最近的評價"),
       list.length ? h("ul", { class: "hn-list" }, list.map(reviewItem)) : h("p", { class: "hn-empty" }, all ? "還沒有評價。" : "還沒有讀到。"),
