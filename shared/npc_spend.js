@@ -14,6 +14,7 @@
 import { NUM } from "./config.js";
 import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "./casino_book.js";
 import { hashStr, mulberry32 } from "./logic.js";
+import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 
@@ -50,6 +51,19 @@ export function crowdVisitsToday(day, secret) {
     out.push({ key: "crowd|" + i, label: k.label, n, start, end: start + stay });
   }
   return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
+}
+// 展廳到訪時刻表（給瀏覽器照表播放、伺服器驗證領分紅）：[{ key, kind: "npc"|"crowd", at 到的毫秒, until 走的毫秒, npc?, who（有名字的）｜label（散客）, n 幾位 }]，
+// 只給 at 在 [fromMs, toMs] 之間的。有名字的 NPC 壹位 n＝1；散客壹組 n＝組員人數（照人數算：旅行團 12 位＝12 次到訪）
+export function hallFeed(day, secret, list, counters, fromMs, toMs) {
+  const base = npcDayStartMs(day), out = [];
+  for (const v of npcVisitsToday(day, secret, list, counters)) if (v.place === "hall") out.push({ key: v.key, kind: "npc", at: base + v.start * 60000, until: base + v.end * 60000, npc: v.id, who: v.name, n: 1 });
+  for (const g of crowdVisitsToday(day, secret)) out.push({ key: g.key, kind: "crowd", at: base + g.start * 60000, until: base + g.end * 60000, label: g.label, n: g.n });
+  return out.filter(e => e.at >= fromMs && e.at <= toMs).sort((a, b) => a.at - b.at || (a.key < b.key ? -1 : 1));
+}
+// 分紅池（house.hallPot { day, keys: { key: { n, left } } }）：到訪的那壹刻開，領分紅的人從裡面拿（shared/casino_ticket.js）
+function hallPotOpen(house, day, key, n, amt) {
+  if (!house.hallPot || typeof house.hallPot !== "object" || house.hallPot.day !== day) house.hallPot = { day, keys: {} };
+  if (amt > 0 && !house.hallPot.keys[key]) house.hallPot.keys[key] = { n, left: amt };
 }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
 export function npcPresence(day, nowMs, secret, list, counters) {
@@ -98,7 +112,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     house.npcLive = null;
   }
   const L = npcLiveFix(house, day), m = nowMs === Infinity ? Infinity : (nowMs - npcDayStartMs(day)) / 60000;
-  const low = casWorldLow(house, W), reviews = casReviewsFix(house);
+  const low = casWorldLow(house, W), reviews = casReviewsFix(house), tmul = casFxMul(house) * casFxPolicy(house, day, "ticket"); // 門票價隨景氣（±10%）和政策（振興觀光多壹成）
   let room = Math.floor(C.dayCap * Math.max(0, 1 + C.extPct / 100 * (+(house.econ && house.econ.b) || 0))) - nsN(L.ticket) - nsN(L.shop);
   // 散客：到了就付壹張門票（每位 crowd.ticket，外面世界付），不留評價、不花錢、不算館內股人數
   const CR = NUM.casino.npcSpend.crowd;
@@ -106,8 +120,10 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   if (CR && !low) for (const gv of crowdVisitsToday(day, secret)) {
     if (gv.start > m || L.done[gv.key]) continue;
     L.done[gv.key] = 1;
-    const amt = Math.min(gv.n * CR.ticket, Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0) continue;
+    const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0) continue;
     const b = Math.floor(amt * C.ticketBudgetPct / 100), got = casPoolWorldOut(house, "budget", "npcCrowdBudget", b) + casPoolWorldOut(house, "museum", "npcCrowdMuseum", amt - b);
+    if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
+    house.npcc.hall = nsN(house.npcc.hall) + gv.n; hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
     L.crowd.ticket += got; L.crowd.people += gv.n; L.crowd.groups++; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
   for (const v of npcVisitsToday(day, secret, list, counters)) {
@@ -123,9 +139,14 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
       const got = pool === "house" ? casHouseWorldOut(house, src, amt, W) : casPoolWorldOut(house, pool, src, amt);
       mine -= got; paid += got; L.sources[src] = nsN(L.sources[src]) + got; return got;
     };
-    if (first) { const tk = C.ticket, b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b) + pay("npcTicketMuseum", "museum", tk - b); }
+    if (first) { const tk = Math.floor(C.ticket * tmul), b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b) + pay("npcTicketMuseum", "museum", tk - b); }
     if (SHOP[v.place]) L.shop += pay(SHOP[v.place][1], SHOP[v.place][0], Math.floor(n.budget.perDay * C.shopPct / 100));
     room -= paid; L.byNpc[v.id] = nsN(L.byNpc[v.id]) + paid; if (first) L.people++;
+    if (v.place === "hall") { // 到展廳：全館累計參觀人次（故事線）、開這壹位的分紅池（那壹天他付過票才有）
+      if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
+      house.npcc.hall = nsN(house.npcc.hall) + 1;
+      hallPotOpen(house, day, v.key, 1, nsN(L.byNpc[v.id]) > 0 ? Math.floor(Math.floor(C.ticket * tmul) * NUM.casino.ticket.ownerPct / 100) : 0);
+    }
     if (v.place === "hall" && C.reviewDay > 0 && reviews.filter(r => r.npc === v.id && r.day === day).length < C.reviewDay) { // 到展廳：留壹則評價（故事線現在這壹段的字；還沒有就說他是誰）
       const rr = mulberry32(hashStr(`${secret}|${day}|${v.id}|${v.key}|review`)), line = npcStoryLine(v.id, day, counters, list);
       if (line) reviews.push({ id: v.id + "|" + (npcDayStartMs(day) + v.start * 60000), day, at: npcDayStartMs(day) + v.start * 60000, npc: v.id, who: n.name, text: line.text.slice(0, 80), stars: Math.min(5, 3 + (npcLikesNow(n, day, counters).includes("hall") ? 1 : 0) + (rr() < 0.4 ? 1 : 0)) });

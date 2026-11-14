@@ -6,20 +6,22 @@
 import { NET } from "./net_firebase.js";
 import { UI, setChips } from "./ui_core.js";
 
-const EVERY = 5, GAP_MS = 180000; // 至少來了 5 位、離上次收超過 3 分鐘才叫
-let seen = 0, last = 0, busy = false;
+const EVERY = 3, GAP_MS = 120000; // 至少看到 3 個到訪、離上次領超過 2 分鐘才叫（11-14：參觀者來自伺服器的時刻表，key 夾在這裡回報領分紅）
+let seen = 0, last = 0, busy = false, pending = [];
 async function claim() {
   busy = true;
   try {
     if (NET.flush) await NET.flush(); // 先把存檔（P.hallVisitors）送上去，伺服器才看得到最新的
-    const r = await NET.call("casino", { act: "tickets" });
-    if (r && r.ok) { seen = 0; last = Date.now(); if (typeof r.chips === "number") setChips(r.chips); }
+    const keys = pending.slice(0, 40);
+    const r = await NET.call("casino", { act: "tickets", keys });
+    if (r && r.ok) { pending = pending.filter(k => !keys.includes(k)); seen = 0; last = Date.now(); if (typeof r.chips === "number") setChips(r.chips); }
   } catch (e) { /* 連不上、存檔衝突：下次再收 */ }
   busy = false;
 }
 // 每來一位參觀者叫一次
-export function ticketPing() {
+export function ticketPing(key) {
   if (!UI.net || !NET.loggedIn) return;
+  if (typeof key === "string" && !pending.includes(key)) pending.push(key);
   seen++;
   if (!busy && seen >= EVERY && Date.now() - last >= GAP_MS) claim();
 }
