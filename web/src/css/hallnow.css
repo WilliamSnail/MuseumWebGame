@@ -90,3 +90,7 @@
 .hn-sub { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hn-hall .hn-sub { max-width: 160px; }
 .hn-layer .hn-names { line-height: 1.6; }
+
+/* 展廳「來人」的卡片：散客（不具名的壹組）標壹個小牌，有名字的照舊 */
+.visitor.crowd .vis-crowd { display: inline-block; margin-right: 6px; padding: 0 7px; border: 1px solid #A88A52; border-radius: 999px; background: rgba(214, 178, 94, .25); color: #6E5020; font-size: .6875rem; font-weight: 700; letter-spacing: .06em; vertical-align: 1px; }
+.visitor.crowd > p:first-child { font-style: italic; }

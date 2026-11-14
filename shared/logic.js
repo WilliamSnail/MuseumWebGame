@@ -1333,10 +1333,10 @@ export function visitorArrive(P, rng = RNG, entry = null) {
     const day = todayStr(), got = visitorInspToday(P, day), n = Math.max(1, Math.min(40, Math.floor(+entry.n) || 1));
     let c;
     if (entry.kind === "npc") { const sl = npcStoryLine(entry.npc, day, npcWebCounters()); c = sl ? { who: sl.who, text: sl.text, npc: sl.npc, story: true } : { who: entry.who || "旅客", text: "逛了壹圈展廳。", npc: entry.npc }; }
-    else c = { who: entry.label || "散客", text: n > 1 ? `壹共 ${n} 位，安靜地逛完了壹圈。` : "安靜地逛了壹圈。" };
+    else c = { who: entry.label || "散客", text: n > 1 ? `壹共 ${n} 位，安靜地逛完了壹圈。` : "安靜地逛了壹圈。", crowd: n }; // crowd：散客壹組幾位（展廳的卡片標「散客」用）
     const want = isFree(P) ? 0 : (1 + Math.floor(hs.score / NUM.visitorStep)) * n, gain = Math.max(0, Math.min(want, NUM.visitorInspDay - got)), full = !isFree(P) && gain < want;
     P.insp += gain; P.hallInsp = { day, n: got + gain }; P.hallVisitors += n;
-    const ex = c.npc ? { npc: c.npc, story: !!c.story } : {};
+    const ex = c.npc ? { npc: c.npc, story: !!c.story } : c.crowd ? { crowd: c.crowd } : {};
     P.visitorLog.unshift({ who: c.who, text: c.text, gain, full, ...ex });
     P.visitorLog = P.visitorLog.slice(0, 12);
     return { who: c.who, text: c.text, gain, full, score: hs.score, ...ex };

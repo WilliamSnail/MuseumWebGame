@@ -52,6 +52,7 @@ T("瀏覽器 visitorArrive(P, rng, entry)：有名字的 NPC 壹位算壹次、�
   const P = hallP(), before = P.insp, hv = P.hallVisitors, step = G.NUM.visitorStep, score = G.hallScore(P).score, per = 1 + Math.floor(score / step);
   const a = G.visitorArrive(P, undefined, { kind: "npc", npc: "v-bai", who: "白伯", n: 1 }); assert.ok(a && a.gain === Math.min(per, G.NUM.visitorInspDay)); assert.strictEqual(P.hallVisitors, hv + 1);
   const P2 = hallP(), b = G.visitorArrive(P2, undefined, { kind: "crowd", label: "旅行團", n: 12 }); assert.strictEqual(b.who, "旅行團"); assert.strictEqual(P2.hallVisitors - 0, 12 + (hallP().hallVisitors || 0)); assert.strictEqual(b.gain, Math.min(per * 12, G.NUM.visitorInspDay));
+  assert.strictEqual(b.crowd, 12, "散客那壹組的人數記在 crowd（展廳卡片標散客用）"); assert.strictEqual(a.crowd, undefined, "有名字的 NPC 沒有 crowd"); assert.strictEqual(P2.visitorLog[0].crowd, 12);
   const P3 = hallP(); for (let i = 0; i < 10; i++) G.visitorArrive(P3, undefined, { kind: "crowd", label: "旅行團", n: 12 }); assert.ok(P3.hallInsp.n <= G.NUM.visitorInspDay, "每日上限不動");
   const F = G.newProfile("challenge"); assert.strictEqual(G.visitorArrive(F, undefined, { kind: "crowd", label: "x", n: 2 }), null, "沒有展廳不來");
 });
