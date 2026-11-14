@@ -56,5 +56,14 @@ T("瀏覽器 visitorArrive(P, rng, entry)：有名字的 NPC 壹位算壹次、�
   const P3 = hallP(); for (let i = 0; i < 10; i++) G.visitorArrive(P3, undefined, { kind: "crowd", label: "旅行團", n: 12 }); assert.ok(P3.hallInsp.n <= G.NUM.visitorInspDay, "每日上限不動");
   const F = G.newProfile("challenge"); assert.strictEqual(G.visitorArrive(F, undefined, { kind: "crowd", label: "x", n: 2 }), null, "沒有展廳不來");
 });
+T("掛畫加評分：有展廳的人加分（≤ cap），分數 ≤ 100；拍賣中的不加；靈感每日上限照擋（買很多畫也領不超過 visitorInspDay）", () => {
+  const P = hallP(), base = G.hallScore(P).score, C = G.NUM.hallArt;
+  P.art = { v: 1, own: { a: { tier: 3, date: "2026-11-01" }, b: { tier: 2, date: "2026-11-01" } } }; const hs = G.hallScore(P);
+  assert.ok(hs.score >= base && hs.score <= Math.min(100, base + C.cap + 1) && hs.artBonus === C.pts[3] + C.pts[2], JSON.stringify([base, hs.score, hs.artBonus]));
+  P.art.own.a.lock = "p~1"; assert.strictEqual(G.hallScore(P).artBonus, C.pts[2], "拍賣中的不算");
+  for (let i = 0; i < 20; i++) P.art.own["z" + i] = { tier: 3, date: "2026-11-01" }; assert.ok(G.hallScore(P).score <= Math.min(100, base + C.cap + 1) && G.hallScore(P).artBonus === C.cap);
+  const E = G.newProfile("challenge"); E.art = { v: 1, own: { a: { tier: 3, date: "2026-11-01" } } }; assert.strictEqual(G.hallScore(E).score, 0, "展廳沒東西：不加分");
+  for (let i = 0; i < 40; i++) G.visitorArrive(P, undefined, { kind: "crowd", label: "旅行團", n: 12 }); assert.ok(P.hallInsp.n <= G.NUM.visitorInspDay, "靈感每日上限照擋");
+});
 console.log(`展廳參觀者門票：${pass} 過，${fail} 沒過`);
 process.exit(fail ? 1 : 0);

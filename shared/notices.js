@@ -28,6 +28,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "hall-art-score-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
+    title: "收藏的畫，也讓展廳評分加壹點", publish: "2026-11-14", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "你收藏的畫現在也算進展廳評分：尋常 ＋0.5、少見 ＋1、珍藏 ＋1.5、孤品 ＋2，加起來最多 ＋5 分。正在拍賣中的畫不算。展廳裡還沒放任何東西的時候不加分。",
+        "評分高壹點，參觀者每次給的靈感就可能多壹點（評分每滿 50 多 1），但展廳參觀者壹天給的靈感上限（40）不變。別人參觀你的展廳時，也看得到你收藏的畫（沒有價錢）和這壹行「掛畫 ＋N」。",
+      ]],
+    ],
+  },
+  {
     id: "crowd-shop-2026-11", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
     title: "散客也逛各家店，算進股價", publish: "2026-11-14", expire: "2027-12-31",
     sections: [
