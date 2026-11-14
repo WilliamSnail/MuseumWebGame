@@ -9,6 +9,7 @@
 //    - 「同一個交易」由後端負責：sendGift 改好送的人的 P、回傳要寄給對方的信，後端把兩邊一起寫進去。
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
+import { NUM } from "./config.js";
 import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "./logic.js";
 import { showPosters } from "./themeshow.js";
 
@@ -50,9 +51,16 @@ export function hallView(save) {
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
   const hung = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) : null; // 掛在牆上的探險報告（決定 0036）
-  return { open: true, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
+  return { open: true, art: hallArt(P), slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
 }
 
+// 展廳主人收藏的畫（翊文 11-14：「大家的展廳也可以看到買的畫」「其他人參觀別人展廳時也可以看到」）：只給畫的 id、名字、稀有度、拍賣中與否；
+// **不給買價、現價、籌碼、買的日期**（買價是主人的錢的資訊，現價可以算出怎麼賺）。從存檔的 P.art.own 讀，不信存檔以外的東西。稀有的在前、同稀有度照買的日期（舊的在前）
+export function hallArt(P) {
+  const own = P && P.art && typeof P.art === "object" && P.art.own && typeof P.art.own === "object" && !Array.isArray(P.art.own) ? P.art.own : {};
+  return Object.keys(own).filter(id => id !== "__proto__" && own[id] && typeof own[id] === "object").map(id => ({ id: String(id).slice(0, 60), title: String(own[id].title || "").slice(0, 40), tier: Math.max(0, Math.min(3, Math.floor(+own[id].tier) || 0)), auction: !!own[id].lock, d: String(own[id].d || own[id].date || "") }))
+    .sort((a, b) => b.tier - a.tier || (a.d < b.d ? -1 : a.d > b.d ? 1 : 0) || (a.id < b.id ? -1 : 1)).slice(0, (NUM.art && NUM.art.holdMax) || 20).map(({ id, title, tier, auction }) => ({ id, title, tier, tierName: ((NUM.art.tiers[tier] || {}).name) || "", auction }));
+}
 // ---------- 來訪、按讚、留言 ----------
 // 這次來參觀，展廳主人拿幾點靈感。o：
 //   self（參觀自己的）、open（對方開館了沒）、again（這位館友今天已經來過）、paidToday（主人今天已經因為來訪拿過幾次）

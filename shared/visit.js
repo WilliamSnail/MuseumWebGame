@@ -105,6 +105,7 @@ export function cleanHallView(view) {
   return {
     open: true,
     slots: (Array.isArray(view.slots) ? view.slots : []).slice(0, NUM.guest.slotsMax).map(cleanHallSlot),
+    art: (Array.isArray(view.art) ? view.art : []).slice(0, NUM.art.holdMax).map(a => ({ id: String((a && a.id) || "").slice(0, 60), title: String((a && a.title) || "").slice(0, 40), tier: Math.max(0, Math.min(3, Math.floor(+(a && a.tier)) || 0)), tierName: String((a && a.tierName) || "").slice(0, 8), auction: !!(a && a.auction) })).filter(a => a.id), // 收藏的畫（沒有價錢）
     score: Math.max(0, Math.min(100, +view.score || 0)),
     theme: typeof view.theme === "string" ? view.theme : null,
     deco: worn(view.deco, "stand"),
