@@ -85,3 +85,40 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
 .origin-onescreen .origin-main > .reader { padding: 0 4px 10px; }
 @media (max-width: 760px) { .origin-onescreen .origin-main > .shelves { border-width: 14px; border-image-width: 14px; } .origin-onescreen .origin-main > .shelves > .shelf::after { left: -14px; right: -14px; } }
 @media (max-height: 500px) and (orientation: landscape) { .origin-onescreen .origin-main > .shelves { border-width: 12px; border-image-width: 12px; } .origin-onescreen .origin-main > .shelves > .shelf::after { left: -12px; right: -12px; } }
+
+/* ----- 翻書：羊皮紙（ui2-note-1）、酒紅絲帶標題（照 U-6 右邊那張）、翻頁鈕固定在紙的底下，內文自己捲 ----- */
+.origin-onescreen .reader .book { display: flex; flex-direction: column; max-height: 100%; min-height: 0; max-width: 600px; width: 100%; padding: 10px 14px 6px; border: 34px solid transparent; border-image: url(/ui2/ui2-note-1.webp) 70 fill / 34px stretch; background: none; box-shadow: none; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .5)); }
+.origin-onescreen .reader .book > .book-title { flex: none; align-self: center; margin: -18px 0 10px; padding: 6px 34px 7px; font-size: var(--type-head, 1.05rem); letter-spacing: .24em; color: #F6E4B0; text-shadow: 0 1px 0 rgba(40, 0, 0, .7); background: linear-gradient(180deg, #9A2E38, #6E1C26); border: 1px solid #C9A24E; clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%, 14px 50%); }
+.origin-onescreen .reader .book > .book-title::after { display: none; }
+.origin-onescreen .reader .book > .book-hint { flex: none; }
+.origin-onescreen .reader .book > .page { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-right: 4px; }
+.origin-onescreen .reader .book > .book-nav { flex: none; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(120, 90, 50, .45); }
+.origin-onescreen .reader .book > .book-gains { flex: none; }
+.origin-onescreen .origin-main > .reader { align-items: stretch; }
+.origin-onescreen .reader > .empty { display: flex; flex-direction: column; align-items: center; gap: 4px; align-self: center; text-align: center; }
+.origin-onescreen .reader > .empty::before { content: ""; width: 170px; height: 150px; background: url(/ui2/ui2-book-open.webp) center / contain no-repeat; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .5)); }
+@media (max-width: 760px) {
+  .origin-onescreen .reader .book { border-width: 24px; border-image-width: 24px; padding: 4px 8px 2px; }
+  .origin-onescreen .reader .book > .book-title { margin-top: -12px; padding: 4px 24px 5px; }
+  .origin-onescreen .reader > .empty::before { width: 110px; height: 90px; }
+}
+@media (max-height: 500px) and (orientation: landscape) { .origin-onescreen .reader .book { border-width: 20px; border-image-width: 20px; } .origin-onescreen .reader > .empty::before { display: none; } }
+@media (max-width: 760px) and (orientation: portrait) {
+  .origin-onescreen .origin-main > .shelves { max-height: 158px; }
+  .origin-onescreen .spine, .origin-onescreen .spine:nth-child(3n), .origin-onescreen .spine:nth-child(4n) { height: 100px; width: 42px; padding: 8px 0 6px; }
+  .origin-onescreen .spine .spine-t { font-size: .75rem; padding: 4px 1px; }
+}
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .origin-onescreen .reader .book > .book-gains { max-height: 28px; overflow: hidden; }
+  .origin-onescreen .reader .book > .book-gains > * { min-height: 0; padding: 2px 10px; font-size: .75rem; line-height: 1.4; margin: 0; }
+  .origin-onescreen .reader .book > .book-nav { margin-top: 2px; padding-top: 2px; }
+  .origin-onescreen .reader .book > .book-nav .book-arrow { min-height: 36px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .origin-onescreen > .seg.big-tabs .seg-btn .tab-c { display: none; }
+  .origin-onescreen .reader .book { border-width: 16px; border-image-width: 16px; padding: 0 8px; }
+  .origin-onescreen .reader .book > .book-title { margin: -12px 0 4px; padding: 2px 22px 3px; font-size: .875rem; }
+  .origin-onescreen .reader .book > .page { min-height: 70px; }
+  .origin-onescreen .reader .book > .book-nav .book-arrow { min-height: 30px; }
+  .origin-onescreen .reader .book > .book-gains { display: none; }
+}

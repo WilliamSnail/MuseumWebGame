@@ -31,3 +31,29 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .screen.onescreen-room > .seg.big-tabs .seg-btn, .bank-onescreen > .bank-tabs .bank-tabbtn { border-width: 7px; border-image-width: 7px 12px; min-height: 32px; padding: 0 10px; gap: 4px; }
 }
+
+/* 頁籤字至少 13px（測試 session：只有 11～12px）；手機直拿頁籤排兩排，不用橫向捲（圖書館 8 個只看得到 2.5 個） */
+.screen.onescreen-room > .seg.big-tabs .seg-btn { font-size: .9375rem; }
+.screen.onescreen-room > .seg.big-tabs .seg-btn .tab-c { font-size: .8125rem; }
+.bank-onescreen > .bank-tabs .bank-tabbtn { font-size: .9375rem; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.onescreen-room[class*="-onescreen"] > .seg.big-tabs { flex-wrap: wrap; overflow: visible; gap: 2px 4px; }
+  .screen.onescreen-room[class*="-onescreen"] > .seg.big-tabs .seg-btn { flex: 1 1 auto; justify-content: center; font-size: .8125rem; padding: 0 8px; }
+  .screen.onescreen-room[class*="-onescreen"] > .seg.big-tabs .seg-btn .tab-c { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.onescreen-room > .seg.big-tabs .seg-btn { font-size: .8125rem; }
+}
+/* 圖書館有 8 個頁籤：電腦寬度也放得下（字 14px，牌子左右少留一點） */
+.screen.onescreen-room.origin-onescreen > .seg.big-tabs .seg-btn { font-size: .875rem; padding: 2px 12px; gap: 5px; }
+.screen.onescreen-room.origin-onescreen > .seg.big-tabs .seg-btn .tab-c::before { display: none; }
+/* 手機直拿：四欄，8 個頁籤剛好兩排（字 13px；牌子邊縮小、左右少留） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.onescreen-room[class*="-onescreen"] > .seg.big-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 3px; }
+  .screen.onescreen-room[class*="-onescreen"] > .seg.big-tabs .seg-btn { min-width: 0; min-height: 36px; padding: 0 2px; border-width: 6px; border-image-width: 6px 10px; font-size: .8125rem; letter-spacing: 0; white-space: nowrap; }
+}
+/* 畫廊的頁籤名字長（「今日特展：…」）：手機直拿排成 2×2，字才不被切掉 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.onescreen-room.gallery-onescreen > .seg.big-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn { overflow: hidden; text-overflow: ellipsis; }
+}
