@@ -31,6 +31,34 @@ T("GDP：店裡花的算消費 C、門票算淨出口 NX；日報壹句「帶進
   const txt = G.casReportView({ day: add(D0, 1), at: 0, snap: s1, diff: d, opening: 0 }).secs.map(x => x.lines.join("|")).join("\n");
   assert.ok(txt.includes("帶進館"), txt.slice(0, 300));
 });
+T("即時在場：每位 NPC 的幾站排成壹串不重疊、在營業時間內、同輸入同輸出；現在在展廳的人數和名字看時間算得出來", G => {
+  const V = G.npcVisitsToday(D0, "s", LIST, null);
+  assert.ok(V.length > 10); assert.strictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "s", LIST, null))); assert.notStrictEqual(JSON.stringify(V), JSON.stringify(G.npcVisitsToday(D0, "乙", LIST, null)));
+  const by = {}; for (const v of V) { assert.ok(v.start >= 0 && v.end <= 1110 && v.end > v.start, JSON.stringify(v)); (by[v.id] = by[v.id] || []).push(v); }
+  for (const id of Object.keys(by)) { const a = by[id].sort((p, q) => p.start - q.start); for (let i = 1; i < a.length; i++) assert.ok(a[i].start >= a[i - 1].end, "不重疊：" + id); }
+  assert.ok(!V.some(v => v.id.startsWith("t-")), "劇情角色不會在場");
+  const hv = V.find(v => v.place === "hall"), mid = G.npcDayStartMs(D0) + (hv.start + 1) * 60000, p = G.npcPresence(D0, mid, "s", LIST, null);
+  assert.ok(p.hall >= 1 && p.names.includes(hv.name), JSON.stringify(p)); assert.strictEqual(G.npcPresence(D0, G.npcDayStartMs(D0) - 1000, "s", LIST, null).hall, 0, "05:00 以前沒人");
+  assert.ok(!("shops" in p), "不給各家店現在的人數");
+});
+T("惰性結算：到了才付錢和留評價、冪等、不重複；整天結完等於收進 house.npcs；評價最多 20 則、壹位壹天 ≤ reviewDay", G => {
+  const h = mk(G), t0 = inv(G, h), V = G.npcVisitsToday(D0, "s", LIST, null), last = V[V.length - 1];
+  const early = G.npcDayStartMs(D0) + (V[2].start) * 60000;
+  const a = G.casNpcLive(h, D0, early, "s", LIST, null), n1 = Object.keys(a.done).length, w1 = h.world;
+  assert.ok(n1 >= 3 && n1 < V.length, "只結到了的：" + n1); G.casNpcLive(h, D0, early, "s", LIST, null); assert.strictEqual(h.world, w1, "同壹刻再叫不重複付");
+  G.casNpcLive(h, D0, G.npcDayStartMs(D0) + (last.start) * 60000, "s", LIST, null); assert.ok(Object.keys(h.npcLive.done).length > n1);
+  const part = h.world; G.casNpcLive(h, D0, Infinity, "s", LIST, null); const tot = G.casNpcSpend(h, D0, "s", LIST, null);
+  assert.strictEqual(Object.keys(h.npcLive.done).length, V.length); assert.ok(h.world <= part && tot.total === h.npcs.total && tot.day === D0);
+  assert.strictEqual(inv(G, h), t0, "守恆"); G.casNpcLive(h, D0, Infinity, "s", LIST, null); assert.strictEqual(h.npcs.total, tot.total);
+  const R = h.reviews; assert.ok(R.length >= 1 && R.length <= 20); for (const r of R) { assert.ok(r.who && r.text && r.stars >= 1 && r.stars <= 5); assert.ok(R.filter(x => x.npc === r.npc && x.day === r.day).length <= G.NUM.casino.npcSpend.reviewDay); }
+  for (let i = 1; i < 12; i++) G.casNpcSpend(h, add(D0, i), "s" + i, LIST, null); assert.ok(h.reviews.length <= 20, "最多 20 則");
+});
+T("跨天：換日時前壹天剩下的結完收起來；沒人來好幾天只收最後壹天", G => {
+  const h = mk(G); G.casNpcLive(h, D0, G.npcDayStartMs(D0) + 3600000, "s", LIST, null);
+  G.casNpcLive(h, add(D0, 1), G.npcDayStartMs(add(D0, 1)) + 60000, "s", LIST, null);
+  assert.strictEqual(h.npcs.day, D0, "前壹天收進 npcs"); assert.strictEqual(h.npcLive.day, add(D0, 1));
+  G.casNpcLive(h, add(D0, 5), G.npcDayStartMs(add(D0, 5)) + 60000, "s", LIST, null); assert.strictEqual(h.npcs.day, add(D0, 1)); assert.strictEqual(h.npcLive.day, add(D0, 5));
+});
 if (process.argv[2] === "sim") {
   const G = load(); G.NUM.casino.grants = []; const h = mk(G); let tot = 0, tk = 0, shop = 0, ppl = 0; const N = 200;
   for (let i = 0; i < N; i++) { const r = G.casNpcSpend(h, add(D0, i), "x" + i, LIST, null); tot += r.total; tk += r.ticket; shop += r.shop; ppl += r.people; }

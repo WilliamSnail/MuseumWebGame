@@ -489,7 +489,9 @@ export const NUM = {
     // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進預算池、其餘館方帳）；
     //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進預算池）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
     //   dayCap 全館壹天最多（×（1＋extPct%×景氣）），hallLambda 展廳壹天平均來幾位 NPC。都從外面世界池子搬
-    npcSpend: { on: true, ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 4 },
+    npcSpend: { on: true, ticket: 20000, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 4,
+      // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
+      reviewDay: 2, reviewKeep: 20 },
     ticket: { perScore: 1000, perDay: 20, ownerPct: 30, budgetPct: 20 },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
