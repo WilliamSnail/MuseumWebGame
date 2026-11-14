@@ -42,8 +42,10 @@ SCREENS.pillow = (root, params = {}) => {
     },
     selected: item => item.kind === "pillow" ? item.key === keyNow() : P.plPrint === (item.kind === "failed" ? "f:" : "p:") + item.key,
     badge: item => item.kind === "pillow" ? h("span", { class: "si-hug" + (huggedToday(item.key) ? " done" : "") }, huggedToday(item.key) ? "今天抱過" : "可以抱") : null });
+  // 壹個畫面看得完（11-14，onescreen 骨架）：標題壹行｜左：抱枕（大）＋三排選項｜右：名牌、可能性、做｜最下面收藏的抽屜
+  root.classList.add("onescreen-room", "pillow-onescreen");
   root.append(roomHead(GEN_TEXT.pillow, "抱枕正面印的是你做過的佩佩。換材質，印刷效果當場變；換尺寸，印的範圍當場變。"),
-    h("div", { class: "pl-top" }, stage, info), rows, strip);
+    h("div", { class: "onescreen-main pl-main" }, h("div", { class: "pl-left" }, stage, rows), info), onescreenDrawer(strip));
   const drawArt = () => { art.innerHTML = itemHTML({ kind: "pillow", key: keyNow() }); };
   const drawInfo = () => {
     const key = keyNow();

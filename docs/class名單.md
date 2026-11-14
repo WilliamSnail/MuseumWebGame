@@ -126,7 +126,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `sc-` | `story.css`、`shop.css`、`cellar2.css` | 劇情卡裡的房間列（story card）、兌換所 |
 | `md-` | `theme3.css`、`board.css` | 彈窗裡的管理區（modal） |
 | `rk-` | `rank.css` | 排行榜（rank） |
-| `pl-` | `ui.css` | 展示牌（placard） |
+| `pl-` | `ui.css`、`pillow2.css` | 展示牌（placard）；抱枕工作台重做（11-14）：`pillow-onescreen`（套骨架）、`pl-main`（左抱枕和選項、右名牌）、`pl-left` |
 | `shp-` | `shop.css` | 兌換所（shop） |
 | `nf-` | `net.css` | 館友動態（net feed） |
 | `si-` | `theme3.css`、`cellar2.css` | 隊伍條裡的一格（strip item） |
