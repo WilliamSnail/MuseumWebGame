@@ -126,6 +126,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `md-` | `theme3.css`、`board.css` | 彈窗裡的管理區（modal） |
 | `rk-` | `rank.css` | 排行榜（rank） |
 | `ws-` | `ui.css`、`workshop2.css` | 手作坊；重做（11-14，`ui_screens1.js` 的 `SCREENS.workshop`）：`workshop-onescreen`（套骨架）、`ws-main`（上：佩佩和名牌）、`ws-tray`（下：類別頁籤、卡片、工具） |
+| `lib-`／`set-` | `libset2.css`（舊的在 `ui.css`） | 圖庫、設定重做（11-14，`ui_screens2.js`）：`library-onescreen`、`lib-main`（左上傳和每個心情壹列、右預覽和對準）、`settings-onescreen`、`set-tabs`（一般／聲音／存檔／怎麼玩）、`set-main` |
 | `pl-` | `ui.css`、`pillow2.css` | 展示牌（placard）；抱枕工作台重做（11-14）：`pillow-onescreen`（套骨架）、`pl-main`（左抱枕和選項、右名牌）、`pl-left` |
 | `shp-` | `shop.css` | 兌換所（shop） |
 | `nf-` | `net.css` | 館友動態（net feed） |
