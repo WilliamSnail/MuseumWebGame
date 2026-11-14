@@ -35,6 +35,7 @@ import "./css/lobby2.css";
 import "./css/cellar2.css"; // 地下室改版（11-11） // 新的大廳（決定 0066）
 import "./css/artmarket.css"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14，ui_art.js）
 import "./css/gallery2.css";
+import "./css/origin2.css"; // 圖書館重做（11-14，ui_screens1.js）
 import "./css/office2.css"; // 館長室重做（11-14，ui_screens3.js） // 畫廊重做（11-14，ui_story.js、ui_art.js）
 import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
 import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2

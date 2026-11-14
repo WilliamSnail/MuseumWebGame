@@ -425,6 +425,7 @@ export function diffGame(ex, artBox, info) {
 
 // ---------- 4 圖書館：書架 ----------
 SCREENS.origin = (root, params) => {
+  root.classList.add("onescreen-room", "origin-onescreen"); // 11-14 圖書館套 onescreen 骨架（css/origin2.css）
   root.append(roomHead("圖書館", "書可以翻開。新章節解鎖時，書背會亮起來。"));
   const tab = ORIGIN_TABS.some(t => t[0] === params.tab) ? params.tab : "shelf"; // 書架分頁籤（11-09，docs/每週劇情.md 第九節）：館藏、禁書照舊，主線、每週劇情、節日在 ui_story.js
   const reader = h("div", { class: "reader", "aria-live": "polite" }, h("p", { class: "empty" }, "從書架上挑一本書。"));
@@ -484,7 +485,7 @@ SCREENS.origin = (root, params) => {
   const opened = books.filter(b => b.gen1 || chapterOpen(P, b.id)), fbVis = forbList.filter(b => !b.after || sequelOpen(P, b));
   const counts = { shelf: [opened.length, opened.filter(b => !P.chaptersRead[b.id]).length, opened.filter(b => !b.gen1 && isFresh(P, "origin", FRESH_KEY.ch(b.id))).length + (isFresh(P, "origin", FRESH_KEY.understood) ? 1 : 0)],
     forbidden: [fbVis.length, isFree(P) ? 0 : fbVis.filter(b => !P.mythFrom[b.id]).length, fbVis.filter(b => isFresh(P, "origin", FRESH_KEY.book(b.id))).length] }; // 頁籤上的「幾本・幾本沒讀」
-  root.append(originTabs(tab, counts), h("div", { class: "origin-wrap" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
+  root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };
 // 《佩佩起源考・補遺》：讀過上壹本之後，在圖書館什麼都不做 NUM.idleBook 秒（點滑鼠、按鍵盤、滾輪會重來；移動滑鼠沒關係）
