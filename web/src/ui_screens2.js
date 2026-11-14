@@ -585,8 +585,9 @@ SCREENS.library = root => {
       return h("label", { class: "fit-row" }, h("span", null, sl.label), r);
     }),
     btn("位置重設", () => { Object.assign(FIT, { hatY: 0, hatS: 1, handX: 0, handY: 0 }); saveFit(); rerender(); }, "ghost"));
+  root.classList.add("onescreen-room", "library-onescreen"); // 11-14 套 onescreen 骨架（css/libset2.css）：左上傳＋每個心情壹列、右預覽和對準；整頁不捲
   root.append(roomHead("圖庫", total ? `圖庫 ${total} 張。某個心情有圖就從裡面挑，沒有就用「全部」的圖；顏色、帽子、姿勢照樣套上去（顏色是照綠色的圖去調）。` : "還沒有圖，現在畫的是原創青蛙。放你們自己的佩佩圖進來吧。"),
-    drop, h("div", { class: "lib-wrap" }, rows, h("div", { class: "fit-wrap" }, preview, fit)));
+    h("div", { class: "onescreen-main lib-main" }, h("div", { class: "lib-left" }, drop, rows), h("div", { class: "fit-wrap" }, preview, fit)));
   drawPreview();
 };
 export function moveImage(from, i, to) {
@@ -612,7 +613,12 @@ SCREENS.settings = root => {
     go("title", {}, { action: false });
   }, "ghost danger-line");
   const other = P ? (isFree(P) ? "challenge" : "free") : null;
-  root.append(roomHead("設定", null), h("div", { class: "set-cols" }, // 左邊設定、右邊怎麼玩（手機上下排）
+  // 11-14 套 onescreen 骨架：頁籤 一般／聲音／存檔／怎麼玩，壹頁壹組，整頁不捲（css/libset2.css）
+  const SET_TABS = [["gen", "一般"], ["snd", "聲音"], ["save", "存檔"], ["how", "怎麼玩"]];
+  const setTab = SET_TABS.some(t => t[0] === UI.setTab) ? UI.setTab : "gen";
+  root.classList.add("onescreen-room", "settings-onescreen");
+  const setTabs = h("div", { class: "seg big-tabs set-tabs", role: "tablist", "aria-label": "設定的分類" }, SET_TABS.map(([id, name]) => h("button", { type: "button", role: "tab", "aria-selected": String(id === setTab), class: "seg-btn" + (id === setTab ? " on" : ""), onClick: () => { UI.setTab = id; rerender(); } }, name)));
+  root.append(roomHead("設定", null), setTabs, h("div", { class: "onescreen-main set-main" }, h("div", { class: "set-cols" }, // 壹頁壹組
     h("div", { class: "set-list" },
       h("div", { class: "set-row" }, h("span", null, "字大小"), seg("font", [["s", "小"], ["m", "中"], ["l", "大"]])),
       h("div", { class: "set-row" }, h("span", null, "動畫減量"), seg("reduceMotion", [[false, "關"], [true, "開（只淡入）"]])),
@@ -658,8 +664,15 @@ SCREENS.settings = root => {
       exportBox,
       h("div", { class: "set-row" }, h("span", null, "清除存檔"), clear),
       h("div", { class: "set-row" }, h("span", null, "版本"), h("span", { class: "sub" }, typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "開發中"))),
-    howToPlay()),
-    P ? btn("回大廳", () => go("lobby", {}, { action: false }), "ghost") : btn("回開場", () => go("title", {}, { action: false }), "ghost"));
+    howToPlay())));
+  // 照頁籤只留這一組的列（每列第壹個字是名字）；「怎麼玩」那頁整個換成怎麼玩
+  const GROUP = { 字大小: "gen", 動畫減量: "gen", 大廳的樣子: "gen", 節日外觀: "gen", 換日: "gen", 手機直拿提醒: "gen", 模式: "gen", 聲音: "snd", 音量: "snd", 試聽: "snd", 存檔碼: "save", 清除存檔: "save", 版本: "save" };
+  const setList = root.querySelector(".set-list"), howBox = root.querySelector(".set-cols > :not(.set-list)");
+  if (setTab === "how") setList.remove();
+  else {
+    howBox.remove();
+    [...setList.children].forEach(row => { const g = row === exportBox ? "save" : GROUP[(row.firstElementChild && row.firstElementChild.textContent) || ""] || "gen"; if (g !== setTab) row.remove(); });
+  }
 };
 
 // ---------- 13 結局 ----------

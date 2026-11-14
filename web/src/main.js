@@ -35,6 +35,7 @@ import "./css/lobby2.css";
 import "./css/cellar2.css"; // 地下室改版（11-11） // 新的大廳（決定 0066）
 import "./css/artmarket.css"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14，ui_art.js）
 import "./css/gallery2.css";
+import "./css/libset2.css"; // 圖庫、設定重做（11-14，ui_screens2.js）
 import "./css/workshop2.css"; // 手作坊重做（11-14，ui_screens1.js）
 import "./css/pillow2.css"; // 抱枕工作台重做（11-14，ui_screens2.js）
 import "./css/origin2.css"; // 圖書館重做（11-14，ui_screens1.js）

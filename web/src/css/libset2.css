@@ -1,0 +1,69 @@
+/* ================================================================
+   圖庫、設定重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。前綴 lib-／set-（docs/class名單.md）
+   圖庫：左（上傳框壹條＋每個心情壹列，在裡面捲）｜右（預覽、對準的滑桿）
+   設定：頁籤 一般／聲音／存檔／怎麼玩，壹頁壹組
+   ================================================================ */
+/* ----- 圖庫 ----- */
+.screen.library-onescreen > .onescreen-main.lib-main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: stretch; }
+.library-onescreen .lib-left { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: visible; }
+.library-onescreen .dropzone { flex: none; padding: 10px 14px; min-height: 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 12px; text-align: left; }
+.library-onescreen .dropzone p { margin: 0; }
+.library-onescreen .dropzone .icon, .library-onescreen .dropzone svg { width: 28px; height: 28px; flex: none; }
+.library-onescreen .img-rows { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.library-onescreen .fit-wrap { min-height: 0; overflow-y: auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 8px; }
+.library-onescreen .fit-wrap .fit-frog { flex: none; width: min(100%, 200px); aspect-ratio: 1; align-self: center; }
+
+/* ----- 設定 ----- */
+.screen.onescreen-room.settings-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
+.settings-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 96px; white-space: nowrap; position: relative; }
+.screen.settings-onescreen > .onescreen-main.set-main { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 860px; width: 100%; margin: 0 auto; }
+.settings-onescreen .set-cols { display: block; min-height: 0; }
+.settings-onescreen .set-cols > * { max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
+.settings-onescreen .set-cols > .how, .settings-onescreen .set-cols > .set-how { max-height: 100%; }
+
+/* 手機直拿：圖庫壹欄（預覽縮小、放最上面），設定頁籤四欄 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.library-onescreen > .onescreen-main.lib-main { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+  .screen.library-onescreen > .onescreen-main.lib-main > * { max-height: none; overflow: visible; }
+  .library-onescreen .lib-left { display: contents; }
+  .library-onescreen .fit-wrap { order: 2; }
+  .library-onescreen .dropzone { order: 0; padding: 8px 10px; }
+  .library-onescreen .dropzone p.sub { display: none; }
+  .library-onescreen .img-rows { order: 1; overflow: visible; }
+  .library-onescreen .fit-wrap .fit-frog { width: 110px; }
+  .screen.onescreen-room.settings-onescreen > .seg.big-tabs .seg-btn { min-width: 0; }
+}
+/* 手機橫拿 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .screen.library-onescreen > .onescreen-main.lib-main { grid-template-columns: minmax(0, 1fr) minmax(190px, 240px); gap: 10px; }
+  .library-onescreen .dropzone { padding: 4px 10px; }
+  .library-onescreen .dropzone p.sub { display: none; }
+  .library-onescreen .fit-wrap .fit-frog { width: 90px; }
+  .screen.library-onescreen > .room-head, .screen.settings-onescreen > .room-head { display: flex; flex-wrap: nowrap; align-items: center; margin: 0 0 4px; gap: 8px; }
+  .screen.library-onescreen > .room-head h1, .screen.settings-onescreen > .room-head h1 { font-size: .8rem; padding: 2px 10px 4px; }
+  .screen.library-onescreen > .room-head .sub, .screen.settings-onescreen > .room-head .sub { display: none; }
+  .screen.library-onescreen > .room-head .rh-row, .screen.settings-onescreen > .room-head .rh-row { margin: 0; }
+  .screen.library-onescreen > .room-head .btn, .screen.settings-onescreen > .room-head .btn { min-height: 30px; padding: 0 8px; font-size: .75rem; }
+}
+/* 修：設定的列在固定高度裡被壓扁互相疊住（flex 預設會縮）；內容靠左對齊頁籤；圖庫每列矮壹點 */
+.settings-onescreen .set-list { display: flex; flex-direction: column; }
+.settings-onescreen .set-list > * { flex: none; }
+.screen.settings-onescreen > .onescreen-main.set-main { margin: 0; }
+.library-onescreen .img-row { min-height: 0; padding-top: 8px; padding-bottom: 8px; }
+.library-onescreen .img-list { min-height: 60px; }
+/* 手機：圖庫每列不被壓扁；設定的選項按鈕不被擠成直條，說明字放在按鈕下面 */
+.library-onescreen .img-rows { display: flex; flex-direction: column; }
+.library-onescreen .img-rows > * { flex: none; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .settings-onescreen .set-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .settings-onescreen .set-row > div { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
+  .settings-onescreen .set-row .seg { flex-wrap: wrap; }
+  .settings-onescreen .set-row .seg-btn { white-space: nowrap; flex: none; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .settings-onescreen .set-row > div:not(.seg) { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
+  .settings-onescreen .set-row > div.seg, .settings-onescreen .set-row .seg { display: flex; flex-direction: row; flex-wrap: wrap; width: auto; gap: 6px; }
+  .library-onescreen .img-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 6px 0; }
+  .library-onescreen .img-list { min-height: 0; width: 100%; }
+  .library-onescreen .img-list .empty { display: block; }
+}

@@ -57,3 +57,5 @@
   .screen.onescreen-room.gallery-onescreen > .seg.big-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .screen.onescreen-room.gallery-onescreen > .seg.big-tabs .seg-btn { overflow: hidden; text-overflow: ellipsis; }
 }
+/* 設定的頁籤：黃銅（跟畫廊壹樣） */
+.settings-onescreen { --tabx-1: url(/ui2/ui2-tabx-brass-1.webp); --tabx-2: url(/ui2/ui2-tabx-brass-2.webp); --tabx-ink: #1A0F06; --tabx-ink-on: #1A0F06; --tabx-sh: rgba(255, 240, 200, .7); --tabx-sh-on: rgba(255, 240, 200, .7); }
