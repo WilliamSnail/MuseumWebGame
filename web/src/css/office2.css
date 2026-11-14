@@ -75,3 +75,29 @@
   .office-onescreen .sheet-badge { width: 48px; height: 48px; }
   .office-onescreen .sheet-head .pl-line, .office-onescreen .sheet-head .pl-aside { font-size: var(--type-small, .75rem); margin: 2px 0 0; }
 }
+
+/* 手機：工坊升級、修復台的卡片壓矮（測試 11-14：橫拿可視區太矮，壹張升級卡 209px 只看到壹張） */
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  .office-onescreen .badge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .office-onescreen .badge.upgrade { padding: 6px 8px; gap: 2px; min-height: 0; }
+  .office-onescreen .badge.upgrade > .ic, .office-onescreen .badge.upgrade > .ic svg { width: 18px; height: 18px; }
+  .office-onescreen .badge.upgrade b { font-size: var(--type-small, .75rem); }
+  .office-onescreen .badge.upgrade p.sub { margin: 0; font-size: var(--type-tiny, .6875rem); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .office-onescreen .badge.upgrade .btn { min-height: 32px; margin-top: 2px; padding: 0 8px; font-size: var(--type-small, .75rem); }
+  .office-onescreen .insp-have { margin: 0 0 4px; }
+  .office-onescreen .item-grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+  .office-onescreen .item-card { padding: 6px; gap: 2px; }
+  .office-onescreen .item-card .si-art { width: 46px; height: 46px; }
+  .office-onescreen .item-card .btn { min-height: 30px; padding: 0 8px; font-size: var(--type-small, .75rem); }
+  .office-onescreen .sec-title { margin: 8px 0 4px; font-size: var(--type-body, .875rem); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .office-onescreen .badge-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.office-onescreen .badge-grid { width: 100%; max-width: none; }
+@media (max-height: 500px) and (orientation: landscape) {
+  .office-onescreen .badge.upgrade > .ic { display: none; }
+  .office-onescreen .badge.upgrade { padding: 5px 8px; }
+}
+/* 骨架預設主區右邊留 280px 側欄；館長室沒有側欄，整排給內容（選擇器要比 onescreen.css 的更具體） */
+.screen.office-onescreen > .onescreen-main.off-main { display: block; grid-template-columns: minmax(0, 1fr); }

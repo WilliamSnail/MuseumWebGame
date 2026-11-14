@@ -33,6 +33,8 @@ export function casTicketClaim(w, house, P, day) {
   const price = Math.floor(casTicketPrice(hallScore(P).score) * casFxMul(house) * casFxPolicy(house, day, "ticket")), total = n * price; // 景氣 ±10%、政策（振興觀光）多一成
   if (!(total > 0)) return { ok: true, n: 0, price, total: 0, owner: 0, budget: 0, museum: 0 };
   t.n += n;
+  if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
+  house.npcc.hall = tkNz(house.npcc.hall) + n; // 全館累計參觀展廳幾人次（NPC 故事線解鎖用）
   casCount(house, "ticketPeople", n);
   const owner = Math.floor(total * C.ownerPct / 100), budget = Math.floor(total * C.budgetPct / 100), museum = total - owner - budget;
   casWorldOut(w, house, "ticket", owner, NUM.casino.world); // 參觀者是外面世界來的客人：門票從外面世界付（池子變少）

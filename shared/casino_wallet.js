@@ -115,6 +115,16 @@ function casHouseDaily(h, day) {
   // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
   if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));
+  // 1b 文化部館債分期（30 天內還清）：今天至少還 ceil(剩餘本息 ÷ 剩下天數)（到期日當天或過了＝全部）。莊家的錢不夠就先由預算池墊（記成莊家欠預算池，2.11 的順序），還不夠記逾期（h.cultureLate，日報寫出來），不印錢
+  h.cul = { paid: 0, late: 0, day };
+  if (h.debt.culture > 0 && H.cultureDue && day) {
+    const left = Math.max(1, casDaysBetween(day, H.cultureDue) + 1), need = Math.min(h.debt.culture, Math.ceil(h.debt.culture * Math.min(days, left) / left));
+    let avail = Math.max(0, h.bankroll);
+    if (need > avail) { const x = Math.min(need - avail, Math.max(0, h.budget)); if (x > 0) { h.budget -= x; casHouseMove(h, "budgetLoan", x); h.debt.budget += x; avail += x; } }
+    const pay = Math.min(need, avail, h.debt.culture);
+    if (pay > 0) { casHouseWorldIn(h, "cultureRepay", pay); h.debt.culture -= pay; h.cul.paid = pay; }
+    h.cul.late = need - pay; if (h.cul.late > 0) h.cultureLate = (h.cultureLate || 0) + h.cul.late;
+  }
   // 2 莊家有賺（超過準備金）：壹半還債。先預算池、再文化部借款、最後外面世界（燒掉）
   if (h.bankroll > H.reserve) {
     let pay = Math.floor((h.bankroll - H.reserve) * H.repayPct / 100);

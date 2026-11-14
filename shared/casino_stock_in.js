@@ -24,6 +24,7 @@ import { NUM } from "./config.js";
 import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
+import { npcTrips } from "./npc_trip.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 
@@ -144,15 +145,16 @@ export function casInJump(H, id, day, B, secret = SECRET) {
 // d 那天各家店的 NPC 人數（沒算過才算，算了存進 H.npc）：每家 Poisson(npcLambda)，最多占這家店人數的 npcShareMax%（館友太少時更少）；
 // 劇情日（npcDays：{ 日期: { store, name } }，content/weeks 的 week.json.npc）那天，那家店再多 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 隨機。
 // 種子含伺服器祕密，玩家算不出；回傳 H.npc[d]
-export function casInNpcFor(H, d, secret = SECRET, npcDays) {
+export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
   const C = NUM.casino.stockIn;
   if (!inDay(d)) return {};
   if (inBox(H.npc[d])) return H.npc[d];
   const out = {}, ev = npcDays && inBox(npcDays[d]) ? npcDays[d] : null;
+  const trip = npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length ? npcTrips(d, secret, npcCtx.list, npcCtx.counters) : null; // 有名單：每位 NPC 各抽今天去哪幾家（npc_trip.js）；沒有：Poisson
   for (const id of IN_STORES) {
     const players = inN(H.use[d] && H.use[d][id]), rnd = mulberry32(hashStr(`${secret}|${d}|${id}|npc`));
     const cap = Math.floor(players * C.npcShareMax / (100 - C.npcShareMax));
-    let n = Math.min(cap, inPois(rnd, C.npcLambda));
+    let n = Math.min(cap, trip ? trip.counts[id] : inPois(rnd, C.npcLambda));
     if (ev && ev.store === id) {
       const valid = [];
       for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
@@ -170,7 +172,7 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays) {
 
 // 換日：算今天的開盤價。同壹天只算壹次；隔了好幾天（沒人來）壹天壹天補（最多 30 天，沒人去＝不調價）。
 // B：景氣（house.econ.b）。回傳 { done, day, jump: { id: m } }
-export function casInRoll(house, day, B, secret = SECRET, npcDays) {
+export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
   const C = NUM.casino.stockIn, H = casInHouseFix(house);
   if (!inDay(day) || H.day === day) return { done: false, day: H.day, jump: {} };
   if (H.day === null) { // 第壹天：照起始價開
@@ -183,7 +185,7 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays) {
   for (let i = 0; i < n; i++) {
     const next = inAdd(d, 1);
     pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
-    casInNpcFor(H, d, secret, npcDays); // 這壹天去逛的 NPC（算進這壹天「不同的人」，明天的跳空看它）
+    casInNpcFor(H, d, secret, npcDays, npcCtx); // 這壹天去逛的 NPC（算進這壹天「不同的人」，明天的跳空看它）
     for (const id of IN_IDS) {
       const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1];
       const j = casInJump(H, id, next, B, secret);

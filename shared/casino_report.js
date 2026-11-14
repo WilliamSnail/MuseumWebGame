@@ -9,6 +9,7 @@ import { NUM } from "./config.js";
 import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON } from "./casino_text.js";
+import { npcNews } from "./npc.js";
 
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
@@ -43,6 +44,10 @@ export function casReportView(doc) {
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
   const flow = rpList(d.flow, CAS_REPORT.flow, true);
   if (flow.length) hl.push("進出：", ...flow);
+  if (H.debt && H.debt.culture > 0 && NUM.casino.houseLoan.cultureDue) { // 文化部館債（30 天內還清）
+    const dueD = NUM.casino.houseLoan.cultureDue, dl = doc.day ? Math.max(0, rpDays(doc.day, dueD)) : null, c = H.cul || {};
+    hl.push(`文化部館債：剩 ${rpN(H.debt.culture)}，${dl === null ? "" : dl + " 天後"}到期（${dueD.slice(5)}），今天還了 ${rpN(c.paid || 0)}。` + (H.culLate > 0 ? `逾期累計 ${rpN(H.culLate)}。` : ""));
+  }
   const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部持有的館債", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
   if (debts.length) hl.push("莊家欠的錢（賺了錢會先還）：" + debts.map(x => `${x[0]} ${rpN(x[1])}`).join("、") + "。");
   if (H.loansOut > 0) hl.push(`莊家借出去、還沒收回的本金 ${rpN(H.loansOut)}。`);
@@ -53,6 +58,7 @@ export function casReportView(doc) {
     hl.push(`莊家健康度：玩家輸給莊家 ${rpN(inn)}，莊家發給玩家 ${rpN(outg)}（比值 ${ratio.toFixed(2)}，${ratio >= 1 ? "健康" : ratio >= 0.6 ? "吃緊" : "失血"}）。`);
     if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
   }
+  if (H.npcc && doc.day) { const nw = npcNews(doc.day, { commissions: H.npcc.comm, hallVisits: H.npcc.hall }, 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
   if (H.npcLast && H.npcLast.n) { // 館內股的 NPC（規劃 2.8k）：昨天館外來了幾位旅客；劇情日那天寫活動
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" }, tot = Object.values(H.npcLast.n).reduce((a, b) => a + (+b || 0), 0), ev = H.npcLast.ev;
     if (ev && nm[ev.store]) hl.push(`昨天${ev.name ? "《" + ev.name + "》在" : ""}${nm[ev.store]}辦了活動，館外來了 ${rpN(ev.n)} 位旅客。`);
