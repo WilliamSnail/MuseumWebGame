@@ -708,12 +708,12 @@ ADDONS.cellarFind = roomId => {
 };
 // 交了委託（ui_screens2.js：手動交壹張、壹鍵交件交好幾張）：跟伺服器說交了今天的哪幾張（決定 0062）。給多少是伺服器的事；不等它，連不上就算了
 ADDONS.chipsOn = () => { try { return !!(P && !isFree(P) && UI.net && NET.loggedIn); } catch (e) { return false; } };
-ADDONS.jobChips = ids => {
+ADDONS.jobChips = (ids, clients) => {
   let ask;
   try {
     const slots = (ids || []).map(id => String(id).split("#")[1]).filter(Boolean);
     if (!slots.length || !ADDONS.chipsOn()) return;
-    ask = NET.call("casino", { act: "job", slots });
+    ask = NET.call("casino", { act: "job", slots, clients: (clients || []).map(x => String(x || "").slice(0, 40)) });
   } catch (e) { return; }
   Promise.resolve(ask).then(r => {
     if (!r || !r.ok || !(r.found > 0)) return;

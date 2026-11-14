@@ -13,7 +13,8 @@
   "route": {
     "auction": 6,
     "bank": 3,
-    "hall": 2
+    "hall": 2,
+    "job": 1
   },
   "budget": {
     "tier": "collector",

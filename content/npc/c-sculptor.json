@@ -54,7 +54,8 @@
       "route": {
         "auction": 5,
         "craft": 4,
-        "hall": 2
+        "hall": 2,
+        "job": 1
       }
     }
   ]

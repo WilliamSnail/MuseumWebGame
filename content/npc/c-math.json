@@ -53,7 +53,8 @@
       "route": {
         "hall": 3,
         "bank": 3,
-        "cellar": 3
+        "cellar": 3,
+        "job": 2
       }
     }
   ]

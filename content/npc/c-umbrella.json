@@ -54,7 +54,8 @@
       "route": {
         "hall": 4,
         "cellar": 3,
-        "food": 2
+        "food": 2,
+        "job": 2
       }
     }
   ]
