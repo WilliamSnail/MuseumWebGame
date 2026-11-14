@@ -75,6 +75,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `artmarket-` | `artmarket.css` | 藝術市場（`ui_art.js`）：畫廊今日特展每幅畫下面的買賣（`artmarket-row`）和「我收藏的畫」（`artmarket-shelf`）。不要跟畫框的 `art-` 搞混 |
 | `bank-` | `bank.css` | Yuga Bot 銀行廳（`ui_bank.js`）：`bank-onescreen`（套骨架）、`bank-panel`（深藍面板）、`bank-book`（米色存摺表格）、`bank-ticker`（最下面的今日行情）。賭場銀行用的是 `cas-bank`、`bk-`，不要搞混 |
 | `gal-` | `gallery2.css` | 畫廊重做（11-14，`ui_story.js` 的 `galleryShell`、`ui_art.js` 的拍賣）：`gallery-onescreen`（套骨架）、`gal-wall`（畫牆）、`gal-corridor`（畫框走廊）、`gal-side`／`gal-rules`（側欄）、`gal-lot`／`gal-easel`（拍賣的畫架） |
+| `hn-` | `hallnow.css` | 展廳現在幾人、NPC 的即時評價（11-14，`ui_hallnow.js`）：`hn-box`（小區塊）、`hn-lobby`／`hn-hall`（大廳深色、展廳羊皮紙）、`hn-list`、`hn-rv`（一則評價）、`hn-layer`（看全部） |
 | `origin-` | `origin2.css`、`story.css` | 圖書館重做（11-14，`ui_screens1.js` 的 `SCREENS.origin`）：`origin-onescreen`（套骨架）、`origin-main`（左書架右讀書）、`origin-wrap`、`origin-tabs`（頁籤） |
 | `cellar-` | `cellar2.css`、`onescreen.css` | 地下收藏庫入口；`cellar-onescreen`（套骨架）、`cellar-entry`、`cellar-facts`、`cellar-buff`、`cellar-power` 在 `onescreen.css` |
 | `codex-` | `onescreen.css` | 圖鑑室套骨架：`codex-onescreen`、`codex-stage`（主區的框）、`codex-filter`（篩選）、`codex-no-side`（沒有側欄的頁籤）。不要跟 `cx-`（地下探險）搞混 |

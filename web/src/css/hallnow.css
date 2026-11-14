@@ -1,0 +1,42 @@
+/* 展廳現在幾人、NPC 的即時評價（11-14，ui_hallnow.js）。前綴 hn-
+   兩種底：大廳右欄（深色木板，字用淡金）、展廳側欄（羊皮紙，字用深棕）。 */
+.hn-box { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.hn-h { display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 2px 8px; font-weight: 800; font-size: .9rem; letter-spacing: .06em; }
+.hn-h small { display: block; font-weight: 400; font-size: .7rem; letter-spacing: 0; opacity: .85; }
+.hn-h2 { margin-top: 2px; font-size: .8rem; }
+.hn-names { margin: 0; font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; }
+.hn-names b { font-weight: 700; }
+.hn-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.hn-rv { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; align-items: baseline; font-size: .78rem; line-height: 1.4; }
+.hn-st { grid-row: 1; color: #E8B93A; letter-spacing: 1px; font-size: .78rem; white-space: nowrap; }
+.hn-tx { grid-row: 1; grid-column: 2; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hn-by { grid-column: 2; font-size: .6875rem; opacity: .75; }
+.hn-empty { margin: 0; font-size: .75rem; opacity: .8; }
+.hn-more { flex: none; align-self: flex-start; min-height: 30px; padding: 0 12px; font-size: .75rem; }
+.hn-lobby .hn-more { min-height: 28px; padding: 0 10px; }
+
+/* 大廳右欄 */
+.hn-lobby { color: #EADBB8; }
+.hn-lobby .hn-h { color: var(--gold-hi, #F3DFA6); }
+.hn-lobby .hn-more { color: #EADBB8; border-color: rgba(214, 178, 94, .7); }
+.l2-hnbox { padding: 4px 4px 2px; }
+
+/* 展廳側欄 */
+.hn-hall { padding: 8px 10px; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .92); color: var(--ink, #2E2014); }
+.hn-hall .hn-h { color: var(--ink-accent, #8E2A24); }
+.hn-hall .hn-st { color: #B07A10; }
+
+/* 全部的評價（點「看全部」） */
+.mini-card.hn-layer { width: min(520px, 94vw); max-height: min(84dvh, 620px); overflow-y: auto; }
+.hn-layer .hn-list { gap: 8px; }
+.hn-layer .hn-rv { font-size: .9375rem; }
+.hn-layer .hn-st { font-size: .9375rem; color: #B07A10; }
+.hn-layer .hn-by { font-size: .75rem; }
+.hn-layer .hn-names { font-size: .875rem; }
+.hn-layer .hn-acts { display: flex; justify-content: center; margin-top: 4px; }
+
+/* 展廳側欄的「館友和留言」：電腦寬度時 details 是 display: contents，新版 Chrome（131 以後）仍把收起來的內容藏掉，
+   參觀者留言、館友來過整塊看不到（11-14 發現）。電腦寬度時叫它的內容照常顯示；手機還是點開才看。 */
+@media (min-width: 761px) and (min-height: 501px) {
+  .hall-onescreen .onescreen-side .hall-more::details-content { content-visibility: visible; display: contents; }
+}
