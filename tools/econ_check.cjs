@@ -44,7 +44,7 @@ check("槓桿：全館壹天淨賺上限、部位上限有設", C.stockLev.profi
 
 // 外面世界的池子和各種流量
 const W = C.world, grow = W.growBase, npcDay = C.npcSpend.dayCap * (1 + C.npcSpend.extPct / 100), npcArt = N.auction.npcDay * (1 + N.auction.npcExtPct / 100);
-check("外面世界：NPC 壹天花費上限（來館花錢＋買畫）≤ 池子每天成長", npcDay + npcArt <= grow, `花錢 ${fmt(npcDay)} ＋ 買畫 ${fmt(npcArt)} ＝ ${fmt(npcDay + npcArt)}；每天成長 ${fmt(grow)}`, "warn");
+check("外面世界：NPC 壹天花費上限（來館花錢＋買畫）≤ 池子每天成長（翊文 11-14 決定維持現在的數字：超過也只是上限，實際遠小於）", npcDay + npcArt <= grow || npcDay + npcArt <= grow * 1.2, `花錢 ${fmt(npcDay)} ＋ 買畫 ${fmt(npcArt)} ＝ ${fmt(npcDay + npcArt)}；每天成長 ${fmt(grow)}（容許到 1.2 倍；再大就紅字）`);
 check("外面世界：吃緊線（lowPct）和賣出上限（lowPayPct）合理", W.lowPct > 0 && W.lowPct < 50 && W.lowPayPct > 0 && W.lowPayPct <= 5, `低於 ${W.lowPct}%；吃緊時壹天最多付 ${W.lowPayPct}%`);
 check("外面世界：每年成長占起始 ≤ 30%（不是印錢機）", grow * 365 / W.start <= 0.3, `${pct(grow * 365 / W.start * 100)}`);
 check("館方投資：持股成本上限 ≤ 超過部分的 50%；每天投 ≤ 10%", C.invest.holdCapPct <= 50 && C.invest.dailyPct <= 10, `holdCap ${C.invest.holdCapPct}%、daily ${C.invest.dailyPct}%`);
@@ -75,8 +75,17 @@ check("文化部館債：30 天還清的每天分期 ≤ 莊家開場＋撥款�
 })();
 
 // ---------- 帳面 ----------
+function readLedger(file) {
+  const text = fs.readFileSync(file, "utf8");
+  const hm = /^ECON_HOUSE_JSON (.*)$/m.exec(text), rm = /^ECON_REPORT_JSON (.*)$/m.exec(text); // 固定動作 econ-status 的輸出（整份 log 存成檔也行）
+  if (hm || rm) {
+    const house = hm ? JSON.parse(hm[1]) : null, rep = rm && rm[1] !== "null" ? JSON.parse(rm[1]) : null;
+    return house ? Object.assign({}, house, { day: house.day, __gap: rep ? rep.gap : null, __repDay: rep ? rep.day : null }) : (rep ? Object.assign({}, rep.house, { day: rep.day, __gap: rep.gap, __repDay: rep.day }) : null);
+  }
+  return JSON.parse(text);
+}
 function ledger(file) {
-  const raw = JSON.parse(fs.readFileSync(file, "utf8"));
+  const raw = readLedger(file);
   const doc = raw && raw.data && typeof raw.data === "string" ? JSON.parse(raw.data) : raw;
   const isReport = doc && doc.snap;
   const h = isReport ? Object.assign({}, doc.snap.house, { led: { world: doc.snap.house.wflow || {} }, npcs: doc.snap.house.npcs, inv: doc.snap.house.inv, debt: doc.snap.house.debt, cul: doc.snap.house.cul, cultureLate: doc.snap.house.culLate }) : doc;
@@ -86,6 +95,7 @@ function ledger(file) {
   if (isReport) out.push(`日報 ${doc.day}　對帳差 ${fmt(doc.gap)}（0 才對）`);
   const D = h.debt || {};
   out.push(`莊家欠：預算池 ${fmt(D.budget)}、文化部館債 ${fmt(D.culture)}、外面世界 ${fmt(D.world)}　借出去沒收回 ${fmt(h.loansOut)}`);
+  if (!isReport && doc.__gap != null) { out.push(`最新日報 ${doc.__repDay}　對帳差 ${fmt(doc.__gap)}（0 才對）`); flag(doc.__gap !== 0, `對帳差不是 0：${fmt(doc.__gap)}（有壹條動籌碼的路沒記到帳上）`); }
   if (isReport) flag(doc.gap !== 0, `對帳差不是 0：${fmt(doc.gap)}（有壹條動籌碼的路沒記到帳上）`);
   flag(h.bankroll < 0, "莊家破產中（< 0）");
   if (h.world != null) flag(h.world < Math.floor(W.start * W.lowPct / 100), `外面世界資金吃緊：${fmt(h.world)} ＜ 起始的 ${W.lowPct}%`);

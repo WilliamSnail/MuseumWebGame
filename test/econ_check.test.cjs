@@ -14,5 +14,11 @@ T("帳面：正常的帳沒有異常；吃緊、館債逾期、對帳差、莊�
   fs.writeFileSync(f, JSON.stringify({ day: "2026-11-20", gap: 7, snap: { house: { bankroll: 1, budget: 1, museum: 0, sea: 0, world: W, debt: { budget: 0, culture: 0, world: 0 } } } })); r = run(["--ledger", f]); assert.ok(/對帳差不是 0/.test(r.stdout), r.stdout);
   fs.unlinkSync(f);
 });
+T("帳面：吃 econ-status 的輸出（ECON_HOUSE_JSON／ECON_REPORT_JSON 兩行），對帳差也看", () => {
+  const f = path.join(os.tmpdir(), "econ2_" + process.pid + ".txt"), NL = "\n", h = { bankroll: 2e9, budget: 1e9, museum: 0, sea: 0, world: 10000000000, day: "2026-11-20", debt: { budget: 0, culture: 9e8, world: 0 }, led: { world: {} } };
+  const mk = gap => ["雜訊", "ECON_HOUSE_JSON " + JSON.stringify(h), "ECON_REPORT_JSON " + JSON.stringify({ day: "2026-11-20", gap, house: h }), ""].join(NL);
+  fs.writeFileSync(f, mk(0)); let r = run(["--ledger", f]); assert.strictEqual(r.status, 0, r.stdout); assert.ok(r.stdout.includes("對帳差 0"));
+  fs.writeFileSync(f, mk(12)); r = run(["--ledger", f]); assert.strictEqual(r.status, 1); assert.ok(/對帳差不是 0/.test(r.stdout)); fs.unlinkSync(f);
+});
 console.log(`${pass} passed, ${fail} failed（經濟自我檢查）`);
 process.exit(fail ? 1 : 0);

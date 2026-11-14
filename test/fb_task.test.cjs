@@ -1,12 +1,12 @@
 // tools/fb_task.cjs：Firebase 的固定動作只做得到那幾件事（不會連 Firebase）
 const assert = require("assert");
-const { ACTIONS, parseTask, planTask } = require("../tools/fb_task.cjs");
+const { ACTIONS, parseTask, planTask, econPick } = require("../tools/fb_task.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
-  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status"]);
+  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status"]);
   assert.deepStrictEqual(parseTask({ action: "stock-reroll" }), { action: "stock-reroll" }, "重算股價不用 email");
   // 工作流程的下拉選單要跟程式的清單壹樣，不然按得到的動作程式不認得（或反過來）
   const yml = require("fs").readFileSync(require("path").join(__dirname, "..", ".github/workflows/firebase-task.yml"), "utf8");
@@ -62,5 +62,12 @@ T("工作流程先遮再做、金鑰用完就刪、輸入不經過環境變數",
   assert.ok(/rm -f/.test(y) && /if: always\(\)/.test(y), "金鑰用完就刪");
 });
 
+T("econ-status 只印經濟欄位的白名單：名字、uid、email、祕密、錢包、畫的持有人都不會出現", () => {
+  const h = { bankroll: 5, budget: 6, museum: 1, sea: 0, world: 9, day: "2026-11-20", debt: { budget: 1, culture: 2, world: 3, uid: "U1" }, secret: "祕密", email: "a@b.com", nick: "小明", wallets: { u1: { chips: 5 } },
+    art: { own: { x: 1 }, byUser: { u1: 1 } }, npcs: { day: "d", ticket: 1, shop: 2, total: 3, people: 1, who: ["x"] }, inv: { sum: { hold: [{ name: "綠眼顯卡", n: 2, uid: "U" }], pnl: 5 }, pool: { house: { own: {} } } }, led: { world: { stockBuy: 10 }, mint: { start: 1 } } };
+  const s = JSON.stringify(econPick(h));
+  for (const bad of ["祕密", "a@b.com", "小明", "U1", "wallets", "art", "byUser", "who", "mint", "pool"]) assert.ok(!s.includes(bad), "不該印出：" + bad);
+  const o = econPick(h); assert.strictEqual(o.world, 9); assert.strictEqual(o.debt.culture, 2); assert.strictEqual(o.led.world.stockBuy, 10); assert.strictEqual(o.inv.sum.hold[0].n, 2);
+});
 console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`);
 process.exit(fail ? 1 : 0);
