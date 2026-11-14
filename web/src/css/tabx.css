@@ -59,3 +59,11 @@
 }
 /* 設定的頁籤：黃銅（跟畫廊壹樣） */
 .settings-onescreen { --tabx-1: url(/ui2/ui2-tabx-brass-1.webp); --tabx-2: url(/ui2/ui2-tabx-brass-2.webp); --tabx-ink: #1A0F06; --tabx-ink-on: #1A0F06; --tabx-sh: rgba(255, 240, 200, .7); --tabx-sh-on: rgba(255, 240, 200, .7); }
+/* 賭場面板的頁籤：墨綠絲絨牌（賭桌的綠，金邊跟籌碼同壹國；docs/頁籤牌子素材.md） */
+.nb-casino { --tabx-1: url(/ui2/ui2-tabx-velvet-1.webp); --tabx-2: url(/ui2/ui2-tabx-velvet-2.webp); --tabx-ink: #F3E3A8; --tabx-ink-on: #FFF3C4; --tabx-sh: rgba(0, 0, 0, .65); --tabx-sh-on: rgba(0, 40, 10, .7); }
+.nb-casino .nb-tabs { gap: 4px; }
+.nb-casino .nb-tab { min-height: 46px; padding: 0 10px; border: 12px solid transparent; border-image: var(--tabx-1) 30 40 fill / 12px 20px stretch; border-radius: 0; background: none; box-shadow: none; transform: none; color: var(--tabx-ink); text-shadow: 0 1px 0 var(--tabx-sh); font-weight: 800; }
+.nb-casino .nb-tab.on { border-image-source: var(--tabx-2); box-shadow: none; color: var(--tabx-ink-on); text-shadow: 0 1px 0 var(--tabx-sh-on); }
+.nb-casino .nb-tab:not(.on):hover { filter: brightness(1.15); }
+@media (max-width: 760px) and (orientation: portrait) { .nb-casino .nb-tab { min-height: 40px; padding: 0 6px; border-width: 8px; border-image-width: 8px 14px; } }
+@media (max-height: 500px) and (orientation: landscape) { .nb-casino .nb-tab { min-height: 32px; padding: 0 4px; border-width: 6px; border-image-width: 6px 10px; } }
