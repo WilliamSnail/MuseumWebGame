@@ -92,7 +92,7 @@ export function casInHouseFix(house) {
   for (const d of Object.keys(H.npc)) { if (!inDay(d) || !inBox(H.npc[d])) delete H.npc[d]; else for (const s of Object.keys(H.npc[d])) { const n = inN(H.npc[d][s]); if (IN_STORES.includes(s)) H.npc[d][s] = n; else delete H.npc[d][s]; } }
   const nd = Object.keys(H.npc).sort(); for (const d of nd.slice(0, Math.max(0, nd.length - C.histDays))) delete H.npc[d];
   if (!inBox(H.npcEv)) H.npcEv = {};
-  for (const d of Object.keys(H.npcEv)) { const e = H.npcEv[d]; if (!inDay(d) || !inBox(e) || !IN_STORES.includes(e.store)) delete H.npcEv[d]; else H.npcEv[d] = { store: e.store, name: typeof e.name === "string" ? e.name.slice(0, 40) : "", n: inN(e.n) }; }
+  for (const d of Object.keys(H.npcEv)) { const e = H.npcEv[d]; if (!inDay(d) || !inBox(e) || !IN_STORES.includes(e.store)) delete H.npcEv[d]; else H.npcEv[d] = { ...(e.burst ? { burst: true } : {}), store: e.store, name: typeof e.name === "string" ? e.name.slice(0, 40) : "", n: inN(e.n) }; }
   const ed = Object.keys(H.npcEv).sort(); for (const d of ed.slice(0, Math.max(0, ed.length - C.histDays))) delete H.npcEv[d];
   // 前壹天的開盤價（掛單、停損停利隔天補查前壹天盤中碰過的價用；更早的不留）
   if (!inBox(H.pre)) H.pre = { day: null, open: {} };
@@ -162,6 +162,14 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
       const extra = Math.round(Math.min(b, 0.33) * avg);
       n += extra;
       H.npcEv[d] = { store: id, name: typeof ev.name === "string" ? ev.name.slice(0, 40) : "", n: 0 };
+    }
+    if (!(ev && ev.store === id) && C.npcBurstPct > 0) { // 突發大事件（不預告）：獨立的亂數，不影響上面的抽法
+      const br = mulberry32(hashStr(`${secret}|${d}|${id}|burst`));
+      if (br() * 100 < C.npcBurstPct) {
+        const valid = [];
+        for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
+        if (valid.length) { n += Math.round(Math.min(C.npcBurstMax, C.npcBurstMin + br() * (C.npcBurstMax - C.npcBurstMin)) * valid.reduce((s, x) => s + x, 0) / valid.length); if (!H.npcEv[d]) H.npcEv[d] = { store: id, name: "", n: 0, burst: true }; }
+      }
     }
     out[id] = n;
   }
