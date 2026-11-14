@@ -456,3 +456,40 @@ body.reduce-motion .live-dot { animation: none; }
   .nb-casino .cas-quick .btn { min-height: 34px; }
   .nb-casino .cas-hint { display: none; }
 }
+
+/* 賭場手機直拿（11-14，主 session：「發牌」要在第一屏、頁籤不要只能橫向滑）：
+   標題壹列收小、頁籤排成 5 欄兩排（不用滑）、銀行那條收成壹行、牌桌頁照矮螢幕的收法，下注和發牌擠進第壹屏 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-casino .nb-top { min-height: 0; padding: 4px 0; flex-wrap: nowrap; gap: 6px; }
+  .nb-casino .nb-plaque { padding: 4px 14px 4px 12px; }
+  .nb-casino .nb-plaque h2 { font-size: .875rem; letter-spacing: .08em; }
+  .nb-casino .nb-plaque .ic, .nb-casino .nb-plaque .ic svg { width: 16px; height: 16px; }
+  .nb-casino .nb-top-r { flex-wrap: nowrap; gap: 4px; }
+  .nb-casino .nb-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; overflow: visible; flex-wrap: initial; }
+  .nb-casino .nb-tab { min-height: 36px; min-width: 0; padding: 0 1px; border-width: 6px; border-image-width: 6px 10px; font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
+  .nb-casino .nb-tab svg, .nb-casino .nb-tab .ic { display: none; }
+  .cas-bank.slim { padding: 4px 8px; gap: 6px; flex-wrap: nowrap; }
+  .cas-bank.slim .bk-seal { display: none; }
+  .cas-bank.slim .bk-slim-t { min-width: 0; flex: 1 1 auto; }
+  .cas-bank.slim .bk-slim-t small { display: none; }
+  .cas-bank .btn, .cas-bank .btn.small { min-height: 36px; padding: 0 10px; }
+  .nb-casino .cas-felt { gap: 6px; padding: 8px 10px; min-height: 0; }
+  .nb-casino .cas-hand { min-height: 56px; gap: 5px; }
+  .nb-casino .cas-card { width: 40px; height: 56px; }
+  .nb-casino .cas-card b, .nb-casino .cas-card i { font-size: 1rem; }
+  .nb-casino .cas-sec { padding: 6px 10px; gap: 4px; }
+  .nb-casino .cas-result { padding: 4px 10px; }
+  .nb-casino .cas-betbox { gap: 4px; }
+  .nb-casino .cas-betbox .cas-ask { margin: 0; }
+  .nb-casino .cas-quick .btn { min-height: 32px; }
+}
+
+/* 賭場手機橫拿：九個頁籤壹排放得下（不用橫向滑）：去掉圖示、字小壹點、牌子邊再縮；銀行那條也壓矮 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nb-casino .nb-tabs { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; overflow: visible; margin-bottom: 3px; }
+  .nb-casino .nb-tab { min-width: 0; min-height: 30px; padding: 0 1px; border-width: 5px; border-image-width: 5px 8px; font-size: .6875rem; letter-spacing: 0; white-space: nowrap; }
+  .nb-casino .nb-tab svg, .nb-casino .nb-tab .ic { display: none; }
+  .cas-bank.slim { padding: 2px 8px; flex-wrap: nowrap; }
+  .cas-bank.slim .bk-slim-t small { display: none; }
+  .cas-bank .btn, .cas-bank .btn.small { min-height: 30px; padding: 0 10px; }
+}

@@ -72,6 +72,17 @@ function stop() {
   if (process.platform === "win32") {
     const ps = `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*firebase.emu${SET}.json*' -or $_.CommandLine -like '*vite*--port ${saved.port || PORT} --strictPort*' } | ForEach-Object { $_.ProcessId }`;
     spawnSync("powershell", ["-NoProfile", "-Command", ps], { encoding: "utf8" }).stdout.split(/\s+/).filter(Boolean).filter(p => Number(p) !== process.pid).forEach(killTree);
+    // 資料庫、Firestore 模擬器是 java，命令列只有 --port 數字、沒有設定檔的名字，上面找不到、taskkill /T 也殺不到，會一直占著連接埠
+    // （11-14 賭場那輪踩到：13100 被占，下次開起來 Functions 載不進來）。照這套設定檔裡的連接埠，把 java 一起關掉
+    try {
+      const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, `firebase.emu${SET}.json`), "utf8")), ports = new Set();
+      for (const v of Object.values(cfg.emulators || {})) if (v && typeof v === "object") { if (v.port) ports.add(v.port); if (v.websocketPort) ports.add(v.websocketPort); }
+      if (ports.size) {
+        const re = [...ports].map(x => `--port ${x}( |$)`).join("|");
+        const ps2 = `Get-CimInstance Win32_Process -Filter "Name='java.exe'" | Where-Object { $_.CommandLine -match '${re}' } | ForEach-Object { $_.ProcessId }`;
+        spawnSync("powershell", ["-NoProfile", "-Command", ps2], { encoding: "utf8" }).stdout.split(/\s+/).filter(Boolean).forEach(killTree);
+      }
+    } catch (e) { /* 沒有設定檔：沒開過這套 */ }
   }
 
   console.log(`第 ${SET} 套關了。`);
