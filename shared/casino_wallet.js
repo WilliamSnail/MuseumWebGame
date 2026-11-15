@@ -315,7 +315,7 @@ function casLoanFix(w) {
   if (!casIsObj(L.lv) || (L.lv.day !== "" && !okDay(L.lv.day))) L.lv = { day: "", n: 0 };
   L.lv.n = Math.max(0, Math.floor(casNz(L.lv.n)));
   L.list = (Array.isArray(L.list) ? L.list : []).filter(x => casIsObj(x) && Number.isFinite(+x.amt) && +x.amt > 0 && okDay(x.day) && okDay(x.due))
-    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: x.due, at: Number.isFinite(+x.at) && x.at != null ? +x.at : null }));
+    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: casLoanDueFix(x.day, x.due), at: Number.isFinite(+x.at) && x.at != null ? +x.at : null }));
   L.notes = (Array.isArray(L.notes) ? L.notes : []).filter(s => typeof s === "string").slice(-5);
   if (!okDay(L.debtSince)) L.debtSince = null;
   if (w.chips >= 0) L.debtSince = null;
@@ -372,6 +372,12 @@ export function casPoorReason(reason) {
 // 借：amt 是玩家要借的（字串、數字都收；"max" ＝借滿）。成功：籌碼加 amt，記壹筆要在 days 天內還 amt×(1+利息)
 // t：伺服器現在的時間（毫秒）。借的時候記下來，repayAfterMin 分鐘之後才能還
 // house：莊家（決定 0071，翊文 11-13：「從莊家來才對」）。借出去的錢從莊家出，還回來的本金加利息回到莊家。不給 house 只動錢包（舊的測試）
+// 舊的 3 天借款延成 7 天（翊文 11-15：「原本最早欠錢是三天要還的那批改成給現在一樣的七天內還」；PR 504 起新借的就是 7 天）：
+//   11-15（含）以前借、到期日剛好是借的那天＋3 的，改成借的那天＋7。利息照借的時候記的（owe 不動）。已經到期被扣掉的不在 list 裡，不會回來。冪等：改過的是＋7，不會再改
+export const LOAN_OLD_UNTIL = "2026-11-15";
+export function casLoanDueFix(day, due) {
+  return okDay(day) && okDay(due) && day <= LOAN_OLD_UNTIL && due === casAddDays(day, 3) ? casAddDays(day, 7) : due;
+}
 export function casBorrow(w, amt, day, playing, t, house) {
   const C = NUM.casino.loan;
   const why = casLoanWhyNot(w, playing, house);

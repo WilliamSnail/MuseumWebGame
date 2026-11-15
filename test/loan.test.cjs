@@ -148,5 +148,16 @@ T("快速按鈕照額度算（11-15）：額度的 quickPct%、1／2／3／5 開
   const w = G.casWalletFix(G.casWalletNew(), "2026-11-15"); w.loan.limit = 3000000;
   assert.strictEqual(JSON.stringify(G.casLoanView(w, "2026-11-15").quick), JSON.stringify([300000, 500000, 1000000]));
 });
+T("舊的 3 天借款延成 7 天（11-15）：11-15 以前借、到期是＋3 的改成＋7；新借的、已經是 7 天的、11-16 以後的都不動；owe 不動", G => {
+  assert.strictEqual(G.casLoanDueFix("2026-11-14", "2026-11-17"), "2026-11-21");
+  assert.strictEqual(G.casLoanDueFix("2026-11-15", "2026-11-18"), "2026-11-22");
+  assert.strictEqual(G.casLoanDueFix("2026-11-15", "2026-11-22"), "2026-11-22", "已經是 7 天");
+  assert.strictEqual(G.casLoanDueFix("2026-11-16", "2026-11-19"), "2026-11-19", "之後借的不動");
+  const w = G.casWalletNew(); w.loan.list = [{ id: 1, amt: 100000, owe: 110000, day: "2026-11-14", due: "2026-11-17" }];
+  const f = G.casWalletFix(w, "2026-11-18"); // 舊規則 11-18 就過期了；延成 11-21 不會被扣
+  assert.strictEqual(f.loan.list.length, 1, "沒被當成過期扣掉");
+  assert.strictEqual(f.loan.list[0].due, "2026-11-21");
+  assert.strictEqual(f.loan.list[0].owe, 110000, "利息照舊");
+});
 console.log(`loan.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
