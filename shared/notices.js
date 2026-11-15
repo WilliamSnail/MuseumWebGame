@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-701bd8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場借款也可以自己輸入金額", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場的 Yuga Bot 銀行展開後，借款金額下面多了輸入框：打多少借多少，旁邊會先算好要還多少",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-885551", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "手作坊成品的效果字看得到了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

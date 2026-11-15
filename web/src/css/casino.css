@@ -546,3 +546,8 @@ body.reduce-motion .cas-bub { animation: none; }
   .cas-side > .cas-mp .cas-acts { margin-top: 8px; flex-direction: column; align-items: stretch; }
 }
 .cas-ni-h { margin: 12px 0 4px; font-size: .95rem; color: #F2D98A; display: flex; align-items: center; gap: 6px; }
+/* 借款自己輸入（11-15）：快速按鈕下面壹排，輸入框＋借＋要還多少 */
+.bk-act-in { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; flex-basis: 100%; }
+.cas-bank .bk-in { flex: 0 1 240px; min-width: 0; min-height: 36px; border: 1px solid #D6B25E; }
+.bk-in-hint { font-size: .8125rem; color: #CFE3C2; }
+.bk-in-hint.bad { color: #F2A38C; }
