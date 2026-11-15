@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-78941f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "以前借的 3 天借款也改成 7 天內還", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "11-15 以前跟 Yuga Bot 借、本來 3 天要還的，到期日都往後延成借的那天＋7 天",
+        "利息照借的時候說好的",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-b9875c", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "大廳和銀行有了氣氛", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
