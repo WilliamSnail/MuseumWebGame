@@ -1,0 +1,181 @@
+{
+  "day": 7,
+  "date": "2026-11-15",
+  "holiday": null,
+  "board": "招領箱空了，小門關上了，門上貼著「下週再來」；大廳櫃台貼出壹張名單，最後壹格是空的。",
+  "real": [
+    "九合壹選舉的候選人名單陸續公告，各地的選舉公報也開始準備寄出。"
+  ],
+  "casino": {
+    "note": "賭場櫃檯的招領單今天全都蓋了「已處理」。只有最後壹行，荷官沒有蓋。"
+  },
+  "books": [
+    {
+      "id": "7a",
+      "line": "w46-lost",
+      "clue": "c-box-bottom-page",
+      "title": "箱底那張紙",
+      "spine": "箱底的紙",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「昨天說好，今天翻。」\n箱子裡已經沒有圍巾、手套和外套了。",
+        "他把箱底那張紙的四個角按住，慢慢翻過來。\n紙比招領單大，比箱子舊。\n正面是壹張帳頁，格子畫得很直。",
+        "每壹格的字都很小、很整齊，跟招領單壹樣。\n圍巾壹、手套壹、外套壹、畫的角壹。\n壹筆壹筆，都對得上。",
+        "他用手指從上往下點了壹遍，點到最後壹行。\n那壹行的格子是空的，只有壹個很小的記號，像是有人想寫，又把筆收回去。",
+        "他把帳頁放在燈下，又點了壹遍。\n兩遍的結果壹樣。\n「這張帳，是有人替我們數過的。」他寫。"
+      ]
+    },
+    {
+      "id": "7end",
+      "line": "w46-lost",
+      "ending": true,
+      "title": "收支：差壹隻",
+      "spine": "差壹隻",
+      "pages": [
+        "冷風停了。\n招領箱裡的圍巾、手套、外套，這個星期壹件壹件，都有人認領走了。",
+        "守夜的警衛蹲下來，最後看了壹眼箱底。\n那頁帳還在。字很小、很整齊，最下面壹行寫著：\n「收支：差壹隻。」",
+        "他數了壹遍箱子裡剩下的東西：什麼都沒有。\n再數了壹遍帳頁上的格子：每壹格都對。\n對不上的，只有最後那壹行。",
+        "箱子後面的小門輕輕關上了。\n門上貼著壹張新紙條：\n「下週再來。」\n字跟招領單壹樣小。",
+        "警衛把帳頁折好，放進值班紀錄的最後壹頁。\n他在底下寫：\n「失主沒有來。可是有人替牠記了帳。」",
+        "他關了 B1 的燈。\n走上樓梯的時候，他又數了壹遍自己的腳步。\n比上樓的人，多壹個聲音。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d7a",
+      "kind": "read",
+      "book": "7a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d7b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d7c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "收起來的東西",
+    "intro": "這個星期的招領箱要收了。今天的畫，都是箱子空了以後才看得見的東西。",
+    "works": [
+      {
+        "id": "s7a",
+        "clue": "c-bottom-row-blank",
+        "frame": "wood",
+        "fx": [],
+        "title": "帳頁的最後壹行",
+        "lines": [
+          "壹頁畫得很直的帳。每壹格都填滿了很小的字。",
+          "最後壹行的格子是空的，筆停在格子外面。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='bg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2c2a24'/><stop offset='1' stop-color='#100f0b'/></linearGradient>",
+          "<radialGradient id='lamp' cx='50%' cy='20%' r='70%'><stop offset='0' stop-color='#e8c878' stop-opacity='.5'/><stop offset='1' stop-color='#e8c878' stop-opacity='0'/></radialGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='41' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#bg)'/>",
+          "<rect width='240' height='300' fill='url(#lamp)'/>",
+          "<rect x='34' y='30' width='172' height='230' fill='#d8c898' stroke='#2a1c10' stroke-width='3'/>",
+          "<path d='M34 66 H206 M34 102 H206 M34 138 H206 M34 174 H206 M34 210 H206 M96 30 V260 M150 30 V260' stroke='#6a5236' stroke-width='1.5'/>",
+          "<path d='M44 48 H86 M106 48 H140 M160 48 H196 M44 84 H80 M106 84 H134 M160 84 H190 M44 120 H84 M106 120 H138 M160 120 H194 M44 156 H78 M106 156 H136 M160 156 H188 M44 192 H82 M106 192 H132 M160 192 H192' stroke='#3a2c1a' stroke-width='2'/>",
+          "<path d='M44 236 H86 M160 236 H196' stroke='#3a2c1a' stroke-width='2' stroke-dasharray='0'/>",
+          "<path d='M104 228 H142 V246 H104 Z' fill='none' stroke='#8a2a22' stroke-width='1.5' stroke-dasharray='3 3'/>",
+          "<path d='M214 258 L180 252' stroke='#1c130c' stroke-width='6' stroke-linecap='round'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s7b",
+        "frame": "gold",
+        "fx": [
+          "dust"
+        ],
+        "title": "關上的小門",
+        "lines": [
+          "門把是壹顆鈕扣。門縫裡的燈已經熄了。",
+          "門上貼著壹張紙，字很小：下週再來。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='wall' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#34302a'/><stop offset='1' stop-color='#12100c'/></linearGradient>",
+          "<linearGradient id='door' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='#5a3e22'/><stop offset='1' stop-color='#3a2812'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "<filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='43' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .11 0 0 0 0 .06 0 0 0 .5 -.16'/></filter>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#wall)'/>",
+          "<rect x='70' y='70' width='100' height='190' fill='url(#door)' stroke='#120b06' stroke-width='4'/>",
+          "<path d='M120 70 V260 M70 130 H170 M70 200 H170' stroke='#241608' stroke-width='2' opacity='.7'/>",
+          "<circle cx='152' cy='168' r='7' fill='#b9a46a' stroke='#1c130c' stroke-width='2'/>",
+          "<path d='M149 166 H155 M149 170 H155' stroke='#1c130c' stroke-width='1.5'/>",
+          "<rect x='92' y='96' width='56' height='36' fill='#f3ead2' stroke='#2a1c10' stroke-width='2' transform='rotate(-2 120 114)'/>",
+          "<path d='M100 108 H140 M102 118 H134 M104 126 H128' stroke='#6a5236' stroke-width='2'/>",
+          "<path d='M70 262 H170' stroke='#0a0806' stroke-width='6'/>",
+          "<rect x='100' y='262' width='40' height='2' fill='#2a2418'/>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "<rect width='240' height='300' filter='url(#n)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s7c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "faded"
+        ],
+        "frame": "plain",
+        "title": "領到圍巾的佩佩",
+        "lines": [
+          "牠把圍巾繞了兩圈，剛剛好。",
+          "牠沒有問這是誰織的，只問了壹句：另外壹半呢？"
+        ]
+      },
+      {
+        "id": "s7d",
+        "art": "portrait",
+        "variant": 2,
+        "fx": [
+          "sepia"
+        ],
+        "frame": "gold",
+        "title": "名單最後壹格",
+        "lines": [
+          "大廳櫃台貼出壹張名單，列了二十三個署名。",
+          "最後壹格的框線畫好了，裡面沒有字。"
+        ]
+      }
+    ]
+  },
+  "adds": []
+}
