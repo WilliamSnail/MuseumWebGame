@@ -551,3 +551,4 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-bank .bk-in { flex: 0 1 240px; min-width: 0; min-height: 36px; border: 1px solid #D6B25E; }
 .bk-in-hint { font-size: .8125rem; color: #CFE3C2; }
 .bk-in-hint.bad { color: #F2A38C; }
+.work-bank { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(214,178,94,.35); } /* 欠款視窗的出口（11-15）：先去銀行找財經專員 */
