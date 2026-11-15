@@ -89,6 +89,14 @@ function matesStrip() {
   return { box, draw, chip };
 }
 
+// 各房間現在幾位（房間熱絡用，門檻在 shared/room_mood.js）＝館友（matesByRoom）＋ NPC、散客（peek 的 now.rooms[id].n，旅客＋委託人＋散客）；賭場再加被館友邀去的 NPC（now.casino）
+function roomCounts() {
+  const by = matesByRoom(NET.roster || []), now = UI.hallNow, rooms = now && now.rooms && typeof now.rooms === "object" ? now.rooms : {}, out = {};
+  Object.keys(by).filter(k => k !== "elsewhere").forEach(k => { out[k] = by[k].length; });
+  Object.keys(rooms).forEach(k => { out[k] = (out[k] || 0) + (Math.max(0, +(rooms[k] && rooms[k].n) || 0)); });
+  const c = now && now.casino; if (c) out.casino = (out.casino || 0) + (typeof c.n === "number" ? c.n : Array.isArray(c.names) ? c.names.length : 0);
+  return out;
+}
 // ---------- 導覽圖 ----------
 function mapBox(step) {
   const progress = roomProgress(P);
@@ -99,7 +107,7 @@ function mapBox(step) {
   // 手機直拿換成直式的底圖（翊文 11-11 生的 port.webp）；轉橫、轉直時 boot.js 會重畫大廳
   const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
   const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
-  mountMood(map, "lobby", { portrait, rooms: LOBBY2_ROOMS.filter(r => r.id !== "bank" || (SCREENS.bank && ADDONS.bankOpen)), counts: () => { const by = matesByRoom(NET.roster || []); return Object.fromEntries(Object.keys(by).filter(k => k !== "elsewhere").map(k => [k, by[k].length])); } }); // 房間效果（燈光、旗、人影、怪影子）：在房間按鈕下面，不擋點擊
+  mountMood(map, "lobby", { portrait, rooms: LOBBY2_ROOMS.filter(r => r.id !== "bank" || (SCREENS.bank && ADDONS.bankOpen)), counts: roomCounts }); // 房間效果（燈光、旗、人影、怪影子）：在房間按鈕下面，不擋點擊
   const whoBoxes = {};
   LOBBY2_ROOMS.filter(r => r.id !== "bank" || (SCREENS.bank && ADDONS.bankOpen)).forEach(r => {
     const [x0, y0, x1, y1] = portrait ? r.port : r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);
