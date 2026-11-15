@@ -426,9 +426,9 @@ export function shelfRow(key, label, spines, extra) {
   const draw = () => {
     box.replaceChildren(h("span", { class: "shelf-label" }, label), ...(spines.length ? spines.slice(p * per, p * per + per) : [h("p", { class: "shelf-empty" }, extra || "這裡還沒有書。")]),
       pages > 1 ? h("div", { class: "shelf-pager" },
-        h("button", { type: "button", class: "icon-btn", "aria-label": "上壹排", disabled: p === 0, onClick: () => { p--; store[key] = p; draw(); } }, icon("arrowLeft")),
-        h("span", null, `${p + 1}／${pages}`),
-        h("button", { type: "button", class: "icon-btn", "aria-label": "下壹排", disabled: p >= pages - 1, onClick: () => { p++; store[key] = p; draw(); } }, icon("arrowRight"))) : null);
+        h("button", { type: "button", class: "shelf-pg-b", "aria-label": "上壹排", disabled: p === 0, onClick: () => { p--; store[key] = p; draw(); } }, icon("arrowLeft"), " 上壹排"),
+        h("b", { class: "shelf-pg-n" }, `${p + 1}／${pages}`),
+        h("button", { type: "button", class: "shelf-pg-b", "aria-label": "下壹排", disabled: p >= pages - 1, onClick: () => { p++; store[key] = p; draw(); } }, "下壹排 ", icon("arrowRight"))) : null);
   };
   draw();
   return box;
