@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-fc8243", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報版面調整", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "財報的「館方投資」搬到左邊，煙霧改到賭場介面後面。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-abefcd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭場和銀行有背景樂了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
