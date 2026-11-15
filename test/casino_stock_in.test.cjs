@@ -315,5 +315,11 @@ T("營收：換日時把 NPC 和散客各家店花的錢記進去（house.npcs.s
   const e = G.casInHouseFix(h).rev[D0]; assert.strictEqual(e.food.x, 7500); assert.strictEqual(e.bj.x, 100); assert.strictEqual(e.craft.x, 0);
 });
 
+T("營收：委託櫃台——委託人給館友交件的籌碼也算營收（每人每天封頂 revCap）", G => {
+  const C = G.NUM.casino.stockIn, h = house(G), w = wallet(G), slots = G.CAS_JOB_SLOTS.slice(0, 2);
+  const r = G.casJobChips(w, h, slots, D0, () => 0.99); assert.ok(r.ok && r.found > 0);
+  assert.strictEqual(G.casInHouseFix(h).rev[D0].job.p, Math.min(r.found, C.revCap), "營收 ＝ 交件拿到的籌碼，最多 revCap");
+});
+
 console.log(`casino_stock_in.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
