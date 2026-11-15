@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-0237e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "餐車：館外的客人也會點餐了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館外來的旅客和散客，現在會在餐車照菜單點烤雞肉、麥茶、壽司這些。",
+        "日報會寫昨天餐車賣給館外客人什麼；銀行的財報之後也會分類列出館外來客的花費。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-1a1daa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "借款改成 7 天內還、利息 9%", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
