@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-5148bd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "地下的寶箱、信箱領東西有開箱聲", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "合作走到地圖上的寶箱點，會聽到打開箱子的聲音。",
+        "公佈欄信箱按「領取」「全部領取」，有領到東西也會有開箱聲。",
+        "音效來自 Pixabay，來源標在 sfx/來源.md。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-c5f51f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "存錢、領錢、開定存可以自己輸入金額；更多音效", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
