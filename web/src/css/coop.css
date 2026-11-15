@@ -11,7 +11,7 @@ body.coop-on .ask { z-index: 8960; }
 .cx-entry p { margin: 0; flex: 1 1 260px; font-size: .875rem; line-height: 1.6; color: var(--on-wall-sub); }
 
 /* 木框：比一起融合大，底色是地下的暗 */
-.nb-frame.nb-coop { width: min(1240px, 100%); height: min(860px, calc(100vh - 20px)); height: min(860px, calc(100dvh - 20px)); }
+.nb-frame.nb-coop { width: min(1240px, 100%); height: min(860px, calc(100vh - 20px)); height: min(860px, calc(100svh - 20px)); }
 .nb-layer:has(.nb-coop) { padding: 10px; }
 .nb-coop .nb-surface { background-color: #241A14; background-image: radial-gradient(ellipse at 50% 0%, rgba(120,84,50,.28), rgba(0,0,0,0) 70%); padding: 10px 12px; overflow: hidden; }
 .nb-coop .nb-top { min-height: 56px; padding: 6px 0; }
@@ -230,7 +230,7 @@ body.reduce-motion .tr-wisp { display: none; }
 
 @media (max-width: 760px) {
   .nb-layer:has(.nb-coop) { padding: 0; }
-  .nb-frame.nb-coop { height: 100vh; height: 100dvh; padding: 0 6px 6px; border-radius: 0; }
+  .nb-frame.nb-coop { height: 100vh; height: 100svh; padding: 0 6px 6px; border-radius: 0; }
   .nb-coop .nb-surface { padding: 6px; }
   .nb-coop .nb-plaque h2 { font-size: 1rem; letter-spacing: .12em; }
   .cx-members { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }

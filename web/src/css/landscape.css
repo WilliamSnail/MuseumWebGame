@@ -46,14 +46,14 @@
   .icon-btn { width: 40px; height: 40px; }
   .menu-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; width: auto; border-radius: 20px; }
   .menu-btn .menu-t { font-size: .75rem; }
-  .nav-drawer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; top: var(--nav-h); left: auto; right: max(6px, env(safe-area-inset-right)); width: min(620px, calc(100vw - 12px)); max-height: calc(100vh - var(--nav-h)); max-height: calc(100dvh - var(--nav-h)); overflow-y: auto; padding: 2px 12px 8px; border-radius: 0 0 6px 6px; align-content: start; }
+  .nav-drawer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; top: var(--nav-h); left: auto; right: max(6px, env(safe-area-inset-right)); width: min(620px, calc(100vw - 12px)); max-height: calc(100vh - var(--nav-h)); max-height: calc(100svh - var(--nav-h)); overflow-y: auto; padding: 2px 12px 8px; border-radius: 0 0 6px 6px; align-content: start; }
   .nav-drawer .md-h { grid-column: 1 / -1; margin: 6px 8px 2px; }
   .nav-drawer .md-group, .nav-drawer .md-rooms { display: contents; }
   .nav-drawer .md-group[hidden], .nav-drawer .md-h[hidden] { display: none; }
   .nav-drawer-link, .nav-drawer .md-item { min-height: 40px; }
   .md-casino-h { display: none; }
   .md-casino-g { display: contents; }
-  .st-tip { max-height: calc(100dvh - 16px); overflow-y: auto; }
+  .st-tip { max-height: calc(100svh - 16px); overflow-y: auto; }
 
   /* ----- 狀態列：一排、沒有進度條 ----- */
   #status { min-height: 0; height: var(--status-h); padding: 0 max(10px, env(safe-area-inset-left)); align-items: center; border-top-width: 1px; }
@@ -120,7 +120,7 @@
   .fx-toasts { left: max(8px, env(safe-area-inset-left)); right: auto; bottom: calc(var(--status-real, var(--status-h)) + 6px); transform: none; align-items: flex-start; gap: 4px; max-width: min(50vw, 400px); }
   .fx-toast { min-height: 40px; padding: 4px 12px; font-size: 12px; line-height: 1.4; max-width: min(50vw, 400px); }
   /* 邀請卡：右下角，比提示窄壹點 */
-  .inv-stack { left: auto; right: max(8px, env(safe-area-inset-right)); width: min(360px, 48vw); bottom: calc(var(--status-real, var(--status-h)) + 6px); gap: 6px; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 14px); overflow-y: auto; }
+  .inv-stack { left: auto; right: max(8px, env(safe-area-inset-right)); width: min(360px, 48vw); bottom: calc(var(--status-real, var(--status-h)) + 6px); gap: 6px; max-height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 14px); overflow-y: auto; }
   .inv-card { padding: 10px 14px 8px; }
   .inv-t { margin: 0 0 2px; font-size: .9375rem; }
   .inv-sub { margin: 0 0 6px; font-size: .75rem; line-height: 1.4; }
@@ -169,7 +169,7 @@
 
 /* ----- 開場、登入 ----- */
 @media (max-height: 500px) and (orientation: landscape) {
-  .t-wrap { padding: 10px 20px 14px; min-height: 100vh; min-height: 100dvh; }
+  .t-wrap { padding: 10px 20px 14px; min-height: 100vh; min-height: 100svh; }
   .t-name { font-size: clamp(30px, 6.4vw, 52px); letter-spacing: .2em; }
   .t-orn { margin-top: 4px; height: 14px; background-size: 200px 14px; width: 200px; }
   .t-en { margin-top: 6px; font-size: .6875rem; letter-spacing: .6em; }
@@ -194,13 +194,13 @@
   .mini-card h2 { font-size: 1.25rem; }
   .mini-card.qk-modal h2, .mini-card.uk-modal h2 { font-size: 1.25rem; }
   .mini-card .btn { min-height: 40px; }
-  .ask { bottom: calc(var(--status-real, var(--status-h)) + 8px); padding: 10px 16px; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); overflow-y: auto; }
-  .ask.ad-ask { max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); }
+  .ask { bottom: calc(var(--status-real, var(--status-h)) + 8px); padding: 10px 16px; max-height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); overflow-y: auto; }
+  .ask.ad-ask { max-height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 16px); }
   .ask p { margin: 0 0 8px; }
   .ask .btn, .ask-btns .btn { min-height: 40px; }
   /* 擲骰：左邊骰盤、右邊文字 */
   .fx-overlay { padding: 8px; }
-  .fx-roll-card { width: min(680px, 100%); max-height: calc(100dvh - 16px); padding: 12px 18px 10px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: 18px; align-items: center; text-align: center; }
+  .fx-roll-card { width: min(680px, 100%); max-height: calc(100svh - 16px); padding: 12px 18px 10px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: 18px; align-items: center; text-align: center; }
   .fx-roll-card .fx-roll-tray { grid-column: 1; grid-row: 1 / span 4; margin-top: 0; }
   .fx-roll-card .fx-roll-title { grid-column: 2; grid-row: 1; font-size: 17px; align-self: end; }
   .fx-roll-card .fx-roll-sub { grid-column: 2; grid-row: 2; margin-top: 2px; font-size: 13px; }
@@ -208,7 +208,7 @@
   .fx-roll-card .fx-roll-more { grid-column: 2; grid-row: 4; align-self: start; margin-top: 2px; }
   .fx-roll-card .fx-tray { --fx-tray-h: 136px; gap: 6px; }
   .fx-tray-total { font-size: 34px; line-height: 40px; }
-  .fx-spot-card { max-height: calc(100dvh - 16px); overflow-y: auto; }
+  .fx-spot-card { max-height: calc(100svh - 16px); overflow-y: auto; }
 }
 
 /* ----- 開場：三個參觀者的位子並排 ----- */
@@ -317,7 +317,7 @@
   .scr-cellar:has(> .cellar-stage) > .room-head { grid-column: 1 / -1; }
   .scr-cellar:has(> .cellar-stage) > .cellar-stage { grid-column: 1; grid-row: 2; }
   .scr-cellar:has(> .cellar-stage) > .team-bar { grid-column: 1; grid-row: 3; margin: 8px 0 0; gap: 6px; }
-  .scr-cellar:has(> .cellar-stage) > .note-card { grid-column: 2; grid-row: 2 / span 2; margin: 0; max-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); overflow-y: auto; padding: 14px 16px; }
+  .scr-cellar:has(> .cellar-stage) > .note-card { grid-column: 2; grid-row: 2 / span 2; margin: 0; max-height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); overflow-y: auto; padding: 14px 16px; }
   .scr-cellar:has(> .cellar-stage) > :not(.room-head):not(.cellar-stage):not(.team-bar):not(.note-card) { grid-column: 2; }
   .cellar-scene { margin: 0 auto 6px; }
   .tb-member .si-art { width: 44px; height: 44px; }
@@ -333,7 +333,7 @@
 
 /* ----- 揭曉：左邊青蛙和骰盤、右邊結果 ----- */
 @media (max-height: 500px) and (orientation: landscape) {
-  .scr-reveal { grid-template-columns: minmax(0, 1fr) minmax(220px, 310px); gap: 6px 18px; min-height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); }
+  .scr-reveal { grid-template-columns: minmax(0, 1fr) minmax(220px, 310px); gap: 6px 18px; min-height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 24px); }
   .rv-stage { min-height: 0; grid-row: 1; grid-column: 1; }
   .rv-tray { grid-row: 2; grid-column: 1; }
   .rv-panel { grid-row: 1 / span 2; grid-column: 2; gap: 8px; }

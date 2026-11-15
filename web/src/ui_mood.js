@@ -73,9 +73,10 @@ const BODY = [
   '<circle cx="11" cy="9" r="4.4"/><path d="M4 32 Q4 18 11 16.5 Q18 18 18 32 Z"/>', // 小孩
   '<circle cx="9" cy="7" r="4.8"/><circle cx="19" cy="9" r="4"/><path d="M1 38 Q1 17 9 15 Q14 16 15 22 Q17 18 19 17 Q26 19 26 38 Z"/>', // 兩個人靠著
 ];
-function silhouette(i, depth) {
-  const t = BODY[i % BODY.length], w = i % 4 === 3 ? 27 : 24;
-  return `<svg class="rm-p" viewBox="0 0 ${w} 42" style="--d:${depth}" aria-hidden="true" preserveAspectRatio="xMidYMax meet"><g fill="currentColor">${t}</g></svg>`;
+function silhouette(i, depth, tone) {
+  // 顏色、透明度、模糊都直接寫成數字（不靠 CSS 變數和 calc）：手機瀏覽器上 calc 算不出來會變成白色（翊文 11-15 手機實測人影變白）
+  const t = BODY[i % BODY.length], w = i % 4 === 3 ? 27 : 24, d = +depth, a = (0.5 + d * 0.4).toFixed(2), blur = ((1 - d) * 0.7).toFixed(2);
+  return `<svg class="rm-p" viewBox="0 0 ${w} 42" style="filter:blur(${blur}px)" aria-hidden="true" preserveAspectRatio="xMidYMax meet"><g fill="${tone || "rgb(44,24,18)"}" fill-opacity="${a}">${t}</g></svg>`;
 }
 function omenSVG() {
   // 圓圓的頭、兩邊肩膀，兩點很淡的眼睛；故意不畫五官和手腳，看起來像「多出來的壹隻」
@@ -130,7 +131,7 @@ export function mountMood(host, kind, opts) {
       last = key;
       const r = rnd(97), els = [];
       for (let i = 0; i < m.crowd; i++) {
-        const depth = r(), host2 = h("span", { class: "rm-pw", style: { left: (r() * 92).toFixed(1) + "%", top: (kind === "lobby" ? 18 + r() * 70 : 55 + r() * 40).toFixed(1) + "%", "--sc": (0.78 + depth * 0.42).toFixed(2), transitionDelay: (i * 60) + "ms" }, html: silhouette(Math.floor(r() * 4), depth.toFixed(2)) });
+        const depth = r(), host2 = h("span", { class: "rm-pw", style: { left: (r() * 92).toFixed(1) + "%", top: (kind === "lobby" ? 18 + r() * 70 : 55 + r() * 40).toFixed(1) + "%", "--sc": (0.78 + depth * 0.42).toFixed(2), transitionDelay: (i * 60) + "ms" }, html: silhouette(Math.floor(r() * 4), depth.toFixed(2), kind === "casino" ? "rgb(8,18,12)" : null) });
         els.push(host2);
       }
       crowd.replaceChildren(...els);

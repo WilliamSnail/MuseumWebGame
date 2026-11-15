@@ -1142,6 +1142,18 @@ T("壹鍵 已完成的不會再挑；交完之後就沒有可以交的", () => {
   again.forEach(p => assert.ok(list[p.idx].done));
   same(G.autoDeliverables(P), []);
 });
+T("壹鍵 條上要寫什麼：有符合 ok、沒有符合 none（寫原因）、都交完 done；交完壹張後還有就還是 ok", () => {
+  const P = bigP();
+  const list = G.dailyCommissions(P, P.day.date), plan = G.autoDeliverables(P);
+  let info = G.autoBarInfo(P); assert.strictEqual(info.state, "ok"); assert.strictEqual(info.n, plan.length); assert.strictEqual(info.left, list.filter(c => !c.done).length);
+  list[plan[0].idx].done = true;
+  info = G.autoBarInfo(P); assert.strictEqual(info.n, plan.length - 1);
+  assert.ok(info.state === "ok" || info.state === "none");
+  list.forEach(c => { c.done = true; });
+  info = G.autoBarInfo(P); assert.strictEqual(info.state, "done"); assert.strictEqual(info.n, 0); assert.ok(/交完/.test(info.why));
+  const E = P3(); E.day = null; G.ensureDay(E, "2026-11-08"); // 沒有收藏：有委託但沒有符合的
+  const e = G.autoBarInfo(E); assert.strictEqual(e.state, G.dailyCommissions(E, E.day.date).length ? "none" : "done"); assert.strictEqual(e.n, 0); assert.ok(e.why.length > 0);
+});
 T("壹鍵 普通和完美作品都符合時挑普通的：一般 → 失敗作 → 完美作品，同一層稀有度低的先", () => {
   const P = P3();
   board(P, [{ 心情: "開心" }]);

@@ -5,7 +5,7 @@
    注意：前綴不要拿 html／body 上的全域 class 來用（名單在 docs/class名單.md）。html 本身有 .new-lobby-on（新大廳，ui_lobby2.js），寫 .new-lobby-on .note-card 會改到全部的委託單、打怪面板（11-13 踩過，PR 218 上線後才發現）。以前叫 u2r、u2-main 等，11-13 改名。
      標題壹行（銅牌＋羊皮紙條＋按鈕）｜主區＋右邊側欄｜最下面收藏的抽屜
    ================================================================ */
-.screen.onescreen-room { --onescreen-gap: 10px; display: flex; flex-direction: column; height: calc(100dvh - var(--nav-h) - var(--status-real, var(--status-h)) - 20px); }
+.screen.onescreen-room { --onescreen-gap: 10px; display: flex; flex-direction: column; height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 20px); }
 #room:has(> .screen.onescreen-room) { padding-top: 10px; padding-bottom: calc(var(--status-real, var(--status-h)) + 10px); }
 /* 主區、側欄用剩下的高度；太多的時候在自己裡面捲，整頁不捲 */
 .onescreen-room > .onescreen-main { flex: 1 1 auto; min-height: 0; }
@@ -93,7 +93,7 @@
 .onescreen-room .onescreen-big:hover { filter: brightness(1.08); }
 .onescreen-lesson-layer .lesson-box { margin: 0; }
 /* 上課的視窗比畫面高時在自己裡面捲；右上角的 × 壹直看得到（翊文 11-13：「委託櫃檯沒有退出鍵」） */
-.onescreen-lesson-layer { position: relative; max-height: calc(100dvh - 32px); overflow-y: auto; }
+.onescreen-lesson-layer { position: relative; max-height: calc(100svh - 32px); overflow-y: auto; }
 .onescreen-lesson-layer .mini-x { position: sticky; top: 0; align-self: flex-end; flex: none; margin: -8px -8px -36px 0; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--gold-deep, #8C6A2E); background: var(--parch, #F6EBD0); color: var(--gold-deep, #8C6A2E); font-size: 1.4rem; line-height: 1; cursor: pointer; z-index: 2; }
 .onescreen-lesson-layer .mini-x:hover { background: #FFF6DE; }
 /* 擠壹點：抽屜的縮圖小壹點、壹鍵交件的說明最多兩行、側欄的框細壹點 */
@@ -436,7 +436,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { min-height: 36px; padding: 0 6px; font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary small { display: none; }
   /* 打開的那壹塊蓋住這壹排，往下展開成壹張羊皮紙；再點標題收起來 */
-  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { position: absolute; top: 0; left: 0; right: 0; z-index: 6; display: flex; max-height: 62dvh; overflow-y: auto; padding: 6px 8px 10px; border: 14px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 14px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { position: absolute; top: 0; left: 0; right: 0; z-index: 6; display: flex; max-height: 62svh; overflow-y: auto; padding: 6px 8px 10px; border: 14px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 14px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] > summary { position: sticky; top: -6px; z-index: 1; }
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open], .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open] * { color: var(--ink); }
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar.trial-box[open] .sc-room { background: rgba(255, 250, 235, .5); border-color: rgba(110, 80, 32, .45); }
@@ -487,7 +487,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .screen.onescreen-room.cellar-onescreen > .room-head .rh-row { order: 0; }
   .screen.onescreen-room.cellar-onescreen > .onescreen-main { grid-template-columns: minmax(0, 1fr) 150px; grid-template-rows: minmax(0, 1fr); }
   .screen.onescreen-room.cellar-onescreen .onescreen-side { order: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 6px; }
-  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { left: auto; right: 0; width: min(440px, 80vw); max-height: 78dvh; }
+  .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar[open] { left: auto; right: 0; width: min(440px, 80vw); max-height: 78svh; }
   .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { min-height: 32px; }
   .screen.onescreen-room.cellar-onescreen .cellar-entry { gap: 4px; justify-content: flex-start; }
   /* 樓層：不放畫，壹排小牌子 */
@@ -537,7 +537,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-box[open] { padding: 6px 8px 10px; }
 }
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary { flex-wrap: nowrap; min-height: 36px; font-size: .75rem; } .screen.onescreen-room.cellar-onescreen .onescreen-side .story-cellar > summary small { display: none; } }
-.mini-card.cellar-rules-layer { max-height: 92dvh; overflow-y: auto; }
+.mini-card.cellar-rules-layer { max-height: 92svh; overflow-y: auto; }
 /* 地下入口：別的檔案帶進來的字級收進四級（本來有 16 種大小） */
 .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-room small, .screen.onescreen-room.cellar-onescreen .floor .sub, .screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-on { font-size: var(--type-tiny); }
 .screen.onescreen-room.cellar-onescreen .onescreen-side .cxh-pts, .screen.onescreen-room.cellar-onescreen .onescreen-side .trial-why, .screen.onescreen-room.cellar-onescreen .onescreen-side .sc-hint { font-size: var(--type-small); }
@@ -604,10 +604,10 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .codex-onescreen .codex-stage .pl-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .codex-onescreen > .seg.big-tabs .seg-btn { padding: 2px 10px; font-size: var(--type-small); }
   .codex-onescreen > .seg.big-tabs .seg-btn .ic, .codex-onescreen > .seg.big-tabs .seg-btn svg { display: none; }
-  .codex-onescreen .onescreen-side .cx-detail { max-height: 20dvh; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
+  .codex-onescreen .onescreen-side .cx-detail { max-height: 20svh; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; }
   .codex-onescreen .onescreen-side .cx-detail .frog.big { width: 64px; height: 64px; }
   .codex-onescreen .onescreen-side .cx-detail .placard { flex: 1 1 140px; }
-  .codex-onescreen .onescreen-side .codex-filter[open] { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; max-height: 60dvh; box-shadow: 0 -10px 30px rgba(0, 0, 0, .7); }
+  .codex-onescreen .onescreen-side .codex-filter[open] { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; max-height: 60svh; box-shadow: 0 -10px 30px rgba(0, 0, 0, .7); }
 }
 /* 手機橫拿：格子在左、側欄在右 */
 @media (max-height: 500px) and (orientation: landscape) {
@@ -621,7 +621,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .codex-onescreen .onescreen-side .cx-detail .frog.big { width: 60px; height: 60px; }
 }
 .codex-onescreen .onescreen-side .codex-filter { max-height: none; overflow: visible; }
-.codex-onescreen .onescreen-side .codex-filter[open] { max-height: 48dvh; overflow-y: auto; scrollbar-width: thin; }
+.codex-onescreen .onescreen-side .codex-filter[open] { max-height: 48svh; overflow-y: auto; scrollbar-width: thin; }
 @media (max-width: 760px) {
   /* 手機直拿：說明牌壓成一小條（圖不放，名字、做過幾次、去做這隻），高度留給格子 */
   .codex-onescreen .onescreen-side .cx-detail { max-height: 104px; padding: 4px 8px; gap: 4px; }
@@ -674,7 +674,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .hall-onescreen .onescreen-side .hall-more > summary b { flex: 1 1 auto; font-size: var(--type-body); white-space: nowrap; }
   .hall-onescreen .onescreen-side .hall-more > summary span { flex: none; color: var(--ink-accent); font-size: var(--type-small); font-weight: 700; white-space: nowrap; }
   .hall-onescreen .onescreen-side .hall-more[open] .hall-more-open, .hall-onescreen .onescreen-side .hall-more:not([open]) .hall-more-close { display: none; }
-  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; display: grid; gap: 6px; max-height: 55dvh; overflow-y: auto; padding: 6px; border: 12px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 12px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
+  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; display: grid; gap: 6px; max-height: 55svh; overflow-y: auto; padding: 6px; border: 12px solid transparent; border-image: url(/ui2/ui2-side.webp) 60 fill / 12px stretch; box-shadow: 0 12px 30px rgba(0, 0, 0, .7); }
   .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body > * { display: grid; }
 }
 /* 手機橫拿：側欄窄，「主題：還沒有」不要一個字一行 */
@@ -682,11 +682,11 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
   .hall-onescreen .onescreen-side .hall-themes summary, .hall-onescreen .onescreen-side .hall-more > summary { min-height: 34px; padding: 2px 8px; border-width: 8px; flex-wrap: nowrap; }
   .hall-onescreen .onescreen-side .hall-themes summary b { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--type-small); }
   .hall-onescreen .onescreen-side .hall-themes summary span, .hall-onescreen .onescreen-side .hall-more > summary span { font-size: var(--type-tiny); }
-  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { left: auto; right: 0; width: min(420px, 78vw); max-height: 70dvh; }
+  .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { left: auto; right: 0; width: min(420px, 78vw); max-height: 70svh; }
 }
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more { position: relative; } }
-@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { top: auto; bottom: 100%; max-height: 60dvh; } }
-@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { max-height: 44dvh; } }
+@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { top: auto; bottom: 100%; max-height: 60svh; } }
+@media (max-height: 500px) and (orientation: landscape) { .hall-onescreen .onescreen-side .hall-more[open] > .hall-more-body { max-height: 44svh; } }
 /* 電腦：有老主顧的單（多壹段開場白）時，單比板子高，板子出現直的捲軸，第 4 張的收藏格被切（測試 session 11-13）：開場白、委託人最多兩行 */
 @media (min-width: 761px) {
   .onescreen-room .cm-board .note-card .nc-intro, .onescreen-room .cm-board .note-card .nc-client { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -821,3 +821,11 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
 /* 館內 NPC（11-14）：展廳側欄的「館裡最近」小字、旅客說自己的故事（不加引號、斜體） */
 .hall-onescreen .onescreen-side .npc-news { margin: 2px 0 6px; color: #7A5A2A; font-size: .72rem; line-height: 1.5; }
 .visitor.story > p:first-child { font-style: italic; }
+
+/* 壹鍵交件在手機（11-15，翊文實測「又不見了」）：沒有符合的時候按鈕下面要看得到原因；有符合的時候按鈕字可以換行，不要被切掉 */
+.onescreen-room .onescreen-side .ad-bar .ad-short { display: none; margin: 0; font-size: .6875rem; line-height: 1.2; color: #8E2A24; font-weight: 700; }
+@media (max-width: 760px) {
+  .onescreen-room .onescreen-side .ad-bar { flex-wrap: wrap; align-content: center; gap: 2px; }
+  .onescreen-room .onescreen-side .ad-bar.off .ad-short { display: block; flex: 1 1 100%; text-align: center; }
+  .onescreen-room .onescreen-side .ad-bar .ad-btn { white-space: normal; line-height: 1.15; min-height: 38px; }
+}

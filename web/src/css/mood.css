@@ -1,6 +1,7 @@
 /* 房間效果（11-15，ui_mood.js／shared/room_mood.js；docs/大廳效果提案.md）。rm- 開頭；不碰 #lights、#vignette、body 的理智 class */
 .rm { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; border-radius: inherit; transition: opacity 1.2s ease; }
 .rm.rm-off { opacity: 0; }
+.rm.rm-lobby { z-index: 0; } /* 導覽圖上：在房間名字標籤下面（人影、旗不蓋字） */
 body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: none; } /* 館友自己的理智效果優先 */
 .rm i { position: absolute; inset: 0; transition: opacity 2.2s ease; }
 /* 燈光：暖＝金色的光從中間往外散、邊緣帶深紅褐的暗角；冷＝發灰的藍、暗角偏黑藍；暗＝整體再壓暗 */
@@ -19,10 +20,9 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
 .rm-crowd { position: absolute; }
 .rm-pw { position: absolute; width: 9%; min-width: 9px; aspect-ratio: 24 / 42; opacity: 0; transform: translateY(4px) scale(var(--sc, 1)); transform-origin: 50% 100%; transition: opacity 1.2s ease, transform 1.2s ease; }
 .rm-crowd.in .rm-pw { opacity: 1; transform: translateY(0) scale(var(--sc, 1)); }
-.rm-p { width: 100%; height: 100%; display: block; color: rgba(44, 24, 18, calc(.5 + var(--d, .5) * .4)); filter: blur(calc((1 - var(--d, .5)) * .7px)) drop-shadow(0 1px 0 rgba(255, 240, 210, .2)); }
+.rm-p { width: 100%; height: 100%; display: block; }
 .rm-lobby .rm-crowd .rm-pw { width: 11%; }
 .rm-casino .rm-crowd { left: 4%; right: 4%; bottom: 3%; height: 22%; top: auto; }
-.rm-casino .rm-p { color: rgba(8, 18, 12, calc(.55 + var(--d, .5) * .35)); }
 .rm-bank .rm-crowd { display: none; }
 /* 怪影子：很淡、邊緣糊、在角落、出現壹下就沒了（約 3 秒），像「看到了又不確定」 */
 .rm-omens { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease; }

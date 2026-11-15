@@ -65,7 +65,7 @@ body.reduce-motion .t-login-area, body.reduce-motion .t-login-area .t-actions { 
 .nf-list.stale { opacity: .55; filter: grayscale(.5); }
 
 /* ---------- 我的帳號：一張釘在板子上的紙 ---------- */
-.nb-frame.nb-account { width: min(580px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); }
+.nb-frame.nb-account { width: min(580px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100svh - 36px); }
 .nb-account .nb-surface { flex: 0 1 auto; overflow-y: auto; padding-top: 22px; }
 .na-sheet { width: 100%; max-width: none; }
 .na-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px dashed var(--parch-line); }

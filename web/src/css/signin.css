@@ -46,7 +46,7 @@ body.holiday-on #nav::after { content: ""; position: absolute; left: 0; right: 0
 .lim-c.br { right: -4px; bottom: -4px; transform: rotate(180deg); }
 
 /* ---------- 簽到卡：木框裡一張羊皮紙 ---------- */
-.nb-frame.nb-sign { width: min(700px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100dvh - 36px); }
+.nb-frame.nb-sign { width: min(700px, 100%); height: auto; max-height: calc(100vh - 36px); max-height: calc(100svh - 36px); }
 .nb-sign .nb-surface, .nb-cal .nb-surface { overflow-y: auto; }
 .sg-card { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px 24px 20px; border-radius: 2px;
   --ink: var(--parch-ink); --sub: var(--parch-sub); --line: var(--parch-line); color: var(--parch-ink);

@@ -1157,6 +1157,15 @@ export function autoDeliverables(P) {
   });
   return out;
 }
+// 壹鍵交件那條要寫什麼（委託櫃台畫面用，翊文 11-15 手機實測「壹鍵交件又不見了」：沒有符合的時候按鈕變成淡淡的虛線框，手機又把原因藏起來，看起來像不見）
+// 回傳 { n 可以交幾張, left 今天還沒交的幾張, state: "ok" | "none" | "done", why 原因（手機也要看得到）}
+export function autoBarInfo(P) {
+  const n = autoDeliverables(P).length;
+  const list = dailyCommissions(P, P.day ? P.day.date : todayStr());
+  const left = list.filter(c => !c.done).length;
+  if (n) return { n, left, state: "ok", why: n < left ? `另外 ${left - n} 張，收藏裡還沒有符合的。` : "" };
+  return { n: 0, left, state: left ? "none" : "done", why: left ? "收藏裡沒有符合的" : "今天都交完了，明天再來" };
+}
 // 照 autoDeliverables 的清單一張一張 deliver（說服、治好怪癖、老主顧的故事線都跟手動交一樣，因為是同一個函式）。
 // 委託已經換掉（換天了）或交不了的跳過，算在 skipped。
 // 回傳 { results: [{ idx, c, item, r }], skipped, reward, gain, cured: [{ quirk, from, to }…], events }

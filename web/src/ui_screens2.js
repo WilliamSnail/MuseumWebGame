@@ -9,7 +9,7 @@ import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
 import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { BASE_TOTAL, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../shared/logic.js";
+import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { npcNews, npcWebCounters } from "../../shared/npc.js";
 import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
@@ -151,14 +151,13 @@ SCREENS.commission = root => {
 // 這裡只管：委託單上方的按鈕、先用 ask() 問一次、交完蓋一張總結，最後才用 showEvents() 演出徽章這些事件。
 // 不像手動交件每張都蓋章、飄字、跳提示，免得一次跳一大堆。
 export function autoBar() {
-  const plan = autoDeliverables(P);
-  const left = dailyCommissions(P, P.day.date).filter(c => !c.done).length;
-  const n = plan.length;
+  const info = autoBarInfo(P), n = info.n, left = info.left;
   const b = btn([icon("commission"), n ? `壹鍵交件（${n} 張）` : "壹鍵交件"], () => autoDeliverFlow(b), n ? "primary ad-btn" : "ad-btn", n ? {} : { disabled: true });
   const why = !left ? "今天的委託都完成了，明天再來。"
     : !n ? "沒有符合的收藏"
-    : `每張挑收藏裡最普通的那件去交，完美作品留到最後；交了收藏不會少。${n < left ? `另外 ${left - n} 張，收藏裡還沒有符合的。` : ""}`;
-  return h("div", { class: "ad-bar" + (n ? "" : " off") }, b, h("p", { class: "ad-why" }, why));
+    : `每張挑收藏裡最普通的那件去交，完美作品留到最後；交了收藏不會少。${info.why}`;
+  // 手機把說明收起來了，但「沒有符合的／都交完了」是按鈕為什麼灰的原因，一定要看得到：另外寫壹行短的（ad-short），平常藏起來，只有 .off 在手機顯示
+  return h("div", { class: "ad-bar" + (n ? "" : " off") }, b, h("p", { class: "ad-why" }, why), n ? null : h("p", { class: "ad-short" }, info.why));
 }
 export async function autoDeliverFlow(b) {
   const plan = autoDeliverables(P); // 按下去的當下再算一次
