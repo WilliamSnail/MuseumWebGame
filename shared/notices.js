@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-0f657e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "看展的散客會順路逛別間", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "看展的散客現在有一部分會在展廳待到壹半，走去別的房間逛逛。",
+        "大廳導覽圖上，畫廊、賭場、手作坊這些房間也看得到人了；展廳的人數會跟著少壹點，冷清、平常、熱絡的分界也重新調過。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-a93301", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下的聲音更豐富", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

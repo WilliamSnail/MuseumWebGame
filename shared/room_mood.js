@@ -21,8 +21,9 @@
 // ================================================================
 import { statBandOf } from "./stat_view.js";
 
-// 導覽圖上各房間的熱絡：館友人數 → 級數（1 人＝1 級、2～3 人＝2 級、4 人以上＝3 級；0 人＝0 級）。門檻只寫這壹處
-export const RM = { roomLv: [1, 2, 4], crowdMax: 24, sanLow: 40, omenMin: 0.15, warm: { cold: -0.7, plain: 0, warm: 0.5, buzz: 0.9 } };
+// 導覽圖上各房間的熱絡：房間人數（館友＋旅客＋散客）→ 級數（1～3 人＝1 級、4～9 人＝2 級、10 人以上＝3 級；0 人＝0 級）。門檻只寫這壹處
+// 展廳的人本來就多（散客壹組十幾位、整天平均約 58 位），門檻乘 roomScale：8～31 人 1 級、32～79 人 2 級、80 人以上 3 級（決定 0095，量測 test/sim_rooms.cjs）
+export const RM = { roomLv: [1, 4, 10], roomScale: { hall: 8 }, crowdMax: 24, sanLow: 40, omenMin: 0.15, warm: { cold: -0.7, plain: 0, warm: 0.5, buzz: 0.9 } };
 const rmN = x => (x === null || x === undefined || x === "" || typeof x === "boolean" || !Number.isFinite(+x) ? null : +x);
 const rmClamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -71,7 +72,8 @@ export function roomHeats(counts) {
   const out = {}, c = counts && typeof counts === "object" ? counts : {};
   for (const id of Object.keys(c)) {
     const n = Math.max(0, Math.floor(rmN(c[id]) || 0));
-    out[id] = { n, lv: RM.roomLv.reduce((lv, t, i) => (n >= t ? i + 1 : lv), 0) };
+    const k = RM.roomScale[id] || 1;
+    out[id] = { n, lv: RM.roomLv.reduce((lv, t, i) => (n >= t * k ? i + 1 : lv), 0) };
   }
   return out;
 }

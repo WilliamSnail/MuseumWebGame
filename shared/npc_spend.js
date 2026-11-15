@@ -112,17 +112,27 @@ export function crowdShopToday(day, secret) {
 export const NPC_ROOM = { hall: "hall", food: "casino", bj: "casino", job: "commission", cellar: "cellar", craft: "workshop", bank: "bank", auction: "gallery" };
 // 這壹天逛店的散客在各家店各有幾位（館內股「昨天不同的人」用，整天的總數；現在在場幾位不給）
 export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }
+// 看展的散客順路逛別間（決定 0095）：每組有 wander.p 的機率在待展廳的中間壹段去別的房間逛，種子含祕密、同壹時刻大家看到壹樣。只影響「現在各房間幾位」（now.rooms），不花錢、不算館內股、不動門票和分紅
+export function crowdWander(day, secret, g) {
+  const C = NUM.casino.npcSpend.crowd, Wd = C && C.wander; if (!Wd || !(Wd.p > 0)) return null;
+  const rnd = mulberry32(hashStr(`${secret}|${day}|${g.key}|wander`)); if (rnd() >= Wd.p) return null;
+  const stay = g.end - g.start, a = g.start + Math.floor(stay * (Wd.from[0] + rnd() * (Wd.from[1] - Wd.from[0]))), b = Math.min(g.end, a + Math.max(1, Math.floor(stay * (Wd.len[0] + rnd() * (Wd.len[1] - Wd.len[0]))))), ids = Object.keys(Wd.rooms), tot = ids.reduce((s, k) => s + Wd.rooms[k], 0);
+  let r = rnd() * tot, room = ids[ids.length - 1]; for (const k of ids) { r -= Wd.rooms[k]; if (r < 0) { room = k; break; } }
+  return { room, a, b };
+}
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
 // away：現在被館友邀去賭場的 NPC id（Set，shared/casino_npc.js 的 npcCasAway）：他們不算在展廳、也不算在館裡別的地方，另外列在 casino
 export function npcPresence(day, nowMs, secret, list, counters, away, mood = null) {
   const aw = away && typeof away.has === "function" ? away : new Set(), m = (nowMs - npcDayStartMs(day)) / 60000, v0 = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end), v = v0.filter(x => !aw.has(x.id));
   const hall = v.filter(x => x.place === "hall");
-  const cg = crowdVisitsToday(day, secret, mood).filter(x => x.start <= m && m < x.end), cn = cg.reduce((a, x) => a + x.n, 0);
+  const cg0 = crowdVisitsToday(day, secret, mood).filter(x => x.start <= m && m < x.end), wd = new Map(cg0.map(x => [x.key, crowdWander(day, secret, x)])), away2 = x => { const w = wd.get(x.key); return w && w.a <= m && m < w.b ? w : null; };
+  const cg = cg0.filter(x => !away2(x)), cn = cg.reduce((a, x) => a + x.n, 0); // 順路去別間逛的不算在展廳
   const cas = Array.from(aw).map(id => { const n = list.find(x => x && x.id === id); return n ? n.name : ""; }).filter(Boolean);
   // 各房間現在有幾位（決定 0094：翊文選「全部照實際人數」；館內股的跳空另外跟著人數即時反映，見 casInRampMake）
   const shops = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, rooms = {}, put = (room, kind, n) => { if (n <= 0) return; const r = rooms[room] || (rooms[room] = { n: 0, npc: 0, crowd: 0 }); r.n += n; r[kind] += n; };
   for (const x of v) { const room = NPC_ROOM[x.place]; if (!room) continue; put(room, "npc", 1); if (x.place in shops) shops[x.place]++; }
   put("hall", "crowd", cn);
+  for (const x of cg0) { const w = away2(x); if (!w) continue; put(w.room, "crowd", x.n); rooms[w.room].wander = (rooms[w.room].wander || 0) + x.n; }
   for (const g of crowdShopToday(day, secret)) if (g.start <= m && m < g.end) { put(NPC_ROOM[g.store], "crowd", g.n); shops[g.store] += g.n; }
   return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) }, rooms, shops };
 }
