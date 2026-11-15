@@ -53,4 +53,10 @@ T("館內股也能賣還債：不受壹人壹天上限和全館淨賣出上限�
 T("view：欠款有多少、能不能賣股還債（給銀行頁用）", G => {
   const s = fresh(G); assert.strictEqual(G.casDebtView(s.w, OPEN).can, false); s.w.chips = -1; const v = G.casDebtView(s.w, OPEN); assert.ok(v.can && v.owed === 1 && v.neg === 1);
 });
+T("訊息的空格：數字前面有空格、單位（萬、億）後面不接空格再接中文字、中文字直接黏著數字的不行（欠 0、欠 149 萬、欠 6.22 萬都對）", G => {
+  const ok = t => { assert.ok(!/[一-鿿]d/.test(t), "中文字黏著數字：" + t); assert.ok(!/[萬億] [一-鿿]/.test(t), "單位後面多空格：" + t); assert.ok(!/d [一-鿿]/.test(t.replace(/d+ 股/g, "")), "數字後面多空格：" + t); };
+  for (const [paid, left] of [[0, 0], [1490000, 0], [62200, 500000]]) ok(G.casFill(G.CAS_DEBT.done, { n: G.casNum(12), net: G.casNum(paid + 10), paid: G.casNum(paid), left: G.casNum(left) }));
+  ok(G.casFill(G.CAS_DEBT.tooMany, { owed: G.casNum(1490000), n: G.casNum(3000), max: G.casNum(80) }));
+  const s = fresh(G); G.casStockBuy(s.w, s.house, ID, 3000, D, OPEN); s.w.chips = -500000; const r = G.casSellForDebt(s.w, s.house, ID, "max", D, OPEN); assert.ok(r.ok); ok(r.lines[r.lines.length - 1]);
+});
 console.log(`賣股還債：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
