@@ -47,6 +47,8 @@ import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic } from "./shared/world.js";
 import { casSellForDebt } from "./shared/casino_debt.js";
+import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
+import { MAIL_DAYS } from "./shared/mailbox.js";
 import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -130,6 +132,8 @@ export async function playCore(me, email, opts, fn) {
       const ctx = { secret: sec, w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
       const r = fn(ctx);
+      const letter = r.ok !== false || opts.writeAnyway ? casAdvisorLetter(ctx.w, ctx.house, day, t, MAIL_DAYS) : null; // 財經專員的個人信（決定 0093 第 3 件）：第壹次欠了不少錢寄壹封，同壹個交易裡寫、錢包記著寄過了
+      if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       ha = ctx.house.bankroll;
       const newRv = casNpcTakeReviews(ctx.house); // 這次新寫的 NPC 評價：合進完整歷史 npcReviews/{日期}（先讀、後面壹起寫；冪等）
       if (!r.ok && !opts.writeAnyway) return r;
@@ -145,8 +149,9 @@ export async function playCore(me, email, opts, fn) {
         tx.set(saveRef(me.uid), { data: JSON.stringify(ctx.S), rev, updatedAt: FieldValue.serverTimestamp() });
       }
       if (ctx.legacyMark && ls && ls.exists) tx.set(legacyRef(email), ctx.legacyMark, { merge: true });
-      return Object.assign({}, r, { rev });
+      return Object.assign({}, r, { rev, letter: letter ? { id: letter.id, from: letter.mail.from, text: letter.mail.note } : null });
     });
+    if (out && out.letter) { try { await inbox(me.uid, { t: "mail_new", kind: "advisor", from: out.letter.from, text: out.letter.text }); } catch (e) { /* 信已經寫了，通知晚點看信箱也找得到 */ } }
     if (out && out.rev) await inbox(me.uid, { t: "save_changed", rev: out.rev, why: "casino" });
     // 莊家破產、被救回來 → Discord（寫 outbox；寫不進去只記錄，不影響這步）
     if (out && out.ok !== false) await outHouse({ before: hb, after: ha, nick: me.nick, settled: !!out.settle, rescued: !!(out.econ && out.econ.rescued), t });
@@ -286,6 +291,11 @@ export const actBorrow = (ctx, d) => {
 };
 // 股票買賣：d.op 是 buy、sell；d.id 哪壹支、d.n 幾股（"max" ＝全賣）。
 // 掛單：d.op 是 order（d.kind 是 buy 限價買、sell 限價賣、stop 停損賣；d.id、d.n、d.px 價）、cancel（d.no 第幾張）
+// 財經專員（決定 0093 第 3 件）：op "extend" 館友同意把某筆借款延期（d.id）；賣股走 stock 的 sellDebt。沒有 op（看計畫）就只回畫面
+export const actAdvisor = (ctx, d) => {
+  if (String(d.op || "") === "extend") { const r = casAdvisorExtend(ctx.w, d.id, ctx.day); return r.ok ? shape(ctx, { lines: r.lines }) : no(r); }
+  return shape(ctx);
+};
 export const actStock = (ctx, d) => {
   const op = String(d.op || ""), id = String(d.id || "");
   if (op === "sellDebt") { // 賣股還債（決定 0093 第 2 件）：d.id 哪壹支（館外或館內）、d.n 幾股（"max" ＝賣到剛好夠還）；不受壹人壹天的賣出上限，賣的錢先補錢包的負數、再照到期順序還借款
@@ -479,6 +489,7 @@ export const casino = onCall(async req => {
       return shape(ctx);
     });
     case "stock": return play(req, me, {}, ctx => actStock(ctx, d)); // 股票：買、賣（11-14） // 銀行廳打開時拿壹次（回答裡的 bankHall，每個賭場動作的回答也都有）
+    case "advisor": return play(req, me, {}, ctx => actAdvisor(ctx, d)); // 財經專員：同意延期（決定 0093 第 3 件）
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
     case "workStart":
