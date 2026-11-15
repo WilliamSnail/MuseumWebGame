@@ -27,7 +27,7 @@
 .hn-hall .hn-st { color: #B07A10; }
 
 /* 全部的評價（點「看全部」） */
-.mini-card.hn-layer { width: min(520px, 94vw); max-height: min(84dvh, 620px); overflow-y: auto; }
+.mini-card.hn-layer { width: min(520px, 94vw); max-height: min(84svh, 620px); overflow-y: auto; }
 .hn-layer .hn-list { gap: 8px; }
 .hn-layer .hn-rv { font-size: .9375rem; }
 .hn-layer .hn-st { font-size: .9375rem; color: #B07A10; }
