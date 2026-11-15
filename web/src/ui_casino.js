@@ -102,7 +102,7 @@ export async function openCasino(o) {
   const want = o && typeof o.tab === "string" && TABS.some(t => t[0] === o.tab) ? o.tab : null;
   if (S && S.m && S.m.layer.isConnected) { if (want) goTab(want); return; }
   const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); });
-  mountMood(m.layer.querySelector(".nb-frame"), "casino"); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
+  mountMood(m.layer.querySelector(".nb-frame"), "casino", { fx: ["chips", "neon", "smoke", "dealer"] }); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
   S = { m, tab: want || "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;

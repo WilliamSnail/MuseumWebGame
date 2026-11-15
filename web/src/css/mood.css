@@ -67,3 +67,7 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
 /* 上面幾種小東西是 <i>，不要吃到 .rm i 的 inset: 0（會把座標壓到上面） */
 .rm .rm-stk i, .rm .rm-smoke i, .rm i.rm-roll { top: auto; right: auto; }
 .rm .rm-stk i { left: 0; }
+
+/* 霓虹和荷官都開：標題列中間錯開 */
+.rm-fx.both-top .rm-neon { left: 36%; }
+.rm-fx.both-top .rm-dealer { left: 66%; font-size: clamp(.72rem, .95vw, .9rem); }
