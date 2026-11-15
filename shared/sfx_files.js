@@ -9,6 +9,11 @@
 export const SFX_FILES = {
   "casino-ambiance": { name: "Casino Ambiance", by: "freesound_community", url: "https://pixabay.com/sound-effects/casino-ambiance-19130/", loop: true, use: "賭場人聲底（跟熱鬧連動）" },
   "wind": { name: "Wind blowing sfx", by: "JCI-21", url: "https://pixabay.com/sound-effects/wind-blowing-sfx-12809/", loop: true, use: "地下收藏庫的風" },
+  "basement-ambience": { name: "Horror Basement Ambience（截 70 秒做成循環）", by: "SoundReality", url: "https://pixabay.com/sound-effects/horror-basement-ambience-615155/", loop: true, use: "地下收藏庫的環境底音" },
+  "echo-dungeon": { name: "Echo Dungeon", by: "freesound_community", url: "https://pixabay.com/sound-effects/echo-dungeon-70538/", use: "地下收藏庫偶爾的遠處回音" },
+  "echo-far": { name: "echo（截前 12 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/echo-26189/", use: "地下收藏庫偶爾的遠處回音" },
+  "basement-noise": { name: "Noise In The Basement", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/noise-in-the-basement-398732/", use: "地下收藏庫偶爾的怪聲" },
+  "someone-coming": { name: "Someone Is Coming", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/someone-is-coming-428186/", use: "地下收藏庫很久壹次的「有人來了」" },
   "coins-counting": { name: "Coins Counting", by: "yuliana-yurukova", url: "https://pixabay.com/sound-effects/coins-counting-275779/", use: "銀行遠處點硬幣" },
   "coin-payout": { name: "Coin Payout 25", by: "floraphonic", url: "https://pixabay.com/sound-effects/coin-payout-25-213587/", use: "銀行提出、借錢、賣股票（錢回到手上）" },
   "coin-payout-big": { name: "Wood Surface Multi Coin Payout Loop 1", by: "floraphonic", url: "https://pixabay.com/sound-effects/wood-surface-multi-coin-payout-loop-1-215433/", use: "銀行定存解約、館債贖回、平倉（大筆錢回到手上）" },

@@ -855,13 +855,18 @@ export const FX = (() => {
       cellar(c, g) { // 地下收藏庫：風聲＋滴水
         // 11-15：風聲加真的錄音（Pixabay「Wind blowing sfx」），合成的風降壹半墊底
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035);
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), fileLoop(c, g, 'wind', 0.35).n];
+        // 11-15 翊文：「這些可以當地下室的各種背景音或音效」：底下多壹層地下室的環境錄音（basement-ambience），風聲降壹點；
+        //   偶爾冒出遠處的回音、地下室的怪聲，很久才壹次「有人來了」（都是 Pixabay，來源在 shared/sfx_files.js）
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), fileLoop(c, g, 'wind', 0.22).n, fileLoop(c, g, 'basement-ambience', 0.4).n];
+        let oddN = 0, comeN = 0; // every 會先跑壹次：第壹次跳過，進來不會馬上冒怪聲
+        const odd = every(() => oddN++ && fileOnce(c, g, pick(['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise']), rand(0.12, 0.2)), () => rand(35000, 80000));
+        const coming = every(() => comeN++ && fileOnce(c, g, 'someone-coming', 0.16), () => rand(150000, 300000));
         const drip = every(() => {
           const t = c.currentTime + 0.05, f = rand(1250, 1900);
           tone(t, { f, f2: f * 1.7, glide: 0.04, g: 0.05, a: 0.002, d: 0.16, to: g });
           tone(t + 0.22, { f, f2: f * 1.7, glide: 0.04, g: 0.014, a: 0.002, d: 0.14, to: g });
         }, () => rand(1400, 4500));
-        return { nodes, timers: [drip] };
+        return { nodes, timers: [drip, odd, coming] };
       },
       fusion(c, g) { // 融合室：神秘的低鳴（會慢慢「呼吸」），偶爾冒出帶回音的玻璃音
         const lp = c.createBiquadFilter(), dg = c.createGain();
