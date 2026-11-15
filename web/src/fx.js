@@ -680,7 +680,7 @@ export const FX = (() => {
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % PROG.length; next += E8 * 8; } }, () => 1000);
         const steps = every(() => farSteps(c, g, 0.01), () => rand(8000, 15000));
-        return { nodes: [...murmur(c, g, 0.006)], timers: [sched, steps] };
+        return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n], timers: [sched, steps] }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
       },
       // 手作坊：輕快的木琴＋撥弦低音（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「手作坊的音樂聽不太到，可以換壹首嗎」→ 原本只有剪刀、鉛筆、敲木頭的零星聲音，換成真的音樂。
@@ -793,7 +793,8 @@ export const FX = (() => {
         const CH = [[293.66, 369.99, 440], [329.63, 415.3, 493.88], [261.63, 329.63, 392], [293.66, 349.23, 440]];
         let k = 0;
         const pad = every(() => { const t = c.currentTime + 0.05, ch = CH[k++ % CH.length]; ch.forEach((f) => { tone(t, { f, g: 0.011, a: 2, d: 4.4, to: g }); tone(t, { f: f * 2, g: 0.003, a: 2.2, d: 3.6, to: g }); }); }, () => 5000);
-        return { nodes: [room.n, ...murmur(c, g, 0.008)], timers: [pad] };
+        // 11-15 翊文：「這個不知道適不適合放博物館大廳或展廳」：加博物館大廳的人聲錄音（Pixabay「museum hall big echo group」）墊在弦樂底下
+        return { nodes: [room.n, ...murmur(c, g, 0.005), fileLoop(c, g, 'museum-hall', 0.3).n], timers: [pad] };
       },
       library(c, g) { // 圖庫：音樂盒，五聲音階隨意彈，有回音
         const send = echoSend(c, g, 0.36, 0.35);
@@ -852,21 +853,58 @@ export const FX = (() => {
         }, () => rand(6500, 13000));
         return { nodes: [room.n], timers: [pad, steps] };
       },
-      cellar(c, g) { // 地下收藏庫：風聲＋滴水
-        // 11-15：風聲加真的錄音（Pixabay「Wind blowing sfx」），合成的風降壹半墊底
-        const b = bed(c, g, 'bandpass', 420, 1.1, 0.035);
-        // 11-15 翊文：「這些可以當地下室的各種背景音或音效」：底下多壹層地下室的環境錄音（basement-ambience），風聲降壹點；
-        //   偶爾冒出遠處的回音、地下室的怪聲，很久才壹次「有人來了」（都是 Pixabay，來源在 shared/sfx_files.js）
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), fileLoop(c, g, 'wind', 0.22).n, fileLoop(c, g, 'basement-ambience', 0.4).n];
-        let oddN = 0, comeN = 0; // every 會先跑壹次：第壹次跳過，進來不會馬上冒怪聲
-        const odd = every(() => oddN++ && fileOnce(c, g, pick(['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise']), rand(0.12, 0.2)), () => rand(35000, 80000));
-        const coming = every(() => comeN++ && fileOnce(c, g, 'someone-coming', 0.16), () => rand(150000, 300000));
+      cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
+        // 錄音都是 Pixabay（來源在 shared/sfx_files.js）。ui_core.js 的 audioState 用 ambMix({ floor, mode }) 告訴這裡現在在哪；沒告訴（選樓層的地方）用 base。
+        //   mode：map 看地圖、選路／explore 房間探索／fight 遇到怪物／gate 守門／rest 休息點
+        //   每層：bed＝三條底音的音量（wind 風、basement 地下室錄音、sewer 下水道管線）；odd＝偶爾冒出來的聲音；gap＝幾秒冒壹次；drip 合成的滴水；coming＝會不會很久壹次「有人來了」
+        const FLOOR = {
+          base: { bed: { wind: 0.22, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise'], gap: [35, 80], drip: 1, coming: true },
+          1: { bed: { wind: 0.1, basement: 0, sewer: 0.35 }, odd: ['cave-drops', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 1 }, // 積灰的儲藏室：滴水的水管
+          2: { bed: { wind: 0.3, basement: 0.3, sewer: 0 }, odd: ['echo-far', 'basement-noise', 'basement-knock'], gap: [40, 90], drip: 0.5 }, // 雕像廳：很冷
+          3: { bed: { wind: 0.08, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-dungeon', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 0.3, coming: true }, // 空畫框的走廊：長走廊的回音
+          4: { bed: { wind: 0.05, basement: 0, sewer: 0.5 }, odd: ['cave-drops', 'cave-drops', 'echo-far'], gap: [20, 50], drip: 1.6 }, // 淹水的檔案室
+          5: { bed: { wind: 0.08, basement: 0, sewer: 0 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空
+        };
+        // 在做什麼：bed 底音乘幾倍、gapK 冒聲音的間隔乘幾倍（0＝不冒）、dripK 滴水
+        const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
+        const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
+        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0) };
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n];
+        const cur = { f: FLOOR.base, m: MODE.map, mode: 'map' };
+        const apply = (fade) => {
+          const t = c.currentTime;
+          Object.keys(L).forEach((k) => {
+            const v = cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : cur.f.bed[k] * cur.m.bed;
+            L[k].v.gain.setTargetAtTime(v, t, fade);
+          });
+        };
+        apply(0.01);
+        let oddN = 0, comeN = 0, lastOdd = 0; // every 會先跑壹次：第壹次跳過，進來不會馬上冒怪聲
+        const odd = every(() => {
+          if (!oddN++ || !cur.m.gapK) return;
+          const now2 = Date.now(), gap = cur.f.gap[0] * cur.m.gapK * 1000;
+          if (now2 - lastOdd < gap) return; lastOdd = now2;
+          fileOnce(c, g, pick(cur.f.odd), rand(0.12, 0.2));
+        }, () => rand(cur.f.gap[0], cur.f.gap[1]) * 1000 * (cur.m.gapK || 1));
+        const coming = every(() => { if (comeN++ && cur.f.coming && cur.m.gapK) fileOnce(c, g, 'someone-coming', 0.16); }, () => rand(150000, 300000));
         const drip = every(() => {
+          if (Math.random() > Math.min(1, cur.f.drip * cur.m.dripK)) return;
           const t = c.currentTime + 0.05, f = rand(1250, 1900);
           tone(t, { f, f2: f * 1.7, glide: 0.04, g: 0.05, a: 0.002, d: 0.16, to: g });
           tone(t + 0.22, { f, f2: f * 1.7, glide: 0.04, g: 0.014, a: 0.002, d: 0.14, to: g });
-        }, () => rand(1400, 4500));
-        return { nodes, timers: [drip, odd, coming] };
+        }, () => rand(1400, 4500) / Math.max(1, cur.f.drip));
+        return {
+          nodes, timers: [drip, odd, coming],
+          mix(m) { // { floor: 1～5 或 null, mode }：換層、換狀態時慢慢淡過去；剛遇到怪物（進 fight／gate）播壹次「有人來了」
+            if (!m || m.mode == null) return;
+            const f = FLOOR[m.floor] || FLOOR.base, md = MODE[m.mode] || MODE.map;
+            const into = (m.mode === 'fight' || m.mode === 'gate') && cur.mode !== 'fight' && cur.mode !== 'gate';
+            if (f === cur.f && m.mode === cur.mode) return;
+            cur.f = f; cur.m = md; cur.mode = m.mode;
+            apply(1.5);
+            if (into) fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.4 : 0.32);
+          },
+        };
       },
       fusion(c, g) { // 融合室：神秘的低鳴（會慢慢「呼吸」），偶爾冒出帶回音的玻璃音
         const lp = c.createBiquadFilter(), dg = c.createGain();
@@ -933,8 +971,8 @@ export const FX = (() => {
         }, () => rand(cur.chipMin, cur.chipMax));
         return {
           nodes, timers: [sched, chips],
-          mix(m) { // 熱絡 → 人聲大聲、籌碼聲變多
-            if (!m) return;
+          mix(m) { // 熱絡 → 人聲大聲、籌碼聲變多（地下的 { floor, mode } 不理）
+            if (!m || m.crowd == null) return;
             cur.crowd = m.crowd; cur.chipMin = m.chipMin; cur.chipMax = m.chipMax; cur.chipN = m.chipN;
             crowdG.gain.setTargetAtTime(Math.max(0.0001, m.crowd), c.currentTime, 1.2);
           },
