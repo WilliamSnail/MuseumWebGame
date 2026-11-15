@@ -24,7 +24,7 @@ let ending = "", partsEnding = "";
   for (let i = a; i < b; i++) if (lines[i].startsWith("```")) { const e = lines.findIndex((l, j) => j > i && l.startsWith("```")); blocks.push(lines.slice(i + 1, e).join(" ").trim()); i = e; }
   [ending, partsEnding = ""] = blocks;
 }
-const isPart = key => /^(3-(8|9|1\d)|P-\d+)$/.test(key.split(" ")[0]); // P-：介面重塑的共通零件
+const isPart = key => /^(3-(8|9|1\d)|P-\d+|M-[1-8])$/.test(key.split(" ")[0]); // P-：介面重塑的共通零件
 
 // 第一～三節的每個 ### 小節：程式框 + 後面的表格
 const items = [];
