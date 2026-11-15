@@ -97,6 +97,7 @@ const STEPS = [
   ["每天新關卡的工具（每種打法每一層都過檢查、少寫預告會說、調難度、今天的點放進地圖，決定 0067）", ["test/new_level.test.cjs"]],
   ["交過的委託不能再交", ["test/commission_keep.test.cjs"]],
   ["每週任務的旁白", ["test/story_words.test.cjs"]],
+  ["functions 用到的名字都有 import（11-15：casino.js 少 import NUM，日報每天 ReferenceError）", ["test/functions_imports.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],
   ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/week_check.cjs"]],
