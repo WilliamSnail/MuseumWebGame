@@ -55,6 +55,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-15-2d1eb8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "借款可以自己輸入金額", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行借款頁多了「自己輸入金額」和「借滿」：打多少借多少，下面會先算好要還多少",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-885551", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "手作坊成品的效果字看得到了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
