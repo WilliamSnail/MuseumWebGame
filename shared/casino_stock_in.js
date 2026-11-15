@@ -26,7 +26,7 @@ import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { npcTrips } from "./npc_trip.js";
-import { casNpcSpend, crowdShopCounts } from "./npc_spend.js";
+import { casNpcSpend, crowdShopCounts, npcShopArrive } from "./npc_spend.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 
@@ -132,6 +132,13 @@ export function casInHouseFix(house) {
   if (!inBox(H.pre.open)) H.pre.open = {};
   for (const id of Object.keys(H.pre.open)) { const n = inN(H.pre.open[id]); if (n > 0 && IN_IDS.includes(id)) H.pre.open[id] = n; else delete H.pre.open[id]; }
   if (!inBox(H.net)) H.net = { day: null, n: 0 };
+  // 盤中跟著人數走（決定 0094）：vis[日期][店] ＝ 那天時刻表上到店的人數（NPC ＋ 逛店的散客，房間即時人數看得到的那一部分）；ramps[日期][店] ＝ 那天盤中價的人數修正（每 RAMP_K 個價壹個點，單位萬分之一）
+  if (!inBox(H.vis)) H.vis = {};
+  for (const d of Object.keys(H.vis)) { if (!inDay(d) || !inBox(H.vis[d])) delete H.vis[d]; else for (const s of Object.keys(H.vis[d])) { const n = inN(H.vis[d][s]); if (IN_STORES.includes(s)) H.vis[d][s] = n; else delete H.vis[d][s]; } }
+  const vd = Object.keys(H.vis).sort(); for (const d of vd.slice(0, Math.max(0, vd.length - C.histDays))) delete H.vis[d];
+  if (!inBox(H.ramps)) H.ramps = {};
+  for (const d of Object.keys(H.ramps)) { if (!inDay(d) || !inBox(H.ramps[d])) delete H.ramps[d]; else for (const s of Object.keys(H.ramps[d])) { const a = H.ramps[d][s]; if (IN_STORES.includes(s) && Array.isArray(a) && a.length) H.ramps[d][s] = a.slice(0, 40).map(x => (Number.isFinite(+x) ? Math.round(+x) : 0)); else delete H.ramps[d][s]; } }
+  const rpd = Object.keys(H.ramps).sort(); for (const d of rpd.slice(0, Math.max(0, rpd.length - 2))) delete H.ramps[d]; // 今天和昨天的（掛單、槓桿看昨天的價用）
   H.net.day = inDay(H.net.day) ? H.net.day : null;
   H.net.n = Number.isFinite(+H.net.n) ? Math.floor(+H.net.n) : 0;
   return H;
@@ -155,6 +162,37 @@ export function casInSeries(open, day, id, secret = SECRET) {
   let p = open;
   for (let i = 1; i < C.ticks; i++) { p = Math.max(lo, Math.min(hi, p * (1 + step * inGauss(rnd)))); out.push(Math.max(C.floor, Math.round(p))); }
   return out;
+}
+
+// ---------- 盤中跟著人數走（決定 0094，翊文 11-15：各房間人數全部照實際公開）----------
+// 房間的即時人數公開之後，看人數就能猜明天的跳空、先卡位賺。所以讓盤中的價格「看得到＝已經漲了」：價格 ＝ 原本的曲線 × (1 ＋ 修正)，
+//   修正 ＝ κ × (到店的人數到現在 − 平均到店人數 × 平常這個鐘點前到的比例)，κ ＝ k ÷ 平均人數（跟跳空的算法同一個斜率）。看到的人多、價格就已經往上走；之後的人數是平均，預期不會再變。
+// 明天 05:00 的開盤價不變（還是 原本的收盤 ×（1 ＋ 跳空）），只是昨天的收盤現在包含了這個修正，所以 05:00 看到的缺口變小。名單、時刻表的任何一項沒有（測試、舊程式）：不修正。
+const RAMP_K = 4;
+const rampAt = (arr, i) => { const x = Math.max(0, i) / RAMP_K, lo = Math.min(Math.floor(x), arr.length - 1), hi = Math.min(lo + 1, arr.length - 1); return 1 + (arr[lo] + (arr[hi] - arr[lo]) * (x - lo)) / 10000; };
+export function casInRampMake(H, day, secret, npcCtx) {
+  const C = NUM.casino.stockIn;
+  if (!(C.ramp > 0) || !(npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) || !inDay(day)) return false;
+  const arr = npcShopArrive(day, secret, npcCtx.list, npcCtx.counters), W = NUM.casino.npcSpend.npcWeights, WT = W.reduce((a, b) => a + b, 0), out = {}, cap = C.jumpCap / 100;
+  const share = min => { let s = 0; for (let h = 0; h < W.length; h++) { const a = h * 60, b = a + 60; if (min >= b) s += W[h]; else if (min > a) s += W[h] * (min - a) / 60; } return s / WT; };
+  for (const id of IN_STORES) {
+    const valid = [], vis = [];
+    for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const d = inAdd(day, -i), n = inAvgTot(H, d, id), v = H.vis[d] && H.vis[d][id]; if (n >= C.minPeople && v !== undefined) { valid.push(n); vis.push(v); } }
+    if (valid.length < C.minDays) continue;
+    const avg = valid.reduce((s, x) => s + x, 0) / valid.length, vbar = vis.reduce((s, x) => s + x, 0) / vis.length, kap = C.k * C.ramp / avg, a = arr[id] || [], r = [];
+    for (let j = 0; j * RAMP_K < C.ticks - 1 + RAMP_K; j++) {
+      const min = j * RAMP_K * C.step; let v = 0; for (const e of a) { if (e.at <= min) v += e.n; else break; }
+      r.push(Math.round(Math.max(-cap, Math.min(cap, kap * (v - vbar * share(min)))) * 10000));
+    }
+    out[id] = r;
+  }
+  H.ramps[day] = out;
+  return true;
+}
+// 這天這家店的曲線（原本的曲線 × 人數修正）；沒有修正的日子跟 casInSeries 壹樣
+export function casInSeriesR(H, open, day, id, secret = SECRET) {
+  const C = NUM.casino.stockIn, ser = casInSeries(open, day, id, secret), r = H && H.ramps && H.ramps[day] && H.ramps[day][id];
+  return r ? ser.map((p, i) => Math.max(C.floor, Math.round(p * rampAt(r, i)))) : ser;
 }
 
 // ---------- 05:00 的跳空 ----------
@@ -202,6 +240,7 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
   const out = {}, ev = npcDays && inBox(npcDays[d]) ? npcDays[d] : null;
   const trip = npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length ? npcTrips(d, secret, npcCtx.list, npcCtx.counters) : null; // 有名單：每位 NPC 各抽今天去哪幾家（npc_trip.js）；沒有：Poisson
   const crowdShop = crowdShopCounts(d, secret);
+  if (trip && !inBox(H.vis[d])) { const ar = npcShopArrive(d, secret, npcCtx.list, npcCtx.counters); H.vis[d] = {}; for (const id of IN_STORES) H.vis[d][id] = ar[id].reduce((s, e) => s + e.n, 0); } // 房間即時人數看得到的那一部分（決定 0094）
   const fests = npcCtx && npcCtx.fest && Array.isArray(npcCtx.fest[d]) ? npcCtx.fest[d] : [], X = {};
   for (const id of IN_STORES) {
     const players = inN(H.use[d] && H.use[d][id]), rnd = mulberry32(hashStr(`${secret}|${d}|${id}|npc`));
@@ -267,9 +306,9 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
     }
     casInNpcFor(H, d, secret, npcDays, npcCtx); // 這壹天去逛的 NPC（算進這壹天「不同的人」，明天的跳空看它）
     for (const id of IN_IDS) {
-      const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1];
+      const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1]; // 原本的收盤（明天的開盤價從它來，不變）
       const j = casInJump(H, id, next, B, secret);
-      H.close[id] = close;
+      H.close[id] = Math.max(C.floor, casInSeriesR(H, H.open[id], d, id, secret)[C.ticks - 1]); // 畫面上的收盤（含人數修正）
       H.jump[id] = j.m; H.quiet[id] = j.quiet;
       H.open[id] = Math.max(C.floor, Math.round(close * (1 + j.m)));
     }
@@ -277,6 +316,8 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
   }
   H.pre = pre && pre.day === inAdd(day, -1) ? pre : { day: null, open: {} }; // 只留「昨天」的開盤價；隔很多天沒人碰的，昨天本身沒有記錄
   H.day = day; // 隔了超過 30 天：直接當今天
+  casInRampMake(H, day, secret, npcCtx); // 今天盤中的人數修正（今天的時刻表算得出來；沒有名單就不修正）
+  const rk = Object.keys(H.ramps).sort(); for (const d0 of rk) if (d0 !== day && d0 !== inAdd(day, -1)) delete H.ramps[d0];
   return { done: true, day, jump: Object.assign({}, H.jump) };
 }
 
@@ -284,7 +325,7 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
 export function casInPrice(house, id, day, t, secret = SECRET) {
   const C = NUM.casino.stockIn, H = casInHouseFix(house);
   if (!inDef(id)) return { px: 0, idx: null, halted: true };
-  const idx = casInIdx(t), ser = casInSeries(H.open[id], H.day || day, id, secret);
+  const idx = casInIdx(t), ser = casInSeriesR(H, H.open[id], H.day || day, id, secret);
   if (idx !== null) return { px: ser[Math.min(idx, ser.length - 1)], idx, halted: false };
   // 停盤（23:30～隔天 05:00，這段時間的「今天」還是前壹天）：價格停在最後壹個價。沒給時間（測試、舊程式）：開盤價，不當停盤
   return { px: t == null ? ser[0] : ser[C.ticks - 1], idx: null, halted: t != null };
@@ -411,7 +452,7 @@ export function casInMatch(w, house, day, t, secret = SECRET) {
     const o = S.orders.find(x => x.no === no);
     if (!o || !inDef(o.id)) continue;
     // 要檢查的價：下單那天（昨天的開盤價記在 H.pre，更早的不知道）下單之後的價，加上今天到現在的價
-    const ser = d => (d === H.day ? casInSeries(H.open[o.id], d, o.id, secret) : H.pre.day === d && H.pre.open[o.id] > 0 ? casInSeries(H.pre.open[o.id], d, o.id, secret) : null);
+    const ser = d => (d === H.day ? casInSeriesR(H, H.open[o.id], d, o.id, secret) : H.pre.day === d && H.pre.open[o.id] > 0 ? casInSeriesR(H, H.pre.open[o.id], d, o.id, secret) : null);
     const pts = [];
     for (const d of [inAdd(day, -1), day]) {
       if (d < o.day || d > o.exp) continue;
@@ -442,7 +483,7 @@ export function casInView(w, house, day, t, secret = SECRET) {
   const C = NUM.casino.stockIn, S = casInFix(w), H = casInHouseFix(house);
   const ready = H.day === day, idx = casInIdx(t), closed = t != null && Number.isFinite(+t) && idx === null;
   const list = IN_STOCKS.map(d => {
-    const ser = ready ? casInSeries(H.open[d.id], day, d.id, secret) : [], upto = idx !== null ? idx : (closed ? ser.length - 1 : 0);
+    const ser = ready ? casInSeriesR(H, H.open[d.id], day, d.id, secret) : [], upto = idx !== null ? idx : (closed ? ser.length - 1 : 0);
     const price = ready ? ser[Math.min(upto, ser.length - 1)] : H.open[d.id], mine = inN(S.own[d.id]);
     const prev = H.close[d.id], costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : price * mine) : 0; // 持股明細欄位跟館外股壹樣（casStockView）；prev ＝ 昨天收盤
     return { id: d.id, name: d.name, line: d.intro, kind: "in", market: "in", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,

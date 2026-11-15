@@ -493,7 +493,8 @@ export const NUM = {
     //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
     //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
     //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
-    stockIn: { start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
+    // ramp（決定 0094）：盤中價格跟著到店的人數走的比例（1 ＝ 照 k 的斜率全部反映；0 ＝ 關掉，回到以前：人數只在 05:00 的跳空反映）。各房間的即時人數公開之後，看人數卡位賺不到（sim_peek_stock）
+    stockIn: { ramp: 1, start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
       // NPC（規劃 2.8k、docs/館內NPC規劃.md 步驟 1、2）：每家店每天有 Poisson(npcLambda) 個 NPC 去逛（種子含伺服器祕密），算進昨天「不同的人」；NPC 最多占這家店人數的 npcShareMax%（館友太少就更少）；
       //   劇情日（week.json 的 npc）那天 NPC 多去 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 之間隨機（預期跳空 k×b ＜ 來回成本，預先進場賺不到；b 不能超過 0.33）
       // 突發大事件 C（翊文 11-14：不預告）：每家店每天有 npcBurstPct% 的機率突然多來 round(b × 前 7 個有效日的平均) 位旅客，b 在 npcBurstMin～npcBurstMax；

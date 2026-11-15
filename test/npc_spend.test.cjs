@@ -39,7 +39,7 @@ T("即時在場：每位 NPC 的幾站排成壹串不重疊、在營業時間內
   assert.ok(!V.some(v => v.id.startsWith("t-")), "劇情角色不會在場");
   const hv = V.find(v => v.place === "hall"), mid = G.npcDayStartMs(D0) + (hv.start + 1) * 60000, p = G.npcPresence(D0, mid, "s", LIST, null);
   assert.ok(p.hall >= 1 && p.names.includes(hv.name), JSON.stringify(p)); assert.strictEqual(G.npcPresence(D0, G.npcDayStartMs(D0) - 1000, "s", LIST, null).hall, 0, "05:00 以前沒人");
-  assert.ok(!("shops" in p), "不給各家店現在的人數");
+  assert.ok("shops" in p && "rooms" in p, "各家店、各房間現在的人數照實際給（決定 0094，翊文 11-15：全部照實際人數）；館內股盤中價格跟著人數走，所以看人數卡位賺不到");
 });
 T("停留時間在設定的範圍內（展廳 60～180、店 30～120，除非碰到營業時間結束被截短）；05:00～23:30 展廳平均 ≥ 2 位（深夜另外看，人少）", G => {
   const SP = G.NUM.casino.npcSpend; let hs = 0, n = 0;
