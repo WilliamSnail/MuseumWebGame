@@ -55,6 +55,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-15-68d45b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行的規則與小提示更新了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "補上：賣出上限照信用等級、賣股還債、館內股看人數和營收、借款自己輸入、財經專員和延期、財報的外面世界",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-ff9165", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "賣出上限看得到了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
