@@ -73,7 +73,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   npcs.forEach((n, i) => {
     const id = isObj(n) && typeof n.id === "string" ? n.id : "", w = `content/npc/${isObj(n) && n.__file || "第 " + (i + 1) + " 筆"}`;
     if (!isObj(n)) { E(w, "要是物件"); return; }
-    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "casino", "__file"]; // job：隸屬哪個單位（內容由 tools/world_check.cjs 檢查，決定 0086）
+    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "branch", "casino", "__file"]; // job：隸屬哪個單位（內容由 tools/world_check.cjs 檢查，決定 0086）
     Object.keys(n).forEach(k => { if (!allowed.includes(k)) E(w, `不認得欄位「${k}」（只能 ${allowed.filter(x => x !== "__file").join("、")}）`); });
     if (!/^[a-z][a-z0-9-]{2,23}$/.test(id)) { E(w, "id 要是英文小寫、數字、-（3～24 字，開頭是字母）"); return; }
     if (n.__file && n.__file !== id + ".json") E(w, `檔名要跟 id 壹樣（${id}.json）`);
@@ -135,7 +135,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
     arc.forEach((s, j) => {
       const sw = `${w}.arc[${j}]`;
       if (!isObj(s)) { E(sw, "要是物件"); return; }
-      Object.keys(s).forEach(k => { if (!["step", "from", "need", "text", "news", "ties", "route", "likes", "early"].includes(k)) E(sw, `不認得「${k}」（只能 step、from、need、text、news、ties、route、likes、early）`); });
+      Object.keys(s).forEach(k => { if (!["step", "from", "need", "text", "news", "ties", "route", "likes", "early", "beat", "variants"].includes(k)) E(sw, `不認得「${k}」（只能 step、from、need、text、news、ties、route、likes、early、beat、variants）`); });
       if (s.step !== j + 1) E(sw, `step 要照順序（這壹段是 ${j + 1}）`);
       if (typeof s.from !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s.from) || G.addDays(s.from, 0) !== s.from) E(sw, "from 要是日期（YYYY-MM-DD）：這壹天起才解鎖");
       else { if (prev && s.from <= prev) E(sw, "from 要比上壹段晚"); prev = s.from; }
@@ -156,7 +156,57 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
       if (s.route !== undefined) route(sw + ".route", s.route, { need: true });
       if (s.likes !== undefined) likes(sw + ".likes", s.likes, { need: true });
       if (trace && (s.route !== undefined || s.likes !== undefined)) E(sw, "劇情角色的故事不改 route、likes");
+      // 理智分岔（翊文 11-16，排程說明 一之十一之二）：steady／tired／uneasy／edge 四級對這壹步怎麼變。beat＝這壹步掛了主線揭露，只能換句子（steady、tired）
+      if (s.beat !== undefined) {
+        if (typeof s.beat !== "string" || !/^b\d+$/.test(s.beat)) E(sw + ".beat", "要是揭露的 id（b01 這種）");
+        else if (ledger && !asList(ledger.revealBeats && ledger.revealBeats.list).some(b => b && b.id === s.beat)) E(sw + ".beat", `「${s.beat}」不在帳本 revealBeats 裡`);
+      }
+      if (s.variants !== undefined) {
+        const vw = sw + ".variants", V = s.variants;
+        if (trace) E(vw, "劇情角色沒有理智，不寫 variants");
+        else if (!isObj(V)) E(vw, "要是 { steady, tired, uneasy, edge } 的物件");
+        else Object.entries(V).forEach(([lv, v]) => {
+          const lw = vw + "." + lv;
+          if (!["steady", "tired", "uneasy", "edge"].includes(lv)) { E(vw, `不認得「${lv}」（只能 steady、tired、uneasy、edge，跟 shared/stat_view.js 的 npcSan 壹樣）`); return; }
+          if (!isObj(v)) { E(lw, "要是物件"); return; }
+          if (s.beat !== undefined && (lv === "uneasy" || lv === "edge")) E(lw, "這壹步掛了主線揭露（beat），只能換句子：不能寫 uneasy、edge（不暫停、不跳步、不分岔）");
+          const keys = { steady: ["text", "news"], tired: ["text", "news", "delay"], uneasy: ["action", "text", "news"], edge: ["action", "news"] }[lv];
+          Object.keys(v).forEach(k => { if (!keys.includes(k)) E(lw, `不認得「${k}」（${lv} 只能 ${keys.join("、")}）`); });
+          if (lv === "steady" || lv === "tired") text(lw + ".text", v.text, L.arcText); else if (v.text !== undefined) text(lw + ".text", v.text, L.arcText);
+          if (v.news !== undefined) text(lw + ".news", v.news, L.arcNews);
+          if (lv === "tired" && v.delay !== undefined && (!Number.isInteger(v.delay) || v.delay < 1 || v.delay > 2)) E(lw + ".delay", "要是 1 或 2（延後幾週放，壹步最多延後壹段）");
+          if (lv === "uneasy") { if (!["hold", "skip", "alt"].includes(v.action)) E(lw + ".action", "要是 hold（停在這步）、skip（略過）、alt（換成另壹句）"); else if (v.action === "alt" && v.text === undefined) E(lw, "alt 要寫 text"); }
+          if (lv === "edge" && v.action !== "branch") E(lw + ".action", "edge 只能是 branch（走另壹條結局，結局由排程在觸發那天寫進檔案的 branch）");
+        });
+      }
     });
+    // 另壹條結局（branch）：任何旅客、委託人走到 edge 都可以有，由排程在觸發那天才寫（不預先寫）。1～3 段，最後壹段 ending
+    if (n.branch !== undefined) {
+      const bw = w + ".branch", B = n.branch;
+      if (trace) E(bw, "劇情角色沒有理智，不寫 branch");
+      else if (!isObj(B)) E(bw, "要是 { id, since, steps }");
+      else {
+        Object.keys(B).forEach(k => { if (!["id", "since", "steps"].includes(k)) E(bw, `不認得「${k}」（只能 id、since、steps）`); });
+        if (typeof B.id !== "string" || !/^[a-z][a-z0-9-]{2,23}$/.test(B.id)) E(bw + ".id", "要是英文小寫、數字、-（3～24 字）");
+        if (typeof B.since !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(B.since) || G.addDays(B.since, 0) !== B.since) E(bw + ".since", "要是觸發那天的日期（YYYY-MM-DD）");
+        if (!Array.isArray(B.steps) || !B.steps.length || B.steps.length > 3) E(bw + ".steps", "要是 1～3 段");
+        else {
+          let bp = typeof B.since === "string" ? B.since : "";
+          B.steps.forEach((t, k) => {
+            const tw = `${bw}.steps[${k}]`;
+            if (!isObj(t)) { E(tw, "要是物件"); return; }
+            Object.keys(t).forEach(x => { if (!["step", "from", "text", "news", "ties", "ending"].includes(x)) E(tw, `不認得「${x}」`); });
+            if (t.step !== k + 1) E(tw, `step 要照順序（這壹段是 ${k + 1}）`);
+            if (typeof t.from !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(t.from) || G.addDays(t.from, 0) !== t.from) E(tw, "from 要是日期");
+            else { if (bp && t.from <= bp) E(tw, "from 要比 since（和上壹段）晚"); bp = t.from; }
+            text(tw + ".text", t.text, L.arcText); text(tw + ".news", t.news, L.arcNews, { optional: true });
+            if (t.ties !== undefined) { if (!Array.isArray(t.ties) || !t.ties.length) E(tw + ".ties", "要是陣列"); else t.ties.forEach(x => { if (ledger && !tieIds.has(x)) E(tw + ".ties", `「${x}」不在帳本的 mysteries／sideArcs 裡`); }); }
+            if (t.ending !== undefined && t.ending !== true) E(tw + ".ending", "只能是 true");
+            if ((k === B.steps.length - 1) !== (t.ending === true)) E(tw, k === B.steps.length - 1 ? "最後壹段要有 ending: true" : "只有最後壹段能有 ending");
+          });
+        }
+      }
+    }
   });
 
   // 委託人 20 位要整批搬進來，名字和 note 不改（Yuga 寫的文字以 Yuga 的為準）
@@ -164,7 +214,8 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   CL.forEach(c => { const n = npcs.find(x => x && x.kind === "client" && x.name === c.name); if (!n) E("content/npc", `委託人「${c.name}」（shared/content.js CLIENTS）還沒搬進來`); else if (n.note !== c.note) E(`content/npc/${n.__file || n.id}`, `note 要跟 CLIENTS 原文壹樣：「${c.note}」`); });
   npcs.filter(n => n && n.kind === "client" && !CL.some(c => c.name === n.name)).forEach(n => W(`content/npc/${n.__file || n.id}`, "這位委託人不在 shared/content.js 的 CLIENTS 裡（新的委託人要程式端也接上，否則委託不會用到他）"));
   // 帳本的劇情角色都要有對應的 trace
-  if (ledger) ledgerChars.filter(Boolean).forEach(c => { if (!npcs.some(n => n && n.kind === "trace" && n.ledger === c)) W("content/npc", `帳本的角色「${c}」還沒有劇情角色（trace）的 NPC 檔`); });
+  if (ledger) asList(ledger.characters).filter(c => c && c.npc).forEach(c => { if (!npcs.some(n => n && n.id === c.npc && n.kind !== "trace")) E("帳本 characters", `「${c.name}」的 npc「${c.npc}」在 content/npc/ 找不到（要是旅客或委託人）`); });
+  if (ledger) asList(ledger.characters).filter(c => c && c.name && !c.npc).map(c => c.name).forEach(c => { if (!npcs.some(n => n && n.kind === "trace" && n.ledger === c)) W("content/npc", `帳本的角色「${c}」還沒有劇情角色（trace）的 NPC 檔`); });
   return { errors, warnings };
 }
 

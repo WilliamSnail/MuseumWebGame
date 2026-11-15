@@ -48,7 +48,7 @@ eq(G.npcLikesNow(T, "2026-12-30", null), ["b"], "喜好：第 3 段蓋掉");
 // 4. 現在的名單、新聞
 const cur = G.npcCurrent("2026-11-20", null);
 ok(cur.length === G.NPC_PEOPLE.length && cur.filter(c => c.arc).every(c => c.arc.step >= 1), "11-20 名單全在，有解鎖的都從第 1 段起");
-ok(G.npcCurrent("2026-12-14", null).every(c => c.arc && c.arc.step >= 1), "12-14（揭露對齊後最晚的第 1 段）每位都到第 1 段");
+ok(G.npcCurrent("2026-12-14", null).every(c => c.arc ? c.arc.step >= 1 : c.id === "v-ferry"), "12-14（揭露對齊後最晚的第 1 段）每位都到第 1 段（阿渡 12-21 才登場）");
 ok(G.npcCurrent("2026-11-14", null).every(c => c.arc === null), "11-14 還沒有人有故事段落");
 const nw = G.npcNews("2026-11-20", null, 2);
 ok(nw.length === 2 && nw.every(x => x.news), "近況最多 2 則、都有字");

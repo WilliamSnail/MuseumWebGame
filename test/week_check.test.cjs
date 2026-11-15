@@ -621,5 +621,44 @@ T("劇情經濟事件（week.json.econ）：對的過；種類不認得、日期
   expectErr(c => { c.files["備用/常青1/week.json"].econ = [{ kind: "audit", date: "2026-11-18", level: 1, name: "x" }]; }, /備用週不寫 econ/);
 });
 
+T("帳本 main.units（兩週壹段）、world.mapPlan、weeks.<週>.unit：真的帳本過；格式錯、不連續、對不上都擋", () => {
+  const U = c => c.ledger.main.units, P = c => c.ledger.world.mapPlan.list;
+  { const c = regular(); assert.deepStrictEqual(run(c).errors, [], "真的帳本要過"); }
+  expectErr(c => { U(c)[1].weeks = ["2026-W49", "2026-W51"]; }, /連續的兩週/);
+  expectErr(c => { U(c)[2].weeks = ["2026-W52", "2026-W53"]; U(c)[2].beatWeek = "2026-W52"; U(c)[2].echoWeek = "2026-W53"; }, /不能空週或重疊|要接在上壹段/);
+  expectErr(c => { U(c)[0].beatWeek = "2026-W48"; }, /beatWeek 要是第 1 週/);
+  expectErr(c => { U(c)[0].beats.push("b99"); }, /不在 revealBeats/);
+  expectErr(c => { U(c)[0].beats.push("b02"); }, /不在這壹段/);
+  expectErr(c => { U(c)[1].closes.push("m-queue"); }, /不在這壹段/);
+  expectErr(c => { U(c)[0].groups.main.push("g-nope"); }, /不在 content\/world\/units/);
+  expectErr(c => { U(c)[0].town.push("v-nope"); }, /不在 content\/npc/);
+  expectErr(c => { U(c)[0].map.push("m-nope"); }, /不在 world.mapPlan/);
+  expectErr(c => { U(c)[0].layers.push("L9"); }, /不在 world.layers/);
+  expectErr(c => { U(c)[0].subthemes["2026-W47"].side = ["st-count"]; }, /side 不等於 main|id 在 main.subthemes/);
+  expectErr(c => { U(c)[0].title = "第一段"; }, /用「壹」/);
+  expectErr(c => { U(c)[0].tell = []; }, /tell 要是/);
+  expectErr(c => { P(c)[0].date = "2027-03-01"; }, /date 要是這壹段/);
+  expectErr(c => { P(c)[0].x = 120; }, /x 要是 0～100/);
+  expectErr(c => { P(c)[1].id = P(c)[0].id; }, /重複/);
+  expectErr(c => { c.ledger.weeks["2026-W46"].unit = "u1"; }, /不在任何壹段/);
+  { const c = regular(); c.ledger.weeks["2026-W47"] = Object.assign({}, c.ledger.weeks["2026-W47"] || {}, { unit: "u2", unitRole: "beat" }); const r = run(c); assert.ok(r.errors.some(e => /unit 要是 u1/.test(e)), r.errors.slice(0, 3).join("\n")); }
+  { const c = regular(); c.ledger.weeks["2026-W47"] = Object.assign({}, c.ledger.weeks["2026-W47"] || {}, { unit: "u1", unitRole: "echo" }); const r = run(c); assert.ok(r.errors.some(e => /unitRole 要是 beat/.test(e))); }
+  { const c = regular(); delete c.ledger.main.units; assert.deepStrictEqual(run(c).errors, [], "沒有 main.units 的舊帳本照常"); }
+});
+T("館外地圖資料 content/map/館外.json：對的過；後面的、破梗、格式錯都擋", () => {
+  const good = () => ({ version: 1, spots: [{ id: "m-alley", name: "巷口", layer: "L1", from: "2026-11-16", x: 30, y: 78, icon: "lamp", line: "路燈下有人在數街。", npc: ["c-umbrella"], need: "c-small-map", source: "2026-W47/b24" }] });
+  const withMap = (mut) => { const c = regular(); c.map = good(); if (mut) mut(c); return c; };
+  assert.deepStrictEqual(run(withMap()).errors, [], "對的地圖資料要過");
+  expectErr(c => { c.map = good(); c.map.spots[0].from = "2027-03-01"; }, /不能先寫/);
+  expectErr(c => { c.map = good(); c.map.spots[0].line = "整本帳只是壹頁，別的館也在對帳"; c.ledger.mysteries.list[0].truth = "整本帳只是壹頁，別的館也在對帳。"; }, /破梗/);
+  expectErr(c => { c.map = good(); c.map.spots[0].need = "小地圖"; }, /need 要是線索 id/);
+  expectErr(c => { c.map = good(); c.map.spots[0].npc = ["v-nope"]; }, /不在 content\/npc/);
+  expectErr(c => { c.map = good(); c.map.spots[0].line = "第一個小正字。"; }, /用「壹」/);
+  expectErr(c => { c.map = good(); c.map.spots[0].layer = "L9"; }, /layer 要是/);
+  expectErr(c => { c.map = good(); c.map.spots[0].source = "2026-W47/b99"; }, /不在 revealBeats/);
+  expectErr(c => { c.map = good(); c.map.spots.push(c.map.spots[0]); }, /重複/);
+  expectErr(c => { c.map = good(); c.map.spots[0].extra = 1; }, /不認得「extra」/);
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
