@@ -17,13 +17,37 @@
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 //   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
 //                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
+//   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
+//                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors"];
+
+// 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
+async function fnErrors(cred, projectId) {
+  const tok = (await cred.getAccessToken()).access_token;
+  const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+  const filter = `severity>=WARNING AND timestamp>="${since}" AND (resource.type="cloud_run_revision" OR resource.type="cloud_function")`;
+  const r = await fetch("https://logging.googleapis.com/v2/entries:list", { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+    body: JSON.stringify({ resourceNames: ["projects/" + projectId], filter, orderBy: "timestamp desc", pageSize: 200 }) });
+  if (!r.ok) { console.log("讀不到紀錄：" + r.status + " " + (await r.text()).slice(0, 300)); process.exitCode = 1; return; }
+  const j = await r.json(), list = j.entries || [];
+  const mask = s => String(s).replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "（email）").replace(/\b[A-Za-z0-9]{28}\b/g, "（uid）");
+  console.log(`最近 36 小時 WARNING 以上：${list.length} 則（最新在上面）`);
+  const seen = new Map();
+  for (const e of list) {
+    const fn = (e.resource && e.resource.labels && (e.resource.labels.service_name || e.resource.labels.function_name)) || "?";
+    const msg = mask(e.textPayload || (e.jsonPayload && (e.jsonPayload.message || JSON.stringify(e.jsonPayload))) || "").replace(/\s+/g, " ").slice(0, 300);
+    const key = fn + "|" + msg.slice(0, 120);
+    if (seen.has(key)) { seen.get(key).n++; continue; }
+    seen.set(key, { t: e.timestamp, sev: e.severity, fn, msg, n: 1 });
+  }
+  for (const v of seen.values()) console.log(`${v.t.slice(0, 19)}Z ${v.sev} ${v.fn}${v.n > 1 ? `（同樣 ${v.n} 則）` : ""}：${v.msg}`);
+}
 
 // 只讀：文件大小（見檔頭 house-size）。大小用 UTF-8 位元組算（Firestore 的上限是 1 MiB ＝ 1,048,576）
 async function houseSize(db) {
@@ -234,6 +258,7 @@ async function main() {
   const { getFirestore, FieldValue } = require(path.join(root, "firebase-admin", "lib", "firestore", "index.js"));
   const sa = JSON.parse(fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, "utf8"));
   if (sa.project_id !== "pepe-museum") throw new Error("金鑰不是 pepe-museum 的");
+  if (task.action === "fn-errors") { await fnErrors(applicationDefault(), sa.project_id); return; }
   initializeApp({ credential: applicationDefault(), projectId: sa.project_id });
   const db = getFirestore();
   if (task.action === "stats") { await stats(db); return; }
