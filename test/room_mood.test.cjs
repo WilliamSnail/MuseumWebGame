@@ -38,9 +38,11 @@ T("組合：理智低＋房間冷清 → 又暗又冷又有影子；熄燈時全
   const r = G.roomMood(d); assert.ok(r.light.warm < 0 && r.light.dim > 0 && r.omen > 0 && !r.hide);
   const o = G.roomMood(Object.assign({}, d, { own: { lightsOut: true } })); assert.ok(o.hide && o.omen === 0);
 });
-T("各房間熱絡：0 人 0 級、1 人 1 級、2～3 人 2 級、4 人以上 3 級；壞資料不丟錯", G => {
-  const r = G.roomHeats({ a: 0, b: 1, c: 2, d: 3, e: 4, f: 99, g: "x", h: -3 });
-  assert.deepStrictEqual([r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h].map(x => x.lv), [0, 1, 2, 2, 3, 3, 0, 0]);
+T("各房間熱絡：0 人 0 級、1～3 人 1 級、4～9 人 2 級、10 人以上 3 級（展廳門檻 ×8）；壞資料不丟錯", G => {
+  const r = G.roomHeats({ a: 0, b: 1, c: 3, d: 4, e: 9, f: 99, g: "x", h: -3, i: 10 });
+  assert.deepStrictEqual([r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h, r.i].map(x => x.lv), [0, 1, 1, 2, 2, 3, 0, 0, 3]);
+  const hl = G.roomHeats({ hall: 0, hall2: 0 }), H = n => G.roomHeats({ hall: n }).hall.lv;
+  assert.deepStrictEqual([H(7), H(8), H(31), H(32), H(79), H(80)], [0, 1, 1, 2, 2, 3]); assert.strictEqual(hl.hall2.lv, 0);
   assert.strictEqual(r.f.n, 99); assert.strictEqual(Object.keys(G.roomHeats(null)).length, 0); assert.strictEqual(Object.keys(G.roomHeats(5)).length, 0);
 });
 T("理智恐怖音樂的門檻：45 以上沒有、<45 low、<=15 edge、歸零 edge；壞資料 null", G => {

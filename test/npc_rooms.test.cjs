@@ -9,15 +9,16 @@ const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toIS
 const D = "2026-12-01", SEC = "sec-rooms";
 
 T("各房間人數：房間對照、每個房間 n ＝ npc ＋ crowd、店的人數加起來跟房間對得上、被邀去賭場的不算、劇情角色不算", G => {
-  const ids = ["hall", "casino", "commission", "cellar", "workshop", "bank", "gallery"];
+  const ids = ["hall", "gallery", "origin", "codex", "fusion", "pillow", "casino", "bank", "workshop", "commission", "office", "cellar"];
   assert.deepStrictEqual(JSON.parse(JSON.stringify(G.NPC_ROOM)), { hall: "hall", food: "casino", bj: "casino", job: "commission", cellar: "cellar", craft: "workshop", bank: "bank", auction: "gallery" });
   let seenShop = 0, seenRooms = 0;
   for (let h = 0; h < 24; h++) {
     const t = G.npcDayStartMs(D) + h * 3600000 + 600000, p = G.npcPresence(D, t, SEC, LIST, null, new Set(), null);
     assert.ok(p.rooms && p.shops, "有 rooms、shops");
     for (const k of Object.keys(p.rooms)) { assert.ok(ids.includes(k), "房間 id 要在大廳的清單裡：" + k); const r = p.rooms[k]; assert.strictEqual(r.n, r.npc + r.crowd, k); assert.ok(r.n > 0); seenRooms++; }
-    const sh = p.shops; assert.strictEqual(sh.food + sh.bj, (p.rooms.casino || { n: 0 }).n, "賭場 ＝ 餐車 ＋ 牌桌（NPC 去賭場桌的不算在這）");
-    assert.strictEqual(sh.job, (p.rooms.commission || { n: 0 }).n); assert.strictEqual(sh.cellar, (p.rooms.cellar || { n: 0 }).n); assert.strictEqual(sh.craft, (p.rooms.workshop || { n: 0 }).n);
+    const rr = k => { const r = p.rooms[k]; return r ? r.n - (r.wander || 0) : 0; }; // 順路逛的散客不是店裡的客人
+    const sh = p.shops; assert.strictEqual(sh.food + sh.bj, (p.rooms.casino || { n: 0, wander: 0 }).n - ((p.rooms.casino || {}).wander || 0), "賭場 ＝ 餐車 ＋ 牌桌（NPC 去賭場桌的不算在這）");
+    assert.strictEqual(sh.job, rr("commission")); assert.strictEqual(sh.cellar, rr("cellar")); assert.strictEqual(sh.craft, rr("workshop"));
     assert.strictEqual((p.rooms.hall || { npc: 0 }).npc, p.hall, "展廳的有名字旅客 ＝ 原本的 hall"); assert.strictEqual((p.rooms.hall || { crowd: 0 }).crowd, p.crowd.n, "展廳的散客 ＝ 原本的 crowd");
     seenShop += sh.food + sh.bj + sh.job + sh.cellar + sh.craft;
   }
@@ -25,6 +26,20 @@ T("各房間人數：房間對照、每個房間 n ＝ npc ＋ crowd、店的人
   const t = G.npcDayStartMs(D) + 12 * 3600000, all = G.npcPresence(D, t, SEC, LIST, null, new Set(), null), ids2 = G.npcVisitsToday(D, SEC, LIST, null).filter(v => v.start <= 720 && 720 < v.end).map(v => v.id);
   if (ids2.length) { const aw = G.npcPresence(D, t, SEC, LIST, null, new Set(ids2), null); const sum = o => Object.values(o.rooms).reduce((a, r) => a + r.npc, 0); assert.ok(sum(aw) < sum(all), "被邀走的 NPC 不算在房間裡"); }
   assert.ok(!LIST.filter(n => n.kind === "trace").some(n => G.npcVisitsToday(D, SEC, LIST, null).some(v => v.id === n.id)), "劇情角色沒有行程");
+});
+T("順路逛：看展的散客有一部分去別的房間；人數守恆（展廳＋逛別間的 ＝ 原本在館裡的散客）、不碰店的人數和到店時刻、同一時刻同樣的結果、逛的房間在大廳的清單裡", G => {
+  const ids = ["hall", "gallery", "origin", "codex", "fusion", "pillow", "casino", "bank", "workshop", "commission", "office", "cellar"], base = G.crowdVisitsToday(D, SEC, null);
+  let wand = 0, seen = new Set();
+  for (let m = 0; m < 1440; m += 20) {
+    const t = G.npcDayStartMs(D) + m * 60000, p = G.npcPresence(D, t, SEC, LIST, null, new Set(), null), q = G.npcPresence(D, t, SEC, LIST, null, new Set(), null);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(p)), JSON.parse(JSON.stringify(q)));
+    const inside = base.filter(x => x.start <= m && m < x.end).reduce((a, x) => a + x.n, 0), w = Object.keys(p.rooms).reduce((a, k) => a + (p.rooms[k].wander || 0), 0);
+    assert.strictEqual(p.crowd.n + w, inside, "展廳的散客 ＋ 逛別間的 ＝ 還在館裡的散客"); assert.strictEqual(p.rooms.hall ? p.rooms.hall.crowd : 0, p.crowd.n); wand += w;
+    for (const k of Object.keys(p.rooms)) { assert.ok(ids.includes(k)); if (p.rooms[k].wander) seen.add(k); }
+  }
+  assert.ok(wand > 0 && seen.size >= 3, "整天裡看得到有人順路逛、而且逛不只壹間"); assert.ok(!seen.has("hall"));
+  const g = base[0], w0 = G.crowdWander(D, SEC, g); assert.deepStrictEqual(JSON.parse(JSON.stringify(G.crowdWander(D, SEC, g))), JSON.parse(JSON.stringify(w0)));
+  const off = load({ __realMoney: true }); off.NUM.casino.npcSpend.crowd.wander.p = 0; const t1 = off.npcDayStartMs(D) + 600 * 60000; assert.ok(Object.keys(off.npcPresence(D, t1, SEC, LIST, null, new Set(), null).rooms).every(k => !off.npcPresence(D, t1, SEC, LIST, null, new Set(), null).rooms[k].wander), "p ＝ 0：沒有人順路逛");
 });
 T("到店的人：npcShopArrive 加起來 ＝ 行程的人數（npcTrips）＋ 逛店的散客（crowdShopCounts）", G => {
   const ar = G.npcShopArrive(D, SEC, LIST, null), tr = G.npcTrips(D, SEC, LIST, null), cs = G.crowdShopCounts(D, SEC);
