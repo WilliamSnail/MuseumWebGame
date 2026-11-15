@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-1d22a8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "書架翻頁鈕變明顯", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "圖書館書架的翻頁改成「上壹排」「下壹排」金色按鈕，放在書架下方。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-1f56dd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "台股換成真實台幣價、財報多了館外來客", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
