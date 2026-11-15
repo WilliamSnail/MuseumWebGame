@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-eaa22e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "館內股：委託櫃台的營收也算委託人給的籌碼", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "委託櫃台的股票，除了來的人數，現在也看昨天委託人給了多少籌碼。",
+        "每個人自己算進去的有上限，一個人沒辦法靠自己多交件把股價推上去。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-07c9b9", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "館內股：店的營收也會影響開盤", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

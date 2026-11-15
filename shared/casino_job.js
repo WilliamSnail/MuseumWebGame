@@ -10,7 +10,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
-import { casInUsed } from "./casino_stock_in.js";
+import { casInSpent, casInUsed } from "./casino_stock_in.js";
 import { RNG } from "./logic.js";
 import { npcByName } from "./npc.js";
 
@@ -53,6 +53,7 @@ export function casJobChips(w, house, slots, day, rnd = RNG, clients = null) {
   });
   if (!n) return { ok: true, found: 0, n: 0 };
   casInUsed(w, house, "job", day); // 館內股票：今天有這個人交過委託
+  casInSpent(w, house, "job", day, found); // 營收：委託人給的籌碼算委託櫃台的營業額（每人每天封頂，決定 0087，翊文 11-15）
   w.chips += found;
   if (house) casHouseMove(house, "job", -found); // 莊家出，跟大禮包一樣
   if (!cjBox(w.st)) w.st = {};

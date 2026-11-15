@@ -83,4 +83,35 @@ T("world:gdp 照現在的 content/economy.json 跑（--dry）：同樣的數字�
   const e = rd(path.join(__dirname, "..", "content", "economy.json")).gdp, f = path.join(tmp(), "e.json"); fs.writeFileSync(f, JSON.stringify({ gdp: e }));
   const out = []; GD.main(["--quarter", e.quarter, "--yoy", String(e.yoy), "--published", e.published, "--dry"], f, x => out.push(x)); assert.ok(/沒有差異/.test(out.join("")));
 });
+const B = require("../tools/world_budget.cjs"), SM = require("../tools/world_sim.cjs"), NW = require("../tools/world_news.cjs");
+const { load } = require("./load_shared.cjs");
+T("world:budget：每個集團的 NPC 人數、perDay、每天最多花、撐幾天；份額太小會被擋", () => {
+  const G = load({ __realMoney: true }), us = L.readUnits(), ns = L.readNpcs(), r = B.budget(G, us, ns);
+  assert.ok(r.rows.length >= 9 && r.bad.length === 0, "現在的名單都撐得過 30 天：" + r.bad.join("|"));
+  assert.strictEqual(r.rows.reduce((a, x) => a + x.npcs, 0), ns.filter(n => n.kind !== "trace" && n.budget && n.budget.perDay > 0).length, "每位有預算的 NPC 都算到某個集團或家計");
+  assert.ok(r.rows.find(x => x.id === "u-household").npcs > 0, "沒有單位的算家計");
+  const bad = B.budget(G, us.map(u => (u.id === "g-arts" ? Object.assign({}, u, { share: 0.0001 }) : u)), ns); assert.ok(bad.bad.length === 1 && /文化藝術/.test(bad.bad[0]), "份額太小：" + bad.bad.join("|"));
+  assert.strictEqual(B.budget(G, us, ns, { unit: "g-daily" }).rows.length, 1); assert.strictEqual(B.budget(G, us, ns, { mult: 0.5 }).total, Math.floor(r.total / 2) + 0, "倍率 0.5：每天最多花減半（取整數）".length ? B.budget(G, us, ns, { mult: 0.5 }).total : 0);
+});
+T("world:sim：跑幾天、守恆、各集團出多少；--set 改數字會生效、亂寫的擋掉", () => {
+  const G = load({ __realMoney: true }), ns = L.readNpcs(), r = SM.sim(G, ns, { days: 5, b: 0 });
+  assert.strictEqual(r.gap, 0); assert.ok(r.spent.total > 0 && Object.keys(r.spent.byUnit).length > 0); assert.ok(r.a1.pub >= 0); assert.strictEqual(r.perDay.length, 5);
+  const G2 = load({ __realMoney: true }), r2 = SM.sim(G2, ns, { days: 5, b: 0, set: ["casino.npcSpend.on=0"] }); assert.strictEqual(r2.spent.total, 0, "關掉 NPC 花錢：沒有花費");
+  assert.throws(() => SM.sim(load({ __realMoney: true }), ns, { days: 1, set: ["casino.nothere.x=1"] }), /沒有/); assert.throws(() => SM.sim(load({ __realMoney: true }), ns, { days: 1, set: ["亂寫"] }), /路徑=值/);
+});
+T("world:news：加、檢查、數字和真實名字和預測擋掉、3～5 則、備用日不能寫、clear", () => {
+  const G = load(), dir = tmp(); fs.mkdirSync(path.join(dir, "2026-W99")); const f = path.join(dir, "2026-W99", "d3.json"); fs.writeFileSync(f, JSON.stringify({ day: 3, board: "x" }, null, 2));
+  fs.writeFileSync(path.join(dir, "2026-W99", "d7.json"), JSON.stringify({ day: 7, spare: true }, null, 2));
+  const c = { W: G.WORLD_NEWS, stockIds: G.OUT_STOCKS.map(x => x.id), names: G.OUT_STOCKS.map(x => x.name).concat(G.IN_STOCKS.map(x => x.name)), banned: ["輝達", "買進", "會漲"] }, out = [];
+  const run = a => NW.main(a.concat(["--week", "2026-W99", "--day", "3"]), dir, c, x => out.push(x));
+  run(["add", "--title", "晶片店訂單多", "--line", "島上傳出壹批大單。", "--tone", "up", "--ref", "handbrain"]);
+  assert.throws(() => run(["add", "--title", "有數字 10", "--line", "好", "--tone", "up"]), /數字/); assert.throws(() => run(["add", "--title", "輝達很強", "--line", "好", "--tone", "up"]), /不能寫的字/);
+  assert.throws(() => run(["add", "--title", "會漲嗎", "--line", "好", "--tone", "up"]), /會漲/); assert.throws(() => run(["add", "--title", "標題", "--line", "好", "--tone", "漲"]), /tone/); assert.throws(() => run(["add", "--title", "標題", "--line", "好", "--tone", "up", "--ref", "zzz"]), /館外股票/);
+  assert.throws(() => run(["add", "--title", "晶片店訂單多", "--line", "不一樣", "--tone", "flat"]), /不重複/); assert.throws(() => run(["check"]), /要 3～5 則/);
+  run(["add", "--title", "車行很熱鬧", "--line", "展示間排了長長的隊。", "--tone", "up"]); run(["add", "--title", "軟體店安靜", "--line", "今天沒有新消息。", "--tone", "flat"]); run(["check"]);
+  assert.strictEqual(JSON.parse(fs.readFileSync(f, "utf8")).market.length, 3); assert.ok(!fs.readFileSync(f, "utf8").endsWith(String.fromCharCode(10)), "照原本的格式（沒有結尾換行）");
+  assert.throws(() => NW.main(["add", "--week", "2026-W99", "--day", "7", "--title", "標題", "--line", "好", "--tone", "up"], dir, c, () => {}), /備用/);
+  const before = fs.readFileSync(f, "utf8"); run(["add", "--title", "再一則", "--line", "也很平靜。", "--tone", "flat", "--dry"]); assert.strictEqual(fs.readFileSync(f, "utf8"), before, "--dry 不寫");
+  run(["clear"]); assert.ok(!("market" in JSON.parse(fs.readFileSync(f, "utf8"))));
+});
 console.log(`世界經濟：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
