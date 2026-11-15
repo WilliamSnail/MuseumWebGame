@@ -388,6 +388,12 @@ export function setAmbOver(name, heatFn) {
   clearInterval(UI.ambTimer); UI.ambTimer = name ? setInterval(audioState, 30000) : null; // 開著的時候每 30 秒照最新的熱鬧程度調壹次；關掉就不再跑
   audioState();
 }
+// 地下的聲音狀態（11-15）：{ floor: 1～5, mode: "map"|"explore"|"fight"|"gate"|"rest" }，null ＝不在地下的某壹層裡。有變才重算聲音
+export function setCellarSnd(st) {
+  const k = st ? st.floor + ":" + st.mode : "";
+  if (k === (UI.cellarSndKey || "")) return;
+  UI.cellarSndKey = k; UI.cellarSnd = st || null; audioState();
+}
 // 低語：理智越低，越多聲音疊在壹起（翊文 11-08）。50 以上 2 個，40–49：3，30–39：4，20–29：5，10–19：6，1–9：7，0：8
 export const whisperLayers = () => !P || isFree(P) || P.sanity >= 50 ? 2 : P.sanity <= 0 ? 8 : Math.min(7, 3 + Math.floor((49 - P.sanity) / 10));
 export function audioState() {
@@ -397,6 +403,9 @@ export function audioState() {
   const live = !!(P && !isFree(P)), scr = UI.screen;
   let amb = scr === "title" ? "title" : P ? (scr in AMB_OF ? AMB_OF[scr] : "room") : null;
   if (UI.ambOver && P && scr !== "ending" && scr !== "title" && AMB_OF[scr] !== null) amb = UI.ambOver;
+  // 地下（11-15）：在地下時告訴環境音現在第幾層、在做什麼（地圖、探索、打鬥、守門、休息），fx.js 的 AMB.cellar 照這個換。合作模式的框蓋在別的房間上，也換成地下的聲音
+  if (UI.cellarSnd && P && scr !== "ending" && scr !== "title" && !UI.ambOver) amb = "cellar";
+  if (amb === "cellar" && S.ambMix) S.ambMix(UI.cellarSnd || { floor: null, mode: "map" });
   if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
   if (live && P.dark && scr !== "ending") amb = "zero";
   if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
