@@ -5,6 +5,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const STEPS = [
   ["規則測試", ["test/logic.test.cjs"]],
+  ["每日重要事件清單（只放今天、每種有上限、預告壹則、壞資料不丟錯）", ["test/headlines.test.cjs"]],
   ["新玩家的下一步", ["test/guide.test.cjs"]],
   ["公佈欄、信箱", ["test/notice.test.cjs"]],
   ["手作坊顯示的地下效果跟地下實際算的一樣", ["test/cellar_fx.test.cjs"]],
