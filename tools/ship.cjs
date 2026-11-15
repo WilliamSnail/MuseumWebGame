@@ -46,11 +46,7 @@ const CI_OK = ["success", "skipped", "neutral"];
 const checksState = runs => !runs || !runs.length ? "none" : runs.some(r => r.status !== "completed") ? "wait" : runs.every(r => CI_OK.includes(r.conclusion)) ? "ok" : "fail";
 const noChecksYet = text => /no checks reported/i.test(String(text || ""));
 
-function gh() {
-  if (process.env.GH_BIN) return process.env.GH_BIN;
-  const win = "C:\\Program Files\\GitHub CLI\\gh.exe";
-  return fs.existsSync(win) ? win : "gh";
-}
+const { gh } = require("./gh_lib.cjs"); // 11-15 合併成共用的
 // 失敗的時候印什麼：測試從第壹個 ✗ 開始（不然會被後面過的項目蓋掉），其他的印最後 25 行
 function failText(out) {
   const lines = out.trim().split("\n"), i = lines.findIndex(l => l.startsWith("✗"));

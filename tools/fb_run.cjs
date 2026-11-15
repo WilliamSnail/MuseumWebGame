@@ -6,13 +6,9 @@
 //   npm run fb -- --show w4-前 --diff w3-後           不按，直接比兩份存的
 // **只有翊文在對話裡同意才能按**（AGENTS.md、決定 0038）；--show 不按，隨時可以用。只讀的動作：house-ledger、house-size、stock-status、econ-status、fn-errors、stats。
 const fs = require("fs"), path = require("path");
-const { spawnSync } = require("child_process");
-const REPO = "WilliamSnail/MuseumWebGame", WF = "firebase-task.yml";
+const { dispatch, runLog } = require("./gh_lib.cjs"); // 11-15 合併成共用的
+const WF = "firebase-task.yml";
 const SNAP = path.join(__dirname, "..", ".claude", "fb-snap");
-const gh = () => process.env.GH_BIN || (fs.existsSync("C:\Program Files\GitHub CLI\gh.exe") ? "C:\Program Files\GitHub CLI\gh.exe" : "gh");
-const run = (args, ok) => { const r = spawnSync(gh(), args, { encoding: "utf8", maxBuffer: 1 << 26 }); if (r.error) throw r.error; if (r.status !== 0 && !ok) throw new Error(`gh ${args.slice(0, 2).join(" ")} 失敗：${(r.stderr || r.stdout).trim().slice(-300)}`); return r; };
-const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-const latest = () => run(["run", "list", "--repo", REPO, "--workflow", WF, "--limit", "1", "--json", "databaseId", "--jq", ".[].databaseId"], true).stdout.trim();
 
 // 紀錄壹行「工作\t步驟\t時間 內容」：只留「做這個動作」那步的內容，拿掉顏色碼和 GitHub 的雜訊行
 function stepLines(log) {
@@ -60,15 +56,9 @@ function main() {
   let lines;
   if (o.show) { lines = fs.readFileSync(snapFile(o.show), "utf8").split("\n"); }
   else {
-    const old = latest();
-    run(["workflow", "run", WF, "--repo", REPO, "--ref", "main", "-f", `action=${o.action}`]);
-    let id = null;
-    for (let i = 0; i < 36 && !id; i++) { const n = latest(); if (n && n !== old) id = n; else sleep(5000); }
-    if (!id) throw new Error("等了 3 分鐘，還是沒有新的壹次（GitHub Actions 可能在塞車）");
-    console.log(`https://github.com/${REPO}/actions/runs/${id}`);
-    const w = run(["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "5"], true);
-    lines = stepLines(run(["run", "view", id, "--repo", REPO, "--log"], true).stdout);
-    if (w.status !== 0) { console.log(lines.join("\n")); throw new Error(`這壹次失敗了（${id}）：gh run view ${id} --log-failed`); }
+    const r = dispatch(WF, { action: o.action }, { onId: (id, url) => console.log(url) });
+    lines = stepLines(runLog(r.id));
+    if (!r.ok) { console.log(lines.join("\n")); throw new Error(`這壹次失敗了（${r.id}）：gh run view ${r.id} --log-failed`); }
   }
   console.log(lines.join("\n"));
   if (o.save) { fs.mkdirSync(SNAP, { recursive: true }); fs.writeFileSync(snapFile(o.save), lines.join("\n")); console.log(`\n✓ 存好了：.claude/fb-snap/${o.save}.txt`); }
