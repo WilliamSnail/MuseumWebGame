@@ -169,5 +169,20 @@ T("有新版本：比對 index.html 裡的程式檔名；拿不到檔名不算",
   assert.strictEqual(G.buildScript("/src/main.js"), null);
 });
 
+T("信箱附背包的東西（11-15 材料補償）：寄得出、字寫得出、領了進背包、不是物品的 id 不收、全部領取也算得到", G => {
+  const P = G.newProfile ? G.newProfile("challenge") : {};
+  G.sendMail(P, { id: "m-items", title: "補償", gift: { items: ["mat:金箔", "不是東西", "mat:畫布"] } }, TODAY);
+  const m = P.mail.find(x => x.id === "m-items");
+  assert.strictEqual(JSON.stringify(m.gift.items), JSON.stringify(["mat:金箔", "mat:畫布"]));
+  assert.ok(G.giftText(m.gift).includes("金箔 ×1") && G.giftText(m.gift).includes("舊畫布 ×1"));
+  const before = G.matCount(P);
+  assert.ok(G.claimMail(P, "m-items", TODAY).ok);
+  assert.strictEqual(G.matCount(P), before + 3);
+  const n = { title: "公告", gift: { id: "g-items", title: "補", items: ["mat:金箔"] } };
+  assert.strictEqual(G.syncMail(P, [n], TODAY), 1);
+  const t = G.claimAllMail(P, TODAY);
+  assert.strictEqual(JSON.stringify(t.items), JSON.stringify(["mat:金箔"]));
+  assert.ok(G.giftText(t).includes("金箔 ×1"));
+});
 console.log(`${pass} passed, ${fail} failed（公佈欄、信箱）`);
 process.exit(fail ? 1 : 0);

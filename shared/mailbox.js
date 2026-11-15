@@ -8,6 +8,10 @@
 // ================================================================
 import { addDays, isFree } from "./logic.js";
 import { cleanGiftItem, giftItemText, putGift } from "./gifts.js";
+import { STORY_ITEMS, storyState } from "./story.js";
+
+// 附背包的東西（11-15 起，材料補償用）：只收 STORY_ITEMS 有的 id，最多 10 個
+const cleanItems = a => (Array.isArray(a) ? a : []).filter(id => typeof id === "string" && STORY_ITEMS[id]).slice(0, 10);
 
 export const MAIL_DAYS = 30; // 寄到之後幾天沒領就不見
 
@@ -24,7 +28,9 @@ export function syncMail(P, notices, today) {
     const g = n.gift;
     if (!g || P.mailSeen[g.id]) continue;
     P.mailSeen[g.id] = true;
-    P.mail.push({ id: g.id, from: "館方", title: g.title, note: `附在公告「${n.title}」`, gift: { insp: g.insp || 0, mood: g.mood || 0 }, sent: today, expire: addDays(today, MAIL_DAYS), claimed: false });
+    const gift = { insp: g.insp || 0, mood: g.mood || 0 }, items = cleanItems(g.items);
+    if (items.length) gift.items = items;
+    P.mail.push({ id: g.id, from: "館方", title: g.title, note: `附在公告「${n.title}」`, gift, sent: today, expire: addDays(today, MAIL_DAYS), claimed: false });
     added++;
   }
   return added;
@@ -38,6 +44,8 @@ export function sendMail(P, m, today) {
   const gift = { insp: (m.gift && m.gift.insp) || 0, mood: (m.gift && m.gift.mood) || 0 };
   const pepe = cleanGiftItem(m.gift && m.gift.pepe); // 館友送的佩佩（壞掉的就不附）
   if (pepe) gift.pepe = pepe;
+  const items = cleanItems(m.gift && m.gift.items);
+  if (items.length) gift.items = items;
   P.mail.push({ id: m.id, from: m.from || "館方", title: m.title, note: m.note || "", gift, sent: today, expire: addDays(today, m.days || MAIL_DAYS), claimed: false });
   return true;
 }
@@ -63,6 +71,9 @@ export function giftText(g) {
   if (g && g.pepes) out.push(`佩佩 ${g.pepes} 隻`);
   if (g && g.insp) out.push(`靈感 +${g.insp}`);
   if (g && g.mood) out.push(`心情 +${g.mood}`);
+  const items = cleanItems(g && g.items), cnt = {};
+  items.forEach(id => { cnt[id] = (cnt[id] || 0) + 1; });
+  Object.keys(cnt).forEach(id => out.push(`${STORY_ITEMS[id].name} ×${cnt[id]}`));
   return out.join("、");
 }
 
@@ -81,16 +92,18 @@ export function claimMail(P, id, today) {
   if (!free) {
     P.insp = (P.insp || 0) + (m.gift.insp || 0);
     P.mood = Math.max(0, Math.min(99, (P.mood || 0) + (m.gift.mood || 0)));
+    const items = cleanItems(m.gift.items);
+    if (items.length) { const S = storyState(P); items.forEach(id => { S.bag[id] = (S.bag[id] || 0) + 1; }); }
   }
   return { ok: true, gift: free ? { insp: 0, mood: 0 } : Object.assign({}, m.gift), free, events: put ? put.events : [] };
 }
 
 // 全部領取：回傳加起來拿到多少（pepes＝領到幾隻佩佩）
 export function claimAllMail(P, today) {
-  const total = { insp: 0, mood: 0, n: 0, pepes: 0 };
+  const total = { insp: 0, mood: 0, n: 0, pepes: 0, items: [] };
   for (const m of mailList(P, today).filter(x => !x.claimed)) {
     const r = claimMail(P, m.id, today);
-    if (r.ok) { total.insp += r.gift.insp || 0; total.mood += r.gift.mood || 0; total.pepes += r.gift.pepe ? 1 : 0; total.n++; }
+    if (r.ok) { total.insp += r.gift.insp || 0; total.mood += r.gift.mood || 0; total.pepes += r.gift.pepe ? 1 : 0; total.items.push(...cleanItems(r.gift.items)); total.n++; }
   }
   return total;
 }
