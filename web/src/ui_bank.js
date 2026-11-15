@@ -10,6 +10,8 @@ import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo
 import { NET } from "./net_firebase.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
+import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat.js";
+import { statView } from "../../shared/stat_view.js";
 import { NUM } from "../../shared/config.js";
 import { casNum } from "../../shared/casino.js";
 import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
@@ -630,21 +632,16 @@ function extPanel(e) {
 }
 // 外面世界（世界經濟 W5，翊文同意第 8 題）：只看整體分布，不列每家的數字（免得洩漏股價方向）。資料 e.world（沒有＝下次換日才有）：
 // { day, states: { normal, cut, squeeze, layoff 各幾個集團 }, bands: [4 格：<0.75、0.75～0.9、0.9～1.1、≥1.1 各幾個], avgMult: NPC 預算倍率平均（0.3～1.1）, events: [{ day, text }] }
-const WLD_STATE = [["normal", "正常", "ok"], ["cut", "減薪", "cut"], ["squeeze", "吃緊", "sq"], ["layoff", "裁員", "ly"]];
-const WLD_BAND = ["很差", "偏弱", "普通", "很好"];
+const WLD_STATE = ["normal", "cut", "squeeze", "layoff"], WLD_BAND = ["tight", "weak", "normal", "strong"];
 function outsidePanel(e) {
   const w = e && e.world;
   if (!w) return panel("外面世界", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
-  const st = w.states || {}, total = Math.max(1, WLD_STATE.reduce((n, [k]) => n + (st[k] || 0), 0));
-  const bands = Array.isArray(w.bands) ? w.bands : [], bmax = Math.max(1, ...bands.map(n => n || 0));
+  const states = statCounts("unitState", w.states, WLD_STATE), bands = Array.isArray(w.bands) ? statCounts("unitHealth", Object.fromEntries(WLD_BAND.map((k, i) => [k, w.bands[i]])), WLD_BAND) : [];
   const mult = Math.max(0.3, Math.min(1.1, +w.avgMult || 0)), events = Array.isArray(w.events) ? w.events : [];
   return panel("外面世界", "整體的樣子，不列每家的數字",
-    h("div", { class: "bank-wld-sec" }, h("b", null, "各集團現在的狀態"),
-      h("div", { class: "bank-wld-bar", role: "img", "aria-label": WLD_STATE.map(([k, n]) => `${n} ${st[k] || 0}`).join("、") }, WLD_STATE.filter(([k]) => st[k] > 0).map(([k, , c]) => h("i", { class: "st-" + c, style: { flexGrow: st[k] } }))),
-      h("div", { class: "bank-wld-legend" }, WLD_STATE.map(([k, n, c]) => h("span", { class: "st-" + c }, h("em", { "aria-hidden": "true" }), n, h("b", { class: "bank-tab-num" }, ` ${fmt(st[k] || 0)}`))))),
-    bands.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團景氣分布"),
-      h("div", { class: "bank-wld-bands" }, bands.slice(0, 4).map((n, i) => h("div", { class: "bank-wld-col" }, h("span", { class: "bank-tab-num" }, fmt(n || 0)), h("i", { style: { height: Math.max(3, Math.round(((n || 0) / bmax) * 44)) + "px" } }), h("small", null, WLD_BAND[i]))))) : null,
-    h("div", { class: "bank-wld-sec" }, h("b", null, "館外 NPC 的花錢力道"),
+    h("div", { class: "bank-wld-sec" }, h("b", null, "各集團現在的狀態"), statBar(states), statLegend(states)),
+    bands.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團景氣分布"), statBands(bands)) : null,
+    h("div", { class: "bank-wld-sec" }, h("b", null, "館外 NPC 的花錢力道", " ", statBadge(statView("budgetMult", null, mult), { kind: "budgetMult", hint: true })),
       h("div", { class: "bank-gauge", role: "img", "aria-label": `預算倍率 ${mult.toFixed(2)}` }, h("i", { style: { left: Math.round(((mult - 0.3) / 0.8) * 100) + "%" } })),
       h("div", { class: "bank-gl" }, h("span", null, "縮手 0.3"), h("span", { class: "bank-tab-num" }, `目前 ${mult.toFixed(2)} 倍`), h("span", null, "放手 1.1"))),
     h("div", { class: "bank-wld-sec" }, h("b", null, "這週換了狀態的"),
