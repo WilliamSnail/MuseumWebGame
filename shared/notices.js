@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-793b6a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "看得到展廳氣氛和集團人心", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "展廳現在有幾人的小塊多壹行今天的氣氛（冷清、平常、熱絡、沸騰）。",
+        "銀行財報的「外面世界」多了集團的人心，和展廳的散客氣氛。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-4f8c45", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "設定頁拿掉「動畫減量」", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

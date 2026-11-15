@@ -11,7 +11,7 @@ import { matesByRoom } from "../../shared/mates.js";
 import { NPC_ROSTER } from "../../shared/npc_roster.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "./ui_core.js";
-import { npcSanBadge } from "./ui_stat.js";
+import { crowdMoodLine, npcSanBadge } from "./ui_stat.js";
 
 const REFRESH_MS = 90000; // 1～2 分鐘壹次（伺服器的建議）；回到畫面時 readCasino 本來就會叫
 const agoText = at => {
@@ -36,6 +36,7 @@ const policyData = () => (UI.policy !== undefined ? UI.policy : fake() ? FAKE_PO
 const mdText = d => { const m = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(d || "")); return m ? `${+m[2]}/${+m[3]}` : ""; };
 const FAKE_RV = () => [{ who: "夜班的畫商", text: "牆上的畫掛得很正，燈也剛好。下次想看看更暗的那一幅。", stars: 4, at: Date.now() - 3 * 60000, day: 1 }, { who: "戴帽子的旅客", text: "走進來就安靜了。", stars: 5, at: Date.now() - 41 * 60000, day: 1 }, { who: "撐傘的人", text: "有點冷。", stars: 2, at: Date.now() - 3 * 3600000, day: 1 }];
 if (import.meta.env.DEV && UI.npcSan === undefined) UI.npcSan = { "fake-a": [34, "uneasy"], "fake-b": [58, "tired"] };
+if (import.meta.env.DEV && UI.crowdMood === undefined) UI.crowdMood = [72, "warm"];
 const nowData = () => (UI.hallNow !== undefined ? UI.hallNow : fake() ? FAKE_NOW : null);
 const reviewData = () => (Array.isArray(UI.reviews) ? UI.reviews : fake() ? FAKE_RV() : null);
 // 展廳現在的人：館友（名單裡在展廳的）＋旅客（now.hall）
@@ -73,6 +74,7 @@ function openAll() {
   const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
   m.card.append(
+    crowdMoodLine(),
     c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), nameList(c, c.names.length, false)) : null,
     c.casino.length ? h("p", { class: "hn-names" }, h("b", null, "在賭場："), c.casino.join("、")) : null,
     c.crowd.groups.length ? h("p", { class: "hn-names" }, h("b", null, "散客："), crowdSummary(c.crowd.groups).join("、")) : null,
@@ -114,6 +116,7 @@ export function hallNowBox(mode) {
     const more = (all && all.length) || c.names.length || c.mates.length || c.crowd.n ? btn("看全部", openAll, "ghost small hn-more") : null;
     box.replaceChildren(
       h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}${c.crowd.n ? `・散客 ${c.crowd.n}` : ""}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
+      crowdMoodLine({ num: false }),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), nameList(c, 4, true), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
       c.casino.length ? h("p", { class: "hn-names hn-casino" }, h("b", null, "在賭場："), c.casino.slice(0, 3).join("、"), c.casino.length > 3 ? `…等 ${c.casino.length} 位` : "") : null,
       inviteBtn(c),
