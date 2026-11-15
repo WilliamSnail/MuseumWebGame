@@ -46,6 +46,7 @@ import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./share
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic } from "./shared/world.js";
+import { casSellForDebt } from "./shared/casino_debt.js";
 import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -287,6 +288,9 @@ export const actBorrow = (ctx, d) => {
 // 掛單：d.op 是 order（d.kind 是 buy 限價買、sell 限價賣、stop 停損賣；d.id、d.n、d.px 價）、cancel（d.no 第幾張）
 export const actStock = (ctx, d) => {
   const op = String(d.op || ""), id = String(d.id || "");
+  if (op === "sellDebt") { // 賣股還債（決定 0093 第 2 件）：d.id 哪壹支（館外或館內）、d.n 幾股（"max" ＝賣到剛好夠還）；不受壹人壹天的賣出上限，賣的錢先補錢包的負數、再照到期順序還借款
+    const r = casSellForDebt(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t); return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
+  }
   if (op === "open" || op === "close" || op === "levset") { // 槓桿、放空、當沖（規劃 2.8j）：open 帶 id、side（或 dir）、lev、qty（或 margin）、可選 stop／take（停損價、停利價）；close 帶單號 no（或畫面的 pid "p3"）；levset 帶 no／pid、stop、take（改停損停利，空值＝清掉）
     const r = op === "open" ? casLevOpen(ctx.w, ctx.house, d, ctx.day, ctx.t) : op === "levset" ? casLevSet(ctx.w, ctx.house, d, ctx.day, ctx.t) : casLevClose(ctx.w, ctx.house, d.no != null ? d.no : parseInt(String(d.pid == null ? "" : d.pid).replace(/\D/g, ""), 10), ctx.day, ctx.t);
     return r.ok ? shape(ctx, { lines: r.lines }) : no(r);

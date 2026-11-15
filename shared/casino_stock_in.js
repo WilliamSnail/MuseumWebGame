@@ -329,7 +329,9 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少
   return { ok: true, n, px, cost, fee, lines: [casFill(T.buyOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
-export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0) {
+// opts.free ＝賣股還債（shared/casino_debt.js）：不受壹人壹天賣出上限和全館淨賣出上限、不算進今天賣出的額度
+export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0, opts) {
+  const free = !!(opts && opts.free);
   const C = NUM.casino.stock, S = casInFix(w), H = casInHouseFix(house), T = CAS_STOCK_IN;
   if (!inDef(id) || !inDay(day)) return { ok: false, reason: T.bad };
   if (H.day !== day) return { ok: false, reason: T.halt };
@@ -342,16 +344,16 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0) {
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: T.bad };
   if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : T.notEnough, { n: casNum(have) }) };
   const px = pr.px, gross = px * n, fee = inFee(gross), net = gross - fee;
-  if (inSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, casSellCap(w) - inSoldToday(S, day))), up: casSellTip(w) }) };
-  if (inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
+  if (!free && inSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, casSellCap(w) - inSoldToday(S, day))), up: casSellTip(w) }) };
+  if (!free && inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
   casInCostSeed(w, house);
   const costOut = n >= have0 ? inN(S.cost[id]) : Math.floor(inN(S.cost[id]) * n / have0);
   casHouseMove(house, "stockIn", -gross);
   w.chips += net; house.budget += fee; casCount(house, "stockFee", fee);
   S.own[id] = have0 - n; if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, inN(S.cost[id]) - costOut);
-  S.fee += fee; S.sold = { day, n: inSoldToday(S, day) + gross };
+  S.fee += fee; if (!free) S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
-  H.net = { day, n: inNetToday(H, day) + gross };
+  if (!free) H.net = { day, n: inNetToday(H, day) + gross };
   return { ok: true, n, px, gross, fee, net, lines: [casFill(T.sellOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee) })] };
 }
 
