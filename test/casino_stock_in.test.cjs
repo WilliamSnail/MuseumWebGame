@@ -281,5 +281,39 @@ T("NPC：舊的／壞的 house.sin 補欄位；npc 只留最近 histDays 天", G
   const H = G.casInHouseFix(h); assert.deepStrictEqual(JSON.parse(JSON.stringify(H.npc)), { "2026-11-16": { food: 3, bj: 0 } }); assert.deepStrictEqual(JSON.parse(JSON.stringify(H.npcEv)), { "2026-11-16": { store: "food", name: "", n: 0 } });
   const old = house(G), O = G.casInHouseFix(old); for (let i = 0; i < 40; i++) O.npc[add(D0, -i)] = { food: 1 }; assert.ok(Object.keys(G.casInHouseFix(old).npc).length <= G.NUM.casino.stockIn.histDays);
 });
+T("營收（決定 0087）：館友每人每店每天最多算 revCap；同一天再花不多算；隔天重算", G => {
+  const C = G.NUM.casino.stockIn, h = house(G), w = wallet(G);
+  assert.strictEqual(G.casInSpent(w, h, "food", D0, 100), 100); assert.strictEqual(G.casInSpent(w, h, "food", D0, C.revCap * 5), C.revCap - 100, "只算到封頂");
+  assert.strictEqual(G.casInSpent(w, h, "food", D0, 50), 0, "封頂了不再算"); assert.strictEqual(G.casInHouseFix(h).rev[D0].food.p, C.revCap);
+  assert.strictEqual(G.casInSpent(w, h, "bj", D0, 500), 500, "別家店另外算"); assert.strictEqual(G.casInSpent(w, h, "food", add(D0, 1), 200), 200, "隔天重算");
+  assert.strictEqual(G.casInSpent(w, h, "不存在", D0, 5), 0); assert.strictEqual(G.casInSpent(w, h, "food", D0, -5), 0);
+});
+T("營收影響跳空：營收比平均高 → 比只看人數多漲；沒有營收記錄或平均太小 → 只看人數；封頂讓自己砸錢推不動", G => {
+  const C = G.NUM.casino.stockIn, day = add(D0, 10), H = G.casInHouseFix(house(G));
+  C.noise = 0; C.moodPct = 0;
+  for (let i = 2; i <= 8; i++) { H.use[add(day, -i)] = { food: 10 }; H.npc[add(day, -i)] = { food: 0 }; H.rev[add(day, -i)] = { food: { p: 5000, x: 15000 } }; } // 平均人數 10、營收 20,000
+  H.use[add(day, -1)] = { food: 10 }; H.npc[add(day, -1)] = { food: 0 };
+  H.rev[add(day, -1)] = { food: { p: 5000, x: 15000 } }; assert.ok(Math.abs(G.casInJump(H, "food", day, 0, SEC).m) < 1e-9, "人數、營收都跟平均一樣：不動");
+  H.rev[add(day, -1)] = { food: { p: 5000, x: 35000 } }; const hi = G.casInJump(H, "food", day, 0, SEC).m; assert.ok(Math.abs(hi - C.k * C.revWeight * (40000 / 20000 - 1)) < 1e-9, "營收 2 倍：k × revWeight × 1：" + hi);
+  delete H.rev[add(day, -1)]; assert.ok(Math.abs(G.casInJump(H, "food", day, 0, SEC).m) < 1e-9, "昨天沒有營收記錄：只看人數（一樣）");
+  H.rev[add(day, -1)] = { food: { p: 5000, x: 35000 } }; C.revWeight = 0; assert.ok(Math.abs(G.casInJump(H, "food", day, 0, SEC).m) < 1e-9, "權重 0：只看人數"); C.revWeight = 0.5;
+  for (let i = 2; i <= 8; i++) H.rev[add(day, -i)] = { food: { p: 100, x: 100 } }; assert.ok(Math.abs(G.casInJump(H, "food", day, 0, SEC).m) < 1e-9, "平均營收太小（< revMinAvg）：不看營收");
+  for (let i = 2; i <= 8; i++) H.rev[add(day, -i)] = { food: { p: 5000, x: 15000 } };
+  const self = G.casInSpent(wallet(G), H, "food", add(day, -1), 999999); assert.strictEqual(self, C.revCap, "自己砸再多也只算 revCap");
+});
+T("營收：活動、突發多來的旅客照比例從平均扣掉；跳空仍夾 jumpCap", G => {
+  const C = G.NUM.casino.stockIn, day = add(D0, 10), H = G.casInHouseFix(house(G)); C.noise = 0; C.moodPct = 0;
+  for (let i = 2; i <= 8; i++) { H.use[add(day, -i)] = { food: 5 }; H.npc[add(day, -i)] = { food: 5 }; H.rev[add(day, -i)] = { food: { p: 0, x: 20000 } }; }
+  H.npcX[add(day, -2)] = { food: 5 }; H.npc[add(day, -2)] = { food: 10 }; H.rev[add(day, -2)] = { food: { p: 0, x: 30000 } }; // 那天多來 5 位（15 位裡的 5 位），營收也多（平均要扣掉：30,000 × 10÷15 ＝ 20,000）
+  H.use[add(day, -1)] = { food: 5 }; H.npc[add(day, -1)] = { food: 5 }; H.rev[add(day, -1)] = { food: { p: 0, x: 20000 } };
+  assert.ok(Math.abs(G.casInJump(H, "food", day, 0, SEC).m) < 1e-9, "活動那天的多出來被扣掉，平均還是 20,000");
+  H.rev[add(day, -1)] = { food: { p: 0, x: 2000000 } }; assert.ok(G.casInJump(H, "food", day, 0, SEC).m <= C.jumpCap / 100 + 1e-9, "夾在上限");
+});
+T("營收：換日時把 NPC 和散客各家店花的錢記進去（house.npcs.shopBy）", G => {
+  const h = house(G), H = G.casInHouseFix(h); h.npcs = { day: D0, shopBy: { food: { npc: 3000, crowd: 4500 }, bj: { npc: 100, crowd: 0 } } };
+  G.casInRoll(h, D0, 0, SEC, {}, { list: [], counters: null }); G.casInRoll(h, add(D0, 1), 0, SEC, {}, { list: [], counters: null });
+  const e = G.casInHouseFix(h).rev[D0]; assert.strictEqual(e.food.x, 7500); assert.strictEqual(e.bj.x, 100); assert.strictEqual(e.craft.x, 0);
+});
+
 console.log(`casino_stock_in.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

@@ -57,6 +57,25 @@ export function casInUsed(w, house, store, day) {
   return true;
 }
 
+// 這個人今天在這家店花了多少錢（算營收）：壹人壹天壹家最多算 NUM.casino.stockIn.revCap（館友自己砸錢推不動股價）。回傳這次算進去的錢。house 沒給就只記錢包
+export function casInSpent(w, house, store, day, amount) {
+  const C = NUM.casino.stockIn;
+  amount = inN(amount);
+  if (!inBox(w) || !IN_STORES.includes(store) || !inDay(day) || amount <= 0) return 0;
+  if (!inBox(w.spent)) w.spent = {};
+  if (!inBox(w.spent[store]) || w.spent[store].day !== day) w.spent[store] = { day, n: 0 };
+  const take = Math.max(0, Math.min(amount, C.revCap - inN(w.spent[store].n)));
+  if (take <= 0) return 0;
+  w.spent[store].n = inN(w.spent[store].n) + take;
+  if (house) {
+    const H = casInHouseFix(house);
+    if (!inBox(H.rev[day])) H.rev[day] = {};
+    if (!inBox(H.rev[day][store])) H.rev[day][store] = { p: 0, x: 0 };
+    H.rev[day][store].p = inN(H.rev[day][store].p) + take;
+  }
+  return take;
+}
+
 // ---------- 補欄位 ----------
 export function casInFix(w) {
   if (!inBox(w.sin)) w.sin = { own: {}, sold: { day: null, n: 0 }, fee: 0, seen: {} };
@@ -92,6 +111,10 @@ export function casInHouseFix(house) {
   if (!inBox(H.npc)) H.npc = {};
   for (const d of Object.keys(H.npc)) { if (!inDay(d) || !inBox(H.npc[d])) delete H.npc[d]; else for (const s of Object.keys(H.npc[d])) { const n = inN(H.npc[d][s]); if (IN_STORES.includes(s)) H.npc[d][s] = n; else delete H.npc[d][s]; } }
   const nd = Object.keys(H.npc).sort(); for (const d of nd.slice(0, Math.max(0, nd.length - C.histDays))) delete H.npc[d];
+  // 營收（11-15，決定 0087）：rev[日期][店] ＝ { p 館友花的（每人每店每天封頂）, x NPC 和散客花的 }
+  if (!inBox(H.rev)) H.rev = {};
+  for (const d of Object.keys(H.rev)) { if (!inDay(d) || !inBox(H.rev[d])) delete H.rev[d]; else for (const s of Object.keys(H.rev[d])) { const e = H.rev[d][s]; if (IN_STORES.includes(s) && inBox(e)) H.rev[d][s] = { p: inN(e.p), x: inN(e.x) }; else delete H.rev[d][s]; } }
+  const rd = Object.keys(H.rev).sort(); for (const d of rd.slice(0, Math.max(0, rd.length - C.histDays))) delete H.rev[d];
   if (!inBox(H.npcEv)) H.npcEv = {};
   for (const d of Object.keys(H.npcEv)) { const e = H.npcEv[d]; if (!inDay(d) || !inBox(e) || !IN_STORES.includes(e.store)) delete H.npcEv[d]; else H.npcEv[d] = { ...(e.burst ? { burst: true } : {}), store: e.store, name: typeof e.name === "string" ? e.name.slice(0, 40) : "", n: inN(e.n) }; }
   const ed = Object.keys(H.npcEv).sort(); for (const d of ed.slice(0, Math.max(0, ed.length - C.histDays))) delete H.npcEv[d];
@@ -138,6 +161,8 @@ export function casInSeries(open, day, id, secret = SECRET) {
 // 那天這家店「不同的人」＝ 館友 ＋ NPC
 const inTot = (H, d, id) => inN(H.use[d] && H.use[d][id]) + inN(H.npc && H.npc[d] && H.npc[d][id]);
 // 算「平均」用的人數：扣掉活動、突發事件那天多來的旅客（H.npcX），不然壹次大事件會把之後 7 天的平均墊高，之後每天的跳空都偏負，被放空賺走
+// 那天這家店的營收（館友的 ＋ NPC 和散客的）；沒有記錄回 null。算「平均」時照扣掉活動、突發多來的人的比例縮小
+const inRev = (H, d, id) => { const e = H.rev && H.rev[d] && H.rev[d][id]; return e ? inN(e.p) + inN(e.x) : null; };
 const inAvgTot = (H, d, id) => Math.max(0, inTot(H, d, id) - inN(H.npcX && H.npcX[d] && H.npcX[d][id]));
 // 接下來幾天預告的活動（日報用）：festDays { 日期: [{ store, name }] }（content/weeks 的 week.json.fest）；回傳 day 起 ahead 天內的 [{ date, store, name }]
 export function casInFestUp(festDays, day, ahead = NUM.casino.stockIn.festAhead) {
@@ -150,12 +175,19 @@ export function casInFestUp(festDays, day, ahead = NUM.casino.stockIn.festAhead)
 function inPois(rnd, lam) { const L = Math.exp(-lam); let k = 0, p = 1; do { k++; p *= rnd(); } while (p > L && k < 60); return k - 1; }
 export function casInJump(H, id, day, B, secret = SECRET) {
   const C = NUM.casino.stockIn, y = inAdd(day, -1), a = inTot(H, y, id);
-  const valid = [];
-  for (let i = 2; i <= C.histDays && valid.length < C.avgDays; i++) { const n = inAvgTot(H, inAdd(day, -i), id); if (n >= C.minPeople) valid.push(n); }
+  const valid = [], revs = [];
+  for (let i = 2; i <= C.histDays && valid.length < C.avgDays; i++) {
+    const d = inAdd(day, -i), n = inAvgTot(H, d, id);
+    if (n >= C.minPeople) { valid.push(n); const r = inRev(H, d, id), t = inTot(H, d, id); if (r !== null && t > 0) revs.push(r * n / t); }
+  }
   if (a < C.minPeople || valid.length < C.minDays) return { m: 0, quiet: true };
   const avg = valid.reduce((s, x) => s + x, 0) / valid.length, rnd = mulberry32(hashStr(`${secret}|${day}|${id}|jump`));
   const b = Number.isFinite(+B) ? Math.max(-1, Math.min(1, +B)) : 0;
-  const m = C.k * (a / avg - 1) + C.moodPct / 100 * b + (rnd() - 0.5) * 2 * C.noise / 100;
+  // 人數那項；營收那項（昨天的營收有記錄、前面有營收記錄的有效日夠多、平均營收夠大才算）
+  let f = a / avg - 1;
+  const ry = inRev(H, y, id), avgR = revs.length >= C.minDays ? revs.reduce((s, x) => s + x, 0) / revs.length : 0;
+  if (C.revWeight > 0 && ry !== null && avgR >= C.revMinAvg) f = (1 - C.revWeight) * f + C.revWeight * (ry / avgR - 1);
+  const m = C.k * f + C.moodPct / 100 * b + (rnd() - 0.5) * 2 * C.noise / 100;
   return { m: Math.max(-C.jumpCap / 100, Math.min(C.jumpCap / 100, m)), quiet: false };
 }
 
@@ -229,6 +261,9 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
     const next = inAdd(d, 1);
     pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
     if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（外面世界的錢，shared/npc_spend.js）
+    if (house.npcs && house.npcs.day === d && inBox(house.npcs.shopBy)) { // 這壹天 NPC 和散客在各家店花的錢，記進營收（決定 0087）
+      for (const st of IN_STORES) { const b = house.npcs.shopBy[st], x = inBox(b) ? inN(b.npc) + inN(b.crowd) : 0; if (!inBox(H.rev[d])) H.rev[d] = {}; if (!inBox(H.rev[d][st])) H.rev[d][st] = { p: 0, x: 0 }; H.rev[d][st].x = x; }
+    }
     casInNpcFor(H, d, secret, npcDays, npcCtx); // 這壹天去逛的 NPC（算進這壹天「不同的人」，明天的跳空看它）
     for (const id of IN_IDS) {
       const close = casInSeries(H.open[id], d, id, secret)[C.ticks - 1];

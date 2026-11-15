@@ -21,6 +21,7 @@ const margin = 0.8; // 期望報酬要小於來回成本的 80%（留餘裕）
 check("館內股：預告活動預先進場的期望報酬 K×p×b ＜ 來回成本", K * S.festP * (S.festMin + S.festMax) / 2 < round * margin, `K×p×b ＝ ${pct(K * S.festP * (S.festMin + S.festMax) / 2)}；來回成本 ${pct(round)}（留 20% 餘裕）`);
 check("館內股：劇情日（確定發生）最大跳空 K×b 上限 ＜ 來回成本", K * S.npcBoostMax < round, `K×${S.npcBoostMax} ＝ ${pct(K * S.npcBoostMax)}；來回成本 ${pct(round)}`);
 check("館內股：突發大事件的期望 K×機率×b 遠小於成本", K * (S.npcBurstPct / 100) * S.npcBurstMax < round * 0.1, `${pct(K * (S.npcBurstPct / 100) * S.npcBurstMax)}`);
+check("館內股：營收項——館友自己多去壹次＋砸滿 revCap，預期多推的跳空 ＜ 來回成本（營收也看，館友自己砸錢仍賺不到）", K * (1 - S.revWeight) / S.minPeople + K * S.revWeight * S.revCap / S.revMinAvg < round * margin, `${pct(K * (1 - S.revWeight) / S.minPeople + K * S.revWeight * S.revCap / S.revMinAvg)}；來回成本 ${pct(round)}（權重 ${S.revWeight}、封頂 ${S.revCap}、平均營收至少 ${S.revMinAvg}）`);
 check("館內股：NPC 占壹家店人數的上限 ≤ 50%（不讓機器人決定股價）", S.npcShareMax <= 50, `${S.npcShareMax}%`);
 check("館內股：NPC 保底人數（館友少的店也有人氣）：壹位多來的人預期跳空 K÷minPeople ＜ 來回成本（少數館友靠自己的人數賺不到）", K / S.minPeople < round * margin, `${pct(K / S.minPeople)}；來回成本 ${pct(round)}；保底 ${S.npcBase} 位、散客每家每天平均 ${S.npcWalk}`);
 check("館外股票：持有成本、手續費都 ＞ 0（抱著不賺長期漂移）", C.stock.holdPct > 0 && C.stock.feePct > 0, `手續費 ${C.stock.feePct}%、持有成本 ${C.stock.holdPct}%／天`);
