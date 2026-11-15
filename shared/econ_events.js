@@ -64,6 +64,18 @@ export function casEconUpText(up) {
   return up.map(u => casFill(CAS_ECON_EV[u.kind], { m: +u.date.slice(5, 7), d: +u.date.slice(8, 10), pct: E.foreignPct[Math.min(3, u.level) - 1], n: u.kind === "bondWindow" ? Math.min(E.windowMax, u.level) : Math.min(E.freezeMax, u.level) }));
 }
 
+// 大廳跑馬燈的「預告」（美術統籌的 shared/headlines.js 讀）：明天起 days 天內、可以公開說的事，照日期排：[{ text, date }]。
+// 只放：劇情經濟事件的預告（econUp ＝ casEconUpcoming 的結果；對帳日 audit 不預告）、預告的活動（festUp ＝ casInFestUp 的結果：可能辦成、可能沒辦成，所以寫「可能」）。不放數字以外的內情，不動錢。
+const UP_STORE = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
+export function casUpcoming(econUp, festUp, day, days = 3) {
+  const out = [];
+  if (!eeDay(day)) return out;
+  const from = eeAdd(day, 1), to = eeAdd(day, days);
+  for (const u of Array.isArray(econUp) ? econUp : []) if (eeBox(u) && u.kind !== "audit" && eeDay(u.date) && u.date >= from && u.date <= to && CAS_ECON_EV[u.kind]) out.push({ text: casEconUpText([u])[0], date: u.date });
+  for (const f of Array.isArray(festUp) ? festUp : []) if (eeBox(f) && eeDay(f.date) && f.date >= from && f.date <= to && UP_STORE[f.store]) out.push({ text: `${+f.date.slice(5, 7)} 月 ${+f.date.slice(8, 10)} 日《${String(f.name || "").slice(0, 40)}》可能在${UP_STORE[f.store]}舉辦。`, date: f.date });
+  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
 // 換日後第壹次碰到莊家時叫（冪等：house.ev 記今天做了什麼）。events：ECON_EVENTS。house.ev = { day, window, freeze, repaid }
 export function casEconRun(house, day, events) {
   if (!eeDay(day)) return null;

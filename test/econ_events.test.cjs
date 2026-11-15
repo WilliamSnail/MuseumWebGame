@@ -56,5 +56,12 @@ T("外資 NPC：出價機率和壹天總額乘（1＋pct%）", G => {
   let a = 0, b = 0; for (let i = 0; i < 400; i++) { const x = { id: "h~" + i, tier: 2, reserve: 1000, kind: "house" }; if (G.casAucNpcBid(x, 6000000, h, { npcList: list, secret: "s", day: D })) a++; if (G.casAucNpcBid(x, 6000000, h, { npcList: list, secret: "s", day: D, econ: { foreign: { pct: 30 } } })) b++; }
   assert.ok(b > a && b <= 400 * 0.4 * 1.3 + 40, `${a} → ${b}`);
 });
+T("跑馬燈的預告 casUpcoming：明天起 3 天內、可以公開的；對帳日不預告；活動寫「可能」；照日期排；壞資料不丟錯", G => {
+  const day = "2026-11-16", econUp = [{ kind: "foreign", date: "2026-11-18", name: "x", level: 2 }, { kind: "audit", date: "2026-11-17", name: "", level: 1 }, { kind: "bondWindow", date: "2026-11-16", name: "", level: 1 }, { kind: "artFreeze", date: "2026-11-21", name: "", level: 1 }];
+  const festUp = [{ date: "2026-11-17", store: "food", name: "賣傘的老闆的餐車日" }, { date: "2026-11-19", store: "zzz", name: "壞的" }];
+  const up = G.casUpcoming(econUp, festUp, day); assert.strictEqual(JSON.stringify(up.map(u => u.date)), JSON.stringify(["2026-11-17", "2026-11-18"]), "明天起 3 天內，今天、對帳日、太遠、壞店都不放");
+  assert.ok(/可能在餐車舉辦/.test(up[0].text) && /外面來的客人會多/.test(up[1].text)); assert.strictEqual(G.casUpcoming(null, undefined, day).length, 0); assert.strictEqual(G.casUpcoming(econUp, festUp, "壞").length, 0);
+  assert.strictEqual(G.casUpcoming(econUp, [], day, 6).length, 2, "放寬到 6 天：外資加第 5 天的借展（對帳日仍不放）");
+});
 console.log(`${pass} passed, ${fail} failed（劇情經濟事件）`);
 process.exit(fail ? 1 : 0);
