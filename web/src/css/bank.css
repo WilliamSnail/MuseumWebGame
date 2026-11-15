@@ -511,3 +511,18 @@ body[data-screen="bank"] #room { background: none; }
 .bank-ext-row { grid-template-columns: 6.5em minmax(24px, 1fr) 11em; min-height: 22px; }
 .bank-ext-g { margin-top: 4px; }
 @media (max-width: 760px) { .bank-ext-row { grid-template-columns: 6em minmax(16px, 1fr) 10em; } }
+
+/* 財報「外面世界」卡（11-15，世界經濟 W5） */
+.bank-wld-sec { margin-top: 10px; display: grid; gap: 6px; }
+.bank-wld-sec > b { color: var(--bank-gold-hi, #F0D995); font-size: var(--type-body, .875rem); }
+.bank-wld-bar { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; background: rgba(255, 255, 255, .08); }
+.bank-wld-bar i { min-width: 6px; }
+.st-ok { --c: #6FBF73; } .st-cut { --c: #E3C26E; } .st-sq { --c: #E08A4A; } .st-ly { --c: #D9604F; }
+.bank-wld-bar i { background: var(--c); }
+.bank-wld-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--type-small, .75rem); }
+.bank-wld-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.bank-wld-legend em { width: 10px; height: 10px; border-radius: 3px; background: var(--c); display: inline-block; }
+.bank-wld-bands { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.bank-wld-col { display: grid; justify-items: center; gap: 3px; font-size: var(--type-small, .75rem); }
+.bank-wld-col i { width: 70%; max-width: 44px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #F0D995, #B8923E); }
+.bank-wld-col small { color: var(--bank-mute, #8E9AB0); font-size: var(--type-tiny, .6875rem); }
