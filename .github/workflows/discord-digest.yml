@@ -1,0 +1,41 @@
+# 每天 20:00（台灣）發壹則「今天的更新」到 Discord（翊文 11-15：「Discord更新太洗板了」→ 每天壹則、「晚上8點發」）。
+# 內容是 shared/notices.js 今天發布的館方公告標題（tools/discord_digest.cjs）；今天沒有就不發。也可以手動按（dry＝只印不發）。
+name: Discord 每天的更新彙整
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # UTC 12:00 ＝ 台灣 20:00（GitHub 的排程可能晚幾分鐘）
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: 只印出來、不發（true／false）
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discord-digest
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 整理今天的更新
+        run: node tools/discord_digest.cjs > "$RUNNER_TEMP/digest.txt"; cat "$RUNNER_TEMP/digest.txt"
+      - name: 發出去
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          DRY: ${{ inputs.dry }}
+        run: |
+          if [ ! -s "$RUNNER_TEMP/digest.txt" ]; then echo "今天沒有更新，不發"; exit 0; fi
+          if [ "$DRY" = "true" ]; then echo "dry：不發"; exit 0; fi
+          ANNOUNCE="$(cat "$RUNNER_TEMP/digest.txt")" node tools/discord_post.cjs --say
