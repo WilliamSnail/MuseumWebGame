@@ -20,6 +20,10 @@
     "perDay": 360000,
     "max": 220000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "作家"
+  },
   "arc": [
     {
       "step": 1,

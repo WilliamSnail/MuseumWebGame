@@ -18,6 +18,10 @@
     "perDay": 1100000,
     "max": 800000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "拍賣師"
+  },
   "arc": [
     {
       "step": 1,

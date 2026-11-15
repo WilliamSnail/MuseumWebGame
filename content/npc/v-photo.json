@@ -18,6 +18,10 @@
     "perDay": 470000,
     "max": 300000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "攝影師"
+  },
   "arc": [
     {
       "step": 1,

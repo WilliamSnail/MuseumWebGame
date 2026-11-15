@@ -1,0 +1,12 @@
+{
+  "id": "g-arts",
+  "name": "文化藝術機構",
+  "kind": "group",
+  "parent": null,
+  "sector": "arts",
+  "share": 0.05,
+  "staff": 3000,
+  "stocks": [],
+  "story": false,
+  "note": "美術館、拍賣行、出版。"
+}

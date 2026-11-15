@@ -18,6 +18,9 @@
     "perDay": 90000,
     "max": 40000
   },
+  "job": {
+    "kind": "retired"
+  },
   "arc": [
     {
       "step": 1,

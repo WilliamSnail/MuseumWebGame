@@ -18,6 +18,10 @@
     "perDay": 280000,
     "max": 180000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "駐館詩人"
+  },
   "arc": [
     {
       "step": 1,

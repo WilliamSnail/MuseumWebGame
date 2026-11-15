@@ -73,7 +73,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   npcs.forEach((n, i) => {
     const id = isObj(n) && typeof n.id === "string" ? n.id : "", w = `content/npc/${isObj(n) && n.__file || "第 " + (i + 1) + " 筆"}`;
     if (!isObj(n)) { E(w, "要是物件"); return; }
-    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "arc", "casino", "__file"];
+    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "casino", "__file"]; // job：隸屬哪個單位（內容由 tools/world_check.cjs 檢查，決定 0086）
     Object.keys(n).forEach(k => { if (!allowed.includes(k)) E(w, `不認得欄位「${k}」（只能 ${allowed.filter(x => x !== "__file").join("、")}）`); });
     if (!/^[a-z][a-z0-9-]{2,23}$/.test(id)) { E(w, "id 要是英文小寫、數字、-（3～24 字，開頭是字母）"); return; }
     if (n.__file && n.__file !== id + ".json") E(w, `檔名要跟 id 壹樣（${id}.json）`);

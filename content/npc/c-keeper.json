@@ -18,6 +18,10 @@
     "perDay": 130000,
     "max": 70000
   },
+  "job": {
+    "unit": "g-public",
+    "title": "飼育員"
+  },
   "arc": [
     {
       "step": 1,

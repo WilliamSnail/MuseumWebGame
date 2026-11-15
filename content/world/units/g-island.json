@@ -1,0 +1,18 @@
+{
+  "id": "g-island",
+  "name": "島上科技集團",
+  "kind": "group",
+  "parent": null,
+  "sector": "tech",
+  "share": 0.09,
+  "staff": 18000,
+  "stocks": [
+    "islandforge",
+    "handbrain",
+    "bigassembly",
+    "trianglepower",
+    "linetower"
+  ],
+  "story": false,
+  "note": "島上的晶片、代工、電源和電話公司。"
+}

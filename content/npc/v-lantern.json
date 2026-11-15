@@ -17,6 +17,10 @@
     "perDay": 260000,
     "max": 160000
   },
+  "job": {
+    "unit": "g-public",
+    "title": "巡守員"
+  },
   "arc": [
     {
       "step": 1,

@@ -412,3 +412,11 @@ content/
   - `text`、`news` 的規矩跟其他畫面上的字壹樣：用「壹」不用「一」、沒有英文字母、沒有真人真公司真政黨（`BANNED` 禁用字）。
 - **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告）。
 - **哪些地方可以用 NPC 的名字**（還沒接）：日報新聞句（`news`）、展廳留言、委託人出現和完成後的話、拍賣結果公告、館內股的「不同的人」。程式接上之前，名單只是內容，遊戲的玩法不變。
+
+## 十一、外面世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/世界經濟規劃.md`）
+
+- 一個單位一個檔，檔名＝id。單位是一棵樹：`parent` 指向上一層（頂層寫 `null`），第一版只有 7 個集團／組織加獨立的文化部（`u-culture`，劇情單位）。
+- 欄位：`id`、`name`（14 字內）、`kind`（group／firm／org／story）、`parent`、`sector`（tech、daily、finance、arts、school、public、story）、`share`（占外面世界的比例）、`staff`（員工數，只用來比大小）、`stocks`（掛的館外股票 id，每支只能掛一處）、`story`（true 只給文化部）、`note`（選填，60 字內，只寫明面的說明）。
+- 不要寫錢（`cash` 在伺服器）；劇情單位的劇情細節（為什麼補助、錢哪來）**不要寫在這裡**，那些在 `content/story/帳本.json`。
+- NPC 的隸屬在 `content/npc/<id>.json` 的 `job`：`{ "unit": "g-daily", "title": "司機" }`（title 8 字內，`level` 1～5 選填），沒有單位的寫 `{ "kind": "student" }`（student、retired、free）。劇情角色（t-）不放 `job`。
+- 改這些檔用 `npm run world:unit`、`npm run world:npc`（不手改），檢查是 `npm run world:check`（`npm test` 也會跑）。

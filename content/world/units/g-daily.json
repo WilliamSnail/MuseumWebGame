@@ -1,0 +1,12 @@
+{
+  "id": "g-daily",
+  "name": "民生集團",
+  "kind": "group",
+  "parent": null,
+  "sector": "daily",
+  "share": 0.22,
+  "staff": 40000,
+  "stocks": [],
+  "story": false,
+  "note": "餐飲、零售、夜市、交通。"
+}

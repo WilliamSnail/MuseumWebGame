@@ -18,6 +18,10 @@
     "perDay": 330000,
     "max": 200000
   },
+  "job": {
+    "unit": "g-daily",
+    "title": "司機"
+  },
   "arc": [
     {
       "step": 1,

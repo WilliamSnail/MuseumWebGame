@@ -18,6 +18,10 @@
     "perDay": 60000,
     "max": 30000
   },
+  "job": {
+    "unit": "g-daily",
+    "title": "店員"
+  },
   "arc": [
     {
       "step": 1,

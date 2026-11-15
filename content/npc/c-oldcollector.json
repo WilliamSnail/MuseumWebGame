@@ -20,6 +20,10 @@
     "perDay": 1800000,
     "max": 1200000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "贊助人"
+  },
   "arc": [
     {
       "step": 1,

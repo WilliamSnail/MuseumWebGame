@@ -104,6 +104,8 @@ const STEPS = [
   ["館內 NPC 的內容檢查（欄位、名字不重複、預算在那一級而且每位不壹樣、不破梗、不露臉、打包給伺服器，11-14 步驟 3）", ["test/npc_check.test.cjs"]],
   ["館內 NPC 的純函式（打包給網頁、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致，11-14）", ["test/npc.test.cjs"]],
   ["館內 NPC 的內容（content/npc）", ["tools/npc_check.cjs"]],
+  ["世界經濟的名單和腳本（單位的樹、兩層加總、股票只掛一處、劇情單位、NPC 的隸屬、world:unit／npc／gdp，決定 0086）", ["test/world.test.cjs"]],
+  ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/world_check.cjs"]],
   ["內容檢查（content.js）", ["test/content/check.cjs"]],
   ["內容檢查（content3.js）", ["test/content/check3.cjs"]],
   ["特效在 Node 載得起來", ["test/fx/node-check.cjs"]],

@@ -18,6 +18,10 @@
     "perDay": 600000,
     "max": 350000
   },
+  "job": {
+    "unit": "g-school",
+    "title": "老師"
+  },
   "arc": [
     {
       "step": 1,

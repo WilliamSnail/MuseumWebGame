@@ -17,6 +17,10 @@
     "perDay": 110000,
     "max": 50000
   },
+  "job": {
+    "unit": "g-daily",
+    "title": "外送員"
+  },
   "arc": [
     {
       "step": 1,
