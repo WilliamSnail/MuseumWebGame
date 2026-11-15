@@ -154,8 +154,31 @@ T("statView：分級只寫一處；健康值用「小於」跟 W5 換檔一致�
   assert.strictEqual(G.statBandOf("unitHealth", 0.8), "weak"); assert.strictEqual(v("unitHealth", "g-island", null), null, "沒有資料");
   const h = mk(G); h.econ = { b: -1 }; G.whTick(h, "2026-11-16", {}); assert.strictEqual(v("unitHealth", "g-island", h).band, "tight"); assert.strictEqual(v("unitState", "g-island", h).label, "減薪"); assert.ok(v("budgetMult", "g-island", h).value < 1);
   assert.strictEqual(v("budgetMult", "x", 1.1).label, "多一點"); assert.strictEqual(v("budgetMult", "x", 0.3).label, "很省");
-  assert.strictEqual(v("npcSan", "x", 10).band, "edge"); assert.strictEqual(v("npcSan", "x", 70).label, "穩定"); assert.strictEqual(v("unitUnrest", "x", 80).band, "turmoil"); assert.strictEqual(v("crowdMood", null, 90).band, "buzz"); assert.strictEqual(v("npcSan", "x", { npcw: {} }), null, "新的理智值還沒有資料");
+  assert.strictEqual(v("npcSan", "x", 10).band, "edge"); assert.strictEqual(v("npcSan", "x", 70).label, "穩定"); assert.strictEqual(v("unitUnrest", "x", 80).band, "turmoil"); assert.strictEqual(v("crowdMood", null, 90).band, "buzz"); assert.strictEqual(v("npcSan", "x", { npcw: {} }).value, 70, "沒有紀錄 ＝ 初始值 70"); assert.strictEqual(v("npcSan", "x", { npcw: { san: { x: 25 } } }).band, "uneasy"); assert.strictEqual(v("npcSan", "x", {}), null, "還沒有 npcw：沒有資料");
   assert.strictEqual(v("不存在", "x", 1), null); assert.ok([v("npcSan", "x", 50), v("unitHealth", "x", 1)].every(x => x.pub === true && typeof x.hint === "string" && x.hint.length <= 20));
   const c = G.whCard(h, "2026-11-16"); assert.strictEqual(c.bands.reduce((a, b) => a + b, 0), 7, "財報卡的分布用同一個分級");
+});
+T("理智（決定 0090）：每天收盤照行程加減；去地下 −2（一天最多 −4）、去餐車 +1、沒來 +3；往 70 靠；被裁 −8、新工作 +5；夾 0～100、一天最多 ±10；同一天不重複", G => {
+  const h = mk(G), S = G.NUM.casino.worldDoc.san, ppl = [{ id: "v-a" }, { id: "v-b" }, { id: "v-c" }, { id: "v-d" }]; G.nwFix(h);
+  assert.strictEqual(G.nwSan(h, "v-a"), S.start, "預設 70");
+  assert.ok(G.nwSanDay(h, "2026-11-16", [{ id: "v-a", place: "cellar" }, { id: "v-a", place: "cellar" }, { id: "v-a", place: "cellar" }, { id: "v-b", place: "food" }, { id: "v-c", place: "hall" }], ppl));
+  assert.strictEqual(G.nwSan(h, "v-a"), 70 + S.cellarMax + S.back, "去 3 次地下：最多 −4，再往 70 靠 1"); assert.strictEqual(G.nwSan(h, "v-b"), 70, "去餐車：已經是初始值，不補過頭"); assert.strictEqual(G.nwSan(h, "v-c"), 70, "去展廳：不變"); assert.strictEqual(G.nwSan(h, "v-d"), 70, "沒來：已經是初始值，不補過頭");
+  h.npcw.san["v-b"] = 50; h.npcw.san["v-d"] = 50; G.nwSanDay(h, "2026-11-16b".slice(0, 10), [], ppl); // 同一天不重複，所以不會動
+  assert.strictEqual(G.nwSan(h, "v-b"), 50, "同一天不重複");
+  assert.ok(!G.nwSanDay(h, "2026-11-16", [], ppl), "同一天不重複"); h.npcw.san["v-b"] = 60; h.npcw.san["v-d"] = 60; G.nwSanDay(h, "2026-11-20", [{ id: "v-b", place: "food" }], ppl); assert.strictEqual(G.nwSan(h, "v-b"), 62, "理智 60：去餐車 +1，再往 70 靠 1"); assert.strictEqual(G.nwSan(h, "v-d"), 64, "理智 60：沒來 +3，再往 70 靠 1");
+  h.npcw.san["v-a"] = 67; h.npcw.ev.push({ day: "2026-11-21", npc: "v-a", from: "g-daily", to: null, t: "lay" }); G.nwSanDay(h, "2026-11-21", [{ id: "v-a", place: "hall" }], ppl); assert.strictEqual(G.nwSan(h, "v-a"), 67 + S.back + S.lay, "被裁 −8，再往 70 靠 1");
+  h.npcw.san["v-b"] = 99; G.nwSanDay(h, "2026-11-22", [{ id: "v-b", place: "food" }], ppl); assert.ok(G.nwSan(h, "v-b") <= 100);
+  h.npcw.san["v-d"] = 2; G.nwSanDay(h, "2026-11-23", [{ id: "v-d", place: "cellar" }, { id: "v-d", place: "cellar" }], ppl); assert.ok(G.nwSan(h, "v-d") >= 0, "不低於 0");
+  const pubv = JSON.parse(JSON.stringify(G.nwSanPublic(h))); assert.deepStrictEqual(pubv["v-a"], [G.nwSan(h, "v-a"), G.statBandOf("npcSan", G.nwSan(h, "v-a"))]);
+});
+T("理智低的影響：不去地下、評價少 1 顆星、預算 ×0.9（不低於下限）；理智正常時什麼都不變", G => {
+  const S = G.NUM.casino.worldDoc.san, add = d => new Date(Date.parse(D + "T00:00:00Z") + d * 86400000).toISOString().slice(0, 10);
+  const run = san => { const h = mk(G); G.nwFix(h); let cellar = 0, spent = 0; for (let i = 0; i < 6; i++) { const d = add(i); for (const n of PEOPLE) h.npcw.san[n.id] = san; G.casNpcSpend(h, d, "secSan", LIST, null); const b = h.npcs.shopBy.cellar; cellar += b ? b.npc : 0; spent += h.npcs.shop + h.npcs.ticket; } h.__cellar = cellar; h.__spent = spent; return h; };
+  const ok = run(70), low = run(10);
+  assert.ok(low.__cellar === 0 && ok.__cellar > 0, "理智 10：地下收藏庫沒有 NPC 花錢；正常的有（" + low.__cellar + " vs " + ok.__cellar + "）");
+  assert.ok(low.__spent < ok.__spent, "理智低：花的比較少");
+  const me = { id: "c-bus", budget: { perDay: 100 } }; assert.strictEqual(G.nwBudgetMult(mk(G), me, "g-daily"), 1); const hl = mk(G); G.nwFix(hl); hl.npcw.san["c-bus"] = S.lowBudget - 1; assert.strictEqual(G.nwBudgetMult(hl, me, "g-daily"), S.budgetMult);
+  const stars = h => (h.reviews || []).map(r => r.stars); assert.ok(Math.max(...stars(ok), 0) >= 1); if (stars(low).length && stars(ok).length) assert.ok(Math.min(...stars(low)) <= Math.min(...stars(ok)) && stars(low).every(x => x >= 1), "評價星數少一顆、不低於 1");
+  assert.strictEqual(G.statView("npcSan", "c-bus", hl).band, "uneasy");
 });
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

@@ -27,6 +27,7 @@ function sim(G, npcs, opts = {}) {
   }
   const a1 = G.wuAmounts(h), sum = o => Object.values(o).reduce((x, y) => x + y, 0);
   const bals = Object.values((h.npcw && h.npcw.bal) || {}), wal = { total: bals.reduce((x, y) => x + y, 0), n: bals.length, min: bals.length ? Math.min(...bals) : 0, max: bals.length ? Math.max(...bals) : 0, moves: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "move").length, lays: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "lay").length };
+  const sv = Object.values((h.npcw && h.npcw.san) || {}); wal.san = { n: sv.length, min: sv.length ? Math.min(...sv) : 70, max: sv.length ? Math.max(...sv) : 70, low: sv.filter(x => x < 30).length };
   return { wal, days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
 }
 // 景氣 −1／0／+1 各跑 30 和 90 天（W5 連動）：NPC 每天花多少、各狀態幾個集團、最低倍率、有沒有裁員、莊家和預算池撐不撐得住。回傳 [{ b, days, perDay, states, minMult, layoff, ok }]
@@ -55,6 +56,7 @@ if (require.main === module) {
     console.log("單位：起點 → 終點（變多少）　其中 NPC 花了");
     Object.keys(r.a1).forEach(k => console.log(`  ${names[k] || k}：${fmt(r.a0[k])} → ${fmt(r.a1[k])}（${r.a1[k] - r.a0[k] >= 0 ? "+" : ""}${fmt(r.a1[k] - r.a0[k])}）${r.spent.byUnit[k] ? "　花 " + fmt(r.spent.byUnit[k]) : ""}`));
     console.log(`NPC 錢包：${r.wal.n} 位、合計 ${fmt(r.wal.total)}（最少 ${fmt(r.wal.min)}、最多 ${fmt(r.wal.max)}）；最近換工作紀錄：被裁 ${r.wal.lays} 次、換到新工作 ${r.wal.moves} 次`);
+    console.log(`NPC 理智（不是 70 的 ${r.wal.san.n} 位）：最低 ${r.wal.san.min}、最高 ${r.wal.san.max}、低於 30 的 ${r.wal.san.low} 位`);
     const wh = r.house.wh, S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
     if (wh && wh.st) { console.log("各集團現在的狀態（健康值 h → 預算倍率）："); Object.keys(wh.st).forEach(k => console.log(`  ${names[k] || k}：${S[wh.st[k].s]}（h ${wh.h[k]} → ×${G.whMult(r.house, k).toFixed(2)}）`)); if (wh.ev.length) console.log("換過狀態：" + wh.ev.map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、")); }
     const bad = []; if (r.gap !== 0) bad.push(`守恆差 ${r.gap}（單位加公共應該等於外面世界）`); if (r.a1.pub < 0) bad.push(`公共是負的 ${fmt(r.a1.pub)}`); if (r.house.bankroll < 0 || r.house.budget < 0) bad.push("莊家或預算池變負");

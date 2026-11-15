@@ -10,7 +10,7 @@
 //  純函式，不碰 DOM。
 // ================================================================
 import { NUM } from "./config.js";
-import { whMult } from "./world.js";
+import { nwSan, whMult } from "./world.js";
 
 const svN = v => (v === null || v === undefined || v === "" || typeof v === "boolean" || !Number.isFinite(+v) ? null : +v);
 // 分級表：由低到高；上限（含）以內算那一級。unitUnrest 是「高 ＝ 不安」，所以分級名字反過來讀。
@@ -37,6 +37,6 @@ export function statView(kind, id, data) {
   if (kind === "unitState") { const s = data && data.wh && data.wh.st && data.wh.st[id] ? data.wh.st[id].s : (typeof data === "string" ? data : null); const x = STAT_STATE[s]; return x ? { value: null, band: x[0], label: x[1], tone: x[2], hint: x[3], pub: true } : null; }
   if (kind === "budgetMult") { const m = typeof data === "number" ? data : (data && data.wh ? whMult(data, id) : null); if (m === null) return null; const t = m >= 1.05 ? ["up", "多一點", "good", "那邊的旅客花得大方。"] : m >= 0.95 ? ["even", "照常", "neutral", "那邊的旅客照常花錢。"] : m >= 0.6 ? ["down", "保守", "warn", "那邊的旅客花得比較保守。"] : ["low", "很省", "bad", "那邊的旅客幾乎不花錢。"]; return { value: m, band: t[0], label: t[1], tone: t[2], hint: t[3], pub: true }; }
   const T = STAT_TABLE[kind]; if (!T) return null;
-  const v = svNum(data, d => (kind === "npcSan" ? d && d.npcw && d.npcw.san && d.npcw.san[id] : kind === "unitUnrest" ? d && d.wh && d.wh.unrest && d.wh.unrest[id] : d && d.wh && d.wh.mood));
+  const v = svNum(data, d => (kind === "npcSan" ? (d && d.npcw ? nwSan(d, id) : null) : kind === "unitUnrest" ? d && d.wh && d.wh.unrest && d.wh.unrest[id] : d && d.wh && d.wh.mood));
   return v === null ? null : svPack(v, svPick(T.bands, v), T.pub);
 }

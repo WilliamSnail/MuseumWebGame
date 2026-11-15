@@ -18,7 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, nwBal, nwPayday, nwSpend, nwUnitOf, whMult, wuDebit, wuHave } from "./world.js";
+import { WU_HH, nwBal, nwBudgetMult, nwPayday, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -190,7 +190,8 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     L.done[v.key] = 1;
     const n = list.find(x => x && x.id === v.id);
     if (!n || !n.budget || !(n.budget.perDay > 0)) continue;
-    const first = L.byNpc[v.id] == null, uid = nwUnitOf(house, n), perDay = Math.floor(n.budget.perDay * whMult(house, uid)); // W5：所屬集團的狀態決定預算倍率（減薪、緊縮、裁員） // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
+    const first = L.byNpc[v.id] == null, uid = nwUnitOf(house, n), perDay = Math.floor(n.budget.perDay * nwBudgetMult(house, n, uid)); // W5：所屬集團的狀態決定預算倍率（減薪、緊縮、裁員）；理智低時再 ×0.9（決定 0090）
+    if (v.place === "cellar" && nwSan(house, v.id) < NUM.casino.worldDoc.san.lowRoute) continue; // 理智太低：不去地下收藏庫（那一站不花錢、不算人次） // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
     let mine = Math.min(room, Math.floor(perDay * C.dayPct / 100) - nsN(L.byNpc[v.id])), paid = 0;
     const pay = (src, pool, amt) => {
       amt = Math.min(amt, mine);
@@ -216,12 +217,13 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     }
     if (v.place === "hall" && C.reviewDay > 0 && reviews.filter(r => r.npc === v.id && r.day === day).length < C.reviewDay) { // 到展廳：留壹則評價（故事線現在這壹段的字；還沒有就說他是誰）
       const rr = mulberry32(hashStr(`${secret}|${day}|${v.id}|${v.key}|review`)), line = npcStoryLine(v.id, day, counters, list);
-      if (line) reviews.push({ id: v.id + "|" + (npcDayStartMs(day) + v.start * 60000), day, at: npcDayStartMs(day) + v.start * 60000, npc: v.id, who: n.name, text: line.text.slice(0, 80), stars: Math.min(5, 3 + (npcLikesNow(n, day, counters).includes("hall") ? 1 : 0) + (rr() < 0.4 ? 1 : 0)) });
+      if (line) reviews.push({ id: v.id + "|" + (npcDayStartMs(day) + v.start * 60000), day, at: npcDayStartMs(day) + v.start * 60000, npc: v.id, who: n.name, text: line.text.slice(0, 80), stars: Math.max(1, Math.min(5, 3 + (npcLikesNow(n, day, counters).includes("hall") ? 1 : 0) + (rr() < 0.4 ? 1 : 0)) - (nwSan(house, v.id) < NUM.casino.worldDoc.san.lowStars ? 1 : 0)) });
       house.reviews = reviews.slice(-C.reviewKeep);
       if (!Array.isArray(house.reviewsOut)) house.reviewsOut = []; // 這次新寫的（伺服器寫進完整歷史 npcReviews/{日期} 後取走；不存在莊家文件裡）
       house.reviewsOut.push(house.reviews[house.reviews.length - 1]);
     }
   }
+  if (nowMs === Infinity) nwSanDay(house, day, npcVisitsToday(day, secret, list, counters), list.filter(x => x && x.kind !== "trace" && x.budget && x.budget.perDay > 0)); // 收盤：NPC 的理智照那天的行程更新（決定 0090）
   if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), byUnit: Object.assign({}, L.byUnit || {}), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
   return L;
 }
