@@ -922,7 +922,7 @@ export const FX = (() => {
             if (f === cur.f && m.mode === cur.mode) return;
             cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null;
             apply(1.5); applyMusic(1.5);
-            if (to2) fileOnce(c, g, 'sword-fight', 0.55); // 守門進第二階段：再劍戰壹下
+            if (to2) { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); } // 守門進第二階段：再劍戰壹下
             if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
           },
         };
@@ -1223,7 +1223,7 @@ export const FX = (() => {
       ambMix(m) { want.mix = m || null; if (ambNow && ambNow.mix && want.mix) ambNow.mix(want.mix); }, // 熱鬧程度（賭場的人聲和籌碼聲）；別的房間不理它
       heart(san) { want.heart = san != null && san > 0 && san <= 30 ? san : null; sync(); },
       tinnitus(on) { want.tinnitus = !!on; sync(); },
-      dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; want.dread = v; sync(); },
+      dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; const toEdge = v === 'edge' && want.dread !== 'edge'; want.dread = v; sync(); if (toEdge && unlocked && !(api.settings && api.settings.muted)) { const c = ctx(); if (c) fileOnce(c, bus.heart, 'pulse-rise', 0.5); } }, // 剛掉到 15 以下：升高音壹次
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
       // 播壹次音效檔（id 見 shared/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
       file(id, g) {
