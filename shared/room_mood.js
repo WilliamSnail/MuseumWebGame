@@ -6,6 +6,7 @@
 //      crowd：畫幾個小人影（0～RM.crowdMax）
 //      flags.bunting：null｜"policy"｜"event"｜"both"
 //      omen：0～1，怪影子多常出現（0 ＝ 完全不出現）
+//      heat：0～3（冷清／平常／熱絡／沸騰），賭場的籌碼塔、招牌、煙霧、荷官台詞用
 //      hide：true ＝ 房間效果全部收起（館友自己的理智效果比房間效果大）
 //  data 每個欄位都可以沒有：
 //    mood        散客氣氛的數字（peek 的 crowdMood[0]）
@@ -39,5 +40,6 @@ export function roomMood(data) {
   if (omen < RM.omenMin) omen = 0;
   const hide = !!(own.lightsOut || own.faint || own.flee || own.bout);
   if (own.shadow || hide) omen = 0;
-  return { light: { warm, dim: Math.round(dim * 100) / 100 }, crowd, flags, omen: Math.round(omen * 100) / 100, hide };
+  const heat = { cold: 0, plain: 1, warm: 2, buzz: 3 }[band] === undefined ? 1 : { cold: 0, plain: 1, warm: 2, buzz: 3 }[band];
+  return { heat, light: { warm, dim: Math.round(dim * 100) / 100 }, crowd, flags, omen: Math.round(omen * 100) / 100, hide };
 }
