@@ -138,5 +138,15 @@ T("決定 0071：借的錢從莊家出、還的本金加利息回莊家、到期
   assert.strictEqual(G.casLoanToHouse(w2, h2), 0, "交過就沒了");
   const old = G.casWalletFix(null, D); delete old.loan.toHouse; G.casWalletFix(old, D); assert.strictEqual(old.loan.toHouse, 0, "舊錢包補 0");
 });
+T("快速按鈕照額度算（11-15）：額度的 quickPct%、1／2／3／5 開頭、不到 min 拿掉、額度太小用舊的那組；摘要裡的 quick 跟著額度", G => {
+  const C = G.NUM.casino.loan;
+  C.quickPct = [10, 25, 50]; C.min = 250; C.quick = [2500, 7500, 12500];
+  assert.strictEqual(JSON.stringify(G.casLoanQuick(3000000)), JSON.stringify([300000, 500000, 1000000]));
+  assert.strictEqual(JSON.stringify(G.casLoanQuick(20000000)), JSON.stringify([2000000, 5000000, 10000000]));
+  assert.strictEqual(JSON.stringify(G.casLoanQuick(1000)), JSON.stringify([500]));
+  assert.strictEqual(JSON.stringify(G.casLoanQuick(100)), JSON.stringify([2500, 7500, 12500]));
+  const w = G.casWalletFix(G.casWalletNew(), "2026-11-15"); w.loan.limit = 3000000;
+  assert.strictEqual(JSON.stringify(G.casLoanView(w, "2026-11-15").quick), JSON.stringify([300000, 500000, 1000000]));
+});
 console.log(`loan.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
