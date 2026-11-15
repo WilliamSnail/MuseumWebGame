@@ -567,6 +567,8 @@ function goStock(v, id) {
 const isPhone = () => window.innerWidth < 761 || window.innerHeight < 501;
 // 手機：把壹塊收成壹行，點開才看（電腦照舊整塊畫）
 const fold = (title, node) => (isPhone() && node ? h("details", { class: "bank-fold" }, h("summary", null, h("b", null, title), h("span", null, "點開 ▾")), node) : node);
+// 電腦也要收折的（館方投資：表很長，世界市場要在上面）：預設收著，點開才看
+const foldAlways = (title, node) => (node ? h("details", { class: "bank-fold" }, h("summary", null, h("b", null, title), h("span", null, "點開 ▾")), node) : node);
 function worldPanel(v) {
   const W = v.world;
   if (!W) return null;
@@ -600,8 +602,8 @@ function houseInvPanel(v) {
       hold.length ? ledger(["持有", "股數", "市值", "損益"], hold.map(x => h("div", { class: "bank-row inv", role: "row" },
         h("span", null, h("b", null, x.name)), h("span", { class: "bank-tab-num" }, `${fmt(x.n)} 股`), h("span", { class: "bank-tab-num" }, fmt(x.value)),
         h("span", { class: "bank-pl " + plc(x.pnl) }, h("b", null, money(x.pnl)), h("small", null, pct(x.pnlPct))))), "inv") : null,
-      h("div", { class: "bank-invy" }, h("b", null, `昨天買賣（用掉 ${fmt(I.spent || 0)}）`),
-        ys.length ? h("ul", null, ys.map(y => h("li", null, h("i", { class: "bank-dir " + (y.side === "buy" ? "long" : "short") }, y.side === "buy" ? "買進" : "賣出"), ` ${y.name} ${fmt(y.n)} 股・成交價 ${fmt(y.px)}`))) : h("p", { class: "bank-meta sm" }, "昨天沒有買賣。"))]);
+      h("div", { class: "bank-invy" }, h("b", null, (I.spent > 0 ? `昨天買賣（用掉 ${fmt(I.spent)}）` : "昨天買賣")),
+        ys.length ? h("ul", null, ys.map(y => h("li", null, h("i", { class: "bank-dir " + (y.side === "buy" ? "long" : "short") }, y.side === "buy" ? "買進" : "賣出"), ` ${y.name} ${fmt(y.n)} 股${y.px > 0 ? `・成交價 ${fmt(y.px)}` : ""}`))) : h("p", { class: "bank-meta sm" }, "昨天沒有買賣。"))]);
 }
 // 昨天館外來客帶進多少錢（11-15，翊文：「可以銀行的財報之類的地方看到嗎？要分類一下」）
 // 資料 e.ext（伺服器日報快照，昨天的）：{ ticket:{hall,crowd}, shop:{food,bj,craft,cellar,job}, shopCrowd:{同上}, total, people:{npc,crowd}, menu:[{id,name,npc,crowd}], orders:[{who,item,name,n}] }
@@ -628,7 +630,7 @@ function extPanel(e) {
 }
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
-  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world));
+  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, world, foldAlways("館方投資", houseInvPanel(v))));
   const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
   return h("div", { class: "bank-cols report" },
     h("div", { class: "bank-stack" },
@@ -639,7 +641,7 @@ function reportPane(v) {
         h("p", { class: "bank-line" }, e.news)),
       fold("昨天館外來客花了多少", extPanel(e)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))])))),
-    h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world,
+    h("div", { class: "bank-stack" }, world, foldAlways("館方投資", houseInvPanel(v)),
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
