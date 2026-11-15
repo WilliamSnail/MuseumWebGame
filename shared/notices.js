@@ -55,6 +55,16 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-15-abefcd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場和銀行有背景樂了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場有了爵士感的背景音樂，還有人聲和籌碼碰撞聲，館裡越熱鬧，人聲和籌碼聲就越多。",
+        "銀行也有了慢慢的鋼琴和弦、偶爾的硬幣聲。右上角的喇叭可以關掉。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-d129c0", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行多了財經專員梁安", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
