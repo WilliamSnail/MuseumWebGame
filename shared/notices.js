@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-7a2d14", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "欠款可以直接賣股票還", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "欠了錢的時候，可以直接賣股票還債：不受一天賣出的上限，賣到剛好夠還為止。",
+        "賣得的錢先補錢包的負數，再照到期順序還借款；手續費和資本利得稅照舊。",
+      ]],
+    ],
+  },
+  {
     id: "mat-make-up-2026-11", v: 1, cat: "館方公告", tags: ["重要", "已更新"], importance: "important", area: "其他",
     title: "換週章多吃了材料：每人補壹片金箔", publish: "2026-11-15", expire: "2026-12-15",
     sections: [

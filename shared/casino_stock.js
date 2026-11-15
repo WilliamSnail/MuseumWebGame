@@ -295,7 +295,9 @@ export function casStockBuy(w, house, id, shares, day, t) {
 }
 
 // 賣 shares 股（"max" ＝全賣）
-export function casStockSell(w, house, id, shares, day, t) {
+// opts.free ＝賣股還債（shared/casino_debt.js）：不受壹人壹天賣出上限、不算進今天賣出的額度和全館淨賣出
+export function casStockSell(w, house, id, shares, day, t, opts) {
+  const free = !!(opts && opts.free);
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
@@ -310,7 +312,7 @@ export function casStockSell(w, house, id, shares, day, t) {
   // 資本利得稅：賣出拿到的錢（扣賣出手續費）− 這 n 股的成本（總成本照股數比例，平均成本法）> 0 的部分抽 taxPct%（向下取整）；賠錢不抽也不退
   const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0, net = gross - fee - tax;
   // 壹人壹天賣出上限
-  if (stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
+  if (!free && stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
   if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
   casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 外面世界付（池子變少）
   w.chips -= fee + tax; house.budget += fee + tax; casCount(house, "stockFee", fee);
@@ -319,9 +321,9 @@ export function casStockSell(w, house, id, shares, day, t) {
   if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut);
   S.gain += profit; // 累計賣出賺賠（扣稅前）
   S.fee += fee;
-  S.sold = { day, n: stSoldToday(S, day) + gross };
+  if (!free) S.sold = { day, n: stSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, stN(H.held[id]) - n);
-  H.net = { day, n: stNetToday(H, day) + gross };
+  if (!free) H.net = { day, n: stNetToday(H, day) + gross };
   return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee), taxText: "，資本利得稅 " + casNum(tax) })] };
 }
 
