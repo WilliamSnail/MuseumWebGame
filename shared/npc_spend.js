@@ -108,6 +108,8 @@ export function crowdShopToday(day, secret) {
   }
   return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
 }
+// 房間 id（大廳的 LOBBY2_ROOMS，web/src/ui_lobby2.js）：NPC 行程的 place 對到哪個房間（決定 0094）；餐車、牌桌都在賭場
+export const NPC_ROOM = { hall: "hall", food: "casino", bj: "casino", job: "commission", cellar: "cellar", craft: "workshop", bank: "bank", auction: "gallery" };
 // 這壹天逛店的散客在各家店各有幾位（館內股「昨天不同的人」用，整天的總數；現在在場幾位不給）
 export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
@@ -117,7 +119,20 @@ export function npcPresence(day, nowMs, secret, list, counters, away, mood = nul
   const hall = v.filter(x => x.place === "hall");
   const cg = crowdVisitsToday(day, secret, mood).filter(x => x.start <= m && m < x.end), cn = cg.reduce((a, x) => a + x.n, 0);
   const cas = Array.from(aw).map(id => { const n = list.find(x => x && x.id === id); return n ? n.name : ""; }).filter(Boolean);
-  return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) } };
+  // 各房間現在有幾位（決定 0094：翊文選「全部照實際人數」；館內股的跳空另外跟著人數即時反映，見 casInRampMake）
+  const shops = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, rooms = {}, put = (room, kind, n) => { if (n <= 0) return; const r = rooms[room] || (rooms[room] = { n: 0, npc: 0, crowd: 0 }); r.n += n; r[kind] += n; };
+  for (const x of v) { const room = NPC_ROOM[x.place]; if (!room) continue; put(room, "npc", 1); if (x.place in shops) shops[x.place]++; }
+  put("hall", "crowd", cn);
+  for (const g of crowdShopToday(day, secret)) if (g.start <= m && m < g.end) { put(NPC_ROOM[g.store], "crowd", g.n); shops[g.store] += g.n; }
+  return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) }, rooms, shops };
+}
+// 各店「到店的人」（人數，不是在場）：館內股盤中價格跟著它走（casInRampMake）。{ store: [{ at 從 05:00 起第幾分鐘, n }] }，照時間排；NPC 每站 1 位、逛店的散客壹組 n 位
+export function npcShopArrive(day, secret, list, counters) {
+  const out = { food: [], bj: [], job: [], cellar: [], craft: [] };
+  for (const v of npcVisitsToday(day, secret, list, counters)) if (out[v.place]) out[v.place].push({ at: v.start, n: 1 });
+  for (const g of crowdShopToday(day, secret)) if (out[g.store]) out[g.store].push({ at: g.start, n: g.n });
+  for (const k of Object.keys(out)) out[k].sort((x, y) => x.at - y.at);
+  return out;
 }
 
 function npcLiveFix(house, day) {

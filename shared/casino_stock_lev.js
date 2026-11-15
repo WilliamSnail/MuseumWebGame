@@ -34,7 +34,7 @@ import { casCreditLevel } from "./casino_credit.js";
 import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
-import { IN_IDS, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeries } from "./casino_stock_in.js";
+import { IN_IDS, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
 import { casStockHouseFix, casStockIdHalt } from "./casino_stock.js";
 import { TW_IDS, US_IDS, twIdx, usIdx } from "./stocks_tw.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
@@ -161,7 +161,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     if (T && T.past && T.past[d] && Array.isArray(T.past[d][id])) return { arr: T.past[d][id], from: lqN(T.pastFrom && T.pastFrom[d]) };
     return null;
   };
-  const inSer = id => casInSeries(IH.open[id], IH.day, id, secret);
+  const inSer = id => casInSeriesR(IH, IH.open[id], IH.day, id, secret);
   return {
     now(id) {
       const mk = casLevMarket(id);
@@ -180,7 +180,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     path(id, d, from) {
       const mk = casLevMarket(id);
       if (mk === "in") {
-        const ser = IH.day === d ? inSer(id) : IH.pre && IH.pre.day === d && IH.pre.open[id] > 0 ? casInSeries(IH.pre.open[id], d, id, secret) : null; // 前壹天的開盤價莊家還記著（IH.pre）；更早的不知道，不編
+        const ser = IH.day === d ? inSer(id) : IH.pre && IH.pre.day === d && IH.pre.open[id] > 0 ? casInSeriesR(IH, IH.pre.open[id], d, id, secret) : null; // 前壹天的開盤價莊家還記著（IH.pre）；更早的不知道，不編
         if (!ser) return [];
         const upto = d < day ? ser.length - 1 : (lqT(t) ? (casInIdx(t) === null ? ser.length - 1 : casInIdx(t)) : -1);
         return ser.slice(from + 1, upto + 1);
@@ -195,7 +195,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
       const mk = casLevMarket(id);
       if (mk === "in") {
         if (IH.day === d) return inSer(id)[C.ticks - 1];
-        if (IH.pre && IH.pre.day === d && IH.pre.open[id] > 0) return casInSeries(IH.pre.open[id], d, id, secret)[C.ticks - 1];
+        if (IH.pre && IH.pre.day === d && IH.pre.open[id] > 0) return casInSeriesR(IH, IH.pre.open[id], d, id, secret)[C.ticks - 1];
         if (lqDay(d) && IH.day === lqAdd(d, 1) && IH.close[id] > 0) return IH.close[id]; // 已經換日：莊家記著前壹天的收盤
         return null;
       }
