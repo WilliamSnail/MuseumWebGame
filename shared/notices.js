@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-cf570b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "地下收藏庫的聲音更陰森了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "地下多了壹層地下室的環境錄音，偶爾會聽到遠處的回音和怪聲，很久才壹次……好像有人來了。",
+        "音效來自 Pixabay，來源標在 sfx/來源.md。音量滑桿、靜音照舊。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-e72d90", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "開大禮包開到 2 星以上有「You have money」", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
