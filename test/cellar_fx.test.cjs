@@ -16,8 +16,8 @@ T("巫師帽、觸手帽、紳士帽、倒立的數字，就是 teamPower、memb
   assert.ok(t(G.cellarPartFx("姿勢", "比讚")).includes(`+${G.NUM.fight.cheer}`));
 });
 T("沒有地下效果的選項回空；稀有度沒擲就不算進強度；擲了才算", G => {
-  assert.deepStrictEqual(Array.from(G.cellarPartFx("帽子", "館員帽")), []);
-  assert.strictEqual(G.cellarFxShort("帽子", "館員帽"), "");
+  assert.deepStrictEqual(Array.from(G.cellarPartFx("帽子", "沒有")), []);
+  assert.strictEqual(G.cellarFxShort("帽子", "沒有"), "");
   const a = G.cellarPickFx(mk({ 顏色: "橘" }).pick), b = G.cellarPickFx(mk({ 顏色: "橘", 稀有度: "傳說級稀有" }).pick, { rarityKnown: true, perfect: true });
   assert.strictEqual(a.power, G.COLOR_POWER["橘"]);
   assert.strictEqual(b.power, G.CELLAR_POWER["傳說級稀有"] + G.CELLAR_POWER.perfect + G.COLOR_POWER["橘"]);

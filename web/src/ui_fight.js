@@ -358,7 +358,7 @@ export function fightCard(v, me, api) {
   const moves = opts.filter(o => o.move);
   const team = opts.filter(o => o.team && (o.ok || o.act === "taunt")); // 合作的新行動：不能用的不放（引開例外：寫為什麼不行）
   const exits = opts.filter(o => o.act === "flee" || o.act === "retreat");
-  const mk = (o, cls) => btn([h("b", null, o.move ? moveIcon(o.act) : o.team ? teamIcon(o.act) : actIcon(o.act), o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] + (o.left > 1 ? `（還有 ${o.left} 次）` : "") : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
+  const mk = (o, cls) => btn([h("b", null, o.move ? moveIcon(o.act) : o.team ? teamIcon(o.act) : actIcon(o.act), o.move ? (o.hat || (MOVE_TEXT[o.act] || o.act).split("：")[0]) + (o.left > 1 ? `（還有 ${o.left} 次）` : "") : ACT_TEXT[o.act] || o.act), h("small", null, o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o))],
     () => send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o), cls + (mine && mine.act === o.act ? " cx-on" : ""), { disabled: !o.ok, "aria-pressed": String(!!(mine && mine.act === o.act)) });
   const last = v.last && v.last.round ? roundLines(v, v.last.round) : [];
   const sanPct = Math.max(0, Math.min(100, seat.san || 0));
@@ -370,7 +370,7 @@ export function fightCard(v, me, api) {
   let armed = null;
   const previewFirst = () => typeof matchMedia === "function" && matchMedia("(pointer: coarse), (max-width: 760px), (max-height: 500px)").matches;
   const chipClick = (o, el) => {
-    const name = o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act;
+    const name = o.move ? (o.hat || (MOVE_TEXT[o.act] || o.act).split("：")[0]) : ACT_TEXT[o.act] || o.act;
     const tip = o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o);
     if (previewFirst() && armed !== o.act && tip) {
       armed = o.act;
@@ -381,7 +381,7 @@ export function fightCard(v, me, api) {
     }
     send(o.for ? { act: o.act, for: o.for } : { act: o.act }, o);
   };
-  const chip = o => { const b = btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (MOVE_TEXT[o.act] || o.act).split("：")[0] : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
+  const chip = o => { const b = btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (o.hat || (MOVE_TEXT[o.act] || o.act).split("：")[0]) : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
     () => chipClick(o, b), "fg-chip" + (o.team ? " team" : "") + (mine && mine.act === o.act ? " cx-on" : ""),
     { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) }); return b; };
   const sum = RP.summary && RP.key === roundKey(v) ? RP.summary : null;

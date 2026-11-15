@@ -92,6 +92,36 @@ export const PEPE_PARTS = [
   { name: "手上拿的東西", deco: true, options: [{ name: "沒有", start: true }, { name: "瓜子", key: "hold" }, { name: "小抱枕", key: "hold" }, { name: "放大鏡", key: "hold" }] },
 ];
 
+// 限定帽子的能力（決定 0085，docs/限定配件能力提案.md；翊文 11-15：地下以外也要有、特展的更強一點）。數字都在這裡。
+//   探索（走房間）：team 全隊強度 +、teamIfColor [顏色, +n] 隊裡有這個顏色就 +、teamIfMood [心情, +n] 戴的那隻是這個心情就 +、rainbow 隊裡每種不同顏色 +1（最多這麼多）、skill 技能檢定 +（取最高，不疊）、
+//   sanCut 每次被扣理智少扣（最少扣 1）、rest 每層第壹次走回這麼多理智、block 擋下幾次理智損失（不同的帽子加起來）、reroll 多幾次重擲、firstSan 每層第壹次走多扣、minPower 自己的強度至少這麼多
+//   打怪（一場一次的招式）：fight { move: 用哪個招式的算法（cheer、wizard、cap、squat、beanie、crown、tentacle）, n 數字, uses 可以用幾次, mult 推的倍率（tentacle）, noSan 不扣理智, team 全隊（beanie）}
+//   館內（地下以外）：home { foodMood 餐車吃的心情 +、foodSan 餐車理智每天上限 +、signInsp 每週第壹次簽到 +靈感、winInsp 房間第壹次過 +靈感、daySan 換日自己回復 +理智、dayMood 換日心情 + }，都是玩家自己存檔裡的東西，沒有新的籌碼來源
+export const LIMITED_FX = {
+  館員帽: { skill: 5, fight: { move: "cheer", n: 1 } },
+  燈籠帽: { team: 1, fight: { move: "wizard", n: 1 } },
+  黃雨帽: { sanCut: 1 },
+  廚師帽: { home: { foodMood: 1 } },
+  毛耳罩: { rest: 1 },
+  礦工帽: { home: { winInsp: 1 } },
+  花環: { teamIfColor: ["粉", 1] },
+  蝴蝶結: { fight: { move: "wizard", n: 1 } },
+  鐵鍋帽: { block: 1 },
+  摺紙帽: { minPower: 1 },
+  傳說的金冠: { team: 3, reroll: 1, fight: { move: "crown", uses: 2 } },
+  火氣頭帶: { team: 4, firstSan: 1, fight: { move: "tentacle", mult: 1.5, noSan: true } },
+  淚滴耳環: { rest: 2, fight: { move: "beanie", n: 2, team: true } },
+  瓜子項鍊: { skill: 10, home: { signInsp: 1 }, fight: { move: "cheer", n: 3 } },
+  彩虹圍巾: { rainbow: 4, fight: { move: "wizard", n: 3 } },
+  三層帽: { block: 3, fight: { move: "cap", uses: 2 } },
+  枕頭睡帽: { rest: 3, home: { daySan: 2 }, fight: { move: "beanie", n: 3 } },
+  歡笑花環: { team: 2, teamIfMood: ["開心", 1], fight: { move: "wizard", n: 3 } },
+  躺平眼罩: { team: -1, rest: 3, fight: { move: "cheer", n: 4 } },
+  縫過的領結: { skill: 8, minPower: 2, fight: { move: "squat" } },
+  黑絨領結: { skill: 12, home: { dayMood: 3 }, fight: { move: "cheer", n: 2 } },
+  小枕頭髮夾: { rest: 2, fight: { move: "squat" } },
+  金瓜子項鍊: { team: 3, home: { foodSan: 1 }, fight: { move: "wizard", n: 4 } },
+};
 // 改過名字的選項：舊存檔（含第 2 代）裡的舊名字會自動換成新名字
 export const RENAMED = { "俄國8": "俄國8+9" };
 
@@ -225,6 +255,7 @@ export const NUM = {
   idleBook: 15,             // 讀過《佩佩起源考》後，在圖書館什麼都不做幾秒，續集會出現（11-08 翊文說等了沒反應：20 → 15，並且等的時候書會越來越亮）
   cellarRest: "1D3",        // 隊伍裡有躺平、毛帽：每一層第一次走時各回這麼多理智
   cellarFx: { wizard: 2, tentacle: 5, gent: 10, handstand: 1 }, // 地下探索：巫師帽全隊強度 +、觸手帽全隊強度 +（要付理智）、紳士帽的技能檢定 +、倒立自己強度 +。手作坊的「地下效果」顯示（logic3.js cellarPartFx）也讀這裡
+  limitedFx: { teamCap: 6, homeSeen: "avatar" }, // 限定帽子的探索加成：全隊強度加起來最多 +teamCap（決定 0085）；館內效果看館友證頭像那隻佩佩戴的帽子
   linesFrom: 4,             // 解鎖幾個選項之後，老主顧（委託人關係線）才開始出現
   lineReward: 8,            // 老主顧的委託給多少靈感
   // 第 4 版（11-09，決定 0030）：每日簽到、每週全簽到、節日。數字是草稿，跑 test/sim.cjs 看過（維護日誌 11-09_翊文_每日簽到.md）

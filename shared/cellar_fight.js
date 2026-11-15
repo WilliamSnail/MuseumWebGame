@@ -19,7 +19,7 @@
 //    fightAfter(f)                       打完：倒下的佩佩哪幾隻真的受傷
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
-import { CELLAR_FOES, MOOD_BEATS, NUM } from "./config.js";
+import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "./config.js";
 import { FOE_TEXT } from "./content3.js";
 import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "./logic.js";
 import { memberPower, skillOf } from "./logic3.js";
@@ -70,7 +70,17 @@ export function fightIntentHidden(fight) {
 // 這個人（或全隊湊到兩隻以上）有沒有這個顏色的佩佩（第三節）
 export const fightHasColor = (fight, s, c) => !!fight && !!s && !s.helper && (fightUp(s).some(p => p.pick.顏色 === c) || !!(fight && fight.colors && fight.colors[c] >= 2));
 // 招式可以用幾次：帶那頂帽子、那個姿勢的佩佩是完美的，可以用兩次
-export const fightMoveUses = (s, m) => (fightUp(s).some(p => p.perfect && p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v) ? 2 : 1);
+const fiBase = (s, m) => !!FIGHT_MOVES[m] && fightUp(s).some(p => p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v);
+// 限定帽子（決定 0085）的招式：LIMITED_FX[帽子].fight ＝ { move, n, uses, mult, noSan, team }，用哪個招式的算法、數字多少。回傳那一頂帽子的設定加上帽子名字；沒有回 null
+export function fightAlias(s, m) {
+  let best = null;
+  for (const p of fightUp(s)) { const f = LIMITED_FX[p.pick.帽子], a = f && f.fight; if (a && a.move === m && (!best || (a.n || 0) > (best.n || 0) || (a.uses || 1) > (best.uses || 1))) best = Object.assign({ hat: p.pick.帽子 }, a); }
+  return best;
+}
+export const fightMoveUses = (s, m) => Math.max(fiBase(s, m) ? (fightUp(s).some(p => p.perfect && p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v) ? 2 : 1) : 0, (fightAlias(s, m) || { uses: 0 }).uses || (fightAlias(s, m) ? 1 : 0));
+// 這個招式的數字：原本的帽子／姿勢給 base；限定帽子給 n；取大的（base 不是數字就用 base 的）
+const fiN = (s, m, base) => { const a = fightAlias(s, m), b = fiBase(s, m); return b || !a || a.n == null ? base : a.n; };
+const fiTent = s => { const a = fightAlias(s, "tentacle"); return !fiBase(s, "tentacle") && a ? a : null; };
 const fiUsed = (s, m) => (s.used[m] === true ? 1 : +s.used[m] || 0);
 const fiUse = (s, m) => { s.used[m] = fiUsed(s, m) + 1; };
 // 你適合：帶的佩佩、招式、職業加起來，取最高的兩個
@@ -179,7 +189,7 @@ export const fightPower = s => fightUp(s).reduce((n, p) => n + p.power, 0);
 export const fightCanAct = s => !!s && !s.helper && !s.out && !s.ghost;
 export const fightActors = fight => fight.seats.filter(fightCanAct);
 // 這個人有沒有這個招式（還站著的佩佩有那頂帽子、那個姿勢）
-export const fightHasMove = (s, m) => !!FIGHT_MOVES[m] && fightUp(s).some(p => p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v);
+export const fightHasMove = (s, m) => !!FIGHT_MOVES[m] && (fiBase(s, m) || !!fightAlias(s, m));
 
 // 怪物的等級 1～3（守門不分等級，當 1）
 export const fightRankOf = n => clampN(Math.floor(+n || 1), 1, NUM.fight.rankHp.length);
@@ -258,7 +268,7 @@ const fiShell = fight => { const t = fightTraitOf(fight); return !!t && t.kind =
 // 推會扣多少：[最少, 最多]。mode："crown" 骰子當最大、"tentacle" 強度乘倍
 export function fightPushRange(fight, s, mode = "", bonus = 0) {
   const F = NUM.fight, top = maxExpr(F.die);
-  const base = fightPower(s) * (mode === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + fiPushBonus(fight, s);
+  const base = fightPower(s) * (mode === "tentacle" ? (fiTent(s) ? fiTent(s).mult || F.tentacleMult : F.tentacleMult) : 1) + (fight.cheer || 0) + bonus + fiPushBonus(fight, s);
   const mult = (fight.weak && !s.helper ? F.weakMult : 1) * (fiShell(fight) ? F.shellMult : 1);
   const tap = fight.tap && !s.helper ? F.tap.great : 0; // 這回合可以按時機：最多再多這麼多
   return [Math.round((base + (mode === "crown" ? top : 1)) * mult), Math.round((base + top + tap) * mult)];
@@ -293,7 +303,7 @@ export function fightOptions(fight, id) {
   Object.keys(FIGHT_MOVES).forEach(m => {
     if (!fightHasMove(s, m)) return;
     const left = fightMoveUses(s, m) - fiUsed(s, m);
-    const o = { act: m, move: true, ok: left > 0, why: left > 0 ? "" : fiUsed(s, m) > 9 ? "被拿走了" : "這場用過了", left };
+    const al = fightAlias(s, m), o = { act: m, move: true, hat: !fiBase(s, m) && al ? al.hat : undefined, ok: left > 0, why: left > 0 ? "" : fiUsed(s, m) > 9 ? "被拿走了" : "這場用過了", left };
     if ((m === "rest" || m === "beanie") && !fight.rest && o.ok) { o.ok = false; o.why = "這壹層回過了"; }
     if (m === "crown" || m === "tentacle") { const r = fightPushRange(fight, s, m); o.lo = r[0]; o.hi = r[1]; }
     out.push(o);
@@ -340,11 +350,16 @@ export function fightRound(fight, picks) {
   let bonus = 0, cheerNext = 0;
   const shield = {}, firm = {}, guard = {};
   doing("point").forEach(s => { s.used.point = true; fight.weak = true; ev.push({ t: "point", id: s.id }); });
-  doing("wizard").forEach(s => { fiUse(s, "wizard"); bonus += F.wizard; ev.push({ t: "move", id: s.id, move: "wizard", n: F.wizard }); });
-  doing("cheer").forEach(s => { fiUse(s, "cheer"); cheerNext += F.cheer; ev.push({ t: "move", id: s.id, move: "cheer", n: F.cheer }); });
+  doing("wizard").forEach(s => { fiUse(s, "wizard"); const n = fiN(s, "wizard", F.wizard); bonus += n; ev.push({ t: "move", id: s.id, move: "wizard", n }); });
+  doing("cheer").forEach(s => { fiUse(s, "cheer"); const n = fiN(s, "cheer", F.cheer); cheerNext += n; ev.push({ t: "move", id: s.id, move: "cheer", n }); });
   doing("squat").forEach(s => { fiUse(s, "squat"); firm[s.id] = true; ev.push({ t: "move", id: s.id, move: "squat" }); });
   doing("cap").forEach(s => { fiUse(s, "cap"); shield[acts[s.id].for || s.id] = s.id; ev.push({ t: "move", id: s.id, move: "cap", for: acts[s.id].for || s.id }); });
-  ["rest", "beanie"].forEach(m => doing(m).forEach(s => { fiUse(s, m); const n = rollExpr(F.rest).total; fxOf(s.id).gain += n; s.san += n; ev.push({ t: "move", id: s.id, move: m, n }); }));
+  ["rest", "beanie"].forEach(m => doing(m).forEach(s => {
+    fiUse(s, m); const al = fightAlias(s, m), n = fiBase(s, m) || !al || al.n == null ? rollExpr(F.rest).total : al.n;
+    const to = al && al.team && !fiBase(s, m) ? fightActors(fight).filter(x => !x.out) : [s]; // 限定帽子（淚滴耳環）：全隊壹起回
+    to.forEach(x => { const k = x.id === s.id ? n : (al.n == null ? rollExpr(F.rest).total : al.n); fxOf(x.id).gain += k; x.san += k; });
+    ev.push({ t: "move", id: s.id, move: m, n, team: to.length > 1 || undefined });
+  }));
   // 合作的新行動：鼓舞、分膽、安慰、看清（第四節）
   const inspired = {};
   doing("inspire").forEach(s => { const t = fightSeatOf(fight, acts[s.id].for); if (!t || t.out) return; inspired[t.id] = (inspired[t.id] || 0) + F.inspire; ev.push({ t: "inspire", id: s.id, for: t.id, n: F.inspire }); });
@@ -376,7 +391,7 @@ export function fightRound(fight, picks) {
     if (a !== "push") fiUse(s, a);
     const die = a === "crown" ? maxExpr(F.die) : rollExpr(F.die).total;
     const tap = s.helper ? 0 : [0, F.tap.good, F.tap.great][acts[s.id].tap || 0];
-    const base = fightPower(s) * (a === "tentacle" ? F.tentacleMult : 1) + (fight.cheer || 0) + bonus + tap + fiPushBonus(fight, s) + (inspired[s.id] || 0);
+    const tent = a === "tentacle" ? fiTent(s) : null, base = fightPower(s) * (a === "tentacle" ? (tent && tent.mult ? tent.mult : F.tentacleMult) : 1) + (fight.cheer || 0) + bonus + tap + fiPushBonus(fight, s) + (inspired[s.id] || 0);
     const weak = fight.weak && !s.helper, shell = fiShell(fight);
     let n = Math.max(0, Math.round((base + die) * (weak ? F.weakMult : 1) * (shell ? F.shellMult : 1)));
     const thick = Math.min(thickLeft, n); n -= thick; thickLeft = 0;
@@ -386,7 +401,7 @@ export function fightRound(fight, picks) {
     if (shell) e.shell = true;
     if (thick) e.thick = thick;
     if (inspired[s.id]) e.inspired = inspired[s.id];
-    if (a === "tentacle") { const loss = rollExpr(F.tentacleSan).total; e.san = lose(s, loss); e.brave = loss - e.san; }
+    if (a === "tentacle" && !(tent && tent.noSan)) { const loss = rollExpr(F.tentacleSan).total; e.san = lose(s, loss); e.brave = loss - e.san; }
     ev.push(e);
   }));
   // 壓到零：過了，或進第二階段（這回合怪物不出招）
