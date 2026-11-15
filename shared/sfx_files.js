@@ -44,7 +44,8 @@ export const SFX_FILES = {
   "suspense-d": { name: "Suspense Cinematic（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/suspense-cinematic-581368/", loop: true, use: "地下 B2 的緊張背景音樂（循環）" },
   "suspense-e": { name: "Suspense（截前 80 秒）", by: "sub_clair", url: "https://pixabay.com/music/suspense-628719/", loop: true, use: "地下 B1 的緊張背景音樂（循環，比其他層輕）" },
   "horror-gate": { name: "Cinematic Horror（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/cinematic-horror-254535/", loop: true, use: "地下守門第二階段的背景音樂（循環）" },
-  "horror-low": { name: "Horror Suspense（截前 80 秒）", by: "atlasaudio", url: "https://pixabay.com/music/horror-suspense-509970/", loop: true, use: "理智很低（45 以下）疊上去的背景音樂（循環）" },
+  "horror-low": { name: "Horror Thriller（截前 80 秒，比較低的底）", by: "atlasaudio", url: "https://pixabay.com/music/horror-thriller-519592/", loop: true, use: "理智很低（45 以下）疊上去的背景音樂（循環）" },
+  "pulse-rise": { name: "Pulsing Tension Rising And Booming Percussion", by: "tomas_herudek", url: "https://pixabay.com/sound-effects/pulsing-tension-rising-and-booming-percussion-529681/", use: "守門進第二階段、理智剛掉到 15 以下時響壹次的升高音" },
   "horror-edge": { name: "Horror Suspense（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/horror-suspense-515839/", loop: true, use: "理智快歸零（15 以下）和歸零的背景音樂（循環）" },
   "horror-bout": { name: "Suspense Scary Horror（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/suspense-scary-horror-515856/", loop: true, use: "瘋狂發作時疊上去的背景音樂（循環）" },
 };
