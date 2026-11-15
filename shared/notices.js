@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-5173c5", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "大廳看得出哪間房熱鬧", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳導覽圖上，有人的房間會微微發亮、冒出小人影、右上角寫著幾個人。人越多越亮。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-51b057", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "手機直拿就好，不用轉橫了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
