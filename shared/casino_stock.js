@@ -24,6 +24,7 @@
 //    成交價壹律用觸發的那個價（跳空比掛的價更好或更差都照它）。house.stk.hist { 日期: { id: 股價 } } 留最近幾天，隔幾天才上線的人，中間日子的價也算。
 // ================================================================
 import { NUM } from "./config.js";
+import { casSellCap, casSellMoney, casSellTip } from "./casino_credit.js";
 import { casCount, casWorldIn, casWorldOut, casWorldRoom } from "./casino_book.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
@@ -309,7 +310,7 @@ export function casStockSell(w, house, id, shares, day, t) {
   // 資本利得稅：賣出拿到的錢（扣賣出手續費）− 這 n 股的成本（總成本照股數比例，平均成本法）> 0 的部分抽 taxPct%（向下取整）；賠錢不抽也不退
   const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0, net = gross - fee - tax;
   // 壹人壹天賣出上限
-  if (stSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { n: casNum(Math.max(0, C.sellDay - stSoldToday(S, day))) }) };
+  if (stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
   if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
   casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 外面世界付（池子變少）
   w.chips -= fee + tax; house.budget += fee + tax; casCount(house, "stockFee", fee);
@@ -357,7 +358,7 @@ export function casStockView(w, house, day, t, stale) {
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
     exposeLeft: null, // 跟外面世界買賣（11-14）：沒有莊家的上限了
     bankroll: house.bankroll, houseBroke: false,
-    sellLeft: Math.max(0, C.sellDay - stSoldToday(S, day)),
+    sellLeft: Math.max(0, casSellCap(w) - stSoldToday(S, day)), sellCap: casSellCap(w), sellTip: casSellTip(w),
     orders: S.orders.map(o => ({ no: o.no, market: IN_IDS.includes(o.id) ? "in" : stMk(o.id) || "us", kind: o.kind, kindName: CAS_STOCK.order.kinds[o.kind], id: o.id, name: stOrderName(o), n: o.n, px: o.px, now: IN_IDS.includes(o.id) ? casInPrice(house, o.id, day, t).px : H.px[o.id], day: o.day, exp: o.exp, lock: o.kind === "buy" ? o.hold : 0, lockShares: o.kind === "buy" ? 0 : o.n })),
     orderLeft: Math.max(0, C.order.max - S.orders.length), orderMax: C.order.max, orderPerStock: C.order.perStock, orderDays: C.order.days,
     cancelLeft: Math.max(0, C.order.cancelDay - (S.cx.day === day ? S.cx.n : 0)), lockChips: S.hold,

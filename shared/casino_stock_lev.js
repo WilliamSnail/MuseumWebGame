@@ -30,6 +30,7 @@
 //    畫面：casStockLevView(w, house, day, t)。
 // ================================================================
 import { NUM } from "./config.js";
+import { casCreditLevel } from "./casino_credit.js";
 import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
@@ -109,7 +110,7 @@ export function casLevCredit(w, day) {
   S.cr.ok = ok; S.cr.late = late;
   return S.cr.pts;
 }
-export const casLevLevel = w => { const K = lqC().credit; return Math.min(K.maxLevel, Math.floor(lqN(casLevFix(w).cr.pts) / K.ptsPerLevel)); };
+export const casLevLevel = w => { casLevFix(w); return casCreditLevel(w); }; // 等級怎麼算寫在 casino_credit.js（賣出上限也用它）
 const lqScale = level => (100 + lqC().stepPct * level) / 100;
 export const casLevPosLimit = level => Math.floor(lqC().posLimit * lqScale(level));
 export const casLevProfitCap = level => Math.floor(lqC().profitCap * lqScale(level));
