@@ -20,4 +20,4 @@ function run(N, perStore, store) {
   return { out: outside / DAYS, share: share / DAYS, mean: mean * 100, sd: sd * 100, p95: abs[Math.floor(abs.length * 0.95)] * 100, atCap: J.filter(x => Math.abs(x) >= cap - 1e-9).length / J.length * 100 };
 }
 const f = x => x.toFixed(2);
-for (const N of [3, 5, 10, 20]) for (const [name, ps] of [["沒有散客逛店", 0], ["散客逛店", 1.5]]) { const x = run(N, ps, "food"); console.log(`館友 ${N}／店／天，${name}：館友外平均 ${f(x.out)} 位（占 ${f(x.share * 100)}%）；跳空 平均 ${f(x.mean)}%、標準差 ${f(x.sd)}%、|跳空| 95 百分位 ${f(x.p95)}%、碰到上限 ${f(x.atCap)}%`); }
+for (const N of [0.001, 1, 3, 5, 10, 20]) for (const [name, ps] of [["沒有散客逛店", 0], ["散客逛店", 1.5]]) { const x = run(N, ps, "food"); console.log(`館友 ${N}／店／天，${name}：館友外平均 ${f(x.out)} 位（占 ${f(x.share * 100)}%）；跳空 平均 ${f(x.mean)}%、標準差 ${f(x.sd)}%、|跳空| 95 百分位 ${f(x.p95)}%、碰到上限 ${f(x.atCap)}%`); }

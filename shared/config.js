@@ -378,8 +378,8 @@ export const NUM = {
       limitPct: 50,         // 準時還清壹筆，額度多 50%（翊文 11-10：「改成多20%」→「50% 好了」；以前是固定 +20 萬）。沒有上限，無條件進位到整數
       latePct: 10,          // 到期沒還被扣壹次，額度降這麼多 %（翊文 11-10：「額度退回 100 萬……這個不要，只要降10%就好」）。無條件捨去，可以降到 100 萬以下
       repayAfterMin: 15,    // 借了幾分鐘之後才能還（翊文 11-10：「每筆要一天之後才能還」→「改成至少 15分鐘後才能還」）。時間照伺服器的
-      interestPct: 10,      // 利息：每筆固定 10%（借 10 萬還 11 萬，提早還也是）
-      days: 3,              // 第 D 天借的，第 D+3 天結束前要還；第 D+4 天還沒還就從籌碼直接扣，扣到負的也扣
+      interestPct: 9,       // 利息：每筆固定 9%（借 10 萬還 10.9 萬，提早還也是）。翊文 11-15：「借款利息調低一點，改成一個禮拜內還款完」：10% 3 天 → 9% 7 天（換成壹週是 23% → 9%；不能再低：館債最高壹週 8%，借款要比館債高，借錢買館債才不會賺）
+      days: 7,              // 第 D 天借的，第 D+7 天結束前要還；第 D+8 天還沒還就從籌碼直接扣，扣到負的也扣
       min: 250,             // 壹次最少借多少
       // 額度上限和莊家的限制（規劃 2.11a，翊文 11-14「好」）：capMax 額度最多；levelPerDay 壹個人壹天最多升幾級（翊文 11-13：「那兩級好了」，100 萬到 2,000 萬大約 4 天；當天借當天還的不升）；
       // outPct／outMin：全館沒還的本金 ≤ max(outMin, 莊家的錢 × outPct%)；借款要莊家的錢夠（莊家 ≤ 0 暫停）；欠款中（錢包是負的）額度鎖在 limit
@@ -457,7 +457,7 @@ export const NUM = {
       //   活動多來的旅客不算進平均（避免之後幾天股價被拉低、被放空賺走），見 casInRoll
       festP: 0.3, festMin: 0.5, festMax: 1.0, festAhead: 2,
       npcBurstPct: 0.3, npcBurstMin: 0.5, npcBurstMax: 1.0,
-      npcLambda: 2, npcShareMax: 40, npcBoostMin: 0.15, npcBoostMax: 0.30,
+      npcLambda: 2, npcShareMax: 40, npcBase: 12, npcWalk: 3, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）

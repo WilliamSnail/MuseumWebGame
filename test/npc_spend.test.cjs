@@ -94,6 +94,7 @@ if (process.argv[2] === "sim") {
   console.log(`${LIST.filter(n => n.kind !== "trace").length} 位 NPC、${N} 天：平均每天 ${Math.round(tot / N)}（門票 ${Math.round(tk / N)}、店裡 ${Math.round(shop / N)}）、${(ppl / N).toFixed(1)} 位花錢；全館上限 ${G.NUM.casino.npcSpend.dayCap}；外面世界每天成長 ${G.NUM.casino.world.growBase}`);
 }
 T("散客逛店：每家店每天平均 perStore 位、類型照店的個性（餐車多學生/家庭/旅行團，地下收藏庫多退休長輩）、跟展廳那幾組分開（不顯示）；算進館內股「昨天不同的人」但合計不超過 40%；花錢進莊家或預算池、有上限", G => {
+  G.NUM.casino.stockIn.npcBase = 0; G.NUM.casino.stockIn.npcWalk = 0; // 保底另外測（casino_stock_in.test）
   const S = G.NUM.casino.npcSpend.crowd.shop, tot = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, kinds = { food: {}, cellar: {} };
   for (let i = 0; i < 200; i++) { for (const g of G.crowdShopToday(add(D0, i), "x" + i)) { tot[g.store] += g.n; if (kinds[g.store]) kinds[g.store][g.label] = (kinds[g.store][g.label] || 0) + 1; assert.ok(g.start >= 0 && g.end <= G.NPC_DAY_MIN); } }
   for (const s of Object.keys(tot)) assert.ok(Math.abs(tot[s] / 200 - S.perStore) < 0.6, s + " 平均 " + tot[s] / 200);
