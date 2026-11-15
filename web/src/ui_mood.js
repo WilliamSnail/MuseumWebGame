@@ -7,7 +7,7 @@
 //  用法：mountMood(host, "lobby" | "bank" | "casino", { portrait })：把效果層放進 host，回傳它。
 //  素材：目前都是 SVG／CSS 畫的，沒有圖。
 // ================================================================
-import { roomMood } from "../../shared/room_mood.js";
+import { heatOf, roomMood } from "../../shared/room_mood.js";
 import { eventBars } from "../../shared/events.js";
 import { todayStr } from "../../shared/logic.js";
 import { ADDONS, UI, every, h } from "./ui_core.js";
@@ -48,6 +48,9 @@ export function moodData() {
     stocks: bh && bh.stocks && Array.isArray(bh.stocks.list) ? bh.stocks.list : null,
   };
 }
+
+// 賭場環境音要的熱鬧程度（0 冷清～3 沸騰；只讀資料，換算在 shared/room_mood.js）
+export function ambHeat() { return heatOf(moodData()); }
 
 // ---------- 畫的零件（SVG） ----------
 const svg = (html, vb, cls) => { const e = document.createElementNS(NS, "svg"); e.setAttribute("viewBox", vb); e.setAttribute("class", cls || ""); e.setAttribute("aria-hidden", "true"); e.setAttribute("preserveAspectRatio", "none"); e.innerHTML = html; return e; };

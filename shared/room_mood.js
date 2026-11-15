@@ -39,5 +39,26 @@ export function roomMood(data) {
   if (omen < RM.omenMin) omen = 0;
   const hide = !!(own.lightsOut || own.faint || own.flee || own.bout);
   if (own.shadow || hide) omen = 0;
-  return { light: { warm, dim: Math.round(dim * 100) / 100 }, crowd, flags, omen: Math.round(omen * 100) / 100, hide };
+  return { light: { warm, dim: Math.round(dim * 100) / 100 }, crowd, flags, omen: Math.round(omen * 100) / 100, hide, heat: heatOf(d) };
+}
+
+// ---------- 熱鬧程度 → 環境音（翊文 11-15：賭場、銀行要有背景樂和環境音；人聲和籌碼聲跟熱鬧連動） ----------
+// heat：0 冷清、1 平常、2 熱絡、3 沸騰（用 crowdMood 的分級，沒資料就是 1）。**門檻只在 stat_view.js 的 crowdMood，換算只在這裡。**
+// ambMix(heat) → { crowd, chipMin, chipMax, chipN }：人聲底噪的音量、籌碼聲間隔的毫秒範圍、壹次最多幾下。web/src/fx.js 的 AMB.casino 照這個放。
+const HEAT_OF = { cold: 0, plain: 1, warm: 2, buzz: 3 };
+export const AMB_MIX = [
+  { crowd: 0.004, chipMin: 14000, chipMax: 24000, chipN: 1 },
+  { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 },
+  { crowd: 0.013, chipMin: 3500, chipMax: 7000, chipN: 3 },
+  { crowd: 0.019, chipMin: 1500, chipMax: 3500, chipN: 4 },
+];
+export function heatOf(data) {
+  const m = rmN((data || {}).mood);
+  if (m === null) return 1;
+  const b = statBandOf("crowdMood", m);
+  return HEAT_OF[b] === undefined ? 1 : HEAT_OF[b];
+}
+export function ambMix(heat) {
+  const h = rmN(heat), i = h === null ? 1 : rmClamp(Math.round(h), 0, AMB_MIX.length - 1);
+  return Object.assign({}, AMB_MIX[i]);
 }

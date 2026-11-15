@@ -566,7 +566,7 @@ export const FX = (() => {
     };
 
     // ---------- 會一直響的：環境音、心跳、耳鳴、不安的低鳴 ----------
-    const want = { amb: null, heart: null, tinnitus: false, unease: 0 };
+    const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null };
     let ambNow = null, heartStop = null, tinNow = null, droneNow = null;
     const isOn = (k) => unlocked && !dead && !(api.settings && api.settings.muted) && vol[k] > 0;
     function every(fn, delay) { // 先跑一次，之後照 delay() 的毫秒數一直跑
@@ -847,6 +847,92 @@ export const FX = (() => {
         }, () => rand(2600, 6500));
         return { nodes: [o1, o2, o3, lfo(c, 0.06, 180, lp.frequency), breath.n, lfo(c, 0.09, 500, breath.fl.frequency)], timers: [glass] };
       },
+      // 賭場：爵士感的走路低音＋刷子鼓＋電鋼琴的零星和弦（Claude 自己寫的，不是任何現成的歌）。
+      // 翊文 11-15：賭場、銀行要有背景樂和環境音。D 小調 ii–V–I：Dm7 → G7 → Cmaj7 → A7 ｜ Dm7 → G7 → Cmaj7 → Cmaj7，96 拍、搖擺感，壹圈 8 小節約 20 秒。
+      // 人聲底噪（濾波雜訊）的音量、籌碼碰撞的頻率，跟「熱鬧」連動：ui_core 的 audioState 把 shared/room_mood.js 的 ambMix(heat) 傳進來（ambMix(m)），這裡不寫門檻
+      casino(c, g) {
+        const B = 0.625, SW = B * 0.62; // 壹拍；搖擺：後半拍晚壹點
+        const BASS = [[73.42, 87.31, 110, 92.5], [98, 123.47, 146.83, 69.3], [65.41, 82.41, 98, 103.83], [110, 138.59, 82.41, 69.3],
+          [73.42, 87.31, 110, 92.5], [98, 123.47, 146.83, 69.3], [65.41, 82.41, 98, 103.83], [65.41, 82.41, 98, 82.41]];
+        const KEYS = [[174.61, 220, 261.63, 329.63], [174.61, 246.94, 293.66, 392], [164.81, 196, 246.94, 329.63], [196, 220, 277.18, 329.63],
+          [174.61, 220, 261.63, 329.63], [174.61, 246.94, 293.66, 392], [164.81, 196, 246.94, 329.63], [164.81, 196, 246.94, 329.63]];
+        const cur = { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 }; // 還沒收到 ambMix 之前的備用值（=平常）；真正的數字在 shared/room_mood.js
+        const crowdG = c.createGain(); crowdG.gain.value = cur.crowd; crowdG.connect(g);
+        const nodes = murmur(c, crowdG, 3);
+        const hiss = bed(c, crowdG, 'bandpass', 1500, 0.7, 2); nodes.push(hiss.n); // 比較散的「沙沙」人聲
+        const send = echoSend(c, g, B * 1.5, 0.22);
+        let next = c.currentTime + 0.1, bar = 0;
+        const play = (t0, b) => {
+          BASS[b].forEach((f, i) => { // 走路低音：三角波加壹點高八度，筆電喇叭才聽得到
+            const t = t0 + i * B;
+            tone(t, { type: 'triangle', f, g: 0.075, a: 0.012, d: 0.5, to: g });
+            tone(t, { f: f * 2, g: 0.04, a: 0.01, d: 0.25, to: g });
+          });
+          for (let i = 0; i < 4; i++) { // 刷子：每拍輕輕的 ride、2 和 4 拍重壹點
+            const t = t0 + i * B;
+            noise(t, { type: 'highpass', f: 5500, q: 0.7, g: i % 2 ? 0.014 : 0.006, a: 0.002, d: i % 2 ? 0.1 : 0.05, to: g });
+            if (i !== 1 && i !== 3) noise(t + SW, { type: 'highpass', f: 7000, q: 0.7, g: 0.005, a: 0.002, d: 0.04, to: g });
+          }
+          const stabs = b % 2 ? [1.5, 3.5] : [1.5]; // 電鋼琴的零星和弦：落在反拍
+          stabs.forEach((bt) => KEYS[b].forEach((f, k) => {
+            const t = t0 + (bt - 1) * B + SW + k * 0.012;
+            tone(t, { f, g: 0.02, a: 0.004, d: 0.7, to: send });
+            tone(t, { f: f * 2, g: 0.003, a: 0.002, d: 0.2, to: send });
+          }));
+        };
+        const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % BASS.length; next += B * 4; } }, () => 1000);
+        const chips = every(() => { // 籌碼碰撞：幾下很短的瓷器「喀喀」
+          const n = 1 + ((Math.random() * cur.chipN) | 0), t = c.currentTime + 0.05;
+          for (let i = 0; i < n; i++) {
+            const tt = t + i * rand(0.04, 0.08), f = rand(2400, 4200);
+            noise(tt, { type: 'bandpass', f, q: 6, g: 0.03, a: 0.001, d: 0.035, to: g });
+            tone(tt, { f: f * 0.8, g: 0.012, a: 0.001, d: 0.05, to: g });
+          }
+        }, () => rand(cur.chipMin, cur.chipMax));
+        return {
+          nodes, timers: [sched, chips],
+          mix(m) { // 熱絡 → 人聲大聲、籌碼聲變多
+            if (!m) return;
+            cur.crowd = m.crowd; cur.chipMin = m.chipMin; cur.chipMax = m.chipMax; cur.chipN = m.chipN;
+            crowdG.gain.setTargetAtTime(Math.max(0.0001, m.crowd), c.currentTime, 1.2);
+          },
+        };
+      },
+      // 銀行：沉穩的電鋼琴和弦、偶爾的硬幣聲、很淡的大廳空氣（Claude 自己寫的，不是任何現成的歌）。
+      // C 大調 Cmaj7 → Am7 → Fmaj7 → G6，每個和弦壹小節（3.6 秒），壹圈約 14 秒；慢、低、沒有鼓，有長長的迴響
+      bank(c, g) {
+        const BAR = 3.6;
+        const ROOT = [130.81, 110, 87.31, 98];
+        const CH = [[261.63, 329.63, 392, 493.88], [220, 261.63, 329.63, 392], [220, 261.63, 349.23, 440], [246.94, 293.66, 392, 493.88]];
+        const BELL = [659.25, 783.99, 880, 1046.5, 987.77];
+        const send = echoSend(c, g, 0.55, 0.32);
+        const nodes = [];
+        const air = bed(c, g, 'lowpass', 520, 0.4, 0.012); nodes.push(air.n, lfo(c, 0.06, 0.006, air.v.gain), lfo(c, 0.04, 140, air.fl.frequency)); // 大廳的空氣
+        const hum = bed(c, g, 'bandpass', 900, 2, 0.004); nodes.push(hum.n); // 遠處櫃台的人聲，很淡
+        let next = c.currentTime + 0.1, bar = 0;
+        const play = (t0, b) => {
+          CH[b].forEach((f, i) => { // 慢慢攤開的和弦
+            tone(t0 + i * 0.09, { f, g: 0.05, a: 0.012, d: 2.8, to: send });
+            tone(t0 + i * 0.09, { type: 'triangle', f, g: 0.02, a: 0.01, d: 1.4, to: send });
+          });
+          tone(t0, { f: ROOT[b], g: 0.09, a: 0.03, d: 3.4, to: g }); tone(t0, { f: ROOT[b] * 2, g: 0.014, a: 0.03, d: 2, to: g }); // 低音壹下
+          if (Math.random() < 0.55) { // 偶爾壹顆高音，像櫃台的叮
+            const f = BELL[(Math.random() * BELL.length) | 0];
+            tone(t0 + rand(1.2, 2.8), { f, g: 0.025, a: 0.004, d: 1.6, to: send });
+          }
+        };
+        const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % CH.length; next += BAR; } }, () => 1000);
+        const coins = every(() => { // 硬幣：兩三下金屬的「叮鈴」
+          const t = c.currentTime + 0.05, n = 2 + ((Math.random() * 2) | 0);
+          for (let i = 0; i < n; i++) {
+            const tt = t + i * rand(0.05, 0.1), f = rand(2800, 3600);
+            tone(tt, { f, g: 0.016, a: 0.001, d: 0.28, to: send });
+            tone(tt, { f: f * 1.51, g: 0.007, a: 0.001, d: 0.14, to: send });
+            noise(tt, { type: 'highpass', f: 6500, q: 1, g: 0.008, a: 0.001, d: 0.02, to: g });
+          }
+        }, () => rand(9000, 19000));
+        return { nodes, timers: [sched, coins] };
+      },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
         const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
         const dl = c.createDelay(0.5), fb = c.createGain(); dl.delayTime.value = 0.13; fb.gain.value = 0.28;
@@ -868,9 +954,11 @@ export const FX = (() => {
       g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(1, c.currentTime + (type === 'title' ? 0.3 : 1.5)); // 開場音樂要馬上聽得到
       g.connect(bus.amb);
       const hnd = AMB[type](c, g);
+      if (hnd.mix && want.mix) hnd.mix(want.mix);
       return {
         type,
         timers: hnd.timers,
+        mix: hnd.mix ? (m) => hnd.mix(m) : null,
         stop() {
           const t = c.currentTime;
           (hnd.timers || []).forEach((s) => s());
@@ -1022,6 +1110,7 @@ export const FX = (() => {
       play,
       names: Object.keys(R),
       ambient(type) { want.amb = type || null; sync(); },
+      ambMix(m) { want.mix = m || null; if (ambNow && ambNow.mix && want.mix) ambNow.mix(want.mix); }, // 熱鬧程度（賭場的人聲和籌碼聲）；別的房間不理它
       heart(san) { want.heart = san != null && san > 0 && san <= 30 ? san : null; sync(); },
       tinnitus(on) { want.tinnitus = !!on; sync(); },
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
