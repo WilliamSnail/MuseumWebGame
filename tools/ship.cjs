@@ -41,6 +41,9 @@ const prBody = body => { const b = String(body || "").trim(); return b.includes(
 const branchOk = b => !!b && b !== "main" && b !== "master";
 const titleOk = t => [...String(t || "").trim()].length >= 4; // 擋掉 --title x 這種占位的
 // PR 剛開，GitHub 可能還沒登記 CI：這時 gh pr checks 會失敗，但不是真的失敗，要等
+// CI 的結果（純函式，測試用）：none 還沒有、wait 還在跑、ok 全過、fail 有沒過的
+const CI_OK = ["success", "skipped", "neutral"];
+const checksState = runs => !runs || !runs.length ? "none" : runs.some(r => r.status !== "completed") ? "wait" : runs.every(r => CI_OK.includes(r.conclusion)) ? "ok" : "fail";
 const noChecksYet = text => /no checks reported/i.test(String(text || ""));
 
 function gh() {
@@ -96,6 +99,8 @@ function main() {
     run("npm", ["test"], { shell: true });
     run("npx", ["vite", "build"], { shell: true });
   }
+  // 只有 package-lock.json 變了、package.json 沒變：多半是 npm install 改的（11-15 每日排程），還原，不要包進 PR。裝套件請用 npm ci
+  { const st = git(["status", "--porcelain"]).out.split(/\r?\n/).map(l => l.slice(3).trim()); if (st.includes("package-lock.json") && !st.includes("package.json")) { git(["checkout", "--", "package-lock.json"]); console.log("（package-lock.json 只因 npm install 變了，還原；裝套件用 npm ci）"); } }
   if (git(["status", "--porcelain"]).out) {
     say("commit");
     git(["add", "-A"]);
@@ -116,37 +121,45 @@ function main() {
   git(["push", "-q", "-u", "origin", branch]);
 
   say("開 PR");
-  let view = run(gh(), ["pr", "view", branch, "--repo", REPO, "--json", "number,state", "--jq", 'select(.state=="OPEN")|.number'], { ok: true });
-  let n = view.status === 0 ? view.out : "";
+  // PR、CI、合併都走 REST（gh api）：雲端排程的環境擋 GraphQL，gh pr create／checks／merge 會失敗（11-15 每日排程）。gh run（部署）本來就是 REST
+  const api = (args, opts) => run(gh(), ["api", ...args], opts);
+  const owner = REPO.split("/")[0];
+  let n = api([`repos/${REPO}/pulls?state=open&head=${encodeURIComponent(owner + ":" + branch)}`, "--jq", ".[0].number // empty"], { ok: true }).out;
   if (!n) {
-    const url = run(gh(), ["pr", "create", "--repo", REPO, "--head", branch, "--base", "main", "--title", o.title, "--body", prBody(body)]).out;
-    n = url.split("/").pop();
-    console.log(url);
+    n = api(["-X", "POST", `repos/${REPO}/pulls`, "-f", `title=${o.title}`, "-f", `head=${branch}`, "-f", "base=main", "-f", `body=${prBody(body)}`, "--jq", ".number"]).out;
+    console.log(`https://github.com/${REPO}/pull/${n}`);
     sleep(15000);
   } else console.log(`已經有 PR ${n}`);
 
-  say(`等 PR ${n} 的 CI`);
-  for (let i = 0; i < 18; i++) {
-    const c = run(gh(), ["pr", "checks", n, "--repo", REPO], { ok: true });
-    if (!noChecksYet(c.stdout + c.stderr)) break;
-    if (i === 17) throw new Error(`PR ${n} 等了 3 分鐘還是沒有 CI`);
-    sleep(10000);
-  }
-  // 等 CI、合併。等 CI 的時候 main 常常又動了（好幾個 session 同時上線），合併會因為衝突失敗：
+  // 等 CI：看 PR 最新那個 commit 的 check runs，全部跑完才算；有壹個不是 success／skipped／neutral 就是沒過
+  const waitCi = () => {
+    say(`等 PR ${n} 的 CI`);
+    for (let i = 0; i < 120; i++) { // 最多 20 分鐘
+      const sha = api([`repos/${REPO}/pulls/${n}`, "--jq", ".head.sha"]).out;
+      const runs = JSON.parse(api([`repos/${REPO}/commits/${sha}/check-runs?per_page=100`, "--jq", "[.check_runs[]|{name,status,conclusion}]"], { ok: true }).out || "[]");
+      const st = checksState(runs);
+      if (st === "ok") { console.log(`CI 過了（${runs.length} 項）`); return; }
+      if (st === "fail") throw new Error(`PR ${n} 的 CI 沒過：${runs.filter(r => !CI_OK.includes(r.conclusion)).map(r => r.name + " " + r.conclusion).join("、")}（gh run list --branch ${branch}）`);
+      if (st === "none" && i === 18) throw new Error(`PR ${n} 等了 3 分鐘還是沒有 CI`);
+      sleep(10000);
+    }
+    throw new Error(`PR ${n} 的 CI 20 分鐘還沒跑完`);
+  };
+  // 等 CI 的時候 main 常常又動了（好幾個 session 同時上線），合併會因為衝突失敗：
   //   這時再併壹次 main（自動解公告、日誌總表）、推上去、重等 CI，最多 4 次（11-14：美術統籌壹輪撞了四次都要手動解）
+  let sha = "";
   for (let tryN = 1; ; tryN++) {
-    run(gh(), ["pr", "checks", n, "--repo", REPO, "--watch", "--interval", "10"]);
+    waitCi();
     if (o.flags.has("no-merge")) { console.log("\nCI 過了，沒有合併（--no-merge）。"); return; }
     say("合併");
-    const m = run(gh(), ["pr", "merge", n, "--repo", REPO, "--merge"], { ok: true });
-    if (m.status === 0) break;
+    const m = api(["-X", "PUT", `repos/${REPO}/pulls/${n}/merge`, "-f", "merge_method=merge", "--jq", ".sha"], { ok: true });
+    if (m.status === 0 && m.out) { sha = m.out; break; }
     if (tryN >= 4) throw new Error(`PR ${n} 合併失敗 ${tryN} 次：${(m.stdout + m.stderr).trim().slice(-300)}`);
     say(`合併失敗（main 動了），再併壹次 main 重來（第 ${tryN + 1} 次）`);
     mergeMain(ai);
     git(["push", "-q", "origin", branch]);
     sleep(15000);
   }
-  const sha = run(gh(), ["pr", "view", n, "--repo", REPO, "--json", "mergeCommit", "--jq", ".mergeCommit.oid"]).out;
 
   say("等部署");
   let id = "";
@@ -190,4 +203,4 @@ function backToMain() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk, bodyFromLog, noticeWarning };
+module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning };
