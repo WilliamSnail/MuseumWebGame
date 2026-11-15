@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-885551", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "手作坊成品的效果字看得到了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "做好成品後「在地下的效果」那張卡，字原本是淺色看不到，現在改回深色。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-0237e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "餐車：館外的客人也會點餐了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
