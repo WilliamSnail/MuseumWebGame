@@ -378,7 +378,9 @@ export const NUM = {
     // 外面世界的池子（11-14，規劃 2.12，翊文：「外面世界也是個經濟體系，從那裏扣錢」）：house.world。start 起始、growBase 每天成長（再 ×（1 ＋ growExtPct% × 外部景氣）；真正憑空的，記 worldGrow）、
     //   lowPct 池子低於起始的幾 % 算吃緊；吃緊時賣股、槓桿賺的錢壹天最多付池子的 lowPayPct%，莊家向外面世界貸款暫停（買股照收）。
     // 世界文件（W2，決定 0086，shared/world.js）：gateway 館的對外帳戶（house.world）最多放多少，其餘放 world/main 的備用池；0 ＝ 關閉、不搬錢（W3 分帳時才開）
-    worldDoc: { gateway: 0 },
+    //   W3 分帳（決定 0086）：外面世界的錢分成「各單位＋家計＋公共」（house.wu，只是帳上的分類，總和永遠等於 house.world）。household 家計占的比例（頂層單位的 share 在 content/world/units，公共＝剩下的）；
+    //   sectorCoef 行業對景氣的敏感度：每天成長分給單位的權重 ＝ 比例 ×（1 ＋ 係數 × 景氣 b）。
+    worldDoc: { gateway: 0, household: 0.1, sectorCoef: { tech: 0.3, finance: 0.15, arts: 0.1, daily: 0, school: -0.05, public: -0.1, story: 0 } },
     world: { start: 10000000000, growBase: 5000000, growExtPct: 20, lowPct: 10, lowPayPct: 1 },
     // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、預算池超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
