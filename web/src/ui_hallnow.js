@@ -83,6 +83,25 @@ function openAll() {
   closeOnOutside(m);
 }
 
+const DRAWS = new Set();
+ADDONS.hallNowDraw = () => DRAWS.forEach(f => f());
+// 手機直拿的大廳精簡列（11-15，翊文：「手機直拿著得時候看不到展區有多少人／邀請遊客」）：壹行放「展廳 N 人」（點了看全部）和「邀旅客去賭場」；電腦版用右欄那塊，這個藏起來（css/hallnow.css）
+export function hallNowBar() {
+  const box = h("div", { class: "hn-bar" });
+  let shown = false;
+  const draw = () => {
+    if (shown && !box.isConnected) { DRAWS.delete(draw); return; }
+    if (box.isConnected) shown = true;
+    const c = counts();
+    box.replaceChildren(
+      btn([h("span", null, h("b", null, "展廳"), c.known ? ` ${c.total} 人` : " ？"), c.known ? h("small", null, `館友 ${c.mates.length}・旅客 ${c.tourists}・散客 ${c.crowd.n}`) : null], openAll, "ghost small hn-bar-n", { title: "展廳現在有誰、最近的評價" }),
+      inviteBtn(c));
+  };
+  DRAWS.add(draw);
+  draw();
+  return box;
+}
+ADDONS.hallNowBar = hallNowBar;
 // 小區塊：mode "lobby"（大廳右欄，深色）或 "hall"（展廳側欄，羊皮紙）。回傳節點；畫面還在就每 90 秒重抓
 export function hallNowBox(mode) {
   const box = h("section", { class: "hn-box hn-" + mode, "aria-label": "展廳現在、最近的評價" });
@@ -103,7 +122,7 @@ export function hallNowBox(mode) {
       pol ? h("p", { class: "hn-policy", title: `${pol.name}：${pol.effect}` }, h("b", null, "本日政策"), ` ${pol.effect}${mdText(pol.until) ? `・到 ${mdText(pol.until)}` : ""}・${pol.name}`) : null,
       lobby ? null : more);
   };
-  ADDONS.hallNowDraw = draw; // 讀到新的 peek：ui_today.js 叫這個，畫著的小區塊就跟著換
+  DRAWS.add(draw); // 讀到新的 peek：ui_today.js 叫 ADDONS.hallNowDraw，畫著的小區塊（右欄、手機的精簡列）就都跟著換
   every(() => { if (ADDONS.peekAgain) ADDONS.peekAgain().then(draw); }, REFRESH_MS);
   every(draw, 30000); // 「幾分鐘前」跟著走
   draw();
