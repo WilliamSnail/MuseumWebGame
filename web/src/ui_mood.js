@@ -7,7 +7,7 @@
 //  用法：mountMood(host, "lobby" | "bank" | "casino", { portrait })：把效果層放進 host，回傳它。
 //  素材：目前都是 SVG／CSS 畫的，沒有圖。
 // ================================================================
-import { heatOf, roomMood } from "../../shared/room_mood.js";
+import { heatOf, roomHeats, roomMood } from "../../shared/room_mood.js";
 import { eventBars } from "../../shared/events.js";
 import { todayStr } from "../../shared/logic.js";
 import { ADDONS, UI, every, h } from "./ui_core.js";
@@ -144,6 +144,18 @@ export function mountMood(host, kind, opts) {
   } else {
     [[6, 62, 7], [90, 58, 7]].forEach(([x, y, sz]) => { const e = h("div", { class: "rm-omen", style: { left: x + "%", top: y + "%", width: sz + "%" } }); e.append(omenSVG()); omens.append(e); });
   }
+  // 各房間的熱絡（大廳導覽圖，o.rooms＝LOBBY2_ROOMS、o.counts()＝{ 房間 id: 館友人數 }）：外框微亮、小人影、人數小牌，三種表現（先都做，翊文挑）
+  const rooms = h("div", { class: "rm-rooms" }), roomEls = {};
+  if (kind === "lobby" && Array.isArray(o.rooms)) {
+    root.append(rooms);
+    o.rooms.forEach(r => {
+      const [x0, y0, x1, y1] = o.portrait ? r.port : r.box, cut = o.portrait ? r.pcut : r.cut, w = x1 - x0, ht = y1 - y0;
+      const el = h("div", { class: "rm-room", dataset: { room: r.id }, style: { left: pct(x0, L.W), top: pct(y0, L.H), width: pct(w, L.W), height: pct(ht, L.H) } },
+        h("i", { class: "rm-rglow" }), h("span", { class: "rm-rfolks" }), h("b", { class: "rm-rpill" }));
+      if (cut) el.style.clipPath = `polygon(${cut.map(([x, y]) => `${((x - x0) / w * 100).toFixed(2)}% ${((y - y0) / ht * 100).toFixed(2)}%`).join(",")})`;
+      rooms.append(el); roomEls[r.id] = { el, n: -1 };
+    });
+  }
   let last = "", bk = "", shown = false, fxKey = ""; // 第壹次畫的時候還沒掛上畫面，不能拿 isConnected 判斷
   const draw = () => {
     if (root.isConnected) shown = true; else if (shown) { LAYERS.delete(draw); return; }
@@ -157,6 +169,24 @@ export function mountMood(host, kind, opts) {
     if (kind === "bank") { // 看板的光：多數行情漲＝綠、跌＝紅
       const up = (d.stocks || []).reduce((n, s) => n + (s.chg > 0.002 ? 1 : s.chg < -0.002 ? -1 : 0), 0), tone = !d.stocks || !d.stocks.length ? 0 : Math.max(-1, Math.min(1, up / Math.max(3, d.stocks.length / 2)));
       root.style.setProperty("--rm-up", Math.max(0, tone).toFixed(2)); root.style.setProperty("--rm-down", Math.max(0, -tone).toFixed(2));
+    }
+    if (kind === "lobby" && o.rooms) {
+      const q = import.meta.env.DEV ? new URLSearchParams(location.search) : null;
+      const fake = q && q.get("rooms") ? Object.fromEntries(q.get("rooms").split(",").map(x => x.split(":")).map(([k, v]) => [k, +v])) : null;
+      const rfx = (q && q.get("roomfx") !== null ? q.get("roomfx") : (o.roomFx || "")).split(",").filter(Boolean);
+      const heats = roomHeats(fake || (o.counts ? o.counts() : {}));
+      Object.keys(roomEls).forEach(id => {
+        const e = roomEls[id], hh = heats[id] || { n: 0, lv: 0 };
+        e.el.dataset.lv = String(hh.lv); e.el.dataset.fx = rfx.join(" ");
+        if (e.n !== hh.n) {
+          e.n = hh.n;
+          e.el.querySelector(".rm-rpill").textContent = hh.n > 0 ? `${hh.n} 人` : "";
+          const folks = e.el.querySelector(".rm-rfolks"), r = rnd(id.length * 31 + 7), els = [];
+          for (let i = 0; i < Math.min(hh.n, 6); i++) { const dpt = r(); els.push(h("span", { class: "rm-pw", style: { left: (6 + r() * 78).toFixed(1) + "%", top: (10 + r() * 38).toFixed(1) + "%", "--sc": (0.7 + dpt * 0.4).toFixed(2), transitionDelay: (i * 70) + "ms" }, html: silhouette(Math.floor(r() * 4), dpt.toFixed(2)) })); }
+          folks.replaceChildren(...els);
+          requestAnimationFrame(() => requestAnimationFrame(() => folks.classList.add("in")));
+        }
+      });
     }
     // 旗：只有種類變了才重畫
     if (kind === "casino") host.style.setProperty("--rm-smoke", [0, 0.35, 0.65, 1][m.heat]); // 煙霧畫在介面後面（css/mood.css 的 .nb-surface::before），這裡只給濃淡

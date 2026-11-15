@@ -6,7 +6,7 @@
 //  動作：存款 act bank（op put／take／term／break）、借款 borrow、repay。還沒接上，按了只跳提示。
 //  規則不寫在這裡：這個檔只畫畫面，數字都從 view 來。
 // ================================================================
-import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo, note, rerender, setChips } from "./ui_core.js";
+import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo, note, rerender, setChips, snd, sndFile } from "./ui_core.js";
 import { NET } from "./net_firebase.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
@@ -103,6 +103,18 @@ async function bankLoad() {
   catch (e) { UI.bankErr = (e && e.message) || "連不上銀行"; }
   finally { UI.bankLoading = false; if (UI.screen === "bank") rerender(); }
 }
+// 音效（11-15，翊文：「有些音效好像銀行也可以用，例如存錢」；檔案和來源在 shared/sfx_files.js）：錢放進去＝籌碼落下，錢回到手上＝吐硬幣（大筆＝壹串）；失敗＝原本的 error
+const BANK_SFX_IN = new Set(["bank:put", "bank:term", "bank:bond", "stock:buy", "stock:open"]);
+const BANK_SFX_PAY = new Set(["repay:", "stock:sellDebt"]); // 還債：收銀機「叮」
+const BANK_SFX_OUT = new Set(["bank:take", "borrow:", "stock:sell"]);
+const BANK_SFX_BIG = new Set(["bank:break", "bank:bondRedeem", "stock:close"]); // 大筆錢回到手上：壹串硬幣
+function bankSfx(act, data) {
+  const k = act + ":" + ((data && data.op) || "");
+  if (BANK_SFX_PAY.has(k)) sndFile("cha-ching", 0.45);
+  else if (BANK_SFX_IN.has(k)) sndFile("coin-drop", 0.4);
+  else if (BANK_SFX_OUT.has(k)) sndFile("coin-payout", 0.45);
+  else if (BANK_SFX_BIG.has(k)) sndFile("coin-payout-big", 0.4);
+}
 // 做壹件事：act 是 casino 的動作（bank、borrow、repay），回答有 bankHall 就換上
 async function bankDo(act, data) {
   if (!UI.bankHall || UI.bankHall.demo) { note("示範資料：登入之後才能動錢。"); return; }
@@ -110,7 +122,8 @@ async function bankDo(act, data) {
   UI.bankBusy = true;
   try {
     const r = await NET.call("casino", Object.assign({ act }, data));
-    if (!r || !r.ok) { note((r && r.reason) || "沒辦法", "bad"); return; }
+    if (!r || !r.ok) { snd("error"); note((r && r.reason) || "沒辦法", "bad"); return; }
+    bankSfx(act, data);
     if (r.bankHall) { UI.bankHall = bankHallView(r.bankHall); UI.bankAt = Date.now(); }
     if (r.wallet) setChips(r.wallet.chips);
     (r.lines || []).concat(r.bankNotes || []).forEach(t => note(t, "good"));
