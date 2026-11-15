@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-60a914", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "主線揭露多了兩首音樂", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "打開主線的書時，會輪流放三首不同的配樂；圖書館、委託櫃台和畫廊的音樂也出現得更頻繁了。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-08b31a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "畫廊多了輕輕的音樂", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
