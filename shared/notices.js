@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-4d7c09", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報看得到外面世界", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行財報多了「外面世界」：各集團現在正常、減薪、吃緊還是裁員，整體景氣分布，和最近換狀態的消息。",
+        "不列每家的數字。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-eaa22e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "館內股：委託櫃台的營收也算委託人給的籌碼", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
