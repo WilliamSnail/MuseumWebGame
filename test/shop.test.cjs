@@ -554,6 +554,22 @@ T("金箔算 2 份：金箔加舊畫布剛好換壹枚；只剩金箔要 2 片�
   assert.ok(G.itemDesc("mat:金箔").includes("算 2 份"));
   assert.ok(G.itemDesc("mat:畫布").includes("算 1 份"));
 });
+T("11-15 玩家回報「兩份的沒算」：2 張畫布＋1 片金箔要用金箔＋1 張畫布剛好 3 份，不能先拿 2 張畫布再拿金箔補（浪費 1 份）", G => {
+  const P = fresh(G), S = G.storyState(P);
+  S.bag = { "mat:畫布": 2, "mat:金箔": 1 };
+  assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(G.matCount(P), 1, "剩 1 份");
+  assert.strictEqual(S.bag["mat:畫布"], 1);
+  S.bag = { "mat:金線": 1, "mat:畫布": 1, "mat:金箔": 1 };
+  assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(G.matCount(P), 1, "4 份換壹枚剩 1 份");
+  S.bag = { "mat:畫布": 4, "mat:金箔": 2 }; // 8 份：連換兩次都要剛好
+  assert.ok(G.tradeMats(P).ok); assert.ok(G.tradeMats(P).ok);
+  assert.strictEqual(G.matCount(P), 2, "8 份換兩枚剩 2 份");
+  // 純函式：湊不剛好才超過，超過的最少
+  assert.strictEqual(JSON.stringify(G.matPick({ a: 2 }, () => 2, 3)), JSON.stringify({ a: 2 }));
+  assert.strictEqual(G.matPick({ a: 1 }, () => 1, 3), null);
+});
 T("材料換週章：每 NUM.shop.matToStamp 份（哪一種都算）換一枚；不夠不能換；別的東西不會被用掉", G => {
   const P = fresh(G), S = G.storyState(P), need = G.NUM.shop.matToStamp;
   S.bag = { "mat:畫布": need - 1, firstAid: 2 };
