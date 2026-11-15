@@ -41,6 +41,13 @@ T("還款計畫：賣股的順序館內股在前、再館外股，各自市值�
   const r = fresh(G); G.casStockBuy(r.w, r.house, ID, 50, D, OPEN); r.w.chips = -50000000; const poor = G.casAdvisorPlan(r.w, r.house, D, OPEN); assert.strictEqual(poor.enough, false, "股票不夠還"); assert.strictEqual(poor.sells[0].n, poor.sells[0].own, "全賣");
   const loansPlan = fresh(G); loansPlan.w.loan.limit = 3000000; borrowTo(G, loansPlan, 1000000); const lp = G.casAdvisorPlan(loansPlan.w, loansPlan.house, D, OPEN); assert.strictEqual(lp.loans.length, 1); assert.ok(lp.loans[0].canExtend && lp.loans[0].fee > 0 && lp.loans[0].newDue > lp.loans[0].due);
 });
+T("賣股計畫只算還得了的欠款：剛借的借款還不能還，計畫的股數不能比賣股還債收的多（不然按同意會被擋）", G => {
+  const s = fresh(G); G.casStockBuy(s.w, s.house, ID, 300, D, OPEN); s.w.loan.limit = 3000000; borrowTo(G, s, 1000000); s.w.chips = -1400000;
+  const p = G.casAdvisorPlan(s.w, s.house, D, OPEN), owed = G.casDebtOwed(s.w, OPEN).total;
+  assert.strictEqual(p.sellNeed, owed, "計畫要還的＝賣股還債收的欠款"); assert.ok(p.debt.total > owed, "借款還沒到能還的時候，畫面欠的比能賣來還的多");
+  assert.ok(p.sells.length >= 1 && p.enough);
+  const r = G.casSellForDebt(s.w, s.house, p.sells[0].id, p.sells[0].n, D, OPEN); assert.ok(r.ok, r.reason);
+});
 T("個人信：第壹次符合寄固定編號壹封；之後不重寄；好起來之後又欠了，隔 resendDays 天再寄（編號帶日期）；沒欠的不寄", G => {
   const s = fresh(G); assert.strictEqual(G.casAdvisorLetter(s.w, s.house, D, OPEN), null, "沒欠不寄");
   s.w.chips = -3000000; const a = G.casAdvisorLetter(s.w, s.house, D, OPEN); assert.ok(a && a.id === "advisor-first");

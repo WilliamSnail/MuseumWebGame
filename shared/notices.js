@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-e33e44", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "財經專員的賣股計畫修好", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "梁安排的賣股股數不再算多，按同意賣出不會被擋。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-fc8243", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "財報版面調整", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

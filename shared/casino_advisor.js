@@ -10,6 +10,7 @@ import { NUM } from "./config.js";
 import { casFill, casNum } from "./casino.js";
 import { casStockFix, casStockHouseFix } from "./casino_stock.js";
 import { IN_IDS, casInFix, casInPrice } from "./casino_stock_in.js";
+import { casDebtOwed } from "./casino_debt.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 
@@ -68,18 +69,18 @@ export function casAdvisorPlan(w, house, day, t) {
     const why = casAdvisorWhyNot(x, day);
     return { id: x.id, owe: adN(x.owe), due: x.due, canExtend: !why, why: why || "", fee: casAdvisorFee(x), newDue: advAddDays(x.due, C.extendDays) };
   });
-  const sells = [];
+  const sells = [], sellNeed = casDebtOwed(w, t).total; // 賣股只還得了「錢包的負數＋現在還得了的借款」（跟賣股還債一樣）；還沒到能還的借款不算，不然計畫會寫成賣太多被伺服器擋
   if (house) {
     const fee = 1 - NUM.casino.stock.feePct / 100, hold = [];
     for (const s of IN_STOCKS) { const own = adN(casInFix(w).own[s.id]); if (own <= 0) continue; const pr = casInPrice(house, s.id, day, t); if (pr.halted) continue; hold.push({ id: s.id, name: s.name, kind: "in", own, px: pr.px }); }
     for (const s of OUT_STOCKS) { const own = adN(casStockFix(w).own[s.id]); if (own <= 0) continue; const px = casStockHouseFix(house).px[s.id]; if (!(px > 0)) continue; hold.push({ id: s.id, name: s.name, kind: "out", own, px }); }
     hold.forEach(h => { h.value = Math.floor(h.own * h.px * fee); });
     hold.sort((a, b) => (a.kind === b.kind ? b.value - a.value : a.kind === "in" ? -1 : 1));
-    let need = debt.total;
+    let need = sellNeed;
     for (const h of hold) { if (need <= 0) break; const n = Math.min(h.own, Math.max(1, Math.ceil(need / (h.px * fee)))); const got = Math.floor(n * h.px * fee); sells.push({ id: h.id, name: h.name, kind: h.kind, own: h.own, px: h.px, value: h.value, n, covers: got }); need -= got; }
   }
   const sellTotal = sells.reduce((s, x) => s + x.covers, 0);
-  return { need: debt.need, debt, loans: ls, sells, sellTotal, enough: sellTotal >= debt.total };
+  return { need: debt.need, debt, loans: ls, sells, sellTotal, sellNeed, enough: sellTotal >= sellNeed };
 }
 
 // 個人信：第壹次符合寄固定編號的（advisor-first）；好起來之後又欠了，隔 resendDays 天可以再寄（編號 advisor-日期）。回 null ＝ 這次不寄；回 { id, mail } 並記在 w.adv
