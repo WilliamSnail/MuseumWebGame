@@ -46,6 +46,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-6a7aee", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場、銀行、地下換了更真實的聲音", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場：拿掉像雜訊的沙沙聲，人聲換成真的賭場錄音，越熱鬧越大聲。",
+        "抽卡包抽到 4 星以上有拉霸機的中獎音，5 星還有全場歡呼；借到籌碼有籌碼落下的聲音。",
+        "銀行：遠處偶爾有點硬幣的聲音。地下收藏庫：風聲換成真的錄音。",
+        "音效來自 Pixabay，來源都標在遊戲資料夾 sfx/來源.md。音量滑桿、靜音照舊。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-51b057", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "手機直拿就好，不用轉橫了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
