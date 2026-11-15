@@ -10,6 +10,7 @@ import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON, CAS_MENU } from "./casino_text.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { NPC_ROSTER } from "./npc_roster.js";
 import { npcCounters, npcNews } from "./npc.js";
 import { CAS_ECON_EV, casEconUpText } from "./econ_events.js";
 import { casFill } from "./casino.js";
@@ -77,6 +78,10 @@ export function casReportView(doc) {
     const bad = Object.keys(cnt).filter(k => cnt[k] > 0).map(k => `${cnt[k]} 個集團${names[k]}`);
     if (bad.length) hl.push(`外面世界的景氣：${bad.join("、")}，來館的旅客花得比較保守。`);
     (H.wh.ev || []).filter(e => e.day === doc.day || e.day === (doc.snap && doc.snap.day)).forEach(e => hl.push(`${nm(e.unit)}${{ normal: "恢復正常了", cut: "減薪了", squeeze: "緊縮了", layoff: "裁員了" }[e.to] || ""}。`));
+  }
+  if (H.npcw && H.npcw.ev) { // NPC 被裁員、換工作（W6）：只寫已經發生的
+    const unit = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id, who = id => (NPC_ROSTER.find(n => n.id === id) || {}).name;
+    H.npcw.ev.filter(e => e.day === doc.day || e.day === (doc.snap && doc.snap.day)).slice(0, 2).forEach(e => { const n = who(e.npc); if (n) hl.push(e.t === "lay" ? `${n}被${unit(e.from)}裁員了。` : `${n}到${unit(e.to)}工作了。`); });
   }
   if (H.npcs && H.npcs.menu) { // 餐車賣給館外來客的（照菜單點，shared/npc_spend.js）
     const nm = id => (CAS_MENU.find(m => m.id === id) || {}).name || id, it = Object.keys(H.npcs.menu).map(k => ({ k, n: (H.npcs.menu[k].npc || 0) + (H.npcs.menu[k].crowd || 0) })).filter(x => x.n > 0).sort((x, y) => y.n - x.n);

@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-f94d0b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "旅客有自己的錢包，景氣差時會被裁員、換工作", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館外來的旅客現在有自己的錢包，來館花的是錢包裡的錢。",
+        "他們的集團景氣差時可能被裁員，之後會找到新工作；日報會寫發生了什麼事。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-b3946d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "外面世界的景氣會影響來館的旅客", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

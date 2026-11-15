@@ -191,6 +191,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   }
   // 館內股的 NPC（規劃 2.8k）：最近壹天每家店有幾位旅客，和劇情日那天的事。日報寫「昨天館外來了 N 位旅客」用
   if (bkBox(house.sin) && bkBox(house.sin.npc)) { const ds = Object.keys(house.sin.npc).sort(), d = ds[ds.length - 1]; if (d) s.house.npcLast = { day: d, n: Object.assign({}, house.sin.npc[d]), ev: bkBox(house.sin.npcEv) && bkBox(house.sin.npcEv[d]) ? Object.assign({}, house.sin.npcEv[d]) : null, fest: bkBox(house.sin.npcFest) && Array.isArray(house.sin.npcFest[d]) ? house.sin.npcFest[d].map(e => Object.assign({}, e)) : [] }; }
+  if (bkBox(house.npcw) && Array.isArray(house.npcw.ev)) s.house.npcw = { ev: house.npcw.ev.slice(-5).map(e => ({ day: e.day, npc: String(e.npc || "").slice(0, 40), from: e.from || null, to: e.to || null, t: e.t === "lay" ? "lay" : "move" })) }; // NPC 換工作（W6）
   if (bkBox(house.wh) && bkBox(house.wh.st)) { const st = {}; Object.keys(house.wh.st).forEach(k => { if (bkBox(house.wh.st[k])) st[k] = String(house.wh.st[k].s || "normal"); }); s.house.wh = { day: house.wh.day || null, st, ev: Array.isArray(house.wh.ev) ? house.wh.ev.slice(-5).map(e => ({ day: e.day, unit: e.unit, to: e.to })) : [] }; } // 外面世界各單位的狀態（W5）
   if (bkBox(house.npcc)) { s.house.npcc = { comm: bkNz(house.npcc.comm), hall: bkNz(house.npcc.hall) }; if (bkBox(house.npcc.cl)) { s.house.npcc.cl = {}; Object.keys(house.npcc.cl).forEach(k => { s.house.npcc.cl[k] = bkNz(house.npcc.cl[k]); }); } }
   if (Array.isArray(house.reviews)) s.house.reviewsN = house.reviews.length;

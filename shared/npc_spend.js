@@ -18,7 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, whMult, wuDebit, wuHave, wuUnitOf } from "./world.js";
+import { WU_HH, nwBal, nwPayday, nwSpend, nwUnitOf, whMult, wuDebit, wuHave } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -153,6 +153,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     if (old.day < day) casNpcLive(house, old.day, Infinity, secret, list, counters);
     house.npcLive = null;
   }
+  nwPayday(house, day, list); // W6：NPC 的錢包每天第一次補（從所屬集團出）；週一換工作
   const L = npcLiveFix(house, day), m = nowMs === Infinity ? Infinity : (nowMs - npcDayStartMs(day)) / 60000;
   const low = casWorldLow(house, W), reviews = casReviewsFix(house), tmul = casFxMul(house) * casFxPolicy(house, day, "ticket"); // 門票價隨景氣（±10%）和政策（振興觀光多壹成）
   let room = Math.floor(C.dayCap * Math.max(0, 1 + C.extPct / 100 * (+(house.econ && house.econ.b) || 0))) - nsN(L.ticket) - nsN(L.shop);
@@ -189,13 +190,14 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     L.done[v.key] = 1;
     const n = list.find(x => x && x.id === v.id);
     if (!n || !n.budget || !(n.budget.perDay > 0)) continue;
-    const first = L.byNpc[v.id] == null, uid = wuUnitOf(n.job), perDay = Math.floor(n.budget.perDay * whMult(house, uid)); // W5：所屬集團的狀態決定預算倍率（減薪、緊縮、裁員） // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
+    const first = L.byNpc[v.id] == null, uid = nwUnitOf(house, n), perDay = Math.floor(n.budget.perDay * whMult(house, uid)); // W5：所屬集團的狀態決定預算倍率（減薪、緊縮、裁員） // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
     let mine = Math.min(room, Math.floor(perDay * C.dayPct / 100) - nsN(L.byNpc[v.id])), paid = 0;
     const pay = (src, pool, amt) => {
       amt = Math.min(amt, mine);
-      if (amt <= 0 || low || wuHave(house, uid) < amt) return 0; // 集團的錢不夠就當天不花
+      const wal = !!(house.npcw && house.npcw.day); // 有錢包（W6）：從錢包出；沒有（舊資料、關掉）：照 W4 從集團出
+      if (amt <= 0 || low || (wal ? nwBal(house, n.id) < amt : wuHave(house, uid) < amt)) return 0; // 錢包（或集團）的錢不夠就當天不花
       const got = pool === "house" ? casHouseWorldOut(house, src, amt, W) : casPoolWorldOut(house, pool, src, amt);
-      if (got > 0) { wuDebit(house, uid, got); L.byUnit[uid] = nsN(L.byUnit[uid]) + got; }
+      if (got > 0) { if (wal) nwSpend(house, n.id, got); else wuDebit(house, uid, got); L.byUnit[uid] = nsN(L.byUnit[uid]) + got; }
       mine -= got; paid += got; L.sources[src] = nsN(L.sources[src]) + got; return got;
     };
     if (first) { const tk = Math.floor(C.ticket * tmul), b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b) + pay("npcTicketMuseum", "museum", tk - b); }
