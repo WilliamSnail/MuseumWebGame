@@ -847,6 +847,7 @@ function trialResult(v) {
 function overCard(v, me) {
   const s = S, isLeader = s.party && s.party.leader === v.me;
   const sum = v.summary || [];
+  if (v.over === "lost" && s.safeKey !== v.id) { s.safeKey = v.id; sndFile("bench-thud", 0.5); setTimeout(() => snd("defeat"), 250); } // 走不下去：悶響加低沉的收尾（翊文 11-15：「失敗時也配壹首低沉的收尾」）
   if (v.over !== "lost" && s.safeKey !== v.id) { s.safeKey = v.id; setTimeout(() => sndFile("safe-return", 0.45), 600); } // 平安回到地面：鋼琴弦樂，壹趟只播壹次（11-15 翊文）
   return h("div", { class: "note-card room-card cx-card cx-over" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.over === "lost" ? "這壹趟到這裡" : "回到地面了"),
