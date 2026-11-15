@@ -71,6 +71,7 @@ function eventStrip() {
   return box;
 }
 function matesStrip() {
+  const chip = h("button", { type: "button", class: "l2-pm", onClick: () => PANELS.friends && PANELS.friends() }); // 手機直拿的精簡列用
   const box = h("div", { class: "l2-box l2-matesbox l2-mates" }); // 11-15：搬到右欄館友證下面（原位置換成今日要聞跑馬燈）
   const draw = () => {
     const by = matesByRoom(NET.roster || []);
@@ -80,9 +81,11 @@ function matesStrip() {
         : h("span", null, UI.net ? "現在沒有別的館友在線。" : "登入了才看得到館友。"),
       list.length ? null : null);
     box.onclick = () => { if (PANELS.friends) PANELS.friends(); };
+    chip.replaceChildren(h("i", { class: "l2-live", "aria-hidden": "true" }), h("b", null, "館友"), list.length ? ` ${list.length} 位在線` : UI.net ? " 沒有人" : " 未登入");
+    chip.title = list.length ? list.map(x => `${x.m.nick}・${x.room}`).join("、") : "現在沒有別的館友在線";
   };
   draw();
-  return { box, draw };
+  return { box, draw, chip };
 }
 
 // ---------- 導覽圖 ----------
@@ -183,7 +186,7 @@ export function lobby2(root) {
     isFree(P) || !(UI.net || import.meta.env.DEV) || !ADDONS.hallNowBox ? null : h("div", { class: "l2-box l2-hnbox" }, ADDONS.hallNowBox("lobby")), // 展廳現在幾人、最近的評價（ui_hallnow.js；登入了才有）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
-    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), headlineStrip()), live, h("div", { class: "l2-mapbox" }, map)),
+    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), headlineStrip(), h("div", { class: "l2-pbar" }, ADDONS.hallNowBar && (UI.net || import.meta.env.DEV) && !isFree(P) ? ADDONS.hallNowBar() : null, mates.chip)), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap);
   document.body.classList.add("lobby-wide-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉

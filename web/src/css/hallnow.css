@@ -109,3 +109,17 @@
 .hn-casino { margin: 4px 0 0; font-size: .75rem; }
 .hn-inv { width: 100%; min-height: 48px; font-size: 1rem; }
 .hn-inv-n { font-style: normal; font-size: .75rem; opacity: .85; }
+
+/* 手機直拿的大廳精簡列（11-15）：電腦、橫拿藏起來，用右欄那塊 */
+.l2-pbar { display: none; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2-pbar { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0; }
+  .hn-bar { display: flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; }
+  .hn-bar .btn, .l2-pm { min-height: 36px; padding: 0 10px; border: 1px solid rgba(214, 178, 94, .85); border-radius: 6px; background: linear-gradient(180deg, rgba(24, 14, 12, .94), rgba(44, 26, 20, .94)); color: #F6E4B0; font: inherit; font-size: .75rem; white-space: nowrap; }
+  .hn-bar-n { display: grid; justify-items: start; align-content: center; gap: 0; line-height: 1.15; text-align: left; }
+  .hn-bar-n small { display: block; font-size: .625rem; color: #D8C59A; white-space: nowrap; }
+  .hn-bar .hn-inv { width: auto; flex: 0 1 auto; min-width: 0; margin-top: 0; min-height: 36px; padding: 0 10px; font-size: .75rem; }
+  .hn-bar .hn-inv-n { display: none; }
+  .l2-pm { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+  .l2-pm .l2-live { width: 8px; height: 8px; }
+}
