@@ -4,13 +4,13 @@
 
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, LIMITED_FX, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../shared/config.js";
 import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../shared/content3.js";
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../shared/content.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../shared/logic.js";
-import { buyUpgrade, canFuse, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyState } from "../../shared/logic3.js";
+import { buyUpgrade, canFuse, limitedFxShort, cellarAdvance, cellarApply, cellarFloor, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, hasUp, healInjured, injureDaysOf, jobInfo, jobSkill, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, skillOf, startCellar, startFusion, teamItems, teamPower, upgradeState, weeklyState } from "../../shared/logic3.js";
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
@@ -804,7 +804,7 @@ export function stageOutcome(stage, res, fx, team) {
 }
 
 // ---------- 挑隊員：每隻底下的小卡（強度、心情相剋、能力、狀態） ----------
-export const HAT_AB = { 棒球帽: "擋壹次", 皇冠: "重擲壹次", 巫師帽: "全隊 +2", 觸手帽: "全隊 +5・扣理智", 紳士帽: "技能 +10", 毛帽: "回理智" };
+export const HAT_AB = Object.assign({ 棒球帽: "擋壹次", 皇冠: "重擲壹次", 巫師帽: "全隊 +2", 觸手帽: "全隊 +5・扣理智", 紳士帽: "技能 +10", 毛帽: "回理智" }, Object.fromEntries(Object.keys(LIMITED_FX).map(k => [k, limitedFxShort(k)]))); // 限定帽子的短標讀 LIMITED_FX（決定 0085）
 export const POSE_AB = { 比讚: "全隊每隻 +1", 躺平: "回理智", 斯拉夫蹲: "不會被推倒", 倒立: "強度 +1" };
 // 強度怎麼來的：「稀有 2＋完美 1＋倒立 1」（照 memberPower 的算法，不算房間）
 export function powerWhy(item) {
@@ -846,7 +846,7 @@ export function teamRules() {
     h("ul", { class: "rl-list" },
       R("sparkle", "強度", "普通 ", E("1"), "、稀有 ", E("2"), "、超稀有 ", E("3"), "、傳說級 ", E("5"), "、不可名狀 ", E("6"), "，完美作品 ", E("+1"), "。"),
       R("heart", "心情相剋", "開心剋傷心、傷心剋生氣、生氣剋開心：", G("剋到 ×2"), "，", B("被剋 −1"), "。俄國8+9 ", G("不被剋"), "。顏色跟房間壹樣 ", G("+1"), "。"),
-      R("hat", "帽子", "棒球帽", G("擋壹次"), "、皇冠", G("重擲壹次"), "、巫師帽 ", G("+2"), "、觸手帽 ", G("+5"), "（", B("扣理智"), "）、紳士帽", G("技能 +10"), "、毛帽", G("回理智"), "。"),
+      R("hat", "帽子", "棒球帽", G("擋壹次"), "、皇冠", G("重擲壹次"), "、巫師帽 ", G("+2"), "、觸手帽 ", G("+5"), "（", B("扣理智"), "）、紳士帽", G("技能 +10"), "、毛帽", G("回理智"), "。簽到、兌換所、特展拿到的限定帽子各有自己的能力（全隊強度加起來最多 +", E(String(NUM.limitedFx.teamCap)), "），看手作坊的說明。"),
       R("hand", "姿勢", "比讚", G("全隊每隻 +1"), "、躺平", G("回理智"), "、斯拉夫蹲", G("不會被推倒"), "（擋壹次受傷）、倒立 ", G("+1"), "。毛帽、躺平：每壹層第壹次走時，各回 ", G("1D3 理智"), "。")));
 }
 

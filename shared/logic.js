@@ -4,7 +4,7 @@
 
 // ---------- 小工具 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_PARTS, PILLOW_PARTS, RARITY_TABLE, RENAMED, UPGRADES } from "./config.js";
+import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, NUM, ORIGIN, PEPE_PARTS, PILLOW_PARTS, RARITY_TABLE, RENAMED, UPGRADES } from "./config.js";
 import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, QUIRK_TEXT, STORY_CHAPTERS, VISITOR_COMMENTS } from "./content.js";
 import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
@@ -140,6 +140,12 @@ export const DEFAULT_PICK = Object.fromEntries(CATS.map(c => [c, baseOpts(c)[0]]
 
 export const pepeKey = pick => CATS.map(c => pick[c] ?? DEFAULT_PICK[c]).join("|");
 export const coreKey = pick => CORE_CATS.map(c => pick[c]).join("|");
+// 限定帽子在館內（地下以外）的效果（決定 0085）：看館友證頭像那隻佩佩戴的帽子（P.avatar）。沒頭像、沒戴限定帽子回 {}。都是玩家自己存檔裡的東西（心情、理智、靈感），沒有新的籌碼來源
+export function limitedHome(P) {
+  if (!P || typeof P.avatar !== "string" || !P.avatar) return {};
+  let pick; try { pick = fromKey(P.avatar); } catch (e) { return {}; }
+  const f = pick && LIMITED_FX[pick.帽子]; return (f && f.home) || {};
+}
 export function fromKey(key) {
   const v = String(key).split("|");
   if (v.length === CATS.length) return Object.fromEntries(CATS.map((c, i) => [c, v[i]]));
@@ -291,7 +297,8 @@ export function ensureDay(P, date = todayStr()) {
   const back = rewindDays(P, date); // 舊存檔的日期比今天晚（以前 15 分鐘一天）：先拉回來
   const firstEver = !P.day;
   // 換日時自己恢復的理智，要先加，今天的起點（startSan）才算進去。隔了幾天沒進館就加幾次（舊存檔日期在今天後面的算 1 次）
-  const sanBack = firstEver ? 0 : sanDayRecover(P, Math.max(1, daysBetween(P.day.date, date)));
+  let sanBack = firstEver ? 0 : sanDayRecover(P, Math.max(1, daysBetween(P.day.date, date)));
+  if (!firstEver && !isFree(P)) { const hh = limitedHome(P); if (hh.daySan) sanBack += gainSan(P, hh.daySan); if (hh.dayMood) P.mood = clampN((P.mood || 0) + hh.dayMood, 0, 99); } // 限定帽子（枕頭睡帽、黑絨領結）：換日多回壹點
   P.day = { date, startSan: P.sanity, lost: 0, exLoss: {}, reviews: {}, views: {}, moodFx: {}, hugs: {}, mini: {}, diff: {}, quirkGiven: false,
     fusions: 0, pairs: {}, rerolls: 0, hints: {} };
   // 地下收藏庫受的傷，時間到了自己好

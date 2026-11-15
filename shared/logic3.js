@@ -5,10 +5,10 @@
 
 // ---------- 系統 K：工坊升級 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, LIMITED_FX, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
 import { settleWeekShow } from "./themeshow.js";
 import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
-import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, understandCheck, usable } from "./logic.js";
+import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, limitedHome, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, understandCheck, usable } from "./logic.js";
 import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
 import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
 
@@ -296,7 +296,27 @@ export function memberPower(it, room) {
   if (room && room.color && p.顏色 === room.color) s += 1;
   if (p.姿勢 === "倒立") s += NUM.cellarFx.handstand;
   s += COLOR_POWER[p.顏色] || 0; // 調色盤調出來的顏色
+  const lf = LIMITED_FX[p.帽子]; if (lf && lf.minPower) s = Math.max(s, lf.minPower); // 限定帽子（摺紙帽、縫過的領結）：失敗作也有最低強度
   return s;
+}
+// 限定帽子對這一隊的探索加成（決定 0085）：回傳 { team, skill, sanCut, rest, block, reroll, firstSan, notes }。強度每頂都算（總共最多 +teamCap）、其他的同壹頂帽子只算壹次
+export function limitedFx(team) {
+  const out = { team: 0, skill: 0, sanCut: 0, rest: 0, block: 0, reroll: 0, firstSan: 0, notes: [] }, seen = new Set(), colors = new Set((team || []).map(it => it.pick.顏色));
+  let pos = 0, neg = 0;
+  for (const it of team || []) {
+    const h = it.pick.帽子, f = LIMITED_FX[h]; if (!f) continue;
+    let t = f.team || 0;
+    if (f.teamIfColor && (team || []).some(x => x.pick.顏色 === f.teamIfColor[0])) t += f.teamIfColor[1];
+    if (f.teamIfMood && it.pick.心情 === f.teamIfMood[0]) t += f.teamIfMood[1];
+    if (f.rainbow) t += Math.min(f.rainbow, colors.size);
+    if (t > 0) pos += t; else neg += t;
+    if (t) out.notes.push(`${h} ${t > 0 ? "+" : ""}${t}`);
+    if (seen.has(h)) continue; seen.add(h);
+    out.skill = Math.max(out.skill, f.skill || 0); out.sanCut = Math.max(out.sanCut, f.sanCut || 0); out.rest = Math.max(out.rest, f.rest || 0);
+    out.block += f.block || 0; out.reroll += f.reroll || 0; out.firstSan = Math.max(out.firstSan, f.firstSan || 0);
+  }
+  out.team = Math.min(pos, NUM.limitedFx.teamCap) + neg;
+  return out;
 }
 export function teamPower(P, team, room) {
   const parts = team.map(it => ({ it, s: memberPower(it, room) }));
@@ -305,6 +325,7 @@ export function teamPower(P, team, room) {
   if (team.some(it => it.pick.姿勢 === "比讚")) { total += team.length; notes.push("比讚鼓舞全隊 +" + team.length); }
   if (team.some(it => it.pick.帽子 === "巫師帽")) { total += NUM.cellarFx.wizard; notes.push(`巫師帽的魔法 +${NUM.cellarFx.wizard}`); }
   if (team.some(it => it.pick.帽子 === "觸手帽")) { total += NUM.cellarFx.tentacle; notes.push(`觸手帽 +${NUM.cellarFx.tentacle}（要付理智）`); }
+  { const lf = limitedFx(team); if (lf.team) { total = Math.max(0, total + lf.team); notes.push(...lf.notes.filter(n => !/^S+ [+-]0$/.test(n))); } } // 限定帽子（決定 0085）
   // 小優點「力氣大」、小缺點「沒力氣」（11-08）
   traitHits(P, "power").forEach(t => { total = Math.max(0, total + t.v); notes.push(traitTag(t)); });
   return { total, parts, notes };
@@ -327,16 +348,25 @@ export function cellarResolve(P, choiceIdx) {
     out.target = ch.check.target;
     out.total = tp.total + out.roll.total;
     out.success = out.total >= out.target;
+    if (!out.success && limitedFx(team).reroll > (run.used.lre || 0) && (run.used.lre = (run.used.lre || 0) + 1)) {
+      out.firstRoll = out.roll; out.roll = rollOnce(); out.total = tp.total + out.roll.total; out.success = out.total >= out.target; out.rerolled = true;
+      out.notes.push("皇冠號令：重擲一次");
+    }
     if (!out.success && teamHas(team, "帽子", "皇冠") && once("crown")) {
       out.firstRoll = out.roll; out.roll = rollOnce(); out.total = tp.total + out.roll.total; out.success = out.total >= out.target; out.rerolled = true;
       out.notes.push("皇冠號令：重擲一次");
     }
     if (teamHas(team, "帽子", "觸手帽")) out.extraSan = NUM.fight.tentacleSan;
   } else if (ch.check.type === "skill") {
-    const mod = (ch.check.mod || 0) + (teamHas(team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0);
+    const lfx = limitedFx(team), mod = (ch.check.mod || 0) + (teamHas(team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0) + lfx.skill;
     const sc = skillCheck(P, ch.check.skill, mod);
     out.roll = sc.roll; out.target = sc.target; out.skill = ch.check.skill; out.success = !!sc.success;
-    if (mod !== (ch.check.mod || 0)) out.notes.push(`紳士帽的禮貌 +${NUM.cellarFx.gent}`);
+    if (teamHas(team, "帽子", "紳士帽")) out.notes.push(`紳士帽的禮貌 +${NUM.cellarFx.gent}`);
+    if (lfx.skill) out.notes.push(`限定帽子 技能 +${lfx.skill}`);
+    if (!out.success && lfx.reroll > (run.used.lre || 0) && (run.used.lre = (run.used.lre || 0) + 1)) {
+      const again = skillCheck(P, ch.check.skill, mod); out.firstRoll = out.roll; out.roll = again.roll; out.success = !!again.success; out.rerolled = true;
+      out.notes.push("皇冠號令：重擲一次");
+    }
     if (!out.success && teamHas(team, "帽子", "皇冠") && once("crown")) {
       const again = skillCheck(P, ch.check.skill, mod); out.firstRoll = out.roll; out.roll = again.roll; out.success = !!again.success; out.rerolled = true;
       out.notes.push("皇冠號令：重擲一次");
@@ -356,15 +386,17 @@ export function cellarApply(P, res, sanSuccess) {
   const once = id => { if (run.used[id]) return false; run.used[id] = true; return true; };
   const firstWin = success && !P.cellar.won[room.id];
   const firstClear = !P.cellar.cleared[room.id]; // 第一次走這個房間（回理智只算第一次，不能一直下去刷）
-  if (o.insp) { fx.insp = firstWin ? o.insp : NUM.cellarRepeatInsp; if (!isFree(P)) P.insp += fx.insp; }
+  if (o.insp) { fx.insp = firstWin ? o.insp + (limitedHome(P).winInsp || 0) : NUM.cellarRepeatInsp; if (!isFree(P)) P.insp += fx.insp; } // 礦工帽：第壹次過多 1 靈感
   if (success) P.cellar.won[room.id] = true;
   if (success && room.trial) fx.trial = trialWin(P, room); // 試煉房間過了：技能成長（決定 0032，shared/shop.js）
   if (o.san) {
     const s = String(o.san).trim();
     if (s.startsWith("+")) { fx.sanGain = isFree(P) || !firstWin ? 0 : gainSan(P, rollExpr(s.slice(1)).total); }
     else {
-      const loss = rollExpr(s).total;
+      let loss = rollExpr(s).total; const lfx = limitedFx(team);
+      if (loss > 0 && lfx.sanCut) { loss = Math.max(1, loss - lfx.sanCut); fx.cut = lfx.sanCut; } // 限定帽子（黃雨帽）：少扣
       if (loss > 0 && teamHas(team, "帽子", "棒球帽") && once("cap")) fx.blocked.push("棒球帽擋下了這一次");
+      else if (loss > 0 && lfx.block > (run.used.lbl || 0) && (run.used.lbl = (run.used.lbl || 0) + 1)) fx.blocked.push("帽子擋下了這一次");
       else fx.sanLoss = isFree(P) ? 0 : loss; // 真正扣理智交給畫面那邊（要跑看懂檢定、怪癖）
     }
   }
@@ -385,6 +417,9 @@ export function cellarApply(P, res, sanSuccess) {
   if (!isFree(P) && firstClear && !room.trial) {
     if (teamHas(team, "姿勢", "躺平") && once("rest")) { fx.sanGain += gainSan(P, rollExpr(NUM.cellarRest).total); fx.rested = "躺平"; }
     if (teamHas(team, "帽子", "毛帽") && once("beanie")) { fx.sanGain += gainSan(P, rollExpr(NUM.cellarRest).total); fx.rested = (fx.rested ? fx.rested + "、" : "") + "毛帽"; }
+    const lfx = limitedFx(team); // 限定帽子（決定 0085）：回理智、火氣頭帶每層第壹次多扣
+    if (lfx.rest && once("lrest")) { fx.sanGain += gainSan(P, lfx.rest); fx.rested = (fx.rested ? fx.rested + "、" : "") + "帽子"; }
+    if (lfx.firstSan && once("lburn")) fx.sanLoss += lfx.firstSan;
   }
   P.cellar.cleared[room.id] = true;
   run.log.push({ room: room.id, success });
@@ -648,6 +683,46 @@ export function understandLine(P, src) {
 // ---------- 手作坊顯示「這個選項在地下收藏庫的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值」）----------
 // 數字全部讀上面實際在算的設定（NUM.cellarFx、NUM.fight、NUM.cellarRest、CELLAR_POWER、COLOR_POWER、MOOD_BEATS），畫面不另外寫壹份。
 // 回傳 [{ where: "強度"|"探索"|"打怪", text }]：強度＝自己的強度（兩種玩法都用）；探索＝走房間；打怪＝一場一次的招式（cellar_fight.js 的 FIGHT_MOVES）。沒有地下效果的選項回 []
+// 限定帽子的說明（決定 0085）：[{ where: "探索"|"打怪"|"館內", text }]。數字讀 LIMITED_FX，跟實際算的壹份
+export function limitedFxLines(name) {
+  const f = LIMITED_FX[name], out = []; if (!f) return out;
+  const add = (where, text) => out.push({ where, text });
+  if (f.team) add("探索", `全隊強度 ${f.team > 0 ? "+" : ""}${f.team}`);
+  if (f.teamIfColor) add("探索", `隊裡有${f.teamIfColor[0]}色的佩佩：全隊強度 +${f.teamIfColor[1]}`);
+  if (f.teamIfMood) add("探索", `戴的這隻是${f.teamIfMood[0]}：全隊強度 +${f.teamIfMood[1]}`);
+  if (f.rainbow) add("探索", `隊裡每多壹種顏色，全隊強度 +1（最多 +${f.rainbow}）`);
+  if (f.skill) add("探索", `技能檢定 +${f.skill}`);
+  if (f.sanCut) add("探索", `每次被扣理智少扣 ${f.sanCut}（最少扣 1）`);
+  if (f.rest) add("探索", `每壹層第壹次走：回 ${f.rest} 理智`);
+  if (f.block) add("探索", `擋下 ${f.block} 次理智損失`);
+  if (f.reroll) add("探索", "檢定失敗可以再多重擲壹次");
+  if (f.firstSan) add("探索", `每壹層第壹次走：多扣 ${f.firstSan} 理智`);
+  if (f.minPower) add("強度", `自己的強度至少 ${f.minPower}（失敗作也有）`);
+  const a = f.fight;
+  if (a) {
+    const T = { wizard: `這回合每個人的推 +${a.n}`, cheer: `下回合每個人的推 +${a.n}`, cap: "擋下這回合打到自己的招", squat: "這回合自己的佩佩不會倒", crown: "推的骰子當最大", beanie: a.team ? `全隊各回 ${a.n} 理智` : `回 ${a.n} 理智`, tentacle: `推的強度 ×${a.mult}${a.noSan ? "，不扣理智" : ""}` }[a.move];
+    if (T) add("打怪", `招式：${T}${a.uses > 1 ? `（可用 ${a.uses} 次）` : ""}`);
+  }
+  const hm = f.home;
+  if (hm) {
+    if (hm.foodMood) add("館內", `餐車吃的東西心情多 +${hm.foodMood}（每天上限不變）`);
+    if (hm.foodSan) add("館內", `餐車吃的東西理智每天上限 +${hm.foodSan}`);
+    if (hm.signInsp) add("館內", `每週第壹次簽到多 ${hm.signInsp} 靈感`);
+    if (hm.winInsp) add("館內", `房間第壹次過關多 ${hm.winInsp} 靈感`);
+    if (hm.daySan) add("館內", `每天換日多回 ${hm.daySan} 理智`);
+    if (hm.dayMood) add("館內", `每天換日心情 +${hm.dayMood}`);
+    add("館內", "當成館友證頭像的那隻戴著才有效");
+  }
+  return out;
+}
+// 限定帽子在卡片上的短標
+export function limitedFxShort(name) {
+  const f = LIMITED_FX[name]; if (!f) return "";
+  if (f.team && f.team > 0 && !f.home) return `全隊 +${f.team}`;
+  if (f.team) return f.team > 0 ? `全隊 +${f.team}` : `全隊 ${f.team}`;
+  if (f.skill) return `檢定 +${f.skill}`; if (f.rainbow) return "全隊 + 顏色"; if (f.teamIfColor) return "搭配加成"; if (f.rest) return `回 ${f.rest} 理智`; if (f.block) return `擋 ${f.block} 次`;
+  if (f.sanCut) return "少扣理智"; if (f.minPower) return `強度 ≥ ${f.minPower}`; if (f.home) return "館內效果"; if (f.fight) return "有招式"; return "";
+}
 export function cellarPartFx(cat, name) {
   const F = NUM.fight, X = NUM.cellarFx, out = [];
   const add = (where, text) => out.push({ where, text });
@@ -668,6 +743,7 @@ export function cellarPartFx(cat, name) {
     else if (name === "皇冠") { add("探索", "檢定失敗可以重擲壹次"); add("打怪", "招式：推的骰子當最大"); }
     else if (name === "棒球帽") { add("探索", "擋下壹次損失"); add("打怪", "招式：擋下這回合打到自己的招"); }
     else if (name === "毛帽") { add("探索", `每壹層第壹次走：回 ${NUM.cellarRest} 理智`); add("打怪", `招式：回 ${F.rest} 理智`); }
+    else limitedFxLines(name).forEach(x => add(x.where, x.text)); // 限定帽子（決定 0085）
   }
   else if (cat === "姿勢") {
     if (name === "比讚") { add("探索", "全隊強度 + 帶下去的人數"); add("打怪", `招式：下回合每個人的推 +${F.cheer}`); }
@@ -684,7 +760,7 @@ export function cellarFxShort(cat, name) {
   if (cat === "顏色") return COLOR_POWER[name] ? `強度 +${COLOR_POWER[name]}` : "";
   if (cat === "心情") return MOOD_BEATS[name] ? "剋" + MOOD_BEATS[name] : "";
   const T = { 巫師帽: `全隊 +${X.wizard}`, 觸手帽: `全隊 +${X.tentacle}`, 紳士帽: `檢定 +${X.gent}`, 皇冠: "重擲", 棒球帽: "擋壹次", 毛帽: "回理智", 比讚: "全隊 +人數", 斯拉夫蹲: "穩住", 躺平: "回理智", 倒立: `強度 +${X.handstand}` };
-  return cat === "帽子" || cat === "姿勢" ? T[name] || "" : "";
+  return cat === "帽子" || cat === "姿勢" ? T[name] || (cat === "帽子" ? limitedFxShort(name) : "") : "";
 }
 // 壹隻整隻的地下效果：lines＝每個有效果的選項的說明；power＝這隻自己的強度（沒有房間的時候；稀有度還沒擲就不算進去，rarityKnown 才含稀有度與完美）
 export function cellarPickFx(pick, o = {}) {

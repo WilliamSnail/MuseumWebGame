@@ -25,8 +25,8 @@
 //  run.phase：vote（等大家投票）→ result（看結果）→ vote …… → floorDone（這一層走完）→ over（結束，run.over 寫為什麼）
 // ================================================================
 import { NUM } from "./config.js";
-import { addDays, addMyth, applySan, clampN, fromKey, fullPick, gainQuirk, gainSan, isFree, maxSan, pepeKey, pickOne, rollExpr, sanCheck, startBout, understandCheck } from "./logic.js";
-import { cellarAdvance, cellarFloor, injureDaysOf, skillCheck, skillOf, teamHas, teamPower, understandLine } from "./logic3.js";
+import { addDays, addMyth, applySan, clampN, fromKey, fullPick, gainQuirk, gainSan, isFree, limitedHome, maxSan, pepeKey, pickOne, rollExpr, sanCheck, startBout, understandCheck } from "./logic.js";
+import { cellarAdvance, cellarFloor, injureDaysOf, limitedFx, skillCheck, skillOf, teamHas, teamPower, understandLine } from "./logic3.js";
 import { cellarDarkLoss, traitHits, traitTag } from "./legacy.js";
 import { eventRunFix } from "./events.js";
 import { trialById, trialState, trialWin } from "./shop.js";
@@ -169,7 +169,7 @@ export function coopPreview(run, Ps) {
   const room = coopRoom(run);
   if (!room) return null;
   const tp = coopPower(run, Ps, room), pr = run.pressure || coopPressure(run);
-  const gent = teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0;
+  const gent = (teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0) + limitedFx(run.team).skill;
   const choices = room.choices.map((c, i) => {
     const k = c.check, o = { i, type: k.type };
     if (k.type === "power") Object.assign(o, { base: k.target, target: coopTargetOf(run, k.target), power: tp.total });
@@ -325,7 +325,11 @@ export function coopCheck(run, Ps, room, ch, bonus = null) {
   const k = ch.check, pr = run.pressure || coopPressure(run);
   const out = { type: k.type, success: true, roll: null, total: null, target: null, rerolled: false, notes: [] };
   if (bonus) out.clue = true;
-  const crown = () => { if (run.used.crown || !teamHas(run.team, "帽子", "皇冠")) return false; run.used.crown = true; out.rerolled = true; out.notes.push("皇冠號令：重擲一次"); return true; };
+  const lfx = limitedFx(run.team);
+  const crown = () => {
+    if (lfx.reroll > (run.used.lre || 0)) { run.used.lre = (run.used.lre || 0) + 1; out.rerolled = true; out.notes.push("皇冠號令：重擲一次"); return true; } // 限定帽子（傳說的金冠）多壹次
+    if (run.used.crown || !teamHas(run.team, "帽子", "皇冠")) return false; run.used.crown = true; out.rerolled = true; out.notes.push("皇冠號令：重擲一次"); return true;
+  };
   if (k.type === "power") {
     const tp = coopPower(run, Ps, room);
     out.power = tp.total; out.notes = tp.notes.slice(); out.base = k.target;
@@ -336,10 +340,11 @@ export function coopCheck(run, Ps, room, ch, bonus = null) {
     out.tentacle = coopVoters(run).filter(m => coopOwns(run, m.id, "帽子", "觸手帽")).map(m => m.id); // 這幾個人要付理智
   } else if (k.type === "skill") {
     const by = coopRoller(run, Ps, k.skill), P = Ps[by];
-    const gent = teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0;
-    const mod = (k.mod || 0) + gent + pr.skill + (bonus ? bonus.skill : 0);
+    const gent = teamHas(run.team, "帽子", "紳士帽") ? NUM.cellarFx.gent : 0, lskill = lfx.skill;
+    const mod = (k.mod || 0) + gent + lskill + pr.skill + (bonus ? bonus.skill : 0);
     if (bonus) out.notes.push(`記號對上了：技能 +${bonus.skill}`);
     if (gent) out.notes.push(`紳士帽的禮貌 +${NUM.cellarFx.gent}`);
+    if (lskill) out.notes.push(`限定帽子 技能 +${lskill}`);
     if (pr.skill) out.notes.push(`理智壓力 ${pr.skill}`);
     let sc = skillCheck(P, k.skill, mod);
     out.by = by; out.skill = k.skill; out.roll = sc.roll; out.target = sc.target; out.success = !!sc.success;
@@ -438,7 +443,7 @@ export function coopApply(run, Ps, room, ch, check, events) {
     const firstWin = ok && !P.cellar.won[room.id];
     const firstClear = !P.cellar.cleared[room.id];
     if (o.insp) {
-      f.insp = firstWin ? o.insp : (m.rewarded ? NUM.cellarRepeatInsp : 0);
+      f.insp = firstWin ? o.insp + (limitedHome(P).winInsp || 0) : (m.rewarded ? NUM.cellarRepeatInsp : 0);
       if (f.insp) { P.insp += f.insp; m.got.insp += f.insp; ev.push({ type: "insp", gain: f.insp, first: firstWin, why: firstWin ? "第一次過這一間" : "再走一次" }); }
     }
     if (ok) P.cellar.won[room.id] = true;
@@ -449,8 +454,10 @@ export function coopApply(run, Ps, room, ch, check, events) {
         const s = String(o.san).trim();
         if (s.startsWith("+")) { if (firstWin) f.sanGain += coopSanGain(P, m, rollExpr(s.slice(1)).total, "room", ev); }
         else {
-          const l = rollExpr(s).total;
+          let l = rollExpr(s).total; const lfx = limitedFx(run.team);
+          if (l > 0 && lfx.sanCut) l = Math.max(1, l - lfx.sanCut); // 限定帽子（黃雨帽）
           if (l > 0 && !m.used.cap && coopOwns(run, m.id, "帽子", "棒球帽")) { m.used.cap = true; f.blocked.push("cap"); ev.push({ type: "blocked", what: "cap", by: m.id }); }
+          else if (l > 0 && lfx.block > (m.used.lbl || 0)) { m.used.lbl = (m.used.lbl || 0) + 1; f.blocked.push("cap"); ev.push({ type: "blocked", what: "cap", by: m.id }); } // 限定帽子（鐵鍋帽、三層帽）每個人各擋
           else { loss += l; parts.room = l; }
         }
       }
@@ -464,6 +471,9 @@ export function coopApply(run, Ps, room, ch, check, events) {
       if (firstClear && !run.trial) {
         if (teamHas(run.team, "姿勢", "躺平") && !m.used.rest) { m.used.rest = true; f.sanGain += coopSanGain(P, m, rollExpr(NUM.cellarRest).total, "躺平", ev); }
         if (teamHas(run.team, "帽子", "毛帽") && !m.used.beanie) { m.used.beanie = true; f.sanGain += coopSanGain(P, m, rollExpr(NUM.cellarRest).total, "毛帽", ev); }
+        const lfx = limitedFx(run.team); // 限定帽子（決定 0085）
+        if (lfx.rest && !m.used.lrest) { m.used.lrest = true; f.sanGain += coopSanGain(P, m, lfx.rest, "帽子", ev); }
+        if (lfx.firstSan && !m.used.lburn) { m.used.lburn = true; f.sanLoss += lfx.firstSan; loss += lfx.firstSan; parts.burn = lfx.firstSan; }
       }
       if (loss) pending.push([P, m, loss, parts, ev]);
     }
