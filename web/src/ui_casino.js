@@ -228,7 +228,7 @@ export function bankBar(C, io) {
       fig("利率・期限", `${L.pct}%`, `每筆固定・${NUM.casino.loan.repayAfterMin} 分鐘後可還・${L.days} 天內還清`)),
     h("div", { class: "bk-act" },
       why ? h("p", { class: "bk-why" }, why)
-        : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts)]),
+        : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts), L.left >= L.min ? loanInput(C, L, borrow, off) : null]),
     // 在地下室工作的那位（決定 0064 第二部分）
     w.work ? h("div", { class: "bk-work" }, h("span", null, ADDONS.workLine ? ADDONS.workLine() : ""), ADDONS.workCheer ? btn(CAS_TEXT.workCheer, () => ADDONS.workCheer(), "small", { disabled: off }) : null) : null,
     L.list.length ? h("table", { class: "bk-book" },
@@ -327,6 +327,20 @@ function resultCard(r) {
   const text = o.kind === "lose" ? `輸 ${casNum(r.bet)}` : o.kind === "push" ? `退回 ${casNum(r.bet)}` : `贏 ${casNum(o.net)}${o.bonus ? `（含加成 ${casNum(o.bonus)}）` : ""}`;
   return h("div", { class: "cas-result k-" + o.kind, role: "status" }, h("b", null, kinds[o.kind] || ""), h("span", null, text),
     r.slips && r.slips.length ? h("small", null, `牌翻回來了：你剛剛有 ${r.slips.length} 張牌看錯了。`) : null);
+}
+// 借款自己輸入（11-15，翊文：「賭場那邊的借款也加手動輸入」；銀行廳那邊是 ui_bank.js 的 typeLoan）：打字時只改旁邊那行「要還多少」，不整塊重畫
+function loanInput(C, L, borrow, off) {
+  const inp = h("input", { class: "t-input cas-bet bk-in", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "16", "aria-label": "自己輸入借款金額", placeholder: `自己輸入（${casNum(L.min)}～${casNum(L.left)}）` });
+  inp.value = C.loanAmt || "";
+  const hint = h("small", { class: "bk-in-hint" });
+  const val = () => Math.floor(Number(String(inp.value).replace(/[,，\s]/g, "")));
+  const ok = n => Number.isFinite(n) && n >= L.min && n <= L.left;
+  const upd = () => { C.loanAmt = inp.value; const n = val(); hint.textContent = !inp.value.trim() ? "" : !ok(n) ? `要在 ${casNum(L.min)}～${casNum(L.left)} 之間` : `借 ${casNum(n)}，要還 ${casNum(Math.ceil(n * (100 + L.pct) / 100))}`; hint.classList.toggle("bad", !!inp.value.trim() && !ok(n)); };
+  const go = () => { const n = val(); if (ok(n)) { C.loanAmt = ""; borrow(n); } else upd(); };
+  inp.addEventListener("input", upd);
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+  upd();
+  return h("span", { class: "bk-act-in" }, inp, btn("借", go, "small primary", { disabled: off }), hint);
 }
 function betBox() {
   const w = S.w;
