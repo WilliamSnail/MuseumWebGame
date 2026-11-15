@@ -12,6 +12,7 @@ import { NPC_ROSTER } from "../../shared/npc_roster.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "./ui_core.js";
 import { crowdMoodLine, npcSanBadge } from "./ui_stat.js";
+import { npcName } from "./ui_npc_card.js";
 
 const REFRESH_MS = 90000; // 1～2 分鐘壹次（伺服器的建議）；回到畫面時 readCasino 本來就會叫
 const agoText = at => {
@@ -25,7 +26,7 @@ const starText = n => { const k = Math.max(0, Math.min(5, Math.round(Number(n) |
 const reviewItem = r => h("li", { class: "hn-rv" },
   h("span", { class: "hn-st", role: "img", "aria-label": `${Math.round(Number(r.stars) || 0)} 顆星` }, starText(r.stars)),
   h("span", { class: "hn-tx" }, String(r.text || "")),
-  h("small", { class: "hn-by" }, `${String(r.who || "旅客")}・${agoText(r.at)}`, npcSanBadge(r.npc, { calm: true, num: false })));
+  h("small", { class: "hn-by" }, r.npc ? npcName(r.npc, String(r.who || "旅客")) : String(r.who || "旅客"), `・${agoText(r.at)}`, npcSanBadge(r.npc, { calm: true, num: false })));
 
 // 開發的時候沒登入：用示範資料把畫面畫出來（玩家看不到）
 const fake = () => import.meta.env.DEV && !NET.me;
@@ -67,7 +68,7 @@ function inviteBtn(c, before) {
 }
 // 旅客名單：名字後面接理智小牌（全部的視窗寫分級和數字；窄的地方只在不穩定時寫分級）
 function nameList(c, n, calm) {
-  return c.names.slice(0, n).map((nm, i) => h("span", { class: "hn-nm" }, i ? "、" : "", nm, npcSanBadge(c.ids[i], calm ? { calm: true, num: false } : { hint: false }))); // 全部的視窗：每位都寫（有數字）
+  return c.names.slice(0, n).map((nm, i) => h("span", { class: "hn-nm" }, i ? "、" : "", npcName(c.ids[i], nm), npcSanBadge(c.ids[i], calm ? { calm: true, num: false } : { hint: false }))); // 全部的視窗：每位都寫（有數字）
 }
 function openAll() {
   const c = counts(), list = reviewData() || [];
@@ -187,7 +188,7 @@ function guestbook() {
           : items.length ? h("ul", { class: "hn-list hn-gb-list" }, items.map(x => h("li", { class: "hn-rv" },
             h("span", { class: "hn-st", role: "img", "aria-label": `${Math.round(Number(x.stars) || 0)} 顆星` }, starText(x.stars)),
             h("span", { class: "hn-tx" }, String(x.text || "")),
-            h("small", { class: "hn-by" }, `${String(x.who || "旅客")}・${agoText(x.at)}`))))
+            h("small", { class: "hn-by" }, x.npc ? npcName(x.npc, String(x.who || "旅客")) : String(x.who || "旅客"), `・${agoText(x.at)}`))))
           : h("p", { class: "hn-empty" }, "還沒有旅客留言。旅客走進展廳的時候，會留一句話。")));
   };
   ADDONS.hallNowDraw = () => { if (root.isConnected && !gb.data) fetchIt(); };

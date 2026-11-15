@@ -15,6 +15,7 @@ import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, titleOfId, titleTag } from "./ui_core.js";
+import { npcName } from "./ui_npc_card.js";
 import { overlay } from "./ui_board.js";
 import { ambHeat, mountMood } from "./ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
@@ -204,7 +205,7 @@ function seatCard(s, v) {
   const bub = T && T.bub && T.bub[s.uid];
   return h("div", { class: "cas-seat tb" + (s.you ? " me" : "") + (s.npc ? " npc" : "") + (v.turn === s.uid ? " turn" : "") + (s.gone ? " gone" : "") },
     bub && bub.until > Date.now() ? h("p", { class: "cas-bub" + (s.npc ? " npc" : ""), role: "status" }, String(bub.text)) : null,
-    h("div", { class: "cas-who" }, h("b", null, s.nick, s.you ? "（你）" : ""), s.npc ? h("i", { class: "cas-npc-tag", title: "館內的旅客，不是真人" }, "NPC") : null, titleTag(titleOfId(s.uid), "cas-ttl"), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
+    h("div", { class: "cas-who" }, h("b", null, s.npc && String(s.uid).startsWith("n~") ? npcName(String(s.uid).slice(2), s.nick) : s.nick, s.you ? "（你）" : ""), s.npc ? h("i", { class: "cas-npc-tag", title: "館內的旅客，不是真人" }, "NPC") : null, titleTag(titleOfId(s.uid), "cas-ttl"), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
     s.cards.length ? handEl(s.cards, { warped: s.warped, label: `${s.nick} 的牌` }) : null,
     s.out ? h("p", { class: "cas-tb-out k-" + s.out.kind }, kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
 }
@@ -371,7 +372,7 @@ export async function openNpcInvite(pidGiven) {
       h("h4", { class: "cas-ni cas-ni-h" }, h("span", { "aria-hidden": "true" }, "♠"), " 館裡的旅客"),
       said ? h("div", { class: "cas-ni cas-ni-say" + (said.ok ? " ok" : "") }, h("b", null, said.reason ? "沒邀成" : said.name + (said.ok ? "答應了" : "拒絕了")), h("p", { class: "cas-bub npc" }, said.reason ? said.line : `${said.name}：${said.line}`)) : null,
       who === null ? h("p", { class: "cas-ni cas-ni-empty" }, "問問看誰在館裡……")
-        : who.length ? h("ul", { class: "cas-ni cas-ni-list" }, who.map(x => h("li", null, h("span", null, x.name), btn(busy === x.id ? "邀請中……" : "邀他去賭場", () => invite(x), "small primary", { disabled: busy ? true : null }))))
+        : who.length ? h("ul", { class: "cas-ni cas-ni-list" }, who.map(x => h("li", null, h("span", null, npcName(x.id, x.name)), btn(busy === x.id ? "邀請中……" : "邀他去賭場", () => invite(x), "small primary", { disabled: busy ? true : null }))))
         : h("p", { class: "cas-ni cas-ni-empty" }, failed || "現在沒有人邀得動：旅客在館裡的時間有限，今天答應過 3 次或額度用完的也不會來。晚點再看看。"),
       h("div", { class: "cas-ni cas-ni-acts" }, btn("關起來", () => m.close(), "ghost")));
   };
