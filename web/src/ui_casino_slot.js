@@ -66,7 +66,7 @@ export function slotMachine(o = {}) {
     el.classList.add("sl-spinning");
     lever.classList.remove("sl-pull"); void lever.offsetWidth; lever.classList.add("sl-pull");
     plateSet("轉動中……");
-    snd("whoosh");
+    snd("whoosh"); sndFile("i-see-money", 0.4); // 11-15 翊文：「I see money 應該可以給大禮包開的時候用」
     if (motionOff()) return;
     const h1 = cellH();
     reels.forEach((r, i) => {
