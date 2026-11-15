@@ -211,7 +211,7 @@ T("股票畫面合起來：館內五家店排前面、館外七支在後面，�
   const out = G.casStockView(w, h, D0, t, []); assert.strictEqual(out.list.length, G.STOCK_IDS.length, "原本的 casStockView 不變");
 });
 T("NPC：每家每天 Poisson(λ)，平均約 λ；種子有祕密（同祕密壹樣、換祕密不壹樣）；沒有館友就沒有 NPC", G => {
-  const C = G.NUM.casino.stockIn; assert.strictEqual(C.npcLambda, 2); assert.strictEqual(C.npcShareMax, 40);
+  const C = G.NUM.casino.stockIn; C.npcBase = 0; C.npcWalk = 0; /* 保底另外測 */ assert.strictEqual(C.npcLambda, 2); assert.strictEqual(C.npcShareMax, 40);
   const mk = (players, day) => { const h = house(G), H = G.casInHouseFix(h); for (const s of G.IN_STORES) { H.use[day] = H.use[day] || {}; H.use[day][s] = players; } return H; };
   let sum = 0, n = 0; for (let d = 0; d < 400; d++) { const day = add(D0, d), H = mk(100, day); const o = G.casInNpcFor(H, day, SEC); for (const s of G.IN_STORES) { sum += o[s]; n++; } }
   assert.ok(Math.abs(sum / n - 2) < 0.15, "平均 " + sum / n);
@@ -221,11 +221,18 @@ T("NPC：每家每天 Poisson(λ)，平均約 λ；種子有祕密（同祕密�
   assert.strictEqual(G.casInNpcFor(H1, D0, "Z")[G.IN_STORES[0]], JSON.parse(a)[G.IN_STORES[0]], "算過就存起來，不會再抽");
 });
 T("NPC：最多占這家店人數的 npcShareMax%（館友 3 位最多 2 個 NPC）", G => {
-  const C = G.NUM.casino.stockIn; C.npcLambda = 50; // 抽很多，看上限
+  const C = G.NUM.casino.stockIn; C.npcLambda = 50; C.npcBase = 0; C.npcWalk = 0; // 抽很多，看上限（保底另外測）
   for (const [players, max] of [[3, 2], [5, 3], [10, 6], [0, 0]]) {
     const H = G.casInHouseFix(house(G)); H.use[D0] = { food: players }; const n = G.casInNpcFor(H, D0, SEC).food;
     assert.strictEqual(n, max, players + " 位館友 → NPC 最多 " + max); assert.ok(n / (players + n || 1) <= C.npcShareMax / 100 + 1e-9);
   }
+});
+T("NPC 保底（決定 0083）：館友 0 位也有人（每家每天平均約 npcWalk＋有名字的 NPC），最多 npcBase 位；館友多就照比例的上限；沒有館友時 5 位以上的天數不少", G => {
+  const C = G.NUM.casino.stockIn; C.npcLambda = 50;
+  const H = G.casInHouseFix(house(G)); H.use[D0] = { food: 0 }; assert.strictEqual(G.casInNpcFor(H, D0, SEC).food, C.npcBase, "0 位館友：抽很多也只到 npcBase");
+  const H2 = G.casInHouseFix(house(G)); H2.use[D0] = { food: 30 }; assert.strictEqual(G.casInNpcFor(H2, D0, SEC).food, Math.floor(30 * C.npcShareMax / (100 - C.npcShareMax)), "館友多：照比例");
+  const G2 = G, C2 = G2.NUM.casino.stockIn; C2.npcLambda = 2; let s5 = 0, tot = 0; for (let d = 0; d < 300; d++) { const day = add(D0, d), Hx = G.casInHouseFix(house(G)); Hx.use[day] = { food: 0 }; const n = G.casInNpcFor(Hx, day, "w" + d).food; tot += n; if (n >= C2.minPeople) s5++; }
+  assert.ok(tot / 300 > C2.npcWalk * 0.8 && s5 / 300 > 0.4, "平均 " + tot / 300 + "、≥minPeople 的天 " + s5 / 300);
 });
 T("NPC：算進「不同的人」：館友 2 位加 NPC 3 位 ＝ 5 位就不算「人太少」；前 7 個有效日的平均也含 NPC", G => {
   const C = G.NUM.casino.stockIn, h = house(G), H = G.casInHouseFix(h), day = add(D0, 10);
@@ -236,6 +243,7 @@ T("NPC：算進「不同的人」：館友 2 位加 NPC 3 位 ＝ 5 位就不算
   H.npc[add(day, -1)] = { food: 2 }; assert.ok(G.casInJump(H, "food", day, 0, SEC).quiet, "館友 2 ＋ NPC 2 ＝ 4 位：人太少");
 });
 T("NPC 劇情日：那家店那天多去 round(b × 前 7 個有效日平均)，b 在 npcBoostMin～npcBoostMax；別家不加；事件記下來", G => {
+  G.NUM.casino.stockIn.npcBase = 0; G.NUM.casino.stockIn.npcWalk = 0;
   const C = G.NUM.casino.stockIn, h = house(G), H = G.casInHouseFix(h), day = add(D0, 10);
   for (let i = 1; i <= 8; i++) { H.use[add(day, -i)] = { food: 10, bj: 10 }; H.npc[add(day, -i)] = { food: 0, bj: 0 }; }
   H.use[day] = { food: 10, bj: 10 };

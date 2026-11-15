@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-f04f56", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "館內股：沒什麼館友的店，也有 NPC 和散客撐人氣", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館內股以前館友少的店，開盤常常「人太少沒跳空」。",
+        "現在每家店每天都會有幾位 NPC 和散客固定來逛，人氣不再只看館友有幾位。",
+        "跳空的上限、算法都沒變，來回成本照舊。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-1d22a8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "書架翻頁鈕變明顯", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
