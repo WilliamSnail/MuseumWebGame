@@ -14,6 +14,7 @@ export const SFX_FILES = {
   "coin-payout-big": { name: "Wood Surface Multi Coin Payout Loop 1", by: "floraphonic", url: "https://pixabay.com/sound-effects/wood-surface-multi-coin-payout-loop-1-215433/", use: "銀行定存解約、館債贖回、平倉（大筆錢回到手上）" },
   "i-see-money": { name: "i see money（截前 4.5 秒）", by: "Shelvis_makes_games", url: "https://pixabay.com/sound-effects/i-see-money-181273/", use: "開大禮包（拉霸開始轉）" },
   "cha-ching": { name: "Cashier \"ka-ching\" sound effect", by: "u_byub5wd934", url: "https://pixabay.com/sound-effects/cashier-quotka-chingquot-sound-effect-129698/", use: "銀行還錢、賣股還債" },
+  "you-have-money": { name: "You have money", by: "RussWazHere3000", url: "https://pixabay.com/sound-effects/you-have-money-206821/", use: "開大禮包開到 2 星以上" },
   "coin-drop": { name: "Coin Drop In Slot 2 SFX", by: "BFCMUSIC", url: "https://pixabay.com/sound-effects/coin-drop-in-slot-2-sfx-330553/", use: "賭場借到籌碼；銀行存入、定存、買館債、買股票、開槓桿（錢放進去）" },
   "slot-bonus": { name: "Playful Casino Slot Machine Bonus 2", by: "floraphonic", url: "https://pixabay.com/sound-effects/playful-casino-slot-machine-bonus-2-183919/", use: "抽卡包 4 星以上" },
   "crowd-cheer": { name: "crowd cheering", by: "DennisH18", url: "https://pixabay.com/sound-effects/crowd-cheering-143103/", use: "抽卡包 5 星" },

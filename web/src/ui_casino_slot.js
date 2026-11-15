@@ -124,6 +124,7 @@ export function slotMachine(o = {}) {
     plateSet(pack.name, pack.chips);
     snd(pack.stars >= 4 ? "revLegend" : pack.stars === 3 ? "revSuper" : pack.stars === 2 ? "revRare" : "revCommon");
     if (pack.stars >= 4 && FX.goldDust) FX.goldDust(el, pack.stars === 5 ? 3200 : 1600);
+    if (pack.stars >= 2) setTimeout(() => sndFile("you-have-money", 0.4), 300); // 11-15 翊文：「這個開到獎可以用」，選 2 星以上
     if (pack.stars >= 4) sndFile("slot-bonus", 0.45); // 11-15：4 星以上加拉霸機的中獎音（Pixabay）
     if (pack.stars === 5) { setTimeout(() => snd("crit01"), 500); setTimeout(() => sndFile("crowd-cheer", 0.4), 700); } // 5 星：全場歡呼
   }
