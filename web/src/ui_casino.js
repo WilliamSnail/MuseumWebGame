@@ -17,7 +17,7 @@ import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
 import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, sndFile, wait } from "./ui_core.js";
 import { ambHeat } from "./ui_mood.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
@@ -208,7 +208,7 @@ export function bankBar(C, io) {
   }
   const why = playing ? CAS_TEXT.loanPlaying : L.why;
   const off = C.busy ? true : null;
-  const borrow = amt => io.act("borrow", { amt }, r2 => { io.say(r2.lines); snd("coin"); celebrate(r2.ach); });
+  const borrow = amt => io.act("borrow", { amt }, r2 => { io.say(r2.lines); snd("coin"); sndFile("coin-drop", 0.4); celebrate(r2.ach); }); // 11-15：籌碼落下（Pixabay）
   const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`全額 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
   // 銀行的樣子（翊文 11-10：「介面稍微在更精美一點，像銀行一點」）：行名和狀態、三格數字、借款金額、借款明細（像存摺）
   const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);

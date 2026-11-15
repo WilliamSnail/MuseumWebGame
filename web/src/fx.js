@@ -1,7 +1,7 @@
 /* =============================================================================
    fx.js - 佩佩博物館 2 進階版 - interaction & effects toolkit
    -----------------------------------------------------------------------------
-   Exactly one global: FX.  Plain ES2020, no imports, no network, no assets.
+   Exactly one global: FX.  Plain ES2020, no imports. 音效大多即時合成；11-15 起少數用 /sfx/*.mp3（Pixabay，見 shared/sfx_files.js），用到才下載。
    Nothing here touches document/window at load time (safe to load in Node);
    every DOM / Web Audio access happens inside functions.
    Settings are read at call time from FX.settings and body.reduce-motion.
@@ -588,6 +588,40 @@ export const FX = (() => {
       n.connect(fl); fl.connect(v); v.connect(to); n.start(0, Math.random());
       return { n, fl, v };
     }
+    // 音效檔（11-15，翊文給的 Pixabay 素材；清單、來源、授權在 shared/sfx_files.js 和 web/public/sfx/來源.md）。
+    //   用到才下載（/sfx/<id>.mp3），同壹個檔只抓壹次；抓不到、解不開就安靜，不出錯。
+    const FILES = {};
+    function fileBuf(c, id) {
+      if (!FILES[id]) {
+        FILES[id] = (typeof fetch === 'function' ? fetch('/sfx/' + id + '.mp3') : Promise.reject())
+          .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
+          .then((b) => new Promise((ok, no) => c.decodeAudioData(b, ok, no)))
+          .catch(() => null);
+      }
+      return FILES[id];
+    }
+    // 壹直循環的檔案（環境音）：像 bed 壹樣回傳 { n, v }，n.stop() 停掉。檔案到了才接上；從隨機位置開始，每次進來聽起來不壹樣
+    //   mp3 頭尾有幾十毫秒的空白，循環時各跳過 0.05 秒（檔案本身已經做成頭尾接得起來）
+    function fileLoop(c, to, id, gain) {
+      const v = c.createGain(); v.gain.value = gain; v.connect(to);
+      const hh = { v, src: null, dead: false };
+      hh.n = { stop() { hh.dead = true; if (hh.src) { try { hh.src.stop(); } catch (e) { /* ignore */ } } } };
+      fileBuf(c, id).then((buf) => {
+        if (!buf || hh.dead) return;
+        const s = c.createBufferSource(); s.buffer = buf; s.loop = true;
+        s.loopStart = 0.05; s.loopEnd = Math.max(0.1, buf.duration - 0.05);
+        s.connect(v); s.start(0, 0.05 + Math.random() * Math.max(0, buf.duration - 0.2)); hh.src = s;
+      });
+      return hh;
+    }
+    // 環境音裡偶爾播壹次的檔案（接到 to，不走 sfx 音軌）
+    function fileOnce(c, to, id, gain) {
+      fileBuf(c, id).then((buf) => {
+        if (!buf) return;
+        const s = c.createBufferSource(), v = c.createGain();
+        s.buffer = buf; v.gain.value = gain; s.connect(v); v.connect(to); s.start();
+      });
+    }
     // 環境音的小零件：遠處的人聲、遠處的腳步
     function murmur(c, to, level) {
       const nodes = [];
@@ -819,8 +853,9 @@ export const FX = (() => {
         return { nodes: [room.n], timers: [pad, steps] };
       },
       cellar(c, g) { // 地下收藏庫：風聲＋滴水
-        const b = bed(c, g, 'bandpass', 420, 1.1, 0.07);
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.03, b.v.gain)];
+        // 11-15：風聲加真的錄音（Pixabay「Wind blowing sfx」），合成的風降壹半墊底
+        const b = bed(c, g, 'bandpass', 420, 1.1, 0.035);
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), fileLoop(c, g, 'wind', 0.35).n];
         const drip = every(() => {
           const t = c.currentTime + 0.05, f = rand(1250, 1900);
           tone(t, { f, f2: f * 1.7, glide: 0.04, g: 0.05, a: 0.002, d: 0.16, to: g });
@@ -858,7 +893,9 @@ export const FX = (() => {
           [174.61, 220, 261.63, 329.63], [174.61, 246.94, 293.66, 392], [164.81, 196, 246.94, 329.63], [164.81, 196, 246.94, 329.63]];
         const cur = { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 }; // 還沒收到 ambMix 之前的備用值（=平常）；真正的數字在 shared/room_mood.js
         const crowdG = c.createGain(); crowdG.gain.value = cur.crowd; crowdG.connect(g);
-        const nodes = murmur(c, crowdG, 3);
+        // 11-15：人聲改用真的賭場錄音（Pixabay「Casino Ambiance」），合成的 murmur 降低留著墊底（檔案還沒下載完時也有聲音）；兩個都跟熱鬧連動（crowdG）
+        const nodes = murmur(c, crowdG, 1.5);
+        nodes.push(fileLoop(c, crowdG, 'casino-ambiance', 30).n);
         // 11-15 翊文：「拿掉沙沙聲」：原本這裡有壹條 1500 Hz 的帶通雜訊（比較散的人聲），聽起來像白噪音，拿掉了；只留 murmur 的低沉人聲
         const send = echoSend(c, g, B * 1.5, 0.22);
         let next = c.currentTime + 0.1, bar = 0;
@@ -931,7 +968,8 @@ export const FX = (() => {
             noise(tt, { type: 'highpass', f: 6500, q: 1, g: 0.008, a: 0.001, d: 0.02, to: g });
           }
         }, () => rand(9000, 19000));
-        return { nodes, timers: [sched, coins] };
+        const counting = every(() => fileOnce(c, g, 'coins-counting', 0.12), () => rand(25000, 50000)); // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
+        return { nodes, timers: [sched, coins, counting] };
       },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
         const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
@@ -1114,6 +1152,19 @@ export const FX = (() => {
       heart(san) { want.heart = san != null && san > 0 && san <= 30 ? san : null; sync(); },
       tinnitus(on) { want.tinnitus = !!on; sync(); },
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
+      // 播壹次音效檔（id 見 shared/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
+      file(id, g) {
+        try {
+          if (!isOn('sfx')) return;
+          const c = ctx(); if (!c) return;
+          fileBuf(c, id).then((buf) => {
+            if (!buf || !isOn('sfx')) return;
+            const s = c.createBufferSource(), v = c.createGain();
+            s.buffer = buf; v.gain.value = g == null ? 0.5 : Math.max(0, Math.min(1, +g));
+            s.connect(v); v.connect(bus.sfx); s.start();
+          });
+        } catch (e) { /* never throw */ }
+      },
       setVolume(k, v) { if (!(k in vol)) return; vol[k] = Math.max(0, Math.min(1, +v)); sync(); },
       volume: (k) => vol[k],
       sync,

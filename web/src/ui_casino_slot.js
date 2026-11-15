@@ -6,7 +6,7 @@
 // =====================================================================
 import { casNum, casSlotPlan } from "../../shared/casino.js";
 import { FX } from "./fx.js";
-import { h, holdFor, motionOff, snd } from "./ui_core.js";
+import { h, holdFor, motionOff, snd, sndFile } from "./ui_core.js";
 
 const REELS = 5, LOOP = 20, CELLS = 64;
 const PLAIN = ["♠", "♥", "♦", "♣"];
@@ -124,7 +124,8 @@ export function slotMachine(o = {}) {
     plateSet(pack.name, pack.chips);
     snd(pack.stars >= 4 ? "revLegend" : pack.stars === 3 ? "revSuper" : pack.stars === 2 ? "revRare" : "revCommon");
     if (pack.stars >= 4 && FX.goldDust) FX.goldDust(el, pack.stars === 5 ? 3200 : 1600);
-    if (pack.stars === 5) setTimeout(() => snd("crit01"), 500);
+    if (pack.stars >= 4) sndFile("slot-bonus", 0.45); // 11-15：4 星以上加拉霸機的中獎音（Pixabay）
+    if (pack.stars === 5) { setTimeout(() => snd("crit01"), 500); setTimeout(() => sndFile("crowd-cheer", 0.4), 700); } // 5 星：全場歡呼
   }
   // 伺服器沒開成：停下來，什麼都沒中
   async function abort(text) {
