@@ -71,3 +71,10 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
 /* 霓虹和荷官都開：標題列中間錯開 */
 .rm-fx.both-top .rm-neon { left: 36%; }
 .rm-fx.both-top .rm-dealer { left: 66%; font-size: clamp(.72rem, .95vw, .9rem); }
+
+/* 賭場的煙：畫在綠絨布上、介面（牌、字、按鈕）後面（翊文：「煙霧感覺擋到介面了，應該在介面後面」）。濃淡由 ui_mood.js 設 --rm-smoke（冷清 0、熱鬧 1） */
+.nb-casino .nb-surface { isolation: isolate; }
+.nb-casino .nb-surface::before { content: ""; position: absolute; inset: -10% -5%; z-index: -1; pointer-events: none; opacity: var(--rm-smoke, 0); transition: opacity 2.4s ease; filter: blur(7px);
+  background: radial-gradient(ellipse 26% 20% at 18% 88%, rgba(236, 228, 210, .30), transparent 72%), radial-gradient(ellipse 34% 22% at 52% 96%, rgba(236, 228, 210, .26), transparent 72%), radial-gradient(ellipse 24% 18% at 84% 86%, rgba(236, 228, 210, .28), transparent 72%), radial-gradient(ellipse 30% 18% at 40% 60%, rgba(236, 228, 210, .16), transparent 72%);
+  animation: rm-smoke-bg 28s ease-in-out infinite alternate; }
+@keyframes rm-smoke-bg { from { transform: translate(-3%, 3%) scale(1); } to { transform: translate(4%, -14%) scale(1.18); } }

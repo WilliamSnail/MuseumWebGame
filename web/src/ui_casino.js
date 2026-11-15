@@ -17,7 +17,8 @@ import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
 import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setChips, snd, wait } from "./ui_core.js";
+import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, wait } from "./ui_core.js";
+import { ambHeat } from "./ui_mood.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -101,9 +102,10 @@ export async function openCasino(o) {
   // 劇情面板的「去賭場」直接開到「本週收藏」
   const want = o && typeof o.tab === "string" && TABS.some(t => t[0] === o.tab) ? o.tab : null;
   if (S && S.m && S.m.layer.isConnected) { if (want) goTab(want); return; }
-  const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); });
-  mountMood(m.layer.querySelector(".nb-frame"), "casino", { fx: ["chips", "neon", "smoke", "dealer"] }); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
+  const m = overlay("nb-casino", CAS_TEXT.title, CAS_TEXT.title, "dice", () => { S = null; NET.where(netRoom(UI.screen)); setAmbOver(null); });
+  mountMood(m.layer.querySelector(".nb-frame"), "casino", { fx: ["chips", "neon", "dealer"] } /* 煙霧在介面後面，不走 fx */); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
+  setAmbOver("casino", ambHeat); // 底下房間的環境樂換成賭場那首（關掉換回去）
   S = { m, tab: want || "table", w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;
   draw();

@@ -8,6 +8,7 @@ import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } fr
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
+import { ambMix } from "../../shared/room_mood.js";
 import { markTokens, taipeiDay } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/logic3.js";
@@ -377,7 +378,14 @@ export function refreshInspHave(el) {
 // ---------- 聲音跟著狀態走（翊文 11-08） ----------
 // 環境音：看在哪個房間；理智歸零後是遠處的低音鼓；心跳：理智 30 以下；耳鳴：瘋狂發作中；不安的低鳴：理智 40 以下越低越明顯
 export const AMB_OF = { gallery: "gallery", cellar: "cellar", fusion: "fusion", lobby: "lobby", workshop: "workshop", reveal: "workshop", pillow: "pillow", commission: "commission",
-  codex: "codex", hall: "hall", origin: "origin", library: "library", office: "office", settings: "room", title: "title", ending: null }; // 翊文 11-08：每個房間都有自己的背景音
+  codex: "codex", hall: "hall", origin: "origin", library: "library", office: "office", bank: "bank", settings: "room", title: "title", ending: null }; // 翊文 11-08：每個房間都有自己的背景音；11-15：銀行也有
+// 賭場是蓋在房間上面的框：UI.ambOver ＝ "casino" 時，底下房間的環境樂換成賭場那首（關掉就換回去，不會兩首疊在壹起）。
+// UI.ambHeat：回傳 0～3 熱鬧程度的函式（ui_mood.js 的 ambHeat，賭場打開時設上）
+export function setAmbOver(name, heatFn) {
+  UI.ambOver = name || null; UI.ambHeat = name ? heatFn || null : null;
+  clearInterval(UI.ambTimer); UI.ambTimer = name ? setInterval(audioState, 30000) : null; // 開著的時候每 30 秒照最新的熱鬧程度調壹次；關掉就不再跑
+  audioState();
+}
 // 低語：理智越低，越多聲音疊在壹起（翊文 11-08）。50 以上 2 個，40–49：3，30–39：4，20–29：5，10–19：6，1–9：7，0：8
 export const whisperLayers = () => !P || isFree(P) || P.sanity >= 50 ? 2 : P.sanity <= 0 ? 8 : Math.min(7, 3 + Math.floor((49 - P.sanity) / 10));
 export function audioState() {
@@ -386,6 +394,8 @@ export function audioState() {
   if (S.setWhisperLayers) S.setWhisperLayers(whisperLayers());
   const live = !!(P && !isFree(P)), scr = UI.screen;
   let amb = scr === "title" ? "title" : P ? (scr in AMB_OF ? AMB_OF[scr] : "room") : null;
+  if (UI.ambOver && P && scr !== "ending" && scr !== "title" && AMB_OF[scr] !== null) amb = UI.ambOver;
+  if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
   if (live && P.dark && scr !== "ending") amb = "zero";
   if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
   S.ambient(amb);
