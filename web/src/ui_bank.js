@@ -106,11 +106,13 @@ async function bankLoad() {
 // 音效（11-15，翊文：「有些音效好像銀行也可以用，例如存錢」；檔案和來源在 shared/sfx_files.js）：錢放進去＝籌碼落下，錢回到手上＝吐硬幣（大筆＝壹串）；失敗＝原本的 error
 const BANK_SFX_IN = new Set(["bank:put", "bank:term", "bank:bond", "stock:buy", "stock:open"]);
 const BANK_SFX_PAY = new Set(["repay:", "stock:sellDebt"]); // 還債：收銀機「叮」
-const BANK_SFX_OUT = new Set(["bank:take", "borrow:", "stock:sell"]);
+const BANK_SFX_ATM = new Set(["bank:take", "borrow:"]); // 從銀行領錢：ATM 吐鈔（11-15，翊文：「可以改銀行已經用的聲音…看哪個適合」）
+const BANK_SFX_OUT = new Set(["stock:sell"]);
 const BANK_SFX_BIG = new Set(["bank:break", "bank:bondRedeem", "stock:close"]); // 大筆錢回到手上：壹串硬幣
 function bankSfx(act, data) {
   const k = act + ":" + ((data && data.op) || "");
   if (BANK_SFX_PAY.has(k)) sndFile("cha-ching", 0.45);
+  else if (BANK_SFX_ATM.has(k)) sndFile("atm-dispense", 0.4);
   else if (BANK_SFX_IN.has(k)) sndFile("coin-drop", 0.4);
   else if (BANK_SFX_OUT.has(k)) sndFile("coin-payout", 0.45);
   else if (BANK_SFX_BIG.has(k)) sndFile("coin-payout-big", 0.4);
@@ -138,11 +140,22 @@ function confirmTrade(title, lines, okText, onOk) {
   closeOnOutside(m);
 }
 // 挑金額的小視窗：amts 是 [金額, 文字]，按了叫 then(金額)
-function pickAmt(title, sub, amts, then) {
+// type：{ min, max, verb }＝下面多壹格自己輸入金額（11-15 翊文：「存錢應該也要能手動輸入數字」），範圍外不能按（伺服器也會擋）
+function pickAmt(title, sub, amts, then, type) {
   const m = miniLayer(title, sub);
   const ok = amts.filter(([n]) => n > 0);
-  m.card.append(h("div", { class: "bank-acts bank-pick" }, ok.length ? ok.map(([n, t]) => btn(t || fmt(n), () => { m.close(); then(n); }, "big bank-btn")) : h("p", { class: "bank-why" }, "金額不夠。")),
-    btn("取消", () => m.close(), "small"));
+  m.card.append(h("div", { class: "bank-acts bank-pick" }, ok.length ? ok.map(([n, t]) => btn(t || fmt(n), () => { m.close(); then(n); }, "big bank-btn")) : h("p", { class: "bank-why" }, "金額不夠。")));
+  if (type && type.max >= type.min) {
+    let amt = "";
+    const hint = h("p", { class: "bank-hint" }, `或自己輸入：${fmt(type.min)}～${fmt(type.max)}`);
+    const okT = () => typeof amt === "number" && Number.isFinite(amt) && Math.floor(amt) >= type.min && Math.floor(amt) <= type.max;
+    const go = btn(type.verb || "確定", () => { if (okT()) { m.close(); then(Math.floor(amt)); } }, "big bank-btn gold", { disabled: true });
+    m.card.classList.add("bank-loan-pop"); // 小視窗在銀行版面外面：輸入框邊框照借款那個
+    m.card.append(numField("金額", "", x => { amt = x; go.disabled = !okT(); hint.textContent = amt === "" ? `或自己輸入：${fmt(type.min)}～${fmt(type.max)}` : okT() ? `${type.verb || "確定"} ${fmt(Math.floor(amt))}` : `要在 ${fmt(type.min)} 到 ${fmt(type.max)} 之間。`; }, { min: type.min, step: 1 }), hint,
+      h("div", { class: "bank-acts" }, go));
+    const inp = m.card.querySelector("input"); if (inp) inp.addEventListener("keydown", e => { if (e.key === "Enter") go.click(); });
+  }
+  m.card.append(btn("取消", () => m.close(), "small"));
   closeOnOutside(m);
 }
 // 借款自己輸入金額（11-15）：打字時只更新下面那行「要還多少、幾號到期」，按「借」才送；超過還可以借的、不到最少的不能按（伺服器也會擋）
@@ -183,13 +196,13 @@ function savePane(v) {
     h("span", { class: "bank-tab-num" }, `${fmt(t.amt)} → ${fmt(t.amt + t.int)}`),
     h("span", { class: "bank-r" }, btn("提早解約", () => bankDo("bank", { op: "break", id: t.id }), "small bank-btn", { title: "只拿回本金，利息沒有" }))));
   for (let i = 0; i < free; i++) termRows.push(h("div", { class: "bank-row empty", role: "row" }, h("span", null, pic("lock-open", "lock"), h("b", null, "空的"), h("small", null, "還可以開壹筆")), h("span", { class: "bank-r" }, btn("＋ 新增", () => pickAmt("開壹筆定存", `用手上的籌碼，壹筆 ${fmt(s.termMin)}～${fmt(s.termCap)}`, quickOf([s.termMin].concat(s.quick), Math.min(s.termCap, v.cash), s.termMin),
-  amt => { const m = miniLayer(`定存 ${fmt(amt)}`, "存幾天？到期自動回到活存。"); m.card.append(h("div", { class: "bank-acts bank-pick" }, s.kinds.map(k => btn(`${k.days} 天 ${pctText(k.pct)}（+${fmt(Math.floor(amt * k.pct))}）`, () => { m.close(); bankDo("bank", { op: "term", amt, kind: k.i }); }, "big bank-btn gold"))), btn("取消", () => m.close(), "small")); closeOnOutside(m); }), "small bank-btn gold"))));
+  amt => { const m = miniLayer(`定存 ${fmt(amt)}`, "存幾天？到期自動回到活存。"); m.card.append(h("div", { class: "bank-acts bank-pick" }, s.kinds.map(k => btn(`${k.days} 天 ${pctText(k.pct)}（+${fmt(Math.floor(amt * k.pct))}）`, () => { m.close(); bankDo("bank", { op: "term", amt, kind: k.i }); }, "big bank-btn gold"))), btn("取消", () => m.close(), "small")); closeOnOutside(m); }, { min: s.termMin, max: Math.min(s.termCap, v.cash), verb: "下壹步" }), "small bank-btn gold"))));
   return h("div", { class: "bank-cols" },
     panel("活存", "隨時可以領，每天 05:00 給利息",
       h("div", { class: "bank-big" }, pic("jar", "jar"), num("big", fmt(s.save))),
       h("p", { class: "bank-meta" }, "利率 ", h("b", { class: "good" }, `${pctText(s.savePct)}／天`), "　昨天利息 ", h("b", { class: "good" }, sign(s.earned))),
-      h("div", { class: "bank-acts" }, btn("存入", () => pickAmt("存進活存", "從手上的籌碼搬進活存", quickOf(s.quick, v.cash, s.min).concat(v.cash >= s.min ? [[v.cash, `全部 ${fmt(v.cash)}`]] : []), amt => bankDo("bank", { op: "put", amt })), "primary big bank-btn gold"),
-        btn("提出", () => pickAmt("從活存領出", "搬回手上的籌碼", quickOf(s.quick, s.save).concat(s.save > 0 ? [[s.save, `全部 ${fmt(s.save)}`]] : []), amt => bankDo("bank", { op: "take", amt })), "big bank-btn")),
+      h("div", { class: "bank-acts" }, btn("存入", () => pickAmt("存進活存", "從手上的籌碼搬進活存", quickOf(s.quick, v.cash, s.min).concat(v.cash >= s.min ? [[v.cash, `全部 ${fmt(v.cash)}`]] : []), amt => bankDo("bank", { op: "put", amt }), { min: s.min, max: v.cash, verb: "存入" }), "primary big bank-btn gold"),
+        btn("提出", () => pickAmt("從活存領出", "搬回手上的籌碼", quickOf(s.quick, s.save).concat(s.save > 0 ? [[s.save, `全部 ${fmt(s.save)}`]] : []), amt => bankDo("bank", { op: "take", amt }), { min: 1, max: s.save, verb: "領出" }), "big bank-btn")),
       h("p", { class: "bank-hint" }, "利息由莊家付。莊家缺錢的時候，利息會停發，這裡會寫「莊家吃緊」。")),
     panel("定存", `3 天 1%、7 天 3%，同時最多 ${s.termMax} 筆`,
       h("div", { class: "bank-safe" }, pic("safe", "safe"), h("small", null, `存了 ${s.terms.length} 筆，鎖到期才領得到利息`)),
@@ -387,9 +400,12 @@ const SEG_ICON = {
 const seg = (items, cur, onPick, cls) => h("div", { class: "bank-segs " + (cls || ""), role: "tablist" }, items.map(([k, t, dis]) => h("button", { type: "button", role: "tab", "aria-selected": String(k === cur), class: "bank-seg" + (k === cur ? " on" : ""), disabled: dis ? true : null, onClick: () => onPick(k) }, SEG_ICON[k] && cls === "kind" ? h("span", { class: "bank-segi", html: SEG_ICON[k], "aria-hidden": "true" }) : null, t)));
 const form = () => (UI.bankForm || (UI.bankForm = { lev: 2, dir: "long", margin: 1000000, stopOn: true, stop: 3, takeOn: false, take: 5, okind: "buy", opx: "", on: "" }));
 // 數字欄：打字的時候只更新旁邊的算式（不整頁重畫，不然游標會跑掉）
+let keyAt = 0;
+const keyBeep = () => { const t = Date.now(); if (t - keyAt > 40) { keyAt = t; sndFile("keypad", 0.3); } };
 function numField(label, value, onChange, opts = {}) {
   const inp = h("input", { type: "number", inputmode: "decimal", class: "bank-in", value: value === "" ? "" : String(value), min: opts.min != null ? String(opts.min) : null, step: opts.step != null ? String(opts.step) : "any", "aria-label": label,
-    onInput: e => onChange(e.target.value === "" ? "" : Number(e.target.value)) });
+    onInput: e => onChange(e.target.value === "" ? "" : Number(e.target.value)),
+    onKeydown: e => { if (/^[0-9.]$/.test(e.key) || e.key === "Backspace") keyBeep(); } }); // 按數字「嗶」（11-15，Pixabay「Number pad 1」）
   return h("label", { class: "bank-field" }, h("span", null, label), inp, opts.unit ? h("em", null, opts.unit) : null);
 }
 const chips = (list, cur, onPick, fmtFn) => h("div", { class: "bank-chips" }, list.map(n => h("button", { type: "button", class: "bank-chip" + (n === cur ? " on" : ""), "aria-pressed": String(n === cur), onClick: () => onPick(n) }, fmtFn ? fmtFn(n) : fmt(n))));

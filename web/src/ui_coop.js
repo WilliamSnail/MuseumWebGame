@@ -18,7 +18,7 @@ import { COOP } from "../../shared/coop.js";
 import { coopTurnsLeft } from "../../shared/coop_flow.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop_text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, setCellarSnd, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, setCellarSnd, sndFile, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { eventBoostText } from "../../shared/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
@@ -844,6 +844,7 @@ function trialResult(v) {
 function overCard(v, me) {
   const s = S, isLeader = s.party && s.party.leader === v.me;
   const sum = v.summary || [];
+  if (v.over !== "lost" && s.safeKey !== v.id) { s.safeKey = v.id; setTimeout(() => sndFile("safe-return", 0.45), 600); } // 平安回到地面：鋼琴弦樂，壹趟只播壹次（11-15 翊文）
   return h("div", { class: "note-card room-card cx-card cx-over" }, h("i", { class: "pin" }),
     h("h2", { class: "room-title" }, v.over === "lost" ? "這壹趟到這裡" : "回到地面了"),
     h("p", { class: "cx-text" }, COOP_OVER_TEXT[v.over] || COOP_OVER_TEXT.done),
