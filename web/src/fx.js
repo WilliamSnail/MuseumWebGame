@@ -757,8 +757,8 @@ export const FX = (() => {
         const paper = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: rand(1800, 3200), f2: rand(900, 1500), glide: 0.2, q: 1, g: 0.022, a: 0.04, d: 0.22, to: g }), () => rand(2500, 6000));
         const stampT = every(() => { const t = c.currentTime + 0.05; tone(t, { f: 110, f2: 55, glide: 0.1, g: 0.05, a: 0.002, d: 0.12, to: g }); noise(t, { type: 'lowpass', f: 900, q: 0.7, g: 0.03, a: 0.002, d: 0.05, to: g }); }, () => rand(9000, 18000));
         const ding = every(() => { if (Math.random() < 0.6) return; const t = c.currentTime + 0.05; tone(t, { f: 2093, g: 0.014, a: 0.002, d: 0.9, to: g }); tone(t, { f: 4186, g: 0.004, a: 0.002, d: 0.4, to: g }); }, () => rand(20000, 35000));
-        let cn = 0; // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊，大提琴 4～7 分鐘輕輕放壹次
-        const cello = every(() => { if (!cn++) return; fileOnce(c, g, 'cello-commission', 0.4); }, () => rand(240000, 420000));
+        let cn = 0; // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊，大提琴 約每 2 分鐘輕輕放壹次
+        const cello = every(() => { if (!cn++) return; fileOnce(c, g, 'cello-commission', 0.4); }, () => rand(100000, 140000));
         return { nodes: [room.n], timers: [paper, stampT, ding, cello] };
       },
       codex(c, g) { // 圖鑑室：很安靜，時鐘滴答，偶爾翻頁
@@ -793,9 +793,9 @@ export const FX = (() => {
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % MEL.length; next += Q * 4; } }, () => 1000);
         const creak = every(() => tonef(c.currentTime + 0.05, { type: 'sawtooth', f: rand(110, 160), f2: rand(80, 120), glide: 0.6, g: 0.01, a: 0.1, d: 0.6, lp: 700, q: 6, to: g }), () => rand(14000, 24000));
         const page = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: 1400, f2: 4000, q: 0.8, g: 0.012, a: 0.05, d: 0.2, to: g }), () => rand(12000, 20000));
-        // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 4～7 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
+        // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 約每 2 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
         let pn = 0, pu = 0;
-        const piano = every(() => { if (!pn++) return; fileOnce(c, g, pick(['lib-piano-a', 'lib-piano-b']), 0.4); }, () => rand(240000, 420000));
+        const piano = every(() => { if (!pn++) return; fileOnce(c, g, pick(['lib-piano-a', 'lib-piano-b']), 0.4); }, () => rand(100000, 140000));
         const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
         return { nodes: [], timers: [sched, creak, page, piano, pulse] };
       },
@@ -862,7 +862,9 @@ export const FX = (() => {
             tone(t + i * gap, { f: 120, f2: 80, glide: 0.05, g: gg * 0.6, a: 0.002, d: 0.06, to: send });
           }
         }, () => rand(6500, 13000));
-        return { nodes: [room.n], timers: [pad, steps] };
+        let gn = 0; // 11-16 翊文：畫廊偶爾放 nostalgic，約每 2 分鐘壹次，進房間第壹次不響
+        const nost = every(() => { if (!gn++) return; fileOnce(c, g, 'gallery-nostalgic', 0.4); }, () => rand(100000, 140000));
+        return { nodes: [room.n], timers: [pad, steps, nost] };
       },
       cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
         // 錄音都是 Pixabay（來源在 shared/sfx_files.js）。ui_core.js 的 audioState 用 ambMix({ floor, mode }) 告訴這裡現在在哪；沒告訴（選樓層的地方）用 base。

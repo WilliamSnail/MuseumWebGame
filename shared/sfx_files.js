@@ -52,5 +52,6 @@ export const SFX_FILES = {
   "lib-piano-b": { name: "Peaceful Piano（截前 105 秒）", by: "leberch", url: "https://pixabay.com/music/peaceful-piano-590944/", use: "圖書館偶爾輕輕放壹次的鋼琴（另一首）" },
   "cello-commission": { name: "Emotional Cello（截前 105 秒）", by: "no-copyright-music-2026", url: "https://pixabay.com/music/emotional-cello-611670/", use: "委託櫃台偶爾放壹次的大提琴" },
   "film-reveal": { name: "Film（截前 105 秒）", by: "leberch", url: "https://pixabay.com/music/film-517381/", use: "主線劇情揭露：打開主線的書時放" },
+  "gallery-nostalgic": { name: "Nostalgic", by: "atlasaudio", url: "https://pixabay.com/music/nostalgic-511878/", use: "畫廊偶爾輕輕放壹次（懷舊）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";
