@@ -503,6 +503,7 @@ NET.on("message", m => {
     note(`${m.from} 請你去看他的展廳。`, "good", 20000, { label: "去看看", run: () => visitFriend({ id: m.fromId, nick: String(m.from || "館友") }) });
     return;
   }
+  if (m.t === "mail_new" && m.kind === "advisor") { snd("bell"); note(`${m.from}寄了壹封信給你：${m.text}`, "good", 30000, { label: "去銀行看計畫", run: () => go("bank") }); return; } // 財經專員（決定 0093 第 3 件）：第壹次欠了不少錢；信也在信箱裡
   if (m.t === "mail_new" && m.kind === "auction") { snd("bell"); note(`${m.from}：${m.text}`, "good", 20000, { label: "去看信", run: () => PANELS.mail && PANELS.mail() }); return; }
   if (m.t === "mail_new") { snd("bell"); note(`${m.from} 送你壹隻佩佩：${m.text}。到信箱領。`, "good", 20000, { label: "去看信", run: () => PANELS.mail && PANELS.mail() }); return; } // 已經在線：清楚的通知（有按鈕）加信箱紅點，不跳大卡，免得打斷手上的事
   if (m.what === "visit") note(`${m.from} 來參觀你的展廳${m.insp ? `：信箱多了壹封謝禮（靈感 +${m.insp}）` : ""}。`);

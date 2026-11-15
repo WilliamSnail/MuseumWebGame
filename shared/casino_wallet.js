@@ -315,7 +315,7 @@ function casLoanFix(w) {
   if (!casIsObj(L.lv) || (L.lv.day !== "" && !okDay(L.lv.day))) L.lv = { day: "", n: 0 };
   L.lv.n = Math.max(0, Math.floor(casNz(L.lv.n)));
   L.list = (Array.isArray(L.list) ? L.list : []).filter(x => casIsObj(x) && Number.isFinite(+x.amt) && +x.amt > 0 && okDay(x.day) && okDay(x.due))
-    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: casLoanDueFix(x.day, x.due), at: Number.isFinite(+x.at) && x.at != null ? +x.at : null }));
+    .map(x => ({ id: Math.floor(casNz(x.id)), amt: Math.floor(+x.amt), owe: Math.max(Math.floor(+x.amt), Math.floor(casNz(x.owe, x.amt))), day: x.day, due: casLoanDueFix(x.day, x.due), at: Number.isFinite(+x.at) && x.at != null ? +x.at : null, ext: Math.max(0, Math.min(9, Math.floor(casNz(x.ext)))) }));
   L.notes = (Array.isArray(L.notes) ? L.notes : []).filter(s => typeof s === "string").slice(-5);
   if (!okDay(L.debtSince)) L.debtSince = null;
   if (w.chips >= 0) L.debtSince = null;
