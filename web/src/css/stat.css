@@ -1,0 +1,16 @@
+/* 公用數值元件（ui_stat.js；決定 0088）：tone 對應的顏色只寫在這裡。sv- 開頭 */
+:where(.sv-badge, .sv-bar i, .sv-legend span, .sv-col) { --c: #9FA9BD; }
+.tone-good { --c: #6FBF73; } .tone-neutral { --c: #B9C2D4; } .tone-warn { --c: #E3C26E; } .tone-bad { --c: #D9604F; }
+.sv-badge { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 10px; border-radius: 12px; border: 1px solid var(--c); background: rgba(255, 255, 255, .06); color: var(--c); font-size: var(--type-small, .75rem); font-weight: 700; white-space: nowrap; }
+.sv-badge em { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.sv-badge small { color: var(--bank-mute, #8E9AB0); font-weight: 400; font-size: var(--type-tiny, .6875rem); white-space: normal; }
+.sv-bar { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; background: rgba(255, 255, 255, .08); }
+.sv-bar i { min-width: 6px; background: var(--c); }
+.sv-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--type-small, .75rem); }
+.sv-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.sv-legend em { width: 10px; height: 10px; border-radius: 3px; background: var(--c); display: inline-block; }
+.sv-bands { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; align-items: end; }
+.sv-col { display: grid; justify-items: center; gap: 3px; font-size: var(--type-small, .75rem); }
+.sv-col i { width: 70%; max-width: 44px; border-radius: 4px 4px 0 0; background: var(--c); }
+.sv-col small { color: var(--bank-mute, #8E9AB0); font-size: var(--type-tiny, .6875rem); }
+.sv-n { padding-left: 6px; border-left: 1px solid currentColor; font-size: var(--type-small, .75rem); }

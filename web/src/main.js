@@ -41,6 +41,7 @@ import "./css/workshop2.css"; // 手作坊重做（11-14，ui_screens1.js）
 import "./css/pillow2.css"; // 抱枕工作台重做（11-14，ui_screens2.js）
 import "./css/origin2.css"; // 圖書館重做（11-14，ui_screens1.js）
 import "./css/office2.css"; // 館長室重做（11-14，ui_screens3.js） // 畫廊重做（11-14，ui_story.js、ui_art.js）
+import "./css/stat.css"; // 公用數值元件（11-15，ui_stat.js）
 import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
 import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
 import "./css/hallnow.css"; // 展廳現在、評價（11-14，ui_hallnow.js）
