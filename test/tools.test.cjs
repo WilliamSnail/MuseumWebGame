@@ -1,6 +1,6 @@
 // 給 AI 重複用的腳本：tools/ship.cjs、local_game.cjs、new_doc.cjs、edit_lib.cjs（只測規則，不會真的合併、開伺服器）
 const assert = require("assert");
-const { parseArgs, commitText, prBody, branchOk, noChecksYet, titleOk } = require("../tools/ship.cjs");
+const { parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk } = require("../tools/ship.cjs");
 const wf = require("../tools/wf_run.cjs");
 const emuDoc = require("../tools/emu_doc.cjs");
 const wt = require("../tools/new_worktree.cjs");
@@ -31,6 +31,12 @@ T("ship：CI 還沒登記要等，不算失敗；真的失敗不會被當成沒�
   assert.ok(noChecksYet("no checks reported on the 'claude/x' branch"));
   assert.ok(!noChecksYet("test\tfail\t1m"));
   assert.ok(!noChecksYet(""));
+});
+T("ship：CI 的結果（REST 的 check runs，11-15 雲端擋 GraphQL）", () => {
+  assert.strictEqual(checksState([]), "none");
+  assert.strictEqual(checksState([{ status: "in_progress", conclusion: null }, { status: "completed", conclusion: "success" }]), "wait");
+  assert.strictEqual(checksState([{ status: "completed", conclusion: "success" }, { status: "completed", conclusion: "skipped" }]), "ok");
+  assert.strictEqual(checksState([{ status: "completed", conclusion: "success" }, { status: "completed", conclusion: "failure" }]), "fail");
 });
 T("ship：commit 和 PR 的署名", () => {
   const c = commitText("改了東西\n");
