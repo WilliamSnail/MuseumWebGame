@@ -33,5 +33,14 @@ export const SFX_FILES = {
   "coin-drop": { name: "Coin Drop In Slot 2 SFX", by: "BFCMUSIC", url: "https://pixabay.com/sound-effects/coin-drop-in-slot-2-sfx-330553/", use: "賭場借到籌碼；銀行存入、定存、買館債、買股票、開槓桿（錢放進去）" },
   "slot-bonus": { name: "Playful Casino Slot Machine Bonus 2", by: "floraphonic", url: "https://pixabay.com/sound-effects/playful-casino-slot-machine-bonus-2-183919/", use: "抽卡包 4 星以上" },
   "crowd-cheer": { name: "crowd cheering", by: "DennisH18", url: "https://pixabay.com/sound-effects/crowd-cheering-143103/", use: "抽卡包 5 星" },
+  "sword-fight": { name: "Sword Fight", by: "dragon-studio", url: "https://pixabay.com/sound-effects/sword-fight-393849/", use: "地下遇到怪物的瞬間（劍戰壹下）" },
+  "boss-intro": { name: "Boss Intro 02（截前 12 秒，最後 3 秒淡出）", by: "freesound_community", url: "https://pixabay.com/sound-effects/boss-intro-02-72039/", use: "地下守門出現的瞬間" },
+  "stairs-boss": { name: "Stairs To The Boss Fight", by: "imij", url: "https://pixabay.com/music/stairs-to-the-boss-fight-322652/", loop: true, use: "地下守門戰的背景音樂（循環）" },
+  "ready-fight": { name: "Ready To Fight", by: "u_9vcmnl4trh", url: "https://pixabay.com/music/ready-to-fight-474973/", loop: true, use: "地下打怪物時的背景音樂（循環）" },
+  "bench-thud": { name: "Sound Effect 002 Wooden Bench Kicked or Thrown（截前 4 秒）", by: "senhor_a", url: "https://pixabay.com/sound-effects/sound-effect-002-wooden-bench-kicked-or-thrown-160747/", use: "合作走不下去、收尾的壹聲悶響" },
+  "suspense-a": { name: "Suspense Music（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/suspense-music-626374/", loop: true, use: "地下 B3 的緊張背景音樂（循環）" },
+  "suspense-b": { name: "Suspenseful（截前 90 秒）", by: "danyvin", url: "https://pixabay.com/music/suspenseful-633690/", loop: true, use: "地下 B4 的緊張背景音樂（循環）" },
+  "suspense-c": { name: "Suspense（截前 80 秒）", by: "nastelbom", url: "https://pixabay.com/music/suspense-501709/", loop: true, use: "地下 B5 的緊張背景音樂（循環）" },
+  "suspense-d": { name: "Suspense Cinematic（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/suspense-cinematic-581368/", loop: true, use: "地下 B2 的緊張背景音樂（循環）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

@@ -336,6 +336,11 @@ export const FX = (() => {
         [1780, 2650, 3910].forEach((f, i) => tone(t, { f, g: 0.05 / (i + 1), a: 0.001, d: 0.35 - i * 0.08 }));
         noise(t, { type: 'highpass', f: 3500, q: 0.7, g: 0.12, a: 0.001, d: 0.03 });
       },
+      defeat(t) { // 合作走不下去：低沉的收尾（庫裡沒有，自己合成）：往下走的小調四個音，最後壹個長長的低音
+        [146.83, 130.81, 110, 87.31].forEach((f, i) => tone(t + 0.5 + i * 0.55, { type: 'triangle', f, g: 0.07, a: 0.03, d: 1.7 }));
+        tone(t + 0.5, { f: 55, g: 0.09, a: 0.08, d: 3.2 });
+        noise(t + 0.5, { type: 'lowpass', f: 260, q: 0.7, g: 0.05, a: 0.4, d: 2.4 });
+      },
       fanfare(t) { // 整層走完：短號角
         const b = (tt, f, d) => tonef(tt, { type: 'sawtooth', f, g: 0.05, a: 0.03, d, lp: 1000, lp2: 2400, lpGlide: 0.1 });
         b(t, 523.25, 0.13); b(t + 0.13, 523.25, 0.13); b(t + 0.26, 659.25, 0.13);
@@ -870,6 +875,13 @@ export const FX = (() => {
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
         const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0) };
         const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n];
+        // 11-15 翊文給的音樂（Pixabay，shared/sfx_files.js）：用到才下載（lazy）。戰鬥＝ready-fight、守門＝stairs-boss、B2～B5 平常＝緊張的 suspense-*（B1 不放）
+        const LZ = {};
+        const music = (id, v, fade) => { // v＝這個狀態要多大聲；0 而且還沒建過就不建（不下載）
+          if (!LZ[id]) { if (v <= 0) return; LZ[id] = fileLoop(c, g, id, 0); nodes.push(LZ[id].n); }
+          LZ[id].v.gain.setTargetAtTime(v, c.currentTime, fade);
+        };
+        const SUSP = { 2: 'suspense-d', 3: 'suspense-a', 4: 'suspense-b', 5: 'suspense-c' };
         const cur = { f: FLOOR.base, m: MODE.map, mode: 'map' };
         const apply = (fade) => {
           const t = c.currentTime;
@@ -877,6 +889,12 @@ export const FX = (() => {
             const v = cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : (cur.f.bed[k] || 0) * cur.m.bed;
             L[k].v.gain.setTargetAtTime(v, t, fade);
           });
+        };
+        const applyMusic = (fade) => {
+          const md = cur.mode, fl = cur.floorNo;
+          music('ready-fight', md === 'fight' ? 0.32 : 0, fade);
+          music('stairs-boss', md === 'gate' ? 0.38 : 0, fade);
+          Object.keys(SUSP).forEach((k) => music(SUSP[k], fl === +k && (md === 'map' || md === 'explore') ? 0.2 : 0, fade));
         };
         apply(0.01);
         let oddN = 0, comeN = 0, lastOdd = 0; // every 會先跑壹次：第壹次跳過，進來不會馬上冒怪聲
@@ -900,9 +918,9 @@ export const FX = (() => {
             const f = FLOOR[m.floor] || FLOOR.base, md = MODE[m.mode] || MODE.map;
             const into = (m.mode === 'fight' || m.mode === 'gate') && cur.mode !== 'fight' && cur.mode !== 'gate';
             if (f === cur.f && m.mode === cur.mode) return;
-            cur.f = f; cur.m = md; cur.mode = m.mode;
-            apply(1.5);
-            if (into) fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.4 : 0.32);
+            cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null;
+            apply(1.5); applyMusic(1.5);
+            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.5 : 0.4); } // 遇到怪物：劍戰壹下；守門：Boss 登場
           },
         };
       },

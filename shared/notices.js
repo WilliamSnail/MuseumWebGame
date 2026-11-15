@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-685a68", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "地下多了新的音效和音樂", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "打怪、守門、走到地下深處時，有了各自的音樂和聲音；合作走不下去時，會響起壹段低沉的收尾。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-0f1273", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭桌有音樂和音效了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
