@@ -8,7 +8,7 @@
 //    statCounts(kind, counts, order) 把「各分級幾個」（例如 { normal: 7, cut: 3 }）轉成 items，名字和 tone 都叫 statView，不自己寫
 //  用法例：財報「外面世界」卡（ui_bank.js）。NPC 卡片、展廳評價之後也直接叫。
 // ================================================================
-import { h } from "./ui_core.js";
+import { UI, h } from "./ui_core.js";
 import { NUM } from "../../shared/config.js";
 import { statView, statBandOf } from "../../shared/stat_view.js";
 
@@ -25,10 +25,10 @@ export function statNum(kind, value) {
   return String(Math.round(v * 100) / 100);
 }
 
-// opts.kind：種類（決定數字格式）；opts.hint：true 就把壹句話也寫出來
+// opts.kind：種類（決定數字格式）；opts.num：false 就不寫數字；opts.hint：true 就把壹句話也寫出來
 export function statBadge(sv, opts) {
   if (!sv) return null;
-  const o = opts || {}, num = o.kind ? statNum(o.kind, sv.value) : "";
+  const o = opts || {}, num = o.kind && o.num !== false ? statNum(o.kind, sv.value) : "";
   return h("span", { class: "sv-badge tone-" + tone(sv.tone), title: sv.hint || "" }, h("em", { "aria-hidden": "true" }), sv.label, num ? h("b", { class: "sv-n bank-tab-num" }, num) : null, o.hint && sv.hint ? h("small", null, sv.hint) : null);
 }
 
@@ -56,9 +56,23 @@ function rep(kind, code) {
     const C = NUM.casino.worldDoc.health, v = { tight: C.squeeze - 0.01, weak: (C.squeeze + C.cut) / 2, normal: (C.cut + 1.1) / 2, strong: 1.5 }[code];
     return v !== undefined && statBandOf("unitHealth", v) === code ? statView("unitHealth", null, v) : null; // 門檻改了、代表值不在那級，就不顯示（寧可缺也不錯）
   }
+  if (kind === "npcSan") { const v = { edge: 10, uneasy: 30, tired: 50, steady: 80 }[code]; return v !== undefined && statBandOf("npcSan", v) === code ? statView("npcSan", null, v) : null; }
   return null;
 }
 export function statCounts(kind, counts, order) {
   const c = counts || {};
   return (order || Object.keys(c)).map(code => { const sv = rep(kind, code); return sv ? { code, label: sv.label, tone: sv.tone, n: +c[code] || 0 } : null; }).filter(Boolean);
+}
+
+// NPC 理智（peek 的 npcSan，決定 0090）：id → statView。還沒讀到 peek（UI.npcSan 是 undefined）回 null；讀到了沒列的就是 70
+export function npcSanView(id) {
+  if (!id || !UI.npcSan) return null;
+  const e = UI.npcSan[id], v = Array.isArray(e) ? +e[0] : 70;
+  return statView("npcSan", id, Number.isFinite(v) ? v : 70);
+}
+// opts.calm：true ＝ 只有不是「穩定」才畫（窄的地方用，免得壹排都是「穩定」）；其他同 statBadge
+export function npcSanBadge(id, opts) {
+  const sv = npcSanView(id);
+  if (!sv || (opts && opts.calm && sv.band === "steady")) return null;
+  return statBadge(sv, Object.assign({ kind: "npcSan" }, opts || {}));
 }

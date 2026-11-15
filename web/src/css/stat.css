@@ -14,3 +14,9 @@
 .sv-col i { width: 70%; max-width: 44px; border-radius: 4px 4px 0 0; background: var(--c); }
 .sv-col small { color: var(--bank-mute, #8E9AB0); font-size: var(--type-tiny, .6875rem); }
 .sv-n { padding-left: 6px; border-left: 1px solid currentColor; font-size: var(--type-small, .75rem); }
+.hn-nm .sv-badge { margin-left: 4px; min-height: 20px; padding: 0 7px; vertical-align: middle; }
+.hn-by .sv-badge { margin-left: 6px; min-height: 18px; padding: 0 6px; font-size: var(--type-tiny, .6875rem); }
+/* 米色底的視窗（展廳的評價）：顏色壓深壹點才看得清楚 */
+.hn-layer .sv-badge { background: rgba(0, 0, 0, .05); }
+.hn-layer .sv-badge.tone-good { --c: #2F7A34; } .hn-layer .sv-badge.tone-neutral { --c: #5A5348; }
+.hn-layer .sv-badge.tone-warn { --c: #8A5A00; } .hn-layer .sv-badge.tone-bad { --c: #A42F20; }
