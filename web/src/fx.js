@@ -859,7 +859,7 @@ export const FX = (() => {
         const cur = { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 }; // 還沒收到 ambMix 之前的備用值（=平常）；真正的數字在 shared/room_mood.js
         const crowdG = c.createGain(); crowdG.gain.value = cur.crowd; crowdG.connect(g);
         const nodes = murmur(c, crowdG, 3);
-        const hiss = bed(c, crowdG, 'bandpass', 1500, 0.7, 2); nodes.push(hiss.n); // 比較散的「沙沙」人聲
+        // 11-15 翊文：「拿掉沙沙聲」：原本這裡有壹條 1500 Hz 的帶通雜訊（比較散的人聲），聽起來像白噪音，拿掉了；只留 murmur 的低沉人聲
         const send = echoSend(c, g, B * 1.5, 0.22);
         let next = c.currentTime + 0.1, bar = 0;
         const play = (t0, b) => {
