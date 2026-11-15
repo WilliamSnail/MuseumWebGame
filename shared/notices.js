@@ -46,6 +46,22 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "mat-make-up-2026-11", v: 1, cat: "館方公告", tags: ["重要", "已更新"], importance: "important", area: "其他",
+    title: "換週章多吃了材料：每人補壹片金箔", publish: "2026-11-15", expire: "2026-12-15",
+    sections: [
+      ["發生了什麼", [
+        "材料換週章的時候，有時會先拿舊畫布、最後再拿金箔補 1 份，金箔的 2 份就白白少算了 1 份。",
+        "11-15 已經修好了：現在會先找剛好湊滿 3 份的組合。",
+      ]],
+      ["補償", [
+        "看不出以前是誰被多吃了，所以每位館友都補壹片金箔（算 2 份），放在信箱，領了就進背包。",
+        "信 30 天內要領。",
+      ]],
+    ],
+    cta: { label: "打開信箱", panel: "mail" },
+    gift: { id: "gift-mat-make-up-2026-11", title: "換週章的補償：金箔", items: ["mat:金箔"] },
+  },
+  {
     id: "upd-2026-11-15-ac2baa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "換週章：金箔的 2 份不會再少算", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
