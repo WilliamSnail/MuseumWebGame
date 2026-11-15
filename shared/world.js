@@ -153,7 +153,7 @@ export function whFix(house) {
   w.day = wdDayOk(w.day) ? w.day : null;
   for (const k of ["base", "idx", "h", "st", "unrest"]) if (!wuBox(w[k])) w[k] = {};
   for (const k of Object.keys(w.unrest)) w.unrest[k] = whClamp(wdN(w.unrest[k]), 0, 100);
-  w.mood = wuBox(w.mood) && wdDayOk(w.mood.day) ? { day: w.mood.day, v: whClamp(wdN(w.mood.v), 0, 100) } : null;
+  w.mood = wuBox(w.mood) && wdDayOk(w.mood.day) ? { day: w.mood.day, v: whClamp(wdN(w.mood.v), 0, 100), prev: w.mood.prev == null ? null : whClamp(wdN(w.mood.prev), 0, 100) } : null;
   if (!Array.isArray(w.ev)) w.ev = [];
   w.ev = w.ev.filter(e => wuBox(e) && wdDayOk(e.day) && typeof e.unit === "string" && WH_STATES.includes(e.to)).slice(-20);
   for (const u of whUnits()) { const s = wuBox(w.st[u.id]) ? w.st[u.id] : (w.st[u.id] = {}); s.s = WH_STATES.includes(s.s) ? s.s : "normal"; s.low = Math.max(0, wdN(s.low)); }
@@ -195,7 +195,7 @@ export function whTick(house, day, px) {
     w.ev = w.ev.slice(-20);
   }
   w.day = day;
-  w.mood = { day, v: whMood(house, day) };
+  const old = w.mood; w.mood = { day, v: whMood(house, day), prev: old && old.day === whAddDays(day, -1) ? old.v : null }; // prev ＝昨天的氣氛（散客類型權重用，換日前後都是同壹個數字）
   return true;
 }
 // 集團的集體不安（沒有紀錄 ＝ 平常的值）；排程填的劇情事件用 whUnrestAdd 推（劇情決定的欄位，之後接）
@@ -362,5 +362,11 @@ export function nwSanPublic(house) {
   return out;
 }
 
+// 這壹天的散客類型權重看的氣氛：「昨天的」氣氛。換日後第壹個碰莊家的人還沒觸發換日時（mood.day 還是昨天）和觸發之後（mood.day 是今天、昨天的在 prev）都回同壹個數字；差超過壹天或還沒算過 ＝ null（照平常）
+export function whCrowdMood(house, day) {
+  const m = house && house.wh && house.wh.mood; if (!m || !wdDayOk(m.day) || !wdDayOk(day)) return null;
+  if (m.day === day) return m.prev == null ? null : wdN(m.prev);
+  return m.day === whAddDays(day, -1) ? wdN(m.v) : null;
+}
 // 給畫面的今天的展廳氣氛：[數字, 分級代碼]；還沒算過 ＝ null
 export function whMoodPublic(house) { const m = house && house.wh && house.wh.mood; return m && Number.isFinite(+m.v) ? [wdN(m.v), statBandOf("crowdMood", m.v)] : null; }

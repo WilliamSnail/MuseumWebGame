@@ -8,6 +8,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { hallFeed } from "./npc_spend.js";
+import { whCrowdMood } from "./world.js";
 import { isFree } from "./logic.js";
 import { casCount } from "./casino_book.js";
 
@@ -27,7 +28,7 @@ export function casTicketClaimKeys(w, house, P, day, keys, secret, list, counter
   if (t.day !== day) { t.day = day; t.n = 0; t.keys = []; }
   if (!Array.isArray(t.keys)) t.keys = [];
   const pots = house.hallPot && house.hallPot.day === day ? house.hallPot.keys : {};
-  const feed = new Map(hallFeed(day, secret, list, counters, 0, nowMs).map(e => [e.key, e]));
+  const feed = new Map(hallFeed(day, secret, list, counters, 0, nowMs, whCrowdMood(house, day)).map(e => [e.key, e]));
   let n = 0, total = 0; const used = [];
   for (const k of (Array.isArray(keys) ? keys : []).slice(0, 80)) {
     if (typeof k !== "string" || t.keys.includes(k) || !feed.has(k) || !pots[k]) continue;
