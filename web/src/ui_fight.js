@@ -21,6 +21,8 @@ const TRAIT_ICON = { shell: 0, thick: 1, slippery: 2, stubborn: 3, grow: 4, stea
 const teamIcon = act => (act in TEAM_ICON ? h("span", { class: "fg-ico tm", style: { backgroundPosition: `${TEAM_ICON[act] * 25}% 0` }, "aria-hidden": "true" }) : null);
 const roleBadge = r => h("span", { class: "fg-role", title: FIGHT_ROLE_TEXT[r] }, h("i", { style: { backgroundPosition: `${(ROLE_ICON[r] || 0) * 25}% 0` }, "aria-hidden": "true" }), FIGHT_ROLE_TEXT[r]);
 const MOVE_TEXT = { cap: "棒球帽：擋下這壹招", crown: "皇冠：這壹下骰子最大", tentacle: "觸手帽：大力推（自己扣理智）", wizard: "巫師帽：大家的推都加", beanie: "毛帽：回壹點理智", rest: "躺平：回壹點理智", squat: "斯拉夫蹲：這回合不會倒", cheer: "比讚：下回合大家的推都加" };
+// 招式按鈕的提示：限定帽子借用觸手帽的算法但不扣理智（決定 0085），不能照原本寫「自己扣理智」
+const moveTip = (o, desc) => (o.move && o.ok ? (o.act === "tentacle" && o.noSan ? "大力推（自己不扣理智）" : (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o)) : desc(o));
 const INTENT_ICON = { hit: "撲", scare: "嚇", all: "全", grow: "多", veil: "？", blur: "？" };
 const odds = n => (n >= 85 ? "幾乎壹定成" : n >= 65 ? "大概七成" : n >= 45 ? "大概壹半" : n >= 25 ? "大概三成" : "很難");
 
@@ -281,7 +283,7 @@ function lineOf(v, e) {
       if (e.kind === "markHit") return `記帳到期：${n(e.id)} 理智 −${e.san}`;
       if (e.kind === "unmark") return `${n(e.by)} 安撫成功，帳上 ${n(e.id)} 的名字塗掉了`;
     }
-    if (e.t === "push") return `${n(e.id)} 推：壓力 −${e.n}${e.shell ? "（殼擋掉壹些）" : ""}${e.thick ? `（被擋掉 ${e.thick}）` : ""}${e.inspired ? `（鼓舞 +${e.inspired}）` : ""}${e.weak ? "（打到弱點）" : ""}${e.mode === "crown" ? "（皇冠）" : e.mode === "tentacle" ? "（觸手帽）" : ""}${e.tap ? "（時機抓得好 +" + e.tap + "）" : ""}${e.san ? `，自己理智 −${e.san}` : ""}`;
+    if (e.t === "push") return `${n(e.id)} 推：壓力 −${e.n}${e.shell ? "（殼擋掉壹些）" : ""}${e.thick ? `（被擋掉 ${e.thick}）` : ""}${e.inspired ? `（鼓舞 +${e.inspired}）` : ""}${e.weak ? "（打到弱點）" : ""}${e.mode === "crown" ? "（皇冠）" : e.mode === "tentacle" ? "（" + (e.hat || "觸手帽") + "）" : ""}${e.tap ? "（時機抓得好 +" + e.tap + "）" : ""}${e.san ? `，自己理智 −${e.san}` : ""}`;
     if (e.t === "phase") return "布滑了下來。牠還沒完：第二階段";
     if (e.t === "win") return "牠安靜下來了。可以登記了";
     if (e.t === "ghost") return `${n(e.id)} ${e.why === "san" ? "撐不住了" : "帶的佩佩都倒了"}`;
@@ -371,7 +373,7 @@ export function fightCard(v, me, api) {
   const previewFirst = () => typeof matchMedia === "function" && matchMedia("(pointer: coarse), (max-width: 760px), (max-height: 500px)").matches;
   const chipClick = (o, el) => {
     const name = o.move ? (o.hat || (MOVE_TEXT[o.act] || o.act).split("：")[0]) : ACT_TEXT[o.act] || o.act;
-    const tip = o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o);
+    const tip = moveTip(o, desc);
     if (previewFirst() && armed !== o.act && tip) {
       armed = o.act;
       tipEl.replaceChildren(h("b", null, name + "："), tip, h("small", null, "　再點壹次就用"));
@@ -383,7 +385,7 @@ export function fightCard(v, me, api) {
   };
   const chip = o => { const b = btn([o.move ? moveIcon(o.act) : teamIcon(o.act), h("span", null, (o.move ? (o.hat || (MOVE_TEXT[o.act] || o.act).split("：")[0]) : ACT_TEXT[o.act] || o.act) + (o.left > 1 ? `×${o.left}` : ""))],
     () => chipClick(o, b), "fg-chip" + (o.team ? " team" : "") + (mine && mine.act === o.act ? " cx-on" : ""),
-    { disabled: !o.ok, title: (o.move && o.ok ? (MOVE_TEXT[o.act] || "").split("：")[1] || desc(o) : desc(o)), "aria-pressed": String(!!(mine && mine.act === o.act)) }); return b; };
+    { disabled: !o.ok, title: moveTip(o, desc), "aria-pressed": String(!!(mine && mine.act === o.act)) }); return b; };
   const sum = RP.summary && RP.key === roundKey(v) ? RP.summary : null;
   const roundNo = v.last && v.last.round ? v.last.round.round - (v.last.round.over ? 0 : 1) : 0;
   // 第幾步：亮招中按鈕先藏著（位置留著，不會跳）；亮完第壹次畫出來時從底下滑上來（之後有人選、整個重畫就不再滑）

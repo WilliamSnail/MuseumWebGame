@@ -303,7 +303,7 @@ export function fightOptions(fight, id) {
   Object.keys(FIGHT_MOVES).forEach(m => {
     if (!fightHasMove(s, m)) return;
     const left = fightMoveUses(s, m) - fiUsed(s, m);
-    const al = fightAlias(s, m), o = { act: m, move: true, hat: !fiBase(s, m) && al ? al.hat : undefined, ok: left > 0, why: left > 0 ? "" : fiUsed(s, m) > 9 ? "被拿走了" : "這場用過了", left };
+    const al = fightAlias(s, m), o = { act: m, move: true, hat: !fiBase(s, m) && al ? al.hat : undefined, noSan: !fiBase(s, m) && al && al.noSan ? true : undefined, ok: left > 0, why: left > 0 ? "" : fiUsed(s, m) > 9 ? "被拿走了" : "這場用過了", left };
     if ((m === "rest" || m === "beanie") && !fight.rest && o.ok) { o.ok = false; o.why = "這壹層回過了"; }
     if (m === "crown" || m === "tentacle") { const r = fightPushRange(fight, s, m); o.lo = r[0]; o.hi = r[1]; }
     out.push(o);
@@ -398,6 +398,7 @@ export function fightRound(fight, picks) {
     fight.hp -= n;
     if (!s.helper) fight.last = s.id;
     const e = { t: "push", id: s.id, mode: a, die, n, weak, tap };
+    if (tent && tent.hat) e.hat = tent.hat; // 限定帽子（火氣頭帶）借用觸手帽的算法：紀錄寫那頂帽子的名字
     if (shell) e.shell = true;
     if (thick) e.thick = thick;
     if (inspired[s.id]) e.inspired = inspired[s.id];

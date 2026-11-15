@@ -62,10 +62,10 @@ T("打怪壹回合：淚滴耳環全隊回理智、火氣頭帶的推不扣理�
   const seat = (id, hat, san) => { const key = G.pepeKey(G.fullPick({ 稀有度: "稀有", 心情: "俄國8+9", 顏色: "黃", 帽子: hat, 姿勢: "站著" })); return { id, name: id, helper: false, san, brave: 0, skills: { 偵查: 20, 神秘學: 20, 說服: 20 }, pepes: [{ key, pick: G.fromKey(key), perfect: false, power: 3, down: false }], used: {}, out: false, ghost: false }; };
   const st = seats => G.fightStart("f1b", seats, { noTrait: true, rest: true });
   let f = st([seat("a", "淚滴耳環", 30), seat("b", "沒有", 30)]); assert.ok(f, "開得了");
-  const r = G.fightRound(f, { a: { act: "beanie" }, b: { act: "guard" } });
+  G.setRng(() => 0.5); const r = G.fightRound(f, { a: { act: "beanie" }, b: { act: "guard" } }); G.setRng(null); // 骰子固定：不然怪物那回合的扣理智會讓下面的比較偶爾差 1～2
   const mv = r.events.find(e => e.t === "move" && e.move === "beanie"); assert.ok(mv && mv.team && mv.n === G.LIMITED_FX.淚滴耳環.fight.n, "全隊回 n");
   assert.ok(f.seats.find(x => x.id === "b").san >= 30 + G.LIMITED_FX.淚滴耳環.fight.n - 1 && true, "隊友也回了");
-  f = st([seat("a", "火氣頭帶", 30)]); const r2 = G.fightRound(f, { a: { act: "tentacle" } }); const pe = r2.events.find(e => e.t === "push" && e.mode === "tentacle"); assert.ok(pe && pe.san == null, "不扣理智");
+  f = st([seat("a", "火氣頭帶", 30)]); const op = G.fightOptions(f, "a").find(o => o.act === "tentacle"); assert.ok(op && op.noSan && op.hat === "火氣頭帶", "按鈕選項標明不扣理智、帶帽子名字（畫面提示用）"); const r2 = G.fightRound(f, { a: { act: "tentacle" } }); const pe = r2.events.find(e => e.t === "push" && e.mode === "tentacle"); assert.ok(pe && pe.san == null, "不扣理智"); assert.strictEqual(pe.hat, "火氣頭帶", "紀錄寫那頂帽子的名字，不寫觸手帽");
   const A = st([seat("a", "蝴蝶結", 30), seat("b", "沒有", 30)]), B = st([seat("a", "沒有", 30), seat("b", "沒有", 30)]);
   G.setRng(() => 0.5); const ra = G.fightRound(A, { a: { act: "wizard" }, b: { act: "push" } }), rb = G.fightRound(B, { a: { act: "push" }, b: { act: "push" } }); G.setRng(null);
   const pa = ra.events.find(e => e.t === "push" && e.id === "b"), pb = rb.events.find(e => e.t === "push" && e.id === "b"); assert.strictEqual(pa.n - pb.n, G.LIMITED_FX.蝴蝶結.fight.n, "隊友的推多 n");
