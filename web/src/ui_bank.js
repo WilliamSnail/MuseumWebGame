@@ -89,7 +89,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, debt: b.debt || null, econ: b.econ, world: b.world || null, houseInv: b.houseInv || null,
+    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, world: b.world || null, houseInv: b.houseInv || null,
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
