@@ -10,7 +10,7 @@ import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { markTokens, taipeiDay } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
-import { hasTalent, skillCheck, understandLine } from "../../shared/logic3.js";
+import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/logic3.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../shared/notices.js";
@@ -836,15 +836,37 @@ export function collectionItems(kind) {
   if (kind === "failed") return Object.keys(P.failed).map(key => ({ kind: "failed", key, pick: fromKey(key) })).filter(i => i.pick);
   return Object.keys(P.pillows).map(key => ({ kind: "pillow", key }));
 }
+// ---------- 收藏列的數值和篩選（公用，11-15，翊文：「收藏裡的佩佩能不能也寫數值，還有 FILTER，做一個公用的」）----------
+// 用法：collectionStrip({ ..., stats: true })：每隻佩佩下面蓋壹條「強度・稀有度」，上面多稀有度、強度、心情、顏色、帽子、姿勢的篩選，排序多「強度高的先」「稀有度高的先」。
+// 想自己換篩選或排序就給 o.filters、o.sorts（地下收藏庫挑隊員就是自己給的）。
+const RAR_ORDER = ["普通", "稀有", "超稀有", "傳說級稀有", "不可名狀"];
+const RAR_SHORT = { 普通: "普通", 稀有: "稀有", 超稀有: "超稀", 傳說級稀有: "傳說", 不可名狀: "不可名" };
+export function stripPick(it) { return it.kind === "pillow" ? ((parsePillowKey(it.key).print || {}).pick || null) : it.pick || null; }
+export function stripRarity(it) { const p = stripPick(it); return p && p[ROLLED] ? p[ROLLED] : ""; }
+export function stripPower(it) { return it.kind === "pepe" && it.pick ? memberPower(it, null) : ""; } // 強度：只有佩佩有（跟地下收藏庫算的同壹份）
+export function stripStatFilters() {
+  const f = g => it => (stripPick(it) || {})[g];
+  return [["稀有度", stripRarity], ["強度", stripPower], ["心情", f("心情")], ["顏色", f("顏色")], ["帽子", f("帽子")], ["姿勢", f("姿勢")]];
+}
+export function stripStatSorts() {
+  const rk = it => RAR_ORDER.indexOf(stripRarity(it));
+  return [["new", "照收藏順序", null], ["power", "強度高的先", (a, b) => (Number(stripPower(b)) || 0) - (Number(stripPower(a)) || 0)], ["rar", "稀有度高的先", (a, b) => rk(b) - rk(a)]];
+}
+export function stripStatChip(it) {
+  const pw = stripPower(it), rr = stripRarity(it);
+  if (pw === "" && !rr) return null;
+  return h("span", { class: "si-stat", title: [pw !== "" ? "強度 " + pw : "", rr].filter(Boolean).join("・") }, pw !== "" ? h("b", null, "強" + pw) : null, rr ? h("i", null, RAR_SHORT[rr] || rr) : null);
+}
 export function collectionStrip(o) {
   const tabs = o.tabs || ["pepe", "failed", "pillow"];
   const names = { pepe: "佩佩", failed: "失敗作", pillow: "抱枕", repaired: "修復品" };
   let cur = o.start || tabs[0];
   let limit = 40;
+  if (o.stats && !o.sorts) o = { ...o, sorts: stripStatSorts() };
   let sortBy = o.sorts ? o.sorts[0][0] : null; // o.sorts：[[id, 名字, 比較函式]]
   const pickOf = it => it.kind === "pillow" ? ((parsePillowKey(it.key).print || {}).pick || null) : it.pick;
   // 收藏列的篩選（翊文 11-08：顏色、姿勢）：空字串 ＝ 全部。o.filters：[[名字, 取值函式]]，地下收藏庫挑隊員用「強度、心情、帽子、姿勢」（翊文 11-13：「應該要能篩選 pepe 的能力，這樣才好選擇」）
-  const fdefs = o.filters || [["顏色", it => (pickOf(it) || {}).顏色], ["姿勢", it => (pickOf(it) || {}).姿勢]];
+  const fdefs = o.filters || (o.stats ? stripStatFilters() : null) || [["顏色", it => (pickOf(it) || {}).顏色], ["姿勢", it => (pickOf(it) || {}).姿勢]];
   // o.filterKey：篩選記在 UI 裡，挑了壹隻、畫面重畫之後還在（地下收藏庫挑隊員：選了「帽子：巫師帽」再挑幾隻，不會被洗掉）
   const saved = o.filterKey ? ((UI.stripFilt || (UI.stripFilt = {}))[o.filterKey] || (UI.stripFilt[o.filterKey] = {})) : null;
   const filt = Object.fromEntries(fdefs.map(([n]) => [n, (saved && saved[n]) || ""]));
@@ -859,8 +881,9 @@ export function collectionStrip(o) {
     const filterSel = ([c, g]) => {
       const have = new Set(all.map(it => g(it)).filter(v => v !== undefined && v !== null && v !== "").map(String));
       if (have.size < 2 && !filt[c]) return null;
-      const known = o.filters ? [] : allOpts(c);
-      const opts = known.filter(n => have.has(n)).concat([...have].filter(n => !known.includes(n)).sort((a, b) => (isNaN(a) || isNaN(b) ? 0 : b - a))); // 數字（強度）大的在前
+      const known = o.filters || o.stats ? [] : allOpts(c);
+      let opts = known.filter(n => have.has(n)).concat([...have].filter(n => !known.includes(n)).sort((a, b) => (isNaN(a) || isNaN(b) ? 0 : b - a))); // 數字（強度）大的在前
+      if (c === "稀有度") opts = RAR_ORDER.filter(n => have.has(n)); // 稀有度照普通到不可名狀排
       const sel = h("select", { class: "strip-filter" + (filt[c] ? " on" : ""), "aria-label": "篩選" + c },
         h("option", { value: "" }, `${c}：全部`), ...opts.map(n => h("option", { value: n }, `${c}：${n}`)));
       sel.value = filt[c];
@@ -886,7 +909,7 @@ export function collectionStrip(o) {
       const el = h("button", { type: "button", class: "strip-item" + (o.selected && o.selected(item) ? " on" : "") + (item.perfect ? " perfect" : "") + (hurt ? " hurt" : "") + (o.meta ? " has-meta" : ""), role: "listitem", "aria-label": itemTitle(item), title: itemTitle(item), dataset: { r: rr } },
         h("span", { class: "si-art", html: itemHTML(item) }),
         o.meta ? o.meta(item) : null, // 每隻底下的小卡（地下收藏庫挑隊員用）
-        item.kind !== "pillow" ? rdot(rr) : null, o.badge ? o.badge(item) : null, hurt ? h("span", { class: "si-hurt", title: "受傷了" }, "傷") : null);
+        item.kind !== "pillow" ? rdot(rr) : null, o.stats ? stripStatChip(item) : null, o.badge ? o.badge(item) : null, hurt ? h("span", { class: "si-hurt", title: "受傷了" }, "傷") : null);
       const pickIt = () => o.onPick ? o.onPick(item, el) : holdItem(item, el);
       if (o.drag) {
         UI.cleanup.push(FX.makeDraggable(el, { type: typeOf(item), data: item, panX: true, onTap: pickIt }));

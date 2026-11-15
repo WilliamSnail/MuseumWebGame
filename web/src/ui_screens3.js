@@ -320,7 +320,7 @@ SCREENS.fusion = root => {
   } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
   // 調色盤收起來（壹個畫面看得完，docs/介面整合規劃.md 第六步）：點開才有
   info.append(h("details", { class: "onescreen-card fusion-palette" }, h("summary", null, h("b", null, "調色盤"), h("span", { class: "fusion-pal-open" }, "點開看顏色怎麼調 ▾"), h("span", { class: "fusion-pal-close" }, "收起來 ▴")), palettePane()));
-  const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true,
+  const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true, stats: true,
     onPick: item => { const i = slots[0] ? (slots[1] ? 0 : 1) : 0; slots[i] = { key: item.key }; snd("submit"); rerender(); },
     selected: item => slots.some(s => s && s.key === item.key) });
   const newRecipes = freshUnder(P, "codex", FRESH_KEY.recipe("")); // 圖鑑室的配方頁有新的：按鈕上也標「新」（11-08）
