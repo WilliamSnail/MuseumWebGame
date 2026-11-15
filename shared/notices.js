@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-1a1daa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "借款改成 7 天內還、利息 9%", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "跟 Yuga Bot 借錢：還款期限從 3 天改成 7 天，利息從 10% 降成 9%",
+        "已經借的照原本的到期日和利息，新借的照新規則",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-f04f56", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "館內股：沒什麼館友的店，也有 NPC 和散客撐人氣", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
