@@ -21,6 +21,7 @@
 //  純函式：「今天」「現在幾點」「亂數的祕密」從參數來，不碰資料庫和 DOM。槓桿、放空、當沖、限價單是後面幾步（還沒做）。
 // ================================================================
 import { NUM } from "./config.js";
+import { casSellCap, casSellTip } from "./casino_credit.js";
 import { casCount, casHouseMove } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
@@ -341,7 +342,7 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0) {
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: T.bad };
   if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : T.notEnough, { n: casNum(have) }) };
   const px = pr.px, gross = px * n, fee = inFee(gross), net = gross - fee;
-  if (inSoldToday(S, day) + gross > C.sellDay) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, C.sellDay - inSoldToday(S, day))) }) };
+  if (inSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, casSellCap(w) - inSoldToday(S, day))), up: casSellTip(w) }) };
   if (inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
   casInCostSeed(w, house);
   const costOut = n >= have0 ? inN(S.cost[id]) : Math.floor(inN(S.cost[id]) * n / have0);
@@ -447,7 +448,7 @@ export function casInView(w, house, day, t, secret = SECRET) {
       halted: !ready || (t != null && idx === null), intraday: ready ? ser.slice(0, upto + 1) : [], intradayFrom: 0, fresh: S.seen[d.id] !== price, stale: null, quiet: !!H.quiet[d.id], jump: H.jump[d.id] };
   });
   return { list, inDay: { from: C.from, len: C.ticks, step: C.step }, cap: C.cap, total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee, feePct: NUM.casino.stock.feePct / 100,
-    sellLeft: Math.max(0, NUM.casino.stock.sellDay - inSoldToday(S, day)), exposeLeft: Math.max(0, casInExposeCap(house) - inHeld(H, house)), bankroll: house.bankroll, houseBroke: !(house.bankroll > 0), rule: CAS_STOCK_IN.rule };
+    sellLeft: Math.max(0, casSellCap(w) - inSoldToday(S, day)), sellCap: casSellCap(w), sellTip: casSellTip(w), exposeLeft: Math.max(0, casInExposeCap(house) - inHeld(H, house)), bankroll: house.bankroll, houseBroke: !(house.bankroll > 0), rule: CAS_STOCK_IN.rule };
 }
 // 玩家按「看過了」：記下現在的價（fresh 用）
 export function casInSeen(w, house, day, t, secret = SECRET) {

@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-09a721", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "賣股票的額度隨信用等級變多", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "一天能賣出的股票額度，現在會隨信用等級增加：信用 2 級可以賣到原本的 2.5 倍，4 級可以賣到 5 倍。",
+        "超過額度時，畫面會告訴你信用升到幾級可以賣到多少。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-78941f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "以前借的 3 天借款也改成 7 天內還", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
