@@ -43,4 +43,9 @@ T("各房間熱絡：0 人 0 級、1 人 1 級、2～3 人 2 級、4 人以上 3
   assert.deepStrictEqual([r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h].map(x => x.lv), [0, 1, 2, 2, 3, 3, 0, 0]);
   assert.strictEqual(r.f.n, 99); assert.strictEqual(Object.keys(G.roomHeats(null)).length, 0); assert.strictEqual(Object.keys(G.roomHeats(5)).length, 0);
 });
+T("理智恐怖音樂的門檻：45 以上沒有、<45 low、<=15 edge、歸零 edge；壞資料 null", G => {
+  const d = x => G.sanDread(x, false);
+  assert.deepStrictEqual([d(99), d(45), d(44), d(16), d(15), d(1), d(0), d(null), d("x")], [null, null, "low", "low", "edge", "edge", "edge", null, null]);
+  assert.strictEqual(G.sanDread(80, true), "edge");
+});
 console.log(`房間效果：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

@@ -75,3 +75,13 @@ export function roomHeats(counts) {
   }
   return out;
 }
+
+// 理智低的時候疊上去的恐怖音樂（翊文 11-15：「理智很低、理智歸零，門檻數字上升壹點，平常比較容易聽到」；原本的心跳 30 以下、不安低鳴 40 以下照舊保留，這是另外壹層）
+// 理智 < 45：'low'；<= 15（含歸零）：'edge'；其他：null。門檻只寫這壹處
+export const SAN_DREAD = { low: 45, edge: 15 };
+export function sanDread(sanity, dark) {
+  const v = rmN(sanity);
+  if (dark) return "edge";
+  if (v === null) return null;
+  return v <= SAN_DREAD.edge ? "edge" : v < SAN_DREAD.low ? "low" : null;
+}
