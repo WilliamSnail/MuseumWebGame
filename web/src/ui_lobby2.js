@@ -20,6 +20,7 @@ import { storyState } from "../../shared/story.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, frogHTML, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
+import { headlineStrip } from "./ui_headline.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
 
@@ -47,7 +48,7 @@ export const useLobby2 = () => !!(NUM.ui && NUM.ui.newLobby) && !(SAVE && SAVE.s
 const img = (src, cls) => h("img", { class: cls || null, src, alt: "", draggable: "false" });
 const progText = p => (p && p.text ? String(p.text).replace(/^✓ /, "") : "");
 
-// ---------- 細橫幅：活動預告、館友在線 ----------
+// ---------- 細橫幅：活動預告、今日要聞（跑馬燈，ui_headline.js）；館友在線在右欄 ----------
 function eventStrip() {
   const box = h("div", { class: "l2-strip l2-ev", role: "status" });
   let last = null;
@@ -70,11 +71,11 @@ function eventStrip() {
   return box;
 }
 function matesStrip() {
-  const box = h("div", { class: "l2-strip l2-mates" });
+  const box = h("div", { class: "l2-box l2-matesbox l2-mates" }); // 11-15：搬到右欄館友證下面（原位置換成今日要聞跑馬燈）
   const draw = () => {
     const by = matesByRoom(NET.roster || []);
     const list = Object.keys(by).filter(k => k !== "elsewhere").flatMap(k => by[k].map(m => ({ m, room: ROOM_NAMES[k] || "大廳" }))).concat(by.elsewhere.map(m => ({ m, room: "在別處" })));
-    box.replaceChildren(h("i", { class: "l2-live", "aria-hidden": "true" }), h("b", null, "館友在線"),
+    box.replaceChildren(h("div", { class: "l2-h" }, h("i", { class: "l2-live", "aria-hidden": "true" }), "館友在線"),
       list.length ? h("span", { class: "l2-mlist" }, list.slice(0, 8).map(x => h("em", null, `${x.m.nick}・${x.room}`)))
         : h("span", null, UI.net ? "現在沒有別的館友在線。" : "登入了才看得到館友。"),
       list.length ? null : null);
@@ -177,11 +178,12 @@ export function lobby2(root) {
   const live = ADDONS.lobbyLive ? ADDONS.lobbyLive() : null; // 有人在實況就壹小行（ui_casino_live.js）
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
     passCard(),
+    mates.box,
     h("div", { class: "l2-box l2-todobox" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)), // 手機直拿：排到導覽圖上面（css/lobby2.css）
     isFree(P) || !(UI.net || import.meta.env.DEV) || !ADDONS.hallNowBox ? null : h("div", { class: "l2-box l2-hnbox" }, ADDONS.hallNowBox("lobby")), // 展廳現在幾人、最近的評價（ui_hallnow.js；登入了才有）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
-    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), mates.box), live, h("div", { class: "l2-mapbox" }, map)),
+    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), headlineStrip()), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap);
   document.body.classList.add("lobby-wide-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉

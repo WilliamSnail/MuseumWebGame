@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-15843a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "大廳多了今日要聞", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳上方的橫條改成「今日要聞」跑馬燈：今天的政策、景氣、世界經濟、市場新聞、活動和公告。點壹則可以跳過去看。",
+        "館友在線搬到右邊館友證下面。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-f9148a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "財報外面世界的名字", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
