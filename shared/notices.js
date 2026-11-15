@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-15c5de", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場多了氣氛", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場有了霓虹招牌、荷官的話、桌邊的籌碼塔和淡淡的煙。人多的時候更熱鬧，冷清的時候招牌會暗幾個字。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-68d45b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行的規則與小提示更新了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
