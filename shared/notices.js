@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-b753d7", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "旅客有了理智值", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館外來的旅客現在有理智（0 到 100）：去地下收藏庫會慢慢變低，休息和吃東西會回來。",
+        "理智太低的旅客不敢去地下收藏庫、在展廳留的評價也會比較低分；目前理智在 NPC 的介面上還沒有顯示。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-f9148a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "財報外面世界的名字", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

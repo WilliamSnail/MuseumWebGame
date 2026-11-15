@@ -227,7 +227,8 @@ export function nwFix(house) {
   if (!wuBox(house)) return null;
   const w = wuBox(house.npcw) ? house.npcw : (house.npcw = {});
   w.day = wdDayOk(w.day) ? w.day : null;
-  for (const k of ["bal", "lay", "job"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of ["bal", "lay", "job", "san"]) if (!wuBox(w[k])) w[k] = {};
+  w.sanDay = wdDayOk(w.sanDay) ? w.sanDay : null;
   for (const id of Object.keys(w.bal)) { const n = wdN(w.bal[id]); if (n > 0) w.bal[id] = n; else delete w.bal[id]; }
   if (!Array.isArray(w.ev)) w.ev = [];
   w.ev = w.ev.filter(e => wuBox(e) && wdDayOk(e.day) && typeof e.npc === "string").slice(-20);
@@ -265,7 +266,7 @@ export function nwPayday(house, day, list) {
   const people = list.filter(n => wuBox(n) && n.kind !== "trace" && n.budget && n.budget.perDay > 0);
   if (house.wh && whIsMon(day)) nwJobs(house, day, people);
   for (const n of people) {
-    const u = nwUnitOf(house, n), target = Math.floor(n.budget.perDay * whMult(house, u) * P.dayPct / 100) * C.targetDays, bal = nwBal(house, n.id);
+    const u = nwUnitOf(house, n), target = Math.floor(n.budget.perDay * nwBudgetMult(house, n, u) * P.dayPct / 100) * C.targetDays, bal = nwBal(house, n.id);
     if (bal < target) nwMove(house, u, n.id, target - bal); else if (bal > target) nwMove(house, u, n.id, -(bal - target));
   }
   return true;
@@ -293,4 +294,45 @@ export function nwNews(house, day, npcName, days = 1) {
   const w = house && wuBox(house.npcw) ? house.npcw : null; if (!w || !Array.isArray(w.ev)) return [];
   const from = whAddDays(day, -days), nm = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id;
   return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, npc: e.npc, text: e.t === "lay" ? `${npcName(e.npc)}被${nm(e.from)}裁員了` : `${npcName(e.npc)}到${nm(e.to)}工作了` }));
+}
+
+// ================================================================
+//  NPC 理智（決定 0090 第一步，docs/理智值提案.md 第 1 節）：house.npcw.san[NPC id] ＝ 0～100，沒有紀錄 ＝ 初始值（NUM.casino.worldDoc.san.start）。累積型：
+//    每天收盤時（casNpcLive 的整天結算）照那天的行程加減：去地下 −2（一天最多 −4）、去餐車 +1、完全沒來館 +3（休息；這兩項只補到初始值為止）、自然往初始值靠 1；被裁 −8、找到新工作 +5（W6 的 ev，那天發生的）；
+//    排程填的 sanEvents（劇情決定的欄位，之後接）。一天最多變 ±daily（排程和換工作的事件不算）。夾 0～100。
+//  理智低的影響（只放小的）：< lowRoute 不去地下（那一站不花錢）；< lowStars 展廳評價少 1 顆星；< lowBudget 預算 ×budgetMult（再乘 W5 的倍率，總倍率仍 ≥ health.floor）。
+//  玩家看得到數字和分級（statView 的 npcSan，翊文 11-15 第 3 題）。
+// ================================================================
+export const nwSan = (house, id) => { const v = house && house.npcw && wuBox(house.npcw.san) ? house.npcw.san[id] : undefined; return v == null ? NUM.casino.worldDoc.san.start : whClamp(wdN(v), 0, 100); };
+// 預算倍率：集團的 W5 倍率 ×（理智低時 budgetMult），不低於 health.floor
+export function nwBudgetMult(house, n, unitId) {
+  const S = NUM.casino.worldDoc.san, m = whMult(house, unitId) * (nwSan(house, n && n.id) < S.lowBudget ? S.budgetMult : 1);
+  return Math.max(NUM.casino.worldDoc.health.floor, m);
+}
+// 收盤：照那天的行程更新每位的理智。visits ＝ npcVisitsToday 的結果；people ＝ 有預算的 NPC；extra ＝ { id: 排程填的數字 }（可以沒有）。同一天不重複
+export function nwSanDay(house, day, visits, people, extra = {}) {
+  const w = nwFix(house), S = NUM.casino.worldDoc.san;
+  if (!w || !wdDayOk(day) || (w.sanDay && day <= w.sanDay)) return false;
+  w.sanDay = day; if (!wuBox(w.san)) w.san = {};
+  const by = {}; for (const v of visits || []) (by[v.id] || (by[v.id] = [])).push(v.place);
+  const ev = w.ev.filter(e => e.day === day);
+  for (const n of people) {
+    const id = n.id, places = by[id] || [], cur = nwSan(house, id);
+    let d = 0;
+    d += Math.max(S.cellarMax, places.filter(p => p === "cellar").length * S.cellar);
+    let heal = (places.includes("food") ? S.food : 0) + (!places.length ? S.rest : 0); // 休息、餐車只能補到初始值，不會補過頭（不然沒來的人會慢慢變成 100）
+    if (cur + d < S.start) d += Math.min(heal, S.start - (cur + d));
+    d += cur + d < S.start ? S.back : cur + d > S.start ? -S.back : 0;
+    d = whClamp(d, -S.daily, S.daily);
+    for (const e of ev) if (e.npc === id) d += e.t === "lay" ? S.lay : S.job;
+    d += wdN(extra[id]);
+    const nv = whClamp(cur + d, 0, 100); if (nv === S.start) delete w.san[id]; else w.san[id] = nv;
+  }
+  return true;
+}
+// 給畫面的：{ NPC id: [數字, 分級代碼] }（只放不是初始值的，沒有的畫面當初始值）
+export function nwSanPublic(house) {
+  const w = house && house.npcw && wuBox(house.npcw.san) ? house.npcw.san : {}, out = {};
+  for (const id of Object.keys(w)) out[id] = [wdN(w[id]), statBandOf("npcSan", w[id])];
+  return out;
 }

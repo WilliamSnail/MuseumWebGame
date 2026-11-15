@@ -382,7 +382,9 @@ export const NUM = {
     //   sectorCoef 行業對景氣的敏感度：每天成長分給單位的權重 ＝ 比例 ×（1 ＋ 係數 × 景氣 b）。
     //   W5 連動：health 健康值 h ＝ clamp(1 ＋ 景氣 × 行業係數 ＋ 旗下股票週漲跌 × stockW, min, max)；週一換狀態：h ≥ cut 一般（預算倍率 1～upMax）、squeeze ≤ h ＜ cut 減薪、h ＜ squeeze 連續 squeezeWeeks 週緊縮／layoffWeeks 週裁員；mult 各狀態的預算倍率、floor 最低倍率、chgCap 股價週漲跌最多算多少
     //   W6 NPC 錢包：targetDays 錢包補到「今天預算 × 幾天」；joinWeeks 被裁員幾週內一定找到新工作；layoffPct 集團裁員時每位被裁的機率 %、findPct 被裁的每週找到新工作的機率 %
-    worldDoc: { wallet: { on: true, targetDays: 2, joinWeeks: 4, layoffPct: 30, findPct: 25 }, health: { min: 0.6, max: 1.2, stockW: 0.5, chgCap: 0.3, cut: 0.9, squeeze: 0.75, squeezeWeeks: 2, layoffWeeks: 4, mult: { cut: 0.8, squeeze: 0.5, layoff: 0.3 }, upMax: 1.1, floor: 0.3 }, gateway: 0, household: 0.1, sectorCoef: { tech: 0.3, finance: 0.15, arts: 0.1, daily: 0, school: -0.05, public: -0.1, story: 0 } },
+    //   NPC 理智（決定 0090）：start 初始值、daily 一天最多變多少（排程和換工作的事件不算）、cellar 去地下每次加減（一天最多 cellarMax）、food 去餐車、rest 完全沒來館、back 每天往 start 靠多少、lay 被裁、job 找到新工作；
+    //   lowRoute 低於這個不去地下、lowStars 低於這個展廳評價少 1 顆星、lowBudget 低於這個預算 × budgetMult
+    worldDoc: { san: { start: 70, daily: 10, cellar: -2, cellarMax: -4, food: 1, rest: 3, back: 1, lay: -8, job: 5, lowRoute: 30, lowStars: 50, lowBudget: 30, budgetMult: 0.9 }, wallet: { on: true, targetDays: 2, joinWeeks: 4, layoffPct: 30, findPct: 25 }, health: { min: 0.6, max: 1.2, stockW: 0.5, chgCap: 0.3, cut: 0.9, squeeze: 0.75, squeezeWeeks: 2, layoffWeeks: 4, mult: { cut: 0.8, squeeze: 0.5, layoff: 0.3 }, upMax: 1.1, floor: 0.3 }, gateway: 0, household: 0.1, sectorCoef: { tech: 0.3, finance: 0.15, arts: 0.1, daily: 0, school: -0.05, public: -0.1, story: 0 } },
     world: { start: 10000000000, growBase: 5000000, growExtPct: 20, lowPct: 10, lowPayPct: 1 },
     // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、預算池超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
