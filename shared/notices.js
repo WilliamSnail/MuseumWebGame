@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-94d723", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "今日特展右邊的說明不再被切掉", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "畫廊「今日特展」右邊的說明欄和「本週回顧展」不再被撐寬，字會換行、回顧展的畫只在自己那壹塊左右滑。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-2d1eb8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "借款可以自己輸入金額", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
