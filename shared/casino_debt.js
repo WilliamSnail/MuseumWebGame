@@ -18,8 +18,8 @@ export const CAS_DEBT = {
   bad: "要賣哪一支、幾股？",
   noStock: "你沒有這支股票。",
   halt: "這支股票現在停盤，等開盤再賣。",
-  tooMany: "你只欠 {owed}，賣 {n} 股賣得太多了：最多賣 {max} 股。",
-  done: "賣股還債：賣了 {n} 股，拿到 {net}，還了 {paid} 的欠款，還剩欠款 {left}。",
+  tooMany: "你只欠{owed}，賣 {n} 股賣得太多了：最多賣 {max} 股。",
+  done: "賣股還債：賣了 {n} 股，拿到 {net}，還了{paid}的欠款，還剩欠款{left}。",
 };
 const dN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 // 現在還得了的借款（照到期順序）
