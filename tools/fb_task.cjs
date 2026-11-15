@@ -63,7 +63,7 @@ async function houseSize(db) {
     console.log(`  ${k}：${kb(n)}`);
     if (n > 20 * 1024 && h[k] && typeof h[k] === "object") for (const [k2, n2] of top(h[k], 6)) console.log(`      ${k}.${k2}：${kb(n2)}`);
   }
-  for (const p of ["stocksTw/latest", "stocksUs/latest"]) { const s = await db.doc(p).get(); console.log(`${p}：${s.exists ? kb(B(s.data())) : "沒有"}`); }
+  for (const p of ["world/main", "stocksTw/latest", "stocksUs/latest"]) { const s = await db.doc(p).get(); console.log(`${p}：${s.exists ? kb(B(s.data())) : "沒有"}`); }
   const ws = await db.collection("casinoWallets").get(), sizes = ws.docs.map(d => B(d.data().data || d.data()));
   if (sizes.length) console.log(`錢包 ${sizes.length} 個：最大 ${kb(Math.max(...sizes))}、平均 ${kb(sizes.reduce((a, b) => a + b, 0) / sizes.length)}`);
   const rp = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
@@ -156,6 +156,8 @@ async function houseLedger(db) {
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
   console.log(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　館方帳 ${fmt(h.museum)}　莊家記的日子 ${h.day || "-"}`);
+  { const ws = await db.doc("world/main").get(), w = ws.exists ? JSON.parse(ws.data().data || "{}") : null; // 世界文件（W2，決定 0086）：備用池要算進外面世界總量
+    console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　外面世界合計 ${fmt(nz(h.world) + nz(w.pool))}（莊家的對外帳戶 ${fmt(h.world)}）　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有"); }
   const led = h.led || {};
   console.log("莊家每個來源累計（正＝進莊家，負＝出莊家）：");
   (list(led.flow).length ? list(led.flow) : ["    （沒有）"]).forEach(l => console.log(l));
