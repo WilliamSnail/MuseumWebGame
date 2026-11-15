@@ -156,6 +156,7 @@ export function mountMood(host, kind, opts) {
       root.style.setProperty("--rm-up", Math.max(0, tone).toFixed(2)); root.style.setProperty("--rm-down", Math.max(0, -tone).toFixed(2));
     }
     // 旗：只有種類變了才重畫
+    if (kind === "casino") host.style.setProperty("--rm-smoke", [0, 0.35, 0.65, 1][m.heat]); // 煙霧畫在介面後面（css/mood.css 的 .nb-surface::before），這裡只給濃淡
     if (kind === "casino") { m.flags.bunting = null; m.crowd = 0; } // 賭場的介面是頁籤和表單，旗會蓋到頁籤；桌邊人影翊文不要，改成 casinoFx
     if (kind === "casino") { const q = import.meta.env.DEV ? new URLSearchParams(location.search).get("cas") : null, pick = x => (Array.isArray(x) ? x : typeof x === "string" ? x.split(",") : []).filter(y => CAS_FX.includes(y)), v = q ? pick(q) : pick(o.fx), k = v.join(",") + "|" + m.heat; if (k !== fxKey) { fxKey = k; casinoFx(v, m, fx); } }
     if (kind === "bank") m.flags.bunting = null, m.omen = 0, m.crowd = 0; // 銀行不掛旗、不放人影和怪影子（只有光和看板）
