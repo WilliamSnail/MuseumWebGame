@@ -13,6 +13,7 @@
 import { NUM } from "./config.js";
 import { WORLD_UNITS } from "./world_roster.js";
 import { hashStr } from "./logic.js";
+import { statBandOf } from "./stat_view.js";
 
 const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 const wdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -206,7 +207,7 @@ export function whNews(house, day, days = 1) {
 export function whCard(house, day) {
   const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return null;
   const C = whCfg(), us = whUnits(), states = { normal: 0, cut: 0, squeeze: 0, layoff: 0 }, bands = [0, 0, 0, 0];
-  us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[h < C.squeeze ? 0 : h < C.cut ? 1 : h < 1.1 ? 2 : 3]++; });
+  us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[{ tight: 0, weak: 1, normal: 2, strong: 3 }[statBandOf("unitHealth", h)]]++; }); // 分級只寫在 stat_view.js
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   return { day: w.day, states, bands, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
 }

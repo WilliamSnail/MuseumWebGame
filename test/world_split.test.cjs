@@ -148,4 +148,14 @@ T("W6 換工作：集團進入裁員 → 部分 NPC 被裁；被裁的每週找�
   const h2 = mk(G); G.whFix(h2); for (const u of Object.keys(h2.wh.st)) h2.wh.st[u] = { s: "normal", low: 0 }; h2.wh.st["g-daily"].s = "layoff"; G.nwPayday(h2, MON, PEOPLE); const x = Object.keys(h2.npcw.lay)[0]; h2.wh.st["g-daily"].s = "normal"; G.nwPayday(h2, "2026-11-23", PEOPLE); assert.ok(!(x in h2.npcw.lay) && !(x in h2.npcw.job), "原本集團恢復：直接回去");
   assert.strictEqual(sum(G.wuAmounts(h)), h.world);
 });
+T("statView：分級只寫一處；健康值用「小於」跟 W5 換檔一致；沒有資料回 null；數字或莊家文件都能讀；理智三種的分級表先放著", G => {
+  const C = G.NUM.casino.worldDoc.health, v = (k, id, d) => G.statView(k, id, d);
+  assert.strictEqual(v("unitHealth", "x", C.squeeze).band, "weak", "剛好 0.75 ＝ 偏弱（跟 h ＜ squeeze 才緊縮一致）"); assert.strictEqual(v("unitHealth", "x", C.squeeze - 0.001).band, "tight"); assert.strictEqual(v("unitHealth", "x", 1.1).band, "strong"); assert.strictEqual(v("unitHealth", "x", 1).label, "普通");
+  assert.strictEqual(G.statBandOf("unitHealth", 0.8), "weak"); assert.strictEqual(v("unitHealth", "g-island", null), null, "沒有資料");
+  const h = mk(G); h.econ = { b: -1 }; G.whTick(h, "2026-11-16", {}); assert.strictEqual(v("unitHealth", "g-island", h).band, "tight"); assert.strictEqual(v("unitState", "g-island", h).label, "減薪"); assert.ok(v("budgetMult", "g-island", h).value < 1);
+  assert.strictEqual(v("budgetMult", "x", 1.1).label, "多一點"); assert.strictEqual(v("budgetMult", "x", 0.3).label, "很省");
+  assert.strictEqual(v("npcSan", "x", 10).band, "edge"); assert.strictEqual(v("npcSan", "x", 70).label, "穩定"); assert.strictEqual(v("unitUnrest", "x", 80).band, "turmoil"); assert.strictEqual(v("crowdMood", null, 90).band, "buzz"); assert.strictEqual(v("npcSan", "x", { npcw: {} }), null, "新的理智值還沒有資料");
+  assert.strictEqual(v("不存在", "x", 1), null); assert.ok([v("npcSan", "x", 50), v("unitHealth", "x", 1)].every(x => x.pub === true && typeof x.hint === "string" && x.hint.length <= 20));
+  const c = G.whCard(h, "2026-11-16"); assert.strictEqual(c.bands.reduce((a, b) => a + b, 0), 7, "財報卡的分布用同一個分級");
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
