@@ -416,6 +416,9 @@ export const NUM = {
     // 11-14 翊文：「好，那改成文化部借款」：記成債（house.debt.culture，不計利息），莊家超過準備金的部分拿去還（先預算池、再這個、最後外面世界貸款），還的時候燒掉。
     grants: [{ id: "moc-2026-11", amt: 1000000000, name: "文化部借款" }],
     // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino_wallet.js 的 casBorrow、casRepay、casLoanRoll
+    // 財經專員（決定 0093 第 3 件，shared/casino_advisor.js）：欠了不少錢（錢包是負的，或沒還的借款本金加利息 ≥ minOwe）的館友，銀行頁出現專員提還款計畫。
+    // 借款延期：每筆最多 maxExt 次、還沒到期才行，到期日多 extendDays 天，手續費 feePct% 加進要還的錢。手續費換算成每天的利率要不低於借款本身（econ:check 守）。resendDays：好起來之後又欠了，隔幾天可以再寄信。
+    advisor: { minOwe: 1000000, extendDays: 3, feePct: 5, maxExt: 1, resendDays: 7 },
     loan: {
       limit: 25000,         // 壹開始的額度（沒還的本金加起來不能超過）。翊文 11-10：「借款最高可以100萬」，問答選「壹開始就能借 100 萬」
       limitPct: 50,         // 準時還清壹筆，額度多 50%（翊文 11-10：「改成多20%」→「50% 好了」；以前是固定 +20 萬）。沒有上限，無條件進位到整數

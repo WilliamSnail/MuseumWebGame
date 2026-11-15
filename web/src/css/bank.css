@@ -515,3 +515,5 @@ body[data-screen="bank"] #room { background: none; }
 /* 財報「外面世界」卡（11-15，世界經濟 W5） */
 .bank-wld-sec { margin-top: 10px; display: grid; gap: 6px; }
 .bank-wld-sec > b { color: var(--bank-gold-hi, #F0D995); font-size: var(--type-body, .875rem); }
+
+.bank-selltip { color: var(--bank-gold-hi, #F0D995); font-weight: 700; margin-top: 2px; }
