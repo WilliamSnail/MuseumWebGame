@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-1f56dd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "台股換成真實台幣價、財報多了館外來客", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "台股五支換成證交所最近壹次收盤的真實台幣價，手上的股數照比例換，市值不變",
+        "銀行財報「昨天發生的事」多了館外旅客、散客，和他們帶進館的籌碼（明天早上那份起）",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-61b416", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "今日特展的「新」變大了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

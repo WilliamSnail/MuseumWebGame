@@ -15,10 +15,43 @@
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 //   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
+//   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
+//                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
+//                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg"];
+
+// 台股手動換真實價（見檔頭 stock-tw-peg）。真實代號只寫在 functions/stock_tw.js，這裡從那個檔讀出來
+async function stockTwPeg(db) {
+  const src = fs.readFileSync(path.join(__dirname, "..", "functions", "stock_tw.js"), "utf8");
+  const m = /TW_SYMBOLS = (\{[^}]+\})/.exec(src);
+  if (!m) throw new Error("functions/stock_tw.js 裡找不到 TW_SYMBOLS");
+  const syms = JSON.parse(m[1].replace(/(\w+):/g, '"$1":'));
+  const ex = Object.values(syms).map(c => `tse_${c}.tw`).join("|");
+  const r = await fetch(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${Date.now()}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(10000) });
+  if (!r.ok) throw new Error("證交所回 " + r.status);
+  const j = await r.json(), closes = {};
+  let day = null;
+  for (const it of (j && Array.isArray(j.msgArray) ? j.msgArray : [])) {
+    const id = Object.keys(syms).find(k => syms[k] === it.c), px = parseFloat(it.z) > 0 ? parseFloat(it.z) : parseFloat(it.y);
+    if (id && px > 0) { closes[id] = px; day = day || String(it.d || ""); }
+  }
+  console.log(`證交所：${day || "沒有日期"}，${Object.keys(closes).length} 支有價：` + Object.entries(closes).map(([k, v]) => `${k} ${v}`).join("、"));
+  if (Object.keys(closes).length !== Object.keys(syms).length) { console.log("有幾支抓不到，這次不換（不編價）"); process.exitCode = 1; return; }
+  const { casStockPegNow } = await import(require("url").pathToFileURL(path.join(__dirname, "..", "shared", "casino_stock.js")).href);
+  const ref = db.doc("casinoHouse/main");
+  const done = await db.runTransaction(async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists) return null;
+    const h = JSON.parse(s.data().data || "{}"), out = casStockPegNow(h, closes);
+    if (out.length) tx.set(ref, { data: JSON.stringify(h) }, { merge: true });
+    return out;
+  });
+  if (!done) { console.log("莊家的文件還不存在"); return; }
+  console.log(done.length ? "換好了：" + done.map(x => `${x.id} ${x.from} → ${x.to}`).join("、") + "。錢包下次進賭場照比例換股數。" : "都換過了，不用換");
+}
 
 // 只讀：台股、美股盤中的伺服器紀錄（stocksTw/latest、stocksUs/latest）。不讀亂數祕密，什麼都不寫
 //   什麼時候用：股票沒更新、整天休市，要知道是抓不到行情還是別的原因（11-13 美股第壹晚整天休市）
@@ -186,6 +219,7 @@ async function main() {
   if (task.action === "house-ledger") { await houseLedger(db); return; }
   if (task.action === "stock-status") { await stockStatus(db); return; }
   if (task.action === "econ-status") { await econStatus(db); return; }
+  if (task.action === "stock-tw-peg") { await stockTwPeg(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
