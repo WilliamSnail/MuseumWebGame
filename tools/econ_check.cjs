@@ -37,6 +37,8 @@ check("文化部補助新玩家（不設人數上限）：壹位的補助 ≤ �
   check("限定帽子：單頂全隊強度 ≤ 觸手帽、加起來最多 teamCap ≤ 巫師帽＋觸手帽（地下不會變太簡單）", tm <= N.cellarFx.tentacle && N.limitedFx.teamCap <= N.cellarFx.wizard + N.cellarFx.tentacle, `單頂最多 +${tm}、總共最多 +${N.limitedFx.teamCap}；巫師帽 +${N.cellarFx.wizard}、觸手帽 +${N.cellarFx.tentacle}`);
   check("限定帽子：館內效果每項 ≤ 3（餐車、簽到、換日、過關的小口子；都不是籌碼）", homeMax <= 3, `最大 ${homeMax}`);
 }
+{ const r = G.wuRatios(), s = Object.values(r).reduce((a, b) => a + b, 0), u = G.WORLD_UNITS.filter(x => x.parent == null);
+  check("世界分帳：頂層單位的比例加家計加公共 ＝ 1，公共至少 10%（緩衝）；文化部是頂層劇情單位", Math.abs(s - 1) < 1e-9 && r.pub >= 0.1 - 1e-9 && u.some(x => x.id === "u-culture" && x.kind === "story"), `公共 ${pct(r.pub * 100)}、家計 ${pct(r[G.WU_HH] * 100)}、頂層單位 ${u.length} 個`); }
 check("世界文件：搬錢預設關閉（gateway ＝ 0）；要開之前 casBookSnap 必須把備用池算進總量，不然對帳差不是 0（W3 才做）", !(C.worldDoc && C.worldDoc.gateway > 0), `gateway ${C.worldDoc && C.worldDoc.gateway}`);
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
@@ -145,6 +147,7 @@ function ledger(file) {
   out.push(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　館方帳 ${fmt(h.museum)}　海底 ${fmt(h.sea)}　外面世界 ${h.world == null ? "（還沒有帳）" : fmt(h.world)}`);
   if (isReport) out.push(`日報 ${doc.day}　對帳差 ${fmt(doc.gap)}（0 才對）`);
   const D = h.debt || {};
+  if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, w = Math.floor(+h.world || 0); let s = 0; Object.keys(r).filter(k => k !== "pub").forEach(k => { s += Math.floor(w * +r[k]) + (Math.floor(+adj[k]) || 0); }); const pub = w - s; out.push(`外面世界的帳上分類：公共 ${fmt(pub)}、文化部 ${fmt(Math.floor(w * (+r["u-culture"] || 0)) + (Math.floor(+adj["u-culture"]) || 0))}　（總和一定等於外面世界；公共要 ≥ 0）`); flag(pub < 0, `公共（外面世界扣掉各單位）是負的 ${fmt(pub)}：有單位被指名多扣了`); }
   out.push(`莊家欠：預算池 ${fmt(D.budget)}、文化部館債 ${fmt(D.culture)}、外面世界 ${fmt(D.world)}　借出去沒收回 ${fmt(h.loansOut)}`);
   if (!isReport && doc.__gap != null) { out.push(`最新日報 ${doc.__repDay}　對帳差 ${fmt(doc.__gap)}（0 才對）`); const known = doc.__repWorld != null && doc.__gap === -(doc.__repWorld - W.start); // 11-14 外面世界上線那天快照多算了池子當天進出（casBookOpeningNext 在下壹份日報校正）
     if (known) out.push(`  （這是已知的過渡期假差額：等於 −(外面世界 ${fmt(doc.__repWorld)} − 起始 ${fmt(W.start)})，下壹份日報會校正，不是錢不見）`); else flag(doc.__gap !== 0, `對帳差不是 0：${fmt(doc.__gap)}（有壹條動籌碼的路沒記到帳上）`); }

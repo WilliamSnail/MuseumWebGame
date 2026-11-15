@@ -20,6 +20,7 @@ import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldLow } from "./casino_book.js";
 import { casInUsed } from "./casino_stock_in.js";
+import { wuDebit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -42,7 +43,7 @@ export function casCultureFund(w, house) {
   const C = NUM.casino.culture, H = house.cultStart && typeof house.cultStart === "object" ? house.cultStart : (house.cultStart = { n: 0, total: 0 });
   if (!C || !C.on) return 0;
   const got = casWorldFund(w, house, "cultureStart", w.led.mint && w.led.mint.start, NUM.casino.world);
-  if (got > 0) { H.n = casNz(H.n) + 1; H.total = casNz(H.total) + got; }
+  if (got > 0) { H.n = casNz(H.n) + 1; H.total = casNz(H.total) + got; wuDebit(house, "u-culture", got); } // 帳上算文化部出的（它有多少出多少，不夠的照比例攤）
   return got;
 }
 // 讀回來的錢包：補欄位、換日重算（今天的免費大禮包、救濟；這週的換小獎）。day 是台灣的今天
@@ -104,11 +105,13 @@ export function casHouseFix(h, day) {
   if (!casIsObj(h.grantDebt)) h.grantDebt = {};
   for (const g of NUM.casino.grants || []) {
     if (!g || !g.id) continue;
-    if (!h.grants[g.id] && casHouseWorldOut(h, "grant", g.amt, NUM.casino.world) > 0) h.grants[g.id] = day || true; // 外面世界撥的（池子少了），不是憑空
+    const gotG = !h.grants[g.id] ? casHouseWorldOut(h, "grant", g.amt, NUM.casino.world) : 0;
+    if (gotG > 0) { wuDebit(h, "u-culture", gotG); h.grants[g.id] = day || true; } // 外面世界撥的（池子少了），不是憑空
     if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
   }
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
+  wuFix(h); // 外面世界的帳上分類（W3，決定 0086）：沒有就照比例建
   return { house: h, reopen };
 }
 // ---------- 莊家跟整個經濟接軌（規劃 2.11） ----------
@@ -122,7 +125,7 @@ function casHouseDaily(h, day) {
   }
   const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
   // 0 外面世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
-  { const WC = C.world; casWorldGrow(h, Math.floor(WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)) * days)); }
+  { const WC = C.world, g = casWorldGrow(h, Math.floor(WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)) * days)); wuGrow(h, g); } // 成長按權重分給單位（W3，帳上的分類，總和不變）
   // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
   if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));

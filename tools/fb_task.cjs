@@ -128,6 +128,7 @@ function econPick(h) {
   for (const k of ["bankroll", "budget", "museum", "sea", "world", "loansOut", "cultureLate"]) if (h[k] != null) o[k] = nz(h[k]);
   if (typeof h.day === "string") o.day = h.day;
   const d = obj(h.debt); o.debt = { budget: nz(d.budget), culture: nz(d.culture), world: nz(d.world) };
+  { const wu = obj(h.wu), r = obj(wu.r); if (Object.keys(r).length) o.wu = { r, adj: obj(wu.adj) }; } // 外面世界的帳上分類（W3，決定 0086）
   if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null };
   if (h.npcs) o.npcs = { day: obj(h.npcs).day || null, ticket: nz(obj(h.npcs).ticket), shop: nz(obj(h.npcs).shop), total: nz(obj(h.npcs).total), people: nz(obj(h.npcs).people) };
   const sum = obj(obj(h.inv).sum); if (Object.keys(sum).length) o.inv = { sum: { hold: (Array.isArray(sum.hold) ? sum.hold : []).map(x => ({ name: String(obj(x).name || "").slice(0, 20), n: nz(obj(x).n) })), pnl: Number.isFinite(+sum.pnl) ? Math.floor(+sum.pnl) : 0 } };
@@ -157,6 +158,7 @@ async function houseLedger(db) {
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
   console.log(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　館方帳 ${fmt(h.museum)}　莊家記的日子 ${h.day || "-"}`);
   { const ws = await db.doc("world/main").get(), w = ws.exists ? JSON.parse(ws.data().data || "{}") : null; // 世界文件（W2，決定 0086）：備用池要算進外面世界總量
+    if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, world = nz(h.world); let s = 0; const parts = Object.keys(r).filter(k => k !== "pub").map(k => { const a = Math.floor(world * +r[k]) + nz(adj[k]); s += a; return `${k} ${fmt(a)}`; }); console.log(`外面世界的帳上分類（W3）：${parts.join("　")}　公共 ${fmt(world - s)}　合計 ${fmt(world)}`); }
     console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　外面世界合計 ${fmt(nz(h.world) + nz(w.pool))}（莊家的對外帳戶 ${fmt(h.world)}）　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有"); }
   const led = h.led || {};
   console.log("莊家每個來源累計（正＝進莊家，負＝出莊家）：");
