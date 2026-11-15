@@ -82,6 +82,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { casAucMails, casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "./shared/casino_auction.js";
 import { inbox } from "./party.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
+import { worldTick } from "./world.js";
 
 const aucRef = () => db().doc("casinoAuction/main");
 const walletRef = uid => db().doc(`casinoWallets/${uid}`);
@@ -172,7 +173,10 @@ async function auctionOp(me, d) {
   return out;
 }
 
-export const auctionTick = onSchedule({ schedule: "5 * * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 120 }, async () => { await auctionTouch(); });
+export const auctionTick = onSchedule({ schedule: "5 * * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 120 }, async () => {
+  await auctionTouch();
+  try { await worldTick(); } catch (e) { console.error("世界經濟：換日紀錄失敗", e && e.message); } // 世界文件（W2，決定 0086）：每小時看一次，換日第一次才寫；失敗不影響拍賣（排程只有 3 個，併在這裡）
+});
 
 // 看：只讀（不建錢包）。有收標的結果通知就順手清掉
 export async function auctionView(me) {

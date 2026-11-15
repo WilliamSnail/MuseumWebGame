@@ -37,6 +37,7 @@ check("文化部補助新玩家（不設人數上限）：壹位的補助 ≤ �
   check("限定帽子：單頂全隊強度 ≤ 觸手帽、加起來最多 teamCap ≤ 巫師帽＋觸手帽（地下不會變太簡單）", tm <= N.cellarFx.tentacle && N.limitedFx.teamCap <= N.cellarFx.wizard + N.cellarFx.tentacle, `單頂最多 +${tm}、總共最多 +${N.limitedFx.teamCap}；巫師帽 +${N.cellarFx.wizard}、觸手帽 +${N.cellarFx.tentacle}`);
   check("限定帽子：館內效果每項 ≤ 3（餐車、簽到、換日、過關的小口子；都不是籌碼）", homeMax <= 3, `最大 ${homeMax}`);
 }
+check("世界文件：搬錢預設關閉（gateway ＝ 0）；要開之前 casBookSnap 必須把備用池算進總量，不然對帳差不是 0（W3 才做）", !(C.worldDoc && C.worldDoc.gateway > 0), `gateway ${C.worldDoc && C.worldDoc.gateway}`);
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
 // 畫：賣回只拿現價的 sellPct%（短線必虧）
