@@ -133,12 +133,13 @@ export async function playCore(me, email, opts, fn) {
       hb = ctx.house.bankroll;
       const r = fn(ctx);
       const letter = r.ok !== false || opts.writeAnyway ? casAdvisorLetter(ctx.w, ctx.house, day, t, MAIL_DAYS) : null; // 財經專員的個人信（決定 0093 第 3 件）：第壹次欠了不少錢寄壹封，同壹個交易裡寫、錢包記著寄過了
-      if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       ha = ctx.house.bankroll;
       const newRv = casNpcTakeReviews(ctx.house); // 這次新寫的 NPC 評價：合進完整歷史 npcReviews/{日期}（先讀、後面壹起寫；冪等）
       if (!r.ok && !opts.writeAnyway) return r;
       const rvDocs = {};
       for (const d of Array.from(new Set(newRv.map(x => x.day)))) { const rs0 = await tx.get(db().doc("npcReviews/" + d)); rvDocs[d] = rs0.exists ? rs0.data() : null; }
+      // 11-15：財經專員的信原本在上面先寫、這裡才讀評價，Firestore 交易「讀要在寫之前」→ 欠錢又剛好有新評價的人每次都失敗（銀行顯示示範資料）。所有讀完才寫
+      if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       for (const d of Object.keys(rvDocs)) tx.set(db().doc("npcReviews/" + d), casReviewsMerge(rvDocs[d], newRv.filter(x => x.day === d), d));
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
