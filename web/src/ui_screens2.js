@@ -442,7 +442,7 @@ SCREENS.hall = (root, params) => {
   const visitors = h("section", { class: "visitors", id: "visitors" }, h("h3", null, "參觀者留言"),
     news.length ? h("p", { class: "sub npc-news" }, "館裡最近：" + news.map(x => x.news).join(" ")) : null,
     P.visitorLog.length ? P.visitorLog.slice(0, 6).map(v => visitorCard(v)) : h("p", { class: "empty" }, hs.items.length ? "參觀者快來了。" : "擺上作品，參觀者就會來。"));
-  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true });
+  const strip = collectionStrip({ tabs: ["pepe", "failed", "pillow", "repaired"], title: "你的收藏", hint: "拖上展台；也可以點壹件、再點展台", drag: true, stats: true });
   // 主題怎麼擺：收起來，標題寫現在最接近的那壹個（點開才是整張清單）
   const guide = themeGuide(hs);
   const themes = h("details", { class: "onescreen-card hall-themes" }, h("summary", null, h("b", null, theme ? `主題：${theme.name}` : "主題：還沒有"), h("span", { class: "hall-themes-open" }, "點開看怎麼擺 ▾"), h("span", { class: "hall-themes-close" }, "收起來 ▴")), guide);

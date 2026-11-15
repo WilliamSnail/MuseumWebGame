@@ -603,3 +603,9 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
   #status.open .st-toggle { background: rgba(227,185,90,.28); }
   body.reduce-motion .st-toggle .ic { transition: none; }
 }
+
+/* 收藏列每隻下面的「強度・稀有度」小條（公用 collectionStrip 的 stats:true，11-15） */
+.strip-item { position: relative; }
+.si-stat { position: absolute; left: 3px; right: 3px; bottom: 3px; display: flex; justify-content: center; gap: 4px; padding: 1px 3px; border-radius: 3px; background: rgba(20, 12, 8, .78); color: var(--gold-hi, #EED79C); font-size: .625rem; line-height: 1.25; white-space: nowrap; pointer-events: none; }
+.si-stat b { font-weight: 700; }
+.si-stat i { font-style: normal; opacity: .85; }
