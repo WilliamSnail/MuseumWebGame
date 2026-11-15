@@ -90,6 +90,8 @@ export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearI
 // 提示壹律至少 6.5 秒，字越多留越久（翊文 11-08：「你一天內掉太多理智了」這種說明太快消失，至少要 6 秒）
 export const note = (text, tone, ms, action) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90), action }); // action：{ label, run }，toast 上多一顆按鈕（例如「去看看」）
 export const snd = (n, a) => FX.sound.play(n, a);
+// 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/sfx_files.js）。g 音量 0～1
+export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
 
 // 說明牌上的字：偏執發作時都寫「牠們在看你」，理智低時偶爾歪掉、錯字
 export const TYPO = { 佩: "珮", 的: "旳", 你: "妳", 是: "昰", 看: "着", 了: "子", 這: "这", 一: "－", 隻: "只", 心: "忄" };
