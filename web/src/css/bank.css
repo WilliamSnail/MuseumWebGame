@@ -476,3 +476,10 @@ body[data-screen="bank"] #room { background: none; }
 .bank-segs.kind .bank-seg { min-height: 42px; }
 @media (max-width: 760px) { .bank-segs.kind .bank-seg { min-height: 44px; } }
 @media (max-height: 500px) and (orientation: landscape) { .bank-cols.stocks .bank-segs.kind .bank-seg { min-height: 36px; } }
+/* 借款自己輸入的小視窗（11-15）：小視窗在 .bank 外面，--bank-* 讀不到，輸入框要自己給邊框，看得出可以打字 */
+.bank-loan-pop .bank-field { grid-template-columns: auto minmax(0, 1fr); gap: 10px; margin: 6px 0; font-size: var(--type-body, .95rem); color: #5a4a36; }
+.bank-loan-pop .bank-in { min-height: 46px; padding: 0 12px; border: 2px solid #b8923f; border-radius: 8px; background: #fffaf0; color: #2b2117; font-size: 1.15rem; box-shadow: inset 0 1px 3px rgba(0,0,0,.15); }
+.bank-loan-pop .bank-in:focus { outline: 2px solid #e2b85a; outline-offset: 1px; }
+.bank-loan-pop .bank-hint { font-size: var(--type-body, .95rem); color: #4a3b28; min-height: 1.4em; }
+.bank-loan-pop .bank-btn.gold:disabled { opacity: .45; cursor: not-allowed; }
+.bank-loan-pop .bank-btn.gold { background: linear-gradient(#e6c06a, #b8923f); border: 1px solid #8a6a26; color: #2b2117; font-weight: 700; }

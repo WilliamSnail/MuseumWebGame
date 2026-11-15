@@ -126,6 +126,23 @@ function pickAmt(title, sub, amts, then) {
     btn("取消", () => m.close(), "small"));
   closeOnOutside(m);
 }
+// 借款自己輸入金額（11-15）：打字時只更新下面那行「要還多少、幾號到期」，按「借」才送；超過還可以借的、不到最少的不能按（伺服器也會擋）
+function typeLoan(l) {
+  const m = miniLayer("借多少？", `最少 ${fmt(l.min)}，最多 ${fmt(l.left)}。${l.days} 天內還，利息 ${pctText(l.pct)}。`);
+  let amt = "";
+  const hint = h("p", { class: "bank-hint" }, "輸入金額。");
+  const go = btn("借", () => { if (ok()) { m.close(); bankDo("borrow", { amt: Math.floor(amt) }); } }, "big bank-btn gold", { disabled: true });
+  const ok = () => typeof amt === "number" && Number.isFinite(amt) && Math.floor(amt) >= l.min && Math.floor(amt) <= l.left;
+  const upd = () => {
+    go.disabled = !ok();
+    hint.textContent = amt === "" ? "輸入金額。" : !ok() ? `要在 ${fmt(l.min)} 到 ${fmt(l.left)} 之間。` : `借 ${fmt(Math.floor(amt))}，要還 ${fmt(Math.ceil(Math.floor(amt) * (100 + Math.round(l.pct * 100)) / 100))}。`;
+  };
+  m.card.classList.add("bank-loan-pop"); // 小視窗在銀行版面外面，bank 的顏色變數讀不到：bank.css 另外給輸入框邊框
+  m.card.append(numField("金額", "", x => { amt = x; upd(); }, { min: l.min, step: 1 }), hint,
+    h("div", { class: "bank-acts" }, go, btn("取消", () => m.close(), "small")));
+  closeOnOutside(m);
+  const inp = m.card.querySelector("input"); if (inp) { inp.focus(); inp.addEventListener("keydown", e => { if (e.key === "Enter") go.click(); }); }
+}
 const quickOf = (list, max, min = 1) => [...new Set(list)].filter(n => n >= min && n <= max).map(n => [n]);
 
 // ---------- 小零件 ----------
@@ -174,6 +191,10 @@ function loanPane(v) {
       num("big", fmt(l.left)),
       h("p", { class: "bank-meta" }, "還可以借　上限 ", h("b", null, fmt(l.limit))),
       h("div", { class: "bank-acts" }, l.why ? null : l.quick.filter(q => q <= l.left).map(q => btn(fmt(q), () => bankDo("borrow", { amt: q }), "big bank-btn"))),
+      // 自己輸入、借滿（11-15，翊文：「借款應該也有一個手動輸入的」）
+      l.why || l.left < l.min ? null : h("div", { class: "bank-acts" },
+        btn("自己輸入金額", () => typeLoan(l), "bank-btn"),
+        btn(`借滿 ${fmt(l.left)}`, () => bankDo("borrow", { amt: "max" }), "bank-btn")),
       l.why ? h("p", { class: "bank-why" }, l.why) : h("p", { class: "bank-hint" }, "借的錢從莊家出，到期沒還會被直接扣；借款利息比存款、館債都高。")),
     panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)));
 }
