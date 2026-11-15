@@ -251,20 +251,34 @@ export function matCount(P) {
   const bag = storyState(P).bag;
   return Object.keys(bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material").reduce((n, id) => n + (bag[id] || 0) * (STORY_ITEMS[id].worth || 1), 0);
 }
-// 用掉 NUM.shop.matToStamp 份（先用最多的那種，能剛好就剛好），拿一枚週章。金箔一個算 2 份；只剩金箔湊不剛好時不找零
+// 這次要用掉哪幾個（純函式，測試用）：bag ＝ { id: 個數 }，worth(id) ＝ 算幾份。
+// 先找「剛好湊滿 need 份」的組合；湊不剛好才用超過最少的。同樣份數的材料，先用最多的那種。回傳 { id: 用幾個 } 或 null（不夠）
+// 11-15 玩家回報「換週章的材料兩份的沒算」：以前壹個壹個挑最多的，2 張畫布＋1 片金箔（4 份）會先拿 2 張畫布、再拿金箔補 1 份，金箔的 2 份白白少算 1 份
+export function matPick(bag, worth, need) {
+  const ids = Object.keys(bag).filter(id => bag[id] > 0);
+  let best = null;
+  const walk = (i, left, take) => {
+    if (left <= 0) { const over = -left, n = Object.values(take).reduce((a, b) => a + b, 0); if (!best || over < best.over || (over === best.over && n < best.n)) best = { over, n, take: Object.assign({}, take) }; return; }
+    if (i >= ids.length) return;
+    const id = ids[i], w = worth(id), max = Math.min(bag[id], Math.ceil(left / w));
+    for (let k = max; k >= 0; k--) { if (k) take[id] = k; else delete take[id]; walk(i + 1, left - k * w, take); }
+    delete take[id];
+  };
+  // 同樣份數的，最多的排前面（壹樣好的組合會先用它）
+  ids.sort((a, b) => worth(a) - worth(b) || bag[b] - bag[a]);
+  walk(0, need, {});
+  return best ? best.take : null;
+}
+// 用掉 NUM.shop.matToStamp 份，拿壹枚週章。金箔壹個算 2 份；能剛好就剛好，只剩金箔湊不剛好時不找零
 export function tradeMats(P) {
   if (!P || isFree(P)) return { ok: false, reason: "自由模式用不到" };
   const need = NUM.shop.matToStamp;
   if (matCount(P) < need) return { ok: false, reason: `材料不夠（要 ${need} 份）` };
-  const S = storyState(P), mats = Object.keys(S.bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material");
-  const worth = x => STORY_ITEMS[x].worth || 1;
-  for (let left = need; left > 0;) {
-    const have = mats.filter(x => S.bag[x] > 0), fit = have.filter(x => worth(x) <= left);
-    const id = fit.length ? fit.sort((a, b) => S.bag[b] - S.bag[a])[0] : have.sort((a, b) => worth(a) - worth(b))[0];
-    S.bag[id]--;
-    left -= worth(id);
-    if (!S.bag[id]) delete S.bag[id];
-  }
+  const S = storyState(P), bag = {};
+  Object.keys(S.bag).filter(id => STORY_ITEMS[id] && STORY_ITEMS[id].kind === "material").forEach(id => { bag[id] = S.bag[id] || 0; });
+  const take = matPick(bag, x => STORY_ITEMS[x].worth || 1, need);
+  if (!take) return { ok: false, reason: `材料不夠（要 ${need} 份）` };
+  for (const id of Object.keys(take)) { S.bag[id] -= take[id]; if (!S.bag[id]) delete S.bag[id]; }
   S.stamps += 1;
-  return { ok: true, stamps: S.stamps };
+  return { ok: true, stamps: S.stamps, used: take };
 }

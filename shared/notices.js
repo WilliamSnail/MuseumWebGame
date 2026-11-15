@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-ac2baa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "換週章：金箔的 2 份不會再少算", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "材料換週章時會先找剛好湊滿的組合，例如 1 片金箔加 1 張舊畫布剛好 3 份，不會再多吃掉材料",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-793b6a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "看得到展廳氣氛和集團人心", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
