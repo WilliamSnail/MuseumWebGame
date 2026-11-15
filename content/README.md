@@ -410,7 +410,16 @@ content/
   - `early`（選填）：壹句理由（60 字以內，不進遊戲）。`ties` 掛到後面季節的謎、`from` 又比前壹季收線早的時候，檢查會警告；寫了 `early` 就是「看過、確定要早」，不警告（排程說明 一之十一）。
   - `ties`（選填）：呼應帳本的哪個謎（`mysteries` 的 id）或支線（`sideArcs` 的 id），**不揭曉謎底**。`route`、`likes`（選填）：這段起改他的行程和喜好（整個換掉，不是疊加）；劇情角色不能寫。
   - `text`、`news` 的規矩跟其他畫面上的字壹樣：用「壹」不用「一」、沒有英文字母、沒有真人真公司真政黨（`BANNED` 禁用字）。
-- **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告）。
+- **理智分岔（翊文 11-16，`content/排程說明.md` 一之十一之二）**：`arc` 的壹段可以加 `beat`（這壹步掛了 `revealBeats` 的 id，例如 `"b05"`）和 `variants`；檔案可以加 `branch`。
+```json
+{ "step": 3, "from": "2027-02-22", "text": "…", "news": "…", "beat": "b05",
+  "variants": { "steady": { "text": "…" }, "tired": { "text": "…", "news": "…", "delay": 1 },
+    "uneasy": { "action": "hold", "news": "…" }, "edge": { "action": "branch", "news": "…" } } }
+```
+  - `variants` 的鍵只能是 `steady`／`tired`／`uneasy`／`edge`（跟 `shared/stat_view.js` 的 `npcSan` 壹樣）；`steady`、`tired` 要有 `text`（`tired` 可加 `delay`：1 或 2 週）；`uneasy.action` 是 `hold`／`skip`／`alt`（`alt` 要有 `text`）；`edge.action` 只能是 `branch`。**有 `beat` 的步驟只能寫 `steady`、`tired`。**劇情角色（t-）沒有理智，不寫。
+  - `branch`（另壹條結局，由排程在觸發那天寫）：`{ "id", "since", "steps": [1～3 段 { step, from, text, news, ties, ending }] }`，`from` 要比 `since` 晚，最後壹段 `ending: true`。
+  - 資料還沒有程式讀：變成什麼分級、什麼時候走哪壹步，是伺服器週結算的事（還沒做）；現在只檢查格式。
+- **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
 - **哪些地方可以用 NPC 的名字**（還沒接）：日報新聞句（`news`）、展廳留言、委託人出現和完成後的話、拍賣結果公告、館內股的「不同的人」。程式接上之前，名單只是內容，遊戲的玩法不變。
 
 ## 十一、外面世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/世界經濟規劃.md`）

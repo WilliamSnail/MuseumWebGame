@@ -1,0 +1,15 @@
+{
+  "id": "t-handler",
+  "name": "承辦人（文化部公文）",
+  "kind": "trace",
+  "ledger": "承辦人（文化部公文）",
+  "story": "只留空著的承辦人欄和壹枚缺壹角的方章。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}

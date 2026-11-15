@@ -22,6 +22,11 @@ const isObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 // ---------- 純函式（測試用） ----------
 
 // 最近幾週用過哪些店（npc、fest 都算），店用得少的排前面。recent：[{ npc, fest }]（週包的欄位，可以是 undefined）
+// 這週在帳本 main.units 的哪壹段（翊文 11-16，兩週壹段）
+function unitInfo(ledger, week) {
+  const u = asList(ledger && ledger.main && ledger.main.units).find(x => x && Array.isArray(x.weeks) && x.weeks.includes(week));
+  return u ? { id: u.id, no: u.no, title: u.title, which: week === u.weeks[0] ? 1 : 2, map: asList(u.map), beats: asList(u.beats) } : null;
+}
 function suggestStores(recent, n = 3) {
   const used = {}; STORES.forEach(s => { used[s] = 0; });
   asList(recent).forEach(w => {
@@ -162,6 +167,7 @@ function planDay(input) {
     branch: `claude/週劇情-${week}${isMonday ? "" : "-d" + n}`,
     weekExists: !!pack, weekJsonExists: !!wk, dayExists: !!dayObj, dayFile: `${dir}/d${n}.json`, files,
     holiday: G.holidayOf ? G.holidayOf(date) : null, funDays: G.funDaysOf ? G.funDaysOf(date) : [], calendar: cal, chapters,
+    unit: unitInfo(ledger, week),
     beat, beatDay: beat.kind === "揭露週" ? (beat.plannedDay || "d3") : null,
     isBeatDay: beat.kind === "揭露週" && (beat.plannedDay || "d3") === `d${n}`,
     gaps: isMonday ? gaps : { npc: false, fest: 0 }, weekGapsNow: gaps,
@@ -219,6 +225,7 @@ function format(p) {
     if (p.beat.beat) B(`  同週還有揭露 ${p.beat.beat.id}（${p.beat.beat.mystery}）：${p.beat.beat.detail}（放的地方：${asList(p.beat.beat.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}）`);
   } else B("  不是揭露週也不是回聲週：照原來排，每天至少壹條 clue。");
   asList(p.beat.extras).forEach(x => { B(`  加開（extra，館外壹個月內揭）${x.id}（${x.mystery}）：${x.detail}`); B(`    放的地方：${asList(x.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}；放完壹樣改 revealed、revealedOn、clues；不另外發 Discord`); if (x.concrete) B(`    更具體（concrete）：${x.safe}`); });
+  if (p.unit) { B(""); B(`【兩週壹段】第 ${p.unit.no} 段「${p.unit.title}」的第 ${p.unit.which} 週（${p.unit.which === 1 ? "揭露週" : "回聲週：週日要做這壹段的進展（地圖亮壹塊、主線書多壹頁、NPC 日報壹句）"}）；地圖這段要亮：${p.unit.map.join("、") || "（無）"}（資料寫進 content/map/館外.json，揭露當天才寫）`); }
   if (p.chapters.length) { B(""); B("【季節線】"); p.chapters.forEach(c => B(`  ${c.line}「${c.title}」：${c.written ? "已放（" + c.written + "）" : "★還沒放書，這週某壹天放，放了把 written 填書的 id"}`)); }
   if (p.isMonday) {
     B(""); B("【週一要排的（week.json）】");

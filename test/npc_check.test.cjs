@@ -22,7 +22,7 @@ T("數量和種類：委託人 20 位全搬進來、帳本 5 位角色都是劇�
   const k = x => real.npcs.filter(n => n.kind === x);
   assert.strictEqual(k("client").length, G.CLIENTS.length);
   G.CLIENTS.forEach(c => { const n = k("client").find(x => x.name === c.name); assert.ok(n, c.name); assert.strictEqual(n.note, c.note, c.name + " 的 note 要照原文"); });
-  assert.strictEqual(k("trace").length, ledger.characters.length);
+  assert.strictEqual(k("trace").length, ledger.characters.filter(c => !c.npc).length); // 帳本的角色有 npc 欄的是旅客、委託人（有自己的檔），其餘都是劇情角色
   assert.ok(k("visitor").length >= 8);
 });
 T("每位都有名字、預算不壹樣、不同身分的預算差很多", () => {
@@ -97,6 +97,32 @@ T("季節節奏：ties 到後面季節的謎、日期又比前壹季收線早 �
   st.from = "2027-02-08"; // 晚到前壹季收線之後：不警告
   assert.ok(!run(c).warnings.some(hit));
   st.early = 5; assert.ok(run(c).errors.some(e => /early/.test(e)), "early 不是字串要擋");
+});
+
+T("理智分岔（variants、beat、branch）：對的過；掛揭露的步驟不能暫停或分岔、格式錯都擋", () => {
+  const okVariants = c => { const n = get(c, "v-bell"); n.arc[0].variants = { steady: { text: "她今天精神很好，把帳本翻得很快。" }, tired: { text: "她翻帳本的手慢了壹點。", news: "小鈴今天話不多。", delay: 1 }, uneasy: { action: "hold", news: "小鈴最近比較少來。" }, edge: { action: "branch", news: "小鈴把本子留在了櫃台。" } }; return n; };
+  { const c = base(); okVariants(c); assert.deepStrictEqual(run(c).errors, []); }
+  expectErr(c => { okVariants(c).arc[0].variants.numb = { text: "x" }; }, /不認得「numb」/);
+  expectErr(c => { okVariants(c).arc[0].variants.tired.delay = 5; }, /delay：要是 1 或 2/);
+  expectErr(c => { okVariants(c).arc[0].variants.uneasy.action = "die"; }, /要是 hold/);
+  expectErr(c => { okVariants(c).arc[0].variants.edge.action = "hold"; }, /edge 只能是 branch/);
+  expectErr(c => { const n = okVariants(c); n.arc[0].beat = "b01"; }, /掛了主線揭露/);
+  expectErr(c => { const n = okVariants(c); n.arc[0].beat = "b99"; delete n.arc[0].variants.uneasy; delete n.arc[0].variants.edge; }, /不在帳本 revealBeats/);
+  { const c = base(); const n = okVariants(c); n.arc[0].beat = "b01"; delete n.arc[0].variants.uneasy; delete n.arc[0].variants.edge; assert.deepStrictEqual(run(c).errors, [], "掛 beat 的步驟只換句子可以"); }
+  expectErr(c => { get(c, "t-guard").arc = []; get(c, "t-guard").branch = { id: "x-end", since: "2027-03-01", steps: [{ step: 1, from: "2027-03-08", text: "x", ending: true }] }; }, /劇情角色沒有理智/);
+  const br = () => ({ id: "bell-quiet", since: "2027-03-01", steps: [{ step: 1, from: "2027-03-08", text: "她把本子留在櫃台，說剩下的不用再核對了。", news: "小鈴把本子留在櫃台。", ties: ["m-guard"] }, { step: 2, from: "2027-03-22", text: "櫃台上的本子被收進了抽屜，抽屜沒有上鎖。", ending: true }] });
+  { const c = base(); get(c, "v-bell").branch = br(); assert.deepStrictEqual(run(c).errors, []); }
+  expectErr(c => { const b = br(); delete b.steps[1].ending; get(c, "v-bell").branch = b; }, /最後壹段要有 ending/);
+  expectErr(c => { const b = br(); b.steps[0].ending = true; get(c, "v-bell").branch = b; }, /只有最後壹段能有 ending/);
+  expectErr(c => { const b = br(); b.steps[0].from = "2027-02-20"; get(c, "v-bell").branch = b; }, /要比 since/);
+  expectErr(c => { const b = br(); b.since = "2027-3-1"; get(c, "v-bell").branch = b; }, /since：要是觸發那天/);
+  expectErr(c => { const b = br(); b.steps.push(Object.assign({}, b.steps[1], { step: 3 }), Object.assign({}, b.steps[1], { step: 4 })); get(c, "v-bell").branch = b; }, /要是 1～3 段/);
+  expectErr(c => { const b = br(); b.steps[0].ties = ["m-nope"]; get(c, "v-bell").branch = b; }, /不在帳本的 mysteries／sideArcs/);
+  expectErr(c => { const b = br(); b.extra = 1; get(c, "v-bell").branch = b; }, /不認得「extra」/);
+});
+T("帳本 characters 的 npc 欄：指到不存在的旅客要擋；有 npc 欄的不用 trace 檔", () => {
+  expectErr(c => { c.ledger.characters.find(x => x.npc).npc = "v-nope"; }, /在 content\/npc\/ 找不到/);
+  const c = base(); assert.ok(!run(c).warnings.some(w => /退休的郵差/.test(w)), "有 npc 欄的不警告");
 });
 (async () => {
   try {

@@ -58,7 +58,7 @@ function readWeeks(dir = WEEKS) {
 const readJSON = f => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch (e) { return { __bad: e.message }; } };
 
 // files：readWeeks 的結果；ledger：帳本；settings：排程設定；today：台灣的今天（不給就照現在）
-function checkContent({ files = {}, bad = [], ledger = null, settings = null, today = null } = {}) {
+function checkContent({ files = {}, bad = [], ledger = null, settings = null, today = null, map = null, ctx = {} } = {}) {
   const errors = bad.slice(), warnings = [];
   const E = (where, msg) => errors.push(`${where}：${msg}`), W = (where, msg) => warnings.push(`${where}：${msg}`);
   today = today || process.env.WEEK_CHECK_TODAY || G.taipeiDay(Date.now());
@@ -667,6 +667,9 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     if (L.revealBeats != null) checkRevealBeats(L, G, E, W, `${lw}.revealBeats`, nowWeek);
     // 子主旨和世界的層（docs/世界觀主旨.md）：沒有 main.subthemes 的舊帳本照常
     checkSubthemes(L, E, W, lw);
+    // 兩週壹段、地圖計畫、館外地圖資料（翊文 11-16）
+    checkUnits(L, E, W, lw, ctx);
+    { const wks = Object.keys(files).map(k => /^(\d{4}-W\d{2})\//.exec(k)).filter(Boolean).map(m => m[1]).sort(), lastWk = wks[wks.length - 1]; checkMapFile(map, L, E, W, lastWk ? G.addDays(G.isoMonday(lastWk), 6) : null, ctx); }
     // 季節線（決定 0037）：沒有 seasonal 的舊帳本照常
     if (L.seasonal != null) {
       const sl = isObj(L.seasonal) ? L.seasonal.lines : null;
@@ -823,6 +826,133 @@ function checkSubthemes(L, E, W, lw) {
 }
 function prevIsoWeek(k) { try { return G.isoWeek(G.addDays(G.isoMonday(k), -7)); } catch (e) { return null; } }
 
+// ---------- 兩週壹段（翊文 11-16）：帳本 main.units、world.mapPlan、weeks.<週>.unit，和館外地圖資料 content/map/館外.json ----------
+// 沒有 main.units 的舊帳本照常。只檢查格式和對得上，不看寫得好不好。規則在 content/排程說明.md 一之四之三。
+const ISO_WEEK = /^\d{4}-W\d{2}$/, ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+function diskIds(sub) { try { return new Set(fs.readdirSync(path.join(ROOT, ...sub)).filter(f => f.endsWith(".json")).map(f => f.replace(/\.json$/, ""))); } catch (e) { return null; } }
+function checkUnits(L, E, W, lw, ctx = {}) {
+  const M = isObj(L.main) ? L.main : {};
+  if (M.units == null) return;
+  const uw = `${lw}.main.units`;
+  if (!Array.isArray(M.units) || !M.units.length) { E(uw, "要是陣列（兩週壹段）"); return; }
+  const npcIds = ctx.npcIds || diskIds(["content", "npc"]), groupIds = ctx.groupIds || diskIds(["content", "world", "units"]);
+  const beats = new Map(asList(L.revealBeats && L.revealBeats.list).map(b => [b && b.id, b]));
+  const mys = new Map(asList(L.mysteries && L.mysteries.list).map(m => [m && m.id, m]));
+  const layerIds = new Set(asList(L.world && L.world.layers).map(y => y && y.id));
+  const subIds = new Set(asList(M.subthemes && M.subthemes.list).map(s => s && s.id));
+  const plan = isObj(L.world) && isObj(L.world.mapPlan) ? asList(L.world.mapPlan.list) : [];
+  const planIds = new Set(plan.map(p => p && p.id));
+  const unitOfWeek = {}, ids = new Set();
+  let prevEnd = null;
+  M.units.forEach((u, i) => {
+    const w = `${uw}[${i}]`;
+    if (!isObj(u)) { E(w, "要是物件"); return; }
+    if (u.no !== i + 1 || u.id !== "u" + (i + 1)) E(w, `no 要照順序（${i + 1}），id 要是 u${i + 1}`);
+    if (ids.has(u.id)) E(w, `id「${u.id}」重複`); ids.add(u.id);
+    if (typeof u.title !== "string" || !u.title.trim()) E(w, "title 要有字");
+    else if (u.title.includes("一")) E(w, "畫面上會看到的標題用「壹」不用「一」（決定 0001）");
+    if (!Number.isInteger(u.season) || u.season < 1 || u.season > 4) E(w, "season 要是 1～4");
+    const wk = u.weeks;
+    if (!Array.isArray(wk) || wk.length !== 2 || !wk.every(x => ISO_WEEK.test(x || "") && G.isoMonday(x))) { E(w, "weeks 要剛好 2 個週（2026-W47 這種）"); return; }
+    if (G.isoWeek(G.addDays(G.isoMonday(wk[0]), 7)) !== wk[1]) E(w, `weeks 要是連續的兩週（${wk[0]} 的下壹週是 ${G.isoWeek(G.addDays(G.isoMonday(wk[0]), 7))}）`);
+    if (i === 0 && wk[0] !== "2026-W47") E(w, "第 1 段要從 2026-W47 開始");
+    if (prevEnd && G.isoWeek(G.addDays(G.isoMonday(prevEnd), 7)) !== wk[0]) E(w, `要接在上壹段（${prevEnd}）後面，不能空週或重疊`);
+    prevEnd = wk[1]; wk.forEach(x => { unitOfWeek[x] = u; });
+    if (u.beatWeek !== wk[0] || u.echoWeek !== wk[1]) E(w, "beatWeek 要是第 1 週、echoWeek 要是第 2 週");
+    if (typeof u.range === "string" && ISO_DATE.test(u.range.slice(0, 10)) && u.range.slice(0, 10) !== G.isoMonday(wk[0])) E(w, `range 要從 ${G.isoMonday(wk[0])} 開始`);
+    if (!Array.isArray(u.depth) || !u.depth.length || u.depth.some(n => !Number.isInteger(n) || n < 1 || n > 7)) E(w, "depth 要是 main.depths 第幾個問題（1～7）的陣列");
+    if (!Array.isArray(u.tell) || u.tell.length < 1 || u.tell.some(t => typeof t !== "string" || !t.trim())) E(w, "tell 要是 1 句以上的文字陣列");
+    ["progress", "news"].forEach(k => { if (typeof u[k] !== "string" || !u[k].trim()) E(w, `${k} 要有字`); });
+    asList(u.beats).forEach(id => {
+      const b = beats.get(id);
+      if (!b) E(w, `beats「${id}」不在 revealBeats 裡`);
+      else if (!wk.includes(b.week)) E(w, `beats「${id}」是 ${b.week} 的揭露，不在這壹段（${wk.join("、")}）`);
+      else if (b.week !== wk[0] && !b.extra) W(w, `beats「${id}」不在第 1 週（只有加開 extra 的可以在第 2 週）`);
+    });
+    asList(u.closes).forEach(id => {
+      const m = mys.get(id);
+      if (!m) E(w, `closes「${id}」不在 mysteries 裡`); else if (!wk.includes(m.closeBy)) E(w, `closes「${id}」的 closeBy 是 ${m.closeBy}，不在這壹段`);
+    });
+    if (isObj(u.subthemes)) Object.entries(u.subthemes).forEach(([k, s]) => {
+      if (!wk.includes(k)) E(w, `subthemes 的週「${k}」不在這壹段`);
+      else if (!isObj(s) || !subIds.has(s.main) || !Array.isArray(s.side) || s.side.length > 1 || s.side.some(x => !subIds.has(x) || x === s.main)) E(`${w}.subthemes.${k}`, "要是 { main, side: [最多 1 條] }，id 在 main.subthemes，side 不等於 main");
+      const rec = L.weeks && L.weeks[k], rs = rec && rec.subthemes;
+      if (isObj(rs) && isObj(s) && (rs.main !== s.main)) W(`${w}.subthemes.${k}`, `跟 weeks.${k}.subthemes.main（${rs.main}）不壹樣`);
+    }); else E(w, "subthemes 要是 { 週: { main, side } }");
+    asList(u.layers).forEach(y => { if (!layerIds.has(y)) E(w, `layers「${y}」不在 world.layers 裡`); });
+    if (!isObj(u.groups) || !Array.isArray(u.groups.main) || !Array.isArray(u.groups.minor)) E(w, "groups 要是 { main: [], minor: [] }");
+    else [...u.groups.main, ...u.groups.minor].forEach(g => { if (groupIds && !groupIds.has(g)) E(w, `groups「${g}」不在 content/world/units/ 裡`); });
+    asList(u.town).forEach(n => { if (npcIds && !npcIds.has(n)) E(w, `town「${n}」不在 content/npc/ 裡`); });
+    asList(u.map).forEach(m => { if (!planIds.has(m)) E(w, `map「${m}」不在 world.mapPlan 裡`); });
+    if (u.culture != null && (typeof u.culture !== "string" || !u.culture.trim())) E(w, "culture 要是文字或 null");
+  });
+  asList(M.seasons).forEach((s, i) => asList(s && s.units).forEach(id => { if (!ids.has(id)) E(`${lw}.main.seasons[${i}]`, `units「${id}」不在 main.units 裡`); }));
+  const seen = new Set();
+  plan.forEach((p, i) => {
+    const w = `${lw}.world.mapPlan.list[${i}]`;
+    if (!isObj(p)) { E(w, "要是物件"); return; }
+    if (!/^m-[a-z0-9-]+$/.test(p.id || "")) E(w, "id 要是 m-xxx"); else if (seen.has(p.id)) E(w, `id「${p.id}」重複`); seen.add(p.id);
+    if (typeof p.name !== "string" || !p.name.trim()) E(w, "name 要有字");
+    if (!["L0", "L1", "L2", "L3", "L4"].includes(p.layer) || !layerIds.has(p.layer)) E(w, "layer 要是 world.layers 裡的 L0～L4");
+    const u = M.units[(p.unit | 0) - 1];
+    if (!u) E(w, `unit「${p.unit}」不在 main.units 裡`);
+    else if (typeof p.date !== "string" || !ISO_DATE.test(p.date) || !u.weeks.includes(G.isoWeek(p.date))) E(w, `date 要是這壹段（${u.weeks.join("、")}）裡的日期`);
+    ["x", "y"].forEach(k => { if (typeof p[k] !== "number" || p[k] < 0 || p[k] > 100) E(w, `${k} 要是 0～100（百分比）`); });
+    asList(p.npc).forEach(n => { if (npcIds && !npcIds.has(n)) E(w, `npc「${n}」不在 content/npc/ 裡`); });
+  });
+  Object.entries(isObj(L.weeks) ? L.weeks : {}).forEach(([k, rec]) => {
+    if (!ISO_WEEK.test(k) || !isObj(rec)) return;
+    const u = unitOfWeek[k];
+    if (rec.unit !== undefined) {
+      if (!u) E(`${lw}.weeks.${k}`, "unit 寫了，但這週不在任何壹段裡");
+      else if (rec.unit !== u.id) E(`${lw}.weeks.${k}`, `unit 要是 ${u.id}`);
+      else if (rec.unitRole !== (k === u.weeks[0] ? "beat" : "echo")) E(`${lw}.weeks.${k}`, `unitRole 要是 ${k === u.weeks[0] ? "beat" : "echo"}`);
+    } else if (u && k >= "2026-W47") W(`${lw}.weeks.${k}`, `沒有 unit：這週是第 ${u.no} 段的第 ${k === u.weeks[0] ? 1 : 2} 週，要寫 unit: "${u.id}"、unitRole（beat 或 echo）`);
+  });
+  const first = M.units[0] && M.units[0].weeks[0], last = prevEnd;
+  beats.forEach((b, id) => { if (b && first && last && b.week >= first && b.week <= last && b.status !== "skipped" && !M.units.some(u => asList(u.beats).includes(id))) W(uw, `揭露「${id}」（${b.week}）沒有被任何壹段收進 beats`); });
+}
+
+// 館外地圖資料 content/map/館外.json（網頁讀的；只增不減，揭露當天才寫進去）。latest：現有週包裡最晚的那壹週的週日
+function checkMapFile(map, L, E, W, latest, ctx = {}) {
+  const w0 = "content/map/館外.json";
+  if (map == null) return;
+  if (map.__bad) { E(w0, `JSON 讀不出來（${map.__bad}）`); return; }
+  if (!isObj(map) || map.version !== 1 || !Array.isArray(map.spots)) { E(w0, "要是 { version: 1, spots: [] }"); return; }
+  const npcIds = ctx.npcIds || diskIds(["content", "npc"]);
+  const plan = new Map(asList(L && L.world && L.world.mapPlan && L.world.mapPlan.list).map(p => [p && p.id, p]));
+  const beats = new Set(asList(L && L.revealBeats && L.revealBeats.list).map(b => b && b.id));
+  const MARKS = /[\s，。、；：！？「」『』（）()\[\]【】《》…—,.;:!?"'·]/g;
+  const grams = new Set();
+  asList(L && L.mysteries && L.mysteries.list).flatMap(m => [m.truth, m.understood]).filter(s => typeof s === "string").forEach(t => { t = t.replace(MARKS, ""); for (let i = 0; i + 6 <= t.length; i++) grams.add(t.slice(i, i + 6)); });
+  const seen = new Set();
+  map.spots.forEach((s, i) => {
+    const w = `${w0}.spots[${i}]`;
+    if (!isObj(s)) { E(w, "要是物件"); return; }
+    Object.keys(s).forEach(k => { if (!["id", "name", "layer", "from", "x", "y", "icon", "line", "npc", "need", "source"].includes(k)) E(w, `不認得「${k}」（只能 id、name、layer、from、x、y、icon、line、npc、need、source）`); });
+    if (!/^m-[a-z0-9-]+$/.test(s.id || "")) E(w, "id 要是 m-xxx"); else if (seen.has(s.id)) E(w, `id「${s.id}」重複`); seen.add(s.id);
+    if (plan.size && !plan.has(s.id)) W(w, `「${s.id}」不在帳本 world.mapPlan（先在計畫裡加）`);
+    if (typeof s.name !== "string" || !s.name.trim() || len(s.name) > 12) E(w, "name 要是 1～12 字");
+    if (!["L1", "L2", "L3", "L4"].includes(s.layer)) E(w, "layer 要是 L1～L4");
+    if (typeof s.from !== "string" || !ISO_DATE.test(s.from) || G.addDays(s.from, 0) !== s.from) E(w, "from 要是日期（揭露那天）");
+    else if (latest && s.from > latest) E(w, `from ${s.from} 比現有最晚的週包（到 ${latest}）還晚：後面的不能先寫（網頁會把它打包出去）`);
+    else { const p = plan.get(s.id); if (p && s.from < p.date) W(w, `from 比計畫的日期（${p.date}）早`); }
+    ["x", "y"].forEach(k => { if (typeof s[k] !== "number" || s[k] < 0 || s[k] > 100) E(w, `${k} 要是 0～100`); });
+    if (typeof s.icon !== "string" || !/^[a-z][a-z0-9-]*$/.test(s.icon)) E(w, "icon 要是英文小寫（美術圖示的名字）");
+    if (typeof s.line !== "string" || !s.line.trim() || len(s.line) > 36) E(w, "line 要是 1～36 字的壹句話");
+    else {
+      if (s.line.includes("一") || String(s.name).includes("一")) E(w, "畫面上的字用「壹」，不要用「一」（決定 0001）");
+      const hit = BANNED.find(x => (s.line + s.name).includes(x)); if (hit) E(w, `有禁用字「${hit}」`);
+      if (/[A-Za-z]/.test((s.line + s.name).replace(/B\d/g, ""))) E(w, "不要有英文字母");
+      const t = s.line.replace(MARKS, ""); for (let i = 0; i + 6 <= t.length; i++) if (grams.has(t.slice(i, i + 6))) { E(w, `破梗：「${t.slice(i, i + 6)}」跟帳本謎底字句壹樣`); break; }
+    }
+    asList(s.npc).forEach(n => { if (npcIds && !npcIds.has(n)) E(w, `npc「${n}」不在 content/npc/ 裡`); });
+    if (s.need !== undefined && (typeof s.need !== "string" || !/^c-[a-z0-9]+(-[a-z0-9]+)*$/.test(s.need))) E(w, "need 要是線索 id（c-xxx）：拿到那條線索才亮字；不寫就是日期到了全亮");
+    if (typeof s.source !== "string" || !s.source.trim()) E(w, "source 要寫這個點是哪個揭露（例如 2026-W47/b24）或哪壹週的哪件事");
+    else { const m = /\/(b\d+)$/.exec(s.source); if (m && !beats.has(m[1])) E(w, `source「${s.source}」的 ${m[1]} 不在 revealBeats 裡`); }
+  });
+}
+
 // 畫面的程式不能 import 帳本（不打包進網頁，第六節）
 function checkBundle() {
   const errs = [], dir = path.join(ROOT, "web", "src");
@@ -837,7 +967,8 @@ function checkBundle() {
 
 function main() {
   const { files, bad } = readWeeks();
-  const r = checkContent({ files, bad, ledger: fs.existsSync(LEDGER) ? readJSON(LEDGER) : null, settings: fs.existsSync(SETTINGS) ? readJSON(SETTINGS) : null });
+  const MAPF = path.join(ROOT, "content", "map", "館外.json");
+  const r = checkContent({ files, bad, ledger: fs.existsSync(LEDGER) ? readJSON(LEDGER) : null, settings: fs.existsSync(SETTINGS) ? readJSON(SETTINGS) : null, map: fs.existsSync(MAPF) ? readJSON(MAPF) : null });
   r.errors.push(...checkBundle());
   { const N = require("./npc_check.cjs"), nr = N.readNpc(); const nc = N.checkNpc({ npcs: nr.npcs, bad: nr.bad, banned: BANNED, ledger: fs.existsSync(LEDGER) ? readJSON(LEDGER) : null }); r.errors.push(...nc.errors); r.warnings.push(...nc.warnings); } // 館內 NPC（content/npc/，11-14）
   r.warnings.forEach(w => console.log("警告 " + w));
@@ -846,4 +977,4 @@ function main() {
   console.log(`每週劇情：正式週 ${n} 週、備用週 ${f} 週、備用的一天 ${s} 天，都過了${r.warnings.length ? `（${r.warnings.length} 個警告）` : ""}`);
 }
 if (require.main === module) main();
-module.exports = { MARKET_BANNED, checkRevealBeats, checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };
+module.exports = { MARKET_BANNED, checkUnits, checkMapFile, checkRevealBeats, checkContent, checkBundle, readWeeks, readJSON, LIMITS, BANNED, LEDGER, SETTINGS, WEEKS };

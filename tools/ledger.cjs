@@ -51,6 +51,7 @@ function today(L, week, prevWeek) {
     add("這季 main.seasons（不含別週的章）", rest);
     add("這週那章", (chapters || []).filter(c => JSON.stringify(c).includes(`"${week}"`)));
   }
+  { const u = ((L.main && L.main.units) || []).find(x => x && Array.isArray(x.weeks) && x.weeks.includes(week)); if (u) { const { tell, ...rest } = u; add(`這週在第 ${u.no} 段「${u.title}」的第 ${week === u.weeks[0] ? "1（揭露週）" : "2（回聲週，要做這壹段的進展）"} 週 main.units`, Object.assign({ tell }, rest)); } }
   add(`這週 weeks.${week}`, L.weeks && L.weeks[week]);
   if (prevWeek && !(L.weeks && L.weeks[week])) add(`上週 weeks.${prevWeek}（這週還沒寫，先接上週的鉤子）`, L.weeks && L.weeks[prevWeek] && { hooks: L.weeks[prevWeek].hooks, question: L.weeks[prevWeek].question, motifs: L.weeks[prevWeek].motifs });
   add("還沒收的伏筆 foreshadow（closed 不是 true）", (L.foreshadow || []).filter(f => !f.closed));
