@@ -533,3 +533,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-stage.is-demo { position: relative; }
 .bank-stage.is-demo::after { content: "示範資料"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5;
   font-size: clamp(2.4rem, 9vw, 6rem); font-weight: 900; letter-spacing: .3em; color: rgba(201, 87, 75, .22); transform: rotate(-18deg); white-space: nowrap; }
+
+/* 行情／持倉／交易的小切換鈕：按鈕大小不變，字和圖示放大（翊文 11-15） */
+.bank-segs.kind .bank-seg { font-size: 1.0625rem; letter-spacing: .08em; gap: 10px; }
+.bank-segs.kind .bank-segi svg { width: 26px; height: 26px; }
+@media (max-width: 760px) { .bank-segs.kind .bank-seg { font-size: 1rem; gap: 7px; } .bank-segs.kind .bank-segi svg { width: 23px; height: 23px; } }
