@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-3bde9d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行有時顯示示範資料的問題修好了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "欠錢的館友進銀行時，有時會看到不是自己的持股（其實是連不上時的示範資料），已經修好",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-569df6", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "欠款視窗多了「先去銀行找財經專員」", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
