@@ -19,6 +19,7 @@ import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, sndFile, wait } from "./ui_core.js";
 import { ambHeat } from "./ui_mood.js";
+import { casOutSfx, casSfx } from "./casino_sfx.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -382,7 +383,7 @@ async function deal(text) {
   await act("deal", { text }, async r => {
     const v = r.round;
     say([CAS_TEXT.dealHole, fill(CAS_TEXT.dealUp, { card: casCardName(v.dealer.cards[1]) })]);
-    snd("flip");
+    casSfx("bet"); casSfx("deal"); // 下注的籌碼聲＋發牌的三下
     if (v.state === "done") await finish(v, r, { natural: true });
     else if (r.settle) { celebrate(r.settle.ach); streakNote(r.settle.streak); }
   });
@@ -396,8 +397,8 @@ async function move(kind) {
       const c = v.player.cards[v.player.cards.length - 1];
       S.fresh = v.player.cards.length - 1;
       say([`您收到壹張明牌：${casCardName(c)}，目前總點數為 ${v.player.total}`]);
-      snd("flip");
-    }
+      casSfx("hit");
+    } else if (kind === "stand") casSfx("stand");
     if (v.state === "done") await finish(v, r, { stood: kind === "stand" });
   });
 }
@@ -426,12 +427,13 @@ async function finish(v, r, o) {
     if (S !== s) return;
     say([line]);
     if (n != null) s.shown = n === 0 ? 0 : n;
+    if (n != null && n >= 2) casSfx("dealer"); // 莊家翻牌、補牌，每壹張壹下
     draw();
     await wait(n != null && n >= 3 ? 700 : 520);
   }
   s.shown = null;
   if (S !== s) return;
-  if (out.kind === "lose") snd("error"); else if (out.kind !== "push") snd("coin");
+  casSfx(casOutSfx(out)); // 贏、黑傑克／五張、平手、輸、爆牌各壹種
   if (r.ticket) say([CAS_TEXT.packWon]);
   if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); streakNote(r.settle.streak); }
   say(s.house || []);
