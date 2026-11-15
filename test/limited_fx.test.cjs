@@ -65,7 +65,7 @@ T("打怪壹回合：淚滴耳環全隊回理智、火氣頭帶的推不扣理�
   const r = G.fightRound(f, { a: { act: "beanie" }, b: { act: "guard" } });
   const mv = r.events.find(e => e.t === "move" && e.move === "beanie"); assert.ok(mv && mv.team && mv.n === G.LIMITED_FX.淚滴耳環.fight.n, "全隊回 n");
   assert.ok(r.fx.b && r.fx.b.gain >= G.LIMITED_FX.淚滴耳環.fight.n, "隊友也回了（看這回合的回復量，不看剩下多少：怪物可能剛好打到他）");
-  f = st([seat("a", "火氣頭帶", 30)]); const r2 = G.fightRound(f, { a: { act: "tentacle" } }); const pe = r2.events.find(e => e.t === "push" && e.mode === "tentacle"); assert.ok(pe && pe.san == null, "不扣理智");
+  f = st([seat("a", "火氣頭帶", 30)]); const op = G.fightOptions(f, "a").find(o => o.act === "tentacle"); assert.ok(op && op.noSan && op.hat === "火氣頭帶", "按鈕選項標明不扣理智、帶帽子名字（畫面提示用）"); const r2 = G.fightRound(f, { a: { act: "tentacle" } }); const pe = r2.events.find(e => e.t === "push" && e.mode === "tentacle"); assert.ok(pe && pe.san == null, "不扣理智"); assert.strictEqual(pe.hat, "火氣頭帶", "紀錄寫那頂帽子的名字，不寫觸手帽");
   const A = st([seat("a", "蝴蝶結", 30), seat("b", "沒有", 30)]), B = st([seat("a", "沒有", 30), seat("b", "沒有", 30)]);
   G.setRng(() => 0.5); const ra = G.fightRound(A, { a: { act: "wizard" }, b: { act: "push" } }), rb = G.fightRound(B, { a: { act: "push" }, b: { act: "push" } }); G.setRng(null);
   const pa = ra.events.find(e => e.t === "push" && e.id === "b"), pb = rb.events.find(e => e.t === "push" && e.id === "b"); assert.strictEqual(pa.n - pb.n, G.LIMITED_FX.蝴蝶結.fight.n, "隊友的推多 n");
