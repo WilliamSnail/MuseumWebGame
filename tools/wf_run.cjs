@@ -11,10 +11,7 @@
 //
 // 會對外發東西或碰正式資料的流程（公告、Firebase 固定動作、註冊指令），照 AGENTS.md：翊文要求了才能按。
 const fs = require("fs");
-const { spawnSync } = require("child_process");
-
-const REPO = "WilliamSnail/MuseumWebGame";
-const gh = () => process.env.GH_BIN || (fs.existsSync("C:\\Program Files\\GitHub CLI\\gh.exe") ? "C:\\Program Files\\GitHub CLI\\gh.exe" : "gh");
+const { REPO, newRunId, dispatch, runLog } = require("./gh_lib.cjs"); // 11-15 合併成共用的
 
 // 拆參數。錯了就丟錯，不要默默照做
 function parseArgs(argv, read = f => fs.readFileSync(f, "utf8")) {
@@ -34,34 +31,17 @@ function parseArgs(argv, read = f => fs.readFileSync(f, "utf8")) {
   if (!o.workflow) throw new Error("要寫流程的檔名，例如 discord-log.yml");
   return o;
 }
-// 列表裡第一個不是舊那次的（list 最新的在最前面）。沒有回 null
-const newRunId = (ids, oldId) => { const id = ids.find(Boolean); return id && String(id) !== String(oldId) ? String(id) : null; };
 // 紀錄的一行：「工作\t步驟\t時間 內容」→ 內容，順便拿掉顏色碼
 const logBody = line => line.split("\t").slice(2).join("\t").replace(/^\S+ /, "").replace(/\x1b\[[0-9;]*m/g, "");
 
-function run(args, ok) {
-  const r = spawnSync(gh(), args, { encoding: "utf8", maxBuffer: 1 << 26 });
-  if (r.error) throw r.error;
-  if (r.status !== 0 && !ok) throw new Error(`gh ${args.slice(0, 2).join(" ")} 失敗：${(r.stderr || r.stdout).trim().slice(-300)}`);
-  return r;
-}
-const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-const latest = wf => run(["run", "list", "--repo", REPO, "--workflow", wf, "--limit", "1", "--json", "databaseId", "--jq", ".[].databaseId"], true).stdout.trim();
-
 function main() {
-  const o = parseArgs(process.argv.slice(2)), old = latest(o.workflow);
-  const fields = Object.entries(o.inputs).flatMap(([k, v]) => ["-f", `${k}=${v}`]);
-  run(["workflow", "run", o.workflow, "--repo", REPO, "--ref", o.ref, ...fields]); // 失敗（例如參數名字錯）在這裡就停
-  let id = null;
-  for (let i = 0; i < 36 && !id; i++) { id = newRunId([latest(o.workflow)], old); if (!id) sleep(5000); }
-  if (!id) throw new Error("等了 3 分鐘，還是沒有新的一次（GitHub Actions 可能在塞車）");
-  console.log(`https://github.com/${REPO}/actions/runs/${id}`);
-  const w = run(["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "5"], true);
-  const log = run(["run", "view", id, "--repo", REPO, "--log"], true).stdout.split("\n").map(logBody);
+  const o = parseArgs(process.argv.slice(2));
+  const r = dispatch(o.workflow, o.inputs, { ref: o.ref, onId: (id, url) => console.log(url) });
+  const log = runLog(r.id).split("\n").map(logBody);
   const re = o.grep ? new RegExp(o.grep) : null;
   console.log((re ? log.filter(l => re.test(l)) : log.slice(-40)).join("\n"));
-  if (w.status !== 0) throw new Error(`這一次失敗了（${id}）：gh run view ${id} --log-failed`);
-  console.log(`✓ 這一次成功（${id}）`);
+  if (!r.ok) throw new Error(`這一次失敗了（${r.id}）：gh run view ${r.id} --log-failed`);
+  console.log(`✓ 這一次成功（${r.id}）`);
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`✗ ${e.message}`); process.exit(1); } }
