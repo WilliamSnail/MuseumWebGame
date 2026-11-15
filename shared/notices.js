@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-6f6858", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行連不上時會清楚標「示範資料」", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行暫時連不上時顯示的是示範資料，現在上面會有紅色橫幅、整頁也有「示範資料」字樣，不會再以為是自己的帳戶",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-e33e44", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "財經專員的賣股計畫修好", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

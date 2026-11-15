@@ -900,7 +900,9 @@ SCREENS.bank = root => {
     h("span", { class: "bank-ti", html: TAB_ICON[id] }), h("span", null, name), id === "stock" && tab !== "stock" && v.stocks && v.stocks.list.some(x => x.fresh) ? h("i", { class: "bank-dot", "aria-label": "有股票的價格變了" }) : null)));
   root.append(roomHead("Yuga Bot 銀行", v.econ ? `存錢有利息，借錢要還，買股票看行情。今天景氣：${v.econ.idx > 0.3 ? "好 ▲" : v.econ.idx < -0.3 ? "差 ▼" : "普通"}` : "存錢有利息，借錢要還。", helpBtn(v)),
     tabs,
-    h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
+    // 示範資料要壹眼看得出來（11-15 玩家：「進到銀行好像持倉變成官方還是別人的了」——其實是連不上時的示範資料，手機版又把那行藏起來了）：
+    //   上面壹條紅色橫幅（手機也顯示）＋整頁斜的「示範資料」浮水印（.bank-stage.is-demo）
+    h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" + (v.demo && !UI.bankLoading ? " is-demo" : "") }, v.demo ? h("p", { class: "bank-demo" + (UI.bankLoading ? "" : " warn"), role: UI.bankLoading ? null : "alert" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `示範資料，不是你的帳戶：連不上銀行（${UI.bankErr}）。你的錢和股票都還在，等壹下再進來。` : "示範資料，不是你的帳戶：登入之後才看得到自己的錢和股票。") : null, PANES[tab](v)), side(v)),
     v.stocks ? ticker(v, tab === "stock") : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
   mountMood(root, "bank"); // 房間效果：吊燈、景氣的冷暖、看板的光
 };
