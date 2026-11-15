@@ -114,6 +114,7 @@ const STEPS = [
   ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/world_check.cjs"]],
   ["賣股還債（不受壹人壹天賣出上限、賣的錢先補負數再照到期順序還借款、最多賣到剛好夠還、館外館內股、帳對得上，決定 0093 第 2 件）", ["test/casino_debt.test.cjs"]],
   ["各房間即時人數、館內股盤中價格跟著到店人數走（房間對照、人數對得上、修正不改開盤價、沒名單不修正，決定 0094）", ["test/npc_rooms.test.cjs"]],
+  ["旅客卡的資料（只給已經發生的、理智和錢包只給分級、劇情角色不給，決定 0096）", ["test/npc_card.test.cjs"]],
   ["財經專員（欠了不少錢才出現、借款延期手續費、每筆壹次、賣股順序、個人信壹人壹封、帳對得上，決定 0093 第 3 件）", ["test/casino_advisor.test.cjs"]],
   ["世界分帳（外面世界的錢分給單位、家計、公共：總和等於 house.world、成長按權重分、新玩家補助從文化部出、名單打包跟上，W3，決定 0086）", ["test/world_split.test.cjs"]],
   ["調數值的總入口 npm run tune（acorn 只換那個值、unit／npc 叫現有的腳本、檢查沒過就還原、--dry，決定 0089）", ["test/tune.test.cjs"]],
