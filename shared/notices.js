@@ -51,6 +51,10 @@ export const NOTICES = [
     sections: [
       ["改了什麼", [
         "手機直著拿就能玩，不會再跳「把手機轉橫」的提示",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-6f6858", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行連不上時會清楚標「示範資料」", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
