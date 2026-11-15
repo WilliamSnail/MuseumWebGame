@@ -45,7 +45,7 @@ import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
-import { nwSanPublic, whCard, whMoodPublic } from "./shared/world.js";
+import { nwSanPublic, whCard, whCrowdMood, whMoodPublic } from "./shared/world.js";
 import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -81,7 +81,7 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 async function npcNowView(h) {
   try {
     const t = now(), day = taipeiDay(t), sec = await twSecret(), counters = npcCounters(h && h.npcc);
-    const p = npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(h || {}, t)); // 被館友邀去賭場的不算在展廳（決定 0080）
+    const p = npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(h || {}, t), whCrowdMood(h, day)); // 被館友邀去賭場的不算在展廳（決定 0080）
     const house = { reviews: h && Array.isArray(h.reviews) ? h.reviews.slice() : [], npcLive: h ? JSON.parse(JSON.stringify(h.npcLive || null)) : null, world: h ? h.world : 0, econ: h && h.econ, led: {}, budget: 0, bankroll: 0, museum: 0 };
     casNpcLive(house, day, t, sec, NPC_LIST, counters); // 複本上算：已經到、還沒寫進莊家文件的評價補進來（不寫回去、不動錢）
     return { now: { hall: p.hall, names: p.names, around: p.around, named: { hall: p.hall, names: p.names, ids: p.ids }, casino: p.casino, crowd: p.crowd, total: p.hall + p.crowd.n }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
@@ -408,7 +408,7 @@ export const casino = onCall(async req => {
     // 看到了就把 key 夾在下壹次 tickets 回報領分紅。只讀。回 { ok, now（伺服器現在毫秒）, feed: [{ key, kind, at, until, npc?, who?, label?, n }]（at 在現在前 120 秒到後 240 秒之間）, in: 現在展廳的人 }
     case "hallFeed": {
       const t = now(), day = taipeiDay(t), sec = await twSecret(), hs = await houseRef().get(), counters = npcCounters(hs.exists ? parse(hs).npcc : null);
-      return { ok: true, now: t, day, feed: hallFeed(day, sec, NPC_LIST, counters, t - 120000, t + 240000), in: npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(hs.exists ? parse(hs) : {}, t)) };
+      return { ok: true, now: t, day, feed: hallFeed(day, sec, NPC_LIST, counters, t - 120000, t + 240000, whCrowdMood(hs.exists ? parse(hs) : null, day)), in: npcPresence(day, t, sec, NPC_LIST, counters, npcCasAway(hs.exists ? parse(hs) : {}, t), whCrowdMood(hs.exists ? parse(hs) : null, day)) };
     }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。

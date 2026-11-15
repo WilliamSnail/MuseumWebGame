@@ -18,7 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, nwBal, nwBudgetMult, nwPayday, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
+import { WU_HH, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -56,15 +56,21 @@ export function npcVisitsToday(day, secret, list, counters) {
   return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
 }
 // 不具名的散客（翊文 11-14）：「三位學生」「壹對情侶」「帶小孩的家庭」「旅行團」…，每天的組數、類型、幾點到、待多久都由種子決定；只在展廳。
-const CROWD_KINDS = [{ label: "三位學生", n: [3, 3] }, { label: "壹對情侶", n: [2, 2] }, { label: "帶小孩的家庭", n: [3, 4] }, { label: "旅行團", n: [8, 15] }, { label: "兩位朋友", n: [2, 2] }, { label: "獨自看展的人", n: [1, 1] }, { label: "退休的長輩們", n: [4, 6] }];
-export function crowdVisitsToday(day, secret) {
+export const CROWD_KINDS = [{ label: "三位學生", n: [3, 3] }, { label: "壹對情侶", n: [2, 2] }, { label: "帶小孩的家庭", n: [3, 4] }, { label: "旅行團", n: [8, 15] }, { label: "兩位朋友", n: [2, 2] }, { label: "獨自看展的人", n: [1, 1] }, { label: "退休的長輩們", n: [4, 6] }];
+// 散客類型的權重（決定 0092 第 3 件）：mood ＝昨天的展廳氣氛（沒有 ＝ 平常，每種 1）。回傳 CROWD_KINDS 同樣長度的陣列
+export function crowdKindWeights(mood) {
+  const C = NUM.casino.worldDoc.crowd, m = Number.isFinite(+mood) && mood !== null ? +mood : null, t = m === null ? null : m >= C.high ? C.mult.high : m <= C.low ? C.mult.low : null;
+  return CROWD_KINDS.map(k => (t && t[k.label] > 0 ? t[k.label] : 1));
+}
+export function crowdVisitsToday(day, secret, mood = null) {
   const C = NUM.casino.npcSpend.crowd, out = [];
   if (!C || !(C.groupsDay > 0)) return out;
-  const wd = new Date(day + "T00:00:00Z").getUTCDay(), rnd = mulberry32(hashStr(`${secret}|${day}|crowd`));
+  const KW = crowdKindWeights(mood), KT = KW.reduce((a, b) => a + b, 0), wd = new Date(day + "T00:00:00Z").getUTCDay(), rnd = mulberry32(hashStr(`${secret}|${day}|crowd`));
   const g = Math.max(0, Math.round(C.groupsDay * (wd === 0 || wd === 6 ? C.weekendMult : 1) * (0.8 + 0.4 * rnd()))), W = C.weights, tot = W.reduce((a, b) => a + b, 0);
   for (let i = 0; i < g; i++) {
     let r = rnd() * tot, h = 0; for (; h < W.length - 1; h++) { r -= W[h]; if (r < 0) break; }
-    const k = CROWD_KINDS[Math.floor(rnd() * CROWD_KINDS.length)], n = k.n[0] + Math.floor(rnd() * (k.n[1] - k.n[0] + 1)), stay = C.stay[0] + Math.floor(rnd() * (C.stay[1] - C.stay[0] + 1));
+    const ku = rnd(); let kc = 0, ki = 0; for (; ki < CROWD_KINDS.length - 1; ki++) { kc += KW[ki] / KT; if (ku < kc) break; } // 同壹個亂數、換成加權的抽法（權重全是 1 時跟以前壹樣）
+    const k = CROWD_KINDS[ki], n = k.n[0] + Math.floor(rnd() * (k.n[1] - k.n[0] + 1)), stay = C.stay[0] + Math.floor(rnd() * (C.stay[1] - C.stay[0] + 1));
     const start = Math.max(0, Math.min(DAY_MIN - stay, h * 60 + Math.floor(rnd() * 60)));
     out.push({ key: "crowd|" + i, label: k.label, n, start, end: start + stay });
   }
@@ -72,10 +78,10 @@ export function crowdVisitsToday(day, secret) {
 }
 // 展廳到訪時刻表（給瀏覽器照表播放、伺服器驗證領分紅）：[{ key, kind: "npc"|"crowd", at 到的毫秒, until 走的毫秒, npc?, who（有名字的）｜label（散客）, n 幾位 }]，
 // 只給 at 在 [fromMs, toMs] 之間的。有名字的 NPC 壹位 n＝1；散客壹組 n＝組員人數（照人數算：旅行團 12 位＝12 次到訪）
-export function hallFeed(day, secret, list, counters, fromMs, toMs) {
+export function hallFeed(day, secret, list, counters, fromMs, toMs, mood = null) {
   const base = npcDayStartMs(day), out = [];
   for (const v of npcVisitsToday(day, secret, list, counters)) if (v.place === "hall") out.push({ key: v.key, kind: "npc", at: base + v.start * 60000, until: base + v.end * 60000, npc: v.id, who: v.name, n: 1 });
-  for (const g of crowdVisitsToday(day, secret)) out.push({ key: g.key, kind: "crowd", at: base + g.start * 60000, until: base + g.end * 60000, label: g.label, n: g.n });
+  for (const g of crowdVisitsToday(day, secret, mood)) out.push({ key: g.key, kind: "crowd", at: base + g.start * 60000, until: base + g.end * 60000, label: g.label, n: g.n });
   return out.filter(e => e.at >= fromMs && e.at <= toMs).sort((a, b) => a.at - b.at || (a.key < b.key ? -1 : 1));
 }
 // 分紅池（house.hallPot { day, keys: { key: { n, left } } }）：到訪的那壹刻開，領分紅的人從裡面拿（shared/casino_ticket.js）
@@ -106,10 +112,10 @@ export function crowdShopToday(day, secret) {
 export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
 // away：現在被館友邀去賭場的 NPC id（Set，shared/casino_npc.js 的 npcCasAway）：他們不算在展廳、也不算在館裡別的地方，另外列在 casino
-export function npcPresence(day, nowMs, secret, list, counters, away) {
+export function npcPresence(day, nowMs, secret, list, counters, away, mood = null) {
   const aw = away && typeof away.has === "function" ? away : new Set(), m = (nowMs - npcDayStartMs(day)) / 60000, v0 = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end), v = v0.filter(x => !aw.has(x.id));
   const hall = v.filter(x => x.place === "hall");
-  const cg = crowdVisitsToday(day, secret).filter(x => x.start <= m && m < x.end), cn = cg.reduce((a, x) => a + x.n, 0);
+  const cg = crowdVisitsToday(day, secret, mood).filter(x => x.start <= m && m < x.end), cn = cg.reduce((a, x) => a + x.n, 0);
   const cas = Array.from(aw).map(id => { const n = list.find(x => x && x.id === id); return n ? n.name : ""; }).filter(Boolean);
   return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) } };
 }
@@ -160,7 +166,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   // 散客：到了就付壹張門票（每位 crowd.ticket，外面世界付），不留評價、不花錢、不算館內股人數
   const CR = NUM.casino.npcSpend.crowd;
   if (!L.crowd || typeof L.crowd !== "object") L.crowd = { ticket: 0, people: 0, groups: 0 };
-  if (CR && !low) for (const gv of crowdVisitsToday(day, secret)) {
+  if (CR && !low) for (const gv of crowdVisitsToday(day, secret, whCrowdMood(house, day))) {
     if (gv.start > m || L.done[gv.key]) continue;
     L.done[gv.key] = 1;
     // 人次照算（故事線的全館累計、日報的人數）；門票到了全館上限就不再收（11-14：散客壹天上千位，上限會碰到）
