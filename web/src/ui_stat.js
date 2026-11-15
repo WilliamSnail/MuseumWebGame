@@ -56,6 +56,8 @@ function rep(kind, code) {
     const C = NUM.casino.worldDoc.health, v = { tight: C.squeeze - 0.01, weak: (C.squeeze + C.cut) / 2, normal: (C.cut + 1.1) / 2, strong: 1.5 }[code];
     return v !== undefined && statBandOf("unitHealth", v) === code ? statView("unitHealth", null, v) : null; // 門檻改了、代表值不在那級，就不顯示（寧可缺也不錯）
   }
+  if (kind === "unitUnrest") { const v = { calm: 10, stir: 40, uneasy: 60, turmoil: 90 }[code]; return v !== undefined && statBandOf("unitUnrest", v) === code ? statView("unitUnrest", null, v) : null; }
+  if (kind === "crowdMood") { const v = { cold: 10, plain: 45, warm: 70, buzz: 95 }[code]; return v !== undefined && statBandOf("crowdMood", v) === code ? statView("crowdMood", null, v) : null; }
   if (kind === "npcSan") { const v = { edge: 10, uneasy: 30, tired: 50, steady: 80 }[code]; return v !== undefined && statBandOf("npcSan", v) === code ? statView("npcSan", null, v) : null; }
   return null;
 }
@@ -75,4 +77,16 @@ export function npcSanBadge(id, opts) {
   const sv = npcSanView(id);
   if (!sv || (opts && opts.calm && sv.band === "steady")) return null;
   return statBadge(sv, Object.assign({ kind: "npcSan" }, opts || {}));
+}
+
+// 展廳的散客氣氛（peek 的 crowdMood，決定 0091）：回 statView；沒讀到或沒有回 null
+export function crowdMoodView() {
+  const m = UI.crowdMood;
+  return Array.isArray(m) && Number.isFinite(+m[0]) ? statView("crowdMood", null, +m[0]) : null;
+}
+// 壹行：小牌＋壹句話（展廳的小塊、評價視窗用）。opts.num：false 不寫數字
+export function crowdMoodLine(opts) {
+  const sv = crowdMoodView();
+  if (!sv) return null;
+  return h("p", { class: "sv-line" }, statBadge(sv, Object.assign({ kind: "crowdMood" }, opts || {})), h("span", null, sv.hint));
 }

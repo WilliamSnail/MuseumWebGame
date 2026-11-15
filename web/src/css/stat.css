@@ -20,3 +20,5 @@
 .hn-layer .sv-badge { background: rgba(0, 0, 0, .05); }
 .hn-layer .sv-badge.tone-good { --c: #2F7A34; } .hn-layer .sv-badge.tone-neutral { --c: #5A5348; }
 .hn-layer .sv-badge.tone-warn { --c: #8A5A00; } .hn-layer .sv-badge.tone-bad { --c: #A42F20; }
+.sv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0; font-size: var(--type-small, .75rem); }
+.hn-lobby .sv-line { color: #E2D0A2; }
