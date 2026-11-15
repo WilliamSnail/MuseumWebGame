@@ -18,6 +18,10 @@
     "perDay": 1200000,
     "max": 800000
   },
+  "job": {
+    "unit": "g-finance",
+    "title": "分析師"
+  },
   "arc": [
     {
       "step": 1,

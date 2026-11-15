@@ -19,6 +19,9 @@
     "perDay": 3000000,
     "max": 2500000
   },
+  "job": {
+    "kind": "free"
+  },
   "arc": [
     {
       "step": 1,

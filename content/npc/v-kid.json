@@ -19,6 +19,9 @@
     "perDay": 25000,
     "max": 10000
   },
+  "job": {
+    "kind": "student"
+  },
   "arc": [
     {
       "step": 1,

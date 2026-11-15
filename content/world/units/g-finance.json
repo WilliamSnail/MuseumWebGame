@@ -1,0 +1,12 @@
+{
+  "id": "g-finance",
+  "name": "金融集團",
+  "kind": "group",
+  "parent": null,
+  "sector": "finance",
+  "share": 0.13,
+  "staff": 12000,
+  "stocks": [],
+  "story": false,
+  "note": "銀行、保險。"
+}

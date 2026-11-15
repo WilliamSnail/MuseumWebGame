@@ -1,0 +1,19 @@
+{
+  "id": "g-overseas",
+  "name": "海外科技集團",
+  "kind": "group",
+  "parent": null,
+  "sector": "tech",
+  "share": 0.1,
+  "staff": 26000,
+  "stocks": [
+    "greeneye",
+    "redclaw",
+    "nightindex",
+    "silverapple",
+    "flashcar",
+    "squarewin"
+  ],
+  "story": false,
+  "note": "海外的顯卡、晶片、軟體和車行。"
+}

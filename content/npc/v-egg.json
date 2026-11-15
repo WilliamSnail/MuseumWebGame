@@ -18,6 +18,10 @@
     "perDay": 190000,
     "max": 120000
   },
+  "job": {
+    "unit": "g-daily",
+    "title": "攤販"
+  },
   "arc": [
     {
       "step": 1,

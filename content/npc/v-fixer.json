@@ -20,6 +20,10 @@
     "perDay": 780000,
     "max": 500000
   },
+  "job": {
+    "unit": "g-island",
+    "title": "技師"
+  },
   "arc": [
     {
       "step": 1,

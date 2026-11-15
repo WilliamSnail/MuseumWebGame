@@ -19,6 +19,10 @@
     "perDay": 180000,
     "max": 100000
   },
+  "job": {
+    "unit": "g-island",
+    "title": "工程師"
+  },
   "arc": [
     {
       "step": 1,

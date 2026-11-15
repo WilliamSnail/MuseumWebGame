@@ -19,6 +19,10 @@
     "perDay": 900000,
     "max": 600000
   },
+  "job": {
+    "unit": "g-arts",
+    "title": "雕刻家"
+  },
   "arc": [
     {
       "step": 1,

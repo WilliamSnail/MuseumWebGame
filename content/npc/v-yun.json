@@ -19,6 +19,10 @@
     "perDay": 400000,
     "max": 250000
   },
+  "job": {
+    "unit": "g-overseas",
+    "title": "專員"
+  },
   "arc": [
     {
       "step": 1,

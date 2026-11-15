@@ -1,0 +1,12 @@
+{
+  "id": "g-school",
+  "name": "學校研究機構",
+  "kind": "group",
+  "parent": null,
+  "sector": "school",
+  "share": 0.06,
+  "staff": 9000,
+  "stocks": [],
+  "story": false,
+  "note": "學校和研究單位。"
+}

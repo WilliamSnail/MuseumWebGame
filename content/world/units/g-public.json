@@ -1,0 +1,12 @@
+{
+  "id": "g-public",
+  "name": "公共機構",
+  "kind": "group",
+  "parent": null,
+  "sector": "public",
+  "share": 0.07,
+  "staff": 15000,
+  "stocks": [],
+  "story": false,
+  "note": "衛生、交通、稅務和其他部會。"
+}
