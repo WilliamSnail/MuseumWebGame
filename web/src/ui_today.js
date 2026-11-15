@@ -31,6 +31,7 @@ async function readCasino() {
     if (r && Array.isArray(r.upcoming)) UI.upcoming = r.upcoming; // 預告（明天起 3 天內、可以公開說的事）：[{ text, date }]，大廳跑馬燈（ui_headline.js）放最多壹則
     if (r && "crowdMood" in r) UI.crowdMood = Array.isArray(r.crowdMood) ? r.crowdMood : null; // 展廳的散客氣氛（決定 0091）：[數字, 分級]；沒有是 null（ui_stat.js 的 crowdMoodBadge 畫）
     if (r && "npcSan" in r) UI.npcSan = r.npcSan && typeof r.npcSan === "object" ? r.npcSan : {}; // NPC 理智（決定 0090）：{ NPC id: [數字, 分級] }，只放不是 70 的；沒列的就是 70（ui_stat.js 的 npcSanBadge 畫）
+    if (r && ADDONS.moodRedraw) ADDONS.moodRedraw(); // 房間效果跟著新的 peek 換（ui_mood.js）
     if (r && Array.isArray(r.reviews)) UI.reviews = r.reviews; // NPC 的即時評價，新的在前、最多 20 則
     if (r && ADDONS.hallNowDraw) ADDONS.hallNowDraw();
     if (r && typeof r.stockFresh === "number") { UI.bankFresh = r.stockFresh; if (ADDONS.bankFresh) ADDONS.bankFresh(); } // 銀行股票有幾支價格變過（導覽圖銀行的「新」，PR 353）
