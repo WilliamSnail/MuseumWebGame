@@ -45,7 +45,7 @@ import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
-import { nwSanPublic, whCard } from "./shared/world.js";
+import { nwSanPublic, whCard, whMoodPublic } from "./shared/world.js";
 import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -434,7 +434,7 @@ export const casino = onCall(async req => {
       if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       const hs = await houseRef().get(); // 大廳導覽圖銀行的「新」：館外幾支股票的價自從上次看過之後變過（只讀，不寫）
       const stockFresh = hs.exists ? casStockFreshN(w, parse(hs)) : 0;
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, policy: hs.exists ? casPolicyView(parse(hs), taipeiDay(now())) : null, npcSan: hs.exists ? nwSanPublic(parse(hs)) : null, upcoming: casUpcoming(casEconUpcoming(ECON_EVENTS, taipeiDay(now())), casInFestUp(FEST_DAYS, taipeiDay(now())), taipeiDay(now())), npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, policy: hs.exists ? casPolicyView(parse(hs), taipeiDay(now())) : null, npcSan: hs.exists ? nwSanPublic(parse(hs)) : null, crowdMood: hs.exists ? whMoodPublic(parse(hs)) : null, upcoming: casUpcoming(casEconUpcoming(ECON_EVENTS, taipeiDay(now())), casInFestUp(FEST_DAYS, taipeiDay(now())), taipeiDay(now())), npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {

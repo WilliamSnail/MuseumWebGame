@@ -150,7 +150,9 @@ export function whFix(house) {
   if (!wuBox(house)) return null;
   const w = wuBox(house.wh) ? house.wh : (house.wh = {});
   w.day = wdDayOk(w.day) ? w.day : null;
-  for (const k of ["base", "idx", "h", "st"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of ["base", "idx", "h", "st", "unrest"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of Object.keys(w.unrest)) w.unrest[k] = whClamp(wdN(w.unrest[k]), 0, 100);
+  w.mood = wuBox(w.mood) && wdDayOk(w.mood.day) ? { day: w.mood.day, v: whClamp(wdN(w.mood.v), 0, 100) } : null;
   if (!Array.isArray(w.ev)) w.ev = [];
   w.ev = w.ev.filter(e => wuBox(e) && wdDayOk(e.day) && typeof e.unit === "string" && WH_STATES.includes(e.to)).slice(-20);
   for (const u of whUnits()) { const s = wuBox(w.st[u.id]) ? w.st[u.id] : (w.st[u.id] = {}); s.s = WH_STATES.includes(s.s) ? s.s : "normal"; s.low = Math.max(0, wdN(s.low)); }
@@ -172,6 +174,8 @@ export function whTick(house, day, px) {
     let chg = 0; if (ds.length >= 2) { const old = ds.find(d => d <= whAddDays(day, -7)) ? ds.filter(d => d <= whAddDays(day, -7)).pop() : ds[0]; const a = w.idx[u.id][old], c = w.idx[u.id][day]; if (a > 0 && c > 0 && old !== day) chg = c / a - 1; }
     w.h[u.id] = Math.round(whClamp(1 + b * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW, C.min, C.max) * 1000) / 1000;
   }
+  const U = NUM.casino.worldDoc.unrest;
+  for (const u of whUnits()) { const cur = whUnrest(house, u.id); w.unrest[u.id] = whClamp(cur + (cur > U.start ? -Math.min(U.back, cur - U.start) : cur < U.start ? Math.min(U.back, U.start - cur) : 0), 0, 100); } // 每天往平常靠（慣性：事件的影響拖幾天）
   const first = w.day === null;
   if (first || whIsMon(day)) { // 每週一看一次狀態
     for (const u of whUnits()) {
@@ -179,12 +183,23 @@ export function whTick(house, day, px) {
       if (h >= C.cut) { s.s = "normal"; s.low = 0; }
       else if (h >= C.squeeze) { s.s = "cut"; s.low = 0; }
       else { s.low++; s.s = s.low >= C.layoffWeeks ? "layoff" : s.low >= C.squeezeWeeks ? "squeeze" : "cut"; }
-      if (!first && s.s !== from) w.ev.push({ day, unit: u.id, to: s.s, from });
+      if (!first && s.s !== from) { w.ev.push({ day, unit: u.id, to: s.s, from }); w.unrest[u.id] = whClamp(whUnrest(house, u.id) + (U[s.s] || 0), 0, 100); } // 換狀態：推一下集體不安
     }
     w.ev = w.ev.slice(-20);
   }
   w.day = day;
+  w.mood = { day, v: whMood(house, day) };
   return true;
+}
+// 集團的集體不安（沒有紀錄 ＝ 平常的值）；排程填的劇情事件用 whUnrestAdd 推（劇情決定的欄位，之後接）
+export const whUnrest = (house, id) => { const v = house && house.wh && house.wh.unrest ? house.wh.unrest[id] : undefined; return v == null ? NUM.casino.worldDoc.unrest.start : whClamp(wdN(v), 0, 100); };
+export function whUnrestAdd(house, id, n) { const w = whFix(house); if (!w || !(id in w.st)) return null; w.unrest[id] = whClamp(whUnrest(house, id) + wdN(n), 0, 100); return w.unrest[id]; }
+// 散客的展廳氣氛：無狀態，每天由景氣、NPC 平均理智、有幾個集團減薪以上、週末算出來（不動錢）
+export function whMood(house, day) {
+  const M = NUM.casino.worldDoc.mood, S = NUM.casino.worldDoc.san, w = house && house.wh, n = Math.max(1, Object.keys((house && house.npcw && house.npcw.bal) || {}).length);
+  const dev = Object.values((house && house.npcw && house.npcw.san) || {}).reduce((a, v) => a + (wdN(v) - S.start), 0), trouble = w && w.st ? Object.values(w.st).filter(s => s.s !== "normal").length : 0;
+  const wd = new Date(day + "T00:00:00Z").getUTCDay(), b = whClamp(+(house && house.econ && house.econ.b) || 0, -1, 1);
+  return whClamp(Math.round(M.base + M.b * b + M.san * (dev / n) + M.trouble * trouble + (wd === 0 || wd === 6 ? M.weekend : 0)), 0, 100);
 }
 function whAddDays(day, n) { return new Date(Date.parse(day + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10); }
 // NPC 預算倍率：一般 1～upMax（h 高時多一點）、減薪、緊縮、裁員；文化部、家計、沒有的單位 ＝ 1；最低 floor
@@ -209,7 +224,8 @@ export function whCard(house, day) {
   const C = whCfg(), us = whUnits(), states = { normal: 0, cut: 0, squeeze: 0, layoff: 0 }, bands = [0, 0, 0, 0];
   us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[{ tight: 0, weak: 1, normal: 2, strong: 3 }[statBandOf("unitHealth", h)]]++; }); // 分級只寫在 stat_view.js
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
-  return { day: w.day, states, bands, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
+  const un = [0, 0, 0, 0]; us.forEach(u => { un[{ calm: 0, stir: 1, uneasy: 2, turmoil: 3 }[statBandOf("unitUnrest", whUnrest(house, u.id))]]++; });
+  return { day: w.day, states, bands, unrestBands: un, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
 }
 
 // ================================================================
@@ -322,7 +338,8 @@ export function nwSanDay(house, day, visits, people, extra = {}) {
     d += Math.max(S.cellarMax, places.filter(p => p === "cellar").length * S.cellar);
     let heal = (places.includes("food") ? S.food : 0) + (!places.length ? S.rest : 0); // 休息、餐車只能補到初始值，不會補過頭（不然沒來的人會慢慢變成 100）
     if (cur + d < S.start) d += Math.min(heal, S.start - (cur + d));
-    d += cur + d < S.start ? S.back : cur + d > S.start ? -S.back : 0;
+    const un = whUnrest(house, nwUnitOf(house, n)), UN = NUM.casino.worldDoc.unrest, eb = un >= UN.reverse ? -S.back : un >= UN.slow ? 0 : S.back; // 旗下集團很不安：自然回復停下來，更不安就反過來往下
+    d += cur + d < S.start ? eb : cur + d > S.start ? -Math.max(0, eb) : 0;
     d = whClamp(d, -S.daily, S.daily);
     for (const e of ev) if (e.npc === id) d += e.t === "lay" ? S.lay : S.job;
     d += wdN(extra[id]);
@@ -336,3 +353,6 @@ export function nwSanPublic(house) {
   for (const id of Object.keys(w)) out[id] = [wdN(w[id]), statBandOf("npcSan", w[id])];
   return out;
 }
+
+// 給畫面的今天的展廳氣氛：[數字, 分級代碼]；還沒算過 ＝ null
+export function whMoodPublic(house) { const m = house && house.wh && house.wh.mood; return m && Number.isFinite(+m.v) ? [wdN(m.v), statBandOf("crowdMood", m.v)] : null; }
