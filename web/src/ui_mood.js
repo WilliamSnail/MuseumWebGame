@@ -28,6 +28,7 @@ const FAKE = {
   mid: { mood: 45, hall: 12, policy: true, event: false, idx: 0, squeeze: 0.1, sanLow: 1, unrest: [6, 3, 1, 0], own: {}, stocks: [{ chg: 0.01 }, { chg: -0.01 }, { chg: 0 }] },
   bad: { mood: 10, hall: 2, policy: false, event: false, idx: -0.7, squeeze: 0.6, sanLow: 5, unrest: [2, 2, 4, 3], own: {}, stocks: [{ chg: -0.03 }, { chg: -0.02 }, { chg: -0.04 }, { chg: 0.01 }] },
 };
+FAKE.warm = Object.assign({}, FAKE.mid, { mood: 70, hall: 30 });
 FAKE.dark = Object.assign({}, FAKE.bad, { own: { lightsOut: true } });
 export function moodData() {
   if (import.meta.env.DEV) { const q = new URLSearchParams(location.search).get("mood"); if (q && FAKE[q]) return JSON.parse(JSON.stringify(FAKE[q])); }
@@ -92,6 +93,32 @@ const LOBBY = {
 };
 const pct = (v, t) => (v / t * 100).toFixed(2) + "%";
 
+// ---------- 賭場的熱鬧表現（決定用哪種前，網址加 ?cas=chips／neon／smoke／dealer 看；不加就只有燈） ----------
+// 全部由 roomMood 的 heat（0 冷清～3 沸騰）決定，不擋牌、按鈕、字
+const CAS_FX = ["chips", "neon", "smoke", "dealer"];
+const DEALER = ["今晚桌邊有點冷清，慢慢來。", "今晚人不多不少，來壹手吧。", "今晚客人不少，桌邊熱起來了。", "今晚客人好多！籌碼都在飛！"];
+const CHIP_COL = [["#B33A2E", "#E8C9A8"], ["#1F2A33", "#D8B25A"], ["#2E7D4F", "#EADFB8"], ["#C9A24A", "#6B4A12"]];
+function chipStack(n, col, i) {
+  let coins = ""; for (let k = 0; k < n; k++) coins += `<i style="bottom:${k * 5}px;background:${CHIP_COL[col][0]};border-color:${CHIP_COL[col][1]}"></i>`;
+  return `<span class="rm-stk" style="animation-delay:${(i * 0.4) % 3}s">${coins}</span>`;
+}
+function casinoFx(variant, m, fx) {
+  const heat = m.heat;
+  if (variant === "chips") { // 籌碼塔：右下角壹排，熱鬧＝塔多又高；熱鬧時偶爾滾過壹枚籌碼
+    const n = 1 + heat * 2, r = rnd(31); let html = "";
+    for (let i = 0; i < n; i++) html += chipStack(2 + Math.floor(r() * (2 + heat * 2)), i % 4, i);
+    fx.innerHTML = `<div class="rm-chips">${html}</div>${heat >= 2 ? '<i class="rm-roll"></i>' : ""}`;
+  } else if (variant === "neon") { // 霓虹招牌：上緣中間，熱鬧＝全亮微微閃，冷清＝幾個字暗掉
+    const word = "HAMACHI CASINO", dark = [new Set([1, 4, 6, 9, 12]), new Set([4, 10]), new Set(), new Set()][heat];
+    fx.innerHTML = `<div class="rm-neon heat${heat}" role="img">${[...word].map((ch, i) => `<b class="${dark.has(i) ? "off" : ""}" style="animation-delay:${(i * 0.31) % 2.4}s">${ch === " " ? "&nbsp;" : ch}</b>`).join("")}</div>`;
+  } else if (variant === "smoke") { // 吊燈煙霧：熱鬧＝淡淡的雪茄煙從下往上飄過吊燈；冷清＝沒有煙，整個暗壹點
+    const n = [0, 2, 4, 6][heat], r = rnd(53); let html = "";
+    for (let i = 0; i < n; i++) html += `<i style="left:${(8 + r() * 80).toFixed(0)}%;animation-duration:${(18 + r() * 14).toFixed(0)}s;animation-delay:-${(r() * 20).toFixed(0)}s;width:${(18 + r() * 16).toFixed(0)}%"></i>`;
+    fx.innerHTML = `<div class="rm-smoke">${html}</div>`;
+  } else if (variant === "dealer") { // 荷官台詞：標題列中間壹小塊，跟著熱鬧程度換壹句
+    fx.innerHTML = `<div class="rm-dealer heat${heat}"><b>Yuga Bot</b><span>${DEALER[heat]}</span></div>`;
+  } else fx.innerHTML = "";
+}
 // ---------- 建一層 ----------
 export function mountMood(host, kind, opts) {
   const o = opts || {}, root = h("div", { class: `rm rm-${kind}`, "aria-hidden": "true" });
@@ -99,7 +126,8 @@ export function mountMood(host, kind, opts) {
   const bunt = h("div", { class: "rm-bunting" });
   const crowd = h("div", { class: "rm-crowd" });
   const omens = h("div", { class: "rm-omens" });
-  root.append(light, bunt, crowd, omens);
+  const fx = h("div", { class: "rm-fx" });
+  root.append(light, bunt, crowd, omens, fx);
   const L = kind === "lobby" ? (o.portrait ? LOBBY.port : LOBBY.land) : null;
   if (L) {
     const [x0, y0, x1, y1] = L.hall;
@@ -108,7 +136,7 @@ export function mountMood(host, kind, opts) {
   } else {
     [[6, 62, 7], [90, 58, 7]].forEach(([x, y, sz]) => { const e = h("div", { class: "rm-omen", style: { left: x + "%", top: y + "%", width: sz + "%" } }); e.append(omenSVG()); omens.append(e); });
   }
-  let last = "", bk = "", shown = false; // 第壹次畫的時候還沒掛上畫面，不能拿 isConnected 判斷
+  let last = "", bk = "", shown = false, fxKey = ""; // 第壹次畫的時候還沒掛上畫面，不能拿 isConnected 判斷
   const draw = () => {
     if (root.isConnected) shown = true; else if (shown) { LAYERS.delete(draw); return; }
     const d = moodData();
@@ -123,6 +151,8 @@ export function mountMood(host, kind, opts) {
       root.style.setProperty("--rm-up", Math.max(0, tone).toFixed(2)); root.style.setProperty("--rm-down", Math.max(0, -tone).toFixed(2));
     }
     // 旗：只有種類變了才重畫
+    if (kind === "casino") { m.flags.bunting = null; m.crowd = 0; } // 賭場的介面是頁籤和表單，旗會蓋到頁籤；桌邊人影翊文不要，改成 casinoFx
+    if (kind === "casino") { const q = import.meta.env.DEV ? new URLSearchParams(location.search).get("cas") : null, v = CAS_FX.includes(o.fx) ? o.fx : CAS_FX.includes(q) ? q : "", k = v + "|" + m.heat; if (k !== fxKey) { fxKey = k; casinoFx(v, m, fx); } }
     if (kind === "bank") m.flags.bunting = null, m.omen = 0, m.crowd = 0; // 銀行不掛旗、不放人影和怪影子（只有光和看板）
     if (m.flags.bunting !== bk) { bk = m.flags.bunting; bunt.replaceChildren(...(bk ? [buntingSVG(bk)] : [])); bunt.classList.toggle("on", !!bk); }
     // 人影：數量變了才重排（深淺、大小固定在同壹個人身上；新增的人從後面淡進來）

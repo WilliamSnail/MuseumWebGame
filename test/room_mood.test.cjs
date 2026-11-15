@@ -14,6 +14,7 @@ T("燈光：冷清偏冷、熱絡偏暖、沸騰更暖；吃緊和景氣差讓�
   assert.ok(G.roomMood({ squeeze: 0.6 }).light.dim > 0 && G.roomMood({ idx: -0.8 }).light.dim > 0 && G.roomMood({}).light.dim === 0);
 });
 T("warm 直接給就不看 mood（銀行用景氣）", G => { assert.strictEqual(G.roomMood({ mood: 5, warm: 0.4 }).light.warm, 0.4); assert.strictEqual(G.roomMood({ warm: 9 }).light.warm, 1); });
+T("heat：冷清 0、平常 1、熱絡 2、沸騰 3；沒資料 1", G => { const h = m => G.roomMood({ mood: m }).heat; assert.deepStrictEqual([h(10), h(45), h(70), h(95), G.roomMood({}).heat], [0, 1, 2, 3, 1]); });
 T("人影：0～2 人沒有、3～20 人少、21～60 人中、60 人以上封頂；越多人越多影子", G => {
   const c = n => G.roomMood({ hall: n }).crowd;
   assert.strictEqual(c(0), 0); assert.strictEqual(c(2), 0); assert.ok(c(3) >= 3 && c(20) <= 7 && c(21) >= 8 && c(60) <= 16 && c(61) === G.RM.crowdMax && c(500) === G.RM.crowdMax);
