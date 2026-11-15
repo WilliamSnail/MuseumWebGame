@@ -18,7 +18,7 @@
 // ================================================================
 import { LIMITED_ITEMS, NUM } from "./config.js";
 import { LIMITED_TEXT } from "./content3.js";
-import { addDays, clampN, grantOption, isFree, isUnlocked } from "./logic.js";
+import { addDays, clampN, grantOption, isFree, isUnlocked, limitedHome } from "./logic.js";
 import { weekIndex } from "./logic3.js";
 import { holidayOf, holidaysOn } from "./holidays.js";
 
@@ -208,6 +208,7 @@ export function signIn(save, P, today) {
   }
   S.days[today] = { n, k, hol: holiday ? holiday.key : null };
   const week = weekProgress(save, today);
+  if (week.n === 1) addInsp(limitedHome(P).signInsp, "hat"); // 限定帽子（瓜子項鍊）：這週第壹次簽到多 1 靈感
   let weekly = null;
   if (week.n === 7 && !S.weeks[week.wk] && week.item) {
     const g = grantLimited(P, week.item.id, today);

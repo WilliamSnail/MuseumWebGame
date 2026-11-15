@@ -12,7 +12,7 @@
 import { NUM } from "./config.js";
 import { CAS_ACH, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
-import { RNG, clampN, gainSan, hashStr, isFree } from "./logic.js";
+import { RNG, clampN, gainSan, hashStr, isFree, limitedHome } from "./logic.js";
 import { weekIndex } from "./logic3.js";
 import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
@@ -648,8 +648,9 @@ export function casFoodEffect(w, it, P, day) {
   if (!it || (!it.mood && !it.san) || !P || isFree(P)) return none;
   const C = NUM.casino.foodCap;
   if (!w.food || w.food.day !== day) w.food = { day, mood: 0, san: 0 };
-  const moodRoom = Math.min(C.mood - w.food.mood, 99 - (P.mood || 0)), mood = Math.max(0, Math.min(it.mood || 0, moodRoom));
-  const want = P.dark ? 0 : Math.max(0, Math.min(it.san || 0, C.san - w.food.san));
+  const hh = limitedHome(P); // 限定帽子（廚師帽、金瓜子項鍊）：吃的心情多壹點、理智的每天上限多壹點（心情的每天上限不變）
+  const moodRoom = Math.min(C.mood - w.food.mood, 99 - (P.mood || 0)), mood = Math.max(0, Math.min((it.mood || 0) + (it.mood && hh.foodMood ? hh.foodMood : 0), moodRoom));
+  const want = P.dark ? 0 : Math.max(0, Math.min(it.san || 0, C.san + (hh.foodSan || 0) - w.food.san));
   const san = want ? gainSan(P, want) : 0;
   if (mood) P.mood = clampN((P.mood || 0) + mood, 0, 99);
   w.food.mood += mood; w.food.san += san;

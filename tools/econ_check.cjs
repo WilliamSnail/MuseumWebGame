@@ -32,6 +32,11 @@ check("館外股票：超過幾分鐘沒新價暫停（staleMin）不超過槓�
 const save7 = C.bank.savePct * 7, term7 = (C.bank.terms.find(t => t.days === 7) || C.bank.terms[C.bank.terms.length - 1]).pct, bondMin = Math.min(...C.bond.tiers.map(t => t.pct)), loan7 = C.loan.interestPct * 7 / C.loan.days;
 check("利率順序：活存 ＜ 定存 ＜ 館債（最低壹週）＜ 借款", save7 < term7 && term7 <= bondMin && bondMin < loan7, `壹週：活存 ${pct(save7)}、定存 ${pct(term7)}、館債最低 ${pct(bondMin)}、借款 ${pct(loan7)}`);
 check("文化部補助新玩家（不設人數上限）：壹位的補助 ≤ 外面世界起始的 1%（池子至少撐 100 位；吃緊時只補付得出的）", !C.culture.on || C.startChips <= C.world.start * 0.01, `${fmt(C.startChips)} ＝ 池子起始 ${fmt(C.world.start)} 的 ${pct(C.startChips / C.world.start * 100)}；每天成長 ${fmt(C.world.growBase)} 約 ${(C.world.growBase / C.startChips).toFixed(1)} 位`);
+{ // 限定帽子（決定 0085）：每頂的探索加成不超過觸手帽、加起來有上限、館內效果都是小數字（不是新的大來源）
+  const L = Object.values(G.LIMITED_FX), tm = Math.max(...L.map(f => f.team || 0)), homeMax = Math.max(0, ...L.map(f => Math.max(...Object.values(f.home || {}), 0)));
+  check("限定帽子：單頂全隊強度 ≤ 觸手帽、加起來最多 teamCap ≤ 巫師帽＋觸手帽（地下不會變太簡單）", tm <= N.cellarFx.tentacle && N.limitedFx.teamCap <= N.cellarFx.wizard + N.cellarFx.tentacle, `單頂最多 +${tm}、總共最多 +${N.limitedFx.teamCap}；巫師帽 +${N.cellarFx.wizard}、觸手帽 +${N.cellarFx.tentacle}`);
+  check("限定帽子：館內效果每項 ≤ 3（餐車、簽到、換日、過關的小口子；都不是籌碼）", homeMax <= 3, `最大 ${homeMax}`);
+}
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
 // 畫：賣回只拿現價的 sellPct%（短線必虧）

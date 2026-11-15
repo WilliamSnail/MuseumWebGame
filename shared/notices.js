@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-e3d8b1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "限定帽子有能力了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "簽到、兌換所、主題展拿到的限定帽子，現在都有自己的能力。",
+        "有的在地下收藏庫幫忙（強度、檢定、少扣理智、回理智、打怪招式），有的在館裡（餐車、簽到、換日）。",
+        "手作坊的選項卡片寫了每頂的能力；館內的效果要把那頂戴在館友證頭像的佩佩上才有用。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-94d723", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "今日特展右邊的說明不再被切掉", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
