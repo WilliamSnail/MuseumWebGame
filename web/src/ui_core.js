@@ -8,7 +8,7 @@ import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } fr
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
-import { ambMix } from "../../shared/room_mood.js";
+import { ambMix, sanDread } from "../../shared/room_mood.js";
 import { markTokens, taipeiDay } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/logic3.js";
@@ -411,6 +411,7 @@ export function audioState() {
   if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
   S.ambient(amb);
   S.heart(live && !P.dark && scr !== "ending" ? P.sanity : null);
+  if (S.dread) S.dread(live && scr !== "ending" && scr !== "title" ? sanDread(P.sanity, P.dark) : null); // 理智低的恐怖音樂：另外壹層，心跳、不安低鳴照舊
   S.tinnitus(!!(live && P.bout && scr !== "ending"));
   S.unease(live && !P.dark && scr !== "ending" ? Math.max(0, (40 - P.sanity) / 40) : 0);
 }

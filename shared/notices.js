@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-a93301", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "地下的聲音更豐富", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "守門打到第二階段，音樂會變得更陰森。理智掉到壹半以下，會響起恐怖的背景音樂，越低越明顯。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-685a68", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下多了新的音效和音樂", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

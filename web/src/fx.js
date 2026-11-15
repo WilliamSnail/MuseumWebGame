@@ -571,7 +571,7 @@ export const FX = (() => {
     };
 
     // ---------- 會一直響的：環境音、心跳、耳鳴、不安的低鳴 ----------
-    const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null };
+    const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null, dread: null };
     let ambNow = null, heartStop = null, tinNow = null, droneNow = null;
     const isOn = (k) => unlocked && !dead && !(api.settings && api.settings.muted) && vol[k] > 0;
     function every(fn, delay) { // 先跑一次，之後照 delay() 的毫秒數一直跑
@@ -871,7 +871,7 @@ export const FX = (() => {
           5: { bed: { wind: 0.05, basement: 0, sewer: 0, void: 0.3 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空，只有很低的「虛空回響」（Pixabay「Echo of the Void」）
         };
         // 在做什麼：bed 底音乘幾倍、gapK 冒聲音的間隔乘幾倍（0＝不冒）、dripK 滴水
-        const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
+        const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, gate2: { bed: 0.15, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
         const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0) };
         const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n];
@@ -881,7 +881,7 @@ export const FX = (() => {
           if (!LZ[id]) { if (v <= 0) return; LZ[id] = fileLoop(c, g, id, 0); nodes.push(LZ[id].n); }
           LZ[id].v.gain.setTargetAtTime(v, c.currentTime, fade);
         };
-        const SUSP = { 2: 'suspense-d', 3: 'suspense-a', 4: 'suspense-b', 5: 'suspense-c' };
+        const SUSP = { 1: 'suspense-e', 2: 'suspense-d', 3: 'suspense-a', 4: 'suspense-b', 5: 'suspense-c' };
         const cur = { f: FLOOR.base, m: MODE.map, mode: 'map' };
         const apply = (fade) => {
           const t = c.currentTime;
@@ -892,9 +892,10 @@ export const FX = (() => {
         };
         const applyMusic = (fade) => {
           const md = cur.mode, fl = cur.floorNo;
-          music('ready-fight', md === 'fight' ? 0.32 : 0, fade);
-          music('stairs-boss', md === 'gate' ? 0.38 : 0, fade);
-          Object.keys(SUSP).forEach((k) => music(SUSP[k], fl === +k && (md === 'map' || md === 'explore') ? 0.2 : 0, fade));
+          music('ready-fight', md === 'fight' ? 0.45 : 0, fade);
+          music('stairs-boss', md === 'gate' ? 0.5 : md === 'gate2' ? 0.18 : 0, fade);
+          music('horror-gate', md === 'gate2' ? 0.5 : 0, fade); // 守門第二階段：更陰森
+          Object.keys(SUSP).forEach((k) => music(SUSP[k], fl === +k && (md === 'map' || md === 'explore') ? (+k === 1 ? 0.2 : 0.3) : 0, fade));
         };
         apply(0.01);
         let oddN = 0, comeN = 0, lastOdd = 0; // every 會先跑壹次：第壹次跳過，進來不會馬上冒怪聲
@@ -916,11 +917,13 @@ export const FX = (() => {
           mix(m) { // { floor: 1～5 或 null, mode }：換層、換狀態時慢慢淡過去；剛遇到怪物（進 fight／gate）播壹次「有人來了」
             if (!m || m.mode == null) return;
             const f = FLOOR[m.floor] || FLOOR.base, md = MODE[m.mode] || MODE.map;
-            const into = (m.mode === 'fight' || m.mode === 'gate') && cur.mode !== 'fight' && cur.mode !== 'gate';
+            const FG = (x) => x === 'fight' || x === 'gate' || x === 'gate2';
+            const into = FG(m.mode) && !FG(cur.mode), to2 = m.mode === 'gate2' && cur.mode === 'gate';
             if (f === cur.f && m.mode === cur.mode) return;
             cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null;
             apply(1.5); applyMusic(1.5);
-            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.5 : 0.4); } // 遇到怪物：劍戰壹下；守門：Boss 登場
+            if (to2) fileOnce(c, g, 'sword-fight', 0.55); // 守門進第二階段：再劍戰壹下
+            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
           },
         };
       },
@@ -1104,6 +1107,11 @@ export const FX = (() => {
     // 心跳：理智 30 以下開始一直跳，越低越快、越大聲
     const heartGap = () => { const s = want.heart; return s > 20 ? 1050 : s > 10 ? 780 : 560; };
     const heartK = () => 0.45 + (30 - Math.max(1, want.heart)) / 29 * 0.55;
+    const dreadLz = {};
+    function dreadMusic(c, id, v) {
+      if (!dreadLz[id]) { if (v <= 0) return; dreadLz[id] = fileLoop(c, bus.heart, id, 0); }
+      dreadLz[id].v.gain.setTargetAtTime(v, c.currentTime, 1.4);
+    }
     function sync() {
       if (!unlocked || dead) return;
       const c = ctx();
@@ -1123,6 +1131,9 @@ export const FX = (() => {
       const tn = isOn('heart') && want.tinnitus;
       if (tn && !tinNow) tinNow = startTinnitus();
       if (!tn && tinNow) { tinNow.stop(); tinNow = null; }
+      // 理智低的恐怖音樂（11-15）：理智 < 45 low、<= 15 edge、發作時再疊壹首；用到才下載，慢慢淡進淡出（跟心跳、不安低鳴是不同層）
+      const dr = isOn('heart') ? want.dread : null;
+      dreadMusic(c, 'horror-low', dr === 'low' ? 0.42 : 0); dreadMusic(c, 'horror-edge', dr === 'edge' ? 0.5 : 0); dreadMusic(c, 'horror-bout', tn ? 0.38 : 0);
     }
     // 瀏覽器要等玩家先點壹下才准出聲：點之前只記下「想要的狀態」。
     // 11-08 改：手機上觸控的「按下去」不算使用者動作（放開、點擊才算），而且聲音可能被瀏覽器暫停 →
@@ -1212,6 +1223,7 @@ export const FX = (() => {
       ambMix(m) { want.mix = m || null; if (ambNow && ambNow.mix && want.mix) ambNow.mix(want.mix); }, // 熱鬧程度（賭場的人聲和籌碼聲）；別的房間不理它
       heart(san) { want.heart = san != null && san > 0 && san <= 30 ? san : null; sync(); },
       tinnitus(on) { want.tinnitus = !!on; sync(); },
+      dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; want.dread = v; sync(); },
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
       // 播壹次音效檔（id 見 shared/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
       file(id, g) {

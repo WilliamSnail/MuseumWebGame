@@ -42,5 +42,10 @@ export const SFX_FILES = {
   "suspense-b": { name: "Suspenseful（截前 90 秒）", by: "danyvin", url: "https://pixabay.com/music/suspenseful-633690/", loop: true, use: "地下 B4 的緊張背景音樂（循環）" },
   "suspense-c": { name: "Suspense（截前 80 秒）", by: "nastelbom", url: "https://pixabay.com/music/suspense-501709/", loop: true, use: "地下 B5 的緊張背景音樂（循環）" },
   "suspense-d": { name: "Suspense Cinematic（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/suspense-cinematic-581368/", loop: true, use: "地下 B2 的緊張背景音樂（循環）" },
+  "suspense-e": { name: "Suspense（截前 80 秒）", by: "sub_clair", url: "https://pixabay.com/music/suspense-628719/", loop: true, use: "地下 B1 的緊張背景音樂（循環，比其他層輕）" },
+  "horror-gate": { name: "Cinematic Horror（截前 80 秒）", by: "leberch", url: "https://pixabay.com/music/cinematic-horror-254535/", loop: true, use: "地下守門第二階段的背景音樂（循環）" },
+  "horror-low": { name: "Horror Suspense（截前 80 秒）", by: "atlasaudio", url: "https://pixabay.com/music/horror-suspense-509970/", loop: true, use: "理智很低（45 以下）疊上去的背景音樂（循環）" },
+  "horror-edge": { name: "Horror Suspense（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/horror-suspense-515839/", loop: true, use: "理智快歸零（15 以下）和歸零的背景音樂（循環）" },
+  "horror-bout": { name: "Suspense Scary Horror（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/suspense-scary-horror-515856/", loop: true, use: "瘋狂發作時疊上去的背景音樂（循環）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

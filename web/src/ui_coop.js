@@ -389,7 +389,7 @@ function meOf(v) { return v.members.find(m => m.id === v.me) || {}; }
 const COOP_SND = { route: "map", floorDone: "map", guess: "map", over: "map", vote: "explore", chest: "explore", carry: "explore", rest: "rest" };
 function coopSnd(v) {
   if (!v || !v.floor || v.ended || v.phase === "over") return { floor: v && v.floor || null, mode: "map" };
-  const mode = v.phase === "fight" ? (v.fightKind === "gate" ? "gate" : "fight") : COOP_SND[v.phase] || "map";
+  const mode = v.phase === "fight" ? (v.fightKind === "gate" ? (v.fight && v.fight.phase === 2 ? "gate2" : "gate") : "fight") : COOP_SND[v.phase] || "map";
   return { floor: v.floor, mode };
 }
 function floorOf(v) { const t = v.trial && trialById(v.trial.id); return t ? { floor: t.floor, name: t.title, rooms: [t] } : cellarFloor(v.floor); }
