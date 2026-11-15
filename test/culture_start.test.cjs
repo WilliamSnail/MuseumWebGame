@@ -21,11 +21,9 @@ T("舊錢包（沒有記號）不動", G => {
   const s = w.led.mint.start, world0 = h.world;
   assert.strictEqual(G.casCultureFund(w, h), 0); assert.strictEqual(w.led.mint.start, s); assert.strictEqual(h.world, world0);
 });
-T("人數上限到了：還是記憑空、對帳差 0；關掉也是", G => {
-  const h = G.casHouseFix(G.casHouseNew(), D).house; G.NUM.casino.culture.maxPlayers = 1;
-  const a = G.casWalletFix(null, D), b = G.casWalletFix(null, D), s0 = snap(G, [a, b], h), opening = G.casBookOpening(s0);
-  assert.ok(G.casCultureFund(a, h) > 0); assert.strictEqual(G.casCultureFund(b, h), 0);
-  assert.strictEqual(b.led.mint.start, G.NUM.casino.startChips); assert.strictEqual(G.casBookGap(snap(G, [a, b], h), opening), 0);
+T("人數不設上限（連補 50 位都照補）；關掉就記憑空，對帳差 0", G => {
+  const h = G.casHouseFix(G.casHouseNew(), D).house, ws = Array.from({ length: 50 }, () => G.casWalletFix(null, D)), opening = G.casBookOpening(snap(G, ws, h));
+  ws.forEach(w => assert.strictEqual(G.casCultureFund(w, h), G.NUM.casino.startChips)); assert.strictEqual(h.cultStart.n, 50); assert.strictEqual(G.casBookGap(snap(G, ws, h), opening), 0);
   G.NUM.casino.culture.on = false; const c = G.casWalletFix(null, D); assert.strictEqual(G.casCultureFund(c, h), 0);
 });
 T("池子吃緊：只補今天付得出的部分，剩下的還是記憑空，對帳差 0", G => {
