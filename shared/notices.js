@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-4f8c45", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "設定頁拿掉「動畫減量」", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "設定頁的「動畫減量」拿掉了，動畫照壹般的播；以前打開過的也恢復",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-c8a2aa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "展廳的氣氛會改變來的人", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
