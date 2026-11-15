@@ -206,4 +206,15 @@ T("散客展廳氣氛（決定 0091）：每天重算、不動錢；景氣、NPC
   const c = G.whCard(h4, "2026-11-17"); assert.strictEqual(c.unrestBands.reduce((a, b) => a + b, 0), 7); assert.strictEqual(c.mood.band, "plain");
   const snap = G.casBookSnap([], h4, 0, "2026-11-17"); assert.strictEqual(snap.house.wh.mood, M.base); assert.ok("g-island" in snap.house.wh.un);
 });
+T("世界事件（決定 0092）：排程填的集團不安、NPC 理智、展廳氣氛；壞消息推不安（一個集團一天一次）；隔了幾天沒人來也不漏；上限夾住", G => {
+  const EV = G.NUM.casino.worldDoc.events, U = G.NUM.casino.worldDoc.unrest;
+  G.WORLD_EVENTS["2026-12-01"] = { unrest: { "g-daily": 10 }, mood: -10, san: { "c-bus": -6 } }; G.WORLD_EVENTS["2026-12-02"] = { unrest: { "g-finance": 99 }, down: ["islandforge", "handbrain"] };
+  const h = mk(G); h.econ = { b: 0 }; G.whTick(h, "2026-11-30", {}); 
+  G.whTick(h, "2026-12-01", {}); assert.strictEqual(G.whUnrest(h, "g-daily"), U.start + 10, "排程填的集團不安"); assert.strictEqual(h.wh.mood.v, G.NUM.casino.worldDoc.mood.base - 10, "氣氛含排程的 −10（平日、景氣 0）");
+  G.whTick(h, "2026-12-02", {}); assert.strictEqual(G.whUnrest(h, "g-finance"), U.start + EV.unrestMax, "排程的 99 被夾到 unrestMax");
+  assert.strictEqual(G.whUnrest(h, "g-island"), U.start + EV.downPush, "壞消息：旗下兩支股票都 down，這個集團只推一次");
+  const h2 = mk(G); h2.econ = { b: 0 }; G.whTick(h2, "2026-11-30", {}); G.whTick(h2, "2026-12-03", {}); assert.ok(G.whUnrest(h2, "g-daily") > U.start - 1 && G.whUnrest(h2, "g-finance") >= U.start, "隔了 3 天才來：12-01、12-02 的事件也套用（再經過每天回落）"); assert.ok(G.whUnrest(h2, "g-island") >= U.start);
+  const h3 = mk(G); G.nwFix(h3); G.nwSanDay(h3, "2026-12-01", [], [{ id: "c-bus" }]); assert.strictEqual(G.nwSan(h3, "c-bus"), 70 - 6, "NPC 理智套用排程的 −6");
+  delete G.WORLD_EVENTS["2026-12-01"]; delete G.WORLD_EVENTS["2026-12-02"];
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

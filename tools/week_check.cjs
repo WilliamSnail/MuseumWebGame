@@ -500,6 +500,23 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         if (G.NUM.casino.stockIn.festP * (G.NUM.casino.stockIn.festMin + G.NUM.casino.stockIn.festMax) / 2 * G.NUM.casino.stockIn.k * 100 >= 2 * G.NUM.casino.stock.feePct + G.NUM.casino.stock.holdPct) E(fw, "festP × b 太大：預先進場的期望報酬超過來回成本（規劃 2.8k）");
       }
     }
+    // 世界事件（決定 0092，劇情決定的欄位）：sanEvents［某位 NPC 那天的理智 ±］、unrest［某集團那天的集體不安 ±］、moodEvent［那天展廳氣氛 ±］。都可以不寫；只放數字和 id，劇情的理由寫在帳本，這裡不寫
+    for (const [key, who, max, cap] of [["sanEvents", "npc", G.NUM.casino.worldDoc.events.sanMax, 6], ["unrest", "unit", G.NUM.casino.worldDoc.events.unrestMax, 4], ["moodEvent", null, G.NUM.casino.worldDoc.events.moodMax, 3]]) {
+      if (wk[key] === undefined) continue;
+      const fw = where + "/week.json." + key, mon = o.fallback ? null : G.isoMonday(name);
+      if (o.fallback) { E(fw, "備用週不寫 " + key + "（沒有日期）"); continue; }
+      if (!Array.isArray(wk[key]) || wk[key].length > cap) { E(fw, "要寫成最多 " + cap + " 個的陣列"); continue; }
+      const seen = new Set(), ids = who === "npc" ? new Set(G.NPC_ROSTER.map(x => x.id)) : new Set(G.WORLD_UNITS.filter(u => u.parent == null && u.kind !== "story").map(u => u.id));
+      wk[key].forEach((e, i) => {
+        const w2 = `${fw}[${i}]`;
+        if (!isObj(e)) return E(w2, "要寫成物件");
+        Object.keys(e).forEach(k => { if (!["date", "n", ...(who ? [who] : [])].includes(k)) E(w2, `不認得「${k}」：只能寫 date、${who ? who + "、" : ""}n（理由寫在帳本，不寫在這裡）`); });
+        if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date) || e.date < mon || e.date > G.addDays(mon, 6)) E(w2, "date 要是這週內的日期");
+        if (!Number.isInteger(e.n) || e.n === 0 || Math.abs(e.n) > max) E(w2, `n 要是 −${max}～${max} 的整數（不是 0）`);
+        if (who && !ids.has(e[who])) E(w2, `${who} 要是${who === "npc" ? "旅客或委託人的 id（劇情角色 t- 不放）" : "頂層集團的 id（文化部不放）"}：${e[who]}`);
+        const k2 = (who ? e[who] : "") + "|" + e.date; if (seen.has(k2)) E(w2, "同一個對象同一天只能有一筆"); seen.add(k2);
+      });
+    }
     // 賭場的每週收藏（決定 0042）：3～5 件、條件認得、字數、畫面用「壹」、禁用字、集滿的獎勵。可以不寫（舊的週照常）；每天的 casino 在 dayOk
     ctx.casIds = new Set();
     ctx.hasCasino = wk.casino !== undefined;
