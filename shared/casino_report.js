@@ -10,6 +10,7 @@ import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON, CAS_MENU } from "./casino_text.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { statView } from "./stat_view.js";
 import { NPC_ROSTER } from "./npc_roster.js";
 import { npcCounters, npcNews } from "./npc.js";
 import { CAS_ECON_EV, casEconUpText } from "./econ_events.js";
@@ -75,6 +76,8 @@ export function casReportView(doc) {
   if (H.wh && H.wh.st) { // 外面世界各集團的景氣狀態（W5，決定 0086）：只寫已經發生的
     const names = { cut: "減薪", squeeze: "緊縮", layoff: "裁員" }, nm = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id, cnt = { cut: 0, squeeze: 0, layoff: 0 };
     Object.values(H.wh.st).forEach(s => { if (cnt[s] != null) cnt[s]++; });
+    const uneasy = Object.values(H.wh.un || {}).filter(v => v >= 50).length; if (uneasy) hl.push(`外面世界：${uneasy} 個集團人心浮動。`); // 集體不安（決定 0091）
+    if (H.wh.mood != null) hl.push(statView("crowdMood", null, H.wh.mood).hint); // 展廳氣氛
     const bad = Object.keys(cnt).filter(k => cnt[k] > 0).map(k => `${cnt[k]} 個集團${names[k]}`);
     if (bad.length) hl.push(`外面世界的景氣：${bad.join("、")}，來館的旅客花得比較保守。`);
     (H.wh.ev || []).filter(e => e.day === doc.day || e.day === (doc.snap && doc.snap.day)).forEach(e => hl.push(`${nm(e.unit)}${{ normal: "恢復正常了", cut: "減薪了", squeeze: "緊縮了", layoff: "裁員了" }[e.to] || ""}。`));
