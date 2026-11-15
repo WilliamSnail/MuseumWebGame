@@ -24,4 +24,17 @@ T("舊的 dir[id]===true 遇到新倍數會再換壹次、換過不再換；錢�
   G.casStockRoll(house, D3, {}, { [id]: { px: 1020 } });
   assert.strictEqual(H.peg.ev.filter(e => e.id === id).length, 1, "不再換");
 });
+T("手動換真實價 casStockPegNow（11-15 stock-tw-peg）：換壹次、錢包市值不變、美股沒給價不動、再按不再換", G => {
+  const id = "islandforge", D1 = "2026-11-15";
+  const house = G.casHouseFix(G.casHouseNew(), D1).house; const H = G.casStockHouseFix(house);
+  G.casStockRoll(house, D1, {});
+  H.px[id] = 9762; const usBefore = H.px.greeneye;
+  const w = G.casWalletFix(G.casWalletNew(), D1); G.casStockPegSync(w, house); G.casStockFix(w).own[id] = 10;
+  const out = G.casStockPegNow(house, { islandforge: 2350, handbrain: 4120, bigassembly: 241, trianglepower: 1240, linetower: 165 });
+  assert.strictEqual(out.length, 5);
+  assert.strictEqual(H.px[id], 2350); assert.strictEqual(H.prev[id], 2350); assert.strictEqual(H.px.greeneye, usBefore);
+  G.casStockPegSync(w, house);
+  assert.ok(Math.abs(G.casStockFix(w).own[id] * 2350 - 97620) < 2350 + 1);
+  assert.strictEqual(G.casStockPegNow(house, { islandforge: 2400 }).length, 0, "不再換");
+});
 console.log(pass + " 項通過" + (fail ? "，" + fail + " 項沒過" : "")); process.exit(fail ? 1 : 0);

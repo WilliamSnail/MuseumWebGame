@@ -373,7 +373,10 @@ export async function casReport() {
         const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house;
         // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
         const A = doc.diff.act || {}, g = doc.gdp;
-        const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`],
+        // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc_spend.js 的 house.npcs，日報那兩行也是讀這個）
+        const N = (doc.snap.house && doc.snap.house.npcs) || null, NC = (N && N.crowd) || {};
+        const npcRows = N ? [["館外旅客", `${casNum(N.people || 0)} 位`], ["散客", `${casNum(NC.people || 0)} 位`], ["館外帶進館", casNum((N.total || 0) + (NC.ticket || 0) + (NC.shop || 0))]] : [];
+        const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`], ...npcRows,
           ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
         const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
         h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）

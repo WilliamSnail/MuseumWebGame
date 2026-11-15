@@ -171,6 +171,20 @@ function stPegDirect(H, id, target, before, mult) {
   H.held[id] = Math.floor(stN(H.held[id]) * before / target);
   return true;
 }
+// 手動換成真實價（11-15，翊文：「台股還停在 10,000 可以我們先手動改一次嗎」；tools/fb_task.cjs 的 stock-tw-peg）：
+//   closes ＝ { id: 最近壹次收盤的真實價 }。跟換日時壹樣用 stPegDirect（錢包照 peg.ev 換股數、市值不變；已經換過這個倍數的不再換）。回傳 [{ id, from, to }]
+export function casStockPegNow(house, closes) {
+  const H = casStockHouseFix(house), C = NUM.casino.stock, out = [];
+  for (const id of STOCK_IDS) {
+    const real = closes && closes[id], mult = stPegMult(id), before = H.px[id];
+    if (!stOkPx(real) || !(mult > 0) || !(before > 0) || H.peg.dir[id] === mult) continue;
+    const target = Math.max(C.floor, Math.round(mult * real));
+    stPegDirect(H, id, target, before, mult);
+    H.px[id] = target; H.prev[id] = target;
+    out.push({ id, from: before, to: target });
+  }
+  return out;
+}
 // ---------- 照真實股價的比例（規劃 2.8h） ----------
 const stPegMult = id => (stockIsTw(id) ? NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
 // 壹天最多拉回幾（小數）：2 × 手續費 − drag，小於來回手續費加 drag；手續費改了自動跟著降

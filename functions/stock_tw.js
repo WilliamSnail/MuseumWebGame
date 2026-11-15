@@ -153,7 +153,8 @@ export async function stockTwRun(nowMs, fetchFn, secretFn, dbx) {
   return done;
 }
 
-export const stockTwTick = onSchedule({ schedule: "* 9-13 * * 1-5", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
+// 週末也跑（11-15：本來只排週壹到週五，「週末也補」的補收盤從來沒在週末做過，台股 11-14 週六上線就壹直停在起始價）。週末 stockTwRun 只回「不在盤中」
+export const stockTwTick = onSchedule({ schedule: "* 9-13 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
   const now = Date.now(), r = await stockTwRun(now);
   if (/^09:00$/.test(new Date(now + 8 * 3600000).toISOString().slice(11, 16))) console.log("stockTwBackfill", await stockTwBackfill(now)); // 排程只留 3 個（Cloud Scheduler 3 個以內免費）：台股補收盤併進這個每分鐘的排程，09:00 做壹次
   console.log("stockTwTick", r);
