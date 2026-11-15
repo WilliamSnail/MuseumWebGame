@@ -28,6 +28,7 @@ async function readCasino() {
     if (r && r.npcc) npcWebSet(r.npcc); // 館內 NPC 故事線的全館進度（house.npcc，shared/npc.js）：展廳的故事留言、館內近況用
     if (r && "now" in r) UI.hallNow = r.now || null; // 展廳現在幾位旅客、館裡共幾位（伺服器 PR 418；ui_hallnow.js 畫）
     if (r && "policy" in r) UI.policy = r.policy || null; // 本日政策（拚經濟抽到的，{ name, effect, day, until }；沒有是 null）：大廳右欄那塊畫
+    if (r && Array.isArray(r.upcoming)) UI.upcoming = r.upcoming; // 預告（明天起 3 天內、可以公開說的事）：[{ text, date }]，大廳跑馬燈（ui_headline.js）放最多壹則
     if (r && "npcSan" in r) UI.npcSan = r.npcSan && typeof r.npcSan === "object" ? r.npcSan : {}; // NPC 理智（決定 0090）：{ NPC id: [數字, 分級] }，只放不是 70 的；沒列的就是 70（ui_stat.js 的 npcSanBadge 畫）
     if (r && Array.isArray(r.reviews)) UI.reviews = r.reviews; // NPC 的即時評價，新的在前、最多 20 則
     if (r && ADDONS.hallNowDraw) ADDONS.hallNowDraw();

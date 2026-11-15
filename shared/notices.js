@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-9c7c5c", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "跑馬燈多了預告", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳的今日要聞跑馬燈，會多放壹則「預告」：接下來幾天可能發生的事。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-45f10f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "展廳有了氣氛，集團有了人心", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
