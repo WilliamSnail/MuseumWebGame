@@ -53,5 +53,7 @@ export const SFX_FILES = {
   "cello-commission": { name: "Emotional Cello（截前 105 秒）", by: "no-copyright-music-2026", url: "https://pixabay.com/music/emotional-cello-611670/", use: "委託櫃台偶爾放壹次的大提琴" },
   "film-reveal": { name: "Film（截前 105 秒）", by: "leberch", url: "https://pixabay.com/music/film-517381/", use: "主線劇情揭露：打開主線的書時放" },
   "gallery-nostalgic": { name: "Nostalgic", by: "atlasaudio", url: "https://pixabay.com/music/nostalgic-511878/", use: "畫廊偶爾輕輕放壹次（懷舊）" },
+  "film-inspiring": { name: "Inspiring Cinematic Ambient（截前 100 秒）", by: "Lexin_Music", url: "https://pixabay.com/music/inspiring-cinematic-ambient-116199/", use: "主線劇情揭露（三首輪流之一，偏希望感）" },
+  "film-sad": { name: "Sad Documentary Background Music", by: "SigmaMusicArt", url: "https://pixabay.com/music/sad-documentary-background-music-604193/", use: "主線劇情揭露（三首輪流之一，偏失落）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

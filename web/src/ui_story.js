@@ -453,7 +453,7 @@ export function openStoryBook(w, b, reader, el) {
     return;
   }
   const l = lineById(w, b.line);
-  if (l && l.kind === "main") sndFile("film-reveal", 0.45); // 主線劇情揭露：打開主線的書時放壹首（翊文 11-15）
+  if (l && l.kind === "main") sndFile(["film-reveal", "film-inspiring", "film-sad"][[...b.id].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 3], 0.45); // 主線劇情揭露：三首輪流（沒有情緒資料，用書 id 固定分配）（翊文 11-15、11-16）
   bookReader(reader, b.title, b.pages, { onEnd: () => {
     const r = readStoryBook(P, w, b.id, todayStr());
     if (r.first && r.insp) { bookGain(reader, `+${r.insp} 靈感`, "good"); snd("coin"); }
