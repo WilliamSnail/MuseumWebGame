@@ -109,6 +109,7 @@ const STEPS = [
   ["世界經濟的名單和腳本（單位的樹、兩層加總、股票只掛一處、劇情單位、NPC 的隸屬、world:unit／npc／gdp，決定 0086）", ["test/world.test.cjs"]],
   ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/world_check.cjs"]],
   ["世界分帳（外面世界的錢分給單位、家計、公共：總和等於 house.world、成長按權重分、新玩家補助從文化部出、名單打包跟上，W3，決定 0086）", ["test/world_split.test.cjs"]],
+  ["調數值的總入口 npm run tune（acorn 只換那個值、unit／npc 叫現有的腳本、檢查沒過就還原、--dry，決定 0089）", ["test/tune.test.cjs"]],
   ["世界文件（world/main、換日第壹次才記、成長是兩次的差、不改莊家、搬錢總和不變且預設關閉，W2，決定 0086）", ["test/world_doc.test.cjs"]],
   ["內容檢查（content.js）", ["test/content/check.cjs"]],
   ["內容檢查（content3.js）", ["test/content/check3.cjs"]],
