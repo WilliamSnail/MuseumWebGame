@@ -15,13 +15,35 @@
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 //   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
+//   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
+//                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size"];
+
+// 只讀：文件大小（見檔頭 house-size）。大小用 UTF-8 位元組算（Firestore 的上限是 1 MiB ＝ 1,048,576）
+async function houseSize(db) {
+  const B = s => Buffer.byteLength(typeof s === "string" ? s : JSON.stringify(s == null ? null : s), "utf8");
+  const kb = n => (n / 1024).toFixed(1) + " KB";
+  const top = (obj, n) => Object.entries(obj || {}).map(([k, v]) => [k, B(v)]).sort((a, b) => b[1] - a[1]).slice(0, n);
+  const hs = await db.doc("casinoHouse/main").get();
+  if (!hs.exists) { console.log("莊家的文件還不存在"); return; }
+  const raw = hs.data().data || "{}", h = JSON.parse(raw), total = B(raw);
+  console.log(`莊家 casinoHouse/main：${kb(total)}（上限 1,024 KB 的 ${(total / 1048576 * 100).toFixed(1)}%）`);
+  for (const [k, n] of top(h, 15)) {
+    console.log(`  ${k}：${kb(n)}`);
+    if (n > 20 * 1024 && h[k] && typeof h[k] === "object") for (const [k2, n2] of top(h[k], 6)) console.log(`      ${k}.${k2}：${kb(n2)}`);
+  }
+  for (const p of ["stocksTw/latest", "stocksUs/latest"]) { const s = await db.doc(p).get(); console.log(`${p}：${s.exists ? kb(B(s.data())) : "沒有"}`); }
+  const ws = await db.collection("casinoWallets").get(), sizes = ws.docs.map(d => B(d.data().data || d.data()));
+  if (sizes.length) console.log(`錢包 ${sizes.length} 個：最大 ${kb(Math.max(...sizes))}、平均 ${kb(sizes.reduce((a, b) => a + b, 0) / sizes.length)}`);
+  const rp = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
+  if (!rp.empty) console.log(`最新日報 casinoReport/${rp.docs[0].data().day}：${kb(B(rp.docs[0].data().data || rp.docs[0].data()))}`);
+}
 
 // 台股手動換真實價（見檔頭 stock-tw-peg）。真實代號只寫在 functions/stock_tw.js，這裡從那個檔讀出來
 async function stockTwPeg(db) {
@@ -220,6 +242,7 @@ async function main() {
   if (task.action === "stock-status") { await stockStatus(db); return; }
   if (task.action === "econ-status") { await econStatus(db); return; }
   if (task.action === "stock-tw-peg") { await stockTwPeg(db); return; }
+  if (task.action === "house-size") { await houseSize(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
