@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-517fed", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "大禮包機率微調：二星以上變多", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "壹星 45%、二星 33%、三星 16.1%、四星 5%、五星億萬 0.9%（以前 50／30／14.5／4.5／1%）",
+        "抽到二星以上的機會從壹半變成 55%，每星給的籌碼不變",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-ff9165", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "賣出上限看得到了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

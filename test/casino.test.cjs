@@ -425,7 +425,7 @@ T("全下並贏：記全下；贏了有機率多一張大禮包券（要先開�
 });
 T("決定 0070：餐車、大禮包券、贏牌抽券都不是穩賺的", G => {
   const ev = G.casPackEV();
-  assert.strictEqual(Math.round(ev), 1714000, "壹包平均 1,714,000");
+  assert.strictEqual(Math.round(ev), 1691700, "壹包平均 1,691,700（11-15 機率調整：45／33／16.1／5／0.9%）");
   for (const it of G.CAS_MENU) {
     const f = it.redirect ? G.CAS_MENU.find(x => x.id === it.redirect) : it;
     const back = f.ticket ? f.ticket * ev : f.odds / 100 * 3 * ev;
@@ -465,13 +465,13 @@ T("破產不會卡死：沒錢、救濟用完，每天還有免費大禮包", G 
 });
 
 // ---------- 大禮包 ----------
-T("大禮包：五星機率 50／30／14.5／4.5／1（固定種子 20 萬包）；錢由莊家出", G => {
+T("大禮包：五星機率 45／33／16.1／5／0.9（11-15 調整；固定種子 20 萬包）；錢由莊家出", G => {
   seeded(G, 123);
   const n = 200000, cnt = [0, 0, 0, 0, 0, 0]; let sum = 0;
   for (let i = 0; i < n; i++) { const d = G.casPackDraw(); cnt[d.stars]++; sum += d.chips; assert.ok(d.chips >= 10000); }
-  const want = [0, 50, 30, 14.5, 4.5, 1];
+  const want = [0, 45, 33, 16.1, 5, 0.9];
   for (let s = 1; s <= 5; s++) assert.ok(Math.abs(cnt[s] / n * 100 - want[s]) < (s === 5 ? 0.2 : 0.6), `${s} 星 ${cnt[s] / n * 100}`);
-  assert.ok(Math.abs(sum / n - 1.71e6) < 1.5e5);
+  assert.ok(Math.abs(sum / n - 1.69e6) < 1.5e5);
   const { w, house } = fresh(G); const c0 = w.chips, h0 = house.bankroll;
   const r = G.casOpenPacks(w, house, 1, DAY);
   assert.strictEqual(w.chips - c0, r.total); assert.strictEqual(house.bankroll - h0, -r.total);
@@ -671,7 +671,7 @@ T("文字：不出現酒、炸雞、手機和餐廳品牌、真錢的字；畫�
   }
   assert.ok(G.CAS_TEXT.series.includes("Casino Hamachi System") && G.CAS_TEXT.series.includes("Museum Series"));
   assert.strictEqual(G.CAS_MENU.length, 9); assert.strictEqual(G.CAS_PACKS.length, 5);
-  eq(G.CAS_PACKS.map(p => p.upTo), [500, 800, 945, 990, 1000]);
+  eq(G.CAS_PACKS.map(p => p.upTo), [450, 780, 941, 991, 1000]); // 11-15 調整（以前 500／800／945／990）
   eq(G.CAS_MENU.map(m => m.price), [100, 45, 500, 2500, 50, 2000000, 50, 2000000, 20000000]); // 餐點降價 11-14（決定 0081） // 券的價錢 11-13 改了（決定 0070）
   assert.ok(G.CAS_TEXT.idle.includes("可是我肚子還是有點痛") && G.CAS_TEXT.bust === "你爆了ㄏㄏ" && G.CAS_TEXT.dealerBust[0] === "RRRRR我爆了");
 });
