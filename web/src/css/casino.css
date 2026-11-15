@@ -504,7 +504,7 @@ body.reduce-motion .live-dot { animation: none; }
 .cas-bub.npc::after { border-top-color: #DDEFF7; }
 @keyframes cas-bub-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 body.reduce-motion .cas-bub { animation: none; }
-.cas-npcinv { width: min(460px, 94vw); max-height: min(86dvh, 560px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.cas-npcinv { width: min(460px, 94vw); max-height: min(86svh, 560px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .cas-ni-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .cas-ni-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 4px 10px; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .9); color: #2E2014; font-weight: 700; }
 .cas-ni-say { display: grid; gap: 4px; padding: 8px 10px; border-radius: 6px; background: rgba(0, 0, 0, .08); }
@@ -513,7 +513,7 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-ni-say .cas-bub::after { display: none; }
 .cas-ni-empty { margin: 0; font-size: .875rem; line-height: 1.5; }
 .cas-ni-acts { display: flex; justify-content: flex-end; }
-@media (max-height: 500px) and (orientation: landscape) { .cas-npcinv { max-height: 94dvh; padding: 10px 14px; } .cas-npcinv > .sub { display: none; } .cas-bub { font-size: .75rem; padding: 4px 8px; } }
+@media (max-height: 500px) and (orientation: landscape) { .cas-npcinv { max-height: 94svh; padding: 10px 14px; } .cas-npcinv > .sub { display: none; } .cas-bub { font-size: .75rem; padding: 4px 8px; } }
 
 /* 邀旅客的大按鈕和空位（11-14，翊文：「邀旅客一起玩的按鈕再明顯一點」） */
 .cas-inv { display: grid; gap: 4px; margin: 4px 0; }

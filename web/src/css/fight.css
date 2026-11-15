@@ -251,7 +251,7 @@ body.reduce-motion .fg-pop, body.reduce-motion .fg-banner, body.reduce-motion .f
 .fg-chip.cx-on { background: #D6B25E; box-shadow: 0 0 0 3px #7A5A2A inset; }
 /* 手機直拿：整個左欄就是一個螢幕高 */
 @media (max-width: 760px) {
-  .cx-main:has(> .fg-stage) { height: calc(100dvh - 92px); overflow: hidden; }
+  .cx-main:has(> .fg-stage) { height: calc(100svh - 92px); overflow: hidden; }
   .fg-stage .fg-foe-art:has(.fg-sprite) { --foe-h: min(34cqh, 140px); }
   .fg-panel .fg-acts .fg-act { min-height: 50px; }
   .fg-card > .fg-chips { order: 2; } /* 大按鈕在上、小按鈕在下（舊的手機排序規則會把它排到前面） */

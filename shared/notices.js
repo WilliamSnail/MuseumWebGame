@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-1a0f24", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "手機版修正", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機上滑動時，整頁不會再跟著網址列放大縮小。",
+        "大廳的人影不會蓋住房間名字了。",
+        "壹鍵交件沒有符合時，按鈕下面會寫原因。",
+      ]],
+    ],
+  },
+  {
     id: "mat-make-up-2026-11", v: 1, cat: "館方公告", tags: ["重要", "已更新"], importance: "important", area: "其他",
     title: "換週章多吃了材料：每人補壹片金箔", publish: "2026-11-15", expire: "2026-12-15",
     sections: [
