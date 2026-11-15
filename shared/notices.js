@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-ff9165", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "賣出上限看得到了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行賣股票的畫面，會寫今天最多能賣多少、還能賣多少，以及信用升到幾級可以賣更多。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-7a2d14", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "欠款可以直接賣股票還", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
