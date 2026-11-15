@@ -12,6 +12,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { hashStr } from "./logic.js";
 
 const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 const wdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -81,6 +82,7 @@ export function wuFix(house) {
   if (!wuBox(x.adj)) x.adj = {};
   for (const id of Object.keys(x.r)) { x.r[id] = +x.r[id] || 0; if (id !== WU_PUB) x.adj[id] = wdN(x.adj[id]); }
   if (x.r[WU_PUB] == null) x.r[WU_PUB] = 0;
+  if (x.r[WU_WAL] == null) { x.r[WU_WAL] = 0; x.adj[WU_WAL] = wdN(x.adj[WU_WAL]); } // NPC 錢包（W6）：比例 0，只有 adj
   return x;
 }
 // 現在每個單位有多少（含 pub 公共）。總和 ＝ house.world
@@ -207,4 +209,87 @@ export function whCard(house, day) {
   us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[h < C.squeeze ? 0 : h < C.cut ? 1 : h < 1.1 ? 2 : 3]++; });
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   return { day: w.day, states, bands, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
+}
+
+// ================================================================
+//  W6 NPC 錢包和換工作（決定 0086，規劃 docs/世界經濟規劃.md 3.3 階段 B）
+//  house.npcw ＝ { day, bal: { NPC id: 錢包裡有多少 }, lay: { id: { since } }, job: { id: { unit, since } }, ev: [{ day, npc, from, to, t }] }
+//  錢包的錢在帳上是外面世界分類裡的壹個成員「u-wallets」（比例 0，只有 adj），所以總和仍等於 house.world；**沒有憑空多錢**：
+//    每天發薪（nwPayday）：把每位 NPC 的錢包補到「今天預算 × targetDays 天」（預算 ＝ perDay × dayPct% × 所屬集團的 W5 倍率），從所屬集團出（集團的錢不夠就少補）；多出來的（倍率降了）退回集團。
+//    NPC 來館花錢（nwSpend）：從錢包出（錢包不夠就當天不花），錢離開外面世界到館。錢包有上限、每天補回，所以不會無限長、也不會歸零（最少剩 targetDays−1 天的預算）。
+//  換工作（每週一，接 W5）：所屬集團進入「裁員」時，集團裡有職位的 NPC 每人 layoffPct% 被裁；被裁的每週 findPct% 找到新工作（景氣一般的集團，照比例抽），滿 joinWeeks 週一定找到；原本的集團恢復了就直接回去。
+//    W5 還沒有資料（house.wh 不存在）時什麼都不換、倍率 1，照常運作。
+// ================================================================
+export const WU_WAL = "u-wallets";
+const nwDays = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86400000);
+export function nwFix(house) {
+  if (!wuBox(house)) return null;
+  const w = wuBox(house.npcw) ? house.npcw : (house.npcw = {});
+  w.day = wdDayOk(w.day) ? w.day : null;
+  for (const k of ["bal", "lay", "job"]) if (!wuBox(w[k])) w[k] = {};
+  for (const id of Object.keys(w.bal)) { const n = wdN(w.bal[id]); if (n > 0) w.bal[id] = n; else delete w.bal[id]; }
+  if (!Array.isArray(w.ev)) w.ev = [];
+  w.ev = w.ev.filter(e => wuBox(e) && wdDayOk(e.day) && typeof e.npc === "string").slice(-20);
+  return w;
+}
+export const nwBal = (house, id) => wdN(house && house.npcw && house.npcw.bal && house.npcw.bal[id]);
+export const nwTotal = house => Object.values((house && house.npcw && house.npcw.bal) || {}).reduce((a, b) => a + wdN(b), 0);
+// 這位 NPC 現在算哪個頂層集團：換過工作用新的，沒有就用名單的（沒有單位 ＝ 家計）
+export function nwUnitOf(house, n) {
+  const j = house && house.npcw && wuBox(house.npcw.job) && house.npcw.job[n && n.id];
+  return j && typeof j.unit === "string" ? wuUnitOf({ unit: j.unit }) : wuUnitOf(n && n.job);
+}
+// 來館花錢：錢包出 n（house.world 已經少了 n）。回傳錢包實際出了多少
+export function nwSpend(house, id, n) {
+  n = wdN(n); const w = nwFix(house);
+  if (!w || n <= 0) return 0;
+  const take = Math.min(n, nwBal(house, id), wuHave(house, WU_WAL)); if (take <= 0) return 0;
+  const before = wdN(house.world) + n, x = wuFix(house), deltas = {}; for (const k of Object.keys(x.r)) if (k !== WU_PUB) deltas[k] = k === WU_WAL ? -take : 0;
+  wuMove(house, before, deltas); w.bal[id] = nwBal(house, id) - take; if (w.bal[id] <= 0) delete w.bal[id];
+  return take;
+}
+// 在集團和錢包之間搬 n（正：集團 → 錢包；負：錢包 → 集團）。house.world 不變
+function nwMove(house, unitId, id, n) {
+  const x = wuFix(house), w = nwFix(house), world = wdN(house.world), deltas = {}; for (const k of Object.keys(x.r)) if (k !== WU_PUB) deltas[k] = 0;
+  if (!(unitId in x.r) || unitId === WU_PUB) return 0;
+  const m = n > 0 ? Math.min(n, wuHave(house, unitId)) : -Math.min(-n, nwBal(house, id), wuHave(house, WU_WAL)); if (!m) return 0;
+  deltas[unitId] = -m; deltas[WU_WAL] = m; wuMove(house, world, deltas); w.bal[id] = nwBal(house, id) + m; if (w.bal[id] <= 0) delete w.bal[id];
+  return m;
+}
+// 每天第一次：發薪（補錢包）；週一接 W5 換工作。list ＝ 有 budget 的 NPC 名單（伺服器的 NPC_LIST）。同一天不重複。回傳 true ＝ 這次有做
+export function nwPayday(house, day, list) {
+  const w = nwFix(house), C = NUM.casino.worldDoc.wallet, P = NUM.casino.npcSpend;
+  if (!w || !C || !C.on || !wdDayOk(day) || (w.day && day <= w.day) || !Array.isArray(list)) return false;
+  w.day = day;
+  const people = list.filter(n => wuBox(n) && n.kind !== "trace" && n.budget && n.budget.perDay > 0);
+  if (house.wh && whIsMon(day)) nwJobs(house, day, people);
+  for (const n of people) {
+    const u = nwUnitOf(house, n), target = Math.floor(n.budget.perDay * whMult(house, u) * P.dayPct / 100) * C.targetDays, bal = nwBal(house, n.id);
+    if (bal < target) nwMove(house, u, n.id, target - bal); else if (bal > target) nwMove(house, u, n.id, -(bal - target));
+  }
+  return true;
+}
+// 換工作（每週一）：只動 house.npcw.lay、house.npcw.job、ev
+function nwJobs(house, day, people) {
+  const w = nwFix(house), C = NUM.casino.worldDoc.wallet, st = house.wh.st || {}, tops = wuTop().filter(u => u.kind !== "story");
+  for (const n of people) {
+    if (!(n.job && n.job.unit)) continue; // 學生、退休、自由業不換
+    const cur = nwUnitOf(house, n), home = wuUnitOf(n.job), s = st[cur] && st[cur].s, hash = k => (hashStr(`${n.id}|${day}|${k}`) % 1000) / 10; // 0～100
+    if (w.lay[n.id]) {
+      if (st[home] && st[home].s === "normal" && cur === home) { delete w.lay[n.id]; continue; } // 原本的集團恢復了
+      const weeks = Math.floor(nwDays(w.lay[n.id].since, day) / 7);
+      if (weeks >= C.joinWeeks || hash("find") < C.findPct) {
+        const ok = tops.filter(u => u.id !== cur && st[u.id] && st[u.id].s === "normal"); if (!ok.length) continue;
+        let r = (hashStr(`${n.id}|${day}|pick`) % 100000) / 100000 * ok.reduce((a, u) => a + u.share, 0), pick = ok[ok.length - 1]; for (const u of ok) { r -= u.share; if (r < 0) { pick = u; break; } }
+        w.job[n.id] = { unit: pick.id, since: day }; delete w.lay[n.id]; w.ev.push({ day, npc: n.id, from: cur, to: pick.id, t: "move" });
+      }
+    } else if (s === "layoff" && hash("lay") < C.layoffPct) { w.lay[n.id] = { since: day }; w.ev.push({ day, npc: n.id, from: cur, to: null, t: "lay" }); }
+  }
+  w.ev = w.ev.slice(-20);
+}
+// 已發生的換工作（最近 days 天）：給日報用。npcName(id) 由呼叫的人給（名單在別的檔）
+export function nwNews(house, day, npcName, days = 1) {
+  const w = house && wuBox(house.npcw) ? house.npcw : null; if (!w || !Array.isArray(w.ev)) return [];
+  const from = whAddDays(day, -days), nm = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id;
+  return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, npc: e.npc, text: e.t === "lay" ? `${npcName(e.npc)}被${nm(e.from)}裁員了` : `${npcName(e.npc)}到${nm(e.to)}工作了` }));
 }

@@ -88,6 +88,7 @@ async function worldStatus(db) {
     Object.keys(h.wh.st).forEach(k => console.log(`  ${names[k] || k}：h ${h.wh.h[k]}　${S[h.wh.st[k].s]}　預算倍率 ×${G.whMult(h, k).toFixed(2)}　連續低迷 ${h.wh.st[k].low || 0} 週`));
     if (Array.isArray(h.wh.ev) && h.wh.ev.length) console.log("最近換過狀態：" + h.wh.ev.slice(-8).map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、"));
   } else console.log("house.wh 還沒有（第一次換日才會建）");
+  if (h.npcw) { const bals = Object.values(h.npcw.bal || {}).map(nz); console.log(`NPC 錢包（W6）：${bals.length} 位有錢包、合計 ${fmt(bals.reduce((a, b) => a + b, 0))}　最近一次發薪 ${h.npcw.day || "-"}　被裁中 ${Object.keys(h.npcw.lay || {}).length} 位、換過工作 ${Object.keys(h.npcw.job || {}).length} 位`); if (Array.isArray(h.npcw.ev) && h.npcw.ev.length) console.log("最近換工作：" + h.npcw.ev.slice(-6).map(e => `${e.day} ${e.t === "lay" ? "被裁" : "換到"} ${names[e.to] || names[e.from] || ""}`).join("、")); } else console.log("house.npcw 還沒有（第一次發薪才會建）");
   if (h.npcs && h.npcs.byUnit) console.log(`NPC 最近一天（${h.npcs.day || "-"}）各集團出：` + Object.keys(h.npcs.byUnit).map(k => `${names[k] || k} ${fmt(h.npcs.byUnit[k])}`).join("　"));
 }
 

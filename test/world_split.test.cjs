@@ -62,7 +62,7 @@ T("W4 NPC 來館花的錢從所屬集團出：byUnit 加起來 ＝ 花的總額�
   const N = h.npcs, by = N.byUnit; assert.ok(by && Object.keys(by).length > 0, "有記每個單位出多少");
   const total = N.ticket + N.shop + N.crowd.ticket + N.crowd.shop; assert.strictEqual(sum(by), total, "byUnit 加起來 ＝ 花的總額"); assert.ok(total > 0);
   const a = G.wuAmounts(h); assert.strictEqual(sum(a), h.world); assert.strictEqual(w0 - h.world, total, "外面世界少的 ＝ 花的");
-  for (const id of Object.keys(by)) { const base = Math.floor(h.world * G.wuRatios()[id]) - Math.floor(w0 * G.wuRatios()[id]); assert.ok(Math.abs((a[id] - b0[id]) - (-by[id] + 0)) <= Math.abs(base) + 3, id + " 減少約 byUnit：" + (a[id] - b0[id]) + " vs " + by[id]); }
+  assert.strictEqual(a["u-wallets"], G.nwTotal(h), "錢包在帳上的錢 ＝ 每位 NPC 錢包加起來"); assert.ok(a["u-wallets"] > 0, "NPC 有錢包");
   assert.ok(by["u-household"] > 0, "散客從家計出");
 });
 T("W4 沒有單位的 NPC（學生、退休）算家計；有單位的對到頂層集團", G => {
@@ -111,5 +111,41 @@ T("W5 週漲跌：旗下股票漲 → 健康值加分、跌 → 扣分（最多 
   for (let i = 0; i < 8; i++) G.whTick(h, "2026-11-" + String(9 + i).padStart(2, "0"), px(10000));
   G.whTick(h, "2026-11-17", px(13000)); assert.ok(Math.abs(h.wh.h["g-island"] - (1 + C.chgCap * C.stockW)) < 1e-6, "漲 30% 以上夾在 chgCap：" + h.wh.h["g-island"]);
   const h2 = mk(G); h2.econ = { b: 0 }; for (let i = 0; i < 8; i++) G.whTick(h2, "2026-11-" + String(9 + i).padStart(2, "0"), px(10000)); G.whTick(h2, "2026-11-17", px(9000)); assert.ok(h2.wh.h["g-island"] < 1 && h2.wh.h["g-island"] > 1 - C.chgCap * C.stockW - 1e-9);
+});
+const PEOPLE = LIST.filter(n => n.kind !== "trace");
+const MON = "2026-11-16";
+T("W6 發薪：錢包補到（今天預算 × targetDays）、從所屬集團出、世界總和不變、同一天不重複", G => {
+  const h = mk(G), P = G.NUM.casino.npcSpend, C = G.NUM.casino.worldDoc.wallet, b0 = G.wuAmounts(h), w0 = h.world;
+  assert.ok(G.nwPayday(h, MON, PEOPLE)); assert.ok(!G.nwPayday(h, MON, PEOPLE), "同一天不重複"); assert.strictEqual(h.world, w0, "發薪不動外面世界");
+  const a = G.wuAmounts(h), bus = PEOPLE.find(n => n.id === "c-bus"), want = Math.floor(bus.budget.perDay * P.dayPct / 100) * C.targetDays;
+  assert.strictEqual(G.nwBal(h, "c-bus"), want, "公車司機的錢包 ＝ 今天預算 × 2"); assert.strictEqual(sum(a), h.world); assert.strictEqual(a["u-wallets"], G.nwTotal(h));
+  assert.strictEqual(b0["g-daily"] - a["g-daily"], PEOPLE.filter(n => n.job && n.job.unit === "g-daily" && n.budget && n.budget.perDay > 0).reduce((x, n) => x + Math.floor(n.budget.perDay * P.dayPct / 100) * C.targetDays, 0), "民生集團出的 ＝ 它的 NPC 的錢包");
+  const day2 = "2026-11-17"; const before = G.nwTotal(h); G.nwPayday(h, day2, PEOPLE); assert.strictEqual(G.nwTotal(h), before, "沒花就不用再補");
+});
+T("W6 來館花錢從錢包出；錢包不夠就當天不花；沒有錢包（舊資料）照 W4 從集團出", G => {
+  const h = mk(G); G.casNpcSpend(h, D, "secW6", LIST, null); assert.ok(h.npcw && h.npcw.day === D); const t = h.npcs.ticket + h.npcs.shop;
+  assert.ok(t > 0 && sum(h.npcs.byUnit) === t + h.npcs.crowd.ticket + h.npcs.crowd.shop); assert.strictEqual(sum(G.wuAmounts(h)), h.world);
+  const h2 = mk(G); G.NUM.casino.worldDoc.wallet.on = false; G.casNpcSpend(h2, D, "secW6", LIST, null); assert.ok(!h2.npcw || !h2.npcw.day, "關掉錢包：不發薪"); assert.ok(h2.npcs.byUnit && sum(h2.npcs.byUnit) > 0, "照 W4 從集團出"); assert.strictEqual(sum(G.wuAmounts(h2)), h2.world);
+});
+T("W6 錢包不會無限長也不會歸零：連續 90 天，每位 NPC 的錢包都在 [target/2, target]，總和不變", G => {
+  const h = mk(G), P = G.NUM.casino.npcSpend, C = G.NUM.casino.worldDoc.wallet; G.setRng(() => 0.4);
+  for (let i = 0; i < 90; i++) { const d = new Date(Date.parse(D + "T00:00:00Z") + i * 86400000).toISOString().slice(0, 10); if (i > 0) G.casHouseFix(h, d); G.casNpcSpend(h, d, "sec" + i, LIST, null); assert.strictEqual(sum(G.wuAmounts(h)), h.world, "第 " + i + " 天守恆"); }
+  G.setRng(null);
+  for (const n of PEOPLE.filter(x => x.budget && x.budget.perDay > 0)) { const target = Math.floor(n.budget.perDay * P.dayPct / 100) * C.targetDays, bal = G.nwBal(h, n.id); assert.ok(bal <= target + 1, n.id + " 不超過上限"); assert.ok(bal >= Math.floor(target / 2) - 1, n.id + " 不歸零：" + bal + " vs " + target); }
+  assert.ok(G.wuAmounts(h).pub >= 0);
+});
+T("W6 沒有 W5 資料（house.wh 不存在）：不換工作、倍率 1、發薪照常", G => {
+  const h = mk(G); delete h.wh; G.nwPayday(h, MON, PEOPLE); assert.ok(!h.npcw.ev.length && !Object.keys(h.npcw.job).length); assert.strictEqual(G.whMult(h, "g-island"), 1); assert.ok(G.nwTotal(h) > 0);
+});
+T("W6 換工作：集團進入裁員 → 部分 NPC 被裁；被裁的每週找新工作（只找景氣一般的）；滿 joinWeeks 週一定找到；原本集團恢復就回去；日報只寫已發生的", G => {
+  const h = mk(G); G.whFix(h); for (const u of ["g-island", "g-overseas", "g-daily", "g-finance", "g-arts", "g-school", "g-public"]) h.wh.st[u] = { s: "normal", low: 0 }; h.wh.st["g-daily"].s = "layoff";
+  const nm = id => (PEOPLE.find(n => n.id === id) || {}).name || id;
+  G.nwPayday(h, MON, PEOPLE); const lay = Object.keys(h.npcw.lay); assert.ok(lay.length > 0 && lay.length < PEOPLE.filter(n => n.job && n.job.unit === "g-daily").length + 1, "民生集團有人被裁、不是全部：" + lay.length); assert.ok(lay.every(id => PEOPLE.find(n => n.id === id).job.unit === "g-daily"));
+  assert.ok(G.nwNews(h, MON, nm).some(e => /被民生集團裁員了/.test(e.text)));
+  let day = MON; for (let k = 0; k < 5; k++) { day = new Date(Date.parse(day + "T00:00:00Z") + 7 * 86400000).toISOString().slice(0, 10); G.nwPayday(h, day, PEOPLE); }
+  assert.ok(lay.every(id => !(id in h.npcw.lay)), "第一週被裁的，5 週之後都找到新工作（滿 4 週一定；之後新被裁的另外算）"); const moved = Object.keys(h.npcw.job); assert.ok(lay.every(id => moved.includes(id)) && moved.every(id => h.npcw.job[id].unit !== "g-daily" && h.wh.st[h.npcw.job[id].unit].s === "normal"), "新工作在景氣一般的集團");
+  const id = moved[0], n = PEOPLE.find(x => x.id === id); assert.strictEqual(G.nwUnitOf(h, n), h.npcw.job[id].unit, "之後算新的集團"); assert.ok(G.nwNews(h, day, nm, 40).some(e => /工作了/.test(e.text)));
+  const h2 = mk(G); G.whFix(h2); for (const u of Object.keys(h2.wh.st)) h2.wh.st[u] = { s: "normal", low: 0 }; h2.wh.st["g-daily"].s = "layoff"; G.nwPayday(h2, MON, PEOPLE); const x = Object.keys(h2.npcw.lay)[0]; h2.wh.st["g-daily"].s = "normal"; G.nwPayday(h2, "2026-11-23", PEOPLE); assert.ok(!(x in h2.npcw.lay) && !(x in h2.npcw.job), "原本集團恢復：直接回去");
+  assert.strictEqual(sum(G.wuAmounts(h)), h.world);
 });
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

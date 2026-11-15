@@ -43,6 +43,8 @@ check("文化部補助新玩家（不設人數上限）：壹位的補助 ≤ �
 { const Hh = C.worldDoc.health, M = Hh.mult;
   check("世界連動（W5）：預算倍率 一般 ≥ 減薪 ＞ 緊縮 ＞ 裁員 ≥ 下限，下限 ≥ 0.3（景氣再差 NPC 也不會一夜不花錢）；緊縮要連續幾週、裁員更久", Hh.floor >= 0.3 && M.layoff >= Hh.floor && M.cut > M.squeeze && M.squeeze > M.layoff && M.cut < 1 && Hh.squeezeWeeks >= 2 && Hh.layoffWeeks > Hh.squeezeWeeks && Hh.squeeze < Hh.cut && Hh.cut <= 1, `×${M.cut}／×${M.squeeze}／×${M.layoff}、下限 ×${Hh.floor}；緊縮 ${Hh.squeezeWeeks} 週、裁員 ${Hh.layoffWeeks} 週`);
   check("世界連動（W5）：健康值的範圍包得住「景氣 ±1 × 行業係數」（最敏感的往下到 min、最防禦的往上到 max 不被夾掉）", Hh.min <= 1 - Math.max(...Object.values(C.worldDoc.sectorCoef)) && Hh.max >= 1 - Math.min(...Object.values(C.worldDoc.sectorCoef)), `範圍 ${Hh.min}～${Hh.max}`); }
+{ const Wc = C.worldDoc.wallet, Pn = C.npcSpend; const tot = Wc.targetDays * Math.floor(2894500 * Pn.dayPct / 100); // 現在名單 perDay 加起來約 289 萬
+  check("NPC 錢包（W6）：補到的上限 ＝ 每天預算 × targetDays（≥ 2，才不會歸零）；全部錢包加起來 ≤ 外面世界起始的 1%（開辦金不會把池子補光）；被裁員幾週內一定找到工作（joinWeeks ≥ 2）", Wc.targetDays >= 2 && tot <= C.world.start * 0.01 && Wc.joinWeeks >= 2 && Wc.layoffPct > 0 && Wc.layoffPct <= 100 && Wc.findPct > 0, `錢包上限加起來最多約 ${fmt(tot)}（起始的 ${pct(tot / C.world.start * 100)}）；${Wc.targetDays} 天、被裁每週找到 ${Wc.findPct}%、滿 ${Wc.joinWeeks} 週一定找到`); }
 check("世界文件：搬錢預設關閉（gateway ＝ 0）；要開之前 casBookSnap 必須把備用池算進總量，不然對帳差不是 0（W3 才做）", !(C.worldDoc && C.worldDoc.gateway > 0), `gateway ${C.worldDoc && C.worldDoc.gateway}`);
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
