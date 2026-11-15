@@ -57,6 +57,7 @@ export function fakeBankHall() {
     save: { save: 12500000, earned: 12500, savePct: 0.001, perDay: 12500, min: 100000, termMin: 1000000, termCap: 20000000, termMax: 3, quick: [1000000, 5000000, 10000000],
       terms: [{ id: "t1", amt: 5000000, days: 7, pct: 0.03, due: "11-17", int: 150000, left: 4 }, { id: "t2", amt: 2000000, days: 3, pct: 0.01, due: "11-14", int: 20000, left: 1 }],
       kinds: [{ i: 0, days: 3, pct: 0.01 }, { i: 1, days: 7, pct: 0.03 }] },
+    debt: { owed: 6000000, neg: 0, loans: 2, can: true },
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], window: { from: "2026-11-14", until: "2026-11-15" }, state: "健康" },
@@ -88,7 +89,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, econ: b.econ, world: b.world || null, houseInv: b.houseInv || null,
+    bonds, stocks: b.stocks, debt: b.debt || null, econ: b.econ, world: b.world || null, houseInv: b.houseInv || null,
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -179,6 +180,23 @@ function savePane(v) {
       h("div", { class: "bank-safe" }, pic("safe", "safe"), h("small", null, `存了 ${s.terms.length} 筆，鎖到期才領得到利息`)),
       ledger(["期間", "本金 → 到期", ""], termRows)));
 }
+// 賣股還債（決定 0093 第 2 件）：有欠款（v.debt.can）才出現。賣的錢直接還債、不進錢包、不受每天賣出上限。
+// 資料 v.debt：{ owed 欠多少, neg 錢包負數, loans 還得了的借款, can 能不能賣股還債 }；動作 bankDo("stock", { op: "sellDebt", id, n: 股數 | "max" })
+function debtPanel(v) {
+  const d = v.debt;
+  if (!d || !d.can || !(d.owed > 0)) return null;
+  const hold = v.stocks && Array.isArray(v.stocks.list) ? v.stocks.list.filter(x => x.mine > 0 && !x.halted && x.price > 0) : [];
+  const rows = hold.map(x => {
+    const need = Math.min(x.mine, Math.ceil(d.owed / x.price)), enough = need * x.price >= d.owed;
+    return h("div", { class: "bank-row debt", role: "row" },
+      h("span", null, h("b", null, x.name), h("small", null, `有 ${fmt(x.mine)} 股・現價 ${fmt(x.price)}`)),
+      h("span", { class: "bank-tab-num" }, `賣 ${fmt(need)} 股`, h("small", { class: enough ? "" : "bad" }, enough ? `約 ${fmt(need * x.price)}` : "賣光也不夠")),
+      h("span", { class: "bank-r" }, btn(enough ? "賣到夠還" : "全賣", () => bankDo("stock", { op: "sellDebt", id: x.id, n: enough ? "max" : x.mine }), "small bank-btn gold")));
+  });
+  return panel("賣股還債", `你欠 ${fmt(d.owed)}`,
+    h("p", { class: "bank-line" }, "賣的錢直接拿去還債，不進錢包，也不受每天賣出上限。"),
+    rows.length ? ledger(["股票", "要賣", ""], rows) : h("p", { class: "bank-empty" }, "你手上沒有可以賣的股票。"));
+}
 function loanPane(v) {
   const l = v.loan;
   const rows = l.list.map(x => h("div", { class: "bank-row", role: "row" },
@@ -199,7 +217,7 @@ function loanPane(v) {
         btn("自己輸入金額", () => typeLoan(l), "bank-btn"),
         btn(`借滿 ${fmt(l.left)}`, () => bankDo("borrow", { amt: "max" }), "bank-btn")),
       l.why ? h("p", { class: "bank-why" }, l.why) : h("p", { class: "bank-hint" }, "借的錢從莊家出，到期沒還會被直接扣；借款利息比存款、館債都高。")),
-    panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)));
+    h("div", { class: "bank-stack" }, panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)), debtPanel(v)));
 }
 function bondPane(v) {
   const b = v.bonds;
@@ -553,7 +571,7 @@ function stockPane(v) {
         h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${cur.mult}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進館方的預算池。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
-      positionsPanel(S), ordersPanel(S));
+      debtPanel(v), positionsPanel(S), ordersPanel(S));
   if (phone) {
     const pv = UI.bankPV === "market" || UI.bankPV === "hold" ? UI.bankPV : "trade";
     return h("div", { class: "bank-cols stocks phone", dataset: { trade: tab, pv } }, seg([["trade", "交易"], ["market", "行情"], ["hold", "持倉"]], pv, k => { UI.bankPV = k; rerender(); }, "kind"), pv === "trade" ? stackEl : pv === "market" ? marketPanel : holdPanel(v, S, list));

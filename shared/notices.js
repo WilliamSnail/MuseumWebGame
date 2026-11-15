@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-15-d00fc3", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "欠錢可以賣股還債", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行有欠款時，借款頁和股票頁會多一張「賣股還債」：選要賣哪支，賣的錢直接拿去還債，不受每天賣出上限。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-1a0f24", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "手機版修正", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
