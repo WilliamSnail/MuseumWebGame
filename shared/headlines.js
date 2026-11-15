@@ -35,5 +35,12 @@ export function todayHeadlines(data, day) {
   if (up) head.push({ kind: "upcoming", text: "預告：" + hlStr(up.text), tone: "neutral", link: "bank", upcoming: true });
   return head;
 }
+// 播放順序（翊文 11-15：「跑馬燈顯示的訊息順序可以隨機嗎」）：每則第壹次看到時抽壹個號碼記在 ranks（Map）裡，之後照號碼排。
+// 呼叫的地方每次進大廳新開壹個 ranks：同壹次停留中順序不變（不會每則重抽、同壹則連出現）；新來的事件插進隨機的位置，舊的不重洗。只換順序，內容不增不減。
+export function orderHeadlines(list, ranks, rng) {
+  const arr = hlArr(list).slice();
+  arr.forEach(x => { if (!ranks.has(x.text)) ranks.set(x.text, rng()); });
+  return arr.sort((a, b) => ranks.get(a.text) - ranks.get(b.text));
+}
 // 沒有事件時顯示的壹句平常的話（跑馬燈用）
 export const HL_QUIET = "今天館裡很平靜。";
