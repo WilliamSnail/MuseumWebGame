@@ -61,8 +61,19 @@ export async function workCheck(force) {
 }
 
 // ---------- 要送人下去：跳壹個視窗，選壹位（沒有關掉的按鈕：不選不能繼續玩挑戰模式） ----------
+// 11-15 測試回報、翊文「趕快解決」：只有壹位參觀者、送不出人時整個畫面被蓋住，連銀行的財經專員都按不到。
+//   加「先去銀行找財經專員」：關掉視窗、打開銀行借款頁；BANK_SNOOZE_MS 內不再跳（不是關掉就沒事：時間到、或回來還是負的就再跳）
+const BANK_SNOOZE_MS = 10 * 60 * 1000;
+let snoozeUntil = 0;
+function toBank() {
+  snoozeUntil = Date.now() + BANK_SNOOZE_MS;
+  if (layer) { layer.close(); layer = null; }
+  UI.bankTab = "loan";
+  if (ADDONS.bankHall && ADDONS.bankHall.open) ADDONS.bankHall.open();
+}
 function sendLayer(debt) {
   if (layer && layer.layer.isConnected) return;
+  if (Date.now() < snoozeUntil) return;
   const W = NUM.casino.work, P0 = C();
   if (!P0) return;
   const pay = Math.ceil(debt * W.payPct / 100);
@@ -74,7 +85,8 @@ function sendLayer(debt) {
       h("span", { class: "work-name" }, h("b", null, visitorName(v)), h("small", null, [j ? j.name : "", `理智 ${v.sanity}`, P0.vid === v.vid ? "現在在場" : ""].filter(Boolean).join("・"))),
       btn(CAS_TEXT.workPick, () => send(v.vid), "primary small"));
   }));
-  layer.card.append(list, h("p", { class: "sub work-note" }, "籌碼回到 0 以上（大禮包、跟 Yuga Bot 借、別人幫忙都算）他就會回來。"));
+  layer.card.append(list, h("p", { class: "sub work-note" }, "籌碼回到 0 以上（大禮包、跟 Yuga Bot 借、別人幫忙都算）他就會回來。"),
+    ADDONS.bankHall ? h("div", { class: "work-bank" }, btn("先去銀行找財經專員", toBank, "small"), h("small", { class: "sub" }, "梁安會幫你排還款計畫：延期、賣股票還債。10 分鐘後還是負的，這個視窗會再跳出來。")) : null);
 }
 async function send(vid) {
   if (busy) return;

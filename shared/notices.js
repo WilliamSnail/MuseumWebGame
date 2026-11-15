@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-569df6", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "欠款視窗多了「先去銀行找財經專員」", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "Yuga Bot 來收錢、派不出人的時候，可以先去銀行找財經專員梁安排還款計畫",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-e33e44", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "財經專員的賣股計畫修好", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
