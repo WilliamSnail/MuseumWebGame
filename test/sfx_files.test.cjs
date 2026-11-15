@@ -11,7 +11,7 @@ const fs = require("fs"), path = require("path"), assert = require("assert");
     assert.ok(md.includes(id + ".mp3") && md.includes(x.url), id + " 要寫進 來源.md");
     assert.ok(fs.statSync(path.join(dir, id + ".mp3")).size < 800 * 1024, id + " 太大（要壓過）");
   }
-  const fx = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "web", "src", "ui_casino.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "web", "src", "ui_casino_slot.js"), "utf8");
+  const fx = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "web", "src", "ui_casino.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "web", "src", "ui_casino_slot.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "web", "src", "ui_bank.js"), "utf8");
   for (const m of fx.matchAll(/(?:fileLoop\(c, \w+, |fileOnce\(c, \w+, |sndFile\()['"]([a-z-]+)/g)) assert.ok(SFX_FILES[m[1]], "程式用到沒登記的音效檔：" + m[1]);
   console.log("1 passed, 0 failed（音效檔來源）");
 })().catch(e => { console.error(e); process.exit(1); });
