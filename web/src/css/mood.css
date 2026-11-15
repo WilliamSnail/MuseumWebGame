@@ -78,3 +78,17 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
   background: radial-gradient(ellipse 26% 20% at 18% 88%, rgba(236, 228, 210, .30), transparent 72%), radial-gradient(ellipse 34% 22% at 52% 96%, rgba(236, 228, 210, .26), transparent 72%), radial-gradient(ellipse 24% 18% at 84% 86%, rgba(236, 228, 210, .28), transparent 72%), radial-gradient(ellipse 30% 18% at 40% 60%, rgba(236, 228, 210, .16), transparent 72%);
   animation: rm-smoke-bg 28s ease-in-out infinite alternate; }
 @keyframes rm-smoke-bg { from { transform: translate(-3%, 3%) scale(1); } to { transform: translate(4%, -14%) scale(1.18); } }
+
+/* 各房間的熱絡（導覽圖）：三種表現——外框微亮 glow、小人影 folks、人數小牌 pill；網址 ?roomfx=glow,folks,pill 選，?rooms=gallery:1,casino:5 在開發時假裝有人 */
+.rm-rooms { position: absolute; inset: 0; }
+.rm-room { position: absolute; pointer-events: none; }
+.rm-room > i, .rm-room > span, .rm-room > b { position: absolute; }
+.rm-rglow { inset: 0; opacity: 0; transition: opacity 1.8s ease; box-shadow: inset 0 0 18px 4px rgba(255, 204, 108, .8), inset 0 0 40px 10px rgba(255, 170, 70, .35); mix-blend-mode: screen; }
+.rm-room[data-fx~="glow"][data-lv="1"] .rm-rglow { opacity: .35; } .rm-room[data-fx~="glow"][data-lv="2"] .rm-rglow { opacity: .62; } .rm-room[data-fx~="glow"][data-lv="3"] .rm-rglow { opacity: .95; animation: rm-glowpulse 4s ease-in-out infinite alternate; }
+@keyframes rm-glowpulse { to { opacity: .7; } }
+.rm-rfolks { left: 4%; right: 4%; top: 6%; height: 70%; display: none; }
+.rm-room[data-fx~="folks"] .rm-rfolks { display: block; }
+.rm-rfolks .rm-pw { width: 11%; min-width: 8px; }
+.rm-rfolks.in .rm-pw { opacity: 1; transform: translateY(0) scale(var(--sc, 1)); }
+.rm-rpill { right: 4%; top: 4%; display: none; min-width: 34px; padding: 1px 7px; border-radius: 10px; background: rgba(28, 14, 10, .82); color: #FFE2A0; font: 700 clamp(.62rem, .8vw, .85rem) / 1.35 "Noto Serif TC", serif; box-shadow: inset 0 0 0 1px rgba(255, 204, 108, .8), 0 0 8px rgba(255, 190, 90, .5); text-align: center; white-space: nowrap; }
+.rm-room[data-fx~="pill"] .rm-rpill:not(:empty) { display: block; }
