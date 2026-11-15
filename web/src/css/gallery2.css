@@ -202,3 +202,11 @@ details[open] > .gal-sum .gal-open, details:not([open]) > .gal-sum .gal-close { 
 /* 收標結果：得標者、館外收藏小標（11-14） */
 .gal-last li span.gal-won { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; justify-content: flex-end; }
 .gal-last .gal-npc { font-style: normal; font-weight: 700; font-size: var(--type-tiny, .6875rem); padding: 0 6px; border: 1px solid rgba(200, 162, 90, .7); border-radius: 999px; color: var(--paper-soft, #D8C59A); }
+
+/* 側欄不准比欄寬還寬（11-15，翊文：「本週回顧展介面很不對」）：回顧展的畫壹排排開，把整個側欄撐寬，說明字被切掉、右邊要橫捲才看得到。
+   側欄每壹塊都能縮到欄寬，回顧展的畫只在自己那壹塊裡左右滑 */
+.gallery-onescreen .gal-side { grid-template-columns: minmax(0, 1fr); }
+.gallery-onescreen .gal-side > * { min-width: 0; max-width: 100%; }
+.gallery-onescreen .gal-review .corridor.small { max-width: 100%; box-sizing: border-box; }
+.gallery-onescreen .gal-rules p { min-width: 0; }
+.gallery-onescreen .gal-rules p > span { min-width: 0; overflow-wrap: anywhere; }
