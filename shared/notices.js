@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-e52e4a", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "借款的快速按鈕照額度變", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "借款畫面的快速按鈕改成照你的額度算（額度的壹成、四分之壹、壹半），額度高的不用再按很多次",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-1a1daa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "借款改成 7 天內還、利息 9%", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

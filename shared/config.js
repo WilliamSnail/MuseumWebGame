@@ -384,7 +384,8 @@ export const NUM = {
       // 額度上限和莊家的限制（規劃 2.11a，翊文 11-14「好」）：capMax 額度最多；levelPerDay 壹個人壹天最多升幾級（翊文 11-13：「那兩級好了」，100 萬到 2,000 萬大約 4 天；當天借當天還的不升）；
       // outPct／outMin：全館沒還的本金 ≤ max(outMin, 莊家的錢 × outPct%)；借款要莊家的錢夠（莊家 ≤ 0 暫停）；欠款中（錢包是負的）額度鎖在 limit
       capMax: 20000000, levelPerDay: 2, outPct: 30, outMin: 5000000,
-      quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）
+      quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）：額度太小、quickPct 算不出來時才用這組
+      quickPct: [10, 25, 50],     // 快速按鈕照額度的幾 %（11-15，翊文：額度 300 萬時按鈕還是 2,500 太小「好改」）；shared/casino_wallet.js casLoanQuick 取成 1、2、3、5 開頭的整數
       discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
