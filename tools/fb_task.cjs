@@ -17,7 +17,7 @@
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 //   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
 //                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
-//   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
+//   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
@@ -31,13 +31,14 @@ const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats"
 async function fnErrors(cred, projectId) {
   const tok = (await cred.getAccessToken()).access_token;
   const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
-  const filter = `severity>=WARNING AND timestamp>="${since}" AND (resource.type="cloud_run_revision" OR resource.type="cloud_function")`;
+  // console.error 印的字在 Cloud Run 不壹定標成 ERROR（沒結構的 stderr 是 DEFAULT），所以也直接找關鍵字（11-15 日報沒產生，severity 篩出 0 則）
+  const filter = `timestamp>="${since}" AND (resource.type="cloud_run_revision" OR resource.type="cloud_function") AND (severity>=WARNING OR textPayload:"日報" OR textPayload:"失敗" OR textPayload:"Error" OR textPayload:"錯")`;
   const r = await fetch("https://logging.googleapis.com/v2/entries:list", { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
     body: JSON.stringify({ resourceNames: ["projects/" + projectId], filter, orderBy: "timestamp desc", pageSize: 200 }) });
   if (!r.ok) { console.log("讀不到紀錄：" + r.status + " " + (await r.text()).slice(0, 300)); process.exitCode = 1; return; }
   const j = await r.json(), list = j.entries || [];
   const mask = s => String(s).replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "（email）").replace(/\b[A-Za-z0-9]{28}\b/g, "（uid）");
-  console.log(`最近 36 小時 WARNING 以上：${list.length} 則（最新在上面）`);
+  console.log(`最近 36 小時 WARNING 以上或含關鍵字：${list.length} 則（最新在上面）`);
   const seen = new Map();
   for (const e of list) {
     const fn = (e.resource && e.resource.labels && (e.resource.labels.service_name || e.resource.labels.function_name)) || "?";
