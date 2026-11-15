@@ -19,7 +19,7 @@ import { isFresh, markFresh } from "../../shared/fresh.js";
 import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
-import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "./ui_core.js";
 import { CAS_AUC } from "../../shared/casino_auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
@@ -453,6 +453,7 @@ export function openStoryBook(w, b, reader, el) {
     return;
   }
   const l = lineById(w, b.line);
+  if (l && l.kind === "main") sndFile("film-reveal", 0.45); // 主線劇情揭露：打開主線的書時放壹首（翊文 11-15）
   bookReader(reader, b.title, b.pages, { onEnd: () => {
     const r = readStoryBook(P, w, b.id, todayStr());
     if (r.first && r.insp) { bookGain(reader, `+${r.insp} 靈感`, "good"); snd("coin"); }

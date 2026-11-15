@@ -48,5 +48,9 @@ export const SFX_FILES = {
   "pulse-rise": { name: "Pulsing Tension Rising And Booming Percussion", by: "tomas_herudek", url: "https://pixabay.com/sound-effects/pulsing-tension-rising-and-booming-percussion-529681/", use: "守門進第二階段、理智剛掉到 15 以下時響壹次的升高音" },
   "horror-edge": { name: "Horror Suspense（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/horror-suspense-515839/", loop: true, use: "理智快歸零（15 以下）和歸零的背景音樂（循環）" },
   "horror-bout": { name: "Suspense Scary Horror（截前 80 秒）", by: "absolutesound", url: "https://pixabay.com/music/suspense-scary-horror-515856/", loop: true, use: "瘋狂發作時疊上去的背景音樂（循環）" },
+  "lib-piano-a": { name: "Nostalgic", by: "the_mountain", url: "https://pixabay.com/music/nostalgic-610152/", use: "圖書館偶爾輕輕放壹次的鋼琴（一首）" },
+  "lib-piano-b": { name: "Peaceful Piano（截前 105 秒）", by: "leberch", url: "https://pixabay.com/music/peaceful-piano-590944/", use: "圖書館偶爾輕輕放壹次的鋼琴（另一首）" },
+  "cello-commission": { name: "Emotional Cello（截前 105 秒）", by: "no-copyright-music-2026", url: "https://pixabay.com/music/emotional-cello-611670/", use: "委託櫃台偶爾放壹次的大提琴" },
+  "film-reveal": { name: "Film（截前 105 秒）", by: "leberch", url: "https://pixabay.com/music/film-517381/", use: "主線劇情揭露：打開主線的書時放" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

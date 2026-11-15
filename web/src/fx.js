@@ -757,7 +757,9 @@ export const FX = (() => {
         const paper = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: rand(1800, 3200), f2: rand(900, 1500), glide: 0.2, q: 1, g: 0.022, a: 0.04, d: 0.22, to: g }), () => rand(2500, 6000));
         const stampT = every(() => { const t = c.currentTime + 0.05; tone(t, { f: 110, f2: 55, glide: 0.1, g: 0.05, a: 0.002, d: 0.12, to: g }); noise(t, { type: 'lowpass', f: 900, q: 0.7, g: 0.03, a: 0.002, d: 0.05, to: g }); }, () => rand(9000, 18000));
         const ding = every(() => { if (Math.random() < 0.6) return; const t = c.currentTime + 0.05; tone(t, { f: 2093, g: 0.014, a: 0.002, d: 0.9, to: g }); tone(t, { f: 4186, g: 0.004, a: 0.002, d: 0.4, to: g }); }, () => rand(20000, 35000));
-        return { nodes: [room.n], timers: [paper, stampT, ding] };
+        let cn = 0; // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊，大提琴 4～7 分鐘輕輕放壹次
+        const cello = every(() => { if (!cn++) return; fileOnce(c, g, 'cello-commission', 0.4); }, () => rand(240000, 420000));
+        return { nodes: [room.n], timers: [paper, stampT, ding, cello] };
       },
       codex(c, g) { // 圖鑑室：很安靜，時鐘滴答，偶爾翻頁
         const room = bed(c, g, 'lowpass', 180, 0.5, 0.03);
@@ -791,7 +793,11 @@ export const FX = (() => {
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % MEL.length; next += Q * 4; } }, () => 1000);
         const creak = every(() => tonef(c.currentTime + 0.05, { type: 'sawtooth', f: rand(110, 160), f2: rand(80, 120), glide: 0.6, g: 0.01, a: 0.1, d: 0.6, lp: 700, q: 6, to: g }), () => rand(14000, 24000));
         const page = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: 1400, f2: 4000, q: 0.8, g: 0.012, a: 0.05, d: 0.2, to: g }), () => rand(12000, 20000));
-        return { nodes: [], timers: [sched, creak, page] };
+        // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 4～7 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
+        let pn = 0, pu = 0;
+        const piano = every(() => { if (!pn++) return; fileOnce(c, g, pick(['lib-piano-a', 'lib-piano-b']), 0.4); }, () => rand(240000, 420000));
+        const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
+        return { nodes: [], timers: [sched, creak, page, piano, pulse] };
       },
       hall(c, g) { // 我的展廳：明亮壹點的弦樂和聲，遠處有人聲
         const room = bed(c, g, 'lowpass', 200, 0.5, 0.025);
