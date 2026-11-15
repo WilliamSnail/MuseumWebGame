@@ -1,0 +1,43 @@
+/* 房間效果（11-15，ui_mood.js／shared/room_mood.js；docs/大廳效果提案.md）。rm- 開頭；不碰 #lights、#vignette、body 的理智 class */
+.rm { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; border-radius: inherit; transition: opacity 1.2s ease; }
+.rm.rm-off { opacity: 0; }
+body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: none; } /* 館友自己的理智效果優先 */
+.rm i { position: absolute; inset: 0; transition: opacity 2.2s ease; }
+/* 燈光：暖＝金色的光從中間往外散、邊緣帶深紅褐的暗角；冷＝發灰的藍、暗角偏黑藍；暗＝整體再壓暗 */
+.rm-warmglow { opacity: var(--rm-warm, 0); background: radial-gradient(ellipse 75% 70% at 50% 46%, rgba(255, 218, 140, .46), rgba(246, 170, 80, .16) 52%, rgba(110, 36, 18, .22) 100%); mix-blend-mode: soft-light; }
+.rm-warmglow::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 60%, rgba(96, 30, 14, .30)); }
+.rm-coldveil { opacity: var(--rm-cold, 0); background: radial-gradient(ellipse 80% 75% at 50% 50%, rgba(86, 108, 160, .10), rgba(30, 40, 82, .52) 100%); mix-blend-mode: multiply; }
+.rm-coldveil::after { content: ""; position: absolute; inset: 0; background: rgba(110, 140, 190, .16); mix-blend-mode: color; }
+.rm-dimveil { opacity: var(--rm-dim, 0); background: radial-gradient(ellipse 85% 80% at 50% 48%, rgba(20, 10, 8, .15), rgba(12, 6, 6, .66) 100%); mix-blend-mode: multiply; }
+/* 旗：掛在上緣，微微晃動 */
+.rm-bunting { position: absolute; left: 3%; right: 3%; top: 0; height: 9%; min-height: 26px; opacity: 0; transition: opacity 1.6s ease; filter: drop-shadow(0 3px 2px rgba(40, 20, 10, .45)); }
+.rm-bunting.on { opacity: 1; }
+.rm-bunt-svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.rm-flag { animation: rm-sway 5.2s ease-in-out infinite alternate; }
+@keyframes rm-sway { from { transform: rotate(-1.6deg); } to { transform: rotate(1.8deg); } }
+/* 人影：剪影，深色帶壹點暖褐；前面的清楚、後面的淡又糊，從後面淡進來 */
+.rm-crowd { position: absolute; }
+.rm-pw { position: absolute; width: 9%; min-width: 9px; aspect-ratio: 24 / 42; opacity: 0; transform: translateY(4px) scale(var(--sc, 1)); transform-origin: 50% 100%; transition: opacity 1.2s ease, transform 1.2s ease; }
+.rm-crowd.in .rm-pw { opacity: 1; transform: translateY(0) scale(var(--sc, 1)); }
+.rm-p { width: 100%; height: 100%; display: block; color: rgba(44, 24, 18, calc(.5 + var(--d, .5) * .4)); filter: blur(calc((1 - var(--d, .5)) * .7px)) drop-shadow(0 1px 0 rgba(255, 240, 210, .2)); }
+.rm-lobby .rm-crowd .rm-pw { width: 11%; }
+.rm-casino .rm-crowd { left: 4%; right: 4%; bottom: 3%; height: 22%; top: auto; }
+.rm-casino .rm-p { color: rgba(8, 18, 12, calc(.55 + var(--d, .5) * .35)); }
+.rm-bank .rm-crowd { display: none; }
+/* 怪影子：很淡、邊緣糊、在角落、出現壹下就沒了（約 3 秒），像「看到了又不確定」 */
+.rm-omens { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease; }
+.rm-omens.on { opacity: 1; }
+.rm-omen { position: absolute; aspect-ratio: 80 / 120; opacity: 0; filter: blur(2.4px); mix-blend-mode: multiply; animation: rm-glimpse 80s linear infinite; }
+.rm-omen-svg { width: 100%; height: 100%; display: block; }
+@keyframes rm-glimpse { 0%, 6% { opacity: 0; transform: translateX(0); } 7.5% { opacity: .55; } 9.5% { opacity: .5; transform: translateX(-3px); } 11.5%, 100% { opacity: 0; transform: translateX(-6px); } }
+/* 銀行：大理石的金色吊燈從上面兩角照下來（景氣好更亮）；看板的光：漲綠、跌紅 */
+.rm-lamps { opacity: calc(.28 + var(--rm-warm, 0) * .6 - var(--rm-dim, 0) * .3); background: radial-gradient(circle at 8% -4%, rgba(255, 226, 150, .55), transparent 38%), radial-gradient(circle at 92% -4%, rgba(255, 226, 150, .55), transparent 38%); mix-blend-mode: screen; }
+.rm i.rm-board { top: auto; inset: auto 0 0 0; height: 16%; opacity: 1; background: linear-gradient(0deg, rgba(86, 214, 120, calc(var(--rm-up, 0) * .42)), transparent), linear-gradient(0deg, rgba(222, 90, 70, calc(var(--rm-down, 0) * .42)), transparent); mix-blend-mode: screen; }
+/* 賭場：綠桌布上方的吊燈，燈暗時壓低 */
+.rm-chandelier { opacity: calc(.78 - var(--rm-dim, 0) * .9); background: radial-gradient(ellipse 42% 62% at 50% -6%, rgba(255, 232, 170, .52), rgba(255, 210, 120, .14) 55%, transparent 80%); mix-blend-mode: screen; }
+.nb-frame.nb-casino > .rm { z-index: 3; border-radius: 6px; }
+.screen.bank-onescreen { position: relative; }
+.bank-onescreen > .rm { z-index: 3; }
+/* 賭場：旗掛在標題列下面（不蓋標題）；桌邊人影小壹點（框很寬） */
+.rm-casino .rm-bunting { top: 9.5%; left: 6%; right: 6%; height: 7%; }
+.rm-casino .rm-crowd .rm-pw { width: 3.4%; min-width: 14px; }

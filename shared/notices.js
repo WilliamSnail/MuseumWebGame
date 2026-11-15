@@ -62,6 +62,15 @@ export const NOTICES = [
     gift: { id: "gift-mat-make-up-2026-11", title: "換週章的補償：金箔", items: ["mat:金箔"] },
   },
   {
+    id: "upd-2026-11-15-b9875c", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "大廳和銀行有了氣氛", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳和銀行會跟著今天的狀況換氣氛：展廳熱鬧時燈光偏暖，冷清時偏冷；有政策或活動時上緣掛旗；展廳人多會看到剪影；偶爾，角落好像有什麼東西。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-ac2baa", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "換週章：金箔的 2 份不會再少算", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
