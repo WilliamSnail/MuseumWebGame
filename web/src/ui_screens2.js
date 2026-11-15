@@ -630,7 +630,7 @@ SCREENS.settings = root => {
       h("div", { class: "set-row set-day" }, h("span", null, "換日"), h("div", null,
         h("p", { class: "sub" }, "台灣時間每天 05:00 換壹天，每週壹 05:00 換週，大家的壹天都壹樣。每換壹天：委託換新、每天的次數重新算、心情恢復、技能成長。"),
         P ? h("p", { class: "sub" }, `現在是第 ${pad(gameDayNo(P), 3)} 天（你第壹次進館那天是第 1 天）。`) : null)),
-      h("div", { class: "set-row set-orient" }, h("span", null, "手機直拿提醒"), h("div", null,
+      false && h("div", { class: "set-row set-orient" }, h("span", null, "手機直拿提醒"), // 11-15 不再提醒轉橫（翊文：「手機就不用考慮橫的玩了」） h("div", null,
         h("div", { class: "seg" }, [[false, "提醒我轉橫"], [true, "不用提醒"]].map(([v, n]) => h("button", { type: "button", class: "seg-btn" + (orientSkipped() === v ? " on" : ""), onClick: () => { setOrientSkip(v); rerender(); } }, n))),
         h("p", { class: "sub" }, "手機直拿時，會請你把手機轉橫（橫著比較好玩）。只記在這台裝置，電腦和平板不會跳。"))),
       h("div", { class: "set-row" }, h("span", null, "聲音"), seg("muted", [[false, "打開"], [true, "靜音"]])),

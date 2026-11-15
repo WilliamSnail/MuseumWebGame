@@ -23,7 +23,7 @@ export function setOrientSkip(on) {
 // 第一次按按鈕（進館、開始）試一次鎖橫向；按「先用直的」不算，也不鎖
 let lockTried = false;
 export function tryLockLandscape() {
-  if (lockTried) return false;
+  if (!PROMPT_ON || lockTried) return false;
   lockTried = true;
   return askLandscapeLock(typeof screen !== "undefined" ? screen : null, matchMedia("(pointer: coarse)").matches) === "asked";
 }
@@ -32,7 +32,11 @@ const PHONE = `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true
   <g class="or-phone-body"><rect x="21" y="8" width="22" height="40" rx="4"/><path d="M29 12h6M30 43h4"/></g>
   <path class="or-arrow" d="M12 52a22 22 0 0 0 40 0M52 52l-1-8M52 52l-8-1" opacity=".75"/></svg>`;
 
+// 11-15 翊文：「手機就不用考慮橫的玩了」：直拿是主要的玩法，不再跳「把手機轉橫」、也不鎖橫向（決定 0043 改了，見 docs/決定/0043）。
+//   PROMPT_ON 打開就恢復舊的行為；鍵盤高度（--kb）照舊量
+const PROMPT_ON = false;
 function build() {
+  if (!PROMPT_ON) { document.body.classList.add("orient-skip"); return; }
   if (document.getElementById("orient")) return;
   document.body.classList.toggle("orient-skip", orientSkipped());
   const skip = h("button", { type: "button", class: "btn ghost or-skip", onClick: () => setOrientSkip(true) }, "先用直的");

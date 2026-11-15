@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-51b057", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "手機直拿就好，不用轉橫了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直著拿就能玩，不會再跳「把手機轉橫」的提示",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-569df6", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "欠款視窗多了「先去銀行找財經專員」", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
@@ -2651,7 +2660,7 @@ export const NOTICES = [
   },
   {
     id: "landscape1", v: 1, cat: "館方公告", tags: ["更新"], importance: "normal",
-    title: "用手機玩，建議把手機轉橫", publish: "2026-11-09", expire: "2027-12-31",
+    title: "用手機玩，建議把手機轉橫", publish: "2026-11-09", expire: "2026-11-14", // 11-15 起不再建議轉橫，下架
     sections: [
       ["這次有什麼新的", [
         "館裡的畫面改成以橫著拿為主：手機轉橫之後，上面的頁籤和下面的狀態列都變薄，畫面留給展品、導覽圖和各個視窗。",
