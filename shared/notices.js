@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-12709e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報看得到館外來客花了多少", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行財報多了「昨天館外來客花了多少」：旅客和散客帶進來的門票、每家店的消費，分開列出來，每天 05:00 更新。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-09399e", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "收藏列看得到強度和稀有度，可以篩選", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
