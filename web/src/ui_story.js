@@ -554,7 +554,7 @@ export function galleryTabs(active) {
   const tab = (id, ic, label, onClick, ...more) => h("button", { type: "button", class: "seg-btn" + (active === id ? " on" : ""), "aria-pressed": String(active === id), onClick }, icon(ic), h("span", null, label), ...more);
   return h("div", { class: "seg hall-tabs big-tabs gallery-tabs" },
     tab("main", "gallery", "常設展", () => go("gallery", {}, { action: false })),
-    show ? tab("show", "star", `今日特展：${show.title}`, () => go("gallery", { show: true }, { action: false }), unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag() : null) : null,
+    show ? tab("show", "star", `今日特展：${show.title}`, () => go("gallery", { show: true }, { action: false }), unseen ? h("span", { class: "tab-c" }, `${unseen} 幅沒看`) : null, unseen && isFresh(P, "gallery", SHOW_FRESH(todayStr())) ? freshTag("show-fresh") : null) : null,
     collectOn() ? tab("collect", "hall", "我收藏的畫", () => go("gallery", { tab: "collect" }, { action: false })) : null,
     auctionOn() ? tab("auction", "medal", "拍賣", () => go("gallery", { tab: "auction" }, { action: false })) : null,
     // 銀行不是這個廳的頁籤：按了直接進銀行（翊文 11-14：「在畫廊拍賣那邊也加一個頁籤連結到銀行」，跟銀行的「拍賣」頁籤對稱）
