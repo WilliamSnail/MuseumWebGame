@@ -38,4 +38,9 @@ T("組合：理智低＋房間冷清 → 又暗又冷又有影子；熄燈時全
   const r = G.roomMood(d); assert.ok(r.light.warm < 0 && r.light.dim > 0 && r.omen > 0 && !r.hide);
   const o = G.roomMood(Object.assign({}, d, { own: { lightsOut: true } })); assert.ok(o.hide && o.omen === 0);
 });
+T("各房間熱絡：0 人 0 級、1 人 1 級、2～3 人 2 級、4 人以上 3 級；壞資料不丟錯", G => {
+  const r = G.roomHeats({ a: 0, b: 1, c: 2, d: 3, e: 4, f: 99, g: "x", h: -3 });
+  assert.deepStrictEqual([r.a, r.b, r.c, r.d, r.e, r.f, r.g, r.h].map(x => x.lv), [0, 1, 2, 2, 3, 3, 0, 0]);
+  assert.strictEqual(r.f.n, 99); assert.strictEqual(Object.keys(G.roomHeats(null)).length, 0); assert.strictEqual(Object.keys(G.roomHeats(5)).length, 0);
+});
 console.log(`房間效果：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

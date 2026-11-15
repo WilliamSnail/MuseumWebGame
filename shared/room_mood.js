@@ -21,7 +21,8 @@
 // ================================================================
 import { statBandOf } from "./stat_view.js";
 
-export const RM = { crowdMax: 24, sanLow: 40, omenMin: 0.15, warm: { cold: -0.7, plain: 0, warm: 0.5, buzz: 0.9 } };
+// 導覽圖上各房間的熱絡：館友人數 → 級數（1 人＝1 級、2～3 人＝2 級、4 人以上＝3 級；0 人＝0 級）。門檻只寫這壹處
+export const RM = { roomLv: [1, 2, 4], crowdMax: 24, sanLow: 40, omenMin: 0.15, warm: { cold: -0.7, plain: 0, warm: 0.5, buzz: 0.9 } };
 const rmN = x => (x === null || x === undefined || x === "" || typeof x === "boolean" || !Number.isFinite(+x) ? null : +x);
 const rmClamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -62,4 +63,15 @@ export function heatOf(data) {
 export function ambMix(heat) {
   const h = rmN(heat), i = h === null ? 1 : rmClamp(Math.round(h), 0, AMB_MIX.length - 1);
   return Object.assign({}, AMB_MIX[i]);
+}
+
+// 各房間的熱絡（翊文 11-15：「大廳裡顯示目前各館內的熱絡程度」）。counts：{ 房間 id: 館友人數 }（只算真的館友；NPC、散客沒有房間資料）
+// 回傳 { 房間 id: { n, lv } }，lv 0～3
+export function roomHeats(counts) {
+  const out = {}, c = counts && typeof counts === "object" ? counts : {};
+  for (const id of Object.keys(c)) {
+    const n = Math.max(0, Math.floor(rmN(c[id]) || 0));
+    out[id] = { n, lv: RM.roomLv.reduce((lv, t, i) => (n >= t ? i + 1 : lv), 0) };
+  }
+  return out;
 }
