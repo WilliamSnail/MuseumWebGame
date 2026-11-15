@@ -471,3 +471,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-lv-t em { font-style: normal; font-size: .9375rem; color: #E7C878; }
 .bank-lv-t small { font-size: .8125rem; opacity: .85; }
 @media (max-height: 500px) and (orientation: landscape) { .bank-lv-seal { width: 48px; height: 48px; } .bank-lv-seal b { font-size: 1.5rem; } .bank-lv-t b { font-size: 1.0625rem; } }
+
+/* 行情／持倉（交易）切換鈕再高壹點點（11-15，翊文：「這兩個按鈕可以上下稍微高一點點嗎」） */
+.bank-segs.kind .bank-seg { min-height: 42px; }
+@media (max-width: 760px) { .bank-segs.kind .bank-seg { min-height: 44px; } }
+@media (max-height: 500px) and (orientation: landscape) { .bank-cols.stocks .bank-segs.kind .bank-seg { min-height: 36px; } }
