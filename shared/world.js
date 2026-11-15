@@ -12,6 +12,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { WORLD_EVENTS } from "./world_events.js";
 import { hashStr } from "./logic.js";
 import { statBandOf } from "./stat_view.js";
 
@@ -176,6 +177,12 @@ export function whTick(house, day, px) {
   }
   const U = NUM.casino.worldDoc.unrest;
   for (const u of whUnits()) { const cur = whUnrest(house, u.id); w.unrest[u.id] = whClamp(cur + (cur > U.start ? -Math.min(U.back, cur - U.start) : cur < U.start ? Math.min(U.back, U.start - cur) : 0), 0, 100); } // 每天往平常靠（慣性：事件的影響拖幾天）
+  const EV = NUM.casino.worldDoc.events; // 排程填的事件（劇情決定的欄位）和壞消息：從上次算到今天，每壹天都套用壹次（隔了幾天沒人來也不漏）
+  for (let i = Math.min(14, w.day && w.day < day ? Math.round((Date.parse(day) - Date.parse(w.day)) / 86400000) : 1) - 1; i >= 0; i--) {
+    const d = whAddDays(day, -i), e = WORLD_EVENTS[d]; if (!e) continue;
+    for (const id of Object.keys(e.unrest || {})) whUnrestAdd(house, id, whClamp(e.unrest[id], -EV.unrestMax, EV.unrestMax));
+    for (const u of whUnits()) if ((e.down || []).some(s => (u.stocks || []).includes(s))) whUnrestAdd(house, u.id, EV.downPush); // 旗下股票有壞消息：壹個集團壹天最多壹次
+  }
   const first = w.day === null;
   if (first || whIsMon(day)) { // 每週一看一次狀態
     for (const u of whUnits()) {
@@ -199,7 +206,8 @@ export function whMood(house, day) {
   const M = NUM.casino.worldDoc.mood, S = NUM.casino.worldDoc.san, w = house && house.wh, n = Math.max(1, Object.keys((house && house.npcw && house.npcw.bal) || {}).length);
   const dev = Object.values((house && house.npcw && house.npcw.san) || {}).reduce((a, v) => a + (wdN(v) - S.start), 0), trouble = w && w.st ? Object.values(w.st).filter(s => s.s !== "normal").length : 0;
   const wd = new Date(day + "T00:00:00Z").getUTCDay(), b = whClamp(+(house && house.econ && house.econ.b) || 0, -1, 1);
-  return whClamp(Math.round(M.base + M.b * b + M.san * (dev / n) + M.trouble * trouble + (wd === 0 || wd === 6 ? M.weekend : 0)), 0, 100);
+  const ev = WORLD_EVENTS[day] && WORLD_EVENTS[day].mood ? whClamp(WORLD_EVENTS[day].mood, -NUM.casino.worldDoc.events.moodMax, NUM.casino.worldDoc.events.moodMax) : 0;
+  return whClamp(Math.round(M.base + M.b * b + M.san * (dev / n) + M.trouble * trouble + (wd === 0 || wd === 6 ? M.weekend : 0) + ev), 0, 100);
 }
 function whAddDays(day, n) { return new Date(Date.parse(day + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10); }
 // NPC 預算倍率：一般 1～upMax（h 高時多一點）、減薪、緊縮、裁員；文化部、家計、沒有的單位 ＝ 1；最低 floor
@@ -326,7 +334,7 @@ export function nwBudgetMult(house, n, unitId) {
   return Math.max(NUM.casino.worldDoc.health.floor, m);
 }
 // 收盤：照那天的行程更新每位的理智。visits ＝ npcVisitsToday 的結果；people ＝ 有預算的 NPC；extra ＝ { id: 排程填的數字 }（可以沒有）。同一天不重複
-export function nwSanDay(house, day, visits, people, extra = {}) {
+export function nwSanDay(house, day, visits, people, extra = (WORLD_EVENTS[day] && WORLD_EVENTS[day].san) || {}) {
   const w = nwFix(house), S = NUM.casino.worldDoc.san;
   if (!w || !wdDayOk(day) || (w.sanDay && day <= w.sanDay)) return false;
   w.sanDay = day; if (!wuBox(w.san)) w.san = {};
@@ -342,7 +350,7 @@ export function nwSanDay(house, day, visits, people, extra = {}) {
     d += cur + d < S.start ? eb : cur + d > S.start ? -Math.max(0, eb) : 0;
     d = whClamp(d, -S.daily, S.daily);
     for (const e of ev) if (e.npc === id) d += e.t === "lay" ? S.lay : S.job;
-    d += wdN(extra[id]);
+    d += whClamp(wdN(extra[id]), -NUM.casino.worldDoc.events.sanMax, NUM.casino.worldDoc.events.sanMax); // 排程填的（劇情決定的欄位），不算進一天最多 ±10
     const nv = whClamp(cur + d, 0, 100); if (nv === S.start) delete w.san[id]; else w.san[id] = nv;
   }
   return true;

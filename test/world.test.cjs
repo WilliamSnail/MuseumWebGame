@@ -126,4 +126,16 @@ T("world:health／world:sim --scan／world:news draft：景氣差時科技進緊
   assert.ok(dr.length >= 1 && dr.every(t => /npm run world:news -- add/.test(t.command))); const g = load(), c = { W: g.WORLD_NEWS, stockIds: g.OUT_STOCKS.map(q => q.id), names: g.OUT_STOCKS.map(q => q.name).concat(g.IN_STOCKS.map(q => q.name)), banned: require("../tools/week_check.cjs").MARKET_BANNED };
   dr.forEach(t => assert.deepStrictEqual(NW.checkItem({ title: t.title, line: t.line, tone: t.tone, ref: t.ref }, c), [], t.title + " 要過新聞檢查"));
 });
+const WE = require("../tools/world_events_pack.cjs"), EV = require("../tools/world_event.cjs");
+T("world_events 打包跟 content/weeks 一致；world:event 加、擋、list、clear（暫存資料夾，不打包）", () => {
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_events.js"), "utf8"), WE.source(WE.events()), "shared/world_events.js 沒跟上（跑 node tools/world_events_pack.cjs）");
+  const G = load(), d = tmp(); fs.mkdirSync(path.join(d, "2026-W47")); const f = path.join(d, "2026-W47", "week.json"); fs.writeFileSync(f, JSON.stringify({ week: "2026-W47", start: "2026-11-16" }, null, 2));
+  const out = [], run = a => EV.main(a.concat(["--week", "2026-W47"]), d, G, x => out.push(x), false);
+  run(["san", "--date", "2026-11-18", "--npc", "c-bus", "--n", "-5"]); run(["unrest", "--date", "2026-11-19", "--unit", "g-island", "--n", "8"]); run(["mood", "--date", "2026-11-20", "--n", "-10"]);
+  const wk = JSON.parse(fs.readFileSync(f, "utf8")); assert.strictEqual(wk.sanEvents[0].n, -5); assert.strictEqual(wk.unrest[0].unit, "g-island"); assert.strictEqual(wk.moodEvent[0].n, -10);
+  assert.throws(() => run(["san", "--date", "2026-11-18", "--npc", "c-bus", "--n", "-5"]), /同一個對象同一天/); assert.throws(() => run(["san", "--date", "2026-11-25", "--npc", "c-bus", "--n", "1"]), /這週內/);
+  assert.throws(() => run(["unrest", "--date", "2026-11-19", "--unit", "u-culture", "--n", "1"]), /頂層集團/); assert.throws(() => run(["san", "--date", "2026-11-19", "--npc", "t-yuga", "--n", "1"]), /旅客或委託人/); assert.throws(() => run(["mood", "--date", "2026-11-19", "--n", "99"]), /−20～20/);
+  const before = fs.readFileSync(f, "utf8"); run(["mood", "--date", "2026-11-21", "--n", "3", "--dry"]); assert.strictEqual(fs.readFileSync(f, "utf8"), before, "--dry 不寫");
+  run(["list"]); assert.ok(out.some(x => /san　2026-11-18　c-bus　-5/.test(x))); run(["clear", "--kind", "san"]); assert.ok(!("sanEvents" in JSON.parse(fs.readFileSync(f, "utf8"))) && "unrest" in JSON.parse(fs.readFileSync(f, "utf8"))); run(["clear"]); assert.ok(!("unrest" in JSON.parse(fs.readFileSync(f, "utf8"))));
+});
 console.log(`世界經濟：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
