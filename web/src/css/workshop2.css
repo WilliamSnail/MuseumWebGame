@@ -109,3 +109,6 @@
 .ws-fx > summary { background: none; }
 .ws-fx[open] > summary { border-bottom-color: transparent; }
 .ws-fx > :not(summary) { padding-bottom: 4px; }
+
+/* 效果卡是米色底，字壹律用深色：放在做好的成品面板、送佩佩的木框裡時，--ink 是淺色（給深底用），字會看不到（11-15，翊文：「這個字看不到」） */
+.ws-fx { --ink: #2E2014; --ink-soft: #5A4030; --ink-accent: #8E2A24; }
