@@ -9,6 +9,7 @@ import { NUM } from "./config.js";
 import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON, CAS_MENU } from "./casino_text.js";
+import { WORLD_UNITS } from "./world_roster.js";
 import { npcCounters, npcNews } from "./npc.js";
 import { CAS_ECON_EV, casEconUpText } from "./econ_events.js";
 import { casFill } from "./casino.js";
@@ -70,6 +71,13 @@ export function casReportView(doc) {
   if (doc.openingFix) hl.push(`對帳基準校正了 ${rpSign(doc.openingFix)}（外面世界池子上線那天的快照多算了池子當天的進出，不是錢不見）。`);
   if (H.npcs && H.npcs.crowd && H.npcs.crowd.ticket > 0) hl.push(`昨天 ${rpN(H.npcs.crowd.people)} 位散客（${rpN(H.npcs.crowd.groups)} 組）逛了展廳，散客門票 ${rpN(H.npcs.crowd.ticket)}${H.npcs.crowd.shop > 0 ? `、散客在店裡花了 ${rpN(H.npcs.crowd.shop)}` : ""}。`);
   if (H.npcs && H.npcs.total > 0) hl.push(`昨天 ${rpN(H.npcs.people)} 位館外的旅客來館，付了門票、在店裡花了，帶進館 ${rpN(H.npcs.total)} 籌碼（門票 ${rpN(H.npcs.ticket)}、店裡 ${rpN(H.npcs.shop)}）。`);
+  if (H.wh && H.wh.st) { // 外面世界各集團的景氣狀態（W5，決定 0086）：只寫已經發生的
+    const names = { cut: "減薪", squeeze: "緊縮", layoff: "裁員" }, nm = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id, cnt = { cut: 0, squeeze: 0, layoff: 0 };
+    Object.values(H.wh.st).forEach(s => { if (cnt[s] != null) cnt[s]++; });
+    const bad = Object.keys(cnt).filter(k => cnt[k] > 0).map(k => `${cnt[k]} 個集團${names[k]}`);
+    if (bad.length) hl.push(`外面世界的景氣：${bad.join("、")}，來館的旅客花得比較保守。`);
+    (H.wh.ev || []).filter(e => e.day === doc.day || e.day === (doc.snap && doc.snap.day)).forEach(e => hl.push(`${nm(e.unit)}${{ normal: "恢復正常了", cut: "減薪了", squeeze: "緊縮了", layoff: "裁員了" }[e.to] || ""}。`));
+  }
   if (H.npcs && H.npcs.menu) { // 餐車賣給館外來客的（照菜單點，shared/npc_spend.js）
     const nm = id => (CAS_MENU.find(m => m.id === id) || {}).name || id, it = Object.keys(H.npcs.menu).map(k => ({ k, n: (H.npcs.menu[k].npc || 0) + (H.npcs.menu[k].crowd || 0) })).filter(x => x.n > 0).sort((x, y) => y.n - x.n);
     if (it.length) hl.push("昨天餐車賣給館外的客人：" + it.map(x => nm(x.k) + " ×" + rpN(x.n)).join("、") + "。");

@@ -45,6 +45,7 @@ import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { casEconActive, casEconRun, casEconUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
+import { whCard } from "./shared/world.js";
 import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
@@ -382,7 +383,7 @@ export async function casReport() {
         const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
         h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
         h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
-          perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
+          perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
         put(tx, houseRef(), h);
       });
     }

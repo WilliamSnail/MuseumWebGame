@@ -17,6 +17,8 @@
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 //   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
 //                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
+//   world-status  只讀：世界經濟（決定 0086）——world/main（備用池、最近一天）、最近 3 天的 worldDays 紀錄、莊家的 house.wh（各集團的健康值 h、狀態、預算倍率）、帳上各單位現在多少（house.wu）、最近一天 NPC 各集團出多少（house.npcs.byUnit）。
+//                 什麼時候用：W2 以後確認世界文件有沒有每天寫、W5 以後看哪些集團減薪／緊縮／裁員（管理者看得到每家，財報只給分布）。
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
@@ -25,7 +27,7 @@
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -68,6 +70,25 @@ async function houseSize(db) {
   if (sizes.length) console.log(`錢包 ${sizes.length} 個：最大 ${kb(Math.max(...sizes))}、平均 ${kb(sizes.reduce((a, b) => a + b, 0) / sizes.length)}`);
   const rp = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
   if (!rp.empty) console.log(`最新日報 casinoReport/${rp.docs[0].data().day}：${kb(B(rp.docs[0].data().data || rp.docs[0].data()))}`);
+}
+
+// 只讀：世界經濟現況（見檔頭 world-status）。不印名字、uid、email
+async function worldStatus(db) {
+  const nz = v => (Number.isFinite(+v) ? Math.floor(+v) : 0), fmt = n => nz(n).toLocaleString("en-US"), J = s => (s.exists ? JSON.parse(s.data().data || "{}") : null);
+  const { load } = require("../test/load_shared.cjs"), G = load({ __realMoney: true }), names = {}; for (const u of G.WORLD_UNITS) names[u.id] = u.name; names["u-household"] = "家計"; names.pub = "公共";
+  const S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
+  const w = J(await db.doc("world/main").get()), h = J(await db.doc("casinoHouse/main").get());
+  console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有");
+  const days = await db.collection("worldDays").orderBy("__name__", "desc").limit(3).get();
+  days.docs.forEach(d => { const r = JSON.parse(d.data().data || "{}"); console.log(`  ${d.id}：外面世界 ${fmt(r.world)}　合計 ${fmt(r.total)}　成長 ${r.growth == null ? "-" : fmt(r.growth)}　景氣 ${r.b}　莊家記的日子 ${r.houseDay || "-"}`); });
+  if (!h) { console.log("莊家文件還不存在"); return; }
+  if (h.wu && h.wu.r) { const a = G.wuAmounts(Object.assign({}, h)); console.log("帳上各單位現在多少（合計＝外面世界）：" + Object.keys(a).map(k => `${names[k] || k} ${fmt(a[k])}`).join("　") + `　外面世界 ${fmt(h.world)}`); }
+  if (h.wh && h.wh.st) {
+    console.log(`各集團健康值（${h.wh.day || "-"}）：`);
+    Object.keys(h.wh.st).forEach(k => console.log(`  ${names[k] || k}：h ${h.wh.h[k]}　${S[h.wh.st[k].s]}　預算倍率 ×${G.whMult(h, k).toFixed(2)}　連續低迷 ${h.wh.st[k].low || 0} 週`));
+    if (Array.isArray(h.wh.ev) && h.wh.ev.length) console.log("最近換過狀態：" + h.wh.ev.slice(-8).map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、"));
+  } else console.log("house.wh 還沒有（第一次換日才會建）");
+  if (h.npcs && h.npcs.byUnit) console.log(`NPC 最近一天（${h.npcs.day || "-"}）各集團出：` + Object.keys(h.npcs.byUnit).map(k => `${names[k] || k} ${fmt(h.npcs.byUnit[k])}`).join("　"));
 }
 
 // 台股手動換真實價（見檔頭 stock-tw-peg）。真實代號只寫在 functions/stock_tw.js，這裡從那個檔讀出來
@@ -273,6 +294,7 @@ async function main() {
   if (task.action === "econ-status") { await econStatus(db); return; }
   if (task.action === "stock-tw-peg") { await stockTwPeg(db); return; }
   if (task.action === "house-size") { await houseSize(db); return; }
+  if (task.action === "world-status") { await worldStatus(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());

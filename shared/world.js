@@ -130,3 +130,81 @@ export function wuDebit(house, id, n) {
   wuMove(house, before, deltas);
   return take;
 }
+
+// ================================================================
+//  W5 連動（決定 0086，規劃 docs/世界經濟規劃.md 第 4 節）：每個頂層單位每天算一個健康值 h，每週一換狀態（一般／減薪／緊縮／裁員），
+//  狀態決定 NPC 來館花錢的預算倍率（只動預算，不動 NPC 在不在場；全館不會一夜變空）。house.wh ＝ { day, base, idx, h, st, ev }。
+//    h ＝ clamp(1 ＋ 景氣 b × 行業係數 ＋ 旗下館外股票這一週的漲跌 × stockW, min, max)；文化部固定 1.0、家計沒有 h（倍率 1）。
+//    狀態（每週一看一次）：h ≥ cut → 一般（倍率 1～upMax）；squeeze ≤ h ＜ cut → 減薪 ×0.8；h ＜ squeeze → 連續 squeezeWeeks 週緊縮 ×0.5，連續 layoffWeeks 週裁員 ×0.3；下限 floor。
+//    股價用「昨天以前」的價（house.stk.px 在換日算好之後的現價，不是盤中），每天最多留 8 天，週漲跌 ＝ 現在對 7 天前，夾在 ±chgCap（換股數比例時不會讓 h 暴衝）。
+// ================================================================
+export const WH_STATES = ["normal", "cut", "squeeze", "layoff"];
+const whCfg = () => NUM.casino.worldDoc.health;
+const whClamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const whIsMon = day => new Date(day + "T00:00:00Z").getUTCDay() === 1;
+const whUnits = () => wuTop().filter(u => u.kind !== "story");
+export function whFix(house) {
+  if (!wuBox(house)) return null;
+  const w = wuBox(house.wh) ? house.wh : (house.wh = {});
+  w.day = wdDayOk(w.day) ? w.day : null;
+  for (const k of ["base", "idx", "h", "st"]) if (!wuBox(w[k])) w[k] = {};
+  if (!Array.isArray(w.ev)) w.ev = [];
+  w.ev = w.ev.filter(e => wuBox(e) && wdDayOk(e.day) && typeof e.unit === "string" && WH_STATES.includes(e.to)).slice(-20);
+  for (const u of whUnits()) { const s = wuBox(w.st[u.id]) ? w.st[u.id] : (w.st[u.id] = {}); s.s = WH_STATES.includes(s.s) ? s.s : "normal"; s.low = Math.max(0, wdN(s.low)); }
+  return w;
+}
+// 單位的旗下股票平均「相對第一次看到的價」；沒有股票或沒價回 null
+function whIdx(u, px, base) {
+  const r = []; for (const id of u.stocks || []) { const p = +(px && px[id]); if (!(p > 0)) continue; if (!(base[id] > 0)) base[id] = p; r.push(p / base[id]); }
+  return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null;
+}
+// 換日呼叫（house.econ.b 是景氣，px 是 house.stk.px）。同一天不重複。回傳 true ＝ 這次有算
+export function whTick(house, day, px) {
+  const w = whFix(house), C = whCfg();
+  if (!w || !wdDayOk(day) || w.day === day) return false;
+  const b = whClamp(+(house.econ && house.econ.b) || 0, -1, 1), coef = NUM.casino.worldDoc.sectorCoef || {};
+  for (const u of whUnits()) {
+    const ix = whIdx(u, px, w.base); if (ix != null) { if (!wuBox(w.idx[u.id])) w.idx[u.id] = {}; w.idx[u.id][day] = Math.round(ix * 10000) / 10000; }
+    const ds = wuBox(w.idx[u.id]) ? Object.keys(w.idx[u.id]).sort() : []; for (const d of ds.slice(0, Math.max(0, ds.length - 8))) delete w.idx[u.id][d];
+    let chg = 0; if (ds.length >= 2) { const old = ds.find(d => d <= whAddDays(day, -7)) ? ds.filter(d => d <= whAddDays(day, -7)).pop() : ds[0]; const a = w.idx[u.id][old], c = w.idx[u.id][day]; if (a > 0 && c > 0 && old !== day) chg = c / a - 1; }
+    w.h[u.id] = Math.round(whClamp(1 + b * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW, C.min, C.max) * 1000) / 1000;
+  }
+  const first = w.day === null;
+  if (first || whIsMon(day)) { // 每週一看一次狀態
+    for (const u of whUnits()) {
+      const s = w.st[u.id], h = w.h[u.id], from = s.s;
+      if (h >= C.cut) { s.s = "normal"; s.low = 0; }
+      else if (h >= C.squeeze) { s.s = "cut"; s.low = 0; }
+      else { s.low++; s.s = s.low >= C.layoffWeeks ? "layoff" : s.low >= C.squeezeWeeks ? "squeeze" : "cut"; }
+      if (!first && s.s !== from) w.ev.push({ day, unit: u.id, to: s.s, from });
+    }
+    w.ev = w.ev.slice(-20);
+  }
+  w.day = day;
+  return true;
+}
+function whAddDays(day, n) { return new Date(Date.parse(day + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10); }
+// NPC 預算倍率：一般 1～upMax（h 高時多一點）、減薪、緊縮、裁員；文化部、家計、沒有的單位 ＝ 1；最低 floor
+export function whMult(house, unitId) {
+  const w = house && wuBox(house.wh) ? house.wh : null, C = whCfg();
+  if (!w || !wuBox(w.st) || !wuBox(w.st[unitId])) return 1;
+  const s = w.st[unitId].s, h = +w.h[unitId] || 1;
+  const m = s === "normal" ? whClamp(h, 1, C.upMax) : (C.mult[s] || 1);
+  return Math.max(C.floor, m);
+}
+const WH_TEXT = { normal: "恢復正常", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
+const whName = id => { const u = WORLD_UNITS.find(x => x.id === id); return u ? u.name : id; };
+// 已發生的事（最近 days 天內換狀態的）：給日報和市場新聞用。只寫發生過的，不預告
+export function whNews(house, day, days = 1) {
+  const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return [];
+  const from = whAddDays(day, -days);
+  return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, unit: e.unit, to: e.to, text: `${whName(e.unit)}${WH_TEXT[e.to]}了` }));
+}
+// 財報「外面世界」卡的資料（只給分布，不列每家的數字）：{ day, states 各狀態幾個單位, bands h 的分布 [＜squeeze, squeeze～cut, cut～1.1, ≥1.1], avgMult 預算倍率平均, events 最近一週換狀態的 }
+export function whCard(house, day) {
+  const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return null;
+  const C = whCfg(), us = whUnits(), states = { normal: 0, cut: 0, squeeze: 0, layoff: 0 }, bands = [0, 0, 0, 0];
+  us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[h < C.squeeze ? 0 : h < C.cut ? 1 : h < 1.1 ? 2 : 3]++; });
+  const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
+  return { day: w.day, states, bands, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
+}

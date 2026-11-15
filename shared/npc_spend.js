@@ -18,7 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, wuDebit, wuHave, wuUnitOf } from "./world.js";
+import { WU_HH, whMult, wuDebit, wuHave, wuUnitOf } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -189,8 +189,8 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     L.done[v.key] = 1;
     const n = list.find(x => x && x.id === v.id);
     if (!n || !n.budget || !(n.budget.perDay > 0)) continue;
-    const first = L.byNpc[v.id] == null, uid = wuUnitOf(n.job); // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
-    let mine = Math.min(room, Math.floor(n.budget.perDay * C.dayPct / 100) - nsN(L.byNpc[v.id])), paid = 0;
+    const first = L.byNpc[v.id] == null, uid = wuUnitOf(n.job), perDay = Math.floor(n.budget.perDay * whMult(house, uid)); // W5：所屬集團的狀態決定預算倍率（減薪、緊縮、裁員） // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
+    let mine = Math.min(room, Math.floor(perDay * C.dayPct / 100) - nsN(L.byNpc[v.id])), paid = 0;
     const pay = (src, pool, amt) => {
       amt = Math.min(amt, mine);
       if (amt <= 0 || low || wuHave(house, uid) < amt) return 0; // 集團的錢不夠就當天不花
@@ -200,7 +200,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     };
     if (first) { const tk = Math.floor(C.ticket * tmul), b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b) + pay("npcTicketMuseum", "museum", tk - b); }
     if (SHOP[v.place]) {
-      let amt = Math.floor(n.budget.perDay * C.shopPct / 100), ord = null;
+      let amt = Math.floor(perDay * C.shopPct / 100), ord = null;
       if (v.place === "food") { ord = npcOrder(mulberry32(hashStr(`${secret}|${day}|${v.key}|order`)), Math.min(amt, mine)); amt = ord.cost; }
       const got = amt > 0 ? pay(SHOP[v.place][1], SHOP[v.place][0], amt) : 0; L.shop += got;
       if (got > 0) { const sb = L.shopBy[v.place] || (L.shopBy[v.place] = { npc: 0, crowd: 0 }); sb.npc += got; }

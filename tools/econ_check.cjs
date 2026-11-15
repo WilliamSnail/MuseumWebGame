@@ -40,6 +40,9 @@ check("文化部補助新玩家（不設人數上限）：壹位的補助 ≤ �
 }
 { const r = G.wuRatios(), s = Object.values(r).reduce((a, b) => a + b, 0), u = G.WORLD_UNITS.filter(x => x.parent == null);
   check("世界分帳：頂層單位的比例加家計加公共 ＝ 1，公共至少 10%（緩衝）；文化部是頂層劇情單位", Math.abs(s - 1) < 1e-9 && r.pub >= 0.1 - 1e-9 && u.some(x => x.id === "u-culture" && x.kind === "story"), `公共 ${pct(r.pub * 100)}、家計 ${pct(r[G.WU_HH] * 100)}、頂層單位 ${u.length} 個`); }
+{ const Hh = C.worldDoc.health, M = Hh.mult;
+  check("世界連動（W5）：預算倍率 一般 ≥ 減薪 ＞ 緊縮 ＞ 裁員 ≥ 下限，下限 ≥ 0.3（景氣再差 NPC 也不會一夜不花錢）；緊縮要連續幾週、裁員更久", Hh.floor >= 0.3 && M.layoff >= Hh.floor && M.cut > M.squeeze && M.squeeze > M.layoff && M.cut < 1 && Hh.squeezeWeeks >= 2 && Hh.layoffWeeks > Hh.squeezeWeeks && Hh.squeeze < Hh.cut && Hh.cut <= 1, `×${M.cut}／×${M.squeeze}／×${M.layoff}、下限 ×${Hh.floor}；緊縮 ${Hh.squeezeWeeks} 週、裁員 ${Hh.layoffWeeks} 週`);
+  check("世界連動（W5）：健康值的範圍包得住「景氣 ±1 × 行業係數」（最敏感的往下到 min、最防禦的往上到 max 不被夾掉）", Hh.min <= 1 - Math.max(...Object.values(C.worldDoc.sectorCoef)) && Hh.max >= 1 - Math.min(...Object.values(C.worldDoc.sectorCoef)), `範圍 ${Hh.min}～${Hh.max}`); }
 check("世界文件：搬錢預設關閉（gateway ＝ 0）；要開之前 casBookSnap 必須把備用池算進總量，不然對帳差不是 0（W3 才做）", !(C.worldDoc && C.worldDoc.gateway > 0), `gateway ${C.worldDoc && C.worldDoc.gateway}`);
 check("文化部館債：利率（每天）＜ 外面世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
 
