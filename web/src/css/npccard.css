@@ -1,0 +1,43 @@
+/* 旅客卡（11-16，ui_npc_card.js）。前綴 npk- */
+.npk-name { display: inline; padding: 0 1px; margin: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-decoration: underline dotted; text-decoration-thickness: 2px; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
+.npk-name i { font-style: normal; font-weight: 800; margin-left: 1px; color: var(--ink-accent, #B8432F); }
+.npk-name:hover, .npk-name:focus-visible { text-decoration-style: solid; }
+.npk-name-plain { font: inherit; }
+.npk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.mini-card.npk-card { width: min(460px, 94vw); max-height: min(86svh, 680px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.npk-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.npk-head h3 { margin: 0; font-size: 1.15rem; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.npk-head small { display: block; opacity: .8; font-size: .8rem; }
+.npk-kind { font-style: normal; font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; border: 1px solid currentColor; opacity: .85; }
+.npk-note { margin: 4px 0 0; font-size: .85rem; line-height: 1.5; opacity: .9; }
+.npk-row { display: grid; grid-template-columns: 4.6em minmax(0, 1fr); gap: 8px; align-items: start; padding-top: 8px; border-top: 1px solid rgba(120, 90, 50, .28); }
+.npk-k { font-size: .8rem; letter-spacing: .06em; padding-top: 2px; opacity: .85; }
+.npk-v { min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: .88rem; line-height: 1.45; overflow-wrap: anywhere; }
+.npk-money { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.npk-meter { height: 8px; border-radius: 4px; background: rgba(120, 90, 50, .25); overflow: hidden; }
+.npk-meter i { display: block; height: 100%; background: #C9962B; }
+.npk-sub { font-size: .76rem; opacity: .85; }
+.npk-dim { margin: 0; opacity: .75; }
+.npk-inv { font-style: normal; font-size: .7rem; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: rgba(184, 67, 47, .15); color: var(--ink-accent, #B8432F); }
+.npk-trail { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+.npk-trail li { display: flex; align-items: baseline; gap: 8px; }
+.npk-trail .npk-t { font-variant-numeric: tabular-nums; font-size: .78rem; opacity: .75; min-width: 3em; }
+.npk-trail li.now { font-weight: 700; }
+.npk-trail li i { font-style: normal; font-size: .68rem; padding: 0 6px; border-radius: 4px; background: #C9962B; color: #2E2014; }
+.npk-likes { display: flex; flex-wrap: wrap; gap: 6px; }
+.npk-like { display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 9px; border-radius: 99px; background: rgba(120, 90, 50, .16); font-size: .82rem; }
+.npk-like small { font-size: .66rem; opacity: .7; }
+.npk-story, .npk-arc { margin: 0; }
+.npk-arc { font-size: .84rem; }
+.npk-arc.now b { color: var(--ink-accent, #B8432F); }
+.npk-news { display: block; opacity: .8; }
+.npk-done summary { cursor: pointer; font-size: .8rem; padding: 4px 0; min-height: 28px; }
+.npk-done p { padding-left: 8px; border-left: 2px solid rgba(120, 90, 50, .3); margin: 4px 0; }
+.npk-acts { display: flex; justify-content: flex-end; }
+@media (max-width: 480px) { .npk-row { grid-template-columns: 3.8em minmax(0, 1fr); } }
+/* 淺色卡片上的分級小牌：顏色要深（跟 .hn-layer 一樣） */
+.npk-card .sv-badge { background: rgba(0, 0, 0, .05); }
+.npk-card .sv-badge.tone-good { --c: #2F7A34; } .npk-card .sv-badge.tone-neutral { --c: #5A5348; }
+.npk-card .sv-badge.tone-warn { --c: #8A5A00; } .npk-card .sv-badge.tone-bad { --c: #A42F20; }
+.npk-card .sv-badge small { color: #5A4A38; }

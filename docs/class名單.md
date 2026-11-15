@@ -133,6 +133,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `shp-` | `shop.css` | 兌換所（shop） |
 | `nf-` | `net.css` | 館友動態（net feed） |
 | `si-` | `theme3.css`、`cellar2.css` | 隊伍條裡的一格（strip item） |
+| `npk-` | `npccard.css` | 旅客卡（11-16，`ui_npc_card.js`）：`npk-name`（看得出能按的旅客名字）、`npk-card`（卡）、`npk-row`（壹列）、`npk-trail`（今天去過） |
 | `nc-` | `onescreen.css`、`ui.css` | 委託單內部（note card） |
 | `cm-` | `onescreen.css` | 委託櫃台（commission） |
 | `ex-` | `theme3.css` | 兌換、換取（exchange） |
