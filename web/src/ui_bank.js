@@ -58,6 +58,8 @@ export function fakeBankHall() {
       terms: [{ id: "t1", amt: 5000000, days: 7, pct: 0.03, due: "11-17", int: 150000, left: 4 }, { id: "t2", amt: 2000000, days: 3, pct: 0.01, due: "11-14", int: 20000, left: 1 }],
       kinds: [{ i: 0, days: 3, pct: 0.01 }, { i: 1, days: 7, pct: 0.03 }] },
     debt: { owed: 6000000, neg: 0, loans: 2, can: true },
+    advisor: { need: true, debt: { neg: 0, loan: 6000000, total: 6000000 }, loans: [{ id: "l1", owe: 2200000, due: "2026-11-18", canExtend: true, why: "", fee: 110000, newDue: "2026-11-21" }, { id: "l2", owe: 3800000, due: "2026-11-16", canExtend: false, why: "這筆已經延過期了，每筆只能延壹次。", fee: 0, newDue: "2026-11-19" }],
+      sells: [{ id: "work", name: "手作坊", kind: "in", own: 10, px: 120, value: 1194000, n: 10, covers: 1194000 }, { id: "food", name: "餐車", kind: "in", own: 20, px: 102, value: 2030000, n: 20, covers: 2030000 }], sellTotal: 3224000, enough: false },
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], window: { from: "2026-11-14", until: "2026-11-15" }, state: "健康" },
@@ -197,6 +199,29 @@ function debtPanel(v) {
     h("p", { class: "bank-line" }, "賣的錢直接拿去還債，不進錢包，也不受每天賣出上限。"),
     rows.length ? ledger(["股票", "要賣", ""], rows) : h("p", { class: "bank-empty" }, "你手上沒有可以賣的股票。"));
 }
+// 財經專員（決定 0093 第 3 件）：欠了不少錢（v.advisor.need）才出現，代替「賣股還債」那張；每項都要按「同意」、跳確認才動。專員自己不動錢。
+// 資料 v.advisor：{ need, debt{neg,loan,total}, loans[{id,owe,due,canExtend,why,fee,newDue}], sells[{id,name,kind,own,px,value,n,covers}], sellTotal, enough }
+const md5 = s => (s ? String(s).slice(5) : "");
+function advisorPanel(v) {
+  const a = v.advisor;
+  if (!a || !a.need || !a.debt) return null;
+  const d = a.debt, parts = [d.neg > 0 ? `錢包欠 ${fmt(d.neg)}` : "", d.loan > 0 ? `借款共 ${fmt(d.loan)}` : ""].filter(Boolean).join("、");
+  const ext = a.loans.filter(x => x.canExtend), blocked = a.loans.filter(x => !x.canExtend && x.why);
+  const extRows = ext.map(x => h("div", { class: "bank-adv-row" },
+    h("span", null, h("b", null, `借款 ${fmt(x.owe)}`), h("small", null, `${md5(x.due)} 到期 → 延到 ${md5(x.newDue)}，手續費 ${fmt(x.fee)}`)),
+    btn("同意延期", () => confirmTrade("同意延期", [["這筆借款", fmt(x.owe)], ["改成到期", md5(x.newDue)], ["手續費（加進要還的）", fmt(x.fee), "bad"], ["延期後要還", fmt(x.owe + x.fee)]], "同意延期", () => bankDo("advisor", { op: "extend", id: x.id })), "small bank-btn gold")));
+  const sellRows = a.sells.map(x => h("div", { class: "bank-adv-row" },
+    h("span", null, h("b", null, `賣 ${x.name} ${fmt(x.n)} 股`), h("small", null, `${x.kind === "in" ? "館內股，沒有資本利得稅" : "館外股"}・手上 ${fmt(x.own)} 股・現價 ${fmt(x.px)}・約還 ${fmt(x.covers)}`)),
+    btn("同意賣出", () => confirmTrade("同意賣股還債", [["股票", x.name], ["賣", `${fmt(x.n)} 股`], ["約還債", fmt(x.covers), "good"]], "同意賣出", () => bankDo("stock", { op: "sellDebt", id: x.id, n: x.n })), "small bank-btn gold")));
+  const verdict = !a.sells.length ? "手上沒有能賣的股票。" : a.enough ? `照這樣賣，大約還 ${fmt(a.sellTotal)}，夠還。` : `賣光也只能還約 ${fmt(a.sellTotal)}，還差 ${fmt(Math.max(0, d.total - a.sellTotal))}。`;
+  return panel("財經專員", `你欠 ${fmt(d.total)}`,
+    h("div", { class: "bank-adv-who" }, h("div", { class: "bank-adv-face", "aria-hidden": "true" }, "梁"), h("div", null, h("b", null, "梁安（財經專員）"), h("small", null, "金融集團"))),
+    h("p", { class: "bank-line" }, `「欠了不少，別慌，我排壹份計畫。每壹項都要你點頭才動。」現在欠 ${fmt(d.total)}（${parts}）。`),
+    ext.length ? h("div", { class: "bank-adv-sec" }, h("b", null, "壹、借款延期"), ...extRows, h("small", { class: "bank-hint" }, "每筆只能延壹次、要在到期前。")) : null,
+    blocked.length ? h("p", { class: "bank-hint" }, blocked.map(x => `借款 ${fmt(x.owe)}：${x.why}`).join(" ")) : null,
+    h("div", { class: "bank-adv-sec" }, h("b", null, "二、賣股還債（館內股先賣）"), ...sellRows, h("p", { class: a.enough ? "bank-line good" : "bank-line bad" }, verdict),
+      h("small", { class: "bank-hint" }, "賣的錢直接還債，不進錢包，也不受每天賣出上限。")));
+}
 function loanPane(v) {
   const l = v.loan;
   const rows = l.list.map(x => h("div", { class: "bank-row", role: "row" },
@@ -217,7 +242,7 @@ function loanPane(v) {
         btn("自己輸入金額", () => typeLoan(l), "bank-btn"),
         btn(`借滿 ${fmt(l.left)}`, () => bankDo("borrow", { amt: "max" }), "bank-btn")),
       l.why ? h("p", { class: "bank-why" }, l.why) : h("p", { class: "bank-hint" }, "借的錢從莊家出，到期沒還會被直接扣；借款利息比存款、館債都高。")),
-    h("div", { class: "bank-stack" }, panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)), debtPanel(v)));
+    h("div", { class: "bank-stack" }, panel("欠的錢", "還的時候本金加利息", ledger(["借的", "要還", ""], rows)), advisorPanel(v) || debtPanel(v)));
 }
 function bondPane(v) {
   const b = v.bonds;

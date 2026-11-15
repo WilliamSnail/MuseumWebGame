@@ -517,3 +517,14 @@ body[data-screen="bank"] #room { background: none; }
 .bank-wld-sec > b { color: var(--bank-gold-hi, #F0D995); font-size: var(--type-body, .875rem); }
 
 .bank-selltip { color: var(--bank-gold-hi, #F0D995); font-weight: 700; margin-top: 2px; }
+
+/* 財經專員卡（決定 0093 第 3 件） */
+.bank-adv-who { display: flex; align-items: center; gap: 10px; }
+.bank-adv-who small { display: block; color: var(--bank-mute); font-size: var(--type-small, .75rem); }
+.bank-adv-face { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: #2B3A55; border: 2px solid var(--bank-gold-hi, #F0D995); color: var(--bank-gold-hi, #F0D995); font-weight: 700; font-size: 1.1rem; }
+.bank-adv-sec { display: grid; gap: 6px; margin-top: 8px; }
+.bank-adv-sec > b { color: var(--bank-gold-hi, #F0D995); font-size: var(--type-body, .875rem); }
+.bank-adv-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(240, 217, 149, .3); font-size: var(--type-body, .875rem); color: #C9D1DE; }
+.bank-adv-row small { display: block; color: var(--bank-mute); font-size: var(--type-small, .75rem); line-height: 1.4; }
+.bank-line.good { color: #8FD6A0; }
+.bank-line.bad { color: #FF9C94; }
