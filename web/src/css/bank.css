@@ -149,7 +149,7 @@ body[data-screen="bank"] #room { background: none; }
 @media (min-width: 761px) and (min-height: 501px) { .bank-demo { padding: 2px 10px; } .bank-panel { padding: 10px 14px; } }
 /* 手機直拿：壓緊，存款、借款、館債壹頁放得下；股票、財報放不下的部分在主區裡捲 */
 @media (max-width: 760px) {
-  .bank-hint, .bank-demo { display: none; }
+  .bank-hint, .bank-demo:not(.warn) { display: none; } /* 示範資料的警告不能藏（11-15） */
   .bank-panel { padding: 8px 12px; gap: 4px; }
   .bank-ph { padding-bottom: 3px; }
   .bank-onescreen .bank-btn { min-height: 44px; }
@@ -179,7 +179,7 @@ body[data-screen="bank"] #room { background: none; }
   .bank-onescreen > .room-head .rh-row { order: 0; margin-left: auto; }
   .bank-tabs { margin-bottom: 4px; }
   .bank-tabbtn { min-height: 32px; font-size: var(--type-small, .75rem); }
-  .bank-ticker, .bank-demo { display: none; }
+  .bank-ticker, .bank-demo:not(.warn) { display: none; }
   .bank-side { flex-direction: column; overflow-y: auto; }
   .bank-side > .bank-panel:not(:first-child) { display: none; }
   .bank-onescreen .bank-btn { min-height: 36px; }
@@ -528,3 +528,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-adv-row small { display: block; color: var(--bank-mute); font-size: var(--type-small, .75rem); line-height: 1.4; }
 .bank-line.good { color: #8FD6A0; }
 .bank-line.bad { color: #FF9C94; }
+/* 示範資料（11-15）：紅色橫幅＋整頁斜的浮水印，壹眼看得出不是自己的帳 */
+.bank-demo.warn { display: block !important; padding: 6px 12px; background: #7a1f1f; color: #fff4e0; font-weight: 700; border: 1px solid #c9574b; font-size: var(--type-body, .875rem); }
+.bank-stage.is-demo { position: relative; }
+.bank-stage.is-demo::after { content: "示範資料"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5;
+  font-size: clamp(2.4rem, 9vw, 6rem); font-weight: 900; letter-spacing: .3em; color: rgba(201, 87, 75, .22); transform: rotate(-18deg); white-space: nowrap; }
