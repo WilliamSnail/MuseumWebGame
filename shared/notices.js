@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-15-249a33", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "手機直拿的大廳看得到展廳人數", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿的大廳，導覽圖上面多壹列：展廳現在有幾人、邀旅客去賭場、館友在線。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-9c0c63", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "看得到 NPC 的狀態", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
