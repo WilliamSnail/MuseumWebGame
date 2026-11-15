@@ -711,8 +711,9 @@ export function applySettings() {
   if (s.vol && !s.vol.touched && s.vol.amb === 70) s.vol.amb = 100; // 以前的預設是 70，沒拉過就跟著改成 100
   [["sfx", 100], ["amb", 100], ["heart", 100]].forEach(([k, d]) => { if (FX.sound.setVolume) FX.sound.setVolume(k, (vol[k] == null ? d : vol[k]) / 100); });
   if (FX.sound.sync) FX.sound.sync();
-  FX.settings.reduceMotion = !!s.reduceMotion;
-  document.body.classList.toggle("reduce-motion", !!s.reduceMotion);
+  // 「動畫減量」拿掉了（翊文 11-15：「減少動態我想可以取消了，現在大家不需要這個功能」）：存檔裡的 reduceMotion 留著但不再看，以前打開過的也當作關
+  FX.settings.reduceMotion = false;
+  document.body.classList.remove("reduce-motion");
   document.body.classList.remove("font-s", "font-m", "font-l");
   document.body.classList.add("font-" + (s.font || "m"));
   const sb = $("#soundBtn");
