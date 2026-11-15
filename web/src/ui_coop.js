@@ -18,7 +18,7 @@ import { COOP } from "../../shared/coop.js";
 import { coopTurnsLeft } from "../../shared/coop_flow.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop_text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, setCellarSnd, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { eventBoostText } from "../../shared/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
@@ -112,6 +112,7 @@ async function endSession(leave) {
   clearInterval(s.clock);
   Object.values(s.timers).forEach(x => clearTimeout(x.t));
   document.body.classList.remove("coop-on");
+  setCellarSnd(null); // 離開合作：地下的聲音收掉（11-15）
   if (s.m && s.m.layer.isConnected) s.m.close();
   if (leave && !s.gone) { try { await NET.call("partyAction", { pid: s.pid, act: "leave" }); } catch (e) { /* 隊伍已經不在了 */ } }
   // 伺服器剛寫過我的存檔：讀最新的，才放開存檔
@@ -254,7 +255,8 @@ function draw() {
     return;
   }
   const phase = s.party.phase;
-  if ((phase === "running" || phase === "done") && s.view) { drawRun(s.view); return; }
+  if ((phase === "running" || phase === "done") && s.view) { setCellarSnd(coopSnd(s.view)); drawRun(s.view); return; }
+  setCellarSnd(null);
   if (phase === "running" || phase === "done") {
     s.m.setTop(null);
     s.m.surface.replaceChildren(h("p", { class: "nb-empty" }, "往下走……"));
@@ -383,6 +385,13 @@ function inviteBox(ms) {
 // ---------- 走一趟 ----------
 function meOf(v) { return v.members.find(m => m.id === v.me) || {}; }
 // 這一趟走的那一層：合作試煉（決定 0041）是只有一間房的小層
+// 地下的聲音（11-15）：合作這壹趟現在在第幾層、在做什麼。route、floorDone、guess、走完＝看地圖；vote、chest、carry＝探索；fight 分遭遇和守門
+const COOP_SND = { route: "map", floorDone: "map", guess: "map", over: "map", vote: "explore", chest: "explore", carry: "explore", rest: "rest" };
+function coopSnd(v) {
+  if (!v || !v.floor || v.ended || v.phase === "over") return { floor: v && v.floor || null, mode: "map" };
+  const mode = v.phase === "fight" ? (v.fightKind === "gate" ? "gate" : "fight") : COOP_SND[v.phase] || "map";
+  return { floor: v.floor, mode };
+}
 function floorOf(v) { const t = v.trial && trialById(v.trial.id); return t ? { floor: t.floor, name: t.title, rooms: [t] } : cellarFloor(v.floor); }
 function roomOf(v) { const f = floorOf(v); return f ? f.rooms[v.idx] : null; }
 // 合作試煉：每個人這間算不算拿成長（開始時查的；過關那一刻會再查一次）

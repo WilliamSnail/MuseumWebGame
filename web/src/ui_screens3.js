@@ -14,7 +14,7 @@ import { buyUpgrade, canFuse, limitedFxShort, cellarAdvance, cellarApply, cellar
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
-import { $, $$, ADDONS, P, PANELS, SCREENS, UI, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
+import { $, $$, ADDONS, P, PANELS, SCREENS, UI, setCellarSnd, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
 import { onescreenDrawer, roomHead } from "./ui_screens1.js";
 import { SOCIAL } from "../../shared/gifts.js";
 import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
@@ -511,6 +511,7 @@ export function historyCard(x, made) {
 
 // ---------- 地下收藏庫（系統 M） ----------
 SCREENS.cellar = root => {
+  setCellarSnd(P.cellar.run && P.cellar.run.floor ? { floor: P.cellar.run.floor, mode: "explore" } : null); // 地下的聲音照層換（11-15）
   if (P.cellar.run) { cellarRoom(root); return; }
   // 地下室改版（翊文 11-11 生的素材 web/public/cellar/，css/cellar2.css）：跟新大廳同壹個總開關 NUM.ui.newLobby
   const newLobby = !!(NUM.ui && NUM.ui.newLobby);
