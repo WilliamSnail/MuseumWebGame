@@ -23,7 +23,7 @@ export function headlineData(day) {
   const bars = eventBars(allEvents(), Date.now()).map(b => ({ phase: b.phase, title: b.ev.title, text: b.phase === "live" ? `${b.ev.title}・還剩 ${eventLeftText(b.left)}` : `${eventWhen(b.ev)} ${eventRange(b.ev)}・${b.ev.title}` }));
   let notices = [];
   try { notices = P ? visibleNotices(P, day) : []; } catch (e) { notices = []; }
-  return { policy: UI.policy || (dev ? dev.policy : null), econ: bh ? bh.econ : null, market: bh && bh.world ? bh.world.days : null, events: bars, notices };
+  return { policy: UI.policy || (dev ? dev.policy : null), econ: bh ? bh.econ : null, market: bh && bh.world ? bh.world.days : null, events: bars, notices, upcoming: UI.upcoming || (dev ? [{ text: "11 月 17 日《餐車週》可能會辦，餐車的客人會多壹些。", date: "2999-01-01" }] : null) };
 }
 async function loadBank(day, redraw) {
   if (!NET.me || UI.headLoading || (UI.headBank && UI.headBank.day === day)) return;
