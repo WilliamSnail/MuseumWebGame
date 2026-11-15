@@ -22,6 +22,7 @@ check("館內股：預告活動預先進場的期望報酬 K×p×b ＜ 來回成
 check("館內股：劇情日（確定發生）最大跳空 K×b 上限 ＜ 來回成本", K * S.npcBoostMax < round, `K×${S.npcBoostMax} ＝ ${pct(K * S.npcBoostMax)}；來回成本 ${pct(round)}`);
 check("館內股：突發大事件的期望 K×機率×b 遠小於成本", K * (S.npcBurstPct / 100) * S.npcBurstMax < round * 0.1, `${pct(K * (S.npcBurstPct / 100) * S.npcBurstMax)}`);
 check("館內股：NPC 占壹家店人數的上限 ≤ 50%（不讓機器人決定股價）", S.npcShareMax <= 50, `${S.npcShareMax}%`);
+check("館內股：NPC 保底人數（館友少的店也有人氣）：壹位多來的人預期跳空 K÷minPeople ＜ 來回成本（少數館友靠自己的人數賺不到）", K / S.minPeople < round * margin, `${pct(K / S.minPeople)}；來回成本 ${pct(round)}；保底 ${S.npcBase} 位、散客每家每天平均 ${S.npcWalk}`);
 check("館外股票：持有成本、手續費都 ＞ 0（抱著不賺長期漂移）", C.stock.holdPct > 0 && C.stock.feePct > 0, `手續費 ${C.stock.feePct}%、持有成本 ${C.stock.holdPct}%／天`);
 if (!C.stock.direct) check("館外股票（舊模型）：開盤拉回每天上限 ＜ 來回成本", G.casStockPullMax() * 100 < round, `${pct(G.casStockPullMax() * 100)}`);
 check("館外股票：真實價合理範圍 sane 夾得住（0.5～2 倍之內）", C.stock.sane && C.stock.sane[0] > 0 && C.stock.sane[1] < 3, JSON.stringify(C.stock.sane));
@@ -72,7 +73,7 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   for (let i = 1; i <= M; i++) {
     const h = G.casHouseFix(G.casHouseNew(), "2026-11-01").house, H = G.casInHouseFix(h);
     let s = (i * 2654435761) >>> 0; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-    for (let d = 12; d >= 1; d--) { H.use[add(D, -d)] = { food: pois(r, 10) }; H.npc[add(D, -d)] = { food: pois(r, 2) }; }
+    for (let d = 12; d >= 1; d--) { H.use[add(D, -d)] = { food: pois(r, 10) }; G.casInNpcFor(H, add(D, -d), "h" + i, {}, {}); } // 前幾天的 NPC 也用真的算法（含保底），不然活動那天的人數對不上平均
     H.use[D] = { food: pois(r, 10) };
     G.casInNpcFor(H, D, "c" + i, {}, { fest: { [D]: [{ store: "food", name: "x" }] } });
     sum += G.casInJump(H, "food", add(D, 1), 0, "c" + i).m;

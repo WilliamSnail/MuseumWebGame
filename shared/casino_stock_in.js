@@ -172,8 +172,9 @@ export function casInNpcFor(H, d, secret = SECRET, npcDays, npcCtx) {
   const fests = npcCtx && npcCtx.fest && Array.isArray(npcCtx.fest[d]) ? npcCtx.fest[d] : [], X = {};
   for (const id of IN_STORES) {
     const players = inN(H.use[d] && H.use[d][id]), rnd = mulberry32(hashStr(`${secret}|${d}|${id}|npc`));
-    const cap = Math.floor(players * C.npcShareMax / (100 - C.npcShareMax));
-    let n = Math.min(cap, (trip ? trip.counts[id] : inPois(rnd, C.npcLambda)) + (npcCtx && npcCtx.crowd !== false ? crowdShop[id] : 0)); // 有名字的 NPC ＋ 逛店的散客（照人數），合計最多占 npcShareMax%
+    const cap = Math.max(Math.floor(players * C.npcShareMax / (100 - C.npcShareMax)), C.npcBase || 0); // 館友少的店，NPC、散客也至少能有 npcBase 位撐人氣（決定 0083）
+    const walk = C.npcWalk > 0 ? inPois(mulberry32(hashStr(`${secret}|${d}|${id}|walk`)), C.npcWalk) : 0; // 常來逛的散客：不看館友人數，每家每天固定有（決定 0083）
+    let n = Math.min(cap, (trip ? trip.counts[id] : inPois(rnd, C.npcLambda)) + (npcCtx && npcCtx.crowd !== false ? crowdShop[id] : 0) + walk); // 有名字的 NPC ＋ 逛店的散客（照人數），合計最多占 npcShareMax%
     if (ev && ev.store === id) {
       const valid = [];
       for (let i = 1; i <= C.histDays && valid.length < C.avgDays; i++) { const t = inAvgTot(H, inAdd(d, -i), id); if (t >= C.minPeople) valid.push(t); }
