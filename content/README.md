@@ -420,3 +420,13 @@ content/
 - 不要寫錢（`cash` 在伺服器）；劇情單位的劇情細節（為什麼補助、錢哪來）**不要寫在這裡**，那些在 `content/story/帳本.json`。
 - NPC 的隸屬在 `content/npc/<id>.json` 的 `job`：`{ "unit": "g-daily", "title": "司機" }`（title 8 字內，`level` 1～5 選填），沒有單位的寫 `{ "kind": "student" }`（student、retired、free）。劇情角色（t-）不放 `job`。
 - 改這些檔用 `npm run world:unit`、`npm run world:npc`（不手改），檢查是 `npm run world:check`（`npm test` 也會跑）。
+
+## 十二、世界事件：`week.json` 的 sanEvents、unrest、moodEvent（決定 0092，劇情決定的欄位）
+
+- 都是選填的陣列；**只放日期、對象的 id、數字**，劇情的理由寫在帳本（`content/story/帳本.json`），這裡不寫（不破梗）。備用週不寫。
+- `sanEvents`：`[{ "date": "2026-11-18", "npc": "c-bus", "n": -5 }]`，那天收盤時某位 NPC 的理智 ±（−10～10，最多 6 筆；旅客和委託人，劇情角色 t- 不放）。
+- `unrest`：`[{ "date": "2026-11-19", "unit": "g-island", "n": 8 }]`，那天某個頂層集團的集體不安 ±（−15～15，最多 4 筆；文化部不放）。
+- `moodEvent`：`[{ "date": "2026-11-20", "n": -10 }]`，那天展廳氣氛 ±（−20～20，最多 3 筆）。
+- 日期要在這週內；同一個對象同一天只能有一筆；不認得的欄位（例如想寫理由的 `note`）會被擋。
+- **壞消息推不安**：`dN.json` 的 `market` 裡 `tone: "down"` 且 `ref` 指到某集團旗下的館外股票，那個集團的不安 +2（壹個集團壹天最多壹次）。不用另外寫。
+- 用 `npm run world:event` 寫（不手改）；`npm test` 的 `week_check` 擋格式，`shared/world_events.js` 是打包出來給伺服器用的，不要手改。

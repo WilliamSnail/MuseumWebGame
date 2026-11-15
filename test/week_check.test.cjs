@@ -599,6 +599,16 @@ T("預告的活動（week.json.fest）：對的過；最多 2 個、店不對、
   expectErr(c => { c.files["備用/常青1/week.json"].fest = [{ store: "food", date: "2026-11-18", name: "x" }]; }, /備用週不寫 fest/);
 });
 
+T("世界事件（week.json 的 sanEvents、unrest、moodEvent）：對的過；id 不存在、文化部、劇情角色、日期不在這週、數字太大或 0、多寫欄位（想寫理由）、同對象同天、太多筆、備用週都擋", () => {
+  const W = c => c.files["2026-W47/week.json"], ok = c => { W(c).sanEvents = [{ date: "2026-11-18", npc: "c-bus", n: -5 }]; W(c).unrest = [{ date: "2026-11-19", unit: "g-island", n: 8 }]; W(c).moodEvent = [{ date: "2026-11-20", n: -10 }]; };
+  const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的要過");
+  expectErr(c => { ok(c); W(c).sanEvents[0].npc = "v-nobody"; }, /npc 要是旅客或委託人/); expectErr(c => { ok(c); W(c).sanEvents[0].npc = "t-yuga"; }, /npc 要是旅客或委託人/);
+  expectErr(c => { ok(c); W(c).unrest[0].unit = "u-culture"; }, /unit 要是頂層集團/); expectErr(c => { ok(c); W(c).unrest[0].unit = "g-zz"; }, /unit 要是頂層集團/);
+  expectErr(c => { ok(c); W(c).sanEvents[0].date = "2026-11-25"; }, /date 要是這週內/); expectErr(c => { ok(c); W(c).sanEvents[0].n = 11; }, /n 要是/); expectErr(c => { ok(c); W(c).unrest[0].n = 0; }, /n 要是/); expectErr(c => { ok(c); W(c).moodEvent[0].n = 30; }, /n 要是/);
+  expectErr(c => { ok(c); W(c).sanEvents[0].note = "因為某某事件"; }, /不認得「note」/); expectErr(c => { ok(c); W(c).sanEvents.push({ date: "2026-11-18", npc: "c-bus", n: 1 }); }, /同一個對象同一天/);
+  expectErr(c => { ok(c); W(c).moodEvent = [1, 2, 3, 4].map(d => ({ date: "2026-11-1" + (5 + d), n: 1 })); }, /最多 3 個/); expectErr(c => { c.files["備用/常青1/week.json"].unrest = [{ date: "2026-11-18", unit: "g-island", n: 1 }]; }, /備用週不寫 unrest/);
+});
+
 T("劇情經濟事件（week.json.econ）：對的過；種類不認得、日期不在這週、等級超過、多寫欄位（想自己寫比例）、同種兩個、動錢的超過每週上限、備用週都擋", () => {
   const ok = c => { c.files["2026-W47/week.json"].econ = [{ kind: "foreign", date: "2026-11-18", level: 2, name: "外面來的客人" }, { kind: "audit", date: "2026-11-20", level: 1, name: "對帳日" }]; };
   const c = regular(); ok(c); assert.deepStrictEqual(run(c).errors, [], "對的 econ 要過");
