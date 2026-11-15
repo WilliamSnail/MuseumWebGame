@@ -217,4 +217,25 @@ T("世界事件（決定 0092）：排程填的集團不安、NPC 理智、展�
   const h3 = mk(G); G.nwFix(h3); G.nwSanDay(h3, "2026-12-01", [], [{ id: "c-bus" }]); assert.strictEqual(G.nwSan(h3, "c-bus"), 70 - 6, "NPC 理智套用排程的 −6");
   delete G.WORLD_EVENTS["2026-12-01"]; delete G.WORLD_EVENTS["2026-12-02"];
 });
+T("散客類型權重（決定 0092 第 3 件）：氣氛高多旅行團和家庭、低多獨自和朋友；組數、時間、停留不變；沒有氣氛或在中間 ＝ 跟以前一模一樣；人數期望值變動在 ±20% 內", G => {
+  const C = G.NUM.casino.worldDoc.crowd, K = G.CROWD_KINDS, lab = l => K.findIndex(k => k.label === l);
+  assert.ok(G.crowdKindWeights(null).every(x => x === 1) && G.crowdKindWeights(45).every(x => x === 1), "沒有或在中間：全是 1");
+  assert.strictEqual(G.crowdKindWeights(C.high)[lab("旅行團")], 1.3); assert.strictEqual(G.crowdKindWeights(C.low)[lab("獨自看展的人")], 2); assert.strictEqual(G.crowdKindWeights(C.low)[lab("旅行團")], 0.7);
+  const ev = m => { const w = G.crowdKindWeights(m), t = w.reduce((a, b) => a + b, 0); return K.reduce((a, k, j) => a + w[j] / t * (k.n[0] + k.n[1]) / 2, 0); }, base = ev(null);
+  assert.ok(Math.abs(ev(80) / base - 1) <= 0.2 && Math.abs(ev(10) / base - 1) <= 0.2, "人數期望值 ±20% 內：" + (ev(80) / base).toFixed(3) + "、" + (ev(10) / base).toFixed(3));
+  const day = "2026-12-05", sec = "cwsec", a = G.crowdVisitsToday(day, sec), b = G.crowdVisitsToday(day, sec, 45), hi = G.crowdVisitsToday(day, sec, 80), lo = G.crowdVisitsToday(day, sec, 10);
+  assert.strictEqual(JSON.stringify(a), JSON.stringify(b), "平常的氣氛：跟沒給壹模壹樣"); assert.strictEqual(a.length, hi.length); assert.strictEqual(JSON.stringify(a.map(x => [x.key, x.start, x.end])), JSON.stringify(hi.map(x => [x.key, x.start, x.end])), "組數、時間不變");
+  let tour = [0, 0, 0], solo = [0, 0, 0], people = [0, 0, 0];
+  for (let d = 0; d < 60; d++) { const dd = new Date(Date.parse(day + "T00:00:00Z") + d * 86400000).toISOString().slice(0, 10); [null, 80, 10].forEach((m, j) => { for (const g of G.crowdVisitsToday(dd, "s" + d, m)) { if (g.label === "旅行團") tour[j]++; if (g.label === "獨自看展的人") solo[j]++; people[j] += g.n; } }); }
+  assert.ok(tour[1] > tour[0] && tour[2] < tour[0], "氣氛高：旅行團多；低：少（" + tour + "）"); assert.ok(solo[2] > solo[0], "氣氛低：獨自多（" + solo + "）"); assert.ok(Math.abs(people[1] / people[0] - 1) <= 0.2 && Math.abs(people[2] / people[0] - 1) <= 0.2, "實際人數也在 ±20%：" + people);
+});
+T("散客類型權重：展廳時刻表、現在誰在場、結算（casNpcLive）用同一份；換日前後同一個氣氛；人數多寡不破守恆、門票不超過上限", G => {
+  const M = "2026-11-30", D1 = "2026-12-01", h = mk(G); h.econ = { b: 0 }; G.whTick(h, M, {});
+  assert.strictEqual(G.whCrowdMood(h, D1), h.wh.mood.v, "還沒換日：用昨天的氣氛（現在的）"); const before = G.whCrowdMood(h, D1); G.whTick(h, D1, {}); assert.strictEqual(G.whCrowdMood(h, D1), before, "換日之後：用昨天的（prev），同一個數字");
+  assert.strictEqual(G.whCrowdMood(h, "2026-12-09"), null, "隔太久：照平常"); assert.strictEqual(G.whCrowdMood(mk(G), D1), null, "還沒算過：照平常");
+  const run = mood => { const x = mk(G); x.econ = { b: 0 }; G.whFix(x); x.wh.mood = { day: M, v: mood, prev: null }; const w0 = x.world; G.casNpcSpend(x, D1, "cwsec2", LIST, null); return { x, w0, feed: G.hallFeed(D1, "cwsec2", LIST, null, 0, Infinity, G.whCrowdMood(x, D1)) }; };
+  const hi = run(90), lo = run(5), mid = run(50);
+  const ppl = r => r.x.npcs.crowd.people; assert.ok(ppl(hi) !== ppl(lo) || ppl(hi) !== ppl(mid), "不同氣氛：實際來的人不一樣（" + [ppl(hi), ppl(mid), ppl(lo)] + "）");
+  for (const r of [hi, lo, mid]) { assert.strictEqual(sum(G.wuAmounts(r.x)), r.x.world); assert.ok(r.x.npcs.crowd.ticket <= G.NUM.casino.npcSpend.crowd.dayCap, "散客門票不超過上限"); assert.strictEqual(r.feed.filter(e => e.kind === "crowd").reduce((a, e) => a + e.n, 0), ppl(r), "展廳時刻表的人數 ＝ 結算的人數"); }
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
