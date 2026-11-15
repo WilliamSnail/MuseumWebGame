@@ -213,7 +213,7 @@ function advisorPanel(v) {
   const sellRows = a.sells.map(x => h("div", { class: "bank-adv-row" },
     h("span", null, h("b", null, `賣 ${x.name} ${fmt(x.n)} 股`), h("small", null, `${x.kind === "in" ? "館內股，沒有資本利得稅" : "館外股"}・手上 ${fmt(x.own)} 股・現價 ${fmt(x.px)}・約還 ${fmt(x.covers)}`)),
     btn("同意賣出", () => confirmTrade("同意賣股還債", [["股票", x.name], ["賣", `${fmt(x.n)} 股`], ["約還債", fmt(x.covers), "good"]], "同意賣出", () => bankDo("stock", { op: "sellDebt", id: x.id, n: x.n })), "small bank-btn gold")));
-  const verdict = !a.sells.length ? "手上沒有能賣的股票。" : a.enough ? `照這樣賣，大約還 ${fmt(a.sellTotal)}，夠還。` : `賣光也只能還約 ${fmt(a.sellTotal)}，還差 ${fmt(Math.max(0, d.total - a.sellTotal))}。`;
+  const verdict = !a.sells.length ? "手上沒有能賣的股票。" : a.enough ? `照這樣賣，大約還 ${fmt(a.sellTotal)}，夠還。` : `賣光也只能還約 ${fmt(a.sellTotal)}，還差 ${fmt(Math.max(0, (a.sellNeed != null ? a.sellNeed : d.total) - a.sellTotal))}。`;
   return panel("財經專員", `你欠 ${fmt(d.total)}`,
     h("div", { class: "bank-adv-who" }, h("div", { class: "bank-adv-face", "aria-hidden": "true" }, "梁"), h("div", null, h("b", null, "梁安（財經專員）"), h("small", null, "金融集團"))),
     h("p", { class: "bank-line" }, `「欠了不少，別慌，我排壹份計畫。每壹項都要你點頭才動。」現在欠 ${fmt(d.total)}（${parts}）。`),
