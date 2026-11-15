@@ -8,7 +8,7 @@
 import { NUM } from "./config.js";
 import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
-import { CAS_ECON } from "./casino_text.js";
+import { CAS_ECON, CAS_MENU } from "./casino_text.js";
 import { npcCounters, npcNews } from "./npc.js";
 import { CAS_ECON_EV, casEconUpText } from "./econ_events.js";
 import { casFill } from "./casino.js";
@@ -70,6 +70,11 @@ export function casReportView(doc) {
   if (doc.openingFix) hl.push(`對帳基準校正了 ${rpSign(doc.openingFix)}（外面世界池子上線那天的快照多算了池子當天的進出，不是錢不見）。`);
   if (H.npcs && H.npcs.crowd && H.npcs.crowd.ticket > 0) hl.push(`昨天 ${rpN(H.npcs.crowd.people)} 位散客（${rpN(H.npcs.crowd.groups)} 組）逛了展廳，散客門票 ${rpN(H.npcs.crowd.ticket)}${H.npcs.crowd.shop > 0 ? `、散客在店裡花了 ${rpN(H.npcs.crowd.shop)}` : ""}。`);
   if (H.npcs && H.npcs.total > 0) hl.push(`昨天 ${rpN(H.npcs.people)} 位館外的旅客來館，付了門票、在店裡花了，帶進館 ${rpN(H.npcs.total)} 籌碼（門票 ${rpN(H.npcs.ticket)}、店裡 ${rpN(H.npcs.shop)}）。`);
+  if (H.npcs && H.npcs.menu) { // 餐車賣給館外來客的（照菜單點，shared/npc_spend.js）
+    const nm = id => (CAS_MENU.find(m => m.id === id) || {}).name || id, it = Object.keys(H.npcs.menu).map(k => ({ k, n: (H.npcs.menu[k].npc || 0) + (H.npcs.menu[k].crowd || 0) })).filter(x => x.n > 0).sort((x, y) => y.n - x.n);
+    if (it.length) hl.push("昨天餐車賣給館外的客人：" + it.map(x => nm(x.k) + " ×" + rpN(x.n)).join("、") + "。");
+    const o = Array.isArray(H.npcs.orders) ? H.npcs.orders[0] : null; if (o && o.who) hl.push(o.who + "在餐車點了" + (o.n > 1 ? " " + o.n + " 份" : "壹份") + nm(o.item) + "。");
+  }
   if (H.npcLast && H.npcLast.fest && H.npcLast.fest.length) { // 昨天預告的活動辦成了沒
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
     for (const f of H.npcLast.fest) hl.push(f.ok ? `昨天《${f.name}》在${nm[f.store]}辦成了，館外來了 ${rpN(f.n)} 位旅客。` : `昨天預告的《${f.name}》最後沒在${nm[f.store]}辦成，一切照常。`);

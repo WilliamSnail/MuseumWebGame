@@ -116,5 +116,19 @@ T("深夜也有人（翊文 11-14）：23:30 之後到隔天 05:00 有有名字�
   assert.ok(crowdLate < crowdEve, `深夜（${crowdLate}）比晚上 19～21 點（${crowdEve}）少`);
   assert.strictEqual(G.NUM.casino.npcSpend.crowd.weights.length, 24, "每小時壹個比重，05:00 起 24 小時");
 });
+T("餐車點餐（11-15）：NPC、散客照菜單點、花的 ≤ 預算、守恆；記賣出幾份、財報 ext 分類", G => {
+  const h = mk(G), i0 = inv(G, h);
+  G.casNpcSpend(h, D0, "s", LIST, null);
+  const N = h.npcs, ext = G.casNpcExt(N);
+  assert.ok(N.menu && Object.keys(N.menu).length > 0, "有賣出品項");
+  const priced = id => G.CAS_MENU.find(m => m.id === id).price;
+  let menuTotal = 0; for (const id of Object.keys(N.menu)) { assert.ok(["tea", "chicken", "sushi", "feast", "juice"].includes(id), "只點餐點：" + id); menuTotal += (N.menu[id].npc + N.menu[id].crowd) * priced(id); }
+  assert.strictEqual(menuTotal, N.shopBy.food.npc + N.shopBy.food.crowd, "餐車收到的 ＝ 賣出的品項加總");
+  assert.strictEqual(ext.shop.food, menuTotal); assert.strictEqual(inv(G, h), i0, "守恆");
+  assert.strictEqual(ext.total, N.ticket + N.crowd.ticket + Object.values(ext.shop).reduce((a, b) => a + b, 0)); assert.strictEqual(ext.people.crowd, N.crowd.people);
+  assert.ok(ext.menu.every(m => m.name && m.npc + m.crowd > 0)); assert.strictEqual(G.casNpcExt(null), null);
+  for (const o of ext.orders) assert.ok(o.who && o.name && o.n >= 1);
+  const rpt = G.casReportView({ day: D0, at: 0, snap: { house: { npcs: N, wflow: {} } }, diff: {}, opening: 0 }); assert.ok(rpt && /餐車賣給館外/.test(JSON.stringify(rpt)), "日報寫餐車賣了什麼");
+});
 console.log(`${pass} passed, ${fail} failed（NPC 花錢）`);
 process.exit(fail ? 1 : 0);
