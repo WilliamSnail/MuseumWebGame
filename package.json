@@ -14,6 +14,7 @@
     "econ:prices": "node tools/econ_prices.cjs",
     "econ:scan": "node tools/econ_scan.cjs",
     "econ:status": "node tools/econ_status.cjs",
+    "tune": "node tools/tune.cjs",
     "world:check": "node tools/world_check.cjs",
     "world:unit": "node tools/world_unit.cjs",
     "world:npc": "node tools/world_npc.cjs",
