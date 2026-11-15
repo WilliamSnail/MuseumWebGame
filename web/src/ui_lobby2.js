@@ -21,6 +21,7 @@ import { NET } from "./net_firebase.js";
 import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, frogHTML, h, icon, navTo, planPortrait, titleTag } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
 import { headlineStrip } from "./ui_headline.js";
+import { mountMood } from "./ui_mood.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
 
@@ -98,6 +99,7 @@ function mapBox(step) {
   // 手機直拿換成直式的底圖（翊文 11-11 生的 port.webp）；轉橫、轉直時 boot.js 會重畫大廳
   const portrait = planPortrait(), W = portrait ? 572 : 1024, H = portrait ? 1024 : 572;
   const map = h("div", { class: "l2-map" + (portrait ? " port" : ""), role: "group", "aria-label": "館內導覽圖：點壹間房走進去" }, img(L + (portrait ? "port.webp" : "land.webp"), "l2-land"));
+  mountMood(map, "lobby", { portrait }); // 房間效果（燈光、旗、人影、怪影子）：在房間按鈕下面，不擋點擊
   const whoBoxes = {};
   LOBBY2_ROOMS.filter(r => r.id !== "bank" || (SCREENS.bank && ADDONS.bankOpen)).forEach(r => {
     const [x0, y0, x1, y1] = portrait ? r.port : r.box, name = ROOM_NAMES[r.id] || r.id, sub = progText(progress[r.id]);

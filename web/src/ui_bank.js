@@ -12,6 +12,7 @@ import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat.js";
 import { statView } from "../../shared/stat_view.js";
+import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
 import { casNum } from "../../shared/casino.js";
 import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
@@ -842,6 +843,7 @@ SCREENS.bank = root => {
     tabs,
     h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, v.demo ? h("p", { class: "bank-demo" }, UI.bankLoading ? "正在跟銀行拿資料……" : UI.bankErr ? `連不上銀行（${UI.bankErr}），下面是示範資料。` : "示範資料：登入之後才看得到自己的帳戶。") : null, PANES[tab](v)), side(v)),
     v.stocks ? ticker(v, tab === "stock") : null); // 股票還沒開：不畫今日行情（測試 11-13：空的行情條被切）
+  mountMood(root, "bank"); // 房間效果：吊燈、景氣的冷暖、看板的光
 };
 // 導覽圖上的「銀行」熱區要不要放：伺服器的 bankHall 接上之後，Yuga 主 session 把這個改成 true（現在是示範資料，不給玩家點進來）
 ADDONS.bankOpen = true; // 11-13 接上伺服器了（存款、借款、館債）；股票、財報寫「即將開放」
