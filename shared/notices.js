@@ -46,6 +46,19 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-c5f51f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "存錢、領錢、開定存可以自己輸入金額；更多音效", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行的存入、提出、開定存，快捷按鈕下面多了壹格可以自己輸入金額，範圍外按不下去。",
+        "輸入金額會有按鍵聲；提出和借錢換成 ATM 吐鈔的聲音。",
+        "在銀行和賭場以外拿到籌碼，會聽到錢袋的聲音。",
+        "地下 B5 多了很低的回響；走完壹層、平安回到地面，會有壹段鋼琴弦樂。",
+        "音效來自 Pixabay，來源標在 sfx/來源.md。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-852c96", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下每壹層的聲音都不壹樣了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [

@@ -633,7 +633,13 @@ export function drawShopTab() {
   const ts = $(".tb-shop"); if (ts) ts.hidden = !P || isFree(P);
   a.title = n ? `兌換所：你有 ${n} 枚週章` : "兌換所";
 }
-export function setChips(v) { UI.chips = typeof v === "number" ? v : null; drawChips(); }
+// 籌碼變多：響錢袋聲（11-15 翊文：「這個可以在玩家其他地方獲得籌碼的音效」，Pixabay「Coin and Money Bag 2」）。
+//   銀行、賭場有自己的聲音，在那裡不響；第壹次拿到數字（從 null 來）不響
+export function setChips(v) {
+  const prev = UI.chips, next = typeof v === "number" ? v : null;
+  UI.chips = next; drawChips();
+  if (typeof prev === "number" && next != null && next > prev && UI.screen !== "bank" && UI.ambOver !== "casino") sndFile("money-bag", 0.4);
+}
 export function updateStatus(instant) {
   audioTrack(instant);
   syncFresh();

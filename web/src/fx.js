@@ -863,18 +863,18 @@ export const FX = (() => {
           2: { bed: { wind: 0.3, basement: 0.3, sewer: 0 }, odd: ['echo-far', 'basement-noise', 'basement-knock'], gap: [40, 90], drip: 0.5 }, // 雕像廳：很冷
           3: { bed: { wind: 0.08, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-dungeon', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 0.3, coming: true }, // 空畫框的走廊：長走廊的回音
           4: { bed: { wind: 0.05, basement: 0, sewer: 0.5 }, odd: ['cave-drops', 'cave-drops', 'echo-far'], gap: [20, 50], drip: 1.6 }, // 淹水的檔案室
-          5: { bed: { wind: 0.08, basement: 0, sewer: 0 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空
+          5: { bed: { wind: 0.05, basement: 0, sewer: 0, void: 0.3 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空，只有很低的「虛空回響」（Pixabay「Echo of the Void」）
         };
         // 在做什麼：bed 底音乘幾倍、gapK 冒聲音的間隔乘幾倍（0＝不冒）、dripK 滴水
         const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
-        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0) };
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n];
+        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0) };
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n];
         const cur = { f: FLOOR.base, m: MODE.map, mode: 'map' };
         const apply = (fade) => {
           const t = c.currentTime;
           Object.keys(L).forEach((k) => {
-            const v = cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : cur.f.bed[k] * cur.m.bed;
+            const v = cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : (cur.f.bed[k] || 0) * cur.m.bed;
             L[k].v.gain.setTargetAtTime(v, t, fade);
           });
         };
