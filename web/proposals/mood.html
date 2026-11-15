@@ -1,0 +1,98 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>效果提案（大廳、銀行、賭場）</title>
+<style>
+body{margin:0;background:#2a1018;color:#f3e6c4;font:15px/1.5 "Noto Serif TC","PMingLiU",serif;padding:18px}
+h1{font-size:22px;margin:0 0 4px} h2{font-size:17px;margin:22px 0 6px;color:#f0d995} p.n{margin:0 0 10px;color:#cdb98c;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,512px);gap:14px;width:1040px}
+.cell{position:relative}.cell>b{display:block;font-size:13px;margin:0 0 3px;color:#f6e4b0}
+.frame{position:relative;width:512px;overflow:hidden}
+.map{position:relative;width:1024px;height:572px;transform:scale(.5);transform-origin:0 0;background:url(/lobby/land.webp) 0 0/1024px 572px}
+.sc{position:relative;width:1024px;height:572px}
+.lg{position:absolute;inset:0;pointer-events:none}
+.lg.cold{background:radial-gradient(ellipse at 50% 55%,rgba(40,60,110,.10),rgba(15,25,60,.45));mix-blend-mode:multiply}
+.lg.cold::after{content:"";position:absolute;inset:0;background:rgba(80,110,170,.16);mix-blend-mode:color}
+.lg.warm{background:radial-gradient(ellipse at 50% 50%,rgba(255,196,110,.30),rgba(255,160,60,.06) 70%,transparent);mix-blend-mode:soft-light}
+.lg.buzz{background:radial-gradient(ellipse at 50% 50%,rgba(255,200,110,.46),rgba(255,150,40,.14) 70%,transparent);mix-blend-mode:soft-light}
+.sky{position:absolute;left:0;top:0;width:1024px;height:60px;background:linear-gradient(#171a33,#2b2347);display:flex;gap:12px;padding:0 20px;align-items:flex-end;overflow:hidden}
+.sky i{flex:none;width:60px;height:44px;background:#0d0f1f;border-radius:6px 6px 0 0;position:relative}
+.sky i.h{height:56px}
+.sky i::before,.sky i::after{content:"";position:absolute;width:10px;height:12px;background:#ffd36b;box-shadow:0 0 10px #ffd36b;top:10px;left:12px}
+.sky i::after{left:34px}
+.sky i.d::before,.sky i.d::after{background:#1a1d36;box-shadow:none}
+.sky .moon{position:absolute;right:40px;top:6px;width:24px;height:24px;border-radius:50%;background:#e8e2c8;box-shadow:0 0 16px #e8e2c8}
+.ppl{position:absolute;pointer-events:none}
+.ppl i{position:absolute;width:12px;height:26px;border-radius:7px 7px 2px 2px;background:rgba(40,22,18,.85)}
+.ppl i::before{content:"";position:absolute;left:0;top:-12px;width:12px;height:12px;border-radius:50%;background:rgba(40,22,18,.85)}
+.omen{position:absolute;pointer-events:none;width:80px;height:130px;background:radial-gradient(ellipse at 50% 30%,rgba(8,4,12,.8),rgba(8,4,12,.4) 55%,transparent 70%);clip-path:polygon(40% 0,60% 0,66% 22%,86% 100%,14% 100%,34% 22%);filter:blur(2px)}
+.omen::before,.omen::after{content:"";position:absolute;top:18px;width:7px;height:4px;background:#d9604f;opacity:.85;border-radius:50%}
+.omen::before{left:30px}.omen::after{left:44px}
+.bank{width:683px;height:384px;position:relative;overflow:hidden;background:url(shot_bank_report_1366x768.png) 0 0/683px 384px}
+.bank .tint{position:absolute;inset:0;pointer-events:none}
+.bank .win{position:absolute;left:0;right:0;top:0;height:16px;display:flex;gap:4px;padding:0 6px;align-items:flex-end;background:linear-gradient(#10132a,transparent)}
+.bank .win i{width:14px;height:11px;background:#ffd36b;box-shadow:0 0 4px #ffd36b;border-radius:2px 2px 0 0;flex:none}.bank .win i.d{background:#151833;box-shadow:none}
+.bank .glow{position:absolute;left:0;right:0;bottom:0;height:44px;pointer-events:none}
+.cas{width:683px;height:384px;position:relative;background:radial-gradient(ellipse at 50% 60%,#1d6a3a,#0d3a20 70%,#07200f);overflow:hidden}
+.cas .tbl{position:absolute;left:120px;top:100px;width:440px;height:200px;border-radius:50%;background:radial-gradient(ellipse,#2c8a4c,#17562f);box-shadow:0 0 0 8px #5a3a1e,0 8px 22px rgba(0,0,0,.6)}
+.cas .chip{position:absolute;width:16px;height:16px;border-radius:50%;background:#c63;border:2px dashed #fff8}
+.cas .lamp{position:absolute;left:190px;top:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,224,150,.6),transparent 68%);pointer-events:none}
+.cas .nm{position:absolute;left:10px;top:8px;color:#f6e4b0;font-size:13px}
+.cas .ppl i{background:rgba(10,10,10,.8)}
+.cas .omen{width:60px;height:100px}
+</style></head><body>
+<h1>大廳、銀行、賭場：效果提案</h1>
+<p class="n">每張都是示意（用示範資料排出每個狀態），玩家看不到這頁。效果都很淡、不擋操作；定了才正式做。</p>
+<div id="app"></div>
+<script>
+const $ = h => { const d = document.createElement("div"); d.innerHTML = h.trim(); return d.firstChild; };
+const app = document.getElementById("app");
+let SEC = 0; const ONLY = +new URLSearchParams(location.search).get("only") || 0; // ?only=3 只畫第 3 段（照圖用）
+function sec(title, note, cells, w) {
+  SEC++; if (ONLY && SEC !== ONLY) return;
+  const s = $(`<section><h2>${title}</h2><p class="n">${note}</p><div class="grid"></div></section>`);
+  const g = s.querySelector(".grid"); if (w) g.style.cssText = `grid-template-columns:repeat(2,${w}px);width:${w * 2 + 14}px`;
+  cells.forEach(c => g.append(c)); app.append(s);
+}
+// 導覽圖壹格：inner 是蓋在導覽圖上的層；sky＝上面多壹條窗外遠景
+function mapCell(label, inner, sky) {
+  const top = sky ? 60 : 0;
+  return $(`<div class="cell"><b>${label}</b><div class="frame" style="height:${(572 + top) / 2}px"><div class="map" style="top:${top / 2}px;transform-origin:0 0">${inner}</div>${sky ? `<div style="position:absolute;left:0;top:0;transform:scale(.5);transform-origin:0 0">${sky}</div>` : ""}</div></div>`);
+}
+const rnd = seed => { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
+const ppl = (n, x0, y0, w, h, seed) => { const r = rnd(seed); let o = ""; for (let i = 0; i < n; i++) o += `<i style="left:${Math.round(r() * w)}px;top:${Math.round(r() * h)}px"></i>`; return `<div class="ppl" style="left:${x0}px;top:${y0}px">${o}</div>`; };
+const skyOf = (lit, moon) => `<div class="sky">${[...Array(16)].map((_, i) => `<i class="${lit[i % lit.length] ? "" : "d"} ${i % 4 == 1 ? "h" : ""}"></i>`).join("")}${moon ? '<span class="moon"></span>' : ""}</div>`;
+const bunt = cols => `<svg style="position:absolute;left:60px;top:0;width:904px;height:70px;pointer-events:none" viewBox="0 0 900 46" preserveAspectRatio="none"><path d="M0 4 Q450 36 900 4" stroke="#8a6a3a" stroke-width="3" fill="none"/>${cols.map((c, i) => { const x = 20 + i * (860 / (cols.length - 1)), y = 4 + Math.sin(i / (cols.length - 1) * Math.PI) * 17; return `<polygon points="${x - 14},${y} ${x + 14},${y} ${x},${y + 30}" fill="${c}"/>`; }).join("")}</svg>`;
+const two = (a, b) => [...Array(15)].map((_, i) => (i % 2 ? a : b));
+
+sec("1　大廳燈光（散客展廳氣氛 crowdMood）", "冷清＝偏暗偏冷；平常＝不加；熱絡＝偏暖；沸騰＝更暖更亮。只蓋壹層半透明的光，點擊照常。",
+  [["冷清（0～29）", "lg cold"], ["平常（30～59）", ""], ["熱絡（60～84）", "lg warm"], ["沸騰（85～100）", "lg buzz"]].map(([t, c]) => mapCell(t, `<div class="${c}"></div>`)));
+
+sec("2　窗外遠景（景氣、集團狀態 e.world）", "導覽圖上面多壹條遠景：窗亮得多＝景氣好；有集團裁員就多幾格暗窗；吃緊時整排變少。",
+  [["景氣好（多數集團強）", [1, 1, 1, 1, 1, 1, 1, 0], 1], ["景氣普通", [1, 1, 1, 0, 1, 1, 0, 1], 0], ["景氣差（吃緊多）", [1, 0, 0, 1, 0, 0, 1, 0], 0], ["有集團裁員（暗窗成串）", [1, 1, 0, 0, 0, 1, 1, 0, 0, 0], 0]].map(([t, l, m]) => mapCell(t, "", skyOf(l, m))));
+
+sec("3　旗幟（本日政策、限時活動）", "政策或活動期間，導覽圖上緣掛壹排三角旗，顏色看是哪壹種；兩個同時就兩種顏色交錯。",
+  [["沒有政策、沒有活動", ""], ["本日政策（金紅旗）", bunt(two("#c4392f", "#e3c26e"))], ["限時活動（藍綠旗）", bunt(two("#2f8a8a", "#e8e2c8"))], ["政策＋活動同時", bunt([...Array(15)].map((_, i) => ["#c4392f", "#e3c26e", "#2f8a8a"][i % 3]))]].map(([t, b]) => mapCell(t, b)));
+
+sec("4　小人影（展廳人數）", "導覽圖上「我的展廳」那格，依人數多幾個小人影（最多 24 個，超過就不再增加）。",
+  [["0～2 人", 0], ["3～20 人", 5], ["21～60 人", 12], ["60 人以上", 24]].map(([t, n]) => mapCell(t, ppl(n, 462, 80, 96, 40, 3))));
+
+sec("5　怪影子（NPC 平均理智低、集團不安高）", "很少出現：理智低或不安高時，大廳角落偶爾閃壹下，不解釋。這裡是「出現的那壹格」；平常是看不到的。",
+  [["平常（看不到）", ""], ["偶爾（不安）：地下樓梯口", '<div class="omen" style="left:790px;top:226px;opacity:.4"></div>'], ["常見（動盪）：圖書館窗邊", '<div class="omen" style="left:262px;top:250px;opacity:.6"></div>'], ["很嚴重：兩處", '<div class="omen" style="left:790px;top:226px;opacity:.65"></div><div class="omen" style="left:120px;top:300px;opacity:.55;transform:scale(.8)"></div>']].map(([t, h]) => mapCell(t, h)));
+
+sec("合起來的樣子（大廳）", "上面五種壹起開。",
+  [mapCell("熱絡＋政策旗＋景氣好＋人多", `<div class="lg warm"></div>${bunt(two("#c4392f", "#e3c26e"))}${ppl(14, 462, 80, 96, 40, 5)}`, skyOf([1, 1, 1, 1, 1, 0], 1)),
+   mapCell("冷清＋景氣差＋裁員＋偶爾有影子", `<div class="lg cold"></div>${ppl(2, 462, 80, 96, 40, 9)}<div class="omen" style="left:790px;top:226px;opacity:.45"></div>`, skyOf([1, 0, 0, 0, 1, 0, 0], 0))]);
+
+const wins = l => `<div class="win">${[...Array(34)].map((_, i) => `<i class="${l[i % l.length] ? "" : "d"}"></i>`).join("")}</div>`;
+const bankCell = (t, tint, w, glow) => $(`<div class="cell"><b>${t}</b><div class="bank"><div class="tint" style="${tint}"></div>${wins(w)}<div class="glow" style="${glow}"></div></div></div>`);
+sec("銀行", "窗外壹排窗（景氣、集團狀態）、整體偏暖偏冷（外面世界好壞）、最下面行情看板在漲時發綠光、跌時發紅光。", [
+  bankCell("景氣好、股市漲", "background:radial-gradient(ellipse at 50% 50%,rgba(255,200,120,.18),transparent 70%);mix-blend-mode:soft-light", [1, 1, 1, 1, 1, 0], "background:linear-gradient(transparent,rgba(110,200,120,.32))"),
+  bankCell("普通", "", [1, 1, 0, 1, 1, 0], ""),
+  bankCell("景氣差、集團裁員", "background:radial-gradient(ellipse at 50% 55%,rgba(30,50,100,.05),rgba(10,20,50,.4));mix-blend-mode:multiply", [1, 0, 0, 0, 1, 0, 0], "background:linear-gradient(transparent,rgba(217,96,79,.32))"),
+  bankCell("莊家吃緊（館方整體更暗壹點）", "background:rgba(0,0,0,.3);mix-blend-mode:multiply", [1, 0, 1, 0, 0, 0], "background:linear-gradient(transparent,rgba(227,194,110,.2))")], 683);
+
+const casCell = (t, lamp, felt, n, omen, pol) => $(`<div class="cell"><b>${t}</b><div class="cas"><div class="nm">賭場（示意）</div><div class="lamp" style="opacity:${lamp}"></div><div class="tbl" style="filter:${felt}"></div>${[...Array(5)].map((_, i) => `<span class="chip" style="left:${260 + i * 26}px;top:${180 + (i % 2) * 10}px"></span>`).join("")}${ppl(n, 90, 300, 500, 60, 11)}${omen ? '<div class="omen" style="left:30px;top:140px;opacity:.6"></div>' : ""}${pol ? bunt(two("#c4392f", "#e3c26e")).replace("left:60px", "left:20px").replace("width:904px", "width:640px") : ""}</div></div>`);
+sec("賭場", "莊家健康（燈、桌布顏色）、本日政策旗、展廳氣氛和人多寡（桌邊人影）、集團不安高時偶爾怪影子。底圖是示意。", [
+  casCell("莊家健康、人多、有政策", 1, "none", 14, false, true),
+  casCell("普通", .6, "none", 5, false, false),
+  casCell("莊家吃緊（燈暗、桌布發灰）", .2, "saturate(.45) brightness(.7)", 2, false, false),
+  casCell("破產中＋不安高（怪影子）", .08, "saturate(.25) brightness(.5)", 1, true, false)], 683);
+</script></body></html>
