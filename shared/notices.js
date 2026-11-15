@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-c66f16", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "大廳熱絡度算進旅客和散客", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳各房間的熱絡度，現在連館裡的旅客、散客也一起算進去，不再只算館友。",
+        "館內股的盤中價格也會跟著到店的人數走：人多的店，價格當天就慢慢反映；隔天開盤價照舊。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-cf570b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下收藏庫的聲音更陰森了", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
