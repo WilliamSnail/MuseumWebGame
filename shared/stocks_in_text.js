@@ -18,7 +18,7 @@ export const CAS_STOCK_IN = {
   none: "你沒有這支股票。",
   notEnough: "你只有 {n} 股。",
   cap: "每家店最多持有 {n} 股，你已經有 {have} 股。",
-  sellDay: "今天賣出的額度只剩 {n}。",
+  sellDay: "今天賣出的額度只剩 {n}。{up}",
   queue: "今天全館賣太多了，莊家付不過來，明天再賣。",
   buyOk: "買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}。",
   sellOk: "賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}。",

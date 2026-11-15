@@ -267,7 +267,7 @@ export const CAS_STOCK = {
   exposed: "莊家手上的股票已經夠多了，今天不能再買。",
   none: "你沒有這支。",
   notEnough: "你只有 {n} 股。",
-  sellDay: "壹天最多賣 2,000 萬，今天還能賣 {n}。",
+  sellDay: "壹天最多賣 {cap}，今天還能賣 {n}。{up}",
   queue: "今天全館賣太多了，莊家付不過來，明天再賣。",
   buyOk: "買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}。",
   sellOk: "賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}{taxText}。",
