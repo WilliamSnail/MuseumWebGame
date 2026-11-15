@@ -24,6 +24,7 @@ T("行程：平均每家店每天約 npcLambda 位；有些 NPC 哪裡都不去�
   assert.notStrictEqual(JSON.stringify(G.npcTrips(D0, "甲", list, null)), JSON.stringify(G.npcTrips(D0, "乙", list, null)));
 });
 T("館內股的 NPC 人數用行程加總（有名單）；沒有名單還是 Poisson；上限 40% 還在", G => {
+  G.NUM.casino.stockIn.npcBase = 0; G.NUM.casino.stockIn.npcWalk = 0; // 保底另外測（casino_stock_in.test）
   const mk = () => { const h = G.casHouseFix(G.casHouseNew(), D0).house; G.casInHouseFix(h); return h; };
   const h = mk(), H = h.sin; G.casInRoll(h, D0, 0, "s", {}, { list: G.NPC_ROSTER, counters: null }); G.casInRoll(h, add(D0, 1), 0, "s", {}, { list: G.NPC_ROSTER, counters: null });
   const trips = G.npcTrips(D0, "s", G.NPC_ROSTER, null);

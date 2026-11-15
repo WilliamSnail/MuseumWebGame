@@ -456,7 +456,7 @@ export const NUM = {
       //   活動多來的旅客不算進平均（避免之後幾天股價被拉低、被放空賺走），見 casInRoll
       festP: 0.3, festMin: 0.5, festMax: 1.0, festAhead: 2,
       npcBurstPct: 0.3, npcBurstMin: 0.5, npcBurstMax: 1.0,
-      npcLambda: 2, npcShareMax: 40, npcBoostMin: 0.15, npcBoostMax: 0.30,
+      npcLambda: 2, npcShareMax: 40, npcBase: 12, npcWalk: 3, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
