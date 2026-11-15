@@ -12,7 +12,7 @@ import { realTodayStr } from "../../shared/logic.js";
 import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../shared/notices.js";
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
-import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, sndFile, updateBoardBadges, updateStatus } from "./ui_core.js";
 
 const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
 const narrow = () => planPortrait(); // 橫拿的手機寬度夠，左右分欄（決定 0043）
@@ -163,6 +163,7 @@ export function openMailbox() {
       snd("coin"); updateStatus(); persist();
       const s = srv.length ? await sv.claim(srv.map(x => x.id)) : null;
       if (s) { t.n += s.n; t.insp += s.insp; t.mood += s.mood; t.pepes += s.pepes; }
+      if (t.n) sndFile("chest-open", 0.4); // 領信：開箱聲（11-15 翊文）
       note(t.n ? `領了 ${t.n} 封${giftText(t) ? "：" + giftText(t) : ""}` : "沒有可以領的。", "good");
       if (m.layer.isConnected) draw();
     }, "primary small") : null);
@@ -173,13 +174,13 @@ export function openMailbox() {
             b.disabled = true;
             const s = await sv.claim([x.id]);
             b.disabled = false;
-            if (s && s.n) { snd("coin"); FX.floatText(b, giftText(s) || "已領取", "good"); }
+            if (s && s.n) { snd("coin"); sndFile("chest-open", 0.4); FX.floatText(b, giftText(s) || "已領取", "good"); }
             if (m.layer.isConnected) draw();
             return;
           }
           const r = claimMail(P, x.id, today);
           if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
-          snd("coin");
+          snd("coin"); sndFile("chest-open", 0.4);
           FX.floatText(b, giftText(r.gift) || "已領取", "good");
           if (r.free) note("自由模式不用靈感：信收下了。");
           updateStatus(); persist(); draw();

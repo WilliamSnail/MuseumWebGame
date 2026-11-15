@@ -473,6 +473,9 @@ function stage(v) {
   return st;
 }
 function phaseCard(v, me) {
+  // 寶箱點：剛走進來那壹次響開箱聲（11-15 翊文，Pixabay「Chest Opening」）；同壹格重畫不再響
+  if (v.phase === "chest" && S.phaseWas !== "chest") sndFile("chest-open", 0.45);
+  S.phaseWas = v.phase;
   if (me.out === "ghost" && !v.ended) return h("div", { class: "note-card room-card cx-card" }, h("i", { class: "pin" }), h("h2", { class: "room-title" }, "你回到地面了"), h("p", { class: "cx-text" }, "大家往下走了。你的參觀者留在這壹層的樓梯口，接下來要換下壹位。"), h("div", { class: "cx-card-foot" }, btn("回去", () => S.m.close(), "primary")));
   if (v.phase === "over" || v.ended) return overCard(v, me);
   if (v.phase === "carry") return carryCard(v, me);
