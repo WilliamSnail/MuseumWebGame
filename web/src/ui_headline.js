@@ -7,8 +7,8 @@
 // ================================================================
 import { NET } from "./net_firebase.js";
 import { eventBars, eventLeftText, eventRange, eventWhen } from "../../shared/events.js";
-import { HL_QUIET, todayHeadlines } from "../../shared/headlines.js";
-import { todayStr } from "../../shared/logic.js";
+import { HL_QUIET, orderHeadlines, todayHeadlines } from "../../shared/headlines.js";
+import { RNG, todayStr } from "../../shared/logic.js";
 import { visibleNotices } from "../../shared/notices.js";
 import { P, PANELS, UI, every, h, navTo } from "./ui_core.js";
 import { allEvents } from "./ui_events.js";
@@ -41,10 +41,11 @@ function go(link) {
 export function headlineStrip() {
   const box = h("div", { class: "l2-strip l2-hl", role: "region", "aria-label": "今天的重要事件" });
   let key = "", timer = null, turn = null, cur = 0;
+  const ranks = new Map(); // 這次進大廳洗好的順序（orderHeadlines）
   const reduce = () => document.body.classList.contains("reduce-motion");
   const draw = () => {
     if (!box.isConnected && key !== "") { clearInterval(timer); clearInterval(turn); return; }
-    const day = todayStr(), list = todayHeadlines(headlineData(day), day), k = JSON.stringify(list.map(x => x.text)) + reduce();
+    const day = todayStr(), list = orderHeadlines(todayHeadlines(headlineData(day), day), ranks, RNG), k = JSON.stringify(list.map(x => x.text)) + reduce();
     if (k === key) return;
     key = k; cur = 0;
     const item = (x, i) => h("button", { type: "button", class: "hl-i tone-" + x.tone + (x.upcoming ? " up" : "") + (i === 0 ? " cur" : ""), onClick: () => go(x.link) }, h("em", { "aria-hidden": "true" }), x.text);
