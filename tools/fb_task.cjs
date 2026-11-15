@@ -86,6 +86,7 @@ async function worldStatus(db) {
   if (h.wh && h.wh.st) {
     console.log(`各集團健康值（${h.wh.day || "-"}）：`);
     Object.keys(h.wh.st).forEach(k => console.log(`  ${names[k] || k}：h ${h.wh.h[k]}　${S[h.wh.st[k].s]}　預算倍率 ×${G.whMult(h, k).toFixed(2)}　連續低迷 ${h.wh.st[k].low || 0} 週`));
+    if (h.wh.unrest) console.log("集團集體不安：" + Object.keys(h.wh.unrest).map(k => `${names[k] || k} ${h.wh.unrest[k]}`).join("　") + (h.wh.mood ? `　｜　展廳氣氛 ${h.wh.mood.v}` : ""));
     if (Array.isArray(h.wh.ev) && h.wh.ev.length) console.log("最近換過狀態：" + h.wh.ev.slice(-8).map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、"));
   } else console.log("house.wh 還沒有（第一次換日才會建）");
   if (h.npcw && h.npcw.san) { const sv = Object.values(h.npcw.san).map(nz); console.log(`NPC 理智（決定 0090）：不是初始值的 ${sv.length} 位${sv.length ? `，最低 ${Math.min(...sv)}、最高 ${Math.max(...sv)}、低於 30 的 ${sv.filter(x => x < 30).length} 位` : ""}`); }

@@ -57,6 +57,7 @@ if (require.main === module) {
     Object.keys(r.a1).forEach(k => console.log(`  ${names[k] || k}：${fmt(r.a0[k])} → ${fmt(r.a1[k])}（${r.a1[k] - r.a0[k] >= 0 ? "+" : ""}${fmt(r.a1[k] - r.a0[k])}）${r.spent.byUnit[k] ? "　花 " + fmt(r.spent.byUnit[k]) : ""}`));
     console.log(`NPC 錢包：${r.wal.n} 位、合計 ${fmt(r.wal.total)}（最少 ${fmt(r.wal.min)}、最多 ${fmt(r.wal.max)}）；最近換工作紀錄：被裁 ${r.wal.lays} 次、換到新工作 ${r.wal.moves} 次`);
     console.log(`NPC 理智（不是 70 的 ${r.wal.san.n} 位）：最低 ${r.wal.san.min}、最高 ${r.wal.san.max}、低於 30 的 ${r.wal.san.low} 位`);
+    if (r.house.wh && r.house.wh.unrest) console.log("集團集體不安（平常 " + G.NUM.casino.worldDoc.unrest.start + "）：" + Object.keys(r.house.wh.unrest).map(k => `${names[k] || k} ${G.whUnrest(r.house, k)}`).join("　") + (r.house.wh.mood ? `　｜　今天的展廳氣氛 ${r.house.wh.mood.v}` : ""));
     const wh = r.house.wh, S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
     if (wh && wh.st) { console.log("各集團現在的狀態（健康值 h → 預算倍率）："); Object.keys(wh.st).forEach(k => console.log(`  ${names[k] || k}：${S[wh.st[k].s]}（h ${wh.h[k]} → ×${G.whMult(r.house, k).toFixed(2)}）`)); if (wh.ev.length) console.log("換過狀態：" + wh.ev.map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、")); }
     const bad = []; if (r.gap !== 0) bad.push(`守恆差 ${r.gap}（單位加公共應該等於外面世界）`); if (r.a1.pub < 0) bad.push(`公共是負的 ${fmt(r.a1.pub)}`); if (r.house.bankroll < 0 || r.house.budget < 0) bad.push("莊家或預算池變負");

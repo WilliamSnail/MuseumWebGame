@@ -181,4 +181,29 @@ T("理智低的影響：不去地下、評價少 1 顆星、預算 ×0.9（不�
   const stars = h => (h.reviews || []).map(r => r.stars); assert.ok(Math.max(...stars(ok), 0) >= 1); if (stars(low).length && stars(ok).length) assert.ok(Math.min(...stars(low)) <= Math.min(...stars(ok)) && stars(low).every(x => x >= 1), "評價星數少一顆、不低於 1");
   assert.strictEqual(G.statView("npcSan", "c-bus", hl).band, "uneasy");
 });
+T("集體不安（決定 0091）：換狀態那天推一下、每天往 20 靠 2（慣性）、排程填的事件推得動、夾 0～100；沒有的單位擋掉", G => {
+  const U = G.NUM.casino.worldDoc.unrest, h = mk(G); h.econ = { b: -1 };
+  assert.strictEqual(G.whUnrest(h, "g-island"), U.start, "沒有紀錄 ＝ 平常的值");
+  G.whTick(h, "2026-11-16", {}); G.whTick(h, "2026-11-23", {}); assert.strictEqual(h.wh.st["g-island"].s, "squeeze"); assert.ok(G.whUnrest(h, "g-island") > U.start, "進入緊縮：不安上升：" + G.whUnrest(h, "g-island"));
+  const peak = G.whUnrest(h, "g-island"); h.econ = { b: 0 }; G.whTick(h, "2026-11-24", {}); assert.ok(G.whUnrest(h, "g-island") < peak, "隔天往平常靠一點（慣性：不是馬上回來）"); assert.ok(G.whUnrest(h, "g-island") > U.start);
+  for (let d = 25; d < 30; d++) G.whTick(h, "2026-11-" + d, {}); assert.strictEqual(G.whUnrest(h, "g-island"), U.start, "幾天後回到平常");
+  assert.strictEqual(G.whUnrestAdd(h, "g-daily", 50), U.start + 50); assert.strictEqual(G.whUnrestAdd(h, "g-daily", 999), 100, "夾 100"); assert.strictEqual(G.whUnrestAdd(h, "g-daily", -999), 0, "夾 0"); assert.strictEqual(G.whUnrestAdd(h, "u-culture", 5), null, "文化部、不存在的單位不放"); assert.strictEqual(G.whUnrestAdd(h, "g-zz", 5), null);
+  assert.strictEqual(G.statView("unitUnrest", "g-island", h).band, "calm"); G.whUnrestAdd(h, "g-island", 40); assert.strictEqual(G.statView("unitUnrest", "g-island", h).band, "uneasy");
+});
+T("集體不安拖慢旗下 NPC 理智的回復：≥60 停下來、≥80 反過來每天 −1；平常照回", G => {
+  const S = G.NUM.casino.worldDoc.san, run = unrest => { const h = mk(G); G.whFix(h); G.nwFix(h); h.wh.unrest["g-daily"] = unrest; h.npcw.san["c-bus"] = 50; G.nwSanDay(h, "2026-11-16", [{ id: "c-bus", place: "hall" }], [{ id: "c-bus", job: { unit: "g-daily", title: "x" }, budget: { perDay: 1 } }]); return G.nwSan(h, "c-bus"); };
+  assert.strictEqual(run(20), 50 + S.back, "平常：往 70 靠 1"); assert.strictEqual(run(60), 50, "不安 60：不回復"); assert.strictEqual(run(85), 50 - S.back, "不安 85：反過來往下");
+});
+T("散客展廳氣氛（決定 0091）：每天重算、不動錢；景氣、NPC 平均理智、減薪集團、週末都會改變它；夾 0～100", G => {
+  const M = G.NUM.casino.worldDoc.mood, h = mk(G); h.econ = { b: 0 }; G.whFix(h);
+  assert.strictEqual(G.whMood(h, "2026-11-17"), M.base, "平日、景氣 0、沒有人不安：50"); assert.strictEqual(G.whMood(h, "2026-11-21"), M.base + M.weekend, "週末 +5");
+  h.econ = { b: 1 }; assert.strictEqual(G.whMood(h, "2026-11-17"), M.base + M.b); h.econ = { b: 0 };
+  G.nwFix(h); for (const id of ["a", "b", "c", "d"]) h.npcw.bal[id] = 1; h.npcw.san.a = 30; assert.strictEqual(G.whMood(h, "2026-11-17"), Math.round(M.base + M.san * (-40 / 4)), "NPC 平均理智低：氣氛低");
+  const h2 = mk(G); h2.econ = { b: 0 }; G.whFix(h2); h2.wh.st["g-island"].s = "layoff"; h2.wh.st["g-daily"].s = "cut"; assert.strictEqual(G.whMood(h2, "2026-11-17"), M.base + 2 * M.trouble, "兩個集團減薪以上：−10");
+  const h3 = mk(G); h3.econ = { b: -1 }; G.whFix(h3); for (const k of Object.keys(h3.wh.st)) h3.wh.st[k].s = "layoff"; assert.ok(G.whMood(h3, "2026-11-17") >= 0);
+  const h4 = mk(G); h4.econ = { b: 0 }; G.whTick(h4, "2026-11-17", {}); assert.strictEqual(h4.wh.mood.v, M.base); assert.strictEqual(JSON.stringify(G.whMoodPublic(h4)), JSON.stringify([M.base, "plain"])); assert.strictEqual(G.whMoodPublic(mk(G)), null);
+  assert.strictEqual(G.statView("crowdMood", null, h4).band, "plain");
+  const c = G.whCard(h4, "2026-11-17"); assert.strictEqual(c.unrestBands.reduce((a, b) => a + b, 0), 7); assert.strictEqual(c.mood.band, "plain");
+  const snap = G.casBookSnap([], h4, 0, "2026-11-17"); assert.strictEqual(snap.house.wh.mood, M.base); assert.ok("g-island" in snap.house.wh.un);
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
