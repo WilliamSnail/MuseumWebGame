@@ -16,7 +16,7 @@
 | **發 Discord**：發壹則手動公告，等到成功或失敗 | `npm run say -- "文字"`（`--file 檔案`、`--dry` 只印；擋空的、太長、@ 人） |
 | **加館方公告**到 `shared/notices.js` 最上面 | `npm run notice -- --area 賭場 --title "標題" "第壹句" "第二句"`（area 要是 NOTICE_AREAS 其中壹個；`--id`、`--section`、`--importance`、`--expire`、`--dry`，看 tools/notice.cjs 開頭） |
 | **經濟三支**：價格總表（玩家看得到的價格和上限，名字、值、路徑）；寫死金額掃描（文字裡的「1,000 萬」跟 NUM 對不上的，列檔名:行；白名單 `tools/econ_scan_allow.json`）；正式站帳面壹鍵拿（按固定動作 econ-status → 存 log → 餵 `econ_check --ledger`，**只有翊文同意才能跑，要加 `--yes`**） | `npm run econ:prices [-- --md]`；`npm run econ:scan [-- --all --strict]`；`npm run econ:status -- --yes` |
-| **世界經濟四支**（決定 0086）：`npm run world:check`（名單檢查：單位的樹、兩層加總、股票只掛一處、NPC 的隸屬）；`world:unit -- list --tree／add／set／move`（加、改、掛單位）；`world:npc -- assign／list／orphans`（NPC 的隸屬）；`world:gdp -- --quarter … --yoy … --published …`（台灣 GDP 數字寫進 content/economy.json，不倒退、自動推近四季）。都有 `--dry`，寫之前會檢查，只改 repo 的檔案 | 加單位、掛 NPC、更新 GDP 時用；排程更新 GDP 也用 `world:gdp`，不手改 JSON | `tools/world_*.cjs` |
+| **世界經濟七支**（決定 0086；加 `world:budget` 集團預算總表、`world:sim` 改數字前跑 30 天預覽、`world:news` 世界市場新聞寫進 market）：`npm run world:check`（名單檢查：單位的樹、兩層加總、股票只掛一處、NPC 的隸屬）；`world:unit -- list --tree／add／set／move`（加、改、掛單位）；`world:npc -- assign／list／orphans`（NPC 的隸屬）；`world:gdp -- --quarter … --yoy … --published …`（台灣 GDP 數字寫進 content/economy.json，不倒退、自動推近四季）。都有 `--dry`，寫之前會檢查，只改 repo 的檔案 | 加單位、掛 NPC、更新 GDP 時用；排程更新 GDP 也用 `world:gdp`，不手改 JSON | `tools/world_*.cjs` |
 | 開本機測試環境：模擬器、規則、網頁 | `npm run local -- --set 8 --port 5288`（放背景跑；`--stop` 關掉；測試請換到還沒開的 `--set`，不然會測到別的分支） |
 | 測限時活動：把一場移到 90 秒後開始 | `npm run local -- --event-now double11`（測完 `git checkout` 還原，不要 commit） |
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/new_doc.cjs` 開頭） |

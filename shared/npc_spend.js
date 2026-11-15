@@ -18,6 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
+import { WU_HH, wuDebit, wuHave, wuUnitOf } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -115,9 +116,9 @@ export function npcPresence(day, nowMs, secret, list, counters, away) {
 
 function npcLiveFix(house, day) {
   const L = house.npcLive;
-  if (!L || typeof L !== "object" || L.day !== day) house.npcLive = { day, done: {}, by: {}, ticket: 0, shop: 0, people: 0, byNpc: {}, sources: {}, menu: {}, orders: [], shopBy: {} };
+  if (!L || typeof L !== "object" || L.day !== day) house.npcLive = { day, done: {}, by: {}, ticket: 0, shop: 0, people: 0, byNpc: {}, sources: {}, menu: {}, orders: [], shopBy: {}, byUnit: {} };
   const x = house.npcLive; if (!x.done || typeof x.done !== "object") x.done = {}; if (!x.byNpc || typeof x.byNpc !== "object") x.byNpc = {}; if (!x.by || typeof x.by !== "object") x.by = {};
-  if (!x.menu || typeof x.menu !== "object") x.menu = {}; if (!Array.isArray(x.orders)) x.orders = []; if (!x.shopBy || typeof x.shopBy !== "object") x.shopBy = {};
+  if (!x.menu || typeof x.menu !== "object") x.menu = {}; if (!x.byUnit || typeof x.byUnit !== "object") x.byUnit = {}; if (!Array.isArray(x.orders)) x.orders = []; if (!x.shopBy || typeof x.shopBy !== "object") x.shopBy = {};
   return x;
 }
 // 完整歷史（11-14，翊文：「圖書館留個位置放所有他們的歷史留言」）：npcReviews/{日期} 每天壹份 { day, items: [...] }，照時間排，以 id 去重（冪等）。
@@ -164,9 +165,10 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     // 人次照算（故事線的全館累計、日報的人數）；門票到了全館上限就不再收（11-14：散客壹天上千位，上限會碰到）
     if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
     house.npcc.hall = nsN(house.npcc.hall) + gv.n; L.crowd.people += gv.n; L.crowd.groups++;
-    const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0) continue;
+    const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0 || wuHave(house, WU_HH) < amt) continue; // 散客的錢從家計出（W4）；家計不夠就不收
     const b = Math.floor(amt * C.ticketBudgetPct / 100), got = casPoolWorldOut(house, "budget", "npcCrowdBudget", b) + casPoolWorldOut(house, "museum", "npcCrowdMuseum", amt - b);
     hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
+    wuDebit(house, WU_HH, got); L.byUnit[WU_HH] = nsN(L.byUnit[WU_HH]) + got;
     L.crowd.ticket += got; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
   // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap
@@ -174,11 +176,12 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   if (CS && !low) for (const sv of crowdShopToday(day, secret)) {
     if (sv.start > m || L.done[sv.key]) continue;
     L.done[sv.key] = 1;
-    let amt = Math.min(sv.n * CS.spend, Math.max(0, CS.dayCap - nsN(L.crowd.shop))); if (amt <= 0 || !SHOP[sv.store]) continue;
+    let amt = Math.min(sv.n * CS.spend, Math.max(0, CS.dayCap - nsN(L.crowd.shop))); if (amt <= 0 || !SHOP[sv.store] || wuHave(house, WU_HH) < amt) continue;
     let ord = null; if (sv.store === "food") { ord = npcOrder(mulberry32(hashStr(`${secret}|${day}|${sv.key}|order`)), amt); amt = ord.cost; if (amt <= 0) continue; } // 餐車：照菜單點，花的是點的那些
     const got = SHOP[sv.store][0] === "house" ? casHouseWorldOut(house, SHOP[sv.store][1], amt, W) : casPoolWorldOut(house, SHOP[sv.store][0], SHOP[sv.store][1], amt);
     if (ord && got >= amt) for (const k of Object.keys(ord.items)) { const o = L.menu[k] || (L.menu[k] = { npc: 0, crowd: 0 }); o.crowd += ord.items[k]; }
     const sb = L.shopBy[sv.store] || (L.shopBy[sv.store] = { npc: 0, crowd: 0 }); sb.crowd += got;
+    wuDebit(house, WU_HH, got); L.byUnit[WU_HH] = nsN(L.byUnit[WU_HH]) + got;
     L.crowd.shop = nsN(L.crowd.shop) + got; L.sources[SHOP[sv.store][1]] = nsN(L.sources[SHOP[sv.store][1]]) + got;
   }
   for (const v of npcVisitsToday(day, secret, list, counters)) {
@@ -186,12 +189,13 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     L.done[v.key] = 1;
     const n = list.find(x => x && x.id === v.id);
     if (!n || !n.budget || !(n.budget.perDay > 0)) continue;
-    const first = L.byNpc[v.id] == null;
+    const first = L.byNpc[v.id] == null, uid = wuUnitOf(n.job); // 有名字的旅客：花的錢從所屬集團出（W4，決定 0086）；沒有單位的算家計
     let mine = Math.min(room, Math.floor(n.budget.perDay * C.dayPct / 100) - nsN(L.byNpc[v.id])), paid = 0;
     const pay = (src, pool, amt) => {
       amt = Math.min(amt, mine);
-      if (amt <= 0 || low) return 0;
+      if (amt <= 0 || low || wuHave(house, uid) < amt) return 0; // 集團的錢不夠就當天不花
       const got = pool === "house" ? casHouseWorldOut(house, src, amt, W) : casPoolWorldOut(house, pool, src, amt);
+      if (got > 0) { wuDebit(house, uid, got); L.byUnit[uid] = nsN(L.byUnit[uid]) + got; }
       mine -= got; paid += got; L.sources[src] = nsN(L.sources[src]) + got; return got;
     };
     if (first) { const tk = Math.floor(C.ticket * tmul), b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b) + pay("npcTicketMuseum", "museum", tk - b); }
@@ -216,7 +220,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
       house.reviewsOut.push(house.reviews[house.reviews.length - 1]);
     }
   }
-  if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
+  if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), byUnit: Object.assign({}, L.byUnit || {}), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
   return L;
 }
 

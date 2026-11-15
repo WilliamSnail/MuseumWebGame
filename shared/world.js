@@ -112,6 +112,15 @@ export function wuGrow(house, n) {
   wuMove(house, wdN(house.world) - n, deltas);
   return n;
 }
+// NPC 的隸屬 → 帳上要扣哪個頂層單位（W4）：job.unit 往上找到頂層；沒有單位（學生、退休、自由業、沒寫）算家計
+export function wuUnitOf(job) {
+  if (!wuBox(job) || typeof job.unit !== "string") return WU_HH;
+  const by = {}; for (const u of WORLD_UNITS) by[u.id] = u;
+  let u = by[job.unit], n = 0; while (u && u.parent != null && n++ < 50) u = by[u.parent];
+  return u ? u.id : WU_HH;
+}
+// 這個單位現在有多少（帳上）；沒有這個單位回 0
+export function wuHave(house, id) { const a = wuAmounts(house); return id in a ? Math.max(0, a[id]) : 0; }
 // 指名一個單位出錢 n（house.world 已經少了 n）：它最多出它現在有的，剩下的由公共出（別的單位不動）。回傳那個單位實際出了多少
 export function wuDebit(house, id, n) {
   n = wdN(n); const x = wuFix(house);

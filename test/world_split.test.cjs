@@ -56,4 +56,20 @@ T("壞資料：wu 不見、r 壞掉都變回預設；不改 house.world", G => {
   const h = mk(G), w = h.world; delete h.wu; assert.strictEqual(sum(G.wuAmounts(h)), w); h.wu = { r: "x" }; assert.strictEqual(sum(G.wuAmounts(h)), w); assert.strictEqual(h.world, w);
   h.wu = { r: { "g-a": "abc", pub: 0.5 }, adj: { "g-a": "x" } }; assert.strictEqual(sum(G.wuAmounts(h)), w);
 });
+const LIST = fs.readdirSync(path.join(__dirname, "..", "content", "npc")).filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "npc", f), "utf8")));
+T("W4 NPC 來館花的錢從所屬集團出：byUnit 加起來 ＝ 花的總額、集團減少、家計出散客的、總和還是 house.world", G => {
+  const h = mk(G), b0 = G.wuAmounts(h), w0 = h.world; G.casNpcSpend(h, D, "sec", LIST, null);
+  const N = h.npcs, by = N.byUnit; assert.ok(by && Object.keys(by).length > 0, "有記每個單位出多少");
+  const total = N.ticket + N.shop + N.crowd.ticket + N.crowd.shop; assert.strictEqual(sum(by), total, "byUnit 加起來 ＝ 花的總額"); assert.ok(total > 0);
+  const a = G.wuAmounts(h); assert.strictEqual(sum(a), h.world); assert.strictEqual(w0 - h.world, total, "外面世界少的 ＝ 花的");
+  for (const id of Object.keys(by)) { const base = Math.floor(h.world * G.wuRatios()[id]) - Math.floor(w0 * G.wuRatios()[id]); assert.ok(Math.abs((a[id] - b0[id]) - (-by[id] + 0)) <= Math.abs(base) + 3, id + " 減少約 byUnit：" + (a[id] - b0[id]) + " vs " + by[id]); }
+  assert.ok(by["u-household"] > 0, "散客從家計出");
+});
+T("W4 沒有單位的 NPC（學生、退休）算家計；有單位的對到頂層集團", G => {
+  assert.strictEqual(G.wuUnitOf({ kind: "student" }), "u-household"); assert.strictEqual(G.wuUnitOf(undefined), "u-household"); assert.strictEqual(G.wuUnitOf({ unit: "g-daily", title: "x" }), "g-daily"); assert.strictEqual(G.wuUnitOf({ unit: "不存在", title: "x" }), "u-household");
+});
+T("W4 集團的錢不夠就當天不花：把集團的份額清空，那個集團的 NPC 不花錢", G => {
+  const h = mk(G), x = G.wuFix(h); x.adj["g-daily"] = -Math.floor(h.world * x.r["g-daily"]); assert.strictEqual(G.wuHave(h, "g-daily"), 0);
+  G.casNpcSpend(h, D, "sec", LIST, null); assert.ok(!h.npcs.byUnit["g-daily"], "民生集團沒錢：不花"); assert.strictEqual(sum(G.wuAmounts(h)), h.world);
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
