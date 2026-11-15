@@ -555,11 +555,22 @@ export function casSignWeekChips(w, save, day) {
 
 // 「Yuga 來收錢了」的話：拿走（畫面說完就清掉）
 export function casLoanTakeNotes(w) { const n = w.loan.notes; w.loan.notes = []; return n; }
+// 快速按鈕照額度算（11-15，翊文：額度 300 萬時按鈕還是 2,500／7,500／12,500「好改」）：額度的 quickPct%，往下取成 1、2、3、5 開頭的整數，不到 min 的、重複的拿掉
+export function casLoanQuick(limit) {
+  const C = NUM.casino.loan, out = [];
+  for (const p of C.quickPct || []) {
+    const raw = Math.floor(Math.max(0, +limit || 0) * p / 100);
+    if (raw < C.min) continue;
+    const e = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / e, nice = (f >= 5 ? 5 : f >= 3 ? 3 : f >= 2 ? 2 : 1) * e;
+    if (nice >= C.min && !out.includes(nice)) out.push(nice);
+  }
+  return out.length ? out : C.quick.slice();
+}
 // 畫面要的借款摘要
 export function casLoanView(w, day) {
   const C = NUM.casino.loan, L = w.loan;
   return {
-    limit: L.limit, left: casLoanLeft(w), pct: C.interestPct, days: C.days, min: C.min, quick: C.quick.slice(), ok: L.ok, late: L.late,
+    limit: L.limit, left: casLoanLeft(w), pct: C.interestPct, days: C.days, min: C.min, quick: casLoanQuick(L.limit), ok: L.ok, late: L.late,
     debtSince: L.debtSince, debtDays: L.debtSince && okDay(day) ? casDaysBetween(L.debtSince, day) : 0,
     why: casLoanWhyNot(w, false), notes: L.notes.slice(),
     list: L.list.slice().sort((a, b) => (a.due < b.due ? -1 : 1)).map(x => ({ id: x.id, amt: x.amt, owe: x.owe, day: x.day, due: x.due, today: x.due === day,
