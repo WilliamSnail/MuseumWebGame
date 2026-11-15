@@ -31,6 +31,16 @@ function ctx() {
   const { load } = require("../test/load_shared.cjs"), G = load(), { MARKET_BANNED } = require("./week_check.cjs");
   return { W: G.WORLD_NEWS, stockIds: G.OUT_STOCKS.map(s => s.id), names: G.OUT_STOCKS.map(s => s.name).concat(G.IN_STOCKS.map(s => s.name)), banned: MARKET_BANNED };
 }
+// 草稿（W5）：從集團的狀態變化產生「某某減薪了」這類已經發生的新聞，給排程挑、改寫；不寫檔。events 來自 whNews（house.wh.ev），units 是名單（用名字和旗下股票）。
+// 每則 { title, line, tone, ref, command }：command 是可以直接貼的 world:news add；寫進去之前仍會過 checkItem。
+const DRAFT = { cut: { t: "減薪", line: "那邊的人說近來手頭比較緊。", tone: "down" }, squeeze: { t: "緊縮", line: "那邊的開銷收得很緊。", tone: "down" }, layoff: { t: "裁員", line: "那邊傳出壹批人要離開。", tone: "down" }, normal: { t: "恢復正常", line: "那邊的氣氛輕鬆了些。", tone: "up" } };
+function draft(events, units, week = "<週>", day = "<幾>") {
+  const by = new Map(units.map(u => [u.id, u]));
+  return events.filter(e => DRAFT[e.to] && by.has(e.unit)).map(e => {
+    const u = by.get(e.unit), d = DRAFT[e.to], title = u.name + d.t, ref = (u.stocks || []).slice(0, 3);
+    return { title, line: u.name + d.line.replace("那邊", ""), tone: d.tone, ref, day: e.day, command: `npm run world:news -- add --week ${week} --day ${day} --title ${title} --line ${u.name}${d.line.replace("那邊", "")} --tone ${d.tone}${ref.length ? " --ref " + ref.join(",") : ""}` };
+  });
+}
 function main(argv, weeksDir = path.join(ROOT, "content", "weeks"), c = null, log = console.log) {
   const o = parse(argv), cmd = o._[0], C = c || ctx();
   if (!o.week || !o.day) throw new Error("要寫 --week 2026-W47 --day 3");
@@ -52,5 +62,17 @@ function main(argv, weeksDir = path.join(ROOT, "content", "weeks"), c = null, lo
   }
   throw new Error("用法：add --week --day --title --line --tone [--ref]｜list｜check｜clear（加 --dry 只印不寫）");
 }
-module.exports = { main, checkItem };
-if (require.main === module) { try { main(process.argv.slice(2)); } catch (e) { console.error("✗ " + e.message); process.exit(1); } }
+module.exports = { main, checkItem, draft };
+if (require.main === module && process.argv[2] === "draft") { // npm run world:news -- draft [--b -1] [--weeks 6] [--week 2026-W47 --day 3]
+  try {
+    const o = parse(process.argv.slice(3)), L = require("./world_lib.cjs"), { load } = require("../test/load_shared.cjs"), G = load({ __realMoney: true }), SM = require("./world_sim.cjs");
+    const r = SM.sim(G, L.readNpcs(), { days: Math.max(1, Math.min(52, +o.weeks || 6)) * 7, b: o.b }), C = ctx(), us = L.readUnits();
+    const items = draft(G.whNews(r.house, r.house.wh.day, 14), us, o.week, o.day), bad = [];
+    items.forEach((x, i) => { const e = checkItem({ title: x.title, line: x.line, tone: x.tone, ref: x.ref }, C); if (e.length) bad.push(`${x.title}：${e.join("；")}`); console.log(`${i + 1}. [${x.tone}] ${x.title}｜${x.line}｜${x.day}
+   ${x.command}`); });
+    if (!items.length) console.log("最近兩週沒有集團換狀態，沒有草稿。"); if (bad.length) { bad.forEach(m => console.log("✗ 草稿不合格：" + m)); process.exit(1); }
+    console.log("（草稿是模擬景氣算出來的，排程要看真的景氣再挑、改寫；不要照抄當成真的事件。）");
+  } catch (e) { console.error("✗ " + e.message); process.exit(1); }
+  return;
+}
+if (require.main === module && process.argv[2] !== "draft") { try { main(process.argv.slice(2)); } catch (e) { console.error("✗ " + e.message); process.exit(1); } }

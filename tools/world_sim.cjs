@@ -1,11 +1,12 @@
 // 改世界經濟的數字之前，先跑壹遍預覽：node tools/world_sim.cjs [--days 30] [--b 0] [--set casino.npcSpend.dayPct=12]（npm run world:sim -- …）。決定 0086。
 // 用真的程式（casHouseFix 的換日成長、casNpcSpend 的 NPC 和散客花錢、wu 分帳）跑 N 天，印：
 //   外面世界的錢和每天變多少、每個單位的帳上分類（起點→終點）、每天 NPC 和散客花多少、各集團出多少、莊家和預算池變多少、守恆（單位加公共 ＝ 外面世界）。
+// --scan：景氣 −1／0／+1 各跑 30、90 天，印壹張表（W5 連動）。
 // --b 景氣（−1～1，每天都當這個值）；--set 路徑=值（NUM 底下，可以多次，例如 casino.world.growBase=3000000）；--days 天數（預設 30，最多 365）。
 // 擋：守恆差不是 0、公共是負的、莊家或預算池變負 → exit 1。只讀 repo 的檔案，不碰正式站。
 const fs = require("fs"), path = require("path");
 const L = require("./world_lib.cjs");
-function parse(argv) { const o = { set: [] }; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (a === "--set") o.set.push(argv[++i]); else if (a.startsWith("--")) o[a.slice(2)] = argv[++i]; } return o; }
+function parse(argv) { const o = { set: [] }; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (a === "--set") o.set.push(argv[++i]); else if (a === "--scan") o.scan = true; else if (a.startsWith("--")) o[a.slice(2)] = argv[++i]; } return o; }
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const fmt = n => Math.round(n).toLocaleString("en-US");
 // 回傳 { days, rows, ... }
@@ -27,15 +28,33 @@ function sim(G, npcs, opts = {}) {
   const a1 = G.wuAmounts(h), sum = o => Object.values(o).reduce((x, y) => x + y, 0);
   return { days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
 }
-module.exports = { sim };
+// 景氣 −1／0／+1 各跑 30 和 90 天（W5 連動）：NPC 每天花多少、各狀態幾個集團、最低倍率、有沒有裁員、莊家和預算池撐不撐得住。回傳 [{ b, days, perDay, states, minMult, layoff, ok }]
+function scan(load, npcs, set = []) {
+  const out = [];
+  for (const days of [30, 90]) for (const b of [-1, 0, 1]) {
+    const G = load(), r = sim(G, npcs, { days, b, set }), st = { normal: 0, cut: 0, squeeze: 0, layoff: 0 };
+    const w = r.house.wh; if (w) Object.values(w.st).forEach(s => { st[s.s]++; });
+    const mult = w ? Object.keys(w.st).map(k => G.whMult(r.house, k)) : [1];
+    out.push({ b, days, perDay: r.spent.total / days, states: st, minMult: Math.min(...mult), layoff: st.layoff, ok: r.gap === 0 && r.a1.pub >= 0 && r.house.bankroll >= 0 && r.house.budget >= 0 });
+  }
+  return out;
+}
+module.exports = { sim, scan };
 if (require.main === module) {
   try {
     const o = parse(process.argv.slice(2)), { load } = require("../test/load_shared.cjs"), G = load({ __realMoney: true }), npcs = L.readNpcs();
+    if (o.scan !== undefined) { // 景氣 −1／0／+1 各跑 30、90 天
+      const rows = scan(() => load({ __realMoney: true }), npcs, o.set); console.log("天數　景氣　NPC 每天花　一般／減薪／緊縮／裁員　最低倍率　守恆和不破產");
+      rows.forEach(x => console.log(`${x.days}　${x.b}　${fmt(x.perDay)}　${x.states.normal}／${x.states.cut}／${x.states.squeeze}／${x.states.layoff}　×${x.minMult.toFixed(2)}　${x.ok ? "✓" : "✗"}`));
+      if (rows.some(x => !x.ok)) process.exit(1); console.log("✓ 六種組合都守恆、沒破產"); process.exit(0);
+    }
     const r = sim(G, npcs, { days: o.days, b: o.b, set: o.set }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; }); names["u-household"] = "家計"; names.pub = "公共";
     console.log(`模擬 ${r.days} 天，景氣 ${r.b}：外面世界 ${fmt(r.w0)} → ${fmt(r.w1)}（${r.w1 >= r.w0 ? "+" : ""}${fmt(r.w1 - r.w0)}）`);
     console.log(`NPC 和散客一共花 ${fmt(r.spent.total)}，平均每天 ${fmt(r.spent.total / r.days)}；莊家 ${r.bank >= 0 ? "+" : ""}${fmt(r.bank)}、預算池 ${r.budget >= 0 ? "+" : ""}${fmt(r.budget)}`);
     console.log("單位：起點 → 終點（變多少）　其中 NPC 花了");
     Object.keys(r.a1).forEach(k => console.log(`  ${names[k] || k}：${fmt(r.a0[k])} → ${fmt(r.a1[k])}（${r.a1[k] - r.a0[k] >= 0 ? "+" : ""}${fmt(r.a1[k] - r.a0[k])}）${r.spent.byUnit[k] ? "　花 " + fmt(r.spent.byUnit[k]) : ""}`));
+    const wh = r.house.wh, S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
+    if (wh && wh.st) { console.log("各集團現在的狀態（健康值 h → 預算倍率）："); Object.keys(wh.st).forEach(k => console.log(`  ${names[k] || k}：${S[wh.st[k].s]}（h ${wh.h[k]} → ×${G.whMult(r.house, k).toFixed(2)}）`)); if (wh.ev.length) console.log("換過狀態：" + wh.ev.map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、")); }
     const bad = []; if (r.gap !== 0) bad.push(`守恆差 ${r.gap}（單位加公共應該等於外面世界）`); if (r.a1.pub < 0) bad.push(`公共是負的 ${fmt(r.a1.pub)}`); if (r.house.bankroll < 0 || r.house.budget < 0) bad.push("莊家或預算池變負");
     if (bad.length) { bad.forEach(m => console.log("✗ " + m)); process.exit(1); }
     console.log("✓ 守恆（單位加公共 ＝ 外面世界）、公共不為負、莊家和預算池沒破產");

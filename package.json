@@ -19,6 +19,7 @@
     "world:npc": "node tools/world_npc.cjs",
     "world:gdp": "node tools/world_gdp.cjs",
     "world:budget": "node tools/world_budget.cjs",
+    "world:health": "node tools/world_health.cjs",
     "world:sim": "node tools/world_sim.cjs",
     "world:news": "node tools/world_news.cjs",
     "now": "node tools/now.cjs",

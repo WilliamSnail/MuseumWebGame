@@ -72,4 +72,44 @@ T("W4 集團的錢不夠就當天不花：把集團的份額清空，那個集�
   const h = mk(G), x = G.wuFix(h); x.adj["g-daily"] = -Math.floor(h.world * x.r["g-daily"]); assert.strictEqual(G.wuHave(h, "g-daily"), 0);
   G.casNpcSpend(h, D, "sec", LIST, null); assert.ok(!h.npcs.byUnit["g-daily"], "民生集團沒錢：不花"); assert.strictEqual(sum(G.wuAmounts(h)), h.world);
 });
+T("W5 健康值：景氣好的時候高、差的時候低；文化部固定、家計沒有；夾在 min～max", G => {
+  const C = G.NUM.casino.worldDoc.health, mk2 = b => { const h = mk(G); h.econ = { b }; G.whTick(h, "2026-11-17", {}); return h; };
+  const good = mk2(1), bad = mk2(-1), mid = mk2(0);
+  assert.strictEqual(mid.wh.h["g-island"], 1); assert.ok(good.wh.h["g-island"] > 1 && bad.wh.h["g-island"] < 1, "科技對景氣敏感");
+  assert.ok(Math.abs((bad.wh.h["g-island"] - 1) + 0.3) < 1e-6, "b＝−1、行業係數 0.3 → 0.7");
+  assert.ok(bad.wh.h["g-public"] > 1, "公共機構是防禦型：景氣差 h 反而高"); assert.ok(!("u-culture" in bad.wh.h) && !("u-household" in bad.wh.h), "文化部、家計沒有 h");
+  for (const id of Object.keys(bad.wh.h)) assert.ok(bad.wh.h[id] >= C.min && bad.wh.h[id] <= C.max);
+  assert.strictEqual(G.whMult(bad, "u-culture"), 1); assert.strictEqual(G.whMult(bad, "u-household"), 1); assert.strictEqual(G.whMult(mk(G), "g-island"), 1, "還沒算過：倍率 1");
+  assert.ok(!G.whTick(bad, "2026-11-17", {}), "同一天不重複");
+});
+T("W5 狀態：每週一換；連續 2 週緊縮、4 週裁員；回到 0.9 以上立刻恢復；倍率照狀態、有下限", G => {
+  const C = G.NUM.casino.worldDoc.health, h = mk(G); h.econ = { b: -1 };
+  const mon = ["2026-11-16", "2026-11-23", "2026-11-30", "2026-12-07", "2026-12-14"];
+  const stateOn = d => { G.whTick(h, d, {}); return h.wh.st["g-island"].s; };
+  assert.strictEqual(stateOn(mon[0]), "cut", "第一次 h＝0.7 ＜ 0.75，累計 1 週：減薪");
+  assert.strictEqual(stateOn("2026-11-17"), "cut", "不是週一不換"); assert.strictEqual(stateOn(mon[1]), "squeeze", "連續 2 週：緊縮");
+  assert.strictEqual(G.whMult(h, "g-island"), C.mult.squeeze); assert.strictEqual(stateOn(mon[2]), "squeeze"); assert.strictEqual(stateOn(mon[3]), "layoff", "連續 4 週：裁員");
+  assert.strictEqual(G.whMult(h, "g-island"), C.mult.layoff); assert.ok(G.whMult(h, "g-island") >= C.floor);
+  h.econ = { b: 0 }; assert.strictEqual(stateOn(mon[4]), "normal", "回到 0.9 以上：下一個週一就恢復"); assert.strictEqual(G.whMult(h, "g-island"), 1);
+  assert.ok(h.wh.ev.some(e => e.unit === "g-island" && e.to === "layoff") && h.wh.ev.some(e => e.to === "normal"), "換過的記在 ev");
+  assert.ok(G.whNews(h, mon[4], 1).some(e => /島上科技集團恢復正常了/.test(e.text)), "新聞只寫已發生的");
+});
+T("W5 NPC 預算倍率：集團減薪／緊縮時，那個集團的 NPC 花的比較少；別的集團不受影響；總和和守恆不變", G => {
+  const run = st => { const h = mk(G); G.wuFix(h); G.whTick(h, "2026-11-15", {}); h.wh.st["g-arts"].s = st; G.casNpcSpend(h, D, "secW", LIST, null); return h; };
+  const a = run("normal"), b = run("layoff"); assert.ok((b.npcs.byUnit["g-arts"] || 0) < (a.npcs.byUnit["g-arts"] || 1), "裁員：文化藝術集團的 NPC 花得少");
+  assert.strictEqual(b.npcs.byUnit["g-daily"] || 0, a.npcs.byUnit["g-daily"] || 0, "別的集團不變");
+  assert.strictEqual(sum(G.wuAmounts(b)), b.world);
+});
+T("W5 財報卡和日報：狀態分布、h 的分布不列每家；日報只寫已經發生的", G => {
+  const h = mk(G); h.econ = { b: -1 }; G.whTick(h, "2026-11-16", {}); G.whTick(h, "2026-11-23", {}); G.whTick(h, "2026-11-30", {});
+  const c = G.whCard(h, "2026-11-30"); assert.ok(c.states.squeeze >= 1 && c.bands.length === 4); assert.strictEqual(c.bands.reduce((x, y) => x + y, 0), 7); assert.ok(!JSON.stringify(c).includes("g-island"), "不列每家的數字");
+  assert.ok(c.avgMult < 1 && c.avgMult >= G.NUM.casino.worldDoc.health.floor);
+  const s = G.casBookSnap([], h, 0, "2026-11-30"); assert.ok(s.house.wh && s.house.wh.st["g-island"]);
+});
+T("W5 週漲跌：旗下股票漲 → 健康值加分、跌 → 扣分（最多 chgCap×stockW）", G => {
+  const C = G.NUM.casino.worldDoc.health, h = mk(G); h.econ = { b: 0 }; const px = v => ({ islandforge: v, handbrain: v, bigassembly: v, trianglepower: v, linetower: v });
+  for (let i = 0; i < 8; i++) G.whTick(h, "2026-11-" + String(9 + i).padStart(2, "0"), px(10000));
+  G.whTick(h, "2026-11-17", px(13000)); assert.ok(Math.abs(h.wh.h["g-island"] - (1 + C.chgCap * C.stockW)) < 1e-6, "漲 30% 以上夾在 chgCap：" + h.wh.h["g-island"]);
+  const h2 = mk(G); h2.econ = { b: 0 }; for (let i = 0; i < 8; i++) G.whTick(h2, "2026-11-" + String(9 + i).padStart(2, "0"), px(10000)); G.whTick(h2, "2026-11-17", px(9000)); assert.ok(h2.wh.h["g-island"] < 1 && h2.wh.h["g-island"] > 1 - C.chgCap * C.stockW - 1e-9);
+});
 console.log(`世界分帳：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

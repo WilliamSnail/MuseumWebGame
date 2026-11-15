@@ -103,7 +103,7 @@ export function casBankEcon(house) {
   if (!e || typeof e !== "object" || !e.day) return null;
   const idx = gdClamp(+e.b || 0, -1, 1);
   const rows = (Array.isArray(e.rows) ? e.rows : []).filter(r => Array.isArray(r) && r.length === 2).map(r => [String(r[0]), String(r[1])]);
-  return { gdp: gdNz(e.perDay), growth: typeof e.g === "number" && isFinite(e.g) ? e.g : 0, idx, news: casEconNews(e), report: rows, ext: e.ext && typeof e.ext === "object" ? e.ext : null };
+  return { gdp: gdNz(e.perDay), growth: typeof e.g === "number" && isFinite(e.g) ? e.g : 0, idx, news: casEconNews(e), report: rows, ext: e.ext && typeof e.ext === "object" ? e.ext : null, world: e.world && typeof e.world === "object" ? e.world : null };
 }
 // 今天的壹句新聞：照景氣、昨天最熱鬧的那件事、預算池的狀況挑。純函式，不抽亂數（每個人看到的壹樣）
 export function casEconNews(e) {
