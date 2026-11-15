@@ -35,7 +35,7 @@ npm run dev            # http://localhost:5173（開發時自動連模擬器）
 npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
-npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md
+npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md。要重複做的事都要寫腳本；同樣的邏輯有兩份以上就合併成共用的（翊文 11-15）
 npm run log:index      # 重產日誌索引（不要手改）
 node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
 npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/econ_check.cjs --ledger 檔案.json（docs/經濟自我檢查.md）
