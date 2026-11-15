@@ -4,6 +4,7 @@
 //
 //   node tools/shot_login.cjs --url "http://localhost:5393" --user 賭場甲 --room 賭場 --tab 成就 --size 1366x768 --out a.png
 //   --room 預設「賭場」（大廳地圖上的房間名：賭場、銀行、我的展廳…），--tab 不給就停在第壹頁，--size 手機直拿用 375x740（會自動略過「請轉橫」）
+//   --after "JS 片段"：進完房間、點完頁籤之後再跑壹段（例如塞假資料再重畫；可用 await、sleep）
 //   --mode 自由模式（預設；賭場、銀行、大廳都能看）或 新參觀者（要有挑戰存檔，用 qa_seed_save 放）
 const { spawnSync } = require("child_process");
 const path = require("path"), os = require("os");
@@ -15,6 +16,6 @@ const js = `(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));const un
   `const btn=t=>()=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim().startsWith(t));` +
   `(await until(btn(${JSON.stringify(mode)})))?.click();await until(()=>document.querySelector('.l2-room'));await sleep(800);document.querySelector('.nb-x')?.click();` +
   `(([...document.querySelectorAll('.l2-room')].find(e=>e.getAttribute('aria-label').startsWith(${JSON.stringify(room)})))||(document.querySelectorAll('button')&&[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim().startsWith(${JSON.stringify(room)}))))?.click();await sleep(2500);` +
-  (tab ? `(await until(btn(${JSON.stringify(tab)})))?.click();await sleep(1500);` : "") + `})()`;
+  (tab ? `(await until(btn(${JSON.stringify(tab)})))?.click();await sleep(1500);` : "") + (v("--after", "") ? `${v("--after", "")};await sleep(800);` : "") + `})()`;
 const r = spawnSync(process.execPath, [path.join(__dirname, "shot_phone.cjs"), `${base}/?user=${encodeURIComponent(user)}`, "--size", v("--size", "1366x768"), "--wait", v("--wait", "6000"), "--js", js, "--out", out], { stdio: "inherit" });
 process.exit(r.status || 0);

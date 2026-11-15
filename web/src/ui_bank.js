@@ -61,7 +61,7 @@ export function fakeBankHall() {
       lev: { max: 5, byMarket: { in: 2, tw: 5, us: 0 }, owed: 120000, owedText: "館內股今天賺的超過館方當天能賠的上限，還有 120,000 記成欠條，明天補發。", usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 3, next: 3, nextText: "再 3 點信用升到 4 級，就能開到 5×。", nextUnlock: { level: 4, lev: 5, pts: 20 }, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
-    econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
+    econ: { gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", ext: { day: "2026-11-14", ticket: { hall: 18400, crowd: 31200 }, shop: { food: 52300, bj: 128000, craft: 9600, cellar: 0, job: 14400 }, shopCrowd: { food: 31200, bj: 0, craft: 4800, cellar: 0, job: 14400 }, total: 253900, people: { npc: 14, crowd: 86 }, menu: [{ id: "chicken", name: "烤雞肉", npc: 40, crowd: 120 }, { id: "tea", name: "麥茶", npc: 22, crowd: 60 }], orders: [{ who: "鞋店老闆", item: "tea", name: "麥茶", n: 1 }, { who: "小明", item: "chicken", name: "烤雞肉", n: 2 }] }, report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
 },
     houseInv: { asOf: "2026-11-13", hold: [{ id: "chipshop", name: "掌心晶片鋪", n: 2000, cost: 2400000, value: 2500000, pnl: 100000, pnlPct: 0.0417 }, { id: "applework", name: "銀蘋果工坊", n: 300, cost: 3000000, value: 2850000, pnl: -150000, pnlPct: -0.05 }, { id: "nightidx", name: "夜市指數", n: 800, cost: 420000, value: 432000, pnl: 12000, pnlPct: 0.0286 }],
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
@@ -603,6 +603,29 @@ function houseInvPanel(v) {
       h("div", { class: "bank-invy" }, h("b", null, `昨天買賣（用掉 ${fmt(I.spent || 0)}）`),
         ys.length ? h("ul", null, ys.map(y => h("li", null, h("i", { class: "bank-dir " + (y.side === "buy" ? "long" : "short") }, y.side === "buy" ? "買進" : "賣出"), ` ${y.name} ${fmt(y.n)} 股・成交價 ${fmt(y.px)}`))) : h("p", { class: "bank-meta sm" }, "昨天沒有買賣。"))]);
 }
+// 昨天館外來客帶進多少錢（11-15，翊文：「可以銀行的財報之類的地方看到嗎？要分類一下」）
+// 資料 e.ext（伺服器日報快照，昨天的）：{ ticket:{hall,crowd}, shop:{food,bj,craft,cellar,job}, shopCrowd:{同上}, total, people:{npc,crowd}, menu:[{id,name,npc,crowd}], orders:[{who,item,name,n}] }
+// 沒有 ext（正式站要等下次 05:00 日報）：寫「明天早上才有」，不留空洞
+const EXT_SHOP = [["food", "餐車"], ["bj", "21 點"], ["craft", "手作"], ["cellar", "地下"], ["job", "工作"]];
+function extPanel(e) {
+  const x = e && e.ext;
+  if (!x) return panel("昨天館外來客花了多少", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
+  const tk = x.ticket || {}, sh = x.shop || {}, sc = x.shopCrowd || {}, pe = x.people || {};
+  const ticketSum = (tk.hall || 0) + (tk.crowd || 0), shopSum = EXT_SHOP.reduce((n, [k]) => n + (sh[k] || 0), 0);
+  const max = Math.max(1, ...[tk.hall, tk.crowd, ...EXT_SHOP.map(([k]) => sh[k])].map(n => n || 0));
+  const row = (label, n, sub) => h("div", { class: "bank-ext-row", role: "row" }, h("span", { class: "bank-ext-l" }, label), h("span", { class: "bank-ext-bar", "aria-hidden": "true" }, h("i", { style: { width: Math.round(((n || 0) / max) * 100) + "%" } })),
+    h("span", { class: "bank-ext-n bank-tab-num" }, fmt(n || 0), sub ? h("small", null, sub) : null));
+  const group = (title, sum, ...rows) => h("div", { class: "bank-ext-g" }, h("div", { class: "bank-ext-gh" }, h("b", null, title), h("span", { class: "bank-tab-num" }, fmt(sum))), ...rows);
+  const menu = (x.menu || []).filter(m => (m.npc || 0) + (m.crowd || 0) > 0), orders = x.orders || [];
+  return panel("昨天館外來客花了多少", "有名字的旅客＋散客，每天 05:00 結算",
+    h("div", { class: "bank-quote" }, num("big", fmt(x.total || 0)), h("small", null, `旅客 ${fmt(pe.npc || 0)} 位・散客 ${fmt(pe.crowd || 0)} 位`)),
+    h("div", { class: "bank-ext-cols" },
+      group("門票", ticketSum, row("有名字的旅客", tk.hall), row("散客", tk.crowd)),
+      group("店裡消費", shopSum, ...EXT_SHOP.filter(([k]) => sh[k]).map(([k, n]) => row(n, sh[k], sc[k] ? `散客 ${fmt(sc[k])}` : "")))),
+    menu.length || orders.length ? h("details", { class: "bank-ext-more" }, h("summary", null, h("b", null, "餐車賣了什麼"), h("span", null, "點開 ▾")),
+      menu.length ? h("ul", { class: "bank-who" }, menu.map(m => h("li", null, h("b", null, m.name), ` ${fmt((m.npc || 0) + (m.crowd || 0))} 份（旅客 ${fmt(m.npc || 0)}・散客 ${fmt(m.crowd || 0)}）`))) : null,
+      orders.length ? h("ul", { class: "bank-who" }, orders.map(o => h("li", null, h("b", null, o.who), ` 點了 ${o.name}${o.n > 1 ? " ×" + o.n : ""}`))) : null) : null);
+}
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
   if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world));
@@ -614,6 +637,7 @@ function reportPane(v) {
         h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${tone}` }, h("i", { style: { left: 50 + e.idx * 50 + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好")),
         h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天；上面的條是景氣（差、普通、好）"),
         h("p", { class: "bank-line" }, e.news)),
+      fold("昨天館外來客花了多少", extPanel(e)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))])))),
     h("div", { class: "bank-stack" }, fold("館方投資", houseInvPanel(v)), world,
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));

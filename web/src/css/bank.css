@@ -483,3 +483,31 @@ body[data-screen="bank"] #room { background: none; }
 .bank-loan-pop .bank-hint { font-size: var(--type-body, .95rem); color: #4a3b28; min-height: 1.4em; }
 .bank-loan-pop .bank-btn.gold:disabled { opacity: .45; cursor: not-allowed; }
 .bank-loan-pop .bank-btn.gold { background: linear-gradient(#e6c06a, #b8923f); border: 1px solid #8a6a26; color: #2b2117; font-weight: 700; }
+
+/* 昨天館外來客花了多少（11-15）：分組（門票、店裡消費），每列有條，右邊數字；餐車賣了什麼收起來 */
+.bank-ext-g { margin-top: 8px; }
+.bank-ext-gh { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0 4px; border-bottom: 1px solid rgba(201, 209, 222, .25); color: var(--bank-gold, #E3C26E); font-size: var(--type-body, .875rem); }
+.bank-ext-row { display: grid; grid-template-columns: 6.5em minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 28px; font-size: var(--type-body, .875rem); color: #DCE3EE; }
+.bank-ext-bar { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.bank-ext-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #B8923E, #F0D995); }
+.bank-ext-n { text-align: right; white-space: nowrap; }
+.bank-ext-n small { display: block; color: var(--bank-mute, #8E9AB0); font-size: .6875rem; line-height: 1.2; }
+.bank-ext-more { margin-top: 8px; }
+.bank-ext-more > summary { display: flex; justify-content: space-between; min-height: 32px; align-items: center; cursor: pointer; list-style: none; color: #DCE3EE; }
+.bank-ext-more > summary::-webkit-details-marker { display: none; }
+.bank-ext-more > summary span { color: var(--bank-gold, #E3C26E); font-size: .75rem; }
+@media (max-width: 760px) { .bank-ext-row { grid-template-columns: 5.5em minmax(0, 1fr) auto; } }
+
+/* 兩組並排（電腦、橫放）：不然一頁看不完；手機直拿一組一組往下排 */
+.bank-ext-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 16px; align-items: start; }
+.bank-ext-row { min-height: 24px; }
+.bank-ext-n small { display: inline; margin-left: 4px; }
+@media (max-width: 760px) { .bank-ext-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) and (min-width: 761px) { .bank-ext-cols { grid-template-columns: minmax(0, 1fr); } }
+.bank-ext-row { grid-template-columns: 6.5em minmax(24px, 1fr) 9.5em; }
+@media (max-width: 760px) { .bank-ext-row { grid-template-columns: 6em minmax(16px, 1fr) 9em; } }
+/* 兩欄在 1366 寬太窄（數字和說明重疊），全部改成壹欄；每列壓矮壹點 */
+.bank-ext-cols, .bank-ext-cols { grid-template-columns: minmax(0, 1fr) !important; }
+.bank-ext-row { grid-template-columns: 6.5em minmax(24px, 1fr) 11em; min-height: 22px; }
+.bank-ext-g { margin-top: 4px; }
+@media (max-width: 760px) { .bank-ext-row { grid-template-columns: 6em minmax(16px, 1fr) 10em; } }
