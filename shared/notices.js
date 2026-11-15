@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-15-a993ac", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "打怪的招牌修好了", publish: "2026-11-15", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "打怪時「下壹招」的木牌，背景不會再有壹條接縫。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-5148bd", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下的寶箱、信箱領東西有開箱聲", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
