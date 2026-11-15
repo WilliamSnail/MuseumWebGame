@@ -34,4 +34,17 @@ T("預告已經是今天或過去就不算預告；公告只放重要以上；to
   assert.strictEqual(r.find(x => x.kind === "mood").tone, "bad");
   assert.ok(r.every(x => ["good", "neutral", "warn", "bad"].includes(x.tone) && ["bank", "board", "casino", "events"].includes(x.link)));
 });
+T("播放順序洗牌：內容不增不減、同壹次停留順序不變、新來的不重洗舊的", G => {
+  const mk = n => Array.from({ length: n }, (_, i) => ({ kind: "world", text: "t" + i, tone: "neutral", link: "bank" }));
+  let seed = 7; const rng = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  const ranks = new Map(), a = G.orderHeadlines(mk(8), ranks, rng), b = G.orderHeadlines(mk(8), ranks, rng);
+  assert.deepStrictEqual(a.map(x => x.text).sort(), mk(8).map(x => x.text).sort(), "內容壹樣");
+  assert.deepStrictEqual(a.map(x => x.text), b.map(x => x.text), "同壹次停留順序不變");
+  assert.notDeepStrictEqual(a.map(x => x.text), mk(8).map(x => x.text), "順序有換");
+  const c = G.orderHeadlines(mk(8).concat([{ kind: "world", text: "新", tone: "neutral", link: "bank" }]), ranks, rng).map(x => x.text);
+  assert.deepStrictEqual(c.filter(t => t !== "新"), a.map(x => x.text), "舊的相對順序沒變");
+  const d = G.orderHeadlines(mk(8), new Map(), rng).map(x => x.text);
+  assert.notDeepStrictEqual(d, a.map(x => x.text), "新的壹次停留會重洗");
+  assert.strictEqual(G.orderHeadlines(null, new Map(), rng).length, 0);
+});
 console.log(`每日重要事件：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
