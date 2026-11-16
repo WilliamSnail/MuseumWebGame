@@ -6,7 +6,15 @@
   "sector": "daily",
   "share": 0.22,
   "staff": 40000,
-  "stocks": [],
+  "stocks": [
+    "wavefreight",
+    "ironwing",
+    "plugstation",
+    "pillpot",
+    "needlelab",
+    "towerbeam",
+    "coilelder"
+  ],
   "story": false,
   "note": "餐飲、零售、夜市、交通。"
 }

@@ -127,7 +127,7 @@ T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
   const fs = require("fs"), path = require("path");
   for (const f of ["stocks_text.js", "casino_stock.js", "stocks_tw.js", "casino_text.js"]) {
     const src = fs.readFileSync(path.join(__dirname, "..", "shared", f), "utf8");
-    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
+    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519|2609|2618|1513|1795|4743|9958|1609)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
   }
 });
 T("直接用真實價：盤中開著卻超過 3 分鐘沒新價，買賣擋下來說「暫停」，不說「沒有開盤」（11-14 實測）", G => {

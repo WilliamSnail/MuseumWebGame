@@ -188,7 +188,7 @@ export function casStockPegNow(house, closes) {
   return out;
 }
 // ---------- 照真實股價的比例（規劃 2.8h） ----------
-const stPegMult = id => (stockIsTw(id) ? NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
+const stPegMult = id => (stockIsTw(id) ? (NUM.casino.stock.peg.byId && NUM.casino.stock.peg.byId[id]) || NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
 // 壹天最多拉回幾（小數）：2 × 手續費 − drag，小於來回手續費加 drag；手續費改了自動跟著降
 export const casStockPullMax = () => Math.max(0, 2 * NUM.casino.stock.feePct - NUM.casino.stock.drag) / 100;
 const stOkPx = v => typeof v === "number" && isFinite(v) && v > 0;

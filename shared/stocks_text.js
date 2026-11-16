@@ -19,4 +19,11 @@ export const OUT_STOCKS = [
   { id: "cloudcabinet", kind: "stock", market: "tw", name: "大戶櫃匠", intro: "只接幾個大戶的單，大戶壹打噴嚏就跟著感冒。價錢高，跳起來也兇。" },
   { id: "customchip", kind: "stock", market: "tw", name: "量身晶片坊", intro: "不賣現成的，專替大攤位設計量身訂做的晶片。大單子一來價錢就跳，單子一走也跳。" },
   { id: "voltgrid", kind: "stock", market: "tw", name: "粗線變壓坊", intro: "做變壓器和配電盤的重電老坊，機房和電廠都得向它訂貨。這兩年訂單排得很後面。" },
+  { id: "wavefreight", kind: "stock", market: "tw", name: "大浪押運行", intro: "押著壹箱箱貨在海上跑的船運行。海上壹缺貨，它的價錢就像浪頭壹樣高；浪退了，掉得也快。" },
+  { id: "ironwing", kind: "stock", market: "tw", name: "鐵翼搭客行", intro: "載人在天上飛的行號。客人壹多就賺，油壹貴就喊痛，天氣壹壞整天的帳都跟著抖。" },
+  { id: "plugstation", kind: "stock", market: "tw", name: "接線電廠所", intro: "替電廠和工廠接粗線、做配電盤的老所。哪裡要蓋新電廠，單子就往哪裡來。" },
+  { id: "pillpot", kind: "stock", market: "tw", name: "小罐藥房", intro: "把藥配成小小壹罐的藥坊，專做別人專利到期的老方子。壹兩罐藥賣得好，價錢就跟著跳。" },
+  { id: "needlelab", kind: "stock", market: "tw", name: "針筒夜工坊", intro: "做新藥的小實驗坊，壹口鍋能不能煮出新藥，全看試驗成不成。成了衝上天，不成就掉下來。" },
+  { id: "towerbeam", kind: "stock", market: "tw", name: "巨塔鋼條行", intro: "替海上大風車打塔架的鋼鐵行。接到壹張大單，幾年都有活幹；單子斷了，價錢也斷。" },
+  { id: "coilelder", kind: "stock", market: "tw", name: "捲線老頭行", intro: "專捲粗電線、粗電纜的老行號，電廠、工地、大樓都在用。銅價壹動，它跟著動。" },
 ];

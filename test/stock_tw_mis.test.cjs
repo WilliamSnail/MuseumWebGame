@@ -22,4 +22,9 @@ assert.strictEqual(out.trianglepower.px, null, "兩邊都沒有、也不在漲�
 assert.strictEqual(out.linetower.px, 1120, "第壹檔是 0（市價單佔位）：跳過，取下壹個大於 0 的價");
 const lock = parseMis({ msgArray: [Object.assign(row("2308", "-", "-", "-"), { h: "1200.0000", l: "1120.0000", u: "1360.0000", w: "1120.0000" })] }, "20261116", now);
 assert.strictEqual(lock.trianglepower.px, 1120, "兩邊都沒有、今天最低＝跌停：用跌停價");
+{ // 上櫃的用 otc_、上市用 tse_（合一 4743 是上櫃）
+  const k = src.indexOf("export const TW_OTC"), l = src.indexOf(String.fromCharCode(10), src.indexOf("export const misCh"));
+  const misCh = new Function(src.slice(k, l).replace("export const TW_OTC", "const TW_OTC").replace("export const misCh", "const misCh") + "; return misCh;")();
+  assert.strictEqual(misCh("4743"), "otc_4743.tw"); assert.strictEqual(misCh("2330"), "tse_2330.tw");
+}
 console.log("6 passed, 0 failed（台股盤中解析）");

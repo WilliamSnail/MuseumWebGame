@@ -525,7 +525,7 @@ export const NUM = {
       twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }],
       // 照真實股價的比例（11-14，規劃 2.8h，翊文「美股×4、台股×24」「可以（拉回）」）：遊戲價 ＝ 倍數 × 真實價。第壹次換日時把價位換成這個比例（持股照比例換股數、市值不變）；
       //   之後每天開盤把遊戲價往「倍數 × 真實價」拉回 lamPct% 的差距，壹天最多拉回 2 × feePct − 0.04（%）：拉回量小於來回手續費加 drag，看盤的人收盤前知道方向也賺不到（test/sim_peg.cjs）
-      peg: { us: 32, tw: 1, lamPct: 30 },
+      peg: { us: 32, tw: 1, lamPct: 30, byId: { wavefreight: 10, ironwing: 10, plugstation: 10, pillpot: 10, needlelab: 10, towerbeam: 10, coilelder: 20 } }, // byId：真實價很低的台股（30～140 元）照 ×10／×20，不然壹個籌碼的跳動就大於真實的 15 分鐘波動（決定 0107）
       // 直接用真實價（11-14，規劃 2.8l，翊文：「維持，直接用真實價即時成交」）：direct 開＝遊戲價 ＝ 倍數 × 真實價（每分鐘抓、即時成交；下面的錨點、橋、拉回、drag 都不用，測試設 false 走舊的）。
       //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進預算池（持有成本，取代 drag；%）。
       //   換比例零頭 stockRebase 照舊。真實價的合理範圍 sane（相對前壹收盤的倍數）：超出的當壞資料不收
@@ -535,7 +535,7 @@ export const NUM = {
       //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
       // noOpenIdx：台股 13:25（第 265 分鐘）起不能新開槓桿、放空（收盤集合競價那五分鐘，翊文 11-14）；13:30 用官方收盤價平倉（收盤後再抓壹次，twNeed 的 fin）
       tw: { noOpenIdx: 265, from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
-        sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3, brainrack: 0.31, cloudcabinet: 0.55, customchip: 0.64, voltgrid: 0.5 } },
+        sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3, brainrack: 0.31, cloudcabinet: 0.55, customchip: 0.64, voltgrid: 0.5, wavefreight: 0.3, ironwing: 0.33, plugstation: 0.37, pillpot: 0.4, needlelab: 0.43, towerbeam: 0.34, coilelder: 0.35 } },
       // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
