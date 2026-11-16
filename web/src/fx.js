@@ -705,19 +705,24 @@ export const FX = (() => {
         const steps = every(() => farSteps(c, g, 0.01), () => rand(8000, 15000));
         const ck = creepyHook(c, g);
         // 兩首翊文用 Suno 做的（11-16）：限時活動進行中放 lobby-event、人潮很多放 lobby-crowd（活動優先）；都沒有放原本的旋律。第壹次要放才下載
-        const song = { event: null, crowd: null }, state = { event: false, crowd: false };
-        const songStop = { stop() { if (song.event) song.event.n.stop(); if (song.crowd) song.crowd.n.stop(); } };
+        // 11-16 翊文：「平常時大廳可以放這首」（Welcome Lobby）：平常放 lobby-normal，原本的合成旋律收起來（mel ＝ 0，程式留著）
+        const SONG_ID = { normal: 'lobby-normal', event: 'lobby-event', crowd: 'lobby-crowd' };
+        const song = { normal: null, event: null, crowd: null }, state = { event: false, crowd: false };
+        const songStop = { stop() { for (const k of Object.keys(song)) if (song[k]) song[k].n.stop(); } };
+        mel.gain.value = 0;
+        const apply = () => {
+          const pick = state.event ? 'event' : state.crowd ? 'crowd' : 'normal', t = c.currentTime;
+          if (!song[pick]) song[pick] = fileLoop(c, g, SONG_ID[pick], 0, true);
+          for (const k of Object.keys(song)) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? 0.45 : 0, t, k === pick && t < 2 ? 0.3 : 1.2);
+        };
         const mix = (m) => {
           ck.mix(m);
           if (!m || !('event' in m || 'crowd' in m)) return;
           if ('event' in m) state.event = !!m.event;
           if ('crowd' in m) state.crowd = !!m.crowd;
-          const pick = state.event ? 'event' : state.crowd ? 'crowd' : null, t = c.currentTime;
-          if (pick === 'event' && !song.event) song.event = fileLoop(c, g, 'lobby-event', 0, true);
-          if (pick === 'crowd' && !song.crowd) song.crowd = fileLoop(c, g, 'lobby-crowd', 0, true);
-          mel.gain.setTargetAtTime(pick ? 0 : 1, t, 1.2);
-          for (const k of ['event', 'crowd']) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? 0.45 : 0, t, 1.2);
+          apply();
         };
+        apply();
         return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n, songStop], timers: [sched, steps, ck.timer], mix }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
       },
       // 手作坊：輕快的木琴＋撥弦低音（Claude 自己寫的，不是任何現成的歌）。
