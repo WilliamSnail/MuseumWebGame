@@ -28,7 +28,7 @@ export const TW_SYMBOLS = { islandforge: "2330", handbrain: "2454", bigassembly:
 const MIS_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp";
 
 // 把證交所的回應變成 { id: { open, prev, px, lag } }。
-//   o 開盤價、y 前壹收盤、z 最新成交價（"-" ＝還沒有）、d 資料的日期、t 最後成交時間。
+//   o 開盤價、y 前壹收盤、z 最新成交價（"-" ＝這壹刻沒有，改用 a 賣價、b 買價第壹檔的中間價）、d 資料的日期、t 最後成交時間。
 //   日期不是今天（假日、還沒開盤時介面會回上壹個交易日）→ 那支當沒資料。
 //   lag：資料落後幾分鐘 ＝ 現在（台灣時間）減這次回應裡最新的成交時間（所有股票取最新的，代表資料源本身的延遲）。
 export function parseMis(json, todayYmd, nowMs) {
@@ -41,7 +41,11 @@ export function parseMis(json, todayYmd, nowMs) {
   for (const it of arr) {
     const id = Object.keys(TW_SYMBOLS).find(k => TW_SYMBOLS[k] === it.c);
     if (!id || String(it.d) !== todayYmd) continue;
-    rows[id] = { open: num(it.o), prev: num(it.y), px: num(it.z) };
+    // 11-16：大型股（島上鑄晶坊 2330、掌心晶片鋪 2454）常常這壹秒剛好在撮合，z 回 "-"，被當成沒新行情、標「未更新」又暫停買賣。
+    //   z 沒有的時候用最佳買價、最佳賣價（a、b 是用 _ 隔開的五檔，取第壹檔）的中間價；兩邊都沒有才真的當沒資料
+    const best = v => num(String(v || "").split("_")[0]), ask = best(it.a), bid = best(it.b);
+    const px = num(it.z) != null ? num(it.z) : ask != null && bid != null ? Math.round((ask + bid) / 2 * 100) / 100 : ask != null ? ask : bid;
+    rows[id] = { open: num(it.o), prev: num(it.y), px };
     const s = secs(it.t);
     if (s != null && (newest == null || s > newest)) newest = s;
   }

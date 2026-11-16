@@ -33,7 +33,7 @@ gold = np.array([235, 190, 95], np.float32)
 rgb[semi] = rgb[semi] * 0.35 + gold * 0.65
 
 mask = alpha > 0.5
-mask = ndimage.binary_opening(mask, iterations=2)
+mask = ndimage.binary_opening(mask, iterations=int(os.environ.get("CUT_OPEN", "2"))) if int(os.environ.get("CUT_OPEN", "2")) > 0 else mask  # 細線的素材（燈串）用 CUT_OPEN=0
 lab, n = ndimage.label(mask)
 boxes = ndimage.find_objects(lab)
 H, W = mask.shape

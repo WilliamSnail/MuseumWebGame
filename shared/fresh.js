@@ -8,8 +8,9 @@
 //    false  ＝看過了。留著是為了「掃描」來的東西（買得起的升級、剛能解鎖的選項）不會再標第二次
 // ================================================================
 import { PEPE_PARTS, UPGRADES } from "./config.js";
-import { CATS, isFree, isUnlocked, partOf, reqMet } from "./logic.js";
+import { CATS, isFree, isUnlocked, partOf, reqMet, todayStr } from "./logic.js";
 import { upgradeState } from "./logic3.js";
+import { mapSpots } from "./map.js";
 
 // 每種東西的 key（畫面那邊找小牌子也用這裡，兩邊才不會寫不一樣）
 export const FRESH_KEY = {
@@ -23,6 +24,7 @@ export const FRESH_KEY = {
   badge: id => `badge:${id}`,               // 圖鑑室的徽章頁
   up: id => `up:${id}`,                     // 館長室的工坊升級
   floor: n => `floor:${n}`,                 // 地下收藏庫新開的樓層
+  map: id => `map:${id}`,                    // 圖書館「地圖」頁籤新亮的點（11-16）
 };
 
 // 事件 → 新東西在哪個房間、哪壹件（tab ＝在那個房間的哪壹頁）。壹個事件可能有好幾件：拿到鑰匙＝多壹頁＋那頁的選項
@@ -78,6 +80,7 @@ export function scanFresh(P, here) {
   CATS.forEach(c => partOf(c).options.forEach(o => {
     if (o.req && !isUnlocked(P, c, o.name) && reqMet(P, o.req)) once("workshop", FRESH_KEY.opt(c, o.name), { tab: c, cat: c, name: o.name });
   }));
+  mapSpots(todayStr(), P).forEach(s => once("origin", FRESH_KEY.map(s.id), { tab: "map" })); // 圖書館地圖：日期到了新出現的點（11-16）
   UPGRADES.forEach(u => {
     const st = upgradeState(P, u.id), key = FRESH_KEY.up(u.id), b = P.fresh && P.fresh.office;
     if (st.state === "buy" && st.ok) once("office", key, { tab: "upgrades", id: u.id });
