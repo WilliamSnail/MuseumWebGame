@@ -542,3 +542,28 @@ body[data-screen="bank"] #room { background: none; }
 /* 財報標題旁的「這份是哪一天的帳」（11-16）；不是昨天的用警告色 */
 .bank-day { margin-left: 8px; padding: 1px 8px; border: 1px solid currentColor; border-radius: 99px; font-size: .75rem; font-weight: 700; color: #B9C2D4; white-space: nowrap; }
 .bank-day.warn { color: #F0B95A; background: rgba(240, 185, 90, .14); }
+
+/* 全館的帳（11-16）：每個帳壹列，點開看昨天最大的進出 */
+.bank-books { display: grid; gap: 6px; }
+.bank-book-row { border: 1px solid rgba(180, 190, 215, .35); border-radius: 6px; background: rgba(255, 255, 255, .04); }
+.bank-book-row summary, .bank-book-row.none { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; min-height: 44px; cursor: pointer; list-style: none; }
+.bank-book-row.none { cursor: default; }
+.bank-book-row summary::-webkit-details-marker { display: none; }
+.bank-book-n { display: grid; gap: 1px; min-width: 0; }
+.bank-book-n small { font-size: .7rem; opacity: .75; }
+.bank-book-v { display: grid; justify-items: end; gap: 1px; flex: none; }
+.bank-book-v i { font-style: normal; font-size: .72rem; }
+.bank-book-v i.up, .bank-book-top b.up { color: #6FBF73; }
+.bank-book-v i.down, .bank-book-top b.down { color: #E0705F; }
+.bank-book-v em { font-style: normal; opacity: .7; font-size: .75rem; }
+.bank-book-v.dim, .bank-book-top .dim { opacity: .7; }
+.bank-book-row[open] summary em { transform: rotate(180deg); display: inline-block; }
+.bank-book-top { margin: 0; padding: 4px 10px 10px; list-style: none; display: grid; gap: 4px; font-size: .8rem; }
+.bank-book-top li { display: flex; justify-content: space-between; gap: 10px; }
+/* 館方投資：投資方式的告示 */
+.bank-howbtn { margin-left: 8px; min-height: 30px; border-color: rgba(214, 178, 94, .85); color: #F6E4B0; }
+.mini-card.bank-how { width: min(480px, 94vw); max-height: min(86svh, 640px); overflow-y: auto; text-align: left; }
+.bank-how-l { margin: 0 0 6px; padding-left: 18px; display: grid; gap: 8px; line-height: 1.55; font-size: .9rem; }
+.bank-how h4 { margin: 10px 0 4px; }
+.bank-how p { margin: 4px 0; line-height: 1.55; font-size: .9rem; }
+.bank-how-acts { display: flex; justify-content: flex-end; margin-top: 10px; }
