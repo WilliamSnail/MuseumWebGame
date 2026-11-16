@@ -384,6 +384,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     } else if (wk.week || wk.start) E(where + "/week.json", "備用週不寫 week、start（哪一週用到就是哪一週）");
     text(where + "/week.json.title", wk.title, LIMITS.weekTitle);
     lines(where + "/week.json.summary", wk.summary, 2, 5, LIMITS.summaryLine);
+    if (wk.answer !== undefined) text(where + "/week.json.answer", wk.answer, 120); // 這週的結論（週日寫，疑點簿在這週過完後才顯示；只寫到這週的層次，不寫謎底）
     if (wk.question !== undefined) text(where + "/week.json.question", wk.question, 40); // 本週疑點：玩家在「本週」和疑點簿看得到（排程說明 一之七）
     const lineIds = new Set(), weekLine = new Set(), mainLine = new Set();
     if (!Array.isArray(wk.lines) || !wk.lines.length) E(where + "/week.json", "lines 至少要有一條（這週的劇情線）");

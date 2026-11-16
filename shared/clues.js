@@ -27,7 +27,8 @@ export function clueCatalog(lib, today) {
   if (typeof today === "string") Object.keys(weeks).sort().forEach(label => {
     const monday = isoMonday(label), pack = weeks[label];
     if (!monday || !pack || !clObj(pack.days) || label < NUM.story.startWeek) return;
-    if (monday <= today) cat.weeks[label] = { title: clStr(clObj(pack.week) && pack.week.title), question: clStr(clObj(pack.week) && pack.week.question) };
+    // answer：這週的結論（11-16 翊文：「疑點簿每周完成後怎麼沒有個總結說所以到底怎麼了?」）。週日結局書寫完時排程寫進 week.json，**這週過完才給**（casebookView 判斷）
+    if (monday <= today) cat.weeks[label] = { title: clStr(clObj(pack.week) && pack.week.title), question: clStr(clObj(pack.week) && pack.week.question), answer: clStr(clObj(pack.week) && pack.week.answer) };
     for (let n = 1; n <= 7; n++) {
       const d = pack.days[n], date = addDays(monday, n - 1);
       if (!clObj(d) || date > today) continue;
@@ -98,14 +99,14 @@ export function clueNew(P, lib, today) {
   } catch (e) { return []; }
 }
 // 疑點簿要畫的（翊文 11-10：「只列開著的疑問和你已經撿到的線索出處……不解釋」）
-//   weeks：[{ week, title, question, now（是不是這週）, got: [{ sid, kind, title, day, date }], left（這週還拿得到、還沒撿的有幾個地方） }]，新的週在前
+//   weeks：[{ week, title, question, answer（這週的結論，過完的週才有）, now（是不是這週）, got: [{ sid, kind, title, day, date }], left（這週還拿得到、還沒撿的有幾個地方） }]，新的週在前
 //   這週有疑點就列（就算還沒撿到）；以前的週要撿到過才列。near 跟《看懂的事》同壹份（還差幾條、提示）
 export function casebookView(P, lib, today) {
   const out = { weeks: [], near: [] };
   if (!P || typeof P !== "object" || isFree(P) || typeof today !== "string") return out;
   try {
     const cat = clueCatalog(lib, today), S = storyState(P), cur = isoWeek(today), by = {};
-    const weekOf = label => by[label] || (by[label] = Object.assign({ week: label, title: "", question: "" }, cat.weeks[label], { now: label === cur, got: [], left: 0 }));
+    const weekOf = label => by[label] || (by[label] = Object.assign({ week: label, title: "", question: "" }, cat.weeks[label], { now: label === cur, got: [], left: 0 }, label === cur ? { answer: "" } : {})); // 這週的結論：這週還沒過完不給
     if (cat.weeks[cur] && cat.weeks[cur].question) weekOf(cur);
     const leftSeen = new Set(); // 這週還拿得到、還沒撿的（這週沒列出來就不算）
     cat.sources.forEach(s => {

@@ -227,9 +227,10 @@ const CB_KIND = { book: "書", room: "房間", work: "畫" };
 export function casePane() {
   const v = casebookView(P, STORY_LIB, todayStr());
   if (!v.weeks.length) return h("p", { class: "nb-empty" }, "疑點簿還是空的。讀書、看今日特展、走地下收藏庫的時候，有些地方會讓你多看壹眼。");
-  return [h("p", { class: "sp-note cb-lead" }, "這裡只記問題，和你在哪裡多看了壹眼。答案不在這裡。"),
+  return [h("p", { class: "sp-note cb-lead" }, "這裡記每週的問題，和你在哪裡多看了壹眼。那壹週過完，會寫下這週弄清楚了什麼、還剩什麼沒解開。"),
     v.weeks.map(w => sec(`〈${w.title || w.week}〉${w.now ? "・這週" : ""}`,
       w.question ? h("p", { class: "cb-q" }, w.question) : null,
+      w.answer ? h("div", { class: "cb-ans" }, h("b", null, "這週弄清楚的"), h("p", null, ptNode(w.answer))) : null, // 11-16：過完的週寫結論
       w.got.length ? h("ul", { class: "cb-list" }, w.got.map(g => h("li", null, h("span", { class: "cb-kind" }, CB_KIND[g.kind] || "書"), h("b", null, g.title ? `〈${g.title}〉` : "沒有名字的地方"), h("small", null, `第 ${g.day} 天`))))
         : h("p", { class: "sp-note" }, "還沒有多看壹眼的地方。"),
       w.left ? h("p", { class: "sp-note" }, `這週還有 ${w.left} 個地方，你還沒留意到。`) : null)),
