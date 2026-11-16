@@ -7,8 +7,8 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const ids = G => G.OUT_STOCKS.map(s => s.id);
 
-T("名字表：6～8 檔、id 不重複、有名字有介紹、不寫真公司名和代號", G => {
-  const L = G.OUT_STOCKS; assert.ok(L.length >= 6 && L.length <= 12);
+T("名字表：跟 STOCK_IDS 壹樣多、id 不重複、有名字有介紹、不寫真公司名和代號", G => {
+  const L = G.OUT_STOCKS; assert.ok(L.length > 0 && L.length === G.STOCK_IDS.length);
   assert.strictEqual(new Set(ids(G)).size, L.length);
   const bad = /NVIDIA|AMD|Nasdaq|NASDAQ|TSMC|台積|Apple|Tesla|Microsoft|輝達|超微|蘋果公司|特斯拉|微軟|NVDA|AAPL|TSLA|MSFT|\b[A-Z]{3,5}\b|\d{4}\.TW/;
   L.forEach(s => { assert.ok(s.name && s.intro && ["stock", "index"].includes(s.kind)); assert.ok(!bad.test(s.name + s.intro), s.id); });
