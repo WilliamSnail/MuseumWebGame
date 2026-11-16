@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-5027e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "手機上的畫廊看得到畫了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿時，畫廊的畫放在上面、說明和任務放在下面，往下滑就看得到。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-c2f118", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "館裡的鋼琴、大提琴不再疊在壹起", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
