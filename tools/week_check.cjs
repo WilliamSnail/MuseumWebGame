@@ -266,7 +266,10 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     asList(d.adds).forEach((r, i) => { ids("房間", r && r.id); roomOk(`${where}.adds[${i}]`, r, ctx); if (r && r.id) ctx.rooms.add(r.id); });
     if (asList(d.adds).length > 2) E(where, "一天最多加 2 個房間");
     if (o.spare && asList(d.adds).length) E(where, "備用的一天不加房間（不影響主線）");
-    if (!Array.isArray(d.books) || d.books.length < 1 || d.books.length > 2) E(where, "books 要 1～2 本");
+    // 主線章節書（kind main 的線，排程說明第二節第 3 點：週日「再多放壹本」）不算在每天 1～2 本裡，壹天最多壹本（11-16：W46 序章那本就是被這條擋掉沒放）
+    const mainN = asList(d.books).filter(b => b && ctx.mainLine && ctx.mainLine.has(b.line)).length, otherN = asList(d.books).length - mainN;
+    if (!Array.isArray(d.books) || otherN < 1 || otherN > 2) E(where, "books 要 1～2 本（主線章節書另外算）");
+    if (mainN > 1) E(where, "主線章節書壹天最多壹本");
     if (!Array.isArray(d.daily) || d.daily.length !== 3) E(where, "daily 要剛好 3 個");
     const books = asList(d.books), daily = asList(d.daily);
     books.forEach(b => { ids("書", b && b.id); if (b && b.id) ctx.books.add(b.id); });
@@ -382,7 +385,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     text(where + "/week.json.title", wk.title, LIMITS.weekTitle);
     lines(where + "/week.json.summary", wk.summary, 2, 5, LIMITS.summaryLine);
     if (wk.question !== undefined) text(where + "/week.json.question", wk.question, 40); // 本週疑點：玩家在「本週」和疑點簿看得到（排程說明 一之七）
-    const lineIds = new Set(), weekLine = new Set();
+    const lineIds = new Set(), weekLine = new Set(), mainLine = new Set();
     if (!Array.isArray(wk.lines) || !wk.lines.length) E(where + "/week.json", "lines 至少要有一條（這週的劇情線）");
     asList(wk.lines).forEach((l, i) => {
       const lw = `${where}/week.json.lines[${i}]`;
@@ -390,14 +393,14 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       if (!G.LINE_KINDS[l.kind]) E(lw, `kind 只能是 ${Object.keys(G.LINE_KINDS).join("、")}`);
       if (o.fallback && (l.kind === "main" || l.kind === "holiday" || l.kind === "season")) E(lw, "備用週不放主線、季節、節日的線（備用週可能在任何一週用到）");
       text(lw + ".name", l.name, LIMITS.lineName);
-      lineIds.add(l.id); if (l.kind === "week" || l.kind === "floor") weekLine.add(l.id);
+      lineIds.add(l.id); if (l.kind === "week" || l.kind === "floor") weekLine.add(l.id); if (l.kind === "main") mainLine.add(l.id);
       const prev = allLines[l.id];
       if (prev && !G.CROSS_WEEK_KINDS.includes(l.kind)) E(lw, `劇情線 id「${l.id}」在 ${prev.where} 用過了（只有主線、季節線可以跨週用同一個 id）`);
       if (prev && G.CROSS_WEEK_KINDS.includes(l.kind) && prev.name !== l.name) E(lw, `${G.LINE_KINDS[l.kind]}線「${l.id}」的名字跟 ${prev.where} 不一樣`);
       allLines[l.id] = { name: l.name, kind: l.kind, where, week: o.fallback ? null : name, fallback: o.fallback ? name : null };
     });
     if (!weekLine.size) E(where + "/week.json", "lines 裡要有一條 kind 是 week 的（這週的線）");
-    const ctx = { lineIds, weekLine, books: new Set(), rooms: new Set(), tasks: new Set(), ids: new Set() };
+    const ctx = { lineIds, weekLine, mainLine, books: new Set(), rooms: new Set(), tasks: new Set(), ids: new Set() };
     if (wk.anomaly != null) {
       text(where + "/week.json.anomaly.title", wk.anomaly.title, LIMITS.anomalyTitle);
       lines(where + "/week.json.anomaly.text", wk.anomaly.text, 1, 3, LIMITS.anomalyText);
