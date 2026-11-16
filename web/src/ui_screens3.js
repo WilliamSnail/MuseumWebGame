@@ -342,7 +342,7 @@ export async function doFusion() {
   try {
     const altar = $(".altar");
     if (altar) altar.classList.add("fusing");
-    snd("fuse"); updateStatus(); persist();
+    snd("fuse"); sndFile("bubbles", 0.4); updateStatus(); persist(); // 融合時咕嘟咕嘟（11-16 翊文，Pixabay「Water Bubbles」）
     await wait(1000);
     if (!isFree(P)) {
       await sanFlow(f.san, "fusion", "融合", { anchor: altar || undefined, noInvoluntary: true });

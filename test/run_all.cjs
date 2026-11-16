@@ -64,7 +64,7 @@ const STEPS = [
   ["NPC 經濟接線（行程每天抽去哪幾家、館內股人數用行程加總、全館計數、GDP 的投資看股票淨流入）", ["test/npc_econ.test.cjs"]],
   ["NPC 買畫（每場最多壹位 NPC 出價、錢從外面世界來、預算和壹天上限、抬高第二價、玩家的畫賣給 NPC、守恆）", ["test/npc_art.test.cjs"]],
   ["NPC 來館花錢（門票不分紅給玩家、店裡花錢進莊家或預算池、外面世界付、每人每天和全館每天上限、GDP、日報）", ["test/npc_spend.test.cjs"]],
-  ["經濟自我檢查腳本（規則面全過、帳面摘要標得出異常、吃緊和館債逾期會紅字）", ["test/econ_check.test.cjs"]],
+  ["經濟自我檢查腳本（規則面全過、帳面摘要標得出異常、吃緊和館債逾期會紅字）", ["test/econ_check.test.cjs"], "slowEcon"],
   ["劇情經濟事件（外資 NPC、館債簽收窗口、畫價凍結、莊家提早還貸款、對帳日、預告）", ["test/econ_events.test.cjs"]],
   ["外面世界的池子（買賣股票槓桿門票貸款撥款都是搬、只有每天成長憑空、吃緊時賣出有上限暫停貸款、文化部借款計利息、日報壹段，規劃 2.12）", ["test/casino_world.test.cjs"]],
   ["館外股票照真實股價的比例（倍數、換股數市值不變、開盤拉回有上限賺不到、真實價、畫面欄位，規劃 2.8h）", ["test/casino_stock_peg.test.cjs"]],
@@ -102,6 +102,7 @@ const STEPS = [
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["每天排程的幫手（day:plan 今天要做什麼、day:check 一次檢查）", ["test/day_plan.test.cjs"]],
   ["每日排程優化（11-16）：ship 只改內容跳過本機測試、day:check --strict、day:new 骨架、day:pr 草稿、ledger reveal／written／day／apply、npm run issue", ["test/sched_tools.test.cjs"]],
+  ["只改內容的 CI 跳過最慢那項（changed_files 的判斷、ci.yml 有接、deploy.yml 沒有接、announce 備援時間，11-16）", ["test/ci_skip.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
   ["每天新關卡的工具（每種打法每一層都過檢查、少寫預告會說、調難度、今天的點放進地圖，決定 0067）", ["test/new_level.test.cjs"]],
   ["交過的委託不能再交", ["test/commission_keep.test.cjs"]],
@@ -151,8 +152,13 @@ function flush() {
     printed++;
   }
 }
+// 11-16：只改內容的 PR，CI 設 SKIP_SLOW_ECON=1（tools/changed_files.cjs 判斷），跳過最慢的那項（經濟自我檢查，約 114 秒）。
+// 本機和部署前的最後一道（deploy.yml）不設，壹律全跑。
+const SKIP_SLOW = process.env.SKIP_SLOW_ECON === "1";
+if (SKIP_SLOW) console.log("只改內容，跳過經濟自我檢查（SKIP_SLOW_ECON=1；合併後的部署照樣全跑）");
 function runOne(i) {
-  const [name, args] = STEPS[i], t = Date.now();
+  const [name, args, tag] = STEPS[i], t = Date.now();
+  if (SKIP_SLOW && tag === "slowEcon") { results[i] = { name, ok: true, out: ["只改內容，跳過"], ms: 0 }; flush(); return Promise.resolve(); }
   return new Promise(done => {
     const p = spawn(process.execPath, args, { cwd: root });
     let buf = "";

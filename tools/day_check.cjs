@@ -11,7 +11,7 @@
 //   npm run day:check -- --date 2026-11-17   指定日期
 //   npm run day:check -- --strict         排程用（11-16）：說明裡「一定要」的今天的項目，缺了就擋（不只警告）。只看「今天」（照 day_plan 的判斷），舊的週不追溯
 //                                         （也可以 npm run day:check:strict）。擋的是：今天的檔、clue、svg、平日的 market、hooks／ties／memes／touched 今天那行、
-//                                         揭露日放對 clue 而且帳本改 revealed、週日的結局書／主線章節書／answer、回聲週週日的 units.written、週一帳本的必填欄位、骨架的「待寫」沒改掉
+//                                         揭露日放對 clue 而且帳本改 revealed、週日的結局書／主線章節書／answer、回聲週週日的 units.written、週一帳本的必填欄位、骨架（dN.json 和週一的 week.json）的「待寫」沒改掉
 //   --allow-no-market／--allow-no-meme   今天真的沒有合適的世界股市新聞、政治梗：加這個放行，並在 PR 說明寫原因
 //   --fix                               名單、館外地圖的打包沒跟上時，直接幫你打包（要 git add；ship 會 add -A）
 const fs = require("fs"), path = require("path");
@@ -50,6 +50,7 @@ function strictIssues({ p, day, wk, ledger, opts = {} }) {
   const n = p.weekday, f = p.dayFile, rec = ledger && ledger.weeks && ledger.weeks[p.week] || null, g = p.dayGaps;
   if (p.isMonday && !p.weekJsonExists) E.push(`${p.week} 的 week.json 還沒寫（週一要排這壹週）`);
   if (!isObj(day) || !g) { E.push(`${f} 還沒寫`); return E; }
+  if (isObj(wk) && hasPlaceholder(Object.assign({}, wk, { answer: undefined }))) E.push(`${p.week}/week.json 還有「${CONTENT_PLACEHOLDER}」（day:new 的週骨架留的記號）：全部換成真的內容`);
   if (hasPlaceholder(day)) E.push(`${f} 還有「${CONTENT_PLACEHOLDER}」（day:new 的骨架留的記號）：全部換成真的內容`);
   if (!g.clue) E.push(`${f}：今天沒有任何 clue（每天至少壹條，放在書、房間或今日特展）`);
   if (!g.svg) E.push(`${f}：今日特展沒有用 svg 畫的新圖（每天至少 1 幅）`);

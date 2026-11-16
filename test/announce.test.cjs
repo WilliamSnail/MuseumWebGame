@@ -1,7 +1,7 @@
 // tools/announce.cjs：預約公告、今日館訊八點半、活動開跑：時間換算、該發哪幾則、不重發、工作流程對得上（不會真的連 Discord）
 const assert = require("assert");
-const fs = require("fs"), path = require("path");
-const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, RETRY_MIN, WINDOW_MIN, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS } = require("../tools/announce.cjs");
+const fs = require("fs"), path = require("path"), os = require("os");
+const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, DAY_POST_AT, RETRY_MIN, WINDOW_MIN, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS } = require("../tools/announce.cjs");
 const { shared } = require("../tools/discord_post.cjs");
 
 let pass = 0, fail = 0;
@@ -77,9 +77,9 @@ T("工作流程：每則到點一次、晚 20 分鐘補一次；沒有預約公�
 });
 // 台灣時間的 "HH:MM"（固定的 cron 是 UTC）
 const tw = cron => { const [m, h] = cron.split(" ").map(Number); return `${String((h + 8) % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`; };
-T("固定的時間換回台灣時間是對的：今日館訊八點半左右；活動開始前幾分鐘跑、開始後補一次；週末那場只有週末", () => {
+T("固定的時間換回台灣時間是對的：今日館訊備援排在每天排程（08:23 開始、約 08:55 部署完）之後；活動開始前幾分鐘跑、開始後補一次；週末那場只有週末", () => {
   const times = FIXED_CRONS.map(([c]) => tw(c));
-  assert.deepStrictEqual(times, ["08:27", "08:47", "19:53", "20:13", "13:53", "14:13"]);
+  assert.deepStrictEqual(times, ["09:17", "09:37", "19:53", "20:13", "13:53", "14:13"]);
   assert.deepStrictEqual(EVENT_SLOTS.map(s => s.from), ["20:00", "14:00"]);
   assert.ok(FIXED_CRONS.slice(4).every(([c]) => c.endsWith("* * 0,6")), "週六、週日（UTC 也是同一天）");
   const before = parseAt("2026-11-11 20:00") - EVENT_EARLY_MIN * MIN, run = parseAt("2026-11-11 19:53");
@@ -145,6 +145,26 @@ T("活動的時間開得到開跑公告嗎：平日 20:00，週末 14:00、20:00
 T("部署壞了才不發今日館訊：還在跑、讀不到都照發", () => {
   for (const ok of ["completed/success", "in_progress/", "queued/", "", null, undefined]) assert.strictEqual(deployBroken(ok), false, String(ok));
   for (const bad of ["completed/failure", "completed/cancelled", "completed/timed_out"]) assert.strictEqual(deployBroken(bad), true, bad);
+});
+T("定時的備援要等部署完才發今日館訊（11-16）：還在跑、排隊、還沒開始（stale）都先不發；手動叫的（部署成功後、deploy.yml 最後壹步）只有壞了才擋", () => {
+  for (const s of ["in_progress/", "queued/", "stale/", "completed/failure", "completed/cancelled"]) assert.strictEqual(deployNotReady(s), true, s);
+  for (const s of ["completed/success", "", null, undefined]) assert.strictEqual(deployNotReady(s), false, String(s) + "：成功、讀不到都照發");
+  assert.strictEqual(blockedState("in_progress/", "schedule"), true, "定時：部署中不發");
+  assert.strictEqual(blockedState("in_progress/", "workflow_dispatch"), false, "手動：deploy.yml 自己叫的時候它還在跑，不能擋");
+  assert.strictEqual(blockedState("stale/", "workflow_dispatch"), false);
+  assert.strictEqual(blockedState("completed/failure", "workflow_dispatch"), true, "手動：部署壞了照擋");
+  assert.strictEqual(blockedState("completed/success", "schedule"), false);
+});
+T("排程 08:23 開始、約 08:55 部署完：備援晚於部署；今天的檔還沒進 main 就沒有今天的訊息（不會先發舊的）", () => {
+  const tw2 = c => { const [m, h] = c.split(" ").map(Number); return h * 60 + m + 8 * 60; };
+  const backups = FIXED_CRONS.slice(0, 2).map(([c]) => tw2(c) % 1440);
+  assert.ok(backups.every(m => m >= 9 * 60 + 5), "備援都在 09:05 之後（排程 08:23 開始、約 08:55 部署完還留 10 分鐘）");
+  assert.ok(DAY_POST_AT < "08:23", "可發的鐘點早於排程開始：今天的檔存在才是真正的條件");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ann-")); // 沒有今天的檔：週包只有 week.json
+  fs.mkdirSync(path.join(dir, "2026-W47")); fs.writeFileSync(path.join(dir, "2026-W47", "week.json"), JSON.stringify({ week: "2026-W47", start: "2026-11-16" }));
+  assert.strictEqual(autoEntries(dir).filter(e => e.isDay).length, 0, "d1.json 還沒進 main：沒有今日館訊可發");
+  fs.writeFileSync(path.join(dir, "2026-W47", "d1.json"), "{}");
+  assert.strictEqual(autoEntries(dir).filter(e => e.isDay).length, 1, "d1.json 合併進 main 之後才有");
 });
 T("部署完不直接發：沒發的才叫預約公告那支（同一個人發，才不會重複）", () => {
   const d = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "deploy.yml"), "utf8");
