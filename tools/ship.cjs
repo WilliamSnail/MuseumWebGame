@@ -50,7 +50,7 @@ const CI_OK = ["success", "skipped", "neutral"];
 const checksState = runs => !runs || !runs.length ? "none" : runs.some(r => r.status !== "completed") ? "wait" : runs.every(r => CI_OK.includes(r.conclusion)) ? "ok" : "fail";
 const noChecksYet = text => /no checks reported/i.test(String(text || ""));
 
-const { gh } = require("./gh_lib.cjs"); // 11-15 合併成共用的
+const { gh, waitRun } = require("./gh_lib.cjs"); // 11-15 合併成共用的
 // 失敗的時候印什麼：測試從第壹個 ✗ 開始（不然會被後面過的項目蓋掉），其他的印最後 25 行
 function failText(out) {
   const lines = out.trim().split("\n"), i = lines.findIndex(l => l.startsWith("✗"));
@@ -156,8 +156,12 @@ function main() {
   // 等 CI：看 PR 最新那個 commit 的 check runs，全部跑完才算；有壹個不是 success／skipped／neutral 就是沒過
   const waitCi = () => {
     say(`等 PR ${n} 的 CI`);
+    let netErr = 0;
     for (let i = 0; i < 120; i++) { // 最多 20 分鐘
-      const sha = api([`repos/${REPO}/pulls/${n}`, "--jq", ".head.sha"]).out;
+      const shaR = api([`repos/${REPO}/pulls/${n}`, "--jq", ".head.sha"], { ok: true });
+      if (shaR.status !== 0 || !shaR.out) { if (++netErr >= 6) throw new Error(`查 PR ${n} 的最新 commit 連續失敗 ${netErr} 次：${(shaR.stderr || "").trim().slice(-200)}`); sleep(10000); continue; } // 網路短暫錯誤：等壹下再查
+      netErr = 0;
+      const sha = shaR.out;
       const runs = JSON.parse(api([`repos/${REPO}/commits/${sha}/check-runs?per_page=100`, "--jq", "[.check_runs[]|{name,status,conclusion}]"], { ok: true }).out || "[]");
       const st = checksState(runs);
       if (st === "ok") { console.log(`CI 過了（${runs.length} 項）`); return; }
@@ -190,7 +194,10 @@ function main() {
     id = run(gh(), ["run", "list", "--repo", REPO, "--workflow=deploy.yml", "--commit", sha, "--limit", "1", "--json", "databaseId", "--jq", ".[0].databaseId"], { ok: true }).out;
   }
   if (!id) throw new Error(`合併了（${sha.slice(0, 7)}），但找不到這次的部署`);
-  run(gh(), ["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "10"]);
+  // 11-16：不用 gh run watch（會中途斷掉，PR 其實已合併、部署成功卻被判失敗；PR 600、620、627）。改成 REST 輪詢 run 的 status／conclusion，網路短暫錯誤會重試
+  const dep = waitRun(id, { intervalMs: 10000, maxMs: 20 * 60 * 1000 });
+  if (dep.timedOut) throw new Error(`PR ${n} 已合併（${sha.slice(0, 7)}），但部署 20 分鐘還沒跑完（狀態 ${dep.status}）：${dep.url}`);
+  if (!dep.ok) throw new Error(`PR ${n} 已合併（${sha.slice(0, 7)}），但部署沒成功（${dep.conclusion}）：${dep.url}`);
   console.log(`\n✓ PR ${n} 合併、部署成功（${sha.slice(0, 7)}）：https://github.com/${REPO}/pull/${n}`);
   let after = true;
   if (sayText) {

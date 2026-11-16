@@ -7,6 +7,11 @@
 //   newRunId(ids, oldId)         清單裡第壹個不是舊那次的（純函式，測試用）
 //   dispatch(workflow, inputs, { ref, waitMin, onId })
 //                                觸發、認出新的那壹次、等它跑完。回傳 { id, url, ok }；認不出新的就丟錯
+//   runState(id)                 這壹次現在的 { status, conclusion }（REST：gh api repos/…/actions/runs/ID）；網路錯誤丟錯
+//   runVerdict(st)               { status, conclusion } → "wait" | "ok" | "fail"（純函式，測試用）
+//   waitRun(id, opts)            輪詢到跑完：回傳 { ok, status, conclusion, url, timedOut }。
+//                                不用 gh run watch（11-16：它會中途斷掉、非零結束，PR 600、620、627 明明部署成功卻被判失敗）。
+//                                查狀態遇到網路短暫錯誤會重試（連續 maxErrors 次才放棄）；opts 可換 fetchState／sleep（測試用）
 //   runLog(id)                   那壹次的完整紀錄（字串）
 // 雲端排程的環境擋 GraphQL：這裡只用 gh workflow／gh run／gh api（REST）。
 const fs = require("fs");
@@ -24,6 +29,30 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 const latestRunId = wf => ghRun(["run", "list", "--repo", REPO, "--workflow", wf, "--limit", "1", "--json", "databaseId", "--jq", ".[].databaseId"], { ok: true }).out;
 const newRunId = (ids, oldId) => { const id = ids.find(Boolean); return id && String(id) !== String(oldId) ? String(id) : null; };
 
+// ---------- 等壹次 run 跑完（REST 輪詢） ----------
+const runState = id => {
+  const r = ghRun(["api", `repos/${REPO}/actions/runs/${id}`, "--jq", "{status,conclusion}"]);
+  const j = JSON.parse(r.out || "{}");
+  if (!j.status) throw new Error("查不到 run " + id + " 的狀態：" + r.out.slice(0, 100));
+  return j;
+};
+const RUN_OK = ["success", "skipped", "neutral"];
+const runVerdict = st => !st || st.status !== "completed" ? "wait" : RUN_OK.includes(st.conclusion) ? "ok" : "fail";
+function waitRun(id, opts = {}) {
+  const fetchState = opts.fetchState || runState, nap = opts.sleep || sleep;
+  const every = opts.intervalMs || 10000, maxMs = opts.maxMs || 20 * 60 * 1000, maxErrors = opts.maxErrors || 6;
+  const url = `https://github.com/${REPO}/actions/runs/${id}`;
+  let waited = 0, errs = 0, last = null;
+  for (;;) {
+    try { last = fetchState(id); errs = 0; }
+    catch (e) { if (++errs >= maxErrors) throw new Error(`查 run ${id} 的狀態連續失敗 ${errs} 次：${e.message}`); }
+    const v = runVerdict(last);
+    if (v !== "wait") return { ok: v === "ok", status: last.status, conclusion: last.conclusion, url, timedOut: false };
+    if (waited >= maxMs) return { ok: false, status: last ? last.status : "unknown", conclusion: null, url, timedOut: true };
+    nap(every); waited += every;
+  }
+}
+
 function dispatch(wf, inputs = {}, opts = {}) {
   const old = latestRunId(wf), ref = opts.ref || "main";
   const fields = Object.entries(inputs).flatMap(([k, v]) => ["-f", `${k}=${v}`]);
@@ -34,9 +63,9 @@ function dispatch(wf, inputs = {}, opts = {}) {
   if (!id) throw new Error(`等了 ${opts.waitMin || 3} 分鐘，還是沒有新的壹次（GitHub Actions 可能在塞車）`);
   const url = `https://github.com/${REPO}/actions/runs/${id}`;
   if (opts.onId) opts.onId(id, url);
-  const w = ghRun(["run", "watch", id, "--repo", REPO, "--exit-status", "--interval", "5"], { ok: true });
-  return { id, url, ok: w.status === 0 };
+  const w = waitRun(id, { intervalMs: 10000 });
+  return { id, url, ok: w.ok };
 }
 const runLog = id => ghRun(["run", "view", String(id), "--repo", REPO, "--log"], { ok: true }).stdout || "";
 
-module.exports = { REPO, gh, ghRun, sleep, latestRunId, newRunId, dispatch, runLog };
+module.exports = { REPO, gh, ghRun, sleep, latestRunId, newRunId, runState, runVerdict, waitRun, dispatch, runLog };
