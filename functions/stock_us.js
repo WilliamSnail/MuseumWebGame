@@ -56,6 +56,22 @@ export async function fetchYahoo(nowMs) {
   return out;
 }
 
+// 美元對台幣的匯率（11-16，翊文：「×32 可以照今日台幣匯率嗎」）：Yahoo 的 TWD=X，開盤時抓壹次、整天固定。抓不到回 null（遊戲價用昨天的匯率，再沒有就 ×32）。合理範圍 15～60
+export function parseFx(json) {
+  const m = json && json.chart && json.chart.result && json.chart.result[0] && json.chart.result[0].meta, v = m && m.regularMarketPrice;
+  return typeof v === "number" && isFinite(v) && v >= 15 && v <= 60 ? Math.round(v * 10000) / 10000 : null;
+}
+export async function fetchFx() {
+  for (const host of HOSTS) {
+    try {
+      const r = await fetch(`https://${host}/v8/finance/chart/TWD%3DX?interval=1d&range=1d`, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(host + " 回 " + r.status);
+      const v = parseFx(await r.json());
+      if (v) return v;
+    } catch (e) { /* 換下壹個 host */ }
+  }
+  return null;
+}
 // 補最近壹次收盤（規劃 2.8l）：圖表介面 meta 有最後壹個交易日的收盤（regularMarketPrice）、前壹收盤（chartPreviousClose）、時間（regularMarketTime）。
 // 回傳 { day: 美東日期, close: { id }, prev: { id } }；沒有就 null
 export function parseYahooClose(json, id) {
@@ -98,7 +114,7 @@ export async function stockUsBackfill(nowMs, fetchFn, dbx) {
 }
 
 // 做壹次（每分鐘壹次）。fetchFn、secretFn 可以換掉（測試用）。回傳做了什麼的字串（排程記錄用）
-export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
+export async function stockUsRun(nowMs, fetchFn, secretFn, dbx, fxFn) {
   const D = dbx || db(), ref = D.doc("stocksUs/latest");
   const day = usNyDay(nowMs), idx = usIdx(nowMs, day), C = NUM.casino.stock.us;
   if (outStockWeekend(day) || idx == null || idx < 0 || idx > mkLen("us", day) + 2) return "不在盤中";
@@ -110,6 +126,9 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
   if (need.fetch) {
     try { got = await (fetchFn || fetchYahoo)(nowMs); } catch (e) { err = String((e && e.message) || e).slice(0, 200); }
   }
+  // 匯率：開盤那一分鐘抓；沒抓到的話開盤後 10 分鐘內每分鐘再試（今天還沒有匯率才抓）
+  let fx = null;
+  if (need.kind === "open" || (doc0.openIdx != null && !(doc0.fx > 0) && idx - doc0.openIdx < 10)) { try { fx = await (fxFn || fetchFx)(); } catch (e) { fx = null; } }
   const secret = await (secretFn || twSecret)();
   const done = await D.runTransaction(async tx => {
     const s = await tx.get(ref);
@@ -123,6 +142,7 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx) {
       if (!usApply(doc, nd, idx, useGot, secret)) { did.push(nd.kind + "沒做成"); break; }
       did.push(nd.kind + (nd.j != null ? nd.j : ""));
     }
+    if (fx > 0 && doc.openIdx != null && !(doc.fx > 0)) doc.fx = fx; // 整天固定：今天已經有就不改
     doc.updatedAt = nowMs;
     doc.err = err;
     tx.set(ref, doc);
