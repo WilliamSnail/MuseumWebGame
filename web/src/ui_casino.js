@@ -140,7 +140,7 @@ function chipsPill() {
 function draw() {
   if (!S || !S.m.layer.isConnected) return;
   const m = S.m;
-  m.setTop(S.w ? chipsPill() : null);
+  m.setTop(S.w ? [chipsPill(), ADDONS.roomPeople ? ADDONS.roomPeople("casino") : null] : ADDONS.roomPeople ? ADDONS.roomPeople("casino") : null); // 這裡現在 N 人（11-16 翊文：賭場也要）
   if (!S.w) { m.surface.replaceChildren(h("p", { class: "nb-empty" }, "正在入座……")); return; }
   const old = m.surface.querySelector(".cas-body"), keepY = old && old.dataset.tab === S.tab ? old.scrollTop : 0;
   const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": CAS_TEXT.title }, TABS.map(([id, name, ic]) =>

@@ -59,7 +59,7 @@ export function roomPeopleBtn(room) {
     if (shown && !b.isConnected) return false;
     if (b.isConnected) shown = true;
     const n = room === "hall" ? hallPeople().total : roomPeople(room).n, known = room === "hall" ? hallPeople().known : roomPeople(room).known;
-    b.replaceChildren(icon("users"), h("span", null, known ? ` 這裡現在 ${n} 人` : " 這裡現在？"));
+    b.replaceChildren(icon("users"), h("span", null, h("span", { class: "rn-t" }, " 這裡現在"), known ? ` ${n} 人` : "？"));
     b.title = "看看現在有誰在這裡";
     b.classList.toggle("empty", known && !n);
     return true;
