@@ -451,7 +451,10 @@ async function main() {
   if (check) {
     if (missing.length) { console.error(`fx_notes.json 缺 ${missing.length} 個項目（${missing.slice(0, 5).join("、")}…）：跑 npm run fx:report`); process.exit(1); }
     const cur = fs.existsSync(DOC) ? EOL(fs.readFileSync(DOC, "utf8")) : "";
-    if (cur !== r.text) { console.error("程式改了、總表沒更新：跑 npm run fx:report"); process.exit(1); }
+    // 行號只是找位置用：別人的 PR 在檔案前面加幾行，行號跟著動，不算「總表沒更新」（11-16：不然每個同時進 main 的 PR 都會害這張表過期）。
+    // 新增／刪除／改名／改音量這種「內容」變了才會不一樣；想要行號是新的就跑 npm run fx:report
+    const noLine = s => s.replace(/(\.(?:js|css)):\d+/g, "$1:N");
+    if (noLine(cur) !== noLine(r.text)) { console.error("程式改了、總表沒更新：跑 npm run fx:report"); process.exit(1); }
     console.log("音效與特效總表是最新的");
     return;
   }
