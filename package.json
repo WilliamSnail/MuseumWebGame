@@ -11,6 +11,7 @@
     "test": "node test/run_all.cjs",
     "log:index": "node tools/log_index.cjs",
     "econ:check": "node tools/econ_check.cjs",
+    "books:sign": "node tools/books_sign_check.cjs",
     "econ:prices": "node tools/econ_prices.cjs",
     "econ:scan": "node tools/econ_scan.cjs",
     "econ:status": "node tools/econ_status.cjs",
@@ -53,6 +54,7 @@
     "level:new": "node tools/new_level.cjs",
     "fb": "node tools/fb_run.cjs",
     "fx:report": "node tools/fx_report.cjs",
+    "snd:check": "node tools/snd_check.cjs",
     "sfx:add": "node tools/sfx_add.cjs",
     "san:levels": "node tools/san_levels.cjs"
   },

@@ -10,6 +10,7 @@ import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../shared/applause.j
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { ambMix, sanDread } from "../../shared/room_mood.js";
+import { ambFor } from "./audio_state.js";
 import { markTokens, taipeiDay, todayStr } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
 import { hasTalent, memberPower, skillCheck, understandLine, weeklyTheme } from "../../shared/logic3.js";
@@ -418,8 +419,10 @@ export function setAmbOver(name, heatFn) {
   audioState();
 }
 // 地下的聲音狀態（11-15）：{ floor: 1～5, mode: "map"|"explore"|"fight"|"gate"|"rest" }，null ＝不在地下的某壹層裡。有變才重算聲音
-export function setCellarSnd(st) {
+// from：誰設的（"coop" 合作的框、"room" 地下收藏庫這個畫面）。"room" 設的在離開地下收藏庫時由 go() 收掉（11-16 翊文：被理智嚇退出房間，原本的聲音不會停）
+export function setCellarSnd(st, from = "coop") {
   const k = st ? st.floor + ":" + st.mode + ":" + (st.rank || 0) + ":" + (st.trial ? 1 : 0) : "";
+  UI.cellarSndFrom = st ? from : null;
   if (k === (UI.cellarSndKey || "")) return;
   UI.cellarSndKey = k; UI.cellarSnd = st || null; audioState();
 }
@@ -430,17 +433,11 @@ export function audioState() {
   if (!S || !S.ambient) return;
   if (S.setWhisperLayers) S.setWhisperLayers(whisperLayers());
   const live = !!(P && !isFree(P)), scr = UI.screen;
-  let amb = scr === "title" ? "title" : P ? (scr in AMB_OF ? AMB_OF[scr] : "room") : null;
-  if (UI.ambOver && P && scr !== "ending" && scr !== "title" && AMB_OF[scr] !== null) amb = UI.ambOver;
-  // 地下（11-15）：在地下時告訴環境音現在第幾層、在做什麼（地圖、探索、打鬥、守門、休息），fx.js 的 AMB.cellar 照這個換。合作模式的框蓋在別的房間上，也換成地下的聲音
-  if (UI.cellarSnd && P && scr !== "ending" && scr !== "title" && !UI.ambOver) amb = "cellar";
-  if (amb === "cellar" && S.ambMix) S.ambMix(UI.cellarSnd || { floor: null, mode: "map" });
-  if (amb === "origin" && S.ambMix) S.ambMix({ forbidden: !!(UI.params && UI.params.tab === "forbidden") }); // 圖書館的禁書頁籤：背景換成緊張的那首（11-16）
-  if (amb === "library" && S.ambMix) S.ambMix({ dread: live ? sanDread(P.sanity, P.dark) : null }); // 理智很低：圖庫的音樂盒換成走音的（11-16）
-  if ((amb === "lobby" || amb === "hall") && S.ambMix) S.ambMix({ creepy: !!(P && weeklyTheme(todayStr()) === "failedOnly") }); // 失敗作之夜那週：偶爾冒壹段走音的音樂盒（11-16）
-  if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
-  if (live && P.dark && scr !== "ending") amb = "zero";
-  if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
+  const heat = () => { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } return hh; };
+  // 該放哪一首：audio_state.js 的 ambFor（純函式，test/snd_check.test.cjs 測轉換）。地下、圖書館禁書頁籤、圖庫走音、失敗作之夜、賭場熱鬧程度的 ambMix 也在裡面決定
+  const { amb, mix } = ambFor({ screen: scr, hasP: !!P, live, dark: !!(P && P.dark), params: UI.params, ambOf: AMB_OF, ambOver: UI.ambOver, cellarSnd: UI.cellarSnd,
+    heat, dread: () => sanDread(P.sanity, P.dark), creepy: () => weeklyTheme(todayStr()) === "failedOnly" });
+  if (mix && S.ambMix) S.ambMix(mix[0] === "casino" ? ambMix(mix[1].heat) : mix[1]);
   S.ambient(amb);
   S.heart(live && !P.dark && scr !== "ending" ? P.sanity : null);
   if (S.dread) S.dread(live && scr !== "ending" && scr !== "title" ? sanDread(P.sanity, P.dark) : null); // 理智低的恐怖音樂：另外壹層，心跳、不安低鳴照舊
@@ -826,6 +823,8 @@ export function go(name, params = {}, opts = {}) {
   if (P && P.news && P.news[name]) { delete P.news[name]; }
   // 新解開的東西：離開的房間把這次看過的小牌子拿掉；進來的房間導覽列的「新」消失、小牌子這次還在（同壹個畫面換頁籤不算進出）
   if (P && prev !== name) { leaveFreshRoom(P, prev); enterFreshRoom(P, name); }
+  // 離開地下收藏庫（自己走回大廳、被嚇退、昏倒、逃跑都壹樣）：這個畫面設的地下聲音收掉，不然大廳還在放地下的風聲（11-16）
+  if (prev === "cellar" && name !== "cellar" && UI.cellarSndFrom === "room") { UI.cellarSnd = null; UI.cellarSndKey = ""; UI.cellarSndFrom = null; }
   render();
   window.scrollTo(0, 0);
   // 換房間：木地板上兩步（標題、結局、黑房間不算）

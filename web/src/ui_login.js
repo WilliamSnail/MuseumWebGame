@@ -12,7 +12,7 @@
 import { SAVE_KEY, migrateSave, nowMs } from "../../shared/logic.js";
 import { titleName } from "../../shared/titles.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setP, setSave, snd, titleTag, updateNetMenu, useProfile } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setAmbOver, setCellarSnd, setP, setSave, snd, titleTag, updateNetMenu, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 
 const MOVED_KEY = "pepe4.movedTo";  // 這台電腦的舊存檔搬給哪個帳號了（只搬一次，不然兩個帳號會有同一份）
@@ -138,7 +138,8 @@ NET.on("logout", e => {
   setSave(migrateSave(readJSON(SAVE_KEY))); // 回到這台電腦的設定（聲音這些）
   applySettings();
   updateNetMenu();
-  document.querySelectorAll(".nb-layer").forEach(l => l.remove());
+  document.querySelectorAll(".nb-layer").forEach(l => { try { if (l.nbClose) l.nbClose(); else l.remove(); } catch (x) { l.remove(); } }); // 照正常的方式關：賭場、合作的框關掉時會收自己的聲音和計時器（直接拿掉的話賭場那首會留著）
+  setAmbOver(null); setCellarSnd(null); // 保險：框沒收乾淨也不留聲音狀態
   document.body.classList.remove("nb-open");
   if (UI.screen !== "title") go("title", {}, { action: false }); else refreshLogin();
   if (was && e && e.code !== "logout") note("登入過期了，請再登入壹次。", "bad");
