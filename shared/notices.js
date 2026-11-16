@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-6b6ad8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "台股逼近漲跌停時不會再標「未更新」", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "像三角電源行這樣快跌停、整段沒有成交時，以前會抓不到價、標「未更新」並暫停買賣。",
+        "現在會改用掛單的價，鎖在漲停或跌停時就用漲停、跌停價。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-d5f8ba", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下打鬥每壹招都有聲音了", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
