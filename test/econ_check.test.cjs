@@ -8,6 +8,7 @@ T("帳面：正常的帳沒有異常；吃緊、館債逾期、對帳差、莊�
   const f = path.join(os.tmpdir(), "econ_" + process.pid + ".json"), W = 10000000000;
   const ok = { bankroll: 2e9, budget: 1e9, museum: 0, sea: 0, world: W, day: "2026-11-20", debt: { budget: 0, culture: 9e8, world: 0 }, led: { world: { stockBuy: 1000 } } };
   fs.writeFileSync(f, JSON.stringify(ok)); let r = run(["--ledger", f]); assert.strictEqual(r.status, 0, r.stdout); assert.ok(r.stdout.includes("沒有異常"));
+  assert.ok(!r.stdout.includes("規則自我檢查"), "帳面模式不跑規則檢查（11-16 加速）");
   for (const [patch, re] of [[{ world: 100 }, /資金吃緊/], [{ cultureLate: 5 }, /逾期/], [{ bankroll: -1 }, /破產/], [{ bankroll: 1e6, budget: 1e6 }, /不夠還文化部館債/]]) {
     fs.writeFileSync(f, JSON.stringify(Object.assign({}, ok, patch))); r = run(["--ledger", f]); assert.strictEqual(r.status, 1); assert.ok(re.test(r.stdout), r.stdout);
   }

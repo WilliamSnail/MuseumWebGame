@@ -1,4 +1,4 @@
-# 合併到 main 之後：先跑跟 PR 一樣的測試和打包，都過了才部署到正式的 pepe-museum（決定 0023、0024）。
+# 合併到 main 之後：測試（跟 PR 一樣的）和裝套件＋打包同時跑，都過了才部署到正式的 pepe-museum（決定 0023、0024）。
 # 免費帳號的私人 repo 鎖不住 main（翊文 11-08：「沒問題」），所以「測試沒過就不部署」寫在這裡：deploy 要等 test 過。
 # 部署用的服務帳號金鑰放在 GitHub 的 Secrets：FIREBASE_SERVICE_ACCOUNT（只有翊文能放，AI 拿不到；怎麼建見 docs/Firebase做法.md 第六節）。
 # 還沒放金鑰之前，部署那一步會跳過（不會報錯）。
@@ -18,23 +18,81 @@ permissions:
   contents: read
 
 jobs:
+  # 測試：跟 prepare 同時跑。這個 commit 的 tree 跟某個 PR 的 CI 全套測過的 tree 完全一樣，就跳過重跑（tools/deploy_gate.cjs 判斷；
+  # 判斷不出來、手動部署、中間有別包先合進 main，一律照跑）。測試沒過 → test 紅 → deploy 不會跑（needs）。
   test:
+    runs-on: ubuntu-latest
+    outputs:
+      skip_tests: ${{ steps.gate.outputs.skip_tests }}
+    permissions:
+      contents: read
+      actions: read # 讀 PR 的 CI 結果
+      pull-requests: read # 這個 commit 屬於哪個 PR
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 要讀得到 merge commit 的 parent（PR head）
+      - id: gate
+        name: 要不要重跑測試（tree 跟 PR 的 CI 測過的一樣就不用）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/deploy_gate.cjs --github-output
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip_tests != 'true'
+        with:
+          node-version: 22
+      - id: nm
+        if: steps.gate.outputs.skip_tests != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+          key: nm-${{ runner.os }}-n22-${{ hashFiles('package-lock.json', 'functions/package-lock.json') }}
+      - name: 裝套件
+        if: steps.gate.outputs.skip_tests != 'true' && steps.nm.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          npm --prefix functions ci
+      # 部署前的最後一道：不看改了什麼，全套（test/ci_skip.test.cjs 會確認這裡沒有跳過的開關）
+      - name: 測試（規則、內容、特效、模組、日誌格式；全套）
+        if: steps.gate.outputs.skip_tests != 'true'
+        run: npm test
+
+  # 裝套件＋打包：跟 test 同時跑，結果（dist）用 artifact 交給 deploy；node_modules 用 cache（key 是兩個 lock 檔的 hash）。
+  # 這裡沒有任何 secrets。
+  prepare:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      # 部署前的最後一道：壹定跑全套，不看改了什麼（PR 的 ci.yml 只改內容時會跳過經濟自我檢查，這裡不跳。test/ci_skip.test.cjs 會確認這裡沒有 SKIP_SLOW_ECON）
-      - name: 測試（規則、內容、特效、模組、日誌格式；全套）
-        run: npm test
-      - name: 打包
+      - id: nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+          key: nm-${{ runner.os }}-n22-${{ hashFiles('package-lock.json', 'functions/package-lock.json') }}
+      - name: 裝套件
+        if: steps.nm.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          npm --prefix functions ci
+      - name: 打包（連正式的 pepe-museum）
         run: npm run build
+      - name: 打包有東西才交出去
+        run: test -s dist/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prod-dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
-    needs: test
+    needs: [test, prepare] # 兩個都成功才部署（test 被跳過也算成功；test 紅了、prepare 紅了都不部署）
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,15 +109,27 @@ jobs:
         if: env.HAS_KEY == 'true'
         with:
           node-version: 22
-          cache: npm
-      - name: 裝套件
+      - id: nm
         if: env.HAS_KEY == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+          key: nm-${{ runner.os }}-n22-${{ hashFiles('package-lock.json', 'functions/package-lock.json') }}
+      - name: 裝套件（cache 沒有才裝）
+        if: env.HAS_KEY == 'true' && steps.nm.outputs.cache-hit != 'true'
         run: |
           npm ci
           npm --prefix functions ci
-      - name: 打包（連正式的 pepe-museum）
+      - uses: actions/download-artifact@v4
         if: env.HAS_KEY == 'true'
-        run: npm run build
+        with:
+          name: prod-dist
+          path: dist
+      - name: 打包有東西才部署
+        if: env.HAS_KEY == 'true'
+        run: test -s dist/index.html
       - name: 部署（網頁、Firestore 和 Realtime Database 的規則、Functions）
         if: env.HAS_KEY == 'true'
         env:

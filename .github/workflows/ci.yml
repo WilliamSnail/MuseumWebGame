@@ -15,16 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 要比對 PR 改了哪些檔
+          fetch-depth: 0 # 維護日誌檢查要比對 PR 改了哪些檔
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      # 只改內容的 PR 不跑最慢的那項「經濟自我檢查腳本」（約 114 秒，翊文 11-16 同意）。有任何程式檔就照跑。
-      # 合併到 main 之後的部署（deploy.yml）不看這個：部署前的最後一道壹定跑全套。
-      - name: 只改內容嗎（是的話之後的 npm test 跳過經濟自我檢查）
-        run: node tools/changed_files.cjs --base origin/${{ github.base_ref }} --event ${{ github.event_name }} --github-env
+      # 記下這次測的是哪個 tree（pull_request 測的是 GitHub 暫時合出來的 merge ref）。合併後 deploy.yml 看這個名字：
+      # 合併出來的 tree 跟這裡測過的完全一樣，就不重跑一樣的測試（tools/deploy_gate.cjs）。這步一定要在測試之前，名字格式不能改。
+      - id: tree
+        run: echo "hash=$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
+      - name: 測試的 tree ${{ steps.tree.outputs.hash }}
+        run: echo "測的 tree：${{ steps.tree.outputs.hash }}"
+      # 一律跑全套：經濟自我檢查改成規則只跑一次之後不慢了，不再有「只改內容就跳過」（那會讓部署分不出哪些 CI 是全套跑過的）
       - name: 測試（規則、內容、特效、模組、日誌格式）
         run: npm test
       - name: 打包
