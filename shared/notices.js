@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-b581d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "大廳改寫全館人數，散客會逛到各館區", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "大廳的小塊改寫「館內現在有幾人」，展廳的人數寫在後面。",
+        "看展的散客現在大多會在中途走去畫廊、賭場、工作室等其他房間逛逛，不再全擠在展廳。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-6b6ad8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "台股逼近漲跌停時不會再標「未更新」", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
