@@ -322,9 +322,11 @@ export function teamPower(P, team, room) {
   const parts = team.map(it => ({ it, s: memberPower(it, room) }));
   let total = parts.reduce((n, x) => n + x.s, 0);
   const notes = [];
-  if (team.some(it => it.pick.姿勢 === "比讚")) { total += team.length; notes.push("比讚鼓舞全隊 +" + team.length); }
-  if (team.some(it => it.pick.帽子 === "巫師帽")) { total += NUM.cellarFx.wizard; notes.push(`巫師帽的魔法 +${NUM.cellarFx.wizard}`); }
-  if (team.some(it => it.pick.帽子 === "觸手帽")) { total += NUM.cellarFx.tentacle; notes.push(`觸手帽 +${NUM.cellarFx.tentacle}（要付理智）`); }
+  // 疊加（決定 0109）：比讚、巫師帽帶幾隻就算幾份、最多 stack 份；觸手帽只算 1 份（疊了太強）
+  const SK = NUM.cellarFx.stack, nOf = (cat, v) => team.filter(it => it.pick[cat] === v).length, cap = (n, k) => Math.min(n, Math.max(1, SK[k] || 1));
+  { const k = cap(nOf("姿勢", "比讚"), "like"), n = nOf("姿勢", "比讚"); if (n > 0) { total += team.length * k; notes.push(k > 1 ? `比讚 ×${k} 鼓舞全隊 +${team.length * k}` : "比讚鼓舞全隊 +" + team.length); } }
+  { const k = cap(nOf("帽子", "巫師帽"), "wizard"), n = nOf("帽子", "巫師帽"); if (n > 0) { total += NUM.cellarFx.wizard * k; notes.push(k > 1 ? `巫師帽 ×${k} 的魔法 +${NUM.cellarFx.wizard * k}` : `巫師帽的魔法 +${NUM.cellarFx.wizard}`); } }
+  if (team.some(it => it.pick.帽子 === "觸手帽")) { total += NUM.cellarFx.tentacle; notes.push(`觸手帽 +${NUM.cellarFx.tentacle}（要付理智，只算壹份）`); }
   { const lf = limitedFx(team); if (lf.team) { total = Math.max(0, total + lf.team); notes.push(...lf.notes.filter(n => !/^S+ [+-]0$/.test(n))); } } // 限定帽子（決定 0085）
   // 小優點「力氣大」、小缺點「沒力氣」（11-08）
   traitHits(P, "power").forEach(t => { total = Math.max(0, total + t.v); notes.push(traitTag(t)); });
@@ -737,8 +739,8 @@ export function cellarPartFx(cat, name) {
     add("強度", "跟房間或怪物的顏色一樣：強度 +1");
   }
   else if (cat === "帽子") {
-    if (name === "巫師帽") { add("探索", `全隊強度 +${X.wizard}`); add("打怪", `招式：這回合每個人的推 +${F.wizard}`); }
-    else if (name === "觸手帽") { add("探索", `全隊強度 +${X.tentacle}，每個房間多扣 ${NUM.fight.tentacleSan} 理智`); add("打怪", `招式：推的強度 ×${F.tentacleMult}，自己扣 ${F.tentacleSan} 理智`); }
+    if (name === "巫師帽") { add("探索", `全隊強度 +${X.wizard}（帶兩隻疊兩次，最多 ${X.stack.wizard} 份）`); add("打怪", `招式：這回合每個人的推 +${F.wizard}`); }
+    else if (name === "觸手帽") { add("探索", `全隊強度 +${X.tentacle}（只算壹份，帶幾頂都壹樣），每個房間多扣 ${NUM.fight.tentacleSan} 理智`); add("打怪", `招式：推的強度 ×${F.tentacleMult}，自己扣 ${F.tentacleSan} 理智`); }
     else if (name === "紳士帽") add("探索", `技能檢定 +${X.gent}`);
     else if (name === "皇冠") { add("探索", "檢定失敗可以重擲壹次"); add("打怪", "招式：推的骰子當最大"); }
     else if (name === "棒球帽") { add("探索", "擋下壹次損失"); add("打怪", "招式：擋下這回合打到自己的招"); }
@@ -746,7 +748,7 @@ export function cellarPartFx(cat, name) {
     else limitedFxLines(name).forEach(x => add(x.where, x.text)); // 限定帽子（決定 0085）
   }
   else if (cat === "姿勢") {
-    if (name === "比讚") { add("探索", "全隊強度 + 帶下去的人數"); add("打怪", `招式：下回合每個人的推 +${F.cheer}`); }
+    if (name === "比讚") { add("探索", `全隊強度 + 帶下去的人數（帶兩隻疊兩次，最多 ${X.stack.like} 份）`); add("打怪", `招式：下回合每個人的推 +${F.cheer}`); }
     else if (name === "斯拉夫蹲") { add("探索", "穩住壹次，沒有人被推倒"); add("打怪", "招式：這回合自己的佩佩不會倒"); }
     else if (name === "躺平") { add("探索", `每壹層第壹次走：回 ${NUM.cellarRest} 理智`); add("打怪", `招式：回 ${F.rest} 理智`); }
     else if (name === "倒立") add("強度", `強度 +${X.handstand}`);
