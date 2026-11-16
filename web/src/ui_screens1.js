@@ -490,6 +490,11 @@ SCREENS.origin = (root, params) => {
     root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb" }, ADDONS.guestbook()));
     return;
   }
+  if (tab === "map" && ADDONS.worldMap) { // 館外地圖（11-16）：日期到了亮輪廓、拿到線索才亮字（ui_map.js）
+    root.classList.add("origin-gb-on");
+    root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb origin-map" }, ADDONS.worldMap()));
+    return;
+  }
   root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };

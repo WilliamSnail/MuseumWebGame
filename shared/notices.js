@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-bc23f9", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "圖書館多了「地圖」頁籤", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "圖書館多了一個頁籤：地圖。館外的地方會一個一個浮出來；先看到圖釘的輪廓，拿到對應的線索後，才看得到那裡的名字和住的人。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-15-81f211", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "點旅客的名字可以看他的狀況", publish: "2026-11-15", expire: "2027-12-31",
     sections: [
