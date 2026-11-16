@@ -9,9 +9,9 @@ import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } fro
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { ambMix, sanDread } from "../../shared/room_mood.js";
-import { markTokens, taipeiDay } from "../../shared/logic.js";
+import { markTokens, taipeiDay, todayStr } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
-import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/logic3.js";
+import { hasTalent, memberPower, skillCheck, understandLine, weeklyTheme } from "../../shared/logic3.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../shared/notices.js";
@@ -406,6 +406,8 @@ export function audioState() {
   // 地下（11-15）：在地下時告訴環境音現在第幾層、在做什麼（地圖、探索、打鬥、守門、休息），fx.js 的 AMB.cellar 照這個換。合作模式的框蓋在別的房間上，也換成地下的聲音
   if (UI.cellarSnd && P && scr !== "ending" && scr !== "title" && !UI.ambOver) amb = "cellar";
   if (amb === "cellar" && S.ambMix) S.ambMix(UI.cellarSnd || { floor: null, mode: "map" });
+  if (amb === "library" && S.ambMix) S.ambMix({ dread: live ? sanDread(P.sanity, P.dark) : null }); // 理智很低：圖庫的音樂盒換成走音的（11-16）
+  if ((amb === "lobby" || amb === "hall") && S.ambMix) S.ambMix({ creepy: !!(P && weeklyTheme(todayStr()) === "failedOnly") }); // 失敗作之夜那週：偶爾冒壹段走音的音樂盒（11-16）
   if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
   if (live && P.dark && scr !== "ending") amb = "zero";
   if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
