@@ -1,3 +1,4 @@
+import { NUM } from "./config.js";
 // ================================================================
 //  賭場的記帳（11-13，數值平衡；docs/經濟體系規劃.md 第 2.2 節 P0）
 //  純函式，不碰資料庫，也不依賴別的檔（所以 casino_wallet、econ、find、job 都可以 import）。
@@ -16,6 +17,11 @@ const bkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
 const bkBox = o => !!o && typeof o === "object" && !Array.isArray(o);
 
 // 補欄位（casWalletFix、casHouseFix 會叫）
+// 文化部館債現在的到期日：展延過就是原本的到期日 ＋ cultureExtDays 天（只展延壹次）
+export function casCultureDue(h) {
+  const H = NUM.casino.houseLoan; if (!H.cultureDue) return null;
+  return h && h.cultureExt ? new Date(Date.parse(H.cultureDue + "T00:00:00Z") + H.cultureExtDays * 86400000).toISOString().slice(0, 10) : H.cultureDue;
+}
 export function casLedFix(x, keys) {
   if (!bkBox(x.led)) x.led = {};
   for (const k of keys) if (!bkBox(x.led[k])) x.led[k] = {};
@@ -179,7 +185,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), world: house.world == null ? null : bkNz(house.world), wflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), day: house.cul.day || null, due: null } : null, culLate: bkNz(house.cultureLate) } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), world: house.world == null ? null : bkNz(house.world), wflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;

@@ -43,6 +43,17 @@ T("畫價凍結：窗口內第壹次報的價記下來、窗口內都用它；�
   assert.notStrictEqual(G.casArtPrice(item, id, add(D, 3), h), p1, "窗口外照舊（跟著變）"); assert.ok(before > 0);
   assert.strictEqual(G.casArtPrice(item, id, D, h, true), G.casArtPrice(item, id, D, h, true), "det 不快取");
 });
+T("畫價凍結不能拿來躲掉價：賣給館方的價 ＝ min(凍結價, 當下真的價)；漲了不多給、掉了照掉（贗品疑雲、景氣）；窗口外照舊", G => {
+  const h = G.casHouseFix(G.casHouseNew(), D).house; G.casArtHouse(h); const item = { tier: 1, date: add(D, -10) }, id = "2026-W50/y";
+  G.casEconRun(h, D, ev([D, "artFreeze", 3, "借展"])); const p1 = G.casArtPrice(item, id, D, h);
+  assert.strictEqual(G.casArtSellBase(item, id, D, h), p1, "沒變：賣價 ＝ 凍結價");
+  h.art.own[id] = 40; h.econ.b = 1; const raw = G.casArtPrice(item, id, D, h, true); // 搶手度變了
+  assert.ok(G.casArtSellBase(item, id, add(D, 1), h) <= p1, "漲了不多給");
+  h.econ.b = -1; h.art.own[id] = 0; const hh = G.casArtSellBase(item, id, add(D, 2), h); assert.ok(hh <= p1, "不會比凍結價高");
+  const real = G.casArtPrice(item, id, add(D, 2), h, false); assert.ok(G.casArtSellBase(item, id, add(D, 2), h) <= p1 && G.casArtSellBase(item, id, add(D, 2), h) <= Math.max(real, p1));
+  { h.art.own[id] = 0; h.econ.b = 1; const fz = h.art.freeze; h.art.freeze = null; const real2 = G.casArtPrice(item, id, D, h); h.art.freeze = fz; assert.ok(real2 < p1, "景氣好 → 當下價比凍結價低（測試前提）"); assert.strictEqual(G.casArtSellBase(item, id, D, h), real2, "當下價比較低：照當下價賣（凍結不能躲掉價）"); }
+  assert.strictEqual(G.casArtSellBase(item, id, add(D, 3), h), G.casArtPrice(item, id, add(D, 3), h), "窗口外照舊"); assert.ok(raw > 0);
+});
 T("莊家提早還外面世界貸款：只在那天壹次、不超過上限、還完莊家仍在健康線以上；守恆", G => {
   const h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = 500000000; h.debt.world = 300000000; const t0 = inv(G, h), w0 = h.world;
   G.casEconRun(h, D, ev([D, "houseRepay", 2, ""])); const room = Math.max(0, 500000000 - G.NUM.casino.health.low * 2), want = Math.min(300000000, Math.floor(room * G.NUM.casino.econEvent.repayPct[1] / 100));

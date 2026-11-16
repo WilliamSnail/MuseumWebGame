@@ -12,6 +12,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
 import { RNG } from "./logic.js";
+import { nwPoke } from "./world.js";
 import { npcByName } from "./npc.js";
 
 const cjBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -35,7 +36,7 @@ export function casJobLeft(w, day) {
 // 交了幾張委託：一張擲一次數量。
 // 回傳 { ok: false, reason }（什麼都沒改）、{ ok: true, found: 這次共幾枚, n: 這次給了幾張 }（重複的、超過上限的那幾張不給，found 可能是 0）
 // clients：跟 slots 壹對壹的委託人名字（網頁說的；伺服器算不出每張是誰，因為要看玩家的存檔）。認得是名單裡的委託人才記到他名下；不認得的只算全館
-export function casJobChips(w, house, slots, day, rnd = RNG, clients = null) {
+export function casJobChips(w, house, slots, day, rnd = RNG, clients = null, uid = null) {
   const C = NUM.casino.job;
   if (!C || typeof rnd !== "function") return { ok: false, reason: "沒有這個設定" };
   const list = (Array.isArray(slots) ? slots : [slots]).slice(0, CAS_JOB_SLOTS.length);
@@ -47,7 +48,7 @@ export function casJobChips(w, house, slots, day, rnd = RNG, clients = null) {
   list.forEach((s, i) => {
     if (cj.slots.includes(s) || cj.n >= C.perDay) return;
     const nm = Array.isArray(clients) && typeof clients[i] === "string" ? npcByName(clients[i].slice(0, 40)) : null;
-    if (nm && nm.kind === "client") who.push(nm.id);
+    if (nm && nm.kind === "client") { who.push(nm.id); if (house && uid) nwPoke(house, day, uid, nm.id, "jobDone"); }
     cj.slots.push(s); cj.n++; n++;
     found += Math.min(C.max, C.min + C.step * Math.min(steps - 1, Math.floor(rnd() * steps)));
   });

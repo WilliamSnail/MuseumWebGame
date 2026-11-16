@@ -151,6 +151,12 @@ export function casArtPrice(item, id, day, house, det) {
   if (fz && !det && typeof id === "string" && arDay(day) && day >= fz.from && day <= fz.until && arBox(fz.cache)) fz.cache[id] = p;
   return p;
 }
+// 賣給館方的價用的畫價：凍結期間取「凍結價」和「當下真的價」比較低的（決定 0097）。凍結只是不漲不跌，不能拿來躲贗品疑雲或景氣掉價
+export function casArtSellBase(item, id, day, house) {
+  const p = casArtPrice(item, id, day, house), fz = house && arBox(house.art) && arBox(house.art.freeze) ? house.art.freeze : null;
+  if (fz && typeof id === "string" && arDay(day) && day >= fz.from && day <= fz.until) return Math.min(p, casArtPriceRaw(item, id, day, house, false));
+  return p;
+}
 function casArtPriceRaw(item, id, day, house, det) {
   const C = NUM.art, base = C.tiers[arTierOf(item && item.tier)].base;
   const age = arDay(item && item.date) && arDay(day) ? casArtAge(Math.max(0, arDiff(item.date, day))) : 0;
@@ -208,7 +214,7 @@ export function casArtSell(w, house, P, id, day) {
   if (!x) return { ok: false, reason: CAS_ART.none };
   if (x.lock) return { ok: false, reason: CAS_ART.locked };
   casArtHouse(house);
-  const pay = casArtSellPrice(casArtPrice(x, id, day, house));
+  const pay = casArtSellPrice(casArtSellBase(x, id, day, house));
   if (arN(A.sells[day]) >= NUM.art.sellPerDay) return { ok: false, reason: arFill(CAS_ART.sellCap, { n: NUM.art.sellPerDay }) };
   if (!Number.isFinite(+house.bankroll) || house.bankroll < pay) return { ok: false, reason: CAS_ART.houseShort };
   if (house.art.out.day !== day) house.art.out = { day, n: 0 };
@@ -229,11 +235,11 @@ export function casArtView(w, house, P, works, day) {
   const tierName = t => C.tiers[arTierOf(t)].name;
   const items = (Array.isArray(works) ? works : []).filter(x => arBox(x) && typeof x.id === "string" && arDay(x.date)).map(x => {
     const price = casArtPrice(x, x.id, day, house), mine = arBox(own[x.id]);
-    return { id: x.id, tier: arTierOf(x.tier), tierName: tierName(x.tier), price, owned: mine, sellPrice: mine ? casArtSellPrice(casArtPrice(own[x.id], x.id, day, house)) : 0, canBuy: !mine && !x.auction && bought < C.perDay && chips >= price, auction: !!x.auction };
+    return { id: x.id, tier: arTierOf(x.tier), tierName: tierName(x.tier), price, owned: mine, sellPrice: mine ? casArtSellPrice(casArtSellBase(own[x.id], x.id, day, house)) : 0, canBuy: !mine && !x.auction && bought < C.perDay && chips >= price, auction: !!x.auction };
   });
   const mine = Object.keys(own).filter(id => arBox(own[id]) && arDay(own[id].date)).map(id => {
     const x = own[id], price = casArtPrice(x, id, day, house);
-    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(price), lock: typeof x.lock === "string" && x.lock ? x.lock : null, breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)), hint: casArtHoaxTomorrow(x, id, day) ? arFill(CAS_ART.hoaxHint, { title: String(x.title || id) }) : null };
+    return { id, title: String(x.title || ""), tier: arTierOf(x.tier), tierName: tierName(x.tier), paid: arN(x.paid), price, sellPrice: casArtSellPrice(casArtSellBase(x, id, day, house)), lock: typeof x.lock === "string" && x.lock ? x.lock : null, breakEven: casArtBreakEven(x, id, day, house, arN(x.paid)), hint: casArtHoaxTomorrow(x, id, day) ? arFill(CAS_ART.hoaxHint, { title: String(x.title || id) }) : null };
   });
   return { items, mine, left: Math.max(0, C.perDay - bought), perDay: C.perDay, holdMax: C.holdMax, sellPct: C.sellPct, chips, risk: CAS_ART.risk };
 }
