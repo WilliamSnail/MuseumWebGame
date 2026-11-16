@@ -418,8 +418,10 @@ export function setAmbOver(name, heatFn) {
   audioState();
 }
 // 地下的聲音狀態（11-15）：{ floor: 1～5, mode: "map"|"explore"|"fight"|"gate"|"rest" }，null ＝不在地下的某壹層裡。有變才重算聲音
-export function setCellarSnd(st) {
+// from：誰設的（"coop" 合作的框、"room" 地下收藏庫這個畫面）。"room" 設的在離開地下收藏庫時由 go() 收掉（11-16 翊文：被理智嚇退出房間，原本的聲音不會停）
+export function setCellarSnd(st, from = "coop") {
   const k = st ? st.floor + ":" + st.mode + ":" + (st.rank || 0) + ":" + (st.trial ? 1 : 0) : "";
+  UI.cellarSndFrom = st ? from : null;
   if (k === (UI.cellarSndKey || "")) return;
   UI.cellarSndKey = k; UI.cellarSnd = st || null; audioState();
 }
@@ -826,6 +828,8 @@ export function go(name, params = {}, opts = {}) {
   if (P && P.news && P.news[name]) { delete P.news[name]; }
   // 新解開的東西：離開的房間把這次看過的小牌子拿掉；進來的房間導覽列的「新」消失、小牌子這次還在（同壹個畫面換頁籤不算進出）
   if (P && prev !== name) { leaveFreshRoom(P, prev); enterFreshRoom(P, name); }
+  // 離開地下收藏庫（自己走回大廳、被嚇退、昏倒、逃跑都壹樣）：這個畫面設的地下聲音收掉，不然大廳還在放地下的風聲（11-16）
+  if (prev === "cellar" && name !== "cellar" && UI.cellarSndFrom === "room") { UI.cellarSnd = null; UI.cellarSndKey = ""; UI.cellarSndFrom = null; }
   render();
   window.scrollTo(0, 0);
   // 換房間：木地板上兩步（標題、結局、黑房間不算）
