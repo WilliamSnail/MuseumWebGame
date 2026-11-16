@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-6deb84", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行財報多了「今天到目前」", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "財報多了壹格「今天到目前」，看今天館外來客到現在付了多少門票、花了多少。",
+        "店裡的消費只給合計，不分店；館友自己的消費不公開。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-51946f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "每個房間看得到現在有幾人", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

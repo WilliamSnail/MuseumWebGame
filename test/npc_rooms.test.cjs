@@ -41,6 +41,18 @@ T("順路逛：看展的散客有一部分去別的房間；人數守恆（展�
   const g = base[0], w0 = G.crowdWander(D, SEC, g); assert.deepStrictEqual(JSON.parse(JSON.stringify(G.crowdWander(D, SEC, g))), JSON.parse(JSON.stringify(w0)));
   const off = load({ __realMoney: true }); off.NUM.casino.npcSpend.crowd.wander.p = 0; const t1 = off.npcDayStartMs(D) + 600 * 60000; assert.ok(Object.keys(off.npcPresence(D, t1, SEC, LIST, null, new Set(), null).rooms).every(k => !off.npcPresence(D, t1, SEC, LIST, null, new Set(), null).rooms[k].wander), "p ＝ 0：沒有人順路逛");
 });
+T("各房間有誰：ids／names 同長度 ＝ npc、groups 的人數加起來 ＝ crowd、順路逛來的標 wander、ids 是真的旅客、被邀走的不在裡面；今天到目前只給合計（不分店）", G => {
+  const known = new Set(LIST.map(n => n.id)); let seenIds = 0, seenW = 0, seenShopG = 0;
+  for (let m = 0; m < 1440; m += 20) {
+    const p = G.npcPresence(D, G.npcDayStartMs(D) + m * 60000, SEC, LIST, null, new Set(), null);
+    for (const k of Object.keys(p.rooms)) { const r = p.rooms[k]; assert.strictEqual(r.ids.length, r.npc, k); assert.strictEqual(r.names.length, r.npc); assert.strictEqual(r.groups.reduce((a, g) => a + g.n, 0), r.crowd, k + " 散客組加起來 ＝ crowd"); assert.ok(r.ids.every(id => known.has(id))); assert.strictEqual(r.groups.filter(g => g.wander).reduce((a, g) => a + g.n, 0), r.wander || 0); seenIds += r.ids.length; seenW += r.groups.filter(g => g.wander).length; seenShopG += r.groups.filter(g => !g.wander && k !== "hall").length; }
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(p.ids)), JSON.parse(JSON.stringify(p.rooms.hall ? p.rooms.hall.ids : [])), "展廳的 ids ＝ 原本的 hall ids");
+  }
+  assert.ok(seenIds > 0 && seenW > 0 && seenShopG > 0, "整天裡三種都看得到");
+  const L = { day: D, ticket: 100, shop: 50, people: 3, crowd: { ticket: 200, shop: 70, people: 40 }, shopBy: { food: { npc: 1, crowd: 2 } } };
+  const t = G.casNpcToday(L, D); assert.deepStrictEqual(JSON.parse(JSON.stringify(t)), { day: D, ticket: { hall: 100, crowd: 200 }, shop: 120, total: 420, people: { npc: 3, crowd: 40 } }); assert.ok(!("shopBy" in t), "不分店");
+  assert.strictEqual(G.casNpcToday(L, add(D, 1)), null, "不是今天的不給"); assert.strictEqual(G.casNpcToday(null, D), null);
+});
 T("到店的人：npcShopArrive 加起來 ＝ 行程的人數（npcTrips）＋ 逛店的散客（crowdShopCounts）", G => {
   const ar = G.npcShopArrive(D, SEC, LIST, null), tr = G.npcTrips(D, SEC, LIST, null), cs = G.crowdShopCounts(D, SEC);
   for (const st of G.IN_STORES) { assert.strictEqual(ar[st].reduce((a, e) => a + e.n, 0), (tr.counts[st] || 0) + cs[st], st); for (let i = 1; i < ar[st].length; i++) assert.ok(ar[st][i - 1].at <= ar[st][i].at, "照時間排"); }
