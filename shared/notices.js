@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-ca9be0", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "下面的抽屜看得出能拉開", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "各廳下面的收藏抽屜，拉環上多了箭頭；第壹次會發亮並寫「點拉環拉開」，拉開後變「收起」。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-5027e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "手機上的畫廊看得到畫了", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
