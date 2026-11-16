@@ -14,7 +14,7 @@ T("books：五個帳的餘額和昨天變化、進出最大的最多 3 筆（正
   const e = G.casBankEcon({ econ: { day: D1, b: 0, rows: [], books: b } }); assert.strictEqual(e.books.day, D1); assert.strictEqual(G.casBankEcon({ econ: { day: D1, b: 0 } }).books, null);
 });
 T("books：NPC、散客的門票進預算池和館方帳顯示成正的（wflow 是外面世界付出去的負數；11-16 翊文截圖）", G => {
-  const doc = { day: "2026-11-15", snap: { house: { bankroll: 0, budget: 0, museum: 0, sea: 0 } }, diff: { wflow: { npcCrowdBudget: -109264, npcTicketBudget: -2298, npcCrowdMuseum: -255206, npcTicketMuseum: -5400 }, houseMint: {}, flow: {} } };
+  const doc = { day: "2026-11-15", snap: { house: { bankroll: 0, budget: 0, museum: 0, sea: 0 } }, diff: { wflow: { npcCrowdBudget: -109264, npcTicketBudget: -2298, npcCrowdMuseum: -255206, npcTicketMuseum: -5400 }, houseMint: {}, flow: { npcCrowdBudget: 109264, npcTicketBudget: 2298, npcCrowdMuseum: 255206, npcTicketMuseum: 5400 } } };
   const b = G.casBooksView(doc), n = (arr, lab) => (arr.find(x => x.label === lab) || {}).n;
   assert.strictEqual(n(b.top.budget, "散客的門票（預算池）"), 109264); assert.strictEqual(n(b.top.budget, "NPC 的門票（預算池）"), 2298);
   assert.strictEqual(n(b.top.museum, "散客的門票（館方帳）"), 255206); assert.strictEqual(n(b.top.museum, "NPC 的門票（館方帳）"), 5400);
