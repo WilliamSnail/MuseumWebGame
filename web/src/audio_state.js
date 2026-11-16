@@ -18,7 +18,7 @@ export function ambFor(o) {
   if (amb === "cellar") mix = ["cellar", o.cellarSnd || { floor: null, mode: "map" }];
   else if (amb === "origin") mix = ["origin", { forbidden: !!(o.params && o.params.tab === "forbidden") }];
   else if (amb === "library") mix = ["library", { dread: o.live ? o.dread() : null }];
-  else if (amb === "lobby") mix = ["lobby", { creepy: !!(P && o.creepy()), event: !!(P && o.event && o.event()), crowd: !!(P && o.crowd && o.crowd()) }]; // event：有限時活動進行中、crowd：館內人潮很多（11-16，大廳換那兩首）
+  else if (amb === "lobby") mix = ["lobby", { creepy: !!(P && o.creepy()), event: !!(P && o.event && o.event()), crowd: !!(P && o.crowd && o.crowd()), tier: o.live && o.sanTier ? o.sanTier() : null }]; // tier：理智那壹段（自由模式、沒存檔是 null，不換曲） // event：有限時活動進行中、crowd：館內人潮很多（11-16，大廳換那兩首）
   else if (amb === "hall") mix = ["hall", { creepy: !!(P && o.creepy()) }];
   else if (amb === "casino") mix = ["casino", { heat: o.heat() }];
   if (o.live && o.dark && scr !== "ending") amb = "zero";

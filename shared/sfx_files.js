@@ -17,6 +17,8 @@ export const SFX_FILES = {
   "sewer-pipe": { name: "Basement Sewer Pipe Ambience（截 70 秒做成循環）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/basement-sewer-pipe-ambience-447101/", loop: true, use: "地下 B1、B4 的底音" },
   "cave-drops": { name: "Waterdrops Cave Echo Sounds", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/waterdrops-cave-echo-sounds-230896/", use: "地下 B1、B4 偶爾的水滴回音" },
   "basement-knock": { name: "Basement Knocking Noises（截前 8 秒）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/basement-knocking-noises-428177/", use: "地下 B1～B3 偶爾的敲擊聲" },
+  "lobby-wrong": { name: "Familiar Melody, Subly Wrong（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e1525680-4848-48c1-a6a1-e55dd0f31f36", own: true, loop: true, use: "大廳：理智稍低（55 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
+  "lobby-silence": { name: "Lobby Silence（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e8704ed2-0e4e-457c-9cad-00c8cd63a527", own: true, loop: true, use: "大廳：理智更低（30 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
   "lobby-normal": { name: "Welcome Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/abab39ee-f9f5-4678-be5d-a7ca871cd0ba", own: true, loop: true, use: "大廳平常的背景音樂（取代原本的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
   "lobby-crowd": { name: "Inviting Loop（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/bad4d15a-ab5e-45b7-ac88-f22bf887fcaa", own: true, loop: true, use: "大廳人潮很多時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
   "lobby-event": { name: "Welcome to the Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/62ba3211-c459-4f88-9014-fff51e2eb270", own: true, loop: true, use: "大廳有限時活動時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的，不是 Pixabay
