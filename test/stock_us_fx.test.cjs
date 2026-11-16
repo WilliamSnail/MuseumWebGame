@@ -24,7 +24,7 @@ T("遊戲價 ＝ 當天匯率 × 真實價，換股數的基準不變（不重�
   assert.strictEqual(H.hist[W][ID], r2(30.5 * 100), "基準 ＝ 匯率 × 前壹收盤");
   assert.strictEqual(H.px[ID], r2(30.5 * 101), "開盤價 ＝ 匯率 × 真實開盤價");
   const view = G.casStockView(G.casWalletFix(G.casWalletNew(), W), house, W, tm(G, 1), []).list.find(x => x.id === ID);
-  assert.strictEqual(view.mult, 30.5);
+  assert.strictEqual(view.mult, 30.5); assert.strictEqual(view.prevClose, H.hist[W][ID], "圖表虛線＝前壹收盤（倍數×真實前收），不是開盤價");
 });
 T("沒有匯率：用 peg.us（×32）；匯率壞掉不收", G => {
   const house = mkHouse(G, W), H = G.casStockHouseFix(house);

@@ -355,7 +355,7 @@ export function casStockView(w, house, day, t, stale) {
     //   11-13 那天 05:00 換日還是舊做法（把前壹晚美股的漲跌套進價格），H.prev 是那之前的價，所以「今天」把昨晚的漲幅也算進來了
     const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
     const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round(mine * (price - prev)) : 0, value = stValue(price, mine); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
-    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
+    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
       costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: C.taxPct / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
       stale: old.includes(d.id) ? CAS_STOCK.stale : null,
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
