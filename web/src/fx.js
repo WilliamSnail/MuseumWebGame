@@ -775,7 +775,7 @@ export const FX = (() => {
         const stampT = every(() => { const t = c.currentTime + 0.05; tone(t, { f: 110, f2: 55, glide: 0.1, g: 0.05, a: 0.002, d: 0.12, to: g }); noise(t, { type: 'lowpass', f: 900, q: 0.7, g: 0.03, a: 0.002, d: 0.05, to: g }); }, () => rand(9000, 18000));
         const ding = every(() => { if (Math.random() < 0.6) return; const t = c.currentTime + 0.05; tone(t, { f: 2093, g: 0.014, a: 0.002, d: 0.9, to: g }); tone(t, { f: 4186, g: 0.004, a: 0.002, d: 0.4, to: g }); }, () => rand(20000, 35000));
         // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊。11-16：播完安靜約 20 秒再放（songCycle）
-        const cello = songCycle(c, g, ['cello-commission'], 0.4, [6000, 10000]); // 11-16 翊文：「在廳裡等8秒左右就可以撥放了」
+        const cello = songCycle(c, g, ['cello-commission'], 0.4, [300, 600]); // 11-16 翊文：「在廳裡等8秒左右就可以撥放了」→「改成一進去就撥放好了」
         return { nodes: [room.n], timers: [paper, stampT, ding, cello] };
       },
       codex(c, g) { // 圖鑑室：很安靜，時鐘滴答，偶爾翻頁
