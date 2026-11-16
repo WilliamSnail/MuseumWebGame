@@ -508,7 +508,7 @@ export const NUM = {
       // 營收也影響跳空（11-15，翊文：「店裡消費…反映在店家股價上」；決定 0087）：跳空 ＝ k ×（人數那項 × (1−revWeight) ＋ 營收那項 × revWeight）。營收 ＝ 昨天這家店的「客人花的錢」：館友的（每人每店每天最多算 revCap，館友自己砸錢推不動股價）＋ NPC 和散客的（house.npcs.shopBy）。
       //   平均用前幾個有效日（活動、突發多來的旅客照比例扣掉）；平均營收低於 revMinAvg、或有營收記錄的有效日不到 minDays 天：營收那項不算（只看人數）。
       revWeight: 0.5, revCap: 3000, revMinAvg: 10000,
-      npcLambda: 2, npcShareMax: 40, npcBase: 12, npcWalk: 3, npcBoostMin: 0.15, npcBoostMax: 0.30,
+      npcLambda: 2, npcShareMax: 40, npcBase: 12, npcWalk: 6, npcBoostMin: 0.15, npcBoostMax: 0.30,
       from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
