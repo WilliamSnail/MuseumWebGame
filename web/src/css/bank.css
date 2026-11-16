@@ -567,3 +567,10 @@ body[data-screen="bank"] #room { background: none; }
 .bank-how h4 { margin: 10px 0 4px; }
 .bank-how p { margin: 4px 0; line-height: 1.55; font-size: .9rem; }
 .bank-how-acts { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+/* 行情表的分組可以收折（11-16）：整條是按鈕，左邊箭頭、右邊幾支／持有幾支 */
+.bank-grp.bank-grp-btn { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; border-bottom: 1px solid #C9B98F; text-align: left; cursor: pointer; font: inherit; font-size: var(--type-small, .75rem); min-height: 32px; }
+.bank-grp.bank-grp-btn:hover { filter: brightness(1.05); }
+.bank-grp .bank-grp-arrow { font-style: normal; width: 1em; color: var(--bank-ink, #2E2014); }
+.bank-grp .bank-grp-sum { margin-left: auto; letter-spacing: 0; opacity: .8; }
+.bank-grp.shut { opacity: .85; }
