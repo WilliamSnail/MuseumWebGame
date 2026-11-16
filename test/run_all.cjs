@@ -110,6 +110,7 @@ const STEPS = [
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],
   ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/week_check.cjs"]],
   ["館內 NPC 的內容檢查（欄位、名字不重複、預算在那一級而且每位不壹樣、不破梗、不露臉、打包給伺服器，11-14 步驟 3）", ["test/npc_check.test.cjs"]],
+  ["館外地圖（打包跟上、兩階亮度、補讀、透明片、新點，11-16）", ["test/map.test.cjs"]],
   ["館內 NPC 的純函式（打包給網頁、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致，11-14）", ["test/npc.test.cjs"]],
   ["館內 NPC 的內容（content/npc）", ["tools/npc_check.cjs"]],
   ["世界經濟的名單和腳本（單位的樹、兩層加總、股票只掛一處、劇情單位、NPC 的隸屬、world:unit／npc／gdp，決定 0086）", ["test/world.test.cjs"]],
