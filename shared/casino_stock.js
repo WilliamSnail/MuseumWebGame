@@ -105,6 +105,7 @@ export function casStockHouseFix(house) {
   H.peg.ev = H.peg.ev.filter(e => stBox(e) && stDef(e.id) && stN(e.from) > 0 && stN(e.to) > 0 && stN(e.seq) > 0).map(e => ({ seq: stN(e.seq), id: e.id, from: stN(e.from), to: stN(e.to) }));
   if (!stBox(H.peg.dir)) H.peg.dir = {}; // dir[id]：這支已經換成「直接用真實價」（換過比例）
   if (!stBox(H.real)) H.real = {};
+  if (!stBox(H.sym)) H.sym = {}; // 每支的真實代號和名字（11-16：新上架、還沒抓到價的也要先顯示）；只是顯示用，不影響價格
   for (const k of Object.keys(H.real)) { const r = H.real[k]; if (!STOCK_IDS.includes(k) || !stBox(r) || !(+r.px > 0)) delete H.real[k]; else H.real[k] = { sym: typeof r.sym === "string" ? r.sym.slice(0, 12) : "", name: typeof r.name === "string" ? r.name.slice(0, 20) : "", px: +r.px, chg: Number.isFinite(+r.chg) ? +r.chg : 0 }; }
   if (!stBox(H.net)) H.net = { day: null, n: 0 };
   H.net.day = stDay(H.net.day) ? H.net.day : null;
@@ -210,6 +211,7 @@ export function casStockReals(house, tw, us) {
 // 畫面要的真實價：只給「已經算進遊戲價」的那個（上壹個錨點，或還沒開盤時前壹收盤），不給即時的（不然不用看盤軟體就能搶跑）。syms：{ id: 代號 }（只有伺服器知道，shared 不寫死）
 export function casStockSetReal(house, tw, us, day, syms, names) {
   const H = casStockHouseFix(house), sy = syms && typeof syms === "object" ? syms : {}, nm = names && typeof names === "object" ? names : {};
+  H.sym = {}; for (const id of STOCK_IDS) if (typeof sy[id] === "string" && sy[id]) H.sym[id] = { sym: sy[id].slice(0, 12), name: typeof nm[id] === "string" ? nm[id].slice(0, 20) : "" };
   for (const doc of [tw, us]) {
     if (!doc || typeof doc !== "object") continue;
     let src = null;
@@ -349,7 +351,7 @@ export function casStockView(w, house, day, t, stale) {
       intraday: mk && H[mk].day === day && Array.isArray(H[mk].ser[d.id]) ? H[mk].ser[d.id].slice() : [], intradayFrom: mk && H[mk].day === day ? H[mk].from : 0,
       fresh: S.seen[d.id] !== price,
       // 11-14（規劃 2.8h）：real 真實代號、已經算進遊戲價的真實價、真實漲跌 %（沒有資料是 null）；mult 遊戲價 ＝ 倍數 × 真實價
-      real: H.real[d.id] ? Object.assign({}, H.real[d.id]) : null, mult: stPegMult(d.id) };
+      real: H.real[d.id] ? Object.assign({}, H.real[d.id]) : null, code: H.sym && H.sym[d.id] ? Object.assign({}, H.sym[d.id]) : null, mult: stPegMult(d.id) };
   });
   return {
     list, fee: C.feePct / 100, taxPct: C.taxPct / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
