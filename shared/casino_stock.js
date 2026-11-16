@@ -283,6 +283,9 @@ function casStockHoldCost(w, house, S, H) {
 // ---------- 買賣 ----------
 // 成本記錄（11-14，資本利得稅）：有持股卻沒有成本記錄的舊持股，成本 ＝ 第壹次碰到時的價 × 股數（之前的漲幅不抽稅）。每次碰到錢包（casStockPegSync）、買賣時補
 const stSeed = (S, H) => { for (const id of Object.keys(S.own)) if (S.cost[id] == null && H.px[id] > 0) S.cost[id] = stBuyCost(H.px[id], S.own[id]); };
+// 證交稅（決定 0111）：賣出金額 × 稅率，無條件進位、最少 1（捨去的話小單拆開就逃稅）；不超過賣出拿到的錢（扣完手續費）。台股、館內股收，美股 taxUs（預設不收）
+export const casStockTaxPct = id => (stockIsUs(id) ? NUM.casino.stock.taxUs : NUM.casino.stock.taxPct);
+export const casStockTax = (id, gross, fee) => { const pc = Math.round(casStockTaxPct(id) * 100); return pc > 0 && gross > 0 ? Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * pc / 10000))) : 0; };
 const stFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 // 全館持股總市值（莊家曝險看這個）
 export const casStockExposure = house => { const H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * H.held[id], 0); };
@@ -325,8 +328,8 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : CAS_STOCK.notEnough, { n: casNum(have) }) };
   const px = H.px[id], gross = stSellGet(px, n), fee = stFee(gross);
   stSeed(S, H);
-  // 資本利得稅：賣出拿到的錢（扣賣出手續費）− 這 n 股的成本（總成本照股數比例，平均成本法）> 0 的部分抽 taxPct%（向下取整）；賠錢不抽也不退
-  const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0, net = gross - fee - tax;
+  // 證交稅（決定 0111，取代資本利得稅）：賣出金額的 taxPct%（美股不收），不管賺賠；成本照股數比例扣（平均成本法）只用在損益顯示
+  const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = casStockTax(id, gross, fee), net = gross - fee - tax;
   // 壹人壹天賣出上限
   if (!free && stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
   if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
@@ -340,7 +343,7 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (!free) S.sold = { day, n: stSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, stN(H.held[id]) - n);
   if (!free) H.net = { day, n: stNetToday(H, day) + gross };
-  return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: "，資本利得稅 " + casNum(tax) })] };
+  return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
 // ---------- 畫面要的 ----------
@@ -356,7 +359,7 @@ export function casStockView(w, house, day, t, stale) {
     const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
     const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round(mine * (price - prev)) : 0, value = stValue(price, mine); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
     return { id: d.id, name: d.name, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
-      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: C.taxPct / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
+      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: casStockTaxPct(d.id) / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
       stale: old.includes(d.id) ? CAS_STOCK.stale : null,
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
       //   intraday 今天盤中每分鐘的價（從 intradayFrom 分鐘起，0 ＝ 09:00；其他股票是空陣列）；fresh 價格自從玩家上次按「看過了」之後變過
@@ -368,7 +371,7 @@ export function casStockView(w, house, day, t, stale) {
       real: H.real[d.id] ? Object.assign({}, H.real[d.id]) : null, code: H.sym && H.sym[d.id] ? Object.assign({}, H.sym[d.id]) : null, mult: stPxMult(H, d.id) };
   });
   return {
-    list, fee: C.feePct / 100, taxPct: C.taxPct / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
+    list, fee: C.feePct / 100, taxPct: C.taxPct / 100, taxUsPct: C.taxUs / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
     tw: { state: H.tw.day === day ? H.tw.st : "closed", from: C.tw.from, len: C.tw.len },
     us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: mkLen("us", day), early: usEarlyClose(day) }, // from：美東當天 00:00 起算的分鐘（570 ＝ 09:30）；len 390 分鐘
     usOpenAt: usOpenMs(day), // 這個遊戲日美股開盤的毫秒（日光節約已算進去；畫面要顯示台灣時間幾點開盤用 new Date(usOpenAt)，收盤 ＝ usOpenAt ＋ len×60000）
@@ -493,7 +496,7 @@ export function casStockMatch(w, house, day, t) {
     if (r.ok) {
       out.fills++;
       stNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: stOrderName(o), n: casNum(r.n), px: casPx(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
-        : casFill(O.fillSell, { name: stOrderName(o), kind: stKind(o), n: casNum(r.n), px: casPx(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: "，資本利得稅 " + casNum(r.tax) }));
+        : casFill(O.fillSell, { name: stOrderName(o), kind: stKind(o), n: casNum(r.n), px: casPx(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: r.tax > 0 ? "，證交稅 " + casNum(r.tax) : "" }));
     } else { out.cancels++; stNote(S, casFill(O.capCancel, { name: stOrderName(o), kind: stKind(o), n: casNum(o.n) })); }
   }
   return out;

@@ -128,8 +128,8 @@ T("賣：莊家付錢，扣手續費進預算池，守恆；賣超過持有擋�
   assert.ok(G.casInBuy(w, h, "food", 100, D0, t, SEC).ok);
   const t1 = total(G, w, h), c1 = w.chips, b1 = h.bankroll, bud1 = h.budget;
   const r = G.casInSell(w, h, "food", 40, D0, t, SEC); assert.ok(r.ok, r.reason);
-  const gross = px * 40, fee = Math.ceil(gross * S.feePct / 100);
-  assert.strictEqual(w.chips, c1 + gross - fee); assert.strictEqual(h.bankroll, b1 - gross); assert.strictEqual(h.budget, bud1 + fee);
+  const gross = px * 40, fee = Math.ceil(gross * S.feePct / 100), tax = Math.min(gross - fee, Math.max(1, Math.ceil(gross * 0.3 / 100))); // 證交稅（決定 0111）
+  assert.strictEqual(w.chips, c1 + gross - fee - tax); assert.strictEqual(r.tax, tax); assert.strictEqual(h.bankroll, b1 - gross); assert.strictEqual(h.budget, bud1 + fee);
   assert.strictEqual(total(G, w, h), t1, "賣出也守恆"); assert.strictEqual(w.sin.own.food, 60); assert.strictEqual(h.sin.held.food, 60);
   assert.ok(!G.casInSell(w, h, "food", 61, D0, t, SEC).ok, "不能賣比持有多"); assert.ok(!G.casInSell(w, h, "bj", 1, D0, t, SEC).ok, "沒有這支");
   assert.ok(!G.casInSell(w, h, "food", 1, D0, at(D0, 23, 50), SEC).ok, "停盤擋");

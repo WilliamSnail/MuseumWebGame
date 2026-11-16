@@ -514,7 +514,7 @@ export const NUM = {
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
-    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, taxPct: 5, // taxPct 資本利得稅（11-14，翊文：「抽5%就好」）：館外股票賣出時，（賣出拿到的錢 − 這些股的成本）> 0 的部分抽 taxPct% 進預算池（搬，不是 burn）；賠錢不退；館內股、槓桿不抽
+    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, taxPct: 0.3, taxUs: 0, // taxPct 證交稅（決定 0111，翊文 11-16：取代資本利得稅 5%）：台股、館內股「賣出」都收賣出金額的 taxPct%，無條件進位、最少 1，進政府帳（搬，不是 burn）；taxUs 美股（0＝不收，貼近真實）；槓桿不收
      
       // sellMultByCredit：壹天賣出上限（sellDay）隨信用等級的倍數 [[等級 ≥, 倍數], …]（決定 0093，翊文 11-15：「賣出上限隨信用等級」；0 級 ×1、2 級 ×2.5、4 級 ×5）。館內股的全館淨賣出上限（netSellPct、netSellFlat）照舊，守住莊家
       sellMultByCredit: [[2, 2.5], [4, 50]],
@@ -564,6 +564,7 @@ export const NUM = {
     //   freezeMax 畫價凍結最多幾天；repayPct 莊家提早還貸款占「超過健康線 ×2 的部分」的 %（等級 1～3）；perWeek 每週最多幾個動錢的事件；ahead 事先公告的天數
     econEvent: { foreignPct: [15, 20, 30], windowMax: 3, redeemPct: 50, freezeMax: 7, repayPct: [5, 10, 20], perWeek: 2, ahead: { foreign: 2, bondWindow: 3, artFreeze: 2 } },
     ticket: { perDay: 20, ownerPct: 30, firstPct: 50 },
+    tax: { bizPct: 5, entPct: 5 }, // 營業稅（NPC、散客在店裡的花費；牌桌不課）、娛樂稅（NPC、散客的門票）：內含，進政府帳（決定 0111）
     // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080，shared/casino_npc.js、casino_table.js；翊文：「賭場邀請 NPC 一起來」「也可以參與多人賭桌」）：
     //   perNpcDay 壹位 NPC 壹天最多答應幾次；tableMax 壹桌最多幾位 NPC；stay 壹次待幾分鐘；coolMs 被拒之後同壹位館友 30 分鐘才能再邀；baseP／likeP 答應的機率 %（愛玩牌桌 likes bj 再加 likeP）；
     //   lossPct／winPct 壹位 NPC 壹天最多輸／贏他 perDay 的幾 %（到了就說離開台詞走人）；dayCap 全館 NPC 壹天在賭場淨輸或淨贏的上限（任壹邊到了，今天不再答應、在桌上的也走）；

@@ -41,8 +41,8 @@ T("賣：從館外進來（記成憑空、來源 stockSell），手續費進預�
   const op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, px = s.house.stk.px[ID];
   const r = G.casStockSell(s.w, s.house, ID, "max", D, OPEN);
   assert.ok(r.ok, r.reason);
-  const gross = px * 10, fee = Math.ceil(gross * C.feePct / 100);
-  assert.strictEqual(s.w.chips, c0 + gross - fee);
+  const gross = px * 10, fee = Math.ceil(gross * C.feePct / 100), tax = Math.min(gross - fee, Math.max(1, Math.ceil(gross * C.taxPct / 100))); // 證交稅（決定 0111）
+  assert.strictEqual(s.w.chips, c0 + gross - fee - tax);
   assert.strictEqual(s.house.bankroll, h0, "莊家不付錢");
   assert.strictEqual(s.house.led.world.stockSell, -gross, "外面世界付（池子變少），不是憑空"); assert.ok(!s.w.led.mint.stockSell);
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");

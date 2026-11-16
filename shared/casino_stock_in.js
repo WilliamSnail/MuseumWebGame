@@ -41,6 +41,8 @@ const inDiff = (a, b) => { const f = s => { const [y, m, d] = s.split("-").map(N
 export const IN_STORES = ["food", "bj", "job", "cellar", "craft"];
 export const IN_IDS = IN_STOCKS.map(s => s.id);
 const inDef = id => IN_STOCKS.find(s => s.id === id) || null;
+// 證交稅（決定 0111）：跟館外台股同一個算法（shared/casino_stock.js 的 casStockTax）；館內股收，無條件進位、最少 1
+const inTax = (gross, fee) => { const pc = Math.round(NUM.casino.stock.taxPct * 100); return pc > 0 && gross > 0 ? Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * pc / 10000))) : 0; };
 const inFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 
 // ---------- 這個人今天用過哪幾家店（算「不同的人」） ----------
@@ -384,18 +386,19 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0, op
   const n = shares === "max" ? have : inShares(shares);
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: T.bad };
   if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : T.notEnough, { n: casNum(have) }) };
-  const px = pr.px, gross = px * n, fee = inFee(gross), net = gross - fee;
+  const px = pr.px, gross = px * n, fee = inFee(gross), tax = inTax(gross, fee), net = gross - fee - tax;
   if (!free && inSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(T.sellDay, { n: casNum(Math.max(0, casSellCap(w) - inSoldToday(S, day))), up: casSellTip(w) }) };
   if (!free && inNetToday(H, day) + gross > inNetCap(house)) return { ok: false, reason: T.queue }; // 莊家付不過來，明天再賣
   casInCostSeed(w, house);
   const costOut = n >= have0 ? inN(S.cost[id]) : Math.floor(inN(S.cost[id]) * n / have0);
   casHouseMove(house, "stockIn", -gross);
   w.chips += net; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
+  if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); } // 證交稅進政府帳
   S.own[id] = have0 - n; if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, inN(S.cost[id]) - costOut);
   S.fee += fee; if (!free) S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
   if (!free) H.net = { day, n: inNetToday(H, day) + gross };
-  return { ok: true, n, px, gross, fee, net, lines: [casFill(T.sellOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee) })] };
+  return { ok: true, n, px, gross, fee, tax, net, lines: [casFill(T.sellOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
 // ---------- 限價單、停損單（11-14，規劃 2.8c、2.8g：跟館外股壹樣，對手盤是莊家） ----------
@@ -470,7 +473,7 @@ export function casInMatch(w, house, day, t, secret = SECRET) {
     if (r.ok) {
       out.fills++;
       inNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: inDef(o.id).name, n: casNum(r.n), px: casNum(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
-        : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: "" }));
+        : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: r.tax > 0 ? "，證交稅 " + casNum(r.tax) : "" }));
     } else { out.cancels++; inNote(S, casFill(O.capCancel, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(o.n) })); }
   }
   return out;
@@ -487,7 +490,7 @@ export function casInView(w, house, day, t, secret = SECRET) {
     const price = ready ? ser[Math.min(upto, ser.length - 1)] : H.open[d.id], mine = inN(S.own[d.id]);
     const prev = H.close[d.id], costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : price * mine) : 0; // 持股明細欄位跟館外股壹樣（casStockView）；prev ＝ 昨天收盤
     return { id: d.id, name: d.name, line: d.intro, kind: "in", market: "in", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,
-      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg: prev > 0 ? mine * (price - prev) : 0, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: price * mine - costTotal, pnlPct: costTotal > 0 ? (price * mine - costTotal) / costTotal : 0, tax: 0,
+      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg: prev > 0 ? mine * (price - prev) : 0, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: price * mine - costTotal, pnlPct: costTotal > 0 ? (price * mine - costTotal) / costTotal : 0, tax: NUM.casino.stock.taxPct / 100,
       halted: !ready || (t != null && idx === null), intraday: ready ? ser.slice(0, upto + 1) : [], intradayFrom: 0, fresh: S.seen[d.id] !== price, stale: null, quiet: !!H.quiet[d.id], jump: H.jump[d.id] };
   });
   return { list, inDay: { from: C.from, len: C.ticks, step: C.step }, cap: C.cap, total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee, feePct: NUM.casino.stock.feePct / 100,

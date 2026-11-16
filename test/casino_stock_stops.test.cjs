@@ -140,8 +140,8 @@ T("館內股限價賣：鎖住股數（不能再市價賣、不能重複掛）�
   assert.ok(G.casInSell(s.w, s.h, IN, 40, D0, tick(D0, up.i), SEC).ok);
   const v = G.casStockViewAll(s.w, s.h, D0, tick(D0, up.i)); assert.strictEqual(v.orders[0].lockShares, 60);
   const c0 = s.w.chips, hb = s.h.bankroll, m = G.casStockMatch(s.w, s.h, D0, tick(D0, up.k)); assert.strictEqual(m.fills, 1);
-  const gross = up.hit * 60, fee = Math.ceil(gross * 0.005);
-  assert.strictEqual(s.w.chips, c0 + gross - fee); assert.strictEqual(s.h.bankroll, hb - gross); assert.ok(!s.w.sin.own[IN]);
+  const gross = up.hit * 60, fee = Math.ceil(gross * 0.005), tax = Math.max(1, Math.ceil(gross * 0.003)); // 證交稅（決定 0111）
+  assert.strictEqual(s.w.chips, c0 + gross - fee - tax); assert.strictEqual(s.h.bankroll, hb - gross); assert.ok(!s.w.sin.own[IN]);
   assert.strictEqual(gap(s, op), 0);
 });
 T("館內股停損賣：跌到就賣，成交價是觸發那個價", G => {

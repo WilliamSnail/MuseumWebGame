@@ -31,7 +31,7 @@ T("買賣：小數價的成本進位、收入捨去、手續費進位、稅捨�
   s.house.stk.px[ID] = 57.91;
   const q = G.casStockSell(s.w, s.house, ID, "max", D, OPEN);
   assert.ok(q.ok, q.reason);
-  const gross = Math.floor(5791 * 7 / 100), sfee = Math.ceil(gross * C.feePct / 100), profit = gross - sfee - (cost + fee), tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0;
+  const gross = Math.floor(5791 * 7 / 100), sfee = Math.ceil(gross * C.feePct / 100), profit = gross - sfee - (cost + fee), tax = Math.ceil(gross * C.taxPct / 100);
   assert.strictEqual(q.gross, gross); assert.strictEqual(q.fee, sfee); assert.strictEqual(q.tax, tax); assert.strictEqual(q.net, gross - sfee - tax);
   assert.ok(Number.isInteger(s.w.chips)); assert.strictEqual(gap(G, s, op), 0, "賣完守恆");
 });
