@@ -30,7 +30,7 @@ import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino_book.js";
-import { casReportView } from "./shared/casino_report.js";
+import { casBooksView, casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
@@ -379,7 +379,7 @@ async function writeEcon(doc, day) {
   const sec = await twSecret();
   await db().runTransaction(async tx => {
     const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house, yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
-    if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
+    if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world && h.econ.books) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
     let snapN = (doc.snap.house && doc.snap.house.npcs) || null;
     if (!(snapN && snapN.day === yd)) { try { const cp = JSON.parse(JSON.stringify(h)); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snapN = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("writeEcon npcs", e && e.message); } } // 日報是唯讀、不換日：昨天的 npcs 可能還沒結算，在複本上補算
     // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
@@ -392,7 +392,7 @@ async function writeEcon(doc, day) {
     const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
     h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
     h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
-      perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
+      perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
     put(tx, houseRef(), h);
   });
   ECON_DONE = day;
