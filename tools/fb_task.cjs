@@ -140,8 +140,15 @@ async function stockStatus(db) {
     const log = Array.isArray(d.log) ? d.log.slice(-15) : [];
     console.log("  最近的紀錄：" + (log.length ? "" : "（沒有）"));
     log.forEach(l => console.log("    " + (typeof l === "string" ? l : short(l))));
+    if (d.fx != null || d.fxLast != null) console.log("  匯率：今天 " + d.fx + "　昨天 " + d.fxLast);
+    console.log("  真實前收盤：" + (short(d.prevReal) || "-"));
+    if (d.ser && typeof d.ser === "object") console.log("  盤中前幾個 rel：" + short(Object.fromEntries(Object.keys(d.ser).map(id => [id, (d.ser[id] || []).slice(d.openIdx || 0, (d.openIdx || 0) + 4)]))));
     console.log("  有哪些天：" + Object.keys(d.days || {}).sort().join("、"));
   }
+  { const hs = await db.doc("casinoHouse/main").get(), h = hs.exists ? JSON.parse(hs.data().data || "{}") : {}, k = h.stk || {}; // 莊家的股價（圖表基準、換倍數的紀錄）
+    console.log("莊家 house.stk：日期 " + (k.day || "-") + "　fx " + k.fx);
+    console.log("  px：" + short(k.px)); console.log("  prev：" + short(k.prev)); console.log("  peg.dir：" + short(k.peg && k.peg.dir));
+    const days = Object.keys(k.hist || {}).sort().slice(-3); days.forEach(d => console.log("  hist " + d + "：" + short(k.hist[d]))); }
 }
 
 // 只讀：經濟用到的欄位（白名單，不是整份文件）。格式給 tools/econ_check.cjs --ledger 吃

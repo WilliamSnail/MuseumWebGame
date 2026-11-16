@@ -342,10 +342,11 @@ function chart(s) {
   const W = 240, H = 56, pad = 4, slots = ss ? ss.slots : pts.length, off = ss ? ss.offset : 0;
   let body = "";
   if (pts.length > 1 && !(ss && ss.state === "noopen")) {
-    const lo = Math.min(...pts), hi = Math.max(...pts), span = Math.max(1e-9, hi - lo);
+    const ref = ss && s.prevClose > 0 ? s.prevClose : pts[0]; // 虛線＝前壹收盤（沒有就用開盤價）；盤中開盤跳空時，虛線不在線的起點
+    const lo = Math.min(...pts, ref), hi = Math.max(...pts, ref), span = Math.max(1e-9, hi - lo);
     const xy = pts.map((p, i) => [pad + (off + i) / Math.max(1, slots - 1) * (W - 2 * pad), H - pad - (p - lo) / span * (H - 2 * pad)]);
-    const up = pts[pts.length - 1] >= pts[0], col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1], first = xy[0];
-    const oy = H - pad - (pts[0] - lo) / span * (H - 2 * pad); // 開盤價的虛線
+    const up = pts[pts.length - 1] >= ref, col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1], first = xy[0];
+    const oy = H - pad - (ref - lo) / span * (H - 2 * pad); // 前壹收盤的虛線
     body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${first[0].toFixed(1)},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
   const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, ss.mid), h("span", null, ss.to)) : null;
