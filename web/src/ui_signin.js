@@ -168,7 +168,7 @@ function holidayArtRow(hol, today) {
       const seen = P && P.seen && P.seen[a.id];
       return h("figure", { class: "sg-art" + (seen ? "" : " covered") }, h("span", { class: `frame art-${a.art}`, html: seen ? ART.exhibit(a.art, { hol: a.look }) : "" }), h("figcaption", null, `《${a.title}》`));
     })),
-    on && P ? btn(["去畫廊看 ", h("span", { "aria-hidden": "true" }, "→")], () => { document.querySelectorAll(".nb-layer").forEach(l => l.remove()); document.body.classList.remove("nb-open"); go("gallery"); }, "small sg-go-gallery") : null);
+    on && P ? btn(["去畫廊看 ", h("span", { "aria-hidden": "true" }, "→")], () => { document.querySelectorAll(".nb-layer").forEach(l => { if (l.nbClose) l.nbClose(); else l.remove(); }); document.body.classList.remove("nb-open"); go("gallery"); }, "small sg-go-gallery") : null);
 }
 
 // ---------- 簽到卡 ----------

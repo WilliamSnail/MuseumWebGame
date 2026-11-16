@@ -8,6 +8,7 @@ const STEPS = [
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/room_mood.test.cjs"]],
   ["賭場、銀行的背景樂：熱鬧程度換算（ambMix）、環境音會建會停會尊重靜音", ["test/amb_mix.test.cjs"]],
   ["音效檔（Pixabay）：清單、檔案、來源.md 對得上，程式用到的都有登記", ["test/sfx_files.test.cjs"]],
+  ["聲音狀態檢查（npm run snd:check）：每個房間的環境音計時器都進 timers、檔案都接房間的 g、地下→大廳／賭場框／登出的聲音都收乾淨、該放哪首（ambFor）", ["test/snd_check.test.cjs"]],
   ["音效與特效總表：docs/音效與特效總表.md 跟程式對得上（npm run fx:report），掃 snd／sndFile 的解析", ["test/fx_report.test.cjs"]],
   ["npm run sfx:add：Pixabay 檔名和網頁標題解析、登記到 sfx_files.js 和 來源.md", ["test/sfx_add.test.cjs"]],
   ["地下打鬥的聲音表：合成音效名字和檔案 id 都要存在", ["test/fight_sfx.test.cjs"]],

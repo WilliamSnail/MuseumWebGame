@@ -181,8 +181,8 @@ const SAN_RULES = [
   { key: "snd-tinnitus", name: "耳鳴", find: ["web/src/ui_core.js", /S\.tinnitus\(/], when: "瘋狂發作中", nums: () => "P.bout（ui_core.js audioState）" },
   { key: "snd-dread", name: "理智低的恐怖音樂（horror-low／horror-edge）", find: ["web/src/ui_core.js", /S\.dread\(/], when: "理智 < 45 疊 horror-low；≤ 15（含歸零）換 horror-edge；進 15 以下響一次 pulse-rise", nums: m => `SAN_DREAD＝${JSON.stringify(m.SAN_DREAD)}、sanDread()（shared/room_mood.js）` },
   { key: "snd-whisper", name: "低語層數", find: ["web/src/ui_core.js", /export const whisperLayers/], when: "理智越低，低語疊越多層（R.whisper）", nums: () => "50 以上 2 層；40–49：3；30–39：4；20–29：5；10–19：6；1–9：7；0：8（ui_core.js whisperLayers）" },
-  { key: "snd-zero", name: "理智歸零的遠處低音鼓", find: ["web/src/ui_core.js", /amb = "zero"/], when: "理智歸零（P.dark）時環境音換成 AMB.zero", nums: () => "P.dark" },
-  { key: "snd-mix-casino", name: "賭場的熱鬧連動環境音（ambMix）", find: ["web/src/ui_core.js", /S\.ambMix\(ambMix\(/], when: "賭場開著時每 30 秒照熱鬧程度調人聲音量、籌碼聲間隔", nums: m => "AMB_MIX（見 3-5）" },
+  { key: "snd-zero", name: "理智歸零的遠處低音鼓", find: ["web/src/audio_state.js", /amb = "zero"/], when: "理智歸零（P.dark）時環境音換成 AMB.zero", nums: () => "P.dark" },
+  { key: "snd-mix-casino", name: "賭場的熱鬧連動環境音（ambMix）", find: ["web/src/ui_core.js", /ambMix\(mix\[1\]\.heat\)/], when: "賭場開著時每 30 秒照熱鬧程度調人聲音量、籌碼聲間隔", nums: m => "AMB_MIX（見 3-5）" },
 ];
 
 // ---------- 組總表 ----------
