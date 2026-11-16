@@ -300,6 +300,8 @@ const realPx = (n, mk) => `${Number(n).toLocaleString("en-US", { maximumFraction
 // 美股：遊戲價旁邊同時寫美金（翊文 11-14：「美股換算台幣，那美股那邊同時顯示美金和台幣」）。倍數 ≥ 30 才算「台幣」（決定 0081 美股 ×32＝美元換台幣），之前的倍數只寫「籌碼」
 const usTwd = s => s && s.market === "us" && Number(s.mult) >= 30;
 const usdText = s => (s && s.market === "us" && s.real && s.real.px != null ? `US$ ${Number(s.real.px).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
+// 還沒抓到真實價的（新上架、還沒開過盤）：先寫代號和名字（11-16，翊文：「怎麼新的沒有股票號碼那些」）
+const codeBit = s => h("span", { class: "bank-real" }, h("b", null, s.code.name ? `${s.code.sym} ${s.code.name}` : s.code.sym), h("span", null, "開盤後才有價"));
 function realBit(s) {
   const r = s.real;
   if (!r) return null;
@@ -383,7 +385,7 @@ function stockRows(list, cur, S) {
       if (gk(s) !== k) return;
       const closed = s.session && s.session.state !== "open";
       rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
-        h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : h("small", { class: "ln" }, s.line)),
+        h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : s.code ? h("small", { class: "ln real" }, codeBit(s)) : h("small", { class: "ln" }, s.line)),
         h("span", { class: "bank-tab-num" }, fmt(s.price), usdText(s) ? h("small", { class: "bank-usd-sm" }, usdText(s)) : null), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
     });
   });
