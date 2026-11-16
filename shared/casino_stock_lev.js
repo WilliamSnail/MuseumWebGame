@@ -32,14 +32,15 @@
 import { NUM } from "./config.js";
 import { casCreditLevel } from "./casino_credit.js";
 import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
-import { casFill, casNum } from "./casino.js";
+import { casFill, casNum, casPx } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
 import { IN_IDS, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
-import { casStockHouseFix, casStockIdHalt } from "./casino_stock.js";
+import { casStockHouseFix, casStockIdHalt, stBuyCost, stCents, stPx } from "./casino_stock.js";
 import { TW_IDS, US_IDS, twIdx, usIdx } from "./stocks_tw.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 
+const lqP = stPx; // 價：小數兩位（決定 0108）；股數、保證金、損益是整數
 const lqBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const lqN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const lqDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -63,8 +64,8 @@ export function casLevFix(w, day) {
   const S = w.lev;
   // 就地補（不換物件：呼叫的人手上拿著的 pos 還是同壹個）
   S.pos = (Array.isArray(S.pos) ? S.pos : []).filter(lqBox).map(p => Object.assign(p, {
-    no: lqN(p.no), mk: casLevMarket(p.id), side: p.side === "short" ? "short" : "long", lev: Math.max(1, lqN(p.lev)), qty: lqN(p.qty), entry: lqN(p.entry), notional: lqN(p.notional),
-    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), peg: lqN(p.peg), px: lqN(p.px) || lqN(p.entry), stop: lqN(p.stop) || null, take: lqN(p.take) || null }))
+    no: lqN(p.no), mk: casLevMarket(p.id), side: p.side === "short" ? "short" : "long", lev: Math.max(1, lqN(p.lev)), qty: lqN(p.qty), entry: lqP(p.entry), notional: lqN(p.notional),
+    margin: lqN(p.margin), fee: lqN(p.fee), day: lqDay(p.day) ? p.day : null, at: p.at == null ? null : lqN(p.at), chk: lqN(p.chk), peg: lqN(p.peg), px: lqP(p.px) || lqP(p.entry), stop: lqP(p.stop) || null, take: lqP(p.take) || null }))
     .filter(p => p.mk && p.qty > 0 && p.entry > 0 && p.margin > 0 && p.day);
   S.seq = lqN(S.seq);
   S.hold = S.pos.reduce((a, p) => a + p.margin, 0); // 永遠由部位算出來，不會對不上
@@ -123,16 +124,17 @@ export const casLevMaxLev = (mk, level) => { const m = Math.max(0, lqN((lqC().ma
 
 // ---------- 一筆部位的算術（全部用整數比較，沒有浮點的邊界問題） ----------
 const lqSide = s => (s === "short" || s === "空" ? "short" : s === "long" || s === "多" ? "long" : null);
-export const casLevPnl = (p, px) => (p.side === "long" ? px - p.entry : p.entry - px) * p.qty;
+// 損益 ＝ 價差（用「分」算）× 股數，四捨五入到整數籌碼（決定 0108：賺賠對稱的四捨五入，不偏玩家也不偏外面世界）
+export const casLevPnl = (p, px) => Math.round((p.side === "long" ? stCents(px) - stCents(p.entry) : stCents(p.entry) - stCents(px)) * p.qty / 100);
 export const casLevEquity = (p, px) => p.margin + casLevPnl(p, px);
 // 碰到強制平倉了嗎：保證金加損益 ≤ 原本保證金的 forcePct%
 export const casLevHit = (p, px) => casLevEquity(p, px) * 100 <= p.margin * lqC().forcePct;
 // 強制平倉價（顯示用）：做多是「碰到就平倉」的最高價，放空是最低價
 export function casLevLiqPx(p) {
-  const f = lqC().forcePct / 100;
-  if (p.side === "long") { let x = Math.floor(p.entry - f * p.margin / p.qty); while (x + 1 < p.entry && casLevHit(p, x + 1)) x++; while (x > 0 && !casLevHit(p, x)) x--; return Math.max(0, x); }
-  let x = Math.ceil(p.entry + f * p.margin / p.qty); while (x - 1 > p.entry && casLevHit(p, x - 1)) x--; while (!casLevHit(p, x)) x++;
-  return x;
+  const f = lqC().forcePct / 100, hit = c => casLevHit(p, c / 100), e = stCents(p.entry); // 用「分」找（價是小數兩位）
+  if (p.side === "long") { let x = Math.floor(e - f * p.margin / p.qty * 100); while (x + 1 < e && hit(x + 1)) x++; while (x > 0 && !hit(x)) x--; return Math.max(0, x) / 100; }
+  let x = Math.ceil(e + f * p.margin / p.qty * 100); while (x - 1 > e && hit(x - 1)) x--; while (!hit(x)) x++;
+  return x / 100;
 }
 // 維持率（%）：保證金加損益 ÷ 原本的保證金。開倉是 100，到 forcePct（50）強平
 export const casLevMaint = (p, px) => Math.round(casLevEquity(p, px) / p.margin * 100);
@@ -207,18 +209,18 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
 
 // ---------- 停損、停利的設定檢查 ----------
 // 價的輸入：沒給／空字串／0／null ＝ 沒設（null）；不是正整數回 undefined（看不懂）
-const lqPxArg = v => { if (v == null || v === "" || v === 0 || v === "0") return null; const n = Math.floor(Number(String(v).replace(/[,，\s]/g, ""))); return Number.isFinite(n) && n >= 1 ? n : undefined; };
+const lqPxArg = v => { if (v == null || v === "" || v === 0 || v === "0") return null; const n = lqP(Number(String(v).replace(/[,，s]/g, ""))); return n >= 0.01 ? n : undefined; };
 // 檢查壹組 stop、take（都可以是 null）。ref ＝ 參考價（開倉時是開倉價，之後改是現價）。回傳 null ＝ 合格，不然原因。
 // 規則：做多要「停損 < 參考價 < 停利」，放空相反（停利 < 參考價 < 停損）；停損一定要比強制平倉價更靠近參考價（不然會先被強平，等於沒設，直接拒絕）
 function lqStopWhy(pos, ref, stop, take) {
   const T = CAS_STOCK_LEV, L = pos.side === "long";
   if (stop === undefined || take === undefined) return T.stopBad;
-  if (stop != null && !(L ? stop < ref : stop > ref)) return casFill(L ? T.stopLong : T.stopShort, { px: casNum(ref) });
-  if (take != null && !(L ? take > ref : take < ref)) return casFill(L ? T.takeLong : T.takeShort, { px: casNum(ref) });
-  if (stop != null) { const liq = casLevLiqPx(pos); if (L ? stop <= liq : stop >= liq) return casFill(T.stopLiq, { liq: casNum(liq) }); }
+  if (stop != null && !(L ? stop < ref : stop > ref)) return casFill(L ? T.stopLong : T.stopShort, { px: casPx(ref) });
+  if (take != null && !(L ? take > ref : take < ref)) return casFill(L ? T.takeLong : T.takeShort, { px: casPx(ref) });
+  if (stop != null) { const liq = casLevLiqPx(pos); if (L ? stop <= liq : stop >= liq) return casFill(T.stopLiq, { liq: casPx(liq) }); }
   return null;
 }
-const lqStopText = (stop, take) => casFill(CAS_STOCK_LEV.stopSet, { stop: stop ? casNum(stop) : CAS_STOCK_LEV.unset, take: take ? casNum(take) : CAS_STOCK_LEV.unset });
+const lqStopText = (stop, take) => casFill(CAS_STOCK_LEV.stopSet, { stop: stop ? casPx(stop) : CAS_STOCK_LEV.unset, take: take ? casPx(take) : CAS_STOCK_LEV.unset });
 
 // ---------- 開倉 ----------
 const lqOpenPos = S => S.pos.reduce((a, p) => a + p.notional, 0);
@@ -241,8 +243,8 @@ export const casLevLagWhy = nw => {
 // 給保證金開倉時的整股算法（畫面的確認單也用這個，11-14 測試：畫面以前寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：
 //   股數 ＝ 保證金 × 倍數 ÷ 價 無條件捨去；部位 ＝ 股數 × 價；保證金 ＝ 部位 ÷ 倍數 進位
 export function casLevSizeOf(margin, lev, px) {
-  const L = Math.floor(+lev), P = +px, M = Math.floor(+margin);
-  const qty = L >= 1 && P > 0 && M > 0 ? Math.floor(M * L / P) : 0, notional = qty * (P > 0 ? P : 0);
+  const L = Math.floor(+lev), P = lqP(px), M = Math.floor(+margin);
+  const qty = L >= 1 && P > 0 && M > 0 ? Math.floor(M * L * 100 / stCents(P)) : 0, notional = stBuyCost(P, qty); // 部位 ＝ 股數 × 價，進位到整數籌碼
   return { qty, notional, margin: L >= 1 ? Math.ceil(notional / L) : 0 };
 }
 export function casLevOpen(w, house, args, day, t, src) {
@@ -259,7 +261,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.halt };
   if (mk === "tw" && lqT(t) && twIdx(t) >= NUM.casino.stock.tw.noOpenIdx && twIdx(t) <= NUM.casino.stock.tw.len) return { ok: false, reason: T.closeAuction };
   const lagWhy = mk === "in" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
-  const px = nw.px;
+  const px = lqP(nw.px);
   let qty = Math.floor(+A.qty);
   if (!(qty > 0) && A.margin != null) qty = casLevSizeOf(A.margin, lev, px).qty;
   if (!Number.isFinite(qty) || qty <= 0) return { ok: false, reason: T.qtyBad };
@@ -267,7 +269,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   const opensToday = S.opens.day === day ? S.opens.n : 0;
   if (opensToday >= C.opensDay) return { ok: false, reason: casFill(T.opens, { n: C.opensDay }) };
   if (lqT(t) && S.last[id] && +t - S.last[id] < C.coolMin * 60000) return { ok: false, reason: casFill(T.cool, { n: Math.max(1, Math.ceil((C.coolMin * 60000 - (+t - S.last[id])) / 60000)) }) };
-  const notional = qty * px, margin = Math.ceil(notional / lev), level = casLevLevel(w), limit = casLevPosLimit(level), used = lqOpenPos(S);
+  const notional = stBuyCost(px, qty), margin = Math.ceil(notional / lev), level = casLevLevel(w), limit = casLevPosLimit(level), used = lqOpenPos(S);
   if (used + notional > limit) return { ok: false, reason: casFill(T.posLimit, { limit: casNum(limit), level, used: casNum(used), add: casNum(notional) }) };
   const H = mk === "in" ? casLevHouseFix(house) : null;
   if (mk === "in") {
@@ -288,7 +290,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   S.opens = { day, n: opensToday + 1 };
   if (H) H.in += notional;
   casCount(house, "levOpen");
-  return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casNum(px), margin: casNum(margin), fee: casNum(cost.total), liq: casNum(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
+  return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casPx(px), margin: casNum(margin), fee: casNum(cost.total), liq: casPx(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
 }
 
 // ---------- 結算壹筆（平倉、強平、收盤自動平倉共用） ----------
@@ -320,7 +322,7 @@ function lqSettle(w, house, S, pos, px, t, why) {
   w.chips += pos.margin;
   if (eff > 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldOut(w, house, "stockLevWin", eff, NUM.casino.world); }
   else if (eff < 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
-  const equity = pos.margin + eff, feeDue = Math.ceil(pos.qty * px * lqFeePct() / 100), fee = Math.min(feeDue, Math.max(0, equity));
+  const equity = pos.margin + eff, feeDue = Math.ceil(stBuyCost(px, pos.qty) * lqFeePct() / 100), fee = Math.min(feeDue, Math.max(0, equity));
   w.chips -= fee; house.budget += fee; casCount(house, "levFee", fee);
   const back = equity - fee;
   if (bad > 0) casCount(house, "levBadDebt", bad);
@@ -332,10 +334,10 @@ function lqSettle(w, house, S, pos, px, t, why) {
   casCount(house, "levClose");
   const sideW = pos.side === "long" ? T.long : T.short;
   const out = { px, pnl: eff, back, fee, bad, clipped, why };
-  if (why === "liq") S.notes.push(casFill(T.liqNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
-  if (why === "stop") S.notes.push(casFill(T.stopNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
-  if (why === "take") S.notes.push(casFill(T.takeNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
-  if (why === "flat") S.notes.push(casFill(T.flatNote, { name: lqName(pos.id), side: sideW, px: casNum(px), back: casNum(back) }));
+  if (why === "liq") S.notes.push(casFill(T.liqNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
+  if (why === "stop") S.notes.push(casFill(T.stopNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
+  if (why === "take") S.notes.push(casFill(T.takeNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
+  if (why === "flat") S.notes.push(casFill(T.flatNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
   if (clipped - owe > 0) S.notes.push(casFill(T.capNote, { over: casNum(clipped - owe) }));
   if (owe > 0) S.notes.push(casFill(T.owedNote, { over: casNum(owe) }));
   S.notes = S.notes.slice(-8);
@@ -402,7 +404,7 @@ export function casLevClose(w, house, no, day, t, src) {
   const nw = src.now(had.id);
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.closeHalt };
   const r = lqSettle(w, house, S, had, nw.px, t, "close"), sideW = had.side === "long" ? T.long : T.short;
-  return Object.assign({ ok: true }, r, { lines: [casFill(T.closeOk, { name: lqName(had.id), side: sideW, px: casNum(r.px), pnlWord: r.pnl > 0 ? T.winWord : r.pnl < 0 ? T.loseWord : T.evenWord, pnl: casNum(Math.abs(r.pnl)), back: casNum(r.back), fee: casNum(r.fee) })] });
+  return Object.assign({ ok: true }, r, { lines: [casFill(T.closeOk, { name: lqName(had.id), side: sideW, px: casPx(r.px), pnlWord: r.pnl > 0 ? T.winWord : r.pnl < 0 ? T.loseWord : T.evenWord, pnl: casNum(Math.abs(r.pnl)), back: casNum(r.back), fee: casNum(r.fee) })] });
 }
 
 // ---------- 改停損、停利 ----------

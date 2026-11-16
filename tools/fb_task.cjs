@@ -100,7 +100,7 @@ async function stockTwPeg(db) {
   const m = /TW_SYMBOLS = (\{[^}]+\})/.exec(src);
   if (!m) throw new Error("functions/stock_tw.js 裡找不到 TW_SYMBOLS");
   const syms = JSON.parse(m[1].replace(/(\w+):/g, '"$1":'));
-  const ex = Object.values(syms).map(c => `tse_${c}.tw`).join("|");
+  const ex = Object.values(syms).map(c => `${c === "4743" ? "otc_" : "tse_"}${c}.tw`).join("|");
   const r = await fetch(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${Date.now()}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(10000) });
   if (!r.ok) throw new Error("證交所回 " + r.status);
   const j = await r.json(), closes = {};

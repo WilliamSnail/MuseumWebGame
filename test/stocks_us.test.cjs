@@ -1,6 +1,7 @@
 // 美股盤中（11-14，規劃 2.8i）：node test/stocks_us.test.cjs（npm test 也會跑）
 // 美東開盤時間（冬令、夏令、換日光節約的前後）、整個交易日的模擬（含 DST 日、國定假日）、停盤、掛單當天有效、05:00 換日不重複算、view 欄位、守恆、解析行情。數字讀 NUM。
 const assert = require("assert");
+const r2 = x => Math.round(x * 100) / 100; // 股價小數兩位（決定 0108）
 const fs = require("fs"), path = require("path");
 const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
@@ -125,7 +126,7 @@ T("今天換過日、卻沒有今天的基準價（11-13 美股第壹晚）：�
 });
 T("「今天」漲跌跟今天的開盤基準比，不是跟 H.prev（11-14 盤中壹路跌卻顯示漲）", G => {
   const house = house0(G, W), doc = runDay(G, "x", W, {}), w = wallet(G, W);
-  house.stk.prev[ID] = Math.round(house.stk.hist[W][ID] / 1.05); // 舊做法：05:00 換日時把昨晚的漲幅（+5%）套進去了
+  house.stk.prev[ID] = r2(house.stk.hist[W][ID] / 1.05); // 舊做法：05:00 換日時把昨晚的漲幅（+5%）套進去了
   G.casStockUsApply(house, doc, W, tm(G, W, 200));
   const v = G.casStockView(w, house, W, tm(G, W, 200)).list.find(x => x.id === ID);
   const want = (house.stk.px[ID] - house.stk.hist[W][ID]) / house.stk.hist[W][ID];
@@ -167,12 +168,12 @@ T("狀態：開盤前 pre、沒第壹個價 pending、抓到後 open、16:00 clo
 T("股價 ＝ 今天開盤價 × rel；每個分鐘跟著走；收盤後停在最後壹個價；台股不受影響", G => {
   const house = house0(G, W), doc = runDay(G, "祕密", W, { gap: 0.02 }), base = house.stk.hist[W][ID], tw = house.stk.px[TWID];
   G.casStockUsApply(house, doc, W, tm(G, W, 0));
-  assert.strictEqual(house.stk.px[ID], Math.round(base * doc.ser[ID][0]));
+  assert.strictEqual(house.stk.px[ID], r2(base * doc.ser[ID][0]));
   G.casStockUsApply(house, doc, W, tm(G, W, 67));
-  assert.strictEqual(house.stk.px[ID], Math.round(base * doc.ser[ID][67]));
+  assert.strictEqual(house.stk.px[ID], r2(base * doc.ser[ID][67]));
   assert.strictEqual(house.stk.us.ser[ID].length, 68);
   G.casStockUsApply(house, doc, W, tm(G, W, 500));
-  assert.strictEqual(house.stk.px[ID], Math.round(base * doc.ser[ID][390]));
+  assert.strictEqual(house.stk.px[ID], r2(base * doc.ser[ID][390]));
   assert.strictEqual(house.stk.px[TWID], tw);
 });
 T("停盤：美股只在開盤時間買賣、下單、取消（沒有全館 22:00～05:00 了）", G => {
@@ -208,7 +209,7 @@ T("掛單照盤中每分鐘的價檢查：只看下單之後；成交價是觸�
   const house = house0(G, W), w = wallet(G), base = house.stk.hist[W][ID];
   let doc = null, px = null, lows = null;
   for (let k = 0; k < 50 && !doc; k++) { // 找壹條「下單之後會跌破下單時價格」的路徑（隨機的，換祕密找）
-    const d = runDay(G, "祕密" + k, W, { gap: 0.02 }), p = i => Math.max(1, Math.round(base * d.ser[ID][i]));
+    const d = runDay(G, "祕密" + k, W, { gap: 0.02 }), p = i => Math.max(1, r2(base * d.ser[ID][i]));
     const l = []; for (let i = 11; i <= 389; i++) l.push(p(i));
     if (Math.min(...l) + 1 < p(10)) { doc = d; px = p; lows = l; }
   }
@@ -241,7 +242,7 @@ T("掛單當天有效：美股收盤（美東 16:00）沒成交就取消退回�
 });
 T("睡前掛單：台灣 23:00 掛的限價單，隔天早上起床碰到才回來也照夜裡的價成交／取消", G => {
   const house = house0(G, W), doc = runDay(G, "祕密", W, { gap: 0.02 }), w = wallet(G), w2 = wallet(G);
-  const base = house.stk.hist[W][ID], px = i => Math.max(1, Math.round(base * doc.ser[ID][i]));
+  const base = house.stk.hist[W][ID], px = i => Math.max(1, r2(base * doc.ser[ID][i]));
   const t = tm(G, W, 30); // 台灣 23:00
   G.casStockUsApply(house, doc, W, t);
   const lows = []; for (let i = 31; i <= 390; i++) lows.push(px(i));
@@ -259,7 +260,7 @@ T("睡前掛單：台灣 23:00 掛的限價單，隔天早上起床碰到才回�
 T("05:00 換日：收盤價用 settle 套上去，換日只扣 drag 壹次（冬令收盤剛好 05:00 也不漏、不重複）", G => {
   for (const day of [W, S]) {
     const C = G.NUM.casino.stock, house = house0(G, day), doc = runDay(G, "祕密", day, { gap: 0.03, ret: 0.002 });
-    const base = house.stk.hist[day][ID], close = Math.max(1, Math.round(base * doc.ser[ID][390]));
+    const base = house.stk.hist[day][ID], close = Math.max(1, r2(base * doc.ser[ID][390]));
     G.casStockUsApply(house, doc, day, tm(G, day, 100)); // 夜裡有人碰過壹次，價停在盤中
     assert.notStrictEqual(house.stk.px[ID], close);
     const next = new Date(Date.parse(day + "T00:00:00Z") + 86400000).toISOString().slice(0, 10), after = Date.parse(next + "T05:00:30+08:00");
@@ -268,7 +269,7 @@ T("05:00 換日：收盤價用 settle 套上去，換日只扣 drag 壹次（冬
     assert.strictEqual(house.stk.px[ID], close, "先補上真正的收盤價");
     G.casStockRoll(house, next, { [ID]: 0.1, [ID2]: -0.1 }); // 就算舊程式還傳每日漲跌，也不能再算壹次
     G.casStockUsApply(house, doc2, next, after);
-    assert.strictEqual(house.stk.px[ID], Math.round(close * (1 - C.drag / 100)), "只多扣壹次 drag：" + house.stk.px[ID]);
+    assert.strictEqual(house.stk.px[ID], r2(close * (1 - C.drag / 100)), "只多扣壹次 drag：" + house.stk.px[ID]);
     assert.strictEqual(house.stk.prev[ID], close);
     const again = house.stk.px[ID];
     G.casStockUsSettle(house, doc2, next); G.casStockRoll(house, next, {}); G.casStockUsApply(house, doc2, next, after + 1000);
@@ -290,7 +291,7 @@ T("連續幾天（含週六、國定假日）：每個交易日收盤價照盤�
     assert.ok(open <= before && open >= before - 5, day + " 換日只扣 drag");
     G.casStockUsApply(house, doc, day, G.usOpenMs(day) + 395 * 60000);
     if (!live) assert.strictEqual(house.stk.px[ID], open, day + " 休市不動");
-    else assert.strictEqual(house.stk.px[ID], Math.max(1, Math.round(house.stk.hist[day][ID] * today.ser[ID][today.ser[ID].length - 1])), day + " 收盤價（提早收盤日 2026-11-27 只到第 210 分鐘）");
+    else assert.strictEqual(house.stk.px[ID], Math.max(1, r2(house.stk.hist[day][ID] * today.ser[ID][today.ser[ID].length - 1])), day + " 收盤價（提早收盤日 2026-11-27 只到第 210 分鐘）");
   }
   assert.ok(Object.keys(house.stk.hist).length <= C.order.days + 2);
 });
@@ -372,11 +373,11 @@ T("提早收盤日的狀態、收盤價和換日：13:00 美東以後是 closed�
   const st = i => G.casStockUsApply(house, doc, EARLY, tm(G, EARLY, i)).st;
   assert.strictEqual(st(0), "open"); assert.strictEqual(st(L - 1), "open"); assert.strictEqual(st(L), "closed", "13:00 就收");
   const T1 = G.casStockUsApply(house, doc, EARLY, tm(G, EARLY, L + 120)); assert.strictEqual(T1.idx, L, "收盤後停在最後壹個價（不是 390）");
-  assert.strictEqual(house.stk.px[ID], Math.max(1, Math.round(house.stk.hist[EARLY][ID] * doc.ser[ID][L])), "價 ＝ 收盤");
+  assert.strictEqual(house.stk.px[ID], Math.max(1, r2(house.stk.hist[EARLY][ID] * doc.ser[ID][L])), "價 ＝ 收盤");
   const view = G.casStockView(G.casWalletFix(G.casWalletNew(), EARLY), house, EARLY, tm(G, EARLY, 60), []); assert.strictEqual(view.us.len, L, "畫面的場次長度是 210");
   const v2 = G.casStockView(G.casWalletFix(G.casWalletNew(), W), house0(G, W), W, tm(G, W, 60), []); assert.strictEqual(v2.us.len, 390, "平常的日子 390");
   // 換日：settle 在收盤後 1 分鐘套收盤價
-  const next = "2026-11-30"; G.casStockUsSettle(house, doc, next); assert.strictEqual(house.stk.px[ID], Math.max(1, Math.round(house.stk.hist[EARLY][ID] * doc.ser[ID][L])), "換日補上的是真的收盤價");
+  const next = "2026-11-30"; G.casStockUsSettle(house, doc, next); assert.strictEqual(house.stk.px[ID], Math.max(1, r2(house.stk.hist[EARLY][ID] * doc.ser[ID][L])), "換日補上的是真的收盤價");
 });
 T("提早收盤日：usParseChart 只算到 13:00 以前的 K 棒，之後的不算（盤後）", G => {
   const EARLY = "2026-11-27", o = G.usOpenMs(EARLY), mk = (min, c) => ({ t: Math.floor((o + min * 60000) / 1000), c });

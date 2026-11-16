@@ -20,8 +20,8 @@ T("第壹次換比例：價位 ＝ 倍數 × 真實價（再扣 drag）；昨天
   const C = G.NUM.casino.stock, s = fresh(G), h = s.house, H = h.stk;
   const old = H.px[ID], oldTw = H.px[TWID];
   roll(G, h, D1, { [ID]: { px: 166.19 }, [TWID]: { px: 4120 } });
-  const to = Math.round(C.peg.us * 166.19), toTw = Math.round(C.peg.tw * 4120);
-  assert.strictEqual(H.px[ID], Math.round(to * (1 - C.drag / 100)), "美股 ×倍數"); assert.strictEqual(H.px[TWID], Math.round(toTw * (1 - C.drag / 100)), "台股 ×倍數");
+  const r2 = x => Math.round(x * 100) / 100, to = r2(C.peg.us * 166.19), toTw = r2(C.peg.tw * 4120);
+  assert.strictEqual(H.px[ID], r2(to * (1 - C.drag / 100)), "美股 ×倍數"); assert.strictEqual(H.px[TWID], r2(toTw * (1 - C.drag / 100)), "台股 ×倍數");
   assert.strictEqual(H.prev[ID], to, "昨天收盤換成新比例，漲跌 % 才對");
   assert.strictEqual(H.hist[D1][ID], H.px[ID]);
   assert.strictEqual(JSON.stringify(H.peg.ev.map(e => [e.id, e.from, e.to]).sort()), JSON.stringify([[ID, old, to], [TWID, oldTw, toTw]].sort()));
@@ -40,14 +40,14 @@ T("錢包照比例換股數：市值不變（零頭用籌碼補、從外面世�
   const snap0 = G.casBookSnap([s.w], h, 0, null), t0 = G.casBookTotal(snap0) - G.casBookMinted(snap0) + G.casBookBurned(snap0);
   const c0 = s.w.chips, px0 = h.stk.px[ID], pxTw0 = h.stk.px[TWID];
   roll(G, h, D1, { [ID]: { px: 166.19 }, [TWID]: { px: 4120 } });
-  const to = Math.round(G.NUM.casino.stock.peg.us * 166.19), toTw = Math.round(G.NUM.casino.stock.peg.tw * 4120);
+  const r2 = x => Math.round(x * 100) / 100, to = r2(G.NUM.casino.stock.peg.us * 166.19), toTw = r2(G.NUM.casino.stock.peg.tw * 4120), cents = x => Math.round(x * 100), val = (px, n) => Math.floor(cents(px) * n / 100);
   G.casStockPegSync(s.w, h);
   const S = s.w.stk;
   const valueBefore = 1000 * px0; // 換之前用「昨天收盤」的價（H.prev 已換成新比例，這裡用 ev.from）
   const ev = h.stk.peg.ev.find(e => e.id === ID), evTw = h.stk.peg.ev.find(e => e.id === TWID);
-  const ns = Math.floor(1000 * ev.from / to), rem = 1000 * ev.from - ns * to;
+  const ns = Math.floor(val(ev.from, 1000) * 100 / cents(to)), rem = val(ev.from, 1000) - val(to, ns);
   assert.strictEqual(S.own[ID], ns, "股數照比例"); assert.ok(rem >= 0 && rem < to, "零頭小於壹股");
-  const nsTw = Math.floor(7 * evTw.from / toTw), remTw = 7 * evTw.from - nsTw * toTw;
+  const nsTw = Math.floor(val(evTw.from, 7) * 100 / cents(toTw)), remTw = val(evTw.from, 7) - val(toTw, nsTw);
   if (nsTw > 0) assert.strictEqual(S.own[TWID], nsTw); else assert.strictEqual(S.own[TWID], undefined);
   assert.strictEqual(S.orders.filter(o => o.id === ID).length, 0, "這支的掛單取消"); assert.strictEqual(S.orders.filter(o => o.id === "redclaw").length, 1, "別支的掛單不動");
   assert.strictEqual(S.hold, 9045, "鎖住的籌碼只剩別支的"); assert.strictEqual(s.w.chips, c0 + 90500 + rem + remTw, "退回鎖住的籌碼，加上零頭");
@@ -127,7 +127,7 @@ T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
   const fs = require("fs"), path = require("path");
   for (const f of ["stocks_text.js", "casino_stock.js", "stocks_tw.js", "casino_text.js"]) {
     const src = fs.readFileSync(path.join(__dirname, "..", "shared", f), "utf8");
-    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
+    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519|2609|2618|1513|1795|4743|9958|1609)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
   }
 });
 T("直接用真實價：盤中開著卻超過 3 分鐘沒新價，買賣擋下來說「暫停」，不說「沒有開盤」（11-14 實測）", G => {

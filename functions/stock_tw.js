@@ -24,9 +24,12 @@ const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");
 
 // 遊戲裡的 id → 證交所的代號（真實代號只放這裡）
-export const TW_SYMBOLS = { islandforge: "2330", handbrain: "2454", bigassembly: "2317", trianglepower: "2308", linetower: "2412", brainrack: "2382", cloudcabinet: "6669", customchip: "3661", voltgrid: "1519" };
+export const TW_SYMBOLS = { islandforge: "2330", handbrain: "2454", bigassembly: "2317", trianglepower: "2308", linetower: "2412", brainrack: "2382", cloudcabinet: "6669", customchip: "3661", voltgrid: "1519", wavefreight: "2609", ironwing: "2618", plugstation: "1513", pillpot: "1795", needlelab: "4743", towerbeam: "9958", coilelder: "1609" };
+// 上櫃的股票（mis 查詢要用 otc_，其他是上市 tse_）
+export const TW_OTC = ["4743"];
+export const misCh = code => (TW_OTC.includes(code) ? "otc_" : "tse_") + code + ".tw";
 // 畫面上標的真實名字（翊文 11-16：「像每股一樣加個號碼和名子標示真實是什麼」）。真實名字也只放在 functions
-export const TW_NAMES = { islandforge: "台積電", handbrain: "聯發科", bigassembly: "鴻海", trianglepower: "台達電", linetower: "中華電", brainrack: "廣達", cloudcabinet: "緯穎", customchip: "世芯-KY", voltgrid: "華城" };
+export const TW_NAMES = { islandforge: "台積電", handbrain: "聯發科", bigassembly: "鴻海", trianglepower: "台達電", linetower: "中華電", brainrack: "廣達", cloudcabinet: "緯穎", customchip: "世芯-KY", voltgrid: "華城", wavefreight: "陽明", ironwing: "長榮航", plugstation: "中興電", pillpot: "美時", needlelab: "合一", towerbeam: "世紀鋼", coilelder: "大亞" };
 const MIS_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp";
 
 // 把證交所的回應變成 { id: { open, prev, px, lag } }。
@@ -61,7 +64,7 @@ export function parseMis(json, todayYmd, nowMs) {
 }
 
 export async function fetchMis(nowMs) {
-  const ex = Object.values(TW_SYMBOLS).map(c => `tse_${c}.tw`).join("|");
+  const ex = Object.values(TW_SYMBOLS).map(misCh).join("|");
   const ymd = taipeiDay(nowMs).replace(/-/g, "");
   const r = await fetch(`${MIS_URL}?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${nowMs}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error("證交所回 " + r.status);
@@ -85,7 +88,7 @@ export function parseMisClose(json) {
   return day ? { day, close, prev } : null;
 }
 export async function fetchMisClose(nowMs) {
-  const ex = Object.values(TW_SYMBOLS).map(c => `tse_${c}.tw`).join("|");
+  const ex = Object.values(TW_SYMBOLS).map(misCh).join("|");
   const r = await fetch(`${MIS_URL}?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${nowMs}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error("證交所回 " + r.status);
   return parseMisClose(await r.json());
