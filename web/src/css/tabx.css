@@ -68,9 +68,8 @@
 @media (max-width: 760px) and (orientation: portrait) { .nb-casino .nb-tab { min-height: 40px; padding: 0 6px; border-width: 8px; border-image-width: 8px 14px; } }
 @media (max-height: 500px) and (orientation: landscape) { .nb-casino .nb-tab { min-height: 32px; padding: 0 4px; border-width: 6px; border-image-width: 6px 10px; } }
 
-/* 圖書館的「地圖」頁籤跟其他木牌不壹樣（翊文 11-16）：羊皮紙牌子＋紅圖釘（map/pin-lit），字用墨色，像釘在書櫃上的壹張地圖 */
-.origin-onescreen > .seg.big-tabs .seg-btn.tab-map { border-image-source: url(/ui2/ui2-tabx-parchment-1.webp); color: #3A2410; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); transform: rotate(-1.5deg); }
-.origin-onescreen > .seg.big-tabs .seg-btn.tab-map.on { border-image-source: url(/ui2/ui2-tabx-parchment-2.webp); color: #5A1A0A; }
+/* 圖書館的「地圖」頁籤跟其他木牌不壹樣（翊文 11-16）：泛黃摺痕的航海圖紙牌（tools/map_tab_plate.py 畫的），左角羅盤、右角叉記號，選好是紅蠟邊；字用墨色，斜壹點像釘在書櫃上的壹張地圖 */
+.origin-onescreen > .seg.big-tabs .seg-btn.tab-map { border-image-source: url(/ui2/ui2-tabx-map-1.webp); color: #3A2410; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); transform: rotate(-1.2deg); }
+.origin-onescreen > .seg.big-tabs .seg-btn.tab-map.on { border-image-source: url(/ui2/ui2-tabx-map-2.webp); color: #5A1A0A; }
 .origin-onescreen > .seg.big-tabs .seg-btn.tab-map:not(.on):hover { filter: brightness(1.06); color: #3A2410; }
-.origin-onescreen > .seg.big-tabs .seg-btn.tab-map::before { content: ""; width: 1.25em; height: 1.25em; margin: -2px -2px 0 -6px; background: url(/map/pin-lit.webp) center / contain no-repeat; flex: none; }
 .origin-onescreen > .seg.big-tabs .seg-btn.tab-map .tab-c { color: #6A3A1A; text-shadow: none; }
