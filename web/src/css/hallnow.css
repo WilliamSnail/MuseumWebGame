@@ -137,3 +137,7 @@
 .btn.rn-pill:hover, .btn.rn-pill:focus-visible { background: linear-gradient(180deg, rgba(54, 32, 24, .96), rgba(80, 48, 30, .96)); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35), 0 0 10px rgba(214, 160, 40, .55); }
 .btn.rn-pill.empty { opacity: .8; }
 .btn.rn-pill svg { width: 1.15em; height: 1.15em; }
+
+/* 賭場浮層的頂端放不下就只寫「N 人」 */
+.nb-top .btn.rn-pill { min-height: 36px; padding: 0 10px; font-size: .8rem; }
+@media (max-width: 560px) { .nb-top .rn-pill .rn-t { display: none; } }
