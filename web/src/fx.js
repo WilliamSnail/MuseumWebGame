@@ -630,11 +630,11 @@ export const FX = (() => {
       }, () => null);
     }
     // 房間偶爾放的整首曲子（11-16 翊文：「播完後安靜20秒左右再撥」）：壹首播完才開始算，安靜 15～25 秒再放下壹首（ids 輪流）；進房間也先安靜 15～25 秒。回傳停止函式（跟 every 壹樣放進 timers）
-    function songCycle(c, g, ids, gain) {
+    function songCycle(c, g, ids, gain, first) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
       let alive = true, id = null, k = (Math.random() * ids.length) | 0;
       const wait = (ms) => { id = setTimeout(play, ms); };
       const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
-      wait(rand(15000, 25000));
+      wait(first ? rand(first[0], first[1]) : rand(15000, 25000));
       return () => { alive = false; clearTimeout(id); };
     }
     // 「失敗作之夜」那週（每週特展 failedOnly）：大廳、展廳很久才冒壹小段走音的音樂盒（11-16 翊文，Pixabay「creepy music box」）。mix({ creepy }) 開關，第壹次不響
@@ -775,7 +775,7 @@ export const FX = (() => {
         const stampT = every(() => { const t = c.currentTime + 0.05; tone(t, { f: 110, f2: 55, glide: 0.1, g: 0.05, a: 0.002, d: 0.12, to: g }); noise(t, { type: 'lowpass', f: 900, q: 0.7, g: 0.03, a: 0.002, d: 0.05, to: g }); }, () => rand(9000, 18000));
         const ding = every(() => { if (Math.random() < 0.6) return; const t = c.currentTime + 0.05; tone(t, { f: 2093, g: 0.014, a: 0.002, d: 0.9, to: g }); tone(t, { f: 4186, g: 0.004, a: 0.002, d: 0.4, to: g }); }, () => rand(20000, 35000));
         // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊。11-16：播完安靜約 20 秒再放（songCycle）
-        const cello = songCycle(c, g, ['cello-commission'], 0.4);
+        const cello = songCycle(c, g, ['cello-commission'], 0.4, [6000, 10000]); // 11-16 翊文：「在廳裡等8秒左右就可以撥放了」
         return { nodes: [room.n], timers: [paper, stampT, ding, cello] };
       },
       codex(c, g) { // 圖鑑室：很安靜，時鐘滴答，偶爾翻頁
