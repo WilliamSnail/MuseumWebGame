@@ -93,6 +93,8 @@ import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二
 import "./ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/lostfound.js）
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 
+import "./ui_scrollhint.js"; // 「往下滑還有」的提示（11-16）
+import "./css/scrollhint.css";
 import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊網頁跳「館裡更新了」；判斷在 shared/notices.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
