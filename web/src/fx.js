@@ -621,12 +621,21 @@ export const FX = (() => {
       return hh;
     }
     // 環境音裡偶爾播壹次的檔案（接到 to，不走 sfx 音軌）
-    function fileOnce(c, to, id, gain) {
-      fileBuf(c, id).then((buf) => {
-        if (!buf) return;
+    function fileOnce(c, to, id, gain) { // 回傳 Promise：這個檔有幾秒（讀不到是 null）
+      return fileBuf(c, id).then((buf) => {
+        if (!buf) return null;
         const s = c.createBufferSource(), v = c.createGain();
         s.buffer = buf; v.gain.value = gain; s.connect(v); v.connect(to); s.start();
-      });
+        return buf.duration;
+      }, () => null);
+    }
+    // 房間偶爾放的整首曲子（11-16 翊文：「播完後安靜20秒左右再撥」）：壹首播完才開始算，安靜 15～25 秒再放下壹首（ids 輪流）；進房間也先安靜 15～25 秒。回傳停止函式（跟 every 壹樣放進 timers）
+    function songCycle(c, g, ids, gain) {
+      let alive = true, id = null, k = (Math.random() * ids.length) | 0;
+      const wait = (ms) => { id = setTimeout(play, ms); };
+      const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
+      wait(rand(15000, 25000));
+      return () => { alive = false; clearTimeout(id); };
     }
     // 「失敗作之夜」那週（每週特展 failedOnly）：大廳、展廳很久才冒壹小段走音的音樂盒（11-16 翊文，Pixabay「creepy music box」）。mix({ creepy }) 開關，第壹次不響
     function creepyHook(c, g) {
@@ -765,8 +774,8 @@ export const FX = (() => {
         const paper = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: rand(1800, 3200), f2: rand(900, 1500), glide: 0.2, q: 1, g: 0.022, a: 0.04, d: 0.22, to: g }), () => rand(2500, 6000));
         const stampT = every(() => { const t = c.currentTime + 0.05; tone(t, { f: 110, f2: 55, glide: 0.1, g: 0.05, a: 0.002, d: 0.12, to: g }); noise(t, { type: 'lowpass', f: 900, q: 0.7, g: 0.03, a: 0.002, d: 0.05, to: g }); }, () => rand(9000, 18000));
         const ding = every(() => { if (Math.random() < 0.6) return; const t = c.currentTime + 0.05; tone(t, { f: 2093, g: 0.014, a: 0.002, d: 0.9, to: g }); tone(t, { f: 4186, g: 0.004, a: 0.002, d: 0.4, to: g }); }, () => rand(20000, 35000));
-        let cn = 0; // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊，大提琴 每 1～2 分鐘輕輕放壹次
-        const cello = every(() => { if (!cn++) return; fileOnce(c, g, 'cello-commission', 0.4); }, () => rand(60000, 120000));
+        // 11-15 翊文：委託櫃台放大提琴；原本的翻紙、蓋章、櫃台鈴照舊。11-16：播完安靜約 20 秒再放（songCycle）
+        const cello = songCycle(c, g, ['cello-commission'], 0.4);
         return { nodes: [room.n], timers: [paper, stampT, ding, cello] };
       },
       codex(c, g) { // 圖鑑室：很安靜，時鐘滴答，偶爾翻頁
@@ -802,8 +811,8 @@ export const FX = (() => {
         const creak = every(() => tonef(c.currentTime + 0.05, { type: 'sawtooth', f: rand(110, 160), f2: rand(80, 120), glide: 0.6, g: 0.01, a: 0.1, d: 0.6, lp: 700, q: 6, to: g }), () => rand(14000, 24000));
         const page = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: 1400, f2: 4000, q: 0.8, g: 0.012, a: 0.05, d: 0.2, to: g }), () => rand(12000, 20000));
         // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 每 1～2 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
-        let pn = 0, pu = 0;
-        const piano = every(() => { if (!pn++) return; fileOnce(c, g, pick(['lib-piano-a', 'lib-piano-b']), 0.4); }, () => rand(60000, 120000));
+        let pu = 0;
+        const piano = songCycle(c, g, ['lib-piano-a', 'lib-piano-b'], 0.4); // 11-16：兩首輪流，播完安靜約 20 秒再放
         const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
         const fb = fileLoop(c, g, 'suspense-forbidden', 0); // 禁書頁籤（11-16 翊文，Pixabay「Suspense Tension」）：mix({ forbidden })
         return { nodes: [fb.n], timers: [sched, creak, page, piano, pulse], mix(m) { if (m && 'forbidden' in m) fb.v.gain.setTargetAtTime(m.forbidden ? 0.32 : 0, c.currentTime, 1.5); } };
@@ -875,8 +884,8 @@ export const FX = (() => {
             tone(t + i * gap, { f: 120, f2: 80, glide: 0.05, g: gg * 0.6, a: 0.002, d: 0.06, to: send });
           }
         }, () => rand(6500, 13000));
-        let gn = 0; // 11-16 翊文：畫廊偶爾放 nostalgic，每 1～2 分鐘壹次，進房間第壹次不響
-        const nost = every(() => { if (!gn++) return; fileOnce(c, g, pick(['gallery-nostalgic', 'gallery-welte']), 0.4); }, () => rand(60000, 120000));
+        // 11-16 翊文：畫廊放 nostalgic／Welte 鋼琴，兩首輪流，播完安靜約 20 秒再放（songCycle）
+        const nost = songCycle(c, g, ['gallery-nostalgic', 'gallery-welte'], 0.4);
         return { nodes: [room.n], timers: [pad, steps, nost] };
       },
       cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
