@@ -51,7 +51,9 @@
     "emu:call": "node tools/emu_call.cjs",
     "functions:shared": "node tools/copy_shared.cjs",
     "level:new": "node tools/new_level.cjs",
-    "fb": "node tools/fb_run.cjs"
+    "fb": "node tools/fb_run.cjs",
+    "fx:report": "node tools/fx_report.cjs",
+    "sfx:add": "node tools/sfx_add.cjs"
   },
   "devDependencies": {
     "acorn": "^8.19.0",
