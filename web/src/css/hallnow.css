@@ -123,3 +123,11 @@
   .l2-pm { display: inline-flex; align-items: center; gap: 4px; flex: none; }
   .l2-pm .l2-live { width: 8px; height: 8px; }
 }
+
+/* 每個房間標題旁的「這裡現在 N 人」（11-16，ui_roomnow.js）。前綴 rn- */
+.rh-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.rn-pill { gap: 4px; min-height: 32px; }
+.rn-pill.empty { opacity: .75; }
+.mini-card.rn-layer { width: min(460px, 94vw); max-height: min(84svh, 600px); overflow-y: auto; }
+.rn-sec h3 { margin: 10px 0 2px; font-size: var(--type-body, .875rem); color: var(--ink-accent, #8E2A24); }
+.rn-acts { display: flex; justify-content: flex-end; margin-top: 10px; }
