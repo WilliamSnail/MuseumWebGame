@@ -390,7 +390,7 @@ const COOP_SND = { route: "map", floorDone: "map", guess: "map", over: "map", vo
 function coopSnd(v) {
   if (!v || !v.floor || v.ended || v.phase === "over") return { floor: v && v.floor || null, mode: "map" };
   const mode = v.phase === "fight" ? (v.fightKind === "gate" ? (v.fight && v.fight.phase === 2 ? "gate2" : "gate") : "fight") : COOP_SND[v.phase] || "map";
-  return { floor: v.floor, mode, rank: mode === "fight" ? v.fightRank || 1 : 0 }; // rank：遭遇的怪物等級（3＝強怪，換 Dark Gladiator，11-16）
+  return { floor: v.floor, mode, rank: mode === "fight" ? v.fightRank || 1 : 0, trial: !!v.trial }; // trial：合作試煉（打鬥換戰鼓） // rank：遭遇的怪物等級（3＝強怪，換 Dark Gladiator，11-16）
 }
 function floorOf(v) { const t = v.trial && trialById(v.trial.id); return t ? { floor: t.floor, name: t.title, rooms: [t] } : cellarFloor(v.floor); }
 function roomOf(v) { const f = floorOf(v); return f ? f.rooms[v.idx] : null; }
