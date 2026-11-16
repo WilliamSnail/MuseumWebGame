@@ -210,3 +210,12 @@ details[open] > .gal-sum .gal-open, details:not([open]) > .gal-sum .gal-close { 
 .gallery-onescreen .gal-review .corridor.small { max-width: 100%; box-sizing: border-box; }
 .gallery-onescreen .gal-rules p { min-width: 0; }
 .gallery-onescreen .gal-rules p > span { min-width: 0; overflow-wrap: anywhere; }
+
+/* 手機直拿：畫先、說明後（11-16，翊文截圖「看不到畫」）。原本側欄（怎麼看、今天的任務）被通用規則（onescreen.css order: -1）排到牆上面，
+   壹個畫面的高度又固定，牆被擠到只剩名牌。改成：牆在上、至少 60% 螢幕高；側欄放牆下面；整頁可以往下滑（有「往下滑還有」提示） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.onescreen-room.gallery-onescreen { height: auto; max-height: none; }
+  .gallery-onescreen .gal-main { grid-template-rows: auto auto; height: auto; min-height: 0; }
+  .gallery-onescreen .gal-main > .gal-wall { order: 0; min-height: 60svh; }
+  .gallery-onescreen .gal-main > .gal-side { order: 1; max-height: none; }
+}
