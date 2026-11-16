@@ -1,5 +1,5 @@
-// 加壹則館方公告到 shared/notices.js 的最上面（翊文 11-14：「還有什麼腳本需要寫的」→「四個都做」）
-// 以前每次手動插壹大段：id、日期、area、到期日都要自己打，area 打錯就歸到「其他」。
+// 加壹則館方公告：寫成 content/notices/<id>.json（壹則壹個檔，11-16 公告拆檔：以前都插在 shared/notices.js 最上面，同時上線的 PR 一直撞）
+// 不用手動打 id、日期、area、到期日；area 打錯會直接擋下來，不會歸到「其他」。
 //   npm run notice -- --area 賭場 --title "賭場同桌不用往下滑了" "第壹點" "第二點"
 //   選填：--id casino-xxx-2026-11（沒給就用 upd-日期-標題雜湊）  --section 改了什麼（段落名，預設「改了什麼」）
 //         --importance low|normal|important|urgent（預設 low）  --cat 館方公告|特展活動  --tag 更新（可以多次）
@@ -7,7 +7,8 @@
 // 句子照第 1 代用「壹」：這裡把「一」換成「壹」以外的字不會動，「一」會提醒（不擋，因為「一起」這類有時就是要用）。
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const ROOT = path.join(__dirname, "..");
-const FILE = path.join(ROOT, "shared", "notices.js");
+const FILE = path.join(ROOT, "shared", "notices.js"); // 只讀 NOTICE_AREAS、NOTICE_CATS
+const DIR = path.join(ROOT, "content", "notices");
 
 function readList(name) {
   const src = fs.readFileSync(FILE, "utf8"), m = src.match(new RegExp(`export const ${name} = (\\[[^\\]]*\\])`));
@@ -48,35 +49,23 @@ function build(o, { areas, cats, today, existingIds = [] }) {
   if (existingIds.includes(id)) throw new Error(`id「${id}」已經有了：換壹個，或要讓大家重看就改那則的 v`);
   return { id, v: 1, cat, tags: o.tags.length ? o.tags : ["更新"], importance, area: o.area, title: o.title, publish, expire, sections: [[o.section || "改了什麼", o.lines]] };
 }
-// 寫成跟檔案裡壹樣的樣子
-function render(n) {
-  const q = s => JSON.stringify(s);
-  return `  {
-    id: ${q(n.id)}, v: ${n.v}, cat: ${q(n.cat)}, tags: ${q(n.tags).replace(/,/g, ", ")}, importance: ${q(n.importance)}, area: ${q(n.area)},
-    title: ${q(n.title)}, publish: ${q(n.publish)}, expire: ${q(n.expire)},
-    sections: [
-${n.sections.map(([t, ls]) => `      [${q(t)}, [\n${ls.map(l => `        ${q(l)},`).join("\n")}\n      ]],`).join("\n")}
-    ],
-  },
-`;
-}
-function insert(src, block) {
-  const head = "export const NOTICES = [\n";
-  if (!src.includes(head)) throw new Error("shared/notices.js 找不到 NOTICES 的開頭");
-  return src.replace(head, head + block);
-}
+// 一則公告的檔案內容（at 是寫入時間：同壹天壹起加的，新的排在前面；見 tools/notices_build.cjs）
+function render(n, at = new Date().toISOString()) { return JSON.stringify({ ...n, at }, null, 2) + "\n"; }
 const warnOne = lines => lines.some(l => /一/.test(l)) ? "提醒：句子裡有「一」，介面文字照第 1 代用「壹」（「一起」這類可以不改）" : "";
 
-module.exports = { parse, build, render, insert, warnOne, taipeiDay };
+module.exports = { parse, build, render, warnOne, taipeiDay, existingIds };
+function existingIds() { return fs.existsSync(DIR) ? fs.readdirSync(DIR).filter(f => f.endsWith(".json")).map(f => f.slice(0, -5)) : []; }
 if (require.main === module) {
   try {
-    const o = parse(process.argv.slice(2)), src = fs.readFileSync(FILE, "utf8");
-    const ids = [...src.matchAll(/\bid: "([^"]+)"/g)].map(m => m[1]);
+    const o = parse(process.argv.slice(2));
+    const ids = existingIds();
     const n = build(o, { areas: readList("NOTICE_AREAS"), cats: readList("NOTICE_CATS"), today: taipeiDay(), existingIds: ids });
     const block = render(n);
     if (o.dry) { console.log(block); process.exit(0); }
-    fs.writeFileSync(FILE, insert(src, block));
-    console.log(`✓ 加好公告 ${n.id}（${n.area}，${n.publish}～${n.expire}）`);
+    fs.mkdirSync(DIR, { recursive: true });
+    fs.writeFileSync(path.join(DIR, n.id + ".json"), block);
+    require("./notices_build.cjs").write(); // 本機的 shared/notices_data.js 也更新
+    console.log(`✓ 加好公告 content/notices/${n.id}.json（${n.area}，${n.publish}～${n.expire}）`);
     const w = warnOne(o.lines); if (w) console.log(w);
   } catch (e) { console.error("✗ " + e.message); process.exit(1); }
 }

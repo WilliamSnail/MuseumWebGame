@@ -1,13 +1,15 @@
 // 併 origin/main，只會「大家都往後加」的檔案自動解衝突（翊文 11-09：「自動收集各種可能多步驟但其實可以用腳本加速的地方，讓子代裡需要也可以共用這些腳本」）
 //   npm run merge:main
-// 自動解的：日誌索引（重新產生）、館方公告（兩邊都留）、測試清單和模組清單（兩邊都留）。其他的衝突停下來，要人看。
+// 自動解的：測試清單和模組清單（兩邊都留）；11-16 公告拆檔後：公告是一則一個檔（不會撞），日誌總表和音效特效總表不進 git（不會撞）。
+// 公告拆檔前開的分支帶著舊的 shared/notices.js（陣列裡插了新公告）：把裡面 main 還沒有的公告拆成檔（tools/notices_migrate.cjs 的 rescue），notices.js 留 main 的。其他的衝突停下來，要人看。
 const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
-const INDEX = "維護日誌/README.md";
-// 兩邊都留。notice：每則是 { … }，衝突裡的兩段開頭共用一個 "  {"，要補回去
-const KEEP_BOTH = { "shared/notices.js": "notice", "test/run_all.cjs": "plain", "test/tools.test.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "tools/check_imports.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };
-const canAuto = f => f === INDEX || !!KEEP_BOTH[f];
+const NOTICES_JS = "shared/notices.js";
+const GENERATED = ["維護日誌/README.md", "docs/音效與特效總表.md"]; // 11-16 起不進 git（npm run log:index、npm run fx:report 產生）
+// 兩邊都留
+const KEEP_BOTH = { "test/run_all.cjs": "plain", "test/tools.test.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "tools/check_imports.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };
+const canAuto = f => f === NOTICES_JS || GENERATED.includes(f) || !!KEEP_BOTH[f];
 
 const MARK = /^<<<<<<< [^\n]*\n([\s\S]*?)^=======\n([\s\S]*?)^>>>>>>> [^\n]*\n/gm;
 // 一行的清單（load_shared 的 ORDER、esm_smoke 的模組表）兩邊各加了東西：以對方為底，把我這邊多的放回原本的前一項後面
@@ -29,34 +31,9 @@ function mergeListLine(oursLine, theirsLine) {
 const oneLine = s => s.split("\n").length === 2 && s.endsWith("\n");
 function keepBoth(text, how = "plain") {
   return text.replace(MARK, (m, ours, theirs) => {
-    if (how === "notice") { // git 會把兩邊共同的收尾（"      ]],\n    ],\n  }," 的壹部分）留在衝突外面：我這邊要自己補上才是完整的壹則
-      return `${ours}${noticeCloser(ours)}  {\n${theirs}`;
-    }
     if (how === "list" && oneLine(ours) && oneLine(theirs)) return mergeListLine(ours.trimEnd(), theirs.trimEnd()) + "\n";
     return ours + theirs;
   });
-}
-// 公告衝突裡我這邊的那壹段（開頭的 "  {" 在衝突外面）還有哪些括號沒關，照公告的排法補上。
-// 11-13 兩次 PR 掉了 "      ]],"：以前只補 "    ],\n  },"，共同的收尾連段落的 "]]," 都在外面時就少壹行
-function noticeCloser(ours) {
-  const st = ["{"];
-  let q = null;
-  for (let i = 0; i < ours.length; i++) {
-    const c = ours[i];
-    if (q) { if (c === "\\") i++; else if (c === q) q = null; continue; }
-    if (c === "\"" || c === "'" || c === "`") q = c;
-    else if (c === "{" || c === "[") st.push(c);
-    else if (c === "}" || c === "]") st.pop();
-  }
-  if (!st.length) return "";
-  const cl = st.reverse().map(c => (c === "{" ? "}" : "]"));
-  // 最外面的 "}" 在 2 格、它前面壹個 "]"（sections）在 4 格，再裡面的併成壹行在 6 格（"]],"）
-  const lines = [];
-  const outer = cl.pop(), mid = cl.length ? cl.pop() : null;
-  if (cl.length) lines.push(" ".repeat(6) + cl.join("") + ",");
-  if (mid) lines.push("    " + mid + ",");
-  lines.push("  " + outer + ",");
-  return lines.join("\n") + "\n";
 }
 function git(args, opts = {}) {
   const r = spawnSync("git", ["-c", "core.quotepath=false", ...args], { cwd: ROOT, encoding: "utf8", input: opts.input });
@@ -73,9 +50,17 @@ function resolveConflicts() {
     fs.writeFileSync(p, keepBoth(fs.readFileSync(p, "utf8"), KEEP_BOTH[f]));
     git(["add", f]);
   });
-  if (files.includes(INDEX)) {
-    spawnSync(process.execPath, ["tools/log_index.cjs"], { cwd: ROOT });
-    git(["add", INDEX]);
+  files.filter(f => GENERATED.includes(f)).forEach(f => git(["rm", "-q", "--cached", "--ignore-unmatch", f], { ok: true })); // 不進 git 了：留本機的檔，從合併裡拿掉
+  if (files.includes(NOTICES_JS)) {
+    // 兩邊誰還帶著舊陣列（stage 2＝我這邊、3＝main 那邊）：把裡面還沒有檔的公告拆出去，notices.js 留沒有陣列的那一邊
+    const N = require("./notices_migrate.cjs"), side = n => { const r = git(["show", ":" + n + ":" + NOTICES_JS], { ok: true }); return r.status === 0 ? r.stdout : ""; };
+    const mine = side(2), theirs = side(3), rescued = [];
+    for (const src of [mine, theirs]) if (src) rescued.push(...N.rescue(src, path.join(ROOT, "content", "notices")));
+    if (rescued.length) console.log(`公告：舊 notices.js 裡還沒有檔的 ${rescued.length} 則拆成檔了：${rescued.join("、")}`);
+    const oldMine = N.extract(mine || "") !== null; // 我這邊是舊陣列 → 用 main 的（新）；否則用我的（新）
+    git(["checkout", oldMine ? "--theirs" : "--ours", NOTICES_JS]);
+    git(["add", NOTICES_JS]);
+    if (rescued.length) git(["add", "content/notices"]);
   }
   return files;
 }
@@ -91,4 +76,4 @@ if (require.main === module) {
   try { const f = mergeMain(); console.log(f.length ? `併好了，自動解了：${f.join("、")}` : "併好了。"); }
   catch (e) { console.error(e.message); process.exit(1); }
 }
-module.exports = { keepBoth, canAuto, mergeMain, resolveConflicts, noticeCloser };
+module.exports = { keepBoth, canAuto, mergeMain, resolveConflicts };

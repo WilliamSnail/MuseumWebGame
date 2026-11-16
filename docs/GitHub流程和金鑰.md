@@ -40,7 +40,7 @@
 > **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
 
 1. **要翊文同意才發**（翊文說「發 Discord」「公告 Discord」才算）。發出去就收不回來。
-2. 遊戲裡也要有館方公告（`shared/notices.js`），不能只發 Discord。
+2. 遊戲裡也要有館方公告（`npm run notice`，檔在 `content/notices/`），不能只發 Discord。
 3. 先上線、確認部署成功，再發公告（除非翊文說先發）。
 4. 文字照遊戲畫面的寫法：介面字用「壹」，短句，一行一件事。不要放謎底、玩家的資料。
 5. 發完跟翊文說發了什麼。

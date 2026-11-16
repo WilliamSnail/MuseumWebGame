@@ -15,6 +15,7 @@ content/
 ├─ 排程說明.md           ← 排程的每一步
 ├─ 排程設定.json         ← 「這週暫停」（第六節）
 ├─ story/帳本.json       ← 劇情帳本（第五節）。不打包進網頁
+├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/notices_build.cjs 合成 shared/notices_data.js，不進 git）
 ├─ npc/<id>.json        ← 館內 NPC（第十節）：壹位壹個檔。不進網頁，伺服器用 copy_shared 打包
 └─ weeks/               ← 網頁只讀這裡的 .json（web/src/ui_story.js 的 import.meta.glob）
    ├─ 2026-W47/         ← 正式週：ISO 週的名字（週一開始）

@@ -31,6 +31,7 @@ function digestText(list, day, areaOf, areas) {
 }
 
 async function main() {
+  require("./notices_build.cjs").write(); // shared/notices_data.js 不進 git，先產生
   const { NOTICES, NOTICE_AREAS, noticeArea } = await imp("notices.js");
   const { taipeiDay } = await imp("logic.js");
   const a = process.argv.slice(2), i = a.indexOf("--date"), day = i >= 0 ? a[i + 1] : taipeiDay(Date.now());
