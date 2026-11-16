@@ -99,6 +99,7 @@ const STEPS = [
   ["Discord 聯動第二步的規則（遊戲大事發到頻道：事件的字只有暱稱、冷卻、太舊的不發、不 @ 任何人、token 不進 repo、部署流程、模擬器不連真的 Discord，決定 0051）", ["test/discord_out.test.cjs"]],
   ["預約公告（時間換算、不重發、工作流程對得上）", ["test/announce.test.cjs"]],
   ["每天排程的幫手（day:plan 今天要做什麼、day:check 一次檢查）", ["test/day_plan.test.cjs"]],
+  ["每日排程優化（11-16）：ship 只改內容跳過本機測試、day:check --strict、day:new 骨架、day:pr 草稿、ledger reveal／written／day／apply、npm run issue", ["test/sched_tools.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
   ["每天新關卡的工具（每種打法每一層都過檢查、少寫預告會說、調難度、今天的點放進地圖，決定 0067）", ["test/new_level.test.cjs"]],
   ["交過的委託不能再交", ["test/commission_keep.test.cjs"]],

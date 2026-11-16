@@ -7,6 +7,10 @@
 //   --body-file 檔案   內容太長時放檔案
 //   --no-merge        只開 PR、等 CI，不合併
 //   --skip-local      不跑本機的 npm test 和 vite build（CI 還是會跑）
+//   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、維護日誌/、shared/notices.js、
+//                     .claude/，加上從 content 打包出來的 shared/npc_roster.js、shared/map_data.js）時，本機改跑 npm run day:check（要過才繼續），
+//                     不跑 npm test 和 vite build（11-16 每日排程優化：內容 PR 每次省 2～5 分鐘；CI 和部署照跑，安全網還在）。
+//                     只要有任何程式檔（web/、shared/ 其他檔、functions/、tools/、test/、package.json…）就照舊全跑
 //   沒給 --body：拿這個分支新加的維護日誌的「為什麼要改」「改了什麼」當 PR 說明（11-14：常常忘了給說明被擋）
 //   --say "文字"／--say-file 檔案   **不再馬上發**（11-15，翊文：「Discord更新太洗板了」）：玩家看得到的改動只要加館方公告（npm run notice），
 //                                   每天 20:00 .github/workflows/discord-digest.yml 會把當天的公告合成壹則發出去。給了 --say 只印提醒，不發。
@@ -28,7 +32,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith("--")) throw new Error(`看不懂「${a}」`);
     const k = a.slice(2);
-    if (["skip-local", "no-merge", "no-notice"].includes(k)) { out.flags.add(k); continue; }
+    if (["skip-local", "no-merge", "no-notice", "full"].includes(k)) { out.flags.add(k); continue; }
     if (!["title", "body", "body-file", "message", "say", "say-file", "say-now", "after-deploy"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
     if (argv[i + 1] === undefined) throw new Error(`--${k} 後面要有內容`);
     out[k] = argv[++i];
@@ -64,6 +68,25 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
+// 只動「內容」嗎（純函式，測試用）：每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）。
+// 內容路徑：content/、維護日誌/、shared/notices.js、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
+const CONTENT_PATH = /^(content\/|維護日誌\/|\.claude\/)|^shared\/(notices|npc_roster|map_data)\.js$/;
+const isContentFile = f => CONTENT_PATH.test(String(f || "").split("\\").join("/"));
+const contentOnly = files => { const f = (files || []).filter(Boolean); return f.length > 0 && f.every(isContentFile); };
+// 本機要跑什麼：{ mode: "skip" | "content" | "full", line }（line 是要印的壹行說明）
+function localPlan(files, flags) {
+  const has = x => flags && flags.has && flags.has(x);
+  if (has("skip-local")) return { mode: "skip", line: "（--skip-local：不跑本機的 npm test 和 build，CI 還是會跑）" };
+  if (!has("full") && contentOnly(files)) return { mode: "content", line: `這次只改內容（${files.length} 個檔，全在 content/、維護日誌/、公告、.claude/）：跳過本機的 npm test 和 build，改跑 npm run day:check；CI 和部署照跑。要全跑加 --full` };
+  return { mode: "full", line: has("full") ? "（--full：本機全跑 npm test 和 build）" : "" };
+}
+// 還沒 commit 的時候，這個分支相對 origin/main 改到哪些檔（已 commit、沒 commit、新檔都算）
+function pendingFiles() {
+  const base = git(["merge-base", "origin/main", "HEAD"], { ok: true }).out || "origin/main";
+  const a = git(["diff", "--name-only", base], { ok: true }).out, b = git(["ls-files", "--others", "--exclude-standard"], { ok: true }).out;
+  return [...new Set([...a.split("\n"), ...b.split("\n")].map(x => x.trim()).filter(Boolean))];
+}
+
 // 維護日誌的兩段拿來當 PR 說明（純函式，測試用）
 function bodyFromLog(md) {
   const parts = ("\n" + String(md || "")).split("\n## ");
@@ -90,10 +113,15 @@ function main() {
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
 
-  if (!o.flags.has("skip-local")) {
+  const lp = localPlan(pendingFiles(), o.flags);
+  if (lp.line) console.log(lp.line);
+  if (lp.mode === "full") {
     say("本機測試");
     run("npm", ["test"], { shell: true });
     run("npx", ["vite", "build"], { shell: true });
+  } else if (lp.mode === "content") {
+    say("內容檢查（npm run day:check）");
+    run("npm", ["run", "day:check"], { shell: true });
   }
   // 只有 package-lock.json 變了、package.json 沒變：多半是 npm install 改的（11-15 每日排程），還原，不要包進 PR。裝套件請用 npm ci
   { const st = git(["status", "--porcelain"]).out.split(/\r?\n/).map(l => l.slice(3).trim()); if (st.includes("package-lock.json") && !st.includes("package.json")) { git(["checkout", "--", "package-lock.json"]); console.log("（package-lock.json 只因 npm install 變了，還原；裝套件用 npm ci）"); } }
@@ -199,4 +227,4 @@ function backToMain() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning };
+module.exports = { isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning };
