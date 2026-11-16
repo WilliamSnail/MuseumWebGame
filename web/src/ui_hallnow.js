@@ -70,7 +70,7 @@ function inviteBtn(c, before) {
 function nameList(c, n, calm) {
   return c.names.slice(0, n).map((nm, i) => h("span", { class: "hn-nm" }, i ? "、" : "", npcName(c.ids[i], nm), npcSanBadge(c.ids[i], calm ? { calm: true, num: false } : { hint: false }))); // 全部的視窗：每位都寫（有數字）
 }
-function openAll() {
+export function openAll() {
   const c = counts(), list = reviewData() || [];
   const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
@@ -87,6 +87,9 @@ function openAll() {
 }
 
 const DRAWS = new Set();
+// 別的畫面（每個房間的「這裡現在 N 人」，ui_roomnow.js）也要跟著讀到新的 peek 重畫：f 回傳 false（鈕已經不在畫面上）就不再叫
+export function hallNowWatch(f) { const g = () => { if (f() === false) DRAWS.delete(g); }; DRAWS.add(g); }
+export const hallPeople = () => counts();
 ADDONS.hallNowDraw = () => DRAWS.forEach(f => f());
 // 手機直拿的大廳精簡列（11-15，翊文：「手機直拿著得時候看不到展區有多少人／邀請遊客」）：壹行放「展廳 N 人」（點了看全部）和「邀旅客去賭場」；電腦版用右欄那塊，這個藏起來（css/hallnow.css）
 export function hallNowBar() {

@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-51946f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "每個房間看得到現在有幾人", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "每個房間標題旁多了一顆「這裡現在幾人」，點開可以看有哪些館友、旅客和散客；點旅客的名字會打開他的卡片。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-d6b33f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "疑點簿多了每週的結論", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

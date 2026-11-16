@@ -31,7 +31,8 @@ export function onescreenDrawer(strip, label = "你的收藏") {
 }
 export function roomHead(title, sub, ...extra) {
   const back = UI.screen && UI.screen !== "lobby" && !HIDE_CHROME.includes(UI.screen) && P ? btn([icon("lobby"), " 回大廳"], () => navTo("lobby"), "ghost small rh-back") : null;
-  return h("header", { class: "room-head" }, h("h1", null, title), sub ? h("p", { class: "sub" }, sub) : null, back ? h("div", { class: "rh-row" }, back) : null, extra.length ? h("div", { class: "head-tools" }, extra) : null); // 回大廳在標題下面靠左，每個房間同壹個位置
+  const ppl = P && ADDONS.roomPeople && UI.screen ? ADDONS.roomPeople(UI.screen) : null; // 這裡現在 N 人（11-16，ui_roomnow.js）
+  return h("header", { class: "room-head" }, h("h1", null, title), sub ? h("p", { class: "sub" }, sub) : null, back || ppl ? h("div", { class: "rh-row" }, back, ppl) : null, extra.length ? h("div", { class: "head-tools" }, extra) : null); // 回大廳在標題下面靠左，每個房間同壹個位置
 }
 
 // ---------- 1 開場 ----------
