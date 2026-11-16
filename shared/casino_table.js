@@ -16,6 +16,7 @@ import { CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casDealerPlay, casHand, casOutcome, casPayout, casPoint, casShown, casShuffle } from "./casino.js";
 import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./casino_wallet.js";
 import { hashStr, mulberry32 } from "./logic.js";
+import { nwPoke, nwPokeKind } from "./world.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./casino_npc.js";
 
 export const CAS_QUICK = ["加油", "好牌", "莊家別爆", "再來壹把", "我不行了", "運氣來了"]; // 快速短句（自由打字另外走 cleanSay）
@@ -174,7 +175,7 @@ export function casTFinish(t, ctx, now) {
   for (const s of bet) {
     const o = casOutcome(s.cards, t.dealer);
     s.out = Object.assign({ kind: o.kind, why: o.why }, casPayout(s.bet, o.kind, s.bonusPct));
-    if (s.npc) { npcCasPay(ctx.house, ctx.day, s.npc.id, s.bet, s.out); continue; } // NPC：沒有錢包，賠付回外面世界
+    if (s.npc) { npcCasPay(ctx.house, ctx.day, s.npc.id, s.bet, s.out); nwPoke(ctx.house, ctx.day, s.npc.host, s.npc.id, nwPokeKind(s.out)); continue; } // NPC：沒有錢包，賠付回外面世界
     const w = ctx.wallets[s.uid];
     if (w) {
       const r = casSettle(w, ctx.house, { bet: s.bet, out: s.out, allin: s.allin, settled: false }, { day: ctx.day, withOthers });

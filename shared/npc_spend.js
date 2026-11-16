@@ -18,7 +18,7 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
+import { WU_HH, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
@@ -255,6 +255,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     }
   }
   if (nowMs === Infinity) nwSanDay(house, day, npcVisitsToday(day, secret, list, counters), list.filter(x => x && x.kind !== "trace" && x.budget && x.budget.perDay > 0)); // 收盤：NPC 的理智照那天的行程更新（決定 0090）
+  if (nowMs === Infinity) nwArcWeek(house, day, list.filter(x => x && x.kind !== "trace")); // 每段第 1 週的週一早上：旅客理智的分級結算（決定 0097）
   if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), byUnit: Object.assign({}, L.byUnit || {}), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
   return L;
 }

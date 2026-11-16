@@ -251,7 +251,7 @@ export function nwFix(house) {
   if (!wuBox(house)) return null;
   const w = wuBox(house.npcw) ? house.npcw : (house.npcw = {});
   w.day = wdDayOk(w.day) ? w.day : null;
-  for (const k of ["bal", "lay", "job", "san"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of ["bal", "lay", "job", "san", "hist", "arc", "poke"]) if (!wuBox(w[k])) w[k] = {};
   w.sanDay = wdDayOk(w.sanDay) ? w.sanDay : null;
   for (const id of Object.keys(w.bal)) { const n = wdN(w.bal[id]); if (n > 0) w.bal[id] = n; else delete w.bal[id]; }
   if (!Array.isArray(w.ev)) w.ev = [];
@@ -348,12 +348,89 @@ export function nwSanDay(house, day, visits, people, extra = (WORLD_EVENTS[day] 
     if (cur + d < S.start) d += Math.min(heal, S.start - (cur + d));
     const un = whUnrest(house, nwUnitOf(house, n)), UN = NUM.casino.worldDoc.unrest, eb = un >= UN.reverse ? -S.back : un >= UN.slow ? 0 : S.back; // 旗下集團很不安：自然回復停下來，更不安就反過來往下
     d += cur + d < S.start ? eb : cur + d > S.start ? -Math.max(0, eb) : 0;
+    d += nwPokeNet(w, day, id); // 玩家互動（賭場邀請輸贏、委託）：今天的淨額，算進一天最多 ±daily 裡
     d = whClamp(d, -S.daily, S.daily);
     for (const e of ev) if (e.npc === id) d += e.t === "lay" ? S.lay : S.job;
     d += whClamp(wdN(extra[id]), -NUM.casino.worldDoc.events.sanMax, NUM.casino.worldDoc.events.sanMax); // 排程填的（劇情決定的欄位），不算進一天最多 ±10
     const nv = whClamp(cur + d, 0, 100); if (nv === S.start) delete w.san[id]; else w.san[id] = nv;
+    if (nwArcTracked(n)) { const hs = Array.isArray(w.hist[id]) ? w.hist[id] : []; hs.push(nv); w.hist[id] = hs.slice(-NUM.casino.worldDoc.branch.histDays); } // 只存有 variants 的旅客的收盤理智（7 個整數）
   }
+  if (wuBox(w.poke)) for (const k of Object.keys(w.poke)) if (nwDays(k, day) >= 2) delete w.poke[k]; // 舊的互動紀錄不留
   return true;
+}
+
+// ================================================================
+//  旅客理智分岔（決定 0097，規劃稿第柒節）：玩家跟旅客互動 → 當天理智的小幅加減（nwPoke，記在 house.npcw.poke[日期]）→ 收盤進 nwSanDay（算進一天最多 ±10）
+//  → 有 variants 的旅客存最近 7 天的收盤理智（house.npcw.hist）→ 每段第 1 週的週一早上週結算（nwArcWeek）→ 狀態 house.npcw.arc[id] = { st, prev, rec, since, end? }
+//  → nwArcVariant(step, st) 決定這一步用哪一句。不看有幾位玩家（翊文 11-16：「理智只有一個，任何一個玩家都可以影響他」）；防刷靠每人每天上限、7 天均線、先有預兆、一段才結算一次。不動錢、不獎勵、不報名字。
+// ================================================================
+const ARC_RANK = { steady: 0, tired: 1, uneasy: 2, edge: 3 };
+// 這位旅客有沒有分岔的資料（任何一步有 variants）
+export const nwArcTracked = n => !!n && Array.isArray(n.arc) && n.arc.some(s => wuBox(s) && wuBox(s.variants));
+// 今天（day）這位旅客被玩家互動加減的淨額
+export const nwPokeNet = (w, day, id) => (wuBox(w && w.poke) && wuBox(w.poke[day]) && wuBox(w.poke[day].by) && wuBox(w.poke[day].by[id]) ? wdN(w.poke[day].by[id].net) : 0);
+// 賭場邀請的那一手 → 互動種類（贏、二十一點、輸、爆；平手不算）
+export const nwPokeKind = out => (!wuBox(out) ? null : out.kind === "win" || out.kind === "charlie" ? "win" : out.kind === "blackjack" ? "blackjack" : out.kind === "lose" ? (out.why === "bust" ? "bust" : "lose") : null);
+// 記一件互動：uid 這位玩家在 day 對旅客 id 做了 kind（win、blackjack、lose、bust、jobDone、jobFail）。回傳這次真的算了多少（被上限擋掉是 0）。
+// 上限：同一位玩家對同一位旅客一天最多 perUidNpc 件、淨額夾 ±netUidNpc；同一位玩家一天全館最多 perUid 件；全館對同一位旅客一天最多 ±perNpc。連輸（上一件也是輸）算 loseRow。
+export function nwPoke(house, day, uid, id, kind) {
+  const w = nwFix(house), B = NUM.casino.worldDoc.branch;
+  if (!w || !B || !B.on || !wdDayOk(day) || typeof uid !== "string" || !uid || uid === "__proto__" || typeof id !== "string" || !id || id === "__proto__") return 0;
+  const base = wdN(B.delta[kind]); if (!base) return 0;
+  if (!wuBox(w.poke[day])) w.poke[day] = { by: {}, uidN: {} };
+  for (const k of Object.keys(w.poke)) if (nwDays(k, day) >= 2) delete w.poke[k];
+  const P = w.poke[day], nb = wuBox(P.by[id]) ? P.by[id] : (P.by[id] = { net: 0, uid: {} }), u = wuBox(nb.uid[uid]) ? nb.uid[uid] : (nb.uid[uid] = { n: 0, net: 0, last: "" });
+  if (u.n >= B.perUidNpc || wdN(P.uidN[uid]) >= B.perUid) return 0;
+  let d = kind === "lose" && u.last === "lose" ? wdN(B.delta.loseRow) : base;
+  d = whClamp(u.net + d, -B.netUidNpc, B.netUidNpc) - u.net;
+  d = whClamp(nb.net + d, -B.perNpc, B.perNpc) - nb.net;
+  u.n++; P.uidN[uid] = wdN(P.uidN[uid]) + 1; u.last = kind; u.net += d; nb.net += d;
+  return d;
+}
+// 第幾段（0 起；還沒開始 ＝ -1）
+export function nwArcSeg(day) { const B = NUM.casino.worldDoc.branch; if (!wdDayOk(day)) return -1; const n = nwDays(B.segStart, day); return n < 0 ? -1 : Math.floor(n / B.segDays); }
+// 分級：最近 histDays 天收盤理智的平均（四捨五入）→ 分級代碼；資料少於 minDays 天 ＝ null
+export function nwArcBand(hist) {
+  const B = NUM.casino.worldDoc.branch, h = Array.isArray(hist) ? hist.slice(-B.histDays).map(wdN) : [];
+  return h.length < B.minDays ? null : statBandOf("npcSan", Math.round(h.reduce((a, b) => a + b, 0) / h.length));
+}
+// 週結算：closedDay 是剛收盤的那天；它的隔天如果是新的一段（第 1 週的週一），每位有 variants 的旅客結算一次（冪等：house.npcw.arcSeg）。
+// 規則：edge 要前一次結算已經是 uneasy 以上（先有預兆）；uneasy 以上要恢復，要連續 recoverN 次結算的平均都回到有點累以上；結局（nwArcEnd）之後不再恢復。回傳這次有變的 [{ id, from, to }]
+export function nwArcWeek(house, closedDay, people) {
+  const w = nwFix(house), B = NUM.casino.worldDoc.branch; if (!w || !B || !B.on || !wdDayOk(closedDay)) return [];
+  const next = new Date(Date.parse(closedDay + "T00:00:00Z") + 86400000).toISOString().slice(0, 10), seg = nwArcSeg(next);
+  if (seg < 0 || wdN(w.arcSeg == null ? -1 : w.arcSeg) >= seg || nwDays(B.segStart, next) % B.segDays !== 0) return [];
+  w.arcSeg = seg; const out = [];
+  for (const n of people || []) {
+    if (!nwArcTracked(n)) continue;
+    const raw = nwArcBand(w.hist[n.id]); if (!raw) continue;
+    const a = wuBox(w.arc[n.id]) ? w.arc[n.id] : { st: "steady", prev: "steady", rec: 0, since: null }, from = a.st;
+    if (a.end) continue;
+    let to = raw;
+    if (to === "edge" && ARC_RANK[from] < 2) to = "uneasy";
+    if (ARC_RANK[from] >= 2 && ARC_RANK[to] < 2) { a.rec = wdN(a.rec) + 1; if (a.rec < B.recoverN) to = from; else a.rec = 0; } else a.rec = 0;
+    if (to !== from) { a.prev = from; a.st = to; a.since = next; out.push({ id: n.id, from, to }); }
+    w.arc[n.id] = a;
+  }
+  return out;
+}
+// 排程觸發的結局（edge 那一步）之後：不再恢復
+export function nwArcEnd(house, id, day) { const w = nwFix(house); if (!w || typeof id !== "string" || !id || id === "__proto__") return false; const a = wuBox(w.arc[id]) ? w.arc[id] : (w.arc[id] = { st: "edge", prev: "uneasy", rec: 0, since: day || null }); a.st = "edge"; a.end = true; return true; }
+export const nwArcState = (house, id) => (house && house.npcw && wuBox(house.npcw.arc) && wuBox(house.npcw.arc[id]) && ARC_RANK[house.npcw.arc[id].st] != null ? house.npcw.arc[id].st : "steady");
+// 這一步在這個狀態下怎麼走：{ text, news, action（null／"hold"／"skip"／"alt"）, delay（週，0 或 1）, edge, state }
+// steady 可選 variants.steady；tired 換句子（可 delay 1 週）；uneasy／edge：hold、skip 或 alt（暫停最多一段，由呼叫的人管）。
+// 掛了主線揭露的步（beat）只能換句子（steady／tired），uneasy／edge 一律當 tired（不暫停、不跳、不延後），不然揭露的管道會掉。
+export function nwArcVariant(step, st) {
+  const v = wuBox(step) && wuBox(step.variants) ? step.variants : null, state = ARC_RANK[st] != null ? st : "steady", r = { text: wuBox(step) ? step.text : "", news: wuBox(step) ? step.news : "", action: null, delay: 0, edge: state === "edge", state };
+  if (!v || (state === "steady" && !wuBox(v.steady))) return r;
+  const use = x => { if (typeof x.text === "string" && x.text) r.text = x.text; if (typeof x.news === "string" && x.news) r.news = x.news; };
+  const beat = !!(step && step.beat);
+  if (state === "steady") { use(v.steady); return r; }
+  if (state === "tired" || beat) { const x = wuBox(v.tired) ? v.tired : null; if (x) { use(x); if (!beat) r.delay = whClamp(wdN(x.delay), 0, 1); } return r; }
+  const x = wuBox(v.uneasy) ? v.uneasy : null;
+  r.action = x && ["hold", "skip", "alt"].includes(x.action) ? x.action : "hold";
+  if (x && r.action !== "skip") use(x);
+  return r;
 }
 // 給畫面的：{ NPC id: [數字, 分級代碼] }（只放不是初始值的，沒有的畫面當初始值）
 export function nwSanPublic(house) {
