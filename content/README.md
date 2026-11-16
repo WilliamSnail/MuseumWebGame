@@ -18,7 +18,7 @@ content/
 ├─ npc/<id>.json        ← 館內 NPC（第十節）：壹位壹個檔。不進網頁，伺服器用 copy_shared 打包
 └─ weeks/               ← 網頁只讀這裡的 .json（web/src/ui_story.js 的 import.meta.glob）
    ├─ 2026-W47/         ← 正式週：ISO 週的名字（週一開始）
-   │  ├─ week.json      ← 週的設定（週一 04:30 寫）
+   │  ├─ week.json      ← 週的設定（週一排程寫；npm run day:new 會先建骨架）
    │  ├─ d1.json … d7.json ← 一天一個（d1＝週一。那天 04:30 寫）
    │  └─ 靈感來源.md     ← 新聞的連結、取了什麼、為什麼安全（只給審的人看；.md 不進網頁）
    └─ 備用/

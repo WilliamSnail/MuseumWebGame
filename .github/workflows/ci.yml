@@ -21,6 +21,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # 只改內容的 PR 不跑最慢的那項「經濟自我檢查腳本」（約 114 秒，翊文 11-16 同意）。有任何程式檔就照跑。
+      # 合併到 main 之後的部署（deploy.yml）不看這個：部署前的最後一道壹定跑全套。
+      - name: 只改內容嗎（是的話之後的 npm test 跳過經濟自我檢查）
+        run: node tools/changed_files.cjs --base origin/${{ github.base_ref }} --event ${{ github.event_name }} --github-env
       - name: 測試（規則、內容、特效、模組、日誌格式）
         run: npm test
       - name: 打包

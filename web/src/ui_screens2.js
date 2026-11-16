@@ -15,7 +15,8 @@ import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } f
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
-import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
+import { APPLAUSE, hallApplauseDue } from "../../shared/applause.js";
+import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, sndFile, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
@@ -181,7 +182,7 @@ export async function autoDeliverFlow(b) {
   if (!(await asking)) { b.disabled = false; return; }
   const res = deliverAll(P, plan);
   if (!res.results.length) { snd("error"); note("委託換新了，再按壹次看看。", "bad"); rerender(); return; }
-  snd("stamp");
+  snd("stamp"); sndFile("applause", APPLAUSE.vol); sndFile("bell-ring", 0.3); // 交件：櫃台鈴（11-16 翊文，Pixabay「Bell Sound Effect」）
   if (ADDONS.jobChips) ADDONS.jobChips(res.results.map(x => x.c.id), res.results.map(x => x.c.client)); // 交委託拿壹點籌碼（決定 0062）
   applyBodyState(); updateStatus(); persist(); actionTick();
   if (UI.screen === "commission") rerender(); // 委託單蓋上「完成」、按鈕的張數跟著變
@@ -257,7 +258,7 @@ export function noteCard(c, i) {
     if (r.ok && r.skill) note(`說服 ${r.skill.roll.total} ≤ ${r.skill.target}？${r.skill.success ? "成功：賞金多三成" : "沒談成，照原價"}`, r.skill.success ? "good" : "neutral");
     if (r.ok && r.line) later(() => regularDone(r.line, r.comment), 1500); // 等委託單飛走、畫面重畫完才跳
     if (!r.ok) { snd("error"); note(r.reason, "bad"); card.classList.remove("nope"); void card.offsetWidth; card.classList.add("nope"); return false; }
-    snd("stamp");
+    snd("stamp"); sndFile("applause", APPLAUSE.vol); sndFile("bell-ring", 0.3); // 交件：櫃台鈴（11-16 翊文，Pixabay「Bell Sound Effect」）
     if (ADDONS.jobChips) ADDONS.jobChips([c.id], [c.client]); // 交委託拿壹點籌碼（決定 0062）
     card.append(h("div", { class: "nc-stamp in", html: ART.stamp("完成") }));
     if (r.reward) FX.floatText(card, `+${r.reward} 靈感`, "good");
@@ -414,8 +415,9 @@ export function showCodexCell(detail, pick, failed) {
 SCREENS.hall = (root, params) => {
   if (params.place) {
     const it = params.place; params.place = null;
-    const empty = P.hall.findIndex(s => !s);
+    const empty = P.hall.findIndex(s => !s), before0 = hallScore(P).score;
     const r = placeInHall(P, empty >= 0 ? empty : 0, it);
+    if (r.ok && hallApplauseDue(before0, hallScore(P).score)) sndFile("applause", APPLAUSE.vol);
     if (r.ok) later(() => showEvents(r.events), 300);
   }
   if (params.friend && ADDONS.friendHall) { ADDONS.friendHall(root, params); return; } // 走進館友的展廳（多人版 M2，ui_visit.js）
@@ -491,9 +493,11 @@ export function pedestal(slot, i) {
       : h("div", { class: "ped-label empty" }, "空展台"),
     it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "從展台拿下來", onClick: e => { e.stopPropagation(); P.hall[i] = null; persist(); rerender(); } }, icon("close")) : null);
   placeTarget(el, ["pepe", "pillow"], item => {
+    const before = hallScore(P).score;
     const r = placeInHall(P, i, item);
     if (!r.ok) { note(r.reason || "放不上去", "bad"); return false; }
     snd("submit"); persist();
+    if (hallApplauseDue(before, hallScore(P).score)) sndFile("applause", APPLAUSE.vol); // 展廳評分跨過高分門檻
     later(() => { if (UI.screen === "hall") { rerender(); showEvents(r.events); } }, 280);
     return true;
   });

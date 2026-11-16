@@ -17,8 +17,9 @@ import { isFresh, markFresh, markFreshEvents } from "../../shared/fresh.js";
 import { isFree, isUnlocked, todayStr } from "../../shared/logic.js";
 import { limitedInfo, ownsLimited } from "../../shared/signin.js";
 import { SHOW_NOTES, SHOW_POSTER_PICK, SHOW_THEMES, SHOW_TIER_NAME, hasShowPending, noteCounts, noteOpen, noteRead, readShowNote, showBox, showHintDue, showItemOf, showPosters, showRewards, showStatus, showTiers, showTitle, syncShow, takeShowPending, weekGold, weekItemOf } from "../../shared/themeshow.js";
+import { APPLAUSE } from "../../shared/applause.js";
 import { ART } from "./art.js";
-import { $$, ADDONS, HOOKS, P, UI, btn, freshMark, go, h, icon, later, miniLayer, note, persist, rerender, snd, updateStatus } from "./ui_core.js";
+import { $$, ADDONS, HOOKS, P, UI, btn, freshMark, go, h, icon, later, miniLayer, note, persist, rerender, snd, sndFile, updateStatus } from "./ui_core.js";
 import { bookReader } from "./ui_screens1.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { shelfRow } from "./ui_story.js";
@@ -83,7 +84,7 @@ function doneCard(e) {
     later(pump, 400);
     return;
   }
-  snd("bell");
+  snd("bell"); sndFile("applause", APPLAUSE.vol); // 主題展結算拿到新的壹級
   const m = miniLayer(`${fullName(e.theme)}辦完了`, `連續 ${NUM.show.days} 天，閉展那天 ${e.score} 分。牆上會留壹張海報。`);
   m.card.classList.add("ts-card");
   const close = () => { m.close(); persist(); updateStatus(); if (UI.screen === "hall") rerender(); later(pump, 300); }; // 展廳：海報、獎牌換新

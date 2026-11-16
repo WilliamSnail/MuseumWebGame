@@ -6,6 +6,7 @@ import { casExact, casNum } from "../../shared/casino.js";
 import { LEGACY, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
+import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../shared/applause.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { ambMix, sanDread } from "../../shared/room_mood.js";
@@ -90,6 +91,17 @@ export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearI
 // 提示壹律至少 6.5 秒，字越多留越久（翊文 11-08：「你一天內掉太多理智了」這種說明太快消失，至少要 6 秒）
 export const note = (text, tone, ms, action) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90), action }); // action：{ label, run }，toast 上多一顆按鈕（例如「去看看」）
 export const snd = (n, a) => FX.sound.play(n, a);
+// 整點鐘聲（11-16）：每 15 秒看台灣時間，剛跨過整點就滴答、再敲 12 小時制的鐘點下。所有畫面都響（音量、靜音照舊）；剛開遊戲不補敲、分頁在背景不敲
+let chimeLast = null;
+function chimeCheck() {
+  const now = Date.now(), due = chimeDue(chimeLast, now);
+  chimeLast = now;
+  if (!due || document.hidden) return;
+  const n = chimeCount(taipeiHour(now));
+  sndFile("clock-tick", CHIME.tickVol);
+  for (let i = 0; i < n; i++) setTimeout(() => sndFile("clock-strike", CHIME.strikeVol), CHIME.strikeAfterMs + i * CHIME.strikeGapMs); // 不放進 UI.timers：換畫面不能打斷鐘聲
+}
+export function startChime() { if (chimeLast != null) return; chimeLast = Date.now(); setInterval(chimeCheck, CHIME.checkMs); }
 // 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/sfx_files.js）。g 音量 0～1
 export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
 
@@ -1316,3 +1328,4 @@ export function miniLayer(title, sub) {
   document.body.append(layer);
   return { layer, card, close: () => layer.remove() };
 }
+startChime();

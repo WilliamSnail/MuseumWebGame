@@ -27,7 +27,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: 測試（規則、內容、特效、模組、日誌格式）
+      # 部署前的最後一道：壹定跑全套，不看改了什麼（PR 的 ci.yml 只改內容時會跳過經濟自我檢查，這裡不跳。test/ci_skip.test.cjs 會確認這裡沒有 SKIP_SLOW_ECON）
+      - name: 測試（規則、內容、特效、模組、日誌格式；全套）
         run: npm test
       - name: 打包
         run: npm run build
@@ -77,7 +78,7 @@ jobs:
             printf 'DISCORD_BOT_TOKEN=%s\nDISCORD_CHANNEL_ID=%s\n' "$tok" "$chan" > functions/.env
           fi
           npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
-      # 今日館訊固定早上八點半發（tools/announce.cjs）。這裡只補兩種情形：八點半之後才合併的、早上部署壞掉現在修好的
+      # 今日館訊主要由 ship 部署成功後叫，定時備援在 09:17、09:37（tools/announce.cjs；定時的會等部署完才發）。這裡補的是：沒用 ship 合併的、早上部署壞掉現在修好的
       - name: 讀哪些公告發過了
         if: env.HAS_KEY == 'true'
         continue-on-error: true
