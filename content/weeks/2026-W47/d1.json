@@ -1,0 +1,228 @@
+{
+  "day": 1,
+  "date": "2026-11-16",
+  "holiday": null,
+  "board": "B1 小門開了壹條縫，門後牆上畫滿正字；公報寄到；書架多 2 本書。",
+  "market": [
+    {
+      "title": "夜光街攤位早收",
+      "line": "冷氣團壹來，夜光街的攤位比平常早收，街上的燈亮得稀稀落落。",
+      "tone": "down",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠照常趕工",
+      "line": "巨浪代工廠的夜班燈還亮著，門口的大箱子又多壹疊。",
+      "tone": "up",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行很安靜",
+      "line": "島線電話行這幾天沒有什麼動靜，電話線穩穩垂著。",
+      "tone": "flat",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官在牌桌邊放了壹本記牌本，每打完壹手就畫壹筆。他說畫到第八筆會多壹筆，他沒有多畫。"
+  },
+  "books": [
+    {
+      "id": "1a",
+      "line": "w47-count",
+      "title": "門縫裡的粉筆灰",
+      "spine": "粉筆灰",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「小雪前的冷氣團。」\n「招領箱後面的鈕扣門，今天開了壹條縫。」",
+        "他沒有進去。\n門縫裡有粉筆灰飄出來，\n落在鞋尖上，白白的壹小撮。",
+        "他把手電筒伸進去照。\n牆上畫滿了正字，壹組壹組，\n每組都用粉筆圈起來。",
+        "「字很小，很整齊。」他寫。\n「跟招領單上的字像是同壹隻手。」\n「我先數壹遍。」",
+        "他從第壹組數到最後壹組，\n總數比《地下收藏目錄》多壹畫。\n「明天找人陪我數。」他寫。\n(你決定替他數第二遍)"
+      ]
+    },
+    {
+      "id": "1b",
+      "line": "w47-count",
+      "title": "數到第八畫",
+      "spine": "第八畫",
+      "unlock": {
+        "type": "find",
+        "room": "tally"
+      },
+      "pages": [
+        "你走進小門，站在牆前。\n粉筆的味道很淡，牆是乾的。",
+        "你從第壹組數起。\n壹、二、三、四、五，圈起來。\n再壹組，再壹組。",
+        "數到第八畫的時候，\n牆上的下壹畫已經畫好了。\n你沒有看見是誰畫的。",
+        "你把數到的寫在手背上，\n走出小門。\n門縫又比剛才寬了壹點。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d1a",
+      "kind": "read",
+      "book": "1a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d1b",
+      "kind": "spot",
+      "room": "tally",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d1c",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "show": {
+    "title": "牆上的字",
+    "intro": "小門旁邊掛起壹排畫。畫裡的牆都畫滿了記號，每壹幅都有人在數。",
+    "works": [
+      {
+        "id": "s1a",
+        "clue": "c-chalk-same-hand",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "圈起來的壹組",
+        "lines": [
+          "牆上壹組正字用粉筆圈起來，圈得很圓。",
+          "粉筆線的粗細，跟招領單上的字壹樣整齊。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a3038'/><stop offset='1' stop-color='#0e1115'/></linearGradient>",
+          "<radialGradient id='vig' cx='50%' cy='50%' r='70%'><stop offset='.5' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.86'/></radialGradient>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<g stroke='#e8e4d4' stroke-width='3' stroke-linecap='round' fill='none'>",
+          "<path d='M40 90 V130 M52 90 V130 M64 90 V130 M76 90 V130 M32 118 L88 100'/>",
+          "<path d='M110 90 V130 M122 90 V130 M134 90 V130 M146 90 V130 M102 118 L158 100'/>",
+          "<path d='M40 170 V210 M52 170 V210 M64 170 V210 M76 170 V210 M32 198 L88 180'/>",
+          "<path d='M110 170 V210 M122 170 V210 M134 170 V210'/>",
+          "<ellipse cx='64' cy='150' rx='46' ry='68' stroke='#c9a15a' stroke-width='2' opacity='.7'/>",
+          "<path d='M180 90 V130' stroke='#8a2f2a'/>",
+          "</g>",
+          "<rect width='240' height='300' fill='url(#vig)'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s1b",
+        "art": "frog",
+        "pick": {
+          "顏色": "黃",
+          "心情": "開心",
+          "姿勢": "坐著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "數到睡著的佩佩",
+        "lines": [
+          "牠數羊數到壹半睡著了，手指還停在第七隻。",
+          "壹覺醒來，牠壹口咬定自己數了八隻。"
+        ]
+      },
+      {
+        "id": "s1c",
+        "art": "portrait",
+        "variant": 1,
+        "fx": [
+          "sepia"
+        ],
+        "frame": "gold",
+        "title": "公報上的小照片",
+        "lines": [
+          "公報的第壹頁都印著壹張小小的肖像。",
+          "每張肖像下面的名字欄，都留著壹行空白。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "gazette",
+      "floor": 1,
+      "line": "w47-gazette",
+      "title": "樓梯口的公報",
+      "hint": "去 B1 樓梯口，看看那疊公報",
+      "intro": "B1 樓梯口的長桌上堆著壹疊選舉公報，每個展品壹頁，用細繩綁著，繩結打得很整齊。",
+      "lines": [
+        "壹尊雕像想把招領箱搬到門口，壹幅畫想讓地下多開壹條走廊，兩邊字壹樣大。",
+        "每份公報最後壹頁都印著同壹行小字：「差壹隻。」簽收欄多出壹格。"
+      ],
+      "mood": null,
+      "color": "藍",
+      "choices": [
+        {
+          "label": "壹份壹份核對簽收",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "份數對得上，只有簽收欄多出壹格，那壹格沒有人簽。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "紙太薄，你翻到壹半就弄混了順序。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把最後壹頁攤開看",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "每份最後壹頁都是同壹行小字。你把它們疊在壹起，字剛好對齊。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "字對得太整齊，你看久了有點頭暈。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "先簽收自己那壹份",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你簽了名。簽收簿多出的那壹格，好像亮了壹下。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ]
+}
