@@ -941,8 +941,8 @@ export const FX = (() => {
             if (f === cur.f && m.mode === cur.mode && (m.rank || 0) === (cur.rank || 0) && !!m.trial === !!cur.trial) return;
             cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null; cur.rank = m.rank || 0; cur.trial = !!m.trial;
             apply(1.5); applyMusic(1.5);
-            if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); }, 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
-            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
+            if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => fileOnce(c, g, 'pulse-rise', 0.5), 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
+            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'basement-noise', m.mode === 'gate' ? 0.65 : 0.5); } // 遇到怪物：地下的怪聲（11-16 翊文：「打鬥時的刀劍音效跟我們實際做的事情不太配合」——推、安撫、擋都不是拿劍，原本的 sword-fight 拿掉）；守門：Boss 登場
           },
         };
       },
