@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-c2f118", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "館裡的鋼琴、大提琴不再疊在壹起", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "圖書館的鋼琴、委託櫃台的大提琴、畫廊的鋼琴，現在壹首播完會安靜二十秒左右再放下壹首。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-983747", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "地圖頁籤換了專用牌子", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
