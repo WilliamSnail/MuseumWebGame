@@ -913,10 +913,12 @@ export const FX = (() => {
         };
         const applyMusic = (fade) => {
           const md = cur.mode, fl = cur.floorNo;
-          music('ready-fight', md === 'fight' && (cur.rank || 0) < 3 ? 0.45 : 0, fade);
-          music('fight-gladiator', md === 'fight' && (cur.rank || 0) >= 3 ? 0.45 : 0, fade); // 11-16 翊文：等級 3 的強怪換成 Dark Gladiator（Pixabay）
-          music('stairs-boss', md === 'gate' ? 0.5 : md === 'gate2' ? 0.18 : 0, fade);
-          music('horror-gate', md === 'gate2' ? 0.5 : 0, fade); // 守門第二階段：更陰森
+          music('ready-fight', md === 'fight' && !cur.trial && (cur.rank || 0) < 3 ? 0.45 : 0, fade);
+          music('fight-gladiator', md === 'fight' && !cur.trial && (cur.rank || 0) >= 3 ? 0.45 : 0, fade); // 11-16 翊文：等級 3 的強怪換成 Dark Gladiator（Pixabay）
+          music('gate-viking', md === 'gate' ? 0.5 : md === 'gate2' ? 0.18 : 0, fade); // 11-16 翊文：守門第壹階段換成 Viking Battle（Pixabay），原本的 stairs-boss 不用了
+          music('war-drums', md === 'fight' && cur.trial ? 0.45 : 0, fade); // 合作試煉的打鬥：戰鼓（11-16）
+          music('horror-gate', md === 'gate2' && !(fl >= 3) ? 0.5 : 0, fade); // 守門第二階段：B1、B2 更陰森
+          music('gate2-deep', md === 'gate2' && fl >= 3 ? 0.5 : 0, fade); // 11-16 翊文「某些怪物第二階段」：B3～B5 的守門換成 Suspense Music Cinematic（Pixabay） // 守門第二階段：更陰森
           Object.keys(SUSP).forEach((k) => music(SUSP[k], fl === +k && (md === 'map' || md === 'explore') ? (+k === 1 ? 0.2 : 0.3) : 0, fade));
         };
         apply(0.01);
@@ -936,8 +938,8 @@ export const FX = (() => {
             const f = FLOOR[m.floor] || FLOOR.base, md = MODE[m.mode] || MODE.map;
             const FG = (x) => x === 'fight' || x === 'gate' || x === 'gate2';
             const into = FG(m.mode) && !FG(cur.mode), to2 = m.mode === 'gate2' && cur.mode === 'gate';
-            if (f === cur.f && m.mode === cur.mode && (m.rank || 0) === (cur.rank || 0)) return;
-            cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null; cur.rank = m.rank || 0;
+            if (f === cur.f && m.mode === cur.mode && (m.rank || 0) === (cur.rank || 0) && !!m.trial === !!cur.trial) return;
+            cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null; cur.rank = m.rank || 0; cur.trial = !!m.trial;
             apply(1.5); applyMusic(1.5);
             if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); }, 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
             if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
