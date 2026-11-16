@@ -103,6 +103,23 @@ function chimeCheck() {
   for (let i = 0; i < n; i++) setTimeout(() => sndFile("clock-strike", CHIME.strikeVol), CHIME.strikeAfterMs + i * CHIME.strikeGapMs); // 不放進 UI.timers：換畫面不能打斷鐘聲
 }
 export function startChime() { if (chimeLast != null) return; chimeLast = Date.now(); setInterval(chimeCheck, CHIME.checkMs); }
+// 短慶祝（11-16 翊文：拍賣成交、地下打贏）：壹層不擋操作的粒子。gold ＝金粉紙屑從上面落下＋四邊金光閃壹下（拍賣）；calm ＝柔光點從中間升起散開（打贏，安撫的調性，沒有刀劍和血）。
+// 位置用編號算（不用亂數，每次壹樣）。celebrateEl 回元素（放進舞台裡）；celebrate 蓋在整個畫面上，2.4 秒後自己拿掉
+export function celebrateEl(kind) {
+  const n = kind === "gold" ? 34 : 22, bits = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i * 137.5) % 360, r = ((i * 53) % 100) / 100;
+    bits.push(h("i", { style: { "--x": kind === "gold" ? ((i * 29) % 100) + "%" : 50 + Math.cos(a * Math.PI / 180) * 6 + "%", "--dx": Math.cos(a * Math.PI / 180) * (30 + r * 90) + "px", "--dy": Math.sin(a * Math.PI / 180) * (20 + r * 70) + "px", "--d": ((i * 37) % 60) * 10 + "ms", "--s": 5 + ((i * 7) % 6) + "px", "--rot": ((i * 83) % 360) + "deg", "--c": kind === "gold" ? ["#F3D27A", "#E6B84A", "#FBEFD9", "#C9962E"][i % 4] : ["#FFFFFF", "#CFE6FF", "#FBEFD9"][i % 3] } }));
+  }
+  return h("div", { class: "cel cel-" + kind, "aria-hidden": "true" }, ...bits);
+}
+export function celebrate(kind) {
+  if (typeof document === "undefined") return;
+  const el = celebrateEl(kind);
+  el.classList.add("cel-screen");
+  document.body.append(el);
+  setTimeout(() => el.remove(), 2400);
+}
 // 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/sfx_files.js）。g 音量 0～1
 export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
 

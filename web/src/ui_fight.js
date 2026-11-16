@@ -10,7 +10,7 @@ import { NUM } from "../../shared/config.js";
 import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar_fight.js";
 import { COOP } from "../../shared/coop.js";
 import { nowMs } from "../../shared/logic.js";
-import { btn, diceWords, h, itemHTML, snd, sndFile } from "./ui_core.js";
+import { btn, celebrateEl, diceWords, h, itemHTML, snd, sndFile } from "./ui_core.js";
 import { FIGHT_SFX, fightSfxKey } from "../../shared/fight_sfx.js";
 
 const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點", taunt: "引開", inspire: "鼓舞", share: "分膽", comfort: "安慰", reveal: "看清" };
@@ -93,7 +93,7 @@ function stepOf(v, e) {
   else if (e.t === "ghost") pop(e.id, "倒了", "hurt");
   else if (e.t === "flee") { s.who = null; s.banner = e.ok ? "逃掉了！" : "沒逃掉"; if (e.ok) fx("flee", "foe"); }
   else if (e.t === "phase") { s.who = null; fx("phase", "foe"); s.banner = "第二階段"; s.setHp = e.hp; }
-  else if (e.t === "win") { s.who = null; s.banner = "牠安靜下來了"; }
+  else if (e.t === "win") { s.who = null; s.banner = "牠安靜下來了"; s.cel = "calm"; }
   else if (e.t === "over") { s.who = null; s.banner = e.over === "away" ? "牠自己走掉了" : e.over === "lose" ? "大家都倒了" : null; }
   else if (e.t === "foe") {
     s.who = null; s.lunge = !e.cancel;
@@ -248,6 +248,7 @@ export function fightStage(v, mine = null) {
   const focusFoe = !!(cur && (cur.lunge || cur.fxs.some(x => x.on === "foe")));
   const st = h("div", { class: "fg-stage fl" + v.floor + (f.phase === 2 ? " p2" : "") + (play ? " replay" : "") + (rev ? " reveal" : "") + (cur && cur.who ? " has-actor" : "") + (focusFoe ? " focus-foe" : "") },
     cur && cur.banner ? h("div", { class: "fg-banner", role: "status" }, cur.banner) : null,
+    cur && cur.cel ? celebrateEl(cur.cel) : null,
     h("div", { class: "fg-foe" },
       play ? h("div", { class: "fg-intent k-none", role: "status" }, h("i", null, "結"), h("span", null, h("b", null, "結算中"))) : h("div", { class: "fg-intent k-" + (it.kind || "none"), role: "status" }, h("i", null, INTENT_ICON[it.kind] || "？"), h("span", null, "下壹招：", h("b", null, fv.intent || "……"))),
       h("div", { class: "fg-foe-box" }, foeSprite(f, !!(cur && cur.lunge)), ...fxOn("foe"), ...popOn("foe")),

@@ -134,6 +134,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `nf-` | `net.css` | 館友動態（net feed） |
 | `si-` | `theme3.css`、`cellar2.css` | 隊伍條裡的一格（strip item） |
 | `npk-` | `npccard.css` | 旅客卡（11-16，`ui_npc_card.js`）：`npk-name`（看得出能按的旅客名字）、`npk-card`（卡）、`npk-row`（壹列）、`npk-trail`（今天去過） |
+| `cel-` | `fx.css` | 短慶祝（11-16，`ui_core.js` 的 `celebrate`／`celebrateEl`）：`cel`（粒子層）、`cel-gold`（拍賣成交）、`cel-calm`（地下打贏）、`cel-screen`（蓋整個畫面） |
 | `nc-` | `onescreen.css`、`ui.css` | 委託單內部（note card） |
 | `cm-` | `onescreen.css` | 委託櫃台（commission） |
 | `ex-` | `theme3.css` | 兌換、換取（exchange） |

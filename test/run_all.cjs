@@ -64,6 +64,7 @@ const STEPS = [
   ["館方投資外面世界（莊家和預算池超過保留的部分每天投壹點、錢搬給外面世界、停損停利、虧太多暫停、吃緊暫停、日報寫昨天，規劃 2.8f）", ["test/casino_invest.test.cjs"]],
   ["旅客理智分岔（互動上限、7 天均線、每段週結算、先有預兆、恢復、variants 的選法、賭場邀請和委託有接上）", ["test/npc_branch.test.cjs"]],
   ["銀行館內經濟的幾個帳（books：餘額、昨天變化、進出最大的幾筆）", ["test/casino_books.test.cjs"]],
+  ["帳的正負號對帳（莊家／預算池／館方帳／外面世界的每個來源方向、兩邊相反、名字、日報文字、掃程式；npm run books:sign）", ["test/books_sign.test.cjs"]],
   ["文化部館債 30 天內還清（每天至少還剩餘÷剩下天數、預算池墊、逾期記帳、日報寫出來、館方投資不動還款的錢）", ["test/casino_culture.test.cjs"]],
   ["NPC 經濟接線（行程每天抽去哪幾家、館內股人數用行程加總、全館計數、GDP 的投資看股票淨流入）", ["test/npc_econ.test.cjs"]],
   ["NPC 買畫（每場最多壹位 NPC 出價、錢從外面世界來、預算和壹天上限、抬高第二價、玩家的畫賣給 NPC、守恆）", ["test/npc_art.test.cjs"]],
