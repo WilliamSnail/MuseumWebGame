@@ -26,7 +26,7 @@ const MAX_KB = 800;
 // ---------- 解析（test/sfx_add.test.cjs 會測） ----------
 // 「作者-標題-編號.mp3」→ { author, slug（標題的 slug，不含編號）, num, full（標題-編號） }；對不上格式回 null
 function parsePixabayFilename(file) {
-  const base = path.basename(String(file)).replace(/\.mp3$/i, "");
+  const base = String(file).split(/[\\/]/).pop().replace(/\.mp3$/i, ""); // Windows 和 Linux 的路徑都吃（CI 是 Linux）
   const m = base.match(/^([^-]+)-(.+)-(\d+)$/);
   if (!m) return null;
   return { author: m[1], slug: m[2], num: m[3], full: m[2] + "-" + m[3] };
