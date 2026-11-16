@@ -596,6 +596,7 @@ export const FX = (() => {
     // 音效檔（11-15，翊文給的 Pixabay 素材；清單、來源、授權在 shared/sfx_files.js 和 web/public/sfx/來源.md）。
     //   用到才下載（/sfx/<id>.mp3），同壹個檔只抓壹次；抓不到、解不開就安靜，不出錯。
     const FILES = {};
+    let lastSfxAt = 0; // 館友按鈕的音效最後壹次響的時間（銀行的環境小聲音避開它，11-16）
     function fileBuf(c, id) {
       if (!FILES[id]) {
         FILES[id] = (typeof fetch === 'function' ? fetch('/sfx/' + id + '.mp3') : Promise.reject())
@@ -626,6 +627,12 @@ export const FX = (() => {
         const s = c.createBufferSource(), v = c.createGain();
         s.buffer = buf; v.gain.value = gain; s.connect(v); v.connect(to); s.start();
       });
+    }
+    // 「失敗作之夜」那週（每週特展 failedOnly）：大廳、展廳很久才冒壹小段走音的音樂盒（11-16 翊文，Pixabay「creepy music box」）。mix({ creepy }) 開關，第壹次不響
+    function creepyHook(c, g) {
+      const st = { on: false, n: 0 };
+      const timer = every(() => { if (st.n++ && st.on) fileOnce(c, g, 'creepy-box-short', 0.3); }, () => rand(150000, 300000));
+      return { timer, mix(m) { if (m && m.creepy != null) st.on = !!m.creepy; } };
     }
     // 環境音的小零件：遠處的人聲、遠處的腳步
     function murmur(c, to, level) {
@@ -685,7 +692,8 @@ export const FX = (() => {
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % PROG.length; next += E8 * 8; } }, () => 1000);
         const steps = every(() => farSteps(c, g, 0.01), () => rand(8000, 15000));
-        return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n], timers: [sched, steps] }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
+        const ck = creepyHook(c, g);
+        return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n], timers: [sched, steps, ck.timer], mix: ck.mix }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
       },
       // 手作坊：輕快的木琴＋撥弦低音（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「手作坊的音樂聽不太到，可以換壹首嗎」→ 原本只有剪刀、鉛筆、敲木頭的零星聲音，換成真的音樂。
@@ -805,13 +813,17 @@ export const FX = (() => {
         let k = 0;
         const pad = every(() => { const t = c.currentTime + 0.05, ch = CH[k++ % CH.length]; ch.forEach((f) => { tone(t, { f, g: 0.011, a: 2, d: 4.4, to: g }); tone(t, { f: f * 2, g: 0.003, a: 2.2, d: 3.6, to: g }); }); }, () => 5000);
         // 11-15 翊文：「這個不知道適不適合放博物館大廳或展廳」：加博物館大廳的人聲錄音（Pixabay「museum hall big echo group」）墊在弦樂底下
-        return { nodes: [room.n, ...murmur(c, g, 0.005), fileLoop(c, g, 'museum-hall', 0.3).n], timers: [pad] };
+        const ck = creepyHook(c, g);
+        return { nodes: [room.n, ...murmur(c, g, 0.005), fileLoop(c, g, 'museum-hall', 0.3).n], timers: [pad, ck.timer], mix: ck.mix };
       },
       library(c, g) { // 圖庫：音樂盒，五聲音階隨意彈，有回音
         const send = echoSend(c, g, 0.36, 0.35);
         const NOTES = [1046.5, 1174.66, 1318.51, 1567.98, 1760, 2093];
-        const box = every(() => { const t = c.currentTime + 0.05, f = NOTES[(Math.random() * NOTES.length) | 0]; tone(t, { f, g: 0.02, a: 0.002, d: 1.1, to: send }); tone(t, { f: f * 3, g: 0.003, a: 0.002, d: 0.4, to: send }); }, () => rand(900, 2600));
-        return { nodes: [], timers: [box] };
+        // 11-16 翊文：理智很低時，音樂盒換成走音的那首（Pixabay「creepy music box」）：mix({ dread: "low"|"edge"|null })，low 以下就換
+        const st = { creepy: false };
+        const cb = fileLoop(c, g, 'creepy-box', 0);
+        const box = every(() => { if (st.creepy) return; const t = c.currentTime + 0.05, f = NOTES[(Math.random() * NOTES.length) | 0]; tone(t, { f, g: 0.02, a: 0.002, d: 1.1, to: send }); tone(t, { f: f * 3, g: 0.003, a: 0.002, d: 0.4, to: send }); }, () => rand(900, 2600));
+        return { nodes: [cb.n], timers: [box], mix(m) { if (!m || !('dread' in m)) return; st.creepy = !!m.dread; cb.v.gain.setTargetAtTime(st.creepy ? (m.dread === 'edge' ? 0.45 : 0.32) : 0, c.currentTime, 1.5); } };
       },
       office(c, g) { // 館長室：落地鐘、羽毛筆、壁爐
         const fire = bed(c, g, 'lowpass', 300, 0.7, 0.03);
@@ -873,7 +885,7 @@ export const FX = (() => {
         const FLOOR = {
           base: { bed: { wind: 0.22, basement: 0.4, sewer: 0, cave: 0.35 }, odd: ['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise'], gap: [35, 80], drip: 0, coming: true }, // 選樓層的大廳：滴水用洞穴錄音（cave），不放各層的 drips
           1: { bed: { wind: 0.1, basement: 0, sewer: 0.35 }, odd: ['cave-drops', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 1 }, // 積灰的儲藏室：滴水的水管
-          2: { bed: { wind: 0.3, basement: 0.3, sewer: 0 }, odd: ['echo-far', 'basement-noise', 'basement-knock'], gap: [40, 90], drip: 0.5 }, // 雕像廳：很冷
+          2: { bed: { wind: 0.3, basement: 0.3, sewer: 0 }, odd: ['echo-far', 'basement-noise', 'basement-knock', 'creepy-box-short'], gap: [40, 90], drip: 0.5 }, // 雕像廳：很冷
           3: { bed: { wind: 0.08, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-dungeon', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 0.3, coming: true }, // 空畫框的走廊：長走廊的回音
           4: { bed: { wind: 0.05, basement: 0, sewer: 0.5, waves: 0.25 }, odd: ['cave-drops', 'cave-drops', 'echo-far', 'bubbles'], gap: [20, 50], drip: 1.6 }, // 淹水的檔案室
           5: { bed: { wind: 0.05, basement: 0, sewer: 0, void: 0.3 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空，只有很低的「虛空回響」（Pixabay「Echo of the Void」）
@@ -1026,7 +1038,12 @@ export const FX = (() => {
           }
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % CH.length; next += BAR; } }, () => 1000);
+        // 11-16 翊文：「銀行有時候也可以有這個聲音（打字機），但不要跟其他音效疊加」：銀行的環境小聲音（硬幣、點硬幣、打字機）共用壹個空檔，
+        //   壹個在響的時候別的不響；館友按鈕的音效（sfx 音軌，lastSfxAt）剛響過 4 秒內也不響
+        let quietUntil = 0;
+        const slot = (sec) => { const t0 = c.currentTime; if (t0 < quietUntil || now() - lastSfxAt < 4000) return false; quietUntil = t0 + sec; return true; };
         const coins = every(() => { // 硬幣：兩三下金屬的「叮鈴」
+          if (!slot(1.5)) return;
           const t = c.currentTime + 0.05, n = 2 + ((Math.random() * 2) | 0);
           for (let i = 0; i < n; i++) {
             const tt = t + i * rand(0.05, 0.1), f = rand(2800, 3600);
@@ -1035,8 +1052,9 @@ export const FX = (() => {
             noise(tt, { type: 'highpass', f: 6500, q: 1, g: 0.008, a: 0.001, d: 0.02, to: g });
           }
         }, () => rand(9000, 19000));
-        const counting = every(() => fileOnce(c, g, 'coins-counting', 0.12), () => rand(25000, 50000)); // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
-        return { nodes, timers: [sched, coins, counting] };
+        const counting = every(() => { if (slot(10.5)) fileOnce(c, g, 'coins-counting', 0.12); }, () => rand(25000, 50000));
+        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, 'typewriter', 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
+        return { nodes, timers: [sched, coins, counting, typing] };
       },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
         const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
@@ -1179,7 +1197,7 @@ export const FX = (() => {
         const tn = now();
         if (last[name] && tn - last[name] < 35) return; // de-dupe accidental double calls
         last[name] = tn;
-        fn(c.currentTime + 0.01, arg);
+        lastSfxAt = tn; fn(c.currentTime + 0.01, arg);
       } catch (e) { /* never throw */ }
     }
 
@@ -1237,7 +1255,7 @@ export const FX = (() => {
             if (!buf || !isOn('sfx')) return;
             const s = c.createBufferSource(), v = c.createGain();
             s.buffer = buf; v.gain.value = g == null ? 0.5 : Math.max(0, Math.min(1, +g));
-            s.connect(v); v.connect(bus.sfx); s.start();
+            s.connect(v); v.connect(bus.sfx); s.start(); lastSfxAt = now();
           });
         } catch (e) { /* never throw */ }
       },

@@ -6,12 +6,13 @@ import { casExact, casNum } from "../../shared/casino.js";
 import { LEGACY, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
+import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../shared/applause.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { ambMix, sanDread } from "../../shared/room_mood.js";
-import { markTokens, taipeiDay } from "../../shared/logic.js";
+import { markTokens, taipeiDay, todayStr } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
-import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/logic3.js";
+import { hasTalent, memberPower, skillCheck, understandLine, weeklyTheme } from "../../shared/logic3.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../shared/notices.js";
@@ -90,6 +91,17 @@ export function clearTimers() { UI.timers.forEach(t => { clearTimeout(t); clearI
 // 提示壹律至少 6.5 秒，字越多留越久（翊文 11-08：「你一天內掉太多理智了」這種說明太快消失，至少要 6 秒）
 export const note = (text, tone, ms, action) => FX.toast(text, { tone, ms: Math.max(ms || 0, 6500, 2600 + String(text).length * 90), action }); // action：{ label, run }，toast 上多一顆按鈕（例如「去看看」）
 export const snd = (n, a) => FX.sound.play(n, a);
+// 整點鐘聲（11-16）：每 15 秒看台灣時間，剛跨過整點就滴答、再敲 12 小時制的鐘點下。所有畫面都響（音量、靜音照舊）；剛開遊戲不補敲、分頁在背景不敲
+let chimeLast = null;
+function chimeCheck() {
+  const now = Date.now(), due = chimeDue(chimeLast, now);
+  chimeLast = now;
+  if (!due || document.hidden) return;
+  const n = chimeCount(taipeiHour(now));
+  sndFile("clock-tick", CHIME.tickVol);
+  for (let i = 0; i < n; i++) setTimeout(() => sndFile("clock-strike", CHIME.strikeVol), CHIME.strikeAfterMs + i * CHIME.strikeGapMs); // 不放進 UI.timers：換畫面不能打斷鐘聲
+}
+export function startChime() { if (chimeLast != null) return; chimeLast = Date.now(); setInterval(chimeCheck, CHIME.checkMs); }
 // 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/sfx_files.js）。g 音量 0～1
 export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
 
@@ -406,6 +418,8 @@ export function audioState() {
   // 地下（11-15）：在地下時告訴環境音現在第幾層、在做什麼（地圖、探索、打鬥、守門、休息），fx.js 的 AMB.cellar 照這個換。合作模式的框蓋在別的房間上，也換成地下的聲音
   if (UI.cellarSnd && P && scr !== "ending" && scr !== "title" && !UI.ambOver) amb = "cellar";
   if (amb === "cellar" && S.ambMix) S.ambMix(UI.cellarSnd || { floor: null, mode: "map" });
+  if (amb === "library" && S.ambMix) S.ambMix({ dread: live ? sanDread(P.sanity, P.dark) : null }); // 理智很低：圖庫的音樂盒換成走音的（11-16）
+  if ((amb === "lobby" || amb === "hall") && S.ambMix) S.ambMix({ creepy: !!(P && weeklyTheme(todayStr()) === "failedOnly") }); // 失敗作之夜那週：偶爾冒壹段走音的音樂盒（11-16）
   if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
   if (live && P.dark && scr !== "ending") amb = "zero";
   if (scr === "ending" && UI.params && UI.params.id === "russia8") amb = "zero";
@@ -1313,3 +1327,4 @@ export function miniLayer(title, sub) {
   document.body.append(layer);
   return { layer, card, close: () => layer.remove() };
 }
+startChime();

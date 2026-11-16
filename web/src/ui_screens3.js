@@ -423,12 +423,13 @@ export function officeRepair() {
     h("h3", { class: "sec-title" }, `受傷的佩佩（${hurt.length}）`),
     hurt.length ? h("div", { class: "item-grid" }, hurt.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }),
       h("p", { class: "sub" }, `${itemTitle(it)}・${P.injured[it.key]} 會自己好`),
-      btn(costText("治好", NUM.healCost), () => { const r = healInjured(P, it.key); if (!r.ok) { note(r.reason, "bad"); return; } snd("hug"); note("包紮好了。", "good"); updateStatus(); persist(); rerender(); }, "ghost"))))
+      btn(costText("治好", NUM.healCost), () => { const r = healInjured(P, it.key); if (!r.ok) { note(r.reason, "bad"); return; } snd("hug"); sndFile("repair", 0.4); note("包紮好了。", "good"); updateStatus(); persist(); rerender(); }, "ghost"))))
       : h("p", { class: "empty" }, "沒有受傷的佩佩。"),
     h("h3", { class: "sec-title" }, `失敗作（${failed.length}）`),
     failed.length ? h("div", { class: "item-grid" }, failed.map(it => h("div", { class: "item-card" }, h("div", { class: "si-art", html: itemHTML(it) }),
       h("p", { class: "sub" }, itemTitle(it)),
       btn(costText("修修看", NUM.repairCost), () => {
+        sndFile("repair", 0.4); // 上發條：按下就響，不管修沒修好
         const r = repairFailed(P, it.key);
         if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
         if (r.check && !r.check.skip) note(`手工藝 ${r.check.roll.total} ≤ ${r.check.target}？${r.fixed ? "成功" : "失手了"}`, r.fixed ? "good" : "bad");

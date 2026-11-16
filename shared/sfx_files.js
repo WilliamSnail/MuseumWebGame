@@ -37,6 +37,9 @@ export const SFX_FILES = {
   "i-see-money": { name: "i see money（截前 4.5 秒）", by: "Shelvis_makes_games", url: "https://pixabay.com/sound-effects/i-see-money-181273/", use: "開大禮包（拉霸開始轉）" },
   "cha-ching": { name: "Cashier \"ka-ching\" sound effect", by: "u_byub5wd934", url: "https://pixabay.com/sound-effects/cashier-quotka-chingquot-sound-effect-129698/", use: "銀行還錢、賣股還債" },
   "you-have-money": { name: "You have money", by: "RussWazHere3000", url: "https://pixabay.com/sound-effects/you-have-money-206821/", use: "開大禮包開到 2 星以上" },
+  "creepy-box": { name: "creepy music box（做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/musical-creepy-music-box-6169/", loop: true, use: "理智很低時圖庫的音樂盒" },
+  "creepy-box-short": { name: "creepy music box（截前 10 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/musical-creepy-music-box-6169/", use: "地下 B2 偶爾、失敗作之夜那週大廳和展廳偶爾" },
+  "typewriter": { name: "Type Writer（截 6 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/film-special-effects-type-writer-53735/", use: "銀行遠處偶爾的打字機（不跟別的音效疊）" },
   "coin-drop": { name: "Coin Drop In Slot 2 SFX", by: "BFCMUSIC", url: "https://pixabay.com/sound-effects/coin-drop-in-slot-2-sfx-330553/", use: "賭場借到籌碼；銀行存入、定存、買館債、買股票、開槓桿（錢放進去）" },
   "slot-bonus": { name: "Playful Casino Slot Machine Bonus 2", by: "floraphonic", url: "https://pixabay.com/sound-effects/playful-casino-slot-machine-bonus-2-183919/", use: "抽卡包 4 星以上" },
   "crowd-cheer": { name: "crowd cheering", by: "DennisH18", url: "https://pixabay.com/sound-effects/crowd-cheering-143103/", use: "抽卡包 5 星" },
@@ -62,5 +65,10 @@ export const SFX_FILES = {
   "gallery-nostalgic": { name: "Nostalgic", by: "atlasaudio", url: "https://pixabay.com/music/nostalgic-511878/", use: "畫廊偶爾輕輕放壹次（懷舊）" },
   "film-inspiring": { name: "Inspiring Cinematic Ambient（截前 100 秒）", by: "Lexin_Music", url: "https://pixabay.com/music/inspiring-cinematic-ambient-116199/", use: "主線劇情揭露（三首輪流之一，偏希望感）" },
   "film-sad": { name: "Sad Documentary Background Music", by: "SigmaMusicArt", url: "https://pixabay.com/music/sad-documentary-background-music-604193/", use: "主線劇情揭露（三首輪流之一，偏失落）" },
+  "applause": { name: "Applause - sound effect", by: "PWLPL", url: "https://pixabay.com/sound-effects/film-special-effects-applause-sound-effect-521104/", use: "展廳評分跨過高分、主題展辦完拿新的壹級、拍賣成交、委託完成" },
+  "applause-cheer": { name: "Applause, cheer", by: "Driken5482", url: "https://pixabay.com/sound-effects/people-applause-cheer-236786/", use: "21 點拿到 Blackjack（單人和同桌）" },
+  "clock-strike": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截壹下鐘聲，含餘音約 6.5 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘（敲的次數＝12 小時制的鐘點）" },
+  "clock-tick": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截 4 秒滴答聲，前後淡入淡出）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘前的滴答聲" },
+  "repair": { name: "Wind the wall clock（截前 3.5 秒，淡出）", by: "spinopel", url: "https://pixabay.com/sound-effects/film-special-effects-wind-the-wall-clock-381831/", use: "維修任何東西時（修復台修修看、治好受傷的佩佩；之後館方帳的修繕也用）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";
