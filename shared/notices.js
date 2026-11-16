@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-481c4d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "可以左右滑的地方也會提示", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "頁籤、卡片、畫牆這些可以左右滑的地方，右邊會淡出，第壹次還會跳出「往右滑還有 ›」的小牌。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-d32090", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "可以往下滑的地方會提示", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
