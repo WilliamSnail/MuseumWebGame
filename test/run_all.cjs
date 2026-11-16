@@ -8,6 +8,7 @@ const STEPS = [
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/room_mood.test.cjs"]],
   ["賭場、銀行的背景樂：熱鬧程度換算（ambMix）、環境音會建會停會尊重靜音", ["test/amb_mix.test.cjs"]],
   ["音效檔（Pixabay）：清單、檔案、來源.md 對得上，程式用到的都有登記", ["test/sfx_files.test.cjs"]],
+  ["進館順序：賭場同桌不會跳過公佈欄和簽到，公告後才問要不要回牌桌", ["test/after_enter.test.cjs"]],
   ["每日重要事件清單（只放今天、每種有上限、預告壹則、壞資料不丟錯）", ["test/headlines.test.cjs"]],
   ["新玩家的下一步", ["test/guide.test.cjs"]],
   ["公佈欄、信箱", ["test/notice.test.cjs"]],
