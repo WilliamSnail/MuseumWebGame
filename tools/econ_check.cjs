@@ -13,6 +13,9 @@ const check = (name, ok, detail, level = "fail") => rows.push({ name, ok: !!ok, 
 const pct = x => (Math.round(x * 1000) / 1000) + "%";
 const fmt = n => Math.round(+n || 0).toLocaleString("en-US");
 
+// 規則面的全部檢查包成函式：只有「跑規則」才執行；--ledger 帳面模式不跑（省約 7 秒，test/econ_check.test.cjs 會開 12 次帳面）
+const W = C.world, grow = W.growBase, npcDay = C.npcSpend.dayCap * (1 + C.npcSpend.extPct / 100), npcArt = N.auction.npcDay * (1 + N.auction.npcExtPct / 100); // 帳面也要用（W、npcDay），所以放在函式外面
+function runRules() {
 // ---------- 規則面 ----------
 const round = 2 * C.stock.feePct + C.stock.holdPct; // 館外股票來回成本（%）：手續費 ×2 ＋ 持有成本
 const S = C.stockIn, K = S.k * 100; // 跳空倍率（換成 % 的係數）
@@ -65,7 +68,6 @@ check("槓桿：強平後再跳空壹天的漲跌停也不會賠光保證金（�
 check("槓桿：全館壹天淨賺上限、部位上限有設", C.stockLev.profitCap > 0 && C.stockLev.posLimit > 0, `淨賺 ${fmt(C.stockLev.profitCap)}、部位 ${fmt(C.stockLev.posLimit)}`);
 
 // 外面世界的池子和各種流量
-const W = C.world, grow = W.growBase, npcDay = C.npcSpend.dayCap * (1 + C.npcSpend.extPct / 100), npcArt = N.auction.npcDay * (1 + N.auction.npcExtPct / 100);
 check("外面世界：NPC 壹天花費上限（來館花錢＋買畫）≤ 池子每天成長（翊文 11-14 決定維持現在的數字：超過也只是上限，實際遠小於）", npcDay + npcArt <= grow || npcDay + npcArt <= grow * 1.2, `花錢 ${fmt(npcDay)} ＋ 買畫 ${fmt(npcArt)} ＝ ${fmt(npcDay + npcArt)}；每天成長 ${fmt(grow)}（容許到 1.2 倍；再大就紅字）`);
 check("散客逛店：每家店每天平均 ≤ 店保底人數的 75%（npcBase×0.75，決定 0104）；NPC＋散客合計占店人數上限不變；散客門票＋店內花費上限 ≤ 外面世界每天成長的 40%（決定 0102）", C.npcSpend.crowd.shop.perStore <= S.npcBase * 0.75 && S.npcShareMax <= 50 && C.npcSpend.crowd.dayCap + C.npcSpend.crowd.shop.dayCap <= grow * 0.4, `每店 ${C.npcSpend.crowd.shop.perStore} ≤ ${S.npcBase * 0.75}；占店上限 ${S.npcShareMax}%；上限 ${fmt(C.npcSpend.crowd.dayCap)}＋${fmt(C.npcSpend.crowd.shop.dayCap)} ≤ ${fmt(grow * 0.4)}`);
 { const EV = C.econEvent; check("劇情經濟事件：外資加成 ≤ 30%、凍結 ≤ 7 天、簽收窗口 ≤ 3 天且莊家壹天最多付超過準備金的 50%、提早還貸款 ≤ 20%（且還完仍在健康線以上）", Math.max(...EV.foreignPct) <= 30 && EV.freezeMax <= 7 && EV.windowMax <= 3 && EV.redeemPct <= 50 && Math.max(...EV.repayPct) <= 20 && C.health.low * 2 > 0, `外資 ＋${Math.max(...EV.foreignPct)}%、凍結 ${EV.freezeMax} 天、窗口 ${EV.windowMax} 天（莊家付 ${EV.redeemPct}%）、還貸款 ${Math.max(...EV.repayPct)}%；每週動錢的 ${EV.perWeek} 個`); check("劇情經濟事件：外資 NPC 買畫上限（含加成）仍 ≤ 外面世界每天成長（容許 1.2 倍，同 NPC 花費的規則）", (C.npcSpend.dayCap + N.auction.npcDay * (1 + Math.max(...EV.foreignPct) / 100)) * 1.2 <= grow * 1.6, `${fmt(C.npcSpend.dayCap * 1.2 + N.auction.npcDay * 1.2 * (1 + Math.max(...EV.foreignPct) / 100))} vs 成長 ${fmt(grow)}`, "warn"); }
@@ -114,6 +116,7 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   }
   check("模擬：NPC 來館花錢的平均每天 ≤ 全館上限，且 ≤ 外面世界每天成長的 20%", tot / days <= npcDay && tot / days <= grow * 0.2, `平均每天 ${fmt(tot / days)}；上限 ${fmt(npcDay)}；成長 ${fmt(grow)}`);
 })();
+}
 
 // ---------- 帳面 ----------
 function econCrc(s) { let c = 7; for (let i = 0; i < s.length; i++) c = (Math.imul(c, 31) + s.charCodeAt(i)) >>> 0; return c.toString(16).padStart(8, "0"); }
@@ -190,6 +193,7 @@ if (i >= 0) {
   console.log(r.bad.length ? "\n異常：" : "\n沒有異常。"); r.bad.forEach(m => console.log("  ✗ " + m));
   process.exit(r.bad.length ? 1 : 0);
 }
+runRules();
 let failN = 0, warnN = 0;
 console.log("== 經濟規則自我檢查（NUM）==");
 for (const r of rows) {
