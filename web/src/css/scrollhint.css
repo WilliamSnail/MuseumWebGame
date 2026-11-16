@@ -8,3 +8,11 @@
 .sy::-webkit-scrollbar { width: 5px; }
 .sy::-webkit-scrollbar-track { background: rgba(0, 0, 0, .15); border-radius: 3px; }
 .sy::-webkit-scrollbar-thumb { background: rgba(201, 165, 90, .75); border-radius: 3px; }
+
+/* 左右滑（11-16，翊文：「左右滑也加」）：右邊還有就右邊淡出；捲過去之後左邊也淡出 */
+.sx.sx-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), rgba(0, 0, 0, .25)); mask-image: linear-gradient(to right, #000 calc(100% - 40px), rgba(0, 0, 0, .25)); }
+.sx.sx-back { -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .25), #000 40px); mask-image: linear-gradient(to right, rgba(0, 0, 0, .25), #000 40px); }
+.sx.sx-more.sx-back { -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .25), #000 40px, #000 calc(100% - 40px), rgba(0, 0, 0, .25)); mask-image: linear-gradient(to right, rgba(0, 0, 0, .25), #000 40px, #000 calc(100% - 40px), rgba(0, 0, 0, .25)); }
+.sy-pill.sy-pill-x { transform: translate(-100%, -50%); }
+.sy-pill.sy-pill-x.on { animation: sx-bob 1.2s ease-in-out infinite; }
+@keyframes sx-bob { 0%, 100% { transform: translate(-100%, -50%); } 50% { transform: translate(calc(-100% + 6px), -50%); } }
