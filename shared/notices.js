@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-f970ff", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "賭場也看得到現在幾人", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場的上方多了「這裡現在幾人」，點開可以看有哪些館友、旅客和散客在賭場。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-995ab0", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "館方投資改成每天平均買、跌深加碼", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
