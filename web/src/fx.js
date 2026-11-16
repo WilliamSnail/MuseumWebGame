@@ -881,8 +881,8 @@ export const FX = (() => {
         // 在做什麼：bed 底音乘幾倍、gapK 冒聲音的間隔乘幾倍（0＝不冒）、dripK 滴水
         const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, gate2: { bed: 0.15, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
-        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0) };
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n];
+        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0), drips: fileLoop(c, g, 'water-drips', 0) }; // drips：11-16 翊文「這可以改成地下室廳的水聲特效」，取代合成的滴水，音量照每層的 drip
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n, L.drips.n];
         // 11-15 翊文給的音樂（Pixabay，shared/sfx_files.js）：用到才下載（lazy）。戰鬥＝ready-fight、守門＝stairs-boss、B2～B5 平常＝緊張的 suspense-*（B1 不放）
         const LZ = {};
         const music = (id, v, fade) => { // v＝這個狀態要多大聲；0 而且還沒建過就不建（不下載）
@@ -894,7 +894,7 @@ export const FX = (() => {
         const apply = (fade) => {
           const t = c.currentTime;
           Object.keys(L).forEach((k) => {
-            const v = cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : (cur.f.bed[k] || 0) * cur.m.bed;
+            const v = k === 'drips' ? 0.28 * Math.min(1.6, cur.f.drip || 0) * (cur.m.dripK || 0) : cur.mode === 'rest' ? (k === 'wind' ? cur.m.wind : 0) : (cur.f.bed[k] || 0) * cur.m.bed;
             L[k].v.gain.setTargetAtTime(v, t, fade);
           });
         };
@@ -914,12 +914,7 @@ export const FX = (() => {
           fileOnce(c, g, pick(cur.f.odd), rand(0.12, 0.2));
         }, () => rand(cur.f.gap[0], cur.f.gap[1]) * 1000 * (cur.m.gapK || 1));
         const coming = every(() => { if (comeN++ && cur.f.coming && cur.m.gapK) fileOnce(c, g, 'someone-coming', 0.16); }, () => rand(150000, 300000));
-        const drip = every(() => {
-          if (Math.random() > Math.min(1, cur.f.drip * cur.m.dripK)) return;
-          const t = c.currentTime + 0.05, f = rand(1250, 1900);
-          tone(t, { f, f2: f * 1.7, glide: 0.04, g: 0.05, a: 0.002, d: 0.16, to: g });
-          tone(t + 0.22, { f, f2: f * 1.7, glide: 0.04, g: 0.014, a: 0.002, d: 0.14, to: g });
-        }, () => rand(1400, 4500) / Math.max(1, cur.f.drip));
+        const drip = () => {}; // 11-16：合成的滴水換成錄音（L.drips，音量在 apply 照 drip 算），這裡留壹個空的讓 timers 照舊
         return {
           nodes, timers: [drip, odd, coming],
           mix(m) { // { floor: 1～5 或 null, mode }：換層、換狀態時慢慢淡過去；剛遇到怪物（進 fight／gate）播壹次「有人來了」

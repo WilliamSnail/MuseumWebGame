@@ -554,6 +554,7 @@ async function econGo() {
     setChips(r.wallet.chips);
     sync(r);
     snd(ev.win ? "coin" : ev.loot ? "coin" : "error");
+    if (!ev.win && !ev.loot) sndFile("water-splash", 0.5); // 石沉大海：撲通壹聲（11-16 翊文，Pixabay「Water Splash」）
     if (ev.rescued) { note("把莊家拚回來了！", "good"); snd("unlock"); }
     celebrate([]);
   }
