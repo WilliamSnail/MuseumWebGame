@@ -298,6 +298,7 @@ const unitCost = (s, fee) => Math.ceil(s.price * (1 + fee)); // 買壹股要付�
 // 真實行情的壹小段：代號、真實價（台股寫元、美股寫美元）、真實漲跌%。沒資料（null）就只寫代號
 const realPx = (n, mk) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${mk === "tw" ? "元" : "美元"}`;
 // 美股：遊戲價旁邊同時寫美金（翊文 11-14：「美股換算台幣，那美股那邊同時顯示美金和台幣」）。倍數 ≥ 30 才算「台幣」（決定 0081 美股 ×32＝美元換台幣），之前的倍數只寫「籌碼」
+const mulText = s => (s && s.market === "us" && Number(s.mult) >= 15 ? `${Number(s.mult).toFixed(2)}（今天的美元對台幣匯率）` : String(s && s.mult));
 const usTwd = s => s && s.market === "us" && Number(s.mult) >= 30;
 const usdText = s => (s && s.market === "us" && s.real && s.real.px != null ? `US$ ${Number(s.real.px).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "");
 // 還沒抓到真實價的（新上架、還沒開過盤）：先寫代號和名字（11-16，翊文：「怎麼新的沒有股票號碼那些」）
@@ -614,7 +615,7 @@ function stockPane(v) {
       panel(cur.name, cur.line,
         h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), cur.market === "us" ? h("small", { class: "bank-cur" }, usTwd(cur) ? "台幣" : "籌碼") : null, upDown(cur.chg, true),
           usdText(cur) ? h("span", { class: "bank-usd", title: "外面那支美股現在的美金價格" }, usdText(cur)) : null),
-        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價＝真實價 × ${cur.mult}，每分鐘跟著更新。`) : null) : null,
+        cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著更新。`) : null) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "開盤沒跳空　"), "昨天來這家店的人太少，今天開盤價跟昨天收盤一樣（盤中照樣會小幅變動）。") : null,
@@ -622,7 +623,7 @@ function stockPane(v) {
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
-        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${cur.mult}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進館方的預算池。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
+        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進館方的預算池。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       debtPanel(v), positionsPanel(S), ordersPanel(S));
@@ -873,7 +874,7 @@ function helpSections(v) {
         "沒開盤的時候看得到價，但不能買賣。",
         `館外的價錢超過 ${S.staleMin} 分鐘沒更新，這一支會暫停買賣，標「未更新」；等新價來了才能動。`]],
       ["價錢怎麼來", [
-        `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 ×${S.peg.us}、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
+        `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
         "館內股：看昨天來了多少不同的人，見「館內股」那一頁。"]],
       ["要付的錢", [
         `手續費 ${pc(S.feePct)}，買和賣各收一次。`,

@@ -109,13 +109,15 @@ const okPx = v => typeof v === "number" && isFinite(v) && v > 0;
 
 // ---------- 這一天的資料 ----------
 export function twDocNew(day) {
-  return { day, openIdx: null, closed: false, k: -1, prevReal: {}, R: {}, A: {}, ser: {}, lag: {}, stale: {}, log: [], days: {} };
+  return { day, openIdx: null, closed: false, k: -1, prevReal: {}, R: {}, A: {}, ser: {}, lag: {}, stale: {}, log: [], days: {}, fx: null, fxLast: null };
 }
 // 今天的資料：舊的不是今天，就把舊的收進 days（最多留 keep 天），開新的
 export function twDocRoll(old, day, keep) {
   if (old && old.day === day) return old;
   const doc = twDocNew(day);
   if (old && typeof old === "object") {
+    const fxOld = okPx(old.fx) ? old.fx : okPx(old.fxLast) ? old.fxLast : null; // 美股匯率：昨天用的，今天還沒抓到前先頂著
+    doc.fxLast = fxOld;
     doc.days = Object.assign({}, old.days);
     // close：那天最後壹次抓到的真實價（遊戲價「已經算進去」的那個），prev：真實前壹收盤；2.8h 每天開盤拉回要用
     if (old.day && old.openIdx != null && old.ser) {
@@ -123,6 +125,7 @@ export function twDocRoll(old, day, keep) {
       for (const id of Object.keys(old.R || {})) if (old.R[id] && okPx(old.R[id].px)) close[id] = old.R[id].px;
       for (const id of Object.keys(old.prevReal || {})) if (okPx(old.prevReal[id])) prev[id] = old.prevReal[id];
       doc.days[old.day] = { openIdx: old.openIdx, ser: old.ser, close, prev };
+      if (fxOld) doc.days[old.day].fx = fxOld;
     }
     for (const d of Object.keys(doc.days).sort().slice(0, -(keep || 5))) delete doc.days[d];
   }
