@@ -46,6 +46,24 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-47d02c", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報的進出名字和歸屬修正", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行「館內經濟」的莊家那壹列不再混進預算池的錢，進出項目也都換成中文名字，日報同步改好。",
+      ]],
+    ],
+  },
+  {
+    id: "upd-2026-11-16-5027e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "手機上的畫廊看得到畫了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿時，畫廊的畫放在上面、說明和任務放在下面，往下滑就看得到。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-984414", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "成交和打贏有慶祝畫面", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
