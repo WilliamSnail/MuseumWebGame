@@ -55,6 +55,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-b6d2d6", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報的門票改回正的", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行「館內經濟」裡，預算池和館方帳收到的旅客、散客門票之前誤顯示成負數，現在改成正的（錢本來就是收進來，只是顯示錯）。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-5027e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
     title: "手機上的畫廊看得到畫了", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

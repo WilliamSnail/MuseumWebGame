@@ -48,10 +48,10 @@ export function casBooksView(doc) {
   for (const [k, v] of Object.entries(d.houseMint || {})) if (k !== "ticketBudget" && k !== "ticketMuseum") add(bank, k, R.houseMint[k] || k, v);
   for (const [k, v] of Object.entries(d.wflow || {})) add(world, k, R.world[k] || k, v);
   const hm = d.houseMint || {}, wf = d.wflow || {}, fl = d.flow || {};
-  add(budget, "tb", R.houseMint.ticketBudget, hm.ticketBudget); add(budget, "nt", R.world.npcTicketBudget, wf.npcTicketBudget); add(budget, "nc", R.world.npcCrowdBudget, wf.npcCrowdBudget);
+  add(budget, "tb", R.houseMint.ticketBudget, hm.ticketBudget); add(budget, "nt", R.world.npcTicketBudget, -(wf.npcTicketBudget || 0)); add(budget, "nc", R.world.npcCrowdBudget, -(wf.npcCrowdBudget || 0)); // wflow 是外面世界的角度（付出去是負的），進預算池要反過來（11-16 翊文：「為什麼館方帳和預算池會付給NPC門票?」）
   add(budget, "ib", R.world.budgetInvestBuy, -(wf.budgetInvestBuy || 0)); add(budget, "is", R.world.budgetInvestSell, -(wf.budgetInvestSell || 0));
   add(budget, "fee", "投資手續費", -(fl.investFee || 0)); add(budget, "bl", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "br", R.flow.budgetRepay, -(fl.budgetRepay || 0));
-  add(museum, "tm", R.houseMint.ticketMuseum, hm.ticketMuseum); add(museum, "nm", R.world.npcTicketMuseum, wf.npcTicketMuseum); add(museum, "cm", R.world.npcCrowdMuseum, wf.npcCrowdMuseum);
+  add(museum, "tm", R.houseMint.ticketMuseum, hm.ticketMuseum); add(museum, "nm", R.world.npcTicketMuseum, -(wf.npcTicketMuseum || 0)); add(museum, "cm", R.world.npcCrowdMuseum, -(wf.npcCrowdMuseum || 0)); // 同上：進館方帳是正的
   const N = v => Math.round(+v) || 0;
   return { day: doc.day || null, bankroll: N(H.bankroll), budget: N(H.budget), museum: N(H.museum), sea: N(H.sea), world: H.world == null ? null : N(H.world),
     d: { bankroll: N(d.bankroll), budget: N(d.budget), museum: N(d.museum), sea: N(d.sea), world: N(d.world) }, top: { bankroll: top(bank), budget: top(budget), museum: top(museum), sea: [], world: top(world) } };
