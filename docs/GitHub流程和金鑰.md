@@ -37,7 +37,7 @@
 
 ## 四、發 Discord 公告的規矩
 
-> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。每天 08:00 的今日館訊（`discord-scheduled.yml`）照舊。
+> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
 
 1. **要翊文同意才發**（翊文說「發 Discord」「公告 Discord」才算）。發出去就收不回來。
 2. 遊戲裡也要有館方公告（`shared/notices.js`），不能只發 Discord。
@@ -47,7 +47,7 @@
 
 ## 五、雲端排程（自動的，不用按）
 
-- **每週劇情的 Claude 排程**：每天 08:00（台灣）在雲端跑，週一排這週、週二到週日寫今天，開 PR、合併、部署。
+- **每週劇情的 Claude 排程**：每天 08:23（台灣，翊文 11-16 確認）在雲端跑，週一排這週、週二到週日寫今天，開 PR、合併、部署。
   - 做法全部寫在 `content/排程說明.md`（排程網址、環境、失敗了怎麼辦都在那裡）。
   - 限時活動、預約公告也是它寫進 `content/weeks/<週>/week.json` 的 `events`、`content/公告排程.json`；到時間由 `discord-scheduled.yml` 發到 Discord。
 - **部署完的當天更新**：`deploy.yml` 合併到 main、部署成功後，自動把當天的「館方公告」整理發到 Discord。

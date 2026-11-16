@@ -258,6 +258,72 @@ T("ledger apply：壹串 set／push 壹次做完；格式錯就停", () => {
   assert.throws(() => LG.applyOps(L, [{ set: "c" }]), /value/);
 });
 
+// ---------- 8. day:new 週一的 week.json 骨架（11-16 第二批） ----------
+const seasonLedger = () => {
+  const L = ledger();
+  L.main.seasons = [
+    { season: 0, name: "序章", weeks: ["2026-W46"], chapters: [{ week: "2026-W46", title: "換季的失物招領" }] },
+    { season: 1, name: "帳對不上", weeks: ["2026-W47", "2026-W48"], chapters: [{ week: "2026-W47", title: "第壹章　多壹隻" }, { week: "2026-W48", title: "第貳章　白布的名牌" }] },
+  ];
+  L.seasonal.lines[0].name = "冬天的明信片";
+  return L;
+};
+T("week 骨架：新壹季頭壹週 summary 第壹行自動寫「主線開始」，其他欄位是待寫，有主線線和季節線", () => {
+  const L = seasonLedger(), p = mk("2026-11-16", { wk: null, ledger: L }).p;
+  const w = N.weekSkeleton(p, L, null);
+  assert.strictEqual(w.week, "2026-W47"); assert.strictEqual(w.start, "2026-11-16");
+  assert.strictEqual(w.summary[0], "📖 主線第 1 季〈帳對不上〉開始：第壹章〈多壹隻〉");
+  assert.ok(w.summary.length >= 2 && w.summary[1] === D.CONTENT_PLACEHOLDER, "summary 至少 2 行");
+  assert.deepStrictEqual(w.lines.map(l => l.kind), ["week", "main", "season"]);
+  assert.strictEqual(w.lines[0].id, "w47-待寫"); assert.strictEqual(w.lines[1].id, "main-s1"); assert.strictEqual(w.lines[1].name, "第壹季　帳對不上");
+  assert.strictEqual(w.lines[2].id, "season-w");
+  assert.strictEqual(w.weekly.length, 5, "每週任務剛好 5 個空殼");
+  assert.ok(w.ending.need.read >= 1 && w.weeklyBonus.insp > 0);
+  ["title", "theme", "question"].forEach(k => assert.strictEqual(w[k], D.CONTENT_PLACEHOLDER, k));
+  assert.ok(!("answer" in w), "answer 週日才寫，骨架不放");
+  assert.ok(D.hasPlaceholder(w));
+});
+T("week 骨架：不是頭壹週不寫「開始」；主線的名字照上週；序章（season 0）不寫「開始」", () => {
+  const L = seasonLedger(), prev = N.weekSkeleton(mk("2026-11-16", { wk: null, ledger: L }).p, L, null);
+  prev.lines[1].name = "第壹季　帳對不上（上週的名字）";
+  const p48 = P.planDay({ date: "2026-11-23", G, ledger: L, settings: null, weeks: {}, recent: [], npcs: [], economy: null });
+  const w = N.weekSkeleton(p48, L, prev);
+  assert.strictEqual(w.summary[0], D.CONTENT_PLACEHOLDER, "第 2 週沒有主線開始那行");
+  assert.strictEqual(w.lines.find(l => l.kind === "main").name, "第壹季　帳對不上（上週的名字）", "跨週同 id 同名字");
+  assert.ok(!w.lines.some(l => l.kind === "season"), "這週沒有季節線的章就不放那條線");
+  const p46 = P.planDay({ date: "2026-11-09", G, ledger: L, settings: null, weeks: {}, recent: [], npcs: [], economy: null }), w46 = N.weekSkeleton(p46, L, null);
+  assert.ok(!w46.summary[0].includes("開始") && w46.lines.find(l => l.kind === "main").name === "序章");
+  assert.strictEqual(N.seasonOpenLine(null), null);
+  assert.strictEqual(N.chapterLabel("第壹章　多壹隻"), "第壹章〈多壹隻〉"); assert.strictEqual(N.chapterLabel("多壹隻"), "〈多壹隻〉");
+});
+T("week 骨架：不在任何壹季（備用）就沒有主線的線；沒有 weeklyBonus 的上週用預設", () => {
+  const L = ledger(), p = mk("2026-11-16", { wk: null, ledger: L }).p;
+  L.main.seasons = []; const w = N.weekSkeleton(p, L, { weeklyBonus: { insp: 7, items: [] }, lines: [] });
+  assert.ok(!w.lines.some(l => l.kind === "main")); assert.deepStrictEqual(w.weeklyBonus, { insp: 7, items: [] });
+  assert.ok(N.weekNotes(p, L).join(" ").includes("不在帳本 main.seasons"));
+});
+T("week 骨架的提醒：unit／unitRole、answer 週日才寫、選填欄位", () => {
+  const L = seasonLedger(), p = mk("2026-11-16", { wk: null, ledger: L }).p, t = N.weekNotes(p, L).join(" ");
+  assert.ok(t.includes('unit: "u1"') && t.includes('unitRole: "beat"'), t);
+  assert.ok(t.includes("answer") && t.includes("週日") && t.includes("頭壹週"));
+  const L2 = seasonLedger(), p2 = P.planDay({ date: "2026-11-23", G, ledger: L2, settings: null, weeks: {}, recent: [], npcs: [], economy: null });
+  assert.ok(N.weekNotes(p2, L2).join(" ").includes('unitRole: "echo"'));
+});
+T("strict：週骨架的「待寫」沒改掉就擋（answer 不算），改掉就過", () => {
+  const L = seasonLedger(), wk = N.weekSkeleton(mk("2026-11-16", { wk: null, ledger: L }).p, L, null);
+  const day = dayObj(1, { books: [{ id: "1a", line: "w47-count", title: "書", clue: "c-a", pages: ["p"] }] });
+  const m = mk("2026-11-16", { ledger: L, wk, day });
+  assert.ok(has(C.strictIssues(m), "week.json 還有「待寫」"), "週骨架沒填完要擋");
+  const filled = JSON.parse(JSON.stringify(wk).split(D.CONTENT_PLACEHOLDER).join("好了"));
+  assert.ok(!has(C.strictIssues(mk("2026-11-16", { ledger: L, wk: filled, day })), "week.json 還有"), "填完就不擋這條");
+  assert.ok(!has(C.strictIssues(mk("2026-11-16", { ledger: L, wk: { ...filled, answer: undefined }, day })), "week.json 還有"), "answer 不放不算待寫");
+});
+T("day:new 週一：已有 week.json 不覆蓋（main 只在沒有時才建）", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "day_new.cjs"), "utf8");
+  assert.ok(src.includes("if (p.isMonday && !wk)"), "只有週一而且沒有 week.json 才建");
+  assert.ok(src.includes("weekSkeleton(p, ctx.ledger"));
+});
+
 // ---------- 7. npm run issue ----------
 T("issue：標題和內文都要寫、打錯選項就停；gh api 走 REST、內文用 -f 傳", () => {
   const i = IS.parseArgs(["排程失敗 W47 d3", "ship 在等 CI 時停了\n第二行", "--label", "排程"]);

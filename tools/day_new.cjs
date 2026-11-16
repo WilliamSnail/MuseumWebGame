@@ -6,7 +6,9 @@
 //   今天是揭露日：第壹本書先掛 clue 的空位；週日：印出要做的事（結局、主線章、answer、回聲週的進展）。
 //   昨天留的鉤子（帳本 weeks.<週>.hooks）印在最上面，今天的開頭要接它。
 // 已經有檔就不覆蓋：只印它還差什麼（缺的欄位、day:check --strict 會擋的項目）。
-// 週一另外建 靈感來源.md 的表頭（沒有的話）；week.json 還是要自己寫（格式照上週的 week.json 和 content/README.md）。
+// 週一另外建 靈感來源.md 的表頭（沒有的話），而且這週的 week.json 還沒有的話也產生骨架（11-16 第二批）：title／theme／question／summary、lines（這週的 week 線、主線 main-sN、季節線）、
+//   weekly 5 個空殼、weeklyBonus、ending；新一季頭一週的 summary 第壹行自動寫「📖 主線第 N 季〈季名〉開始：第壹章〈章名〉」。要填的寫「待寫」，day:check --strict 會擋。
+//   answer 週日才寫，骨架不放（印提醒）；events／casino／npc／fest／anomaly 是選填，骨架不放（day:plan 會建議）；帳本 unit／unitRole 印提醒。已經有 week.json 不覆蓋。
 const fs = require("fs"), path = require("path");
 const { asList, isObj, isMainBook, CONTENT_PLACEHOLDER: TODO } = require("./day_lib.cjs");
 const ROOT = path.join(__dirname, "..");
@@ -72,6 +74,66 @@ function missingNotes(existing, skel) {
   return SKEL_KEYS.filter(k => existing[k] === undefined && skel[k] !== undefined).map(k => `缺欄位 ${k}`);
 }
 
+
+// ---------- 週一的 week.json 骨架 ----------
+const NUMS = ["零", "壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖", "拾"];
+// 這週在帳本 main.seasons 的哪一季，是不是那一季的第壹週：{ season, name, first, chapter }；不在任何一季回 null
+function seasonOf(ledger, week) {
+  const s = asList(ledger && ledger.main && ledger.main.seasons).find(x => x && asList(x.weeks).includes(week));
+  if (!s || !Number.isInteger(s.season)) return null;
+  const ch = asList(s.chapters).find(c => c && c.week === week);
+  return { season: s.season, name: String(s.name || ""), first: asList(s.weeks)[0] === week, chapter: ch && typeof ch.title === "string" ? ch.title : "" };
+}
+// 「第壹章　多壹隻」→「第壹章〈多壹隻〉」；沒有全形空白就整個放進〈〉
+function chapterLabel(title) {
+  const m = /^(\S+?)[　 ]+(.+)$/.exec(String(title || "").trim());
+  return m ? `${m[1]}〈${m[2]}〉` : `〈${String(title || "").trim() || TODO}〉`;
+}
+// 新壹季頭壹週的 summary 第壹行（排程說明第壹節「新壹季的頭壹週」）；不是頭壹週、或序章（season 0）回 null
+function seasonOpenLine(so) {
+  if (!so || !so.first || so.season < 1) return null;
+  return `📖 主線第 ${so.season} 季〈${so.name}〉開始：${chapterLabel(so.chapter)}`;
+}
+const seasonName = so => so.season === 0 ? so.name : `第${NUMS[so.season] || so.season}季　${so.name}`;
+// p：planDay 的結果；ledger：整份帳本；prevWk：上壹週的 week.json（沒有給 null，主線線的名字、weeklyBonus 照它）
+function weekSkeleton(p, ledger, prevWk) {
+  const wn = p.week.split("-W")[1], so = seasonOf(ledger, p.week), open = seasonOpenLine(so);
+  const lines = [{ id: `w${wn}-${TODO}`, name: TODO, kind: "week" }];
+  if (so) {
+    const id = `main-s${so.season}`, prevMain = asList(prevWk && prevWk.lines).find(l => l && l.id === id);
+    lines.push({ id, name: prevMain && prevMain.name || seasonName(so), kind: "main" });
+  }
+  asList(ledger && ledger.seasonal && ledger.seasonal.lines).forEach(l => {
+    if (l && asList(l.chapters).some(c => c && c.week === p.week)) lines.push({ id: l.id, name: l.name, kind: "season" });
+  });
+  const bonus = prevWk && isObj(prevWk.weeklyBonus) ? prevWk.weeklyBonus : { insp: 10, items: ["mat:金線"] };
+  return {
+    week: p.week, start: p.monday, title: TODO, theme: TODO, holidayWeek: false, question: TODO,
+    summary: [open || TODO, TODO],
+    lines,
+    weekly: [
+      { id: "w1", kind: "spot", room: TODO, reward: { insp: 6 } },
+      { id: "w2", kind: "spot", room: TODO, reward: { insp: 6 } },
+      { id: "w3", kind: "readWeek", n: 6, reward: { insp: 8 } },
+      { id: "w4", kind: "dailyAll", n: 3, reward: { mood: 10 } },
+      { id: "w5", kind: "ending", reward: { insp: 8 } },
+    ],
+    weeklyBonus: bonus,
+    ending: { need: { read: 6 } },
+  };
+}
+// 週一建 week.json 時要印的提醒（純函式，測試用）
+function weekNotes(p, ledger) {
+  const L = [], so = seasonOf(ledger, p.week), rec = ledger && ledger.weeks && ledger.weeks[p.week];
+  L.push(`★週一：建了 ${p.week}/week.json 骨架：每個「${TODO}」換成真的內容（title 16 字內、question 40 字內、summary 2～5 行；weekly 的 spot 要指到週一就有的房間；lines 的「${TODO}」是這週的線，d1 的書掛它）`);
+  if (so) L.push(`  這週在第 ${so.season} 季〈${so.name}〉${so.first && so.season >= 1 ? "的頭壹週：summary 第壹行已經寫好「📖 主線…開始」，不要刪" : "：lines 已經放了主線 main-s" + so.season + "（名字跟上週壹樣）"}`);
+  else L.push("  這週不在帳本 main.seasons 的任何壹季：lines 沒有主線的線，確認是不是備用週或帳本漏了");
+  if (p.unit) L.push(`  帳本 weeks.${p.week} 要寫 unit: "${p.unit.id}"、unitRole: "${p.unit.which === 1 ? "beat" : "echo"}"（第 ${p.unit.no} 段的第 ${p.unit.which} 週）${rec ? "" : "（帳本還沒有這週）"}`);
+  L.push("  骨架沒放的選填欄位（要的話自己加，day:plan 會建議）：anomaly 本週異狀、events 活動、casino 賭場收藏（要先在 lines 加線）、npc、fest、shop");
+  L.push("  answer（疑點簿的答案）週日才寫，現在不用放；--strict 週日會擋沒寫的");
+  return L;
+}
+
 const INSPIRE_HEAD = (week) => `# ${week} 靈感來源\n\n> 只給審的人看，不進網頁。\n\n| 新聞 | 取了什麼元素 | 在遊戲裡變成什麼 | 為什麼安全 |\n|---|---|---|---|\n| ${TODO} | ${TODO} | ${TODO} | ${TODO} |\n`;
 
 function main() {
@@ -82,8 +144,16 @@ function main() {
   const wk = pack && pack.week || null, file = path.join(ROOT, p.dayFile), existing = pack && pack.days && pack.days[p.weekday] || null;
   console.log(`今天：${date}（${p.weekdayName}，${p.week} d${p.weekday}）`);
   notes(p, wk, ctx.ledger, G).forEach(x => console.log(x));
-  if (p.isMonday && !wk) console.log(`★週一：${p.week}/week.json 還沒有，要自己寫（照上週的 week.json 和 content/README.md）；骨架的書掛的線會是「${TODO}」，week.json 寫好後把 line 換成那條 kind week 的 id`);
-  const skel = skeleton(p, wk, ctx.ledger);
+  let wkNow = wk;
+  if (p.isMonday && !wk) { // 週一、這週的 week.json 還沒有：建骨架（已經有的不覆蓋）
+    const prevPack = ctx.weeks[G.isoWeek(G.addDays(p.monday, -7))], wf = path.join(ROOT, "content", "weeks", p.week, "week.json");
+    wkNow = weekSkeleton(p, ctx.ledger, prevPack && prevPack.week || null);
+    fs.mkdirSync(path.dirname(wf), { recursive: true });
+    fs.writeFileSync(wf, JSON.stringify(wkNow, null, 2) + "\n");
+    console.log(`建好了 ${path.relative(ROOT, wf)}`);
+    weekNotes(p, ctx.ledger).forEach(x => console.log(x));
+  }
+  const skel = skeleton(p, wkNow, ctx.ledger);
   if (existing) {
     console.log(`\n${p.dayFile} 已經有了：不覆蓋。`);
     const miss = missingNotes(existing, skel), E = strictIssues({ p, day: existing, wk, ledger: ctx.ledger, opts: {} });
@@ -98,4 +168,4 @@ function main() {
   if (p.isMonday && !fs.existsSync(ins)) { fs.writeFileSync(ins, INSPIRE_HEAD(p.week)); console.log(`建好了 ${path.relative(ROOT, ins)}（表頭）`); }
 }
 if (require.main === module) { try { main(); } catch (e) { console.error("✗ " + e.message); process.exit(1); } }
-module.exports = { skeleton, notes, yesterdayHook, missingNotes, seasonNo, SKEL_KEYS };
+module.exports = { weekSkeleton, weekNotes, seasonOf, seasonOpenLine, chapterLabel, skeleton, notes, yesterdayHook, missingNotes, seasonNo, SKEL_KEYS };
