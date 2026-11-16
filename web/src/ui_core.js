@@ -402,7 +402,7 @@ export function setAmbOver(name, heatFn) {
 }
 // 地下的聲音狀態（11-15）：{ floor: 1～5, mode: "map"|"explore"|"fight"|"gate"|"rest" }，null ＝不在地下的某壹層裡。有變才重算聲音
 export function setCellarSnd(st) {
-  const k = st ? st.floor + ":" + st.mode + ":" + (st.rank || 0) : "";
+  const k = st ? st.floor + ":" + st.mode + ":" + (st.rank || 0) + ":" + (st.trial ? 1 : 0) : "";
   if (k === (UI.cellarSndKey || "")) return;
   UI.cellarSndKey = k; UI.cellarSnd = st || null; audioState();
 }

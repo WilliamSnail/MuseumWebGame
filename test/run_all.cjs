@@ -10,6 +10,7 @@ const STEPS = [
   ["音效檔（Pixabay）：清單、檔案、來源.md 對得上，程式用到的都有登記", ["test/sfx_files.test.cjs"]],
   ["音效與特效總表：docs/音效與特效總表.md 跟程式對得上（npm run fx:report），掃 snd／sndFile 的解析", ["test/fx_report.test.cjs"]],
   ["npm run sfx:add：Pixabay 檔名和網頁標題解析、登記到 sfx_files.js 和 來源.md", ["test/sfx_add.test.cjs"]],
+  ["地下打鬥的聲音表：合成音效名字和檔案 id 都要存在", ["test/fight_sfx.test.cjs"]],
   ["進館順序：賭場同桌不會跳過公佈欄和簽到，公告後才問要不要回牌桌", ["test/after_enter.test.cjs"]],
   ["每日重要事件清單（只放今天、每種有上限、預告壹則、壞資料不丟錯）", ["test/headlines.test.cjs"]],
   ["新玩家的下一步", ["test/guide.test.cjs"]],
