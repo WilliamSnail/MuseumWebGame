@@ -118,6 +118,10 @@
 .sp-question { margin: 8px 0 0; padding: 6px 10px; border-left: 3px solid var(--parch-sub); font-family: var(--serif); line-height: 1.6; }
 .sp-question span { display: block; font-family: inherit; font-size: .75rem; letter-spacing: .08em; color: var(--parch-sub); }
 .cb-q { margin: 4px 0 8px; font-family: var(--serif); font-size: 1.0625rem; line-height: 1.6; }
+/* 這週的結論（11-16）：問題下面壹塊，左邊壹條金線 */
+.cb-ans { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid #b08a3e; background: rgba(176, 138, 62, .1); border-radius: 4px; }
+.cb-ans b { display: block; font-size: .8125rem; letter-spacing: .08em; color: #7a5a1e; margin-bottom: 2px; }
+.cb-ans p { margin: 0; font-family: var(--serif); line-height: 1.7; }
 .cb-list { list-style: none; margin: 0; padding: 0; }
 .cb-list li { display: flex; gap: 8px; align-items: baseline; padding: 5px 0; border-top: 1px dashed color-mix(in srgb, var(--parch-sub) 40%, transparent); }
 .cb-list b { font-family: var(--serif); font-weight: 600; flex: 1; }
