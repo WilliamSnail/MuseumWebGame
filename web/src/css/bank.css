@@ -538,3 +538,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-segs.kind .bank-seg { font-size: 1.0625rem; letter-spacing: .08em; gap: 10px; }
 .bank-segs.kind .bank-segi svg { width: 26px; height: 26px; }
 @media (max-width: 760px) { .bank-segs.kind .bank-seg { font-size: 1rem; gap: 7px; } .bank-segs.kind .bank-segi svg { width: 23px; height: 23px; } }
+
+/* 財報標題旁的「這份是哪一天的帳」（11-16）；不是昨天的用警告色 */
+.bank-day { margin-left: 8px; padding: 1px 8px; border: 1px solid currentColor; border-radius: 99px; font-size: .75rem; font-weight: 700; color: #B9C2D4; white-space: nowrap; }
+.bank-day.warn { color: #F0B95A; background: rgba(240, 185, 90, .14); }
