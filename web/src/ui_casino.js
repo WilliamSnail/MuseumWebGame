@@ -20,6 +20,7 @@ import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, sndFile, wait } from "./ui_core.js";
 import { ambHeat } from "./ui_mood.js";
 import { casOutSfx, casSfx } from "./casino_sfx.js";
+import { APPLAUSE } from "../../shared/applause.js";
 import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -409,6 +410,7 @@ async function finish(v, r, o) {
   const total = n => casHand(real.slice(0, n)).total;
   const bust = out.why === "bust", charlie = out.kind === "charlie";
   if (o.natural) steps.push([CAS_TEXT.blackjack, 0]);
+  if (o.natural && out.kind === "blackjack") sndFile("applause-cheer", APPLAUSE.vol); // 兩張牌就 21（跟莊家同樣 Blackjack 是平手，不歡呼）
   if (bust) steps.push([CAS_TEXT.bust, null]);
   else if (charlie) steps.push([CAS_TEXT.charlie[0], null], [CAS_TEXT.charlie[1], null]);
   else {
