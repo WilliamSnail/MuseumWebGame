@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-1c9fa5", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "圖書館的主線多了《序章》", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "主線頁籤補上了序章《換季的失物招領》：把上週招領箱的事整理成壹章。",
+        "之後每壹章結束的週日，主線會多壹本。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-bc23f9", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "圖書館多了「地圖」頁籤", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
