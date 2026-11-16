@@ -53,7 +53,8 @@
     "level:new": "node tools/new_level.cjs",
     "fb": "node tools/fb_run.cjs",
     "fx:report": "node tools/fx_report.cjs",
-    "sfx:add": "node tools/sfx_add.cjs"
+    "sfx:add": "node tools/sfx_add.cjs",
+    "san:levels": "node tools/san_levels.cjs"
   },
   "devDependencies": {
     "acorn": "^8.19.0",
