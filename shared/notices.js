@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-5907ae", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行多了全館的帳和投資方式", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行財報多了「全館的帳」，可以展開看莊家、預算池、館方帳、海底和外面世界的錢；館方投資旁多了「投資方式」，點開可以看館方怎麼投資。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-158627", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下的滴水換成真的錄音；石沉大海會撲通壹聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
