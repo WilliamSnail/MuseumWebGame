@@ -130,6 +130,21 @@ jobs:
       - name: 打包有東西才部署
         if: env.HAS_KEY == 'true'
         run: test -s dist/index.html
+      # 函式沒變就不部署函式（11-16，翊文：Cloud Functions 壹個月 81 美元，幾乎都是每次部署整批重建 40 多個函式）：
+      # tools/fn_hash.cjs 算 functions/ 這包（含複製進去的 shared、content）的指紋；上次部署過同壹個指紋（Actions cache 有 fn-deployed-<指紋>）就只部署網頁和規則。
+      # 手動部署（workflow_dispatch）壹律連函式壹起。cache 7 天沒用會被清掉，清掉就照常部署壹次，不會漏
+      - name: 算函式這包的指紋
+        id: fnh
+        if: env.HAS_KEY == 'true'
+        run: echo "hash=$(node tools/fn_hash.cjs | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: 這個指紋部署過了嗎
+        id: fnseen
+        if: env.HAS_KEY == 'true' && github.event_name == 'push'
+        uses: actions/cache/restore@v4
+        with:
+          path: .fn-deployed
+          key: fn-deployed-${{ steps.fnh.outputs.hash }}
+          lookup-only: true
       - name: 部署（網頁、Firestore 和 Realtime Database 的規則、Functions）
         if: env.HAS_KEY == 'true'
         env:
@@ -147,7 +162,25 @@ jobs:
           if [ -n "$tok" ] && [ -n "$chan" ]; then
             printf 'DISCORD_BOT_TOKEN=%s\nDISCORD_CHANNEL_ID=%s\n' "$tok" "$chan" > functions/.env
           fi
-          npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
+          if [ "${{ steps.fnseen.outputs.cache-hit }}" = "true" ]; then
+            echo "函式這包沒變（指紋 ${{ steps.fnh.outputs.hash }}），這次只部署網頁和規則" | tee -a "$GITHUB_STEP_SUMMARY"
+            npx firebase deploy --project prod --only hosting,firestore,database --non-interactive --force
+          else
+            echo "函式這包有變（指紋 ${{ steps.fnh.outputs.hash }}），連函式壹起部署" | tee -a "$GITHUB_STEP_SUMMARY"
+            npx firebase deploy --project prod --only hosting,firestore,database,functions --non-interactive --force
+            # 舊的函式打包檔（Artifact Registry 的容器映像）只留 1 天，不然每次部署都多存壹份、越存越貴（firebase functions:artifacts:setpolicy，設過再設不會怎樣；失敗不影響部署）
+            npx firebase functions:artifacts:setpolicy --project prod --location asia-east1 --days 1 --force --non-interactive || echo "設定舊打包檔清除規則沒成功（不影響這次部署）"
+          fi
+      - name: 記下這個指紋部署過了
+        if: env.HAS_KEY == 'true' && steps.fnseen.outputs.cache-hit != 'true'
+        run: mkdir -p .fn-deployed && echo "${{ steps.fnh.outputs.hash }}" > .fn-deployed/hash
+      - name: 存起來（下次同壹個指紋就不部署函式）
+        if: env.HAS_KEY == 'true' && steps.fnseen.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .fn-deployed
+          key: fn-deployed-${{ steps.fnh.outputs.hash }}
       # 今日館訊主要由 ship 部署成功後叫，定時備援在 09:17、09:37（tools/announce.cjs；定時的會等部署完才發）。這裡補的是：沒用 ship 合併的、早上部署壞掉現在修好的
       - name: 讀哪些公告發過了
         if: env.HAS_KEY == 'true'
