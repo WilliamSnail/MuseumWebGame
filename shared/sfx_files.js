@@ -24,6 +24,8 @@ export const SFX_FILES = {
   "atm-dispense": { name: "ATM Cash Dispensing Mechanism（截 4 秒）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/atm-cash-dispensing-mechanism-481755/", use: "銀行提出、借錢" },
   "money-bag": { name: "Coin and Money Bag 2", by: "floraphonic", url: "https://pixabay.com/sound-effects/coin-and-money-bag-2-185263/", use: "銀行、賭場以外拿到籌碼" },
   "chest-open": { name: "Chest Opening", by: "freesound_community", url: "https://pixabay.com/sound-effects/chest-opening-87569/", use: "地下合作的寶箱點、信箱領取" },
+  "water-drips": { name: "Water Drips（做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/film-special-effects-water-drips-76848/", loop: true, use: "地下收藏庫的滴水（取代合成的滴水）" },
+  "water-splash": { name: "Water Splash", by: "Universfield", url: "https://pixabay.com/sound-effects/film-special-effects-water-splash-199583/", use: "拚經濟石沉大海" },
   "coins-counting": { name: "Coins Counting", by: "yuliana-yurukova", url: "https://pixabay.com/sound-effects/coins-counting-275779/", use: "銀行遠處點硬幣" },
   "coin-payout": { name: "Coin Payout 25", by: "floraphonic", url: "https://pixabay.com/sound-effects/coin-payout-25-213587/", use: "銀行賣股票（錢回到手上）" },
   "coin-payout-big": { name: "Wood Surface Multi Coin Payout Loop 1", by: "floraphonic", url: "https://pixabay.com/sound-effects/wood-surface-multi-coin-payout-loop-1-215433/", use: "銀行定存解約、館債贖回、平倉（大筆錢回到手上）" },
