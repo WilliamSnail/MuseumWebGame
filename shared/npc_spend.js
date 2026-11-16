@@ -129,11 +129,11 @@ export function npcPresence(day, nowMs, secret, list, counters, away, mood = nul
   const cg = cg0.filter(x => !away2(x)), cn = cg.reduce((a, x) => a + x.n, 0); // 順路去別間逛的不算在展廳
   const cas = Array.from(aw).map(id => { const n = list.find(x => x && x.id === id); return n ? n.name : ""; }).filter(Boolean);
   // 各房間現在有幾位（決定 0094：翊文選「全部照實際人數」；館內股的跳空另外跟著人數即時反映，見 casInRampMake）
-  const shops = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, rooms = {}, put = (room, kind, n) => { if (n <= 0) return; const r = rooms[room] || (rooms[room] = { n: 0, npc: 0, crowd: 0 }); r.n += n; r[kind] += n; };
-  for (const x of v) { const room = NPC_ROOM[x.place]; if (!room) continue; put(room, "npc", 1); if (x.place in shops) shops[x.place]++; }
-  put("hall", "crowd", cn);
-  for (const x of cg0) { const w = away2(x); if (!w) continue; put(w.room, "crowd", x.n); rooms[w.room].wander = (rooms[w.room].wander || 0) + x.n; }
-  for (const g of crowdShopToday(day, secret)) if (g.start <= m && m < g.end) { put(NPC_ROOM[g.store], "crowd", g.n); shops[g.store] += g.n; }
+  const shops = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, rooms = {}, put = (room, kind, n) => { if (n <= 0) return; const r = rooms[room] || (rooms[room] = { n: 0, npc: 0, crowd: 0, ids: [], names: [], groups: [] }); r.n += n; r[kind] += n; return r; }; // ids／names：現在在這間的有名字的旅客（同順序）；groups：這間現在的散客組（順路逛來的 wander: true）；點旅客卡用 ids（決定 0098）
+  for (const x of v) { const room = NPC_ROOM[x.place]; if (!room) continue; const rr0 = put(room, "npc", 1); rr0.ids.push(x.id); rr0.names.push(x.name); if (x.place in shops) shops[x.place]++; }
+  { const rh = put("hall", "crowd", cn); if (rh) for (const x of cg) rh.groups.push({ label: x.label, n: x.n }); }
+  for (const x of cg0) { const w = away2(x); if (!w) continue; put(w.room, "crowd", x.n); rooms[w.room].groups.push({ label: x.label, n: x.n, wander: true }); rooms[w.room].wander = (rooms[w.room].wander || 0) + x.n; }
+  for (const g of crowdShopToday(day, secret)) if (g.start <= m && m < g.end) { const rs = put(NPC_ROOM[g.store], "crowd", g.n); if (rs) rs.groups.push({ label: g.label, n: g.n }); shops[g.store] += g.n; }
   return { hall: hall.length, names: hall.map(x => x.name), ids: hall.map(x => x.id), around: new Set(v.map(x => x.id)).size, crowd: { n: cn, groups: cg.map(x => ({ label: x.label, n: x.n })) }, casino: { n: cas.length, names: cas, ids: Array.from(aw) }, rooms, shops };
 }
 // 各店「到店的人」（人數，不是在場）：館內股盤中價格跟著它走（casInRampMake）。{ store: [{ at 從 05:00 起第幾分鐘, n }] }，照時間排；NPC 每站 1 位、逛店的散客壹組 n 位
@@ -269,6 +269,13 @@ export function casNpcSpend(house, d, secret, list, counters) {
   return house.npcs && house.npcs.day === d ? house.npcs : null;
 }
 
+// 今天到目前館外來客花了多少（銀行財報「今天到目前」，決定 0098）。L ＝ house.npcLive（已經結到現在）；不是今天的（舊的、沒有）回 null。
+// 只給合計：門票（旅客、散客）、店裡消費「不分店」的合計、人數。**不給每家店的花費**：它是隔天館內股跳空的壹部分（H.rev 的 x），分店給了會洩漏（sim_peek_stock 實測，決定 0098）；各店人數本來就公開（房間人數）。
+export function casNpcToday(L, day) {
+  if (!L || typeof L !== "object" || L.day !== day) return null;
+  const C = L.crowd && typeof L.crowd === "object" ? L.crowd : {}, tk = { hall: nsN(L.ticket), crowd: nsN(C.ticket) }, shop = nsN(L.shop) + nsN(C.shop);
+  return { day, ticket: tk, shop, total: tk.hall + tk.crowd + shop, people: { npc: nsN(L.people), crowd: nsN(C.people) } };
+}
 // 昨天館外來客的花費，給銀行財報（h.econ.ext，美術統籌排版）。N ＝ house.npcs（或日報快照裡的 snap.house.npcs）
 // 回傳 { day, ticket: { hall 有名字的旅客, crowd 散客 }, shop: { food, bj, craft, cellar, job 每家店的合計 }, shopCrowd: { 同上，散客的那份 }, total, people: { npc, crowd },
 //   menu: [{ id, name, npc, crowd }]（餐車賣出幾份）, orders: [{ who, item, name, n }]（有名字的旅客點了什麼，最多 5 筆） }

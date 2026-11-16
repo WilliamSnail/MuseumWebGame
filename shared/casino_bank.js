@@ -18,6 +18,7 @@ import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
 import { casBondHeld, casBondView } from "./casino_bond.js";
 import { casStockValue, casStockViewAll } from "./casino_stock.js";
+import { casNpcToday } from "./npc_spend.js";
 import { casInvestPubView } from "./casino_invest.js";
 import { casDebtView } from "./casino_debt.js";
 import { casAdvisorPlan } from "./casino_advisor.js";
@@ -137,7 +138,7 @@ export function casBankHall(w, day, house, t, stale, dayData) {
   const stocks = house ? casStockViewAll(w, house, day, t, stale) : null;
   const owe = loan.list.reduce((s, x) => s + x.owe, 0);
   const held = save.save + save.terms.reduce((s, x) => s + x.amt, 0) + casBondHeld(w) + (bonds ? bonds.iou : 0) + (house ? casStockValue(w, house) : 0);
-  return { debt: casDebtView(w, t), advisor: casAdvisorPlan(w, house, day, t), cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, houseInv: house ? casInvestPubView(house) : null, world: casWorldNews(dayData, day, OUT_STOCKS), net: w.chips + held - owe };
+  return { debt: casDebtView(w, t), advisor: casAdvisorPlan(w, house, day, t), cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, today: house ? casNpcToday(house.npcLive, day) : null, houseInv: house ? casInvestPubView(house) : null, world: casWorldNews(dayData, day, OUT_STOCKS), net: w.chips + held - owe };
 }
 // 畫面要的
 export function casBankView(w, day) {
