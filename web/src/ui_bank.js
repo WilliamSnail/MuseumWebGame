@@ -651,8 +651,9 @@ function worldPanel(v) {
   const days = Array.isArray(W.days) ? W.days.filter(d => d && Array.isArray(d.items) && d.items.length) : [];
   if (!days.length) return panel("世界市場", "每天由館方整理", h("p", { class: "bank-empty-dark" }, "今天還沒有世界市場的消息。"));
   return panel("世界市場", "外面世界的股市消息，不寫數字",
-    h("div", { class: "bank-worlddays" }, days.map((d, di) => h(isPhone() && di > 0 ? "details" : "section", { class: "bank-wday" + (isPhone() && di > 0 ? " old" : "") },
-      h(isPhone() && di > 0 ? "summary" : "h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5) + (isPhone() ? "　點開 ▾" : "")),
+    // 11-16 翊文：「世界市場寫今天的展開，其他天的收折」：電腦也收（原本只有手機收）
+    h("div", { class: "bank-worlddays" }, days.map((d, di) => h(di > 0 ? "details" : "section", { class: "bank-wday" + (di > 0 ? " old" : "") },
+      h(di > 0 ? "summary" : "h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5) + "　點開 ▾"),
       h("ul", { class: "bank-world" }, d.items.map(it => { const m = TONE_MARK[it.tone] || TONE_MARK.flat; return h("li", { class: "tone-" + (it.tone || "flat") },
         h("i", { class: "bank-tone " + m[1], "aria-hidden": "true" }, m[0]),
         h("span", null, h("b", null, it.title), h("small", null, it.line),
