@@ -336,17 +336,18 @@ function twSess(S, s) {
 // 這支現在能不能買賣：伺服器給的 halted 最準；沒有（示範資料）就看整個市場停盤或場次
 const stockHalt = (S, s) => (s.halted != null ? !!s.halted : !!S.halt || !!(s.session && s.session.state !== "open"));
 const haltText = (S, s) => (s.session && s.session.state !== "open" && SESS_TEXT[s.session.state] ? SESS_TEXT[s.session.state](s.session) : S.halt ? "停盤中，等開盤再買賣。" : "現在不能買賣。");
-// 走勢線：台股照 09:00～13:30 的時間軸畫（每分鐘一個價，右邊還沒走到的留白）；其他有 hist 就畫 hist。紅漲綠跌：整體比第壹點高畫紅。底圖用 CSS 畫的深藍格線
+// 走勢線：台股照 09:00～13:30 的時間軸畫（每分鐘一個價，右邊還沒走到的留白）；其他有 hist 就畫 hist。底圖用 CSS 畫的深藍格線
+// 虛線和紅綠（11-16 翊文：「改成昨天收盤」，照真實看盤軟體的「平盤／前收」）：盤中圖用昨天收盤（價 ÷（1＋今天漲跌））當基準，現在比昨收高畫紅、低畫綠，跟旁邊的漲跌％壹致；沒有漲跌資料才退回第壹點
 function chart(s) {
   const ss = s.session, pts = (ss ? s.intraday : s.hist) || [];
   const W = 240, H = 56, pad = 4, slots = ss ? ss.slots : pts.length, off = ss ? ss.offset : 0;
   let body = "";
   if (pts.length > 1 && !(ss && ss.state === "noopen")) {
-    const ref = ss && s.prevClose > 0 ? s.prevClose : pts[0]; // 虛線＝前壹收盤（沒有就用開盤價）；盤中開盤跳空時，虛線不在線的起點
-    const lo = Math.min(...pts, ref), hi = Math.max(...pts, ref), span = Math.max(1e-9, hi - lo);
+    const pc = ss && typeof s.chg === "number" && s.price > 0 && s.chg > -1 ? s.price / (1 + s.chg) : null, base = pc != null ? pc : pts[0]; // 昨天收盤
+    const lo = Math.min(base, ...pts), hi = Math.max(base, ...pts), span = Math.max(1e-9, hi - lo);
     const xy = pts.map((p, i) => [pad + (off + i) / Math.max(1, slots - 1) * (W - 2 * pad), H - pad - (p - lo) / span * (H - 2 * pad)]);
-    const up = pts[pts.length - 1] >= ref, col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1], first = xy[0];
-    const oy = H - pad - (ref - lo) / span * (H - 2 * pad); // 前壹收盤的虛線
+    const up = pc != null ? s.chg >= 0 : pts[pts.length - 1] >= pts[0], col = up ? "#FF8A78" : "#7FD39B", line = xy.map(p => p.map(n => n.toFixed(1)).join(",")).join(" "), last = xy[xy.length - 1], first = xy[0];
+    const oy = H - pad - (base - lo) / span * (H - 2 * pad); // 昨天收盤的虛線（沒有漲跌資料時是第壹點）
     body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${first[0].toFixed(1)},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
   const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, ss.mid), h("span", null, ss.to)) : null;
