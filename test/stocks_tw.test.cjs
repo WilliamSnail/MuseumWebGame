@@ -1,6 +1,7 @@
 // 台股盤中（11-14，規劃 2.8d）：node test/stocks_tw.test.cjs（npm test 也會跑）
 // 開盤價才開、15 分鐘錨點加隨機、橋、種子祕密、停盤、掛單照盤中價檢查、view 的盤中資料、守恆。數字讀 NUM。
 const assert = require("assert");
+const r2 = x => Math.round(x * 100) / 100; // 股價小數兩位（決定 0108）
 const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x);
@@ -131,12 +132,12 @@ T("狀態：開盤前 pre、沒第壹個價 pending、超過 09:30 closed、抓�
 T("股價 ＝ 今天開盤價 × rel；每個分鐘跟著走；13:30 之後停在最後一個價；美股不動", G => {
   const house = house0(G, D), doc = TW(G), base = house.stk.hist[D][TWID], us = house.stk.px[USID];
   G.casStockTwApply(house, doc, D, at(D, 9, 0));
-  assert.strictEqual(house.stk.px[TWID], Math.round(base * doc.ser[TWID][0]));
+  assert.strictEqual(house.stk.px[TWID], r2(base * doc.ser[TWID][0]));
   G.casStockTwApply(house, doc, D, at(D, 10, 7));
-  assert.strictEqual(house.stk.px[TWID], Math.round(base * doc.ser[TWID][67]));
+  assert.strictEqual(house.stk.px[TWID], r2(base * doc.ser[TWID][67]));
   assert.strictEqual(house.stk.tw.ser[TWID].length, 68, "盤中序列從開盤到現在");
   G.casStockTwApply(house, doc, D, at(D, 15, 0));
-  assert.strictEqual(house.stk.px[TWID], Math.round(base * doc.ser[TWID][270]));
+  assert.strictEqual(house.stk.px[TWID], r2(base * doc.ser[TWID][270]));
   assert.strictEqual(house.stk.px[USID], us);
 });
 T("停盤：台股只在開盤時間買賣、下單、取消（美股也一樣，在 stocks_us.test 測）", G => {
@@ -159,7 +160,7 @@ T("停盤：台股只在開盤時間買賣、下單、取消（美股也一樣�
 });
 T("掛單照盤中每分鐘的價檢查：只看下單之後；成交價是觸發的那個價", G => {
   const house = house0(G, D), doc = TW(G), w = wallet(G);
-  const base = house.stk.hist[D][TWID], px = i => Math.max(1, Math.round(base * doc.ser[TWID][i]));
+  const base = house.stk.hist[D][TWID], px = i => Math.max(1, r2(base * doc.ser[TWID][i]));
   G.casStockTwApply(house, doc, D, at(D, 9, 10));
   const now = house.stk.px[TWID];
   const lows = []; for (let i = 11; i <= 269; i++) lows.push(px(i));
@@ -179,7 +180,7 @@ T("掛單照盤中每分鐘的價檢查：只看下單之後；成交價是觸�
 });
 T("下單之前的價不算：下單時的價比限價還低的盤中低點不會讓單成交", G => {
   const house = house0(G, D), doc = TW(G), w = wallet(G);
-  const base = house.stk.hist[D][TWID], px = i => Math.max(1, Math.round(base * doc.ser[TWID][i]));
+  const base = house.stk.hist[D][TWID], px = i => Math.max(1, r2(base * doc.ser[TWID][i]));
   // 找壹個分鐘 i，之前有比它更低的價，之後都比它高
   let pick = -1;
   for (let i = 200; i < 269; i++) { const before = Math.min(...Array.from({ length: i }, (_, k) => px(k))), after = Math.min(...Array.from({ length: 270 - i }, (_, k) => px(i + 1 + k))); if (before < px(i) - 1 && after > before + 1) { pick = i; break; } }
@@ -196,7 +197,7 @@ T("下單之前的價不算：下單時的價比限價還低的盤中低點不�
 });
 T("隔天才回來：前壹天盤中碰過的限價也算", G => {
   const house = house0(G, D), doc = TW(G), w = wallet(G);
-  const base = house.stk.hist[D][TWID], all = doc.ser[TWID].map(r => Math.max(1, Math.round(base * r)));
+  const base = house.stk.hist[D][TWID], all = doc.ser[TWID].map(r => Math.max(1, r2(base * r)));
   G.casStockTwApply(house, doc, D, at(D, 9, 5));
   const lim = Math.min(...all.slice(6)) + 1;
   assert.ok(lim < all[5]);

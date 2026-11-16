@@ -24,6 +24,8 @@ export const casNum = n => {
   if (a >= 1e4) return `${sign}${two(a / 1e4)} 萬`;
   return v.toLocaleString("en-US");
 };
+// 股價（決定 0108：小數兩位）：整數照 casNum 寫；有小數就寫兩位（不縮成萬、億，免得吃掉零頭）
+export const casPx = n => { const v = Math.round((+n || 0) * 100) / 100; return Number.isInteger(v) ? casNum(v) : v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
 export const casExact = n => Math.round(+n || 0).toLocaleString("en-US"); // 完整的數字（滑鼠停著看）
 
 // ---------- 大禮包的拉霸機：五輪怎麼停（只是演出，結果是伺服器決定的） ----------

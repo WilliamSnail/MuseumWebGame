@@ -13,6 +13,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow, casWorldRoom } from "./casino_book.js";
+import { stBuyCost, stCents, stPx, stSellGet, stValue } from "./casino_stock.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 
@@ -44,8 +45,8 @@ export function casInvestFix(house) {
   I.last = ivBox(y) && ivDay(y.day) ? { day: y.day, buy: Array.isArray(y.buy) ? y.buy : [], sell: Array.isArray(y.sell) ? y.sell : [], paused: ivBox(y.paused) ? y.paused : {} } : null;
   if (!ivBox(I.sum)) I.sum = { hold: [], pnl: 0 };
   if (!ivBox(I.hx)) I.hx = {};
-  for (const id of Object.keys(I.hx)) { const a = Array.isArray(I.hx[id]) ? I.hx[id].filter(v => +v > 0).map(v => Math.floor(+v)).slice(-NUM.casino.invest.dip.days) : []; if (IV_IDS.includes(id) && a.length) I.hx[id] = a; else delete I.hx[id]; }
-  for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = Math.floor(+m[id]); } // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
+  for (const id of Object.keys(I.hx)) { const a = Array.isArray(I.hx[id]) ? I.hx[id].filter(v => +v > 0).map(v => stPx(v)).slice(-NUM.casino.invest.dip.days) : []; if (IV_IDS.includes(id) && a.length) I.hx[id] = a; else delete I.hx[id]; }
+  for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = stPx(m[id]); } // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
   return I;
 }
 
@@ -56,16 +57,16 @@ const ivAvail = (house, pool) => (pool === "house" ? Math.max(0, ivN(house.bankr
 const ivFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 const ivCostSum = P => Object.values(P.cost).reduce((s, x) => s + ivN(x), 0);
 // 持股現值（用現在的價）
-const ivValue = (P, px) => Object.keys(P.own).reduce((s, id) => s + P.own[id] * (px[id] || 0), 0);
+const ivValue = (P, px) => Object.keys(P.own).reduce((s, id) => s + stValue(px[id] || 0, P.own[id]), 0);
 
 // 賣 n 股（先檢查外面世界今天付得出）。回傳實際賣的股數
 function ivSell(house, pool, P, id, n, px, cfg) {
   n = Math.min(n, P.own[id]);
   if (n <= 0 || !(px > 0)) return 0;
   const room = casWorldRoom(house, cfg.world);
-  n = Math.min(n, Math.floor(room / px));
+  n = Math.min(n, Math.floor(room * 100 / stCents(px)));
   if (n <= 0) return 0;
-  const gross = n * px, fee = ivFee(gross), costOut = n >= P.own[id] ? P.cost[id] : Math.floor(P.cost[id] * n / P.own[id]);
+  const gross = stSellGet(px, n), fee = ivFee(gross), costOut = n >= P.own[id] ? P.cost[id] : Math.floor(P.cost[id] * n / P.own[id]);
   if (pool === "house") { casHouseWorldOut(house, "houseInvestSell", gross, cfg.world); casHouseMove(house, "investFee", -fee); house.budget += fee; }
   else { casPoolWorldOut(house, "budget", "budgetInvestSell", gross); } // 預算池付給自己：手續費不用搬
   P.own[id] -= n; P.cost[id] = Math.max(0, P.cost[id] - costOut);
@@ -90,9 +91,9 @@ export function casInvestRun(house, stkH, day, secret, b) {
   I.day = day;
   if (I.cur && I.cur.day < day) I.last = { day: I.cur.day, buy: ivList(I.cur.buy), sell: ivList(I.cur.sell), paused: I.cur.paused }; // 昨天的收進 last（日報寫昨天的，延遲壹天）
   I.cur = { day, buy: {}, sell: {}, paused: {} };
-  I.lastPx = I.px; I.px = Object.fromEntries(IV_IDS.filter(id => +stkH.px[id] > 0).map(id => [id, Math.floor(stkH.px[id])]));
+  I.lastPx = I.px; I.px = Object.fromEntries(IV_IDS.filter(id => +stkH.px[id] > 0).map(id => [id, stPx(stkH.px[id])]));
   const px = stkH.px, cfg = NUM.casino;
-  for (const id of IV_IDS) if (+px[id] > 0) { const a = Array.isArray(I.hx[id]) ? I.hx[id] : []; I.hx[id] = a.concat(Math.floor(px[id])).slice(-C.dip.days); } // 均價用的歷史：每天跑壹次記壹個價（買之前用的是記今天價之前的）
+  for (const id of IV_IDS) if (+px[id] > 0) { const a = Array.isArray(I.hx[id]) ? I.hx[id] : []; I.hx[id] = a.concat(stPx(px[id])).slice(-C.dip.days); } // 均價用的歷史：每天跑壹次記壹個價（買之前用的是記今天價之前的）
   for (const pool of IV_POOLS) {
     const P = I.pool[pool], avail = ivAvail(house, pool);
     // 1 先賣：跌過停損、漲過停利
@@ -129,7 +130,7 @@ export function casInvestRun(house, stkH, day, secret, b) {
       if (!(px[id] > 0)) continue;
       const n = Math.floor(Math.min(left, alloc[id]) / (px[id] * (1 + cfg.stock.feePct / 100)));
       if (n <= 0) continue;
-      const cost = n * px[id], fee = ivFee(cost);
+      const cost = stBuyCost(px[id], n), fee = ivFee(cost);
       if (cost + fee > left) continue;
       if (pool === "house") { casHouseWorldIn(house, "houseInvestBuy", cost); casHouseMove(house, "investFee", -fee); house.budget += fee; }
       else casPoolWorldIn(house, "budget", "budgetInvestBuy", cost);
@@ -150,7 +151,7 @@ export function casInvestPublic(house, day) {
   const I = casInvestFix(house), px = (house.stk && house.stk.px) || {}, hold = {};
   let realized = 0;
   for (const k of IV_POOLS) { const P = I.pool[k]; realized += P.pnl; for (const id of Object.keys(P.own)) { const h = hold[id] || (hold[id] = { id, name: ivName(id), n: 0, cost: 0 }); h.n += P.own[id]; h.cost += ivN(P.cost[id]); } }
-  const rows = Object.values(hold).map(h => { const value = h.n * (px[h.id] || 0); return Object.assign(h, { value, pnl: value - h.cost, pnlPct: h.cost > 0 ? Math.round((value / h.cost - 1) * 1000) / 10 : 0 }); }).sort((a, b) => b.value - a.value);
+  const rows = Object.values(hold).map(h => { const value = stValue(px[h.id] || 0, h.n); return Object.assign(h, { value, pnl: value - h.cost, pnlPct: h.cost > 0 ? Math.round((value / h.cost - 1) * 1000) / 10 : 0 }); }).sort((a, b) => b.value - a.value);
   const cost = rows.reduce((s, h) => s + h.cost, 0), value = rows.reduce((s, h) => s + h.value, 0);
   const side = (arr, s) => (arr || []).map(x => ({ side: s, id: x.id, name: x.name, n: x.n, px: (I.lastPx && I.lastPx[x.id]) || 0 }));
   const yesterday = I.last ? side(I.last.buy, "buy").concat(side(I.last.sell, "sell")) : [];

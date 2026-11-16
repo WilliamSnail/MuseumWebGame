@@ -1,6 +1,7 @@
 // 美股照當天美元對台幣匯率（11-16）：node test/stock_us_fx.test.cjs（npm test 也會跑）
 // 遊戲價 ＝ 匯率 × 美金價；匯率變動是價格漲跌，不換股數；沒有匯率用昨天的、再沒有用 peg.us；壞匯率不收；每日資料換日帶著匯率。
 const assert = require("assert");
+const r2 = x => Math.round(x * 100) / 100; // 股價小數兩位（決定 0108）
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -20,16 +21,16 @@ T("遊戲價 ＝ 當天匯率 × 真實價，換股數的基準不變（不重�
   const doc = openDoc(G, 30.5);
   G.casStockUsApply(house, doc, W, tm(G, 1));
   assert.strictEqual(H.fx, 30.5);
-  assert.strictEqual(H.hist[W][ID], Math.round(30.5 * 100), "基準 ＝ 匯率 × 前壹收盤");
-  assert.strictEqual(H.px[ID], Math.round(30.5 * 101), "開盤價 ＝ 匯率 × 真實開盤價");
+  assert.strictEqual(H.hist[W][ID], r2(30.5 * 100), "基準 ＝ 匯率 × 前壹收盤");
+  assert.strictEqual(H.px[ID], r2(30.5 * 101), "開盤價 ＝ 匯率 × 真實開盤價");
   const view = G.casStockView(G.casWalletFix(G.casWalletNew(), W), house, W, tm(G, 1), []).list.find(x => x.id === ID);
   assert.strictEqual(view.mult, 30.5);
 });
 T("沒有匯率：用 peg.us（×32）；匯率壞掉不收", G => {
   const house = mkHouse(G, W), H = G.casStockHouseFix(house);
   G.casStockUsApply(house, openDoc(G), W, tm(G, 1));
-  assert.strictEqual(H.px[ID], Math.round(G.NUM.casino.stock.peg.us * 101));
-  for (const bad of [0, -3, "32", NaN, 5, 200]) { const h2 = mkHouse(G, W); G.casStockUsApply(h2, openDoc(G, bad), W, tm(G, 1)); assert.strictEqual(G.casStockHouseFix(h2).fx, null, String(bad)); assert.strictEqual(G.casStockHouseFix(h2).px[ID], Math.round(32 * 101)); }
+  assert.strictEqual(H.px[ID], r2(G.NUM.casino.stock.peg.us * 101));
+  for (const bad of [0, -3, "32", NaN, 5, 200]) { const h2 = mkHouse(G, W); G.casStockUsApply(h2, openDoc(G, bad), W, tm(G, 1)); assert.strictEqual(G.casStockHouseFix(h2).fx, null, String(bad)); assert.strictEqual(G.casStockHouseFix(h2).px[ID], r2(32 * 101)); }
 });
 T("換日：昨天的匯率帶到今天（fxLast）和每日資料；今天抓到的蓋過去", G => {
   const doc = openDoc(G, 31);

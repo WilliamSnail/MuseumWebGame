@@ -30,12 +30,19 @@ import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPri
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
-import { casFill, casNum } from "./casino.js";
+import { casFill, casNum, casPx } from "./casino.js";
 import { outStockWeekend } from "./stocks.js";
 import { TW_IDS, US_IDS, mkLen, usEarlyClose, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "./stocks_tw.js";
 
 const stBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const stN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
+// 股價用小數兩位（決定 0108：真實價 30～140 元的股票，整數價一格跳 1～3% 會卡住）。錢包的籌碼、成本、手續費、稅、損益仍是整數：
+//   每次真的動錢都在那一步取整數——買進成本無條件進位（玩家多付）、賣出收入無條件捨去（玩家少拿）、手續費進位、稅捨去、成本照比例捨去（跟舊做法一樣）。
+export const stPx = v => (Number.isFinite(+v) && +v > 0 ? Math.round(+v * 100) / 100 : 0); // 價取到小數兩位
+export const stCents = v => Math.round(+v * 100); // 價 → 分（整數）
+export const stBuyCost = (px, n) => Math.ceil(stCents(px) * n / 100); // 買 n 股要付的錢：進位
+export const stSellGet = (px, n) => Math.floor(stCents(px) * n / 100); // 賣 n 股拿到的錢：捨去
+export const stValue = (px, n) => Math.floor(stCents(px) * n / 100); // 持股市值（帳面）：捨去
 const stDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const stAddDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
 const ORDER_KINDS = ["buy", "sell", "stop"];
@@ -69,14 +76,14 @@ export function casStockFix(w) {
   S.fee = stN(S.fee);
   S.gain = Number.isFinite(+S.gain) ? Math.floor(+S.gain) : 0; // 可以是負的
   S.seq = stN(S.seq);
-  S.orders = (Array.isArray(S.orders) ? S.orders : []).map(o => stBox(o) ? { no: stN(o.no), kind: o.kind, id: o.id, n: stN(o.n), px: stN(o.px), day: stDay(o.day) ? o.day : null, exp: stDay(o.exp) ? o.exp : null, hold: o.kind === "buy" ? stN(o.hold) : 0, at: o.at == null ? null : stN(o.at) } : null)
+  S.orders = (Array.isArray(S.orders) ? S.orders : []).map(o => stBox(o) ? { no: stN(o.no), kind: o.kind, id: o.id, n: stN(o.n), px: stPx(o.px), day: stDay(o.day) ? o.day : null, exp: stDay(o.exp) ? o.exp : null, hold: o.kind === "buy" ? stN(o.hold) : 0, at: o.at == null ? null : stN(o.at) } : null)
     .filter(o => o && ORDER_KINDS.includes(o.kind) && (stDef(o.id) || IN_IDS.includes(o.id)) && o.n > 0 && o.px > 0 && o.day && o.exp);
   S.hold = S.orders.reduce((a, o) => a + o.hold, 0); // 永遠由單算出來，不會和單對不上
   if (!stBox(S.cx)) S.cx = { day: null, n: 0 };
   S.cx.day = stDay(S.cx.day) ? S.cx.day : null; S.cx.n = stN(S.cx.n);
   S.peg = stN(S.peg); // 這個錢包換股數換到第幾次（house.stk.peg.ev 的 seq）
   if (!stBox(S.seen)) S.seen = {}; // 玩家上次看到的價（view 的 fresh 用）
-  for (const k of Object.keys(S.seen)) { const n = stN(S.seen[k]); if (n > 0 && STOCK_IDS.includes(k)) S.seen[k] = n; else delete S.seen[k]; }
+  for (const k of Object.keys(S.seen)) { const n = stPx(S.seen[k]); if (n > 0 && STOCK_IDS.includes(k)) S.seen[k] = n; else delete S.seen[k]; }
   S.notes = (Array.isArray(S.notes) ? S.notes : []).filter(x => typeof x === "string").slice(-8);
   return S;
 }
@@ -86,8 +93,8 @@ export function casStockHouseFix(house) {
   H.day = stDay(H.day) ? H.day : null;
   for (const k of ["px", "prev", "held"]) if (!stBox(H[k])) H[k] = {};
   for (const id of STOCK_IDS) {
-    H.px[id] = Math.max(NUM.casino.stock.floor, stN(H.px[id]) || NUM.casino.stock.start);
-    H.prev[id] = Math.max(NUM.casino.stock.floor, stN(H.prev[id]) || H.px[id]);
+    H.px[id] = Math.max(NUM.casino.stock.floor, stPx(H.px[id]) || NUM.casino.stock.start);
+    H.prev[id] = Math.max(NUM.casino.stock.floor, stPx(H.prev[id]) || H.px[id]);
     H.held[id] = stN(H.held[id]);
   }
   for (const k of Object.keys(H.px)) if (!STOCK_IDS.includes(k)) { delete H.px[k]; delete H.prev[k]; delete H.held[k]; }
@@ -102,7 +109,7 @@ export function casStockHouseFix(house) {
   // 照真實股價的比例（規劃 2.8h）：peg.done[id] ＝ 這支已經換成比例（記第幾次換的），peg.ev ＝ 換的紀錄（錢包照順序換股數）；real[id] ＝ 畫面要的真實價
   if (!stBox(H.peg)) H.peg = { seq: 0, done: {}, ev: [] };
   H.peg.seq = stN(H.peg.seq); if (!stBox(H.peg.done)) H.peg.done = {}; if (!Array.isArray(H.peg.ev)) H.peg.ev = [];
-  H.peg.ev = H.peg.ev.filter(e => stBox(e) && stDef(e.id) && stN(e.from) > 0 && stN(e.to) > 0 && stN(e.seq) > 0).map(e => ({ seq: stN(e.seq), id: e.id, from: stN(e.from), to: stN(e.to) }));
+  H.peg.ev = H.peg.ev.filter(e => stBox(e) && stDef(e.id) && stPx(e.from) > 0 && stPx(e.to) > 0 && stN(e.seq) > 0).map(e => ({ seq: stN(e.seq), id: e.id, from: stPx(e.from), to: stPx(e.to) }));
   if (!stBox(H.peg.dir)) H.peg.dir = {}; // dir[id]：這支已經換成「直接用真實價」（換過比例）
   if (!stBox(H.real)) H.real = {};
   H.fx = stOkFx(H.fx) ? H.fx : null; // 美股今天用的美元對台幣匯率（11-16，翊文：「×32 可以照今日台幣匯率嗎」）；沒有就用 peg.us
@@ -130,26 +137,26 @@ export function casStockRoll(house, day, moves, reals) {
     const m = -C.drag / 100; // 換日不跳：開盤的跳空由開盤時真實的開盤價給，只扣 drag
     const before = H.px[id], real = reals && reals[id], mult = stPegMult(id), pm = stPxMult(H, id);
     H.prev[id] = before;
-    let px = Math.max(C.floor, Math.round(before * (1 + m)));
+    let px = Math.max(C.floor, stPx(before * (1 + m)));
     if (C.direct) { // 直接用真實價（規劃 2.8l）：價 ＝ 倍數 × 前壹天收盤的真實價；沒有 drag、沒有拉回。第壹次換成這個價時錢包照比例換股數（市值不變）；真實價沒有（假日、還沒抓過）就維持原價
       px = before;
       if (real && real.px > 0 && mult > 0) {
-        const target = Math.max(C.floor, Math.round(pm * real.px));
+        const target = Math.max(C.floor, stPx(pm * real.px));
         stPegDirect(H, id, target, before, mult);
         px = target; H.prev[id] = target;
       }
     } else if (real && real.px > 0 && mult > 0) {
-      const target = Math.max(C.floor, Math.round(mult * real.px));
+      const target = Math.max(C.floor, stPx(mult * real.px));
       if (!H.peg.done[id]) { // 第壹次：換成真實的比例
         H.peg.seq++; H.peg.done[id] = H.peg.seq; H.peg.ev.push({ seq: H.peg.seq, id, from: before, to: target });
         const scale = target / before;
-        for (const d of Object.keys(H.hist)) if (H.hist[d][id] > 0) H.hist[d][id] = Math.max(C.floor, Math.round(H.hist[d][id] * scale));
+        for (const d of Object.keys(H.hist)) if (H.hist[d][id] > 0) H.hist[d][id] = Math.max(C.floor, stPx(H.hist[d][id] * scale));
         H.held[id] = Math.floor(stN(H.held[id]) * before / target);
         H.prev[id] = target;
-        px = Math.max(C.floor, Math.round(target * (1 + m)));
+        px = Math.max(C.floor, stPx(target * (1 + m)));
       } else { // 之後：每天拉回壹部分
         const D = px / target - 1, cap = casStockPullMax(), pull = Math.max(-cap, Math.min(cap, -C.peg.lamPct / 100 * D));
-        px = Math.max(C.floor, Math.round(px * (1 + pull)));
+        px = Math.max(C.floor, stPx(px * (1 + pull)));
       }
     }
     H.px[id] = px;
@@ -170,7 +177,7 @@ function stPegDirect(H, id, target, before, mult) {
   if (!(before > 0) || target === before) return false;
   H.peg.seq++; H.peg.done[id] = H.peg.seq; H.peg.ev.push({ seq: H.peg.seq, id, from: before, to: target });
   const scale = target / before;
-  for (const d of Object.keys(H.hist)) if (H.hist[d][id] > 0) H.hist[d][id] = Math.max(NUM.casino.stock.floor, Math.round(H.hist[d][id] * scale));
+  for (const d of Object.keys(H.hist)) if (H.hist[d][id] > 0) H.hist[d][id] = Math.max(NUM.casino.stock.floor, stPx(H.hist[d][id] * scale));
   H.held[id] = Math.floor(stN(H.held[id]) * before / target);
   return true;
 }
@@ -181,7 +188,7 @@ export function casStockPegNow(house, closes) {
   for (const id of STOCK_IDS) {
     const real = closes && closes[id], mult = stPegMult(id), before = H.px[id];
     if (!stOkPx(real) || !(mult > 0) || !(before > 0) || H.peg.dir[id] === mult) continue;
-    const target = Math.max(C.floor, Math.round(stPxMult(H, id) * real));
+    const target = Math.max(C.floor, stPx(stPxMult(H, id) * real));
     stPegDirect(H, id, target, before, mult);
     H.px[id] = target; H.prev[id] = target;
     out.push({ id, from: before, to: target });
@@ -244,11 +251,11 @@ export function casStockPegSync(w, house) {
   casInCostSeed(w, house); // 館內股的舊持股也補成本記錄
   for (const e of H.peg.ev.filter(x => x.seq > S.peg).sort((a, b) => a.seq - b.seq)) {
     const name = stDef(e.id).name;
-    if (S.cost[e.id] == null && S.own[e.id] > 0) S.cost[e.id] = S.own[e.id] * e.from; // 換股數之前還沒有成本記錄：用換之前的價算；換股數時總成本不變（市值不變，零頭用籌碼補不算成本）
+    if (S.cost[e.id] == null && S.own[e.id] > 0) S.cost[e.id] = stBuyCost(e.from, S.own[e.id]); // 換股數之前還沒有成本記錄：用換之前的價算；換股數時總成本不變（市值不變，零頭用籌碼補不算成本）
     for (const o of S.orders.filter(x => x.id === e.id)) stDrop(w, S, o);
     const sh = stN(S.own[e.id]);
     if (sh > 0) {
-      const value = sh * e.from, ns = Math.floor(value / e.to), rem = value - ns * e.to;
+      const value = stValue(e.from, sh), ns = Math.floor(value * 100 / stCents(e.to)), rem = value - Math.floor(stCents(e.to) * ns / 100);
       if (ns > 0) S.own[e.id] = ns; else delete S.own[e.id];
       if (rem > 0) casWorldOut(w, house, "stockRebase", rem, NUM.casino.world);
       stNote(S, casFill(CAS_STOCK.peg.split, { name, from: casNum(sh), to: casNum(ns), rem: casNum(rem) }));
@@ -268,14 +275,14 @@ function casStockHoldCost(w, house, S, H) {
   if (!last || last >= H.day) return;
   const days = Math.min(7, Math.round((Date.parse(H.day + "T00:00:00Z") - Date.parse(last + "T00:00:00Z")) / 86400000));
   let mv = 0;
-  for (const id of Object.keys(S.own)) if (stDef(id) && H.px[id] > 0) mv += S.own[id] * H.px[id];
+  for (const id of Object.keys(S.own)) if (stDef(id) && H.px[id] > 0) mv += stValue(H.px[id], S.own[id]);
   const cost = Math.min(Math.max(0, w.chips), Math.floor(mv * C.holdPct / 100 * days));
   if (cost > 0) { w.chips -= cost; house.budget += cost; casCount(house, "stockHold", cost); }
 }
 
 // ---------- 買賣 ----------
 // 成本記錄（11-14，資本利得稅）：有持股卻沒有成本記錄的舊持股，成本 ＝ 第壹次碰到時的價 × 股數（之前的漲幅不抽稅）。每次碰到錢包（casStockPegSync）、買賣時補
-const stSeed = (S, H) => { for (const id of Object.keys(S.own)) if (S.cost[id] == null && H.px[id] > 0) S.cost[id] = H.px[id] * S.own[id]; };
+const stSeed = (S, H) => { for (const id of Object.keys(S.own)) if (S.cost[id] == null && H.px[id] > 0) S.cost[id] = stBuyCost(H.px[id], S.own[id]); };
 const stFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 // 全館持股總市值（莊家曝險看這個）
 export const casStockExposure = house => { const H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * H.held[id], 0); };
@@ -291,7 +298,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
   const n = Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_STOCK.bad };
-  const px = H.px[id], cost = px * n, fee = stFee(cost);
+  const px = H.px[id], cost = stBuyCost(px, n), fee = stFee(cost);
   if (cost + fee > w.chips) return { ok: false, reason: CAS_STOCK.poor };
   stSeed(S, H);
   casWorldIn(w, house, "stockBuy", cost); // 錢給外面世界（池子變多，不是燒掉）
@@ -300,7 +307,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   S.cost[id] = stN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   S.fee += fee;
   H.held[id] = stN(H.held[id]) + n;
-  return { ok: true, n, px, cost, fee, lines: [casFill(CAS_STOCK.buyOk, { name: stDef(id).name, n: casNum(n), px: casNum(px), cost: casNum(cost), fee: casNum(fee) })] };
+  return { ok: true, n, px, cost, fee, lines: [casFill(CAS_STOCK.buyOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
 
 // 賣 shares 股（"max" ＝全賣）
@@ -316,7 +323,7 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   let n = shares === "max" ? have : Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_STOCK.bad };
   if (n > have) return { ok: false, reason: casFill(have0 > have ? CAS_STOCK.order.noShares : CAS_STOCK.notEnough, { n: casNum(have) }) };
-  const px = H.px[id], gross = px * n, fee = stFee(gross);
+  const px = H.px[id], gross = stSellGet(px, n), fee = stFee(gross);
   stSeed(S, H);
   // 資本利得稅：賣出拿到的錢（扣賣出手續費）− 這 n 股的成本（總成本照股數比例，平均成本法）> 0 的部分抽 taxPct%（向下取整）；賠錢不抽也不退
   const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = profit > 0 ? Math.floor(profit * C.taxPct / 100) : 0, net = gross - fee - tax;
@@ -333,7 +340,7 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (!free) S.sold = { day, n: stSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, stN(H.held[id]) - n);
   if (!free) H.net = { day, n: stNetToday(H, day) + gross };
-  return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee), taxText: "，資本利得稅 " + casNum(tax) })] };
+  return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: "，資本利得稅 " + casNum(tax) })] };
 }
 
 // ---------- 畫面要的 ----------
@@ -347,9 +354,9 @@ export function casStockView(w, house, day, t, stale) {
     // 「今天」的漲跌跟今天的開盤基準比（盤中價就是從這個基準算的），不是跟 H.prev。11-14 翊文：紅爪晶片盤中壹路跌卻顯示 ▲0.4%——
     //   11-13 那天 05:00 換日還是舊做法（把前壹晚美股的漲跌套進價格），H.prev 是那之前的價，所以「今天」把昨晚的漲幅也算進來了
     const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
-    const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : price * mine) : 0, dayChg = prev > 0 ? mine * (price - prev) : 0; // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
-    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value: price * mine,
-      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: price * mine - costTotal, pnlPct: costTotal > 0 ? (price * mine - costTotal) / costTotal : 0, tax: C.taxPct / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
+    const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round(mine * (price - prev)) : 0, value = stValue(price, mine); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
+    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
+      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: C.taxPct / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
       stale: old.includes(d.id) ? CAS_STOCK.stale : null,
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
       //   intraday 今天盤中每分鐘的價（從 intradayFrom 分鐘起，0 ＝ 09:00；其他股票是空陣列）；fresh 價格自從玩家上次按「看過了」之後變過
@@ -386,7 +393,7 @@ export function casStockViewAll(w, house, day, t, stale) {
   return v;
 }
 // 存在股票裡的錢（記帳快照用：持股市值是帳面的，錢其實在莊家那裡，所以不加進總額）
-export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * stN(S.own[id]), 0) + S.hold + casInValueApprox(w, house); }; // 鎖在買單裡的籌碼也算玩家的
+export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + stValue(H.px[id], stN(S.own[id])), 0) + S.hold + casInValueApprox(w, house); }; // 鎖在買單裡的籌碼也算玩家的
 export function casStockTakeNotes(w) { const S = casStockFix(w); const n = S.notes; S.notes = []; return n; }
 
 
@@ -401,17 +408,17 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
   if (!ORDER_KINDS.includes(kind) || !stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
   const num = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
-  const n = num(shares), p = num(px);
+  const n = num(shares), p = stPx(Number(String(px == null ? "" : px).replace(/[,，s]/g, "")));
   if (!Number.isFinite(n) || n <= 0 || !Number.isFinite(p) || p < C.floor) return { ok: false, reason: CAS_STOCK.bad };
   if (S.orders.length >= C.order.max) return { ok: false, reason: casFill(O.full, { n: C.order.max }) };
   if (S.orders.filter(o => o.id === id).length >= C.order.perStock) return { ok: false, reason: casFill(O.fullStock, { n: C.order.perStock }) };
   const now = H.px[id];
-  if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: casFill(O.px, { px: casNum(now) }) };
+  if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: casFill(O.px, { px: casPx(now) }) };
   // 有效到當天收盤（規劃 2.8d、2.8i；台股 13:30、美股美東 16:00，沒成交就取消，exp ＝ 下單那天；美股的收盤在台灣隔天凌晨，但還是同壹個遊戲日）。沒有盤中的股票（現在只有測試會碰到）還是有效到下壹次換日調價
   const mk = stMk(id);
   const o = { no: ++S.seq, kind, id, n, px: p, day, exp: stAddDays(day, mk ? C.order.days - 1 : C.order.days), hold: 0, at: mk && H[mk].day === day && H[mk].st === "open" ? stN(H[mk].idx) : null }; // at：盤中下的單，記下是第幾分鐘，之後只檢查這之後的價
   if (kind === "buy") {
-    o.hold = p * n + stFee(p * n);
+    o.hold = stBuyCost(p, n) + stFee(stBuyCost(p, n));
     if (o.hold > w.chips) { S.seq--; return { ok: false, reason: CAS_STOCK.poor }; }
     w.chips -= o.hold; S.hold += o.hold;
   } else {
@@ -419,7 +426,7 @@ export function casStockOrder(w, house, kind, id, shares, px, day, t) {
     if (n > free) { S.seq--; return { ok: false, reason: casFill(O.noShares, { n: casNum(Math.max(0, free)) }) }; }
   }
   S.orders.push(o);
-  const line = casFill(kind === "buy" ? O.buyOk : kind === "sell" ? O.sellOk : O.stopOk, { name: stOrderName(o), n: casNum(n), px: casNum(p), lock: casNum(o.hold) });
+  const line = casFill(kind === "buy" ? O.buyOk : kind === "sell" ? O.sellOk : O.stopOk, { name: stOrderName(o), n: casNum(n), px: casPx(p), lock: casNum(o.hold) });
   return { ok: true, order: o, lines: [line] };
 }
 // 退回鎖住的籌碼，從清單拿掉
@@ -485,8 +492,8 @@ export function casStockMatch(w, house, day, t) {
     H.px[o.id] = saved;
     if (r.ok) {
       out.fills++;
-      stNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: stOrderName(o), n: casNum(r.n), px: casNum(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
-        : casFill(O.fillSell, { name: stOrderName(o), kind: stKind(o), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: "，資本利得稅 " + casNum(r.tax) }));
+      stNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: stOrderName(o), n: casNum(r.n), px: casPx(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
+        : casFill(O.fillSell, { name: stOrderName(o), kind: stKind(o), n: casNum(r.n), px: casPx(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: "，資本利得稅 " + casNum(r.tax) }));
     } else { out.cancels++; stNote(S, casFill(O.capCancel, { name: stOrderName(o), kind: stKind(o), n: casNum(o.n) })); }
   }
   return out;
@@ -505,7 +512,7 @@ export function casStockSeen(w, house) {
 // 盤中那幾支的股價 ＝ 這個分鐘的價（今天開盤價 × rel），house.stk.tw／us 記今天的狀態和盤中每分鐘的價（畫面、掛單檢查用）。
 // 每次錢包被碰到、在 casStockRoll 之後呼叫；沒有資料或還沒換日就只更新狀態。純函式：t 從參數來。
 // 狀態 st：pre 開盤前、pending 開盤後等第壹個價（真實開盤價）、open、closed（收盤、超過 giveUp 分鐘沒抓到、週末假日）
-const stTwPx = (base, rel) => Math.max(NUM.casino.stock.floor, Math.round(base * rel));
+const stTwPx = (base, rel) => Math.max(NUM.casino.stock.floor, stPx(base * rel));
 const MKT = { tw: { ids: TW_IDS, C: () => NUM.casino.stock.tw, idx: (t, day) => twIdx(t) }, us: { ids: US_IDS, C: () => NUM.casino.stock.us, idx: (t, day) => usIdx(t, day) } };
 export function casStockIntraApply(house, mk, data, day, t) {
   const C = NUM.casino.stock, M = MKT[mk], MC = M.C(), H = casStockHouseFix(house), T = H[mk], tw = data;
@@ -533,7 +540,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
       const arr = cur.ser && cur.ser[id];
       let base = H.hist[day][id];
       if (C.direct && cur.prevReal && stOkPx(cur.prevReal[id])) { // 直接用真實價：基準 ＝ 倍數 × 真實前壹收盤，今天的漲跌 ＝ 真實的漲跌（同壹個前壹收盤）
-        base = Math.max(C.floor, Math.round((mk === "us" ? fxOf(cur) : stPegMult(id)) * cur.prevReal[id]));
+        base = Math.max(C.floor, stPx((mk === "us" ? fxOf(cur) : stPegMult(id)) * cur.prevReal[id]));
         stPegDirect(H, id, base, H.hist[day][id], stPegMult(id)); // 換日時沒有真實價（第壹次、休市），第壹次開盤才換比例
         H.hist[day][id] = base; H.prev[id] = base;
       }
@@ -550,7 +557,7 @@ export function casStockIntraApply(house, mk, data, day, t) {
     const r = rec(d);
     if (!r || r.openIdx == null || !r.ser) continue;
     T.past[d] = {}; T.pastFrom[d] = r.openIdx;
-    for (const id of M.ids) { const b = C.direct && r.prev && stOkPx(r.prev[id]) ? Math.max(C.floor, Math.round((mk === "us" ? fxOf(r) : stPegMult(id)) * r.prev[id])) : H.hist[d][id]; if (Array.isArray(r.ser[id]) && b > 0) T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(b, x)); }
+    for (const id of M.ids) { const b = C.direct && r.prev && stOkPx(r.prev[id]) ? Math.max(C.floor, stPx((mk === "us" ? fxOf(r) : stPegMult(id)) * r.prev[id])) : H.hist[d][id]; if (Array.isArray(r.ser[id]) && b > 0) T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(b, x)); }
   }
   return T;
 }
