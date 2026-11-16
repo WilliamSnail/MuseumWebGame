@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-983747", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "地圖頁籤換了專用牌子", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "圖書館的「地圖」頁籤換成泛黃摺痕的航海圖牌子，左邊有小羅盤。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-dda694", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下打鬥不再有刀劍聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
