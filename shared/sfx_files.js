@@ -6,6 +6,7 @@
 //    不能把檔案單獨拿去賣或轉發。我們還是每個都標來源（翊文要求），人看的版本在 web/public/sfx/來源.md。
 //  新增檔案：放進 web/public/sfx、這裡加壹列、來源.md 加壹列（test/sfx_files.test.cjs 會檢查三邊對得上）。
 // ================================================================
+// hq: true ＝ 音樂，音質比較高（雙聲道 80～128 kbps），檔案可以到 2 MB（11-16 翊文：「理智>55高的時候的音樂可以稍微音質高一點嗎」）；用到才下載
 export const SFX_FILES = {
   "casino-ambiance": { name: "Casino Ambiance", by: "freesound_community", url: "https://pixabay.com/sound-effects/casino-ambiance-19130/", loop: true, use: "賭場人聲底（跟熱鬧連動）" },
   "wind": { name: "Wind blowing sfx", by: "JCI-21", url: "https://pixabay.com/sound-effects/wind-blowing-sfx-12809/", loop: true, use: "地下收藏庫的風" },
@@ -19,9 +20,9 @@ export const SFX_FILES = {
   "basement-knock": { name: "Basement Knocking Noises（截前 8 秒）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/basement-knocking-noises-428177/", use: "地下 B1～B3 偶爾的敲擊聲" },
   "lobby-wrong": { name: "Familiar Melody, Subly Wrong（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e1525680-4848-48c1-a6a1-e55dd0f31f36", own: true, loop: true, use: "大廳：理智稍低（55 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
   "lobby-silence": { name: "Lobby Silence（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e8704ed2-0e4e-457c-9cad-00c8cd63a527", own: true, loop: true, use: "大廳：理智更低（30 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
-  "lobby-normal": { name: "Welcome Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/abab39ee-f9f5-4678-be5d-a7ca871cd0ba", own: true, loop: true, use: "大廳平常的背景音樂（取代原本的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
-  "lobby-crowd": { name: "Inviting Loop（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/bad4d15a-ab5e-45b7-ac88-f22bf887fcaa", own: true, loop: true, use: "大廳人潮很多時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
-  "lobby-event": { name: "Welcome to the Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/62ba3211-c459-4f88-9014-fff51e2eb270", own: true, loop: true, use: "大廳有限時活動時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的，不是 Pixabay
+  "lobby-normal": { name: "Welcome Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/abab39ee-f9f5-4678-be5d-a7ca871cd0ba", own: true, hq: true, loop: true, use: "大廳平常的背景音樂（取代原本的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
+  "lobby-crowd": { name: "Inviting Loop（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/bad4d15a-ab5e-45b7-ac88-f22bf887fcaa", own: true, hq: true, loop: true, use: "大廳人潮很多時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
+  "lobby-event": { name: "Welcome to the Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/62ba3211-c459-4f88-9014-fff51e2eb270", own: true, hq: true, loop: true, use: "大廳有限時活動時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的，不是 Pixabay
   "museum-hall": { name: "museum hall big echo group（截 70 秒做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/museum-hall-big-echo-group-53095/", loop: true, use: "展廳、大廳的人聲底" },
   "void-echo": { name: "Echo of the Void（做成循環）", by: "KRNBEATZ", url: "https://pixabay.com/sound-effects/echo-of-the-void-422714/", loop: true, use: "地下 B5 很低的虛空回響" },
   "safe-return": { name: "Piano and Strings Ambient - Confident and Light FULL（截前 26 秒，最後 5 秒淡出）", by: "zec53", url: "https://pixabay.com/music/piano-and-strings-ambient-confident-and-light-full-633882/", use: "地下走完壹層、合作平安回到地面" },
