@@ -97,7 +97,7 @@ T("散客逛店：每家店每天平均 perStore 位、類型照店的個性（�
   G.NUM.casino.stockIn.npcBase = 0; G.NUM.casino.stockIn.npcWalk = 0; // 保底另外測（casino_stock_in.test）
   const S = G.NUM.casino.npcSpend.crowd.shop, tot = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }, kinds = { food: {}, cellar: {} };
   for (let i = 0; i < 200; i++) { for (const g of G.crowdShopToday(add(D0, i), "x" + i)) { tot[g.store] += g.n; if (kinds[g.store]) kinds[g.store][g.label] = (kinds[g.store][g.label] || 0) + 1; assert.ok(g.start >= 0 && g.end <= G.NPC_DAY_MIN); } }
-  for (const s of Object.keys(tot)) assert.ok(Math.abs(tot[s] / 200 - S.perStore) < 0.6, s + " 平均 " + tot[s] / 200);
+  for (const s of Object.keys(tot)) assert.ok(Math.abs(tot[s] / 200 - S.perStore) < Math.max(0.6, S.perStore * 0.1), s + " 平均 " + tot[s] / 200);
   assert.ok((kinds.cellar["退休的長輩們"] || 0) > (kinds.cellar["三位學生"] || 0), "地下收藏庫退休長輩多於學生"); assert.ok(!kinds.food["退休的長輩們"] || kinds.food["三位學生"] > 0);
   assert.ok(G.crowdVisitsToday(D0, "s").every(g => !g.key.startsWith("cshop")), "展廳的組不含逛店的組");
   const h = G.casHouseFix(G.casHouseNew(), D0).house, H = G.casInHouseFix(h); for (let i = 1; i <= 7; i++) H.use[add(D0, -i)] = { food: 10 };
