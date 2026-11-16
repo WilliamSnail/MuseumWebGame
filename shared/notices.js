@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-a0df62", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "銀行「館內經濟」可以看各個帳", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行的館內經濟多了壹份帳：莊家、預算池、館方帳、海底、外面世界各有多少、昨天變了多少。",
+        "每個帳昨天進出最大的幾筆也列出來；每天 05:00 結算，不是即時。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-995ab0", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "館方投資改成每天平均買、跌深加碼", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

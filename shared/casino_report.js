@@ -37,6 +37,25 @@ const rpTime = ms => { const d = new Date(ms + 8 * 3600000), p = n => String(n).
 const rpList = (obj, names, signed) => Object.entries(obj || {}).filter(([, v]) => v).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
   .map(([k, v]) => `${names[k] || k}　${signed ? rpSign(v) : rpN(v)}`);
 
+// 銀行「館內經濟」展開看的幾個帳（決定 0100）：{ day, bankroll, budget, museum, sea, world, d: { 各帳昨天的變化 }, top: { 各帳進出最大的最多 3 筆 [{ label, n }]（正＝進、負＝出）} }。
+// 全部從日報已經算好的 snap 和 diff 拿（延遲壹天、整天不變）。只列「對得上來源」的：莊家＝flow＋houseMint；外面世界＝wflow；預算池＝門票進預算池、投資買賣、莊家跟預算池借還、投資手續費；館方帳＝門票進館方帳；海底沒有記來源，不列。
+export function casBooksView(doc) {
+  if (!doc || !doc.snap || !doc.snap.house || !doc.diff) return null;
+  const H = doc.snap.house, d = doc.diff, R = CAS_REPORT, add = (m, k, label, v) => { if (v) m.push({ label, n: Math.round(v) }); };
+  const top = m => m.sort((a, b) => Math.abs(b.n) - Math.abs(a.n)).slice(0, 3);
+  const bank = [], world = [], budget = [], museum = [];
+  for (const [k, v] of Object.entries(d.flow || {})) add(bank, k, R.flow[k] || k, v);
+  for (const [k, v] of Object.entries(d.houseMint || {})) if (k !== "ticketBudget" && k !== "ticketMuseum") add(bank, k, R.houseMint[k] || k, v);
+  for (const [k, v] of Object.entries(d.wflow || {})) add(world, k, R.world[k] || k, v);
+  const hm = d.houseMint || {}, wf = d.wflow || {}, fl = d.flow || {};
+  add(budget, "tb", R.houseMint.ticketBudget, hm.ticketBudget); add(budget, "nt", R.world.npcTicketBudget, wf.npcTicketBudget); add(budget, "nc", R.world.npcCrowdBudget, wf.npcCrowdBudget);
+  add(budget, "ib", R.world.budgetInvestBuy, -(wf.budgetInvestBuy || 0)); add(budget, "is", R.world.budgetInvestSell, -(wf.budgetInvestSell || 0));
+  add(budget, "fee", "投資手續費", -(fl.investFee || 0)); add(budget, "bl", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "br", R.flow.budgetRepay, -(fl.budgetRepay || 0));
+  add(museum, "tm", R.houseMint.ticketMuseum, hm.ticketMuseum); add(museum, "nm", R.world.npcTicketMuseum, wf.npcTicketMuseum); add(museum, "cm", R.world.npcCrowdMuseum, wf.npcCrowdMuseum);
+  const N = v => Math.round(+v) || 0;
+  return { day: doc.day || null, bankroll: N(H.bankroll), budget: N(H.budget), museum: N(H.museum), sea: N(H.sea), world: H.world == null ? null : N(H.world),
+    d: { bankroll: N(d.bankroll), budget: N(d.budget), museum: N(d.museum), sea: N(d.sea), world: N(d.world) }, top: { bankroll: top(bank), budget: top(budget), museum: top(museum), sea: [], world: top(world) } };
+}
 // doc：{ day, at, snap, diff }（diff 是 casBookDiff 的樣子，第一天 from 是 null）。回傳 { day, at, span, secs: [{ t, lines }] }
 export function casReportView(doc) {
   if (!doc || !doc.snap || !doc.diff) return null;
