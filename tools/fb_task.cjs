@@ -153,7 +153,7 @@ function econPick(h) {
   if (typeof h.day === "string") o.day = h.day;
   const d = obj(h.debt); o.debt = { budget: nz(d.budget), culture: nz(d.culture), world: nz(d.world) };
   { const wu = obj(h.wu), r = obj(wu.r); if (Object.keys(r).length) o.wu = { r, adj: obj(wu.adj) }; } // 外面世界的帳上分類（W3，決定 0086）
-  if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null };
+  if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null, due: obj(h.cul).due || null };
   if (h.npcs) o.npcs = { day: obj(h.npcs).day || null, ticket: nz(obj(h.npcs).ticket), shop: nz(obj(h.npcs).shop), total: nz(obj(h.npcs).total), people: nz(obj(h.npcs).people) };
   const sum = obj(obj(h.inv).sum); if (Object.keys(sum).length) o.inv = { sum: { hold: (Array.isArray(sum.hold) ? sum.hold : []).map(x => ({ name: String(obj(x).name || "").slice(0, 20), n: nz(obj(x).n) })), pnl: Number.isFinite(+sum.pnl) ? Math.floor(+sum.pnl) : 0 } };
   const w = obj(obj(h.led).world); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])) };

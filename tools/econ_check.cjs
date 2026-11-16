@@ -82,6 +82,7 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   const days = C.houseLoan.cultureDue ? Math.max(1, Math.round((Date.parse(C.houseLoan.cultureDue) - Date.parse("2026-11-13")) / 86400000)) : 1, owed = grants * Math.pow(1 + C.houseLoan.cultureInterestPct / 100, days / 2) , cash = C.houseStart + grants, padRoom = Math.max(0, C.budgetStart !== undefined ? C.budgetStart : C.econ.budgetStart) - C.invest.budgetKeep;
   const needIncome = Math.max(0, owed - C.houseStart - padRoom) / days;
   check("文化部館債：每天分期 ≤ 預算池起始的 20%（壹天墊得起）", !C.houseLoan.cultureDue || grants === 0 || owed / days <= C.econ.budgetStart * 0.2, `${days} 天，平均每天約 ${fmt(owed / days)}；預算池起始 ${fmt(C.econ.budgetStart)}`);
+  check("文化部館債：墊付保留金（cultureKeep）≥ 館方投資的預算池保留金；到期日有展延壹次（不再設第二個到期日）", C.houseLoan.cultureKeep >= C.invest.budgetKeep && C.houseLoan.cultureExtDays > 0 && C.houseLoan.cultureExtDays <= 60, "保留 " + fmt(C.houseLoan.cultureKeep) + "、展延 " + C.houseLoan.cultureExtDays + " 天");
   check("文化部館債：現金加預算池可墊的部分（保留 " + fmt(C.invest.budgetKeep) + "）夠還；不夠的要靠莊家收入", needIncome === 0, `${days} 天；莊家現金 ${fmt(C.houseStart)}＋預算池可墊 ${fmt(padRoom)} 不夠時，莊家每天至少要賺 ${fmt(needIncome)}（最壞情況：館債全額、莊家沒有別的收入；實際看日報的莊家現金）`, "warn");
 }
 
@@ -167,7 +168,7 @@ function ledger(file) {
   flag(h.bankroll < 0, "莊家破產中（< 0）");
   if (h.world != null) flag(h.world < Math.floor(W.start * W.lowPct / 100), `外面世界資金吃緊：${fmt(h.world)} ＜ 起始的 ${W.lowPct}%`);
   if (D.culture > 0) {
-    const due = C.houseLoan.cultureDue, day = (doc.day || h.day || null), left = day && due ? Math.max(1, Math.round((Date.parse(due) - Date.parse(day)) / 86400000) + 1) : null;
+    const due = (h.cul && h.cul.due) || C.houseLoan.cultureDue, day = (doc.day || h.day || null), left = day && due ? Math.max(1, Math.round((Date.parse(due) - Date.parse(day)) / 86400000) + 1) : null;
     if (left) { const need = Math.ceil(D.culture / left); out.push(`文化部館債：剩 ${fmt(D.culture)}，${left} 天後到期（${due}），平均每天要還 ${fmt(need)}`); flag(h.bankroll < D.culture && h.budget < D.culture - h.bankroll, "莊家現金加預算池都不夠還文化部館債"); flag(h.bankroll < need, `莊家現金 ${fmt(h.bankroll)} 小於今天這期 ${fmt(need)}（要預算池墊）`); }
     flag(h.cultureLate > 0, `文化部館債逾期累計 ${fmt(h.cultureLate)}`);
   }
