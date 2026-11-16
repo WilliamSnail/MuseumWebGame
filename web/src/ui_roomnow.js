@@ -24,7 +24,7 @@ export function roomPeople(room) {
   const mates = (by[room] || []).map(m => ({ nick: m.nick, id: m.id }));
   const r = rooms && rooms[room] ? rooms[room] : {}, ids = Array.isArray(r.ids) ? r.ids.map(String) : [], names = Array.isArray(r.names) ? r.names.map(String) : [];
   const npc = ids.map((id, i) => ({ id, name: names[i] || "旅客" }));
-  let npcN = Math.max(0, +r.npc || 0), crowdN = Math.max(0, +r.crowd || 0), groups = Array.isArray(r.groups) ? r.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0 })) : [];
+  let npcN = Math.max(0, +r.npc || 0), crowdN = Math.max(0, +r.crowd || 0), groups = Array.isArray(r.groups) ? r.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0, wander: !!g.wander })) : [];
   let n = mates.length + Math.max(0, +r.n || 0);
   const c = room === "casino" && now && now.casino ? now.casino : null; // 被館友邀去賭場的旅客
   if (c) {
@@ -46,7 +46,7 @@ function openRoom(room) {
   m.card.append(
     p.mates.length ? sec("館友", h("p", { class: "hn-names" }, p.mates.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", x.nick)))) : null,
     p.npcN ? sec("旅客", p.npc.length ? h("p", { class: "hn-names" }, p.npc.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", npcName(x.id, x.name), npcSanBadge(x.id, { calm: true, num: false })))) : h("p", { class: "hn-empty" }, `${p.npcN} 位（名單還沒有送來）`)) : null,
-    p.crowdN || p.groups.length ? sec("散客", h("p", { class: "hn-names" }, p.groups.length ? crowdSummary(p.groups).join("、") : `${p.crowdN} 位`)) : null,
+    p.crowdN || p.groups.length ? sec("散客", h("p", { class: "hn-names" }, p.groups.length ? crowdSummary(p.groups.map(g => (g.wander ? Object.assign({}, g, { label: g.label + "（順路逛來）" }) : g))).join("、") : `${p.crowdN} 位`)) : null,
     h("div", { class: "rn-acts" }, btn("關起來", () => m.close(), "ghost")));
 }
 

@@ -14,6 +14,7 @@ import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat
 import { statView } from "../../shared/stat_view.js";
 import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
+import { addDays, todayStr } from "../../shared/logic.js";
 import { casNum } from "../../shared/casino.js";
 import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
 
@@ -698,6 +699,13 @@ function todayPanel(t) {
       h("div", { class: "bank-ext-g" }, h("div", { class: "bank-ext-gh" }, h("b", null, "店裡消費"), h("span", { class: "bank-tab-num" }, fmt(t.shop || 0))), row("全部店合計", t.shop))),
     h("p", { class: "bank-meta sm" }, "只算館外來客；館友自己的消費、每家店分開的數字不公開。"));
 }
+// 「這份是哪一天的帳」（11-16，翊文／數值平衡：財報停在前一天要看得出來）：日期不是昨天就用警告色
+function dayTag(day) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(day || ""));
+  if (!m) return null;
+  const old = String(day) !== addDays(todayStr(), -1);
+  return h("span", { class: "bank-day" + (old ? " warn" : ""), title: old ? "這份帳不是昨天的，可能還沒更新" : "這份帳的日期" }, ` ${+m[2]}/${+m[3]} 的帳`, old ? "（舊的）" : "");
+}
 function extPanel(e) {
   const x = e && e.ext;
   if (!x) return panel("昨天館外來客花了多少", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
@@ -708,7 +716,7 @@ function extPanel(e) {
     h("span", { class: "bank-ext-n bank-tab-num" }, fmt(n || 0), sub ? h("small", null, sub) : null));
   const group = (title, sum, ...rows) => h("div", { class: "bank-ext-g" }, h("div", { class: "bank-ext-gh" }, h("b", null, title), h("span", { class: "bank-tab-num" }, fmt(sum))), ...rows);
   const menu = (x.menu || []).filter(m => (m.npc || 0) + (m.crowd || 0) > 0), orders = x.orders || [];
-  return panel("昨天館外來客花了多少", "有名字的旅客＋散客，每天 05:00 結算",
+  return panel("昨天館外來客花了多少", h("span", null, "有名字的旅客＋散客，每天 05:00 結算", dayTag(x.day || e.day)),
     h("div", { class: "bank-quote" }, num("big", fmt(x.total || 0)), h("small", null, `旅客 ${fmt(pe.npc || 0)} 位・散客 ${fmt(pe.crowd || 0)} 位`)),
     h("div", { class: "bank-ext-cols" },
       group("門票", ticketSum, row("有名字的旅客", tk.hall), row("散客", tk.crowd)),
@@ -726,7 +734,7 @@ function outsidePanel(e) {
   const states = statCounts("unitState", w.states, WLD_STATE), bands = Array.isArray(w.bands) ? statCounts("unitHealth", Object.fromEntries(WLD_BAND.map((k, i) => [k, w.bands[i]])), WLD_BAND) : [];
   const unrest = Array.isArray(w.unrestBands) ? statCounts("unitUnrest", Object.fromEntries(WLD_UNREST.map((k, i) => [k, w.unrestBands[i]])), WLD_UNREST) : [];
   const mult = Math.max(0.3, Math.min(1.1, +w.avgMult || 0)), events = Array.isArray(w.events) ? w.events : [];
-  return panel("外面世界", "整體的樣子，不列每家的數字",
+  return panel("外面世界", h("span", null, "整體的樣子，不列每家的數字", dayTag(w.day || e.day)),
     h("div", { class: "bank-wld-sec" }, h("b", null, "各集團現在的狀態"), statBar(states), statLegend(states)),
     bands.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團景氣分布"), statBands(bands)) : null,
     unrest.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團的人心"), statBands(unrest)) : null,
