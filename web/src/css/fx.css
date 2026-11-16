@@ -265,3 +265,15 @@ html.fx-dragging, html.fx-dragging * { cursor: grabbing !important; -webkit-user
 :is(body.reduce-motion, .fx-rm) .fx-spot-hole.is-moving { transition: none; }
 body.reduce-motion :is(.fx-press, .fx-btn):active,
 body.reduce-motion .fx-press.is-pressed { scale: none; opacity: .86; }
+
+/* 短慶祝（11-16）：拍賣成交（gold）、地下打贏（calm）。不擋操作、2 秒內結束 */
+.cel { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+.cel.cel-screen { position: fixed; z-index: 9000; }
+.cel i { position: absolute; display: block; width: var(--s); height: var(--s); background: var(--c); opacity: 0; }
+.cel-gold i { top: -12px; left: var(--x); height: calc(var(--s) * 1.6); border-radius: 1px; animation: cel-fall 1.7s ease-in var(--d) forwards; }
+.cel-gold::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 70px 6px rgba(243, 210, 122, .75); opacity: 0; animation: cel-flash 1.1s ease-out forwards; }
+.cel-calm i { top: 46%; left: var(--x); border-radius: 50%; box-shadow: 0 0 10px 3px var(--c); animation: cel-mote 1.8s ease-out var(--d) forwards; }
+.cel-calm::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(255, 255, 255, .55), rgba(190, 220, 255, .18) 40%, transparent 70%); opacity: 0; animation: cel-flash 1.6s ease-out forwards; }
+@keyframes cel-fall { 0% { opacity: 1; transform: translateY(0) rotate(var(--rot)); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(110vh) translateX(calc(var(--dx) * .4)) rotate(calc(var(--rot) + 540deg)); } }
+@keyframes cel-flash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes cel-mote { 0% { opacity: 0; transform: translate(0, 0) scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) - 90px)) scale(1.2); } }
