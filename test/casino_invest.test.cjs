@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn, legacy = true) => { const G = load(); G.NUM.casino.grants = []; if (legacy) Object.assign(G.NUM.casino.invest, { mode: "chase", stopLossPct: 15, takeProfitPct: 30, stopPct: 10 });  /* 舊的追高策略（決定 0074）；新的平均買策略（決定 0099）另外測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", D2 = "2026-11-16", SEC = "祕密";
 const mk = (G, bank, budget) => { const h = G.casHouseFix(G.casHouseNew(), D0).house; if (bank != null) h.bankroll = bank; if (budget != null) h.budget = budget; G.casStockHouseFix(h); G.casStockRoll(h, D0, {}); return h; };
 const inv = (G, h) => { const s = G.casBookSnap([], h, 0, null); return G.casBookTotal(s) - G.casBookMinted(s) + G.casBookBurned(s); };
@@ -91,5 +91,25 @@ T("銀行的館方投資（延遲壹天）：日報那壹刻拍快照 house.invP
   h.invPub = pub; const bh = G.casBankHall(w, D1, h, Date.parse(D1 + "T12:00:00+08:00"), []); assert.ok(bh.houseInv && bh.houseInv.hold.length === pub.hold.length && bh.houseInv.asOf === D1);
   const before = JSON.stringify(bh.houseInv); run(G, h, D2); assert.strictEqual(JSON.stringify(G.casBankHall(w, D1, h, Date.parse(D1 + "T12:00:00+08:00"), []).houseInv), before, "快照之後館方再買賣，銀行看到的不變（延遲）");
 });
+const dayN = n => new Date(Date.parse(D0 + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
+T("新策略（決定 0099）：每天平均買全部；比自己均價低 dip.pct% 以上的加碼；不夠 minDays 天不加碼；不追高、不停損停利；守恆", G => {
+  const C = G.NUM.casino.invest, h = mk(G, C.reserve + 1000000000, C.budgetKeep), t0 = inv(G, h);
+  assert.strictEqual(C.mode, "even"); assert.strictEqual(C.stopLossPct, 0); assert.strictEqual(C.takeProfitPct, 0);
+  run(G, h, D0); const I = G.casInvestFix(h), P = I.pool.house, ids = Object.keys(P.own);
+  assert.ok(ids.length >= 5, "平均買很多支"); const cs = ids.map(id => P.cost[id]); assert.ok(Math.max(...cs) / Math.min(...cs) < 1.5, "沒加碼（均價資料不夠）時每支差不多：" + cs.join());
+  assert.ok(Object.values(I.hx).every(a => a.length === 1), "每天記壹個價"); assert.strictEqual(inv(G, h), t0, "守恆");
+  for (let i = 1; i < C.dip.minDays; i++) run(G, h, dayN(i)); // 價不動，建立均價
+  const H = G.casStockHouseFix(h), id0 = Object.keys(P.own)[0], before = JSON.parse(JSON.stringify(P.cost));
+  H.px[id0] = Math.floor(H.px[id0] * 0.9); run(G, h, dayN(C.dip.minDays));
+  const add = {}; for (const id of Object.keys(P.cost)) add[id] = P.cost[id] - (before[id] || 0);
+  const others = Object.keys(add).filter(id => id !== id0 && add[id] > 0).map(id => add[id]), mine = add[id0];
+  assert.ok(mine > Math.max(...others) * (C.dip.mult - 0.6), "跌深那支買得多（約 ×" + C.dip.mult + "）：" + mine + " vs " + Math.max(...others));
+  assert.strictEqual(inv(G, h), t0, "守恆");
+}, false);
+T("新策略：不停損、不停利；跌 50% 也不賣；虧超過 stopPct 才暫停買進", G => {
+  const C = G.NUM.casino.invest, h = mk(G, C.reserve + 1000000000, C.budgetKeep), H = G.casStockHouseFix(h), I = G.casInvestFix(h), P = I.pool.house;
+  P.own.greeneye = 100000; P.cost.greeneye = 100000 * H.px.greeneye * 2;
+  run(G, h, D0); assert.ok(P.own.greeneye >= 100000, "−50% 也不賣"); assert.ok(I.cur.paused.house === "stop", "虧超過 25%：暫停買進");
+}, false);
 console.log(`${pass} passed, ${fail} failed（館方投資）`);
 process.exit(fail ? 1 : 0);
