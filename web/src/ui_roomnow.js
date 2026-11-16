@@ -41,6 +41,7 @@ function openRoom(room) {
   const p = roomPeople(room), name = ROOM_NAMES[room] || room;
   const m = miniLayer(`${name}　現在`, p.known ? (p.n ? `這裡現在有 ${p.n} 位（館友 ${p.mates.length}・旅客 ${p.npcN}・散客 ${p.crowdN}）。` : "這裡現在沒有別人。") : "現在算不出人數。");
   m.card.classList.add("hn-layer", "rn-layer");
+  m.layer.classList.add("sp-top"); // 從賭場、銀行這些面板（z 8800）裡開，要蓋得住（翊文 11-16：點了看不到）；旅客卡也是 sp-top，後開的在上面
   closeOnOutside(m);
   const sec = (title, ...kids) => h("section", { class: "rn-sec" }, h("h3", null, title), ...kids);
   m.card.append(

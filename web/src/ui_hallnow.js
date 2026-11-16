@@ -79,6 +79,7 @@ export function openAll() {
   const c = counts(), list = reviewData() || [];
   const m = miniLayer("展廳的評價", c.known ? `館內現在有 ${c.all.total} 位（館友 ${c.all.mates}、旅客 ${c.all.tourists}、散客 ${c.all.crowd}）；展廳 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
+  m.layer.classList.add("sp-top"); // 同上：要蓋得住面板
   m.card.append(
     crowdMoodLine(),
     c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), nameList(c, c.names.length, false)) : null,
