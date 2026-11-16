@@ -11,6 +11,7 @@
     "test": "node test/run_all.cjs",
     "log:index": "node tools/log_index.cjs",
     "econ:check": "node tools/econ_check.cjs",
+    "books:sign": "node tools/books_sign_check.cjs",
     "econ:prices": "node tools/econ_prices.cjs",
     "econ:scan": "node tools/econ_scan.cjs",
     "econ:status": "node tools/econ_status.cjs",
