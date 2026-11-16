@@ -393,7 +393,7 @@ export const NUM = {
     // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、預算池超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
     //   持股總賺賠虧超過 stopPct% 暫停買進 stopDays 天。on:false 整個關掉
-    invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 15, takeProfitPct: 30, stopPct: 10, stopDays: 7 },
+    invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, mode: "even", dip: { days: 20, pct: 5, mult: 3, minDays: 5 }, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 0, takeProfitPct: 0, stopPct: 25, stopDays: 7 }, // 決定 0099：mode even ＝ 每天平均買全部、價格比自己 20 天均價低 5% 以上的那幾支加碼 ×3，不追高、不停損停利（0 ＝ 關）；mode chase ＝ 舊的（追最近 lookback 天漲最多的 topN 支）
     // 新玩家的起始籌碼是文化部補助（決定 0082）：從外面世界池子搬、來源記 cultureStart，不再憑空。on:false ＝照舊憑空給。maxPlayers：全館最多補助幾位（池子吃緊時只補付得出的部分）
     culture: { on: true, name: "文化部" },
     houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
