@@ -4,6 +4,7 @@
 //   1. fx.js 的 AMB.*（每個房間的環境音）：每個 every()／songCycle()／creepyHook() 的停止函式都要進 timers；每個 fileLoop 都要進 nodes（不然換房間停不掉）
 //   2. fileOnce／fileLoop 要接到房間自己的 g（或接在 g 上的小音量），不能直接接 bus（房間換掉不會跟著停）；AMB 外面接 bus 的是刻意的，要在白名單上
 //   3. UI 的聲音狀態（UI.ambOver、UI.cellarSnd、UI.ambTimer）只能在 ui_core.js 的 setAmbOver／setCellarSnd 裡改；開的人要有關的人
+//   5. 房間有自己的合成旋律（const sched／pad = every）又放整首曲子（songCycle）時，songCycle 要給第 6 個參數 duck，曲子放的時候旋律淡出（11-16「圖書館兩個音樂好像會重疊」）
 //   4. 蓋在畫面上的框（.nb-layer）被程式直接拿掉時，要走 nbClose（框關掉才會收賭場、合作的聲音和計時器）
 // 有問題 exit 1。test/snd_check.test.cjs 也用它。
 const fs = require("fs"), path = require("path");
@@ -30,6 +31,7 @@ function checkFx(fx) {
   const ents = ambEntries(fx);
   if (ents.length < 15) bad.push(`AMB 只找到 ${ents.length} 個房間（讀法壞了？）`);
   for (const e of ents) {
+    if (/\bconst\s+(?:sched|pad)\s*=\s*every\(/.test(e.src)) for (const m of e.src.matchAll(/songCycle\(([^;]*?)\);/g)) if (m[1].split(",").length < 6) bad.push(`AMB.${e.name}：有合成旋律又放 songCycle，沒給 duck，兩首會疊在壹起`);
     const timers = [...e.src.matchAll(/timers:\s*\[([^\]]*)\]/g)].map(m => m[1]).join(",");
     for (const m of e.src.matchAll(/(?:const|let)\s+(\w+)\s*=\s*(every|songCycle)\(/g)) {
       if (!new RegExp("\\b" + m[1] + "\\b").test(timers)) bad.push(`AMB.${e.name}：${m[1]}（${m[2]}）沒進 timers，換房間不會停`);

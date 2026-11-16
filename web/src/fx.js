@@ -630,10 +630,16 @@ export const FX = (() => {
       }, () => null);
     }
     // 房間偶爾放的整首曲子（11-16 翊文：「播完後安靜20秒左右再撥」）：壹首播完才開始算，安靜 15～25 秒再放下壹首（ids 輪流）；進房間也先安靜 15～25 秒。回傳停止函式（跟 every 壹樣放進 timers）
-    function songCycle(c, g, ids, gain, first) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
+    //   duck：房間原本的合成旋律接在這個 GainNode 上；曲子放的時候它淡出、播完前 2 秒淡回來，兩首不會疊在壹起（11-16 翊文：「圖書館兩個音樂好像會重疊」）
+    function songCycle(c, g, ids, gain, first, duck) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
       let alive = true, id = null, k = (Math.random() * ids.length) | 0;
       const wait = (ms) => { id = setTimeout(play, ms); };
-      const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
+      const ducked = (d) => {
+        if (!duck || !d) return;
+        const t = c.currentTime, p = duck.gain;
+        p.cancelScheduledValues(t); p.setTargetAtTime(0, t, 0.6); p.setTargetAtTime(1, t + Math.max(1, d - 2), 1.2);
+      };
+      const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { ducked(d); if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
       wait(first ? rand(first[0], first[1]) : rand(15000, 25000));
       return () => { alive = false; clearTimeout(id); };
     }
@@ -741,7 +747,10 @@ export const FX = (() => {
           [698.46, 0, 659.25, 698.46, 783.99, 0, 698.46, 659.25], [587.33, 0, 440, 0, 587.33, 659.25, 698.46, 0],
           [587.33, 0, 466.16, 587.33, 523.25, 0, 466.16, 440], [392, 0, 523.25, 0, 329.63, 0, 349.23, 0],
         ];
-        const send = echoSend(c, g, E8 * 3, 0.18);
+        // 11-17 翊文：「這首手作坊多人的時候可以放」：木琴、低音、和弦、沙鈴接在 mus 上，人多（mix busy）時淡出換 workshop-crowd；剪刀聲照舊
+        const mus = c.createGain(); mus.connect(g);
+        const ws = { song: null };
+        const send = echoSend(c, mus, E8 * 3, 0.18);
         let next = c.currentTime + 0.1, bar = 0;
         const play = (t0, b) => {
           const ch = b % 4;
@@ -753,15 +762,25 @@ export const FX = (() => {
           });
           [0, 2, 4, 6].forEach((i, k) => { // 撥弦低音：根音、五度、根音、五度
             const f = BASS[ch][k % 2], t = t0 + i * E8;
-            tone(t, { type: 'triangle', f, g: 0.06, a: 0.004, d: 0.3, to: g });
-            tone(t, { f: f * 2, g: 0.018, a: 0.004, d: 0.18, to: g });
+            tone(t, { type: 'triangle', f, g: 0.06, a: 0.004, d: 0.3, to: mus });
+            tone(t, { f: f * 2, g: 0.018, a: 0.004, d: 0.18, to: mus });
           });
-          [2, 6].forEach((i) => CHORD[ch].forEach((f) => tone(t0 + i * E8 + 0.01, { type: 'triangle', f, g: 0.014, a: 0.003, d: 0.16, to: g }))); // 反拍的小和弦
-          if (b % 2 === 0) noise(t0 + 4 * E8, { type: 'highpass', f: 6000, q: 0.7, g: 0.008, a: 0.001, d: 0.03, to: g }); // 輕輕的沙鈴
+          [2, 6].forEach((i) => CHORD[ch].forEach((f) => tone(t0 + i * E8 + 0.01, { type: 'triangle', f, g: 0.014, a: 0.003, d: 0.16, to: mus }))); // 反拍的小和弦
+          if (b % 2 === 0) noise(t0 + 4 * E8, { type: 'highpass', f: 6000, q: 0.7, g: 0.008, a: 0.001, d: 0.03, to: mus }); // 輕輕的沙鈴
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % MEL.length; next += E8 * 8; } }, () => 1000);
         const snip = every(() => { const t = c.currentTime + 0.05; [0, 0.09].forEach((dt) => noise(t + dt, { type: 'highpass', f: 3500, q: 1.5, g: 0.018, a: 0.001, d: 0.025, to: g })); }, () => rand(7000, 14000)); // 偶爾剪刀喀擦
-        return { nodes: [], timers: [sched, snip] };
+        const songStop = { stop() { if (ws.song) ws.song.n.stop(); } };
+        return {
+          nodes: [songStop], timers: [sched, snip],
+          mix(m) {
+            if (!m || !('busy' in m)) return;
+            const on = !!m.busy, t = c.currentTime;
+            if (on && !ws.song) ws.song = fileLoop(c, g, 'workshop-crowd', 0, true);
+            mus.gain.setTargetAtTime(on ? 0 : 1, t, 1.2);
+            if (ws.song) ws.song.v.gain.setTargetAtTime(on ? 0.45 : 0, t, 1.2);
+          },
+        };
       },
       // 抱枕工作台：軟綿綿的搖籃曲小圓舞曲（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「抱枕區音樂也要」→ 原本只有布料聲和縫紉機，換成真的音樂，布料聲、縫紉機留著當點綴。
@@ -819,10 +838,13 @@ export const FX = (() => {
           [587.33, 0, 698.46, 659.25], [523.25, 0, 0, 0], [466.16, 523.25, 587.33, 0], [554.37, 0, 0, 0],
           [880, 0, 783.99, 698.46], [659.25, 0, 523.25, 0], [587.33, 0, 466.16, 523.25], [440, 0, 0, 0],
         ];
-        const send = echoSend(c, g, 0.6, 0.35);
+        // 11-16：合成的風琴＋旋律接在 syn 上（鋼琴放的時候淡出），syn 再接 calmG（打開禁書頁籤時連鋼琴壹起淡出，只留 Suspense）
+        const calmG = c.createGain(); calmG.connect(g);
+        const syn = c.createGain(); syn.connect(calmG);
+        const send = echoSend(c, syn, 0.6, 0.35);
         let next = c.currentTime + 0.1, bar = 0, tk = 0;
         const play = (t0, b) => {
-          PAD[b % 4].forEach((f) => { tone(t0, { f, g: 0.013, a: 1.2, d: Q * 4 + 0.8, to: g }); tone(t0, { f: f * 3, g: 0.0025, a: 1.4, d: Q * 4, to: g }); }); // 風琴
+          PAD[b % 4].forEach((f) => { tone(t0, { f, g: 0.013, a: 1.2, d: Q * 4 + 0.8, to: syn }); tone(t0, { f: f * 3, g: 0.0025, a: 1.4, d: Q * 4, to: syn }); }); // 風琴
           MEL[b].forEach((f, i) => {
             if (!f) return;
             const t = t0 + i * Q;
@@ -836,10 +858,10 @@ export const FX = (() => {
         const page = every(() => noise(c.currentTime + 0.05, { type: 'bandpass', f: 1400, f2: 4000, q: 0.8, g: 0.012, a: 0.05, d: 0.2, to: g }), () => rand(12000, 20000));
         // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 每 1～2 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
         let pu = 0;
-        const piano = songCycle(c, g, ['lib-piano-a', 'lib-piano-b'], 0.4); // 11-16：兩首輪流，播完安靜約 20 秒再放
+        const piano = songCycle(c, calmG, ['lib-piano-a', 'lib-piano-b'], 0.4, null, syn); // 11-16：兩首輪流，播完安靜約 20 秒再放；放的時候合成旋律淡出
         const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
         const fb = fileLoop(c, g, 'suspense-forbidden', 0); // 禁書頁籤（11-16 翊文，Pixabay「Suspense Tension」）：mix({ forbidden })
-        return { nodes: [fb.n], timers: [sched, creak, page, piano, pulse], mix(m) { if (m && 'forbidden' in m) fb.v.gain.setTargetAtTime(m.forbidden ? 0.32 : 0, c.currentTime, 1.5); } };
+        return { nodes: [fb.n], timers: [sched, creak, page, piano, pulse], mix(m) { if (m && 'forbidden' in m) { fb.v.gain.setTargetAtTime(m.forbidden ? 0.32 : 0, c.currentTime, 1.5); calmG.gain.setTargetAtTime(m.forbidden ? 0 : 1, c.currentTime, 1.5); } } };
       },
       hall(c, g) { // 我的展廳：明亮壹點的弦樂和聲，遠處有人聲
         const room = bed(c, g, 'lowpass', 200, 0.5, 0.025);
@@ -894,7 +916,8 @@ export const FX = (() => {
         const room = bed(c, g, 'lowpass', 160, 0.5, 0.03);
         const dl = c.createDelay(1), fb = c.createGain(), send = c.createGain();
         dl.delayTime.value = 0.31; fb.gain.value = 0.38;
-        send.connect(g); send.connect(dl); dl.connect(fb); fb.connect(dl); fb.connect(g);
+        const syn = c.createGain(); syn.connect(g); // 11-16：合成弦樂（和腳步回音）接在 syn 上，鋼琴放的時候淡出
+        send.connect(syn); send.connect(dl); dl.connect(fb); fb.connect(dl); fb.connect(syn);
         const CH = [[261.63, 329.63, 392], [220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66]]; // C、Am、F、G
         let k = 0;
         const pad = every(() => {
@@ -910,7 +933,7 @@ export const FX = (() => {
           }
         }, () => rand(6500, 13000));
         // 11-16 翊文：畫廊放 nostalgic／Welte 鋼琴，兩首輪流，播完安靜約 20 秒再放（songCycle）
-        const nost = songCycle(c, g, ['gallery-nostalgic', 'gallery-welte'], 0.4);
+        const nost = songCycle(c, g, ['gallery-nostalgic', 'gallery-welte'], 0.4, null, syn);
         return { nodes: [room.n], timers: [pad, steps, nost] };
       },
       cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）

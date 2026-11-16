@@ -147,7 +147,7 @@ export const NUM = {
   // newLobby：新的大廳（導覽圖底圖、右欄、圓形圖示）。有問題改成 false 就回到舊的大廳，舊的程式都還在
   // newCellar：地下室改版（決定 0067、0068）。true ＝合作地下每一層的房間探索完之後要打守門，打贏才算走完。
   //   11-12 翊文說直接打開，不用先自己測（決定 0069）。有問題改回 false 就回到舊的（房間走完直接算這一層走完），舊的程式都還在
-  ui: { newLobby: true, newCellar: true, lobbyCrowdMusic: 150, lobbySan: [55, 30, 15], casinoBusyMusic: 35 }, // casinoBusyMusic：賭場超過幾人換成 Copper Nights（11-16 翊文：「賭場裡超過35人就改播這個」）； // lobbySan：大廳照理智換曲（11-16 翊文）：低於 55 放「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律； // lobbyCrowdMusic：館內同時超過幾人，大廳換成「Inviting Loop」（11-16 翊文：「人潮很多的時候用這首」；150 是先估的，太常/太少出現就改）
+  ui: { newLobby: true, newCellar: true, lobbyCrowdMusic: 150, lobbySan: [55, 30, 15], casinoBusyMusic: 35, workshopBusyMusic: 20 }, // workshopBusyMusic：手作坊超過幾人換成翊文的錄音（11-17 翊文：「這首手作坊多人的時候可以放」；20 是先估的） // casinoBusyMusic：賭場超過幾人換成 Copper Nights（11-16 翊文：「賭場裡超過35人就改播這個」）； // lobbySan：大廳照理智換曲（11-16 翊文）：低於 55 放「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律； // lobbyCrowdMusic：館內同時超過幾人，大廳換成「Inviting Loop」（11-16 翊文：「人潮很多的時候用這首」；150 是先估的，太常/太少出現就改）
   // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim_fight.cjs
   //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
   //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
