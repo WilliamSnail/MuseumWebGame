@@ -684,7 +684,7 @@ export function viewFor(run, id) {
   if (v.last && v.last.events) v.last.events = { [id]: v.last.events[id] || [] }; // 事件只給他自己的
   v.fresh = (run.fresh && run.fresh[id]) || [];
   if (run.fun) coopFilterView(v, run, id); // 不該看到的東西在這裡拿掉：線索、幻覺、地圖（coop_fun.js）
-  if (run.phase === "fight" && run.fight) { v.fightKind = run.fightKind || "gate"; v.fightView = coopFightView(run, id); v.votes = { [id]: (run.votes || {})[id] || null }; } // 打怪物：別人選了什麼結算前看不到，只知道誰選好了（fightView.waiting）
+  if (run.phase === "fight" && run.fight) { v.fightKind = run.fightKind || "gate"; v.fightRank = (run.fight && run.fight.rank) || 1; v.fightView = coopFightView(run, id); v.votes = { [id]: (run.votes || {})[id] || null }; } // 打怪物：別人選了什麼結算前看不到，只知道誰選好了（fightView.waiting）
   // 怪物的個性「蓋著布」「看不清楚」：下一招是哪一種（甚至要對誰）不送出去，開發者工具也看不到
   const hid = run.phase === "fight" && run.fight ? fightIntentHidden(run.fight) : null;
   if (hid && v.fight && v.fight.intent) v.fight.intent = hid === "veil" ? { kind: "veil", to: v.fight.intent.to } : { kind: "blur", to: null };

@@ -10,7 +10,7 @@
 // ================================================================
 import { nowMs } from "../../shared/logic.js";
 import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventNoticeText, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks, eventsToNotify } from "../../shared/events.js";
-import { ADDONS, HIDE_CHROME, P, PANELS, UI, every, h, icon, navTo, note, readJSON, snd } from "./ui_core.js";
+import { ADDONS, HIDE_CHROME, P, PANELS, UI, every, h, icon, navTo, note, readJSON, snd, sndFile } from "./ui_core.js";
 
 // 只讀正式週的 week.json（備用週沒有日期，不會有活動）
 const RAW = import.meta.glob("../../content/weeks/*/week.json", { eager: true, import: "default" });
@@ -70,7 +70,7 @@ function eventNoticeTick() {
   if (!P || document.hidden || HIDE_CHROME.includes(UI.screen)) return;
   eventsToNotify(allEvents(), nowMs(), seenList()).forEach(ev => {
     markSeen(ev.id);
-    snd("bell");
+    snd("bell"); sndFile("bell-ring", 0.4); // 限時活動開跑：真的鈴聲（11-16 翊文，Pixabay「Bell Sound Effect」）
     note(eventNoticeText(ev), "good", 20000, eventGo(ev));
   });
 }

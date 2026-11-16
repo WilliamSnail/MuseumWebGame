@@ -246,6 +246,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     if (!Array.isArray(b.pages) || b.pages.length < 2 || b.pages.length > 6) E(where, "pages 要 2～6 頁");
     else b.pages.forEach((p, i) => text(`${where}.pages[${i}]`, p, LIMITS.page));
     text(where + ".hint", b.hint, LIMITS.bookHint, { optional: true });
+    if (b.big !== undefined && (b.big !== true || !(ctx.mainLine && ctx.mainLine.has(b.line)))) E(where, "big 只能寫 true，而且只放在主線（kind main）的書上（大揭曉那本，打開時會轟壹聲）");
     if (b.ending) { if (n !== 7 || ctx.spare) E(where, "ending 只能放在週日（d7）"); return; }
     const u = b.unlock || { type: "now" };
     if (u.type === "find") { if (!ctx.rooms.has(u.room)) E(where, `unlock.room「${u.room}」不是這週到這天為止的房間`); }
