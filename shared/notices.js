@@ -55,6 +55,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-69c491", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "離開地下後不再聽到地下的聲音", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "從地下收藏庫回大廳（包括被嚇退、昏倒、逃跑），地下的風聲、滴水會停掉，換回大廳的聲音。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-47d02c", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "財報的進出名字和歸屬修正", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

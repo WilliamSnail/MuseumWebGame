@@ -512,7 +512,7 @@ export function historyCard(x, made) {
 
 // ---------- 地下收藏庫（系統 M） ----------
 SCREENS.cellar = root => {
-  setCellarSnd(P.cellar.run && P.cellar.run.floor ? { floor: P.cellar.run.floor, mode: "explore" } : null); // 地下的聲音照層換（11-15）
+  setCellarSnd(P.cellar.run && P.cellar.run.floor ? { floor: P.cellar.run.floor, mode: "explore" } : null, "room"); // 地下的聲音照層換（11-15）
   if (P.cellar.run) { cellarRoom(root); return; }
   // 地下室改版（翊文 11-11 生的素材 web/public/cellar/，css/cellar2.css）：跟新大廳同壹個總開關 NUM.ui.newLobby
   const newLobby = !!(NUM.ui && NUM.ui.newLobby);
