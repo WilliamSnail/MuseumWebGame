@@ -554,7 +554,7 @@ async function econGo() {
     setChips(r.wallet.chips);
     sync(r);
     snd(ev.win ? "coin" : ev.loot ? "coin" : "error");
-    if (!ev.win && !ev.loot) sndFile("water-splash", 0.5); // 石沉大海：撲通壹聲（11-16 翊文，Pixabay「Water Splash」）
+    if (!ev.win && !ev.loot) { sndFile("water-splash", 0.5); setTimeout(() => sndFile("waves-short", 0.3), 900); } // 撲通之後水面晃壹下 // 石沉大海：撲通壹聲（11-16 翊文，Pixabay「Water Splash」）
     if (ev.rescued) { note("把莊家拚回來了！", "good"); snd("unlock"); }
     celebrate([]);
   }
@@ -635,6 +635,7 @@ function dinerPane() {
   const buy = it => act("buy", { item: it.n }, r => {
     S.dinerLines = r.lines || [];
     snd("coin");
+    if (it.icon === "cup") { sndFile("pouring", 0.45); setTimeout(() => sndFile("bubbles", 0.22), 2600); } // 倒完再冒壹點泡 // 飲料（麥茶、葡萄汁、珍藏茶）：倒水聲（11-16 翊文，Pixabay「Pouring Water」）
     if (r.mood) note(`心情 +${r.mood}${r.san ? `，理智 +${r.san}` : ""}`, "good");
     else if (r.san) note(`理智 +${r.san}`, "good");
     celebrate(r.ach);

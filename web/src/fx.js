@@ -871,18 +871,18 @@ export const FX = (() => {
         //   mode：map 看地圖、選路／explore 房間探索／fight 遇到怪物／gate 守門／rest 休息點
         //   每層：bed＝三條底音的音量（wind 風、basement 地下室錄音、sewer 下水道管線）；odd＝偶爾冒出來的聲音；gap＝幾秒冒壹次；drip 合成的滴水；coming＝會不會很久壹次「有人來了」
         const FLOOR = {
-          base: { bed: { wind: 0.22, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise'], gap: [35, 80], drip: 1, coming: true },
+          base: { bed: { wind: 0.22, basement: 0.4, sewer: 0, cave: 0.35 }, odd: ['echo-dungeon', 'echo-far', 'basement-noise', 'basement-noise'], gap: [35, 80], drip: 0, coming: true }, // 選樓層的大廳：滴水用洞穴錄音（cave），不放各層的 drips
           1: { bed: { wind: 0.1, basement: 0, sewer: 0.35 }, odd: ['cave-drops', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 1 }, // 積灰的儲藏室：滴水的水管
           2: { bed: { wind: 0.3, basement: 0.3, sewer: 0 }, odd: ['echo-far', 'basement-noise', 'basement-knock'], gap: [40, 90], drip: 0.5 }, // 雕像廳：很冷
           3: { bed: { wind: 0.08, basement: 0.4, sewer: 0 }, odd: ['echo-dungeon', 'echo-dungeon', 'basement-noise', 'basement-knock'], gap: [35, 80], drip: 0.3, coming: true }, // 空畫框的走廊：長走廊的回音
-          4: { bed: { wind: 0.05, basement: 0, sewer: 0.5 }, odd: ['cave-drops', 'cave-drops', 'echo-far'], gap: [20, 50], drip: 1.6 }, // 淹水的檔案室
+          4: { bed: { wind: 0.05, basement: 0, sewer: 0.5, waves: 0.25 }, odd: ['cave-drops', 'cave-drops', 'echo-far', 'bubbles'], gap: [20, 50], drip: 1.6 }, // 淹水的檔案室
           5: { bed: { wind: 0.05, basement: 0, sewer: 0, void: 0.3 }, odd: ['echo-far'], gap: [90, 180], drip: 0 }, // 很大的白色房間：故意很空，只有很低的「虛空回響」（Pixabay「Echo of the Void」）
         };
         // 在做什麼：bed 底音乘幾倍、gapK 冒聲音的間隔乘幾倍（0＝不冒）、dripK 滴水
         const MODE = { map: { bed: 1, gapK: 1, dripK: 1 }, explore: { bed: 0.7, gapK: 0.6, dripK: 1 }, fight: { bed: 0.35, gapK: 0, dripK: 0.3 }, gate: { bed: 0.2, gapK: 0, dripK: 0 }, gate2: { bed: 0.15, gapK: 0, dripK: 0 }, rest: { bed: 0, gapK: 0, dripK: 0, wind: 0.08 } };
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
-        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0), drips: fileLoop(c, g, 'water-drips', 0) }; // drips：11-16 翊文「這可以改成地下室廳的水聲特效」，取代合成的滴水，音量照每層的 drip
-        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n, L.drips.n];
+        const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0), drips: fileLoop(c, g, 'water-drips', 0), cave: fileLoop(c, g, 'cave-drips', 0), waves: fileLoop(c, g, 'waves', 0) }; // cave：選樓層大廳的洞穴滴水；waves：B4 的水波（11-16 翊文） // drips：11-16 翊文「這可以改成地下室廳的水聲特效」，取代合成的滴水，音量照每層的 drip
+        const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n, L.drips.n, L.cave.n, L.waves.n];
         // 11-15 翊文給的音樂（Pixabay，shared/sfx_files.js）：用到才下載（lazy）。戰鬥＝ready-fight、守門＝stairs-boss、B2～B5 平常＝緊張的 suspense-*（B1 不放）
         const LZ = {};
         const music = (id, v, fade) => { // v＝這個狀態要多大聲；0 而且還沒建過就不建（不下載）

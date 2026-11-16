@@ -11,7 +11,7 @@ import { todayStr } from "../../shared/logic.js";
 import { isFresh } from "../../shared/fresh.js";
 import { MAP_LAYER_NAME, mapLayersOn, mapSpots } from "../../shared/map.js";
 import { NPC_ROSTER } from "../../shared/npc_roster.js";
-import { ADDONS, P, freshTag, h } from "./ui_core.js";
+import { ADDONS, P, freshTag, h, sndFile } from "./ui_core.js";
 import { npcName } from "./ui_npc_card.js";
 
 const IMG = n => `/map/${n}.webp`;
@@ -55,11 +55,12 @@ function pathOf(spots) {
 }
 const svgEl = (tag, attrs) => { const e = document.createElementNS("http://www.w3.org/2000/svg", tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); return e; };
 
+const WATERY = new Set(["bridge", "harbour", "island"]); // 水邊的地點（點了有水波聲，Pixabay「Water Waves」）
 function spotBtn(s, i, sel, pick) {
   const fresh = isFresh(P, "origin", "map:" + s.id), lit = s.lit;
   const icon = ICONS.has(s.icon) ? s.icon : "blank";
   const st = STAMP[s.layer];
-  const b = h("button", { type: "button", class: "map-spot " + (lit ? "lit" : "out") + (fresh ? " new" : "") + (sel === s.id ? " on" : "") + " l-" + s.layer, style: { left: s.x + "%", top: s.y + "%" }, dataset: { id: s.id }, "aria-pressed": String(sel === s.id), "aria-label": lit ? `${s.name}（${MAP_LAYER_NAME[s.layer] || ""}）` : "這裡有東西，還看不清", onClick: () => pick(s.id) },
+  const b = h("button", { type: "button", class: "map-spot " + (lit ? "lit" : "out") + (fresh ? " new" : "") + (sel === s.id ? " on" : "") + " l-" + s.layer, style: { left: s.x + "%", top: s.y + "%" }, dataset: { id: s.id }, "aria-pressed": String(sel === s.id), "aria-label": lit ? `${s.name}（${MAP_LAYER_NAME[s.layer] || ""}）` : "這裡有東西，還看不清", onClick: () => { if (lit && WATERY.has(icon)) sndFile("waves-short", 0.35); pick(s.id); } }, // 橋頭、碼頭、小島：水波聲（11-16 翊文）
     st ? h("img", { class: "map-stamp", src: IMG(st(i)), alt: "", "aria-hidden": "true", draggable: "false" }) : null,
     lit ? h("img", { class: "map-ic", src: IMG("icon-" + icon), alt: "", "aria-hidden": "true", draggable: "false" }) : null,
     h("img", { class: "map-pin", src: IMG(lit ? (fresh ? "pin-new" : "pin-lit") : "pin-outline"), alt: "", "aria-hidden": "true", draggable: "false" }),
