@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-5027e8", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "畫廊與拍賣",
+    title: "手機上的畫廊看得到畫了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿時，畫廊的畫放在上面、說明和任務放在下面，往下滑就看得到。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-d32090", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
     title: "可以往下滑的地方會提示", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
