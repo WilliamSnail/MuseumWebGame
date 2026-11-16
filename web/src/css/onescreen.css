@@ -829,3 +829,14 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
   .onescreen-room .onescreen-side .ad-bar.off .ad-short { display: block; flex: 1 1 100%; text-align: center; }
   .onescreen-room .onescreen-side .ad-bar .ad-btn { white-space: normal; line-height: 1.15; min-height: 38px; }
 }
+
+/* 抽屜拉環看得出能按（11-16，翊文：「這個可以拉開的抽屜玩家不太知道可以當按鈕」）：字前面壹個箭頭；還沒拉開過的玩家，拉環輕輕發亮呼吸 */
+.onescreen-room .onescreen-pull span { display: inline-flex; align-items: center; gap: 5px; }
+.onescreen-room .onescreen-pull .op-arrow { font-style: normal; font-size: .8em; color: #7A2A10; }
+.onescreen-room .onescreen-pull:hover { filter: brightness(1.12) drop-shadow(0 0 6px rgba(255, 210, 120, .7)); }
+.onescreen-room .onescreen-pull.op-hint { animation: op-breathe 2.2s ease-in-out infinite; }
+@keyframes op-breathe { 0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 210, 120, 0)); } 50% { filter: brightness(1.15) drop-shadow(0 0 9px rgba(255, 210, 120, .95)); } }
+.onescreen-room .onescreen-pull.op-hint .op-arrow { animation: op-nudge 2.2s ease-in-out infinite; }
+@keyframes op-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.onescreen-room .onescreen-pull .op-arrow { font-size: 1em; color: #9A2A0A; text-shadow: 0 0 4px rgba(255, 230, 160, .9); }
+.onescreen-room .onescreen-pull.op-hint::after { content: "← 點拉環拉開"; position: absolute; left: 100%; top: 50%; transform: translate(6px, -60%); padding: 3px 10px 4px; border-radius: 999px; background: rgba(28, 16, 8, .9); border: 1px solid #C9A55A; color: #F3E0B0; font-size: .75rem; font-weight: 700; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
