@@ -29,14 +29,17 @@ const WORKFLOW_FILE = path.join(ROOT, ".github", "workflows", "discord-scheduled
 const STATE_FILE = path.join(ROOT, ".announce-state", "posted.json");
 const RETRY_MIN = 20; // 晚這麼多分鐘再跑一次
 const WINDOW_MIN = 360; // 超過時間這麼久還沒發，就不發了（過時的公告不要半夜跳出來）
-const DAY_POST_AT = "07:50"; // 今日館訊幾點起可以發。排程 08:00 寫完、部署好就手動觸發；GitHub 的 08:27 定時留著當備援（發過就不重發）
+// 今日館訊幾點起可以發。每天的排程 08:23（台灣）才開始寫，今天的 dN.json 要等排程合併進 main 才存在，所以不管這個鐘點多早，
+// 內容上線前不會有「今天」的訊息可發（autoEntries 只看 main 上有 dN.json 的天）。真正的發送時機：ship 部署成功後馬上叫（--after-deploy）、
+// deploy.yml 部署完補叫壹次；GitHub 的定時只是備援（發過就不重發）。
+const DAY_POST_AT = "07:50";
 const DAY_POST_FROM = "2026-11-10"; // 從這天開始照這個方式發（再早的已經在部署時發過了，不要重發）
 const EVENT_EARLY_MIN = 10; // 活動開始前這麼久起可以發（工作流程開始前 7 分鐘跑，整點的定時最容易晚）
 const EVENT_SLOTS = [{ from: "20:00", weekendOnly: false }, { from: "14:00", weekendOnly: true }]; // 活動固定開在這些時間，開跑公告才發得到
 // 固定的時間（UTC，台灣減 8 小時；週末的 13:53 在 UTC 也是同一天）。改了要跑 npm run announce:sync
 const FIXED_CRONS = [
-  ["27 0 * * *", "今日館訊：台灣每天 08:27"],
-  ["47 0 * * *", "今日館訊：補一次"],
+  ["17 1 * * *", "今日館訊：台灣每天 09:17（備援：排程 08:23 開始、約 08:55 部署完，備援排在部署之後）"],
+  ["37 1 * * *", "今日館訊：補一次"],
   ["53 11 * * *", "限時活動 20:00：台灣每天 19:53"],
   ["13 12 * * *", "限時活動 20:00：補一次"],
   ["53 5 * * 0,6", "限時活動 14:00：台灣週末 13:53"],
@@ -137,6 +140,12 @@ function eventSlotOk(date, from) {
 }
 // 最新一次部署是不是壞的（"completed/failure" 這種）。還在跑不算壞；讀不到也不算（不要因為讀不到就不發）
 const deployBroken = s => /^completed\//.test(String(s || "")) && s !== "completed/success";
+// 定時（schedule）那幾次用的更嚴的版本：還沒部署完也先不發今日館訊（11-16：排程 08:23 開始、約 08:55 才部署完，
+// 合併之後、部署完之前跑到定時備援，會在內容還沒上線時就說「今天有新東西」）。
+// 狀態是 discord-scheduled.yml 讀的「status/conclusion」；最新壹次部署不是現在 main 的那個 commit（還沒開始跑）寫 stale/；讀不到（空的）不擋。
+// 手動叫的（workflow_dispatch：ship 部署成功後、deploy.yml 部署完的最後壹步）不用這個：deploy.yml 那壹步還在跑的時候擋了，就永遠發不出去。
+const deployNotReady = s => !!s && String(s) !== "completed/success";
+const blockedState = (state, event) => (event === "schedule" ? deployNotReady(state) : deployBroken(state));
 
 // 這一刻該發哪幾則：到時間了、還在時限內、沒發過。late：預約公告過了時限還沒發的（只印出來；自動的過了就過了，不用講）
 function duePosts(entries, posted, now) {
@@ -198,8 +207,8 @@ async function main() {
     return;
   }
   let entries = allEntries();
-  if (deployBroken(process.env.DEPLOY_STATE)) { // 內容還沒上線就不說今天有新東西。部署修好的時候 deploy.yml 會再叫這支
-    console.log(`最新的部署沒成功（${process.env.DEPLOY_STATE}），今日館訊先不發。`);
+  if (blockedState(process.env.DEPLOY_STATE, process.env.GITHUB_EVENT_NAME)) { // 內容還沒上線就不說今天有新東西。部署完（或修好）的時候 deploy.yml 會再叫這支
+    console.log(`最新的部署還沒成功上線（${process.env.DEPLOY_STATE}），今日館訊先不發。`);
     entries = entries.filter(e => !e.isDay);
   }
   const r = await runDue(entries, readPosted(), Date.now());
@@ -209,4 +218,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { beatEntry, parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };
+module.exports = { beatEntry, parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };
