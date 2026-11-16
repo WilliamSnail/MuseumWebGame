@@ -10,7 +10,7 @@ import { NET } from "./net_firebase.js";
 import { CAS_AUC } from "../../shared/casino_auction.js";
 import { NUM } from "../../shared/config.js";
 import { APPLAUSE, aucDealDone } from "../../shared/applause.js";
-import { ADDONS, UI, btn, go, h, note, setChips, snd, sndFile } from "./ui_core.js";
+import { ADDONS, UI, btn, celebrate, go, h, note, setChips, snd, sndFile } from "./ui_core.js";
 import { reloadSave } from "./ui_login.js";
 
 let data = null; // 最近一次的報價 { items, mine, left, perDay, holdMax, sellPct, chips }；重畫畫廊時先用這份，背景再問一次
@@ -167,7 +167,7 @@ async function loadAuc() {
     aucFailed = false;
     if (r && r.ok) {
       auc = r.auctions || null; if (typeof r.chips === "number") setChips(r.chips);
-      if (auc && auc.notes && auc.notes.length && aucDealDone(auc.notes)) sndFile("applause", APPLAUSE.vol); // 拍賣成交（賣出、拍到）
+      if (auc && auc.notes && auc.notes.length && aucDealDone(auc.notes)) { sndFile("applause", APPLAUSE.vol); celebrate("gold"); } // 拍賣成交（賣出、拍到）
       if (auc && auc.notes && auc.notes.length) aucMsg = { text: auc.notes.join("　"), tone: "good" }; // 收標的結果：伺服器叫過就清掉，這裡要留著給玩家看
     }
   } catch (e) { aucFailed = true; }
