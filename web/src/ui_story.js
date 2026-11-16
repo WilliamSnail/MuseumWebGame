@@ -412,7 +412,7 @@ export function originTabs(tab, counts = {}) {
   const sc = storyCounts();
   return h("div", { class: "seg big-tabs origin-tabs", role: "tablist", "aria-label": "書架的分類" }, ORIGIN_TABS.map(([id, name]) => {
     const c = counts[id] || sc[id] || [0, 0, 0];
-    const b = h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "seg-btn" + (id === tab ? " on" : ""), onClick: () => go("origin", { tab: id }, { action: false }) },
+    const b = h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "seg-btn tab-" + id + (id === tab ? " on" : ""), onClick: () => go("origin", { tab: id }, { action: false }) },
       h("span", null, name), h("span", { class: "tab-c", title: `${c[0]} 本，${c[1]} 本還沒讀` }, c[1] ? `${c[0]}・${c[1]} 沒讀` : String(c[0])));
     if (c[2]) b.append(freshTag("tab-fresh"));
     return b;
