@@ -9,6 +9,8 @@
  "sewer-pipe": {"heard":null,"note":null},
  "cave-drops": {"heard":null,"note":null},
  "basement-knock": {"heard":null,"note":null},
+ "lobby-crowd": {"heard":null,"note":null},
+ "lobby-event": {"heard":null,"note":null},
  "museum-hall": {"heard":null,"note":null},
  "void-echo": {"heard":null,"note":null},
  "safe-return": {"heard":null,"note":null},

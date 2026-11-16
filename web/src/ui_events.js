@@ -22,6 +22,7 @@ export function allEvents() {
 }
 // 現在進行中的某一種活動，回傳「記下來的樣子」（events.js 的 eventRunOf）；沒有就是 null
 export const liveEvent = kind => eventRunOf(eventLive(allEvents(), kind, nowMs()));
+ADDONS.eventLiveAny = () => !!eventLive(allEvents(), null, nowMs()); // 有沒有任何限時活動進行中：大廳換活動那首（11-16，ui_core.js audioState）
 // 「限時活動 ×1.5」的小標籤。boost 是 eventRunOf 的樣子（run.event、房間的 extra.boost 也是）
 export const eventTagNode = (boost, extra) => h("span", { class: "ev-tag", title: boost && boost.title ? `限時活動：${boost.title}` : "限時活動" }, icon("sparkle"), ` ${eventTag(boost)}`, extra ? ` ${extra}` : "");
 

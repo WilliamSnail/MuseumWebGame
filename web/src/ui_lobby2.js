@@ -59,7 +59,9 @@ function eventStrip() {
     const bars = eventBars(allEvents(), Date.now()), b = bars[0];
     const key = b ? [b.phase, b.ev.id, b.phase === "live" ? eventLeftText(b.left) : ""].join("|") + bars.length : "none";
     if (key === last) return;
-    last = key;
+    const liveNow = !!(b && b.phase === "live"), evFlip = last !== null && liveNow !== box._live; // 活動開始／結束：大廳的音樂跟著換（11-16）
+    last = key; box._live = liveNow;
+    if (evFlip && ADDONS.audioState) ADDONS.audioState();
     if (!b) { box.replaceChildren(h("b", null, "活動預告"), h("span", { class: "l2-ev-l" }, h("span", null, "今天沒有限時活動。每週劇情、委託、地下收藏庫都在等你。"))); return; }
     const ev = b.ev;
     box.replaceChildren(h("b", null, b.phase === "live" ? "活動進行中" : "活動預告"),

@@ -7,7 +7,7 @@
 // opts：
 //   screen、hasP（有沒有存檔）、live（有存檔而且不是自由模式）、dark（理智歸零）、params（畫面的參數）、ambOf（AMB_OF）
 //   ambOver（蓋在房間上面的框要的環境音，現在只有 "casino"）、cellarSnd（地下的聲音狀態或 null）
-//   heat()、dread()、creepy()：用到才算（賭場熱鬧程度、圖庫的走音、失敗作之夜）
+//   heat()、dread()、creepy()、event()、crowd()：用到才算（賭場熱鬧程度、圖庫的走音、失敗作之夜、限時活動進行中、人潮很多）
 export function ambFor(o) {
   const scr = o.screen, P = !!o.hasP, ambOf = o.ambOf || {};
   let amb = scr === "title" ? "title" : P ? (scr in ambOf ? ambOf[scr] : "room") : null;
@@ -18,7 +18,8 @@ export function ambFor(o) {
   if (amb === "cellar") mix = ["cellar", o.cellarSnd || { floor: null, mode: "map" }];
   else if (amb === "origin") mix = ["origin", { forbidden: !!(o.params && o.params.tab === "forbidden") }];
   else if (amb === "library") mix = ["library", { dread: o.live ? o.dread() : null }];
-  else if (amb === "lobby" || amb === "hall") mix = [amb, { creepy: !!(P && o.creepy()) }];
+  else if (amb === "lobby") mix = ["lobby", { creepy: !!(P && o.creepy()), event: !!(P && o.event && o.event()), crowd: !!(P && o.crowd && o.crowd()) }]; // event：有限時活動進行中、crowd：館內人潮很多（11-16，大廳換那兩首）
+  else if (amb === "hall") mix = ["hall", { creepy: !!(P && o.creepy()) }];
   else if (amb === "casino") mix = ["casino", { heat: o.heat() }];
   if (o.live && o.dark && scr !== "ending") amb = "zero";
   if (scr === "ending" && o.params && o.params.id === "russia8") amb = "zero";

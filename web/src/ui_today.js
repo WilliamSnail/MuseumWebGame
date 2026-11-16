@@ -34,6 +34,7 @@ async function readCasino() {
     if (r && ADDONS.moodRedraw) ADDONS.moodRedraw(); // 房間效果跟著新的 peek 換（ui_mood.js）
     if (r && Array.isArray(r.reviews)) UI.reviews = r.reviews; // NPC 的即時評價，新的在前、最多 20 則
     if (r && ADDONS.hallNowDraw) ADDONS.hallNowDraw();
+    if (r && ADDONS.audioState) ADDONS.audioState(); // 館內人數變了：大廳的音樂可能要換（11-16）
     if (r && typeof r.stockFresh === "number") { UI.bankFresh = r.stockFresh; if (ADDONS.bankFresh) ADDONS.bankFresh(); } // 銀行股票有幾支價格變過（導覽圖銀行的「新」，PR 353）
   } catch (e) { /* 讀不到就先不列賭場的，下次打開再讀 */ }
   return CAS;
