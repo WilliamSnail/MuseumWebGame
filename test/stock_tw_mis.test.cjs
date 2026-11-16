@@ -13,9 +13,13 @@ const out = parseMis({ msgArray: [
   row("2454", "-", "1500.0000_1505.0000_", "1495.0000_1490.0000_"),
   row("2317", "-", "-", "200.5000_200.0000_"),
   row("2308", "-", "-", "-"),
+  Object.assign(row("2412", "-", "0.0000_1120.0000_1125.0000_", "-"), {}),
 ] }, "20261116", now);
 assert.strictEqual(out.islandforge.px, 1010, "有成交價就用成交價");
 assert.strictEqual(out.handbrain.px, 1497.5, "沒有成交價：用買賣第壹檔的中間價");
 assert.strictEqual(out.bigassembly.px, 200.5, "只有壹邊：用那壹邊");
-assert.strictEqual(out.trianglepower.px, null, "兩邊都沒有：當沒資料");
-console.log("4 passed, 0 failed（台股盤中解析）");
+assert.strictEqual(out.trianglepower.px, null, "兩邊都沒有、也不在漲跌停：當沒資料");
+assert.strictEqual(out.linetower.px, 1120, "第壹檔是 0（市價單佔位）：跳過，取下壹個大於 0 的價");
+const lock = parseMis({ msgArray: [Object.assign(row("2308", "-", "-", "-"), { h: "1200.0000", l: "1120.0000", u: "1360.0000", w: "1120.0000" })] }, "20261116", now);
+assert.strictEqual(lock.trianglepower.px, 1120, "兩邊都沒有、今天最低＝跌停：用跌停價");
+console.log("6 passed, 0 failed（台股盤中解析）");

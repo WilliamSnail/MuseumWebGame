@@ -43,8 +43,11 @@ export function parseMis(json, todayYmd, nowMs) {
     if (!id || String(it.d) !== todayYmd) continue;
     // 11-16：大型股（島上鑄晶坊 2330、掌心晶片鋪 2454）常常這壹秒剛好在撮合，z 回 "-"，被當成沒新行情、標「未更新」又暫停買賣。
     //   z 沒有的時候用最佳買價、最佳賣價（a、b 是用 _ 隔開的五檔，取第壹檔）的中間價；兩邊都沒有才真的當沒資料
-    const best = v => num(String(v || "").split("_")[0]), ask = best(it.a), bid = best(it.b);
-    const px = num(it.z) != null ? num(it.z) : ask != null && bid != null ? Math.round((ask + bid) / 2 * 100) / 100 : ask != null ? ask : bid;
+    //   11-16 再修（翊文：「三角洲為什麼抓不到」，2308 逼近跌停）：鎖在漲跌停附近時第壹檔常是 0（市價單的佔位）、另壹邊整個是 "-"，
+    //   所以取每邊「第壹個大於 0 的價」；兩邊都沒有時，今天最高＝漲停（u）就用漲停價、今天最低＝跌停（w）就用跌停價
+    const best = v => { for (const x of String(v || "").split("_")) { const n = num(x); if (n != null) return n; } return null; }, ask = best(it.a), bid = best(it.b);
+    const lim = num(it.h) != null && num(it.u) != null && num(it.h) === num(it.u) ? num(it.u) : num(it.l) != null && num(it.w) != null && num(it.l) === num(it.w) ? num(it.w) : null;
+    const px = num(it.z) != null ? num(it.z) : ask != null && bid != null ? Math.round((ask + bid) / 2 * 100) / 100 : ask != null ? ask : bid != null ? bid : lim;
     rows[id] = { open: num(it.o), prev: num(it.y), px };
     const s = secs(it.t);
     if (s != null && (newest == null || s > newest)) newest = s;
