@@ -17,6 +17,7 @@ import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
 import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
+import { bankSfx, isKeyBeep, keyBeep } from "./bank_sfx.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, sndFile, wait } from "./ui_core.js";
 import { ambHeat } from "./ui_mood.js";
 import { casOutSfx, casSfx } from "./casino_sfx.js";
@@ -210,7 +211,7 @@ export function bankBar(C, io) {
   }
   const why = playing ? CAS_TEXT.loanPlaying : L.why;
   const off = C.busy ? true : null;
-  const borrow = amt => io.act("borrow", { amt }, r2 => { io.say(r2.lines); snd("coin"); sndFile("coin-drop", 0.4); celebrate(r2.ach); }); // 11-15：籌碼落下（Pixabay）
+  const borrow = amt => io.act("borrow", { amt }, r2 => { io.say(r2.lines); bankSfx("borrow", null); celebrate(r2.ach); }); // 11-16：跟銀行廳同壹套聲音（bank_sfx.js，借錢＝ATM 吐鈔）
   const opts = why ? [] : L.quick.filter(n => n <= L.left).map(n => btn(casNum(n), () => borrow(n), "small", { disabled: off })).concat(L.left >= L.min ? [btn(`全額 ${casNum(L.left)}`, () => borrow("max"), "primary small", { disabled: off })] : []);
   // 銀行的樣子（翊文 11-10：「介面稍微在更精美一點，像銀行一點」）：行名和狀態、三格數字、借款金額、借款明細（像存摺）
   const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);
@@ -234,7 +235,7 @@ export function bankBar(C, io) {
       fig("利率・期限", `${L.pct}%`, `每筆固定・${NUM.casino.loan.repayAfterMin} 分鐘後可還・${L.days} 天內還清`)),
     h("div", { class: "bk-act" },
       why ? h("p", { class: "bk-why" }, why)
-        : [h("span", { class: "bk-act-l" }, "借款金額"), h("span", { class: "bk-act-b" }, opts), L.left >= L.min ? loanInput(C, L, borrow, off) : null]),
+        : [h("span", { class: "bk-act-l" }, "借款金額"), L.left >= L.min ? loanInput(C, L, borrow, off) : null, opts.length ? h("span", { class: "bk-act-b bk-quick" }, h("small", null, "快選："), opts) : null]), // 11-16 翊文：「以手動輸入為主」→ 輸入欄在前、快選在後
     // 在地下室工作的那位（決定 0064 第二部分）
     w.work ? h("div", { class: "bk-work" }, h("span", null, ADDONS.workLine ? ADDONS.workLine() : ""), ADDONS.workCheer ? btn(CAS_TEXT.workCheer, () => ADDONS.workCheer(), "small", { disabled: off }) : null) : null,
     L.list.length ? h("table", { class: "bk-book" },
@@ -242,20 +243,20 @@ export function bankBar(C, io) {
       h("tbody", null, L.list.map(x => h("tr", { class: x.today ? "today" : "" },
         h("td", null, md(x.day)), h("td", null, casNum(x.amt)), h("td", null, h("b", null, casNum(x.owe))),
         h("td", null, x.today ? "今天" : md(x.due)),
-        h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => io.act("repay", { id: x.id }, r2 => { io.say(r2.lines); snd("coin"); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
+        h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => io.act("repay", { id: x.id }, r2 => { io.say(r2.lines); bankSfx("repay", null); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
 }
 
 // Yuga Bot 銀行的存款頁（活存、定存）。規則在 shared/casino_bank.js，伺服器 act bank（op：put、take、term、break）
 function savePane(C, io, fig, md, off) {
   const B = C.bank, w = C.w;
-  const bank = (op, extra) => io.act("bank", Object.assign({ op }, extra), r2 => { io.say(r2.lines); snd("coin"); });
+  const bank = (op, extra) => io.act("bank", Object.assign({ op }, extra), r2 => { io.say(r2.lines); bankSfx("bank", { op }); });
   const can = n => n <= w.chips;
   const puts = B.quick.filter(n => n >= B.min).map(n => btn(casNum(n), () => bank("put", { amt: n }), "small", { disabled: off || !can(n) ? true : null }))
     .concat(w.chips >= B.min ? [btn(`全部 ${casNum(w.chips)}`, () => bank("put", { amt: "max" }), "small", { disabled: off })] : []);
   const takes = B.save > 0 ? [btn(`全部領出 ${casNum(B.save)}`, () => bank("take", { amt: "max" }), "small", { disabled: off })] : [];
   // 定存先挑金額再挑天數（測試 11-13：以前壹按就把手上籌碼全存進去，新手容易誤觸）。預設最少的那壹檔
   const termAmts = [...new Set([B.termMin].concat(B.quick).filter(n => n >= B.termMin && n <= B.termCap))].sort((a, b) => a - b);
-  if (!termAmts.includes(C.termAmt)) C.termAmt = termAmts[0];
+  if (!(C.termAmt >= B.termMin && C.termAmt <= B.termCap)) C.termAmt = termAmts[0]; // 自己填的金額（不在快選裡）也留著
   const amtBtns = termAmts.map(n => btn(casNum(n), () => { C.termAmt = n; io.draw(); }, "small" + (C.termAmt === n ? " primary" : ""), { disabled: off || n > w.chips ? true : null, "aria-pressed": String(C.termAmt === n) }));
   const kinds = B.kinds.map(k => {
     const amt = C.termAmt, int = Math.floor(amt * k.pct / 100);
@@ -266,8 +267,16 @@ function savePane(C, io, fig, md, off) {
       fig(CAS_BANK.save, casNum(B.save), `每天 ${B.savePct}%・明天約 +${casNum(B.perDay)}`),
       fig(CAS_BANK.term, casNum(B.terms.reduce((s, x) => s + x.amt, 0)), `${B.terms.length}／${B.termMax} 筆`),
       fig("累計利息", casNum(B.earned), "莊家付的")),
-    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "存活存"), h("span", { class: "bk-act-b" }, puts.length ? puts : h("small", null, CAS_BANK.poor)), takes.length ? h("span", { class: "bk-act-b" }, takes) : null),
-    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "開定存：先挑金額"), h("span", { class: "bk-act-b" }, amtBtns), h("span", { class: "bk-act-b" }, kinds)),
+    // 11-16 翊文：「簡單型銀行應該以手動輸入為主」：存、領、定存金額都先給輸入欄，快選按鈕放後面
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "存活存"),
+      w.chips >= B.min ? amtInput(C, "putAmt", { min: B.min, max: w.chips, verb: "存", aria: "自己輸入要存的金額", tip: n => `存 ${casNum(n)}，明天約 +${casNum(Math.floor(n * B.savePct / 100))}` }, n => bank("put", { amt: n }), off) : h("small", null, CAS_BANK.poor),
+      puts.length ? h("span", { class: "bk-act-b bk-quick" }, h("small", null, "快選："), puts) : null),
+    B.save > 0 ? h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "領出來"),
+      amtInput(C, "takeAmt", { min: 1, max: B.save, verb: "領", aria: "自己輸入要領的金額", tip: n => `領 ${casNum(n)}，活存剩 ${casNum(B.save - n)}` }, n => bank("take", { amt: n }), off),
+      h("span", { class: "bk-act-b bk-quick" }, h("small", null, "快選："), takes)) : null,
+    h("div", { class: "bk-act" }, h("span", { class: "bk-act-l" }, "開定存：先填金額"),
+      amtInput(C, "termIn", { min: B.termMin, max: Math.min(B.termCap, w.chips), verb: "就這個", aria: "自己輸入定存金額", tip: n => `定存 ${casNum(n)}，下面挑天數` }, n => { C.termAmt = n; io.draw(); }, off),
+      h("span", { class: "bk-act-b bk-quick" }, h("small", null, "快選："), amtBtns), h("span", { class: "bk-act-b" }, kinds)),
     B.terms.length ? h("table", { class: "bk-book" },
       h("thead", null, h("tr", null, ["期間", "本金", "利息", "到期", ""].map(t => h("th", { scope: "col" }, t)))),
       h("tbody", null, B.terms.map(x => h("tr", null,
@@ -281,7 +290,7 @@ function savePane(C, io, fig, md, off) {
 function bondBlock(C, io, fig, md, off) {
   const D = C.bond, w = C.w;
   if (!D) return null;
-  const buy = amt => io.act("bank", { op: "bond", amt }, r2 => { io.say(r2.lines); snd("coin"); });
+  const buy = amt => io.act("bank", { op: "bond", amt }, r2 => { io.say(r2.lines); bankSfx("bank", { op: "bond" }); });
   const I = D.issue;
   const room = I.open ? Math.max(0, Math.min(I.cap - I.sold, D.perUser - D.mine, w.chips)) : 0;
   const why = !I.open ? CAS_BOND.none : D.young ? casFill(CAS_BOND.young, { n: NUM.casino.bond.minAge }) : null;
@@ -344,9 +353,24 @@ function loanInput(C, L, borrow, off) {
   const upd = () => { C.loanAmt = inp.value; const n = val(); hint.textContent = !inp.value.trim() ? "" : !ok(n) ? `要在 ${casNum(L.min)}～${casNum(L.left)} 之間` : `借 ${casNum(n)}，要還 ${casNum(Math.ceil(n * (100 + L.pct) / 100))}`; hint.classList.toggle("bad", !!inp.value.trim() && !ok(n)); };
   const go = () => { const n = val(); if (ok(n)) { C.loanAmt = ""; borrow(n); } else upd(); };
   inp.addEventListener("input", upd);
-  inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+  inp.addEventListener("keydown", e => { if (isKeyBeep(e)) keyBeep(); if (e.key === "Enter") { e.preventDefault(); go(); } });
   upd();
   return h("span", { class: "bk-act-in" }, inp, btn("借", go, "small primary", { disabled: off }), hint);
+}
+// 簡易銀行的金額輸入欄（11-16，翊文：「簡單型銀行應該以手動輸入為主，並且要有銀行按鈕的那些音效」）：存、領、定存共用。打字只改旁邊那行，不整塊重畫；按數字「嗶」
+// key：C 裡記住打到壹半的字（重畫後還在）；o：{ min, max, verb 按鈕字, aria, tip(n) 旁邊那行 }
+function amtInput(C, key, o, onGo, off) {
+  const inp = h("input", { class: "t-input cas-bet bk-in", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "16", "aria-label": o.aria, placeholder: `自己輸入（${casNum(o.min)}～${casNum(o.max)}）` });
+  inp.value = C[key] || "";
+  const hint = h("small", { class: "bk-in-hint" });
+  const val = () => Math.floor(Number(String(inp.value).replace(/[,，s]/g, "")));
+  const ok = n => Number.isFinite(n) && n >= o.min && n <= o.max;
+  const upd = () => { C[key] = inp.value; const n = val(); hint.textContent = !inp.value.trim() ? "" : !ok(n) ? `要在 ${casNum(o.min)}～${casNum(o.max)} 之間` : o.tip(n); hint.classList.toggle("bad", !!inp.value.trim() && !ok(n)); };
+  const go = () => { const n = val(); if (ok(n)) { C[key] = ""; onGo(n); } else upd(); };
+  inp.addEventListener("input", upd);
+  inp.addEventListener("keydown", e => { if (isKeyBeep(e)) keyBeep(); if (e.key === "Enter") { e.preventDefault(); go(); } });
+  upd();
+  return h("span", { class: "bk-act-in" }, inp, btn(o.verb, go, "small primary", { disabled: off || o.max < o.min ? true : null }), hint);
 }
 function betBox() {
   const w = S.w;
