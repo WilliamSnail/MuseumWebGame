@@ -24,7 +24,9 @@ const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");
 
 // 遊戲裡的 id → 證交所的代號（真實代號只放這裡）
-export const TW_SYMBOLS = { islandforge: "2330", handbrain: "2454", bigassembly: "2317", trianglepower: "2308", linetower: "2412" };
+export const TW_SYMBOLS = { islandforge: "2330", handbrain: "2454", bigassembly: "2317", trianglepower: "2308", linetower: "2412", brainrack: "2382", cloudcabinet: "6669", customchip: "3661", voltgrid: "1519" };
+// 畫面上標的真實名字（翊文 11-16：「像每股一樣加個號碼和名子標示真實是什麼」）。真實名字也只放在 functions
+export const TW_NAMES = { islandforge: "台積電", handbrain: "聯發科", bigassembly: "鴻海", trianglepower: "台達電", linetower: "中華電", brainrack: "廣達", cloudcabinet: "緯穎", customchip: "世芯-KY", voltgrid: "華城" };
 const MIS_URL = "https://mis.twse.com.tw/stock/api/getStockInfo.jsp";
 
 // 把證交所的回應變成 { id: { open, prev, px, lag } }。

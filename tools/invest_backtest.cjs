@@ -4,7 +4,7 @@
 // 規則照 shared/casino_invest.js：每天投現金的 3%、持股成本上限 30% 的現金、手續費 0.5%（預算池 0）。
 const fs = require("fs"), path = require("path");
 const dir = process.argv[3] || path.join(require("os").tmpdir(), "invest_bt"), PF = path.join(dir, "prices.json");
-const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", islandforge: "2330.TW", handbrain: "2454.TW", bigassembly: "2317.TW", trianglepower: "2308.TW", linetower: "2412.TW" }; // 真實代號只放在 tools/（不進 shared/）
+const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", islandforge: "2330.TW", handbrain: "2454.TW", bigassembly: "2317.TW", trianglepower: "2308.TW", linetower: "2412.TW", brainrack: "2382.TW", cloudcabinet: "6669.TW", customchip: "3661.TW", voltgrid: "1519.TW" }; // 真實代號只放在 tools/（不進 shared/）
 async function fetchAll() {
   fs.mkdirSync(dir, { recursive: true }); const out = {};
   for (const [id, sym] of Object.entries(SYMBOLS)) { const r = await fetch("https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(sym) + "?range=5y&interval=1d", { headers: { "User-Agent": "Mozilla/5.0" } }), c = (await r.json()).chart.result[0], q = c.indicators.quote[0].close; out[id] = c.timestamp.map((t, i) => [new Date(t * 1000).toISOString().slice(0, 10), q[i]]).filter(x => x[1] > 0); console.log("抓到", id, out[id].length); }

@@ -8,7 +8,7 @@ const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { f
 const D = "2026-11-16"; // 星期一
 const TWID = "handbrain", USID = "greeneye";
 const at = (d, hh, mm) => Date.parse(`${d}T${String(hh).padStart(2, "0")}:${String(mm || 0).padStart(2, "0")}:00+08:00`);
-const prevReal = { islandforge: 1000, handbrain: 1200, bigassembly: 200, trianglepower: 400, linetower: 120 };
+const prevReal = { islandforge: 1000, handbrain: 1200, bigassembly: 200, trianglepower: 400, linetower: 120, brainrack: 260, cloudcabinet: 1500, customchip: 3600, voltgrid: 480 };
 const openGot = (G, gap, lag) => { const o = {}; for (const id of G.TW_IDS) o[id] = { open: prevReal[id] * (1 + gap), prev: prevReal[id], lag: lag == null ? 0 : lag }; return o; };
 const segGot = (G, base, j, ret, lag) => { const o = {}; for (const id of G.TW_IDS) o[id] = { px: base[id] * Math.pow(1 + ret, j), lag: lag == null ? 0 : lag }; return o; };
 // 跑壹整天：每分鐘問 twNeed，要抓就抓。opts：gap、ret（每段真實漲跌）、lag、failSeg（這幾段抓不到）、openAt（第幾分鐘才抓得到開盤價）
@@ -29,7 +29,7 @@ const house0 = (G, day) => { const house = G.casHouseFix(G.casHouseNew(), day).h
 const wallet = G => { const w = G.casWalletFix(G.casWalletNew(), D); w.chips = 500000000; return w; };
 
 T("台股名單：五支，美股白天停著（沒有 tw 標記）", G => {
-  assert.strictEqual(J(G.TW_IDS.slice().sort()), J(["bigassembly", "handbrain", "islandforge", "linetower", "trianglepower"]));
+  assert.strictEqual(J(G.TW_IDS.slice().sort()), J(["bigassembly", "brainrack", "cloudcabinet", "customchip", "handbrain", "islandforge", "linetower", "trianglepower", "voltgrid"]));
   assert.ok(G.stockIsTw(TWID) && !G.stockIsTw(USID));
   for (const id of G.TW_IDS) assert.ok(G.NUM.casino.stock.tw.sd15[id] > 0, id + " 要有 15 分鐘標準差");
 });

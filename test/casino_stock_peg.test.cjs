@@ -98,7 +98,7 @@ T("真實價：只給已經算進遊戲價的（今天的錨點，或前壹收�
   const tw = { day: D1, prevReal: { [TWID]: 4100 }, R: { [TWID]: { px: 4150, seg: 3 } }, days: { [D0]: { openIdx: 0, ser: {}, close: { [TWID]: 4100 }, prev: { [TWID]: 4000 } } } };
   const us = { day: D0, prevReal: { [ID]: 160 }, R: { [ID]: { px: 166.19, seg: 20 } }, days: {} };
   G.casStockSetReal(h, tw, us, D1, { [TWID]: "ABC", [ID]: "XYZ" });
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(h.stk.real[TWID])), { sym: "ABC", px: 4150, chg: 4150 / 4100 - 1 }, "台股：今天的錨點");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(h.stk.real[TWID])), { sym: "ABC", name: "", px: 4150, chg: 4150 / 4100 - 1 }, "台股：今天的錨點");
   assert.strictEqual(h.stk.real[ID].px, 166.19, "美股：還沒開盤，給前壹個交易日的收盤"); assert.ok(Math.abs(h.stk.real[ID].chg - (166.19 / 160 - 1)) < 1e-9);
   // 換日的收盤價
   h.stk.day = D0;
@@ -118,14 +118,16 @@ T("畫面：館外每支多 real（代號、真實價、真實漲跌）和 mult�
   assert.ok(v0.list.every(x => x.real === null && x.mult > 0), "沒有資料：null");
   G.casStockSetReal(h, null, { day: D0, prevReal: { [ID]: 160 }, R: { [ID]: { px: 166.19 } }, days: {} }, D0, { [ID]: "XYZ" });
   const x = G.casStockView(s.w, h, D0, Date.parse(`${D0}T14:30:00+08:00`), []).list.find(y => y.id === ID);
-  assert.strictEqual(x.real.sym, "XYZ"); assert.strictEqual(x.real.px, 166.19); assert.strictEqual(x.mult, G.NUM.casino.stock.peg.us);
+  assert.strictEqual(x.real.sym, "XYZ"); assert.strictEqual(x.real.px, 166.19);
+  G.casStockSetReal(h, null, { day: D0, prevReal: { [ID]: 160 }, R: { [ID]: { px: 166.19 } }, days: {} }, D0, { [ID]: "XYZ" }, { [ID]: "某某公司" });
+  assert.strictEqual(G.casStockView(s.w, h, D0, Date.parse(`${D0}T14:30:00+08:00`), []).list.find(y => y.id === ID).real.name, "某某公司", "真實名字跟代號壹起給畫面"); assert.strictEqual(x.mult, G.NUM.casino.stock.peg.us);
   assert.strictEqual(G.casStockView(s.w, h, D0, null, []).list.find(y => y.id === TWID).mult, G.NUM.casino.stock.peg.tw);
 });
 T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
   const fs = require("fs"), path = require("path");
   for (const f of ["stocks_text.js", "casino_stock.js", "stocks_tw.js", "casino_text.js"]) {
     const src = fs.readFileSync(path.join(__dirname, "..", "shared", f), "utf8");
-    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
+    assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
   }
 });
 T("直接用真實價：盤中開著卻超過 3 分鐘沒新價，買賣擋下來說「暫停」，不說「沒有開盤」（11-14 實測）", G => {

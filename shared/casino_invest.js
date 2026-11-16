@@ -160,7 +160,7 @@ export function casInvestPublic(house, day) {
 export function casInvestPubView(house) {
   const p = house && house.invPub;
   if (!ivBox(p) || !ivDay(p.asOf)) return null;
-  return { asOf: p.asOf, hold: (Array.isArray(p.hold) ? p.hold : []).slice(0, 12), cost: ivN(p.cost), value: ivN(p.value), pnl: Math.floor(+p.pnl) || 0, pnlPct: +p.pnlPct || 0, pnlTotal: Math.floor(+p.pnlTotal) || 0, spent: ivN(p.spent), yesterday: (Array.isArray(p.yesterday) ? p.yesterday : []).slice(0, 20), paused: ivBox(p.paused) ? p.paused : {} };
+  return { asOf: p.asOf, hold: (Array.isArray(p.hold) ? p.hold : []).slice(0, IV_IDS.length), cost: ivN(p.cost), value: ivN(p.value), pnl: Math.floor(+p.pnl) || 0, pnlPct: +p.pnlPct || 0, pnlTotal: Math.floor(+p.pnlTotal) || 0, spent: ivN(p.spent), yesterday: (Array.isArray(p.yesterday) ? p.yesterday : []).slice(0, 20), paused: ivBox(p.paused) ? p.paused : {} };
 }
 // 給日報的：昨天館方買賣了什麼、現在持有什麼、累計賺賠（延遲壹天；沒有就 null）
 export function casInvestView(house, px) {
