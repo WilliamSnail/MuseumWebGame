@@ -43,6 +43,8 @@ export function casInvestFix(house) {
   const y = I.last; // 昨天的（給日報，已經換成有名字的清單）
   I.last = ivBox(y) && ivDay(y.day) ? { day: y.day, buy: Array.isArray(y.buy) ? y.buy : [], sell: Array.isArray(y.sell) ? y.sell : [], paused: ivBox(y.paused) ? y.paused : {} } : null;
   if (!ivBox(I.sum)) I.sum = { hold: [], pnl: 0 };
+  if (!ivBox(I.hx)) I.hx = {};
+  for (const id of Object.keys(I.hx)) { const a = Array.isArray(I.hx[id]) ? I.hx[id].filter(v => +v > 0).map(v => Math.floor(+v)).slice(-NUM.casino.invest.dip.days) : []; if (IV_IDS.includes(id) && a.length) I.hx[id] = a; else delete I.hx[id]; }
   for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = Math.floor(+m[id]); } // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
   return I;
 }
@@ -90,14 +92,15 @@ export function casInvestRun(house, stkH, day, secret, b) {
   I.cur = { day, buy: {}, sell: {}, paused: {} };
   I.lastPx = I.px; I.px = Object.fromEntries(IV_IDS.filter(id => +stkH.px[id] > 0).map(id => [id, Math.floor(stkH.px[id])]));
   const px = stkH.px, cfg = NUM.casino;
+  for (const id of IV_IDS) if (+px[id] > 0) { const a = Array.isArray(I.hx[id]) ? I.hx[id] : []; I.hx[id] = a.concat(Math.floor(px[id])).slice(-C.dip.days); } // 均價用的歷史：每天跑壹次記壹個價（買之前用的是記今天價之前的）
   for (const pool of IV_POOLS) {
     const P = I.pool[pool], avail = ivAvail(house, pool);
     // 1 先賣：跌過停損、漲過停利
     for (const id of Object.keys(P.own)) {
       const avg = P.cost[id] / P.own[id], r = avg > 0 ? px[id] / avg - 1 : 0;
       let part = 0;
-      if (r <= -C.stopLossPct / 100) part = Math.ceil(P.own[id] / 2);
-      else if (r >= C.takeProfitPct / 100) part = Math.ceil(P.own[id] / 3);
+      if (C.stopLossPct > 0 && r <= -C.stopLossPct / 100) part = Math.ceil(P.own[id] / 2);
+      else if (C.takeProfitPct > 0 && r >= C.takeProfitPct / 100) part = Math.ceil(P.own[id] / 3);
       if (part > 0) { const n = ivSell(house, pool, P, id, part, px[id], cfg); if (n > 0) I.cur.sell[`${pool}:${id}`] = n; }
     }
     // 2 停損：持股總賺賠（已實現累計 ＋ 帳面）虧超過池子的 stopPct%，暫停買進
@@ -109,12 +112,18 @@ export function casInvestRun(house, stkH, day, secret, b) {
     const capLeft = Math.floor(avail * C.holdCapPct / 100) - ivCostSum(P);
     const spend = Math.min(avail, capLeft, Math.floor(avail * C.dailyPct * Math.max(0, 1 + C.extPct / 100 * (+b || 0)) / 100));
     if (!(spend > 0)) continue;
-    const ranked = IV_IDS.map(id => ({ id, r: ivRet(stkH, day, id, px[id]) })).sort((a, z) => z.r - a.r || (a.id < z.id ? -1 : 1));
-    const rnd = mulberry32(hashStr(`${secret}|${day}|${pool}|invest`)), pick = IV_IDS[Math.floor(rnd() * IV_IDS.length)];
     const alloc = {};
-    ranked.slice(0, C.topN).forEach(x => { alloc[x.id] = (alloc[x.id] || 0) + spend * C.topPct / 100 / C.topN; });
-    IV_IDS.forEach(id => { alloc[id] = (alloc[id] || 0) + spend * C.evenPct / 100 / IV_IDS.length; });
-    alloc[pick] = (alloc[pick] || 0) + spend * C.randPct / 100;
+    if (C.mode === "chase") { // 舊的：七成追最近漲最多的、兩成平均、壹成隨機
+      const ranked = IV_IDS.map(id => ({ id, r: ivRet(stkH, day, id, px[id]) })).sort((a, z) => z.r - a.r || (a.id < z.id ? -1 : 1));
+      const rnd = mulberry32(hashStr(`${secret}|${day}|${pool}|invest`)), pick = IV_IDS[Math.floor(rnd() * IV_IDS.length)];
+      ranked.slice(0, C.topN).forEach(x => { alloc[x.id] = (alloc[x.id] || 0) + spend * C.topPct / 100 / C.topN; });
+      IV_IDS.forEach(id => { alloc[id] = (alloc[id] || 0) + spend * C.evenPct / 100 / IV_IDS.length; });
+      alloc[pick] = (alloc[pick] || 0) + spend * C.randPct / 100;
+    } else { // 平均買全部；比自己的均價低 dip.pct% 以上的加碼 dip.mult 倍（均價 ＝ 最近 dip.days 次記下的價，不夠 dip.minDays 次不加碼）
+      const w = {}; let tot = 0;
+      for (const id of IV_IDS) { if (!(px[id] > 0)) continue; const hx = I.hx[id] || [], ma = hx.length >= C.dip.minDays ? hx.reduce((a, b) => a + b, 0) / hx.length : 0; w[id] = ma > 0 && px[id] <= ma * (1 - C.dip.pct / 100) ? C.dip.mult : 1; tot += w[id]; }
+      for (const id of Object.keys(w)) alloc[id] = spend * w[id] / tot;
+    }
     let left = spend;
     for (const id of Object.keys(alloc)) {
       if (!(px[id] > 0)) continue;
