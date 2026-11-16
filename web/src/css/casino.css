@@ -558,3 +558,13 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-bank .bk-act .bk-quick > small { color: var(--paper-soft, #D8C59A); font-size: var(--type-tiny, .6875rem); }
 .cas-bank .bk-act .bk-quick .btn { min-height: 32px; padding: 2px 8px; font-size: var(--type-small, .75rem); }
 .cas-bank .bk-in-hint.bad { color: #E08A6A; }
+
+/* 賭場、同桌賭桌右欄的「我的帳戶」（11-16，可以收折） */
+.cas-acct { margin-top: 8px; border: 1px solid rgba(201, 165, 90, .5); border-radius: 6px; background: rgba(20, 26, 40, .85); color: #E8DCC0; }
+.cas-acct-h { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 4px 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.cas-acct-h i { font-style: normal; width: 1em; color: #C9A55A; }
+.cas-acct-h small { margin-left: auto; color: #9FD3A8; }
+.cas-acct .bank-acct { padding: 2px 10px 8px; }
+.cas-acct .bank-acct p { display: flex; justify-content: space-between; margin: 2px 0; font-size: var(--type-small, .8125rem); }
+.cas-acct .bank-acct p.net { border-top: 1px solid rgba(201, 165, 90, .4); padding-top: 4px; margin-top: 4px; }
+.cas-acct .bank-acct b.bad { color: #E08A6A; } .cas-acct .bank-acct b.good { color: #9FD3A8; }

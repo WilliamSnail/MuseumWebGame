@@ -799,13 +799,35 @@ function reportPane(v) {
 const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
 
 // ---------- 右欄 ----------
-function side(v) {
+// 我的帳戶的幾行（銀行右欄、賭場和同桌賭桌的小塊共用，11-16）
+function acctRows(v) {
   const stockVal = v.stocks ? (v.stocks.total != null ? v.stocks.total : v.stocks.list.reduce((n, s) => n + s.price * s.mine, 0)) : 0; // 伺服器給 total；示範資料沒有就自己算
   const termSum = v.save.terms.reduce((n, t) => n + t.amt, 0), owe = v.loan.list.reduce((n, x) => n + x.owe, 0) + (v.stocks && v.stocks.margin ? v.stocks.margin.owe : 0);
-  const rows = [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
   // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
+  return [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
+}
+const acctBody = v => h("div", { class: "bank-acct" }, acctRows(v).map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))));
+// 賭場、同桌賭桌右欄的「我的帳戶」（11-16，翊文：「賭場的賭桌也可以看到簡易銀行嗎，以及自己的帳戶，依樣可以收折」）：
+// 標題那條點了收起／打開（記在 localStorage pm-acct-fold）；資料跟銀行廳同壹份（act bankHall），打開時讀壹次、之後 60 秒內不重讀
+const ACCT_FOLD = "pm-acct-fold";
+export function bankAcctBox() {
+  const box = h("section", { class: "cas-acct" });
+  let shut = false; try { shut = localStorage.getItem(ACCT_FOLD) === "1"; } catch (e) { /* ignore */ }
+  const draw = () => {
+    const v0 = UI.bankHall && !UI.bankHall.demo ? UI.bankHall : null;
+    const v = v0 && typeof UI.chips === "number" ? Object.assign({}, v0, { cash: UI.chips, net: v0.net + UI.chips - v0.cash }) : v0; // 現金照最新的籌碼（牌桌上每手都在變），其他照帳本
+    const head = h("button", { type: "button", class: "cas-acct-h", "aria-expanded": String(!shut), onClick: () => { shut = !shut; try { localStorage.setItem(ACCT_FOLD, shut ? "1" : "0"); } catch (e) { /* ignore */ } if (!shut) load(); draw(); } },
+      h("i", { "aria-hidden": "true" }, shut ? "▸" : "▾"), h("b", null, "我的帳戶"), v ? h("small", null, `淨值 ${fmt(v.net)}`) : null);
+    box.replaceChildren(head, shut ? null : v ? acctBody(v) : h("p", { class: "cas-bank-wait" }, UI.bankErr ? "讀不到帳戶。" : "翻帳本中……"));
+  };
+  const load = () => { if (UI.bankLoading || (UI.bankHall && !UI.bankHall.demo && Date.now() - (UI.bankAt || 0) < 60000)) return; bankLoad().then(() => { if (box.isConnected) draw(); }); };
+  draw(); if (!shut && NET.loggedIn) load();
+  return box;
+}
+ADDONS.bankAcctBox = bankAcctBox;
+function side(v) {
   return h("aside", { class: "onescreen-side bank-side" },
-    panel("我的帳戶", "", h("div", { class: "bank-acct" }, rows.map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))))),
+    panel("我的帳戶", "", acctBody(v)),
     v.stocks && v.stocks.credit ? creditPanel(v.stocks.credit) : null); // 11-15：「今日新聞」拿掉（跟財報卡裡的新聞是同壹句）
 }
 // 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
