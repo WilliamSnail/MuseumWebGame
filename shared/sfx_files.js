@@ -20,7 +20,7 @@ export const SFX_FILES = {
   "basement-knock": { name: "Basement Knocking Noises（截前 8 秒）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/basement-knocking-noises-428177/", use: "地下 B1～B3 偶爾的敲擊聲" },
   "lobby-wrong": { name: "Familiar Melody, Subly Wrong（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e1525680-4848-48c1-a6a1-e55dd0f31f36", own: true, loop: true, use: "大廳：理智稍低（55 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
   "lobby-silence": { name: "Lobby Silence（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e8704ed2-0e4e-457c-9cad-00c8cd63a527", own: true, loop: true, use: "大廳：理智更低（30 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
-  "lobby-normal": { name: "Welcome Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/abab39ee-f9f5-4678-be5d-a7ca871cd0ba", own: true, hq: true, loop: true, use: "大廳平常的背景音樂（取代原本的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
+  "lobby-normal": { name: "大廳平常（11-16 新版，翊文的錄音，去頭尾空白後做成循環）", by: "翊文", url: "", own: true, hq: true, loop: true, use: "大廳平常的背景音樂（11-16 取代 Welcome Lobby）" }, // 原檔：OST/07、.claude/交接/音效/原檔/；沒有網址（own 可以留空）
   "lobby-crowd": { name: "Inviting Loop（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/bad4d15a-ab5e-45b7-ac88-f22bf887fcaa", own: true, hq: true, loop: true, use: "大廳人潮很多時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
   "lobby-event": { name: "Welcome to the Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/62ba3211-c459-4f88-9014-fff51e2eb270", own: true, hq: true, loop: true, use: "大廳有限時活動時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的，不是 Pixabay
   "museum-hall": { name: "museum hall big echo group（截 70 秒做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/museum-hall-big-echo-group-53095/", loop: true, use: "展廳、大廳的人聲底" },
