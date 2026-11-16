@@ -7,7 +7,7 @@ const fs = require("fs"), path = require("path"), assert = require("assert");
   assert.deepStrictEqual(files, Object.keys(SFX_FILES).sort(), "web/public/sfx 的 mp3 要跟 shared/sfx_files.js 壹樣");
   const md = fs.readFileSync(path.join(dir, "來源.md"), "utf8");
   for (const [id, x] of Object.entries(SFX_FILES)) {
-    assert.ok(x.name && x.by && /^https:\/\/pixabay\.com\/(sound-effects|music)\//.test(x.url), id + " 要有原名、作者、Pixabay 網址");
+    assert.ok(x.name && x.by && (x.own ? /^https:\/\/suno\.com\/song\//.test(x.url) : /^https:\/\/pixabay\.com\/(sound-effects|music)\//.test(x.url)), id + " 要有原名、作者、網址（Pixabay；翊文自己生成的 own: true 用 Suno 網址）");
     assert.ok(md.includes(id + ".mp3") && md.includes(x.url), id + " 要寫進 來源.md");
     assert.ok(fs.statSync(path.join(dir, id + ".mp3")).size < 800 * 1024, id + " 太大（要壓過）");
   }

@@ -608,7 +608,7 @@ export const FX = (() => {
     }
     // 壹直循環的檔案（環境音）：像 bed 壹樣回傳 { n, v }，n.stop() 停掉。檔案到了才接上；從隨機位置開始，每次進來聽起來不壹樣
     //   mp3 頭尾有幾十毫秒的空白，循環時各跳過 0.05 秒（檔案本身已經做成頭尾接得起來）
-    function fileLoop(c, to, id, gain) {
+    function fileLoop(c, to, id, gain, fromStart) { // fromStart：整首歌從頭放（環境錄音才從隨機位置開始）
       const v = c.createGain(); v.gain.value = gain; v.connect(to);
       const hh = { v, src: null, dead: false };
       hh.n = { stop() { hh.dead = true; if (hh.src) { try { hh.src.stop(); } catch (e) { /* ignore */ } } } };
@@ -616,7 +616,7 @@ export const FX = (() => {
         if (!buf || hh.dead) return;
         const s = c.createBufferSource(); s.buffer = buf; s.loop = true;
         s.loopStart = 0.05; s.loopEnd = Math.max(0.1, buf.duration - 0.05);
-        s.connect(v); s.start(0, 0.05 + Math.random() * Math.max(0, buf.duration - 0.2)); hh.src = s;
+        s.connect(v); s.start(0, fromStart ? 0.05 : 0.05 + Math.random() * Math.max(0, buf.duration - 0.2)); hh.src = s;
       });
       return hh;
     }
@@ -684,7 +684,9 @@ export const FX = (() => {
           [739.99, 0, 659.25, 587.33], [587.33, 0, 493.88, 0], [659.25, 587.33, 493.88, 392], [440, 0, 0, 0],
           [587.33, 0, 739.99, 880], [880, 0, 739.99, 659.25], [587.33, 0, 659.25, 739.99], [659.25, 0, 0, 0],
         ];
-        const send = echoSend(c, g, 0.45, 0.3);
+        // 11-16 翊文：「大廳有限定活動時可以改成這首」「人潮很多的時候用這首」：旋律接在 mel 上，換成那兩首時 mel 淡出（下面的 mix）
+        const mel = c.createGain(); mel.gain.value = 1; mel.connect(g);
+        const send = echoSend(c, mel, 0.45, 0.3);
         let next = c.currentTime + 0.1, bar = 0;
         const play = (t0, b) => {
           const ch = PROG[b];
@@ -697,12 +699,26 @@ export const FX = (() => {
             tone(t, { f, g: 0.045, a: 0.07, d: len * E8 * 2 + 0.5, to: send });
             tone(t, { f: f * 2, g: 0.005, a: 0.08, d: len * E8 * 2, to: send });
           });
-          PAD[ch].forEach((f) => tone(t0, { f, g: 0.007, a: 1, d: E8 * 8 + 0.6, to: g })); // 弦樂墊底
+          PAD[ch].forEach((f) => tone(t0, { f, g: 0.007, a: 1, d: E8 * 8 + 0.6, to: mel })); // 弦樂墊底
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % PROG.length; next += E8 * 8; } }, () => 1000);
         const steps = every(() => farSteps(c, g, 0.01), () => rand(8000, 15000));
         const ck = creepyHook(c, g);
-        return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n], timers: [sched, steps, ck.timer], mix: ck.mix }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
+        // 兩首翊文用 Suno 做的（11-16）：限時活動進行中放 lobby-event、人潮很多放 lobby-crowd（活動優先）；都沒有放原本的旋律。第壹次要放才下載
+        const song = { event: null, crowd: null }, state = { event: false, crowd: false };
+        const songStop = { stop() { if (song.event) song.event.n.stop(); if (song.crowd) song.crowd.n.stop(); } };
+        const mix = (m) => {
+          ck.mix(m);
+          if (!m || !('event' in m || 'crowd' in m)) return;
+          if ('event' in m) state.event = !!m.event;
+          if ('crowd' in m) state.crowd = !!m.crowd;
+          const pick = state.event ? 'event' : state.crowd ? 'crowd' : null, t = c.currentTime;
+          if (pick === 'event' && !song.event) song.event = fileLoop(c, g, 'lobby-event', 0, true);
+          if (pick === 'crowd' && !song.crowd) song.crowd = fileLoop(c, g, 'lobby-crowd', 0, true);
+          mel.gain.setTargetAtTime(pick ? 0 : 1, t, 1.2);
+          for (const k of ['event', 'crowd']) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? 0.45 : 0, t, 1.2);
+        };
+        return { nodes: [...murmur(c, g, 0.004), fileLoop(c, g, 'museum-hall', 0.18).n, songStop], timers: [sched, steps, ck.timer], mix }; // 11-15：大廳也墊壹點博物館人聲錄音（Pixabay），比展廳小聲
       },
       // 手作坊：輕快的木琴＋撥弦低音（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「手作坊的音樂聽不太到，可以換壹首嗎」→ 原本只有剪刀、鉛筆、敲木頭的零星聲音，換成真的音樂。

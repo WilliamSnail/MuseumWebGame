@@ -97,6 +97,7 @@ const DRAWS = new Set();
 export function hallNowWatch(f) { const g = () => { if (f() === false) DRAWS.delete(g); }; DRAWS.add(g); }
 export const hallPeople = () => counts();
 ADDONS.hallNowDraw = () => DRAWS.forEach(f => f());
+ADDONS.museumPeople = () => { const c = counts(); return c.known ? c.all.total : null; }; // 館內現在幾人：大廳人潮多時換音樂（11-16，ui_core.js audioState）
 // 手機直拿的大廳精簡列（11-15，翊文：「手機直拿著得時候看不到展區有多少人／邀請遊客」）：壹行放「展廳 N 人」（點了看全部）和「邀旅客去賭場」；電腦版用右欄那塊，這個藏起來（css/hallnow.css）
 export function hallNowBar() {
   const box = h("div", { class: "hn-bar" });

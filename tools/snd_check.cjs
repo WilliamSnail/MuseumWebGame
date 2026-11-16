@@ -44,6 +44,9 @@ function checkFx(fx) {
       if (m[2]) continue; // 直接拿 .n
       if (asg && new RegExp("\\b" + asg[1] + "\\.n\\b").test(e.src)) continue;
       if (lz && /nodes\.push\(LZ\[id\]\.n\)/.test(e.src)) continue;
+      // 用到才建（例如大廳的限時活動、人潮多那兩首）：X = fileLoop(...)，而且有放進 nodes 的停止物件叫 X.n.stop()
+      const late = /([\w.]+)\s*=\s*$/.exec(pre);
+      if (!asg && late && new RegExp("\\b" + late[1].replace(/\./g, "\\.") + "\\.n\\.stop\\(").test(e.src)) continue;
       if (inObj && /const L = \{/.test(e.src) && /Object\.values\(L\)|L\[/.test(e.src)) continue; // cellar 的 L 表
       bad.push(`AMB.${e.name}：fileLoop(${m[1].split(",")[2] || m[1]}) 沒把 .n 放進 nodes，換房間停不掉`);
     }
