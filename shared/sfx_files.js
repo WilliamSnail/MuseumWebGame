@@ -20,6 +20,7 @@ export const SFX_FILES = {
   "basement-knock": { name: "Basement Knocking Noises（截前 8 秒）", by: "Alex_Jauk", url: "https://pixabay.com/sound-effects/basement-knocking-noises-428177/", use: "地下 B1～B3 偶爾的敲擊聲" },
   "lobby-wrong": { name: "Familiar Melody, Subly Wrong（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e1525680-4848-48c1-a6a1-e55dd0f31f36", own: true, loop: true, use: "大廳：理智稍低（55 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
   "lobby-silence": { name: "Lobby Silence（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/e8704ed2-0e4e-457c-9cad-00c8cd63a527", own: true, loop: true, use: "大廳：理智更低（30 以下）時的背景音樂" }, // 11-16 翊文自己用 Suno 做的
+  "workshop-crowd": { name: "手作坊人多（翊文的錄音，去頭空白後做成循環）", by: "翊文", url: "", own: true, hq: true, loop: true, use: "手作坊超過 20 人時的背景音樂（取代合成的木琴）" }, // 11-17 翊文：「這首手作坊多人的時候可以放」；原檔 D:\我的影片\2026-11-17 00-10-45.mp4
   "lobby-normal": { name: "PepeMuseumLobby（去頭尾空白後做成循環）", by: "翊文", url: "", own: true, hq: true, loop: true, use: "大廳平常的背景音樂（11-16 取代 Welcome Lobby）" }, // 原檔：OST/07 PepeMuseumLobby.mp3、.claude/交接/音效/原檔/；沒有網址（own 可以留空）
   "lobby-crowd": { name: "Inviting Loop（做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/bad4d15a-ab5e-45b7-ac88-f22bf887fcaa", own: true, hq: true, loop: true, use: "大廳人潮很多時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的
   "lobby-event": { name: "Welcome to the Lobby（整首做成循環）", by: "翊文（Suno 生成）", url: "https://suno.com/song/62ba3211-c459-4f88-9014-fff51e2eb270", own: true, hq: true, loop: true, use: "大廳有限時活動時的背景音樂（取代平常的合成旋律）" }, // 11-16 翊文自己用 Suno 做的，不是 Pixabay
