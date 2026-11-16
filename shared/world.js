@@ -365,8 +365,8 @@ export function nwSanDay(house, day, visits, people, extra = (WORLD_EVENTS[day] 
 //  → nwArcVariant(step, st) 決定這一步用哪一句。不看有幾位玩家（翊文 11-16：「理智只有一個，任何一個玩家都可以影響他」）；防刷靠每人每天上限、7 天均線、先有預兆、一段才結算一次。不動錢、不獎勵、不報名字。
 // ================================================================
 const ARC_RANK = { steady: 0, tired: 1, uneasy: 2, edge: 3 };
-// 這位旅客有沒有分岔的資料（任何一步有 variants）
-export const nwArcTracked = n => !!n && Array.isArray(n.arc) && n.arc.some(s => wuBox(s) && wuBox(s.variants));
+// 要不要追蹤這位旅客的分岔（所有有名字的旅客，劇情角色 trace 不算；排程可以對任何旅客觸發 edge，不預先指定，翊文 11-16）
+export const nwArcTracked = n => !!n && typeof n.id === "string" && n.kind !== "trace";
 // 今天（day）這位旅客被玩家互動加減的淨額
 export const nwPokeNet = (w, day, id) => (wuBox(w && w.poke) && wuBox(w.poke[day]) && wuBox(w.poke[day].by) && wuBox(w.poke[day].by[id]) ? wdN(w.poke[day].by[id].net) : 0);
 // 賭場邀請的那一手 → 互動種類（贏、二十一點、輸、爆；平手不算）
@@ -411,6 +411,23 @@ export function nwArcWeek(house, closedDay, people) {
     if (ARC_RANK[from] >= 2 && ARC_RANK[to] < 2) { a.rec = wdN(a.rec) + 1; if (a.rec < B.recoverN) to = from; else a.rec = 0; } else a.rec = 0;
     if (to !== from) { a.prev = from; a.st = to; a.since = next; out.push({ id: n.id, from, to }); }
     w.arc[n.id] = a;
+  }
+  return out;
+}
+// 給排程讀的（決定 0103）：公開的 JSON（不寫玩家名字、不寫誰造成的）。{ asOf: 最近一次結算的段首日期或 null, seg, levels: { id: { now（最近 7 天均線的分級，資料不夠 null）, st（最近一次週結算的分級）, prev（前一次的）, since, end? } }, edge: [st 是 edge 又還沒走結局的 id], newEdge: [這次結算「前一次是 uneasy 以上、這次 edge」的 id] }
+export function nwArcPublic(house, day) {
+  const w = house && house.npcw && wuBox(house.npcw) ? house.npcw : null, B = NUM.casino.worldDoc.branch, out = { asOf: null, seg: null, levels: {}, edge: [], newEdge: [] };
+  if (!w || !B) return out;
+  const hist = wuBox(w.hist) ? w.hist : {}, arc = wuBox(w.arc) ? w.arc : {}, seg = wdN(w.arcSeg == null ? -1 : w.arcSeg);
+  out.seg = seg >= 0 ? seg : null; out.asOf = seg >= 0 ? new Date(Date.parse(B.segStart + "T00:00:00Z") + seg * B.segDays * 86400000).toISOString().slice(0, 10) : null;
+  const ids = Array.from(new Set(Object.keys(hist).concat(Object.keys(arc)))).sort();
+  for (const id of ids) {
+    if (id === "__proto__") continue;
+    const a = wuBox(arc[id]) ? arc[id] : null, st = a && ARC_RANK[a.st] != null ? a.st : "steady", prev = a && ARC_RANK[a.prev] != null ? a.prev : "steady";
+    const x = { now: nwArcBand(hist[id]), st, prev, since: a && wdDayOk(a.since) ? a.since : null }; if (a && a.end) x.end = true;
+    out.levels[id] = x;
+    if (st === "edge" && !x.end) out.edge.push(id);
+    if (st === "edge" && ARC_RANK[prev] >= 2 && x.since === out.asOf) out.newEdge.push(id);
   }
   return out;
 }

@@ -30,10 +30,20 @@ T("單一玩家就能把旅客推下去（沒有人數門檻）：連續好幾�
   assert.ok(G.nwSan(h, "t-bell") < 70, "往下");
   const hist = G.nwFix(h).hist["t-bell"]; assert.ok(Array.isArray(hist) && hist.length === 7, "只存最近 7 天");
 });
-T("沒有 variants 的旅客不存均線；互動仍算進理智；舊的互動紀錄隔兩天清掉", G => {
-  const h = mk(G), plain = { id: "p1", name: "沒分岔", kind: "visitor", budget: { perDay: 1000 }, arc: [{ step: 1, from: D, text: "a", news: "b" }] };
-  G.nwPoke(h, D, "u", "p1", "lose"); G.nwSanDay(h, D, [], [plain], {}); assert.ok(!G.nwFix(h).hist.p1, "沒有 variants 不存"); assert.ok(G.nwSan(h, "p1") === 70 - 1 || G.nwSan(h, "p1") <= 70);
+T("所有有名字的旅客都追蹤（排程可以對任何旅客觸發 edge，不預先指定）：沒有 variants 也存 7 天均線；劇情角色（trace）不存；互動仍算進理智；舊的互動紀錄隔兩天清掉", G => {
+  const h = mk(G), plain = { id: "p1", name: "沒分岔", kind: "visitor", budget: { perDay: 1000 }, arc: [{ step: 1, from: D, text: "a", news: "b" }] }, tr = { id: "tr1", name: "劇情", kind: "trace", budget: { perDay: 1000 }, arc: [] };
+  G.nwPoke(h, D, "u", "p1", "lose"); G.nwSanDay(h, D, [], [plain, tr], {}); assert.deepStrictEqual(JSON.parse(JSON.stringify(G.nwFix(h).hist.p1)), [69], "沒有 variants 也存（收盤 69）"); assert.ok(!G.nwFix(h).hist.tr1, "trace 不存");
   G.nwPoke(h, add(D, 3), "u", "p1", "win"); assert.ok(!G.nwFix(h).poke[D], "舊的互動紀錄清掉");
+});
+T("給排程讀的公開資料：asOf 是最近一次結算的段首日期、每位的 now／st／prev／since、edge 是還沒走結局的、newEdge 是前一次 uneasy 以上這次 edge；不含玩家名字", G => {
+  const h = mk(G), w = G.nwFix(h); assert.deepStrictEqual(JSON.parse(JSON.stringify(G.nwArcPublic(h))), { asOf: null, seg: null, levels: {}, edge: [], newEdge: [] }); assert.strictEqual(G.nwArcPublic(null).seg, null);
+  const N2 = { id: "t-two", name: "二", kind: "visitor", budget: { perDay: 1 }, arc: [] };
+  w.hist["t-bell"] = [10, 10, 10, 10, 10, 10, 10]; w.hist["t-two"] = [50, 50, 50, 50, 50, 50, 50]; G.nwArcWeek(h, add(D, 13), [NPC, N2]);
+  let p = G.nwArcPublic(h); assert.strictEqual(p.asOf, add(D, 14)); assert.strictEqual(p.seg, 1); assert.strictEqual(p.edge.length, 0); assert.strictEqual(p.newEdge.length, 0);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.levels["t-bell"])), { now: "edge", st: "uneasy", prev: "steady", since: add(D, 14) }); assert.strictEqual(p.levels["t-two"].st, "tired", "平均 50 ＝ 有點累");
+  G.nwArcWeek(h, add(D, 27), [NPC, N2]); p = G.nwArcPublic(h); assert.strictEqual(p.edge.join(), "t-bell"); assert.strictEqual(p.newEdge.join(), "t-bell", "前一次 uneasy、這次 edge");
+  G.nwArcEnd(h, "t-bell", add(D, 30)); p = G.nwArcPublic(h); assert.strictEqual(p.edge.length, 0, "走完結局不再列"); assert.ok(p.levels["t-bell"].end);
+  assert.ok(!/uid|u1|solo/.test(JSON.stringify(p)), "沒有玩家");
 });
 T("週結算：只在每段第 1 週的週一（前一天收盤時）算一次；資料少於 3 天不算；edge 要前一次已經是 uneasy 以上（先有預兆）", G => {
   const h = mk(G), w = G.nwFix(h), B = G.NUM.casino.worldDoc.branch;
