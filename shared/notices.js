@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-c84948", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "各廳整點會敲鐘，成交和高分有掌聲", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "每個整點（台灣時間）各廳都會先響壹陣滴答，再敲老掛鐘，幾點敲幾下；音量和靜音照設定。",
+        "展廳評分到 60 分、主題展辦完拿到新的壹級、拍賣成交、委託完成，會有掌聲；21 點拿到 Blackjack 有掌聲加歡呼。",
+        "修復台修東西、治好受傷的佩佩，會有上發條的聲音。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-7a7527", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "走音的音樂盒、銀行的打字機", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

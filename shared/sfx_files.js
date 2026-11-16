@@ -65,5 +65,10 @@ export const SFX_FILES = {
   "gallery-nostalgic": { name: "Nostalgic", by: "atlasaudio", url: "https://pixabay.com/music/nostalgic-511878/", use: "畫廊偶爾輕輕放壹次（懷舊）" },
   "film-inspiring": { name: "Inspiring Cinematic Ambient（截前 100 秒）", by: "Lexin_Music", url: "https://pixabay.com/music/inspiring-cinematic-ambient-116199/", use: "主線劇情揭露（三首輪流之一，偏希望感）" },
   "film-sad": { name: "Sad Documentary Background Music", by: "SigmaMusicArt", url: "https://pixabay.com/music/sad-documentary-background-music-604193/", use: "主線劇情揭露（三首輪流之一，偏失落）" },
+  "applause": { name: "Applause - sound effect", by: "PWLPL", url: "https://pixabay.com/sound-effects/film-special-effects-applause-sound-effect-521104/", use: "展廳評分跨過高分、主題展辦完拿新的壹級、拍賣成交、委託完成" },
+  "applause-cheer": { name: "Applause, cheer", by: "Driken5482", url: "https://pixabay.com/sound-effects/people-applause-cheer-236786/", use: "21 點拿到 Blackjack（單人和同桌）" },
+  "clock-strike": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截壹下鐘聲，含餘音約 6.5 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘（敲的次數＝12 小時制的鐘點）" },
+  "clock-tick": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截 4 秒滴答聲，前後淡入淡出）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘前的滴答聲" },
+  "repair": { name: "Wind the wall clock（截前 3.5 秒，淡出）", by: "spinopel", url: "https://pixabay.com/sound-effects/film-special-effects-wind-the-wall-clock-381831/", use: "維修任何東西時（修復台修修看、治好受傷的佩佩；之後館方帳的修繕也用）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

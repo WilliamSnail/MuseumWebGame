@@ -14,13 +14,14 @@ import { CAS_QUICK } from "../../shared/casino_table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, titleOfId, titleTag } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, sndFile, titleOfId, titleTag } from "./ui_core.js";
 import { npcName } from "./ui_npc_card.js";
 import { overlay } from "./ui_board.js";
 import { ambHeat, mountMood } from "./ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "./ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
 import { casOutSfx, casSfx } from "./casino_sfx.js";
+import { APPLAUSE } from "../../shared/applause.js";
 import { CAS_WK } from "./ui_casino_week.js";
 
 const hashOf = s => [...String(s)].reduce((n, c) => (n * 31 + c.codePointAt(0)) >>> 0, 7);
@@ -121,6 +122,7 @@ function resultNotes(v) {
   const me = v.seats.find(x => x.you);
   if (!me || !me.out) return;
   casSfx(casOutSfx(me.out));
+  if (me.out.kind === "blackjack") sndFile("applause-cheer", APPLAUSE.vol); // 同桌拿到 Blackjack
   for (const a of me.ach || []) { note(`成就「${a.name}」！在賭場的「成就」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
   if (me.ticket) note(CAS_TEXT.packWon, "good");
 }
