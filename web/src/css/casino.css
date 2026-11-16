@@ -552,3 +552,9 @@ body.reduce-motion .cas-bub { animation: none; }
 .bk-in-hint { font-size: .8125rem; color: #CFE3C2; }
 .bk-in-hint.bad { color: #F2A38C; }
 .work-bank { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(214,178,94,.35); } /* 欠款視窗的出口（11-15）：先去銀行找財經專員 */
+
+/* 簡易銀行：輸入欄在前，快選按鈕縮小放後面（11-16，翊文：「以手動輸入為主」） */
+.cas-bank .bk-act .bk-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; opacity: .9; }
+.cas-bank .bk-act .bk-quick > small { color: var(--paper-soft, #D8C59A); font-size: var(--type-tiny, .6875rem); }
+.cas-bank .bk-act .bk-quick .btn { min-height: 32px; padding: 2px 8px; font-size: var(--type-small, .75rem); }
+.cas-bank .bk-in-hint.bad { color: #E08A6A; }
