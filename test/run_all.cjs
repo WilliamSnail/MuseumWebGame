@@ -111,6 +111,7 @@ const STEPS = [
   ["每天排程的幫手（day:plan 今天要做什麼、day:check 一次檢查）", ["test/day_plan.test.cjs"]],
   ["每日排程優化（11-16）：ship 只改內容跳過本機測試、day:check --strict、day:new 骨架、day:pr 草稿、ledger reveal／written／day／apply、npm run issue", ["test/sched_tools.test.cjs"]],
   ["CI 不跳過任何測試（run_all、ci.yml、deploy.yml 都沒有偷跳；ship 的內容判斷共用，11-16）", ["test/ci_skip.test.cjs"]],
+  ["函式這包的指紋（沒變就不部署函式，deploy.yml，11-16）", ["test/fn_hash.test.cjs"]],
   ["部署前要不要重跑測試（tree 跟 PR 的 CI 測過的完全一樣才跳過，其他照跑；deploy.yml 的 test／prepare 並行、deploy 等兩個，11-16）", ["test/deploy_gate.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
   ["ship／gh_lib 等 CI、等部署：用 REST 輪詢 run 的狀態、網路短暫錯誤重試、不再因 gh run watch 中斷誤報失敗（11-16）", ["test/gh_wait.test.cjs"]],
