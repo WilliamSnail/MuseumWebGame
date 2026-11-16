@@ -99,6 +99,7 @@ function roomCounts() {
   const c = now && now.casino; if (c) out.casino = (out.casino || 0) + (typeof c.n === "number" ? c.n : Array.isArray(c.names) ? c.names.length : 0);
   return out;
 }
+ADDONS.roomPeopleN = id => roomCounts()[id] || 0; // 某間現在幾人（館友＋旅客＋散客＋被邀去的）：賭場人多換曲用（11-16，ui_core.js audioState）
 // ---------- 導覽圖 ----------
 function mapBox(step) {
   const progress = roomProgress(P);
