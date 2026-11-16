@@ -70,7 +70,9 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
 
 /* 霓虹和荷官都開：標題列中間錯開 */
 .rm-fx.both-top .rm-neon { left: 36%; }
-.rm-fx.both-top .rm-dealer { left: 66%; font-size: clamp(.72rem, .95vw, .9rem); }
+.rm-fx.both-top .rm-dealer { left: 59%; max-width: 24%; font-size: clamp(.72rem, .85vw, .85rem); } /* 11-16：66% 會被右邊的籌碼蓋到；拿掉 Yuga Bot 的名字、縮到霓虹和籌碼之間放得下，放不下就省略號 */
+.rm-fx.both-top .rm-dealer b { display: none; }
+.rm-fx.both-top .rm-dealer span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* 賭場的煙：畫在綠絨布上、介面（牌、字、按鈕）後面（翊文：「煙霧感覺擋到介面了，應該在介面後面」）。濃淡由 ui_mood.js 設 --rm-smoke（冷清 0、熱鬧 1） */
 .nb-casino .nb-surface { isolation: isolate; }
