@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-6a35d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
+    title: "餐車買飲料有倒水聲", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "在餐車買冰涼麥茶、堂主推薦葡萄汁、海軍上將珍藏茶，會聽到倒飲料的聲音。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-158627", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "地下的滴水換成真的錄音；石沉大海會撲通壹聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

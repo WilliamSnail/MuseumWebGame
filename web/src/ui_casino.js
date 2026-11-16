@@ -635,6 +635,7 @@ function dinerPane() {
   const buy = it => act("buy", { item: it.n }, r => {
     S.dinerLines = r.lines || [];
     snd("coin");
+    if (it.icon === "cup") sndFile("pouring", 0.45); // 飲料（麥茶、葡萄汁、珍藏茶）：倒水聲（11-16 翊文，Pixabay「Pouring Water」）
     if (r.mood) note(`心情 +${r.mood}${r.san ? `，理智 +${r.san}` : ""}`, "good");
     else if (r.san) note(`理智 +${r.san}`, "good");
     celebrate(r.ach);
