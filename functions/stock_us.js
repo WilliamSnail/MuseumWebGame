@@ -26,6 +26,7 @@ const docRef = () => db().doc("stocksUs/latest");
 
 // 遊戲裡的 id → Yahoo 的代號（真實代號只放這裡）
 export const US_SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "QQQ", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT" };
+export const US_NAMES = { greeneye: "輝達", redclaw: "超微", nightindex: "那斯達克 100 指數基金", silverapple: "蘋果", flashcar: "特斯拉", squarewin: "微軟" };
 const HOSTS = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
 
 async function fetchOne(sym, day, nowMs) {

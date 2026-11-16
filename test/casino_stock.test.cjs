@@ -90,7 +90,7 @@ T("畫面要的：行情、漲跌、我的持股、停盤", G => {
   G.casStockRoll(s.house, "2026-11-15", {});
   s.house.stk.px[ID] += 500; // 盤中漲了
   const v = G.casStockView(s.w, s.house, "2026-11-15", OPEN);
-  assert.strictEqual(v.list.length, 11);
+  assert.strictEqual(v.list.length, G.OUT_STOCKS.length);
   const x = v.list.find(y => y.id === ID);
   assert.strictEqual(x.mine, 3); assert.ok(x.chg > 0); assert.strictEqual(x.value, x.price * 3);
   assert.strictEqual(v.total, x.value, "只有這支有持股");

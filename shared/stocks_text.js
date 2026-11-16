@@ -15,4 +15,8 @@ export const OUT_STOCKS = [
   { id: "bigassembly", kind: "stock", market: "tw", name: "巨浪代工廠", intro: "幫別人組裝東西的超大工廠，銀色小機器和機房裡的伺服器大半是它的工人裝的。賺的是辛苦錢，量很大。" },
   { id: "trianglepower", kind: "stock", market: "tw", name: "三角電源行", intro: "做電源和散熱風扇的老店，機房裡嗡嗡響的東西大半是它做的。算盤腦袋越熱，它也跟著越熱。" },
   { id: "linetower", kind: "stock", market: "tw", name: "島線電話行", intro: "牽電話線和網路線的老牌電信行，家家戶戶都用它。波動很小，是穩穩當當的選擇。" },
+  { id: "brainrack", kind: "stock", market: "tw", name: "腦袋機架行", intro: "組筆電，也替機房組放算盤腦袋的大機架。客人是幾家最大的雲端攤位，單子來得快、去得也快。" },
+  { id: "cloudcabinet", kind: "stock", market: "tw", name: "大戶櫃匠", intro: "只接幾個大戶的單，大戶壹打噴嚏就跟著感冒。價錢高，跳起來也兇。" },
+  { id: "customchip", kind: "stock", market: "tw", name: "量身晶片坊", intro: "不賣現成的，專替大攤位設計量身訂做的晶片。大單子一來價錢就跳，單子一走也跳。" },
+  { id: "voltgrid", kind: "stock", market: "tw", name: "粗線變壓坊", intro: "做變壓器和配電盤的重電老坊，機房和電廠都得向它訂貨。這兩年訂單排得很後面。" },
 ];

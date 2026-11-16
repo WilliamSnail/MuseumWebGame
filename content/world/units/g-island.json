@@ -11,7 +11,11 @@
     "handbrain",
     "bigassembly",
     "trianglepower",
-    "linetower"
+    "linetower",
+    "brainrack",
+    "cloudcabinet",
+    "customchip",
+    "voltgrid"
   ],
   "story": false,
   "note": "島上的晶片、代工、電源和電話公司。"

@@ -105,7 +105,7 @@ export function casStockHouseFix(house) {
   H.peg.ev = H.peg.ev.filter(e => stBox(e) && stDef(e.id) && stN(e.from) > 0 && stN(e.to) > 0 && stN(e.seq) > 0).map(e => ({ seq: stN(e.seq), id: e.id, from: stN(e.from), to: stN(e.to) }));
   if (!stBox(H.peg.dir)) H.peg.dir = {}; // dir[id]：這支已經換成「直接用真實價」（換過比例）
   if (!stBox(H.real)) H.real = {};
-  for (const k of Object.keys(H.real)) { const r = H.real[k]; if (!STOCK_IDS.includes(k) || !stBox(r) || !(+r.px > 0)) delete H.real[k]; else H.real[k] = { sym: typeof r.sym === "string" ? r.sym.slice(0, 12) : "", px: +r.px, chg: Number.isFinite(+r.chg) ? +r.chg : 0 }; }
+  for (const k of Object.keys(H.real)) { const r = H.real[k]; if (!STOCK_IDS.includes(k) || !stBox(r) || !(+r.px > 0)) delete H.real[k]; else H.real[k] = { sym: typeof r.sym === "string" ? r.sym.slice(0, 12) : "", name: typeof r.name === "string" ? r.name.slice(0, 20) : "", px: +r.px, chg: Number.isFinite(+r.chg) ? +r.chg : 0 }; }
   if (!stBox(H.net)) H.net = { day: null, n: 0 };
   H.net.day = stDay(H.net.day) ? H.net.day : null;
   H.net.n = Number.isFinite(+H.net.n) ? Math.floor(+H.net.n) : 0;
@@ -208,8 +208,8 @@ export function casStockReals(house, tw, us) {
   return Object.assign({}, stRealMap(tw, H.day), stRealMap(us, H.day));
 }
 // 畫面要的真實價：只給「已經算進遊戲價」的那個（上壹個錨點，或還沒開盤時前壹收盤），不給即時的（不然不用看盤軟體就能搶跑）。syms：{ id: 代號 }（只有伺服器知道，shared 不寫死）
-export function casStockSetReal(house, tw, us, day, syms) {
-  const H = casStockHouseFix(house), sy = syms && typeof syms === "object" ? syms : {};
+export function casStockSetReal(house, tw, us, day, syms, names) {
+  const H = casStockHouseFix(house), sy = syms && typeof syms === "object" ? syms : {}, nm = names && typeof names === "object" ? names : {};
   for (const doc of [tw, us]) {
     if (!doc || typeof doc !== "object") continue;
     let src = null;
@@ -223,7 +223,7 @@ export function casStockSetReal(house, tw, us, day, syms) {
     for (const id of Object.keys(src.R)) {
       if (!STOCK_IDS.includes(id) || !src.R[id] || !stOkPx(src.R[id].px)) continue;
       const px = src.R[id].px, pv = src.prev && stOkPx(src.prev[id]) ? src.prev[id] : null;
-      H.real[id] = { sym: typeof sy[id] === "string" ? sy[id] : "", px, chg: pv ? px / pv - 1 : 0 };
+      H.real[id] = { sym: typeof sy[id] === "string" ? sy[id] : "", name: typeof nm[id] === "string" ? nm[id] : "", px, chg: pv ? px / pv - 1 : 0 };
     }
   }
 }

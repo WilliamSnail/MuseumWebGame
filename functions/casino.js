@@ -61,8 +61,8 @@ import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
 import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
-import { TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js";
-import { US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
+import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js";
+import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
@@ -124,7 +124,7 @@ export async function playCore(me, email, opts, fn) {
       casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/econ_events.js）
       casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
-      casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
+      casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS), Object.assign({}, TW_NAMES, US_NAMES)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
       const S = ss ? parse(ss) : null;

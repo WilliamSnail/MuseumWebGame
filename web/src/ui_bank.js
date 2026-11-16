@@ -47,8 +47,8 @@ export function fakeBankHall() {
     { id: "neon", name: "霓虹顯卡", line: "館外・世界版", fresh: true, market: "us", price: 231, chg: 0.017, hist: [220, 224, 226, 225, 227, 227, 231], mine: 0, kind: "out" },
     { id: "sand", name: "紅砂晶片", stale: "這幾分鐘抓不到新的真實價，先暫停買賣，價停在最後壹個價；新的價回來就恢復。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
     { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
-    { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
-    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", name: "聯發科", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
+    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", name: "蘋果", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
     { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
   stocks.forEach(x => { x.value = x.price * x.mine; x.tax = x.market === "in" ? 0 : 0.05; if (x.mine > 0) { x.avgCost = Math.round(x.price * 0.93 * 100) / 100; x.costTotal = Math.round(x.avgCost * x.mine); x.dayChg = Math.round(x.value * x.chg / (1 + x.chg)); x.dayPct = x.chg; x.pnl = x.value - x.costTotal; x.pnlPct = x.pnl / x.costTotal; } });
@@ -304,7 +304,7 @@ function realBit(s) {
   const r = s.real;
   if (!r) return null;
   const c = typeof r.chg === "number" ? r.chg : null;
-  return h("span", { class: "bank-real" }, h("i", { class: "bank-realtag", title: "真實：外面那支股票現在的行情。遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新，漲跌幅一樣。" }, "真實"), h("b", null, r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
+  return h("span", { class: "bank-real" }, h("i", { class: "bank-realtag", title: "真實：外面那支股票現在的行情。遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新，漲跌幅一樣。" }, "真實"), h("b", null, r.name ? `${r.sym} ${r.name}` : r.sym), r.px != null ? h("span", null, realPx(r.px, s.market)) : null,
     c != null ? h("em", { class: c > 0 ? "up" : c < 0 ? "down" : "" }, `${c > 0 ? "▲" : c < 0 ? "▼" : "－"} ${(Math.abs(c) * 100).toFixed(1)}%`) : null);
 }
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
