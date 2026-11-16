@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-3c142d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "各廳新介面",
+    title: "手機大廳的導覽圖放大", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "手機直拿時，大廳的導覽圖改成跟螢幕壹樣寬，可以往下滑看完整張；每週任務、簽到在圖下面。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-b581d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "大廳改寫全館人數，散客會逛到各館區", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

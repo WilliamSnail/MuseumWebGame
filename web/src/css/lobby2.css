@@ -393,3 +393,10 @@ body.reduce-motion .hl-track { animation: none; }
   .l2-todo.done b { color: #F3EBD8; text-decoration-color: rgba(243, 235, 216, .6); text-shadow: 0 1px 1px rgba(0, 0, 0, .55); }
   .l2-todo.done small { color: #E2D6BC; }
 }
+
+/* 手機直拿：導覽圖用滿寬（11-16，翊文：「大廳的圖片手機版實在太小了」）。原本照剩下的高度縮（壹個畫面放完），直式底圖窄高，縮完只剩螢幕寬的四成多；改成跟螢幕壹樣寬、大廳可以往下捲，「每週任務／簽到」放在圖下面 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2 { height: auto; }
+  .l2-mapbox { flex: none; display: block; }
+  .l2-map.port { width: 100%; height: auto; max-width: none; }
+}
