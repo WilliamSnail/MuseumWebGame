@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-dda694", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "地下打鬥不再有刀劍聲", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "地下遇到怪物時改成地下的怪聲，守門第二階段也拿掉了刀劍聲；推、安撫、擋本來就不是拿劍打。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-ee9d7d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "圖書館的地圖頁籤換了樣子", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

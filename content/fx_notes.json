@@ -46,7 +46,7 @@
  "coin-drop": {"heard":null,"note":null},
  "slot-bonus": {"heard":null,"note":null},
  "crowd-cheer": {"heard":null,"note":null},
- "sword-fight": {"heard":null,"note":null},
+ "sword-fight": {"heard":null,"note":"11-16 起不用了（翊文：刀劍聲跟推、安撫、擋不配），遇到怪物改 basement-noise；檔案留著備用"},
  "boss-intro": {"heard":null,"note":null},
  "stairs-boss": {"heard":null,"note":"11-16 起不用了，換成 gate-viking；檔案留著備用"},
  "ready-fight": {"heard":null,"note":null},
