@@ -56,6 +56,15 @@ export const NOTICES = [
     ],
   },
   {
+    id: "upd-2026-11-16-b61579", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "館長室有音樂了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館長室壹進去會放跟委託櫃台同壹首大提琴；委託櫃台的大提琴也改成壹進去就放。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-7adf6f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "賭桌也看得到銀行和自己的帳戶", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
