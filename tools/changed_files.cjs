@@ -1,5 +1,5 @@
 // 「這次只改內容嗎」的判斷（11-16 每日排程優化二；以前寫在 tools/ship.cjs，現在 ship 和 CI 共用這壹份）
-//   isContentFile(檔名)   內容路徑：content/、維護日誌/、.claude/（交接檔，不進遊戲），以及 shared/notices.js，
+//   isContentFile(檔名)   內容路徑：content/、維護日誌/、.claude/（交接檔，不進遊戲），（公告在 content/notices/），以及
 //                         和從 content 打包出來的 shared/npc_roster.js、shared/map_data.js
 //   contentOnly(檔案清單) 每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）
 //   skipSlowEcon(檔案清單, 事件)  CI 要不要跳過最慢的那項「經濟自我檢查腳本」（約 114 秒）：
@@ -13,7 +13,7 @@
 const { spawnSync } = require("child_process");
 const fs = require("fs"), path = require("path");
 
-const CONTENT_PATH = /^(content\/|維護日誌\/|\.claude\/)|^shared\/(notices|npc_roster|map_data)\.js$/;
+const CONTENT_PATH = /^(content\/|維護日誌\/|\.claude\/)|^shared\/(npc_roster|map_data)\.js$/;
 const norm = f => String(f || "").split("\\").join("/");
 const isContentFile = f => CONTENT_PATH.test(norm(f));
 const contentOnly = files => { const f = (files || []).filter(Boolean); return f.length > 0 && f.every(isContentFile); };

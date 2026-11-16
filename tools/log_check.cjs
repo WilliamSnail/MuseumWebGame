@@ -1,16 +1,13 @@
 // 檢查維護日誌：node tools/log_check.cjs
 //   1. 每一篇的檔名、開頭欄位、標題都對（格式見 維護日誌/範本.md）。
-//   2. 總表 維護日誌/README.md 是最新的。
-//   3. 加 --base <分支或 commit>（CI 的 PR 用）：這個 PR 改了程式（shared/、web/、server/、db/），就一定要新增一篇日誌。
+//   2. 加 --base <分支或 commit>（CI 的 PR 用）：這個 PR 改了程式（shared/、web/、server/、db/），就一定要新增一篇日誌。
 const fs = require("fs"), path = require("path");
 const { execSync, spawnSync } = require("child_process");
 const { ROOT, listLogs, check } = require("./log_lib.cjs");
 
 const errs = listLogs().flatMap(check);
 
-// 總表
-const idx = spawnSync(process.execPath, [path.join(__dirname, "log_index.cjs"), "--check"], { cwd: ROOT, encoding: "utf8" });
-if (idx.status !== 0) errs.push((idx.stderr || idx.stdout).trim());
+// 總表 維護日誌/README.md 不進 git（11-16 起 .gitignore，npm run log:index 在本機產生給人看），這裡只檢查每篇的格式
 
 // PR 有改程式就要有日誌
 const bi = process.argv.indexOf("--base");

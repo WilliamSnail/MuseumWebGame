@@ -7,7 +7,7 @@
 //   --body-file 檔案   內容太長時放檔案
 //   --no-merge        只開 PR、等 CI，不合併
 //   --skip-local      不跑本機的 npm test 和 vite build（CI 還是會跑）
-//   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、維護日誌/、shared/notices.js、
+//   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、維護日誌/（公告在 content/notices/）、
 //                     .claude/，加上從 content 打包出來的 shared/npc_roster.js、shared/map_data.js）時，本機改跑 npm run day:check（要過才繼續），
 //                     不跑 npm test 和 vite build（11-16 每日排程優化：內容 PR 每次省 2～5 分鐘；CI 和部署照跑，安全網還在）。
 //                     只要有任何程式檔（web/、shared/ 其他檔、functions/、tools/、test/、package.json…）就照舊全跑
@@ -16,7 +16,7 @@
 //                                   每天 20:00 .github/workflows/discord-digest.yml 會把當天的公告合成壹則發出去。給了 --say 只印提醒，不發。
 //   --say-now "文字"                大更新要馬上發才用（tools/say.cjs）：例如新廳開放、全館活動開跑、壞掉修好要通知大家
 //   --after-deploy "指令"           部署成功後再跑壹條指令（每日排程用：--after-deploy "gh workflow run discord-scheduled.yml --ref main"）
-//   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒動 shared/notices.js 會印警告，不擋）
+//   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒加 content/notices/ 的公告檔會印警告，不擋）
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
 const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
@@ -69,7 +69,7 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
 // 只動「內容」嗎（純函式，測試用）：每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）。
-// 內容路徑：content/、維護日誌/、shared/notices.js、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
+// 內容路徑：content/、維護日誌/（公告在 content/notices/）、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
 const { isContentFile, contentOnly } = require("./changed_files.cjs"); // 11-16 第二批：抽到共用的檔，CI 也用同壹個判斷
 // 本機要跑什麼：{ mode: "skip" | "content" | "full", line }（line 是要印的壹行說明）
 function localPlan(files, flags) {
@@ -95,7 +95,7 @@ function bodyFromLog(md) {
 // 改了玩家看得到的地方卻沒加公告（純函式，測試用）：回傳要印的警告，沒事回空字串
 function noticeWarning(files) {
   const f = files.filter(Boolean);
-  if (f.includes("shared/notices.js")) return "";
+  if (f.some(x => x.startsWith("content/notices/"))) return "";
   const seen = f.filter(x => /^(web\/|functions\/|shared\/)/.test(x) && !/\.test\.|^shared\/npc_roster\.js$/.test(x));
   return seen.length ? `⚠ 改了 ${seen.slice(0, 3).join("、")}${seen.length > 3 ? ` 等 ${seen.length} 個檔` : ""}，但沒有加館方公告（npm run notice -- …）。不是玩家看得到的就加 --no-notice。` : "";
 }

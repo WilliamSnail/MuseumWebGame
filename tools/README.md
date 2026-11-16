@@ -14,7 +14,7 @@
 |---|---|
 | 上線：本機測試 → commit → 併 main → 推 → 開 PR → 等 CI → 合併 → 等部署 → 回到 main 拉最新 | `npm run ship -- --title "標題" --body "內容"`（放背景跑；`--no-merge` 不合併；沒給 `--body` 就拿新加的維護日誌兩段；`--say "文字"` 部署成功後發 Discord；`--after-deploy "指令"` 部署後再跑壹條；改了 web／shared／functions 沒加公告會警告，不是玩家看得到的加 `--no-notice`；在 worktree 裡不切回 main） |
 | **發 Discord**：發壹則手動公告，等到成功或失敗 | `npm run say -- "文字"`（`--file 檔案`、`--dry` 只印；擋空的、太長、@ 人） |
-| **加館方公告**到 `shared/notices.js` 最上面 | `npm run notice -- --area 賭場 --title "標題" "第壹句" "第二句"`（area 要是 NOTICE_AREAS 其中壹個；`--id`、`--section`、`--importance`、`--expire`、`--dry`，看 tools/notice.cjs 開頭） |
+| **加館方公告**（寫成 `content/notices/<id>.json`，一則一個檔，不會撞） | `npm run notice -- --area 賭場 --title "標題" "第壹句" "第二句"`（area 要是 NOTICE_AREAS 其中壹個；`--id`、`--section`、`--importance`、`--expire`、`--dry`，看 tools/notice.cjs 開頭） |
 | **經濟三支**：價格總表（玩家看得到的價格和上限，名字、值、路徑）；寫死金額掃描（文字裡的「1,000 萬」跟 NUM 對不上的，列檔名:行；白名單 `tools/econ_scan_allow.json`）；正式站帳面壹鍵拿（按固定動作 econ-status → 存 log → 餵 `econ_check --ledger`，**只有翊文同意才能跑，要加 `--yes`**） | `npm run econ:prices [-- --md]`；`npm run econ:scan [-- --all --strict]`；`npm run econ:status -- --yes` |
 | 館方投資策略回測（真實日線 5 年，比較追高、平均買、跌深加碼等） | `node tools/invest_backtest.cjs --fetch` 抓資料，再 `node tools/invest_backtest.cjs [交易日數]`（決定 0099） |
 | **`npm run tune`（調數值的總入口，決定 0089）**：壹張清單改好幾處（`NUM.路徑=值`、`unit:id.欄位=值`、`npc:id.欄位=值`，或 `--file 清單.txt`），自己找到檔案（config.js 用 acorn 只換那個值）、改完自動跑 world:check、econ:check、相關測試，再模擬 30 天（景氣 0 和 −1）印「改之前 → 改之後」；任何壹項沒過就還原，`--dry` 只看不留。**以後改數字壹律用它** | 要改 NUM、單位、NPC 的數字時 | `tools/tune.cjs` |

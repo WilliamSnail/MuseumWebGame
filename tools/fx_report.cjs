@@ -1,6 +1,6 @@
 // 聲音和畫面特效的總表（翊文 11-16：「做一張聲音和畫面特效的總表，好追蹤和改進，自動產生並檢查」）
 //   npm run fx:report            重新產生 docs/音效與特效總表.md（並把新項目補進 content/fx_notes.json）
-//   npm run fx:report -- --check 只比對，總表跟程式對不上就結束碼 1（npm test 會跑）
+//   npm run fx:report -- --check 只檢查程式掃得出來、fx_notes.json 每個項目都有，缺了就結束碼 1（npm test 會跑）。總表本身不進 git（.gitignore），要看就跑上面那行
 // 全部從程式掃出來：shared/sfx_files.js、web/src/fx.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
 //   ui_mood.js、css、shared/room_mood.js、地下戰鬥特效。
 // 「畫面特效」和「理智規則」是一張清單（下面 VFX、SAN_RULES），每項帶一個「標記」去程式裡找行號；標記找不到就報錯 → 改名或刪掉程式時會被抓到，要回來改這張清單。
@@ -331,7 +331,7 @@ async function build(notes) {
 
   o.push("# 聲音和畫面特效總表", "",
     "> 這份是 `npm run fx:report` 產生的，**不要手改**。聽過了沒、要調什麼，寫在 `content/fx_notes.json`（格式見下面），下次跑 `npm run fx:report` 會進表。",
-    "> 改了聲音或畫面特效的程式後，`npm test` 會檢查這份有沒有跟上（`npm run fx:report -- --check`）；不一樣就跑一次 `npm run fx:report`。", "");
+    "> 這份**不進 git**（.gitignore）：要看就在本機跑 `npm run fx:report`。`npm test` 只檢查「程式掃得出來、`content/fx_notes.json` 每一項都有」（`npm run fx:report -- --check`），缺了就跑一次 `npm run fx:report`。", "");
 
   // 摘要
   const heardN = (ks) => ks.filter(k => notes[k] && notes[k].heard).length;
@@ -469,12 +469,8 @@ async function main() {
   const missing = r.keys.filter(k => !(k in notes));
   if (check) {
     if (missing.length) { console.error(`fx_notes.json 缺 ${missing.length} 個項目（${missing.slice(0, 5).join("、")}…）：跑 npm run fx:report`); process.exit(1); }
-    const cur = fs.existsSync(DOC) ? EOL(fs.readFileSync(DOC, "utf8")) : "";
-    // 行號只是找位置用：別人的 PR 在檔案前面加幾行，行號跟著動，不算「總表沒更新」（11-16：不然每個同時進 main 的 PR 都會害這張表過期）。
-    // 新增／刪除／改名／改音量這種「內容」變了才會不一樣；想要行號是新的就跑 npm run fx:report
-    const noLine = s => s.replace(/(\.(?:js|css)):\d+/g, "$1:N");
-    if (noLine(cur) !== noLine(r.text)) { console.error("程式改了、總表沒更新：跑 npm run fx:report"); process.exit(1); }
-    console.log("音效與特效總表是最新的");
+    // 11-16 起總表不進 git（docs/音效與特效總表.md 由 npm run fx:report 在本機產生，給人看）：這裡只檢查「程式掃得出來、fx_notes.json 每一項都有」，不比對檔案
+    console.log("音效與特效總表：程式掃得出來，fx_notes.json 跟得上");
     return;
   }
   if (missing.length) { for (const k of missing) notes[k] = { heard: null, note: null }; writeNotes(notes, r.keys); }

@@ -46,23 +46,11 @@ T("ship：commit 和 PR 的署名", () => {
   assert.ok(b.trim().endsWith("https://claude.com/claude-code)"));
   assert.strictEqual(prBody(b).split("Generated with").length, 2, "不會多壹行");
 });
-T("merge：公告兩邊都留，開頭的 { 補回去；其他的只留內容；不認得的檔不自動解", () => {
-  const c = "頭\n  {\n<<<<<<< HEAD\n    id: 1,\n  },\n=======\n    id: 2,\n  },\n>>>>>>> origin/main\n];\n";
-  assert.strictEqual(keepBoth(c, "notice"), "頭\n  {\n    id: 1,\n  },\n  {\n    id: 2,\n  },\n];\n");
+T("merge：清單兩邊都留、其他只留內容；公告檔和不進 git 的總表可以自動處理；不認得的檔不自動解", () => {
   assert.strictEqual(keepBoth("<<<<<<< a\nA\n=======\nB\n>>>>>>> b\n"), "A\nB\n");
-  // 真的公告的樣子：共同的收尾（段落的 ]],、sections 的 ],、這則的 },）壹部分或全部在衝突外面（11-13 兩次掉了 "      ]],"）
-  const one = id => `    id: "${id}", sections: [\n      ["段", [\n        "句（有 ] 和 } 也不算）",\n`;
-  const full = "      ]],\n    ],\n  },\n";
-  for (const tail of [full, "    ],\n  },\n", "  },\n", ""]) {
-    const inner = full.slice(0, full.length - tail.length);
-    const cc = `const N = [\n  {\n<<<<<<< HEAD\n${one("a")}${inner}=======\n${one("b")}${inner}>>>>>>> origin/main\n${tail}];\n`;
-    const out = keepBoth(cc, "notice");
-    const N = new Function(out.replace("const N =", "return"))();
-    assert.deepStrictEqual(N.map(x => x.id), ["a", "b"], "合完要是能跑的 JS：外面留 " + JSON.stringify(tail));
-  }
   const l = '<<<<<<< a\nconst O = ["x.js", "new1.js", "z.js"];\n=======\nconst O = ["x.js", "z.js", "new2.js"];\n>>>>>>> b\n';
   assert.strictEqual(keepBoth(l, "list"), 'const O = ["x.js", "new1.js", "z.js", "new2.js"];\n');
-  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md"));
+  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md") && canAuto("docs/音效與特效總表.md"));
   assert.ok(!canAuto("shared/logic.js"));
 });
 T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別場不動；找不到回 null", () => {
@@ -212,7 +200,7 @@ T("ship：沒給說明就拿維護日誌的兩段", () => {
 });
 T("ship：改了玩家看得到的檔卻沒公告會警告；有公告、只改 tools 不警告", () => {
   assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/ui_bank.js", "維護日誌/2026/x.md"])));
-  assert.strictEqual(SH.noticeWarning(["web/src/ui_bank.js", "shared/notices.js"]), "");
+  assert.strictEqual(SH.noticeWarning(["web/src/ui_bank.js", "content/notices/upd-x.json"]), "");
   assert.strictEqual(SH.noticeWarning(["tools/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
 });
 T("say：空的、太長、@ 人都擋下來", () => {
@@ -231,11 +219,9 @@ T("notice：組出公告、area 要對、id 不重複、預設日期", () => {
   assert.throws(() => NO.build(NO.parse(["--area", "亂寫", "--title", "賭場的新東西", "x"]), env), /area/);
   assert.throws(() => NO.build(NO.parse(["--area", "賭場", "--title", "賭場的新東西", "--id", "dup-id", "x"]), env), /已經有了/);
   assert.throws(() => NO.build(NO.parse(["--area", "賭場", "--title", "賭場的新東西"]), env), /至少/);
-  const src = "export const NOTICES = [\n  {\n    id: \"old\",\n  },\n];\n";
-  const out = NO.insert(src, NO.render(n));
-  assert.ok(out.indexOf(n.id) < out.indexOf("\"old\""));
-  // 寫出來的那段要是合法的 JS 物件
-  const obj = Function(`return ${NO.render(n).trim().replace(/,$/, "")}`)();
+  // 寫出來的是一個 JSON 檔（content/notices/<id>.json），帶寫入時間 at
+  const obj = JSON.parse(NO.render(n, "2026-11-14T00:00:00.000Z"));
+  assert.strictEqual(obj.at, "2026-11-14T00:00:00.000Z"); assert.strictEqual(obj.id, n.id);
   assert.strictEqual(obj.area, "賭場"); assert.strictEqual(obj.sections[0][1][1], "第二句");
 });
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);

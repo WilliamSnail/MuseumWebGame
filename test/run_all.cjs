@@ -3,6 +3,7 @@
 const path = require("path");
 
 const root = path.join(__dirname, "..");
+require("../tools/notices_build.cjs").write(); // shared/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
 const STEPS = [
   ["規則測試", ["test/logic.test.cjs"]],
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/room_mood.test.cjs"]],
@@ -16,6 +17,7 @@ const STEPS = [
   ["每日重要事件清單（只放今天、每種有上限、預告壹則、壞資料不丟錯）", ["test/headlines.test.cjs"]],
   ["新玩家的下一步", ["test/guide.test.cjs"]],
   ["公佈欄、信箱", ["test/notice.test.cjs"]],
+  ["公告一則一個檔：拆檔遷移（id 和順序不變、可以重跑）、合成、舊陣列偵測、併 main 救援", ["test/notices_split.test.cjs"]],
   ["手作坊顯示的地下效果跟地下實際算的一樣", ["test/cellar_fx.test.cjs"]],
   ["參觀者一位接一位（遺物、選職業抽優缺點、歷任紀錄）", ["test/legacy.test.cjs"]],
   ["多位參觀者（換人、位子、名字）", ["test/visitors.test.cjs"]],

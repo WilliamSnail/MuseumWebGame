@@ -18,7 +18,7 @@
 3. `docs/決定/`：每一篇決定紀錄。至少看過標題，跟你要改的有關的讀完。
 4. `docs/架構.md`：要改的那一部分。
 5. 動到經濟（籌碼、賭場、銀行、股票、畫的買賣）：`docs/經濟系統的坑.md`，整份讀過。
-6. 最近 10 篇維護日誌：`維護日誌/年份/`，照檔名排最後 10 篇（總表在 `維護日誌/README.md`）。
+6. 最近 10 篇維護日誌：`維護日誌/年份/`，照檔名排最後 10 篇（總表是 `npm run log:index` 在本機產生的 `維護日誌/README.md`，不進 git）。
 
 - **repo 是唯一的真相。** AI 自己的記憶（Claude 的記憶、Antigravity 存的知識）、聊天紀錄都不算數，下一個人看不到。要留下來的事，寫進維護日誌、決定紀錄或 `docs/`。
 - 發 Discord、碰正式 Firebase 都是按 GitHub 上的流程，金鑰不經過 AI：`docs/GitHub流程和金鑰.md`。
@@ -36,7 +36,8 @@ npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
 npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md。要重複做的事都要寫腳本；同樣的邏輯有兩份以上就合併成共用的（翊文 11-15）
-npm run log:index      # 重產日誌索引（不要手改）
+npm run log:index      # 在本機重產日誌索引（不進 git，不要手改）
+npm run notice -- --area 賭場 --title "標題" "第壹句"   # 加館方公告（寫成 content/notices/<id>.json，一則一檔，不要手改 shared/notices.js 的陣列）
 node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
 npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/econ_check.cjs --ledger 檔案.json（docs/經濟自我檢查.md）
 npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入口：改好幾處、自動跑檢查和模擬、不過就還原（tools/tune.cjs）
