@@ -216,6 +216,7 @@ export function autoBoard(tries = 0) {
   syncMail(P, list, today); persist(); updateBoardBadges();
   const plan = autoOpenPlan(state, boardNotices(P, today), today);
   if (plan.urgent || plan.open) UI.autoPopups = (UI.autoPopups || 0) + 1; // 一次登入最多自動跳 2 個視窗
+  if (plan.urgent || plan.open) sndFile("bell-ring", 0.35); // 有新公告自己跳出來：叮壹聲（11-16 翊文）
   if (plan.urgent) openUrgent(plan.urgent);
   else if (plan.open) openBoard({ focus: plan.focus, auto: true });
 }

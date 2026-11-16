@@ -182,7 +182,7 @@ export async function autoDeliverFlow(b) {
   if (!(await asking)) { b.disabled = false; return; }
   const res = deliverAll(P, plan);
   if (!res.results.length) { snd("error"); note("委託換新了，再按壹次看看。", "bad"); rerender(); return; }
-  snd("stamp"); sndFile("applause", APPLAUSE.vol);
+  snd("stamp"); sndFile("applause", APPLAUSE.vol); sndFile("bell-ring", 0.3); // 交件：櫃台鈴（11-16 翊文，Pixabay「Bell Sound Effect」）
   if (ADDONS.jobChips) ADDONS.jobChips(res.results.map(x => x.c.id), res.results.map(x => x.c.client)); // 交委託拿壹點籌碼（決定 0062）
   applyBodyState(); updateStatus(); persist(); actionTick();
   if (UI.screen === "commission") rerender(); // 委託單蓋上「完成」、按鈕的張數跟著變
@@ -258,7 +258,7 @@ export function noteCard(c, i) {
     if (r.ok && r.skill) note(`說服 ${r.skill.roll.total} ≤ ${r.skill.target}？${r.skill.success ? "成功：賞金多三成" : "沒談成，照原價"}`, r.skill.success ? "good" : "neutral");
     if (r.ok && r.line) later(() => regularDone(r.line, r.comment), 1500); // 等委託單飛走、畫面重畫完才跳
     if (!r.ok) { snd("error"); note(r.reason, "bad"); card.classList.remove("nope"); void card.offsetWidth; card.classList.add("nope"); return false; }
-    snd("stamp"); sndFile("applause", APPLAUSE.vol);
+    snd("stamp"); sndFile("applause", APPLAUSE.vol); sndFile("bell-ring", 0.3); // 交件：櫃台鈴（11-16 翊文，Pixabay「Bell Sound Effect」）
     if (ADDONS.jobChips) ADDONS.jobChips([c.id], [c.client]); // 交委託拿壹點籌碼（決定 0062）
     card.append(h("div", { class: "nc-stamp in", html: ART.stamp("完成") }));
     if (r.reward) FX.floatText(card, `+${r.reward} 靈感`, "good");

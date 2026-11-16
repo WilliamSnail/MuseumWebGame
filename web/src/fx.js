@@ -805,7 +805,8 @@ export const FX = (() => {
         let pn = 0, pu = 0;
         const piano = every(() => { if (!pn++) return; fileOnce(c, g, pick(['lib-piano-a', 'lib-piano-b']), 0.4); }, () => rand(60000, 120000));
         const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
-        return { nodes: [], timers: [sched, creak, page, piano, pulse] };
+        const fb = fileLoop(c, g, 'suspense-forbidden', 0); // 禁書頁籤（11-16 翊文，Pixabay「Suspense Tension」）：mix({ forbidden })
+        return { nodes: [fb.n], timers: [sched, creak, page, piano, pulse], mix(m) { if (m && 'forbidden' in m) fb.v.gain.setTargetAtTime(m.forbidden ? 0.32 : 0, c.currentTime, 1.5); } };
       },
       hall(c, g) { // 我的展廳：明亮壹點的弦樂和聲，遠處有人聲
         const room = bed(c, g, 'lowpass', 200, 0.5, 0.025);
@@ -912,7 +913,8 @@ export const FX = (() => {
         };
         const applyMusic = (fade) => {
           const md = cur.mode, fl = cur.floorNo;
-          music('ready-fight', md === 'fight' ? 0.45 : 0, fade);
+          music('ready-fight', md === 'fight' && (cur.rank || 0) < 3 ? 0.45 : 0, fade);
+          music('fight-gladiator', md === 'fight' && (cur.rank || 0) >= 3 ? 0.45 : 0, fade); // 11-16 翊文：等級 3 的強怪換成 Dark Gladiator（Pixabay）
           music('stairs-boss', md === 'gate' ? 0.5 : md === 'gate2' ? 0.18 : 0, fade);
           music('horror-gate', md === 'gate2' ? 0.5 : 0, fade); // 守門第二階段：更陰森
           Object.keys(SUSP).forEach((k) => music(SUSP[k], fl === +k && (md === 'map' || md === 'explore') ? (+k === 1 ? 0.2 : 0.3) : 0, fade));
@@ -934,10 +936,10 @@ export const FX = (() => {
             const f = FLOOR[m.floor] || FLOOR.base, md = MODE[m.mode] || MODE.map;
             const FG = (x) => x === 'fight' || x === 'gate' || x === 'gate2';
             const into = FG(m.mode) && !FG(cur.mode), to2 = m.mode === 'gate2' && cur.mode === 'gate';
-            if (f === cur.f && m.mode === cur.mode) return;
-            cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null;
+            if (f === cur.f && m.mode === cur.mode && (m.rank || 0) === (cur.rank || 0)) return;
+            cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null; cur.rank = m.rank || 0;
             apply(1.5); applyMusic(1.5);
-            if (to2) { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); } // 守門進第二階段：再劍戰壹下
+            if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); }, 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
             if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
           },
         };
@@ -1053,7 +1055,7 @@ export const FX = (() => {
           }
         }, () => rand(9000, 19000));
         const counting = every(() => { if (slot(10.5)) fileOnce(c, g, 'coins-counting', 0.12); }, () => rand(25000, 50000));
-        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, 'typewriter', 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
+        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, pick(['typewriter', 'keyboard']), 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
         return { nodes, timers: [sched, coins, counting, typing] };
       },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
