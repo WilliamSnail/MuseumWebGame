@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-ee9d7d", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "圖書館的地圖頁籤換了樣子", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "圖書館的「地圖」頁籤改成羊皮紙加紅圖釘，壹眼就看得出來。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-b581d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "大廳改寫全館人數，散客會逛到各館區", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
