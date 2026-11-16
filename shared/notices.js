@@ -46,6 +46,17 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-6f1c65", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
+    title: "更多水聲：融合冒泡、地下大廳洞穴滴水、B4 水波", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "融合室按下融合時，會咕嘟咕嘟冒泡；餐車的飲料倒完也冒壹點泡。",
+        "地下選樓層的大廳有洞穴裡的滴水聲；B4 淹水的檔案室多了輕輕的水波，偶爾冒出壹串氣泡。",
+        "館外地圖點橋頭、碼頭、小島，會聽到水波；拚經濟石沉大海撲通之後，水面也會晃壹下。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-6a35d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "餐車買飲料有倒水聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
