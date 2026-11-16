@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-014224", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "賭場和畫廊的簡易銀行可以直接打金額", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場、畫廊拍賣裡的簡易銀行，借款、存款、領出來、定存都先給輸入欄，快選按鈕放在後面；按數字、存錢、領錢、還錢也有跟銀行壹樣的聲音。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-984414", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "成交和打贏有慶祝畫面", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

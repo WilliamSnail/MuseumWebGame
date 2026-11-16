@@ -8,6 +8,7 @@
 // ================================================================
 import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo, note, rerender, setChips, snd, sndFile } from "./ui_core.js";
 import { NET } from "./net_firebase.js";
+import { bankSfx, keyBeep } from "./bank_sfx.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
 import { roomHead } from "./ui_screens1.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat.js";
@@ -106,19 +107,7 @@ async function bankLoad() {
   finally { UI.bankLoading = false; if (UI.screen === "bank") rerender(); }
 }
 // 音效（11-15，翊文：「有些音效好像銀行也可以用，例如存錢」；檔案和來源在 shared/sfx_files.js）：錢放進去＝籌碼落下，錢回到手上＝吐硬幣（大筆＝壹串）；失敗＝原本的 error
-const BANK_SFX_IN = new Set(["bank:put", "bank:term", "bank:bond", "stock:buy", "stock:open"]);
-const BANK_SFX_PAY = new Set(["repay:", "stock:sellDebt"]); // 還債：收銀機「叮」
-const BANK_SFX_ATM = new Set(["bank:take", "borrow:"]); // 從銀行領錢：ATM 吐鈔（11-15，翊文：「可以改銀行已經用的聲音…看哪個適合」）
-const BANK_SFX_OUT = new Set(["stock:sell"]);
-const BANK_SFX_BIG = new Set(["bank:break", "bank:bondRedeem", "stock:close"]); // 大筆錢回到手上：壹串硬幣
-function bankSfx(act, data) {
-  const k = act + ":" + ((data && data.op) || "");
-  if (BANK_SFX_PAY.has(k)) sndFile("cha-ching", 0.45);
-  else if (BANK_SFX_ATM.has(k)) sndFile("atm-dispense", 0.4);
-  else if (BANK_SFX_IN.has(k)) sndFile("coin-drop", 0.4);
-  else if (BANK_SFX_OUT.has(k)) sndFile("coin-payout", 0.45);
-  else if (BANK_SFX_BIG.has(k)) sndFile("coin-payout-big", 0.4);
-}
+// 銀行的聲音：bank_sfx.js（11-16 抽成共用，簡易銀行也用）
 // 做壹件事：act 是 casino 的動作（bank、borrow、repay），回答有 bankHall 就換上
 async function bankDo(act, data) {
   if (!UI.bankHall || UI.bankHall.demo) { note("示範資料：登入之後才能動錢。"); return; }
@@ -402,8 +391,6 @@ const SEG_ICON = {
 const seg = (items, cur, onPick, cls) => h("div", { class: "bank-segs " + (cls || ""), role: "tablist" }, items.map(([k, t, dis]) => h("button", { type: "button", role: "tab", "aria-selected": String(k === cur), class: "bank-seg" + (k === cur ? " on" : ""), disabled: dis ? true : null, onClick: () => onPick(k) }, SEG_ICON[k] && cls === "kind" ? h("span", { class: "bank-segi", html: SEG_ICON[k], "aria-hidden": "true" }) : null, t)));
 const form = () => (UI.bankForm || (UI.bankForm = { lev: 2, dir: "long", margin: 1000000, stopOn: true, stop: 3, takeOn: false, take: 5, okind: "buy", opx: "", on: "" }));
 // 數字欄：打字的時候只更新旁邊的算式（不整頁重畫，不然游標會跑掉）
-let keyAt = 0;
-const keyBeep = () => { const t = Date.now(); if (t - keyAt > 40) { keyAt = t; sndFile("keypad", 0.3); } };
 function numField(label, value, onChange, opts = {}) {
   const inp = h("input", { type: "number", inputmode: "decimal", class: "bank-in", value: value === "" ? "" : String(value), min: opts.min != null ? String(opts.min) : null, step: opts.step != null ? String(opts.step) : "any", "aria-label": label,
     onInput: e => onChange(e.target.value === "" ? "" : Number(e.target.value)),
