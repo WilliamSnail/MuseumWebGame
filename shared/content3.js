@@ -309,7 +309,7 @@ export const CELLAR = [
         lines: ["書架在水裡一路排下去，看不到底。", "最上面一層的書，還是乾的。"],
         mood: null, color: "綠",
         choices: [
-          { label: "爬上書架", check: { type: "power", target: 19 },
+          { label: "爬上書架", check: { type: "power", target: 21 },
             success: { text: "你們爬上去了，拿到乾的那幾本。", insp: 6 },
             fail: { text: "書架倒了。壹隻佩佩跟著書沉下去，又被撈了回來。", san: "1D4", injure: true } },
           { label: "潛下去找底", check: { type: "skill", skill: "幸運", mod: -10 },
@@ -340,7 +340,7 @@ export const CELLAR = [
         lines: ["前面是一道水閘，再下去就是最底層。", "對面有人在敲。敲八下，停一下，再敲九下。"],
         mood: "開心", color: "黃",
         choices: [
-          { label: "轉開水閘", check: { type: "power", target: 21 },
+          { label: "轉開水閘", check: { type: "power", target: 23 },
             success: { text: "水閘開了。水退下去，露出往下的樓梯。", insp: 6 },
             fail: { text: "水灌了進來。壹隻佩佩被沖得好遠。", san: "1D6", injure: true } },
           { label: "回敲八下，再敲九下", check: { type: "skill", skill: "說服", mod: 0 },
@@ -364,7 +364,7 @@ export const CELLAR = [
         lines: ["你們走了很久，牆還是很遠。", "地上有一排蹲過的痕跡，每隔八步壹個。"],
         mood: "傷心", color: null,
         choices: [
-          { label: "一直走下去", check: { type: "power", target: 20 },
+          { label: "一直走下去", check: { type: "power", target: 22 },
             success: { text: "牆終於近了。回頭看，入口已經不見了。", insp: 5 },
             fail: { text: "走太久了。壹隻佩佩躺平，不肯再走。", san: "1D6", injure: true } },
           { label: "數著蹲痕走", check: { type: "skill", skill: "偵查", mod: 0 },
@@ -379,7 +379,7 @@ export const CELLAR = [
         lines: ["白色地板上有壹座小山，全是瓜子殼。", "山頂上，放著一頂毛帽。"],
         mood: "生氣", color: "黃",
         choices: [
-          { label: "爬上瓜子山", check: { type: "power", target: 21 },
+          { label: "爬上瓜子山", check: { type: "power", target: 23 },
             success: { text: "山很滑，但你們爬上去了。毛帽裡塞滿了靈感。", insp: 7 },
             fail: { text: "瓜子殼崩了，你們滑回山腳。", san: "1D4", injure: true } },
           { label: "跟山頂的毛帽打招呼", check: { type: "skill", skill: "說服", mod: -10 },
@@ -410,7 +410,7 @@ export const CELLAR = [
         lines: ["白色的盡頭有壹扇小門，門牌寫著「8+9」。", "門後傳來嗑瓜子的聲音。牠在等你蹲下來。"],
         mood: null, color: null,
         choices: [
-          { label: "推開小門", check: { type: "power", target: 23 },
+          { label: "推開小門", check: { type: "power", target: 25 },
             success: { text: "門開了。牠站起來，拍拍你的肩：兄弟，夠義氣。", insp: 10 },
             fail: { text: "門推不動。門後的牠笑了一聲。", san: "1D10", injure: true } },
           { label: "在門口蹲下", check: { type: "san", spec: "1D3/1D10" },

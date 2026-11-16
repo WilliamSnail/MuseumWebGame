@@ -254,7 +254,7 @@ export const NUM = {
   cellarRepeatInsp: 1,      // 已經過關的房間再過一次只給 1 靈感
   idleBook: 15,             // 讀過《佩佩起源考》後，在圖書館什麼都不做幾秒，續集會出現（11-08 翊文說等了沒反應：20 → 15，並且等的時候書會越來越亮）
   cellarRest: "1D3",        // 隊伍裡有躺平、毛帽：每一層第一次走時各回這麼多理智
-  cellarFx: { wizard: 2, tentacle: 5, gent: 10, handstand: 1 }, // 地下探索：巫師帽全隊強度 +、觸手帽全隊強度 +（要付理智）、紳士帽的技能檢定 +、倒立自己強度 +。手作坊的「地下效果」顯示（logic3.js cellarPartFx）也讀這裡
+  cellarFx: { wizard: 2, tentacle: 5, gent: 10, handstand: 1, stack: { like: 2, wizard: 2, tentacle: 1 }, floorBump: { 4: 2, 5: 2 } }, // 地下探索：巫師帽全隊強度 +、觸手帽全隊強度 +（要付理智）、紳士帽的技能檢定 +、倒立自己強度 +。手作坊的「地下效果」顯示（logic3.js cellarPartFx）也讀這裡。stack：比讚、巫師帽、觸手帽帶幾隻最多算幾份（決定 0109，翊文 11-16：比讚、巫師帽最多 2 份，觸手帽 1 份）；floorBump：疊加之後 B4、B5 強度檢定目標各 +2（已經寫進 content3.js 的目標，這裡只是記錄）
   limitedFx: { teamCap: 6, homeSeen: "avatar" }, // 限定帽子的探索加成：全隊強度加起來最多 +teamCap（決定 0085）；館內效果看館友證頭像那隻佩佩戴的帽子
   linesFrom: 4,             // 解鎖幾個選項之後，老主顧（委託人關係線）才開始出現
   lineReward: 8,            // 老主顧的委託給多少靈感

@@ -77,7 +77,9 @@ export function fightAlias(s, m) {
   for (const p of fightUp(s)) { const f = LIMITED_FX[p.pick.帽子], a = f && f.fight; if (a && a.move === m && (!best || (a.n || 0) > (best.n || 0) || (a.uses || 1) > (best.uses || 1))) best = Object.assign({ hat: p.pick.帽子 }, a); }
   return best;
 }
-export const fightMoveUses = (s, m) => Math.max(fiBase(s, m) ? (fightUp(s).some(p => p.perfect && p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v) ? 2 : 1) : 0, (fightAlias(s, m) || { uses: 0 }).uses || (fightAlias(s, m) ? 1 : 0));
+// 帶那個配件的佩佩每多 1 隻多 1 次、最多 2 次；完美作品直接 2 次；觸手帽只有 1 次（完美 2 次，決定 0109）
+const fiCarry = (s, m) => fightUp(s).filter(p => p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v).length;
+export const fightMoveUses = (s, m) => Math.max(fiBase(s, m) ? (fightUp(s).some(p => p.perfect && p.pick[FIGHT_MOVES[m].cat] === FIGHT_MOVES[m].v) ? 2 : m === "tentacle" ? 1 : Math.min(2, fiCarry(s, m))) : 0, (fightAlias(s, m) || { uses: 0 }).uses || (fightAlias(s, m) ? 1 : 0));
 // 這個招式的數字：原本的帽子／姿勢給 base；限定帽子給 n；取大的（base 不是數字就用 base 的）
 const fiN = (s, m, base) => { const a = fightAlias(s, m), b = fiBase(s, m); return b || !a || a.n == null ? base : a.n; };
 const fiTent = s => { const a = fightAlias(s, "tentacle"); return !fiBase(s, "tentacle") && a ? a : null; };

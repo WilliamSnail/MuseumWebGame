@@ -175,7 +175,7 @@ const SAN_LOSS = /^([1-9]\d*D[1-9]\d*|[1-9]\d*)$/;
 const SAN_GAIN = /^\+([1-9]\d*D[1-9]\d*|[1-9]\d*)$/;
 const SPEC = /^(0|[1-9]\d*|[1-9]\d*D[1-9]\d*)\/([1-9]\d*|[1-9]\d*D[1-9]\d*)$/;
 // 強度門檻的範圍：2026-11-08 跑完 test/sim_cellar.js 後調高（原本 B1 7–9 … B5 15–18，收藏 40 隻時幾乎都過）
-const RANGES = { 1: [11, 13], 2: [15, 16], 3: [17, 19], 4: [19, 21], 5: [20, 23] };
+const RANGES = { 1: [11, 13], 2: [15, 16], 3: [17, 19], 4: [21, 23], 5: [22, 25] }; // 4、5 層各 +2（決定 0109）
 const stats = { rooms: 0, choices: 0, types: { power: 0, skill: 0, san: 0, none: 0 }, skills: {}, moods: {}, colors: {}, insp: {} };
 function checkOutcome(o, p) {
   keysExactly(o, ["text"], p, ["insp", "san", "myth", "injure"]);
