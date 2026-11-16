@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-ebd694", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "館內股人比較多了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "館內五家店的股價，現在就算沒有館友光顧，旅客和散客也撐得起來人氣。",
+        "人太少所以開盤不動的日子變少了。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-e72a9b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場",
     title: "登入不會再直接跳進賭桌", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
