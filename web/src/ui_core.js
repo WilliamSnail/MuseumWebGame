@@ -437,7 +437,7 @@ export function audioState() {
   const heat = () => { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } return hh; };
   // 該放哪一首：audio_state.js 的 ambFor（純函式，test/snd_check.test.cjs 測轉換）。地下、圖書館禁書頁籤、圖庫走音、失敗作之夜、賭場熱鬧程度的 ambMix 也在裡面決定
   const { amb, mix } = ambFor({ screen: scr, hasP: !!P, live, dark: !!(P && P.dark), params: UI.params, ambOf: AMB_OF, ambOver: UI.ambOver, cellarSnd: UI.cellarSnd,
-    heat, dread: () => sanDread(P.sanity, P.dark), creepy: () => weeklyTheme(todayStr()) === "failedOnly", event: () => !!(ADDONS.eventLiveAny && ADDONS.eventLiveAny()), crowd: () => { const n = ADDONS.museumPeople ? ADDONS.museumPeople() : null; return n != null && n >= NUM.ui.lobbyCrowdMusic; } });
+    heat, dread: () => sanDread(P.sanity, P.dark), creepy: () => weeklyTheme(todayStr()) === "failedOnly", event: () => !!(ADDONS.eventLiveAny && ADDONS.eventLiveAny()), crowd: () => { const n = ADDONS.museumPeople ? ADDONS.museumPeople() : null; return n != null && n >= NUM.ui.lobbyCrowdMusic; }, sanTier: () => { const L = NUM.ui.lobbySan || [55, 30, 15], v = P.sanity; return v < L[2] ? "synth" : v < L[1] ? "silence" : v < L[0] ? "wrong" : null; } }); // 大廳照理智換曲（11-16）
   if (mix && S.ambMix) S.ambMix(mix[0] === "casino" ? ambMix(mix[1].heat) : mix[1]);
   S.ambient(amb);
   S.heart(live && !P.dark && scr !== "ending" ? P.sanity : null);

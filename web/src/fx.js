@@ -706,20 +706,23 @@ export const FX = (() => {
         const ck = creepyHook(c, g);
         // 兩首翊文用 Suno 做的（11-16）：限時活動進行中放 lobby-event、人潮很多放 lobby-crowd（活動優先）；都沒有放原本的旋律。第壹次要放才下載
         // 11-16 翊文：「平常時大廳可以放這首」（Welcome Lobby）：平常放 lobby-normal，原本的合成旋律收起來（mel ＝ 0，程式留著）
-        const SONG_ID = { normal: 'lobby-normal', event: 'lobby-event', crowd: 'lobby-crowd' };
-        const song = { normal: null, event: null, crowd: null }, state = { event: false, crowd: false };
+        // 11-16 翊文：照理智換：低於 55「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律（門檻 NUM.ui.lobbySan，理智優先於活動、人潮）
+        const SONG_ID = { normal: 'lobby-normal', event: 'lobby-event', crowd: 'lobby-crowd', wrong: 'lobby-wrong', silence: 'lobby-silence' };
+        const song = { normal: null, event: null, crowd: null, wrong: null, silence: null }, state = { event: false, crowd: false, tier: null }; // tier：理智那壹段（"wrong"／"silence"／"synth"／null），門檻在 ui_core.js 算
         const songStop = { stop() { for (const k of Object.keys(song)) if (song[k]) song[k].n.stop(); } };
         mel.gain.value = 0;
         const apply = () => {
-          const pick = state.event ? 'event' : state.crowd ? 'crowd' : 'normal', t = c.currentTime;
-          if (!song[pick]) song[pick] = fileLoop(c, g, SONG_ID[pick], 0, true);
+          const t = c.currentTime, pick = state.tier || (state.event ? 'event' : state.crowd ? 'crowd' : 'normal');
+          mel.gain.setTargetAtTime(pick === 'synth' ? 1 : 0, t, 1.2);
+          if (pick !== 'synth' && !song[pick]) song[pick] = fileLoop(c, g, SONG_ID[pick], 0, true);
           for (const k of Object.keys(song)) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? 0.45 : 0, t, k === pick && t < 2 ? 0.3 : 1.2);
         };
         const mix = (m) => {
           ck.mix(m);
-          if (!m || !('event' in m || 'crowd' in m)) return;
+          if (!m || !('event' in m || 'crowd' in m || 'tier' in m)) return;
           if ('event' in m) state.event = !!m.event;
           if ('crowd' in m) state.crowd = !!m.crowd;
+          if ('tier' in m) state.tier = ['wrong', 'silence', 'synth'].includes(m.tier) ? m.tier : null;
           apply();
         };
         apply();
