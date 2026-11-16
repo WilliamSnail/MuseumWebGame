@@ -14,7 +14,7 @@ import { CAS_QUICK } from "../../shared/casino_table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, titleOfId, titleTag } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, titleOfId, titleTag } from "./ui_core.js";
 import { npcName } from "./ui_npc_card.js";
 import { overlay } from "./ui_board.js";
 import { ambHeat, mountMood } from "./ui_mood.js";
@@ -304,15 +304,25 @@ PARTY_HOOKS.table = {
     if (m.left) note(m.why === "offline" ? `${m.left} 斷線了，離桌了。` : `${m.left} 離桌了。`);
   },
 };
-// 進館時：還在這一桌的隊伍裡就接回去（重新整理過、斷線回來）。回傳有沒有接回去
+// 進館時：還在這壹桌的隊伍裡（重新整理過、斷線回來）。11-16 翊文：「有時候壹登入後進大廳會跑進賭桌而不是公告」：
+//   以前直接打開牌桌、afterEnter 就停了，公佈欄、簽到、今天的心情都沒跳。現在只回傳那桌的 pid，等公告和簽到都處理完才問要不要回去（casinoOffer）
 PANELS.casinoResume = async () => {
-  if (T || !UI.net || !NET.me) return false;
+  if (T || !UI.net || !NET.me) return null;
   const pid = await NET.read(`partyOf/${NET.me.id}`);
-  if (typeof pid !== "string" || !pid) return false;
+  if (typeof pid !== "string" || !pid) return null;
   const p = fixParty(await NET.read(`parties/${pid}`));
-  if (!p || p.kind !== "table" || !p.members[NET.me.id]) return false;
-  openTable(pid);
-  return true;
+  if (!p || p.kind !== "table" || !p.members[NET.me.id]) return null;
+  return pid;
+};
+// 問要不要回到那壹桌：等畫面上沒有別的視窗（公佈欄、簽到卡、信）才問，最多等 2 分鐘；選「離桌」就離開那桌的隊伍
+PANELS.casinoOffer = (pid, tries = 0) => {
+  if (!pid || T || !NET.me) return;
+  const busy = UI.busy || document.querySelector(".mini-layer, .ask, .nb-layer, .fx-overlay, .fx-roll-card, .fx-spot-card, .m-door");
+  if (busy) { if (tries < 60) setTimeout(() => PANELS.casinoOffer(pid, tries + 1), 2000); return; }
+  ask("你剛剛還坐在壹桌 21 點。要回到牌桌嗎？", "回到牌桌", "離桌").then(yes => {
+    if (yes) { openTable(pid); return; }
+    NET.call("partyAction", { pid, act: "leave" }).catch(() => { /* 那桌已經收了 */ });
+  });
 };
 NET.on("logout", () => { if (T) { const s = T; T = null; s.offs.forEach(f => { try { f(); } catch (e) { /* 已經停了 */ } }); clearInterval(s.clock); Object.values(s.timers).forEach(x => clearTimeout(x.t)); } });
 

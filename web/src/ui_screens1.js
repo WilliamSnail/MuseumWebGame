@@ -170,7 +170,7 @@ export async function startChallenge(name) {
 }
 export async function afterEnter() {
   if (!P) return;
-  if (PANELS.casinoResume && await PANELS.casinoResume()) return; // 賭場同桌坐到一半（重新整理過、斷線回來）：接回去（ui_casino_table.js）
+  const tablePid = PANELS.casinoResume ? await PANELS.casinoResume() : null; // 賭場同桌坐到壹半：不直接打開，公告和簽到處理完再問（11-16，ui_casino_table.js 的 casinoOffer）
   if (PANELS.coopResume && await PANELS.coopResume()) return; // 合作地下走到一半（重新整理過、斷線回來）：接回去，關掉之後會再叫一次（ui_coop.js）
   if (!isFree(P) && P.dark) { await checkEnding(); return; } // 燈熄了的那位（換人時留著的）：直接回黑房間找那扇門
   if (!isFree(P) && ADDONS.workCheck) ADDONS.workCheck(); // 欠款中要送人去地下工作、在工作的還清了回來（決定 0064，ui_work.js）。不等它
@@ -183,6 +183,7 @@ export async function afterEnter() {
   if (UI.screen === "title" || !P) return;
   if (PANELS.autoBoard) PANELS.autoBoard(); // 公佈欄：有新公告就打開壹次（11-08）
   if (PANELS.autoSignin) PANELS.autoSignin(); // 簽到卡：公佈欄關了才跳；今天簽過就不跳（11-09，ui_signin.js）
+  if (tablePid && PANELS.casinoOffer) setTimeout(() => PANELS.casinoOffer(tablePid), 2500); // 公佈欄、簽到卡先跳（它們自己也會等），之後才問要不要回牌桌
 }
 export async function dailyRecovery() {
   if (!UI.pendingRecovery || isFree(P)) return;
