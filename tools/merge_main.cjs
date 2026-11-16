@@ -52,10 +52,13 @@ function resolveConflicts() {
   });
   files.filter(f => GENERATED.includes(f)).forEach(f => git(["rm", "-q", "--cached", "--ignore-unmatch", f], { ok: true })); // 不進 git 了：留本機的檔，從合併裡拿掉
   if (files.includes(NOTICES_JS)) {
-    const ours = git(["show", ":2:" + NOTICES_JS], { ok: true }), N = require("./notices_migrate.cjs");
-    const rescued = ours.status === 0 ? N.rescue(ours.stdout, path.join(ROOT, "content", "notices")) : [];
-    if (rescued.length) console.log(`公告：舊 notices.js 裡 main 還沒有的 ${rescued.length} 則拆成檔了：${rescued.join("、")}`);
-    git(["checkout", "--theirs", NOTICES_JS]); // 新的 notices.js（函式）用 main 的
+    // 兩邊誰還帶著舊陣列（stage 2＝我這邊、3＝main 那邊）：把裡面還沒有檔的公告拆出去，notices.js 留沒有陣列的那一邊
+    const N = require("./notices_migrate.cjs"), side = n => { const r = git(["show", ":" + n + ":" + NOTICES_JS], { ok: true }); return r.status === 0 ? r.stdout : ""; };
+    const mine = side(2), theirs = side(3), rescued = [];
+    for (const src of [mine, theirs]) if (src) rescued.push(...N.rescue(src, path.join(ROOT, "content", "notices")));
+    if (rescued.length) console.log(`公告：舊 notices.js 裡還沒有檔的 ${rescued.length} 則拆成檔了：${rescued.join("、")}`);
+    const oldMine = N.extract(mine || "") !== null; // 我這邊是舊陣列 → 用 main 的（新）；否則用我的（新）
+    git(["checkout", oldMine ? "--theirs" : "--ours", NOTICES_JS]);
     git(["add", NOTICES_JS]);
     if (rescued.length) git(["add", "content/notices"]);
   }
