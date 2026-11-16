@@ -365,12 +365,20 @@ function whyNoSell(S, cur) {
   if ((cur.market === "in" ? S.inSellLeft : S.sellLeft) != null && (cur.market === "in" ? S.inSellLeft : S.sellLeft) < cur.price) return `今天賣出的額度用完了（壹天最多賣 ${fmt(S.sellDay || 0)}），明天再賣。`;
   return "現在賣不了。";
 }
+// 分組收折（11-16，翊文：「館內，台股，美股也可以多個收折功能嗎」）：按組名收起／打開，記在這台裝置（localStorage）
+const FOLD_KEY = "pm-bank-fold";
+const foldGet = () => { if (!UI.bankFold) { try { UI.bankFold = JSON.parse(localStorage.getItem(FOLD_KEY) || "{}") || {}; } catch (e) { UI.bankFold = {}; } } return UI.bankFold; };
+const foldSet = (k, v) => { const F = foldGet(); if (v) F[k] = 1; else delete F[k]; try { localStorage.setItem(FOLD_KEY, JSON.stringify(F)); } catch (e) { /* ignore */ } };
 function stockRows(list, cur, S) {
   const gk = s => (s.market === "tw" ? "tw" : s.market === "us" ? "us" : s.kind);
   const kinds = STOCK_GROUP_ORDER.filter(k => list.some(s => gk(s) === k)).concat([...new Set(list.map(gk))].filter(k => !STOCK_GROUP_ORDER.includes(k)));
   const rows = [], fresh = UI.bankFreshSnap || new Set();
   kinds.forEach(k => {
-    if (kinds.length > 1) rows.push(h("div", { class: "bank-grp" }, STOCK_GROUPS[k] || "其他"));
+    const F = foldGet(), shut = kinds.length > 1 && !!F[k], mine = list.filter(s => gk(s) === k), held = mine.filter(s => s.mine > 0).length;
+    if (kinds.length > 1) rows.push(h("button", { type: "button", class: "bank-grp bank-grp-btn" + (shut ? " shut" : ""), "aria-expanded": String(!shut), title: shut ? "點開這壹組" : "收起這壹組", onClick: () => { foldSet(k, !shut); rerender(); } },
+      h("i", { class: "bank-grp-arrow", "aria-hidden": "true" }, shut ? "▸" : "▾"), h("span", null, STOCK_GROUPS[k] || "其他"),
+      h("small", { class: "bank-grp-sum" }, `${mine.length} 支${held ? `・持有 ${held} 支` : ""}${shut ? "・點開" : ""}`)));
+    if (shut) return;
     list.forEach((s, i) => {
       if (gk(s) !== k) return;
       const closed = s.session && s.session.state !== "open";
