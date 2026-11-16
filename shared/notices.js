@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-a20b66", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "登出後不再聽到賭場的音樂", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "登出再登入後，大廳不會再放賭場或地下的音樂；聲音狀態也寫了自動檢查。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-69c491", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "離開地下後不再聽到地下的聲音", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
