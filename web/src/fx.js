@@ -1014,18 +1014,21 @@ export const FX = (() => {
         const nodes = murmur(c, crowdG, 1.5);
         nodes.push(fileLoop(c, crowdG, 'casino-ambiance', 30).n);
         // 11-15 翊文：「拿掉沙沙聲」：原本這裡有壹條 1500 Hz 的帶通雜訊（比較散的人聲），聽起來像白噪音，拿掉了；只留 murmur 的低沉人聲
-        const send = echoSend(c, g, B * 1.5, 0.22);
+        // 11-16 翊文：「賭場裡超過35人就改播這個」（Pixabay「Copper Nights」）：合成的爵士接在 mus 上，人多時 mus 淡出、換那首（用到才下載）；人聲、籌碼照舊
+        const mus = c.createGain(); mus.gain.value = 1; mus.connect(g);
+        const jz = { song: null }, jzStop = { stop() { if (jz.song) jz.song.n.stop(); } }; nodes.push(jzStop);
+        const send = echoSend(c, mus, B * 1.5, 0.22);
         let next = c.currentTime + 0.1, bar = 0;
         const play = (t0, b) => {
           BASS[b].forEach((f, i) => { // 走路低音：三角波加壹點高八度，筆電喇叭才聽得到
             const t = t0 + i * B;
-            tone(t, { type: 'triangle', f, g: 0.075, a: 0.012, d: 0.5, to: g });
-            tone(t, { f: f * 2, g: 0.04, a: 0.01, d: 0.25, to: g });
+            tone(t, { type: 'triangle', f, g: 0.075, a: 0.012, d: 0.5, to: mus });
+            tone(t, { f: f * 2, g: 0.04, a: 0.01, d: 0.25, to: mus });
           });
           for (let i = 0; i < 4; i++) { // 刷子：每拍輕輕的 ride、2 和 4 拍重壹點
             const t = t0 + i * B;
-            noise(t, { type: 'highpass', f: 5500, q: 0.7, g: i % 2 ? 0.014 : 0.006, a: 0.002, d: i % 2 ? 0.1 : 0.05, to: g });
-            if (i !== 1 && i !== 3) noise(t + SW, { type: 'highpass', f: 7000, q: 0.7, g: 0.005, a: 0.002, d: 0.04, to: g });
+            noise(t, { type: 'highpass', f: 5500, q: 0.7, g: i % 2 ? 0.014 : 0.006, a: 0.002, d: i % 2 ? 0.1 : 0.05, to: mus });
+            if (i !== 1 && i !== 3) noise(t + SW, { type: 'highpass', f: 7000, q: 0.7, g: 0.005, a: 0.002, d: 0.04, to: mus });
           }
           const stabs = b % 2 ? [1.5, 3.5] : [1.5]; // 電鋼琴的零星和弦：落在反拍
           stabs.forEach((bt) => KEYS[b].forEach((f, k) => {
@@ -1045,7 +1048,13 @@ export const FX = (() => {
         }, () => rand(cur.chipMin, cur.chipMax));
         return {
           nodes, timers: [sched, chips],
-          mix(m) { // 熱絡 → 人聲大聲、籌碼聲變多（地下的 { floor, mode } 不理）
+          mix(m) { // 熱絡 → 人聲大聲、籌碼聲變多（地下的 { floor, mode } 不理）；busy（超過 35 人）→ 換 Copper Nights
+            if (m && 'busy' in m) {
+              const on = !!m.busy, t = c.currentTime;
+              if (on && !jz.song) jz.song = fileLoop(c, g, 'casino-jazz', 0, true);
+              mus.gain.setTargetAtTime(on ? 0 : 1, t, 1.2);
+              if (jz.song) jz.song.v.gain.setTargetAtTime(on ? 0.5 : 0, t, 1.2);
+            }
             if (!m || m.crowd == null) return;
             cur.crowd = m.crowd; cur.chipMin = m.chipMin; cur.chipMax = m.chipMax; cur.chipN = m.chipN;
             crowdG.gain.setTargetAtTime(Math.max(0.0001, m.crowd), c.currentTime, 1.2);
