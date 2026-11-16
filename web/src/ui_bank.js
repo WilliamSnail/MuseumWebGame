@@ -52,7 +52,7 @@ export function fakeBankHall() {
     { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", name: "蘋果", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
     { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
-  stocks.forEach(x => { x.value = x.price * x.mine; x.tax = x.market === "in" ? 0 : 0.05; if (x.mine > 0) { x.avgCost = Math.round(x.price * 0.93 * 100) / 100; x.costTotal = Math.round(x.avgCost * x.mine); x.dayChg = Math.round(x.value * x.chg / (1 + x.chg)); x.dayPct = x.chg; x.pnl = x.value - x.costTotal; x.pnlPct = x.pnl / x.costTotal; } });
+  stocks.forEach(x => { x.value = x.price * x.mine; x.tax = x.market === "us" ? 0 : 0.003; if (x.mine > 0) { x.avgCost = Math.round(x.price * 0.93 * 100) / 100; x.costTotal = Math.round(x.avgCost * x.mine); x.dayChg = Math.round(x.value * x.chg / (1 + x.chg)); x.dayPct = x.chg; x.pnl = x.value - x.costTotal; x.pnlPct = x.pnl / x.costTotal; } });
   const stockVal = stocks.reduce((n, s) => n + s.price * s.mine, 0) * 100;
   return {
     demo: true,
@@ -66,7 +66,7 @@ export function fakeBankHall() {
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], window: { from: "2026-11-14", until: "2026-11-15" }, state: "健康" },
-    stocks: { list: stocks, taxPct: 0.05, fee: 0.005, halt: false, sellCap: 20000000, sellTip: "信用升到 2 級可以賣到 5,000 萬。", inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
+    stocks: { list: stocks, taxPct: 0.003, fee: 0.005, halt: false, sellCap: 20000000, sellTip: "信用升到 2 級可以賣到 5,000 萬。", inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
       lev: { max: 5, byMarket: { in: 2, tw: 5, us: 0 }, owed: 120000, owedText: "館內股今天賺的超過館方當天能賠的上限，還有 120,000 記成欠條，明天補發。", usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 3, next: 3, nextText: "再 3 點信用升到 4 級，就能開到 5×。", nextUnlock: { level: 4, lev: 5, pts: 20 }, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
@@ -229,7 +229,7 @@ function advisorPanel(v) {
     h("span", null, h("b", null, `借款 ${fmt(x.owe)}`), h("small", null, `${md5(x.due)} 到期 → 延到 ${md5(x.newDue)}，手續費 ${fmt(x.fee)}`)),
     btn("同意延期", () => confirmTrade("同意延期", [["這筆借款", fmt(x.owe)], ["改成到期", md5(x.newDue)], ["手續費（加進要還的）", fmt(x.fee), "bad"], ["延期後要還", fmt(x.owe + x.fee)]], "同意延期", () => bankDo("advisor", { op: "extend", id: x.id })), "small bank-btn gold")));
   const sellRows = a.sells.map(x => h("div", { class: "bank-adv-row" },
-    h("span", null, h("b", null, `賣 ${x.name} ${fmt(x.n)} 股`), h("small", null, `${x.kind === "in" ? "館內股，沒有資本利得稅" : "館外股"}・手上 ${fmt(x.own)} 股・現價 ${fp(x.px)}・約還 ${fmt(x.covers)}`)),
+    h("span", null, h("b", null, `賣 ${x.name} ${fmt(x.n)} 股`), h("small", null, `${x.kind === "in" ? "館內股" : "館外股"}・手上 ${fmt(x.own)} 股・現價 ${fp(x.px)}・約還 ${fmt(x.covers)}`)),
     btn("同意賣出", () => confirmTrade("同意賣股還債", [["股票", x.name], ["賣", `${fmt(x.n)} 股`], ["約還債", fmt(x.covers), "good"]], "同意賣出", () => bankDo("stock", { op: "sellDebt", id: x.id, n: x.n })), "small bank-btn gold")));
   const verdict = !a.sells.length ? "手上沒有能賣的股票。" : a.enough ? `照這樣賣，大約還 ${fmt(a.sellTotal)}，夠還。` : `賣光也只能還約 ${fmt(a.sellTotal)}，還差 ${fmt(Math.max(0, (a.sellNeed != null ? a.sellNeed : d.total) - a.sellTotal))}。`;
   return panel("財經專員", `你欠 ${fmt(d.total)}`,
@@ -420,11 +420,11 @@ function spotTrade(v, S, cur) {
   const maxBuy = halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), capL, expL != null ? Math.floor(expL / Math.max(1, cur.price)) : Infinity));
   const maxSell = halt ? 0 : Math.max(0, Math.min(cur.free != null ? cur.free : cur.mine, sellL != null ? Math.floor(sellL / Math.max(1, cur.price)) : Infinity));
   const max = side === "buy" ? maxBuy : maxSell;
-  // 總價（約）：買 ＝ 股價×股數＋手續費；賣 ＝ 股價×股數－手續費－資本利得稅（賺到的部分才課，成本用平均成本）
+  // 總價（約）：買 ＝ 股價×股數＋手續費；賣 ＝ 股價×股數－手續費－證交稅（賣出金額 × 稅率，賺賠都收，進位、最少 1；美股 tax 是 0）
   const sumOf = n => {
     const cents = Math.round(cur.price * 100) * n, gross = side === "buy" ? Math.ceil(cents / 100) : Math.floor(cents / 100), fee = Math.ceil(gross * S.fee);
     if (side === "buy") return { gross, fee, tax: 0, total: gross + fee };
-    const gain = cur.avgCost != null ? Math.max(0, gross - fee - cur.avgCost * n) : 0, tax = cur.tax > 0 ? Math.floor(gain * cur.tax) : 0;
+    const tax = cur.tax > 0 && gross > 0 ? Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * Math.round(cur.tax * 10000) / 10000))) : 0;
     return { gross, fee, tax, total: gross - fee - tax };
   };
   // 按了先跳確認，按「確認」才送出（sendN：賣光時給 "max"）
@@ -432,7 +432,7 @@ function spotTrade(v, S, cur) {
     const x = sumOf(n), buy = side === "buy";
     confirmTrade(`${buy ? "買進" : "賣出"} ${cur.name}`, [
       ["股數", `${fmt(n)} 股`], ["股價", fp(cur.price)], ["手續費（約）", fmt(x.fee)],
-      !buy && cur.tax > 0 ? ["資本利得稅（約）", fmt(x.tax)] : null,
+      !buy && cur.tax > 0 ? ["證交稅（約）", fmt(x.tax)] : null,
       [buy ? "合計要付（約）" : "拿回（約）", fmt(x.total), "total"]], buy ? "確認買進" : "確認賣出", () => bankDo("stock", { op: side, id: cur.id, n: sendN != null ? sendN : n }));
   };
   const steps = [1, 10, 100].map(n => btn(`${n} 股`, () => ask(n), "big bank-btn", { disabled: n > max ? true : null }));
@@ -596,7 +596,7 @@ function holdPanel(v, S, list) {
     h("span", { class: "bank-tab-num" }, H.c === "value" ? fmt(s.value) : `${fmt(s.mine)} 股`),
     h("span", { class: "bank-tab-num" }, H.b === "unit" ? dec2(s.avgCost) : fmt(s.costTotal)),
     H.a === "day" ? plBit(s.dayChg, s.dayPct) : plBit(s.pnl, s.pnlPct)));
-  return panel("持倉", S.taxPct ? `賣出賺的部分課 ${Math.round(S.taxPct * 100)}% 資本利得稅` : "", h("div", { class: "bank-book holdings", role: "table" },
+  return panel("持倉", S.taxPct ? `賣出課 ${pctText(S.taxPct)} 證交稅（美股不收）` : "", h("div", { class: "bank-book holdings", role: "table" },
     h("div", { class: "bank-bh", role: "row" }, h("span", null, "名稱"), tog("c", "value", "qty", "市值", "數量"), tog("b", "unit", "total", "單位成本", "總成本"), tog("a", "day", "total", "當日變更", "總漲跌")),
     hs.length ? rows : h("div", { class: "bank-row empty", role: "row" }, h("span", null, "你還沒有持股"), h("span", null, "—")),
     hs.length ? h("div", { class: "bank-row holdings sum", role: "row" }, h("span", null, h("b", null, "合計")), h("span", { class: "bank-tab-num" }, fmt(tv)), h("span", { class: "bank-tab-num" }, fmt(tc)), H.a === "day" ? plBit(td) : plBit(tp, tc > 0 ? tp / tc : null)) : null));
@@ -731,7 +731,7 @@ function dayTag(day) {
 
 // 全館的帳（11-16 翊文：「把館內的這幾個帳都放在銀行館內經濟可以展開來看」）：資料 e.books（數值平衡，日報寫回時寫，延遲壹天、整天不變）
 // { day, bankroll, budget, museum, sea, world（現在的餘額；world 沒有帳是 null）, d: { 各帳比前壹份日報多少 }, top: { 各帳昨天進出最大最多 3 筆 [{ label, n }] } }
-const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢"], ["budget", "預算池", "館方行政：拚經濟、大禮包、投資、還館債"], ["museum", "館方帳", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "股票的資本利得稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債"]];
+const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢"], ["budget", "預算池", "館方行政：拚經濟、大禮包、投資、還館債"], ["museum", "館方帳", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債"]];
 function booksPanel(b) {
   if (!b || typeof b !== "object") return null;
   const sgn = n => (n < 0 ? "−" : n > 0 ? "+" : "") + fmt(Math.abs(Math.round(n))), cls = n => (n > 0 ? "up" : n < 0 ? "down" : "");
@@ -882,7 +882,7 @@ function helpSections(v) {
       ["要付的錢", [
         `手續費 ${pc(S.feePct)}，買和賣各收一次。`,
         `持有成本：每天從持股市值扣 ${pc(S.holdPct)}。`,
-        `資本利得稅 ${pc(S.taxPct)}：賣館外股票「賺到的部分」要繳，賠錢不用繳也不退；館內股不抽。`,
+        `證交稅 ${pctText(S.taxPct)}：賣台股和館內股要繳賣出金額的 ${pctText(S.taxPct)}（賺賠都收，不到 1 籌碼也算 1）；美股不收。稅進政府帳。`,
         `一個人一天最多賣出：${sellCaps}（館外股和館內股合算；信用跟槓桿是同一個等級）。`]],
       ["賣股還債", [
         "有欠款（錢包是負的，或有可以還的借款）時，可以選「賣股還債」：賣的錢直接拿去補負數、照到期順序還借款，不進錢包。",
@@ -922,7 +922,7 @@ function helpSections(v) {
       ["限制", [
         `每人每家最多持有 ${fmt(I.cap)} 股。`,
         "館內股的對手盤是莊家，莊家接得下的量有上限，滿了就暫時買不到。",
-        "館內股不抽資本利得稅。"]],
+        "館內股賣出收證交稅，跟台股一樣。"]],
     ] },
     { id: "save", name: "存款", blocks: [
       ["活存", [

@@ -18,15 +18,15 @@ const SIGN = {
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
     bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, tax: -1 },
   budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, investFee: 1, budgetLoan: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1 },
-  gov: { stockTax: 1 },
+  gov: { stockTax: 1, bizTax: 1, entTax: 1 },
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   world: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
-    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, worldGrow: 1 },
+    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, worldGrow: 1, bizTax: -1, entTax: -1 },
 };
 const ACCT_NAME = { bankroll: "莊家", budget: "預算池", museum: "館方帳", gov: "政府帳", world: "外面世界" };
 // 同壹筆錢在兩個帳（外面世界 ↔ 莊家／預算池／館方帳）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
-const PAIRED = { bankroll: ["cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: [] };
+const PAIRED = { bankroll: ["cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;

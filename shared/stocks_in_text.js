@@ -20,7 +20,7 @@ export const CAS_STOCK_IN = {
   cap: "每家店最多持有 {n} 股，你已經有 {have} 股。",
   sellDay: "今天賣出的額度只剩 {n}。{up}",
   queue: "今天全館賣太多了，莊家付不過來，明天再賣。",
-  buyOk: "買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}。",
+  buyOk: "買進「{name}」{n} 股，每股 {px}，花了 {cost}，手續費 {fee}{taxText}。",
   sellOk: "賣出「{name}」{n} 股，每股 {px}，拿到 {net}，手續費 {fee}。",
   quiet: "昨天去的人太少，今天不調價。",
   rule: "館內五家店照昨天有多少不同的人去過，白天每 15 分鐘動壹次。營業時間 05:00～23:30。買賣各收 0.5% 手續費，進館方的預算池。",

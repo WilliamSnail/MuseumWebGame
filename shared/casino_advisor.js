@@ -13,6 +13,7 @@ import { IN_IDS, casInFix, casInPrice } from "./casino_stock_in.js";
 import { casDebtOwed } from "./casino_debt.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
+import { US_IDS } from "./stocks_tw.js";
 
 export const CAS_ADVISOR = {
   name: "財經專員 梁安",
@@ -62,7 +63,7 @@ export function casAdvisorExtend(w, id, day) {
 
 // 還款計畫（給畫面和信用）。day、t 用來看股價、停盤；house 可以沒有（沒有就不排賣股）
 // 回傳 { need, debt, loans: [{ id, owe, due, canExtend, why, fee, newDue }], sells: [{ id, name, kind, own, px, value, n, covers }], sellTotal, enough }
-//   sells 的順序就是建議賣的順序：館內股（沒資本利得稅）在前，館外股在後，各自市值大的在前；n ＝ 賣到剛好夠還（或全賣）要幾股
+//   sells 的順序就是建議賣的順序：館內股在前，館外股在後，各自市值大的在前；n ＝ 賣到剛好夠還（或全賣）要幾股
 export function casAdvisorPlan(w, house, day, t) {
   const debt = casAdvisorDebt(w), C = NUM.casino.advisor;
   const ls = advLoans(w).slice().sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : a.id - b.id)).map(x => {
@@ -71,13 +72,13 @@ export function casAdvisorPlan(w, house, day, t) {
   });
   const sells = [], sellNeed = casDebtOwed(w, t).total; // 賣股只還得了「錢包的負數＋現在還得了的借款」（跟賣股還債一樣）；還沒到能還的借款不算，不然計畫會寫成賣太多被伺服器擋
   if (house) {
-    const fee = 1 - NUM.casino.stock.feePct / 100, hold = [];
-    for (const s of IN_STOCKS) { const own = adN(casInFix(w).own[s.id]); if (own <= 0) continue; const pr = casInPrice(house, s.id, day, t); if (pr.halted) continue; hold.push({ id: s.id, name: s.name, kind: "in", own, px: pr.px }); }
-    for (const s of OUT_STOCKS) { const own = adN(casStockFix(w).own[s.id]); if (own <= 0) continue; const px = casStockHouseFix(house).px[s.id]; if (!(px > 0)) continue; hold.push({ id: s.id, name: s.name, kind: "out", own, px }); }
-    hold.forEach(h => { h.value = Math.floor(h.own * h.px * fee); });
+    const kOf = id => 1 - NUM.casino.stock.feePct / 100 - (US_IDS.includes(id) ? NUM.casino.stock.taxUs : NUM.casino.stock.taxPct) / 100, hold = []; // 賣 1 元拿到幾元：扣手續費和證交稅（決定 0111）
+    for (const s of IN_STOCKS) { const own = adN(casInFix(w).own[s.id]); if (own <= 0) continue; const pr = casInPrice(house, s.id, day, t); if (pr.halted) continue; hold.push({ id: s.id, name: s.name, kind: "in", own, px: pr.px, k: kOf(s.id) }); }
+    for (const s of OUT_STOCKS) { const own = adN(casStockFix(w).own[s.id]); if (own <= 0) continue; const px = casStockHouseFix(house).px[s.id]; if (!(px > 0)) continue; hold.push({ id: s.id, name: s.name, kind: "out", own, px, k: kOf(s.id) }); }
+    hold.forEach(h => { h.value = Math.floor(h.own * h.px * h.k); });
     hold.sort((a, b) => (a.kind === b.kind ? b.value - a.value : a.kind === "in" ? -1 : 1));
     let need = sellNeed;
-    for (const h of hold) { if (need <= 0) break; const n = Math.min(h.own, Math.max(1, Math.ceil(need / (h.px * fee)))); const got = Math.floor(n * h.px * fee); sells.push({ id: h.id, name: h.name, kind: h.kind, own: h.own, px: h.px, value: h.value, n, covers: got }); need -= got; }
+    for (const h of hold) { if (need <= 0) break; const n = Math.min(h.own, Math.max(1, Math.ceil(need / (h.px * h.k)))); const got = Math.floor(n * h.px * h.k); sells.push({ id: h.id, name: h.name, kind: h.kind, own: h.own, px: h.px, value: h.value, n, covers: got }); need -= got; }
   }
   const sellTotal = sells.reduce((s, x) => s + x.covers, 0);
   return { need: debt.need, debt, loans: ls, sells, sellTotal, sellNeed, enough: sellTotal >= sellNeed };

@@ -87,7 +87,7 @@ export function casHouseFix(h, day) {
   if (!casIsObj(h.econ)) h.econ = { b: 0 }; // 最新的景氣（shared/casino_gdp.js，日報產生時寫）
   h.econ.b = Math.max(-1, Math.min(1, casNz(h.econ.b)));
   if (!casIsObj(h.pol)) h.pol = null; // 最近一次拚經濟成功抽到的政策 { idx, fx, day }
-  h.gov = Math.floor(casNz(h.gov, 0)); // 政府帳（資本利得稅，決定 0110）
+  h.gov = Math.floor(casNz(h.gov, 0)); // 政府帳（證交稅、營業稅、娛樂稅，決定 0110、0111）
   h.museum = Math.floor(casNz(h.museum, 0)); // 館方帳（門票，shared/casino_ticket.js）
   h.world = Math.floor(casNz(h.world, NUM.casino.world.start)); // 外面世界的池子（規劃 2.12）；舊的莊家第壹次碰到時給起始
   casLedFix(h, ["mint", "flow", "burn"]);

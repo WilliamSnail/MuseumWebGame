@@ -14,7 +14,7 @@ T("來館的 NPC 付門票、去的店花錢：預算池／莊家／館方帳收
   const r = G.casNpcSpend(h, D0, "s", LIST, null);
   assert.ok(r.total > 0 && r.people > 0 && r.ticket > 0 && r.shop > 0, JSON.stringify(r));
   assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket - r.crowd.shop); assert.strictEqual(inv(G, h), t0, "守恆");
-  assert.strictEqual((h.budget - b0) + (h.bankroll - k0) + (h.museum - m0), r.total + r.crowd.ticket + r.crowd.shop, "錢進預算池／莊家／館方帳");
+  assert.strictEqual((h.budget - b0) + (h.bankroll - k0) + (h.museum - m0) + (h.gov || 0), r.total + r.crowd.ticket + r.crowd.shop, "錢進預算池／莊家／館方帳");
   assert.ok(h.museum > m0, "門票有進館方帳"); assert.strictEqual(G.casNpcSpend(h, D0, "s", LIST, null), h.npcs); assert.strictEqual(h.world, w0 - r.total - r.crowd.ticket - r.crowd.shop, "不重複");
 });
 T("上限：每位 NPC 壹天 ≤ perDay×dayPct%、全館壹天 ≤ dayCap；吃緊的池子不花；沒名單／關掉不花", G => {
