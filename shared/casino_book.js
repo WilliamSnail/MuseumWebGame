@@ -44,6 +44,16 @@ export function casPoolMint(house, pool, src, n) {
   return n;
 }
 
+// 錢從錢包搬進預算池／館方帳／政府帳（手續費、稅）：呼叫的人先自己扣錢包的籌碼，這裡加池子，並在 house.led.flow 記「這個來源讓池子多了 n」（池子自己的角度：正＝進池子）。
+// pool："budget"｜"museum"｜"gov"（政府帳，決定 0110：資本利得稅）。不是憑空，是搬
+export function casPoolGain(house, pool, src, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house[pool] = bkNz(house[pool]) + n;
+  bkAdd(casLedFix(house, ["mint", "flow"]).flow, src, n);
+  return n;
+}
+
 // 錢包憑空多 n（n 要是正整數）。回傳 n
 export function casMint(w, src, n) {
   n = bkNz(n);
@@ -185,7 +195,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), world: house.world == null ? null : bkNz(house.world), wflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), gov: bkNz(house.gov), world: house.world == null ? null : bkNz(house.world), wflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
@@ -208,7 +218,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   return s;
 }
 // 全館的錢（含莊家、預算池、海底）
-export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.world);
+export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.gov) + bkNz(s.house.world);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
 export const casBookBurned = s => bkSumObj(s.burn) + bkSumObj(s.house && s.house.burn);
@@ -236,6 +246,7 @@ export function casBookDiff(a, b) {
     budget: bkNz(b.house.budget) - bkNz(a.house.budget),
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),
     museum: bkNz(b.house.museum) - bkNz(a.house.museum),
+    gov: bkNz(b.house.gov) - bkNz(a.house.gov),
     world: bkNz(b.house.world) - bkNz(a.house.world), wflow: bkDiffObj(a.house.wflow, b.house.wflow),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
     houseMint: bkDiffObj(a.house.mint, b.house.mint), houseBurn: bkDiffObj(a.house.burn, b.house.burn), flow: bkDiffObj(a.house.flow, b.house.flow),

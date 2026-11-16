@@ -17,7 +17,7 @@
 //  純函式：「今天」「現在」從參數來。伺服器入口在 functions/art.js。
 // ================================================================
 import { NUM } from "./config.js";
-import { casCount, casHouseMove, casHouseWorldOut, casPoolWorldOut, casWorldOut, casWorldRoom } from "./casino_book.js";
+import { casCount, casHouseMove, casHouseWorldOut, casPoolGain, casPoolWorldOut, casWorldOut, casWorldRoom } from "./casino_book.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { casArtFix, casArtHouse, casArtPrice } from "./casino_art.js";
 import { casBondFix } from "./casino_bond.js";
@@ -259,7 +259,7 @@ export function casAucSettle(doc, id, ctx) {
       if (a.kind === "player") {
         fee = Math.floor(price * C.feePct / 100);
         const x = sellerA.own[a.work];
-        wallets[seller].chips += price - fee; house.budget += fee; casCount(house, "artFee", fee); casCount(house, "artAuction");
+        wallets[seller].chips += price - fee; casPoolGain(house, "budget", "artFee", fee); casCount(house, "artFee", fee); casCount(house, "artAuction");
         house.art.paid = Math.max(0, house.art.paid - auN(x.paid)) + price;
         delete sellerA.own[a.work];
         if (!auBox(sellerA.prem)) sellerA.prem = {};

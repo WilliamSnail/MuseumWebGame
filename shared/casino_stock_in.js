@@ -22,7 +22,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casSellCap, casSellTip } from "./casino_credit.js";
-import { casCount, casHouseMove } from "./casino_book.js";
+import { casCount, casHouseMove, casPoolGain } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { npcTrips } from "./npc_trip.js";
@@ -364,7 +364,7 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   w.chips -= cost + fee;
   S.cost[id] = inN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   casHouseMove(house, "stockIn", cost); // 買進的錢進莊家（莊家當對手盤）
-  house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（搬）
+  casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進預算池（搬）
   S.own[id] = have + n; S.fee += fee;
   H.held[id] = inN(H.held[id]) + n;
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少
@@ -390,7 +390,7 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0, op
   casInCostSeed(w, house);
   const costOut = n >= have0 ? inN(S.cost[id]) : Math.floor(inN(S.cost[id]) * n / have0);
   casHouseMove(house, "stockIn", -gross);
-  w.chips += net; house.budget += fee; casCount(house, "stockFee", fee);
+  w.chips += net; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   S.own[id] = have0 - n; if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, inN(S.cost[id]) - costOut);
   S.fee += fee; if (!free) S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
