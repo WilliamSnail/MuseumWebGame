@@ -876,7 +876,7 @@ export const FX = (() => {
           }
         }, () => rand(6500, 13000));
         let gn = 0; // 11-16 翊文：畫廊偶爾放 nostalgic，每 1～2 分鐘壹次，進房間第壹次不響
-        const nost = every(() => { if (!gn++) return; fileOnce(c, g, 'gallery-nostalgic', 0.4); }, () => rand(60000, 120000));
+        const nost = every(() => { if (!gn++) return; fileOnce(c, g, pick(['gallery-nostalgic', 'gallery-welte']), 0.4); }, () => rand(60000, 120000));
         return { nodes: [room.n], timers: [pad, steps, nost] };
       },
       cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
