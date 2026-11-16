@@ -46,6 +46,15 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-0a691b", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
+    title: "財報標出是哪一天的帳", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "銀行財報的「館外來客」和「外面世界」標題旁，多了「這份是哪一天的帳」；如果不是昨天的，會用警告色提醒。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-6deb84", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "股票與銀行",
     title: "銀行財報多了「今天到目前」", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
