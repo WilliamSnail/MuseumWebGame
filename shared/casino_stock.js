@@ -195,7 +195,7 @@ const stOkFx = v => typeof v === "number" && isFinite(v) && v >= 15 && v <= 60;
 export const stFxOf = r => (r && stOkFx(r.fx) ? r.fx : r && stOkFx(r.fxLast) ? r.fxLast : null);
 // 遊戲價 ＝ 這個倍數 × 真實價：台股 peg.tw；美股今天的匯率（H.fx），沒有就 peg.us。換股數的基準還是 stPegMult（固定），所以匯率變動只是價格漲跌、不換股數
 const stPxMult = (H, id) => (stockIsUs(id) ? (stOkFx(H.fx) ? H.fx : NUM.casino.stock.peg.us) : stPegMult(id));
-const stPegMult = id => (stockIsTw(id) ? (NUM.casino.stock.peg.byId && NUM.casino.stock.peg.byId[id]) || NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
+const stPegMult = id => (stockIsTw(id) ? NUM.casino.stock.peg.tw : stockIsUs(id) ? NUM.casino.stock.peg.us : 0);
 // 壹天最多拉回幾（小數）：2 × 手續費 − drag，小於來回手續費加 drag；手續費改了自動跟著降
 export const casStockPullMax = () => Math.max(0, 2 * NUM.casino.stock.feePct - NUM.casino.stock.drag) / 100;
 const stOkPx = v => typeof v === "number" && isFinite(v) && v > 0;
