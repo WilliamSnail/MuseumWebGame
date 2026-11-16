@@ -50,7 +50,7 @@ import { nwSanPublic, whCard, whCrowdMood, whMoodPublic } from "./shared/world.j
 import { casSellForDebt } from "./shared/casino_debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
-import { casNpcExt, casNpcLive, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
+import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
@@ -360,11 +360,42 @@ async function reportSnap(day) {
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && !s.npc && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
     const snap = casBookSnap(wallets, house, inplay, day);
+    // 昨天館外來客花了多少：house.npcs 是換日後第壹個玩的人（casInRoll）才結算的；日報是唯讀、不換日，05:00 後第壹個碰到的如果是日報，house.npcs 還是前天的 → 財報停在前天。
+    // 這裡在複本上補算昨天的（只拿 npcs 欄位，不動錢、不寫回去）
+    const yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
+    if (!(house.npcs && house.npcs.day === yd)) {
+      try { const cp = JSON.parse(JSON.stringify(house)), sec = await twSecret(); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snap.house.npcs = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("reportSnap npcs", e && e.message); }
+    }
     snap.house.econUp = casEconUpcoming(ECON_EVENTS, day); // 要提前公告的劇情經濟事件（日報寫）
     snap.house.festUp = casInFestUp(FEST_DAYS, day); // 預告的活動（日報寫「幾號某店可能舉辦…」）
     snap.pol = house.pol || null; // 現在有效的政策（日報要寫）
     return snap;
   }, { readOnly: true });
+}
+// 景氣、昨天館外來客等寫回莊家（銀行財報頁讀 house.econ）。冪等：今天已經寫好就不動。日報文件別人先建了（ref.create 沒成功）、或這個實例重開，都要補寫，不然財報會停在前壹天
+let ECON_DONE = "";
+async function writeEcon(doc, day) {
+  if (ECON_DONE === day) return;
+  const sec = await twSecret();
+  await db().runTransaction(async tx => {
+    const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house, yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
+    if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
+    let snapN = (doc.snap.house && doc.snap.house.npcs) || null;
+    if (!(snapN && snapN.day === yd)) { try { const cp = JSON.parse(JSON.stringify(h)); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snapN = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("writeEcon npcs", e && e.message); } } // 日報是唯讀、不換日：昨天的 npcs 可能還沒結算，在複本上補算
+    // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
+    const A = doc.diff.act || {}, g = doc.gdp;
+    // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc_spend.js 的 house.npcs，日報那兩行也是讀這個）
+    const N = snapN, NC = (N && N.crowd) || {};
+    const npcRows = N ? [["館外旅客", `${casNum(N.people || 0)} 位`], ["散客", `${casNum(NC.people || 0)} 位`], ["館外帶進館", casNum((N.total || 0) + (NC.ticket || 0) + (NC.shop || 0))]] : [];
+    const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`], ...npcRows,
+      ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
+    const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
+    h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
+    h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
+      perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
+    put(tx, houseRef(), h);
+  });
+  ECON_DONE = day;
 }
 export async function casReport() {
   const t = now(), day = taipeiDay(t), ref = db().doc(`casinoReport/${day}`);
@@ -386,26 +417,12 @@ export async function casReport() {
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
     let made = false;
     try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); made = true; } catch (e) { /* 別人先建了：讀他的 */ }
-    if (made) { // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino_gdp.js 的 casFxMul）
-      await db().runTransaction(async tx => {
-        const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house;
-        // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
-        const A = doc.diff.act || {}, g = doc.gdp;
-        // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc_spend.js 的 house.npcs，日報那兩行也是讀這個）
-        const N = (doc.snap.house && doc.snap.house.npcs) || null, NC = (N && N.crowd) || {};
-        const npcRows = N ? [["館外旅客", `${casNum(N.people || 0)} 位`], ["散客", `${casNum(NC.people || 0)} 位`], ["館外帶進館", casNum((N.total || 0) + (NC.ticket || 0) + (NC.shop || 0))]] : [];
-        const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ["參觀者門票", `${casNum(A.ticketPeople || 0)} 位`], ...npcRows,
-          ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
-        const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
-        h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
-        h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
-          perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
-        put(tx, houseRef(), h);
-      });
-    }
+    if (made) await writeEcon(doc, day); // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino_gdp.js 的 casFxMul）
     s = await ref.get();
   }
-  return casReportView(JSON.parse(s.data().data));
+  const rdoc = JSON.parse(s.data().data);
+  if (ECON_DONE !== day) await writeEcon(rdoc, day).catch(e => console.error("日報：補寫財報失敗", e && e.message));
+  return casReportView(rdoc);
 }
 
 export const casino = onCall(async req => {
