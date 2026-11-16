@@ -30,7 +30,7 @@ const reviewItem = r => h("li", { class: "hn-rv" },
 
 // 開發的時候沒登入：用示範資料把畫面畫出來（玩家看不到）
 const fake = () => import.meta.env.DEV && !NET.me;
-const FAKE_NOW = { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], around: 5, named: { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], ids: ["fake-a", "fake-b"] }, crowd: { n: 15, groups: [{ label: "三位學生", n: 3 }, { label: "旅行團", n: 12 }] }, total: 17 };
+const FAKE_NOW = { rooms: { hall: { n: 17, npc: 2, crowd: 15 }, casino: { n: 6, npc: 1, crowd: 5 }, workshop: { n: 3, npc: 0, crowd: 3 } }, hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], around: 5, named: { hall: 2, names: ["夜班的畫商", "戴帽子的旅客"], ids: ["fake-a", "fake-b"] }, crowd: { n: 15, groups: [{ label: "三位學生", n: 3 }, { label: "旅行團", n: 12 }] }, total: 17 };
 const FAKE_POLICY = { name: "兩岸服務業、貨品貿易協定", effect: "門票多一成", day: "2026-11-14", until: "2026-11-15" };
 const policyData = () => (UI.policy !== undefined ? UI.policy : fake() ? FAKE_POLICY : null);
 // 「2026-11-15」→「11/15」
@@ -50,7 +50,12 @@ function counts() {
   const crowd = now && now.crowd ? { n: Math.max(0, Number(now.crowd.n) || 0), groups: Array.isArray(now.crowd.groups) ? now.crowd.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0 })) : [] } : { n: 0, groups: [] };
   const people = now && typeof now.total === "number" ? Math.max(0, now.total) : tourists + crowd.n;
   const casino = now && now.casino && Array.isArray(now.casino.names) ? now.casino.names.map(String) : []; // PR 465：被邀去賭場的 NPC
-  return { mates, tourists, crowd, casino, canInvite: !!(named && Array.isArray(named.ids) ? named.ids.length : tourists), inviteN: named && Array.isArray(named.ids) ? named.ids.length : 0, names: named && Array.isArray(named.names) ? named.names.map(String) : [], ids: named && Array.isArray(named.ids) ? named.ids.map(String) : [], total: mates.length + people, known: !!now };
+  // 全館（翊文 11-16：「應該改成顯示全館有多少人」）：館友（不在館外的）＋各房間的旅客、散客（now.rooms）＋被邀去賭場的；舊伺服器沒有 rooms 就退回展廳的數字
+  const byRoom = matesByRoom(NET.roster || []), allMates = Object.keys(byRoom).filter(k => k !== "elsewhere").reduce((a, k) => a + byRoom[k].length, 0);
+  const rooms = now && now.rooms && typeof now.rooms === "object" ? Object.values(now.rooms) : null, sum = key => rooms.reduce((a, r) => a + Math.max(0, +(r && r[key]) || 0), 0);
+  const all = rooms && rooms.length ? { mates: allMates, tourists: sum("npc") + casino.length, crowd: sum("crowd") } : { mates: mates.length, tourists: tourists + casino.length, crowd: crowd.n };
+  all.total = all.mates + all.tourists + all.crowd;
+  return { all, hallTotal: mates.length + people, mates, tourists, crowd, casino, canInvite: !!(named && Array.isArray(named.ids) ? named.ids.length : tourists), inviteN: named && Array.isArray(named.ids) ? named.ids.length : 0, names: named && Array.isArray(named.names) ? named.names.map(String) : [], ids: named && Array.isArray(named.ids) ? named.ids.map(String) : [], total: mates.length + people, known: !!now };
 }
 // 散客的描述：label 已經寫了人數（三位學生、一對情侶、2 人）就不再補「N 位」；沒寫的（旅行團、退休的長輩們）才補
 const HAS_COUNT = /[0-9０-９一二兩三四五六七八九十壹貳參肆伍陸柒捌玖拾百]|一對/;
@@ -72,7 +77,7 @@ function nameList(c, n, calm) {
 }
 export function openAll() {
   const c = counts(), list = reviewData() || [];
-  const m = miniLayer("展廳的評價", c.known ? `展廳現在有 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
+  const m = miniLayer("展廳的評價", c.known ? `館內現在有 ${c.all.total} 位（館友 ${c.all.mates}、旅客 ${c.all.tourists}、散客 ${c.all.crowd}）；展廳 ${c.total} 位（館友 ${c.mates.length}、旅客 ${c.tourists}、散客 ${c.crowd.n}）。` : "現在算不出展廳的人數。");
   m.card.classList.add("hn-layer");
   m.card.append(
     crowdMoodLine(),
@@ -100,7 +105,7 @@ export function hallNowBar() {
     if (box.isConnected) shown = true;
     const c = counts();
     box.replaceChildren(
-      btn([h("span", null, h("b", null, "展廳"), c.known ? ` ${c.total} 人` : " ？"), c.known ? h("small", null, `館友 ${c.mates.length}・旅客 ${c.tourists}・散客 ${c.crowd.n}`) : null], openAll, "ghost small hn-bar-n", { title: "展廳現在有誰、最近的評價" }),
+      btn([h("span", null, h("b", null, "館內"), c.known ? ` ${c.all.total} 人` : " ？"), c.known ? h("small", null, `展廳 ${c.total}・旅客 ${c.all.tourists}・散客 ${c.all.crowd}`) : null], openAll, "ghost small hn-bar-n", { title: "館內現在有多少人、展廳有誰、最近的評價" }),
       inviteBtn(c));
   };
   DRAWS.add(draw);
@@ -119,7 +124,7 @@ export function hallNowBox(mode) {
     const pol = policyData();
     const more = (all && all.length) || c.names.length || c.mates.length || c.crowd.n ? btn("看全部", openAll, "ghost small hn-more") : null;
     box.replaceChildren(
-      h("div", { class: "hn-h" }, h("span", null, c.known ? `展廳現在有 ${c.total} 人` : "展廳現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.mates.length}・旅客 ${c.tourists}${c.crowd.n ? `・散客 ${c.crowd.n}` : ""}`, c.names.length ? `：${c.names.slice(0, 3).join("、")}${c.names.length > 3 ? `…等 ${c.names.length} 位` : ""}` : "") : null), lobby ? more : null),
+      h("div", { class: "hn-h" }, h("span", null, c.known ? `館內現在有 ${c.all.total} 人` : "館內現在", c.known ? h("small", { class: "hn-sub", title: c.names.join("、") }, `館友 ${c.all.mates}・旅客 ${c.all.tourists}${c.all.crowd ? `・散客 ${c.all.crowd}` : ""}`, `・展廳 ${c.total}`) : null), lobby ? more : null),
       crowdMoodLine({ num: false }),
       !lobby && c.names.length ? h("p", { class: "hn-names" }, h("b", null, "旅客："), nameList(c, 4, true), c.names.length > 4 ? `…等 ${c.names.length} 位` : "") : null,
       c.casino.length ? h("p", { class: "hn-names hn-casino" }, h("b", null, "在賭場："), c.casino.slice(0, 3).join("、"), c.casino.length > 3 ? `…等 ${c.casino.length} 位` : "") : null,
