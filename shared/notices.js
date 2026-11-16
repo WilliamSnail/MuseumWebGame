@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-0ee8eb", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "散客到各館區也會消費", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "賭場、手作坊、委託櫃台、地下收藏庫現在都有散客在逛，也會買東西。",
+        "展廳以外的房間人比較多了，館內股也跟著更有人氣。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-b581d1", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
     title: "大廳改寫全館人數，散客會逛到各館區", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

@@ -29,7 +29,7 @@ T("館內股的 NPC 人數用行程加總（有名單）；沒有名單還是 Po
   const h = mk(), H = h.sin; G.casInRoll(h, D0, 0, "s", {}, { list: G.NPC_ROSTER, counters: null }); G.casInRoll(h, add(D0, 1), 0, "s", {}, { list: G.NPC_ROSTER, counters: null });
   const trips = G.npcTrips(D0, "s", G.NPC_ROSTER, null);
   for (const s of ["food", "bj"]) assert.ok(H.npc[D0][s] <= trips.counts[s], "有 40% 上限（館友 0 位 → 0）");
-  H.use[add(D0, 1)] = { food: 100 }; delete H.npc[add(D0, 1)]; const c = G.casInNpcFor(H, add(D0, 1), "s", {}, { list: G.NPC_ROSTER, counters: null });
+  H.use[add(D0, 1)] = { food: 100 }; delete H.npc[add(D0, 1)]; const c = G.casInNpcFor(H, add(D0, 1), "s", {}, { list: G.NPC_ROSTER, counters: null, crowd: false }); // 逛店散客另外測（npc_spend.test）
   assert.strictEqual(c.food, Math.min(Math.floor(100 * 40 / 60), G.npcTrips(add(D0, 1), "s", G.NPC_ROSTER, null).counts.food));
 });
 T("全館計數：交委託、收門票時累加 house.npcc（故事線解鎖用）；日報有「館內近況」", G => {
@@ -80,7 +80,7 @@ T("突發大事件 C：機率 100% 時每家店都多來 b×平均 位（b 0.5�
 });
 T("預告的活動：festP＝1 必辦成（多來 b×平均、不算進之後的平均）、festP＝0 沒辦成；日報寫預告和結果；預告提前 festAhead 天", G => {
   const C = G.NUM.casino.stockIn, mk = () => { const h = G.casHouseFix(G.casHouseNew(), D0).house, H = G.casInHouseFix(h); for (let i = 1; i <= 7; i++) H.use[add(D0, -i)] = { food: 10 }; return { h, H }; };
-  const ctx = { fest: { [D0]: [{ store: "food", name: "夜市週" }] } };
+  const ctx = { fest: { [D0]: [{ store: "food", name: "夜市週" }] }, crowd: false }; // 逛店散客另外測
   C.npcBurstPct = 0; C.festP = 1; let { h, H } = mk(); const base = G.casInNpcFor(mk().H, D0, "s", {}, null).food, c = G.casInNpcFor(H, D0, "s", {}, ctx).food;
   assert.ok(c - base >= Math.round(10 * C.festMin) && c - base <= Math.round(10 * C.festMax), "多來 " + (c - base));
   assert.ok(H.npcFest[D0][0].ok && H.npcX[D0].food === c - base, "多來的記在 npcX，算平均時扣掉");
