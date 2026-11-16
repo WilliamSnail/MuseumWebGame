@@ -841,7 +841,8 @@ export const FX = (() => {
         const clock = every(() => { const t = c.currentTime + 0.05; tone(t, { type: 'triangle', f: tk++ % 2 ? 420 : 520, g: 0.016, a: 0.001, d: 0.12, to: g }); noise(t, { type: 'bandpass', f: 1200, q: 5, g: 0.01, a: 0.001, d: 0.03, to: g }); }, () => 1000);
         const quill = every(() => { const t = c.currentTime + 0.1; for (let i = 0; i < 3; i++) noise(t + i * 0.18, { type: 'bandpass', f: rand(3000, 4500), q: 4, g: 0.012, a: 0.01, d: 0.12, to: g }); }, () => rand(6000, 12000));
         const crackle = every(() => noise(c.currentTime + 0.02, { type: 'highpass', f: rand(1500, 3500), q: 1, g: rand(0.006, 0.02), a: 0.001, d: rand(0.008, 0.02), to: g }), () => rand(200, 900));
-        return { nodes: [fire.n], timers: [clock, quill, crackle] };
+        const cello = songCycle(c, g, ['cello-commission'], 0.4, [300, 600]); // 11-16 翊文：「館長室也先播一樣的大提琴」：跟委託櫃台同壹首，壹進去就放，播完安靜約 20 秒再放
+        return { nodes: [fire.n], timers: [clock, quill, crackle, cello] };
       },
       title(c, g) { // 開場：音樂盒的旋律（Claude 自己寫的，不是任何現成的歌）
         const send = echoSend(c, g, 0.42, 0.32);
