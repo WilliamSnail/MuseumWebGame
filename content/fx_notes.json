@@ -11,6 +11,7 @@
  "basement-knock": {"heard":null,"note":null},
  "lobby-wrong": {"heard":null,"note":null},
  "lobby-silence": {"heard":null,"note":null},
+ "workshop-crowd": {"heard":null,"note":null},
  "lobby-normal": {"heard":null,"note":null},
  "lobby-crowd": {"heard":null,"note":null},
  "lobby-event": {"heard":null,"note":null},

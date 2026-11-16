@@ -747,7 +747,10 @@ export const FX = (() => {
           [698.46, 0, 659.25, 698.46, 783.99, 0, 698.46, 659.25], [587.33, 0, 440, 0, 587.33, 659.25, 698.46, 0],
           [587.33, 0, 466.16, 587.33, 523.25, 0, 466.16, 440], [392, 0, 523.25, 0, 329.63, 0, 349.23, 0],
         ];
-        const send = echoSend(c, g, E8 * 3, 0.18);
+        // 11-17 翊文：「這首手作坊多人的時候可以放」：木琴、低音、和弦、沙鈴接在 mus 上，人多（mix busy）時淡出換 workshop-crowd；剪刀聲照舊
+        const mus = c.createGain(); mus.connect(g);
+        const ws = { song: null };
+        const send = echoSend(c, mus, E8 * 3, 0.18);
         let next = c.currentTime + 0.1, bar = 0;
         const play = (t0, b) => {
           const ch = b % 4;
@@ -759,15 +762,25 @@ export const FX = (() => {
           });
           [0, 2, 4, 6].forEach((i, k) => { // 撥弦低音：根音、五度、根音、五度
             const f = BASS[ch][k % 2], t = t0 + i * E8;
-            tone(t, { type: 'triangle', f, g: 0.06, a: 0.004, d: 0.3, to: g });
-            tone(t, { f: f * 2, g: 0.018, a: 0.004, d: 0.18, to: g });
+            tone(t, { type: 'triangle', f, g: 0.06, a: 0.004, d: 0.3, to: mus });
+            tone(t, { f: f * 2, g: 0.018, a: 0.004, d: 0.18, to: mus });
           });
-          [2, 6].forEach((i) => CHORD[ch].forEach((f) => tone(t0 + i * E8 + 0.01, { type: 'triangle', f, g: 0.014, a: 0.003, d: 0.16, to: g }))); // 反拍的小和弦
-          if (b % 2 === 0) noise(t0 + 4 * E8, { type: 'highpass', f: 6000, q: 0.7, g: 0.008, a: 0.001, d: 0.03, to: g }); // 輕輕的沙鈴
+          [2, 6].forEach((i) => CHORD[ch].forEach((f) => tone(t0 + i * E8 + 0.01, { type: 'triangle', f, g: 0.014, a: 0.003, d: 0.16, to: mus }))); // 反拍的小和弦
+          if (b % 2 === 0) noise(t0 + 4 * E8, { type: 'highpass', f: 6000, q: 0.7, g: 0.008, a: 0.001, d: 0.03, to: mus }); // 輕輕的沙鈴
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % MEL.length; next += E8 * 8; } }, () => 1000);
         const snip = every(() => { const t = c.currentTime + 0.05; [0, 0.09].forEach((dt) => noise(t + dt, { type: 'highpass', f: 3500, q: 1.5, g: 0.018, a: 0.001, d: 0.025, to: g })); }, () => rand(7000, 14000)); // 偶爾剪刀喀擦
-        return { nodes: [], timers: [sched, snip] };
+        const songStop = { stop() { if (ws.song) ws.song.n.stop(); } };
+        return {
+          nodes: [songStop], timers: [sched, snip],
+          mix(m) {
+            if (!m || !('busy' in m)) return;
+            const on = !!m.busy, t = c.currentTime;
+            if (on && !ws.song) ws.song = fileLoop(c, g, 'workshop-crowd', 0, true);
+            mus.gain.setTargetAtTime(on ? 0 : 1, t, 1.2);
+            if (ws.song) ws.song.v.gain.setTargetAtTime(on ? 0.45 : 0, t, 1.2);
+          },
+        };
       },
       // 抱枕工作台：軟綿綿的搖籃曲小圓舞曲（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「抱枕區音樂也要」→ 原本只有布料聲和縫紉機，換成真的音樂，布料聲、縫紉機留著當點綴。
