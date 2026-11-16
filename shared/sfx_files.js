@@ -40,6 +40,8 @@ export const SFX_FILES = {
   "creepy-box": { name: "creepy music box（做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/musical-creepy-music-box-6169/", loop: true, use: "理智很低時圖庫的音樂盒" },
   "creepy-box-short": { name: "creepy music box（截前 10 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/musical-creepy-music-box-6169/", use: "地下 B2 偶爾、失敗作之夜那週大廳和展廳偶爾" },
   "typewriter": { name: "Type Writer（截 6 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/film-special-effects-type-writer-53735/", use: "銀行遠處偶爾的打字機（不跟別的音效疊）" },
+  "impact-boom": { name: "Cinematic Impact Boom 05", by: "Universfield", url: "https://pixabay.com/sound-effects/film-special-effects-cinematic-impact-boom-05-352465/", use: "守門進第二階段、主線大揭曉那本書打開時" },
+  "keyboard": { name: "Keyboard Typing Sound Effect（截前 6 秒）", by: "DRAGON-STUDIO", url: "https://pixabay.com/sound-effects/film-special-effects-keyboard-typing-sound-effect-335503/", use: "銀行遠處偶爾的打字（跟打字機輪流）" },
   "coin-drop": { name: "Coin Drop In Slot 2 SFX", by: "BFCMUSIC", url: "https://pixabay.com/sound-effects/coin-drop-in-slot-2-sfx-330553/", use: "賭場借到籌碼；銀行存入、定存、買館債、買股票、開槓桿（錢放進去）" },
   "slot-bonus": { name: "Playful Casino Slot Machine Bonus 2", by: "floraphonic", url: "https://pixabay.com/sound-effects/playful-casino-slot-machine-bonus-2-183919/", use: "抽卡包 4 星以上" },
   "crowd-cheer": { name: "crowd cheering", by: "DennisH18", url: "https://pixabay.com/sound-effects/crowd-cheering-143103/", use: "抽卡包 5 星" },

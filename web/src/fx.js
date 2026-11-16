@@ -937,7 +937,7 @@ export const FX = (() => {
             if (f === cur.f && m.mode === cur.mode) return;
             cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null;
             apply(1.5); applyMusic(1.5);
-            if (to2) { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); } // 守門進第二階段：再劍戰壹下
+            if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => { fileOnce(c, g, 'sword-fight', 0.55); fileOnce(c, g, 'pulse-rise', 0.5); }, 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
             if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'sword-fight', m.mode === 'gate' ? 0.65 : 0.55); } // 遇到怪物：劍戰壹下；守門：Boss 登場
           },
         };
@@ -1053,7 +1053,7 @@ export const FX = (() => {
           }
         }, () => rand(9000, 19000));
         const counting = every(() => { if (slot(10.5)) fileOnce(c, g, 'coins-counting', 0.12); }, () => rand(25000, 50000));
-        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, 'typewriter', 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
+        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, pick(['typewriter', 'keyboard']), 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
         return { nodes, timers: [sched, coins, counting, typing] };
       },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
