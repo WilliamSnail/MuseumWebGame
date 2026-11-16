@@ -163,7 +163,8 @@ function reliefBar() { return bankBar(S, CAS_IO); }
 // 右邊壹欄：銀行＋牌桌頁籤的「跟館友同桌」（翊文 11-14：「一覽就看到不用滑到底下」）。窄的畫面：銀行在上、同桌釘在下面（css）
 function sideCol() {
   const mp = S.tab === "table" && ADDONS.casinoTable ? ADDONS.casinoTable() : null;
-  return mp ? h("div", { class: "cas-side" }, reliefBar(), mp) : reliefBar();
+  const acct = ADDONS.bankAcctBox ? ADDONS.bankAcctBox() : null; // 我的帳戶（11-16，可以收折；ui_bank.js）
+  return h("div", { class: "cas-side" }, reliefBar(), acct, mp);
 }
 // ---------- 簡易銀行（11-14，翊文：「畫廊的拍賣那個頁籤裡面加入像賭場裡的那個簡易銀行」）----------
 // 畫廊拍賣頁籤放壹條：存款・未還・可借、展開（借款、存款）、去銀行。資料和動作跟賭場同壹條（casino act open、borrow、repay、bank）；
@@ -182,7 +183,7 @@ export function casinoBankBox() {
       let r = null;
       try {
         r = await NET.call("casino", Object.assign({ act: name }, data || {}));
-        if (r && r.ok === false) { snd("error"); note(r.reason || "沒辦法。", "bad"); } else { sync2(r); if (then) await then(r); }
+        if (r && r.ok === false) { snd("error"); note(r.reason || "沒辦法。", "bad"); } else { sync2(r); UI.bankAt = 0; if (then) await then(r); } // 錢動了：我的帳戶下次重讀
       } catch (e) { snd("error"); note((e && e.message) || "沒辦法。", "bad"); }
       C.busy = false; io.draw();
       return r;

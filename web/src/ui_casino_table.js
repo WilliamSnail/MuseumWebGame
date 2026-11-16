@@ -237,7 +237,10 @@ function draw() {
   if (me && me.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   parts.push(h("div", { class: "cas-tb-chat" }, h("h3", null, "桌上說的話"), h("div", { class: "cas-say cas-chat", role: "log", "aria-live": "polite", "aria-label": "桌上說的話" }), chatForm(s)));
   parts.push(h("p", { class: "cas-rules" }, "同桌：壹副牌、壹個莊家，照入座的順序輪流；時間到、斷線都當停牌；有人離桌不影響別人。"));
-  s.m.surface.replaceChildren(h("div", { class: "cas-body", dataset: { tab: "table" } }, parts), h("p", { class: "cas-foot" }, CAS_TEXT.series));
+  // 右欄：簡易銀行＋我的帳戶（11-16，翊文：「賭場的賭桌也可以看到簡易銀行嗎，以及自己的帳戶，依樣可以收折」）。簡易銀行的節點留著重用（不要每次重畫都跟伺服器要壹次）
+  if (!s.bankBox && ADDONS.casinoBankBox) s.bankBox = ADDONS.casinoBankBox();
+  const side = h("div", { class: "cas-side" }, s.bankBox || null, ADDONS.bankAcctBox ? ADDONS.bankAcctBox() : null);
+  s.m.surface.replaceChildren(h("div", { class: "cas-row" }, h("div", { class: "cas-body", dataset: { tab: "table" } }, parts), side), h("p", { class: "cas-foot" }, CAS_TEXT.series));
   const b = s.m.surface.querySelector(".cas-body"); if (b) b.scrollTop = keep;
   drawChat();
 }
