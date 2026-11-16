@@ -131,7 +131,8 @@ function evalObj(text) { return new Function("return (" + text + ")")(); } // �
 async function load() {
   const sfx = (await import("../shared/sfx_files.js")).SFX_FILES;
   const rm = await import("../shared/room_mood.js");
-  return { sfx, rm };
+  const fightSfx = (await import("../shared/fight_sfx.js")).FIGHT_SFX; // 地下打鬥的聲音表（11-16 補：以前沒掃，skill-reveal、war-drums-hit 被誤判沒人用）
+  return { sfx, rm, fightSfx };
 }
 
 // ---------- 畫面特效清單（標記在程式裡找行號） ----------
@@ -191,7 +192,7 @@ function noteCols(notes, key) {
 }
 
 async function build(notes) {
-  const { sfx, rm } = await load();
+  const { sfx, rm, fightSfx } = await load();
   const sfxIds = Object.keys(sfx);
   const files = webFiles().map(f => "web/src/" + f);
   const keys = []; // 這份總表會用到的 fx_notes 名字（給「補新項目」用）
@@ -224,6 +225,15 @@ async function build(notes) {
     }
     // sound: "name"（rollOverlay 的結果音）
     for (const m of text.matchAll(/\bsound:\s*(["'])(\w+)\1/g)) if (Rnames.has(m[2])) add(T.snd, m[2], { file: short, line: lineOf(text, m.index), fn: fnAt(lines, lineOf(text, m.index) - 1), vol: "", note: "sound: 結果音" });
+  }
+  // 地下打鬥聲音表（shared/fight_sfx.js 的 FIGHT_SFX）：file 欄算音效檔的使用處、snd 欄算合成音的使用處
+  const fightLines = src("shared/fight_sfx.js").split("\n");
+  const fightKeys = Object.keys(fightSfx);
+  for (const k of fightKeys) {
+    const e = fightSfx[k], at = fightLines.findIndex(l => l.includes(JSON.stringify(k) + ":") || l.startsWith("  " + k + ":")) + 1;
+    const row = { file: "shared/fight_sfx.js", line: at, fn: "FIGHT_SFX[" + k + "]", vol: e.g !== undefined ? String(e.g) : "", note: "打鬥聲音表" };
+    if (e.file) { add(T.file, e.file, row); if (!sfx[e.file]) T.unreg.push({ id: e.file, file: "shared/fight_sfx.js", line: at }); }
+    if (e.snd) { if (Rnames.has(e.snd)) add(T.snd, e.snd, { ...row, vol: "" }); else T.unreg.push({ id: e.snd + "（合成音）", file: "shared/fight_sfx.js", line: at }); }
   }
   // 環境音裡的檔案
   const fxText = src("web/src/fx.js");
@@ -261,6 +271,9 @@ async function build(notes) {
   const rUsed = n => !!(T.snd[n] || weakR[n]);
 
   const unusedSfx = sfxIds.filter(id => !sfxUsed(id));
+  const withNote = id => (notes[id] && notes[id].note ? "（" + cell(notes[id].note) + "）" : "");
+  const unusedSfxText = unusedSfx.map(id => id + withNote(id)).join("、");
+  const fightTodo = fightKeys.filter(k => fightSfx[k].todo), fightSynth = fightKeys.filter(k => fightSfx[k].snd && !fightSfx[k].file);
   const unusedR = [...Rnames].filter(n => !rUsed(n));
   const unreg = [...new Map(T.unreg.map(x => [x.id + x.file + x.line, x])).values()];
 
@@ -328,7 +341,8 @@ async function build(notes) {
     `- 環境音／背景樂：**${Arows}** 個房間（${AMB.map(a => a.name).join("、")}）；地下另外照 ${FLOOR.length} 種樓層 × ${Object.keys(MODE).length} 種狀態換聲音。`,
     `- 觸發點：**${trigCount}** 處（合成音 ${Object.values(T.snd).reduce((s, a) => s + a.length, 0)} 處、音效檔 ${Object.values(T.file).reduce((s, a) => s + a.length, 0)} 處），另有 ${T.dynSnd.length + T.dynFile.length} 處名字放在變數裡（動態，見後面）。`,
     `- 畫面特效：**${vfxRows.length}** 項（房間效果 ${vfxRows.filter(v => v.group === "房間效果").length}、理智效果 ${vfxRows.filter(v => v.group === "理智效果").length}、畫面工具 ${vfxRows.filter(v => v.group === "畫面工具").length}），另有地下戰鬥特效 ${fightFx.length} 種。`,
-    `- **沒人用的**：音效檔 ${unusedSfx.length} 個${unusedSfx.length ? "（" + unusedSfx.join("、") + "）" : ""}；合成音 ${unusedR.length} 種${unusedR.length ? "（" + unusedR.join("、") + "）" : ""}。`,
+    `- **沒人用的**：音效檔 ${unusedSfx.length} 個${unusedSfx.length ? "（" + unusedSfxText + "）" : ""}；合成音 ${unusedR.length} 種${unusedR.length ? "（" + unusedR.join("、") + "）" : ""}。`,
+    `- **還在用合成音、之後要找錄音的：${fightTodo.length} 項**（地下打鬥的聲音，見第 7 節；royalty free 找到後放進 FIGHT_SFX 的 file 欄）。`,
     `- **用了卻沒登記的** 音效檔 id：${unreg.length} 個${unreg.length ? "（" + [...new Set(unreg.map(x => x.id))].join("、") + "）" : ""}。`,
     "", "### 加新音效", "",
     "從 Pixabay 下載 mp3 後，一個指令做完壓縮、登記、備份原檔（細節看 `tools/sfx_add.cjs` 最上面）：", "",
@@ -407,7 +421,7 @@ async function build(notes) {
   o.push("", "### 4-2. 音效檔", "");
   for (const id of sfxIds) {
     const t = T.file[id];
-    o.push(`- **${id}**：` + (t ? "" : (quotedAt[id] ? "（沒有直接呼叫；字串出現在 " + quotedAt[id].join("、") + "）" : "**沒人用**")));
+    o.push(`- **${id}**：` + (t ? "" : (quotedAt[id] ? "（沒有直接呼叫；字串出現在 " + quotedAt[id].join("、") + "）" : "**沒人用**" + withNote(id))));
     for (const x of t || []) o.push(`  - ${x.file}:${x.line} ${x.fn}${x.vol ? " 音量 " + x.vol.replace(/\s+/g, "") : ""}${x.note ? "（" + x.note + "）" : ""}`);
   }
   o.push("", "### 4-3. 名字放在變數裡的呼叫（動態，沒辦法對到單一音效）", "");
@@ -416,7 +430,7 @@ async function build(notes) {
   if (!T.dynSnd.length && !T.dynFile.length) o.push("（沒有）");
 
   sec("## 5. 沒人用的、沒登記的");
-  o.push("**沒人用的音效檔**（登記了、檔案在，程式裡找不到呼叫也沒引號字串）：" + (unusedSfx.length ? unusedSfx.join("、") : "無"), "",
+  o.push("**沒人用的音效檔**（登記了、檔案在，程式裡找不到呼叫也沒引號字串）：" + (unusedSfx.length ? unusedSfxText : "無"), "",
     "**沒人用的合成音**（`R` 裡有、程式裡找不到呼叫）：" + (unusedR.length ? unusedR.join("、") : "無"), "",
     "**用了卻沒登記的音效檔 id**（呼叫了但 `shared/sfx_files.js` 沒有）：" + (unreg.length ? unreg.map(x => `${x.id}（${x.file}:${x.line}）`).join("、") : "無"));
 
@@ -437,7 +451,12 @@ async function build(notes) {
 
   o.push("### 6-6. 門檻速查（shared/room_mood.js、ui_odd.js 目前的值）", "", "```",
     "RM = " + JSON.stringify(rm.RM), "SAN_DREAD = " + JSON.stringify(rm.SAN_DREAD), "ODD_AT = " + JSON.stringify(oddAt()), "```", "");
-  return { text: o.join("\n").replace(/\n{3,}/g, "\n\n").replace(/\s+$/, "") + "\n", keys, unusedSfx, unusedR, unreg, counts: { sfx: sfxIds.length, R: Rrows, AMB: Arows, trig: trigCount, vfx: vfxRows.length, fight: fightFx.length } };
+  o.push("## 7. 地下打鬥的聲音（`shared/fight_sfx.js` 的 FIGHT_SFX）", "",
+    "事件 → 聲音。畫面在 `web/src/ui_fight.js`，沒有在表裡的事件照舊響通用的「受傷／喀」。**現在**欄有「錄音」＝已經是音效檔；「合成」＝程式即時合成的，`todo` 是之後要找的 royalty free 聲音。", "",
+    "| 事件 key | 現在用什麼 | todo（之後要找的聲音） |", "|---|---|---|");
+  for (const k of fightKeys) { const e = fightSfx[k]; o.push(`| ${cell(k)} | ${e.file ? "錄音 " + e.file + (e.g !== undefined ? "（音量 " + e.g + "）" : "") : e.snd ? "合成 " + e.snd : "（無）"} | ${cell(e.todo || "")} |`); }
+  o.push("", `共 ${fightKeys.length} 個事件；錄音 ${fightKeys.filter(k => fightSfx[k].file).length} 個、合成音 ${fightSynth.length} 個；還在用合成音、之後要找錄音的：**${fightTodo.length} 項**。`, "");
+  return { text: o.join("\n").replace(/\n{3,}/g, "\n\n").replace(/\s+$/, "") + "\n", keys, unusedSfx, unusedR, unreg, counts: { fightTodo: fightTodo.length, sfx: sfxIds.length, R: Rrows, AMB: Arows, trig: trigCount, vfx: vfxRows.length, fight: fightFx.length } };
 }
 
 function readNotes() { try { return JSON.parse(fs.readFileSync(NOTES, "utf8")); } catch (e) { return {}; } }
@@ -460,7 +479,7 @@ async function main() {
   }
   if (missing.length) { for (const k of missing) notes[k] = { heard: null, note: null }; writeNotes(notes, r.keys); }
   fs.writeFileSync(DOC, r.text);
-  console.log(`寫好 docs/音效與特效總表.md：音效檔 ${r.counts.sfx}、合成音 ${r.counts.R}、房間背景 ${r.counts.AMB}、觸發點 ${r.counts.trig}、畫面特效 ${r.counts.vfx}（地下戰鬥 ${r.counts.fight}）；沒人用 音效檔 ${r.unusedSfx.length}／合成音 ${r.unusedR.length}；沒登記 ${r.unreg.length}` + (missing.length ? `；fx_notes.json 補了 ${missing.length} 個新項目` : ""));
+  console.log(`寫好 docs/音效與特效總表.md：音效檔 ${r.counts.sfx}、合成音 ${r.counts.R}、房間背景 ${r.counts.AMB}、觸發點 ${r.counts.trig}、畫面特效 ${r.counts.vfx}（地下戰鬥 ${r.counts.fight}）；還在用合成音要找錄音 ${r.counts.fightTodo}；沒人用 音效檔 ${r.unusedSfx.length}／合成音 ${r.unusedR.length}；沒登記 ${r.unreg.length}` + (missing.length ? `；fx_notes.json 補了 ${missing.length} 個新項目` : ""));
 }
 function writeNotes(notes, order) {
   const out = {}; for (const k of order) if (k in notes) out[k] = notes[k];

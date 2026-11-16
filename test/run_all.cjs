@@ -107,6 +107,7 @@ const STEPS = [
   ["每日排程優化（11-16）：ship 只改內容跳過本機測試、day:check --strict、day:new 骨架、day:pr 草稿、ledger reveal／written／day／apply、npm run issue", ["test/sched_tools.test.cjs"]],
   ["只改內容的 CI 跳過最慢那項（changed_files 的判斷、ci.yml 有接、deploy.yml 沒有接、announce 備援時間，11-16）", ["test/ci_skip.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools.test.cjs"]],
+  ["ship／gh_lib 等 CI、等部署：用 REST 輪詢 run 的狀態、網路短暫錯誤重試、不再因 gh run watch 中斷誤報失敗（11-16）", ["test/gh_wait.test.cjs"]],
   ["每天新關卡的工具（每種打法每一層都過檢查、少寫預告會說、調難度、今天的點放進地圖，決定 0067）", ["test/new_level.test.cjs"]],
   ["交過的委託不能再交", ["test/commission_keep.test.cjs"]],
   ["每週任務的旁白", ["test/story_words.test.cjs"]],

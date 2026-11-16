@@ -48,7 +48,7 @@
  "crowd-cheer": {"heard":null,"note":null},
  "sword-fight": {"heard":null,"note":null},
  "boss-intro": {"heard":null,"note":null},
- "stairs-boss": {"heard":null,"note":null},
+ "stairs-boss": {"heard":null,"note":"11-16 起不用了，換成 gate-viking；檔案留著備用"},
  "ready-fight": {"heard":null,"note":null},
  "bench-thud": {"heard":null,"note":null},
  "suspense-a": {"heard":null,"note":null},
