@@ -46,6 +46,16 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-6fd90f", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "NPC 與展廳",
+    title: "散客付的門票和店裡消費變多了", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "展廳的散客門票壹天的上限調高，人多的日子不再被擋住。",
+        "逛店的散客也比較常買東西了。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-c84948", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
     title: "各廳整點會敲鐘，成交和高分有掌聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [
