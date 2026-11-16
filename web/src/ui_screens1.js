@@ -24,8 +24,15 @@ import { ORIGIN_TABS, galleryAuction, galleryCollect, galleryRules, galleryShell
 // 介面重塑（翊文 11-13，docs/介面整合規劃.md 第六步）：最下面收藏的抽屜。平常壹排縮圖，按銅拉環拉開才有頁籤和篩選（css/onescreen.css 的 .onescreen-drawer）
 export function onescreenDrawer(strip, label = "你的收藏") {
   const drawer = h("div", { class: "onescreen-drawer" });
-  const pull = h("button", { type: "button", class: "onescreen-pull", "aria-expanded": "false", title: "拉開：換頁籤、篩選" }, h("span", null, label));
-  pull.addEventListener("click", () => { const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open)); });
+  // 11-16 翊文：「這個可以拉開的抽屜玩家不太知道可以當按鈕」：拉環上寫箭頭（關著 ▲、拉開 ▼ 收起）；玩家第壹次拉開以前，拉環輕輕發亮呼吸（記在 localStorage，拉過壹次就不再亮）
+  const SEEN = "pm-drawer-seen", seen = () => { try { return localStorage.getItem(SEEN) === "1"; } catch (e) { return true; } };
+  const arrow = h("i", { class: "op-arrow", "aria-hidden": "true" }, "▲"), txt = h("b", null, label);
+  const pull = h("button", { type: "button", class: "onescreen-pull" + (seen() ? "" : " op-hint"), "aria-expanded": "false", title: "點這裡拉開：換頁籤、篩選" }, h("span", null, arrow, txt));
+  pull.addEventListener("click", () => {
+    const open = drawer.classList.toggle("open"); pull.setAttribute("aria-expanded", String(open));
+    arrow.textContent = open ? "▼" : "▲"; txt.textContent = open ? "收起" : label;
+    if (open) { pull.classList.remove("op-hint"); try { localStorage.setItem(SEEN, "1"); } catch (e) { /* ignore */ } }
+  });
   drawer.append(pull, strip);
   return drawer;
 }
