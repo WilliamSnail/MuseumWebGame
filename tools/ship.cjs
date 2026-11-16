@@ -70,9 +70,7 @@ const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）"
 
 // 只動「內容」嗎（純函式，測試用）：每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）。
 // 內容路徑：content/、維護日誌/、shared/notices.js、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
-const CONTENT_PATH = /^(content\/|維護日誌\/|\.claude\/)|^shared\/(notices|npc_roster|map_data)\.js$/;
-const isContentFile = f => CONTENT_PATH.test(String(f || "").split("\\").join("/"));
-const contentOnly = files => { const f = (files || []).filter(Boolean); return f.length > 0 && f.every(isContentFile); };
+const { isContentFile, contentOnly } = require("./changed_files.cjs"); // 11-16 第二批：抽到共用的檔，CI 也用同壹個判斷
 // 本機要跑什麼：{ mode: "skip" | "content" | "full", line }（line 是要印的壹行說明）
 function localPlan(files, flags) {
   const has = x => flags && flags.has && flags.has(x);
