@@ -160,7 +160,7 @@ function ledger(file) {
   const h = isReport ? Object.assign({}, doc.snap.house, { led: { world: doc.snap.house.wflow || {} }, npcs: doc.snap.house.npcs, inv: doc.snap.house.inv, debt: doc.snap.house.debt, cul: doc.snap.house.cul, cultureLate: doc.snap.house.culLate }) : doc;
   const out = [], bad = [];
   const flag = (cond, msg) => { if (cond) bad.push(msg); };
-  out.push(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　館方帳 ${fmt(h.museum)}　海底 ${fmt(h.sea)}　外面世界 ${h.world == null ? "（還沒有帳）" : fmt(h.world)}`);
+  out.push(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　館方帳 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　海底 ${fmt(h.sea)}　外面世界 ${h.world == null ? "（還沒有帳）" : fmt(h.world)}`);
   if (isReport) out.push(`日報 ${doc.day}　對帳差 ${fmt(doc.gap)}（0 才對）`);
   const D = h.debt || {};
   if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, w = Math.floor(+h.world || 0); let s = 0; Object.keys(r).filter(k => k !== "pub").forEach(k => { s += Math.floor(w * +r[k]) + (Math.floor(+adj[k]) || 0); }); const pub = w - s; out.push(`外面世界的帳上分類：公共 ${fmt(pub)}、文化部 ${fmt(Math.floor(w * (+r["u-culture"] || 0)) + (Math.floor(+adj["u-culture"]) || 0))}　（總和一定等於外面世界；公共要 ≥ 0）`); flag(pub < 0, `公共（外面世界扣掉各單位）是負的 ${fmt(pub)}：有單位被指名多扣了`); }

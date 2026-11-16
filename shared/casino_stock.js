@@ -25,7 +25,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casSellCap, casSellMoney, casSellTip } from "./casino_credit.js";
-import { casCount, casWorldIn, casWorldOut, casWorldRoom } from "./casino_book.js";
+import { casCount, casPoolGain, casWorldIn, casWorldOut, casWorldRoom } from "./casino_book.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
@@ -302,7 +302,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   if (cost + fee > w.chips) return { ok: false, reason: CAS_STOCK.poor };
   stSeed(S, H);
   casWorldIn(w, house, "stockBuy", cost); // 錢給外面世界（池子變多，不是燒掉）
-  w.chips -= fee; house.budget += fee; casCount(house, "stockFee", fee); // 手續費進預算池（搬，不是憑空；拚經濟也是這樣直接動預算池）
+  w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進預算池（搬，不是憑空；拚經濟也是這樣直接動預算池）
   S.own[id] = stN(S.own[id]) + n;
   S.cost[id] = stN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   S.fee += fee;
@@ -331,8 +331,8 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (!free && stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
   if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
   casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 外面世界付（池子變少）
-  w.chips -= fee + tax; house.budget += fee + tax; casCount(house, "stockFee", fee);
-  if (tax > 0) casCount(house, "stockTax", tax); // 稅進預算池（搬，不是 burn）；日報看 house.act.stockTax
+  w.chips -= fee + tax; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
+  if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); } // 資本利得稅進政府帳（決定 0110；以前進預算池）；日報看 house.act.stockTax
   S.own[id] = have0 - n;
   if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut);
   S.gain += profit; // 累計賣出賺賠（扣稅前）

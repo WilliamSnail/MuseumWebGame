@@ -8,15 +8,15 @@ const fresh = G => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.ca
 const snap = (G, s) => G.casBookSnap([s.w], s.house, 0, null);
 const setPx = (s, px) => { s.house.stk.px[ID] = px; };
 
-T("賺錢的賣出抽 5%：稅 ＝ (拿到的錢 − 賣出手續費 − 成本) × 5%，進預算池，訊息有稅；帳對得上", G => {
+T("賺錢的賣出抽 5%：稅 ＝ (拿到的錢 − 賣出手續費 − 成本) × 5%，進政府帳（手續費還是進預算池，決定 0110），訊息有稅；帳對得上", G => {
   const s = fresh(G); setPx(s, 10000); const op = G.casBookOpening(snap(G, s));
   const b = G.casStockBuy(s.w, s.house, ID, 100, D, null); assert.ok(b.ok);
   assert.strictEqual(s.w.stk.cost[ID], 1000000 + 5000, "總成本含買進手續費");
-  setPx(s, 12000); const b0 = s.house.budget, c0 = s.w.chips;
+  setPx(s, 12000); const b0 = s.house.budget, g0 = s.house.gov || 0, c0 = s.w.chips;
   const r = G.casStockSell(s.w, s.house, ID, 100, D, null); assert.ok(r.ok, r.reason);
   const gross = 1200000, fee = 6000, profit = gross - fee - 1005000, tax = Math.floor(profit * 0.05);
   assert.strictEqual(r.tax, tax); assert.strictEqual(r.net, gross - fee - tax); assert.strictEqual(s.w.chips, c0 + gross - fee - tax);
-  assert.strictEqual(s.house.budget, b0 + fee + tax); assert.strictEqual(s.house.act.stockTax, tax);
+  assert.strictEqual(s.house.budget, b0 + fee); assert.strictEqual(s.house.gov, g0 + tax, "稅進政府帳"); assert.strictEqual(s.house.act.stockTax, tax);
   assert.ok(r.lines[0].includes("資本利得稅 " + G.casNum(tax)), r.lines[0]);
   assert.ok(!s.w.stk.cost[ID], "賣光就沒有成本記錄");
   assert.strictEqual(G.casBookGap(snap(G, s), op), 0);
