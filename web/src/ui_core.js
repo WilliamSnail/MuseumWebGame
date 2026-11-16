@@ -390,7 +390,7 @@ export function setAmbOver(name, heatFn) {
 }
 // 地下的聲音狀態（11-15）：{ floor: 1～5, mode: "map"|"explore"|"fight"|"gate"|"rest" }，null ＝不在地下的某壹層裡。有變才重算聲音
 export function setCellarSnd(st) {
-  const k = st ? st.floor + ":" + st.mode : "";
+  const k = st ? st.floor + ":" + st.mode + ":" + (st.rank || 0) : "";
   if (k === (UI.cellarSndKey || "")) return;
   UI.cellarSndKey = k; UI.cellarSnd = st || null; audioState();
 }
@@ -406,6 +406,7 @@ export function audioState() {
   // 地下（11-15）：在地下時告訴環境音現在第幾層、在做什麼（地圖、探索、打鬥、守門、休息），fx.js 的 AMB.cellar 照這個換。合作模式的框蓋在別的房間上，也換成地下的聲音
   if (UI.cellarSnd && P && scr !== "ending" && scr !== "title" && !UI.ambOver) amb = "cellar";
   if (amb === "cellar" && S.ambMix) S.ambMix(UI.cellarSnd || { floor: null, mode: "map" });
+  if (amb === "origin" && S.ambMix) S.ambMix({ forbidden: !!(UI.params && UI.params.tab === "forbidden") }); // 圖書館的禁書頁籤：背景換成緊張的那首（11-16）
   if (amb === "library" && S.ambMix) S.ambMix({ dread: live ? sanDread(P.sanity, P.dark) : null }); // 理智很低：圖庫的音樂盒換成走音的（11-16）
   if ((amb === "lobby" || amb === "hall") && S.ambMix) S.ambMix({ creepy: !!(P && weeklyTheme(todayStr()) === "failedOnly") }); // 失敗作之夜那週：偶爾冒壹段走音的音樂盒（11-16）
   if (amb === "casino" && S.ambMix) { let hh = 1; try { if (UI.ambHeat) hh = UI.ambHeat(); } catch (e) { /* 拿不到就當平常 */ } S.ambMix(ambMix(hh)); }
@@ -1255,7 +1256,7 @@ export function quirkMakeBox(pick) {
 // 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進圖書館的《看懂的事》
 // 集齊線索看懂的（shared/clues.js）：跟看懂檢定同壹張大卡片，按了才關，不會錯過。不扣理智、不發作
 export function understoodCard(e) {
-  snd("eerie", 2);
+  snd("eerie", 2); sndFile("suspense-short", 0.4); // 「你看懂了」：越來越緊張的壹段（11-16 翊文，Pixabay「Suspense Tension」）
   return quirkLayer("你看懂了", e.from ? `來自：${e.from}` : "", [
     h("p", { class: "uk-text" }, ptNode(e.text)),
     h("p", { class: "uk-note" }, `這件事記進了圖書館書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}。`),

@@ -46,6 +46,18 @@ const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
 export const NOTICES = [
   {
+    id: "upd-2026-11-16-3fa697", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "其他",
+    title: "鈴聲、強怪的戰鬥曲、禁書的緊張配樂", publish: "2026-11-16", expire: "2027-12-31",
+    sections: [
+      ["改了什麼", [
+        "有新信、公告自己跳出來、限時活動開跑時，會叮壹聲。",
+        "地下遇到爪痕三道的強怪，戰鬥音樂換成更壯烈的那首。",
+        "線索湊齊、跳出「你看懂了」時，會有壹段越來越緊張的音樂；圖書館的禁書頁籤也換成緊張的背景。",
+        "音效來自 Pixabay，來源標在 sfx/來源.md。",
+      ]],
+    ],
+  },
+  {
     id: "upd-2026-11-16-b83159", v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "地下與劇情",
     title: "守門第二階段和大揭曉會「轟」壹聲", publish: "2026-11-16", expire: "2027-12-31",
     sections: [

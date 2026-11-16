@@ -21,7 +21,7 @@ import { NUM } from "../../shared/config.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait } from "./ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait, sndFile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { RANK, ago, reloadSave } from "./ui_login.js";
 import { cellarFxBox, roomHead } from "./ui_screens1.js";
@@ -437,6 +437,7 @@ PANELS.autoMail = async function autoMail() {
   for (let i = 0; i < 10 && mailBusy(); i++) await wait(500);
   if (mailBusy() || UI.screen !== "lobby" || mailCardShown) return;
   mailCardShown = true;
+  sndFile("bell-ring", 0.35); // 有新信：叮壹聲（11-16 翊文）
   await new Promise(resolve => openMailNews(resolve));
 };
 
