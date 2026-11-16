@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/data/npc_san.json",
+        "function": { "functionId": "npcSan", "region": "asia-east1" }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
