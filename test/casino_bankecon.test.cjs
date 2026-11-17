@@ -49,6 +49,13 @@ T("銀行廳的資料帶財報；沒有日報時是 null", G => {
   const v = G.casBankHall(w, D, house(G, { b: 0.2, perDay: 100, day: D }));
   assert.ok(v.econ && v.econ.idx === 0.2);
 });
+T("全館的帳的即時餘額（live，11-17）：照莊家現在的樣子，不等日報", G => {
+  const w = G.casWalletFix(G.casWalletNew(), D), h = house(G);
+  h.bankroll = 27516200; h.budget = 914364593; h.gov = 6998;
+  const L = G.casBankHall(w, D, h).live;
+  assert.strictEqual(L.bankroll, 27516200); assert.strictEqual(L.budget, 914364593); assert.strictEqual(L.gov, 6998);
+  assert.strictEqual(G.casBankHall(w, D, null).live, null);
+});
 T("銀行廳帶世界股市新聞：最近 3 天、新的在前、只留遊戲裡的股票、壞的丟掉", G => {
   const w = G.casWalletFix(G.casWalletNew(), D);
   const mk = (t, ref) => ({ title: t, line: "壹句話。", tone: "up", ref });
