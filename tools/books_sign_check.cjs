@@ -16,7 +16,7 @@ const { load } = require(path.join(ROOT, "test", "load_shared.cjs"));
 const SIGN = {
   bankroll: { cultureRepay: -1, worldRepay: -1, grant: 1, worldLoan: 1, budgetLoan: 1, budgetFix: 1, budgetRepay: -1, houseInvestBuy: -1, houseInvestSell: 1, houseInvFix: 1, investFee: -1, reset: 1,
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
-    bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, tax: -1, inMarket: 0, gStock: 0, gRaise: -1, gBuy: 1 },
+    bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, gLev: 0, tax: -1, inMarket: 0, gStock: 0, gRaise: -1, gBuy: 1 },
   budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1 },
   gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },

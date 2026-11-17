@@ -26,6 +26,7 @@
 import { NUM } from "./config.js";
 import { casSellCap, casSellMoney, casSellTip } from "./casino_credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut, casWorldRoom } from "./casino_book.js";
+import { gsMatch } from "./casino_stock_grp.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
@@ -532,6 +533,7 @@ export function casStockMatch(w, house, day, t) {
   const out = { fills: 0, cancels: 0 };
   const inr = casInMatch(w, house, day, t); // 館內店的單另外檢查（15 分鐘的價）
   out.fills += inr.fills; out.cancels += inr.cancels;
+  const gr = gsMatch(w, house, day, t); out.fills += gr.fills; out.cancels += gr.cancels; // 世界集團股票的單（決定 0124）
   if (!stDay(day) || !S.orders.length) return out;
   // 成交時 casStockBuy／casStockSell 會再呼叫 casStockFix，把 S.orders 換成新的物件：不能拿壹開始的舊物件，要照單號每次重新找（11-14 測試發現：後面的單退了鎖卻刪不掉，變成幽靈單，下次又成交壹次）
   for (const no of S.orders.map(x => x.no).sort((a, b) => a - b)) {

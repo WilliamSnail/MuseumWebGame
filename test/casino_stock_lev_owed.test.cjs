@@ -70,11 +70,11 @@ T2("倍數：畫面的 byMarket、maxLev 跟著目前的信用等級；credit.ne
   const s = fresh(G), src = fakeSrc({ px: { [IN]: 1000, [TW]: 100000 }, idx: 0 });
   s.w.lev = null; G.casLevFix(s.w, D0); s.w.lev.pos.push(pos(G, { lev: 5, no: 1 })); s.w.lev.seq = 1; G.casLevFix(s.w, D0);
   let v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src);
-  assert.strictEqual(J(v.lev.byMarket), J({ in: 2, tw: 2, us: 2 })); assert.strictEqual(v.lev.max, 2); assert.strictEqual(v.credit.maxLev, 2);
+  assert.strictEqual(J(v.lev.byMarket), J({ in: 2, tw: 2, us: 2, grp: 2 })); assert.strictEqual(v.lev.max, 2); assert.strictEqual(v.credit.maxLev, 2);
   assert.strictEqual(J(v.credit.nextUnlock), J({ level: 2, lev: 3, pts: 10 })); assert.ok(v.credit.nextText.includes("3×") && v.credit.nextText.includes("2 級"), v.credit.nextText);
   assert.strictEqual(v.positions.length, 1); assert.strictEqual(v.positions[0].lev, 5, "已經開的 5× 照舊");
   assert.strictEqual(G.casLevSweep(s.w, s.h, D0, at(D0, 6), src).length, 0); assert.strictEqual(s.w.lev.pos[0].lev, 5, "不會被強制改倍數或平倉");
-  s.w.lev.cr.pts = 10; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(J(v.lev.byMarket), J({ in: 3, tw: 3, us: 3 })); assert.strictEqual(v.credit.nextUnlock.lev, 5); assert.ok(v.credit.nextText.includes("4 級"));
+  s.w.lev.cr.pts = 10; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(J(v.lev.byMarket), J({ in: 3, tw: 3, us: 3, grp: 3 })); assert.strictEqual(v.credit.nextUnlock.lev, 5); assert.ok(v.credit.nextText.includes("4 級"));
   s.w.lev.cr.pts = 20; v = G.casStockLevView(s.w, s.h, D0, at(D0, 6), src); assert.strictEqual(v.credit.maxLev, 5); assert.strictEqual(v.credit.nextUnlock, null); assert.ok(v.credit.nextText.includes("全部解鎖"));
 });
 console.log(`casino_stock_lev_owed.test：${pass} 過，${fail} 沒過`);

@@ -47,7 +47,7 @@ import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { npcCardView } from "./shared/npc_card.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "./shared/world.js";
-import { gsAdvance, gsBuy, gsIs, gsSell, gsView } from "./shared/casino_stock_grp.js";
+import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "./shared/casino_stock_grp.js";
 import { casSellForDebt } from "./shared/casino_debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
@@ -318,8 +318,9 @@ export const actStock = (ctx, d) => {
     return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
   }
   if (gsIs(ctx.house, id)) { // 世界集團的股票（決定 0121）：現股買賣（沒有槓桿、掛單）
-    const x = op === "buy" ? gsBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? gsSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : null;
-    if (!x) return no({ reason: "集團的股票只能買、賣。" });
+    const x = op === "buy" ? gsBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? gsSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t)
+      : op === "order" ? gsOrder(ctx.w, ctx.house, String(d.kind || ""), id, d.n, d.px, ctx.day, ctx.t) : op === "cancel" ? gsCancel(ctx.w, ctx.house, d.no, ctx.day, ctx.t) : null; // 集團股的單：取消要帶 id（單號跟別的股票的單分開編）
+    if (!x) return no({ reason: "沒有這個動作" });
     return x.ok ? shape(ctx, { lines: x.lines }) : no(x);
   }
   if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣、限價單、停損單（op order，跟館外股同格式）；槓桿、放空走上面的 open／close／levset
