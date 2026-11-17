@@ -30,7 +30,7 @@ import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino_book.js";
-import { casBooksView, casReportView } from "./shared/casino_report.js";
+import { casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
@@ -254,6 +254,7 @@ export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   // 畫面（web/src/ui_bank.js）讀的是 bankHall.stocks，槓桿頁籤要的 lev、positions、credit、levCap 也要在那裡（11-14 測試：只放在 stock，槓桿頁籤和部位卡永遠不出現）
   const hall = casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), lev = levStock(ctx);
+  hall.flow = casFlowHub(ctx.house, ctx.day); // 金流頁籤（11-17）：今天 05:00 起各條線的流量
   if (hall && hall.stocks) Object.assign(hall.stocks, { lev: lev.lev, positions: lev.positions, credit: lev.credit, levCap: lev.levCap });
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day, ctx.house), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
     econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: hall, stock: lev, bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w), casLevTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
@@ -383,7 +384,7 @@ async function writeEcon(doc, day) {
   const sec = await twSecret();
   await db().runTransaction(async tx => {
     const hs = await tx.get(houseRef()), h = casHouseFix(parse(hs), null).house, yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
-    if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world && h.econ.books) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
+    if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world && h.econ.books && h.econ.led0) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
     let snapN = (doc.snap.house && doc.snap.house.npcs) || null;
     if (!(snapN && snapN.day === yd)) { try { const cp = JSON.parse(JSON.stringify(h)); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snapN = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("writeEcon npcs", e && e.message); } } // 日報是唯讀、不換日：昨天的 npcs 可能還沒結算，在複本上補算
     // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
@@ -396,7 +397,7 @@ async function writeEcon(doc, day) {
     const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
     h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
     h.econ = { yoy: doc.ext && doc.ext.ok ? doc.ext.yoy : 0, b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
-      perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
+      perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), led0: casFlowLed0(doc.snap), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
     put(tx, houseRef(), h);
   });
   ECON_DONE = day;

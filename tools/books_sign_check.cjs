@@ -76,6 +76,8 @@ function run() {
   }
   for (const { day, doc } of days) {
     const d = doc.diff, v = G.casBooksView(doc, true), tag = a => `${day} ${ACCT_NAME[a] || a}`;
+    // 金流頁籤（casFlowEdges）：每個來源都要歸到一條線
+    for (const k of G.casFlowEdges(v.all).lost) P(tag("金流"), `來源 ${k} 沒歸到金流的線（shared/casino_report.js 的 CAS_FLOW_LINE）`);
     // (a) 對帳
     for (const a of ["bankroll", "world", "museum", "gov"]) {
       const sum = v.all[a].reduce((x, y) => x + y.n, 0), real = v.d[a];
@@ -138,6 +140,7 @@ function run() {
   for (const [k, kinds] of Object.entries(keys)) {
     const onlyMint = [...kinds].every(x => mintKinds.has(x));
     if (!onlyMint && !known.has(k)) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）不在符號表裡，新加的來源要想好它在每個帳是進還是出，加到 tools/books_sign_check.cjs 的 SIGN`);
+    if (!G.CAS_FLOW_LINE[k]) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒歸到金流的線（shared/casino_report.js 的 CAS_FLOW_LINE）`);
     if (G.casReportLabel(k) === k) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒有中文名字（shared/casino_report.js 的 CAS_REPORT）`);
   }
   return { probs, info };
