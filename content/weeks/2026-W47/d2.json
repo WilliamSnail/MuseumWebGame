@@ -1,0 +1,170 @@
+{
+  "day": 2,
+  "date": "2026-11-17",
+  "holiday": "手作麵包日",
+  "board": "B1 小門旁多了壹張兩個人簽名的巡邏單；算盤珠計時器放在樓梯口；書架多 1 本書。",
+  "books": [
+    {
+      "id": "2a",
+      "line": "w47-count",
+      "clue": "c-count-together",
+      "title": "兩個人壹起數",
+      "spine": "兩人數",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「手作麵包日，樓上有人烤了壹爐麵包。」\n「香味壹路飄到小門口。」",
+        "他昨天說要找人陪他數。\n今天他等到了你，\n兩個人壹起站在畫滿正字的牆前。",
+        "警衛數壹遍：比目錄多壹畫。\n你也數壹遍：剛好，不多不少。\n兩個人都沒數錯。",
+        "他們把兩個數字寫在壹起：\n警衛的那壹行比你的那壹行多壹畫。\n「兩個人數，就對了。」他寫。",
+        "他把筆放下，又拿起來，\n在你名字旁邊補壹行：\n「那壹畫，是不是我自己？」\n(你把這句也抄進了紀錄)"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d2a",
+      "kind": "read",
+      "book": "2a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d2b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d2c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w2",
+      "words": "公報旁邊多了壹個算盤珠計時器，珠子撥完就按鈴，說到壹半也要停。"
+    }
+  ],
+  "show": {
+    "title": "壹起數",
+    "intro": "樓梯口掛起壹排畫。畫裡都有兩個人，站在同壹面牆前，各數各的。",
+    "works": [
+      {
+        "id": "s2a",
+        "clue": "c-count-together-pic",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "兩個影子數牆",
+        "lines": [
+          "兩個人站在同壹面牆前，影子落在牆上，各壓住壹組正字。",
+          "兩個人都說自己數對了，但是兩個人數的不是同壹畫。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs>",
+          "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2c333b'/><stop offset='1' stop-color='#101418'/></linearGradient>",
+          "</defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<g stroke='#e8e4d4' stroke-width='3' stroke-linecap='round' fill='none'>",
+          "<path d='M50 70 V110 M62 70 V110 M74 70 V110 M86 70 V110 M42 98 L98 82'/>",
+          "<path d='M130 70 V110 M142 70 V110 M154 70 V110 M166 70 V110 M122 98 L178 82'/>",
+          "<path d='M50 130 V170 M62 130 V170 M74 130 V170 M86 130 V170 M42 158 L98 142'/>",
+          "</g>",
+          "<g fill='#0a0c0f' opacity='.85'>",
+          "<ellipse cx='72' cy='250' rx='14' ry='34'/><circle cx='72' cy='206' r='11'/>",
+          "<ellipse cx='160' cy='250' rx='14' ry='30'/><circle cx='160' cy='210' r='11'/>",
+          "</g>",
+          "<path d='M180 120 V160' stroke='#8a2f2a' stroke-width='3' stroke-linecap='round'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s2b",
+        "frame": "gold",
+        "fx": [
+          "sepia"
+        ],
+        "title": "算盤珠計時器",
+        "lines": [
+          "珠子壹顆壹顆撥過去，撥完就按鈴，說到壹半也要停。",
+          "最後壹排多了壹顆珠子，沒有人撥過它。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#3a2c1e'/>",
+          "<rect x='30' y='80' width='180' height='140' rx='6' fill='#6b4a2c' stroke='#c9a15a' stroke-width='4'/>",
+          "<g stroke='#c9a15a' stroke-width='2'><line x1='30' y1='120' x2='210' y2='120'/><line x1='30' y1='150' x2='210' y2='150'/><line x1='30' y1='180' x2='210' y2='180'/></g>",
+          "<g fill='#e8d9b0'><circle cx='60' cy='105' r='9'/><circle cx='90' cy='105' r='9'/><circle cx='120' cy='105' r='9'/><circle cx='150' cy='135' r='9'/><circle cx='180' cy='135' r='9'/><circle cx='60' cy='165' r='9'/><circle cx='90' cy='165' r='9'/><circle cx='120' cy='165' r='9'/><circle cx='150' cy='165' r='9'/><circle cx='180' cy='200' r='9'/><circle cx='195' cy='200' r='9'/></g>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s2c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "坐著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "麵包日的佩佩",
+        "lines": [
+          "牠捧著壹個剛出爐的小麵包，熱氣把眼鏡都蒙白了。",
+          "牠分給旁邊的佩佩壹半，自己還是剛好壹整個。"
+        ]
+      }
+    ]
+  },
+  "adds": [],
+  "market": [
+    {
+      "title": "巷口麵包店排隊",
+      "line": "手作麵包日，麵包店門口排了壹小段隊，老闆說今天麵粉比平常用得快。",
+      "tone": "up",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠改夜班輪替",
+      "line": "巨浪代工廠的夜班改成兩批人輪流數貨，箱子的數字兩邊對起來比較順。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行加裝計時鈴",
+      "line": "島線電話行在櫃台放了壹個計時鈴，講電話超過時間就會響。",
+      "tone": "down",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "real": [
+    "今天是手作麵包日：街角的麵包店很早就開了燈，整條巷子都是烤箱的味道。",
+    "北市選戰的電視辯論已經播過壹場，距離 11-28 投票日還有十壹天，街上的宣傳車越來越多。"
+  ],
+  "casino": {
+    "note": "荷官找客人壹起核對記牌本。客人數剛好，荷官數多壹畫，兩個人笑了笑，沒有數第三遍。"
+  }
+}
