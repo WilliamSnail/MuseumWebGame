@@ -10,6 +10,7 @@ import { h } from "./ui_core.js";
 let NM = {}; // 這次畫的節點 id → { name, note, tier, org, bal, parent }（資料來自伺服器 flow.nodes：名單、單位、來源表變了就自己跟著變）
 const fmt = n => Number(Math.round(n)).toLocaleString("en-US");
 const short = n => { const a = Math.abs(n); return a >= 1e8 ? (a / 1e8).toFixed(a >= 1e9 ? 0 : 1).replace(/\.0$/, "") + " 億" : a >= 1e4 ? (a / 1e4).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, "") + " 萬" : fmt(a); };
+const sshort = n => (n < 0 ? "−" : "") + short(n); // 帶負號的短寫（海外帳可以是負的）
 const NS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
 const SEL = { e: null, n: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝外面世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
@@ -52,11 +53,11 @@ function layout(phone, V) {
   const cols = phone ? 2 : 3, gx = phone ? 52 : 70, gy = 56, cw = (W - 16 - gx * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
   let y = 0;
   for (const t of tiers) {
-    const ns = base.filter(n => n.tier === t), isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 46 + rows * (ch + gy) - gy + 14 : bh + 4) : bh;
+    const ns = base.filter(n => n.tier === t), isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 60 + rows * (ch + gy) - gy + 14 : bh + 4) : bh;
     if (y) y += gap + (hasOrg && ns.some(n => n.org && !n.isOrg) && !base.some(n => n.org && !n.isOrg && n.tier === t - 1) ? 14 : 0); else y = 8;
     const cy = y + hh / 2; y += hh;
     ns.forEach((n, i) => { const w = isBand ? W - 16 : Math.min(phone ? 100 : 170, (W - 16) / ns.length - 10); pos[n.id] = { x: W * (i + 0.5) / ns.length, y: cy, w, h: hh }; tierOf[n.id] = t; });
-    if (isBand) { const top = cy - hh / 2; chips.forEach((c, i) => { const r = Math.floor(i / cols), k = i % cols; pos[c.id] = { x: 8 + gx + cw / 2 + k * (cw + gx), y: top + 46 + r * (ch + gy) + ch / 2, w: cw, h: ch, chip: true }; tierOf[c.id] = t; }); }
+    if (isBand) { const top = cy - hh / 2; chips.forEach((c, i) => { const r = Math.floor(i / cols), k = i % cols; pos[c.id] = { x: 8 + gx + cw / 2 + k * (cw + gx), y: top + 60 + r * (ch + gy) + ch / 2, w: cw, h: ch, chip: true }; tierOf[c.id] = t; }); }
   }
   const H = y + 8;
   for (const o of frameOrgs) { const ps = base.filter(n => n.org === o && !n.isOrg).map(n => pos[n.id]), x0 = Math.min(...ps.map(p => p.x - p.w / 2)) - 8, x1 = Math.max(...ps.map(p => p.x + p.w / 2)) + 8, y0 = Math.min(...ps.map(p => p.y - p.h / 2)) - 22, y1 = Math.max(...ps.map(p => p.y + p.h / 2)) + 8; frames.push({ id: o, x: x0, y: y0, w: x1 - x0, h: y1 - y0 }); }
@@ -93,7 +94,7 @@ function anchors(edges, pos, tierOf) {
 
 // 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是外面世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
 function route(pa, pb, e, pos, W) {
-  const chips2 = !!(pos[e.from] && pos[e.from].chip && pos[e.to] && pos[e.to].chip), m = chips2 ? 7 : 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
+  const chips2 = !!(pos[e.from] && pos[e.from].chip && pos[e.to] && pos[e.to].chip), m = chips2 ? 20 : 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
   const obs = Object.entries(pos).filter(([id, r]) => !r.holder && (chips2 || !r.chip) && id !== e.from && id !== e.to && !(chipEnd && id === "world")).map(([, r]) => r);
   const hits = r => { for (let k = 0; k <= 40; k++) { const t = k / 40, x = pa.x + (pb.x - pa.x) * t, y = pa.y + (pb.y - pa.y) * t; if (Math.abs(x - r.x) < r.w / 2 + 2 && Math.abs(y - r.y) < r.h / 2 + 2) return true; } return false; };
   const bad = obs.filter(hits).sort((p, q) => (pb.y >= pa.y ? p.y - q.y : q.y - p.y)); if (!bad.length) return [pa, pb];
@@ -160,7 +161,7 @@ export function flowPane(v, deps) {
       lines.push(s("path", { d, class: "bank-flow-hit", "stroke-width": 22, fill: "none", tabindex: 0, role: "button", "aria-label": name(e.from) + "到" + name(e.to) + "，今天 " + fmt(e.amt) + "，看來源", "data-i": i }));
       const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
       for (let k = 0; k < n && dots < 70; k++, dots++) dotsEl.push(s("circle", { r: (2.4 + 1.2 * lg(e.amt)).toFixed(1), class: "bank-flow-dot" }, s("animateMotion", { path: d, dur: dur.toFixed(2) + "s", begin: "-" + ((k / n) * dur).toFixed(2) + "s", repeatCount: "indefinite", calcMode: "linear" })));
-      const t = short(e.amt), w = 12 + t.length * 7.4, chipEdge = !!(L.pos[e.from] && L.pos[e.from].chip && L.pos[e.to] && L.pos[e.to].chip), rects = Object.entries(L.pos).filter(([id, r]) => !r.holder && (chipEdge ? r.chip && id !== e.from && id !== e.to : !r.chip)).map(([, r]) => r).concat(chipEdge && L.pos.world ? [{ x: L.pos.world.x, y: L.pos.world.y - L.pos.world.h / 2 + 18, w: L.pos.world.w, h: 36 }] : []).concat(L.frames.map(f => ({ x: f.x + 6 + (24 + ftitle(V, f).length * 15 + 30) / 2, y: f.y + 11, w: 24 + ftitle(V, f).length * 15 + 30, h: 18 }))), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
+      const t = short(e.amt), w = 12 + t.length * 7.4, chipEdge = !!(L.pos[e.from] && L.pos[e.from].chip && L.pos[e.to] && L.pos[e.to].chip), rects = Object.entries(L.pos).filter(([id, r]) => !r.holder && (chipEdge ? r.chip && id !== e.from && id !== e.to : !r.chip)).map(([, r]) => r).concat(chipEdge && L.pos.world ? [{ x: L.pos.world.x, y: L.pos.world.y - L.pos.world.h / 2 + 22, w: L.pos.world.w, h: 44 }] : []).concat(L.frames.map(f => ({ x: f.x + 6 + (24 + ftitle(V, f).length * 15 + 30) / 2, y: f.y + 11, w: 24 + ftitle(V, f).length * 15 + 30, h: 18 }))), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
       let mx = polyAt(pts, 0.5).x, my = polyAt(pts, 0.5).y; for (const k of [0.5, 0.42, 0.58, 0.35, 0.65, 0.3, 0.7, 0.2, 0.8]) { const q = polyAt(pts, k); if (!hit(q.x, q.y)) { mx = q.x; my = q.y; break; } } // 金額小牌不蓋到方塊：沿線找壹個空的位置
       pills.push(s("g", { class: "bank-flow-pill" + (on ? " on" : "") + (dim ? " dim" : ""), transform: "translate(" + mx.toFixed(1) + " " + my.toFixed(1) + ")", "data-i": i }, s("rect", { x: -w / 2, y: -10, width: w, height: 20, rx: 10 }), s("text", { "text-anchor": "middle", y: 4.3 }, t)));
     });
@@ -169,7 +170,7 @@ export function flowPane(v, deps) {
       const id = n.id, p = L.pos[id]; if (!p) return;
       const kidsOf = zoomable(V, id), on = SEL.n === id, bal = V.bal[id] != null ? V.bal[id] : n.bal, small = !!p.chip, band = id === "world" && L.chips.length > 0, label = name(id) + (kidsOf ? " ▸" : "");
       svg.append(s("g", { class: "bank-flow-node-g" + (on ? " on" : "") + (id === "gen" ? " ghost" : "") + (small ? " chip" : "") + (id === L.focus ? " focus" : "") + (kidsOf ? " kids" : ""), transform: "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ")", tabindex: 0, role: "button", "aria-label": kidsOf ? name(id) + "，放大看裡面" : name(id) + "，只看這裡的進出", "data-n": id, "data-k": kidsOf ? "1" : null },
-        s("rect", { x: -p.w / 2, y: -p.h / 2, width: p.w, height: p.h, rx: small ? 7 : 9 }), ...(band ? [s("text", { class: "n", "text-anchor": "middle", y: -p.h / 2 + 20 }, name(id) + (bal != null ? "　" + short(bal) : ""))] : [s("text", { class: "n", "text-anchor": "middle", y: bal != null ? -2 : 5 }, label), bal != null ? s("text", { class: "b", "text-anchor": "middle", y: small ? 12 : 14 }, short(bal)) : null])));
+        s("rect", { x: -p.w / 2, y: -p.h / 2, width: p.w, height: p.h, rx: small ? 7 : 9 }), ...(band ? [s("text", { class: "n", "text-anchor": "middle", y: -p.h / 2 + 20 }, name(id) + (bal != null ? "　" + sshort(bal) : ""))] : [s("text", { class: "n", "text-anchor": "middle", y: bal != null ? -2 : 5 }, label), bal != null ? s("text", { class: "b" + (bal < 0 ? " neg" : ""), "text-anchor": "middle", y: small ? 12 : 14 }, sshort(bal)) : null])));
     };
     (L.focus ? L.nodes : L.nodes.filter(n => !n.parent)).forEach(draw1);
     svg.append(...lines, ...dotsEl); // 線畫在方塊和外面世界那條帶子的上面（集團之間的線在帶子裡面）
