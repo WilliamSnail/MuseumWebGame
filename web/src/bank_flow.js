@@ -78,6 +78,23 @@ function anchors(edges, pos, tierOf) {
   return pt;
 }
 
+// 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是外面世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
+function route(pa, pb, e, pos, W) {
+  const m = 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
+  const obs = Object.entries(pos).filter(([id, r]) => !r.chip && id !== e.from && id !== e.to && !(chipEnd && id === "world")).map(([, r]) => r);
+  const hits = r => { for (let k = 0; k <= 40; k++) { const t = k / 40, x = pa.x + (pb.x - pa.x) * t, y = pa.y + (pb.y - pa.y) * t; if (Math.abs(x - r.x) < r.w / 2 + 2 && Math.abs(y - r.y) < r.h / 2 + 2) return true; } return false; };
+  const bad = obs.filter(hits).sort((p, q) => (pb.y >= pa.y ? p.y - q.y : q.y - p.y)); if (!bad.length) return [pa, pb];
+  const pts = [pa], flat = Math.abs(pa.y - pb.y) < 2;
+  for (const r of (flat ? bad.sort((p, q) => (pb.x >= pa.x ? p.x - q.x : q.x - p.x)) : bad)) {
+    if (flat) { const y = r.y - r.h / 2 - m, a = r.x - r.w / 2 - m, b = r.x + r.w / 2 + m, fw = pb.x >= pa.x; pts.push({ x: fw ? a : b, y: pa.y }, { x: fw ? a : b, y }, { x: fw ? b : a, y }, { x: fw ? b : a, y: pa.y }); continue; }
+    const L = r.x - r.w / 2 - m, R = r.x + r.w / 2 + m, last = pts[pts.length - 1], sx = Math.abs(last.x - L) + Math.abs(pb.x - L) <= Math.abs(last.x - R) + Math.abs(pb.x - R) ? L : R, down = pb.y >= pa.y, y0 = down ? r.y - r.h / 2 - m : r.y + r.h / 2 + m, y1 = down ? r.y + r.h / 2 + m : r.y - r.h / 2 - m, cx = Math.max(8, Math.min(W - 8, sx));
+    pts.push({ x: cx, y: y0 }, { x: cx, y: y1 });
+  }
+  pts.push(pb); return pts;
+}
+const polyD = pts => pts.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
+const polyLen = pts => pts.slice(1).reduce((n, p, i) => n + Math.hypot(p.x - pts[i].x, p.y - pts[i].y), 0);
+const polyAt = (pts, f) => { let want = polyLen(pts) * f; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); if (want <= l || i === pts.length - 1) { const t = l ? Math.min(1, want / l) : 0; return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t }; } want -= l; } return pts[0]; };
 const name = id => (NM[id] && NM[id].name) || id, balOf = (F, id) => (F.bal && F.bal[id] != null ? F.bal[id] : NM[id] && NM[id].bal != null ? NM[id].bal : null);
 // 右邊（手機在下面）的「流向一覽」：每條線壹列「從 → 到　金額」，點開看來源；點方塊就只列那個地方的進出
 function listBox(F, sel, pick) {
@@ -111,13 +128,13 @@ export function flowPane(v, deps) {
     const lines = [], pills = [], dotsEl = []; let dots = 0;
     edges.forEach((e, i) => {
       const pa = PT[i] && PT[i][e.from], pb = PT[i] && PT[i][e.to]; if (!pa || !pb) return;
-      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), d = "M" + pa.x.toFixed(1) + " " + pa.y.toFixed(1) + " L" + pb.x.toFixed(1) + " " + pb.y.toFixed(1);
+      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = route(pa, pb, e, L.pos, L.W), d = polyD(pts);
       lines.push(s("path", { d, class: "bank-flow-line" + (on ? " on" : "") + (dim ? " dim" : ""), "stroke-width": wd.toFixed(1), "marker-end": "url(#bfa" + (on ? "-on" : "") + ")", fill: "none" }));
       lines.push(s("path", { d, class: "bank-flow-hit", "stroke-width": 22, fill: "none", tabindex: 0, role: "button", "aria-label": name(e.from) + "到" + name(e.to) + "，今天 " + fmt(e.amt) + "，看來源", "data-i": i }));
-      const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = Math.hypot(pb.x - pa.x, pb.y - pa.y), dur = Math.max(2.4, len / 60);
+      const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
       for (let k = 0; k < n && dots < 70; k++, dots++) dotsEl.push(s("circle", { r: (2.4 + 1.2 * lg(e.amt)).toFixed(1), class: "bank-flow-dot" }, s("animateMotion", { path: d, dur: dur.toFixed(2) + "s", begin: "-" + ((k / n) * dur).toFixed(2) + "s", repeatCount: "indefinite", calcMode: "linear" })));
       const t = short(e.amt), w = 12 + t.length * 7.4, rects = Object.values(L.pos).filter(r => !r.chip), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
-      let mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2; for (const k of [0.5, 0.42, 0.58, 0.35, 0.65, 0.3, 0.7]) { const x = pa.x + (pb.x - pa.x) * k, y = pa.y + (pb.y - pa.y) * k; if (!hit(x, y)) { mx = x; my = y; break; } } // 金額小牌不蓋到方塊：沿線找壹個空的位置
+      let mx = polyAt(pts, 0.5).x, my = polyAt(pts, 0.5).y; for (const k of [0.5, 0.42, 0.58, 0.35, 0.65, 0.3, 0.7, 0.2, 0.8]) { const q = polyAt(pts, k); if (!hit(q.x, q.y)) { mx = q.x; my = q.y; break; } } // 金額小牌不蓋到方塊：沿線找壹個空的位置
       pills.push(s("g", { class: "bank-flow-pill" + (on ? " on" : "") + (dim ? " dim" : ""), transform: "translate(" + mx.toFixed(1) + " " + my.toFixed(1) + ")", "data-i": i }, s("rect", { x: -w / 2, y: -10, width: w, height: 20, rx: 10 }), s("text", { "text-anchor": "middle", y: 4.3 }, t)));
     });
     L.frames.forEach(f => svg.append(s("g", { class: "bank-flow-frame", "data-org": "org:" + f.id, tabindex: 0, role: "button", "aria-label": (V.orgs[f.id] || f.id) + "，收起來" }, s("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12 }), s("text", { x: f.x + 12, y: f.y + 15 }, "▾ " + (V.orgs[f.id] || f.id)))));
