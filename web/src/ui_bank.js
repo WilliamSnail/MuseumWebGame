@@ -1068,7 +1068,7 @@ const helpBtn = v => btn([h("span", { class: "bank-help-q", "aria-hidden": "true
 // ---------- 整個畫面 ----------
 SCREENS.bank = root => {
   if (!UI.localPlay && !UI.bankLoading && Date.now() - (UI.bankAt || 0) > 20000) bankLoad(); // 進來先跟伺服器拿；拿到前畫示範資料（上面寫著）
-  root.classList.add("onescreen-room", "bank-onescreen");
+  root.classList.add("onescreen-room", "bank-onescreen"); root.classList.toggle("bank-tab-flow", (UI.bankTab || "report") === "flow");
   // 登入了、第壹次還沒拿到：只寫「正在拿」，不先畫示範數字（測試 11-13：會先閃壹組假數字）
   if (!UI.bankHall && !UI.localPlay && !UI.bankErr) {
     root.append(roomHead("Yuga Bot 銀行", "存錢有利息，借錢要還。"), h("div", { class: "onescreen-main" }, h("div", { class: "bank-stage" }, h("p", { class: "bank-demo" }, "正在跟銀行拿資料……"))));

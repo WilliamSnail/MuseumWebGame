@@ -45,20 +45,20 @@ function prep(F) {
 // 線從上面那個方塊的下緣出去、接到下面那個的上緣；同壹邊有好幾條就平均分開。同層接左右邊。
 const MORE = "w:more";
 function layout(phone, V, need) {
-  const nodes = V.nodes, W = phone ? 360 : 640, base = nodes.filter(n => !n.parent), kids = nodes.filter(n => n.parent === "world"), bh = 46, gap = phone ? 52 : 44;
+  const nodes = V.nodes, W = phone ? 360 : 720, base = nodes.filter(n => !n.parent), kids = nodes.filter(n => n.parent === "world"), bh = phone ? 46 : 54, gap = phone ? 52 : 62;
   const frameOrgs = [...new Set(base.filter(n => n.org && !n.isOrg).map(n => n.org))], hasOrg = frameOrgs.length > 0, tiers = [...new Set(base.map(n => n.tier))].sort((a, b) => a - b), pos = {}, tierOf = {}, frames = [];
   const K = SEL.more ? 99 : phone ? 6 : 8, show = kids.filter(k => need.has(k.id)); for (const k of kids) if (show.length < K && !show.includes(k)) show.push(k);
   const rest = kids.filter(k => !show.includes(k)), chips = [];
   const walk = (n, depth) => { chips.push(Object.assign({}, n, { depth })); if (isOpen(n.id)) nodes.filter(c => c.parent === n.id).forEach(c => walk(c, depth + 1)); };
   show.forEach(k => walk(k, 0));
   if (rest.length) { const m = { id: MORE, name: "其他 " + rest.length, more: true, tier: 1, parent: "world", bal: rest.reduce((n, x) => n + (x.bal || 0), 0), depth: 0 }; chips.push(m); NM[MORE] = m; }
-  const cols = phone ? 3 : 4, cw = (W - 16 - 8 * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
+  const cols = phone ? 3 : 5, cw = (W - 16 - 8 * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
   let y = 0;
   for (const t of tiers) {
     const ns = base.filter(n => n.tier === t), isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 30 + rows * (ch + 6) + 4 : bh + 4) : bh;
     if (y) y += gap + (hasOrg && ns.some(n => n.org && !n.isOrg) && !base.some(n => n.org && !n.isOrg && n.tier === t - 1) ? 14 : 0); else y = 8;
     const cy = y + hh / 2; y += hh;
-    ns.forEach((n, i) => { const w = isBand ? W - 16 : Math.min(phone ? 100 : 150, (W - 16) / ns.length - 10); pos[n.id] = { x: W * (i + 0.5) / ns.length, y: cy, w, h: hh }; tierOf[n.id] = t; });
+    ns.forEach((n, i) => { const w = isBand ? W - 16 : Math.min(phone ? 100 : 170, (W - 16) / ns.length - 10); pos[n.id] = { x: W * (i + 0.5) / ns.length, y: cy, w, h: hh }; tierOf[n.id] = t; });
     if (isBand) { const top = cy - hh / 2; chips.forEach((c, i) => { const r = Math.floor(i / cols), k = i % cols; pos[c.id] = { x: 16 + cw / 2 + k * (cw + 8), y: top + 30 + r * (ch + 6) + ch / 2, w: cw, h: ch, chip: true }; tierOf[c.id] = t; }); }
   }
   const H = y + 8;
