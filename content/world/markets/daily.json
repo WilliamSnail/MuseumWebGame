@@ -1,0 +1,11 @@
+{
+  "id": "daily",
+  "name": "日常消費",
+  "kind": "sector",
+  "anchor": "tw",
+  "beta": 0.03,
+  "kappa": 0.08,
+  "sd": 0.03,
+  "rho": 0.5,
+  "note": "餐車、日用品、超市。接台股。"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "school",
+  "name": "教育",
+  "kind": "sector",
+  "anchor": "none",
+  "beta": 0,
+  "kappa": 0.1,
+  "sd": 0.02,
+  "rho": 0.2,
+  "note": "學校、補習。穩，自己的循環。"
+}

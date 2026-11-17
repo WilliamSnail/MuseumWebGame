@@ -4,7 +4,7 @@ const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 const pack = require("../tools/world_pack.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
+const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.worldDoc.market.on = false; /* 景氣分市場另外在 world_market.test 測（決定 0121） */ G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const D = "2026-11-16";
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const mk = G => { G.NUM.casino.worldDoc.trade.on = false; /* 決定 0119 的交易另外在 world_trade.test 測 */ return G.casHouseFix(G.casHouseNew(), D).house; };

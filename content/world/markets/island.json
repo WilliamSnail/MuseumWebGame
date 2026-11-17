@@ -1,0 +1,11 @@
+{
+  "id": "island",
+  "name": "離島",
+  "kind": "region",
+  "anchor": "tw",
+  "beta": 0.06,
+  "kappa": 0.05,
+  "sd": 0.05,
+  "rho": 0.4,
+  "note": "島上的集團。接台股。"
+}

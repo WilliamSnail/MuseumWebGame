@@ -5,6 +5,7 @@
   "parent": null,
   "sector": "daily",
   "share": 0.22,
+  "listed": true,
   "staff": 40000,
   "stocks": [
     "wavefreight",

@@ -4,7 +4,9 @@
   "kind": "group",
   "parent": null,
   "sector": "tech",
+  "market": "overseas",
   "share": 0.1,
+  "listed": true,
   "staff": 26000,
   "stocks": [
     "greeneye",

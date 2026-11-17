@@ -17,6 +17,7 @@ const svN = v => (v === null || v === undefined || v === "" || typeof v === "boo
 const STAT_TABLE = {
   npcSan: { pub: true, bands: [["edge", "崩潰邊緣", "bad", "看起來快撐不住了。", 19], ["uneasy", "不安", "warn", "最近有點不對勁。", 39], ["tired", "有點累", "neutral", "看起來有點累。", 59], ["steady", "穩定", "good", "狀態不錯。", 100]] },
   unitUnrest: { pub: true, bands: [["calm", "安穩", "good", "那邊很平靜。", 29], ["stir", "有點躁動", "neutral", "那邊有點議論。", 49], ["uneasy", "不安", "warn", "那邊人心浮動。", 74], ["turmoil", "動盪", "bad", "那邊亂成一團。", 100]] },
+  marketB: { pub: true, bands: [["low", "低迷", "bad", "這個行業很冷。", -0.5], ["cool", "偏冷", "warn", "這個行業有點冷。", -0.15], ["plain", "平穩", "neutral", "這個行業很平穩。", 0.15], ["warm", "回溫", "good", "這個行業在回溫。", 0.5], ["hot", "熱絡", "good", "這個行業很熱。", 1]] },
   crowdMood: { pub: true, bands: [["cold", "冷清", "warn", "今天館裡有點冷清。", 29], ["plain", "平常", "neutral", "今天館裡很平常。", 59], ["warm", "熱絡", "good", "今天館裡很熱絡。", 84], ["buzz", "沸騰", "good", "今天館裡人聲鼎沸。", 100]] },
 };
 // 集團健康值：門檻讀 W5 的設定（跟狀態換檔同一組），不另外寫

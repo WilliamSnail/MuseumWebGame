@@ -5,6 +5,7 @@
   "parent": null,
   "sector": "finance",
   "share": 0.13,
+  "listed": true,
   "staff": 12000,
   "stocks": [],
   "story": false,

@@ -23,9 +23,9 @@ export const CAS_REPORT = {
   mint: { worldGrow: "外面世界每天成長（照 GDP 年增率）", worldExpand: "外面世界一次性擴充", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進博物館資金）", ticketMuseum: "參觀者門票（進修繕基金）" },
   // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
-  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（外面世界付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟外面世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
+  world: { gRaise: "集團增資（莊家買新股，錢進集團）", gBuy: "集團庫藏股（集團買回，錢給莊家）", gDiv: "集團股息（集團付）", stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（外面世界付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟外面世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
-  flow: { stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetFix: "博物館資金補撥給莊家（11-17 館債那期照新規定該由博物館資金付，一次性）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
+  flow: { gStock: "集團股票（莊家當造市商）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetFix: "博物館資金補撥給莊家（11-17 館債那期照新規定該由博物館資金付，一次性）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
   seaNote: "水面底下有人在數東西。",
 };
@@ -211,7 +211,7 @@ export const CAS_FLOW_ORGS = { museum: "佩佩博物館" }; // 框的名字
 // 外面世界展開的小節點（世界單位名單＋家計＋公共＋NPC 錢包）：id 是 "w:單位id"，會跟著 WORLD_UNITS 新增、拆分、改名；沒有帳（house.world 是 null）就沒有
 export function casFlowWorldNodes(house) {
   if (!house || house.world == null) return [];
-  const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
+  const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : id === "u-ext" ? "海外（真實市場）" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
   const ids = new Set(Object.keys(am)); for (const u of WORLD_UNITS) if (u && u.parent == null) ids.add(u.id); // 名單上的每個頂層單位都有，就算帳上還沒有
   const top = [...ids].map(id => ({ id: "w:" + id, name: nm(id), tier: 1, parent: "world", bal: Math.max(0, Math.floor(+am[id] || 0)) })).sort((x, y) => y.bal - x.bal);
   const subs = WORLD_UNITS.filter(u => u && u.parent != null).map(u => ({ id: "w:" + u.id, name: u.name || u.id, tier: 1, parent: "w:" + u.parent, bal: null })); // 子公司：名單上有上級的；帳上只分到頂層，所以沒有各自的餘額
@@ -219,7 +219,7 @@ export function casFlowWorldNodes(house) {
 }
 export const CAS_FLOW_LINE = {
   bj: ["house", "players"], pack: ["house", "players"], food: ["house", "players"], loan: ["house", "players"], loanBack: ["house", "players"], job: ["house", "players"], find: ["house", "players"], econLoot: ["house", "players"], bankInt: ["house", "players"],
-  stockIn: ["house", "players"], stockLev: ["house", "players"], bond: ["house", "players"], art: ["house", "players"], artAuction: ["house", "players"], tax: ["house", "gov"], econSea: ["house", "sea"],
+  gStock: ["house", "players"], gRaise: ["world", "house"], gBuy: ["world", "house"], gDiv: ["world", "players"], stockIn: ["house", "players"], stockLev: ["house", "players"], bond: ["house", "players"], art: ["house", "players"], artAuction: ["house", "players"], tax: ["house", "gov"], econSea: ["house", "sea"],
   investFee: ["house", "budget"], budgetLoan: ["house", "budget"], budgetFix: ["house", "budget"], budgetRepay: ["house", "budget"], econWin: ["house", "budget"],
   stockFee: ["players", "budget"], artFee: ["players", "budget"], stockTax: ["players", "gov"], divTax: ["players", "gov"],
   bizTax: ["world", "gov"], entTax: ["world", "gov"],
@@ -227,7 +227,7 @@ export const CAS_FLOW_LINE = {
   houseInvestBuy: ["world", "house"], houseInvestSell: ["world", "house"], houseInvFix: ["world", "house"],
   budgetInvestBuy: ["world", "budget"], budgetInvestSell: ["world", "budget"], budgetInvFix: ["world", "budget"], npcTicketBudget: ["world", "budget"], npcCrowdBudget: ["world", "budget"], npcJob: ["world", "budget"], npcCellar: ["world", "budget"], npcCraft: ["world", "budget"], npcArt: ["world", "budget"], ticketBudget: ["world", "budget"],
   npcTicketMuseum: ["world", "museum"], npcCrowdMuseum: ["world", "museum"], ticketMuseum: ["world", "museum"],
-  stockBuy: ["world", "players"], stockSell: ["world", "players"], stockRebase: ["world", "players"], stockLevWin: ["world", "players"], stockLevLoss: ["world", "players"], dividend: ["world", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
+  stockBuy: ["w:u-ext", "players"], stockSell: ["w:u-ext", "players"], stockRebase: ["w:u-ext", "players"], stockLevWin: ["w:u-ext", "players"], stockLevLoss: ["w:u-ext", "players"], dividend: ["w:u-ext", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
   worldGrow: ["gen", "world"], worldExpand: ["gen", "world"], reset: ["gen", "house"],
   start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
 };

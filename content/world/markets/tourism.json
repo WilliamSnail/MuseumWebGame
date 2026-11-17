@@ -1,0 +1,11 @@
+{
+  "id": "tourism",
+  "name": "觀光",
+  "kind": "sector",
+  "anchor": "us",
+  "beta": 0.05,
+  "kappa": 0.04,
+  "sd": 0.07,
+  "rho": 0.3,
+  "note": "展廳、旅行團、地下收藏。接美股。"
+}

@@ -4,7 +4,9 @@
   "kind": "group",
   "parent": null,
   "sector": "tech",
+  "market": "island",
   "share": 0.09,
+  "listed": true,
   "staff": 18000,
   "stocks": [
     "islandforge",
