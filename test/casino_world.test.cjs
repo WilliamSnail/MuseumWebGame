@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.world.expand = 0; G.NUM.casino.world.growYoy = false; /* 決定 0117 的擴充和 GDP 成長另外測 */ G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", ID = "greeneye", TW = Date.parse(D0 + "T21:40:00+08:00");
 const add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
 const mk = (G, chips = 500000000) => { const w = G.casWalletFix(G.casWalletNew(), D0), house = G.casHouseFix(G.casHouseNew(), D0).house; w.chips = chips; G.casStockHouseFix(house); G.casStockRoll(house, D0, {}); return { w, house }; };
@@ -62,6 +62,24 @@ T("日報：有「跟外面世界的往來」一段（現在多少、進出的�
   const v = G.casReportView(doc), txt = v.secs.map(x => x.t + "|" + x.lines.join("|")).join("\n");
   assert.ok(txt.includes("跟外面世界的往來"), txt); assert.ok(txt.includes("買股票"), "進外面世界的來源");
   assert.ok(txt.includes("真的憑空來的、真的消失的"));
+});
+T("決定 0117：外面世界一次性擴充 900 億（每個莊家文件壹次、記 mint.worldExpand、帳上分類總和仍等於池子、對帳守恆）", G => {
+  G.NUM.casino.world.expand = 90000000000;
+  const h = G.casHouseFix(G.casHouseNew(), "2026-11-17").house, w0 = G.NUM.casino.world.start;
+  assert.strictEqual(h.world, w0 + 90000000000); assert.strictEqual(h.led.mint.worldExpand, 90000000000); assert.ok(h.wExp);
+  const a = G.wuAmounts(h); assert.strictEqual(Object.values(a).reduce((x, y) => x + y, 0), h.world, "分類總和 ＝ 池子");
+  const h2 = G.casHouseFix(h, "2026-11-17").house; assert.strictEqual(h2.world, w0 + 90000000000, "只做壹次");
+  const old = G.casHouseNew(); old.world = 11060000000; const o2 = G.casHouseFix(old, "2026-11-17").house; assert.strictEqual(o2.world, 11060000000 + 90000000000, "舊莊家照現在的池子加 900 億");
+});
+T("決定 0117：每天成長 ＝ max(growBase, 池子 × max(0, yoy%) ÷ 365)，不看景氣 b；yoy 負的或沒有就用 growBase", G => {
+  G.NUM.casino.world.growYoy = true;
+  const mk = (yoy, b) => { const h = G.casHouseFix(G.casHouseNew(), "2026-11-17").house; h.world = 101000000000; h.econ = { b, yoy }; return h; };
+  const g = (yoy, b) => { const h = mk(yoy, b), w = h.world; return G.casHouseFix(h, "2026-11-18").house.world - w; };
+  assert.strictEqual(g(14.36, 0), Math.floor(101000000000 * 14.36 / 100 / 365));
+  assert.strictEqual(g(14.36, 1), g(14.36, -1), "景氣 b 不影響");
+  assert.strictEqual(g(-3, 0), G.NUM.casino.world.growBase, "yoy 負的：只有 growBase");
+  assert.strictEqual(g(0, 0), G.NUM.casino.world.growBase);
+  const h = mk(14.36, 0), w = h.world; h.world = 10000000000; assert.strictEqual(G.casHouseFix(h, "2026-11-18").house.world - 10000000000, G.NUM.casino.world.growBase, "小池子：不比現在差（下限 growBase）");
 });
 console.log(`${pass} passed, ${fail} failed（外面世界的池子）`);
 process.exit(fail ? 1 : 0);

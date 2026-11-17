@@ -79,6 +79,7 @@ check("掛畫加展廳評分：總加分上限不大、壹幅最多加的分 ≤
 check("展廳門票：玩家分紅池比例 ≤ 票的博物館資金份額（分紅是從博物館資金搬給玩家，池子永遠不會超過博物館資金收到的）", C.ticket.ownerPct <= C.npcSpend.ticketBudgetPct && C.ticket.firstPct <= 100, `分紅池 ${C.ticket.ownerPct}% ≤ 博物館資金份額 ${C.npcSpend.ticketBudgetPct}%；先領的拿剩下的 ${C.ticket.firstPct}%`);
 check("外面世界：吃緊線（lowPct）和賣出上限（lowPayPct）合理", W.lowPct > 0 && W.lowPct < 50 && W.lowPayPct > 0 && W.lowPayPct <= 5, `低於 ${W.lowPct}%；吃緊時壹天最多付 ${W.lowPayPct}%`);
 check("外面世界：每年成長占起始 ≤ 30%（不是印錢機）", grow * 365 / W.start <= 0.3, `${pct(grow * 365 / W.start * 100)}`);
+check("外面世界（決定 0117）：一次性擴充 ≥ 0；成長 ＝ max(growBase, 池子 × GDP 年增率)，年增率照 content/economy.json（沒有或負的就是 growBase）；成長只進外面世界，NPC、玩家的錢不跟池子大小走", W.expand >= 0 && W.growBase > 0 && (!W.growYoy || W.growBase >= 1), `擴充 ${fmt(W.expand || 0)}；growYoy ${!!W.growYoy}；下限 ${fmt(W.growBase)}／天`);
 check("館方投資：持股成本上限 ≤ 超過部分的 50%；每天投 ≤ 10%", C.invest.holdCapPct <= 50 && C.invest.dailyPct <= 10, `holdCap ${C.invest.holdCapPct}%、daily ${C.invest.dailyPct}%`);
 check("館方投資：保留金 ≥ 莊家借款的準備金（不動到重開的底）", C.invest.reserve >= C.houseLoan.reserve, `${fmt(C.invest.reserve)} ≥ ${fmt(C.houseLoan.reserve)}`);
 check("借款額度上限 ≤ 莊家壹開始的錢（壹個人借光不會讓莊家破產）", C.loan.capMax <= C.houseStart, `capMax ${fmt(C.loan.capMax)}、莊家 ${fmt(C.houseStart)}`);

@@ -22,7 +22,7 @@ const SIGN = {
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   world: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
-    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, houseInvFix: -1, budgetInvFix: -1, worldGrow: 1, bizTax: -1, entTax: -1, dividend: -1, inMarket: 0 },
+    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, houseInvFix: -1, budgetInvFix: -1, worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, dividend: -1, inMarket: 0 },
 };
 const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "外面世界" };
 // 同壹筆錢在兩個帳（外面世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
@@ -100,7 +100,7 @@ function run() {
       if (!x || !y || x.n !== -y.n) P(`${day} ${ACCT_NAME[a]}↔外面世界`, `同壹筆「${k}」兩邊要剛好相反：${ACCT_NAME[a]} ${x ? sgn(x.n) : "沒列"}、外面世界 ${y ? sgn(y.n) : "沒列"}`);
     }
     // 外面世界的池子對得上：每天成長＋各來源
-    if (d.world !== (d.wflow ? Object.values(d.wflow).reduce((a, b) => a + b, 0) : 0) + ((d.houseMint || {}).worldGrow || 0)) P(tag("world"), `外面世界變化 ${sgn(d.world)} ≠ wflow 加成長`);
+    if (d.world !== (d.wflow ? Object.values(d.wflow).reduce((a, b) => a + b, 0) : 0) + ((d.houseMint || {}).worldGrow || 0) + ((d.houseMint || {}).worldExpand || 0)) P(tag("world"), `外面世界變化 ${sgn(d.world)} ≠ wflow 加成長`);
     // (d) 日報的文字
     const rv = G.casReportView(doc);
     if (!rv) { P(day, "casReportView 沒回東西"); continue; }
