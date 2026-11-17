@@ -15,11 +15,11 @@ function sim(G, npcs, opts = {}) {
   for (const kv of opts.set || []) { const m = /^([\w.]+)=(.+)$/.exec(kv); if (!m) throw new Error(`--set 要寫成 路徑=值：${kv}`); const parts = m[1].split("."); let o = G.NUM; for (const p of parts.slice(0, -1)) { if (!o || typeof o[p] !== "object") throw new Error(`NUM 底下沒有 ${m[1]}`); o = o[p]; } const k = parts[parts.length - 1]; if (!(k in o)) throw new Error(`NUM 底下沒有 ${m[1]}`); o[k] = isNaN(+m[2]) ? m[2] : +m[2]; }
   G.NUM.casino.grants = []; // 已經撥過的撥款不算（正式站撥過了）
   const start = "2026-11-16", list = npcs.filter(n => n.kind !== "trace");
-  const h = G.casHouseFix(G.casHouseNew(), start).house; h.econ = { b };
+  const h = G.casHouseFix(G.casHouseNew(), start).house; h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy };
   const w0 = h.world, a0 = G.wuAmounts(h), bank0 = h.bankroll, bud0 = h.budget, spent = { total: 0, byUnit: {} };
   const perDay = [];
   for (let i = 0; i < days; i++) {
-    const d = add(start, i); if (i > 0) { h.econ = { b }; G.casHouseFix(h, d); }
+    const d = add(start, i); if (i > 0) { h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy }; G.casHouseFix(h, d); }
     const before = h.world; G.casNpcSpend(h, d, "sim" + i, list, null);
     const N = h.npcs && h.npcs.day === d ? h.npcs : null, t = N ? N.ticket + N.shop + N.crowd.ticket + N.crowd.shop : 0;
     spent.total += t; if (N && N.byUnit) for (const k of Object.keys(N.byUnit)) spent.byUnit[k] = (spent.byUnit[k] || 0) + N.byUnit[k];
