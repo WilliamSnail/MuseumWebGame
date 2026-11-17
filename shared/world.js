@@ -311,7 +311,7 @@ export function wtWealth(house, id) {
 }
 // 帳上搬：from 單位 → to 單位（adj），最多搬 from 現有的；回傳搬了多少。總和不變
 // 每壹筆也記在 house.led.units["種類|from|to"]（累計），銀行金流頁籤（shared/casino_report.js 的 casFlowHub）算今天集團之間的線用；kind 是 "trade…"，名字在 CAS_FLOW_UNIT
-function wtLed(house, kind, from, to, n) { if (!(n > 0)) return; const L = (house.led = wuBox(house.led) ? house.led : {}), U = (L.units = wuBox(L.units) ? L.units : {}), k = kind + "|" + from + "|" + to; U[k] = wdN(U[k]) + n; }
+export function wtLed(house, kind, from, to, n) { if (!(n > 0)) return; const L = (house.led = wuBox(house.led) ? house.led : {}), U = (L.units = wuBox(L.units) ? L.units : {}), k = kind + "|" + from + "|" + to; U[k] = wdN(U[k]) + n; }
 function wtMove(house, from, to, n, kind) {
   n = wdN(n); const x = wuFix(house);
   if (!x || n <= 0 || from === to || from === WU_PUB || to === WU_PUB || !(from in x.r) || !(to in x.r)) return 0;
@@ -420,7 +420,7 @@ function wtWeekSnap(house, day) { const w = whFix(house); if (!w) return; w.wk =
 export function wtCard(house) {
   const T = wtCfg(), w = house && wuBox(house.wh) ? house.wh : null; if (!T || !T.on || !w || !wuBox(w.wk)) return null;
   const cur = (house.led && house.led.units) || {}, rows = [];
-  for (const key of Object.keys(cur)) { const n = Math.floor(wdN(cur[key]) - wdN(w.wk.u[key])); if (n <= 0) continue; const [k, from, to] = key.split("|"); rows.push({ k, from, to, fromName: from === WU_PUB ? "公共" : whName(from), toName: to === WU_PUB ? "公共" : whName(to), n }); }
+  for (const key of Object.keys(cur)) { const n = Math.floor(wdN(cur[key]) - wdN(w.wk.u[key])); if (n <= 0 || !key.startsWith("trade")) continue; const [k, from, to] = key.split("|"); rows.push({ k, from, to, fromName: from === WU_PUB ? "公共" : whName(from), toName: to === WU_PUB ? "公共" : whName(to), n }); }
   rows.sort((a, b) => b.n - a.n);
   const loans = Object.keys(w.loan || {}).map(id => ({ unit: id, name: whName(id), amt: Math.floor(wdN(w.loan[id].amt)), day: w.loan[id].day })).sort((a, b) => b.amt - a.amt);
   return { since: w.wk.day, rows, loans };
