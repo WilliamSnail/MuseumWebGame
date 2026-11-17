@@ -84,6 +84,12 @@ export function casStockFix(w) {
   S.peg = stN(S.peg); // 這個錢包換股數換到第幾次（house.stk.peg.ev 的 seq）
   if (!stBox(S.seen)) S.seen = {}; // 玩家上次看到的價（view 的 fresh 用）
   for (const k of Object.keys(S.seen)) { const n = stPx(S.seen[k]); if (n > 0 && STOCK_IDS.includes(k)) S.seen[k] = n; else delete S.seen[k]; }
+  // 配股息（決定 0112）：dv.done 已經領過的事件、dv.start { 日期: { id: 股數 } } 每個遊戲日第一次被碰到時的持股（除息日當天先買的人領不到：領的是除息日開始時的持股）
+  if (!stBox(S.dv)) S.dv = { done: {}, start: {} };
+  if (!stBox(S.dv.done)) S.dv.done = {}; if (!stBox(S.dv.start)) S.dv.start = {};
+  { const ks = Object.keys(S.dv.done); if (ks.length > 120) ks.sort().slice(0, ks.length - 120).forEach(k => delete S.dv.done[k]); }
+  for (const d of Object.keys(S.dv.start)) { if (!stDay(d) || !stBox(S.dv.start[d])) { delete S.dv.start[d]; continue; } for (const k of Object.keys(S.dv.start[d])) { const n = stN(S.dv.start[d][k]); if (n > 0 && STOCK_IDS.includes(k)) S.dv.start[d][k] = n; else delete S.dv.start[d][k]; } }
+  { const ds = Object.keys(S.dv.start).sort(); ds.slice(0, Math.max(0, ds.length - NUM.casino.stock.div.snapDays)).forEach(d => delete S.dv.start[d]); }
   S.notes = (Array.isArray(S.notes) ? S.notes : []).filter(x => typeof x === "string").slice(-8);
   return S;
 }
@@ -115,6 +121,9 @@ export function casStockHouseFix(house) {
   H.fx = stOkFx(H.fx) ? H.fx : null; // 美股今天用的美元對台幣匯率（11-16，翊文：「×32 可以照今日台幣匯率嗎」）；沒有就用 peg.us
   if (!stBox(H.sym)) H.sym = {}; // 每支的真實代號和名字（11-16：新上架、還沒抓到價的也要先顯示）；只是顯示用，不影響價格
   for (const k of Object.keys(H.real)) { const r = H.real[k]; if (!STOCK_IDS.includes(k) || !stBox(r) || !(+r.px > 0)) delete H.real[k]; else H.real[k] = { sym: typeof r.sym === "string" ? r.sym.slice(0, 12) : "", name: typeof r.name === "string" ? r.name.slice(0, 20) : "", px: +r.px, chg: Number.isFinite(+r.chg) ? +r.chg : 0 }; }
+  // 配股息（決定 0112）：div.ev ＝ 伺服器抓到的除息、配股事件 [{ key, id, kind "div"｜"split", ex 除息日（台股台灣日期、美股美東日期）, amt 每股現金股利（真實幣別：台股台幣、美股美元）, r 配股後股數是原來的幾倍 }]
+  if (!stBox(H.div)) H.div = { ev: [] };
+  H.div.ev = (Array.isArray(H.div.ev) ? H.div.ev : []).filter(e => stBox(e) && typeof e.key === "string" && stDef(e.id) && stDay(e.ex) && (e.kind === "split" ? +e.r > 1 && +e.r <= 50 : +e.amt > 0)).map(e => ({ key: e.key.slice(0, 40), id: e.id, kind: e.kind === "split" ? "split" : "div", ex: e.ex, amt: e.kind === "split" ? 0 : +e.amt, r: e.kind === "split" ? +e.r : 0 })).slice(-300);
   if (!stBox(H.net)) H.net = { day: null, n: 0 };
   H.net.day = stDay(H.net.day) ? H.net.day : null;
   H.net.n = Number.isFinite(+H.net.n) ? Math.floor(+H.net.n) : 0;
@@ -263,7 +272,57 @@ export function casStockPegSync(w, house) {
     S.peg = e.seq;
   }
   S.peg = Math.max(S.peg, H.peg.seq);
+  casStockDivSync(w, house, S, H);
   casStockHoldCost(w, house, S, H);
+}
+// ---------- 配股息（決定 0112） ----------
+// 伺服器把抓到的除息、配股事件放進莊家（functions/stock_div.js 每小時抓 Yahoo，存 stocksDiv/latest；casino.js 每次交易前呼叫這個）。純函式：doc.ev 是 [{ id, kind, ex, amt|r }]
+export function casStockSetDiv(house, doc) {
+  const H = casStockHouseFix(house), list = doc && Array.isArray(doc.ev) ? doc.ev : [];
+  const old = Object.fromEntries(H.div.ev.map(e => [e.key, e]));
+  for (const e of list) {
+    if (!stBox(e) || !stDef(e.id) || !stDay(e.ex)) continue;
+    const kind = e.kind === "split" ? "split" : "div", key = kind + "|" + e.id + "|" + e.ex;
+    if (kind === "div" ? !(+e.amt > 0 && +e.amt < 1e6) : !(+e.r > 1 && +e.r <= 50)) continue;
+    old[key] = { key, id: e.id, kind, ex: e.ex, amt: kind === "div" ? +e.amt : 0, r: kind === "split" ? +e.r : 0 };
+  }
+  const cut = H.day ? stAddDays(H.day, -NUM.casino.stock.div.keep) : "0000-00-00";
+  H.div.ev = Object.values(old).filter(e => e.ex >= cut).sort((a, b) => (a.ex < b.ex ? -1 : a.ex > b.ex ? 1 : a.key < b.key ? -1 : 1));
+  return H.div.ev.length;
+}
+// 這支股票的真實股利換成遊戲價：台股 ×1（NUM.casino.stock.peg.tw）、美股照今天的匯率；小數兩位
+export const casStockDivPx = (H, id, amt) => stPx(amt * stPxMult(H, id));
+// 股利所得稅率（%）：台股 30.11（分離課稅 28% ＋ 二代健保補充保費 2.11%）、美股 30（預扣）
+export const casStockDivTaxPct = id => (stockIsUs(id) ? NUM.casino.stock.div.taxUs : NUM.casino.stock.div.taxTw);
+// 錢包領股息、配股（每個交易開頭由 casStockPegSync 叫）。領的股數是「除息日開始時」的持股（S.dv.start 最早的那一天 ≥ 除息日；沒有紀錄的新錢包用現在的），所以除息日當天才買的人領不到
+function casStockDivSync(w, house, S, H) {
+  if (!stDay(H.day)) return;
+  if (!S.dv.start[H.day]) S.dv.start[H.day] = Object.assign({}, S.own); // 每個遊戲日第一次被碰到時記下持股（在任何買賣之前）
+  const days = Object.keys(S.dv.start).sort(), W = NUM.casino.world;
+  for (const e of H.div.ev) {
+    if (S.dv.done[e.key] || e.ex > H.day) continue;
+    S.dv.done[e.key] = 1;
+    const d = days.find(x => x >= e.ex), sh = d ? stN(S.dv.start[d][e.id]) : stN(S.own[e.id]);
+    if (!(sh > 0)) continue;
+    const name = stDef(e.id).name;
+    if (e.kind === "div") {
+      const each = casStockDivPx(H, e.id, e.amt), gross0 = stSellGet(each, sh);
+      if (!(gross0 > 0)) continue;
+      const got = casWorldOut(w, house, "dividend", gross0, W); // 錢由外面世界付（池子吃緊就付得出的部分）
+      if (got <= 0) continue;
+      const tax = Math.min(got, Math.ceil(got * Math.round(casStockDivTaxPct(e.id) * 100) / 10000)); // 股利所得稅：進位（跟手續費一致）
+      if (tax > 0) { w.chips -= tax; casPoolGain(house, "gov", "divTax", tax); }
+      casCount(house, "dividend", got); if (tax > 0) casCount(house, "divTax", tax);
+      stNote(S, casFill(CAS_STOCK.div.pay, { name, n: casNum(sh), each: casPx(each), got: casNum(got), tax: casNum(tax), net: casNum(got - tax) }));
+    } else {
+      const exact = sh * (e.r - 1), bonus = Math.floor(exact + 1e-9), px = (H.hist[e.ex] && H.hist[e.ex][e.id]) || H.px[e.id], frac = Math.floor((exact - bonus) * px);
+      if (S.cost[e.id] == null && S.own[e.id] > 0) S.cost[e.id] = stBuyCost(px * e.r, S.own[e.id]); // 配股之前還沒有成本記錄：用除權前的價（配股後價低了）
+      if (bonus > 0) { S.own[e.id] = stN(S.own[e.id]) + bonus; H.held[e.id] = stN(H.held[e.id]) + bonus; } // 總成本不變（股數多了、單位成本低了）
+      const cash = frac > 0 ? casWorldOut(w, house, "stockRebase", frac, W) : 0; // 配股的零股用現金補（跟換股數的零頭同一個來源）
+      casCount(house, "stockSplit", Math.max(1, bonus));
+      stNote(S, casFill(CAS_STOCK.div.split, { name, n: casNum(sh), bonus: casNum(bonus), cash: casNum(cash) }));
+    }
+  }
 }
 // 持有成本（規劃 2.8l，取代 drag）：每過壹天（換日），館外股票持股市值的 holdPct% 從錢包搬進預算池（搬，不是燒掉）。壹次最多補 7 天；
 // 第壹次碰到（沒有記錄）只記今天，不補扣。持股市值用現在的價算（換日後第壹次碰到錢包時扣）
@@ -346,6 +405,11 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
+// 畫面要的：這支最近一次（或下一次）的除息日、每股配多少（遊戲價單位，沒資料 null）
+function stDivInfo(H, id, day) {
+  const L = H.div.ev.filter(e => e.id === id && e.kind === "div").sort((a, b) => (a.ex < b.ex ? -1 : 1)), last = L[L.length - 1];
+  return last ? { ex: last.ex, each: casStockDivPx(H, id, last.amt), future: last.ex > day } : null;
+}
 // ---------- 畫面要的 ----------
 // 回傳 { list: [{ id, name, line, kind, price, chg, mine, value }], fee, halt, exposeLeft, sellLeft, total }
 // stale：哪幾支今天沒有新資料（shared/stocks.js 的 outStockStale）。標出來，不要讓人以為真的沒漲跌
@@ -372,7 +436,7 @@ export function casStockView(w, house, day, t, stale) {
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
       //   intraday 今天盤中每分鐘的價（從 intradayFrom 分鐘起，0 ＝ 09:00；其他股票是空陣列）；fresh 價格自從玩家上次按「看過了」之後變過
       //   11-14（規劃 2.8i）：美股也盤中了：usState 美股的狀態（pre、pending、open、closed；其他股是 null）；intraday／intradayFrom 美股 ＝ 從美東 09:30 起算的分鐘（0 ＝ 09:30）
-      market: mk || "us", halted: casStockIdHalt(house, d.id, day, t), twState: tw ? H.tw.st : null, usState: mk === "us" ? H.us.st : null,
+      div: stDivInfo(H, d.id, day), market: mk || "us", halted: casStockIdHalt(house, d.id, day, t), twState: tw ? H.tw.st : null, usState: mk === "us" ? H.us.st : null,
       intraday: mk && H[mk].day === day && Array.isArray(H[mk].ser[d.id]) ? H[mk].ser[d.id].slice() : [], intradayFrom: mk && H[mk].day === day ? H[mk].from : 0,
       // 11-17 翊文：「這個圖應該保留昨天股市結束之後的摺線圖吧?」：今天還沒有盤中的價（開盤前、等開盤價、休市）就給最近壹場的走勢 lastSession { day, from, ser, base 那天的昨收 }
       lastSession: mk && !(H[mk].day === day && Array.isArray(H[mk].ser[d.id]) && H[mk].ser[d.id].length) ? stLastSession(H[mk], d.id) : null,

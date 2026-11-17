@@ -256,6 +256,7 @@ export const CAS_BOND = {
 };
 // 股票（11-14，shared/casino_stock.js）。草稿，Yuga 可以改
 export const CAS_STOCK = {
+  div: { pay: "「{name}」除息：你除息前持有的 {n} 股，每股配 {each}，共 {got}，扣股利所得稅 {tax}，實拿 {net}。", split: "「{name}」除權（配股）：你除權前持有的 {n} 股，多配 {bonus} 股，零股補給你現金 {cash}。" },
   peg: { split: "「{name}」改成照真實股價的比例：你的 {from} 股換成 {to} 股，市值不變，零頭 {rem} 籌碼補給你；這支的掛單已經取消，鎖住的籌碼退回。" },
   title: "股票",
   sub: "館外二十二支：台股 09:00～13:30、美股和指數台灣晚上（美東 09:30～16:00）盤中都會動",
