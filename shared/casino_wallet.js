@@ -134,13 +134,14 @@ function casHouseDaily(h, day) {
   // 到期日那天剩下的自動展延壹次（H.cultureExtDays 天，決定 0097）；展延過的、期限也過了：不再設到期日，只靠第 2 步「莊家賺到的錢壹半還債」
   if (h.debt.culture > 0 && H.cultureDue && day && H.cultureExtDays > 0 && !h.cultureExt && day >= H.cultureDue) h.cultureExt = true;
   const dueD = casCultureDue(h);
-  h.cul = { paid: 0, late: 0, day, due: dueD };
+  h.cul = { paid: 0, late: 0, budget: 0, day, due: dueD };
   if (h.debt.culture > 0 && dueD && day && day <= dueD) {
     const left = Math.max(1, casDaysBetween(day, dueD) + 1), need = Math.min(h.debt.culture, Math.ceil(h.debt.culture * Math.min(days, left) / left));
-    let avail = Math.max(0, h.bankroll);
-    // 墊付不得讓博物館資金低於 cultureKeep（博物館資金要補拚經濟、館方投資，不能被抽乾）；付不出的記逾期，不印錢、不罰息
-    if (need > avail) { const x = Math.min(need - avail, Math.max(0, h.budget - H.cultureKeep)); if (x > 0) { h.budget -= x; casHouseMove(h, "budgetLoan", x); h.debt.budget += x; avail += x; } }
-    const pay = Math.min(need, avail, h.debt.culture);
+    // 決定 0116：博物館資金先付（不得讓它低於 cultureKeep，博物館資金要補拚經濟、館方投資，不能被抽乾；這是博物館資金出的，不記成莊家欠它）；
+    // 不夠的，莊家只付他超過 cultureBankMin 的部分（不讓館債把莊家抽到 0，免費大禮包才不會被擋）；再不夠記逾期，不印錢、不罰息。期限過了（展延也過了）改由第 2 步莊家賺的錢還
+    const bx = Math.min(need, Math.max(0, h.budget - H.cultureKeep)), bank0 = Math.max(0, h.bankroll);
+    const fx = Math.min(need - bx, Math.max(0, bank0 - H.cultureBankMin)), pay = Math.min(bx + fx, h.debt.culture);
+    if (bx > 0 && pay > 0) { const y = Math.min(bx, pay); h.budget -= y; casHouseMove(h, "budgetLoan", y); h.cul.budget = y; }
     if (pay > 0) { casHouseWorldIn(h, "cultureRepay", pay); h.debt.culture -= pay; h.cul.paid = pay; }
     h.cul.late = need - pay; if (h.cul.late > 0) h.cultureLate = (h.cultureLate || 0) + h.cul.late;
   }
@@ -149,7 +150,8 @@ function casHouseDaily(h, day) {
     let pay = Math.floor((h.bankroll - H.reserve) * H.repayPct / 100);
     const a = Math.min(pay, h.debt.budget);
     if (a > 0) { casHouseMove(h, "budgetRepay", -a); h.budget += a; h.debt.budget -= a; pay -= a; }
-    const b = Math.min(pay, h.debt.culture);
+    const inTerm = h.debt.culture > 0 && dueD && day && day <= dueD; // 期限內館債由博物館資金先付（1b）；莊家只拿超過 cultureBankMin 的部分還，期限過了才全部照壹半還
+    const b = Math.min(pay, h.debt.culture, inTerm ? Math.max(0, h.bankroll - H.cultureBankMin) : Infinity); // 期限內只拿莊家超過 cultureBankMin 的部分還
     if (b > 0) { casHouseWorldIn(h, "cultureRepay", b); h.debt.culture -= b; pay -= b; }
     const c = Math.min(pay, h.debt.world);
     if (c > 0) { casHouseWorldIn(h, "worldRepay", c); h.debt.world -= c; }
@@ -683,8 +685,8 @@ const casAddDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); retur
 const casDaysBetween = (a, b) => { const f = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((f(b) - f(a)) / 86400000); };
 
 // ---------- 大禮包（舊的機率）：由莊家出 ----------
-export function casPackDraw() {
-  const roll = 1 + Math.floor(RNG() * 1000); // 1–1000
+export function casPackDraw(maxStars = 5) {
+  const roll = 1 + Math.floor(RNG() * (maxStars >= 5 ? 1000 : CAS_PACKS.find(x => x.stars === maxStars).upTo)); // 1–1000；maxStars < 5：只骰到那一星為止（全館每天上限用完）
   const p = CAS_PACKS.find(x => roll <= x.upTo);
   const chips = p.base + (p.extra ? Math.floor(RNG() * (p.extra + 1)) * p.step : 0);
   return { roll, stars: p.stars, name: p.name, chips };
@@ -705,6 +707,14 @@ export function casPackCut(house) {
   if (house.bankroll < H.low) return Math.max(0, D - H.lowPacks);
   return 0;
 }
+// 全館大禮包壹天付出的（決定 0116）：house.pks { day, n }；超過 NUM.casino.packDayCap 之後當天的包只發 1～3 星
+export function casPackAdd(h, day, n) {
+  n = Math.floor(casNz(n));
+  if (!(n > 0) || !day) return;
+  if (!casIsObj(h.pks) || h.pks.day !== day) h.pks = { day, n: 0 };
+  h.pks.n += n;
+}
+export const casPackCapped = (h, day) => !!(h && day && NUM.casino.packDayCap > 0 && casIsObj(h.pks) && h.pks.day === day && h.pks.n >= NUM.casino.packDayCap);
 export function casOpenPacks(w, house, n, day) {
   const C = NUM.casino, cut = casPackCut(house), freeLeft = Math.max(0, w.pk.left - cut), avail = freeLeft + w.tickets;
   n = Math.floor(+n);
@@ -717,11 +727,11 @@ export function casOpenPacks(w, house, n, day) {
     if (house && casPayLeft(house, day) <= 0) break; // 莊家今天賠付的額度用完了：剩下的包明天再開
     if (w.pk.left - cut > 0) w.pk.left--; else w.tickets--;
     w.pk.opened++;
-    const d = casPackDraw();
+    const d = casPackDraw(casPackCapped(house, day) ? 3 : 5); // 全館今天大禮包付出到上限了：只發 1～3 星
     if (dcap != null && d.chips > dcap) d.chips = dcap; // 莊家手頭緊：壹包最多賠這麼多（五星億萬大禮包縮水）
     w.chips += d.chips;
     casHouseMove(house, "pack", -d.chips);
-    if (house) casPayAdd(house, day, d.chips);
+    if (house) { casPayAdd(house, day, d.chips); casPackAdd(house, day, d.chips); }
     if (d.stars === 5) w.st.star5++;
     packs.push(d);
   }
