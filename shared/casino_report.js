@@ -189,3 +189,62 @@ export function casReportView(doc) {
   secs.push({ t: "對帳", lines: [CAS_REPORT.gag] });
   return { day: doc.day, at: doc.at, span, from: d.from, title: CAS_REPORT.title, intro: CAS_REPORT.intro, stamp: `結算到 ${rpTime(doc.at)}${d.from ? `（從 ${d.from.slice(5)} 算起）` : "（第壹份，從開始記帳算）"}`, secs };
 }
+
+// ================================================================
+//  全世界金流總覽（11-17 翊文：銀行多一個「金流」頁籤，動態 hub 顯示錢往哪裡流）
+//  每個記帳的來源代號歸到一條線：[X, Y] ＝ 這個來源在 X、Y 兩個地方之間搬錢。
+//  節點：world 外面世界（含旅客、散客、各集團、文化部）、house 莊家、budget 博物館資金、museum 修繕基金、gov 政府帳、sea 海底、players 館友（全部合起來）、gen 憑空（成長、擴充、開場）。
+//  新來源沒歸到線就過不了 test/flow_hub.test.cjs。只給合計和來源標籤，不給個別館友和 NPC。
+// ================================================================
+export const CAS_FLOW_NODES = [["world", "外面世界"], ["house", "莊家"], ["players", "館友"], ["budget", "博物館資金"], ["museum", "修繕基金"], ["gov", "政府帳"], ["sea", "海底"], ["gen", "憑空"]];
+export const CAS_FLOW_LINE = {
+  bj: ["house", "players"], pack: ["house", "players"], food: ["house", "players"], loan: ["house", "players"], loanBack: ["house", "players"], job: ["house", "players"], find: ["house", "players"], econLoot: ["house", "players"], bankInt: ["house", "players"],
+  stockIn: ["house", "players"], stockLev: ["house", "players"], bond: ["house", "players"], art: ["house", "players"], artAuction: ["house", "players"], tax: ["house", "gov"], econSea: ["house", "sea"],
+  investFee: ["house", "budget"], budgetLoan: ["house", "budget"], budgetFix: ["house", "budget"], budgetRepay: ["house", "budget"], econWin: ["house", "budget"],
+  stockFee: ["players", "budget"], artFee: ["players", "budget"], stockTax: ["players", "gov"], divTax: ["players", "gov"],
+  bizTax: ["world", "gov"], entTax: ["world", "gov"],
+  npcFood: ["world", "house"], npcBj: ["world", "house"], npcArtBuy: ["world", "house"], inMarket: ["world", "house"], grant: ["world", "house"], worldLoan: ["world", "house"], worldRepay: ["world", "house"], cultureRepay: ["world", "house"],
+  houseInvestBuy: ["world", "house"], houseInvestSell: ["world", "house"], houseInvFix: ["world", "house"],
+  budgetInvestBuy: ["world", "budget"], budgetInvestSell: ["world", "budget"], budgetInvFix: ["world", "budget"], npcTicketBudget: ["world", "budget"], npcCrowdBudget: ["world", "budget"], npcJob: ["world", "budget"], npcCellar: ["world", "budget"], npcCraft: ["world", "budget"], npcArt: ["world", "budget"], ticketBudget: ["world", "budget"],
+  npcTicketMuseum: ["world", "museum"], npcCrowdMuseum: ["world", "museum"], ticketMuseum: ["world", "museum"],
+  stockBuy: ["world", "players"], stockSell: ["world", "players"], stockRebase: ["world", "players"], stockLevWin: ["world", "players"], stockLevLoss: ["world", "players"], dividend: ["world", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
+  worldGrow: ["gen", "world"], worldExpand: ["gen", "world"], reset: ["gen", "house"],
+  start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
+};
+// 今天 05:00 起各條記帳的累計（跟日報快照同一份：led0 在換日寫財報時存，shared/casino_book.js 的 casBookSnap 同一套來源）
+export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, w: Object.assign({}, H.wflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
+const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object.keys(now || {}), ...Object.keys(then || {})])) { const d = Math.round((+(now || {})[k] || 0) - (+(then || {})[k] || 0)); if (d) o[k] = d; } return o; };
+// all：casBooksView(doc, true).all（每個帳的 [{ k, label, n }]，n 是這個帳自己的角度）。回傳 { edges, lost }
+//   edges：[{ from, to, amt, srcs: [{ src, label, amt }] }]，兩個地方之間的淨流向（amt 一定 > 0），srcs 的 amt 對 edge 的方向（反方向的是負的）
+//   lost：沒歸到線的來源（要是 0；test 擋）
+export function casFlowEdges(all) {
+  const pair = {}, done = new Set(), lost = [];
+  for (const [A, list] of [["world", all.world], ["bankroll", all.bankroll], ["budget", all.budget], ["museum", all.museum], ["gov", all.gov]]) for (const x of list || []) {
+    const a = A === "bankroll" ? "house" : A, ln = CAS_FLOW_LINE[x.k];
+    if (done.has(x.k)) continue; // 同壹筆錢在兩個帳（外面世界、莊家…）：先到的算，後面那個是對面的同壹筆
+    if (!ln || (ln[0] !== a && ln[1] !== a)) { lost.push(`${a}.${x.k}`); continue; }
+    done.add(x.k);
+    const other = ln[0] === a ? ln[1] : ln[0], key = [a, other].sort().join("|");
+    // 以字母序小的當「正向」：n > 0 ＝ 進 a（other → a）。存成 [第一個, 第二個] 的淨額（正＝第一個 → 第二個）
+    const first = key.split("|")[0], signed = (a === first ? -x.n : x.n); // a 是第一個：進 a ＝ 第二個 → 第一個 ＝ 負；a 是第二個：進 a ＝ 第一個 → 第二個 ＝ 正
+    const p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
+    p.srcs.push({ src: x.k, label: x.label, amt: signed });
+  }
+  const edges = [];
+  for (const p of Object.values(pair)) {
+    const net = p.srcs.reduce((s, x) => s + x.amt, 0);
+    if (!net) continue;
+    const fwd = net >= 0, srcs = p.srcs.map(x => ({ src: x.src, label: x.label, amt: fwd ? x.amt : -x.amt })).sort((x, y) => Math.abs(y.amt) - Math.abs(x.amt));
+    edges.push({ from: fwd ? p.a : p.b, to: fwd ? p.b : p.a, amt: Math.abs(net), srcs });
+  }
+  return { edges: edges.sort((x, y) => y.amt - x.amt), lost };
+}
+// 銀行「金流」頁籤的資料：{ since: 'MM-DD', edges, bal }；led0 不是今天的（還沒寫）就回 null
+export function casFlowHub(house, day) {
+  const e = house && house.econ, L0 = e && e.led0, led = house && house.led;
+  if (!L0 || L0.day !== day || !led) return null;
+  const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w) };
+  const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0 } }, diff }, true);
+  const r = casFlowEdges(v.all);
+  return { day, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world) } };
+}

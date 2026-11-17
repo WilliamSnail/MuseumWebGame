@@ -18,6 +18,7 @@ import { NUM } from "../../shared/config.js";
 import { addDays, todayStr } from "../../shared/logic.js";
 import { casNum, casPx } from "../../shared/casino.js";
 import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
+import { flowPane } from "./bank_flow.js";
 
 const fp = casPx; // 股價（小數兩位；決定 0108）
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
@@ -31,8 +32,9 @@ const TAB_ICON = {
   stock: SVG('<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>'), // 往上的折線
   auction: SVG('<path d="M4 20h10M7 20v-3h4v3"/><path d="m5 11 6 6M8 6l6 6M13 4l5 5-3 3-5-5z"/><path d="M16 18h4"/>'), // 拍賣槌
   report: SVG('<path d="M5 4h13v16H5z"/><path d="M8 8h7M8 12h7M8 16h4"/><path d="M5 4v16"/>'), // 帳本
+  flow: SVG('<circle cx="12" cy="12" r="2.2"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="12" cy="20" r="1.6"/><path d="M6.4 7.2 10 10.6M17.6 7.2 14 10.6M12 14.2V18.2"/>'), // 中心往外的幾條線（金流 hub）
 };
-const TABS = [["report", "財報"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
+const TABS = [["report", "財報"], ["flow", "金流"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
 const pctText = p => `${(p * 100).toFixed(p * 100 % 1 ? 1 : 0)}%`;
 
 // ---------- 示範資料（伺服器還沒給 bankHall 的時候用；格式照 Yuga 說的 bankHall） ----------
@@ -77,6 +79,18 @@ export function fakeBankHall() {
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
+    flow: { day: "2026-11-17", bal: { house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
+      { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
+      { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
+      { from: "world", to: "budget", amt: 3100000, srcs: [{ src: "npcCrowdBudget", label: "散客的門票（博物館資金）", amt: 2400000 }, { src: "npcJob", label: "NPC 在委託櫃台花的", amt: 700000 }] },
+      { from: "players", to: "world", amt: 1900000, srcs: [{ src: "stockBuy", label: "買股票（錢給外面世界）", amt: 2200000 }, { src: "dividend", label: "股息（外面世界付）", amt: -300000 }] },
+      { from: "gen", to: "world", amt: 840000, srcs: [{ src: "worldGrow", label: "外面世界每天成長（照 GDP 年增率）", amt: 840000 }] },
+      { from: "house", to: "budget", amt: 410000, srcs: [{ src: "investFee", label: "投資手續費", amt: 410000 }] },
+      { from: "players", to: "gov", amt: 160000, srcs: [{ src: "stockTax", label: "股票證交稅", amt: 160000 }] },
+      { from: "world", to: "gov", amt: 95000, srcs: [{ src: "bizTax", label: "營業稅（店裡的花費）", amt: 95000 }] },
+      { from: "house", to: "sea", amt: 22000, srcs: [{ src: "econSea", label: "拚經濟沉到海底", amt: 22000 }] },
+      { from: "world", to: "house", amt: 300000, srcs: [{ src: "npcFood", label: "NPC 在餐車花的", amt: 300000 }] },
+    ] },
   };
 }
 // ---------- 接上伺服器（11-13，主 session）：casino act bankHall 的回答換成畫面要的格式 ----------
@@ -95,7 +109,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, // live：全館的帳的即時餘額（11-17）
+    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -839,7 +853,8 @@ function reportPane(v) {
     h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e)),
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
-const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane };
+const flowReload = () => { if (UI.screen === "bank" && UI.bankTab === "flow" && !UI.bankLoading) bankLoad(); }; // 金流頁籤開著：每 45 秒重拿（bank_flow.js 排）
+const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane, flow: v => flowPane(v, { panel, reload: flowReload }) };
 
 // ---------- 右欄 ----------
 // 我的帳戶的幾行（銀行右欄、賭場和同桌賭桌的小塊共用，11-16）

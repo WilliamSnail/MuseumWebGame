@@ -66,6 +66,7 @@ const STEPS = [
   ["館方投資外面世界（莊家和博物館資金超過保留的部分每天投壹點、錢搬給外面世界、停損停利、虧太多暫停、吃緊暫停、日報寫昨天，規劃 2.8f）", ["test/casino_invest.test.cjs"]],
   ["存股數的地方都跟著換比例、除權（錢包、館方兩個池子、全館持股數；shared/ 用到 .own[ 的檔都要登記，11-17）", ["test/holders_follow.test.cjs"]],
   ["旅客理智分岔（互動上限、7 天均線、每段週結算、先有預兆、恢復、variants 的選法、賭場邀請和委託有接上）", ["test/npc_branch.test.cjs"]],
+  ["銀行金流頁籤的資料（每個來源歸線、方向、淨額、led0 相減、只給合計）", ["test/flow_hub.test.cjs"]],
   ["銀行館內經濟的幾個帳（books：餘額、昨天變化、進出最大的幾筆）", ["test/casino_books.test.cjs"]],
   ["帳的正負號對帳（莊家／博物館資金／修繕基金／外面世界的每個來源方向、兩邊相反、名字、日報文字、掃程式；npm run books:sign）", ["test/books_sign.test.cjs"]],
   ["文化部館債 30 天內還清（每天至少還剩餘÷剩下天數、博物館資金墊、逾期記帳、日報寫出來、館方投資不動還款的錢）", ["test/casino_culture.test.cjs"]],
