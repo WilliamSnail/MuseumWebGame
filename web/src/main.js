@@ -4,6 +4,7 @@
 //   2. 每個畫面檔載入時會把自己的房間登記進 SCREENS（ui_core.js），所以全部先載入。
 //   3. boot.js 一載入就開館，所以放在最後，而且用動態 import，確保前面都準備好了。
 // 開發時網址加 #畫面（例如 #lobby、#cellarrun）會直接進那個畫面、放好假收藏（debug_boot.js，只有 npm run dev 才有）。
+import "./error_report.js"; // 前端錯誤回報（決定 0125）：越早載入越好
 import "./css/ui.css";
 import "./css/fx.css";
 import "./css/theme.css";

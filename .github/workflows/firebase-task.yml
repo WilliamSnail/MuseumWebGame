@@ -10,9 +10,9 @@ on:
         description: 要做什麼
         required: true
         type: choice
-        options: [stats, invite, admin-on, admin-off, disable, enable, stock-reroll, house-ledger, stock-status, econ-status, stock-tw-peg, house-size, fn-errors, world-status, player-invest, invest-status, advisor-rules-mail]
+        options: [stats, invite, admin-on, admin-off, disable, enable, stock-reroll, house-ledger, stock-status, econ-status, stock-tw-peg, house-size, fn-errors, world-status, player-invest, invest-status, client-errors, advisor-rules-mail]
       email:
-        description: Gmail（stats、stock-reroll、house-ledger、stock-status、econ-status、stock-tw-peg、house-size、fn-errors、world-status、advisor-rules-mail 不用填）
+        description: Gmail（stats、stock-reroll、house-ledger、stock-status、econ-status、stock-tw-peg、house-size、fn-errors、world-status、client-errors、advisor-rules-mail 不用填）
         required: false
       name:
         description: 名字（邀請時可以填；player-invest 填館友暱稱）
