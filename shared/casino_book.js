@@ -1,4 +1,5 @@
 import { NUM } from "./config.js";
+import { wuExt } from "./world.js";
 // ================================================================
 //  賭場的記帳（11-13，數值平衡；docs/經濟體系規劃.md 第 2.2 節 P0）
 //  純函式，不碰資料庫，也不依賴別的檔（所以 casino_wallet、econ、find、job 都可以 import）。
@@ -99,11 +100,13 @@ export function casWorldRoom(house, cfg) {
   return Math.max(0, Math.min(w, bkNz(house.wpay.cap) - bkNz(house.wpay.n)));
 }
 const bkWPaid = (house, cfg, n) => { if (casWorldLow(house, cfg) && bkBox(house.wpay)) house.wpay.n = bkNz(house.wpay.n) + n; };
+// 館外股的錢（買賣、股利、換比例的零頭、槓桿損益）記在世界帳上的「海外（真實市場）」，不算本地的集團（決定 0121，shared/world.js 的 wuExt）
+const BK_EXT = new Set(["stockBuy", "stockSell", "stockRebase", "stockLevWin", "stockLevLoss", "dividend"]);
 // 錢包 → 外面世界（買股、槓桿賠）。回傳 n
 export function casWorldIn(w, house, src, n) {
   n = bkNz(n);
   if (n <= 0) return 0;
-  w.chips -= n; house.world = bkNz(house.world) + n;
+  const before = bkNz(house.world); w.chips -= n; house.world = before + n; if (BK_EXT.has(src)) wuExt(house, before, n);
   bkAdd(bkW(house), src, n);
   return n;
 }
@@ -112,7 +115,7 @@ export function casWorldOut(w, house, src, n, cfg) {
   n = Math.min(bkNz(n), casWorldRoom(house, cfg));
   if (n <= 0) return 0;
   bkWPaid(house, cfg, n);
-  w.chips += n; house.world = bkNz(house.world) - n;
+  const before = bkNz(house.world); w.chips += n; house.world = before - n; if (BK_EXT.has(src)) wuExt(house, before, -n);
   bkAdd(bkW(house), src, -n);
   return n;
 }

@@ -112,6 +112,7 @@ export function casHouseFix(h, day) {
   }
   { const F = NUM.casino.houseLoan.fix; if (F && F.on && !h.cFix && h.day && h.debt.culture > 0 && h.budget >= F.amt + NUM.casino.houseLoan.cultureKeep) { h.budget -= F.amt; casHouseMove(h, "budgetFix", F.amt); h.cFix = day || true; } } // 決定 0118（11-17 修正：正式站 house.cul.paid 只是分期 13,393,619，另外 19,402,873 是第 2 步還的，所以不看 cul，只靠 cFix 擋重複）：一次性補撥，博物館資金 → 莊家，不改館債餘額
   if (!h.wExp && NUM.casino.world.expand > 0) { const x = casWorldExpand(h, NUM.casino.world.expand); wuFix(h); wuGrow(h, x); h.wExp = day || true; } // 決定 0117：外面世界一次性擴充（帳上分類照權重分）
+  if (!h.extFix && h.world != null && h.day && casIsObj(h.led) && casIsObj(h.led.world)) { const L = h.led.world, net = ["stockBuy", "stockSell", "stockRebase", "stockLevWin", "stockLevLoss", "dividend"].reduce((t, k) => t + Math.round(casNz(L[k])), 0); const x = wuFix(h); if (x) x.adj["u-ext"] = casNz(x.adj["u-ext"]) + net; h.extFix = day || true; } // 決定 0121：以前館外股的錢進了本地池子，改記「海外」：把累計的淨額從本地分類搬到海外分類（池子總數不變）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
   wuFix(h); // 外面世界的帳上分類（W3，決定 0086）：沒有就照比例建

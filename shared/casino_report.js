@@ -211,7 +211,7 @@ export const CAS_FLOW_ORGS = { museum: "佩佩博物館" }; // 框的名字
 // 外面世界展開的小節點（世界單位名單＋家計＋公共＋NPC 錢包）：id 是 "w:單位id"，會跟著 WORLD_UNITS 新增、拆分、改名；沒有帳（house.world 是 null）就沒有
 export function casFlowWorldNodes(house) {
   if (!house || house.world == null) return [];
-  const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
+  const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : id === "u-ext" ? "海外（真實市場）" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
   const ids = new Set(Object.keys(am)); for (const u of WORLD_UNITS) if (u && u.parent == null) ids.add(u.id); // 名單上的每個頂層單位都有，就算帳上還沒有
   const top = [...ids].map(id => ({ id: "w:" + id, name: nm(id), tier: 1, parent: "world", bal: Math.max(0, Math.floor(+am[id] || 0)) })).sort((x, y) => y.bal - x.bal);
   const subs = WORLD_UNITS.filter(u => u && u.parent != null).map(u => ({ id: "w:" + u.id, name: u.name || u.id, tier: 1, parent: "w:" + u.parent, bal: null })); // 子公司：名單上有上級的；帳上只分到頂層，所以沒有各自的餘額
@@ -227,7 +227,7 @@ export const CAS_FLOW_LINE = {
   houseInvestBuy: ["world", "house"], houseInvestSell: ["world", "house"], houseInvFix: ["world", "house"],
   budgetInvestBuy: ["world", "budget"], budgetInvestSell: ["world", "budget"], budgetInvFix: ["world", "budget"], npcTicketBudget: ["world", "budget"], npcCrowdBudget: ["world", "budget"], npcJob: ["world", "budget"], npcCellar: ["world", "budget"], npcCraft: ["world", "budget"], npcArt: ["world", "budget"], ticketBudget: ["world", "budget"],
   npcTicketMuseum: ["world", "museum"], npcCrowdMuseum: ["world", "museum"], ticketMuseum: ["world", "museum"],
-  stockBuy: ["world", "players"], stockSell: ["world", "players"], stockRebase: ["world", "players"], stockLevWin: ["world", "players"], stockLevLoss: ["world", "players"], dividend: ["world", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
+  stockBuy: ["w:u-ext", "players"], stockSell: ["w:u-ext", "players"], stockRebase: ["w:u-ext", "players"], stockLevWin: ["w:u-ext", "players"], stockLevLoss: ["w:u-ext", "players"], dividend: ["w:u-ext", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
   worldGrow: ["gen", "world"], worldExpand: ["gen", "world"], reset: ["gen", "house"],
   start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
 };

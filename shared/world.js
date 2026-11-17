@@ -68,6 +68,7 @@ export function wdSettle(house, wIn, gateway = NUM.casino.worldDoc ? NUM.casino.
 //    公共（pub）是剩下的，所以指名的單位不夠出時由公共補；公共的比例（現在 16%）是緩衝。
 // ================================================================
 export const WU_HH = "u-household"; // 家計：沒有單位的人（學生、退休、自由業）
+export const WU_EXT = "u-ext"; // 海外（真實市場，決定 0121）：館外股的買賣、股利記在這裡（比例 0，只有 adj）：買＝本地資金外流、賣和股利＝流回來，可以是負的（館友賺真實市場的錢）
 export const WU_PUB = "pub"; // 公共：剩下的（只在 wuAmounts 的結果裡，不存在 adj）
 const wuBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wuTop = () => WORLD_UNITS.filter(u => u && u.parent == null);
@@ -86,8 +87,15 @@ export function wuFix(house) {
   if (!wuBox(x.adj)) x.adj = {};
   for (const id of Object.keys(x.r)) { x.r[id] = +x.r[id] || 0; if (id !== WU_PUB) x.adj[id] = wdN(x.adj[id]); }
   if (x.r[WU_PUB] == null) x.r[WU_PUB] = 0;
+  if (x.r[WU_EXT] == null) { x.r[WU_EXT] = 0; x.adj[WU_EXT] = wdN(x.adj[WU_EXT]); }
   if (x.r[WU_WAL] == null) { x.r[WU_WAL] = 0; x.adj[WU_WAL] = wdN(x.adj[WU_WAL]); } // NPC 錢包（W6）：比例 0，只有 adj
   return x;
+}
+// 館外股的錢進出「海外」：house.world 已經從 before 變成現在，變多的 n（買股：正）全記在海外、其他單位和錢包不動；賣、股利是負的。總和仍等於池子
+export function wuExt(house, before, n) {
+  n = wdN(n); const x = wuFix(house); if (!x || !n) return 0;
+  const deltas = {}; for (const k of Object.keys(x.r)) if (k !== WU_PUB) deltas[k] = k === WU_EXT ? n : 0;
+  wuMove(house, before, deltas); return n;
 }
 // 現在每個單位有多少（含 pub 公共）。總和 ＝ house.world
 export function wuAmounts(house) {
