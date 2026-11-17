@@ -339,7 +339,7 @@ const haltText = (S, s) => (s.session && s.session.state !== "open" && SESS_TEXT
 // 走勢線：台股照 09:00～13:30 的時間軸畫（每分鐘一個價，右邊還沒走到的留白）；其他有 hist 就畫 hist。底圖用 CSS 畫的深藍格線
 // 虛線和紅綠（11-16 翊文：「改成昨天收盤」，照真實看盤軟體的「平盤／前收」）：盤中圖用昨天收盤（價 ÷（1＋今天漲跌））當基準，現在比昨收高畫紅、低畫綠，跟旁邊的漲跌％壹致；沒有漲跌資料才退回第壹點
 function chart(s) {
-  // 11-17 翊文：「這個圖應該保留昨天股市結束之後的摺線圖吧?」：今天還沒有盤中的價（開盤前、等開盤價、休市）就畫伺服器給的上一場（lastSession），基準是那天的昨收
+  // 11-17 翊文：「這個圖應該保留昨天股市結束之後的摺線圖吧?」：今天還沒有盤中的價（開盤前、等開盤價、休市）就畫伺服器給的上壹場（lastSession），基準是那天的昨收
   const ss = s.session, ls = ss && ss.state !== "open" && !(s.intraday || []).length && s.lastSession && (s.lastSession.ser || []).length > 1 ? s.lastSession : null;
   const pts = (ls ? ls.ser : ss ? s.intraday : s.hist) || [];
   const W = 240, H = 56, pad = 4, slots = ss ? ss.slots : pts.length, off = ls ? ls.from : ss ? ss.offset : 0;
@@ -353,7 +353,7 @@ function chart(s) {
     body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${first[0].toFixed(1)},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
   const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, ss.mid), h("span", null, ss.to)) : null;
-  const label = (ss ? (ss.state === "open" ? `盤中，每${ss.step > 1 ? ` ${ss.step} ` : ""}分鐘更新一次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "") + (ls ? `圖是上一場（${ls.day.slice(5)}）的走勢。` : "");
+  const label = (ss ? (ss.state === "open" ? `盤中，每${ss.step > 1 ? ` ${ss.step} ` : ""}分鐘更新一次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "") + (ls ? `圖是上壹場（${ls.day.slice(5)}）的走勢。` : "");
   if (!body && !ss) return null;
   return h("div", { class: "bank-chartbox" },
     h("div", { class: "bank-chart" + (ss && ss.state !== "open" ? " dim" : ""), role: "img", "aria-label": ss ? `走勢，${label}` : `走勢：從 ${fmt(pts[0])} 到 ${fmt(pts[pts.length - 1])}`, html: body ? `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${body}</svg>` : "" }, body ? null : h("p", { class: "bank-nochart" }, label)),
