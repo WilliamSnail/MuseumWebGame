@@ -62,7 +62,7 @@ body.reduce-motion.new-lobby-on #nav .nav-link > .ic, html.new-lobby-on body.red
 .l2-room:focus-visible { outline: none; }
 /* 下壹步那間：框固定，外面的光只動透明度（以前動 box-shadow，每格都要重畫，很吃效能；翊文 11-11：「效能有點吃」） */
 .l2-room.is-goal::after { box-shadow: inset 0 0 0 3px rgba(255,214,120,.95); }
-.l2-room.is-goal::before { content: ""; position: absolute; inset: 0; border-radius: 4px; pointer-events: none; box-shadow: 0 0 22px rgba(255,214,120,.6), inset 0 0 18px rgba(255,214,120,.35); opacity: 0; animation: l2-pulse 1.8s ease-in-out infinite; will-change: opacity; }
+.l2-room.is-goal::before { content: ""; position: absolute; inset: 0; border-radius: 4px; pointer-events: none; box-shadow: 0 0 22px rgba(255,214,120,.6), inset 0 0 18px rgba(255,214,120,.35); opacity: 0; animation: l2-pulse 1.8s ease-in-out 3; will-change: opacity; }
 @keyframes l2-pulse { 50% { opacity: 1; } }
 /* 不是方的房間（.cut）：金框改由 SVG 畫，::after 只留淡淡的底色 */
 .l2-cut { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -106,7 +106,7 @@ body.reduce-motion.new-lobby-on #nav .nav-link > .ic, html.new-lobby-on body.red
 .l2-todo small { display: block; font-size: .74rem; color: #6E5020; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .l2-todo.on { border-image-source: url(/lobby/card-active.webp); border-image-slice: 60 76 fill; }
 /* 第壹張的光：只動透明度（以前動 filter: drop-shadow，很吃效能） */
-.l2-todo.on::after { content: ""; position: absolute; inset: -12px; border-radius: 8px; pointer-events: none; box-shadow: 0 0 16px rgba(255,214,120,.55); opacity: .25; animation: l2-pulse 2.4s ease-in-out infinite; will-change: opacity; }
+.l2-todo.on::after { content: ""; position: absolute; inset: -12px; border-radius: 8px; pointer-events: none; box-shadow: 0 0 16px rgba(255,214,120,.55); opacity: .25; animation: l2-pulse 2.4s ease-in-out 3; will-change: opacity; }
 .l2-todo.done { border-image-source: url(/lobby/card-done.webp); opacity: .62; }
 .l2-todo.done b { text-decoration: line-through; text-decoration-color: rgba(42,30,22,.5); }
 .l2-todo.done small { padding-right: 34px; }

@@ -166,7 +166,7 @@ button.st-item { cursor: pointer; min-height: 44px; }
 .fp-room .fp-label { fill: var(--ink); font-family: var(--font); letter-spacing: .12em; pointer-events: none; transition: transform .25s var(--ease); }
 .fp-room .fp-icon { color: var(--sub); stroke: currentColor; pointer-events: none; }
 .fp-room .fp-dot { fill: var(--accent); opacity: 0; transition: opacity .3s; }
-.fp-room.has-new .fp-dot { opacity: 1; animation: pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.fp-room.has-new .fp-dot { opacity: 1; animation: pulse 2.4s ease-in-out 3; transform-box: fill-box; transform-origin: center; }
 @keyframes pulse { 50% { transform: scale(1.35); } }
 .fp-room:hover .fp-shape, .fp-room:focus-visible .fp-shape { fill: #fff; filter: drop-shadow(0 8px 14px rgba(0,0,0,.08)); transform: translateY(-4px); stroke: var(--ink); }
 .fp-room:focus-visible .fp-shape { stroke: var(--accent); stroke-width: 2.5; }

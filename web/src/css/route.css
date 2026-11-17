@@ -14,7 +14,7 @@
 .rt-node.done { opacity: .6; border-style: dashed; }
 .rt-node.done .rt-name::after { content: "　✓"; color: #9FD39A; }
 .rt-node.here { opacity: 1; border-color: #D6B25E; box-shadow: 0 0 0 3px rgba(214, 178, 94, .35); }
-.rt-node.next { opacity: 1; cursor: pointer; border-color: #D6B25E; background: rgba(251, 239, 217, .12); animation: rt-hop 1.6s ease-in-out infinite; }
+.rt-node.next { opacity: 1; cursor: pointer; border-color: #D6B25E; background: rgba(251, 239, 217, .12); animation: rt-hop 1.6s ease-in-out 3; }
 .rt-node.next:hover, .rt-node.next:focus-visible { background: rgba(251, 239, 217, .22); }
 .rt-node.sel { background: #FBEFD9; color: #2A1E14; animation: none; box-shadow: 0 0 0 3px #7A1F2B; }
 .rt-node:disabled { pointer-events: none; }
@@ -74,7 +74,7 @@ body.reduce-motion .rt-node.next { animation: none; }
 .rt-medal { position: relative; display: block; width: var(--m); height: var(--m); border-radius: 50%; box-shadow: 0 3px 6px rgba(0, 0, 0, .55); }
 .rt-medal .rt-ico { display: block; width: 100%; height: 100%; } /* span 是行內的：不設 block 寬高不會生效 */
 .rt-ico { display: inline-block; vertical-align: middle; }
-.rt-node.next .rt-medal { box-shadow: 0 0 0 3px #D6B25E, 0 0 14px 4px rgba(214, 178, 94, .55); animation: rt-pulse 1.6s ease-in-out infinite; }
+.rt-node.next .rt-medal { box-shadow: 0 0 0 3px #D6B25E, 0 0 14px 4px rgba(214, 178, 94, .55); animation: rt-pulse 1.6s ease-in-out 3; }
 .rt-node.sel .rt-medal { box-shadow: 0 0 0 4px #FBEFD9, 0 0 0 7px #7A1F2B, 0 0 16px 6px rgba(122, 31, 43, .6); animation: none; }
 .rt-node.done .rt-medal { filter: grayscale(.7) brightness(.8); }
 .rt-node.done .rt-name::after { content: "　✓"; color: #9FD39A; }

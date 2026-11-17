@@ -346,17 +346,17 @@ body.reduce-motion .curio-box > svg, body.reduce-motion .curio-box .f-hat, body.
 /* ----- 抱枕：怎麼抱的提示 ----- */
 .hug-hint { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; padding: 10px 14px; border: 1px solid var(--gold-lo); border-radius: 12px; background: rgba(20,8,10,.45); color: var(--on-wall); font-size: .9375rem; }
 .hug-hint .ic, .hug-hint .ic svg { width: 22px; height: 22px; color: #F3A7B8; flex: 0 0 auto; }
-.hug-hint.ready { border-color: #F3A7B8; box-shadow: 0 0 0 1px rgba(243,167,184,.25), 0 0 16px rgba(243,167,184,.35); animation: hugHint 2.4s ease-in-out infinite; }
+.hug-hint.ready { border-color: #F3A7B8; box-shadow: 0 0 0 1px rgba(243,167,184,.25), 0 0 16px rgba(243,167,184,.35); animation: hugHint 2.4s ease-in-out 3; }
 .hug-hint.done { opacity: .75; }
 @keyframes hugHint { 50% { box-shadow: 0 0 0 4px rgba(243,167,184,.18), 0 0 22px rgba(243,167,184,.5); } }
-.huggable svg { animation: hugGlow 2.4s ease-in-out infinite; }
+.huggable svg { animation: hugGlow 2.4s ease-in-out 3; }
 @keyframes hugGlow { 50% { filter: drop-shadow(0 0 12px rgba(255,200,210,.75)); } }
 body.reduce-motion .hug-hint.ready, body.reduce-motion .huggable svg { animation: none; }
 
 /* ----- 書：可以點的字、得失的牌子、蓋著的續集、鏡子 ----- */
 .book-hint { display: flex; align-items: center; gap: 6px; margin: -4px 0 10px; font-size: .8125rem; color: var(--gold-deep, #9C7428); }
 .book-hint .ic, .book-hint .ic svg { width: 15px; height: 15px; }
-.book-link { font: inherit; color: #7A3FB0; background: none; border: 0; padding: 0 2px; cursor: pointer; border-bottom: 1.5px dashed currentColor; text-shadow: 0 0 6px rgba(155,100,220,.45); animation: bookLink 2.6s ease-in-out infinite; }
+.book-link { font: inherit; color: #7A3FB0; background: none; border: 0; padding: 0 2px; cursor: pointer; border-bottom: 1.5px dashed currentColor; text-shadow: 0 0 6px rgba(155,100,220,.45); animation: bookLink 2.6s ease-in-out 3; }
 .book-link:hover, .book-link:focus-visible { color: #A050E0; outline: none; }
 .book-link.faded { opacity: .15; transition: opacity 1.6s; }
 @keyframes bookLink { 50% { text-shadow: 0 0 12px rgba(170,110,235,.8); } }
@@ -374,7 +374,7 @@ body.reduce-motion .hug-hint.ready, body.reduce-motion .huggable svg { animation
 .spine.sealed .spine-of { color: var(--gold); }
 .sealed-hint { font-size: 1rem; line-height: 1.8; padding: 10px 12px; border-left: 3px solid #7A3FB0; background: rgba(122,63,176,.08); }
 /* 圖鑑：最後壹格的下壹格 */
-.cell-beyond { aspect-ratio: 1; border: 0; padding: 0; cursor: pointer; border-radius: 4px; background: radial-gradient(circle at 50% 40%, #4A3768, #120C18 80%); box-shadow: 0 0 8px rgba(138,79,216,.6); display: grid; place-items: center; animation: beyondPulse 2.6s ease-in-out infinite; }
+.cell-beyond { aspect-ratio: 1; border: 0; padding: 0; cursor: pointer; border-radius: 4px; background: radial-gradient(circle at 50% 40%, #4A3768, #120C18 80%); box-shadow: 0 0 8px rgba(138,79,216,.6); display: grid; place-items: center; animation: beyondPulse 2.6s ease-in-out 3; }
 .cell-beyond span { color: #CDB8F0; font-size: .7rem; font-family: Georgia, serif; }
 .cell-beyond.call { animation: beyondCall .9s ease-in-out 6; }
 @keyframes beyondPulse { 50% { box-shadow: 0 0 14px rgba(170,110,235,.9); } }
@@ -398,11 +398,11 @@ body.reduce-motion .hug-hint.ready, body.reduce-motion .huggable svg { animation
 
 /* ----- 揭曉：花心情壓骰子，要壹眼看得出來（翊文 11-08） ----- */
 .spend-box { gap: 10px; padding: 14px 16px 12px; border: 1px solid var(--gold-lo); border-radius: 12px; background: rgba(20,8,10,.45); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
-.spend-box.untouched { border-color: #F3A7B8; animation: spendHint 2.2s ease-in-out infinite; }
+.spend-box.untouched { border-color: #F3A7B8; animation: spendHint 2.2s ease-in-out 3; }
 @keyframes spendHint { 50% { box-shadow: 0 0 0 4px rgba(243,167,184,.18), 0 0 20px rgba(243,167,184,.4); } }
 .spend-head { display: flex; align-items: center; gap: 10px; font-size: 1.0625rem; color: var(--gold-hi); }
 .spend-head .ic, .spend-head .ic svg { width: 22px; height: 22px; color: #F3A7B8; }
-.spend-arrow { margin-left: auto; font-size: .9375rem; color: #F3C9D2; animation: spendArrow 1.4s ease-in-out infinite; }
+.spend-arrow { margin-left: auto; font-size: .9375rem; color: #F3C9D2; animation: spendArrow 1.4s ease-in-out 3; }
 .spend-box:not(.untouched) .spend-arrow { animation: none; opacity: .55; }
 @keyframes spendArrow { 50% { transform: translateX(-10px); } }
 .spend-box .spend-l { font-size: .9375rem; color: var(--on-wall); }
@@ -521,7 +521,7 @@ body.reduce-motion .cellar-stage *, body.reduce-motion .cellar-stage { animation
 body.reduce-motion .btn.odd-talking { animation: none; }
 
 /* 標題畫面：開啟音樂（翊文 11-08：標題音樂聽不太到） */
-.t-music { position: fixed; right: 18px; bottom: 18px; z-index: 40; font: 600 .9375rem var(--serif); letter-spacing: .12em; color: var(--gold-hi); background: rgba(20,8,10,.55); border: 1px solid var(--gold-lo); border-radius: 999px; padding: 8px 16px; cursor: pointer; animation: tMusic 2.4s ease-in-out infinite; }
+.t-music { position: fixed; right: 18px; bottom: 18px; z-index: 40; font: 600 .9375rem var(--serif); letter-spacing: .12em; color: var(--gold-hi); background: rgba(20,8,10,.55); border: 1px solid var(--gold-lo); border-radius: 999px; padding: 8px 16px; cursor: pointer; animation: tMusic 2.4s ease-in-out 3; }
 .t-music.on { animation: none; opacity: .7; }
 @keyframes tMusic { 50% { box-shadow: 0 0 0 4px rgba(238,215,156,.15), 0 0 18px rgba(238,215,156,.4); } }
 
@@ -552,7 +552,7 @@ body.reduce-motion .btn.odd-talking { animation: none; }
 .md-call { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; transition: opacity .4s; animation: mdIn .9s .5s ease both; }
 .md-name { font-family: var(--serif); font-size: clamp(22px, 4vw, 34px); letter-spacing: .4em; margin-left: .4em; color: #EED79C; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .md-orn { width: 220px; height: 18px; margin: 14px 0 26px; background: var(--orn) center / 220px 18px no-repeat; }
-.md-push { font-family: var(--serif); font-size: clamp(20px, 3.2vw, 28px); letter-spacing: .3em; color: #FFF3D6; border: 1px solid #C8A25A; border-radius: 999px; padding: 14px 34px; background: rgba(20,6,8,.45); animation: mdPulse 2.2s 1.4s ease-in-out infinite; }
+.md-push { font-family: var(--serif); font-size: clamp(20px, 3.2vw, 28px); letter-spacing: .3em; color: #FFF3D6; border: 1px solid #C8A25A; border-radius: 999px; padding: 14px 34px; background: rgba(20,6,8,.45); animation: mdPulse 2.2s 1.4s ease-in-out 3; }
 .md-sub { margin-top: 18px; color: #D9C29A; font-size: .9375rem; letter-spacing: .1em; }
 .m-door:focus-visible .md-push { box-shadow: 0 0 0 3px #EED79C; }
 .m-door.open { pointer-events: none; }
@@ -891,7 +891,7 @@ body.reduce-motion .fresh-tag::after { content: none; }
   .next-step .btn { width: 100%; }
 }
 /* 導覽圖上要去的那間房：金色光暈慢慢呼吸 */
-.fp-room.is-goal { filter: drop-shadow(0 0 5px rgba(238,215,156,.95)) drop-shadow(0 0 12px rgba(238,215,156,.55)); animation: goalGlow 1.8s ease-in-out infinite; }
+.fp-room.is-goal { filter: drop-shadow(0 0 5px rgba(238,215,156,.95)) drop-shadow(0 0 12px rgba(238,215,156,.55)); animation: goalGlow 1.8s ease-in-out 3; }
 @keyframes goalGlow { 50% { filter: drop-shadow(0 0 2px rgba(238,215,156,.6)) drop-shadow(0 0 5px rgba(238,215,156,.25)); } }
 body.reduce-motion .fp-room.is-goal, body.reduce-motion .next-step { animation: none; }
 

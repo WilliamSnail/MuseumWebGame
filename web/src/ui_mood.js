@@ -136,6 +136,9 @@ export function mountMood(host, kind, opts) {
   const omens = h("div", { class: "rm-omens" });
   const fx = h("div", { class: "rm-fx" });
   root.append(light, bunt, crowd, omens, fx);
+  // 影子每 80 秒晃過壹次（約 4 秒）：用計時器加 .go 跑壹次，不用 80 秒的無限循環動畫（看不到的 76 秒也在耗電，11-17）。離開房間就不再排
+  const glimpse = () => { if (!omens.isConnected) return; omens.querySelectorAll(".rm-omen").forEach(e => { e.classList.remove("go"); void e.offsetWidth; e.classList.add("go"); }); setTimeout(glimpse, 80000); };
+  setTimeout(glimpse, 4800);
   const L = kind === "lobby" ? (o.portrait ? LOBBY.port : LOBBY.land) : null;
   if (L) {
     const [x0, y0, x1, y1] = L.hall;
