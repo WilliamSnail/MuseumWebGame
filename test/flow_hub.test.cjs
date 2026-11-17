@@ -5,7 +5,7 @@ const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 T("flow：casino_report 名單裡的每個來源都有線，線的兩端都是節點", G => {
-  const ids = new Set(G.CAS_FLOW_NODES.map(x => x[0])), R = G.CAS_REPORT, miss = [];
+  const ids = new Set(G.CAS_FLOW_NODES.map(x => x.id)), R = G.CAS_REPORT, miss = [];
   for (const m of [R.flow, R.houseMint, R.world, R.burn, R.mint]) for (const k of Object.keys(m)) if (!G.CAS_FLOW_LINE[k]) miss.push(k);
   assert.deepStrictEqual(miss, [], "沒歸到金流的線：" + miss.join("、"));
   for (const [k, ln] of Object.entries(G.CAS_FLOW_LINE)) assert.ok(ln.length === 2 && ln.every(x => ids.has(x)) && ln[0] !== ln[1], k);
@@ -29,6 +29,29 @@ T("flow：casFlowHub 用現在的 house.led 減 05:00 的 led0；不是今天的
   const r = G.casFlowHub(h, D), ph = r.edges.find(x => x.from === "players" && x.to === "house");
   assert.ok(ph && ph.amt === 3000, JSON.stringify(r.edges)); assert.strictEqual(r.bal.house, Math.floor(h.bankroll));
   assert.strictEqual(G.casFlowHub(h, "2026-11-18"), null, "led0 是昨天的");
-  assert.ok(!JSON.stringify(r).match(/npcw|name|who/), "只給合計和來源標籤");
+  assert.ok(!JSON.stringify(r).match(/npcw|"who"|"npc":/), "只給合計和來源標籤");
+});
+T("flow：外面世界裡每個頂層單位、家計、公共都有節點（名單新增、拆分、改名會自己跟著）", G => {
+  const D = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), D).house, ids = G.casFlowWorldNodes(h).map(x => x.id);
+  for (const u of G.WORLD_UNITS.filter(x => x.parent == null)) assert.ok(ids.includes("w:" + u.id), "沒有節點：" + u.id);
+  assert.ok(ids.includes("w:" + G.WU_HH) && ids.includes("w:" + G.WU_PUB));
+  const sum = G.casFlowWorldNodes(h).reduce((n, x) => n + x.bal, 0); assert.ok(Math.abs(sum - Math.floor(h.world)) <= 2 && sum > 0, "各單位加起來要是外面世界的錢（公共是剩下的）：" + sum + " vs " + h.world);
+  assert.strictEqual(G.casFlowWorldNodes(null).length, 0);
+});
+T("flow：名單多加壹個集團、拆成兩個、改名，節點和線自己多出來；沒有的來源會被擋", G => {
+  const D = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), D).house, before = G.casFlowWorldNodes(h).length, U = G.WORLD_UNITS;
+  U.push({ id: "g-new", name: "新創集團", kind: "group", parent: null, sector: "arts", share: 0.01, stocks: [] }, { id: "g-new-b", name: "新創集團乙", kind: "group", parent: null, sector: "arts", share: 0.01, stocks: [] });
+  const n2 = G.casFlowWorldNodes(h); assert.strictEqual(n2.length, before + 2);
+  assert.strictEqual(n2.find(x => x.id === "w:g-new-b").name, "新創集團乙"); U.find(x => x.id === "g-new").name = "改名後的集團"; assert.strictEqual(G.casFlowWorldNodes(h).find(x => x.id === "w:g-new").name, "改名後的集團");
+  // 集團之間的交易（以後記在 all.units）：線的兩端是 "w:…"，會長出線；沒歸線的會被擋
+  G.CAS_FLOW_LINE.testTrade = ["w:g-new", "w:g-new-b"];
+  const e = G.casFlowEdges({ units: [{ k: "testTrade", label: "貨款", n: 500 }, { k: "noLine", label: "沒歸線", n: 1 }], world: [], bankroll: [], budget: [], museum: [], gov: [] });
+  assert.ok(e.edges.some(x => x.from === "w:g-new" && x.to === "w:g-new-b" && x.amt === 500), JSON.stringify(e.edges)); assert.strictEqual(e.lost.length, 1);
+  G.CAS_FLOW_LINE.testPay = ["w:g-new", "house"]; const e2 = G.casFlowEdges({ world: [], bankroll: [{ k: "testPay", label: "付莊家", n: 70 }], budget: [], museum: [], gov: [] });
+  assert.ok(e2.edges.some(x => x.from === "w:g-new" && x.to === "house" && x.amt === 70), "莊家那邊的帳也會長出跟集團的線：" + JSON.stringify(e2.edges));
+});
+T("flow：框「佩佩博物館」＝莊家、博物館資金、修繕基金；每個節點都有層", G => {
+  const org = G.CAS_FLOW_NODES.filter(x => x.org === "museum").map(x => x.id).sort(); assert.strictEqual(org.join(), "budget,house,museum"); assert.ok(G.CAS_FLOW_ORGS.museum === "佩佩博物館");
+  assert.ok(G.CAS_FLOW_NODES.every(x => Number.isInteger(x.tier) && x.name));
 });
 console.log(`${pass} passed, ${fail} failed（金流頁籤）`); process.exit(fail ? 1 : 0);

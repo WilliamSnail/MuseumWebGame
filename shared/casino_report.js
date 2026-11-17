@@ -10,6 +10,7 @@ import { casBookSumObj } from "./casino_book.js";
 import { CAS_FX_TEXT } from "./casino_gdp.js";
 import { CAS_ECON, CAS_MENU } from "./casino_text.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { WU_HH, WU_PUB, WU_WAL, wuAmounts } from "./world.js";
 import { statView } from "./stat_view.js";
 import { NPC_ROSTER } from "./npc_roster.js";
 import { npcCounters, npcNews } from "./npc.js";
@@ -196,7 +197,24 @@ export function casReportView(doc) {
 //  節點：world 外面世界（含旅客、散客、各集團、文化部）、house 莊家、budget 博物館資金、museum 修繕基金、gov 政府帳、sea 海底、players 館友（全部合起來）、gen 憑空（成長、擴充、開場）。
 //  新來源沒歸到線就過不了 test/flow_hub.test.cjs。只給合計和來源標籤，不給個別館友和 NPC。
 // ================================================================
-export const CAS_FLOW_NODES = [["world", "外面世界"], ["house", "莊家"], ["players", "館友"], ["budget", "博物館資金"], ["museum", "修繕基金"], ["gov", "政府帳"], ["sea", "海底"], ["gen", "憑空"]];
+export const CAS_FLOW_NODES = [ // tier：第幾層（上到下）；org：屬於哪個框（佩佩博物館）；順序就是同一層從左到右
+  { id: "gen", name: "增長", tier: 0, note: "成長、擴充、開場：不是從哪個帳搬來的" },
+  { id: "world", name: "外面世界", tier: 1, note: "館外的旅客、散客、各集團、文化部" },
+  { id: "players", name: "館友", tier: 2, note: "所有館友的錢包合起來" },
+  { id: "house", name: "莊家", tier: 2, org: "museum", note: "Yuga Bot 的賭場錢" },
+  { id: "gov", name: "政府帳", tier: 3, note: "證交稅、營業稅、娛樂稅" },
+  { id: "sea", name: "海底", tier: 3, note: "B4 水面底下，沉掉的錢" },
+  { id: "museum", name: "修繕基金", tier: 3, org: "museum", note: "門票七成，之後修繕和預算公投" },
+  { id: "budget", name: "博物館資金", tier: 3, org: "museum", note: "館方行政、投資、還館債" },
+];
+export const CAS_FLOW_ORGS = { museum: "佩佩博物館" }; // 框的名字
+// 外面世界展開的小節點（世界單位名單＋家計＋公共＋NPC 錢包）：id 是 "w:單位id"，會跟著 WORLD_UNITS 新增、拆分、改名；沒有帳（house.world 是 null）就沒有
+export function casFlowWorldNodes(house) {
+  if (!house || house.world == null) return [];
+  const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
+  const ids = new Set(Object.keys(am)); for (const u of WORLD_UNITS) if (u && u.parent == null) ids.add(u.id); // 名單上的每個頂層單位都有，就算帳上還沒有
+  return [...ids].map(id => ({ id: "w:" + id, name: nm(id), tier: 1, parent: "world", bal: Math.max(0, Math.floor(+am[id] || 0)) })).sort((x, y) => y.bal - x.bal);
+}
 export const CAS_FLOW_LINE = {
   bj: ["house", "players"], pack: ["house", "players"], food: ["house", "players"], loan: ["house", "players"], loanBack: ["house", "players"], job: ["house", "players"], find: ["house", "players"], econLoot: ["house", "players"], bankInt: ["house", "players"],
   stockIn: ["house", "players"], stockLev: ["house", "players"], bond: ["house", "players"], art: ["house", "players"], artAuction: ["house", "players"], tax: ["house", "gov"], econSea: ["house", "sea"],
@@ -219,12 +237,19 @@ const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object
 //   lost：沒歸到線的來源（要是 0；test 擋）
 export function casFlowEdges(all) {
   const pair = {}, done = new Set(), lost = [];
+  // all.units（以後集團之間的交易放這裡）：[{ k, label, n }]，n > 0 ＝ 線 [X, Y] 的 X 付給 Y
+  for (const x of all.units || []) {
+    const ln = CAS_FLOW_LINE[x.k]; if (!ln || done.has(x.k)) { if (!ln) lost.push("units." + x.k); continue; }
+    done.add(x.k); const key = [ln[0], ln[1]].sort().join("|"), first = key.split("|")[0], p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
+    p.srcs.push({ src: x.k, label: x.label, amt: ln[0] === first ? x.n : -x.n });
+  }
   for (const [A, list] of [["world", all.world], ["bankroll", all.bankroll], ["budget", all.budget], ["museum", all.museum], ["gov", all.gov]]) for (const x of list || []) {
-    const a = A === "bankroll" ? "house" : A, ln = CAS_FLOW_LINE[x.k];
+    const a0 = A === "bankroll" ? "house" : A, ln = CAS_FLOW_LINE[x.k];
     if (done.has(x.k)) continue; // 同壹筆錢在兩個帳（外面世界、莊家…）：先到的算，後面那個是對面的同壹筆
-    if (!ln || (ln[0] !== a && ln[1] !== a)) { lost.push(`${a}.${x.k}`); continue; }
+    const at = ln ? ln.findIndex(id => id === a0 || (a0 === "world" && id.startsWith("w:"))) : -1; // 線的兩端可以是 "w:單位id"（外面世界裡的某個集團），算在外面世界的帳上
+    if (!ln || at < 0) { lost.push(`${a0}.${x.k}`); continue; }
     done.add(x.k);
-    const other = ln[0] === a ? ln[1] : ln[0], key = [a, other].sort().join("|");
+    const a = ln[at], other = ln[1 - at], key = [a, other].sort().join("|");
     // 以字母序小的當「正向」：n > 0 ＝ 進 a（other → a）。存成 [第一個, 第二個] 的淨額（正＝第一個 → 第二個）
     const first = key.split("|")[0], signed = (a === first ? -x.n : x.n); // a 是第一個：進 a ＝ 第二個 → 第一個 ＝ 負；a 是第二個：進 a ＝ 第一個 → 第二個 ＝ 正
     const p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
@@ -246,5 +271,5 @@ export function casFlowHub(house, day) {
   const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w) };
   const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0 } }, diff }, true);
   const r = casFlowEdges(v.all);
-  return { day, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world) } };
+  return { day, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(casFlowWorldNodes(house)), orgs: CAS_FLOW_ORGS, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world) } };
 }
