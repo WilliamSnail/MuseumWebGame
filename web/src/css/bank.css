@@ -616,3 +616,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-src li { display: flex; justify-content: space-between; gap: 8px; font-size: var(--type-small, .75rem); color: var(--bank-mute); }
 .bank-flow-src li b { color: #FF8A78; } .bank-flow-src li b.down { color: #7FD39B; } .bank-flow-src small { display: block; }
 @media (max-width: 760px) { .bank-flow { grid-template-columns: minmax(0, 1fr); } }
+.bank-flow-frame rect { fill: rgba(214, 178, 94, .06); stroke: rgba(214, 178, 94, .55); stroke-width: 1.2; stroke-dasharray: 6 4; }
+.bank-flow-frame text { paint-order: stroke; stroke: #0F192B; stroke-width: 4px; fill: #D6B25E; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; }
+.bank-flow-node-g.chip rect { fill: #17294A; stroke-width: 1.2; filter: none; }
+.bank-flow-node-g.chip text.n { font-size: 11.5px; letter-spacing: 0; } .bank-flow-node-g.chip text.b { font-size: 10px; }
+.bank-flow-node-g.more rect { stroke-dasharray: 3 3; }
