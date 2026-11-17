@@ -22,6 +22,7 @@ T("ship：選項看得懂；打錯就停，不會默默照做", () => {
   assert.throws(() => parseArgs(["--tilte", "x"]), /沒有/);
   assert.throws(() => parseArgs(["--title"]), /後面/);
   assert.throws(() => parseArgs(["亂打"]), /看不懂/);
+  assert.strictEqual(parseArgs(["--say-now-file", "a.txt"])["say-now-file"], "a.txt"); // 多行的 Discord 文字走檔案（11-17）
 });
 T("ship：main 不能直接動；空的分支名也不行", () => {
   assert.ok(branchOk("claude/主題"));

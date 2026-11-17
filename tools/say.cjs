@@ -1,7 +1,7 @@
 // 發壹則手動公告到 Discord，等到發成功或失敗才結束（翊文 11-14：「還有什麼腳本需要寫的」→「四個都做」）
 // 以前每次都要 gh workflow run discord-announce.yml -f message=…，再找 run id、gh run watch，壹天十幾次；子 session 還要傳話叫別人發。
 //   npm run say -- "🎲 賭場：……"            直接寫文字
-//   npm run say -- --file 公告.txt          文字放檔案（很長、有引號的時候）
+//   npm run say -- --file 公告.txt          文字放檔案（很長、有引號、**多行**的時候：Windows 上 npm run 經過 cmd.exe，參數裡換行後面會被切掉）
 //   npm run say -- --dry "……"              只印出來，不發
 // 金鑰在 GitHub Secrets，這裡拿不到也不用拿：只是叫 GitHub 的工作流程去發。ship 的 --say 也用這支。
 const fs = require("fs");
@@ -30,6 +30,7 @@ if (require.main === module) {
   try {
     const fi = a.indexOf("--file"), dry = a.includes("--dry");
     const text = fi >= 0 ? fs.readFileSync(a[fi + 1], "utf8") : a.filter((x, i) => x !== "--dry" && !(fi >= 0 && (i === fi || i === fi + 1))).join(" ");
+    if (fi < 0 && process.platform === "win32" && process.env.npm_lifecycle_event) console.log("（提醒：用 npm run 在 Windows 上直接寫文字，換行後面會被切掉；多行請用 --file）");
     if (dry) { console.log(checkText(text)); process.exit(0); }
     const r = sayDiscord(text);
     if (!r.ok) { console.error(`✗ Discord 沒發成功：${r.url}`); process.exit(1); }
