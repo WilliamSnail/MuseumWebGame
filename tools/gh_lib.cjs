@@ -41,19 +41,30 @@ const runVerdict = st => !st || st.status !== "completed" ? "wait" : RUN_OK.incl
 function waitRun(id, opts = {}) {
   const fetchState = opts.fetchState || runState, nap = opts.sleep || sleep;
   const every = opts.intervalMs || 10000, maxMs = opts.maxMs || 20 * 60 * 1000, maxErrors = opts.maxErrors || 6;
+  const queueMaxMs = opts.queueMaxMs || 0; // 壹直排隊（queued）超過這麼久就回 stuck（11-17：固定動作排隊卡了壹小時）；0＝不管
   const url = `https://github.com/${REPO}/actions/runs/${id}`;
-  let waited = 0, errs = 0, last = null;
+  let waited = 0, errs = 0, last = null, queued = 0;
   for (;;) {
     try { last = fetchState(id); errs = 0; }
     catch (e) { if (++errs >= maxErrors) throw new Error(`查 run ${id} 的狀態連續失敗 ${errs} 次：${e.message}`); }
     const v = runVerdict(last);
     if (v !== "wait") return { ok: v === "ok", status: last.status, conclusion: last.conclusion, url, timedOut: false };
     if (waited >= maxMs) return { ok: false, status: last ? last.status : "unknown", conclusion: null, url, timedOut: true };
+    if (last && last.status === "queued") queued += every; else queued = 0;
+    if (queueMaxMs && queued > queueMaxMs) return { ok: false, status: "queued", conclusion: null, url, timedOut: false, stuck: true };
     nap(every); waited += every;
   }
 }
 
+// 按壹次。排隊超過 queueMin 分鐘（預設 10）還沒開始：取消那次、重按壹次（只重按壹次；還沒開始跑的取消掉不會做壹半）
 function dispatch(wf, inputs = {}, opts = {}) {
+  const r = dispatchOnce(wf, inputs, opts);
+  if (!r.stuck || opts.noRetry) return r;
+  console.log(`排隊超過 ${opts.queueMin || 10} 分鐘還沒開始，取消 ${r.id}、重按壹次`);
+  ghRun(["run", "cancel", String(r.id), "--repo", REPO], { ok: true });
+  return dispatchOnce(wf, inputs, Object.assign({}, opts, { queueMin: 0 }));
+}
+function dispatchOnce(wf, inputs = {}, opts = {}) {
   const old = latestRunId(wf), ref = opts.ref || "main";
   const fields = Object.entries(inputs).flatMap(([k, v]) => ["-f", `${k}=${v}`]);
   ghRun(["workflow", "run", wf, "--repo", REPO, "--ref", ref, ...fields]); // 參數錯（例如輸入名字不對）在這裡就停
@@ -63,8 +74,9 @@ function dispatch(wf, inputs = {}, opts = {}) {
   if (!id) throw new Error(`等了 ${opts.waitMin || 3} 分鐘，還是沒有新的壹次（GitHub Actions 可能在塞車）`);
   const url = `https://github.com/${REPO}/actions/runs/${id}`;
   if (opts.onId) opts.onId(id, url);
-  const w = waitRun(id, { intervalMs: 10000 });
-  return { id, url, ok: w.ok };
+  const q = opts.queueMin === 0 ? 0 : (opts.queueMin || 10) * 60 * 1000;
+  const w = (opts.waitRun || waitRun)(id, { intervalMs: 10000, queueMaxMs: q });
+  return { id, url, ok: w.ok, stuck: !!w.stuck };
 }
 const runLog = id => ghRun(["run", "view", String(id), "--repo", REPO, "--log"], { ok: true }).stdout || "";
 

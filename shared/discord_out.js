@@ -12,7 +12,7 @@
 import { NUM } from "./config.js";
 import { dcNick, dcNum } from "./discord.js";
 
-export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"];
+export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"]; // 每天 20:00 的彙整（kind "digest"，functions/discord_digest.js）不是遊戲事件，不列在這裡
 export const DC_OUT_TEXT = {
   broke: "💸 莊家破產了。Yuga 正在翻抽屜找零錢。想幫忙的人，到賭場的「拚經濟」。",
   breaker: "💥 {nick} 壹把把莊家打到破產了！荷官的手在抖。",
@@ -78,4 +78,36 @@ export const dcOutStale = (atMs, nowMs) => !(Number.isFinite(+atMs) && Number.is
 export function dcOutBody(text) {
   const t = String(text == null ? "" : text);
   return { content: [...t].length > 1900 ? [...t].slice(0, 1899).join("") + "…" : t, allowed_mentions: { parse: [] } };
+}
+
+// ---------- 每天 20:00 的更新彙整（翊文 11-15：「Discord更新太洗板了」→ 每天壹則、「晚上8點發」） ----------
+// 11-17 起由伺服器排程發（functions/discord_digest.js）：GitHub 的定時會晚好幾個小時（11-16 的 20:00 那則隔天 05:32 才發）。
+// list：館方公告（NOTICES）；day：台灣日期；areaOf、areas：分段（noticeArea、NOTICE_AREAS）。今天沒有公告回 ""（不發）
+export const DC_DIGEST_MAX = 1800; // Discord 壹則 2000 字，後面還要放連結
+export const DC_DIGEST_SITE = "https://pepe-museum.web.app";
+export function dcDigestText(list, day, areaOf, areas) {
+  const items = (list || []).filter(n => n && n.title && n.publish === day && n.cat !== "特展活動");
+  if (!items.length) return "";
+  const head = `📰 今天的更新（${day.slice(5).replace("-", "/")}）`, tail = "完整內容在館內公佈欄。";
+  const by = new Map(areas.map(a => [a, []]));
+  for (const n of items) { const a = areaOf(n); (by.get(a) || by.get("其他") || []).push(n.title.replace(/\s+/g, " ").trim()); }
+  const lines = [head];
+  let used = head.length + tail.length + 4, shown = 0;
+  for (const [a, ts] of by) { // 壹行壹行加，放不下就停（不會因為某壹段太長整段都不見）
+    if (!ts.length) continue;
+    const h = `【${a}】`;
+    if (used + h.length + 1 > DC_DIGEST_MAX) break;
+    lines.push(h); used += h.length + 1;
+    let full = false;
+    for (const t of ts) { const l = `・${t}`; if (used + l.length + 1 > DC_DIGEST_MAX) { full = true; break; } lines.push(l); used += l.length + 1; shown++; }
+    if (full) break;
+  }
+  if (shown < items.length) lines.push(`…還有 ${items.length - shown} 則`);
+  lines.push(tail);
+  return lines.join("\n");
+}
+// 真的發出去的那則：彙整＋入館連結（跟 tools/discord_post.cjs 的公告壹樣的尾巴）。沒有公告回 ""
+export function dcDigestPost(list, day, areaOf, areas) {
+  const t = dcDigestText(list, day, areaOf, areas);
+  return t ? `${t}\n\n🎟 入館：${DC_DIGEST_SITE}` : "";
 }
