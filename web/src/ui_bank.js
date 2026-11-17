@@ -820,7 +820,15 @@ function extPanel(e) {
 // 外面世界（世界經濟 W5，翊文同意第 8 題）：只看整體分布，不列每家的數字（免得洩漏股價方向）。資料 e.world（沒有＝下次換日才有）：
 // { day, states: { normal, cut, squeeze, layoff 各幾個集團 }, bands: [4 格：<0.75、0.75～0.9、0.9～1.1、≥1.1 各幾個], avgMult: NPC 預算倍率平均（0.3～1.1）, events: [{ day, text }] }
 const WLD_STATE = ["normal", "cut", "squeeze", "layoff"], WLD_BAND = ["tight", "weak", "normal", "strong"], WLD_UNREST = ["calm", "stir", "uneasy", "turmoil"];
-function outsidePanel(e) {
+// 集團之間的往來（決定 0120）：本週累計＋目前欠金融集團的。資料 v.bankHall.trade ＝ { since, rows: [{ k, label, from, to, n }], loans: [{ name, amt, day }] }
+function tradeSec(t) {
+  if (!t) return null;
+  const rows = (t.rows || []).slice(0, 8), loans = t.loans || [];
+  return h("div", { class: "bank-wld-sec" }, h("b", null, "集團之間的往來"), h("small", { class: "bank-meta sm" }, `　本週（${String(t.since || "").slice(5).replace("-", "/")} 起）累計，整天陸續入帳`),
+    rows.length ? h("ul", { class: "bank-who" }, rows.map(x => h("li", null, h("b", null, x.label || x.k), ` ${x.fromName} → ${x.toName}　`, h("span", { class: "bank-tab-num" }, fmt(x.n))))) : h("p", { class: "bank-meta sm" }, "這週還沒有往來。"),
+    h("p", { class: "bank-meta sm" }, loans.length ? "還欠金融集團：" + loans.map(l => `${l.name} ${fmt(l.amt)}（${String(l.day || "").slice(5).replace("-", "/")} 借）`).join("、") : "目前沒有集團欠金融集團的錢。"));
+}
+function outsidePanel(e, trade) {
   const w = e && e.world;
   if (!w) return panel("外面世界", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
   const states = statCounts("unitState", w.states, WLD_STATE), bands = Array.isArray(w.bands) ? statCounts("unitHealth", Object.fromEntries(WLD_BAND.map((k, i) => [k, w.bands[i]])), WLD_BAND) : [];
@@ -834,12 +842,13 @@ function outsidePanel(e) {
     h("div", { class: "bank-wld-sec" }, h("b", null, "館外 NPC 的花錢力道", " ", statBadge(statView("budgetMult", null, mult), { kind: "budgetMult", hint: true })),
       h("div", { class: "bank-gauge", role: "img", "aria-label": `預算倍率 ${mult.toFixed(2)}` }, h("i", { style: { left: Math.round(((mult - 0.3) / 0.8) * 100) + "%" } })),
       h("div", { class: "bank-gl" }, h("span", null, "縮手 0.3"), h("span", { class: "bank-tab-num" }, `目前 ${mult.toFixed(2)} 倍`), h("span", null, "放手 1.1"))),
+    tradeSec(trade),
     h("div", { class: "bank-wld-sec" }, h("b", null, "這週換了狀態的"),
       events.length ? h("ul", { class: "bank-who" }, events.slice(0, 6).map(x => h("li", null, h("small", { class: "bank-tab-num" }, String(x.day || "").slice(5).replace("-", "/") + "　"), String(x.text || "")))) : h("p", { class: "bank-meta sm" }, "這週沒有換狀態的。")));
 }
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
-  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e)), foldAlways("館方投資", houseInvPanel(v))));
+  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e, v.bankHall && v.bankHall.trade)), foldAlways("館方投資", houseInvPanel(v))));
   const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
   return h("div", { class: "bank-cols report" },
     h("div", { class: "bank-stack" },

@@ -30,7 +30,7 @@ import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
 import { casCellarFind } from "./shared/casino_find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino_book.js";
-import { casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino_report.js";
+import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino_report.js";
 import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
@@ -46,7 +46,7 @@ import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./share
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { npcCardView } from "./shared/npc_card.js";
-import { nwSanPublic, whCard, whCrowdMood, whMoodPublic } from "./shared/world.js";
+import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wtAdvance, wtCard } from "./shared/world.js";
 import { casSellForDebt } from "./shared/casino_debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
@@ -110,6 +110,7 @@ export async function playCore(me, email, opts, fn) {
       const evPacks = casEventPacks(w, eventsFromWeeks(EVENT_WEEKS), t); // 限時活動（casinoBoost）：伺服器的時間說了算
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
+      wtAdvance(house, day, t); // 集團之間的往來整天陸續發生（決定 0120）：補算到現在那壹格
       casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成外面世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
@@ -254,6 +255,7 @@ export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
   // 畫面（web/src/ui_bank.js）讀的是 bankHall.stocks，槓桿頁籤要的 lev、positions、credit、levCap 也要在那裡（11-14 測試：只放在 stock，槓桿頁籤和部位卡永遠不出現）
   const hall = casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), lev = levStock(ctx);
+  hall.trade = (tc => tc && Object.assign(tc, { rows: tc.rows.map(x => Object.assign({ label: CAS_FLOW_UNIT[x.k] || x.k }, x)) }))(wtCard(ctx.house)); // 財報「集團之間的往來」：本週累計、目前欠金融集團的（決定 0120）
   hall.flow = casFlowHub(ctx.house, ctx.day); // 金流頁籤（11-17）：今天 05:00 起各條線的流量
   if (hall && hall.stocks) Object.assign(hall.stocks, { lev: lev.lev, positions: lev.positions, credit: lev.credit, levCap: lev.levCap });
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day, ctx.house), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
