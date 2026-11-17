@@ -7,7 +7,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const D = "2026-11-16";
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
-const mk = G => G.casHouseFix(G.casHouseNew(), D).house;
+const mk = G => { G.NUM.casino.worldDoc.trade.on = false; /* 決定 0119 的交易另外在 world_trade.test 測 */ return G.casHouseFix(G.casHouseNew(), D).house; };
 
 T("單位名單打包跟 content/world/units 一致、頂層比例加家計不超過 1", G => {
   assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_roster.js"), "utf8"), pack.source(pack.roster()), "shared/world_roster.js 沒跟上（跑 node tools/world_pack.cjs）");

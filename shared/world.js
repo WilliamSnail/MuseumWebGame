@@ -151,7 +151,8 @@ export function whFix(house) {
   if (!wuBox(house)) return null;
   const w = wuBox(house.wh) ? house.wh : (house.wh = {});
   w.day = wdDayOk(w.day) ? w.day : null;
-  for (const k of ["base", "idx", "h", "st", "unrest"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of ["base", "idx", "h", "st", "unrest", "chg", "loan"]) if (!wuBox(w[k])) w[k] = {};
+  for (const k of Object.keys(w.loan)) { const L = w.loan[k]; if (!wuBox(L) || !(wdN(L.amt) > 0)) delete w.loan[k]; else { L.amt = wdN(L.amt); L.day = wdDayOk(L.day) ? L.day : null; } }
   for (const k of Object.keys(w.unrest)) w.unrest[k] = whClamp(wdN(w.unrest[k]), 0, 100);
   w.mood = wuBox(w.mood) && wdDayOk(w.mood.day) ? { day: w.mood.day, v: whClamp(wdN(w.mood.v), 0, 100), prev: w.mood.prev == null ? null : whClamp(wdN(w.mood.prev), 0, 100) } : null;
   if (!Array.isArray(w.ev)) w.ev = [];
@@ -165,7 +166,7 @@ function whIdx(u, px, base) {
   return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null;
 }
 // 換日呼叫（house.econ.b 是景氣，px 是 house.stk.px）。同一天不重複。回傳 true ＝ 這次有算
-export function whTick(house, day, px) {
+export function whTick(house, day, px, grown = 0) {
   const w = whFix(house), C = whCfg();
   if (!w || !wdDayOk(day) || w.day === day) return false;
   const b = whClamp(+(house.econ && house.econ.b) || 0, -1, 1), coef = NUM.casino.worldDoc.sectorCoef || {};
@@ -173,8 +174,10 @@ export function whTick(house, day, px) {
     const ix = whIdx(u, px, w.base); if (ix != null) { if (!wuBox(w.idx[u.id])) w.idx[u.id] = {}; w.idx[u.id][day] = Math.round(ix * 10000) / 10000; }
     const ds = wuBox(w.idx[u.id]) ? Object.keys(w.idx[u.id]).sort() : []; for (const d of ds.slice(0, Math.max(0, ds.length - 8))) delete w.idx[u.id][d];
     let chg = 0; if (ds.length >= 2) { const old = ds.find(d => d <= whAddDays(day, -7)) ? ds.filter(d => d <= whAddDays(day, -7)).pop() : ds[0]; const a = w.idx[u.id][old], c = w.idx[u.id][day]; if (a > 0 && c > 0 && old !== day) chg = c / a - 1; }
-    w.h[u.id] = Math.round(whClamp(1 + b * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW, C.min, C.max) * 1000) / 1000;
+    w.chg[u.id] = Math.round(chg * 10000) / 10000;
+    w.h[u.id] = Math.round(whClamp(1 + b * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW + wtWealth(house, u.id), C.min, C.max) * 1000) / 1000;
   }
+  wtDaily(house, day, grown);
   const U = NUM.casino.worldDoc.unrest;
   for (const u of whUnits()) { const cur = whUnrest(house, u.id); w.unrest[u.id] = whClamp(cur + (cur > U.start ? -Math.min(U.back, cur - U.start) : cur < U.start ? Math.min(U.back, U.start - cur) : 0), 0, 100); } // 每天往平常靠（慣性：事件的影響拖幾天）
   const EV = NUM.casino.worldDoc.events; // 排程填的事件（劇情決定的欄位）和壞消息：從上次算到今天，每壹天都套用壹次（隔了幾天沒人來也不漏）
@@ -184,6 +187,8 @@ export function whTick(house, day, px) {
     for (const u of whUnits()) if ((e.down || []).some(s => (u.stocks || []).includes(s))) whUnrestAdd(house, u.id, EV.downPush); // 旗下股票有壞消息：壹個集團壹天最多壹次
   }
   const first = w.day === null;
+  const isMon = first || whIsMon(day);
+  if (isMon) wtWeekStart(house, day); // 週一先看上週借的要不要還、股票營收
   if (first || whIsMon(day)) { // 每週一看一次狀態
     for (const u of whUnits()) {
       const s = w.st[u.id], h = w.h[u.id], from = s.s;
@@ -193,6 +198,7 @@ export function whTick(house, day, px) {
       if (!first && s.s !== from) { w.ev.push({ day, unit: u.id, to: s.s, from }); w.unrest[u.id] = whClamp(whUnrest(house, u.id) + (U[s.s] || 0), 0, 100); } // 換狀態：推一下集體不安
     }
     w.ev = w.ev.slice(-20);
+    wtLoanTake(house, day); // 狀態出來後，不是一般的集團跟金融集團借
   }
   w.day = day;
   const old = w.mood; w.mood = { day, v: whMood(house, day), prev: old && old.day === whAddDays(day, -1) ? old.v : null }; // prev ＝昨天的氣氛（散客類型權重用，換日前後都是同壹個數字）
@@ -218,6 +224,65 @@ export function whMult(house, unitId) {
   const m = s === "normal" ? whClamp(h, 1, C.upMax) : (C.mult[s] || 1);
   return Math.max(C.floor, m);
 }
+// ---------- 集團之間的交易（決定 0119）：只搬帳上的分類（house.wu.adj），house.world、玩家的錢、門票、大禮包、借款都不動 ----------
+const wtCfg = () => NUM.casino.worldDoc.trade;
+const WT_FIN = "g-finance";
+// 單位 id 帳上「比照比例應有的」＝ floor(world × r)
+const wtBase = (house, id) => { const x = wuFix(house); return x && id in x.r ? Math.floor(wdN(house.world) * x.r[id]) : 0; };
+// 帳上的錢比應有的多或少多少（比例，夾在 ±dCap），乘 wealthW ＝ 健康值多或少幾。借來的錢也算（所以借款會讓健康值先回升，還款再回去）
+export function wtWealth(house, id) {
+  const T = wtCfg(); if (!T || !T.on) return 0;
+  const x = wuFix(house), base = wtBase(house, id); if (!x || !(base > 0)) return 0;
+  const rec = id === WT_FIN && wuBox(house.wh) && wuBox(house.wh.loan) ? Object.values(house.wh.loan).reduce((a, L) => a + wdN(L && L.amt), 0) : 0; // 金融集團借出去的算它的資產（不然借越多越窮）
+  return whClamp((wdN(x.adj[id]) + rec) / base, -T.dCap, T.dCap) * T.wealthW;
+}
+// 帳上搬：from 單位 → to 單位（adj），最多搬 from 現有的；回傳搬了多少。總和不變
+function wtMove(house, from, to, n) {
+  n = wdN(n); const x = wuFix(house);
+  if (!x || n <= 0 || from === to || from === WU_PUB || to === WU_PUB || !(from in x.r) || !(to in x.r)) return 0;
+  const take = Math.min(n, wuHave(house, from)); if (take <= 0) return 0;
+  x.adj[from] = wdN(x.adj[from]) - take; x.adj[to] = wdN(x.adj[to]) + take;
+  return take;
+}
+const wtLog = (w, day, t) => { if (!Array.isArray(w.trade)) w.trade = []; w.trade.push({ day, t }); w.trade = w.trade.slice(-20); };
+// 每天：B 貨款（來源集團今天分到的成長 × pct% × 健康值）、A 借款利息
+function wtDaily(house, day, grown) {
+  const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
+  const x = wuFix(house), g = wdN(grown), world = Math.max(1, wdN(house.world));
+  if (g > 0) for (const t of T.goods) { const h = whClamp(+w.h[t.from] || 1, 0.6, 1.2), n = Math.floor(g * (x.r[t.from] || 0) * t.pct / 100 * h); wtMove(house, t.from, t.to, n); }
+  for (const id of Object.keys(w.loan)) { const L = w.loan[id], iv = Math.max(1, Math.ceil(L.amt * T.loan.ratePct / 100)); wtMove(house, id, WT_FIN, iv); }
+}
+// 公共 ↔ 單位（C 股票營收）：n > 0 公共給單位、n < 0 單位給公共；公共是剩下的，所以只改單位的 adj
+function wtPub(house, id, n) {
+  const x = wuFix(house); if (!x || !(id in x.r) || id === WU_PUB) return 0; n = wdN(n);
+  if (n > 0) n = Math.min(n, Math.max(0, wuAmounts(house)[WU_PUB])); else n = -Math.min(-n, wuHave(house, id));
+  x.adj[id] = wdN(x.adj[id]) + n; return n;
+}
+// 週一（狀態之前）：A 的還款（健康值扣掉借款帶來的那一塊，仍 ≥ repayH 才還）、C 股票營收
+function wtWeekStart(house, day) {
+  const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
+  for (const id of Object.keys(w.loan)) {
+    const L = w.loan[id], base = Math.max(1, wtBase(house, id)), adj = wdN(wuFix(house).adj[id]);
+    const hNo = (+w.h[id] || 1) - whClamp(adj / base, -T.dCap, T.dCap) * T.wealthW + whClamp((adj - L.amt) / base, -T.dCap, T.dCap) * T.wealthW; // 不含借款的健康值
+    if (hNo >= T.loan.repayH) { const n = wtMove(house, id, WT_FIN, L.amt); if (n >= L.amt) { delete w.loan[id]; wtLog(w, day, id + " 還款"); } else L.amt -= n; }
+  }
+  for (const u of whUnits()) { const c = +w.chg[u.id] || 0; if (!c) continue; wtPub(house, u.id, Math.floor(wtBase(house, u.id) * T.revPct / 100 * c)); } // 旗下股票漲：公共給單位；跌：單位給公共
+}
+// 週一（狀態出來後）：狀態不是一般的集團，跟金融集團借自己池子的 pct%（金融集團最多借出自己現有的 finPct%）；已經有借款的不再借
+function wtLoanTake(house, day) {
+  const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
+  for (const u of whUnits()) {
+    if (u.id === WT_FIN || w.st[u.id].s === "normal" || w.loan[u.id]) continue;
+    const want = Math.floor(wtBase(house, u.id) * T.loan.pct / 100), cap = Math.floor(wuHave(house, WT_FIN) * T.loan.finPct / 100), n = wtMove(house, WT_FIN, u.id, Math.min(want, cap));
+    if (n > 0) { w.loan[u.id] = { amt: n, day }; wtLog(w, day, u.id + " 借 " + n); }
+  }
+}
+// 集團之間的借款（最近 days 天內的）：給日報和市場新聞用；只寫發生過的（誰借了、誰還了），不寫金額太細
+export function wtNews(house, day, days = 1) {
+  const w = house && wuBox(house.wh) ? house.wh : null; if (!w || !Array.isArray(w.trade)) return [];
+  const from = whAddDays(day, -days);
+  return w.trade.filter(e => e && e.day > from && e.day <= day).map(e => { const m = /^(S+) (借|還款)/.exec(e.t || ""); return m ? { day: e.day, text: `${whName(m[1])}${m[2] === "借" ? "跟金融集團借了錢" : "還了金融集團的借款"}` } : null; }).filter(Boolean);
+}
 const WH_TEXT = { normal: "恢復正常", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
 const whName = id => { const u = WORLD_UNITS.find(x => x.id === id); return u ? u.name : id; };
 // 已發生的事（最近 days 天內換狀態的）：給日報和市場新聞用。只寫發生過的，不預告
@@ -233,7 +298,7 @@ export function whCard(house, day) {
   us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[{ tight: 0, weak: 1, normal: 2, strong: 3 }[statBandOf("unitHealth", h)]]++; }); // 分級只寫在 stat_view.js
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   const un = [0, 0, 0, 0]; us.forEach(u => { un[{ calm: 0, stir: 1, uneasy: 2, turmoil: 3 }[statBandOf("unitUnrest", whUnrest(house, u.id))]]++; });
-  return { day: w.day, states, bands, unrestBands: un, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })) };
+  return { day: w.day, states, bands, unrestBands: un, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
 }
 
 // ================================================================
