@@ -82,6 +82,17 @@ T("槓桿部位當天結束：換日平倉用除息前的收盤價，不受除�
 T("壞資料：事件欄位怪的被丟掉；舊錢包沒有 dv 欄位補得起來", G => {
   const s = fresh(G); G.casStockSetDiv(s.house, { ev: [{ id: "nope", kind: "div", ex: D1, amt: 1 }, { id: ID, kind: "div", ex: "bad", amt: 1 }, { id: ID, kind: "div", ex: D1, amt: -1 }, { id: ID, kind: "split", ex: D1, r: 0.5 }, ev("div", D1, 1)] });
   assert.strictEqual(s.house.stk.div.ev.length, 1);
-  const w = G.casWalletFix(G.casWalletNew(), D0); delete w.stk; G.casStockFix(w); assert.deepStrictEqual(JSON.parse(JSON.stringify(w.stk.dv)), { done: {}, start: {} });
+  const w = G.casWalletFix(G.casWalletNew(), D0); delete w.stk; G.casStockFix(w); assert.deepStrictEqual(JSON.parse(JSON.stringify(w.stk.dv)), { done: {}, start: {}, last: null });
+});
+T("舊錢包第一次碰到：除息日在今天以前的事件（含 1 個月內的除權）不補領、不補配（不然持股會莫名變兩倍）；除息日 ＝ 今天的照領", G => {
+  const s = fresh(G); give(G, s, 1000); G.casStockHouseFix(s.house); s.house.stk.day = "2026-11-17";
+  delete s.w.stk.dv; // 上線前的舊錢包：沒有 dv
+  G.casStockSetDiv(s.house, { ev: [ev("split", "2026-11-05", 2), ev("div", "2026-11-10", 5), ev("split", "2026-11-17", 1.1)] });
+  const c0 = s.w.chips; G.casStockPegSync(s.w, s.house);
+  assert.strictEqual(s.w.stk.own[ID], 1100, "只有今天除權的那張配：1000 × 0.1 ＝ 100 股；11-05 的 2 倍不補");
+  assert.strictEqual(s.w.chips, c0, "11-10 的股息不補");
+  // 錢包幾天沒上線：最後一次領息之後的事件照領
+  const t = fresh(G); give(G, t, 10); t.house.stk.day = "2026-11-17"; G.casStockPegSync(t.w, t.house); roll(G, t, "2026-11-20"); G.casStockSetDiv(t.house, { ev: [ev("div", "2026-11-18", 10)] });
+  const c1 = t.w.chips; G.casStockPegSync(t.w, t.house); assert.ok(t.w.chips > c1, "11-18 的股息在上次領息（11-17）之後，要領");
 });
 console.log(`stock_div.test：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
