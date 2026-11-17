@@ -656,3 +656,6 @@ body[data-screen="bank"] #room { background: none; }
 @keyframes bank-flow-zin { from { transform: scale(.86); opacity: .2; } to { transform: scale(1); opacity: 1; } }
 @keyframes bank-flow-zout { from { transform: scale(1.14); opacity: .2; } to { transform: scale(1); opacity: 1; } }
 .bank-flow-node-g.focus rect { stroke: #FFF3C4; stroke-width: 2.4; }
+
+.bank-flow-node-g .b.neg { fill: #FF9A86; font-weight: 700; } /* 負的餘額（例如海外帳）：帶負號、偏紅 */
+.bank-flow-node-g:has(.b.neg) rect { stroke: #E0705C; }
