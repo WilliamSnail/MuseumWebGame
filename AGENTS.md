@@ -98,7 +98,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 **其他**：
 
 - 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`）。
-- 手機寬度另外看；新動畫要尊重 `body.reduce-motion`。新的 css 前綴、往 html／body 加的 class，先查 `docs/class名單.md`（`npm test` 會檢查）。
+- 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。新的 css 前綴、往 html／body 加的 class，先查 `docs/class名單.md`（`npm test` 會檢查）。
 - 新的文字是草稿，Yuga 可以改；Yuga 改過的以 Yuga 的為準。
 - 文件、日誌、註解用繁體中文、白話、短句，一句一件事；用一般的「一」，引用遊戲畫面上的字才照原樣寫「壹」。
 - 更多會踩的坑：`docs/架構.md` 第 6 節。

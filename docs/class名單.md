@@ -26,7 +26,7 @@
 | `cellar-on` | body | `ui_screens3.js`（地下收藏庫入口） | 在地下收藏庫入口；換房間 `render()` 拿掉 | 石牆背景和石板、銅牌的樣子（`cellar2.css`） |
 | `room-frame-on` | body | `ui_core.js` `render()` | 這個畫面有導覽列和狀態列（標題、結局、黑房間沒有） | 以前叫 `chrome`，容易跟瀏覽器的 chrome 搞混 |
 | `lights-out` | body | `ui_core.js` | 理智用完、燈熄了（`P.dark`）而且不在結局 | 黑房間的樣子。以前叫 `dark`（跟 `.spine.dark`、`.vs-card.dark` 撞名） |
-| `reduce-motion` | body | `ui_core.js`（設定頁） | 玩家開了「減少動態」 | 關動畫。**新動畫要尊重它** |
+| `reduce-motion` | body | `ui_core.js`（設定頁） | 11-15 拿掉設定後不會再加上（舊存檔讀進來就清掉） | 舊的關動畫規則還留著；**新動畫不用管它** |
 | `font-*` | body | `ui_core.js` | 永遠有一個：`font-s`、`font-m`、`font-l` | 字體大小 |
 | `lowsan` | body | `ui_core.js` | 理智低於 40 | 低理智的抖動、變色 |
 | `bout` | body | `ui_core.js` | 瘋狂發作中（`P.bout`） | 發作 |
