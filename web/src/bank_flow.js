@@ -183,8 +183,8 @@ export function flowPane(v, deps) {
     svg.querySelectorAll(".bank-flow-node-g").forEach(el => act(el, () => { const id = el.dataset.n; if (el.dataset.k) { zgo(id); return; } pick({ n: SEL.n === id ? null : id, e: null }); }));
     const crumbs = [["全景", []]]; if (wOpen()) crumbs.push(["外面世界", ["world"]]); if (fid) crumbs.push([name(fid), ["world", fid]]); if (SEL.path[0] && SEL.path[0] !== "world") crumbs.push([(V.orgs[SEL.path[0].slice(4)]) || SEL.path[0], SEL.path.slice()]);
     const bar = h("div", { class: "bank-flow-bar" }, h("nav", { class: "bank-flow-crumbs", "aria-label": "現在看哪一層" }, ...crumbs.flatMap(([t, p], i) => (i === crumbs.length - 1 ? [h("b", { class: "bank-flow-here", "aria-current": "true" }, t)] : [h("button", { type: "button", class: "bank-flow-crumb", onClick: () => { SEL.dir = "out"; SEL.path = p; SEL.n = null; SEL.e = null; draw(); } }, t), h("i", { "aria-hidden": "true" }, "›")]))),
-      h("div", { class: "bank-flow-zoom" }, h("button", { type: "button", class: "bank-flow-zb", "aria-label": "縮小，回上一層", title: SEL.path.length ? "縮小，回上一層" : "已經是全景", disabled: SEL.path.length ? null : true, onClick: () => zout() }, "－"),
-        h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到外面世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到外面世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, "＋")));
+      h("div", { class: "bank-flow-zoom" }, h("button", { type: "button", class: "bank-flow-zb", "aria-label": "縮小，回上一層", title: SEL.path.length ? "縮小，回上一層" : "已經是全景", disabled: SEL.path.length ? null : true, onClick: () => zout() }, h("b", null, "－"), h("span", null, "縮小")),
+        h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到外面世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到外面世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, h("b", null, "＋"), h("span", null, "放大"))));
     if (SEL.dir) { svg.classList.add(SEL.dir === "in" ? "zin" : "zout"); SEL.dir = ""; }
     mapBox.replaceChildren(bar, svg);
     side.replaceChildren(listBox({ edges, bal: V.bal }, SEL, pick));
