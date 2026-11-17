@@ -128,7 +128,7 @@ function casHouseDaily(h, day) {
   }
   const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
   // 0 外面世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
-  { const WC = C.world, yoy = Math.max(0, casNz(h.econ && h.econ.yoy)), base = WC.growYoy ? Math.max(WC.growBase, h.world * yoy / 100 / 365) : WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)), g = casWorldGrow(h, Math.floor(base * days)); wuGrow(h, g); whTick(h, day, h.stk && h.stk.px); } // 成長按權重分給單位；單位的健康值、週一換狀態（W5）（W3，帳上的分類，總和不變）
+  { const WC = C.world, yoy = Math.max(0, casNz(h.econ && h.econ.yoy)), base = WC.growYoy ? Math.max(WC.growBase, h.world * yoy / 100 / 365) : WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)), g = casWorldGrow(h, Math.floor(base * days)); wuGrow(h, g); whTick(h, day, h.stk && h.stk.px, g); } // 成長按權重分給單位；單位的健康值、週一換狀態（W5）（W3，帳上的分類，總和不變）
   // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
   if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));
