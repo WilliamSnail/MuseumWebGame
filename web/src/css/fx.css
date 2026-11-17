@@ -231,7 +231,7 @@ html.fx-dragging, html.fx-dragging * { cursor: grabbing !important; -webkit-user
 }
 .fx-spot-hole::after {
   content: ''; position: absolute; inset: -1px; border-radius: inherit;
-  border: 1.5px solid var(--accent); animation: fx-ring 2.4s ease-in-out infinite;
+  border: 1.5px solid var(--accent); animation: fx-ring 2.4s ease-in-out 3;
 }
 .fx-spot-hole.is-empty::after { display: none; }
 @keyframes fx-ring {

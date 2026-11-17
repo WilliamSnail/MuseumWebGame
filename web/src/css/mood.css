@@ -27,9 +27,10 @@ body.lights-out .rm, body.faint .rm, body.flee .rm, body.bout .rm { display: non
 /* 怪影子：很淡、邊緣糊、在角落、出現壹下就沒了（約 3 秒），像「看到了又不確定」 */
 .rm-omens { position: absolute; inset: 0; opacity: 0; transition: opacity 1.5s ease; }
 .rm-omens.on { opacity: 1; }
-.rm-omen { position: absolute; aspect-ratio: 80 / 120; opacity: 0; filter: blur(2.4px); mix-blend-mode: multiply; animation: rm-glimpse 80s linear infinite; }
+.rm-omen { position: absolute; aspect-ratio: 80 / 120; opacity: 0; filter: blur(2.4px); mix-blend-mode: multiply; }
+.rm-omens.on .rm-omen.go { animation: rm-glimpse 4.4s linear 1; } /* ui_mood.js 每 80 秒加壹次 .go（以前是 80 秒的無限循環，看不到的時候也在耗電） */
 .rm-omen-svg { width: 100%; height: 100%; display: block; }
-@keyframes rm-glimpse { 0%, 6% { opacity: 0; transform: translateX(0); } 7.5% { opacity: .55; } 9.5% { opacity: .5; transform: translateX(-3px); } 11.5%, 100% { opacity: 0; transform: translateX(-6px); } }
+@keyframes rm-glimpse { 0% { opacity: 0; transform: translateX(0); } 27% { opacity: .55; } 64% { opacity: .5; transform: translateX(-3px); } 100% { opacity: 0; transform: translateX(-6px); } }
 /* 銀行：大理石的金色吊燈從上面兩角照下來（景氣好更亮）；看板的光：漲綠、跌紅 */
 .rm-lamps { opacity: calc(.28 + var(--rm-warm, 0) * .6 - var(--rm-dim, 0) * .3); background: radial-gradient(circle at 8% -4%, rgba(255, 226, 150, .55), transparent 38%), radial-gradient(circle at 92% -4%, rgba(255, 226, 150, .55), transparent 38%); mix-blend-mode: screen; }
 .rm i.rm-board { top: auto; inset: auto 0 0 0; height: 16%; opacity: 1; background: linear-gradient(0deg, rgba(86, 214, 120, calc(var(--rm-up, 0) * .42)), transparent), linear-gradient(0deg, rgba(222, 90, 70, calc(var(--rm-down, 0) * .42)), transparent); mix-blend-mode: screen; }

@@ -10,7 +10,7 @@
 .nav-board .nb-seal, .nav-board .nb-dot { display: none; position: absolute; pointer-events: none; }
 .nav-board.has-seal .nb-seal { display: block; top: -4px; left: 10px; width: 14px; height: 14px; border-radius: 50%;
   background: radial-gradient(circle at 36% 30%, #E58074, #A3261E 58%, #5E120E); box-shadow: 0 0 0 1.5px rgba(238,215,156,.85), 0 1px 3px rgba(0,0,0,.6);
-  animation: nbSealPulse 2.4s ease-in-out infinite; }
+  animation: nbSealPulse 2.4s ease-in-out 3; }
 .nav-board.has-dot .nb-dot { display: block; top: -2px; left: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 6px rgba(238,215,156,.85); }
 .nav-board.has-seal, .nav-board.has-dot { color: var(--gold-hi); }
 .nav-board.has-seal .ic, .nav-board.has-dot .ic { opacity: 1; color: var(--gold); }
