@@ -6,7 +6,7 @@
 //  - 小牌：挑看得到的、最大的那個；捲了或 5 秒收起；同壹個框這次開網頁只提示壹次（整頁是每個廳各壹次）。有對話框（role=dialog）蓋著時只看對話框裡的。
 //  - 只看 2140×1440 和手機直拿（翊文 11-16）。
 // ================================================================
-const MORE = 12, SHOW_MS = 5000, MIN_Y = 120, MIN_X = 160;
+const MORE = 12, SHOW_MS = 3500, MIN_Y = 120, MIN_X = 160;
 const told = new WeakSet(), toldPage = new Set();
 const pills = { y: null, x: null }, pillFor = { y: null, x: null }, pillTimer = { y: 0, x: 0 };
 let scanTimer = 0;
@@ -25,7 +25,7 @@ function hidePill(ax) { const had = !!pillFor[ax]; if (pills[ax]) pills[ax].clas
 function showPill(ax, el) {
   if (!pills[ax]) { const p = document.createElement("div"); p.className = "sy-pill sy-pill-" + ax; p.setAttribute("aria-hidden", "true"); p.textContent = ax === "y" ? "⌄ 往下滑還有" : "往右滑還有 ›"; document.body.append(p); pills[ax] = p; }
   const r = viewRect(el), p = pills[ax];
-  if (ax === "y") { p.style.left = `${r.left + r.width / 2}px`; p.style.top = `${Math.min(r.bottom, innerHeight) - 10}px`; }
+  if (ax === "y") { p.style.left = `${r.left + r.width / 2}px`; p.style.top = `${Math.min(r.bottom, innerHeight) - 3}px`; }
   else { p.style.left = `${Math.min(r.right, innerWidth) - 8}px`; p.style.top = `${r.top + r.height / 2}px`; }
   p.classList.add("on"); pillFor[ax] = el; markTold(el);
   clearTimeout(pillTimer[ax]); pillTimer[ax] = setTimeout(() => hidePill(ax), SHOW_MS);
