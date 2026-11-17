@@ -1,14 +1,14 @@
 ---
-日期: 2026-11-17
+日期: 2026-11-17 21:29:38
 作者: 翊文
 AI: Claude Opus 5.5
 類型: 修正
-範圍: tools/ship.cjs、tools/say.cjs、docs/GitHub流程和金鑰.md
+範圍: [tools/ship.cjs, tools/say.cjs, docs/GitHub流程和金鑰.md, test/tools.test.cjs]
 PR: 待補
 版本: -
 測試: test/tools.test.cjs
 相關: 決定 0122（集團股開放買賣的 Discord 公告）
-狀態: 完成
+狀態: 待合併
 ---
 
 ## 為什麼要改
