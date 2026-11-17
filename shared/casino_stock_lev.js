@@ -31,7 +31,8 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casCreditLevel } from "./casino_credit.js";
-import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
+import { casCount, casHouseCover, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
+import { gsLevBook, gsLevClose, gsLevOk, gsLevSrc, gsLevTrade, gsNameOf } from "./casino_stock_grp.js";
 import { casFill, casNum, casPx } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
 import { IN_IDS, casInAdvance, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
@@ -52,11 +53,12 @@ const lqFeePct = () => NUM.casino.stock.feePct;
 // 這支屬於哪個市場："in" 館內五家店、"tw" 台股、"us" 美股，不認得是 null
 export function casLevMarket(id) {
   if (IN_IDS.includes(id)) return "in";
+  if (gsLevOk(id)) return "grp"; // 世界集團的股票（決定 0124）：莊家當對手盤，槓桿單照現股推價
   if (TW_IDS.includes(id)) return "tw";
   if (US_IDS.includes(id)) return "us";
   return null;
 }
-const lqName = id => { const d = IN_STOCKS.find(s => s.id === id) || OUT_STOCKS.find(s => s.id === id); return d ? d.name : id; };
+const lqName = id => { if (gsLevOk(id)) return gsNameOf(id); const d = IN_STOCKS.find(s => s.id === id) || OUT_STOCKS.find(s => s.id === id); return d ? d.name : id; };
 
 // ---------- 補欄位 ----------
 export function casLevFix(w, day) {
@@ -87,8 +89,8 @@ export function casLevFix(w, day) {
 }
 // 莊家：館內股的槓桿＋放空部位合計（曝險上限看這個）。house.lev ＝ { in: 部位合計 }
 export function casLevHouseFix(house) {
-  if (!lqBox(house.lev)) house.lev = { in: 0 };
-  house.lev.in = lqN(house.lev.in);
+  if (!lqBox(house.lev)) house.lev = { in: 0, grp: 0 };
+  house.lev.in = lqN(house.lev.in); house.lev.grp = lqN(house.lev.grp); // grp：集團股槓桿部位合計（換日歸 0，部位都是當天的）
   return house.lev;
 }
 
@@ -165,9 +167,11 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     return null;
   };
   const inSer = id => casInSeriesR(IH, IH.open[id], IH.day, id, secret);
+  const GS = gsLevSrc(house, day, t);
   return {
     now(id) {
       const mk = casLevMarket(id);
+      if (mk === "grp") return GS.now(id);
       if (mk === "in") {
         const pr = casInPrice(house, id, day, t, secret), ready = IH.day === day, idx = casInIdx(t);
         return { px: pr.px, idx: idx === null ? (lqT(t) ? C.ticks - 1 : 0) : idx, open: ready && !pr.halted };
@@ -182,6 +186,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     },
     path(id, d, from) {
       const mk = casLevMarket(id);
+      if (mk === "grp") return GS.path(id, d, from);
       if (mk === "in") {
         const ser = IH.day === d ? inSer(id) : IH.pre && IH.pre.day === d && IH.pre.open[id] > 0 ? casInSeriesR(IH, IH.pre.open[id], d, id, secret) : null; // 前壹天的開盤價莊家還記著（IH.pre）；更早的不知道，不編
         if (!ser) return [];
@@ -196,6 +201,7 @@ export function casLevSrc(house, day, t, secret = casInSecret()) {
     },
     close(id, d) {
       const mk = casLevMarket(id);
+      if (mk === "grp") return GS.close(id, d);
       if (mk === "in") {
         if (IH.day === d) return inSer(id)[C.ticks - 1];
         if (IH.pre && IH.pre.day === d && IH.pre.open[id] > 0) return casInSeriesR(IH, IH.pre.open[id], d, id, secret)[C.ticks - 1];
@@ -261,21 +267,22 @@ export function casLevOpen(w, house, args, day, t, src) {
   const nw = src.now(id);
   if (!nw || !nw.open || !(nw.px > 0)) return { ok: false, reason: T.halt };
   if (mk === "tw" && lqT(t) && twIdx(t) >= NUM.casino.stock.tw.noOpenIdx && twIdx(t) <= NUM.casino.stock.tw.len) return { ok: false, reason: T.closeAuction };
-  const lagWhy = mk === "in" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
-  const px = lqP(nw.px);
+  const lagWhy = mk === "in" || mk === "grp" ? null : casLevLagWhy(nw); if (lagWhy) return { ok: false, reason: lagWhy };
+  let px = lqP(nw.px);
   let qty = Math.floor(+A.qty);
   if (!(qty > 0) && A.margin != null) qty = casLevSizeOf(A.margin, lev, px).qty;
   if (!Number.isFinite(qty) || qty <= 0) return { ok: false, reason: T.qtyBad };
+  if (mk === "grp") { const dr = gsLevTrade(house, id, side === "long" ? 1 : -1, qty, day, t, { dry: true }); if (!dr.ok) return { ok: false, reason: dr.reason }; px = lqP(dr.px); } // 集團股：成交價 ＝ 推價的均價加半價差（先試算，過了所有檢查才真的推）
   const why = lqDebtWhy(w, day); if (why) return { ok: false, reason: why };
   const opensToday = S.opens.day === day ? S.opens.n : 0;
   if (opensToday >= C.opensDay) return { ok: false, reason: casFill(T.opens, { n: C.opensDay }) };
   if (lqT(t) && S.last[id] && +t - S.last[id] < C.coolMin * 60000) return { ok: false, reason: casFill(T.cool, { n: Math.max(1, Math.ceil((C.coolMin * 60000 - (+t - S.last[id])) / 60000)) }) };
   const notional = stBuyCost(px, qty), margin = Math.ceil(notional / lev), level = casLevLevel(w), limit = casLevPosLimit(level), used = lqOpenPos(S);
   if (used + notional > limit) return { ok: false, reason: casFill(T.posLimit, { limit: casNum(limit), level, used: casNum(used), add: casNum(notional) }) };
-  const H = mk === "in" ? casLevHouseFix(house) : null;
-  if (mk === "in") {
+  const H = mk === "in" || mk === "grp" ? casLevHouseFix(house) : null;
+  if (H) {
     if (!(house.bankroll > 0)) return { ok: false, reason: T.houseBroke };
-    if (H.in + notional > lqHouseCap(house)) return { ok: false, reason: T.exposed };
+    if (H[mk] + notional > lqHouseCap(house)) return { ok: false, reason: T.exposed };
   }
   const cost = lqCostOf(side, notional, margin);
   if (w.chips < margin + cost.total) return { ok: false, reason: casFill(T.poor, { need: casNum(margin + cost.total), margin: casNum(margin), fee: casNum(cost.total) }) };
@@ -283,13 +290,14 @@ export function casLevOpen(w, house, args, day, t, src) {
   const probe = { side, entry: px, qty, margin }, sWhy = lqStopWhy(probe, px, stop, take); // 停損停利有問題就整張單不開
   if (sWhy) return { ok: false, reason: sWhy };
   // 成交
+  if (mk === "grp") { const rr = gsLevTrade(house, id, side === "long" ? 1 : -1, qty, day, t); if (!rr.ok) return { ok: false, reason: rr.reason }; gsLevBook(house, id, side === "long" ? qty : -qty); }
   w.chips -= margin + cost.total;
   house.budget += cost.total; casCount(house, "levFee", cost.total); // 手續費和利息搬進博物館資金（不是 burn）
   S.seq += 1;
   const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), peg: lqN(casStockHouseFix(house).peg.seq), px, stop, take };
   S.pos.push(pos); S.hold += margin; S.fee += cost.total;
   S.opens = { day, n: opensToday + 1 };
-  if (H) H.in += notional;
+  if (H) H[mk] += notional;
   casCount(house, "levOpen");
   return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casPx(px), margin: casNum(margin), fee: casNum(cost.total), liq: casPx(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
 }
@@ -297,7 +305,9 @@ export function casLevOpen(w, house, args, day, t, src) {
 // ---------- 結算壹筆（平倉、強平、收盤自動平倉共用） ----------
 // why："close"｜"liq"｜"stop"｜"take"｜"flat"。回傳 { px, pnl 實際算的損益（含賠到保證金為止、賺有上限）, back 拿回的籌碼, fee 平倉手續費, bad 壞帳, clipped 超過上限沒給的 }
 function lqSettle(w, house, S, pos, px, t, why) {
-  const T = CAS_STOCK_LEV, C = lqC();
+  const T = CAS_STOCK_LEV, C = lqC(), grp = pos.mk === "grp", hp = grp || pos.mk === "in", src = grp ? "gLev" : "stockLev";
+  const gsDay = grp && house.gs ? house.gs.day : null;
+  if (grp && pos.day === gsDay) { const cpx = gsLevClose(house, pos.id, pos.side === "long" ? pos.qty : -pos.qty, pos.day, gsDay, t); if (why === "close" && cpx > 0) px = lqP(cpx); } // 集團股：今天的部位平倉、強平也推價（強平照第一個碰到的價結算，手動平倉照推價的成交價）；莊家庫存還原
   const raw = casLevPnl(pos, px);
   let eff = Math.max(raw, -pos.margin); // 賠最多賠保證金
   const bad = raw < -pos.margin ? -pos.margin - raw : 0;
@@ -310,6 +320,10 @@ function lqSettle(w, house, S, pos, px, t, why) {
     let room = Math.max(0, casLevProfitCap(casLevLevel(w)) - S.net.n);
     // 館內股：莊家壹天淨賠付上限（規劃 2.8a 第 7 條，跟股票的賣出共用壹個數）。H.net 已經是更晚的日子（換日後才結算）就不算
     clipped = Math.max(0, eff - room); eff = Math.min(eff, room); // 自己的壹天淨賺上限：多的不給
+    if (grp) { // 集團股：莊家不夠付先跟博物館資金借（決定 0122 同壹個函式），還不夠就少給（沒有隔天補發）
+      const bank = Math.max(0, Math.floor(house.bankroll)); if (eff > bank) { const cv = casHouseCover(house, NUM.casino.gstock.cover.pct, NUM.casino.gstock.cover.max); cv.take(eff - bank); }
+      const bank2 = Math.max(0, Math.floor(house.bankroll)); if (eff > bank2) { clipped += eff - bank2; eff = bank2; }
+    }
     if (hn !== null) { // 莊家壹天淨賠付上限：多的不是不給，記成欠條，之後的日子有空間再補發（11-14，翊文：隔天補發）
       const hroom = house.bankroll > 0 ? Math.max(0, Math.floor(house.bankroll * NUM.casino.stock.netSellPct / 100) + NUM.casino.stock.netSellFlat - hn) : 0;
       owe = Math.max(0, eff - hroom); eff = Math.min(eff, hroom); clipped += owe;
@@ -321,13 +335,14 @@ function lqSettle(w, house, S, pos, px, t, why) {
   if (hn !== null) IH.net = { day: pos.day, n: hn + eff };
   // 錢：先把保證金放回籌碼，再跟對手盤算損益，最後扣平倉手續費
   w.chips += pos.margin;
-  if (eff > 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldOut(w, house, "stockLevWin", eff, NUM.casino.world); }
-  else if (eff < 0) { if (pos.mk === "in") { casHouseMove(house, "stockLev", -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
+  if (eff > 0) { if (hp) { casHouseMove(house, src, -eff); w.chips += eff; } else casWorldOut(w, house, "stockLevWin", eff, NUM.casino.world); }
+  else if (eff < 0) { if (hp) { casHouseMove(house, src, -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
   const equity = pos.margin + eff, feeDue = Math.ceil(stBuyCost(px, pos.qty) * lqFeePct() / 100), fee = Math.min(feeDue, Math.max(0, equity));
   w.chips -= fee; house.budget += fee; casCount(house, "levFee", fee);
   const back = equity - fee;
   if (bad > 0) casCount(house, "levBadDebt", bad);
   if (IH) { const H = casLevHouseFix(house); H.in = Math.max(0, H.in - pos.notional); }
+  if (grp && pos.day === gsDay) { const H = casLevHouseFix(house); H.grp = Math.max(0, H.grp - pos.notional); }
   S.pos = S.pos.filter(p => p !== pos);
   S.hold = S.pos.reduce((a, p) => a + p.margin, 0);
   S.gain += eff - fee - pos.fee; S.fee += fee;
@@ -381,13 +396,14 @@ export function casLevSweep(w, house, day, t, src) {
   src = src || casLevSrc(house, day, t);
   for (const pos of S.pos.slice()) {
     // 價位換成真實比例（規劃 2.8h，house.stk.peg.ev）時還有這檔的部位：之後的價是新的比例，不能跟開倉價比。保守做法：用換之前最後看到的價平倉
-    if (pos.mk !== "in" && casStockHouseFix(house).peg.ev.some(e => e.id === pos.id && e.seq > pos.peg)) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, pos.px, t, "flat"))); continue; }
+    if (pos.mk !== "in" && pos.mk !== "grp" && casStockHouseFix(house).peg.ev.some(e => e.id === pos.id && e.seq > pos.peg)) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, pos.px, t, "flat"))); continue; }
     const path = src.path(pos.id, pos.day, pos.chk) || [];
     const h = casLevCheck(pos, path);
     if (h.hit) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, h.px, t, h.why))); continue; }
     pos.chk += path.length;
     if (path.length) pos.px = path[path.length - 1];
     const nw = src.now(pos.id), stale = lqDay(day) && pos.day < day, closed = stale || (lqT(t) && nw && !nw.open);
+    if (pos.mk === "grp" && !closed && nw && nw.px > 0) { const why = casLevTrig(pos, nw.px); if (why) { out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, nw.px, t, why))); continue; } } // 集團股：除了每 15 分鐘的價，現價（被別人推過的）也檢查
     if (!closed) { if (!stale && nw && nw.px > 0) pos.px = nw.px; continue; }
     const cp = src.close(pos.id, pos.day), px = cp > 0 ? cp : pos.px; // 收盤價不知道（隔了很久沒碰）：用最後看到的價
     out.push(Object.assign({ pos }, lqSettle(w, house, S, pos, px, t, casLevTrig(pos, px) || "flat")));
@@ -438,8 +454,8 @@ export function casStockLevView(w, house, day, t, src) {
   const lagMap = s => { const o = {}; for (const id of [...TW_IDS, ...US_IDS]) { const nw = s.now(id), r = nw && nw.open ? casLevLagWhy(nw) : null; if (r) o[id] = r; } return o; }; // 哪幾檔現在因為行情落後暫停新開
   const C = lqC(), T = CAS_STOCK_LEV, S = casLevFix(w), K = C.credit;
   src = src || casLevSrc(house, day, t);
-  const level = casLevLevel(w), pts = S.cr.pts, byMarket = { in: casLevMaxLev("in", level), tw: casLevMaxLev("tw", level), us: casLevMaxLev("us", level) }; // 倍數上限跟信用等級有關（levByCredit）
-  const nxU = casLevNextUnlock(level), maxLevNow = Math.max(byMarket.in, byMarket.tw, byMarket.us);
+  const level = casLevLevel(w), pts = S.cr.pts, byMarket = { in: casLevMaxLev("in", level), tw: casLevMaxLev("tw", level), us: casLevMaxLev("us", level), grp: casLevMaxLev("grp", level) }; // 倍數上限跟信用等級有關（levByCredit）
+  const nxU = casLevNextUnlock(level), maxLevNow = Math.max(byMarket.in, byMarket.tw, byMarket.us, byMarket.grp);
   const owedTotal = S.owed.reduce((a, e) => a + e.amt, 0);
   const positions = S.pos.map(p => {
     const nw = src.now(p.id), now = nw && nw.px > 0 && p.day === day ? nw.px : p.px;
@@ -448,7 +464,7 @@ export function casStockLevView(w, house, day, t, src) {
   });
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
-    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
+    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us, byMarket.grp), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
       fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, force: C.forcePct / 100, rule: T.rule },
     positions,
     credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: maxLevNow, next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts,

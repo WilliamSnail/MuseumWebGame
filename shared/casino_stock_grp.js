@@ -37,6 +37,7 @@ export function gsFix(house) {
   g.day = gDayOk(g.day) ? g.day : null; g.k = Number.isFinite(+g.k) ? gN(g.k) : -1; g.n = gN(g.n);
   if (!Array.isArray(g.ev)) g.ev = []; g.ev = g.ev.filter(e => gBox(e)).slice(-200);
   if (!gBox(g.u)) g.u = {}; g.div = +g.div > 0 ? +g.div : 0; g.idx = +g.idx > 0 ? +g.idx : 0;
+  for (const U of Object.values(g.u)) { if (!gBox(U)) continue; if (!Array.isArray(U.tp)) U.tp = []; if (!Array.isArray(U.tpp)) U.tpp = []; if (!gBox(U.hc)) U.hc = {}; U.lv = Number.isFinite(+U.lv) ? Math.round(+U.lv) : 0; } // 決定 0124：槓桿要用的今天／昨天每 15 分鐘的價、各日收盤、槓桿部位對莊家庫存的淨影響
   return g;
 }
 const gSnap = (house, id) => { const am = wuAmounts(house); return Math.max(0, gN(am[id])); };
@@ -55,7 +56,7 @@ const gDivAdj = (house, capBefore) => { const g = gsFix(house), after = gCap(hou
 function gsList(house, id, day) {
   const C = gCfg(), g = gsFix(house), x = wuFix(house); if (!x || g.u[id]) return false;
   const cap = gSnap(house, id) * C.capMult, S = Math.max(1000, Math.floor(cap / C.p0)); if (!(S > 0) || !(gSnap(house, id) > 0)) return false;
-  const before = gCap(house); g.u[id] = { S, P: C.p0, o: C.p0, i: 0, h: 0, a0: gSnap(house, id), hist: [] };
+  const before = gCap(house); g.u[id] = { S, P: C.p0, o: C.p0, i: 0, h: 0, a0: gSnap(house, id), hist: [], tp: [], tpp: [], hc: {}, lv: 0 };
   if (g.div > 0) gDivAdj(house, before); else g.div = gCap(house) / 100;
   return true;
 }
@@ -66,7 +67,12 @@ export function gsAdvance(house, day, t) {
   const C = gCfg(); if (!C || !C.on || !gDayOk(day)) return false;
   const g = gsFix(house), x = wuFix(house); if (!x) return false;
   if (g.day !== day) { // 換日：收盤進歷史、開盤價 ＝ 昨天的收盤；新的集團上市；每週一做公司的事
-    for (const id of Object.keys(g.u)) { const U = g.u[id]; U.hist.push(Math.round(U.P * 100) / 100); U.hist = U.hist.slice(-30); U.o = U.P; }
+    for (const id of Object.keys(g.u)) {
+      const U = g.u[id]; U.i += gN(U.lv); U.lv = 0; // 槓桿部位都是當天的：換日就當沖掉了，莊家庫存還原（錢包裡的部位之後用昨天的收盤結算，不再動庫存）
+      if (g.day) { U.hc[g.day] = Math.round(U.P * 100) / 100; for (const d of Object.keys(U.hc).sort().slice(0, -6)) delete U.hc[d]; U.tpp = U.tp; U.tpd = g.day; } U.tp = [];
+      U.hist.push(Math.round(U.P * 100) / 100); U.hist = U.hist.slice(-30); U.o = U.P;
+    }
+    if (gBox(house.lev)) house.lev.grp = 0;
     for (const id of gsListed(house)) gsList(house, id, day);
     g.day = day; g.k = -1;
     if (new Date(day + "T00:00:00Z").getUTCDay() === 1) gsWeekly(house, day);
@@ -81,7 +87,7 @@ function gsStep(house, id, day, k) {
   const C = gCfg(), U = gsFix(house).u[id], F = gsFair(house, id), prev = U.P;
   let P = prev + C.revert * (F - prev) + prev * C.sd * gGauss(`${day}|${id}|${k}`);
   P = gClamp(P, prev * (1 - C.tickLim / 100), prev * (1 + C.tickLim / 100)); P = gClamp(P, U.o * (1 - C.dayLim / 100), U.o * (1 + C.dayLim / 100));
-  U.P = Math.max(C.floor, P);
+  U.P = Math.max(C.floor, P); U.tp[k] = Math.round(U.P * 100) / 100;
 }
 // ---------- 公司的事（每週一）：現金股利、增資、庫藏股、股票股利、分割 ----------
 function gsEvent(g, e) { g.n++; g.ev.push(Object.assign({ no: g.n }, e)); g.ev = g.ev.slice(-200); }
@@ -155,6 +161,8 @@ export function gsWalletFix(w) {
   for (const k of ["h", "cost"]) if (!gBox(s[k])) s[k] = {};
   for (const k of Object.keys(s.h)) { const n = gN(s.h[k]); if (n > 0) s.h[k] = n; else { delete s.h[k]; delete s.cost[k]; } }
   if (!gBox(s.sold)) s.sold = { day: null, n: 0 }; if (!gBox(s.v)) s.v = { day: null, n: {} }; s.seen = gN(s.seen);
+  s.orders = (Array.isArray(s.orders) ? s.orders : []).filter(o => gBox(o) && o.id && gN(o.n) > 0 && +o.px > 0); s.oseq = gN(s.oseq); s.hold = s.orders.reduce((a, o) => a + gN(o.hold), 0); // 掛單（決定 0124）：鎖住的籌碼算玩家的（casino_book 的 bkHeld）
+  s.notes = (Array.isArray(s.notes) ? s.notes : []).filter(x => typeof x === "string").slice(-8);
   return s;
 }
 // 碰到錢包時補上沒套用的公司事件（股利、股票股利、分割、分拆）；每次買賣、看畫面前先呼叫。錢從集團池子出（gDiv）。回傳 { got 領到的股利, lines }
@@ -181,7 +189,7 @@ function gQuote(U, q) { // q：買 ＋、賣 −。回傳 { ok, avg, Pn, maxN }
   return { ok: true, Pn, avg: Math.sqrt(U.P * Pn) };
 }
 const gHalt = (g, day, t) => !gDayOk(day) || (t != null && Number.isFinite(+t) && casInIdx(t) === null);
-export function gsBuy(w, house, id, shares, day, t) {
+export function gsBuy(w, house, id, shares, day, t, fixPx) {
   const C = gCfg(); if (!C || !C.on) return { ok: false, reason: "集團的股票還沒開放。" };
   gsAdvance(house, day, t); const g = gsFix(house), U = g.u[id], S = gsWalletFix(w); gsSync(w, house);
   if (!U) return { ok: false, reason: "看不懂要買哪一支。" }; if (gHalt(g, day, t)) return { ok: false, reason: "集團股票的營業時間是 05:00～23:30，現在休市。" };
@@ -190,24 +198,25 @@ export function gsBuy(w, house, id, shares, day, t) {
   if (vol + n > capD) return { ok: false, reason: `今天這支最多再買賣 ${Math.max(0, capD - vol)} 股（壹天最多股本的 ${C.dayVolPct}%）。` };
   if (Math.abs(U.i - n) > U.S * C.makerCapPct / 100) return { ok: false, reason: "莊家手上這支的庫存已經夠多了，今天不能再買。" };
   const q = gQuote(U, n); if (!q.ok) return { ok: false, reason: `這支的價格已經推到漲跌停了，現在最多還能買 ${q.maxN} 股，晚點再來。` };
-  const cost = Math.max(1, Math.round(n * q.avg * (1 + C.half))), fee = Math.ceil(cost * NUM.casino.stock.feePct / 100);
+  const cost = Math.max(1, fixPx > 0 ? Math.round(n * fixPx) : Math.round(n * q.avg * (1 + C.half))), fee = Math.ceil(cost * NUM.casino.stock.feePct / 100);
   if (cost + fee > w.chips) return { ok: false, reason: "籌碼不夠。" };
   w.chips -= cost; casHouseMove(house, "gStock", cost); w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   U.P = Math.max(C.floor, q.Pn); U.i -= n; U.h += n; S.h[id] = have + n; S.cost[id] = gN(S.cost[id]) + cost + fee; S.v = { day, n: Object.assign(S.v.day === day ? S.v.n : {}, { [id]: vol + n }) };
   return { ok: true, n, cost, fee, px: Math.round(cost / n), lines: [`買進「${gsNameOf(id)}」${n} 股，每股約 ${Math.round(cost / n)}，花了 ${cost}，手續費 ${fee}。`] };
 }
-export function gsSell(w, house, id, shares, day, t) {
+export function gsSell(w, house, id, shares, day, t, fixPx) {
   const C = gCfg(); if (!C || !C.on) return { ok: false, reason: "集團的股票還沒開放。" };
   gsAdvance(house, day, t); const g = gsFix(house), U = g.u[id], S = gsWalletFix(w); gsSync(w, house);
   if (!U) return { ok: false, reason: "看不懂要賣哪一支。" }; if (gHalt(g, day, t)) return { ok: false, reason: "集團股票的營業時間是 05:00～23:30，現在休市。" };
   const have = gN(S.h[id]); if (have <= 0) return { ok: false, reason: "你沒有這支股票。" };
   const n0 = shares === "max" ? have : Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, ""))); if (!Number.isFinite(n0) || n0 <= 0) return { ok: false, reason: "看不懂要賣幾股。" };
   if (n0 > have) return { ok: false, reason: `你只有 ${have} 股。` };
+  { const free = have - gsLocked(S, id); if (n0 > free) return { ok: false, reason: `有 ${have - free} 股被掛單鎖住了，現在能賣 ${Math.max(0, free)} 股。` }; }
   const vol = S.v.day === day ? gN(S.v.n[id]) : 0, capD = Math.floor(U.S * C.dayVolPct / 100);
   if (vol + n0 > capD) return { ok: false, reason: `今天這支最多再買賣 ${Math.max(0, capD - vol)} 股（壹天最多股本的 ${C.dayVolPct}%）。` };
   if (Math.abs(U.i + n0) > U.S * C.makerCapPct / 100) return { ok: false, reason: "莊家手上這支的庫存已經夠多了，今天不能再收。" };
   const q0 = gQuote(U, -n0); if (!q0.ok) return { ok: false, reason: `這支的價格已經推到漲跌停了，現在最多還能賣 ${q0.maxN} 股，晚點再來。` };
-  const gOf = k => { const qq = gQuote(U, -k); return qq.ok ? Math.max(1, Math.round(k * qq.avg * (1 - C.half))) : Infinity; };
+  const gOf = k => { const qq = gQuote(U, -k); return qq.ok ? Math.max(1, fixPx > 0 ? Math.round(k * fixPx) : Math.round(k * qq.avg * (1 - C.half))) : Infinity; };
   let n = n0, gross = gOf(n0), part = 0, lent = 0;
   if (house.bankroll < gross) { // 決定 0122：莊家不夠先跟博物館資金借；兩邊加起來還不夠，賣得掉幾股算幾股（部分成交）
     if (!(house.bankroll >= 0)) return { ok: false, reason: "莊家現在沒有錢收，晚點再來。" };
@@ -224,12 +233,92 @@ export function gsSell(w, house, id, shares, day, t) {
   S.v = { day, n: Object.assign(S.v.day === day ? S.v.n : {}, { [id]: vol + n }) };
   return { ok: true, n, gross, fee, tax, profit, part, lent, lines: [`賣出「${gsNameOf(id)}」${n} 股${part > 0 ? `（莊家付不起整筆，只收了這些，另外 ${part} 股沒賣掉）` : ""}，每股約 ${Math.round(gross / n)}，拿到 ${gross - fee - tax}，手續費 ${fee}，證交稅 ${tax}。`] };
 }
+// ---------- 掛單（決定 0124，翊文 11-17：成交照現股推價）----------
+// 限價買（buy）：價 ≤ 限價就成交；限價賣（sell）：價 ≥ 限價；停損賣（stop）：價 ≤ 停損價。下單那天的收盤前有效，沒成交就取消退回（公司事件都在週一換日，不會跨到事件）。
+// 下單時價格要比現價更有利（不然等於市價單）；買單鎖籌碼、賣單和停損鎖股數。成交價 ＝ 碰到的那個價（用下單之後每 15 分鐘的價和現價檢查），成交走 gsBuy／gsSell（手續費、稅、上限、推價跟現股壹樣）。
+const gsLocked = (S, id) => S.orders.filter(o => o.id === id && o.kind !== "buy").reduce((a, o) => a + gN(o.n), 0);
+const gPx2 = v => Math.round(+v * 100) / 100;
+const gKind = { buy: "限價買", sell: "限價賣", stop: "停損賣" };
+export function gsOrder(w, house, kind, id, shares, px, day, t) {
+  const C = gCfg(); if (!C || !C.on) return { ok: false, reason: "集團的股票還沒開放。" };
+  gsAdvance(house, day, t); const g = gsFix(house), U = g.u[id], S = gsWalletFix(w); gsSync(w, house);
+  if (!U || !gKind[kind]) return { ok: false, reason: "看不懂要掛哪壹張單。" }; if (gHalt(g, day, t)) return { ok: false, reason: "集團股票的營業時間是 05:00～23:30，現在休市。" };
+  const n = Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, ""))), p = gPx2(Number(String(px == null ? "" : px).replace(/[,，\s]/g, "")));
+  if (!Number.isFinite(n) || n <= 0 || !(p >= C.floor)) return { ok: false, reason: "看不懂股數或價格。" };
+  const O = NUM.casino.stock.order; if (S.orders.length >= O.max) return { ok: false, reason: `最多同時掛 ${O.max} 張單。` };
+  if (S.orders.filter(o => o.id === id).length >= O.perStock) return { ok: false, reason: `同壹支最多掛 ${O.perStock} 張單。` };
+  const now = gPx2(U.P); if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: `價格要比現價 ${now} 更有利才能掛單（買、停損要低於現價，賣要高於現價）。` };
+  const o = { no: ++S.oseq, kind, id, n, px: p, day, hold: 0, at: gN(g.k) };
+  if (kind === "buy") { const c = Math.max(1, Math.round(n * p)); o.hold = c + Math.ceil(c * NUM.casino.stock.feePct / 100); if (o.hold > w.chips) { S.oseq--; return { ok: false, reason: "籌碼不夠，掛不了這張單。" }; } w.chips -= o.hold; }
+  else { const free = gN(S.h[id]) - gsLocked(S, id); if (n > free) { S.oseq--; return { ok: false, reason: `可以掛的股只有 ${Math.max(0, free)} 股（掛單會鎖住股數）。` }; } }
+  S.orders.push(o); S.hold = S.orders.reduce((a, x) => a + gN(x.hold), 0);
+  return { ok: true, order: o, lines: [`掛好了：${gKind[kind]}「${gsNameOf(id)}」${n} 股，價格 ${p}${o.hold ? "，鎖住 " + o.hold : ""}。今天收盤前沒成交就取消。`] };
+}
+function gsDrop(w, S, o) { if (o.hold > 0) { w.chips += o.hold; o.hold = 0; } S.orders = S.orders.filter(x => x.no !== o.no); S.hold = S.orders.reduce((a, x) => a + gN(x.hold), 0); }
+export function gsCancel(w, house, no, day, t) {
+  gsAdvance(house, day, t); const g = gsFix(house), S = gsWalletFix(w);
+  const o = S.orders.find(x => x.no === gN(no)); if (!o) return { ok: false, reason: "找不到這張單。" };
+  if (gHalt(g, day, t)) return { ok: false, reason: "休市中不能取消（收盤後沒成交的單會自己取消）。" };
+  gsDrop(w, S, o); return { ok: true, lines: ["取消了，鎖住的錢（股）退回來。"] };
+}
+// 照價格檢查這個錢包的單（casStockMatch 呼叫，每次碰到錢包）。回傳 { fills, cancels }
+export function gsMatch(w, house, day, t) {
+  const out = { fills: 0, cancels: 0 }; if (!gBox(w.gs) || !Array.isArray(w.gs.orders) || !w.gs.orders.length) return out;
+  const C = gCfg(); if (!C || !C.on) return out;
+  gsAdvance(house, day, t); const g = gsFix(house), S = gsWalletFix(w), closed = gHalt(g, day, t) && t != null;
+  for (const no of S.orders.map(x => x.no).sort((a, b) => a - b)) {
+    const o = S.orders.find(x => x.no === no), U = o && g.u[o.id]; if (!o) continue;
+    const note = line => { S.notes.push(line); S.notes = S.notes.slice(-8); };
+    if (!U || o.day < day) { gsDrop(w, S, o); note(`${gKind[o.kind]}「${gsNameOf(o.id)}」${o.n} 股沒成交，已經過期取消。`); out.cancels++; continue; }
+    const pts = U.tp.slice(o.at + 1).concat(closed ? [] : [U.P]);
+    const hit = pts.find(p => (o.kind === "sell" ? p >= o.px : p <= o.px)); // 限價買、停損：碰到或低於；限價賣：碰到或高於
+    if (hit === undefined) { if (closed) { gsDrop(w, S, o); note(`${gKind[o.kind]}「${gsNameOf(o.id)}」${o.n} 股今天沒成交，已經取消。`); out.cancels++; } continue; }
+    const kind = o.kind, n = o.n, id = o.id; gsDrop(w, S, o); // 先退回鎖住的，再照市價單走壹遍，成交價用碰到的價
+    const r = kind === "buy" ? gsBuy(w, house, id, n, day, null, hit) : gsSell(w, house, id, n, day, null, hit);
+    if (r.ok) { out.fills++; note(`${gKind[kind]}「${gsNameOf(id)}」成交：${r.n} 股，價格 ${hit}${r.part > 0 ? "（只賣掉這些）" : ""}。`); } else { out.cancels++; note(`${gKind[kind]}「${gsNameOf(id)}」${n} 股碰到價格了，但成交不了（${r.reason}），已取消。`); }
+  }
+  return out;
+}
+// ---------- 槓桿、放空（決定 0124，翊文 11-17：槓桿單也推價、5 倍、莊家曝險 20%）----------
+// 部位的對手是莊家：開倉＝莊家賣出（做多）或買進（放空）n 股，推價；平倉、強平反過來推價。部位都是當天的（跟館內股壹樣），換日 gsAdvance 把莊家庫存還原（U.lv ＝ 部位淨股數，做多正、放空負）。
+// 價格怎麼取：成交價 ＝ 這次推價的均價加半價差（跟現股壹樣）；推不動（漲跌停、莊家庫存上限、休市）的收尾單用現價、不推。
+export const gsLevOk = id => WORLD_UNITS.some(u => u && u.listed && u.id === id);
+// dir：+1 使用者買（做多開倉、放空平倉）、−1 使用者賣。回傳 { ok, px 成交價, pushed 有沒有推, Pn, reason }；dry 只報價不動；force 推不動就用現價
+export function gsLevTrade(house, id, dir, n, day, t, opt = {}) {
+  const C = gCfg(); if (!C || !C.on) return { ok: false, reason: "集團的股票還沒開放。" };
+  gsAdvance(house, day, t); const g = gsFix(house), U = g.u[id]; n = Math.floor(n);
+  if (!U || !(n > 0)) return { ok: false, reason: "看不懂要交易哪一支。" };
+  const halt = gHalt(g, day, t), capBad = Math.abs(U.i - dir * n) > U.S * C.makerCapPct / 100, q = halt ? { ok: false } : gQuote(U, dir * n);
+  if (halt || capBad || !q.ok) { if (!opt.force) return { ok: false, reason: halt ? "集團股票的營業時間是 05:00～23:30，現在休市。" : capBad ? "莊家手上這支的庫存已經夠多了，今天不能再推。" : `這支的價格已經推到漲跌停了，現在最多還能 ${q.maxN} 股，晚點再來。` }; return { ok: true, px: gPx2(U.P), pushed: false, Pn: U.P }; }
+  const px = gPx2(dir > 0 ? q.avg * (1 + C.half) : q.avg * (1 - C.half));
+  if (!opt.dry) { U.P = Math.max(C.floor, q.Pn); U.i -= dir * n; }
+  return { ok: true, px, pushed: !opt.dry, Pn: q.Pn };
+}
+// 開倉成交後記下莊家的庫存影響（signed：做多 +n、放空 −n）
+export function gsLevBook(house, id, signed) { const U = gsFix(house).u[id]; if (U) U.lv += signed; }
+// 收掉壹筆當天的部位：能推就推（均價就是成交價），推不動用現價；莊家庫存都還原。不是今天開的部位（換日時已經還原）什麼都不動。回傳成交價或 null
+export function gsLevClose(house, id, signed, openDay, day, t) {
+  const g = gsFix(house), U = g.u[id]; if (!U || openDay !== g.day) return null;
+  const r = gsLevTrade(house, id, signed > 0 ? -1 : 1, Math.abs(signed), day, t, { force: true });
+  if (!r.pushed) U.i += signed; // 沒推（收盤了、漲跌停）：莊家庫存直接還原
+  U.lv -= signed; return r.px;
+}
+// casLevSrc 要的價格來源（跟 src.now／path／close 同壹套）。idx ＝ 今天推到第幾個價（跟 U.tp 同壹個編號）
+export function gsLevSrc(house, day, t) {
+  gsAdvance(house, day, t); const g = gsFix(house);
+  return {
+    now(id) { const U = g.u[id]; return U ? { px: gPx2(U.P), idx: gN(g.k), open: !gHalt(g, day, t) } : { px: 0, idx: 0, open: false }; },
+    path(id, d, from) { const U = g.u[id]; if (!U) return []; if (d === g.day) return U.tp.slice(from + 1); if (d === U.tpd) return U.tpp.slice(from + 1); return []; },
+    close(id, d) { const U = g.u[id]; if (!U) return null; if (U.hc[d] > 0) return U.hc[d]; return d === g.day ? gPx2(U.P) : null; },
+  };
+}
 // ---------- 畫面要的 ----------
 // { list: [{ id, name, unit, price, open, chg（對開盤 %）, shares 股數, mcap 市值, nav 每股淨值, pb 股價淨值比, mine 持股, value 市值, cost 成本, market 所屬市場 }], index: { v, chg }, halt, rule }
 export function gsView(w, house, day, t) {
   const C = gCfg(); if (!C || !C.on || !house) return null;
   gsAdvance(house, day, t); const g = gsFix(house), S = w ? gsWalletFix(w) : null, ids = Object.keys(g.u), sy = w ? gsSync(w, house) : { lines: [] }; // 看畫面時順便領股息、配股
   const list = ids.map(id => { const U = g.u[id], nav = gsNav(house, id), mine = S ? gN(S.h[id]) : 0; return { id, name: gsNameOf(id), unit: whName(id), price: Math.round(U.P * 100) / 100, open: Math.round(U.o * 100) / 100, chg: U.o > 0 ? Math.round((U.P / U.o - 1) * 10000) / 100 : 0, shares: U.S, mcap: Math.floor(U.P * U.S), nav: Math.round(nav * 100) / 100, pb: nav > 0 ? Math.round(U.P / nav * 100) / 100 : null, mine, value: Math.floor(mine * U.P), cost: S ? gN(S.cost[id]) : 0, market: wmOfUnit(id), hist: Array.isArray(U.hist) ? U.hist.slice(-30).map(x => Math.round(+x * 100) / 100) : [] }; });
-  return { notes: sy.lines, list, index: { v: gsIndex(house) }, halt: gHalt(g, day, t), rule: `集團的股票：價格由這個世界的買賣和經濟決定。每人持股沒有上限、壹天買賣最多 ${C.dayVolPct}%、每天漲跌停 ±${C.dayLim}%。` };
+  const ords = S ? S.orders.map(o => ({ no: o.no, kind: o.kind, kindName: gKind[o.kind], id: o.id, name: gsNameOf(o.id), n: o.n, px: o.px, hold: o.hold, day: o.day })) : [], onotes = S ? S.notes.splice(0) : [];
+  return { notes: sy.lines.concat(onotes), orders: ords, list, index: { v: gsIndex(house) }, halt: gHalt(g, day, t), rule: `集團的股票：價格由這個世界的買賣和經濟決定。每人持股沒有上限、壹天買賣最多 ${C.dayVolPct}%、每天漲跌停 ±${C.dayLim}%。` };
 }
 export const gsPrice = (house, id) => { const U = house && gBox(house.gs) && gBox(house.gs.u) ? house.gs.u[id] : null; return U ? U.P : 0; };
