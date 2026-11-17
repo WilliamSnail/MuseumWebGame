@@ -5,6 +5,7 @@
   "parent": null,
   "sector": "arts",
   "share": 0.05,
+  "listed": true,
   "staff": 3000,
   "stocks": [],
   "story": false,

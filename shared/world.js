@@ -92,9 +92,11 @@ export function wuFix(house) {
   return x;
 }
 // 館外股的錢進出「海外」：house.world 已經從 before 變成現在，變多的 n（買股：正）全記在海外、其他單位和錢包不動；賣、股利是負的。總和仍等於池子
-export function wuExt(house, before, n) {
-  n = wdN(n); const x = wuFix(house); if (!x || !n) return 0;
-  const deltas = {}; for (const k of Object.keys(x.r)) if (k !== WU_PUB) deltas[k] = k === WU_EXT ? n : 0;
+export function wuExt(house, before, n) { return wuCredit(house, before, WU_EXT, n); }
+// house.world 已經從 before 變成現在：變多（少）的 n 全記在 id 這個單位，其他單位、錢包不動。總和仍等於池子（集團增資的錢進池子、館外股進出海外都用它）
+export function wuCredit(house, before, id, n) {
+  n = wdN(n); const x = wuFix(house); if (!x || !n || !(id in x.r) || id === WU_PUB) return 0;
+  const deltas = {}; for (const k of Object.keys(x.r)) if (k !== WU_PUB) deltas[k] = k === id ? n : 0;
   wuMove(house, before, deltas); return n;
 }
 // 現在每個單位有多少（含 pub 公共）。總和 ＝ house.world
@@ -172,7 +174,7 @@ export function whFix(house) {
 }
 // 單位的旗下股票平均「相對第一次看到的價」；沒有股票或沒價回 null
 function whIdx(u, px, base) {
-  const r = []; for (const id of u.stocks || []) { const p = +(px && px[id]); if (!(p > 0)) continue; if (!(base[id] > 0)) base[id] = p; r.push(p / base[id]); }
+  const r = []; for (const id of (u.stocks || []).concat(["gs-" + u.id])) { const p = +(px && px[id]); if (!(p > 0)) continue; if (!(base[id] > 0)) base[id] = p; r.push(p / base[id]); }
   return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null;
 }
 // 換日呼叫（house.econ.b 是景氣，px 是 house.stk.px）。同一天不重複。回傳 true ＝ 這次有算
@@ -181,6 +183,7 @@ export function whTick(house, day, px, grown = 0) {
   if (!w || !wdDayOk(day) || w.day === day) return false;
   wtAdvance(house, day, null); // 前壹天排的沒走完的，先補完（換日那壹刻）
   wmTick(house, day, px); // 各市場今天的景氣（決定 0121）：先算，這天的健康值、成長、氣氛都用它
+  if (house.gs && house.gs.u && Object.keys(house.gs.u).length) { px = Object.assign({}, px); for (const k of Object.keys(house.gs.u)) px["gs-" + k] = house.gs.u[k].P; } // 集團自己的股價也算進健康值的股價項（決定 0121，股價 → 經濟，上限照現有 stockW×chgCap）
   const b = whClamp(+(house.econ && house.econ.b) || 0, -1, 1), coef = NUM.casino.worldDoc.sectorCoef || {};
   for (const u of whUnits()) {
     const ix = whIdx(u, px, w.base); if (ix != null) { if (!wuBox(w.idx[u.id])) w.idx[u.id] = {}; w.idx[u.id][day] = Math.round(ix * 10000) / 10000; }
@@ -423,7 +426,7 @@ export function wtCard(house) {
   return { since: w.wk.day, rows, loans };
 }
 const WH_TEXT = { normal: "恢復正常", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
-const whName = id => { const u = WORLD_UNITS.find(x => x.id === id); return u ? u.name : id; };
+export const whName = id => { const u = WORLD_UNITS.find(x => x.id === id); return u ? u.name : id; };
 // 已發生的事（最近 days 天內換狀態的）：給日報和市場新聞用。只寫發生過的，不預告
 export function whNews(house, day, days = 1) {
   const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return [];

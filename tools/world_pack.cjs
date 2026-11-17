@@ -2,7 +2,7 @@
 // 只放算帳要用的欄位（id、名字、kind、parent、sector、share）。內容改了就跑 node tools/world_pack.cjs；npm test（test/world.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const KEEP = ["id", "name", "kind", "parent", "sector", "market", "share", "stocks"];
+const KEEP = ["id", "name", "kind", "parent", "sector", "market", "listed", "share", "stocks"];
 function roster(dir = path.join(ROOT, "content", "world", "units")) {
   const out = [];
   if (!fs.existsSync(dir)) return out;

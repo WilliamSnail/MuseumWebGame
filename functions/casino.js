@@ -47,6 +47,7 @@ import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { npcCardView } from "./shared/npc_card.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "./shared/world.js";
+import { gsAdvance, gsBuy, gsIs, gsSell, gsView } from "./shared/casino_stock_grp.js";
 import { casSellForDebt } from "./shared/casino_debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
@@ -111,6 +112,7 @@ export async function playCore(me, email, opts, fn) {
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       wtAdvance(house, day, t); // 集團之間的往來整天陸續發生（決定 0120）：補算到現在那壹格
+      gsAdvance(house, day, t); // 世界集團的股票（決定 0121）：推到現在（換日、每週一的公司事件、每 15 分鐘的價）
       wmWriteVisit(house, day, NPC_LIST); // 景氣分市場（決定 0121）：每位 NPC 今天的來館倍率（行程用 npcCounters 看到）
       casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成外面世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
@@ -257,6 +259,7 @@ export const shape = (ctx, extra) => {
   // 畫面（web/src/ui_bank.js）讀的是 bankHall.stocks，槓桿頁籤要的 lev、positions、credit、levCap 也要在那裡（11-14 測試：只放在 stock，槓桿頁籤和部位卡永遠不出現）
   const hall = casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), lev = levStock(ctx);
   hall.trade = (tc => tc && Object.assign(tc, { rows: tc.rows.map(x => Object.assign({ label: CAS_FLOW_UNIT[x.k] || x.k }, x)) }))(wtCard(ctx.house)); // 財報「集團之間的往來」：本週累計、目前欠金融集團的（決定 0120）
+  hall.gs = gsView(ctx.w, ctx.house, ctx.day, ctx.t); // 世界集團的股票：價格、指數、我的持股（決定 0121）
   hall.flow = casFlowHub(ctx.house, ctx.day); // 金流頁籤（11-17）：今天 05:00 起各條線的流量
   if (hall && hall.stocks) Object.assign(hall.stocks, { lev: lev.lev, positions: lev.positions, credit: lev.credit, levCap: lev.levCap });
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day, ctx.house), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
@@ -313,6 +316,11 @@ export const actStock = (ctx, d) => {
   if (op === "open" || op === "close" || op === "levset") { // 槓桿、放空、當沖（規劃 2.8j）：open 帶 id、side（或 dir）、lev、qty（或 margin）、可選 stop／take（停損價、停利價）；close 帶單號 no（或畫面的 pid "p3"）；levset 帶 no／pid、stop、take（改停損停利，空值＝清掉）
     const r = op === "open" ? casLevOpen(ctx.w, ctx.house, d, ctx.day, ctx.t) : op === "levset" ? casLevSet(ctx.w, ctx.house, d, ctx.day, ctx.t) : casLevClose(ctx.w, ctx.house, d.no != null ? d.no : parseInt(String(d.pid == null ? "" : d.pid).replace(/\D/g, ""), 10), ctx.day, ctx.t);
     return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
+  }
+  if (gsIs(ctx.house, id)) { // 世界集團的股票（決定 0121）：現股買賣（沒有槓桿、掛單）
+    const x = op === "buy" ? gsBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? gsSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : null;
+    if (!x) return no({ reason: "集團的股票只能買、賣。" });
+    return x.ok ? shape(ctx, { lines: x.lines }) : no(x);
   }
   if (IN_IDS.includes(id)) { // 館內五家店（規劃 2.8g）：莊家當對手盤，現股買賣、限價單、停損單（op order，跟館外股同格式）；槓桿、放空走上面的 open／close／levset
     const x = op === "buy" ? casInBuy(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t) : op === "sell" ? casInSell(ctx.w, ctx.house, id, d.n, ctx.day, ctx.t)

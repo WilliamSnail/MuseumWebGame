@@ -5,6 +5,7 @@
   "parent": null,
   "sector": "school",
   "share": 0.06,
+  "listed": true,
   "staff": 9000,
   "stocks": [],
   "story": false,
