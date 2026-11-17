@@ -8,14 +8,14 @@ T("flow：casino_report 名單裡的每個來源都有線，線的兩端都是�
   const ids = new Set(G.CAS_FLOW_NODES.map(x => x.id)), R = G.CAS_REPORT, miss = [];
   for (const m of [R.flow, R.houseMint, R.world, R.burn, R.mint]) for (const k of Object.keys(m)) if (!G.CAS_FLOW_LINE[k]) miss.push(k);
   assert.deepStrictEqual(miss, [], "沒歸到金流的線：" + miss.join("、"));
-  for (const [k, ln] of Object.entries(G.CAS_FLOW_LINE)) assert.ok(ln.length === 2 && ln.every(x => ids.has(x)) && ln[0] !== ln[1], k);
+  for (const [k, ln] of Object.entries(G.CAS_FLOW_LINE)) assert.ok(ln.length === 2 && ln.every(x => ids.has(x) || x.startsWith("w:")) && ln[0] !== ln[1], k);
 });
 T("flow：方向（進莊家的錢是 對面→莊家；外面世界付出去的是 外面世界→對面；兩個方向相抵取淨額）", G => {
   const e = G.casFlowEdges({ bankroll: [{ k: "bj", label: "21 點", n: 3000 }, { k: "pack", label: "大禮包", n: -700 }, { k: "grant", label: "文化部借款", n: 500 }], world: [{ k: "grant", label: "文化部借款撥款", n: -500 }, { k: "stockBuy", label: "買股票", n: 900 }, { k: "npcTicketBudget", label: "NPC 的門票", n: -40 }], budget: [{ k: "npcTicketBudget", label: "NPC 的門票", n: 40 }, { k: "investFee", label: "投資手續費", n: 20 }], museum: [], gov: [] }), at = (a, b) => e.edges.find(x => x.from === a && x.to === b);
   assert.strictEqual(e.lost.length, 0, e.lost.join());
   assert.strictEqual((at("players", "house") || {}).amt, 2300, "21 點進 3000、大禮包出 700 → 淨 2300 館友給莊家");
   assert.strictEqual((at("world", "house") || {}).amt, 500, "外面世界撥款給莊家 500（兩個帳各列壹次，只算壹次）");
-  assert.strictEqual((at("players", "world") || {}).amt, 900, "買股票：錢給外面世界");
+  assert.strictEqual((at("players", "w:u-ext") || {}).amt, 900, "買股票：錢給海外（真實市場，決定 0121）");
   assert.strictEqual((at("world", "budget") || {}).amt, 40, "NPC 門票：外面世界→博物館資金");
   assert.strictEqual((at("house", "budget") || {}).amt, 20, "投資手續費：莊家付給博物館資金");
   const pk = at("players", "house").srcs.find(x => x.src === "pack"); assert.strictEqual(pk.amt, -700, "反方向的來源是負的");
