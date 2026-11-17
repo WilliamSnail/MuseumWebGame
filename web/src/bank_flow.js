@@ -133,12 +133,13 @@ export function flowPane(v, deps) {
       lines.push(s("path", { d, class: "bank-flow-hit", "stroke-width": 22, fill: "none", tabindex: 0, role: "button", "aria-label": name(e.from) + "到" + name(e.to) + "，今天 " + fmt(e.amt) + "，看來源", "data-i": i }));
       const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
       for (let k = 0; k < n && dots < 70; k++, dots++) dotsEl.push(s("circle", { r: (2.4 + 1.2 * lg(e.amt)).toFixed(1), class: "bank-flow-dot" }, s("animateMotion", { path: d, dur: dur.toFixed(2) + "s", begin: "-" + ((k / n) * dur).toFixed(2) + "s", repeatCount: "indefinite", calcMode: "linear" })));
-      const t = short(e.amt), w = 12 + t.length * 7.4, rects = Object.values(L.pos).filter(r => !r.chip), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
+      const t = short(e.amt), w = 12 + t.length * 7.4, rects = Object.values(L.pos).filter(r => !r.chip).concat(L.frames.map(f => ({ x: f.x + 6 + (24 + (V.orgs[f.id] || f.id).length * 15 + 30) / 2, y: f.y + 11, w: 24 + (V.orgs[f.id] || f.id).length * 15 + 30, h: 18 }))), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
       let mx = polyAt(pts, 0.5).x, my = polyAt(pts, 0.5).y; for (const k of [0.5, 0.42, 0.58, 0.35, 0.65, 0.3, 0.7, 0.2, 0.8]) { const q = polyAt(pts, k); if (!hit(q.x, q.y)) { mx = q.x; my = q.y; break; } } // 金額小牌不蓋到方塊：沿線找壹個空的位置
       pills.push(s("g", { class: "bank-flow-pill" + (on ? " on" : "") + (dim ? " dim" : ""), transform: "translate(" + mx.toFixed(1) + " " + my.toFixed(1) + ")", "data-i": i }, s("rect", { x: -w / 2, y: -10, width: w, height: 20, rx: 10 }), s("text", { "text-anchor": "middle", y: 4.3 }, t)));
     });
-    L.frames.forEach(f => svg.append(s("g", { class: "bank-flow-frame", "data-org": "org:" + f.id, tabindex: 0, role: "button", "aria-label": (V.orgs[f.id] || f.id) + "，收起來" }, s("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12 }), s("text", { x: f.x + 12, y: f.y + 15 }, "▾ " + (V.orgs[f.id] || f.id)))));
+    L.frames.forEach(f => svg.append(s("g", { class: "bank-flow-frame", "data-org": "org:" + f.id, tabindex: 0, role: "button", "aria-label": (V.orgs[f.id] || f.id) + "，收起來" }, s("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12 }))));
     svg.append(...lines, ...dotsEl);
+    L.frames.forEach(f => { const t = "▾ " + (V.orgs[f.id] || f.id), w = 24 + t.length * 15; svg.append(s("g", { class: "bank-flow-ftitle", "data-org": "org:" + f.id, tabindex: 0, role: "button", "aria-label": (V.orgs[f.id] || f.id) + "，收起來" }, s("rect", { x: f.x + 6, y: f.y + 2, width: w, height: 18, rx: 9 }), s("text", { x: f.x + 14, y: f.y + 15 }, t))); }); // 框的標題畫在線的上面，不被線蓋住
     const draw1 = n => { // 方塊（大的）和外面世界裡的小方塊（chip）
       const id = n.id, p = L.pos[id]; if (!p) return;
       const kidsOf = V.hasKids(id) && !n.more, op = kidsOf && isOpen(id), on = SEL.n === id, bal = n.more ? n.bal : (V.bal[id] != null ? V.bal[id] : n.bal), small = !!p.chip, band = id === "world" && L.chips.length > 0, label = name(id) + (kidsOf ? (op ? " ▾" : " ▸") : "");
@@ -150,7 +151,7 @@ export function flowPane(v, deps) {
     const act = (el, f) => { el.addEventListener("click", f); el.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); f(); } }); };
     svg.querySelectorAll(".bank-flow-hit").forEach(el => act(el, () => pick({ n: SEL.n, e: +el.dataset.i })));
     svg.querySelectorAll(".bank-flow-pill").forEach(el => act(el, () => pick({ n: SEL.n, e: +el.dataset.i })));
-    svg.querySelectorAll(".bank-flow-frame").forEach(el => act(el, () => { SEL.open[el.dataset.org] = false; SEL.n = null; SEL.e = null; draw(); }));
+    svg.querySelectorAll(".bank-flow-frame, .bank-flow-ftitle").forEach(el => act(el, () => { SEL.open[el.dataset.org] = false; SEL.n = null; SEL.e = null; draw(); }));
     svg.querySelectorAll(".bank-flow-node-g").forEach(el => act(el, () => { const id = el.dataset.n; if (id === MORE) { SEL.more = true; draw(); return; } if (el.dataset.k) { SEL.open[id] = !isOpen(id); SEL.n = null; SEL.e = null; draw(); return; } pick({ n: SEL.n === id ? null : id, e: null }); }));
     mapBox.replaceChildren(svg);
     side.replaceChildren(listBox({ edges, bal: V.bal }, SEL, pick));
