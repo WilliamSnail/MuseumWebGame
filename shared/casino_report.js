@@ -232,7 +232,8 @@ export const CAS_FLOW_LINE = {
   start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
 };
 // 今天 05:00 起各條記帳的累計（跟日報快照同一份：led0 在換日寫財報時存，shared/casino_book.js 的 casBookSnap 同一套來源）
-export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, w: Object.assign({}, H.wflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
+export const CAS_FLOW_UNIT = { tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）" }; // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
+export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, u: Object.assign({}, H.units), w: Object.assign({}, H.wflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
 const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object.keys(now || {}), ...Object.keys(then || {})])) { const d = Math.round((+(now || {})[k] || 0) - (+(then || {})[k] || 0)); if (d) o[k] = d; } return o; };
 // all：casBooksView(doc, true).all（每個帳的 [{ k, label, n }]，n 是這個帳自己的角度）。回傳 { edges, lost }
 //   edges：[{ from, to, amt, srcs: [{ src, label, amt }] }]，兩個地方之間的淨流向（amt 一定 > 0），srcs 的 amt 對 edge 的方向（反方向的是負的）
@@ -241,8 +242,8 @@ export function casFlowEdges(all) {
   const pair = {}, done = new Set(), lost = [];
   // all.units（以後集團之間的交易放這裡）：[{ k, label, n }]，n > 0 ＝ 線 [X, Y] 的 X 付給 Y
   for (const x of all.units || []) {
-    const ln = CAS_FLOW_LINE[x.k]; if (!ln || done.has(x.k)) { if (!ln) lost.push("units." + x.k); continue; }
-    done.add(x.k); const key = [ln[0], ln[1]].sort().join("|"), first = key.split("|")[0], p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
+    const ln = x.from && x.to && CAS_FLOW_UNIT[x.k] ? [x.from, x.to] : CAS_FLOW_LINE[x.k]; if (!ln || ln[0] === ln[1]) { if (!ln) lost.push("units." + x.k); continue; }
+    const key = [ln[0], ln[1]].sort().join("|"), first = key.split("|")[0], p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
     p.srcs.push({ src: x.k, label: x.label, amt: ln[0] === first ? x.n : -x.n });
   }
   for (const [A, list] of [["world", all.world], ["bankroll", all.bankroll], ["budget", all.budget], ["museum", all.museum], ["gov", all.gov]]) for (const x of list || []) {
@@ -272,6 +273,7 @@ export function casFlowHub(house, day) {
   if (!L0 || L0.day !== day || !led) return null;
   const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w) };
   const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0 } }, diff }, true);
+  v.all.units = (L0.u ? Object.entries(cfDiff(led.units, L0.u)) : []).filter(([, n]) => n > 0).map(([k, n]) => { const [kind, from, to] = k.split("|"); return { k: kind, label: CAS_FLOW_UNIT[kind] || kind, n, from: "w:" + from, to: "w:" + to }; }); // 集團之間的交易（all.units）
   const r = casFlowEdges(v.all);
   return { day, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(casFlowWorldNodes(house)), orgs: CAS_FLOW_ORGS, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world) } };
 }

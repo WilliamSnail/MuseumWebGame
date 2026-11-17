@@ -223,6 +223,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   if (bkBox(house.npcs)) s.house.npcs = { day: house.npcs.day || null, ticket: bkNz(house.npcs.ticket), shop: bkNz(house.npcs.shop), total: bkNz(house.npcs.total), people: bkNz(house.npcs.people), crowd: bkBox(house.npcs.crowd) ? { ticket: bkNz(house.npcs.crowd.ticket), people: bkNz(house.npcs.crowd.people), groups: bkNz(house.npcs.crowd.groups), shop: bkNz(house.npcs.crowd.shop) } : null, byUnit: bkBox(house.npcs.byUnit) ? Object.assign({}, house.npcs.byUnit) : null, shopBy: bkBox(house.npcs.shopBy) ? JSON.parse(JSON.stringify(house.npcs.shopBy)) : null, menu: bkBox(house.npcs.menu) ? JSON.parse(JSON.stringify(house.npcs.menu)) : null, orders: Array.isArray(house.npcs.orders) ? house.npcs.orders.slice(0, 10).map(o => ({ who: String(o.who || "").slice(0, 20), item: String(o.item || ""), n: bkNz(o.n) })) : [] }; // NPC 來館花的錢（shared/npc_spend.js）
   if (bkBox(house.inv) && (bkBox(house.inv.last) || bkBox(house.inv.sum))) s.house.inv = { last: bkBox(house.inv.last) ? house.inv.last : null, sum: bkBox(house.inv.sum) ? house.inv.sum : null }; // 館方投資（shared/casino_invest.js）：昨天買賣了什麼、現在持有
   if (bkBox(house.led)) { bkMerge(s.house.wflow, house.led.world); bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
+  if (bkBox(house.led) && bkBox(house.led.units)) s.house.units = Object.assign({}, house.led.units); // 集團之間的交易（shared/world.js 的 wtLed）：金流頁籤算今天的線
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
