@@ -13,7 +13,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { WORLD_UNITS } from "./world_roster.js";
-import { whName, wmB, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "./world.js";
+import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "./world.js";
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./casino_book.js";
 import { casInIdx } from "./casino_stock_in.js";
 import { hashStr } from "./logic.js";
@@ -109,7 +109,7 @@ export function gsRaise(house, id, day) {
   const N = Math.floor(U.S * C.raise.pct / 100), px = U.P * (1 - C.raise.discPct / 100), cash = Math.floor(N * px);
   if (!(N > 0) || cash <= 0 || house.bankroll - cash < C.raise.keep || Math.abs(U.i + N) > U.S * C.makerCapPct / 100) return 0;
   const before = gCap(house), w0 = gN(house.world);
-  casHouseWorldIn(house, "gRaise", cash); wuCredit(house, w0, id, cash);
+  casHouseWorldIn(house, "gRaise", cash); wuCredit(house, w0, id, cash); wtLed(house, "gRaise", "house", id, cash); // 金流頁籤：莊家 → 那家集團
   U.P = Math.max(C.floor, (U.S * U.P + N * px) / (U.S + N)); U.S += N; U.i += N; gDivAdj(house, before - 0);
   gsEvent(g, { kind: "raise", id, n: N, cash, day }); casCount(house, "gRaise", cash);
   return cash;
@@ -121,7 +121,7 @@ export function gsBuyback(house, id, day) {
   cash = Math.min(cash, Math.floor(gSnap(house, id) * C.buyback.maxPoolPct / 100)); const n2 = Math.floor(cash / px); cash = Math.floor(n2 * px);
   if (!(n2 > 0) || cash <= 0 || Math.abs(U.i - n2) > U.S * C.makerCapPct / 100) return 0;
   const before = gCap(house), got = casHouseWorldOut(house, "gBuy", cash); if (got <= 0) return 0;
-  wuDebit(house, id, got); U.i -= n2; U.S -= n2; U.P = Math.max(C.floor, U.P * (1 + 0.5 * n2 / (U.S + n2))); gDivAdj(house, before - 0);
+  wuDebit(house, id, got); wtLed(house, "gBuy", id, "house", got); U.i -= n2; U.S -= n2; U.P = Math.max(C.floor, U.P * (1 + 0.5 * n2 / (U.S + n2))); gDivAdj(house, before - 0);
   gsEvent(g, { kind: "buyback", id, n: n2, cash: got, day }); casCount(house, "gBuy", got);
   return got;
 }
@@ -166,7 +166,7 @@ export function gsSync(w, house) {
     const n = gN(S.h[e.id]); if (n <= 0) continue;
     if (e.kind === "div") {
       const amt = Math.floor(n * e.ps), pay = amt > 0 ? casWorldOut(w, house, "gDiv", amt, NUM.casino.world) : 0;
-      if (pay > 0) { wuDebit(house, e.id, pay); out.got += pay; out.lines.push(`${gsNameOf(e.id)}發股息：${n} 股領到 ${pay}。`); casCount(house, "gDiv", pay); }
+      if (pay > 0) { wuDebit(house, e.id, pay); wtLed(house, "gDiv", e.id, "players", pay); out.got += pay; out.lines.push(`${gsNameOf(e.id)}發股息：${n} 股領到 ${pay}。`); casCount(house, "gDiv", pay); }
     } else if (e.kind === "bonus") { const b = Math.floor(n * e.r); if (b > 0) { S.h[e.id] = n + b; out.lines.push(`${gsNameOf(e.id)}配股：多了 ${b} 股。`); } }
     else if (e.kind === "split") { S.h[e.id] = n * e.k; out.lines.push(`${gsNameOf(e.id)}一股拆成 ${e.k} 股：現在 ${n * e.k} 股。`); }
     else if (e.kind === "spin") { const c = Math.floor(n); S.h[e.child] = gN(S.h[e.child]) + c; const cost = gN(S.cost[e.id]), cc = Math.floor(cost * e.f); S.cost[e.id] = cost - cc; S.cost[e.child] = gN(S.cost[e.child]) + cc; out.lines.push(`${gsNameOf(e.id)}分拆出「${gsNameOf(e.child)}」：領到 ${c} 股。`); }
