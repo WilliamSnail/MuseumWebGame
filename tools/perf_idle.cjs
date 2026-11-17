@@ -2,7 +2,7 @@
 // 用無頭的 Edge／Chrome（跟 tools/shot.cjs 壹樣找），開網頁、等它畫好，再錄 N 秒的時間軸，數：
 //   重畫（Paint）幾次、花幾毫秒；樣式重算、排版幾次；主執行緒忙了幾毫秒（全部的工作加起來）。
 // 只准 localhost。用法：
-//   node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" [--size 1920x1080] [--secs 10] [--wait 8000]
+//   node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" [--size 1920x1080] [--secs 10] [--wait 8000] [--js "頁面載好後先執行的程式（例如點頁籤）"]
 // 同壹個畫面改前、改後各量壹次比較。數字會隨電腦有差，要在同壹台、同壹個大小比。
 const fs = require("fs"), path = require("path"), os = require("os");
 const { spawn } = require("child_process");
@@ -11,7 +11,7 @@ const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k);
 const url = args.find(a => /^https?:/.test(a));
 if (!url || !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) { console.error("用法：node tools/perf_idle.cjs \"http://localhost:5287/?x=1#lobby\"（只准 localhost）"); process.exit(1); }
 const [W, H] = val("--size", "1920x1080").split("x").map(Number);
-const SECS = +val("--secs", 10), WAIT = +val("--wait", 8000);
+const SECS = +val("--secs", 10), WAIT = +val("--wait", 8000), JS = val("--js", null);
 const cands = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium"];
 const exe = cands.find(c => fs.existsSync(c));
 if (!exe) { console.error("找不到 Edge 或 Chrome"); process.exit(1); }
@@ -38,6 +38,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await send("Page.enable");
   await send("Page.navigate", { url });
   await sleep(WAIT);
+  if (JS) { await send("Runtime.evaluate", { expression: JS, awaitPromise: true }); await sleep(2000); } // 例如點到某個頁籤，再開始量
   await send("Tracing.start", { categories: "devtools.timeline,disabled-by-default-devtools.timeline", transferMode: "ReportEvents" });
   await sleep(SECS * 1000);
   const fin = new Promise(r => { done = r; });

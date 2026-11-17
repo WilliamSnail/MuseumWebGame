@@ -237,11 +237,13 @@ export function wtWealth(house, id) {
   return whClamp((wdN(x.adj[id]) + rec) / base, -T.dCap, T.dCap) * T.wealthW;
 }
 // 帳上搬：from 單位 → to 單位（adj），最多搬 from 現有的；回傳搬了多少。總和不變
-function wtMove(house, from, to, n) {
+// 每壹筆也記在 house.led.units["種類|from|to"]（累計），銀行金流頁籤（shared/casino_report.js 的 casFlowHub）算今天集團之間的線用；kind 是 "trade…"，名字在 CAS_FLOW_UNIT
+function wtLed(house, kind, from, to, n) { if (!(n > 0)) return; const L = (house.led = wuBox(house.led) ? house.led : {}), U = (L.units = wuBox(L.units) ? L.units : {}), k = kind + "|" + from + "|" + to; U[k] = wdN(U[k]) + n; }
+function wtMove(house, from, to, n, kind) {
   n = wdN(n); const x = wuFix(house);
   if (!x || n <= 0 || from === to || from === WU_PUB || to === WU_PUB || !(from in x.r) || !(to in x.r)) return 0;
   const take = Math.min(n, wuHave(house, from)); if (take <= 0) return 0;
-  x.adj[from] = wdN(x.adj[from]) - take; x.adj[to] = wdN(x.adj[to]) + take;
+  x.adj[from] = wdN(x.adj[from]) - take; x.adj[to] = wdN(x.adj[to]) + take; wtLed(house, kind, from, to, take);
   return take;
 }
 const wtLog = (w, day, t) => { if (!Array.isArray(w.trade)) w.trade = []; w.trade.push({ day, t }); w.trade = w.trade.slice(-20); };
@@ -249,14 +251,14 @@ const wtLog = (w, day, t) => { if (!Array.isArray(w.trade)) w.trade = []; w.trad
 function wtDaily(house, day, grown) {
   const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
   const x = wuFix(house), g = wdN(grown), world = Math.max(1, wdN(house.world));
-  if (g > 0) for (const t of T.goods) { const h = whClamp(+w.h[t.from] || 1, 0.6, 1.2), n = Math.floor(g * (x.r[t.from] || 0) * t.pct / 100 * h); wtMove(house, t.from, t.to, n); }
-  for (const id of Object.keys(w.loan)) { const L = w.loan[id], iv = Math.max(1, Math.ceil(L.amt * T.loan.ratePct / 100)); wtMove(house, id, WT_FIN, iv); }
+  if (g > 0) for (const t of T.goods) { const h = whClamp(+w.h[t.from] || 1, 0.6, 1.2), n = Math.floor(g * (x.r[t.from] || 0) * t.pct / 100 * h); wtMove(house, t.from, t.to, n, "tradeGoods"); }
+  for (const id of Object.keys(w.loan)) { const L = w.loan[id], iv = Math.max(1, Math.ceil(L.amt * T.loan.ratePct / 100)); wtMove(house, id, WT_FIN, iv, "tradeInterest"); }
 }
 // 公共 ↔ 單位（C 股票營收）：n > 0 公共給單位、n < 0 單位給公共；公共是剩下的，所以只改單位的 adj
 function wtPub(house, id, n) {
   const x = wuFix(house); if (!x || !(id in x.r) || id === WU_PUB) return 0; n = wdN(n);
   if (n > 0) n = Math.min(n, Math.max(0, wuAmounts(house)[WU_PUB])); else n = -Math.min(-n, wuHave(house, id));
-  x.adj[id] = wdN(x.adj[id]) + n; return n;
+  x.adj[id] = wdN(x.adj[id]) + n; if (n > 0) wtLed(house, "tradeRev", WU_PUB, id, n); else wtLed(house, "tradeRev", id, WU_PUB, -n); return n;
 }
 // 週一（狀態之前）：A 的還款（健康值扣掉借款帶來的那一塊，仍 ≥ repayH 才還）、C 股票營收
 function wtWeekStart(house, day) {
@@ -264,7 +266,7 @@ function wtWeekStart(house, day) {
   for (const id of Object.keys(w.loan)) {
     const L = w.loan[id], base = Math.max(1, wtBase(house, id)), adj = wdN(wuFix(house).adj[id]);
     const hNo = (+w.h[id] || 1) - whClamp(adj / base, -T.dCap, T.dCap) * T.wealthW + whClamp((adj - L.amt) / base, -T.dCap, T.dCap) * T.wealthW; // 不含借款的健康值
-    if (hNo >= T.loan.repayH) { const n = wtMove(house, id, WT_FIN, L.amt); if (n >= L.amt) { delete w.loan[id]; wtLog(w, day, id + " 還款"); } else L.amt -= n; }
+    if (hNo >= T.loan.repayH) { const n = wtMove(house, id, WT_FIN, L.amt, "tradeRepay"); if (n >= L.amt) { delete w.loan[id]; wtLog(w, day, id + " 還款"); } else L.amt -= n; }
   }
   for (const u of whUnits()) { const c = +w.chg[u.id] || 0; if (!c) continue; wtPub(house, u.id, Math.floor(wtBase(house, u.id) * T.revPct / 100 * c)); } // 旗下股票漲：公共給單位；跌：單位給公共
 }
@@ -273,7 +275,7 @@ function wtLoanTake(house, day) {
   const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
   for (const u of whUnits()) {
     if (u.id === WT_FIN || w.st[u.id].s === "normal" || w.loan[u.id]) continue;
-    const want = Math.floor(wtBase(house, u.id) * T.loan.pct / 100), cap = Math.floor(wuHave(house, WT_FIN) * T.loan.finPct / 100), n = wtMove(house, WT_FIN, u.id, Math.min(want, cap));
+    const want = Math.floor(wtBase(house, u.id) * T.loan.pct / 100), cap = Math.floor(wuHave(house, WT_FIN) * T.loan.finPct / 100), n = wtMove(house, WT_FIN, u.id, Math.min(want, cap), "tradeLoan");
     if (n > 0) { w.loan[u.id] = { amt: n, day }; wtLog(w, day, u.id + " 借 " + n); }
   }
 }

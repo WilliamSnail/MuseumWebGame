@@ -57,6 +57,17 @@ T("flow：名單上有上級的單位（子公司）也有節點，掛在上級�
   G.CAS_FLOW_LINE.testSub = ["w:g-daily-sub", "house"]; const e = G.casFlowEdges({ world: [], bankroll: [{ k: "testSub", label: "子公司付莊家", n: 9 }], budget: [], museum: [], gov: [] });
   assert.ok(e.edges.some(x => x.from === "w:g-daily-sub" && x.to === "house"));
 });
+T("flow：集團之間的交易（world.js 記的 trade…）每種都有名字、線的兩端是集團；今天的量＝現在減 05:00", G => {
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "shared", "world.js"), "utf8");
+  const kinds = new Set([...src.matchAll(/"(trade\w+)"/g)].map(m => m[1])); assert.ok(kinds.size >= 5, "world.js 的 trade 種類：" + [...kinds].join());
+  for (const k of kinds) assert.ok(G.CAS_FLOW_UNIT[k], "交易種類 " + k + " 沒有名字（shared/casino_report.js 的 CAS_FLOW_UNIT）");
+  for (const m of src.matchAll(/wtMove\(house, [^;]*?\);/g)) if (!m[0].startsWith("wtMove(house, from, to") && !/"trade\w+"\)/.test(m[0])) assert.fail("wtMove 呼叫沒帶種類：" + m[0].slice(0, 80));
+  const D = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), D).house, s0 = G.casBookSnap([], h, 0, D); h.econ = { day: D, led0: G.casFlowLed0(s0) };
+  h.led.units = { "tradeLoan|g-finance|g-daily": 700, "tradeGoods|g-daily|g-finance": 300 };
+  const r = G.casFlowHub(h, D), e = r.edges.find(x => x.from === "w:g-finance" && x.to === "w:g-daily"), e2 = r.edges.find(x => x.from === "w:g-daily" && x.to === "w:g-finance");
+  assert.ok(e && e.amt === 400 || e2, JSON.stringify(r.edges)); // 放款 700 一個方向、貨款 300 反方向，淨 400
+  const net = r.edges.find(x => [x.from, x.to].sort().join() === "w:g-daily,w:g-finance"); assert.ok(net && net.amt === 400 && net.srcs.length === 2, JSON.stringify(net));
+});
 T("flow：框「佩佩博物館」＝莊家、博物館資金、修繕基金；每個節點都有層", G => {
   const org = G.CAS_FLOW_NODES.filter(x => x.org === "museum").map(x => x.id).sort(); assert.strictEqual(org.join(), "budget,house,museum"); assert.ok(G.CAS_FLOW_ORGS.museum === "佩佩博物館");
   assert.ok(G.CAS_FLOW_NODES.every(x => Number.isInteger(x.tier) && x.name));
