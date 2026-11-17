@@ -5,6 +5,8 @@
 //   2. fileOnce／fileLoop 要接到房間自己的 g（或接在 g 上的小音量），不能直接接 bus（房間換掉不會跟著停）；AMB 外面接 bus 的是刻意的，要在白名單上
 //   3. UI 的聲音狀態（UI.ambOver、UI.cellarSnd、UI.ambTimer）只能在 ui_core.js 的 setAmbOver／setCellarSnd 裡改；開的人要有關的人
 //   5. 房間有自己的合成旋律（const sched／pad = every）又放整首曲子（songCycle）時，songCycle 要給第 6 個參數 duck，曲子放的時候旋律淡出（11-16「圖書館兩個音樂好像會重疊」）
+//   6. 理智低的恐怖音樂放的時候，房間的整首曲子要壓低（11-17 翊文：「理智低的恐怖音樂放的時候 讓房間的鋼琴降低」）：
+//      songCycle 的曲子要先過 SONG_GAINS 的小音量鈕（停的時候拿掉），sync() 照恐怖音樂開關調它；房間裡不能自己用 fileOnce 放整首曲子（要走 songCycle）
 //   4. 蓋在畫面上的框（.nb-layer）被程式直接拿掉時，要走 nbClose（框關掉才會收賭場、合作的聲音和計時器）
 // 有問題 exit 1。test/snd_check.test.cjs 也用它。
 const fs = require("fs"), path = require("path");
@@ -71,6 +73,12 @@ function checkFx(fx) {
   if (!/g\.disconnect\(\)/.test(st) || !/hnd\.nodes/.test(st)) bad.push("startAmb().stop() 沒有斷開 g、停 nodes");
   const sy = fx.slice(fx.indexOf("function sync()"), fx.indexOf("// 瀏覽器要等玩家先點"));
   for (const k of ["ambNow.stop()", "heartStop()", "tinNow.stop()", "droneNow.stop()"]) if (!sy.includes(k)) bad.push(`sync() 沒有 ${k}`);
+  // 6. 恐怖音樂時房間的曲子壓低
+  const sc = fx.slice(fx.indexOf("function songCycle("), fx.indexOf("function creepyHook("));
+  if (!/SONG_GAINS\.add\(/.test(sc) || !/SONG_GAINS\.delete\(/.test(sc)) bad.push("songCycle 的曲子沒有過 SONG_GAINS（恐怖音樂時壓不低），或停的時候沒拿掉");
+  if (!/songDread/.test(sy) || !/SONG_GAINS\.forEach/.test(sy)) bad.push("sync() 沒有照恐怖音樂調房間曲子的音量（SONG_GAINS）");
+  const SONG_IDS = ["lib-piano-a", "lib-piano-b", "cello-commission", "gallery-nostalgic", "gallery-welte"];
+  for (const e of ents) for (const m of e.src.matchAll(/fileOnce\([^,]+,[^,]+,\s*'([^']+)'/g)) if (SONG_IDS.includes(m[1])) bad.push(`AMB.${e.name}：整首曲子 ${m[1]} 用 fileOnce 直接放，要走 songCycle（恐怖音樂時才壓得低）`);
   return { bad, info: [...new Set(info)], rooms: ents.map(e => e.name) };
 }
 
