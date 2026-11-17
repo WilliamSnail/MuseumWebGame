@@ -711,7 +711,7 @@ export function casOpenPacks(w, house, n, day) {
   n = Math.floor(+n);
   if (!(n >= 1)) return { ok: false, reason: "要開幾包？" };
   if (n > C.maxPacksAtOnce) n = C.maxPacksAtOnce;
-  if (avail < 1) return { ok: false, reason: casPacksLeft(w) >= 1 && cut > 0 ? CAS_TEXT.packHouse : CAS_TEXT.packNone };
+  if (avail < 1) return { ok: false, reason: CAS_TEXT.packNone }; // 莊家缺錢少發的原因只在 Discord 說，遊戲介面不寫（翊文 11-17）
   n = Math.min(n, avail);
   const packs = [], dcap = house ? casDrawCap(house) : null;
   for (let i = 0; i < n; i++) {
