@@ -666,3 +666,5 @@ body[data-screen="bank"] #room { background: none; }
   .bank-flow-zb b { font-size: 1.1rem; } .bank-flow-zb span { font-size: .75rem; }
   .bank-flow-zoom { gap: 4px; } .bank-flow-crumb { padding: 2px 8px; min-height: 26px; }
 }
+
+.bank-chip.locked, .bank-chip:disabled { opacity: .4; cursor: not-allowed; border-style: dashed; text-decoration: line-through; } /* 信用等級還沒解鎖的倍數：灰、虛線、劃掉，不能按 */
