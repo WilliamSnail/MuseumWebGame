@@ -625,3 +625,6 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-node-g.sub text.n { fill: #C9D1DE; }
 .bank-flow-node-g.kids rect { stroke-width: 2; }
 .bank-flow-frame { cursor: pointer; outline: none; } .bank-flow-frame:hover rect { fill: rgba(214, 178, 94, .12); }
+/* 金流（11-17 翊文）：電腦版圖放大、佔滿寬度，流向一覽放圖下面分兩欄；手機直拿把底下的今日行情收掉，整張圖用捲的看得到 */
+@media (min-width: 761px) { .bank-flow { grid-template-columns: minmax(0, 1fr); } .bank-flow-box > .bank-flow-l { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bank-flow-l > li.on { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .bank-tab-flow .bank-ticker { display: none; } .bank-tab-flow .bank-stage { padding-bottom: 12px; } }
