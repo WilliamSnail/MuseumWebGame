@@ -1,7 +1,8 @@
 // 股票槓桿、放空、當沖、信用等級（11-14，規劃 2.8b、2.8j）：node test/casino_stock_lev.test.cjs（npm test 也會跑）
 // 保證金算術、強平價、盤中檢查（含跳空穿過）、收盤自動平倉、放空損益、各種上限、信用等級、館內股（莊家）和台股（外面世界）兩種對手盤的帳都對得上。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const { load: load0 } = require("./load_shared.cjs");
+const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.stockLev.levByCredit = [[0, 5]]; /* 舊測試用 5× 開，倍數跟信用的規則在 casino_stock_lev_owed.test.cjs 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const SEC = "test-secret", D0 = "2026-11-16";

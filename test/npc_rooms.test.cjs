@@ -1,7 +1,8 @@
 // 各房間現在有幾位＋館內股盤中跟著人數走（決定 0094）：node test/npc_rooms.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
-const { load } = require("./load_shared.cjs");
+const { load: load0 } = require("./load_shared.cjs");
+const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
 const LIST = fs.readdirSync(path.join(__dirname, "..", "content", "npc")).filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(__dirname, "..", "content", "npc", f), "utf8")));
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };

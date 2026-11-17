@@ -1,7 +1,8 @@
 // 賣股還債（決定 0093 第 2 件，shared/casino_debt.js）：node test/casino_debt.test.cjs（npm test 也會跑）
 // 不受壹人壹天賣出上限、賣的錢先補錢包的負數再照到期順序還借款、最多賣到剛好夠還、手續費稅照舊、不算進今天賣出的額度、帳對得上。館外股、館內股都能賣。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const { load: load0 } = require("./load_shared.cjs");
+const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.US_IDS.length = 0; G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D = "2026-11-14", ID = "greeneye", SEC = "debt-secret";

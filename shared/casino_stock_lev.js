@@ -34,7 +34,7 @@ import { casCreditLevel } from "./casino_credit.js";
 import { casCount, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
 import { casFill, casNum, casPx } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
-import { IN_IDS, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
+import { IN_IDS, casInAdvance, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
 import { casStockHouseFix, casStockIdHalt, stBuyCost, stCents, stPx } from "./casino_stock.js";
 import { TW_IDS, US_IDS, twIdx, usIdx } from "./stocks_tw.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
@@ -156,6 +156,7 @@ export function casLevCheck(p, path) {
 // ---------- 價格來源：用莊家的資料做 src ----------
 // 館內五家店：idx ＝ 第幾個 15 分鐘價（0 ＝ 05:00）；台股、美股：idx ＝ 距離開盤那壹刻的分鐘（跟 house.stk.tw／us 的 ser 同壹套）
 export function casLevSrc(house, day, t, secret = casInSecret()) {
+  casInAdvance(house, day, t, secret); // 館內股的價是推出來的：先推到現在（還沒換日就把昨天走完）
   const SH = casStockHouseFix(house), IH = casInHouseFix(house), C = NUM.casino.stockIn;
   const arrOf = (mk, id, d) => { // 台股、美股 d 那天盤中每分鐘的價：{ arr, from }
     const T = SH[mk];

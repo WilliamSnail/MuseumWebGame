@@ -1,6 +1,7 @@
 // 停損、停利（槓桿部位）和館內五家店的限價單、停損單（11-14，規劃 2.8b、2.8c、2.8j）：node test/casino_stock_stops.test.cjs（npm test 也會跑）
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const { load: load0 } = require("./load_shared.cjs");
+const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; G.NUM.casino.stockLev.levByCredit = [[0, 5]]; /* 舊測試用 5× 開，倍數跟信用的規則在 T2 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const J = JSON.stringify;
