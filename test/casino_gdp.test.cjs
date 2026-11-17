@@ -131,7 +131,8 @@ T("莊家缺錢保護：莊家少於 low 免費大禮包只發 lowPacks 包、�
   const open = (s, n = 2) => G.casOpenPacks(s.w, s.house, n, D0);
   assert.strictEqual(G.casPackCut(null), 0); assert.strictEqual(G.casPackCut(mk(H.low).house), 0);
   let s = mk(H.low * 2); let r = open(s); assert.ok(r.ok && r.packs.length === D, "健康：全發");
-  s = mk(H.low - 1); r = open(s); assert.ok(r.ok && r.packs.length === H.lowPacks, "缺錢：只發 lowPacks 包"); assert.ok(!open(s).ok); assert.ok(!open(s).reason.includes("莊家"), "遊戲介面不寫莊家缺錢");
+  s = mk(H.low - 1); r = open(s); assert.ok(r.ok && r.packs.length === H.lowPacks, "缺錢：只發 lowPacks 包"); assert.ok(!open(s).ok); assert.ok(open(s).reason.includes("莊家現在缺錢"));
+  s = mk(H.low - 1); assert.strictEqual(G.casWalletView(s.w, D0, s.house).packCut, D - H.lowPacks, "畫面拿得到少發幾包"); assert.strictEqual(G.casWalletView(s.w, D0, null).packCut, 0);
   s = mk(0); r = open(s); assert.strictEqual(r.ok, H.brokePacks > 0, "破產：brokePacks 包");
   s = mk(-5); s.w.tickets = 3; r = open(s, 2); assert.ok(r.ok && r.packs.length === 2 && s.w.tickets === 1 && s.w.pk.left === D, "破產時買來的券還能開，免費的不動");
   s = mk(H.low - 1); open(s); s.house.bankroll = H.low * 2; r = open(s); assert.ok(r.ok && r.packs.length === D - H.lowPacks, "錢回來就恢復（今天剩下的）");

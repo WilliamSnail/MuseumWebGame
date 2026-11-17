@@ -480,7 +480,7 @@ function weekPane() {
 
 // ---------- 大禮包 ----------
 function packsPane() {
-  const w = S.w, can = w.packsLeft > 0;
+  const w = S.w, cut = w.packCut || 0, usable = Math.max(0, w.packsToday - cut) + w.tickets, can = usable > 0; // 莊家缺錢時免費的少發（cut 包），畫面也要照這個算，不然拉霸一直按不出東西（11-17 翊文）
   const rows = CAS_PACKS.map((p, i) => h("li", null, h("span", { class: "cas-stars", "aria-label": `${p.stars} 星` }, "★".repeat(p.stars)), h("b", null, p.name), h("small", null, `${(p.upTo - (i ? CAS_PACKS[i - 1].upTo : 0)) / 10}%`)));
   const boost = liveEvent("casinoBoost");
   // 拉霸（翊文 11-09）：先轉，伺服器回來再壹輪壹輪停。籌碼等停好才變，不然狀態列會先爆雷
@@ -489,7 +489,7 @@ function packsPane() {
   machine.idle(can ? "拉下拉桿，開壹包" : "今天沒有可以開的了");
   const pull = async n => {
     const s = S;
-    if (!s || s.busy || s.w.packsLeft < 1) return;
+    if (!s || s.busy || (Math.max(0, s.w.packsToday - (s.w.packCut || 0)) + s.w.tickets) < 1) return;
     s.busy = true;
     s.m.surface.querySelectorAll("button").forEach(b => { b.disabled = true; });
     machine.spin();
@@ -523,9 +523,10 @@ function packsPane() {
   const open = n => pull(n);
   return [
     sec("每日大禮包", machine.el, boost ? h("p", { class: "cas-note" }, eventTagNode(boost), ` ${boost.title}：活動時間內多 ${NUM.events.casinoBoost.extraPacks} 包（進來就加好了，沒趕上也不會少什麼）。`) : null, h("p", { class: "cas-note" }, `每天有 ${NUM.casino.dailyPacks} 包免費的（沒開的不累積）；餐車買的、贏牌抽到的券另外算。籌碼是莊家出的。`),
-      h("p", { class: "cas-have" }, `今天免費的剩 ${w.packsToday} 包，券 ${w.tickets} 張，共 ${w.packsLeft} 包可以開。`),
+      h("p", { class: "cas-have" }, `今天免費的剩 ${w.packsToday} 包，券 ${w.tickets} 張，共 ${usable} 包可以開。`),
+      cut > 0 ? h("p", { class: "cas-note", role: "status" }, CAS_TEXT.packHouse) : null,
       h("div", { class: "cas-acts" }, btn(`開壹包`, () => open(1), "primary", { disabled: !can || S.busy ? true : null }),
-        w.packsLeft > 1 ? btn(`全開（${Math.min(w.packsLeft, NUM.casino.maxPacksAtOnce)} 包）`, () => open(w.packsLeft), "", { disabled: S.busy ? true : null }) : null)),
+        usable > 1 ? btn(`全開（${Math.min(usable, NUM.casino.maxPacksAtOnce)} 包）`, () => open(usable), "", { disabled: S.busy ? true : null }) : null)),
     S.packs ? sec("剛剛開到的", h("ul", { class: "cas-packs" }, S.packs.map(p => h("li", { class: "s" + p.stars }, h("span", { class: "cas-stars" }, "★".repeat(p.stars)), h("b", null, p.name), h("span", null, `+${casNum(p.chips)}`))))) : null,
     sec("機率", h("ul", { class: "cas-odds" }, rows)),
   ];

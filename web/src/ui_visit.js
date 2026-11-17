@@ -372,6 +372,13 @@ async function claimServer(ids) {
   } catch (e) { snd("error"); note(e.message || "領不了，等壹下再試。", "bad"); return null; }
 }
 ADDONS.serverMail = { list: () => serverMail, refresh: () => refreshSocial(), claim: claimServer, useRow };
+// 剛寄進信箱的信（財經專員在銀行、賭場寄的）：馬上跳壹張提示＋「去看信」，信箱的數字也更新（不用等下次進館）
+if (NET.setLetterHook) NET.setLetterHook(l => {
+  refreshSocial().catch(() => {});
+  const open = () => { if (PANELS.mail) PANELS.mail(); };
+  if (ADDONS.mailCard) ADDONS.mailCard({ from: l.from || "館方", title: l.title || String(l.text || "").split("\n")[0].slice(0, 40), open }); // 跟邀請同壹張卡（ui_party.js）
+  else { note(`${l.from || "館方"}寄了壹封信給你，放在信箱。`, "good", 0, { label: "去看信", run: open }); snd("bell"); }
+});
 ADDONS.mailCount = () => serverMail.length;
 
 // 這幾則請你去看展廳的通知我處理過了（去看了、或按知道了）：告訴伺服器標起來，畫面先拿掉

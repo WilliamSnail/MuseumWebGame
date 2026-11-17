@@ -710,7 +710,7 @@ export function casOpenPacks(w, house, n, day) {
   n = Math.floor(+n);
   if (!(n >= 1)) return { ok: false, reason: "要開幾包？" };
   if (n > C.maxPacksAtOnce) n = C.maxPacksAtOnce;
-  if (avail < 1) return { ok: false, reason: CAS_TEXT.packNone }; // 莊家缺錢少發的原因只在 Discord 說，遊戲介面不寫（翊文 11-17）
+  if (avail < 1) return { ok: false, reason: cut > 0 ? CAS_TEXT.packHouse : CAS_TEXT.packNone };
   n = Math.min(n, avail);
   const packs = [], dcap = house ? casDrawCap(house) : null;
   for (let i = 0; i < n; i++) {
@@ -969,11 +969,11 @@ export function casWkClaim(w, P, label, day) {
 }
 
 // ---------- 畫面要的錢包摘要 ----------
-export function casWalletView(w, day) {
+export function casWalletView(w, day, house) {
   const C = NUM.casino;
   return {
     foodMoodLeft: Math.max(0, NUM.casino.foodCap.mood - (w.food && w.food.day === day ? w.food.mood : 0)), foodSanLeft: Math.max(0, NUM.casino.foodCap.san - (w.food && w.food.day === day ? w.food.san : 0)),
-    chips: w.chips, tickets: w.tickets, packsToday: w.pk.left, packsLeft: casPacksLeft(w), opened: w.pk.opened,
+    chips: w.chips, tickets: w.tickets, packsToday: w.pk.left, packsLeft: casPacksLeft(w), packCut: house ? casPackCut(house) : 0, opened: w.pk.opened,
     canRelief: casCanRelief(w), loan: casLoanView(w, day), work: casWorkView(w), mustWork: casMustWork(w),
     ex: C.exchange.map(x => ({ id: x.id, chips: x.chips, perWeek: x.perWeek, left: casExchangeLeft(w, x.id) })),
     ach: Object.keys(w.ach).map(id => Object.assign({ d: w.ach[id].d }, casAchInfo(w, id))).filter(a => a.name),
