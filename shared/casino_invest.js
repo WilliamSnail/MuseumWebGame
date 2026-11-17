@@ -65,6 +65,25 @@ function ivPegSync(I, house) {
   }
   I.pegSeq = top;
 }
+// 除權（配股、拆股，house.stk.div.ev 的 kind "split"，決定 0112）：館方的持股也要乘 r（捨去），成本不變；hx、px、lastPx 除以 r（11-17，跟換比例同壹類的漏洞）。
+//   I.dvLast ＝ 上次對過的遊戲日：只跟除權日 ≥ 那天的（第壹次＝今天，過去的不補，跟錢包的 S.dv.last 壹樣）；I.dvDone 記做過的事件
+function ivSplitSync(I, house) {
+  const H = house && ivBox(house.stk) ? house.stk : null, day = H && ivDay(H.day) ? H.day : null;
+  if (!day) return;
+  const evs = H.div && Array.isArray(H.div.ev) ? H.div.ev.filter(e => ivBox(e) && e.kind === "split" && +e.r > 1 && +e.r <= 50 && ivDay(e.ex) && typeof e.key === "string") : [];
+  if (!ivBox(I.dvDone)) I.dvDone = {};
+  const last = ivDay(I.dvLast) ? I.dvLast : day;
+  for (const e of evs) {
+    if (I.dvDone[e.key] || e.ex > day) continue;
+    I.dvDone[e.key] = 1;
+    if (e.ex < last) continue;
+    for (const k of IV_POOLS) { const P = I.pool[k]; if (P.own[e.id] > 0) P.own[e.id] = Math.floor(P.own[e.id] * e.r + 1e-9); }
+    if (Array.isArray(I.hx[e.id])) I.hx[e.id] = I.hx[e.id].map(v => stPx(v / e.r));
+    for (const m of [I.px, I.lastPx]) if (m && +m[e.id] > 0) m[e.id] = stPx(m[e.id] / e.r);
+  }
+  const keys = new Set(evs.map(e => e.key)); for (const k of Object.keys(I.dvDone)) if (!keys.has(k)) delete I.dvDone[k];
+  I.dvLast = day;
+}
 export function casInvestFix(house) {
   if (!ivBox(house.inv)) house.inv = { day: null, pool: {}, cur: null, last: null };
   const I = house.inv;
@@ -88,7 +107,8 @@ export function casInvestFix(house) {
   for (const id of Object.keys(I.hx)) { const a = Array.isArray(I.hx[id]) ? I.hx[id].filter(v => +v > 0).map(v => stPx(v)).slice(-NUM.casino.invest.dip.days) : []; if (IV_IDS.includes(id) && a.length) I.hx[id] = a; else delete I.hx[id]; }
   for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = stPx(m[id]); }
   I.pegSeq = I.pegSeq == null || !Number.isFinite(+I.pegSeq) ? null : Math.floor(+I.pegSeq);
-  ivPegSync(I, house); // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
+  ivPegSync(I, house);
+  ivSplitSync(I, house); // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
   return I;
 }
 
@@ -135,7 +155,7 @@ export function casInvestRun(house, stkH, day, secret, b) {
   I.cur = { day, buy: {}, sell: {}, paused: {} };
   I.lastPx = I.px; I.px = Object.fromEntries(IV_IDS.filter(id => +stkH.px[id] > 0).map(id => [id, stPx(stkH.px[id])]));
   const px = stkH.px, cfg = NUM.casino;
-  for (const id of IV_IDS) if (+px[id] > 0) { const a = Array.isArray(I.hx[id]) ? I.hx[id] : []; I.hx[id] = a.concat(stPx(px[id])).slice(-C.dip.days); } // 均價用的歷史：每天跑壹次記壹個價（買之前用的是記今天價之前的）
+  for (const id of IV_IDS) if (+px[id] > 0) { const a = (Array.isArray(I.hx[id]) ? I.hx[id] : []).filter(v => v * 3 > px[id] && v < px[id] * 3); I.hx[id] = a.concat(stPx(px[id])).slice(-C.dip.days); } // 跟現在差 3 倍以上的舊價丟掉（換比例、除權沒換到的，11-17：7 支非科技台股的均價還是 10,000） // 均價用的歷史：每天跑壹次記壹個價（買之前用的是記今天價之前的）
   for (const pool of IV_POOLS) {
     const P = I.pool[pool], avail = ivAvail(house, pool);
     // 1 先賣：跌過停損、漲過停利

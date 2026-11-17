@@ -64,6 +64,7 @@ const STEPS = [
   ["Yuga Bot 銀行的活存、定存（存領、到期、解約、利息從莊家出、破產不給、補算、守恆、利率順序）", ["test/casino_bank.test.cjs"]],
   ["遊戲價直接照真實價（每分鐘抓、價＝倍數×真實價、漲跌和真實壹樣、超過 3 分鐘沒新價暫停、第壹次換比例市值不變、持有成本、補最近壹次收盤，規劃 2.8l）", ["test/stocks_direct.test.cjs"]],
   ["館方投資外面世界（莊家和預算池超過保留的部分每天投壹點、錢搬給外面世界、停損停利、虧太多暫停、吃緊暫停、日報寫昨天，規劃 2.8f）", ["test/casino_invest.test.cjs"]],
+  ["存股數的地方都跟著換比例、除權（錢包、館方兩個池子、全館持股數；shared/ 用到 .own[ 的檔都要登記，11-17）", ["test/holders_follow.test.cjs"]],
   ["旅客理智分岔（互動上限、7 天均線、每段週結算、先有預兆、恢復、variants 的選法、賭場邀請和委託有接上）", ["test/npc_branch.test.cjs"]],
   ["銀行館內經濟的幾個帳（books：餘額、昨天變化、進出最大的幾筆）", ["test/casino_books.test.cjs"]],
   ["帳的正負號對帳（莊家／預算池／館方帳／外面世界的每個來源方向、兩邊相反、名字、日報文字、掃程式；npm run books:sign）", ["test/books_sign.test.cjs"]],
