@@ -27,6 +27,7 @@ check("館內股：突發大事件的期望 K×機率×b 遠小於成本", K * (
 check("館內股：營收項——館友自己多去壹次＋砸滿 revCap，預期多推的跳空 ＜ 來回成本（營收也看，館友自己砸錢仍賺不到）", K * (1 - S.revWeight) / S.minPeople + K * S.revWeight * S.revCap / S.revMinAvg < round * margin, `${pct(K * (1 - S.revWeight) / S.minPeople + K * S.revWeight * S.revCap / S.revMinAvg)}；來回成本 ${pct(round)}（權重 ${S.revWeight}、封頂 ${S.revCap}、平均營收至少 ${S.revMinAvg}）`);
 check("館內股：NPC 占壹家店人數的上限 ≤ 50%（不讓機器人決定股價）", S.npcShareMax <= 50, `${S.npcShareMax}%`);
 check("館內股：NPC 保底人數（館友少的店也有人氣）：壹位多來的人預期跳空 K÷minPeople ＜ 來回成本（少數館友靠自己的人數賺不到）", K / S.minPeople < round * margin, `${pct(K / S.minPeople)}；來回成本 ${pct(round)}；保底 ${S.npcBase} 位、散客每家每天平均 ${S.npcWalk}`);
+{ const D = C.stock.div, yr = C.stock.holdPct * 365; check("配股息：股利所得稅率在 0～100%、持有成本壹年（每天 × 365）高於壹般殖利率（8%）——抱著領股息不會賺（決定 0112）", D.taxTw >= 0 && D.taxTw < 100 && D.taxUs >= 0 && D.taxUs < 100 && yr > 8, `持有成本壹年約 ${yr.toFixed(1)}%；稅率 台股 ${D.taxTw}%、美股 ${D.taxUs}%`); }
 check("館外股票：持有成本、手續費都 ＞ 0（抱著不賺長期漂移）", C.stock.holdPct > 0 && C.stock.feePct > 0, `手續費 ${C.stock.feePct}%、持有成本 ${C.stock.holdPct}%／天`);
 if (!C.stock.direct) check("館外股票（舊模型）：開盤拉回每天上限 ＜ 來回成本", G.casStockPullMax() * 100 < round, `${pct(G.casStockPullMax() * 100)}`);
 check("館外股票：真實價合理範圍 sane 夾得住（0.5～2 倍之內）", C.stock.sane && C.stock.sane[0] > 0 && C.stock.sane[1] < 3, JSON.stringify(C.stock.sane));

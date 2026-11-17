@@ -372,6 +372,8 @@ export function casLevPayOwed(w, house, day) {
 // ---------- 掃描：強制平倉、收盤自動平倉 ----------
 // 每次碰到錢包（在換日、casStockTwSettle／casStockUsSettle／casInRoll 之前）叫壹次。價格走過的路（src.path）逐個價檢查，碰到強平就用那個價平倉；
 // 然後這支如果已經收盤（今天還沒收盤的不動）、或是日子過了，用那天最後壹個價自動平倉。回傳平掉的 [{ pos, ...結算 }]
+// 配股息和槓桿（決定 0112）：槓桿部位一律當天結束（收盤、或換日用那天最後一個價自動平倉），不會跨過除息日，所以不用調整進場價；
+// 要是以後開放隔夜部位，除息日要把進場價、停損停利減一個股利、除權日價格除以配股比（不能放在這個 sweep 開頭：換日平倉用的是除息前的價）。
 export function casLevSweep(w, house, day, t, src) {
   const S = casLevFix(w, day), out = [];
   casLevPayOwed(w, house, day);
