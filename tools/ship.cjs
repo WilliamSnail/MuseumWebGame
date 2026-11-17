@@ -15,6 +15,7 @@
 //   --say "文字"／--say-file 檔案   **不再馬上發**（11-15，翊文：「Discord更新太洗板了」）：玩家看得到的改動只要加館方公告（npm run notice），
 //                                   每天 20:00 .github/workflows/discord-digest.yml 會把當天的公告合成壹則發出去。給了 --say 只印提醒，不發。
 //   --say-now "文字"                大更新要馬上發才用（tools/say.cjs）：例如新廳開放、全館活動開跑、壞掉修好要通知大家
+//   --say-now-file 檔案             同上，文字放檔案。**多行壹定用這個**：Windows 上 npm run 經過 cmd.exe，參數裡的換行後面會被切掉（11-17 Discord 只發出標題）
 //   --after-deploy "指令"           部署成功後再跑壹條指令（每日排程用：--after-deploy "gh workflow run discord-scheduled.yml --ref main"）
 //   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒加 content/notices/ 的公告檔會印警告，不擋）
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
@@ -33,7 +34,7 @@ function parseArgs(argv) {
     if (!a.startsWith("--")) throw new Error(`看不懂「${a}」`);
     const k = a.slice(2);
     if (["skip-local", "no-merge", "no-notice", "full"].includes(k)) { out.flags.add(k); continue; }
-    if (!["title", "body", "body-file", "message", "say", "say-file", "say-now", "after-deploy"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
+    if (!["title", "body", "body-file", "message", "say", "say-file", "say-now", "say-now-file", "after-deploy"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
     if (argv[i + 1] === undefined) throw new Error(`--${k} 後面要有內容`);
     out[k] = argv[++i];
   }
@@ -106,7 +107,9 @@ function main() {
   if (!titleOk(o.title)) throw new Error("--title 要寫真的標題：它會變成 commit 訊息和 PR 標題，推上去就改不回來");
   let body = o["body-file"] ? fs.readFileSync(o["body-file"], "utf8") : o.body;
   if (o.say || o["say-file"]) console.log("（--say 不再馬上發 Discord：每天 20:00 會把今天的館方公告合成壹則發；這次有加公告就會列進去。大更新要馬上發用 --say-now）");
-  const sayText = o["say-now"];
+  if (o["say-now"] && o["say-now-file"]) throw new Error("--say-now 和 --say-now-file 只能擇壹");
+  const sayText = o["say-now-file"] ? fs.readFileSync(o["say-now-file"], "utf8") : o["say-now"];
+  if (o["say-now"] && process.platform === "win32" && process.env.npm_lifecycle_event) console.log("（提醒：用 npm run 在 Windows 上傳 --say-now，文字裡的換行後面會被切掉；多行請改 --say-now-file 檔案）");
   if (sayText) require("./say.cjs").checkText(sayText); // 先檢查，免得上線完才發現發不出去
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
