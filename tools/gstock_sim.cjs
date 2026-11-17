@@ -21,7 +21,7 @@ function run(b, players) {
       const t = Date.parse(day + "T05:00:00+08:00") + k * 900000 + 1000; G.gsAdvance(h, day, t);
       if (players > 0 && k === 4) for (const w of ws) { // 炒作：d 0～4 每天買到上限；d 8～12 賣
         const U = h.gs.u[target]; if (!U) continue;
-        if (d < 5) { const n = Math.floor(U.S * G.NUM.casino.gstock.dayVolPct / 100 / players); G.gsBuy(w, h, target, n, day, t); } else if (d >= 8 && d < 13) G.gsSell(w, h, target, Math.ceil((w.gs && w.gs.h[target] || 0) / (13 - d)), day, t);
+        if (d < 5) { let n = Math.floor(U.S * G.NUM.casino.gstock.dayVolPct / 100 / players); while (n >= 1 && !G.gsBuy(w, h, target, n, day, t).ok) n = Math.floor(n / 2); } else if (d >= 8 && d < 13) G.gsSell(w, h, target, Math.ceil((w.gs && w.gs.h[target] || 0) / (13 - d)), day, t);
       }
     }
     for (const w of ws) G.gsSync(w, h);

@@ -23,14 +23,15 @@ T("買賣：買了價格上升、賣了下降；來回壹趟賠價差手續費�
 });
 T("上限：壹天買賣上限、休市、錢不夠、價格推到漲跌停就擋", G => {
   const { h, w } = setup(G), U = h.gs.u["g-daily"], C = G.NUM.casino.gstock;
-  assert.ok(!G.gsBuy(w, h, "g-daily", Math.floor(U.S * C.dayVolPct / 100) + 1, D, NOON).ok, "壹天最多 1% 股本"); assert.ok(!G.gsBuy(w, h, "g-daily", 1000, D, Date.parse(D + "T03:00:00+08:00")).ok, "休市");
+  assert.ok(!G.gsBuy(w, h, "g-daily", Math.floor(U.S * C.dayVolPct / 100) + 1, D, NOON).ok, "壹天最多 dayVolPct 股本"); assert.ok(!G.gsBuy(w, h, "g-daily", 1000, D, Date.parse(D + "T03:00:00+08:00")).ok, "休市");
   w.chips = 10; assert.ok(!G.gsBuy(w, h, "g-daily", 100, D, NOON).ok, "沒錢"); w.chips = 5e9;
   const V = h.gs.u["g-arts"]; V.S = 20000; V.i = 0; C.depthPct = 1; const big = G.gsBuy(w, h, "g-arts", 200, D, NOON); assert.ok(!big.ok && /漲跌停/.test(big.reason), big.reason);
   C.depthPct = 20; const small = G.gsBuy(w, h, "g-arts", 10, D, NOON); assert.ok(small.ok, small.reason);
 });
-T("持股上限：每家最多股本的 holdCapPct%", G => {
-  const { h, w } = setup(G), C = G.NUM.casino.gstock, V = h.gs.u["g-school"]; V.S = 100000; const cap = Math.floor(V.S * C.holdCapPct / 100);
-  w.gs = { h: { "g-school": cap }, cost: { "g-school": 1 } }; const r = G.gsBuy(w, h, "g-school", 1, D, NOON); assert.ok(!r.ok && /最多持有/.test(r.reason), r.reason);
+T("沒有持股上限：壹個人可以持有很大比例（只受壹天成交上限、漲跌停、錢限制）", G => {
+  const { h, w } = setup(G), V = h.gs.u["g-school"]; V.S = 100000; const n = Math.floor(V.S * 0.06); w.gs = { h: { "g-school": n }, cost: { "g-school": 1 } };
+  const r = G.gsBuy(w, h, "g-school", 100, D, NOON); assert.ok(r.ok, r.reason); assert.strictEqual(w.gs.h["g-school"], n + 100);
+  assert.strictEqual(G.NUM.casino.gstock.holdCapPct, undefined);
 });
 T("股利：持股人碰錢包時領、錢從那個集團池子出，守恆，同壹個事件不領兩次", G => {
   const { h, w } = setup(G); G.gsBuy(w, h, "g-daily", 400000, D, NOON); const am0 = G.wuAmounts(h);
@@ -68,6 +69,18 @@ T("價格推進：每個價最多動 tickLim%、壹天離開盤價最多 dayLim%
   const { h } = setup(G); const C = G.NUM.casino.gstock; let prev = h.gs.u["g-daily"].P; const o = h.gs.u["g-daily"].o;
   for (let k = 20; k < 75; k++) { G.gsAdvance(h, D, at(D, k)); const P = h.gs.u["g-daily"].P; assert.ok(Math.abs(P / prev - 1) <= C.tickLim / 100 + 1e-9); assert.ok(Math.abs(P / o - 1) <= C.dayLim / 100 + 1e-9); prev = P; }
   const p = h.gs.u["g-daily"].P; G.gsAdvance(h, D, Date.parse(D + "T03:00:00+08:00")); assert.strictEqual(h.gs.u["g-daily"].P, p);
+});
+T("賣單莊家不夠錢：夠就照舊；不夠但博物館資金夠就借；兩邊都不夠部分成交；壹股都付不起才擋；守恆", G => {
+  const { h, w } = setup(G); G.gsBuy(w, h, "g-daily", 200000, D, NOON); const U = h.gs.u["g-daily"]; let t0 = total(G, w, h);
+  const b1 = G.gsSell(w, h, "g-daily", 50000, D, NOON); assert.ok(b1.ok && b1.lent === 0 && b1.part === 0, "莊家夠：不借");
+  // 莊家只剩一點、博物館資金很多：借
+  h.bankroll = 1000; h.budget = 5e9; t0 = total(G, w, h); const bud0 = h.budget, debt0 = h.debt.budget; const r2 = G.gsSell(w, h, "g-daily", 20000, D, NOON); assert.ok(r2.ok && r2.part === 0 && r2.lent > 0, JSON.stringify(r2));
+  assert.ok(h.budget < bud0 - r2.lent + r2.fee + 1 && h.budget > bud0 - r2.lent - 1, "博物館資金少了借出去的、多了手續費"); assert.strictEqual(h.debt.budget, debt0 + r2.lent); assert.ok(h.bankroll >= 0); assert.strictEqual(total(G, w, h), t0, "全館總和不變");
+  // 兩邊都不夠：部分成交
+  h.bankroll = 1000; h.budget = Math.floor(G.NUM.casino.econ.budgetStart * G.NUM.casino.houseLoan.budgetKeepPct / 100) + 200000; t0 = total(G, w, h); const before = w.gs.h["g-daily"], r3 = G.gsSell(w, h, "g-daily", 100000, D, NOON);
+  assert.ok(r3.ok && r3.part > 0 && r3.n < 100000 && r3.n > 0, JSON.stringify(r3)); assert.strictEqual(w.gs.h["g-daily"], before - r3.n); assert.ok(h.bankroll >= 0); assert.ok(/沒賣掉/.test(r3.lines[0])); assert.strictEqual(total(G, w, h), t0);
+  // 壹股都付不起
+  h.bankroll = 0; h.budget = 0; const r4 = G.gsSell(w, h, "g-daily", 10, D, NOON); assert.ok(!r4.ok && /沒有/.test(r4.reason), JSON.stringify(r4)); void U;
 });
 T("畫面 gsView：價格、指數、我的持股；沒有錢包也行", G => {
   const { h, w } = setup(G); G.gsBuy(w, h, "g-arts", 1000, D, NOON); const v = G.gsView(w, h, D, NOON); assert.strictEqual(v.list.length, 6); const a = v.list.find(x => x.id === "g-arts"); assert.strictEqual(a.mine, 1000); assert.ok(a.price > 0 && a.name.endsWith("股")); assert.ok(G.gsView(null, h, D, NOON).list.length === 6);
