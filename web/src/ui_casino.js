@@ -171,7 +171,7 @@ function sideCol() {
 // 賭場的牌桌那壹手打到壹半的限制在賭場裡才有，這裡不會有（round 是 null）。回傳節點，畫面離開就不再更新
 export function casinoBankBox() {
   const box = h("div", { class: "cas-bank-host" });
-  const C = { w: null, bank: null, bond: null, round: null, busy: false, bankOpen: false, bankTab: "loan", termAmt: null, failed: false };
+  const C = { w: null, bank: null, bond: null, round: null, busy: false, bankOpen: false, bankTab: "save", termAmt: null, failed: false };
   const sync2 = r => { if (!r) return; if (r.wallet) { C.w = r.wallet; if (typeof r.wallet.chips === "number") setChips(r.wallet.chips); } if (r.bank) C.bank = r.bank; if (r.bond) C.bond = r.bond; };
   const io = {
     draw: () => { if (!box.isConnected && C.w) return; box.replaceChildren(...(C.w ? [bankBar(C, io)].filter(Boolean) : C.failed ? [] : [h("p", { class: "cas-bank-wait" }, "翻存摺中……")])); },
@@ -219,14 +219,14 @@ export function bankBar(C, io) {
   const fig = (label, value, sub) => h("div", { class: "bk-fig" }, h("span", { class: "bk-fig-l" }, label), h("b", null, value), sub ? h("small", null, sub) : null);
   const md = s => s.slice(5).replace("-", "/");
   // 借款、存款兩個頁籤（11-13，Yuga Bot 銀行的活存、定存）
-  const bt = C.bankTab === "save" && C.bank ? "save" : "loan";
+  const bt = C.bankTab !== "loan" && C.bank ? "save" : "loan"; // 存款在左邊、是預設（11-17 翊文）；存款資料還沒來才先顯示借款
   const btab = (id, name) => h("button", { type: "button", role: "tab", class: "bk-tab" + (bt === id ? " on" : ""), "aria-selected": String(bt === id), onClick: () => { C.bankTab = id; io.draw(); } }, name);
   const head = h("header", { class: "bk-head" },
     h("span", { class: "bk-seal", "aria-hidden": "true" }, "Y"),
     h("span", { class: "bk-name" }, h("b", null, CAS_TEXT.bankName), h("small", null, CAS_TEXT.bankBranch)),
     h("span", { class: "bk-state " + (debt ? "bad" : L.list.length ? "open" : "good") }, debt ? "欠款中" : L.list.length ? `借款中 ${L.list.length} 筆` : "信用良好"));
   const fold = h("div", { class: "bk-fold" }, btn("收起來", () => { C.bankOpen = false; io.draw(); }, "small"), ADDONS.bankHall && ADDONS.bankOpen ? btn("去銀行（完整）", () => { io.leave(); ADDONS.bankHall.open(); }, "small primary") : null);
-  const tabsRow = C.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("loan", CAS_BANK.tabLoan), btab("save", `${CAS_BANK.tabSave}${C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`)) : null;
+  const tabsRow = C.bank ? h("div", { class: "bk-tabs", role: "tablist", "aria-label": CAS_TEXT.bankName }, btab("save", `${CAS_BANK.tabSave}${C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0) > 0 ? "・" + casNum(C.bank.save + C.bank.terms.reduce((s, x) => s + x.amt, 0)) : ""}`), btab("loan", CAS_BANK.tabLoan)) : null;
   if (bt === "save") return h("section", { class: "cas-bank", "aria-label": CAS_TEXT.bankName }, head, fold, tabsRow, savePane(C, io, fig, md, off));
   return h("section", { class: "cas-bank" + (debt ? " debt" : ""), "aria-label": CAS_TEXT.bankName },
     head, fold, tabsRow,
