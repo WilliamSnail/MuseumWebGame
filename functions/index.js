@@ -77,6 +77,7 @@ export const join = onCall(async req => {
 export { discordBot } from "./discord.js";
 export { discordLinkCode, discordLinkState, discordUnlink } from "./discord_link.js";
 export { discordOutboxSend } from "./discord_out.js";
+export { discordDigestTick } from "./discord_digest.js"; // 每天台灣 20:00 的 Discord 更新彙整（11-17 從 GitHub 定時搬過來，GitHub 的會晚好幾小時）
 
 // ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
 export { invite, inviteReply, partyAction } from "./party.js";

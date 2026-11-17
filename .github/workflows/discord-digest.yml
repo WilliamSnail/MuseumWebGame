@@ -2,9 +2,9 @@
 # 內容是 shared/notices.js 今天發布的館方公告標題（tools/discord_digest.cjs）；今天沒有就不發。也可以手動按（dry＝只印不發）。
 name: Discord 每天的更新彙整
 
+# 11-17 起每天 20:00 由伺服器排程發（functions/discord_digest.js 的 discordDigestTick）：GitHub 的定時晚了 6～9 小時。
+# 這支只留手動（補發、dry 看內容）；手動發不會跟伺服器那則去重，當天伺服器發過就不要再按。
 on:
-  schedule:
-    - cron: "0 12 * * *" # UTC 12:00 ＝ 台灣 20:00（GitHub 的排程可能晚幾分鐘）
   workflow_dispatch:
     inputs:
       dry:
@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: 整理今天的更新

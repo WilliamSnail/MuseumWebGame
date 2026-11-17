@@ -29,7 +29,7 @@ jobs:
       actions: read # 讀 PR 的 CI 結果
       pull-requests: read # 這個 commit 屬於哪個 PR
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # 要讀得到 merge commit 的 parent（PR head）
       - id: gate
@@ -37,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node tools/deploy_gate.cjs --github-output
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.gate.outputs.skip_tests != 'true'
         with:
           node-version: 22
@@ -64,8 +64,8 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - id: nm
@@ -103,9 +103,9 @@ jobs:
       - name: 還沒放部署的金鑰
         if: env.HAS_KEY != 'true'
         run: echo "還沒在 GitHub Secrets 放 FIREBASE_SERVICE_ACCOUNT，這次不部署。"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: env.HAS_KEY == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: env.HAS_KEY == 'true'
         with:
           node-version: 22
