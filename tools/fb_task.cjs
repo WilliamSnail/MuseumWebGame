@@ -21,6 +21,7 @@
 //                 什麼時候用：W2 以後確認世界文件有沒有每天寫、W5 以後看哪些集團減薪／緊縮／裁員（管理者看得到每家，財報只給分布）。
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
+//   invest-status 只讀：館方投資兩個池子的持股、成本、停損、每天記的價，和股價換比例的紀錄（11-17）。
 //   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠、借款、淨值（11-17）。名字在紀錄裡遮掉。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
@@ -28,7 +29,7 @@
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -264,6 +265,23 @@ async function playerInvest(db, name) {
     console.log(`  淨值（籌碼＋市值＋保證金＋買單鎖住 − 借款${lvOwed ? "、槓桿欠的" : ""}）：${fmt(nz(w.chips) + val + mg + nz(S0.hold) - owe - lvOwed)}`);
   }
 }
+// 只讀：館方投資（house.inv）的兩個池子、每天記的價、股價換比例的紀錄（11-17 翊文：館方投資帳面 +57280%、又寫「館方虧太多」→ 查持股有沒有跟著換比例）。
+//   不印名字、uid、email；只有莊家文件裡的這幾塊。
+async function investStatus(db) {
+  const hs = await db.doc("casinoHouse/main").get();
+  const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
+  const I = h.inv || {}, S = h.stk || {}, J = x => JSON.stringify(x);
+  console.log(`館方投資：day ${I.day || "-"}　peg（這份記到第幾次換比例）${I.pegSeq == null ? "（沒有）" : I.pegSeq}`);
+  for (const k of Object.keys(I.pool || {})) { const P = I.pool[k] || {}; console.log(`  池子 ${k}：pnl ${P.pnl}　stopUntil ${P.stopUntil || "-"}`); console.log(`    own ${J(P.own || {})}`); console.log(`    cost ${J(P.cost || {})}`); }
+  console.log(`  hx（每天跑壹次記的價）：${J(I.hx || {})}`);
+  console.log(`  px ${J(I.px || {})}　lastPx ${J(I.lastPx || {})}`);
+  console.log(`  cur ${J(I.cur || null)}`);
+  console.log(`  last ${J(I.last || null)}`);
+  const peg = S.peg || {};
+  console.log(`股價換比例：seq ${peg.seq}　dir ${J(peg.dir || {})}`);
+  for (const e of peg.ev || []) console.log(`  #${e.seq} ${e.id} ${e.from} → ${e.to}`);
+  console.log(`hist 有哪些天：${Object.keys(S.hist || {}).sort().join("、")}`);
+}
 const NEEDS_EMAIL = ["invite", "admin-on", "admin-off", "disable", "enable"];
 const EMAIL_RE = /^[^\s@/]+@[^\s@/]+\.[^\s@/.]+$/;
 
@@ -362,6 +380,7 @@ async function main() {
   if (task.action === "house-size") { await houseSize(db); return; }
   if (task.action === "world-status") { await worldStatus(db); return; }
   if (task.action === "player-invest") { await playerInvest(db, task.name); return; }
+  if (task.action === "invest-status") { await investStatus(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
