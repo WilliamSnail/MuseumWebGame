@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-16T01:13:33.422Z",
+ "updated": "2026-11-17T04:03:00.393Z",
  "source": "Yahoo Finance chart API（免金鑰）",
  "note": "pct＝真實漲跌幅（%）；null＝那天休市；key＝市場所在地的日期",
  "days": {
@@ -209,6 +209,15 @@
    "silverapple": 0.39,
    "flashcar": -1.82,
    "squarewin": 0.17
+  },
+  "2026-11-16": {
+   "greeneye": -4.12,
+   "redclaw": -5.58,
+   "nightindex": -2.49,
+   "islandforge": -5.74,
+   "silverapple": -0.98,
+   "flashcar": -2.69,
+   "squarewin": -1.12
   }
  }
 }
