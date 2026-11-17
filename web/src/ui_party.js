@@ -13,7 +13,7 @@ import { describePepe, fromKey, isFree, nowMs } from "../../shared/logic.js";
 import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/logic3.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
-import { FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd, titleOfId, titleTag } from "./ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd, titleOfId, titleTag } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { learnText } from "../../shared/shop.js";
 
@@ -43,8 +43,10 @@ function drawInvites() {
     outCard = card;
   } else if (outCard) { outCard.remove(); outCard = null; }
   incoming.forEach((x, i) => { x.card.hidden = i > 0; if (!x.card.isConnected) box.append(x.card); });
+  mailCards.forEach(c => { if (!c.isConnected) box.append(c); });
+  if (!outgoing.size && !incoming.length && mailCards.length) { if (ticker) { clearInterval(ticker); ticker = null; } return; } // 只有信的卡：不用倒數
   if (incoming.length) { const n = incoming.length - 1; incoming[0].more.textContent = n ? `還有 ${n} 個邀請` : ""; }
-  if (!outgoing.size && !incoming.length) {
+  if (!outgoing.size && !incoming.length && !mailCards.length) {
     if (ticker) { clearInterval(ticker); ticker = null; }
     box.remove();
     return;
@@ -77,6 +79,29 @@ export async function sendInvite(friend, kind) {
   } catch (e) { snd("error"); note(e.message || "邀請送不出去。", "bad"); }
 }
 FRIEND_ACTIONS.push({ id: "fuse", label: "邀請壹起融合", show: p => p.status !== "offline" && canFuseHere(), run: p => sendInvite(p, "fusion") });
+
+// 通用的遊戲內即時提示卡（11-17 翊文：「可以類似的做一個收到信的立即提示嗎?」「或重複用同一個提示功能?」「對這種in game 提示之後應該可以重複用」）
+//   跟被邀請同壹個地方（右下角）、同樣的卡、會響鈴。新的即時提示都用這張：ADDONS.noticeCard(...)（ui_core 不能 import 這個檔，所以掛在 ADDONS）
+//   who 粗體的那個人／東西、text 接在後面的話、sub 小字補充（可以沒有）、actions [{ label, run, primary }]（按了先收卡再 run；沒給是「知道了」）、
+//   ms 幾毫秒沒按自己收起來（預設 60 秒）。回傳收起來的函式
+const mailCards = [];
+export function noticeCard({ who, text, sub, actions, ms }) {
+  const acts = Array.isArray(actions) && actions.length ? actions : [{ label: "知道了" }];
+  const card = h("div", { class: "inv-card inv-in inv-note", role: "alertdialog", "aria-label": `${who || ""}${text || ""}` },
+    h("p", { class: "inv-t" }, who ? h("b", null, who) : null, text || ""),
+    sub ? h("p", { class: "inv-sub" }, sub) : null,
+    h("div", { class: "inv-btns" }, acts.map(x => btn(x.label, () => { close(); if (x.run) x.run(); }, x.primary ? "primary small" : "small"))));
+  const timer = setTimeout(() => close(), ms > 0 ? ms : 60000);
+  function close() { clearTimeout(timer); const i = mailCards.indexOf(card); if (i >= 0) mailCards.splice(i, 1); card.remove(); drawInvites(); }
+  mailCards.push(card);
+  drawInvites();
+  snd("bell");
+  return close;
+}
+// 收到信（財經專員在銀行、賭場寄的…）：用上面那張。60 秒沒按就收起來，信還在信箱
+export const mailCard = ({ from, title, open }) => noticeCard({ who: from, text: " 寄了信給你", sub: title, actions: [{ label: "去看信", run: open, primary: true }, { label: "等等再看" }] });
+ADDONS.noticeCard = noticeCard;
+ADDONS.mailCard = mailCard;
 
 // 被邀請：右下角一張卡
 function inviteCard(m) {

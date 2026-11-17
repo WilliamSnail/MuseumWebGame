@@ -74,7 +74,14 @@ export function createFirebaseNet(opts = {}) {
     onAuthStateChanged(auth, u => { if (!u && me) { me = null; stopPresence(); emit("logout", { code: "need_login" }); } });
     return ready;
   }
-  const call = async (name, data = {}) => { try { return (await httpsCallable(fns, name)(data)).data; } catch (e) { throw toNetError(e); } };
+  // 伺服器回傳裡有 letter（剛寄進信箱的信，例如財經專員的信，functions/casino.js）：叫 letterHook，畫面馬上提示（11-17 翊文：「介面會提示嗎」）
+  let letterHook = null;
+  const call = async (name, data = {}) => {
+    let d;
+    try { d = (await httpsCallable(fns, name)(data)).data; } catch (e) { throw toNetError(e); }
+    if (d && d.letter && letterHook) { try { letterHook(d.letter); } catch (e) { /* 提示失敗不影響動作 */ } }
+    return d;
+  };
 
   let me = null, rev = 0, state = "idle", roster = [], room = null, wanted = false;
   let statusRaw = null, titles = {}; // 在線名單的原始資料、館友戴的稱號（titles/{uid}，決定 0050）
@@ -335,6 +342,7 @@ export function createFirebaseNet(opts = {}) {
     // 邀請、隊伍都走 Functions（call）；舊的 send 留著，回傳 false。
     send() { return false; },
     call,
+    setLetterHook(fn) { letterHook = typeof fn === "function" ? fn : null; },
     // 聽 Realtime Database 的一個位置（例如隊伍 parties/{pid}）：有變就 fn(值)；沒權限、斷了 fn(null, 錯誤)。回傳停止的函式
     watch(path, fn) {
       if (!rtdb) return () => {};
