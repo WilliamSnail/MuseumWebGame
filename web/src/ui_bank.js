@@ -151,6 +151,34 @@ function pickAmt(title, sub, amts, then, type) {
   closeOnOutside(m);
 }
 // 借款自己輸入金額（11-15）：打字時只更新下面那行「要還多少、幾號到期」，按「借」才送；超過還可以借的、不到最少的不能按（伺服器也會擋）
+// 還壹部分（決定 0114）：先還利息、再還本金；一次最少 partMin，每筆最多 partMax 次；部分還不升額度
+function partLoan(v, x) {
+  const m = miniLayer("還多少？", `這筆要還 ${fmt(x.owe)}。先還利息、再還本金；壹次最少 ${fmt(x.partMin)}，這筆已經部分還了 ${x.parts}／${x.partMax} 次。部分還款不算準時還清，額度不會升；整筆還清才升。`);
+  let amt = "";
+  const hint = h("p", { class: "bank-hint" }, "輸入金額。");
+  const ok = () => typeof amt === "number" && Number.isFinite(amt) && Math.floor(amt) >= Math.min(x.partMin, x.owe) && Math.floor(amt) <= Math.min(x.owe, v.cash) && x.parts < x.partMax;
+  const go = btn("還", () => { if (ok()) { m.close(); bankDo("repay", { id: x.id, amt: Math.floor(amt) }); } }, "big bank-btn gold", { disabled: true });
+  const upd = () => { go.disabled = !ok(); hint.textContent = x.parts >= x.partMax ? "這筆部分還的次數用完了，請壹次還清或轉分期。" : amt === "" ? "輸入金額。" : !ok() ? `要在 ${fmt(Math.min(x.partMin, x.owe))} 到 ${fmt(Math.min(x.owe, v.cash))} 之間。` : `還 ${fmt(Math.floor(amt))}，還剩 ${fmt(x.owe - Math.floor(amt))}。`; };
+  m.card.classList.add("bank-loan-pop");
+  m.card.append(numField("金額", "", z => { amt = z; upd(); }, { min: 1, step: 1 }), hint,
+    h("div", { class: "bank-acts" }, ...[25, 50].map(p => btn(p + "%", () => { const n = Math.min(x.owe, v.cash, Math.max(x.partMin, Math.floor(x.owe * p / 100))); amt = n; const i = m.card.querySelector("input"); if (i) i.value = String(n); upd(); }, "small bank-btn")), go, btn("取消", () => m.close(), "small")));
+  closeOnOutside(m);
+  const inp = m.card.querySelector("input"); if (inp) { inp.focus(); inp.addEventListener("keydown", e => { if (e.key === "Enter") go.click(); }); }
+}
+// 轉分期（決定 0114）：2～4 期、每期隔 3～7 天；手續費 ＝ 延後那一期的本金 × 借款日利率 × 延後天數
+function splitLoan(l, x) {
+  const sp = l.split, m = miniLayer("轉分期", `把這筆分成 ${sp.kMin}～${sp.kMax} 期，每期隔 ${sp.gMin}～${sp.gMax} 天；第壹期就是原本的到期日。延後的部分照借款的日利率（每天 ${(sp.dayFeePct).toFixed(2)}%）收手續費，算進每期要還的錢。分期和延期只能選壹個，轉了不能再轉。`);
+  let k = sp.kMin, g = sp.gMin;
+  const info = h("div", { class: "bank-hint" });
+  const plan = () => { const base = Math.floor(x.amt / k), baseO = Math.floor(x.owe / k), rate = sp.dayFeePct / 100, due = d => { const t = new Date(Date.parse(x.due + "T00:00:00Z") + d * 86400000); return t.toISOString().slice(5, 10); }; let fee = 0; const rows = []; for (let i = 0; i < k; i++) { const a = base + (i === 0 ? x.amt - base * k : 0), o = baseO + (i === 0 ? x.owe - baseO * k : 0), f = i === 0 ? 0 : Math.ceil(a * rate * g * i); fee += f; rows.push(`${due(g * i)} 還 ${fmt(o + f)}`); } return { rows, fee }; };
+  const upd = () => { const p = plan(); info.textContent = `${p.rows.join("、")}；手續費共 ${fmt(p.fee)}`; };
+  const seg = (label, vals, get, set) => h("div", { class: "bank-acts" }, h("small", null, label), ...vals.map(n => btn(String(n), () => { set(n); upd(); }, "small bank-btn")));
+  const ks = []; for (let i = sp.kMin; i <= sp.kMax; i++) ks.push(i); const gs = []; for (let i = sp.gMin; i <= sp.gMax; i++) gs.push(i);
+  m.card.classList.add("bank-loan-pop");
+  m.card.append(seg("幾期", ks, () => k, n => { k = n; }), seg("每期隔幾天", gs, () => g, n => { g = n; }), info,
+    h("div", { class: "bank-acts" }, btn("轉分期", () => { m.close(); bankDo("loanSplit", { id: x.id, k, g }); }, "big bank-btn gold"), btn("取消", () => m.close(), "small")));
+  upd(); closeOnOutside(m);
+}
 function typeLoan(l) {
   const m = miniLayer("借多少？", `最少 ${fmt(l.min)}，最多 ${fmt(l.left)}。${l.days} 天內還，利息 ${pctText(l.pct)}。`);
   let amt = "";
@@ -248,7 +276,10 @@ function loanPane(v) {
     // 借了 15 分鐘內不能還：寫幾點起可以還，不要只把按鈕淡掉（測試 11-13）；籌碼不夠也寫出來
     h("span", { class: "bank-r" }, x.at && Date.now() < x.at
       ? h("small", { class: "bank-soon" }, `${new Date(x.at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`)
-      : v.cash < x.owe ? h("small", { class: "bank-soon bad" }, "籌碼不夠還") : btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold"))));
+      : h("span", { class: "bank-acts" }, v.cash < x.owe ? h("small", { class: "bank-soon bad" }, "籌碼不夠還整筆") : btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold"),
+        v.cash >= Math.min(x.partMin, x.owe) && x.parts < x.partMax ? btn("還一部分", () => partLoan(v, x), "small bank-btn") : null,
+        x.splitWhy ? null : btn("轉分期", () => splitLoan(l, x), "small bank-btn"))),
+    x.plan ? h("small", { class: "bank-hint bank-plan" }, `分期：${x.plan.map(p => `${p.due.slice(5)} 要還 ${fmt(p.owe)}`).join("、")}`) : null));
   if (!rows.length) rows.push(h("p", { class: "bank-empty" }, "沒有欠款。"));
   return h("div", { class: "bank-cols" },
     panel("借款", `${l.days} 天內還，利息 ${pctText(l.pct)}`,
@@ -894,6 +925,10 @@ function helpSections(v) {
         "館內股是真的市場：每家發行 10 萬股，旅客、散客照那家店每 15 分鐘到店的人數下單，價格由買賣推出來；你的買賣也會推動價格。",
         "每個價最多動 3%、壹天最多動 10%，一次想買賣太多會被擋，並告訴你現在最多還能買賣幾股。買賣各有半個價差（0.5%），加上手續費、證交稅，拉高出貨賺不到。",
         "「合理價」是旅客心裡的價，照昨天的人數、營收、景氣調：價格比它高旅客傾向賣，比它低傾向買。人多的店成交多、價格追合理價追得快；人少的店價格幾乎不動。"]],
+      ["借款：部分還、分期", [
+        "借款可以「還一部分」：先還利息、再還本金（壹次最少 5%、最少 1,000，每筆最多 8 次）；部分還款不算準時還清，額度不會升，整筆還清才升。",
+        "借了壹天以上、本金 10 萬以上、沒延過期的，可以「轉分期」：分 2～4 期、每期隔 3～7 天（最晚多 21 天），每期到期只扣那壹期；延後的部分照借款日利率收手續費，算進每期要還的錢。分期和延期只能選壹個，莊家手頭緊時暫停開分期。",
+        "賣股還債可以只還壹部分：賣的錢先補負數、還前面的整筆，最後壹筆還不完就先還它的利息和本金的壹部分。"]],
       ["股息和配股", [
         "館外股有配息的，除息日開始時你手上有的股數，每股領真實的現金股利（照遊戲價的倍數、美股照當天匯率換算），錢由外面世界付，扣股利所得稅：台股 30.11%（分離課稅 28% ＋ 二代健保 2.11%）、美股 30%，稅進政府帳。",
         "除息當天才買的不領，也買在掉完股利的價。除權（配股）：除權前持有的人多配股數，零股用現金補。",

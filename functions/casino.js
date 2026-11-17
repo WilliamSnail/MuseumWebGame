@@ -24,7 +24,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "./shared/casino.js";
-import { casCultureFund, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casCultureFund, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -343,6 +343,7 @@ export const actWork = (act, ctx, d) => {
 };
 // 還壹筆（d.id；沒給就還最早到期的）
 export const actRepay = (ctx, d) => {
+  if (d.amt != null && d.amt !== "") { const r = casRepayPart(ctx.w, d.id == null ? null : d.id, d.amt, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); return r.ok ? shape(ctx, { lines: r.lines }) : no(r); } // 部分還款（決定 0114）
   const r = casRepay(ctx.w, d.id == null ? null : d.id, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house); // 還給莊家（決定 0071）
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
@@ -523,6 +524,7 @@ export const casino = onCall(async req => {
     case "advisor": return play(req, me, {}, ctx => actAdvisor(ctx, d)); // 財經專員：同意延期（決定 0093 第 3 件）
     case "borrow": return play(req, me, {}, ctx => actBorrow(ctx, d));
     case "repay": return play(req, me, {}, ctx => actRepay(ctx, d));
+    case "loanSplit": return play(req, me, {}, ctx => { const r = casLoanSplit(ctx.w, d.id, d.k, d.g, ctx.day, ctx.house); return r.ok ? shape(ctx, { lines: r.lines }) : no(r); }); // 轉分期（決定 0114）
     case "workStart":
     case "workCheer":
     case "workEnd": {

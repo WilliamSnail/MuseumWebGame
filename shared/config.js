@@ -431,6 +431,11 @@ export const NUM = {
       // 額度上限和莊家的限制（規劃 2.11a，翊文 11-14「好」）：capMax 額度最多；levelPerDay 壹個人壹天最多升幾級（翊文 11-13：「那兩級好了」，100 萬到 2,000 萬大約 4 天；當天借當天還的不升）；
       // outPct／outMin：全館沒還的本金 ≤ max(outMin, 莊家的錢 × outPct%)；借款要莊家的錢夠（莊家 ≤ 0 暫停）；欠款中（錢包是負的）額度鎖在 limit
       capMax: 20000000, levelPerDay: 2, outPct: 30, outMin: 5000000,
+      // 部分還款、分期（決定 0114，翊文 11-17）：part ＝ 部分還款（先還利息、再還本金；一次最少 max(minAbs, 剩下 owe 的 minPct%)；每筆最多 max 次；部分還不升信用）；
+      //   split ＝ 把一筆改成 kMin～kMax 期、每期間隔 gMin～gMax 天（最晚多 gMax×(kMax−1) ≤ 21 天）；本金 ≥ minAmt、借了 minAgeDays 天以上、沒延期過；
+      //   手續費 ＝ 延後那一期的本金 × 借款日利率（interestPct ÷ days）× 延後天數；bankMult：莊家現金 < bankMult × 文化部館債才暫停開分期；on ＝ false 整個關掉
+      part: { minAbs: 1000, minPct: 5, max: 8 },
+      split: { on: true, kMin: 2, kMax: 4, gMin: 3, gMax: 7, minAmt: 100000, minAgeDays: 1, bankMult: 2 },
       quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）：額度太小、quickPct 算不出來時才用這組
       quickPct: [10, 25, 50],     // 快速按鈕照額度的幾 %（11-15，翊文：額度 300 萬時按鈕還是 2,500 太小「好改」）；shared/casino_wallet.js casLoanQuick 取成 1、2、3、5 開頭的整數
       discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）

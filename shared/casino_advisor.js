@@ -21,6 +21,7 @@ export const CAS_ADVISOR = {
   noLoan: "找不到這筆借款。",
   late: "這筆已經過了到期日，來不及延期了。",
   once: "這筆已經延過期了，每筆只能延壹次。",
+  split: "這筆轉成分期了，延期和分期只能選壹個。",
   done: "延期好了：這筆改成 {due} 到期，手續費 {fee} 加進要還的錢，現在要還 {owe}。",
   mailTitle: "財經專員的還款計畫",
   mailNote: "我是金融集團的財經專員梁安。你現在欠 {owed}（{part}）。我排了壹份計畫：{plan}。到銀行頁看，同意了才動，不同意就當我沒來過。",
@@ -47,6 +48,7 @@ export function casAdvisorWhyNot(x, day) {
   if (!x) return CAS_ADVISOR.noLoan;
   if (day > x.due) return CAS_ADVISOR.late;
   if (adN(x.ext) >= NUM.casino.advisor.maxExt) return CAS_ADVISOR.once;
+  if (Array.isArray(x.plan) && x.plan.length) return CAS_ADVISOR.split; // 轉過分期的不能再延期（二選一）
   return null;
 }
 export const casAdvisorFee = x => Math.ceil(adN(x.owe) * NUM.casino.advisor.feePct / 100);
