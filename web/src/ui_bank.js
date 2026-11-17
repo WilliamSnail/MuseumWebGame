@@ -911,6 +911,7 @@ function creditPanel(c) {
     c.why ? h("p", { class: "bank-hint" }, c.why) : null);
 }
 function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
+  if (dup && UI.bankPV === "market") return null; // 手機在看「行情」那頁，表已經是行情了，底下不用再秀一條
   const list = v.stocks ? v.stocks.list : [];
   return h("div", { class: "bank-ticker" + (dup ? " dup" : ""), "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情"),
     list.map((s, i) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },

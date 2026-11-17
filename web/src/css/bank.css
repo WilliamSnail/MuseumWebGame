@@ -624,6 +624,9 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-node-g.sub rect { fill: #0F1B33; stroke: #8E8AA8; stroke-dasharray: 2 2; }
 .bank-flow-node-g.sub text.n { fill: #C9D1DE; }
 .bank-flow-node-g.kids rect { stroke-width: 2; }
+.bank-flow-ftitle rect { fill: #0F192B; fill-opacity: .92; stroke: rgba(214, 178, 94, .55); stroke-width: 1; }
+.bank-flow-ftitle text { fill: #D6B25E; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; }
+.bank-flow-ftitle { cursor: pointer; outline: none; } .bank-flow-ftitle:hover rect { fill-opacity: 1; stroke: #D6B25E; }
 .bank-flow-frame { cursor: pointer; outline: none; } .bank-flow-frame:hover rect { fill: rgba(214, 178, 94, .12); }
 /* 金流（11-17 翊文）：電腦版圖放大、佔滿寬度，流向一覽放圖下面分兩欄；手機直拿把底下的今日行情收掉，整張圖用捲的看得到 */
 @media (min-width: 761px) { .bank-flow { grid-template-columns: minmax(0, 1fr); } .bank-flow-box > .bank-flow-l { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bank-flow-l > li.on { grid-column: 1 / -1; } }
