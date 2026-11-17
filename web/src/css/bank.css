@@ -644,9 +644,12 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-here { padding: 4px 10px; color: #FFF3C4; font-size: var(--type-small, .8125rem); }
 .bank-flow-crumbs i { font-style: normal; opacity: .7; }
 .bank-flow-zoom { display: flex; gap: 6px; flex: none; }
-.bank-flow-zb { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #C9A55A; background: linear-gradient(#3A4A6B, #25314D); color: #FFF3C4; font-size: 1.1rem; font-weight: 700; line-height: 1; cursor: pointer; }
-.bank-flow-zb:hover:not(:disabled) { background: linear-gradient(#4A5C82, #2F3D5E); }
-.bank-flow-zb:disabled { opacity: .35; cursor: default; }
+.bank-flow-zb { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 88px; height: 46px; padding: 0 14px; border-radius: 10px; border: 2px solid #8A6A2A; background: linear-gradient(#F0D68A, #C79A3F); color: #2A1A0A; font: inherit; font-weight: 800; letter-spacing: .08em; cursor: pointer; box-shadow: 0 2px 0 #5E4414, 0 4px 10px rgba(0, 0, 0, .45); }
+.bank-flow-zb b { font-size: 1.5rem; line-height: 1; } .bank-flow-zb span { font-size: var(--type-body, .9375rem); }
+.bank-flow-zb:hover:not(:disabled) { background: linear-gradient(#FFE9A8, #D8AB4D); } .bank-flow-zb:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 #5E4414, 0 2px 6px rgba(0, 0, 0, .45); }
+.bank-flow-zb:focus-visible { outline: 3px solid #FFF3C4; outline-offset: 2px; }
+.bank-flow-zb:disabled { background: rgba(214, 178, 94, .12); border-style: dashed; border-color: rgba(214, 178, 94, .5); color: rgba(243, 224, 176, .55); box-shadow: none; cursor: default; }
+.bank-flow-bar { flex-wrap: wrap; }
 .bank-flow-map { touch-action: pan-y; }
 .bank-flow-svg.zin { animation: bank-flow-zin .3s ease-out; transform-origin: 50% 40%; }
 .bank-flow-svg.zout { animation: bank-flow-zout .3s ease-out; transform-origin: 50% 40%; }
