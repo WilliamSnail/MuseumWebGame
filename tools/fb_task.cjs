@@ -29,10 +29,12 @@
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
+//   client-errors 只讀：網頁回報上來的前端錯誤（決定 0125，clientErrors 集合，7 天）。依訊息分組：次數、最後出現、版本、畫面、視窗大小、位置、stack 前 3 行。不印名字、uid、email（寫入時就清過，這裡再遮壹次）。
+//                 什麼時候用：玩家說畫面壞了（11-17 壹鍵交件整塊不見），本機重現不了。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "advisor-rules-mail"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "client-errors", "advisor-rules-mail"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -296,6 +298,19 @@ async function playerInvest(db, name) {
 }
 // 只讀：館方投資（house.inv）的兩個池子、每天記的價、股價換比例的紀錄（11-17 翊文：館方投資帳面 +57280%、又寫「館方虧太多」→ 查持股有沒有跟著換比例）。
 //   不印名字、uid、email；只有莊家文件裡的這幾塊。
+// 只讀：前端錯誤回報（見檔頭 client-errors）
+async function clientErrors(db) {
+  const snap = await db.collection("clientErrors").orderBy("lastAt", "desc").limit(300).get();
+  const mask = x => String(x == null ? "" : x).replace(/[w.+-]+@[w-]+(?:.[w-]+)+/g, "（email）").replace(/[A-Za-z0-9]{28}/g, "（uid）");
+  const g = new Map();
+  for (const d of snap.docs) { const e = d.data(), k = (e.msg || "") + "|" + (e.src || ""); const r = g.get(k) || { msg: e.msg, src: e.src, n: 0, last: 0, vers: new Set(), screens: new Set(), sizes: new Set(), stack: e.stack }; r.n += e.n || 1; const t = e.lastAt && e.lastAt.toMillis ? e.lastAt.toMillis() : 0; if (t > r.last) { r.last = t; r.stack = e.stack; } if (e.ver) r.vers.add(e.ver); if (e.screen) r.screens.add(e.screen); if (e.vw) r.sizes.add(e.vw + "x" + e.vh); g.set(k, r); }
+  console.log(`前端錯誤：最近 7 天 ${snap.size} 筆記錄、${g.size} 種（最新在上）`);
+  for (const r of [...g.values()].sort((a, b) => b.last - a.last)) {
+    console.log(`${r.last ? new Date(r.last).toISOString().slice(0, 19) + "Z" : "?"} ×${r.n}　${mask(r.msg)}`);
+    console.log(`    位置 ${mask(r.src) || "?"}　版本 ${[...r.vers].join(",") || "?"}　畫面 ${[...r.screens].join(",") || "?"}　視窗 ${[...r.sizes].slice(0, 4).join(",") || "?"}`);
+    mask(r.stack).split("\n").slice(0, 3).filter(Boolean).forEach(l => console.log("    " + l));
+  }
+}
 async function investStatus(db) {
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
@@ -410,6 +425,7 @@ async function main() {
   if (task.action === "world-status") { await worldStatus(db); return; }
   if (task.action === "player-invest") { await playerInvest(db, task.name); return; }
   if (task.action === "invest-status") { await investStatus(db); return; }
+  if (task.action === "client-errors") { await clientErrors(db); return; }
   if (task.action === "advisor-rules-mail") { await advisorRulesMail(db, FieldValue); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
