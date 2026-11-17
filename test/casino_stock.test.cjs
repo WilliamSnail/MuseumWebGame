@@ -1,5 +1,5 @@
 // 股票（11-14，館外七支）：node test/casino_stock.test.cjs（npm test 也會跑）
-// 買賣守恆、手續費進預算池、換日調價和 drag、停盤時段、各種上限、舊錢包壞資料。數字讀 NUM。
+// 買賣守恆、手續費進博物館資金、換日調價和 drag、停盤時段、各種上限、舊錢包壞資料。數字讀 NUM。
 const assert = require("assert");
 const load = () => { const G = require("./load_shared.cjs").load(); G.NUM.casino.stock.direct = false; G.NUM.casino.houseLoan.cultureDue = ""; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
@@ -22,7 +22,7 @@ T("停盤：沒有全館 22:00～05:00 了，每支只在自己的盤中交易�
   const r = G.casStockBuy(s.w, s.house, "handbrain", 1, D, at(D, 23));
   assert.ok(!r.ok && r.reason.includes("09:00"), "台股沒開盤不能買");
 });
-T("買：股價流出館外（記成消失、來源 stockBuy），手續費進預算池；莊家不動；帳對得上", G => {
+T("買：股價流出館外（記成消失、來源 stockBuy），手續費進博物館資金；莊家不動；帳對得上", G => {
   const C = G.NUM.casino.stock, s = fresh(G), op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, b0 = s.house.budget;
   const px = s.house.stk.px[ID];
   const r = G.casStockBuy(s.w, s.house, ID, 10, D, OPEN);
@@ -35,7 +35,7 @@ T("買：股價流出館外（記成消失、來源 stockBuy），手續費進�
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], 10);
 });
-T("賣：從館外進來（記成憑空、來源 stockSell），手續費進預算池；莊家不動；帳對得上；賣光清掉欄位", G => {
+T("賣：從館外進來（記成憑空、來源 stockSell），手續費進博物館資金；莊家不動；帳對得上；賣光清掉欄位", G => {
   const C = G.NUM.casino.stock, s = fresh(G);
   G.casStockBuy(s.w, s.house, ID, 10, D, OPEN);
   const op = open0(G, s), c0 = s.w.chips, h0 = s.house.bankroll, px = s.house.stk.px[ID];

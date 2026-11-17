@@ -1,5 +1,5 @@
 // 營業稅、娛樂稅（決定 0111）：node test/npc_tax.test.cjs（npm test 也會跑）
-// NPC、散客的門票收娛樂稅 5%、店裡的花費收營業稅 5%（牌桌不收）：內含，外面世界付的錢不變，政府先拿，店家和預算池、館方帳少收；帳守恆。
+// NPC、散客的門票收娛樂稅 5%、店裡的花費收營業稅 5%（牌桌不收）：內含，外面世界付的錢不變，政府先拿，店家和博物館資金、修繕基金少收；帳守恆。
 const assert = require("assert");
 const fs = require("fs");
 const { load } = require("./load_shared.cjs");

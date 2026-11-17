@@ -106,7 +106,7 @@ T("現價：營業時間內照曲線；停盤時停在最後壹個價；還沒�
   assert.strictEqual(G.casInPrice(h, "不存在", D0, at(D0, 9, 0), SEC).halted, true);
   const w = wallet(G); const r = G.casInBuy(w, h, "food", 1, add(D0, 1), at(add(D0, 1), 9, 0), SEC); assert.ok(!r.ok, "還沒換日算今天的開盤");
 });
-T("買：籌碼進莊家、手續費進預算池，守恆；每家最多 cap 股；籌碼不夠、停盤、莊家沒錢都擋", G => {
+T("買：籌碼進莊家、手續費進博物館資金，守恆；每家最多 cap 股；籌碼不夠、停盤、莊家沒錢都擋", G => {
   const C = G.NUM.casino.stockIn, h = house(G), w = wallet(G); G.casInRoll(h, D0, 0, SEC);
   const t = at(D0, 10, 0), px = G.casInPrice(h, "food", D0, t, SEC).px, t0 = total(G, w, h), b0 = h.bankroll, bud0 = h.budget, c0 = w.chips;
   const r = G.casInBuy(w, h, "food", 10, D0, t, SEC); assert.ok(r.ok, r.reason);
@@ -123,7 +123,7 @@ T("買：籌碼進莊家、手續費進預算池，守恆；每家最多 cap 股
   for (const bad of [0, -3, "x", 1.5, null]) { const x = G.casInBuy(wallet(G), h, "food", bad, D0, t, SEC); assert.ok(!x.ok || x.n >= 1); }
   assert.ok(!G.casInBuy(wallet(G), h, "不存在", 1, D0, t, SEC).ok);
 });
-T("賣：莊家付錢，扣手續費進預算池，守恆；賣超過持有擋；壹人壹天賣出上限；全館壹天淨賣出上限（排隊）", G => {
+T("賣：莊家付錢，扣手續費進博物館資金，守恆；賣超過持有擋；壹人壹天賣出上限；全館壹天淨賣出上限（排隊）", G => {
   const S = G.NUM.casino.stock, h = house(G), w = wallet(G); G.casInRoll(h, D0, 0, SEC);
   const t = at(D0, 10, 0), px = G.casInPrice(h, "food", D0, t, SEC).px;
   assert.ok(G.casInBuy(w, h, "food", 100, D0, t, SEC).ok);

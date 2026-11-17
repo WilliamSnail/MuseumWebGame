@@ -22,7 +22,7 @@ T("時刻表：有名字的壹位 n＝1、散客壹組 n＝人數；key 唯一�
   const mid = f[Math.floor(f.length / 2)].at, w = G.hallFeed(D1, SEC, LIST, null, mid - 60000, mid + 60000); assert.ok(w.length >= 1 && w.length < f.length && w.every(e => e.at >= mid - 60000 && e.at <= mid + 60000));
   const s = mk(); settle(s); const pots = s.house.hallPot.keys; assert.ok(f.every(e => pots[e.key] ? pots[e.key].n === e.n : true)); assert.ok(Object.keys(pots).length >= 1);
 });
-T("領分紅：驗證 key（不在表裡、還沒到的不算）、先領的拿池子的壹半、同壹個 key 不能領兩次；錢從預算池搬給玩家，守恆", () => {
+T("領分紅：驗證 key（不在表裡、還沒到的不算）、先領的拿池子的壹半、同壹個 key 不能領兩次；錢從博物館資金搬給玩家，守恆", () => {
   const s = mk(), P = hallP(); settle(s); const t0 = total(s), f = feed().filter(e => s.house.hallPot.keys[e.key]), e = f[0], pot = s.house.hallPot.keys[e.key], left0 = pot.left, b0 = s.house.budget, c0 = s.w.chips;
   assert.strictEqual(claim(s, P, ["亂寫的 key"]).n, 0, "不在表裡不算"); assert.strictEqual(claim(s, P, [e.key], e.at - 1000).n, 0, "還沒到不算");
   const r = claim(s, P, [e.key, e.key]); assert.strictEqual(r.n, Math.min(e.n, C().perDay)); assert.strictEqual(r.total, Math.floor(left0 * C().firstPct / 100 * r.n / pot.n));

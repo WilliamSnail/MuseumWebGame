@@ -113,7 +113,7 @@ export async function playCore(me, email, opts, fn) {
       casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成外面世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
-      const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由預算池墊，再不夠開憑證，shared/casino_bond.js）
+      const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由博物館資金墊，再不夠開憑證，shared/casino_bond.js）
       if ((bankEv && bankEv.back && bankEv.back.length) || (bondEv && bondEv.back && bondEv.back.length)) casLevCreditAdd(w, day); // 定存、館債準時到期：信用點 +1（壹天最多 1，規劃 2.8b、2.8j）
       casStockTwSettle(house, tw, day); // 換日以前先把上一天台股的收盤價套上去
       casStockUsSettle(house, us, day); // 美股也是（冬令收盤剛好是 05:00 換日那一刻，這裡補上最後一個價）
@@ -435,7 +435,7 @@ export const casino = onCall(async req => {
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
-    // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和預算池、館方帳在同一個交易裡加（shared/casino_ticket.js）
+    // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和博物館資金、修繕基金在同一個交易裡加（shared/casino_ticket.js）
     case "tickets": return play(req, me, { save: true }, ctx => {
       const sec2 = ctx.secret;
       const r = casTicketClaimKeys(ctx.w, ctx.house, ctx.P, ctx.day, d.keys, sec2, NPC_LIST, npcCounters(ctx.house.npcc), ctx.t);

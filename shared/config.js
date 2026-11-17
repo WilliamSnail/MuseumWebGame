@@ -236,7 +236,7 @@ export const NUM = {
   //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
   //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。
   //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
-  //   帳號要開 minAge 天；成交抽 feePct % 進預算池；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
+  //   帳號要開 minAge 天；成交抽 feePct % 進博物館資金；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
   auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40,
     // NPC 買家（11-14，docs/館內NPC規劃.md 步驟 4、翊文：NPC 的錢從外面世界來）：每場最多壹位 NPC 出價，出價機率 npcJoinPct%；出價 ＝ 參考價 ×（玩家的畫 0.80～1.00／館方的畫 1.00～1.10）× 喜歡這個稀有度（×1.05，否則 ×0.95），
     //   不超過這位 NPC 的 budget.max、也不超過他壹天剩下的 perDay；全館壹天 NPC 買畫總額 ≤ npcDay ×（1 ＋ npcExtPct% × 景氣）；錢從外面世界池子付、付回池子（吃緊時付不出的場不出價）
@@ -390,7 +390,7 @@ export const NUM = {
     //   散客類型權重 crowd（決定 0092 第 3 件）：昨天的展廳氣氛 ≥ high：這幾種散客組比較多（乘上這個倍數）；≤ low：另外幾種。只改「抽到哪種組」的機率，每天幾組、幾點到、待多久不變。人數的期望值變動由 econ:check 擋（±20% 內）
     worldDoc: { crowd: { high: 60, low: 30, mult: { high: { "帶小孩的家庭": 1.3, "旅行團": 1.3 }, low: { "獨自看展的人": 2, "兩位朋友": 1.3, "旅行團": 0.7 } } }, events: { downPush: 2, sanMax: 10, unrestMax: 15, moodMax: 20 }, unrest: { start: 20, back: 2, cut: 3, squeeze: 5, layoff: 8, normal: -5, slow: 60, reverse: 80 }, mood: { base: 50, b: 20, san: 0.3, trouble: -5, weekend: 5 }, branch: { on: true, segStart: "2026-11-16", segDays: 14, histDays: 7, minDays: 3, recoverN: 2, perUidNpc: 3, netUidNpc: 3, perUid: 10, perNpc: 6, delta: { win: 1, blackjack: 1, lose: -1, loseRow: -2, bust: -2, jobDone: 1, jobFail: -1 } }, san: { start: 70, daily: 10, cellar: -2, cellarMax: -4, food: 1, rest: 3, back: 1, lay: -8, job: 5, lowRoute: 30, lowStars: 50, lowBudget: 30, budgetMult: 0.9 }, wallet: { on: true, targetDays: 2, joinWeeks: 4, layoffPct: 30, findPct: 25 }, health: { min: 0.6, max: 1.2, stockW: 0.5, chgCap: 0.3, cut: 0.9, squeeze: 0.75, squeezeWeeks: 2, layoffWeeks: 4, mult: { cut: 0.8, squeeze: 0.5, layoff: 0.3 }, upMax: 1.1, floor: 0.3 }, gateway: 0, household: 0.1, sectorCoef: { tech: 0.3, finance: 0.15, arts: 0.1, daily: 0, school: -0.05, public: -0.1, story: 0 } },
     world: { start: 10000000000, growBase: 5000000, growExtPct: 20, lowPct: 10, lowPayPct: 1 },
-    // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、預算池超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
+    // 館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、博物館資金超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
     //   持股總賺賠虧超過 stopPct% 暫停買進 stopDays 天。on:false 整個關掉
     invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, mode: "even", dip: { days: 20, pct: 5, mult: 3, minDays: 5 }, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 0, takeProfitPct: 0, stopPct: 25, stopDays: 7 }, // 決定 0099：mode even ＝ 每天平均買全部、價格比自己 20 天均價低 5% 以上的那幾支加碼 ×3，不追高、不停損停利（0 ＝ 關）；mode chase ＝ 舊的（追最近 lookback 天漲最多的 topN 支）
@@ -402,11 +402,11 @@ export const NUM = {
     // false＝莊家破產就停在負的，不印錢；接軌的做法（跟館方或外面世界借、要還）設計好再改。
     houseResetMint: false,
     // 莊家跟整個經濟接軌（規劃 2.11，翊文 11-14「好這三次都做」）：破產過了換日不印錢，改借錢、記債、用賺的錢還。
-    //   reserve 重開補到多少；先跟預算池借（預算池超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
+    //   reserve 重開補到多少；先跟博物館資金借（博物館資金超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
     //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
-    //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先預算池、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
-    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 30, cultureKeep: 500000000, // 到期日剩下的自動展延壹次 cultureExtDays 天（決定 0097，之後不再設到期日）；預算池墊付不得讓它低於 cultureKeep（＝NUM.casino.invest.budgetKeep）
-       // 文化部館債（翊文 11-14：30 天 → 「借久一點 60 天」，從 11-13 撥款起算到 2027-01-12）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由預算池墊，再不夠記逾期
+    //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先博物館資金、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
+    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 30, cultureKeep: 500000000, // 到期日剩下的自動展延壹次 cultureExtDays 天（決定 0097，之後不再設到期日）；博物館資金墊付不得讓它低於 cultureKeep（＝NUM.casino.invest.budgetKeep）
+       // 文化部館債（翊文 11-14：30 天 → 「借久一點 60 天」，從 11-13 撥款起算到 2027-01-12）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由博物館資金墊，再不夠記逾期
        reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
     // 莊家破產／吃緊的時候限制流出（規劃 2.11 第二點）：不是處罰玩家，是不讓莊家掉得更深。贏的錢不收回。
     //   吃緊（0 ～ health.low）：最大注 max(betMin, 莊家的錢 × betTightPct%)、壹天總賠付（21 點贏的＋大禮包）≤ 莊家的錢 × payTightPct% ＋ payFlat、壹包最多賠 max(drawFlat, 莊家的錢 ÷ 2)
@@ -414,7 +414,7 @@ export const NUM = {
     risk: { betTightPct: 2, betMin: 1000000, betBroke: 1000000, payTightPct: 5, payFlat: 5000000, payBrokeFlat: 5000000, drawFlat: 5000000, betMult: 3 },
     // 外面世界壹次撥給莊家的錢（翊文 11-13：「先編個理由，比如文化部補助博物館從世界經濟撥給10億給博物館」）。
     // 每個 id 只撥壹次（記在 house.grants），記成館外進來（casHouseMint，來源 grant），日報「從館外進來」看得到。
-    // 11-14 翊文：「好，那改成文化部借款」：記成債（house.debt.culture，不計利息），莊家超過準備金的部分拿去還（先預算池、再這個、最後外面世界貸款），還的時候燒掉。
+    // 11-14 翊文：「好，那改成文化部借款」：記成債（house.debt.culture，不計利息），莊家超過準備金的部分拿去還（先博物館資金、再這個、最後外面世界貸款），還的時候燒掉。
     grants: [{ id: "moc-2026-11", amt: 1000000000, name: "文化部借款" }],
     // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino_wallet.js 的 casBorrow、casRepay、casLoanRoll
     // 財經專員（決定 0093 第 3 件，shared/casino_advisor.js）：欠了不少錢（錢包是負的，或沒還的借款本金加利息 ≥ minOwe）的館友，銀行頁出現專員提還款計畫。
@@ -433,9 +433,9 @@ export const NUM = {
       capMax: 20000000, levelPerDay: 2, outPct: 30, outMin: 5000000,
       // 部分還款、分期（決定 0114，翊文 11-17）：part ＝ 部分還款（先還利息、再還本金；一次最少 max(minAbs, 剩下 owe 的 minPct%)；每筆最多 max 次；部分還不升信用）；
       //   split ＝ 把一筆改成 kMin～kMax 期、每期間隔 gMin～gMax 天（最晚多 gMax×(kMax−1) ≤ 21 天）；本金 ≥ minAmt、借了 minAgeDays 天以上、沒延期過；
-      //   手續費 ＝ 延後那一期的本金 × 借款日利率（interestPct ÷ days）× 延後天數；bankMult：莊家現金 < bankMult × 文化部館債才暫停開分期；on ＝ false 整個關掉
+      //   手續費 ＝ 延後那一期的本金 × 借款日利率（interestPct ÷ days）× 延後天數；on ＝ false 整個關掉（翊文 11-17：拿掉「莊家現金低就暫停」的條件，只留總開關）
       part: { minAbs: 1000, minPct: 5, max: 8 },
-      split: { on: true, kMin: 2, kMax: 4, gMin: 3, gMax: 7, minAmt: 100000, minAgeDays: 1, bankMult: 2 },
+      split: { on: true, kMin: 2, kMax: 4, gMin: 3, gMax: 7, minAmt: 100000, minAgeDays: 1 },
       quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）：額度太小、quickPct 算不出來時才用這組
       quickPct: [10, 25, 50],     // 快速按鈕照額度的幾 %（11-15，翊文：額度 300 萬時按鈕還是 2,500 太小「好改」）；shared/casino_wallet.js casLoanQuick 取成 1、2、3、5 開頭的整數
       discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
@@ -473,7 +473,7 @@ export const NUM = {
     // 交壹張給 min～max（每 step 壹級），壹定有；壹天最多 perDay 張。壹天最多 10,000，跟最小的免費大禮包壹樣多
     job: { min: 1000, max: 2000, step: 100, perDay: 5 },
     // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
-    // budgetStart：拚經濟的錢從「預算池」進出（翊文 11-10：「先設定一個地方，讓它其實從那邊扣錢，這個之後怎麼接上其他的，我們再討論」）。存在莊家同壹份（casinoHouse/main 的 budget）；先給這麼多，不夠可以是負的，只記帳不擋
+    // budgetStart：拚經濟的錢從「博物館資金」進出（翊文 11-10：「先設定一個地方，讓它其實從那邊扣錢，這個之後怎麼接上其他的，我們再討論」）。存在莊家同壹份（casinoHouse/main 的 budget）；先給這麼多，不夠可以是負的，只記帳不擋
     // Yuga Bot 銀行（11-13，翊文：「可以投資了」；shared/casino_bank.js，規劃玩法 2）。利息從莊家出，莊家 ≤ 0 不給
     //   savePct：活存每天 %（本金最多算 saveCap）；terms：定存的種類；houseCapPct：壹次最多付莊家的 %；catchup：太久沒來最多補幾天
     //   利率順序（測試擋）：活存 < 定存 < 借款（loan.interestPct／loan.days），借錢來存不會賺
@@ -524,7 +524,7 @@ export const NUM = {
       mkt: { on: true, Ns: 100000, depth: 16000, size: 40, sizeCap: 40, band: 0.01, mixF: 0.7, mixC: 0.1, tickLim: 0.03, dayLim: 0.1, half: 0.005, rho: 0.05, walkSd: 0.0003, floatCap: 0.1, floatShort: 0.02 } },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
-    //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
+    //   feePct 手續費（進博物館資金）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
     stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, taxPct: 0.3, taxUs: 0, div: { taxTw: 30.11, taxUs: 30, keep: 45, snapDays: 12 }, // div 配股息（決定 0112，翊文 11-17）：taxTw 台股股利所得稅率 %（分離 28% ＋ 二代健保 2.11%）、taxUs 美股預扣 %，進政府帳；keep 事件留幾天；snapDays 錢包留幾天的「每天開始時的持股」
     // taxPct 證交稅（決定 0111，翊文 11-16：取代資本利得稅 5%）：台股、館內股「賣出」都收賣出金額的 taxPct%，無條件進位、最少 1，進政府帳（搬，不是 burn）；taxUs 美股（0＝不收，貼近真實）；槓桿不收
@@ -540,7 +540,7 @@ export const NUM = {
       //   之後每天開盤把遊戲價往「倍數 × 真實價」拉回 lamPct% 的差距，壹天最多拉回 2 × feePct − 0.04（%）：拉回量小於來回手續費加 drag，看盤的人收盤前知道方向也賺不到（test/sim_peg.cjs）
       peg: { us: 32, tw: 1, lamPct: 30 },
       // 直接用真實價（11-14，規劃 2.8l，翊文：「維持，直接用真實價即時成交」）：direct 開＝遊戲價 ＝ 倍數 × 真實價（每分鐘抓、即時成交；下面的錨點、橋、拉回、drag 都不用，測試設 false 走舊的）。
-      //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進預算池（持有成本，取代 drag；%）。
+      //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進博物館資金（持有成本，取代 drag；%）。
       //   換比例零頭 stockRebase 照舊。真實價的合理範圍 sane（相對前壹收盤的倍數）：超出的當壞資料不收
       direct: true, staleMin: 3, holdPct: 0.04, sane: [0.5, 2],
       // 台股盤中（11-14，規劃 2.8d，shared/stocks_tw.js）：from／len 開盤、收盤（台灣時間 09:00 起算的分鐘，09:00～13:30 ＝ 0～270）；seg 幾分鐘壹個真實錨點；
@@ -556,23 +556,23 @@ export const NUM = {
       us: { open: 570, len: 390, earlyLen: 210, seg: 15, giveUp: 30, retry: 3, band: 10,
         minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06 },
         sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26 } } },
-    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：預算池 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
-    // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、預算池 budgetPct%、其餘進館方帳；每人每天最多 perDay 位付。先照這樣，等翊文
-    // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進預算池、其餘館方帳）；
-    //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進預算池）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
+    econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：博物館資金 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
+    // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、博物館資金 budgetPct%、其餘進修繕基金；每人每天最多 perDay 位付。先照這樣，等翊文
+    // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進博物館資金、其餘修繕基金）；
+    //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進博物館資金）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
     //   dayCap 全館壹天最多（×（1＋extPct%×景氣）），hallLambda 展廳壹天平均來幾位 NPC。都從外面世界池子搬
     //   npcWeights：有名字的 NPC 第壹站幾點到的比重（05:00 起每小時壹個；白天晚上平均，00:00～04:00 少但有，翊文 11-14「深夜也要有人」）
     npcSpend: { on: true, npcWeights: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.3, 0.3, 0.3, 0.3, 0.3], ticket: 500, ticketBudgetPct: 30, shopPct: 3, dayPct: 10, dayCap: 1500000, extPct: 20, hallLambda: 24, hallStay: [60, 180], shopStay: [30, 120],
       // 不具名的散客（翊文 11-14：「不具名的也可以有一些」「散客要付門票」）：每天 groupsDay 組（週末 ×weekendMult）、壹組幾位看類型；只在展廳、待 stay 分鐘；到的時間午後和晚上多（weights）。
-      //   ticket 每位散客付的門票（外面世界付，ticketBudgetPct% 預算池、其餘館方帳）；dayCap 全館散客門票壹天上限（要 ≤ 外面世界每天成長的 10%，econ:check）。不留評價、不算館內股人數、不花錢。
+      //   ticket 每位散客付的門票（外面世界付，ticketBudgetPct% 博物館資金、其餘修繕基金）；dayCap 全館散客門票壹天上限（要 ≤ 外面世界每天成長的 10%，econ:check）。不留評價、不算館內股人數、不花錢。
       // 散客也逛店（翊文 11-14：「散客去店裡、算進股價」）：跟展廳那幾組「分開」抽（逛店的散客不顯示在展廳，不然看展廳的組別就能猜到哪家店明天的人數）：每家店每天平均 shop.perStore 位散客，
-      //   壹組幾位、什麼類型看這家店的個性（學生愛餐車和手作坊、旅行團愛餐車和牌桌、退休長輩愛地下收藏庫…）；每位進店花 shop.spend（餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap；算進這家店「昨天不同的人」
+      //   壹組幾位、什麼類型看這家店的個性（學生愛餐車和手作坊、旅行團愛餐車和牌桌、退休長輩愛地下收藏庫…）；每位進店花 shop.spend（餐車牌桌進莊家、其餘進博物館資金），全館壹天 shop.dayCap；算進這家店「昨天不同的人」
       crowd: { wander: { p: 0.95, from: [0.1, 0.3], len: [0.6, 0.85], rooms: { gallery: 3, origin: 2, codex: 1, fusion: 1, pillow: 1, casino: 0, bank: 1, workshop: 0, commission: 0, office: 1, cellar: 0 } }, shop: { perStore: 72, stay: [60, 240], spend: 800, dayCap: 600000 }, groupsDay: 300, weekendMult: 1.5, stay: [30, 120], ticket: 500, dayCap: 1200000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1, 1, 0.5, 0.5, 0.5, 0.5] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）；門票旅客、散客都 500（翊文 11-14：「都500，我想要籌碼跟台幣感覺相當，增加散客數量來補足賺錢的部分」「補滿」）：groupsDay 300（每天約 1,500 位散客）；dayCap 照舊 50 萬（econ:check：散客門票 ≤ 外面世界每天成長的 10%），約 1,000 位以後的散客不再付錢，門票總收入約原本的七成；weights 是 05:00 起每小時的比重，最後五個是 00:00～04:00（翊文 11-14：「深夜也要有人」，少但不是零）
       // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
     // 展廳參觀者門票（11-14 改版，決定 0079 取代 0073 的分法）：到訪的人（有名字的 NPC、散客，每位）自己付壹張票（npcSpend.ticket／crowd.ticket，外面世界付，到的那刻）；
     //   票的 ownerPct% 放進「那壹位的分紅池」，那壹刻真的在看展廳、領了這個 key 的線上玩家分：先領的拿池子剩下的 firstPct%（再領的拿再剩下的 firstPct%…，總額不超過池子）；
-    //   perDay 壹個人壹天最多領幾位的分紅（壹組散客壹組算人數，用到幾位算幾位）。沒人領的池子留在預算池（票的預算池那份）。
+    //   perDay 壹個人壹天最多領幾位的分紅（壹組散客壹組算人數，用到幾位算幾位）。沒人領的池子留在博物館資金（票的博物館資金那份）。
     // 劇情經濟事件（11-14，shared/econ_events.js；排程只選種類、日期、等級，數字都在這裡）：foreignPct 外資 NPC 買畫的力道 ＋幾 %（等級 1～3）；windowMax 館債簽收窗口最多幾天、redeemPct 窗口每天最多付莊家超過準備金的幾 %；
     //   freezeMax 畫價凍結最多幾天；repayPct 莊家提早還貸款占「超過健康線 ×2 的部分」的 %（等級 1～3）；perWeek 每週最多幾個動錢的事件；ahead 事先公告的天數
     econEvent: { foreignPct: [15, 20, 30], windowMax: 3, redeemPct: 50, freezeMax: 7, repayPct: [5, 10, 20], perWeek: 2, ahead: { foreign: 2, bondWindow: 3, artFreeze: 2 } },
@@ -584,12 +584,12 @@ export const NUM = {
     //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
     npcCas: { on: true, perNpcDay: 3, tableMax: 2, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
-    // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：預算池低到這個負數，拚經濟成功完全不撥款。
+    // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：博物館資金低到這個負數，拚經濟成功完全不撥款。
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
     // 館內 GDP 和景氣指數（11-13，規劃 2.7 節）：每項活動 次數×標準值，不看隨機的賺賠。foodAvg 餐車每份、bjHand 21 點每手、econWin 拚經濟成功平均撥款（r 31～100 平均 65.5 × 30,000）、econSink 失敗沉下去的平均（平均 r 15 × 10,000 × 沒被撈走的 45%）、investPct 銀行存款淨增加算幾 % 進投資；growthFull 成長率 10% ＝ 指數 1；minPeople 過去 7 天來過的人少於這個，館內指數維持 0。標準值是我先定的，等有幾天真的數字再調
     gdp: { foodAvg: 150, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
       // 景氣的影響（11-14，規劃 2.7 節）：景氣 B（−1～+1）對拚經濟撥款、門票、存款利率各 ±fxPct%；拚經濟成功抽到的政策持續 polDays 天（到明天），效果 ±polPct%。
-      // extSpread：外部景氣＝（最新一季年增率 − 最近四季平均）÷ extSpread（百分點），夾在 ±1。policyFx 是 CAS_ECON.policies 每一項對應的效果（我配的，Yuga 可以改）：tourism 門票、cellar 地下撿、grant 拚經濟撥款多、tighten 撥款少（預算池因此少花）
+      // extSpread：外部景氣＝（最新一季年增率 − 最近四季平均）÷ extSpread（百分點），夾在 ±1。policyFx 是 CAS_ECON.policies 每一項對應的效果（我配的，Yuga 可以改）：tourism 門票、cellar 地下撿、grant 拚經濟撥款多、tighten 撥款少（博物館資金因此少花）
       fxPct: 10, polPct: 10, polDays: 1, extSpread: 3, extStaleDays: 200,
       policyFx: ["tourism", "tourism", "grant", "grant", "grant", "cellar", "cellar", "tighten"] },
     // Yuga Bot 日報（11-13，數值平衡）：海底只給水位，每 seaPerCm 籌碼算壹公分（不給數字，規劃第五節問題 12 等翊文）

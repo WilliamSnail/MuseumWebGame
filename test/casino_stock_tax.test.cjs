@@ -8,7 +8,7 @@ const fresh = G => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.ca
 const snap = (G, s) => G.casBookSnap([s.w], s.house, 0, null);
 const setPx = (s, px) => { s.house.stk.px[ID] = px; };
 
-T("賣出收證交稅：稅 ＝ 賣出金額 × 0.3% 進位，進政府帳（手續費還是進預算池），訊息有稅；帳對得上", G => {
+T("賣出收證交稅：稅 ＝ 賣出金額 × 0.3% 進位，進政府帳（手續費還是進博物館資金），訊息有稅；帳對得上", G => {
   const s = fresh(G); setPx(s, 10000); const op = G.casBookOpening(snap(G, s));
   const b = G.casStockBuy(s.w, s.house, ID, 100, D, null); assert.ok(b.ok);
   assert.strictEqual(s.w.stk.cost[ID], 1000000 + 5000, "總成本含買進手續費");

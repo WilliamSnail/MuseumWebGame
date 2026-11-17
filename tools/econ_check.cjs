@@ -76,19 +76,19 @@ check("散客逛店：每家店每天平均 ≤ 店保底人數的 75%（npcBase
 { const EV = C.econEvent; check("劇情經濟事件：外資加成 ≤ 30%、凍結 ≤ 7 天、簽收窗口 ≤ 3 天且莊家壹天最多付超過準備金的 50%、提早還貸款 ≤ 20%（且還完仍在健康線以上）", Math.max(...EV.foreignPct) <= 30 && EV.freezeMax <= 7 && EV.windowMax <= 3 && EV.redeemPct <= 50 && Math.max(...EV.repayPct) <= 20 && C.health.low * 2 > 0, `外資 ＋${Math.max(...EV.foreignPct)}%、凍結 ${EV.freezeMax} 天、窗口 ${EV.windowMax} 天（莊家付 ${EV.redeemPct}%）、還貸款 ${Math.max(...EV.repayPct)}%；每週動錢的 ${EV.perWeek} 個`); check("劇情經濟事件：外資 NPC 買畫上限（含加成）仍 ≤ 外面世界每天成長（容許 1.2 倍，同 NPC 花費的規則）", (C.npcSpend.dayCap + N.auction.npcDay * (1 + Math.max(...EV.foreignPct) / 100)) * 1.2 <= grow * 1.6, `${fmt(C.npcSpend.dayCap * 1.2 + N.auction.npcDay * 1.2 * (1 + Math.max(...EV.foreignPct) / 100))} vs 成長 ${fmt(grow)}`, "warn"); }
 check("掛畫加展廳評分：總加分上限不大、壹幅最多加的分 ≤ 上限；靈感每日上限擋得住；買最便宜的畫刷評分不划算（賣回只拿壹部分）", N.hallArt.cap <= 10 && Math.max(...N.hallArt.pts) <= N.hallArt.cap && N.visitorInspDay <= 100 && N.art.sellPct < 100, `上限 +${N.hallArt.cap} 分；稀有度加分 ${N.hallArt.pts.join("／")}；靈感每日上限 ${N.visitorInspDay}；評分 +5 最多讓每次到訪多 1 靈感（visitorStep ${N.visitorStep}）；最便宜的畫（${fmt(N.art.tiers[0].base)}）賣回只拿 ${N.art.sellPct}%，每加 0.5 分要放 ${fmt(N.art.tiers[0].base * (1 - N.art.sellPct / 100))} 的價差`);
 { const NC = C.npcCas; check("邀請 NPC 去賭場：全館壹天淨輸贏上限 ≤ 外面世界每天成長的 10%、壹位 NPC 壹天輸贏上限比例 ≤ 20%、壹注上限 ≤ 全館上限的 10%、壹位壹天答應次數有上限（不能無限帶人去）", NC.dayCap <= grow * 0.1 && Math.max(NC.lossPct, NC.winPct) <= 20 && NC.betMax <= NC.dayCap * 0.1 && NC.perNpcDay <= 5 && NC.tableMax <= 2, `全館 ${fmt(NC.dayCap)} ≤ ${fmt(grow * 0.1)}；輸 ${NC.lossPct}%／贏 ${NC.winPct}%；壹注 ${fmt(NC.betMax)} ≤ ${fmt(NC.dayCap * 0.1)}；每位每天 ${NC.perNpcDay} 次、壹桌 ${NC.tableMax} 位`); }
-check("展廳門票：玩家分紅池比例 ≤ 票的預算池份額（分紅是從預算池搬給玩家，池子永遠不會超過預算池收到的）", C.ticket.ownerPct <= C.npcSpend.ticketBudgetPct && C.ticket.firstPct <= 100, `分紅池 ${C.ticket.ownerPct}% ≤ 預算池份額 ${C.npcSpend.ticketBudgetPct}%；先領的拿剩下的 ${C.ticket.firstPct}%`);
+check("展廳門票：玩家分紅池比例 ≤ 票的博物館資金份額（分紅是從博物館資金搬給玩家，池子永遠不會超過博物館資金收到的）", C.ticket.ownerPct <= C.npcSpend.ticketBudgetPct && C.ticket.firstPct <= 100, `分紅池 ${C.ticket.ownerPct}% ≤ 博物館資金份額 ${C.npcSpend.ticketBudgetPct}%；先領的拿剩下的 ${C.ticket.firstPct}%`);
 check("外面世界：吃緊線（lowPct）和賣出上限（lowPayPct）合理", W.lowPct > 0 && W.lowPct < 50 && W.lowPayPct > 0 && W.lowPayPct <= 5, `低於 ${W.lowPct}%；吃緊時壹天最多付 ${W.lowPayPct}%`);
 check("外面世界：每年成長占起始 ≤ 30%（不是印錢機）", grow * 365 / W.start <= 0.3, `${pct(grow * 365 / W.start * 100)}`);
 check("館方投資：持股成本上限 ≤ 超過部分的 50%；每天投 ≤ 10%", C.invest.holdCapPct <= 50 && C.invest.dailyPct <= 10, `holdCap ${C.invest.holdCapPct}%、daily ${C.invest.dailyPct}%`);
 check("館方投資：保留金 ≥ 莊家借款的準備金（不動到重開的底）", C.invest.reserve >= C.houseLoan.reserve, `${fmt(C.invest.reserve)} ≥ ${fmt(C.houseLoan.reserve)}`);
 check("借款額度上限 ≤ 莊家壹開始的錢（壹個人借光不會讓莊家破產）", C.loan.capMax <= C.houseStart, `capMax ${fmt(C.loan.capMax)}、莊家 ${fmt(C.houseStart)}`);
 const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
-{ // 文化部館債分期：單靠現金撐得住嗎？撐不住的部分由預算池墊（墊到保留金為止），再不夠要靠莊家的收入
+{ // 文化部館債分期：單靠現金撐得住嗎？撐不住的部分由博物館資金墊（墊到保留金為止），再不夠要靠莊家的收入
   const days = C.houseLoan.cultureDue ? Math.max(1, Math.round((Date.parse(C.houseLoan.cultureDue) - Date.parse("2026-11-13")) / 86400000)) : 1, owed = grants * Math.pow(1 + C.houseLoan.cultureInterestPct / 100, days / 2) , cash = C.houseStart + grants, padRoom = Math.max(0, C.budgetStart !== undefined ? C.budgetStart : C.econ.budgetStart) - C.invest.budgetKeep;
   const needIncome = Math.max(0, owed - C.houseStart - padRoom) / days;
-  check("文化部館債：每天分期 ≤ 預算池起始的 20%（壹天墊得起）", !C.houseLoan.cultureDue || grants === 0 || owed / days <= C.econ.budgetStart * 0.2, `${days} 天，平均每天約 ${fmt(owed / days)}；預算池起始 ${fmt(C.econ.budgetStart)}`);
-  check("文化部館債：墊付保留金（cultureKeep）≥ 館方投資的預算池保留金；到期日有展延壹次（不再設第二個到期日）", C.houseLoan.cultureKeep >= C.invest.budgetKeep && C.houseLoan.cultureExtDays > 0 && C.houseLoan.cultureExtDays <= 60, "保留 " + fmt(C.houseLoan.cultureKeep) + "、展延 " + C.houseLoan.cultureExtDays + " 天");
-  check("文化部館債：現金加預算池可墊的部分（保留 " + fmt(C.invest.budgetKeep) + "）夠還；不夠的要靠莊家收入", needIncome === 0, `${days} 天；莊家現金 ${fmt(C.houseStart)}＋預算池可墊 ${fmt(padRoom)} 不夠時，莊家每天至少要賺 ${fmt(needIncome)}（最壞情況：館債全額、莊家沒有別的收入；實際看日報的莊家現金）`, "warn");
+  check("文化部館債：每天分期 ≤ 博物館資金起始的 20%（壹天墊得起）", !C.houseLoan.cultureDue || grants === 0 || owed / days <= C.econ.budgetStart * 0.2, `${days} 天，平均每天約 ${fmt(owed / days)}；博物館資金起始 ${fmt(C.econ.budgetStart)}`);
+  check("文化部館債：墊付保留金（cultureKeep）≥ 館方投資的博物館資金保留金；到期日有展延壹次（不再設第二個到期日）", C.houseLoan.cultureKeep >= C.invest.budgetKeep && C.houseLoan.cultureExtDays > 0 && C.houseLoan.cultureExtDays <= 60, "保留 " + fmt(C.houseLoan.cultureKeep) + "、展延 " + C.houseLoan.cultureExtDays + " 天");
+  check("文化部館債：現金加博物館資金可墊的部分（保留 " + fmt(C.invest.budgetKeep) + "）夠還；不夠的要靠莊家收入", needIncome === 0, `${days} 天；莊家現金 ${fmt(C.houseStart)}＋博物館資金可墊 ${fmt(padRoom)} 不夠時，莊家每天至少要賺 ${fmt(needIncome)}（最壞情況：館債全額、莊家沒有別的收入；實際看日報的莊家現金）`, "warn");
 }
 
 // 小模擬（固定種子，幾秒）：預告活動預先進場、NPC 來館花錢的總量
@@ -163,11 +163,11 @@ function ledger(file) {
   const h = isReport ? Object.assign({}, doc.snap.house, { led: { world: doc.snap.house.wflow || {} }, npcs: doc.snap.house.npcs, inv: doc.snap.house.inv, debt: doc.snap.house.debt, cul: doc.snap.house.cul, cultureLate: doc.snap.house.culLate }) : doc;
   const out = [], bad = [];
   const flag = (cond, msg) => { if (cond) bad.push(msg); };
-  out.push(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　館方帳 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　海底 ${fmt(h.sea)}　外面世界 ${h.world == null ? "（還沒有帳）" : fmt(h.world)}`);
+  out.push(`莊家 ${fmt(h.bankroll)}　博物館資金 ${fmt(h.budget)}　修繕基金 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　海底 ${fmt(h.sea)}　外面世界 ${h.world == null ? "（還沒有帳）" : fmt(h.world)}`);
   if (isReport) out.push(`日報 ${doc.day}　對帳差 ${fmt(doc.gap)}（0 才對）`);
   const D = h.debt || {};
   if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, w = Math.floor(+h.world || 0); let s = 0; Object.keys(r).filter(k => k !== "pub").forEach(k => { s += Math.floor(w * +r[k]) + (Math.floor(+adj[k]) || 0); }); const pub = w - s; out.push(`外面世界的帳上分類：公共 ${fmt(pub)}、文化部 ${fmt(Math.floor(w * (+r["u-culture"] || 0)) + (Math.floor(+adj["u-culture"]) || 0))}　（總和一定等於外面世界；公共要 ≥ 0）`); flag(pub < 0, `公共（外面世界扣掉各單位）是負的 ${fmt(pub)}：有單位被指名多扣了`); }
-  out.push(`莊家欠：預算池 ${fmt(D.budget)}、文化部館債 ${fmt(D.culture)}、外面世界 ${fmt(D.world)}　借出去沒收回 ${fmt(h.loansOut)}`);
+  out.push(`莊家欠：博物館資金 ${fmt(D.budget)}、文化部館債 ${fmt(D.culture)}、外面世界 ${fmt(D.world)}　借出去沒收回 ${fmt(h.loansOut)}`);
   if (!isReport && doc.__gap != null) { out.push(`最新日報 ${doc.__repDay}　對帳差 ${fmt(doc.__gap)}（0 才對）`); const known = doc.__repWorld != null && doc.__gap === -(doc.__repWorld - W.start); // 11-14 外面世界上線那天快照多算了池子當天進出（casBookOpeningNext 在下壹份日報校正）
     if (known) out.push(`  （這是已知的過渡期假差額：等於 −(外面世界 ${fmt(doc.__repWorld)} − 起始 ${fmt(W.start)})，下壹份日報會校正，不是錢不見）`); else flag(doc.__gap !== 0, `對帳差不是 0：${fmt(doc.__gap)}（有壹條動籌碼的路沒記到帳上）`); }
   if (isReport) flag(doc.gap !== 0, `對帳差不是 0：${fmt(doc.gap)}（有壹條動籌碼的路沒記到帳上）`);
@@ -175,7 +175,7 @@ function ledger(file) {
   if (h.world != null) flag(h.world < Math.floor(W.start * W.lowPct / 100), `外面世界資金吃緊：${fmt(h.world)} ＜ 起始的 ${W.lowPct}%`);
   if (D.culture > 0) {
     const due = (h.cul && h.cul.due) || C.houseLoan.cultureDue, day = (doc.day || h.day || null), left = day && due ? Math.max(1, Math.round((Date.parse(due) - Date.parse(day)) / 86400000) + 1) : null;
-    if (left) { const need = Math.ceil(D.culture / left); out.push(`文化部館債：剩 ${fmt(D.culture)}，${left} 天後到期（${due}），平均每天要還 ${fmt(need)}`); flag(h.bankroll < D.culture && h.budget < D.culture - h.bankroll, "莊家現金加預算池都不夠還文化部館債"); flag(h.bankroll < need, `莊家現金 ${fmt(h.bankroll)} 小於今天這期 ${fmt(need)}（要預算池墊）`); }
+    if (left) { const need = Math.ceil(D.culture / left); out.push(`文化部館債：剩 ${fmt(D.culture)}，${left} 天後到期（${due}），平均每天要還 ${fmt(need)}`); flag(h.bankroll < D.culture && h.budget < D.culture - h.bankroll, "莊家現金加博物館資金都不夠還文化部館債"); flag(h.bankroll < need, `莊家現金 ${fmt(h.bankroll)} 小於今天這期 ${fmt(need)}（要博物館資金墊）`); }
     flag(h.cultureLate > 0, `文化部館債逾期累計 ${fmt(h.cultureLate)}`);
   }
   if (h.npcs && h.npcs.total != null) { out.push(`NPC 昨天帶進館 ${fmt(h.npcs.total)}（門票 ${fmt(h.npcs.ticket)}、店裡 ${fmt(h.npcs.shop)}、${h.npcs.people} 位）`); flag(h.npcs.total > npcDay, `NPC 帶進館 ${fmt(h.npcs.total)} 超過上限 ${fmt(npcDay)}`); }

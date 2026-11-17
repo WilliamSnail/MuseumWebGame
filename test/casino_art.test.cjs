@@ -144,7 +144,7 @@ T("上限：換日重算一天幾幅，舊的日期會清掉", G => {
   const d30 = add(DAY, 30); G.casArtBuy(s.w, s.house, s.P, work("m", 0, d30), d30);
   assert.strictEqual(JSON.stringify(Object.keys(s.P.art.buys)), JSON.stringify([d30]));
 });
-T("莊家收不起就不賣（不印錢、不讓預算池墊）", G => {
+T("莊家收不起就不賣（不印錢、不讓博物館資金墊）", G => {
   const s = fresh(G); G.casArtBuy(s.w, s.house, s.P, work("a", 3), DAY);
   s.house.bankroll = 1000; const b0 = s.house.budget, c0 = s.w.chips;
   const r = G.casArtSell(s.w, s.house, s.P, "a", DAY); assert.ok(!r.ok);

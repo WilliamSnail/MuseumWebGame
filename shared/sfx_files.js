@@ -88,7 +88,7 @@ export const SFX_FILES = {
   "applause-cheer": { name: "Applause, cheer", by: "Driken5482", url: "https://pixabay.com/sound-effects/people-applause-cheer-236786/", use: "21 點拿到 Blackjack（單人和同桌）" },
   "clock-strike": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截壹下鐘聲，含餘音約 6.5 秒）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘（敲的次數＝12 小時制的鐘點）" },
   "clock-tick": { name: "Ticking and 12 chime of an old Junghans Wall Clock（截 4 秒滴答聲，前後淡入淡出）", by: "freesound_community", url: "https://pixabay.com/sound-effects/city-ticking-and-12-chime-of-an-old-junghans-wall-clock-27215/", use: "整點敲鐘前的滴答聲" },
-  "repair": { name: "Wind the wall clock（截前 3.5 秒，淡出）", by: "spinopel", url: "https://pixabay.com/sound-effects/film-special-effects-wind-the-wall-clock-381831/", use: "維修任何東西時（修復台修修看、治好受傷的佩佩；之後館方帳的修繕也用）" },
+  "repair": { name: "Wind the wall clock（截前 3.5 秒，淡出）", by: "spinopel", url: "https://pixabay.com/sound-effects/film-special-effects-wind-the-wall-clock-381831/", use: "維修任何東西時（修復台修修看、治好受傷的佩佩；之後修繕基金的修繕也用）" },
   "casino-jazz": { name: "Copper Nights - Jazz Background Music for Video Stories (Full Version)（做成循環）", by: "pink_sound", url: "https://pixabay.com/music/copper-nights-jazz-background-music-for-video-stories-full-version-633222/", loop: true, use: "賭場超過 35 人時的背景音樂（取代合成的爵士）" },
 };
 export const SFX_LICENSE = "Pixabay Content License";

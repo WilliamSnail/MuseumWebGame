@@ -1,8 +1,8 @@
 // 帳的正負號對帳（11-16，翊文：「還有什麼正負號弄有問題，有腳本嗎」）：node tools/books_sign_check.cjs（npm run books:sign；npm test 也會跑）
 // 為什麼要有：銀行財報「館內經濟」、日報的各個帳，錢的方向有三種角度——
-//   莊家（diff.flow、diff.houseMint）：進莊家是正；外面世界（diff.wflow）：進外面世界是正，所以付出去是負的；預算池、館方帳：進這個池子是正。
-//   顯示的人拿錯角度、少反壹次號，玩家就看到「預算池付門票給 NPC」。這支把壹整天會動到每種帳的事都做壹遍，對壹次帳：
-//   (a) 對帳：每個帳列出來的全部來源加起來 ＝ 這個帳昨天的變化（莊家、外面世界、館方帳一定對；預算池有幾項還沒記帳，只印差多少）
+//   莊家（diff.flow、diff.houseMint）：進莊家是正；外面世界（diff.wflow）：進外面世界是正，所以付出去是負的；博物館資金、修繕基金：進這個池子是正。
+//   顯示的人拿錯角度、少反壹次號，玩家就看到「博物館資金付門票給 NPC」。這支把壹整天會動到每種帳的事都做壹遍，對壹次帳：
+//   (a) 對帳：每個帳列出來的全部來源加起來 ＝ 這個帳昨天的變化（莊家、外面世界、修繕基金一定對；博物館資金有幾項還沒記帳，只印差多少）
 //   (b) 符號表：每個來源在每個帳應該是進來（＋）還是出去（－），照表；表裡沒有的來源（新加的）也會被擋
 //   (c) 同壹筆錢在兩個帳的正負要相反（例如莊家還文化部借款：莊家 －、外面世界 ＋）
 //   (d) 名字：列出來的每壹項都要有中文名字（不能露出 npcCrowdBudget 這種代號）；日報文字（casReportView）的進出、往來也照同壹套檢查
@@ -24,8 +24,8 @@ const SIGN = {
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
     houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, houseInvFix: -1, budgetInvFix: -1, worldGrow: 1, bizTax: -1, entTax: -1, dividend: -1, inMarket: 0 },
 };
-const ACCT_NAME = { bankroll: "莊家", budget: "預算池", museum: "館方帳", gov: "政府帳", world: "外面世界" };
-// 同壹筆錢在兩個帳（外面世界 ↔ 莊家／預算池／館方帳）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
+const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "外面世界" };
+// 同壹筆錢在兩個帳（外面世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
 const PAIRED = { bankroll: ["inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
@@ -55,13 +55,13 @@ function run() {
   const days = [];
   for (let k = 1; k <= 4; k++) {
     const day = addD(D0, k);
-    if (k === 2) G.casHouseMove(h, "bj", -3000000 - h.bankroll); // 破產，預算池有錢：先跟預算池借 // 破產：換日跟預算池借、跟外面世界貸款
-    if (k === 4) { G.casHouseMove(h, "bj", -3000000 - h.bankroll); h.budget = 1000; } // 破產，預算池也沒錢：跟外面世界貸款
-    if (k === 3) { G.casHouseMove(h, "bj", 4e11 - h.bankroll); h.budget = 5e9; h.debt.budget = Math.max(h.debt.budget, 1000000); h.debt.world = Math.max(h.debt.world, 1000000); } // 賺很多：換日還預算池、文化部、外面世界
+    if (k === 2) G.casHouseMove(h, "bj", -3000000 - h.bankroll); // 破產，博物館資金有錢：先跟博物館資金借 // 破產：換日跟博物館資金借、跟外面世界貸款
+    if (k === 4) { G.casHouseMove(h, "bj", -3000000 - h.bankroll); h.budget = 1000; } // 破產，博物館資金也沒錢：跟外面世界貸款
+    if (k === 3) { G.casHouseMove(h, "bj", 4e11 - h.bankroll); h.budget = 5e9; h.debt.budget = Math.max(h.debt.budget, 1000000); h.debt.world = Math.max(h.debt.world, 1000000); } // 賺很多：換日還博物館資金、文化部、外面世界
     G.casHouseFix(h, day); // 換日：外面世界成長、撥款、還款、借款（真的規則）
     G.casNpcSpend(h, day, "s" + k, LIST, null); // NPC 和散客的門票、逛店（真的規則）
     G.casStockHouseFix(h); G.casStockRoll(h, day, {}); G.casInvestRun(h, G.casStockHouseFix(h), day, "s", 0); // 館方投資（真的規則）
-    // 其餘的來源：用記帳的零件照真的來源名字各動壹次（錢的對面跟真的程式壹樣：預算池、海底、錢包）
+    // 其餘的來源：用記帳的零件照真的來源名字各動壹次（錢的對面跟真的程式壹樣：博物館資金、海底、錢包）
     G.casWorldIn(w, h, "stockBuy", 5000); G.casWorldOut(w, h, "stockRebase", 10, W); G.casWorldOut(w, h, "stockSell", 3000, W); G.casWorldIn(w, h, "stockLevLoss", 700); G.casWorldOut(w, h, "stockLevWin", 400, W);
     G.casHouseWorldIn(h, "houseInvestBuy", 2000); G.casHouseMove(h, "investFee", -20); h.budget += 20; G.casHouseWorldOut(h, "houseInvestSell", 1500, W);
     G.casPoolWorldIn(h, "budget", "budgetInvestBuy", 900); G.casPoolWorldOut(h, "budget", "budgetInvestSell", 600);
@@ -69,7 +69,7 @@ function run() {
     G.casHouseMove(h, "bj", 3000); G.casHouseMove(h, "bj", -1000); w.chips -= 2000; G.casHouseMove(h, "food", 500); w.chips -= 500; G.casHouseMove(h, "pack", -700); w.chips += 700; G.casHouseMove(h, "job", -300); w.chips += 300;
     G.casHouseMove(h, "find", -200); w.chips += 200; G.casHouseMove(h, "loan", -400); w.chips += 400; G.casHouseMove(h, "loanBack", 450); w.chips -= 450; G.casHouseMove(h, "bankInt", -50); w.chips += 50;
     G.casHouseMove(h, "econWin", 1200); h.budget -= 1200; G.casHouseMove(h, "econLoot", -250); w.chips += 250; G.casHouseMove(h, "econSea", -150); h.sea += 150;
-    w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); G.casHouseWorldOut(h, "inMarket", 300, W); G.casHouseWorldIn(h, "inMarket", 100); // 手續費、拍賣手續費進預算池，資本利得稅進政府帳（決定 0110）
+    w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); G.casHouseWorldOut(h, "inMarket", 300, W); G.casHouseWorldIn(h, "inMarket", 100); // 手續費、拍賣手續費進博物館資金，資本利得稅進政府帳（決定 0110）
     G.casPoolMint(h, "budget", "ticketBudget", 100); G.casPoolMint(h, "museum", "ticketMuseum", 300); G.casHouseMint(h, "reset", 123);
     const s = G.casBookSnap([w], h, 0, day), diff = G.casBookDiff(prev, s); prev = s;
     days.push({ day, doc: { day, at: Date.parse(day + "T05:00:00+08:00"), snap: s, diff } });
@@ -81,7 +81,7 @@ function run() {
       const sum = v.all[a].reduce((x, y) => x + y.n, 0), real = v.d[a];
       if (Math.abs(sum - real) > v.all[a].length) P(tag(a), `列出來的來源加起來 ${sgn(sum)}，帳上這天變化 ${sgn(real)}（差 ${sgn(real - sum)}）。來源：${v.all[a].map(x => x.k + " " + sgn(x.n)).join("、")}`);
     }
-    info.push(`${day} 預算池昨天變化 ${sgn(v.d.budget)}，列出來的來源合計 ${sgn(v.all.budget.reduce((x, y) => x + y.n, 0))}（預算池還有幾項沒進帳上：參觀者分紅池撥款、債券救助；腳本自己改過預算池餘額的那天也不準，只印出來看）`);
+    info.push(`${day} 博物館資金昨天變化 ${sgn(v.d.budget)}，列出來的來源合計 ${sgn(v.all.budget.reduce((x, y) => x + y.n, 0))}（博物館資金還有幾項沒進帳上：參觀者分紅池撥款、債券救助；腳本自己改過博物館資金餘額的那天也不準，只印出來看）`);
     for (const a of ["bankroll", "budget", "museum", "gov", "world"]) for (const x of v.all[a]) {
       seen[a + "." + x.k] = 1;
       // (b) 符號表
@@ -91,8 +91,8 @@ function run() {
       // (d) 名字
       if (x.label === x.k || /^[A-Za-z0-9_]+$/.test(x.label)) P(tag(a), `來源 ${x.k} 沒有中文名字，玩家會看到「${x.label}」`);
     }
-    // 莊家那塊不能有預算池、館方帳的搬動
-    for (const x of v.all.bankroll) if (G.CAS_BOOK_POOL[x.k]) P(tag("bankroll"), `「${x.label}」是預算池／館方帳的錢，不該列在莊家`);
+    // 莊家那塊不能有博物館資金、修繕基金的搬動
+    for (const x of v.all.bankroll) if (G.CAS_BOOK_POOL[x.k]) P(tag("bankroll"), `「${x.label}」是博物館資金／修繕基金的錢，不該列在莊家`);
     // (c) 同壹筆錢兩邊相反
     for (const a of Object.keys(PAIRED)) for (const k of PAIRED[a]) {
       const x = v.all[a].find(y => y.k === k), y = v.all.world.find(z => z.k === k);
@@ -110,11 +110,11 @@ function run() {
     for (const l of flowLines) {
       const m = /^(.*)　([＋－])([\d,]+)$/.exec(l); if (!m) continue;
       const n = (m[2] === "＋" ? 1 : -1) * Number(m[3].replace(/,/g, "")), key = Object.keys(d.flow || {}).find(k => !G.CAS_BOOK_POOL[k] && G.casReportLabel(k) === m[1] && d.flow[k] === n);
-      if (!key) P(`${day} 日報「莊家」的進出`, `「${l}」對不上帳上的莊家進出（可能是預算池的錢被當成莊家的，或名字、正負號錯）`);
+      if (!key) P(`${day} 日報「莊家」的進出`, `「${l}」對不上帳上的莊家進出（可能是博物館資金的錢被當成莊家的，或名字、正負號錯）`);
       else if (/^[A-Za-z0-9_]+$/.test(m[1])) P(`${day} 日報「莊家」的進出`, `露出代號「${m[1]}」`);
     }
     for (const k of Object.keys(d.flow || {})) if (!G.CAS_BOOK_POOL[k] && d.flow[k] && !flowLines.some(l => l.startsWith(G.casReportLabel(k) + "　"))) P(`${day} 日報「莊家」的進出`, `來源 ${k} 沒出現在進出裡`);
-    for (const k of Object.keys(G.CAS_BOOK_POOL)) if (d.flow && d.flow[k] && flowLines.some(l => l.startsWith(G.casReportLabel(k) + "　"))) P(`${day} 日報「莊家」的進出`, `預算池／館方帳的 ${k} 被列進莊家的進出`);
+    for (const k of Object.keys(G.CAS_BOOK_POOL)) if (d.flow && d.flow[k] && flowLines.some(l => l.startsWith(G.casReportLabel(k) + "　"))) P(`${day} 日報「莊家」的進出`, `博物館資金／修繕基金的 ${k} 被列進莊家的進出`);
     const wl = sec("跟外面世界的往來"), inAt = wl.indexOf("進外面世界："), outAt = wl.indexOf("從外面世界出來：");
     const into = inAt < 0 ? [] : wl.slice(inAt + 1, outAt < 0 ? wl.length : outAt), outp = outAt < 0 ? [] : wl.slice(outAt + 1);
     const wf = d.wflow || {};
@@ -125,7 +125,7 @@ function run() {
     }
     for (const k of Object.keys(wf)) if (wf[k] && ![...into, ...outp].some(l => l.startsWith(G.casReportLabel(k, "world") + "　"))) P(`${day} 日報「跟外面世界的往來」`, `來源 ${k} 沒出現`);
     const head = t => { const m = /這段時間 ([＋－])([\d,]+)/.exec(sec(t)[0] || ""); return m ? (m[1] === "＋" ? 1 : -1) * Number(m[2].replace(/,/g, "")) : null; };
-    for (const [t, val, nm] of [["莊家", d.bankroll, "莊家"], ["預算池（館方）", d.budget, "預算池"], ["館方帳", d.museum, "館方帳"], ["政府帳", d.gov, "政府帳"], ["跟外面世界的往來", d.world, "外面世界"]]) {
+    for (const [t, val, nm] of [["莊家", d.bankroll, "莊家"], ["博物館資金（館方）", d.budget, "博物館資金"], ["修繕基金", d.museum, "修繕基金"], ["政府帳", d.gov, "政府帳"], ["跟外面世界的往來", d.world, "外面世界"]]) {
       const got = head(t); if (got !== null && got !== val) P(`${day} 日報「${t}」開頭`, `${nm}這段時間應該是 ${sgn(val)}，文字寫 ${sgn(got)}`);
     }
   }

@@ -2,7 +2,7 @@
 //  Yuga Bot 日報（11-13，數值平衡；docs/經濟體系規劃.md 玩法 1）
 //  純函式：吃一份「快照加上跟上一份的差」（casinoReport/{day}，shared/casino_book.js 算的），做出給玩家看的幾段字。
 //  只公告「結算過的」：快照是每天第一個來看的人觸發的，不是即時數字（免得有人算「現在去賭莊家最虛弱」）。
-//  海底只給水位（公分），不給數字（規劃第五節問題 12 還沒決定）。預算池、莊家給數字。
+//  海底只給水位（公分），不給數字（規劃第五節問題 12 還沒決定）。博物館資金、莊家給數字。
 //  介面上的字用「壹」。文字是草稿，Yuga 可以改。
 // ================================================================
 import { NUM } from "./config.js";
@@ -20,11 +20,11 @@ export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
   mint: { worldGrow: "外面世界每天成長", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
-  houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進預算池）", ticketMuseum: "參觀者門票（進館方帳）" },
+  houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進博物館資金）", ticketMuseum: "參觀者門票（進修繕基金）" },
   // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
-  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補預算池）", bizTax: "營業稅（政府先拿）", dividend: "股息（外面世界付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟外面世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（預算池）", ticketMuseum: "參觀者門票（館方帳）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（預算池）", npcTicketMuseum: "NPC 的門票（館方帳）", npcCrowdBudget: "散客的門票（預算池）", npcCrowdMuseum: "散客的門票（館方帳）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "預算池投資（買）", budgetInvestSell: "預算池投資（賣）" },
+  world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（外面世界付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟外面世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還外面世界貸款" },
-  flow: { stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟預算池借（莊家破產重開）", budgetRepay: "還預算池", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（預算池撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
+  flow: { stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
   seaNote: "水面底下有人在數東西。",
 };
@@ -37,8 +37,8 @@ const rpTime = ms => { const d = new Date(ms + 8 * 3600000), p = n => String(n).
 const rpList = (obj, names, signed) => Object.entries(obj || {}).filter(([, v]) => v).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
   .map(([k, v]) => `${names[k] || k}　${signed ? rpSign(v) : rpN(v)}`);
 
-// flow 裡「不是莊家的錢」的來源（記帳的人用 casPoolWorldIn／Out：錢在預算池或館方帳跟外面世界之間搬，flow 記的是那個池子的角度：正＝進池子）。
-// 莊家那塊（銀行財報的莊家、日報的「進出」）不能列它們，不然預算池收的門票會變成莊家的錢（11-16 對帳腳本 tools/books_sign_check.cjs 擋這個）
+// flow 裡「不是莊家的錢」的來源（記帳的人用 casPoolWorldIn／Out：錢在博物館資金或修繕基金跟外面世界之間搬，flow 記的是那個池子的角度：正＝進池子）。
+// 莊家那塊（銀行財報的莊家、日報的「進出」）不能列它們，不然博物館資金收的門票會變成莊家的錢（11-16 對帳腳本 tools/books_sign_check.cjs 擋這個）
 export const CAS_BOOK_POOL = { npcTicketBudget: "budget", npcCrowdBudget: "budget", npcJob: "budget", npcCellar: "budget", npcCraft: "budget", npcArt: "budget", budgetInvestBuy: "budget", budgetInvestSell: "budget", npcTicketMuseum: "museum", npcCrowdMuseum: "museum", stockFee: "budget", artFee: "budget", stockTax: "gov", bizTax: "gov", entTax: "gov", divTax: "gov" };
 // 帳上的來源代號 → 玩家看的名字（找不到才回代號，對帳腳本會擋沒有名字的）
 // acct 是「外面世界」時，同壹個代號先用外面世界的名字（例如 grant：外面世界那塊叫「文化部借款撥款」，莊家那塊叫「文化部借款」）
@@ -46,8 +46,8 @@ export const casReportLabel = (k, acct) => (acct === "world" ? CAS_REPORT.world[
 
 // 銀行「館內經濟」展開看的幾個帳（決定 0100）：{ day, bankroll, budget, museum, sea, world, d: { 各帳昨天的變化 }, top: { 各帳進出最大的最多 3 筆 [{ label, n }]（正＝進這個帳、負＝出這個帳）} }。
 // 全部從日報已經算好的 snap 和 diff 拿（延遲壹天、整天不變）。每個帳的 n 都是「這個帳自己的角度」：進來是正、出去是負。
-//   莊家＝flow（扣掉預算池、館方帳的搬動）＋houseMint（扣掉門票、外面世界成長）－houseBurn；外面世界＝wflow（正＝進外面世界）＋每天成長；
-//   預算池＝門票、投資買賣、NPC 在委託／地下／手作坊花的、莊家跟預算池借還、投資手續費；館方帳＝門票進館方帳；海底沒有記來源，不列。
+//   莊家＝flow（扣掉博物館資金、修繕基金的搬動）＋houseMint（扣掉門票、外面世界成長）－houseBurn；外面世界＝wflow（正＝進外面世界）＋每天成長；
+//   博物館資金＝門票、投資買賣、NPC 在委託／地下／手作坊花的、莊家跟博物館資金借還、投資手續費；修繕基金＝門票進修繕基金；海底沒有記來源，不列。
 // full＝true 時多回 all（每個帳的全部來源 [{ k, label, n }]，k 是帳上的來源代號），給 tools/books_sign_check.cjs 對帳用。
 export function casBooksView(doc, full) {
   if (!doc || !doc.snap || !doc.snap.house || !doc.diff) return null;
@@ -62,7 +62,7 @@ export function casBooksView(doc, full) {
   add(world, "worldGrow", casReportLabel("worldGrow", "world"), hm.worldGrow);
   add(budget, "ticketBudget", R.houseMint.ticketBudget, hm.ticketBudget); add(museum, "ticketMuseum", R.houseMint.ticketMuseum, hm.ticketMuseum);
   for (const [k, pool] of Object.entries(CAS_BOOK_POOL)) add(pool === "budget" ? budget : pool === "gov" ? gov : museum, k, casReportLabel(k), fl[k]); // 池子自己的角度：flow 正＝進池子
-  add(budget, "econWin", R.flow.econWin, -(fl.econWin || 0)); add(budget, "investFee", "投資手續費", -(fl.investFee || 0)); add(budget, "budgetLoan", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "budgetRepay", R.flow.budgetRepay, -(fl.budgetRepay || 0)); // 這幾個動的是莊家（拚經濟撥款、投資手續費、借還），預算池在對面：反號
+  add(budget, "econWin", R.flow.econWin, -(fl.econWin || 0)); add(budget, "investFee", "投資手續費", -(fl.investFee || 0)); add(budget, "budgetLoan", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "budgetRepay", R.flow.budgetRepay, -(fl.budgetRepay || 0)); // 這幾個動的是莊家（拚經濟撥款、投資手續費、借還），博物館資金在對面：反號
   const N = v => Math.round(+v) || 0;
   const out = { day: doc.day || null, bankroll: N(H.bankroll), budget: N(H.budget), museum: N(H.museum), gov: N(H.gov), sea: N(H.sea), world: H.world == null ? null : N(H.world),
     d: { bankroll: N(d.bankroll), budget: N(d.budget), museum: N(d.museum), gov: N(d.gov), sea: N(d.sea), world: N(d.world) }, top: { bankroll: top(bank), budget: top(budget), museum: top(museum), gov: top(gov), sea: [], world: top(world) } };
@@ -79,13 +79,13 @@ export function casReportView(doc) {
   // 莊家
   const hl = [`莊家現在有 ${rpN(H.bankroll)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.bankroll)}）`}。`];
   if (H.bankroll < 0) hl.push("莊家破產中，換日 Yuga 會借他壹筆重新開張。");
-  const bankFlow = Object.fromEntries(Object.entries(d.flow || {}).filter(([k]) => !CAS_BOOK_POOL[k])), flow = rpList(bankFlow, Object.fromEntries(Object.keys(bankFlow).map(k => [k, casReportLabel(k)])), true); // 預算池、館方帳的搬動不是莊家的進出
+  const bankFlow = Object.fromEntries(Object.entries(d.flow || {}).filter(([k]) => !CAS_BOOK_POOL[k])), flow = rpList(bankFlow, Object.fromEntries(Object.keys(bankFlow).map(k => [k, casReportLabel(k)])), true); // 博物館資金、修繕基金的搬動不是莊家的進出
   if (flow.length) hl.push("進出：", ...flow);
   if (H.debt && H.debt.culture > 0 && NUM.casino.houseLoan.cultureDue) { // 文化部館債（30 天內還清）
     const dueD = (H.cul && H.cul.due) || NUM.casino.houseLoan.cultureDue, dl = doc.day ? Math.max(0, rpDays(doc.day, dueD)) : null, c = H.cul || {};
     hl.push(`文化部館債：剩 ${rpN(H.debt.culture)}，${dl === null ? "" : dl + " 天後"}到期（${dueD.slice(5)}）${dueD > NUM.casino.houseLoan.cultureDue ? "，回條來了：到期日已展延壹次" : ""}，今天還了 ${rpN(c.paid || 0)}。` + (H.culLate > 0 ? `逾期累計 ${rpN(H.culLate)}。` : ""));
   }
-  const DB = H.debt || {}, debts = [["預算池", DB.budget], ["文化部持有的館債", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
+  const DB = H.debt || {}, debts = [["博物館資金", DB.budget], ["文化部持有的館債", DB.culture], ["外面世界", DB.world]].filter(x => x[1] > 0);
   if (debts.length) hl.push("莊家欠的錢（賺了錢會先還）：" + debts.map(x => `${x[0]} ${rpN(x[1])}`).join("、") + "。");
   if (H.loansOut > 0) hl.push(`莊家借出去、還沒收回的本金 ${rpN(H.loansOut)}。`);
   // 莊家健康度：從玩家流進來的（21 點、餐車、借款還回）對流出給玩家的（大禮包、委託、地下撿、借出、拚經濟油水、利息）
@@ -141,16 +141,16 @@ export function casReportView(doc) {
   }
   hl.push(`${s.wallets} 位館友的錢包合計 ${rpN(s.chips)} 籌碼。`);
   secs.push({ t: "莊家", lines: hl });
-  // 預算池
+  // 博物館資金
   const bl = [];
-  if (H.budget <= 0) bl.push(`預算池剩 ${rpN(H.budget)}。預算凍結中：拚經濟成功只撥平常的 ${NUM.casino.econ.freezeKeep}%。`);
+  if (H.budget <= 0) bl.push(`博物館資金剩 ${rpN(H.budget)}。預算凍結中：拚經濟成功只撥平常的 ${NUM.casino.econ.freezeKeep}%。`);
   else {
-    bl.push(`預算池剩 ${rpN(H.budget)}${first ? "" : `（這段時間 ${rpSign(d.budget)}）`}。`);
+    bl.push(`博物館資金剩 ${rpN(H.budget)}${first ? "" : `（這段時間 ${rpSign(d.budget)}）`}。`);
     if (!first && d.budget < 0) { const days = Math.floor(H.budget / (-d.budget / span)); bl.push(`照這個速度，大約還撐 ${rpN(days)} 天。`); }
   }
-  secs.push({ t: "預算池（館方）", lines: bl });
+  secs.push({ t: "博物館資金（館方）", lines: bl });
   secs.push({ t: "政府帳", lines: [`政府帳有 ${rpN(H.gov || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.gov || 0)}）`}。收證交稅（賣台股、館內股）、營業稅（NPC、散客在店裡花的錢）、娛樂稅（NPC、散客的門票），館方還沒決定怎麼用。`] });
-  secs.push({ t: "館方帳", lines: [`館方帳有 ${rpN(H.museum || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.museum || 0)}）`}。來自參觀者的門票，之後用在修繕、捐款、預算公投。`] });
+  secs.push({ t: "修繕基金", lines: [`修繕基金有 ${rpN(H.museum || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.museum || 0)}）`}。來自參觀者的門票，之後用在修繕、捐款、預算公投。`] });
   // 海底：只給水位
   const cm = Math.floor(Math.max(0, H.sea) / C.seaPerCm), dcm = first ? 0 : Math.floor(Math.max(0, H.sea) / C.seaPerCm) - Math.floor(Math.max(0, H.sea - d.sea) / C.seaPerCm);
   secs.push({ t: "海底（B4 的水下）", lines: [`水位 ${rpN(cm)} 公分${dcm > 0 ? `，這段時間升了 ${rpN(dcm)} 公分` : ""}。`, !first && d.sea > 0 ? CAS_REPORT.seaNote : ""].filter(Boolean) });

@@ -4,8 +4,8 @@ const { stepLines, numbersOf, diffNumbers, parseArgs } = require("../tools/fb_ru
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
 T("只留做這個動作那步、拿掉雜訊", () => {
-  const log = ["task\t裝套件\t2026-11-15T01:00:00Z added 3", "task\t做這個動作\t2026-11-15T01:00:01Z ##[group]Run x", "task\t做這個動作\t2026-11-15T01:00:02Z 莊家 1,000　預算池 2,000", "task\t做這個動作\t2026-11-15T01:00:02Z shell: /usr/bin/bash"].join("\n");
-  assert.deepStrictEqual(stepLines(log), ["莊家 1,000　預算池 2,000"]);
+  const log = ["task\t裝套件\t2026-11-15T01:00:00Z added 3", "task\t做這個動作\t2026-11-15T01:00:01Z ##[group]Run x", "task\t做這個動作\t2026-11-15T01:00:02Z 莊家 1,000　博物館資金 2,000", "task\t做這個動作\t2026-11-15T01:00:02Z shell: /usr/bin/bash"].join("\n");
+  assert.deepStrictEqual(stepLines(log), ["莊家 1,000　博物館資金 2,000"]);
 });
 T("同名的數字用行開頭分開（#1、#2）", () => {
   const n = numbersOf(["  #1　籌碼 10　沒還的借款 5", "  #2　籌碼 20"]);

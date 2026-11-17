@@ -295,7 +295,7 @@ T("連續幾天（含週六、國定假日）：每個交易日收盤價照盤�
   }
   assert.ok(Object.keys(house.stk.hist).length <= C.order.days + 2);
 });
-T("買賣守恆：美股盤中買賣照樣記帳對得上、手續費進預算池", G => {
+T("買賣守恆：美股盤中買賣照樣記帳對得上、手續費進博物館資金", G => {
   const house = house0(G, W), doc = runDay(G, "祕密", W, { gap: 0.02 }), w = wallet(G);
   const snap = () => G.casBookSnap([w], house, 0, null);
   const op = G.casBookOpening(snap());

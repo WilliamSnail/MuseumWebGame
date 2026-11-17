@@ -7,10 +7,10 @@
 //    { no, id, mk "in"｜"tw"｜"us", side "long"｜"short", lev 倍數, qty 股數, entry 開倉價, notional ＝ qty × entry, margin 保證金,
 //      fee 開倉時付的手續費和利息, day 開倉的遊戲日, at 開倉的毫秒, chk 已檢查到第幾個價, px 最後看到的價 }
 //  錢怎麼動（守恆，shared/casino_book.js）：
-//    開倉：保證金從籌碼搬到 w.lev.hold（錢還是玩家的，記帳算在 bkHeld）；手續費＋利息搬進預算池。對手盤沒動。
+//    開倉：保證金從籌碼搬到 w.lev.hold（錢還是玩家的，記帳算在 bkHeld）；手續費＋利息搬進博物館資金。對手盤沒動。
 //    平倉：損益 ＝ 做多 (平倉價 − 開倉價) × 股數；放空 ＝ (開倉價 − 平倉價) × 股數。賠最多賠保證金（不欠莊家、不欠外面世界）。
 //      館內股（mk "in"）：對手盤是莊家（casHouseMove "stockLev"）；莊家付的賺、收的賠，壹天的淨賠付算進全館壹天淨賣出上限（規劃 2.8b）。
-//      台股（mk "tw"）：對手盤是外面世界（賺＝casMint "stockLevWin"，賠＝casBurn "stockLevLoss"）；期望值 0，手續費和利息是搬進預算池，不是 burn。
+//      台股（mk "tw"）：對手盤是外面世界（賺＝casMint "stockLevWin"，賠＝casBurn "stockLevLoss"）；期望值 0，手續費和利息是搬進博物館資金，不是 burn。
 //      美股（mk "us"）：跟台股一樣（對手盤是外面世界）；11-14 翊文決定開放做多、放空，倍數照信用解鎖，部位上限同台股（maxLev.us ＝ 5）。
 //      行情落後安全閥（11-14）：台股、美股這檔真實行情落後超過 NUM.casino.stockLev.maxLagMin 分鐘（或這段沒抓到真實價），暫停「新開」槓桿單；已開的部位、平倉、停損停利、強平照常。
 //    壞帳（價格跳過強平價、賠超過保證金的那壹段）：沒有人付，只記 house.act.levBadDebt（次數／金額，不是錢）。
@@ -284,7 +284,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (sWhy) return { ok: false, reason: sWhy };
   // 成交
   w.chips -= margin + cost.total;
-  house.budget += cost.total; casCount(house, "levFee", cost.total); // 手續費和利息搬進預算池（不是 burn）
+  house.budget += cost.total; casCount(house, "levFee", cost.total); // 手續費和利息搬進博物館資金（不是 burn）
   S.seq += 1;
   const pos = { no: S.seq, id, mk, side, lev, qty, entry: px, notional, margin, fee: cost.total, day, at: lqT(t) ? +t : null, chk: lqN(nw.idx), peg: lqN(casStockHouseFix(house).peg.seq), px, stop, take };
   S.pos.push(pos); S.hold += margin; S.fee += cost.total;

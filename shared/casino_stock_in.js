@@ -478,7 +478,7 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   w.chips -= cost + fee;
   S.cost[id] = inN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   casHouseMove(house, "stockIn", cost); // 買進的錢進莊家（莊家當對手盤）
-  casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進預算池（搬）
+  casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進博物館資金（搬）
   S.own[id] = have + n; S.fee += fee;
   H.held[id] = inN(H.held[id]) + n;
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少

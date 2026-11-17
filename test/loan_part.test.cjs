@@ -58,7 +58,7 @@ T("分期：條件（借 1 天後、本金 ≥ 10 萬、沒延期、沒到期、
   const y = borrow(G, s, 50000); assert.ok(!G.casLoanSplit(s.w, y.id, 2, 3, d1, s.h).ok, "本金太小");
   const e = mk(G), z = borrow(G, e, 500000); z.ext = 1; assert.ok(!G.casLoanSplit(e.w, z.id, 2, 3, d1, e.h).ok, "延期過了");
   const f = mk(G), q = borrow(G, f, 500000); assert.ok(!G.casLoanSplit(f.w, q.id, 2, 3, plus(q.due, 1), f.h).ok, "已經到期了");
-  const g = mk(G), v = borrow(G, g, 500000); g.h.debt.culture = 1000000000; g.h.bankroll = 1000; assert.ok(!G.casLoanSplit(g.w, v.id, 2, 3, d1, g.h).ok, "莊家現金吃緊：暫停開分期");
+  const g = mk(G), v = borrow(G, g, 500000); g.h.debt.culture = 1000000000; g.h.bankroll = 1000; assert.ok(G.casLoanSplit(g.w, v.id, 2, 3, d1, g.h).ok, "莊家現金低也可以開分期（沒有暫停條件，只有總開關）");
   G.NUM.casino.loan.split.on = false; const o = mk(G), p = borrow(G, o, 500000); assert.ok(!G.casLoanSplit(o.w, p.id, 2, 3, d1, o.h).ok, "旗標關掉");
 });
 

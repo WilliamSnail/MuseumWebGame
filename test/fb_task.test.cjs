@@ -1,12 +1,12 @@
 // tools/fb_task.cjs：Firebase 的固定動作只做得到那幾件事（不會連 Firebase）
 const assert = require("assert");
-const { ACTIONS, parseTask, planTask, econPick } = require("../tools/fb_task.cjs");
+const { ACTIONS, parseTask, planTask, econPick, advisorRulesMail } = require("../tools/fb_task.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
-  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status"]);
+  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "advisor-rules-mail"]);
   assert.deepStrictEqual(parseTask({ action: "stock-reroll" }), { action: "stock-reroll" }, "重算股價不用 email");
   // 工作流程的下拉選單要跟程式的清單壹樣，不然按得到的動作程式不認得（或反過來）
   const yml = require("fs").readFileSync(require("path").join(__dirname, "..", ".github/workflows/firebase-task.yml"), "utf8");
@@ -70,5 +70,26 @@ T("econ-status 只印經濟欄位的白名單：名字、uid、email、祕密、
   for (const bad of ["祕密", "a@b.com", "小明", "U1", "wallets", "art", "byUser", "who", "mint", "pool"]) assert.ok(!s.includes(bad), "不該印出：" + bad);
   const o = econPick(h); assert.strictEqual(o.world, 9); assert.strictEqual(o.debt.culture, 2); assert.strictEqual(o.led.world.stockBuy, 10); assert.strictEqual(o.inv.sum.hold[0].n, 2);
 });
-console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`);
-process.exit(fail ? 1 : 0);
+// 借款新規定的信：用假的 Firestore 跑（不連 Firebase）：有借款的寄、沒借款的不寄、重跑不重寄
+const pending = [];
+pending.push((async () => {
+  try {
+    const mkW = loans => ({ chips: 100, loan: { list: loans, limit: 1000000 } });
+    const store = { a: mkW([{ id: 1, amt: 1000000, owe: 1090000, day: "2026-11-10", due: "2026-11-17" }]), b: mkW([]), c: mkW([{ id: 1, amt: 500000, owe: 545000, day: "2026-11-12", due: "2026-11-19" }]) };
+    const mails = {}, FieldValue = { serverTimestamp: () => "TS" };
+    const db = {
+      collection: () => ({ get: async () => ({ docs: Object.keys(store).map(id => ({ id, ref: { id, kind: "wallet" } })) }) }),
+      doc: p => ({ path: p, kind: "mail" }),
+      runTransaction: async fn => fn({ get: async r => ({ exists: true, data: () => ({ data: JSON.stringify(store[r.id]) }) }), set: (r, v) => { if (r.kind === "wallet") store[r.id] = JSON.parse(v.data); else mails[r.path] = v; } }),
+    };
+    const logs = [], old = console.log; console.log = (...a) => logs.push(a.join(" "));
+    try { await advisorRulesMail(db, FieldValue); await advisorRulesMail(db, FieldValue); } finally { console.log = old; }
+    assert.deepStrictEqual(Object.keys(mails).sort(), ["mail/a/items/advisor-rules", "mail/c/items/advisor-rules"], "只有有借款的兩位，各壹封");
+    assert.ok(store.a.adv && store.a.adv.rules && !store.b.adv, "錢包記著寄過了");
+    assert.ok(/寄出 2 封/.test(logs[0]) && /寄出 0 封/.test(logs[1]), logs.join("|"));
+    assert.ok(!logs.join("").includes("mail/a"), "紀錄不印 uid");
+    assert.ok(mails["mail/a/items/advisor-rules"].note.includes("1,090,000") || mails["mail/a/items/advisor-rules"].note.includes("109"), "帶自己的數字");
+    pass++;
+  } catch (e) { fail++; console.log("FAIL advisor-rules-mail: " + e.message); }
+})());
+Promise.all(pending).then(() => { console.log(pass + " passed, " + fail + " failed（Firebase 的固定動作）"); process.exit(fail ? 1 : 0); });

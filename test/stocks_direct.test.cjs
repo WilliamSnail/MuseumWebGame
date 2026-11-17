@@ -74,7 +74,7 @@ T("第壹次換成直接用真實價：持股市值不變（股數照比例）�
   assert.strictEqual(house.stk.peg.ev.length, n, "第二天不換");
   assert.strictEqual(house.stk.px[TW], Math.round(C.peg.tw * 1010), "價跟著真實");
 });
-T("持有成本：每過壹天，持股市值的 holdPct% 從錢包搬進預算池；守恆；第壹次只記起點", G => {
+T("持有成本：每過壹天，持股市值的 holdPct% 從錢包搬進博物館資金；守恆；第壹次只記起點", G => {
   const C = G.NUM.casino.stock, house = mkHouse(G, W0), w = G.casWalletFix(G.casWalletNew(), W0); w.chips = 5e8;
   G.casStockRoll(house, W, {}, { [TW]: { px: 1000 } }); G.casStockRoll(house, "2026-11-17", {}, { [TW]: { px: 1000 } });
   G.casStockPegSync(w, house);
@@ -84,7 +84,7 @@ T("持有成本：每過壹天，持股市值的 holdPct% 從錢包搬進預算�
   G.casStockRoll(house, "2026-11-18", {}, { [TW]: { px: 1000 } });
   G.casStockPegSync(w, house);
   const mv = 1000 * house.stk.px[TW], cost = Math.floor(mv * C.holdPct / 100);
-  assert.strictEqual(c0 - w.chips, cost); assert.strictEqual(house.budget - b0, cost, "進預算池");
+  assert.strictEqual(c0 - w.chips, cost); assert.strictEqual(house.budget - b0, cost, "進博物館資金");
   const snap1 = G.casBookSnap([w], house, 0, null); assert.strictEqual(G.casBookTotal(snap1) - G.casBookMinted(snap1) + G.casBookBurned(snap1), t0, "守恆");
   G.casStockPegSync(w, house); assert.strictEqual(c0 - w.chips, cost, "同壹天不重扣");
 });

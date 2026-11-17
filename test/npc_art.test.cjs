@@ -41,7 +41,7 @@ T("NPC 沒贏也把第二高價抬到他的出價；玩家出更高的還是玩�
   const r = settle(G, W);
   assert.ok(r.sold && r.winner === "u1", JSON.stringify(r)); assert.ok(r.price >= a.reserve && r.price < hi, "付第二高價（NPC 的出價），不是自己的高價");
 });
-T("玩家的畫拍賣：NPC 買走，賣家拿到錢（扣手續費進預算池），畫變成館外收藏；錢從外面世界來；守恆", G => {
+T("玩家的畫拍賣：NPC 買走，賣家拿到錢（扣手續費進博物館資金），畫變成館外收藏；錢從外面世界來；守恆", G => {
   G.NUM.auction.npcJoinPct = 100; G.NUM.auction.npcDay = 1e9;
   const W = world(G), P = {}; W.saves.u2 = P; const A = G.casArtFix(P);
   A.own[WORK] = { tier: 2, date: DAY, d: DAY, paid: 6000000, title: "珍藏的畫", lock: "p~1" }; W.house.art = { own: { [WORK]: 1 }, paid: 6000000, out: { day: "", n: 0 } };
