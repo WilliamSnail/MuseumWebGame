@@ -659,3 +659,10 @@ body[data-screen="bank"] #room { background: none; }
 
 .bank-flow-node-g .b.neg { fill: #FF9A86; font-weight: 700; } /* 負的餘額（例如海外帳）：帶負號、偏紅 */
 .bank-flow-node-g:has(.b.neg) rect { stroke: #E0705C; }
+/* 手機直拿：放大縮小按鈕縮小，跟路徑排同一行（翊文 11-17：「手機的放大縮小按鈕太大了」） */
+@media (max-width: 760px) {
+  .bank-flow-bar { flex-wrap: nowrap; padding: 4px 6px; }
+  .bank-flow-zb { min-width: 0; height: 34px; padding: 0 9px; gap: 3px; border-radius: 8px; border-width: 1.5px; letter-spacing: 0; }
+  .bank-flow-zb b { font-size: 1.1rem; } .bank-flow-zb span { font-size: .75rem; }
+  .bank-flow-zoom { gap: 4px; } .bank-flow-crumb { padding: 2px 8px; min-height: 26px; }
+}
