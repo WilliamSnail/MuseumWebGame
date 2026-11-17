@@ -349,6 +349,14 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
 // ---------- 畫面要的 ----------
 // 回傳 { list: [{ id, name, line, kind, price, chg, mine, value }], fee, halt, exposeLeft, sellLeft, total }
 // stale：哪幾支今天沒有新資料（shared/stocks.js 的 outStockStale）。標出來，不要讓人以為真的沒漲跌
+const stLastSession = (T, id) => { // 最近壹場（有兩個以上的價）的盤中走勢
+  const P = T && stBox(T.past) ? T.past : {};
+  for (const d of Object.keys(P).sort().reverse()) {
+    const ser = P[d] && P[d][id];
+    if (Array.isArray(ser) && ser.length > 1) return { day: d, from: stN(T.pastFrom && T.pastFrom[d]), ser: ser.slice(), base: stN(T.pastBase && T.pastBase[d] && T.pastBase[d][id]) || null };
+  }
+  return null;
+};
 export function casStockView(w, house, day, t, stale) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   const old = Array.isArray(stale) ? stale : [];
@@ -366,6 +374,8 @@ export function casStockView(w, house, day, t, stale) {
       //   11-14（規劃 2.8i）：美股也盤中了：usState 美股的狀態（pre、pending、open、closed；其他股是 null）；intraday／intradayFrom 美股 ＝ 從美東 09:30 起算的分鐘（0 ＝ 09:30）
       market: mk || "us", halted: casStockIdHalt(house, d.id, day, t), twState: tw ? H.tw.st : null, usState: mk === "us" ? H.us.st : null,
       intraday: mk && H[mk].day === day && Array.isArray(H[mk].ser[d.id]) ? H[mk].ser[d.id].slice() : [], intradayFrom: mk && H[mk].day === day ? H[mk].from : 0,
+      // 11-17 翊文：「這個圖應該保留昨天股市結束之後的摺線圖吧?」：今天還沒有盤中的價（開盤前、等開盤價、休市）就給最近壹場的走勢 lastSession { day, from, ser, base 那天的昨收 }
+      lastSession: mk && !(H[mk].day === day && Array.isArray(H[mk].ser[d.id]) && H[mk].ser[d.id].length) ? stLastSession(H[mk], d.id) : null,
       fresh: S.seen[d.id] !== price,
       // 11-14（規劃 2.8h）：real 真實代號、已經算進遊戲價的真實價、真實漲跌 %（沒有資料是 null）；mult 遊戲價 ＝ 倍數 × 真實價
       real: H.real[d.id] ? Object.assign({}, H.real[d.id]) : null, code: H.sym && H.sym[d.id] ? Object.assign({}, H.sym[d.id]) : null, mult: stPxMult(H, d.id) };
@@ -554,13 +564,13 @@ export function casStockIntraApply(house, mk, data, day, t) {
     }
   }
   // 前幾天盤中的價（隔幾天才上線的人，掛單也要照中間每天盤中的價檢查）
-  T.past = {}; T.pastFrom = {};
+  T.past = {}; T.pastFrom = {}; T.pastBase = {}; // pastBase：那天的昨收（盤中價的基準），開盤前畫「上一場」的走勢要用（11-17）
   const days = Object.keys(Object.assign({}, tw && tw.days, tw && tw.day ? { [tw.day]: 1 } : {})).filter(d => d < day && H.hist[d]).sort().slice(-(C.order.days + 1));
   for (const d of days) {
     const r = rec(d);
     if (!r || r.openIdx == null || !r.ser) continue;
-    T.past[d] = {}; T.pastFrom[d] = r.openIdx;
-    for (const id of M.ids) { const b = C.direct && r.prev && stOkPx(r.prev[id]) ? Math.max(C.floor, stPx((mk === "us" ? fxOf(r) : stPegMult(id)) * r.prev[id])) : H.hist[d][id]; if (Array.isArray(r.ser[id]) && b > 0) T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(b, x)); }
+    T.past[d] = {}; T.pastFrom[d] = r.openIdx; T.pastBase[d] = {};
+    for (const id of M.ids) { const b = C.direct && r.prev && stOkPx(r.prev[id]) ? Math.max(C.floor, stPx((mk === "us" ? fxOf(r) : stPegMult(id)) * r.prev[id])) : H.hist[d][id]; if (Array.isArray(r.ser[id]) && b > 0) { T.past[d][id] = r.ser[id].slice(r.openIdx).map(x => stTwPx(b, x)); T.pastBase[d][id] = b; } }
   }
   return T;
 }
