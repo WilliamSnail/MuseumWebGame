@@ -1,7 +1,8 @@
 // 館內五家店的股票（11-14，規劃 2.8a、2.8b、2.8e、2.8g）：node test/casino_stock_in.test.cjs（npm test 也會跑）
 // 營業時間、盤中曲線（種子有祕密、夾開盤 ±5%）、05:00 跳空（K＝0.03、人太少不調、有效日）、不同的人只算一次、買賣守恆、上限、畫面格式。數字讀 NUM。
 const assert = require("assert");
-const { load } = require("./load_shared.cjs");
+const { load: load0 } = require("./load_shared.cjs");
+const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const SEC = "test-secret", D0 = "2026-11-16", add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };

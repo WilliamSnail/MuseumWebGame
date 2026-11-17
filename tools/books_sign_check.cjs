@@ -16,17 +16,17 @@ const { load } = require(path.join(ROOT, "test", "load_shared.cjs"));
 const SIGN = {
   bankroll: { cultureRepay: -1, worldRepay: -1, grant: 1, worldLoan: 1, budgetLoan: 1, budgetRepay: -1, houseInvestBuy: -1, houseInvestSell: 1, investFee: -1, reset: 1,
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
-    bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, tax: -1 },
+    bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, tax: -1, inMarket: 0 },
   budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, investFee: 1, budgetLoan: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1 },
   gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   world: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
-    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, worldGrow: 1, bizTax: -1, entTax: -1, dividend: -1 },
+    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, worldGrow: 1, bizTax: -1, entTax: -1, dividend: -1, inMarket: 0 },
 };
 const ACCT_NAME = { bankroll: "莊家", budget: "預算池", museum: "館方帳", gov: "政府帳", world: "外面世界" };
 // 同壹筆錢在兩個帳（外面世界 ↔ 莊家／預算池／館方帳）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
-const PAIRED = { bankroll: ["cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
+const PAIRED = { bankroll: ["inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;
@@ -69,7 +69,7 @@ function run() {
     G.casHouseMove(h, "bj", 3000); G.casHouseMove(h, "bj", -1000); w.chips -= 2000; G.casHouseMove(h, "food", 500); w.chips -= 500; G.casHouseMove(h, "pack", -700); w.chips += 700; G.casHouseMove(h, "job", -300); w.chips += 300;
     G.casHouseMove(h, "find", -200); w.chips += 200; G.casHouseMove(h, "loan", -400); w.chips += 400; G.casHouseMove(h, "loanBack", 450); w.chips -= 450; G.casHouseMove(h, "bankInt", -50); w.chips += 50;
     G.casHouseMove(h, "econWin", 1200); h.budget -= 1200; G.casHouseMove(h, "econLoot", -250); w.chips += 250; G.casHouseMove(h, "econSea", -150); h.sea += 150;
-    w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); // 手續費、拍賣手續費進預算池，資本利得稅進政府帳（決定 0110）
+    w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); G.casHouseWorldOut(h, "inMarket", 300, W); G.casHouseWorldIn(h, "inMarket", 100); // 手續費、拍賣手續費進預算池，資本利得稅進政府帳（決定 0110）
     G.casPoolMint(h, "budget", "ticketBudget", 100); G.casPoolMint(h, "museum", "ticketMuseum", 300); G.casHouseMint(h, "reset", 123);
     const s = G.casBookSnap([w], h, 0, day), diff = G.casBookDiff(prev, s); prev = s;
     days.push({ day, doc: { day, at: Date.parse(day + "T05:00:00+08:00"), snap: s, diff } });
