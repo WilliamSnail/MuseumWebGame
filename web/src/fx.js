@@ -573,6 +573,11 @@ export const FX = (() => {
     // ---------- 會一直響的：環境音、心跳、耳鳴、不安的低鳴 ----------
     const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null, dread: null };
     let ambNow = null, heartStop = null, tinNow = null, droneNow = null;
+    // 房間的整首曲子（songCycle 的鋼琴、大提琴）每個房間壹個小音量鈕：理智低的恐怖音樂放的時候壓低到 SONG_DREAD_DUCK
+    // （11-17 翊文：「理智低的恐怖音樂放的時候 讓房間的鋼琴降低」）。恐怖音樂停了慢慢回到 1
+    const SONG_GAINS = new Set(), SONG_DREAD_DUCK = 0.3;
+    let songDread = false;
+    const songLevel = () => (songDread ? SONG_DREAD_DUCK : 1);
     const isOn = (k) => unlocked && !dead && !(api.settings && api.settings.muted) && vol[k] > 0;
     function every(fn, delay) { // 先跑一次，之後照 delay() 的毫秒數一直跑
       let alive = true, id = null;
@@ -631,8 +636,9 @@ export const FX = (() => {
     }
     // 房間偶爾放的整首曲子（11-16 翊文：「播完後安靜20秒左右再撥」）：壹首播完才開始算，安靜 15～25 秒再放下壹首（ids 輪流）；進房間也先安靜 15～25 秒。回傳停止函式（跟 every 壹樣放進 timers）
     //   duck：房間原本的合成旋律接在這個 GainNode 上；曲子放的時候它淡出、播完前 2 秒淡回來，兩首不會疊在壹起（11-16 翊文：「圖書館兩個音樂好像會重疊」）
-    function songCycle(c, g, ids, gain, first, duck) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
+    function songCycle(c, g0, ids, gain, first, duck) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
       let alive = true, id = null, k = (Math.random() * ids.length) | 0;
+      const g = c.createGain(); g.gain.value = songLevel(); g.connect(g0); SONG_GAINS.add(g); // 曲子先過這個鈕（恐怖音樂時壓低），再進房間
       const wait = (ms) => { id = setTimeout(play, ms); };
       const ducked = (d) => {
         if (!duck || !d) return;
@@ -641,7 +647,7 @@ export const FX = (() => {
       };
       const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { ducked(d); if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
       wait(first ? rand(first[0], first[1]) : rand(15000, 25000));
-      return () => { alive = false; clearTimeout(id); };
+      return () => { alive = false; clearTimeout(id); SONG_GAINS.delete(g); };
     }
     // 「失敗作之夜」那週（每週特展 failedOnly）：大廳、展廳很久才冒壹小段走音的音樂盒（11-16 翊文，Pixabay「creepy music box」）。mix({ creepy }) 開關，第壹次不響
     function creepyHook(c, g) {
@@ -1224,6 +1230,8 @@ export const FX = (() => {
       if (!tn && tinNow) { tinNow.stop(); tinNow = null; }
       // 理智低的恐怖音樂（11-15）：理智 < 45 low、<= 15 edge、發作時再疊壹首；用到才下載，慢慢淡進淡出（跟心跳、不安低鳴是不同層）
       const dr = isOn('heart') ? want.dread : null;
+      const sd = dr === 'low' || dr === 'edge' || !!tn; // 恐怖音樂有在放：房間的曲子壓低，停了再回來
+      if (sd !== songDread) { songDread = sd; SONG_GAINS.forEach((sg) => { try { sg.gain.setTargetAtTime(songLevel(), c.currentTime, 1.5); } catch (e) { /* ignore */ } }); }
       dreadMusic(c, 'horror-low', dr === 'low' ? 0.42 : 0); dreadMusic(c, 'horror-edge', dr === 'edge' ? 0.5 : 0); dreadMusic(c, 'horror-bout', tn ? 0.38 : 0);
     }
     // 瀏覽器要等玩家先點壹下才准出聲：點之前只記下「想要的狀態」。

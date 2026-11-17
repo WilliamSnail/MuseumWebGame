@@ -407,7 +407,7 @@ export const NUM = {
     //   reserve 重開補到多少；先跟博物館資金借（博物館資金超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
     //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
     //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先博物館資金、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
-    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 60, cultureKeep: 500000000, cultureBankMin: 150000000, fix: { day: "2026-11-17", amt: 32796492 }, // 決定 0118：11-17 換日莊家付了這期館債 32,796,492（0116 之前的規則），照新規定該由博物館資金付：一次性補撥（house.cFix 擋重複；只在 house.cul 記的那天、那筆金額剛好對得上時才做）
+    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 60, cultureKeep: 500000000, cultureBankMin: 150000000, fix: { on: true, amt: 32796492 }, // 決定 0118：11-17 換日莊家付了這期館債 32,796,492（0116 之前的規則），照新規定該由博物館資金付：一次性補撥（house.cFix 擋重複；只在 house.cul 記的那天、那筆金額剛好對得上時才做）
         // 決定 0116：館債分期先由博物館資金付（守 cultureKeep），不夠的莊家超過 cultureBankMin 的部分才付；展延 30 → 60 天。 到期日剩下的自動展延壹次 cultureExtDays 天（決定 0097，之後不再設到期日）；博物館資金墊付不得讓它低於 cultureKeep（＝NUM.casino.invest.budgetKeep）
        // 文化部館債（翊文 11-14：30 天 → 「借久一點 60 天」，從 11-13 撥款起算到 2027-01-12）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由博物館資金墊，再不夠記逾期
        reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
