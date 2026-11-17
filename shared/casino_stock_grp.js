@@ -229,7 +229,7 @@ export function gsSell(w, house, id, shares, day, t) {
 export function gsView(w, house, day, t) {
   const C = gCfg(); if (!C || !C.on || !house) return null;
   gsAdvance(house, day, t); const g = gsFix(house), S = w ? gsWalletFix(w) : null, ids = Object.keys(g.u), sy = w ? gsSync(w, house) : { lines: [] }; // 看畫面時順便領股息、配股
-  const list = ids.map(id => { const U = g.u[id], nav = gsNav(house, id), mine = S ? gN(S.h[id]) : 0; return { id, name: gsNameOf(id), unit: whName(id), price: Math.round(U.P * 100) / 100, open: Math.round(U.o * 100) / 100, chg: U.o > 0 ? Math.round((U.P / U.o - 1) * 10000) / 100 : 0, shares: U.S, mcap: Math.floor(U.P * U.S), nav: Math.round(nav * 100) / 100, pb: nav > 0 ? Math.round(U.P / nav * 100) / 100 : null, mine, value: Math.floor(mine * U.P), cost: S ? gN(S.cost[id]) : 0, market: wmOfUnit(id) }; });
+  const list = ids.map(id => { const U = g.u[id], nav = gsNav(house, id), mine = S ? gN(S.h[id]) : 0; return { id, name: gsNameOf(id), unit: whName(id), price: Math.round(U.P * 100) / 100, open: Math.round(U.o * 100) / 100, chg: U.o > 0 ? Math.round((U.P / U.o - 1) * 10000) / 100 : 0, shares: U.S, mcap: Math.floor(U.P * U.S), nav: Math.round(nav * 100) / 100, pb: nav > 0 ? Math.round(U.P / nav * 100) / 100 : null, mine, value: Math.floor(mine * U.P), cost: S ? gN(S.cost[id]) : 0, market: wmOfUnit(id), hist: Array.isArray(U.hist) ? U.hist.slice(-30).map(x => Math.round(+x * 100) / 100) : [] }; });
   return { notes: sy.lines, list, index: { v: gsIndex(house) }, halt: gHalt(g, day, t), rule: `集團的股票：價格由這個世界的買賣和經濟決定。每人持股沒有上限、壹天買賣最多 ${C.dayVolPct}%、每天漲跌停 ±${C.dayLim}%。` };
 }
 export const gsPrice = (house, id) => { const U = house && gBox(house.gs) && gBox(house.gs.u) ? house.gs.u[id] : null; return U ? U.P : 0; };
