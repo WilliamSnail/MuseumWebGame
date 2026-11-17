@@ -81,6 +81,9 @@ export function fakeBankHall() {
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
+    gs: { halt: false, rule: "示範：集團股的價格由這個世界的買賣和經濟決定。", notes: [], index: { v: 100.38 }, list: [
+      { id: "g-culture", name: "文化藝術機構股", unit: "文化藝術機構", price: 100.66, open: 100, chg: 0.66, shares: 101213719, mcap: 10188034904, nav: 50, pb: 2.01, mine: 40, value: 4026, cost: 3900, limit: 5000000, hist: [98, 99.2, 97.5, 99, 100.1, 99.4, 100.9, 100.2, 101.3, 100.66] },
+      { id: "g-daily", name: "民生集團股", unit: "民生集團", price: 100.09, open: 100, chg: 0.09, shares: 90000000, mcap: 9008100000, nav: 50, pb: 2, mine: 0, value: 0, cost: 0, limit: 4500000, hist: [100, 100.3, 99.8, 100.09] }] },
     flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
       { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
       { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
@@ -869,12 +872,27 @@ function reportPane(v) {
 }
 // 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
 function gstockPane(v) {
+  // 翊文 11-17：「這個應該要向其他頁籤可以直接輸入數字」「要有這些功能阿」：買／賣二選壹、1／10／100、買滿／全賣、自訂股數、走勢
   const G = v.gs; if (!G || !G.list || !G.list.length) return soon("集團股", "世界集團的股票正在準備，開放時館方公告會說。");
   const list = G.list, cur = list[Math.min(UI.bankGs || 0, list.length - 1)], tone = n => (n > 0 ? "up" : n < 0 ? "down" : "");
   const rows = list.map((x, i) => h("div", { class: "bank-row gs" + (x === cur ? " on" : ""), role: "row", tabindex: "0", onClick: () => { UI.bankGs = i; rerender(); } },
     h("span", null, h("b", null, x.name)), h("span", { class: "bank-tab-num" }, fmt(x.price)), h("span", { class: "bank-tab-num " + tone(x.chg) }, (x.chg > 0 ? "+" : "") + x.chg + "%"), h("span", { class: "bank-tab-num" }, x.pb != null ? "×" + x.pb : "—"), h("span", { class: "bank-tab-num" }, x.mine ? fmt(x.mine) + " 股" : "—")));
   const ask = (buy, n) => confirmTrade((buy ? "買進 " : "賣出 ") + cur.name, [["股數", fmt(n === "max" ? cur.mine : n) + " 股"], ["股價（約）", fmt(cur.price)]], buy ? "確認買進" : "確認賣出", () => bankDo("stock", { op: buy ? "buy" : "sell", id: cur.id, n }));
-  const dis = G.halt ? true : null;
+  const dis = G.halt ? true : null, sell = UI.bankGsSide === "sell" && cur.mine > 0, side = sell ? "sell" : "buy";
+  const maxBuy = Math.max(0, Math.min(Math.floor((v.cash || 0) / Math.max(1, cur.price * 1.01)), cur.limit != null ? cur.limit - cur.mine : Infinity)), max = sell ? cur.mine : maxBuy;
+  const qf = UI.bankGsQty || (UI.bankGsQty = { n: "" }), qinfo = h("p", { class: "bank-meta sm bank-qinfo" }), qty = () => { const n = Number(qf.n); return Number.isInteger(n) && n > 0 ? n : 0; };
+  const qbtn = btn(sell ? "賣這個數量" : "買這個數量", () => { const n = qty(); if (n > 0 && n <= max) ask(!sell, n); }, "bank-btn gold");
+  const qcalc = () => {
+    const raw = qf.n, n = qty(); qbtn.disabled = true;
+    if (raw === "" || raw == null) { qinfo.textContent = max > 0 ? "最多 " + fmt(max) + " 股。" : ""; return; }
+    if (!n) { qinfo.textContent = "股數要是 1 以上的整數。"; return; }
+    if (n > max) { qinfo.textContent = "最多只能" + (sell ? "賣 " : "買 ") + fmt(max) + " 股。"; return; }
+    qinfo.textContent = fmt(n) + " 股 × " + fmt(cur.price) + " ＝ 約 " + fmt(n * cur.price) + "（手續費照成交算）"; qbtn.disabled = G.halt ? true : false;
+  };
+  qcalc();
+  const steps = h("div", { class: "bank-acts" }, ...[1, 10, 100].map(n => btn(fmt(n) + " 股", () => ask(!sell, n), "big bank-btn", { disabled: dis || n > max ? true : null })),
+    btn(sell ? "全賣" + (max > 0 ? " " + fmt(max) : "") : "買滿" + (max > 0 ? " " + fmt(max) : ""), () => (sell ? ask(false, "max") : ask(true, max)), "primary big bank-btn gold", { disabled: dis || max <= 0 ? true : null }));
+  const custom = max > 0 ? h("div", { class: "bank-custom" }, numField("自訂股數", qf.n, x => { qf.n = x === "" ? "" : Math.floor(Number(x)); qcalc(); }, { min: 1, step: 1, unit: "股" }), qbtn, qinfo) : null;
   return h("div", { class: "bank-cols" },
     h("div", { class: "bank-stack" }, panel("世界集團的股票", G.index && G.index.v ? `集團指數 ${G.index.v}` : "", h("div", { class: "bank-ledger", role: "table" }, h("div", { class: "bank-row gs head", role: "row" }, h("span", null, "名稱"), h("span", null, "股價"), h("span", null, "今天"), h("span", null, "股價淨值比"), h("span", null, "持股")), ...rows)),
       h("p", { class: "bank-meta sm" }, G.rule || "")),
@@ -882,7 +900,9 @@ function gstockPane(v) {
       h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), h("span", { class: "bank-mood " + tone(cur.chg) }, (cur.chg > 0 ? "+" : "") + cur.chg + "%")),
       h("p", { class: "bank-meta sm" }, `股本 ${fmt(cur.shares)} 股・市值 ${fmt(cur.mcap)}・每股淨值 ${fmt(cur.nav)}`),
       h("p", { class: "bank-meta sm" }, cur.mine ? `你有 ${fmt(cur.mine)} 股，市值 ${fmt(cur.value)}，成本 ${fmt(cur.cost)}` : "你還沒有這支。"),
-      h("div", { class: "bank-acts" }, ...[1, 100, 1000, 10000].map(n => btn(`買 ${fmt(n)}`, () => ask(true, n), "big bank-btn", { disabled: dis })), btn("全賣", () => ask(false, "max"), "primary big bank-btn gold", { disabled: dis || !cur.mine ? true : null })),
+      cur.hist && cur.hist.length > 1 ? h("div", null, spark(cur.hist), h("p", { class: "bank-meta sm" }, "近 " + cur.hist.length + " 天收盤")) : null,
+      seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankGsSide = k; rerender(); }),
+      steps, custom,
       (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null)));
 }
 const flowReload = () => { if (UI.screen === "bank" && UI.bankTab === "flow" && !UI.bankLoading) bankLoad(); }; // 金流頁籤開著：每 45 秒重拿（bank_flow.js 排）
