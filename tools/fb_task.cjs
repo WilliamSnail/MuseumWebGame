@@ -149,6 +149,9 @@ async function stockStatus(db) {
     console.log("莊家 house.stk：日期 " + (k.day || "-") + "　fx " + k.fx);
     console.log("  px：" + short(k.px)); console.log("  prev：" + short(k.prev)); console.log("  peg.dir：" + short(k.peg && k.peg.dir));
     const days = Object.keys(k.hist || {}).sort().slice(-3); days.forEach(d => console.log("  hist " + d + "：" + short(k.hist[d]))); }
+  { const ds = await db.doc("stocksDiv/latest").get(), dd = ds.exists ? ds.data() : null; // 配股息資料（決定 0112）
+    console.log("配股息：" + (dd ? "更新 " + (dd.at ? new Date(dd.at).toISOString() : "-") + "　事件 " + (Array.isArray(dd.ev) ? dd.ev.length : 0) + " 筆　沒抓到 " + short(dd.failed || []) : "還沒有紀錄"));
+    if (dd && Array.isArray(dd.ev)) dd.ev.slice(-12).forEach(e => console.log("  " + e.ex + " " + e.id + " " + (e.kind === "split" ? "配股 ×" + e.r : "股利 " + e.amt))); }
 }
 
 // 只讀：經濟用到的欄位（白名單，不是整份文件）。格式給 tools/econ_check.cjs --ledger 吃

@@ -619,6 +619,7 @@ function stockPane(v) {
         h("div", { class: "bank-quote" }, num("big", fp(cur.price)), cur.market === "us" ? h("small", { class: "bank-cur" }, usTwd(cur) ? "台幣" : "籌碼") : null, upDown(cur.chg, true),
           usdText(cur) ? h("span", { class: "bank-usd", title: "外面那支美股現在的美金價格" }, usdText(cur)) : null),
         cur.real ? h("p", { class: "bank-meta sm bank-realline" }, "真實：外面那支股票今天的漲跌。", realBit(cur), cur.mult ? h("small", null, `　遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著更新。`) : null) : null,
+        cur.div ? h("p", { class: "bank-meta sm bank-divline" }, `${cur.div.future ? "下次除息" : "最近除息"} ${String(cur.div.ex).slice(5)}，每股配 ${fp(cur.div.each)}（除息日開始時持有才領；股利所得稅 ${cur.market === "us" ? "30" : "30.11"}%）`) : null,
         chart(cur),
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "開盤沒跳空　"), "昨天來這家店的人太少，今天開盤價跟昨天收盤一樣（盤中照樣會小幅變動）。") : null,
@@ -884,6 +885,10 @@ function helpSections(v) {
         `持有成本：每天從持股市值扣 ${pc(S.holdPct)}。`,
         `證交稅 ${pctText(S.taxPct)}：賣台股和館內股要繳賣出金額的 ${pctText(S.taxPct)}（賺賠都收，不到 1 籌碼也算 1）；美股不收。稅進政府帳。`,
         `一個人一天最多賣出：${sellCaps}（館外股和館內股合算；信用跟槓桿是同一個等級）。`]],
+      ["股息和配股", [
+        "館外股有配息的，除息日開始時你手上有的股數，每股領真實的現金股利（照遊戲價的倍數、美股照當天匯率換算），錢由外面世界付，扣股利所得稅：台股 30.11%（分離課稅 28% ＋ 二代健保 2.11%）、美股 30%，稅進政府帳。",
+        "除息當天才買的不領，也買在掉完股利的價。除權（配股）：除權前持有的人多配股數，零股用現金補。",
+        "槓桿部位當天結束，不會跨過除息日，所以沒有股息。"]],
       ["賣股還債", [
         "有欠款（錢包是負的，或有可以還的借款）時，可以選「賣股還債」：賣的錢直接拿去補負數、照到期順序還借款，不進錢包。",
         "賣股還債不受每天賣出的上限、也不算進今天的額度；手續費和稅照收。按「賣到夠還」會算好要賣幾股。"]],

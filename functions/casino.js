@@ -53,7 +53,7 @@ import { MAIL_DAYS } from "./shared/mailbox.js";
 import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
 import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
-import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
+import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
@@ -63,6 +63,7 @@ import { setRng, taipeiDay } from "./shared/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
 import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js";
 import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
+import { stocksDiv } from "./stock_div.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
@@ -95,6 +96,7 @@ export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
   const tw = await stocksTw(); // 台股盤中（11-14，規劃 2.8d）：伺服器每分鐘排程算好的價，同樣交易外面讀（有快取）
+  const divDoc = await stocksDiv(); // 配股息：伺服器每小時抓的除息、配股事件（決定 0112）
   const us = await stocksUs(); // 美股盤中（11-14，規劃 2.8i）：同上，美東 09:30～16:00 的價
   const sec = await twSecret(); // 祕密種子（stocksTwSecret/main，玩家讀不到）：館內五家店盤中曲線、畫的隨機走勢和贗品疑雲都用它
   casInSecret(sec); casArtSecret(sec);
@@ -125,6 +127,7 @@ export async function playCore(me, email, opts, fn) {
       casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS), Object.assign({}, TW_NAMES, US_NAMES)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
+      casStockSetDiv(house, divDoc); // 除息、配股事件放進莊家（錢包領息在下面的 PegSync）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
       casStockMatch(w, house, day, t); // 掛單（限價、停損）照新的價檢查；價格變了之後，錢包被碰到時都要跑壹次
       const S = ss ? parse(ss) : null;
