@@ -12,9 +12,11 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { WORLD_UNITS } from "./world_roster.js";
+import { WORLD_MARKETS } from "./world_markets.js";
 import { WORLD_EVENTS } from "./world_events.js";
+import { OUT_STOCKS } from "./stocks_text.js";
 import { hashStr } from "./logic.js";
-import { statBandOf } from "./stat_view.js";
+import { statBandOf, statView } from "./stat_view.js";
 
 const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 const wdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -107,10 +109,10 @@ function wuMove(house, before, deltas) {
 export function wuGrow(house, n) {
   n = wdN(n); const x = wuFix(house);
   if (!x || n <= 0) return 0;
-  const b = Math.max(-1, Math.min(1, +(house.econ && house.econ.b) || 0)), coef = NUM.casino.worldDoc.sectorCoef || {}, sector = {};
+  const b = Math.max(-1, Math.min(1, +(house.econ && house.econ.b) || 0)), coef = NUM.casino.worldDoc.sectorCoef || {}, sector = {}, mkOn = wmCfg() && wmCfg().on && wuBox(house.mk);
   for (const u of wuTop()) sector[u.id] = u.sector;
   const raw = {}; let tot = 0;
-  for (const id of Object.keys(x.r)) { raw[id] = x.r[id] * Math.max(0, 1 + (id === WU_PUB || id === WU_HH ? 0 : (+coef[sector[id]] || 0)) * b); tot += raw[id]; }
+  for (const id of Object.keys(x.r)) { raw[id] = x.r[id] * Math.max(0, 1 + (id === WU_PUB || id === WU_HH ? 0 : (+coef[sector[id]] || 0)) * (mkOn && id !== WU_PUB && id !== WU_HH ? wmB(house, wmOfUnit(id)) : b)); tot += raw[id]; }
   if (!(tot > 0)) return 0;
   const deltas = {}; for (const id of Object.keys(x.r)) if (id !== WU_PUB) deltas[id] = Math.floor(n * raw[id] / tot);
   wuMove(house, wdN(house.world) - n, deltas);
@@ -170,13 +172,14 @@ export function whTick(house, day, px, grown = 0) {
   const w = whFix(house), C = whCfg();
   if (!w || !wdDayOk(day) || w.day === day) return false;
   wtAdvance(house, day, null); // 前壹天排的沒走完的，先補完（換日那壹刻）
+  wmTick(house, day, px); // 各市場今天的景氣（決定 0121）：先算，這天的健康值、成長、氣氛都用它
   const b = whClamp(+(house.econ && house.econ.b) || 0, -1, 1), coef = NUM.casino.worldDoc.sectorCoef || {};
   for (const u of whUnits()) {
     const ix = whIdx(u, px, w.base); if (ix != null) { if (!wuBox(w.idx[u.id])) w.idx[u.id] = {}; w.idx[u.id][day] = Math.round(ix * 10000) / 10000; }
     const ds = wuBox(w.idx[u.id]) ? Object.keys(w.idx[u.id]).sort() : []; for (const d of ds.slice(0, Math.max(0, ds.length - 8))) delete w.idx[u.id][d];
     let chg = 0; if (ds.length >= 2) { const old = ds.find(d => d <= whAddDays(day, -7)) ? ds.filter(d => d <= whAddDays(day, -7)).pop() : ds[0]; const a = w.idx[u.id][old], c = w.idx[u.id][day]; if (a > 0 && c > 0 && old !== day) chg = c / a - 1; }
     w.chg[u.id] = Math.round(chg * 10000) / 10000;
-    w.h[u.id] = Math.round(whClamp(1 + b * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW + wtWealth(house, u.id), C.min, C.max) * 1000) / 1000;
+    w.h[u.id] = Math.round(whClamp(1 + (wmCfg() && wmCfg().on && wuBox(house.mk) ? wmB(house, wmOfUnit(u.id)) : b) * (+coef[u.sector] || 0) + whClamp(chg, -C.chgCap, C.chgCap) * C.stockW + wtWealth(house, u.id), C.min, C.max) * 1000) / 1000;
   }
   wtDaily(house, day, grown);
   const U = NUM.casino.worldDoc.unrest;
@@ -213,7 +216,7 @@ export function whUnrestAdd(house, id, n) { const w = whFix(house); if (!w || !(
 export function whMood(house, day) {
   const M = NUM.casino.worldDoc.mood, S = NUM.casino.worldDoc.san, w = house && house.wh, n = Math.max(1, Object.keys((house && house.npcw && house.npcw.bal) || {}).length);
   const dev = Object.values((house && house.npcw && house.npcw.san) || {}).reduce((a, v) => a + (wdN(v) - S.start), 0), trouble = w && w.st ? Object.values(w.st).filter(s => s.s !== "normal").length : 0;
-  const wd = new Date(day + "T00:00:00Z").getUTCDay(), b = whClamp(+(house && house.econ && house.econ.b) || 0, -1, 1);
+  const wd = new Date(day + "T00:00:00Z").getUTCDay(), b = wmCfg() && wmCfg().on && house && wuBox(house.mk) && house.mk.day ? whClamp(wmTotal(house), -1, 1) : whClamp(+(house && house.econ && house.econ.b) || 0, -1, 1);
   const ev = WORLD_EVENTS[day] && WORLD_EVENTS[day].mood ? whClamp(WORLD_EVENTS[day].mood, -NUM.casino.worldDoc.events.moodMax, NUM.casino.worldDoc.events.moodMax) : 0;
   return whClamp(Math.round(M.base + M.b * b + M.san * (dev / n) + M.trouble * trouble + (wd === 0 || wd === 6 ? M.weekend : 0) + ev), 0, 100);
 }
@@ -225,6 +228,63 @@ export function whMult(house, unitId) {
   const s = w.st[unitId].s, h = +w.h[unitId] || 1;
   const m = s === "normal" ? whClamp(h, 1, C.upMax) : (C.mult[s] || 1);
   return Math.max(C.floor, m);
+}
+// ---------- 景氣分市場（決定 0121）：每個市場自己的景氣指數 b（−1～+1），接真實台股／美股、放大、會回平均 ----------
+// house.mk = { day, c 共同因子, b: { 市場: 數 }, p: { 股票 id: 昨天收盤價 }, f: { NPC id: 今天來館倍率 }, g: 昨天的 f }
+const wmCfg = () => NUM.casino.worldDoc.market;
+const wmGauss = key => { const u1 = ((hashStr(key + "|a") % 1000000) + 0.5) / 1000000, u2 = ((hashStr(key + "|b") % 1000000) + 0.5) / 1000000; return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2); };
+export const wmDef = id => WORLD_MARKETS.find(m => m.id === id) || null;
+// 單位在哪個市場：自己寫的 market，沒有就用 sector；名單裡沒有的當「公共」
+export function wmOfUnit(unitId) { const u = WORLD_UNITS.find(x => x.id === unitId); const id = u && (u.market || u.sector); return wmDef(id) ? id : "public"; }
+export function wmFix(house) {
+  if (!wuBox(house)) return null;
+  const m = wuBox(house.mk) ? house.mk : (house.mk = {});
+  m.day = wdDayOk(m.day) ? m.day : null; m.c = Number.isFinite(+m.c) ? whClamp(+m.c, -1, 1) : 0;
+  for (const k of ["b", "p", "f", "g"]) if (!wuBox(m[k])) m[k] = {};
+  for (const d of WORLD_MARKETS) m.b[d.id] = Number.isFinite(+m.b[d.id]) ? whClamp(+m.b[d.id], -1, 1) : 0;
+  return m;
+}
+export const wmB = (house, id) => { const m = house && wuBox(house.mk) ? house.mk : null; return m && Number.isFinite(+m.b[id]) ? +m.b[id] : 0; };
+export const wmTotal = house => WORLD_MARKETS.length ? WORLD_MARKETS.reduce((a, d) => a + wmB(house, d.id), 0) / WORLD_MARKETS.length : 0;
+// 真實市場昨天到今天的漲跌（%）：anchor 那個市場的館外股平均。沒有價就 0
+function wmReal(m, px, anchor) {
+  const C = wmCfg(); if (anchor !== "tw" && anchor !== "us") return 0;
+  const r = []; for (const s of OUT_STOCKS) { if (s.market !== anchor) continue; const p = +(px && px[s.id]), q = +m.p[s.id]; if (p > 0 && q > 0) r.push(p / q - 1); }
+  return r.length ? whClamp(100 * r.reduce((a, b) => a + b, 0) / r.length, -C.realCap, C.realCap) : 0;
+}
+// 換日呼叫：算每個市場今天的景氣，再算每位 NPC 今天的來館倍率。同壹天不重複；隔幾天沒人來，每天都走壹步（真實漲跌只算最後那天）
+export function wmTick(house, day, px) {
+  const C = wmCfg(), m = wmFix(house); if (!C || !C.on || !m || !wdDayOk(day) || m.day === day) return false;
+  const gap = m.day && m.day < day ? Math.max(1, Math.min(14, Math.round((Date.parse(day) - Date.parse(m.day)) / 86400000))) : 1;
+  const real = {}; for (const d of WORLD_MARKETS) real[d.id] = wmReal(m, px, d.anchor);
+  for (let i = gap - 1; i >= 0; i--) {
+    const dd = whAddDays(day, -i); m.c = whClamp(C.common * m.c + C.commonSd * wmGauss(dd + "|common"), -1, 1);
+    for (const d of WORLD_MARKETS) m.b[d.id] = Math.round(Math.tanh((1 - d.kappa) * m.b[d.id] + (i === 0 ? real[d.id] * d.beta * C.amp : 0) + d.rho * m.c + d.sd * wmGauss(dd + "|" + d.id) * 0.5) * 1000) / 1000;
+  }
+  for (const s of OUT_STOCKS) { const p = +(px && px[s.id]); if (p > 0) m.p[s.id] = p; }
+  m.g = m.f; m.f = {}; m.day = day;
+  return true;
+}
+// 來館頻率倍率（旅客、散客）和花錢意願倍率：1 ＋ k × 市場景氣，夾在範圍內。沒資料或關掉 ＝ 1
+const wmMul = (b, k, lo, hi) => whClamp(1 + k * b, lo, hi);
+export function wmVisit(house, id) { const C = wmCfg(); return C && C.on ? wmMul(wmB(house, id), C.visitK, C.visitLo, C.visitHi) : 1; }
+export function wmSpend(house, id) { const C = wmCfg(); return C && C.on ? wmMul(wmB(house, id), C.spendK, C.spendLo, C.spendHi) : 1; }
+// 這位 NPC 受哪個市場影響：所屬集團的市場；沒有集團的（學生、退休、自由）看總景氣
+export function wmOfNpc(house, n) { const u = nwUnitOf(house, n); return u && u !== WU_HH && u !== WU_PUB && WORLD_UNITS.some(x => x.id === u) ? wmOfUnit(u) : null; }
+export function wmNpcMul(house, n, kind) {
+  const C = wmCfg(); if (!C || !C.on) return 1;
+  const id = wmOfNpc(house, n), b = id ? wmB(house, id) : wmTotal(house), solace = Array.isArray(C.solace) && C.solace.includes(n && n.id);
+  if (kind === "visit") return solace && b < 0 ? whClamp(1 - C.solaceK * b, 1, C.visitHi) : wmMul(b, C.visitK, C.visitLo, C.visitHi); // 愛解悶的：景氣差反而多來（最多 +solaceK×|b|）
+  return wmMul(b, C.spendK, C.spendLo, C.spendHi);
+}
+// 每位 NPC 今天的來館倍率寫進 house.npcc.mkv（npcCounters 帶給行程用，伺服器和網頁都看得到同壹份）；mkv.g 是昨天的（補算昨天用）
+export function wmWriteVisit(house, day, list) {
+  const m = wmFix(house), C = wmCfg(); if (!m || !C || !C.on || m.day !== day) return false;
+  if (!wuBox(house.npcc)) house.npcc = { comm: 0, hall: 0 };
+  if (wuBox(house.npcc.mkv) && house.npcc.mkv.day === day) return false; // 今天寫過了
+  const f = {}; for (const n of list || []) { const v = Math.round(wmNpcMul(house, n, "visit") * 1000) / 1000; if (v !== 1) f[n.id] = v; }
+  m.f = f; house.npcc.mkv = { day, f, g: m.g || {} };
+  return true;
 }
 // ---------- 集團之間的交易（決定 0119）：只搬帳上的分類（house.wu.adj），house.world、玩家的錢、門票、大禮包、借款都不動 ----------
 const wtCfg = () => NUM.casino.worldDoc.trade;
@@ -369,7 +429,8 @@ export function whCard(house, day) {
   us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[{ tight: 0, weak: 1, normal: 2, strong: 3 }[statBandOf("unitHealth", h)]]++; }); // 分級只寫在 stat_view.js
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   const un = [0, 0, 0, 0]; us.forEach(u => { un[{ calm: 0, stir: 1, uneasy: 2, turmoil: 3 }[statBandOf("unitUnrest", whUnrest(house, u.id))]]++; });
-  return { day: w.day, states, bands, unrestBands: un, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
+  const mk = wuBox(house.mk) ? WORLD_MARKETS.map(d => { const v = statView("marketB", null, wmB(house, d.id)); return v ? { id: d.id, name: d.name, band: v.band, label: v.label, tone: v.tone } : null; }).filter(Boolean) : []; // 各市場景氣只給分級（決定 0121）
+  return { day: w.day, states, bands, unrestBands: un, markets: mk, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
 }
 
 // ================================================================
@@ -466,7 +527,7 @@ export function nwNews(house, day, npcName, days = 1) {
 export const nwSan = (house, id) => { const v = house && house.npcw && wuBox(house.npcw.san) ? house.npcw.san[id] : undefined; return v == null ? NUM.casino.worldDoc.san.start : whClamp(wdN(v), 0, 100); };
 // 預算倍率：集團的 W5 倍率 ×（理智低時 budgetMult），不低於 health.floor
 export function nwBudgetMult(house, n, unitId) {
-  const S = NUM.casino.worldDoc.san, m = whMult(house, unitId) * (nwSan(house, n && n.id) < S.lowBudget ? S.budgetMult : 1);
+  const S = NUM.casino.worldDoc.san, m = whMult(house, unitId) * (nwSan(house, n && n.id) < S.lowBudget ? S.budgetMult : 1) * wmNpcMul(house, n, "spend");
   return Math.max(NUM.casino.worldDoc.health.floor, m);
 }
 // 收盤：照那天的行程更新每位的理智。visits ＝ npcVisitsToday 的結果；people ＝ 有預算的 NPC；extra ＝ { id: 排程填的數字 }（可以沒有）。同一天不重複

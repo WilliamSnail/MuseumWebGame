@@ -34,7 +34,7 @@ export function npcNeedMet(need, counters, npcId) {
 export function npcCounters(npcc) {
   if (!npcc || typeof npcc !== "object") return null;
   const cl = npcc.cl && typeof npcc.cl === "object" && !Array.isArray(npcc.cl) ? npcc.cl : null;
-  return { commissions: cl && Object.keys(cl).length ? cl : npcc.comm, hallVisits: npcc.hall };
+  return { commissions: cl && Object.keys(cl).length ? cl : npcc.comm, hallVisits: npcc.hall, ...(npcc.mkv && typeof npcc.mkv === "object" ? { mkv: npcc.mkv } : {}) }; // mkv：景氣分市場今天各 NPC 的來館倍率（決定 0121，shared/world.js 的 wmWriteVisit 寫）
 }
 // 給網頁看的 house.npcc：只留數字（comm、hall、cl）
 export function npcPublic(npcc) {

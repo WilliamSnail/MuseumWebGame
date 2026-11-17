@@ -68,7 +68,8 @@ export function crowdVisitsToday(day, secret, mood = null) {
   const C = NUM.casino.npcSpend.crowd, out = [];
   if (!C || !(C.groupsDay > 0)) return out;
   const KW = crowdKindWeights(mood), KT = KW.reduce((a, b) => a + b, 0), wd = new Date(day + "T00:00:00Z").getUTCDay(), rnd = mulberry32(hashStr(`${secret}|${day}|crowd`));
-  const g = Math.max(0, Math.round(C.groupsDay * (wd === 0 || wd === 6 ? C.weekendMult : 1) * (0.8 + 0.4 * rnd()))), W = C.weights, tot = W.reduce((a, b) => a + b, 0);
+  const MK = NUM.casino.worldDoc.market, mf = MK && MK.on && Number.isFinite(+mood) && mood !== null ? Math.max(0.6, Math.min(1.4, 1 + MK.moodK / 100 * (+mood - 50) / 50)) : 1; // 決定 0121：展廳氣氛好、散客組數多（±moodK%）
+  const g = Math.max(0, Math.round(C.groupsDay * (wd === 0 || wd === 6 ? C.weekendMult : 1) * (0.8 + 0.4 * rnd()) * mf)), W = C.weights, tot = W.reduce((a, b) => a + b, 0);
   for (let i = 0; i < g; i++) {
     let r = rnd() * tot, h = 0; for (; h < W.length - 1; h++) { r -= W[h]; if (r < 0) break; }
     const ku = rnd(); let kc = 0, ki = 0; for (; ki < CROWD_KINDS.length - 1; ki++) { kc += KW[ki] / KT; if (ku < kc) break; } // 同壹個亂數、換成加權的抽法（權重全是 1 時跟以前壹樣）

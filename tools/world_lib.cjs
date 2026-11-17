@@ -9,7 +9,7 @@ const KINDS = ["group", "firm", "org", "story"];
 const SECTORS = ["tech", "daily", "finance", "arts", "school", "public", "story"];
 const JOB_KINDS = ["student", "retired", "free"]; // 沒有單位的人
 const TOP_SHARE_MAX = 0.8; // 頂層單位的 share 加起來最多 80%：剩下家計 10%、公共池至少 10%（規劃 3.3）
-const STORY_KEYS = ["id", "name", "kind", "parent", "sector", "share", "staff", "stocks", "story", "note"]; // 劇情單位只能有這些欄位，劇情的細節不放在這裡（決定 0086 第 9 點）
+const STORY_KEYS = ["id", "name", "kind", "parent", "sector", "market", "share", "staff", "stocks", "story", "note"]; // 劇情單位只能有這些欄位，劇情的細節不放在這裡（決定 0086 第 9 點）
 const UNIT_KEYS = STORY_KEYS;
 const isObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 

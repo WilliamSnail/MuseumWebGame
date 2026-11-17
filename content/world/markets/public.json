@@ -1,0 +1,11 @@
+{
+  "id": "public",
+  "name": "公共",
+  "kind": "sector",
+  "anchor": "none",
+  "beta": 0,
+  "kappa": 0.1,
+  "sd": 0.015,
+  "rho": 0.1,
+  "note": "公共服務。最穩。"
+}

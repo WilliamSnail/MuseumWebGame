@@ -6,13 +6,14 @@
 // 擋：守恆差不是 0、公共是負的、莊家或博物館資金變負 → exit 1。只讀 repo 的檔案，不碰正式站。
 const fs = require("fs"), path = require("path");
 const L = require("./world_lib.cjs");
-function parse(argv) { const o = { set: [] }; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (a === "--set") o.set.push(argv[++i]); else if (a === "--scan") o.scan = true; else if (a.startsWith("--")) o[a.slice(2)] = argv[++i]; } return o; }
+function parse(argv) { const o = { set: [] }; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (a === "--set") o.set.push(argv[++i]); else if (a === "--scan") o.scan = true; else if (a === "--mk") o.mk = argv[++i]; else if (a.startsWith("--")) o[a.slice(2)] = argv[++i]; } return o; }
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const fmt = n => Math.round(n).toLocaleString("en-US");
 // 回傳 { days, rows, ... }
 function sim(G, npcs, opts = {}) {
   const days = Math.max(1, Math.min(365, +opts.days || 30)), b = Math.max(-1, Math.min(1, +opts.b || 0));
   for (const kv of opts.set || []) { const m = /^([\w.]+)=(.+)$/.exec(kv); if (!m) throw new Error(`--set 要寫成 路徑=值：${kv}`); const parts = m[1].split("."); let o = G.NUM; for (const p of parts.slice(0, -1)) { if (!o || typeof o[p] !== "object") throw new Error(`NUM 底下沒有 ${m[1]}`); o = o[p]; } const k = parts[parts.length - 1]; if (!(k in o)) throw new Error(`NUM 底下沒有 ${m[1]}`); o[k] = isNaN(+m[2]) ? m[2] : +m[2]; }
+  if (opts.mk == null) G.NUM.casino.worldDoc.market.on = false; // 沒用 --mk：景氣分市場關掉，照舊用景氣 b 驅動（決定 0121 之前的行為，舊的測試和 --scan 看這個）
   G.NUM.casino.grants = []; // 已經撥過的撥款不算（正式站撥過了）
   const start = "2026-11-16", list = npcs.filter(n => n.kind !== "trace");
   const h = G.casHouseFix(G.casHouseNew(), start).house; h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy };
@@ -20,7 +21,7 @@ function sim(G, npcs, opts = {}) {
   const perDay = [];
   for (let i = 0; i < days; i++) {
     const d = add(start, i); if (i > 0) { h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy }; G.casHouseFix(h, d); }
-    const before = h.world; G.casNpcSpend(h, d, "sim" + i, list, null);
+    if (opts.mk != null && h.mk) { for (const k of Object.keys(h.mk.b)) h.mk.b[k] = +opts.mk; } /* 景氣分市場：--mk 數字 ＝ 每個市場都固定這個景氣（模擬用） */ const before = h.world; G.wmWriteVisit(h, d, list); G.casNpcSpend(h, d, "sim" + i, list, G.npcCounters(h.npcc));
     if (opts.slots) { // 整天陸續發生（決定 0120）：每 15 分鐘碰壹次莊家，記每格集團之間搬了多少（house.led.units 的累計差）
       const sumU = () => Object.values((h.led && h.led.units) || {}).reduce((x, y) => x + y, 0), t0 = Date.parse(d + "T05:00:00+08:00"), row = [];
       for (let k = 0; k < 96; k++) { const b0 = sumU(); G.wtAdvance(h, d, t0 + k * 900000 + 1000); row.push(sumU() - b0); }
@@ -55,7 +56,7 @@ if (require.main === module) {
       rows.forEach(x => console.log(`${x.days}　${x.b}　${fmt(x.perDay)}　${x.states.normal}／${x.states.cut}／${x.states.squeeze}／${x.states.layoff}　×${x.minMult.toFixed(2)}　${x.ok ? "✓" : "✗"}`));
       if (rows.some(x => !x.ok)) process.exit(1); console.log("✓ 六種組合都守恆、沒破產"); process.exit(0);
     }
-    const r = sim(G, npcs, { days: o.days, b: o.b, set: o.set }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; }); names["u-household"] = "家計"; names.pub = "公共";
+    const r = sim(G, npcs, { days: o.days, b: o.b, set: o.set, mk: o.mk }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; }); names["u-household"] = "家計"; names.pub = "公共";
     console.log(`模擬 ${r.days} 天，景氣 ${r.b}：外面世界 ${fmt(r.w0)} → ${fmt(r.w1)}（${r.w1 >= r.w0 ? "+" : ""}${fmt(r.w1 - r.w0)}）`);
     console.log(`NPC 和散客一共花 ${fmt(r.spent.total)}，平均每天 ${fmt(r.spent.total / r.days)}；莊家 ${r.bank >= 0 ? "+" : ""}${fmt(r.bank)}、博物館資金 ${r.budget >= 0 ? "+" : ""}${fmt(r.budget)}`);
     console.log("單位：起點 → 終點（變多少）　其中 NPC 花了");

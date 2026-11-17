@@ -46,7 +46,7 @@ import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./share
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCasAway } from "./shared/casino_npc.js";
 import { npcCardView } from "./shared/npc_card.js";
-import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wtAdvance, wtCard } from "./shared/world.js";
+import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "./shared/world.js";
 import { casSellForDebt } from "./shared/casino_debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
@@ -111,6 +111,7 @@ export async function playCore(me, email, opts, fn) {
       if (w.tablePid && !(await tx.get(db().doc(`casinoTables/${w.tablePid}`))).exists) w.tablePid = null; // 那桌已經收了（隊伍解散）：不用再坐著
       const { house, reopen } = casHouseFix(parse(hs), day);
       wtAdvance(house, day, t); // 集團之間的往來整天陸續發生（決定 0120）：補算到現在那壹格
+      wmWriteVisit(house, day, NPC_LIST); // 景氣分市場（決定 0121）：每位 NPC 今天的來館倍率（行程用 npcCounters 看到）
       casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成外面世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）

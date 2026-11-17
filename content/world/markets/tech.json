@@ -1,0 +1,11 @@
+{
+  "id": "tech",
+  "name": "科技",
+  "kind": "sector",
+  "anchor": "us",
+  "beta": 0.1,
+  "kappa": 0.06,
+  "sd": 0.05,
+  "rho": 0.4,
+  "note": "晶片、算盤、機房。接美股那斯達克。"
+}
