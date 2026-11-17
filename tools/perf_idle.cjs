@@ -2,7 +2,7 @@
 // 用無頭的 Edge／Chrome（跟 tools/shot.cjs 壹樣找），開網頁、等它畫好，再錄 N 秒的時間軸，數：
 //   重畫（Paint）幾次、花幾毫秒；樣式重算、排版幾次；主執行緒忙了幾毫秒（全部的工作加起來）。
 // 只准 localhost。用法：
-//   node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" [--size 1920x1080] [--secs 10] [--wait 8000] [--js "…"] [--top 15]
+//   node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" [--size 1920x1080] [--secs 10] [--wait 8000] [--js "…"] [--top 15] [--after "量完印出的值"]
 //   --top N：同時錄 CPU 剖析，列出最吃時間的 N 個函式（檔名:行），找「是誰在空轉」用（11-17 玩家反應手機、電腦會熱）
 // 同壹個畫面改前、改後各量壹次比較。數字會隨電腦有差，要在同壹台、同壹個大小比。
 const fs = require("fs"), path = require("path"), os = require("os");
@@ -12,7 +12,7 @@ const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k);
 const url = args.find(a => /^https?:/.test(a));
 if (!url || !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) { console.error("用法：node tools/perf_idle.cjs \"http://localhost:5287/?x=1#lobby\"（只准 localhost）"); process.exit(1); }
 const [W, H] = val("--size", "1920x1080").split("x").map(Number);
-const SECS = +val("--secs", 10), WAIT = +val("--wait", 8000), JS = val("--js", null), TOP = +val("--top", 0);
+const SECS = +val("--secs", 10), WAIT = +val("--wait", 8000), JS = val("--js", null), AFTER = val("--after", null), TOP = +val("--top", 0);
 const cands = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium"];
 const exe = cands.find(c => fs.existsSync(c));
 if (!exe) { console.error("找不到 Edge 或 Chrome"); process.exit(1); }
@@ -62,6 +62,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     [...self.entries()].filter(([k]) => !/^(idle)/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, TOP).forEach(([k, ms]) => console.log(`    ${r(ms)} ms  ${k}`));
     console.log(`    （錄到 ${r(tot)} ms，含 idle）`);
   }
+  if (AFTER) { const v = await send("Runtime.evaluate", { expression: AFTER, returnByValue: true }); console.log("  --after：", JSON.stringify(v.result && v.result.value)); }
   ws.close(); br.kill();
   try { fs.rmSync(prof, { recursive: true, force: true }); } catch (e) { /* 沒關係 */ }
   process.exit(0);

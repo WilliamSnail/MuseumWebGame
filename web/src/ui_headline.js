@@ -38,6 +38,14 @@ function go(link) {
   else if (PANELS.board) PANELS.board(); // board、events：公佈欄（活動預告、公告都在那裡）
 }
 
+// 捲壹圈停壹下（11-17 翊文）：捲完壹圈停 HL_REST_MS 再捲。壹直捲的話大廳每秒畫 60 格，手機會熱；停的時候不耗電。
+// 閒置省電中（body.resting，web/src/rest.js）先不捲，等玩家回來
+export const HL_REST_MS = 20000;
+function hlRest(track) {
+  track.style.animationName = "none";
+  const again = () => { if (!track.isConnected) return; if (document.body.classList.contains("resting")) { setTimeout(again, 3000); return; } track.style.animationName = ""; };
+  setTimeout(again, HL_REST_MS);
+}
 export function headlineStrip() {
   const box = h("div", { class: "l2-strip l2-hl", role: "region", "aria-label": "今天的重要事件" });
   let key = "", timer = null, turn = null, cur = 0;
@@ -52,6 +60,7 @@ export function headlineStrip() {
     const items = list.length ? list : [{ text: HL_QUIET, tone: "neutral", link: "board" }];
     const track = h("div", { class: "hl-track", style: { animationDuration: Math.max(18, items.reduce((n, x) => n + x.text.length, 0) * 0.55) + "s" } }, items.map(item), reduce() || items.length < 2 ? null : items.map((x, i) => item(x, i + 99))); // 複製壹份接在後面，捲動才接得起來
     box.replaceChildren(h("b", null, "今日要聞"), h("div", { class: "hl-view" }, track));
+    track.addEventListener("animationend", () => hlRest(track));
     box.classList.toggle("hl-still", reduce() || items.length < 2);
   };
   // 減少動態：壹則壹則切換

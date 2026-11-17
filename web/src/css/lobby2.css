@@ -369,7 +369,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 /* ---------- 今日要聞跑馬燈、館友在線小卡（11-15，翊文：「館友在線移到箭頭那邊一格，原本的位置改成各種每日重要事件的跑馬燈」） ---------- */
 .l2-hl { cursor: default; }
 .hl-view { flex: 1; min-width: 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); }
-.hl-track { display: inline-flex; white-space: nowrap; animation: hl-run 40s linear infinite; }
+.hl-track { display: inline-flex; white-space: nowrap; animation: hl-run 40s linear 1; } /* 捲壹圈就停，ui_headline.js 停 20 秒再捲（11-17） */
 .l2-hl:hover .hl-track, .l2-hl:focus-within .hl-track { animation-play-state: paused; }
 .hl-i { display: inline-flex; align-items: center; gap: 7px; flex: none; margin-right: 28px; padding: 4px 2px; border: 0; background: none; color: #F3E6C4; font: inherit; cursor: pointer; }
 .hl-i:hover, .hl-i:focus-visible { color: #fff; text-decoration: underline; }
