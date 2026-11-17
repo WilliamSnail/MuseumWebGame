@@ -509,7 +509,14 @@ export const NUM = {
       //   平均用前幾個有效日（活動、突發多來的旅客照比例扣掉）；平均營收低於 revMinAvg、或有營收記錄的有效日不到 minDays 天：營收那項不算（只看人數）。
       revWeight: 0.5, revCap: 3000, revMinAvg: 10000,
       npcLambda: 2, npcShareMax: 40, npcBase: 120, npcWalk: 6, npcBoostMin: 0.15, npcBoostMax: 0.30,
-      from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000 },
+      from: 300, step: 15, ticks: 75, daySd: 2, dayCap: 5, cap: 1000, exposeFloor: 10000000,
+      // 真的市場（決定 0113，翊文 11-17 選 B「純買賣推價」）：on 開關（關掉就是舊的：伺服器祕密算好的隨機曲線）。
+      //   Ns 每家發行股數（資本額 ＝ Ns × 價）；depth 淨買 depth 股價格漲 e 倍（每個價 ln 價 += 淨買股數 ÷ depth）；
+      //   旅客、散客照該店「這個價到店的人數」每位下 1 單，平均約 size 股（最多 sizeCap）；個性：基本面 mixF（買賣機率隨價格偏離「合理價」連續變化，band ＝ 偏離多少一面倒）、
+      //   追漲殺跌 mixC（看最近 8 個價）、其餘雜訊；合理價 ＝ 原本 casInRoll 算的每天的價（H.open），只活在旅客心裡，不直接決定價格；
+      //   tickLim 每個價最多動多少、dayLim 每天最多離當天開盤（昨天收盤）多少；half 造市商半個價差（旅客散客付的，館友買賣也付）；rho 造市商每個價把持倉的幾 % 回補給外面世界；
+      //   walkSd 價格自己的小雜訊；floatCap／floatShort 旅客散客合計最多持有／賣空發行股數的幾 %。
+      mkt: { on: true, Ns: 100000, depth: 16000, size: 40, sizeCap: 40, band: 0.01, mixF: 0.7, mixC: 0.1, tickLim: 0.03, dayLim: 0.1, half: 0.005, rho: 0.05, walkSd: 0.0003, floatCap: 0.1, floatShort: 0.02 } },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進預算池）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
