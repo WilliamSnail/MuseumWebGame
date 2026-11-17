@@ -78,6 +78,14 @@ export function casHouseMove(house, src, n) {
   bkAdd(casLedFix(house, ["mint", "flow"]).flow, src, n);
   return n;
 }
+// 莊家要付 need 但錢不夠時，跟博物館資金借（決定 0122，翊文 11-17）。借的是「博物館資金超過底線（起始的 budgetKeepPct%）的部分」的 coverPct%、壹次最多 coverMax；
+// 記成莊家欠博物館資金（house.debt.budget，莊家賺了照舊先還這個），來源 budgetLoan（跟破產重開同壹條金流線）。回傳 { room: 最多借得到, take(n): 真的借 n 並回傳借到多少 }
+// 壹支賣單、館內股、槓桿都用這壹個（不要各寫壹份）
+export function casHouseCover(house, coverPct, coverMax) {
+  const H = NUM.casino.houseLoan, spare = Math.max(0, (+house.budget || 0) - Math.floor(NUM.casino.econ.budgetStart * H.budgetKeepPct / 100));
+  const room = Math.max(0, Math.min(Math.floor(spare * coverPct / 100), coverMax));
+  return { room, take(n) { n = Math.min(Math.max(0, Math.floor(n)), room); if (n <= 0) return 0; house.budget -= n; casHouseMove(house, "budgetLoan", n); if (!house.debt || typeof house.debt !== "object") house.debt = {}; house.debt.budget = (+house.debt.budget || 0) + n; return n; } };
+}
 // 莊家的錢消失 n（還外面世界的貸款：本金加利息，流回館外）。house.led.burn 記來源
 export function casHouseBurn(house, src, n) {
   n = bkNz(n);
