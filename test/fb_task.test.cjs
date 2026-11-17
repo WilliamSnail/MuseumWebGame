@@ -6,7 +6,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
-  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status"]);
+  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest"]);
   assert.deepStrictEqual(parseTask({ action: "stock-reroll" }), { action: "stock-reroll" }, "重算股價不用 email");
   // 工作流程的下拉選單要跟程式的清單壹樣，不然按得到的動作程式不認得（或反過來）
   const yml = require("fs").readFileSync(require("path").join(__dirname, "..", ".github/workflows/firebase-task.yml"), "utf8");
@@ -24,6 +24,7 @@ T("email 轉小寫；格式不對就擋，錯誤訊息裡沒有 email", () => {
   }
 });
 T("stats 不用 email", () => { assert.deepStrictEqual(parseTask({ action: "stats", email: "" }), { action: "stats" }); });
+T("player-invest 要填名字（不用 email）", () => { assert.deepStrictEqual(parseTask({ action: "player-invest", name: " YUGA chu " }), { action: "player-invest", name: "YUGA chu" }); assert.throws(() => parseTask({ action: "player-invest", name: "" }), /要填名字/); });
 T("名字：去掉控制字元、最多 20 字", () => {
   assert.strictEqual(parseTask({ action: "invite", email: "a@b.com", name: "  小\n明 " }).name, "小明");
   assert.strictEqual(Array.from(parseTask({ action: "invite", email: "a@b.com", name: "字".repeat(50) }).name).length, 20);
