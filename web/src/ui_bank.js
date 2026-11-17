@@ -95,7 +95,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null,
+    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, // live：全館的帳的即時餘額（11-17）
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -725,25 +725,27 @@ function todayPanel(t) {
     h("p", { class: "bank-meta sm" }, "只算館外來客；館友自己的消費、每家店分開的數字不公開。"));
 }
 // 「這份是哪一天的帳」（11-16，翊文／數值平衡：財報停在前一天要看得出來）：日期不是昨天就用警告色
-function dayTag(day) {
+function dayTag(day, want) { // want：這份帳應該是哪壹天的（沒給＝昨天）
   const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(day || ""));
   if (!m) return null;
-  const old = String(day) !== addDays(todayStr(), -1);
+  const old = String(day) !== (want || addDays(todayStr(), -1));
   return h("span", { class: "bank-day" + (old ? " warn" : ""), title: old ? "這份帳不是昨天的，可能還沒更新" : "這份帳的日期" }, ` ${+m[2]}/${+m[3]} 的帳`, old ? "（舊的）" : "");
 }
 
 // 全館的帳（11-16 翊文：「把館內的這幾個帳都放在銀行館內經濟可以展開來看」）：資料 e.books（數值平衡，日報寫回時寫，延遲壹天、整天不變）
 // { day, bankroll, budget, museum, sea, world（現在的餘額；world 沒有帳是 null）, d: { 各帳比前壹份日報多少 }, top: { 各帳昨天進出最大最多 3 筆 [{ label, n }] } }
 const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢"], ["budget", "預算池", "館方行政：拚經濟、大禮包、投資、還館債"], ["museum", "館方帳", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債"]];
-function booksPanel(b) {
+// live：現在的餘額（伺服器 casBooksLive）；有就把大數字換成即時的，下面寫「05:00 起」多了少了多少、「昨天」照日報
+function booksPanel(b, live) {
   if (!b || typeof b !== "object") return null;
   const sgn = n => (n < 0 ? "−" : n > 0 ? "+" : "") + fmt(Math.abs(Math.round(n))), cls = n => (n > 0 ? "up" : n < 0 ? "down" : "");
-  return panel("全館的帳", h("span", null, "每個帳壹列，點開看昨天最大的進出", dayTag(b.day)),
+  const L = live && typeof live === "object" ? live : null;
+  return panel("全館的帳", h("span", null, L ? "每個帳壹列，餘額是現在的；點開看昨天最大的進出" : "每個帳壹列，點開看昨天最大的進出", dayTag(b.day, todayStr())), // 日報那份是今天 05:00 記的（11-17：以前拿去跟昨天比，每天都標「舊的」）
     h("div", { class: "bank-books" }, BOOK_LIST.map(([k, name, who]) => {
-      const bal = b[k], d = b.d && Number.isFinite(+b.d[k]) ? +b.d[k] : 0, top = b.top && Array.isArray(b.top[k]) ? b.top[k].slice(0, 3) : [];
+      const now = L && L[k] != null ? L[k] : null, bal0 = b[k], bal = now != null ? now : bal0, since = now != null && bal0 != null ? now - bal0 : 0, d = b.d && Number.isFinite(+b.d[k]) ? +b.d[k] : 0, top = b.top && Array.isArray(b.top[k]) ? b.top[k].slice(0, 3) : [];
       if (bal == null) return h("div", { class: "bank-book-row none" }, h("span", { class: "bank-book-n" }, h("b", null, name), h("small", null, who)), h("span", { class: "bank-book-v dim" }, "還沒有帳"));
       return h("details", { class: "bank-book-row" },
-        h("summary", null, h("span", { class: "bank-book-n" }, h("b", null, name), h("small", null, who)), h("span", { class: "bank-book-v" }, h("b", { class: "bank-tab-num" }, bal < 0 ? "−" + fmt(-bal) : fmt(bal)), h("i", { class: "bank-tab-num " + cls(d) }, d ? "昨天 " + sgn(d) : "昨天持平"), h("em", { "aria-hidden": "true" }, "▾"))),
+        h("summary", null, h("span", { class: "bank-book-n" }, h("b", null, name), h("small", null, who)), h("span", { class: "bank-book-v" }, h("b", { class: "bank-tab-num" }, bal < 0 ? "−" + fmt(-bal) : fmt(bal)), now != null && bal0 != null ? h("i", { class: "bank-tab-num " + cls(since) }, since ? "05:00 起 " + sgn(since) : "05:00 起持平") : null, h("i", { class: "bank-tab-num " + cls(d) }, d ? "昨天 " + sgn(d) : "昨天持平"), h("em", { "aria-hidden": "true" }, "▾"))),
         h("ul", { class: "bank-book-top" }, top.length ? top.map(x => h("li", null, h("span", null, String(x.label || "")), h("b", { class: "bank-tab-num " + cls(x.n) }, sgn(+x.n || 0)))) : [h("li", { class: "dim" }, "昨天沒有可列的進出")]));
     })));
 }
@@ -797,7 +799,7 @@ function reportPane(v) {
         h("div", { class: "bank-gauge", role: "img", "aria-label": `景氣 ${tone}` }, h("i", { style: { left: 50 + e.idx * 50 + "%" } })), h("div", { class: "bank-gl" }, h("span", null, "差"), h("span", null, "普通"), h("span", null, "好")),
         h("p", { class: "bank-meta sm" }, "館內 GDP（標準活動值）；成長是近 7 天對前 7 天；上面的條是景氣（差、普通、好）"),
         h("p", { class: "bank-line" }, e.news)),
-      foldAlways("全館的帳", booksPanel(e.books)),
+      foldAlways("全館的帳", booksPanel(e.books, v.live)),
       fold("今天到目前", todayPanel(v.today)),
       fold("昨天館外來客花了多少", extPanel(e)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))]))),
