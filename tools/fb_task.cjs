@@ -22,9 +22,6 @@
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
 //   invest-status 只讀：館方投資兩個池子的持股、成本、停損、每天記的價，和股價換比例的紀錄（11-17）。
-//   advisor-rules-mail  寫：把財經專員「借款新規定」的信（shared/casino_advisor.js 的 casAdvisorRulesLetter，決定 0114）寄給所有「還有借款沒還」而且還沒收過的館友：
-//                 每個錢包一個交易：寫 mail/{uid}/items/advisor-rules、錢包記 adv.rules（每人只寄一次；跑第二次不會重寄）。紀錄只印人數，不印 uid、名字。
-//                 什麼時候用：借款部分還款、分期上線的那一刻（翊文 11-17：「上線那刻寄給所有還有借款沒還的館友」）。
 //   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠、借款、淨值（11-17）。名字在紀錄裡遮掉。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
@@ -32,7 +29,7 @@
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "advisor-rules-mail"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -127,32 +124,6 @@ async function stockTwPeg(db) {
   });
   if (!done) { console.log("莊家的文件還不存在"); return; }
   console.log(done.length ? "換好了：" + done.map(x => `${x.id} ${x.from} → ${x.to}`).join("、") + "。錢包下次進賭場照比例換股數。" : "都換過了，不用換");
-}
-
-// 寫：借款新規定的信寄給所有還有借款的館友（見檔頭 advisor-rules-mail）。每個錢包自己一個交易（讀錢包、寫信、記寄過了），重跑不會重寄
-async function advisorRulesMail(db, FieldValue) {
-  const href = f => require("url").pathToFileURL(path.join(__dirname, "..", "shared", f)).href;
-  const { casAdvisorRulesLetter } = await import(href("casino_advisor.js")), { MAIL_DAYS } = await import(href("mailbox.js")), { todayStr } = await import(href("logic.js"));
-  const day = todayStr(), ws = await db.collection("casinoWallets").get();
-  let sent = 0, skipped = 0, failed = 0;
-  for (const d of ws.docs) {
-    try {
-      const did = await db.runTransaction(async tx => {
-        const s = await tx.get(d.ref);
-        if (!s.exists) return false;
-        const w = JSON.parse(s.data().data || "null");
-        if (!w || typeof w !== "object") return false;
-        const letter = casAdvisorRulesLetter(w, day, MAIL_DAYS);
-        if (!letter) return false;
-        tx.set(d.ref, { data: JSON.stringify(w), updatedAt: FieldValue.serverTimestamp() });
-        tx.set(db.doc(`mail/${d.id}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
-        return true;
-      });
-      if (did) sent++; else skipped++;
-    } catch (e) { failed++; }
-  }
-  console.log(`借款新規定的信：寄出 ${sent} 封；沒借款或寄過了 ${skipped} 個；失敗 ${failed} 個（失敗的重跑壹次就好）。`);
-  if (failed) process.exitCode = 1;
 }
 
 // 只讀：台股、美股盤中的伺服器紀錄（stocksTw/latest、stocksUs/latest）。不讀亂數祕密，什麼都不寫
@@ -410,7 +381,6 @@ async function main() {
   if (task.action === "world-status") { await worldStatus(db); return; }
   if (task.action === "player-invest") { await playerInvest(db, task.name); return; }
   if (task.action === "invest-status") { await investStatus(db); return; }
-  if (task.action === "advisor-rules-mail") { await advisorRulesMail(db, FieldValue); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
@@ -420,4 +390,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc, advisorRulesMail };
+module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc };
