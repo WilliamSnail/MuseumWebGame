@@ -249,7 +249,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     room -= paid; L.byNpc[v.id] = nsN(L.byNpc[v.id]) + paid; if (first) L.people++;
     if (v.place === "hall") { // 到展廳：全館累計參觀人次（故事線）、開這壹位的分紅池（那壹天他付過票才有）
       if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
-      house.npcc.hall = nsN(house.npcc.hall) + 1;
+      house.npcc.hall = nsN(house.npcc.hall) + 1; L.hallN = nsN(L.hallN) + 1; // hallN：今天有名字的旅客到展廳幾位（財報「展廳參觀者」，11-17）
       hallPotOpen(house, day, v.key, 1, nsN(L.byNpc[v.id]) > 0 ? Math.floor(Math.floor(C.ticket * tmul) * (100 - NUM.casino.tax.entPct) / 100 * NUM.casino.ticket.ownerPct / 100) : 0);
     }
     if (v.place === "hall" && C.reviewDay > 0 && reviews.filter(r => r.npc === v.id && r.day === day).length < C.reviewDay) { // 到展廳：留壹則評價（故事線現在這壹段的字；還沒有就說他是誰）
@@ -262,7 +262,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   }
   if (nowMs === Infinity) nwSanDay(house, day, npcVisitsToday(day, secret, list, counters), list.filter(x => x && x.kind !== "trace" && x.budget && x.budget.perDay > 0)); // 收盤：NPC 的理智照那天的行程更新（決定 0090）
   if (nowMs === Infinity) nwArcWeek(house, day, list.filter(x => x && x.kind !== "trace")); // 每段第 1 週的週一早上：旅客理智的分級結算（決定 0097）
-  if (nowMs === Infinity) house.npcs = { day, ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), byUnit: Object.assign({}, L.byUnit || {}), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
+  if (nowMs === Infinity) house.npcs = { day, hallN: nsN(L.hallN), ticket: nsN(L.ticket), shop: nsN(L.shop), total: nsN(L.ticket) + nsN(L.shop), people: nsN(L.people), crowd: { ticket: nsN(L.crowd.ticket), people: nsN(L.crowd.people), groups: nsN(L.crowd.groups), shop: nsN(L.crowd.shop) }, by: Object.assign({}, L.sources), shopBy: JSON.parse(JSON.stringify(L.shopBy || {})), byUnit: Object.assign({}, L.byUnit || {}), menu: JSON.parse(JSON.stringify(L.menu || {})), orders: (L.orders || []).slice(0, 10) };
   return L;
 }
 
