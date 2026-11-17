@@ -88,5 +88,15 @@ T("決定 0116：全館大禮包壹天付出到 packDayCap 之後，當天的包
   const r2 = G.casOpenPacks(w, h, 3, day); assert.ok(r2.packs.every(p => p.stars <= 3), "到上限：只發 1～3 星");
   assert.ok(!G.casPackCapped(h, "2026-11-18"), "隔天恢復"); G.setRng(null);
 });
+T("決定 0118：11-17 那期館債（照舊規則莊家付的）一次性由博物館資金補撥給莊家；只做壹次；金額或日期對不上就不做；不改館債餘額；對帳守恆", G => {
+  const F = G.NUM.casino.houseLoan.fix, mk2 = () => { const h = G.casHouseFix(G.casHouseNew(), "2026-11-17").house; h.cul = { paid: F.amt, late: 0, budget: 0, day: F.day, due: "2027-01-12" }; h.debt.culture = 900000000; h.bankroll = 29000000; return h; };
+  const h = mk2(), b0 = h.budget, d0 = h.debt.culture, s0 = G.casBookSnap([], h, 0, F.day);
+  const r = G.casHouseFix(h, F.day).house; assert.strictEqual(r.bankroll, 29000000 + F.amt); assert.strictEqual(r.budget, b0 - F.amt); assert.strictEqual(r.debt.culture, d0); assert.ok(r.cFix);
+  assert.strictEqual(r.led.flow.budgetFix, F.amt);
+  const r2 = G.casHouseFix(r, F.day).house; assert.strictEqual(r2.bankroll, 29000000 + F.amt, "只做壹次");
+  const s1 = G.casBookSnap([], r, 0, F.day); assert.strictEqual(G.casBookTotal(s1) - G.casBookTotal(s0), 0, "總和不變（搬動，不是憑空）");
+  const w = mk2(); w.cul.paid = F.amt + 1; assert.strictEqual(G.casHouseFix(w, F.day).house.bankroll, 29000000, "金額對不上：不做");
+  const x = mk2(); x.cul.day = "2026-11-16"; assert.strictEqual(G.casHouseFix(x, F.day).house.bankroll, 29000000, "日期對不上：不做");
+});
 console.log(`${pass} passed, ${fail} failed（文化部館債）`);
 process.exit(fail ? 1 : 0);

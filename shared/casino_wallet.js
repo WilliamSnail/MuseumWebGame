@@ -110,6 +110,7 @@ export function casHouseFix(h, day) {
     if (gotG > 0) { wuDebit(h, "u-culture", gotG); h.grants[g.id] = day || true; } // 外面世界撥的（池子少了），不是憑空
     if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
   }
+  { const F = NUM.casino.houseLoan.fix; if (F && !h.cFix && h.cul && h.cul.day === F.day && h.cul.paid === F.amt && h.budget >= F.amt) { h.budget -= F.amt; casHouseMove(h, "budgetFix", F.amt); h.cFix = day || true; } } // 決定 0118：一次性補撥，博物館資金 → 莊家，不改館債餘額
   if (!h.wExp && NUM.casino.world.expand > 0) { const x = casWorldExpand(h, NUM.casino.world.expand); wuFix(h); wuGrow(h, x); h.wExp = day || true; } // 決定 0117：外面世界一次性擴充（帳上分類照權重分）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
