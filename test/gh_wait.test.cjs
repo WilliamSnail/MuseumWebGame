@@ -35,6 +35,15 @@ t("錯誤中間夾一次成功，連續錯誤數重算", () => {
   const r = W([e, e, { status: "in_progress" }, e, e, { status: "completed", conclusion: "success" }], { maxErrors: 3 });
   assert.strictEqual(r.ok, true);
 });
+t("壹直排隊超過上限就回 stuck（11-17 固定動作排隊卡壹小時）；開始跑了就重算", () => {
+  const q = { status: "queued" };
+  const r = W([q, q, q, q], { queueMaxMs: 25000 });
+  assert.strictEqual(r.stuck, true); assert.strictEqual(r.ok, false);
+  const r2 = W([q, q, { status: "in_progress" }, q, { status: "completed", conclusion: "success" }], { queueMaxMs: 25000 });
+  assert.strictEqual(r2.ok, true); assert.ok(!r2.stuck);
+  const r3 = W([q, q, q, q, { status: "completed", conclusion: "success" }]);
+  assert.strictEqual(r3.ok, true, "沒給上限就照舊等");
+});
 t("連續錯誤到上限才丟錯", () => {
   assert.throws(() => W([new Error("dns")], { maxErrors: 4 }), /連續失敗 4 次/);
   assert.strictEqual(naps.length, 3);
