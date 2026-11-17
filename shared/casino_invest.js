@@ -25,6 +25,46 @@ const IV_IDS = OUT_STOCKS.map(s => s.id);
 export const IV_POOLS = ["house", "budget"];
 
 // 補欄位
+// 股價換比例（house.stk.peg.ev，shared/casino_stock.js 的 stPegDirect）時，館方的持股也要照比例換股數、成本不變（跟錢包壹樣）。
+// 11-17 翊文截圖：館方投資帳面 +57280%、又寫「館方虧太多」。以前只換錢包和全館持股數，這裡的股數沒換：美股 ×4→×32 帳面假漲 8 倍、台股 10,000→真實價帳面假跌，
+//   觸發停損暫停買進；11-16 還用沒換過的少量股數照新價賣掉壹些（已實現虧損）。I.pegSeq ＝ 已經換到第幾次。
+// 第壹次（I.pegSeq 還沒有）：每支用「平均每股成本」對出是在哪壹次換比例之前買的（成本在那次 from 的 ±15% 內），從那次起往後補換；對不上的不動。
+//   lastPx 同樣照它的價對；hx 是換比例之後才記的，不動。停損暫停清掉（是假跌觸發的），下壹次跑重新判斷。
+const IV_PEG_TOL = 0.15;
+// 11-16 用沒換過的股數照新價賣掉的台股（停損賣壹半）：照當時的成交價算「正確股數該拿到的 − 實際拿到的」（扣手續費後），翊文 11-17：「補回」。
+//   只在正式站那份第壹次校正時補（換比例到第 28 次、池子的已實現虧損至少是補的 95%），外面世界付，記 houseInvFix／budgetInvFix
+const IV_PEG_REFUND = { house: 869857, budget: 3435843 };
+function ivPegSync(I, house) {
+  const peg = house && house.stk && ivBox(house.stk.peg) ? house.stk.peg : null, evs = peg && Array.isArray(peg.ev) ? peg.ev.filter(e => ivBox(e) && +e.from > 0 && +e.to > 0 && +e.seq > 0).slice().sort((a, b) => a.seq - b.seq) : [];
+  const top = evs.length ? evs[evs.length - 1].seq : 0;
+  const scaleN = (n, list) => list.reduce((x, e) => Math.floor(x * e.from / e.to), n);
+  if (I.pegSeq == null) {
+    const from = (id, unit) => { const L = evs.filter(e => e.id === id); const i = L.findIndex(e => Math.abs(unit / e.from - 1) <= IV_PEG_TOL); return i < 0 ? [] : L.slice(i); };
+    let fixed = false;
+    for (const k of IV_POOLS) {
+      const P = I.pool[k];
+      for (const id of Object.keys(P.own)) { const L = from(id, ivN(P.cost[id]) / P.own[id]); if (L.length) { P.own[id] = scaleN(P.own[id], L); fixed = true; if (!(P.own[id] > 0)) { delete P.own[id]; delete P.cost[id]; } } }
+      if (fixed) P.stopUntil = null;
+    }
+    if (top >= 28) for (const k of IV_POOLS) {
+      const P = I.pool[k], n = IV_PEG_REFUND[k];
+      if (!(n > 0) || !(P.pnl <= -Math.floor(n * 0.95))) continue;
+      const got = k === "house" ? casHouseWorldOut(house, "houseInvFix", n) : casPoolWorldOut(house, "budget", "budgetInvFix", n);
+      P.pnl += got;
+    }
+    for (const id of Object.keys(I.lastPx || {})) { const L = from(id, I.lastPx[id]); if (L.length) I.lastPx[id] = stPx(L.reduce((x, e) => x * e.to / e.from, I.lastPx[id])); }
+    I.pegSeq = top;
+    return;
+  }
+  const L = evs.filter(e => e.seq > I.pegSeq);
+  if (!L.length) return;
+  for (const k of IV_POOLS) { const P = I.pool[k]; for (const id of Object.keys(P.own)) { const M = L.filter(e => e.id === id); if (M.length) { P.own[id] = scaleN(P.own[id], M); if (!(P.own[id] > 0)) { delete P.own[id]; delete P.cost[id]; } } } }
+  for (const e of L) {
+    if (Array.isArray(I.hx[e.id])) I.hx[e.id] = I.hx[e.id].map(v => stPx(v * e.to / e.from)); // 均價用的歷史也換到新比例（不然換完會被當成大跌而加碼）
+    for (const m of [I.px, I.lastPx]) if (m && +m[e.id] > 0) m[e.id] = stPx(m[e.id] * e.to / e.from);
+  }
+  I.pegSeq = top;
+}
 export function casInvestFix(house) {
   if (!ivBox(house.inv)) house.inv = { day: null, pool: {}, cur: null, last: null };
   const I = house.inv;
@@ -46,7 +86,9 @@ export function casInvestFix(house) {
   if (!ivBox(I.sum)) I.sum = { hold: [], pnl: 0 };
   if (!ivBox(I.hx)) I.hx = {};
   for (const id of Object.keys(I.hx)) { const a = Array.isArray(I.hx[id]) ? I.hx[id].filter(v => +v > 0).map(v => stPx(v)).slice(-NUM.casino.invest.dip.days) : []; if (IV_IDS.includes(id) && a.length) I.hx[id] = a; else delete I.hx[id]; }
-  for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = stPx(m[id]); } // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
+  for (const k of ["px", "lastPx"]) { const m = ivBox(I[k]) ? I[k] : {}; I[k] = {}; for (const id of Object.keys(m)) if (IV_IDS.includes(id) && +m[id] > 0) I[k][id] = stPx(m[id]); }
+  I.pegSeq = I.pegSeq == null || !Number.isFinite(+I.pegSeq) ? null : Math.floor(+I.pegSeq);
+  ivPegSync(I, house); // 最近兩次跑的時候的價（銀行的「昨天買賣」要寫成交價）
   return I;
 }
 

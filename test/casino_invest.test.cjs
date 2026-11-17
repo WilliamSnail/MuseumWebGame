@@ -111,5 +111,32 @@ T("新策略：不停損、不停利；跌 50% 也不賣；虧超過 stopPct 才
   P.own.greeneye = 100000; P.cost.greeneye = 100000 * H.px.greeneye * 2;
   run(G, h, D0); assert.ok(P.own.greeneye >= 100000, "−50% 也不賣"); assert.ok(I.cur.paused.house === "stop", "虧超過 25%：暫停買進");
 }, false);
+// 11-17：股價換比例時館方持股沒跟著換（帳面 +57280%、假跌觸發停損）
+const pegHouse = () => ({
+  stk: { px: { flashcar: 12513.57, bigassembly: 218.75, handbrain: 3797.5 }, peg: { seq: 3, ev: [
+    { seq: 1, id: "flashcar", from: 10161, to: 1590 }, { seq: 2, id: "bigassembly", from: 10000, to: 241 }, { seq: 3, id: "flashcar", from: 1561, to: 12859 }] } },
+  inv: { day: "2026-11-17", pool: {
+    house: { pnl: 0, stopUntil: "2026-11-23", own: { flashcar: 981, bigassembly: 76 }, cost: { flashcar: 1541930, bigassembly: 763800 } },
+    budget: { pnl: 0, stopUntil: null, own: { handbrain: 9 }, cost: { handbrain: 34000 } } }, hx: {}, px: {}, lastPx: { flashcar: 1561, bigassembly: 241 } },
+});
+T("換比例校正（第壹次）：照平均成本對出從哪次開始沒換，往後補換；成本不變、清掉假的停損；換過的不動", G => {
+  const h = pegHouse(), I = G.casInvestFix(h), P = I.pool.house;
+  assert.strictEqual(P.own.flashcar, Math.floor(981 * 1561 / 12859), "成本約 1,572／股：在 ×4 那時買的，只補第 3 次");
+  assert.strictEqual(P.own.bigassembly, Math.floor(76 * 10000 / 241), "成本約 10,050／股：起始價買的，補第 2 次");
+  assert.strictEqual(P.cost.flashcar, 1541930); assert.strictEqual(P.stopUntil, null);
+  assert.strictEqual(I.pool.budget.own.handbrain, 9, "成本 3,778／股對不上任何壹次的 from：不動");
+  assert.strictEqual(I.pegSeq, 3); assert.strictEqual(I.lastPx.flashcar, 12859);
+  const pub = G.casInvestPublic(h, "2026-11-17");
+  assert.ok(Math.abs(pub.pnlPct) < 20, "帳面不會再是幾百倍：" + pub.pnlPct);
+  const again = JSON.stringify(h.inv.pool); G.casInvestFix(h); assert.strictEqual(JSON.stringify(h.inv.pool), again, "再叫壹次不會再換");
+}, false);
+T("換比例（之後）：新的換比例事件，館方持股、均價歷史、最近的價都照比例換", G => {
+  const h = pegHouse(); G.casInvestFix(h);
+  h.inv.hx.flashcar = [12000, 12513.57]; h.inv.px.flashcar = 12513.57;
+  h.stk.peg.ev.push({ seq: 4, id: "flashcar", from: 12513.57, to: 1251.36 }); h.stk.peg.seq = 4;
+  const n0 = h.inv.pool.house.own.flashcar; G.casInvestFix(h);
+  assert.strictEqual(h.inv.pool.house.own.flashcar, Math.floor(n0 * 12513.57 / 1251.36));
+  assert.strictEqual(h.inv.hx.flashcar[1], 1251.36); assert.strictEqual(h.inv.px.flashcar, 1251.36); assert.strictEqual(h.inv.pegSeq, 4);
+}, false);
 console.log(`${pass} passed, ${fail} failed（館方投資）`);
 process.exit(fail ? 1 : 0);
