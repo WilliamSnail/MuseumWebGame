@@ -39,10 +39,10 @@ function diffNumbers(a, b) {
   return rows.length ? rows : ["（數字都壹樣）"];
 }
 function parseArgs(argv) {
-  const o = { action: null, save: null, diff: null, show: null };
+  const o = { action: null, save: null, diff: null, show: null, name: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], next = () => { if (argv[i + 1] === undefined) throw new Error(`${a} 後面要有名字`); return argv[++i]; };
-    if (a === "--save") o.save = next(); else if (a === "--diff") o.diff = next(); else if (a === "--show") o.show = next();
+    if (a === "--name") o.name = next(); else if (a === "--save") o.save = next(); else if (a === "--diff") o.diff = next(); else if (a === "--show") o.show = next();
     else if (a.startsWith("--")) throw new Error(`沒有 ${a} 這個選項`); else if (!o.action) o.action = a; else throw new Error(`看不懂「${a}」`);
   }
   if (!o.action && !o.show) throw new Error("用法：npm run fb -- <動作> [--save 名字] [--diff 名字]，或 --show 名字 --diff 名字");
@@ -56,7 +56,7 @@ function main() {
   let lines;
   if (o.show) { lines = fs.readFileSync(snapFile(o.show), "utf8").split("\n"); }
   else {
-    const r = dispatch(WF, { action: o.action }, { onId: (id, url) => console.log(url) });
+    const r = dispatch(WF, Object.assign({ action: o.action }, o.name ? { name: o.name } : {}), { onId: (id, url) => console.log(url) });
     lines = stepLines(runLog(r.id));
     if (!r.ok) { console.log(lines.join("\n")); throw new Error(`這壹次失敗了（${r.id}）：gh run view ${r.id} --log-failed`); }
   }
