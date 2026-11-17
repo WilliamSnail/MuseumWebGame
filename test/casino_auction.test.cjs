@@ -167,7 +167,7 @@ T("玩家拍賣：底價綁在館方價 0.8～1.5 倍、不超過現價加溢價
   assert.strictEqual(pbid(W, r.id, "u2", R.hi + 1000).ok, false, "出價有上限");
   assert.strictEqual(a.closeAt, G.casAucCloseAt(DAY));
 });
-T("玩家拍賣：成交付第二價，賣家拿價錢扣 5%，手續費進預算池，畫搬走，守恆", G => {
+T("玩家拍賣：成交付第二價，賣家拿價錢扣 5%，手續費進博物館資金，畫搬走，守恆", G => {
   const W = world(G); withPainting(W, "u1", 1);
   const R = cur(W), r = list(W, R.cur), t0 = sum(W), b0 = W.house.budget, h0 = W.house.bankroll;
   pbid(W, r.id, "u2", R.cur + 100000); pbid(W, r.id, "u3", R.cur + 50000);

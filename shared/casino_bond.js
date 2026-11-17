@@ -4,11 +4,11 @@
 //  利率：這期第壹次有人買時，照莊家當時的錢定下來（莊家越缺錢利率越高），整期不變。莊家破產（< 0）這週不發。
 //  利息照持有天數算：週壹買拿滿 7 天，週日買只拿 1 天（不然週日才買的人白拿壹週）。
 //  錢怎麼動（守恆）：買＝錢包 → 莊家（casHouseMove "bond"）。到期＝莊家 → 錢包。
-//    莊家不夠：先用莊家 > 0 的部分，再由預算池墊（記在 house.bailout，館方是最後的貸款人），
+//    莊家不夠：先用莊家 > 0 的部分，再由博物館資金墊（記在 house.bailout，館方是最後的貸款人），
 //    還是不夠就給「債權憑證」（w.bond.iou）：莊家回到起始的壹半以上時自動補付。不打折、不印錢。
 //  上限：壹期總額 cap（照健康度）、壹個人 perUser、帳號要開了 minAge 天（擋分身）。不能提早贖回、不能轉讓。
 //  純函式：「今天」從參數來。錢包 w.bond：{ list: [{ mon, amt, day, pct, due }], iou, earned, born, notes }
-//  莊家 house.bond：{ mon, name, pct, cap, sold }（這期）；house.bailout：預算池墊了多少（之後從莊家稅還）
+//  莊家 house.bond：{ mon, name, pct, cap, sold }（這期）；house.bailout：博物館資金墊了多少（之後從莊家稅還）
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
@@ -77,7 +77,7 @@ export function casBondBuy(w, house, amt, day) {
 // 壹張到期時的利息：照持有天數（最多 7 天）
 export const casBondInt = x => Math.floor(x.amt * x.pct / 100 * Math.min(7, Math.max(0, cbdDiff(x.day, x.due))) / 7);
 
-// 付給玩家 want：先莊家 > 0 的部分，再預算池 > 0 的部分（記 bailout），剩下的回傳（要記成憑證）
+// 付給玩家 want：先莊家 > 0 的部分，再博物館資金 > 0 的部分（記 bailout），剩下的回傳（要記成憑證）
 function cbdPay(w, house, want) {
   let left = want;
   const a = Math.min(left, Math.max(0, house.bankroll));
@@ -107,7 +107,7 @@ export function casBondSettle(w, house, day) {
   return out;
 }
 // 簽收窗口（劇情經濟事件 bondWindow，shared/econ_events.js）：窗口內可以提早拿回館債，本金加「已持有天數」照比例的利息（利率不變，不會比到期多）；
-// 莊家壹天最多付 redeemPct% 的（bankroll ＋ 超過準備金的部分）；付不出的留著，不開憑證、不動預算池。回傳 { ok, n 幾張, amt 本金, int 利息 }
+// 莊家壹天最多付 redeemPct% 的（bankroll ＋ 超過準備金的部分）；付不出的留著，不開憑證、不動博物館資金。回傳 { ok, n 幾張, amt 本金, int 利息 }
 export function casBondRedeem(w, house, day) {
   const E = NUM.casino.econEvent, W = house && house.ev && house.ev.window;
   if (!W || !(day >= W.from && day <= W.until)) return { ok: false, reason: "現在不是館債的簽收窗口" };

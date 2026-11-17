@@ -138,7 +138,7 @@ T("莊家缺錢保護：莊家少於 low 免費大禮包只發 lowPacks 包、�
   s = mk(H.low - 1); open(s); s.house.bankroll = H.low * 2; r = open(s); assert.ok(r.ok && r.packs.length === D - H.lowPacks, "錢回來就恢復（今天剩下的）");
 });
 
-T("預算池硬下限：低到 budgetFloor，拚經濟成功完全不撥款（失敗照舊）；高一點只是凍結", G => {
+T("博物館資金硬下限：低到 budgetFloor，拚經濟成功完全不撥款（失敗照舊）；高一點只是凍結", G => {
   const C = G.NUM.casino.econ, seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; }, atR = r => (r + 0.5) / (C.rMax + 1);
   const mk = b => { const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house; house.budget = b; return { w, house }; };
   let s = mk(C.budgetFloor); let r = G.casEconPlay(s.w, s.house, D, seq(atR(50), 0.3, 0.99));

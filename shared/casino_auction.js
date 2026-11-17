@@ -11,7 +11,7 @@
 //  出價鎖籌碼（跟股票的限價單壹樣）：錢包 w.auc = { hold 鎖住的總和, bids: { 拍賣 id: 金額 } }；錢還是玩家的，記帳算在 bkHeld。
 //  錢怎麼動（全是「搬」）：
 //    出價＝錢包 → 鎖；收標時所有鎖退回，得標的再付「第二高價」：
-//    館方的畫 → 莊家（casHouseMove "artAuction"）；玩家的畫 → 賣家（扣 feePct% 進預算池，casCount "artFee"）。
+//    館方的畫 → 莊家（casHouseMove "artAuction"）；玩家的畫 → 賣家（扣 feePct% 進博物館資金，casCount "artFee"）。
 //    畫從賣家的 P.art.own 搬到得標的人；house.art.own（全館持有幾份）不變。
 //  收標是「下次有人摸到拍賣」時才算（lazy），壹場壹個 Firestore 交易，從 open 搬到 done 跟所有錢包、存檔同壹次寫，所以不會付兩次。
 //  純函式：「今天」「現在」從參數來。伺服器入口在 functions/art.js。
@@ -44,7 +44,7 @@ export const CAS_AUC = {
   notOwn: "你沒有收藏這幅畫。", locked: "這幅畫正在拍賣，不能賣回也不能再拍。", listCap: "壹個人最多同時拍 {n} 幅。",
   priceRange: "底價要在館方價的 {lo}%～{hi}%（{a}～{b}）。", premium: "你今天靠拍賣收的溢價已經到上限了，明天再來。", hasBids: "已經有人出價了，不能取消。",
   direct: "這幅是稀有的畫，只在拍賣買得到。",
-  rule: "稀有的畫（珍藏、孤品）展出後 {days} 天、台灣 {hour} 點收標。館友的畫底價要在館方價的 {lo}%～{hi}%，成交抽 {fee}% 進預算池；帳號要開 {age} 天以上。",
+  rule: "稀有的畫（珍藏、孤品）展出後 {days} 天、台灣 {hour} 點收標。館友的畫底價要在館方價的 {lo}%～{hi}%，成交抽 {fee}% 進博物館資金；帳號要開 {age} 天以上。",
 };
 
 // ---------- 時間 ----------

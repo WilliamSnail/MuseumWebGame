@@ -92,7 +92,7 @@ export function casFxPolicy(house, day, kind) {
   return 1;
 }
 // 政策的白話（日報和拚經濟的畫面用）
-export const CAS_FX_TEXT = { tourism: "門票多一成", cellar: "地下撿到的籌碼多一成", grant: "拚經濟的撥款多一成", tighten: "拚經濟的撥款少一成，預算池少花一些" };
+export const CAS_FX_TEXT = { tourism: "門票多一成", cellar: "地下撿到的籌碼多一成", grant: "拚經濟的撥款多一成", tighten: "拚經濟的撥款少一成，博物館資金少花一些" };
 
 // ---------- 銀行廳的「財報」頁（11-14，翊文：「接著做: 股票、財報」） ----------
 // 資料是日報產生時寫進莊家的 house.econ（b、perDay、g、rows…），這裡只整理成畫面要的格式。
@@ -105,7 +105,7 @@ export function casBankEcon(house) {
   const rows = (Array.isArray(e.rows) ? e.rows : []).filter(r => Array.isArray(r) && r.length === 2).map(r => [String(r[0]), String(r[1])]);
   return { gdp: gdNz(e.perDay), growth: typeof e.g === "number" && isFinite(e.g) ? e.g : 0, idx, news: casEconNews(e), report: rows, ext: e.ext && typeof e.ext === "object" ? e.ext : null, world: e.world && typeof e.world === "object" ? e.world : null, books: e.books && typeof e.books === "object" ? e.books : null };
 }
-// 今天的壹句新聞：照景氣、昨天最熱鬧的那件事、預算池的狀況挑。純函式，不抽亂數（每個人看到的壹樣）
+// 今天的壹句新聞：照景氣、昨天最熱鬧的那件事、博物館資金的狀況挑。純函式，不抽亂數（每個人看到的壹樣）
 export function casEconNews(e) {
   const T = CAS_NEWS, idx = gdClamp(+(e && e.b) || 0, -1, 1);
   const parts = [idx > 0.3 ? T.good : idx < -0.3 ? T.bad : T.flat];
@@ -130,7 +130,7 @@ export const CAS_NEWS = {
   },
   up: "館內 GDP 比前七天多了 {p}%。",
   down: "館內 GDP 比前七天少了 {p}%。",
-  frozen: "預算池見底，拚經濟的撥款凍結中。",
+  frozen: "博物館資金見底，拚經濟的撥款凍結中。",
 };
 
 // ---------- 世界股市新聞（11-14，翊文：「館內訊息以外可以抓最新世界相關股市訊息改成遊戲內版本」） ----------

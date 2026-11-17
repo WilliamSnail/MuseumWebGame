@@ -546,7 +546,7 @@ function econPane() {
       h("p", { class: "cas-hint" }, CAS_ECON.rule)),
     sec("為什麼要拚", h("p", { class: "cas-note" }, CAS_ECON.why)),
     sec("怎麼拚", h("p", { class: "cas-note" }, CAS_ECON.how.join("、"), "。")),
-    sec("Yuga Bot 日報", ...reportNodes()), // 館方的帳（11-13）：莊家、預算池、海底，結算過的
+    sec("Yuga Bot 日報", ...reportNodes()), // 館方的帳（11-13）：莊家、博物館資金、海底，結算過的
   ];
 }
 // 跳字區矮的時候（手機橫拿），讓最新壹行留在看得到的地方，不然會看不到結果

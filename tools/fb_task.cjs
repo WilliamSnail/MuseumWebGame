@@ -9,7 +9,7 @@
 //   stock-reroll  清掉莊家「今天調過股價了」的記號，下壹個進賭場的人會重新照當天的行情算壹次。
 //                 只動 casinoHouse/main 的 stk.day，不碰股價、不碰任何人的錢包。
 //                 什麼時候用：調價那天算錯了（例如 11-14 七支全變 9,996），修好之後要當天就重算，不想等隔天換日。
-//   house-ledger  只讀：莊家、預算池、海底、館方帳現在多少；莊家每個來源累計進出多少；
+//   house-ledger  只讀：莊家、博物館資金、海底、修繕基金現在多少；莊家每個來源累計進出多少；
 //                 每個錢包的籌碼、借款、憑空和消失的來源。不印名字、uid、email，錢包用 #1、#2 代替（照籌碼排）。
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
@@ -192,7 +192,7 @@ async function houseLedger(db) {
   const list = o => Object.entries(o || {}).filter(([, v]) => nz(v)).sort((a, b) => Math.abs(nz(b[1])) - Math.abs(nz(a[1]))).map(([k, v]) => `    ${k}：${fmt(v)}`);
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
-  console.log(`莊家 ${fmt(h.bankroll)}　預算池 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　館方帳 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　莊家記的日子 ${h.day || "-"}`);
+  console.log(`莊家 ${fmt(h.bankroll)}　博物館資金 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　修繕基金 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　莊家記的日子 ${h.day || "-"}`);
   { const ws = await db.doc("world/main").get(), w = ws.exists ? JSON.parse(ws.data().data || "{}") : null; // 世界文件（W2，決定 0086）：備用池要算進外面世界總量
     if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, world = nz(h.world); let s = 0; const parts = Object.keys(r).filter(k => k !== "pub").map(k => { const a = Math.floor(world * +r[k]) + nz(adj[k]); s += a; return `${k} ${fmt(a)}`; }); console.log(`外面世界的帳上分類（W3）：${parts.join("　")}　公共 ${fmt(world - s)}　合計 ${fmt(world)}`); }
     console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　外面世界合計 ${fmt(nz(h.world) + nz(w.pool))}（莊家的對外帳戶 ${fmt(h.world)}）　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有"); }

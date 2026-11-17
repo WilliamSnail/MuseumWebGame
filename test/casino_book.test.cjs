@@ -1,5 +1,5 @@
 // 賭場的記帳（11-13，數值平衡）：node test/casino_book.test.cjs（npm test 也會跑）
-// 守恆：錢包 ＋ 在路上的 ＋ 打到一半的注 ＋ 莊家 ＋ 預算池 ＋ 海底，永遠等於 開場總和 ＋ 憑空 － 消失。
+// 守恆：錢包 ＋ 在路上的 ＋ 打到一半的注 ＋ 莊家 ＋ 博物館資金 ＋ 海底，永遠等於 開場總和 ＋ 憑空 － 消失。
 // 每一條會動籌碼的路都要過：21 點、同桌、大禮包、餐車、借款（借、還、逾期扣、工作還債）、拚經濟、地下撿、交委託、換小獎、全勤簽到、舊錢包認領、斗內、地下遇到、莊家重開。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
@@ -23,7 +23,7 @@ const snap = (G, W) => G.casBookSnap(Object.values(W.wallets), W.house, inplay(W
 const gap = (G, W) => G.casBookGap(snap(G, W), opening(G));
 const ok = (G, W, what) => { const g = gap(G, W); assert.strictEqual(g, 0, `${what}：帳差 ${g}`); };
 
-T("開場：莊家＋預算池＋每個錢包的開場籌碼（記成 mint.start）剛好對得上", G => {
+T("開場：莊家＋博物館資金＋每個錢包的開場籌碼（記成 mint.start）剛好對得上", G => {
   const W = world(G, 4);
   const s = snap(G, W);
   assert.strictEqual(s.mint.start, 4 * G.NUM.casino.startChips);
@@ -203,7 +203,7 @@ T("壞資料、舊資料：沒有 led 的舊錢包／莊家會補；casMint 不�
   assert.strictEqual(G.casBurn(w, "y", 3), 3); assert.strictEqual(w.chips, 7);
 });
 
-T("日報：莊家、預算池給數字；海底只給水位公分，不出現海底的數字；預算快乾時算得出天數；預算 ≤ 0 寫追加預算", G => {
+T("日報：莊家、博物館資金給數字；海底只給水位公分，不出現海底的數字；預算快乾時算得出天數；預算 ≤ 0 寫追加預算", G => {
   const W = world(G, 3);
   G.setRng(G.mulberry32(31));
   const a = snap(G, W);
@@ -212,7 +212,7 @@ T("日報：莊家、預算池給數字；海底只給水位公分，不出現�
   const doc = { day: W.day, at: Date.UTC(2026, 10, 10, 1, 0), snap: b, diff: G.casBookDiff(a, b) };
   const v = G.casReportView(doc);
   const text = v.secs.map(s => s.t + "|" + s.lines.join("|")).join("|");
-  assert.ok(text.includes(W.house.bankroll.toLocaleString("en-US")) && text.includes(W.house.budget.toLocaleString("en-US")), "莊家、預算池的數字");
+  assert.ok(text.includes(W.house.bankroll.toLocaleString("en-US")) && text.includes(W.house.budget.toLocaleString("en-US")), "莊家、博物館資金的數字");
   if (W.house.sea > 0) assert.ok(!text.includes(W.house.sea.toLocaleString("en-US")) || W.house.sea < 1000, "海底的數字不外露");
   assert.ok(/水位 [0-9]+ 公分/.test(text) && text.includes("對帳：差 1 枚，原因不明"));
   assert.ok(/大約還撐 [0-9,]+ 天/.test(text), "照這個速度還撐幾天");

@@ -2,9 +2,9 @@
 //  館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074；翊文：「館方自己也會投資外面世界」）
 //  純函式，不碰資料庫。每個遊戲日第一次有人進賭場時（在換日調價之後）跑一次：casInvestRun(house, day, secret, b)。
 //  兩個池子各自投，記帳來源分開：
-//    莊家（house）：bankroll 超過準備金（reserve）的部分。預算池（budget）：超過 budgetKeep 的部分（≤ budgetKeep 時不投，它在補拚經濟）。
+//    莊家（house）：bankroll 超過準備金（reserve）的部分。博物館資金（budget）：超過 budgetKeep 的部分（≤ budgetKeep 時不投，它在補拚經濟）。
 //  錢怎麼動（規劃 2.12，不憑空也不燒掉）：買＝池子的錢搬給外面世界（casHouseWorldIn／casPoolWorldIn），賣＝外面世界付回池子（受 casWorldRoom 的吃緊上限）；
-//    手續費 NUM.casino.stock.feePct 進預算池（莊家付的搬進預算池；預算池付給自己＝不用搬）。持股不算進全館的錢（跟玩家的股票一樣，是資產不是籌碼）。
+//    手續費 NUM.casino.stock.feePct 進博物館資金（莊家付的搬進博物館資金；博物館資金付給自己＝不用搬）。持股不算進全館的錢（跟玩家的股票一樣，是資產不是籌碼）。
 //  怎麼選股：每天投「超過部分 × dailyPct% ×（1 ＋ extPct% × 外部景氣）」，七成買最近 lookback 天漲最多的 topN 支、兩成平均買全部、一成隨機一支（種子有伺服器祕密）；
 //    持股成本合計 ≤ 超過部分的 holdCapPct%。比成本跌 stopLossPct% 賣一半、漲 takeProfitPct% 賣三分之一（先賣再買）。
 //    停損：持股的總賺賠（已實現 ＋ 帳面）虧超過池子（持股成本 ＋ 超過部分）的 stopPct%，暫停買進 stopDays 天。外面世界吃緊（casWorldLow）也暫停買進。
@@ -114,7 +114,7 @@ export function casInvestFix(house) {
 
 const ivName = id => (OUT_STOCKS.find(s => s.id === id) || { name: id }).name;
 const ivList = rec => Object.entries(rec || {}).map(([k, n]) => { const [pool, id] = k.split(":"); return { pool, id, name: ivName(id), n }; });
-// 莊家：超過準備金、扣掉文化部館債；預算池：超過保留金、扣掉「莊家還文化部館債時預算池要墊的」（館債剩下的 − 莊家現金），不然預算池壹邊墊款壹邊拿去投資，墊不出來
+// 莊家：超過準備金、扣掉文化部館債；博物館資金：超過保留金、扣掉「莊家還文化部館債時博物館資金要墊的」（館債剩下的 − 莊家現金），不然博物館資金壹邊墊款壹邊拿去投資，墊不出來
 const ivAvail = (house, pool) => (pool === "house" ? Math.max(0, ivN(house.bankroll) - NUM.casino.invest.reserve - ivN(house.debt && house.debt.culture)) : Math.max(0, ivN(house.budget) - NUM.casino.invest.budgetKeep - Math.max(0, ivN(house.debt && house.debt.culture) - Math.max(0, ivN(house.bankroll)))));
 const ivFee = n => Math.ceil(n * NUM.casino.stock.feePct / 100);
 const ivCostSum = P => Object.values(P.cost).reduce((s, x) => s + ivN(x), 0);
@@ -130,7 +130,7 @@ function ivSell(house, pool, P, id, n, px, cfg) {
   if (n <= 0) return 0;
   const gross = stSellGet(px, n), fee = ivFee(gross), costOut = n >= P.own[id] ? P.cost[id] : Math.floor(P.cost[id] * n / P.own[id]);
   if (pool === "house") { casHouseWorldOut(house, "houseInvestSell", gross, cfg.world); casHouseMove(house, "investFee", -fee); house.budget += fee; }
-  else { casPoolWorldOut(house, "budget", "budgetInvestSell", gross); } // 預算池付給自己：手續費不用搬
+  else { casPoolWorldOut(house, "budget", "budgetInvestSell", gross); } // 博物館資金付給自己：手續費不用搬
   P.own[id] -= n; P.cost[id] = Math.max(0, P.cost[id] - costOut);
   if (P.own[id] <= 0) { delete P.own[id]; delete P.cost[id]; }
   P.pnl += gross - (pool === "house" ? fee : 0) - costOut;
@@ -207,7 +207,7 @@ export function casInvestRun(house, stkH, day, secret, b) {
 }
 
 // 銀行財報頁的「館方投資」（翊文 11-14：「銀行裡怎麼我們看不到館方投資了什麼」）：延遲壹天公開——日報產生那壹刻拍壹張快照（house.invPub），之後整天不變，不給即時的（避免跟單套利）。
-// 兩個池子（莊家、預算池）合併。回傳 { asOf, hold: [{ id, name, n, cost, value, pnl, pnlPct }], cost, value, pnl, pnlPct, pnlTotal 累計賺賠（已實現＋帳面）, spent 昨天買進用掉多少, yesterday: [{ side: "buy"|"sell", id, name, n, px }], paused: { house?, budget?: "stop"|"world" } }
+// 兩個池子（莊家、博物館資金）合併。回傳 { asOf, hold: [{ id, name, n, cost, value, pnl, pnlPct }], cost, value, pnl, pnlPct, pnlTotal 累計賺賠（已實現＋帳面）, spent 昨天買進用掉多少, yesterday: [{ side: "buy"|"sell", id, name, n, px }], paused: { house?, budget?: "stop"|"world" } }
 export function casInvestPublic(house, day) {
   if (!ivBox(house.inv)) return null;
   const I = casInvestFix(house), px = (house.stk && house.stk.px) || {}, hold = {};

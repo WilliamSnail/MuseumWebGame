@@ -218,7 +218,7 @@ T("換日調價：台股、美股都不跳（只扣 drag），開盤跳空由第
   assert.ok(house.stk.px[USID] <= p0 && house.stk.px[USID] >= p0 - 5, "美股也不跳了（11-14 起美股也是盤中，換日只扣 drag）");
   assert.ok(r.moves[TWID] < 0);
 });
-T("買賣守恆：台股盤中買賣照樣記帳對得上、手續費進預算池", G => {
+T("買賣守恆：台股盤中買賣照樣記帳對得上、手續費進博物館資金", G => {
   const house = house0(G, D), doc = TW(G), w = wallet(G);
   const snap = () => G.casBookSnap([w], house, 0, null);
   const op = G.casBookOpening(snap());

@@ -8,7 +8,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casFill, casNum } from "./casino.js";
-import { casLoanFrom, casRepay } from "./casino_wallet.js";
+import { casLoanFrom, casRepay, casRepayPart } from "./casino_wallet.js";
 import { casStockFix, casStockHouseFix, casStockSell } from "./casino_stock.js";
 import { IN_IDS, casInFix, casInPrice, casInSell } from "./casino_stock_in.js";
 import { OUT_STOCKS } from "./stocks_text.js";
@@ -20,6 +20,7 @@ export const CAS_DEBT = {
   noStock: "你沒有這支股票。",
   halt: "這支股票現在停盤，等開盤再賣。",
   tooMany: "你只欠 {owed}，賣 {n} 股賣得太多了：最多賣 {max} 股。",
+  partial: "還有 {left} 沒還完（賣的錢不夠）：先還了利息和本金的一部分，剩下的照原本的日子還。",
   done: "賣股還債：賣了 {n} 股，拿到 {net}，還了欠款 {paid}，還剩欠款 {left}。",
 };
 const dN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
@@ -48,12 +49,16 @@ export function casSellForDebt(w, house, id, shares, day, t) {
   const need = Math.max(1, Math.ceil(D.total / perShare)); // 剛好夠還要賣幾股
   const n = shares === "max" ? Math.min(need, have0) : Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_DEBT.bad };
-  if (n > need) return { ok: false, reason: casFill(CAS_DEBT.tooMany, { owed: casNum(D.total), n: casNum(n), max: casNum(need) }) };
+  if (n > have0) return { ok: false, reason: CAS_DEBT.bad };
+  if (shares !== "max" && n > need && D.total > 0 && n * perShare > D.total * 1.5 + 1) return { ok: false, reason: casFill(CAS_DEBT.tooMany, { owed: casNum(D.total), n: casNum(n), max: casNum(need) }) }; // 賣太多太離譜才擋（差一點點無所謂）
   const r = isIn ? casInSell(w, house, id, n, day, t, undefined, undefined, { free: true }) : casStockSell(w, house, id, n, day, t, { free: true });
   if (!r.ok) return r;
   // 賣的錢已經進錢包（負的先補）；還得了的借款照到期順序壹筆壹筆還清
   const paid = []; let repaid = 0;
   for (const x of D.loans) { if (dN(w.chips) < x.owe) break; const rr = casRepay(w, x.id, day, false, t, house); if (!rr.ok) break; paid.push(x.id); repaid += x.owe; }
+  // 還有借款還不起整筆：剩下賣股的錢（補完負數、還完前面的整筆之後）照「先還利息、再還本金」部分還下一筆（決定 0114）
+  const rest = Math.min(dN(w.chips), Math.max(0, dN(r.net) - D.neg - repaid));
+  if (rest > 0) { const nx = D.loans.find(x => !paid.includes(x.id)); if (nx) { const pr = casRepayPart(w, nx.id, rest, day, false, t, house, { free: true }); if (pr.ok) repaid += pr.paid != null ? pr.paid : 0; } }
   const left = casDebtOwed(w, t).total;
   return { ok: true, n: r.n, px: r.px, gross: r.gross, fee: r.fee, tax: r.tax || 0, net: r.net, repaid, paidLoans: paid, left, chips: w.chips, lines: r.lines.concat([casFill(CAS_DEBT.done, { n: casNum(r.n), net: casNum(r.net), paid: casNum(D.total - left), left: casNum(left) })]) };
 }

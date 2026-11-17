@@ -157,7 +157,7 @@ T("當沖：隔天才碰到（還沒換日／已經換日），照原本那天�
   assert.strictEqual(out3[0].px, px0); assert.strictEqual(out3[0].pnl, 0);
 });
 
-T("台股用外面世界當對手盤：賺 mint（stockLevWin）、賠 burn（stockLevLoss）；莊家不動；手續費利息進預算池；帳對得上", G => {
+T("台股用外面世界當對手盤：賺 mint（stockLevWin）、賠 burn（stockLevLoss）；莊家不動；手續費利息進博物館資金；帳對得上", G => {
   const s = fresh(G), op = G.casBookOpening(snap(s)), bank0 = s.h.bankroll;
   const P = { day: D0, px: { [TW]: 100000 }, idx: 10, ser: {} };
   const r = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), fakeSrc(P)); assert.ok(r.ok, r.reason);

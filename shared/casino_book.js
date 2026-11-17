@@ -3,14 +3,14 @@ import { NUM } from "./config.js";
 //  賭場的記帳（11-13，數值平衡；docs/經濟體系規劃.md 第 2.2 節 P0）
 //  純函式，不碰資料庫，也不依賴別的檔（所以 casino_wallet、econ、find、job 都可以 import）。
 //  規則：籌碼只有兩種動法。
-//    搬：錢包 ↔ 莊家 ↔ 預算池 ↔ 海底 ↔ 另一個錢包，總量不變。
+//    搬：錢包 ↔ 莊家 ↔ 博物館資金 ↔ 海底 ↔ 另一個錢包，總量不變。
 //    憑空（mint）、消失（burn）：一定要用下面的 casMint／casBurn／casHouseMint，並且寫上來源。
 //  記在哪：
 //    錢包 w.led = { mint: {來源: 累計}, burn: {來源: 累計} }（這個錢包自己憑空來的、消失的）
 //    莊家 house.led = { mint: {來源: 累計}, flow: {來源: 累計} }
 //      mint：莊家憑空多的（破產重開）。flow：莊家的錢因為這個來源變多少（正＝進莊家，負＝出莊家）
 //  每天第一次有人看財報時，伺服器把全館加總存成一份快照（casBookSnap）；兩份快照相減就是那一天的帳（casBookDiff）。
-//  守恆：錢包總和 ＋ 在路上的（借款被扣、還沒交給莊家）＋ 打到一半的注 ＋ 莊家 ＋ 預算池 ＋ 海底，
+//  守恆：錢包總和 ＋ 在路上的（借款被扣、還沒交給莊家）＋ 打到一半的注 ＋ 莊家 ＋ 博物館資金 ＋ 海底，
 //        永遠等於 開場的總和 ＋ 全部 mint － 全部 burn。測試 test/casino_book.test.cjs 擋這個。
 // ================================================================
 const bkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
@@ -35,7 +35,7 @@ export function casCount(house, key, n = 1) {
   house.act[key] = bkNz(house.act[key]) + bkNz(n);
 }
 
-// 預算池、館方帳憑空多 n（pool："budget"｜"museum"，門票這類館外進來的錢）
+// 博物館資金、修繕基金憑空多 n（pool："budget"｜"museum"，門票這類館外進來的錢）
 export function casPoolMint(house, pool, src, n) {
   n = bkNz(n);
   if (n <= 0) return 0;
@@ -44,7 +44,7 @@ export function casPoolMint(house, pool, src, n) {
   return n;
 }
 
-// 錢從錢包搬進預算池／館方帳／政府帳（手續費、稅）：呼叫的人先自己扣錢包的籌碼，這裡加池子，並在 house.led.flow 記「這個來源讓池子多了 n」（池子自己的角度：正＝進池子）。
+// 錢從錢包搬進博物館資金／修繕基金／政府帳（手續費、稅）：呼叫的人先自己扣錢包的籌碼，這裡加池子，並在 house.led.flow 記「這個來源讓池子多了 n」（池子自己的角度：正＝進池子）。
 // pool："budget"｜"museum"｜"gov"（政府帳，決定 0110：資本利得稅）。不是憑空，是搬
 export function casPoolGain(house, pool, src, n) {
   n = bkNz(n);
@@ -70,7 +70,7 @@ export function casBurn(w, src, n) {
   bkAdd(casLedFix(w, ["mint", "burn"]).burn, src, n);
   return n;
 }
-// 莊家的錢因為 src 變動 n（正＝進莊家，負＝出莊家）。對面一定是錢包／預算池／海底，那邊自己動
+// 莊家的錢因為 src 變動 n（正＝進莊家，負＝出莊家）。對面一定是錢包／博物館資金／海底，那邊自己動
 export function casHouseMove(house, src, n) {
   n = bkNz(n);
   house.bankroll += n;
@@ -147,7 +147,7 @@ export function casHouseWorldIn(house, src, n) {
   bkAdd(bkW(house), src, n);
   return n;
 }
-// 預算池／館方帳 → 外面世界（館方投資買股）
+// 博物館資金／修繕基金 → 外面世界（館方投資買股）
 export function casPoolWorldIn(house, pool, src, n) {
   n = Math.min(bkNz(n), Math.max(0, bkNz(house[pool])));
   if (n <= 0) return 0;
@@ -156,7 +156,7 @@ export function casPoolWorldIn(house, pool, src, n) {
   bkAdd(bkW(house), src, n);
   return n;
 }
-// 外面世界 → 預算池／館方帳（參觀者的門票）
+// 外面世界 → 博物館資金／修繕基金（參觀者的門票）
 export function casPoolWorldOut(house, pool, src, n) {
   n = Math.min(bkNz(n), Math.max(0, bkNz(house.world)));
   if (n <= 0) return 0;
@@ -217,7 +217,7 @@ export function casBookSnap(wallets, house, inplay, day) {
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
-// 全館的錢（含莊家、預算池、海底）
+// 全館的錢（含莊家、博物館資金、海底）
 export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.gov) + bkNz(s.house.world);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);

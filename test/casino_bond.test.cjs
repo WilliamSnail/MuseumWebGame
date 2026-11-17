@@ -1,5 +1,5 @@
 // 館債（11-13）：node test/casino_bond.test.cjs（npm test 也會跑）
-// 每週壹期、利率照莊家健康度、利息照持有天數、到期還本金加利息、莊家不夠由預算池墊、再不夠開憑證、補付、上限、帳號天數、守恆、利率順序。數字讀 NUM。
+// 每週壹期、利率照莊家健康度、利息照持有天數、到期還本金加利息、莊家不夠由博物館資金墊、再不夠開憑證、補付、上限、帳號天數、守恆、利率順序。數字讀 NUM。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -51,7 +51,7 @@ T("到期：下週壹換日還本金加利息，莊家付；守恆", G => {
   assert.strictEqual(total(G, s), t0 + 0, "利息是莊家搬給玩家");
   assert.ok(G.casBondTakeNotes(s.w).some(l => l.includes("到期")));
 });
-T("莊家不夠：先莊家、再預算池墊（記 bailout）、再不夠開憑證；莊家回穩補付；全程守恆", G => {
+T("莊家不夠：先莊家、再博物館資金墊（記 bailout）、再不夠開憑證；莊家回穩補付；全程守恆", G => {
   const C = G.NUM.casino.bond, start = G.NUM.casino.houseStart, s = fresh(G);
   G.casBondBuy(s.w, s.house, 3000000, MON);
   const owe = 3000000 + G.casBondInt(s.w.bond.list[0]);

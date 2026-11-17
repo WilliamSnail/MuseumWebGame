@@ -1,5 +1,5 @@
 // 館方投資外面世界（11-14，規劃 2.8f 第五節）：node test/casino_invest.test.cjs（npm test 也會跑）
-// 莊家和預算池超過保留的部分每天投壹點；錢是搬給外面世界、不是燒掉；超過上限不買；跌過停損賣壹半、漲過停利賣三分之壹；虧太多暫停；外面世界吃緊暫停；日報寫昨天的。數字讀 NUM。
+// 莊家和博物館資金超過保留的部分每天投壹點；錢是搬給外面世界、不是燒掉；超過上限不買；跌過停損賣壹半、漲過停利賣三分之壹；虧太多暫停；外面世界吃緊暫停；日報寫昨天的。數字讀 NUM。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -10,24 +10,24 @@ const inv = (G, h) => { const s = G.casBookSnap([], h, 0, null); return G.casBoo
 const run = (G, h, day, b) => G.casInvestRun(h, G.casStockHouseFix(h), day, SEC, b || 0);
 const cost = (G, h, pool) => Object.values(G.casInvestFix(h).pool[pool].cost).reduce((a, b) => a + b, 0);
 
-T("沒超過保留的部分不投：莊家 ≤ reserve、預算池 ≤ budgetKeep；同壹天只跑壹次", G => {
+T("沒超過保留的部分不投：莊家 ≤ reserve、博物館資金 ≤ budgetKeep；同壹天只跑壹次", G => {
   const C = G.NUM.casino.invest, h = mk(G, C.reserve, C.budgetKeep);
   assert.ok(run(G, h, D0).ran); assert.strictEqual(cost(G, h, "house"), 0); assert.strictEqual(cost(G, h, "budget"), 0);
   assert.ok(!run(G, h, D0).ran, "同壹天不重跑");
 });
-T("莊家超過 reserve 的部分每天投 dailyPct%：錢給外面世界（池子變多）、手續費進預算池、總帳守恆、不是燒掉", G => {
+T("莊家超過 reserve 的部分每天投 dailyPct%：錢給外面世界（池子變多）、手續費進博物館資金、總帳守恆、不是燒掉", G => {
   const C = G.NUM.casino.invest, F = G.NUM.casino.stock.feePct, h = mk(G, C.reserve + 1000000000, C.budgetKeep), t0 = inv(G, h), w0 = h.world, b0 = h.budget, k0 = h.bankroll;
   run(G, h, D0);
   const spent = cost(G, h, "house"), fee = Math.ceil((spent) * F / 100);
   assert.ok(spent > 0 && spent <= Math.floor(1000000000 * C.dailyPct / 100), "不超過每天的量：" + spent);
-  assert.strictEqual(h.world - w0, spent - (h.budget - b0), "外面世界收到股款（成本裡含手續費，手續費進預算池）");
-  assert.ok(h.budget > b0, "手續費進預算池");
+  assert.strictEqual(h.world - w0, spent - (h.budget - b0), "外面世界收到股款（成本裡含手續費，手續費進博物館資金）");
+  assert.ok(h.budget > b0, "手續費進博物館資金");
   assert.ok(k0 - h.bankroll >= spent, "莊家付了股款和手續費");
   assert.strictEqual(inv(G, h), t0, "守恆");
   assert.strictEqual(G.casBookBurned(G.casBookSnap([], h, 0, null)), 0, "不是燒掉");
   assert.ok(fee >= 0);
 });
-T("預算池超過 budgetKeep 的部分也投；預算池付給自己的手續費不用搬；守恆", G => {
+T("博物館資金超過 budgetKeep 的部分也投；博物館資金付給自己的手續費不用搬；守恆", G => {
   const C = G.NUM.casino.invest, h = mk(G, C.reserve, C.budgetKeep + 500000000), t0 = inv(G, h), w0 = h.world;
   run(G, h, D0);
   const spent = cost(G, h, "budget"); assert.ok(spent > 0 && spent <= Math.floor(500000000 * C.dailyPct / 100));

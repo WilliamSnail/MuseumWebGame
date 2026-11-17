@@ -4,8 +4,8 @@
 //    整天都可能有人（05:00 到隔天 05:00，分鐘 0～1440，從 05:00 起算；翊文 11-14：「深夜也要有人」。館內股的營業時間另外是 05:00～23:30，跟這個無關），壹位 NPC 的幾站排成壹串不重疊（先後順序、中間空壹下都是亂數）；店待 shopStay（30～120）分鐘、展廳 hallStay（60～180）分鐘。
 //    種子含伺服器祕密：玩家算不出誰幾點在哪。「現在誰在哪」只看時間算得出來，不用排程、不用存（npcPresence）。
 //  錢和評價在「到了」的那壹刻才發生（惰性結算 casNpcLive：任何壹個碰到莊家文件的交易，把已經到時間、還沒結算的幾站結掉；house.npcLive.done 記哪些做過了，冪等）：
-//    壹位 NPC 當天第壹站付壹張門票 ticket（不分紅給玩家：ticketBudgetPct% 預算池、其餘館方帳）；
-//    去的每家店花 perDay × shopPct%（餐車、牌桌 → 莊家；委託櫃台、地下收藏庫、手作坊 → 預算池）；
+//    壹位 NPC 當天第壹站付壹張門票 ticket（不分紅給玩家：ticketBudgetPct% 博物館資金、其餘修繕基金）；
+//    去的每家店花 perDay × shopPct%（餐車、牌桌 → 莊家；委託櫃台、地下收藏庫、手作坊 → 博物館資金）；
 //    到展廳時留壹則評價（house.reviews，最多 20 則；壹位 NPC 壹天最多 reviewDay 則）。
 //  都是外面世界的錢（casPoolWorldOut／casHouseWorldOut）；每位 NPC 壹天最多花 perDay × dayPct%（連門票），全館壹天最多 dayCap ×（1 ＋ extPct% × 景氣），
 //    順序是「到的先後」；外面世界吃緊不花。record：house.npcLive（今天的進度）、house.npcs（最近壹個完整的壹天，日報寫）。
@@ -200,13 +200,13 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     if (!house.npcc || typeof house.npcc !== "object") house.npcc = { comm: 0, hall: 0 };
     house.npcc.hall = nsN(house.npcc.hall) + gv.n; L.crowd.people += gv.n; L.crowd.groups++;
     const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0 || wuHave(house, WU_HH) < amt) continue; // 散客的錢從家計出（W4）；家計不夠就不收
-    const tax = nsTax(amt, "ent"), net = amt - tax; // 娛樂稅（決定 0111）：內含，政府先拿，剩下的才照比例分預算池、館方帳
+    const tax = nsTax(amt, "ent"), net = amt - tax; // 娛樂稅（決定 0111）：內含，政府先拿，剩下的才照比例分博物館資金、修繕基金
     const b = Math.floor(net * C.ticketBudgetPct / 100), got = casPoolWorldOut(house, "budget", "npcCrowdBudget", b) + casPoolWorldOut(house, "museum", "npcCrowdMuseum", net - b), tg = casPoolWorldOut(house, "gov", "entTax", tax);
     hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
     wuDebit(house, WU_HH, got + tg); L.byUnit[WU_HH] = nsN(L.byUnit[WU_HH]) + got + tg; L.sources.entTax = nsN(L.sources.entTax) + tg;
     L.crowd.ticket += got + tg; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
-  // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進預算池），全館壹天 shop.dayCap
+  // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進博物館資金），全館壹天 shop.dayCap
   const CS = CR && CR.shop;
   if (CS && !low) for (const sv of crowdShopToday(day, secret)) {
     if (sv.start > m || L.done[sv.key]) continue;

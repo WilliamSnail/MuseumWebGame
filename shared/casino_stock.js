@@ -4,8 +4,8 @@
 //  館內五家店、槓桿、放空、當沖、盤中價格是後面幾步，規劃在 docs/經濟體系規劃.md 2.8。
 //
 //  錢怎麼動（shared/casino_book.js）：跟「外面世界」買賣（翊文 11-14：「股票不是跟"外面世界"買的嗎?」→「好更改」）。
-//    買：股價×股數 錢給外面世界（casWorldIn，來源 stockBuy），手續費進預算池（搬）。
-//    賣：股價×股數 外面世界付（casWorldOut，來源 stockSell），扣手續費進預算池（搬）。
+//    買：股價×股數 錢給外面世界（casWorldIn，來源 stockBuy），手續費進博物館資金（搬）。
+//    賣：股價×股數 外面世界付（casWorldOut，來源 stockSell），扣手續費進博物館資金（搬）。
 //    莊家完全不出錢，所以沒有「全館持股 ≤ 莊家 50%」那種上限（以前莊家當對手盤時要有，莊家壹窮股市就停擺）。
 //    外面世界就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的 drag、每人每天賣出上限。
 //    記帳照樣對得上：憑空的、消失的都有來源，日報看得到股市每天讓館裡多了或少了多少。
@@ -327,7 +327,7 @@ function casStockDivSync(w, house, S, H) {
     }
   }
 }
-// 持有成本（規劃 2.8l，取代 drag）：每過壹天（換日），館外股票持股市值的 holdPct% 從錢包搬進預算池（搬，不是燒掉）。壹次最多補 7 天；
+// 持有成本（規劃 2.8l，取代 drag）：每過壹天（換日），館外股票持股市值的 holdPct% 從錢包搬進博物館資金（搬，不是燒掉）。壹次最多補 7 天；
 // 第壹次碰到（沒有記錄）只記今天，不補扣。持股市值用現在的價算（換日後第壹次碰到錢包時扣）
 function casStockHoldCost(w, house, S, H) {
   const C = NUM.casino.stock;
@@ -367,7 +367,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   if (cost + fee > w.chips) return { ok: false, reason: CAS_STOCK.poor };
   stSeed(S, H);
   casWorldIn(w, house, "stockBuy", cost); // 錢給外面世界（池子變多，不是燒掉）
-  w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進預算池（搬，不是憑空；拚經濟也是這樣直接動預算池）
+  w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee); // 手續費進博物館資金（搬，不是憑空；拚經濟也是這樣直接動博物館資金）
   S.own[id] = stN(S.own[id]) + n;
   S.cost[id] = stN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   S.fee += fee;
@@ -397,7 +397,7 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (gross > casWorldRoom(house, NUM.casino.world)) return { ok: false, reason: CAS_STOCK.worldTight }; // 外面世界資金吃緊：今天付不出這麼多
   casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 外面世界付（池子變少）
   w.chips -= fee + tax; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
-  if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); } // 資本利得稅進政府帳（決定 0110；以前進預算池）；日報看 house.act.stockTax
+  if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); } // 資本利得稅進政府帳（決定 0110；以前進博物館資金）；日報看 house.act.stockTax
   S.own[id] = have0 - n;
   if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut);
   S.gain += profit; // 累計賣出賺賠（扣稅前）

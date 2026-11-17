@@ -70,7 +70,7 @@ export function fakeBankHall() {
       lev: { max: 5, byMarket: { in: 2, tw: 5, us: 0 }, owed: 120000, owedText: "館內股今天賺的超過館方當天能賠的上限，還有 120,000 記成欠條，明天補發。", usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 3, next: 3, nextText: "再 3 點信用升到 4 級，就能開到 5×。", nextUnlock: { level: 4, lev: 5, pts: 20 }, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
       positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
       orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
-    econ: { books: { day: "2026-11-15", bankroll: 1100000000, budget: 620000000, museum: 48000000, gov: 5200000, sea: 3200000, world: null, d: { bankroll: -12000000, budget: 8000000, museum: 1400000, sea: 300000, world: 0 }, top: { bankroll: [{ label: "21 點贏家拿走", n: -18000000 }, { label: "賭場下注收入", n: 6000000 }], budget: [{ label: "拚經濟撥款", n: -5000000 }, { label: "館方投資買進", n: -3000000 }, { label: "還館債", n: -2000000 }], museum: [{ label: "門票七成", n: 1800000 }], sea: [], world: [] } }, gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。館方預算池充裕，利息照發。", ext: { day: "2026-11-14", ticket: { hall: 18400, crowd: 31200 }, shop: { food: 52300, bj: 128000, craft: 9600, cellar: 0, job: 14400 }, shopCrowd: { food: 31200, bj: 0, craft: 4800, cellar: 0, job: 14400 }, total: 253900, people: { npc: 14, crowd: 86 }, menu: [{ id: "chicken", name: "烤雞肉", npc: 40, crowd: 120 }, { id: "tea", name: "麥茶", npc: 22, crowd: 60 }], orders: [{ who: "鞋店老闆", item: "tea", name: "麥茶", n: 1 }, { who: "小明", item: "chicken", name: "烤雞肉", n: 2 }] }, world: { day: "2026-11-14", states: { normal: 7, cut: 3, squeeze: 2, layoff: 1 }, bands: [1, 3, 7, 2], avgMult: 0.82, unrestBands: [6, 3, 2, 1], mood: { v: 72, band: "warm" }, events: [{ day: "2026-11-14", text: "島上科技集團減薪了" }, { day: "2026-11-12", text: "銀蘋果集團恢復正常" }] }, report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
+    econ: { books: { day: "2026-11-15", bankroll: 1100000000, budget: 620000000, museum: 48000000, gov: 5200000, sea: 3200000, world: null, d: { bankroll: -12000000, budget: 8000000, museum: 1400000, sea: 300000, world: 0 }, top: { bankroll: [{ label: "21 點贏家拿走", n: -18000000 }, { label: "賭場下注收入", n: 6000000 }], budget: [{ label: "拚經濟撥款", n: -5000000 }, { label: "館方投資買進", n: -3000000 }, { label: "還館債", n: -2000000 }], museum: [{ label: "門票七成", n: 1800000 }], sea: [], world: [] } }, gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。博物館資金充裕，利息照發。", ext: { day: "2026-11-14", ticket: { hall: 18400, crowd: 31200 }, shop: { food: 52300, bj: 128000, craft: 9600, cellar: 0, job: 14400 }, shopCrowd: { food: 31200, bj: 0, craft: 4800, cellar: 0, job: 14400 }, total: 253900, people: { npc: 14, crowd: 86 }, menu: [{ id: "chicken", name: "烤雞肉", npc: 40, crowd: 120 }, { id: "tea", name: "麥茶", npc: 22, crowd: 60 }], orders: [{ who: "鞋店老闆", item: "tea", name: "麥茶", n: 1 }, { who: "小明", item: "chicken", name: "烤雞肉", n: 2 }] }, world: { day: "2026-11-14", states: { normal: 7, cut: 3, squeeze: 2, layoff: 1 }, bands: [1, 3, 7, 2], avgMult: 0.82, unrestBands: [6, 3, 2, 1], mood: { v: 72, band: "warm" }, events: [{ day: "2026-11-14", text: "島上科技集團減薪了" }, { day: "2026-11-12", text: "銀蘋果集團恢復正常" }] }, report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
 },
     today: { day: "2026-11-16", ticket: { hall: 120000, crowd: 200000 }, shop: 85000, total: 405000, people: { npc: 14, crowd: 520 } },
     houseInv: { asOf: "2026-11-13", hold: [{ id: "chipshop", name: "掌心晶片鋪", n: 2000, cost: 2400000, value: 2500000, pnl: 100000, pnlPct: 0.0417 }, { id: "applework", name: "銀蘋果工坊", n: 300, cost: 3000000, value: 2850000, pnl: -150000, pnlPct: -0.05 }, { id: "nightidx", name: "夜市指數", n: 800, cost: 420000, value: 432000, pnl: 12000, pnlPct: 0.0286 }],
@@ -151,6 +151,34 @@ function pickAmt(title, sub, amts, then, type) {
   closeOnOutside(m);
 }
 // 借款自己輸入金額（11-15）：打字時只更新下面那行「要還多少、幾號到期」，按「借」才送；超過還可以借的、不到最少的不能按（伺服器也會擋）
+// 還壹部分（決定 0114）：先還利息、再還本金；一次最少 partMin，每筆最多 partMax 次；部分還不升額度
+function partLoan(v, x) {
+  const m = miniLayer("還多少？", `這筆要還 ${fmt(x.owe)}。先還利息、再還本金；壹次最少 ${fmt(x.partMin)}，這筆已經部分還了 ${x.parts}／${x.partMax} 次。部分還款不算準時還清，額度不會升；整筆還清才升。`);
+  let amt = "";
+  const hint = h("p", { class: "bank-hint" }, "輸入金額。");
+  const ok = () => typeof amt === "number" && Number.isFinite(amt) && Math.floor(amt) >= Math.min(x.partMin, x.owe) && Math.floor(amt) <= Math.min(x.owe, v.cash) && x.parts < x.partMax;
+  const go = btn("還", () => { if (ok()) { m.close(); bankDo("repay", { id: x.id, amt: Math.floor(amt) }); } }, "big bank-btn gold", { disabled: true });
+  const upd = () => { go.disabled = !ok(); hint.textContent = x.parts >= x.partMax ? "這筆部分還的次數用完了，請壹次還清或轉分期。" : amt === "" ? "輸入金額。" : !ok() ? `要在 ${fmt(Math.min(x.partMin, x.owe))} 到 ${fmt(Math.min(x.owe, v.cash))} 之間。` : `還 ${fmt(Math.floor(amt))}，還剩 ${fmt(x.owe - Math.floor(amt))}。`; };
+  m.card.classList.add("bank-loan-pop");
+  m.card.append(numField("金額", "", z => { amt = z; upd(); }, { min: 1, step: 1 }), hint,
+    h("div", { class: "bank-acts" }, ...[25, 50].map(p => btn(p + "%", () => { const n = Math.min(x.owe, v.cash, Math.max(x.partMin, Math.floor(x.owe * p / 100))); amt = n; const i = m.card.querySelector("input"); if (i) i.value = String(n); upd(); }, "small bank-btn")), go, btn("取消", () => m.close(), "small")));
+  closeOnOutside(m);
+  const inp = m.card.querySelector("input"); if (inp) { inp.focus(); inp.addEventListener("keydown", e => { if (e.key === "Enter") go.click(); }); }
+}
+// 轉分期（決定 0114）：2～4 期、每期隔 3～7 天；手續費 ＝ 延後那一期的本金 × 借款日利率 × 延後天數
+function splitLoan(l, x) {
+  const sp = l.split, m = miniLayer("轉分期", `把這筆分成 ${sp.kMin}～${sp.kMax} 期，每期隔 ${sp.gMin}～${sp.gMax} 天；第壹期就是原本的到期日。延後的部分照借款的日利率（每天 ${(sp.dayFeePct).toFixed(2)}%）收手續費，算進每期要還的錢。分期和延期只能選壹個，轉了不能再轉。`);
+  let k = sp.kMin, g = sp.gMin;
+  const info = h("div", { class: "bank-hint" });
+  const plan = () => { const base = Math.floor(x.amt / k), baseO = Math.floor(x.owe / k), rate = sp.dayFeePct / 100, due = d => { const t = new Date(Date.parse(x.due + "T00:00:00Z") + d * 86400000); return t.toISOString().slice(5, 10); }; let fee = 0; const rows = []; for (let i = 0; i < k; i++) { const a = base + (i === 0 ? x.amt - base * k : 0), o = baseO + (i === 0 ? x.owe - baseO * k : 0), f = i === 0 ? 0 : Math.ceil(a * rate * g * i); fee += f; rows.push(`${due(g * i)} 還 ${fmt(o + f)}`); } return { rows, fee }; };
+  const upd = () => { const p = plan(); info.textContent = `${p.rows.join("、")}；手續費共 ${fmt(p.fee)}`; };
+  const seg = (label, vals, get, set) => h("div", { class: "bank-acts" }, h("small", null, label), ...vals.map(n => btn(String(n), () => { set(n); upd(); }, "small bank-btn")));
+  const ks = []; for (let i = sp.kMin; i <= sp.kMax; i++) ks.push(i); const gs = []; for (let i = sp.gMin; i <= sp.gMax; i++) gs.push(i);
+  m.card.classList.add("bank-loan-pop");
+  m.card.append(seg("幾期", ks, () => k, n => { k = n; }), seg("每期隔幾天", gs, () => g, n => { g = n; }), info,
+    h("div", { class: "bank-acts" }, btn("轉分期", () => { m.close(); bankDo("loanSplit", { id: x.id, k, g }); }, "big bank-btn gold"), btn("取消", () => m.close(), "small")));
+  upd(); closeOnOutside(m);
+}
 function typeLoan(l) {
   const m = miniLayer("借多少？", `最少 ${fmt(l.min)}，最多 ${fmt(l.left)}。${l.days} 天內還，利息 ${pctText(l.pct)}。`);
   let amt = "";
@@ -248,7 +276,10 @@ function loanPane(v) {
     // 借了 15 分鐘內不能還：寫幾點起可以還，不要只把按鈕淡掉（測試 11-13）；籌碼不夠也寫出來
     h("span", { class: "bank-r" }, x.at && Date.now() < x.at
       ? h("small", { class: "bank-soon" }, `${new Date(x.at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`)
-      : v.cash < x.owe ? h("small", { class: "bank-soon bad" }, "籌碼不夠還") : btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold"))));
+      : h("span", { class: "bank-acts" }, v.cash < x.owe ? h("small", { class: "bank-soon bad" }, "籌碼不夠還整筆") : btn("還錢", () => bankDo("repay", { id: x.id }), "small bank-btn gold"),
+        v.cash >= Math.min(x.partMin, x.owe) && x.parts < x.partMax ? btn("還一部分", () => partLoan(v, x), "small bank-btn") : null,
+        x.splitWhy ? null : btn("轉分期", () => splitLoan(l, x), "small bank-btn"))),
+    x.plan ? h("small", { class: "bank-hint bank-plan" }, `分期：${x.plan.map(p => `${p.due.slice(5)} 要還 ${fmt(p.owe)}`).join("、")}`) : null));
   if (!rows.length) rows.push(h("p", { class: "bank-empty" }, "沒有欠款。"));
   return h("div", { class: "bank-cols" },
     panel("借款", `${l.days} 天內還，利息 ${pctText(l.pct)}`,
@@ -630,7 +661,7 @@ function stockPane(v) {
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
-        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進館方的預算池。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進館方的預算池。" : "股價照外面世界的行情動。買賣各收手續費，進館方的預算池。"),
+        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照外面世界的行情動。買賣各收手續費，進博物館資金。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       debtPanel(v), positionsPanel(S), ordersPanel(S));
@@ -668,7 +699,7 @@ function worldPanel(v) {
 }
 // 館方投資（翊文 11-14：「館方也有投資外面世界，銀行裡怎麼我們看不到」）：數值平衡 PR 445 的 houseInv。昨天的快照，不是現在，所以標「截至」
 const PAUSE_TEXT = { stop: "館方虧太多，暫停買進", world: "外面世界資金吃緊，暫停買進" };
-const POOL_TEXT = { house: "莊家", budget: "預算池" };
+const POOL_TEXT = { house: "莊家", budget: "博物館資金" };
 
 // 館方投資的「投資方式」告示（11-16 翊文：「館方投資的新策略寫在館方投資那欄裡做壹個小圖示可以點出來出現壹個告示讓玩家看」；決定 0099）：數字都讀 NUM.casino.invest，改設定告示跟著變
 const wanText = n => (n >= 100000000 ? `${+(n / 100000000).toFixed(1)} 億` : `${fmt(Math.round(n / 10000))} 萬`);
@@ -678,7 +709,7 @@ function openInvestHow() {
   closeOnOutside(m);
   const even = C.mode !== "chase", li = (...k) => h("li", null, ...k);
   m.card.append(h("ul", { class: "bank-how-l" },
-    even ? li(h("b", null, "平均買全部　"), "每天把能動用的錢（莊家超過 ", wanText(C.reserve), "、預算池超過 ", wanText(C.budgetKeep), "的部分，每天約 ", String(C.dailyPct), "%）平均分給全部館外股票，不挑熱門、不追高。")
+    even ? li(h("b", null, "平均買全部　"), "每天把能動用的錢（莊家超過 ", wanText(C.reserve), "、博物館資金超過 ", wanText(C.budgetKeep), "的部分，每天約 ", String(C.dailyPct), "%）平均分給全部館外股票，不挑熱門、不追高。")
       : li(h("b", null, "追漲　"), "每天挑最近 ", String(C.lookback), " 天漲最多的 ", String(C.topN), " 支多買。"),
     even && C.dip ? li(h("b", null, "跌了多買　"), "某支的價格比館方自己最近 ", String(C.dip.days), " 次的平均成本低 ", String(C.dip.pct), "% 以上，那支這天多買 ", String(C.dip.mult), " 倍。") : null,
     li(h("b", null, C.stopLossPct > 0 || C.takeProfitPct > 0 ? "停損停利　" : "不停損、不停利　"), C.stopLossPct > 0 || C.takeProfitPct > 0 ? `比成本跌 ${C.stopLossPct}% 賣一半、漲 ${C.takeProfitPct}% 賣三分之一。` : "跌了不賣，漲了也不急著賣，抱著等。"),
@@ -735,7 +766,7 @@ function dayTag(day, want) { // want：這份帳應該是哪壹天的（沒給�
 
 // 全館的帳（11-16 翊文：「把館內的這幾個帳都放在銀行館內經濟可以展開來看」）：資料 e.books（數值平衡，日報寫回時寫，延遲壹天、整天不變）
 // { day, bankroll, budget, museum, sea, world（現在的餘額；world 沒有帳是 null）, d: { 各帳比前壹份日報多少 }, top: { 各帳昨天進出最大最多 3 筆 [{ label, n }] } }
-const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢"], ["budget", "預算池", "館方行政：拚經濟、大禮包、投資、還館債"], ["museum", "館方帳", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債"]];
+const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢：牌桌、館內股、免費大禮包、借款"], ["budget", "博物館資金", "館方行政：拚經濟、投資、還館債"], ["museum", "修繕基金", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債"]];
 // live：現在的餘額（伺服器 casBooksLive）；有就把大數字換成即時的，下面寫「05:00 起」多了少了多少、「昨天」照日報
 function booksPanel(b, live) {
   if (!b || typeof b !== "object") return null;
@@ -894,6 +925,10 @@ function helpSections(v) {
         "館內股是真的市場：每家發行 10 萬股，旅客、散客照那家店每 15 分鐘到店的人數下單，價格由買賣推出來；你的買賣也會推動價格。",
         "每個價最多動 3%、壹天最多動 10%，一次想買賣太多會被擋，並告訴你現在最多還能買賣幾股。買賣各有半個價差（0.5%），加上手續費、證交稅，拉高出貨賺不到。",
         "「合理價」是旅客心裡的價，照昨天的人數、營收、景氣調：價格比它高旅客傾向賣，比它低傾向買。人多的店成交多、價格追合理價追得快；人少的店價格幾乎不動。"]],
+      ["借款：部分還、分期", [
+        "借款可以「還一部分」：先還利息、再還本金（壹次最少 5%、最少 1,000，每筆最多 8 次）；部分還款不算準時還清，額度不會升，整筆還清才升。",
+        "借了壹天以上、本金 10 萬以上、沒延過期的，可以「轉分期」：分 2～4 期、每期隔 3～7 天（最晚多 21 天），每期到期只扣那壹期；延後的部分照借款日利率收手續費，算進每期要還的錢。分期和延期只能選壹個。",
+        "賣股還債可以只還壹部分：賣的錢先補負數、還前面的整筆，最後壹筆還不完就先還它的利息和本金的壹部分。"]],
       ["股息和配股", [
         "館外股有配息的，除息日開始時你手上有的股數，每股領真實的現金股利（照遊戲價的倍數、美股照當天匯率換算），錢由外面世界付，扣股利所得稅：台股 30.11%（分離課稅 28% ＋ 二代健保 2.11%）、美股 30%，稅進政府帳。",
         "除息當天才買的不領，也買在掉完股利的價。除權（配股）：除權前持有的人多配股數，零股用現金補。",

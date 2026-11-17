@@ -5,9 +5,9 @@
 //  否則失敗，莊家 -r×10000，約 55% 按的人撈到同額的籌碼（油水，這份是從莊家虧掉的那份流給他，所以兩邊加起來守恆）。
 //  新的：一人一天最多 perDay 次（舊的沒有上限）；一天用台灣 05:00 換日。
 //  莊家是負的（破產中）時拚回正：回 rescued，畫面說「把莊家拚回來了」。莊家的 houseReopen（換日還是負的，Yuga 借錢重開）不用改：拚回正之後就不會被借。
-//  錢從哪裡來（翊文 11-10，決定 0056、0057）：成功時莊家多的那份從「預算池」（house.budget）扣；失敗時莊家虧的那份，被撈走的進錢包，
-//  沒撈走的沉到「海底」（house.sea，翊文：「這個放到另一個地方」）。預算池、海底、莊家、錢包加起來不變（不再憑空生錢、憑空消失）。
-//  預算池不夠可以是負的，只記帳，玩法先不變；兩個地方之後要接什麼再討論。
+//  錢從哪裡來（翊文 11-10，決定 0056、0057）：成功時莊家多的那份從「博物館資金」（house.budget）扣；失敗時莊家虧的那份，被撈走的進錢包，
+//  沒撈走的沉到「海底」（house.sea，翊文：「這個放到另一個地方」）。博物館資金、海底、莊家、錢包加起來不變（不再憑空生錢、憑空消失）。
+//  博物館資金不夠可以是負的，只記帳，玩法先不變；兩個地方之後要接什麼再討論。
 //  文字界線（決定 0048）：沒有真人名字、綽號、頭銜、政黨；失敗和撈油水的句子不接任何政策名字。
 //  純函式：亂數用參數 rnd（預設 RNG，測試可以換）；「今天」從參數來。不碰網路和 DOM。
 //  錢包欄位 ec：{ day, n 今天拚幾次, wins 累計成功, fails 累計失敗, loot 累計撈到的油水, rescues 累計把莊家拚回正 }；舊錢包沒有，這裡補。
@@ -57,14 +57,14 @@ export function casEconPlay(w, house, day, rnd = RNG) {
   const lines = CAS_ECON.cheer.slice();
   // 景氣和政策的影響（11-14，規劃 2.7 節）：成功的撥款 × 景氣倍率（±10%）× 還有效的政策（多或少一成）
   if (x.win) { x.amount = Math.floor(x.amount * casFxMul(house) * casFxPolicy(house, day, "econ")); out.amount = x.amount; }
-  // 預算凍結（翊文 11-13 同意方向，規劃 2.6 節）：預算池用完（≤ 0）的時候，成功也只撥平常的 freezeKeep%，不再把錢印出來
+  // 預算凍結（翊文 11-13 同意方向，規劃 2.6 節）：博物館資金用完（≤ 0）的時候，成功也只撥平常的 freezeKeep%，不再把錢印出來
   const frozen = house.budget <= 0 && C.freezeKeep < 100;
-  const dead = x.win && house.budget <= C.budgetFloor; // 預算池低到硬下限：完全不撥款（不再欠館方更多）
+  const dead = x.win && house.budget <= C.budgetFloor; // 博物館資金低到硬下限：完全不撥款（不再欠館方更多）
   if (dead) { x.amount = 0; out.amount = 0; out.frozen = true; out.dead = true; }
   else if (x.win && frozen) { x.amount = Math.floor(x.amount * C.freezeKeep / 100); out.amount = x.amount; out.frozen = true; }
   if (x.win) {
     casHouseMove(house, "econWin", x.amount);
-    house.budget -= x.amount; // 從預算池撥過來
+    house.budget -= x.amount; // 從博物館資金撥過來
     e.wins++;
     casCount(house, "econWin");
     out.policy = x.policy;
@@ -86,7 +86,7 @@ export function casEconPlay(w, house, day, rnd = RNG) {
       out.loot = x.amount; w.chips += x.amount; e.loot += x.amount;
       if (w.st) w.st.chipsMax = Math.max(ecNum(w.st.chipsMax), w.chips);
       lines.push(casFill(CAS_ECON.failLoot, { n: casNum(x.amount) }));
-    } else house.sea += x.amount; // 石沉大海：沉到海底（不回預算池，決定 0057）
+    } else house.sea += x.amount; // 石沉大海：沉到海底（不回博物館資金，決定 0057）
     lines.push(CAS_ECON.failEnd);
   }
   out.houseAfter = house.bankroll;

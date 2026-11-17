@@ -7,7 +7,7 @@
 //    景氣：反向，景氣差（house.econ.b < 0）畫價微漲、景氣好微跌，最多 ±moodPct%（casFxMood 只讀）。
 //    搶手：全館現在有幾個人持有這幅，每人 ＋demandPct%，最多 ＋demandCapPct%（house.art.own）。
 //  錢怎麼動（守恆，shared/casino_book.js）：買＝錢包 → 莊家（casHouseMove "art"）；賣回＝莊家 → 錢包，只付 sellPct%，差額留在莊家。
-//    莊家現金不夠付就不收（reason），不印錢、不讓預算池墊。
+//    莊家現金不夠付就不收（reason），不印錢、不讓博物館資金墊。
 //  存檔：P.art（這間博物館的，跟收藏一起，不是某位參觀者的；舊存檔沒有，casArtFix 補）：
 //    { v, own: { 畫 id: { tier, date, d 買的那天, paid 付了多少, title } }, buys: { 日期: 買了幾幅 } }
 //  莊家 house.art = { own: { 畫 id: 全館持有幾份 } }（舊的莊家沒有，用到時補）

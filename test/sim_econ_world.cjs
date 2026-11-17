@@ -1,10 +1,10 @@
-// 預算池和莊家的長期模擬（11-13，數值平衡；docs/經濟體系規劃.md 2.6 節的預設值）
+// 博物館資金和莊家的長期模擬（11-13，數值平衡；docs/經濟體系規劃.md 2.6 節的預設值）
 // node test/sim_econ_world.cjs [天數，預設 90]
 // 用真的規則（casEconPlay、casOpenPacks、casJobChips…）讓 N 個玩家每天做滿每日上限，
-// 加上還沒做進遊戲的：門票進預算池、莊家稅、預算凍結。看預算池、莊家、破產重開（印錢）的長期樣子。
+// 加上還沒做進遊戲的：門票進博物館資金、莊家稅、預算凍結。看博物館資金、莊家、破產重開（印錢）的長期樣子。
 // 玩家怎麼用錢（不能從規則算出來，所以是旋鈕）：每天把賺到的籌碼的 R 比例輸給莊家（21 點、餐車、買券），其餘留在錢包。
 // BANK=1：每個玩家每天把錢包裡超過 KEEP（預設 2,000,000）的籌碼存進銀行（先開滿 3 筆 7 天定存，各 termCap，其餘放活存），看利息把莊家吸走多少（銀行 shared/casino_bank.js，11-13）
-// 環境變數：BANK、KEEP、R（預設 0.8）、VISITORS（每人每天來幾位參觀者，預設 20）、SCORE（展廳評分，預設 60）、TICKET（每分的票價，預設 1000）、SHARE（門票進預算池的比例，預設 0.5）、
+// 環境變數：BANK、KEEP、R（預設 0.8）、VISITORS（每人每天來幾位參觀者，預設 20）、SCORE（展廳評分，預設 60）、TICKET（每分的票價，預設 1000）、SHARE（門票進博物館資金的比例，預設 0.5）、
 //          TAX_FROM（莊家稅門檻，預設 200000000）、TAX（稅率，預設 0.1）、FREEZE（凍結時撥款剩幾成，預設 0.2）
 const { load } = require("./load_shared.cjs");
 const G = load();
@@ -71,11 +71,11 @@ function world(N, cfg, seed) {
   return out;
 }
 const M = n => (n / 1e6).toFixed(0).replace(/\B(?=(\d{3})+$)/g, ",") + "M";
-console.log(`${DAYS} 天。玩家每天做滿每日上限，賺到的 ${R * 100}% 輸給莊家。門票：每人每天 ${VISITORS} 位 × 評分 ${SCORE} × ${TICKET}/分 × ${SHARE * 100}% 進預算池 ＝ ${M(VISITORS * SCORE * TICKET * SHARE)}/人/天`);
+console.log(`${DAYS} 天。玩家每天做滿每日上限，賺到的 ${R * 100}% 輸給莊家。門票：每人每天 ${VISITORS} 位 × 評分 ${SCORE} × ${TICKET}/分 × ${SHARE * 100}% 進博物館資金 ＝ ${M(VISITORS * SCORE * TICKET * SHARE)}/人/天`);
 const CFG = [["A 現在（沒有進帳）", {}], ["B ＋門票", { tickets: 1 }], ["C ＋門票＋莊家稅", { tickets: 1, tax: 1 }], ["D ＋門票＋莊家稅＋預算凍結", { tickets: 1, tax: 1, freeze: 1 }], ["E 現在上線的（門票＋預算凍結，沒有稅）", { tickets: 1, freeze: 1 }]];
 for (const N of [3, 10, 20]) {
   console.log(`\n== ${N} 位玩家 ==`);
-  console.log("設定                          預算池見底   重開(印錢)次數/金額   凍結天數   門票進   稅進   第30天預算/莊家      第90天預算/莊家");
+  console.log("設定                          博物館資金見底   重開(印錢)次數/金額   凍結天數   門票進   稅進   第30天預算/莊家      第90天預算/莊家");
   for (const [name, cfg] of CFG) {
     const o = world(N, cfg, 20261113 + N);
     const s30 = o.snaps[30] || {}, s90 = o.snaps[90] || o.snaps[DAYS] || {};

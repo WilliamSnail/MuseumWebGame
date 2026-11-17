@@ -17,7 +17,7 @@ T("數字照舊：一天 3 次、r 0～100、30 以上才成功、成功 ×30000
   assert.deepStrictEqual([C.perDay, C.rMax, C.winAbove, C.winPer, C.losePer, C.ticketPct, C.lootPct], [3, 100, 30, 30000, 10000, 8, 55]);
   assert.ok((C.winAbove + 1) * C.winPer >= 930000 && C.rMax * C.winPer === 3000000, "成功約 93 萬～300 萬");
 });
-T("預算凍結：預算池 ≤ 0 時成功只撥 freezeKeep%，加起來還是守恆；> 0 時照舊；100 ＝ 不凍結", G => {
+T("預算凍結：博物館資金 ≤ 0 時成功只撥 freezeKeep%，加起來還是守恆；> 0 時照舊；100 ＝ 不凍結", G => {
   const C = G.NUM.casino.econ, sum = s => s.house.budget + s.house.sea + s.house.bankroll + s.w.chips;
   assert.strictEqual(C.freezeKeep, 20);
   let s = fresh(G); s.house.budget = 0; let t0 = sum(s), b0 = s.house.bankroll;
@@ -26,13 +26,13 @@ T("預算凍結：預算池 ≤ 0 時成功只撥 freezeKeep%，加起來還是�
   assert.strictEqual(s.house.bankroll, b0 + r.amount); assert.strictEqual(s.house.budget, -r.amount); assert.strictEqual(sum(s), t0);
   assert.ok(r.lines.some(l => l.includes("預算凍結")));
   s = fresh(G); s.house.budget = 1; r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 50), 0.3, 0.99));
-  assert.ok(r.win && !r.frozen && r.amount === 50 * C.winPer, "預算池還有壹點就照舊");
+  assert.ok(r.win && !r.frozen && r.amount === 50 * C.winPer, "博物館資金還有壹點就照舊");
   s = fresh(G); s.house.budget = -5; r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), 0));
   assert.ok(!r.win && !r.frozen && s.house.budget === -5, "失敗不受凍結影響");
   G.NUM.casino.econ.freezeKeep = 100; s = fresh(G); s.house.budget = -5; r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 50), 0.3, 0.99));
   assert.ok(r.win && !r.frozen && r.amount === 50 * C.winPer, "freezeKeep 100 ＝ 不凍結");
 });
-T("預算池、海底（決定 0056、0057）：成功從預算池扣、沒撈到沉到海底；預算池＋海底＋莊家＋錢包加起來不變", G => {
+T("博物館資金、海底（決定 0056、0057）：成功從博物館資金扣、沒撈到沉到海底；博物館資金＋海底＋莊家＋錢包加起來不變", G => {
   const C = G.NUM.casino.econ;
   const sum = s => s.house.budget + s.house.sea + s.house.bankroll + s.w.chips;
   let s = fresh(G); assert.strictEqual(s.house.budget, C.budgetStart);
@@ -42,10 +42,10 @@ T("預算池、海底（決定 0056、0057）：成功從預算池扣、沒撈�
   assert.strictEqual(r.budgetBefore, b0); assert.strictEqual(r.budgetAfter, s.house.budget);
   s = fresh(G); t0 = sum(s); b0 = s.house.budget;
   r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), C.lootPct / 100)); // 沒撈到
-  assert.ok(!r.win && !r.loot); assert.strictEqual(s.house.budget, b0, "不回預算池"); assert.strictEqual(s.house.sea, 20 * C.losePer); assert.strictEqual(sum(s), t0);
+  assert.ok(!r.win && !r.loot); assert.strictEqual(s.house.budget, b0, "不回博物館資金"); assert.strictEqual(s.house.sea, 20 * C.losePer); assert.strictEqual(sum(s), t0);
   assert.strictEqual(r.seaBefore, 0); assert.strictEqual(r.seaAfter, 20 * C.losePer);
   s = fresh(G); t0 = sum(s); b0 = s.house.budget;
-  r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), 0)); // 撈到：預算池、海底都不動
+  r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 20), 0)); // 撈到：博物館資金、海底都不動
   assert.ok(r.loot); assert.strictEqual(s.house.budget, b0); assert.strictEqual(s.house.sea, 0); assert.strictEqual(sum(s), t0);
   s = fresh(G); r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 50), 0.3, 0.99)); // 成功：海底不動
   assert.ok(r.win && s.house.sea === 0);
@@ -53,7 +53,7 @@ T("預算池、海底（決定 0056、0057）：成功從預算池扣、沒撈�
   s = fresh(G); s.house.budget = 100;
   r = G.casEconPlay(s.w, s.house, D1, seq(atR(G, 40), 0, 0.99));
   assert.ok(r.ok && r.win && s.house.budget === 100 - 40 * C.winPer);
-  // 舊的莊家沒有 budget：補上；壞資料也補；破產重開不動預算池
+  // 舊的莊家沒有 budget：補上；壞資料也補；破產重開不動博物館資金
   assert.strictEqual(G.casHouseFix({ v: 1, bankroll: 5 }, D1).house.budget, C.budgetStart);
   assert.strictEqual(G.casHouseFix({ v: 1, bankroll: 5, budget: "壞" }, D1).house.budget, C.budgetStart);
   assert.strictEqual(G.casHouseFix({ v: 1, bankroll: 5 }, D1).house.sea, 0);
