@@ -12,7 +12,7 @@
 import { NUM } from "./config.js";
 import { dcNick, dcNum } from "./discord.js";
 
-export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj", "digest"]; // digest：每天 20:00 的更新彙整（functions/discord_digest.js）
+export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"]; // 每天 20:00 的彙整（kind "digest"，functions/discord_digest.js）不是遊戲事件，不列在這裡
 export const DC_OUT_TEXT = {
   broke: "💸 莊家破產了。Yuga 正在翻抽屜找零錢。想幫忙的人，到賭場的「拚經濟」。",
   breaker: "💥 {nick} 壹把把莊家打到破產了！荷官的手在抖。",
