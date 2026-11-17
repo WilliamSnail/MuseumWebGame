@@ -213,7 +213,9 @@ export function casFlowWorldNodes(house) {
   if (!house || house.world == null) return [];
   const am = wuAmounts(house), nm = id => id === WU_HH ? "家計" : id === WU_PUB ? "公共" : id === WU_WAL ? "NPC 錢包" : ((WORLD_UNITS.find(u => u.id === id) || {}).name || id);
   const ids = new Set(Object.keys(am)); for (const u of WORLD_UNITS) if (u && u.parent == null) ids.add(u.id); // 名單上的每個頂層單位都有，就算帳上還沒有
-  return [...ids].map(id => ({ id: "w:" + id, name: nm(id), tier: 1, parent: "world", bal: Math.max(0, Math.floor(+am[id] || 0)) })).sort((x, y) => y.bal - x.bal);
+  const top = [...ids].map(id => ({ id: "w:" + id, name: nm(id), tier: 1, parent: "world", bal: Math.max(0, Math.floor(+am[id] || 0)) })).sort((x, y) => y.bal - x.bal);
+  const subs = WORLD_UNITS.filter(u => u && u.parent != null).map(u => ({ id: "w:" + u.id, name: u.name || u.id, tier: 1, parent: "w:" + u.parent, bal: null })); // 子公司：名單上有上級的；帳上只分到頂層，所以沒有各自的餘額
+  return top.concat(subs);
 }
 export const CAS_FLOW_LINE = {
   bj: ["house", "players"], pack: ["house", "players"], food: ["house", "players"], loan: ["house", "players"], loanBack: ["house", "players"], job: ["house", "players"], find: ["house", "players"], econLoot: ["house", "players"], bankInt: ["house", "players"],

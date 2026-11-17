@@ -80,7 +80,7 @@ export function fakeBankHall() {
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
-    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: 9e9 - i * 1e9 }))), bal: { house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
+    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
       { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
       { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
       { from: "world", to: "budget", amt: 3100000, srcs: [{ src: "npcCrowdBudget", label: "散客的門票（博物館資金）", amt: 2400000 }, { src: "npcJob", label: "NPC 在委託櫃台花的", amt: 700000 }] },
@@ -90,6 +90,8 @@ export function fakeBankHall() {
       { from: "players", to: "gov", amt: 160000, srcs: [{ src: "stockTax", label: "股票證交稅", amt: 160000 }] },
       { from: "world", to: "gov", amt: 95000, srcs: [{ src: "bizTax", label: "營業稅（店裡的花費）", amt: 95000 }] },
       { from: "house", to: "sea", amt: 22000, srcs: [{ src: "econSea", label: "拚經濟沉到海底", amt: 22000 }] },
+      { from: "w:d0a", to: "house", amt: 120000, srcs: [{ src: "demoA", label: "子公司付給莊家（示範）", amt: 120000 }] },
+      { from: "w:d0b", to: "w:d0a", amt: 80000, srcs: [{ src: "demoB", label: "物流費（示範）", amt: 80000 }] },
       { from: "world", to: "house", amt: 300000, srcs: [{ src: "npcFood", label: "NPC 在餐車花的", amt: 300000 }] },
     ] },
   };

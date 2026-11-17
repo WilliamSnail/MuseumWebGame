@@ -50,6 +50,13 @@ T("flow：名單多加壹個集團、拆成兩個、改名，節點和線自己�
   G.CAS_FLOW_LINE.testPay = ["w:g-new", "house"]; const e2 = G.casFlowEdges({ world: [], bankroll: [{ k: "testPay", label: "付莊家", n: 70 }], budget: [], museum: [], gov: [] });
   assert.ok(e2.edges.some(x => x.from === "w:g-new" && x.to === "house" && x.amt === 70), "莊家那邊的帳也會長出跟集團的線：" + JSON.stringify(e2.edges));
 });
+T("flow：名單上有上級的單位（子公司）也有節點，掛在上級底下", G => {
+  const D = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), D).house, U = G.WORLD_UNITS;
+  U.push({ id: "g-daily-sub", name: "民生子公司", kind: "company", parent: "g-daily", sector: "daily", share: 0, stocks: [] });
+  const n = G.casFlowWorldNodes(h).find(x => x.id === "w:g-daily-sub"); assert.ok(n && n.parent === "w:g-daily" && n.name === "民生子公司", JSON.stringify(n));
+  G.CAS_FLOW_LINE.testSub = ["w:g-daily-sub", "house"]; const e = G.casFlowEdges({ world: [], bankroll: [{ k: "testSub", label: "子公司付莊家", n: 9 }], budget: [], museum: [], gov: [] });
+  assert.ok(e.edges.some(x => x.from === "w:g-daily-sub" && x.to === "house"));
+});
 T("flow：框「佩佩博物館」＝莊家、博物館資金、修繕基金；每個節點都有層", G => {
   const org = G.CAS_FLOW_NODES.filter(x => x.org === "museum").map(x => x.id).sort(); assert.strictEqual(org.join(), "budget,house,museum"); assert.ok(G.CAS_FLOW_ORGS.museum === "佩佩博物館");
   assert.ok(G.CAS_FLOW_NODES.every(x => Number.isInteger(x.tier) && x.name));
