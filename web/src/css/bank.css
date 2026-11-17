@@ -621,3 +621,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-node-g.chip rect { fill: #17294A; stroke-width: 1.2; filter: none; }
 .bank-flow-node-g.chip text.n { font-size: 11.5px; letter-spacing: 0; } .bank-flow-node-g.chip text.b { font-size: 10px; }
 .bank-flow-node-g.more rect { stroke-dasharray: 3 3; }
+.bank-flow-node-g.sub rect { fill: #0F1B33; stroke: #8E8AA8; stroke-dasharray: 2 2; }
+.bank-flow-node-g.sub text.n { fill: #C9D1DE; }
+.bank-flow-node-g.kids rect { stroke-width: 2; }
+.bank-flow-frame { cursor: pointer; outline: none; } .bank-flow-frame:hover rect { fill: rgba(214, 178, 94, .12); }
