@@ -125,7 +125,7 @@ export const CAS_NEWS = {
     food: "餐車昨天賣了 {n} 份，窗口前面排了隊。",
     bjHands: "昨天牌桌上打了 {n} 手，荷官的手沒停過。",
     econWin: "拚經濟昨天成功 {n} 次，Yuga Bot 很得意。",
-    ticketPeople: "昨天有 {n} 位參觀者買票進來。",
+    ticketPeople: "昨天館友在展廳領到 {n} 位參觀者的門票分紅。", // 11-17 翊文：「參觀者門票怎麼可能只有34 位?」：ticketPeople 只算線上館友領到分紅的，不是全部參觀者（全部的在館外旅客、散客那兩列）
     other: "",
   },
   up: "館內 GDP 比前七天多了 {p}%。",
