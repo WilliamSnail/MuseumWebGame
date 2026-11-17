@@ -21,6 +21,11 @@ function sim(G, npcs, opts = {}) {
   for (let i = 0; i < days; i++) {
     const d = add(start, i); if (i > 0) { h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy }; G.casHouseFix(h, d); }
     const before = h.world; G.casNpcSpend(h, d, "sim" + i, list, null);
+    if (opts.slots) { // 整天陸續發生（決定 0120）：每 15 分鐘碰壹次莊家，記每格集團之間搬了多少（house.led.units 的累計差）
+      const sumU = () => Object.values((h.led && h.led.units) || {}).reduce((x, y) => x + y, 0), t0 = Date.parse(d + "T05:00:00+08:00"), row = [];
+      for (let k = 0; k < 96; k++) { const b0 = sumU(); G.wtAdvance(h, d, t0 + k * 900000 + 1000); row.push(sumU() - b0); }
+      opts.slots.push({ d, row });
+    }
     const N = h.npcs && h.npcs.day === d ? h.npcs : null, t = N ? N.ticket + N.shop + N.crowd.ticket + N.crowd.shop : 0;
     spent.total += t; if (N && N.byUnit) for (const k of Object.keys(N.byUnit)) spent.byUnit[k] = (spent.byUnit[k] || 0) + N.byUnit[k];
     perDay.push({ d, spent: t, world: h.world, out: before - h.world });
