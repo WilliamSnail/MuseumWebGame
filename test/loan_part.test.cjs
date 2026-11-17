@@ -112,4 +112,11 @@ T("賣股還債也能部分還：賣的錢夠補負數、還前面的整筆，�
   assert.ok(s.h.loansOut < loans0, "莊家借出去的本金減少"); assert.strictEqual(G.casBookGap(G.casBookSnap([s.w], s.h, 0, null), op), 0);
 });
 
+T("財經專員寄新規定的信：還有借款的人壹人壹封（advisor-rules），帶自己的數字；沒借款不寄；之後欠款的信照舊", G => {
+  const s = mk(G), none = G.casAdvisorLetter(s.w, s.h, D, T1(D)); assert.strictEqual(none, null, "沒借款：不寄");
+  const x = borrow(G, s, 1000000), a = G.casAdvisorLetter(s.w, s.h, D, T1(D)); assert.ok(a && a.id === "advisor-rules", a && a.id);
+  assert.ok(a.mail.note.includes("部分") && a.mail.note.includes("分期") && a.mail.note.includes(G.casNum(x.owe)) && a.mail.note.includes(x.due.slice(5)), a.mail.note);
+  const p = G.casLoanSplitPlan({ amt: x.amt, owe: x.owe, due: x.due }, 3, 7); assert.ok(a.mail.note.includes(G.casNum(p.fee)), "有手續費");
+  const b = G.casAdvisorLetter(s.w, s.h, plus(D, 1), T1(plus(D, 1))); assert.ok(b && b.id === "advisor-first", "新規定的信只寄壹次，之後欠款的信照舊：" + (b && b.id));
+});
 console.log(`loan_part.test：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);

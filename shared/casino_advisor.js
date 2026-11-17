@@ -11,6 +11,7 @@ import { casFill, casNum } from "./casino.js";
 import { casStockFix, casStockHouseFix } from "./casino_stock.js";
 import { IN_IDS, casInFix, casInPrice } from "./casino_stock_in.js";
 import { casDebtOwed } from "./casino_debt.js";
+import { casLoanSplitPlan } from "./casino_wallet.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { US_IDS } from "./stocks_tw.js";
@@ -29,6 +30,10 @@ export const CAS_ADVISOR = {
   mailPlanSell: "賣 {name} 就能還清",
   mailPlanSell2: "股票先賣館內股再賣館外股",
   mailPlanNone: "先去地下工作或等收入，我再幫你排",
+  rulesTitle: "借款新規定：可以部分還、轉分期",
+  rulesNote: "我是金融集團的財經專員梁安。借款有新規定，你手上還有借款，所以寫信告訴你：壹、可以「還壹部分」：先還利息、再還本金，壹次最少 {min}（剩下的 5%，最少 1,000），每筆最多 {max} 次；部分還款不算準時還清，額度不會升，整筆還清才升。二、借了壹天以上、本金 10 萬以上、沒延過期的，可以轉 2～4 期分期，每期隔 3～7 天（最多多 21 天），延後的部分照借款日利率收手續費（每天約 {fee}%）；分期和延期只能選壹個。三、賣股還債也可以只還壹部分。你的借款：{loans}。到銀行借款頁就能用。",
+  rulesLoan: "借 {amt}、要還 {owe}、{due} 到期，轉 3 期（每 7 天）每期約 {each}、手續費共 {fee}",
+  rulesMore: "還有 {n} 筆",
   partNeg: "錢包欠 {n}",
   partLoan: "借款共 {n}",
 };
@@ -87,7 +92,23 @@ export function casAdvisorPlan(w, house, day, t) {
 }
 
 // 個人信：第壹次符合寄固定編號的（advisor-first）；好起來之後又欠了，隔 resendDays 天可以再寄（編號 advisor-日期）。回 null ＝ 這次不寄；回 { id, mail } 並記在 w.adv
+// 借款新規定的信（決定 0114，翊文 11-17）：還有借款沒還的館友，下一次碰到錢包時寄壹封（固定編號、每人壹封），帶自己的數字：每筆欠多少、哪天到期、轉 3 期每期約多少、手續費
+export function casAdvisorRulesLetter(w, day, days = 30) {
+  const A = advBox(w), L = advLoans(w);
+  if (A.rules || !L.length) return null;
+  A.rules = day;
+  const C = NUM.casino.loan, rows = L.slice().sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : a.id - b.id)), show = rows.slice(0, 3).map(x => {
+    const p = casLoanSplitPlan({ amt: adN(x.amt), owe: adN(x.owe), due: x.due }, 3, 7);
+    return casFill(CAS_ADVISOR.rulesLoan, { amt: casNum(x.amt), owe: casNum(x.owe), due: x.due.slice(5), each: casNum(Math.round(p.plan.reduce((s, q) => s + q.owe, 0) / 3)), fee: casNum(p.fee) });
+  });
+  if (rows.length > 3) show.push(casFill(CAS_ADVISOR.rulesMore, { n: rows.length - 3 }));
+  const min = Math.min(...rows.map(x => Math.min(adN(x.owe), Math.max(C.part.minAbs, Math.ceil(adN(x.owe) * C.part.minPct / 100)))));
+  const id = "advisor-rules";
+  return { id, mail: { id, from: CAS_ADVISOR.name, title: CAS_ADVISOR.rulesTitle, note: casFill(CAS_ADVISOR.rulesNote, { min: casNum(min), max: C.part.max, fee: (C.interestPct / C.days).toFixed(2), loans: show.join("；") }), gift: { insp: 0, mood: 0 }, sent: day, expire: advAddDays(day, days), claimed: false } };
+}
 export function casAdvisorLetter(w, house, day, t, days = 30) {
+  const rl = casAdvisorRulesLetter(w, day, days);
+  if (rl) return rl; // 新規定的信先寄；欠款的信下一次碰到再寄（它的條件沒被用掉）
   const A = advBox(w), d = casAdvisorDebt(w);
   if (!d.need) { A.clear = true; return null; }
   const first = !A.sent;
