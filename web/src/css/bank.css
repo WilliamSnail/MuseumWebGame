@@ -635,3 +635,21 @@ body[data-screen="bank"] #room { background: none; }
 .bank-row.gs { grid-template-columns: 1.5fr .9fr .8fr .9fr 1fr; cursor: pointer; }
 .bank-row.gs.on { background: rgba(214, 178, 94, .22); }
 .bank-row.gs.head { min-height: 34px; cursor: default; font-size: var(--type-small, .75rem); color: var(--bank-ink-soft); }
+
+/* 金流縮放（11-17）：上面一條路徑＋放大縮小，過場放大／縮小一下就停 */
+.bank-flow-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-bottom: 1px solid rgba(214, 178, 94, .3); background: rgba(15, 25, 43, .6); position: relative; z-index: 2; }
+.bank-flow-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-width: 0; font-size: var(--type-small, .8125rem); color: #D6B25E; }
+.bank-flow-crumb { padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(214, 178, 94, .6); background: rgba(214, 178, 94, .12); color: #F3E0B0; font: inherit; font-weight: 700; cursor: pointer; min-height: 30px; }
+.bank-flow-crumb:hover { background: rgba(214, 178, 94, .26); }
+.bank-flow-here { padding: 4px 10px; color: #FFF3C4; font-size: var(--type-small, .8125rem); }
+.bank-flow-crumbs i { font-style: normal; opacity: .7; }
+.bank-flow-zoom { display: flex; gap: 6px; flex: none; }
+.bank-flow-zb { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #C9A55A; background: linear-gradient(#3A4A6B, #25314D); color: #FFF3C4; font-size: 1.1rem; font-weight: 700; line-height: 1; cursor: pointer; }
+.bank-flow-zb:hover:not(:disabled) { background: linear-gradient(#4A5C82, #2F3D5E); }
+.bank-flow-zb:disabled { opacity: .35; cursor: default; }
+.bank-flow-map { touch-action: pan-y; }
+.bank-flow-svg.zin { animation: bank-flow-zin .3s ease-out; transform-origin: 50% 40%; }
+.bank-flow-svg.zout { animation: bank-flow-zout .3s ease-out; transform-origin: 50% 40%; }
+@keyframes bank-flow-zin { from { transform: scale(.86); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+@keyframes bank-flow-zout { from { transform: scale(1.14); opacity: .2; } to { transform: scale(1); opacity: 1; } }
+.bank-flow-node-g.focus rect { stroke: #FFF3C4; stroke-width: 2.4; }
