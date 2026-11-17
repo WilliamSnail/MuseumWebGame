@@ -85,7 +85,8 @@ export function casStockFix(w) {
   if (!stBox(S.seen)) S.seen = {}; // 玩家上次看到的價（view 的 fresh 用）
   for (const k of Object.keys(S.seen)) { const n = stPx(S.seen[k]); if (n > 0 && STOCK_IDS.includes(k)) S.seen[k] = n; else delete S.seen[k]; }
   // 配股息（決定 0112）：dv.done 已經領過的事件、dv.start { 日期: { id: 股數 } } 每個遊戲日第一次被碰到時的持股（除息日當天先買的人領不到：領的是除息日開始時的持股）
-  if (!stBox(S.dv)) S.dv = { done: {}, start: {} };
+  if (!stBox(S.dv)) S.dv = { done: {}, start: {}, last: null };
+  S.dv.last = stDay(S.dv.last) ? S.dv.last : null; // 上次領息時的遊戲日：只領「除息日在這之後」的事件（舊錢包第一次不補領過去的，不然 1 個月內的除權會被套到早就調過價的持股上）
   if (!stBox(S.dv.done)) S.dv.done = {}; if (!stBox(S.dv.start)) S.dv.start = {};
   { const ks = Object.keys(S.dv.done); if (ks.length > 120) ks.sort().slice(0, ks.length - 120).forEach(k => delete S.dv.done[k]); }
   for (const d of Object.keys(S.dv.start)) { if (!stDay(d) || !stBox(S.dv.start[d])) { delete S.dv.start[d]; continue; } for (const k of Object.keys(S.dv.start[d])) { const n = stN(S.dv.start[d][k]); if (n > 0 && STOCK_IDS.includes(k)) S.dv.start[d][k] = n; else delete S.dv.start[d][k]; } }
@@ -298,10 +299,12 @@ export const casStockDivTaxPct = id => (stockIsUs(id) ? NUM.casino.stock.div.tax
 function casStockDivSync(w, house, S, H) {
   if (!stDay(H.day)) return;
   if (!S.dv.start[H.day]) S.dv.start[H.day] = Object.assign({}, S.own); // 每個遊戲日第一次被碰到時記下持股（在任何買賣之前）
-  const days = Object.keys(S.dv.start).sort(), W = NUM.casino.world;
+  const days = Object.keys(S.dv.start).sort(), W = NUM.casino.world, last = S.dv.last || H.day; // 舊錢包、新錢包第一次：只領今天（含）以後的除息日
+  S.dv.last = H.day;
   for (const e of H.div.ev) {
     if (S.dv.done[e.key] || e.ex > H.day) continue;
     S.dv.done[e.key] = 1;
+    if (e.ex < last) continue; // 除息日在上次領息的遊戲日以前：那時候的價早就調過了，不補領（也不補配股）
     const d = days.find(x => x >= e.ex), sh = d ? stN(S.dv.start[d][e.id]) : stN(S.own[e.id]);
     if (!(sh > 0)) continue;
     const name = stDef(e.id).name;
