@@ -399,8 +399,8 @@ export const NUM = {
     // 新玩家的起始籌碼是文化部補助（決定 0082）：從外面世界池子搬、來源記 cultureStart，不再憑空。on:false ＝照舊憑空給。maxPlayers：全館最多補助幾位（池子吃緊時只補付得出的部分）
     culture: { on: true, name: "文化部" },
     // 世界集團的股票（決定 0121，shared/casino_stock_grp.js）：名單 listed 的集團發股。資本額 ＝ 池子 × capMult；基本價 ＝ 每股淨值 × pb ×（1＋healthW×(h−1)）×（1＋marketW×市場景氣）；推價 depthPct（買 1% 股本推約 5%）、半價差 half、漲跌停 dayLim、每 15 分鐘 tickLim；
-    //   持股上限 holdCapPct%、壹人壹天 dayVolPct%、莊家庫存 makerCapPct%；每週一：現金股利（池子成長 × payoutPct%）、增資（吃緊、hBelow、莊家要留 keep）、庫藏股（健康、價格低於基本價 discPct%）、股票股利（價格 ≥ stockDivPx）、分割（價格 ≥ splitPx）
-    gstock: { on: true, capMult: 2, p0: 100, pb: 2, floor: 1, ticks: 75, half: 0.01, depthPct: 20, tickLim: 3, dayLim: 10, revert: 0.1, sd: 0.004, healthW: 0.5, marketW: 0.1, holdCapPct: 5, dayVolPct: 1, makerCapPct: 10, payoutPct: 30,
+    //   （決定 0122：拿掉持股上限；壹人壹天 80%、莊家庫存 100%）壹人壹天 dayVolPct%、莊家庫存 makerCapPct%；每週一：現金股利（池子成長 × payoutPct%）、增資（吃緊、hBelow、莊家要留 keep）、庫藏股（健康、價格低於基本價 discPct%）、股票股利（價格 ≥ stockDivPx）、分割（價格 ≥ splitPx）
+    gstock: { on: true, cover: { pct: 50, max: 200000000 }, capMult: 2, p0: 100, pb: 2, floor: 1, ticks: 75, half: 0.01, depthPct: 20, tickLim: 3, dayLim: 10, revert: 0.1, sd: 0.004, healthW: 0.5, marketW: 0.1, dayVolPct: 80, makerCapPct: 100, payoutPct: 30,
       raise: { pct: 5, discPct: 5, hBelow: 0.9, keep: 100000000 }, buyback: { pct: 2, premPct: 2, hAbove: 1.05, discPct: 90, maxPoolPct: 2 }, stockDivPx: 250, stockDivPct: 5, splitPx: 500, splitK: 2 },
     houseStart: 100000000,  // 莊家一開始有多少（舊的錢包檔是手動建的，數字不抄；這個是新定的）
     houseReset: 10000000,   // 莊家破產中（小於 0）過了換日，Yuga 借他這麼多重新開張
