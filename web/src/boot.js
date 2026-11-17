@@ -14,6 +14,7 @@ import { dailyRecovery } from "./ui_screens1.js";
 import { visitorCard } from "./ui_screens2.js";
 import { netBoot } from "./ui_login.js";
 import { ticketPing } from "./ui_ticket.js";
+import { restLoop } from "./rest.js";
 
 export function normalizeImages(o) {
   const out = {};
@@ -106,6 +107,7 @@ export function boot() {
     rt = setTimeout(() => { const p = planPortrait(); if (p !== wasPortrait) { wasPortrait = p; if (UI.screen === "lobby") rerender(); } }, 250);
   });
   setInterval(tick, 1000);
+  restLoop(); // 閒置省電：45 秒沒操作，無限循環的動畫先停（11-17 玩家反應手機、電腦會熱）
   netBoot(); // 多人版 M1：看伺服器、上次登入過沒（不等它，布幕先放）
   museumDoor(() => go("title", {}, { action: false }));
 }
