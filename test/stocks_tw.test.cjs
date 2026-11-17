@@ -281,5 +281,23 @@ T("掛單有效到當天收盤：隔天才回來也取消（先檢查前壹天�
   G.casStockMatch(w, house, D2, at(D2, 5, 30));
   assert.strictEqual(w.stk.orders.length, 0); assert.strictEqual(w.stk.hold, 0);
 });
+T("開盤前給上壹場的走勢（lastSession，11-17）：隔天 09:00 前有前壹天整場、基準是那天的昨收；開盤後就不給", G => {
+  const house = house0(G, D), doc = TW(G), w = wallet(G);
+  G.casStockTwApply(house, doc, D, at(D, 13, 40));
+  const close = house.stk.px[TWID], base = house.stk.hist[D][TWID];
+  const D2 = "2026-11-17", doc2 = G.twDocRoll(doc, D2, 5);
+  G.casStockTwSettle(house, doc2, D2); G.casStockRoll(house, D2, {});
+  G.casStockTwApply(house, doc2, D2, at(D2, 8, 0));
+  let x = G.casStockView(w, house, D2, at(D2, 8, 0)).list.find(y => y.id === TWID);
+  assert.strictEqual(x.twState, "pre"); assert.strictEqual(J(x.intraday), "[]");
+  assert.ok(x.lastSession, "開盤前要有上壹場"); assert.strictEqual(x.lastSession.day, D);
+  assert.strictEqual(x.lastSession.ser.length, 271); assert.strictEqual(x.lastSession.ser[270], close); assert.strictEqual(x.lastSession.base, base);
+  const u = G.casStockView(w, house, D2, at(D2, 8, 0)).list.find(y => y.id === "pillpot");
+  assert.ok(u.lastSession && u.lastSession.ser.length > 1, "非科技台股也有");
+  const doc3 = runDay(G, "祕密", { gap: 0.01 }); doc3.day = D2; doc3.days = doc2.days;
+  G.casStockTwApply(house, doc3, D2, at(D2, 9, 10));
+  x = G.casStockView(w, house, D2, at(D2, 9, 10)).list.find(y => y.id === TWID);
+  assert.strictEqual(x.twState, "open"); assert.ok(x.intraday.length > 1); assert.strictEqual(x.lastSession, null, "開盤有今天的價就不給上壹場");
+});
 console.log(`${pass} passed, ${fail} failed（台股盤中）`);
 process.exit(fail ? 1 : 0);
