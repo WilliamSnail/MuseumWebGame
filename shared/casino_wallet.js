@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldLow, casCultureDue } from "./casino_book.js";
+import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
 import { whTick, wuDebit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
@@ -110,6 +110,7 @@ export function casHouseFix(h, day) {
     if (gotG > 0) { wuDebit(h, "u-culture", gotG); h.grants[g.id] = day || true; } // 外面世界撥的（池子少了），不是憑空
     if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
   }
+  if (!h.wExp && NUM.casino.world.expand > 0) { const x = casWorldExpand(h, NUM.casino.world.expand); wuFix(h); wuGrow(h, x); h.wExp = day || true; } // 決定 0117：外面世界一次性擴充（帳上分類照權重分）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
   wuFix(h); // 外面世界的帳上分類（W3，決定 0086）：沒有就照比例建
@@ -126,7 +127,7 @@ function casHouseDaily(h, day) {
   }
   const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
   // 0 外面世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
-  { const WC = C.world, g = casWorldGrow(h, Math.floor(WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)) * days)); wuGrow(h, g); whTick(h, day, h.stk && h.stk.px); } // 成長按權重分給單位；單位的健康值、週一換狀態（W5）（W3，帳上的分類，總和不變）
+  { const WC = C.world, yoy = Math.max(0, casNz(h.econ && h.econ.yoy)), base = WC.growYoy ? Math.max(WC.growBase, h.world * yoy / 100 / 365) : WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)), g = casWorldGrow(h, Math.floor(base * days)); wuGrow(h, g); whTick(h, day, h.stk && h.stk.px); } // 成長按權重分給單位；單位的健康值、週一換狀態（W5）（W3，帳上的分類，總和不變）
   // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
   if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));

@@ -19,7 +19,7 @@ import { casFill } from "./casino.js";
 export const CAS_REPORT = {
   title: "Yuga Bot 日報",
   intro: "館方的帳，Yuga Bot 每天算壹次。這是結算過的數字，不是現在的。",
-  mint: { worldGrow: "外面世界每天成長", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
+  mint: { worldGrow: "外面世界每天成長（照 GDP 年增率）", worldExpand: "外面世界一次性擴充", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（外面世界撥款，要還）", worldLoan: "外面世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進博物館資金）", ticketMuseum: "參觀者門票（進修繕基金）" },
   // 外面世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進外面世界）
   world: { stockBuy: "買股票（錢給外面世界）", stockSell: "賣股票（外面世界付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（外面世界付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟外面世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
@@ -56,10 +56,10 @@ export function casBooksView(doc, full) {
   const bank = [], world = [], budget = [], museum = [], gov = [];
   const hm = d.houseMint || {}, fl = d.flow || {}, hb = d.houseBurn || {};
   for (const [k, v] of Object.entries(fl)) if (!CAS_BOOK_POOL[k]) add(bank, k, casReportLabel(k), v);
-  for (const [k, v] of Object.entries(hm)) if (k !== "ticketBudget" && k !== "ticketMuseum" && k !== "worldGrow") add(bank, k, casReportLabel(k), v);
+  for (const [k, v] of Object.entries(hm)) if (k !== "ticketBudget" && k !== "ticketMuseum" && k !== "worldGrow" && k !== "worldExpand") add(bank, k, casReportLabel(k), v);
   for (const [k, v] of Object.entries(hb)) add(bank, k, casReportLabel(k), -v);
   for (const [k, v] of Object.entries(d.wflow || {})) add(world, k, casReportLabel(k, "world"), v); // 外面世界的角度：正＝進外面世界
-  add(world, "worldGrow", casReportLabel("worldGrow", "world"), hm.worldGrow);
+  add(world, "worldGrow", casReportLabel("worldGrow", "world"), hm.worldGrow); add(world, "worldExpand", casReportLabel("worldExpand", "world"), hm.worldExpand);
   add(budget, "ticketBudget", R.houseMint.ticketBudget, hm.ticketBudget); add(museum, "ticketMuseum", R.houseMint.ticketMuseum, hm.ticketMuseum);
   for (const [k, pool] of Object.entries(CAS_BOOK_POOL)) add(pool === "budget" ? budget : pool === "gov" ? gov : museum, k, casReportLabel(k), fl[k]); // 池子自己的角度：flow 正＝進池子
   add(budget, "econWin", R.flow.econWin, -(fl.econWin || 0)); add(budget, "investFee", "投資手續費", -(fl.investFee || 0)); add(budget, "budgetLoan", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "budgetRepay", R.flow.budgetRepay, -(fl.budgetRepay || 0)); // 這幾個動的是莊家（拚經濟撥款、投資手續費、借還），博物館資金在對面：反號
@@ -157,6 +157,7 @@ export function casReportView(doc) {
   // 外面世界（規劃 2.12）：現在有多少、這段時間怎麼進出。有帳以前的日報沒有這一段
   if (H.world != null) {
     const wl = [`外面世界現在有 ${rpN(H.world)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.world)}）`}。`];
+    { const hm2 = d.houseMint || {}; if (hm2.worldExpand > 0) wl.push(`外面世界一次性擴充 ${rpN(hm2.worldExpand)}（憑空，只進外面世界）。`); if (hm2.worldGrow > 0) wl.push(`每天成長 ${rpN(hm2.worldGrow)}（照台灣 GDP 年增率，只進外面世界、不給玩家）。`); }
     if (H.world < Math.floor(NUM.casino.world.start * NUM.casino.world.lowPct / 100)) wl.push("外面世界資金吃緊：賣股、槓桿賺的錢壹天只付得出壹部分，也暫停借錢給莊家。");
     const into = {}, out = {}, wNames = Object.fromEntries(Object.keys(d.wflow || {}).map(k => [k, casReportLabel(k, "world")]));
     for (const [k, v] of Object.entries(d.wflow || {})) { if (v > 0) into[k] = v; else if (v < 0) out[k] = -v; }

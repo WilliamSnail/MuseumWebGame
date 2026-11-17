@@ -174,6 +174,15 @@ export function casWorldGrow(house, n) {
   return n;
 }
 
+// 外面世界一次性擴充（決定 0117，真正憑空，記 mint.worldExpand；每個莊家文件壹次，由呼叫的人用 house.wExp 擋）
+export function casWorldExpand(house, n) {
+  n = bkNz(n);
+  if (n <= 0) return 0;
+  house.world = bkNz(house.world) + n;
+  bkAdd(casLedFix(house, ["mint", "flow", "burn", "world"]).mint, "worldExpand", n);
+  return n;
+}
+
 // 莊家憑空多 n（破產重開）
 export function casHouseMint(house, src, n) {
   n = bkNz(n);

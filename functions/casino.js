@@ -395,7 +395,7 @@ async function writeEcon(doc, day) {
       ["消費", casNum(g.C)], ["投資", casNum(g.I)], ["政府支出", casNum(g.G)], ["淨出口", casNum(g.NX)]];
     const top = ["food", "bjHands", "econWin", "ticketPeople"].map(k => ({ key: k, n: A[k] || 0 })).sort((a, b) => b.n - a.n)[0];
     h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
-    h.econ = { b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
+    h.econ = { yoy: doc.ext && doc.ext.ok ? doc.ext.yoy : 0, b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
       perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
     put(tx, houseRef(), h);
   });
@@ -415,7 +415,7 @@ export async function casReport() {
     const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
     const ext = casGdpExt(ECONOMY, day); // 外面世界的景氣（content/economy.json，每日排劇情的排程更新）
     doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7, ext.b);
-    doc.ext = { ok: ext.ok, quarter: ext.quarter || "", stale: !!ext.stale };
+    doc.ext = { ok: ext.ok, quarter: ext.quarter || "", stale: !!ext.stale, yoy: ext.ok ? ext.yoy : 0 };
     doc.gap = casBookGap(snap, doc.opening);
     doc.audit = !!casEconActive(ECON_EVENTS, day).audit; // 全館對帳日（E8）：日報多印壹行對帳差
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
