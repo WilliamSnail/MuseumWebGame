@@ -21,13 +21,14 @@
 //                 什麼時候用：W2 以後確認世界文件有沒有每天寫、W5 以後看哪些集團減薪／緊縮／裁員（管理者看得到每家，財報只給分布）。
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
+//   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠（11-17）。名字在紀錄裡遮掉。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -209,6 +210,51 @@ async function houseLedger(db) {
     if (b.length) { console.log("    消失的："); b.forEach(l => console.log("  " + l)); }
   });
 }
+// 只讀：壹位館友的投資（11-17 翊文：「能問一下 玩家 YUGA chu投資了多少嗎」）。照名字（members 的 nick，大小寫、空白不計）找錢包，
+//   用銀行畫面同壹套算法（casStockViewAll、casStockLevView）印持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賣出賺賠和手續費。
+//   名字在紀錄裡被 --mask 遮成 ***；不印 uid、email。館內股的盤中價要亂數祕密（這裡沒有），用今天的開盤價估。
+async function playerInvest(db, name) {
+  const key = s => String(s || "").replace(/\s+/g, "").toLowerCase();
+  const ms = await db.collection("members").get();
+  const hits = ms.docs.filter(d => key(d.data().nick) === key(name));
+  if (!hits.length) { console.log("找不到這個名字的館友（比對 members 的暱稱，不分大小寫、空白）"); process.exitCode = 1; return; }
+  if (hits.length > 1) console.log(`同名的有 ${hits.length} 位，壹位壹位列`);
+  const url = p => require("url").pathToFileURL(path.join(__dirname, "..", "shared", p)).href;
+  const { casStockViewAll } = await import(url("casino_stock.js"));
+  const { casStockLevView } = await import(url("casino_stock_lev.js"));
+  const { taipeiDay } = await import(url("logic.js"));
+  const hs = await db.doc("casinoHouse/main").get();
+  const house = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
+  const t = Date.now(), day = taipeiDay(t);
+  const nz = v => (Number.isFinite(+v) ? +v : 0), fmt = n => Math.round(nz(n)).toLocaleString("en-US"), px = n => nz(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  for (const [i, d] of hits.entries()) {
+    const ws = await db.doc(`casinoWallets/${d.id}`).get();
+    if (!ws.exists) { console.log(`#${i + 1}：沒有錢包（還沒進過賭場、銀行）`); continue; }
+    const w = JSON.parse(ws.data().data || "{}");
+    const S0 = JSON.parse(JSON.stringify(w.stk || {}));
+    const v = casStockViewAll(w, JSON.parse(JSON.stringify(house)), day, null, []);
+    const L = casStockLevView(w, JSON.parse(JSON.stringify(house)), day, t);
+    const own = v.list.filter(x => x.mine > 0);
+    let val = 0, cost = 0;
+    console.log(`#${i + 1}　籌碼 ${fmt(w.chips)}　（${day}）`);
+    console.log("  持股：" + (own.length ? "" : "（沒有）"));
+    for (const x of own) {
+      val += nz(x.value); cost += nz(x.costTotal);
+      console.log(`    ${x.name}（${x.market === "in" ? "館內" : x.market === "us" ? "美股" : "台股"}）${fmt(x.mine)} 股　現價 ${px(x.price)}　市值 ${fmt(x.value)}　成本 ${fmt(x.costTotal)}　帳面 ${x.pnl >= 0 ? "+" : ""}${fmt(x.pnl)}${x.locked ? `　掛單鎖住 ${fmt(x.locked)} 股` : ""}`);
+    }
+    if (own.length) console.log(`    合計：市值 ${fmt(val)}　成本 ${fmt(cost)}　帳面 ${val - cost >= 0 ? "+" : ""}${fmt(val - cost)}`);
+    const pos = (L && L.positions) || [];
+    console.log("  槓桿／放空：" + (pos.length ? "" : "（沒有）"));
+    let mg = 0;
+    for (const p of pos) { mg += nz(p.margin); console.log(`    ${p.name} ${p.side === "long" ? "做多" : "放空"} ${p.lev} 倍　${fmt(p.qty)} 股　進場 ${px(p.entry)}　現價 ${px(p.now)}　保證金 ${fmt(p.margin)}　帳面 ${p.pnl >= 0 ? "+" : ""}${fmt(p.pnl)}`); }
+    if (pos.length) console.log(`    保證金合計 ${fmt(mg)}`);
+    const od = Array.isArray(S0.orders) ? S0.orders : [];
+    console.log(`  掛單 ${od.length} 張${od.length ? "：" + od.map(o => `${o.kind === "buy" ? "買" : o.kind === "sell" ? "賣" : "停損"} ${o.id} ${fmt(o.n)} 股 @${px(o.px)}`).join("、") : ""}　買單鎖住的籌碼 ${fmt(S0.hold)}`);
+    const lv = w.lev || {};
+    console.log(`  累計：現股賣出賺賠（扣稅前）${fmt(S0.gain)}　現股手續費 ${fmt(S0.fee)}　槓桿賺賠 ${fmt(lv.gain)}　槓桿手續費＋利息 ${fmt(lv.fee)}`);
+    console.log(`  投入合計（持股成本＋保證金＋買單鎖住）：${fmt(cost + mg + nz(S0.hold))}`);
+  }
+}
 const NEEDS_EMAIL = ["invite", "admin-on", "admin-off", "disable", "enable"];
 const EMAIL_RE = /^[^\s@/]+@[^\s@/]+\.[^\s@/.]+$/;
 
@@ -229,6 +275,7 @@ function parseTask(inputs) {
   const o = inputs || {};
   const action = String(o.action || "").trim();
   if (!ACTIONS.includes(action)) throw new Error("沒有這個動作");
+  if (action === "player-invest") { const name = Array.from(String(o.name || "").replace(/[\u0000-\u001f\u007f]/g, "").trim()).slice(0, 40).join(""); if (!name) throw new Error("要填名字"); return { action, name }; }
   if (!NEEDS_EMAIL.includes(action)) return { action };
   const email = String(o.email || "").trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 200) throw new Error("email 的格式不對");
@@ -305,6 +352,7 @@ async function main() {
   if (task.action === "stock-tw-peg") { await stockTwPeg(db); return; }
   if (task.action === "house-size") { await houseSize(db); return; }
   if (task.action === "world-status") { await worldStatus(db); return; }
+  if (task.action === "player-invest") { await playerInvest(db, task.name); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
