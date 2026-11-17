@@ -15,11 +15,11 @@ T("錢夠：每天至少還 剩餘本息 ÷ 剩下天數，30 天還清；還的
   assert.ok(!h.cultureLate); assert.ok(h.world > w0);
   const s = G.casBookSnap([], h, 0, null); assert.strictEqual(G.casBookTotal(s) - G.casBookMinted(s) + G.casBookBurned(s), t0 + G.casBookMinted(s) - 0 - (G.casBookMinted(s)) , "守恆");
 });
-T("莊家的錢不夠：博物館資金先墊（莊家欠博物館資金），還不夠記逾期，不印錢", G => {
+T("莊家的錢不夠：博物館資金先付（不記成莊家欠博物館資金），還不夠記逾期，不印錢", G => {
   const H = G.NUM.casino.houseLoan, D0 = add(H.cultureDue, -10), h0 = mk(G, 0, D0); h0.budget = H.cultureKeep + 20000000; h0.debt.culture = 1000000000;
   const need = Math.ceil(1000000000 * (1 + H.cultureInterestPct / 100) / 10);
   const h = G.casHouseFix(h0, add(D0, 1)).house;
-  assert.ok(h.debt.budget > 0, "博物館資金墊了"); assert.ok(h.cul.late > 0 && h.cultureLate > 0, "還是不夠，記逾期"); assert.ok(h.cul.paid < need);
+  assert.strictEqual(h.cul.budget, 20000000, "博物館資金先付超過保留金的部分"); assert.strictEqual(h.debt.budget, 0, "不記成莊家欠博物館資金"); assert.ok(h.cul.late > 0 && h.cultureLate > 0, "還是不夠，記逾期"); assert.ok(h.cul.paid < need);
   assert.ok(h.budget >= 0 && h.bankroll >= 0, "沒有印錢");
 });
 T("到期日當天全部要還；日報寫「文化部館債：剩…天後到期，今天還了…」", G => {
@@ -52,9 +52,9 @@ T("日報對帳基準（casBookOpeningNext）：外面世界有帳的那天加�
 T("墊付不低於博物館資金保留金：博物館資金剛好在保留金上時不墊，全記逾期；超過的部分才墊", G => {
   const H = G.NUM.casino.houseLoan, D0 = add(H.cultureDue, -10), h0 = mk(G, 0, D0); h0.budget = H.cultureKeep + 30000000; h0.debt.culture = 1000000000;
   const h = G.casHouseFix(h0, add(D0, 1)).house;
-  assert.ok(h.budget >= H.cultureKeep, "博物館資金沒被墊到保留金以下：" + h.budget); assert.strictEqual(h.debt.budget, 30000000, "只墊超過保留金的部分");
+  assert.ok(h.budget >= H.cultureKeep, "博物館資金沒被墊到保留金以下：" + h.budget); assert.strictEqual(h.cul.budget, 30000000, "只付超過保留金的部分"); assert.strictEqual(h.debt.budget, 0);
   assert.ok(h.cul.late > 0 && h.cultureLate > 0, "不夠的記逾期");
-  const h1 = mk(G, 0, D0); h1.budget = H.cultureKeep; const r = G.casHouseFix(h1, add(D0, 1)).house; assert.strictEqual(r.debt.budget, 0); assert.strictEqual(r.budget, H.cultureKeep); assert.ok(r.cul.late > 0);
+  const h1 = mk(G, 0, D0); h1.budget = H.cultureKeep; const r = G.casHouseFix(h1, add(D0, 1)).house; assert.strictEqual(r.cul.budget, 0); assert.strictEqual(r.budget, H.cultureKeep); assert.ok(r.cul.late > 0);
 });
 T("到期日自動展延壹次 30 天：到期日剩下的接著按剩下天數分期；展延過、期限也過了就不再設到期日（只靠莊家賺到的錢壹半還債）；不印錢", G => {
   const H = G.NUM.casino.houseLoan, ext = add(H.cultureDue, H.cultureExtDays);
@@ -66,6 +66,27 @@ T("到期日自動展延壹次 30 天：到期日剩下的接著按剩下天數�
   const h2 = G.casHouseFix(h, add(ext, 3)).house; assert.ok(h2.cul.late === 0 && h2.cul.paid === 0, "展延期限過了：不再分期"); assert.ok(h2.cultureExt && G.casCultureDue(h2) === ext);
   const d0 = h2.debt.culture; h2.bankroll = G.NUM.casino.houseLoan.reserve + 200000000; const h3 = G.casHouseFix(h2, add(ext, 4)).house; assert.ok(h3.debt.culture < d0, "莊家賺到超過準備金：壹半還債");
   const w = mk(G, 0, add(H.cultureDue, -1)); w.debt.culture = 0; assert.ok(!G.casHouseFix(w, H.cultureDue).house.cultureExt, "沒有欠就不展延");
+});
+T("決定 0116：博物館資金碰到保留金後，莊家只付他超過 cultureBankMin 的部分；期限內莊家賺的錢不拿去還館債（除了超過的）；期限過了才還", G => {
+  const H = G.NUM.casino.houseLoan, D0 = add(H.cultureDue, -10);
+  const a = mk(G, H.cultureBankMin + 40000000, D0); a.budget = H.cultureKeep; a.debt.culture = 1000000000;
+  const ra = G.casHouseFix(a, add(D0, 1)).house; assert.ok(ra.cul.paid > 0 && ra.cul.budget === 0); assert.ok(ra.bankroll >= H.cultureBankMin - 1, "莊家留在 cultureBankMin 以上：" + ra.bankroll);
+  const b = mk(G, H.cultureBankMin - 1000, D0); b.budget = H.cultureKeep; b.debt.culture = 1000000000;
+  const rb = G.casHouseFix(b, add(D0, 1)).house; assert.strictEqual(rb.cul.paid, 0, "莊家沒到門檻：不付"); assert.ok(rb.cul.late > 0); assert.strictEqual(rb.bankroll, b.bankroll);
+  const c = mk(G, H.reserve + 200000000 - 1000000000 + 1000000000 - 0, D0); c.bankroll = H.cultureBankMin - 5000000; c.budget = H.cultureKeep; c.debt.culture = 1000000000;
+  assert.strictEqual(G.casHouseFix(c, add(D0, 1)).house.cul.paid, 0, "期限內莊家賺的錢（超過準備金但沒到門檻）不拿去還館債");
+  assert.strictEqual(H.cultureExtDays, 60);
+});
+T("決定 0116：全館大禮包壹天付出到 packDayCap 之後，當天的包只發 1～3 星；隔天恢復；有記帳", G => {
+  const C = G.NUM.casino, day = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), day).house; h.bankroll = 5000000000;
+  const mkW = () => { const w = G.casWalletNew ? G.casWalletNew() : null; return w; };
+  G.setRng(() => 0.999); // 骰到最大：不封頂會是五星
+  const cap = C.packDayCap; assert.strictEqual(cap, 30000000);
+  const w = G.casWalletFix ? G.casWalletFix({}, day) : mkW(); w.pk.left = 50; w.pk.day = day;
+  assert.ok(!G.casPackCapped(h, day)); const r1 = G.casOpenPacks(w, h, 1, day); assert.strictEqual(r1.packs[0].stars, 5, "沒到上限：照骰");
+  assert.ok(G.casPackCapped(h, day), "壹包 1 億已經超過上限");
+  const r2 = G.casOpenPacks(w, h, 3, day); assert.ok(r2.packs.every(p => p.stars <= 3), "到上限：只發 1～3 星");
+  assert.ok(!G.casPackCapped(h, "2026-11-18"), "隔天恢復"); G.setRng(null);
 });
 console.log(`${pass} passed, ${fail} failed（文化部館債）`);
 process.exit(fail ? 1 : 0);

@@ -405,7 +405,7 @@ export const NUM = {
     //   reserve 重開補到多少；先跟博物館資金借（博物館資金超過起始的 budgetKeepPct% 的部分，借 budgetPct%，一次最多 budgetMax），不夠再跟外面世界貸款
     //   （上限 ＝ max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）；每天利息 interestPct%，記在債上）；
     //   還債：換日時莊家超過 reserve 的部分，repayPct% 拿去還（先博物館資金、再文化部借款、最後外面世界，外面世界的本金加利息燒掉）。
-    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 30, cultureKeep: 500000000, // 到期日剩下的自動展延壹次 cultureExtDays 天（決定 0097，之後不再設到期日）；博物館資金墊付不得讓它低於 cultureKeep（＝NUM.casino.invest.budgetKeep）
+    houseLoan: { on: true, cultureInterestPct: 0.02, cultureDue: "2027-01-12", cultureExtDays: 60, cultureKeep: 500000000, cultureBankMin: 150000000, // 決定 0116：館債分期先由博物館資金付（守 cultureKeep），不夠的莊家超過 cultureBankMin 的部分才付；展延 30 → 60 天。 到期日剩下的自動展延壹次 cultureExtDays 天（決定 0097，之後不再設到期日）；博物館資金墊付不得讓它低於 cultureKeep（＝NUM.casino.invest.budgetKeep）
        // 文化部館債（翊文 11-14：30 天 → 「借久一點 60 天」，從 11-13 撥款起算到 2027-01-12）：到期日；每天至少還 剩餘本息 ÷ 剩下天數，不夠由博物館資金墊，再不夠記逾期
        reserve: 10000000, budgetKeepPct: 50, budgetPct: 10, budgetMax: 50000000, creditDays: 20, creditMin: 10000000, creditExtPct: 20, interestPct: 0.05, repayPct: 50 },
     // 莊家破產／吃緊的時候限制流出（規劃 2.11 第二點）：不是處罰玩家，是不讓莊家掉得更深。贏的錢不收回。
@@ -521,7 +521,7 @@ export const NUM = {
       //   追漲殺跌 mixC（看最近 8 個價）、其餘雜訊；合理價 ＝ 原本 casInRoll 算的每天的價（H.open），只活在旅客心裡，不直接決定價格；
       //   tickLim 每個價最多動多少、dayLim 每天最多離當天開盤（昨天收盤）多少；half 造市商半個價差（旅客散客付的，館友買賣也付）；rho 造市商每個價把持倉的幾 % 回補給外面世界；
       //   walkSd 價格自己的小雜訊；floatCap／floatShort 旅客散客合計最多持有／賣空發行股數的幾 %。
-      mkt: { on: true, Ns: 100000, depth: 16000, size: 40, sizeCap: 40, band: 0.01, mixF: 0.7, mixC: 0.1, tickLim: 0.03, dayLim: 0.1, half: 0.005, rho: 0.05, walkSd: 0.0003, floatCap: 0.1, floatShort: 0.02 } },
+      mkt: { on: true, Ns: 100000, depth: 16000, size: 40, sizeCap: 40, band: 0.01, mixF: 0.7, mixC: 0.1, tickLim: 0.03, dayLim: 0.1, half: 0.01, rho: 0.05, walkSd: 0.0003, floatCap: 0.1, floatShort: 0.02 } },
     // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進博物館資金）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
@@ -585,6 +585,7 @@ export const NUM = {
     npcCas: { on: true, perNpcDay: 3, tableMax: 2, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：博物館資金低到這個負數，拚經濟成功完全不撥款。
+    packDayCap: 30000000, // 決定 0116：全館大禮包壹天最多付這麼多籌碼，超過的包當天只發 1～3 星
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
     // 館內 GDP 和景氣指數（11-13，規劃 2.7 節）：每項活動 次數×標準值，不看隨機的賺賠。foodAvg 餐車每份、bjHand 21 點每手、econWin 拚經濟成功平均撥款（r 31～100 平均 65.5 × 30,000）、econSink 失敗沉下去的平均（平均 r 15 × 10,000 × 沒被撈走的 45%）、investPct 銀行存款淨增加算幾 % 進投資；growthFull 成長率 10% ＝ 指數 1；minPeople 過去 7 天來過的人少於這個，館內指數維持 0。標準值是我先定的，等有幾天真的數字再調
     gdp: { foodAvg: 150, bjHand: 20000, econWin: 1965000, econSink: 67500, investPct: 5, growthFull: 0.1, minPeople: 3,
