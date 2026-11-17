@@ -126,6 +126,7 @@ export const CAS_TEXT = {
   // 大禮包
   packHello: "恭喜你可以領今天的大禮包",
   packNone: "沒有可以開的大禮包",
+  packHouse: "莊家現在缺錢，今天的免費大禮包先發到這裡。莊家的錢回來就會恢復。",
   packLeft: "剩下 {n} 個大禮包",
   packWon: "恭喜你抽到壹張大禮包券",
   // 認領舊資料
