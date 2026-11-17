@@ -631,3 +631,7 @@ body[data-screen="bank"] #room { background: none; }
 /* 金流（11-17 翊文）：電腦版圖放大、佔滿寬度，流向一覽放圖下面分兩欄；手機直拿把底下的今日行情收掉，整張圖用捲的看得到 */
 @media (min-width: 761px) { .bank-flow { grid-template-columns: minmax(0, 1fr); } .bank-flow-box > .bank-flow-l { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bank-flow-l > li.on { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .bank-tab-flow .bank-ticker { display: none; } .bank-tab-flow .bank-stage { padding-bottom: 12px; } }
+/* 集團股（決定 0121）：五欄的列（名稱、股價、今天、股價淨值比、持股），選到的那列淡淡標出 */
+.bank-row.gs { grid-template-columns: 1.5fr .9fr .8fr .9fr 1fr; cursor: pointer; }
+.bank-row.gs.on { background: rgba(214, 178, 94, .22); }
+.bank-row.gs.head { min-height: 34px; cursor: default; font-size: var(--type-small, .75rem); color: var(--bank-ink-soft); }

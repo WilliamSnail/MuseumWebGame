@@ -32,10 +32,11 @@ const TAB_ICON = {
   bond: SVG('<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>'), // 債券（壹張紙）
   stock: SVG('<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>'), // 往上的折線
   auction: SVG('<path d="M4 20h10M7 20v-3h4v3"/><path d="m5 11 6 6M8 6l6 6M13 4l5 5-3 3-5-5z"/><path d="M16 18h4"/>'), // 拍賣槌
+  gstock: SVG('<path d="M4 20V9l4-3 4 3v11M12 20V4l4 3v13M3 20h18"/>'), // 幾棟樓（集團）
   report: SVG('<path d="M5 4h13v16H5z"/><path d="M8 8h7M8 12h7M8 16h4"/><path d="M5 4v16"/>'), // 帳本
   flow: SVG('<circle cx="12" cy="12" r="2.2"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="12" cy="20" r="1.6"/><path d="M6.4 7.2 10 10.6M17.6 7.2 14 10.6M12 14.2V18.2"/>'), // 中心往外的幾條線（金流 hub）
 };
-const TABS = [["report", "財報"], ["flow", "金流"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
+const TABS = [["report", "財報"], ["flow", "金流"], ["stock", "股票"], ["gstock", "集團股"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
 const pctText = p => `${(p * 100).toFixed(p * 100 % 1 ? 1 : 0)}%`;
 
 // ---------- 示範資料（伺服器還沒給 bankHall 的時候用；格式照 Yuga 說的 bankHall） ----------
@@ -112,7 +113,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
+    bonds, stocks: b.stocks, gs: b.gs || null, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -866,8 +867,26 @@ function reportPane(v) {
     h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e)),
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
+// 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
+function gstockPane(v) {
+  const G = v.gs; if (!G || !G.list || !G.list.length) return soon("集團股", "世界集團的股票正在準備，開放時館方公告會說。");
+  const list = G.list, cur = list[Math.min(UI.bankGs || 0, list.length - 1)], tone = n => (n > 0 ? "up" : n < 0 ? "down" : "");
+  const rows = list.map((x, i) => h("div", { class: "bank-row gs" + (x === cur ? " on" : ""), role: "row", tabindex: "0", onClick: () => { UI.bankGs = i; rerender(); } },
+    h("span", null, h("b", null, x.name)), h("span", { class: "bank-tab-num" }, fmt(x.price)), h("span", { class: "bank-tab-num " + tone(x.chg) }, (x.chg > 0 ? "+" : "") + x.chg + "%"), h("span", { class: "bank-tab-num" }, x.pb != null ? "×" + x.pb : "—"), h("span", { class: "bank-tab-num" }, x.mine ? fmt(x.mine) + " 股" : "—")));
+  const ask = (buy, n) => confirmTrade((buy ? "買進 " : "賣出 ") + cur.name, [["股數", fmt(n === "max" ? cur.mine : n) + " 股"], ["股價（約）", fmt(cur.price)]], buy ? "確認買進" : "確認賣出", () => bankDo("stock", { op: buy ? "buy" : "sell", id: cur.id, n }));
+  const dis = G.halt ? true : null;
+  return h("div", { class: "bank-cols" },
+    h("div", { class: "bank-stack" }, panel("世界集團的股票", G.index && G.index.v ? `集團指數 ${G.index.v}` : "", h("div", { class: "bank-ledger", role: "table" }, h("div", { class: "bank-row gs head", role: "row" }, h("span", null, "名稱"), h("span", null, "股價"), h("span", null, "今天"), h("span", null, "股價淨值比"), h("span", null, "持股")), ...rows)),
+      h("p", { class: "bank-meta sm" }, G.rule || "")),
+    h("div", { class: "bank-stack" }, panel(cur.name, `${cur.unit}・${G.halt ? "休市" : "營業中"}`,
+      h("div", { class: "bank-quote" }, num("big", fmt(cur.price)), h("span", { class: "bank-mood " + tone(cur.chg) }, (cur.chg > 0 ? "+" : "") + cur.chg + "%")),
+      h("p", { class: "bank-meta sm" }, `股本 ${fmt(cur.shares)} 股・市值 ${fmt(cur.mcap)}・每股淨值 ${fmt(cur.nav)}`),
+      h("p", { class: "bank-meta sm" }, cur.mine ? `你有 ${fmt(cur.mine)} 股，市值 ${fmt(cur.value)}，成本 ${fmt(cur.cost)}` : "你還沒有這支。"),
+      h("div", { class: "bank-acts" }, ...[1, 100, 1000, 10000].map(n => btn(`買 ${fmt(n)}`, () => ask(true, n), "big bank-btn", { disabled: dis })), btn("全賣", () => ask(false, "max"), "primary big bank-btn gold", { disabled: dis || !cur.mine ? true : null })),
+      (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null)));
+}
 const flowReload = () => { if (UI.screen === "bank" && UI.bankTab === "flow" && !UI.bankLoading) bankLoad(); }; // 金流頁籤開著：每 45 秒重拿（bank_flow.js 排）
-const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, report: reportPane, flow: v => flowPane(v, { panel, reload: flowReload }) };
+const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, gstock: gstockPane, report: reportPane, flow: v => flowPane(v, { panel, reload: flowReload }) };
 
 // ---------- 右欄 ----------
 // 我的帳戶的幾行（銀行右欄、賭場和同桌賭桌的小塊共用，11-16）
