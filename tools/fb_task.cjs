@@ -21,7 +21,7 @@
 //                 什麼時候用：W2 以後確認世界文件有沒有每天寫、W5 以後看哪些集團減薪／緊縮／裁員（管理者看得到每家，財報只給分布）。
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
-//   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠（11-17）。名字在紀錄裡遮掉。
+//   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠、借款、淨值（11-17）。名字在紀錄裡遮掉。
 //   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
@@ -253,6 +253,12 @@ async function playerInvest(db, name) {
     const lv = w.lev || {};
     console.log(`  累計：現股賣出賺賠（扣稅前）${fmt(S0.gain)}　現股手續費 ${fmt(S0.fee)}　槓桿賺賠 ${fmt(lv.gain)}　槓桿手續費＋利息 ${fmt(lv.fee)}`);
     console.log(`  投入合計（持股成本＋保證金＋買單鎖住）：${fmt(cost + mg + nz(S0.hold))}`);
+    const ln = w.loan && Array.isArray(w.loan.list) ? w.loan.list : [], owe = ln.reduce((s, x) => s + nz(x && x.owe), 0); // 11-17 翊文：「好，加借款」
+    console.log(`  借款：${ln.length ? `${ln.length} 筆，要還合計 ${fmt(owe)}（借了 ${fmt(ln.reduce((s, x) => s + nz(x && x.amt), 0))}）` : "（沒有）"}　借款額度 ${fmt(w.loan && w.loan.limit)}`);
+    for (const x of ln) console.log(`    借 ${x.day || "-"}　本金 ${fmt(x.amt)}　要還 ${fmt(x.owe)}　到期 ${x.due || "-"}${x.due && x.due < day ? "（逾期）" : ""}${x.ext ? `　延期 ${x.ext} 次` : ""}`);
+    const lvOwed = Array.isArray(lv.owed) ? lv.owed.reduce((s, e) => s + nz(e && e.amt), 0) : 0;
+    if (lvOwed) console.log(`  槓桿強平欠的：${fmt(lvOwed)}`);
+    console.log(`  淨值（籌碼＋市值＋保證金＋買單鎖住 − 借款${lvOwed ? "、槓桿欠的" : ""}）：${fmt(nz(w.chips) + val + mg + nz(S0.hold) - owe - lvOwed)}`);
   }
 }
 const NEEDS_EMAIL = ["invite", "admin-on", "admin-off", "disable", "enable"];
