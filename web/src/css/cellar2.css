@@ -244,3 +244,18 @@
 .rt-card b { font-size: .9375rem; }
 .rt-card span { font-size: .75rem; }
 .rt-dot { width: 12px; height: 12px; border-width: 1px; }
+
+/* 隊員資訊只放壹處（翊文 11-18：「每個佩佩不是等於重複顯示了兩次嗎」）：場景已經畫了三隻，下面那排拿掉重複的小圖，只寫「名字、強度、房間對它的影響」，三格跟場景同寬 */
+.scr-cellar:has(> .cellar-stage) > .team-bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; justify-content: stretch; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-member { display: grid; justify-items: center; gap: 1px; padding: 4px 6px; cursor: help; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-member .si-art { display: none; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-who { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .75rem; color: #C9B98F; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-n { font-size: 1rem; font-weight: 700; color: #F3E0B0; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-total { grid-column: 1 / -1; display: flex; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 0; }
+.tb-fx { padding: 0 8px; border-radius: 999px; background: rgba(95, 143, 87, .25); color: #CFE8C8; font-size: .75rem; white-space: nowrap; }
+.tb-fx.bad { background: rgba(184, 88, 76, .3); color: #F5C6BE; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-total { margin-left: 0; padding: 4px 4px 0; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-total .poss-l, .scr-cellar:has(> .cellar-stage) > .team-bar .tb-total .poss-f { display: inline; margin: 0; }
+.scr-cellar:has(> .cellar-stage) > .team-bar .tb-total .poss-n { font-size: 1.75rem; line-height: 1; color: var(--gold-hi); }
+.scr-cellar:has(> .cellar-stage) > .team-bar > .tb-total { display: flex !important; flex-direction: row !important; align-items: baseline !important; flex-wrap: wrap; gap: 2px 12px; }
+.scr-cellar:has(> .cellar-stage) > .team-bar > .tb-total > * { display: inline-block !important; width: auto !important; }

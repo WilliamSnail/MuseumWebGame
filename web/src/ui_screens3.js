@@ -606,8 +606,13 @@ export function cellarRoom(root) {
   const COLOR_SWATCH = { 綠: "#4FA24A", 黑: "#3A3A3A", 黃: "#E3B93A", 紅: "#C7503F", 藍: "#4A78C4", 粉紅: "#E58FB0", 白: "#EDEDED", 紫: "#8E5FB8", 橘: "#E48A3A" };
   const dots = run.extra ? null : h("div", { class: "room-dots", title: `第 ${run.idx + 1}／${f.rooms.length} 間` }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" })), h("span", { class: "rd-n" }, `第 ${run.idx + 1}／${f.rooms.length} 間`)); // run.extra：每週劇情多出來的一間、試煉房間（只走這一間）
   const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
-  const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
-    h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`), (() => { const t = []; if (room.mood && MOOD_BEATS[it.pick.心情] === room.mood) t.push("剋到 ×2"); else if (room.mood && MOOD_BEATS[room.mood] === it.pick.心情) t.push("被剋 −1"); if (room.color && it.pick.顏色 === room.color) t.push("同色 +1"); return t.length ? h("span", { class: "tb-fx" + (t.some(x => x.startsWith("被")) ? " bad" : "") }, t.join("・")) : null; })())),
+  const teamBar = h("div", { class: "team-bar" }, team.map(it => { // 隊員的資訊只放這壹排（場景裡已經有畫），每隻壹格：強度＋房間對它的影響；滑鼠移上去有白話說明
+    const beat = !!room.mood && MOOD_BEATS[it.pick.心情] === room.mood, beaten = !!room.mood && MOOD_BEATS[room.mood] === it.pick.心情, same = !!room.color && it.pick.顏色 === room.color;
+    const why = [beat ? `房間的心情是「${room.mood}」，這隻的心情「${it.pick.心情}」剛好剋制它，強度變 2 倍` : beaten ? `房間的心情是「${room.mood}」，剛好剋制這隻的「${it.pick.心情}」，強度 −1` : "", same ? `這隻的顏色跟房間一樣（${room.color}），強度 +1` : ""].filter(Boolean).join("；");
+    return h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : ""), title: why || "房間的心情、顏色對這隻沒有影響" },
+      h("span", { class: "tb-who" }, itemTitle(it)), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`),
+      beat ? h("span", { class: "tb-fx" }, "心情剋房間 ×2") : beaten ? h("span", { class: "tb-fx bad" }, "被房間剋 −1") : null, same ? h("span", { class: "tb-fx" }, "同色 +1") : null);
+  }),
     h("div", { class: "tb-total" }, h("span", { class: "poss-l" }, "這個房間的隊伍強度"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null));
   // 房間特性（翊文 11-18：「房間的心情 顏色這些都不明顯」）：心情、顏色各壹塊大的說明牌，直接寫對隊伍強度的影響
   const MC = { 開心: "#E8B93A", 傷心: "#5B8FC7", 生氣: "#C7503F" }, beatsMood = Object.keys(MOOD_BEATS).find(k => MOOD_BEATS[k] === room.mood), loseMood = room.mood ? MOOD_BEATS[room.mood] : null;
