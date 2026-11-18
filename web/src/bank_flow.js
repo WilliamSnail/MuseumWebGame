@@ -112,6 +112,28 @@ function routeGrid(e, pos, i) {
   const y = gy(dy > 0 ? ra : ra - 1) + sp, x = gx(dx > 0 ? cb - 1 : cb) + sp; // 其他：A 往 B 的方向出到列縫，沿列縫走到 B 旁邊的欄縫，再沿欄縫走到 B 的高度，從側邊進去
   return [vert(A, dy, sp), P(A.x + sp, y), P(x, y), P(x, B.y + sp), side(B, -dx, sp)];
 }
+// 不同層的方塊之間：全部走直角線。從上面方塊的下緣垂直出去 → 進層和層之間的橫縫 → 橫走到目標的 x → 垂直進下面方塊的上緣；中間隔了別層，垂直那段會碰到方塊時，改在空的 x 位置下去（再多兩個轉折）。
+function routeOrtho(pa, pb, e, pos, W, i) {
+  const A0 = pos[e.from], B0 = pos[e.to]; if (!A0 || !B0 || (A0.chip && B0.chip)) return null;
+  if (A0.chip || B0.chip) { // 壹端在集團格子裡、另壹端在格子外：先從格子旁邊的欄縫走到已知世界那條帶子的下面，再走直角線
+    const ch = A0.chip ? A0 : B0, out = A0.chip ? B0 : A0, band = pos.world; if (!band || out.holder) return null;
+    const bandBottom = band.y + band.h / 2, down = out.y > bandBottom, toward = out.x >= ch.x ? 1 : -1, sg = toward, gxx = ch.x + sg * (ch.w / 2 + 35) + ((i * 7) % 5 - 2) * 5, off = ((i * 7) % 5 - 2) * 5;
+    const ly = down ? bandBottom + 16 + off : band.y - band.h / 2 - 16 + off, ox = (A0.chip ? pb : pa).x, oy = out.y + (down ? -out.h / 2 : out.h / 2);
+    const mid = [{ x: ch.x + sg * ch.w / 2, y: ch.y + off }, { x: gxx, y: ch.y + off }, { x: gxx, y: ly }, { x: ox, y: ly }, { x: ox, y: oy }];
+    return A0.chip ? mid : mid.slice().reverse();
+  }
+  const A = A0, B = B0; if (A.holder || B.holder) return null;
+  const dir = B.y > A.y ? 1 : -1, ay = A.y + dir * A.h / 2, by = B.y - dir * B.h / 2;
+  if (Math.abs(pa.y - ay) > 1 || Math.abs(pb.y - by) > 1 || Math.abs(B.y - A.y) < 20) return null; // 不是上下接的（同壹層左右接）交給原本的
+  const off = ((i * 7) % 5 - 2) * 5, obs = Object.entries(pos).filter(([id, r]) => !r.chip && !r.holder && id !== e.from && id !== e.to).map(([, r]) => r);
+  const lo = Math.min(ay, by), hi = Math.max(ay, by), between = obs.filter(r => r.y + r.h / 2 > lo && r.y - r.h / 2 < hi);
+  const hitX = (x, y0, y1) => between.some(r => x > r.x - r.w / 2 - 6 && x < r.x + r.w / 2 + 6 && r.y + r.h / 2 > Math.min(y0, y1) && r.y - r.h / 2 < Math.max(y0, y1));
+  const ly = ay + dir * (16 + off), ly2 = by - dir * (16 - off);
+  if (!between.length || !hitX(pb.x, ly, by)) return [pa, { x: pa.x, y: (between.length ? ly : (ay + by) / 2 + off) }, { x: pb.x, y: (between.length ? ly : (ay + by) / 2 + off) }, pb];
+  let xf = null; for (let k = 0; k < 80 && xf == null; k++) for (const sg of [1, -1]) { const x = pb.x + sg * k * 8; if (x > 8 && x < W - 8 && !hitX(x, ly, ly2)) { xf = x; break; } }
+  if (xf == null) return null;
+  return [pa, { x: pa.x, y: ly }, { x: xf, y: ly }, { x: xf, y: ly2 }, { x: pb.x, y: ly2 }, pb];
+}
 // 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是已知世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
 function route(pa, pb, e, pos, W) {
   const chips2 = !!(pos[e.from] && pos[e.from].chip && pos[e.to] && pos[e.to].chip), m = chips2 ? 20 : 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
@@ -176,7 +198,7 @@ export function flowPane(v, deps) {
     const lines = [], pills = [], dotsEl = [], taken = []; let dots = 0; // taken：已經放好的金額牌（後面的牌要錯開，不疊在壹起）
     edges.forEach((e, i) => {
       const pa = PT[i] && PT[i][e.from], pb = PT[i] && PT[i][e.to]; if (!pa || !pb) return;
-      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = routeGrid(e, L.pos, i) || route(pa, pb, e, L.pos, L.W), d = polyD(pts);
+      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = routeGrid(e, L.pos, i) || routeOrtho(pa, pb, e, L.pos, L.W, i) || route(pa, pb, e, L.pos, L.W), d = polyD(pts);
       lines.push(s("path", { d, class: "bank-flow-line" + (on ? " on" : "") + (dim ? " dim" : ""), "stroke-width": wd.toFixed(1), "marker-end": "url(#bfa" + (on ? "-on" : "") + ")", fill: "none" }));
       lines.push(s("path", { d, class: "bank-flow-hit", "stroke-width": 22, fill: "none", tabindex: 0, role: "button", "aria-label": name(e.from) + "到" + name(e.to) + "，今天 " + fmt(e.amt) + "，看來源", "data-i": i }));
       const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
