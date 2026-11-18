@@ -10,6 +10,7 @@ import { h } from "./ui_core.js";
 let NM = {}; // 這次畫的節點 id → { name, note, tier, org, bal, parent }（資料來自伺服器 flow.nodes：名單、單位、來源表變了就自己跟著變）
 const fmt = n => Number(Math.round(n)).toLocaleString("en-US");
 const short = n => { const a = Math.abs(n); return a >= 1e8 ? (a / 1e8).toFixed(a >= 1e9 ? 0 : 1).replace(/\.0$/, "") + " 億" : a >= 1e4 ? (a / 1e4).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, "") + " 萬" : fmt(a); };
+const FRACS = Array.from({ length: 31 }, (_, i) => 0.5 + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 0.03).filter(k => k > 0.04 && k < 0.96); // 金額牌沿線的候選位置：從中間往兩邊每 3% 一個
 const sshort = n => (n < 0 ? "−" : "") + short(n); // 帶負號的短寫（海外帳可以是負的）
 const NS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
@@ -155,7 +156,7 @@ export function flowPane(v, deps) {
     if (SEL.e != null && !edges[SEL.e]) SEL.e = null; if (SEL.n && !L.pos[SEL.n]) SEL.n = null;
     const svg = s("svg", { class: "bank-flow-svg", viewBox: "0 0 " + L.W + " " + L.H, role: "group", "aria-label": "今天的金流：" + edges.slice(0, 6).map(e => name(e.from) + "到" + name(e.to) + " " + short(e.amt)).join("、") });
     svg.append(s("defs", null, ...["", "-on"].map(sfx => s("marker", { id: "bfa" + sfx, viewBox: "0 0 10 10", refX: 8, refY: 5, markerUnits: "userSpaceOnUse", markerWidth: 12, markerHeight: 12, orient: "auto" }, s("path", { d: "M0 0 L10 5 L0 10 z", fill: sfx ? "#FFF3C4" : "#D6B25E" })))));
-    const lines = [], pills = [], dotsEl = []; let dots = 0;
+    const lines = [], pills = [], dotsEl = [], taken = []; let dots = 0; // taken：已經放好的金額牌（後面的牌要錯開，不疊在壹起）
     edges.forEach((e, i) => {
       const pa = PT[i] && PT[i][e.from], pb = PT[i] && PT[i][e.to]; if (!pa || !pb) return;
       const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = route(pa, pb, e, L.pos, L.W), d = polyD(pts);
@@ -164,7 +165,10 @@ export function flowPane(v, deps) {
       const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
       for (let k = 0; k < n && dots < 70; k++, dots++) dotsEl.push(s("circle", { r: (2.4 + 1.2 * lg(e.amt)).toFixed(1), class: "bank-flow-dot" }, s("animateMotion", { path: d, dur: dur.toFixed(2) + "s", begin: "-" + ((k / n) * dur).toFixed(2) + "s", repeatCount: "indefinite", calcMode: "linear" })));
       const t = short(e.amt), w = 12 + t.length * 7.4, chipEdge = !!(L.pos[e.from] && L.pos[e.from].chip && L.pos[e.to] && L.pos[e.to].chip), rects = Object.entries(L.pos).filter(([id, r]) => !r.holder && (chipEdge ? r.chip && id !== e.from && id !== e.to : !r.chip)).map(([, r]) => r).concat(chipEdge && L.pos.world ? [{ x: L.pos.world.x, y: L.pos.world.y - L.pos.world.h / 2 + 22, w: L.pos.world.w, h: 44 }] : []).concat(L.frames.map(f => ({ x: f.x + 6 + (24 + ftitle(V, f).length * 15 + 30) / 2, y: f.y + 11, w: 24 + ftitle(V, f).length * 15 + 30, h: 18 }))), hit = (x, y) => rects.some(r => Math.abs(x - r.x) < r.w / 2 + w / 2 && Math.abs(y - r.y) < r.h / 2 + 12);
-      let mx = polyAt(pts, 0.5).x, my = polyAt(pts, 0.5).y; for (const k of [0.5, 0.42, 0.58, 0.35, 0.65, 0.3, 0.7, 0.2, 0.8]) { const q = polyAt(pts, k); if (!hit(q.x, q.y)) { mx = q.x; my = q.y; break; } } // 金額小牌不蓋到方塊：沿線找壹個空的位置
+      const hitTaken = (x, y) => taken.some(q => Math.abs(x - q.x) < (q.w + w) / 2 + 3 && Math.abs(y - q.y) < 23);
+      let mx = polyAt(pts, 0.5).x, my = polyAt(pts, 0.5).y, found = false;
+      for (const pass of [true, false]) { let best = null, bd = -1; for (const k of FRACS) { const q = polyAt(pts, k); if (hit(q.x, q.y)) continue; if (pass) { if (!hitTaken(q.x, q.y)) { mx = q.x; my = q.y; found = true; break; } } else { const d = taken.reduce((m, t) => Math.min(m, Math.hypot(q.x - t.x, (q.y - t.y) * 2)), 1e9); if (d > bd) { bd = d; best = q; } } } if (!pass && best) { mx = best.x; my = best.y; found = true; } if (found) break; } // 金額小牌不蓋到方塊、也不疊到別張小牌：先找兩樣都不碰的位置；找不到就挑離別張最遠的
+      taken.push({ x: mx, y: my, w });
       pills.push(s("g", { class: "bank-flow-pill" + (on ? " on" : "") + (dim ? " dim" : ""), transform: "translate(" + mx.toFixed(1) + " " + my.toFixed(1) + ")", "data-i": i }, s("rect", { x: -w / 2, y: -10, width: w, height: 20, rx: 10 }), s("text", { "text-anchor": "middle", y: 4.3 }, t)));
     });
     L.frames.forEach(f => svg.append(s("g", { class: "bank-flow-frame", tabindex: 0, role: "button", "aria-label": ftitle(V, f) + "，回上一層" }, s("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12 }))));
