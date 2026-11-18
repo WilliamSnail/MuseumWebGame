@@ -237,3 +237,10 @@
 .tb-fx.bad { background: rgba(184, 88, 76, .3); color: #F5C6BE; }
 @media (max-width: 899px) { .scr-cellar:has(> .cellar-stage) .room-card .room-traits { grid-template-columns: 1fr; gap: 6px; } }
 @media (min-width: 900px) and (min-height: 501px) { .scr-cellar:has(> .cellar-stage) .cellar-scene { width: min(100%, 40vh); } .scr-cellar:has(> .cellar-stage) > .team-bar { align-items: flex-start; } }
+/* 主次層級（翊文 11-18：「心情 顏色又太大了，要考慮主要和次要資訊的平衡」）：房間特性是次要資訊——壹行小牌，比標題和選項都小，但顏色和效果看得到 */
+.scr-cellar:has(> .cellar-stage) .room-card .room-traits { display: flex; flex-wrap: wrap; gap: 6px 8px; padding-bottom: 6px; }
+.rt-card { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; padding: 3px 10px; border-left-width: 5px; border-radius: 4px; }
+.rt-card small { font-size: .75rem; }
+.rt-card b { font-size: .9375rem; }
+.rt-card span { font-size: .75rem; }
+.rt-dot { width: 12px; height: 12px; border-width: 1px; }
