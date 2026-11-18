@@ -26,6 +26,17 @@ T("直接模式：開盤後每分鐘都要抓（kind min）；開盤那分鐘的
   assert.strictEqual(doc.R[TW].px, 1005);
   assert.strictEqual(doc.last[TW], 5);
 });
+T("開盤那分鐘只有部分股票有資料：晚到的那支之後抓到就補進來，不整天停著（11-18）", G => {
+  const doc = G.twDocNew(W), OTHER = G.TW_IDS.find(id => id !== TW);
+  assert.ok(G.twApply(doc, G.twNeed(doc, 0), 0, { [TW]: { open: 1010, prev: 1000, px: 1010, lag: 0 } }, "祕密"));
+  assert.ok(doc.stale[OTHER], "開盤時沒拿到的先停著");
+  const got = { [TW]: { open: 1010, prev: 1000, px: 1012, lag: 0 }, [OTHER]: { open: 205, prev: 200, px: 206, lag: 0 } };
+  assert.ok(G.twApply(doc, G.twNeed(doc, 1), 1, got, "祕密"));
+  assert.strictEqual(doc.prevReal[OTHER], 200);
+  assert.strictEqual(doc.ser[OTHER][1], 1.03);
+  assert.ok(!doc.stale[OTHER], "補進來就不是未更新");
+  assert.strictEqual(doc.ser[OTHER].length, 2);
+});
 T("遊戲價 ＝ 倍數 × 真實價；遊戲漲跌和真實漲跌壹模壹樣（同壹個前壹收盤）", G => {
   const C = G.NUM.casino.stock, doc = G.twDocNew(W), house = mkHouse(G, W);
   house.stk.px[TW] = 777; house.stk.hist[W] = { ...house.stk.px }; // 故意讓昨天的遊戲價跟真實對不上（以前會漲跌 % 不壹致）

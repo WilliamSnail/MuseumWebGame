@@ -221,8 +221,11 @@ function twMinute(doc, idx, g, mk) {
   if (!doc.last || typeof doc.last !== "object") doc.last = {};
   const stale = {};
   for (const id of IDS) {
-    const arr = doc.ser[id], prev = doc.prevReal[id], row = g[id];
-    if (!Array.isArray(arr) || !okPx(prev)) { stale[id] = true; continue; } // 開盤時就沒有這支：整天停著
+    const row = g[id];
+    // 開盤那壹分鐘沒拿到這支（09:00:00 常常只有幾支有開盤價，其他是 "-"）：之後抓到前壹收盤就補進來，不再整天停著（11-18：15 支整天「未更新」）
+    if (!okPx(doc.prevReal[id]) && row && okPx(row.prev)) { doc.prevReal[id] = row.prev; doc.ser[id] = []; twPad(doc.ser[id], idx - 1, twRound(twClamp((okPx(row.open) ? row.open : row.prev) / row.prev, MKS[mk].C()))); }
+    const arr = doc.ser[id], prev = doc.prevReal[id];
+    if (!Array.isArray(arr) || !okPx(prev)) { stale[id] = true; continue; } // 還是沒有前壹收盤：先停著
     const rel = row && okPx(row.px) ? row.px / prev : null;
     const fresh = rel != null && rel >= S.sane[0] && rel <= S.sane[1] && !(Number.isFinite(+row.lag) && +row.lag > sm);
     if (Number.isFinite(+(row && row.lag))) doc.lag[id] = +row.lag;
