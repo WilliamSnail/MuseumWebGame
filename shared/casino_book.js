@@ -224,7 +224,7 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), gov: bkNz(house.gov), world: house.world == null ? null : bkNz(house.world), ext: bkNz(house.ext), wflow: {}, xflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), budget: bkNz(house.cul.budget), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), gov: bkNz(house.gov), world: house.world == null ? null : bkNz(house.world), ext: bkNz(house.ext), gb: bkBox(house.gb) ? bkNz(house.gb.cash) : 0, gbx: bkBox(house.gb) ? { debt: bkNz(house.gb.debt), dep: bkSumObj(house.gb.dep), loan: bkSumObj(house.gb.loan) } : { debt: 0, dep: 0, loan: 0 }, wflow: {}, xflow: {}, gflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), budget: bkNz(house.cul.budget), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
@@ -242,13 +242,13 @@ export function casBookSnap(wallets, house, inplay, day) {
   if (Array.isArray(house.reviews)) s.house.reviewsN = house.reviews.length;
   if (bkBox(house.npcs)) s.house.npcs = { day: house.npcs.day || null, ticket: bkNz(house.npcs.ticket), shop: bkNz(house.npcs.shop), total: bkNz(house.npcs.total), people: bkNz(house.npcs.people), crowd: bkBox(house.npcs.crowd) ? { ticket: bkNz(house.npcs.crowd.ticket), people: bkNz(house.npcs.crowd.people), groups: bkNz(house.npcs.crowd.groups), shop: bkNz(house.npcs.crowd.shop) } : null, byUnit: bkBox(house.npcs.byUnit) ? Object.assign({}, house.npcs.byUnit) : null, shopBy: bkBox(house.npcs.shopBy) ? JSON.parse(JSON.stringify(house.npcs.shopBy)) : null, menu: bkBox(house.npcs.menu) ? JSON.parse(JSON.stringify(house.npcs.menu)) : null, orders: Array.isArray(house.npcs.orders) ? house.npcs.orders.slice(0, 10).map(o => ({ who: String(o.who || "").slice(0, 20), item: String(o.item || ""), n: bkNz(o.n) })) : [] }; // NPC 來館花的錢（shared/npc_spend.js）
   if (bkBox(house.inv) && (bkBox(house.inv.last) || bkBox(house.inv.sum))) s.house.inv = { last: bkBox(house.inv.last) ? house.inv.last : null, sum: bkBox(house.inv.sum) ? house.inv.sum : null }; // 館方投資（shared/casino_invest.js）：昨天買賣了什麼、現在持有
-  if (bkBox(house.led)) { bkMerge(s.house.wflow, house.led.world); bkMerge(s.house.xflow, house.led.ext); bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
+  if (bkBox(house.led)) { bkMerge(s.house.wflow, house.led.world); bkMerge(s.house.xflow, house.led.ext); bkMerge(s.house.gflow, house.led.gb); bkMerge(s.house.mint, house.led.mint); bkMerge(s.house.flow, house.led.flow); bkMerge(s.house.burn, house.led.burn); }
   if (bkBox(house.led) && bkBox(house.led.units)) s.house.units = Object.assign({}, house.led.units); // 集團之間的交易（shared/world.js 的 wtLed）：金流頁籤算今天的線
   if (bkBox(house.act)) bkMerge(s.house.act, house.act);
   return s;
 }
 // 全館的錢（含莊家、博物館資金、海底）
-export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.gov) + bkNz(s.house.world) + bkNz(s.house.ext);
+export const casBookTotal = s => s.chips + s.transit + bkNz(s.bank) + s.inplay + s.house.bankroll + s.house.budget + s.house.sea + bkNz(s.house.museum) + bkNz(s.house.gov) + bkNz(s.house.world) + bkNz(s.house.ext) + bkNz(s.house.gb);
 // 全部憑空的、消失的累計
 export const casBookMinted = s => bkSumObj(s.mint) + bkSumObj(s.house.mint);
 export const casBookBurned = s => bkSumObj(s.burn) + bkSumObj(s.house && s.house.burn);
@@ -277,7 +277,7 @@ export function casBookDiff(a, b) {
     sea: bkNz(b.house.sea) - bkNz(a.house.sea),
     museum: bkNz(b.house.museum) - bkNz(a.house.museum),
     gov: bkNz(b.house.gov) - bkNz(a.house.gov),
-    world: bkNz(b.house.world) - bkNz(a.house.world), wflow: bkDiffObj(a.house.wflow, b.house.wflow), ext: bkNz(b.house.ext) - bkNz(a.house.ext), xflow: bkDiffObj(a.house.xflow, b.house.xflow),
+    world: bkNz(b.house.world) - bkNz(a.house.world), wflow: bkDiffObj(a.house.wflow, b.house.wflow), ext: bkNz(b.house.ext) - bkNz(a.house.ext), xflow: bkDiffObj(a.house.xflow, b.house.xflow), gb: bkNz(b.house.gb) - bkNz(a.house.gb), gflow: bkDiffObj(a.house.gflow, b.house.gflow),
     mint: bkDiffObj(a.mint, b.mint), burn: bkDiffObj(a.burn, b.burn),
     houseMint: bkDiffObj(a.house.mint, b.house.mint), houseBurn: bkDiffObj(a.house.burn, b.house.burn), flow: bkDiffObj(a.house.flow, b.house.flow),
     act: bkDiffObj(a.house.act, b.house.act), active7: bkNz(b.active7),

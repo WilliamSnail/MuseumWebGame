@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.grants = []; G.NUM.casino.world.expand = 0; G.NUM.casino.world.growYoy = false; /* 決定 0117 的擴充和 GDP 成長另外測 */ G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.grants = []; G.NUM.casino.world.expand = 0; G.NUM.casino.worldDoc.trade.bank.on = false; /* 佩佩銀行的存款利息另外在 world_trade_flows 測（決定 0127） */ G.NUM.casino.world.growYoy = false; /* 決定 0117 的擴充和 GDP 成長另外測 */ G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const D0 = "2026-11-14", D1 = "2026-11-15", ID = "greeneye", TW = Date.parse(D0 + "T21:40:00+08:00");
 const add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
 const mk = (G, chips = 500000000) => { const w = G.casWalletFix(G.casWalletNew(), D0), house = G.casHouseFix(G.casHouseNew(), D0).house; w.chips = chips; G.casStockHouseFix(house); G.casStockRoll(house, D0, {}); return { w, house }; };
