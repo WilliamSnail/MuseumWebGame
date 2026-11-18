@@ -317,7 +317,8 @@ export function wtWealth(house, id) {
   const T = wtCfg(); if (!T || !T.on) return 0;
   const x = wuFix(house), base = wtBase(house, id); if (!x || !(base > 0)) return 0;
   const rec = id === WT_FIN && wuBox(house.wh) && wuBox(house.wh.loan) ? Object.values(house.wh.loan).reduce((a, L) => a + wdN(L && L.amt), 0) : 0; // 金融集團借出去的算它的資產（不然借越多越窮）
-  return whClamp((wdN(x.adj[id]) + rec) / base, -T.dCap, T.dCap) * T.wealthW;
+  const dep = wuBox(house.gb) && wuBox(house.gb.dep) ? wdN(house.gb.dep[id]) : 0; // 存在佩佩銀行的也是集團的資產（決定 0127），不然存進去健康值會掉
+  return whClamp((wdN(x.adj[id]) + rec + dep) / base, -T.dCap, T.dCap) * T.wealthW;
 }
 // 帳上搬：from 單位 → to 單位（adj），最多搬 from 現有的；回傳搬了多少。總和不變
 // 每壹筆也記在 house.led.units["種類|from|to"]（累計），銀行金流頁籤（shared/casino_report.js 的 casFlowHub）算今天集團之間的線用；kind 是 "trade…"，名字在 CAS_FLOW_UNIT
@@ -330,12 +331,75 @@ function wtMove(house, from, to, n, kind) {
   return take;
 }
 const wtLog = (w, day, t) => { if (!Array.isArray(w.trade)) w.trade = []; w.trade.push({ day, t }); w.trade = w.trade.slice(-20); };
+// ---------- 集團之間的往來表和佩佩銀行（決定 0127）----------
+const wtTop = () => WORLD_UNITS.filter(u => u && u.parent == null).map(u => u.id);
+const wtB = (house, id) => { const C = wmCfg(); return C && C.on && wuBox(house.mk) && house.mk.day ? wmB(house, wmOfUnit(id)) : whClamp(+(house.econ && house.econ.b) || 0, -1, 1); }; // 付款方所在市場的景氣
+// 往來表：照名單長（flows 裡有的照寫，名單上有、表裡沒寫的集團照 flowDefault）。每天排進 wh.tr（陸續發生）
+function wtFlowsDaily(house, day) {
+  const T = wtCfg(); if (!T || !T.on || !Array.isArray(T.flows)) return;
+  const ids = new Set(wtTop()), list = T.flows.slice(), seen = new Set(T.flows.map(f => f.from));
+  if (Array.isArray(T.flowDefault)) for (const id of ids) if (!seen.has(id)) for (const d of T.flowDefault) if (d.to !== id) list.push({ k: d.k, from: id, to: d.to, pct: d.pct });
+  for (const f of list) {
+    if (!ids.has(f.from) || !ids.has(f.to) || f.from === f.to || !(f.pct > 0)) continue;
+    const n = Math.floor(wtBase(house, f.from) * f.pct / 100 * whMult(house, f.from) * Math.max(0, 1 + T.bK * wtB(house, f.from)));
+    if (n > 0) wtGo(house, day, f.k, f.from, f.to, n);
+  }
+}
+// 銀行準備金（house.gb）：{ cash, debt 欠博物館資金的, dep: { 單位: 存款 }, loan: { 單位: 放款 } }。存款、放款是備忘（錢在 cash 或單位的帳上），只有 cash 算進全館的錢
+export function gbFix(house) {
+  if (!wuBox(house)) return null;
+  const g = wuBox(house.gb) ? house.gb : (house.gb = {}); g.cash = wdN(g.cash); g.debt = Math.max(0, wdN(g.debt));
+  for (const k of ["dep", "loan"]) { if (!wuBox(g[k])) g[k] = {}; for (const id of Object.keys(g[k])) { g[k][id] = Math.max(0, wdN(g[k][id])); if (!g[k][id]) delete g[k][id]; } }
+  return g;
+}
+const gbLed = (house, box, src, n) => { if (!n) return; if (!wuBox(house.led)) house.led = {}; if (!wuBox(house.led[box])) house.led[box] = {}; house.led[box][src] = wdN(house.led[box][src]) + n; };
+// 單位 → 準備金（存款、還款）
+function gbIn(house, unit, n, src) { const g = gbFix(house); n = Math.min(wdN(n), Math.max(0, wuHave(house, unit))); if (n <= 0) return 0; house.world = wdN(house.world) - n; wuDebit(house, unit, n); g.cash += n; gbLed(house, "world", src, -n); gbLed(house, "gb", src, n); return n; }
+// 準備金 → 單位（領回、放款）
+function gbOut(house, unit, n, src) { const g = gbFix(house); n = Math.min(wdN(n), Math.max(0, g.cash)); if (n <= 0) return 0; const before = wdN(house.world); house.world = before + n; wuCredit(house, before, unit, n); g.cash -= n; gbLed(house, "world", src, n); gbLed(house, "gb", src, -n); return n; }
+// 博物館資金 → 準備金（銀行借的）
+function gbBorrow(house, n, src) { const g = gbFix(house); n = wdN(n); if (n <= 0) return 0; house.budget = wdN(house.budget) - n; g.cash += n; g.debt += n; gbLed(house, "flow", src, -n); gbLed(house, "gb", src, n); return n; }
+// 準備金 → 博物館資金（還本金 isDebt、付利息）
+function gbRepay(house, n, src, isDebt) { const g = gbFix(house); n = Math.min(wdN(n), Math.max(0, g.cash)); if (isDebt) n = Math.min(n, g.debt); if (n <= 0) return 0; house.budget = wdN(house.budget) + n; g.cash -= n; if (isDebt) g.debt -= n; gbLed(house, "flow", src, n); gbLed(house, "gb", src, -n); return n; }
+// 博物館資金 ↔ 單位：存款利息（博物館資金付給集團）、放款利息（集團付進博物館資金）
+function gbInt(house, unit, n, pay) {
+  n = wdN(n); if (n <= 0) return 0;
+  if (pay) { n = Math.min(n, Math.max(0, wdN(house.budget))); if (n <= 0) return 0; const before = wdN(house.world); house.budget = wdN(house.budget) - n; house.world = before + n; wuCredit(house, before, unit, n); gbLed(house, "flow", "groupIntDep", -n); gbLed(house, "world", "groupIntDep", n); }
+  else { n = Math.min(n, Math.max(0, wuHave(house, unit))); if (n <= 0) return 0; house.world = wdN(house.world) - n; wuDebit(house, unit, n); house.budget = wdN(house.budget) + n; gbLed(house, "flow", "groupIntLoan", n); gbLed(house, "world", "groupIntLoan", -n); }
+  return n;
+}
+function wtBankDaily(house, day) {
+  const T = wtCfg(), B = T && T.bank, w = whFix(house); if (!B || !B.on || !w) return;
+  const g = gbFix(house), x = wuFix(house), mon = new Date(day + "T00:00:00Z").getUTCDay() === 1;
+  for (const u of wtTop()) {
+    const st = w.st[u] ? w.st[u].s : "normal", base = Math.max(1, wtBase(house, u)), dep = g.dep[u] || 0, loan = g.loan[u] || 0;
+    if (dep > 0) gbInt(house, u, Math.floor(dep * B.depRate / 100), true);
+    if (loan > 0) gbInt(house, u, Math.ceil(loan * B.loanRate / 100), false);
+    if (st === "normal") { // 存：帳上超過 depFloor 的部分存 depShare%，上限池子的 depCap%
+      const ratio = wdN(x.adj[u]) / base, room = Math.floor(base * B.depCap / 100) - dep, want = Math.floor((ratio - B.depFloor) * base * B.depShare / 100), n = gbIn(house, u, Math.max(0, Math.min(want, room)), "groupDeposit");
+      if (n > 0) g.dep[u] = dep + n;
+      if (loan > 0 && mon && wdN(x.adj[u]) > 0) { const back = gbIn(house, u, loan, "groupRepay"); if (back > 0) { g.loan[u] = loan - back; if (g.loan[u] <= 0) delete g.loan[u]; } } // 週一帳上回正就還
+    } else { // 不好：把存款領回（每天 1/3；準備金不夠先向博物館資金借）；還沒借的借（文化部不借）
+      if (dep > 0) {
+        const want = Math.ceil(dep / 3); if (want > g.cash && B.budgetMax > 0) gbBorrow(house, Math.min(want - g.cash, Math.max(0, Math.floor(Math.max(0, wdN(house.budget)) * B.budgetMax / 100) - g.debt)), "groupBankLoan");
+        const n = gbOut(house, u, want, "groupWithdraw"); if (n > 0) { g.dep[u] = dep - n; if (g.dep[u] <= 0) delete g.dep[u]; }
+      }
+      if (!loan && u !== "u-culture") {
+        const want = Math.floor(base * B.loanPct / 100); let cap = Math.floor(Math.max(0, g.cash) * (100 - B.reservePct) / 100);
+        if (want > cap && B.budgetMax > 0) { const room = Math.max(0, Math.floor(Math.max(0, wdN(house.budget)) * B.budgetMax / 100) - g.debt), b2 = Math.min(want - cap, room); if (b2 > 0) { gbBorrow(house, b2, "groupBankLoan"); cap += b2; } }
+        const n = gbOut(house, u, Math.min(want, cap), "groupLoan"); if (n > 0) { g.loan[u] = n; wtLog(w, day, u + " 向佩佩銀行借 " + n); }
+      }
+    }
+  }
+  if (g.debt > 0) { gbRepay(house, Math.floor(g.debt * B.debtRate / 100), "groupBankInt", false); const d0 = Object.values(g.dep).reduce((a, v) => a + v, 0); gbRepay(house, Math.max(0, g.cash - Math.floor(d0 * B.reservePct / 100)), "groupBankRepay", true); } // 利息、有錢就還博物館資金（留準備金）
+}
 // 每天：B 貨款（來源集團今天分到的成長 × pct% × 健康值）、A 借款利息
 function wtDaily(house, day, grown) {
   const T = wtCfg(), w = whFix(house); if (!T || !T.on || !w) return;
   const x = wuFix(house), g = wdN(grown), world = Math.max(1, wdN(house.world));
   if (g > 0) for (const t of T.goods) { const h = whClamp(+w.h[t.from] || 1, 0.6, 1.2), n = Math.floor(g * (x.r[t.from] || 0) * t.pct / 100 * h); wtGo(house, day, "tradeGoods", t.from, t.to, n); }
   for (const id of Object.keys(w.loan)) { const L = w.loan[id], iv = Math.max(1, Math.ceil(L.amt * T.loan.ratePct / 100)); wtGo(house, day, "tradeInterest", id, WT_FIN, iv); }
+  wtFlowsDaily(house, day); wtBankDaily(house, day);
   wtTranche(house, day);
 }
 // ---------- 陸續發生（決定 0120，trade.live）：每天 96 格（05:00 起每 15 分鐘壹格），換日時只「排」，碰到莊家文件時補算到現在 ----------

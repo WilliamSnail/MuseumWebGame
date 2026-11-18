@@ -2,12 +2,12 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load(); G.NUM.casino.worldDoc.market.on = false; /* 景氣分市場另外在 world_market.test 測（決定 0121） */ G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const T = (name, fn) => { const G = load(); G.NUM.casino.worldDoc.market.on = false; /* 景氣分市場另外在 world_market.test 測（決定 0121） */ G.NUM.casino.grants = []; G.NUM.casino.worldDoc.trade.flows = []; G.NUM.casino.worldDoc.trade.flowDefault = []; G.NUM.casino.worldDoc.trade.bank.on = false; /* 往來表和銀行另外在 world_trade_flows.test 測（決定 0127） */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const run = (G, b, days, yoy = 14.36) => { let day = "2026-11-16"; const h = G.casHouseFix(G.casHouseNew(), day).house; for (let i = 1; i <= days; i++) { day = add(day, 1); h.econ = { b, yoy }; G.casHouseFix(h, day); } return h; };
 T("景氣 −1：週一狀態不是一般的集團跟金融集團借（有借款紀錄、金融集團帳上少、借的多）；總和 ＝ 池子；借款讓健康值回升", G => {
-  const T0 = G.NUM.casino.worldDoc.trade, on = run(G, -1, 30), G2 = load(); G2.NUM.casino.grants = []; G2.NUM.casino.worldDoc.market.on = false; G2.NUM.casino.worldDoc.trade.on = false; const off = run(G2, -1, 30);
+  const T0 = G.NUM.casino.worldDoc.trade, on = run(G, -1, 30), G2 = load(); G2.NUM.casino.grants = []; G2.NUM.casino.worldDoc.market.on = false; G2.NUM.casino.worldDoc.trade.on = false; G2.NUM.casino.worldDoc.trade.flows = []; G2.NUM.casino.worldDoc.trade.flowDefault = []; G2.NUM.casino.worldDoc.trade.bank.on = false; const off = run(G2, -1, 30);
   assert.ok(Object.keys(on.wh.loan).length >= 1, "有人借錢"); const a = G.wuAmounts(on); assert.strictEqual(sum(a), on.world, "分類總和仍等於池子");
   const id = Object.keys(on.wh.loan)[0]; assert.ok(on.wh.h[id] > off.wh.h[id], "借了錢：健康值比沒交易高");
   assert.ok(Object.keys(off.wh.loan).length === 0 && !off.wh.trade, "關掉就沒有交易");
@@ -38,7 +38,7 @@ T("陸續發生：換日只排、不入帳；每 15 分鐘補壹格；全天加�
   assert.ok(h.wh.tr && h.wh.tr.day === "2026-11-17", "排好了"); assert.strictEqual(G.wtAdvance(h, "2026-11-17", null), 0, "沒給時間不動");
   G.wtAdvance(h, "2026-11-17", at("2026-11-17", 30)); const mid = G.wuAmounts(h); assert.ok(mid["g-overseas"] > a0["g-overseas"] && mid["g-daily"] < a0["g-daily"], "中午有壹部分");
   G.wtAdvance(h, "2026-11-17", at("2026-11-17", 95)); const end = G.wuAmounts(h); assert.ok(!h.wh.tr, "走完 96 格就刪"); assert.strictEqual(sum(end), h.world);
-  const G2 = load(); G2.NUM.casino.grants = []; G2.NUM.casino.worldDoc.market.on = false; G2.NUM.casino.worldDoc.trade.live = false; const h2 = G2.casHouseFix(G2.casHouseNew(), "2026-11-16").house; G2.whTick(h2, "2026-11-16", {}); G2.whTick(h2, "2026-11-17", {}, 100000000);
+  const G2 = load(); G2.NUM.casino.grants = []; G2.NUM.casino.worldDoc.market.on = false; G2.NUM.casino.worldDoc.trade.live = false; G2.NUM.casino.worldDoc.trade.flows = []; G2.NUM.casino.worldDoc.trade.flowDefault = []; G2.NUM.casino.worldDoc.trade.bank.on = false; const h2 = G2.casHouseFix(G2.casHouseNew(), "2026-11-16").house; G2.whTick(h2, "2026-11-16", {}); G2.whTick(h2, "2026-11-17", {}, 100000000);
   assert.strictEqual(JSON.stringify(end), JSON.stringify(G2.wuAmounts(h2)), "全天總額跟壹次入帳壹樣");
 });
 T("整週分散：週一定下借款總額，每天借 1/7，七天加起來等於總額；有借款紀錄、新聞寫誰借了；欠款全還完才刪", G => {

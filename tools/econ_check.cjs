@@ -68,6 +68,10 @@ check("藝術市場拍賣：NPC 出價不超過現價、玩家自己的畫底價
 const maxLev = Math.max(...Object.values(C.stockLev.maxLev)), band = Math.max(C.stock.tw.band, C.stock.us.band);
 check("槓桿：強平線在保證金內（forcePct ＜ 100）", C.stockLev.forcePct > 0 && C.stockLev.forcePct < 100, `${C.stockLev.forcePct}%`);
 check("槓桿：強平後再跳空壹天的漲跌停也不會賠光保證金（無壞帳）", (C.stockLev.forcePct / 100) * (100 / maxLev) + band <= 100 / maxLev + 1e-9, `${maxLev} 倍：強平 ${pct((C.stockLev.forcePct / 100) * (100 / maxLev))} ＋ 漲跌停 ${band}% ≤ ${pct(100 / maxLev)}`);
+{ const T = C.worldDoc.trade, ids = new Set(G.WORLD_UNITS.filter(u => u && u.parent == null).map(u => u.id)), net = {}, gross = {}; let bad = [];
+  for (const f of T.flows || []) { if (!ids.has(f.from) || !ids.has(f.to)) { bad.push(f.k + " " + f.from + "→" + f.to + " 不在名單上"); continue; } const u = G.WORLD_UNITS.find(x => x.id === f.from), v = G.WORLD_UNITS.find(x => x.id === f.to), a = (u.share || 0) * f.pct; net[f.from] = (net[f.from] || 0) - a; net[f.to] = (net[f.to] || 0) + (u.share || 0) * f.pct; gross[f.from] = (gross[f.from] || 0) + a; void v; }
+  const worst = Object.keys(gross).map(id => [id, Math.abs(net[id] || 0) / Math.max(1e-9, gross[id])]).sort((a, b) => b[1] - a[1])[0];
+  check("集團往來表（決定 0127）：付款方、收款方都在名單上；每個單位名目上收＝付（淨額 ≤ 付出的 25%，不然會被掏空或暴漲）；銀行利率 存款 < 放款", bad.length === 0 && (!worst || worst[1] <= 0.25) && T.bank.depRate < T.bank.loanRate, bad.length ? bad.join("、") : worst ? `最不平衡的 ${worst[0]} 淨額 ${Math.round(worst[1] * 100)}%（付出的）；存款 ${T.bank.depRate}% ＜ 放款 ${T.bank.loanRate}%／天` : "沒有往來表"); }
 check("槓桿：全館壹天淨賺上限、部位上限有設", C.stockLev.profitCap > 0 && C.stockLev.posLimit > 0, `淨賺 ${fmt(C.stockLev.profitCap)}、部位 ${fmt(C.stockLev.posLimit)}`);
 
 // 已知世界的池子和各種流量

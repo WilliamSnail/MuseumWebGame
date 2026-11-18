@@ -141,7 +141,7 @@ export function casBankHall(w, day, house, t, stale, dayData) {
   return { debt: casDebtView(w, t), advisor: casAdvisorPlan(w, house, day, t), cash: w.chips, save, loan, bonds, stocks, econ: house ? casBankEcon(house) : null, today: house ? casNpcToday(house.npcLive, day) : null, houseInv: house ? casInvestPubView(house) : null, live: house ? casBooksLive(house) : null, world: casWorldNews(dayData, day, OUT_STOCKS), net: w.chips + held - owe };
 }
 // 全館的帳的即時餘額（11-17 翊文：「能夠改成即時一點嗎?」）：銀行每次打開都從莊家現在的樣子拿，不等隔天 05:00 的日報
-const casBooksLive = h => { const N = v => (Number.isFinite(+v) ? Math.floor(+v) : 0); return { bankroll: N(h.bankroll), budget: N(h.budget), museum: N(h.museum), gov: N(h.gov), sea: N(h.sea), world: h.world == null ? null : N(h.world), ext: h.world == null ? null : N(h.ext) }; };
+const casBooksLive = h => { const N = v => (Number.isFinite(+v) ? Math.floor(+v) : 0); return { bankroll: N(h.bankroll), budget: N(h.budget), museum: N(h.museum), gov: N(h.gov), sea: N(h.sea), world: h.world == null ? null : N(h.world), ext: h.world == null ? null : N(h.ext), gb: h.gb ? N(h.gb.cash) : 0 }; };
 // 畫面要的
 export function casBankView(w, day) {
   const C = NUM.casino.bank, B = casBankFix(w);

@@ -23,7 +23,7 @@ export const CAS_REPORT = {
   mint: { worldGrow: "已知世界每天成長（照 GDP 年增率）", worldExpand: "已知世界一次性擴充", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（已知世界撥款，要還）", worldLoan: "已知世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進博物館資金）", ticketMuseum: "參觀者門票（進修繕基金）" },
   // 已知世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進已知世界）
-  world: { gRaise: "集團增資（莊家買新股，錢進集團）", gBuy: "集團庫藏股（集團買回，錢給莊家）", gDiv: "集團股息（集團付）", stockBuy: "買股票（錢給海外）", stockSell: "賣股票（海外付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（海外付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟已知世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
+  world: { groupDeposit: "集團存進佩佩銀行", groupWithdraw: "集團從佩佩銀行領回", groupLoan: "集團向佩佩銀行借款", groupRepay: "集團還佩佩銀行", groupIntDep: "佩佩銀行付集團的存款利息", groupIntLoan: "集團付佩佩銀行的放款利息", groupBankLoan: "佩佩銀行向博物館資金借", groupBankRepay: "佩佩銀行還博物館資金", groupBankInt: "佩佩銀行付博物館資金的利息", gRaise: "集團增資（莊家買新股，錢進集團）", gBuy: "集團庫藏股（集團買回，錢給莊家）", gDiv: "集團股息（集團付）", stockBuy: "買股票（錢給海外）", stockSell: "賣股票（海外付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（海外付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟已知世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還已知世界貸款" },
   flow: { gStock: "集團股票（莊家當造市商）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", gLev: "集團股槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetFix: "博物館資金補撥給莊家（11-17 館債那期照新規定該由博物館資金付，一次性）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
@@ -40,10 +40,10 @@ const rpList = (obj, names, signed) => Object.entries(obj || {}).filter(([, v]) 
 
 // flow 裡「不是莊家的錢」的來源（記帳的人用 casPoolWorldIn／Out：錢在博物館資金或修繕基金跟已知世界之間搬，flow 記的是那個池子的角度：正＝進池子）。
 // 莊家那塊（銀行財報的莊家、日報的「進出」）不能列它們，不然博物館資金收的門票會變成莊家的錢（11-16 對帳腳本 tools/books_sign_check.cjs 擋這個）
-export const CAS_BOOK_POOL = { npcTicketBudget: "budget", npcCrowdBudget: "budget", npcJob: "budget", npcCellar: "budget", npcCraft: "budget", npcArt: "budget", budgetInvestBuy: "budget", budgetInvestSell: "budget", npcTicketMuseum: "museum", npcCrowdMuseum: "museum", stockFee: "budget", artFee: "budget", stockTax: "gov", bizTax: "gov", entTax: "gov", divTax: "gov" };
+export const CAS_BOOK_POOL = { npcTicketBudget: "budget", npcCrowdBudget: "budget", npcJob: "budget", npcCellar: "budget", npcCraft: "budget", npcArt: "budget", budgetInvestBuy: "budget", budgetInvestSell: "budget", npcTicketMuseum: "museum", npcCrowdMuseum: "museum", groupIntDep: "budget", groupIntLoan: "budget", groupBankLoan: "budget", groupBankRepay: "budget", groupBankInt: "budget", stockFee: "budget", artFee: "budget", stockTax: "gov", bizTax: "gov", entTax: "gov", divTax: "gov" };
 // 帳上的來源代號 → 玩家看的名字（找不到才回代號，對帳腳本會擋沒有名字的）
 // acct 是「已知世界」時，同壹個代號先用已知世界的名字（例如 grant：已知世界那塊叫「文化部借款撥款」，莊家那塊叫「文化部借款」）
-export const casReportLabel = (k, acct) => (acct === "world" || acct === "ext" ? CAS_REPORT.world[k] : "") || CAS_REPORT.flow[k] || CAS_REPORT.houseMint[k] || CAS_REPORT.world[k] || CAS_REPORT.mint[k] || CAS_REPORT.burn[k] || k;
+export const casReportLabel = (k, acct) => (acct === "world" || acct === "ext" || acct === "gb" ? CAS_REPORT.world[k] : "") || CAS_REPORT.flow[k] || CAS_REPORT.houseMint[k] || CAS_REPORT.world[k] || CAS_REPORT.mint[k] || CAS_REPORT.burn[k] || k;
 
 // 銀行「館內經濟」展開看的幾個帳（決定 0100）：{ day, bankroll, budget, museum, sea, world, d: { 各帳昨天的變化 }, top: { 各帳進出最大的最多 3 筆 [{ label, n }]（正＝進這個帳、負＝出這個帳）} }。
 // 全部從日報已經算好的 snap 和 diff 拿（延遲壹天、整天不變）。每個帳的 n 都是「這個帳自己的角度」：進來是正、出去是負。
@@ -54,21 +54,22 @@ export function casBooksView(doc, full) {
   if (!doc || !doc.snap || !doc.snap.house || !doc.diff) return null;
   const H = doc.snap.house, d = doc.diff, R = CAS_REPORT, add = (m, k, label, v) => { if (v) m.push({ k, label, n: Math.round(v) }); };
   const sorted = m => m.slice().sort((a, b) => Math.abs(b.n) - Math.abs(a.n)), top = m => sorted(m).slice(0, 3).map(x => ({ label: x.label, n: x.n }));
-  const bank = [], world = [], ext = [], budget = [], museum = [], gov = [];
+  const bank = [], world = [], ext = [], gbk = [], budget = [], museum = [], gov = [];
   const hm = d.houseMint || {}, fl = d.flow || {}, hb = d.houseBurn || {};
   for (const [k, v] of Object.entries(fl)) if (!CAS_BOOK_POOL[k]) add(bank, k, casReportLabel(k), v);
   for (const [k, v] of Object.entries(hm)) if (k !== "ticketBudget" && k !== "ticketMuseum" && k !== "worldGrow" && k !== "worldExpand") add(bank, k, casReportLabel(k), v);
   for (const [k, v] of Object.entries(hb)) add(bank, k, casReportLabel(k), -v);
   for (const [k, v] of Object.entries(d.wflow || {})) add(world, k, casReportLabel(k, "world"), v); // 已知世界的角度：正＝進已知世界
+  for (const [k, v] of Object.entries(d.gflow || {})) add(gbk, k, casReportLabel(k, "gb"), v); // 佩佩銀行準備金（決定 0127）的角度：正＝進準備金
   for (const [k, v] of Object.entries(d.xflow || {})) add(ext, k, casReportLabel(k, "ext"), v); // 海外（決定 0126）的角度：正＝進海外
   add(world, "worldGrow", casReportLabel("worldGrow", "world"), hm.worldGrow); add(world, "worldExpand", casReportLabel("worldExpand", "world"), hm.worldExpand);
   add(budget, "ticketBudget", R.houseMint.ticketBudget, hm.ticketBudget); add(museum, "ticketMuseum", R.houseMint.ticketMuseum, hm.ticketMuseum);
   for (const [k, pool] of Object.entries(CAS_BOOK_POOL)) add(pool === "budget" ? budget : pool === "gov" ? gov : museum, k, casReportLabel(k), fl[k]); // 池子自己的角度：flow 正＝進池子
   add(budget, "econWin", R.flow.econWin, -(fl.econWin || 0)); add(budget, "investFee", "投資手續費", -(fl.investFee || 0)); add(budget, "budgetLoan", R.flow.budgetLoan, -(fl.budgetLoan || 0)); add(budget, "budgetFix", R.flow.budgetFix, -(fl.budgetFix || 0)); add(budget, "budgetRepay", R.flow.budgetRepay, -(fl.budgetRepay || 0)); // 這幾個動的是莊家（拚經濟撥款、投資手續費、借還），博物館資金在對面：反號
   const N = v => Math.round(+v) || 0;
-  const out = { day: doc.day || null, bankroll: N(H.bankroll), budget: N(H.budget), museum: N(H.museum), gov: N(H.gov), sea: N(H.sea), world: H.world == null ? null : N(H.world), ext: H.ext == null ? null : N(H.ext),
-    d: { bankroll: N(d.bankroll), budget: N(d.budget), museum: N(d.museum), gov: N(d.gov), sea: N(d.sea), world: N(d.world), ext: N(d.ext) }, top: { bankroll: top(bank), budget: top(budget), museum: top(museum), gov: top(gov), sea: [], world: top(world), ext: top(ext) } };
-  if (full) out.all = { bankroll: sorted(bank), budget: sorted(budget), museum: sorted(museum), gov: sorted(gov), sea: [], world: sorted(world), ext: sorted(ext) };
+  const out = { day: doc.day || null, bankroll: N(H.bankroll), budget: N(H.budget), museum: N(H.museum), gov: N(H.gov), sea: N(H.sea), world: H.world == null ? null : N(H.world), ext: H.ext == null ? null : N(H.ext), gb: H.gb == null ? null : N(H.gb),
+    d: { bankroll: N(d.bankroll), budget: N(d.budget), museum: N(d.museum), gov: N(d.gov), sea: N(d.sea), world: N(d.world), ext: N(d.ext), gb: N(d.gb) }, top: { bankroll: top(bank), budget: top(budget), museum: top(museum), gov: top(gov), sea: [], world: top(world), ext: top(ext), gb: top(gbk) } };
+  if (full) out.all = { bankroll: sorted(bank), budget: sorted(budget), museum: sorted(museum), gov: sorted(gov), sea: [], world: sorted(world), ext: sorted(ext), gb: sorted(gbk) };
   return out;
 }
 // doc：{ day, at, snap, diff }（diff 是 casBookDiff 的樣子，第一天 from 是 null）。回傳 { day, at, span, secs: [{ t, lines }] }
@@ -167,6 +168,15 @@ export function casReportView(doc) {
     if (Object.keys(out).length) wl.push("從已知世界出來：", ...rpList(out, wNames, false));
     secs.push({ t: "跟已知世界的往來", lines: wl });
   }
+  // 佩佩銀行當集團的銀行（決定 0127）：準備金、集團的存放款
+  if (H.gb != null && (H.gb || (H.gbx && (H.gbx.dep || H.gbx.loan)) || (d.gflow && Object.keys(d.gflow).length))) {
+    const bl = [`準備金 ${rpN(H.gb)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.gb)}）`}；集團存在這裡 ${rpN((H.gbx || {}).dep || 0)}、借走 ${rpN((H.gbx || {}).loan || 0)}${(H.gbx || {}).debt > 0 ? `；銀行欠博物館資金 ${rpN(H.gbx.debt)}` : ""}。`];
+    const gin = {}, gout = {}, gNames = Object.fromEntries(Object.keys(d.gflow || {}).map(k => [k, casReportLabel(k, "gb")]));
+    for (const [k, v] of Object.entries(d.gflow || {})) { if (v > 0) gin[k] = v; else if (v < 0) gout[k] = -v; }
+    if (Object.keys(gin).length) bl.push("進準備金：", ...rpList(gin, gNames, false));
+    if (Object.keys(gout).length) bl.push("從準備金出去：", ...rpList(gout, gNames, false));
+    secs.push({ t: "佩佩銀行（集團的存放款）", lines: bl });
+  }
   // 海外（決定 0126）：真實市場，跟已知世界並列的帳，可以是負的（館友在真實市場賺回來的比投出去的多）
   if (H.ext != null && (H.ext || (d.xflow && Object.keys(d.xflow).length))) {
     const xl = [`海外（真實市場）現在 ${H.ext < 0 ? "－" : ""}${rpN(Math.abs(H.ext))} 籌碼${first ? "" : `（這段時間 ${rpSign(d.ext)}）`}。${H.ext < 0 ? "負數＝館友在真實市場賺回來的，比投出去的多。" : ""}`];
@@ -210,6 +220,7 @@ export function casReportView(doc) {
 export const CAS_FLOW_NODES = [ // tier：第幾層（上到下）；org：屬於哪個框（佩佩博物館）；順序就是同一層從左到右
   { id: "gen", name: "增長", tier: 0, note: "成長、擴充、開場：不是從哪個帳搬來的" },
   { id: "world", name: "已知世界", tier: 1, note: "館外的旅客、散客、各集團、文化部" },
+  { id: "gb", name: "佩佩銀行準備金", tier: 2, org: "museum", note: "集團存進來的錢、借出去之前的錢；跟莊家分開" },
   { id: "ext", name: "海外（真實市場）", tier: 1, note: "真實的股票、行情、股利。負數＝館友在真實市場賺回來的，比投出去的多" },
   { id: "players", name: "館友", tier: 2, note: "所有館友的錢包合起來" },
   { id: "house", name: "莊家", tier: 2, org: "museum", note: "Yuga Bot 的賭場錢" },
@@ -239,12 +250,13 @@ export const CAS_FLOW_LINE = {
   budgetInvestBuy: ["ext", "budget"], budgetInvestSell: ["ext", "budget"], budgetInvFix: ["ext", "budget"], npcTicketBudget: ["world", "budget"], npcCrowdBudget: ["world", "budget"], npcJob: ["world", "budget"], npcCellar: ["world", "budget"], npcCraft: ["world", "budget"], npcArt: ["world", "budget"], ticketBudget: ["world", "budget"],
   npcTicketMuseum: ["world", "museum"], npcCrowdMuseum: ["world", "museum"], ticketMuseum: ["world", "museum"],
   stockBuy: ["ext", "players"], stockSell: ["ext", "players"], stockRebase: ["ext", "players"], stockLevWin: ["ext", "players"], stockLevLoss: ["ext", "players"], dividend: ["ext", "players"], ticket: ["world", "players"], cultureStart: ["world", "players"],
+  groupDeposit: ["world", "gb"], groupWithdraw: ["world", "gb"], groupLoan: ["world", "gb"], groupRepay: ["world", "gb"], groupIntDep: ["world", "budget"], groupIntLoan: ["world", "budget"], groupBankLoan: ["gb", "budget"], groupBankRepay: ["gb", "budget"], groupBankInt: ["gb", "budget"],
   worldGrow: ["gen", "world"], worldExpand: ["gen", "world"], reset: ["gen", "house"],
   start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
 };
 // 今天 05:00 起各條記帳的累計（跟日報快照同一份：led0 在換日寫財報時存，shared/casino_book.js 的 casBookSnap 同一套來源）
-export const CAS_FLOW_UNIT = { tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
-export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, u: Object.assign({}, H.units), w: Object.assign({}, H.wflow), x: Object.assign({}, H.xflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
+export const CAS_FLOW_UNIT = { tradeDaily: "日用品採購", tradeFee: "金融服務費", tradeResearch: "研究委託", tradeDesign: "展覽設計委託", tradeTax: "稅與規費", tradeSubsidy: "補助與公共採購", tradeTech: "科技服務", tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
+export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, u: Object.assign({}, H.units), w: Object.assign({}, H.wflow), x: Object.assign({}, H.xflow), g: Object.assign({}, H.gflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
 const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object.keys(now || {}), ...Object.keys(then || {})])) { const d = Math.round((+(now || {})[k] || 0) - (+(then || {})[k] || 0)); if (d) o[k] = d; } return o; };
 // all：casBooksView(doc, true).all（每個帳的 [{ k, label, n }]，n 是這個帳自己的角度）。回傳 { edges, lost }
 //   edges：[{ from, to, amt, srcs: [{ src, label, amt }] }]，兩個地方之間的淨流向（amt 一定 > 0），srcs 的 amt 對 edge 的方向（反方向的是負的）
@@ -258,7 +270,7 @@ export function casFlowEdges(all) {
     const key = [ln[0], ln[1]].sort().join("|"), first = key.split("|")[0], p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
     p.srcs.push({ src: x.k, label: x.label, amt: ln[0] === first ? x.n : -x.n });
   }
-  for (const [A, list] of [["world", all.world], ["ext", all.ext], ["bankroll", all.bankroll], ["budget", all.budget], ["museum", all.museum], ["gov", all.gov]]) for (const x of list || []) {
+  for (const [A, list] of [["world", all.world], ["ext", all.ext], ["gb", all.gb], ["bankroll", all.bankroll], ["budget", all.budget], ["museum", all.museum], ["gov", all.gov]]) for (const x of list || []) {
     const a0 = A === "bankroll" ? "house" : A, ln = CAS_FLOW_LINE[x.k];
     if (done.has(x.k)) continue; // 同壹筆錢在兩個帳（已知世界、莊家…）：先到的算，後面那個是對面的同壹筆
     const at = ln ? ln.findIndex(id => id === a0 || (a0 === "world" && id.startsWith("w:"))) : -1; // 線的兩端可以是 "w:單位id"（已知世界裡的某個集團），算在已知世界的帳上
@@ -283,9 +295,9 @@ export function casFlowEdges(all) {
 export function casFlowHub(house, day) {
   const e = house && house.econ, L0 = e && e.led0, led = house && house.led;
   if (!L0 || L0.day !== day || !led) return null;
-  const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w), xflow: cfDiff(Object.assign({}, led.ext, { extSplit: 0 }), Object.assign({}, L0.x, { extSplit: 0 })) }; // 決定 0126：led0 沒有 x（上線前寫的）就當 0；搬出那筆 extSplit 不算今天的流動
-  const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0, ext: 0 } }, diff }, true);
+  const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w), xflow: cfDiff(Object.assign({}, led.ext, { extSplit: 0 }), Object.assign({}, L0.x, { extSplit: 0 })), gflow: cfDiff(led.gb, L0.g) }; // 決定 0126：led0 沒有 x（上線前寫的）就當 0；搬出那筆 extSplit 不算今天的流動
+  const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0, ext: 0, gb: 0 } }, diff }, true);
   v.all.units = (L0.u ? Object.entries(cfDiff(led.units, L0.u)) : []).filter(([, n]) => n > 0).map(([k, n]) => { const [kind, from, to] = k.split("|"), E = s => s === "house" || s === "players" ? s : "w:" + s; return { k: kind, label: CAS_FLOW_UNIT[kind] || kind, n, from: E(from), to: E(to), grp: /^g(Raise|Buy|Div)$/.test(kind) }; }); // 集團之間的交易（all.units）
   const r = casFlowEdges(v.all);
-  return { day, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(casFlowWorldNodes(house)), orgs: CAS_FLOW_ORGS, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world), ext: house.world == null ? null : N(house.ext) } };
+  return { day, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(casFlowWorldNodes(house)), orgs: CAS_FLOW_ORGS, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world), ext: house.world == null ? null : N(house.ext), gb: house.gb ? N(house.gb.cash) : 0 } };
 }

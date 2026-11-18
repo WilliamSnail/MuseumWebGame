@@ -69,7 +69,7 @@ T("flow：集團之間的交易（world.js 記的 trade…）每種都有名字�
   const net = r.edges.find(x => [x.from, x.to].sort().join() === "w:g-daily,w:g-finance"); assert.ok(net && net.amt === 400 && net.srcs.length === 2, JSON.stringify(net));
 });
 T("flow：框「佩佩博物館」＝莊家、博物館資金、修繕基金；每個節點都有層", G => {
-  const org = G.CAS_FLOW_NODES.filter(x => x.org === "museum").map(x => x.id).sort(); assert.strictEqual(org.join(), "budget,house,museum"); assert.ok(G.CAS_FLOW_ORGS.museum === "佩佩博物館");
+  const org = G.CAS_FLOW_NODES.filter(x => x.org === "museum").map(x => x.id).sort(); assert.strictEqual(org.join(), "budget,gb,house,museum"); assert.ok(G.CAS_FLOW_ORGS.museum === "佩佩博物館");
   assert.ok(G.CAS_FLOW_NODES.every(x => Number.isInteger(x.tier) && x.name));
 });
 console.log(`${pass} passed, ${fail} failed（金流頁籤）`); process.exit(fail ? 1 : 0);
