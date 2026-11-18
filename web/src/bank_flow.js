@@ -95,6 +95,23 @@ function anchors(edges, pos, tierOf) {
   return pt;
 }
 
+// 已知世界那層，集團方塊排成格子：兩端都是格子裡的方塊時，線只走「方塊中間的空隙」（欄和欄之間、列和列之間），從來源方塊的邊出發、停在目標方塊的邊上，不穿過、不貼著別的方塊。
+// 同壹列相鄰＝直線；同壹欄相鄰＝直線；隔壁欄＝壹個 Z（兩次轉折）；其他＝沿列縫、欄縫走（最多三次轉折）。同壹條縫上的線錯開幾個像素。
+function routeGrid(e, pos, i) {
+  const A = pos[e.from], B = pos[e.to]; if (!A || !B || !A.chip || !B.chip) return null;
+  const chips = Object.values(pos).filter(r => r.chip), uniq = k => [...new Set(chips.map(r => Math.round(r[k])))].sort((p, q) => p - q), xs = uniq("x"), ys = uniq("y");
+  const ca = xs.indexOf(Math.round(A.x)), cb = xs.indexOf(Math.round(B.x)), ra = ys.indexOf(Math.round(A.y)), rb = ys.indexOf(Math.round(B.y)); if (ca < 0 || cb < 0 || ra < 0 || rb < 0) return null;
+  const sp = ((i * 7) % 5 - 2) * 8, mid = (a, b) => (a + b) / 2, gx = c => (c < 0 ? xs[0] - A.w / 2 - 10 : c >= xs.length - 1 ? xs[xs.length - 1] + A.w / 2 + 10 : mid(xs[c] + A.w / 2, xs[c + 1] - A.w / 2)), gy = r => (r < 0 ? ys[0] - A.h / 2 - 12 : r >= ys.length - 1 ? ys[ys.length - 1] + A.h / 2 + 12 : mid(ys[r] + A.h / 2, ys[r + 1] - A.h / 2));
+  const dx = Math.sign(cb - ca), dy = Math.sign(rb - ra), P = (x, y) => ({ x, y });
+  const side = (R, d, off) => P(R.x + d * R.w / 2, R.y + off), vert = (R, d, off) => P(R.x + off, R.y + d * R.h / 2);
+  if (ra === rb && Math.abs(cb - ca) === 1) return [side(A, dx, sp), side(B, -dx, sp)];
+  if (ca === cb && Math.abs(rb - ra) === 1) return [vert(A, dy, sp), vert(B, -dy, sp)];
+  if (ra === rb) { const y = gy(ra) + sp; return [vert(A, 1, sp * 2), P(A.x + sp * 2, y), P(B.x + sp * 2, y), vert(B, 1, sp * 2)]; } // 同列不相鄰：從下面的列縫繞過去
+  if (ca === cb) { const x = gx(ca) + sp; return [side(A, 1, sp), P(x, A.y + sp), P(x, B.y + sp), side(B, 1, sp)]; } // 同欄不相鄰：從右邊的欄縫繞過去
+  if (Math.abs(cb - ca) === 1) { const x = gx(Math.min(ca, cb)) + sp; return [side(A, dx, sp), P(x, A.y + sp), P(x, B.y + sp), side(B, -dx, sp)]; }
+  const y = gy(dy > 0 ? ra : ra - 1) + sp, x = gx(dx > 0 ? cb - 1 : cb) + sp; // 其他：A 往 B 的方向出到列縫，沿列縫走到 B 旁邊的欄縫，再沿欄縫走到 B 的高度，從側邊進去
+  return [vert(A, dy, sp), P(A.x + sp, y), P(x, y), P(x, B.y + sp), side(B, -dx, sp)];
+}
 // 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是已知世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
 function route(pa, pb, e, pos, W) {
   const chips2 = !!(pos[e.from] && pos[e.from].chip && pos[e.to] && pos[e.to].chip), m = chips2 ? 20 : 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
@@ -159,7 +176,7 @@ export function flowPane(v, deps) {
     const lines = [], pills = [], dotsEl = [], taken = []; let dots = 0; // taken：已經放好的金額牌（後面的牌要錯開，不疊在壹起）
     edges.forEach((e, i) => {
       const pa = PT[i] && PT[i][e.from], pb = PT[i] && PT[i][e.to]; if (!pa || !pb) return;
-      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = route(pa, pb, e, L.pos, L.W), d = polyD(pts);
+      const on = SEL.e === i, dim = SEL.n && e.from !== SEL.n && e.to !== SEL.n, wd = 1.4 + 4.6 * lg(e.amt), pts = routeGrid(e, L.pos, i) || route(pa, pb, e, L.pos, L.W), d = polyD(pts);
       lines.push(s("path", { d, class: "bank-flow-line" + (on ? " on" : "") + (dim ? " dim" : ""), "stroke-width": wd.toFixed(1), "marker-end": "url(#bfa" + (on ? "-on" : "") + ")", fill: "none" }));
       lines.push(s("path", { d, class: "bank-flow-hit", "stroke-width": 22, fill: "none", tabindex: 0, role: "button", "aria-label": name(e.from) + "到" + name(e.to) + "，今天 " + fmt(e.amt) + "，看來源", "data-i": i }));
       const n = move && !dim ? Math.min(5, 2 + Math.round(lg(e.amt) * 3)) : 0, len = polyLen(pts), dur = Math.max(2.4, len / 60);
