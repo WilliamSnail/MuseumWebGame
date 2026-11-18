@@ -16,7 +16,12 @@ T("結構檢查：抓得到壞掉的寫法（每一種都試）", () => {
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [sched, steps]").some(x => /creepyHook/.test(x)), "creepyHook timer 漏掉");
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [steps, ck.timer]").some(x => /sched/.test(x)), "every 漏掉");
   assert.ok(mut("fileLoop(c, g, 'museum-hall', 0.18).n", "fileLoop(c, g, 'museum-hall', 0.18)").some(x => /fileLoop/.test(x)), "fileLoop 漏 .n");
-  assert.ok(mut("fileOnce(c, g, 'pulse-rise', 0.22)", "fileOnce(c, bus.amb, 'pulse-rise', 0.22)").some(x => /bus/.test(x)), "接到 bus");
+  assert.ok(mut("fileOnce(c, g, 'pulse-rise', 0.22, own)", "fileOnce(c, bus.amb, 'pulse-rise', 0.22, own)").some(x => /bus/.test(x)), "接到 bus");
+  assert.ok(mut("fileOnce(c, g, 'pulse-rise', 0.22, own)", "fileOnce(c, g, 'pulse-rise', 0.22)").some(x => /沒給 own/.test(x)), "fileOnce 漏 own");
+  assert.ok(mut("const ck = creepyHook(c, g, own);", "const ck = creepyHook(c, g);").some(x => /沒給 own/.test(x)), "creepyHook 漏 own");
+  assert.ok(mut("origin(c, g, own) {", "origin(c, g) {").some(x => /沒收 own/.test(x)), "房間沒收 own");
+  assert.ok(mut("      own.stop(c);\n", "").some(x => /own\.stop/.test(x)), "startAmb 沒停 own");
+  assert.ok(mut("own.stop(c, 0.4); SONG_GAINS.delete(g);", "SONG_GAINS.delete(g);").some(x => /songCycle/.test(x)), "songCycle 沒停正在放的曲子");
   assert.ok(mut("(hnd.timers || []).forEach((s) => s());", "").some(x => /stop\(\)/.test(x)), "stop 沒停 timers");
   assert.ok(mut("if (hs == null && heartStop) { heartStop(); heartStop = null; }", "").some(x => /heartStop/.test(x)), "心跳沒停");
 });
@@ -94,18 +99,72 @@ function loadFx() {
     createGain() { const n = node(); n.gain = param(); return n; },
     createOscillator() { const n = node(); n.frequency = param(); n.type = "sine"; return n; },
     createBiquadFilter() { const n = node(); n.frequency = param(); n.Q = param(); n.gain = param(); return n; },
-    createBufferSource() { const n = node(); n.playbackRate = param(); return n; },
+    // 音效檔：記下每個放出來的檔（id、有沒有開始、有沒有被停掉）
+    createBufferSource() { const n = node(); n.playbackRate = param(); n.start = () => { n.started = true; log.srcs.push(n); }; n.stop = () => { n.stopped = true; }; return n; },
     createBuffer(ch, len) { const d = new Float32Array(len); return { getChannelData: () => d }; },
+    decodeAudioData(b, ok) { ok({ duration: 90, id: b.id }); },
     createDelay() { const n = node(); n.delayTime = param(); return n; },
     createDynamicsCompressor() { const n = node(); for (const k of ["threshold", "knee", "ratio", "attack", "release"]) n[k] = param(); return n; },
     createStereoPanner() { const n = node(); n.pan = param(); return n; },
     resume() { return Promise.resolve(); },
   };
-  const timers = new Set(); let id = 0;
-  const sandbox = { window: { AudioContext: function () { return ctx; } }, setTimeout: () => { const k = ++id; timers.add(k); return k; }, clearTimeout: k => timers.delete(k) };
+  log.srcs = []; log.fetches = {};
+  // 計時器：記下要跑的函式，測試用 fire() 自己決定什麼時候跑（模擬「待壹下子」）
+  const timers = new Set(), fns = new Map(); let id = 0;
+  // 下載：hold 為 true 時先不給，等測試呼叫 release(id) 才給（模擬網路慢、還在下載就離開）
+  const net = { hold: false, wait: [] };
+  const fetch = (url) => new Promise((ok) => {
+    const fid = url.replace(/^\/sfx\/|\.mp3$/g, ""); log.fetches[fid] = (log.fetches[fid] || 0) + 1;
+    const give = () => ok({ ok: true, arrayBuffer: () => Promise.resolve({ id: fid }) });
+    if (net.hold) net.wait.push({ fid, give }); else give();
+  });
+  const sandbox = { window: { AudioContext: function () { return ctx; } }, fetch,
+    setTimeout: (fn) => { const k = ++id; timers.add(k); fns.set(k, fn); return k; }, clearTimeout: k => { timers.delete(k); fns.delete(k); } };
   const names = Object.keys(sandbox);
   const FX = new Function(...names, code + ";return FX;")(...names.map(n => sandbox[n]));
-  return { FX, log, timers };
+  const fire = () => { const ks = [...fns.keys()]; ks.forEach((k) => { const fn = fns.get(k); if (!fn) return; fns.delete(k); timers.delete(k); fn(); }); };
+  const flush = () => new Promise((r) => setImmediate(r));
+  const release = () => { const w = net.wait; net.wait = []; w.forEach((x) => x.give()); };
+  return { FX, log, timers, fire, flush, net, release };
+}
+// 房間裡「待壹下子才放」的整首曲子（11-18 翊文：「圖書館裡待一下子會播放的那個音樂，退出到大廳後還會繼續播放」）
+const SONGS = { origin: /^lib-piano/, gallery: /^gallery-/, commission: /^cello-/, office: /^cello-/ };
+const songSrcs = (log, re) => log.srcs.filter((s) => s.buffer && re.test(s.buffer.id));
+async function untilSong(t, re) { // 壹直跑計時器，直到那首曲子開始放
+  for (let i = 0; i < 6 && !songSrcs(t.log, re).length; i++) { t.fire(); await t.flush(); await t.flush(); }
+  return songSrcs(t.log, re);
+}
+const AT = async (name, fn) => { try { await fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, e.message); } };
+const asyncTests = [];
+for (const room of Object.keys(SONGS)) {
+  asyncTests.push(() => AT(`fx.js：${room} 的曲子放到壹半去大廳，曲子停掉`, async () => {
+    const t = loadFx(); t.FX.sound.demo("click"); t.FX.sound.ambient(room);
+    const s = await untilSong(t, SONGS[room]);
+    assert.strictEqual(s.length, 1, `${room} 等了還沒放曲子`);
+    assert.ok(!s[0].stopped, "還在房間裡就被停了");
+    t.FX.sound.ambient("lobby");
+    assert.ok(s[0].stopped, `${room} 的曲子去大廳後還在放`);
+  }));
+  asyncTests.push(() => AT(`fx.js：${room} 等待中就離開，到大廳不會晚響`, async () => {
+    const t = loadFx(); t.FX.sound.demo("click"); t.FX.sound.ambient(room);
+    t.FX.sound.ambient("lobby");
+    t.fire(); await t.flush(); await t.flush(); t.fire(); await t.flush();
+    assert.strictEqual(songSrcs(t.log, SONGS[room]).length, 0, `${room} 離開後曲子還是響了`);
+  }));
+  asyncTests.push(() => AT(`fx.js：${room} 曲子下載到壹半離開，下載好也不放`, async () => {
+    const t = loadFx(); t.FX.sound.demo("click"); t.net.hold = true; t.FX.sound.ambient(room);
+    for (let i = 0; i < 4 && !t.net.wait.some((w) => SONGS[room].test(w.fid)); i++) { t.fire(); await t.flush(); }
+    assert.ok(t.net.wait.some((w) => SONGS[room].test(w.fid)), `${room} 沒開始下載曲子`);
+    t.FX.sound.ambient("lobby"); t.net.hold = false; t.release(); await t.flush(); await t.flush(); await t.flush();
+    assert.strictEqual(songSrcs(t.log, SONGS[room]).length, 0, `${room} 離開後下載好的曲子還是放了`);
+  }));
+  asyncTests.push(() => AT(`fx.js：${room} 回來照原本規則重新計時、會再放`, async () => {
+    const t = loadFx(); t.FX.sound.demo("click"); t.FX.sound.ambient(room); t.FX.sound.ambient("lobby");
+    t.FX.sound.ambient(room);
+    const s = await untilSong(t, SONGS[room]);
+    assert.strictEqual(s.length, 1, `${room} 回來後沒有再放`);
+    assert.ok(!s[0].stopped);
+  }));
 }
 T("fx.js：每個房間的環境音換掉後，計時器都停了（只剩淡出收尾用的）", () => {
   const rooms = ambEntries(rd("web/src/fx.js")).map(e => e.name);
@@ -140,5 +199,8 @@ T("fx.js：心跳、耳鳴、不安低鳴：關掉就停；重複關不丟錯", 
   FX.sound.heart(null);
 });
 
-console.log(`snd_check：${pass} 過、${fail} 沒過`);
-if (fail) process.exit(1);
+(async () => {
+  for (const t of asyncTests) await t();
+  console.log(`snd_check：${pass} 過、${fail} 沒過`);
+  if (fail) process.exit(1);
+})();

@@ -201,7 +201,7 @@ async function build(notes) {
   const R = blocks("web/src/fx.js", /^    const R = \{/, /^    \};/, /^      ([A-Za-z_][\w]*)\(t[,)]/);
   const Rnames = new Set(R.map(r => r.name));
   // --- AMB（環境音） ---
-  const AMB = blocks("web/src/fx.js", /^    const AMB = \{/, /^    \};/, /^      ([A-Za-z_]\w*)\(c, g\)/);
+  const AMB = blocks("web/src/fx.js", /^    const AMB = \{/, /^    \};/, /^      ([A-Za-z_]\w*)\(c, g(?:, own)?\)/);
 
   // --- 觸發點 ---
   const T = { snd: {}, file: {}, dynSnd: [], dynFile: [], unreg: [] }; // name → [{file,line,fn,vol,note}]

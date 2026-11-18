@@ -19,10 +19,19 @@ const BUS_OK = [
   { re: /fileOnce\(c, bus\.heart, 'pulse-rise'/, why: "理智掉到 15 以下時升高音一次（刻意）" },
 ];
 
+// 從 src[at] 的左括號開始，回傳括號裡的整段參數（會數巢狀括號）
+function callArgs(src, at) {
+  let d = 0;
+  for (let i = at; i < src.length; i++) {
+    if (src[i] === "(") d++;
+    else if (src[i] === ")" && --d === 0) return src.slice(at + 1, i).trim();
+  }
+  return "";
+}
 function ambEntries(fx) {
   const a = fx.indexOf("const AMB = {"), b = fx.indexOf("function startAmb(");
   const body = fx.slice(a, b), out = [];
-  const re = /^      (\w+)\(c, g\) \{/gm; let m, last = null;
+  const re = /^      (\w+)\(c, g(?:, own)?\) \{/gm; let m, last = null;
   while ((m = re.exec(body))) { if (last) last.src = body.slice(last.at, m.index); last = { name: m[1], at: m.index }; out.push(last); }
   if (last) last.src = body.slice(last.at);
   return out;
@@ -41,6 +50,12 @@ function checkFx(fx) {
     for (const m of e.src.matchAll(/(?:const|let)\s+(\w+)\s*=\s*creepyHook\(/g)) {
       if (!new RegExp("\\b" + m[1] + "\\.timer\\b").test(timers)) bad.push(`AMB.${e.name}：${m[1]}（creepyHook）的 .timer 沒進 timers`);
     }
+    // 11-18：房間裡的 fileOnce／creepyHook 要把 own 傳下去（換房間時正在放的淡出停掉、還在下載的不放；「圖書館的音樂退出到大廳還在放」）
+    for (const m of e.src.matchAll(/\b(fileOnce|creepyHook)\(c, (?!bus\.)/g)) {
+      const call = callArgs(e.src, m.index + m[1].length);
+      if (!/,\s*own$/.test(call)) bad.push(`AMB.${e.name}：${m[1]} 沒給 own，換房間不會停：${m[1]}(${call.slice(0, 50)})`);
+    }
+    if (/\b(?:fileOnce|creepyHook)\(c, (?!bus\.)/.test(e.src) && !/^\s*\w+\(c, g, own\)/.test(e.src)) bad.push(`AMB.${e.name}：用了 fileOnce／creepyHook 但沒收 own 參數`);
     for (const m of e.src.matchAll(/^\s*every\(/gm)) bad.push(`AMB.${e.name}：有 every() 沒接回傳值，停不掉 (${m.index})`);
     for (const m of e.src.matchAll(/fileLoop\(([^)]*)\)(\.n)?/g)) {
       const pre = e.src.slice(Math.max(0, m.index - 60), m.index);
@@ -71,11 +86,13 @@ function checkFx(fx) {
   const st = fx.slice(fx.indexOf("function startAmb("), fx.indexOf("function startDrone("));
   if (!/\(hnd\.timers \|\| \[\]\)\.forEach\(\(s\) => s\(\)\)/.test(st)) bad.push("startAmb().stop() 沒有停 timers");
   if (!/g\.disconnect\(\)/.test(st) || !/hnd\.nodes/.test(st)) bad.push("startAmb().stop() 沒有斷開 g、停 nodes");
+  if (!/AMB\[type\]\(c, g, own\)/.test(st) || !/own\.stop\(c\)/.test(st)) bad.push("startAmb() 沒把 own 給房間，或 stop() 沒有 own.stop(c)（房間放的單次檔案換房間停不掉）");
   const sy = fx.slice(fx.indexOf("function sync()"), fx.indexOf("// 瀏覽器要等玩家先點"));
   for (const k of ["ambNow.stop()", "heartStop()", "tinNow.stop()", "droneNow.stop()"]) if (!sy.includes(k)) bad.push(`sync() 沒有 ${k}`);
   // 6. 恐怖音樂時房間的曲子壓低
   const sc = fx.slice(fx.indexOf("function songCycle("), fx.indexOf("function creepyHook("));
   if (!/SONG_GAINS\.add\(/.test(sc) || !/SONG_GAINS\.delete\(/.test(sc)) bad.push("songCycle 的曲子沒有過 SONG_GAINS（恐怖音樂時壓不低），或停的時候沒拿掉");
+  if (!/own\.stop\(c/.test(sc) || !/fileOnce\([^;]*, own\)/.test(sc)) bad.push("songCycle 停的時候沒有 own.stop（正在放的曲子會繼續放、還在下載的離開後才響）");
   if (!/songDread/.test(sy) || !/SONG_GAINS\.forEach/.test(sy)) bad.push("sync() 沒有照恐怖音樂調房間曲子的音量（SONG_GAINS）");
   const SONG_IDS = ["lib-piano-a", "lib-piano-b", "cello-commission", "gallery-nostalgic", "gallery-welte"];
   for (const e of ents) for (const m of e.src.matchAll(/fileOnce\([^,]+,[^,]+,\s*'([^']+)'/g)) if (SONG_IDS.includes(m[1])) bad.push(`AMB.${e.name}：整首曲子 ${m[1]} 用 fileOnce 直接放，要走 songCycle（恐怖音樂時才壓得低）`);

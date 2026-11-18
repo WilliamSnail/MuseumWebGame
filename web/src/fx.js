@@ -625,19 +625,37 @@ export const FX = (() => {
       });
       return hh;
     }
-    // 環境音裡偶爾播壹次的檔案（接到 to，不走 sfx 音軌）
-    function fileOnce(c, to, id, gain) { // 回傳 Promise：這個檔有幾秒（讀不到是 null）
+    // 誰放的、誰收（11-18 翊文：「圖書館裡待一下子會播放的那個音樂，退出到大廳後還會繼續播放」）：
+    //   房間（startAmb）和 songCycle 各有壹個 owner；它放的檔案記在 srcs，換房間時 stop() 把正在放的淡出再真的停掉，
+    //   alive 變 false 以後才下載好的檔案也不放（不然等待中離開，到了大廳才突然響）。原本只靠把房間的音量鈕拔掉，曲子其實還在跑
+    function owner() {
+      const srcs = new Set();
+      return {
+        alive: true, srcs,
+        add(s, v) { const hh = { s, v }; srcs.add(hh); s.onended = () => srcs.delete(hh); },
+        stop(c, fade = 0.3) {
+          this.alive = false;
+          const t = c.currentTime;
+          srcs.forEach(({ s, v }) => { try { v.gain.cancelScheduledValues(t); v.gain.setTargetAtTime(0.0001, t, fade); s.stop(t + fade * 4); } catch (e) { /* 已經停了 */ } });
+          srcs.clear();
+        },
+      };
+    }
+    // 環境音裡偶爾播壹次的檔案（接到 to，不走 sfx 音軌）。own：房間或 songCycle 的 owner（房間裡壹定要給，換房間才停得掉）
+    function fileOnce(c, to, id, gain, own) { // 回傳 Promise：這個檔有幾秒（讀不到、已經離開是 null）
       return fileBuf(c, id).then((buf) => {
-        if (!buf) return null;
+        if (!buf || (own && !own.alive)) return null;
         const s = c.createBufferSource(), v = c.createGain();
         s.buffer = buf; v.gain.value = gain; s.connect(v); v.connect(to); s.start();
+        if (own) own.add(s, v);
         return buf.duration;
       }, () => null);
     }
     // 房間偶爾放的整首曲子（11-16 翊文：「播完後安靜20秒左右再撥」）：壹首播完才開始算，安靜 15～25 秒再放下壹首（ids 輪流）；進房間也先安靜 15～25 秒。回傳停止函式（跟 every 壹樣放進 timers）
     //   duck：房間原本的合成旋律接在這個 GainNode 上；曲子放的時候它淡出、播完前 2 秒淡回來，兩首不會疊在壹起（11-16 翊文：「圖書館兩個音樂好像會重疊」）
     function songCycle(c, g0, ids, gain, first, duck) { // first：進房間先安靜幾毫秒 [最少, 最多]，沒給是 15～25 秒
-      let alive = true, id = null, k = (Math.random() * ids.length) | 0;
+      const own = owner(); // 停的時候：計時器取消、正在放的曲子淡出停掉、還在下載的不放
+      let id = null, k = (Math.random() * ids.length) | 0;
       const g = c.createGain(); g.gain.value = songLevel(); g.connect(g0); SONG_GAINS.add(g); // 曲子先過這個鈕（恐怖音樂時壓低），再進房間
       const wait = (ms) => { id = setTimeout(play, ms); };
       const ducked = (d) => {
@@ -645,14 +663,14 @@ export const FX = (() => {
         const t = c.currentTime, p = duck.gain;
         p.cancelScheduledValues(t); p.setTargetAtTime(0, t, 0.6); p.setTargetAtTime(1, t + Math.max(1, d - 2), 1.2);
       };
-      const play = () => { if (!alive) return; fileOnce(c, g, ids[k++ % ids.length], gain).then((d) => { ducked(d); if (alive) wait((d || 60) * 1000 + rand(15000, 25000)); }); };
+      const play = () => { if (!own.alive) return; fileOnce(c, g, ids[k++ % ids.length], gain, own).then((d) => { if (!own.alive) return; ducked(d); wait((d || 60) * 1000 + rand(15000, 25000)); }); };
       wait(first ? rand(first[0], first[1]) : rand(15000, 25000));
-      return () => { alive = false; clearTimeout(id); SONG_GAINS.delete(g); };
+      return () => { clearTimeout(id); own.stop(c, 0.4); SONG_GAINS.delete(g); };
     }
     // 「失敗作之夜」那週（每週特展 failedOnly）：大廳、展廳很久才冒壹小段走音的音樂盒（11-16 翊文，Pixabay「creepy music box」）。mix({ creepy }) 開關，第壹次不響
-    function creepyHook(c, g) {
+    function creepyHook(c, g, own) {
       const st = { on: false, n: 0 };
-      const timer = every(() => { if (st.n++ && st.on) fileOnce(c, g, 'creepy-box-short', 0.3); }, () => rand(150000, 300000));
+      const timer = every(() => { if (st.n++ && st.on) fileOnce(c, g, 'creepy-box-short', 0.3, own); }, () => rand(150000, 300000));
       return { timer, mix(m) { if (m && m.creepy != null) st.on = !!m.creepy; } };
     }
     // 環境音的小零件：遠處的人聲、遠處的腳步
@@ -683,7 +701,7 @@ export const FX = (() => {
       // 11-08 翊文：「大廳也可以有音樂嗎」→ 原本只有遠處的人聲和腳步，加上音樂，人聲、腳步改小留著。
       // D 大調 D → G → Em → A ｜ D → F#m → G → A，豎琴分解和弦＋長笛般的旋律＋很輕的弦樂墊底，壹圈 8 小節約 19 秒。
       // 大廳待最久，所以不要太吵：慢、圓、沒有鼓。
-      lobby(c, g) {
+      lobby(c, g, own) {
         const E8 = 0.3;
         const ARP = {
           D: [146.83, 220, 293.66, 369.99, 440, 369.99, 293.66, 220], G: [196, 293.66, 392, 493.88, 587.33, 493.88, 392, 293.66],
@@ -715,7 +733,7 @@ export const FX = (() => {
         };
         const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % PROG.length; next += E8 * 8; } }, () => 1000);
         const steps = every(() => farSteps(c, g, 0.01), () => rand(8000, 15000));
-        const ck = creepyHook(c, g);
+        const ck = creepyHook(c, g, own);
         // 兩首翊文用 Suno 做的（11-16）：限時活動進行中放 lobby-event、人潮很多放 lobby-crowd（活動優先）；都沒有放原本的旋律。第壹次要放才下載
         // 11-16 翊文：「平常時大廳可以放這首」（Welcome Lobby）：平常放 lobby-normal，原本的合成旋律收起來（mel ＝ 0，程式留著）
         // 11-16 翊文：照理智換：低於 55「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律（門檻 NUM.ui.lobbySan，理智優先於活動、人潮）
@@ -837,7 +855,7 @@ export const FX = (() => {
       // 圖書館：古老、神秘、慢慢的（Claude 自己寫的，不是任何現成的歌）。
       // 11-08 翊文：「這裡怎麼沒有圖書館？還有他的音樂呢」→ 原本只有老時鐘、木頭嘎吱、翻頁，加上音樂，這些留著當點綴。
       // D 小調（多利安），Dm → C → B♭ → A，風琴般的和弦墊底，豎琴般的旋律有長長的回音；老時鐘跟著拍子走（每拍滴、答）
-      origin(c, g) {
+      origin(c, g, own) {
         const Q = 0.8; // 四分音符
         const PAD = [[146.83, 220, 293.66, 349.23], [130.81, 196, 261.63, 329.63], [116.54, 174.61, 233.08, 293.66], [110, 164.81, 220, 277.18]];
         const MEL = [
@@ -865,17 +883,17 @@ export const FX = (() => {
         // 11-15 翊文給的音樂：圖書館「某些時候」放（原本的音樂照舊保留）。鋼琴 每 1～2 分鐘輕輕放壹次（兩首輪流），升高音 1～2 分鐘壹次、很小聲；進房間第壹次不響
         let pu = 0;
         const piano = songCycle(c, calmG, ['lib-piano-a', 'lib-piano-b'], 0.4, null, syn); // 11-16：兩首輪流，播完安靜約 20 秒再放；放的時候合成旋律淡出
-        const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22); }, () => rand(60000, 120000));
+        const pulse = every(() => { if (!pu++) return; fileOnce(c, g, 'pulse-rise', 0.22, own); }, () => rand(60000, 120000));
         const fb = fileLoop(c, g, 'suspense-forbidden', 0); // 禁書頁籤（11-16 翊文，Pixabay「Suspense Tension」）：mix({ forbidden })
         return { nodes: [fb.n], timers: [sched, creak, page, piano, pulse], mix(m) { if (m && 'forbidden' in m) { fb.v.gain.setTargetAtTime(m.forbidden ? 0.32 : 0, c.currentTime, 1.5); calmG.gain.setTargetAtTime(m.forbidden ? 0 : 1, c.currentTime, 1.5); } } };
       },
-      hall(c, g) { // 我的展廳：明亮壹點的弦樂和聲，遠處有人聲
+      hall(c, g, own) { // 我的展廳：明亮壹點的弦樂和聲，遠處有人聲
         const room = bed(c, g, 'lowpass', 200, 0.5, 0.025);
         const CH = [[293.66, 369.99, 440], [329.63, 415.3, 493.88], [261.63, 329.63, 392], [293.66, 349.23, 440]];
         let k = 0;
         const pad = every(() => { const t = c.currentTime + 0.05, ch = CH[k++ % CH.length]; ch.forEach((f) => { tone(t, { f, g: 0.011, a: 2, d: 4.4, to: g }); tone(t, { f: f * 2, g: 0.003, a: 2.2, d: 3.6, to: g }); }); }, () => 5000);
         // 11-15 翊文：「這個不知道適不適合放博物館大廳或展廳」：加博物館大廳的人聲錄音（Pixabay「museum hall big echo group」）墊在弦樂底下
-        const ck = creepyHook(c, g);
+        const ck = creepyHook(c, g, own);
         return { nodes: [room.n, ...murmur(c, g, 0.005), fileLoop(c, g, 'museum-hall', 0.3).n], timers: [pad, ck.timer], mix: ck.mix };
       },
       library(c, g) { // 圖庫：音樂盒，五聲音階隨意彈，有回音
@@ -942,7 +960,7 @@ export const FX = (() => {
         const nost = songCycle(c, g, ['gallery-nostalgic', 'gallery-welte'], 0.4, null, syn);
         return { nodes: [room.n], timers: [pad, steps, nost] };
       },
-      cellar(c, g) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
+      cellar(c, g, own) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
         // 錄音都是 Pixabay（來源在 shared/sfx_files.js）。ui_core.js 的 audioState 用 ambMix({ floor, mode }) 告訴這裡現在在哪；沒告訴（選樓層的地方）用 base。
         //   mode：map 看地圖、選路／explore 房間探索／fight 遇到怪物／gate 守門／rest 休息點
         //   每層：bed＝三條底音的音量（wind 風、basement 地下室錄音、sewer 下水道管線）；odd＝偶爾冒出來的聲音；gap＝幾秒冒壹次；drip 合成的滴水；coming＝會不會很久壹次「有人來了」
@@ -990,9 +1008,9 @@ export const FX = (() => {
           if (!oddN++ || !cur.m.gapK) return;
           const now2 = Date.now(), gap = cur.f.gap[0] * cur.m.gapK * 1000;
           if (now2 - lastOdd < gap) return; lastOdd = now2;
-          fileOnce(c, g, pick(cur.f.odd), rand(0.12, 0.2));
+          fileOnce(c, g, pick(cur.f.odd), rand(0.12, 0.2), own);
         }, () => rand(cur.f.gap[0], cur.f.gap[1]) * 1000 * (cur.m.gapK || 1));
-        const coming = every(() => { if (comeN++ && cur.f.coming && cur.m.gapK) fileOnce(c, g, 'someone-coming', 0.16); }, () => rand(150000, 300000));
+        const coming = every(() => { if (comeN++ && cur.f.coming && cur.m.gapK) fileOnce(c, g, 'someone-coming', 0.16, own); }, () => rand(150000, 300000));
         const drip = () => {}; // 11-16：合成的滴水換成錄音（L.drips，音量在 apply 照 drip 算），這裡留壹個空的讓 timers 照舊
         return {
           nodes, timers: [drip, odd, coming],
@@ -1004,8 +1022,8 @@ export const FX = (() => {
             if (f === cur.f && m.mode === cur.mode && (m.rank || 0) === (cur.rank || 0) && !!m.trial === !!cur.trial) return;
             cur.f = f; cur.m = md; cur.mode = m.mode; cur.floorNo = m.floor || null; cur.rank = m.rank || 0; cur.trial = !!m.trial;
             apply(1.5); applyMusic(1.5);
-            if (to2) { fileOnce(c, g, 'impact-boom', 0.6); setTimeout(() => fileOnce(c, g, 'pulse-rise', 0.5), 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
-            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'basement-noise', m.mode === 'gate' ? 0.65 : 0.5); } // 遇到怪物：地下的怪聲（11-16 翊文：「打鬥時的刀劍音效跟我們實際做的事情不太配合」——推、安撫、擋都不是拿劍，原本的 sword-fight 拿掉）；守門：Boss 登場
+            if (to2) { fileOnce(c, g, 'impact-boom', 0.6, own); setTimeout(() => fileOnce(c, g, 'pulse-rise', 0.5, own), 450); } // 11-16 翊文：進第二階段先「轟」壹聲（Pixabay「Cinematic Impact Boom 05」） // 守門進第二階段：再劍戰壹下
+            if (into) { fileOnce(c, g, 'someone-coming', m.mode === 'gate' ? 0.3 : 0.24, own); fileOnce(c, g, m.mode === 'gate' ? 'boss-intro' : 'basement-noise', m.mode === 'gate' ? 0.65 : 0.5, own); } // 遇到怪物：地下的怪聲（11-16 翊文：「打鬥時的刀劍音效跟我們實際做的事情不太配合」——推、安撫、擋都不是拿劍，原本的 sword-fight 拿掉）；守門：Boss 登場
           },
         };
       },
@@ -1092,7 +1110,7 @@ export const FX = (() => {
       },
       // 銀行：沉穩的電鋼琴和弦、偶爾的硬幣聲、很淡的大廳空氣（Claude 自己寫的，不是任何現成的歌）。
       // C 大調 Cmaj7 → Am7 → Fmaj7 → G6，每個和弦壹小節（3.6 秒），壹圈約 14 秒；慢、低、沒有鼓，有長長的迴響
-      bank(c, g) {
+      bank(c, g, own) {
         const BAR = 3.6;
         const ROOT = [130.81, 110, 87.31, 98];
         const CH = [[261.63, 329.63, 392, 493.88], [220, 261.63, 329.63, 392], [220, 261.63, 349.23, 440], [246.94, 293.66, 392, 493.88]];
@@ -1128,8 +1146,8 @@ export const FX = (() => {
             noise(tt, { type: 'highpass', f: 6500, q: 1, g: 0.008, a: 0.001, d: 0.02, to: g });
           }
         }, () => rand(9000, 19000));
-        const counting = every(() => { if (slot(10.5)) fileOnce(c, g, 'coins-counting', 0.12); }, () => rand(25000, 50000));
-        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, pick(['typewriter', 'keyboard']), 0.16); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
+        const counting = every(() => { if (slot(10.5)) fileOnce(c, g, 'coins-counting', 0.12, own); }, () => rand(25000, 50000));
+        let twN = 0; const typing = every(() => { if (twN++ && slot(6.5)) fileOnce(c, g, pick(['typewriter', 'keyboard']), 0.16, own); }, () => rand(60000, 120000)); // 遠處的打字機（Pixabay「Type Writer」），第壹次不響 // 11-15：遠處櫃台點硬幣（Pixabay「Coins Counting」）
         return { nodes, timers: [sched, coins, counting, typing] };
       },
       zero(c, g) { // 理智歸零：遠處傳來的低音鼓（節奏自己寫的）
@@ -1152,7 +1170,8 @@ export const FX = (() => {
       const g = c.createGain();
       g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.exponentialRampToValueAtTime(1, c.currentTime + (type === 'title' ? 0.3 : 1.5)); // 開場音樂要馬上聽得到
       g.connect(bus.amb);
-      const hnd = AMB[type](c, g);
+      const own = owner(); // 這個房間放的單次檔案（fileOnce），換房間時淡出停掉
+      const hnd = AMB[type](c, g, own);
       if (hnd.mix && want.mix) hnd.mix(want.mix);
       return {
         type,
@@ -1161,6 +1180,7 @@ export const FX = (() => {
         stop() {
           const t = c.currentTime;
           (hnd.timers || []).forEach((s) => s());
+          own.stop(c);
           try { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2); } catch (e) { /* ignore */ }
           setTimeout(() => { (hnd.nodes || []).forEach((n) => { try { n.stop(); } catch (e) { /* ignore */ } }); try { g.disconnect(); } catch (e) { /* ignore */ } }, 1400);
         },
