@@ -53,10 +53,12 @@ function layout(phone, V) {
   const cols = phone ? 2 : 3, gx = phone ? 52 : 70, gy = 56, cw = (W - 16 - gx * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
   let y = 0;
   for (const t of tiers) {
-    const ns = base.filter(n => n.tier === t), isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 60 + rows * (ch + gy) - gy + 14 : bh + 4) : bh;
+    const all = base.filter(n => n.tier === t), split = chips.length > 0 && all.some(n => n.id === "world") && all.length > 1; // 已知世界展開成各集團時很寬，同一層的海外（ext）改放在它正下面壹排
+    const ns = split ? all.filter(n => n.id === "world") : all, side = split ? all.filter(n => n.id !== "world") : [], isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 60 + rows * (ch + gy) - gy + 14 : bh + 4) : bh;
     if (y) y += gap + (hasOrg && ns.some(n => n.org && !n.isOrg) && !base.some(n => n.org && !n.isOrg && n.tier === t - 1) ? 14 : 0); else y = 8;
     const cy = y + hh / 2; y += hh;
-    ns.forEach((n, i) => { const w = isBand ? W - 16 : Math.min(phone ? 100 : 170, (W - 16) / ns.length - 10); pos[n.id] = { x: W * (i + 0.5) / ns.length, y: cy, w, h: hh }; tierOf[n.id] = t; });
+    ns.forEach((n, i) => { const w = isBand && chips.length ? W - 16 : Math.min(phone ? 100 : 170, (W - 16) / ns.length - 10); pos[n.id] = { x: W * (i + 0.5) / ns.length, y: cy, w, h: hh }; tierOf[n.id] = t; });
+    if (side.length) { y += gap * 0.6; const cy2 = y + bh / 2; y += bh; side.forEach((n, i) => { pos[n.id] = { x: W * (i + 0.5) / side.length, y: cy2, w: Math.min(phone ? 150 : 220, (W - 16) / side.length - 10), h: bh }; tierOf[n.id] = t + 0.5; }); } // t＋0.5：跟上面那條帶子之間的線走上下邊
     if (isBand) { const top = cy - hh / 2; chips.forEach((c, i) => { const r = Math.floor(i / cols), k = i % cols; pos[c.id] = { x: 8 + gx + cw / 2 + k * (cw + gx), y: top + 60 + r * (ch + gy) + ch / 2, w: cw, h: ch, chip: true }; tierOf[c.id] = t; }); }
   }
   const H = y + 8;
