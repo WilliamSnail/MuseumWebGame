@@ -689,3 +689,10 @@ body[data-screen="bank"] #room { background: none; }
 .bank-trade-k > summary .bank-tab-num { grid-column: 3; grid-row: 1; }
 .bank-trade-k > summary em { grid-column: 4; grid-row: 1; }
 .bank-trade-k > summary .bank-trade-bar { grid-column: 1 / -1; grid-row: 2; }
+
+/* 已知世界層的往來種類篩選（往來變多，決定 0127） */
+.bank-flow-kinds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid rgba(214, 178, 94, .25); background: rgba(15, 25, 43, .5); font-size: var(--type-small, .8125rem); color: #C9D1DE; }
+.bank-flow-kind { padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(214, 178, 94, .55); background: rgba(214, 178, 94, .1); color: #F3E0B0; font: inherit; cursor: pointer; min-height: 28px; display: inline-flex; gap: 6px; align-items: center; }
+.bank-flow-kind small { opacity: .75; font-size: .75rem; }
+.bank-flow-kind.on { background: #D6B25E; color: #2A1A0A; border-color: #FFF3C4; font-weight: 700; }
+.bank-flow-kinds em { flex: 1 1 100%; font-style: normal; color: #D6B25E; font-size: .75rem; }
