@@ -9,10 +9,7 @@
 .sv-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--type-small, .75rem); }
 .sv-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .sv-legend em { width: 10px; height: 10px; border-radius: 3px; background: var(--c); display: inline-block; }
-.sv-bands { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; align-items: end; }
-.sv-col { display: grid; justify-items: center; gap: 3px; font-size: var(--type-small, .75rem); }
-.sv-col i { width: 70%; max-width: 44px; border-radius: 4px 4px 0 0; background: var(--c); }
-.sv-col small { color: var(--bank-mute, #8E9AB0); font-size: var(--type-tiny, .6875rem); }
+.sv-bands { display: grid; gap: 4px; }
 .sv-n { padding-left: 6px; border-left: 1px solid currentColor; font-size: var(--type-small, .75rem); }
 .hn-nm .sv-badge { margin-left: 4px; min-height: 20px; padding: 0 7px; vertical-align: middle; }
 .hn-by .sv-badge { margin-left: 6px; min-height: 18px; padding: 0 6px; font-size: var(--type-tiny, .6875rem); }
@@ -22,3 +19,13 @@
 .hn-layer .sv-badge.tone-warn { --c: #8A5A00; } .hn-layer .sv-badge.tone-bad { --c: #A42F20; }
 .sv-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0; font-size: var(--type-small, .75rem); }
 .hn-lobby .sv-line { color: #E2D0A2; }
+
+/* 分布：壹條 100% 堆疊橫條（高 24px），段上寫「等級 數字」；太窄的段只放顏色，名字數字放下面壹排 */
+.sv-stack { display: flex; gap: 2px; height: 24px; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, .08); }
+.sv-stack i { display: flex; align-items: center; justify-content: center; min-width: 6px; background: var(--c); color: #14202F; font-style: normal; font-size: .75rem; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.sv-stack i span { padding: 0 4px; }
+.sv-stack i b { font-weight: 700; }
+.sv-narrow { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: .75rem; color: #C9D1DE; }
+.sv-narrow span { display: inline-flex; align-items: center; gap: 4px; }
+.sv-narrow em { width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+:where(.sv-stack i, .sv-narrow span) { --c: #9FA9BD; }
