@@ -603,7 +603,7 @@ export function cellarRoom(root) {
   if (!f || !room) { leaveCellar(P); go("cellar", {}, { action: false }); return; }
   const team = teamItems(P, run.team);
   const tp = teamPower(P, team, room);
-  const dots = run.extra ? null : h("div", { class: "room-dots" }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" }))); // run.extra：每週劇情多出來的一間、試煉房間（只走這一間）
+  const dots = run.extra ? null : h("div", { class: "room-dots", title: `第 ${run.idx + 1}／${f.rooms.length} 間` }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" })), h("span", { class: "rd-n" }, `第 ${run.idx + 1}／${f.rooms.length} 間`)); // run.extra：每週劇情多出來的一間、試煉房間（只走這一間）
   const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
   const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
     h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`))),
@@ -611,7 +611,7 @@ export function cellarRoom(root) {
   const chips = h("div", { class: "nc-tags" }, room.mood ? h("span", { class: "tag" }, `房間的心情：${room.mood}`) : null, room.color ? h("span", { class: "tag" }, `房間的顏色：${room.color}`) : null);
   const result = h("div", { class: "room-result", "aria-live": "polite" });
   const desc = c => c.type === "power" ? `強度 ${tp.total}＋擲 1～10，要 ≥ ${c.target}` : c.type === "skill" ? `${c.skill} ${clampN(skillOf(P, c.skill) + (c.mod || 0) + (team.some(t => t.pick.帽子 === "紳士帽") ? 10 : 0), 1, 99)}%` : c.type === "san" ? `理智 ${sanShort(c.spec)}` : "安全";
-  const choices = h("div", { class: "choices" }, room.choices.map((c, i) => btn([h("span", null, c.label), h("small", null, desc(c.check))], () => resolveFlow(i, result, choices), c.check.type === "none" ? "ghost" : "")));
+  const choices = h("div", { class: "choices" }, room.choices.map((c, i) => btn([h("i", { class: "ch-no", "aria-hidden": "true" }, String(i + 1)), h("span", { class: "ch-label" }, c.label), h("small", { class: "ch-tag" }, desc(c.check))], () => resolveFlow(i, result, choices), "ch-" + c.check.type + (c.check.type === "none" ? " ghost" : ""))));
   const stage = cellarStage(team, room, run.floor);
   // 游標移到選項上（或用鍵盤選到）：舞台先預告這個選項會怎麼做
   $$(".btn", choices).forEach((b, i) => {

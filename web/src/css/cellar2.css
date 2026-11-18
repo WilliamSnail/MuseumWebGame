@@ -174,3 +174,54 @@
 .scr-cellar:has(> .cellar-stage) .room-card .nc-text p { margin: 0 0 6px; }
 .scr-cellar:has(> .cellar-stage) .room-card .choices { gap: 6px; }
 .scr-cellar:has(> .cellar-stage) .room-card .choices .btn { padding-top: 8px; padding-bottom: 8px; }
+
+/* 房間卡重新設計（翊文 11-18：「我不是說這個可以重新設計嗎」）：事件像壹張任務單——上面標籤和標題、中間是故事、下面三個編號選項；
+   每個選項左邊有號碼章、右邊有壹顆彩色的小標（金＝比強度、藍＝比技能、紅＝要擲理智、綠＝安全） */
+.scr-cellar:has(> .cellar-stage) .room-card { display: grid; grid-template-rows: auto auto 1fr auto auto; align-content: start; gap: 0; padding: 16px 22px 18px; background: linear-gradient(180deg, #F7EFD8 0%, #EBDDB8 100%); border: 1px solid #B08A3E; box-shadow: 0 0 0 3px rgba(176, 138, 62, .25), 0 12px 28px rgba(0, 0, 0, .45); }
+.scr-cellar:has(> .cellar-stage) .room-card .nc-tags { order: 0; gap: 6px; margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px dashed rgba(122, 90, 42, .5); }
+.scr-cellar:has(> .cellar-stage) .room-card .room-title { order: 1; margin: 4px 0 10px; font-size: 1.5rem; letter-spacing: .08em; color: #3A2410; }
+.scr-cellar:has(> .cellar-stage) .room-card .nc-text { order: 2; margin: 0 0 14px; padding: 10px 14px; border-left: 4px solid #B08A3E; background: rgba(122, 90, 42, .08); border-radius: 0 6px 6px 0; font-size: 1.0625rem; line-height: 1.7; color: #2E2014; }
+.scr-cellar:has(> .cellar-stage) .room-card .nc-text p { margin: 0 0 4px; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices { order: 3; display: grid; gap: 8px; margin: 0; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border: 1px solid #A78235; border-radius: 8px; background: linear-gradient(180deg, #FFFBEF, #EFE2BF); box-shadow: 0 2px 0 rgba(122, 90, 42, .35); font-size: 1.0625rem; color: #2E2014; text-align: left; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn:hover:not(:disabled) { background: linear-gradient(180deg, #FFF6D8, #F1DFA6); transform: translateY(-1px); }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn .ch-no { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #7A5A1E; color: #FFF3C4; font-style: normal; font-weight: 700; font-size: .9375rem; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn .ch-tag { padding: 3px 10px; border-radius: 999px; background: rgba(122, 90, 42, .14); border: 1px solid rgba(122, 90, 42, .5); color: #5A4030; font-size: .8125rem; white-space: nowrap; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-power .ch-tag { background: #F3DFA0; border-color: #B08A3E; color: #5A3E08; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-skill .ch-tag { background: #D5E3F2; border-color: #6D8FB6; color: #1F3F66; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-san .ch-tag { background: #F2D2CC; border-color: #B8584C; color: #7A241A; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-none .ch-tag { background: #D6E8D2; border-color: #5F8F57; color: #2A5A24; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-none { background: linear-gradient(180deg, #F6F1E3, #E7E0C8); }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-none .ch-no { background: #5F8F57; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-san .ch-no { background: #8E3A2E; }
+.scr-cellar:has(> .cellar-stage) .room-card .choices .btn.ch-skill .ch-no { background: #3F628C; }
+/* 招領單、遇到的人、痕跡放左邊隊員下面（左邊本來是空的），右邊只有房間卡，兩邊都不用往下滑（翊文 11-18：「還是看不到全部的事項」） */
+@media (min-width: 900px) and (min-height: 501px) {
+  .scr-cellar:has(> .cellar-stage) > :not(.room-head):not(.cellar-stage):not(.team-bar):not(.note-card) { grid-column: 1; grid-row: auto; margin-top: 10px; }
+  .scr-cellar:has(> .cellar-stage) > .note-card { grid-row: 2 / span 12; align-self: start; }
+  .scr-cellar:has(> .cellar-stage) > .cellar-stage { grid-row: 2; }
+  .scr-cellar:has(> .cellar-stage) > .team-bar { grid-row: 3; }
+  .scr-cellar:has(> .cellar-stage) .cellar-scene { width: min(100%, 60vh); }
+}
+/* 手機：選項的小標放在文字下面，文字不會被擠成直排 */
+@media (max-width: 899px) {
+  .scr-cellar:has(> .cellar-stage) .room-card .choices .btn { grid-template-columns: 30px 1fr; row-gap: 4px; }
+  .scr-cellar:has(> .cellar-stage) .room-card .choices .btn .ch-tag { grid-column: 2; justify-self: start; }
+}
+/* 空間重新分配（翊文 11-18：「哪邊佔的空間太大沒有意義」）：場景只是背景，縮小；標題列、招領單壓緊；省下來的給房間卡和隊伍強度 */
+.scr-cellar:has(> .cellar-stage) .rd-n { margin-left: 6px; color: var(--gold-hi); font-size: .8125rem; white-space: nowrap; }
+.scr-cellar:has(> .cellar-stage) .room-dots { align-items: center; }
+@media (min-width: 900px) and (min-height: 501px) {
+  .scr-cellar:has(> .cellar-stage) .cellar-scene { width: min(100%, 46vh); border-width: 8px; }
+  .scr-cellar:has(> .cellar-stage) > .room-head .sub { display: none; }
+  .scr-cellar:has(> .cellar-stage) > .team-bar { margin-top: 8px; }
+  .scr-cellar:has(> .cellar-stage) .tb-total .poss-n { font-size: 2.25rem; color: var(--gold-hi); }
+  .scr-cellar:has(> .cellar-stage) .tb-total .poss-l { font-size: .9375rem; color: var(--gold-hi); }
+  .scr-cellar:has(> .cellar-stage) .tb-total .poss-f { font-size: .875rem; color: #F3E0B0; }
+}
+.scr-cellar:has(> .cellar-stage) > .meet-card { margin: 8px 0 0; padding: 8px 12px; }
+.scr-cellar:has(> .cellar-stage) > .meet-card p { margin: 0 0 6px; font-size: .9375rem; line-height: 1.45; }
+.scr-cellar:has(> .cellar-stage) > .meet-card .choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn { flex: 1 1 auto; min-height: 36px; padding: 4px 12px; font-size: .875rem; color: #FFF3C4; background: linear-gradient(180deg, #4A5C82, #2F3D5E); border: 1px solid #C9A55A; }
+.scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn:hover:not(:disabled) { background: linear-gradient(180deg, #5A6E96, #3A4A6E); }
+.scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn small { display: block; font-size: .75rem; color: #F3E0B0; }
