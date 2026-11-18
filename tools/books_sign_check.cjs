@@ -17,17 +17,18 @@ const SIGN = {
   bankroll: { cultureRepay: -1, worldRepay: -1, grant: 1, worldLoan: 1, budgetLoan: 1, budgetFix: 1, budgetRepay: -1, houseInvestBuy: -1, houseInvestSell: 1, houseInvFix: 1, investFee: -1, reset: 1,
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
     bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, gLev: 0, tax: -1, inMarket: 0, gStock: 0, gRaise: -1, gBuy: 1 },
-  budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1 },
+  budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1, groupIntDep: -1, groupIntLoan: 1, groupBankLoan: -1, groupBankRepay: 1, groupBankInt: 1 },
   gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
+  gb: { groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
-  world: { worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
+  world: { groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
     worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
 };
-const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "已知世界", ext: "海外" };
+const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "已知世界", ext: "海外", gb: "佩佩銀行準備金" };
 // 同壹筆錢在兩個帳（已知世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的已知世界那邊還包著賣家的錢包，不比
-const PAIRED = { bankroll: ["gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
+const PAIRED = { bankroll: ["gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix", "groupIntDep", "groupIntLoan", "groupBankLoan", "groupBankRepay", "groupBankInt"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"], gb: ["groupDeposit", "groupWithdraw", "groupLoan", "groupRepay"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;
@@ -85,7 +86,7 @@ function run() {
       if (Math.abs(sum - real) > v.all[a].length) P(tag(a), `列出來的來源加起來 ${sgn(sum)}，帳上這天變化 ${sgn(real)}（差 ${sgn(real - sum)}）。來源：${v.all[a].map(x => x.k + " " + sgn(x.n)).join("、")}`);
     }
     info.push(`${day} 博物館資金昨天變化 ${sgn(v.d.budget)}，列出來的來源合計 ${sgn(v.all.budget.reduce((x, y) => x + y.n, 0))}（博物館資金還有幾項沒進帳上：參觀者分紅池撥款、債券救助；腳本自己改過博物館資金餘額的那天也不準，只印出來看）`);
-    for (const a of ["bankroll", "budget", "museum", "gov", "world", "ext"]) for (const x of v.all[a]) {
+    for (const a of ["bankroll", "budget", "museum", "gov", "world", "ext", "gb"]) for (const x of v.all[a]) {
       seen[a + "." + x.k] = 1;
       // (b) 符號表
       const exp = SIGN[a][x.k];
@@ -98,12 +99,14 @@ function run() {
     for (const x of v.all.bankroll) if (G.CAS_BOOK_POOL[x.k]) P(tag("bankroll"), `「${x.label}」是博物館資金／修繕基金的錢，不該列在莊家`);
     // (c) 同壹筆錢兩邊相反
     for (const a of Object.keys(PAIRED)) for (const k of PAIRED[a]) {
-      const x = v.all[a].find(y => y.k === k), y = v.all.ext.concat(v.all.world).find(z => z.k === k);
+      const x = v.all[a].find(y => y.k === k), y = ["ext", "world", "gb"].filter(o => o !== a).flatMap(o => v.all[o]).find(z => z.k === k);
       if (!x && !y) continue;
       if (!x || !y || x.n !== -y.n) P(`${day} ${ACCT_NAME[a]}↔已知世界／海外`, `同壹筆「${k}」兩邊要剛好相反：${ACCT_NAME[a]} ${x ? sgn(x.n) : "沒列"}、對面 ${y ? sgn(y.n) : "沒列"}`);
     }
     // 已知世界的池子對得上：每天成長＋各來源
     if (d.world !== (d.wflow ? Object.values(d.wflow).reduce((a, b) => a + b, 0) : 0) + ((d.houseMint || {}).worldGrow || 0) + ((d.houseMint || {}).worldExpand || 0)) P(tag("world"), `已知世界變化 ${sgn(d.world)} ≠ wflow 加成長`);
+    // 佩佩銀行準備金的帳對得上（決定 0127）
+    if (d.gb !== (d.gflow ? Object.values(d.gflow).reduce((a, b) => a + b, 0) : 0)) P(tag("gb"), `準備金變化 ${sgn(d.gb)} ≠ gflow 加起來`);
     // 海外的帳對得上（決定 0126）：變化 ＝ 各來源加起來（搬出那筆 extSplit 一起算）
     if (d.ext !== (d.xflow ? Object.values(d.xflow).reduce((a, b) => a + b, 0) : 0)) P(tag("ext"), `海外變化 ${sgn(d.ext)} ≠ xflow 加起來`);
     // (d) 日報的文字

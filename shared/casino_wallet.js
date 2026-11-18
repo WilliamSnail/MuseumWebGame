@@ -20,7 +20,7 @@ import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
-import { whTick, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
+import { gbFix, whTick, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -90,6 +90,7 @@ export function casHouseFix(h, day) {
   h.gov = Math.floor(casNz(h.gov, 0)); // 政府帳（證交稅、營業稅、娛樂稅，決定 0110、0111）
   h.museum = Math.floor(casNz(h.museum, 0)); // 修繕基金（門票，shared/casino_ticket.js）
   h.world = Math.floor(casNz(h.world, NUM.casino.world.start)); // 已知世界的池子（規劃 2.12）；舊的莊家第壹次碰到時給起始
+  gbFix(h); // 佩佩銀行的準備金（決定 0127）
   h.ext = Math.floor(casNz(h.ext, 0)); // 海外（真實市場，決定 0126）：跟已知世界並列的帳，可以是負的
   casLedFix(h, ["mint", "flow", "burn"]);
   // 莊家的債（規劃 2.11）：budget 跟博物館資金借的、culture 文化部借款、world 已知世界貸款（含利息）。loansOut：借出去還沒收回的本金。pay：今天已經賠付多少
