@@ -43,10 +43,13 @@ export function statLegend(items) {
 }
 
 export function statBands(items, opts) {
-  const list = items || [], max = Math.max(1, ...list.map(x => x.n || 0));
+  // 壹條 100% 堆疊橫條（翊文 11-18：直條圖太佔空間）：照比例切段、沿用各等級顏色；段夠寬就寫「等級 數字」，太窄的只放顏色，名字和數字改到條下面壹排小字
+  const list = items || [], total = list.reduce((n, x) => n + (x.n || 0), 0);
   if (!list.length) return null;
+  const share = x => (total ? (x.n || 0) / total : 0), wide = x => share(x) >= 0.2, narrow = list.filter(x => (x.n || 0) > 0 && !wide(x));
   return h("div", { class: "sv-bands", role: "img", "aria-label": (opts && opts.label) || list.map(x => `${x.label} ${x.n || 0}`).join("、") },
-    list.map(x => h("div", { class: "sv-col tone-" + tone(x.tone) }, h("span", { class: "bank-tab-num" }, String(x.n || 0)), h("i", { style: { height: Math.max(3, Math.round(((x.n || 0) / max) * 44)) + "px" } }), h("small", null, x.label))));
+    h("div", { class: "sv-stack" }, list.filter(x => (x.n || 0) > 0).map(x => h("i", { class: "tone-" + tone(x.tone), style: { flexGrow: x.n }, title: `${x.label} ${x.n}` }, wide(x) ? h("span", null, x.label, h("b", { class: "bank-tab-num" }, " " + x.n)) : null))),
+    narrow.length ? h("div", { class: "sv-narrow" }, narrow.map(x => h("span", { class: "tone-" + tone(x.tone) }, h("em", { "aria-hidden": "true" }), x.label, h("b", { class: "bank-tab-num" }, " " + x.n)))) : null);
 }
 
 // 沒有 id、只有「各分級幾個」的時候，用壹個代表值去問 statView 要名字和 tone（分級只寫在 stat_view.js）
