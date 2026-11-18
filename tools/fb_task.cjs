@@ -235,11 +235,17 @@ async function houseLedger(db) {
   const ws = await db.collection("casinoWallets").get();
   const rows = ws.docs.map(d => { try { return JSON.parse(d.data().data || "{}"); } catch (e) { return {}; } })
     .map(w => ({ chips: nz(w.chips), loan: (w.loan && Array.isArray(w.loan.list) ? w.loan.list : []).reduce((s, x) => s + nz(x && x.owe), 0),
-      limit: nz(w.loan && w.loan.limit), mint: (w.led && w.led.mint) || {}, burn: (w.led && w.led.burn) || {} }))
+      limit: nz(w.loan && w.loan.limit), mint: (w.led && w.led.mint) || {}, burn: (w.led && w.led.burn) || {},
+      // 還是館友的錢、只是不在籌碼裡（11-18：沒算這些，存款、開槓桿、掛買單時對帳會差壹筆）
+      bank: w.bank ? nz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, t) => s + nz(t && t.amt), 0) : 0) : 0,
+      margin: (w.lev && Array.isArray(w.lev.pos) ? w.lev.pos : []).reduce((s, x) => s + nz(x && x.margin), 0),
+      hold: nz(w.gs && w.gs.hold) }))
     .sort((a, b) => b.chips - a.chips);
-  console.log(`錢包 ${rows.length} 個，籌碼合計 ${fmt(rows.reduce((s, r) => s + r.chips, 0))}`);
+  const tot = k => rows.reduce((s, r) => s + r[k], 0);
+  console.log(`錢包 ${rows.length} 個，籌碼合計 ${fmt(tot("chips"))}`);
+  console.log(`錢包不在籌碼裡的：銀行存款 ${fmt(tot("bank"))}　槓桿保證金 ${fmt(tot("margin"))}　集團股買單鎖住 ${fmt(tot("hold"))}　（館友的錢合計 ${fmt(tot("chips") + tot("bank") + tot("margin") + tot("hold"))}）`);
   rows.forEach((r, i) => {
-    console.log(`  #${i + 1}　籌碼 ${fmt(r.chips)}　沒還的借款 ${fmt(r.loan)}　借款額度 ${fmt(r.limit)}`);
+    console.log(`  #${i + 1}　籌碼 ${fmt(r.chips)}　沒還的借款 ${fmt(r.loan)}　借款額度 ${fmt(r.limit)}` + (r.bank || r.margin || r.hold ? `　存款 ${fmt(r.bank)}　保證金 ${fmt(r.margin)}　買單鎖住 ${fmt(r.hold)}` : ""));
     const m = list(r.mint), b = list(r.burn);
     if (m.length) { console.log("    憑空多的："); m.forEach(l => console.log("  " + l)); }
     if (b.length) { console.log("    消失的："); b.forEach(l => console.log("  " + l)); }
