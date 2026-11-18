@@ -2123,11 +2123,13 @@
       ],
       "hooks": [
         "d1：警衛先數壹遍比目錄多壹畫，說明天找人陪他數；牆上的下壹畫已經畫好了，沒人看見誰畫的 → d2 接（兩個人壹起數）",
-        "d2：壹起數的結果：警衛比你多壹畫，他問『那壹畫是不是我自己？』→ d3 接（揭露 b01：多的那壹畫的高度）"
+        "d2：壹起數的結果：警衛比你多壹畫，他問『那壹畫是不是我自己？』→ d3 接（揭露 b01：多的那壹畫的高度）",
+        "d3：揭露 b01、b24 都放了：多的那畫跟數的人壹樣高；樓梯口小地圖。警衛收起捲尺沒寫為什麼；郵差明天再走壹趟 → d4 接"
       ],
       "ties": [
         "d1：牆上的正字（m-count）；粉筆字跟招領單同壹隻手（m-accountant，clue c-chalk-same-hand）；公報最後壹頁『差壹隻』（f-page 的呼應）；簽收欄多出壹格（f-name）",
-        "d2：兩個人數就對（m-count，clue c-count-together）；算盤珠計時器多壹顆珠（m-accountant 的呼應）"
+        "d2：兩個人數就對（m-count，clue c-count-together）；算盤珠計時器多壹顆珠（m-accountant 的呼應）",
+        "d3：多的那畫跟數的人壹樣高（m-count，clues c-tally-high-stroke、c-tally-own-height）；小地圖巷口夜市橋頭各壹個小正字（m-world，c-stair-map、c-postman-street-count）；郵差每年差壹戶（arc-culture 無；點到 m-world）"
       ],
       "news": [
         "小雪前的冷氣團",
@@ -2135,15 +2137,18 @@
       ],
       "world": [
         "d1：小門後面有壹整面牆在記數；公報跟簽收簿是館裡本來就有的程序，現在多了壹格",
-        "d2：手作麵包日：巷口麵包店開燈排隊（館外城鎮的日常，接 d3 小地圖）"
+        "d2：手作麵包日：巷口麵包店開燈排隊（館外城鎮的日常，接 d3 小地圖）",
+        "d3：B1 樓梯口釘上館外的小地圖：巷口、夜市、橋頭，每處壹個小正字（地圖頁籤亮 L1）"
       ],
       "sideRefs": [
         "d1：賭場記牌本（賭場↔牆上的正字）；公報（選戰線 nt-election）；每週任務旁白提警衛的數法",
-        "d2：賭場記牌本：荷官找客人壹起核對；公報旁的算盤珠計時器（選戰線 nt-election）"
+        "d2：賭場記牌本：荷官找客人壹起核對；公報旁的算盤珠計時器（選戰線 nt-election）",
+        "d3：賭場荷官數籌碼多壹枚、高度跟眼睛壹樣（w47-casino）；NPC 郵差、賣傘的、八樓鄰居、店員日報碰到 b01／b24"
       ],
       "memes": [
         "d1：選舉公報每人壹份、簽收（中立，只取程序；每個展品兩邊主張份量壹樣）",
-        "d2：政見發表會的算盤珠計時、撥完就按鈴（中立，debateMemes）"
+        "d2：政見發表會的算盤珠計時、撥完就按鈴（中立，debateMemes）",
+        "d3：政見會「你的告示沒有梯子／梯子要先有人願意扶」，梯子通往 B2（A 邊，debateMemes）"
       ],
       "casino": "記牌本接 w47-count：每手畫壹筆，數到第八筆多壹筆（m-count 的賭場面；故事最後高度跟荷官站的位置壹樣，不說破）。",
       "subthemes": {
@@ -2156,6 +2161,10 @@
             "st-count"
           ],
           "d2": [
+            "st-count",
+            "st-outside"
+          ],
+          "d3": [
             "st-count",
             "st-outside"
           ]
@@ -2310,6 +2319,24 @@
             "day": "d4",
             "where": "今日特展",
             "what": "握過的手：數第三遍，數的人自己的手也在裡面（c-handshake-count，已放）"
+          },
+          {
+            "week": "2026-W47",
+            "day": "d3",
+            "where": "書",
+            "what": "那壹畫有多高（c-tally-own-height，已放）"
+          },
+          {
+            "week": "2026-W47",
+            "day": "d3",
+            "where": "今日特展",
+            "what": "牆上高處的那壹畫（c-tally-height-pic，已放）"
+          },
+          {
+            "week": "2026-W47",
+            "day": "d3",
+            "where": "房間",
+            "what": "牆上最高的那壹畫（c-tally-high-stroke，已放）"
           }
         ],
         "understood": "差的那壹隻不是東西。是在數的那個人。"
@@ -2417,6 +2444,18 @@
             "week": "2026-W49",
             "where": "書",
             "what": "帳本每壹頁上方印著分冊的號碼：這壹本只是其中壹冊"
+          },
+          {
+            "week": "2026-W47",
+            "day": "d3",
+            "where": "書",
+            "what": "郵差的壹戶（c-postman-street-count，已放）"
+          },
+          {
+            "week": "2026-W47",
+            "day": "d3",
+            "where": "今日特展",
+            "what": "樓梯口的手繪小地圖（c-stair-map-pic，已放）"
           }
         ],
         "understood": "不是只有這裡差壹隻。水閘的聲音，是別的館在回答。",
@@ -3229,9 +3268,13 @@
           }
         ],
         "echo": "2026-W48：賭場收藏（荷官對籌碼的帳差壹點，剛好是荷官自己那份）",
-        "status": "planned",
-        "revealedOn": null,
-        "clues": []
+        "status": "revealed",
+        "revealedOn": "2026-11-18",
+        "clues": [
+          "c-tally-own-height",
+          "c-tally-height-pic",
+          "c-tally-high-stroke"
+        ]
       },
       {
         "id": "b24",
@@ -3264,9 +3307,13 @@
         ],
         "echo": "2026-W48：公佈欄（有人問那張地圖是誰畫的）",
         "extra": true,
-        "status": "planned",
-        "revealedOn": null,
-        "clues": []
+        "status": "revealed",
+        "revealedOn": "2026-11-18",
+        "clues": [
+          "c-stair-map",
+          "c-stair-map-pic",
+          "c-postman-street-count"
+        ]
       },
       {
         "id": "b25",

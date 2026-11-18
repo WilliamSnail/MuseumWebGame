@@ -16,6 +16,7 @@ import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";
 import { APPLAUSE, hallApplauseDue } from "../../shared/applause.js";
+import { reportClientError } from "./error_report.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, sndFile, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
 import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
@@ -140,7 +141,7 @@ SCREENS.commission = root => {
   const learn = [
     lesson ? btn([icon("medal"), h("span", null, "上課", h("small", null, lessonLeft))], () => { const m = miniLayer("委託櫃台的課", "老主顧輪流來教你壹招。"); m.card.classList.add("onescreen-lesson-layer"); m.card.prepend(h("button", { type: "button", class: "mini-x", "aria-label": "關閉", title: "關閉", onClick: () => m.close() }, "×")); m.card.append(lesson, btn("關閉", () => m.close(), "primary")); closeOnOutside(m); }, "onescreen-big") : null,
     PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "onescreen-big") : null];
-  const side = h("aside", { class: "onescreen-side" }, regularsStrip(list), quirkHereBox("deliver"), autoBar()); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
+  const side = h("aside", { class: "onescreen-side" }, safeBlock("老主顧", () => regularsStrip(list)), safeBlock("怪癖的治法", () => quirkHereBox("deliver")), safeBlock("壹鍵交件", () => autoBar())); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
   const drawer = onescreenDrawer(strip);
   root.classList.add("onescreen-room"); // 以前叫 u2r。名字不能跟 html 上的 new-lobby-on 撞，也不要用兩個字母的縮寫（docs/class名單.md）
   root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "onescreen-main" }, board, side), drawer);
@@ -151,6 +152,13 @@ SCREENS.commission = root => {
 // 挑哪一件、怎麼交都在 shared/logic.js（autoDeliverables、keepRank、deliverAll）。
 // 這裡只管：委託單上方的按鈕、先用 ask() 問一次、交完蓋一張總結，最後才用 showEvents() 演出徽章這些事件。
 // 不像手動交件每張都蓋章、飄字、跳提示，免得一次跳一大堆。
+// 側欄壹塊壹塊各自包起來（11-17，玩家回報壹鍵交件整塊不見）：壹塊出錯只剩壹個小提示，不連累其他塊，錯誤回報給伺服器（error_report.js）
+function safeBlock(title, make) {
+  try { return make(); } catch (e) {
+    reportClientError(e, "委託櫃台側欄：" + title);
+    return h("div", { class: "rg-strip off", role: "note" }, h("b", { class: "rg-h" }, title), h("span", null, "這塊暫時打不開，重新整理看看。"));
+  }
+}
 export function autoBar() {
   const info = autoBarInfo(P), n = info.n, left = info.left;
   const b = btn([icon("commission"), n ? `壹鍵交件（${n} 張）` : "壹鍵交件"], () => autoDeliverFlow(b), n ? "primary ad-btn" : "ad-btn", n ? {} : { disabled: true });

@@ -1060,27 +1060,28 @@ T("新 地下收藏庫：第壹次走完 B1，B2 開放（樓層牌子標新）�
   assert.ok(last.floorDone && !last.next); assert.ok(!last.events.some(e => e.type === "floor"));
 });
 T("新 掃描：剛能解鎖的選項、第壹次買得起的升級，各標壹次；看過就不再標", () => {
+  const scanNoMap = (P, room) => G.scanFresh(P, room).filter(f => !String(f.key).startsWith("map:")); // 館外地圖的點（揭露當天加的）跟這個測試無關
   const P = fresh();
-  same(G.scanFresh(P, "lobby"), [], "壹開始什麼都沒有");
+  same(scanNoMap(P, "lobby"), [], "壹開始什麼都沒有");
   P.seen.strange = 1; // 看過奇怪的繪畫 → 俄國8+9 可以花靈感解鎖
-  const s1 = G.scanFresh(P, "gallery");
+  const s1 = scanNoMap(P, "gallery");
   same(s1.map(f => f.key), ["opt:心情:俄國8+9"]);
   assert.strictEqual(G.freshCount(P, "workshop"), 1);
-  same(G.scanFresh(P, "gallery"), [], "標過了不再標");
+  same(scanNoMap(P, "gallery"), [], "標過了不再標");
   G.enterFreshRoom(P, "workshop"); G.leaveFreshRoom(P, "workshop");
-  same(G.scanFresh(P, "lobby"), [], "看過了不再標");
+  same(scanNoMap(P, "lobby"), [], "看過了不再標");
   P.insp = 30; // 夠買展台、修復台
-  const s2 = G.scanFresh(P, "lobby");
+  const s2 = scanNoMap(P, "lobby");
   same(s2.map(f => f.key).sort(), ["up:ped7", "up:repair"]);
   assert.strictEqual(G.freshRooms(P).office, 2);
-  P.insp = 5; G.scanFresh(P, "lobby"); // 還沒去看就又花掉了：先拿掉
+  P.insp = 5; scanNoMap(P, "lobby"); // 還沒去看就又花掉了：先拿掉
   assert.strictEqual(G.freshCount(P, "office"), 0);
-  P.insp = 30; G.scanFresh(P, "lobby");
+  P.insp = 30; scanNoMap(P, "lobby");
   assert.strictEqual(G.freshCount(P, "office"), 2, "又買得起了，再標");
   G.enterFreshRoom(P, "office"); G.leaveFreshRoom(P, "office");
-  P.insp = 5; G.scanFresh(P, "lobby"); P.insp = 30;
-  same(G.scanFresh(P, "lobby"), [], "看過的升級不會再標");
-  same(G.scanFresh(fresh("free"), "lobby"), [], "自由模式什麼都打開了，不用掃");
+  P.insp = 5; scanNoMap(P, "lobby"); P.insp = 30;
+  same(scanNoMap(P, "lobby"), [], "看過的升級不會再標");
+  same(scanNoMap(fresh("free"), "lobby"), [], "自由模式什麼都打開了，不用掃");
 });
 T("新 徽章打開的選項：四種心情 → 黑、四色同心情 → 皇冠（解鎖之後就不列）", () => {
   const P = fresh();
