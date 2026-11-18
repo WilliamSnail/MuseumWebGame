@@ -1,6 +1,6 @@
 // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080）：node test/casino_npc.test.cjs（npm test 也會跑）
 // 誰邀得動、答應或拒絕（種子祕密、冷卻）、NPC 坐進桌子（算座位、壹位館友最多 perHost 位 NPC、壹桌最多 tableMax 位）、館友先下注 NPC 才下注、
-// NPC 馬上打完、注從外面世界出、賠付回外面世界（守恆）、壹位 NPC 壹天輸贏上限、全館上限、館友走了 NPC 也走、桌子收了退注、台詞和說話次數、presence 把他算到賭場。
+// NPC 馬上打完、注從已知世界出、賠付回已知世界（守恆）、壹位 NPC 壹天輸贏上限、全館上限、館友走了 NPC 也走、桌子收了退注、台詞和說話次數、presence 把他算到賭場。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -90,7 +90,7 @@ T("帶 3 位客人打牌守恆；同壹局好幾位 NPC 的注加起來，最壞
   const sum = Object.values(m2.t.seats).reduce((a, x) => a + (x.npc ? x.bet : 0), 0);
   assert.ok(2 * sum <= 40000, "這局 NPC 注 " + sum);
 });
-T("館友先下注 NPC 才下注：注從外面世界出（世界池減、莊家增），不到最小注或沒額度不下；兩邊都下好馬上發牌；NPC 馬上打完、不等計時", G => {
+T("館友先下注 NPC 才下注：注從已知世界出（世界池減、莊家增），不到最小注或沒額度不下；兩邊都下好馬上發牌；NPC 馬上打完、不等計時", G => {
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); const s = m.t.seats["n~" + f.id], w0 = m.house.world, b0 = m.house.bankroll;
   assert.ok(G.casTNpcWho && m.t.phase === "bet" && s.bet === 0);
   const t0 = total(G, m);
@@ -99,7 +99,7 @@ T("館友先下注 NPC 才下注：注從外面世界出（世界池減、莊家
   if (m.t.seats["n~" + f.id]) { assert.strictEqual(w0 - m.house.world, s.bet); assert.ok(m.house.bankroll - b0 === s.bet); assert.strictEqual(m.t.phase, "play"); assert.strictEqual(m.t.turn, "a"); assert.ok(G.casTAct(m.t, "a", "stand", m.t.seq, m.ctx, f.at).ok); assert.strictEqual(m.t.phase, "result"); assert.ok(s.st !== "play" && s.out, "館友停牌後 NPC 馬上打完、結算"); }
   assert.strictEqual(total(G, m), t0, "守恆（NPC 的注不算打牌中，已經在莊家帳）");
 });
-T("結算守恆：NPC 輸 ＝ 注留在莊家、贏 ＝ 賠付回外面世界；全館記下他的輸贏；NPC 沒有錢包、沒有成就和獎勵", G => {
+T("結算守恆：NPC 輸 ＝ 注留在莊家、贏 ＝ 賠付回已知世界；全館記下他的輸贏；NPC 沒有錢包、沒有成就和獎勵", G => {
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at);
   const t0 = total(G, m); let rounds = 0, seen = new Set();
   for (let i = 0; i < 12 && m.t.seats["n~" + f.id]; i++) {
@@ -131,16 +131,16 @@ T("全館上限 dayCap：淨輸贏到了今天不再邀得動、桌上的也走"
   assert.ok(G.casTBet(m.t, "a", "1000", { san: 99, bonusPct: 0 }, m.ctx, f.at).ok); assert.ok(!m.t.seats["n~" + f.id], "NPC 走了"); assert.ok(!G.npcCasAway(m.house, f.at).has(f.id));
   assert.ok(m.ctx.says.some(x => x.npc && /./.test(x.text)));
 });
-T("莊家不健康（吃緊、破產）或外面世界吃緊：邀不動、不下注；莊家健康才玩", G => {
+T("莊家不健康（吃緊、破產）或已知世界吃緊：邀不動、不下注；莊家健康才玩", G => {
   const m = mk(G), f = findAt(G, m.house); m.house.bankroll = G.NUM.casino.health.low - 1;
   assert.ok(!G.casTNpcWho(m.ctx, f.at).length, "莊家吃緊");
-  m.house.bankroll = 10 ** 9; m.house.world = 0; assert.ok(!G.casTNpcWho(m.ctx, f.at).length, "外面世界吃緊");
+  m.house.bankroll = 10 ** 9; m.house.world = 0; assert.ok(!G.casTNpcWho(m.ctx, f.at).length, "已知世界吃緊");
 });
-T("館友離桌：下注前離桌 ＝ NPC 的注也退回外面世界、NPC 走；打牌中離桌 ＝ 這手打完、下局 NPC 走；錢守恆", G => {
+T("館友離桌：下注前離桌 ＝ NPC 的注也退回已知世界、NPC 走；打牌中離桌 ＝ 這手打完、下局 NPC 走；錢守恆", G => {
   const m = mk(G, 7, 2), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); const t0 = total(G, m), w0 = m.house.world;
   assert.ok(G.casTBet(m.t, "a", "1000", { san: 99, bonusPct: 0 }, m.ctx, f.at).ok);
   if (m.t.phase === "bet") { // b 還沒下注，還在下注階段
-    G.casTLeave(m.t, "a", m.ctx, f.at); assert.ok(!m.t.seats["n~" + f.id], "host 走了 NPC 也走"); assert.strictEqual(m.house.world, w0, "注退回外面世界"); assert.ok(!G.npcCasAway(m.house, f.at).has(f.id));
+    G.casTLeave(m.t, "a", m.ctx, f.at); assert.ok(!m.t.seats["n~" + f.id], "host 走了 NPC 也走"); assert.strictEqual(m.house.world, w0, "注退回已知世界"); assert.ok(!G.npcCasAway(m.house, f.at).has(f.id));
   }
   assert.strictEqual(total(G, m), t0);
   const m2 = mk(G, 9, 2), g = findAt(G, m2.house); inviteOk(G, m2, "a", g.id, g.at); G.casTBet(m2.t, "a", "1000", { san: 99, bonusPct: 0 }, m2.ctx, g.at); G.casTBet(m2.t, "b", "1000", { san: 99, bonusPct: 0 }, m2.ctx, g.at);
@@ -148,7 +148,7 @@ T("館友離桌：下注前離桌 ＝ NPC 的注也退回外面世界、NPC 走�
   for (let i = 0; i < 6 && m2.t.phase !== "bet"; i++) G.casTAdvance(m2.t, m2.ctx, m2.t.deadline + 1);
   assert.ok(!m2.t.seats["n~" + g.id], "host 走了：下局 NPC 也走"); assert.strictEqual(total(G, m2), t1);
 });
-T("桌子收了：casTNpcDrop 把還沒結算的 NPC 注退回外面世界、NPC 全部離開名單，不說話", G => {
+T("桌子收了：casTNpcDrop 把還沒結算的 NPC 注退回已知世界、NPC 全部離開名單，不說話", G => {
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); G.casTBet(m.t, "a", "1000", { san: 99, bonusPct: 0 }, m.ctx, f.at);
   const t0 = total(G, m); m.ctx.says.length = 0; G.casTNpcDrop(m.t, m.ctx); assert.ok(!Object.values(m.t.seats).some(s => s.npc)); assert.ok(!G.npcCasAway(m.house, f.at).has(f.id)); assert.strictEqual(m.ctx.says.length, 0);
   assert.strictEqual(total(G, m), t0 + 0 - 0, "守恆（退回後不再算打牌中）");

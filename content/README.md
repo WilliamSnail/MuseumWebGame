@@ -396,7 +396,7 @@ content/
 | `none` | 只給劇情角色（不帶錢） | 0 | 0 |
 
   - `max` ≤ `perDay`，都取壹千的倍數；**每位 NPC 的 `perDay` 不能跟別人壹樣**（翊文：「每個 NPC 根據他是誰，可以拿的數目壹定不壹樣」），檢查會擋。身分決定 tier，tier 之內再挑壹個沒人用過的數字。
-  - 這是「他今天願意花多少」，不是他的存款（規劃 2.4：NPC 沒有錢包，付的錢都是外面世界的）。全館壹天的 NPC 總額上限由拍賣那壹步的程式訂。
+  - 這是「他今天願意花多少」，不是他的存款（規劃 2.4：NPC 沒有錢包，付的錢都是已知世界的）。全館壹天的 NPC 總額上限由拍賣那壹步的程式訂。
 - **`kind: "trace"`（劇情角色）**：對應帳本 `characters` 的壹位（多壹欄 `"ledger": "帳本裡的名字"`），**不露臉、不寫長相、不去哪裡、不帶錢、不算人數、不出價**：`likes: []`、`route: {}`、`budget` 是 `none`、`arc` 可以空的。名字和 `story` 只寫痕跡（字跡、瓜子殼、值班紀錄）。
 - **故事線 `arc`**（每位 1～6 段，劇情角色可以空；排程慢慢補到 3～6 段）：每段
 
@@ -423,10 +423,10 @@ content/
 - **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
 - **哪些地方可以用 NPC 的名字**（還沒接）：日報新聞句（`news`）、展廳留言、委託人出現和完成後的話、拍賣結果公告、館內股的「不同的人」。程式接上之前，名單只是內容，遊戲的玩法不變。
 
-## 十一、外面世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/世界經濟規劃.md`）
+## 十一、已知世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/世界經濟規劃.md`）
 
 - 一個單位一個檔，檔名＝id。單位是一棵樹：`parent` 指向上一層（頂層寫 `null`），第一版只有 7 個集團／組織加獨立的文化部（`u-culture`，劇情單位）。
-- 欄位：`id`、`name`（14 字內）、`kind`（group／firm／org／story）、`parent`、`sector`（tech、daily、finance、arts、school、public、story）、`share`（占外面世界的比例）、`staff`（員工數，只用來比大小）、`stocks`（掛的館外股票 id，每支只能掛一處）、`story`（true 只給文化部）、`note`（選填，60 字內，只寫明面的說明）。
+- 欄位：`id`、`name`（14 字內）、`kind`（group／firm／org／story）、`parent`、`sector`（tech、daily、finance、arts、school、public、story）、`share`（占已知世界的比例）、`staff`（員工數，只用來比大小）、`stocks`（掛的館外股票 id，每支只能掛一處）、`story`（true 只給文化部）、`note`（選填，60 字內，只寫明面的說明）。
 - 不要寫錢（`cash` 在伺服器）；劇情單位的劇情細節（為什麼補助、錢哪來）**不要寫在這裡**，那些在 `content/story/帳本.json`。
 - NPC 的隸屬在 `content/npc/<id>.json` 的 `job`：`{ "unit": "g-daily", "title": "司機" }`（title 8 字內，`level` 1～5 選填），沒有單位的寫 `{ "kind": "student" }`（student、retired、free）。劇情角色（t-）不放 `job`。
 - 改這些檔用 `npm run world:unit`、`npm run world:npc`（不手改），檢查是 `npm run world:check`（`npm test` 也會跑）。

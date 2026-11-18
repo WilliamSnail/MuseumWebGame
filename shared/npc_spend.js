@@ -7,8 +7,8 @@
 //    壹位 NPC 當天第壹站付壹張門票 ticket（不分紅給玩家：ticketBudgetPct% 博物館資金、其餘修繕基金）；
 //    去的每家店花 perDay × shopPct%（餐車、牌桌 → 莊家；委託櫃台、地下收藏庫、手作坊 → 博物館資金）；
 //    到展廳時留壹則評價（house.reviews，最多 20 則；壹位 NPC 壹天最多 reviewDay 則）。
-//  都是外面世界的錢（casPoolWorldOut／casHouseWorldOut）；每位 NPC 壹天最多花 perDay × dayPct%（連門票），全館壹天最多 dayCap ×（1 ＋ extPct% × 景氣），
-//    順序是「到的先後」；外面世界吃緊不花。record：house.npcLive（今天的進度）、house.npcs（最近壹個完整的壹天，日報寫）。
+//  都是已知世界的錢（casPoolWorldOut／casHouseWorldOut）；每位 NPC 壹天最多花 perDay × dayPct%（連門票），全館壹天最多 dayCap ×（1 ＋ extPct% × 景氣），
+//    順序是「到的先後」；已知世界吃緊不花。record：house.npcLive（今天的進度）、house.npcs（最近壹個完整的壹天，日報寫）。
 //  館內股的「昨天不同的人」還是用整天的行程（casInNpcFor），跟「現在誰在場」無關；所以畫面不顯示各家店現在幾個 NPC（會洩漏明天的跳空）。
 // ================================================================
 import { NUM } from "./config.js";
@@ -191,7 +191,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
   const L = npcLiveFix(house, day), m = nowMs === Infinity ? Infinity : (nowMs - npcDayStartMs(day)) / 60000;
   const low = casWorldLow(house, W), reviews = casReviewsFix(house), tmul = casFxMul(house) * casFxPolicy(house, day, "ticket"); // 門票價隨景氣（±10%）和政策（振興觀光多壹成）
   let room = Math.floor(C.dayCap * Math.max(0, 1 + C.extPct / 100 * (+(house.econ && house.econ.b) || 0))) - nsN(L.ticket) - nsN(L.shop);
-  // 散客：到了就付壹張門票（每位 crowd.ticket，外面世界付），不留評價、不花錢、不算館內股人數
+  // 散客：到了就付壹張門票（每位 crowd.ticket，已知世界付），不留評價、不花錢、不算館內股人數
   const CR = NUM.casino.npcSpend.crowd;
   if (!L.crowd || typeof L.crowd !== "object") L.crowd = { ticket: 0, people: 0, groups: 0 };
   if (CR && !low) for (const gv of crowdVisitsToday(day, secret, whCrowdMood(house, day))) {
@@ -207,7 +207,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     wuDebit(house, WU_HH, got + tg); L.byUnit[WU_HH] = nsN(L.byUnit[WU_HH]) + got + tg; L.sources.entTax = nsN(L.sources.entTax) + tg;
     L.crowd.ticket += got + tg; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
   }
-  // 逛店的散客：到了就花 shop.spend × 人數（外面世界付；餐車牌桌進莊家、其餘進博物館資金），全館壹天 shop.dayCap
+  // 逛店的散客：到了就花 shop.spend × 人數（已知世界付；餐車牌桌進莊家、其餘進博物館資金），全館壹天 shop.dayCap
   const CS = CR && CR.shop;
   if (CS && !low) for (const sv of crowdShopToday(day, secret)) {
     if (sv.start > m || L.done[sv.key]) continue;

@@ -6,7 +6,7 @@
 //      foreign     E3 外資 NPC 來得多：那壹天 NPC 買畫的上限和出價機率 ×（1 ＋ pct%）；level 1／2／3 ＝ foreignPct 的三個檔
 //      bondWindow  E4 館債簽收窗口：date 起 level 天（≤ windowMax），玩家可以提早拿回館債的本金加「已持有天數」的利息（照比例，利率不變），莊家付，每天最多付莊家超過準備金的 redeemPct%
 //      artFreeze   E2 借展期間畫價凍結：date 起 level 天（≤ freezeMax），畫的館方買賣價停在那段時間「第壹次報的價」，不漲不跌
-//      houseRepay  E7 莊家提早還外面世界貸款壹部分：date 那天，還 min(債, 莊家超過健康線的部分 × repayPct[level]%)，還完莊家仍在健康線以上（最大注不縮）
+//      houseRepay  E7 莊家提早還已知世界貸款壹部分：date 那天，還 min(債, 莊家超過健康線的部分 × repayPct[level]%)，還完莊家仍在健康線以上（最大注不縮）
 //      audit       E8 全館對帳日：date 那天日報多印壹行對帳差；不動錢
 //    E1（外館借展的拍品）用現有的「拍賣」旗標（content 的畫標 auction），價格照稀有度，程式不用改；E5（吃緊／寬鬆的旁白）、E6（對帳員來訪）只能旁白／用現有的 npc 劇情日。
 //  事先公告：foreign、artFreeze 提前 ahead 天、bondWindow 提前 3 天，日報寫；houseRepay、audit 不預告（不動玩家價格）。repo 是公開的，所以會動玩家價格或錢的都預告給所有人，沒有人比別人早知道的好處。
@@ -56,7 +56,7 @@ export const CAS_ECON_EV = {
   bondWindow: "{m} 月 {d} 日起 {n} 天，館債開簽收窗口：可以提早拿回本金和已經算到的利息，利率不變。",
   artFreeze: "{m} 月 {d} 日起 {n} 天，借展期間，畫的館方買賣價不動。",
   audit: "館際通知：請各館核對本季差額。今天的對帳差 ＝ {gap}（0 ＝ 對得上）。",
-  repaid: "館方提早還了外面世界的貸款 {n}。",
+  repaid: "館方提早還了已知世界的貸款 {n}。",
 };
 // 日報的預告句子（照日期順序）
 export function casEconUpText(up) {
@@ -84,7 +84,7 @@ export function casEconRun(house, day, events) {
   ev.window = a.bondWindow ? { from: a.bondWindow.from, until: a.bondWindow.until } : null;
   // 畫價凍結：窗口開始壹次（house.art.freeze 記哪幾天、報過的價），casArtPrice 讀
   if (a.artFreeze) { if (!eeBox(house.art)) house.art = {}; const f = house.art.freeze; if (!eeBox(f) || f.from !== a.artFreeze.from) house.art.freeze = { from: a.artFreeze.from, until: a.artFreeze.until, cache: {} }; ev.freeze = { from: a.artFreeze.from, until: a.artFreeze.until }; }
-  // 莊家提早還外面世界貸款：只在那壹天、只做壹次
+  // 莊家提早還已知世界貸款：只在那壹天、只做壹次
   if (a.houseRepay && !ev.repaid && house.debt && house.debt.world > 0) {
     const room = Math.max(0, house.bankroll - NUM.casino.health.low * 2), pay = Math.min(house.debt.world, Math.floor(room * a.houseRepay.pct / 100));
     if (pay > 0) { casHouseWorldIn(house, "worldRepay", pay); house.debt.world -= pay; ev.repaid = pay; casLedFix(house, ["mint", "flow", "burn", "world"]); }

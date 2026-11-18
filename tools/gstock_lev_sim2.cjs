@@ -6,7 +6,7 @@
 const { load } = require("../test/load_shared.cjs");
 const D0 = "2026-11-16", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10), fmt = n => Math.round(n).toLocaleString("en-US");
 const tk = (day, k) => Date.parse(day + "T05:00:00+08:00") + k * 900000 + 1000;
-const DAYS = +(process.argv[2] || 30), LEV = 5, FEE = 0.5 / 100, CARRY = 0.15 / 100, BORROW = 0.3 / 100, EXPO = 0.2, FORCE = 0.5, POS = 20e6, BANK = 59e6;
+const DAYS = +(process.argv[2] || 30), LEV = 5, FEE = (+process.env.FEE || 0.5) / 100, CARRY = (+process.env.CARRY || 0.15) / 100, BORROW = (+process.env.BORROW || 0.3) / 100, TAX = (+process.env.TAX || 0) / 100, EXPO = 0.2, FORCE = 0.5, POS = 20e6, BANK = 59e6;
 const rnd = (() => { let s = 777; return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296; })();
 function mk(bank = BANK) { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; const h = G.casHouseFix(G.casHouseNew(), D0).house; h.bankroll = bank; G.gsAdvance(h, D0, tk(D0, 1)); return { G, h }; }
 // 一個「市場」：用 scratch 錢包推價，回傳成交均價
@@ -31,8 +31,8 @@ function mkBook(G, h, id) {
       const p = { side, e: r.px, q: r.n, m: r.n * r.px / LEV, day }; pos.push(p); st.opened++; const fee = r.n * r.px * (FEE + (side > 0 ? CARRY * (1 - 1 / LEV) : BORROW)); st.fees += fee; st.pnlHouse += fee; st.maxExpo = Math.max(st.maxExpo, expo()); return p;
     },
     close(p, day, t, why) {
-      const r = p.side > 0 ? M.sell(p.q, day, t) : M.buy(p.q, day, t); if (!r.n) return 0; const x = r.px, q = r.n; if (q < p.q) { const part = Object.assign({}, p, { q, m: p.m * q / p.q }); p.q -= q; p.m -= part.m; const raw0 = p.side * (x - p.e) * q, eff0 = Math.max(raw0, -part.m); if (raw0 < -part.m) st.bad += -part.m - raw0; const f0 = q * x * FEE; st.fees += f0; st.pnlHouse += f0 - eff0; return eff0; }
-      const raw = p.side * (x - p.e) * q, eff = Math.max(raw, -p.m); if (raw < -p.m) st.bad += -p.m - raw; const fee = q * x * FEE; st.fees += fee; st.pnlHouse += fee; st.pnlHouse -= eff; pos.splice(pos.indexOf(p), 1); if (why === "liq") st.liq++; return eff;
+      const r = p.side > 0 ? M.sell(p.q, day, t) : M.buy(p.q, day, t); if (!r.n) return 0; const x = r.px, q = r.n; if (q < p.q) { const part = Object.assign({}, p, { q, m: p.m * q / p.q }); p.q -= q; p.m -= part.m; const raw0 = p.side * (x - p.e) * q, eff0 = Math.max(raw0, -part.m); if (raw0 < -part.m) st.bad += -part.m - raw0; const f0 = q * x * FEE; st.fees += f0; st.pnlHouse += f0 - eff0; st.tax = (st.tax||0) + q * x * TAX; return eff0; }
+      const raw = p.side * (x - p.e) * q, eff = Math.max(raw, -p.m); if (raw < -p.m) st.bad += -p.m - raw; const fee = q * x * FEE; st.fees += fee; st.pnlHouse += fee; st.pnlHouse -= eff; st.tax = (st.tax||0) + q * x * TAX; pos.splice(pos.indexOf(p), 1); if (why === "liq") st.liq++; return eff;
     },
     sweep(day, t) { // 強平：反覆檢查直到沒有（強平單自己推價，可能連鎖）
       let rounds = 0, any = true; while (any) { any = false; const P = h.gs.u[id].P; for (const p of pos.slice()) { if (equity(p, P) <= p.m * FORCE) { this.close(p, day, t, "liq"); any = true; } } if (any && pos.length === 0) any = false; if (any) { rounds++; if (rounds > 1) st.cascade++; } if (rounds > 50) break; }
@@ -59,7 +59,7 @@ function scenB(attN) {
     for (let i = 0; i < 8; i++) B.open(-1, 1.4e6, day, tk(day, 3)); // 空頭 8 位 × 140 萬
     const a = A.open(1, attN, day, tk(day, 4)); if (!a) { B.flat(day, tk(day, 74)); continue; }
     B.sweep(day, tk(day, 4)); const P1 = h.gs.u[id].P; move += P1 / P0 - 1; liq += B.st.liq; // 攻擊者開倉後空頭被強平
-    gainA += A.close(a, day, tk(day, 5), "flat") - a.q * a.e * (FEE + CARRY * (1 - 1 / LEV)); B.flat(day, tk(day, 74)); days++;
+    const q0 = a.q, e0 = a.e; gainA += A.close(a, day, tk(day, 5), "flat") - q0 * e0 * (FEE + CARRY * (1 - 1 / LEV)) - q0 * e0 * TAX; B.flat(day, tk(day, 74)); days++;
   }
   return { attN, gainA: gainA / Math.max(1, days), move: move / Math.max(1, days), liq: B.st.liq, bad: B.st.bad, houseA: A.st.pnlHouse + B.st.pnlHouse };
 }

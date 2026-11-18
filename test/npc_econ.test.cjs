@@ -1,5 +1,5 @@
 // 館內 NPC 的經濟接線（11-14，docs/館內NPC規劃.md 步驟 3）：node test/npc_econ.test.cjs（npm test 也會跑）
-// 行程（每位 NPC 每天抽去哪幾家店、可能都不去、劇情角色跳過、平均 λ）、館內股人數用行程加總、全館計數、GDP 的投資和門票看外面世界的流向。
+// 行程（每位 NPC 每天抽去哪幾家店、可能都不去、劇情角色跳過、平均 λ）、館內股人數用行程加總、全館計數、GDP 的投資和門票看已知世界的流向。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -61,7 +61,7 @@ T("網頁收到 peek 的 npcc 之後，展廳的故事線照全館進度解鎖�
   G.npcWebSet({ comm: 99, hall: 99, cl: { "c-math": 99 } }); assert.strictEqual(G.npcArcIndex(n, day, G.npcWebCounters()), open);
   G.npcWebSet(null); assert.strictEqual(G.npcWebCounters(), null);
 });
-T("GDP：投資 I 加股票淨流入外面世界（玩家和館方）；門票從外面世界付也算淨出口", G => {
+T("GDP：投資 I 加股票淨流入已知世界（玩家和館方）；門票從已知世界付也算淨出口", G => {
   const K = G.NUM.casino.gdp, z = G.casGdpOf({ act: {}, wflow: {} });
   const g = G.casGdpOf({ act: {}, wflow: { stockBuy: 1000000, stockSell: -400000, houseInvestBuy: 200000 }, bank: 0 });
   assert.strictEqual(g.I - z.I, Math.floor((600000 + 200000) * K.investPct / 100));

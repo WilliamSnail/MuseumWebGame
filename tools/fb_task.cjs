@@ -13,7 +13,7 @@
 //                 每個錢包的籌碼、借款、憑空和消失的來源。不印名字、uid、email，錢包用 #1、#2 代替（照籌碼排）。
 //                 什麼時候用：莊家的錢對不上要查錢流去哪（11-14 莊家 −8.3 億）。
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
-//   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、外面世界的池子、NPC 花費、館方投資、每個來源的累計），
+//   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、已知世界的池子、NPC 花費、館方投資、每個來源的累計），
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
 //   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
 //                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
@@ -89,9 +89,9 @@ async function worldStatus(db) {
   // 最近 3 天：照日期直接拿（11-18：orderBy("__name__","desc") 要 Firestore 建索引，沒建就整個失敗）
   const ds = [0, 1, 2].map(k => new Date(Date.parse((w && w.day ? w.day : new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10)) + "T00:00:00Z") - k * 864e5).toISOString().slice(0, 10));
   const days = { docs: (await db.getAll(...ds.map(d => db.doc(`worldDays/${d}`)))).filter(d => d.exists) };
-  days.docs.forEach(d => { const r = JSON.parse(d.data().data || "{}"); console.log(`  ${d.id}：外面世界 ${fmt(r.world)}　合計 ${fmt(r.total)}　成長 ${r.growth == null ? "-" : fmt(r.growth)}　景氣 ${r.b}　莊家記的日子 ${r.houseDay || "-"}`); });
+  days.docs.forEach(d => { const r = JSON.parse(d.data().data || "{}"); console.log(`  ${d.id}：已知世界 ${fmt(r.world)}　合計 ${fmt(r.total)}　成長 ${r.growth == null ? "-" : fmt(r.growth)}　景氣 ${r.b}　莊家記的日子 ${r.houseDay || "-"}`); });
   if (!h) { console.log("莊家文件還不存在"); return; }
-  if (h.wu && h.wu.r) { const a = G.wuAmounts(Object.assign({}, h)); console.log("帳上各單位現在多少（合計＝外面世界）：" + Object.keys(a).map(k => `${names[k] || k} ${fmt(a[k])}`).join("　") + `　外面世界 ${fmt(h.world)}`); }
+  if (h.wu && h.wu.r) { const a = G.wuAmounts(Object.assign({}, h)); console.log("帳上各單位現在多少（合計＝已知世界）：" + Object.keys(a).map(k => `${names[k] || k} ${fmt(a[k])}`).join("　") + `　已知世界 ${fmt(h.world)}`); }
   if (h.wh && h.wh.st) {
     console.log(`各集團健康值（${h.wh.day || "-"}）：`);
     Object.keys(h.wh.st).forEach(k => console.log(`  ${names[k] || k}：h ${h.wh.h[k]}　${S[h.wh.st[k].s]}　預算倍率 ×${G.whMult(h, k).toFixed(2)}　連續低迷 ${h.wh.st[k].low || 0} 週`));
@@ -194,14 +194,14 @@ async function stockStatus(db) {
 function econCrc(s) { let c = 7; for (let i = 0; i < s.length; i++) c = (Math.imul(c, 31) + s.charCodeAt(i)) >>> 0; return c.toString(16).padStart(8, "0"); }
 function econPick(h) {
   const o = {}, nz = v => (Number.isFinite(+v) ? Math.floor(+v) : 0), obj = v => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
-  for (const k of ["bankroll", "budget", "museum", "gov", "sea", "world", "loansOut", "cultureLate"]) if (h[k] != null) o[k] = nz(h[k]);
+  for (const k of ["bankroll", "budget", "museum", "gov", "sea", "world", "ext", "loansOut", "cultureLate"]) if (h[k] != null) o[k] = nz(h[k]);
   if (typeof h.day === "string") o.day = h.day;
   const d = obj(h.debt); o.debt = { budget: nz(d.budget), culture: nz(d.culture), world: nz(d.world) };
-  { const wu = obj(h.wu), r = obj(wu.r); if (Object.keys(r).length) o.wu = { r, adj: obj(wu.adj) }; } // 外面世界的帳上分類（W3，決定 0086）
+  { const wu = obj(h.wu), r = obj(wu.r); if (Object.keys(r).length) o.wu = { r, adj: obj(wu.adj) }; } // 已知世界的帳上分類（W3，決定 0086）
   if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null, due: obj(h.cul).due || null };
   if (h.npcs) o.npcs = { day: obj(h.npcs).day || null, ticket: nz(obj(h.npcs).ticket), shop: nz(obj(h.npcs).shop), total: nz(obj(h.npcs).total), people: nz(obj(h.npcs).people) };
   const sum = obj(obj(h.inv).sum); if (Object.keys(sum).length) o.inv = { sum: { hold: (Array.isArray(sum.hold) ? sum.hold : []).map(x => ({ name: String(obj(x).name || "").slice(0, 20), n: nz(obj(x).n) })), pnl: Number.isFinite(+sum.pnl) ? Math.floor(+sum.pnl) : 0 } };
-  const w = obj(obj(h.led).world); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])) };
+  const w = obj(obj(h.led).world), x = obj(obj(h.led).ext); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])), ext: Object.fromEntries(Object.entries(x).map(([k, v]) => [k, nz(v)])) }; // 決定 0126：海外是並列的帳 house.ext
   return o;
 }
 async function econStatus(db) {
@@ -214,7 +214,7 @@ async function econStatus(db) {
   const q = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
   if (q.empty) { emit("R", null); return; }
   const r = JSON.parse(q.docs[0].data().data || "{}"), sh = (r.snap && r.snap.house) || {};
-  const pick = econPick(Object.assign({}, sh, { led: { world: sh.wflow || {} }, cultureLate: sh.culLate, inv: sh.inv }));
+  const pick = econPick(Object.assign({}, sh, { led: { world: sh.wflow || {}, ext: sh.xflow || {} }, cultureLate: sh.culLate, inv: sh.inv }));
   emit("R", { day: r.day || null, gap: Number.isFinite(+r.gap) ? Math.floor(+r.gap) : null, opening: Number.isFinite(+r.opening) ? Math.floor(+r.opening) : null, house: pick });
 }
 
@@ -225,13 +225,15 @@ async function houseLedger(db) {
   const list = o => Object.entries(o || {}).filter(([, v]) => nz(v)).sort((a, b) => Math.abs(nz(b[1])) - Math.abs(nz(a[1]))).map(([k, v]) => `    ${k}：${fmt(v)}`);
   const hs = await db.doc("casinoHouse/main").get();
   const h = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
-  console.log(`莊家 ${fmt(h.bankroll)}　博物館資金 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　修繕基金 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　莊家記的日子 ${h.day || "-"}`);
-  { const ws = await db.doc("world/main").get(), w = ws.exists ? JSON.parse(ws.data().data || "{}") : null; // 世界文件（W2，決定 0086）：備用池要算進外面世界總量
-    if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, world = nz(h.world); let s = 0; const parts = Object.keys(r).filter(k => k !== "pub").map(k => { const a = Math.floor(world * +r[k]) + nz(adj[k]); s += a; return `${k} ${fmt(a)}`; }); console.log(`外面世界的帳上分類（W3）：${parts.join("　")}　公共 ${fmt(world - s)}　合計 ${fmt(world)}`); }
-    console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　外面世界合計 ${fmt(nz(h.world) + nz(w.pool))}（莊家的對外帳戶 ${fmt(h.world)}）　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有"); }
+  console.log(`莊家 ${fmt(h.bankroll)}　博物館資金 ${fmt(h.budget)}　海底 ${fmt(h.sea)}　修繕基金 ${fmt(h.museum)}　政府帳 ${fmt(h.gov)}　已知世界 ${fmt(h.world)}　海外（house.ext，可以是負的）${fmt(h.ext)}　莊家記的日子 ${h.day || "-"}`);
+  { const ws = await db.doc("world/main").get(), w = ws.exists ? JSON.parse(ws.data().data || "{}") : null; // 世界文件（W2，決定 0086）：備用池要算進已知世界總量
+    if (h.wu && h.wu.r) { const r = h.wu.r, adj = h.wu.adj || {}, world = nz(h.world); let s = 0; const parts = Object.keys(r).filter(k => k !== "pub").map(k => { const a = Math.floor(world * +r[k]) + nz(adj[k]); s += a; return `${k} ${fmt(a)}`; }); console.log(`已知世界的帳上分類（W3）：${parts.join("　")}　公共 ${fmt(world - s)}　合計 ${fmt(world)}`); }
+    console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　已知世界合計 ${fmt(nz(h.world) + nz(w.pool))}（莊家的對外帳戶 ${fmt(h.world)}）　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有"); }
   const led = h.led || {};
   console.log("莊家每個來源累計（正＝進莊家，負＝出莊家）：");
   (list(led.flow).length ? list(led.flow) : ["    （沒有）"]).forEach(l => console.log(l));
+  console.log("海外每個來源累計（正＝進海外，負＝出海外；extSplit 是上線那次從已知世界搬出來的）：");
+  (list((h.led || {}).ext).length ? list((h.led || {}).ext) : ["    （沒有）"]).forEach(l => console.log(l));
   console.log("莊家憑空多的（重開）：");
   (list(led.mint).length ? list(led.mint) : ["    （沒有）"]).forEach(l => console.log(l));
   const ws = await db.collection("casinoWallets").get();

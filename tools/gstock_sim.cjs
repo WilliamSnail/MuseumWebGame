@@ -1,7 +1,7 @@
 // 世界集團股票的模擬（決定 0121）：node tools/gstock_sim.cjs [--days 90] [--amp 1.5]
 // 用真的程式（casHouseFix 換日、wmTick 市場景氣、whTick 健康值、gsAdvance 股價和每週的公司事件、gsBuy／gsSell），每天每 15 分鐘推壹格。
 // 情境：景氣 −1／0／+1（每個市場固定）× 沒人買賣／壹位館友大量炒作（每天買到上限、5 天買、3 天放、5 天賣）／10 位館友同時炒。
-// 印：股價範圍、指數範圍、增資／庫藏股／配股／分割幾次、莊家最低錢和最大庫存、館友賺賠、健康值最高、守恆差（單位加公共 ＝ 外面世界；全館總和對帳）。壹項不對就 exit 1。
+// 印：股價範圍、指數範圍、增資／庫藏股／配股／分割幾次、莊家最低錢和最大庫存、館友賺賠、健康值最高、守恆差（單位加公共 ＝ 已知世界；全館總和對帳）。壹項不對就 exit 1。
 const L = require("./world_lib.cjs"), { load } = require("../test/load_shared.cjs");
 const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null; };
 const days = +opt("--days") || 90, amp = opt("--amp") != null ? +opt("--amp") : null;

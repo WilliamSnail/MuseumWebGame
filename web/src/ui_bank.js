@@ -88,8 +88,8 @@ export function fakeBankHall() {
       { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
       { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
       { from: "world", to: "budget", amt: 3100000, srcs: [{ src: "npcCrowdBudget", label: "散客的門票（博物館資金）", amt: 2400000 }, { src: "npcJob", label: "NPC 在委託櫃台花的", amt: 700000 }] },
-      { from: "players", to: "world", amt: 1900000, srcs: [{ src: "stockBuy", label: "買股票（錢給外面世界）", amt: 2200000 }, { src: "dividend", label: "股息（外面世界付）", amt: -300000 }] },
-      { from: "gen", to: "world", amt: 840000, srcs: [{ src: "worldGrow", label: "外面世界每天成長（照 GDP 年增率）", amt: 840000 }] },
+      { from: "players", to: "world", amt: 1900000, srcs: [{ src: "stockBuy", label: "買股票（錢給海外）", amt: 2200000 }, { src: "dividend", label: "股息（海外付）", amt: -300000 }] },
+      { from: "gen", to: "world", amt: 840000, srcs: [{ src: "worldGrow", label: "已知世界每天成長（照 GDP 年增率）", amt: 840000 }] },
       { from: "house", to: "budget", amt: 410000, srcs: [{ src: "investFee", label: "投資手續費", amt: 410000 }] },
       { from: "players", to: "gov", amt: 160000, srcs: [{ src: "stockTax", label: "股票證交稅", amt: 160000 }] },
       { from: "world", to: "gov", amt: 95000, srcs: [{ src: "bizTax", label: "營業稅（店裡的花費）", amt: 95000 }] },
@@ -688,7 +688,7 @@ function stockPane(v) {
         cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
-        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照外面世界的行情動。買賣各收手續費，進博物館資金。"),
+        h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照真實市場的行情動。買賣各收手續費，進博物館資金。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
       debtPanel(v), positionsPanel(S), ordersPanel(S));
@@ -715,7 +715,7 @@ function worldPanel(v) {
   if (!W) return null;
   const days = Array.isArray(W.days) ? W.days.filter(d => d && Array.isArray(d.items) && d.items.length) : [];
   if (!days.length) return panel("世界市場", "每天由館方整理", h("p", { class: "bank-empty-dark" }, "今天還沒有世界市場的消息。"));
-  return panel("世界市場", "外面世界的股市消息，不寫數字",
+  return panel("世界市場", "海外的股市消息，不寫數字",
     // 11-16 翊文：「世界市場寫今天的展開，其他天的收折」：電腦也收（原本只有手機收）
     h("div", { class: "bank-worlddays" }, days.map((d, di) => h(di > 0 ? "details" : "section", { class: "bank-wday" + (di > 0 ? " old" : "") },
       h(di > 0 ? "summary" : "h4", { class: "bank-wd" }, di === 0 ? `${String(d.day || "").slice(5)} 最新` : String(d.day || "").slice(5) + "　點開 ▾"),
@@ -724,8 +724,8 @@ function worldPanel(v) {
         h("span", null, h("b", null, it.title), h("small", null, it.line),
           it.refs && it.refs.length ? h("span", { class: "bank-refs" }, it.refs.map(r => h("button", { type: "button", class: "bank-ref", onClick: () => goStock(v, r.id), "aria-label": `看 ${r.name}` }, r.name))) : null)); }))))));
 }
-// 館方投資（翊文 11-14：「館方也有投資外面世界，銀行裡怎麼我們看不到」）：數值平衡 PR 445 的 houseInv。昨天的快照，不是現在，所以標「截至」
-const PAUSE_TEXT = { stop: "館方虧太多，暫停買進", world: "外面世界資金吃緊，暫停買進" };
+// 館方投資（翊文 11-14：「館方也有投資海外，銀行裡怎麼我們看不到」）：數值平衡 PR 445 的 houseInv。昨天的快照，不是現在，所以標「截至」
+const PAUSE_TEXT = { stop: "館方虧太多，暫停買進", world: "已知世界資金吃緊，暫停買進" };
 const POOL_TEXT = { house: "莊家", budget: "博物館資金" };
 
 // 館方投資的「投資方式」告示（11-16 翊文：「館方投資的新策略寫在館方投資那欄裡做壹個小圖示可以點出來出現壹個告示讓玩家看」；決定 0099）：數字都讀 NUM.casino.invest，改設定告示跟著變
@@ -740,7 +740,7 @@ function openInvestHow() {
       : li(h("b", null, "追漲　"), "每天挑最近 ", String(C.lookback), " 天漲最多的 ", String(C.topN), " 支多買。"),
     even && C.dip ? li(h("b", null, "跌了多買　"), "某支的價格比館方自己最近 ", String(C.dip.days), " 次的平均成本低 ", String(C.dip.pct), "% 以上，那支這天多買 ", String(C.dip.mult), " 倍。") : null,
     li(h("b", null, C.stopLossPct > 0 || C.takeProfitPct > 0 ? "停損停利　" : "不停損、不停利　"), C.stopLossPct > 0 || C.takeProfitPct > 0 ? `比成本跌 ${C.stopLossPct}% 賣一半、漲 ${C.takeProfitPct}% 賣三分之一。` : "跌了不賣，漲了也不急著賣，抱著等。"),
-    li(h("b", null, "虧太多才停手　"), "整體虧超過 ", String(C.stopPct), "%，暫停買進 ", String(C.stopDays), " 天；外面世界資金吃緊時也先暫停。"),
+    li(h("b", null, "虧太多才停手　"), "整體虧超過 ", String(C.stopPct), "%，暫停買進 ", String(C.stopDays), " 天；已知世界資金吃緊時也先暫停。"),
     li(h("b", null, "不押太重　"), "持股成本合計最多是能動用的錢的 ", String(C.holdCapPct), "%。"),
     li(h("b", null, "延遲壹天公開　"), "你看到的是昨天的快照，不是現在，所以不能用它跟著買賣套利。")),
     h("h4", null, "為什麼這樣投"),
@@ -793,7 +793,7 @@ function dayTag(day, want) { // want：這份帳應該是哪壹天的（沒給�
 
 // 全館的帳（11-16 翊文：「把館內的這幾個帳都放在銀行館內經濟可以展開來看」）：資料 e.books（數值平衡，日報寫回時寫，延遲壹天、整天不變）
 // { day, bankroll, budget, museum, sea, world（現在的餘額；world 沒有帳是 null）, d: { 各帳比前壹份日報多少 }, top: { 各帳昨天進出最大最多 3 筆 [{ label, n }] } }
-const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢：牌桌、館內股、免費大禮包、借款"], ["budget", "博物館資金", "館方行政：拚經濟、投資、還館債"], ["museum", "修繕基金", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "外面世界", "館外：旅客散客、館外股票、館債；每天照台灣 GDP 年增率成長（只增加外面世界，不給玩家）"]];
+const BOOK_LIST = [["bankroll", "莊家", "Yuga Bot 的賭場錢：牌桌、館內股、免費大禮包、借款"], ["budget", "博物館資金", "館方行政：拚經濟、投資、還館債"], ["museum", "修繕基金", "門票七成，之後修繕和預算公投"], ["gov", "政府帳", "證交稅、營業稅、娛樂稅；館方還沒決定怎麼用"], ["sea", "海底", "B4 水面底下，沉掉的錢"], ["world", "已知世界", "旅客散客、各集團、文化部、館債；每天照台灣 GDP 年增率成長（只增加已知世界，不給玩家）"], ["ext", "海外（真實市場）", "館外股票的買賣、股利、館方投資；負數＝館友在真實市場賺回來的，比投出去的多"]];
 // live：現在的餘額（伺服器 casBooksLive）；有就把大數字換成即時的，下面寫「05:00 起」多了少了多少、「昨天」照日報
 function booksPanel(b, live) {
   if (!b || typeof b !== "object") return null;
@@ -827,7 +827,7 @@ function extPanel(e) {
       menu.length ? h("ul", { class: "bank-who" }, menu.map(m => h("li", null, h("b", null, m.name), ` ${fmt((m.npc || 0) + (m.crowd || 0))} 份（旅客 ${fmt(m.npc || 0)}・散客 ${fmt(m.crowd || 0)}）`))) : null,
       orders.length ? h("ul", { class: "bank-who" }, orders.map(o => h("li", null, h("b", null, o.who), ` 點了 ${o.name}${o.n > 1 ? " ×" + o.n : ""}`))) : null) : null);
 }
-// 外面世界（世界經濟 W5，翊文同意第 8 題）：只看整體分布，不列每家的數字（免得洩漏股價方向）。資料 e.world（沒有＝下次換日才有）：
+// 已知世界（世界經濟 W5，翊文同意第 8 題）：只看整體分布，不列每家的數字（免得洩漏股價方向）。資料 e.world（沒有＝下次換日才有）：
 // { day, states: { normal, cut, squeeze, layoff 各幾個集團 }, bands: [4 格：<0.75、0.75～0.9、0.9～1.1、≥1.1 各幾個], avgMult: NPC 預算倍率平均（0.3～1.1）, events: [{ day, text }] }
 const WLD_STATE = ["normal", "cut", "squeeze", "layoff"], WLD_BAND = ["tight", "weak", "normal", "strong"], WLD_UNREST = ["calm", "stir", "uneasy", "turmoil"];
 // 集團之間的往來（決定 0120）：本週累計＋目前欠金融集團的。資料 v.bankHall.trade ＝ { since, rows: [{ k, label, from, to, n }], loans: [{ name, amt, day }] }
@@ -840,11 +840,11 @@ function tradeSec(t) {
 }
 function outsidePanel(e, trade) {
   const w = e && e.world;
-  if (!w) return panel("外面世界", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
+  if (!w) return panel("已知世界", "每天 05:00 結算", h("p", { class: "bank-empty" }, "這份帳明天早上 05:00 才有。"));
   const states = statCounts("unitState", w.states, WLD_STATE), bands = Array.isArray(w.bands) ? statCounts("unitHealth", Object.fromEntries(WLD_BAND.map((k, i) => [k, w.bands[i]])), WLD_BAND) : [];
   const unrest = Array.isArray(w.unrestBands) ? statCounts("unitUnrest", Object.fromEntries(WLD_UNREST.map((k, i) => [k, w.unrestBands[i]])), WLD_UNREST) : [];
   const mult = Math.max(0.3, Math.min(1.1, +w.avgMult || 0)), events = Array.isArray(w.events) ? w.events : [];
-  return panel("外面世界", h("span", null, "整體的樣子，不列每家的數字", dayTag(w.day || e.day)),
+  return panel("已知世界", h("span", null, "整體的樣子，不列每家的數字", dayTag(w.day || e.day)),
     h("div", { class: "bank-wld-sec" }, h("b", null, "各集團現在的狀態"), statBar(states), statLegend(states)),
     bands.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團景氣分布"), statBands(bands)) : null,
     unrest.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團的人心"), statBands(unrest)) : null,
@@ -859,7 +859,7 @@ function outsidePanel(e, trade) {
 }
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
-  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e, v.bankHall && v.bankHall.trade)), foldAlways("館方投資", houseInvPanel(v))));
+  if (!e) return h("div", { class: "bank-cols" }, panel("館內經濟", "每天 05:00 結算昨天", h("p", { class: "bank-empty" }, "館內的帳每天 05:00 結算昨天，今天的還沒出來。")), h("div", { class: "bank-stack" }, world, fold("已知世界", outsidePanel(e, v.bankHall && v.bankHall.trade)), foldAlways("館方投資", houseInvPanel(v))));
   const tone = e.idx > 0.3 ? "好" : e.idx < -0.3 ? "差" : "普通";
   return h("div", { class: "bank-cols report" },
     h("div", { class: "bank-stack" },
@@ -873,7 +873,7 @@ function reportPane(v) {
       fold("昨天館外來客花了多少", extPanel(e)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))]))),
       foldAlways("館方投資", houseInvPanel(v))), // 館方投資在左邊（翊文 11-15：「館方投資移到左邊」），世界市場在中間
-    h("div", { class: "bank-stack" }, world, fold("外面世界", outsidePanel(e)),
+    h("div", { class: "bank-stack" }, world, fold("已知世界", outsidePanel(e)),
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
 // 集團股的掛單（決定 0124）：限價買、限價賣、停損賣；單當天有效，買單鎖籌碼、賣單鎖股數。op order／cancel（取消要帶 id 和 no）
@@ -1034,7 +1034,7 @@ function helpSections(v) {
         "借了壹天以上、本金 10 萬以上、沒延過期的，可以「轉分期」：分 2～4 期、每期隔 3～7 天（最晚多 21 天），每期到期只扣那壹期；延後的部分照借款日利率收手續費，算進每期要還的錢。分期和延期只能選壹個。",
         "賣股還債可以只還壹部分：賣的錢先補負數、還前面的整筆，最後壹筆還不完就先還它的利息和本金的壹部分。"]],
       ["股息和配股", [
-        "館外股有配息的，除息日開始時你手上有的股數，每股領真實的現金股利（照遊戲價的倍數、美股照當天匯率換算），錢由外面世界付，扣股利所得稅：台股 30.11%（分離課稅 28% ＋ 二代健保 2.11%）、美股 30%，稅進政府帳。",
+        "館外股有配息的，除息日開始時你手上有的股數，每股領真實的現金股利（照遊戲價的倍數、美股照當天匯率換算），錢由海外付，扣股利所得稅：台股 30.11%（分離課稅 28% ＋ 二代健保 2.11%）、美股 30%，稅進政府帳。",
         "除息當天才買的不領，也買在掉完股利的價。除權（配股）：除權前持有的人多配股數，零股用現金補。",
         "槓桿部位當天結束，不會跨過除息日，所以沒有股息。"]],
       ["賣股還債", [
@@ -1115,7 +1115,7 @@ function helpSections(v) {
         "昨天發生的事：館內昨天進出的錢和今天的數字。",
         "莊家和投資人在買什麼：看大家的動向，只能當參考。",
         "世界市場：館外世界每天發生的事，跟外面的股票有關。有附相關股票的，就是會影響它。",
-        "外面世界：外面各集團現在好不好（正常、減薪、緊縮、裁員各幾個）、旅客的預算打幾折、這週誰換了狀態。集團差，旅客來館花的錢就少。",
+        "已知世界：外面各集團現在好不好（正常、減薪、緊縮、裁員各幾個）、旅客的預算打幾折、這週誰換了狀態。集團差，旅客來館花的錢就少。",
         "昨天館外來客花了多少：有名字的旅客和散客付的門票、在每家店花的錢、餐車賣了什麼。"]],
       ["小提示", [
         "股票那一頁的紅點代表有股票的價錢變了。",

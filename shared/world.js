@@ -2,7 +2,7 @@
 //  世界經濟的「世界文件」（W2，決定 0086，規劃 docs/世界經濟規劃.md 第 5、6 節）
 //  純函式。伺服器每小時的排程（functions/world.js 的 worldTick，併進 auctionTick）呼叫 wdTick：換日第一次才寫，同一天再跑什麼都不做。
 //  world/main：{ v, day, pool, grownSeen, last }
-//    pool        外面世界的「備用池」：house.world（館的對外帳戶）以外的那一份。現在是 0，搬錢預設關閉（NUM.casino.worldDoc.gateway ＝ 0）。
+//    pool        已知世界的「備用池」：house.world（館的對外帳戶）以外的那一份。現在是 0，搬錢預設關閉（NUM.casino.worldDoc.gateway ＝ 0）。
 //    grownSeen   上次看到的 house.led.mint.worldGrow 累計（算「這一次之間成長了多少」）
 //    last        最近一天的紀錄（同 worldDays/{日期} 那份）
 //  worldDays/{日期}：每天一份紀錄 { day, houseDay, world, pool, total, grown, growth, b }。**只觀察、不改莊家**：
@@ -35,7 +35,7 @@ export function wdFix(w) {
 }
 // 莊家文件目前累計的成長（house.led.mint.worldGrow）
 export const wdGrown = house => wdN(house && house.led && house.led.mint && house.led.mint.worldGrow);
-// 外面世界現在總共多少：莊家的對外帳戶（house.world）加備用池
+// 已知世界現在總共多少：莊家的對外帳戶（house.world）加備用池
 export const wdTotal = (house, w) => wdN(house && house.world) + wdN(w && w.pool);
 
 // 換日第一次：回傳 { skip: true }（今天已經記過）或 { skip: false, w, rec }。house 不會被改
@@ -61,14 +61,14 @@ export function wdSettle(house, wIn, gateway = NUM.casino.worldDoc ? NUM.casino.
 }
 
 // ================================================================
-//  W3 分帳（決定 0086）：外面世界的錢（house.world）分成「頂層單位、家計、公共」。這只是帳上的分類，**不搬錢**：
+//  W3 分帳（決定 0086）：已知世界的錢（house.world）分成「頂層單位、家計、公共」。這只是帳上的分類，**不搬錢**：
 //    house.wu ＝ { r: { id: 比例 }, adj: { id: 調整 } }。單位 i 現在有 floor(house.world × r_i) ＋ adj_i；公共＝house.world 減掉所有單位和家計（剩下的），所以總和永遠等於 house.world，不會對不上。
 //    池子進出（館的各種來源）照比例攤（world × r 自己就會跟著變）；只有「指名的」會動 adj：每天成長按權重分（wuGrow）、新玩家的起始補助從文化部出（wuDebit）。
 //    W4 起，NPC 來館花的錢從所屬集團出，會用 wuDebit。
 //    公共（pub）是剩下的，所以指名的單位不夠出時由公共補；公共的比例（現在 16%）是緩衝。
 // ================================================================
 export const WU_HH = "u-household"; // 家計：沒有單位的人（學生、退休、自由業）
-export const WU_EXT = "u-ext"; // 海外（真實市場，決定 0121）：館外股的買賣、股利記在這裡（比例 0，只有 adj）：買＝本地資金外流、賣和股利＝流回來，可以是負的（館友賺真實市場的錢）
+export const WU_EXT = "u-ext"; // 舊的「海外」單位（決定 0121）：決定 0126 起海外是並列的帳 house.ext，這個 id 只剩壹次性搬出（wuExtSplit）用
 export const WU_PUB = "pub"; // 公共：剩下的（只在 wuAmounts 的結果裡，不存在 adj）
 const wuBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wuTop = () => WORLD_UNITS.filter(u => u && u.parent == null);
@@ -80,19 +80,29 @@ export function wuRatios() {
   r[WU_PUB] = Math.max(0, 1 - sum);
   return r;
 }
-// 讀回來的莊家：沒有 wu 就照現在的比例建（第一次：外面世界的錢照比例分）；壞資料變回預設
+// 讀回來的莊家：沒有 wu 就照現在的比例建（第一次：已知世界的錢照比例分）；壞資料變回預設
 export function wuFix(house) {
   if (!wuBox(house)) return null;
   const x = wuBox(house.wu) && wuBox(house.wu.r) ? house.wu : (house.wu = { r: wuRatios(), adj: {} });
   if (!wuBox(x.adj)) x.adj = {};
   for (const id of Object.keys(x.r)) { x.r[id] = +x.r[id] || 0; if (id !== WU_PUB) x.adj[id] = wdN(x.adj[id]); }
   if (x.r[WU_PUB] == null) x.r[WU_PUB] = 0;
-  if (x.r[WU_EXT] == null) { x.r[WU_EXT] = 0; x.adj[WU_EXT] = wdN(x.adj[WU_EXT]); }
   if (x.r[WU_WAL] == null) { x.r[WU_WAL] = 0; x.adj[WU_WAL] = wdN(x.adj[WU_WAL]); } // NPC 錢包（W6）：比例 0，只有 adj
   return x;
 }
-// 館外股的錢進出「海外」：house.world 已經從 before 變成現在，變多的 n（買股：正）全記在海外、其他單位和錢包不動；賣、股利是負的。總和仍等於池子
-export function wuExt(house, before, n) { return wuCredit(house, before, WU_EXT, n); }
+// 決定 0126：把海外從已知世界（house.world）搬出來，變成並列的帳 house.ext（壹個莊家壹次，旗標 house.extSplit）。
+//   E ＝ 舊的 u-ext 累計（house.wu.adj）。house.world 少 E、house.ext 多 E，全館總和不變；各集團、家計、NPC 錢包的帳不變（adj 補上 world 變小造成的 floor 差），公共也不變。
+//   流水帳：led.world.extSplit ＝ −E、led.ext.extSplit ＝ +E（讓「世界的變化 ＝ 流水加成長」的檢查照樣成立）；舊的 led.world 累計不動（歷史）。回傳搬了多少
+export function wuExtSplit(house) {
+  if (!wuBox(house) || house.extSplit || house.world == null) return 0;
+  const x = wuFix(house); if (!x) return 0;
+  const E = wdN(x.adj[WU_EXT]), W = wdN(house.world);
+  if (E) for (const id of Object.keys(x.r)) { if (id === WU_PUB || id === WU_EXT) continue; x.adj[id] = wdN(x.adj[id]) + Math.floor(W * x.r[id]) - Math.floor((W - E) * x.r[id]); }
+  delete x.r[WU_EXT]; delete x.adj[WU_EXT];
+  house.world = W - E; house.ext = wdN(house.ext) + E; house.extSplit = true;
+  if (E) { if (!wuBox(house.led)) house.led = {}; for (const k of ["world", "ext"]) if (!wuBox(house.led[k])) house.led[k] = {}; house.led.world.extSplit = wdN(house.led.world.extSplit) - E; house.led.ext.extSplit = wdN(house.led.ext.extSplit) + E; }
+  return E;
+}
 // house.world 已經從 before 變成現在：變多（少）的 n 全記在 id 這個單位，其他單位、錢包不動。總和仍等於池子（集團增資的錢進池子、館外股進出海外都用它）
 export function wuCredit(house, before, id, n) {
   n = wdN(n); const x = wuFix(house); if (!x || !n || !(id in x.r) || id === WU_PUB) return 0;
@@ -433,7 +443,7 @@ export function whNews(house, day, days = 1) {
   const from = whAddDays(day, -days);
   return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, unit: e.unit, to: e.to, text: `${whName(e.unit)}${WH_TEXT[e.to]}了` }));
 }
-// 財報「外面世界」卡的資料（只給分布，不列每家的數字）：{ day, states 各狀態幾個單位, bands h 的分布 [＜squeeze, squeeze～cut, cut～1.1, ≥1.1], avgMult 預算倍率平均, events 最近一週換狀態的 }
+// 財報「已知世界」卡的資料（只給分布，不列每家的數字）：{ day, states 各狀態幾個單位, bands h 的分布 [＜squeeze, squeeze～cut, cut～1.1, ≥1.1], avgMult 預算倍率平均, events 最近一週換狀態的 }
 export function whCard(house, day) {
   const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return null;
   const C = whCfg(), us = whUnits(), states = { normal: 0, cut: 0, squeeze: 0, layoff: 0 }, bands = [0, 0, 0, 0];
@@ -447,9 +457,9 @@ export function whCard(house, day) {
 // ================================================================
 //  W6 NPC 錢包和換工作（決定 0086，規劃 docs/世界經濟規劃.md 3.3 階段 B）
 //  house.npcw ＝ { day, bal: { NPC id: 錢包裡有多少 }, lay: { id: { since } }, job: { id: { unit, since } }, ev: [{ day, npc, from, to, t }] }
-//  錢包的錢在帳上是外面世界分類裡的壹個成員「u-wallets」（比例 0，只有 adj），所以總和仍等於 house.world；**沒有憑空多錢**：
+//  錢包的錢在帳上是已知世界分類裡的壹個成員「u-wallets」（比例 0，只有 adj），所以總和仍等於 house.world；**沒有憑空多錢**：
 //    每天發薪（nwPayday）：把每位 NPC 的錢包補到「今天預算 × targetDays 天」（預算 ＝ perDay × dayPct% × 所屬集團的 W5 倍率），從所屬集團出（集團的錢不夠就少補）；多出來的（倍率降了）退回集團。
-//    NPC 來館花錢（nwSpend）：從錢包出（錢包不夠就當天不花），錢離開外面世界到館。錢包有上限、每天補回，所以不會無限長、也不會歸零（最少剩 targetDays−1 天的預算）。
+//    NPC 來館花錢（nwSpend）：從錢包出（錢包不夠就當天不花），錢離開已知世界到館。錢包有上限、每天補回，所以不會無限長、也不會歸零（最少剩 targetDays−1 天的預算）。
 //  換工作（每週一，接 W5）：所屬集團進入「裁員」時，集團裡有職位的 NPC 每人 layoffPct% 被裁；被裁的每週 findPct% 找到新工作（景氣一般的集團，照比例抽），滿 joinWeeks 週一定找到；原本的集團恢復了就直接回去。
 //    W5 還沒有資料（house.wh 不存在）時什麼都不換、倍率 1，照常運作。
 // ================================================================

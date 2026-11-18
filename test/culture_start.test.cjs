@@ -1,4 +1,4 @@
-// 決定 0082：新玩家的起始籌碼由文化部補助（從外面世界池子搬、記 cultureStart），不再憑空
+// 決定 0082：新玩家的起始籌碼由文化部補助（從已知世界池子搬、記 cultureStart），不再憑空
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;

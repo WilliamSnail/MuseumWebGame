@@ -7,7 +7,7 @@ const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toIS
 const mk = (G, bank, day) => { const h = G.casHouseFix(G.casHouseNew(), day).house; h.bankroll = bank; h.debt.culture = 1000000000; return h; };
 const inv = (G, h) => { const s = G.casBookSnap([], h, 0, null); return G.casBookTotal(s) - G.casBookMinted(s) + G.casBookBurned(s); };
 
-T("錢夠：每天至少還 剩餘本息 ÷ 剩下天數，30 天還清；還的錢回外面世界；守恆", G => {
+T("錢夠：每天至少還 剩餘本息 ÷ 剩下天數，30 天還清；還的錢回已知世界；守恆", G => {
   const H = G.NUM.casino.houseLoan, D0 = add(H.cultureDue, -30); let h = mk(G, 6000000000, D0);
   const t0 = inv(G, h), w0 = h.world; let day = D0;
   for (let i = 0; i < 31 && h.debt.culture > 0; i++) { day = add(day, 1); h = G.casHouseFix(h, day).house; }
@@ -41,7 +41,7 @@ T("館方投資：博物館資金要墊文化部館債的部分不能拿去投�
   assert.strictEqual(Object.keys(G.casInvestFix(h).pool.budget.own).length, 0, "館債要墊的錢大於博物館資金超過保留的部分：不投");
   h.debt.culture = 0; h.day = "2026-11-15"; G.casInvestRun(h, G.casStockHouseFix(h), "2026-11-15", "s", 0); assert.ok(Object.keys(G.casInvestFix(h).pool.budget.own).length > 0, "沒館債就照投");
 });
-T("日報對帳基準（casBookOpeningNext）：外面世界有帳的那天加「起始」不是餘額；已經加錯的壹次校正；之後不再動", G => {
+T("日報對帳基準（casBookOpeningNext）：已知世界有帳的那天加「起始」不是餘額；已經加錯的壹次校正；之後不再動", G => {
   const WS = G.NUM.casino.world.start, mkSnap = w => ({ chips: 0, transit: 0, bank: 0, inplay: 0, mint: {}, burn: {}, house: { bankroll: 5, budget: 0, sea: 0, museum: 0, world: w, mint: {}, flow: {}, burn: {} } });
   let r = G.casBookOpeningNext({ opening: 1000, gap: 0, snap: mkSnap(null) }, mkSnap(WS + 764291250), WS); assert.strictEqual(r.opening, 1000 + WS); assert.strictEqual(r.fix, 0);
   r = G.casBookOpeningNext({ opening: 1000 + WS + 764291250, gap: -764291250, snap: mkSnap(WS + 764291250) }, mkSnap(WS + 800000000), WS); assert.strictEqual(r.opening, 1000 + WS, "壹次校正掉前壹份的差額"); assert.strictEqual(r.fix, -764291250);

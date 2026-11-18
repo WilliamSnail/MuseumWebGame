@@ -1,5 +1,5 @@
 // 世界經濟 W3 分帳（決定 0086，shared/world.js 的 wu*）：node test/world_split.test.cjs（npm test 也會跑）
-// 外面世界的錢（house.world）在帳上分成各單位、家計、公共：總和永遠等於 house.world；成長按權重分；新玩家補助從文化部出；單位名單跟 shared/world_roster.js 一致。
+// 已知世界的錢（house.world）在帳上分成各單位、家計、公共：總和永遠等於 house.world；成長按權重分；新玩家補助從文化部出；單位名單跟 shared/world_roster.js 一致。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 const pack = require("../tools/world_pack.cjs");
@@ -14,7 +14,7 @@ T("單位名單打包跟 content/world/units 一致、頂層比例加家計不�
   const r = G.wuRatios(); assert.ok(r.pub >= 0.1 - 1e-9, "公共至少 10%：" + r.pub); assert.ok(Math.abs(sum(r) - 1) < 1e-9, "比例加起來 1"); assert.strictEqual(r["u-household"], G.NUM.casino.worldDoc.household);
   assert.ok("u-culture" in r && "g-island" in r);
 });
-T("第一次分帳：照比例分外面世界的錢，總和 ＝ house.world；莊家一建就有 wu", G => {
+T("第一次分帳：照比例分已知世界的錢，總和 ＝ house.world；莊家一建就有 wu", G => {
   const h = mk(G); assert.ok(h.wu && h.wu.r); const a = G.wuAmounts(h); assert.strictEqual(sum(a), h.world);
   assert.strictEqual(a["g-daily"], Math.floor(h.world * G.wuRatios()["g-daily"])); assert.ok(a.pub >= 0);
 });
@@ -61,7 +61,7 @@ T("W4 NPC 來館花的錢從所屬集團出：byUnit 加起來 ＝ 花的總額�
   const h = mk(G), b0 = G.wuAmounts(h), w0 = h.world; G.casNpcSpend(h, D, "sec", LIST, null);
   const N = h.npcs, by = N.byUnit; assert.ok(by && Object.keys(by).length > 0, "有記每個單位出多少");
   const total = N.ticket + N.shop + N.crowd.ticket + N.crowd.shop; assert.strictEqual(sum(by), total, "byUnit 加起來 ＝ 花的總額"); assert.ok(total > 0);
-  const a = G.wuAmounts(h); assert.strictEqual(sum(a), h.world); assert.strictEqual(w0 - h.world, total, "外面世界少的 ＝ 花的");
+  const a = G.wuAmounts(h); assert.strictEqual(sum(a), h.world); assert.strictEqual(w0 - h.world, total, "已知世界少的 ＝ 花的");
   assert.strictEqual(a["u-wallets"], G.nwTotal(h), "錢包在帳上的錢 ＝ 每位 NPC 錢包加起來"); assert.ok(a["u-wallets"] > 0, "NPC 有錢包");
   assert.ok(by["u-household"] > 0, "散客從家計出");
 });
@@ -116,7 +116,7 @@ const PEOPLE = LIST.filter(n => n.kind !== "trace");
 const MON = "2026-11-16";
 T("W6 發薪：錢包補到（今天預算 × targetDays）、從所屬集團出、世界總和不變、同一天不重複", G => {
   const h = mk(G), P = G.NUM.casino.npcSpend, C = G.NUM.casino.worldDoc.wallet, b0 = G.wuAmounts(h), w0 = h.world;
-  assert.ok(G.nwPayday(h, MON, PEOPLE)); assert.ok(!G.nwPayday(h, MON, PEOPLE), "同一天不重複"); assert.strictEqual(h.world, w0, "發薪不動外面世界");
+  assert.ok(G.nwPayday(h, MON, PEOPLE)); assert.ok(!G.nwPayday(h, MON, PEOPLE), "同一天不重複"); assert.strictEqual(h.world, w0, "發薪不動已知世界");
   const a = G.wuAmounts(h), bus = PEOPLE.find(n => n.id === "c-bus"), want = Math.floor(bus.budget.perDay * P.dayPct / 100) * C.targetDays;
   assert.strictEqual(G.nwBal(h, "c-bus"), want, "公車司機的錢包 ＝ 今天預算 × 2"); assert.strictEqual(sum(a), h.world); assert.strictEqual(a["u-wallets"], G.nwTotal(h));
   assert.strictEqual(b0["g-daily"] - a["g-daily"], PEOPLE.filter(n => n.job && n.job.unit === "g-daily" && n.budget && n.budget.perDay > 0).reduce((x, n) => x + Math.floor(n.budget.perDay * P.dayPct / 100) * C.targetDays, 0), "民生集團出的 ＝ 它的 NPC 的錢包");

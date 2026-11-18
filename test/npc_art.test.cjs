@@ -1,5 +1,5 @@
 // NPC 買畫（11-14，docs/館內NPC規劃.md 步驟 4）：node test/npc_art.test.cjs（npm test 也會跑）
-// 每場最多壹位 NPC 出價、錢從外面世界的池子來、不超過自己的預算和全館壹天的上限、NPC 沒贏也會把價格抬到他的出價、玩家的畫賣給 NPC 賣家拿到錢、守恆。
+// 每場最多壹位 NPC 出價、錢從已知世界的池子來、不超過自己的預算和全館壹天的上限、NPC 沒贏也會把價格抬到他的出價、玩家的畫賣給 NPC 賣家拿到錢、守恆。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -15,7 +15,7 @@ const world = G => {
 const sum = (G, W) => { const s = G.casBookSnap(Object.values(W.wallets), W.house, 0, null); return G.casBookTotal(s) - G.casBookMinted(s) + G.casBookBurned(s); };
 const settle = (G, W, extra) => G.casAucSettle(W.doc, "h~" + WORK, Object.assign({ house: W.house, wallets: W.wallets, saves: W.saves, day: "2026-11-19", nowMs: T0 + 4 * 86400000, npcList: [NPC], secret: "祕密" }, extra));
 
-T("沒人出價、NPC 出價：NPC 以底價買走館方的畫，錢從外面世界來（池子少、莊家多），守恆", G => {
+T("沒人出價、NPC 出價：NPC 以底價買走館方的畫，錢從已知世界來（池子少、莊家多），守恆", G => {
   G.NUM.auction.npcJoinPct = 100; G.NUM.auction.npcDay = 1e9;
   const W = world(G), t0 = sum(G, W), w0 = W.house.world, b0 = W.house.bankroll, R = W.doc.open[0].reserve;
   const r = settle(G, W);
@@ -41,7 +41,7 @@ T("NPC 沒贏也把第二高價抬到他的出價；玩家出更高的還是玩�
   const r = settle(G, W);
   assert.ok(r.sold && r.winner === "u1", JSON.stringify(r)); assert.ok(r.price >= a.reserve && r.price < hi, "付第二高價（NPC 的出價），不是自己的高價");
 });
-T("玩家的畫拍賣：NPC 買走，賣家拿到錢（扣手續費進博物館資金），畫變成館外收藏；錢從外面世界來；守恆", G => {
+T("玩家的畫拍賣：NPC 買走，賣家拿到錢（扣手續費進博物館資金），畫變成館外收藏；錢從已知世界來；守恆", G => {
   G.NUM.auction.npcJoinPct = 100; G.NUM.auction.npcDay = 1e9;
   const W = world(G), P = {}; W.saves.u2 = P; const A = G.casArtFix(P);
   A.own[WORK] = { tier: 2, date: DAY, d: DAY, paid: 6000000, title: "珍藏的畫", lock: "p~1" }; W.house.art = { own: { [WORK]: 1 }, paid: 6000000, out: { day: "", n: 0 } };

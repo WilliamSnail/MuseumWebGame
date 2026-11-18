@@ -1,6 +1,6 @@
 // 改世界經濟的數字之前，先跑壹遍預覽：node tools/world_sim.cjs [--days 30] [--b 0] [--set casino.npcSpend.dayPct=12]（npm run world:sim -- …）。決定 0086。
 // 用真的程式（casHouseFix 的換日成長、casNpcSpend 的 NPC 和散客花錢、wu 分帳）跑 N 天，印：
-//   外面世界的錢和每天變多少、每個單位的帳上分類（起點→終點）、每天 NPC 和散客花多少、各集團出多少、莊家和博物館資金變多少、守恆（單位加公共 ＝ 外面世界）。
+//   已知世界的錢和每天變多少、每個單位的帳上分類（起點→終點）、每天 NPC 和散客花多少、各集團出多少、莊家和博物館資金變多少、守恆（單位加公共 ＝ 已知世界）。
 // --scan：景氣 −1／0／+1 各跑 30、90 天，印壹張表（W5 連動）。
 // --b 景氣（−1～1，每天都當這個值）；--set 路徑=值（NUM 底下，可以多次，例如 casino.world.growBase=3000000）；--days 天數（預設 30，最多 365）。
 // 擋：守恆差不是 0、公共是負的、莊家或博物館資金變負 → exit 1。只讀 repo 的檔案，不碰正式站。
@@ -57,7 +57,7 @@ if (require.main === module) {
       if (rows.some(x => !x.ok)) process.exit(1); console.log("✓ 六種組合都守恆、沒破產"); process.exit(0);
     }
     const r = sim(G, npcs, { days: o.days, b: o.b, set: o.set, mk: o.mk }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; }); names["u-household"] = "家計"; names.pub = "公共";
-    console.log(`模擬 ${r.days} 天，景氣 ${r.b}：外面世界 ${fmt(r.w0)} → ${fmt(r.w1)}（${r.w1 >= r.w0 ? "+" : ""}${fmt(r.w1 - r.w0)}）`);
+    console.log(`模擬 ${r.days} 天，景氣 ${r.b}：已知世界 ${fmt(r.w0)} → ${fmt(r.w1)}（${r.w1 >= r.w0 ? "+" : ""}${fmt(r.w1 - r.w0)}）`);
     console.log(`NPC 和散客一共花 ${fmt(r.spent.total)}，平均每天 ${fmt(r.spent.total / r.days)}；莊家 ${r.bank >= 0 ? "+" : ""}${fmt(r.bank)}、博物館資金 ${r.budget >= 0 ? "+" : ""}${fmt(r.budget)}`);
     console.log("單位：起點 → 終點（變多少）　其中 NPC 花了");
     Object.keys(r.a1).forEach(k => console.log(`  ${names[k] || k}：${fmt(r.a0[k])} → ${fmt(r.a1[k])}（${r.a1[k] - r.a0[k] >= 0 ? "+" : ""}${fmt(r.a1[k] - r.a0[k])}）${r.spent.byUnit[k] ? "　花 " + fmt(r.spent.byUnit[k]) : ""}`));
@@ -66,8 +66,8 @@ if (require.main === module) {
     if (r.house.wh && r.house.wh.unrest) console.log("集團集體不安（平常 " + G.NUM.casino.worldDoc.unrest.start + "）：" + Object.keys(r.house.wh.unrest).map(k => `${names[k] || k} ${G.whUnrest(r.house, k)}`).join("　") + (r.house.wh.mood ? `　｜　今天的展廳氣氛 ${r.house.wh.mood.v}` : ""));
     const wh = r.house.wh, S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
     if (wh && wh.st) { console.log("各集團現在的狀態（健康值 h → 預算倍率）："); Object.keys(wh.st).forEach(k => console.log(`  ${names[k] || k}：${S[wh.st[k].s]}（h ${wh.h[k]} → ×${G.whMult(r.house, k).toFixed(2)}）`)); if (wh.ev.length) console.log("換過狀態：" + wh.ev.map(e => `${e.day} ${names[e.unit] || e.unit}→${S[e.to]}`).join("、")); }
-    const bad = []; if (r.gap !== 0) bad.push(`守恆差 ${r.gap}（單位加公共應該等於外面世界）`); if (r.a1.pub < 0) bad.push(`公共是負的 ${fmt(r.a1.pub)}`); if (r.house.bankroll < 0 || r.house.budget < 0) bad.push("莊家或博物館資金變負");
+    const bad = []; if (r.gap !== 0) bad.push(`守恆差 ${r.gap}（單位加公共應該等於已知世界）`); if (r.a1.pub < 0) bad.push(`公共是負的 ${fmt(r.a1.pub)}`); if (r.house.bankroll < 0 || r.house.budget < 0) bad.push("莊家或博物館資金變負");
     if (bad.length) { bad.forEach(m => console.log("✗ " + m)); process.exit(1); }
-    console.log("✓ 守恆（單位加公共 ＝ 外面世界）、公共不為負、莊家和博物館資金沒破產");
+    console.log("✓ 守恆（單位加公共 ＝ 已知世界）、公共不為負、莊家和博物館資金沒破產");
   } catch (e) { console.error("✗ " + e.message); process.exit(1); }
 }

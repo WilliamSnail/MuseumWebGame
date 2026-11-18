@@ -1,7 +1,7 @@
 // ================================================================
 //  銀行「金流」頁籤（11-17 翊文：「做一個動態的 hub 完整顯示整個世界各項金流流動方向的即時動畫」）
 //  資料：bankHall.flow（shared/casino_report.js 的 casFlowHub）＝ 今天 05:00 起每兩個地方之間的淨流向：{ edges: [{ from, to, amt, srcs: [{ src, label, amt }] }], bal }
-//  畫法：節點排成橢圓、外面世界在中間；每條線壹條帶箭頭的線，線上有金色小圓片沿著方向跑（SVG 的 animateMotion，瀏覽器自己動，不用我們每格算；分頁在背景它會自己停）。
+//  畫法：節點排成橢圓、已知世界在中間；每條線壹條帶箭頭的線，線上有金色小圓片沿著方向跑（SVG 的 animateMotion，瀏覽器自己動，不用我們每格算；分頁在背景它會自己停）。
 //        粗細＝今天流多少（取對數）、圓片數量跟著多壹點（上限 6 個壹條）。點線上的金額小牌或方塊，下面列出是哪些來源。
 //  只給合計和來源標籤，沒有個別館友和 NPC 的名字。介面字用「壹」。
 // ================================================================
@@ -13,11 +13,11 @@ const short = n => { const a = Math.abs(n); return a >= 1e8 ? (a / 1e8).toFixed(
 const sshort = n => (n < 0 ? "−" : "") + short(n); // 帶負號的短寫（海外帳可以是負的）
 const NS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
-const SEL = { e: null, n: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝外面世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
+const SEL = { e: null, n: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝已知世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
 let timer = 0;
 const still = () => !!(document.body && document.body.classList.contains("reduce-motion")) || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
-// 層級（11-17 翊文：「需要可以做縮放各層級的交易」）：全景（外面世界、佩佩博物館各是壹塊）→ 外面世界（各集團一塊，集團之間的往來看得到）→ 單一集團（它的子公司和它所有的進出）；另壹邊：全景 → 佩佩博物館（館裡的各帳）
+// 層級（11-17 翊文：「需要可以做縮放各層級的交易」）：全景（已知世界、佩佩博物館各是壹塊）→ 已知世界（各集團一塊，集團之間的往來看得到）→ 單一集團（它的子公司和它所有的進出）；另壹邊：全景 → 佩佩博物館（館裡的各帳）
 const wOpen = () => SEL.path[0] === "world", focusId = () => (SEL.path[0] === "world" ? SEL.path[1] || null : null);
 const isOpen = id => (id.startsWith("org:") ? SEL.path[0] === id : id === focusId());
 // 把伺服器的資料變成這次要畫的：收起來的集團／org 把底下的點和線併到它身上，展開了就各自畫
@@ -43,13 +43,13 @@ function prep(F) {
   edges.sort((x, y) => y.amt - x.amt);
   return { nodes, edges, bal, orgs, by, hasKids: id => raw.some(n => n.parent === id) || !!(by[id] && by[id].isOrg) };
 }
-// 版面（分層，全部照資料排）：同壹層的方塊平均分寬度；外面世界那壹條裡面放各集團的小方塊（有子公司的點了展開；太多收成「其他」）；展開的 org 外面框壹個框。
+// 版面（分層，全部照資料排）：同壹層的方塊平均分寬度；已知世界那壹條裡面放各集團的小方塊（有子公司的點了展開；太多收成「其他」）；展開的 org 外面框壹個框。
 // 線從上面那個方塊的下緣出去、接到下面那個的上緣；同壹邊有好幾條就平均分開。同層接左右邊。
 function layout(phone, V) {
   if (focusId()) return layoutFocus(phone, V, focusId());
   const nodes = V.nodes, W = phone ? 360 : 720, base = nodes.filter(n => !n.parent), kids = nodes.filter(n => n.parent === "world"), bh = phone ? 46 : 54, gap = phone ? 52 : 62;
   const frameOrgs = [...new Set(base.filter(n => n.org && !n.isOrg).map(n => n.org))], hasOrg = frameOrgs.length > 0, tiers = [...new Set(base.map(n => n.tier))].sort((a, b) => a - b), pos = {}, tierOf = {}, frames = [];
-  const wo = wOpen(), chips = wo ? kids.map(k => Object.assign({}, k, { depth: 0 })) : []; // 放大到外面世界才畫各集團（全部都畫，集團之間的線才看得到）
+  const wo = wOpen(), chips = wo ? kids.map(k => Object.assign({}, k, { depth: 0 })) : []; // 放大到已知世界才畫各集團（全部都畫，集團之間的線才看得到）
   const cols = phone ? 2 : 3, gx = phone ? 52 : 70, gy = 56, cw = (W - 16 - gx * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
   let y = 0;
   for (const t of tiers) {
@@ -92,7 +92,7 @@ function anchors(edges, pos, tierOf) {
   return pt;
 }
 
-// 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是外面世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
+// 線不穿過別的方塊：直線會碰到中間的方塊（不是兩端、不是已知世界裡的小方塊要繞開的那條帶子）就繞到它的左邊或右邊（同壹排就繞到上面）
 function route(pa, pb, e, pos, W) {
   const chips2 = !!(pos[e.from] && pos[e.from].chip && pos[e.to] && pos[e.to].chip), m = chips2 ? 20 : 10, chipEnd = e.from.startsWith("w:") || e.to.startsWith("w:");
   const obs = Object.entries(pos).filter(([id, r]) => !r.holder && (chips2 || !r.chip) && id !== e.from && id !== e.to && !(chipEnd && id === "world")).map(([, r]) => r);
@@ -109,7 +109,7 @@ function route(pa, pb, e, pos, W) {
 const polyD = pts => pts.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
 const polyLen = pts => pts.slice(1).reduce((n, p, i) => n + Math.hypot(p.x - pts[i].x, p.y - pts[i].y), 0);
 const polyAt = (pts, f) => { let want = polyLen(pts) * f; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); if (want <= l || i === pts.length - 1) { const t = l ? Math.min(1, want / l) : 0; return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t }; } want -= l; } return pts[0]; };
-// 這個方塊可以點進去放大嗎：外面世界（還沒放大時）、佩佩博物館（還沒進去時）、有子公司的集團（不是正在看的那個）
+// 這個方塊可以點進去放大嗎：已知世界（還沒放大時）、佩佩博物館（還沒進去時）、有子公司的集團（不是正在看的那個）
 const zoomable = (V, id) => (id === "world" ? !wOpen() : id.startsWith("org:") ? SEL.path[0] !== id : id.startsWith("w:") && V.hasKids(id) && id !== focusId());
 const ftitle = (V, f) => f.title || (V.orgs && V.orgs[f.id]) || f.id;
 const name = id => (NM[id] && NM[id].name) || id, balOf = (F, id) => (F.bal && F.bal[id] != null ? F.bal[id] : NM[id] && NM[id].bal != null ? NM[id].bal : null);
@@ -166,14 +166,14 @@ export function flowPane(v, deps) {
       pills.push(s("g", { class: "bank-flow-pill" + (on ? " on" : "") + (dim ? " dim" : ""), transform: "translate(" + mx.toFixed(1) + " " + my.toFixed(1) + ")", "data-i": i }, s("rect", { x: -w / 2, y: -10, width: w, height: 20, rx: 10 }), s("text", { "text-anchor": "middle", y: 4.3 }, t)));
     });
     L.frames.forEach(f => svg.append(s("g", { class: "bank-flow-frame", tabindex: 0, role: "button", "aria-label": ftitle(V, f) + "，回上一層" }, s("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 12 }))));
-    const draw1 = n => { // 方塊（大的）和外面世界裡的小方塊（chip）
+    const draw1 = n => { // 方塊（大的）和已知世界裡的小方塊（chip）
       const id = n.id, p = L.pos[id]; if (!p) return;
       const kidsOf = zoomable(V, id), on = SEL.n === id, bal = V.bal[id] != null ? V.bal[id] : n.bal, small = !!p.chip, band = id === "world" && L.chips.length > 0, label = name(id) + (kidsOf ? " ▸" : "");
       svg.append(s("g", { class: "bank-flow-node-g" + (on ? " on" : "") + (id === "gen" ? " ghost" : "") + (small ? " chip" : "") + (id === L.focus ? " focus" : "") + (kidsOf ? " kids" : ""), transform: "translate(" + p.x.toFixed(1) + " " + p.y.toFixed(1) + ")", tabindex: 0, role: "button", "aria-label": kidsOf ? name(id) + "，放大看裡面" : name(id) + "，只看這裡的進出", "data-n": id, "data-k": kidsOf ? "1" : null },
         s("rect", { x: -p.w / 2, y: -p.h / 2, width: p.w, height: p.h, rx: small ? 7 : 9 }), ...(band ? [s("text", { class: "n", "text-anchor": "middle", y: -p.h / 2 + 20 }, name(id) + (bal != null ? "　" + sshort(bal) : ""))] : [s("text", { class: "n", "text-anchor": "middle", y: bal != null ? -2 : 5 }, label), bal != null ? s("text", { class: "b" + (bal < 0 ? " neg" : ""), "text-anchor": "middle", y: small ? 12 : 14 }, sshort(bal)) : null])));
     };
     (L.focus ? L.nodes : L.nodes.filter(n => !n.parent)).forEach(draw1);
-    svg.append(...lines, ...dotsEl); // 線畫在方塊和外面世界那條帶子的上面（集團之間的線在帶子裡面）
+    svg.append(...lines, ...dotsEl); // 線畫在方塊和已知世界那條帶子的上面（集團之間的線在帶子裡面）
     L.frames.forEach(f => { const t = "◂ " + ftitle(V, f), w = 24 + t.length * 15; svg.append(s("g", { class: "bank-flow-ftitle", tabindex: 0, role: "button", "aria-label": ftitle(V, f) + "，回上一層" }, s("rect", { x: f.x + 6, y: f.y + 2, width: w, height: 18, rx: 9 }), s("text", { x: f.x + 14, y: f.y + 15 }, t))); }); // 框的標題畫在線的上面，不被線蓋住
     L.chips.forEach(draw1);
     svg.append(...pills); // 金額小牌在最上面（好點）
@@ -182,15 +182,15 @@ export function flowPane(v, deps) {
     svg.querySelectorAll(".bank-flow-pill").forEach(el => act(el, () => pick({ n: SEL.n, e: +el.dataset.i })));
     svg.querySelectorAll(".bank-flow-frame, .bank-flow-ftitle").forEach(el => act(el, () => zout()));
     svg.querySelectorAll(".bank-flow-node-g").forEach(el => act(el, () => { const id = el.dataset.n; if (el.dataset.k) { zgo(id); return; } pick({ n: SEL.n === id ? null : id, e: null }); }));
-    const crumbs = [["全景", []]]; if (wOpen()) crumbs.push(["外面世界", ["world"]]); if (fid) crumbs.push([name(fid), ["world", fid]]); if (SEL.path[0] && SEL.path[0] !== "world") crumbs.push([(V.orgs[SEL.path[0].slice(4)]) || SEL.path[0], SEL.path.slice()]);
+    const crumbs = [["全景", []]]; if (wOpen()) crumbs.push(["已知世界", ["world"]]); if (fid) crumbs.push([name(fid), ["world", fid]]); if (SEL.path[0] && SEL.path[0] !== "world") crumbs.push([(V.orgs[SEL.path[0].slice(4)]) || SEL.path[0], SEL.path.slice()]);
     const bar = h("div", { class: "bank-flow-bar" }, h("nav", { class: "bank-flow-crumbs", "aria-label": "現在看哪一層" }, ...crumbs.flatMap(([t, p], i) => (i === crumbs.length - 1 ? [h("b", { class: "bank-flow-here", "aria-current": "true" }, t)] : [h("button", { type: "button", class: "bank-flow-crumb", onClick: () => { SEL.dir = "out"; SEL.path = p; SEL.n = null; SEL.e = null; draw(); } }, t), h("i", { "aria-hidden": "true" }, "›")]))),
       h("div", { class: "bank-flow-zoom" }, h("button", { type: "button", class: "bank-flow-zb", "aria-label": "縮小，回上一層", title: SEL.path.length ? "縮小，回上一層" : "已經是全景", disabled: SEL.path.length ? null : true, onClick: () => zout() }, h("b", null, "－"), h("span", null, "縮小")),
-        h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到外面世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到外面世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, h("b", null, "＋"), h("span", null, "放大"))));
+        h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到已知世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到已知世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, h("b", null, "＋"), h("span", null, "放大"))));
     if (SEL.dir) { svg.classList.add(SEL.dir === "in" ? "zin" : "zout"); SEL.dir = ""; }
     mapBox.replaceChildren(bar, svg);
     side.replaceChildren(listBox({ edges, bal: V.bal }, SEL, pick));
   };
   draw();
   box.append(mapBox, side);
-  return panel("金流", "今天 05:00 起", box, h("p", { class: "bank-hint" }, "圓片跑的方向＝錢走的方向，線越粗今天流得越多。點金額小牌看來源；點方塊只看那個地方的進出。有 ▸ 的方塊（外面世界、各集團、佩佩博物館）點了放大一層，上面的路徑或「－」回上一層；電腦按住 Ctrl 滾輪、手機兩指分開／靠攏也能縮放。都是合計，不會列個別的人。"));
+  return panel("金流", "今天 05:00 起", box, h("p", { class: "bank-hint" }, "圓片跑的方向＝錢走的方向，線越粗今天流得越多。點金額小牌看來源；點方塊只看那個地方的進出。有 ▸ 的方塊（已知世界、各集團、佩佩博物館）點了放大一層，上面的路徑或「－」回上一層；電腦按住 Ctrl 滾輪、手機兩指分開／靠攏也能縮放。都是合計，不會列個別的人。"));
 }

@@ -14,7 +14,7 @@ const P = {
   pTrade: +process.env.PTRADE || 0.25, size: +process.env.SIZE || 8, sizeCap: 40, mix: (() => { const f = process.env.MIXF ? +process.env.MIXF : 0.6, c = process.env.MIXC ? +process.env.MIXC : 0.25; return { fund: f, chase: c, noise: Math.max(0, 1 - f - c) }; })(), // 下單機率、平均股數、三種個性
   beta: +process.env.BETA || 0.6, fvBand: 0.03, fvWin: 7, floatCap: 0.4, // 合理價對人數的彈性、基本面的容忍帶、旅客散客合計最多持有的比例
   fee: 0.005, tax: 0.003, ticks: 75, mode: process.env.MODE || "skew", band: +process.env.BAND || 0.03, tickLim: +process.env.TICKLIM || 0.03, dayLim: +process.env.DAYLIM || 0.1, // mode：skew ＝ 選項 A（合理價錨點）；flow ＝ 選項 B（價格只由買賣推，合理價只是旅客心裡的參考）；band：基本面旅客心裡「偏離多少就一面倒」；tickLim／dayLim：每個價、每天最多動多少
-  skew: +process.env.SKEW || 0.015, walkSd: +process.env.WALK || 0.0003, half: +process.env.HALF || 0.002, rho: +process.env.RHO || 0.02, // skew：造市商持倉造成的報價偏移最多 ±skew（價格壓力有上限，所以拉高出貨賺不到、知道合理價的人也套不到）；walkSd：價格自己的隨機游走（每 15 分鐘）；half：造市商的半個價差；rho：造市商每個價（15 分鐘）把持倉的 rho 賣回外面世界（價格壓力的回復）
+  skew: +process.env.SKEW || 0.015, walkSd: +process.env.WALK || 0.0003, half: +process.env.HALF || 0.002, rho: +process.env.RHO || 0.02, // skew：造市商持倉造成的報價偏移最多 ±skew（價格壓力有上限，所以拉高出貨賺不到、知道合理價的人也套不到）；walkSd：價格自己的隨機游走（每 15 分鐘）；half：造市商的半個價差；rho：造市商每個價（15 分鐘）把持倉的 rho 賣回已知世界（價格壓力的回復）
 };
 const gauss = r => { const u = Math.max(1e-12, r()), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const pois = (r, l) => { if (l > 30) return Math.max(0, Math.round(l + Math.sqrt(l) * gauss(r))); let L = Math.exp(-l), k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; };
@@ -60,13 +60,13 @@ function run(seed, strat) {
           const tg = strat(d, t, x, me, fv, r);
           if (tg != null) { const cap = P.mode === "flow" ? P.depth * Math.log(1 + P.tickLim) * (strat.gang || 1) : Infinity, fill = Math.max(-cap, Math.min(cap, tg - me.sh)); if (fill) { me.cash -= cost(fill, x.P) * (1 / (strat.gang || 1)); me.sh += fill; q += fill; } }
         }
-        // 價格 ＝ 合理價錨點 × exp(−造市商持倉 ÷ depth)：買的人多，造市商賣出變空頭，報價往上；造市商每個價把持倉的 rho 回補（賣回／買自外面世界），價格慢慢回到錨點
+        // 價格 ＝ 合理價錨點 × exp(−造市商持倉 ÷ depth)：買的人多，造市商賣出變空頭，報價往上；造市商每個價把持倉的 rho 回補（賣回／買自已知世界），價格慢慢回到錨點
         x.walk = 0.995 * x.walk + P.walkSd * gauss(r);
         x.mmInv -= q;
         const pFlow = Math.max(x.P * (1 - P.tickLim), Math.min(x.P * (1 + P.tickLim), x.P * Math.exp(q / P.depth + P.walkSd * gauss(r))));
         const pRaw = P.mode === "flow" ? pFlow : fv * Math.exp(x.walk) * Math.exp(Math.max(-P.skew, Math.min(P.skew, -x.mmInv / P.depth))), pNew = Math.max(x.open * (1 - P.dayLim), Math.min(x.open * (1 + P.dayLim), pRaw)); // 漲跌停 ±10%（跟開盤價比）
         x.cashMM += q * (pNew + x.P) / 2 * (q > 0 ? 1 + P.half : 1 - P.half); // 莊家逆向接，賺半個價差
-        const dec = x.mmInv * P.rho; x.mmInv -= dec; x.cashMM += dec * pNew; x.wCash += dec * pNew; // 把持倉回補給外面世界
+        const dec = x.mmInv * P.rho; x.mmInv -= dec; x.cashMM += dec * pNew; x.wCash += dec * pNew; // 把持倉回補給已知世界
         x.P = pNew; x.hist.push(x.P); x.fpMax = Math.max(x.fpMax || 0, Math.abs(x.flowPos)); x.invMax = Math.max(x.invMax || 0, Math.abs(x.mmInv)); out.vol += Math.abs(q) * x.P;
       }
     }

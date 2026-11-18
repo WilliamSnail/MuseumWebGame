@@ -15,7 +15,7 @@ function roster(dir = path.join(ROOT, "content", "world", "units")) {
   }
   return out.sort((a, b) => (a.id < b.id ? -1 : 1));
 }
-const HEAD = "// tools/world_pack.cjs 產生的，不要改（改 content/world/units/*.json，再跑 node tools/world_pack.cjs）。\n// 外面世界的單位名單（算帳用）：規則在 shared/world.js。\n";
+const HEAD = "// tools/world_pack.cjs 產生的，不要改（改 content/world/units/*.json，再跑 node tools/world_pack.cjs）。\n// 已知世界的單位名單（算帳用）：規則在 shared/world.js。\n";
 const source = list => HEAD + "export const WORLD_UNITS = " + JSON.stringify(list, null, 1).replace(/\n\s*/g, "") + ";\n";
 function write() { const f = path.join(ROOT, "shared", "world_roster.js"), s = source(roster()); if (!fs.existsSync(f) || fs.readFileSync(f, "utf8") !== s) fs.writeFileSync(f, s); return f; }
 module.exports = { roster, source, write };

@@ -1,5 +1,5 @@
 // 營業稅、娛樂稅（決定 0111）：node test/npc_tax.test.cjs（npm test 也會跑）
-// NPC、散客的門票收娛樂稅 5%、店裡的花費收營業稅 5%（牌桌不收）：內含，外面世界付的錢不變，政府先拿，店家和博物館資金、修繕基金少收；帳守恆。
+// NPC、散客的門票收娛樂稅 5%、店裡的花費收營業稅 5%（牌桌不收）：內含，已知世界付的錢不變，政府先拿，店家和博物館資金、修繕基金少收；帳守恆。
 const assert = require("assert");
 const fs = require("fs");
 const { load } = require("./load_shared.cjs");
@@ -14,7 +14,7 @@ const op = G.casBookOpening(G.casBookSnap([w], h, 0, D0));
 const gov0 = h.gov; 
 for (let i = 0; i < N; i++) { G.casHouseFix(h, add(D0, i)); G.casNpcSpend(h, add(D0, i), "t" + i, list, null); }
 const wf = h.led.world, biz = -wf.bizTax, ent = -wf.entTax;
-T("政府帳收到營業稅和娛樂稅，數字等於外面世界付出去的稅", () => {
+T("政府帳收到營業稅和娛樂稅，數字等於已知世界付出去的稅", () => {
   assert.ok(biz > 0 && ent > 0, `biz ${biz} ent ${ent}`);
   assert.strictEqual(h.gov - gov0, biz + ent, "政府帳 ＝ 兩種稅");
 });

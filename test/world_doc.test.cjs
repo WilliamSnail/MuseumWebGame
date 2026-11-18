@@ -6,7 +6,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const hs = (G, day) => G.casHouseFix(G.casHouseNew(), day).house;
 
-T("換日第一次才記：記下外面世界、備用池、合計、成長；同一天再跑什麼都不做；隔天又記", G => {
+T("換日第一次才記：記下已知世界、備用池、合計、成長；同一天再跑什麼都不做；隔天又記", G => {
   const h = hs(G, "2026-11-16"), w0 = G.wdNew();
   const a = G.wdTick(w0, h, "2026-11-16"); assert.ok(!a.skip); assert.strictEqual(a.rec.day, "2026-11-16"); assert.strictEqual(a.rec.world, h.world); assert.strictEqual(a.rec.pool, 0); assert.strictEqual(a.rec.total, h.world); assert.strictEqual(a.rec.growth, null, "第一次沒有前一次可比");
   assert.strictEqual(a.w.day, "2026-11-16");

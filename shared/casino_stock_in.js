@@ -5,7 +5,7 @@
 //
 //  價格怎麼來（決定 0113：下面是舊的算法，NUM.casino.stockIn.mkt.on ＝ false 時還用；現在預設是「真的市場」：
 //    每家發行 mkt.Ns 股；旅客散客照那家店每 15 分鐘到店的人數下單、館友的買賣也推價（價格由淨買賣推：ln 價 += 淨買股數 ÷ depth）；每個價最多動 tickLim、壹天最多離開盤 dayLim；
-//    開盤價 ＝ 昨天最後一個價；下面算出來的「開盤價」變成旅客心裡的「合理價」（H.open），旅客照它決定買賣；莊家當造市商（半個價差 half、持倉每個價回補 rho 給外面世界，來源 inMarket）。
+//    開盤價 ＝ 昨天最後一個價；下面算出來的「開盤價」變成旅客心裡的「合理價」（H.open），旅客照它決定買賣；莊家當造市商（半個價差 half、持倉每個價回補 rho 給已知世界，來源 inMarket）。
 //    價格序列存在 house.sin.m，由 casInAdvance 惰性推進（種子有祕密；館友的買賣在發生的那個價加進去））：
 //    每天 05:00 的跳空 m ＝ k ×（昨天這家店「不同的人」數 a ÷ 前 avgDays 個有效日的平均 − 1）＋ moodPct% × 景氣 B ＋ 隨機 ±noise%，夾 ±jumpCap%。
 //      有效日 ＝ 不同的人 ≥ minPeople 的那天；昨天不到 minPeople 人、或有效日不到 minDays 天：不調價（m ＝ 0）。
@@ -240,7 +240,7 @@ function inMktStart(H, day, secret, npcCtx) {
   M.day = day; M.arr = inArrive(day, secret, npcCtx);
   for (const id of IN_IDS) { M.ser[id] = []; M.open[id] = M.P[id]; M.vol[id] = 0; M.net[id] = 0; }
 }
-// 錢的另一邊是外面世界：旅客散客買（造市商收錢）＝ 外面世界 → 莊家；賣 ＝ 莊家 → 外面世界。莊家沒錢就付得出的部分（不憑空生錢）
+// 錢的另一邊是已知世界：旅客散客買（造市商收錢）＝ 已知世界 → 莊家；賣 ＝ 莊家 → 已知世界。莊家沒錢就付得出的部分（不憑空生錢）
 function inSettle(house, N) {
   if (N > 0) casHouseWorldOut(house, "inMarket", N, NUM.casino.world);
   else if (N < 0) casHouseWorldIn(house, "inMarket", Math.min(-N, Math.max(0, Math.floor(house.bankroll))));
@@ -264,7 +264,7 @@ function inTickStep(house, H, id, day, k, secret) {
   const P = Math.max(C.floor, Math.max(lo, Math.min(hi, base * Math.exp(q / K.depth + K.walkSd * inGauss(rnd)))));
   M.inv[id] -= q; // 造市商逆向接：旅客散客淨買 ＝ 造市商賣出，持倉變負
   const avg = (base + P) / 2, agentCash = q * avg * (q > 0 ? 1 + K.half : 1 - K.half), dec = M.inv[id] * K.rho; // 價差：旅客散客付半個價差給造市商
-  M.inv[id] -= dec; // 造市商把持倉的 rho 回補給外面世界（價格壓力慢慢回復）
+  M.inv[id] -= dec; // 造市商把持倉的 rho 回補給已知世界（價格壓力慢慢回復）
   inSettle(house, Math.round(agentCash + dec * P));
   casCount(house, "inVol", Math.round(gross * avg));
   M.vol[id] += gross; M.net[id] += q; M.P[id] = P; ser.push(Math.max(C.floor, Math.round(P)));
@@ -398,7 +398,7 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
   for (let i = 0; i < n; i++) {
     const next = inAdd(d, 1);
     pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
-    if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（外面世界的錢，shared/npc_spend.js）
+    if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（已知世界的錢，shared/npc_spend.js）
     if (house.npcs && house.npcs.day === d && inBox(house.npcs.shopBy)) { // 這壹天 NPC 和散客在各家店花的錢，記進營收（決定 0087）
       for (const st of IN_STORES) { const b = house.npcs.shopBy[st], x = inBox(b) ? inN(b.npc) + inN(b.crowd) : 0; if (!inBox(H.rev[d])) H.rev[d] = {}; if (!inBox(H.rev[d][st])) H.rev[d][st] = { p: 0, x: 0 }; H.rev[d][st].x = x; }
     }

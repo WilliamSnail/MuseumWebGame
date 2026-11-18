@@ -15,7 +15,7 @@ const GROUPS = [
   ["門票", [["旅客門票", "casino.npcSpend.ticket"], ["散客門票", "casino.npcSpend.crowd.ticket"], ["散客壹天上限", "casino.npcSpend.crowd.dayCap"]]],
   ["畫", [["尋常", "art.tiers.0.base"], ["少見", "art.tiers.1.base"], ["珍藏", "art.tiers.2.base"], ["孤品", "art.tiers.3.base"], ["價格進位", "art.unit"], ["拍賣溢價壹天上限", "auction.premiumDay"]]],
   ["股票", [["館內股起始價", "casino.stockIn.start"], ["台股倍數", "casino.stock.peg.tw"], ["美股倍數", "casino.stock.peg.us"], ["館外股壹天賣出上限", "casino.stock.sellDay"], ["槓桿部位上限", "casino.stockLev.posLimit"], ["槓桿壹天淨賺上限", "casino.stockLev.profitCap"]]],
-  ["館方", [["莊家起始", "casino.houseStart"], ["博物館資金起始", "casino.econ.budgetStart"], ["外面世界起始", "casino.world.start"], ["外面世界每天成長", "casino.world.growBase"], ["文化部借款", "casino.grants.0.amt"]]],
+  ["館方", [["莊家起始", "casino.houseStart"], ["博物館資金起始", "casino.econ.budgetStart"], ["已知世界起始", "casino.world.start"], ["已知世界每天成長", "casino.world.growBase"], ["文化部借款", "casino.grants.0.amt"]]],
 ];
 
 function get(obj, path) { return path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj); }

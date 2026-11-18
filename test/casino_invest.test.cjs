@@ -1,5 +1,5 @@
-// 館方投資外面世界（11-14，規劃 2.8f 第五節）：node test/casino_invest.test.cjs（npm test 也會跑）
-// 莊家和博物館資金超過保留的部分每天投壹點；錢是搬給外面世界、不是燒掉；超過上限不買；跌過停損賣壹半、漲過停利賣三分之壹；虧太多暫停；外面世界吃緊暫停；日報寫昨天的。數字讀 NUM。
+// 館方投資海外（11-14，規劃 2.8f 第五節）：node test/casino_invest.test.cjs（npm test 也會跑）
+// 莊家和博物館資金超過保留的部分每天投壹點；錢是搬給已知世界、不是燒掉；超過上限不買；跌過停損賣壹半、漲過停利賣三分之壹；虧太多暫停；已知世界吃緊暫停；日報寫昨天的。數字讀 NUM。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
@@ -15,12 +15,12 @@ T("沒超過保留的部分不投：莊家 ≤ reserve、博物館資金 ≤ bud
   assert.ok(run(G, h, D0).ran); assert.strictEqual(cost(G, h, "house"), 0); assert.strictEqual(cost(G, h, "budget"), 0);
   assert.ok(!run(G, h, D0).ran, "同壹天不重跑");
 });
-T("莊家超過 reserve 的部分每天投 dailyPct%：錢給外面世界（池子變多）、手續費進博物館資金、總帳守恆、不是燒掉", G => {
-  const C = G.NUM.casino.invest, F = G.NUM.casino.stock.feePct, h = mk(G, C.reserve + 1000000000, C.budgetKeep), t0 = inv(G, h), w0 = h.world, b0 = h.budget, k0 = h.bankroll;
+T("莊家超過 reserve 的部分每天投 dailyPct%：錢給已知世界（池子變多）、手續費進博物館資金、總帳守恆、不是燒掉", G => {
+  const C = G.NUM.casino.invest, F = G.NUM.casino.stock.feePct, h = mk(G, C.reserve + 1000000000, C.budgetKeep), t0 = inv(G, h), w0 = h.ext, b0 = h.budget, k0 = h.bankroll; // 決定 0126：館方投資的錢進海外（house.ext），不進已知世界
   run(G, h, D0);
   const spent = cost(G, h, "house"), fee = Math.ceil((spent) * F / 100);
   assert.ok(spent > 0 && spent <= Math.floor(1000000000 * C.dailyPct / 100), "不超過每天的量：" + spent);
-  assert.strictEqual(h.world - w0, spent - (h.budget - b0), "外面世界收到股款（成本裡含手續費，手續費進博物館資金）");
+  assert.strictEqual(h.ext - w0, spent - (h.budget - b0), "海外收到股款（成本裡含手續費，手續費進博物館資金）");
   assert.ok(h.budget > b0, "手續費進博物館資金");
   assert.ok(k0 - h.bankroll >= spent, "莊家付了股款和手續費");
   assert.strictEqual(inv(G, h), t0, "守恆");
@@ -28,10 +28,10 @@ T("莊家超過 reserve 的部分每天投 dailyPct%：錢給外面世界（池�
   assert.ok(fee >= 0);
 });
 T("博物館資金超過 budgetKeep 的部分也投；博物館資金付給自己的手續費不用搬；守恆", G => {
-  const C = G.NUM.casino.invest, h = mk(G, C.reserve, C.budgetKeep + 500000000), t0 = inv(G, h), w0 = h.world;
+  const C = G.NUM.casino.invest, h = mk(G, C.reserve, C.budgetKeep + 500000000), t0 = inv(G, h), w0 = h.ext;
   run(G, h, D0);
   const spent = cost(G, h, "budget"); assert.ok(spent > 0 && spent <= Math.floor(500000000 * C.dailyPct / 100));
-  assert.strictEqual(h.world, w0 + spent); assert.strictEqual(h.budget, C.budgetKeep + 500000000 - spent);
+  assert.strictEqual(h.ext, w0 + spent); assert.strictEqual(h.budget, C.budgetKeep + 500000000 - spent);
   assert.strictEqual(inv(G, h), t0);
 });
 T("景氣好多投、差少投：dailyPct ×（1 ＋ extPct% × b）", G => {
@@ -45,24 +45,24 @@ T("持股成本合計不超過超過部分的 holdCapPct%（天天買也不超�
   for (let i = 0; i < 40; i++) { run(G, h, day, 0); day = new Date(Date.parse(day + "T00:00:00Z") + 86400000).toISOString().slice(0, 10); }
   assert.ok(cost(G, h, "house") <= Math.floor((ex) * C.holdCapPct / 100) + 1000000, "成本 " + cost(G, h, "house"));
 });
-T("先賣：比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；賣的錢外面世界付回池子，守恆", G => {
+T("先賣：比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；賣的錢已知世界付回池子，守恆", G => {
   const C = G.NUM.casino.invest, h = mk(G, C.reserve, C.budgetKeep), H = G.casStockHouseFix(h), I = G.casInvestFix(h), P = I.pool.house;
   const [a, b] = ["greeneye", "redclaw"];
   P.own[a] = 300; P.cost[a] = 300 * H.px[a] * 2;  // 現價只有成本的一半：跌 50% → 停損
   P.own[b] = 300; P.cost[b] = Math.floor(300 * H.px[b] / 1.5); // 現價是成本的 1.5 倍：漲 50% → 停利
-  const t0 = inv(G, h), w0 = h.world, k0 = h.bankroll;
+  const t0 = inv(G, h), w0 = h.ext, k0 = h.bankroll;
   run(G, h, D0);
   assert.strictEqual(P.own[a], 150, "停損賣壹半"); assert.strictEqual(P.own[b], 200, "停利賣三分之壹");
-  assert.ok(h.world < w0 && h.bankroll > k0, "外面世界付回莊家");
+  assert.ok(h.ext < w0 && h.bankroll > k0, "海外付回莊家");
   assert.strictEqual(inv(G, h), t0, "守恆");
 });
-T("外面世界吃緊（低於起始 10%）：暫停買進，賣出也受壹天最多付池子 1% 的上限", G => {
+T("已知世界吃緊（低於起始 10%）：暫停買進；賣出的錢從海外付，不受池子上限（決定 0126）", G => {
   const C = G.NUM.casino.invest, WC = G.NUM.casino.world, h = mk(G, C.reserve + 1000000000, C.budgetKeep);
   h.world = Math.floor(WC.start * WC.lowPct / 100) - 1;
   run(G, h, D0); assert.strictEqual(cost(G, h, "house"), 0, "不買"); assert.strictEqual(G.casInvestFix(h).cur.paused.house, "world");
   const H = G.casStockHouseFix(h), P = G.casInvestFix(h).pool.house; P.own.greeneye = 100000; P.cost.greeneye = 100000 * H.px.greeneye * 2;
-  const w0 = h.world; run(G, h, D1);
-  assert.ok(w0 - h.world <= Math.floor(w0 * WC.lowPayPct / 100), "賣出受 1% 上限");
+  const w0 = h.world, e0 = h.ext; run(G, h, D1);
+  assert.strictEqual(h.world, w0, "已知世界不動"); assert.ok(e0 - h.ext > Math.floor(w0 * WC.lowPayPct / 100), "賣出不受已知世界 1% 的上限");
 });
 T("虧太多（總賺賠虧超過 stopPct%）暫停買進 stopDays 天；日報寫昨天的買賣和持有", G => {
   const C = G.NUM.casino.invest, h = mk(G, C.reserve + 1000000000, C.budgetKeep), H = G.casStockHouseFix(h);
@@ -72,7 +72,7 @@ T("虧太多（總賺賠虧超過 stopPct%）暫停買進 stopDays 天；日報�
   assert.strictEqual(G.casInvestFix(h).cur.paused.house, "stop");
   const doc = (() => { const s0 = G.casBookSnap([], mk(G).bank ? mk(G) : mk(G), 0, D0), s1 = G.casBookSnap([], h, 0, D2); return { day: D2, at: 0, snap: s1, diff: G.casBookDiff(s0, s1), opening: 0 }; })();
   const v = G.casReportView(doc), txt = v.secs.map(x => x.lines.join("|")).join("\n");
-  assert.ok(/昨天館方投資外面世界/.test(txt) && /買 /.test(txt), txt.slice(0, 400));
+  assert.ok(/昨天館方投資海外/.test(txt) && /買 /.test(txt), txt.slice(0, 400));
   assert.ok(/館方現在持有/.test(txt));
 });
 T("種子有祕密：同樣的祕密同樣的買法、不同的祕密隨機那壹成不同", G => {

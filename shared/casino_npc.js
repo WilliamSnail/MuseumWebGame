@@ -1,9 +1,9 @@
 // ================================================================
 //  邀請在場的 NPC 壹起去賭場（11-14，決定 0080；翊文：「賭場邀請 NPC 一起來，每個也可以有自己說話」「也可以參與多人賭桌」）
 //  純函式（shared/casino_table.js 的牌桌叫它）：誰邀得動、答不答應、NPC 怎麼下注怎麼打、錢怎麼走、說什麼。
-//  錢：NPC 的注從「外面世界」出（casHouseWorldOut，帳上寫 npcBj，跟 NPC 在牌桌花錢同一條），贏的賠付回外面世界（casHouseWorldIn）。
+//  錢：NPC 的注從「已知世界」出（casHouseWorldOut，帳上寫 npcBj，跟 NPC 在牌桌花錢同一條），贏的賠付回已知世界（casHouseWorldIn）。
 //    下注的當下錢就在莊家帳上、不算「打牌中」，所以玩家那邊的 inplay 要跳過 npc 座位（functions/casino.js 的日報）。永遠不印錢、不燒錢，casBookGap 還是 0。
-//  上限：壹位 NPC 壹天最多輸／贏 perDay 的 lossPct／winPct；全館壹天淨輸或淨贏最多 dayCap；莊家不是「健康」（吃緊、破產）、外面世界吃緊都不下注。
+//  上限：壹位 NPC 壹天最多輸／贏 perDay 的 lossPct／winPct；全館壹天淨輸或淨贏最多 dayCap；莊家不是「健康」（吃緊、破產）、已知世界吃緊都不下注。
 //  館友帶 NPC 沒有任何額外獎勵（不給籌碼、不給靈感）。
 //  記帳 house.npcCas：{ day, by: { npcId: { n 今天答應幾次, net NPC 今天贏（正）輸（負）多少, hands }, }, net 全館 NPC 今天的淨贏輸, at: { npcId: { pid, host, since, until } 現在在賭場的 }, cool: { "uid|npcId": 到哪個毫秒才能再邀 } }
 //  打法（content/npc/<id>.json 的 casino.style）：careful 保守、basic 標準、bold 大膽、wild 亂來；沒寫的當 basic。台詞 casino.lines 沒寫的用下面的預設。
@@ -60,7 +60,7 @@ export function npcCasLine(n, kind, seed) {
   return arr.length ? String(arr[Math.floor(mulberry32(hashStr(String(seed)))() * arr.length)]).slice(0, 30) : "";
 }
 
-// 這位 NPC 今天在賭場還能輸多少、贏多少（照他的 perDay）；ok：莊家健康、外面世界不吃緊、全館淨輸贏沒到上限、他自己沒到上限
+// 這位 NPC 今天在賭場還能輸多少、贏多少（照他的 perDay）；ok：莊家健康、已知世界不吃緊、全館淨輸贏沒到上限、他自己沒到上限
 export function npcCasRoom(house, day, n) {
   const C = NUM.casino.npcCas, c = npcCasFix(house, day), by = myBy(c, n.id), per = ncN(n.budget && n.budget.perDay);
   const lossCap = Math.floor(per * C.lossPct / 100), winCap = Math.floor(per * C.winPct / 100);
@@ -118,20 +118,20 @@ export function npcCasBet(n, house, day, pending = 0) {
   bet = Math.min(bet, C.betMax, casBetMax(house), R.lossLeft, Math.floor(room / 2), left === Infinity ? Infinity : Math.floor(left / NUM.casino.risk.betMult));
   return bet >= NUM.casino.minBet ? bet : 0;
 }
-// 下注：錢從外面世界進莊家帳（到不了這麼多就下少壹點；不到最小注就不下）。回傳真的下了多少
+// 下注：錢從已知世界進莊家帳（到不了這麼多就下少壹點；不到最小注就不下）。回傳真的下了多少
 export function npcCasTake(house, bet) {
   const got = casHouseWorldOut(house, "npcBj", bet, NUM.casino.world);
   if (got > 0 && got < NUM.casino.minBet) { casHouseWorldIn(house, "npcBj", got); return 0; }
   return got;
 }
-// 這壹手結算：賠付回外面世界；記他今天的輸贏、全館的輸贏。out：{ kind, payout, net }（casPayout 的結果）
+// 這壹手結算：賠付回已知世界；記他今天的輸贏、全館的輸贏。out：{ kind, payout, net }（casPayout 的結果）
 export function npcCasPay(house, day, id, bet, out) {
   const c = npcCasFix(house, day), by = myBy(c, id), net = ncN(out.payout) - ncN(bet);
   if (out.payout > 0) casHouseWorldIn(house, "npcBj", out.payout);
   by.net += net; by.hands++; c.net += net;
   if (net > 0) casPayAdd(house, day, net);
 }
-// 下注前就收了桌（館友走了）：注退回外面世界
+// 下注前就收了桌（館友走了）：注退回已知世界
 export const npcCasRefund = (house, bet) => { if (bet > 0) casHouseWorldIn(house, "npcBj", bet); };
 // 該離開了嗎：回傳原因（"stay" 時間到、"loss" 輸夠了或額度用完、"win" 贏夠了、"day" 全館上限、"house" 莊家吃緊）或 null
 export function npcCasLeaveWhy(house, day, n, until, nowMs) {

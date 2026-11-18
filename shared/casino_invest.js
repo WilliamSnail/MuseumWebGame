@@ -1,18 +1,18 @@
 // ================================================================
-//  館方投資外面世界（11-14，規劃 2.8f 第五節、決定 0074；翊文：「館方自己也會投資外面世界」）
+//  館方投資海外（11-14，規劃 2.8f 第五節、決定 0074；翊文：「館方自己也會投資海外」）
 //  純函式，不碰資料庫。每個遊戲日第一次有人進賭場時（在換日調價之後）跑一次：casInvestRun(house, day, secret, b)。
 //  兩個池子各自投，記帳來源分開：
 //    莊家（house）：bankroll 超過準備金（reserve）的部分。博物館資金（budget）：超過 budgetKeep 的部分（≤ budgetKeep 時不投，它在補拚經濟）。
-//  錢怎麼動（規劃 2.12，不憑空也不燒掉）：買＝池子的錢搬給外面世界（casHouseWorldIn／casPoolWorldIn），賣＝外面世界付回池子（受 casWorldRoom 的吃緊上限）；
+//  錢怎麼動（規劃 2.12，不憑空也不燒掉）：買＝池子的錢搬給已知世界（casHouseWorldIn／casPoolWorldIn），賣＝已知世界付回池子（受 casWorldRoom 的吃緊上限）；
 //    手續費 NUM.casino.stock.feePct 進博物館資金（莊家付的搬進博物館資金；博物館資金付給自己＝不用搬）。持股不算進全館的錢（跟玩家的股票一樣，是資產不是籌碼）。
 //  怎麼選股：每天投「超過部分 × dailyPct% ×（1 ＋ extPct% × 外部景氣）」，七成買最近 lookback 天漲最多的 topN 支、兩成平均買全部、一成隨機一支（種子有伺服器祕密）；
 //    持股成本合計 ≤ 超過部分的 holdCapPct%。比成本跌 stopLossPct% 賣一半、漲 takeProfitPct% 賣三分之一（先賣再買）。
-//    停損：持股的總賺賠（已實現 ＋ 帳面）虧超過池子（持股成本 ＋ 超過部分）的 stopPct%，暫停買進 stopDays 天。外面世界吃緊（casWorldLow）也暫停買進。
+//    停損：持股的總賺賠（已實現 ＋ 帳面）虧超過池子（持股成本 ＋ 超過部分）的 stopPct%，暫停買進 stopDays 天。已知世界吃緊（casWorldLow）也暫停買進。
 //  玩家看得到什麼：日報寫「昨天」館方買賣了什麼、現在持有什麼、累計賺賠（house.inv.last，延遲壹天公開，不即時）。
 //  存哪：house.inv = { day, pool: { house|budget: { own {id: 股}, cost {id: 成本}, pnl 已實現累計, stopUntil } }, cur 今天的買賣, last 昨天的買賣 }
 // ================================================================
 import { NUM } from "./config.js";
-import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow, casWorldRoom } from "./casino_book.js";
+import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow } from "./casino_book.js";
 import { stBuyCost, stCents, stPx, stSellGet, stValue } from "./casino_stock.js";
 import { hashStr, mulberry32 } from "./logic.js";
 import { OUT_STOCKS } from "./stocks_text.js";
@@ -32,7 +32,7 @@ export const IV_POOLS = ["house", "budget"];
 //   lastPx 同樣照它的價對；hx 是換比例之後才記的，不動。停損暫停清掉（是假跌觸發的），下壹次跑重新判斷。
 const IV_PEG_TOL = 0.15;
 // 11-16 用沒換過的股數照新價賣掉的台股（停損賣壹半）：照當時的成交價算「正確股數該拿到的 − 實際拿到的」（扣手續費後），翊文 11-17：「補回」。
-//   只在正式站那份第壹次校正時補（換比例到第 28 次、池子的已實現虧損至少是補的 95%），外面世界付，記 houseInvFix／budgetInvFix
+//   只在正式站那份第壹次校正時補（換比例到第 28 次、池子的已實現虧損至少是補的 95%），已知世界付，記 houseInvFix／budgetInvFix
 const IV_PEG_REFUND = { house: 869857, budget: 3435843 };
 function ivPegSync(I, house) {
   const peg = house && house.stk && ivBox(house.stk.peg) ? house.stk.peg : null, evs = peg && Array.isArray(peg.ev) ? peg.ev.filter(e => ivBox(e) && +e.from > 0 && +e.to > 0 && +e.seq > 0).slice().sort((a, b) => a.seq - b.seq) : [];
@@ -121,13 +121,10 @@ const ivCostSum = P => Object.values(P.cost).reduce((s, x) => s + ivN(x), 0);
 // 持股現值（用現在的價）
 const ivValue = (P, px) => Object.keys(P.own).reduce((s, id) => s + stValue(px[id] || 0, P.own[id]), 0);
 
-// 賣 n 股（先檢查外面世界今天付得出）。回傳實際賣的股數
+// 賣 n 股（決定 0126：錢從海外付，沒有池子上限）。回傳實際賣的股數
 function ivSell(house, pool, P, id, n, px, cfg) {
   n = Math.min(n, P.own[id]);
   if (n <= 0 || !(px > 0)) return 0;
-  const room = casWorldRoom(house, cfg.world);
-  n = Math.min(n, Math.floor(room * 100 / stCents(px)));
-  if (n <= 0) return 0;
   const gross = stSellGet(px, n), fee = ivFee(gross), costOut = n >= P.own[id] ? P.cost[id] : Math.floor(P.cost[id] * n / P.own[id]);
   if (pool === "house") { casHouseWorldOut(house, "houseInvestSell", gross, cfg.world); casHouseMove(house, "investFee", -fee); house.budget += fee; }
   else { casPoolWorldOut(house, "budget", "budgetInvestSell", gross); } // 博物館資金付給自己：手續費不用搬
