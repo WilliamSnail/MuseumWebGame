@@ -108,12 +108,14 @@ export function npcCasCool(house, day, uid, id, nowMs) {
 export const npcCasCoolLeft = (house, day, uid, id, nowMs) => Math.max(0, ncN(ncBox(house.npcCas) && ncBox(house.npcCas.cool) ? house.npcCas.cool[uid + "|" + id] : 0) - nowMs);
 
 // 這壹局的注（0 ＝ 下不了：額度用完、莊家不健康）。跟玩家壹樣受莊家的最大注、當天賠付上限限制
-export function npcCasBet(n, house, day) {
+// pending：同壹局其他 NPC 已經下的注（壹桌能坐好幾位客人，決定 0080 修訂）：壹手最多淨輸贏 2 倍注（五張不爆），全部算最壞的情況，這局結算完全館淨輸贏也不超過 dayCap
+export function npcCasBet(n, house, day, pending = 0) {
   const C = NUM.casino.npcCas, R = npcCasRoom(house, day, n);
   if (!R.ok) return 0;
   const per = ncN(n.budget.perDay), left = casPayLeft(house, day);
   let bet = Math.floor(per * (C.bet[npcCasStyle(n)] || C.bet.basic) / 100 * (0.7 + 0.6 * RNG()));
-  bet = Math.min(bet, C.betMax, casBetMax(house), R.lossLeft, left === Infinity ? Infinity : Math.floor(left / NUM.casino.risk.betMult));
+  const room = C.dayCap - Math.abs(npcCasFix(house, day).net) - 2 * Math.max(0, ncN(pending));
+  bet = Math.min(bet, C.betMax, casBetMax(house), R.lossLeft, Math.floor(room / 2), left === Infinity ? Infinity : Math.floor(left / NUM.casino.risk.betMult));
   return bet >= NUM.casino.minBet ? bet : 0;
 }
 // 下注：錢從外面世界進莊家帳（到不了這麼多就下少壹點；不到最小注就不下）。回傳真的下了多少

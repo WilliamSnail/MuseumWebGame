@@ -74,12 +74,14 @@ export function casTBet(t, uid, text, info, ctx, now) {
 // 有館友下了注，桌上的 NPC 才跟著下（下注階段、還沒下的）：該走的先走（時間到、額度用完），下不了注也走。不發牌（叫的人自己看是不是都下好了）
 function casTNpcBets(t, ctx, now) {
   if (t.phase !== "bet" || !casTHumanBet(t)) return;
+  let pending = casTSeats(t).reduce((a, s) => a + (s.npc && s.bet > 0 ? s.bet : 0), 0); // 這局已經下好的 NPC 注
   for (const s of casTSeats(t)) {
     if (!s.npc || s.bet > 0) continue;
     const n = npcOf(ctx, s), why = npcCasLeaveWhy(ctx.house, ctx.day, n, s.npc.until, now);
     if (why) { casTNpcGo(t, ctx, s, why); continue; }
-    const bet = npcCasBet(n, ctx.house, ctx.day), got = bet > 0 ? npcCasTake(ctx.house, bet) : 0;
+    const bet = npcCasBet(n, ctx.house, ctx.day, pending), got = bet > 0 ? npcCasTake(ctx.house, bet) : 0;
     if (got <= 0) { casTNpcGo(t, ctx, s, "loss"); continue; }
+    pending += got;
     Object.assign(s, { bet: got, st: "bet", idle: 0 });
     if (s.npc.first) { s.npc.first = false; if (mulberry32(hashStr(`${ctx.secret || ""}|${ctx.day}|${s.npc.id}|${t.rid}|first`))() < 0.5) npcSay(t, ctx, s, "sit"); }
   }
@@ -253,7 +255,7 @@ export function casTNpcInvite(t, ctx, uid, npcId, now) {
   const C = NUM.casino.npcCas, me = t.seats[uid], list = Array.isArray(ctx.npcList) ? ctx.npcList : [], hs = ctx.house, sec = ctx.secret || "";
   if (!C.on) return { ok: false, reason: "邀請客人還沒開放" };
   if (!me || me.npc || me.gone) return { ok: false, reason: "你不在這桌" };
-  if (casTSeats(t).some(s => s.npc && s.npc.host === uid)) return { ok: false, reason: "你已經帶了壹位客人" };
+  if (casTSeats(t).filter(s => s.npc && s.npc.host === uid).length >= (C.perHost || 1)) return { ok: false, reason: (C.perHost || 1) > 1 ? `你已經帶了 ${C.perHost || 1} 位客人` : "你已經帶了壹位客人" };
   const n = list.find(x => x && x.id === npcId && x.kind !== "trace");
   if (!n) return { ok: false, reason: "他不在館裡" };
   if (casTSeats(t).filter(s => s.npc).length >= C.tableMax) return { ok: false, reason: "這桌的客人夠多了" };
@@ -276,7 +278,7 @@ export function casTNpcInvite(t, ctx, uid, npcId, now) {
   const line = npcSay(t, ctx, s, "accept", "in");
   casTNpcBets(t, ctx, now);
   if (t.phase === "bet" && casTHumanBet(t) && casTSeats(t).every(x => x.bet > 0)) casTDeal(t, ctx, now);
-  return { ok: true, accepted: true, name: n.name, line, until };
+  return { ok: true, accepted: true, name: n.name, line, until, brought: casTSeats(t).filter(x => x.npc && x.npc.host === uid).length };
 }
 
 // ---------- 給每個人看的樣子 ----------
@@ -286,7 +288,7 @@ export function casTView(t, uid, now) {
   const san = me ? me.san : 99, real = t.phase === "result";
   const seats = casTSeats(t).map(s => {
     const cards = casShown(s.cards, `${t.rid}:${uid}:${s.uid}`, san, real);
-    return { uid: s.uid, nick: s.nick, npc: s.npc ? true : undefined, bet: s.bet, st: s.st, gone: s.gone, timedOut: s.timedOut, you: s.uid === uid, cards, total: casHand(cards).total,
+    return { uid: s.uid, nick: s.nick, npc: s.npc ? true : undefined, mine: s.npc && s.npc.host === uid ? true : undefined, bet: s.bet, st: s.st, gone: s.gone, timedOut: s.timedOut, you: s.uid === uid, cards, total: casHand(cards).total,
       out: real ? s.out : null, ach: real && s.uid === uid ? s.ach || [] : null, ticket: real && s.uid === uid ? !!s.ticket : false, warped: s.uid === uid && !real && cards.some((c, i) => c !== s.cards[i]) };
   });
   const dealerShown = casShown(t.dealer, `${t.rid}:${uid}:d`, san, real);

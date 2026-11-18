@@ -178,11 +178,12 @@ function onlineFriends() {
 }
 // 邀人的大按鈕：金色主按鈕，圖示＋字＋可邀幾位（館友＋旅客）；沒有人能邀就變灰、寫原因
 function inviteBtn(s, v) {
-  const fr = onlineFriends().length, guests = v.seats.filter(x => x.npc).length >= 2;
-  const npcN = guests ? 0 : (s.who || 0), n = fr + npcN, full = !!v.full;
+  const C = NUM.casino.npcCas, mine = v.seats.filter(x => x.npc && x.mine).length, fr = onlineFriends().length;
+  const tableFull = v.seats.filter(x => x.npc).length >= C.tableMax, handsFull = mine >= (C.perHost || 1), guests = tableFull || handsFull;
+  const npcN = guests ? 0 : Math.min(s.who || 0, (C.perHost || 1) - mine, NUM.casino.seats - v.seats.length), n = fr + npcN, full = !!v.full;
   const none = !fr && (guests || s.who === 0);
   const off = none || full;
-  const why = full ? "這桌坐滿了" : none ? (guests ? "沒有館友在線，旅客這桌最多 2 位" : "現在沒有館友在線，館裡也沒有旅客能邀（晚點再來看看）") : "";
+  const why = full ? "這桌坐滿了" : none ? (handsFull ? `沒有館友在線；你已經帶了 ${mine} 位旅客（最多 ${C.perHost || 1} 位）` : guests ? `沒有館友在線，旅客這桌最多 ${C.tableMax} 位` : "現在沒有館友在線，館裡也沒有旅客能邀（晚點再來看看）") : "";
   return h("div", { class: "cas-inv" },
     btn([h("span", { class: "cas-inv-ic", "aria-hidden": "true" }, "♠"), " 邀人一起玩", n ? h("i", { class: "cas-inv-n" }, " " + n + " 位可邀") : null], () => openNpcInvite(s.pid), "primary big cas-inv-b", { disabled: off ? true : null, title: why || "邀在線的館友，或館裡的旅客、委託人來這桌同桌打 21 點" }),
     why ? h("small", { class: "cas-inv-why" }, why) : null);
@@ -350,7 +351,11 @@ export async function openNpcInvite(pidGiven) {
   m.layer.classList.add("sp-top"); // 從牌桌裡按「邀旅客一起玩」時，牌桌（z 8800）會蓋住預設的小視窗（z 80）
   closeOnOutside(m);
   const sentTo = new Set();
-  let pid = pidGiven || null, who = null, said = null, busy = null, failed = "";
+  const C = NUM.casino.npcCas, cap = C.perHost || 1;
+  const seatsNow = () => T && T.pid === pid && T.view ? T.view.seats : null; // 牌桌開著：照桌上的樣子算我帶了幾位、還有幾個空位
+  let pid = pidGiven || null, who = null, said = null, busy = null, failed = "", brought = 0;
+  const mineNow = () => { const v = seatsNow(); return v ? Math.max(brought, v.filter(x => x.npc && x.mine).length) : brought; };
+  const roomNow = () => { const v = seatsNow(); return v ? Math.min(cap - mineNow(), C.tableMax - v.filter(x => x.npc).length, NUM.casino.seats - v.length) : cap - mineNow(); };
   const load = async () => {
     try {
       if (!pid) pid = await tablePid();
@@ -368,9 +373,10 @@ export async function openNpcInvite(pidGiven) {
       const r = await NET.call("casinoTable", { act: "npcInvite", pid, npc: x.id });
       if (r && r.ok && r.invite) {
         said = { name: r.invite.name || x.name, line: r.invite.line || "", ok: !!r.invite.accepted };
-        if (r.invite.accepted) { snd("coin"); busy = null; m.close(); openTable(pid); if (T && T.pid === pid) refreshWho(T); note(`${said.name}：${said.line}`, "good"); return; }
-        snd("error");
-        who = who.filter(w => w.id !== x.id); // 剛拒絕：30 分鐘內不能再邀
+        // 答應了：視窗不關，可以接著邀（翊文 11-17：「讓邀請去賭場的旅客不只能帶一個人」，壹位館友最多 perHost 位）；後面的牌桌先開好
+        who = who.filter(w => w.id !== x.id); // 答應了＝去賭場了；拒絕＝30 分鐘內不能再邀
+        if (r.invite.accepted) { snd("coin"); brought = Math.max(brought + 1, +r.invite.brought || 0); openTable(pid); if (T && T.pid === pid) refreshWho(T); m.layer.classList.add("sp-top"); }
+        else { snd("error"); if (T && T.pid === pid) refreshWho(T); } // 被拒絕：牌桌上「N 位可邀」也跟著少
       } else { said = { name: x.name, line: (r && r.reason) || "邀不了。", ok: false, reason: true }; snd("error"); }
     } catch (e) { said = { name: x.name, line: (e && e.message) || "邀不了。", ok: false, reason: true }; snd("error"); }
     busy = null;
@@ -384,12 +390,13 @@ export async function openNpcInvite(pidGiven) {
       h("h4", { class: "cas-ni cas-ni-h" }, icon("users"), " 館友"),
       fr.length ? h("ul", { class: "cas-ni cas-ni-list" }, fr.map(x => h("li", null, h("span", null, x.nick), btn(sentTo.has(x.id) ? "邀請送出了" : "邀請同桌", async () => { sentTo.add(x.id); draw(); if (!pid) { try { pid = await tablePid(); } catch (e) { /* 伺服器會再開 */ } } sendInvite(x, "table"); }, "small primary", { disabled: sentTo.has(x.id) ? true : null }))))
         : h("p", { class: "cas-ni cas-ni-empty" }, "現在沒有別的館友在線。"),
-      h("h4", { class: "cas-ni cas-ni-h" }, h("span", { "aria-hidden": "true" }, "♠"), " 館裡的旅客"),
+      h("h4", { class: "cas-ni cas-ni-h" }, h("span", { "aria-hidden": "true" }, "♠"), " 館裡的旅客", h("i", { class: "cas-ni-cnt" + (roomNow() <= 0 ? " full" : "") }, ` 已帶 ${mineNow()}／${cap} 位`)),
       said ? h("div", { class: "cas-ni cas-ni-say" + (said.ok ? " ok" : "") }, h("b", null, said.reason ? "沒邀成" : said.name + (said.ok ? "答應了" : "拒絕了")), h("p", { class: "cas-bub npc" }, said.reason ? said.line : `${said.name}：${said.line}`)) : null,
       who === null ? h("p", { class: "cas-ni cas-ni-empty" }, "問問看誰在館裡……")
+        : roomNow() <= 0 ? h("p", { class: "cas-ni cas-ni-empty" }, mineNow() >= cap ? `你已經帶了 ${mineNow()} 位旅客，最多 ${cap} 位。有人離開再邀。` : "這桌坐滿了。")
         : who.length ? h("ul", { class: "cas-ni cas-ni-list" }, who.map(x => h("li", null, h("span", null, npcName(x.id, x.name)), btn(busy === x.id ? "邀請中……" : "邀他去賭場", () => invite(x), "small primary", { disabled: busy ? true : null }))))
         : h("p", { class: "cas-ni cas-ni-empty" }, failed || "現在沒有人邀得動：旅客在館裡的時間有限，今天答應過 3 次或額度用完的也不會來。晚點再看看。"),
-      h("div", { class: "cas-ni cas-ni-acts" }, btn("關起來", () => m.close(), "ghost")));
+      h("div", { class: "cas-ni cas-ni-acts" }, mineNow() > 0 ? btn("去牌桌", () => { m.close(); openTable(pid); }, "primary") : null, btn("關起來", () => m.close(), "ghost")));
   };
   draw();
   load();

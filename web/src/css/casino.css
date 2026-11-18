@@ -546,6 +546,9 @@ body.reduce-motion .cas-bub { animation: none; }
   .cas-side > .cas-mp .cas-acts { margin-top: 8px; flex-direction: column; align-items: stretch; }
 }
 .cas-ni-h { margin: 12px 0 4px; font-size: .95rem; color: #F2D98A; display: flex; align-items: center; gap: 6px; }
+/* 已帶幾位旅客（翊文 11-17：壹位館友最多 3 位）：靠右的小字，帶滿了變紅；視窗是淺色底，字要深 */
+.cas-ni-cnt { margin-left: auto; font-style: normal; font-size: .85rem; font-weight: 600; color: #5E4718; }
+.cas-ni-cnt.full { color: #8C3A2A; }
 /* 借款自己輸入（11-15）：快速按鈕下面壹排，輸入框＋借＋要還多少 */
 .bk-act-in { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; flex-basis: 100%; }
 .cas-bank .bk-in { flex: 0 1 240px; min-width: 0; min-height: 36px; border: 1px solid #D6B25E; }

@@ -1,5 +1,5 @@
 // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080）：node test/casino_npc.test.cjs（npm test 也會跑）
-// 誰邀得動、答應或拒絕（種子祕密、冷卻）、NPC 坐進桌子（算座位、壹位館友壹位 NPC、壹桌最多 tableMax 位）、館友先下注 NPC 才下注、
+// 誰邀得動、答應或拒絕（種子祕密、冷卻）、NPC 坐進桌子（算座位、壹位館友最多 perHost 位 NPC、壹桌最多 tableMax 位）、館友先下注 NPC 才下注、
 // NPC 馬上打完、注從外面世界出、賠付回外面世界（守恆）、壹位 NPC 壹天輸贏上限、全館上限、館友走了 NPC 也走、桌子收了退注、台詞和說話次數、presence 把他算到賭場。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
@@ -52,13 +52,43 @@ T("被拒絕：回他的拒絕台詞、30 分鐘內同壹位館友不能再邀�
   const t1 = rej.t0 + 60000, all = G.casTNpcWho(m.ctx, t1); // 11-14：名單不再列「剛拒絕過我」的人（按了只會得到「N 分鐘後再邀」）
   if (all.some(x => x.id === f.id)) { assert.ok(!G.casTNpcWho(m.ctx, t1, "a").some(x => x.id === f.id), "被拒絕的不在我的名單"); assert.ok(G.casTNpcWho(m.ctx, t1, "b").some(x => x.id === f.id), "別的館友還看得到他"); }
 });
-T("壹位館友壹位客人、壹桌最多 tableMax 位客人、坐滿了不能再邀、同壹位 NPC 不能同時跟兩桌", G => {
+T("壹桌最多 tableMax 位客人、坐滿了不能再邀、同壹位 NPC 不能同時跟兩桌", G => {
   const m = mk(G, 7, 3); const f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at);
   const w = G.casTNpcWho(m.ctx, f.at).filter(x => x.id !== f.id); assert.ok(!w.some(x => x.id === f.id), "他已經在賭場，不在邀得動的名單");
   assert.ok(!G.casTNpcInvite(m.t, m.ctx, "b", f.id, f.at).ok, "同壹位不能同時跟兩桌");
-  assert.ok(/已經帶了/.test(G.casTNpcInvite(m.t, m.ctx, "a", w[0] ? w[0].id : "x", f.at).reason || ""), "壹位館友壹位客人");
+  // 3 位館友坐著，a 帶 1 位就 4 人坐滿
+  { const r = G.casTNpcInvite(m.t, m.ctx, "a", LIST.find(n => n.id !== f.id && n.kind !== "trace" && !/^t-/.test(n.id)).id, f.at); assert.ok(/坐滿/.test(r.reason || ""), "4 個座位坐滿了：" + JSON.stringify(r)); }
   const m2 = mk(G, 7, 3); G.casTSit(m2.t, "d", "館友d"); // 4 人坐滿
   assert.ok(/坐滿/.test(G.casTNpcInvite(m2.t, m2.ctx, "a", f.id, f.at).reason || ""));
+});
+// 11-17 翊文：「讓邀請去賭場的旅客不只能帶一個人」「最多 3 位」
+const findMany = (G, house, k) => {
+  for (let mm = 60; mm < 24 * 60; mm += 5) { const at = base(G) + mm * 60000, w = G.casTNpcWho({ house, day: DAY, secret: SEC, npcList: LIST, counters: null }, at).filter(x => LIST.find(n => n.id === x.id && n.budget && n.budget.perDay > 100000)); if (w.length >= k) return { ids: w.slice(0, k).map(x => x.id), at }; }
+  throw new Error("找不到同時在館裡的 " + k + " 位 NPC");
+};
+T("壹位館友最多帶 perHost 位客人（3 位，跟自己剛好坐滿 4 個座位）；第 perHost＋1 位邀不了", G => {
+  assert.strictEqual(C(G).perHost, 3); assert.ok(C(G).tableMax >= C(G).perHost && C(G).perHost < G.NUM.casino.seats);
+  const m = mk(G, 7, 1), F = findMany(G, m.house, C(G).perHost + 1);
+  F.ids.slice(0, C(G).perHost).forEach(id => inviteOk(G, m, "a", id, F.at));
+  assert.strictEqual(Object.values(m.t.seats).filter(x => x.npc && x.npc.host === "a").length, C(G).perHost);
+  const r = G.casTNpcInvite(m.t, m.ctx, "a", F.ids[C(G).perHost], F.at); assert.ok(!r.ok && /已經帶了 3 位/.test(r.reason), JSON.stringify(r));
+});
+T("帶 3 位客人打牌守恆；同壹局好幾位 NPC 的注加起來，最壞的結果也不讓全館淨輸贏超過 dayCap", G => {
+  const m = mk(G, 11, 1), F = findMany(G, m.house, 3); F.ids.forEach(id => inviteOk(G, m, "a", id, F.at));
+  const t0 = total(G, m);
+  for (let i = 0; i < 30 && Object.values(m.t.seats).some(x => x.npc); i++) {
+    const now = F.at + i * 1000;
+    if (m.t.phase === "bet") G.casTBet(m.t, "a", "1000", { san: 99, bonusPct: 0 }, m.ctx, now);
+    if (m.t.phase === "play" && m.t.turn === "a") G.casTAct(m.t, "a", "stand", m.t.seq, m.ctx, now);
+    if (m.t.phase === "result") G.casTAdvance(m.t, m.ctx, m.t.deadline + 1);
+  }
+  assert.strictEqual(total(G, m), t0, "守恆");
+  // 全館快到上限：這局 3 位的注加起來 ×2 不超過剩下的空間
+  const m2 = mk(G, 13, 1), F2 = findMany(G, m2.house, 3); F2.ids.forEach(id => inviteOk(G, m2, "a", id, F2.at));
+  G.npcCasFix(m2.house, DAY).net = -(C(G).dayCap - 40000);
+  G.casTBet(m2.t, "a", "1000", { san: 99, bonusPct: 0 }, m2.ctx, F2.at);
+  const sum = Object.values(m2.t.seats).reduce((a, x) => a + (x.npc ? x.bet : 0), 0);
+  assert.ok(2 * sum <= 40000, "這局 NPC 注 " + sum);
 });
 T("館友先下注 NPC 才下注：注從外面世界出（世界池減、莊家增），不到最小注或沒額度不下；兩邊都下好馬上發牌；NPC 馬上打完、不等計時", G => {
   const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at); const s = m.t.seats["n~" + f.id], w0 = m.house.world, b0 = m.house.bankroll;
