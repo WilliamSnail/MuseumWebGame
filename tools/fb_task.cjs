@@ -86,7 +86,9 @@ async function worldStatus(db) {
   const S = { normal: "一般", cut: "減薪", squeeze: "緊縮", layoff: "裁員" };
   const w = J(await db.doc("world/main").get()), h = J(await db.doc("casinoHouse/main").get());
   console.log(w ? `世界文件 world/main：備用池 ${fmt(w.pool)}　最近一天 ${w.day || "-"}　累計成長看到 ${fmt(w.grownSeen)}` : "世界文件 world/main：還沒有");
-  const days = await db.collection("worldDays").orderBy("__name__", "desc").limit(3).get();
+  // 最近 3 天：照日期直接拿（11-18：orderBy("__name__","desc") 要 Firestore 建索引，沒建就整個失敗）
+  const ds = [0, 1, 2].map(k => new Date(Date.parse((w && w.day ? w.day : new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10)) + "T00:00:00Z") - k * 864e5).toISOString().slice(0, 10));
+  const days = { docs: (await db.getAll(...ds.map(d => db.doc(`worldDays/${d}`)))).filter(d => d.exists) };
   days.docs.forEach(d => { const r = JSON.parse(d.data().data || "{}"); console.log(`  ${d.id}：外面世界 ${fmt(r.world)}　合計 ${fmt(r.total)}　成長 ${r.growth == null ? "-" : fmt(r.growth)}　景氣 ${r.b}　莊家記的日子 ${r.houseDay || "-"}`); });
   if (!h) { console.log("莊家文件還不存在"); return; }
   if (h.wu && h.wu.r) { const a = G.wuAmounts(Object.assign({}, h)); console.log("帳上各單位現在多少（合計＝外面世界）：" + Object.keys(a).map(k => `${names[k] || k} ${fmt(a[k])}`).join("　") + `　外面世界 ${fmt(h.world)}`); }
