@@ -1,0 +1,306 @@
+{
+  "day": 3,
+  "date": "2026-11-18",
+  "holiday": null,
+  "board": "B1 樓梯口釘上壹張手繪小地圖，牆上高處多了壹排粉筆記號；書架多 2 本書。",
+  "books": [
+    {
+      "id": "3a",
+      "line": "w47-count",
+      "clue": "c-tally-own-height",
+      "title": "那壹畫有多高",
+      "spine": "多的那畫",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「昨天他問，多的那壹畫是不是自己。」\n「今天我帶了捲尺。」",
+        "他們站在畫滿正字的牆前。\n每數到第八畫，\n第九畫就已經畫在那裡了。",
+        "警衛用捲尺量。\n多的那壹畫，離地壹百七十公分，\n剛好是他站著時眼睛的高度。",
+        "換你站過去數。\n多的那壹畫，往下移到你的眼睛那麼高。\n你蹲下，它也跟著矮了壹點。",
+        "警衛把捲尺收起來，在紀錄上寫：\n「高度是數的人的高度。」\n「我沒有寫為什麼。」\n(你把兩個數字都抄了下來)"
+      ]
+    },
+    {
+      "id": "3b",
+      "line": "w47-count",
+      "clue": "c-postman-street-count",
+      "title": "郵差的壹戶",
+      "spine": "差壹戶",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "退休的郵差路過 B1，在樓梯口停下來。\n牆上釘著壹張手繪的小地圖，\n他看了很久。",
+        "「巷口、夜市、橋頭。」他說。\n「這幾條街的人家，我每年數壹遍。」\n「每年都差壹戶。」",
+        "地圖上每個地方旁邊，\n都畫了壹個很小的正字。\n他伸手指，指頭落在巷口那壹個。",
+        "「我數過每壹戶的信箱。」\n「就是沒有數過我自己住的那壹戶。」\n他笑了壹下，把帽子壓低。",
+        "他沒有留下地址。\n他說明天再來走壹趟，\n把地圖上的路再走壹遍。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d3a",
+      "kind": "read",
+      "book": "3a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d3b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d3c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w3",
+      "words": "多的那壹畫跟站的人壹樣高；樓梯口有人舉牌：「梯子要先有人願意扶。」"
+    }
+  ],
+  "show": {
+    "title": "壹樣高",
+    "intro": "樓梯口掛起壹排畫：壹面牆、壹張小地圖，和壹隻在雨天收攤的手。",
+    "works": [
+      {
+        "id": "s3a",
+        "clue": "c-tally-height-pic",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D4",
+        "title": "牆上高處的那壹畫",
+        "lines": [
+          "壹個人站在牆前數正字，頭頂剛好碰到最後壹畫。",
+          "他走開以後，那壹畫還停在他頭那麼高的地方。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs><linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2b3239'/><stop offset='1' stop-color='#0f1317'/></linearGradient></defs>",
+          "<rect width='240' height='300' fill='url(#w)'/>",
+          "<g stroke='#e8e4d4' stroke-width='3' stroke-linecap='round' fill='none'>",
+          "<path d='M30 70 V108 M42 70 V108 M54 70 V108 M66 70 V108 M22 96 L78 82'/>",
+          "<path d='M100 70 V108 M112 70 V108 M124 70 V108 M136 70 V108 M92 96 L148 82'/>",
+          "<path d='M30 125 V163 M42 125 V163 M54 125 V163 M66 125 V163 M22 151 L78 137'/>",
+          "</g>",
+          "<path d='M190 150 V178' stroke='#c9564a' stroke-width='4' stroke-linecap='round'/>",
+          "<g fill='#07090b' opacity='.9'><ellipse cx='176' cy='250' rx='16' ry='46'/><circle cx='176' cy='196' r='14'/></g>",
+          "<line x1='150' y1='188' x2='215' y2='188' stroke='#8a8f95' stroke-width='1' stroke-dasharray='3 3'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s3b",
+        "clue": "c-stair-map-pic",
+        "frame": "gold",
+        "fx": [
+          "sepia"
+        ],
+        "title": "樓梯口的手繪小地圖",
+        "lines": [
+          "三個地方用細線連著：巷口、夜市、橋頭。",
+          "每個地方旁邊，都畫著壹個很小的正字。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#3a2c1e'/>",
+          "<rect x='24' y='40' width='192' height='220' fill='#e7d9b4' stroke='#9c7a45' stroke-width='3'/>",
+          "<g stroke='#6b5030' stroke-width='2' fill='none'><path d='M60 210 L110 150 L170 190 M110 150 L150 90' stroke-dasharray='5 4'/></g>",
+          "<g fill='#6b5030'><circle cx='60' cy='210' r='7'/><circle cx='110' cy='150' r='7'/><circle cx='170' cy='190' r='7'/><circle cx='150' cy='90' r='7'/></g>",
+          "<g stroke='#2b2b2b' stroke-width='2.5' stroke-linecap='round'><path d='M70 224 V240 M76 224 V240 M82 224 V240 M88 224 V240 M66 234 L92 230'/><path d='M120 164 V180 M126 164 V180 M132 164 V180 M138 164 V180 M116 174 L142 170'/><path d='M180 204 V220 M186 204 V220 M192 204 V220'/></g>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s3c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "坐著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "替牠數壹遍的佩佩",
+        "lines": [
+          "牠站在小地圖前，用手指壹格壹格點過去。",
+          "點到最後，牠自己也笑了：數完剛好，壹隻不多。"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "tallyhigh",
+      "clue": "c-tally-high-stroke",
+      "floor": 1,
+      "line": "w47-count",
+      "title": "牆上最高的那壹畫",
+      "hint": "去 B1 小門後面，抬頭看看牆的高處",
+      "intro": "小門後的牆比昨天亮了壹點。每數八畫就多出來的那壹畫，今天看得特別清楚。",
+      "lines": [
+        "多出來的那壹畫都畫在差不多的高度，離地不高也不矮。",
+        "你站直，那高度剛好跟你的眼睛壹樣高。"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "用手比壹比高度",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "你站在哪裡數，多的那壹畫就在哪裡的眼睛那麼高。換你旁邊的人站過去，它也跟著換了位置。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你比到壹半，覺得牆在看你。手放下以後，記號好像也低了壹點。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "蹲下來再數壹遍",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "你蹲著數，多的那壹畫也矮下來，貼在你眼前。你把它記在手背上，沒有再往下想。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "數到第八畫，你的視線被壹隻很小的手擋住了，轉頭看，什麼也沒有。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "先在門口登記壹下",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你寫下「已看過，高度同我」。門縫又寬了壹點點。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "stairmap",
+      "clue": "c-stair-map",
+      "floor": 1,
+      "line": "w47-count",
+      "title": "樓梯口的小地圖",
+      "hint": "去 B1 樓梯口，看看牆上新釘的那張紙",
+      "intro": "通往 B2 的樓梯口釘著壹張手繪的小地圖，墨還很新。圖上是館外的三個地方：巷口、夜市、橋頭。",
+      "lines": [
+        "每個地方旁邊都畫著壹個很小的正字，粉筆壹樣的白。",
+        "地圖的右下角沒有署名，只有壹條空著的橫線。"
+      ],
+      "mood": null,
+      "color": "藍",
+      "choices": [
+        {
+          "label": "壹個地方壹個地方對照",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "巷口三畫、夜市四畫、橋頭兩畫。這些字的粗細，跟 B1 牆上的壹樣。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "線條太細，你的視線沿著線滑出了地圖外面。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "摸摸圖的邊角",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "紙的邊角是溫的，像剛被誰握過。你把它撫平，收回手。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你摸到壹個小小的指印，大小跟你的手壹樣。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "抄下三個地名",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你抄好了。地圖上的巷口，燈好像亮了壹下。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ],
+  "market": [
+    {
+      "title": "夜市攤位排隊變長",
+      "line": "夜市有幾攤客人排到巷口，老闆說今天每壹碗都要數兩遍才不會漏。",
+      "tone": "up",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠新增驗貨線",
+      "line": "巨浪代工廠多開壹條驗貨線，兩個人各數壹遍，數字不同就重數。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行轉接變慢",
+      "line": "島線電話行的轉接檯今天比較忙，總機說每通都要先確認有幾個人在線上。",
+      "tone": "down",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官數籌碼，多了壹枚。他站直，那壹枚剛好跟他的眼睛壹樣高。"
+  },
+  "real": [
+    "小雪前的冷空氣還沒走，早晚出門要多穿壹件。",
+    "北市選戰進入最後十壹天，街角的旗子越掛越密。"
+  ]
+}
