@@ -14,7 +14,7 @@ const FRACS = Array.from({ length: 31 }, (_, i) => 0.5 + (i % 2 ? 1 : -1) * Math
 const sshort = n => (n < 0 ? "−" : "") + short(n); // 帶負號的短寫（海外帳可以是負的）
 const NS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
-const SEL = { e: null, n: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝已知世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
+const SEL = { e: null, n: null, kind: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝已知世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
 let timer = 0;
 const still = () => !!(document.body && document.body.classList.contains("reduce-motion")) || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -190,6 +190,19 @@ export function flowPane(v, deps) {
     if (SEL.path[1] && !(F.nodes || []).some(n => n.id === SEL.path[1])) SEL.path = SEL.path.slice(0, 1); // 資料變了（集團改名、拆掉）就退一層
     if (SEL.path[0] && SEL.path[0] !== "world" && !(F.orgs || {})[SEL.path[0].slice(4)]) SEL.path = [];
     const V = prep(F); NM = Object.assign({}, V.by); V.nodes.forEach(n => (NM[n.id] = n));
+    // 往來變多（決定 0127，約 24 條集團之間的線）：已知世界那層預設只畫最大的 8 條集團之間的線；選壹個種類只畫那壹種；點壹個集團方塊只畫跟它有關的。沒畫出來的都還在右邊流向一覽裡。
+    let hidden = 0, kinds = [];
+    if (wOpen() && !focusId()) {
+      const kindOf = e => (e.srcs[0] && e.srcs[0].src ? String(e.srcs[0].src).split("|")[0] : ""), isCC = e => e.from.startsWith("w:") && e.to.startsWith("w:");
+      const cc = V.edges.filter(isCC), sum = new Map(); cc.forEach(e => e.srcs.forEach(x => { const k = String(x.src).split("|")[0]; sum.set(k, (sum.get(k) || 0) + Math.abs(x.amt)); }));
+      kinds = [...sum.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n, label: (cc.flatMap(e => e.srcs).find(x => String(x.src).split("|")[0] === k) || {}).label || k }));
+      if (SEL.kind && !sum.has(SEL.kind)) SEL.kind = null;
+      const keepTop = new Set(cc.slice().sort((a, b) => b.amt - a.amt).slice(0, 8));
+      const before = V.edges.length;
+      V.edges = V.edges.filter(e => !isCC(e) || (SEL.n ? (e.from === SEL.n || e.to === SEL.n) : SEL.kind ? e.srcs.some(x => String(x.src).split("|")[0] === SEL.kind) : keepTop.has(e)));
+      hidden = before - V.edges.length;
+      void kindOf;
+    }
     const fid = focusId(); if (fid) { const S = new Set([fid, ...V.nodes.filter(n => n.parent === fid).map(n => n.id)]); V.edges = V.edges.filter(e => S.has(e.from) || S.has(e.to)); }
     const L = layout(phone, V), edges = V.edges, PT = anchors(edges, L.pos, L.tierOf), max = Math.max(...edges.map(e => e.amt), 1), lg = a => Math.log1p(a) / Math.log1p(max);
     if (SEL.e != null && !edges[SEL.e]) SEL.e = null; if (SEL.n && !L.pos[SEL.n]) SEL.n = null;
@@ -232,7 +245,10 @@ export function flowPane(v, deps) {
       h("div", { class: "bank-flow-zoom" }, h("button", { type: "button", class: "bank-flow-zb", "aria-label": "縮小，回上一層", title: SEL.path.length ? "縮小，回上一層" : "已經是全景", disabled: SEL.path.length ? null : true, onClick: () => zout() }, h("b", null, "－"), h("span", null, "縮小")),
         h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到已知世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到已知世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, h("b", null, "＋"), h("span", null, "放大"))));
     if (SEL.dir) { svg.classList.add(SEL.dir === "in" ? "zin" : "zout"); SEL.dir = ""; }
-    mapBox.replaceChildren(bar, svg);
+    const kbar = kinds.length ? h("div", { class: "bank-flow-kinds", role: "group", "aria-label": "往來種類" }, h("span", null, "往來種類"), h("button", { type: "button", class: "bank-flow-kind" + (!SEL.kind ? " on" : ""), "aria-pressed": String(!SEL.kind), onClick: () => { SEL.kind = null; SEL.n = null; SEL.e = null; draw(); } }, "最大的 8 條"),
+      ...kinds.map(k => h("button", { type: "button", class: "bank-flow-kind" + (SEL.kind === k.k ? " on" : ""), "aria-pressed": String(SEL.kind === k.k), onClick: () => { SEL.kind = SEL.kind === k.k ? null : k.k; SEL.n = null; SEL.e = null; draw(); } }, k.label, h("small", null, short(k.n)))),
+      hidden ? h("em", null, "還有 " + hidden + " 條沒畫（選種類或點集團方塊看）") : null) : null;
+    mapBox.replaceChildren(...[bar, kbar, svg].filter(Boolean));
     side.replaceChildren(listBox({ edges, bal: V.bal }, SEL, pick));
   };
   draw();
