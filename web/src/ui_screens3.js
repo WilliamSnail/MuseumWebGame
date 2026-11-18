@@ -610,15 +610,15 @@ export function cellarRoom(root) {
     const beat = !!room.mood && MOOD_BEATS[it.pick.心情] === room.mood, beaten = !!room.mood && MOOD_BEATS[room.mood] === it.pick.心情, same = !!room.color && it.pick.顏色 === room.color;
     const why = [beat ? `房間的心情是「${room.mood}」，這隻的心情「${it.pick.心情}」剛好剋制它，強度變 2 倍` : beaten ? `房間的心情是「${room.mood}」，剛好剋制這隻的「${it.pick.心情}」，強度 −1` : "", same ? `這隻的顏色跟房間一樣（${room.color}），強度 +1` : ""].filter(Boolean).join("；");
     return h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : ""), title: why || "房間的心情、顏色對這隻沒有影響" },
-      h("span", { class: "tb-who" }, itemTitle(it)), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`),
-      beat ? h("span", { class: "tb-fx" }, "心情剋房間 ×2") : beaten ? h("span", { class: "tb-fx bad" }, "被房間剋 −1") : null, same ? h("span", { class: "tb-fx" }, "同色 +1") : null);
+      h("span", { class: "member-who" }, itemTitle(it)), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`),
+      beat ? h("span", { class: "member-fx" }, "心情剋房間 ×2") : beaten ? h("span", { class: "member-fx bad" }, "被房間剋 −1") : null, same ? h("span", { class: "member-fx" }, "同色 +1") : null);
   }),
     h("div", { class: "tb-total" }, h("span", { class: "poss-l" }, "這個房間的隊伍強度"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null));
   // 房間特性（翊文 11-18：「房間的心情 顏色這些都不明顯」）：心情、顏色各壹塊大的說明牌，直接寫對隊伍強度的影響
   const MC = { 開心: "#E8B93A", 傷心: "#5B8FC7", 生氣: "#C7503F" }, beatsMood = Object.keys(MOOD_BEATS).find(k => MOOD_BEATS[k] === room.mood), loseMood = room.mood ? MOOD_BEATS[room.mood] : null;
   const chips = h("div", { class: "nc-tags room-traits" },
-    room.mood ? h("div", { class: "rt-card rt-mood", style: { "--rt": MC[room.mood] || "#8A6A3A" } }, h("small", null, "房間的心情"), h("b", null, room.mood), h("span", null, [beatsMood ? `${beatsMood}的佩佩 強度 ×2` : "", loseMood ? `${loseMood}的佩佩 −1` : ""].filter(Boolean).join("　"))) : null,
-    room.color ? h("div", { class: "rt-card rt-color", style: { "--rt": COLOR_SWATCH[room.color] || "#8A6A3A" } }, h("small", null, "房間的顏色"), h("b", null, h("i", { class: "rt-dot" }), room.color), h("span", null, `${room.color}色的佩佩 強度 +1`)) : null);
+    room.mood ? h("div", { class: "trait-card trait-mood", style: { "--rt": MC[room.mood] || "#8A6A3A" } }, h("small", null, "房間的心情"), h("b", null, room.mood), h("span", null, [beatsMood ? `${beatsMood}的佩佩 強度 ×2` : "", loseMood ? `${loseMood}的佩佩 −1` : ""].filter(Boolean).join("　"))) : null,
+    room.color ? h("div", { class: "trait-card trait-color", style: { "--rt": COLOR_SWATCH[room.color] || "#8A6A3A" } }, h("small", null, "房間的顏色"), h("b", null, h("i", { class: "trait-dot" }), room.color), h("span", null, `${room.color}色的佩佩 強度 +1`)) : null);
   const result = h("div", { class: "room-result", "aria-live": "polite" });
   const desc = c => c.type === "power" ? `強度 ${tp.total}＋擲 1～10，要 ≥ ${c.target}` : c.type === "skill" ? `${c.skill} ${clampN(skillOf(P, c.skill) + (c.mod || 0) + (team.some(t => t.pick.帽子 === "紳士帽") ? 10 : 0), 1, 99)}%` : c.type === "san" ? `理智 ${sanShort(c.spec)}` : "安全";
   const choices = h("div", { class: "choices" }, room.choices.map((c, i) => btn([h("i", { class: "ch-no", "aria-hidden": "true" }, String(i + 1)), h("span", { class: "ch-label" }, c.label), h("small", { class: "ch-tag" }, desc(c.check))], () => resolveFlow(i, result, choices), "ch-" + c.check.type + (c.check.type === "none" ? " ghost" : ""))));
@@ -634,11 +634,13 @@ export function cellarRoom(root) {
     h("h2", { class: "room-title" }, ptNode(room.title)), h("div", { class: "nc-text" }, room.lines.map(l => h("p", null, ptNode(l)))),
     h("p", { class: "cs-hint" }, icon("sparkle"), " 游標移到選項上，看隊伍會怎麼做；按下去牠們就會動起來"), choices, result);
   root.append(roomHead(`B${run.floor}　${f.name}`, run.extra ? run.extra.intro || "這週多出來的地方。" : run.idx === 0 && f.intro ? f.intro : null, dots, leave),
-    stage,
-    teamBar, card,
-    ADDONS.cellarMeet ? ADDONS.cellarMeet(room, run.floor) : null, // 遇到館友在地下工作的參觀者（決定 0064，ui_work.js）
-    ADDONS.cellarLost ? ADDONS.cellarLost(room, run.floor) : null, // 招領單：別的館友以前理智歸零的參觀者（翊文 11-13，ui_lost.js）
-    ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null); // 館友留下的痕跡（ui_trace.js）
+    // 回爐重造（翊文 11-18：「這個畫面不是依然很不平衡嗎」）：兩個等高的面板——左「隊伍」（場景吃剩下的高度、三隻隊員、隊伍強度）、右「事件」（房間卡吃剩下的高度、選項沉底、招領單等在卡下面）
+    h("div", { class: "cr-body" },
+      h("section", { class: "cr-left", "aria-label": "隊伍" }, stage, teamBar,
+        ADDONS.cellarMeet ? ADDONS.cellarMeet(room, run.floor) : null, // 遇到館友在地下工作的參觀者（決定 0064，ui_work.js）；放左邊：場景會讓出高度，右邊的房間卡不被擠
+        ADDONS.cellarLost ? ADDONS.cellarLost(room, run.floor) : null, // 招領單：別的館友以前理智歸零的參觀者（翊文 11-13，ui_lost.js）
+        ADDONS.cellarTraces ? ADDONS.cellarTraces(room, run.floor, stage) : null), // 館友留下的痕跡（ui_trace.js）
+      h("section", { class: "cr-right", "aria-label": "房間的事件" }, card)));
 }
 // 誰讓理智多扣、少扣：「怕黑 +1、探險燈 −1」（只有一個就寫名字）
 const darkWhy = () => { const hits = traitHits(P, "cellarSan"); return hits.length === 1 ? hits[0].name : hits.map(traitTag).join("、"); };
