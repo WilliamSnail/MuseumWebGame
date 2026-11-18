@@ -53,7 +53,7 @@ function loadFx() {
 }
 T("fx.js：賭場、銀行環境音會建節點、換掉會停計時器；不丟錯", () => {
   const code = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx.js"), "utf8");
-  assert.ok(/\bcasino\(c, g\)/.test(code) && /\bbank\(c, g\)/.test(code), "AMB 要有 casino、bank");
+  assert.ok(/\bcasino\(c, g(?:, own)?\)/.test(code) && /\bbank\(c, g(?:, own)?\)/.test(code), "AMB 要有 casino、bank");
   for (const room of ["casino", "bank"]) {
     const { FX, log, timers } = loadFx();
     assert.strictEqual(typeof FX.sound.ambMix, "function");
