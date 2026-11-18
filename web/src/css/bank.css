@@ -668,3 +668,24 @@ body[data-screen="bank"] #room { background: none; }
 }
 
 .bank-chip.locked, .bank-chip:disabled { opacity: .4; cursor: not-allowed; border-style: dashed; text-decoration: line-through; } /* 信用等級還沒解鎖的倍數：灰、虛線、劃掉，不能按 */
+
+/* 集團之間的往來：先照種類加總（壹行壹種、大的在前），點開看誰付給誰 */
+.bank-trade { display: grid; gap: 4px; margin: 6px 0; }
+.bank-trade-k { border: 1px solid rgba(201, 165, 90, .3); border-radius: 6px; background: rgba(15, 25, 43, .45); }
+.bank-trade-k > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 4px 10px; padding: 6px 10px; cursor: pointer; list-style: none; min-height: 36px; }
+.bank-trade-k > summary::-webkit-details-marker { display: none; }
+.bank-trade-k > summary b { color: var(--bank-gold-hi, #F3E0B0); font-size: var(--type-small, .8125rem); }
+.bank-trade-k > summary small { color: #A9B4C8; font-size: .75rem; }
+.bank-trade-k > summary em { font-style: normal; color: #D6B25E; font-size: .75rem; white-space: nowrap; }
+.bank-trade-k[open] > summary em { opacity: .6; }
+.bank-trade-bar { grid-column: 1 / -1; display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.bank-trade-bar u { display: block; height: 100%; background: linear-gradient(90deg, #8A6A3A, #D6B25E); }
+.bank-trade-k .bank-who { padding: 2px 10px 8px; }
+.bank-trade-k > summary { grid-template-columns: minmax(0, 1fr) auto auto auto; row-gap: 2px; padding: 5px 10px; }
+.bank-trade-k > summary .bank-trade-bar { grid-row: 2; }
+.bank-trade-k > summary em { grid-row: 1; }
+.bank-trade-k > summary b { grid-column: 1; grid-row: 1; }
+.bank-trade-k > summary small { grid-column: 2; grid-row: 1; }
+.bank-trade-k > summary .bank-tab-num { grid-column: 3; grid-row: 1; }
+.bank-trade-k > summary em { grid-column: 4; grid-row: 1; }
+.bank-trade-k > summary .bank-trade-bar { grid-column: 1 / -1; grid-row: 2; }
