@@ -603,12 +603,17 @@ export function cellarRoom(root) {
   if (!f || !room) { leaveCellar(P); go("cellar", {}, { action: false }); return; }
   const team = teamItems(P, run.team);
   const tp = teamPower(P, team, room);
+  const COLOR_SWATCH = { 綠: "#4FA24A", 黑: "#3A3A3A", 黃: "#E3B93A", 紅: "#C7503F", 藍: "#4A78C4", 粉紅: "#E58FB0", 白: "#EDEDED", 紫: "#8E5FB8", 橘: "#E48A3A" };
   const dots = run.extra ? null : h("div", { class: "room-dots", title: `第 ${run.idx + 1}／${f.rooms.length} 間` }, f.rooms.map((r, i) => h("i", { class: i < run.idx ? "done" : i === run.idx ? "now" : "" })), h("span", { class: "rd-n" }, `第 ${run.idx + 1}／${f.rooms.length} 間`)); // run.extra：每週劇情多出來的一間、試煉房間（只走這一間）
   const leave = btn("回到地面", () => { leaveCellar(P); persist(); go("cellar", {}, { action: false }); }, "ghost");
   const teamBar = h("div", { class: "team-bar" }, team.map(it => h("div", { class: "tb-member" + (P.injured[it.key] ? " hurt" : "") },
-    h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`))),
+    h("span", { class: "si-art", html: itemHTML(it) }), h("span", { class: "tb-n" }, `強度 ${memberPower(it, room)}`), (() => { const t = []; if (room.mood && MOOD_BEATS[it.pick.心情] === room.mood) t.push("剋到 ×2"); else if (room.mood && MOOD_BEATS[room.mood] === it.pick.心情) t.push("被剋 −1"); if (room.color && it.pick.顏色 === room.color) t.push("同色 +1"); return t.length ? h("span", { class: "tb-fx" + (t.some(x => x.startsWith("被")) ? " bad" : "") }, t.join("・")) : null; })())),
     h("div", { class: "tb-total" }, h("span", { class: "poss-l" }, "這個房間的隊伍強度"), h("b", { class: "poss-n" }, String(tp.total)), tp.notes.length ? h("span", { class: "poss-f" }, tp.notes.join("・")) : null));
-  const chips = h("div", { class: "nc-tags" }, room.mood ? h("span", { class: "tag" }, `房間的心情：${room.mood}`) : null, room.color ? h("span", { class: "tag" }, `房間的顏色：${room.color}`) : null);
+  // 房間特性（翊文 11-18：「房間的心情 顏色這些都不明顯」）：心情、顏色各壹塊大的說明牌，直接寫對隊伍強度的影響
+  const MC = { 開心: "#E8B93A", 傷心: "#5B8FC7", 生氣: "#C7503F" }, beatsMood = Object.keys(MOOD_BEATS).find(k => MOOD_BEATS[k] === room.mood), loseMood = room.mood ? MOOD_BEATS[room.mood] : null;
+  const chips = h("div", { class: "nc-tags room-traits" },
+    room.mood ? h("div", { class: "rt-card rt-mood", style: { "--rt": MC[room.mood] || "#8A6A3A" } }, h("small", null, "房間的心情"), h("b", null, room.mood), h("span", null, [beatsMood ? `${beatsMood}的佩佩 強度 ×2` : "", loseMood ? `${loseMood}的佩佩 −1` : ""].filter(Boolean).join("　"))) : null,
+    room.color ? h("div", { class: "rt-card rt-color", style: { "--rt": COLOR_SWATCH[room.color] || "#8A6A3A" } }, h("small", null, "房間的顏色"), h("b", null, h("i", { class: "rt-dot" }), room.color), h("span", null, `${room.color}色的佩佩 強度 +1`)) : null);
   const result = h("div", { class: "room-result", "aria-live": "polite" });
   const desc = c => c.type === "power" ? `強度 ${tp.total}＋擲 1～10，要 ≥ ${c.target}` : c.type === "skill" ? `${c.skill} ${clampN(skillOf(P, c.skill) + (c.mod || 0) + (team.some(t => t.pick.帽子 === "紳士帽") ? 10 : 0), 1, 99)}%` : c.type === "san" ? `理智 ${sanShort(c.spec)}` : "安全";
   const choices = h("div", { class: "choices" }, room.choices.map((c, i) => btn([h("i", { class: "ch-no", "aria-hidden": "true" }, String(i + 1)), h("span", { class: "ch-label" }, c.label), h("small", { class: "ch-tag" }, desc(c.check))], () => resolveFlow(i, result, choices), "ch-" + c.check.type + (c.check.type === "none" ? " ghost" : ""))));

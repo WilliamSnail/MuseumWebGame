@@ -225,3 +225,15 @@
 .scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn { flex: 1 1 auto; min-height: 36px; padding: 4px 12px; font-size: .875rem; color: #FFF3C4; background: linear-gradient(180deg, #4A5C82, #2F3D5E); border: 1px solid #C9A55A; }
 .scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn:hover:not(:disabled) { background: linear-gradient(180deg, #5A6E96, #3A4A6E); }
 .scr-cellar:has(> .cellar-stage) > .meet-card .choices .btn small { display: block; font-size: .75rem; color: #F3E0B0; }
+
+/* 房間特性：心情、顏色各壹塊大牌（左邊色條＋小標＋大字＋對強度的影響），隊員下面標出各自受的影響 */
+.scr-cellar:has(> .cellar-stage) .room-card .room-traits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-bottom: 10px; }
+.rt-card { display: grid; gap: 1px; padding: 6px 12px; border: 1px solid rgba(122, 90, 42, .55); border-left: 8px solid var(--rt, #8A6A3A); border-radius: 6px; background: rgba(255, 251, 239, .8); color: #2E2014; }
+.rt-card small { font-size: .75rem; color: #7A5A1E; }
+.rt-card b { display: flex; align-items: center; gap: 8px; font-size: 1.25rem; line-height: 1.2; }
+.rt-card span { font-size: .8125rem; color: #5A4030; }
+.rt-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--rt); border: 2px solid rgba(0, 0, 0, .35); }
+.tb-fx { margin-top: 2px; padding: 0 6px; border-radius: 999px; background: rgba(95, 143, 87, .25); color: #CFE8C8; font-size: .75rem; white-space: nowrap; }
+.tb-fx.bad { background: rgba(184, 88, 76, .3); color: #F5C6BE; }
+@media (max-width: 899px) { .scr-cellar:has(> .cellar-stage) .room-card .room-traits { grid-template-columns: 1fr; gap: 6px; } }
+@media (min-width: 900px) and (min-height: 501px) { .scr-cellar:has(> .cellar-stage) .cellar-scene { width: min(100%, 40vh); } .scr-cellar:has(> .cellar-stage) > .team-bar { align-items: flex-start; } }
