@@ -81,6 +81,11 @@ export function fakeBankHall() {
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
+    trade: { since: "2026-11-16", loans: [{ name: "民生集團", amt: 3600000, day: "2026-11-17" }], rows: [
+      { k: "tradeGoods", label: "貨款（集團之間）", fromName: "島嶼集團", toName: "民生集團", n: 1500000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "民生集團", toName: "海外集團", n: 660000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "學校集團", n: 700000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "島嶼集團", n: 220000 },
+      { k: "tradeLoan", label: "金融集團放款", fromName: "金融集團", toName: "民生集團", n: 3600000 }, { k: "tradeLoan", label: "金融集團放款", fromName: "學校集團", toName: "金融集團", n: 180000 },
+      { k: "tradeInterest", label: "借款利息", fromName: "民生集團", toName: "金融集團", n: 260000 }, { k: "tradeRepay", label: "還款", fromName: "民生集團", toName: "金融集團", n: 400000 },
+      { k: "tradeRev", label: "旗下股票營收（公共和集團）", fromName: "公共", toName: "島嶼集團", n: 450000 }, { k: "tradeRev", label: "旗下股票營收（公共和集團）", fromName: "家計", toName: "島嶼集團", n: 300000 }] },
     gs: { halt: false, orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "g-culture", name: "文化藝術機構股", n: 100, px: 95, hold: 9548, day: "2026-11-17" }], rule: "示範：集團股的價格由這個世界的買賣和經濟決定。", notes: [], index: { v: 100.38 }, list: [
       { id: "g-culture", name: "文化藝術機構股", unit: "文化藝術機構", price: 100.66, open: 100, chg: 0.66, shares: 101213719, mcap: 10188034904, nav: 50, pb: 2.01, mine: 40, value: 4026, cost: 3900, limit: 5000000, hist: [98, 99.2, 97.5, 99, 100.1, 99.4, 100.9, 100.2, 101.3, 100.66] },
       { id: "g-daily", name: "民生集團股", unit: "民生集團", price: 100.09, open: 100, chg: 0.09, shares: 90000000, mcap: 9008100000, nav: 50, pb: 2, mine: 0, value: 0, cost: 0, limit: 4500000, hist: [100, 100.3, 99.8, 100.09] }] },
@@ -126,7 +131,7 @@ export function bankHallView(b) {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
     loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
-    bonds, stocks: b.stocks, gs: b.gs || null, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
+    bonds, stocks: b.stocks, gs: b.gs || null, trade: b.trade || null, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
   };
 }
 const view = () => UI.bankHall || fakeBankHall();
@@ -837,9 +842,13 @@ const WLD_STATE = ["normal", "cut", "squeeze", "layoff"], WLD_BAND = ["tight", "
 // 集團之間的往來（決定 0120）：本週累計＋目前欠金融集團的。資料 v.bankHall.trade ＝ { since, rows: [{ k, label, from, to, n }], loans: [{ name, amt, day }] }
 function tradeSec(t) {
   if (!t) return null;
-  const rows = (t.rows || []).slice(0, 8), loans = t.loans || [];
+  // 先照種類加總（貨款、放款、利息…壹行壹種、大的在前），點開才看那壹種是誰付給誰（翊文 11-18：往來變多，壹列列太長）
+  const kinds = new Map(); for (const x of t.rows || []) { const g = kinds.get(x.k) || { k: x.k, label: x.label || x.k, n: 0, list: [] }; g.n += x.n; g.list.push(x); kinds.set(x.k, g); }
+  const groups = [...kinds.values()].sort((a, b) => b.n - a.n), loans = t.loans || [], total = groups.reduce((n, g) => n + g.n, 0);
   return h("div", { class: "bank-wld-sec" }, h("b", null, "集團之間的往來"), h("small", { class: "bank-meta sm" }, `　本週（${String(t.since || "").slice(5).replace("-", "/")} 起）累計，整天陸續入帳`),
-    rows.length ? h("ul", { class: "bank-who" }, rows.map(x => h("li", null, h("b", null, x.label || x.k), ` ${x.fromName} → ${x.toName}　`, h("span", { class: "bank-tab-num" }, fmt(x.n))))) : h("p", { class: "bank-meta sm" }, "這週還沒有往來。"),
+    groups.length ? h("div", { class: "bank-trade" }, groups.map(g => h("details", { class: "bank-trade-k" },
+      h("summary", null, h("b", null, g.label), h("small", null, `${g.list.length} 筆`), h("span", { class: "bank-tab-num" }, fmt(g.n)), h("i", { class: "bank-trade-bar", "aria-hidden": "true" }, h("u", { style: { width: Math.max(3, Math.round(g.n / Math.max(1, total) * 100)) + "%" } })), h("em", { "aria-hidden": "true" }, "點開 ▾")),
+      h("ul", { class: "bank-who" }, g.list.slice().sort((a, b) => b.n - a.n).map(x => h("li", null, `${x.fromName} → ${x.toName}　`, h("span", { class: "bank-tab-num" }, fmt(x.n)))))))) : h("p", { class: "bank-meta sm" }, "這週還沒有往來。"),
     h("p", { class: "bank-meta sm" }, loans.length ? "還欠金融集團：" + loans.map(l => `${l.name} ${fmt(l.amt)}（${String(l.day || "").slice(5).replace("-", "/")} 借）`).join("、") : "目前沒有集團欠金融集團的錢。"));
 }
 function outsidePanel(e, trade) {
@@ -877,7 +886,7 @@ function reportPane(v) {
       fold("昨天館外來客花了多少", extPanel(e)),
       fold("昨天發生的事", panel("昨天發生的事", "", ledger(["項目", "數字"], e.report.length ? e.report.map(r => h("div", { class: "bank-row two", role: "row" }, h("span", null, r[0]), h("span", { class: "bank-tab-num" }, r[1]))) : [h("div", { class: "bank-row two", role: "row" }, h("span", null, "還沒有紀錄"), h("span", null, "—"))]))),
       foldAlways("館方投資", houseInvPanel(v))), // 館方投資在左邊（翊文 11-15：「館方投資移到左邊」），世界市場在中間
-    h("div", { class: "bank-stack" }, world, fold("已知世界", outsidePanel(e)),
+    h("div", { class: "bank-stack" }, world, fold("已知世界", outsidePanel(e, v.trade)),
       v.stocks && v.stocks.maker ? fold("莊家和投資人在買什麼", panel("莊家和投資人在買什麼", "他們的買賣大家都看得到", h("ul", { class: "bank-who" }, (v.stocks.maker || []).map(x => h("li", null, h("b", null, x.who), x.does))))) : null));
 }
 // 集團股的掛單（決定 0124）：限價買、限價賣、停損賣；單當天有效，買單鎖籌碼、賣單鎖股數。op order／cancel（取消要帶 id 和 no）
