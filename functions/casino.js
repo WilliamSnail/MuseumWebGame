@@ -114,7 +114,7 @@ export async function playCore(me, email, opts, fn) {
       wtAdvance(house, day, t); // 集團之間的往來整天陸續發生（決定 0120）：補算到現在那壹格
       gsAdvance(house, day, t); // 世界集團的股票（決定 0121）：推到現在（換日、每週一的公司事件、每 15 分鐘的價）
       wmWriteVisit(house, day, NPC_LIST); // 景氣分市場（決定 0121）：每位 NPC 今天的來館倍率（行程用 npcCounters 看到）
-      casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成外面世界出的（決定 0082）
+      casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成已知世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
       const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
       const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由博物館資金墊，再不夠開憑證，shared/casino_bond.js）
@@ -129,7 +129,7 @@ export async function playCore(me, email, opts, fn) {
       casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
       casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/econ_events.js）
       casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
-      casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資外面世界（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
+      casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資海外（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS), Object.assign({}, TW_NAMES, US_NAMES)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockSetDiv(house, divDoc); // 除息、配股事件放進莊家（錢包領息在下面的 PegSync）
       casStockPegSync(w, house); // 價位換成真實比例之後，這個錢包的持股照比例換股數、掛單取消
@@ -422,11 +422,11 @@ export async function casReport() {
     const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(14).get();
     const olds = prevQ.docs.map(d => JSON.parse(d.data().data)).reverse(); // 由舊到新（最多 14 份，算景氣指數的成長率用）
     const prev = olds.length ? olds[olds.length - 1] : null;
-    const ob = casBookOpeningNext(prev, snap, NUM.casino.world.start); // 對帳基準（外面世界有帳的那壹天起算；見 shared/casino_book.js）
-    const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: ob.opening, wfix: true, openingFix: ob.fix }; // 外面世界有帳的第壹天：起始的池子算進開場總和（規劃 2.12）
+    const ob = casBookOpeningNext(prev, snap, NUM.casino.world.start); // 對帳基準（已知世界有帳的那壹天起算；見 shared/casino_book.js）
+    const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: ob.opening, wfix: true, openingFix: ob.fix }; // 已知世界有帳的第壹天：起始的池子算進開場總和（規劃 2.12）
     doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino_gdp.js）
     const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
-    const ext = casGdpExt(ECONOMY, day); // 外面世界的景氣（content/economy.json，每日排劇情的排程更新）
+    const ext = casGdpExt(ECONOMY, day); // 已知世界的景氣（content/economy.json，每日排劇情的排程更新）
     doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7, ext.b);
     doc.ext = { ok: ext.ok, quarter: ext.quarter || "", stale: !!ext.stale, yoy: ext.ok ? ext.yoy : 0 };
     doc.gap = casBookGap(snap, doc.opening);

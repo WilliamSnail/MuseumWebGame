@@ -9,7 +9,7 @@
 //  座位：{ uid, nick, bet, cards, st: "idle"｜"bet"｜"play"｜"stand"｜"done", san, bonusPct, allin, out, gone, idle, timedOut }
 //  ctx：{ wallets: { uid: 錢包 }, house, day }（會改）。邀 NPC 的桌子還要 ctx.secret、ctx.npcList、ctx.counters（NPC 名單、全館進度），NPC 說的話寫進 ctx.says（陣列，伺服器之後推進聊天）。
 //  NPC 座位（11-14，決定 0080，規則在 shared/casino_npc.js）：uid 是 "n~NPC的id"，座位多 npc：{ id, style, host 帶他來的館友, until 待到哪個毫秒, said 這局說了幾句 }；
-//    沒有錢包：注從外面世界出、賠付回外面世界；下注、要牌、停牌都由伺服器馬上替他做，不等計時；館友先下注他才下注（桌上只有 NPC 時不開局）。
+//    沒有錢包：注從已知世界出、賠付回已知世界；下注、要牌、停牌都由伺服器馬上替他做，不等計時；館友先下注他才下注（桌上只有 NPC 時不開局）。
 // ================================================================
 import { NUM } from "./config.js";
 import { CAS_TEXT } from "./casino_text.js";
@@ -177,7 +177,7 @@ export function casTFinish(t, ctx, now) {
   for (const s of bet) {
     const o = casOutcome(s.cards, t.dealer);
     s.out = Object.assign({ kind: o.kind, why: o.why }, casPayout(s.bet, o.kind, s.bonusPct));
-    if (s.npc) { npcCasPay(ctx.house, ctx.day, s.npc.id, s.bet, s.out); nwPoke(ctx.house, ctx.day, s.npc.host, s.npc.id, nwPokeKind(s.out)); continue; } // NPC：沒有錢包，賠付回外面世界
+    if (s.npc) { npcCasPay(ctx.house, ctx.day, s.npc.id, s.bet, s.out); nwPoke(ctx.house, ctx.day, s.npc.host, s.npc.id, nwPokeKind(s.out)); continue; } // NPC：沒有錢包，賠付回已知世界
     const w = ctx.wallets[s.uid];
     if (w) {
       const r = casSettle(w, ctx.house, { bet: s.bet, out: s.out, allin: s.allin, settled: false }, { day: ctx.day, withOthers });
@@ -217,7 +217,7 @@ function casTNpcSweep(t, ctx) {
   for (const s of casTSeats(t)) { const h = s.npc && t.seats[s.npc.host]; if (s.npc && (!h || h.gone)) casTNpcGo(t, ctx, s, "host"); }
   if (t.phase === "bet" && !casTHumanBet(t)) for (const s of casTSeats(t)) if (s.npc && s.bet > 0) { npcCasRefund(ctx.house, s.bet); Object.assign(s, { bet: 0, st: "idle" }); t.seq++; }
 }
-// 桌子收了、隊伍解散：還沒結算的 NPC 注退回外面世界，NPC 全部從「在賭場」名單拿掉（不說話）
+// 桌子收了、隊伍解散：還沒結算的 NPC 注退回已知世界，NPC 全部從「在賭場」名單拿掉（不說話）
 export function casTNpcDrop(t, ctx) {
   for (const s of casTSeats(t)) if (s.npc) casTNpcGo(t, ctx, s, "silent");
 }

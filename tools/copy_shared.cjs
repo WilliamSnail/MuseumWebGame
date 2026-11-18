@@ -85,12 +85,12 @@ function dayData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "day_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每天的館訊（board）和現實消息（real），依日期查（給 Discord 的 /pepe-今日活動）\nexport const DAY_DATA = " + JSON.stringify(dayData()) + ";\n");
-// 外面世界的經濟（11-14）：content/economy.json 的 gdp（台灣最新一季 GDP 年增率），每日排劇情的排程更新，給景氣指數的外部景氣用（shared/casino_gdp.js 的 casGdpExt）。
+// 已知世界的經濟（11-14）：content/economy.json 的 gdp（台灣最新一季 GDP 年增率），每日排劇情的排程更新，給景氣指數的外部景氣用（shared/casino_gdp.js 的 casGdpExt）。
 function economyData() {
   const f = path.join(ROOT, "content", "economy.json");
   try { const d = JSON.parse(fs.readFileSync(f, "utf8")); return d.gdp ? { gdp: d.gdp } : {}; } catch (e) { console.error("economy.json：讀不出來", e.message); return {}; }
 }
-fs.writeFileSync(path.join(to, "economy_data.js"), "// copy_shared.cjs 產生的，不要改。content/economy.json（外面世界的景氣，給 Functions 算景氣指數）\nexport const ECONOMY = " + JSON.stringify(economyData()) + ";\n");
+fs.writeFileSync(path.join(to, "economy_data.js"), "// copy_shared.cjs 產生的，不要改。content/economy.json（已知世界的景氣，給 Functions 算景氣指數）\nexport const ECONOMY = " + JSON.stringify(economyData()) + ";\n");
 // 藝術市場（11-14，shared/casino_art.js）：每日特展的畫登記起來給伺服器查價（不放 svg 和畫的內容）。id 跟存檔的 P.story.works 一樣（週/畫 id），只收正式的週（備用週的 id 會變，先不賣）。
 function artData() {
   const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);

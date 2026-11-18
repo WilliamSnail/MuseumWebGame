@@ -195,7 +195,7 @@ export function casAucNpcBid(a, ref, house, ctx) {
   let amt = auUnit(ref * mult * like);
   amt = Math.min(amt, npc.budget.max, npc.budget.perDay - auN(spent.by[npc.id]), dayCap - auN(spent.n));
   if (amt < a.reserve || amt <= 0) return null;
-  if (a.kind === "player" && amt > casWorldRoom(house, NUM.casino.world)) return null; // 玩家賣給 NPC：外面世界付，吃緊時付不出就不出價
+  if (a.kind === "player" && amt > casWorldRoom(house, NUM.casino.world)) return null; // 玩家賣給 NPC：已知世界付，吃緊時付不出就不出價
   return { npc, amt };
 }
 // 算壹場。ctx：{ house, wallets: { uid: 錢包 }, saves: { uid: 存檔的 P（挑戰模式的，沒有就沒這個 key） }, day, nowMs, npcList?: NPC 名單, secret?: 伺服器祕密 }
@@ -227,7 +227,7 @@ export function casAucSettle(doc, id, ctx) {
   });
   const keep = a.kind === "player" ? !!(sellerA && wallets[seller] && auHas(sellerA.own, a.work) && sellerA.own[a.work].lock === id) : true; // 賣家的畫不見了：流標
   let sold = null;
-  // NPC 買家：出價比最高的玩家高才得標（同價玩家先），得標的 NPC 付的是外面世界的錢
+  // NPC 買家：出價比最高的玩家高才得標（同價玩家先），得標的 NPC 付的是已知世界的錢
   const refPx = a.kind === "player" ? (sellerA && auHas(sellerA.own, a.work) ? casArtPrice(sellerA.own[a.work], a.work, day, house) : 0) : a.reserve;
   const nb = keep ? casAucNpcBid(a, refPx, house, ctx) : null;
   if (nb && (!ranks.length || nb.amt > ranks[0].amt)) {

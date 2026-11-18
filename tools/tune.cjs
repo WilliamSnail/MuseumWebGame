@@ -8,7 +8,7 @@
 //   unit:集團id.欄位=值　　content/world/units，叫 world:unit 的 set
 //   npc:NPCid.欄位路徑=值　content/npc，叫 world:npc 的 set（例如 budget.perDay、job.unit）
 // 改完自動跑：world:check、econ:check、npc_check（有改 NPC 時）、世界經濟的測試；--full 改跑整套 npm test；
-//   world:sim（30 天，景氣 0 和 −1）前後對照：外面世界、NPC 每天花多少、莊家、博物館資金、各狀態的集團數、守恆、有沒有破產。--no-sim 跳過模擬。
+//   world:sim（30 天，景氣 0 和 −1）前後對照：已知世界、NPC 每天花多少、莊家、博物館資金、各狀態的集團數、守恆、有沒有破產。--no-sim 跳過模擬。
 // 任何壹項沒過、或模擬破產／守恆不對：exit 1，檔案還原成原本的樣子。只改 repo 的檔案，不碰正式站。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
@@ -108,7 +108,7 @@ function defaultSim() {
   const L = require("./world_lib.cjs"), SM = require("./world_sim.cjs"), { load } = require("../test/load_shared.cjs"), npcs = L.readNpcs(), out = {};
   for (const b of [0, -1]) {
     const G = load({ __realMoney: true }), r = SM.sim(G, npcs, { days: 30, b }), st = { normal: 0, cut: 0, squeeze: 0, layoff: 0 }; if (r.house.wh) Object.values(r.house.wh.st).forEach(s => { st[s.s]++; });
-    out["景氣 " + b] = { 外面世界變化: r.w1 - r.w0, NPC每天花: Math.round(r.spent.total / r.days), 莊家變化: r.bank, 博物館資金變化: r.budget, 錢包合計: r.wal.total, 一般減薪緊縮裁員: `${st.normal}／${st.cut}／${st.squeeze}／${st.layoff}`, 守恆差: r.gap, 沒破產: r.gap === 0 && r.a1.pub >= 0 && r.house.bankroll >= 0 && r.house.budget >= 0 };
+    out["景氣 " + b] = { 已知世界變化: r.w1 - r.w0, NPC每天花: Math.round(r.spent.total / r.days), 莊家變化: r.bank, 博物館資金變化: r.budget, 錢包合計: r.wal.total, 一般減薪緊縮裁員: `${st.normal}／${st.cut}／${st.squeeze}／${st.layoff}`, 守恆差: r.gap, 沒破產: r.gap === 0 && r.a1.pub >= 0 && r.house.bankroll >= 0 && r.house.budget >= 0 };
   }
   return out;
 }

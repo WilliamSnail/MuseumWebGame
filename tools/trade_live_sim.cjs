@@ -7,7 +7,7 @@ const run = (live, b) => { const G = load({ __realMoney: true }); G.NUM.casino.w
 for (const b of [-1, 0, 1]) {
   const A = run(false, b), B = run(true, b), wa = A.r.house.wh, wb = B.r.house.wh, S = { normal: "一", cut: "減", squeeze: "緊", layoff: "裁" };
   const st = w => Object.keys(w.st).map(k => S[w.st[k].s]).join(""), maxDiff = Math.max(...Object.keys(A.r.a1).map(k => Math.abs(A.r.a1[k] - B.r.a1[k])));
-  console.log(`\n景氣 ${b}，${days} 天：集團之間搬的錢 關 ${fmt(A.tot)} / 開 ${fmt(B.tot)}；最後狀態 關 ${st(wa)} / 開 ${st(wb)}；各單位帳上最大差 ${fmt(maxDiff)}（外面世界 ${fmt(A.r.w1)}）；守恆差 ${B.r.gap}`);
+  console.log(`\n景氣 ${b}，${days} 天：集團之間搬的錢 關 ${fmt(A.tot)} / 開 ${fmt(B.tot)}；最後狀態 關 ${st(wa)} / 開 ${st(wb)}；各單位帳上最大差 ${fmt(maxDiff)}（已知世界 ${fmt(A.r.w1)}）；守恆差 ${B.r.gap}`);
   const rows = B.slots.map(x => x.row), act = rows.map(r => r.filter(v => v > 0).length), tot = rows.map(r => r.reduce((a, c) => a + c, 0)), mx = rows.map((r, i) => tot[i] > 0 ? Math.max(...r) / tot[i] : 0);
   const days0 = rows.filter((r, i) => tot[i] > 0).length;
   console.log(`  live 開：有搬錢的天 ${days0}/${days}，每天有動的格數 平均 ${(act.reduce((a, c) => a + c, 0) / days).toFixed(1)}／96，最大壹格占全天 平均 ${(100 * mx.reduce((a, c) => a + c, 0) / Math.max(1, days0)).toFixed(1)}%、最大 ${(100 * Math.max(...mx)).toFixed(1)}%`);

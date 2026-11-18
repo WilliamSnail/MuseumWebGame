@@ -63,7 +63,7 @@ T("拉高出貨賺不到：一口氣買到漲停、等回補再賣，扣掉價�
   const out = G.casInSell(w, h, "food", "max", day, at(day, 18), SEC); assert.ok(out.ok, out.reason);
   assert.ok(w.chips < c0, "拉高出貨淨虧：" + (w.chips - c0));
 });
-T("錢：旅客散客的買賣走外面世界 ↔ 莊家（來源 inMarket），守恆；莊家沒錢時付得出的部分", G => {
+T("錢：旅客散客的買賣走已知世界 ↔ 莊家（來源 inMarket），守恆；莊家沒錢時付得出的部分", G => {
   const h = house(G), w = wallet(G); const op = G.casBookOpening(snap(G, w, h)); run(G, h, 12);
   assert.strictEqual(G.casBookGap(snap(G, w, h), op), 0, "跑 12 天守恆");
   assert.ok(h.led && h.led.world && typeof h.led.world.inMarket === "number", "世界帳有 inMarket");

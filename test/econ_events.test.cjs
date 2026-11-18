@@ -54,7 +54,7 @@ T("畫價凍結不能拿來躲掉價：賣給館方的價 ＝ min(凍結價, 當
   { h.art.own[id] = 0; h.econ.b = 1; const fz = h.art.freeze; h.art.freeze = null; const real2 = G.casArtPrice(item, id, D, h); h.art.freeze = fz; assert.ok(real2 < p1, "景氣好 → 當下價比凍結價低（測試前提）"); assert.strictEqual(G.casArtSellBase(item, id, D, h), real2, "當下價比較低：照當下價賣（凍結不能躲掉價）"); }
   assert.strictEqual(G.casArtSellBase(item, id, add(D, 3), h), G.casArtPrice(item, id, add(D, 3), h), "窗口外照舊"); assert.ok(raw > 0);
 });
-T("莊家提早還外面世界貸款：只在那天壹次、不超過上限、還完莊家仍在健康線以上；守恆", G => {
+T("莊家提早還已知世界貸款：只在那天壹次、不超過上限、還完莊家仍在健康線以上；守恆", G => {
   const h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = 500000000; h.debt.world = 300000000; const t0 = inv(G, h), w0 = h.world;
   G.casEconRun(h, D, ev([D, "houseRepay", 2, ""])); const room = Math.max(0, 500000000 - G.NUM.casino.health.low * 2), want = Math.min(300000000, Math.floor(room * G.NUM.casino.econEvent.repayPct[1] / 100));
   assert.strictEqual(h.ev.repaid, want); assert.strictEqual(h.debt.world, 300000000 - want); assert.strictEqual(h.world, w0 + want); assert.ok(h.bankroll >= G.NUM.casino.health.low); assert.strictEqual(inv(G, h), t0, "守恆");

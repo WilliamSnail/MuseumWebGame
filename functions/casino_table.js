@@ -106,7 +106,7 @@ partyHooks.beforeLeave.push(async (pid, uid) => {
   } catch (e) { if (!(e instanceof HttpsError)) console.error("賭場離桌出錯", e); } // 這桌已經收了：照樣離開隊伍
 });
 async function closeTable(pid) {
-  try { await tableTxn(pid, null, {}, ({ t, ctx }) => { casTNpcDrop(t, ctx); return { ok: true }; }); } catch (e) { if (!(e instanceof HttpsError)) console.error("賭場收桌退 NPC 的注出錯", e); } // 還沒結算的 NPC 注退回外面世界、NPC 從「在賭場」名單拿掉
+  try { await tableTxn(pid, null, {}, ({ t, ctx }) => { casTNpcDrop(t, ctx); return { ok: true }; }); } catch (e) { if (!(e instanceof HttpsError)) console.error("賭場收桌退 NPC 的注出錯", e); } // 還沒結算的 NPC 注退回已知世界、NPC 從「在賭場」名單拿掉
   await rtdb().ref().update({ [`casinoView/${pid}`]: null, [`casinoChat/${pid}`]: null, [`casinoChatAt/${pid}`]: null }).catch(() => {});
   await tableRef(pid).delete().catch(() => {});
 }

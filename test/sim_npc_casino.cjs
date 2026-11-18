@@ -1,5 +1,5 @@
 // 邀請 NPC 去賭場的模擬（11-14，決定 0080；11-17 加「壹次帶好幾位」）：node test/sim_npc_casino.cjs [天數 30] [每天幾位館友 12] [每人壹次帶幾位，預設照 config 的 perHost]
-// 每天 P 位館友各開壹桌、在不同時間邀 NPC（壹次邀到 K 位）、打到 NPC 都走；看全館 NPC 壹天的淨輸贏有沒有超過 dayCap、壹位 NPC 的最大輸贏、莊家、守恆（莊家＋外面世界＋館友錢包，差要是 0）。
+// 每天 P 位館友各開壹桌、在不同時間邀 NPC（壹次邀到 K 位）、打到 NPC 都走；看全館 NPC 壹天的淨輸贏有沒有超過 dayCap、壹位 NPC 的最大輸贏、莊家、守恆（莊家＋已知世界＋館友錢包，差要是 0）。
 const fs = require("fs"), path = require("path"), repo = path.join(__dirname, "..");
 const { load } = require("./load_shared.cjs");
 const G = load();
@@ -45,4 +45,4 @@ for (let d = 0; d < days; d++) {
 const avg = a => a.reduce((x, y) => x + y, 0) / a.length, fmt = n => Math.round(n).toLocaleString();
 console.log(`每人最多帶 ${K}、桌上最多 ${TM}｜邀 ${invites}、答應 ${accepted}、桌上同時最多 ${maxAt} 位、NPC 打 ${hands} 手、總下注 ${fmt(stake)}`);
 console.log(`  全館 NPC 壹天淨輸贏：平均 ${fmt(avg(rows.map(r => r.net)))}，最大 ${fmt(worst)}（上限 ${fmt(G.NUM.casino.npcCas.dayCap)}，碰到上限 ${capDays} 天）；壹位 NPC 壹天最大 ${fmt(maxNpc)}`);
-console.log(`  莊家每天平均 ${fmt(avg(rows.map(r => r.bank)))}；守恆差（莊家＋外面世界 前後差）：${fmt(house.bankroll + house.world + pDelta - W0)}（館友錢包也算進去）`);
+console.log(`  莊家每天平均 ${fmt(avg(rows.map(r => r.bank)))}；守恆差（莊家＋已知世界 前後差）：${fmt(house.bankroll + house.world + pDelta - W0)}（館友錢包也算進去）`);

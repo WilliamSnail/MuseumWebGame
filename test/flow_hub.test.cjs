@@ -10,13 +10,13 @@ T("flow：casino_report 名單裡的每個來源都有線，線的兩端都是�
   assert.deepStrictEqual(miss, [], "沒歸到金流的線：" + miss.join("、"));
   for (const [k, ln] of Object.entries(G.CAS_FLOW_LINE)) assert.ok(ln.length === 2 && ln.every(x => ids.has(x) || x.startsWith("w:")) && ln[0] !== ln[1], k);
 });
-T("flow：方向（進莊家的錢是 對面→莊家；外面世界付出去的是 外面世界→對面；兩個方向相抵取淨額）", G => {
-  const e = G.casFlowEdges({ bankroll: [{ k: "bj", label: "21 點", n: 3000 }, { k: "pack", label: "大禮包", n: -700 }, { k: "grant", label: "文化部借款", n: 500 }], world: [{ k: "grant", label: "文化部借款撥款", n: -500 }, { k: "stockBuy", label: "買股票", n: 900 }, { k: "npcTicketBudget", label: "NPC 的門票", n: -40 }], budget: [{ k: "npcTicketBudget", label: "NPC 的門票", n: 40 }, { k: "investFee", label: "投資手續費", n: 20 }], museum: [], gov: [] }), at = (a, b) => e.edges.find(x => x.from === a && x.to === b);
+T("flow：方向（進莊家的錢是 對面→莊家；已知世界付出去的是 已知世界→對面；兩個方向相抵取淨額）", G => {
+  const e = G.casFlowEdges({ bankroll: [{ k: "bj", label: "21 點", n: 3000 }, { k: "pack", label: "大禮包", n: -700 }, { k: "grant", label: "文化部借款", n: 500 }], ext: [{ k: "stockBuy", label: "買股票", n: 900 }], world: [{ k: "grant", label: "文化部借款撥款", n: -500 }, { k: "npcTicketBudget", label: "NPC 的門票", n: -40 }], budget: [{ k: "npcTicketBudget", label: "NPC 的門票", n: 40 }, { k: "investFee", label: "投資手續費", n: 20 }], museum: [], gov: [] }), at = (a, b) => e.edges.find(x => x.from === a && x.to === b);
   assert.strictEqual(e.lost.length, 0, e.lost.join());
   assert.strictEqual((at("players", "house") || {}).amt, 2300, "21 點進 3000、大禮包出 700 → 淨 2300 館友給莊家");
-  assert.strictEqual((at("world", "house") || {}).amt, 500, "外面世界撥款給莊家 500（兩個帳各列壹次，只算壹次）");
-  assert.strictEqual((at("players", "w:u-ext") || {}).amt, 900, "買股票：錢給海外（真實市場，決定 0121）");
-  assert.strictEqual((at("world", "budget") || {}).amt, 40, "NPC 門票：外面世界→博物館資金");
+  assert.strictEqual((at("world", "house") || {}).amt, 500, "已知世界撥款給莊家 500（兩個帳各列壹次，只算壹次）");
+  assert.strictEqual((at("players", "ext") || {}).amt, 900, "買股票：錢給海外（真實市場，決定 0126：跟已知世界並列的帳）");
+  assert.strictEqual((at("world", "budget") || {}).amt, 40, "NPC 門票：已知世界→博物館資金");
   assert.strictEqual((at("house", "budget") || {}).amt, 20, "投資手續費：莊家付給博物館資金");
   const pk = at("players", "house").srcs.find(x => x.src === "pack"); assert.strictEqual(pk.amt, -700, "反方向的來源是負的");
   assert.ok(e.edges.every(x => x.amt > 0 && x.srcs.length));
@@ -31,11 +31,11 @@ T("flow：casFlowHub 用現在的 house.led 減 05:00 的 led0；不是今天的
   assert.strictEqual(G.casFlowHub(h, "2026-11-18"), null, "led0 是昨天的");
   assert.ok(!JSON.stringify(r).match(/npcw|"who"|"npc":/), "只給合計和來源標籤");
 });
-T("flow：外面世界裡每個頂層單位、家計、公共都有節點（名單新增、拆分、改名會自己跟著）", G => {
+T("flow：已知世界裡每個頂層單位、家計、公共都有節點（名單新增、拆分、改名會自己跟著）", G => {
   const D = "2026-11-17", h = G.casHouseFix(G.casHouseNew(), D).house, ids = G.casFlowWorldNodes(h).map(x => x.id);
   for (const u of G.WORLD_UNITS.filter(x => x.parent == null)) assert.ok(ids.includes("w:" + u.id), "沒有節點：" + u.id);
   assert.ok(ids.includes("w:" + G.WU_HH) && ids.includes("w:" + G.WU_PUB));
-  const sum = G.casFlowWorldNodes(h).reduce((n, x) => n + x.bal, 0); assert.ok(Math.abs(sum - Math.floor(h.world)) <= 2 && sum > 0, "各單位加起來要是外面世界的錢（公共是剩下的）：" + sum + " vs " + h.world);
+  const sum = G.casFlowWorldNodes(h).reduce((n, x) => n + x.bal, 0); assert.ok(Math.abs(sum - Math.floor(h.world)) <= 2 && sum > 0, "各單位加起來要是已知世界的錢（公共是剩下的）：" + sum + " vs " + h.world);
   assert.strictEqual(G.casFlowWorldNodes(null).length, 0);
 });
 T("flow：名單多加壹個集團、拆成兩個、改名，節點和線自己多出來；沒有的來源會被擋", G => {

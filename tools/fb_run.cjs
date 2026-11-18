@@ -20,7 +20,7 @@ function stepLines(log) {
 function numbersOf(lines) {
   const out = {};
   for (const raw of lines) {
-    const line = raw.trim(), head = (/^(#\d+|莊家|世界文件[^：]*|外面世界的帳上分類[^：]*|錢包 \d+ 個)/.exec(line) || [""])[0];
+    const line = raw.trim(), head = (/^(#\d+|莊家|世界文件[^：]*|已知世界的帳上分類[^：]*|錢包 \d+ 個)/.exec(line) || [""])[0];
     for (const m of line.matchAll(/([^\s：:,，（）()　]+)[：:\s　]+(-?\d[\d,]*(?:\.\d+)?)(?![\d.])/g)) {
       const k = (head && !m[1].startsWith(head) ? head + "·" : "") + m[1], v = Number(m[2].replace(/,/g, ""));
       if (Number.isFinite(v)) out[k] = v;

@@ -1,5 +1,5 @@
 // 配股息（決定 0112）：node test/stock_div.test.cjs（npm test 也會跑）
-// 除息日開始時持有的人領現金股利（外面世界付、扣股利所得稅進政府帳）；除息日當天才買的不領；配股（除權）多給股數、零股補現金；槓桿部位調整；守恆。
+// 除息日開始時持有的人領現金股利（已知世界付、扣股利所得稅進政府帳）；除息日當天才買的不領；配股（除權）多給股數、零股補現金；槓桿部位調整；守恆。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 // functions/stock_div.js 直接取出 parseDivEvents 的原始碼來跑（不載入 firebase）
@@ -25,16 +25,16 @@ T("解析 Yahoo：現金股利、台股配股（記成 splits）、同一天的�
   assert.deepStrictEqual(parseDivEvents(two, "x", true).map(e => e.amt), [1.5], "同一天兩筆合成一筆");
   assert.deepStrictEqual(parseDivEvents({ chart: { result: [{}] } }, "x", true), []); assert.deepStrictEqual(parseDivEvents(null, "x", true), []);
 });
-T("除息日開始時持有的人領股息：外面世界付、扣 30.11% 進政府帳；帳守恆；訊息", G => {
+T("除息日開始時持有的人領股息：已知世界付、扣 30.11% 進政府帳；帳守恆；訊息", G => {
   const s = fresh(G), op = G.casBookOpening(snap(G, s));
   give(G, s, 1000);
   G.casStockPegSync(s.w, s.house); // 今天的持股記下來
   roll(G, s, D1); G.casStockSetDiv(s.house, { ev: [ev("div", D1, 2)] });
-  const c0 = s.w.chips, g0 = s.house.gov || 0, w0 = s.house.world;
+  const c0 = s.w.chips, g0 = s.house.gov || 0, w0 = s.house.ext;
   G.casStockPegSync(s.w, s.house);
   const gross = 2000, tax = Math.ceil(gross * 3011 / 10000);
-  assert.strictEqual(s.w.chips, c0 + gross - tax); assert.strictEqual(s.house.gov, g0 + tax); assert.strictEqual(s.house.world, w0 - gross);
-  assert.strictEqual(s.house.led.world.dividend, -gross); assert.ok(s.w.stk.notes.some(n => n.includes("除息") && n.includes("2,000")), s.w.stk.notes.join("|"));
+  assert.strictEqual(s.w.chips, c0 + gross - tax); assert.strictEqual(s.house.gov, g0 + tax); assert.strictEqual(s.house.ext, w0 - gross);
+  assert.strictEqual(s.house.led.ext.dividend, -gross); assert.ok(s.w.stk.notes.some(n => n.includes("除息") && n.includes("2,000")), s.w.stk.notes.join("|"));
   assert.strictEqual(gap(G, s, op), 0, "守恆");
   const c1 = s.w.chips; G.casStockPegSync(s.w, s.house); assert.strictEqual(s.w.chips, c1, "同一筆只領一次");
 });

@@ -88,8 +88,8 @@ T("金流頁籤：增資、庫藏股、股利的線連到那家集團；海外�
   const bb = G.gsBuy(w, h, "g-arts", 40000, D, NOON); assert.ok(bb.ok, bb.reason); const g = h.gs; g.ev.push({ no: ++g.n, kind: "div", id: "g-arts", ps: 0.5, day: D }); const got = G.gsSync(w, h).got; assert.ok(got > 0);
   const r = G.casFlowHub(h, D), E = (a, b) => r.edges.find(x => x.from === a && x.to === b);
   assert.strictEqual(E("house", "w:g-finance").amt, c1, "增資：莊家 → 那家集團"); assert.strictEqual(E("w:g-daily", "house").amt, c2, "庫藏股：那家集團 → 莊家"); assert.strictEqual(E("w:g-arts", "players").amt, got, "股利：那家集團 → 館友");
-  assert.ok(!r.edges.some(x => x.from === "world" && x.to === "house" && x.srcs.some(s => s.src === "gRaise")), "不再掛在整個外面世界");
-  h.wu.adj["u-ext"] = -5000; const n = G.casFlowWorldNodes(h).find(x => x.id === "w:u-ext"); assert.ok(n.bal < 0, "海外負的照實顯示"); assert.ok(G.wtCard(h) == null || G.wtCard(h).rows.every(x => x.k.startsWith("trade")));
+  assert.ok(!r.edges.some(x => x.from === "world" && x.to === "house" && x.srcs.some(s => s.src === "gRaise")), "不再掛在整個已知世界");
+  h.ext = -5000; assert.ok(!G.casFlowWorldNodes(h).find(x => x.id === "w:u-ext"), "海外不在已知世界的節點裡（決定 0126）"); assert.ok(G.wtCard(h) == null || G.wtCard(h).rows.every(x => x.k.startsWith("trade")));
 });
 T("畫面 gsView：價格、指數、我的持股；沒有錢包也行", G => {
   const { h, w } = setup(G); G.gsBuy(w, h, "g-arts", 1000, D, NOON); const v = G.gsView(w, h, D, NOON); assert.strictEqual(v.list.length, 6); const a = v.list.find(x => x.id === "g-arts"); assert.strictEqual(a.mine, 1000); assert.ok(a.price > 0 && a.name.endsWith("股")); assert.ok(G.gsView(null, h, D, NOON).list.length === 6);

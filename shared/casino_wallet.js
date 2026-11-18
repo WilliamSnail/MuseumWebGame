@@ -20,7 +20,7 @@ import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
-import { whTick, wuDebit, wuFix, wuGrow } from "./world.js";
+import { whTick, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -35,7 +35,7 @@ export function casWalletNew() {
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
-// 新玩家的起始籌碼是文化部補助（決定 0082）：新錢包帶 led.cult＝1 的記號，第壹次碰到莊家（house）時，把「憑空給的」改記成外面世界出的（來源 cultureStart）。
+// 新玩家的起始籌碼是文化部補助（決定 0082）：新錢包帶 led.cult＝1 的記號，第壹次碰到莊家（house）時，把「憑空給的」改記成已知世界出的（來源 cultureStart）。
 // 舊錢包沒有記號，不動。人數不設上限（翊文 11-15）；池子吃緊時只補今天付得出的部分，剩下的還是記憑空。回傳這次轉的籌碼
 export function casCultureFund(w, house) {
   if (!w || !w.led || !w.led.cult) return 0;
@@ -89,9 +89,10 @@ export function casHouseFix(h, day) {
   if (!casIsObj(h.pol)) h.pol = null; // 最近一次拚經濟成功抽到的政策 { idx, fx, day }
   h.gov = Math.floor(casNz(h.gov, 0)); // 政府帳（證交稅、營業稅、娛樂稅，決定 0110、0111）
   h.museum = Math.floor(casNz(h.museum, 0)); // 修繕基金（門票，shared/casino_ticket.js）
-  h.world = Math.floor(casNz(h.world, NUM.casino.world.start)); // 外面世界的池子（規劃 2.12）；舊的莊家第壹次碰到時給起始
+  h.world = Math.floor(casNz(h.world, NUM.casino.world.start)); // 已知世界的池子（規劃 2.12）；舊的莊家第壹次碰到時給起始
+  h.ext = Math.floor(casNz(h.ext, 0)); // 海外（真實市場，決定 0126）：跟已知世界並列的帳，可以是負的
   casLedFix(h, ["mint", "flow", "burn"]);
-  // 莊家的債（規劃 2.11）：budget 跟博物館資金借的、culture 文化部借款、world 外面世界貸款（含利息）。loansOut：借出去還沒收回的本金。pay：今天已經賠付多少
+  // 莊家的債（規劃 2.11）：budget 跟博物館資金借的、culture 文化部借款、world 已知世界貸款（含利息）。loansOut：借出去還沒收回的本金。pay：今天已經賠付多少
   if (!casIsObj(h.debt)) h.debt = {};
   for (const k of ["budget", "culture", "world"]) h.debt[k] = Math.max(0, Math.floor(casNz(h.debt[k])));
   h.loansOut = Math.max(0, Math.floor(casNz(h.loansOut)));
@@ -100,22 +101,23 @@ export function casHouseFix(h, day) {
   h.hands = Math.max(0, Math.floor(casNz(h.hands))); h.reopened = Math.max(0, Math.floor(casNz(h.reopened)));
   // 莊家破產中（小於 0），過了換日 Yuga 借他壹筆重新開張（梗留著，但不會破產到永遠）
   let reopen = null;
-  // 外面世界撥的錢（NUM.casino.grants）：每個 id 只撥壹次，記成文化部借款（債，house.debt.culture，不計利息，莊家賺的錢先還博物館資金、再還這個）。
+  // 已知世界撥的錢（NUM.casino.grants）：每個 id 只撥壹次，記成文化部借款（債，house.debt.culture，不計利息，莊家賺的錢先還博物館資金、再還這個）。
   // 已經撥過、當時沒記債的（11-14 之前），補記壹次債（grantDebt）。
   if (!casIsObj(h.grants)) h.grants = {};
   if (!casIsObj(h.grantDebt)) h.grantDebt = {};
   for (const g of NUM.casino.grants || []) {
     if (!g || !g.id) continue;
     const gotG = !h.grants[g.id] ? casHouseWorldOut(h, "grant", g.amt, NUM.casino.world) : 0;
-    if (gotG > 0) { wuDebit(h, "u-culture", gotG); h.grants[g.id] = day || true; } // 外面世界撥的（池子少了），不是憑空
+    if (gotG > 0) { wuDebit(h, "u-culture", gotG); h.grants[g.id] = day || true; } // 已知世界撥的（池子少了），不是憑空
     if (h.grants[g.id] && !h.grantDebt[g.id]) { h.debt.culture += Math.max(0, Math.floor(casNz(g.amt))); h.grantDebt[g.id] = true; }
   }
   { const F = NUM.casino.houseLoan.fix; if (F && F.on && !h.cFix && h.day && h.debt.culture > 0 && h.budget >= F.amt + NUM.casino.houseLoan.cultureKeep) { h.budget -= F.amt; casHouseMove(h, "budgetFix", F.amt); h.cFix = day || true; } } // 決定 0118（11-17 修正：正式站 house.cul.paid 只是分期 13,393,619，另外 19,402,873 是第 2 步還的，所以不看 cul，只靠 cFix 擋重複）：一次性補撥，博物館資金 → 莊家，不改館債餘額
-  if (!h.wExp && NUM.casino.world.expand > 0) { const x = casWorldExpand(h, NUM.casino.world.expand); wuFix(h); wuGrow(h, x); h.wExp = day || true; } // 決定 0117：外面世界一次性擴充（帳上分類照權重分）
-  if (!h.extFix && h.world != null && h.day && casIsObj(h.led) && casIsObj(h.led.world)) { const L = h.led.world, net = ["stockBuy", "stockSell", "stockRebase", "stockLevWin", "stockLevLoss", "dividend"].reduce((t, k) => t + Math.round(casNz(L[k])), 0); const x = wuFix(h); if (x) x.adj["u-ext"] = casNz(x.adj["u-ext"]) + net; h.extFix = day || true; } // 決定 0121：以前館外股的錢進了本地池子，改記「海外」：把累計的淨額從本地分類搬到海外分類（池子總數不變）
+  if (!h.wExp && NUM.casino.world.expand > 0) { const x = casWorldExpand(h, NUM.casino.world.expand); wuFix(h); wuGrow(h, x); h.wExp = day || true; } // 決定 0117：已知世界一次性擴充（帳上分類照權重分）
+  if (!h.extFix && !h.extSplit && h.world != null && h.day && casIsObj(h.led) && casIsObj(h.led.world)) { const L = h.led.world, net = ["stockBuy", "stockSell", "stockRebase", "stockLevWin", "stockLevLoss", "dividend"].reduce((t, k) => t + Math.round(casNz(L[k])), 0); const x = wuFix(h); if (x) x.adj["u-ext"] = casNz(x.adj["u-ext"]) + net; h.extFix = day || true; } // 決定 0121：以前館外股的錢進了本地池子，改記「海外」：把累計的淨額從本地分類搬到海外分類（池子總數不變）
+  wuExtSplit(h); // 決定 0126：海外從已知世界搬出來，變成並列的帳 house.ext（壹次）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
-  wuFix(h); // 外面世界的帳上分類（W3，決定 0086）：沒有就照比例建
+  wuFix(h); // 已知世界的帳上分類（W3，決定 0086）：沒有就照比例建
   return { house: h, reopen };
 }
 // ---------- 莊家跟整個經濟接軌（規劃 2.11） ----------
@@ -128,9 +130,9 @@ function casHouseDaily(h, day) {
     return reopen;
   }
   const days = Math.max(1, Math.min(30, casDaysBetween(h.day, day)));
-  // 0 外面世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
+  // 0 已知世界每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 外部景氣 b）× 天數
   { const WC = C.world, yoy = Math.max(0, casNz(h.econ && h.econ.yoy)), base = WC.growYoy ? Math.max(WC.growBase, h.world * yoy / 100 / 365) : WC.growBase * Math.max(0, 1 + WC.growExtPct / 100 * casNz(h.econ && h.econ.b)), g = casWorldGrow(h, Math.floor(base * days)); wuGrow(h, g); whTick(h, day, h.stk && h.stk.px, g); } // 成長按權重分給單位；單位的健康值、週一換狀態（W5）（W3，帳上的分類，總和不變）
-  // 1 外面世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
+  // 1 已知世界貸款的利息：記在債上（不動莊家的錢），複利。文化部持有的館債（原本的 10 億撥款）也計利息，利率 cultureInterestPct（每天 %）
   if (h.debt.culture > 0 && H.cultureInterestPct > 0) h.debt.culture += Math.ceil(h.debt.culture * (Math.pow(1 + H.cultureInterestPct / 100, days) - 1));
   if (h.debt.world > 0) h.debt.world += Math.ceil(h.debt.world * (Math.pow(1 + H.interestPct / 100, days) - 1));
   // 1b 文化部館債分期（30 天內還清）：今天至少還 ceil(剩餘本息 ÷ 剩下天數)（到期日當天或過了＝全部）。莊家的錢不夠就先由博物館資金墊（記成莊家欠博物館資金，2.11 的順序），還不夠記逾期（h.cultureLate，日報寫出來），不印錢
@@ -148,7 +150,7 @@ function casHouseDaily(h, day) {
     if (pay > 0) { casHouseWorldIn(h, "cultureRepay", pay); h.debt.culture -= pay; h.cul.paid = pay; }
     h.cul.late = need - pay; if (h.cul.late > 0) h.cultureLate = (h.cultureLate || 0) + h.cul.late;
   }
-  // 2 莊家有賺（超過準備金）：壹半還債。先博物館資金、再文化部借款、最後外面世界（燒掉）
+  // 2 莊家有賺（超過準備金）：壹半還債。先博物館資金、再文化部借款、最後已知世界（燒掉）
   if (h.bankroll > H.reserve) {
     let pay = Math.floor((h.bankroll - H.reserve) * H.repayPct / 100);
     const a = Math.min(pay, h.debt.budget);
@@ -159,21 +161,21 @@ function casHouseDaily(h, day) {
     const c = Math.min(pay, h.debt.world);
     if (c > 0) { casHouseWorldIn(h, "worldRepay", c); h.debt.world -= c; }
   }
-  // 3 破產：先跟博物館資金借（閒錢的壹小部分），再跟外面世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
+  // 3 破產：先跟博物館資金借（閒錢的壹小部分），再跟已知世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
   if (h.bankroll < 0) {
     let need = H.reserve - h.bankroll, got = 0;
     const spare = Math.max(0, h.budget - Math.floor(C.econ.budgetStart * H.budgetKeepPct / 100));
     const x = Math.min(need, Math.floor(spare * H.budgetPct / 100), H.budgetMax);
     if (x > 0) { h.budget -= x; casHouseMove(h, "budgetLoan", x); h.debt.budget += x; need -= x; got += x; }
     const room = Math.max(0, casHouseCredit(h) - h.debt.world);
-    const y = casWorldLow(h, C.world) ? 0 : Math.min(need, room); // 外面世界吃緊時暫停貸款
+    const y = casWorldLow(h, C.world) ? 0 : Math.min(need, room); // 已知世界吃緊時暫停貸款
     if (y > 0) { const z = casHouseWorldOut(h, "worldLoan", y, C.world); h.debt.world += z; got += z; }
     if (h.bankroll >= 0) { h.reopened++; reopen = casFill(CAS_TEXT.houseReopenLoan, { n: casNum(got) }); }
     else reopen = CAS_TEXT.houseStillBroke;
   }
   return reopen;
 }
-// 外面世界願意借莊家多少（累計的債不超過這個）：max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）
+// 已知世界願意借莊家多少（累計的債不超過這個）：max(creditMin, creditDays × 館內 GDP 每天) ×（1 ＋ creditExtPct% × 外部景氣）
 export function casHouseCredit(h) {
   const H = NUM.casino.houseLoan, e = casIsObj(h.econ) ? h.econ : {};
   const gdp = Math.max(0, Math.floor(casNz(e.perDay))), ext = Math.max(-1, Math.min(1, casNz(e.bExt)));

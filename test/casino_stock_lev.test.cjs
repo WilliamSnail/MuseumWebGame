@@ -1,5 +1,5 @@
 // 股票槓桿、放空、當沖、信用等級（11-14，規劃 2.8b、2.8j）：node test/casino_stock_lev.test.cjs（npm test 也會跑）
-// 保證金算術、強平價、盤中檢查（含跳空穿過）、收盤自動平倉、放空損益、各種上限、信用等級、館內股（莊家）和台股（外面世界）兩種對手盤的帳都對得上。
+// 保證金算術、強平價、盤中檢查（含跳空穿過）、收盤自動平倉、放空損益、各種上限、信用等級、館內股（莊家）和台股（已知世界）兩種對手盤的帳都對得上。
 const assert = require("assert");
 const { load: load0 } = require("./load_shared.cjs");
 const load = (...a) => { const G = load0(...a); G.NUM.casino.stockIn.mkt.on = false; return G; }; // 這份測舊的算好的曲線（真的市場在 test/in_market.test.cjs，決定 0113）
@@ -157,18 +157,18 @@ T("當沖：隔天才碰到（還沒換日／已經換日），照原本那天�
   assert.strictEqual(out3[0].px, px0); assert.strictEqual(out3[0].pnl, 0);
 });
 
-T("台股用外面世界當對手盤：賺 mint（stockLevWin）、賠 burn（stockLevLoss）；莊家不動；手續費利息進博物館資金；帳對得上", G => {
+T("台股用已知世界當對手盤：賺 mint（stockLevWin）、賠 burn（stockLevLoss）；莊家不動；手續費利息進博物館資金；帳對得上", G => {
   const s = fresh(G), op = G.casBookOpening(snap(s)), bank0 = s.h.bankroll;
   const P = { day: D0, px: { [TW]: 100000 }, idx: 10, ser: {} };
   const r = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), fakeSrc(P)); assert.ok(r.ok, r.reason);
   P.px[TW] = 104000; P.idx = 12;
   const c = G.casLevClose(s.w, s.h, r.pos.no, D0, at(D0, 11), fakeSrc(P)); assert.ok(c.ok);
-  assert.strictEqual(c.pnl, 40000); assert.strictEqual(-s.h.led.world.stockLevWin, 40000); assert.strictEqual(s.h.bankroll, bank0, "莊家完全沒動");
+  assert.strictEqual(c.pnl, 40000); assert.strictEqual(-s.h.led.ext.stockLevWin, 40000); assert.strictEqual(s.h.bankroll, bank0, "莊家完全沒動");
   assert.strictEqual(G.casBookGap(snap(s), op), 0);
   const r2 = G.casLevOpen(s.w, s.h, { id: TW, side: "short", lev: 5, qty: 10 }, D0, at(D0, 12), fakeSrc(P)); assert.ok(r2.ok, r2.reason);
   P.px[TW] = 106000; P.idx = 20;
   const c2 = G.casLevClose(s.w, s.h, r2.pos.no, D0, at(D0, 12, 30), fakeSrc(P)); assert.ok(c2.ok, c2.reason);
-  assert.strictEqual(c2.pnl, -20000); assert.strictEqual(s.h.led.world.stockLevLoss, 20000); assert.strictEqual(s.h.bankroll, bank0);
+  assert.strictEqual(c2.pnl, -20000); assert.strictEqual(s.h.led.ext.stockLevLoss, 20000); assert.strictEqual(s.h.bankroll, bank0);
   assert.strictEqual(G.casBookGap(snap(s), op), 0);
   assert.strictEqual(G.casLevHouseFix(s.h).in, 0, "台股不佔莊家的曝險");
 });
@@ -178,7 +178,7 @@ T("台股淨賺上限：壹天賺超過上限的部分不給；賠的不設限�
   const r = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), fakeSrc(P)); assert.ok(r.ok);
   P.px[TW] = 105000; P.idx = 1;
   const c = G.casLevClose(s.w, s.h, r.pos.no, D0, at(D0, 10, 5), fakeSrc(P));
-  assert.strictEqual(c.pnl, 30000, "上限 3 萬"); assert.strictEqual(c.clipped, 20000); assert.strictEqual(-s.h.led.world.stockLevWin, 30000);
+  assert.strictEqual(c.pnl, 30000, "上限 3 萬"); assert.strictEqual(c.clipped, 20000); assert.strictEqual(-s.h.led.ext.stockLevWin, 30000);
   const r2 = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 11), fakeSrc(P)); P.px[TW] = 106000; P.idx = 2;
   const c2 = G.casLevClose(s.w, s.h, r2.pos.no, D0, at(D0, 11, 5), fakeSrc(P)); assert.strictEqual(c2.pnl, 0, "上限用完了，賺的不給");
   const r3 = G.casLevOpen(s.w, s.h, { id: TW, side: "long", lev: 5, qty: 10 }, D0, at(D0, 12), fakeSrc(P)); P.px[TW] = 100000; P.idx = 3;
@@ -233,7 +233,7 @@ T("莊家這邊的上限：館內股槓桿＋放空部位 ≤ max(莊家的錢 �
   assert.ok(G.casLevOpen(p.w, p.h, { id: IN, side: "long", lev: 5, qty: 3000 }, D0, at(D0, 6), src(0)).ok, "保底 300 萬");
   assert.ok(!G.casLevOpen(p.w, p.h, { id: IN, side: "long", lev: 5, qty: 1 }, D0, at(D0, 8), src(8)).ok);
   const z = fresh(G, 500000000, 0), rz = G.casLevOpen(z.w, z.h, { id: IN, side: "long", lev: 5, qty: 1 }, D0, at(D0, 6), src(0)); assert.ok(!rz.ok && /沒有錢/.test(rz.reason), rz.reason);
-  const w2 = fresh(G, 500000000, 0); assert.ok(G.casLevOpen(w2.w, w2.h, { id: TW, side: "long", lev: 5, qty: 1 }, D0, at(D0, 10), fakeSrc({ px: { [TW]: 100000 }, idx: 0 })).ok, "台股對手是外面世界，莊家沒錢也可以");
+  const w2 = fresh(G, 500000000, 0); assert.ok(G.casLevOpen(w2.w, w2.h, { id: TW, side: "long", lev: 5, qty: 1 }, D0, at(D0, 10), fakeSrc({ px: { [TW]: 100000 }, idx: 0 })).ok, "台股對手是已知世界，莊家沒錢也可以");
 });
 
 T("美股照信用解鎖開做多、放空（同台股）；市場判斷", G => {

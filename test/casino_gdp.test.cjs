@@ -117,14 +117,14 @@ T("政策：拚經濟成功抽到的政策持續到隔天；振興觀光門票�
   const tight = mk(); tight.house.pol = { idx: 7, fx: "tighten", day: D };
   assert.strictEqual(G.casEconPlay(tight.w, tight.house, D, seq(atR(50), 0.3, 0.99)).amount, Math.floor(50 * G.NUM.casino.econ.winPer * (1 - K.polPct / 100)));
 });
-T("日報景氣段：外面世界的景氣、景氣的影響、有效的政策", G => {
+T("日報景氣段：海外的景氣、景氣的影響、有效的政策", G => {
   const w = G.casWalletFix(G.casWalletNew(), D), house = G.casHouseFix(G.casHouseNew(), D).house;
   house.pol = { idx: 1, fx: "tourism", day: D };
   const snap = G.casBookSnap([w], house, 0, D); snap.pol = house.pol;
   const diff = G.casBookDiff(null, snap), idx = G.casGdpIndex([{ from: null, to: D, total: 0 }], 0, 5, 0.5);
   const sec = G.casReportView({ day: D, at: Date.UTC(2026, 10, 14), snap, diff, gdp: G.casGdpOf(diff), index: idx, ext: { ok: true, quarter: "2026Q3" } }).secs.find(s => s.t.includes("景氣"));
   const text = sec.lines.join("|");
-  assert.ok(text.includes("外面世界的景氣：比前幾季熱") && text.includes("景氣的影響：拚經濟撥款") && text.includes("有效的政策") && text.includes("門票多一成"), text);
+  assert.ok(text.includes("海外的景氣：比前幾季熱") && text.includes("景氣的影響：拚經濟撥款") && text.includes("有效的政策") && text.includes("門票多一成"), text);
 });
 T("莊家缺錢保護：莊家少於 low 免費大禮包只發 lowPacks 包、破產只發 brokePacks 包；買來的券不受影響；錢回來就恢復", G => {
   const H = G.NUM.casino.health, D = G.NUM.casino.dailyPacks, mk = bank => { const w = G.casWalletFix(G.casWalletNew(), D0), house = G.casHouseFix(G.casHouseNew(), D0).house; house.bankroll = bank; return { w, house }; };

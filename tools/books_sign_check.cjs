@@ -1,10 +1,10 @@
 // 帳的正負號對帳（11-16，翊文：「還有什麼正負號弄有問題，有腳本嗎」）：node tools/books_sign_check.cjs（npm run books:sign；npm test 也會跑）
 // 為什麼要有：銀行財報「館內經濟」、日報的各個帳，錢的方向有三種角度——
-//   莊家（diff.flow、diff.houseMint）：進莊家是正；外面世界（diff.wflow）：進外面世界是正，所以付出去是負的；博物館資金、修繕基金：進這個池子是正。
+//   莊家（diff.flow、diff.houseMint）：進莊家是正；已知世界（diff.wflow）：進已知世界是正，所以付出去是負的；博物館資金、修繕基金：進這個池子是正。
 //   顯示的人拿錯角度、少反壹次號，玩家就看到「博物館資金付門票給 NPC」。這支把壹整天會動到每種帳的事都做壹遍，對壹次帳：
-//   (a) 對帳：每個帳列出來的全部來源加起來 ＝ 這個帳昨天的變化（莊家、外面世界、修繕基金一定對；博物館資金有幾項還沒記帳，只印差多少）
+//   (a) 對帳：每個帳列出來的全部來源加起來 ＝ 這個帳昨天的變化（莊家、已知世界、修繕基金一定對；博物館資金有幾項還沒記帳，只印差多少）
 //   (b) 符號表：每個來源在每個帳應該是進來（＋）還是出去（－），照表；表裡沒有的來源（新加的）也會被擋
-//   (c) 同壹筆錢在兩個帳的正負要相反（例如莊家還文化部借款：莊家 －、外面世界 ＋）
+//   (c) 同壹筆錢在兩個帳的正負要相反（例如莊家還文化部借款：莊家 －、已知世界 ＋）
 //   (d) 名字：列出來的每壹項都要有中文名字（不能露出 npcCrowdBudget 這種代號）；日報文字（casReportView）的進出、往來也照同壹套檢查
 //   (e) 掃 shared/ 所有記帳的呼叫，每個來源代號都要在符號表裡、都要有名字
 // 對不上就印出哪個帳、哪個來源、預期和實際，結束碼 1。
@@ -20,12 +20,13 @@ const SIGN = {
   budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1 },
   gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
-  world: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
+  ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
+  world: { worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
-    houseInvestBuy: 1, houseInvestSell: -1, budgetInvestBuy: 1, budgetInvestSell: -1, houseInvFix: -1, budgetInvFix: -1, worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, dividend: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
+    worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
 };
-const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "外面世界" };
-// 同壹筆錢在兩個帳（外面世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的外面世界那邊還包著賣家的錢包，不比
+const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "已知世界", ext: "海外" };
+// 同壹筆錢在兩個帳（已知世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的已知世界那邊還包著賣家的錢包，不比
 const PAIRED = { bankroll: ["gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
@@ -55,10 +56,10 @@ function run() {
   const days = [];
   for (let k = 1; k <= 4; k++) {
     const day = addD(D0, k);
-    if (k === 2) G.casHouseMove(h, "bj", -3000000 - h.bankroll); // 破產，博物館資金有錢：先跟博物館資金借 // 破產：換日跟博物館資金借、跟外面世界貸款
-    if (k === 4) { G.casHouseMove(h, "bj", -3000000 - h.bankroll); h.budget = 1000; } // 破產，博物館資金也沒錢：跟外面世界貸款
-    if (k === 3) { G.casHouseMove(h, "bj", 4e11 - h.bankroll); h.budget = 5e9; h.debt.budget = Math.max(h.debt.budget, 1000000); h.debt.world = Math.max(h.debt.world, 1000000); } // 賺很多：換日還博物館資金、文化部、外面世界
-    G.casHouseFix(h, day); // 換日：外面世界成長、撥款、還款、借款（真的規則）
+    if (k === 2) G.casHouseMove(h, "bj", -3000000 - h.bankroll); // 破產，博物館資金有錢：先跟博物館資金借 // 破產：換日跟博物館資金借、跟已知世界貸款
+    if (k === 4) { G.casHouseMove(h, "bj", -3000000 - h.bankroll); h.budget = 1000; } // 破產，博物館資金也沒錢：跟已知世界貸款
+    if (k === 3) { G.casHouseMove(h, "bj", 4e11 - h.bankroll); h.budget = 5e9; h.debt.budget = Math.max(h.debt.budget, 1000000); h.debt.world = Math.max(h.debt.world, 1000000); } // 賺很多：換日還博物館資金、文化部、已知世界
+    G.casHouseFix(h, day); // 換日：已知世界成長、撥款、還款、借款（真的規則）
     G.casNpcSpend(h, day, "s" + k, LIST, null); // NPC 和散客的門票、逛店（真的規則）
     G.casStockHouseFix(h); G.casStockRoll(h, day, {}); G.casInvestRun(h, G.casStockHouseFix(h), day, "s", 0); // 館方投資（真的規則）
     // 其餘的來源：用記帳的零件照真的來源名字各動壹次（錢的對面跟真的程式壹樣：博物館資金、海底、錢包）
@@ -84,7 +85,7 @@ function run() {
       if (Math.abs(sum - real) > v.all[a].length) P(tag(a), `列出來的來源加起來 ${sgn(sum)}，帳上這天變化 ${sgn(real)}（差 ${sgn(real - sum)}）。來源：${v.all[a].map(x => x.k + " " + sgn(x.n)).join("、")}`);
     }
     info.push(`${day} 博物館資金昨天變化 ${sgn(v.d.budget)}，列出來的來源合計 ${sgn(v.all.budget.reduce((x, y) => x + y.n, 0))}（博物館資金還有幾項沒進帳上：參觀者分紅池撥款、債券救助；腳本自己改過博物館資金餘額的那天也不準，只印出來看）`);
-    for (const a of ["bankroll", "budget", "museum", "gov", "world"]) for (const x of v.all[a]) {
+    for (const a of ["bankroll", "budget", "museum", "gov", "world", "ext"]) for (const x of v.all[a]) {
       seen[a + "." + x.k] = 1;
       // (b) 符號表
       const exp = SIGN[a][x.k];
@@ -97,12 +98,14 @@ function run() {
     for (const x of v.all.bankroll) if (G.CAS_BOOK_POOL[x.k]) P(tag("bankroll"), `「${x.label}」是博物館資金／修繕基金的錢，不該列在莊家`);
     // (c) 同壹筆錢兩邊相反
     for (const a of Object.keys(PAIRED)) for (const k of PAIRED[a]) {
-      const x = v.all[a].find(y => y.k === k), y = v.all.world.find(z => z.k === k);
+      const x = v.all[a].find(y => y.k === k), y = v.all.ext.concat(v.all.world).find(z => z.k === k);
       if (!x && !y) continue;
-      if (!x || !y || x.n !== -y.n) P(`${day} ${ACCT_NAME[a]}↔外面世界`, `同壹筆「${k}」兩邊要剛好相反：${ACCT_NAME[a]} ${x ? sgn(x.n) : "沒列"}、外面世界 ${y ? sgn(y.n) : "沒列"}`);
+      if (!x || !y || x.n !== -y.n) P(`${day} ${ACCT_NAME[a]}↔已知世界／海外`, `同壹筆「${k}」兩邊要剛好相反：${ACCT_NAME[a]} ${x ? sgn(x.n) : "沒列"}、對面 ${y ? sgn(y.n) : "沒列"}`);
     }
-    // 外面世界的池子對得上：每天成長＋各來源
-    if (d.world !== (d.wflow ? Object.values(d.wflow).reduce((a, b) => a + b, 0) : 0) + ((d.houseMint || {}).worldGrow || 0) + ((d.houseMint || {}).worldExpand || 0)) P(tag("world"), `外面世界變化 ${sgn(d.world)} ≠ wflow 加成長`);
+    // 已知世界的池子對得上：每天成長＋各來源
+    if (d.world !== (d.wflow ? Object.values(d.wflow).reduce((a, b) => a + b, 0) : 0) + ((d.houseMint || {}).worldGrow || 0) + ((d.houseMint || {}).worldExpand || 0)) P(tag("world"), `已知世界變化 ${sgn(d.world)} ≠ wflow 加成長`);
+    // 海外的帳對得上（決定 0126）：變化 ＝ 各來源加起來（搬出那筆 extSplit 一起算）
+    if (d.ext !== (d.xflow ? Object.values(d.xflow).reduce((a, b) => a + b, 0) : 0)) P(tag("ext"), `海外變化 ${sgn(d.ext)} ≠ xflow 加起來`);
     // (d) 日報的文字
     const rv = G.casReportView(doc);
     if (!rv) { P(day, "casReportView 沒回東西"); continue; }
@@ -117,17 +120,17 @@ function run() {
     }
     for (const k of Object.keys(d.flow || {})) if (!G.CAS_BOOK_POOL[k] && d.flow[k] && !flowLines.some(l => l.startsWith(G.casReportLabel(k) + "　"))) P(`${day} 日報「莊家」的進出`, `來源 ${k} 沒出現在進出裡`);
     for (const k of Object.keys(G.CAS_BOOK_POOL)) if (d.flow && d.flow[k] && flowLines.some(l => l.startsWith(G.casReportLabel(k) + "　"))) P(`${day} 日報「莊家」的進出`, `博物館資金／修繕基金的 ${k} 被列進莊家的進出`);
-    const wl = sec("跟外面世界的往來"), inAt = wl.indexOf("進外面世界："), outAt = wl.indexOf("從外面世界出來：");
+    const wl = sec("跟已知世界的往來"), inAt = wl.indexOf("進已知世界："), outAt = wl.indexOf("從已知世界出來：");
     const into = inAt < 0 ? [] : wl.slice(inAt + 1, outAt < 0 ? wl.length : outAt), outp = outAt < 0 ? [] : wl.slice(outAt + 1);
     const wf = d.wflow || {};
-    for (const [lines, sign, nm] of [[into, 1, "進外面世界"], [outp, -1, "從外面世界出來"]]) for (const l of lines) {
+    for (const [lines, sign, nm] of [[into, 1, "進已知世界"], [outp, -1, "從已知世界出來"]]) for (const l of lines) {
       const m = /^(.*)　([\d,]+)$/.exec(l); if (!m) continue;
       const n = Number(m[2].replace(/,/g, "")), k = Object.keys(wf).find(k => G.casReportLabel(k, "world") === m[1] && wf[k] === sign * n);
-      if (!k) P(`${day} 日報「跟外面世界的往來」`, `「${nm}」裡的「${l}」對不上帳（方向放反了？）`);
+      if (!k) P(`${day} 日報「跟已知世界的往來」`, `「${nm}」裡的「${l}」對不上帳（方向放反了？）`);
     }
-    for (const k of Object.keys(wf)) if (wf[k] && ![...into, ...outp].some(l => l.startsWith(G.casReportLabel(k, "world") + "　"))) P(`${day} 日報「跟外面世界的往來」`, `來源 ${k} 沒出現`);
+    for (const k of Object.keys(wf)) if (wf[k] && ![...into, ...outp].some(l => l.startsWith(G.casReportLabel(k, "world") + "　"))) P(`${day} 日報「跟已知世界的往來」`, `來源 ${k} 沒出現`);
     const head = t => { const m = /這段時間 ([＋－])([\d,]+)/.exec(sec(t)[0] || ""); return m ? (m[1] === "＋" ? 1 : -1) * Number(m[2].replace(/,/g, "")) : null; };
-    for (const [t, val, nm] of [["莊家", d.bankroll, "莊家"], ["博物館資金（館方）", d.budget, "博物館資金"], ["修繕基金", d.museum, "修繕基金"], ["政府帳", d.gov, "政府帳"], ["跟外面世界的往來", d.world, "外面世界"]]) {
+    for (const [t, val, nm] of [["莊家", d.bankroll, "莊家"], ["博物館資金（館方）", d.budget, "博物館資金"], ["修繕基金", d.museum, "修繕基金"], ["政府帳", d.gov, "政府帳"], ["跟已知世界的往來", d.world, "已知世界"]]) {
       const got = head(t); if (got !== null && got !== val) P(`${day} 日報「${t}」開頭`, `${nm}這段時間應該是 ${sgn(val)}，文字寫 ${sgn(got)}`);
     }
   }

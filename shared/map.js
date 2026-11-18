@@ -6,7 +6,7 @@
 // ================================================================
 import { MAP_SPOTS } from "./map_data.js";
 
-export const MAP_LAYER_NAME = { L1: "城鎮", L3: "外面世界", L2: "別的館", L4: "總帳" };
+export const MAP_LAYER_NAME = { L1: "城鎮", L3: "已知世界", L2: "別的館", L4: "總帳" };
 export const MAP_LAYER_ORDER = ["L1", "L3", "L2", "L4"]; // 四片透明片疊起來的順序（規劃稿 5.2 的表）
 const mapHeld = (P, id) => !!(P && P.clues && typeof P.clues === "object" && !Array.isArray(P.clues) && P.clues[id]);
 // 現在看得到的點：[{ ...點, lit }]，lit＝線索也拿到了。spots 不給就用打包好的 MAP_SPOTS

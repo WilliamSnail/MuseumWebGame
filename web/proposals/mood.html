@@ -83,7 +83,7 @@ sec("合起來的樣子（大廳）", "上面五種壹起開。",
 
 const wins = l => `<div class="win">${[...Array(34)].map((_, i) => `<i class="${l[i % l.length] ? "" : "d"}"></i>`).join("")}</div>`;
 const bankCell = (t, tint, w, glow) => $(`<div class="cell"><b>${t}</b><div class="bank"><div class="tint" style="${tint}"></div>${wins(w)}<div class="glow" style="${glow}"></div></div></div>`);
-sec("銀行", "窗外壹排窗（景氣、集團狀態）、整體偏暖偏冷（外面世界好壞）、最下面行情看板在漲時發綠光、跌時發紅光。", [
+sec("銀行", "窗外壹排窗（景氣、集團狀態）、整體偏暖偏冷（已知世界好壞）、最下面行情看板在漲時發綠光、跌時發紅光。", [
   bankCell("景氣好、股市漲", "background:radial-gradient(ellipse at 50% 50%,rgba(255,200,120,.18),transparent 70%);mix-blend-mode:soft-light", [1, 1, 1, 1, 1, 0], "background:linear-gradient(transparent,rgba(110,200,120,.32))"),
   bankCell("普通", "", [1, 1, 0, 1, 1, 0], ""),
   bankCell("景氣差、集團裁員", "background:radial-gradient(ellipse at 50% 55%,rgba(30,50,100,.05),rgba(10,20,50,.4));mix-blend-mode:multiply", [1, 0, 0, 0, 1, 0, 0], "background:linear-gradient(transparent,rgba(217,96,79,.32))"),

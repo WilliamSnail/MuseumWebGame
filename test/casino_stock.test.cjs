@@ -29,9 +29,9 @@ T("買：股價流出館外（記成消失、來源 stockBuy），手續費進�
   assert.ok(r.ok, r.reason);
   const cost = px * 10, fee = Math.ceil(cost * C.feePct / 100);
   assert.strictEqual(s.w.chips, c0 - cost - fee);
-  assert.strictEqual(s.house.bankroll, h0, "莊家不出錢也不收錢（跟外面世界買）");
+  assert.strictEqual(s.house.bankroll, h0, "莊家不出錢也不收錢（跟已知世界買）");
   assert.strictEqual(s.house.budget, b0 + fee);
-  assert.strictEqual(s.house.led.world.stockBuy, cost, "錢給外面世界（池子變多），不是燒掉"); assert.ok(!s.w.led.burn.stockBuy);
+  assert.strictEqual(s.house.led.ext.stockBuy, cost, "錢給海外（house.ext 變多，決定 0126），不是燒掉"); assert.ok(!s.w.led.burn.stockBuy);
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], 10);
 });
@@ -44,7 +44,7 @@ T("賣：從館外進來（記成憑空、來源 stockSell），手續費進博�
   const gross = px * 10, fee = Math.ceil(gross * C.feePct / 100), tax = Math.min(gross - fee, Math.max(1, Math.ceil(gross * C.taxPct / 100))); // 證交稅（決定 0111）
   assert.strictEqual(s.w.chips, c0 + gross - fee - tax);
   assert.strictEqual(s.house.bankroll, h0, "莊家不付錢");
-  assert.strictEqual(s.house.led.world.stockSell, -gross, "外面世界付（池子變少），不是憑空"); assert.ok(!s.w.led.mint.stockSell);
+  assert.strictEqual(s.house.led.ext.stockSell, -gross, "海外付（house.ext 變少），不是憑空"); assert.ok(!s.w.led.mint.stockSell);
   assert.strictEqual(gap(G, s, op), 0, "帳對得上");
   assert.strictEqual(s.w.stk.own[ID], undefined, "賣光就不留欄位");
   assert.ok(!G.casStockSell(s.w, s.house, ID, 1, D, OPEN).ok, "沒有了就不能賣");
@@ -74,7 +74,7 @@ T("什麼都不動的時候，每天會慢慢扣 drag（抱著不會穩賺）", 
   for (let i = 1; i <= 30; i++) { day = `2026-12-${String(i).padStart(2, "0")}`; G.casStockRoll(s.house, day, {}); }
   assert.ok(s.house.stk.px[ID] < px, `30 天後要比 ${px} 低，實際 ${s.house.stk.px[ID]}`);
 });
-T("上限：莊家窮也買得了（跟外面世界買）；壹人壹天賣出上限還在", G => {
+T("上限：莊家窮也買得了（跟已知世界買）；壹人壹天賣出上限還在", G => {
   const s = fresh(G); s.house.bankroll = -100; // 莊家破產
   assert.ok(G.casStockBuy(s.w, s.house, ID, 1000, D, OPEN).ok, "莊家破產也照買（11-14：以前莊家壹窮股市就停擺）");
   const s3 = fresh(G);
@@ -133,14 +133,14 @@ T("莊家破產換日不再印錢（11-14：翊文「這不行，莊家要跟整
   const r = G.casHouseFix(h, "2026-11-15");
   assert.ok(!(r.house.led && r.house.led.mint && r.house.led.mint.reset), "沒有印錢補回（reset）");
   assert.strictEqual(r.house.debt.budget + r.house.debt.world, r.house.bankroll + 830000000, "借了多少，債就記多少");
-  assert.ok(r.house.bankroll < G.NUM.casino.houseLoan.reserve, "借不夠補到準備金（外面世界有上限）");
+  assert.ok(r.house.bankroll < G.NUM.casino.houseLoan.reserve, "借不夠補到準備金（已知世界有上限）");
   assert.ok(r.house.debt.world + r.house.debt.budget > 0, "借的記成債");
 });
 T("文化部借款 10 億只撥壹次、記成館外進來、記成債（11-13 翊文；11-14 改成借款）", G => {
   const h = G.casHouseNew(); h.bankroll = -830000000; delete h.grants;
   const r = G.casHouseFix(h, "2026-11-14").house;
   assert.strictEqual(r.bankroll, -830000000 + 1000000000, "撥了 10 億");
-  assert.strictEqual(r.led.flow.grant, 1000000000, "外面世界撥給莊家，來源 grant");
+  assert.strictEqual(r.led.flow.grant, 1000000000, "已知世界撥給莊家，來源 grant");
   assert.strictEqual(r.debt.culture, 1000000000, "記成債");
   const n = G.casHouseFix(r, "2026-11-15").house;
   assert.strictEqual(n.led.flow.grant, 1000000000, "第二次不再撥");

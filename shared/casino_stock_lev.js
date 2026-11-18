@@ -8,10 +8,10 @@
 //      fee 開倉時付的手續費和利息, day 開倉的遊戲日, at 開倉的毫秒, chk 已檢查到第幾個價, px 最後看到的價 }
 //  錢怎麼動（守恆，shared/casino_book.js）：
 //    開倉：保證金從籌碼搬到 w.lev.hold（錢還是玩家的，記帳算在 bkHeld）；手續費＋利息搬進博物館資金。對手盤沒動。
-//    平倉：損益 ＝ 做多 (平倉價 − 開倉價) × 股數；放空 ＝ (開倉價 − 平倉價) × 股數。賠最多賠保證金（不欠莊家、不欠外面世界）。
+//    平倉：損益 ＝ 做多 (平倉價 − 開倉價) × 股數；放空 ＝ (開倉價 − 平倉價) × 股數。賠最多賠保證金（不欠莊家、不欠已知世界）。
 //      館內股（mk "in"）：對手盤是莊家（casHouseMove "stockLev"）；莊家付的賺、收的賠，壹天的淨賠付算進全館壹天淨賣出上限（規劃 2.8b）。
-//      台股（mk "tw"）：對手盤是外面世界（賺＝casMint "stockLevWin"，賠＝casBurn "stockLevLoss"）；期望值 0，手續費和利息是搬進博物館資金，不是 burn。
-//      美股（mk "us"）：跟台股一樣（對手盤是外面世界）；11-14 翊文決定開放做多、放空，倍數照信用解鎖，部位上限同台股（maxLev.us ＝ 5）。
+//      台股（mk "tw"）：對手盤是海外（賺＝casMint "stockLevWin"，賠＝casBurn "stockLevLoss"）；期望值 0，手續費和利息是搬進博物館資金，不是 burn。
+//      美股（mk "us"）：跟台股一樣（對手盤是海外）；11-14 翊文決定開放做多、放空，倍數照信用解鎖，部位上限同台股（maxLev.us ＝ 5）。
 //      行情落後安全閥（11-14）：台股、美股這檔真實行情落後超過 NUM.casino.stockLev.maxLagMin 分鐘（或這段沒抓到真實價），暫停「新開」槓桿單；已開的部位、平倉、停損停利、強平照常。
 //    壞帳（價格跳過強平價、賠超過保證金的那壹段）：沒有人付，只記 house.act.levBadDebt（次數／金額，不是錢）。
 //  強制平倉：保證金加浮動損益剩不到原本的 forcePct%（50%），在「第壹個碰到的價」平倉（跳空穿過就用跳空後的價，不是強平價）。
@@ -126,7 +126,7 @@ export const casLevMaxLev = (mk, level) => { const m = Math.max(0, lqN((lqC().ma
 
 // ---------- 一筆部位的算術（全部用整數比較，沒有浮點的邊界問題） ----------
 const lqSide = s => (s === "short" || s === "空" ? "short" : s === "long" || s === "多" ? "long" : null);
-// 損益 ＝ 價差（用「分」算）× 股數，四捨五入到整數籌碼（決定 0108：賺賠對稱的四捨五入，不偏玩家也不偏外面世界）
+// 損益 ＝ 價差（用「分」算）× 股數，四捨五入到整數籌碼（決定 0108：賺賠對稱的四捨五入，不偏玩家也不偏已知世界）
 export const casLevPnl = (p, px) => Math.round((p.side === "long" ? stCents(px) - stCents(p.entry) : stCents(p.entry) - stCents(px)) * p.qty / 100);
 export const casLevEquity = (p, px) => p.margin + casLevPnl(p, px);
 // 碰到強制平倉了嗎：保證金加損益 ≤ 原本保證金的 forcePct%

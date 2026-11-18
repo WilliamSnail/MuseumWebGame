@@ -6,7 +6,7 @@
 //    statLegend(items)              配長條的圖例：色塊＋名字＋數量
 //    statBands(items, { label })    分布：壹格壹柱，高度照 n；items 同上
 //    statCounts(kind, counts, order) 把「各分級幾個」（例如 { normal: 7, cut: 3 }）轉成 items，名字和 tone 都叫 statView，不自己寫
-//  用法例：財報「外面世界」卡（ui_bank.js）。NPC 卡片、展廳評價之後也直接叫。
+//  用法例：財報「已知世界」卡（ui_bank.js）。NPC 卡片、展廳評價之後也直接叫。
 // ================================================================
 import { UI, h } from "./ui_core.js";
 import { NUM } from "../../shared/config.js";
