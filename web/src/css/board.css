@@ -180,6 +180,7 @@ body.reduce-motion .nb-layer, body.reduce-motion .nb-frame, body.reduce-motion .
 .nb-env-body { position: relative; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .nb-env-body b { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .04em; }
 .nb-env-from, .nb-env-note { font-size: .8125rem; color: var(--parch-sub); }
+.nb-env-note { white-space: pre-line; } /* 信裡的換行（文化部的信，決定 0131） */
 .nb-env-gift { font-size: .9375rem; font-weight: 700; color: #7A5A1E; }
 .nb-env-act { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .nb-env-act small { font-size: .75rem; color: var(--parch-sub); }

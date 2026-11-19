@@ -10,7 +10,7 @@
 //    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino_week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
 import { NUM } from "./config.js";
-import { CAS_ACH, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
+import { CAS_ACH, CAS_GIFT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
 import { RNG, clampN, gainSan, hashStr, isFree, limitedHome } from "./logic.js";
 import { weekIndex } from "./logic3.js";
@@ -18,9 +18,9 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casWorldFund, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
+import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
-import { gbCollect, gbDaily, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
+import { gbCollect, gbDaily, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -375,6 +375,24 @@ export function casLoanRoll(w, day) {
   // 欠款從哪天算：這次扣的話，從最早那筆到期的隔天算（換日沒進賭場也照算）
   if (w.chips < 0) { if (!L.debtSince) L.debtSince = late.length ? casAddDays(late.map(x => x.due).sort()[0], 1) : day; } else L.debtSince = null;
   return late;
+}
+// 文化部資助壹位館友（決定 0131）：暱稱比對（去空白、小寫）、只壹次（house.cg[id]、w.gifts[id]）；錢從文化部（已知世界的 u-culture）出到錢包，守恆，不憑空、不是借款，莊家和博物館資金不經手；
+// 同壹個交易裡寄壹封信（回傳 { id, mail }，伺服器寫進 mail/{uid}/items）。條件不符、已經撥過、已知世界付不出就回 null
+export const casGiftKey = s => String(s == null ? "" : s).replace(/\s+/g, "").toLowerCase();
+// 這個暱稱是不是文化部資助的對象（伺服器的 peek 用：是的才多做壹個交易）
+export const casGiftWho = nick => { const G = NUM.casino.cultureGift; return !!G && !!G.on && G.nicks.some(x => casGiftKey(x) === casGiftKey(nick)); };
+export function casCultureGift(w, house, nick, day, t) {
+  const G = NUM.casino.cultureGift;
+  if (!G || !G.on || !w || !house || !okDay(day) || !G.nicks.some(x => casGiftKey(x) === casGiftKey(nick))) return null;
+  if (!casIsObj(house.cg)) house.cg = {};
+  if (!casIsObj(w.gifts)) w.gifts = {};
+  if (house.cg[G.id] || w.gifts[G.id]) return null;
+  const n = Math.max(0, Math.floor(G.amt)); if (!(n > 0) || n > casWorldRoom(house, NUM.casino.world)) return null;
+  const got = casWorldOut(w, house, "cultureGift", n, NUM.casino.world); if (got !== n) return null;
+  wuDebit(house, "u-culture", n); wtLed(house, "cultureGift", "u-culture", "players", n); // 金流圖：文化部 → 館友
+  house.cg[G.id] = day; w.gifts[G.id] = day;
+  const T = CAS_GIFT, id = ("cg-" + G.id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100);
+  return { id, mail: { id, from: T.name, title: T.title, note: [casFill(T.hello, { nick: String(nick) })].concat(T.lines).join("\n"), gift: { insp: 0, mood: 0 }, sent: day, expire: casAddDays(day, G.days || 365), claimed: false }, got: n };
 }
 // 現在借得到嗎：可以的話回 null，不行回原因（畫面上那壹條、Discord 都用這個）
 export function casLoanWhyNot(w, playing, house) {

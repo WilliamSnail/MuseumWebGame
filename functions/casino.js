@@ -24,7 +24,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "./shared/casino.js";
-import { casCultureFund, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -139,6 +139,7 @@ export async function playCore(me, email, opts, fn) {
       const stale = twStale(tw, day).concat(usStale(us, day)); // 哪幾支這壹段沒有新行情（畫面要標出來，不要讓人以為真的沒漲跌）
       const ctx = { secret: sec, w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
+      const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t); // 文化部資助（決定 0131）：該收的人壹進來就到（peek 也會跑壹次空交易），錢和信在同壹個交易
       const r = fn(ctx);
       const letter = r.ok !== false || opts.writeAnyway ? casAdvisorLetter(ctx.w, ctx.house, day, t, MAIL_DAYS) : null; // 財經專員的個人信（決定 0093 第 3 件）：第壹次欠了不少錢寄壹封，同壹個交易裡寫、錢包記著寄過了
       ha = ctx.house.bankroll;
@@ -148,6 +149,7 @@ export async function playCore(me, email, opts, fn) {
       for (const d of Array.from(new Set(newRv.map(x => x.day)))) { const rs0 = await tx.get(db().doc("npcReviews/" + d)); rvDocs[d] = rs0.exists ? rs0.data() : null; }
       // 11-15：財經專員的信原本在上面先寫、這裡才讀評價，Firestore 交易「讀要在寫之前」→ 欠錢又剛好有新評價的人每次都失敗（銀行顯示示範資料）。所有讀完才寫
       if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
+      if (gift) tx.set(db().doc(`mail/${me.uid}/items/${gift.id}`), Object.assign({}, gift.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       for (const d of Object.keys(rvDocs)) tx.set(db().doc("npcReviews/" + d), casReviewsMerge(rvDocs[d], newRv.filter(x => x.day === d), d));
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
@@ -483,6 +485,7 @@ export const casino = onCall(async req => {
       return { ok: true, day, items: pick.items, total: pick.total, prevDay: pq.empty ? null : pq.docs[0].id, nextDay: nq.empty ? null : nq.docs[0].id };
     }
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
+      if (casGiftWho(me.nick)) await playCore(me, null, { writeAnyway: true }, () => ({ ok: true })).catch(e => console.error("文化部資助：失敗", e && e.message)); // 該收文化部資助的人：進館就到（沒有就什麼都不做）
       await casReport().catch(e => console.error("日報：產生失敗", e && e.message)); // 每天第一個進館的人觸發日報（景氣指數靠它每天更新）
       const ws = await walletRef(me.uid).get();
       const w = casWalletFix(parse(ws), taipeiDay(now()));
