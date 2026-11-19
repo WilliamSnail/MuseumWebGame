@@ -1131,7 +1131,11 @@ export const FX = (() => {
             tone(t0 + rand(1.2, 2.8), { f, g: 0.025, a: 0.004, d: 1.6, to: send });
           }
         };
-        const sched = every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % CH.length; next += BAR; } }, () => 1000);
+        // 11-20 翊文：「銀行的背景音樂可以換這個嗎（其他背景音效還是要留下），然後原本的合成器也留著備用」：
+        //   背景音樂改放翊文給的曲子 bank-music（壹進去就放，跟委託櫃台的大提琴同壹套 songCycle，離開淡出停掉）；
+        //   上面的合成和弦、低音整段留著，BANK_SYNTH 改成 true 就換回來（大廳的空氣、遠處人聲、硬幣、點硬幣、打字機照舊）
+        const BANK_SYNTH = false;
+        const sched = BANK_SYNTH ? every(() => { while (next < c.currentTime + 3) { play(next, bar); bar = (bar + 1) % CH.length; next += BAR; } }, () => 1000) : songCycle(c, g, ['bank-music'], 0.4, [300, 600]);
         // 11-16 翊文：「銀行有時候也可以有這個聲音（打字機），但不要跟其他音效疊加」：銀行的環境小聲音（硬幣、點硬幣、打字機）共用壹個空檔，
         //   壹個在響的時候別的不響；館友按鈕的音效（sfx 音軌，lastSfxAt）剛響過 4 秒內也不響
         let quietUntil = 0;
