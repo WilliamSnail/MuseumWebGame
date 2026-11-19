@@ -122,3 +122,30 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
   .origin-onescreen .reader .book > .book-nav .book-arrow { min-height: 30px; }
   .origin-onescreen .reader .book > .book-gains { display: none; }
 }
+
+/* ===== 圖書館書架整理（翊文 11-19：「書本疊在一起，有些書有奇怪的顏色背景」）=====
+   1) 書背顏色：story.css 給每週劇情的書背壹個底色（#24464A 等），透過書圖透明的地方露出來，變成奇怪的色塊 → 全部拿掉，只用書的圖
+   2) 書背的圖照「第幾本書」輪流（以前用 nth-child，被書架的標籤算進去，每排和每個書架換的都不壹樣，超過 10 本還沒有圖）
+   3) 疊在壹起：每本固定壹樣高、排與排隔開，書架左欄加寬到壹排放得下 8 本 */
+.screen.origin-onescreen > .onescreen-main.origin-main { grid-template-columns: minmax(300px, 540px) minmax(0, 1fr); }
+.origin-onescreen .spine, .origin-onescreen .spine.story, .origin-onescreen .spine.story:nth-child(n), .origin-onescreen .spine.story.vol { background-color: transparent; }
+.origin-onescreen .spine:nth-of-type(6n+1) { background-image: url(/ui2/ui2-book-6.webp); }
+.origin-onescreen .spine:nth-of-type(6n+2) { background-image: url(/ui2/ui2-book-2.webp); }
+.origin-onescreen .spine:nth-of-type(6n+3) { background-image: url(/ui2/ui2-book-3.webp); }
+.origin-onescreen .spine:nth-of-type(6n+4) { background-image: url(/ui2/ui2-book-9.webp); }
+.origin-onescreen .spine:nth-of-type(6n+5) { background-image: url(/ui2/ui2-book-5.webp); }
+.origin-onescreen .spine:nth-of-type(6n) { background-image: url(/ui2/ui2-book-11.webp); }
+.origin-onescreen .spine, .origin-onescreen .spine:nth-child(n) { height: 150px; }
+@media (max-width: 760px) { .origin-onescreen .spine, .origin-onescreen .spine:nth-child(n) { height: 120px; } }
+.origin-onescreen .spine.story.bound { background: url(/ui2/ui2-book-12.webp) center / 100% 100% no-repeat; filter: hue-rotate(-40deg) saturate(1.3) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+.origin-onescreen .story-shelf { row-gap: 14px; min-height: 0; padding-bottom: 8px; }
+.origin-onescreen .spine.ending { box-shadow: none; filter: sepia(.4) saturate(1.5) drop-shadow(2px 3px 3px rgba(0, 0, 0, .5)); }
+.origin-onescreen .story-shelf { padding-top: 44px; }
+.origin-onescreen .story-shelf .shelf-label { top: 10px; }
+@media (min-width: 761px) { .origin-onescreen .shelf { overflow-x: visible; } }
+@media (max-width: 760px) {
+  .origin-onescreen .origin-main > .shelves { max-height: none; overflow-y: visible; }
+  .origin-onescreen .spine, .origin-onescreen .spine:nth-child(n) { height: 104px; }
+  .origin-onescreen .story-shelf { padding-top: 40px; }
+  .origin-onescreen .story-shelf .shelf-label { top: 8px; }
+}
