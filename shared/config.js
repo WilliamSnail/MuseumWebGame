@@ -390,6 +390,8 @@ export const NUM = {
     //   散客類型權重 crowd（決定 0092 第 3 件）：昨天的展廳氣氛 ≥ high：這幾種散客組比較多（乘上這個倍數）；≤ low：另外幾種。只改「抽到哪種組」的機率，每天幾組、幾點到、待多久不變。人數的期望值變動由 econ:check 擋（±20% 內）
     // 館門口池子的水位（決定 0132，翊文 11-19）：跟著被文化部資助那位館友的淨值動。目標水位 ＝ clamp(start ＋ (1−start)×ln(淨值÷起點)÷ln(xT)，min，1)（淨值長到起點的 xT 倍＝門檻 1）；每天 05:00 日報算壹次、最多動 step；連續 confirm 個日報目標 ≥ 1 才到門檻，那晚全館看得到事件，隔天天亮前收完（只收東西、不收錢，劇情定）水退回 start、起點重設。
     //   trace 留幾天的漲退痕跡、grid 水位量化成幾格（peek 給畫面）
+    // 門檻那晚收走一個名字（決定 0133）：被收走的佩佩名字變空白名牌，名牌背面是館友號碼（加入順序）；信一年後過期
+    poolTake: { on: true, expireDays: 365 },
     pool: { xT: 1.5, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
     // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino_text.js 的 CAS_GIFT。on:false 關掉
     cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
@@ -874,6 +876,8 @@ export const HALL_THEME_BONUS = { legend: 20, angry: 15, tears: 15, russia8: 15,
 // 規則在 shared/legacy.js；文字在 content3.js 的 TRAIT_TEXT、LEGACY_TEXT。
 // 換人時：前一位留一樣東西給下一位（A）。
 // 每一位參觀者（第一位也是）都從 6 個職業自己選，選好再抽一個小優點、一個小缺點（決定 0028；以前換人時是從 3 位候選人挑）。
+// 替佩佩取名（決定 0133）：所有佩佩都能取；最多 max 個字；含 bad 裡任何壹段（去空白、轉小寫比對）就擋
+export const PEPE_NAME = { max: 12, bad: ["幹你", "操你", "去死", "白痴", "智障", "婊", "fuck", "shit", "bitch", "nigg", "slut", "porn"] };
 export const LEGACY = {
   skillPlus: 10,  // 「把最拿手的技能傳下去」：下一位這個技能的起點 +10
   relicMood: 10,  // 「留下一件收藏當遺物」：下一位開場心情 +10（0 ＝遺物只是紀念）
