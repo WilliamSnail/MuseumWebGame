@@ -9,7 +9,7 @@
 // 格式見 shared/stocks.js 開頭。只寫「已經收盤」的日子：盤中的最新一根會丟掉。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", islandforge: "2330.TW", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", bigshipport: "CCL", greenleafclinic: "TLRY", quantumfrog: "IONQ", smallcore: "OKLO", messengerlab: "MRNA", oldgamestore: "GME", fingerbank: "SOFI", betkingdom: "DKNG", droidhive: "KTOS", treadclub: "PTON", blockpark: "RBLX", popcornhall: "AMC", blackgoldwell: "APA", bluefireyard: "AR", greenglowmine: "UEC", raremountain: "MP", redcoppermine: "FCX", richsoilshop: "MOS" };
+const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", islandforge: "2330.TW", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", bigshipport: "CCL", greenleafclinic: "TLRY", quantumfrog: "IONQ", smallcore: "OKLO", messengerlab: "MRNA", oldgamestore: "GME", fingerbank: "SOFI", betkingdom: "DKNG", droidhive: "KTOS", treadclub: "PTON", blockpark: "RBLX", popcornhall: "AMC", blackgoldwell: "APA", bluefireyard: "AR", greenglowmine: "UEC", raremountain: "MP", redcoppermine: "FCX", richsoilshop: "MOS", vaultbrick: "UGL", blackbarrel: "UCO" };
 const KEEP = 40;
 const FRESH_DAYS = 3; // 跟 shared/stocks.js 的 OUT_STOCK_NUM.staleDays 一樣
 

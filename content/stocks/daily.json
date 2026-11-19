@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-19T15:55:36.352Z",
+ "updated": "2026-11-19T17:13:22.914Z",
  "source": "Yahoo Finance chart API（免金鑰）",
  "note": "pct＝真實漲跌幅（%）；null＝那天休市；key＝市場所在地的日期",
  "days": {
@@ -28,7 +28,9 @@
    "greenglowmine": -4.82,
    "raremountain": 0.84,
    "redcoppermine": -0.69,
-   "richsoilshop": -2.79
+   "richsoilshop": -2.79,
+   "vaultbrick": -0.51,
+   "blackbarrel": 2.24
   },
   "2026-09-25": {
    "greeneye": 0.22,
@@ -55,7 +57,9 @@
    "greenglowmine": -0.63,
    "raremountain": -0.95,
    "redcoppermine": 0.32,
-   "richsoilshop": -2.87
+   "richsoilshop": -2.87,
+   "vaultbrick": 0.83,
+   "blackbarrel": -2.64
   },
   "2026-09-28": {
    "greeneye": 1.68,
@@ -82,7 +86,9 @@
    "greenglowmine": -2.13,
    "raremountain": -4.87,
    "redcoppermine": -0.48,
-   "richsoilshop": -3.3
+   "richsoilshop": -3.3,
+   "vaultbrick": -7.82,
+   "blackbarrel": 2.29
   },
   "2026-09-29": {
    "greeneye": -0.72,
@@ -109,7 +115,9 @@
    "greenglowmine": 0.87,
    "raremountain": -2.2,
    "redcoppermine": -1.63,
-   "richsoilshop": 0.76
+   "richsoilshop": 0.76,
+   "vaultbrick": 2.62,
+   "blackbarrel": -2.17
   },
   "2026-09-30": {
    "greeneye": 0.51,
@@ -136,7 +144,9 @@
    "greenglowmine": 1.72,
    "raremountain": 4.09,
    "redcoppermine": -1.12,
-   "richsoilshop": -3.43
+   "richsoilshop": -3.43,
+   "vaultbrick": -1.04,
+   "blackbarrel": 2.75
   },
   "2026-10-01": {
    "greeneye": 1.09,
@@ -163,7 +173,9 @@
    "greenglowmine": -0.95,
    "raremountain": -2.54,
    "redcoppermine": -1.03,
-   "richsoilshop": -0.46
+   "richsoilshop": -0.46,
+   "vaultbrick": 0.92,
+   "blackbarrel": 2.34
   },
   "2026-10-02": {
    "greeneye": 1.34,
@@ -190,7 +202,9 @@
    "greenglowmine": -0.64,
    "raremountain": 1.91,
    "redcoppermine": 3.98,
-   "richsoilshop": -2.23
+   "richsoilshop": -2.23,
+   "vaultbrick": -1.45,
+   "blackbarrel": -0.38
   },
   "2026-10-05": {
    "greeneye": 2.12,
@@ -217,7 +231,9 @@
    "greenglowmine": 0.54,
    "raremountain": -0.28,
    "redcoppermine": 0.78,
-   "richsoilshop": 1.04
+   "richsoilshop": 1.04,
+   "vaultbrick": -0.37,
+   "blackbarrel": -0.55
   },
   "2026-10-06": {
    "greeneye": 0.14,
@@ -244,7 +260,9 @@
    "greenglowmine": 8.13,
    "raremountain": 3.61,
    "redcoppermine": -0.06,
-   "richsoilshop": -1.64
+   "richsoilshop": -1.64,
+   "vaultbrick": 1.39,
+   "blackbarrel": 0.55
   },
   "2026-10-07": {
    "greeneye": -0.74,
@@ -271,7 +289,9 @@
    "greenglowmine": -6.33,
    "raremountain": -4.57,
    "redcoppermine": -0.96,
-   "richsoilshop": -4.63
+   "richsoilshop": -4.63,
+   "vaultbrick": -3.29,
+   "blackbarrel": 0.31
   },
   "2026-10-08": {
    "greeneye": -2.94,
@@ -298,7 +318,9 @@
    "greenglowmine": -3.48,
    "raremountain": -0.37,
    "redcoppermine": -1,
-   "richsoilshop": -1.2
+   "richsoilshop": -1.2,
+   "vaultbrick": 1.46,
+   "blackbarrel": 4.49
   },
   "2026-10-09": {
    "greeneye": -0.52,
@@ -325,7 +347,9 @@
    "greenglowmine": 0.55,
    "raremountain": 0,
    "redcoppermine": 3.58,
-   "richsoilshop": -5.02
+   "richsoilshop": -5.02,
+   "vaultbrick": 3.04,
+   "blackbarrel": -0.42
   },
   "2026-10-12": {
    "greeneye": -1.29,
@@ -352,7 +376,9 @@
    "greenglowmine": -3.92,
    "raremountain": -6.03,
    "redcoppermine": -0.54,
-   "richsoilshop": 0.59
+   "richsoilshop": 0.59,
+   "vaultbrick": -1.23,
+   "blackbarrel": 4.05
   },
   "2026-10-13": {
    "greeneye": 0.97,
@@ -379,7 +405,9 @@
    "greenglowmine": -6.68,
    "raremountain": -2.14,
    "redcoppermine": -1.19,
-   "richsoilshop": 1.75
+   "richsoilshop": 1.75,
+   "vaultbrick": -0.39,
+   "blackbarrel": 2.44
   },
   "2026-10-14": {
    "greeneye": -3.16,
@@ -406,7 +434,9 @@
    "greenglowmine": -6.55,
    "raremountain": -5.84,
    "redcoppermine": -3.87,
-   "richsoilshop": -0.89
+   "richsoilshop": -0.89,
+   "vaultbrick": -3.02,
+   "blackbarrel": -0.05
   },
   "2026-10-15": {
    "greeneye": -1.84,
@@ -433,7 +463,9 @@
    "greenglowmine": 6.1,
    "raremountain": 4.16,
    "redcoppermine": 0.63,
-   "richsoilshop": -0.32
+   "richsoilshop": -0.32,
+   "vaultbrick": 3.56,
+   "blackbarrel": 0.59
   },
   "2026-10-16": {
    "greeneye": -1.43,
@@ -460,7 +492,9 @@
    "greenglowmine": -3.18,
    "raremountain": -3.46,
    "redcoppermine": -0.74,
-   "richsoilshop": -0.69
+   "richsoilshop": -0.69,
+   "vaultbrick": -0.26,
+   "blackbarrel": 4.45
   },
   "2026-10-19": {
    "greeneye": 1.38,
@@ -487,7 +521,9 @@
    "greenglowmine": -0.25,
    "raremountain": -3.04,
    "redcoppermine": 0.3,
-   "richsoilshop": -4.78
+   "richsoilshop": -4.78,
+   "vaultbrick": -1.35,
+   "blackbarrel": 0.38
   },
   "2026-10-20": {
    "greeneye": -0.29,
@@ -514,7 +550,9 @@
    "greenglowmine": -0.76,
    "raremountain": 0.26,
    "redcoppermine": -1.26,
-   "richsoilshop": -0.33
+   "richsoilshop": -0.33,
+   "vaultbrick": -1.06,
+   "blackbarrel": -0.74
   },
   "2026-10-21": {
    "greeneye": 2.54,
@@ -541,7 +579,9 @@
    "greenglowmine": 0.89,
    "raremountain": 1.15,
    "redcoppermine": 0.04,
-   "richsoilshop": -1.01
+   "richsoilshop": -1.01,
+   "vaultbrick": 0.65,
+   "blackbarrel": 0.3
   },
   "2026-10-22": {
    "greeneye": -4.4,
@@ -568,7 +608,9 @@
    "greenglowmine": -5.32,
    "raremountain": -2.38,
    "redcoppermine": -6.26,
-   "richsoilshop": -2.32
+   "richsoilshop": -2.32,
+   "vaultbrick": -5.2,
+   "blackbarrel": 0.35
   },
   "2026-10-23": {
    "greeneye": -0.59,
@@ -595,7 +637,9 @@
    "greenglowmine": -1.74,
    "raremountain": -0.67,
    "redcoppermine": 0.91,
-   "richsoilshop": 3.3
+   "richsoilshop": 3.3,
+   "vaultbrick": -1.52,
+   "blackbarrel": 3.67
   },
   "2026-10-26": {
    "greeneye": 2.39,
@@ -622,7 +666,9 @@
    "greenglowmine": 1.22,
    "raremountain": -2.17,
    "redcoppermine": -0.03,
-   "richsoilshop": -0.73
+   "richsoilshop": -0.73,
+   "vaultbrick": 0.71,
+   "blackbarrel": -1.07
   },
   "2026-10-27": {
    "greeneye": 0.9,
@@ -649,7 +695,9 @@
    "greenglowmine": 8.06,
    "raremountain": 9.07,
    "redcoppermine": 1.21,
-   "richsoilshop": 6.1
+   "richsoilshop": 6.1,
+   "vaultbrick": 2.39,
+   "blackbarrel": -0.78
   },
   "2026-10-28": {
    "greeneye": -1.17,
@@ -676,7 +724,9 @@
    "greenglowmine": 3.73,
    "raremountain": 0.46,
    "redcoppermine": 0.99,
-   "richsoilshop": -2.45
+   "richsoilshop": -2.45,
+   "vaultbrick": 0.69,
+   "blackbarrel": 2.73
   },
   "2026-10-29": {
    "greeneye": -0.8,
@@ -703,7 +753,9 @@
    "greenglowmine": -2.28,
    "raremountain": 1.41,
    "redcoppermine": -0.69,
-   "richsoilshop": -0.55
+   "richsoilshop": -0.55,
+   "vaultbrick": -2.66,
+   "blackbarrel": 0.23
   },
   "2026-10-30": {
    "greeneye": -4.22,
@@ -730,7 +782,9 @@
    "greenglowmine": -5.4,
    "raremountain": -4.97,
    "redcoppermine": -5.55,
-   "richsoilshop": 0.88
+   "richsoilshop": 0.88,
+   "vaultbrick": -7,
+   "blackbarrel": 0.54
   },
   "2026-11-02": {
    "greeneye": -1.26,
@@ -757,7 +811,9 @@
    "greenglowmine": -2.59,
    "raremountain": -3.08,
    "redcoppermine": 0.8,
-   "richsoilshop": 3.48
+   "richsoilshop": 3.48,
+   "vaultbrick": 3.27,
+   "blackbarrel": -10.38
   },
   "2026-11-03": {
    "greeneye": 2.29,
@@ -784,7 +840,9 @@
    "greenglowmine": 0.67,
    "raremountain": -1.36,
    "redcoppermine": -1.91,
-   "richsoilshop": -3.21
+   "richsoilshop": -3.21,
+   "vaultbrick": -1.2,
+   "blackbarrel": 1.41
   },
   "2026-11-04": {
    "greeneye": -3.17,
@@ -811,7 +869,9 @@
    "greenglowmine": -4.89,
    "raremountain": -5.08,
    "redcoppermine": 1.34,
-   "richsoilshop": 17.37
+   "richsoilshop": 17.37,
+   "vaultbrick": 7.28,
+   "blackbarrel": -13.19
   },
   "2026-11-05": {
    "greeneye": -9.26,
@@ -838,7 +898,9 @@
    "greenglowmine": -9.87,
    "raremountain": -6.04,
    "redcoppermine": -7.51,
-   "richsoilshop": 3.28
+   "richsoilshop": 3.28,
+   "vaultbrick": 1.69,
+   "blackbarrel": 0.26
   },
   "2026-11-06": {
    "greeneye": 2.78,
@@ -865,7 +927,9 @@
    "greenglowmine": 6.79,
    "raremountain": 4.95,
    "redcoppermine": 2.63,
-   "richsoilshop": 0.13
+   "richsoilshop": 0.13,
+   "vaultbrick": -1.64,
+   "blackbarrel": 2.33
   },
   "2026-11-09": {
    "greeneye": -4.27,
@@ -892,7 +956,9 @@
    "greenglowmine": 10.12,
    "raremountain": 6.61,
    "redcoppermine": 4.9,
-   "richsoilshop": 1.83
+   "richsoilshop": 1.83,
+   "vaultbrick": 3.8,
+   "blackbarrel": -5.42
   },
   "2026-11-10": {
    "greeneye": -5.47,
@@ -919,7 +985,9 @@
    "greenglowmine": -5.91,
    "raremountain": -3.42,
    "redcoppermine": -3.24,
-   "richsoilshop": 0.97
+   "richsoilshop": 0.97,
+   "vaultbrick": -5.37,
+   "blackbarrel": -2.14
   },
   "2026-11-11": {
    "greeneye": 2.87,
@@ -946,7 +1014,9 @@
    "greenglowmine": 0.84,
    "raremountain": 0.74,
    "redcoppermine": 3,
-   "richsoilshop": -0.83
+   "richsoilshop": -0.83,
+   "vaultbrick": -2.29,
+   "blackbarrel": 1.47
   },
   "2026-11-12": {
    "greeneye": -4.34,
@@ -973,7 +1043,9 @@
    "greenglowmine": -5.95,
    "raremountain": 1.96,
    "redcoppermine": -2.69,
-   "richsoilshop": -4.56
+   "richsoilshop": -4.56,
+   "vaultbrick": -5.64,
+   "blackbarrel": 5.15
   },
   "2026-11-13": {
    "greeneye": -2.01,
@@ -1000,7 +1072,9 @@
    "greenglowmine": -2.06,
    "raremountain": 3.5,
    "redcoppermine": -2,
-   "richsoilshop": 0.74
+   "richsoilshop": 0.74,
+   "vaultbrick": 0.1,
+   "blackbarrel": -1.3
   },
   "2026-11-16": {
    "greeneye": -4.12,
@@ -1027,7 +1101,9 @@
    "greenglowmine": -7.96,
    "raremountain": -6.89,
    "redcoppermine": -6.84,
-   "richsoilshop": -3.15
+   "richsoilshop": -3.15,
+   "vaultbrick": -1.35,
+   "blackbarrel": -6.72
   },
   "2026-11-17": {
    "greeneye": -0.44,
@@ -1054,7 +1130,9 @@
    "greenglowmine": -0.98,
    "raremountain": -3.41,
    "redcoppermine": 0.2,
-   "richsoilshop": -2.31
+   "richsoilshop": -2.31,
+   "vaultbrick": -0.23,
+   "blackbarrel": -0.83
   },
   "2026-11-18": {
    "greeneye": -2.89,
@@ -1081,7 +1159,9 @@
    "greenglowmine": -2.47,
    "raremountain": 3.13,
    "redcoppermine": -6.96,
-   "richsoilshop": -3.91
+   "richsoilshop": -3.91,
+   "vaultbrick": -6.36,
+   "blackbarrel": -3.85
   }
  }
 }
