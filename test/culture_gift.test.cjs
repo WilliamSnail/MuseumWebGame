@@ -3,7 +3,7 @@ const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
-const D0 = "2026-11-19", NICK = "Yuga";
+const D0 = "2026-11-19", NICK = "YUGa Chu";
 const mk = G => { const h = G.casHouseFix(G.casHouseNew(), D0).house, w = G.casWalletFix(G.casWalletNew(), D0); return { h, w }; };
 const inv = (G, s) => { const x = G.casBookSnap([s.w], s.h, 0, null); return G.casBookTotal(x) - G.casBookMinted(x) + G.casBookBurned(x); };
 T("該收的人：10 億從文化部到錢包；已知世界少 10 億、文化部帳少 10 億（別的集團不動）；錢守恆；不是借款；莊家、博物館資金不動", G => {
@@ -14,7 +14,7 @@ T("該收的人：10 億從文化部到錢包；已知世界少 10 億、文化�
   assert.strictEqual(s.h.led.units["cultureGift|u-culture|players"], G0.amt);
 });
 T("只撥壹次：第二次什麼都不做（錢包記著、莊家文件也記著）；別的暱稱、關掉都不撥", G => {
-  const s = mk(G); assert.ok(G.casCultureGift(s.w, s.h, "  yuga ", D0, 1e12), "暱稱去空白、小寫比對"); const c1 = s.w.chips; assert.strictEqual(G.casCultureGift(s.w, s.h, NICK, D0, 1e12), null); assert.strictEqual(s.w.chips, c1);
+  const s = mk(G); assert.ok(G.casCultureGift(s.w, s.h, "  yuga  CHU ", D0, 1e12), "暱稱去空白、小寫比對"); const c1 = s.w.chips; assert.strictEqual(G.casCultureGift(s.w, s.h, NICK, D0, 1e12), null); assert.strictEqual(s.w.chips, c1);
   const s2 = mk(G); s2.w.gifts = {}; assert.strictEqual(G.casCultureGift(s2.w, s2.h, "小明", D0, 1e12), null); assert.strictEqual(s2.w.chips, mk(G).w.chips);
   const s3 = mk(G); const id = G.NUM.casino.cultureGift.id; s3.h.cg = { [id]: D0 }; assert.strictEqual(G.casCultureGift(s3.w, s3.h, NICK, D0, 1e12), null, "莊家文件記著就不撥（錢包被重建也不會再撥）");
   G.NUM.casino.cultureGift.on = false; assert.strictEqual(G.casCultureGift(mk(G).w, mk(G).h, NICK, D0, 1e12), null); assert.ok(!G.casGiftWho(NICK));

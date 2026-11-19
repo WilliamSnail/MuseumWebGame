@@ -389,7 +389,7 @@ export const NUM = {
     //   壞消息推不安 downPush：世界市場新聞 tone=down、ref 指到某集團旗下的股票，那個集團不安 +這麼多（壹個集團壹天最多壹次）；排程事件的上下限（week_check 也擋）：san ±sanMax、unrest ±unrestMax、mood ±moodMax
     //   散客類型權重 crowd（決定 0092 第 3 件）：昨天的展廳氣氛 ≥ high：這幾種散客組比較多（乘上這個倍數）；≤ low：另外幾種。只改「抽到哪種組」的機率，每天幾組、幾點到、待多久不變。人數的期望值變動由 econ:check 擋（±20% 內）
     // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino_text.js 的 CAS_GIFT。on:false 關掉
-    cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["Yuga"], amt: 1000000000, days: 365 },
+    cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
     // 佩佩銀行跟賭場分開（決定 0130，翊文 11-19）：館友借款（新的）、館債、存款利息改由準備金 house.gb 出錢；賭場、股票留在莊家。舊借款（9.85 億）留在莊家照舊還給莊家。
     //   on 總開關；reservePct 放款留的準備率；gdepKeepPct 集團存款留幾 %（會被領）；hdepW 莊家的錢超過這個，超過的部分每天存進 gb（hdep）；hdepRate hdep 的利息 %／天；
     //   hdepLow 莊家低於這個才可以領回 hdep，每天最多 gb 多餘現金的 hdepOutPct%；sweepHousePct 盈餘（利息淨收入）給莊家的 %，其餘進博物館資金；bondMove 一次性：莊家搬給 gb 的舊館債本金。
