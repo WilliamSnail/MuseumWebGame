@@ -94,7 +94,7 @@ function checkFx(fx) {
   if (!/SONG_GAINS\.add\(/.test(sc) || !/SONG_GAINS\.delete\(/.test(sc)) bad.push("songCycle 的曲子沒有過 SONG_GAINS（恐怖音樂時壓不低），或停的時候沒拿掉");
   if (!/own\.stop\(c/.test(sc) || !/fileOnce\([^;]*, own\)/.test(sc)) bad.push("songCycle 停的時候沒有 own.stop（正在放的曲子會繼續放、還在下載的離開後才響）");
   if (!/songDread/.test(sy) || !/SONG_GAINS\.forEach/.test(sy)) bad.push("sync() 沒有照恐怖音樂調房間曲子的音量（SONG_GAINS）");
-  const SONG_IDS = ["lib-piano-a", "lib-piano-b", "cello-commission", "gallery-nostalgic", "gallery-welte"];
+  const SONG_IDS = ["bank-music", "lib-piano-a", "lib-piano-b", "cello-commission", "gallery-nostalgic", "gallery-welte"];
   for (const e of ents) for (const m of e.src.matchAll(/fileOnce\([^,]+,[^,]+,\s*'([^']+)'/g)) if (SONG_IDS.includes(m[1])) bad.push(`AMB.${e.name}：整首曲子 ${m[1]} 用 fileOnce 直接放，要走 songCycle（恐怖音樂時才壓得低）`);
   return { bad, info: [...new Set(info)], rooms: ents.map(e => e.name) };
 }
