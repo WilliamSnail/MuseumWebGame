@@ -27,7 +27,10 @@ const FLOWS = [
   ["tradeSubsidy", "補助與公共採購", [[P, S, 300], [P, A, 150], [P, C, 100], [P, D, 200]]],
   ["tradeTech", "科技服務", [[F, I, 200], [A, I, 100], [S, I, 100], [P, I, 250], [I, O, 300], [P, O, 150]]],
 ];
-const UN = [D, F, I, O, A, S, P, C];
+const HH = "u-household", WITHHH = process.argv.includes("--hh");
+// 家計（決定 0128 的建議，--hh）：家計→民生（日用品）、→公共（所得稅）、→金融（保險利息）、集團→家計（薪水）；份量（萬／天）同樣用最小二乘法調成收支平衡
+if (WITHHH) FLOWS.push(["tradeHhGoods", "家計買日用品", [[HH, D, 800]]], ["tradeHhTax", "家計繳稅", [[HH, P, 400]]], ["tradeHhFee", "家計付金融費", [[HH, F, 250]]], ["tradeWage", "集團付薪水給家計", [[D, HH, 300], [F, HH, 200], [I, HH, 200], [O, HH, 250], [A, HH, 60], [S, HH, 100], [P, HH, 300], [C, HH, 20]]]);
+const UN = WITHHH ? [D, F, I, O, A, S, P, C, HH] : [D, F, I, O, A, S, P, C];
 // 現有兩條貨款每天大約多少（萬）：成長 g × 來源比例 × pct%（只拿來讓新表跟它們一起收支平衡，不改它們）
 function solve(G, h) {
   const x = G.wuFix(h), world = h.world, base = id => Math.floor(world * x.r[id]), g = world * 0.1436 / 365;
@@ -72,10 +75,10 @@ function run(b, E) {
   const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.worldDoc.market.on = false;
   const start = "2026-11-16", h = G.casHouseFix(G.casHouseNew(), start).house; h.econ = { b, yoy: 14.36 }; h.extFix = true;
   h.__gb = null; const x = () => G.wuFix(h), a0 = G.wuAmounts(h), hs = {}, gross = { n: 0, byKind: {} }, st = {}; for (const u of UN) { hs[u] = []; st[u] = {}; }
-  const pairNet = {}, gb = h.__gb = { cash: 0, dep: {}, loan: {}, debt: 0 }, S = { borrowed: 0, repaidBud: 0, debtInt: 0, debtMax: 0, intPaid: 0, intGot: 0, depIn: 0, depOut: 0, repaid: 0, lent: 0, runDays: 0, short: 0, cashMin: 0, depMax: 0, loanMax: 0 }, bud0 = h.budget, w0 = h.world;
+  let npcSum = 0, npcDays = 0; const pairNet = {}, gb = h.__gb = { cash: 0, dep: {}, loan: {}, debt: 0 }, S = { borrowed: 0, repaidBud: 0, debtInt: 0, debtMax: 0, intPaid: 0, intGot: 0, depIn: 0, depOut: 0, repaid: 0, lent: 0, runDays: 0, short: 0, cashMin: 0, depMax: 0, loanMax: 0 }, bud0 = h.budget, w0 = h.world;
   for (let i = 0; i < DAYS; i++) {
     const d = add(start, i); if (i > 0) { h.econ = { b, yoy: 14.36 }; G.casHouseFix(h, d); }
-    G.wmWriteVisit(h, d, npcs); G.casNpcSpend(h, d, "sim" + i, npcs, G.npcCounters(h.npcc));
+    G.wmWriteVisit(h, d, npcs); G.casNpcSpend(h, d, "sim" + i, npcs, G.npcCounters(h.npcc)); { const N = h.npcs && h.npcs.day === d ? h.npcs : null; if (N) { npcSum += N.ticket + N.shop + N.crowd.ticket + N.crowd.shop; npcDays++; } }
     if (E) { // 新的往來：今天一次搬完（真正做的時候會跟貨款壹樣分成每 15 分鐘壹格）
       for (const e of E) {
         const mult = G.whMult(h, e.f) * (1 + 0.5 * b), n = Math.floor(Math.floor(h.world * x().r[e.f]) * e.pct / 100 * mult), take = Math.min(n, Math.max(0, G.wuHave(h, e.f)));
@@ -88,7 +91,8 @@ function run(b, E) {
   const a1 = G.wuAmounts(h), r = x().r, keys = Object.keys((h.led && h.led.units) || {}).length;
   const units = UN.map(u => ({ u, d0: a0[u], d1: a1[u], adjRatio: x().adj[u] / Math.max(1, Math.floor(h.world * r[u])), hMin: Math.min(...hs[u]), hAvg: hs[u].reduce((s, v) => s + v, 0) / hs[u].length, st: st[u] }));
   const ledTotal = Object.entries((h.led && h.led.units) || {}).reduce((s, [k, v]) => s + (k.startsWith("tradeGoods") ? v : 0), 0);
-  return { units, gross, ledTotal, keys, size: JSON.stringify(h).length, world: h.world, gb, S, bud: h.budget - bud0 };
+  const wal = Object.values((h.npcw && h.npcw.bal) || {}).reduce((a, v) => a + v, 0);
+  return { units, gross, ledTotal, keys, size: JSON.stringify(h).length, world: h.world, gb, S, bud: h.budget - bud0, npcAvg: npcDays ? npcSum / npcDays : 0, wal, hhAdj: x().adj[HH] };
 }
 const G0 = load({ __realMoney: true }); G0.NUM.casino.grants = []; const h0 = G0.casHouseFix(G0.casHouseNew(), "2026-11-16").house, sol = solve(G0, h0);
 console.log(`集團往來模擬 ${DAYS} 天${OFF ? "（只有現在的兩條貨款）" : ""}`);
@@ -100,6 +104,7 @@ for (const b of [-1, 0, 1]) {
   const r = run(b, OFF ? null : sol.E);
   console.log(`\n景氣 ${b}：世界 ${fmt(r.world)}　led.units 鍵數 ${r.keys}　house 文件 ${fmt(r.size)} 字元　新往來每天平均 ${fmt(r.gross.n / DAYS / 1e4)} 萬`);
   console.log("  單位　　　　　帳 開始→結束（億）　adj／池子　健康值 平均（最低）　各狀態天數");
+  console.log(`  NPC、散客每天平均花 ${fmt(r.npcAvg)}；NPC 錢包合計 ${fmt(r.wal)}`);
   if (BANK) { const S = r.S, sum = o => Object.values(o).reduce((a, v) => a + v, 0); console.log(`  銀行：存款最多 ${fmt(S.depMax / 1e4)} 萬、放款最多 ${fmt(S.loanMax / 1e4)} 萬、準備金最低 ${fmt(S.cashMin / 1e4)} 萬；結束時存款 ${fmt(sum(r.gb.dep) / 1e4)} 萬、放款 ${fmt(sum(r.gb.loan) / 1e4)} 萬、準備金 ${fmt(r.gb.cash / 1e4)} 萬；存入 ${fmt(S.depIn / 1e4)}、領回 ${fmt(S.depOut / 1e4)}、借出 ${fmt(S.lent / 1e4)}、還 ${fmt(S.repaid / 1e4)}；付存款利息 ${fmt(S.intPaid)}、收放款利息 ${fmt(S.intGot)}（博物館資金淨 ${fmt(S.intGot - S.intPaid)}）；向博物館資金借最多 ${fmt(S.debtMax / 1e4)} 萬（借 ${fmt(S.borrowed / 1e4)}、還 ${fmt(S.repaidBud / 1e4)}、結束時還欠 ${fmt(r.gb.debt / 1e4)}、利息 ${fmt(S.debtInt)}）、博物館資金變化 ${fmt(r.bud / 1e4)} 萬；擠兌 ${S.runDays} 次、少付共 ${fmt(S.short / 1e4)} 萬`); }
   for (const u of r.units) console.log(`  ${u.u.padEnd(12)} ${(u.d0 / 1e8).toFixed(1).padStart(6)}→${(u.d1 / 1e8).toFixed(1).padStart(6)}　${(u.adjRatio * 100).toFixed(2).padStart(7)}%　${u.hAvg.toFixed(3)}（${u.hMin.toFixed(3)}）　${Object.entries(u.st).map(([k, v]) => k + v).join(" ")}`);
 }

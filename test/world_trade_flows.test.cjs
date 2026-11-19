@@ -13,7 +13,7 @@ const kinds = h => new Set(Object.keys((h.led && h.led.units) || {}).map(k => k.
 T("往來表：每天七種往來都有、各單位帳加公共還是等於池子；錢守恆；90 天沒有單位被掏空（帳 adj／池子在 ±6% 內）", G => {
   G.NUM.casino.worldDoc.trade.bank.on = false; const h = mk(G), t0 = inv(G, h); let day = D0;
   for (let i = 1; i <= 90; i++) { day = add(day, 1); step(G, h, day); }
-  for (const k of ["tradeDaily", "tradeFee", "tradeResearch", "tradeDesign", "tradeTax", "tradeSubsidy", "tradeTech", "tradeGoods"]) assert.ok(kinds(h).has(k), k);
+  for (const k of ["tradeDaily", "tradeFee", "tradeResearch", "tradeDesign", "tradeTax", "tradeSubsidy", "tradeTech", "tradeGoods", "tradeHhGoods", "tradeHhTax", "tradeHhFee", "tradeWage"]) assert.ok(kinds(h).has(k), k);
   assert.strictEqual(sum(G.wuAmounts(h)), h.world); assert.strictEqual(inv(G, h), t0 + 0 * 1, "總和只多了憑空成長");
   const x = G.wuFix(h); for (const id of Object.keys(x.r)) if (id !== "pub" && x.r[id] > 0) assert.ok(Math.abs(x.adj[id] / Math.max(1, Math.floor(h.world * x.r[id]))) < 0.06, id + " " + x.adj[id]);
 });
