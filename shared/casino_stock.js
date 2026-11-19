@@ -633,11 +633,6 @@ export function casStockIntraApply(house, mk, data, day, t) {
       const i = Math.min(T.idx, arr.length - 1);
       T.ser[id] = arr.slice(cur.openIdx, i + 1).map(r => stTwPx(base, r));
       if (T.ser[id].length) H.px[id] = T.ser[id][T.ser[id].length - 1];
-      // 秒級現價（決定 0135）：排程每幾秒抓的 live 比這壹分鐘的價新，就用它當現價（也換掉盤中最後壹格），落後從約 1 分鐘縮到幾秒
-      const LV = cur.live, LC = C.live;
-      if (LC && LC.on && C.direct && LV && LV.rel && LV.rel[id] > 0 && Number.isFinite(+LV.at) && t - LV.at >= -5000 && t - LV.at <= LC.maxAgeSec * 1000 && LV.idx >= i && T.ser[id].length) {
-        const p = stTwPx(base, LV.rel[id]); if (p > 0) { T.ser[id][T.ser[id].length - 1] = p; H.px[id] = p; if (Number.isFinite(+(LV.lag && LV.lag[id]))) T.lag[id] = +LV.lag[id]; }
-      }
     }
   }
   // 前幾天盤中的價（隔幾天才上線的人，掛單也要照中間每天盤中的價檢查）

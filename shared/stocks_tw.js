@@ -216,22 +216,6 @@ export function twApply(doc, need, idx, got, secret, mk) {
 
 // 直接用真實價：這壹分鐘（idx）每支的 rel ＝ 真實價 ÷ 真實前壹收盤。抓不到（或資料落後超過 staleMin 分鐘）這壹分鐘價平的接上去；
 // 超過 staleMin 分鐘沒有新價的那支標 stale（遊戲暫停那支的買賣）。lag 每分鐘更新
-// 秒級的現價（決定 0135）：排程每 everySec 秒抓壹次，不寫進每分鐘的 ser，只放 doc.live { at 毫秒, idx 是第幾分鐘, rel { id: 真實價÷前壹收盤 }, lag { id: 落後分鐘 } }；
-// 一定要在這壹分鐘的 twMinute 做完之後才寫（idx ＞ doc.k 時不寫）。回傳有沒有寫
-export function twLive(doc, got, idx, nowMs, mk) {
-  mk = mk || "tw"; const S = NUM.casino.stock, L = S.live;
-  if (!L || !L.on || !S.direct || !doc || doc.closed || doc.fin || doc.openIdx == null || idx == null || !(idx >= doc.openIdx) || idx > doc.k || idx > mkLen(mk, doc.day) || !Number.isFinite(+nowMs)) return false;
-  const rel = {}, lag = {}; let n = 0;
-  for (const id of MKS[mk].ids) {
-    const row = got && got[id], prev = doc.prevReal && doc.prevReal[id];
-    if (!row || !okPx(row.px) || !okPx(prev)) continue;
-    const r = row.px / prev; if (!(r >= S.sane[0] && r <= S.sane[1])) continue;
-    if (Number.isFinite(+row.lag) && +row.lag > S.staleMin) continue;
-    rel[id] = twRound(r); if (Number.isFinite(+row.lag)) lag[id] = +row.lag; n++;
-  }
-  if (!n) return false;
-  doc.live = { at: Math.floor(+nowMs), idx, rel, lag }; return true;
-}
 function twMinute(doc, idx, g, mk) {
   const IDS = MKS[mk].ids, S = NUM.casino.stock, sm = S.staleMin;
   if (!doc.last || typeof doc.last !== "object") doc.last = {};
