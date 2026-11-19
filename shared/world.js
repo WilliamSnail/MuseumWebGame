@@ -349,10 +349,45 @@ function wtFlowsDaily(house, day) {
 export function gbFix(house) {
   if (!wuBox(house)) return null;
   const g = wuBox(house.gb) ? house.gb : (house.gb = {}); g.cash = wdN(g.cash); g.debt = Math.max(0, wdN(g.debt));
+  g.loansOut = Math.max(0, wdN(g.loansOut)); g.bond = Math.max(0, wdN(g.bond)); g.hdep = Math.max(0, wdN(g.hdep)); g.inc = wdN(g.inc); // 決定 0130：新借款本金、館債本金、莊家存款、今天的利息淨收入
   for (const k of ["dep", "loan"]) { if (!wuBox(g[k])) g[k] = {}; for (const id of Object.keys(g[k])) { g[k][id] = Math.max(0, wdN(g[k][id])); if (!g[k][id]) delete g[k][id]; } }
   return g;
 }
 const gbLed = (house, box, src, n) => { if (!n) return; if (!wuBox(house.led)) house.led = {}; if (!wuBox(house.led[box])) house.led[box] = {}; house.led[box][src] = wdN(house.led[box][src]) + n; };
+// ---------- 佩佩銀行跟賭場分開（決定 0130）：館友借款、館債、存款利息改由 gb 出錢；莊家水位上繳 hdep；盈餘 30% 莊家、70% 博物館資金 ----------
+// gb 多的欄位：loansOut（新借款借出去沒收回的本金）、bond（館債欠館友的本金）、hdep（gb 欠莊家的存款）、inc（今天累計的利息收入減支出，換日分盈餘）、mig、day
+const gbSp = () => NUM.casino.bankSplit;
+export const gbSplitOn = house => !!(gbSp() && gbSp().on && wuBox(house));
+// 放款額度：現金 ×（1 − 準備率）− 集團存款 × gdepKeepPct% − 館債本金（館友存款本金還在錢包裡，不算；莊家存款 hdep 不扣：是自己人的資本）
+export function gbRoom(house) {
+  const S = gbSp(), g = gbFix(house); if (!S || !g) return 0;
+  const gd = Object.values(g.dep).reduce((a, v) => a + v, 0);
+  return Math.max(0, Math.floor(g.cash * (100 - S.reservePct) / 100 - gd * S.gdepKeepPct / 100 - g.bond));
+}
+// 借出去（館友借款）：gb 現金 → 館友錢包（呼叫的人自己加錢包的籌碼）
+export function gbLend(house, n, src = "pLoan") { const g = gbFix(house); n = wdN(n); if (n <= 0) return 0; g.cash -= n; g.loansOut += n; gbLed(house, "gb", src, -n); return n; }
+// 收回（館友還款、到期被扣）：owe 進 gb 現金，principal 是本金（利息 ＝ owe − principal 進 inc）
+export function gbCollect(house, owe, principal, src = "pLoanBack") { const g = gbFix(house); owe = wdN(owe); principal = Math.min(wdN(principal), owe); if (owe <= 0) return 0; g.cash += owe; g.loansOut = Math.max(0, g.loansOut - principal); g.inc += owe - principal; gbLed(house, "gb", src, owe); return owe; }
+// 付利息（館友存款、館債）：gb 現金付得出多少付多少，回傳實付
+export function gbPay(house, want, src) { const g = gbFix(house); const n = Math.min(wdN(want), Math.max(0, g.cash)); if (n <= 0) return 0; g.cash -= n; g.inc -= n; gbLed(house, "gb", src, -n); return n; }
+// 館債：賣出收的錢進 gb（本金記在 g.bond）、到期付出去（本金先、利息後；付不出的回傳 short 給呼叫的人開憑證）
+export function gbBondIn(house, n) { const g = gbFix(house); n = wdN(n); if (n <= 0) return 0; g.cash += n; g.bond += n; gbLed(house, "gb", "pBond", n); return n; }
+export function gbBondPay(house, owe, principal) { const g = gbFix(house); const n = Math.min(wdN(owe), Math.max(0, g.cash)); if (n <= 0) return 0; const pr = Math.min(n, wdN(principal), g.bond); g.cash -= n; g.bond -= pr; g.inc -= n - pr; gbLed(house, "gb", "pBond", -n); return n; }
+// 每天（換日第一次碰到莊家）：舊館債本金搬一次、莊家的存款利息、水位上繳、莊家缺錢時領回、盈餘分配
+export function gbDaily(house, day) {
+  const S = gbSp(), g = gbFix(house); if (!S || !S.on || !g || !wdDayOk(day) || g.day === day) return false;
+  g.day = day;
+  if (!g.mig) { g.mig = 1; const n = Math.max(0, Math.min(wdN(S.bondMove), Math.max(0, wdN(house.bankroll)))); if (n > 0) { house.bankroll -= n; gbLedFlow(house, "bondMove", -n); g.cash += n; g.bond += n; gbLed(house, "gb", "bondMove", n); } } // 舊的沒到期的館債本金：莊家搬現金給 gb（金額查正式站，11-19 ＝ 2,100,000）
+  const gd = Object.values(g.dep).reduce((a, v) => a + v, 0), keep = Math.floor(gd * S.gdepKeepPct / 100) + g.bond;
+  if (g.hdep > 0) { const iv = Math.min(Math.floor(g.hdep * S.hdepRate / 100), Math.max(0, g.cash)); if (iv > 0) { g.cash -= iv; g.inc -= iv; house.bankroll += iv; gbLedFlow(house, "hdepInt", iv); gbLed(house, "gb", "hdepInt", -iv); } } // gb 付莊家存款的利息
+  if (g.inc > 0) { const s = Math.min(g.inc, Math.max(0, g.cash - keep)); if (s > 0) { const h = Math.floor(s * S.sweepHousePct / 100), b = s - h; g.cash -= s; g.inc -= s; house.bankroll += h; gbLedFlow(house, "gbSweepH", h); gbLed(house, "gb", "gbSweepH", -h); house.budget = wdN(house.budget) + b; gbLedFlow(house, "gbSweepB", b); gbLed(house, "gb", "gbSweepB", -b); } } // 盈餘：30% 莊家、70% 博物館資金
+  if (wdN(house.bankroll) > S.hdepW) { const x = wdN(house.bankroll) - S.hdepW; house.bankroll -= x; gbLedFlow(house, "hdepIn", -x); g.cash += x; g.hdep += x; gbLed(house, "gb", "hdepIn", x); } // A：莊家水位上繳
+  else if (wdN(house.bankroll) < S.hdepLow && g.hdep > 0) { // B：莊家缺錢才領回，每天最多 gb 多餘現金的 hdepOutPct%
+    const avail = Math.max(0, g.cash - keep), take = Math.min(g.hdep, Math.floor(avail * S.hdepOutPct / 100), S.hdepLow - wdN(house.bankroll)); if (take > 0) { g.cash -= take; g.hdep -= take; house.bankroll += take; gbLedFlow(house, "hdepOut", take); gbLed(house, "gb", "hdepOut", -take); }
+  }
+  return true;
+}
+const gbLedFlow = (house, src, n) => gbLed(house, "flow", src, n); // 莊家（或博物館資金，用 CAS_BOOK_POOL 分）的角度：正＝進這個帳
 // 單位 → 準備金（存款、還款）
 function gbIn(house, unit, n, src) { const g = gbFix(house); n = Math.min(wdN(n), Math.max(0, wuHave(house, unit))); if (n <= 0) return 0; house.world = wdN(house.world) - n; wuDebit(house, unit, n); g.cash += n; gbLed(house, "world", src, -n); gbLed(house, "gb", src, n); return n; }
 // 準備金 → 單位（領回、放款）

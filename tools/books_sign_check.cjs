@@ -14,12 +14,12 @@ const { load } = require(path.join(ROOT, "test", "load_shared.cjs"));
 
 // 符號表：來源 → 在這個帳應該是 ＋ 還是 －（0＝兩個方向都可能，例如賭桌輸贏）。k 是帳上的來源代號。
 const SIGN = {
-  bankroll: { cultureRepay: -1, worldRepay: -1, grant: 1, worldLoan: 1, budgetLoan: 1, budgetFix: 1, budgetRepay: -1, houseInvestBuy: -1, houseInvestSell: 1, houseInvFix: 1, investFee: -1, reset: 1,
+  bankroll: { bondMove: -1, hdepIn: -1, hdepOut: 1, hdepInt: 1, gbSweepH: 1, cultureRepay: -1, worldRepay: -1, grant: 1, worldLoan: 1, budgetLoan: 1, budgetFix: 1, budgetRepay: -1, houseInvestBuy: -1, houseInvestSell: 1, houseInvFix: 1, investFee: -1, reset: 1,
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
     bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, gLev: 0, tax: -1, inMarket: 0, gStock: 0, gRaise: -1, gBuy: 1 },
-  budget: { ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1, groupIntDep: -1, groupIntLoan: 1, groupBankLoan: -1, groupBankRepay: 1, groupBankInt: 1 },
+  budget: { gbSweepB: 1, ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1, groupIntDep: -1, groupIntLoan: 1, groupBankLoan: -1, groupBankRepay: 1, groupBankInt: 1 },
   gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
-  gb: { groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
+  gb: { pLoan: -1, pLoanBack: 1, pBankInt: -1, pBond: 0, bondMove: 1, hdepIn: 1, hdepOut: -1, hdepInt: -1, gbSweepH: -1, gbSweepB: -1, groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
   world: { groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
@@ -28,7 +28,7 @@ const SIGN = {
 };
 const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "已知世界", ext: "海外", gb: "佩佩銀行準備金" };
 // 同壹筆錢在兩個帳（已知世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的已知世界那邊還包著賣家的錢包，不比
-const PAIRED = { bankroll: ["gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix", "groupIntDep", "groupIntLoan", "groupBankLoan", "groupBankRepay", "groupBankInt"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"], gb: ["groupDeposit", "groupWithdraw", "groupLoan", "groupRepay"] };
+const PAIRED = { bankroll: ["bondMove", "hdepIn", "hdepOut", "hdepInt", "gbSweepH", "gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["gbSweepB", "npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix", "groupIntDep", "groupIntLoan", "groupBankLoan", "groupBankRepay", "groupBankInt"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"], gb: ["groupDeposit", "groupWithdraw", "groupLoan", "groupRepay"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;
@@ -45,7 +45,7 @@ function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
 }
 
 function run() {
-  const G = load();
+  const G = load(); G.NUM.casino.bankSplit.on = true; // 決定 0130：佩佩銀行跟賭場分開（借款、館債、存款利息、莊家水位上繳、盈餘分配都走 gb）
   const probs = [], info = [], seen = {}, P = (where, msg) => probs.push(`${where}：${msg}`);
   const sgn = n => (n > 0 ? "＋" : n < 0 ? "－" : "0") + Math.abs(n).toLocaleString("en-US");
   const LIST = fs.readdirSync(path.join(ROOT, "content", "npc")).filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(path.join(ROOT, "content", "npc", f), "utf8")));
@@ -72,6 +72,7 @@ function run() {
     G.casHouseMove(h, "find", -200); w.chips += 200; G.casHouseMove(h, "loan", -400); w.chips += 400; G.casHouseMove(h, "loanBack", 450); w.chips -= 450; G.casHouseMove(h, "bankInt", -50); w.chips += 50;
     G.casHouseMove(h, "econWin", 1200); h.budget -= 1200; G.casHouseMove(h, "econLoot", -250); w.chips += 250; G.casHouseMove(h, "econSea", -150); h.sea += 150;
     w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); G.casHouseWorldOut(h, "inMarket", 300, W); G.casHouseWorldIn(h, "inMarket", 100); // 手續費、拍賣手續費進博物館資金，資本利得稅進政府帳（決定 0110）
+    { const rb = G.casBorrow(w, 5000, day, false, 1e12 + k * 3600000, h); if (rb.ok) { w.chips += rb.loan.owe; G.casRepay(w, rb.loan.id, day, false, 1e12 + k * 3600000 + 7200000, h); } G.casBankPut(w, 2000); G.casBankAccrue(w, h, addD(day, 2)); h.gb.inc += 50000; } // 新借款、還款、存款利息（走 gb）
     G.casPoolMint(h, "budget", "ticketBudget", 100); G.casPoolMint(h, "museum", "ticketMuseum", 300); G.casHouseMint(h, "reset", 123);
     const s = G.casBookSnap([w], h, 0, day), diff = G.casBookDiff(prev, s); prev = s;
     days.push({ day, doc: { day, at: Date.parse(day + "T05:00:00+08:00"), snap: s, diff } });

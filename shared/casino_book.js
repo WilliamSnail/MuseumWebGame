@@ -224,13 +224,13 @@ const bkMerge = (into, o) => { for (const [k, v] of Object.entries(bkBox(o) ? o 
 //            house: { bankroll, budget, sea, mint {來源}, flow {來源} } }
 export function casBookSnap(wallets, house, inplay, day) {
   const s = { day: day || null, wallets: 0, active7: 0, chips: 0, transit: 0, bank: 0, inplay: bkNz(inplay), mint: {}, burn: {},
-    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), gov: bkNz(house.gov), world: house.world == null ? null : bkNz(house.world), ext: bkNz(house.ext), gb: bkBox(house.gb) ? bkNz(house.gb.cash) : 0, gbx: bkBox(house.gb) ? { debt: bkNz(house.gb.debt), dep: bkSumObj(house.gb.dep), loan: bkSumObj(house.gb.loan) } : { debt: 0, dep: 0, loan: 0 }, wflow: {}, xflow: {}, gflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), budget: bkNz(house.cul.budget), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
+    house: { bankroll: bkNz(house.bankroll), budget: bkNz(house.budget), sea: bkNz(house.sea), museum: bkNz(house.museum), gov: bkNz(house.gov), world: house.world == null ? null : bkNz(house.world), ext: bkNz(house.ext), gb: bkBox(house.gb) ? bkNz(house.gb.cash) : 0, gbx: bkBox(house.gb) ? { debt: bkNz(house.gb.debt), dep: bkSumObj(house.gb.dep), loan: bkSumObj(house.gb.loan), loansOut: bkNz(house.gb.loansOut), bond: bkNz(house.gb.bond), hdep: bkNz(house.gb.hdep) } : { debt: 0, dep: 0, loan: 0, loansOut: 0, bond: 0, hdep: 0 }, wflow: {}, xflow: {}, gflow: {}, mint: {}, flow: {}, burn: {}, act: {}, debt: bkBox(house.debt) ? { budget: bkNz(house.debt.budget), culture: bkNz(house.debt.culture), world: bkNz(house.debt.world) } : { budget: 0, culture: 0, world: 0 }, loansOut: bkNz(house.loansOut), cul: bkBox(house.cul) ? { paid: bkNz(house.cul.paid), late: bkNz(house.cul.late), budget: bkNz(house.cul.budget), day: house.cul.day || null, due: casCultureDue(house) } : null, culLate: bkNz(house.cultureLate) } };
   for (const w of wallets) {
     if (!bkBox(w)) continue;
     s.wallets++;
     if (day && typeof w.seen === "string" && bkDaysBetween(w.seen, day) <= 6) s.active7++; // 過去 7 天（含今天）來過的人
     s.chips += bkNz(w.chips);
-    s.transit += bkNz(w.loan && w.loan.toHouse);
+    s.transit += bkNz(w.loan && w.loan.toHouse) + bkNz(w.loan && w.loan.toGb);
     s.bank += bkHeld(w); // 存在 Yuga Bot 銀行的（活存＋定存，shared/casino_bank.js）：還是玩家的錢
     if (bkBox(w.led)) { bkMerge(s.mint, w.led.mint); bkMerge(s.burn, w.led.burn); }
   }
