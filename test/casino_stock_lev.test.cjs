@@ -24,7 +24,7 @@ T("NUM.casino.stockLev：5 倍、強平 50%、利息 0.15%、借券 0.3%、壹�
   const C = G.NUM.casino.stockLev;
   assert.strictEqual(C.maxLev.in, 5); assert.strictEqual(C.maxLev.tw, 5); assert.strictEqual(C.maxLev.us, 5); assert.strictEqual(C.maxLagMin, 3);
   assert.strictEqual(C.forcePct, 50); assert.strictEqual(C.interestPct, 0.15); assert.strictEqual(C.borrowPct, 0.3);
-  assert.strictEqual(C.opensDay, 3); assert.strictEqual(C.coolMin, 15); assert.strictEqual(C.posLimit, 20000000); assert.strictEqual(C.profitCap, 10000000);
+  assert.strictEqual(C.opensDay, 3); assert.strictEqual(C.coolMin, 0); // 11-19 翊文：取消平倉後冷卻 assert.strictEqual(C.posLimit, 20000000); assert.strictEqual(C.profitCap, 10000000);
   assert.strictEqual(C.houseExposePct, 20); assert.strictEqual(C.houseFloor, 3000000); assert.strictEqual(G.NUM.casino.stock.feePct, 0.5);
 });
 
@@ -106,7 +106,7 @@ T("放空的強平和損益：放空賺（價跌）、放空賠（價漲到 +10%
   assert.strictEqual(out[0].why, "liq"); assert.strictEqual(out[0].px, 1120); assert.strictEqual(out[0].pnl, -12000); assert.strictEqual(G.casBookGap(snap(s2), op2), 0);
 });
 
-T("手動平倉：找不到的單號不行、休市中叫平倉會被掃描收盤平掉；平倉後同一檔 15 分鐘內不能再開", G => {
+T("手動平倉：找不到的單號不行、休市中叫平倉會被掃描收盤平掉；平倉後同一檔馬上可以再開（冷卻 coolMin 0；設成 15 時要等）", G => {
   const s = fresh(G), P = { day: D0, px: { [IN]: 1000 }, idx: 5 }, t0 = at(D0, 6);
   const r = G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0, fakeSrc(P)); assert.ok(r.ok);
   assert.ok(!G.casLevClose(s.w, s.h, 99, D0, t0, fakeSrc(P)).ok);
@@ -114,8 +114,17 @@ T("手動平倉：找不到的單號不行、休市中叫平倉會被掃描收�
   assert.ok(h.ok && h.auto === "flat", "休市中叫平倉：掃描就收盤平掉了");
   const s2 = fresh(G), P2 = { day: D0, px: { [IN]: 1000 }, idx: 5 }, r2 = G.casLevOpen(s2.w, s2.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0, fakeSrc(P2));
   const c = G.casLevClose(s2.w, s2.h, r2.pos.no, D0, t0 + 60000, fakeSrc(P2)); assert.ok(c.ok);
-  const again = G.casLevOpen(s2.w, s2.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 10, fakeSrc(P2)); assert.ok(!again.ok && again.reason.includes("6 分鐘"), again.reason);
-  assert.ok(G.casLevOpen(s2.w, s2.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 16, fakeSrc(P2)).ok, "15 分鐘後可以");
+  assert.ok(G.casLevOpen(s2.w, s2.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 2, fakeSrc(P2)).ok, "冷卻 0：平倉後馬上可以再開");
+  G.NUM.casino.stockLev.coolMin = 15; const s3 = fresh(G), r3 = G.casLevOpen(s3.w, s3.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0, fakeSrc(P2)); G.casLevClose(s3.w, s3.h, r3.pos.no, D0, t0 + 60000, fakeSrc(P2));
+  const again = G.casLevOpen(s3.w, s3.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 10, fakeSrc(P2)); assert.ok(!again.ok && again.reason.includes("6 分鐘"), again.reason);
+});
+
+T("停損停利用 % 給時照成交價算（11-19）", G => {
+  const s = fresh(G), P = { day: D0, px: { [IN]: 1000 }, idx: 5 }, t0 = at(D0, 6);
+  const L = G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 2, qty: 10, stopPct: 3, takePct: 5 }, D0, t0, fakeSrc(P)); assert.ok(L.ok, L.reason);
+  assert.strictEqual(L.pos.stop, Math.round(L.pos.entry * 0.97 * 100) / 100); assert.strictEqual(L.pos.take, Math.round(L.pos.entry * 1.05 * 100) / 100);
+  const S = G.casLevOpen(s.w, s.h, { id: IN, side: "short", lev: 1, qty: 10, stopPct: 3 }, D0, t0 + 1, fakeSrc(P)); assert.ok(S.ok, S.reason);
+  assert.strictEqual(S.pos.stop, Math.round(S.pos.entry * 1.03 * 100) / 100);
 });
 
 T("當沖：收盤了還沒平的，用那天最後壹個價自動平倉（館內 23:30，真的曲線）；沒收盤的不動", G => {

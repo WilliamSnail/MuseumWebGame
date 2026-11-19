@@ -286,7 +286,9 @@ export function casLevOpen(w, house, args, day, t, src) {
   }
   const cost = lqCostOf(side, notional, margin);
   if (w.chips < margin + cost.total) return { ok: false, reason: casFill(T.poor, { need: casNum(margin + cost.total), margin: casNum(margin), fee: casNum(cost.total) }) };
-  const stop = lqPxArg(A.stop), take = lqPxArg(A.take);
+  // 停損停利可以用 % 給（stopPct、takePct）：照實際成交價（px）算，不用畫面上的價（11-19 翊文：「虧 3% 就賣」實際要是 3%）
+  const pctPx = (pct, up) => { const v = +pct; return Number.isFinite(v) && v > 0 ? Math.round(px * (up ? 1 + v / 100 : 1 - v / 100) * 100) / 100 : null; };
+  const stop = A.stopPct != null ? pctPx(A.stopPct, side === "short") : lqPxArg(A.stop), take = A.takePct != null ? pctPx(A.takePct, side !== "short") : lqPxArg(A.take);
   const probe = { side, entry: px, qty, margin }, sWhy = lqStopWhy(probe, px, stop, take); // 停損停利有問題就整張單不開
   if (sWhy) return { ok: false, reason: sWhy };
   // 成交
