@@ -773,7 +773,7 @@ let chipsAsked = false;
 async function askChips() {
   if (chipsAsked || !UI.net || !NET.loggedIn) return;
   chipsAsked = true;
-  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); if (ADDONS.workPeek) ADDONS.workPeek(r); } // 欠款要送人下去、還清了回來（決定 0064，ui_work.js）
+  try { const r = await NET.call("casino", { act: "peek" }); if (r && typeof r.chips === "number") setChips(r.chips); if (ADDONS.workPeek) ADDONS.workPeek(r); if (r && "pool" in r && ADDONS.poolPeek) ADDONS.poolPeek(r.pool); } // 欠款要送人下去、還清了回來（決定 0064，ui_work.js）；館門口的池子（ui_pool.js）
   catch (e) { chipsAsked = false; } // 讀不到就先不顯示，下次連上再試
 }
 // 走完地下的一個房間（單人：ui_screens3.js 的 resolveFlow；合作：ui_coop.js 的 playResult）：跟伺服器說「我走完這間了」（決定 0047）。
