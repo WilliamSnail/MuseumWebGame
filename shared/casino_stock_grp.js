@@ -17,6 +17,8 @@ import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } fro
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./casino_book.js";
 import { casInIdx } from "./casino_stock_in.js";
 import { hashStr } from "./logic.js";
+// 集團股的手續費 %（決定 0137）：feeOut.grp，沒寫就用 feePct
+export const gsFeePct = () => { const O = NUM.casino.stock.feeOut; return O && O.grp != null ? O.grp : NUM.casino.stock.feePct; };
 
 const gN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 const gBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -198,7 +200,7 @@ export function gsBuy(w, house, id, shares, day, t, fixPx) {
   if (vol + n > capD) return { ok: false, reason: `今天這支最多再買賣 ${Math.max(0, capD - vol)} 股（壹天最多股本的 ${C.dayVolPct}%）。` };
   if (Math.abs(U.i - n) > U.S * C.makerCapPct / 100) return { ok: false, reason: "莊家手上這支的庫存已經夠多了，今天不能再買。" };
   const q = gQuote(U, n); if (!q.ok) return { ok: false, reason: `這支的價格已經推到漲跌停了，現在最多還能買 ${q.maxN} 股，晚點再來。` };
-  const cost = Math.max(1, fixPx > 0 ? Math.round(n * fixPx) : Math.round(n * q.avg * (1 + C.half))), fee = Math.ceil(cost * NUM.casino.stock.feePct / 100);
+  const cost = Math.max(1, fixPx > 0 ? Math.round(n * fixPx) : Math.round(n * q.avg * (1 + C.half))), fee = Math.ceil(cost * gsFeePct() / 100);
   if (cost + fee > w.chips) return { ok: false, reason: "籌碼不夠。" };
   w.chips -= cost; casHouseMove(house, "gStock", cost); w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   U.P = Math.max(C.floor, q.Pn); U.i -= n; U.h += n; S.h[id] = have + n; S.cost[id] = gN(S.cost[id]) + cost + fee; S.v = { day, n: Object.assign(S.v.day === day ? S.v.n : {}, { [id]: vol + n }) };
@@ -225,7 +227,7 @@ export function gsSell(w, house, id, shares, day, t, fixPx) {
     if (lo < 1) return { ok: false, reason: "莊家和博物館資金現在都沒有這麼多錢收，晚點再來。" };
     n = lo; part = n0 - n; gross = gOf(n); lent = cv.take(gross - house.bankroll);
   }
-  const q = gQuote(U, -n), fee = Math.ceil(gross * NUM.casino.stock.feePct / 100), tax = Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * Math.round(NUM.casino.stock.taxPct * 100) / 10000)));
+  const q = gQuote(U, -n), fee = Math.ceil(gross * gsFeePct() / 100), tax = Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * Math.round(NUM.casino.stock.taxPct * 100) / 10000)));
   casHouseMove(house, "gStock", -gross); w.chips += gross; w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   w.chips -= tax; if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); }
   const costOut = n >= have ? gN(S.cost[id]) : Math.floor(gN(S.cost[id]) * n / have), profit = gross - fee - tax - costOut;
@@ -249,7 +251,7 @@ export function gsOrder(w, house, kind, id, shares, px, day, t) {
   if (S.orders.filter(o => o.id === id).length >= O.perStock) return { ok: false, reason: `同壹支最多掛 ${O.perStock} 張單。` };
   const now = gPx2(U.P); if (kind === "sell" ? p <= now : p >= now) return { ok: false, reason: `價格要比現價 ${now} 更有利才能掛單（買、停損要低於現價，賣要高於現價）。` };
   const o = { no: ++S.oseq, kind, id, n, px: p, day, hold: 0, at: gN(g.k) };
-  if (kind === "buy") { const c = Math.max(1, Math.round(n * p)); o.hold = c + Math.ceil(c * NUM.casino.stock.feePct / 100); if (o.hold > w.chips) { S.oseq--; return { ok: false, reason: "籌碼不夠，掛不了這張單。" }; } w.chips -= o.hold; }
+  if (kind === "buy") { const c = Math.max(1, Math.round(n * p)); o.hold = c + Math.ceil(c * gsFeePct() / 100); if (o.hold > w.chips) { S.oseq--; return { ok: false, reason: "籌碼不夠，掛不了這張單。" }; } w.chips -= o.hold; }
   else { const free = gN(S.h[id]) - gsLocked(S, id); if (n > free) { S.oseq--; return { ok: false, reason: `可以掛的股只有 ${Math.max(0, free)} 股（掛單會鎖住股數）。` }; } }
   S.orders.push(o); S.hold = S.orders.reduce((a, x) => a + gN(x.hold), 0);
   return { ok: true, order: o, lines: [`掛好了：${gKind[kind]}「${gsNameOf(id)}」${n} 股，價格 ${p}${o.hold ? "，鎖住 " + o.hold : ""}。今天收盤前沒成交就取消。`] };
@@ -317,7 +319,7 @@ export function gsLevSrc(house, day, t) {
 export function gsView(w, house, day, t) {
   const C = gCfg(); if (!C || !C.on || !house) return null;
   gsAdvance(house, day, t); const g = gsFix(house), S = w ? gsWalletFix(w) : null, ids = Object.keys(g.u), sy = w ? gsSync(w, house) : { lines: [] }; // 看畫面時順便領股息、配股
-  const list = ids.map(id => { const U = g.u[id], nav = gsNav(house, id), mine = S ? gN(S.h[id]) : 0; return { id, name: gsNameOf(id), unit: whName(id), price: Math.round(U.P * 100) / 100, open: Math.round(U.o * 100) / 100, chg: U.o > 0 ? Math.round((U.P / U.o - 1) * 10000) / 100 : 0, shares: U.S, mcap: Math.floor(U.P * U.S), nav: Math.round(nav * 100) / 100, pb: nav > 0 ? Math.round(U.P / nav * 100) / 100 : null, mine, value: Math.floor(mine * U.P), cost: S ? gN(S.cost[id]) : 0, market: wmOfUnit(id), hist: Array.isArray(U.hist) ? U.hist.slice(-30).map(x => Math.round(+x * 100) / 100) : [] }; });
+  const list = ids.map(id => { const U = g.u[id], nav = gsNav(house, id), mine = S ? gN(S.h[id]) : 0; return { id, name: gsNameOf(id), fee: gsFeePct() / 100, unit: whName(id), price: Math.round(U.P * 100) / 100, open: Math.round(U.o * 100) / 100, chg: U.o > 0 ? Math.round((U.P / U.o - 1) * 10000) / 100 : 0, shares: U.S, mcap: Math.floor(U.P * U.S), nav: Math.round(nav * 100) / 100, pb: nav > 0 ? Math.round(U.P / nav * 100) / 100 : null, mine, value: Math.floor(mine * U.P), cost: S ? gN(S.cost[id]) : 0, market: wmOfUnit(id), hist: Array.isArray(U.hist) ? U.hist.slice(-30).map(x => Math.round(+x * 100) / 100) : [] }; });
   const ords = S ? S.orders.map(o => ({ no: o.no, kind: o.kind, kindName: gKind[o.kind], id: o.id, name: gsNameOf(o.id), n: o.n, px: o.px, hold: o.hold, day: o.day })) : [], onotes = S ? S.notes.splice(0) : [];
   return { notes: sy.lines.concat(onotes), orders: ords, list, index: { v: gsIndex(house) }, halt: gHalt(g, day, t), rule: `集團的股票：價格由這個世界的買賣和經濟決定。每人持股沒有上限、壹天買賣最多 ${C.dayVolPct}%、每天漲跌停 ±${C.dayLim}%。` };
 }

@@ -7,7 +7,7 @@ const D0 = "2026-11-16", at = (h) => Date.UTC(2026, 10, 16, h - 8, 0);
 const ROOT = path.join(__dirname, ".."), ui = fs.readFileSync(path.join(ROOT, "web", "src", "ui_bank.js"), "utf8");
 const levRule = G => { const h = G.casHouseFix(G.casHouseNew(), D0).house, w = G.casWalletFix(G.casWalletNew(), D0); return G.casStockLevView(w, h, D0, at(12)).lev.rule; };
 T("槓桿規則的字：手續費、利息、借券、當沖稅、筆數、冷卻都讀設定；美股 0 寫「免手續費」", G => {
-  const r = levRule(G); assert.ok(r.includes("台股 0.05%") && r.includes("美股 免手續費") && r.includes("館內股和集團股 0.5%"), r);
+  const r = levRule(G); assert.ok(r.includes("台股 0.05%") && r.includes("美股 免手續費") && r.includes("館內股 0.5%、集團股 0.2%"), r);
   assert.ok(r.includes("台股、美股 0.02%") && r.includes("台股、美股 0.08%") && r.includes("館內股和集團股 0.15%") && r.includes("館內股和集團股 0.3%"), "利息、借券費");
   assert.ok(r.includes("當沖證交稅 0.15%"), "當沖稅"); assert.ok(r.includes("壹天開幾筆不限") && r.includes("平倉後馬上可以再開"), "現在不限筆數、沒有冷卻");
   assert.ok(!/買賣各收 0\.5% 手續費|壹天最多開 3 筆|要等 15 分鐘/.test(r), "不能留舊的寫死的字");
@@ -23,7 +23,7 @@ T("每支的費率跟設定壹致：view 的 fee、taxPct；0 的那檔 view 是
 });
 T("銀行說明（helpSections）和畫面：費率從設定讀（feeOut、byMk）、0 用「免手續費」、沒有寫死的 0.5%／0.15%／借券 0.3%", G => {
   const a = ui.indexOf("function helpSections"), b = ui.indexOf("function openHelp"), help = ui.slice(a, b);
-  for (const k of ["S.feeOut.tw", "S.feeOut.us", "S.feePct", "L.byMk.tw.interestPct", "L.byMk.tw.borrowPct", "L.byMk.tw.taxPct", "feeT("]) assert.ok(help.includes(k), k);
+  for (const k of ["S.feeOut.tw", "S.feeOut.us", "S.feeOut.grp", "S.feePct", "L.byMk.tw.interestPct", "L.byMk.tw.borrowPct", "L.byMk.tw.taxPct", "feeT("]) assert.ok(help.includes(k), k);
   assert.ok(ui.includes("免手續費"), "畫面有「免手續費」的字");
   const code = ui.split("\n").filter(l => !/^\s*\/\//.test(l)).join("\n");
   for (const bad of [/手續費 0\.5%/, /利息 0\.15%/, /借券費 0\.3%/, /手續費 \$\{pctText\(S\.fee\)\}（跟台股/]) assert.ok(!bad.test(code), String(bad));

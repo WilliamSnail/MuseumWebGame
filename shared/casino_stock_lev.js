@@ -54,8 +54,8 @@ const lqMk = id => (TW_IDS.includes(id) ? "tw" : US_IDS.includes(id) ? "us" : nu
 const lqRate = (id, k) => { const m = lqMk(id), B = lqC().byMk && m && lqC().byMk[m]; return B && B[k] != null ? B[k] : k === "taxPct" ? 0 : lqC()[k]; };
 // 規則那段字裡的費用和限制，全部讀設定（決定 0136；以前寫死 0.5%、0.15%、0.3%、壹天 3 筆、等 15 分鐘，早就跟設定不一樣了）
 export function casLevCostText() {
-  const C = lqC(), tw = casLevRates(TW_IDS[0]), us = casLevRates(US_IDS[0]), df = casLevRates("in"), p = v => +(v * 100).toFixed(4) + "%", fee = v => casFeeText(+(v * 100).toFixed(4));
-  return `手續費（買賣各收）：台股 ${fee(tw.fee)}、美股 ${fee(us.fee)}、館內股和集團股 ${fee(df.fee)}。做多另收借的錢每天的利息：台股、美股 ${p(tw.interest)}，館內股和集團股 ${p(df.interest)}；放空另收借券費：台股、美股 ${p(tw.borrow)}，館內股和集團股 ${p(df.borrow)}。` + (tw.tax > 0 ? `台股平倉另收當沖證交稅 ${p(tw.tax)}（進政府帳）。` : "") + (C.opensDay > 0 ? `壹天最多開 ${C.opensDay} 筆。` : "壹天開幾筆不限。") + (C.coolMin > 0 ? `同壹檔平倉後要等 ${C.coolMin} 分鐘。` : "平倉後馬上可以再開。");
+  const C = lqC(), tw = casLevRates(TW_IDS[0]), us = casLevRates(US_IDS[0]), df = casLevRates("in"), grp = casLevRates("grp"), p = v => +(v * 100).toFixed(4) + "%", fee = v => casFeeText(+(v * 100).toFixed(4));
+  return `手續費（買賣各收）：台股 ${fee(tw.fee)}、美股 ${fee(us.fee)}、館內股 ${fee(df.fee)}、集團股 ${fee(grp.fee)}。做多另收借的錢每天的利息：台股、美股 ${p(tw.interest)}，館內股和集團股 ${p(df.interest)}；放空另收借券費：台股、美股 ${p(tw.borrow)}，館內股和集團股 ${p(df.borrow)}。` + (tw.tax > 0 ? `台股平倉另收當沖證交稅 ${p(tw.tax)}（進政府帳）。` : "") + (C.opensDay > 0 ? `壹天最多開 ${C.opensDay} 筆。` : "壹天開幾筆不限。") + (C.coolMin > 0 ? `同壹檔平倉後要等 ${C.coolMin} 分鐘。` : "平倉後馬上可以再開。");
 }
 export const casLevRates = id => ({ fee: lqFeePct(id) / 100, interest: lqRate(id, "interestPct") / 100, borrow: lqRate(id, "borrowPct") / 100, tax: lqRate(id, "taxPct") / 100 });
 
