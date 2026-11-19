@@ -340,5 +340,19 @@ T("issue：標題和內文都要寫、打錯選項就停；gh api 走 REST、內
   assert.strictEqual(IS.parseArgs(["標題夠長了", "--body-file", f]).body, "從檔案來的內文\n");
 });
 
+T("ledger range／about：只挑跨到的週、謎題不印謎底；about 找本身和提到它的（11-19）", () => {
+  const L = { weeks: { "2026-W47": { question: "q47" }, "2026-W50": { question: "q50" } },
+    mysteries: { list: [{ id: "m-x", q: "問", truth: "謎底", clues: [{ week: "2026-W47", what: "線索47" }, { week: "2026-W52", what: "線索52" }] }] },
+    foreshadow: [{ id: "f-a", note: "提到 m-x", week: "2026-W48" }], revealBeats: { list: [{ id: "b1", week: "2026-W47", mystery: "m-x" }] } };
+  const r = LG.range(L, ["2026-W47"]); const txt = JSON.stringify(r);
+  assert.ok(txt.includes("q47") && !txt.includes("q50"), "只挑跨到的週");
+  assert.ok(txt.includes("線索47") && !txt.includes("線索52"), "謎題只列那週的線索");
+  assert.ok(!txt.includes("謎底"), "range 不印謎底");
+  assert.ok(txt.includes("b1"), "揭露有列");
+  const ab = LG.about(L, "m-x");
+  assert.strictEqual(ab.self.length, 1);
+  assert.deepStrictEqual(ab.refs.map(x => x[0]).sort(), ["foreshadow.f-a", "revealBeats.list.b1"]);
+});
+
 console.log(`${pass} passed, ${fail} failed（每日排程優化）`);
 process.exit(fail ? 1 : 0);
