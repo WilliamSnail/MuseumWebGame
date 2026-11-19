@@ -14,10 +14,11 @@ const FRACS = Array.from({ length: 31 }, (_, i) => 0.5 + (i % 2 ? 1 : -1) * Math
 const sshort = n => (n < 0 ? "−" : "") + short(n); // 帶負號的短寫（海外帳可以是負的）
 const NS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
-const SEL = { e: null, n: null, kind: null, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝已知世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
+const SEL = { e: null, n: null, kind: null, kindMore: false, path: [], dir: "" }; // path：現在放大到哪一層（[]＝全景、["world"]＝已知世界、["world", 集團id]＝單一集團、["org:…"]＝館裡）；dir：剛剛是放大還是縮小（過場用） // e：選到的線（edges 的第幾條）、n：只看哪個地方 // 選到的：e0、e1…（線）或 n:house（方塊）
 let timer = 0;
 const still = () => !!(document.body && document.body.classList.contains("reduce-motion")) || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
+const KIND_SHOW = 6; // 往來種類按鈕預設只列最大的幾種，其他收進「更多」
 // 往來種類（篩選用）：集團之間的往來照 src 的種類（tradeGoods…）；發薪水（wageNpc、wageBack）合成「薪水」；NPC 和散客花錢（沒有 | 的來源）合成「館內消費」
 const catOf = x => { const k = String(x.src).split("|")[0]; return /^wage/.test(k) ? { k: "wage", label: "薪水（集團↔NPC 錢包、家計）" } : String(x.src).includes("|") ? { k, label: x.label || k } : { k: "spend", label: "館內消費（NPC、散客）" }; };
 // 層級（11-17 翊文：「需要可以做縮放各層級的交易」）：全景（已知世界、佩佩博物館各是壹塊）→ 已知世界（各集團一塊，集團之間的往來看得到）→ 單一集團（它的子公司和它所有的進出）；另壹邊：全景 → 佩佩博物館（館裡的各帳）
@@ -248,7 +249,8 @@ export function flowPane(v, deps) {
         h("button", { type: "button", class: "bank-flow-zb", "aria-label": "放大到已知世界", title: SEL.path.length ? "點有 ▸ 的方塊放大" : "放大到已知世界", disabled: SEL.path.length ? true : null, onClick: () => zgo("world") }, h("b", null, "＋"), h("span", null, "放大"))));
     if (SEL.dir) { svg.classList.add(SEL.dir === "in" ? "zin" : "zout"); SEL.dir = ""; }
     const kbar = kinds.length ? h("div", { class: "bank-flow-kinds", role: "group", "aria-label": "往來種類" }, h("span", null, "往來種類"), h("button", { type: "button", class: "bank-flow-kind" + (!SEL.kind ? " on" : ""), "aria-pressed": String(!SEL.kind), onClick: () => { SEL.kind = null; SEL.n = null; SEL.e = null; draw(); } }, "最大的 8 條"),
-      ...kinds.map(k => h("button", { type: "button", class: "bank-flow-kind" + (SEL.kind === k.k ? " on" : ""), "aria-pressed": String(SEL.kind === k.k), onClick: () => { SEL.kind = SEL.kind === k.k ? null : k.k; SEL.n = null; SEL.e = null; draw(); } }, k.label, h("small", null, short(k.n)))),
+      ...(SEL.kindMore ? kinds : kinds.filter((k, i) => i < KIND_SHOW || k.k === SEL.kind)).map(k => h("button", { type: "button", class: "bank-flow-kind" + (SEL.kind === k.k ? " on" : ""), "aria-pressed": String(SEL.kind === k.k), onClick: () => { SEL.kind = SEL.kind === k.k ? null : k.k; SEL.n = null; SEL.e = null; draw(); } }, k.label, h("small", null, short(k.n)))),
+      kinds.length > KIND_SHOW ? h("button", { type: "button", class: "bank-flow-kind more", "aria-expanded": String(SEL.kindMore), onClick: () => { SEL.kindMore = !SEL.kindMore; draw(); } }, SEL.kindMore ? "收起 ▴" : "更多 " + (kinds.length - KIND_SHOW) + " 種 ▾") : null,
       hidden ? h("em", null, "還有 " + hidden + " 條沒畫（選種類或點集團方塊看）") : null) : null;
     mapBox.replaceChildren(...[bar, kbar, svg].filter(Boolean));
     side.replaceChildren(listBox({ edges, bal: V.bal }, SEL, pick));

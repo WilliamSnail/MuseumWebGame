@@ -696,3 +696,4 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-kind small { opacity: .75; font-size: .75rem; }
 .bank-flow-kind.on { background: #D6B25E; color: #2A1A0A; border-color: #FFF3C4; font-weight: 700; }
 .bank-flow-kinds em { flex: 1 1 100%; font-style: normal; color: #D6B25E; font-size: .75rem; }
+.bank-flow-kind.more { border-style: dashed; background: transparent; }
