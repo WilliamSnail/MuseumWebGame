@@ -89,7 +89,7 @@ export function fakeBankHall() {
     gs: { halt: false, orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "g-culture", name: "文化藝術機構股", n: 100, px: 95, hold: 9548, day: "2026-11-17" }], rule: "示範：集團股的價格由這個世界的買賣和經濟決定。", notes: [], index: { v: 100.38 }, list: [
       { id: "g-culture", name: "文化藝術機構股", unit: "文化藝術機構", price: 100.66, open: 100, chg: 0.66, shares: 101213719, mcap: 10188034904, nav: 50, pb: 2.01, mine: 40, value: 4026, cost: 3900, limit: 5000000, hist: [98, 99.2, 97.5, 99, 100.1, 99.4, 100.9, 100.2, 101.3, 100.66] },
       { id: "g-daily", name: "民生集團股", unit: "民生集團", price: 100.09, open: 100, chg: 0.09, shares: 90000000, mcap: 9008100000, nav: 50, pb: 2, mine: 0, value: 0, cost: 0, limit: 4500000, hist: [100, 100.3, 99.8, 100.09] }] },
-    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: i === 3 ? -1.2e9 : 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { ext: -240000000, house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
+    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: i === 3 ? -1.2e9 : 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { gb: 61000000, ext: -240000000, house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
       { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
       { from: "house", to: "ext", amt: 700000, srcs: [{ src: "houseInvestBuy", label: "館方投資買股票", amt: 700000 }] },
       { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
@@ -140,6 +140,12 @@ export function fakeBankHall() {
       { from: "w:d5", to: "gov", amt: 800000, srcs: [{ src: "tradeHhTax|w:d5|gov", label: "家計繳稅", amt: 800000 }] },
       { from: "w:d5", to: "w:d1", amt: 600000, srcs: [{ src: "tradeHhFee|w:d5|w:d1", label: "家計付保險利息", amt: 600000 }] },
       { from: "w:d2", to: "w:d5", amt: 3100000, srcs: [{ src: "tradeWage|w:d2|w:d5", label: "集團付薪水給家計", amt: 3100000 }] },
+      { from: "gb", to: "players", amt: 1250000, srcs: [{ src: "pLoan", label: "佩佩銀行借給館友", amt: 1500000 }, { src: "pLoanBack", label: "館友還款", amt: -250000 }] },
+      { from: "gb", to: "players", amt: 90000, srcs: [{ src: "pBankInt", label: "存款利息（佩佩銀行付給館友）", amt: 90000 }] },
+      { from: "players", to: "gb", amt: 420000, srcs: [{ src: "pBond", label: "館友買館債（錢進佩佩銀行）", amt: 420000 }] },
+      { from: "house", to: "gb", amt: 3000000, srcs: [{ src: "hdepIn", label: "莊家存款進佩佩銀行", amt: 3300000 }, { src: "hdepOut", label: "莊家領回存款", amt: -300000 }] },
+      { from: "gb", to: "house", amt: 110000, srcs: [{ src: "hdepInt", label: "莊家存款利息", amt: 110000 }, { src: "gbSweepH", label: "盈餘分給莊家 30%", amt: 0 }] },
+      { from: "gb", to: "budget", amt: 260000, srcs: [{ src: "gbSweepB", label: "盈餘分給博物館資金 70%", amt: 260000 }] },
       { from: "w:d3", to: "w:d4", amt: 700000, srcs: [{ src: "tradeGoods|w:d3|w:d4", label: "海外集團賣貨給學校集團", amt: 700000 }] },
       { from: "w:d6", to: "w:d2", amt: 450000, srcs: [{ src: "tradeRev|w:d6|w:d2", label: "公共付給島嶼集團的營收", amt: 450000 }] },
       { from: "w:d4", to: "w:d1", amt: 180000, srcs: [{ src: "tradeLoan|w:d4|w:d1", label: "學校集團存進金融集團", amt: 180000 }] },

@@ -57,7 +57,7 @@ function layout(phone, V) {
   const cols = phone ? 2 : 3, gx = phone ? 52 : 70, gy = 56, cw = (W - 16 - gx * (cols + 1)) / cols, ch = 34, rows = Math.ceil(chips.length / cols);
   let y = 0;
   for (const t of tiers) {
-    const all = base.filter(n => n.tier === t), split = chips.length > 0 && all.some(n => n.id === "world") && all.length > 1; // 已知世界展開成各集團時很寬，同一層的海外（ext）改放在它正下面壹排
+    const all = base.filter(n => n.tier === t).map((n, i) => [n, i]).sort((p, q) => ((p[0].org && !p[0].isOrg ? 1 : 0) - (q[0].org && !q[0].isOrg ? 1 : 0)) || p[1] - q[1]).map(p => p[0]), split = chips.length > 0 && all.some(n => n.id === "world") && all.length > 1; // 已知世界展開成各集團時很寬，同一層的海外（ext）改放在它正下面壹排
     const ns = split ? all.filter(n => n.id === "world") : all, side = split ? all.filter(n => n.id !== "world") : [], isBand = ns.some(n => n.id === "world"), hh = isBand ? (chips.length ? 60 + rows * (ch + gy) - gy + 14 : bh + 4) : bh;
     if (y) y += gap + (hasOrg && ns.some(n => n.org && !n.isOrg) && !base.some(n => n.org && !n.isOrg && n.tier === t - 1) ? 14 : 0); else y = 8;
     const cy = y + hh / 2; y += hh;
