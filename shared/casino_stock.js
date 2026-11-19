@@ -26,7 +26,7 @@
 import { NUM } from "./config.js";
 import { casSellCap, casSellMoney, casSellTip } from "./casino_credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut } from "./casino_book.js";
-import { gsMatch } from "./casino_stock_grp.js";
+import { gsFeePct, gsMatch } from "./casino_stock_grp.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
@@ -352,7 +352,7 @@ export const casStockTax = (id, gross, fee) => { const pc = Math.round(casStockT
 // 費用的字（決定 0136）：0 寫「免手續費」，不寫「0%」
 export const casFeeText = p => (+p > 0 ? +p + "%" : "免手續費");
 // 這支館外股的手續費 %（決定 0136）：台股、美股各有自己的 feeOut，館內股、集團股用 feePct
-export const casStockFeePct = id => { const O = NUM.casino.stock.feeOut; return O && stockIsUs(id) && O.us != null ? O.us : O && stockIsTw(id) && O.tw != null ? O.tw : NUM.casino.stock.feePct; };
+export const casStockFeePct = id => { const O = NUM.casino.stock.feeOut; if (id === "grp" || String(id).startsWith("gs-")) return gsFeePct(); return O && stockIsUs(id) && O.us != null ? O.us : O && stockIsTw(id) && O.tw != null ? O.tw : NUM.casino.stock.feePct; };
 const stFee = (n, id) => Math.ceil(n * casStockFeePct(id) / 100);
 // 全館持股總市值（莊家曝險看這個）
 export const casStockExposure = house => { const H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + H.px[id] * H.held[id], 0); };

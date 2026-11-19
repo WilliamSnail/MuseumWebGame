@@ -10,11 +10,11 @@ const snap = s => s.G.casBookSnap([s.w], s.h, 0, null);
 const fakeSrc = P => ({ now: id => ({ px: P.px[id], idx: P.idx, open: true, lag: null, stale: false }), path: () => [], close: () => null });
 const eq = (a, b, m) => assert.strictEqual(JSON.stringify(a), JSON.stringify(b), m);
 const IN = "food", TW = "handbrain", US = "greeneye";
-T("設定：台股手續費 0.05、美股 0；槓桿台股利息 0.02／借券 0.08／當沖稅 0.15，美股利息 0.02／借券 0.08／稅 0；館內股、集團股照舊（手續費 0.5、利息 0.15、借券 0.3）", G => {
+T("設定：台股手續費 0.05、美股 0；槓桿台股利息 0.02／借券 0.08／當沖稅 0.15，美股利息 0.02／借券 0.08／稅 0；館內股照舊（手續費 0.5、利息 0.15、借券 0.3），集團股手續費 0.2（決定 0137）", G => {
   const S = G.NUM.casino.stock, L = G.NUM.casino.stockLev;
-  eq(S.feeOut, { tw: 0.05, us: 0 }); assert.strictEqual(S.feePct, 0.5); assert.strictEqual(L.interestPct, 0.15); assert.strictEqual(L.borrowPct, 0.3);
+  eq(S.feeOut, { tw: 0.05, us: 0, grp: 0.2 }); assert.strictEqual(S.feePct, 0.5); assert.strictEqual(L.interestPct, 0.15); assert.strictEqual(L.borrowPct, 0.3);
   eq(L.byMk, { tw: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0.15 }, us: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0 } });
-  assert.strictEqual(G.casStockFeePct(TW), 0.05); assert.strictEqual(G.casStockFeePct(US), 0); assert.strictEqual(G.casStockFeePct(IN), 0.5); assert.strictEqual(G.casStockFeePct("gs-g-daily"), 0.5);
+  assert.strictEqual(G.casStockFeePct(TW), 0.05); assert.strictEqual(G.casStockFeePct(US), 0); assert.strictEqual(G.casStockFeePct(IN), 0.5); assert.strictEqual(G.casStockFeePct("gs-g-daily"), 0.2);
   assert.strictEqual(G.casStockTaxPct(TW), 0.3, "現股證交稅照舊"); assert.strictEqual(G.casStockTaxPct(US), 0);
 });
 T("現股：台股買賣各收 0.05%（進博物館資金）、美股免手續費；每支 view 帶 fee、taxPct；守恆", G => {
@@ -43,6 +43,15 @@ T("槓桿平倉：台股收平倉手續費 0.05％＋當沖稅 0.15％（進政�
 T("槓桿 view：每個市場自己的費用（rates）；預設 fee 是館內股的", G => {
   const s = fresh(G), v = G.casStockLevView(s.w, s.h, D0, at(D0, 12)).lev;
   eq(v.rates.tw, { fee: 0.0005, interest: 0.0002, borrow: 0.0008, tax: 0.0015 }); eq(v.rates.us, { fee: 0, interest: 0.0002, borrow: 0.0008, tax: 0 }); eq(v.rates.in, { fee: 0.005, interest: 0.0015, borrow: 0.003, tax: 0 }); assert.strictEqual(v.fee, 0.005);
+});
+T("集團股手續費 0.2%（決定 0137）：買賣都照 feeOut.grp；view 每支帶 fee；館內股照舊 0.5%；守恆", G => {
+  const D = "2026-11-16", NOON = Date.parse(D + "T12:00:00+08:00"), h = G.casHouseFix(G.casHouseNew(), D).house; h.bankroll = 2e9; G.gsAdvance(h, D, NOON);
+  const w = G.casWalletFix(G.casWalletNew(), D); w.chips = 5e9; const op = G.casBookOpening(G.casBookSnap([w], h, 0, D)), b0 = h.budget;
+  const b = G.gsBuy(w, h, "g-daily", 100000, D, NOON); assert.ok(b.ok, b.reason); assert.strictEqual(b.fee, Math.ceil(b.cost * 0.2 / 100)); assert.strictEqual(h.budget - b0, b.fee);
+  const s = G.gsSell(w, h, "g-daily", 100000, D, NOON); assert.ok(s.ok, s.reason); assert.strictEqual(s.fee, Math.ceil(s.gross * 0.2 / 100));
+  assert.strictEqual(G.casBookGap(G.casBookSnap([w], h, 0, D), op), 0, "守恆");
+  assert.strictEqual(G.gsFeePct(), 0.2); assert.strictEqual(G.casStockFeePct("gs-g-daily"), 0.2); assert.strictEqual(G.casStockFeePct("grp"), 0.2); assert.strictEqual(G.casStockFeePct(IN), 0.5);
+  const v = G.gsView(w, h, D, NOON); assert.ok(v.list.length && v.list.every(x => x.fee === 0.002), "每支帶 fee");
 });
 console.log(`${pass} passed, ${fail} failed（館外股費用照真實）`);
 process.exit(fail ? 1 : 0);
