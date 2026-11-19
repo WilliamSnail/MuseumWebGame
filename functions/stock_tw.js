@@ -18,7 +18,8 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
 import { taipeiDay } from "./shared/logic.js";
 import { outStockWeekend } from "./shared/stocks.js";
-import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "./shared/stocks_tw.js";
+import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twLive, twNeed } from "./shared/stocks_tw.js";
+import { NUM } from "./shared/config.js";
 
 const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");
@@ -165,9 +166,23 @@ export async function stockTwRun(nowMs, fetchFn, secretFn, dbx) {
   return done;
 }
 
+// 秒級現價（決定 0135）：每分鐘的排程做完之後，每 everySec 秒再抓壹次，只寫 doc.live（不動每分鐘的價）。回傳做了什麼的字串
+export async function stockTwLive(nowMs, fetchFn, dbx) {
+  const D = dbx || db(), ref = D.doc("stocksTw/latest"), day = taipeiDay(nowMs), idx = twIdx(nowMs);
+  if (outStockWeekend(day) || idx == null || idx < 0 || idx > 270) return "不在盤中";
+  const snap = await ref.get(); if (!snap.exists || snap.data().day !== day) return "還沒有今天的資料";
+  const doc = snap.data(); let got;
+  try { got = await (fetchFn || fetchMis)(nowMs); } catch (e) { return "抓不到"; }
+  if (!twLive(doc, got, idx, nowMs)) return "不用寫";
+  await ref.update({ live: doc.live });
+  return "live";
+}
+const sleepMs = ms => new Promise(r => setTimeout(r, ms));
 // 週末也跑（11-15：本來只排週壹到週五，「週末也補」的補收盤從來沒在週末做過，台股 11-14 週六上線就壹直停在起始價）。週末 stockTwRun 只回「不在盤中」
-export const stockTwTick = onSchedule({ schedule: "* 9-13 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 30 }, async () => {
+export const stockTwTick = onSchedule({ schedule: "* 9-13 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 75 }, async () => {
   const now = Date.now(), r = await stockTwRun(now);
+  const L = NUM.casino.stock.live; // 決定 0135：這壹分鐘剩下的時間，每 everySec 秒再抓壹次價
+  if (L && L.on && L.everySec >= 5) for (let k = 1; k * L.everySec < 55; k++) { await sleepMs(Math.max(0, now + k * L.everySec * 1000 - Date.now())); try { const lv = await stockTwLive(Date.now()); if (lv === "不在盤中") break; } catch (e) { console.warn("台股秒級價：", e && e.message); } }
   if (/^09:00$/.test(new Date(now + 8 * 3600000).toISOString().slice(11, 16))) console.log("stockTwBackfill", await stockTwBackfill(now)); // 排程只留 3 個（Cloud Scheduler 3 個以內免費）：台股補收盤併進這個每分鐘的排程，09:00 做壹次
   console.log("stockTwTick", r);
 });
