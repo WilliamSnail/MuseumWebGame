@@ -337,7 +337,7 @@ const wtB = (house, id) => { const C = wmCfg(); return C && C.on && wuBox(house.
 // 往來表：照名單長（flows 裡有的照寫，名單上有、表裡沒寫的集團照 flowDefault）。每天排進 wh.tr（陸續發生）
 function wtFlowsDaily(house, day) {
   const T = wtCfg(); if (!T || !T.on || !Array.isArray(T.flows)) return;
-  const ids = new Set(wtTop()), list = T.flows.slice(), seen = new Set(T.flows.map(f => f.from));
+  const ids = new Set(wtTop().concat([WU_HH])), list = T.flows.slice(), seen = new Set(T.flows.map(f => f.from));
   if (Array.isArray(T.flowDefault)) for (const id of ids) if (!seen.has(id)) for (const d of T.flowDefault) if (d.to !== id) list.push({ k: d.k, from: id, to: d.to, pct: d.pct });
   for (const f of list) {
     if (!ids.has(f.from) || !ids.has(f.to) || f.from === f.to || !(f.pct > 0)) continue;
