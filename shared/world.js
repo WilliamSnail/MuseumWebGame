@@ -271,7 +271,7 @@ export const wmTotal = house => WORLD_MARKETS.length ? WORLD_MARKETS.reduce((a, 
 function wmReal(m, px, anchor, cats) {
   const C = wmCfg(); if (anchor !== "tw" && anchor !== "us") return 0;
   // cats（決定 0134）：這個市場只看那幾類的館外股（自然資源）；沒寫就是 anchor 市場裡「預設」的那幾支（ext 的新股不算，11-19 新增的 18 支不改既有市場的景氣）
-  const r = []; for (const s of OUT_STOCKS) { if (s.market !== anchor || (Array.isArray(cats) && cats.length ? !cats.includes(s.cat) : s.ext)) continue; const p = +(px && px[s.id]), q = +m.p[s.id]; if (p > 0 && q > 0) r.push(p / q - 1); }
+  const r = []; for (const s of OUT_STOCKS) { if (s.market !== anchor || (Array.isArray(cats) && cats.length ? !cats.includes(s.cat) : s.ext)) continue; const p = +(px && px[s.id]), q = +m.p[s.id]; if (p > 0 && q > 0) r.push((p / q - 1) / (s.mult > 1 ? s.mult : 1)); }
   return r.length ? whClamp(100 * r.reduce((a, b) => a + b, 0) / r.length, -C.realCap, C.realCap) : 0;
 }
 // 換日呼叫：算每個市場今天的景氣，再算每位 NPC 今天的來館倍率。同壹天不重複；隔幾天沒人來，每天都走壹步（真實漲跌只算最後那天）
