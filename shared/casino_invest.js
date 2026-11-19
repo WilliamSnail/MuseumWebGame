@@ -21,7 +21,7 @@ const ivBox = o => !!o && typeof o === "object" && !Array.isArray(o);
 const ivN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const ivDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const ivAdd = (s, n) => new Date(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) + n * 86400000).toISOString().slice(0, 10);
-const IV_IDS = OUT_STOCKS.map(s => s.id);
+const IV_IDS = OUT_STOCKS.filter(s => !s.ext).map(s => s.id); // 11-19 新增的 18 支（ext）不進館方投資：維持既有的錢（決定 0134）
 export const IV_POOLS = ["house", "budget"];
 
 // 補欄位

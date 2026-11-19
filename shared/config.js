@@ -590,8 +590,8 @@ export const NUM = {
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
       // earlyLen：美股提早收盤日（13:00 美東收，壹年約 3 天：感恩節隔天、聖誕夜、7 月 3 日；shared/stocks_tw.js 的 usEarlyClose）那天盤中有幾分鐘（570 → 780 ＝ 210）
       us: { open: 570, len: 390, earlyLen: 210, seg: 15, giveUp: 30, retry: 3, band: 10,
-        minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06 },
-        sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26 } } },
+        minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06, bigshipport: 0.1, greenleafclinic: 0.11, quantumfrog: 0.19, smallcore: 0.19, messengerlab: 0.22, oldgamestore: 0.09, fingerbank: 0.11, betkingdom: 0.14, droidhive: 0.12, treadclub: 0.09, blockpark: 0.16, popcornhall: 0.14, blackgoldwell: 0.09, bluefireyard: 0.08, greenglowmine: 0.15, raremountain: 0.12, redcoppermine: 0.1, richsoilshop: 0.11 },
+        sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26, bigshipport: 0.38, greenleafclinic: 0.45, quantumfrog: 0.76, smallcore: 0.74, messengerlab: 0.89, oldgamestore: 0.34, fingerbank: 0.44, betkingdom: 0.55, droidhive: 0.47, treadclub: 0.37, blockpark: 0.62, popcornhall: 0.54, blackgoldwell: 0.34, bluefireyard: 0.3, greenglowmine: 0.61, raremountain: 0.49, redcoppermine: 0.4, richsoilshop: 0.43 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：博物館資金 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、博物館資金 budgetPct%、其餘進修繕基金；每人每天最多 perDay 位付。先照這樣，等翊文
     // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進博物館資金、其餘修繕基金）；
