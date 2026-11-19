@@ -1,0 +1,6 @@
+/* 館門口的池子（11-19，ui_pool.js）：疊在大廳導覽圖最下面中間，只是壹幅小小的剖面，不能點 */
+.pool-door { position: absolute; left: 41.5%; width: 17%; bottom: 0.4%; pointer-events: none; z-index: 3; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
+.pool-door.port { left: 31%; width: 38%; }
+.pool-door svg { display: block; width: 100%; height: auto; overflow: visible; }
+/* 夜裡：大廳的燈暗壹格 */
+.l2-map.pool-night .l2-land { filter: brightness(.8) saturate(.92); }
