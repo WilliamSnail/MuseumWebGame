@@ -733,10 +733,10 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
     if (!mon) E(w, "week 要是週的名字（例如 2026-W47）");
     else {
       const k = Math.round((Date.parse(mon) - Date.parse(firstMon)) / 604800000);
-      // extra：翊文 11-14 指定提前揭的線（館外世界），不受「每隔壹週」限制，壹週最多壹筆加開，可以跟正常的壹筆同週
+      // extra：翊文指定提前揭的線（11-14 館外世界 m-world、11-19 撥款信 m-capital），不受「每隔壹週」限制；同壹週同壹個謎最多壹筆加開（翊文 11-19：不同的謎可以同週各加開壹筆），可以跟正常的壹筆同週
       if (b.extra !== undefined && b.extra !== true) E(w, "extra 只能是 true");
       if (k < 0 || (!b.extra && k % 2)) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週；加開的要寫 extra: true）`);
-      if (b.extra) { if (seenX.has(b.week)) E(w, `${b.week} 已經有壹筆加開了（壹週最多壹筆加開）`); seenX.add(b.week); }
+      if (b.extra) { const xk = b.week + "|" + b.mystery; if (seenX.has(xk)) E(w, `${b.week} 已經有壹筆 ${b.mystery} 的加開了（同壹週同壹個謎最多壹筆加開）`); seenX.add(xk); }
       else { if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露；要加開寫 extra: true）`); seen.add(b.week); }
       if (prev && b.week < prev) E(w, "要照週的順序排");
       prev = b.week;
