@@ -5,8 +5,8 @@ const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-19";
-T("名單：美股 24 支（原 6 ＋ 新 18）；新股都有 15 分鐘波動和每分鐘隨機、名字不重複、說明壹句；真實代號不在 shared", G => {
-  const ext = G.OUT_STOCKS.filter(s => s.ext); assert.strictEqual(ext.length, 18); assert.strictEqual(G.US_IDS.length, 24);
+T("名單：美股 26 支（原 6 ＋ 新 18 ＋ 2 倍版 2）；新股都有 15 分鐘波動和每分鐘隨機、名字不重複、說明壹句；真實代號不在 shared", G => {
+  const ext = G.OUT_STOCKS.filter(s => s.ext); assert.strictEqual(ext.length, 20); assert.strictEqual(G.US_IDS.length, 26);
   assert.strictEqual(new Set(G.OUT_STOCKS.map(s => s.name)).size, G.OUT_STOCKS.length, "名字不重複");
   const C = G.NUM.casino.stock.us; for (const s of ext) { assert.strictEqual(s.market, "us"); assert.ok(C.sd15[s.id] > 0 && C.minSd[s.id] > 0, s.id); assert.ok(s.intro && s.intro.length > 10 && !/[A-Za-z]{3,}/.test(s.name + s.intro), s.id + " 說明不放英文代號"); }
   const txt = ["stocks_text.js", "config.js"].map(f => fs.readFileSync(path.join(__dirname, "..", "shared", f), "utf8")).join("\n");
@@ -31,6 +31,12 @@ T("景氣：原本接美股的市場只看原本 6 支（新股不算）；自�
   const up2 = Object.assign({}, base); for (const s of G.OUT_STOCKS) if (s.cat === "resource") up2[s.id] = 130;
   assert.ok(run(base, up2, "resource") > run(base, base, "resource"), "自然資源漲，自然資源市場跟著漲");
   assert.strictEqual(run(base, up2, "tech"), run(base, base, "tech"), "自然資源漲，科技市場不動");
+});
+T("2 倍版（金庫磚、黑油桶）：標 mult 2、自然資源；景氣平均把它們的漲跌 ÷ 2 當金價、油價本身，跟別的自然資源股各占壹份", G => {
+  for (const id of ["vaultbrick", "blackbarrel"]) { const s = G.OUT_STOCKS.find(x => x.id === id); assert.ok(s && s.cat === "resource" && s.ext && s.mult === 2 && /兩倍/.test(s.intro), id); }
+  const run = (px1) => { const h = G.casHouseFix(G.casHouseNew(), D0).house, base = {}; for (const s of G.OUT_STOCKS) base[s.id] = 100; G.wmTick(h, "2026-11-18", base); G.wmTick(h, D0, Object.assign({}, base, px1)); return G.wmB(h, "resource"); };
+  const flat = run({}), twice = run({ vaultbrick: 120 });
+  assert.ok(twice > flat, "金庫磚漲，自然資源景氣跟著漲"); assert.ok(Math.abs(run({ vaultbrick: 120 }) - run({ greenglowmine: 110 })) < 1e-9, "2 倍版漲 20% ＝ 壹般自然資源股漲 10%（÷ 2）");
 });
 console.log(`${pass} passed, ${fail} failed（美股新增 18 支和分類）`);
 process.exit(fail ? 1 : 0);

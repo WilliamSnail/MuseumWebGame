@@ -56,4 +56,7 @@ export const OUT_STOCKS = [
   { id: "raremountain", kind: "stock", market: "us", cat: "resource", ext: true, name: "稀土山", intro: "壹座挖稀土的山，手機、馬達、風車都向它要貨。誰攔著不給，價錢就跳。" },
   { id: "redcoppermine", kind: "stock", market: "us", cat: "resource", ext: true, name: "赤銅礦坑", intro: "挖紅色銅礦的大坑。電線、馬達都靠銅，銅價壹動，它就跟著動。" },
   { id: "richsoilshop", kind: "stock", market: "us", cat: "resource", ext: true, name: "沃土肥坊", intro: "賣讓田裡長東西的肥料。糧價好、農人肯花錢時賺，反過來就慢。" },
+  // 11-20 美股再加 2 支原物料的 2 倍版（決定 0138）：mult ＝ 它的漲跌是金價、油價的幾倍，景氣市場算平均時漲跌 ÷ mult（當成金價、油價本身）
+  { id: "vaultbrick", kind: "stock", market: "us", cat: "resource", ext: true, mult: 2, name: "金庫磚", intro: "壹塊塊黃澄澄的金磚，專門跟著金價走，而且壹次走兩倍：金價漲壹步它跳兩步，跌也是。" },
+  { id: "blackbarrel", kind: "stock", market: "us", cat: "resource", ext: true, mult: 2, name: "黑油桶", intro: "壹桶桶黑色的原油，專門跟著油價走，而且壹次走兩倍：油價晃壹下它晃兩下，賺賠都放大。" },
 ];
