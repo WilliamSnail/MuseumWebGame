@@ -92,6 +92,7 @@ async function worldStatus(db) {
   days.docs.forEach(d => { const r = JSON.parse(d.data().data || "{}"); console.log(`  ${d.id}：已知世界 ${fmt(r.world)}　合計 ${fmt(r.total)}　成長 ${r.growth == null ? "-" : fmt(r.growth)}　景氣 ${r.b}　莊家記的日子 ${r.houseDay || "-"}`); });
   if (!h) { console.log("莊家文件還不存在"); return; }
   if (h.wu && h.wu.r) { const a = G.wuAmounts(Object.assign({}, h)); console.log("帳上各單位現在多少（合計＝已知世界）：" + Object.keys(a).map(k => `${names[k] || k} ${fmt(a[k])}`).join("　") + `　已知世界 ${fmt(h.world)}`); }
+  if (h.gb) { const sum = o => Object.values(o || {}).reduce((a, v) => a + nz(v), 0); console.log(`佩佩銀行準備金：現金 ${fmt(h.gb.cash)}　欠博物館資金 ${fmt(h.gb.debt)}　集團存款 ${fmt(sum(h.gb.dep))}　放款 ${fmt(sum(h.gb.loan))}　存款：${Object.entries(h.gb.dep || {}).map(([k, v]) => `${names[k] || k} ${fmt(v)}`).join("、") || "（沒有）"}　放款：${Object.entries(h.gb.loan || {}).map(([k, v]) => `${names[k] || k} ${fmt(v)}`).join("、") || "（沒有）"}`); }
   if (h.wh && h.wh.st) {
     console.log(`各集團健康值（${h.wh.day || "-"}）：`);
     Object.keys(h.wh.st).forEach(k => console.log(`  ${names[k] || k}：h ${h.wh.h[k]}　${S[h.wh.st[k].s]}　預算倍率 ×${G.whMult(h, k).toFixed(2)}　連續低迷 ${h.wh.st[k].low || 0} 週`));
@@ -201,7 +202,7 @@ function econPick(h) {
   if (h.cul) o.cul = { paid: nz(obj(h.cul).paid), late: nz(obj(h.cul).late), day: obj(h.cul).day || null, due: obj(h.cul).due || null };
   if (h.npcs) o.npcs = { day: obj(h.npcs).day || null, ticket: nz(obj(h.npcs).ticket), shop: nz(obj(h.npcs).shop), total: nz(obj(h.npcs).total), people: nz(obj(h.npcs).people) };
   const sum = obj(obj(h.inv).sum); if (Object.keys(sum).length) o.inv = { sum: { hold: (Array.isArray(sum.hold) ? sum.hold : []).map(x => ({ name: String(obj(x).name || "").slice(0, 20), n: nz(obj(x).n) })), pnl: Number.isFinite(+sum.pnl) ? Math.floor(+sum.pnl) : 0 } };
-  const w = obj(obj(h.led).world), x = obj(obj(h.led).ext); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])), ext: Object.fromEntries(Object.entries(x).map(([k, v]) => [k, nz(v)])) }; // 決定 0126：海外是並列的帳 house.ext
+  const w = obj(obj(h.led).world), x = obj(obj(h.led).ext); const gl = obj(obj(h.led).gb); o.led = { world: Object.fromEntries(Object.entries(w).map(([k, v]) => [k, nz(v)])), ext: Object.fromEntries(Object.entries(x).map(([k, v]) => [k, nz(v)])), gb: Object.fromEntries(Object.entries(gl).map(([k, v]) => [k, nz(v)])) }; if (obj(h.gb).cash != null || Object.keys(obj(h.gb)).length) { const g = obj(h.gb); o.gb = { cash: nz(g.cash), debt: nz(g.debt), dep: Object.fromEntries(Object.entries(obj(g.dep)).map(([k, v]) => [k, nz(v)])), loan: Object.fromEntries(Object.entries(obj(g.loan)).map(([k, v]) => [k, nz(v)])) }; } // 佩佩銀行準備金（決定 0127） // 決定 0126：海外是並列的帳 house.ext
   return o;
 }
 async function econStatus(db) {
@@ -234,6 +235,14 @@ async function houseLedger(db) {
   (list(led.flow).length ? list(led.flow) : ["    （沒有）"]).forEach(l => console.log(l));
   console.log("海外每個來源累計（正＝進海外，負＝出海外；extSplit 是上線那次從已知世界搬出來的）：");
   (list((h.led || {}).ext).length ? list((h.led || {}).ext) : ["    （沒有）"]).forEach(l => console.log(l));
+  { const g = h.gb || {}, sum = o => Object.values(o || {}).reduce((a, v) => a + nz(v), 0);
+    console.log(`佩佩銀行準備金（house.gb，決定 0127）：現金 ${fmt(g.cash)}　欠博物館資金 ${fmt(g.debt)}　集團存款合計 ${fmt(sum(g.dep))}　放款合計 ${fmt(sum(g.loan))}`);
+    console.log("  存款：" + (Object.keys(g.dep || {}).length ? Object.entries(g.dep).map(([k, v]) => `${k} ${fmt(v)}`).join("　") : "（沒有）") + "\n  放款：" + (Object.keys(g.loan || {}).length ? Object.entries(g.loan).map(([k, v]) => `${k} ${fmt(v)}`).join("　") : "（沒有）"));
+    console.log("準備金每個來源累計（正＝進準備金，負＝出準備金）：");
+    (list(led.gb).length ? list(led.gb) : ["    （沒有）"]).forEach(l => console.log(l));
+    const gw = Object.fromEntries(Object.entries(led.world || {}).filter(([k]) => /^group/.test(k)));
+    console.log("已知世界裡集團存放款的來源累計（正＝進已知世界，負＝出已知世界；跟準備金那邊的存款、放款、還款兩邊相反）：");
+    (list(gw).length ? list(gw) : ["    （沒有）"]).forEach(l => console.log(l)); }
   console.log("莊家憑空多的（重開）：");
   (list(led.mint).length ? list(led.mint) : ["    （沒有）"]).forEach(l => console.log(l));
   const ws = await db.collection("casinoWallets").get();
@@ -248,6 +257,8 @@ async function houseLedger(db) {
   const tot = k => rows.reduce((s, r) => s + r[k], 0);
   console.log(`錢包 ${rows.length} 個，籌碼合計 ${fmt(tot("chips"))}`);
   console.log(`錢包不在籌碼裡的：銀行存款 ${fmt(tot("bank"))}　槓桿保證金 ${fmt(tot("margin"))}　集團股買單鎖住 ${fmt(tot("hold"))}　（館友的錢合計 ${fmt(tot("chips") + tot("bank") + tot("margin") + tot("hold"))}）`);
+  { const bank = nz(h.bankroll) + nz(h.budget) + nz(h.sea) + nz(h.museum) + nz(h.gov) + nz(h.world) + nz(h.ext) + nz(h.gb && h.gb.cash), players = tot("chips") + tot("bank") + tot("margin") + tot("hold");
+    console.log(`全館的錢合計（不含在路上的借款、打到一半的注）：${fmt(bank + players)}　＝ 莊家 ${fmt(h.bankroll)} ＋ 博物館資金 ${fmt(h.budget)} ＋ 海底 ${fmt(h.sea)} ＋ 修繕基金 ${fmt(h.museum)} ＋ 政府帳 ${fmt(h.gov)} ＋ 已知世界 ${fmt(h.world)} ＋ 海外 ${fmt(h.ext)} ＋ 銀行準備金 ${fmt(h.gb && h.gb.cash)} ＋ 館友的錢 ${fmt(players)}`); }
   rows.forEach((r, i) => {
     console.log(`  #${i + 1}　籌碼 ${fmt(r.chips)}　沒還的借款 ${fmt(r.loan)}　借款額度 ${fmt(r.limit)}` + (r.bank || r.margin || r.hold ? `　存款 ${fmt(r.bank)}　保證金 ${fmt(r.margin)}　買單鎖住 ${fmt(r.hold)}` : ""));
     const m = list(r.mint), b = list(r.burn);
@@ -446,4 +457,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc };
+module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc, houseLedger, worldStatus };
