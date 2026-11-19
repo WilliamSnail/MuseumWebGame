@@ -22,7 +22,7 @@ const SIGN = {
   gb: { pLoan: -1, pLoanBack: 1, pBankInt: -1, pBond: 0, bondMove: 1, hdepIn: 1, hdepOut: -1, hdepInt: -1, gbSweepH: -1, gbSweepB: -1, groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
-  world: { groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
+  world: { cultureGift: -1, groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
     worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
 };
@@ -72,6 +72,7 @@ function run() {
     G.casHouseMove(h, "find", -200); w.chips += 200; G.casHouseMove(h, "loan", -400); w.chips += 400; G.casHouseMove(h, "loanBack", 450); w.chips -= 450; G.casHouseMove(h, "bankInt", -50); w.chips += 50;
     G.casHouseMove(h, "econWin", 1200); h.budget -= 1200; G.casHouseMove(h, "econLoot", -250); w.chips += 250; G.casHouseMove(h, "econSea", -150); h.sea += 150;
     w.chips -= 65; G.casPoolGain(h, "budget", "stockFee", 30); G.casPoolGain(h, "budget", "artFee", 10); G.casPoolGain(h, "gov", "stockTax", 20); G.casPoolGain(h, "gov", "divTax", 5); G.casWorldOut(w, h, "dividend", 50, W); G.casHouseWorldOut(h, "inMarket", 300, W); G.casHouseWorldIn(h, "inMarket", 100); // 手續費、拍賣手續費進博物館資金，資本利得稅進政府帳（決定 0110）
+    if (k === 1) G.casCultureGift(w, h, "Yuga", day, 1e12); // 文化部資助（只壹次，決定 0131）
     { const rb = G.casBorrow(w, 5000, day, false, 1e12 + k * 3600000, h); if (rb.ok) { w.chips += rb.loan.owe; G.casRepay(w, rb.loan.id, day, false, 1e12 + k * 3600000 + 7200000, h); } G.casBankPut(w, 2000); G.casBankAccrue(w, h, addD(day, 2)); h.gb.inc += 50000; } // 新借款、還款、存款利息（走 gb）
     G.casPoolMint(h, "budget", "ticketBudget", 100); G.casPoolMint(h, "museum", "ticketMuseum", 300); G.casHouseMint(h, "reset", 123);
     const s = G.casBookSnap([w], h, 0, day), diff = G.casBookDiff(prev, s); prev = s;

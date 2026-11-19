@@ -439,6 +439,7 @@ function openMailNews(onClose) {
 }
 PANELS.autoMail = async function autoMail() {
   if (mailCardShown || !UI.net || !P || isFree(P) || window.__PM_NODOOR__) return;
+  if (!UI.giftPeek) { UI.giftPeek = true; try { await NET.call("casino", { act: "peek" }); } catch (e) { /* 下次進館再看 */ } } // 決定 0131：文化部資助這類「壹進館就到」的信，要先讓伺服器寄出去，下面才讀得到
   try { await refreshSocial(); } catch (e) { return; }
   if (!serverMail.length && !calls.length) return;
   for (let i = 0; i < 10 && mailBusy(); i++) await wait(500);
