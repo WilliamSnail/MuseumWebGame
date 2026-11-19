@@ -959,7 +959,7 @@ function reportPane(v) {
 }
 // 集團股的掛單（決定 0124）：限價買、限價賣、停損賣；單當天有效，買單鎖籌碼、賣單鎖股數。op order／cancel（取消要帶 id 和 no）
 function gsOrderTrade(v, S, G, cur) {
-  const f = form(), k = f.okind, halt = !!G.halt, fee = S && S.fee != null ? S.fee : 0.005, free = cur.free != null ? cur.free : cur.mine;
+  const f = form(), k = f.okind, halt = !!G.halt, fee = cur.fee != null ? cur.fee : S && S.fee != null ? S.fee : 0.005, free = cur.free != null ? cur.free : cur.mine;
   if (f.opx === "" || f.opxFor !== cur.id + k) { f.opx = Math.max(0.01, Math.round(cur.price * (k === "buy" ? 0.98 : k === "sell" ? 1.02 : 0.97) * 100) / 100); f.opxFor = cur.id + k; f.on = f.on || 1; }
   const info = h("p", { class: "bank-meta sm" }), lockOf = (px, n) => Math.ceil(Math.ceil(px * n - 1e-9) * (1 + fee));
   const calc = () => { const n = f.on || 0, px = f.opx || 0; info.textContent = k === "buy" ? "會先鎖住 " + fmt(lockOf(px, n)) + " 籌碼（價格到 " + fmt(px) + " 以下才買，成交價照當時的價，多的退回）。" : "會先鎖住這 " + fmt(n) + " 股（價格到 " + fmt(px) + (k === "sell" ? " 以上" : " 以下") + "才賣，成交價照當時的價）。"; };
@@ -1106,7 +1106,7 @@ function helpSections(v) {
         `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
         "館內股：看昨天來了多少不同的人，見「館內股」那一頁。"]],
       ["要付的錢", [
-        `手續費：台股 ${feeT(S.feeOut.tw)}、美股 ${feeT(S.feeOut.us)}（買和賣各收一次）；館內股、集團股 ${feeT(S.feePct)}。`,
+        `手續費：台股 ${feeT(S.feeOut.tw)}、美股 ${feeT(S.feeOut.us)}（買和賣各收一次）；館內股 ${feeT(S.feePct)}、集團股 ${feeT(S.feeOut.grp)}。`,
         `持有成本：每天從持股市值扣 ${pc(S.holdPct)}。`,
         `證交稅 ${pc(S.taxPct)}：賣台股和館內股要繳賣出金額的 ${pc(S.taxPct)}（賺賠都收，不到 1 籌碼也算 1）；美股不收。稅進政府帳。`,
         `一個人一天最多賣出：${sellCaps}（館外股和館內股合算；信用跟槓桿是同一個等級）。`]],
@@ -1149,7 +1149,7 @@ function helpSections(v) {
         `莊家是對手盤，接的部位合計有上限（莊家的錢的 ${pc(L.houseExposePct)}，最少 ${casNum(L.houseFloor)}），滿了就暫時開不了新的。`]],
       ["會發生什麼事", [
         `借的錢（部位減保證金）每天收利息：台股、美股 ${pc(L.byMk.tw.interestPct)}，館內股、集團股 ${pc(L.interestPct)}；放空另外收借券費：台股、美股 ${pc(L.byMk.tw.borrowPct)}，館內股、集團股 ${pc(L.borrowPct)}。`,
-        `手續費：台股 ${feeT(S.feeOut.tw)}、美股 ${feeT(S.feeOut.us)}，館內股、集團股 ${feeT(S.feePct)}；台股平倉另收當沖證交稅 ${pc(L.byMk.tw.taxPct)}（進政府帳），美股、館內股、集團股沒有。`,
+        `手續費：台股 ${feeT(S.feeOut.tw)}、美股 ${feeT(S.feeOut.us)}，館內股 ${feeT(S.feePct)}、集團股 ${feeT(S.feeOut.grp)}；台股平倉另收當沖證交稅 ${pc(L.byMk.tw.taxPct)}（進政府帳），美股、館內股、集團股沒有。`,
         `保證金剩下不到一半（${L.forcePct}%）就強制平倉，錢拿不回來。`,
         "當沖：收盤前沒平，系統自動幫你平倉。",
         `台股收盤（${twClose}）用官方收盤價平倉，可能跟你看到的最後一個價不一樣。`,
@@ -1176,7 +1176,7 @@ function helpSections(v) {
         `你買賣會推價：買進股本的 1% 大約漲 ${Math.round(100 / G.depthPct)}%；買賣各有半個價差 ${pc(G.half * 100)}。每 15 分鐘最多動 ${G.tickLim}%、壹天最多動 ${G.dayLim}%，想買賣太多會被擋並告訴你現在最多還能買賣幾股。`,
         "別人推價也會讓你的持股漲跌；拉高出貨要付價差、手續費、證交稅，賺不到。"]],
       ["要付的錢和限制", [
-        `手續費 ${pc(S.feePct)}、賣出證交稅 ${pc(S.taxPct)}（跟台股一樣），進博物館資金和政府帳。`,
+        `手續費 ${feeT(S.feeOut.grp)}、賣出證交稅 ${pc(S.taxPct)}（跟台股一樣），進博物館資金和政府帳。`,
         `沒有持股上限；一個人一天最多買賣股本的 ${G.dayVolPct}%，不跟館外股的每天賣出上限合算。`,
         `莊家是對手盤，手上的庫存最多股本的 ${G.makerCapPct}%（買賣都算）；莊家的錢不夠付你的賣單時，先向博物館資金借（最多 ${casNum(G.cover.max)}），再不夠就只賣掉付得出的部分，其餘退回給你。`]],
       ["每週一的事", [
