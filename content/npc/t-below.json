@@ -1,0 +1,15 @@
+{
+  "id": "t-below",
+  "name": "從下面上來的",
+  "kind": "trace",
+  "ledger": "從下面上來的",
+  "story": "只留池邊石階上的濕腳印，和每天高壹點的水位。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}
