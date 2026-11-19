@@ -604,7 +604,7 @@ function levTrade(v, S, cur) {
       ["強制平倉價（約）", fp(liq), "warn"], stopP ? ["停損價", fp(stopP)] : null, takeP ? ["停利價", fp(takeP)] : null,
       ["今天一定平倉", cur.market === "tw" ? "台股 13:30 前" : "23:30 前"]], long ? "確認開多單" : "確認開空單", doOpen);
   };
-  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : (L.lagWhy && L.lagWhy[cur.id]) ? L.lagWhy[cur.id] : halt ? haltText(S, cur) : L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
+  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : (L.lagWhy && L.lagWhy[cur.id]) ? L.lagWhy[cur.id] : halt ? haltText(S, cur) : L.opensLeft != null && L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
   return [
     seg([["long", "做多 ▲"], ["short", "放空 ▼"]], f.dir, k => { f.dir = k; rerender(); }),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips(Array.from({ length: Math.max(0, Math.min(10, Math.floor(shownLev))) }, (_, i) => i + 1), lev, n => { f.lev = n; rerender(); }, n => `${n}×`, n => (n > maxLev ? (S.credit && S.credit.nextText) || "信用等級還沒解鎖這個倍數" : ""))),
@@ -619,7 +619,7 @@ function levTrade(v, S, cur) {
     S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・部位 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
     S.credit && S.credit.nextText ? h("p", { class: "bank-meta sm bank-nextunlock" }, S.credit.nextText) : null,
     L.owedText || L.owed > 0 ? h("p", { class: "bank-stale" }, h("b", null, "欠條　"), L.owedText || `今天賺的超過館方當天能賠的上限，還有 ${fmt(L.owed)} 記成欠條，明天補發。`) : null,
-    h("p", { class: "bank-meta sm" }, `今天還能開 ${L.opensLeft} 筆。當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
+    h("p", { class: "bank-meta sm" }, `${L.opensLeft != null ? `今天還能開 ${L.opensLeft} 筆。` : ""}當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
 const KIND_TEXT = { buy: "限價買", sell: "限價賣", stop: "停損賣" };
@@ -1110,7 +1110,7 @@ function helpSections(v) {
       ["開之前", [
         `倍數看信用等級：${lev}。信用在財報頁看。`,
         `信用升級：每 ${L.credit.ptsPerLevel} 點升一級，一天最多加 ${L.credit.dayGain} 點，借款逾期一次扣 ${L.credit.lateLoss} 點。`,
-        L.coolMin > 0 ? `一天最多開 ${L.opensDay} 筆；同一支平倉後要等 ${L.coolMin} 分鐘才能再開。` : `一天最多開 ${L.opensDay} 筆；平倉後馬上可以再開。`,
+        (L.opensDay > 0 ? `一天最多開 ${L.opensDay} 筆；` : "一天開幾筆不限；") + (L.coolMin > 0 ? `同一支平倉後要等 ${L.coolMin} 分鐘才能再開。` : "平倉後馬上可以再開。"),
         `部位（做多加放空）上限 ${casNum(L.posLimit)}、一天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高一級再多 ${L.stepPct}%。`,
         `台股、美股行情落後超過 ${L.maxLagMin} 分鐘，暫停「新開」；已經開的、平倉、強平照常。`,
         `台股 ${twNoOpen} 起不能新開（收盤前最後五分鐘是集合競價）。`]],
