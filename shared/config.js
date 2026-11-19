@@ -388,6 +388,9 @@ export const NUM = {
     //   散客展廳氣氛 mood（無狀態，每天重算）：base ＋ b × 景氣 ＋ san × (NPC 平均理智 − 70) ＋ trouble × (減薪以上的集團數) ＋ 週末 weekend，夾 0～100
     //   壞消息推不安 downPush：世界市場新聞 tone=down、ref 指到某集團旗下的股票，那個集團不安 +這麼多（壹個集團壹天最多壹次）；排程事件的上下限（week_check 也擋）：san ±sanMax、unrest ±unrestMax、mood ±moodMax
     //   散客類型權重 crowd（決定 0092 第 3 件）：昨天的展廳氣氛 ≥ high：這幾種散客組比較多（乘上這個倍數）；≤ low：另外幾種。只改「抽到哪種組」的機率，每天幾組、幾點到、待多久不變。人數的期望值變動由 econ:check 擋（±20% 內）
+    // 館門口池子的水位（決定 0132，翊文 11-19）：跟著被文化部資助那位館友的淨值動。目標水位 ＝ clamp(start ＋ (1−start)×ln(淨值÷起點)÷ln(xT)，min，1)（淨值長到起點的 xT 倍＝門檻 1）；每天 05:00 日報算壹次、最多動 step；連續 confirm 個日報目標 ≥ 1 才到門檻，那晚全館看得到事件，隔天天亮前收完（只收東西、不收錢，劇情定）水退回 start、起點重設。
+    //   trace 留幾天的漲退痕跡、grid 水位量化成幾格（peek 給畫面）
+    pool: { xT: 1.5, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
     // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino_text.js 的 CAS_GIFT。on:false 關掉
     cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
     // 佩佩銀行跟賭場分開（決定 0130，翊文 11-19）：館友借款（新的）、館債、存款利息改由準備金 house.gb 出錢；賭場、股票留在莊家。舊借款（9.85 億）留在莊家照舊還給莊家。
