@@ -299,6 +299,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-pos-pnl { margin-left: auto; font-weight: 800; font-family: Georgia, serif; color: var(--bank-mute); }
 .bank-pos-pnl.up { color: #FF8A78; } .bank-pos-pnl.down { color: #7FD39B; }
 .bank-pos-pnl .bank-pos-pct { margin-left: 6px; font-size: .78em; font-weight: 700; opacity: .9; } /* 報酬率（賺賠÷保證金，11-19） */
+.bank-pos-m .bank-pos-mv { font-weight: 700; } .bank-pos-m .bank-pos-mv.up { color: #FF8A78; } .bank-pos-m .bank-pos-mv.down { color: #7FD39B; } /* 股價漲跌：紅漲綠跌，不管做多放空（翊文 11-19） */
 .bank-pos-m { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 0; font-size: var(--type-small, .75rem); color: #C9D1DE; }
 .bank-ratio { position: relative; height: 16px; border-radius: 8px; background: rgba(0, 0, 0, .4); border: 1px solid rgba(214, 178, 94, .5); overflow: hidden; }
 .bank-ratio i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #C2452F, #E0B040 45%, #5CC4B4); }
