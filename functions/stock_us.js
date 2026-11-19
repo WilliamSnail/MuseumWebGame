@@ -17,7 +17,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { outStockWeekend } from "./shared/stocks.js";
-import { US_IDS, mkLen, twBackfill, twLive, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
+import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
 import { NUM } from "./shared/config.js";
 import { twSecret } from "./stock_tw.js";
 
@@ -154,23 +154,9 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx, fxFn) {
   return done;
 }
 
-// 秒級現價（決定 0135）：每分鐘的排程做完之後，每 everySec 秒再抓壹次，只寫 doc.live（不動每分鐘的價）。回傳做了什麼的字串
-export async function stockUsLive(nowMs, fetchFn, dbx) {
-  const D = dbx || db(), ref = D.doc("stocksUs/latest"), day = usNyDay(nowMs), idx = usIdx(nowMs, day);
-  if (outStockWeekend(day) || idx == null || idx < 0 || idx > mkLen("us", day)) return "不在盤中";
-  const snap = await ref.get(); if (!snap.exists || snap.data().day !== day) return "還沒有今天的資料";
-  const doc = snap.data(); let got;
-  try { got = await (fetchFn || fetchYahoo)(nowMs); } catch (e) { return "抓不到"; }
-  if (!twLive(doc, got, idx, nowMs, "us")) return "不用寫";
-  await ref.update({ live: doc.live });
-  return "live";
-}
-const sleepMs = ms => new Promise(r => setTimeout(r, ms));
 // 美東週一到週五 09:00～16:59 每分鐘跑壹次（09:00～09:29 和收盤後那幾分鐘 stockUsRun 自己會跳過）。時區用 Cloud Scheduler 的 timeZone，日光節約由它處理
-export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "America/New_York", retryCount: 0, timeoutSeconds: 75 }, async () => {
+export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "America/New_York", retryCount: 0, timeoutSeconds: 30 }, async () => {
   const now = Date.now(), r = await stockUsRun(now);
-  const L = NUM.casino.stock.live; // 決定 0135：這壹分鐘剩下的時間，每 everySec 秒再抓壹次價
-  if (L && L.on && L.everySec >= 5) for (let k = 1; k * L.everySec < 55; k++) { await sleepMs(Math.max(0, now + k * L.everySec * 1000 - Date.now())); try { const lv = await stockUsLive(Date.now()); if (lv === "不在盤中") break; } catch (e) { console.warn("美股秒級價：", e && e.message); } }
   if (/^09:00$/.test(new Date(now).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" }))) console.log("stockUsBackfill", await stockUsBackfill(now)); // 美股補收盤併進這個排程（美東 09:00 做壹次，開盤前）
   console.log("stockUsTick", r);
 });
