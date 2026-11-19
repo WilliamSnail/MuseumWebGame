@@ -18,6 +18,8 @@ const SEL = { e: null, n: null, kind: null, path: [], dir: "" }; // path：現�
 let timer = 0;
 const still = () => !!(document.body && document.body.classList.contains("reduce-motion")) || (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
+// 往來種類（篩選用）：集團之間的往來照 src 的種類（tradeGoods…）；發薪水（wageNpc、wageBack）合成「薪水」；NPC 和散客花錢（沒有 | 的來源）合成「館內消費」
+const catOf = x => { const k = String(x.src).split("|")[0]; return /^wage/.test(k) ? { k: "wage", label: "薪水（集團↔NPC 錢包、家計）" } : String(x.src).includes("|") ? { k, label: x.label || k } : { k: "spend", label: "館內消費（NPC、散客）" }; };
 // 層級（11-17 翊文：「需要可以做縮放各層級的交易」）：全景（已知世界、佩佩博物館各是壹塊）→ 已知世界（各集團一塊，集團之間的往來看得到）→ 單一集團（它的子公司和它所有的進出）；另壹邊：全景 → 佩佩博物館（館裡的各帳）
 const wOpen = () => SEL.path[0] === "world", focusId = () => (SEL.path[0] === "world" ? SEL.path[1] || null : null);
 const isOpen = id => (id.startsWith("org:") ? SEL.path[0] === id : id === focusId());
@@ -193,13 +195,13 @@ export function flowPane(v, deps) {
     // 往來變多（決定 0127，約 24 條集團之間的線）：已知世界那層預設只畫最大的 8 條集團之間的線；選壹個種類只畫那壹種；點壹個集團方塊只畫跟它有關的。沒畫出來的都還在右邊流向一覽裡。
     let hidden = 0, kinds = [];
     if (wOpen() && !focusId()) {
-      const kindOf = e => (e.srcs[0] && e.srcs[0].src ? String(e.srcs[0].src).split("|")[0] : ""), isCC = e => e.from.startsWith("w:") && e.to.startsWith("w:");
-      const cc = V.edges.filter(isCC), sum = new Map(); cc.forEach(e => e.srcs.forEach(x => { const k = String(x.src).split("|")[0]; sum.set(k, (sum.get(k) || 0) + Math.abs(x.amt)); }));
-      kinds = [...sum.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n, label: (cc.flatMap(e => e.srcs).find(x => String(x.src).split("|")[0] === k) || {}).label || k }));
+      const kindOf = e => (e.srcs[0] && e.srcs[0].src ? String(e.srcs[0].src).split("|")[0] : ""), isCC = e => e.from.startsWith("w:") || e.to.startsWith("w:"); // 碰到已知世界裡任何壹個單位的線都歸這裡（集團之間、發薪水、NPC 和散客花錢…）
+      const cc = V.edges.filter(isCC), sum = new Map(); const labelOf = new Map(); cc.forEach(e => e.srcs.forEach(x => { const c = catOf(x); labelOf.set(c.k, c.label); sum.set(c.k, (sum.get(c.k) || 0) + Math.abs(x.amt)); }));
+      kinds = [...sum.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ k, n, label: labelOf.get(k) || k }));
       if (SEL.kind && !sum.has(SEL.kind)) SEL.kind = null;
       const keepTop = new Set(cc.slice().sort((a, b) => b.amt - a.amt).slice(0, 8));
       const before = V.edges.length;
-      V.edges = V.edges.filter(e => !isCC(e) || (SEL.n ? (e.from === SEL.n || e.to === SEL.n) : SEL.kind ? e.srcs.some(x => String(x.src).split("|")[0] === SEL.kind) : keepTop.has(e)));
+      V.edges = V.edges.filter(e => !isCC(e) || (SEL.n ? (e.from === SEL.n || e.to === SEL.n) : SEL.kind ? e.srcs.some(x => catOf(x).k === SEL.kind) : keepTop.has(e)));
       hidden = before - V.edges.length;
       void kindOf;
     }
