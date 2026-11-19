@@ -24,6 +24,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "./shared/casino.js";
+import { casPoolDay, casPoolEnsure, casPoolView, casNetWorth } from "./shared/casino_bank.js";
 import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
@@ -139,7 +140,8 @@ export async function playCore(me, email, opts, fn) {
       const stale = twStale(tw, day).concat(usStale(us, day)); // 哪幾支這壹段沒有新行情（畫面要標出來，不要讓人以為真的沒漲跌）
       const ctx = { secret: sec, w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
-      const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t); // 文化部資助（決定 0131）：該收的人壹進來就到（peek 也會跑壹次空交易），錢和信在同壹個交易
+      const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t);
+      casPoolEnsure(ctx.w, ctx.house, me.nick, me.uid, day); // 決定 0132：收到資助的人壹進來，建池子水位的起點（house.pool） // 文化部資助（決定 0131）：該收的人壹進來就到（peek 也會跑壹次空交易），錢和信在同壹個交易
       const r = fn(ctx);
       const letter = r.ok !== false || opts.writeAnyway ? casAdvisorLetter(ctx.w, ctx.house, day, t, MAIL_DAYS) : null; // 財經專員的個人信（決定 0093 第 3 件）：第壹次欠了不少錢寄壹封，同壹個交易裡寫、錢包記著寄過了
       ha = ctx.house.bankroll;
@@ -379,6 +381,7 @@ async function reportSnap(day) {
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && !s.npc && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
     const snap = casBookSnap(wallets, house, inplay, day);
+    if (house.pool && house.pool.uid) { const pd = ws.docs.find(d => d.id === house.pool.uid); if (pd) snap.poolNw = casNetWorth(casWalletFix(JSON.parse(pd.data().data), null), house); } // 決定 0132：池子水位要的淨值（只有伺服器的日報看到）
     // 昨天館外來客花了多少：house.npcs 是換日後第壹個玩的人（casInRoll）才結算的；日報是唯讀、不換日，05:00 後第壹個碰到的如果是日報，house.npcs 還是前天的 → 財報停在前天。
     // 這裡在複本上補算昨天的（只拿 npcs 欄位，不動錢、不寫回去）
     const yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
@@ -412,6 +415,7 @@ async function writeEcon(doc, day) {
     h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
     h.econ = { yoy: doc.ext && doc.ext.ok ? doc.ext.yoy : 0, b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
       perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), led0: casFlowLed0(doc.snap), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
+    if (doc.snap && Number.isFinite(+doc.snap.poolNw)) casPoolDay(h, day, doc.snap.poolNw); // 決定 0132：池子水位每天壹次
     put(tx, houseRef(), h);
   });
   ECON_DONE = day;
@@ -496,7 +500,7 @@ export const casino = onCall(async req => {
       if (w.work) await publishWork(me.uid, w, me.nick); // 在地下工作的：理智每天變，館主連上時更新給館友看（決定 0064 第三部分）
       const hs = await houseRef().get(); // 大廳導覽圖銀行的「新」：館外幾支股票的價自從上次看過之後變過（只讀，不寫）
       const stockFresh = hs.exists ? casStockFreshN(w, parse(hs)) : 0;
-      return { ok: true, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, policy: hs.exists ? casPolicyView(parse(hs), taipeiDay(now())) : null, npcSan: hs.exists ? nwSanPublic(parse(hs)) : null, crowdMood: hs.exists ? whMoodPublic(parse(hs)) : null, upcoming: casUpcoming(casEconUpcoming(ECON_EVENTS, taipeiDay(now())), casInFestUp(FEST_DAYS, taipeiDay(now())), taipeiDay(now())), npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
+      return { ok: true, pool: hs.exists ? casPoolView(parse(hs), taipeiDay(now()), now()) : null, chips: w.chips, packs: casPacksLeft(w), econ: casEconLeft(w, taipeiDay(now())), work: casWorkView(w), mustWork: casMustWork(w), debt: Math.max(0, -w.chips), stockFresh, policy: hs.exists ? casPolicyView(parse(hs), taipeiDay(now())) : null, npcSan: hs.exists ? nwSanPublic(parse(hs)) : null, crowdMood: hs.exists ? whMoodPublic(parse(hs)) : null, upcoming: casUpcoming(casEconUpcoming(ECON_EVENTS, taipeiDay(now())), casInFestUp(FEST_DAYS, taipeiDay(now())), taipeiDay(now())), npcc: hs.exists ? npcPublic(parse(hs).npcc) : null, ...(await npcNowView(hs.exists ? parse(hs) : null)) }; // packs、econ：「今天」清單要的（ui_today.js）
     }
     // 走地下探險撿籌碼（決定 0047）：畫面只說走完了哪個房間，有沒有、多少、一天幾次都是這裡算。沒撿到也要寫（記下這個房間，不能重擲）；重複、撿夠了什麼都不寫
     case "cellarFind": return play(req, me, {}, ctx => {
