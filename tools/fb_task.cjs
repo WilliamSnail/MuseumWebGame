@@ -252,11 +252,14 @@ async function houseLedger(db) {
       // 還是館友的錢、只是不在籌碼裡（11-18：沒算這些，存款、開槓桿、掛買單時對帳會差壹筆）
       bank: w.bank ? nz(w.bank.save) + (Array.isArray(w.bank.terms) ? w.bank.terms.reduce((s, t) => s + nz(t && t.amt), 0) : 0) : 0,
       margin: (w.lev && Array.isArray(w.lev.pos) ? w.lev.pos : []).reduce((s, x) => s + nz(x && x.margin), 0),
-      hold: nz(w.gs && w.gs.hold) }))
+      hold: nz(w.gs && w.gs.hold),
+      // 館債：館友買了、還沒到期的本金和債權憑證（莊家欠館友的，不是館友手上的錢，不算進館友的錢合計）
+      bondOwed: w.bond ? (Array.isArray(w.bond.list) ? w.bond.list.reduce((s, b) => s + nz(b && b.amt), 0) : 0) + nz(w.bond.iou) : 0 }))
     .sort((a, b) => b.chips - a.chips);
   const tot = k => rows.reduce((s, r) => s + r[k], 0);
   console.log(`錢包 ${rows.length} 個，籌碼合計 ${fmt(tot("chips"))}`);
   console.log(`錢包不在籌碼裡的：銀行存款 ${fmt(tot("bank"))}　槓桿保證金 ${fmt(tot("margin"))}　集團股買單鎖住 ${fmt(tot("hold"))}　（館友的錢合計 ${fmt(tot("chips") + tot("bank") + tot("margin") + tot("hold"))}）`);
+  console.log(`館債（莊家欠館友、還沒到期的本金＋債權憑證）：${fmt(tot("bondOwed"))}　（${rows.filter(r => r.bondOwed > 0).length} 個錢包）`);
   { const bank = nz(h.bankroll) + nz(h.budget) + nz(h.sea) + nz(h.museum) + nz(h.gov) + nz(h.world) + nz(h.ext) + nz(h.gb && h.gb.cash), players = tot("chips") + tot("bank") + tot("margin") + tot("hold");
     console.log(`全館的錢合計（不含在路上的借款、打到一半的注）：${fmt(bank + players)}　＝ 莊家 ${fmt(h.bankroll)} ＋ 博物館資金 ${fmt(h.budget)} ＋ 海底 ${fmt(h.sea)} ＋ 修繕基金 ${fmt(h.museum)} ＋ 政府帳 ${fmt(h.gov)} ＋ 已知世界 ${fmt(h.world)} ＋ 海外 ${fmt(h.ext)} ＋ 銀行準備金 ${fmt(h.gb && h.gb.cash)} ＋ 館友的錢 ${fmt(players)}`); }
   rows.forEach((r, i) => {
