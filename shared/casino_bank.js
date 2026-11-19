@@ -13,7 +13,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casBankEcon, casFxMul, casWorldNews } from "./casino_gdp.js";
 import { OUT_STOCKS } from "./stocks_text.js";
-import { CAS_BANK } from "./casino_text.js";
+import { CAS_BANK, CAS_TAKE } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanView } from "./casino_wallet.js";
 import { casBondHeld, casBondView } from "./casino_bond.js";
@@ -178,7 +178,7 @@ export function casPoolEnsure(w, house, nick, uid, day) {
 export function casPoolDay(house, day, nw) {
   const C = NUM.casino.pool, P = house && house.pool;
   if (!C || !P || !P.uid || !(P.base > 0) || P.day === day || !Number.isFinite(+nw)) return false;
-  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
+  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
   const x = Math.max(1e-6, nw / P.base), target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * Math.log(x) / Math.log(C.xT))), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
   P.lv = plRound(Math.min(1, Math.max(C.min, P.lv + dl))); P.day = day;
   P.trace = (P.trace || []).concat([dl > 0.00005 ? 1 : dl < -0.00005 ? -1 : 0]).slice(-C.trace);
@@ -193,4 +193,25 @@ export function casPoolView(house, day, t) {
   const mins = Number.isFinite(+t) ? (((Math.floor(+t / 60000) + 480) % 1440) + 1440) % 1440 : 0, evening = mins >= 18 * 60 || mins < 5 * 60;
   const lv = P.lv, band = lv >= 1 ? "over" : lv > 0.9 ? "edge" : lv > 0.6 ? "high" : lv > 0.2 ? "mid" : "low";
   return { lv: Math.round(lv * C.grid), dir: (P.trace || []).length ? P.trace[P.trace.length - 1] : 0, band, night: !!P.night && P.night === day && evening, trace: (P.trace || []).slice(), hits: P.hits || 0 };
+}
+
+// 收走壹個名字（決定 0133，翊文 11-19）：門檻那晚過去（casPoolDay 隔天日報把 pool.take 標成那壹晚）之後，這位館友壹進來（要有存檔 P）就收。
+// 挑誰：玩家自己取過名、最新取的那隻（e.nm、nmSeq 最大）；都沒取過名，就收融合稱號那隻（有 title、還沒被收過、序號 s 最大）。
+// 收了：名字清成空白（稱號留著，畫面把名牌顯示成空白）、記 e.tk ＝ { no（館友號碼，加入順序，第壹次收的那刻定，再收還是同壹個）、day、n（被收幾次）、stamp ＝ false（重新取名才變 true）}、pool.take 清掉。
+// 不動錢。回傳 { key, pepe, no, mails: [短信, 收據] } 或 null（沒有待收、不是他、沒有存檔、還沒有號碼、或沒有可收的 → 沒有可收的也會清掉待收，下次門檻再來）
+export function casPoolTake(house, P, uid, memberNo, day) {
+  const C = NUM.casino.poolTake, Q = house && house.pool;
+  if (!C || !C.on || !Q || !Q.take || String(Q.uid) !== String(uid) || !P || !P.pepes || !Number.isInteger(memberNo) || memberNo < 1) return null;
+  const ks = Object.keys(P.pepes), named = ks.filter(k => P.pepes[k] && P.pepes[k].nm);
+  let key = null;
+  if (named.length) key = named.reduce((m, k) => ((P.pepes[k].nmSeq || 0) >= (P.pepes[m].nmSeq || 0) ? k : m));
+  else { const ti = ks.filter(k => P.pepes[k] && P.pepes[k].title && !P.pepes[k].tk); if (ti.length) key = ti.reduce((m, k) => ((P.pepes[k].s || 0) >= (P.pepes[m].s || 0) ? k : m)); }
+  const night = Q.take; Q.take = null;
+  if (!key) { Q.took = { day: night, none: true }; return null; }
+  const e = P.pepes[key], pepe = e.nm || e.title, no = e.tk && e.tk.no ? e.tk.no : memberNo;
+  e.tk = { no, day: night, n: ((e.tk && e.tk.n) || 0) + 1, stamp: false, was: pepe }; e.nm = ""; e.nmSeq = 0;
+  Q.took = { day: night, key, no };
+  const pad = String(no).padStart(3, "0"), exp = new Date(Date.parse(day + "T00:00:00Z") + (C.expireDays || 365) * 86400000).toISOString().slice(0, 10);
+  const mk = (id, T) => ({ id, mail: { id, from: CAS_TAKE.name, title: T.title, note: T.lines.map(l => casFill(l, { pepe, no: pad })).join("\n"), gift: { insp: 0, mood: 0 }, sent: day, expire: exp, claimed: false } });
+  return { key, pepe, no, mails: [mk("tk-" + night, CAS_TAKE.letter), mk("tk-" + night + "-r", CAS_TAKE.receipt)] };
 }

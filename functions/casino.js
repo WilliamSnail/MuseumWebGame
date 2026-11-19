@@ -24,7 +24,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "./shared/casino.js";
-import { casPoolDay, casPoolEnsure, casPoolView, casNetWorth } from "./shared/casino_bank.js";
+import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "./shared/casino_bank.js";
 import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
@@ -94,6 +94,10 @@ async function npcNowView(h) {
     return { now: { hall: p.hall, names: p.names, around: p.around, named: { hall: p.hall, names: p.names, ids: p.ids }, casino: p.casino, crowd: p.crowd, total: p.hall + p.crowd.n, rooms: p.rooms, shops: p.shops }, reviews: casReviewsFix(house).slice().reverse().map(r => ({ who: r.who, text: r.text, stars: r.stars, at: r.at, day: r.day })) };
   } catch (e) { console.warn("npcNowView", e && e.message); return { now: null, reviews: [] }; }
 }
+// 館友號碼（決定 0133）：加入順序（members 的 joinedAt 排第幾）；拿不到回 null（那次先不收）
+async function memberRank(uid) {
+  try { const m = await db().doc(`members/${uid}`).get(); const at = m.exists ? m.data().joinedAt : null; if (!at) return null; const c = await db().collection("members").where("joinedAt", "<=", at).count().get(); return c.data().count || null; } catch (e) { console.error("館友號碼：算不出來", e && e.message); return null; }
+}
 export async function playCore(me, email, opts, fn) {
   const t = now(), day = taipeiDay(t);
   let hb = null, ha = null; // 這個交易前後莊家的錢（Discord 第二步：破產、救回來的事件，交易成功之後才寫 outbox）
@@ -103,6 +107,7 @@ export async function playCore(me, email, opts, fn) {
   const sec = await twSecret(); // 祕密種子（stocksTwSecret/main，玩家讀不到）：館內五家店盤中曲線、畫的隨機走勢和贗品疑雲都用它
   casInSecret(sec); casArtSecret(sec);
   setRng(cryptoRng);
+  const memberNo = opts.save && casGiftWho(me.nick) ? await memberRank(me.uid) : null; // 決定 0133：館友號碼（加入順序）只有被資助的人要，交易外面先算
   try {
     const out = await db().runTransaction(async tx => {
       const [ws, rs, hs] = await Promise.all([tx.get(walletRef(me.uid)), tx.get(roundRef(me.uid)), tx.get(houseRef())]);
@@ -142,6 +147,8 @@ export async function playCore(me, email, opts, fn) {
       hb = ctx.house.bankroll;
       const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t);
       casPoolEnsure(ctx.w, ctx.house, me.nick, me.uid, day); // 決定 0132：收到資助的人壹進來，建池子水位的起點（house.pool） // 文化部資助（決定 0131）：該收的人壹進來就到（peek 也會跑壹次空交易），錢和信在同壹個交易
+      const took = ctx.P ? casPoolTake(ctx.house, ctx.P, me.uid, memberNo, day) : null; // 決定 0133：門檻那晚過去，壹進來就收走壹個名字（存檔同壹個交易改、寫短信和收據）
+      if (took) ctx.saveDirty = true;
       const r = fn(ctx);
       const letter = r.ok !== false || opts.writeAnyway ? casAdvisorLetter(ctx.w, ctx.house, day, t, MAIL_DAYS) : null; // 財經專員的個人信（決定 0093 第 3 件）：第壹次欠了不少錢寄壹封，同壹個交易裡寫、錢包記著寄過了
       ha = ctx.house.bankroll;
@@ -151,6 +158,7 @@ export async function playCore(me, email, opts, fn) {
       for (const d of Array.from(new Set(newRv.map(x => x.day)))) { const rs0 = await tx.get(db().doc("npcReviews/" + d)); rvDocs[d] = rs0.exists ? rs0.data() : null; }
       // 11-15：財經專員的信原本在上面先寫、這裡才讀評價，Firestore 交易「讀要在寫之前」→ 欠錢又剛好有新評價的人每次都失敗（銀行顯示示範資料）。所有讀完才寫
       if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
+      if (took) for (const m of took.mails) tx.set(db().doc(`mail/${me.uid}/items/${m.id}`), Object.assign({}, m.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       if (gift) tx.set(db().doc(`mail/${me.uid}/items/${gift.id}`), Object.assign({}, gift.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       for (const d of Object.keys(rvDocs)) tx.set(db().doc("npcReviews/" + d), casReviewsMerge(rvDocs[d], newRv.filter(x => x.day === d), d));
       put(tx, walletRef(me.uid), ctx.w);
@@ -489,7 +497,7 @@ export const casino = onCall(async req => {
       return { ok: true, day, items: pick.items, total: pick.total, prevDay: pq.empty ? null : pq.docs[0].id, nextDay: nq.empty ? null : nq.docs[0].id };
     }
     case "peek": { // 狀態列的籌碼（只讀，不建錢包；還沒進過賭場就是開場的數字）
-      if (casGiftWho(me.nick)) await playCore(me, null, { writeAnyway: true }, () => ({ ok: true })).catch(e => console.error("文化部資助：失敗", e && e.message)); // 該收文化部資助的人：進館就到（沒有就什麼都不做）
+      if (casGiftWho(me.nick)) await playCore(me, null, { writeAnyway: true, save: true }, () => ({ ok: true })).catch(e => console.error("文化部資助：失敗", e && e.message)); // 該收文化部資助的人：進館就到（沒有就什麼都不做）
       await casReport().catch(e => console.error("日報：產生失敗", e && e.message)); // 每天第一個進館的人觸發日報（景氣指數靠它每天更新）
       const ws = await walletRef(me.uid).get();
       const w = casWalletFix(parse(ws), taipeiDay(now()));

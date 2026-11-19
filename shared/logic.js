@@ -4,7 +4,7 @@
 
 // ---------- 小工具 ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, NUM, ORIGIN, PEPE_PARTS, PILLOW_PARTS, RARITY_TABLE, RENAMED, UPGRADES } from "./config.js";
+import { BADGES, EXHIBITS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, NUM, ORIGIN, PEPE_NAME, PEPE_PARTS, PILLOW_PARTS, RARITY_TABLE, RENAMED, UPGRADES } from "./config.js";
 import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, QUIRK_TEXT, STORY_CHAPTERS, VISITOR_COMMENTS } from "./content.js";
 import { CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./content3.js";
@@ -1557,4 +1557,28 @@ export function markTokens(text) {
   }
   if (at < s.length) out.push({ t: s.slice(at), k: null });
   return out;
+}
+
+// ---------- 替佩佩取名（決定 0133，翊文 11-19：所有佩佩都能取名）----------
+// 名字：去頭尾空白、連續空白變壹個、1～PEPE_NAME.max 個字、不能有控制字元、不能含不雅的字。不合格回傳 { ok: false, reason }
+export function pepeNameClean(s) {
+  if (typeof s !== "string") return { ok: false, reason: "名字要是文字" };
+  const t = s.normalize("NFC").replace(/\s+/g, " ").trim();
+  if (!t) return { ok: false, reason: "名字不能是空的" };
+  if (/\p{C}/u.test(t)) return { ok: false, reason: "名字有看不見的字" };
+  if ([...t].length > PEPE_NAME.max) return { ok: false, reason: "名字最多 " + PEPE_NAME.max + " 個字" };
+  const flat = t.replace(/[\s\p{P}\p{S}_]+/gu, "").toLowerCase();
+  if (PEPE_NAME.bad.some(b => flat.includes(String(b).toLowerCase()))) return { ok: false, reason: "這個名字不行" };
+  return { ok: true, name: t };
+}
+// 替收藏裡的佩佩（key）取名或改名：e.nm ＝ 名字，P.nmSeq 是取名的先後（越大越新，「收走」挑最新取的）；
+// 這隻曾被收走過名字（e.tk，名牌背面是館友號碼）：重新取的名字旁邊多壹個小空心圓章（e.tk.stamp ＝ true）
+export function pepeRename(P, key, name) {
+  const e = P && P.pepes && P.pepes[key];
+  if (!e) return { ok: false, reason: "收藏裡沒有這隻佩佩" };
+  const c = pepeNameClean(name); if (!c.ok) return c;
+  P.nmSeq = (Number.isInteger(P.nmSeq) ? P.nmSeq : 0) + 1;
+  e.nm = c.name; e.nmSeq = P.nmSeq;
+  if (e.tk) e.tk.stamp = true;
+  return { ok: true, name: c.name, stamp: !!(e.tk && e.tk.stamp) };
 }
