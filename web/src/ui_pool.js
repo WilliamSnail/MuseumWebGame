@@ -10,7 +10,7 @@
 import { ADDONS, UI } from "./ui_core.js";
 
 const NS = "http://www.w3.org/2000/svg";
-const THR = 20;               // 門檻刻在 lv 20 那格的高度（band edge ＝快到門檻、over ＝過了）
+const THR = 24;               // 門檻（水位 ℓ＝1.0）＝lv 24＝池口那一格；edge／over 照伺服器給的 band，不用格數猜（PR 784）
 const Y0 = 48, Y1 = 10, LVMAX = 24; // 池底、池口的 y；lv 滿格
 const yOf = lv => Y0 - Math.max(0, Math.min(LVMAX, lv)) / LVMAX * (Y0 - Y1);
 const el = (tag, attrs, ...kids) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs || {})) if (v != null) e.setAttribute(k, String(v)); kids.forEach(c => c && e.append(c)); return e; };
@@ -32,8 +32,8 @@ export function poolSvg(pool) {
   const floor = el("rect", { x: 4, y: 48, width: 176, height: 4, fill: "#3A3128", stroke: "#8A7452", "stroke-width": ".8" });
   // 門檻：石階上壹道舊刻線（磨損的，斷斷續續），旁邊是來過幾次的刮痕
   const ty = yOf(THR), hits = Math.max(0, Math.min(5, Math.round(+pool.hits || 0)));
-  const groove = el("path", { d: `M6 ${ty} H34`, stroke: "#E2C98A", "stroke-width": "1", "stroke-dasharray": "5 1.5 2 1.5", opacity: ".85", fill: "none" });
-  const scratches = Array.from({ length: hits }, (_, i) => el("path", { d: `M${9 + i * 2.6} ${ty - 5.5} l.6 4.2`, stroke: "#C9B98F", "stroke-width": ".7", opacity: ".7", fill: "none" }));
+  const groove = el("path", { d: `M6 ${ty + 3} H34`, stroke: "#E2C98A", "stroke-width": "1", "stroke-dasharray": "5 1.5 2 1.5", opacity: ".85", fill: "none" });
+  const scratches = Array.from({ length: hits }, (_, i) => el("path", { d: `M${9 + i * 2.6} ${ty + 4} l.6 4.2`, stroke: "#C9B98F", "stroke-width": ".7", opacity: ".7", fill: "none" }));
   // 右牆的舊水痕（最近 7 天水到過哪裡）
   const trace = (Array.isArray(pool.trace) ? pool.trace : []).slice(-7).map((v, i) => el("path", { d: `M${164 + (i % 2) * 2} ${yOf(+v || 0)} H172`, stroke: "#A9D8D2", "stroke-width": ".6", opacity: ".35" }));
   // 水面：壹條橫線（極慢的波紋）；dir 非 0 時，上壹次的水位留壹條淡淡的濕痕
