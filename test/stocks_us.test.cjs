@@ -12,12 +12,13 @@ const S = "2026-07-15"; // 星期三，夏令（美東 UTC−4）：台灣 21:30
 const HOL = "2026-11-26"; // 感恩節（週四，美國休市）
 const ID = "greeneye", ID2 = "redclaw", TWID = "handbrain";
 const prevReal = { greeneye: 170, redclaw: 550, nightindex: 690, silverapple: 355, flashcar: 390, squarewin: 520 };
-const openGot = (G, gap, lag) => { const o = {}; for (const id of G.US_IDS) o[id] = { open: prevReal[id] * (1 + gap), prev: prevReal[id], lag: lag == null ? 0 : lag }; return o; };
-const segGot = (G, base, j, ret, lag) => { const o = {}; for (const id of G.US_IDS) o[id] = { px: base[id] * Math.pow(1 + ret, j), lag: lag == null ? 0 : lag }; return o; };
+const px0 = (G, id) => prevReal[id] || (prevReal[id] = 40 + (id.length * 7) % 90); // 11-19 新增的 18 支：測試用的前收盤（隨便壹個正數）
+const openGot = (G, gap, lag) => { G.US_IDS.forEach(id => px0(G, id)); const o = {}; for (const id of G.US_IDS) o[id] = { open: prevReal[id] * (1 + gap), prev: prevReal[id], lag: lag == null ? 0 : lag }; return o; };
+const segGot = (G, base, j, ret, lag) => { G.US_IDS.forEach(id => px0(G, id)); const o = {}; for (const id of G.US_IDS) o[id] = { px: base[id] * Math.pow(1 + ret, j), lag: lag == null ? 0 : lag }; return o; };
 // 跑壹整個交易日（每分鐘問 usNeed，要抓就抓）。opts：gap、ret（每段真實漲跌）、lag、failSeg、openAt（第幾分鐘才抓得到開盤價，不給＝一直抓不到時用 never）
 function runDay(G, secret, day, opts) {
   opts = opts || {};
-  const doc = G.usDocNew(day), base = Object.fromEntries(G.US_IDS.map(id => [id, prevReal[id] * (1 + (opts.gap || 0))]));
+  G.US_IDS.forEach(id => px0(G, id)); const doc = G.usDocNew(day), base = Object.fromEntries(G.US_IDS.map(id => [id, prevReal[id] * (1 + (opts.gap || 0))]));
   for (let idx = 0; idx <= 390; idx++) {
     const need = G.usNeed(doc, idx);
     if (!need) continue;
@@ -62,8 +63,8 @@ T("美東日期：台灣時間冬令 22:30～隔天 05:00、夏令 21:30～隔�
   assert.strictEqual(G.taipeiDay(G.usOpenMs(W) + 390 * 60000), "2026-11-17", "冬令收盤剛好是 05:00 換日那壹刻");
   assert.strictEqual(G.usNyDay(Date.parse("2026-11-17T04:59:00+08:00")), W);
 });
-T("名單：六支美股（含指數用的），都有 15 分鐘標準差和每分鐘隨機；真實代號不在 shared 裡", G => {
-  assert.strictEqual(J(G.US_IDS.slice().sort()), J(["flashcar", "greeneye", "nightindex", "redclaw", "silverapple", "squarewin"]));
+T("名單：24 支美股（原本 6 支含指數，11-19 新增 18 支），都有 15 分鐘標準差和每分鐘隨機；真實代號不在 shared 裡", G => {
+  assert.strictEqual(G.US_IDS.length, 24); assert.ok(["flashcar", "greeneye", "nightindex", "redclaw", "silverapple", "squarewin"].every(id => G.US_IDS.includes(id)));
   assert.ok(G.stockIsUs(ID) && !G.stockIsUs(TWID) && !G.stockIsTw(ID));
   const C = G.NUM.casino.stock.us;
   for (const id of G.US_IDS) { assert.ok(C.sd15[id] > 0, id); assert.ok(C.minSd[id] > 0, id); }

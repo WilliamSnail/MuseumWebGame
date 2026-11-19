@@ -30,7 +30,7 @@ import { gsMatch } from "./casino_stock_grp.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./casino_stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";
 import { CAS_STOCK } from "./casino_text.js";
-import { OUT_STOCKS } from "./stocks_text.js";
+import { OUT_CATS, OUT_STOCKS } from "./stocks_text.js";
 import { casFill, casNum, casPx } from "./casino.js";
 import { outStockWeekend } from "./stocks.js";
 import { TW_IDS, US_IDS, mkLen, usEarlyClose, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "./stocks_tw.js";
@@ -433,7 +433,7 @@ export function casStockView(w, house, day, t, stale) {
     //   11-13 那天 05:00 換日還是舊做法（把前壹晚美股的漲跌套進價格），H.prev 是那之前的價，所以「今天」把昨晚的漲幅也算進來了
     const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
     const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round(mine * (price - prev)) : 0, value = stValue(price, mine); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
-    return { id: d.id, name: d.name, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
+    return { id: d.id, name: d.name, cat: d.cat || null, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
       costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: casStockTaxPct(d.id) / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
       stale: old.includes(d.id) ? CAS_STOCK.stale : null,
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
@@ -448,7 +448,7 @@ export function casStockView(w, house, day, t, stale) {
       real: H.real[d.id] ? Object.assign({}, H.real[d.id]) : null, code: H.sym && H.sym[d.id] ? Object.assign({}, H.sym[d.id]) : null, mult: stPxMult(H, d.id) };
   });
   return {
-    list, fee: C.feePct / 100, taxPct: C.taxPct / 100, taxUsPct: C.taxUs / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
+    list, cats: OUT_CATS.map(c => ({ id: c.id, name: c.name })), fee: C.feePct / 100, taxPct: C.taxPct / 100, taxUsPct: C.taxUs / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
     tw: { state: H.tw.day === day ? H.tw.st : "closed", from: C.tw.from, len: C.tw.len },
     us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: mkLen("us", day), early: usEarlyClose(day) }, // from：美東當天 00:00 起算的分鐘（570 ＝ 09:30）；len 390 分鐘
     usOpenAt: usOpenMs(day), // 這個遊戲日美股開盤的毫秒（日光節約已算進去；畫面要顯示台灣時間幾點開盤用 new Date(usOpenAt)，收盤 ＝ usOpenAt ＋ len×60000）
