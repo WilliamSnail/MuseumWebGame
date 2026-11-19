@@ -23,6 +23,7 @@ import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
 import { crowdText } from "./ui_hallnow.js";
+import { pepeNm, pnmBlock, pnmButton, pnmPlate, pnmStamp } from "./ui_pepename.js"; // 替佩佩取名（決定 0133）
 import { collectOn, hallArtWall } from "./ui_art.js"; // 展廳的收藏畫牆（11-14） // 散客的描述（label 已含人數就不補「N 位」）
 
 SCREENS.pillow = (root, params = {}) => {
@@ -413,6 +414,7 @@ export function showCodexCell(detail, pick, failed) {
   const missing = CATS.filter(c => c !== ROLLED || isFree(P)).filter(c => !(failed && c === ROLLED) && !usable(P, c).includes(pick[c])).map(c => pick[c]);
   if (e && !failed) later(() => enliven(art, pick), 0);
   detail.replaceChildren(art, pepePlacard(pick, { failed, perfect: e && e.perfect }),
+    e && !failed ? pnmBlock(key, describePepe(pick).title, () => showCodexCell(detail, pick, failed)) : null,
     e ? h("p", { class: "sub" }, failed ? `失敗了 ${e} 次` : `做過 ${e.n} 次${e.perfect ? "・完美作品" : ""}${e.gen2 ? "・第 2 代帶來的" : ""}`) : null,
     !e && !failed ? btn("去做這隻", () => go("workshop", { preset: pick }), "primary") : null,
     !e && !failed && !isFree(P) ? h("p", { class: "sub" }, "選項會幫你選好；稀有度還是要靠擲骰。") : null,
@@ -493,12 +495,13 @@ export function themeGuide(hs) {
     h("div", { class: "tg-grid" }, cards));
 }
 export function pedestal(slot, i) {
-  const it = hallItem(P, slot);
+  const it = hallItem(P, slot), nm = it && it.kind === "pepe" ? pepeNm(it.key) : null;
   const el = h("div", { class: "ped-slot" + (it ? " full" : ""), "aria-label": it ? `展台 ${i + 1}：${itemTitle(it)}` : `展台 ${i + 1}：空的` },
     h("div", { class: "ped-art", html: it ? itemHTML(it, it.kind === "pepe" ? { fx: true } : {}) : "" }),
     h("div", { class: "ped-block" }),
-    it ? h("div", { class: "ped-label" }, h("b", null, itemTitle(it)), it.kind !== "pillow" ? h("span", null, rdot(it.kind === "failed" ? FAILED : it.pick[ROLLED]), " ", it.kind === "failed" ? "失敗作" : it.pick[ROLLED]) : h("span", null, describePillow(it.key).printed))
+    it ? h("div", { class: "ped-label" + (nm && (nm.name || nm.blank) ? " pnm-on" : "") }, h("b", { title: nm && nm.name ? `${nm.name}（${itemTitle(it)}）` : null }, nm && nm.name ? nm.name : nm && nm.blank ? (pnmPlate(it.key, { mini: true }) || itemTitle(it)) : itemTitle(it), nm && nm.stamp ? pnmStamp() : null), it.kind !== "pillow" ? h("span", null, rdot(it.kind === "failed" ? FAILED : it.pick[ROLLED]), " ", it.kind === "failed" ? "失敗作" : it.pick[ROLLED]) : h("span", null, describePillow(it.key).printed))
       : h("div", { class: "ped-label empty" }, "空展台"),
+    nm ? pnmButton(it.key, itemTitle(it), () => rerender(), { icon: true }) : null,
     it ? h("button", { type: "button", class: "icon-btn ped-x", "aria-label": "從展台拿下來", onClick: e => { e.stopPropagation(); P.hall[i] = null; persist(); rerender(); } }, icon("close")) : null);
   placeTarget(el, ["pepe", "pillow"], item => {
     const before = hallScore(P).score;

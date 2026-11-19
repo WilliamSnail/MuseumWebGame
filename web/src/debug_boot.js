@@ -120,6 +120,7 @@ function fightPreview(arg) {
     if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 5 * 86400000 + 5000, task: "calm", done: [] }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 2 * 86400000 + 5000, task: "hug", done: [P.day.date] }]; // 怪癖（決定 0046）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
     if (screen === "lobby" && /^pool/.test(arg || "")) UI.pool = { low: { lv: 2, dir: -1, band: "low", night: false, trace: [9, 7, 6, 4, 3, 3, 2], hits: 0 }, mid: { lv: 12, dir: 1, band: "mid", night: true, trace: [8, 9, 10, 11, 11, 12, 12], hits: 1 }, edge: { lv: 19, dir: 1, band: "edge", night: false, trace: [14, 15, 17, 18, 19, 19, 19], hits: 2 }, over: { lv: 24, dir: 1, band: "over", night: true, trace: [18, 19, 21, 22, 23, 24, 24], hits: 4 } }[arg.slice(4)] || { lv: 12, dir: 0, band: "mid", night: false, trace: [], hits: 0 };
+    if (/^pnm/.test(arg || "")) { const k = its.map(i => i.key); P.nmSeq = 2; P.pepes[k[0]].nm = "小綠"; P.pepes[k[0]].nmSeq = 1; P.pepes[k[1]].tk = { no: 7, day: "2026-11-18", n: 1, stamp: false, was: "舊名" }; P.pepes[k[1]].nm = ""; P.pepes[k[2]].nm = "新名字"; P.pepes[k[2]].nmSeq = 2; P.pepes[k[2]].tk = { no: 12, day: "2026-11-18", n: 1, stamp: true, was: "舊" }; } // 取名的示範（決定 0133）
     setRng(null);
     if (screen === "route") { go("lobby", {}, { action: false }); setTimeout(() => routePreview(arg), 300); return; }
     if (screen === "fight") { go("lobby", {}, { action: false }); setTimeout(() => fightPreview(arg), 300); return; }
@@ -137,6 +138,6 @@ function fightPreview(arg) {
     if (screen === "shop") storyState(P).stamps = 40;
     if (screen === "signin" || screen === "calendar" || screen === "shop" || screen === "casino" || screen === "pass") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
     if (screen === "book") { go("origin", {}, { action: false }); setTimeout(() => openBook(STORY_CHAPTERS[0], $(".reader")), 300); return; }
-    go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) && !/^pool/.test(arg) ? { tab: arg } : {}, { action: false });
+    go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) && !/^pool/.test(arg) && !/^pnm/.test(arg) ? { tab: arg } : {}, { action: false });
   }, 150);
 })();

@@ -1,0 +1,56 @@
+/* 替佩佩取名（11-19，決定 0133，ui_pepename.js）：銅名牌、空白名牌（翻過來是號碼）、小空心圓章、取名小視窗 */
+.pnm-block { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 8px 0 2px; }
+.pnm-none { font-size: .8125rem; opacity: .7; }
+.pnm-btn { min-height: 34px; }
+
+/* 銅名牌 */
+.pnm-plate { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; box-sizing: border-box; padding: 3px 12px; border-radius: 4px; border: 1px solid #7A5A22; color: #2A1A0C; font: inherit; font-size: .9375rem; line-height: 1.3;
+  background: linear-gradient(180deg, #F0D995, #C8A25A 52%, #A07C34); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 1px 2px rgba(0, 0, 0, .35); }
+.pnm-plate b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pnm-plate.mini { padding: 0 8px; font-size: .75rem; }
+
+/* 重新取名之後的小空心圓章 */
+.pnm-stamp { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid rgba(60, 38, 12, .8); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .0), 0 0 0 1px rgba(255, 255, 255, .25); vertical-align: -1px; margin-left: 5px; }
+.pnm-stamp::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; border: 1px solid rgba(60, 38, 12, .6); margin: 2.5px; box-sizing: border-box; }
+.ped-label .pnm-stamp { border-color: #E6C879; box-shadow: none; }
+.ped-label .pnm-stamp::after { border-color: rgba(230, 200, 121, .7); }
+
+/* 空白名牌：正面沒有字，翻過來背面打著號碼（滑過去、點一下） */
+.pnm-plate.blank { position: relative; padding: 0; width: 8.5em; height: 1.9em; background: none; border: 0; box-shadow: none; perspective: 360px; cursor: pointer; }
+.pnm-plate.blank.mini { width: 6.2em; height: 1.55em; }
+.pnm-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform .45s ease; }
+.pnm-front { border: 1px solid #7A5A22; background: linear-gradient(180deg, #D9BE7E, #B48F48 52%, #8E6D2C); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 0 6px rgba(60, 38, 12, .35), 0 1px 2px rgba(0, 0, 0, .35); }
+.pnm-slot { display: block; width: 62%; height: 3px; border-radius: 2px; background: rgba(60, 38, 12, .22); box-shadow: 0 1px 0 rgba(255, 255, 255, .25); }
+.pnm-back { transform: rotateY(180deg); border: 1px solid #4B3716; background: linear-gradient(180deg, #8A6B30, #6B5121); color: #2E2210; box-shadow: inset 0 0 8px rgba(0, 0, 0, .45); }
+.pnm-back b { font-family: ui-monospace, "Courier New", monospace; font-size: .8125rem; letter-spacing: .12em; color: #3A2A10; text-shadow: 0 1px 0 rgba(255, 235, 170, .3), 0 -1px 0 rgba(0, 0, 0, .5); }
+.pnm-plate.mini .pnm-back b { font-size: .6875rem; }
+.pnm-plate.blank.flip .pnm-front { transform: rotateY(-180deg); }
+.pnm-plate.blank.flip .pnm-back { transform: rotateY(0); }
+@media (hover: hover) {
+  .pnm-plate.blank:hover .pnm-front, .pnm-plate.blank:focus-visible .pnm-front { transform: rotateY(-180deg); }
+  .pnm-plate.blank:hover .pnm-back, .pnm-plate.blank:focus-visible .pnm-back { transform: rotateY(0); }
+  .pnm-plate.blank.flip:hover .pnm-front { transform: rotateY(0); }
+  .pnm-plate.blank.flip:hover .pnm-back { transform: rotateY(180deg); }
+}
+
+/* 展台：名字取代稱號；取名的小圖示放左上角 */
+.ped-slot { position: relative; }
+.pnm-edit { position: absolute; top: 0; left: 4px; z-index: 2; width: 26px; height: 26px; min-height: 0; padding: 0; opacity: .75; }
+.pnm-edit:hover, .pnm-edit:focus-visible { opacity: 1; }
+.ped-label.pnm-on b { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; }
+.ped-label.pnm-on b .pnm-plate { max-width: none; }
+.ped-label.pnm-on b:not(:has(.pnm-plate)) { color: #F6E3A8; }
+
+/* 取名的小視窗（.ask 的樣子） */
+.pnm-ask-t { font-weight: 700; margin: 0 0 4px; }
+.pnm-ask-s { margin: 0 0 10px; opacity: .8; font-size: .8125rem; }
+.pnm-input { width: 100%; box-sizing: border-box; margin: 0 0 6px; font-size: 1.0625rem; }
+.pnm-err { min-height: 1.2em; margin: 0 0 8px; font-size: .8125rem; color: var(--bad, #A23B2A); }
+
+/* 展台的小名牌：展台的標籤本來就是銅牌，空白名牌只畫那條刻槽，翻過來是壓在銅上的號碼（不再巢狀一塊牌） */
+.pnm-plate.blank.mini { width: 100%; max-width: 8em; }
+.pnm-plate.mini .pnm-front, .pnm-plate.mini .pnm-back { background: none; border: 0; box-shadow: none; }
+.pnm-plate.mini .pnm-back b { color: #4A3512; }
+.pnm-plate.mini .pnm-slot { height: 4px; width: 70%; background: rgba(50, 30, 8, .55); }
+.pnm-plate.mini .pnm-back b { color: #3A280C; font-weight: 700; }
+.pnm-edit { opacity: .95; color: #E6C879; }

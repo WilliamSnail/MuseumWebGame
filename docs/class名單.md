@@ -172,3 +172,4 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `spend-` | `theme3.css` | 花靈感、花籌碼的確認框（spend） |
 | `p-` | `themeshow.css` | 主題展裡各種佩佩的圖例（`p-angry`、`p-tears`、`p-russia8`） |
 | `cr-`、`trait-`、`member-`、`ch-` | `cellar2.css` | 地下走房間（`cellarRoom`）：`cr-body`／`cr-left`／`cr-right` 兩個等高面板；`trait-` 房間的心情顏色小牌；`member-` 隊員格裡的影響小標；`ch-` 選項的號碼章和小標（11-18 回爐重造） |
+| `pnm-` | `pepename.css` | 替佩佩取名（11-19，`ui_pepename.js`）：`pnm-plate`（銅名牌；`blank` 空白名牌、`mini` 展台用、`flip` 翻過來看背面號碼）、`pnm-stamp`（重新取名後的小空心圓章）、`pnm-ask`（取名小視窗）、`pnm-edit`／`pnm-block`／`pnm-btn` |
