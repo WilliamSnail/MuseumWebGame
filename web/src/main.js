@@ -89,6 +89,8 @@ import "./ui_npc_card.js";
 import "./ui_map.js"; // 圖書館的「地圖」頁籤（11-16）；放在旅客卡後面（用 npcName） // 旅客卡（11-16）：點旅客名字看狀況；放在用到的檔前面
 import "./ui_hallnow.js";
 import "./ui_roomnow.js"; // 每個房間的「這裡現在 N 人」（11-16）；要在 ui_hallnow、ui_npc_card 後面 // 展廳現在幾人、NPC 的即時評價（11-14，伺服器 PR 418）
+import "./ui_pepename.js"; // 替佩佩取名（決定 0133）
+import "./css/pepename.css";
 import "./ui_pool.js"; // 館門口的池子（決定 0132）：要放在 ui_lobby2 前面（大廳畫導覽圖時會叫它）
 import "./css/pool.css";
 import "./ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
