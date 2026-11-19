@@ -136,6 +136,7 @@ function mapBox(step) {
     map.append(b);
   });
   map.append(h("span", { class: "l2-me" }, "大廳・你在這裡"));
+  if (ADDONS.poolMount) ADDONS.poolMount(map, portrait); // 館門口的池子（ui_pool.js，peek 的 pool；沒有就不畫）
   // 館友名牌（綠點）：名單有變就換
   const drawWho = () => {
     const by = matesByRoom(NET.roster || []);

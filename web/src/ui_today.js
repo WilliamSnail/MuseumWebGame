@@ -26,6 +26,7 @@ async function readCasino() {
     if (r && typeof r.packs === "number") CAS = { packs: r.packs, econ: typeof r.econ === "number" ? r.econ : 0, day: realTodayStr() };
     if (ADDONS.workPeek) ADDONS.workPeek(r); // 欠款要送人下去（決定 0064，ui_work.js）
     if (r && r.npcc) npcWebSet(r.npcc); // 館內 NPC 故事線的全館進度（house.npcc，shared/npc.js）：展廳的故事留言、館內近況用
+    if (r && "pool" in r && ADDONS.poolPeek) ADDONS.poolPeek(r.pool); // 館門口的池子（決定 0132，ui_pool.js）
     if (r && "now" in r) UI.hallNow = r.now || null; // 展廳現在幾位旅客、館裡共幾位（伺服器 PR 418；ui_hallnow.js 畫）
     if (r && "policy" in r) UI.policy = r.policy || null; // 本日政策（拚經濟抽到的，{ name, effect, day, until }；沒有是 null）：大廳右欄那塊畫
     if (r && Array.isArray(r.upcoming)) UI.upcoming = r.upcoming; // 預告（明天起 3 天內、可以公開說的事）：[{ text, date }]，大廳跑馬燈（ui_headline.js）放最多壹則
