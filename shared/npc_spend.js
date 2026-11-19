@@ -18,11 +18,13 @@ import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
+import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 // 稅（決定 0111）：營業稅、娛樂稅都內含，進政府帳。kind "biz"｜"ent"
 const nsTax = (amt, kind) => Math.floor(amt * NUM.casino.tax[kind + "Pct"] / 100);
+// 金流圖（決定 0128）：NPC、散客花的錢是從哪個單位出的（家計、NPC 錢包、集團），只記帳（house.led.units，kind ＝ 來源代號），不動錢。npcBj 還有賭場 NPC 的注（casino_npc.js），沒有全記，所以不記
+const nsLed = (house, src, from, to, n) => { if (n > 0 && src !== "npcBj") wtLed(house, src, from, to, n); };
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
 // 館外來客在餐車「點」菜單上的品項（11-15，翊文：「NPC 自己也可以買餐車裡面的東西嗎」）：照常識挑（麥茶、烤雞肉、壽司最常，分享餐、葡萄汁少），價錢照 CAS_MENU；
 // 花的總額 ≤ 預算（所以還是夾在原本的上限裡）；不加心情、不進館友的點餐紀錄，只記賣出幾份。種子含祕密。回傳 { cost, items: { id: 份數 } }
@@ -202,7 +204,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     house.npcc.hall = nsN(house.npcc.hall) + gv.n; L.crowd.people += gv.n; L.crowd.groups++;
     const amt = Math.min(Math.floor(gv.n * CR.ticket * tmul), Math.max(0, CR.dayCap - nsN(L.crowd.ticket))); if (amt <= 0 || wuHave(house, WU_HH) < amt) continue; // 散客的錢從家計出（W4）；家計不夠就不收
     const tax = nsTax(amt, "ent"), net = amt - tax; // 娛樂稅（決定 0111）：內含，政府先拿，剩下的才照比例分博物館資金、修繕基金
-    const b = Math.floor(net * C.ticketBudgetPct / 100), got = casPoolWorldOut(house, "budget", "npcCrowdBudget", b) + casPoolWorldOut(house, "museum", "npcCrowdMuseum", net - b), tg = casPoolWorldOut(house, "gov", "entTax", tax);
+    const b = Math.floor(net * C.ticketBudgetPct / 100), gb = casPoolWorldOut(house, "budget", "npcCrowdBudget", b), gm = casPoolWorldOut(house, "museum", "npcCrowdMuseum", net - b), got = gb + gm, tg = casPoolWorldOut(house, "gov", "entTax", tax); nsLed(house, "npcCrowdBudget", WU_HH, "budget", gb); nsLed(house, "npcCrowdMuseum", WU_HH, "museum", gm); nsLed(house, "entTax", WU_HH, "gov", tg);
     hallPotOpen(house, day, gv.key, gv.n, Math.floor(got * NUM.casino.ticket.ownerPct / 100));
     wuDebit(house, WU_HH, got + tg); L.byUnit[WU_HH] = nsN(L.byUnit[WU_HH]) + got + tg; L.sources.entTax = nsN(L.sources.entTax) + tg;
     L.crowd.ticket += got + tg; L.sources.npcCrowdBudget = nsN(L.sources.npcCrowdBudget) + Math.min(got, b); L.sources.npcCrowdMuseum = nsN(L.sources.npcCrowdMuseum) + Math.max(0, got - b);
@@ -216,6 +218,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
     let ord = null; if (sv.store === "food") { ord = npcOrder(mulberry32(hashStr(`${secret}|${day}|${sv.key}|order`)), amt); amt = ord.cost; if (amt <= 0) continue; } // 餐車：照菜單點，花的是點的那些
     const tax = sv.store === "bj" ? 0 : nsTax(amt, "biz"), net = amt - tax; // 營業稅（決定 0111）：內含，牌桌（賭博）不課
     const got0 = SHOP[sv.store][0] === "house" ? casHouseWorldOut(house, SHOP[sv.store][1], net, W) : casPoolWorldOut(house, SHOP[sv.store][0], SHOP[sv.store][1], net), tg = tax > 0 ? casPoolWorldOut(house, "gov", "bizTax", tax) : 0, got = got0 + tg;
+    nsLed(house, SHOP[sv.store][1], WU_HH, SHOP[sv.store][0], got0); nsLed(house, "bizTax", WU_HH, "gov", tg);
     L.sources.bizTax = nsN(L.sources.bizTax) + tg;
     if (ord && got >= amt) for (const k of Object.keys(ord.items)) { const o = L.menu[k] || (L.menu[k] = { npc: 0, crowd: 0 }); o.crowd += ord.items[k]; }
     const sb = L.shopBy[sv.store] || (L.shopBy[sv.store] = { npc: 0, crowd: 0 }); sb.crowd += got;
@@ -236,7 +239,7 @@ export function casNpcLive(house, day, nowMs, secret, list, counters) {
       if (amt <= 0 || low || (wal ? nwBal(house, n.id) < amt : wuHave(house, uid) < amt)) return 0; // 錢包（或集團）的錢不夠就當天不花
       const tax = kind ? nsTax(amt, kind) : 0, net = amt - tax;
       const got0 = pool === "house" ? casHouseWorldOut(house, src, net, W) : casPoolWorldOut(house, pool, src, net), tg = tax > 0 ? casPoolWorldOut(house, "gov", kind === "ent" ? "entTax" : "bizTax", tax) : 0, got = got0 + tg;
-      if (got > 0) { if (wal) nwSpend(house, n.id, got); else wuDebit(house, uid, got); L.byUnit[uid] = nsN(L.byUnit[uid]) + got; }
+      if (got > 0) { if (wal) nwSpend(house, n.id, got); else wuDebit(house, uid, got); L.byUnit[uid] = nsN(L.byUnit[uid]) + got; const pyr = wal ? WU_WAL : uid; nsLed(house, src, pyr, pool, got0); nsLed(house, kind === "ent" ? "entTax" : "bizTax", pyr, "gov", tg); }
       mine -= got; paid += got; L.sources[src] = nsN(L.sources[src]) + got0; if (tg > 0) L.sources[kind === "ent" ? "entTax" : "bizTax"] = nsN(L.sources[kind === "ent" ? "entTax" : "bizTax"]) + tg; return got;
     };
     if (first) { const tk = Math.floor(C.ticket * tmul), b = Math.floor(tk * C.ticketBudgetPct / 100); L.ticket += pay("npcTicketBudget", "budget", b, "ent") + pay("npcTicketMuseum", "museum", tk - b, "ent"); }

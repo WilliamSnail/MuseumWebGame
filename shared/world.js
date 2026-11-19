@@ -562,6 +562,7 @@ function nwMove(house, unitId, id, n) {
   if (!(unitId in x.r) || unitId === WU_PUB) return 0;
   const m = n > 0 ? Math.min(n, wuHave(house, unitId)) : -Math.min(-n, nwBal(house, id), wuHave(house, WU_WAL)); if (!m) return 0;
   deltas[unitId] = -m; deltas[WU_WAL] = m; wuMove(house, world, deltas); w.bal[id] = nwBal(house, id) + m; if (w.bal[id] <= 0) delete w.bal[id];
+  if (m > 0) wtLed(house, "wageNpc", unitId, WU_WAL, m); else wtLed(house, "wageBack", WU_WAL, unitId, -m); // 金流圖（決定 0128）：發薪水、多的退回，只記帳（累計，不是每人壹筆）
   return m;
 }
 // 每天第一次：發薪（補錢包）；週一接 W5 換工作。list ＝ 有 budget 的 NPC 名單（伺服器的 NPC_LIST）。同一天不重複。回傳 true ＝ 這次有做

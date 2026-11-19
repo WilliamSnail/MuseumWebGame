@@ -255,7 +255,9 @@ export const CAS_FLOW_LINE = {
   start: ["gen", "players"], signWeek: ["gen", "players"], legacy: ["gen", "players"], discord: ["gen", "players"], work: ["gen", "players"], test: ["gen", "players"], exchange: ["players", "gen"],
 };
 // 今天 05:00 起各條記帳的累計（跟日報快照同一份：led0 在換日寫財報時存，shared/casino_book.js 的 casBookSnap 同一套來源）
-export const CAS_FLOW_UNIT = { tradeDaily: "日用品採購", tradeFee: "金融服務費", tradeResearch: "研究委託", tradeDesign: "展覽設計委託", tradeTax: "稅與規費", tradeSubsidy: "補助與公共採購", tradeTech: "科技服務", tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
+// 線從出錢的單位出發（決定 0128）的來源：有單位端點的記帳（house.led.units）取代同名來源整個已知世界的那條（同壹筆錢）
+export const CAS_FLOW_GRP = new Set(["gRaise", "gBuy", "gDiv", "npcFood", "npcJob", "npcCellar", "npcCraft", "npcTicketBudget", "npcTicketMuseum", "npcCrowdBudget", "npcCrowdMuseum", "entTax", "bizTax"]);
+export const CAS_FLOW_UNIT = { wageNpc: "發薪水（集團→NPC 錢包）", wageBack: "多的薪水退回（NPC 錢包→集團）", tradeDaily: "日用品採購", tradeFee: "金融服務費", tradeResearch: "研究委託", tradeDesign: "展覽設計委託", tradeTax: "稅與規費", tradeSubsidy: "補助與公共採購", tradeTech: "科技服務", tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
 export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, u: Object.assign({}, H.units), w: Object.assign({}, H.wflow), x: Object.assign({}, H.xflow), g: Object.assign({}, H.gflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
 const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object.keys(now || {}), ...Object.keys(then || {})])) { const d = Math.round((+(now || {})[k] || 0) - (+(then || {})[k] || 0)); if (d) o[k] = d; } return o; };
 // all：casBooksView(doc, true).all（每個帳的 [{ k, label, n }]，n 是這個帳自己的角度）。回傳 { edges, lost }
@@ -266,7 +268,7 @@ export function casFlowEdges(all) {
   // all.units（以後集團之間的交易放這裡）：[{ k, label, n }]，n > 0 ＝ 線 [X, Y] 的 X 付給 Y
   const GRP = new Set((all.units || []).filter(x => x.grp).map(x => x.k)); for (const k of GRP) done.add(k); // 集團增資、庫藏股、股利：照集團分開的線取代整個已知世界的那條（同壹筆錢）
   for (const x of all.units || []) {
-    const ln = x.from && x.to && CAS_FLOW_UNIT[x.k] ? [x.from, x.to] : CAS_FLOW_LINE[x.k]; if (!ln || ln[0] === ln[1]) { if (!ln) lost.push("units." + x.k); continue; }
+    const ln = x.from && x.to ? [x.from, x.to] : CAS_FLOW_LINE[x.k]; if (!ln || ln[0] === ln[1]) { if (!ln) lost.push("units." + x.k); continue; }
     const key = [ln[0], ln[1]].sort().join("|"), first = key.split("|")[0], p = pair[key] || (pair[key] = { a: first, b: key.split("|")[1], srcs: [] });
     p.srcs.push({ src: x.k, label: x.label, amt: ln[0] === first ? x.n : -x.n });
   }
@@ -297,7 +299,7 @@ export function casFlowHub(house, day) {
   if (!L0 || L0.day !== day || !led) return null;
   const diff = { flow: cfDiff(led.flow, L0.f), houseMint: cfDiff(led.mint, L0.m), houseBurn: cfDiff(led.burn, L0.b), wflow: cfDiff(led.world, L0.w), xflow: cfDiff(Object.assign({}, led.ext, { extSplit: 0 }), Object.assign({}, L0.x, { extSplit: 0 })), gflow: cfDiff(led.gb, L0.g) }; // 決定 0126：led0 沒有 x（上線前寫的）就當 0；搬出那筆 extSplit 不算今天的流動
   const N = v => Math.floor(+v) || 0, v = casBooksView({ day, snap: { house: { bankroll: 0, budget: 0, museum: 0, gov: 0, sea: 0, world: 0, ext: 0, gb: 0 } }, diff }, true);
-  v.all.units = (L0.u ? Object.entries(cfDiff(led.units, L0.u)) : []).filter(([, n]) => n > 0).map(([k, n]) => { const [kind, from, to] = k.split("|"), E = s => s === "house" || s === "players" ? s : "w:" + s; return { k: kind, label: CAS_FLOW_UNIT[kind] || kind, n, from: E(from), to: E(to), grp: /^g(Raise|Buy|Div)$/.test(kind) }; }); // 集團之間的交易（all.units）
+  v.all.units = (L0.u ? Object.entries(cfDiff(led.units, L0.u)) : []).filter(([, n]) => n > 0).map(([k, n]) => { const [kind, from, to] = k.split("|"), E = s => s === "house" || s === "players" || s === "budget" || s === "museum" || s === "gov" ? s : "w:" + s; return { k: kind, label: CAS_FLOW_UNIT[kind] || casReportLabel(kind, "world"), n, from: E(from), to: E(to), grp: CAS_FLOW_GRP.has(kind) }; }); // 集團之間的交易（all.units）
   const r = casFlowEdges(v.all);
   return { day, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(casFlowWorldNodes(house)), orgs: CAS_FLOW_ORGS, edges: r.edges.slice(0, 40), bal: { house: N(house.bankroll), budget: N(house.budget), museum: N(house.museum), gov: N(house.gov), sea: N(house.sea), world: house.world == null ? null : N(house.world), ext: house.world == null ? null : N(house.ext), gb: house.gb ? N(house.gb.cash) : 0 } };
 }
