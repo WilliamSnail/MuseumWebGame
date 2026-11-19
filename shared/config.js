@@ -528,7 +528,7 @@ export const NUM = {
     //   posLimit 部位（做多＋放空合計）上限、profitCap 壹天當沖淨賺最多算多少，都乘 (1 ＋ stepPct% × 信用等級)；
     //   houseExposePct／houseFloor 莊家接館內股槓桿＋放空部位的上限（max(莊家的錢 × %, 保底)，莊家 ≤ 0 不接）；
     //   credit：ptsPerLevel 幾點升壹級、maxLevel 最高幾級、dayGain 壹天最多加幾點、lateLoss 借款逾期壹次扣幾點。
-    stockLev: { maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 3, coolMin: 15,
+    stockLev: { maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 3, coolMin: 0,
       posLimit: 20000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
       credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 1, lateLoss: 3 } },
     // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
