@@ -1,7 +1,7 @@
 // 把 content/world/markets/*.json 打包成 shared/world_markets.js（景氣分市場，決定 0121）。內容改了就跑 node tools/market_pack.cjs；npm test（test/world_market.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const KEEP = ["id", "name", "kind", "anchor", "beta", "kappa", "sd", "rho"];
+const KEEP = ["cats", "id", "name", "kind", "anchor", "beta", "kappa", "sd", "rho"];
 function markets(dir = path.join(ROOT, "content", "world", "markets")) {
   const out = [];
   if (!fs.existsSync(dir)) return out;

@@ -16,7 +16,7 @@ T("現在的名單全過：8 個單位、每位 NPC 有隸屬、文化部是劇�
   const r = WC.run(); assert.deepStrictEqual(r.errs, []); assert.strictEqual(r.units.length, 8);
   const c = r.units.find(u => u.id === "u-culture"); assert.ok(c && c.kind === "story" && c.parent === null && c.story === true);
   assert.ok(r.npcs.filter(n => n.kind !== "trace").every(n => n.job), "每位旅客、委託人都有 job"); assert.ok(r.npcs.filter(n => n.kind === "trace").every(n => !n.job), "劇情角色沒有 job");
-  const st = r.units.flatMap(u => u.stocks); assert.strictEqual(new Set(st).size, st.length, "每支股票只掛一處"); assert.strictEqual(st.length, require("./load_shared.cjs").load().OUT_STOCKS.length, "館外股票都掛了");
+  const st = r.units.flatMap(u => u.stocks); assert.strictEqual(new Set(st).size, st.length, "每支股票只掛一處"); assert.strictEqual(st.length, require("./load_shared.cjs").load().OUT_STOCKS.filter(s => !s.ext).length, "（11-19 新增的 18 支 ext 不掛集團：不動集團的錢）館外股票都掛了");
 });
 T("好的資料：一個集團加一家公司（parent）、加總對得上", () => {
   assert.deepStrictEqual(chk([unit("g-a", { share: 0.2 }), unit("c-x", { kind: "firm", parent: "g-a", share: 0.1 })], [npc("v-a", { unit: "g-a", title: "員工" })]), []);

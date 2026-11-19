@@ -268,16 +268,17 @@ export function wmFix(house) {
 export const wmB = (house, id) => { const m = house && wuBox(house.mk) ? house.mk : null; return m && Number.isFinite(+m.b[id]) ? +m.b[id] : 0; };
 export const wmTotal = house => WORLD_MARKETS.length ? WORLD_MARKETS.reduce((a, d) => a + wmB(house, d.id), 0) / WORLD_MARKETS.length : 0;
 // 真實市場昨天到今天的漲跌（%）：anchor 那個市場的館外股平均。沒有價就 0
-function wmReal(m, px, anchor) {
+function wmReal(m, px, anchor, cats) {
   const C = wmCfg(); if (anchor !== "tw" && anchor !== "us") return 0;
-  const r = []; for (const s of OUT_STOCKS) { if (s.market !== anchor) continue; const p = +(px && px[s.id]), q = +m.p[s.id]; if (p > 0 && q > 0) r.push(p / q - 1); }
+  // cats（決定 0134）：這個市場只看那幾類的館外股（自然資源）；沒寫就是 anchor 市場裡「預設」的那幾支（ext 的新股不算，11-19 新增的 18 支不改既有市場的景氣）
+  const r = []; for (const s of OUT_STOCKS) { if (s.market !== anchor || (Array.isArray(cats) && cats.length ? !cats.includes(s.cat) : s.ext)) continue; const p = +(px && px[s.id]), q = +m.p[s.id]; if (p > 0 && q > 0) r.push(p / q - 1); }
   return r.length ? whClamp(100 * r.reduce((a, b) => a + b, 0) / r.length, -C.realCap, C.realCap) : 0;
 }
 // 換日呼叫：算每個市場今天的景氣，再算每位 NPC 今天的來館倍率。同壹天不重複；隔幾天沒人來，每天都走壹步（真實漲跌只算最後那天）
 export function wmTick(house, day, px) {
   const C = wmCfg(), m = wmFix(house); if (!C || !C.on || !m || !wdDayOk(day) || m.day === day) return false;
   const gap = m.day && m.day < day ? Math.max(1, Math.min(14, Math.round((Date.parse(day) - Date.parse(m.day)) / 86400000))) : 1;
-  const real = {}; for (const d of WORLD_MARKETS) real[d.id] = wmReal(m, px, d.anchor);
+  const real = {}; for (const d of WORLD_MARKETS) real[d.id] = wmReal(m, px, d.anchor, d.cats);
   for (let i = gap - 1; i >= 0; i--) {
     const dd = whAddDays(day, -i); m.c = whClamp(C.common * m.c + C.commonSd * wmGauss(dd + "|common"), -1, 1);
     for (const d of WORLD_MARKETS) m.b[d.id] = Math.round(Math.tanh((1 - d.kappa) * m.b[d.id] + (i === 0 ? real[d.id] * d.beta * C.amp : 0) + d.rho * m.c + d.sd * wmGauss(dd + "|" + d.id) * 0.5) * 1000) / 1000;
