@@ -24,7 +24,7 @@ T("NUM.casino.stockLev：5 倍、強平 50%、利息 0.15%、借券 0.3%、壹�
   const C = G.NUM.casino.stockLev;
   assert.strictEqual(C.maxLev.in, 5); assert.strictEqual(C.maxLev.tw, 5); assert.strictEqual(C.maxLev.us, 5); assert.strictEqual(C.maxLagMin, 3);
   assert.strictEqual(C.forcePct, 50); assert.strictEqual(C.interestPct, 0.15); assert.strictEqual(C.borrowPct, 0.3);
-  assert.strictEqual(C.opensDay, 3); assert.strictEqual(C.coolMin, 0); // 11-19 翊文：取消平倉後冷卻 assert.strictEqual(C.posLimit, 20000000); assert.strictEqual(C.profitCap, 10000000);
+  assert.strictEqual(C.opensDay, 0); assert.strictEqual(C.coolMin, 0); /* 11-19 翊文：取消平倉冷卻和每天筆數 */ assert.strictEqual(C.posLimit, 20000000); assert.strictEqual(C.profitCap, 10000000);
   assert.strictEqual(C.houseExposePct, 20); assert.strictEqual(C.houseFloor, 3000000); assert.strictEqual(G.NUM.casino.stock.feePct, 0.5);
 });
 
@@ -117,6 +117,11 @@ T("手動平倉：找不到的單號不行、休市中叫平倉會被掃描收�
   assert.ok(G.casLevOpen(s2.w, s2.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 2, fakeSrc(P2)).ok, "冷卻 0：平倉後馬上可以再開");
   G.NUM.casino.stockLev.coolMin = 15; const s3 = fresh(G), r3 = G.casLevOpen(s3.w, s3.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0, fakeSrc(P2)); G.casLevClose(s3.w, s3.h, r3.pos.no, D0, t0 + 60000, fakeSrc(P2));
   const again = G.casLevOpen(s3.w, s3.h, { id: IN, side: "long", lev: 2, qty: 10 }, D0, t0 + 60000 * 10, fakeSrc(P2)); assert.ok(!again.ok && again.reason.includes("6 分鐘"), again.reason);
+});
+
+T("opensDay 0：壹天開幾筆不限（11-19）", G => {
+  const s = fresh(G);
+  for (let i = 0; i < 6; i++) assert.ok(G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 2, qty: 1 }, D0, at(D0, 6) + i, fakeSrc({ px: { [IN]: 1000 }, idx: i })).ok, "第 " + (i + 1) + " 筆");
 });
 
 T("停損停利用 % 給時照成交價算（11-19）", G => {
@@ -212,8 +217,8 @@ T("館內股淨賺也受全館壹天淨賠付上限限制（跟賣出共用壹�
   assert.strictEqual(G.casBookGap(snap(s), op), 0);
 });
 
-T("上限：壹天 3 筆開倉；部位合計上限；倍數；股數；籌碼不夠；錢包是負的／借款逾期不能開；休市不能開", G => {
-  const s = fresh(G), src = fakeSrc({ px: { [IN]: 1000 }, idx: 0 });
+T("上限：壹天 3 筆開倉（opensDay 設 3 時）；部位合計上限；倍數；股數；籌碼不夠；錢包是負的／借款逾期不能開；休市不能開", G => {
+  G.NUM.casino.stockLev.opensDay = 3; const s = fresh(G), src = fakeSrc({ px: { [IN]: 1000 }, idx: 0 });
   for (let i = 0; i < 3; i++) assert.ok(G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 5, qty: 10 }, D0, at(D0, 6 + i), fakeSrc({ px: { [IN]: 1000 + i }, idx: i })).ok, "第 " + (i + 1) + " 筆");
   const no = G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 5, qty: 10 }, D0, at(D0, 10), src); assert.ok(!no.ok && /3 筆/.test(no.reason), no.reason);
   assert.ok(G.casLevOpen(s.w, s.h, { id: IN, side: "long", lev: 5, qty: 10 }, addDay(D0, 1), at(addDay(D0, 1), 6), src).ok, "隔天重算");
@@ -303,7 +308,7 @@ T("畫面：lev、positions、credit 的形狀，數字跟部位對得上；不�
   P.px[IN] = 950; P.px[TW] = 99000; P.idx = 4;
   const before = JSON.stringify(s.w), v = G.casStockLevView(s.w, s.h, D0, at(D0, 11), fakeSrc(P));
   assert.strictEqual(JSON.stringify(s.w), before, "view 不改錢包");
-  assert.strictEqual(v.lev.max, 5); assert.strictEqual(v.lev.opensLeft, 1); assert.strictEqual(v.lev.fee, 0.005); assert.strictEqual(v.lev.interest, 0.0015); assert.strictEqual(v.lev.borrow, 0.003); assert.strictEqual(v.lev.force, 0.5); assert.ok(v.lev.rule.length > 10);
+  assert.strictEqual(v.lev.max, 5); assert.strictEqual(v.lev.opensLeft, null, "opensDay 0＝不限，不給剩幾筆"); assert.strictEqual(v.lev.fee, 0.005); assert.strictEqual(v.lev.interest, 0.0015); assert.strictEqual(v.lev.borrow, 0.003); assert.strictEqual(v.lev.force, 0.5); assert.ok(v.lev.rule.length > 10);
   assert.strictEqual(v.positions.length, 2);
   const a = v.positions[0], b = v.positions[1];
   for (const k of ["no", "id", "name", "market", "side", "lev", "qty", "entry", "margin", "now", "pnl", "maintPct", "liqPx", "openedDay", "dayTrade"]) assert.ok(k in a, k);

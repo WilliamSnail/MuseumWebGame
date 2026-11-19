@@ -275,7 +275,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (mk === "grp") { const dr = gsLevTrade(house, id, side === "long" ? 1 : -1, qty, day, t, { dry: true }); if (!dr.ok) return { ok: false, reason: dr.reason }; px = lqP(dr.px); } // 集團股：成交價 ＝ 推價的均價加半價差（先試算，過了所有檢查才真的推）
   const why = lqDebtWhy(w, day); if (why) return { ok: false, reason: why };
   const opensToday = S.opens.day === day ? S.opens.n : 0;
-  if (opensToday >= C.opensDay) return { ok: false, reason: casFill(T.opens, { n: C.opensDay }) };
+  if (C.opensDay > 0 && opensToday >= C.opensDay) return { ok: false, reason: casFill(T.opens, { n: C.opensDay }) }; // opensDay 0＝不限（11-19 翊文取消）
   if (lqT(t) && S.last[id] && +t - S.last[id] < C.coolMin * 60000) return { ok: false, reason: casFill(T.cool, { n: Math.max(1, Math.ceil((C.coolMin * 60000 - (+t - S.last[id])) / 60000)) }) };
   const notional = stBuyCost(px, qty), margin = Math.ceil(notional / lev), level = casLevLevel(w), limit = casLevPosLimit(level), used = lqOpenPos(S);
   if (used + notional > limit) return { ok: false, reason: casFill(T.posLimit, { limit: casNum(limit), level, used: casNum(used), add: casNum(notional) }) };
@@ -466,7 +466,7 @@ export function casStockLevView(w, house, day, t, src) {
   });
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
-    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us, byMarket.grp), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)),
+    lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us, byMarket.grp), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: C.opensDay > 0 ? Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)) : null,
       fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, force: C.forcePct / 100, rule: T.rule },
     positions,
     credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: maxLevNow, next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts,
