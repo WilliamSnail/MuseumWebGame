@@ -6,6 +6,8 @@
 //   npm run ledger -- set weeks.2026-W47.question "……"   設某壹段（值能當 JSON 讀就當 JSON，例如 true、[…]、{…}；不然當字串）
 //   npm run ledger -- push weeks.2026-W47.hooks "d3：……"  往陣列尾巴加壹筆（陣列不存在就建）
 //   npm run ledger -- keys revealBeats.list        列下壹層有哪些鍵（陣列列 id）
+//   npm run ledger -- range 2026-11-19 2026-12-02    這段日期跨到的每壹週：weeks、主線那章、揭露、謎題線索、伏筆、日曆、新聞線（11-19：延伸劇情要排「這兩週」時不用整份讀）
+//   npm run ledger -- about m-capital               壹個 id（謎題、支線、角色、伏筆、地點…）本身，加上帳本裡所有提到它的地方（路徑＋那壹筆）
 // 每天固定要回填的欄位，壹次做完（11-16 每日排程優化：以前壹次排程要十幾次 ledger 呼叫，還常漏）：
 //   npm run ledger -- reveal b01=c-a,c-b b24=c-x [--date D] [--clues c-a,c-b]
 //        揭露放完：那幾筆 revealBeats 改 revealed、revealedOn＝那天、clues＝那天 dN.json 放的 clue id（預設全部；同壹天有兩筆揭露時，用 b01=c-a,c-b 各自指定；--clues 是全部都套同壹串）；
@@ -155,7 +157,51 @@ function load() { return JSON.parse(fs.readFileSync(FILE, "utf8")); }
 function save(L) { fs.writeFileSync(FILE, JSON.stringify(L, null, 2)); } // 原檔就是縮排 2、結尾沒有換行：git diff 只看得到改的那段
 const show = v => typeof v === "string" ? v : JSON.stringify(v, null, 2);
 
-module.exports = { get, set, push, today, parseVal, walk, putDayLine, revealBeat, fillWritten, fillDay, beatsDueToday, applyOps };
+// ---------- 看壹段日期、看壹個 id（11-19 翊文：「跑得有點慢，是不是缺甚麼腳本?」） ----------
+// 所有「陣列型」的大段：[路徑, 陣列]
+function sections(L) {
+  const out = [];
+  for (const k of Object.keys(L)) {
+    const v = L[k];
+    if (Array.isArray(v)) out.push([k, v]);
+    else if (isObj(v)) for (const k2 of Object.keys(v)) if (Array.isArray(v[k2])) out.push([k + "." + k2, v[k2]]);
+  }
+  return out;
+}
+const idOf = (x, i) => (x && typeof x === "object" && x.id) || i;
+// weeks：ISO 週的清單（由呼叫的人用日期算好）
+function range(L, weeks) {
+  const out = [];
+  for (const week of weeks) {
+    const blk = [];
+    const add = (title, v) => { if (v !== undefined && v !== null && !(Array.isArray(v) && !v.length)) blk.push([title, v]); };
+    add(`weeks.${week}`, L.weeks && L.weeks[week]);
+    const seasons = (L.main && L.main.seasons) || [];
+    for (const se of seasons) add("主線那章", (se.chapters || []).filter(c => JSON.stringify(c).includes(`"${week}"`)));
+    for (const [path_, arr] of sections(L)) {
+      if (path_ === "main.seasons") continue;
+      const hit = arr.map((x, i) => [idOf(x, i), x]).filter(([, x]) => JSON.stringify(x).includes(week));
+      if (!hit.length) continue;
+      // 謎題只列那週的線索，不整條印（謎底留在帳本，要看用 get）
+      if (path_ === "mysteries.list") add(`${path_} 這週的線索`, hit.map(([id, m]) => ({ id, q: m.q, clues: (m.clues || []).filter(c => JSON.stringify(c).includes(week)) })));
+      else add(`${path_} 提到 ${week} 的`, hit.map(([, x]) => x));
+    }
+    out.push([week, blk]);
+  }
+  return out;
+}
+function about(L, id) {
+  const self = [], refs = [];
+  for (const [path_, arr] of sections(L)) arr.forEach((x, i) => {
+    const s = JSON.stringify(x);
+    if (x && x.id === id) self.push([`${path_}.${id}`, x]);
+    else if (s.includes(`"${id}"`) || s.includes(id)) refs.push([`${path_}.${idOf(x, i)}`, x]);
+  });
+  for (const k of Object.keys(L)) if (isObj(L[k]) && !Array.isArray(L[k]) && L[k][id] !== undefined && !self.length) self.push([`${k}.${id}`, L[k][id]]);
+  return { self, refs };
+}
+
+module.exports = { range, about, sections, get, set, push, today, parseVal, walk, putDayLine, revealBeat, fillWritten, fillDay, beatsDueToday, applyOps };
 if (require.main === module) {
   const a = process.argv.slice(2), cmd = a[0];
   try {
@@ -165,6 +211,23 @@ if (require.main === module) {
       const week = G.isoWeek(date), prev = G.isoWeek(G.addDays(G.isoMonday(week), -7));
       console.log(`帳本：今天 ${date}，${week}。只印跟這週有關的；要看別的用 npm run ledger -- get <路徑>\n`);
       for (const [t, v] of today(load(), week, prev)) console.log(`【${t}】\n${show(v)}\n`);
+    } else if (cmd === "range") {
+      const { load: loadShared } = require("../test/load_shared.cjs"), G = loadShared();
+      const from = a[1], to = a[2] || a[1], DAY = /^\d{4}-\d{2}-\d{2}$/;
+      if (!DAY.test(from || "") || !DAY.test(to)) throw new Error("用法：range 2026-11-19 2026-12-02");
+      const weeks = []; for (let d = from; d <= to; d = G.addDays(d, 1)) { const w = G.isoWeek(d); if (!weeks.includes(w)) weeks.push(w); }
+      console.log(`帳本：${from}～${to}，跨 ${weeks.join("、")}。謎題只列那週的線索（謎底不印，要看用 get）\n`);
+      for (const [w, blk] of range(load(), weeks)) {
+        console.log(`==================== ${w} ====================`);
+        if (!blk.length) console.log("（帳本裡還沒有這週的東西）\n");
+        for (const [t, v] of blk) console.log(`【${t}】\n${show(v)}\n`);
+      }
+    } else if (cmd === "about") {
+      if (!a[1]) throw new Error("用法：about <id>，例如 about m-capital");
+      const { self, refs } = about(load(), a[1]);
+      console.log(`帳本：${a[1]}　本身 ${self.length} 筆、提到它的 ${refs.length} 筆（含謎底的欄位照印，只在本機看，不要貼進 PR、日誌、公告）\n`);
+      for (const [pth, v] of self) console.log(`【本身 ${pth}】\n${show(v)}\n`);
+      for (const [pth, v] of refs) console.log(`【提到它 ${pth}】\n${show(v)}\n`);
     } else if (cmd === "get") console.log(show(get(load(), a[1])));
     else if (cmd === "keys") { const v = get(load(), a[1]); console.log(Array.isArray(v) ? v.map((x, i) => (x && x.id) || i).join("\n") : Object.keys(v || {}).join("\n")); }
     else if (cmd === "set" || cmd === "push") {
