@@ -155,3 +155,42 @@ export function casBankView(w, day) {
     quick: C.quick,
   };
 }
+
+// ---------- 館門口池子的水位（決定 0132，翊文 11-19：水位跟著被資助那位館友的錢動；門檻 ＝ 淨值 1.5 倍；到門檻那晚只收東西、不收錢）----------
+// 淨值：籌碼＋存款（活存、定存）＋館債＋股票市值（館外、館內、集團股）＋鎖住的（掛單、槓桿保證金、拍賣出價）−沒還的借款本息。不算畫。
+export function casNetWorth(w, house) {
+  const N = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
+  if (!w || !house) return 0;
+  const gs = w.gs && w.gs.h && house.gs && house.gs.u ? Object.keys(w.gs.h).reduce((s, id) => s + (house.gs.u[id] ? Math.floor(N(w.gs.h[id]) * (+house.gs.u[id].P || 0)) : 0), 0) : 0;
+  const owe = w.loan && Array.isArray(w.loan.list) ? w.loan.list.reduce((s, x) => s + N(x && x.owe), 0) : 0;
+  return N(w.chips) + casBankHeld(w) + casBondHeld(w) + casStockValue(w, house) + N(w.lev && w.lev.hold) + N(w.gs && w.gs.hold) + N(w.auc && w.auc.hold) + gs - owe;
+}
+const plRound = v => Math.round(v * 10000) / 10000;
+// 收到資助的人壹進來：莊家文件 house.pool 還沒有就建（起點 base ＝ 這一刻的淨值，水位在 start）。回傳有沒有新建
+export function casPoolEnsure(w, house, nick, uid, day) {
+  const P = NUM.casino.pool, G = NUM.casino.cultureGift;
+  if (!P || !G || !G.on || !house || house.pool || !house.cg || !house.cg[G.id] || !G.nicks.some(x => String(x).replace(/\s+/g, "").toLowerCase() === String(nick == null ? "" : nick).replace(/\s+/g, "").toLowerCase())) return false;
+  house.pool = { uid: String(uid), base: Math.max(1, casNetWorth(w, house)), lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
+  return true;
+}
+// 每天 05:00 日報算（nw ＝ 日報那刻他的淨值）：水位目標 ＝ clamp(start ＋ (1−start) × ln(x) ÷ ln(xT)，min，1)，x ＝ 淨值 ÷ 起點；每天最多動 step；連續 confirm 個日報目標 ≥ 1 且水位到頂，就是「水漲到門檻」，那天晚上 night ＝ 當天（全館看得到事件），
+// 隔天日報（天亮前）收完：水退回 start、起點重設成那一刻的淨值、hits ＋ 1。只收東西（劇情定），不動錢。壹天只算壹次。回傳有沒有動
+export function casPoolDay(house, day, nw) {
+  const C = NUM.casino.pool, P = house && house.pool;
+  if (!C || !P || !P.uid || !(P.base > 0) || P.day === day || !Number.isFinite(+nw)) return false;
+  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
+  const x = Math.max(1e-6, nw / P.base), target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * Math.log(x) / Math.log(C.xT))), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
+  P.lv = plRound(Math.min(1, Math.max(C.min, P.lv + dl))); P.day = day;
+  P.trace = (P.trace || []).concat([dl > 0.00005 ? 1 : dl < -0.00005 ? -1 : 0]).slice(-C.trace);
+  P.hold = target >= 1 ? (P.hold || 0) + 1 : 0;
+  if (P.lv >= 1 && P.hold >= C.confirm && !P.night) P.night = day;
+  return true;
+}
+// 全館看得到的（peek 回）：不寫誰、不寫數字。lv 量化成 0～grid 格；band；night 只在門檻那晚（那壹天的 18:00 起，到隔天 05:00 換日前）才是 true；trace 最近幾天的漲（1）退（−1）不動（0）；hits 到過幾次
+export function casPoolView(house, day, t) {
+  const C = NUM.casino.pool, P = house && house.pool;
+  if (!C || !P || !P.uid) return null;
+  const mins = Number.isFinite(+t) ? (((Math.floor(+t / 60000) + 480) % 1440) + 1440) % 1440 : 0, evening = mins >= 18 * 60 || mins < 5 * 60;
+  const lv = P.lv, band = lv >= 1 ? "over" : lv > 0.9 ? "edge" : lv > 0.6 ? "high" : lv > 0.2 ? "mid" : "low";
+  return { lv: Math.round(lv * C.grid), dir: (P.trace || []).length ? P.trace[P.trace.length - 1] : 0, band, night: !!P.night && P.night === day && evening, trace: (P.trace || []).slice(), hits: P.hits || 0 };
+}
