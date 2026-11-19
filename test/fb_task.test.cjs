@@ -1,8 +1,9 @@
 // tools/fb_task.cjs：Firebase 的固定動作只做得到那幾件事（不會連 Firebase）
 const assert = require("assert");
-const { ACTIONS, parseTask, planTask, econPick } = require("../tools/fb_task.cjs");
+const { ACTIONS, parseTask, planTask, econPick, houseLedger, worldStatus } = require("../tools/fb_task.cjs");
 
 let pass = 0, fail = 0;
+const later = [], TA = (name, fn) => later.push(fn().then(() => { pass++; }, e => { fail++; console.log("FAIL " + name + "\n    " + e.message); }));
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
@@ -70,5 +71,13 @@ T("econ-status 只印經濟欄位的白名單：名字、uid、email、祕密、
   for (const bad of ["祕密", "a@b.com", "小明", "U1", "wallets", "art", "byUser", "who", "mint", "pool"]) assert.ok(!s.includes(bad), "不該印出：" + bad);
   const o = econPick(h); assert.strictEqual(o.world, 9); assert.strictEqual(o.debt.culture, 2); assert.strictEqual(o.led.world.stockBuy, 10); assert.strictEqual(o.inv.sum.hold[0].n, 2);
 });
-console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`);
-process.exit(fail ? 1 : 0);
+TA("house-ledger、world-status 印出佩佩銀行準備金（現金、欠款、存款、放款）和它的來源累計；全館合計含海外和準備金；econ-status 帶 gb", async () => {
+  const house = { bankroll: 100, budget: 200, museum: 3, gov: 4, sea: 5, world: 1000, ext: -50, day: "2026-11-19", gb: { cash: 700, debt: 30, dep: { "g-daily": 900 }, loan: { "g-finance": 200 } }, led: { gb: { groupDeposit: 900, groupLoan: -200 }, world: { groupDeposit: -900, groupLoan: 200, stockBuy: 1 }, flow: {}, mint: {}, ext: {} } };
+  const mk = obj => ({ exists: true, data: () => ({ data: JSON.stringify(obj) }) });
+  const db = { doc: p => ({ get: async () => (p === "casinoHouse/main" ? mk(house) : { exists: false }) }), collection: () => ({ get: async () => ({ docs: [{ data: () => ({ data: JSON.stringify({ chips: 1000 }) }) }] }) }), getAll: async () => [] };
+  const out = []; const old = console.log; console.log = (...a) => out.push(a.join(" "));
+  try { await houseLedger(db); await worldStatus(db); } finally { console.log = old; }
+  const s = out.join("\n"); assert.ok(/佩佩銀行準備金（house.gb[^）]*）：現金 700　欠博物館資金 30　集團存款合計 900　放款合計 200/.test(s), s.slice(0, 600)); assert.ok(/groupDeposit：900/.test(s) && /groupLoan：-200/.test(s)); assert.ok(/全館的錢合計[^\n]*2,962/.test(s), "合計 ＝ 2962"); 
+  const o = econPick(house); assert.strictEqual(o.gb.cash, 700); assert.strictEqual(o.gb.dep["g-daily"], 900); assert.strictEqual(o.led.gb.groupLoan, -200);
+});
+Promise.all(later).then(() => { console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`); process.exit(fail ? 1 : 0); });
