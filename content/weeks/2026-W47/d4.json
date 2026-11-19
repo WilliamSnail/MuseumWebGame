@@ -1,0 +1,164 @@
+{
+  "day": 4,
+  "date": "2026-11-19",
+  "holiday": null,
+  "board": "廁所日：B1 洗手間掛牌「進去前先數壹下人數」；書架多 1 本書。",
+  "books": [
+    {
+      "id": "4a",
+      "line": "w47-count",
+      "clue": "c-postman-walk-route",
+      "title": "郵差走的那壹趟",
+      "spine": "走壹遍",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "退休的郵差真的來了，手裡拿著壹疊空信封。\n他站在樓梯口的小地圖前，\n說：「今天我照圖走壹遍。」",
+        "巷口，他停了三步，用粉筆在牆角畫三畫。\n夜市，他停了四步，畫四畫。\n橋頭，他停了兩步，畫兩畫。\n跟地圖上的壹樣多。",
+        "回到樓梯口，他把空信封壹封壹封數：\n「每壹戶都有，只差我住的那壹戶。」\n警衛問他住哪，他說：\n「我走過了，我沒有在圖上看到我自己。」",
+        "你陪他走了第二遍。\n這次你站在橋頭，替他數。\n橋頭的小正字，多了壹畫，\n剛好是你站的位置那麼高。",
+        "郵差把空信封收進帽子裡。\n「差壹戶的事，不是信少了。」他說，\n「是送信的人，從來沒把自己算進去。」\n(你沒有回答，只是把粉筆也收了起來)"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d4a",
+      "kind": "read",
+      "book": "4a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d4b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d4c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w4",
+      "words": "郵差走完壹遍，只差壹戶；有隻佩佩舉手喊「這壹戶我來！」，帽子掉了。"
+    }
+  ],
+  "show": {
+    "title": "走壹遍",
+    "intro": "樓梯口多掛了三幅畫：壹座橋、壹個空信封，和壹隻在地圖前替人數壹遍的佩佩。",
+    "works": [
+      {
+        "id": "s4a",
+        "clue": "c-bridge-tally-pic",
+        "frame": "dark",
+        "fx": [],
+        "san": "0/1D3",
+        "title": "橋頭的小正字",
+        "lines": [
+          "橋欄杆上畫著兩畫粉筆，旁邊多了壹畫。",
+          "站在橋頭的人看著那壹畫，高度剛好跟他壹樣。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs><linearGradient id='n' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#1d2733'/><stop offset='1' stop-color='#0d1117'/></linearGradient></defs>",
+          "<rect width='240' height='300' fill='url(#n)'/>",
+          "<path d='M0 210 Q120 150 240 210 V300 H0Z' fill='#2a333d'/>",
+          "<path d='M0 210 Q120 150 240 210' stroke='#8a929b' stroke-width='5' fill='none'/>",
+          "<g stroke='#8a929b' stroke-width='3'><path d='M30 200 V170 M70 188 V158 M110 182 V152 M150 183 V153 M190 190 V160 M225 205 V175'/></g>",
+          "<g stroke='#e8e4d4' stroke-width='3' stroke-linecap='round'><path d='M104 168 V150 M114 168 V150'/><path d='M126 168 V150' stroke='#c9564a'/></g>",
+          "<g fill='#07090b' opacity='.92'><ellipse cx='60' cy='258' rx='15' ry='38'/><circle cx='60' cy='210' r='13'/></g>",
+          "<circle cx='190' cy='60' r='18' fill='#d9d6c4' opacity='.75'/>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s4b",
+        "frame": "gold",
+        "fx": [
+          "sepia"
+        ],
+        "title": "壹疊空信封",
+        "lines": [
+          "每個信封上都寫了地址：巷口、夜市、橋頭。",
+          "最底下那壹個，地址欄是空的，郵戳卻已經蓋好了。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#3a2c1e'/>",
+          "<g transform='rotate(-4 120 150)'><rect x='40' y='150' width='160' height='100' fill='#e7d9b4' stroke='#9c7a45' stroke-width='3'/><path d='M40 150 L120 205 L200 150' stroke='#9c7a45' stroke-width='3' fill='none'/></g>",
+          "<g transform='rotate(3 120 130)'><rect x='45' y='110' width='160' height='100' fill='#eadfbf' stroke='#9c7a45' stroke-width='3'/><path d='M45 110 L125 165 L205 110' stroke='#9c7a45' stroke-width='3' fill='none'/></g>",
+          "<g transform='rotate(-2 120 90)'><rect x='42' y='60' width='160' height='100' fill='#f1e7cb' stroke='#9c7a45' stroke-width='3'/><path d='M42 60 L122 115 L202 60' stroke='#9c7a45' stroke-width='3' fill='none'/><circle cx='176' cy='88' r='13' fill='none' stroke='#8b3a32' stroke-width='3'/></g>",
+          "</svg>"
+        ]
+      },
+      {
+        "id": "s4c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "舉手說「這壹戶我來」的佩佩",
+        "lines": [
+          "牠舉手舉得太高，帽子掉到地上。",
+          "地圖上空著的那壹格，牠用粉筆輕輕點了壹下，沒有畫完。"
+        ]
+      }
+    ]
+  },
+  "adds": [],
+  "market": [
+    {
+      "title": "夜市暖點心攤加開第二口鍋",
+      "line": "鍋邊的小牌子寫著「每位壹小撮」，老闆說今天每壹份都要數兩遍才不會少。",
+      "tone": "up",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠信封外包線忙碌",
+      "line": "巨浪代工廠今天趕出壹大批信封，品管員說每疊最後總是多壹個空白的。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行公用電話亮燈",
+      "line": "島線電話行的公用電話亮著燈沒人用，值班的人說：「大概是在等有人先撥。」",
+      "tone": "down",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官今天少收了壹枚籌碼，他數了三遍，說：「應該是我自己手上那枚。」"
+  },
+  "real": [
+    "今天是廁所日，公共廁所的清潔牌掛在門口，上面的簽名欄壹格壹格填滿。",
+    "北市選戰剩九天，街邊的政見看板越來越多，路人邊走邊停下來看。"
+  ]
+}
