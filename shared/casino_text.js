@@ -99,6 +99,8 @@ export const CAS_TEXT = {
   loanHouseNone: "莊家手上沒有錢，借款先暫停。",
   loanHouseShort: "莊家手上的錢不夠借那麼多，最多 {max}",
   loanOutFull: "莊家借出去的錢已經夠多了，過幾天再來。",
+  loanGbShort: "佩佩銀行的錢暫時不夠借，晚點再來。",
+  loanGbMax: "佩佩銀行現在最多能借 {max}",
   loanNone: "沒有這筆借款",
   loanPoor: "籌碼不夠還這筆（要 {owe}）",
   loanSplitInfo: "借款可以部分還（先還利息再還本金）、也可以轉成 2～4 期分期（手續費照借款日利率）。",

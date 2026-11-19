@@ -14,6 +14,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { CAS_BOND } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
+import { gbBondIn, gbBondPay, gbFix, gbSplitOn } from "./world.js";
 
 const cbdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cbdN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -70,7 +71,7 @@ export function casBondBuy(w, house, amt, day) {
   if (n > roomMe) return { ok: false, reason: casFill(CAS_BOND.perUser, { n: casNum(C.perUser) }) };
   if (n > w.chips) return { ok: false, reason: CAS_BOND.poor };
   const due = cbdAdd(iss.mon, 7), days = cbdDiff(day, due), x = { mon: iss.mon, amt: n, day, pct: iss.pct, due };
-  w.chips -= n; casHouseMove(house, "bond", n); iss.sold += n; B.list.push(x);
+  w.chips -= n; if (gbSplitOn(house)) gbBondIn(house, n); else casHouseMove(house, "bond", n); iss.sold += n; B.list.push(x); // 決定 0130：賣館債收的錢進佩佩銀行
   const int = casBondInt(x);
   return { ok: true, bond: x, lines: [casFill(CAS_BOND.buyOk, { name: iss.name, n: casNum(n), days, due: due.slice(5), int: casNum(int) })] };
 }
@@ -78,10 +79,11 @@ export function casBondBuy(w, house, amt, day) {
 export const casBondInt = x => Math.floor(x.amt * x.pct / 100 * Math.min(7, Math.max(0, cbdDiff(x.day, x.due))) / 7);
 
 // 付給玩家 want：先莊家 > 0 的部分，再博物館資金 > 0 的部分（記 bailout），剩下的回傳（要記成憑證）
-function cbdPay(w, house, want) {
+function cbdPay(w, house, want, principal) {
   let left = want;
-  const a = Math.min(left, Math.max(0, house.bankroll));
-  if (a > 0) { casHouseMove(house, "bond", -a); left -= a; }
+  if (gbSplitOn(house)) { const a = gbBondPay(house, left, principal || 0); left -= a; } // 決定 0130：先佩佩銀行付
+  else { const a = Math.min(left, Math.max(0, house.bankroll));
+  if (a > 0) { casHouseMove(house, "bond", -a); left -= a; } }
   const b = Math.min(left, Math.max(0, Math.floor(house.budget)));
   if (b > 0) { house.budget -= b; house.bailout = cbdN(house.bailout) + b; left -= b; }
   w.chips += want - left;
@@ -93,13 +95,14 @@ export function casBondSettle(w, house, day) {
   if (!cbdDay(day)) return out;
   const due = B.list.filter(x => x.due <= day);
   for (const x of due) {
-    const int = casBondInt(x), owe = x.amt + int, short = cbdPay(w, house, owe);
+    const int = casBondInt(x), owe = x.amt + int, short = cbdPay(w, house, owe, x.amt);
     B.earned += int; B.iou += short; out.iou += short;
     out.back.push({ amt: x.amt, int, short });
     B.notes.push(casFill(short ? CAS_BOND.noteShort : CAS_BOND.noteBack, { amt: casNum(x.amt), int: casNum(int), short: casNum(short) }));
   }
   if (due.length) B.list = B.list.filter(x => !due.includes(x));
-  if (B.iou > 0 && house.bankroll >= NUM.casino.houseStart * NUM.casino.bond.iouAtPct / 100) {
+  if (B.iou > 0 && gbSplitOn(house)) { const n = gbBondPay(house, B.iou, 0); if (n > 0) { w.chips += n; B.iou -= n; out.iouPaid = n; B.notes.push(casFill(CAS_BOND.noteIou, { n: casNum(n), left: casNum(B.iou) })); } } // 佩佩銀行有錢就補付憑證
+  else if (B.iou > 0 && house.bankroll >= NUM.casino.houseStart * NUM.casino.bond.iouAtPct / 100) {
     const n = Math.min(B.iou, house.bankroll - Math.floor(NUM.casino.houseStart * NUM.casino.bond.iouAtPct / 100));
     if (n > 0) { casHouseMove(house, "bond", -n); w.chips += n; B.iou -= n; out.iouPaid = n; B.notes.push(casFill(CAS_BOND.noteIou, { n: casNum(n), left: casNum(B.iou) })); }
   }
@@ -111,13 +114,14 @@ export function casBondSettle(w, house, day) {
 export function casBondRedeem(w, house, day) {
   const E = NUM.casino.econEvent, W = house && house.ev && house.ev.window;
   if (!W || !(day >= W.from && day <= W.until)) return { ok: false, reason: "現在不是館債的簽收窗口" };
-  const B = casBondFix(w, day), room0 = Math.max(0, Math.floor((house.bankroll - NUM.casino.houseLoan.reserve) * E.redeemPct / 100)), paidToday = house.ev.redeemed && house.ev.redeemed.day === day ? cbdN(house.ev.redeemed.n) : 0;
+  const B = casBondFix(w, day), room0 = gbSplitOn(house) ? Math.max(0, Math.floor(Math.max(0, gbFix(house).cash) * E.redeemPct / 100)) : Math.max(0, Math.floor((house.bankroll - NUM.casino.houseLoan.reserve) * E.redeemPct / 100)), paidToday = house.ev.redeemed && house.ev.redeemed.day === day ? cbdN(house.ev.redeemed.n) : 0;
   let room = Math.max(0, room0 - paidToday), n = 0, amt = 0, int = 0;
   for (const x of B.list.slice()) {
     if (x.due <= day) continue; // 今天到期的換日會自己還
     const span = Math.max(1, cbdDiff(x.day, x.due)), held = Math.max(0, cbdDiff(x.day, day)), i = Math.floor(casBondInt(x) * Math.min(held, span) / span), owe = x.amt + i;
     if (owe > room) continue;
-    casHouseMove(house, "bond", -owe); w.chips += owe; room -= owe; B.list = B.list.filter(y => y !== x); B.earned += i; n++; amt += x.amt; int += i;
+    if (gbSplitOn(house)) gbBondPay(house, owe, x.amt); else casHouseMove(house, "bond", -owe);
+    w.chips += owe; room -= owe; B.list = B.list.filter(y => y !== x); B.earned += i; n++; amt += x.amt; int += i;
     B.notes.push(casFill(CAS_BOND.noteEarly, { amt: casNum(x.amt), int: casNum(i), short: 0 }));
   }
   if (!house.ev.redeemed || house.ev.redeemed.day !== day) house.ev.redeemed = { day, n: 0 };

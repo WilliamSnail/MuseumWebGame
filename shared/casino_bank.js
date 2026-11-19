@@ -21,6 +21,7 @@ import { casStockValue, casStockViewAll } from "./casino_stock.js";
 import { casNpcToday } from "./npc_spend.js";
 import { casInvestPubView } from "./casino_invest.js";
 import { casDebtView } from "./casino_debt.js";
+import { gbFix, gbPay, gbSplitOn } from "./world.js";
 import { casAdvisorPlan } from "./casino_advisor.js";
 
 const cbkBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -46,6 +47,7 @@ export const casBankHeld = w => { if (!cbkBox(w && w.bank)) return 0; const B = 
 // 莊家付利息：莊家 ≤ 0 不付；最多付到莊家的 houseCapPct%（免得被存款吸乾）。回傳真的付了多少
 function cbkPay(house, want) {
   const C = NUM.casino.bank;
+  if (house && want > 0 && gbSplitOn(house)) return gbPay(house, Math.min(Math.floor(want), Math.floor(Math.max(0, gbFix(house).cash) * C.houseCapPct / 100)), "pBankInt"); // 決定 0130：利息由佩佩銀行付
   if (!house || want <= 0 || house.bankroll <= 0) return 0;
   const n = Math.min(Math.floor(want), Math.floor(house.bankroll * C.houseCapPct / 100));
   if (n <= 0) return 0;
