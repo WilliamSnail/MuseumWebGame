@@ -95,14 +95,14 @@ export function fakeBankHall() {
     world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", cat: "tech", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", cat: "tech", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", cat: "travel", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
     trade: { since: "2026-11-16", loans: [{ name: "民生集團", amt: 3600000, day: "2026-11-17" }], rows: [
-      { k: "tradeGoods", label: "貨款（集團之間）", fromName: "島嶼集團", toName: "民生集團", n: 1500000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "民生集團", toName: "海外集團", n: 660000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "學校集團", n: 700000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "島嶼集團", n: 220000 },
+      { k: "tradeGoods", label: "貨款（集團之間）", fromName: "島嶼集團", toName: "民生集團", n: 1500000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "民生集團", toName: "跨海集團", n: 660000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "跨海集團", toName: "學校集團", n: 700000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "跨海集團", toName: "島嶼集團", n: 220000 },
       { k: "tradeLoan", label: "金融集團放款", fromName: "金融集團", toName: "民生集團", n: 3600000 }, { k: "tradeLoan", label: "金融集團放款", fromName: "學校集團", toName: "金融集團", n: 180000 },
       { k: "tradeInterest", label: "借款利息", fromName: "民生集團", toName: "金融集團", n: 260000 }, { k: "tradeRepay", label: "還款", fromName: "民生集團", toName: "金融集團", n: 400000 },
       { k: "tradeRev", label: "旗下股票營收（公共和集團）", fromName: "公共", toName: "島嶼集團", n: 450000 }, { k: "tradeRev", label: "旗下股票營收（公共和集團）", fromName: "家計", toName: "島嶼集團", n: 300000 }] },
     gs: { halt: false, orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "g-culture", name: "文化藝術機構股", n: 100, px: 95, hold: 9548, day: "2026-11-17" }], rule: "示範：集團股的價格由這個世界的買賣和經濟決定。", notes: [], index: { v: 100.38 }, list: [
       { id: "g-culture", name: "文化藝術機構股", unit: "文化藝術機構", price: 100.66, open: 100, chg: 0.66, shares: 101213719, mcap: 10188034904, nav: 50, pb: 2.01, mine: 40, value: 4026, cost: 3900, limit: 5000000, hist: [98, 99.2, 97.5, 99, 100.1, 99.4, 100.9, 100.2, 101.3, 100.66] },
       { id: "g-daily", name: "民生集團股", unit: "民生集團", price: 100.09, open: 100, chg: 0.09, shares: 90000000, mcap: 9008100000, nav: 50, pb: 2, mine: 0, value: 0, cost: 0, limit: 4500000, hist: [100, 100.3, 99.8, 100.09] }] },
-    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "海外集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: i === 3 ? -1.2e9 : 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { gb: 61000000, ext: -240000000, house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
+    flow: { day: "2026-11-17", orgs: CAS_FLOW_ORGS, nodes: CAS_FLOW_NODES.map(n => ({ id: n.id, name: n.name, tier: n.tier, org: n.org || null, note: n.note })).concat(["民生集團", "金融集團", "島嶼集團", "跨海集團", "學校集團", "家計", "公共"].map((nm, i) => ({ id: "w:d" + i, name: nm, tier: 1, parent: "world", bal: i === 3 ? -1.2e9 : 9e9 - i * 1e9 })).concat([{ id: "w:d0a", name: "民生超市", tier: 1, parent: "w:d0", bal: null }, { id: "w:d0b", name: "民生物流", tier: 1, parent: "w:d0", bal: null }])), bal: { gb: 61000000, ext: -240000000, house: 3180000000, budget: 912000000, museum: 5410000000, gov: 18700000, sea: 240000000, world: 98000000000 }, edges: [ // 示範：今天 05:00 起（開發時看畫面用）
       { from: "players", to: "house", amt: 2480000, srcs: [{ src: "bj", label: "21 點", amt: 3100000 }, { src: "pack", label: "免費和買來的大禮包", amt: -620000 }] },
       { from: "house", to: "ext", amt: 700000, srcs: [{ src: "houseInvestBuy", label: "館方投資買股票", amt: 700000 }] },
       { from: "world", to: "museum", amt: 6900000, srcs: [{ src: "npcCrowdMuseum", label: "散客的門票（修繕基金）", amt: 5600000 }, { src: "npcTicketMuseum", label: "NPC 的門票（修繕基金）", amt: 1300000 }] },
@@ -117,8 +117,8 @@ export function fakeBankHall() {
       { from: "w:d1", to: "w:d0", amt: 3200000, srcs: [{ src: "tradeLoan|w:d1|w:d0", label: "金融集團借給民生集團（示範）", amt: 3600000 }, { src: "tradeRepay|w:d0|w:d1", label: "民生集團還金融集團（示範）", amt: -400000 }] },
       { from: "w:d0", to: "w:d1", amt: 260000, srcs: [{ src: "tradeInterest|w:d0|w:d1", label: "借款利息", amt: 260000 }] },
       { from: "w:d2", to: "w:d0", amt: 1500000, srcs: [{ src: "tradeGoods|w:d2|w:d0", label: "貨款（集團之間）", amt: 1500000 }] },
-      { from: "w:d3", to: "w:d2", amt: 220000, srcs: [{ src: "tradeGoods|w:d3|w:d2", label: "海外集團賣貨給島嶼集團", amt: 220000 }] },
-      { from: "w:d0", to: "w:d3", amt: 660000, srcs: [{ src: "tradeGoods|w:d0|w:d3", label: "民生集團付給海外集團", amt: 660000 }] },
+      { from: "w:d3", to: "w:d2", amt: 220000, srcs: [{ src: "tradeGoods|w:d3|w:d2", label: "跨海集團賣貨給島嶼集團", amt: 220000 }] },
+      { from: "w:d0", to: "w:d3", amt: 660000, srcs: [{ src: "tradeGoods|w:d0|w:d3", label: "民生集團付給跨海集團", amt: 660000 }] },
       { from: "w:d5", to: "w:d2", amt: 300000, srcs: [{ src: "tradeRev|w:d5|w:d2", label: "家計付給島嶼集團", amt: 300000 }] },
       { from: "w:d1", to: "w:d3", amt: 1019000, srcs: [{ src: "tradeDaily|w:d1|w:d3", label: "日用品採購", amt: 1019000 }] },
       { from: "w:d3", to: "w:d5", amt: 838000, srcs: [{ src: "tradeDaily|w:d3|w:d5", label: "日用品採購", amt: 838000 }] },
@@ -159,7 +159,7 @@ export function fakeBankHall() {
       { from: "house", to: "gb", amt: 3000000, srcs: [{ src: "hdepIn", label: "莊家存款進佩佩銀行", amt: 3300000 }, { src: "hdepOut", label: "莊家領回存款", amt: -300000 }] },
       { from: "gb", to: "house", amt: 110000, srcs: [{ src: "hdepInt", label: "莊家存款利息", amt: 110000 }, { src: "gbSweepH", label: "盈餘分給莊家 30%", amt: 0 }] },
       { from: "gb", to: "budget", amt: 260000, srcs: [{ src: "gbSweepB", label: "盈餘分給博物館資金 70%", amt: 260000 }] },
-      { from: "w:d3", to: "w:d4", amt: 700000, srcs: [{ src: "tradeGoods|w:d3|w:d4", label: "海外集團賣貨給學校集團", amt: 700000 }] },
+      { from: "w:d3", to: "w:d4", amt: 700000, srcs: [{ src: "tradeGoods|w:d3|w:d4", label: "跨海集團賣貨給學校集團", amt: 700000 }] },
       { from: "w:d6", to: "w:d2", amt: 450000, srcs: [{ src: "tradeRev|w:d6|w:d2", label: "公共付給島嶼集團的營收", amt: 450000 }] },
       { from: "w:d4", to: "w:d1", amt: 180000, srcs: [{ src: "tradeLoan|w:d4|w:d1", label: "學校集團存進金融集團", amt: 180000 }] },
       { from: "w:d0b", to: "w:d0a", amt: 80000, srcs: [{ src: "demoB", label: "物流費", amt: 80000 }] },

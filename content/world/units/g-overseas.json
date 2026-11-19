@@ -1,6 +1,6 @@
 {
   "id": "g-overseas",
-  "name": "海外科技集團",
+  "name": "跨海科技集團",
   "kind": "group",
   "parent": null,
   "sector": "tech",
@@ -17,5 +17,5 @@
     "squarewin"
   ],
   "story": false,
-  "note": "海外的顯卡、晶片、軟體和車行。"
+  "note": "跨海的顯卡、晶片、軟體和車行。"
 }
