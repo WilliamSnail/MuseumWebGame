@@ -414,6 +414,7 @@ const soon = (title, what) => h("div", { class: "bank-cols" }, panel(title, "即
 //   S.credit = { pts, level, next, posLimit, posUsed }  動作：op "open"、"close"、"order"、"cancel"（參數見下）
 const STOCK_GROUPS = { out: "其他", us: "美股", in: "館內五家店", tw: "台股" };
 const STOCK_GROUP_ORDER = ["in", "tw", "us", "out"];
+const feeOf = (S, cur) => (cur && cur.fee != null ? cur.fee : S.fee); // 每支自己的手續費（館外台股、美股照真實，決定 0136）；沒有就用整體的
 const unitCost = (s, fee) => Math.ceil(Math.ceil(s.price * 100) / 100 * (1 + fee)); // 買壹股要付的（含手續費）
 // 真實行情的壹小段：代號、真實價（台股寫元、美股寫美元）、真實漲跌%。沒資料（null）就只寫代號
 const realPx = (n, mk) => `${Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${mk === "tw" ? "元" : "美元"}`;
@@ -481,7 +482,7 @@ function chart(s) {
 // 買不了、賣不了的原因：壹次只講壹個（翊文 11-14：有錢卻壹直說「籌碼不夠」）
 function whyNoBuy(v, S, cur) {
   if (stockHalt(S, cur)) return haltText(S, cur);
-  if (v.cash < unitCost(cur, S.fee)) return `錢不夠：壹股 ${fp(cur.price)}，加手續費要 ${fmt(unitCost(cur, S.fee))}，你現在有 ${fmt(v.cash)}。`;
+  if (v.cash < unitCost(cur, feeOf(S, cur))) return `錢不夠：壹股 ${fp(cur.price)}，加手續費要 ${fmt(unitCost(cur, feeOf(S, cur)))}，你現在有 ${fmt(v.cash)}。`;
   if (cur.market === "in" && S.inCap != null && cur.mine >= S.inCap) return `這家最多持有 ${fmt(S.inCap)} 股，你已經滿了。`;
   if ((cur.market === "in" ? S.inExposeLeft : S.exposeLeft) != null && (cur.market === "in" ? S.inExposeLeft : S.exposeLeft) < cur.price) return "全館持股今天到上限了，晚點再來買。";
   return "現在買不了。";
@@ -545,14 +546,14 @@ const chips = (list, cur, onPick, fmtFn, lockFn) => h("div", { class: "bank-chip
 // ---------- 交易：現股 ----------
 function spotTrade(v, S, cur) {
   const side = UI.bankSide === "sell" && (cur.free != null ? cur.free : cur.mine) > 0 ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
-  const halt = stockHalt(S, cur), one = unitCost(cur, S.fee);
+  const halt = stockHalt(S, cur), one = unitCost(cur, feeOf(S, cur));
   const inShop = cur.market === "in", expL = inShop ? S.inExposeLeft : S.exposeLeft, sellL = inShop ? S.inSellLeft : S.sellLeft, capL = inShop && S.inCap != null ? Math.max(0, S.inCap - cur.mine) : Infinity;
   const maxBuy = halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), capL, expL != null ? Math.floor(expL / Math.max(1, cur.price)) : Infinity));
   const maxSell = halt ? 0 : Math.max(0, Math.min(cur.free != null ? cur.free : cur.mine, sellL != null ? Math.floor(sellL / Math.max(1, cur.price)) : Infinity));
   const max = side === "buy" ? maxBuy : maxSell;
   // 總價（約）：買 ＝ 股價×股數＋手續費；賣 ＝ 股價×股數－手續費－證交稅（賣出金額 × 稅率，賺賠都收，進位、最少 1；美股 tax 是 0）
   const sumOf = n => {
-    const cents = Math.round(cur.price * 100) * n, gross = side === "buy" ? Math.ceil(cents / 100) : Math.floor(cents / 100), fee = Math.ceil(gross * S.fee);
+    const cents = Math.round(cur.price * 100) * n, gross = side === "buy" ? Math.ceil(cents / 100) : Math.floor(cents / 100), fee = Math.ceil(gross * feeOf(S, cur));
     if (side === "buy") return { gross, fee, tax: 0, total: gross + fee };
     const tax = cur.tax > 0 && gross > 0 ? Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * Math.round(cur.tax * 10000) / 10000))) : 0;
     return { gross, fee, tax, total: gross - fee - tax };
@@ -594,6 +595,7 @@ function spotTrade(v, S, cur) {
 // ---------- 交易：槓桿、放空（當沖：當天平倉，23:30 前系統會自動平，台股 13:30 前） ----------
 function levTrade(v, S, cur) {
   const L = S.lev, f = form(), halt = stockHalt(S, cur);
+  const RT = (L.rates && L.rates[cur.market]) || { fee: L.fee, interest: L.interest, borrow: L.borrow, tax: 0 }; // 這個市場的費用（決定 0136）：手續費、利息、借券費、當沖證交稅
   const byM = L.byMarket && L.byMarket[cur.market], capCredit = S.credit && S.credit.maxLev != null ? S.credit.maxLev : Infinity, maxLev = Math.min(byM != null ? byM : L.max, capCredit), shownLev = Math.max(maxLev, Math.min(L.max || 0, 10)), lev = Math.max(1, Math.min(f.lev, maxLev)), long = f.dir === "long"; // 各市場最高幾倍（美股 0＝不能開，寫 usWhy）
   const roomMargin = S.credit ? Math.max(0, Math.floor((S.credit.posLimit - S.credit.posUsed) / Math.max(1, lev))) : Infinity;
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
@@ -602,13 +604,13 @@ function levTrade(v, S, cur) {
   // 整股（11-14 測試：以前畫面寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：股數 ＝ 保證金×倍數÷價 無條件捨去，部位 ＝ 股數×價，保證金 ＝ 部位÷倍數 進位（跟 shared/casino_stock_lev.js 的 casLevOpen 壹樣）
   const levSize = m0 => { const z = casLevSizeOf(m0, lev, cur.price); return { qty: z.qty, pos: z.notional, mg: z.margin }; };
   const calc = () => {
-    const sz = levSize(Math.min(f.margin || 0, maxMargin)), m = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? L.interest : L.borrow));
+    const sz = levSize(Math.min(f.margin || 0, maxMargin)), m = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * RT.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? RT.interest : RT.borrow));
     const liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     const stopPx = f.stopOn && f.stop > 0 ? Math.round(cur.price * (long ? 1 - f.stop / 100 : 1 + f.stop / 100) * 100) / 100 : null, takePx = f.takeOn && f.take > 0 ? Math.round(cur.price * (long ? 1 + f.take / 100 : 1 - f.take / 100) * 100) / 100 : null;
     sum.replaceChildren(
       h("summary", null, h("b", null, `部位 ${fmt(pos)}`), h("span", null, `強平價約 ${fp(liq)}`), h("span", { class: "bank-sum-open" }, "點開 ▾")),
       h("p", null, h("span", null, "部位"), h("b", null, `${fmt(pos)}`), h("small", null, ` ＝ ${fmt(sz.qty)} 股 × ${fp(cur.price)}（${lev}× 保證金 ${fmt(m)}）`)),
-      h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(L.fee)}，${long ? "利息 " + pctText(L.interest) : "借券費 " + pctText(L.borrow)}）`)),
+      h("p", null, h("span", null, "手續費＋" + (long ? "利息" : "借券費")), h("b", null, fmt(feeAmt + carry)), h("small", null, ` （手續費 ${pctText(RT.fee)}，${long ? "利息 " + pctText(RT.interest) : "借券費 " + pctText(RT.borrow)}${RT.tax > 0 ? "；平倉另扣當沖證交稅 " + pctText(RT.tax) : ""}）`)),
       h("p", { class: "warn" }, h("span", null, "強制平倉價"), h("b", null, `約 ${fp(liq)}`), h("small", null, ` （保證金剩 ${Math.round(L.force * 100)}% 就平倉）`)),
       stopPx ? h("p", null, h("span", null, "停損價"), h("b", null, fp(stopPx))) : null, takePx ? h("p", null, h("span", null, "停利價"), h("b", null, fp(takePx))) : null);
     return m;
@@ -619,7 +621,7 @@ function levTrade(v, S, cur) {
   const ocoBad = f.stopOn && f.stop >= liqPct ? `停損要比強平價更靠近現價：最多 ${(liqPct - 0.1).toFixed(1)}%。` : "";
   const doOpen = () => bankDo("stock", { op: "open", id: cur.id, dir: f.dir, lev, margin: Math.min(f.margin, maxMargin), stopPct: stopP ? f.stop : null, takePct: takeP ? f.take : null }); // 伺服器照成交價算停損停利價（11-19）
   const open = () => {
-    const sz = levSize(Math.min(f.margin, maxMargin)), mg = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * L.fee), carry = Math.ceil((long ? pos - mg : pos) * (long ? L.interest : L.borrow)), liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
+    const sz = levSize(Math.min(f.margin, maxMargin)), mg = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * RT.fee), carry = Math.ceil((long ? pos - mg : pos) * (long ? RT.interest : RT.borrow)), liq = cur.price * (long ? 1 - L.force / lev : 1 + L.force / lev);
     if (sz.qty < 1) { note("保證金不夠買壹股，加壹點再開。", "bad"); return; }
     confirmTrade(`${long ? "開多單" : "開空單"} ${cur.name} ${lev}×`, [
       ["股數", `${fmt(sz.qty)} 股（每股 ${fp(cur.price)}）`], ["保證金（先扣）", fmt(mg)], ["部位", fmt(pos)], ["手續費＋" + (long ? "利息" : "借券費") + "（約）", fmt(feeAmt + carry)],
@@ -652,12 +654,12 @@ function orderTrade(v, S, cur) {
   const info = h("p", { class: "bank-meta sm" });
   const calc = () => {
     const n = f.on || 0, px = f.opx || 0;
-    info.textContent = k === "buy" ? `會先鎖住 ${fmt(Math.ceil(Math.ceil(px * n - 1e-9) * (1 + S.fee)))} 籌碼（價格到 ${fmt(px)} 以下才買，成交價照當時的價，多的退回）。`
+    info.textContent = k === "buy" ? `會先鎖住 ${fmt(Math.ceil(Math.ceil(px * n - 1e-9) * (1 + feeOf(S, cur))))} 籌碼（價格到 ${fmt(px)} 以下才買，成交價照當時的價，多的退回）。`
       : `會先鎖住這 ${fmt(n)} 股（價格到 ${fmt(px)} ${k === "sell" ? "以上" : "以下"}才賣，成交價照當時的價）。`;
     return n > 0 && px > 0;
   };
   const okNow = calc();
-  const lockNow = k === "buy" ? Math.ceil(Math.ceil((f.opx || 0) * (f.on || 0) - 1e-9) * (1 + S.fee)) : 0, free = k === "buy" ? v.cash : (cur.free != null ? cur.free : cur.mine); // 真資料的 cash 已經扣掉鎖在買單裡的
+  const lockNow = k === "buy" ? Math.ceil(Math.ceil((f.opx || 0) * (f.on || 0) - 1e-9) * (1 + feeOf(S, cur))) : 0, free = k === "buy" ? v.cash : (cur.free != null ? cur.free : cur.mine); // 真資料的 cash 已經扣掉鎖在買單裡的
   const mineHere = (S.orders || []).filter(o => o.id === cur.id).length, px = f.opx || 0, n = f.on || 0;
   const why = halt ? haltText(S, cur) : (S.orderLeft != null ? S.orderLeft < 1 : (S.orders || []).length >= (S.orderMax || 10)) ? `掛著的單滿 ${S.orderMax || 10} 張了，先取消壹些。` : mineHere >= (S.orderPerStock || 3) ? `這支最多掛 ${S.orderPerStock || 3} 張，先取消壹張。`
     : k === "sell" && px <= cur.price ? `賣的價要比現價（${fp(cur.price)}）高，現在就想賣請用「現股」。` : k !== "sell" && px >= cur.price ? `${k === "buy" ? "買" : "停損"}的價要比現價（${fp(cur.price)}）低，現在就想買請用「現股」。`
@@ -745,7 +747,7 @@ function stockPane(v) {
   const tab = tabs.some(t => t[0] === UI.bankTrade) ? UI.bankTrade : "spot";
   const phone = window.innerWidth < 761 || window.innerHeight < 501;
   const left = UI.bankLeft === "hold" ? "hold" : "market";
-  const marketPanel = panel("行情", `手續費 ${pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天", "持股"], stockRows(list, cur, S), "stocks"));
+  const marketPanel = panel("行情", `手續費 ${S.feeTw != null ? `台股 ${pctText(S.feeTw)}、美股 ${pctText(S.feeUs)}、館內股 ${pctText(S.fee)}` : pctText(S.fee)}${S.feePaid ? `・累計付過 ${fmt(S.feePaid)}` : ""}`, ledger(["名稱", "遊戲價", "今天", "持股"], stockRows(list, cur, S), "stocks"));
   const table = h("div", { class: "bank-leftcol" }, seg([["market", "行情"], ["hold", "持倉"]], left, k => { UI.bankLeft = k; rerender(); }, "kind"),
     left === "hold" ? holdPanel(v, S, list) : marketPanel);
   const stackEl = h("div", { class: "bank-stack" },
@@ -1102,7 +1104,7 @@ function helpSections(v) {
         `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
         "館內股：看昨天來了多少不同的人，見「館內股」那一頁。"]],
       ["要付的錢", [
-        `手續費 ${pc(S.feePct)}，買和賣各收一次。`,
+        `手續費：台股 ${pc(S.feeOut.tw)}、美股 ${pc(S.feeOut.us)}（買和賣各收一次）；館內股、集團股 ${pc(S.feePct)}。`,
         `持有成本：每天從持股市值扣 ${pc(S.holdPct)}。`,
         `證交稅 ${pc(S.taxPct)}：賣台股和館內股要繳賣出金額的 ${pc(S.taxPct)}（賺賠都收，不到 1 籌碼也算 1）；美股不收。稅進政府帳。`,
         `一個人一天最多賣出：${sellCaps}（館外股和館內股合算；信用跟槓桿是同一個等級）。`]],
@@ -1144,7 +1146,8 @@ function helpSections(v) {
         "開倉、平倉、被強平都會像現股一樣推價；你推的價可能讓別人的部位碰到強平價。",
         `莊家是對手盤，接的部位合計有上限（莊家的錢的 ${pc(L.houseExposePct)}，最少 ${casNum(L.houseFloor)}），滿了就暫時開不了新的。`]],
       ["會發生什麼事", [
-        `借的錢（部位減保證金）每天收利息 ${pc(L.interestPct)}；放空另外收借券費 ${pc(L.borrowPct)}。`,
+        `借的錢（部位減保證金）每天收利息：台股、美股 ${pc(L.byMk.tw.interestPct)}，館內股、集團股 ${pc(L.interestPct)}；放空另外收借券費：台股、美股 ${pc(L.byMk.tw.borrowPct)}，館內股、集團股 ${pc(L.borrowPct)}。`,
+        `手續費：台股 ${pc(S.feeOut.tw)}、美股 ${pc(S.feeOut.us)}，館內股、集團股 ${pc(S.feePct)}；台股平倉另收當沖證交稅 ${pc(L.byMk.tw.taxPct)}（進政府帳），美股、館內股、集團股沒有。`,
         `保證金剩下不到一半（${L.forcePct}%）就強制平倉，錢拿不回來。`,
         "當沖：收盤前沒平，系統自動幫你平倉。",
         `台股收盤（${twClose}）用官方收盤價平倉，可能跟你看到的最後一個價不一樣。`,

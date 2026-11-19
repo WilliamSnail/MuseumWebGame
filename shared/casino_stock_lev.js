@@ -31,12 +31,12 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casCreditLevel } from "./casino_credit.js";
-import { casCount, casHouseCover, casHouseMove, casWorldIn, casWorldOut } from "./casino_book.js";
+import { casCount, casHouseCover, casHouseMove, casPoolGain, casWorldIn, casWorldOut } from "./casino_book.js";
 import { gsLevBook, gsLevClose, gsLevOk, gsLevSrc, gsLevTrade, gsNameOf } from "./casino_stock_grp.js";
 import { casFill, casNum, casPx } from "./casino.js";
 import { CAS_STOCK_LEV } from "./casino_stock_lev_text.js";
 import { IN_IDS, casInAdvance, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./casino_stock_in.js";
-import { casStockHouseFix, casStockIdHalt, stBuyCost, stCents, stPx } from "./casino_stock.js";
+import { casStockFeePct, casStockHouseFix, casStockIdHalt, stBuyCost, stCents, stPx } from "./casino_stock.js";
 import { TW_IDS, US_IDS, twIdx, usIdx } from "./stocks_tw.js";
 import { IN_STOCKS } from "./stocks_in_text.js";
 import { OUT_STOCKS } from "./stocks_text.js";
@@ -48,7 +48,11 @@ const lqDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const lqT = t => t != null && Number.isFinite(+t);
 const lqAdd = (s, n) => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
 const lqC = () => NUM.casino.stockLev;
-const lqFeePct = () => NUM.casino.stock.feePct;
+// 費用照這支的市場（決定 0136）：手續費 casStockFeePct；利息、借券費、當沖稅看 stockLev.byMk，沒寫（館內股、集團股）用預設
+const lqFeePct = id => casStockFeePct(id);
+const lqMk = id => (TW_IDS.includes(id) ? "tw" : US_IDS.includes(id) ? "us" : null);
+const lqRate = (id, k) => { const m = lqMk(id), B = lqC().byMk && m && lqC().byMk[m]; return B && B[k] != null ? B[k] : k === "taxPct" ? 0 : lqC()[k]; };
+export const casLevRates = id => ({ fee: lqFeePct(id) / 100, interest: lqRate(id, "interestPct") / 100, borrow: lqRate(id, "borrowPct") / 100, tax: lqRate(id, "taxPct") / 100 });
 
 // 這支屬於哪個市場："in" 館內五家店、"tw" 台股、"us" 美股，不認得是 null
 export function casLevMarket(id) {
@@ -231,9 +235,9 @@ const lqStopText = (stop, take) => casFill(CAS_STOCK_LEV.stopSet, { stop: stop ?
 
 // ---------- 開倉 ----------
 const lqOpenPos = S => S.pos.reduce((a, p) => a + p.notional, 0);
-const lqCostOf = (side, notional, margin) => {
-  const fee = Math.ceil(notional * lqFeePct() / 100); // 手續費：算部位
-  const carry = side === "long" ? Math.ceil((notional - margin) * lqC().interestPct / 100) : Math.ceil(notional * lqC().borrowPct / 100); // 做多：借的錢的利息；放空：借券費
+const lqCostOf = (side, notional, margin, id) => {
+  const fee = Math.ceil(notional * lqFeePct(id) / 100); // 手續費：算部位
+  const carry = side === "long" ? Math.ceil((notional - margin) * lqRate(id, "interestPct") / 100) : Math.ceil(notional * lqRate(id, "borrowPct") / 100); // 做多：借的錢的利息；放空：借券費
   return { fee, carry, total: fee + carry };
 };
 const lqHouseCap = house => (house.bankroll > 0 ? Math.max(lqC().houseFloor, Math.floor(house.bankroll * lqC().houseExposePct / 100)) : 0);
@@ -284,7 +288,7 @@ export function casLevOpen(w, house, args, day, t, src) {
     if (!(house.bankroll > 0)) return { ok: false, reason: T.houseBroke };
     if (H[mk] + notional > lqHouseCap(house)) return { ok: false, reason: T.exposed };
   }
-  const cost = lqCostOf(side, notional, margin);
+  const cost = lqCostOf(side, notional, margin, id);
   if (w.chips < margin + cost.total) return { ok: false, reason: casFill(T.poor, { need: casNum(margin + cost.total), margin: casNum(margin), fee: casNum(cost.total) }) };
   // 停損停利可以用 % 給（stopPct、takePct）：照實際成交價（px）算，不用畫面上的價（11-19 翊文：「虧 3% 就賣」實際要是 3%）
   const pctPx = (pct, up) => { const v = +pct; return Number.isFinite(v) && v > 0 ? Math.round(px * (up ? 1 + v / 100 : 1 - v / 100) * 100) / 100 : null; };
@@ -339,15 +343,18 @@ function lqSettle(w, house, S, pos, px, t, why) {
   w.chips += pos.margin;
   if (eff > 0) { if (hp) { casHouseMove(house, src, -eff); w.chips += eff; } else casWorldOut(w, house, "stockLevWin", eff, NUM.casino.world); }
   else if (eff < 0) { if (hp) { casHouseMove(house, src, -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
-  const equity = pos.margin + eff, feeDue = Math.ceil(stBuyCost(px, pos.qty) * lqFeePct() / 100), fee = Math.min(feeDue, Math.max(0, equity));
+  const equity = pos.margin + eff, feeDue = Math.ceil(stBuyCost(px, pos.qty) * lqFeePct(pos.id) / 100), fee = Math.min(feeDue, Math.max(0, equity));
   w.chips -= fee; house.budget += fee; casCount(house, "levFee", fee);
-  const back = equity - fee;
+  // 當沖證交稅（決定 0136，台股 0.15%：平倉的部位金額 × 稅率，無條件進位、最少 1；美股、館內股、集團股沒有）：從剩下的保證金扣，扣不到就少收，進政府帳
+  const taxRate = lqRate(pos.id, "taxPct"), taxDue = taxRate > 0 ? Math.max(1, Math.ceil(stBuyCost(px, pos.qty) * taxRate / 100)) : 0, tax = Math.min(taxDue, Math.max(0, equity - fee));
+  if (tax > 0) { w.chips -= tax; casPoolGain(house, "gov", "stockTax", tax); casCount(house, "levTax", tax); }
+  const back = equity - fee - tax;
   if (bad > 0) casCount(house, "levBadDebt", bad);
   if (IH) { const H = casLevHouseFix(house); H.in = Math.max(0, H.in - pos.notional); }
   if (grp && pos.day === gsDay) { const H = casLevHouseFix(house); H.grp = Math.max(0, H.grp - pos.notional); }
   S.pos = S.pos.filter(p => p !== pos);
   S.hold = S.pos.reduce((a, p) => a + p.margin, 0);
-  S.gain += eff - fee - pos.fee; S.fee += fee;
+  S.gain += eff - fee - tax - pos.fee; S.fee += fee;
   if (lqT(t)) S.last[pos.id] = +t;
   casCount(house, "levClose");
   const sideW = pos.side === "long" ? T.long : T.short;
@@ -467,7 +474,8 @@ export function casStockLevView(w, house, day, t, src) {
   const posLimit = casLevPosLimit(level), posUsed = lqOpenPos(S);
   return {
     lev: { max: Math.max(byMarket.in, byMarket.tw, byMarket.us, byMarket.grp), byMarket, usWhy: casLevMaxLev("us") > 0 ? null : T.off, lagWhy: lagMap(src), maxLagMin: lqN(C.maxLagMin), owed: owedTotal, owedList: S.owed.map(e => ({ day: e.day, amt: e.amt })), owedText: owedTotal > 0 ? casFill(T.owedView, { amt: casNum(owedTotal) }) : "", opensLeft: C.opensDay > 0 ? Math.max(0, C.opensDay - (S.opens.day === day ? S.opens.n : 0)) : null,
-      fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, force: C.forcePct / 100, rule: T.rule },
+      fee: lqFeePct() / 100, interest: C.interestPct / 100, borrow: C.borrowPct / 100, rates: { in: casLevRates("in"), tw: casLevRates(TW_IDS[0]), us: casLevRates(US_IDS[0]), grp: casLevRates("grp") }, // rates：各市場自己的費用（畫面照市場顯示，11-20 決定 0136）
+      force: C.forcePct / 100, rule: T.rule },
     positions,
     credit: { level, name: T.levels[level] || T.levels[T.levels.length - 1], maxLev: maxLevNow, next: level >= K.maxLevel ? 0 : (level + 1) * K.ptsPerLevel - pts,
       nextUnlock: nxU ? { level: nxU.level, lev: nxU.lev, pts: Math.max(0, nxU.level * K.ptsPerLevel - pts) } : null,

@@ -9,7 +9,7 @@
 import { NUM } from "./config.js";
 import { casFill, casNum } from "./casino.js";
 import { casLoanFrom, casRepay, casRepayPart } from "./casino_wallet.js";
-import { casStockFix, casStockHouseFix, casStockSell } from "./casino_stock.js";
+import { casStockFeePct, casStockFix, casStockHouseFix, casStockSell } from "./casino_stock.js";
 import { IN_IDS, casInFix, casInPrice, casInSell } from "./casino_stock_in.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 import { US_IDS } from "./stocks_tw.js";
@@ -45,7 +45,7 @@ export function casSellForDebt(w, house, id, shares, day, t) {
   let px;
   if (isIn) { const pr = casInPrice(house, id, day, t); if (pr.halted) return { ok: false, reason: CAS_DEBT.halt }; px = pr.px; }
   else px = casStockHouseFix(house).px[id];
-  const feePct = NUM.casino.stock.feePct / 100, taxRate = (isIn || !US_IDS.includes(id) ? NUM.casino.stock.taxPct : NUM.casino.stock.taxUs) / 100, perShare = px * (1 - feePct - taxRate); // 賣 1 股拿到的錢（扣手續費、證交稅）
+  const feePct = casStockFeePct(id) / 100, taxRate = (isIn || !US_IDS.includes(id) ? NUM.casino.stock.taxPct : NUM.casino.stock.taxUs) / 100, perShare = px * (1 - feePct - taxRate); // 賣 1 股拿到的錢（扣手續費、證交稅）
   const need = Math.max(1, Math.ceil(D.total / perShare)); // 剛好夠還要賣幾股
   const n = shares === "max" ? Math.min(need, have0) : Math.floor(Number(String(shares == null ? "" : shares).replace(/[,，\s]/g, "")));
   if (!Number.isFinite(n) || n <= 0) return { ok: false, reason: CAS_DEBT.bad };

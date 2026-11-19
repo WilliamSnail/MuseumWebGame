@@ -528,7 +528,9 @@ export const NUM = {
     //   posLimit 部位（做多＋放空合計）上限、profitCap 壹天當沖淨賺最多算多少，都乘 (1 ＋ stepPct% × 信用等級)；
     //   houseExposePct／houseFloor 莊家接館內股槓桿＋放空部位的上限（max(莊家的錢 × %, 保底)，莊家 ≤ 0 不接）；
     //   credit：ptsPerLevel 幾點升壹級、maxLevel 最高幾級、dayGain 壹天最多加幾點、lateLoss 借款逾期壹次扣幾點。
-    stockLev: { maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 0, coolMin: 0,
+    //   費用照真實（決定 0136，翊文 11-20 選 C）：館外台股、美股的手續費、利息、借券費、當沖稅照 byMk（沒寫的市場＝館內股、集團股，照上面的 interestPct／borrowPct 和 stock.feePct）；
+    //   byMk.{tw,us}：interestPct 做多借的錢每天的利息 %、borrowPct 放空的借券費 %、taxPct 平倉時課的當沖證交稅 %（台股 0.15，進政府帳；美股 0）
+    stockLev: { byMk: { tw: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0.15 }, us: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0 } }, maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 0, coolMin: 0,
       posLimit: 20000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
       credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 1, lateLoss: 3 } },
     // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
@@ -562,7 +564,8 @@ export const NUM = {
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進博物館資金）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
-    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, taxPct: 0.3, taxUs: 0, div: { taxTw: 30.11, taxUs: 30, keep: 45, snapDays: 12 }, // div 配股息（決定 0112，翊文 11-17）：taxTw 台股股利所得稅率 %（分離 28% ＋ 二代健保 2.11%）、taxUs 美股預扣 %，進政府帳；keep 事件留幾天；snapDays 錢包留幾天的「每天開始時的持股」
+    //   feeOut（決定 0136）：館外台股（tw）、美股（us）的手續費 %（買賣各收）；沒寫的（館內股、集團股）用 feePct
+    stock: { start: 10000, floor: 1, outCap: 10, drag: 0.04, feePct: 0.5, feeOut: { tw: 0.05, us: 0 }, taxPct: 0.3, taxUs: 0, div: { taxTw: 30.11, taxUs: 30, keep: 45, snapDays: 12 }, // div 配股息（決定 0112，翊文 11-17）：taxTw 台股股利所得稅率 %（分離 28% ＋ 二代健保 2.11%）、taxUs 美股預扣 %，進政府帳；keep 事件留幾天；snapDays 錢包留幾天的「每天開始時的持股」
     // taxPct 證交稅（決定 0111，翊文 11-16：取代資本利得稅 5%）：台股、館內股「賣出」都收賣出金額的 taxPct%，無條件進位、最少 1，進政府帳（搬，不是 burn）；taxUs 美股（0＝不收，貼近真實）；槓桿不收
      
       // sellMultByCredit：壹天賣出上限（sellDay）隨信用等級的倍數 [[等級 ≥, 倍數], …]（決定 0093，翊文 11-15：「賣出上限隨信用等級」；0 級 ×1、2 級 ×2.5、4 級 ×5）。館內股的全館淨賣出上限（netSellPct、netSellFlat）照舊，守住莊家
