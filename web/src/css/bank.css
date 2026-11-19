@@ -699,3 +699,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-kind.on { background: #D6B25E; color: #2A1A0A; border-color: #FFF3C4; font-weight: 700; }
 .bank-flow-kinds em { flex: 1 1 100%; font-style: normal; color: #D6B25E; font-size: .75rem; }
 .bank-flow-kind.more { border-style: dashed; background: transparent; }
+/* 行情表：美股、台股底下的產業小組（11-20，決定 0134）：比組名淺壹階、縮排，小一點 */
+.bank-grp.bank-sub { padding-left: 22px; min-height: 28px; background: #E4D7B2; letter-spacing: .06em; font-weight: 500; }
+.bank-grp.bank-sub .bank-grp-arrow { width: .9em; }
+.bank-tl .bank-tl-sub { display: block; letter-spacing: 0; opacity: .75; font-size: var(--type-tiny, .6875rem); white-space: nowrap; }
+.bank-tl { width: 4em; }

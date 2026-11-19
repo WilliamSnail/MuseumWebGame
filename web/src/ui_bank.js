@@ -49,12 +49,25 @@ export function fakeBankHall() {
     { id: "board", name: "委託櫃台", line: "館內店", price: 110, chg: 0.004, hist: [105, 107, 108, 108, 109, 110, 110], mine: 5, kind: "in" },
     { id: "cellar", name: "地下收藏庫", line: "館內店", market: "in", halted: false, quiet: true, jump: true, intraday: demoSeries(90, 28, 5), intradayFrom: 0, price: 87, chg: -0.032, hist: [94, 93, 92, 91, 90, 90, 87], mine: 0, kind: "in" },
     { id: "work", name: "手作坊", line: "館內店", price: 120, chg: 0.05, hist: [100, 104, 103, 108, 110, 114, 120], mine: 10, kind: "in" },
-    { id: "neon", name: "霓虹顯卡", line: "館外・世界版", fresh: true, market: "us", price: 231, chg: 0.017, hist: [220, 224, 226, 225, 227, 227, 231], mine: 0, kind: "out" },
-    { id: "sand", name: "紅砂晶片", stale: "這幾分鐘抓不到新的真實價，先暫停買賣，價停在最後壹個價；新的價回來就恢復。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
-    { id: "night", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
-    { id: "handbrain", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", name: "聯發科", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
-    { id: "appleshop", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", name: "蘋果", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
-    { id: "linetower", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "neon", cat: "tech", name: "霓虹顯卡", line: "館外・世界版", fresh: true, market: "us", price: 231, chg: 0.017, hist: [220, 224, 226, 225, 227, 227, 231], mine: 0, kind: "out" },
+    { id: "sand", cat: "tech", name: "紅砂晶片", stale: "這幾分鐘抓不到新的真實價，先暫停買賣，價停在最後壹個價；新的價回來就恢復。", line: "館外・世界版", price: 64, chg: -0.011, hist: [66, 66, 65, 65, 66, 65, 64], mine: 0, kind: "out" },
+    { id: "night", cat: "index", name: "夜市指數", line: "館外・世界版", price: 540, chg: 0.003, hist: [535, 537, 538, 538, 539, 538, 540], mine: 0, kind: "out" },
+    { id: "handbrain", cat: "tech", name: "掌心晶片鋪", line: "手機晶片", real: { sym: "2454", name: "聯發科", px: 1235, chg: 0.012 }, mult: 24, price: 1250, chg: 0.012, mine: 0, kind: "out", market: "tw", twState: "open", halted: false, intraday: demoSeries(1235, 135, 7), intradayFrom: 0, fresh: true },
+    { id: "appleshop", cat: "tech", name: "銀蘋果工坊", line: "美股・手機", real: { sym: "AAPL", name: "蘋果", px: 189.52, chg: -0.003 }, mult: 32, price: 6065, chg: -0.003, mine: 0, kind: "out", market: "us", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "cuprum", cat: "res", name: "銅礦公司", line: "館外・世界版", market: "us", price: 40, chg: -0.014, hist: [38, 39, 40], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "oilco", cat: "res", name: "北海石油", line: "館外・世界版", market: "us", price: 57, chg: -0.007, hist: [55, 56, 57], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "goldmine", cat: "res", name: "金脈礦業", line: "館外・世界版", market: "us", price: 74, chg: 0, hist: [72, 73, 74], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "pharma", cat: "med", name: "白衣製藥", line: "館外・世界版", market: "us", price: 91, chg: 0.007, hist: [89, 90, 91], mine: 3, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "gene", cat: "med", name: "基因工坊", line: "館外・世界版", market: "us", price: 108, chg: 0.014, hist: [106, 107, 108], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "stream", cat: "fun", name: "星幕串流", line: "館外・世界版", market: "us", price: 125, chg: -0.014, hist: [123, 124, 125], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "toy", cat: "fun", name: "玩具大王", line: "館外・世界版", market: "us", price: 142, chg: -0.007, hist: [140, 141, 142], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "bankus", cat: "fin", name: "北岸銀行", line: "館外・世界版", market: "us", price: 159, chg: 0, hist: [157, 158, 159], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "payco", cat: "fin", name: "轉帳通", line: "館外・世界版", market: "us", price: 176, chg: 0.007, hist: [174, 175, 176], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "airco", cat: "travel", name: "雲端航空", line: "館外・世界版", market: "us", price: 193, chg: 0.014, hist: [191, 192, 193], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "cruise", cat: "travel", name: "遠洋郵輪", line: "館外・世界版", market: "us", price: 210, chg: -0.014, hist: [208, 209, 210], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "arms", cat: "def", name: "鐵盾重工", line: "館外・世界版", market: "us", price: 227, chg: -0.007, hist: [225, 226, 227], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "spyx", cat: "index", name: "大盤指數基金", line: "館外・世界版", market: "us", price: 244, chg: 0, hist: [242, 243, 244], mine: 0, kind: "out", usState: "pre", halted: true, intraday: [], intradayFrom: 0 },
+    { id: "linetower", cat: "travel", name: "島線電話行", line: "電信", price: 118, chg: 0, mine: 0, kind: "out", market: "tw", twState: "closed", halted: true, intraday: [], intradayFrom: 0 },
   ];
   stocks.forEach(x => { x.value = x.price * x.mine; x.tax = x.market === "us" ? 0 : 0.003; if (x.mine > 0) { x.avgCost = Math.round(x.price * 0.93 * 100) / 100; x.costTotal = Math.round(x.avgCost * x.mine); x.dayChg = Math.round(x.value * x.chg / (1 + x.chg)); x.dayPct = x.chg; x.pnl = x.value - x.costTotal; x.pnlPct = x.pnl / x.costTotal; } });
   const stockVal = stocks.reduce((n, s) => n + s.price * s.mine, 0) * 100;
@@ -70,16 +83,16 @@ export function fakeBankHall() {
     loan: { left: 8000000, limit: 10000000, pct: 0.1, days: 3, quick: [1000000, 2000000, 5000000], min: 500000, why: "",
       list: [{ id: "l1", amt: 2000000, owe: 2200000, day: "11-12", due: "11-15", today: false, from: "莊家" }] },
     bonds: { issue: { name: "B2 修繕債", line: "這週 B2 的白布要換新，莊家向館友借錢。", pct: 0.02, left: 21500000, cap: 30000000, mine: 1000000, due: "11-17" }, held: [{ id: "b1", amt: 1000000, int: 6000, due: "11-17" }], window: { from: "2026-11-14", until: "2026-11-15" }, state: "健康" },
-    stocks: { list: stocks, taxPct: 0.003, fee: 0.005, halt: false, sellCap: 20000000, sellTip: "信用升到 2 級可以賣到 5,000 萬。", inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
+    stocks: { list: stocks, cats: [{ id: "tech", name: "科技" }, { id: "res", name: "自然資源" }, { id: "med", name: "醫療生技" }, { id: "fun", name: "消費娛樂" }, { id: "fin", name: "金融" }, { id: "travel", name: "觀光運輸" }, { id: "def", name: "國防重工" }, { id: "index", name: "指數基金" }], taxPct: 0.003, fee: 0.005, halt: false, sellCap: 20000000, sellTip: "信用升到 2 級可以賣到 5,000 萬。", inCap: 1000, inSellLeft: 2000000, inExposeLeft: 8000000, inRule: "館內五家店的股價跟店的生意走，每天 05:00～23:30 每 15 分鐘動壹次。", usOpenAt: Date.now() + 3 * 3600000, us: { state: "pre", from: 570, len: 390 }, tw: { state: "open", from: 540, len: 270 }, inDay: { from: 300, len: 75, step: 15 }, haltFrom: 22, haltTo: 5, sellLeft: 2000000, feePaid: 18400,
       lev: { max: 5, byMarket: { in: 2, tw: 3, us: 0, grp: 3 }, owed: 120000, owedText: "今天賺的超過館方當天能賠的上限，還有 120,000 記成欠條，明天補發。", usWhy: "美股槓桿還沒開放（美股盤中時間跟台灣晚上對不上，風險太大）。", opensLeft: 2, opensMax: 3, fee: 0.005, interest: 0.0015, borrow: 0.003, force: 0.5, rule: "" }, credit: { pts: 17, level: 3, name: "穩當", maxLev: 3, next: 3, nextText: "再 3 點信用升到 4 級，就能開到 5×。", nextUnlock: { level: 4, lev: 5, pts: 20 }, why: "準時還款、定存到期都會加信用點，等級越高部位上限越大。", posLimit: 32000000, posUsed: 11000000 },
-      positions: [{ id: "p1", no: 1, sid: "handbrain", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
-      orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
+      positions: [{ id: "p1", no: 1, sid: "handbrain", cat: "tech", name: "掌心晶片鋪", market: "tw", side: "long", lev: 5, qty: 4000, n: 4000, margin: 1000000, entry: 1250, now: 1230, ratio: 0.82, liqPx: 1125, liq: 1125, maintPct: 82, pnl: -80000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }, { id: "p2", no: 2, sid: "cellar", name: "地下收藏庫", market: "in", side: "short", lev: 2, qty: 12000, n: 12000, margin: 600000, entry: 87, now: 91, ratio: 0.64, liqPx: 108, liq: 108, maintPct: 64, pnl: -48000, openedDay: "2026-11-14", dayTrade: true, stop: null, take: null }],
+      orders: [{ no: 1, kind: "buy", kindName: "限價買", id: "sand", cat: "tech", name: "紅砂晶片", n: 5000, px: 60, now: 64, day: "2026-11-14", exp: "2026-11-16", lock: 301500, lockShares: 0 }, { no: 2, kind: "stop", kindName: "停損賣", id: "food", name: "餐車", n: 20, px: 95, now: 102, day: "2026-11-14", exp: "2026-11-16", lock: 0, lockShares: 20 }], orderLeft: 8, orderMax: 10, orderPerStock: 3, orderDays: 3, cancelLeft: 20, lockChips: 301500,  margin: { owe: 1200000, ratio: 1.84, limit: 2000000, pct: 0.005 }, maker: [{ who: "莊家", does: "霓虹顯卡 20 萬股、夜市指數 5 萬股" }, { who: "老會計", does: "餐車、委託櫃台" }, { who: "小學徒", does: "手作坊（追漲）" }, { who: "守夜人", does: "紅砂晶片（逆勢）" }] },
     econ: { books: { day: "2026-11-15", bankroll: 1100000000, budget: 620000000, museum: 48000000, gov: 5200000, sea: 3200000, world: null, d: { bankroll: -12000000, budget: 8000000, museum: 1400000, sea: 300000, world: 0 }, top: { bankroll: [{ label: "21 點贏家拿走", n: -18000000 }, { label: "賭場下注收入", n: 6000000 }], budget: [{ label: "拚經濟撥款", n: -5000000 }, { label: "館方投資買進", n: -3000000 }, { label: "還館債", n: -2000000 }], museum: [{ label: "門票七成", n: 1800000 }], sea: [], world: [] } }, gdp: 3520000, growth: 0.032, idx: 0.68, news: "昨天的烤雞肉多賣了 300 份，餐車股今天小漲。博物館資金充裕，利息照發。", ext: { day: "2026-11-14", ticket: { hall: 18400, crowd: 31200 }, shop: { food: 52300, bj: 128000, craft: 9600, cellar: 0, job: 14400 }, shopCrowd: { food: 31200, bj: 0, craft: 4800, cellar: 0, job: 14400 }, total: 253900, people: { npc: 14, crowd: 86 }, menu: [{ id: "chicken", name: "烤雞肉", npc: 40, crowd: 120 }, { id: "tea", name: "麥茶", npc: 22, crowd: 60 }], orders: [{ who: "鞋店老闆", item: "tea", name: "麥茶", n: 1 }, { who: "小明", item: "chicken", name: "烤雞肉", n: 2 }] }, world: { day: "2026-11-14", states: { normal: 7, cut: 3, squeeze: 2, layoff: 1 }, bands: [1, 3, 7, 2], avgMult: 0.82, unrestBands: [6, 3, 2, 1], mood: { v: 72, band: "warm" }, events: [{ day: "2026-11-14", text: "島上科技集團減薪了" }, { day: "2026-11-12", text: "銀蘋果集團恢復正常" }] }, report: [["餐車", "賣出 412 份"], ["21 點", "共 380 手"], ["拚經濟", "成功 9 次"], ["門票", "收入 62,000"]],
 },
     today: { day: "2026-11-16", ticket: { hall: 120000, crowd: 200000 }, shop: 85000, total: 405000, people: { npc: 14, crowd: 520 } },
     houseInv: { asOf: "2026-11-13", hold: [{ id: "chipshop", name: "掌心晶片鋪", n: 2000, cost: 2400000, value: 2500000, pnl: 100000, pnlPct: 0.0417 }, { id: "applework", name: "銀蘋果工坊", n: 300, cost: 3000000, value: 2850000, pnl: -150000, pnlPct: -0.05 }, { id: "nightidx", name: "夜市指數", n: 800, cost: 420000, value: 432000, pnl: 12000, pnlPct: 0.0286 }],
       cost: 5820000, value: 5782000, pnl: -38000, pnlPct: -0.0065, pnlTotal: 64000, spent: 800000, yesterday: [{ side: "buy", id: "chipshop", name: "掌心晶片鋪", n: 400, px: 1230 }, { side: "sell", id: "applework", name: "銀蘋果工坊", n: 50, px: 9980 }], paused: { budget: "world" } },
-    world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", name: "島線電話行" }] }] }] },
+    world: { days: [{ day: "2026-11-13", items: [{ title: "晶片股走強", line: "手機晶片帶頭，電子股壹起收紅。", tone: "up", refs: [{ id: "handbrain", cat: "tech", name: "掌心晶片鋪" }] }, { title: "科技股回檔", line: "獲利了結，美股科技股收黑。", tone: "down", refs: [{ id: "appleshop", cat: "tech", name: "銀蘋果工坊" }] }, { title: "航運持平", line: "運價沒有大消息，盤整。", tone: "flat", refs: [] }] }, { day: "2026-11-12", items: [{ title: "電信小漲", line: "穩定型的股票受到青睞。", tone: "up", refs: [{ id: "linetower", cat: "travel", name: "島線電話行" }] }] }] },
     net: 8200000 + 12500000 + 7000000 + stockVal - 2200000 - 1200000,
     trade: { since: "2026-11-16", loans: [{ name: "民生集團", amt: 3600000, day: "2026-11-17" }], rows: [
       { k: "tradeGoods", label: "貨款（集團之間）", fromName: "島嶼集團", toName: "民生集團", n: 1500000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "民生集團", toName: "海外集團", n: 660000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "學校集團", n: 700000 }, { k: "tradeGoods", label: "貨款（集團之間）", fromName: "海外集團", toName: "島嶼集團", n: 220000 },
@@ -493,12 +506,21 @@ function stockRows(list, cur, S) {
       h("i", { class: "bank-grp-arrow", "aria-hidden": "true" }, shut ? "▸" : "▾"), h("span", null, STOCK_GROUPS[k] || "其他"),
       h("small", { class: "bank-grp-sum" }, `${mine.length} 支${held ? `・持有 ${held} 支` : ""}${shut ? "・點開" : ""}`)));
     if (shut) return;
-    list.forEach((s, i) => {
-      if (gk(s) !== k) return;
+    // 美股、台股照產業分小組（11-20，決定 0134：S.cats ＝ [{ id, name }]，每支 s.cat；小組也能收，記在同壹個 localStorage）
+    const subs = (k === "us" || k === "tw") && S && Array.isArray(S.cats) && S.cats.length && mine.some(s => s.cat) ? S.cats.concat([{ id: "_", name: "其他" }]).map(c => ({ c, rows: mine.filter(s => (s.cat || "_") === c.id) })).filter(g => g.rows.length) : null;
+    const rowFor = (s, i) => {
       const closed = s.session && s.session.state !== "open";
       rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
         h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : s.code ? h("small", { class: "ln real" }, codeBit(s)) : h("small", { class: "ln" }, s.line)),
         h("span", { class: "bank-tab-num" }, fp(s.price), usdText(s) ? h("small", { class: "bank-usd-sm" }, usdText(s)) : null), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
+    };
+    if (!subs) { list.forEach((s, i) => { if (gk(s) === k) rowFor(s, i); }); return; }
+    subs.forEach(({ c, rows: g }) => {
+      const sk = k + "/" + c.id, off = !!F[sk], heldN = g.filter(s => s.mine > 0).length;
+      rows.push(h("button", { type: "button", class: "bank-grp bank-grp-btn bank-sub" + (off ? " shut" : ""), "aria-expanded": String(!off), title: off ? "點開這壹小組" : "收起這壹小組", onClick: () => { foldSet(sk, !off); rerender(); } },
+        h("i", { class: "bank-grp-arrow", "aria-hidden": "true" }, off ? "▸" : "▾"), h("span", null, c.name),
+        h("small", { class: "bank-grp-sum" }, `${g.length} 支${heldN ? `・持有 ${heldN} 支` : ""}${off ? "・點開" : ""}`)));
+      if (!off) g.forEach(s => rowFor(s, list.indexOf(s)));
     });
   });
   return rows;
@@ -1045,8 +1067,10 @@ function creditPanel(c) {
 function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
   if (dup && (UI.bankPV === "market" || UI.bankPV === "hold")) return null; // 手機在看「行情」「持倉」那頁，底下不用再秀一條（交易頁留著拿來換股）
   const list = v.stocks ? v.stocks.list : [];
-  return h("div", { class: "bank-ticker" + (dup ? " dup" : ""), "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情"),
-    list.map((s, i) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
+  // 股票多了（美股 24 支＋台股…）整條拉不完：只放我持有的和今天漲跌最大的，最多 TICKER_MAX 支；全部在股票頁籤的行情表
+  const TICKER_MAX = 12, picks = list.length <= TICKER_MAX ? list.map((s, i) => i) : [...new Set(list.map((s, i) => i).filter(i => list[i].mine > 0).concat(list.map((s, i) => i).filter(i => !(list[i].mine > 0)).sort((a, b) => Math.abs(list[b].chg || 0) - Math.abs(list[a].chg || 0))))].slice(0, TICKER_MAX).sort((a, b) => a - b);
+  return h("div", { class: "bank-ticker" + (dup ? " dup" : ""), "aria-label": "今日行情" }, h("span", { class: "bank-tl" }, "今日行情", picks.length < list.length ? h("small", { class: "bank-tl-sub" }, "漲跌最大") : null),
+    picks.map(i => [list[i], i]).map(([s, i]) => h("button", { type: "button", class: "bank-tk" + (UI.bankTab === "stock" && s === list[UI.bankStock || 0] ? " on" : ""), onClick: () => { UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
       h("small", null, s.name), h("b", null, fp(s.price)), upDown(s.chg))));
 }
 
@@ -1072,6 +1096,7 @@ function helpSections(v) {
         `台股：${clock(tw.from)}～${twClose}。`,
         `美股（台灣時間）：冬令 ${usTime(13)}，夏令 ${usTime(12)}。`,
         "沒開盤的時候看得到價，但不能買賣。",
+        "行情表的組名、美股和台股底下的產業小組，點一下就能收起來，下次進來還記得。",
         `館外的價錢超過 ${S.staleMin} 分鐘沒更新，這一支會暫停買賣，標「未更新」；等新價來了才能動。`]],
       ["價錢怎麼來", [
         `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
