@@ -349,6 +349,8 @@ const stSeed = (S, H) => { for (const id of Object.keys(S.own)) if (S.cost[id] =
 // 證交稅（決定 0111）：賣出金額 × 稅率，無條件進位、最少 1（捨去的話小單拆開就逃稅）；不超過賣出拿到的錢（扣完手續費）。台股、館內股收，美股 taxUs（預設不收）
 export const casStockTaxPct = id => (stockIsUs(id) ? NUM.casino.stock.taxUs : NUM.casino.stock.taxPct);
 export const casStockTax = (id, gross, fee) => { const pc = Math.round(casStockTaxPct(id) * 100); return pc > 0 && gross > 0 ? Math.min(Math.max(0, gross - fee), Math.max(1, Math.ceil(gross * pc / 10000))) : 0; };
+// 費用的字（決定 0136）：0 寫「免手續費」，不寫「0%」
+export const casFeeText = p => (+p > 0 ? +p + "%" : "免手續費");
 // 這支館外股的手續費 %（決定 0136）：台股、美股各有自己的 feeOut，館內股、集團股用 feePct
 export const casStockFeePct = id => { const O = NUM.casino.stock.feeOut; return O && stockIsUs(id) && O.us != null ? O.us : O && stockIsTw(id) && O.tw != null ? O.tw : NUM.casino.stock.feePct; };
 const stFee = (n, id) => Math.ceil(n * casStockFeePct(id) / 100);
