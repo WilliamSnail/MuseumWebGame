@@ -370,7 +370,10 @@ export function storyToday() {
   const S = storyState(P), d = todayOf(W);
   const row = t => ({ id: t.id, text: taskText(t, W), done: taskDone(P, t), claimed: !!(S.tasks[t.id] && S.tasks[t.id].claimed), n: taskCount(P, W, t), tgt: taskTarget(t, W),
     go: W.past ? null : taskGo(t, W), yuga: t.giver === "yuga" && t.says ? t.says : "" });
-  return { title: W.title, daily: (d ? d.daily : []).map(row), weekly: [W.weekly.filter(t => taskDone(P, t)).length, W.weekly.length], claim: claimables(W) };
+  const gt = d ? d.daily.find(t => t.giver && t.says && !taskDone(P, t)) || d.daily.find(t => t.giver && t.says) : null; // 今天第壹個有交代人的任務（大廳小牌放頭像和壹句話）
+  return { pts: d && ptsDay(d) ? { td: dayPts(S, d), cap: NUM.story.pts.dayCap, wk: weekPts(S, W), goal: NUM.story.pts.goal } : null,
+    giver: gt ? { id: gt.giver, name: giverName(gt.giver), says: gt.says } : null, dailyLeft: d ? d.daily.filter(t => !taskDone(P, t)).length : 0, dailyN: d ? d.daily.length : 0,
+    title: W.title, daily: (d ? d.daily : []).map(row), weekly: [W.weekly.filter(t => taskDone(P, t)).length, W.weekly.length], claim: claimables(W) };
 }
 
 // ---------- 大廳總覽（ui_hub.js）裡的那壹列：標題、剩幾天、劇情線的下壹步、按鈕。任務的數字在總覽的格子裡，這裡不重複 ----------

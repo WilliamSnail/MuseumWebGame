@@ -90,6 +90,7 @@ ADDONS.todayCount = () => {
   const n = todayItems().filter(x => x.todo).length;
   const old = document.querySelector(".lobby-today"); // 大廳那壹條跟著換（做完壹件、賭場的讀到了）
   if (old) old.replaceWith(lobbyToday());
+  if (ADDONS.lobbyTodoRedraw) ADDONS.lobbyTodoRedraw(); // 大廳右欄『今天要做的事』也跟著重畫（簽到後那列要馬上換，11-20 測試回報）
   if (ADDONS.hubRefresh) ADDONS.hubRefresh(); // 大廳的總覽（ui_hub.js）也跟著換
   return n;
 };

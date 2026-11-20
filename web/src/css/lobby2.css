@@ -419,3 +419,14 @@ body.reduce-motion .hl-track { animation: none; }
   .new-lobby-on #status:not(.open) .st-row { gap: 0; padding-left: 8px; }
   .new-lobby-on #status .st-toggle { min-width: 40px; margin-right: 2px; }
 }
+
+/* 大廳『今天要做的事』：積分條、交代人頭像（11-20，翊文：積分和交代人在大廳好找） */
+.l2-pts { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin: 0 0 6px; padding: 6px 10px; border-radius: 6px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #3B2A1D, #2A1D14); color: #F3E6C8; font: inherit; font-size: .75rem; cursor: pointer; text-align: left; }
+.l2-pts:hover { filter: brightness(1.12); }
+.l2-pts b { font-family: Georgia, var(--serif); font-size: .9375rem; color: #FFF3D2; }
+.l2-pts > span { white-space: nowrap; }
+.l2-pts-bar { flex: 1; min-width: 24px; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .5); overflow: hidden; }
+.l2-pts-bar u { display: block; height: 100%; text-decoration: none; background: linear-gradient(180deg, #F2D27A, #B8892E); }
+.l2-todo.has-giver { display: flex; align-items: center; gap: 8px; }
+.l2-todo.has-giver .tkc-av { flex: none; }
+.l2-todo-t { display: block; min-width: 0; flex: 1; }
