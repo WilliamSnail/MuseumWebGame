@@ -46,7 +46,7 @@ const T = async (name, fn) => { try { await fn(); pass++; } catch (e) { fail++; 
   await T("接線：伺服器匯出 clientError、不讀存檔和 uid；網頁載入 error_report、開發時不送；委託櫃台側欄每塊有 safeBlock", () => {
     const R = f => fs.readFileSync(path.join(__dirname, "..", "..", f), "utf8");
     assert.ok(/export \{ clientError \}/.test(R("functions/index.js")));
-    const fn = R("functions/client_error.js");
+    const fn = R("functions/game/client_error.js");
     assert.ok(!/req\.auth|\.uid\b/.test(fn), "伺服器端不碰登入資訊");
     assert.ok(/clientErrClean\(req\.data\)/.test(fn) && /clientErrQuota/.test(fn) && /expireAt/.test(fn));
     assert.ok(/error_report\.js/.test(R("web/src/main.js")));

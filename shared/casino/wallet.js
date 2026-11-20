@@ -1,6 +1,6 @@
 // ================================================================
 //  Hamachi 賭場：籌碼錢包、大禮包、餐車、救濟、換小獎、成就和財產、舊資料認領、單人的每一步（決定 0040）
-//  純函式：不碰資料庫。Functions（functions/casino.js）在 Firestore 交易裡讀進來、呼叫這裡、寫回去。
+//  純函式：不碰資料庫。Functions（functions/casino/casino.js）在 Firestore 交易裡讀進來、呼叫這裡、寫回去。
 //  籌碼跟靈感分開：錢包放 Firestore 的 casinoWallets/{uid}，只有 Functions 能寫。沒有真錢，不能花錢買。
 //  「今天」「這週」由呼叫的人給（伺服器的時間），不信瀏覽器。
 //  錢包的資料（w）：

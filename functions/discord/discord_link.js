@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  遊戲裡的「綁定 Discord」（決定 0051）：館友在「我的帳號」拿 6 位數的碼，到 Discord 打 /pepe-綁定 碼。
 //    discordLinkCode   拿碼（10 分鐘、只能用壹次；再拿壹個舊的就作廢）。已經綁定了就不給
@@ -9,8 +9,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { discordConfig } from "./discord_config.js";
 import { linkState, makeLinkCode, unlinkByUid } from "./discord_data.js";
-import { needMember, now as nowMs } from "./party.js";
-import { NUM } from "./shared/config.js";
+import { needMember, now as nowMs } from "../coop/party.js";
+import { NUM } from "../shared/config.js";
 
 export const discordLinkState = onCall(async req => {
   const me = await needMember(req);

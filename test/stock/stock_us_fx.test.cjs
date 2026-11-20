@@ -49,7 +49,7 @@ T("匯率變動只是價格漲跌：持股數不變、市值照新價算", G => 
   assert.ok(G.casStockHouseFix(h2).px[ID] < H.px[ID], "匯率低，遊戲價低");
 });
 T("functions 的 parseFx：只收 15～60 的數字", G => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock_us.js"), "utf8"), i = src.indexOf("export function parseFx"), j = src.indexOf("export async function fetchFx");
+  const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock", "stock_us.js"), "utf8"), i = src.indexOf("export function parseFx"), j = src.indexOf("export async function fetchFx");
   const parseFx = new Function(src.slice(i, j).replace("export function", "return function"))();
   const m = v => ({ chart: { result: [{ meta: { regularMarketPrice: v } }] } });
   assert.strictEqual(parseFx(m(32.41234)), 32.4123); assert.strictEqual(parseFx(m(0)), null); assert.strictEqual(parseFx(m(3200)), null); assert.strictEqual(parseFx(m("32")), null); assert.strictEqual(parseFx(null), null);

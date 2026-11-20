@@ -278,7 +278,7 @@ export function casStockPegSync(w, house) {
   casStockHoldCost(w, house, S, H);
 }
 // ---------- 配股息（決定 0112） ----------
-// 伺服器把抓到的除息、配股事件放進莊家（functions/stock_div.js 每小時抓 Yahoo，存 stocksDiv/latest；casino.js 每次交易前呼叫這個）。純函式：doc.ev 是 [{ id, kind, ex, amt|r }]
+// 伺服器把抓到的除息、配股事件放進莊家（functions/stock/stock_div.js 每小時抓 Yahoo，存 stocksDiv/latest；casino.js 每次交易前呼叫這個）。純函式：doc.ev 是 [{ id, kind, ex, amt|r }]
 export function casStockSetDiv(house, doc) {
   const H = casStockHouseFix(house), list = doc && Array.isArray(doc.ev) ? doc.ev : [];
   const old = Object.fromEntries(H.div.ev.map(e => [e.key, e]));

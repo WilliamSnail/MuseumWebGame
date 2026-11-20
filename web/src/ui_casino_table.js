@@ -1,5 +1,5 @@
 // ================================================================
-//  Hamachi 賭場：館友同桌的畫面（第二階段，決定 0040；規則 shared/casino/table.js，伺服器 functions/casino_table.js）
+//  Hamachi 賭場：館友同桌的畫面（第二階段，決定 0040；規則 shared/casino/table.js，伺服器 functions/casino/casino_table.js）
 //  這個檔只畫「伺服器給我的樣子」：1–4 人同壹張桌、同壹副牌、同壹個莊家，各下各的注，輪流要牌，有時間限制。
 //  - 入口：賭場「牌桌」頁籤下面（ADDONS.casinoTable）、館友小卡「邀請壹起玩 21 點」（FRIEND_ACTIONS）。邀請卡用 ui_party.js 那壹套（PARTY_HOOKS.table 接回來）。
 //  - 木框開著：聽 parties/{pid}（誰在桌上）、casinoView/{pid}/{我}（我看到的樣子）、casinoChat/{pid}（桌上說的話）。

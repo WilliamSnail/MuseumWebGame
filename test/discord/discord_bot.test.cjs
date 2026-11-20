@@ -255,11 +255,11 @@ T("綁定成功的字：第一次說送了多少，領過了就說領過了", G 
 // ---------- 原始碼上的檢查（沒有模擬器也能擋的） ----------
 T("Functions 的 Discord 檔：不用 Math.random、不寫死金鑰；設定檔的三個欄位是字串", () => {
   for (const f of ["discord.js", "discord_data.js", "discord_link.js", "discord_config.js"]) {
-    const src = fs.readFileSync(path.join(ROOT, "functions", f), "utf8");
+    const src = fs.readFileSync(path.join(ROOT, "functions", "discord", f), "utf8");
     assert.ok(!/Math\.random/.test(src), f + " 不准用 Math.random");
     assert.ok(!/BOT_TOKEN|Bot\s+[A-Za-z0-9_-]{20,}/.test(src.replace(/\/\/.*$/gm, "")), f + " 不放 token");
   }
-  const cfg = fs.readFileSync(path.join(ROOT, "functions", "discord_config.js"), "utf8");
+  const cfg = fs.readFileSync(path.join(ROOT, "functions", "discord", "discord_config.js"), "utf8");
   assert.ok(/applicationId: "[0-9]*"/.test(cfg) && /publicKey: "[0-9a-f]*"/.test(cfg) && /guildId: "[0-9]*"/.test(cfg));
 });
 

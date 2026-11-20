@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  Hamachi 賭場（決定 0040）：單人 21 點、籌碼錢包、大禮包、餐車、救濟、換小獎、成就和財產、舊資料認領。
 //  規則在 shared/casino/core.js、shared/casino/wallet.js；這個檔只管讀寫，每一步都是 Firestore 交易。
@@ -22,51 +22,51 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
-import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
-import { casNum, casRoundView } from "./shared/casino/core.js";
-import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "./shared/casino/bank.js";
-import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino/wallet.js";
-import { CAS_LIVE, CAS_TEXT } from "./shared/casino/text.js";
-import { casWkSync, casWkView } from "./shared/casino/week.js";
-import { titlePublish } from "./shared/titles.js";
-import { casCellarFind } from "./shared/casino/find.js";
-import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino/book.js";
-import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino/report.js";
-import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino/gdp.js";
-import { ECONOMY } from "./shared/economy_data.js";
-import { DAY_DATA } from "./shared/day_data.js";
-import { casTicketClaimKeys } from "./shared/casino/ticket.js";
-import { casJobChips } from "./shared/casino/job.js";
-import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "./shared/casino/econ.js";
-import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino/bond.js";
-import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino/stock_lev.js";
-import { casArtSecret } from "./shared/casino/art.js";
-import { npcCounters, npcPublic } from "./shared/npc.js";
-import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
-import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./shared/econ_events.js";
-import { NPC_LIST } from "./shared/npc_list_data.js";
-import { npcCasAway } from "./shared/casino/npc.js";
-import { npcCardView } from "./shared/npc_card.js";
-import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "./shared/world.js";
-import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "./shared/casino/stock_grp.js";
-import { casSellForDebt } from "./shared/casino/debt.js";
-import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino/advisor.js";
-import { MAIL_DAYS } from "./shared/mailbox.js";
-import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
-import { casInvestPublic, casInvestRun } from "./shared/casino/invest.js";
-import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino/stock_in.js";
-import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino/stock.js";
-import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino/bank.js";
-import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino/live.js";
-import { eventLive, eventsFromWeeks } from "./shared/events.js";
-import { EVENT_WEEKS } from "./shared/events_data.js";
-import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
-import { setRng, taipeiDay } from "./shared/logic.js";
-import { inbox, needMember, newId, now, rtdb, statusOf } from "./party.js";
-import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js";
-import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
-import { stocksDiv } from "./stock_div.js";
-import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
+import { NUM } from "../shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
+import { casNum, casRoundView } from "../shared/casino/core.js";
+import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "../shared/casino/bank.js";
+import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "../shared/casino/wallet.js";
+import { CAS_LIVE, CAS_TEXT } from "../shared/casino/text.js";
+import { casWkSync, casWkView } from "../shared/casino/week.js";
+import { titlePublish } from "../shared/titles.js";
+import { casCellarFind } from "../shared/casino/find.js";
+import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "../shared/casino/book.js";
+import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "../shared/casino/report.js";
+import { casGdpExt, casGdpIndex, casGdpOf } from "../shared/casino/gdp.js";
+import { ECONOMY } from "../shared/economy_data.js";
+import { DAY_DATA } from "../shared/day_data.js";
+import { casTicketClaimKeys } from "../shared/casino/ticket.js";
+import { casJobChips } from "../shared/casino/job.js";
+import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "../shared/casino/econ.js";
+import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "../shared/casino/bond.js";
+import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "../shared/casino/stock_lev.js";
+import { casArtSecret } from "../shared/casino/art.js";
+import { npcCounters, npcPublic } from "../shared/npc.js";
+import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "../shared/npc_data.js";
+import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "../shared/econ_events.js";
+import { NPC_LIST } from "../shared/npc_list_data.js";
+import { npcCasAway } from "../shared/casino/npc.js";
+import { npcCardView } from "../shared/npc_card.js";
+import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "../shared/world.js";
+import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "../shared/casino/stock_grp.js";
+import { casSellForDebt } from "../shared/casino/debt.js";
+import { casAdvisorExtend, casAdvisorLetter } from "../shared/casino/advisor.js";
+import { MAIL_DAYS } from "../shared/mailbox.js";
+import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "../shared/npc_spend.js";
+import { casInvestPublic, casInvestRun } from "../shared/casino/invest.js";
+import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "../shared/casino/stock_in.js";
+import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "../shared/casino/stock.js";
+import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "../shared/casino/bank.js";
+import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "../shared/casino/live.js";
+import { eventLive, eventsFromWeeks } from "../shared/events.js";
+import { EVENT_WEEKS } from "../shared/events_data.js";
+import { CAS_WEEK_LIB } from "../shared/casino_week_data.js";
+import { setRng, taipeiDay } from "../shared/logic.js";
+import { inbox, needMember, newId, now, rtdb, statusOf } from "../coop/party.js";
+import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "../stock/stock_tw.js";
+import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "../stock/stock_us.js";
+import { stocksDiv } from "../stock/stock_div.js";
+import { outDonate, outHouse, outLiveOn } from "../discord/discord_out.js";
 import { markAct, readActs } from "./task_act.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
@@ -83,7 +83,7 @@ const emailOf = req => String((req.auth && req.auth.token && req.auth.token.emai
 // 一個交易：讀錢包、這一手、莊家（要的話還有存檔、舊資料）→ fn(ctx) → 寫回
 // fn 回傳 { ok: false, ... }：什麼都不寫，原樣回給畫面（不是錯誤：荷官的話也是這樣回）
 // fn 回傳 { ok: true, ... }：ctx.round 有改（ctx.roundDirty）就寫；錢包、莊家一定寫；ctx.saveDirty 就寫存檔
-// 核心吃 { uid, nick } 和 email（只有認領舊資料用）：遊戲（casino 這個 Function）和 Discord（functions/discord_play.js）各包一層，規則只有這壹份
+// 核心吃 { uid, nick } 和 email（只有認領舊資料用）：遊戲（casino 這個 Function）和 Discord（functions/discord/discord_play.js）各包一層，規則只有這壹份
 // 大廳要的「現在展廳有誰」和最近的評價（peek 回給畫面；只讀，不結算）。now { hall 展廳現在有幾位 NPC、names 他們的名字、around 現在在館裡的 NPC 共幾位 }、reviews 最近的評價（新的在前，最多 20 則 { who, text, stars, at, day }）。
 // 各家店現在幾位 NPC 不給（那是今天的人數，會洩漏明天的跳空）；還沒結算的（到了、還沒有人碰莊家文件）評價也在 reviews 裡補上
 async function npcNowView(h) {

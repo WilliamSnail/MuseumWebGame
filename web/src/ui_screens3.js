@@ -441,7 +441,7 @@ export function officeRepair() {
       }, "ghost"))))
       : h("p", { class: "empty" }, `沒有失敗作。擲出 ${NUM.fumbleFrom}–100 才會有。`));
 }
-// 送館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友 → 選一隻 → 寄到他的信箱（規則在 shared/gifts.js，伺服器在 functions/visit.js 的 sendGift）。取代交換碼
+// 送館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友 → 選一隻 → 寄到他的信箱（規則在 shared/gifts.js，伺服器在 functions/game/visit.js 的 sendGift）。取代交換碼
 export function officeTrade() {
   const free = isFree(P);
   return h("div", { class: "trade" }, h("div", { class: "share-box" },

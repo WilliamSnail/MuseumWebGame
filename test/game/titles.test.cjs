@@ -179,7 +179,7 @@ T("規則：status 沒有開 title 欄位（在線狀態還是只能寫原本那
 });
 T("規則：其他地方沒被放寬（頂層的鍵、根目錄還是不能讀寫、members 還是讀不到）", G => {
   assert.deepStrictEqual(Object.keys(rules).sort(), [".read", ".write", "casinoChat", "casinoLive", "casinoView", "coopChat", "coopReports", "coopTalkLog", "coopView", "inbox", "invites", "lostFound", "lounge", "members", "partyOf", "parties", "status", "titles", "traces", "workers"].sort());
-  assert.strictEqual(rules.lostFound[".write"], false, "招領單只有伺服器寫得動（ui_lost.js、functions/lostfound.js）");
+  assert.strictEqual(rules.lostFound[".write"], false, "招領單只有伺服器寫得動（ui_lost.js、functions/game/lostfound.js）");
   assert.strictEqual(rules[".read"], false);
   assert.strictEqual(rules[".write"], false);
   assert.strictEqual(rules.members[".read"], false);
@@ -193,10 +193,11 @@ T("規則：Firestore 的規則沒動（members 還是只能改 nick、invisible
   assert.ok(/match \/saves\/\{uid\}[\s\S]*allow read: if isMember\(\) && isMe\(uid\)/.test(f));
 });
 T("Functions 只在 casino.js 寫 titles/{uid}，而且交易成功才公開", G => {
-  const src = fs.readFileSync(path.join(ROOT, "functions", "casino.js"), "utf8");
+  const src = fs.readFileSync(path.join(ROOT, "functions", "casino", "casino.js"), "utf8");
   assert.ok(src.includes("titles/${uid}") && src.includes("titlePublish"));
   assert.ok(/if \(out && out\.ok\) await publishTitle/.test(src));
-  for (const f of fs.readdirSync(path.join(ROOT, "functions")).filter(x => x.endsWith(".js") && x !== "casino.js")) {
+  const fnDeep = d => fs.readdirSync(path.join(ROOT, "functions", d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? (["shared", "node_modules"].includes(e.name) ? [] : fnDeep(d ? d + "/" + e.name : e.name)) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
+  for (const f of fnDeep("").filter(x => x !== "casino/casino.js")) {
     assert.ok(!fs.readFileSync(path.join(ROOT, "functions", f), "utf8").includes("titles/"), f + " 不該寫 titles");
   }
 });

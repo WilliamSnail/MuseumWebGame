@@ -1,7 +1,7 @@
 // ================================================================
 //  「綁定 Discord」（我的帳號裡壹列，決定 0051）
 //  翊文 11-09：「能夠連線玩家相應的Discord 帳號，讓玩家可以在discord 直接玩賭場或是斗內等等的」
-//  資料從 Functions 來（functions/discord_link.js）；規則在 shared/discord/core.js；樣式在 css/discord.css。
+//  資料從 Functions 來（functions/discord/discord_link.js）；規則在 shared/discord/core.js；樣式在 css/discord.css。
 //    - 登入了才有（我的帳號本來就要登入）。伺服器那邊還沒設定 Discord（configured: false）：整列藏起來，不會有按了沒用的按鈕。
 //    - 沒綁定：按「綁定 Discord」拿 6 位數的碼，顯示碼、剩多久、怎麼用；每 4 秒問壹次，綁好了就換成「已綁定」。
 //    - 已綁定：可以解除（獎勵不會再送）。

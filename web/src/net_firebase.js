@@ -74,7 +74,7 @@ export function createFirebaseNet(opts = {}) {
     onAuthStateChanged(auth, u => { if (!u && me) { me = null; stopPresence(); emit("logout", { code: "need_login" }); } });
     return ready;
   }
-  // 伺服器回傳裡有 letter（剛寄進信箱的信，例如財經專員的信，functions/casino.js）：叫 letterHook，畫面馬上提示（11-17 翊文：「介面會提示嗎」）
+  // 伺服器回傳裡有 letter（剛寄進信箱的信，例如財經專員的信，functions/casino/casino.js）：叫 letterHook，畫面馬上提示（11-17 翊文：「介面會提示嗎」）
   let letterHook = null;
   const call = async (name, data = {}) => {
     let d;

@@ -1,7 +1,7 @@
 // 證交所盤中回應的解析（11-16：大型股 z 常回 "-"，被當成沒新行情、標「未更新」）
 // functions/ 的檔部署前才複製 shared，這裡直接取出 parseMis 和 TW_SYMBOLS 的原始碼來跑（不載入 firebase）
 const assert = require("assert"), fs = require("fs"), path = require("path");
-const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock_tw.js"), "utf8");
+const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock", "stock_tw.js"), "utf8");
 const sym = /export const TW_SYMBOLS = (\{[^}]*\});/.exec(src)[1];
 const i = src.indexOf("export function parseMis("), j = src.indexOf("\n}\n", i) + 2;
 const TW = JSON.parse(sym.replace(/(\w+):/g, '"$1":'));

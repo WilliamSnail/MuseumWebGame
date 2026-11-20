@@ -6,8 +6,8 @@
 //  Firestore 路徑：world/main、worldDays/{日期}（規劃寫的 world/days/{日期} 不是合法路徑，改成 worldDays）。內容都是 { data: JSON 字串, updatedAt }，跟其他文件一樣。
 // ================================================================
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { taipeiDay } from "./shared/logic.js";
-import { wdTick } from "./shared/world.js";
+import { taipeiDay } from "../shared/logic.js";
+import { wdTick } from "../shared/world.js";
 
 const db = () => getFirestore();
 const worldRef = () => db().doc("world/main");

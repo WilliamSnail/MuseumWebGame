@@ -9,20 +9,20 @@
 //  交易可能重跑：種子只看 run.id、run.step、run.rev，重跑擲出來一樣。setRng 到換回來之間不能 await。
 //  結果寫回下去的那一位參觀者：存檔上現在是別位的話，先換過去、算完換回來（決定 0018）。
 // ================================================================
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { COOP, coopFix, coopMember, coopPresent } from "./shared/coop/base.js";
-import { viewFor } from "./shared/coop/core.js";
-import { coopAct, coopBegin } from "./shared/coop/flow.js";
-import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop/fun.js";
-import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "./shared/party.js";
-import { trialById } from "./shared/shop.js";
-import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
-import { NUM } from "./shared/config.js";
-import { switchVisitor } from "./shared/visitors.js";
-import { eventLive, eventRunOf, eventsFromWeeks } from "./shared/events.js";
-import { EVENT_WEEKS } from "./shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
+import { COOP, coopFix, coopMember, coopPresent } from "../shared/coop/base.js";
+import { viewFor } from "../shared/coop/core.js";
+import { coopAct, coopBegin } from "../shared/coop/flow.js";
+import { coopReportProblem, coopSayBuild, coopSayGap } from "../shared/coop/fun.js";
+import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "../shared/party.js";
+import { trialById } from "../shared/shop.js";
+import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "../shared/logic.js";
+import { NUM } from "../shared/config.js";
+import { switchVisitor } from "../shared/visitors.js";
+import { eventLive, eventRunOf, eventsFromWeeks } from "../shared/events.js";
+import { EVENT_WEEKS } from "../shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
 import { traceRunEnd } from "./coop_trace.js";
 
@@ -159,7 +159,7 @@ async function startRun(me, pid) {
   return { ok: true };
 }
 
-// ---------- 離隊的掛鉤（functions/party.js 的 leaveParty 叫） ----------
+// ---------- 離隊的掛鉤（functions/coop/party.js 的 leaveParty 叫） ----------
 partyHooks.beforeLeave.push(async (pid, uid) => {
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
   if (!p || p.kind !== "cellar") return;

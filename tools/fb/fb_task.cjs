@@ -104,11 +104,11 @@ async function worldStatus(db) {
   if (h.npcs && h.npcs.byUnit) console.log(`NPC 最近一天（${h.npcs.day || "-"}）各集團出：` + Object.keys(h.npcs.byUnit).map(k => `${names[k] || k} ${fmt(h.npcs.byUnit[k])}`).join("　"));
 }
 
-// 台股手動換真實價（見檔頭 stock-tw-peg）。真實代號只寫在 functions/stock_tw.js，這裡從那個檔讀出來
+// 台股手動換真實價（見檔頭 stock-tw-peg）。真實代號只寫在 functions/stock/stock_tw.js，這裡從那個檔讀出來
 async function stockTwPeg(db) {
-  const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock_tw.js"), "utf8");
+  const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock", "stock_tw.js"), "utf8");
   const m = /TW_SYMBOLS = (\{[^}]+\})/.exec(src);
-  if (!m) throw new Error("functions/stock_tw.js 裡找不到 TW_SYMBOLS");
+  if (!m) throw new Error("functions/stock/stock_tw.js 裡找不到 TW_SYMBOLS");
   const syms = JSON.parse(m[1].replace(/(\w+):/g, '"$1":'));
   const ex = Object.values(syms).map(c => `${c === "4743" ? "otc_" : "tse_"}${c}.tw`).join("|");
   const r = await fetch(`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(ex)}&json=1&delay=0&_=${Date.now()}`, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(10000) });

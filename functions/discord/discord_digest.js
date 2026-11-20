@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  每天台灣 20:00 發「今天的更新」到 Discord（翊文 11-15：每天壹則、晚上 8 點）
 //  以前是 GitHub 的定時（.github/workflows/discord-digest.yml），11-15、11-16 都晚了 6～9 小時（11-16 那則隔天 05:32 才發）；
@@ -8,9 +8,9 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { outboxPut } from "./discord_out.js";
-import { NOTICES, NOTICE_AREAS, noticeArea } from "./shared/notices.js";
-import { taipeiDay } from "./shared/logic.js";
-import { dcDigestPost } from "./shared/discord/out.js";
+import { NOTICES, NOTICE_AREAS, noticeArea } from "../shared/notices.js";
+import { taipeiDay } from "../shared/logic.js";
+import { dcDigestPost } from "../shared/discord/out.js";
 
 export async function digestRun(now = Date.now()) {
   const day = taipeiDay(now), text = dcDigestPost(NOTICES, day, noticeArea, NOTICE_AREAS);

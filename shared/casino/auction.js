@@ -14,7 +14,7 @@
 //    館方的畫 → 莊家（casHouseMove "artAuction"）；玩家的畫 → 賣家（扣 feePct% 進博物館資金，casCount "artFee"）。
 //    畫從賣家的 P.art.own 搬到得標的人；house.art.own（全館持有幾份）不變。
 //  收標是「下次有人摸到拍賣」時才算（lazy），壹場壹個 Firestore 交易，從 open 搬到 done 跟所有錢包、存檔同壹次寫，所以不會付兩次。
-//  純函式：「今天」「現在」從參數來。伺服器入口在 functions/art.js。
+//  純函式：「今天」「現在」從參數來。伺服器入口在 functions/casino/art.js。
 // ================================================================
 import { NUM } from "../config.js";
 import { casCount, casHouseMove, casHouseWorldOut, casPoolGain, casPoolWorldOut, casWorldOut, casWorldRoom } from "./book.js";

@@ -3,7 +3,7 @@
 //  翊文 11-09：「理想是Yuga bot可以在我們discord channel 跟玩家互動，內容也是跟我們數據庫即時同步的」
 //
 //  純函式：不碰網路、資料庫、畫面、時鐘（時間由呼叫的人傳進來），亂數由呼叫的人傳函式進來。
-//  Functions（functions/discord.js、functions/discord_data.js）讀寫資料庫，這裡只管：
+//  Functions（functions/discord/discord.js、functions/discord/discord_data.js）讀寫資料庫，這裡只管：
 //    - 解析 Discord 送來的 interaction（dcParse）、組回覆（dcReply 和各種 dc…Text）
 //    - 綁定碼、自己加入的碼：格式、期限、打錯太多次暫時擋、每天加入上限
 //    - 公開的字：只有遊戲暱稱；沒有 email、理智、怪癖、靈感（任何回覆都不放）

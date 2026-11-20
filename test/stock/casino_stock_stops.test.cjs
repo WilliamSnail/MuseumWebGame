@@ -206,7 +206,7 @@ T("下單檢查：同壹家最多 3 張；還沒換日不能下；股數 0、價
   assert.ok(!G.casStockOrder(s3.s.w, s3.s.h, "buy", IN, 1, s3.ser[3] + 5, D0, tick(D0, 3)).ok, "限價買要低於現價");
 });
 T("伺服器接線：actStock 有 levset、館內股 order／cancel", G => {
-  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "casino.js"), "utf8");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "casino", "casino.js"), "utf8");
   assert.ok(src.includes('op === "levset"') && src.includes("casLevSet"));
   assert.ok(!src.includes("館內股票還不能掛單"));
 });

@@ -1,5 +1,5 @@
 // ================================================================
-//  實況和斗內的畫面（決定 0053；規則 shared/casino/live.js，伺服器 functions/casino.js 的 live／liveOn／liveOff／donate）
+//  實況和斗內的畫面（決定 0053；規則 shared/casino/live.js，伺服器 functions/casino/casino.js 的 live／liveOn／liveOff／donate）
 //  這個檔放全館共用的部分：
 //    聽 Realtime Database 的 casinoLive（Functions 寫、館友讀）：現在誰在實況、最近一則感謝。有人斗內，在線的人都跳一則「○○ 斗內了 N！實況主感謝 ○○ 的斗內～」，
 //    收到斗內的人（msg.toUid 是自己）順便重讀籌碼，狀態列的數字跟著變。剛連上那一刻已經在那裡的舊訊息不跳。

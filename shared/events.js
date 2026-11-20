@@ -8,7 +8,7 @@
 //  種類（EVENT_KINDS）：coopBoost 合作地下收藏庫的靈感變多、活動中多 1 趟有獎勵；trialBoost 試煉房間的技能成長變多。
 //    加新種類：EVENT_KINDS 多一列、NUM.events 多數字、用到的地方多一個判斷；tools/content/week_check.cjs 自動認得。
 //  誰說了算：
-//    合作的加成：Functions 用伺服器時間判斷（functions/coop.js 按出發那一刻）。開始時在活動內，這一趟就照活動算到走完（記在 run.event），
+//    合作的加成：Functions 用伺服器時間判斷（functions/coop/coop.js 按出發那一刻）。開始時在活動內，這一趟就照活動算到走完（記在 run.event），
 //      22:01 才走完也不會被扣。玩家改電腦時間沒用。
 //    試煉：畫面跑的，用 nowMs()（網路時間，決定 0026）。走進去那一刻在活動內，這一間就照活動算（記在房間的 extra.boost）。
 //  沒有懲罰：錯過活動什麼都不會少；沒有倒數恐嚇。
