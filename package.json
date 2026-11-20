@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "node server/main.js",
     "test": "node test/run_all.cjs",
     "log:index": "node tools/log_index.cjs",
     "econ:check": "node tools/econ_check.cjs",
@@ -68,7 +67,6 @@
     "vite": "^8.3.6"
   },
   "dependencies": {
-    "firebase": "^13.2.0",
-    "ws": "^8.22.1"
+    "firebase": "^13.2.0"
   }
 }

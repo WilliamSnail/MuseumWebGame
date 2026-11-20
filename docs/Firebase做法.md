@@ -19,7 +19,7 @@ Hosting：放 dist/，網址 專案名.web.app
 
 - **一個專案**：`pepe-museum`（網址 `pepe-museum.web.app`，決定 0023）。測試都在模擬器，不另外開測試專案。
 - **本機**：Firebase 模擬器，專案名用 `demo-pepe4`。`demo-` 開頭的專案不用登入 Firebase、不會連到真的專案（官方的設計），兩個人的 AI 在自己電腦都可以跑。
-- 原本的 Node 伺服器（`server/`、`db/`）留著當參考，不再加東西。
+- 原本的 Node 伺服器（`server/`、`db/`）11-20 翊文決定刪掉（要看舊程式去 git 歷史找）。
 
 ## 二、資料放哪裡
 
