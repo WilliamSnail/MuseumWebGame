@@ -26,6 +26,7 @@ import { CAS_AUC } from "../../shared/casino/auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
 import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
+import { noticeCard } from "./ui_party.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookBack, bookGain, bookReader, roomHead } from "./ui_room.js";
@@ -96,6 +97,10 @@ export function storyTick() {
     if (warm) queue.push(...ev);
     persist();
   }
+  // 新制（每日任務改積分）第壹次：進館跳壹張提示，只跳壹次（記在這台裝置，不動存檔格式）
+  const dN = todayOf(W);
+  if (warm && dN && ptsDay(dN)) { let seen = true; try { seen = localStorage.getItem("pm-pts-intro") === "1"; if (!seen) localStorage.setItem("pm-pts-intro", "1"); } catch (e) { /* ignore */ }
+    if (!seen) noticeCard({ who: "任務", text: "每日任務換成積分了：每天最多 120 分，每週 500 分領大獎，中間還有獎勵。", actions: [{ label: "打開任務板", primary: true, run: () => PANELS.today && PANELS.today() }, { label: "知道了" }], ms: 30000 }); }
   warm = true;
   trackBar();
   roomTaskBar();
