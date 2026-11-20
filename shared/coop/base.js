@@ -15,7 +15,7 @@ export const COOP = {
   maxPlayers: 4,          // 一隊最多幾個人（一個人也能下去）
   eachMin: 1, eachMax: 2, // 每個人帶幾隻
   teamMin: 3,             // 隊伍至少幾隻：不夠由館方助手補
-  teamMax: 6,             // 隊伍最多幾隻（舞台放得下 6 隻；4 個人只能有兩個人帶 2 隻）
+  teamMax: 8,             // 隊伍最多幾隻（翊文 11-21：4 個人（真人加 NPC）每人最多 2 隻 ＝ 8 隻；原本 6 隻）
   helperName: "館方助手", // 草稿，之後搬到 systems_text.js
   // 館方助手的佩佩：稀有（強度 2）、俄國8+9（不剋別人、也不被剋），強度很穩，不會太強
   helpers: [
