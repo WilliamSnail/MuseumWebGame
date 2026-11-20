@@ -155,6 +155,7 @@ const STEPS = [
   ["金流圖的家計和 NPC 錢包（發薪水、NPC 和散客花的錢記出錢的單位、單位端點加起來等於世界流水、線不重複，決定 0128）", ["test/flow_wage.test.cjs"]],
   ["佩佩銀行跟賭場分開（新借款、館債、存款利息由 gb 出、舊借款還莊家、莊家水位上繳 hdep、盈餘 30／70、舊館債搬一次、60 天亂數守恆，決定 0130）", ["test/bank_split.test.cjs"]],
   ["銀行規則與小提示（有集團股、金流、佩佩銀行分頁，不寫過時的話，數字讀設定）", ["test/bank_help.test.cjs"]],
+  ["銀行頁的日期防呆（mdShift 壞日期回「—」不丟錯；ui_bank.js 不直接用 toISOString／Date.parse，11-18 玩家的 Invalid time value）", ["test/bank_date.test.cjs"]],
   ["文化部資助壹位館友（只壹次、不是借款、錢從 u-culture 出、守恆、信讀 CAS_GIFT、金流圖有線，決定 0131）", ["test/culture_gift.test.cjs"]],
   ["館門口池子的水位（跟著被資助那位館友的淨值、門檻 1.5 倍、每天一小格、連續確認、門檻那晚旗標、天亮收完重設、不動錢、view 不洩漏，決定 0132）", ["test/pool.test.cjs"]],
   ["替佩佩取名、門檻那晚過去收走壹個名字（挑最新取名的、沒取過收融合稱號那隻、館友號碼、重新取名小圓章、短信和收據、不動錢，決定 0133）", ["test/pool_take.test.cjs"]],
@@ -174,7 +175,7 @@ const STEPS = [
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/log_check.cjs"]],
-  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/，11-20）", ["tools/repo_rules.cjs"]],
+  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/、shared 子資料夾、檔名不用數字結尾、單檔不超過 1,200 行、web/src 不繞圈，11-20）", ["tools/repo_rules.cjs"]],
 ];
 
 // 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。
