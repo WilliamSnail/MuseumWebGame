@@ -66,7 +66,7 @@ export function lobbyHub() {
       icon("calendar"), h("b", null, "任務"), h("small", null, todo ? `還有 ${todo} 件` : "都做完了")),
     h("div", { class: "hub-tiles" }, chips.map(tile)),
     ex.hol);
-  return h("section", { class: "lobby-hub", "aria-label": "總覽：館友證、下壹步、今天要做的事、本週劇情" },
+  return h("section", { class: "lobby-hub", "aria-label": "總覽：館友證、下壹步、任務、本週劇情" },
     h("div", { class: "hub-side" }, passCard(), PANELS.shop ? shopBtn() : null), h("div", { class: "hub-main" }, stepRow, dayRow, storyHub(), ex.fun));
 }
 ADDONS.lobbyHub = lobbyHub;
