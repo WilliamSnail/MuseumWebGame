@@ -710,3 +710,14 @@ body[data-screen="bank"] #room { background: none; }
 .bank-grpsw { margin: 0; } .bank-grpsw button { min-height: 36px; }
 @media (max-width: 760px) { .bank-grpsw button { min-height: 32px; padding-top: 0; padding-bottom: 0; } }
 @media (min-width: 761px) { .bank-grpsw { align-self: flex-start; width: fit-content; } .bank-grpsw button { flex: none; padding: 0 22px; } }
+/* 成交紀錄（bank_trades.js） */
+.bt > summary { cursor: pointer; list-style: none; } .bt > summary::-webkit-details-marker { display: none; }
+.bt-filter { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 6px 0; }
+.bt-chip { min-height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #5A6C8F; background: #16284A; color: #E6DCC0; font: inherit; font-size: .8125rem; cursor: pointer; } .bt-chip.on { background: linear-gradient(#F2D58A, #C9A24A); color: #3A2A0C; border-color: #E6C879; }
+.bt-sel { min-height: 32px; max-width: 100%; padding: 0 8px; border-radius: 6px; border: 1px solid #5A6C8F; background: #16284A; color: #E6DCC0; font: inherit; font-size: .8125rem; }
+.bt-book { display: grid; font-variant-numeric: tabular-nums; max-height: 320px; overflow-y: auto; }
+.bt-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 4px; border-bottom: 1px dashed rgba(230, 220, 192, .25); font-size: .8125rem; color: #EADFC6; }
+.bt-row small { display: block; font-size: .6875rem; color: #B9AE92; }
+.bt-main { display: grid; gap: 2px; min-width: 0; } .bt-main > b { font-weight: 700; } .bt-main > b small { display: inline; margin-left: 6px; }
+.bt-end { display: grid; text-align: right; } .bt-end > b.up { color: #7FD99A; } .bt-end > b.down { color: #F09A8E; }
+.bt-act { display: inline; } .bt-act small { display: inline; margin-left: 2px; } .bt-act.in { color: #F2D58A; } .bt-act.out { color: #9FC3F0; }

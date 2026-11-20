@@ -19,6 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
+import { tradesPanel } from "./bank_trades.js";
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -769,7 +770,7 @@ function stockPane(v) {
         h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照真實市場的行情動。買賣各收手續費，進博物館資金。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
         S.soon ? h("p", { class: "bank-hint" }, S.soon) : null),
-      debtPanel(v), positionsPanel(S), ordersPanel(S));
+      debtPanel(v), positionsPanel(S), ordersPanel(S), tradesPanel(S.trades, "std"));
   if (phone) {
     const pv = UI.bankPV === "market" || UI.bankPV === "hold" ? UI.bankPV : "trade";
     return h("div", { class: "bank-cols stocks phone", dataset: { trade: tab, pv } }, seg([["trade", "交易"], ["market", "行情"], ["hold", "持倉"]], pv, k => { UI.bankPV = k; rerender(); }, "kind"), pv === "trade" ? stackEl : pv === "market" ? marketPanel : holdPanel(v, S, list));
@@ -805,7 +806,6 @@ function worldPanel(v) {
 // 館方投資（翊文 11-14：「館方也有投資海外，銀行裡怎麼我們看不到」）：數值平衡 PR 445 的 houseInv。昨天的快照，不是現在，所以標「截至」
 const PAUSE_TEXT = { stop: "館方虧太多，暫停買進", world: "已知世界資金吃緊，暫停買進" };
 const POOL_TEXT = { house: "莊家", budget: "博物館資金" };
-
 // 館方投資的「投資方式」告示（11-16 翊文：「館方投資的新策略寫在館方投資那欄裡做壹個小圖示可以點出來出現壹個告示讓玩家看」；決定 0099）：數字都讀 NUM.casino.invest，改設定告示跟著變
 const wanText = n => (n >= 100000000 ? `${+(n / 100000000).toFixed(1)} 億` : `${fmt(Math.round(n / 10000))} 萬`);
 function openInvestHow() {
@@ -1022,7 +1022,7 @@ function gstockPane(v) {
       gtabs.length > 1 ? seg(gtabs, gtab, k => { UI.bankGsTrade = k; rerender(); }, "kind") : null,
       ...(gtab === "lev" ? levTrade(v, S, curL) : gtab === "order" ? gsOrderTrade(v, S0, G, cur) : [seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankGsSide = k; rerender(); }), steps, custom]),
       (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null),
-      S && S.lev ? positionsPanel(S) : null, gsOrdersPanel(G)));
+      S && S.lev ? positionsPanel(S) : null, gsOrdersPanel(G), tradesPanel(S0 && S0.trades, "grp")));
 }
 // 股票頁籤（翊文 11-20：集團股併進來）：上面一排切「台股・美股・館內股」和「集團股」；選集團股畫集團股那套，銀行說明預設跳「集團股」。成交紀錄之後放這裡
 const stockHome = v => { const hasG = v.gs && v.gs.list && v.gs.list.length, grp = UI.bankGrp === "grp"; if (!hasG || !v.stocks) return hasG ? gstockPane(v) : stockPane(v); const fr = document.createDocumentFragment(); fr.append(seg([["std", "一般股"], ["grp", "集團股"]], grp ? "grp" : "std", k => { UI.bankGrp = k; rerender(); }, "kind bank-grpsw"), grp ? gstockPane(v) : stockPane(v)); return fr; };
