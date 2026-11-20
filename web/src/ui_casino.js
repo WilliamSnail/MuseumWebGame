@@ -26,7 +26,7 @@ import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
-import { actDone, casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
+import { actDone, casinoDefOf, curWeek, giverTaskLine, weekCasino } from "./ui_story.js";
 import { slotMachine } from "./ui_casino_slot.js";
 import { LIVE, liveClock, liveNow, liveThanks, onLive } from "./ui_casino_live.js";
 
@@ -672,7 +672,8 @@ function dinerMore(a, b, calm) {
 }
 function dinerNote() {
   const d = todayStr(); let k = 0; for (const c of d) k = (k * 31 + c.charCodeAt(0)) % 9973;
-  const txt = CAS_HALL_NOTES[k % CAS_HALL_NOTES.length];
+  const gl = giverTaskLine("hall"); // 今天有堂主交代的任務：字條寫那壹句（內容檔的台詞）；做完換成回話。沒有才用壹天壹句的老字條
+  const txt = gl ? gl.text : CAS_HALL_NOTES[k % CAS_HALL_NOTES.length];
   const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"), h("img", { class: "dn-cup", src: "/diner/prop-cup.webp", alt: "", title: "多留了壹杯，不說是給誰的" }));
   const el = h("details", { class: "dn-note" }, h("summary", null, icon("scroll"), h("span", null, "堂主的字條")), body);
   if (window.innerWidth > 760) el.open = true; // 電腦攤開；手機收成壹個便條，點了才展開
