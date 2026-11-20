@@ -12,7 +12,7 @@ import { FX } from "../fx/fx.js";
 import { ambMix, sanDread } from "../../../shared/room_mood.js";
 import { ambFor } from "./audio_state.js";
 import { markTokens, taipeiDay, todayStr } from "../../../shared/logic.js";
-import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../../shared/logic.js";
+import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../../shared/logic.js";
 import { hasTalent, memberPower, skillCheck, understandLine } from "../../../shared/systems.js";
 import { weeklyTheme } from "../../../shared/themeshow.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../../shared/visitors.js";
@@ -712,8 +712,8 @@ export function updateStatus(instant) {
     if (poss) {
       const v = possibilities(P);
       if (amnesia) poss.textContent = "??";
-      else if (instant) { poss.dataset.v = v; poss.textContent = `${num(v)}／${num(knownTotal(P))}`; }
-      else FX.countTo(poss, v, { format: n => `${num(n)}／${num(knownTotal(P))}` });
+      else if (instant) { poss.dataset.v = v; poss.textContent = `${num(v)}`; }
+      else FX.countTo(poss, v, { format: n => num(n) });
     }
   }
   set("jobs", 0, String(jobs));
