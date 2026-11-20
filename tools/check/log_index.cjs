@@ -1,4 +1,4 @@
-// 重新產生 維護日誌/README.md（總表）：npm run log:index
+// 重新產生 docs/維護日誌/README.md（總表）：npm run log:index
 // 加 --check：只檢查總表是不是最新的，不寫檔（CI 用）
 const fs = require("fs"), path = require("path");
 const { ROOT, LOG_DIR, listLogs, parse } = require("./log_lib.cjs");
@@ -30,7 +30,7 @@ const out = path.join(LOG_DIR, "README.md");
 const text = build();
 if (process.argv.includes("--check")) {
   const now = fs.existsSync(out) ? fs.readFileSync(out, "utf8").replace(/\r\n/g, "\n") : "";
-  if (now !== text) { console.error("維護日誌/README.md 不是最新的：請跑 npm run log:index"); process.exit(1); }
+  if (now !== text) { console.error("docs/維護日誌/README.md 不是最新的：請跑 npm run log:index"); process.exit(1); }
   console.log("總表是最新的");
 } else {
   fs.mkdirSync(LOG_DIR, { recursive: true });

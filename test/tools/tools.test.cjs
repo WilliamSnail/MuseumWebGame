@@ -51,7 +51,7 @@ T("merge：清單兩邊都留、其他只留內容；公告檔和不進 git 的�
   assert.strictEqual(keepBoth("<<<<<<< a\nA\n=======\nB\n>>>>>>> b\n"), "A\nB\n");
   const l = '<<<<<<< a\nconst O = ["x.js", "new1.js", "z.js"];\n=======\nconst O = ["x.js", "z.js", "new2.js"];\n>>>>>>> b\n';
   assert.strictEqual(keepBoth(l, "list"), 'const O = ["x.js", "new1.js", "z.js", "new2.js"];\n');
-  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md") && canAuto("docs/素材/音效與特效總表.md"));
+  assert.ok(canAuto("shared/notices.js") && canAuto("docs/維護日誌/README.md") && canAuto("docs/素材/音效與特效總表.md"));
   assert.ok(!canAuto("shared/logic.js"));
 });
 T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別場不動；找不到回 null", () => {
@@ -200,7 +200,7 @@ T("ship：沒給說明就拿維護日誌的兩段", () => {
   assert.strictEqual(SH.bodyFromLog("沒有段落"), "");
 });
 T("ship：改了玩家看得到的檔卻沒公告會警告；有公告、只改 tools 不警告", () => {
-  assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/rooms/bank/ui_bank.js", "維護日誌/2026/x.md"])));
+  assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/rooms/bank/ui_bank.js", "docs/維護日誌/2026/x.md"])));
   assert.strictEqual(SH.noticeWarning(["web/src/rooms/bank/ui_bank.js", "content/notices/upd-x.json"]), "");
   assert.strictEqual(SH.noticeWarning(["tools/content/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
 });

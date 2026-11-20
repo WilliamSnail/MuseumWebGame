@@ -90,7 +90,7 @@ function main() {
     s.related = [...(s.related || []), `docs/決定/${path.basename(f)}`];
     console.log(path.relative(ROOT, f));
   }
-  const log = path.join(ROOT, "維護日誌", y, `${mo}-${d}_${s.author || "翊文"}_${safeName(s.topic)}.md`);
+  const log = path.join(ROOT, "docs", "維護日誌", y, `${mo}-${d}_${s.author || "翊文"}_${safeName(s.topic)}.md`);
   if (fs.existsSync(log)) throw new Error(`已經有了：${log}`);
   fs.writeFileSync(log, logText(s, now, versionNow()));
   console.log(path.relative(ROOT, log));
