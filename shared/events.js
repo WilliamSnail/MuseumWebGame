@@ -184,4 +184,4 @@ export function eventBarText(bar) {
   return bar.phase === "live" ? `限時活動進行中：${ev.title}（還剩 ${eventLeftText(bar.left)}）` : `${eventWhen(ev)} ${eventRange(ev)}：${ev.title}`;
 }
 // 公佈欄、每週劇情畫面、Discord 列出這週的活動（每場一行）
-export const eventListLine = ev => `${ev.date.slice(5).replace("-", "/")} ${eventRange(ev)}　${ev.title}：${eventEffect(ev)}`;
+export const eventListLine = ev => `${ev.date.slice(5).replace("-", () => "/")} ${eventRange(ev)}　${ev.title}：${eventEffect(ev)}`;

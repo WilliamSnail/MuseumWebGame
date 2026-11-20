@@ -37,6 +37,7 @@ npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
 npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md。要重複做的事都要寫腳本；同樣的邏輯有兩份以上就合併成共用的（翊文 11-15）
+npm run code:check      # 程式的規矩五條（npm test 已經包含；單跑看哪裡違規）
 npm run ui:check        # 畫面版面檢查（要瀏覽器，不在 npm test）：改了畫面，上線前一定要跑；手機 375×740 和電腦 2140×1440
 npm run log:index      # 在本機重產日誌索引（不進 git，不要手改）
 npm run notice -- --area 賭場 --title "標題" "第壹句"   # 加館方公告（寫成 content/notices/<id>.json，一則一檔，不要手改 shared/notices.js 的陣列）
@@ -61,7 +62,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 - 不做真錢、不課金。排行榜只在館內。
 - 音樂、節奏都自己寫，不用現成的歌。
 - 「怎麼玩」的說明不破梗。
-- 介面文字照第 1 代用「壹」：已經是「壹」的不改成「一」；新的畫面文字用「壹」；**不要整批取代**。
+- 介面文字照第 1 代用「壹」：已經是「壹」的不改成「一」；新的畫面文字用「壹」（npm test 會擋：只看這次新加的行，「一個、一天、一次…」會報；舊的不擋；公告不查）；**不要整批取代**。
 
 覺得某個做法怪怪的，先查 `docs/規則/界線.md` 的「不要改回去」和 `docs/決定/`，不要「好心」改回去（例如把提示調短、把失敗作改回只有 100）。決定要改，新寫一篇決定紀錄，舊的標「被第 N 篇取代」，不要刪。
 
@@ -76,9 +77,9 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 
 **規則是純函式**：
 
-- `shared/` 不碰 DOM、不碰 localStorage。只改傳進來的 `P`，回傳事件陣列；畫面用 `showEvents()` 演出來。伺服器之後要跑同一份。
-- 亂數一律用 `RNG()`，不要直接 `Math.random()`。
-- 「今天」一律用 `todayStr()`，不要自己 `new Date()`。
+- `shared/` 不碰 DOM、不碰 localStorage（npm test 會擋）。只改傳進來的 `P`，回傳事件陣列；畫面用 `showEvents()` 演出來。伺服器之後要跑同一份。
+- 亂數一律用 `RNG()`，不要直接 `Math.random()`（npm test 會擋）。
+- 「今天」一律用 `todayStr()`、「現在」用 `nowMs()`，不要自己 `new Date()`、`Date.now()`（npm test 會擋；`new Date(ms)` 這種有參數的日期算術可以）。
 
 **測試**：
 
@@ -109,11 +110,15 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
   - docs 照性質放：`docs/規劃/`（規劃、提案）、`docs/規則/`（界線、架構、介面原則…）、`docs/操作/`（怎麼查、怎麼測、流程）、`docs/素材/`（素材清單、prompt）、`docs/決定/`；第一層只留 `現況.md`、`未來更新.md`。
   - `tools/` 分 `release/`、`check/`、`content/`、`assets/`、`dev/`、`fb/`；`functions/` 照系統分資料夾，`index.js`、`options.js` 留第一層；`web/src/` 分 `core/`、`fx/`、`rooms/`（賭場、銀行各有子資料夾）、`panels/`。
 - 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、`tools/`／`test/`／`functions/`／`web/src/` 第一層的新檔（要放子資料夾）、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
+- **名字只放一處**：餐車品項（`CAS_MENU`）、交代人（`TASK_GIVERS`）改名時，到 `tools/check/code_rules.cjs` 的 `RENAMES` 加一行「舊名 → 新名」，舊名出現在現役的程式和說明就會被擋（npm test 會擋）。
+- **規矩要寫成檢查**（翊文 11-20，參考「把約束寫進程式碼，不是文件」）：AI 被糾正一次，先問「這能不能寫成檢查？」。能的就加進 `tools/check/`（小的規矩加進 `code_rules.cjs`）、配測試放 `test/tools/`、加進 `test/run_all.cjs`，並在上面那條規矩後面標「（npm test 會擋）」；不要只多寫一條規矩或存進記憶——那兩種漏了沒人知道，檢查漏了 CI 會紅。加檢查前先全掃現有程式，違規的修掉或列白名單（寫原因），不能讓 CI 一開就紅。
 - 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/dev/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
 - 自動流程失敗會寫進 GitHub issue「自動流程失敗通報」（`tools/check/actions_health.cjs`，每天 20:10）；看到就修，修好關掉。
 
 **其他**：
 
+- 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`；要換就用 `.replace("a", () => "b")` 或 split/join；npm test 會擋）。
+- 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite（npm test 會擋，白名單在 `tools/check/code_rules.cjs`）；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`），但要加進白名單並寫原因。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
 - 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`）。
 - **改了畫面，上線前一定要跑 `npm run ui:check`**（起 dev server、無頭瀏覽器開主要畫面，報超出視窗的元素、被切掉的按鈕、字被擠成直排；要登入的畫面它會列為跳過，另外用模擬器看）。出現的是你改到的畫面就修掉；舊畫面本來就有的不用順手修，寫進日誌。腳本在 `tools/check/ui_check.cjs`，還沒放進 npm test 和 CI（太慢、要瀏覽器）。
 - 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`）。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。

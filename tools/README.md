@@ -61,6 +61,7 @@
 | **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/操作/測試清單.md`） | `node tools/dev/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/dev/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/dev/qa_casino_ev.cjs 400000` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 | **按 Firebase 固定動作、存結果、跟上次比**（改正式資料的前後對照；按要翊文同意） | `npm run fb -- house-ledger --save W4前`、`--diff W4前`；`--show 名字` 不按只看。查錯：`npm run fb -- fn-errors`；量大小：`house-size`。整份在 `docs/操作/伺服器除錯.md`。排隊超過 10 分鐘還沒開始會自己取消、重按壹次（`gh_lib` 的 `dispatch`） |
+| **程式的規矩五條**（shared/ 純函式、無限動畫白名單、`.replace(字串, 字串)`、新加的畫面文字用壹、改名對照；`npm test` 會跑；改規矩或白名單看 `tools/check/code_rules.cjs` 開頭） | `npm run code:check [-- --base origin/main --only 1,4]`（第 4 項只看跟 base 比新加的行；沒給 base 就用 origin/main 和 HEAD 的共同祖先） |
 | **畫面版面檢查（改了畫面，上線前一定要跑）**：自己起 dev server、無頭瀏覽器開主要畫面（`#畫面` 假資料，自動靜音），手機 375×740 和電腦 2140×1440；報超出視窗的元素、可見寬高 < 80% 的按鈕、字被擠成直排。要登入的畫面列為跳過。要瀏覽器，不在 `npm test` | `npm run ui:check [-- --screens lobby,today --sizes phone --shots 資料夾 --url http://localhost:5173]`（`tools/check/ui_check.cjs`；有問題 exit 1；畫面清單在檔案開頭 SCREENS） |
 | 看今天 20:00 Discord 彙整會發什麼 | `node tools/content/discord_digest.cjs [--date 2026-11-15]`（每天 20:00 由伺服器排程 `discordDigestTick` 發，`functions/discord/discord_digest.js`；GitHub 的 `discord-digest.yml` 只留手動補發） |
 | 寫新腳本要叫 GitHub（觸發流程、等跑完、讀紀錄、找 gh） | 用 `tools/release/gh_lib.cjs` 的 `dispatch`、`runLog`、`ghRun`，**不要再自己寫壹份**；雲端擋 GraphQL，只用 `gh workflow／run／api` |

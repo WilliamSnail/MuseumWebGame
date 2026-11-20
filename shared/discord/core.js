@@ -312,7 +312,7 @@ export function dcTodayText(day, events, info) {
   const evs = eventsOnDate(events, day), hols = holidaysOn(day), funs = funDaysOf(day), real = dcRealList(info);
   const board = info && typeof info.board === "string" ? dcPlain(info.board, 120) : "";
   if (!evs.length && !hols.length && !funs.length && !real.length && !board) return DC_TEXT.todayNone;
-  const lines = [dcText("todayHead", { day: day.slice(5).replace("-", "/") })];
+  const lines = [dcText("todayHead", { day: day.slice(5).replace("-", () => "/") })];
   if (board) lines.push("", `【${DC_TEXT.todayBoard}】`, `〈${dcPlain(info.title, 20)}〉第 ${Math.max(1, Math.min(7, Math.floor(+info.n) || 1))} 日　${board}`);
   if (evs.length) lines.push("", `【${DC_TEXT.todayEvents}】`, ...evs.map(ev => `・${eventRange(ev)}　${ev.title}：${eventEffect(ev)}`));
   if (hols.length) lines.push("", `【${DC_TEXT.todayHol}】`, ...hols.map(h => `・${h.dayName || h.name}`));
@@ -335,7 +335,7 @@ export function dcNewsText(today, limit) {
   const foot = dcText("newsFoot", { url: DC_SITE }), rows = [];
   let used = DC_TEXT.newsHead.length + foot.length + 40;
   for (const n of list) { // 不超過 Discord 的字數：放不下的後面幾則不列，連結一定留著
-    const d = String(n.publish || "").slice(5).replace("-", "/"), row = `・${d ? d + "　" : ""}${dcPlain(n.title, 40)}`;
+    const d = String(n.publish || "").slice(5).replace("-", () => "/"), row = `・${d ? d + "　" : ""}${dcPlain(n.title, 40)}`;
     if (used + row.length + 1 > 1800) break;
     rows.push(row); used += row.length + 1;
   }

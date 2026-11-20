@@ -42,7 +42,7 @@ function dayMessage(w, d, n, hol, evs, fun) {
   if (n === 1) {
     // 博物館的公告口吻（翊文 11-09：「要以稍微更加像博物館的公告方式推出」）
     lines.push("🏛 **佩佩博物館2　本週特展公告**", `📜 地下收藏庫本週主題：〈${w.title}〉`, "", ...(Array.isArray(w.summary) ? w.summary : []), "");
-    if (evs.length) lines.push("🎪 【本週限時活動】", ...evs.map(e => `・${e.date.slice(5).replace("-", "/")}（${e.wd}）${e.from}～${e.to}　${e.title}：${e.effect}`), "");
+    if (evs.length) lines.push("🎪 【本週限時活動】", ...evs.map(e => `・${e.date.slice(5).replace("-", () => "/")}（${e.wd}）${e.from}～${e.to}　${e.title}：${e.effect}`), "");
     const cas = casinoLines(w, d, n);
     if (cas.week) lines.push(cas.week, "");
     lines.push(`📣 【今日館訊】${d.board || ""}`);

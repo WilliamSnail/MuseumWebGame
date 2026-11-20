@@ -43,7 +43,7 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", 
 const cols = Math.min(found.length, 3), rows = Math.ceil(found.length / cols);
 let html = `<html><body style="margin:0;padding:8px;background:#222;color:#eee;font:14px sans-serif;display:grid;grid-template-columns:repeat(${cols},372px);gap:8px">`;
 for (const x of found) {
-  html += `<div><div style="height:36px;overflow:hidden">${esc(x.where)}<br><b>${esc(x.title)}</b></div><div style="width:360px;height:450px;background:#fff">${x.svg.replace("<svg ", '<svg width="360" height="450" ')}</div></div>`;
+  html += `<div><div style="height:36px;overflow:hidden">${esc(x.where)}<br><b>${esc(x.title)}</b></div><div style="width:360px;height:450px;background:#fff">${x.svg.replace("<svg ", () => '<svg width="360" height="450" ')}</div></div>`;
 }
 html += "</body></html>";
 const htmlPath = outPng.replace(/\.png$/i, "") + ".html";

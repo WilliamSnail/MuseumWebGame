@@ -65,7 +65,7 @@ export const ART = (() => {
     const d = v ? `M${n(cx - a)} ${n(cy - L)}V${n(cy + L)}M${n(cx + a)} ${n(cy - L)}V${n(cy + L)}` : `M${n(cx - L)} ${n(cy - a)}H${n(cx + L)}M${n(cx - L)} ${n(cy + a)}H${n(cx + L)}`;
     return ln(d, STRIPE, 1.5, rot ? ` transform="rotate(${rot} ${n(cx)} ${n(cy)})"` : "");
   };
-  const limb = (q, suit) => { const [k, cx, cy, rx, ry, rot] = q, el = E(cx, cy, rx, ry, rot); return suit && (k === "arm" || k === "leg") ? el.replace("/>", ` fill="${SUIT}" stroke="${SUIT_D}"/>`) + stripes(cx, cy, rx, ry, rot) : el; };
+  const limb = (q, suit) => { const [k, cx, cy, rx, ry, rot] = q, el = E(cx, cy, rx, ry, rot); return suit && (k === "arm" || k === "leg") ? el.replace("/>", () => ` fill="${SUIT}" stroke="${SUIT_D}"/>`) + stripes(cx, cy, rx, ry, rot) : el; };
   const thumb = (fill, dark, suit) => `<g fill="${fill}" stroke="${dark}" stroke-width="${SW}" stroke-linejoin="round">${limb(["arm", 156, 114, 10, 16, -28], suit)}<rect x="159.5" y="71" width="10" height="22" rx="5"/><circle cx="165" cy="98" r="12"/></g>` + ln("M156 96h8M156 102h8", dark, 1.8);
   // 瓜子（黑底白紋）；殼 = 裂開的半片
   const seed = (x, y, r, s = 1) => `<g transform="translate(${n(x)} ${n(y)}) rotate(${r}) scale(${s})"><path d="M-6 0Q-1-3.6 5 0Q-1 3.6-6 0Z" fill="#2B2B2A"/>` + ln("M-3.8-.9L2.8-.5M-3.8.9L2.8.5", "#D9D6CC", .8) + `</g>`;
@@ -361,14 +361,14 @@ export const ART = (() => {
       if (!sil) {
         const look = m.look || [[0, 0], [0, 0]];
         const belly = p.顏色 === "黑" ? "#8A8A85" : GR ? GR.belly : "#F6F1D6";
-        fig += g.flat ? E(100, g.cy + 9, g.rx * .55, g.ry * .45).replace("/>", ` fill="${belly}" opacity=".7"/>`) : E(100, g.cy + 14, g.rx * .6, g.ry * .55).replace("/>", ` fill="${belly}"/>`);
-        if (GR && GR.shine) fig += E(100 - g.rx * .5, g.cy - g.ry * .38, g.rx * .2, g.ry * .1, -38).replace("/>", ` fill="#fff" opacity=".55"/>`) + xs.map(cx => ln(`M${cx - 11} ${g.ey - 7}Q${cx - 8} ${g.ey - 13} ${cx - 2} ${g.ey - 14}`, "#FFF6CF", 2, ' opacity=".8"')).join("") + spark(100 + g.rx * .62, g.cy + g.ry * .2, 4, "#FFF6CF");
+        fig += g.flat ? E(100, g.cy + 9, g.rx * .55, g.ry * .45).replace("/>", () => ` fill="${belly}" opacity=".7"/>`) : E(100, g.cy + 14, g.rx * .6, g.ry * .55).replace("/>", () => ` fill="${belly}"/>`);
+        if (GR && GR.shine) fig += E(100 - g.rx * .5, g.cy - g.ry * .38, g.rx * .2, g.ry * .1, -38).replace("/>", () => ` fill="#fff" opacity=".55"/>`) + xs.map(cx => ln(`M${cx - 11} ${g.ey - 7}Q${cx - 8} ${g.ey - 13} ${cx - 2} ${g.ey - 14}`, "#FFF6CF", 2, ' opacity=".8"')).join("") + spark(100 + g.rx * .62, g.cy + g.ry * .2, 4, "#FFF6CF");
         fig += (m.outfit || "") + limbs("f");
         if (fl) fig += ln(`M${n(100 + g.rx * .62)} ${n(g.cy - g.ry * .55)}Q${n(100 + g.rx * .42)} ${g.cy} ${n(100 + g.rx * .6)} ${n(g.cy + g.ry * .55)}`, dark, 1.8) +
           ln([-.4, -.15, .12, .38].map(t => { const yy = g.cy + t * g.ry * 1.9, xx = 100 + g.rx * (.5 + Math.abs(t) * .22); return `M${n(xx - 5)} ${n(yy - 1)}l10 2`; }).join(""), dark, 1.6) +
           ln(`M100 ${n(g.cy - g.ry + 2)}l-3 6l5 4l-4 6`, dark, 1.6);
         const bk = (x && p.心情 === "生氣" ? 1.3 : 1) * (m.blushK || 1);
-        fig += [-1, 1].map(s => E(100 + s * (g.ex + 8), by, 9 * bk, 5 * bk).replace("/>", ` fill="${m.blushC || BLUSH}" opacity="${m.blush}"/>`)).join("");
+        fig += [-1, 1].map(s => E(100 + s * (g.ex + 8), by, 9 * bk, 5 * bk).replace("/>", () => ` fill="${m.blushC || BLUSH}" opacity="${m.blush}"/>`)).join("");
         let whites = "", pup = "";
         xs.forEach((cx, i) => {
           if (m.closed) { whites += ln(m.closed === 2 ? `M${cx - 8} ${g.ey - 1}Q${cx} ${g.ey + 7} ${cx + 8} ${g.ey - 1}` : `M${cx - 8} ${g.ey + 3}Q${cx} ${g.ey - 9} ${cx + 8} ${g.ey + 3}`, dark, 3.2); return; }

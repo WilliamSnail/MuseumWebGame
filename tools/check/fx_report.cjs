@@ -208,7 +208,7 @@ async function build(notes) {
   const T = { snd: {}, file: {}, dynSnd: [], dynFile: [], unreg: [] }; // name → [{file,line,fn,vol,note}]
   const add = (bucket, k, row) => ((bucket[k] = bucket[k] || []).push(row));
   for (const rel of files) {
-    const text = src(rel), lines = text.split("\n"), short = rel.replace("web/src/", "");
+    const text = src(rel), lines = text.split("\n"), short = rel.replace("web/src/", () => "");
     const isFx = rel === "web/src/fx/fx_sound.js";
     for (const x of findSnd(text, Rnames)) {
       if (/^\s*export const snd = /.test(lines[x.line - 1])) continue;
@@ -260,14 +260,14 @@ async function build(notes) {
   const quotedAt = {};
   for (const rel of files) {
     const t = src(rel);
-    for (const id of sfxIds) { const re = new RegExp("[\"']" + id.replace(/[-]/g, "\\-") + "[\"']"); if (re.test(t)) (quotedAt[id] = quotedAt[id] || []).push(rel.replace("web/src/", "")); }
+    for (const id of sfxIds) { const re = new RegExp("[\"']" + id.replace(/[-]/g, "\\-") + "[\"']"); if (re.test(t)) (quotedAt[id] = quotedAt[id] || []).push(rel.replace("web/src/", () => "")); }
   }
   const sfxUsed = id => !!(T.file[id] || quotedAt[id]);
   // R 有沒有人用：直接呼叫，或在 snd／sound／play 的行裡被引用
   const weakR = {};
   for (const rel of files) {
     const lines = src(rel).split("\n");
-    lines.forEach((l, i) => { if (!/snd|sound|play|sfx/i.test(l)) return; for (const n of Rnames) if (new RegExp("[\"']" + n + "[\"']").test(l)) (weakR[n] = weakR[n] || []).push(rel.replace("web/src/", "") + ":" + (i + 1)); });
+    lines.forEach((l, i) => { if (!/snd|sound|play|sfx/i.test(l)) return; for (const n of Rnames) if (new RegExp("[\"']" + n + "[\"']").test(l)) (weakR[n] = weakR[n] || []).push(rel.replace("web/src/", () => "") + ":" + (i + 1)); });
   }
   const rUsed = n => !!(T.snd[n] || weakR[n]);
 
@@ -362,7 +362,7 @@ async function build(notes) {
     const x = sfx[id], p = path.join(ROOT, "web", "public", "sfx", id + ".mp3");
     const kb = fs.existsSync(p) ? Math.round(fs.statSync(p).size / 1024) : "（檔案不在）";
     const calls = (T.file[id] || []).filter(r => !/^AMB\./.test(r.fn) && r.note !== "dreadMusic");
-    const amb = [...new Set((T.file[id] || []).filter(r => /^AMB\./.test(r.fn) || r.note === "dreadMusic").map(r => r.fn === "(頂層)" || !/^AMB\./.test(r.fn) ? "dread" : r.fn.replace("AMB.", "")))];
+    const amb = [...new Set((T.file[id] || []).filter(r => /^AMB\./.test(r.fn) || r.note === "dreadMusic").map(r => r.fn === "(頂層)" || !/^AMB\./.test(r.fn) ? "dread" : r.fn.replace("AMB.", () => "")))];
     o.push(`| ${id} | [${cell(x.name)}](${x.url}) | ${cell(x.by)} | ${cell(x.use)} | ${x.loop ? "循環" : ""} | ${kb} | ${calls.length} | ${cell(amb.join("、") || (quotedAt[id] && !calls.length ? "（引號字串）" : ""))} | ${noteCols(notes, id)} |`);
   }
 
@@ -403,7 +403,7 @@ async function build(notes) {
   for (const r of SAN_RULES) { keys.push(r.key); o.push(`| ${r.name} | ${cell(r.when)} | ${cell(r.nums(rm))} | ${locOf(...r.find, r.key)} | ${noteCols(notes, r.key)} |`); }
   o.push("", "### 3-7. 銀行的「空檔」音效 slot（`web/src/rooms/bank/ui_bank.js` 的 `bankSfx`）", "",
     "銀行動作（act:op）分幾組，每組一個音效檔；新音效要掛在銀行，先看這幾組有沒有適合的。", "", "| 組 | 動作 | 音效檔（音量） | 說明 |", "|---|---|---|---|");
-  for (const s of bankSlots) { const set = bankSets[s.set] || { items: [] }; o.push(`| ${s.set.replace("BANK_SFX_", "")} | ${cell(set.items.join("、"))} | ${s.id} ${s.vol} | ${cell(set.note)} |`); }
+  for (const s of bankSlots) { const set = bankSets[s.set] || { items: [] }; o.push(`| ${s.set.replace("BANK_SFX_", () => "")} | ${cell(set.items.join("、"))} | ${s.id} ${s.vol} | ${cell(set.note)} |`); }
   const bankUsedSets = new Set(bankSlots.map(s => s.set));
   const bankFree = Object.keys(bankSets).filter(k => !bankUsedSets.has(k));
   if (bankFree.length) o.push("", `沒接上音效的組：${bankFree.join("、")}`);

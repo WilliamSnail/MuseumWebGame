@@ -30,7 +30,10 @@
 .dn-card { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; grid-template-areas: "pic name price" "pic fx buy" "odds odds odds"; gap: 3px 10px; align-items: center; padding: 20px 22px 18px; border-radius: 4px; box-shadow: 0 3px 6px rgba(0, 0, 0, .5);
   background: url(/kit/wood-corner-tl.webp) top left / 40px no-repeat, url(/kit/wood-corner-tr.webp) top right / 40px no-repeat, url(/kit/wood-corner-bl.webp) bottom left / 40px no-repeat, url(/kit/wood-corner-br.webp) bottom right / 40px no-repeat,
     url(/kit/wood-edge-h.webp) 40px top / auto 20px repeat-x, url(/kit/wood-edge-h.webp) 40px bottom / auto 20px repeat-x, url(/kit/wood-edge-v.webp) left 40px / 20px auto repeat-y, url(/kit/wood-edge-v.webp) right 40px / 20px auto repeat-y, url(/kit/wood-fill.webp) 0 0 / 160px; }
-.dn-pricey { box-shadow: 0 0 0 2px #C9A24E, 0 0 14px rgba(255, 200, 90, .45), 0 3px 6px rgba(0, 0, 0, .5); }
+/* 貴的木牌：暗金木框零件組（四角固定、邊條重複接、木紋鋪滿，不拉伸；kit/wood-gold-*，11-20） */
+.dn-pricey { background: url(/kit/wood-gold-corner-tl.webp) top left / 44px no-repeat, url(/kit/wood-gold-corner-tr.webp) top right / 44px no-repeat, url(/kit/wood-gold-corner-bl.webp) bottom left / 44px no-repeat, url(/kit/wood-gold-corner-br.webp) bottom right / 44px no-repeat,
+    url(/kit/wood-gold-edge-h.webp) 44px top / auto 22px repeat-x, url(/kit/wood-gold-edge-h.webp) 44px bottom / auto 22px repeat-x, url(/kit/wood-gold-edge-v.webp) left 44px / 22px auto repeat-y, url(/kit/wood-gold-edge-v.webp) right 44px / 22px auto repeat-y, url(/kit/wood-gold-fill.webp) 0 0 / 160px;
+  box-shadow: 0 0 14px rgba(255, 200, 90, .35), 0 3px 6px rgba(0, 0, 0, .5); padding: 22px 26px 20px; }
 .dn-off { opacity: .6; }
 .dn-pic { grid-area: pic; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 4px; overflow: hidden; background: radial-gradient(circle at 35% 30%, #F2E3BC, #CBB588); color: #5A3A1E; border: 2px solid #2A1A0C; box-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
 .dn-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -87,4 +90,7 @@
   .dn-hello { border-width: 3px; }
   .dn-note { margin-top: 2px; }
   .dn-group h3 { font-size: .8125rem; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .dn-pricey { background-size: 32px, 32px, 32px, 32px, auto 16px, auto 16px, 16px auto, 16px auto, 160px; background-position: top left, top right, bottom left, bottom right, 32px top, 32px bottom, left 32px, right 32px, 0 0; padding: 18px 20px 16px; }
 }

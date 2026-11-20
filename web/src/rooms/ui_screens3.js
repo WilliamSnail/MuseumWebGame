@@ -826,7 +826,7 @@ export const HAT_AB = Object.assign({ 棒球帽: "擋壹次", 皇冠: "重擲壹
 export const POSE_AB = { 比讚: "全隊 + 隊伍人數（最多疊 2 份）", 躺平: "回理智", 斯拉夫蹲: "不會被推倒", 倒立: "強度 +1" };
 // 強度怎麼來的：「稀有 2＋完美 1＋倒立 1」（照 memberPower 的算法，不算房間）
 export function powerWhy(item) {
-  const p = item.pick, parts = [`${String(p[ROLLED]).replace("傳說級稀有", "傳說級")} ${CELLAR_POWER[p[ROLLED]] ?? 1}`];
+  const p = item.pick, parts = [`${String(p[ROLLED]).replace("傳說級稀有", () => "傳說級")} ${CELLAR_POWER[p[ROLLED]] ?? 1}`];
   if (item.perfect) parts.push(`完美 ${CELLAR_POWER.perfect}`);
   if (p.姿勢 === "倒立") parts.push("倒立 1");
   if (COLOR_POWER[p.顏色]) parts.push(`${p.顏色} ${COLOR_POWER[p.顏色]}`);
