@@ -71,9 +71,9 @@ export function goStep(step) {
 // 第一次（剛進館）不跳提示，只標「新」：新的一天的東西由公佈欄說
 let warm = false, queue = [], ticking = false;
 export function storyTick() {
-  if (!on()) { trackBar(); return; }
+  if (!on()) { trackBar(); roomTaskBar(); return; }
   const W = curWeek();
-  if (!W) { trackBar(); return; }
+  if (!W) { trackBar(); roomTaskBar(); return; }
   const today = todayStr();
   const ev = syncStory(P, W, today);
   // 撿到線索：壹句很淡的話，不說是哪件事（剛進館補記的不說）。晚壹點再說，不然會被「讀完了」的提示蓋掉
@@ -98,6 +98,7 @@ export function storyTick() {
   }
   warm = true;
   trackBar();
+  roomTaskBar();
   menuBadge(W);
   // 不用 later：換畫面時 later 的計時器會被取消，ticking 就卡住，之後的事件全部不見
   if (queue.length && !ticking) { ticking = true; setTimeout(flushEvents, 0); }
@@ -177,6 +178,36 @@ function menuBadge(W) {
   el.classList.toggle("has-badge", !!t);
 }
 // 狀態列的「追蹤」那一行（點了走過去）
+// 房間裡的『這裡有任務』小橫幅（11-20，任務入口重新規劃）：進了有今天任務能做的房間，頂上出壹條；做完換成『完成 +N 分・回任務板』；可以關（這個房間這個狀態今天不再出）
+const RT_SKIP = {}; // 關掉的：「房間|狀態」→ 今天的日期
+function roomTaskBar() {
+  let el = document.getElementById("rtk");
+  const hide = () => { if (el) el.hidden = true; };
+  const W = on() ? curWeek() : null, room = UI.screen, d = W ? todayOf(W) : null;
+  if (!W || W.past || !d || !room || room === "lobby" || UI.screen === "title") { hide(); return; }
+  const mine = d.daily.concat(W.weekly).filter(t => { const g = taskGo(t, W); return g && g.room === room; });
+  const pend = mine.filter(t => !taskDone(P, t)), got = mine.filter(t => taskDone(P, t) && !((storyState(P).tasks[t.id] || {}).claimed));
+  const state = pend.length ? "todo" : got.length ? "done" : "";
+  const day = todayStr();
+  if (!state || RT_SKIP[room + "|" + state] === day) { hide(); return; }
+  if (!el) {
+    el = h("div", { id: "rtk", class: "rtk", role: "status" });
+    document.body.append(el);
+  }
+  const t = pend[0] || got[0], n = taskCount(P, W, t), tgt = taskTarget(t, W);
+  const text = pend.length
+    ? `這裡有任務：${taskText(t, W)}（${n}／${tgt}）${pend.length > 1 ? `　還有 ${pend.length - 1} 個` : ""}`
+    : `完成 +${taskPts(t) || 0} 分${got.length > 1 ? `（共 ${got.length} 個）` : ""}・到任務板領獎勵`;
+  const key = state + "|" + text;
+  if (el.dataset.k !== key || el.dataset.room !== room) {
+    el.dataset.k = key; el.dataset.room = room;
+    el.className = "rtk " + state;
+    el.replaceChildren(
+      h("button", { type: "button", class: "rtk-main", onClick: () => PANELS.today && PANELS.today() }, icon(state === "done" ? "check" : "scroll"), h("span", { class: "rtk-t" }, text), h("span", { class: "rtk-go", "aria-hidden": "true" }, "任務板 →")),
+      h("button", { type: "button", class: "rtk-x", "aria-label": "先關掉這條", title: "先關掉", onClick: () => { RT_SKIP[room + "|" + state] = day; el.hidden = true; } }, icon("close")));
+  }
+  el.hidden = false;
+}
 export function trackBar() {
   const el = document.getElementById("st-follow");
   if (!el) return;

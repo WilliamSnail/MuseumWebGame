@@ -174,4 +174,5 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `cr-`、`trait-`、`member-`、`ch-` | `cellar2.css` | 地下走房間（`cellarRoom`）：`cr-body`／`cr-left`／`cr-right` 兩個等高面板；`trait-` 房間的心情顏色小牌；`member-` 隊員格裡的影響小標；`ch-` 選項的號碼章和小標（11-18 回爐重造） |
 | `pnm-` | `pepename.css` | 替佩佩取名（11-19，`ui_pepename.js`）：`pnm-plate`（銅名牌；`blank` 空白名牌、`mini` 展台用、`flip` 翻過來看背面號碼）、`pnm-stamp`（重新取名後的小空心圓章）、`pnm-ask`（取名小視窗）、`pnm-edit`／`pnm-block`／`pnm-btn` |
 | `tkc-` | `tasks.css` | 每日任務的畫面零件（11-20，`ui_tasks.js`）：`tkc-card`（任務卡）、`tkc-av`（交代人頭像）、`tkc-bubble`、`tkc-pts`（積分板）、`tkc-trough`／`tkc-pin`（槽和里程碑釘）、`tkc-burst`（領獎小儀式） |
+| `rtk`、`rtk-` | `story.css` | 房間裡的『這裡有任務』小橫幅（11-20，`ui_story.js` roomTaskBar）：`rtk`（`done` 做完）、`rtk-main`、`rtk-t`、`rtk-go`、`rtk-x` |
 | `dn-` | `diner.css` | 餐車重新設計（11-20，`ui_casino.js` 的 `dinerPane`）：`dn-awning`／`dn-lights`（棚子、掛燈）、`dn-top`／`dn-hello`、`dn-note`（堂主字條）、`dn-group`／`dn-cards`／`dn-card`（`dn-pricey` 貴的、`dn-off` 買不了）、`dn-odds`、`dn-tray`（托盤，`dn-in` 滑入） |
