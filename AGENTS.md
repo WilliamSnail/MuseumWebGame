@@ -17,6 +17,7 @@
 2. `docs/界線.md`：不能做的事、「不要改回去」清單。
 3. `docs/決定/`：每一篇決定紀錄。至少看過標題，跟你要改的有關的讀完。
 4. `docs/架構.md`：要改的那一部分。
+   要改畫面：先讀 `docs/介面設計原則.md`（資訊、版面、動態、素材的原則，加改完用的自我審查）。
 5. 動到經濟（籌碼、賭場、銀行、股票、畫的買賣）：`docs/經濟系統的坑.md`，整份讀過。
 6. 最近 10 篇維護日誌：`維護日誌/年份/`，照檔名排最後 10 篇（總表是 `npm run log:index` 在本機產生的 `維護日誌/README.md`，不進 git）。
 
@@ -100,7 +101,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 - 動手前先想**放哪個資料夾、哪支檔**：同一個系統的新檔放在一起（賭場的放 `shared/casino/`，整理完後照這個做）；不要再開 `xxx3.js` 這種帶數字、看不出用途的檔名。
 - **不准互相 import**：A import B，B 就不能 import A（繞圈也不行）。兩邊都要用的東西搬到下層的新檔；畫面檔之間要叫對方，用 `PANELS`／`ADDONS` 登記（例：`ADDONS.actDone`、`PANELS.afterEnter`）。
 - **單檔不要超過 1,200 行**：快到了就照分段拆成幾支。
-- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/repo_rules.cjs`）會擋。
+- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/repo_rules.cjs`）會擋：最上層新檔、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check_imports.cjs` 擋。
 - 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
 - 自動流程失敗會寫進 GitHub issue「自動流程失敗通報」（`tools/actions_health.cjs`，每天 20:10）；看到就修，修好關掉。
 
