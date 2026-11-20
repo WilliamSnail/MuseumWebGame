@@ -76,6 +76,15 @@ const names = Object.keys;
   let bad; try { bad = R.runAll(); } finally { console.log = log; }
   assert.deepStrictEqual(bad, [], "現在的 repo 違反了程式的規矩：\n" + bad.join("\n"));
 }
+// 6. 錢的漲跌顏色
+{
+  const css = [".bank-pl.up { color: var(--money-up); }", ".a .down, .a .up { color: #FF8A78; }", ".k-lose b { border-color: rgba(0,0,0,.5); }", ".good { color: #0f0; }", "/* .up { color: #f00; } */", ".x.up i { color: #2F6E38; }"].join(" ");
+  assert.deepStrictEqual(R.moneyFindings(css), [".a .down", ".a .up", ".k-lose b", ".x.up i"]);
+  const f = { "web/src/css/x.css": css };
+  assert.strictEqual(R.checkMoney(names(f), mk(f), {}).length, 4);
+  assert.strictEqual(R.checkMoney(names(f), mk(f), { "x.css|.a .down": "t", "x.css|.a .up": "t", "x.css|.k-lose b": "t", "x.css|.x.up i": "t" }).length, 0);
+  assert.ok(R.checkMoney(names(f), mk(f), { "x.css|.a .down": "t", "x.css|.a .up": "t", "x.css|.k-lose b": "t", "x.css|.x.up i": "t", "x.css|.gone": "t" }).some(b => /gone/.test(b)), "沒用到的白名單要報");
+}
 { // 資料夾的規矩第 3 條：shared/ 第一層只准子資料夾
   const RR = require("../../tools/check/repo_rules.cjs");
   const bad = RR.check(["shared/new_thing.js", "shared/core/logic.js", "shared/casino/core.js"], () => "x");

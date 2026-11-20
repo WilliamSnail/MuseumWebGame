@@ -175,7 +175,7 @@ details[open] > .gal-sum .gal-open, details:not([open]) > .gal-sum .gal-close { 
 }
 /* 財報（11-14） */
 .bank-mood { margin-left: auto; padding: 1px 10px; border: 1px solid var(--bank-gold); border-radius: 999px; font-size: var(--type-small, .75rem); font-weight: 700; color: var(--bank-gold-hi); }
-.bank-mood.up { color: #FF8A78; border-color: #FF8A78; } .bank-mood.down { color: #7FD39B; border-color: #7FD39B; }
+.bank-mood.up { color: var(--money-up); border-color: var(--money-up); } .bank-mood.down { color: var(--money-down); border-color: var(--money-down); }
 .bank-world { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .bank-world li { display: flex; align-items: center; gap: 8px; font-size: var(--type-body, .875rem); line-height: 1.5; color: #C9D1DE; }
 .bank-world li b { color: var(--bank-gold-hi); }

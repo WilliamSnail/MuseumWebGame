@@ -1,5 +1,7 @@
 /* ===== 設計規範：當代美術館，白牆、留白、作品是主角 ===== */
 :root {
+  /* 錢的漲跌（11-21 翊文，照台股：賺、漲、增加＝紅；賠、跌、減少＝綠；持平＝原本的字色）。深底用前兩個，淺底（羊皮紙、存摺）用 -ink。用法見 docs/規則/介面配色.md */
+  --money-up: #FF8A78; --money-down: #7FD39B; --money-up-ink: #A32F1E; --money-down-ink: #1F5A2C;
   --wall: #FAFAF7; --ink: #1D1D1B; --sub: #8A8A85; --line: #E4E2DC; --accent: #3F8F4A;
   --r-common: #A8A8A2; --r-rare: #3B6FD6; --r-epic: #8A4FD8; --r-legend: #C99A2E; --r-eldritch: #3A2E4F;
   --bad: #B33A2E;
@@ -609,3 +611,11 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
 .si-stat { position: absolute; left: 3px; right: 3px; bottom: 3px; display: flex; justify-content: center; gap: 4px; padding: 1px 3px; border-radius: 3px; background: rgba(20, 12, 8, .78); color: var(--gold-hi, #EED79C); font-size: .625rem; line-height: 1.25; white-space: nowrap; pointer-events: none; }
 .si-stat b { font-weight: 700; }
 .si-stat i { font-style: normal; opacity: .85; }
+
+/* 錢的漲跌共用 class（11-21）：賺、漲＝紅；賠、跌＝綠；淺底的加 -ink */
+.m-up { color: var(--money-up); } .m-down { color: var(--money-down); }
+.m-up-ink { color: var(--money-up-ink); } .m-down-ink { color: var(--money-down-ink); }
+/* 狀態列的籌碼變多（紅）、變少（綠）：閃壹下就好，不循環 */
+#st-chips.m-flash-up .st-num { animation: mFlashUp 1.4s ease-out 1; } #st-chips.m-flash-down .st-num { animation: mFlashDown 1.4s ease-out 1; }
+@keyframes mFlashUp { 0% { color: var(--money-up); text-shadow: 0 0 8px var(--money-up); } 100% { text-shadow: none; } }
+@keyframes mFlashDown { 0% { color: var(--money-down); text-shadow: 0 0 8px var(--money-down); } 100% { text-shadow: none; } }

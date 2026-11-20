@@ -55,8 +55,8 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .cas-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 14px; border-radius: 8px; background: rgba(0,0,0,.32); border: 1px solid rgba(231,200,120,.6); }
 .cas-result b { font-family: var(--serif); font-size: 1.25rem; letter-spacing: .08em; }
-.cas-result.k-win b, .cas-result.k-blackjack b, .cas-result.k-charlie b { color: #FFE48A; }
-.cas-result.k-lose b { color: #FFB4A6; }
+.cas-result.k-win b, .cas-result.k-blackjack b, .cas-result.k-charlie b { color: var(--money-up); } /* 贏＝紅、輸＝綠（11-21 翊文：照台股） */
+.cas-result.k-lose b { color: var(--money-down); }
 .cas-result small { flex-basis: 100%; color: rgba(243,238,220,.82); }
 .cas-betbox { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 8px; background: rgba(0,0,0,.22); border: 1px solid rgba(231,200,120,.3); }
 .cas-betrow { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -181,7 +181,8 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-seat.tb.gone { opacity: .6; }
 .cas-tb-st { color: rgba(243,238,220,.75); }
 .cas-tb-out { margin: 0; font-weight: 700; color: #F8E3A0; }
-.cas-tb-out.k-lose { color: #FFB4A6; }
+.cas-tb-out.k-lose { color: var(--money-down); }
+.cas-tb-out.k-win, .cas-tb-out.k-blackjack, .cas-tb-out.k-charlie { color: var(--money-up); }
 .cas-dealer-line { margin: 0; padding: 8px 12px; border-left: 4px solid #E7C878; background: rgba(0,0,0,.3); border-radius: 6px; color: #FFF8DC; }
 .cas-dealer-line b { color: #F8E3A0; }
 .cas-tb-chat { display: flex; flex-direction: column; gap: 6px; }
@@ -570,7 +571,7 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-acct .bank-acct { padding: 2px 10px 8px; }
 .cas-acct .bank-acct p { display: flex; justify-content: space-between; margin: 2px 0; font-size: var(--type-small, .8125rem); }
 .cas-acct .bank-acct p.net { border-top: 1px solid rgba(201, 165, 90, .4); padding-top: 4px; margin-top: 4px; }
-.cas-acct .bank-acct b.bad { color: #E08A6A; } .cas-acct .bank-acct b.good { color: #9FD3A8; }
+.cas-acct .bank-acct b.down { color: var(--money-down); }
 
 /* ===== 賭場手機直拿重新整理（11-20，測試 session 用 375×740 看到的：牌桌的下注／發牌鈕被關在 172px 的小窗、全 0 的帳戶佔 250px、關閉鈕被擠出螢幕、霓虹招牌疊在標題上）=====
    做法：①裝飾（霓虹招牌、荷官小牌、籌碼塔）手機直拿不放，它們疊在標題和內容上；②標題壹列壹定放得下：關閉鈕在最右、不被擠出去；
