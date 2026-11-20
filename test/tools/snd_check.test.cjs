@@ -32,7 +32,8 @@ T("結構檢查：UI 端的清除點（登出、離開地下、框走 nbClose）
 });
 
 // ---- ambFor ----
-const ambFor = new Function(rd("web/src/core/audio_state.js").replace(/^export\s+/gm, "") + ";return ambFor;")();
+const { ambFor, lobbyNight } = new Function(rd("web/src/core/audio_state.js").replace(/^export\s+/gm, "") + ";return { ambFor, lobbyNight };")();
+T("大廳深夜：台灣 23:30～05:00 才算（11-20，lobby-night）；ambFor 把 night 帶給大廳", () => { const at = (h, m) => lobbyNight(Date.UTC(2026, 10, 20, h - 8, m)); assert.deepStrictEqual([at(23, 29), at(23, 30), at(0, 0), at(4, 59), at(5, 0), at(12, 0)], [false, true, true, true, false, false]); const r = ambFor({ screen: "lobby", hasP: true, live: true, ambOf: { lobby: "lobby" }, creepy: () => false, night: () => true }); assert.strictEqual(r.mix[1].night, true); });
 const AMB_OF = (() => {
   const src = (rd("web/src/core/ui_core.js").match(/export const AMB_OF = \{([\s\S]*?)\};/) || [, ""])[1];
   const o = {}; for (const m of src.matchAll(/(\w+): ("[^"]*"|null)/g)) o[m[1]] = m[2] === "null" ? null : m[2].slice(1, -1); return o;

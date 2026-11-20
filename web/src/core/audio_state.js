@@ -8,6 +8,8 @@
 //   screen、hasP（有沒有存檔）、live（有存檔而且不是自由模式）、dark（理智歸零）、params（畫面的參數）、ambOf（AMB_OF）
 //   ambOver（蓋在房間上面的框要的環境音，現在只有 "casino"）、cellarSnd（地下的聲音狀態或 null）
 //   heat()、dread()、creepy()、event()、crowd()：用到才算（賭場熱鬧程度、圖庫的走音、失敗作之夜、限時活動進行中、人潮很多）
+// 大廳深夜（翊文 11-20）：台灣時間 23:30～05:00（換日 05:00）。ms＝現在的毫秒（nowMs()）
+export function lobbyNight(ms) { const d = new Date(ms + 8 * 3600e3), m = d.getUTCHours() * 60 + d.getUTCMinutes(); return m >= 23 * 60 + 30 || m < 5 * 60; }
 export function ambFor(o) {
   const scr = o.screen, P = !!o.hasP, ambOf = o.ambOf || {};
   let amb = scr === "title" ? "title" : P ? (scr in ambOf ? ambOf[scr] : "room") : null;
@@ -18,7 +20,7 @@ export function ambFor(o) {
   if (amb === "cellar") mix = ["cellar", o.cellarSnd || { floor: null, mode: "map" }];
   else if (amb === "origin") mix = ["origin", { forbidden: !!(o.params && o.params.tab === "forbidden") }];
   else if (amb === "library") mix = ["library", { dread: o.live ? o.dread() : null }];
-  else if (amb === "lobby") mix = ["lobby", { creepy: !!(P && o.creepy()), event: !!(P && o.event && o.event()), crowd: !!(P && o.crowd && o.crowd()), tier: o.live && o.sanTier ? o.sanTier() : null }]; // tier：理智那壹段（自由模式、沒存檔是 null，不換曲） // event：有限時活動進行中、crowd：館內人潮很多（11-16，大廳換那兩首）
+  else if (amb === "lobby") mix = ["lobby", { creepy: !!(P && o.creepy()), event: !!(P && o.event && o.event()), crowd: !!(P && o.crowd && o.crowd()), night: !!(P && o.night && o.night()), tier: o.live && o.sanTier ? o.sanTier() : null }]; // tier：理智那壹段（自由模式、沒存檔是 null，不換曲） // event：有限時活動進行中、crowd：館內人潮很多（11-16，大廳換那兩首）
   else if (amb === "hall") mix = ["hall", { creepy: !!(P && o.creepy()) }];
   else if (amb === "workshop") mix = ["workshop", { busy: !!(o.wsBusy && o.wsBusy()) }]; // busy：手作坊超過幾人換曲（11-17）
   else if (amb === "casino") mix = ["casino", { heat: o.heat(), busy: !!(o.casBusy && o.casBusy()) }]; // busy：賭場超過幾人換曲（11-16）
