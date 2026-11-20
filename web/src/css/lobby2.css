@@ -400,3 +400,15 @@ body.reduce-motion .hl-track { animation: none; }
   .l2-mapbox { flex: none; display: block; }
   .l2-map.port { width: 100%; height: auto; max-width: none; }
 }
+
+/* ===== 大廳手機直拿整理（11-20，翊文：地圖下半要往下滑、籌碼被「更多」壓住；測試 session 375×740）=====
+   橫幅縮成細條、導覽圖照剩下的高度縮（最矮 420px，不會再縮到看不清）；狀態列的「更多」窄壹點，數字不被壓住 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2 { gap: 6px; }
+  .l2-strips { gap: 4px; }
+  .l2-strip { min-height: 26px; height: 26px; border-width: 6px; border-image-width: 6px 14px; padding: 0 12px; font-size: .75rem; }
+  .l2-mapbox { padding-top: 0; }
+  .l2-map.port { width: auto; max-width: 100%; height: max(420px, calc(100svh - 330px)); margin: 0 auto; }
+  .new-lobby-on #status .st-toggle { min-width: 46px; padding: 0 4px; font-size: .625rem; letter-spacing: 0; margin-right: 4px; }
+  .new-lobby-on #status .st-row .st-item { min-width: 0; }
+}

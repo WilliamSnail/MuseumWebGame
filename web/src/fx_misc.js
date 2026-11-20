@@ -158,7 +158,19 @@ import { EASE, afterAnim, animate, caf, clamp, easeOut3, focusNoScroll, h, hasDO
     }
     const w = toastWrap;
     markRM(w);
+    // 「任務完成：…」好幾則一起來（11-20，翊文：提示壹疊擋住操作）：合併成壹則「任務完成 N 個」，不再壹張壹張疊
+    const key = /^任務完成：/.test(String(text)) ? 'task' : null;
+    if (key) {
+      const ex = Array.from(w.children).find((c) => c._key === key && !c.classList.contains('is-out'));
+      if (ex) {
+        ex._n = (ex._n || 1) + 1;
+        const tx = ex.querySelector('.fx-toast-text'); if (tx) tx.textContent = '任務完成 ' + ex._n + ' 個：到「每週劇情」領獎勵。';
+        clearTimeout(ex._fxT); ex._fxT = setTimeout(() => dismissToast(ex), ms);
+        return () => dismissToast(ex);
+      }
+    }
     const t = h('div', 'fx-toast fx-tone-' + toneOf(o.tone));
+    if (key) t._key = key;
     const dot = h('span', 'fx-toast-dot');
     dot.setAttribute('aria-hidden', 'true');
     t.append(dot, h('span', 'fx-toast-text', String(text)));
@@ -174,7 +186,8 @@ import { EASE, afterAnim, animate, caf, clamp, easeOut3, focusNoScroll, h, hasDO
     void t.offsetWidth;
     t.classList.add('is-in');
     const live = Array.from(w.children).filter((c) => !c.classList.contains('is-out'));
-    while (live.length > 5) dismissToast(live.shift()); // 最多同時 5 則（原本 3 則，重要的說明會被擠掉）
+    const cap = window.innerWidth <= 760 ? 2 : 5; // 最多同時 5 則（原本 3 則，重要的說明會被擠掉）；手機窄，最多 2 則（11-20：疊壹堆擋住操作）
+    while (live.length > cap) dismissToast(live.shift());
     const close = () => dismissToast(t);
     t._fxT = setTimeout(close, ms);
     t.addEventListener('pointerenter', () => clearTimeout(t._fxT));
