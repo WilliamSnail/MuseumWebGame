@@ -1,9 +1,9 @@
 // 維護日誌共用：讀檔、解析開頭的欄位、檢查格式。log_check.cjs、log_index.cjs 都用這個。
-// 格式見 維護日誌/範本.md 和 AGENTS.md。
+// 格式見 docs/維護日誌/範本.md 和 AGENTS.md。
 const fs = require("fs"), path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
-const LOG_DIR = path.join(ROOT, "維護日誌");
+const LOG_DIR = path.join(ROOT, "docs", "維護日誌");
 const FIELDS = ["日期", "作者", "AI", "類型", "範圍", "PR", "版本", "測試", "狀態"]; // 必填；「相關」可以不填
 const TYPES = ["新功能", "修正", "平衡", "內容", "文件", "伺服器"];
 const STATES = ["待合併", "已上線", "本機完成", "還沒驗證"];
@@ -13,7 +13,7 @@ const NAME_RE = /^(\d{2})-(\d{2})_([^_]+)_(.+)\.md$/; // 月-日_作者_主題.m
 const DATE_RE = /^(\d{4}-\d{2}-\d{2})( \d{2}:\d{2}:\d{2})?$/;
 const TIME_FROM = "2026-11-09"; // 決定 0029
 
-// 所有日誌檔：維護日誌/年份/*.md（範本.md、README.md 不算）
+// 所有日誌檔：docs/維護日誌/年份/*.md（範本.md、README.md 不算）
 function listLogs() {
   if (!fs.existsSync(LOG_DIR)) return [];
   return fs.readdirSync(LOG_DIR, { withFileTypes: true })
