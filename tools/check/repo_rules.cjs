@@ -3,7 +3,7 @@
 //   2. 模擬腳本只放 test/sim/（以前 test/ 平放 32 支，還有壹支是重複的舊版）。
 //   3. shared/ 的賭場、合作、地下、Discord 檔放子資料夾（casino/、coop/、cellar/、discord/），不准再在 shared/ 第一層開 casino_xxx.js 這種。
 //   4. 檔名不准用數字結尾（logic3.js、content4.js 這種看不出用途）。
-//   5. 程式檔（shared/、web/src/、functions/ 第一層）單檔不超過 MAX_LINES 行；已經超過的列在 BIG，只准變小。
+//   5. 程式檔（shared/、web/src/ 第一層、functions/）單檔不超過 MAX_LINES 行；已經超過的列在 BIG，只准變小。
 //   6. web/src 的 import 不准繞圈（shared/ 的繞圈由 tools/check/check_imports.cjs 擋）。
 const { spawnSync } = require("child_process"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
@@ -17,8 +17,8 @@ const BIG = { "web/src/ui_core.js": 1350, "web/src/fx_sound.js": 1323, "web/src/
 // 11-20 以前就有的數字檔名：之後改名了就從這裡拿掉
 const OLD_NUM = ["web/src/ui_screens1.js", "web/src/ui_screens2.js", "web/src/ui_screens3.js", "web/src/ui_lobby2.js"];
 // 這幾個資料夾的第一層只准放這些檔，新檔一律放進子資料夾（11-20 資料夾結構第二輪）
-const FIRST_LEVEL = { tools: ["README.md"], test: ["load_shared.cjs", "run_all.cjs", "esm_smoke.mjs"] };
-const CODE = /^(shared\/.*|web\/src\/[^/]+|functions\/[^/]+)\.(js|cjs|mjs)$/;
+const FIRST_LEVEL = { tools: ["README.md"], test: ["load_shared.cjs", "run_all.cjs", "esm_smoke.mjs"], functions: ["index.js", "options.js", "package.json", "package-lock.json"] };
+const CODE = /^(shared\/.*|web\/src\/[^/]+|functions\/(?!shared\/|node_modules\/).*)\.(js|cjs|mjs)$/;
 function check(files, readText = f => fs.readFileSync(path.join(ROOT, f), "utf8")) {
   const bad = [];
   const top = new Set(files.map(f => f.split("/")[0]));

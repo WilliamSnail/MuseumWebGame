@@ -57,7 +57,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | 路徑 | 放什麼 | 誰能寫 |
 |---|---|---|
 | `/status/{uid}` | `state`（online／away／offline）、`room`、`nick`、`at` | 自己；斷線時 `onDisconnect` 自動改成 offline |
-| `/titles/{uid}` | 現在戴的稱號 `{ id, name }`（決定 0050）。只有 `functions/casino.js` 在換稱號、進館時寫；名字用錢包裡的，不信存檔 | 只有 Functions；館友讀得到 |
+| `/titles/{uid}` | 現在戴的稱號 `{ id, name }`（決定 0050）。只有 `functions/casino/casino.js` 在換稱號、進館時寫；名字用錢包裡的，不信存檔 | 只有 Functions；館友讀得到 |
 | `/casinoLive` | 賭場「實況」現在的實況主和最近一則感謝（決定 0053）：`{ seq, uid, nick, since, until, msg: { id, at, from, to, toUid, n } }`；沒人在播就沒有 `uid`。只有暱稱和 uid，沒有 email、錢包。真正的狀態在 Firestore `casinoLive/main`，這裡是交易成功後寫的鏡像（用 `seq` 擋晚到的舊資料）；畫面聽這裡，跳「感謝」和大廳的「正在實況」。規則有欄位白名單（`$other` 不准） | 只有 Functions；館友讀得到 |
 | `/inbox/{uid}/{id}` | 給我的通知：被邀請、存檔被伺服器改了（`save_changed`）、有新的信（`mail_new`）、有人來過展廳（`hall_news`） | 只有 Functions；自己讀完刪掉 |
 | `/invites/{iid}`、`/parties/{pid}` | 邀請、隊伍、一起玩的狀態（M3、M4） | 只有 Functions；成員可以讀 |
@@ -81,8 +81,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | 名字 | 做什麼 | 哪一步 |
 |---|---|---|
 | `join` | 第一次登入：email 在邀請名單上 → 建 `members/{uid}`。網址帶 `?join=碼`（Discord 的 `/pepe-加入`）時多傳 `{ code }`：碼有效就建館友、建 `invites`（`source: "discord"`）、綁定、發獎勵；沒帶碼完全照舊 | M1、決定 0051 |
-| `discordBot` | **不是 callable，是 HTTPS（`onRequest`）**：Discord 的 Interactions Endpoint。驗 ed25519 簽名（`req.rawBody`、`X-Signature-*`），過不了 401；沒設定 503；PING 回 PONG；只收設定的伺服器。八個 `/pepe-…` 指令當場讀寫、回覆（`functions/discord.js`、規則 `shared/discord/core.js`） | 決定 0051 |
-| `discordLinkCode`、`discordLinkState`、`discordUnlink` | 遊戲裡的「綁定 Discord」：拿 6 位數碼、看狀態（`configured` 是 false 就是還沒開通，畫面不顯示）、解除（`functions/discord_link.js`） | 決定 0051 |
+| `discordBot` | **不是 callable，是 HTTPS（`onRequest`）**：Discord 的 Interactions Endpoint。驗 ed25519 簽名（`req.rawBody`、`X-Signature-*`），過不了 401；沒設定 503；PING 回 PONG；只收設定的伺服器。八個 `/pepe-…` 指令當場讀寫、回覆（`functions/discord/discord.js`、規則 `shared/discord/core.js`） | 決定 0051 |
+| `discordLinkCode`、`discordLinkState`、`discordUnlink` | 遊戲裡的「綁定 Discord」：拿 6 位數碼、看狀態（`configured` 是 false 就是還沒開通，畫面不顯示）、解除（`functions/discord/discord_link.js`） | 決定 0051 |
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
 | `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/systems.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話和打字、檢舉、時間到、接回去、移出斷線的人（`shared/coop/core.js`、`coop/flow.js`、`coop/fun.js`） | M4 |
@@ -170,7 +170,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 ## 八、管理員（翊文在後台設，決定 0033）
 
-管理員只看得到大家的進度，不能改（`functions/admin.js`、`shared/admin.js`、`web/src/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
+管理員只看得到大家的進度，不能改（`functions/game/admin.js`、`shared/admin.js`、`web/src/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
 
 翊文怎麼把自己設成管理員（AI 不能做，AI 碰不到正式的 Firebase）：
 
@@ -237,18 +237,18 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 
 ## 十一、Discord 聯動第一步（決定 0051）
 
-規劃在 `docs/規劃/Discord聯動規劃.md`。程式：`functions/discord.js`（入口 `discordBot`）、`discord_data.js`（Firestore 交易）、`discord_link.js`（遊戲裡的三個 callable）、`discord_config.js`（設定）；規則 `shared/discord/core.js`；畫面 `web/src/ui_discord.js`（選單 → 我的帳號 → Discord）。
+規劃在 `docs/規劃/Discord聯動規劃.md`。程式：`functions/discord/discord.js`（入口 `discordBot`）、`discord_data.js`（Firestore 交易）、`discord_link.js`（遊戲裡的三個 callable）、`discord_config.js`（設定）；規則 `shared/discord/core.js`；畫面 `web/src/ui_discord.js`（選單 → 我的帳號 → Discord）。
 
-- **設定**：`functions/discord_config.js` 的 `DISCORD` 有三個欄位（Application ID、Public Key、Guild ID），**翊文 11-09 給了，已經填好**。都不是密碼。空的時候 `discordBot` 回 503、遊戲裡不顯示「綁定 Discord」，其他 Function 不受影響。Bot token 第一步用不到。
+- **設定**：`functions/discord/discord_config.js` 的 `DISCORD` 有三個欄位（Application ID、Public Key、Guild ID），**翊文 11-09 給了，已經填好**。都不是密碼。空的時候 `discordBot` 回 503、遊戲裡不顯示「綁定 Discord」，其他 Function 不受影響。Bot token 第一步用不到。
 - **3 秒**：不另開 codebase、不用 `FUNCTION_TARGET` 懶載入、不設 `minInstances`。量過：載入整個 `functions/index.js` 1.3 秒、只載入 `options.js` 加 Firebase 兩個套件 1.2 秒，差 0.1 秒，時間幾乎都花在 Firebase 的套件上，拆也省不了。指令都只讀、寫幾份文件就回，不先回「處理中」。正式環境的冷啟動還沒量；若常超過 3 秒，才設 `minInstances: 1`（要先查價再問翊文）。
 - **獎勵**：`discord_data.js` 的交易裡讀 `casinoWallets/{uid}`（沒有就用 `casWalletFix` 開一個：開場籌碼照給，再加 `NUM.discord.linkBonus`）和 `discordBonus/{uid}`，沒領過才寫兩份。跟賭場搶同一份文件，Firestore 會讓一邊重試。不從莊家扣。
-- **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/content/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
+- **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/content/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
 - **Firestore 規則沒改**：這些集合都走最後一條「一律不准」（`test/discord/discord_bot.test.cjs` 擋「規則裡不准出現 discord」）。
 
 ### 要翊文做的（AI 碰不到）
 
 1. （做好了）Discord 開發者頁面（discord.com/developers/applications → 選 Yuga Bot → General Information）：複製 **Application ID** 和 **Public Key**，給 AI。
-2. （做好了）Discord 軟體 → 使用者設定 → 進階 → 開「開發者模式」→ 對佩佩博物館伺服器按右鍵 → 「複製伺服器 ID」，給 AI。AI 把三個填進 `functions/discord_config.js`、合併部署。
+2. （做好了）Discord 軟體 → 使用者設定 → 進階 → 開「開發者模式」→ 對佩佩博物館伺服器按右鍵 → 「複製伺服器 ID」，給 AI。AI 把三個填進 `functions/discord/discord_config.js`、合併部署。
 3. 開發者頁面 → OAuth2 → URL Generator：Scopes 勾 `applications.commands`（加上 `bot` 如果還沒邀請過），用產生的網址重新邀請 bot 進伺服器（已經有 `applications.commands` 就不用）。
 4. GitHub → Actions →「註冊 Discord 斜線指令」→ Run workflow，填 Application ID 和伺服器 ID（`DISCORD_BOT_TOKEN` 用現有的 Secret）。成功後在 Discord 打 `/pepe` 會列出八個指令。
 5. 部署之後，開發者頁面 → General Information →「Interactions Endpoint URL」填 `https://asia-east1-pepe-museum.cloudfunctions.net/discordBot`（部署完以 Firebase 主控台 → Functions 顯示的網址為準）→ Save。Discord 會先送 PING 驗證；**第一次可能因為冷啟動超過 3 秒存不起來，再按一次 Save 就好**。
@@ -256,7 +256,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 
 ## 十二、Discord 聯動第二步、第三步（決定 0051）
 
-規劃和做法在 `docs/規劃/Discord聯動規劃.md` 的第二步、第三步。程式：`functions/discord_out.js`（outbox 和發送）、`functions/discord_play.js`（在 Discord 玩）、`functions/casino.js`（`playCore` 和 `act…`）；規則 `shared/discord/out.js`、`shared/discord/play.js`。
+規劃和做法在 `docs/規劃/Discord聯動規劃.md` 的第二步、第三步。程式：`functions/discord/discord_out.js`（outbox 和發送）、`functions/discord/discord_play.js`（在 Discord 玩）、`functions/casino/casino.js`（`playCore` 和 `act…`）；規則 `shared/discord/out.js`、`shared/discord/play.js`。
 
 ### 第二步：遊戲大事發到頻道
 

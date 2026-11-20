@@ -1,6 +1,6 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  美股盤中（11-14，規劃 2.8i）：跟台股盤中（functions/stock_tw.js）同一套做法，只是時間是美東 09:30～16:00，資料來源換成美股行情。
+//  美股盤中（11-14，規劃 2.8i）：跟台股盤中（functions/stock/stock_tw.js）同一套做法，只是時間是美東 09:30～16:00，資料來源換成美股行情。
 //  資料來源：Yahoo Finance 的公開圖表介面（query1.finance.yahoo.com/v8/finance/chart，1 分鐘 K 棒，不用金鑰；跟 tools/content/stocks_fetch.cjs 每日資料同一個介面，
 //    不是官方保證的介面，可能被擋、改格式、限流；抓不到就標沒資料，不編）。真實代號只放在這個檔（不進 shared/，名字表不寫代號）。
 //  「夜光科技指數」對應 QQQ（那斯達克 100 的 ETF，可以交易、盤中有即時價；指數本身 ^IXIC 盤中的資料比較不穩）。
@@ -16,9 +16,9 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
-import { outStockWeekend } from "./shared/stocks.js";
-import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "./shared/stocks_tw.js";
-import { NUM } from "./shared/config.js";
+import { outStockWeekend } from "../shared/stocks.js";
+import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "../shared/stocks_tw.js";
+import { NUM } from "../shared/config.js";
 import { twSecret } from "./stock_tw.js";
 
 const db = () => getFirestore();
@@ -161,7 +161,7 @@ export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "A
   console.log("stockUsTick", r);
 });
 
-// ---------- 給 functions/casino.js 讀 ----------
+// ---------- 給 functions/casino/casino.js 讀 ----------
 // 今天的資料放在記憶體 US_CACHE_MS 毫秒（錨點每 15 分鐘才變，價是用時間算的，不必每次都讀）。讀不到就用舊的，沒有就當沒資料（美股不開）
 let usCache = null, usCacheAt = 0;
 const US_CACHE_MS = 8 * 1000; // 直接用真實價：價每分鐘變，快取壹下下就好

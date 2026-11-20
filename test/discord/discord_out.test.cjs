@@ -105,24 +105,24 @@ T("部署流程：token 只寫進 functions/.env、部署完（成不成功）�
 
 T("Functions 的發送：token 從 process.env 讀、不用 defineSecret、模擬器不連真的 Discord、不重試、不把 token 寫進 log", () => {
   const code = f => read(f).split("\n").map(l => l.replace(/\/\/.*$/, "")).join("\n"); // 拿掉註解再檢查
-  const s = read("functions/discord_out.js");
+  const s = read("functions/discord/discord_out.js");
   assert.ok(s.includes("process.env.DISCORD_BOT_TOKEN") && s.includes("process.env.DISCORD_CHANNEL_ID"));
-  assert.ok(!/defineSecret|defineString|defineJsonSecret/.test(code("functions/discord_out.js")) && !/defineSecret/.test(code("functions/index.js")));
+  assert.ok(!/defineSecret|defineString|defineJsonSecret/.test(code("functions/discord/discord_out.js")) && !/defineSecret/.test(code("functions/index.js")));
   assert.ok(/if \(EMU\(\)\) \{[\s\S]*?fake: true/.test(s), "模擬器要走假的");
   assert.ok(s.includes('if (EMU()) throw new Error("模擬器不准連真的 Discord")'));
   assert.ok(!/retry\s*:\s*true/.test(s), "不重試");
   assert.ok(!/console\.(log|info|warn)\(/.test(s), "不用 console.log 印東西");
   s.split("\n").filter(l => /console\.error/.test(l)).forEach(l => assert.ok(!/token/i.test(l.replace(/redact\([^)]*\)/g, "")), "log 裡不放 token：" + l));
   assert.ok(/onDocumentCreated\("discordOutbox\/\{id\}"/.test(s));
-  assert.ok(!/discord\.com\/api/.test(read("functions/discord.js")), "回覆指令不用 token");
+  assert.ok(!/discord\.com\/api/.test(read("functions/discord/discord.js")), "回覆指令不用 token");
 });
 
 T("寫 outbox 在交易之後、不丟錯：呼叫的地方都在交易外面", () => {
-  const c = read("functions/casino.js");
+  const c = read("functions/casino/casino.js");
   const play = c.slice(c.indexOf("export async function playCore("), c.indexOf("const play = (req"));
   const txEnd = play.indexOf("return Object.assign({}, r, { rev, letter:");
   assert.ok(txEnd > 0 && play.indexOf("outHouse(") > txEnd, "play 裡 outHouse 要在 runTransaction 結束之後");
-  const o = read("functions/discord_out.js");
+  const o = read("functions/discord/discord_out.js");
   const put = o.slice(o.indexOf("export async function outboxPut"), o.indexOf("const safe"));
   assert.ok(/try \{[\s\S]*\} catch \(e\) \{[\s\S]*return false;/.test(put) && !/throw /.test(put), "outboxPut 不丟錯");
   assert.ok(o.includes("const safe = async fn => { try"));

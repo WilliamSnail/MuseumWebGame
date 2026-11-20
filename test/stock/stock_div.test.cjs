@@ -2,8 +2,8 @@
 // 除息日開始時持有的人領現金股利（已知世界付、扣股利所得稅進政府帳）；除息日當天才買的不領；配股（除權）多給股數、零股補現金；槓桿部位調整；守恆。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("../load_shared.cjs");
-// functions/stock_div.js 直接取出 parseDivEvents 的原始碼來跑（不載入 firebase）
-const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock_div.js"), "utf8");
+// functions/stock/stock_div.js 直接取出 parseDivEvents 的原始碼來跑（不載入 firebase）
+const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "stock", "stock_div.js"), "utf8");
 const pi = src.indexOf("export function parseDivEvents("), pj = src.indexOf("\n}\n", src.indexOf("return [...m.values()]")) + 2;
 const dayOf = (sec, tz) => new Date(sec * 1000).toLocaleDateString("en-CA", { timeZone: tz });
 const parseDivEvents = new Function("dayOf", src.slice(pi, pj).replace("export function", "return function"))(dayOf);

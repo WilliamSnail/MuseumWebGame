@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  Discord 聯動第一步：Yuga Bot 的入口 discordBot（決定 0051，docs/規劃/Discord聯動規劃.md）
 //  Discord 把指令用 HTTPS 送來（Interactions Endpoint URL），我們驗簽名、當場讀資料庫、回覆。
@@ -16,13 +16,13 @@ import { createPublicKey, verify } from "node:crypto";
 import "./discord_warm.js"; // 啟動時先連好資料庫（檔裡有為什麼）
 import { discordConfig } from "./discord_config.js";
 import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_data.js";
-import { casHouseFix, casWalletFix } from "./shared/casino/wallet.js";
-import { eventsFromWeeks } from "./shared/events.js";
-import { EVENT_WEEKS } from "./shared/events_data.js";
-import { DAY_DATA } from "./shared/day_data.js";
-import { NUM } from "./shared/config.js";
-import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "./shared/discord/core.js";
-import { taipeiDay } from "./shared/logic.js";
+import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
+import { eventsFromWeeks } from "../shared/events.js";
+import { EVENT_WEEKS } from "../shared/events_data.js";
+import { DAY_DATA } from "../shared/day_data.js";
+import { NUM } from "../shared/config.js";
+import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "../shared/discord/core.js";
+import { taipeiDay } from "../shared/logic.js";
 import { PLAY_HANDLERS, onComponent, yugaLineFor } from "./discord_play.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組

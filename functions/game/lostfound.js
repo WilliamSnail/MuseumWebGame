@@ -6,13 +6,13 @@
 //             壹張只能送回去壹次：lostClaims/{id}（Firestore，只有 Functions 讀寫）。
 //  給別人的只有招領單那幾個欄位（lostCards），不給整份存檔，也不給 email。
 // ================================================================
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
-import { nowMs, todayStr } from "./shared/logic.js";
-import { MAIL_DAYS } from "./shared/mailbox.js";
-import { LOST_TEXT, lostCards, lostReturnStep } from "./shared/lostfound.js";
+import { nowMs, todayStr } from "../shared/logic.js";
+import { MAIL_DAYS } from "../shared/mailbox.js";
+import { LOST_TEXT, lostCards, lostReturnStep } from "../shared/lostfound.js";
 
 const db = () => getFirestore();
 const rtdb = () => getDatabase();

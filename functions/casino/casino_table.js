@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  Hamachi 賭場：館友同桌（第二階段，決定 0040）。規則在 shared/casino/table.js；這個檔只管讀寫。
 //  用現有的隊伍（kind "table"，1–4 人，隊伍一直是 lobby：隨時有人進出）。放哪裡：
@@ -12,19 +12,19 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { casBonusPct } from "./shared/casino/core.js";
-import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTNpcDrop, casTNpcInvite, casTNpcWho, casTSeats, casTSit, casTView } from "./shared/casino/table.js";
-import { NPC_LIST } from "./shared/npc_list_data.js";
-import { npcCounters } from "./shared/npc.js";
-import { twSecret } from "./stock_tw.js";
-import { casHouseFix, casWalletFix } from "./shared/casino/wallet.js";
-import { casWkSync } from "./shared/casino/week.js";
-import { NUM } from "./shared/config.js";
-import { cleanSay, fixParty, newParty } from "./shared/party.js";
-import { isFree, setRng, taipeiDay } from "./shared/logic.js";
-import { bad, leaveCurrent, ledParty, needMember, newId, now, partyHooks, rtdb } from "./party.js";
+import { casBonusPct } from "../shared/casino/core.js";
+import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTNpcDrop, casTNpcInvite, casTNpcWho, casTSeats, casTSit, casTView } from "../shared/casino/table.js";
+import { NPC_LIST } from "../shared/npc_list_data.js";
+import { npcCounters } from "../shared/npc.js";
+import { twSecret } from "../stock/stock_tw.js";
+import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
+import { casWkSync } from "../shared/casino/week.js";
+import { NUM } from "../shared/config.js";
+import { cleanSay, fixParty, newParty } from "../shared/party.js";
+import { isFree, setRng, taipeiDay } from "../shared/logic.js";
+import { bad, leaveCurrent, ledParty, needMember, newId, now, partyHooks, rtdb } from "../coop/party.js";
 import { cryptoRng, wkDefOf } from "./casino.js";
-import { outHouse } from "./discord_out.js";
+import { outHouse } from "../discord/discord_out.js";
 
 const db = () => getFirestore();
 const tableRef = pid => db().doc(`casinoTables/${pid}`);
@@ -95,7 +95,7 @@ async function inParty(pid, uid) {
 const viewOf = (r, uid) => Object.assign(casTView(r.t, uid, now()), { chips: r.wallets && r.wallets[uid] ? r.wallets[uid].chips : undefined });
 const answer = (r, uid) => Object.assign({ ok: r.ok !== false, view: viewOf(r, uid) }, r.ok === false ? { reason: r.reason, gag: !!r.gag } : {}, r.who ? { who: r.who } : {}, r.invite ? { invite: r.invite } : {}, r.refund ? { refund: r.refund } : {}, r.wkNew && r.wkNew[uid] ? { wkNew: r.wkNew[uid] } : {});
 
-// ---------- 離桌的掛鉤（functions/party.js 的 leaveParty 叫） ----------
+// ---------- 離桌的掛鉤（functions/coop/party.js 的 leaveParty 叫） ----------
 partyHooks.beforeLeave.push(async (pid, uid) => {
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
   if (!p || p.kind !== "table") return;

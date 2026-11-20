@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  台股盤中（11-14，規劃 2.8d）：Cloud Functions 自己去抓真實台股行情，不經過玩家的瀏覽器（玩家送回來的價格伺服器沒辦法驗證）。
 //  資料來源：台灣證交所的即時行情介面（mis.twse.com.tw，公開、不用金鑰；跟美股那邊的 Yahoo 一樣不是官方保證的介面，抓不到就標沒資料，不編）。
@@ -11,14 +11,14 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    stocksTw/latest        今天的錨點、每分鐘的價（相對前壹收盤的倍數）和最近幾天；玩家拿到的只有「現在這分鐘以前」的價，還沒發生的隨機路徑不會給
 //    stocksTwSecret/main    亂數種子用的伺服器祕密 { seed }：第壹次用到時伺服器自己產生（crypto 亂數），不在 repo 裡；
 //                           也可以用環境變數 STOCK_TW_SEED 蓋掉（有設就用它）。讀寫都失敗時這次用記憶體裡的亂數祕密（還是猜不到，只是不能重現）
-//  這個檔也給 functions/casino.js 讀今天的資料（stocksTw，有快取）。
+//  這個檔也給 functions/casino/casino.js 讀今天的資料（stocksTw，有快取）。
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
-import { taipeiDay } from "./shared/logic.js";
-import { outStockWeekend } from "./shared/stocks.js";
-import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "./shared/stocks_tw.js";
+import { taipeiDay } from "../shared/logic.js";
+import { outStockWeekend } from "../shared/stocks.js";
+import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "../shared/stocks_tw.js";
 
 const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");
@@ -172,7 +172,7 @@ export const stockTwTick = onSchedule({ schedule: "* 9-13 * * *", timeZone: "Asi
   console.log("stockTwTick", r);
 });
 
-// ---------- 給 functions/casino.js 讀 ----------
+// ---------- 給 functions/casino/casino.js 讀 ----------
 // 今天的資料放在記憶體 TW_CACHE_MS 毫秒（錨點每 15 分鐘才變，價是用時間算的，不必每次都讀）。讀不到就用舊的，沒有就當沒資料（台股不開）
 let twCache = null, twCacheAt = 0;
 const TW_CACHE_MS = 8 * 1000; // 直接用真實價：價每分鐘變，快取壹下下就好

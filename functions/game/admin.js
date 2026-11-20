@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  管理員介面（第一版：只看不改，決定 0033）。規則都在 shared/admin.js，這裡只有讀資料。
 //    adminCheck     登入後畫面問一次：我是不是管理員（決定選單要不要多「管理員」）
@@ -9,8 +9,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
-import { adminEmail, adminOverviewOf, isAdminInvite } from "./shared/admin.js";
-import { nowMs } from "./shared/logic.js";
+import { adminEmail, adminOverviewOf, isAdminInvite } from "../shared/admin.js";
+import { nowMs } from "../shared/logic.js";
 
 async function isAdmin(auth) {
   const email = auth ? adminEmail(auth.token) : null;

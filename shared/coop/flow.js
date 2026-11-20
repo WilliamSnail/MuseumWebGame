@@ -1,6 +1,6 @@
 // ================================================================
 //  合作地下收藏庫：伺服器走一趟的流程（多人版 M4）。規則在 shared/coop/core.js，這個檔只管「輪到誰、等多久、接下來是哪一步」。
-//  functions/coop.js 每一步：讀 run 和每個人的存檔 → setRng → coopAct(...) → setRng(null) → 寫回。
+//  functions/coop/coop.js 每一步：讀 run 和每個人的存檔 → setRng → coopAct(...) → setRng(null) → 寫回。
 //  純函式、同步；「現在」從外面傳進來（now，毫秒），不碰時鐘。
 //
 //  run.phase：vote（投票）→ result（看結果，大家按繼續或 20 秒）→（carry 搬東西 → carried 看結果）→ vote ……

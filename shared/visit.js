@@ -2,7 +2,7 @@
 //  參觀館友的展廳、送佩佩、伺服器的信：伺服器每一步要做的事（多人版 M2，docs/規劃/多人實作.md）
 //  翊文 11-09：「之後可以參觀館友的展廳、送佩佩……也要加入立即可以使用的功能」→ 館友名片上直接有按鈕、對方不在線也能用、收到的東西馬上能用。
 //  規則本身在 shared/gifts.js、shared/mailbox.js。這個檔把「一次呼叫要做什麼」寫成純函式（step 開頭的）：
-//    functions/visit.js 只負責讀資料庫、叫這裡、把結果在同一個 Firestore 交易裡寫回去。這樣不開模擬器也測得到（test/game/visit.test.cjs）。
+//    functions/game/visit.js 只負責讀資料庫、叫這裡、把結果在同一個 Firestore 交易裡寫回去。這樣不開模擬器也測得到（test/game/visit.test.cjs）。
 //  訪客簿（Firestore 的 halls/{主人}，只有 Functions 讀寫）：
 //    { log: [{ uid, nick, day, at, like, note, paid }], likes, seenAt }
 //    log：一天一位館友一筆，最新的在前面，最多 NUM.guest.logMax 筆（今天的不會被擠掉：來訪靈感的上限要算今天的）。
@@ -155,7 +155,7 @@ export function callRow(raw, id) {
 
 // ---------- 走進館友的展廳（Functions 的 visitHall） ----------
 // o：{ view（cleanHallView 過的）, book（訪客簿，還沒有就 null）, me: { uid, nick }, owner（主人的 uid）, today, at }
-//    跟館友學的接口：learn(我的 P, 主人的 P)、mySave、ownerSave（functions/visit.js 的 LEARN_ON_VISIT；沒給就不學）。
+//    跟館友學的接口：learn(我的 P, 主人的 P)、mySave、ownerSave（functions/game/visit.js 的 LEARN_ON_VISIT；沒給就不學）。
 // 回傳 { ok, open, view, first, gain, book（要寫回去的，沒改是 null）, mail（要寄給主人的，沒有是 null）, learn, likes, notes, mine }
 export function stepVisitHall(o) {
   if (o.me.uid === o.owner) return { ok: false, code: "self", reason: "這是你自己的展廳。" };

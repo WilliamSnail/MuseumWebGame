@@ -7,8 +7,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
-import { redeemJoin } from "./discord_data.js";
-import { outJoin } from "./discord_out.js";
+import { redeemJoin } from "./discord/discord_data.js";
+import { outJoin } from "./discord/discord_out.js";
 import { dcJoinCodeOf, dcText, dcVerifiedEmail } from "./shared/discord/core.js";
 
 
@@ -74,29 +74,29 @@ export const join = onCall(async req => {
 });
 
 // ---------- Discord 聯動第一步（決定 0051）：機器人入口 discordBot、遊戲裡的綁定 ----------
-export { discordBot } from "./discord.js";
-export { discordLinkCode, discordLinkState, discordUnlink } from "./discord_link.js";
-export { discordOutboxSend } from "./discord_out.js";
-export { discordDigestTick } from "./discord_digest.js"; // 每天台灣 20:00 的 Discord 更新彙整（11-17 從 GitHub 定時搬過來，GitHub 的會晚好幾小時）
+export { discordBot } from "./discord/discord.js";
+export { discordLinkCode, discordLinkState, discordUnlink } from "./discord/discord_link.js";
+export { discordOutboxSend } from "./discord/discord_out.js";
+export { discordDigestTick } from "./discord/discord_digest.js"; // 每天台灣 20:00 的 Discord 更新彙整（11-17 從 GitHub 定時搬過來，GitHub 的會晚好幾小時）
 
 // ---------- 邀請、隊伍、一起融合（M3）：寫在 party.js ----------
-export { invite, inviteReply, partyAction } from "./party.js";
+export { invite, inviteReply, partyAction } from "./coop/party.js";
 
 // ---------- 合作地下收藏庫（M4）：寫在 coop.js ----------
-export { coopStep } from "./coop.js";
-export { coopTrace } from "./coop_trace.js";
+export { coopStep } from "./coop/coop.js";
+export { coopTrace } from "./coop/coop_trace.js";
 // ---------- 管理員介面（只看不改，決定 0033）：寫在 admin.js ----------
-export { adminCheck, adminOverview } from "./admin.js";
+export { adminCheck, adminOverview } from "./game/admin.js";
 // ---------- Hamachi 賭場（決定 0040）：寫在 casino.js ----------
-export { casino } from "./casino.js";
-export { poolPublic } from "./pool_public.js"; // 館門口池子的水位（公開 JSON，給排程讀；Hosting /data/pool.json，決定 0133）
-export { npcSan } from "./san_levels.js"; // 旅客理智等級（公開 JSON，給排程讀；Hosting /data/npc_san.json，決定 0103）
-export { casinoTable } from "./casino_table.js";
-export { stockUsTick } from "./stock_us.js"; // 美股盤中：美東 09:30～16:00 每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8i）
-export { stockDivTick } from "./stock_div.js"; // 配股息：每小時抓 Yahoo 的除息、配股事件（決定 0112）
-export { stockTwTick } from "./stock_tw.js"; // 台股盤中：每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8d）
-export { art, auctionTick } from "./art.js"; // 藝術市場：跟館方買賣每日特展的畫（11-14，shared/casino/art.js）
+export { casino } from "./casino/casino.js";
+export { poolPublic } from "./casino/pool_public.js"; // 館門口池子的水位（公開 JSON，給排程讀；Hosting /data/pool.json，決定 0133）
+export { npcSan } from "./npc/san_levels.js"; // 旅客理智等級（公開 JSON，給排程讀；Hosting /data/npc_san.json，決定 0103）
+export { casinoTable } from "./casino/casino_table.js";
+export { stockUsTick } from "./stock/stock_us.js"; // 美股盤中：美東 09:30～16:00 每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8i）
+export { stockDivTick } from "./stock/stock_div.js"; // 配股息：每小時抓 Yahoo 的除息、配股事件（決定 0112）
+export { stockTwTick } from "./stock/stock_tw.js"; // 台股盤中：每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8d）
+export { art, auctionTick } from "./casino/art.js"; // 藝術市場：跟館方買賣每日特展的畫（11-14，shared/casino/art.js）
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
-export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./visit.js";
-export { clientError } from "./client_error.js"; // 前端錯誤回報（決定 0125，shared/client_error.js）
-export { lostReturn, lostSync } from "./lostfound.js"; // 招領（翊文 11-13，shared/lostfound.js）
+export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./game/visit.js";
+export { clientError } from "./game/client_error.js"; // 前端錯誤回報（決定 0125，shared/client_error.js）
+export { lostReturn, lostSync } from "./game/lostfound.js"; // 招領（翊文 11-13，shared/lostfound.js）

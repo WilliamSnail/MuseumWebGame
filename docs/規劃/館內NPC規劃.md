@@ -166,7 +166,7 @@
 ### 步驟 4：NPC 參加畫的拍賣
 
 - 內容：3.2 的規則；NPC 買家每天的總額上限 300 萬；結果公告寫「館外的收藏家」。
-- 程式：`shared/casino/auction.js`（收標時多一位 NPC 出價者）、`functions/art.js`、`casino/book.js` 加來源 `npcArt`／`npcArtBuy`。約 2 個 PR。
+- 程式：`shared/casino/auction.js`（收標時多一位 NPC 出價者）、`functions/casino/art.js`、`casino/book.js` 加來源 `npcArt`／`npcArtBuy`。約 2 個 PR。
 - **要翊文決定**：NPC 買家公告寫名字（翊文說每個 NPC 都有名字，建議寫）；一天總額 300 萬；NPC 買走的畫要不要「回到館方再賣」（建議不回，變成館外收藏）；賣家透過 NPC 最多拿到現價（建議）還是讓 NPC 出到 1.1 倍（不建議，會壓過賣回）。
 
 ### 步驟 5（以後）：NPC 的好感、錢包、成長

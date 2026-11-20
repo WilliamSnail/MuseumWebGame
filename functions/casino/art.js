@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  藝術市場第一步（11-14，shared/casino/art.js；規劃 docs/規劃/經濟體系規劃.md 2.10 節）：跟館方買賣每日特展的畫。
 //  art  act "quote"（只讀：今天特展上能買的畫、現價、我收藏的畫）、"buy"（d.id）、"sell"（d.id）
@@ -7,16 +7,16 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import { casArtBuy, casArtSecret, casArtSell, casArtTier, casArtView } from "./shared/casino/art.js";
-import { twSecret } from "./stock_tw.js";
-import { NPC_LIST } from "./shared/npc_list_data.js";
-import { ECON_EVENTS } from "./shared/npc_data.js";
-import { casEconActive } from "./shared/econ_events.js";
-import { casHouseFix, casWalletFix } from "./shared/casino/wallet.js";
-import { ART_WORKS } from "./shared/art_data.js";
-import { NUM } from "./shared/config.js";
-import { taipeiDay } from "./shared/logic.js";
-import { needMember, now } from "./party.js";
+import { casArtBuy, casArtSecret, casArtSell, casArtTier, casArtView } from "../shared/casino/art.js";
+import { twSecret } from "../stock/stock_tw.js";
+import { NPC_LIST } from "../shared/npc_list_data.js";
+import { ECON_EVENTS } from "../shared/npc_data.js";
+import { casEconActive } from "../shared/econ_events.js";
+import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
+import { ART_WORKS } from "../shared/art_data.js";
+import { NUM } from "../shared/config.js";
+import { taipeiDay } from "../shared/logic.js";
+import { needMember, now } from "../coop/party.js";
 import { no, playCore, shape } from "./casino.js";
 
 const db = () => getFirestore();
@@ -79,10 +79,10 @@ export const art = onCall(async req => {
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FieldValue } from "firebase-admin/firestore";
-import { casAucMails, casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "./shared/casino/auction.js";
-import { inbox } from "./party.js";
-import { MAIL_DAYS } from "./shared/mailbox.js";
-import { worldTick } from "./world.js";
+import { casAucMails, casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "../shared/casino/auction.js";
+import { inbox } from "../coop/party.js";
+import { MAIL_DAYS } from "../shared/mailbox.js";
+import { worldTick } from "../world/world.js";
 
 const aucRef = () => db().doc("casinoAuction/main");
 const walletRef = uid => db().doc(`casinoWallets/${uid}`);

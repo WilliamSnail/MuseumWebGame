@@ -1,4 +1,4 @@
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  Discord 聯動第一步的資料讀寫（決定 0051）。規則在 shared/discord/core.js；這個檔只管 Firestore 交易。
 //  放哪裡（都只有 Functions 碰得到：firestore.rules 最後一條「一律不准」擋住瀏覽器）：
@@ -18,11 +18,11 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
-import { NUM } from "./shared/config.js";
-import { taipeiDay } from "./shared/logic.js";
-import { casWalletFix } from "./shared/casino/wallet.js";
-import { casMint } from "./shared/casino/book.js";
-import { dcExpireAt, dcExpired, dcJoinCodeMake, dcJoinFull, dcLinkCodeMake, dcLinkCodeOf, dcTriesFail, dcTriesState } from "./shared/discord/core.js";
+import { NUM } from "../shared/config.js";
+import { taipeiDay } from "../shared/logic.js";
+import { casWalletFix } from "../shared/casino/wallet.js";
+import { casMint } from "../shared/casino/book.js";
+import { dcExpireAt, dcExpired, dcJoinCodeMake, dcJoinFull, dcLinkCodeMake, dcLinkCodeOf, dcTriesFail, dcTriesState } from "../shared/discord/core.js";
 
 const db = () => getFirestore();
 const ref = path => db().doc(path);

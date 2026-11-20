@@ -3,7 +3,7 @@
 //  舊的：說「我要實況」就變成全服唯一的實況主；別人說「我要斗內」，隨機給 2 萬～26 萬籌碼（10000 + 10000×1～25），公開說「感謝 ○○ 的斗內」。金額是隨機的，自己不能選，這是好笑的地方。
 //  新的：全館一次一位，別人正在播就不能搶；播 NUM.casino.live.durationMs（預設 1 小時）自動下播，本人也能下播；
 //       實況主離線（關掉遊戲）超過 graceMs 也算下播；斗內的錢從自己扣、進實況主的錢包（不經過莊家），一人一天 perDay 次，實況主一天最多收 receiveCap。
-//  這個檔是純函式，不碰網路、DOM、req：伺服器（functions/casino.js）用，之後 Discord 接開播和斗內也用同一份。時間、亂數、在線狀態都從參數來。
+//  這個檔是純函式，不碰網路、DOM、req：伺服器（functions/casino/casino.js）用，之後 Discord 接開播和斗內也用同一份。時間、亂數、在線狀態都從參數來。
 //  實況主的狀態（st）：{ v, uid, nick, since, until, seq, msg }；uid 是 null 就是沒人在播。seq 每次改動加一（Realtime Database 的鏡像靠它擋掉舊的）；
 //    msg 是最近一則感謝 { id, at, from, to, toUid, n }。st 整份會鏡像到 Realtime Database 的 casinoLive（館友讀得到），所以裡面只有暱稱和 uid。
 //  錢包欄位 lv：{ day, n 今天斗內幾次, sent 今天斗內出去多少, got 今天收了多少, sentAll、gotAll、times 累計 }；舊錢包沒有，這裡補。

@@ -1,5 +1,5 @@
 // ================================================================
-//  Hamachi 賭場的畫面（決定 0040；規則在 shared/casino*.js，伺服器在 functions/casino.js）
+//  Hamachi 賭場的畫面（決定 0040；規則在 shared/casino*.js，伺服器在 functions/casino/casino.js）
 //  這個檔只畫「伺服器給我的樣子」，什麼都不算：發牌、點數、派彩、錢包都在伺服器。畫面只拿得到看得到的牌，莊家的底牌結算才給。
 //  入口：右上角「選單」的「Hamachi 賭場」（ui_core.js 的 buildNav → PANELS.casino）。
 //  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、拚經濟、實況（決定 0053）、餐車、換小獎、成就、財產。

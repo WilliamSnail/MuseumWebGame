@@ -1,5 +1,5 @@
 // ================================================================
-//  留下痕跡給別人的畫面（好玩的機制 7）。規則在 shared/coop/trace.js；伺服器在 functions/coop_trace.js 的 coopTrace。
+//  留下痕跡給別人的畫面（好玩的機制 7）。規則在 shared/coop/trace.js；伺服器在 functions/coop/coop_trace.js 的 coopTrace。
 //  - 地下收藏庫（單人）和合作地下的房間裡，都看得到館友的留言牌、最後的影子、半透明走過去的幽影。
 //  - 走過這一間才能留言牌。字都是固定的，不能打字。
 //  - 讀 /traces（館友都讀得到），寫都走 Functions。

@@ -9,13 +9,13 @@
 //    /traces/mine/{uid}/{id}             這個人留的牌子（找最舊的換掉用）
 //    /traces/likes/{uid}                 還沒領的讚
 // ================================================================
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { bad, inbox, needMember, newId, now, rtdb } from "./party.js";
-import { claimLikes, likeProblem, newShadow, newSign, okWispKey, shadowsToDrop, signProblem, signsToDrop, traceRoomById } from "./shared/coop/trace.js";
-import { coopMember } from "./shared/coop/base.js";
-import { taipeiDay } from "./shared/logic.js";
+import { claimLikes, likeProblem, newShadow, newSign, okWispKey, shadowsToDrop, signProblem, signsToDrop, traceRoomById } from "../shared/coop/trace.js";
+import { coopMember } from "../shared/coop/base.js";
+import { taipeiDay } from "../shared/logic.js";
 
 const LOUNGE_KEEP = 30; // 交誼廳留最近幾張
 
@@ -126,7 +126,7 @@ async function pass(me, floor, key) {
   await rtdb().ref(`traces/floors/${floor}/wisps/${me.uid}`).set({ nick: me.nick, key, at: now() });
   return { ok: true };
 }
-// 合作走完一趟（functions/coop.js 叫）：在哪裡倒下的留影子，走過的層留幽影
+// 合作走完一趟（functions/coop/coop.js 叫）：在哪裡倒下的留影子，走過的層留幽影
 export async function traceRunEnd(run) {
   const s = run.stats;
   if (!s) return;

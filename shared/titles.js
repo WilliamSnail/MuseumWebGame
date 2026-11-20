@@ -3,7 +3,7 @@
 //  翊文：「獲得的稱號 可以再其他看館友資訊的地方也看的到嗎，不是只是展廳看的到」
 //  稱號是賭場的成就（決定 0040、0042）：玩家在賭場挑一個戴著，展廳上顯示的就是那一個（P.casinoTitle）。
 //  這個檔只有純函式：不碰 Firebase、不碰畫面。
-//    titlePublish(錢包, 存檔)   伺服器（functions/casino.js）用：現在要公開的稱號 { id, name } 或 null。錢包只有 Functions 寫得動，所以不信存檔裡的名字
+//    titlePublish(錢包, 存檔)   伺服器（functions/casino/casino.js）用：現在要公開的稱號 { id, name } 或 null。錢包只有 Functions 寫得動，所以不信存檔裡的名字
 //    titlesFromDb(原始資料)     瀏覽器讀 Realtime Database 的 titles：{ uid: { id, name } }，不對的丟掉
 //    titleName(稱號)            畫面上放的字：沒有、壞掉的回傳空字串（沒稱號的人版面不變）
 //  公開的只有「稱號的 id 和名字」一個欄位；email、理智、怪癖、靈感都不在裡面（docs/規則/界線.md）。

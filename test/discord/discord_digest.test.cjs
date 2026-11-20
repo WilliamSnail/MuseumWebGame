@@ -22,7 +22,7 @@ T("真的發的那則多入館連結；沒有公告就不發", () => {
   assert.strictEqual(G.dcDigestPost([], "2026-11-15", areaOf, AREAS), "");
 });
 T("伺服器排程：每天台灣 20:00、同壹天只寫壹則（outbox 的 id 帶日期）", () => {
-  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "discord_digest.js"), "utf8");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "discord", "discord_digest.js"), "utf8");
   assert.ok(/schedule: "0 20 \* \* \*"/.test(src) && /timeZone: "Asia\/Taipei"/.test(src));
   assert.ok(/`digest-\$\{day\}`/.test(src), "id 要是 digest-日期");
   const idx = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "index.js"), "utf8");

@@ -1,6 +1,6 @@
 // ================================================================
 //  世界經濟的「世界文件」（W2，決定 0086，規劃 docs/規劃/世界經濟規劃.md 第 5、6 節）
-//  純函式。伺服器每小時的排程（functions/world.js 的 worldTick，併進 auctionTick）呼叫 wdTick：換日第一次才寫，同一天再跑什麼都不做。
+//  純函式。伺服器每小時的排程（functions/world/world.js 的 worldTick，併進 auctionTick）呼叫 wdTick：換日第一次才寫，同一天再跑什麼都不做。
 //  world/main：{ v, day, pool, grownSeen, last }
 //    pool        已知世界的「備用池」：house.world（館的對外帳戶）以外的那一份。現在是 0，搬錢預設關閉（NUM.casino.worldDoc.gateway ＝ 0）。
 //    grownSeen   上次看到的 house.led.mint.worldGrow 累計（算「這一次之間成長了多少」）

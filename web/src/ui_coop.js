@@ -1,6 +1,6 @@
 // ================================================================
 //  合作地下收藏庫的畫面（多人版 M4，翊文 11-08、11-09）
-//  規則在 shared/coop/core.js、shared/coop/flow.js；伺服器在 functions/coop.js。這個檔只畫「伺服器給我的樣子」，什麼都不算。
+//  規則在 shared/coop/core.js、shared/coop/flow.js；伺服器在 functions/coop/coop.js。這個檔只畫「伺服器給我的樣子」，什麼都不算。
 //  - 入口：地下收藏庫的畫面（ADDONS.cellarTop）、館友小卡（FRIEND_ACTIONS）。邀請卡用 ui_party.js 那一套（PARTY_HOOKS 接回來）。
 //  - 木框（overlay）開著的時候：準備區（聽 parties/{pid}）→ 走一趟（聽 coopView/{pid}/{我}）。
 //  - 走的時候畫面不存檔（UI.saveHold）：每一步都是伺服器寫存檔，收到 save_changed 重新讀（ui_login.js）。

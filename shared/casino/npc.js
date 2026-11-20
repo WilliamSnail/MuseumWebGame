@@ -2,7 +2,7 @@
 //  邀請在場的 NPC 壹起去賭場（11-14，決定 0080；翊文：「賭場邀請 NPC 一起來，每個也可以有自己說話」「也可以參與多人賭桌」）
 //  純函式（shared/casino/table.js 的牌桌叫它）：誰邀得動、答不答應、NPC 怎麼下注怎麼打、錢怎麼走、說什麼。
 //  錢：NPC 的注從「已知世界」出（casHouseWorldOut，帳上寫 npcBj，跟 NPC 在牌桌花錢同一條），贏的賠付回已知世界（casHouseWorldIn）。
-//    下注的當下錢就在莊家帳上、不算「打牌中」，所以玩家那邊的 inplay 要跳過 npc 座位（functions/casino.js 的日報）。永遠不印錢、不燒錢，casBookGap 還是 0。
+//    下注的當下錢就在莊家帳上、不算「打牌中」，所以玩家那邊的 inplay 要跳過 npc 座位（functions/casino/casino.js 的日報）。永遠不印錢、不燒錢，casBookGap 還是 0。
 //  上限：壹位 NPC 壹天最多輸／贏 perDay 的 lossPct／winPct；全館壹天淨輸或淨贏最多 dayCap；莊家不是「健康」（吃緊、破產）、已知世界吃緊都不下注。
 //  館友帶 NPC 沒有任何額外獎勵（不給籌碼、不給靈感）。
 //  記帳 house.npcCas：{ day, by: { npcId: { n 今天答應幾次, net NPC 今天贏（正）輸（負）多少, hands }, }, net 全館 NPC 今天的淨贏輸, at: { npcId: { pid, host, since, until } 現在在賭場的 }, cool: { "uid|npcId": 到哪個毫秒才能再邀 } }

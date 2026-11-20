@@ -1,6 +1,6 @@
 // 假的 Discord：用測試金鑰簽假的 interaction，打模擬器裡的 discordBot，走完 Discord 聯動第一步（決定 0051）。
 // 不連真的 Discord、不連正式的 Firebase（只連 127.0.0.1）。每次跑都產生新的金鑰組，放進模擬器的 discordTest/config
-// （functions/discord_config.js 只在模擬器讀它；正式環境永遠用 repo 裡的常數），所以 repo 裡沒有任何金鑰。
+// （functions/discord/discord_config.js 只在模擬器讀它；正式環境永遠用 repo 裡的常數），所以 repo 裡沒有任何金鑰。
 //
 //   npm run local -- --set 5 --port 5285      先開模擬器（放背景）
 //   node tools/content/discord_fake.cjs --set 5       跑全部檢查，印每一項過沒過、回應時間；有沒過的就 exit 1
@@ -740,7 +740,7 @@ async function all() {
   await fsDel("discordTest/out"); await outClear();
   await check("拿掉模擬器的測試設定：改用 repo 裡的正式常數（Application ID 等 11-09 已填），測試金鑰簽的請求回 401；常數若是空的則回 503；不影響別的 Function", async () => {
     await fsDel("discordTest/config"); const r = await bot({ type: 1 });
-    const filled = /publicKey: "[0-9a-f]{64}"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "discord_config.js"), "utf8"));
+    const filled = /publicKey: "[0-9a-f]{64}"/.test(require("fs").readFileSync(require("path").join(__dirname, "..", "..", "functions", "discord", "discord_config.js"), "utf8"));
     assert.strictEqual(r.status, filled ? 401 : 503);
     assert.ok((await alice.call("discordLinkState")).result.configured === filled);
     assert.ok((await alice.call("casino", { act: "peek" })).ok, "賭場照常");

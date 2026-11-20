@@ -61,7 +61,7 @@
 | **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/操作/測試清單.md`） | `node tools/dev/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/dev/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/dev/qa_casino_ev.cjs 400000` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 | **按 Firebase 固定動作、存結果、跟上次比**（改正式資料的前後對照；按要翊文同意） | `npm run fb -- house-ledger --save W4前`、`--diff W4前`；`--show 名字` 不按只看。查錯：`npm run fb -- fn-errors`；量大小：`house-size`。整份在 `docs/操作/伺服器除錯.md`。排隊超過 10 分鐘還沒開始會自己取消、重按壹次（`gh_lib` 的 `dispatch`） |
-| 看今天 20:00 Discord 彙整會發什麼 | `node tools/content/discord_digest.cjs [--date 2026-11-15]`（每天 20:00 由伺服器排程 `discordDigestTick` 發，`functions/discord_digest.js`；GitHub 的 `discord-digest.yml` 只留手動補發） |
+| 看今天 20:00 Discord 彙整會發什麼 | `node tools/content/discord_digest.cjs [--date 2026-11-15]`（每天 20:00 由伺服器排程 `discordDigestTick` 發，`functions/discord/discord_digest.js`；GitHub 的 `discord-digest.yml` 只留手動補發） |
 | 寫新腳本要叫 GitHub（觸發流程、等跑完、讀紀錄、找 gh） | 用 `tools/release/gh_lib.cjs` 的 `dispatch`、`runLog`、`ghRun`，**不要再自己寫壹份**；雲端擋 GraphQL，只用 `gh workflow／run／api` |
 
 **腳本要寫就寫、重複的要合併**（翊文 11-15：「記得有什麼腳本要寫都要寫，如果腳本需要合併也記得」）：同樣的邏輯有兩份以上，就抽成共用的（例：`tools/release/gh_lib.cjs` 是 wf_run、fb_run、say、ship 合併出來的），舊的改成叫它；新腳本壹定要加進上面這張表和測試。

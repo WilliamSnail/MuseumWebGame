@@ -55,7 +55,7 @@ export async function stockDivRun(nowMs, fetchFn, dbx) {
 export const stockDivTick = onSchedule({ schedule: "17 * * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 60 }, async () => {
   console.log("stockDivTick", await stockDivRun(Date.now()));
 });
-// 給 functions/casino.js 讀（記憶體快取 5 分鐘）
+// 給 functions/casino/casino.js 讀（記憶體快取 5 分鐘）
 let divCache = null, divCacheAt = 0;
 export async function stocksDiv() {
   if (divCache && Date.now() - divCacheAt < 5 * 60 * 1000) return divCache;

@@ -139,7 +139,7 @@ T("指令 /pepe-借錢：在清單裡、無選項、在 PLAY_COMMANDS 和 handle
   const c = G.dcCommands().find(x => x.name === "pepe-借錢");
   assert.ok(c && c.options === undefined && c.description.length <= 100 && c.description.length >= 1);
   assert.strictEqual(G.dcCommandKey("pepe-借錢"), "borrow");
-  const d = read("functions/discord_play.js"), cs = read("functions/casino.js");
+  const d = read("functions/discord/discord_play.js"), cs = read("functions/casino/casino.js");
   assert.ok(/borrow: cmdBorrow/.test(d) && /DC_CMD\.borrow\]/.test(d));
   assert.ok(d.includes('playCore(me, "", {}, actRelief)'));
   assert.ok(cs.includes("case \"relief\": return play(req, me, {}, actRelief)"), "遊戲跟 Discord 用同壹個動作");

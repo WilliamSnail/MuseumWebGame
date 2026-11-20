@@ -1,6 +1,6 @@
 // ================================================================
 //  藝術市場第一步（11-14）：畫廊「今日特展」每幅畫下面的「買下」「賣回」，和「我收藏的畫」。
-//  規則和錢都在伺服器（functions/art.js、shared/casino/art.js）：這裡只拿報價、按按鈕、畫結果。
+//  規則和錢都在伺服器（functions/casino/art.js、shared/casino/art.js）：這裡只拿報價、按按鈕、畫結果。
 //  定位是避險資產（翊文：「畫可以當像富人買用來避險的感覺」）：價錢不閃、不跳、不用紅綠箭頭，安安靜靜寫一個數字。
 //  沒登入、連不上伺服器就不顯示（畫廊照常）。介面上的字照第 1 代用「壹」。
 // ================================================================
@@ -140,7 +140,7 @@ export function hallArtWall(list) {
   return box;
 }
 
-// ---------- 拍賣（11-14，shared/casino/auction.js、functions/art.js；翊文：封閉式出價、每幅稀有畫壹場、玩家也能拍自己的畫、只公開得標價） ----------
+// ---------- 拍賣（11-14，shared/casino/auction.js、functions/casino/art.js；翊文：封閉式出價、每幅稀有畫壹場、玩家也能拍自己的畫、只公開得標價） ----------
 // 資料：NET.call("art", { act: "auctions" }) → { ok, chips, auctions }。動作 bid { id, amt }、list { id: 畫的 id, reserve }、cancel { id: 拍賣的 id } → { ok, lines, chips, rev, view }
 // auctions.open[]：{ id, kind, sellerName, work, title, tierName, reserve, ceil, closeAt, bidders, mine, mineSeller, canCancel }；done[]：{ id, sellerName, title, tierName, price（流標是 null）, closedAt }
 let auc = null, aucMsg = null, aucBusy = false, aucLoading = false, aucFailed = false;

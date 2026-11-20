@@ -5,7 +5,7 @@
 //  登記簿上還有他的名字，他的號碼牌留在館裡，等人認領。
 //
 //  流程：
-//    1. 伺服器（functions/lostfound.js 的 lostSync）讀館友的存檔，把最近 NUM.lost.days 天理智歸零的參觀者做成公開的招領單，
+//    1. 伺服器（functions/game/lostfound.js 的 lostSync）讀館友的存檔，把最近 NUM.lost.days 天理智歸零的參觀者做成公開的招領單，
 //       放在 Realtime Database 的 lostFound/{id}（館友讀得到，只有伺服器寫得動）。
 //    2. 別的館友走地下，每壹層第壹次進房間擲壹次，NUM.lost.meetPct% 會遇到壹張（web/src/ui_lost.js）。
 //    3. 三個選項：

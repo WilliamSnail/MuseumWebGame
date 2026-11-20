@@ -1,6 +1,6 @@
 // ================================================================
 //  Discord 聯動第二步：遊戲大事發到頻道的規則（決定 0051，docs/規劃/Discord聯動規劃.md「第二步」）
-//  純函式：不碰網路、資料庫、時鐘（時間從參數來）。Functions（functions/discord_out.js）負責寫 discordOutbox、發送。
+//  純函式：不碰網路、資料庫、時鐘（時間從參數來）。Functions（functions/discord/discord_out.js）負責寫 discordOutbox、發送。
 //  流程：遊戲裡的交易成功之後，把事件寫進 discordOutbox/{id}（只有 Functions 碰得到，firestore.rules 最後壹條擋住瀏覽器）；
 //        onDocumentCreated 的 Function 檢查冷卻，發到頻道。Discord 掛掉、沒 token、發失敗，都不影響遊戲。
 //  事件（kind）：broke 莊家破產、breaker 有人壹把把莊家打到破產、rescued 莊家被救回來、join 有人靠 /pepe-加入 成為館友、
@@ -12,7 +12,7 @@
 import { NUM } from "../config.js";
 import { dcNick, dcNum } from "./core.js";
 
-export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"]; // 每天 20:00 的彙整（kind "digest"，functions/discord_digest.js）不是遊戲事件，不列在這裡
+export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"]; // 每天 20:00 的彙整（kind "digest"，functions/discord/discord_digest.js）不是遊戲事件，不列在這裡
 export const DC_OUT_TEXT = {
   broke: "💸 莊家破產了。Yuga 正在翻抽屜找零錢。想幫忙的人，到賭場的「拚經濟」。",
   breaker: "💥 {nick} 壹把把莊家打到破產了！荷官的手在抖。",
@@ -81,7 +81,7 @@ export function dcOutBody(text) {
 }
 
 // ---------- 每天 20:00 的更新彙整（翊文 11-15：「Discord更新太洗板了」→ 每天壹則、「晚上8點發」） ----------
-// 11-17 起由伺服器排程發（functions/discord_digest.js）：GitHub 的定時會晚好幾個小時（11-16 的 20:00 那則隔天 05:32 才發）。
+// 11-17 起由伺服器排程發（functions/discord/discord_digest.js）：GitHub 的定時會晚好幾個小時（11-16 的 20:00 那則隔天 05:32 才發）。
 // list：館方公告（NOTICES）；day：台灣日期；areaOf、areas：分段（noticeArea、NOTICE_AREAS）。今天沒有公告回 ""（不發）
 export const DC_DIGEST_MAX = 1800; // Discord 壹則 2000 字，後面還要放連結
 export const DC_DIGEST_SITE = "https://pepe-museum.web.app";

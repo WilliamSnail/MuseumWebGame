@@ -167,7 +167,7 @@ T("併單的視窗：5 分鐘內且第壹則已經發出去才併；還在發（
 
 // ---------- 原始碼上的檢查 ----------
 T("規則只有壹套：Discord 這層只呼叫 casino.js 的 playCore 和 act… 函式，不重寫牌、錢包、莊家的規則；遊戲的 switch 也走同壹批", () => {
-  const d = read("functions/discord_play.js"), c = read("functions/casino.js");
+  const d = read("functions/discord/discord_play.js"), c = read("functions/casino/casino.js");
   assert.ok(d.includes("playCore") && /actDeal|actHitStand|actPack|actBuy|actEcon|liveAct/.test(d));
   assert.ok(!/casStep|casBuy|casOpenPacks|casEconPlay|liveDonate|casSettle|casFinish|casShuffle|casHit\(|casStand\(/.test(d.replace(/\/\/.*$/gm, "")), "不重寫規則");
   assert.ok(!/runTransaction/.test(d), "交易只在 casino.js");
@@ -177,14 +177,14 @@ T("規則只有壹套：Discord 這層只呼叫 casino.js 的 playCore 和 act�
 
 T("3 秒：回覆當場做完，不先回再繼續做（沒有 follow-up、webhook、編輯訊息、setTimeout）", () => {
   const code = f => read(f).split("\n").map(l => l.replace(/\/\/.*$/, "")).join("\n");
-  const d = code("functions/discord_play.js") + code("functions/discord.js");
+  const d = code("functions/discord/discord_play.js") + code("functions/discord/discord.js");
   assert.ok(!/webhooks\/|interactions\/|setTimeout|setImmediate|process\.nextTick|waitUntil/.test(d), "不在回覆之後做事");
   assert.ok(!/type:\s*5\b|type:\s*6\b|DEFERRED/.test(d), "不回「處理中」");
-  assert.ok(/res\.status\(code\)|J\(res, 200, out\)/.test(read("functions/discord.js")));
+  assert.ok(/res\.status\(code\)|J\(res, 200, out\)/.test(read("functions/discord/discord.js")));
 });
 
 T("Discord 回覆裡的字全都過 dcScrub／dcPlain／dcNick：play 這層沒有把原始的遊戲暱稱或 email 直接塞進訊息", () => {
-  const d = read("functions/discord_play.js").replace(/\/\/.*$/gm, "");
+  const d = read("functions/discord/discord_play.js").replace(/\/\/.*$/gm, "");
   assert.ok(!/email/i.test(d.replace(/playCore\(me, ""/g, "")), "play 這層不碰 email");
   assert.ok(d.includes('playCore(me, "", '), "認領舊資料用的 email 不傳（Discord 不做）");
   assert.ok(!/legacy/.test(d), "不搬舊錢包認領");

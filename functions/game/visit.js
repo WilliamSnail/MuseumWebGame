@@ -10,19 +10,19 @@
 //  通知（Realtime Database 的 /inbox/{uid}）：mail_new（有新的信）、hall_news（有人來過、按讚、留言）、hall_call（請你去看展廳）、save_changed。
 //  給別人的只有展廳那一小部分（hallView＋cleanHallView）和本週特展那一小部分（weeklyView＋stepWeeklyView）：不給整份存檔，也不給 email。
 // ================================================================
-import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
+import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
-import { NUM } from "./shared/config.js";
-import { dayPlus, hallView, weeklyView } from "./shared/gifts.js";
-import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "./shared/logic.js";
-import { weekIndex } from "./shared/logic_base.js";
-import { weeklyTheme } from "./shared/themeshow.js";
-import { markAct, markGift } from "./task_act.js";
-import { friendTalent, learnFromFriend } from "./shared/shop.js";
-import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "./shared/visit.js";
+import { NUM } from "../shared/config.js";
+import { dayPlus, hallView, weeklyView } from "../shared/gifts.js";
+import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "../shared/logic.js";
+import { weekIndex } from "../shared/logic_base.js";
+import { weeklyTheme } from "../shared/themeshow.js";
+import { markAct, markGift } from "../casino/task_act.js";
+import { friendTalent, learnFromFriend } from "../shared/shop.js";
+import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "../shared/visit.js";
 
 // ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。

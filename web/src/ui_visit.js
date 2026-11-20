@@ -1,7 +1,7 @@
 // ================================================================
 //  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/規劃/多人實作.md）。對方不在線也能用。
 //  翊文 11-09：「之後可以參觀館友的展廳、送佩佩……也要加入立即可以使用的功能」→ 館友名片上直接有按鈕、做好就上線、收到的東西馬上能用、不用等對方在線。
-//  規則在 shared/gifts.js、shared/mailbox.js、shared/visit.js；伺服器在 functions/visit.js。樣式在 css/visit.css。
+//  規則在 shared/gifts.js、shared/mailbox.js、shared/visit.js；伺服器在 functions/game/visit.js。樣式在 css/visit.css。
 //  - 館友小卡：「參觀展廳」「送佩佩」（登記在 ui_core.js 的 FRIEND_ACTIONS）。
 //  - 走進館友的展廳：go("hall", { friend: { id, nick } })，SCREENS.hall 看到 friend 就叫這裡（ADDONS.friendHall）。
 //    只畫內建的樣子（玩家自己的圖不上傳，規劃第一節第 5 點）；按讚、留言每天每間一次。
@@ -57,7 +57,7 @@ function friendPedestal(s, i, deco) {
 const stillHere = params => UI.screen === "hall" && UI.params === params;
 
 // 參觀完成時叫一次（走進來、讀到展廳之後）。ctx：{ owner: { id, nick }, view, first（今天第一次來這間）, gain, learn }
-// 跟館友學的接口（claude/兌換所和技能，合併時接）：伺服器的 visitHall 學到了就回傳 learn（functions/visit.js 的 LEARN_ON_VISIT），
+// 跟館友學的接口（claude/兌換所和技能，合併時接）：伺服器的 visitHall 學到了就回傳 learn（functions/game/visit.js 的 LEARN_ON_VISIT），
 // 跟館友學（決定 0032）：今天第一次走進這間展廳，伺服器叫 learnFromFriend；那一句話跟一起融合同一句（shared/shop.js 的 learnText）。要在參觀完成時多做什麼，加在 visitDone。
 function visitDone(ctx) { /* 現在沒有要多做的 */ }
 function visitLearnLine(learn, who) {

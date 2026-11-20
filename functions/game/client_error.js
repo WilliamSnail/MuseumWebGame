@@ -5,11 +5,11 @@
 //  限流：每個人（IP 加當天，雜湊過、只留 16 碼）每分鐘 5 筆；全站每天最多 400 種不同的錯誤。超過就默默丟掉（回 ok 但 dropped）。
 //  7 天過期：文件有 expireAt。Firestore 的 TTL 要翊文在主控台開壹次（docs/操作/伺服器除錯.md）；沒開的話，這支函式每次寫入順手刪最多 10 筆過期的。
 // ================================================================
-import "./options.js";
+import "../options.js";
 import { createHash } from "node:crypto";
 import { onCall } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
-import { CLIENT_ERR, clientErrClean, clientErrKey, clientErrQuota } from "./shared/client_error.js";
+import { CLIENT_ERR, clientErrClean, clientErrKey, clientErrQuota } from "../shared/client_error.js";
 
 const dayOf = ms => new Date(ms + 8 * 3600000).toISOString().slice(0, 10); // 台灣日期
 export const clientError = onCall(async req => {

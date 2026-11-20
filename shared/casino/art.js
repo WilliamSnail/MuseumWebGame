@@ -11,7 +11,7 @@
 //  存檔：P.art（這間博物館的，跟收藏一起，不是某位參觀者的；舊存檔沒有，casArtFix 補）：
 //    { v, own: { 畫 id: { tier, date, d 買的那天, paid 付了多少, title } }, buys: { 日期: 買了幾幅 } }
 //  莊家 house.art = { own: { 畫 id: 全館持有幾份 } }（舊的莊家沒有，用到時補）
-//  純函式：「今天」從參數來，不碰亂數。伺服器入口在 functions/art.js。
+//  純函式：「今天」從參數來，不碰亂數。伺服器入口在 functions/casino/art.js。
 // ================================================================
 import { NUM } from "../config.js";
 import { casHouseMove } from "./book.js";

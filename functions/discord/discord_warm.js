@@ -2,7 +2,7 @@
 // 加上網路就超過 Discord 的 3 秒；常駐的機器每 15～20 分鐘會被換壹台，所以壹直碰到。這裡在開始接請求之前先連好。
 // 只有 discordBot 自己啟動時才做（其他 Function 也會載入這個檔），模擬器不做；連不上最多等 8 秒，照樣開始接請求。
 // 這是啟動時跑的，跟「回覆之後不要再做事」（test/discord/discord_play.test.cjs）無關，所以放在獨立的檔。
-import "./options.js";
+import "../options.js";
 import { getFirestore } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 

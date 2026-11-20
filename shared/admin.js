@@ -2,7 +2,7 @@
 //  管理員介面的規則（第一版：只看不改，決定 0033）
 //  翊文：「管理員介面呢，可以看到大家進度的部分」
 //
-//  這個檔只有純函式：不碰 Firebase、不碰畫面。Functions（functions/admin.js）把讀到的資料傳進來，畫面（web/src/ui_admin.js）只拿結果來畫。
+//  這個檔只有純函式：不碰 Firebase、不碰畫面。Functions（functions/game/admin.js）把讀到的資料傳進來，畫面（web/src/ui_admin.js）只拿結果來畫。
 //    - 誰是管理員：adminEmail（登入 token 的 email，小寫）＋ isAdminInvite（invites/{email} 那一筆有 admin: true）。程式裡不寫死任何 email、uid。
 //    - 一個人的摘要：adminSummary(存檔)。存檔壞了回傳 { ok: false }，不會丟錯。
 //    - 一列：adminRow（暱稱＋在線＋摘要）。整張表：adminOverviewOf。
