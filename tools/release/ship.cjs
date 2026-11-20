@@ -135,7 +135,7 @@ function main() {
   mergeMain(ai);
   const files = changedFiles();
   if (!body) {
-    const log = files.find(f => /^維護日誌\/\d{4}\/.+\.md$/.test(f));
+    const log = files.find(f => /^docs\/維護日誌\/\d{4}\/.+\.md$/.test(f));
     body = log ? bodyFromLog(fs.readFileSync(path.join(ROOT, log), "utf8")) : "";
     if (!body) throw new Error("要有 --body 或 --body-file（這個分支也沒有新的維護日誌可以拿來當說明）");
     console.log(`PR 說明用維護日誌：${log}`);
