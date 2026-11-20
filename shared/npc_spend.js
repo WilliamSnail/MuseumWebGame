@@ -26,7 +26,7 @@ const nsTax = (amt, kind) => Math.floor(amt * NUM.casino.tax[kind + "Pct"] / 100
 // 金流圖（決定 0128）：NPC、散客花的錢是從哪個單位出的（家計、NPC 錢包、集團），只記帳（house.led.units，kind ＝ 來源代號），不動錢。npcBj 還有賭場 NPC 的注（casino_npc.js），沒有全記，所以不記
 const nsLed = (house, src, from, to, n) => { if (n > 0 && src !== "npcBj") wtLed(house, src, from, to, n); };
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
-// 館外來客在餐車「點」菜單上的品項（11-15，翊文：「NPC 自己也可以買餐車裡面的東西嗎」）：照常識挑（麥茶、烤雞肉、壽司最常，分享餐、葡萄汁少），價錢照 CAS_MENU；
+// 館外來客在餐車「點」菜單上的品項（11-15，翊文：「NPC 自己也可以買餐車裡面的東西嗎」）：照常識挑（麥茶、烤雞肉、壽司最常，分享餐、葡萄酒少），價錢照 CAS_MENU；
 // 花的總額 ≤ 預算（所以還是夾在原本的上限裡）；不加心情、不進館友的點餐紀錄，只記賣出幾份。種子含祕密。回傳 { cost, items: { id: 份數 } }
 const ORDER_W = { tea: 4, chicken: 4, sushi: 3, feast: 2, juice: 1 };
 export function npcOrder(rnd, budget) {
