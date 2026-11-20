@@ -100,6 +100,11 @@ function noticeWarning(files) {
   const seen = f.filter(x => /^(web\/|functions\/|shared\/)/.test(x) && !/\.test\.|^shared\/npc_roster\.js$/.test(x));
   return seen.length ? `⚠ 改了 ${seen.slice(0, 3).join("、")}${seen.length > 3 ? ` 等 ${seen.length} 個檔` : ""}，但沒有加館方公告（npm run notice -- …）。不是玩家看得到的就加 --no-notice。` : "";
 }
+// 改了「換日才算」的資料（日報、財報、h.econ、GDP）：上線當天看不到，要到隔天 05:00 換日後才有（11-20，財報各行業景氣說明那次，公告寫得像當天就有）
+function rolloverWarning(files) {
+  const hit = files.filter(Boolean).filter(x => /^functions\/casino\/casino\.js$|^shared\/casino\/(report|gdp|econ)\.js$|^shared\/(world|stat_view)[\w/]*\.js$/.test(x));
+  return hit.length ? `⚠ 改了 ${hit.slice(0, 3).join("、")}：日報、財報、h.econ 這類資料是換日（05:00）才算、整天不重算，上線當天看不到。公告要寫「明天換日後看得到」，不要寫成現在就有。` : "";
+}
 const changedFiles = () => git(["diff", "--name-only", "origin/main...HEAD"], { ok: true }).out.split("\n").map(s => s.trim()).filter(Boolean);
 
 function main() {
@@ -142,6 +147,8 @@ function main() {
   }
   const nw = o.flags.has("no-notice") ? "" : noticeWarning(files);
   if (nw) console.log(nw);
+  const rw = rolloverWarning(files);
+  if (rw) console.log(rw);
   say("推上去");
   git(["push", "-q", "-u", "origin", branch]);
 
@@ -263,4 +270,4 @@ function backToMain() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning };
+module.exports = { isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning, rolloverWarning };

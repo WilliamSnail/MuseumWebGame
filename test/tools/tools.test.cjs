@@ -202,6 +202,8 @@ T("ship：沒給說明就拿維護日誌的兩段", () => {
 T("ship：改了玩家看得到的檔卻沒公告會警告；有公告、只改 tools 不警告", () => {
   assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/rooms/bank/ui_bank.js", "docs/維護日誌/2026/x.md"])));
   assert.strictEqual(SH.noticeWarning(["web/src/rooms/bank/ui_bank.js", "content/notices/upd-x.json"]), "");
+  assert.ok(/明天換日後看得到/.test(SH.rolloverWarning(["functions/casino/casino.js"])) && /換日/.test(SH.rolloverWarning(["shared/casino/report.js"])));
+  assert.strictEqual(SH.rolloverWarning(["web/src/rooms/bank/ui_bank.js", "shared/casino/bank.js"]), "");
   assert.strictEqual(SH.noticeWarning(["tools/content/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
 });
 T("say：空的、太長、@ 人都擋下來", () => {
