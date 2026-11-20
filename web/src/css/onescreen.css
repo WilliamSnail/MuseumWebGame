@@ -840,3 +840,5 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
 @keyframes op-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .onescreen-room .onescreen-pull .op-arrow { font-size: 1em; color: #9A2A0A; text-shadow: 0 0 4px rgba(255, 230, 160, .9); }
 .onescreen-room .onescreen-pull.op-hint::after { content: "← 點拉環拉開"; position: absolute; left: 100%; top: 50%; transform: translate(6px, -60%); padding: 3px 10px 4px; border-radius: 999px; background: rgba(28, 16, 8, .9); border: 1px solid #C9A55A; color: #F3E0B0; font-size: .75rem; font-weight: 700; white-space: nowrap; pointer-events: none; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
+/* 手機展廳：展台比展示框還高、上緣被切，取名的小圖示（在展台左上角）跟著被切掉（11-20，ui:check 抓到）。展台高度限制在框內，內容從下往上排 */
+@media (max-width: 760px) { .hall-onescreen .hall-room .ped-slot { align-self: stretch; height: 100%; } }
