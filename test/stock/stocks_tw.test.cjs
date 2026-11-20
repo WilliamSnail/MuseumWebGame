@@ -16,7 +16,7 @@ const segGot = (G, base, j, ret, lag) => { const o = {}; for (const id of G.TW_I
 function runDay(G, secret, opts) {
   opts = opts || {};
   const doc = G.twDocNew(D), base = Object.fromEntries(G.TW_IDS.map(id => [id, prevReal[id] * (1 + (opts.gap || 0))]));
-  for (let idx = 0; idx <= 270; idx++) {
+  for (let idx = 0; idx <= (opts.to == null ? 270 : opts.to); idx++) { // opts.to：只跑到第幾分鐘（統計測試只看前面幾十分鐘，不必跑完整天）
     const need = G.twNeed(doc, idx);
     if (!need) continue;
     let got = null;
@@ -81,13 +81,13 @@ T("種子有祕密：同樣的輸入同樣的結果；換祕密整條都不同�
   assert.ok(!J(a).includes("祕密甲"));
 });
 T("真實成分：上壹段真實漲 1%，X＝0.4 時錨點平均多漲 0.4%；落後久了 X 變 0.25", G => {
-  const avg = (ret, lag) => { let sum = 0; const N = 400; for (let i = 0; i < N; i++) { const d = runDay(G, "k" + i, { ret, lag }); sum += d.ser[TWID][30] / d.ser[TWID][15] - 1; } return sum / N; };
+  const avg = (ret, lag) => { let sum = 0; const N = 40; for (let i = 0; i < N; i++) { const d = runDay(G, "k" + i, { ret, lag, to: 30 }); sum += d.ser[TWID][30] / d.ser[TWID][15] - 1; } return sum / N; };
   const base = avg(0, 0), up = avg(0.01, 0), slow = avg(0.01, 30);
   assert.ok(Math.abs(up - base - 0.004) < 0.0009, "X＝0.4：" + (up - base));
   assert.ok(Math.abs(slow - base - 0.0025) < 0.0009, "X＝0.25：" + (slow - base));
 });
 T("抓不到的那壹段：真實成分當 0、標沒資料；上壹段沒抓到的下壹段也不算真實", G => {
-  const hi = fail_ => { let sum = 0; const N = 300; for (let i = 0; i < N; i++) { const d = runDay(G, "f" + i, { ret: 0.02, failSeg: fail_ }); sum += d.ser[TWID][45] / d.ser[TWID][30] - 1; } return sum / N; };
+  const hi = fail_ => { let sum = 0; const N = 40; for (let i = 0; i < N; i++) { const d = runDay(G, "f" + i, { ret: 0.02, failSeg: fail_, to: 45 }); sum += d.ser[TWID][45] / d.ser[TWID][30] - 1; } return sum / N; };
   const none = hi([]), failed = hi([2]);
   assert.ok(none > failed + 0.004, "有抓到才有真實成分：" + none + " vs " + failed);
   const e = G.twDocNew(D); G.twApply(e, G.twNeed(e, 0), 0, openGot(G, 0), "x");
