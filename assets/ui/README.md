@@ -67,3 +67,10 @@
   - 第 3 列：`seal-stone`、`seal-green`、`seal-wine`、`divider`
   - 第 4 列：`seal-dark`、`seal-sage`、`seal-orange`、`gem-red`、`btn-arrow`、`btn-close`
 - 還要修：`ring-hover`、`btn2-hover` 外圈的光還帶壹點黃綠色（綠底混出來的），正式用之前要再調成暖金色。
+
+
+---
+## 原圖已移出 repo（11-20，翊文：只存切好的）
+- 移出：`_button-big-hover-src.png`、`_button-big-pressed-src.png`、`_cards-3-src.webp`、`_panel-wide-src.png`、`_sheet-fixed-24.jpg`、`_sheet-stretch-12.jpg`
+- 要找原檔：`git show 41f45c13:assets/ui/<檔名>`（41f45c13 以前的 commit 都有）。
+- 切好的成品在 `web/public/`（哪個檔用在哪、從哪張原圖切的，看 `docs/素材/素材索引.md`）。

@@ -5,3 +5,10 @@
 - 遊戲裡用的是補成正方形、縮成 96px 的 webp：`web/public/lobby/nav-*.webp`。
 - 玻璃罩（hall）裡面原本透出綠底，去背後變透明；魔法陣（fusion）的金色帶壹點黃綠。
 - 授權要翊文確認；不要放 Pepe the Frog 的樣子（決定 0005）。
+
+
+---
+## 原圖已移出 repo（11-20，翊文：只存切好的）
+- 移出：`_sheet-16.jpg`
+- 要找原檔：`git show 41f45c13:assets/nav/<檔名>`（41f45c13 以前的 commit 都有）。
+- 切好的成品在 `web/public/`（哪個檔用在哪、從哪張原圖切的，看 `docs/素材/素材索引.md`）。
