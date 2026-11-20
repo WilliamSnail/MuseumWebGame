@@ -450,7 +450,7 @@ export function openStoryBook(w, b, reader, el) {
   const st = bookState(P, w, b);
   if (st === "locked") {
     snd("eerie", 1);
-    reader.replaceChildren(h("div", { class: "book sealed-book" }, bookBack(reader), h("h2", { class: "book-title" }, "還打不開的書"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, bookHint(w, b))));
+    reader.replaceChildren(h("div", { class: "book sealed-book" }, h("h2", { class: "book-title" }, "還打不開的書"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, bookHint(w, b)), bookBack(reader)));
     return;
   }
   const l = lineById(w, b.line);
