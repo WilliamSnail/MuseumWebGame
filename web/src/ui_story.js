@@ -27,7 +27,7 @@ import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
-import { bookBack, bookGain, bookReader, roomHead } from "./ui_screens1.js";
+import { bookBack, bookGain, bookReader, roomHead } from "./ui_room.js";
 import { holidayOf } from "../../shared/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
@@ -107,6 +107,7 @@ export function actDone(kind) {
   if (!P || isFree(P)) return;
   if (storyAct(P, kind, todayStr())) { persist(); updateStatus(); }
 }
+ADDONS.actDone = actDone; // 公佈欄（ui_board.js）透過 ADDONS 叫，不 import 這支
 let settling = false;
 // 跟伺服器領籌碼：每日任務（賭場、銀行、餐車、參觀、送佩佩，壹天最多 2 個）和每週積分的籌碼、禮盒。博物館資金出，不夠就先不付，下次再領
 export async function settleChips(quiet) {

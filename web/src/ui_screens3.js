@@ -15,7 +15,7 @@ import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../shared/fresh.js
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../shared/legacy.js";
 import { cleanName, renameVisitor } from "../../shared/visitors.js";
 import { $, $$, ADDONS, P, PANELS, SCREENS, UI, setCellarSnd, sndFile, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "./ui_core.js";
-import { onescreenDrawer, roomHead } from "./ui_screens1.js";
+import { onescreenDrawer, roomHead } from "./ui_room.js";
 import { SOCIAL } from "../../shared/gifts.js";
 import { storyCellarBox } from "./ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 

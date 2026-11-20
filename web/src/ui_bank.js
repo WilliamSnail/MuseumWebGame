@@ -10,7 +10,7 @@ import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo
 import { NET } from "./net_firebase.js";
 import { bankSfx, keyBeep } from "./bank_sfx.js";
 import { CAS_BOND } from "../../shared/casino_text.js";
-import { roomHead } from "./ui_screens1.js";
+import { roomHead } from "./ui_room.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat.js";
 import { statView } from "../../shared/stat_view.js";
 import { mountMood } from "./ui_mood.js";
