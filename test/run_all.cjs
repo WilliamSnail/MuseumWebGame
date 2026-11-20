@@ -169,13 +169,12 @@ const STEPS = [
   ["內容檢查（content3.js）", ["test/content/check3.cjs"]],
   ["特效在 Node 載得起來", ["test/fx/node-check.cjs"]],
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
-  ["遊戲伺服器（登入、存檔、在線名單、net.js）", ["test/server.test.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/log_check.cjs"]],
 ];
 
 // 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。
-// 每項本來就是自己的 Node 程式；會寫檔的（tools.test、server.test）都用自己的暫存資料夾、伺服器用隨機 port，同時跑不會打架。
+// 每項本來就是自己的 Node 程式；會寫檔的（tools.test）都用自己的暫存資料夾、伺服器用隨機 port，同時跑不會打架。
 // 結果還是照上面的順序印。TEST_JOBS=1 ＝ 照舊壹項壹項跑（懷疑同時跑出問題時用）。--slow：最後列出最慢的 10 項。
 const os = require("os");
 const { spawn } = require("child_process");

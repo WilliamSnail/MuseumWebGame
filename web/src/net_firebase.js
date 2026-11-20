@@ -1,6 +1,6 @@
 // ================================================================
 //  瀏覽器端的連線：Firebase 版（決定 0021，翊文 11-08：「我目前想部屬在Firebase好了」）
-//  介面跟 web/src/net.js 的 NET 一模一樣（畫面不用改）：
+//  介面跟以前 Node 伺服器版的 NET 一樣（畫面不用改）：
 //    info、login、restore、logout、updateMe、loadSave、save、saveSoon、flush、connect、disconnect、where、send、on、
 //    me、state、roster、rev、loggedIn
 //  事件：status、login、logout、roster、arrive、leave、message、saved、saveError、conflict
@@ -21,7 +21,7 @@ import { setNowClock } from "../../shared/logic.js";
 import { titlesFromDb } from "../../shared/titles.js";
 import { dcJoinParam, dcStripJoin } from "../../shared/discord.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
-import { NetError } from "./net.js";
+import { NetError } from "./net_error.js";
 
 const AWAY_MS = 5 * 60 * 1000;     // 5 分鐘沒動算「離開」（跟原本的伺服器一樣）
 const ROOM_RE = /^[a-z][a-z0-9_:-]{0,31}$/;
