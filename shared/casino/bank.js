@@ -172,12 +172,13 @@ export function casPoolEnsure(w, house, nick, uid, day) {
   const P = NUM.casino.pool, G = NUM.casino.cultureGift, key = s => String(s == null ? "" : s).replace(/\s+/g, "").toLowerCase();
   if (!P || !G || !G.on || !house || !house.cg) return false;
   const got = [G].concat(NUM.casino.cultureGiftMore || []).some(g => house.cg[g.id] && g.nicks.some(x => key(x) === key(nick)));
-  if (!got) return false;
+  const ex = !got && house.pool ? (P.extra || []).find(g => g.nicks.some(x => key(x) === key(nick)) && (!g.from || String(day) >= g.from)) : null; // 決定 0148：沒收資助、水位已經在了才加進來
+  if (!got && !ex) return false;
   const u = String(uid), nw = Math.max(1, casNetWorth(w, house));
   if (!house.pool) { house.pool = { uid: u, who: { [u]: { base: nw, e: 0 } }, base: nw, e: 0, lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] }; return true; }
   const Q = house.pool; if (!Q.who) casPoolWho(Q);
   if (Q.who[u]) return false;
-  Q.who[u] = { base: nw, e: 0 }; return true;
+  Q.who[u] = ex && ex.take === false ? { base: nw, e: 0, nt: 1 } : { base: nw, e: 0 }; return true; // nt ＝ 門檻那晚不收他的名字
 }
 // 舊的 pool（單壹 uid）換成 who（base、e 照搬）
 const casPoolWho = Q => { if (!Q.who || typeof Q.who !== "object") Q.who = { [String(Q.uid)]: { base: Math.max(1, +Q.base || 1), e: Math.max(0, +Q.e || 0) } }; return Q.who; };
@@ -191,7 +192,7 @@ export function casPoolDay(house, day, nws) {
   if (!nws || typeof nws !== "object" || !Object.values(nws).some(v => Number.isFinite(+v))) return false;
   const legacy = !(P.e >= 0), who = casPoolWho(P), fl = v => Math.max(1, Math.floor(+v));
   if (legacy) { P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.day = day; return true; } // 決定 0142：舊的 pool 第壹次日報，從 0 開始累計（不追溯），上壹次淨值設成現在
-  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.takeLeft = Object.keys(who); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
+  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.takeLeft = Object.keys(who).filter(u => !who[u].nt); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
   for (const u of Object.keys(who)) { if (!Number.isFinite(+nws[u])) continue; who[u].e += Math.max(0, Math.floor(+nws[u]) - who[u].base); who[u].base = fl(nws[u]); } // 決定 0142、0143：每個人各自跟自己上壹次比，只算賺的（虧的當 0），累計只增不減；水位看大家合計
   P.e = Object.values(who).reduce((a, x) => a + x.e, 0);
   const target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * P.e / C.earnT)), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
