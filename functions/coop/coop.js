@@ -25,13 +25,19 @@ import { eventLive, eventRunOf, eventsFromWeeks } from "../shared/story/events.j
 import { EVENT_WEEKS } from "../shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
 import { traceRunEnd } from "./coop_trace.js";
+import { coopNpcEnd } from "./coop_npc.js";
+import { coopNpcP, coopNpcMember } from "../shared/coop/npc.js";
+import { NPC_LIST } from "../shared/npc_list_data.js";
+import { npcCoopInfo } from "../shared/npc/coop.js";
+import { casHouseFix } from "../shared/casino/wallet.js";
+import { nwSan } from "../shared/world/base.js";
 
 const runRef = pid => getFirestore().doc(`coopRuns/${pid}`);
 const viewPath = (pid, uid) => `coopView/${pid}/${uid}`;
 
 // 給每個人看的樣子。兩步差很近時，晚到的舊版不能蓋掉新的（r 比較大的留著）
 async function publish(pid, run) {
-  await Promise.all(run.members.filter(m => m.out !== "left").map(m => {
+  await Promise.all(run.members.filter(m => m.out !== "left" && !m.npc).map(m => {
     const r = run.rev, j = JSON.stringify(viewFor(run, m.id));
     return rtdb().ref(viewPath(pid, m.id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j }));
   }));
@@ -46,7 +52,7 @@ async function runStep(pid, uid, act, data = {}) {
     const rs = await tx.get(runRef(pid));
     if (!rs.exists) throw bad("這壹趟已經結束了");
     const run = coopFix(JSON.parse(rs.data().data));
-    const ids = coopPresent(run).map(m => m.id);
+    const ids = coopPresent(run).filter(m => !m.npc).map(m => m.id); // NPC 沒有存檔（決定 0149）：他的 P 每一步照資料現做
     const snaps = await Promise.all(ids.map(id => tx.get(db.doc(`saves/${id}`))));
     const Ss = {}, Ps = {}, revs = {}, backs = {};
     snaps.forEach((s, i) => {
@@ -60,6 +66,7 @@ async function runStep(pid, uid, act, data = {}) {
       Ps[id] = P;
       revs[id] = s.data().rev;
     });
+    run.members.filter(m => m.npc && !m.out).forEach(m => { Ps[m.id] = coopNpcP({ npc: m.npc, role: m.role }, run.floor, m.san, opt.today); });
     // 骰子：中間不 await
     setRng(mulberry32(hashStr(`${run.id}:${run.step}:${run.rev || 0}`)));
     let r;
@@ -93,7 +100,8 @@ async function afterStep(pid, { r, run, saved }, uid, act) {
     for (const o of coopPresent(run)) if (o.id !== id) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "afk" });
   }
   if (r.ended) {
-    await rtdb().ref(`parties/${pid}`).update({ phase: "done" }).catch(() => {});
+    await rtdb().ref(`parties/${pid}`).update({ phase: "done", npcs: null }).catch(() => {});
+    await coopNpcEnd(run).catch(e => console.error("找 NPC 下地下：收尾寫不進去", e));
     await traceRunEnd(run).catch(e => console.error("合作地下：痕跡寫不進去", e)); // 最後的影子、幽影（機制 7）
   }
 }
@@ -116,6 +124,7 @@ async function startRun(me, pid) {
   try {
     const out = await db.runTransaction(async tx => {
       const snaps = await Promise.all(list.map(m => tx.get(db.doc(`saves/${m.id}`))));
+      const npcIds = Object.keys(party.npcs || {}), hsnap = npcIds.length ? await tx.get(db.doc("casinoHouse/main")) : null; // 找 NPC 下地下（決定 0149）：要他們現在的理智
       const Ss = {}, revs = {};
       const members = list.map((m, i) => {
         const s = snaps[i];
@@ -127,6 +136,15 @@ async function startRun(me, pid) {
         revs[m.id] = s.data().rev;
         return { id: m.id, name: m.nick, P, keys: m.pick, guard: !!m.guard };
       });
+      if (npcIds.length) {
+        if (party.trial) throw bad("試煉房間不能帶旅客");
+        const house = casHouseFix(hsnap && hsnap.exists ? JSON.parse(hsnap.data().data) : null, today).house;
+        npcIds.forEach(nid => {
+          const n = NPC_LIST.find(x => x && x.id === nid);
+          if (!n) throw bad("有位旅客找不到了");
+          members.push(coopNpcMember(npcCoopInfo(n), party.floor || 1, nwSan(house, nid), today));
+        });
+      }
       setRng(mulberry32(hashStr(`${id}:start`)));
       let r;
       // 限時活動：用伺服器時間 t 判斷（玩家改電腦時間沒用）。按出發這一刻在活動內，這一趟就照活動算到走完，記在 run.event
@@ -137,6 +155,7 @@ async function startRun(me, pid) {
       const gate = !!NUM.ui.newCellar || (process.env.FUNCTIONS_EMULATOR === "true" && process.env.NEW_CELLAR === "1");
       try { r = coopBegin(members, party.floor || 1, today, t, { id, fun: true, event, trial, gate }); } finally { setRng(null); }
       if (!r.ok) throw bad(r.reason);
+      if (npcIds.length) list.forEach(m => { const P = members.find(x => x.id === m.id).P; if (P && P.cellar) P.cellar.coopNpc = { date: today, n: ((P.cellar.coopNpc && P.cellar.coopNpc.date === today ? P.cellar.coopNpc.n : 0) || 0) + 1 }; }); // 每日任務「帶旅客下地下」的證據（決定 0149）
       r.run.rev = 1;
       tx.set(runRef(pid), { data: JSON.stringify(r.run), rev: 1, updatedAt: FieldValue.serverTimestamp() });
       const revOut = {};

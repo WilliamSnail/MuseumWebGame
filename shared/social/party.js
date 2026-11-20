@@ -60,6 +60,7 @@ export function fixParty(p) {
     m.guard = !!m.guard; // 合作地下：留在監視器前（好玩的機制 5）
   }
   p.phase = p.phase || "lobby";
+  p.npcs = p.npcs && typeof p.npcs === "object" && !Array.isArray(p.npcs) ? p.npcs : {}; // 找 NPC 下地下（決定 0149）：{ npcId: { name, role, style, at } }，不算 members（沒有帳號）
   // 融合的結果：沒有突變時 mutations 是空陣列，存進去就不見了
   if (p.result && typeof p.result === "object") {
     const mu = p.result.mutations;
@@ -174,6 +175,29 @@ export function canStartParty(p, uid) {
   const notReady = ms.find(m => !m.ready || (!m.pick.length && !m.guard));
   if (notReady) return { ok: false, reason: `等 ${notReady.nick} 準備好`, waitFor: notReady.id }; // waitFor：等的是誰（是自己的話，畫面寫「等你準備好」）
   return { ok: true, members: ms };
+}
+// ---------- 找 NPC 一起下地下（決定 0149）：NPC 掛在隊伍的 npcs 上，開始時才變成隊員（shared/coop/npc.js） ----------
+// 每隊最多 max 位（NUM.coopNpc.maxNpc）、至少要有壹個真人、人加 NPC 不超過 4 個座位；試煉房間、留守的隊不能帶
+export function partyNpcAdd(p, uid, info, max, seats = 4) {
+  if (!p || p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能邀" };
+  if (!p.members[uid]) return { ok: false, reason: "你不在這個隊伍裡" };
+  if (p.trial) return { ok: false, reason: "試煉房間只有壹間，不能帶旅客" };
+  if (Object.values(p.members).some(m => m.guard)) return { ok: false, reason: "有人留守的時候不能帶旅客" };
+  p.npcs = p.npcs || {};
+  if (p.npcs[info.npc]) return { ok: false, reason: "他已經在隊裡了" };
+  if (Object.keys(p.npcs).length >= max) return { ok: false, reason: `每隊最多帶 ${max} 位旅客` };
+  if (Object.keys(p.members).length + Object.keys(p.npcs).length >= seats) return { ok: false, reason: "隊伍滿了" };
+  p.npcs[info.npc] = { name: info.name, role: info.role || null, style: info.style || "basic" };
+  Object.values(p.members).forEach(m => { m.ready = false; }); // 人變了，大家重新按準備
+  delete p.fail;
+  return { ok: true };
+}
+export function partyNpcRemove(p, npcId) {
+  if (!p || !p.npcs || !p.npcs[npcId]) return { ok: false, reason: "他不在隊裡" };
+  delete p.npcs[npcId];
+  Object.values(p.members).forEach(m => { m.ready = false; });
+  delete p.fail;
+  return { ok: true };
 }
 // 隊友斷線了，能不能把他移出隊伍（伺服器在 partyAction 的 prune 用）。可以就回 null，不行回傳原因
 // st：Realtime Database 的 /status/{uid}；invisible：他是不是隱身（隱身的人看起來就是離線，看不出來，不移）

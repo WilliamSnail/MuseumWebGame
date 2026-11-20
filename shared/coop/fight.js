@@ -12,7 +12,7 @@
 import { NUM } from "../core/config.js";
 import { addDays } from "../core/logic_base.js";
 import { injureDaysOf } from "../core/systems.js";
-import { coopActive, coopFightFix, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
+import { coopActive, coopFightFix, coopFinish, coopFloorComplete, coopHumanVoters, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
 import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "../cellar/fight.js";
 
 // 這一層還要不要打守門
@@ -96,7 +96,7 @@ export function coopFightRound(run, Ps, picks) {
       return Object.assign(done, { fightOver: "win" });
     }
     if (kind === "foe") return Object.assign(coopRouteBack(run, Ps, events), { fightOver: "win" }); // 路上的怪物：打贏繼續選路
-  } else if (fight.over === "lose" || fight.over === "retreat" || !coopVoters(run).length) {
+  } else if (fight.over === "lose" || fight.over === "retreat" || !coopHumanVoters(run).length) {
     coopFinish(run, fight.over === "retreat" ? "retreat" : "lost");
   } else if (kind === "foe") {
     // 路上的怪物：逃掉、牠自己走掉都沒關係，繼續選路（沒有獎勵）
@@ -128,7 +128,7 @@ export function coopFightView(run, id) {
 // 這個點做完了：回到選路（大家都倒了就結束）
 export function coopRouteBack(run, Ps, events = coopNewEvents(run)) {
   run.room = null; run.rest = null;
-  if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
+  if (!coopHumanVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
   run.phase = "route";
   coopSync(run, Ps);
   return { ok: true, run, events };

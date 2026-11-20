@@ -45,6 +45,7 @@ export const STORY_TASKS = {
   lesson: { when: "daily", min: 1.5, pts: 20, act: 1 },           // 在委託櫃台上壹堂課
   sign: { when: "daily", min: 0.5, pts: 10, act: 1 },             // 簽到
   board: { when: "daily", min: 0.5, pts: 10, act: 1 },            // 看公佈欄
+  withNpc: { when: "daily", min: 5, pts: 40, act: 1 },           // 帶壹位旅客壹起下地下收藏庫（決定 0149；伺服器開始那趟時寫 P.cellar.coopNpc，syncStory 轉成「做過了」）
   readWeek: { when: "weekly", min: 0 }, // 讀這週的書 n 本
   dailyAll: { when: "weekly", min: 0 }, // 每日任務全部做完 n 天
   showDays: { when: "weekly", min: 0 }, // 看完今日特展 n 天
@@ -298,6 +299,7 @@ export function taskText(t, W) {
     case "lesson": return "在委託櫃台上壹堂課";
     case "sign": return "簽到";
     case "board": return "看公佈欄";
+    case "withNpc": return "帶壹位旅客壹起下地下收藏庫";
     case "readWeek": return `讀這週的書 ${n} 本`;
     case "dailyAll": return `每日任務全部做完 ${n} 天`;
     case "showDays": return `看完今日特展 ${n} 天`;
@@ -315,7 +317,7 @@ export function taskGo(t, W) {
     case "view": return { room: "gallery" };
     case "show": case "showDays": return { room: "gallery", params: { show: true } };
     case "read": case "readWeek": case "ending": return { room: "origin", params: { tab: "weekly" } };
-    case "cellar": case "spot": return { room: "cellar" };
+    case "cellar": case "spot": case "withNpc": return { room: "cellar" };
     case "casino": case "food": return { room: "casino" };
     case "bank": case "stockLook": return { room: "bank" };
     case "visit": case "gift": return { panel: "friends" };
@@ -454,6 +456,8 @@ export function syncStory(P, W, today) {
   if (run && !run.extra && run.floor) S.deep[today] = Math.max(S.deep[today] || 0, run.floor);
   const cd = P.cellar && P.cellar.coopDeep; // 合作下去（shared/coop/base.js 的 coopMarkDeep）：今天走到第幾層也算
   if (cd && cd.date === today && cd.floor > 0) S.deep[today] = Math.max(S.deep[today] || 0, cd.floor);
+  const cn = P.cellar && P.cellar.coopNpc; // 帶旅客下去（決定 0149）：伺服器開始那趟時記的
+  if (cn && cn.date === today) storyAct(P, "withNpc", today);
   // 這週多出來的房間：在地下收藏庫過了（P.cellar.won）就算找到
   W.rooms.forEach(r => { if (!S.spots[r.id] && P.cellar && P.cellar.won && P.cellar.won[r.id]) { S.spots[r.id] = today; ev.push({ type: "storySpot", room: r }); } });
   // 任務：這週到今天為止的每日任務（前幾天的可以補做，決定 0060）、這週的每週任務。第一次看到時記下 base

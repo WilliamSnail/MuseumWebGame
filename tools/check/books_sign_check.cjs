@@ -22,7 +22,7 @@ const SIGN = {
   gb: { pLoan: -1, pLoanBack: 1, pBankInt: -1, pBond: 0, bondMove: 1, hdepIn: 1, hdepOut: -1, hdepInt: -1, gbSweepH: -1, gbSweepB: -1, groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
-  world: { cultureGift: -1, groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
+  world: { npcGift: 1, cultureGift: -1, groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
     worldGrow: 1, worldExpand: 1, govSweep: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
 };

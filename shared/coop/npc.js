@@ -5,7 +5,7 @@
 //  誰邀得動、答不答應、錢：shared/npc/coop.js。這個檔只管「他在一趟裡」。
 //  成員格式（run.members[]）：{ id: "npc:v-lantern", npc: "v-lantern", style, role, name, ... } 其他欄位跟真人一樣。
 // ================================================================
-import { NUM } from "../core/config.js";
+import { NUM, SKILLS } from "../core/config.js";
 import { fullPick, hashStr, mulberry32, pepeKey, setRng } from "../core/logic_base.js";
 import { ensureDay, newProfile } from "../core/logic.js";
 import { fightCanAct, fightSeatOf } from "../cellar/fight.js";
@@ -32,7 +32,7 @@ export function coopNpcP(info, floor, san, day) {
   P.sanity = Math.max(1, Math.round(san)); if (P.day) P.day.startSan = P.sanity; P.myth = 0; P.insp = 0;
   P.job = null; P.vid = null;
   const sk = Object.assign({}, ROLE_SKILL[info.role] || {});
-  Object.keys(P.skills || {}).forEach(s => { P.skills[s] = sk[s] != null ? sk[s] : 35; });
+  P.skills = {}; SKILLS.forEach(s => { P.skills[s] = sk[s] != null ? sk[s] : 35; }); // 一般技能 35，專長那一項拉高
   P.cellar.best = Math.max(P.cellar.best || 0, floor - 1);
   return P;
 }
@@ -82,7 +82,7 @@ function pickGuess(run) {
 export function coopNpcTurn(run, Ps) {
   coopFix(run);
   if (!run || run.phase === "over") return false;
-  const C = NUM.coopNpc;
+  const C = NUM.casino.coopNpc;
   let changed = false;
   for (const m of run.members.filter(x => x.npc && !x.out)) {
     const P = Ps && Ps[m.id];
