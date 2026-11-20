@@ -375,6 +375,24 @@ export function gbPay(house, want, src) { const g = gbFix(house); const n = Math
 export function gbBondIn(house, n) { const g = gbFix(house); n = wdN(n); if (n <= 0) return 0; g.cash += n; g.bond += n; gbLed(house, "gb", "pBond", n); return n; }
 export function gbBondPay(house, owe, principal) { const g = gbFix(house); const n = Math.min(wdN(owe), Math.max(0, g.cash)); if (n <= 0) return 0; const pr = Math.min(n, wdN(principal), g.bond); g.cash -= n; g.bond -= pr; g.inc -= n - pr; gbLed(house, "gb", "pBond", -n); return n; }
 // 每天（換日第一次碰到莊家）：舊館債本金搬一次、莊家的存款利息、水位上繳、莊家缺錢時領回、盈餘分配
+// 政府帳併入公共機構（決定 0140）：house.gov 每天搬進已知世界，記在公共機構（g-public）的帳上。是搬，不是憑空：
+//   gov 少 n、house.world 多 n、公共機構的 adj 多 n（其他單位不動）。流水：flow.govSweep ＝ −n（政府帳的角度），led.world.govSweep ＝ +n。每天壹次（house.govDay 擋）。回傳搬了多少
+export function govSweep(house, day) {
+  const S = NUM.casino.govSweep; if (!S || !S.on || !wuBox(house) || house.world == null || !wdDayOk(day) || house.govDay === day) return 0;
+  house.govDay = day;
+  let n = Math.floor(Math.max(0, wdN(house.gov)) * Math.max(0, Math.min(100, +S.pct || 0)) / 100);
+  if (S.capPct > 0) n = Math.min(n, Math.floor(wtBase(house, "g-public") * S.capPct / 100));
+  if (n <= 0) return 0;
+  const before = wdN(house.world); house.gov = wdN(house.gov) - n; house.world = before + n;
+  gbLed(house, "flow", "govSweep", -n); gbLed(house, "world", "govSweep", n);
+  wuCredit(house, before, "g-public", n);
+  return n;
+}
+// 政府撥款給文化部（決定 0140，翊文 11-20）：公共機構的帳壹次搬 cultureGrant 給文化部，贈款、不記債；只動帳上分類（adj），house.world 不動。house.govGrant 擋重複；公共機構帳上不夠就搬得出的。回傳搬了多少
+export function govGrant(house) {
+  const S = NUM.casino.govSweep; if (!S || !S.on || !wuBox(house) || house.world == null || house.govGrant || !(S.cultureGrant > 0)) return 0;
+  const n = wtMove(house, "g-public", "u-culture", S.cultureGrant, "tradeGovGrant"); if (n > 0) house.govGrant = n; return n;
+}
 export function gbDaily(house, day) {
   const S = gbSp(), g = gbFix(house); if (!S || !S.on || !g || !wdDayOk(day) || g.day === day) return false;
   g.day = day;

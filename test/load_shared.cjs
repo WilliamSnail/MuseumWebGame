@@ -36,6 +36,7 @@ function legacyMoney(NUM) {
   Object.assign(C.bank, { min: 10000, termMin: 100000, quick: [100000, 1000000, 5000000] });
   NUM.signin.weekChips = 15000000;
   C.gdp.foodAvg = 100000;
+  C.govSweep.on = false; // 決定 0140：政府帳搬進公共機構、撥款給文化部，舊的測試預設關掉；gov_sweep.test.cjs 用 __realMoney 自己測
   C.bankSplit.on = false; // 決定 0130：佩佩銀行跟賭場分開，舊的測試（借款、館債、利息都由莊家出）預設關掉；要測的用 load({ __realMoney: true }) 或自己打開
 }
 

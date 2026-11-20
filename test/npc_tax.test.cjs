@@ -3,7 +3,7 @@
 const assert = require("assert");
 const fs = require("fs");
 const { load } = require("./load_shared.cjs");
-const G = load(); G.setRng(G.mulberry32(3));
+const G = load(); G.setRng(G.mulberry32(3)); G.NUM.casino.govSweep.on = false; // 這個測試看政府帳收的稅；決定 0140 的每天搬進公共機構另外測（gov_sweep.test.cjs）
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const list = fs.readdirSync(__dirname + "/../content/npc").filter(f => f.endsWith(".json")).map(f => JSON.parse(fs.readFileSync(__dirname + "/../content/npc/" + f, "utf8")));
 let pass = 0, fail = 0;

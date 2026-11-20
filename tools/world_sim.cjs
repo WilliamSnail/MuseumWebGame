@@ -17,10 +17,10 @@ function sim(G, npcs, opts = {}) {
   G.NUM.casino.grants = []; // 已經撥過的撥款不算（正式站撥過了）
   const start = "2026-11-16", list = npcs.filter(n => n.kind !== "trace");
   const h = G.casHouseFix(G.casHouseNew(), start).house; h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy };
-  const w0 = h.world, a0 = G.wuAmounts(h), bank0 = h.bankroll, bud0 = h.budget, spent = { total: 0, byUnit: {} };
+  if (opts.gov0) h.gov = +opts.gov0; /* 模擬：政府帳起始餘額（決定 0140） */ const w0 = h.world, a0 = G.wuAmounts(h), bank0 = h.bankroll, bud0 = h.budget, spent = { total: 0, byUnit: {} };
   const perDay = [];
   for (let i = 0; i < days; i++) {
-    const d = add(start, i); if (i > 0) { h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy }; G.casHouseFix(h, d); }
+    const d = add(start, i); if (opts.govDaily && i > 0) h.gov = (h.gov || 0) + Math.floor(+opts.govDaily); /* 模擬：館友每天交的稅（NPC 的稅程式自己會進） */ if (i > 0) { h.econ = { b, yoy: opts.yoy == null ? 14.36 : +opts.yoy }; G.casHouseFix(h, d); }
     if (opts.mk != null && h.mk) { for (const k of Object.keys(h.mk.b)) h.mk.b[k] = +opts.mk; } /* 景氣分市場：--mk 數字 ＝ 每個市場都固定這個景氣（模擬用） */ const before = h.world; G.wmWriteVisit(h, d, list); G.casNpcSpend(h, d, "sim" + i, list, G.npcCounters(h.npcc));
     if (opts.slots) { // 整天陸續發生（決定 0120）：每 15 分鐘碰壹次莊家，記每格集團之間搬了多少（house.led.units 的累計差）
       const sumU = () => Object.values((h.led && h.led.units) || {}).reduce((x, y) => x + y, 0), t0 = Date.parse(d + "T05:00:00+08:00"), row = [];
@@ -34,7 +34,7 @@ function sim(G, npcs, opts = {}) {
   const a1 = G.wuAmounts(h), sum = o => Object.values(o).reduce((x, y) => x + y, 0);
   const bals = Object.values((h.npcw && h.npcw.bal) || {}), wal = { total: bals.reduce((x, y) => x + y, 0), n: bals.length, min: bals.length ? Math.min(...bals) : 0, max: bals.length ? Math.max(...bals) : 0, moves: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "move").length, lays: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "lay").length };
   const sv = Object.values((h.npcw && h.npcw.san) || {}); wal.san = { n: sv.length, min: sv.length ? Math.min(...sv) : 70, max: sv.length ? Math.max(...sv) : 70, low: sv.filter(x => x < 30).length };
-  return { wal, days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
+  return { gov: h.gov, wal, days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
 }
 // 景氣 −1／0／+1 各跑 30 和 90 天（W5 連動）：NPC 每天花多少、各狀態幾個集團、最低倍率、有沒有裁員、莊家和博物館資金撐不撐得住。回傳 [{ b, days, perDay, states, minMult, layoff, ok }]
 function scan(load, npcs, set = []) {
