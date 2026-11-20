@@ -7,7 +7,7 @@
 // =====================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { ART } from "../core/art.js";
-import { isFree, pickOne, todayStr } from "../../../shared/logic.js";
+import { isFree, pickOne, todayStr } from "../../../shared/core/logic.js";
 import { P, UI, h, later, motionOff, note, persist, snd } from "../core/ui_core.js";
 
 export const ODD_AT = { flip: 35, follow: 25, talk: 30 }; // talk 原本 20，翊文說不明顯，提早到 30

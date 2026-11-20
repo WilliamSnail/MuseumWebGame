@@ -19,10 +19,10 @@
 //    P.visitorCount  博物館發過幾個號碼
 //  純函式：只改傳進來的 P，亂數用 RNG（rollExpr 裡）。
 // ================================================================
-import { LEGACY, NUM } from "../config.js";
-import { asList, fixQuirks, isFree, rollExpr } from "../logic_base.js";
-import { newVisit } from "../legacy.js";
-import { traitById } from "../logic_base.js";
+import { LEGACY, NUM } from "../core/config.js";
+import { asList, fixQuirks, isFree, rollExpr } from "../core/logic_base.js";
+import { newVisit } from "../core/legacy.js";
+import { traitById } from "../core/logic_base.js";
 
 // 「這一位的」欄位（維護日誌 11-08_翊文_參觀者繼承.md 的欄位表，加上 vid、vname、slot、hugDays、oddSeen、cands）。
 //   cellar.run（正在走的地下）在 cellar 裡面，另外收成 cellarRun。

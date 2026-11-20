@@ -7,10 +7,10 @@
 //  入口：連上時、進館時、「今天」清單、賭場讀到錢包時都會叫 ADDONS.workPeek / ADDONS.workCheck。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
+import { NUM } from "../../../shared/core/config.js";
 import { CAS_TEXT } from "../../../shared/casino/text.js";
 import { casFill, casNum } from "../../../shared/casino/core.js";
-import { jobInfo } from "../../../shared/legacy.js";
+import { jobInfo } from "../../../shared/core/legacy.js";
 import { freeSlots, visitorName, workCandidates, workingVisitor } from "../../../shared/social/visitors.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, SAVE, UI, btn, h, miniLayer, note, persist, rerender, snd } from "../core/ui_core.js";

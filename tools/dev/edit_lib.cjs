@@ -1,7 +1,7 @@
 // 一次改很多檔的小工具（翊文 11-09：「有各種需要腳本加速，讓AI不用太多一步步做的地方都可以寫來重複利用」）
 // 寫一支一次性的改檔腳本時用：要改的字找不到、或不只一處，就丟錯，不會默默改錯地方。
 //   const { editor } = require("./tools/dev/edit_lib.cjs");
-//   const f = editor("shared/config.js");
+//   const f = editor("shared/core/config.js");
 //   f.edit("舊的字", "新的字");            // 一定要剛好一處
 //   f.cut("從這裡", "到這裡之前");          // 刪掉一段
 //   f.re(/正規表示式/, m => "新的字");      // 一定要比對得到

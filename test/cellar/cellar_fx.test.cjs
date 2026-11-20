@@ -1,4 +1,4 @@
-// 手作坊顯示的「地下效果」（shared/systems.js cellarPartFx 等）要跟地下真的在算的壹樣：node test/cellar/cellar_fx.test.cjs
+// 手作坊顯示的「地下效果」（shared/core/systems.js cellarPartFx 等）要跟地下真的在算的壹樣：node test/cellar/cellar_fx.test.cjs
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

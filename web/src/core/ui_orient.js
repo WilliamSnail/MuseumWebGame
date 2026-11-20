@@ -2,12 +2,12 @@
 // 網頁鎖不了方向（iPhone 的 Safari 不能鎖；Android 只有全螢幕或裝成 App 才鎖得住），所以做兩件事：
 //   1. 直拿的手機蓋一層提示（只用 CSS 判斷：orientation: portrait、寬 ≤ 760、pointer: coarse，轉橫就自己消失；電腦、平板、拉窄的視窗不受影響）。
 //   2. 橫拿的版面在 css/landscape.css。
-// 「先用直的」記在這台裝置（localStorage，不進存檔、不上傳）；設定頁可以再打開。規則在 shared/orient.js。
-import { askLandscapeLock, readOrientSkip, writeOrientSkip } from "../../../shared/orient.js";
+// 「先用直的」記在這台裝置（localStorage，不進存檔、不上傳）；設定頁可以再打開。規則在 shared/core/orient.js。
+import { askLandscapeLock, readOrientSkip, writeOrientSkip } from "../../../shared/core/orient.js";
 import { h } from "./ui_core.js";
 
 let skipMem = false; // 不能寫 localStorage 的環境（無痕、被擋）：只記在這次
-// 有些瀏覽器光是「拿」localStorage 就會丟錯（被擋的時候）：包起來，讓 shared/orient.js 的 try 接得住
+// 有些瀏覽器光是「拿」localStorage 就會丟錯（被擋的時候）：包起來，讓 shared/core/orient.js 的 try 接得住
 const store = () => {
   try { return window.localStorage; }
   catch (e) { const no = () => { throw e; }; return { getItem: no, setItem: no, removeItem: no }; }

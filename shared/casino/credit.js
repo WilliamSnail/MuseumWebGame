@@ -7,7 +7,7 @@
 //    casSellTip(w)          畫面和錯誤訊息用的壹句：「信用升到 2 級可以賣到 5,000 萬。」；沒有 ＝ ""
 //  全館淨賣出上限（館內股、守住莊家）、海外的付得出來（館外股）照舊，不受信用等級影響。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 
 export const casCreditLevel = w => {
   const K = NUM.casino.stockLev.credit, p = w && w.lev && w.lev.cr ? +w.lev.cr.pts : 0;

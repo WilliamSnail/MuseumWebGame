@@ -70,9 +70,9 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 
 **放哪裡**：
 
-- 數值 → `shared/config.js`（`NUM` 等）。
-- 文字 → `shared/content.js`、`shared/systems_text.js`。
-- 判斷 → `shared/logic.js`、`shared/systems.js`（原 logic3.js）。底層共用的在 `shared/logic_base.js`；shared/ 的 import 單向、不准繞圈（check_imports 擋）。
+- 數值 → `shared/core/config.js`（`NUM` 等）。
+- 文字 → `shared/core/content.js`、`shared/core/systems_text.js`。
+- 判斷 → `shared/core/logic.js`、`shared/core/systems.js`（原 logic3.js）。底層共用的在 `shared/core/logic_base.js`；shared/ 的 import 單向、不准繞圈（check_imports 擋）。
 - 演出 → `web/src/` 的畫面檔。
 
 **規則是純函式**：
@@ -100,16 +100,16 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 
 **架構**（11-20 架構整理，翊文：「要怎麼避免以後再發生這些問題」）：
 
-- 動手前先想**放哪個資料夾、哪支檔**：同一個系統的新檔放在一起（賭場的放 `shared/casino/`，整理完後照這個做）；不要再開 `xxx3.js` 這種帶數字、看不出用途的檔名。
+- 動手前先想**放哪個資料夾、哪支檔**：同一個系統的新檔放在一起（賭場的放 `shared/casino/`）；不要再開 `xxx3.js` 這種帶數字、看不出用途的檔名。
 - **不准互相 import**：A import B，B 就不能 import A（繞圈也不行）。兩邊都要用的東西搬到下層的新檔；畫面檔之間要叫對方，用 `PANELS`／`ADDONS` 登記（例：`ADDONS.actDone`、`PANELS.afterEnter`）。
 - **單檔不要超過 1,200 行**：快到了就照分段拆成幾支。
 - **命名和放哪**（11-20 資料夾結構第二輪，翊文：「照規劃做」）：
   - 程式路徑（資料夾、檔名）一律英文 snake_case；文件、維護日誌可以用中文。
-  - 同一個系統只用一個字：是 `stock` 就不要再開 `stocks`；資料夾名＝系統名（`casino`、`coop`、`discord`、`stock`、`world`、`npc`、`cellar`）。
+  - 同一個系統只用一個字：是 `stock` 就不要再開 `stocks`；資料夾名＝系統名（`casino`、`coop`、`discord`、`stock`、`world`、`npc`、`cellar`）。`shared/` 第一層只放子資料夾（11-20 第三輪）：`core/`（設定、文字、核心規則）、`npc/`、`stock/`、`world/`、`story/`、`social/`（館友互動）、`game/`（公告、管理、音效清單等雜項）、`casino/`、`coop/`、`cellar/`、`discord/`；新檔放進對的資料夾，新系統開新資料夾，不准在第一層放 .js（npm test 會擋）。
   - 測試照原始碼的分法放：`shared/casino/` 的測試放 `test/casino/`；`tools/` 的腳本測試放 `test/tools/`；模擬放 `test/sim/`。
   - docs 照性質放：`docs/規劃/`（規劃、提案）、`docs/規則/`（界線、架構、介面原則…）、`docs/操作/`（怎麼查、怎麼測、流程）、`docs/素材/`（素材清單、prompt）、`docs/決定/`；第一層只留 `現況.md`、`未來更新.md`。
   - `tools/` 分 `release/`、`check/`、`content/`、`assets/`、`dev/`、`fb/`；`functions/` 照系統分資料夾，`index.js`、`options.js` 留第一層；`web/src/` 分 `core/`、`fx/`、`rooms/`（賭場、銀行各有子資料夾）、`panels/`。
-- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、`tools/`／`test/`／`functions/`／`web/src/` 第一層的新檔（要放子資料夾）、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
+- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、`tools/`／`test/`／`functions/`／`web/src/` 第一層的新檔（要放子資料夾）、模擬放錯地方、`shared/` 第一層放 .js 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
 - **名字只放一處**：餐車品項（`CAS_MENU`）、交代人（`TASK_GIVERS`）改名時，到 `tools/check/code_rules.cjs` 的 `RENAMES` 加一行「舊名 → 新名」，舊名出現在現役的程式和說明就會被擋（npm test 會擋）。
 - **規矩要寫成檢查**（翊文 11-20，參考「把約束寫進程式碼，不是文件」）：AI 被糾正一次，先問「這能不能寫成檢查？」。能的就加進 `tools/check/`（小的規矩加進 `code_rules.cjs`）、配測試放 `test/tools/`、加進 `test/run_all.cjs`，並在上面那條規矩後面標「（npm test 會擋）」；不要只多寫一條規矩或存進記憶——那兩種漏了沒人知道，檢查漏了 CI 會紅。加檢查前先全掃現有程式，違規的修掉或列白名單（寫原因），不能讓 CI 一開就紅。
 - 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/dev/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。

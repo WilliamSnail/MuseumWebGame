@@ -12,12 +12,12 @@
 //  純函式：亂數用參數 rnd（預設 RNG，測試可以換）；「今天」從參數來。不碰網路和 DOM。
 //  錢包欄位 ec：{ day, n 今天拚幾次, wins 累計成功, fails 累計失敗, loot 累計撈到的油水, rescues 累計把莊家拚回正 }；舊錢包沒有，這裡補。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casCount, casHouseMove } from "./book.js";
 import { CAS_FX_TEXT, casFxMul, casFxPolicy, casFxPolicyOn } from "./gdp.js";
 import { CAS_ECON } from "./text.js";
 import { casFill, casNum } from "./core.js";
-import { RNG } from "../logic_base.js";
+import { RNG } from "../core/logic_base.js";
 
 const ecBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const ecNum = (v, d = 0) => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : d);

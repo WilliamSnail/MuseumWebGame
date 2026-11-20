@@ -14,8 +14,8 @@
 //  之後每週劇情（docs/規劃/每週劇情.md）要用：holidayOf(日期) 回傳名字、主題、「節日的話」、那天的藝術品。
 //  文字在 systems_text.js 的 HOLIDAY_TEXT（草稿，Yuga 可以改）；獎勵的數字在 config.js 的 NUM.signin。
 // ================================================================
-import { NUM } from "../config.js";
-import { HOLIDAY_TEXT, FUN_TEXT } from "../systems_text.js";
+import { NUM } from "../core/config.js";
+import { HOLIDAY_TEXT, FUN_TEXT } from "../core/systems_text.js";
 
 export const HOLIDAY_YEARS = [2026, 2027, 2028];
 

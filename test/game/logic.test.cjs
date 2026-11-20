@@ -971,7 +971,7 @@ T("v3 修復台：失敗作修成修復品、受傷的治好", () => {
   assert.ok(it.ok);
 });
 
-// ---------- 新解開的東西在哪裡（翊文 11-08：shared/fresh.js） ----------
+// ---------- 新解開的東西在哪裡（翊文 11-08：shared/core/fresh.js） ----------
 // vm 裡做出來的物件、陣列跟這邊的不是同壹套 Object／Array，先轉成 JSON 再比
 const same = (a, b, m) => assert.deepStrictEqual(JSON.parse(JSON.stringify(a)), b, m);
 T("新 存檔：新的參觀者有 fresh＝{}；舊存檔沒有、或壞掉，讀進來補成 {}", () => {
@@ -1092,7 +1092,7 @@ T("新 徽章打開的選項：四種心情 → 黑、四色同心情 → 皇冠
   same(G.badgeOpens(P, "fourMoods"), []);
 });
 
-// ---------- 壹鍵交件（翊文 11-08：shared/logic.js 的 autoDeliverables、keepRank、deliverAll） ----------
+// ---------- 壹鍵交件（翊文 11-08：shared/core/logic.js 的 autoDeliverables、keepRank、deliverAll） ----------
 // 自己擺一張委託板（dailyCommissions 看到今天的 P.daily 就直接用）
 const board = (P, needs) => { P.daily = { date: P.day.date, list: needs.map((need, i) => ({ id: `${P.day.date}#t${i}`, kind: need.kind || "vague", client: "測試的人" + i, text: "測試委託" + i, need: need.need || need, reward: 5 + i, comment: "評語" + i, done: false })) }; return P.daily.list; };
 // 一個收藏很多、委託板有 5 張（加寬＋老主顧）的參觀者

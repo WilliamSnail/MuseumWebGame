@@ -11,12 +11,12 @@
 //        錢包 w.gs ＝ { h: { id: 股數 }, cost: { id: 成本 }, sold: { day, n }, v: { day, n 今天買賣股數 }, seen: 看到第幾號事件 }
 //  純函式，不碰資料庫和 DOM。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { WORLD_UNITS } from "../world/roster.js";
 import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "../world/core.js";
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./book.js";
 import { casInIdx } from "./stock_in.js";
-import { hashStr } from "../logic_base.js";
+import { hashStr } from "../core/logic_base.js";
 // 集團股的手續費 %（決定 0137）：feeOut.grp，沒寫就用 feePct
 export const gsFeePct = () => { const O = NUM.casino.stock.feeOut; return O && O.grp != null ? O.grp : NUM.casino.stock.feePct; };
 

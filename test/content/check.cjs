@@ -1,9 +1,9 @@
-// Validator for shared/content.js（第 4 版：ES 模組，每個名字是 `export const 名字 = `）. Usage: node check.cjs [path-to-content.js]
+// Validator for shared/core/content.js（第 4 版：ES 模組，每個名字是 `export const 名字 = `）. Usage: node check.cjs [path-to-content.js]
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 
-const file = process.argv[2] || path.join(__dirname, "..", "..", "shared", "content.js");
+const file = process.argv[2] || path.join(__dirname, "..", "..", "shared", "core", "content.js");
 const raw = fs.readFileSync(file, "utf8");
 // 第 4 版：檔案是 ES 模組。內容檔不准 import，只准 `export const`；檢查前先拿掉 export，照舊當成一般程式檢查
 if (/^\s*import\b/m.test(raw)) { console.error("content.js 不准 import"); process.exit(1); }

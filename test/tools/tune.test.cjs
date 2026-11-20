@@ -30,8 +30,8 @@ t("patchConfig：只換那個值，註解和排版不動；負數、字串、布
   assert.throws(() => p(["loan", "nothere"], 1), /不存在/); assert.throws(() => p(["obj"], 1), /不是單純/); assert.throws(() => p(["loan", "interestPct"], "8"), /型別不能變/); assert.throws(() => p(["a"], NaN), /值要是/);
   assert.throws(() => p(["a"], 1, "NOPE"), /沒有 export const NOPE/); assert.throws(() => p(["a", "b"], 1), /不是物件或陣列/);
 });
-t("patchConfig 對真的 shared/config.js：NUM.casino.loan.interestPct、LIMITED_FX、NUM.casino.world.start 都找得到", () => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "config.js"), "utf8"), r = T.patchConfig(src, "NUM", ["casino", "loan", "interestPct"], 7);
+t("patchConfig 對真的 shared/core/config.js：NUM.casino.loan.interestPct、LIMITED_FX、NUM.casino.world.start 都找得到", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "core", "config.js"), "utf8"), r = T.patchConfig(src, "NUM", ["casino", "loan", "interestPct"], 7);
   assert.ok(typeof r.old === "number" && r.src.length === src.length + (String(7).length - String(r.old).length));
   assert.strictEqual(T.patchConfig(src, "LIMITED_FX", ["館員帽", "skill"], 6).old, 5); assert.ok(T.patchConfig(src, "NUM", ["casino", "world", "start"], 1).old > 0);
 });

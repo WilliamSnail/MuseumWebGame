@@ -6,10 +6,10 @@
 //    壓力和理智用條；誰選好了、還剩幾秒一直看得到；結果寫得出為什麼；手機按鈕在下半部、夠大。
 //  怪物的圖還沒生成（docs/素材/地下室素材清單.md）：先用程式畫的剪影。素材好了換 foeArt 就好。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
+import { NUM } from "../../../shared/core/config.js";
 import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../../shared/cellar/fight.js";
 import { COOP } from "../../../shared/coop/base.js";
-import { nowMs } from "../../../shared/logic.js";
+import { nowMs } from "../../../shared/core/logic.js";
 import { btn, celebrateEl, diceWords, h, itemHTML, snd, sndFile } from "../core/ui_core.js";
 import { FIGHT_SFX, fightSfxKey } from "../../../shared/game/fight_sfx.js";
 

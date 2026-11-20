@@ -8,7 +8,7 @@
 //  介面文字照第 1 代用「壹」。
 // ================================================================
 import { adminAgo, adminPlayText, adminSortRows, adminTimeText } from "../../../shared/game/admin.js";
-import { nowMs, num } from "../../../shared/logic.js";
+import { nowMs, num } from "../../../shared/core/logic.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, PANELS, btn, h, roomLabel, snd } from "../core/ui_core.js";
 import { overlay } from "./ui_board.js";

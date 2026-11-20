@@ -1,11 +1,11 @@
-// Validator for shared/systems_text.js（第 4 版：ES 模組）. Usage: node check_systems.cjs [sharedDir]
+// Validator for shared/core/systems_text.js（第 4 版：ES 模組）. Usage: node check_systems.cjs [sharedDir]
 // Loads config.js, content.js, systems_text.js as separate scripts in ONE context (like the browser),
 // so a name clash between files fails here too.
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 
-const dir = process.argv[2] || path.join(__dirname, "..", "..", "shared");
+const dir = process.argv[2] || path.join(__dirname, "..", "..", "shared", "core");
 const file3 = path.join(dir, "systems_text.js");
 const raw3 = fs.readFileSync(file3, "utf8");
 if (/^\s*import\b/m.test(raw3)) { console.error("systems_text.js 不准 import"); process.exit(1); }

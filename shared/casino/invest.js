@@ -11,10 +11,10 @@
 //  玩家看得到什麼：日報寫「昨天」館方買賣了什麼、現在持有什麼、累計賺賠（house.inv.last，延遲壹天公開，不即時）。
 //  存哪：house.inv = { day, pool: { house|budget: { own {id: 股}, cost {id: 成本}, pnl 已實現累計, stopUntil } }, cur 今天的買賣, last 昨天的買賣 }
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow } from "./book.js";
 import { stBuyCost, stCents, stPx, stSellGet, stValue } from "./stock.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { OUT_STOCKS } from "../stock/text.js";
 
 const ivBox = o => !!o && typeof o === "object" && !Array.isArray(o);

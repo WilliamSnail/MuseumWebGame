@@ -15,16 +15,16 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
-import { NUM } from "../shared/config.js";
+import { NUM } from "../shared/core/config.js";
 import { dayPlus, hallView, weeklyView } from "../shared/social/gifts.js";
-import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "../shared/logic.js";
-import { weekIndex } from "../shared/logic_base.js";
+import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "../shared/core/logic.js";
+import { weekIndex } from "../shared/core/logic_base.js";
 import { weeklyTheme } from "../shared/story/themeshow.js";
 import { markAct, markGift } from "../casino/task_act.js";
-import { friendTalent, learnFromFriend } from "../shared/shop.js";
+import { friendTalent, learnFromFriend } from "../shared/core/shop.js";
 import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "../shared/social/visit.js";
 
-// ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
+// ---------- 跟館友學（決定 0032，規則在 shared/core/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。
 // 回傳非 null：這裡會把我的存檔寫回去（rev 加一）、送 save_changed，回傳值放進 learn，畫面在 ui_visit.js 的 visitLearnLine 寫出來。
 // 骰子：visitHall 算之前已經 setRng(同一位、同一間、同一天的種子)。

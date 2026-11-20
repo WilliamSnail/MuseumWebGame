@@ -9,8 +9,8 @@
 //  - UI.localPlay：不連伺服器（開發用的 #畫面、開發時伺服器沒開按「先用這台電腦的存檔玩」）。
 //  - 開發時網址帶 ?user=名字：這個分頁自己登入（net.js 把 token 放 sessionStorage），一台電腦開好幾個分頁當不同的人。
 // ================================================================
-import { SAVE_KEY, migrateSave, nowMs } from "../../../shared/logic.js";
-import { titleName } from "../../../shared/titles.js";
+import { SAVE_KEY, migrateSave, nowMs } from "../../../shared/core/logic.js";
+import { titleName } from "../../../shared/core/titles.js";
 import { NET } from "../core/net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, applySettings, ask, btn, go, h, icon, note, persist, readJSON, rerender, roomLabel, setAmbOver, setCellarSnd, setP, setSave, snd, titleTag, updateNetMenu, useProfile } from "../core/ui_core.js";
 import { overlay } from "./ui_board.js";

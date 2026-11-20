@@ -1,4 +1,4 @@
-// 新玩家的「下一步」（shared/guide.js）：node test/web/guide.test.cjs（npm test 也會跑）
+// 新玩家的「下一步」（shared/core/guide.js）：node test/web/guide.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

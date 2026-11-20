@@ -9,7 +9,7 @@ T("名單：美股 26 支（原 6 ＋ 新 18 ＋ 2 倍版 2）；新股都有 15
   const ext = G.OUT_STOCKS.filter(s => s.ext); assert.strictEqual(ext.length, 20); assert.strictEqual(G.US_IDS.length, 26);
   assert.strictEqual(new Set(G.OUT_STOCKS.map(s => s.name)).size, G.OUT_STOCKS.length, "名字不重複");
   const C = G.NUM.casino.stock.us; for (const s of ext) { assert.strictEqual(s.market, "us"); assert.ok(C.sd15[s.id] > 0 && C.minSd[s.id] > 0, s.id); assert.ok(s.intro && s.intro.length > 10 && !/[A-Za-z]{3,}/.test(s.name + s.intro), s.id + " 說明不放英文代號"); }
-  const txt = ["stock/text.js", "config.js"].map(f => fs.readFileSync(path.join(__dirname, "..", "..", "shared", f), "utf8")).join("\n");
+  const txt = ["stock/text.js", "core/config.js"].map(f => fs.readFileSync(path.join(__dirname, "..", "..", "shared", f), "utf8")).join("\n");
   for (const code of ["CCL", "TLRY", "IONQ", "OKLO", "MRNA", "SOFI", "DKNG", "KTOS", "PTON", "RBLX", "UEC", "FCX"]) assert.ok(!new RegExp("\b" + code + "\b").test(txt), code + " 不進 shared");
 });
 T("分類：每支都有 cat、都在 OUT_CATS 裡；順序和名字是資料表；自然資源有 APA、AR、UEC、MP、FCX、MOS", G => {

@@ -17,9 +17,9 @@ import { viewFor } from "../shared/coop/core.js";
 import { coopAct, coopBegin } from "../shared/coop/flow.js";
 import { coopReportProblem, coopSayBuild, coopSayGap } from "../shared/coop/fun.js";
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "../shared/social/party.js";
-import { trialById } from "../shared/shop.js";
-import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "../shared/logic.js";
-import { NUM } from "../shared/config.js";
+import { trialById } from "../shared/core/shop.js";
+import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "../shared/core/logic.js";
+import { NUM } from "../shared/core/config.js";
 import { switchVisitor } from "../shared/social/visitors.js";
 import { eventLive, eventRunOf, eventsFromWeeks } from "../shared/story/events.js";
 import { EVENT_WEEKS } from "../shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）

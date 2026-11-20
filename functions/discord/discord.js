@@ -20,9 +20,9 @@ import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { eventsFromWeeks } from "../shared/story/events.js";
 import { EVENT_WEEKS } from "../shared/events_data.js";
 import { DAY_DATA } from "../shared/day_data.js";
-import { NUM } from "../shared/config.js";
+import { NUM } from "../shared/core/config.js";
 import { dcBoardText, dcChipsText, dcHouseText, dcJoinUrl, dcLinkOkText, dcNewsText, dcOnlineText, dcParse, dcPong, dcReply, dcText, dcTimestampOk, dcTodayText, DC_LINK_OPT, DC_NEWS_OPT } from "../shared/discord/core.js";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { PLAY_HANDLERS, onComponent, yugaLineFor } from "./discord_play.js";
 
 const SPKI_ED25519 = Buffer.from("302a300506032b6570032100", "hex"); // ed25519 公鑰的 DER 開頭，後面接 32 個位元組

@@ -9,7 +9,7 @@
 //  壹則也不 @ 任何人：送出去的 body 壹定帶 allowed_mentions: { parse: [] }。
 //  所有名字都用 dcOut／DC_OUT 開頭（shared 的檔接在壹起跑，頂層名字不能重複）。文字是草稿，Yuga 可以改。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { dcNick, dcNum } from "./core.js";
 
 export const DC_OUT_KINDS = ["broke", "breaker", "rescued", "join", "liveOn", "donate", "bj"]; // 每天 20:00 的彙整（kind "digest"，functions/discord/discord_digest.js）不是遊戲事件，不列在這裡

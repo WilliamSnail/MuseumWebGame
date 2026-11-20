@@ -10,7 +10,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { discordConfig } from "./discord_config.js";
 import { linkState, makeLinkCode, unlinkByUid } from "./discord_data.js";
 import { needMember, now as nowMs } from "../coop/party.js";
-import { NUM } from "../shared/config.js";
+import { NUM } from "../shared/core/config.js";
 
 export const discordLinkState = onCall(async req => {
   const me = await needMember(req);

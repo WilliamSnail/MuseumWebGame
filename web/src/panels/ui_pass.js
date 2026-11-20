@@ -8,7 +8,7 @@
 //  介面文字照第 1 代用「壹」。
 // ================================================================
 import { casNum } from "../../../shared/casino/core.js";
-import { fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
+import { fromKey, isFree, num, todayStr } from "../../../shared/core/logic.js";
 import { PASS_TABS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/social/pass.js";
 import { signinState } from "../../../shared/social/signin.js";
 import { NET } from "../core/net_firebase.js";

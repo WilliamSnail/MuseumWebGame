@@ -1,12 +1,12 @@
 // 開發用：網址後面加 #畫面 就直接打開那個畫面，並放好假的收藏。只在 npm run dev 時載入（main.js），不會進正式打包。
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { STORY_CHAPTERS } from "../../../shared/content.js";
-import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, ensureDay, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, todayStr, visitorArrive } from "../../../shared/logic.js";
+import { STORY_CHAPTERS } from "../../../shared/core/content.js";
+import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, ensureDay, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, todayStr, visitorArrive } from "../../../shared/core/logic.js";
 import { coopRoom } from "../../../shared/coop/base.js";
 import { viewFor } from "../../../shared/coop/core.js";
 import { coopAct, coopBegin } from "../../../shared/coop/flow.js";
-import { assignJob } from "../../../shared/legacy.js";
-import { hallSize, startCellar } from "../../../shared/systems.js";
+import { assignJob } from "../../../shared/core/legacy.js";
+import { hallSize, startCellar } from "../../../shared/core/systems.js";
 import { storyState } from "../../../shared/story/state.js";
 import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, note, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "../rooms/ui_screens1.js";

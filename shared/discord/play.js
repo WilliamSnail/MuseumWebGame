@@ -5,7 +5,7 @@
 //  每壹則回覆都過 dcScrub：不放 email、理智、怪癖、靈感（遊戲裡「理智 -1」這類字會被拿掉）；暱稱過 dcNick。
 //  所有名字都用 dc／DC 開頭（shared 的檔接在壹起跑，頂層名字不能重複）。文字是草稿，Yuga 可以改（DC_TEXT 在 discord.js，荷官的話在 casino/text.js 的 CAS_*）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { CAS_MENU, CAS_TEXT } from "../casino/text.js";
 import { casCardName } from "../casino/core.js";
 import { casCanRelief, casFoodWords, casPoorReason } from "../casino/wallet.js";

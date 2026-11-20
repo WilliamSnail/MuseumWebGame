@@ -1,7 +1,7 @@
 // 資料夾的規矩（11-20 架構整理，翊文：「要怎麼避免以後再發生這些問題」）。npm test 會跑，違規就失敗。
 //   1. 最上層只放清單裡的東西（以前被誤 commit 過暫存檔 body_tmp.md）。真的要加新的最上層檔案／資料夾，改下面的 TOP 並在 PR 說明為什麼。
 //   2. 模擬腳本只放 test/sim/（以前 test/ 平放 32 支，還有壹支是重複的舊版）。
-//   3. shared/ 的賭場、合作、地下、Discord 檔放子資料夾（casino/、coop/、cellar/、discord/），不准再在 shared/ 第一層開 casino_xxx.js 這種。
+//   3. shared/ 第一層只准放子資料夾（core、npc、stock、world、story、social、game、casino、coop、cellar、discord），不准在第一層放 .js 檔（11-20 第三輪，翊文同意）；新系統開新資料夾，一個系統一個字。
 //   4. 檔名不准用數字結尾（logic3.js、content4.js 這種看不出用途）。
 //   5. 程式檔（shared/、web/src/ 第一層、functions/）單檔不超過 MAX_LINES 行；已經超過的列在 BIG，只准變小。
 //   6. web/src 的 import 不准繞圈（shared/ 的繞圈由 tools/check/check_imports.cjs 擋）。
@@ -25,7 +25,7 @@ function check(files, readText = f => fs.readFileSync(path.join(ROOT, f), "utf8"
   for (const t of top) if (!TOP.includes(t)) bad.push(`最上層多了「${t}」：不在 tools/check/repo_rules.cjs 的 TOP 清單（暫存檔不要 commit；真的要加就改清單）`);
   for (const f of files) { const m = f.match(/^(tools|test|functions|web\/src)\/([^/]+)$/); if (m && !FIRST_LEVEL[m[1]].includes(m[2])) bad.push(`${f}：${m[1]}/ 第一層不放新檔，放進子資料夾（見 AGENTS.md 第 4 節）`); }
   for (const f of files) if (/^test\/sim[^/]*\.c?js$/.test(f)) bad.push(`${f}：模擬腳本放 test/sim/`);
-  for (const f of files) { const m = f.match(/^shared\/(casino|coop|cellar|discord)(_[^/]*)?\.js$/); if (m) bad.push(`${f}：放進 shared/${m[1]}/ 子資料夾`); }
+  for (const f of files) if (/^shared\/[^/]+\.js$/.test(f)) bad.push(`${f}：shared/ 第一層只放子資料夾，放進系統的資料夾（core、npc、stock、world、story、social、game、casino、coop、cellar、discord），新系統就開新資料夾`);
   for (const f of files) if (/^(shared|web\/src|functions|tools)\/(.*\/)?[^/]*[a-z_]\d\.(js|cjs|mjs)$/i.test(f) && !OLD_NUM.includes(f)) bad.push(`${f}：檔名不要用數字結尾，取個看得出用途的名字`);
   for (const f of files) {
     if (!CODE.test(f) || /^functions\/shared\//.test(f)) continue;

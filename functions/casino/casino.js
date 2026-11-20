@@ -22,13 +22,13 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
-import { NUM } from "../shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
+import { NUM } from "../shared/core/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "../shared/casino/core.js";
 import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "../shared/casino/bank.js";
 import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "../shared/casino/wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "../shared/casino/text.js";
 import { casWkSync, casWkView } from "../shared/casino/week.js";
-import { titlePublish } from "../shared/titles.js";
+import { titlePublish } from "../shared/core/titles.js";
 import { casCellarFind } from "../shared/casino/find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "../shared/casino/book.js";
 import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "../shared/casino/report.js";
@@ -61,7 +61,7 @@ import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveVie
 import { eventLive, eventsFromWeeks } from "../shared/story/events.js";
 import { EVENT_WEEKS } from "../shared/events_data.js";
 import { CAS_WEEK_LIB } from "../shared/casino_week_data.js";
-import { setRng, taipeiDay } from "../shared/logic.js";
+import { setRng, taipeiDay } from "../shared/core/logic.js";
 import { inbox, needMember, newId, now, rtdb, statusOf } from "../coop/party.js";
 import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "../stock/stock_tw.js";
 import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "../stock/stock_us.js";

@@ -10,11 +10,11 @@
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
 import { NET } from "../core/net_firebase.js";
-import { CELLAR_REWARDS, NUM } from "../../../shared/config.js";
-import { rangeWords, trialById, trialRooms, trialState } from "../../../shared/shop.js";
-import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../../../shared/logic.js";
-import { cellarFloor } from "../../../shared/logic_base.js";
-import { cellarFloors, memberPower } from "../../../shared/systems.js";
+import { CELLAR_REWARDS, NUM } from "../../../shared/core/config.js";
+import { rangeWords, trialById, trialRooms, trialState } from "../../../shared/core/shop.js";
+import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../../../shared/core/logic.js";
+import { cellarFloor } from "../../../shared/core/logic_base.js";
+import { cellarFloors, memberPower } from "../../../shared/core/systems.js";
 import { COOP } from "../../../shared/coop/base.js";
 import { coopTurnsLeft } from "../../../shared/coop/flow.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../../shared/coop/text.js";

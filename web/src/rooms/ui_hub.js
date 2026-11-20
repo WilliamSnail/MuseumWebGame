@@ -7,8 +7,8 @@
 //  自由模式沒有每日的事：這裡回 null，大廳照舊排（下壹步、節日）。
 //  ui_core 不能 import 這個檔：這裡把自己登記進 ADDONS（lobbyHub、hubRefresh）。介面文字照第 1 代用「壹」。
 // ================================================================
-import { nextStep } from "../../../shared/guide.js";
-import { fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
+import { nextStep } from "../../../shared/core/guide.js";
+import { fromKey, isFree, num, todayStr } from "../../../shared/core/logic.js";
 import { passView } from "../../../shared/social/pass.js";
 import { stampHow } from "../../../shared/story/core.js";
 import { storyState } from "../../../shared/story/state.js";

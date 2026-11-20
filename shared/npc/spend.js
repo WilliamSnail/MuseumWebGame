@@ -11,9 +11,9 @@
 //    順序是「到的先後」；已知世界吃緊不花。record：house.npcLive（今天的進度）、house.npcs（最近壹個完整的壹天，日報寫）。
 //  館內股的「昨天不同的人」還是用整天的行程（casInNpcFor），跟「現在誰在場」無關；所以畫面不顯示各家店現在幾個 NPC（會洩漏明天的跳空）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "../casino/book.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { casFxMul, casFxPolicy } from "../casino/gdp.js";
 import { npcStoryLine, npcLikesNow } from "./core.js";
 import { npcTrips } from "./trip.js";

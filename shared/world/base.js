@@ -2,7 +2,7 @@
 //  世界模擬的底層公式：理智、預算倍率、不安的算法（stat_view.js 要用，world.js 也要用，所以放在這裡）。
 //  搬自原本的 world.js。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 
 export const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 

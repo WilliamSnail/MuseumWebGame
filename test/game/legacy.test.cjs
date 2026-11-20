@@ -1,4 +1,4 @@
-// 參觀者一位接一位：roguelike 的繼承（shared/legacy.js）：node test/game/legacy.test.cjs（npm test 也會跑）
+// 參觀者一位接一位：roguelike 的繼承（shared/core/legacy.js）：node test/game/legacy.test.cjs（npm test 也會跑）
 // A 前任的遺物、C 選職業再抽小優缺點（決定 0028；以前是 3 位候選人）、D 歷任參觀者牆的紀錄、舊存檔補欄位。數字一律讀 NUM、LEGACY、PERKS、FLAWS。
 const assert = require("assert");
 const path = require("path");
@@ -440,8 +440,8 @@ T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
 (async () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
-    const logic = await import(url("logic.js"));
-    const legacy = await import(url("legacy.js"));
+    const logic = await import(url("core/logic.js"));
+    const legacy = await import(url("core/legacy.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, "2026-11-08");
     assert.ok(legacy.chooseJob(P, "artisan")); // 第一位也抽
     assert.ok(logic.traitById(P.perk) && logic.traitById(P.flaw));

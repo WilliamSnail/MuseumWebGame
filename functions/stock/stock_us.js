@@ -18,7 +18,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { outStockWeekend } from "../shared/stock/core.js";
 import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "../shared/stock/tw.js";
-import { NUM } from "../shared/config.js";
+import { NUM } from "../shared/core/config.js";
 import { twSecret } from "./stock_tw.js";
 
 const db = () => getFirestore();

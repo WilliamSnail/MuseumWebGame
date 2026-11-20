@@ -8,8 +8,8 @@
 //  記帳 house.npcCas：{ day, by: { npcId: { n 今天答應幾次, net NPC 今天贏（正）輸（負）多少, hands }, }, net 全館 NPC 今天的淨贏輸, at: { npcId: { pid, host, since, until } 現在在賭場的 }, cool: { "uid|npcId": 到哪個毫秒才能再邀 } }
 //  打法（content/npc/<id>.json 的 casino.style）：careful 保守、basic 標準、bold 大膽、wild 亂來；沒寫的當 basic。台詞 casino.lines 沒寫的用下面的預設。
 // ================================================================
-import { NUM } from "../config.js";
-import { RNG, hashStr, mulberry32 } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { RNG, hashStr, mulberry32 } from "../core/logic_base.js";
 import { casHand, casPoint } from "./core.js";
 import { casHouseWorldIn, casHouseWorldOut, casWorldLow } from "./book.js";
 import { casBetMax, casHouseLevel, casPayAdd, casPayLeft } from "./wallet.js";

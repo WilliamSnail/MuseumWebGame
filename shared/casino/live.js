@@ -9,11 +9,11 @@
 //  錢包欄位 lv：{ day, n 今天斗內幾次, sent 今天斗內出去多少, got 今天收了多少, sentAll、gotAll、times 累計 }；舊錢包沒有，這裡補。
 //  文字界線：只顯示遊戲暱稱；不公開誰沒錢（「你才沒那麼有錢」只回給按的那個人）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casFill, casNum } from "./core.js";
 import { casShortName } from "./wallet.js";
 import { CAS_LIVE } from "./text.js";
-import { RNG } from "../logic_base.js";
+import { RNG } from "../core/logic_base.js";
 
 const lvBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const lvNum = (v, d = 0) => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : d);

@@ -84,7 +84,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `discordBot` | **不是 callable，是 HTTPS（`onRequest`）**：Discord 的 Interactions Endpoint。驗 ed25519 簽名（`req.rawBody`、`X-Signature-*`），過不了 401；沒設定 503；PING 回 PONG；只收設定的伺服器。八個 `/pepe-…` 指令當場讀寫、回覆（`functions/discord/discord.js`、規則 `shared/discord/core.js`） | 決定 0051 |
 | `discordLinkCode`、`discordLinkState`、`discordUnlink` | 遊戲裡的「綁定 Discord」：拿 6 位數碼、看狀態（`configured` 是 false 就是還沒開通，畫面不顯示）、解除（`functions/discord/discord_link.js`） | 決定 0051 |
 | `invite`、`inviteReply`、`partyAction` | 邀請、隊伍（準備、挑佩佩、開始、離開） | M3 |
-| `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/systems.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
+| `fuseTogether` | 兩個人一起融合：讀兩份存檔 → `shared/core/systems.js` 的 `fuseTogether` → 兩份都寫回（`rev` 加一）→ 通知 | M3 |
 | `coopStep` | 合作地下：開隊、選層數、留守、開始、投票、看完了、搬、猜、敲一下、說話和打字、檢舉、時間到、接回去、移出斷線的人（`shared/coop/core.js`、`coop/flow.js`、`coop/fun.js`） | M4 |
 | `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop/trace.js`） | M2、M6 |
 | `visitHall`、`hallAct` | 走進館友的展廳（給展廳那一部分、記來訪、寄謝禮）、按讚、留言 | M2 |
@@ -98,8 +98,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `casinoTable` | 賭場同桌：`open`（開桌）、`join`（入座）、`bet`、`hit`、`stand`、`tick`（時間到往下走）、`say`（短句、打字）。離桌用 `partyAction` 的 `leave`（掛鉤幫他離桌）。規則 `shared/casino/table.js` | 決定 0040 |
 
 - **規則同一份**：部署前把 `shared/` 複製進 `functions/shared/`（`firebase.json` 的 predeploy），Functions import 它。
-- **骰子**：`shared/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。
-- **「今天」**：全部照台灣時間 05:00 換日（決定 0019）。11-09 起遊戲裡的一天也是（不再是 15 分鐘一天）。Functions 要「今天」一律 `taipeiDay(Date.now())`（`shared/logic.js`，用伺服器的時間），改存檔前先 `ensureDay(P, 今天)`。Functions 裡 `nowMs()` 就是伺服器的 `Date.now()`（不要在 Functions 用 `setNowClock`、`setDayClock`）。畫面那邊的「現在」登入後也照網路的時間（決定 0026）。
+- **骰子**：`shared/core/logic.js` 的 `RNG` 是整個程式一個。Functions 每次呼叫自己一個執行環境，算之前 `setRng(這次的骰子)`、算完換回來，中間不 `await`。
+- **「今天」**：全部照台灣時間 05:00 換日（決定 0019）。11-09 起遊戲裡的一天也是（不再是 15 分鐘一天）。Functions 要「今天」一律 `taipeiDay(Date.now())`（`shared/core/logic.js`，用伺服器的時間），改存檔前先 `ensureDay(P, 今天)`。Functions 裡 `nowMs()` 就是伺服器的 `Date.now()`（不要在 Functions 用 `setNowClock`、`setDayClock`）。畫面那邊的「現在」登入後也照網路的時間（決定 0026）。
 
 ## 四、畫面的 NET
 

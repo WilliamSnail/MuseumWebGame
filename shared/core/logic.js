@@ -4,14 +4,14 @@
 import { EXHIBITS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_NAME, PEPE_PARTS, PILLOW_PARTS, RENAMED, UPGRADES } from "./config.js";
 import { QUIRK_TEXT, VISITOR_COMMENTS } from "./content.js";
 import { CLIENT_LINES } from "./systems_text.js";
-import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc/core.js";
+import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "../npc/core.js";
 import { BASE_TOTAL, CATS, CORE_CATS, DAY_CLOCK, DAY_MS, DAY_START_HOUR, DECO_CATS, DEFAULT_PICK, KIND_CODE, NOW_CLOCK, PILLOW_CATS, PILLOW_TOTAL, QUIRK_TASKS, RARITY_ORDER, RNG, ROLLED, TZ_HOURS, activeQuirks, addDays, allOpts, asList, attrsOf, b64d, b64e, baseOpts, blockedSet, catOfOption, clampN, codexCount, coreKey, cureByTask, dailyCommissions, daysBetween, describePepe, exhibitById, exhibitOpen, fixQuirks, fromKey, fullPick, gainSan, galleryInsp, grantOption, hallItem, hallScore, hallThemes, isFree, isUnlocked, limitedHome, needSatisfiable, normKey, normPillowKey, nowMs, optOf, parsePillowKey, partOf, pepeKey, pickOne, possibilities, progressEvents, quirkDaysOf, quirkDoneDays, quirkLive, quirkSpan, rarityRank, renameKey, renameVal, rollD100, rollExpr, sortUnlocked, specAllows, todayStr, traitSum, usable } from "./logic_base.js";
 import { fixLegacy, leaveLegacy, newVisit, visitorRecord } from "./legacy.js";
-import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./social/signin.js";
+import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "../social/signin.js";
 import { fixShop } from "./shop.js";
-import { fixShow, newShow } from "./story/themeshow.js";
+import { fixShow, newShow } from "../story/themeshow.js";
 import { hallSize, hasTalent, skillCheck } from "./systems.js";
-import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./social/visitors.js";
+import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "../social/visitors.js";
 
 // 底層搬到 logic_base.js，從這裡再匯出一次（web、functions 還是從這個檔拿）
 export * from "./logic_base.js";
@@ -88,13 +88,13 @@ export function newProfile(mode) {
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
     // 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西（shared/social/signin.js）。博物館的，換參觀者不會跟著換
     limited: { got: {}, wear: { stand: null, frame: null }, stock: {} },
-    // 第 4 版（11-09，決定 0032）：兌換所（shared/shop.js）。shop 是博物館的（買到的裝備、試煉房間這週的次數）；gear 是現在這位穿著的（VISITOR_KEYS）
+    // 第 4 版（11-09，決定 0032）：兌換所（shared/core/shop.js）。shop 是博物館的（買到的裝備、試煉房間這週的次數）；gear 是現在這位穿著的（VISITOR_KEYS）
     shop: { gear: {}, trials: {} }, gear: [],
     // 第 4 版（11-09，決定 0035）：主題展辦到哪裡、策展手記讀過沒（shared/story/themeshow.js）。博物館的，換參觀者不會跟著換
     themeShow: newShow(),
-    // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
+    // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/core/fresh.js）
     fresh: {},
-    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
+    // 第 4 版（11-08 翊文）：參觀者一位接一位（shared/core/legacy.js）：這一位的小優缺點（選職業時抽，決定 0028）、前一位留下的、遺物櫃、這一位自己的統計。
     //   cands 是以前「3 位候選人」還沒挑的，0028 以後一直是 null（舊存檔裡有的留著，選職業時清掉）
     perk: null, flaw: null, cands: null, legacy: null, relics: [],
     visit: { from: todayStr(), sec0: 0, made0: 0, deepest: 0, understood: {}, where: null, made: 0, sec: 0 },
@@ -341,7 +341,7 @@ export function expireQuirks(P, now = nowMs()) {
 export const halveCost = loss => loss * 2;
 export const halved = loss => Math.ceil(loss / 2);
 // 理智 0：俄國8+9 的房間，然後換下一位參觀者（圖鑑、收藏、展廳都留著）
-// 第 4 版（11-08 翊文，roguelike 的繼承，規則在 shared/legacy.js）：
+// 第 4 版（11-08 翊文，roguelike 的繼承，規則在 shared/core/legacy.js）：
 //   leave ＝這一位留給下一位的東西：{ type: "relic", item: { kind, key } }、{ type: "skill" }，或 null（A）
 //   這一位的紀錄多記了優缺點、做了幾隻、地下走到第幾層、看懂幾件、留了什麼（D）
 //   新的一位先不選職業：畫面那邊從 6 個職業選，再抽小優點、小缺點（legacy.js 的 chooseJob；決定 0028，以前是從 3 位候選人挑）

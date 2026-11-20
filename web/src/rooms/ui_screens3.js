@@ -4,18 +4,18 @@
 
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, LIMITED_FX, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../../shared/config.js";
-import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../../shared/systems_text.js";
-import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../../shared/content.js";
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, LIMITED_FX, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../../shared/core/config.js";
+import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../../shared/core/systems_text.js";
+import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../../shared/core/content.js";
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
-import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../../shared/logic.js";
-import { buyUpgrade, canFuse, limitedFxShort, cellarAdvance, cellarApply, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, healInjured, injureDaysOf, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, startCellar, startFusion, teamPower, upgradeState } from "../../../shared/systems.js";
-import { cellarFloor, hasUp, teamItems } from "../../../shared/logic_base.js";
-import { jobInfo, jobSkill, skillOf } from "../../../shared/legacy.js";
+import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill, finishMake, fromKey, hallItem, isFree, maxSan, nextVisitor, num, pad, partOf, quirkName, rarityRank, scoreItems } from "../../../shared/core/logic.js";
+import { buyUpgrade, canFuse, limitedFxShort, cellarAdvance, cellarApply, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, healInjured, injureDaysOf, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, startCellar, startFusion, teamPower, upgradeState } from "../../../shared/core/systems.js";
+import { cellarFloor, hasUp, teamItems } from "../../../shared/core/logic_base.js";
+import { jobInfo, jobSkill, skillOf } from "../../../shared/core/legacy.js";
 import { weeklyState } from "../../../shared/story/themeshow.js";
-import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../../shared/fresh.js";
-import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../../shared/legacy.js";
+import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../../shared/core/fresh.js";
+import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../../shared/core/legacy.js";
 import { cleanName, renameVisitor } from "../../../shared/social/visitors.js";
 import { $, $$, ADDONS, P, PANELS, SCREENS, UI, setCellarSnd, sndFile, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "../core/ui_core.js";
 import { onescreenDrawer, roomHead } from "../core/ui_room.js";
@@ -23,7 +23,7 @@ import { SOCIAL } from "../../../shared/social/gifts.js";
 import { storyCellarBox } from "../panels/ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 
 // 選職業（每一位參觀者都一樣，第一位也是；11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：
-//   從 6 個職業選一個 → 抽一個小優點、一個小缺點（shared/legacy.js 的 chooseJob）→ 馬上存檔 → 蓋一張卡寫抽到什麼、有什麼效果（drawReveal）。
+//   從 6 個職業選一個 → 抽一個小優點、一個小缺點（shared/core/legacy.js 的 chooseJob）→ 馬上存檔 → 蓋一張卡寫抽到什麼、有什麼效果（drawReveal）。
 //   抽到就定了，不能重抽：存好之後 P.job 有值，重新整理也不會再選。
 //   以前換人時是從 3 位候選人挑（pickCandidate，拿掉了）。候選人那一頁原本有的「前一位留下的」「取名字」搬到這一頁，做法照舊。
 export function pickJob() {
@@ -120,7 +120,7 @@ export function growthFlow() {
   });
 }
 
-// ---------- 參觀者一位接一位（翊文 11-08，roguelike 的繼承；規則在 shared/legacy.js） ----------
+// ---------- 參觀者一位接一位（翊文 11-08，roguelike 的繼承；規則在 shared/core/legacy.js） ----------
 // LEGACY_TEXT 裡的 {名字} 換成值
 export const legacyFill = (t, o = {}) => Object.keys(o).reduce((s, k) => s.split("{" + k + "}").join(String(o[k])), String(t));
 // 遺物（或前任留下的遺物）→ 收藏列的格式，畫圖、寫名字用
@@ -220,7 +220,7 @@ export function legacyFlow() {
     showMain();
   });
 }
-// ---------- 退休換人（11-08 翊文：「好，加些其他的」，docs/決定/0025-退休換人.md；規則在 shared/legacy.js 的 retireCheck） ----------
+// ---------- 退休換人（11-08 翊文：「好，加些其他的」，docs/決定/0025-退休換人.md；規則在 shared/core/legacy.js 的 retireCheck） ----------
 // 結局的名字（牆上「看完「館長」，退休了。」）
 export function endingTitle(id) {
   if (id === "cellar") return (typeof ENDING_CELLAR !== "undefined" && ENDING_CELLAR.title) || id;

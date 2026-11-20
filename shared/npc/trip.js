@@ -6,8 +6,8 @@
 //    p(NPC i 去店 s) ＝ min(1, w(i,s) ÷ routeMax × scale(s))，scale(s) ＝ λ ÷ Σ w(i,s)÷routeMax（名單變了、故事線改了權重，平均還是 λ）。
 //  種子含伺服器祕密（玩家算不出誰哪天去哪），同樣的輸入同樣的輸出。
 // ================================================================
-import { NUM } from "../config.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { npcCurrent } from "./core.js";
 
 const NT_STORES = ["food", "bj", "job", "cellar", "craft"], NT_PLACES = NT_STORES.concat(["hall"]); // 展廳排在最後（抽的順序固定，加進來不改前面五家店的結果）

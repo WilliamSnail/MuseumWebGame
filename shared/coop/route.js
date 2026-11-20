@@ -13,8 +13,8 @@
 //  run.cmap ＝今天這一層的地圖（不叫 map：coop/fun.js 給留守看的是 v.map）；run.node ＝現在站的點（還沒出發是 null）；run.path ＝走過的點；run.chest ＝剛開的寶箱
 //  純函式；亂數用 RNG()。
 // ================================================================
-import { NUM } from "../config.js";
-import { RNG, cellarFloor, pickOne, rollExpr } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { RNG, cellarFloor, pickOne, rollExpr } from "../core/logic_base.js";
 import { coopActive, coopArr, coopFinish, coopMember, coopNewEvents, coopNextLeader, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
 import { coopPlanRoom } from "./fun.js";
 import { coopFightStart, coopRouteBack } from "./fight.js";

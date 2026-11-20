@@ -9,7 +9,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { outboxPut } from "./discord_out.js";
 import { NOTICES, NOTICE_AREAS, noticeArea } from "../shared/game/notices.js";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { dcDigestPost } from "../shared/discord/out.js";
 
 export async function digestRun(now = Date.now()) {

@@ -9,8 +9,8 @@
 //    paid：這筆有沒有給主人來訪的靈感。likes：累計幾個讚。seenAt：主人上次看的時間（比它新的算「新的」）。
 //  「今天」、「現在」都由呼叫的人給（伺服器的時間），不信瀏覽器。玩家打的字（暱稱、留言）一律只當資料，畫面用純文字顯示。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "../config.js";
-import { normKey, parsePillowKey, refPick } from "../logic_base.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "../core/config.js";
+import { normKey, parsePillowKey, refPick } from "../core/logic_base.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, checkHallCall, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";

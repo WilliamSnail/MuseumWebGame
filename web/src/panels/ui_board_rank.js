@@ -5,9 +5,9 @@
 //  入口：右上角選單的「本週榜單」（ui_core.js 的 buildNav）。ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 PANELS。
 //  暱稱是玩家打的字：一律當純文字放（不要用 h 的 html）。介面文字照第 1 代用「壹」。
 // ================================================================
-import { BOARD_TEXT } from "../../../shared/systems_text.js";
-import { NUM } from "../../../shared/config.js";
-import { fill } from "../../../shared/logic.js";
+import { BOARD_TEXT } from "../../../shared/core/systems_text.js";
+import { NUM } from "../../../shared/core/config.js";
+import { fill } from "../../../shared/core/logic.js";
 import { boardGroups, boardPeriodText, boardValueText, boardViewOf } from "../../../shared/social/board.js";
 import { NET } from "../core/net_firebase.js";
 import { PANELS, h, icon, snd, titleTag } from "../core/ui_core.js";

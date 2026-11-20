@@ -29,7 +29,7 @@
 //    每次碰到錢包、換日「之前」（casStockTwSettle／casStockUsSettle／casInRoll 之前）叫 casLevSweep(w, house, day, t)：先強平、再把收盤的自動平倉。
 //    畫面：casStockLevView(w, house, day, t)。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casCreditLevel } from "./credit.js";
 import { casCount, casHouseCover, casHouseMove, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
 import { gsLevBook, gsLevClose, gsLevOk, gsLevSrc, gsLevTrade, gsNameOf } from "./stock_grp.js";

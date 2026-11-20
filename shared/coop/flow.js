@@ -19,7 +19,7 @@
 // ================================================================
 import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopSaveReport } from "./fun.js";
 import { eventExtraTurns, eventRunFix } from "../story/events.js";
-import { trialById } from "../shop.js";
+import { trialById } from "../core/shop.js";
 import { coopFightRound, coopReplayMs } from "./fight.js";
 import { coopRest, coopRouteGo, coopRouteOptions } from "./route.js";
 import { coopRouteBack } from "./fight.js";

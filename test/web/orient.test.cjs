@@ -1,4 +1,4 @@
-// 手機轉橫的提示（shared/orient.js、web/src/css/landscape.css）：node test/web/orient.test.cjs（npm test 也會跑）
+// 手機轉橫的提示（shared/core/orient.js、web/src/css/landscape.css）：node test/web/orient.test.cjs（npm test 也會跑）
 // 一、「先用直的」只記在裝置上、壞掉的 storage 不丟錯。二、鎖橫向試一次、失敗不丟錯。
 // 三、landscape.css 的每一條都包在兩個條件裡：電腦（高 > 500）和直拿的手機（沒有 pointer: coarse）看不到任何一條。
 const assert = require("assert");

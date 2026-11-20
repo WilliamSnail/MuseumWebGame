@@ -6,7 +6,7 @@
 //  第壹次符合的時候寄壹封個人信（casAdvisorLetter，固定編號、壹人壹封）；好起來之後又欠了，隔至少 resendDays 天可以再寄（編號帶日期）。
 //  純函式。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casFill, casNum } from "./core.js";
 import { casStockFix, casStockHouseFix } from "./stock.js";
 import { IN_IDS, casInFix, casInPrice } from "./stock_in.js";

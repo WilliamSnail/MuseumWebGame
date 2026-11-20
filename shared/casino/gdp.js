@@ -13,7 +13,7 @@
 //    成長率 ＝（近 7 天合計 － 前 7 天合計）÷ 前 7 天合計；過去 7 天來過的人少於 minPeople 時 B_in ＝ 0（樣本太少）
 //  影響（拚經濟撥款、門票、利率、股價）下一個 PR 接，這裡只算指數。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 
 const gdNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
 const gdClamp = (x, a, b) => Math.min(b, Math.max(a, x));

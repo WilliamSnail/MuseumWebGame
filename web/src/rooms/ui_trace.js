@@ -5,7 +5,7 @@
 //  - 讀 /traces（館友都讀得到），寫都走 Functions。
 //  單人的畫面（ui_screens3.js）只留一個小接口：ADDONS.cellarTraces、cellarResolved、cellarZero、cellarFloorDone。
 // ================================================================
-import { fromKey, isFree, nowMs } from "../../../shared/logic.js";
+import { fromKey, isFree, nowMs } from "../../../shared/core/logic.js";
 import { TRACE, SIGN_TEMPLATES, recentWisps, signText } from "../../../shared/coop/trace.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, P, UI, btn, h, itemHTML, note, snd } from "../core/ui_core.js";

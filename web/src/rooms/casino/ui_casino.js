@@ -9,13 +9,13 @@
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { mountMood } from "../../fx/ui_mood.js";
-import { NUM } from "../../../../shared/config.js";
+import { NUM } from "../../../../shared/core/config.js";
 import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_HALL_NOTES, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../../../shared/casino/text.js";
 import { casCardName, casFill, casHand, casNum } from "../../../../shared/casino/core.js";
 import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../../../shared/casino/wallet.js";
 import { yugaLine, yugaMarkSaid } from "../../../../shared/story/core.js";
-import { exchangeUse } from "../../../../shared/shop.js";
-import { isFree, todayStr } from "../../../../shared/logic.js";
+import { exchangeUse } from "../../../../shared/core/shop.js";
+import { isFree, todayStr } from "../../../../shared/core/logic.js";
 import { NET } from "../../core/net_firebase.js";
 import { bankSfx, isKeyBeep, keyBeep } from "../../fx/bank_sfx.js";
 import { ADDONS, P, PANELS, UI, btn, h, holdFor, icon, markText, miniLayer, motionOff, netRoom, note, persist, setAmbOver, setChips, snd, sndFile, wait } from "../../core/ui_core.js";

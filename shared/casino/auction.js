@@ -16,9 +16,9 @@
 //  收標是「下次有人摸到拍賣」時才算（lazy），壹場壹個 Firestore 交易，從 open 搬到 done 跟所有錢包、存檔同壹次寫，所以不會付兩次。
 //  純函式：「今天」「現在」從參數來。伺服器入口在 functions/casino/art.js。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casCount, casHouseMove, casHouseWorldOut, casPoolGain, casPoolWorldOut, casWorldOut, casWorldRoom } from "./book.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { casArtFix, casArtHouse, casArtPrice } from "./art.js";
 import { casBondFix } from "./bond.js";
 import { casNum } from "./core.js";

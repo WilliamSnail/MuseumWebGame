@@ -143,7 +143,7 @@ function suggestFest(days, recent, gaps) {
   const fest = picks.slice(0, gaps.fest || 0), rest = picks.slice(gaps.fest || 0);
   const npc = gaps.npc ? (rest[0] || null) : null;
   const missing = Math.max(0, need - picks.length);
-  return { fest, npc, missing, days: days.length, hint: missing ? `這週 d3 以後的節日和趣味節日只有 ${days.length} 天、不夠 ${need} 個：可以上網查真實的特殊日、國際日（例如國際某某日），改成館內的名字，並把它加進 shared/story/holidays.js 的 FUN_INFO 和 shared/systems_text.js 的 FUN_TEXT（排程說明 一之九之三），再排活動` : "" };
+  return { fest, npc, missing, days: days.length, hint: missing ? `這週 d3 以後的節日和趣味節日只有 ${days.length} 天、不夠 ${need} 個：可以上網查真實的特殊日、國際日（例如國際某某日），改成館內的名字，並把它加進 shared/story/holidays.js 的 FUN_INFO 和 shared/core/systems_text.js 的 FUN_TEXT（排程說明 一之九之三），再排活動` : "" };
 }
 
 // 全部組起來。input：{ date, G, ledger, settings, weeks（{週: { week, days:{n:obj} }}）, recent（最近幾週的 week.json 陣列）, npcs, economy, weekDirs（有哪些週資料夾）}

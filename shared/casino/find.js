@@ -8,13 +8,13 @@
 //  錢包的欄位 cf：{ day, n 今天撿到幾次, rooms 今天擲過的房間 }；舊錢包沒有，這裡補。
 //  純函式：亂數用 RNG（測試可以換，也可以從參數 rnd 傳）；「今天」從參數來。籌碼不是錢，這裡沒有任何換成現實東西的路。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove } from "./book.js";
 import { casInUsed } from "./stock_in.js";
 import { casFxPolicy } from "./gdp.js";
 import { CAS_FIND_TEXT } from "./text.js";
-import { CELLAR } from "../systems_text.js";
-import { RNG } from "../logic_base.js";
+import { CELLAR } from "../core/systems_text.js";
+import { RNG } from "../core/logic_base.js";
 
 const cfBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cfNum = (v, d = 0) => (Number.isFinite(+v) ? +v : d);

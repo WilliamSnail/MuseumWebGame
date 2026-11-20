@@ -3,24 +3,24 @@
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { casExact, casNum } from "../../../shared/casino/core.js";
-import { LEGACY, NUM } from "../../../shared/config.js";
-import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../../shared/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../../shared/systems_text.js";
+import { LEGACY, NUM } from "../../../shared/core/config.js";
+import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../../shared/core/content.js";
+import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../../shared/core/systems_text.js";
 import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../../shared/social/applause.js";
 import { ART } from "./art.js";
 import { FX } from "../fx/fx.js";
 import { ambMix, sanDread } from "../../../shared/social/room_mood.js";
 import { ambFor } from "./audio_state.js";
-import { markTokens, taipeiDay, todayStr } from "../../../shared/logic.js";
-import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../../shared/logic.js";
-import { hasTalent, memberPower, skillCheck, understandLine } from "../../../shared/systems.js";
+import { markTokens, taipeiDay, todayStr } from "../../../shared/core/logic.js";
+import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../../shared/core/logic.js";
+import { hasTalent, memberPower, skillCheck, understandLine } from "../../../shared/core/systems.js";
 import { weeklyTheme } from "../../../shared/story/themeshow.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../../shared/social/visitors.js";
-import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../../shared/fresh.js";
+import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../../shared/core/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../../shared/game/notices.js";
 import { syncMail, unclaimedCount } from "../../../shared/social/mailbox.js";
 import { holidayClass, holidayOf } from "../../../shared/story/holidays.js";
-import { titleName, titleText } from "../../../shared/titles.js";
+import { titleName, titleText } from "../../../shared/core/titles.js";
 import { storyState } from "../../../shared/story/state.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
@@ -354,7 +354,7 @@ export function markNav() {
 }
 
 // ---------- 新解開的東西（翊文 11-08：「玩家新解開的東西應該介面上要有提示有那個地方解開了」） ----------
-// 規則在 shared/fresh.js。這裡：導覽列的「新」、房間裡的小牌子、提示寫在哪裡
+// 規則在 shared/core/fresh.js。這裡：導覽列的「新」、房間裡的小牌子、提示寫在哪裡
 // 不用紅點（規劃：紅點太多大家就不看了）：只有房間裡「真的有新東西、還沒進去看」時，名字旁邊才有金色的「新」
 export const FRESH_TAB = { recipes: "配方", badges: "徽章", upgrades: "工坊升級" };
 export function freshTag(cls) { return h("span", { class: "fresh-tag" + (cls ? " " + cls : ""), title: "新解開的", "aria-hidden": "true" }, "新"); }
@@ -1145,7 +1145,7 @@ export function quirkEffects(q) {
   return [["bad", q.opt ? `手作坊不敢選「${q.opt}」：可能性變少` : `「${q.cat}」只敢選「${baseOpts(q.cat)[0]}」：可能性變少`]];
 }
 // ---------- 怪癖的治法：在 2 個不同的遊戲日各做壹次，不然壹週後自己消失（翊文 11-09，決定 0046；0027 是「做完壹件事、20 分鐘」） ----------
-// 規則在 shared/logic.js（q.task、q.done、q.until、cureByTask、retaskQuirks、expireQuirks）；文字在 systems_text.js 的 QUIRK_TASK_TEXT、QUIRK_PLAN_TEXT
+// 規則在 shared/core/logic.js（q.task、q.done、q.until、cureByTask、retaskQuirks、expireQuirks）；文字在 systems_text.js 的 QUIRK_TASK_TEXT、QUIRK_PLAN_TEXT
 const qf = (t, o) => Object.keys(o).reduce((r, k) => r.split("{" + k + "}").join(String(o[k])), String(t)); // {n} 這種帶名字的填空（logic.js 的 fill 只有 {x}）
 export const QUIRK_TASK_ICON = { hug: "pillow", deliver: "commission", calm: "gallery" };
 // 「到畫廊看壹幅不可怕的畫就好了。」；這個怪癖沒有治法（得到時都做不到）是空字串

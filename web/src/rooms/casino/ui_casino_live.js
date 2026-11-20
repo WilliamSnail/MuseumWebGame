@@ -10,7 +10,7 @@
 import { CAS_LIVE } from "../../../../shared/casino/text.js";
 import { casFill, casNum } from "../../../../shared/casino/core.js";
 import { liveActive, liveFix } from "../../../../shared/casino/live.js";
-import { nowMs } from "../../../../shared/logic.js";
+import { nowMs } from "../../../../shared/core/logic.js";
 import { NET } from "../../core/net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, every, h, icon, note, setChips, snd } from "../../core/ui_core.js";
 

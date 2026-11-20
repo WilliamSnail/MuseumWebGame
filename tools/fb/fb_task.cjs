@@ -137,7 +137,7 @@ async function stockTwPeg(db) {
 // 寫：借款新規定的信寄給所有還有借款的館友（見檔頭 advisor-rules-mail）。每個錢包自己一個交易（讀錢包、寫信、記寄過了），重跑不會重寄
 async function advisorRulesMail(db, FieldValue) {
   const href = f => require("url").pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
-  const { casAdvisorRulesLetter } = await import(href("casino/advisor.js")), { MAIL_DAYS } = await import(href("social/mailbox.js")), { todayStr } = await import(href("logic.js"));
+  const { casAdvisorRulesLetter } = await import(href("casino/advisor.js")), { MAIL_DAYS } = await import(href("social/mailbox.js")), { todayStr } = await import(href("core/logic.js"));
   const day = todayStr(), ws = await db.collection("casinoWallets").get();
   let sent = 0, skipped = 0, failed = 0;
   for (const d of ws.docs) {
@@ -281,7 +281,7 @@ async function playerInvest(db, name) {
   const url = p => require("url").pathToFileURL(path.join(__dirname, "..", "..", "shared", p)).href;
   const { casStockViewAll } = await import(url("casino/stock.js"));
   const { casStockLevView } = await import(url("casino/stock_lev.js"));
-  const { taipeiDay } = await import(url("logic.js"));
+  const { taipeiDay } = await import(url("core/logic.js"));
   const hs = await db.doc("casinoHouse/main").get();
   const house = hs.exists ? JSON.parse(hs.data().data || "{}") : {};
   const t = Date.now(), day = taipeiDay(t);

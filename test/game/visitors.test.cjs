@@ -328,7 +328,7 @@ T("自由模式不受影響：沒有位子，這些函式都不做事", () => {
 (async () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
-    const logic = await import(url("logic.js"));
+    const logic = await import(url("core/logic.js"));
     const visitors = await import(url("social/visitors.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, DAY);
     assert.ok(visitors.addVisitor(P, "小華", 1));

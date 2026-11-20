@@ -9,8 +9,8 @@
 //    - 「同一個交易」由後端負責：sendGift 改好送的人的 P、回傳要寄給對方的信，後端把兩邊一起寫進去。
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
-import { NUM } from "../config.js";
-import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "../core/logic_base.js";
 import { showPosters } from "../story/themeshow.js";
 
 export const SOCIAL = {

@@ -8,7 +8,7 @@
 //        進館後有新公告會自己打開（ui_screens1.js 的 afterEnter → autoBoard）。
 //  ui_core 不能 import 這個檔（它在後面），所以這裡把自己登記進 ui_core 的 PANELS。
 // ================================================================
-import { realTodayStr } from "../../../shared/logic.js";
+import { realTodayStr } from "../../../shared/core/logic.js";
 import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../../shared/game/notices.js";
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../../shared/social/mailbox.js";
 import { FX } from "../fx/fx.js";

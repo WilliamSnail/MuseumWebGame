@@ -691,7 +691,7 @@ export const MORE_CHAPTERS = [
   },
 ];
 
-// ----- 第 4 版：參觀者一位接一位（翊文 11-08，roguelike 的繼承；規則在 shared/legacy.js） -----
+// ----- 第 4 版：參觀者一位接一位（翊文 11-08，roguelike 的繼承；規則在 shared/core/legacy.js） -----
 // 小優點、小缺點。{欄位名} 會換成 config.js 的 PERKS、FLAWS 裡的數字（不用帶正負號，字裡寫「多」「少」）；{from}、{to} ＝原本和改了之後。
 // 都是 Claude 的草稿，Yuga 可以改。
 export const TRAIT_TEXT = {
@@ -802,7 +802,7 @@ export const VISITOR_TEXT = {
 
 // ----- 怪癖的治法：在 2 個不同的遊戲日各做壹次治法那件事，沒做的話壹週後自己消失（決定 0046；0027 是「做完壹件事、20 分鐘」） -----
 // 翊文 11-09：「怪癖改留久一點，自動恢復要一週之類的，恢復要做事情兩天，這個引導讓使用者多切換不同參觀者，需要的話可以給提示」
-// 得到怪癖時，從現在做得到的裡面抽壹件（shared/logic.js 的 pickQuirkTask）；換日時做不到了會改抽（retaskQuirks）。
+// 得到怪癖時，從現在做得到的裡面抽壹件（shared/core/logic.js 的 pickQuirkTask）；換日時做不到了會改抽（retaskQuirks）。
 //   act：要做的事；chip：狀態列上的短版；where：在哪個房間；hint：再說清楚壹點（{x} 換成不可怕的畫的名字）
 export const QUIRK_TASK_TEXT = {
   hug: { act: "抱壹次抱枕", chip: "抱抱枕", where: "抱枕工作台", hint: "今天還沒抱過的抱枕都可以，按住抱壹下。" },

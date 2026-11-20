@@ -19,11 +19,11 @@
 //    fightAfter(f)                       打完：倒下的佩佩哪幾隻真的受傷
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
-import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "../config.js";
-import { FOE_TEXT } from "../systems_text.js";
-import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "../logic_base.js";
-import { memberPower } from "../systems.js";
-import { skillOf } from "../legacy.js";
+import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "../core/config.js";
+import { FOE_TEXT } from "../core/systems_text.js";
+import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "../core/logic_base.js";
+import { memberPower } from "../core/systems.js";
+import { skillOf } from "../core/legacy.js";
 
 // 帽子、姿勢變成一場一次的招式（原本是自動觸發的能力）
 export const FIGHT_MOVES = {

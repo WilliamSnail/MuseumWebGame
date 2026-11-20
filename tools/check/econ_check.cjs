@@ -2,7 +2,7 @@
 //   node tools/check/econ_check.cjs                      規則面：讀 NUM、跑小模擬，所有已知的套利條件和上限壹次驗；不安全就紅字、結束碼 1
 //   node tools/check/econ_check.cjs --ledger 檔案.json   帳面：吃壹份 casinoHouse/main 的內容（或日報文件 casinoReport/日期 的 JSON），印壹頁摘要、標出異常
 //   npm run econ:check                              ＝ 規則面
-//   改經濟數字（shared/config.js 的 NUM.casino、NUM.auction 等）之前和之後都要跑；紅字不准合併（AGENTS.md 第 4 節）。
+//   改經濟數字（shared/core/config.js 的 NUM.casino、NUM.auction 等）之前和之後都要跑；紅字不准合併（AGENTS.md 第 4 節）。
 // 不碰網路、不碰正式資料。帳面的資料怎麼拿：翊文同意後跑固定動作 house-ledger／stock-status（只讀），或從 Firebase 管理畫面複製文件內容存成 JSON。
 const fs = require("fs");
 const { load } = require("../../test/load_shared.cjs");

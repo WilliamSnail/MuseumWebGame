@@ -9,7 +9,7 @@
 //  用法例：財報「已知世界」卡（ui_bank.js）。NPC 卡片、展廳評價之後也直接叫。
 // ================================================================
 import { UI, h } from "./ui_core.js";
-import { NUM } from "../../../shared/config.js";
+import { NUM } from "../../../shared/core/config.js";
 import { statView, statBandOf } from "../../../shared/world/stat_view.js";
 
 const TONES = ["good", "neutral", "warn", "bad"];

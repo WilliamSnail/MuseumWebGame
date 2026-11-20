@@ -14,8 +14,8 @@
 //  沒有懲罰：錯過活動什麼都不會少；沒有倒數恐嚇。
 //  純函式：時間（毫秒）從參數傳進來，不碰時鐘；亂數走 RNG。壞資料不丟錯（cleanEvents 把壞的丟掉）。
 // ================================================================
-import { NUM } from "../config.js";
-import { RNG, TZ_HOURS, addDays, asList, taipeiDay } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { RNG, TZ_HOURS, addDays, asList, taipeiDay } from "../core/logic_base.js";
 
 // 種類。name：活動在哪裡有用；effect：一句話說加成（數字由 NUM.events 帶入）
 export const EVENT_KINDS = {

@@ -2,13 +2,13 @@
 //  合作地下收藏庫的底層：房間、隊伍、傷害與回血、結算、存檔修復……
 //  coop.js、coop/fun.js、coop/fight.js、coop/route.js 都要用，所以放在這裡（不 import 它們）。搬自原本的 coop.js。
 // ================================================================
-import { NUM } from "../config.js";
-import { applySan, cellarFloor, clampN, fromKey, fullPick, gainSan, maxSan, pepeKey, understandCheck } from "../logic_base.js";
-import { skillOf, traitHits, traitTag } from "../legacy.js";
+import { NUM } from "../core/config.js";
+import { applySan, cellarFloor, clampN, fromKey, fullPick, gainSan, maxSan, pepeKey, understandCheck } from "../core/logic_base.js";
+import { skillOf, traitHits, traitTag } from "../core/legacy.js";
 import { eventRunFix } from "../story/events.js";
-import { trialById } from "../shop.js";
-import { cellarAdvance, limitedFx, teamHas, teamPower, understandLine } from "../systems.js";
-import { gainQuirk, startBout } from "../logic.js";
+import { trialById } from "../core/shop.js";
+import { cellarAdvance, limitedFx, teamHas, teamPower, understandLine } from "../core/systems.js";
+import { gainQuirk, startBout } from "../core/logic.js";
 
 // ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim/sim_coop.cjs） ----------
 export const COOP = {

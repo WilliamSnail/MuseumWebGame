@@ -2,7 +2,7 @@
 //  房間共用的小零件：房間標題、收藏抽屜、書（11-20 架構整理：從 ui_screens1.js 搬出來，解開 ui_screens1 ⇄ ui_screens2／3、ui_story 的 import 繞圈）
 //  書裡 [[字|動作]] 的動作表 BOOK_ACTIONS 在這裡，內容由 ui_screens1.js 加進來
 // ================================================================
-import { CORE_TOTAL, clampN, num } from "../../../shared/logic.js";
+import { CORE_TOTAL, clampN, num } from "../../../shared/core/logic.js";
 import { $$, ADDONS, HIDE_CHROME, P, UI, btn, h, icon, navTo, ptNode, snd } from "./ui_core.js";
 
 export const BOOK_ACTIONS = {};

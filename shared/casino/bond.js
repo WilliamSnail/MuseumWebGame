@@ -10,7 +10,7 @@
 //  純函式：「今天」從參數來。錢包 w.bond：{ list: [{ mon, amt, day, pct, due }], iou, earned, born, notes }
 //  莊家 house.bond：{ mon, name, pct, cap, sold }（這期）；house.bailout：博物館資金墊了多少（之後從莊家稅還）
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove } from "./book.js";
 import { CAS_BOND } from "./text.js";
 import { casFill, casNum } from "./core.js";
