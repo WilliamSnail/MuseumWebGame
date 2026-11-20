@@ -5,7 +5,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-19", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const mkP = () => ({ pepes: { a: { n: 1, s: 1 }, b: { n: 1, s: 2, title: "融合的" }, c: { n: 1, s: 3 }, d: { n: 1, s: 4, title: "更後面的" } } });
-const mkH = (G, take = D0) => { const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base: 1e9, lv: 0.6, day: null, hold: 0, night: null, hits: 0, last: null, trace: [], take }; return h; };
+const mkH = (G, take = D0) => { const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base: 1e9, e: 0, lv: 0.6, day: null, hold: 0, night: null, hits: 0, last: null, trace: [], take }; return h; };
 T("取名：去空白、最多 PEPE_NAME.max 字、擋空白／控制字元／不雅；沒這隻就不行；每次取名 nmSeq 加壹", G => {
   const M = G.PEPE_NAME.max, P = mkP();
   assert.strictEqual(G.pepeNameClean("  小  綠 ").name, "小 綠"); assert.ok(!G.pepeNameClean("   ").ok); assert.ok(!G.pepeNameClean("a".repeat(M + 1)).ok); assert.ok(G.pepeNameClean("a".repeat(M)).ok);
@@ -14,7 +14,7 @@ T("取名：去空白、最多 PEPE_NAME.max 字、擋空白／控制字元／�
   assert.ok(r1.ok && !r1.stamp); assert.strictEqual(P.pepes.a.nm, "小綠"); assert.ok(P.pepes.c.nmSeq > P.pepes.a.nmSeq); assert.ok(!G.pepeRename(P, "a", "").ok); assert.strictEqual(P.pepes.a.nm, "小綠", "壞名字不改");
 });
 T("門檻那晚過去：隔天日報把 pool.take 標成那壹晚", G => {
-  const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base: 1e9, lv: 0.6, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
+  const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base: 1e9, e: 0, lv: 0.6, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
   let d = 0; while (!h.pool.night) { d++; G.casPoolDay(h, add(D0, d), 1700000000); } const night = h.pool.night; assert.ok(!h.pool.take, "晚上還沒收");
   G.casPoolDay(h, add(D0, d + 1), 1800000000); assert.strictEqual(h.pool.take, night);
 });
