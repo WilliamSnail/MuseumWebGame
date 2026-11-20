@@ -1,0 +1,26 @@
+# 每天看一次自動流程有沒有失敗（11-20 架構整理）：有就寫進 GitHub issue「自動流程失敗通報」。規則在 tools/actions_health.cjs。
+name: 自動流程健康檢查
+
+on:
+  schedule:
+    - cron: "10 12 * * *" # 台灣每天 20:10
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: 看過去 24 小時
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/actions_health.cjs --issue
