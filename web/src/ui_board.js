@@ -13,6 +13,7 @@ import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRea
 import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../shared/mailbox.js";
 import { FX } from "./fx.js";
 import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, sndFile, updateBoardBadges, updateStatus } from "./ui_core.js";
+import { actDone } from "./ui_story.js";
 
 const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
 const narrow = () => planPortrait(); // 橫拿的手機寬度夠，左右分欄（決定 0043）
@@ -94,6 +95,7 @@ function sheet(n, today, close) {
 // o.focus：先打開哪一則；o.auto：進館時自己打開的（下面多「今天不再自動打開」）
 export function openBoard(o = {}) {
   if (!SAVE) return;
+  actDone("board"); // 每日任務：看公佈欄（決定 0146）
   const today = realTodayStr(), state = noticeState(SAVE), list = boardNotices(P, today);
   const focusN = o.focus ? list.find(n => n.id === o.focus || (n.parts && n.parts.some(x => x.id === o.focus))) : null;
   let tab = focusN ? focusN.cat : NOTICE_CATS[0];

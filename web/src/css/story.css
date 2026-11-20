@@ -226,3 +226,15 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 .shelf-pg-b[disabled] { opacity: .35; cursor: default; }
 .shelf-pg-n { min-width: 3em; text-align: center; font-size: 1.0625rem; color: var(--gold-hi); }
 @media (max-width: 760px) { .origin-onescreen .story-shelf:has(> .shelf-pager) { padding-top: 62px; } .shelf-pager { left: 8px; top: 26px; } }
+
+/* 每日任務活躍積分（決定 0146）：簡單版，正式的畫面交給美術統籌 */
+.sp-pts { margin: 0 0 10px; padding: 8px 10px; border: 1px solid rgba(0, 0, 0, .15); border-radius: 8px; }
+.sp-pts-line { display: flex; align-items: center; gap: 10px; margin: 2px 0; }
+.sp-pts-line b { min-width: 7.5em; }
+.sp-pts-bar { flex: 1; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .12); overflow: hidden; }
+.sp-pts-bar i { display: block; height: 100%; background: #c9a24a; }
+.sp-pts-bar.wk i { background: #5b8f6a; }
+.sp-miles { list-style: none; margin: 8px 0 4px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.sp-mile { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid rgba(0, 0, 0, .15); border-radius: 6px; }
+.sp-mile.ready { border-color: #c9a24a; }
+.sp-mile.claimed { opacity: .6; }

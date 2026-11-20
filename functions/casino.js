@@ -25,7 +25,7 @@ import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
 import { casNum, casRoundView } from "./shared/casino.js";
 import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "./shared/casino_bank.js";
-import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
+import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
 import { casWkSync, casWkView } from "./shared/casino_week.js";
 import { titlePublish } from "./shared/titles.js";
@@ -67,6 +67,7 @@ import { TW_NAMES, TW_SYMBOLS, stocksTw, twSecret, twStale } from "./stock_tw.js
 import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "./stock_us.js";
 import { stocksDiv } from "./stock_div.js";
 import { outDonate, outHouse, outLiveOn } from "./discord_out.js";
+import { markAct, readActs } from "./task_act.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -537,11 +538,11 @@ export const casino = onCall(async req => {
         return shape(ctx, { legacy: peek, loanNotes, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
       });
     }
-    case "deal": return play(req, me, { save: true }, ctx => actDeal(ctx, d));
+    case "deal": { const r = await play(req, me, { save: true }, ctx => actDeal(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "casino", taipeiDay(now())); return r; } // 每日任務「打壹手 21 點」的證據（決定 0146）
     case "hit":
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, actRelief);
-    case "bank": return play(req, me, {}, ctx => actBank(ctx, d)); // Yuga Bot 銀行：活存、定存（11-13）
+    case "bank": { const r = await play(req, me, {}, ctx => actBank(ctx, d)); if (r && r.ok !== false && String(d.op || "") === "put") await markAct(me.uid, "bank", taipeiDay(now())); return r; } // Yuga Bot 銀行：活存、定存（每日任務「存壹筆」只算存活存，決定 0146）（11-13）
     case "bankHall": return play(req, me, {}, ctx => shape(ctx));
     case "used": return play(req, me, { writeAnyway: true }, ctx => { // 館內股票：手作坊今天有人做過佩佩（網頁做完壹隻叫壹次；壹天壹次，其他店伺服器自己記）
       if (String(d.store || "") !== "craft") return no({ reason: "沒有這個動作" });
@@ -568,7 +569,16 @@ export const casino = onCall(async req => {
       return { ok: true, n: r.n, got: r.chips, chips: ctx.w.chips };
     });
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
-    case "buy": return play(req, me, { save: true }, ctx => actBuy(ctx, d));
+    case "buy": { const r = await play(req, me, { save: true }, ctx => actBuy(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "food", taipeiDay(now())); return r; }
+    // 每日任務、每週積分的籌碼（決定 0146）：存檔說做完、伺服器也看到做過的才付；博物館資金出，不夠就先不付
+    case "taskChips": { const day0 = taipeiDay(now()), acts = await readActs(me.uid, day0); return play(req, me, { save: true }, ctx => {
+      const P = ctx.P, st = P && P.story;
+      if (!st) return { ok: true, items: [], short: false, chips: ctx.w.chips, got: 0 };
+      const miles = [];
+      Object.keys(st.weeks || {}).forEach(label => { const rec = st.weeks[label]; if (rec && rec.miles) NUM.story.pts.miles.forEach(m => { if (rec.miles[m.at] && (m.chips || m.box)) miles.push({ key: label + ":" + m.at, chips: m.chips || 0, box: m.box || 0 }); }); });
+      const r = casTaskChips(ctx.w, ctx.house, ctx.day, { due: (st.chipDue && st.chipDue[ctx.day]) || {}, acts, miles, rng: cryptoRng });
+      return { ok: true, items: r.items, short: r.short, chips: ctx.w.chips, got: r.chips };
+    }); }
     case "exchange": return play(req, me, { save: true }, ctx => {
       if (!ctx.P) return { ok: false, reason: "要用挑戰模式的參觀者進館，才能換" };
       const r = casExchange(ctx.w, String(d.id), ctx.P);

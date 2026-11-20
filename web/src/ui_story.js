@@ -16,9 +16,10 @@ import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { casWkBase } from "../../shared/casino_week.js";
 import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, giverName, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, STORY_TASKS, claimMile, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
-import { understoodCard, markText, ptMark } from "./ui_core.js";
+import { understoodCard, markText, ptMark, setChips } from "./ui_core.js";
+import { NET } from "./net_firebase.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "./ui_core.js";
 import { CAS_AUC } from "../../shared/casino_auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../shared/clues.js";
@@ -87,6 +88,7 @@ export function storyTick() {
   }
   const seen = clueSync(P, STORY_LIB, today); // 線索 → 你看懂了（集齊才有事件）
   if (seen.length) { seen.forEach(() => markFresh(P, "origin", FRESH_KEY.understood, UI.screen)); markFreshNav(); cards.push(...seen); persist(); }
+  if (warm && ev.some(e => e.type === "storyTask" && STORY_TASKS[e.task.kind] && STORY_TASKS[e.task.kind].chip)) settleChips(); // 賭場、銀行、餐車、參觀、送佩佩的任務做完了：去領籌碼（伺服器自己再看做過沒有）
   if (ev.length) {
     ev.forEach(e => { if (e.type === "storyBook") markFresh(P, "origin", "story:" + e.book.id, UI.screen); });
     if (warm) queue.push(...ev);
@@ -98,6 +100,26 @@ export function storyTick() {
   // 不用 later：換畫面時 later 的計時器會被取消，ticking 就卡住，之後的事件全部不見
   if (queue.length && !ticking) { ticking = true; setTimeout(flushEvents, 0); }
   showCards();
+}
+// ---------- 每日任務的「做過了」和籌碼（決定 0146） ----------
+// 真的做了那壹件事的那壹刻叫 actDone("casino")：記進存檔（storyAct），任務就算做完；有籌碼的任務做完會自動去領
+export function actDone(kind) {
+  if (!P || isFree(P)) return;
+  if (storyAct(P, kind, todayStr())) { persist(); updateStatus(); }
+}
+let settling = false;
+// 跟伺服器領籌碼：每日任務（賭場、銀行、餐車、參觀、送佩佩，壹天最多 2 個）和每週積分的籌碼、禮盒。博物館資金出，不夠就先不付，下次再領
+export async function settleChips(quiet) {
+  if (settling || !UI.net || !NET.loggedIn) return;
+  settling = true;
+  try {
+    await NET.flush().catch(() => {}); // 伺服器要先看到存檔裡做完了
+    const r = await NET.call("casino", { act: "taskChips" });
+    if (r && r.got > 0) { snd("coin"); note(`Yuga Bot 撥給你 ${r.got.toLocaleString("en-US")} 籌碼（每日任務、每週積分）`, "good", 6000); }
+    else if (r && r.short && !quiet) note("博物館資金現在吃緊，籌碼晚點再領（不會不見）。");
+    if (r && typeof r.chips === "number") setChips(r.chips);
+  } catch (e) { /* 下次再領 */ }
+  finally { settling = false; }
 }
 // 「你看懂了」壹張壹張來，按了才換下壹張（翊文 11-09：「看懂會說你看懂了什麼」）。
 // 載入存檔時就會集齊，那時還在標題畫面，要等進到遊戲才跳，不然玩家看不到
@@ -256,6 +278,23 @@ function bonusRow(text, state, reward, claim) {
     h("span", { class: "sp-t-n" }),
     state === "claimed" ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了") : state === "ready" ? btn("領獎勵", claim, "primary small") : h("span", { class: "sp-wait" }, state === "late" ? "補做的沒有" : "還沒"));
 }
+// 每週活躍積分：今天幾分、這週幾分、里程碑（決定 0146）
+function ptsBox(W, S, d, draw) {
+  const C = NUM.story.pts, wk = weekPts(S, W), td = dayPts(S, d), ms = milesView(P, W), cap = C.dayCap;
+  const pct = (a, b) => Math.min(100, Math.round(a / b * 100));
+  const claim = v => () => {
+    const r = claimMile(P, W, v.at, todayStr());
+    claimFlow(r, draw);
+    if (r.ok && (r.chips || r.box)) setTimeout(() => settleChips(), 600);
+  };
+  return h("div", { class: "sp-pts" },
+    h("p", { class: "sp-pts-line" }, h("b", null, `今天 ${td}／${cap} 分`), h("span", { class: "sp-pts-bar", role: "img", "aria-label": `今天 ${td} 分，最多 ${cap}` }, h("i", { style: `width:${pct(td, cap)}%` }))),
+    h("p", { class: "sp-pts-line" }, h("b", null, `這週 ${wk}／${C.goal} 分`), h("span", { class: "sp-pts-bar wk", role: "img", "aria-label": `這週 ${wk} 分，大獎 ${C.goal}` }, h("i", { style: `width:${pct(wk, C.goal)}%` }))),
+    h("ul", { class: "sp-miles" }, ms.map(v => h("li", { class: "sp-mile " + v.state },
+      h("b", null, `${v.at} 分`), h("small", null, milesText(v)),
+      v.state === "claimed" ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了") : v.state === "ready" ? btn("領", claim(v), "primary small") : h("span", { class: "sp-wait" }, `還差 ${v.at - wk} 分`)))),
+    h("p", { class: "sp-note" }, `每週拿到 ${C.goal} 分是大獎；300 分先領壹半。籌碼從博物館資金出：賭場、銀行、餐車、參觀、送佩佩這幾個任務，做完各給 ${C.taskChip.toLocaleString("en-US")}（壹天最多 ${C.taskChipDay} 個）。`));
+}
 function weekPane(W, draw, m) {
   if (!W) return h("p", { class: "nb-empty" }, "這週還沒有地下收藏庫的劇情。");
   const S = storyState(P), d = todayOf(W), today = todayStr();
@@ -269,9 +308,10 @@ function weekPane(W, draw, m) {
   const events = eventListBox(W.events);
   const cdef = weekCasino(W), casino = cdef ? weekBox(cdef, todayStr(), { after: draw }) : null; // 賭場的每週收藏（決定 0042）
   const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
-  const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
-    bonusRow("3 個都做完，多壹份", dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
-    h("p", { class: "sp-note" }, "前幾天沒做的，這週裡都可以補做，獎勵照領。「3 個都做完，多壹份」只給當天做完的。")) : null;
+  const pdNew = d && ptsDay(d), bonusText = x => ptsDay(x) ? `拿滿 ${NUM.story.pts.dayCap} 分，多壹份` : "3 個都做完，多壹份";
+  const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, pdNew ? ptsBox(W, S, d, draw) : null, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
+    bonusRow(bonusText(d), dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
+    h("p", { class: "sp-note" }, pdNew ? `每個任務有積分，壹天最多算 ${NUM.story.pts.dayCap} 分，挑自己想做的。前幾天沒做的這週裡都可以補做，積分照算（算在那壹天）；「多壹份」只給當天拿滿的。` : "前幾天沒做的，這週裡都可以補做，獎勵照領。「3 個都做完，多壹份」只給當天做完的。")) : null;
   const wbr = Object.assign({}, W.weeklyBonus, { stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });
   const weekly = sec("每週任務", h("ul", { class: "sp-tasks" }, W.weekly.map(t => taskRow(W, t, draw, m)),
     bonusRow("5 個都做完：這週限定的那份", weekBonusState(P, W), wbr, () => claimFlow(claimWeekBonus(P, W, today), draw))),
@@ -281,7 +321,7 @@ function weekPane(W, draw, m) {
   const back = W.days.filter(x => x.n < W.dayNo && (x.daily.some(open) || dayBonusState(P, W, x.n) === "ready"));
   const old = back.length ? sec("前幾天的每日任務（可以補做）", back.map(x => [h("h4", { class: "sp-day-h" }, `第 ${x.n} 天`),
     h("ul", { class: "sp-tasks" }, x.daily.filter(open).map(t => taskRow(W, t, draw, m)),
-      bonusRow("3 個都在當天做完，多壹份", dayBonusState(P, W, x.n), x.dailyBonus, () => claimFlow(claimDayBonus(P, W, x.n, today), draw)))]),
+      bonusRow(ptsDay(x) ? `當天拿滿 ${NUM.story.pts.dayCap} 分，多壹份` : "3 個都在當天做完，多壹份", dayBonusState(P, W, x.n), x.dailyBonus, () => claimFlow(claimDayBonus(P, W, x.n, today), draw)))]),
     h("p", { class: "sp-note" }, "補做的任務獎勵照領、書照樣解開；每週任務的「每日任務全部做完」只算當天做完的天。")) : null;
   const bag = Object.entries(S.bag).filter(([, n]) => n > 0);
   const bagSec = sec("背包", bag.length ? h("ul", { class: "sp-bag" }, bag.map(([id, n]) => {

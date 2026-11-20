@@ -46,6 +46,14 @@ export function casPoolMint(house, pool, src, n) {
 
 // 錢從錢包搬進博物館資金／修繕基金／政府帳（手續費、稅）：呼叫的人先自己扣錢包的籌碼，這裡加池子，並在 house.led.flow 記「這個來源讓池子多了 n」（池子自己的角度：正＝進池子）。
 // pool："budget"｜"museum"｜"gov"（政府帳，決定 0110：資本利得稅）。不是憑空，是搬
+// 反過來：錢從池子（博物館資金）搬給錢包，池子的角度記負的。呼叫的人自己把籌碼加進錢包、先確認池子付得起（決定 0146）
+export function casPoolPay(house, pool, src, n) {
+  n = Math.floor(bkNz(n));
+  if (n <= 0) return 0;
+  house[pool] = bkNz(house[pool]) - n;
+  bkAdd(casLedFix(house, ["mint", "flow"]).flow, src, -n);
+  return n;
+}
 export function casPoolGain(house, pool, src, n) {
   n = bkNz(n);
   if (n <= 0) return 0;

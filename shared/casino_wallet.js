@@ -18,7 +18,7 @@ import { eventLive } from "./events.js";
 import { isoMonday, isoWeek, rewardText, STORY_ITEMS, storyPackFor, storyState } from "./story.js";
 import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
-import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
+import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casPoolPay, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
 import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
@@ -304,6 +304,46 @@ export function casSettle(w, house, round, ctx = {}) {
   if (win) lines.push(casFill(CAS_TEXT.houseLost, { n: casNum(o.net) }));
   else if (o.kind === "lose") lines.push(casFill(CAS_TEXT.houseGot, { n: casNum(round.bet) }));
   return { ok: true, ach: casAchCheck(w, ctx.day), lines, houseBroke: house.bankroll < 0 };
+}
+
+// ---------- 每日任務、每週積分的籌碼（決定 0146，翊文 11-20：從博物館資金出） ----------
+// o：{ due 今天玩家端說做完的有籌碼任務 { 種類: 1 }、acts 伺服器自己看到今天做過的 { 種類: 1 }、miles 這幾週領過的里程碑 [{ key, chips, box }]、rng }
+// 只付兩邊都有的：任務要「存檔說做完了」而且「伺服器看到真的做了」；壹天最多 taskChipDay 個。里程碑的錢（chips 固定、box 禮盒）壹格壹次，記在 w.tk。
+// 錢從博物館資金出（house.budget，決定 0146）：基金不夠付這筆（付完會小於 0）就先不付、不記，下次再領；絕不讓基金變負。回傳 { items: [{ label, n }], short, chips }
+export const CAS_TASK_CHIP_KINDS = ["casino", "bank", "food", "visit", "gift"];
+export function casTaskChips(w, house, day, o) {
+  const C = NUM.story.pts, items = []; let short = false;
+  if (!casIsObj(w.tk)) w.tk = { d: {}, m: {} };
+  if (!casIsObj(w.tk.d)) w.tk.d = {};
+  if (!casIsObj(w.tk.m)) w.tk.m = {};
+  const pay = (n, src, label) => {
+    if (!(n > 0)) return true;
+    if (!house || !(house.budget >= n)) { short = true; return false; }
+    w.chips += n; casPoolPay(house, "budget", src, n); items.push({ label, n });
+    return true;
+  };
+  const paid = Array.isArray(w.tk.d[day]) ? w.tk.d[day] : [];
+  for (const k of CAS_TASK_CHIP_KINDS) {
+    if (paid.length >= C.taskChipDay) break;
+    if (paid.includes(k) || !(o.due && o.due[k]) || !(o.acts && o.acts[k])) continue;
+    if (pay(C.taskChip, "taskChips", k)) paid.push(k);
+  }
+  w.tk.d[day] = paid;
+  Object.keys(w.tk.d).sort().slice(0, -8).forEach(d => delete w.tk.d[d]);
+  const boxMax = Math.max(...C.boxes.map(b => b.chips)), tot = C.boxes.reduce((a, b) => a + b.w, 0);
+  for (const m of (o.miles || [])) {
+    if (w.tk.m[m.key]) continue;
+    let n = Math.max(0, Math.floor(+m.chips || 0)), label = m.key;
+    if (m.box) {
+      if (!house || !(house.budget >= n + boxMax)) { short = true; continue; } // 先確認付得起最大的那個盒子才抽（不會因為付不起就重抽）
+      let x = (o.rng ? o.rng() : Math.random()) * tot, bx = C.boxes[0];
+      for (const b of C.boxes) { if ((x -= b.w) < 0) { bx = b; break; } }
+      n += bx.chips;
+    }
+    if (pay(n, "taskWeek", label)) w.tk.m[m.key] = day;
+  }
+  Object.keys(w.tk.m).sort().slice(0, -24).forEach(k => delete w.tk.m[k]);
+  return { items, short, chips: items.reduce((a, x) => a + x.n, 0) };
 }
 
 // ---------- 限時活動 casinoBoost（決定 0042）：活動時間內，第一次碰錢包多 1 包免費大禮包 ----------

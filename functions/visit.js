@@ -19,6 +19,7 @@ import { NUM } from "./shared/config.js";
 import { dayPlus, hallView, weeklyView } from "./shared/gifts.js";
 import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "./shared/logic.js";
 import { weekIndex, weeklyTheme } from "./shared/logic3.js";
+import { markAct, markGift } from "./task_act.js";
 import { friendTalent, learnFromFriend } from "./shared/shop.js";
 import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "./shared/visit.js";
 
@@ -93,6 +94,7 @@ export const visitHall = onCall(async req => {
     }
     return Object.assign(r, { rev });
   });
+  if (view.open && owner !== me.uid) await markAct(me.uid, "visit", today); // 每日任務「參觀別人的展廳」的證據（決定 0146）
   if (out.first) await notify(owner, { t: "hall_news", what: "visit", from: me.nick, insp: out.gain });
   if (out.rev) await notify(me.uid, { t: "save_changed", rev: out.rev, why: "visit" });
   return JSON.parse(JSON.stringify({ owner: { id: owner, nick }, open: out.open, view: out.view, first: out.first, gain: out.gain, likes: out.likes, notes: out.notes, mine: out.mine, learn: out.learn, rev: out.rev }));
@@ -197,6 +199,7 @@ export const sendGift = onCall(async req => {
     tx.set(mailRef(to, mailId), mailDoc(r.mail, me.uid));
     return { rev, gift: r.gift, text: r.text };
   });
+  await markGift(me.uid, to, today); // 每日任務「送館友壹隻佩佩」的證據：同壹位這週只算壹次（決定 0146）
   await notify(me.uid, { t: "save_changed", rev: out.rev, why: "gift" });
   await notify(to, { t: "mail_new", kind: "gift", from: me.nick, text: out.text });
   return { ok: true, rev: out.rev, gift: out.gift, text: out.text, toNick };

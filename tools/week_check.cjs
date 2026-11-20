@@ -271,13 +271,28 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     const mainN = asList(d.books).filter(b => b && ctx.mainLine && ctx.mainLine.has(b.line)).length, otherN = asList(d.books).length - mainN;
     if (!Array.isArray(d.books) || otherN < 1 || otherN > 2) E(where, "books 要 1～2 本（主線章節書另外算）");
     if (mainN > 1) E(where, "主線章節書壹天最多壹本");
-    if (!Array.isArray(d.daily) || d.daily.length !== 3) E(where, "daily 要剛好 3 個");
+    const PT = G.NUM.story.pts, ptsMode = !!(o.date && o.date >= PT.from); // 新制（決定 0146）：從 PT.from 起每天 6 個每日任務、有積分
+    if (!Array.isArray(d.daily) || d.daily.length !== (ptsMode ? 6 : 3)) E(where, `daily 要剛好 ${ptsMode ? 6 : 3} 個`);
     const books = asList(d.books), daily = asList(d.daily);
     books.forEach(b => { ids("書", b && b.id); if (b && b.id) ctx.books.add(b.id); });
     daily.forEach(t => { ids("任務", t && t.id); if (t && t.id) ctx.tasks.add(t.id); });
     let minutes = 0;
     daily.forEach((t, i) => { minutes += taskOk(`${where}.daily[${i}]`, t, Object.assign({ day: d }, ctx), "daily"); });
-    if (minutes > N.dailyMinutes) E(where, `3 個每日任務大約要 ${minutes} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
+    if (!ptsMode && minutes > N.dailyMinutes) E(where, `3 個每日任務大約要 ${minutes} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
+    if (ptsMode) { // 新制：6 個任務的積分加起來 140～175（有得挑）；拿滿 dayCap 最慢的路徑 ≤ dailyMinutes；有籌碼的最多 2 個；同壹種不重複；同壹種壹週最多 2 次（書、特展不算）；展品不連兩天
+      const ks = daily.filter(isObj).map(t => ({ k: t.kind, pts: +t.pts > 0 ? +t.pts : (G.STORY_TASKS[t.kind] || {}).pts || 0, min: (G.STORY_TASKS[t.kind] || {}).min || 0 }));
+      const total = ks.reduce((a, x) => a + x.pts, 0);
+      if (total < 140 || total > 175) E(where, `6 個任務的積分加起來 ${total}，要在 140～175（太少沒得挑，太多等於全做）`);
+      let p = 0, mm = 0; ks.slice().sort((a, b) => b.min / b.pts - a.min / a.pts).forEach(x => { if (p < PT.dayCap) { p += x.pts; mm += x.min; } });
+      if (mm > N.dailyMinutes) E(where, `拿滿 ${PT.dayCap} 分最慢的路徑大約要 ${mm} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
+      if (new Set(ks.map(x => x.k)).size !== ks.length) E(where, "壹天的 6 個任務種類不能重複");
+      if (daily.filter(t => isObj(t) && (G.STORY_TASKS[t.kind] || {}).chip).length > PT.taskChipDay) E(where, `有籌碼的任務（賭場、銀行、餐車、參觀、送佩佩）壹天最多 ${PT.taskChipDay} 個`);
+      ctx.kindWeek = ctx.kindWeek || {};
+      ks.forEach(x => { if (x.k === "read" || x.k === "show") return; ctx.kindWeek[x.k] = (ctx.kindWeek[x.k] || 0) + 1; if (ctx.kindWeek[x.k] === 3) E(where, `「${x.k}」這週已經出過 2 次，壹種任務壹週最多 2 次`); });
+      const ex = daily.filter(t => isObj(t) && t.kind === "view").map(t => t.exhibit);
+      if (ctx.prevView && ex.some(e => ctx.prevView.includes(e))) E(where, "同壹件展品不能連兩天出現在「看畫」任務");
+      ctx.prevView = ex;
+    }
     // Yuga Bot 交代的任務：giver 只能是 yuga、says 必填、done 選填；壹天最多壹個；備用的壹天不能有。字 R 是荷官叫玩家的方式，其他英文字母照樣擋
     // 交代人（決定 0145）：id 要在帳本 taskGivers.list；R 只有 yuga 可以用；says／done 不能寫贏輸、賺賠、催玩、叫人掏錢
     const GIVERS = {}; ((ledger && ledger.taskGivers && ledger.taskGivers.list) || []).forEach(g => { if (g && g.id) GIVERS[g.id] = g; });
