@@ -1,5 +1,5 @@
 rules_version = '2';
-// Firestore 的規則（docs/Firebase做法.md 第二節）。改這個檔要翊文核准（CODEOWNERS）。
+// Firestore 的規則（docs/操作/Firebase做法.md 第二節）。改這個檔要翊文核准（CODEOWNERS）。
 // 原則：
 //   - 不在館友名單（members/{uid}）上的人，什麼都讀不到、寫不了。館友只有 Functions 的 join 能建（檢查邀請名單）。
 //   - 存檔只有自己讀寫；rev 一定要加一（兩個分頁同時存，後到的會失敗，畫面就重新讀）。
