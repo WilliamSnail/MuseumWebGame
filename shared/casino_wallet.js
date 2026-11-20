@@ -117,6 +117,7 @@ export function casHouseFix(h, day) {
   if (!h.extFix && !h.extSplit && h.world != null && h.day && casIsObj(h.led) && casIsObj(h.led.world)) { const L = h.led.world, net = ["stockBuy", "stockSell", "stockRebase", "stockLevWin", "stockLevLoss", "dividend"].reduce((t, k) => t + Math.round(casNz(L[k])), 0); const x = wuFix(h); if (x) x.adj["u-ext"] = casNz(x.adj["u-ext"]) + net; h.extFix = day || true; } // 決定 0121：以前館外股的錢進了本地池子，改記「海外」：把累計的淨額從本地分類搬到海外分類（池子總數不變）
   wuExtSplit(h); // 決定 0126：海外從已知世界搬出來，變成並列的帳 house.ext（壹次）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
+  else if (!h.rFix && h.day && NUM.casino.houseLoan && NUM.casino.houseLoan.on && NUM.casino.houseLoan.early) { h.rFix = day || true; reopen = casHouseReopen(h, NUM.casino, NUM.casino.houseLoan); } // 決定 0141：壹次性的提前重開（翊文 11-20 12:15，莊家 −1,876 萬），只跑借錢那壹步；旗標 rFix 擋重複
   if (day) h.day = day;
   govSweep(h, day); govGrant(h); // 決定 0140：政府帳搬進公共機構（每天壹次）
   gbDaily(h, day); // 決定 0130：佩佩銀行每天壹次（舊館債搬一次、莊家水位上繳、盈餘分配）
@@ -164,7 +165,13 @@ function casHouseDaily(h, day) {
     const c = Math.min(pay, h.debt.world);
     if (c > 0) { casHouseWorldIn(h, "worldRepay", c); h.debt.world -= c; }
   }
-  // 3 破產：先跟博物館資金借（閒錢的壹小部分），再跟已知世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
+  { const r = casHouseReopen(h, C, H); if (r) reopen = r; } // 3 破產重開
+  return reopen;
+}
+// 破產重開（換日第 3 步，也給壹次性的提前重開用，決定 0141）：先跟博物館資金借，再跟已知世界貸款，借到準備金。回傳要告訴玩家的壹句（沒破產回 null）
+function casHouseReopen(h, C, H) {
+  let reopen = null;
+  // 破產：先跟博物館資金借（閒錢的壹小部分），再跟已知世界貸款（有上限）。借到準備金；借不夠就停在負的（停業整頓）
   if (h.bankroll < 0) {
     let need = H.reserve - h.bankroll, got = 0;
     const spare = Math.max(0, h.budget - Math.floor(C.econ.budgetStart * H.budgetKeepPct / 100));
