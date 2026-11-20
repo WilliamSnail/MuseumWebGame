@@ -675,10 +675,10 @@ function dinerCard(it, w, buy) {
   const words = it.ticket ? [] : casFoodWords(it);
   const why = lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null;
   return h("li", { class: "dn-card" + (pricey ? " dn-pricey" : "") + (lack || locked ? " dn-off" : ""), "data-food": it.id },
-    h("span", { class: "dn-pic", "aria-hidden": "true" }, icon(it.icon)),
+    h("span", { class: "dn-pic", "aria-hidden": "true" }, h("img", { src: `/diner/food-${it.id}.webp`, alt: "", loading: "lazy" })),
     h("b", { class: "dn-name" }, it.name),
-    h("span", { class: "dn-fx" }, it.ticket ? h("span", { class: "dn-chip" }, "券，壹定拿到") : words.map(x => h("span", { class: "dn-chip" }, markText(x)))),
-    it.ticket ? null : h("details", { class: "dn-odds" }, h("summary", null, "有機會抽到券"), h("span", null, `${it.odds}% 機率抽到大禮包券`)),
+    h("span", { class: "dn-fx" }, it.ticket ? h("span", { class: "dn-chip" }, h("i", { class: "dn-ico ticket", "aria-hidden": "true" }), "券，壹定拿到") : words.map(x => h("span", { class: "dn-chip" }, h("i", { class: "dn-ico " + (x.startsWith("理智") ? "san" : "mood"), "aria-hidden": "true" }), markText(x)))),
+    it.ticket ? null : h("details", { class: "dn-odds" }, h("summary", null, h("i", { class: "dn-ico ticket", "aria-hidden": "true" }), "有機會抽到券"), h("span", null, `${it.odds}% 機率抽到大禮包券`)),
     h("span", { class: "dn-price" }, h("i", { class: "dn-coin", "aria-hidden": "true" }), casNum(it.price)),
     btn("買", () => buy(it), "primary small dn-buy", { disabled: lack || locked || S.busy ? true : null, title: why }));
 }
@@ -704,7 +704,7 @@ function dinerPane() {
       dinerNote()),
     h("div", { class: "dn-groups" }, DN_GROUPS.map(([title, test]) => { const its = menu.filter(test); return its.length ? h("section", { class: "dn-group" + (title === "貴的" ? " dn-g-pricey" : "") }, h("h3", null, title), h("ul", { class: "dn-cards" }, its.map(it => dinerCard(it, w, buy)))) : null; })),
     h("div", { class: "dn-tray" + (S.dinerLines.length ? " dn-has" : ""), "aria-live": "polite" },
-      last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, icon(last.icon)) : h("span", { class: "dn-tray-empty" }, "托盤是空的"),
+      last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, h("img", { src: `/diner/food-${last.id}.webp`, alt: "" })) : h("span", { class: "dn-tray-empty" }, "托盤是空的"),
       S.dinerLines.length ? h("div", { class: "dn-tray-say dn-in" }, S.dinerLines.map(l => h("p", null, l))) : null));
 }
 

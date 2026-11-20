@@ -1,12 +1,15 @@
-/* 餐車重新設計（11-20，翊文；ui_casino.js 的 dinerPane）：夜市攤車。圖還沒進來時用漸層頂著，圖回來再換（docs/餐車素材清單.md）。前綴 dn- */
-.dn { position: relative; display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
-.dn-awning { height: 22px; margin: 0 -2px; border-radius: 4px 4px 14px 14px; background: repeating-linear-gradient(90deg, #8E2F3C 0 34px, #EBDDB8 34px 68px); box-shadow: inset 0 -6px 8px rgba(0, 0, 0, .28), 0 4px 6px rgba(0, 0, 0, .4); }
-.dn-lights { height: 14px; margin: -10px 14px -6px; background: radial-gradient(circle at 10px 8px, #FFD97A 0 3px, rgba(255, 217, 122, .35) 4px 7px, transparent 8px) 0 0 / 38px 14px repeat-x; filter: drop-shadow(0 0 3px rgba(255, 217, 122, .6)); pointer-events: none; }
+/* 餐車重新設計（11-20，翊文；ui_casino.js 的 dinerPane）：夜市攤車。圖照 docs/餐車素材清單.md：木牌用零件組框（四角固定、邊條重複接、中間木紋鋪滿，不拉伸）。前綴 dn- */
+.dn { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 0 0 12px; border-radius: 6px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(20, 10, 4, .35), rgba(20, 10, 4, 0) 120px), url(/kit/wood-fill.webp) 0 0 / 320px; box-shadow: inset 0 0 0 2px #2A1A0C, 0 4px 10px rgba(0, 0, 0, .45); }
+.dn > :not(.dn-awning):not(.dn-lights) { margin-left: 12px; margin-right: 12px; }
+.dn-awning { height: 56px; background: url(/diner/awning.webp) 0 0 / auto 56px repeat-x; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .5)); }
+.dn-lights { height: 30px; margin-top: -8px; margin-bottom: -10px; background: url(/diner/lights.webp) 0 0 / auto 30px repeat-x; pointer-events: none; filter: drop-shadow(0 0 4px rgba(255, 217, 122, .5)); }
 .dn-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 260px); gap: 12px; align-items: start; }
-.dn-hello { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 6px; background: rgba(20, 12, 8, .6); border: 1px solid rgba(201, 162, 78, .35); }
+/* 說明板：黑板 */
+.dn-hello { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 4px; background: url(/diner/board.webp) 0 0 / 256px; border: 6px solid #5A3A1E; box-shadow: inset 0 0 12px rgba(0, 0, 0, .6), 0 3px 6px rgba(0, 0, 0, .5); color: #EDE6D0; }
 .dn-hello p { margin: 0; }
 .dn-say { color: #F8E3A0; font-weight: 700; }
-.dn-stat { font-size: .875rem; opacity: .9; }
+.dn-stat { font-size: .875rem; opacity: .92; }
 .dn-open { font-size: .8125rem; color: #BFE6C8; }
 .dn-open.dn-warn { color: #F2C98A; }
 /* 堂主的字條：黃色便條紙，略歪，貼在右上角 */
@@ -17,38 +20,43 @@
 .dn-note-t { padding: 0 12px 10px; font-family: "Kaiti TC", "BiauKai", "DFKai-SB", serif; font-size: 1rem; line-height: 1.6; }
 .dn-note-t p { margin: 0 0 2px; } .dn-note-t small { display: block; text-align: right; opacity: .7; }
 /* 三區木牌 */
-.dn-group h3 { margin: 0 0 6px; font-size: .9375rem; letter-spacing: .2em; color: #F8E3A0; }
+.dn-group h3 { margin: 0 0 8px; font-size: .9375rem; letter-spacing: .2em; color: #F8E3A0; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 .dn-g-pricey h3 { color: #FFD97A; }
-.dn-cards { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.dn-cards { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .dn-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.dn-card { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "pic name price" "pic fx buy" "odds odds odds"; gap: 2px 10px; align-items: center; padding: 10px 10px 8px; border-radius: 6px; background: linear-gradient(180deg, #4A3322, #33231A); border: 1px solid #7A5A32; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 2px 4px rgba(0, 0, 0, .4); }
-.dn-pricey { background: linear-gradient(180deg, #4F3A1C, #33250F); border-color: #C9A24E; box-shadow: inset 0 0 12px rgba(255, 200, 90, .18), 0 2px 4px rgba(0, 0, 0, .4); }
+.dn-card { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; grid-template-areas: "pic name price" "pic fx buy" "odds odds odds"; gap: 3px 10px; align-items: center; padding: 20px 22px 18px; border-radius: 4px; box-shadow: 0 3px 6px rgba(0, 0, 0, .5);
+  background: url(/kit/wood-corner-tl.webp) top left / 40px no-repeat, url(/kit/wood-corner-tr.webp) top right / 40px no-repeat, url(/kit/wood-corner-bl.webp) bottom left / 40px no-repeat, url(/kit/wood-corner-br.webp) bottom right / 40px no-repeat,
+    url(/kit/wood-edge-h.webp) 40px top / auto 20px repeat-x, url(/kit/wood-edge-h.webp) 40px bottom / auto 20px repeat-x, url(/kit/wood-edge-v.webp) left 40px / 20px auto repeat-y, url(/kit/wood-edge-v.webp) right 40px / 20px auto repeat-y, url(/kit/wood-fill.webp) 0 0 / 160px; }
+.dn-pricey { box-shadow: 0 0 0 2px #C9A24E, 0 0 14px rgba(255, 200, 90, .45), 0 3px 6px rgba(0, 0, 0, .5); }
 .dn-off { opacity: .6; }
-.dn-pic { grid-area: pic; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F2E3BC, #CBB588); color: #5A3A1E; }
-.dn-pic svg { width: 28px; height: 28px; }
-.dn-name { grid-area: name; font-size: 1rem; color: #FFF3D2; line-height: 1.3; }
+.dn-pic { grid-area: pic; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 4px; overflow: hidden; background: radial-gradient(circle at 35% 30%, #F2E3BC, #CBB588); color: #5A3A1E; border: 2px solid #2A1A0C; box-shadow: 0 2px 4px rgba(0, 0, 0, .5); }
+.dn-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dn-name { grid-area: name; font-size: 1rem; color: #FFF3D2; line-height: 1.3; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 .dn-fx { grid-area: fx; display: flex; flex-wrap: wrap; gap: 4px; }
-.dn-chip { padding: 1px 7px; border-radius: 10px; background: rgba(231, 200, 120, .18); border: 1px solid rgba(231, 200, 120, .4); font-size: .75rem; color: #F8E3A0; }
-.dn-odds { grid-area: odds; font-size: .75rem; color: rgba(243, 238, 220, .7); }
+.dn-chip { padding: 1px 7px; border-radius: 10px; background: rgba(20, 10, 4, .55); border: 1px solid rgba(231, 200, 120, .5); font-size: .75rem; color: #F8E3A0; white-space: nowrap; }
+.dn-odds { grid-area: odds; font-size: .75rem; color: #EADFC6; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
 .dn-odds > summary { cursor: pointer; text-decoration: underline dotted; min-height: 24px; display: inline-flex; align-items: center; list-style: none; }
 .dn-odds > summary::-webkit-details-marker { display: none; }
-.dn-price { grid-area: price; justify-self: end; display: inline-flex; align-items: center; gap: 5px; font-family: Georgia, var(--serif); color: #F8E3A0; font-size: 1rem; }
-.dn-coin { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFE9A0, #B8892E); border: 1px dashed rgba(60, 36, 8, .6); }
+.dn-price { grid-area: price; justify-self: end; display: inline-flex; align-items: center; gap: 5px; font-family: Georgia, var(--serif); color: #F8E3A0; font-size: 1rem; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
+.dn-coin { display: inline-block; width: 18px; height: 18px; background: url(/kit/chip-coin.webp) center / contain no-repeat; }
+.dn-ico { display: inline-block; width: 14px; height: 14px; margin-right: 3px; vertical-align: -2px; background: center / contain no-repeat; }
+.dn-ico.mood { background-image: url(/kit/icon-mood.webp); } .dn-ico.san { background-image: url(/kit/icon-san.webp); } .dn-ico.ticket { background-image: url(/kit/ticket.webp); width: 18px; }
 .dn-buy { grid-area: buy; justify-self: end; min-height: 36px; }
 /* 托盤：剛買的東西滑進來（只演壹次） */
-.dn-tray { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; border-radius: 8px 8px 20px 20px; background: linear-gradient(180deg, #5A4026, #3A2815); border: 1px solid #8B6A38; box-shadow: inset 0 3px 8px rgba(0, 0, 0, .45); }
-.dn-tray-empty { font-size: .8125rem; opacity: .6; }
+.dn-tray { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; border-radius: 8px 8px 20px 20px; background: url(/kit/wood-fill.webp) 0 0 / 160px; border: 3px solid #2A1A0C; box-shadow: inset 0 3px 8px rgba(0, 0, 0, .5); }
+.dn-tray-empty { font-size: .8125rem; color: #EADFC6; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
 .dn-tray-pic { flex: none; }
-.dn-tray-say { flex: 1; min-width: 0; }
+.dn-tray-say { flex: 1; min-width: 0; color: #FFF3D2; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 .dn-tray-say p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 .dn-in { animation: dnIn .45s ease-out 1; }
 @keyframes dnIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 760px) {
   .dn-top { grid-template-columns: minmax(0, 1fr); }
-  .dn-awning { height: 20px; }
   .dn-groups { grid-template-columns: minmax(0, 1fr); }
-  .dn-card { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 8px; }
-  .dn-pic { width: 40px; height: 40px; } .dn-pic svg { width: 22px; height: 22px; }
+  .dn-awning { height: 40px; background-size: auto 40px; }
+  .dn-lights { height: 22px; background-size: auto 22px; }
+  .dn-card { grid-template-columns: 48px minmax(0, 1fr) auto; padding: 18px 22px 16px; }
+  .dn-pic { width: 48px; height: 48px; }
   .dn-name { font-size: .9375rem; }
   .dn-note { transform: none; }
 }
