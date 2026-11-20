@@ -3,7 +3,7 @@
 // 排程每週寫的正式週（content/weeks/2026-W46/ 這種）不讀進來：測試不跟著每週的內容變。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const { readWeeks } = require("../tools/week_check.cjs");
+const { readWeeks } = require("../tools/content/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } finally { G.setNowClock(null); G.setRng(null); } };
 const clone = o => JSON.parse(JSON.stringify(o));

@@ -1,6 +1,6 @@
-// tools/discord_post.cjs：訊息的樣子、不會 @ 人、沒放金鑰就跳過（不會真的連 Discord）。什麼時候發看 test/announce.test.cjs
+// tools/content/discord_post.cjs：訊息的樣子、不會 @ 人、沒放金鑰就跳過（不會真的連 Discord）。什麼時候發看 test/announce.test.cjs
 const assert = require("assert");
-const { dayMessage, eventPost, shared, send, MAX } = require("../tools/discord_post.cjs");
+const { dayMessage, eventPost, shared, send, MAX } = require("../tools/content/discord_post.cjs");
 
 let pass = 0, fail = 0;
 const tests = [];

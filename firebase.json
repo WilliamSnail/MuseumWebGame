@@ -89,7 +89,7 @@
         "*.log"
       ],
       "predeploy": [
-        "node tools/copy_shared.cjs"
+        "node tools/release/copy_shared.cjs"
       ]
     }
   ]

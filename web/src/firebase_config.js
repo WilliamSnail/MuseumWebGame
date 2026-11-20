@@ -27,7 +27,7 @@ export const FIREBASE_PROJECTS = {
 };
 
 // 模擬器的連接埠：跟 firebase.json 的 emulators 一樣（翊文的電腦 8080、9000、4000 被別的程式用了）
-// VITE_EMU_SET＝第幾套模擬器（tools/emulators.cjs 的 EMU_SET）：同時測好幾個分支時，連接埠都加 1000×這個數字
+// VITE_EMU_SET＝第幾套模擬器（tools/dev/emulators.cjs 的 EMU_SET）：同時測好幾個分支時，連接埠都加 1000×這個數字
 const EMU_ADD = 1000 * (Number(((typeof import.meta !== "undefined" && import.meta.env) || {}).VITE_EMU_SET) || 0);
 export const EMULATOR_PORTS = { auth: 9099 + EMU_ADD, firestore: 8180 + EMU_ADD, database: 9100 + EMU_ADD, functions: 5101 + EMU_ADD };
 

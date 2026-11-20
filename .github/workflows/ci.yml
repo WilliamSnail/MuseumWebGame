@@ -38,7 +38,7 @@ jobs:
           npm ci
           npm --prefix functions ci
       # 記下這次測的是哪個 tree（pull_request 測的是 GitHub 暫時合出來的 merge ref）。合併後 deploy.yml 看這個名字：
-      # 合併出來的 tree 跟這裡測過的完全一樣，就不重跑一樣的測試（tools/deploy_gate.cjs）。這步一定要在測試之前，名字格式不能改。
+      # 合併出來的 tree 跟這裡測過的完全一樣，就不重跑一樣的測試（tools/release/deploy_gate.cjs）。這步一定要在測試之前，名字格式不能改。
       - id: tree
         run: echo "hash=$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
       - name: 測試的 tree ${{ steps.tree.outputs.hash }}
@@ -50,4 +50,4 @@ jobs:
         run: npm run build
       - name: PR 改了程式就要有維護日誌
         if: github.event_name == 'pull_request'
-        run: node tools/log_check.cjs --base origin/${{ github.base_ref }}
+        run: node tools/check/log_check.cjs --base origin/${{ github.base_ref }}

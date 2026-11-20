@@ -1,7 +1,7 @@
-// 三支經濟腳本：價格總表（tools/econ_prices.cjs）、寫死金額掃描（econ_scan.cjs）、正式站帳面（econ_status.cjs，不連網路的部分）
+// 三支經濟腳本：價格總表（tools/check/econ_prices.cjs）、寫死金額掃描（econ_scan.cjs）、正式站帳面（econ_status.cjs，不連網路的部分）
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const P = require("../tools/econ_prices.cjs"), S = require("../tools/econ_scan.cjs"), E = require("../tools/econ_status.cjs");
+const P = require("../tools/check/econ_prices.cjs"), S = require("../tools/check/econ_scan.cjs"), E = require("../tools/check/econ_status.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const G = load({ __realMoney: true });

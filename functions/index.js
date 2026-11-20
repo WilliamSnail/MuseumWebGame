@@ -1,6 +1,6 @@
 // ================================================================
 //  佩佩博物館 4 的 Cloud Functions（決定 0021：部署改用 Firebase）
-//  伺服器說了算的事都在這裡；規則照舊在 shared/（部署前 tools/copy_shared.cjs 複製進 functions/shared/）。
+//  伺服器說了算的事都在這裡；規則照舊在 shared/（部署前 tools/release/copy_shared.cjs 複製進 functions/shared/）。
 //  做法見 docs/操作/Firebase做法.md 第三節。地區用台灣（asia-east1）。
 // ================================================================
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）

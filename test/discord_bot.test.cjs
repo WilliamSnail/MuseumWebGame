@@ -1,6 +1,6 @@
 // Discord 聯動第一步的規則（shared/discord/core.js，決定 0051）：node test/discord_bot.test.cjs（npm test 也會跑）
 // 解析 interaction、綁定碼、打錯擋、加入連結、公開的字沒有 email、指令清單。資料都是假的；不連網路、不連 Firebase。
-// 簽名、交易、完整流程要用模擬器測：node tools/discord_fake.cjs（tools/README.md）
+// 簽名、交易、完整流程要用模擬器測：node tools/content/discord_fake.cjs（tools/README.md）
 // （test/discord.test.cjs 是「公告發到 Discord」那支，另外一件事。）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");

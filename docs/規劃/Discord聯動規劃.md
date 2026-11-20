@@ -10,7 +10,7 @@
 - 入口 `discordBot`（`functions/discord.js`）驗簽名後當場讀寫、回覆。**Application ID、Public Key、伺服器 ID 還是空的**（`functions/discord_config.js`），翊文給了才通；沒設定時回 503，遊戲裡也看不到「綁定 Discord」。
 - 遊戲裡「選單 → 我的帳號」多了 Discord 那一列（拿碼、剩餘時間、綁好自動換畫面、解除）。
 - 自己加入：`/pepe-加入` → 連結 `https://pepe-museum.web.app/?join=碼`；`join` 認碼（沒帶碼完全照舊）。**第三點「頻道發一則○○加入了」要等第二步的 outbox**，第一步沒做。
-- 測試：`test/discord_bot.test.cjs`（純規則）、`tools/discord_fake.cjs`（用測試金鑰簽假的請求打模擬器，50 項）。
+- 測試：`test/discord_bot.test.cjs`（純規則）、`tools/content/discord_fake.cjs`（用測試金鑰簽假的請求打模擬器，50 項）。
 - **3 秒**：不另開 codebase、不設 `minInstances`；正式環境的冷啟動還沒量，量完再決定。
 - 還沒做：`/pepe-排行榜` 只有最近一次快照（每週一算一次），「這週目前的排名」另外做。
 

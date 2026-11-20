@@ -1,4 +1,4 @@
-# 每天看一次自動流程有沒有失敗（11-20 架構整理）：有就寫進 GitHub issue「自動流程失敗通報」。規則在 tools/actions_health.cjs。
+# 每天看一次自動流程有沒有失敗（11-20 架構整理）：有就寫進 GitHub issue「自動流程失敗通報」。規則在 tools/check/actions_health.cjs。
 name: 自動流程健康檢查
 
 on:
@@ -23,4 +23,4 @@ jobs:
       - name: 看過去 24 小時
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/actions_health.cjs --issue
+        run: node tools/check/actions_health.cjs --issue

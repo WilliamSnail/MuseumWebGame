@@ -4,7 +4,7 @@
 //   3. 真的 content/notices/：每個檔名跟 id 一樣、id 不重複、欄位對得上 shared/notices.js 的規則；shared/notices.js 裡沒有舊陣列
 //   4. merge_main 的救援：拆檔前開的分支帶著舊的 notices.js，裡面 main 還沒有的公告會拆成檔
 const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path");
-const MIG = require("../tools/notices_migrate.cjs"), B = require("../tools/notices_build.cjs");
+const MIG = require("../tools/content/notices_migrate.cjs"), B = require("../tools/content/notices_build.cjs");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack || e.message); } };

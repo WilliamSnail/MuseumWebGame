@@ -40,8 +40,8 @@ npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/RE
 npm run log:index      # 在本機重產日誌索引（不進 git，不要手改）
 npm run notice -- --area 賭場 --title "標題" "第壹句"   # 加館方公告（寫成 content/notices/<id>.json，一則一檔，不要手改 shared/notices.js 的陣列）
 node test/sim/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
-npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/econ_check.cjs --ledger 檔案.json（docs/操作/經濟自我檢查.md）
-npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入口：改好幾處、自動跑檢查和模擬、不過就還原（tools/tune.cjs）
+npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/check/econ_check.cjs --ledger 檔案.json（docs/操作/經濟自我檢查.md）
+npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入口：改好幾處、自動跑檢查和模擬、不過就還原（tools/dev/tune.cjs）
 ```
 
 - **在瀏覽器看**：`npm run dev`，網址加 `#畫面` 直接進那個畫面、放好假收藏，例如 `#lobby`、`#cellarrun`、`#fusion2`、`#office:upgrades`、`#gallery:lowsan`。**這會清掉這個瀏覽器在 localhost:5173 的存檔**。完整清單見 `docs/規則/架構.md` 第 3 節。
@@ -88,7 +88,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 **模組**（原因見 `docs/規則/架構.md` 4.1 節）：
 
 - 新的頂層名字要 export（`export function`、`export const`，寫在宣告前面）。
-- 用到別的檔的名字，要在檔頭的 import 加上。打包只會擋「import 了對方沒 export 的名字」；**忘了 import** 由 `npm test` 裡的 `tools/check_imports.cjs` 擋（它也檢查 ui_core 有沒有 import 後面的檔）。還是要在瀏覽器實際走過。
+- 用到別的檔的名字，要在檔頭的 import 加上。打包只會擋「import 了對方沒 export 的名字」；**忘了 import** 由 `npm test` 裡的 `tools/check/check_imports.cjs` 擋（它也檢查 ui_core 有沒有 import 後面的檔）。還是要在瀏覽器實際走過。
 - `shared/` 的 import 寫成一行；一個 export 只宣告一個名字；不要用 `export { }`、`export default`；五個檔的頂層名字不能重複（`test/load_shared.cjs` 靠這些）。
 - **`ui_core.js` 不准 import 比它後面的檔**（ui_screens1/2/3、ui_curio、ui_odd、ui_board、boot、debug_boot）。需要的東西搬進 `ui_core.js`。
 - **共用狀態 `SAVE`、`P`、`IMG`、`FIT` 宣告在 `ui_core.js`，別的檔不能直接賦值**，要用 `setSave()`、`setP()`、`setImg()`、`setFit()`。改裡面的欄位（`P.insp += 2`）可以直接改。
@@ -101,9 +101,9 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 - 動手前先想**放哪個資料夾、哪支檔**：同一個系統的新檔放在一起（賭場的放 `shared/casino/`，整理完後照這個做）；不要再開 `xxx3.js` 這種帶數字、看不出用途的檔名。
 - **不准互相 import**：A import B，B 就不能 import A（繞圈也不行）。兩邊都要用的東西搬到下層的新檔；畫面檔之間要叫對方，用 `PANELS`／`ADDONS` 登記（例：`ADDONS.actDone`、`PANELS.afterEnter`）。
 - **單檔不要超過 1,200 行**：快到了就照分段拆成幾支。
-- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/repo_rules.cjs`）會擋：最上層新檔、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check_imports.cjs` 擋。
-- 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
-- 自動流程失敗會寫進 GitHub issue「自動流程失敗通報」（`tools/actions_health.cjs`，每天 20:10）；看到就修，修好關掉。
+- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
+- 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/dev/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
+- 自動流程失敗會寫進 GitHub issue「自動流程失敗通報」（`tools/check/actions_health.cjs`，每天 20:10）；看到就修，修好關掉。
 
 **其他**：
 

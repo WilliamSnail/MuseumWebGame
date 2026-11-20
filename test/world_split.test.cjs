@@ -2,7 +2,7 @@
 // 已知世界的錢（house.world）在帳上分成各單位、家計、公共：總和永遠等於 house.world；成長按權重分；新玩家補助從文化部出；單位名單跟 shared/world_roster.js 一致。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
-const pack = require("../tools/world_pack.cjs");
+const pack = require("../tools/content/world_pack.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.govSweep.on = false; /* 決定 0140：政府撥款另外在 gov_sweep.test 測 */ G.NUM.casino.worldDoc.market.on = false; /* 景氣分市場另外在 world_market.test 測（決定 0121） */ G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const D = "2026-11-16";
@@ -10,7 +10,7 @@ const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
 const mk = G => { G.NUM.casino.worldDoc.trade.on = false; /* 決定 0119 的交易另外在 world_trade.test 測 */ return G.casHouseFix(G.casHouseNew(), D).house; };
 
 T("單位名單打包跟 content/world/units 一致、頂層比例加家計不超過 1", G => {
-  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_roster.js"), "utf8"), pack.source(pack.roster()), "shared/world_roster.js 沒跟上（跑 node tools/world_pack.cjs）");
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_roster.js"), "utf8"), pack.source(pack.roster()), "shared/world_roster.js 沒跟上（跑 node tools/content/world_pack.cjs）");
   const r = G.wuRatios(); assert.ok(r.pub >= 0.1 - 1e-9, "公共至少 10%：" + r.pub); assert.ok(Math.abs(sum(r) - 1) < 1e-9, "比例加起來 1"); assert.strictEqual(r["u-household"], G.NUM.casino.worldDoc.household);
   assert.ok("u-culture" in r && "g-island" in r);
 });

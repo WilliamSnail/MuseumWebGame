@@ -1,5 +1,5 @@
 // fx 的聲音：全部即時合成（Web Audio）的 sound（R 效果音、AMB 環境音、心跳耳鳴…）。
-// 11-20 從 fx.js 拆出來：內容照原樣搬（縮排也沒動，所以 tools/fx_report.cjs、test 掃字串的規則照舊）。
+// 11-20 從 fx.js 拆出來：內容照原樣搬（縮排也沒動，所以 tools/check/fx_report.cjs、test 掃字串的規則照舊）。
 import { api, now, pick, rand } from "./fx_core.js";
 
   /* =============================================================== SOUND */

@@ -1,7 +1,7 @@
 // npm run tune（決定 0089）：node test/tune.test.cjs（npm test 也會跑）
 // 改 config.js 用 acorn 只換那個值（註解、排版不動）、型別不能變、物件不能改；unit／npc 叫現有的 world:unit／world:npc；任何壹項沒過就還原；--dry 不留下改動。
 const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path");
-const T = require("../tools/tune.cjs");
+const T = require("../tools/dev/tune.cjs");
 let pass = 0, fail = 0;
 const t = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "tune-"));
@@ -61,7 +61,7 @@ t("run：清單檔（# 註解、空行）和 --no-sim；沒有改動要擋", () 
   assert.throws(() => T.run({ changes: [], dry: false, full: false, sim: false, file: null }, s.ctx, { checks: () => [] }, quiet), /沒有要改的/);
 });
 t("world:npc set：型別不能變、不能改 id、沒有的欄位擋掉", () => {
-  const N = require("../tools/world_npc.cjs"), s = ctxOf();
+  const N = require("../tools/content/world_npc.cjs"), s = ctxOf();
   assert.strictEqual(N.main(["set", "v-a.budget.perDay", "300"], s.ud, s.nd, [], quiet).old, 100); assert.throws(() => N.main(["set", "v-a.budget.perDay", "x"], s.ud, s.nd, [], quiet), /型別不一樣/);
   assert.throws(() => N.main(["set", "v-a.id", "q"], s.ud, s.nd, [], quiet), /id 不能改/); assert.throws(() => N.main(["set", "v-a.budget.zzz", "1"], s.ud, s.nd, [], quiet), /沒有這個欄位/);
 });

@@ -1,6 +1,6 @@
-// 函式這包的指紋（tools/fn_hash.cjs，11-16）：同樣的內容同壹個指紋；公告資料、.env 不算；函式程式改了指紋就變
+// 函式這包的指紋（tools/release/fn_hash.cjs，11-16）：同樣的內容同壹個指紋；公告資料、.env 不算；函式程式改了指紋就變
 const assert = require("assert"), fs = require("fs"), path = require("path");
-const { fnHash } = require("../tools/fn_hash.cjs");
+const { fnHash } = require("../tools/release/fn_hash.cjs");
 const FN = path.join(__dirname, "..", "functions");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };

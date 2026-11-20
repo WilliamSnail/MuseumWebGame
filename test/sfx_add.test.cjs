@@ -1,6 +1,6 @@
-// tools/sfx_add.cjs 的解析和登記（ffmpeg、網路不測）
+// tools/assets/sfx_add.cjs 的解析和登記（ffmpeg、網路不測）
 const assert = require("assert");
-const S = require("../tools/sfx_add.cjs");
+const S = require("../tools/assets/sfx_add.cjs");
 let n = 0;
 const t = fn => { fn(); n++; };
 

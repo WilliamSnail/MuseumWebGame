@@ -24,7 +24,7 @@ import { WEEKLY_TEXT } from "./systems_text.js";
 import { weekIndex } from "./logic_base.js";
 import { weeklyTheme } from "./themeshow.js";
 import { holidayNotices } from "./holidays.js";
-// 公告資料：content/notices/<id>.json → tools/notices_build.cjs 合成這個檔（不進 git）
+// 公告資料：content/notices/<id>.json → tools/content/notices_build.cjs 合成這個檔（不進 git）
 import { NOTICES_DATA } from "./notices_data.js";
 
 export const NOTICE_CATS = ["館方公告", "特展活動"];
@@ -47,7 +47,7 @@ export function noticeArea(n) {
 }
 const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
-// 館方公告的資料：一則一個檔 content/notices/<id>.json（npm run notice 加新的），tools/notices_build.cjs 合成 shared/notices_data.js
+// 館方公告的資料：一則一個檔 content/notices/<id>.json（npm run notice 加新的），tools/content/notices_build.cjs 合成 shared/notices_data.js
 export const NOTICES = NOTICES_DATA;
 
 // 這週的特展（跟展廳的「本週特展」同一個主題）。台灣時間週一 05:00 換週（決定 0019，weekIndex）

@@ -1,10 +1,10 @@
 // CI 不再跳過任何測試（11-16 CI 和部署加速：經濟自我檢查不慢了，「只改內容就跳過」拿掉，
-// 這樣部署才分得出「這個 tree 的 CI 是全套跑過的」，見 tools/deploy_gate.cjs）。
+// 這樣部署才分得出「這個 tree 的 CI 是全套跑過的」，見 tools/release/deploy_gate.cjs）。
 // 這裡守住：ci.yml、deploy.yml、run_all 都沒有偷偷跳測試；ship 還是用 changed_files 的內容判斷。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
-const CF = require("../tools/changed_files.cjs");
-const SHIP = require("../tools/ship.cjs");
+const CF = require("../tools/release/changed_files.cjs");
+const SHIP = require("../tools/release/ship.cjs");
 const root = path.join(__dirname, "..");
 const read = f => fs.readFileSync(path.join(root, f), "utf8");
 
@@ -15,7 +15,7 @@ T("ship 的 isContentFile／contentOnly 就是 changed_files 的", () => {
   assert.strictEqual(SHIP.isContentFile, CF.isContentFile);
   assert.strictEqual(SHIP.contentOnly, CF.contentOnly);
   assert.strictEqual(CF.contentOnly(["content/weeks/a.json", "維護日誌/2026/a.md"]), true);
-  assert.strictEqual(CF.contentOnly(["content/a.json", "tools/ship.cjs"]), false);
+  assert.strictEqual(CF.contentOnly(["content/a.json", "tools/release/ship.cjs"]), false);
   assert.strictEqual(CF.contentOnly([]), false, "沒有檔案不算只改內容");
   assert.strictEqual(CF.contentOnly(["content\\weeks\\a.json"]), true, "Windows 的斜線也認得");
 });

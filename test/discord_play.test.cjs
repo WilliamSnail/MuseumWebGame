@@ -1,6 +1,6 @@
 // Discord 聯動第三步（在 Discord 玩）的文字和按鈕（shared/discord/play.js，決定 0051）：node test/discord_play.test.cjs（npm test 也會跑）
 // 指令清單、按鈕的 custom_id、21 點的訊息、餐車選單、「不放 email 理智 怪癖 靈感」的清理、21 點併單的規則、原始碼上的檢查（規則只有壹套、不先回再做）。
-// 真的打牌、按按鈕、共用次數、存檔要用模擬器測：node tools/discord_fake.cjs（tools/README.md）
+// 真的打牌、按按鈕、共用次數、存檔要用模擬器測：node tools/content/discord_fake.cjs（tools/README.md）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");

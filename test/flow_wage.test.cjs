@@ -1,6 +1,6 @@
 // 決定 0128：金流圖的家計、NPC 錢包有線：發薪水（集團→NPC 錢包）、NPC 和散客花的錢從出錢的單位（家計、NPC 錢包、集團）出發；只記帳（house.led.units），不動錢。node test/flow_wage.test.cjs（npm test 也會跑）
 const assert = require("assert");
-const { load } = require("./load_shared.cjs"), L = require("../tools/world_lib.cjs");
+const { load } = require("./load_shared.cjs"), L = require("../tools/content/world_lib.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.worldDoc.market.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);

@@ -19,7 +19,7 @@ const STORY = process.env.STORY !== "0";
 const VISITS = Math.max(0, +process.env.VISITS || 0);
 const STORY_DAYS = (() => {
   if (!STORY) return null;
-  const { readWeeks } = require("../../tools/week_check.cjs");
+  const { readWeeks } = require("../../tools/content/week_check.cjs");
   const F = readWeeks().files, wk = F["備用/常青1/week.json"], S = G.NUM.story;
   const ins = r => (r && r.insp) || 0, choice = r => Math.max(0, ...(r.choices || []).map(c => (c.success && c.success.insp) || 0));
   const weekly = (wk.weekly.reduce((n, t) => n + ins(t.reward), 0) + ins(wk.weeklyBonus) + (wk.anomaly ? ins(wk.anomaly.room.reward) + choice(wk.anomaly.room) : 0)) / 7;

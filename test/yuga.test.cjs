@@ -1,10 +1,10 @@
 // Yuga Bot 交代的任務、沒錢可以借（決定 0051 補）：node test/yuga.test.cjs（npm test 也會跑）
 // 看：giver 的文字進不進得了遊戲、說過 done 不重複、舊存檔、壞資料、Discord 的訊息（有 says、不帶理智）、借錢的共用規則。
-// 真的叫模擬器的 /pepe-借錢 要用 node tools/discord_fake.cjs（tools/README.md）
+// 真的叫模擬器的 /pepe-借錢 要用 node tools/content/discord_fake.cjs（tools/README.md）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
-const { readWeeks } = require("../tools/week_check.cjs");
+const { readWeeks } = require("../tools/content/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } finally { G.setNowClock(null); G.setRng(null); } };
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -104,7 +104,7 @@ T("Discord：今日活動（公開）不帶 Yuga 交代的事", G => {
   assert.ok(!t.includes("B2") && !t.includes("數壹下"));
 });
 T("打包：copy_shared 只放 says 和 id，不放任務種類、答案、獎勵", () => {
-  const src = read("tools/copy_shared.cjs");
+  const src = read("tools/release/copy_shared.cjs");
   const m = /\.yuga = \{[^}]*\}/.exec(src);
   assert.ok(m && /id: g\.id, says:/.test(m[0]) && !/kind|reward|need|exhibit|room|book/.test(m[0]), m && m[0]);
 });

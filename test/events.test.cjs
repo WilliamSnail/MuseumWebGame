@@ -268,7 +268,7 @@ T("試煉：一週還是只拿一次（活動不多給次數）", () => {
 });
 
 // ---------- Functions 拿得到同一份 ----------
-// tools/copy_shared.cjs 把 content/weeks/*/week.json 的 events 打包成 functions/shared/events_data.js；Functions 用同一份規則（shared/events.js）算
+// tools/release/copy_shared.cjs 把 content/weeks/*/week.json 的 events 打包成 functions/shared/events_data.js；Functions 用同一份規則（shared/events.js）算
 T("開跑通知（決定 0045）：進行中才跳、跳過的不再跳、快結束不跳、壞的時間不跳", () => {
   const G = load();
   const list = G.cleanEvents([{ id: "a", kind: "coopBoost", date: "2026-11-11", from: "20:00", to: "22:00", title: "加班夜", words: "字" }], "2026-11-09", "W");
@@ -289,7 +289,7 @@ T("開跑通知（決定 0045）：進行中才跳、跳過的不再跳、快結
 
 (async () => {
   try {
-    require("child_process").execFileSync(process.execPath, [require("path").join(__dirname, "..", "tools", "copy_shared.cjs")], { stdio: "pipe" });
+    require("child_process").execFileSync(process.execPath, [require("path").join(__dirname, "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
     const url = require("url").pathToFileURL(require("path").join(__dirname, "..", "functions", "shared", "events_data.js")).href;
     const { EVENT_WEEKS } = await import(url);
     const real = require("../content/weeks/2026-W46/week.json");

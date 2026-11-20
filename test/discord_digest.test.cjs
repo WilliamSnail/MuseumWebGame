@@ -1,4 +1,4 @@
-// 每天 20:00 的 Discord 更新彙整（tools/discord_digest.cjs，翊文 11-15：「Discord更新太洗板了」）
+// 每天 20:00 的 Discord 更新彙整（tools/content/discord_digest.cjs，翊文 11-15：「Discord更新太洗板了」）
 const assert = require("assert");
 const G = require("./load_shared.cjs").load(), digestText = (...a) => G.dcDigestText(...a); // 組字在 shared/discord/out.js
 let pass = 0, fail = 0;

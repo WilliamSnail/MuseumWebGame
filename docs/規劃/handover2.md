@@ -4,7 +4,7 @@
 
 ## 專案狀態
 - 專案已搬到 `E:\MuseumWebGame`（C 槽舊資料夾會刪）。repo 改公開，CI 合併後不再重跑（PR 278）。
-- 我之前開的 worktree 都在 C 槽 scratchpad，**全部作廢**，不要用。新的做法：在 E:\MuseumWebGame 跑 `node tools/new_worktree.cjs --dir <新資料夾> --branch claude/<名字>`；預覽用 `.claude/launch.json` 新加設定（port 5181 以上，不要用 5173，那是主 session 的）。
+- 我之前開的 worktree 都在 C 槽 scratchpad，**全部作廢**，不要用。新的做法：在 E:\MuseumWebGame 跑 `node tools/dev/new_worktree.cjs --dir <新資料夾> --branch claude/<名字>`；預覽用 `.claude/launch.json` 新加設定（port 5181 以上，不要用 5173，那是主 session 的）。
 - 合併：`npm run ship -- --title … --body-file … --skip-local`（ship 會 git add -A）。常見失敗：merge conflict → 再跑一次 ship。
 - 修改要有維護日誌（`npm run doc:new -- 檔.json`）、館方公告（`npm run notice`，檔在 content/notices/，介面字用「壹」）。
 

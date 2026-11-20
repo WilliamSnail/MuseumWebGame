@@ -1,8 +1,8 @@
-// 部署前要不要重跑測試（tools/deploy_gate.cjs）：tree 跟 PR 的 CI 測過的完全一樣才跳過，其他一律照跑
+// 部署前要不要重跑測試（tools/release/deploy_gate.cjs）：tree 跟 PR 的 CI 測過的完全一樣才跳過，其他一律照跑
 const assert = require("assert");
 const fs = require("fs"), os = require("os"), path = require("path");
 const { spawnSync } = require("child_process");
-const G = require("../tools/deploy_gate.cjs");
+const G = require("../tools/release/deploy_gate.cjs");
 const root = path.join(__dirname, "..");
 const read = f => fs.readFileSync(path.join(root, f), "utf8");
 
@@ -88,7 +88,7 @@ T("gate（真的 git）：PR 已併過最新 main，merge 後 tree 一樣 → �
 });
 T("CLI：手動部署照跑、寫 skip_tests=false、不會報錯離開", () => {
   const out = path.join(os.tmpdir(), "dg-out-" + process.pid + ".txt"); fs.rmSync(out, { force: true });
-  const r = spawnSync(process.execPath, [path.join(root, "tools", "deploy_gate.cjs"), "--github-output", "--event", "workflow_dispatch"], { encoding: "utf8", env: { ...process.env, GITHUB_OUTPUT: out } });
+  const r = spawnSync(process.execPath, [path.join(root, "tools", "release", "deploy_gate.cjs"), "--github-output", "--event", "workflow_dispatch"], { encoding: "utf8", env: { ...process.env, GITHUB_OUTPUT: out } });
   assert.strictEqual(r.status, 0, r.stderr); assert.ok(fs.readFileSync(out, "utf8").includes("skip_tests=false")); assert.ok(r.stdout.includes("照跑"));
   fs.rmSync(out, { force: true });
 });
@@ -103,7 +103,7 @@ T("deploy.yml：test 跟 prepare 同時跑（互不 needs）、gate 在 test 裡
   const d = read(".github/workflows/deploy.yml");
   const test = d.slice(d.indexOf("\n  test:\n"), d.indexOf("\n  prepare:\n")), prep = d.slice(d.indexOf("\n  prepare:\n"), d.indexOf("\n  deploy:\n"));
   assert.ok(!/needs:/.test(test) && !/needs:/.test(prep), "test、prepare 不互相等");
-  assert.ok(test.includes("node tools/deploy_gate.cjs --github-output") && test.includes("run: npm test"));
+  assert.ok(test.includes("node tools/release/deploy_gate.cjs --github-output") && test.includes("run: npm test"));
   assert.ok(test.includes("steps.gate.outputs.skip_tests != 'true'"));
   assert.ok(!/secrets\./.test(test) && !/secrets\./.test(prep), "test、prepare 不碰 secrets");
   assert.ok(prep.includes("npm run build") && prep.includes("upload-artifact"));

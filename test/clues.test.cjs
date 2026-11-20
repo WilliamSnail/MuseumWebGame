@@ -2,7 +2,7 @@
 // 用自己拼的小內容測規則；W46 第 1 天用真的 content/weeks/ 的檔
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const { readWeeks } = require("../tools/week_check.cjs");
+const { readWeeks } = require("../tools/content/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } finally { G.setNowClock(null); G.setRng(null); } };
 

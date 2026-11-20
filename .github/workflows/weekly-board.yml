@@ -1,8 +1,8 @@
 # 每週排行榜（決定 0039）：每週一台灣時間 05:15 算剛過完的那一週，存快照到 Firestore，發到 Discord。
 # 翊文 11-09：「另外每周排行榜也可以用discord推送給大家看，並提供一些建議」
-# 這個流程讀得到大家的存檔（只算數字，不印出來）：tools/weekly_board.cjs 的紀錄只有榜單文字，沒有 email、uid、存檔內容。
+# 這個流程讀得到大家的存檔（只算數字，不印出來）：tools/content/weekly_board.cjs 的紀錄只有榜單文字，沒有 email、uid、存檔內容。
 # 金鑰只在 GitHub Secrets：FIREBASE_SERVICE_ACCOUNT、DISCORD_BOT_TOKEN、DISCORD_CHANNEL_ID（翊文放的，AI 拿不到）。
-# 手動按：AI 只有翊文要求時才能按（跟決定 0038 一樣）。手動的選項不要直接寫進這個檔，tools/weekly_board.cjs 從事件檔讀。
+# 手動按：AI 只有翊文要求時才能按（跟決定 0038 一樣）。手動的選項不要直接寫進這個檔，tools/content/weekly_board.cjs 從事件檔讀。
 # Discord 還沒放或發失敗，快照照樣寫（先寫快照再發）；再跑一次會用同一份榜單補發。
 name: 每週排行榜
 
@@ -64,7 +64,7 @@ jobs:
           BOARD_SCHEDULE: ${{ github.event.schedule }}
         run: |
           printf '%s' "$SA_JSON" > "$RUNNER_TEMP/sa.json"
-          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/weekly_board.cjs
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node tools/content/weekly_board.cjs
       - name: 刪掉暫存的金鑰
         if: always()
         run: rm -f "$RUNNER_TEMP/sa.json"
