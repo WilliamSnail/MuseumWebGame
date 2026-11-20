@@ -3,7 +3,7 @@
 .tkc-av.small { width: 34px; height: 34px; }
 .tkc-av svg { width: 78%; height: 78%; margin-top: 12%; } .tkc-av img { width: 100%; height: 100%; object-fit: cover; }
 .tkc-av.online::after { content: ""; position: absolute; right: 1px; bottom: 1px; width: 11px; height: 11px; border-radius: 50%; background: #4CD27A; border: 2px solid #1E2A22; }
-.tkc-card { list-style: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--parch-line, rgba(90, 60, 30, .35)); background: rgba(255, 250, 235, .5); }
+.tkc-card { position: relative; list-style: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--parch-line, rgba(90, 60, 30, .35)); background: rgba(255, 250, 235, .5); }
 .tkc-card.done { border-color: #8FB98F; background: rgba(206, 232, 200, .55); } .tkc-card.claimed { opacity: .72; }
 .tkc-say { display: flex; align-items: flex-start; gap: 8px; }
 .tkc-bubble { position: relative; flex: 1; min-width: 0; padding: 5px 10px 6px; border-radius: 4px 12px 12px 12px; background: rgba(255, 255, 255, .6); border: 1px solid rgba(90, 60, 30, .25); }
@@ -55,3 +55,17 @@
   .tkc-act { grid-column: 1 / -1; justify-content: flex-end; }
   .tkc-ic { width: 30px; height: 30px; }
 }
+
+/* 任務卡只留小頭像，貼在右上角；對話交給『今天的交代』（11-20） */
+.tkc-card.giver > .tkc-av { position: absolute; top: -9px; left: -7px; width: 28px; height: 28px; z-index: 1; border-width: 2px; }
+/* 今天的交代 */
+.tkc-giv { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, .45); border: 1px solid rgba(90, 60, 30, .25); }
+.tkc-giv h4 { margin: 0 0 6px; font-size: .875rem; letter-spacing: .12em; color: #6E4A12; }
+.tkc-giv ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tkc-giv li.done { opacity: .55; }
+.tkc-giv-b { display: flex; align-items: center; gap: 10px; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.tkc-giv-b:hover { background: rgba(176, 138, 62, .15); }
+.tkc-giv-t { flex: 1; min-width: 0; }
+.tkc-giv-t b { font-size: .9375rem; } .tkc-giv-t small { color: #6E4A12; font-size: .75rem; }
+.tkc-giv-t p { margin: 2px 0 0; line-height: 1.5; }
+.tkc-giv-go { flex: none; padding: 2px 8px; border-radius: 10px; background: #B08A3E; color: #FFF8DC; }
