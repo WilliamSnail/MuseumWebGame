@@ -20,7 +20,7 @@
 | `tools/check/` | 檢查和報表：check_imports、repo_rules、log_*、actions_health、econ_*、books_sign_check、fx_report、fx_source、snd_check、npc_check、world_check、world_health |
 | `tools/content/` | 每天排程和內容：day_*、week_check、weekly_board、notice*、*_pack、new_doc、new_level、ledger、world_* 內容工具、Discord 發文（say、announce、discord_*）、股價抓取發布 |
 | `tools/assets/` | 素材：*.py、flat_prompts、svg_preview、sfx_add |
-| `tools/dev/` | 開發和實測：emu_*、emulators、shot*、local_game、qa_*、perf_idle、wt_clean、new_worktree、now、edit_lib、apply_edits、tune |
+| `tools/dev/` | 開發和實測：emu_*、emulators、shot*、local_game、qa_*、perf_idle、wt_clean、clean_stale（搬家前的舊檔，ship 會跑）、new_worktree、now、edit_lib、apply_edits、tune |
 | `tools/fb/` | 正式 Firebase 的固定動作：fb_run、fb_task |
 
 模擬和回測腳本（*_sim.cjs、*_backtest.cjs）搬到 `test/sim/`。
