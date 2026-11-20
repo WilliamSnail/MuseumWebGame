@@ -704,3 +704,5 @@ body[data-screen="bank"] #room { background: none; }
 .bank-grp.bank-sub .bank-grp-arrow { width: .9em; }
 .bank-tl .bank-tl-sub { display: block; letter-spacing: 0; opacity: .75; font-size: var(--type-tiny, .6875rem); white-space: nowrap; }
 .bank-tl { width: 4em; }
+
+.bank-mk-sum { margin: 4px 0 6px; font-size: .86rem; line-height: 1.5; color: var(--bank-mute); } /* 各行業景氣的白話摘要（11-20） */
