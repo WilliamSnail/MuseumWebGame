@@ -1,17 +1,17 @@
-// 把 docs/地下室素材清單.md 的 Prompt 展開成「一段一個框、直接複製貼上」的版本（翊文 11-12：「把prompt做成我好複製直接可以一個一個貼上的」）
-//   node tools/flat_prompts.cjs   → 寫 docs/地下室素材Prompt.html（打開就能用：每張有參考圖和兩顆複製鈕；圖片包在檔案裡）
+// 把 docs/素材/地下室素材清單.md 的 Prompt 展開成「一段一個框、直接複製貼上」的版本（翊文 11-12：「把prompt做成我好複製直接可以一個一個貼上的」）
+//   node tools/flat_prompts.cjs   → 寫 docs/素材/地下室素材Prompt.html（打開就能用：每張有參考圖和兩顆複製鈕；圖片包在檔案裡）
 // 做的事：{LAYER}、{THING} 這類照表格換成每一列；【結尾】換成第〇節那段；前面加「照參考圖的風格」那句；第四節的第一批排最前面。
 // 清單改了就重跑，不要手改產出的檔。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..");
 // --only 3-6,3-7 --out 檔名.html：只放這幾張（新加的一批另外給翊文，不跟生好的混在一起）
-// --src docs/別的清單.md：讀別的清單（11-13 介面重塑：docs/介面重塑素材清單.md）；--dir assets/ui2：生好的圖存到哪個資料夾
+// --src docs/別的清單.md：讀別的清單（11-13 介面重塑：docs/素材/介面重塑素材清單.md）；--dir assets/ui2：生好的圖存到哪個資料夾
 const argOf = k => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
-const SRC = path.join(ROOT, argOf("--src") || path.join("docs", "地下室素材清單.md"));
+const SRC = path.join(ROOT, argOf("--src") || path.join("docs", "素材", "地下室素材清單.md"));
 const DIR = (argOf("--dir") || "assets/cellar2").replace(/\/+$/, "");
 const NAME = path.basename(SRC, ".md").replace(/清單$/, "");
 const ONLY = (argOf("--only") || "").split(",").map(x => x.trim()).filter(Boolean);
-const OUT = path.join(ROOT, "docs", argOf("--out") || "地下室素材Prompt.html");
+const OUT = path.join(ROOT, "docs", "素材", argOf("--out") || "地下室素材Prompt.html");
 const STYLE = "Match the art style of the attached reference image.";
 
 const lines = fs.readFileSync(SRC, "utf8").split(/\r?\n/);

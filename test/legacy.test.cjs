@@ -14,7 +14,7 @@ function fresh(mode = "challenge") { const P = G.newProfile(mode); G.ensureDay(P
 const unlockAll = P => { G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); };
 const P3 = () => { const P = fresh(); unlockAll(P); P.insp = 500; return P; };
 const mk = (P, o, nat = 50) => G.finishMake(P, Object.assign({ 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, o), { natural: nat });
-const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）
+const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/規則/架構.md 第 6 節）
 const S = x => JSON.stringify(x);
 // 直接給這位參觀者一個優缺點（測效果用）
 const withTrait = (P, id) => { if (G.PERKS.some(t => t.id === id)) P.perk = id; else P.flaw = id; return P; };

@@ -1,5 +1,5 @@
 // ================================================================
-//  主題展辦完的畫面（決定 0035，docs/每週劇情.md 第十節）。規則在 shared/themeshow.js，樣式在 css/themeshow.css。
+//  主題展辦完的畫面（決定 0035，docs/規劃/每週劇情.md 第十節）。規則在 shared/themeshow.js，樣式在 css/themeshow.css。
 //  這個檔放：
 //    展廳：牆下面的展期、三級和獎勵（ADDONS.hallShow）、牆上的海報、主題小卡上的獎牌（ADDONS.themeCard）
 //    本週特展：到金拿什麼（ADDONS.weeklyShow）

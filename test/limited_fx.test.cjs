@@ -1,4 +1,4 @@
-// 限定帽子的能力（決定 0085，docs/限定配件能力提案.md）：node test/limited_fx.test.cjs（npm test 也會跑）
+// 限定帽子的能力（決定 0085，docs/規劃/限定配件能力提案.md）：node test/limited_fx.test.cjs（npm test 也會跑）
 // 探索加成、打怪招式、館內效果、說明文字跟實際算的壹樣；數字一律讀 LIMITED_FX、NUM。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

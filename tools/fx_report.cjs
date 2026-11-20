@@ -1,5 +1,5 @@
 // 聲音和畫面特效的總表（翊文 11-16：「做一張聲音和畫面特效的總表，好追蹤和改進，自動產生並檢查」）
-//   npm run fx:report            重新產生 docs/音效與特效總表.md（並把新項目補進 content/fx_notes.json）
+//   npm run fx:report            重新產生 docs/素材/音效與特效總表.md（並把新項目補進 content/fx_notes.json）
 //   npm run fx:report -- --check 只檢查程式掃得出來、fx_notes.json 每個項目都有，缺了就結束碼 1（npm test 會跑）。總表本身不進 git（.gitignore），要看就跑上面那行
 // 全部從程式掃出來：shared/sfx_files.js、web/src/fx_sound.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
 //   ui_mood.js、css、shared/room_mood.js、地下戰鬥特效。
@@ -8,7 +8,7 @@
 const fs = require("fs"), path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const DOC = path.join(ROOT, "docs", "音效與特效總表.md");
+const DOC = path.join(ROOT, "docs", "素材", "音效與特效總表.md");
 const NOTES = path.join(ROOT, "content", "fx_notes.json");
 const rd = rel => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const cell = s => String(s === null || s === undefined ? "" : s).replace(/\|/g, "／").replace(/\r?\n/g, " ").trim();
@@ -469,13 +469,13 @@ async function main() {
   const missing = r.keys.filter(k => !(k in notes));
   if (check) {
     if (missing.length) { console.error(`fx_notes.json 缺 ${missing.length} 個項目（${missing.slice(0, 5).join("、")}…）：跑 npm run fx:report`); process.exit(1); }
-    // 11-16 起總表不進 git（docs/音效與特效總表.md 由 npm run fx:report 在本機產生，給人看）：這裡只檢查「程式掃得出來、fx_notes.json 每一項都有」，不比對檔案
+    // 11-16 起總表不進 git（docs/素材/音效與特效總表.md 由 npm run fx:report 在本機產生，給人看）：這裡只檢查「程式掃得出來、fx_notes.json 每一項都有」，不比對檔案
     console.log("音效與特效總表：程式掃得出來，fx_notes.json 跟得上");
     return;
   }
   if (missing.length) { for (const k of missing) notes[k] = { heard: null, note: null }; writeNotes(notes, r.keys); }
   fs.writeFileSync(DOC, r.text);
-  console.log(`寫好 docs/音效與特效總表.md：音效檔 ${r.counts.sfx}、合成音 ${r.counts.R}、房間背景 ${r.counts.AMB}、觸發點 ${r.counts.trig}、畫面特效 ${r.counts.vfx}（地下戰鬥 ${r.counts.fight}）；還在用合成音要找錄音 ${r.counts.fightTodo}；沒人用 音效檔 ${r.unusedSfx.length}／合成音 ${r.unusedR.length}；沒登記 ${r.unreg.length}` + (missing.length ? `；fx_notes.json 補了 ${missing.length} 個新項目` : ""));
+  console.log(`寫好 docs/素材/音效與特效總表.md：音效檔 ${r.counts.sfx}、合成音 ${r.counts.R}、房間背景 ${r.counts.AMB}、觸發點 ${r.counts.trig}、畫面特效 ${r.counts.vfx}（地下戰鬥 ${r.counts.fight}）；還在用合成音要找錄音 ${r.counts.fightTodo}；沒人用 音效檔 ${r.unusedSfx.length}／合成音 ${r.unusedR.length}；沒登記 ${r.unreg.length}` + (missing.length ? `；fx_notes.json 補了 ${missing.length} 個新項目` : ""));
 }
 function writeNotes(notes, order) {
   const out = {}; for (const k of order) if (k in notes) out[k] = notes[k];

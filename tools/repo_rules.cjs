@@ -7,9 +7,9 @@
 //   6. web/src 的 import 不准繞圈（shared/ 的繞圈由 tools/check_imports.cjs 擋）。
 const { spawnSync } = require("child_process"), path = require("path");
 const ROOT = path.join(__dirname, "..");
-const TOP = [".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "assets", "content", "database.rules.json", "docs", "drafts",
+const TOP = [".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "assets", "content", "database.rules.json", "docs",
   "firebase.json", "firestore.indexes.json", "firestore.rules", "functions", "package-lock.json", "package.json", "shared", "test", "tools", "version.json",
-  "vite.config.js", "web", "維護日誌", "規劃.md"];
+  "vite.config.js", "web", "維護日誌"];
 const fs = require("fs");
 const MAX_LINES = 1200;
 // 11-20 已經超過的：數字是現在的行數，只准變小（變小了就把這裡的數字改小；降到 1,200 以下就刪掉這行）

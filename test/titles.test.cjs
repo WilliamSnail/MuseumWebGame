@@ -6,7 +6,7 @@ const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
-const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）
+const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/規則/架構.md 第 6 節）
 const DAY = "2026-11-09";
 const wallet = G => G.casWalletFix(G.casWalletNew(), DAY);
 const prof = G => { const P = G.newProfile("challenge"); G.ensureDay(P, DAY); return P; };

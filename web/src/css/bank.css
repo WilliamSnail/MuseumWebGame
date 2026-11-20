@@ -1,7 +1,7 @@
 /* ================================================================
    Yuga Bot 銀行廳（11-13，美術統籌；ui_bank.js；版面草稿：Design 畫布「Yuga Bot 銀行廳：版面草稿」）
    延續賭場銀行（casino.css 的 .cas-bank）的深藍底：深藍面板＋金色字和金線，存摺是米色表格。
-   骨架：.screen.onescreen-room.bank-onescreen（onescreen.css）。前綴 bank-（docs/class名單.md）
+   骨架：.screen.onescreen-room.bank-onescreen（onescreen.css）。前綴 bank-（docs/規則/class名單.md）
    ================================================================ */
 .bank-onescreen { --bank-navy: #1D2B45; --bank-navy-2: #142036; --bank-navy-3: #0F192B; --bank-gold: #D6B25E; --bank-gold-hi: #F3DFA6; --bank-mute: #A9B4C8; --bank-text: #EEF1F6;
   --bank-paper: #F6F1E3; --bank-paper-2: #E9E1CB; --bank-ink: #26324A; --bank-ink-soft: #6B7894; --bank-up: #A32F1E; --bank-down: #1F5A2C; }

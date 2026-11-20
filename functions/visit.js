@@ -1,5 +1,5 @@
 // ================================================================
-//  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/多人實作.md）。對方不在線也能用。
+//  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/規劃/多人實作.md）。對方不在線也能用。
 //  規則在 shared/gifts.js、shared/mailbox.js；一次呼叫要做的事在 shared/visit.js 的 step…（純函式，測試 test/visit.test.cjs）。
 //  這裡只讀資料庫、叫 step、在同一個 Firestore 交易裡寫回去。
 //  資料（都只有 Functions 讀寫，firestore.rules 沒開給瀏覽器）：
@@ -75,7 +75,7 @@ export const visitHall = onCall(async req => {
   const owner = idArg(req.data && req.data.owner, "要說參觀誰");
   const nick = await memberNick(owner);
   if (!nick) throw bad("找不到這位館友");
-  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/Firebase做法.md 第三節）
+  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/操作/Firebase做法.md 第三節）
   const { view, save: ownerSave } = hallOf(await saveRef(owner).get());
   const out = await db().runTransaction(async tx => {
     const bookSnap = await tx.get(bookRef(owner));
@@ -107,7 +107,7 @@ export const hallAct = onCall(async req => {
   const { kind, text } = req.data || {};
   const owner = idArg(req.data && req.data.owner, "要說是誰的展廳");
   if (!(await memberNick(owner))) throw bad("找不到這位館友");
-  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/Firebase做法.md 第三節）
+  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/操作/Firebase做法.md 第三節）
   const { view } = hallOf(await saveRef(owner).get());
   const out = await db().runTransaction(async tx => {
     const bookSnap = await tx.get(bookRef(owner));
@@ -162,7 +162,7 @@ export const hallCall = onCall(async req => {
 // seenCalls: [通知編號]：這幾則「請你去看展廳」我處理過了（標 seen，不刪）。只回今天、昨天還沒處理的
 export const socialNews = onCall(async req => {
   const me = await needMember(req);
-  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/Firebase做法.md 第三節）
+  const t = nowMs(), today = todayStr(t); // Functions 裡 nowMs() 就是伺服器的時間（docs/操作/Firebase做法.md 第三節）
   const seenCalls = Array.isArray(req.data && req.data.seenCalls) ? [...new Set(req.data.seenCalls.slice(0, 20).filter(x => typeof x === "string" && ID_RE.test(x)))] : [];
   if (seenCalls.length) {
     const snaps = await db().getAll(...seenCalls.map(id => callRef(me.uid, id)));

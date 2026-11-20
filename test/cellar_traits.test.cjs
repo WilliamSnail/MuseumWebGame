@@ -1,4 +1,4 @@
-// 打怪的新玩法（docs/打怪玩法規劃.md）：node test/cellar_traits.test.cjs（npm test 也會跑）
+// 打怪的新玩法（docs/規劃/打怪玩法規劃.md）：node test/cellar_traits.test.cjs（npm test 也會跑）
 // 怪物的九種個性、佩佩的顏色和組合、完美的招式用兩次、合作的新行動（引開、鼓舞、分膽、安慰、看清）、你適合、館方助手補位。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

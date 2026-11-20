@@ -1,5 +1,5 @@
 // ================================================================
-//  每週劇情（遊戲這邊；規劃 docs/每週劇情.md，決定 0031）
+//  每週劇情（遊戲這邊；規劃 docs/規劃/每週劇情.md，決定 0031）
 //  內容放在 content/weeks/（格式寫在 content/README.md）：一週一個資料夾（week.json＋一天一個 d1–d7.json），
 //  畫面用 Vite 的 import.meta.glob 讀進來，交給 storyLibrary() 整理。劇情帳本 content/story/帳本.json 不打包進網頁。
 //  這個檔只有規則（純函式）：不碰畫面、不碰 localStorage；「今天」由呼叫的人傳進來（畫面用 todayStr()），「現在」用 nowMs()。

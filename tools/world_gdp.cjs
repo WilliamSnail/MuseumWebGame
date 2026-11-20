@@ -1,4 +1,4 @@
-// 已知世界的台灣總體經濟數字（content/economy.json）：node tools/world_gdp.cjs …（npm run world:gdp -- …）。決定 0086、規劃 docs/世界經濟規劃.md 第 7 節。
+// 已知世界的台灣總體經濟數字（content/economy.json）：node tools/world_gdp.cjs …（npm run world:gdp -- …）。決定 0086、規劃 docs/規劃/世界經濟規劃.md 第 7 節。
 // 每日排劇情的排程只在「主計總處有新公布」時才用；沒有新公布就不要跑。不再手改 JSON：這支檢查格式、自動推 history、不讓日期倒退，再寫檔（JSON、縮排 2、結尾有換行）。
 //   npm run world:gdp -- --quarter 2026Q4 --yoy 13.1 --published 2026-11-27 [--kind 初步統計] [--note 說明]
 //   npm run world:gdp -- --quarter 2026Q3 --yoy 14.5 --published 2026-11-27 --kind 初步統計          同一季的修正：換掉最後一個

@@ -1,4 +1,4 @@
-/* 房間效果（11-15，ui_mood.js／shared/room_mood.js；docs/大廳效果提案.md）。rm- 開頭；不碰 #lights、#vignette、body 的理智 class */
+/* 房間效果（11-15，ui_mood.js／shared/room_mood.js；docs/規劃/大廳效果提案.md）。rm- 開頭；不碰 #lights、#vignette、body 的理智 class */
 .rm { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; border-radius: inherit; transition: opacity 1.2s ease; }
 .rm.rm-off { opacity: 0; }
 .rm.rm-lobby { z-index: 0; } /* 導覽圖上：在房間名字標籤下面（人影、旗不蓋字） */

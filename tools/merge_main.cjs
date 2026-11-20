@@ -6,7 +6,7 @@ const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const NOTICES_JS = "shared/notices.js";
-const GENERATED = ["維護日誌/README.md", "docs/音效與特效總表.md"]; // 11-16 起不進 git（npm run log:index、npm run fx:report 產生）
+const GENERATED = ["維護日誌/README.md", "docs/素材/音效與特效總表.md"]; // 11-16 起不進 git（npm run log:index、npm run fx:report 產生）
 // 兩邊都留
 const KEEP_BOTH = { "test/run_all.cjs": "plain", "test/tools.test.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "tools/check_imports.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };
 const canAuto = f => f === NOTICES_JS || GENERATED.includes(f) || !!KEEP_BOTH[f];

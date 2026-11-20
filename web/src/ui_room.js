@@ -7,7 +7,7 @@ import { $$, ADDONS, HIDE_CHROME, P, UI, btn, h, icon, navTo, ptNode, snd } from
 
 export const BOOK_ACTIONS = {};
 
-// 介面重塑（翊文 11-13，docs/介面整合規劃.md 第六步）：最下面收藏的抽屜。平常壹排縮圖，按銅拉環拉開才有頁籤和篩選（css/onescreen.css 的 .onescreen-drawer）
+// 介面重塑（翊文 11-13，docs/規劃/介面整合規劃.md 第六步）：最下面收藏的抽屜。平常壹排縮圖，按銅拉環拉開才有頁籤和篩選（css/onescreen.css 的 .onescreen-drawer）
 export function onescreenDrawer(strip, label = "你的收藏") {
   const drawer = h("div", { class: "onescreen-drawer" });
   // 11-16 翊文：「這個可以拉開的抽屜玩家不太知道可以當按鈕」：拉環上寫箭頭（關著 ▲、拉開 ▼ 收起）；玩家第壹次拉開以前，拉環輕輕發亮呼吸（記在 localStorage，拉過壹次就不再亮）

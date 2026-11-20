@@ -1,7 +1,7 @@
 // 參觀館友的展廳、送佩佩、伺服器的信：Functions 每一步要做的事（shared/visit.js，多人版 M2）：node test/visit.test.cjs（npm test 也會跑）
 // functions/visit.js 只讀資料庫、叫這裡的 step…、把結果在同一個交易裡寫回去，所以這裡測「讀到什麼 → 要寫什麼」。
 // 真的跟資料庫一起跑要開模擬器（維護日誌寫了怎麼測的）。
-// 數字一律讀 SOCIAL、NUM；從 vm 拿出來的物件要先過 JSON 才能比（見 docs/架構.md 第 6 節）。
+// 數字一律讀 SOCIAL、NUM；從 vm 拿出來的物件要先過 JSON 才能比（見 docs/規則/架構.md 第 6 節）。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let G = load();

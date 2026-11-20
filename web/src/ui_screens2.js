@@ -134,7 +134,7 @@ SCREENS.commission = root => {
     commentsBox.hidden = !commentsBox.hidden;
     commentsBox.replaceChildren(...(P.comments.length ? P.comments.slice(0, 60).map(c => h("div", { class: "comment" }, h("p", null, `「${c.text}」`), h("p", { class: "sub" }, `— ${c.who}・${c.d}`))) : [h("p", { class: "empty" }, "還沒有評語。交一張委託就會有。")]));
   }, "ghost");
-  // 壹個畫面看得完（翊文 11-13：「目前每個廳都要很多訊息，要往上下滑才能看到全部」，docs/介面整合規劃.md 第六步）：
+  // 壹個畫面看得完（翊文 11-13：「目前每個廳都要很多訊息，要往上下滑才能看到全部」，docs/規劃/介面整合規劃.md 第六步）：
   //   標題壹行｜中間軟木板（委託單）＋右邊側欄（老主顧、怪癖的治法、壹鍵交件、上課和兌換所收起來）｜最下面收藏的抽屜（平常壹排，按拉環拉開才有頁籤和篩選）
   //   零件是翊文生的 assets/ui2/P-1～P-3（切好的在 web/public/ui2/），樣式在 css/onescreen.css
   // 上課和兌換所（決定 0032，ui_shop.js）：標題列右邊兩顆銅牌按鈕（翊文 11-13：「上課，兌換所就不構明顯」），上課的細節點了才跳出來
@@ -145,7 +145,7 @@ SCREENS.commission = root => {
     PANELS.shop ? btn([icon("medal"), h("span", null, "兌換所", h("small", null, "用週章換東西"))], () => PANELS.shop(), "onescreen-big") : null];
   const side = h("aside", { class: "onescreen-side" }, safeBlock("老主顧", () => regularsStrip(list)), safeBlock("怪癖的治法", () => quirkHereBox("deliver")), safeBlock("壹鍵交件", () => autoBar())); // quirkHereBox：治法是「交壹張委託」的怪癖（11-09，決定 0027）
   const drawer = onescreenDrawer(strip);
-  root.classList.add("onescreen-room"); // 以前叫 u2r。名字不能跟 html 上的 new-lobby-on 撞，也不要用兩個字母的縮寫（docs/class名單.md）
+  root.classList.add("onescreen-room"); // 以前叫 u2r。名字不能跟 html 上的 new-lobby-on 撞，也不要用兩個字母的縮寫（docs/規則/class名單.md）
   root.append(roomHead("委託櫃台", "每天 3 張，隔天換新的。越精準賞越多。", ...learn.filter(Boolean), cBtn), commentsBox, h("div", { class: "onescreen-main" }, board, side), drawer);
   syncStatusHeight(); setTimeout(syncStatusHeight, 300); // 抽屜要停在狀態列上面：狀態列排成兩排時也量對（分頁在背景時 requestAnimationFrame 不會跑，所以直接量）
 };
@@ -224,7 +224,7 @@ export function autoSummary(res) {
     res.skipped ? h("p", { class: "ad-note" }, `有 ${res.skipped} 張沒交成（委託換新了）。`) : null,
   ], "ad-modal", "好");
 }
-// ---------- 老主顧（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」；規劃 docs/銀行特展老主顧招領規劃.md 第三節） ----------
+// ---------- 老主顧（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」；規劃 docs/規劃/銀行特展老主顧招領規劃.md 第三節） ----------
 // 委託櫃台上面壹條：三張名片，名字、第幾段（●●○○○）、今天在不在。還沒來過的不寫他是誰。點來過的那位，重讀他說過的話
 export function regularsStrip(list) {
   const v = regularsView(P, list);
@@ -296,7 +296,7 @@ SCREENS.codex = (root, params) => {
   const tabFresh = { recipes: freshUnder(P, "codex", FRESH_KEY.recipe("")), badges: freshUnder(P, "codex", FRESH_KEY.badge("")) }; // 這頁有新東西（11-08）
   const tabs = h("div", { class: "seg big-tabs" }, [["pepe", "佩佩"], ["failed", "失敗作"], ["repaired", "修復品"], ["forbidden", "禁忌・突變"], ["recipes", "配方"], ["pillow", "抱枕"], ["badges", "徽章"]].map(([id, n]) =>
     h("button", { type: "button", class: "seg-btn" + (id === tab ? " on" : ""), "aria-pressed": String(id === tab), onClick: () => go("codex", { tab: id }, { action: false }) }, icon(TAB_IC[id]), h("span", null, n), tabN[id] ? h("small", { class: "tab-c" }, String(tabN[id])) : null, tabFresh[id] ? freshTag("tab-fresh") : null)));
-  // 壹個畫面看得完（docs/介面整合規劃.md 第六步）：標題壹行｜頁籤壹排｜主區（圖鑑的格子，太多的時候在自己裡面捲）＋側欄（篩選收起來、點壹格的說明牌）
+  // 壹個畫面看得完（docs/規劃/介面整合規劃.md 第六步）：標題壹行｜頁籤壹排｜主區（圖鑑的格子，太多的時候在自己裡面捲）＋側欄（篩選收起來、點壹格的說明牌）
   root.classList.add("onescreen-room", "codex-onescreen");
   root.append(roomHead("圖鑑室", `收藏 ${num(count)}／${num(CORE_TOTAL)}（${pct}%）　徽章 ${Object.keys(P.badges).length}／${BADGES.length}`), tabs);
   // 沒有側欄的頁籤（修復品、配方、禁忌、徽章）：內容放主區；同壹頁再 append 就接在後面
@@ -442,7 +442,7 @@ SCREENS.hall = (root, params) => {
     ADDONS.hallCall ? btn([icon("share"), " 請館友來看"], () => PANELS.pickFriend({ title: "請館友來看", hint: "選一位館友，請他來看你的展廳。沒有獎勵；他在線上會馬上看到，不在線的下次進館看到。",
       keep: true, onPick: p => ADDONS.hallCall.send(p) }), "ghost") : null,
   ].filter(Boolean) : [];
-  // 壹個畫面看得完（翊文 11-13，docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架）：
+  // 壹個畫面看得完（翊文 11-13，docs/規劃/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架）：
   //   標題壹行（評分、常設展／本週特展的頁籤、看館友的展廳）｜中間牆和展台｜右邊側欄（主題怎麼擺、參觀者留言、館友來過、館主名牌、探險報告、賭場的稱號）｜最下面收藏的抽屜
   root.classList.add("onescreen-room", "hall-onescreen");
   root.append(roomHead("我的展廳", `評分 ${hs.score}／100　參觀者 ${num(P.hallVisitors)} 位`, hallTabs("main"), ...tools));

@@ -92,7 +92,7 @@ export const PEPE_PARTS = [
   { name: "手上拿的東西", deco: true, options: [{ name: "沒有", start: true }, { name: "瓜子", key: "hold" }, { name: "小抱枕", key: "hold" }, { name: "放大鏡", key: "hold" }] },
 ];
 
-// 限定帽子的能力（決定 0085，docs/限定配件能力提案.md；翊文 11-15：地下以外也要有、特展的更強一點）。數字都在這裡。
+// 限定帽子的能力（決定 0085，docs/規劃/限定配件能力提案.md；翊文 11-15：地下以外也要有、特展的更強一點）。數字都在這裡。
 //   探索（走房間）：team 全隊強度 +、teamIfColor [顏色, +n] 隊裡有這個顏色就 +、teamIfMood [心情, +n] 戴的那隻是這個心情就 +、rainbow 隊裡每種不同顏色 +1（最多這麼多）、skill 技能檢定 +（取最高，不疊）、
 //   sanCut 每次被扣理智少扣（最少扣 1）、rest 每層第壹次走回這麼多理智、block 擋下幾次理智損失（不同的帽子加起來）、reroll 多幾次重擲、firstSan 每層第壹次走多扣、minPower 自己的強度至少這麼多
 //   打怪（一場一次的招式）：fight { move: 用哪個招式的算法（cheer、wizard、cap、squat、beanie、crown、tentacle）, n 數字, uses 可以用幾次, mult 推的倍率（tentacle）, noSan 不扣理智, team 全隊（beanie）}
@@ -148,7 +148,7 @@ export const NUM = {
   // newCellar：地下室改版（決定 0067、0068）。true ＝合作地下每一層的房間探索完之後要打守門，打贏才算走完。
   //   11-12 翊文說直接打開，不用先自己測（決定 0069）。有問題改回 false 就回到舊的（房間走完直接算這一層走完），舊的程式都還在
   ui: { newLobby: true, newCellar: true, lobbyCrowdMusic: 150, lobbySan: [55, 30, 15], casinoBusyMusic: 35, workshopBusyMusic: 20 }, // workshopBusyMusic：手作坊超過幾人換成翊文的錄音（11-17 翊文：「這首手作坊多人的時候可以放」；20 是先估的） // casinoBusyMusic：賭場超過幾人換成 Copper Nights（11-16 翊文：「賭場裡超過35人就改播這個」）； // lobbySan：大廳照理智換曲（11-16 翊文）：低於 55 放「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律； // lobbyCrowdMusic：館內同時超過幾人，大廳換成「Inviting Loop」（11-16 翊文：「人潮很多的時候用這首」；150 是先估的，太常/太少出現就改）
-  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar/fight.js。數字都是草稿，模擬 node test/sim/sim_fight.cjs
+  // 地下室改版（決定 0067，規劃 docs/規劃/地下室改版規劃.md）：打怪物的規則 shared/cellar/fight.js。數字都是草稿，模擬 node test/sim/sim_fight.cjs
   //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
   //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
   //   seeMod、calmMod：看穿（偵查、神秘學取高的）、安撫（說服）的技能加多少；calmHp：安撫成功順便減多少壓力
@@ -163,9 +163,9 @@ export const NUM = {
   //   courage：壯膽，每多壹個真人隊友，每個人多這麼多「膽量」，先替理智擋（這壹趟用完就沒了，不會留在存檔）；coopInsp：每多壹個真人隊友，打贏多給多少靈感
   //   tap：有些回合可以按時機（「有時候 B」）：chance ＝下壹回合可以按的機率，找到弱點的下壹回合壹定可以；good、great ＝按得好、按得很準，「推」多加多少。只加不扣，不按也沒事
   fight: { baseTeam: 3, perPlayer: 0.5, pressureHp: 3, die: "1D6", weakMult: 1.5, seeMod: 20, calmMod: 25, calmHp: 2, guardDodge: 0.5, softDodge: 0.5, wizard: 2, cheer: 2, tentacleMult: 2, tentacleSan: "1D3", rest: "1D3", maxRounds: 15, pressureSan: 2, injure: 1, rankHp: [1, 1.3, 1.55], rankSan: [0, 0, 1], rankInsp: [0, 1, 2], flee: 60, fleeBoss: 40, courage: 5, coopInsp: 1, tap: { chance: 0.25, good: 1, great: 2 },
-    // 結算演出（docs/打怪演出規劃.md）：每件事演 replayStep 毫秒，最後小結 replayTail，最多 replayMax。演完才開始倒數：伺服器把這段時間加進下一回合的期限
+    // 結算演出（docs/規劃/打怪演出規劃.md）：每件事演 replayStep 毫秒，最後小結 replayTail，最多 replayMax。演完才開始倒數：伺服器把這段時間加進下一回合的期限
     replayStep: 750, replayTail: 1600, replayMax: 9000,
-    // 佩佩身上的（docs/打怪玩法規劃.md 第三節）：red 推 +；green 每回合結束理智 +；yellow 看穿、安撫 +％；black 被嚇少扣；moodCombo 全隊湊到三種心情推 +
+    // 佩佩身上的（docs/規劃/打怪玩法規劃.md 第三節）：red 推 +；green 每回合結束理智 +；yellow 看穿、安撫 +％；black 被嚇少扣；moodCombo 全隊湊到三種心情推 +
     color: { red: 1, green: 1, yellow: 10, black: 1 }, moodCombo: 1,
     // 合作的新行動（第四節）：inspire 鼓舞讓隊友推 +；comfort 安慰回理智（骰子＋說服 ÷ comfortDiv）；reveal 看清（偵查 ＋ revealMod）
     inspire: 3, comfort: "1D3", comfortDiv: 30, revealMod: 20,
@@ -238,7 +238,7 @@ export const NUM = {
   //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
   //   帳號要開 minAge 天；成交抽 feePct % 進博物館資金；壹個人同時最多拍 listPerSeller 幅；壹場最多 maxBidders 人出價；recent：畫面留幾場收標的結果；unit：價格進位。
   auction: { minTier: 2, closeDays: 3, closeHour: 22, houseReservePct: 100, floorPct: 80, ceilPct: 150, premiumDay: 2000000, minAge: 3, feePct: 5, listPerSeller: 2, maxBidders: 40,
-    // NPC 買家（11-14，docs/館內NPC規劃.md 步驟 4、翊文：NPC 的錢從已知世界來）：每場最多壹位 NPC 出價，出價機率 npcJoinPct%；出價 ＝ 參考價 ×（玩家的畫 0.80～1.00／館方的畫 1.00～1.10）× 喜歡這個稀有度（×1.05，否則 ×0.95），
+    // NPC 買家（11-14，docs/規劃/館內NPC規劃.md 步驟 4、翊文：NPC 的錢從已知世界來）：每場最多壹位 NPC 出價，出價機率 npcJoinPct%；出價 ＝ 參考價 ×（玩家的畫 0.80～1.00／館方的畫 1.00～1.10）× 喜歡這個稀有度（×1.05，否則 ×0.95），
     //   不超過這位 NPC 的 budget.max、也不超過他壹天剩下的 perDay；全館壹天 NPC 買畫總額 ≤ npcDay ×（1 ＋ npcExtPct% × 景氣）；錢從已知世界池子付、付回池子（吃緊時付不出的場不出價）
     npcJoinPct: 60, npcDay: 3000000, npcExtPct: 20, npcLikePct: 5, recent: 12, unit: 1000 },
   eldritchRoll: { base: 2, perMyth: 5, max: 5 }, // 不可名狀：神話到了以後，原本擲出 01～base 就是；每多 perMyth 點神話寬壹格，最寬到 max（翊文 11-13 要放寬；以前只有 01）
@@ -281,7 +281,7 @@ export const NUM = {
     giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
     callListMax: 10,        // 「請你去看展廳」的通知一次列幾則（今天、昨天沒看的）
   },
-  // 館內 NPC 的內容規則（11-14，docs/館內NPC規劃.md 步驟 3；內容在 content/npc/，檢查在 tools/npc_check.cjs）。這裡只放「內容能寫的範圍」，不碰股票、拍賣的程式。
+  // 館內 NPC 的內容規則（11-14，docs/規劃/館內NPC規劃.md 步驟 3；內容在 content/npc/，檢查在 tools/npc_check.cjs）。這裡只放「內容能寫的範圍」，不碰股票、拍賣的程式。
   //   kinds：visitor 旅客、client 委託人、trace 劇情角色（只留痕跡、不算人數、不出價）；places：去哪（hall 展廳、五家店 food/bj/job/cellar/craft、bank 銀行、auction 拍賣）；
   //   likeThemes：展廳主題（HALL_THEME_BONUS 的 id）；likeRarity：畫的稀有度（尋常、少見、珍藏、孤品）；routeMax：route 每個地方的權重 0～routeMax。
   //   tiers：預算分級（單位：籌碼）。perDay 壹天最多花多少、max 單筆最多（出價、買畫），都落在那一級的範圍內，而且 max ≤ perDay；每個 NPC 的 perDay 不能跟別人壹樣
@@ -305,7 +305,7 @@ export const NUM = {
     // 展廳的旅客（11-14，shared/npc.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
     hallStory: 0.4, newsMax: 2,
   },
-  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
+  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
     understandInsp: 3,      // 線索集齊、「你看懂了」壹件給幾靈感（壹件只給壹次；不扣理智、不發作，shared/clues.js）
@@ -555,7 +555,7 @@ export const NUM = {
     //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
     // ramp（決定 0094）：盤中價格跟著到店的人數走的比例（1 ＝ 照 k 的斜率全部反映；0 ＝ 關掉，回到以前：人數只在 05:00 的跳空反映）。各房間的即時人數公開之後，看人數卡位賺不到（sim_peek_stock）
     stockIn: { ramp: 1, start: 10000, floor: 1, k: 0.03, moodPct: 0.3, noise: 1, jumpCap: 5, minPeople: 5, minDays: 3, avgDays: 7, histDays: 12,
-      // NPC（規劃 2.8k、docs/館內NPC規劃.md 步驟 1、2）：每家店每天有 Poisson(npcLambda) 個 NPC 去逛（種子含伺服器祕密），算進昨天「不同的人」；NPC 最多占這家店人數的 npcShareMax%（館友太少就更少）；
+      // NPC（規劃 2.8k、docs/規劃/館內NPC規劃.md 步驟 1、2）：每家店每天有 Poisson(npcLambda) 個 NPC 去逛（種子含伺服器祕密），算進昨天「不同的人」；NPC 最多占這家店人數的 npcShareMax%（館友太少就更少）；
       //   劇情日（week.json 的 npc）那天 NPC 多去 round(b × 前 7 個有效日的平均)，b 在 npcBoostMin～npcBoostMax 之間隨機（預期跳空 k×b ＜ 來回成本，預先進場賺不到；b 不能超過 0.33）
       // 突發大事件 C（翊文 11-14：不預告）：每家店每天有 npcBurstPct% 的機率突然多來 round(b × 前 7 個有效日的平均) 位旅客，b 在 npcBurstMin～npcBurstMax；
       //   事先不知道是哪天（種子有祕密），預先進場賺不到；事後日報寫「昨天餐車突然來了一大批旅客」
@@ -750,7 +750,7 @@ export const LIMITED_ITEMS = [
 // 名字、說明在 systems_text.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。
 // 效果的欄位跟小優點、小缺點一樣（下面 PERKS 的說明），legacy.js 的 traitSum 會一起算，所以不用在規則裡另外加判斷；
 // 多一種 "skill:技能名"：那個技能檢定時多幾點（不改技能本身，也不影響成長）。tier：common 普通、fine 精良、rare 稀有（價錢在 NUM.shop.gearPrice）。
-// 會讓理智好過的（探險燈）放在最貴的一級；理智要「算容易歸零」（docs/界線.md）。
+// 會讓理智好過的（探險燈）放在最貴的一級；理智要「算容易歸零」（docs/規則/界線.md）。
 export const GEAR_ITEMS = [
   { id: "magnifier", tier: "common", "skill:偵查": 5 },
   { id: "coin", tier: "common", "skill:幸運": 5 },

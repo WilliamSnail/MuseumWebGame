@@ -16,7 +16,7 @@ export const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 export const wuBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 
 // ================================================================
-//  W5 連動（決定 0086，規劃 docs/世界經濟規劃.md 第 4 節）：每個頂層單位每天算一個健康值 h，每週一換狀態（一般／減薪／緊縮／裁員），
+//  W5 連動（決定 0086，規劃 docs/規劃/世界經濟規劃.md 第 4 節）：每個頂層單位每天算一個健康值 h，每週一換狀態（一般／減薪／緊縮／裁員），
 //  狀態決定 NPC 來館花錢的預算倍率（只動預算，不動 NPC 在不在場；全館不會一夜變空）。house.wh ＝ { day, base, idx, h, st, ev }。
 //    h ＝ clamp(1 ＋ 景氣 b × 行業係數 ＋ 旗下館外股票這一週的漲跌 × stockW, min, max)；文化部固定 1.0、家計沒有 h（倍率 1）。
 //    狀態（每週一看一次）：h ≥ cut → 一般（倍率 1～upMax）；squeeze ≤ h ＜ cut → 減薪 ×0.8；h ＜ squeeze → 連續 squeezeWeeks 週緊縮 ×0.5，連續 layoffWeeks 週裁員 ×0.3；下限 floor。
@@ -36,7 +36,7 @@ export function whMult(house, unitId) {
 }
 
 // ================================================================
-//  NPC 理智（決定 0090 第一步，docs/理智值提案.md 第 1 節）：house.npcw.san[NPC id] ＝ 0～100，沒有紀錄 ＝ 初始值（NUM.casino.worldDoc.san.start）。累積型：
+//  NPC 理智（決定 0090 第一步，docs/規劃/理智值提案.md 第 1 節）：house.npcw.san[NPC id] ＝ 0～100，沒有紀錄 ＝ 初始值（NUM.casino.worldDoc.san.start）。累積型：
 //    每天收盤時（casNpcLive 的整天結算）照那天的行程加減：去地下 −2（一天最多 −4）、去餐車 +1、完全沒來館 +3（休息；這兩項只補到初始值為止）、自然往初始值靠 1；被裁 −8、找到新工作 +5（W6 的 ev，那天發生的）；
 //    排程填的 sanEvents（劇情決定的欄位，之後接）。一天最多變 ±daily（排程和換工作的事件不算）。夾 0～100。
 //  理智低的影響（只放小的）：< lowRoute 不去地下（那一站不花錢）；< lowStars 展廳評價少 1 顆星；< lowBudget 預算 ×budgetMult（再乘 W5 的倍率，總倍率仍 ≥ health.floor）。

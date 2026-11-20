@@ -1,6 +1,6 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  Discord 聯動第三步：在 Discord 玩（決定 0051，docs/Discord聯動規劃.md「第三步」）
+//  Discord 聯動第三步：在 Discord 玩（決定 0051，docs/規劃/Discord聯動規劃.md「第三步」）
 //  /pepe-21點、/pepe-大禮包、/pepe-餐車、/pepe-拚經濟、/pepe-實況、/pepe-斗內。要先綁定（沒綁定的人收到怎麼綁定或加入）。
 //  **規則只有壹套**：這裡呼叫的是 functions/casino.js 的 playCore 和 actDeal／actHitStand／actPack／actBuy／actEcon／liveAct，
 //  遊戲（casino 這個 Function）呼叫的是同壹批。次數、上限、籌碼、存檔都跟遊戲共用，不會因為換到 Discord 多拿壹份。

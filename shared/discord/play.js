@@ -1,5 +1,5 @@
 // ================================================================
-//  Discord 聯動第三步：在 Discord 玩（決定 0051，docs/Discord聯動規劃.md「第三步」）的文字和按鈕
+//  Discord 聯動第三步：在 Discord 玩（決定 0051，docs/規劃/Discord聯動規劃.md「第三步」）的文字和按鈕
 //  純函式：不碰網路、資料庫、時鐘。遊戲規則壹個字都沒有重寫：Functions（functions/discord_play.js）呼叫的是 functions/casino.js 的同壹份交易，
 //  這裡只把交易的結果排成 Discord 的訊息（文字 + 按鈕 / 選單），再把按鈕的 custom_id 解回來。
 //  每壹則回覆都過 dcScrub：不放 email、理智、怪癖、靈感（遊戲裡「理智 -1」這類字會被拿掉）；暱稱過 dcNick。

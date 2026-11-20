@@ -321,7 +321,7 @@ SCREENS.fusion = root => {
       h("div", { class: "fusion-foot" }, fusionPill(),
       h("div", { class: "rv-btns" }, btn([icon("fusion"), isFree(P) ? " 融合" : ` ${costText("融合", price)}`], () => doFusion(), "primary big", { disabled: !can.ok }), isFree(P) ? null : inspHave(price), can.ok ? null : h("p", { class: "warn-line" }, can.reason))));
   } else info.append(placard([FUSION_TEXT.empty, "點下面的佩佩，或拖到融合台上。同一隻有兩隻以上，也可以自己跟自己融合。"]), fusionPill());
-  // 調色盤收起來（壹個畫面看得完，docs/介面整合規劃.md 第六步）：點開才有
+  // 調色盤收起來（壹個畫面看得完，docs/規劃/介面整合規劃.md 第六步）：點開才有
   info.append(h("details", { class: "onescreen-card fusion-palette" }, h("summary", null, h("b", null, "調色盤"), h("span", { class: "fusion-pal-open" }, "點開看顏色怎麼調 ▾"), h("span", { class: "fusion-pal-close" }, "收起來 ▴")), palettePane()));
   const strip = collectionStrip({ tabs: ["pepe"], title: "你的收藏", hint: "點一隻放上融合台", drag: true, stats: true,
     onPick: item => { const i = slots[0] ? (slots[1] ? 0 : 1) : 0; slots[i] = { key: item.key }; snd("submit"); rerender(); },
@@ -569,7 +569,7 @@ SCREENS.cellar = root => {
     if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
     snd("whoosh"); persist(); rerender();
   }, "primary big", { disabled: !full });
-  // 壹個畫面看得完（docs/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架；css/onescreen.css 的 .cellar-onescreen）：
+  // 壹個畫面看得完（docs/規劃/介面整合規劃.md 第六步，跟委託櫃台同壹個骨架；css/onescreen.css 的 .cellar-onescreen）：
   //   標題壹行（隊伍規則收成按鈕）｜中間樓層的門和隊伍的展示台｜右邊側欄（壹起下去、本週異狀、試煉房間）｜最下面挑隊員的抽屜
   const rulesBtn = btn([icon("scroll"), h("span", null, "隊伍規則", h("small", null, "強度、相剋、帽子"))], () => {
     const m = miniLayer("隊伍規則", "");
