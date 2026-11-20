@@ -73,7 +73,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   npcs.forEach((n, i) => {
     const id = isObj(n) && typeof n.id === "string" ? n.id : "", w = `content/npc/${isObj(n) && n.__file || "第 " + (i + 1) + " 筆"}`;
     if (!isObj(n)) { E(w, "要是物件"); return; }
-    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "branch", "casino", "__file"]; // job：隸屬哪個單位（內容由 tools/check/world_check.cjs 檢查，決定 0086）
+    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "branch", "casino", "cellar", "__file"]; // job：隸屬哪個單位（內容由 tools/check/world_check.cjs 檢查，決定 0086）
     Object.keys(n).forEach(k => { if (!allowed.includes(k)) E(w, `不認得欄位「${k}」（只能 ${allowed.filter(x => x !== "__file").join("、")}）`); });
     if (!/^[a-z][a-z0-9-]{2,23}$/.test(id)) { E(w, "id 要是英文小寫、數字、-（3～24 字，開頭是字母）"); return; }
     if (n.__file && n.__file !== id + ".json") E(w, `檔名要跟 id 壹樣（${id}.json）`);
@@ -127,6 +127,27 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
       }
     }
     if (!trace && n.casino === undefined) E(w, "旅客、委託人要有 casino（賭場打法和台詞）");
+
+    // 一起下地下收藏庫（決定 0149）：有 cellar 欄位的才邀得動。劇情角色絕對不能有；role 是專長；from 是這位開放的日期；lines 是自己的台詞（沒寫用預設）
+    if (n.cellar !== undefined) {
+      const lw = w + ".cellar", c = n.cellar, CATS = ["accept", "refuse", "enter", "win", "lose", "scared", "leave", "thanks"];
+      if (trace || String(n.id).startsWith("t-")) E(lw, "劇情角色不陪人下地下，不要寫 cellar");
+      else if (!isObj(c)) E(lw, "要寫成 { role, from, lines }");
+      else {
+        Object.keys(c).forEach(k => { if (!["role", "from", "lines"].includes(k)) E(lw, `不認得「${k}」（只能 role、from、lines）`); });
+        if (c.role !== undefined && !["carry", "lead", "calm"].includes(c.role)) E(lw + ".role", "要是 carry（搬運）、lead（帶路）、calm（壯膽）其中壹個，或不寫");
+        if (c.from !== undefined && !/^d{4}-d{2}-d{2}$/.test(String(c.from))) E(lw + ".from", "要是 YYYY-MM-DD");
+        if (c.lines !== undefined) {
+          if (!isObj(c.lines)) E(lw + ".lines", "要是物件");
+          else Object.keys(c.lines).forEach(k => {
+            if (!CATS.includes(k)) { E(lw + ".lines", `不認得「${k}」（只能 ${CATS.join("、")}）`); return; }
+            const a = c.lines[k];
+            if (!Array.isArray(a) || a.length < 2 || a.length > 4) { E(`${lw}.lines.${k}`, "要是 2～4 句的陣列"); return; }
+            a.forEach((s, i) => { if (typeof s !== "string" || !s.trim() || [...s].length > 30) E(`${lw}.lines.${k}[${i}]`, "每句要是 1～30 字的文字"); else if (/[A-Za-z0-9]/.test(s)) E(`${lw}.lines.${k}[${i}]`, "遊戲裡不放英文字母和阿拉伯數字（數字用壹貳參）"); });
+          });
+        }
+      }
+    }
 
     // 故事線
     const arc = n.arc;

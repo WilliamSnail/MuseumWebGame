@@ -12,7 +12,7 @@
 import { NUM } from "../core/config.js";
 import { addDays } from "../core/logic_base.js";
 import { injureDaysOf } from "../core/systems.js";
-import { coopActive, coopFightFix, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
+import { coopActive, coopBonusCount, coopFightFix, coopFinish, coopFloorComplete, coopHumanVoters, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
 import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "../cellar/fight.js";
 
 // 這一層還要不要打守門
@@ -26,7 +26,7 @@ export function coopFightStart(run, Ps, foe, kind = "gate", rank = 1) {
   const seats = ms.map(m => {
     const P = Ps[m.id];
     const s = fightSeat(P, m.id, m.name, m.keys.filter(k => !P.injured[k])); // 這一趟前面受傷的不上場
-    s.brave = typeof m.brave === "number" ? m.brave : fightCourage(ms.length);
+    s.brave = typeof m.brave === "number" ? m.brave : fightCourage(coopBonusCount(ms)); // NPC 算 bonusWeight 個人
     m.brave = s.brave;
     return s;
   });
@@ -55,7 +55,7 @@ export function coopFightRound(run, Ps, picks) {
   fight.seats.forEach(s => { before[s.id] = s.out; });
   const r = fightRound(fight, picks || {});
   if (!r.ok) return r;
-  const players = fight.seats.filter(s => !s.helper).length;
+  const players = coopBonusCount(fight.seats.filter(s => !s.helper).map(s => coopMember(run, s.id)));
   Object.keys(r.fx).forEach(id => {
     const x = r.fx[id], P = Ps[id], m = coopMember(run, id), seat = fightSeatOf(fight, id);
     if (!P || !m) return;
@@ -96,7 +96,7 @@ export function coopFightRound(run, Ps, picks) {
       return Object.assign(done, { fightOver: "win" });
     }
     if (kind === "foe") return Object.assign(coopRouteBack(run, Ps, events), { fightOver: "win" }); // 路上的怪物：打贏繼續選路
-  } else if (fight.over === "lose" || fight.over === "retreat" || !coopVoters(run).length) {
+  } else if (fight.over === "lose" || fight.over === "retreat" || !coopHumanVoters(run).length) {
     coopFinish(run, fight.over === "retreat" ? "retreat" : "lost");
   } else if (kind === "foe") {
     // 路上的怪物：逃掉、牠自己走掉都沒關係，繼續選路（沒有獎勵）
@@ -128,7 +128,7 @@ export function coopFightView(run, id) {
 // 這個點做完了：回到選路（大家都倒了就結束）
 export function coopRouteBack(run, Ps, events = coopNewEvents(run)) {
   run.room = null; run.rest = null;
-  if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
+  if (!coopHumanVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
   run.phase = "route";
   coopSync(run, Ps);
   return { ok: true, run, events };

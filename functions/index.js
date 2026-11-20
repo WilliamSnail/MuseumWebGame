@@ -84,6 +84,7 @@ export { invite, inviteReply, partyAction } from "./coop/party.js";
 
 // ---------- 合作地下收藏庫（M4）：寫在 coop.js ----------
 export { coopStep } from "./coop/coop.js";
+export { coopNpc } from "./coop/coop_npc.js";
 export { coopTrace } from "./coop/coop_trace.js";
 // ---------- 管理員介面（只看不改，決定 0033）：寫在 admin.js ----------
 export { adminCheck, adminOverview } from "./game/admin.js";

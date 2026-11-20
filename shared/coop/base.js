@@ -15,7 +15,7 @@ export const COOP = {
   maxPlayers: 4,          // 一隊最多幾個人（一個人也能下去）
   eachMin: 1, eachMax: 2, // 每個人帶幾隻
   teamMin: 3,             // 隊伍至少幾隻：不夠由館方助手補
-  teamMax: 6,             // 隊伍最多幾隻（舞台放得下 6 隻；4 個人只能有兩個人帶 2 隻）
+  teamMax: 8,             // 隊伍最多幾隻（翊文 11-21：4 個人（真人加 NPC）每人最多 2 隻 ＝ 8 隻；原本 6 隻）
   helperName: "館方助手", // 草稿，之後搬到 systems_text.js
   // 館方助手的佩佩：稀有（強度 2）、俄國8+9（不剋別人、也不被剋），強度很穩，不會太強
   helpers: [
@@ -73,6 +73,10 @@ export const coopActive = run => run.members.filter(m => !m.out && !m.guard);
 export const coopPresent = run => run.members.filter(m => !m.out);
 // 能投票、能擲骰的人：還在地下、不是幽靈
 export const coopCanAct = m => !!m && !m.out && !m.ghost && !m.guard;
+// 人數加成要算幾個人（找 NPC 下地下，決定 0149）：真人壹個算 1、NPC 壹位算 NUM.casino.coopNpc.bonusWeight；給打怪的壯膽和打贏的靈感用（member ＝ 隊員的陣列，可以是投票者或座位對應的隊員）
+export const coopBonusCount = members => members.reduce((n, m) => n + (m && m.npc ? NUM.casino.coopNpc.bonusWeight : 1), 0);
+// 真人的投票者（找 NPC 下地下，決定 0149）：「大家都變幽靈／離開了」要看真人，只剩 NPC 不算一隊
+export const coopHumanVoters = run => coopVoters(run).filter(m => !m.npc);
 export const coopVoters = run => run.members.filter(coopCanAct);
 // 這一趟走的「層」：一般是地下收藏庫的一層；合作試煉（決定 0041）是只有一間房的小層（那一間試煉房間）
 export function coopFloorOf(run) {
@@ -267,7 +271,7 @@ export function coopLeave(run, Ps, id) {
   const events = coopNewEvents(run);
   run.team = coopTeam(run, Ps);
   if (run.leader === id) coopNextLeader(run);
-  if (run.phase !== "over" && !coopVoters(run).length) coopFinish(run, "lost");
+  if (run.phase !== "over" && !coopVoters(run).some(x => !x.npc)) coopFinish(run, "lost"); // 只剩 NPC 在地下（找 NPC 下地下，決定 0149）也算全員離開
   coopSync(run, Ps);
   return { ok: true, run, events };
 }

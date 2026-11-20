@@ -75,8 +75,10 @@ T("檢查：人數、每人帶幾隻、重複、受傷、隊伍上限、自由�
   const five = [0, 1, 2, 3, 4].map(i => { const P = person(); return { id: "p" + i, P, keys: [mk(P)] }; });
   assert.ok(!can(five).ok, "最多 COOP.maxPlayers 個人");
   const big = [0, 1, 2, 3].map(i => { const P = person(); return { id: "p" + i, P, keys: [mk(P), mk(P, { 顏色: "綠" })] }; });
-  const r = can(big);
-  assert.ok(!r.ok && r.reason.includes(String(G.COOP.teamMax)), "4 個人都帶 2 隻是 8 隻，超過上限");
+  assert.strictEqual(G.COOP.teamMax, 8, "翊文 11-21：4 個人每人最多 2 隻 ＝ 8 隻");
+  assert.ok(can(big).ok, "4 個人都帶 2 隻（8 隻）可以");
+  G.COOP.teamMax = 7; const r = can(big);
+  assert.ok(!r.ok && r.reason.includes("7"), "上限降低時超過就擋"); G.COOP.teamMax = 8;
   big[2].keys = big[2].keys.slice(0, 1); big[3].keys = big[3].keys.slice(0, 1);
   assert.ok(can(big).ok, "2+2+1+1 ＝ 6 隻可以");
   A.injured[a[0]] = G.addDays(DATE, 2);

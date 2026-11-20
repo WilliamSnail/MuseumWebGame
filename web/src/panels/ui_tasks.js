@@ -9,7 +9,7 @@ import { btn, h, icon, snd } from "../core/ui_core.js";
 
 // 種類 → 圖示（art.js 已有的名字）
 export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion", pillow: "pillow", hug: "heart", view: "gallery", show: "gallery", read: "book", cellar: "stairs", spot: "key",
-  casino: "cards", bank: "bank", food: "food", visit: "users", gift: "gift", stockLook: "magnifier", lesson: "notebook", sign: "stamp", board: "scroll",
+  casino: "cards", bank: "bank", food: "food", visit: "users", gift: "gift", stockLook: "magnifier", lesson: "notebook", sign: "stamp", board: "scroll", withNpc: "stairs",
   readWeek: "book", dailyAll: "star", showDays: "gallery", ending: "book" };
 // 去哪裡做：按鈕上寫地點（11-20，翊文：按了直接跳房間，看起來像按錯）
 const PLACE = { workshop: "手作坊", commission: "委託櫃台", fusion: "融合室", pillow: "抱枕工作台", gallery: "畫廊", origin: "圖書館", cellar: "地下收藏庫", casino: "賭場", bank: "銀行", friends: "館友名單", signin: "簽到", board: "公佈欄" };
