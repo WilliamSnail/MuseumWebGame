@@ -9,7 +9,7 @@ import { CAS_ART } from "../../../shared/casino/art.js";
 import { NET } from "../core/net_firebase.js";
 import { CAS_AUC } from "../../../shared/casino/auction.js";
 import { NUM } from "../../../shared/config.js";
-import { APPLAUSE, aucDealDone } from "../../../shared/applause.js";
+import { APPLAUSE, aucDealDone } from "../../../shared/social/applause.js";
 import { ADDONS, UI, btn, celebrate, go, h, note, setChips, snd, sndFile } from "../core/ui_core.js";
 import { reloadSave } from "../panels/ui_login.js";
 

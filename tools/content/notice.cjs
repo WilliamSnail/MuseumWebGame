@@ -1,4 +1,4 @@
-// 加壹則館方公告：寫成 content/notices/<id>.json（壹則壹個檔，11-16 公告拆檔：以前都插在 shared/notices.js 最上面，同時上線的 PR 一直撞）
+// 加壹則館方公告：寫成 content/notices/<id>.json（壹則壹個檔，11-16 公告拆檔：以前都插在 shared/game/notices.js 最上面，同時上線的 PR 一直撞）
 // 不用手動打 id、日期、area、到期日；area 打錯會直接擋下來，不會歸到「其他」。
 //   npm run notice -- --area 賭場 --title "賭場同桌不用往下滑了" "第壹點" "第二點"
 //   選填：--id casino-xxx-2026-11（沒給就用 upd-日期-標題雜湊）  --section 改了什麼（段落名，預設「改了什麼」）
@@ -7,7 +7,7 @@
 // 句子照第 1 代用「壹」：這裡把「一」換成「壹」以外的字不會動，「一」會提醒（不擋，因為「一起」這類有時就是要用）。
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const ROOT = path.join(__dirname, "..", "..");
-const FILE = path.join(ROOT, "shared", "notices.js"); // 只讀 NOTICE_AREAS、NOTICE_CATS
+const FILE = path.join(ROOT, "shared", "game", "notices.js"); // 只讀 NOTICE_AREAS、NOTICE_CATS
 const DIR = path.join(ROOT, "content", "notices");
 
 function readList(name) {
@@ -64,7 +64,7 @@ if (require.main === module) {
     if (o.dry) { console.log(block); process.exit(0); }
     fs.mkdirSync(DIR, { recursive: true });
     fs.writeFileSync(path.join(DIR, n.id + ".json"), block);
-    require("./notices_build.cjs").write(); // 本機的 shared/notices_data.js 也更新
+    require("./notices_build.cjs").write(); // 本機的 shared/game/notices_data.js 也更新
     console.log(`✓ 加好公告 content/notices/${n.id}.json（${n.area}，${n.publish}～${n.expire}）`);
     const w = warnOne(o.lines); if (w) console.log(w);
   } catch (e) { console.error("✗ " + e.message); process.exit(1); }

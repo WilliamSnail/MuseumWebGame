@@ -51,14 +51,14 @@ import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance
 import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "../shared/casino/stock_grp.js";
 import { casSellForDebt } from "../shared/casino/debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "../shared/casino/advisor.js";
-import { MAIL_DAYS } from "../shared/mailbox.js";
+import { MAIL_DAYS } from "../shared/social/mailbox.js";
 import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "../shared/npc/spend.js";
 import { casInvestPublic, casInvestRun } from "../shared/casino/invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "../shared/casino/stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "../shared/casino/stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "../shared/casino/bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "../shared/casino/live.js";
-import { eventLive, eventsFromWeeks } from "../shared/events.js";
+import { eventLive, eventsFromWeeks } from "../shared/story/events.js";
 import { EVENT_WEEKS } from "../shared/events_data.js";
 import { CAS_WEEK_LIB } from "../shared/casino_week_data.js";
 import { setRng, taipeiDay } from "../shared/logic.js";

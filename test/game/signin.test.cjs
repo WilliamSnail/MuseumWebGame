@@ -1,4 +1,4 @@
-// 每日簽到、每週全簽到、節日（shared/signin.js、shared/holidays.js，決定 0030）：node test/game/signin.test.cjs（npm test 也會跑）
+// 每日簽到、每週全簽到、節日（shared/social/signin.js、shared/story/holidays.js，決定 0030）：node test/game/signin.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

@@ -15,9 +15,9 @@
 //  公開的只有館友暱稱、參觀者的名字、職業、在哪壹層、做了幾隻、哪壹天：不放 email、不放整份存檔。
 //  純函式：不碰資料庫、不碰 DOM。
 // ================================================================
-import { NUM } from "./config.js";
-import { addDays, isFree } from "./logic_base.js";
-import { jobInfo } from "./legacy.js";
+import { NUM } from "../config.js";
+import { addDays, isFree } from "../logic_base.js";
+import { jobInfo } from "../legacy.js";
 
 export const LOST_TEXT = {
   thing: "號碼牌",

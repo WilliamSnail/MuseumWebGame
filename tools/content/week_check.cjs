@@ -17,7 +17,7 @@ const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 const LIMITS = { foeName: 12, foeText: 40, foeCard: 80, weeklyWords: 40, weekTitle: 16, summaryLine: 60, lineName: 16, anomalyTitle: 24, anomalyText: 60, board: 44,
   bookTitle: 16, spine: 6, page: 120, bookHint: 40, showTitle: 14, showIntro: 60, workTitle: 14, workLine: 50,
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3,
-  understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6, // 線索和看懂（shared/clues.js）
+  understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6, // 線索和看懂（shared/story/clues.js）
   yugaSays: 40, yugaDone: 40 }; // Yuga Bot 交代的任務（每日任務的 giver、says、done）
 // 禁用字（新聞的界線：docs/規劃/每週劇情.md 第三節、docs/規則/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
 // 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
@@ -89,7 +89,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     if ("mood" in r && !isInt(r.mood, 1, 10)) E(where, "mood 要是 1～10 的整數");
     if ("items" in r) {
       if (!Array.isArray(r.items) || r.items.length > 2) E(where, "items 最多 2 樣");
-      else r.items.forEach(id => { if (!G.STORY_ITEMS[id]) E(where, `沒有「${id}」這種東西（shared/story.js 的 STORY_ITEMS）`); });
+      else r.items.forEach(id => { if (!G.STORY_ITEMS[id]) E(where, `沒有「${id}」這種東西（shared/story/core.js 的 STORY_ITEMS）`); });
     }
     if (!o.optional && !r.insp && !r.mood && !(r.items && r.items.length) && !r.skill) E(where, "獎勵是空的");
   };
@@ -589,7 +589,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   });
   if (Object.keys(lib.spare).length < 2) E("content/weeks/備用/一天", "至少要有 2 個備用的一天");
 
-  // ---------- 線索和看懂（shared/clues.js；格式 content/README.md「線索和看懂」） ----------
+  // ---------- 線索和看懂（shared/story/clues.js；格式 content/README.md「線索和看懂」） ----------
   // clue 只能放在書、房間（adds）、今日特展的畫（show.works）；放在別的地方遊戲不會算，所以擋。need 的線索要在同一天或更早已經存在
   {
     const where = (label, n) => `${label}/d${n}.json`, sources = {}, defIds = {};

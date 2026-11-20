@@ -1,5 +1,5 @@
 // ================================================================
-//  邀請、隊伍、兩個人一起融合（多人版 M3）。規則在 shared/party.js、shared/systems.js 的 fuseTogether。
+//  邀請、隊伍、兩個人一起融合（多人版 M3）。規則在 shared/social/party.js、shared/systems.js 的 fuseTogether。
 //  狀態放 Realtime Database：
 //    /invites/{iid}     邀請（只有 Functions 讀寫）。回覆了就刪掉；過期的在同一個人下次邀請時刪掉
 //    /sent/{uid}/{iid}  這個人送出去、還沒回覆的邀請（to、kind、expires）：找自己的舊邀請用，不用在 /invites 建索引
@@ -13,7 +13,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
-import { PARTY, PARTY_KINDS, canStartParty, fixParty, inviteOver, inviteProblem, newInvite, newParty, partyJoin, partyLeave, partyMembers, partyPick, partyReady, pruneProblem } from "../shared/party.js";
+import { PARTY, PARTY_KINDS, canStartParty, fixParty, inviteOver, inviteProblem, newInvite, newParty, partyJoin, partyLeave, partyMembers, partyPick, partyReady, pruneProblem } from "../shared/social/party.js";
 import { hashStr, mulberry32, setDayClock, setRng } from "../shared/logic.js";
 import { fuseTogether } from "../shared/systems.js";
 

@@ -1,10 +1,10 @@
 // ================================================================
 //  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/規劃/多人實作.md）。對方不在線也能用。
-//  規則在 shared/gifts.js、shared/mailbox.js；一次呼叫要做的事在 shared/visit.js 的 step…（純函式，測試 test/game/visit.test.cjs）。
+//  規則在 shared/social/gifts.js、shared/social/mailbox.js；一次呼叫要做的事在 shared/social/visit.js 的 step…（純函式，測試 test/game/visit.test.cjs）。
 //  這裡只讀資料庫、叫 step、在同一個 Firestore 交易裡寫回去。
 //  資料（都只有 Functions 讀寫，firestore.rules 沒開給瀏覽器）：
 //    saves/{uid}             存檔。伺服器改了 rev 加一，再送 save_changed（原則 3）
-//    halls/{uid}             訪客簿：誰哪一天來過、按讚、留言（格式見 shared/visit.js）
+//    halls/{uid}             訪客簿：誰哪一天來過、按讚、留言（格式見 shared/social/visit.js）
 //    mail/{uid}/items/{id}   伺服器的信：送的佩佩、來訪的謝禮。領了標 claimed，不刪（資料庫只加不刪）
 //    calls/{uid}/items/{id}  「請你去看我的展廳」：編號是 call-日期-請的人，所以一天一位只有一則。看過標 seen，不刪
 //  通知（Realtime Database 的 /inbox/{uid}）：mail_new（有新的信）、hall_news（有人來過、按讚、留言）、hall_call（請你去看展廳）、save_changed。
@@ -16,13 +16,13 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
 import { NUM } from "../shared/config.js";
-import { dayPlus, hallView, weeklyView } from "../shared/gifts.js";
+import { dayPlus, hallView, weeklyView } from "../shared/social/gifts.js";
 import { hashStr, migrateSave, mulberry32, nowMs, setRng, todayStr } from "../shared/logic.js";
 import { weekIndex } from "../shared/logic_base.js";
-import { weeklyTheme } from "../shared/themeshow.js";
+import { weeklyTheme } from "../shared/story/themeshow.js";
 import { markAct, markGift } from "../casino/task_act.js";
 import { friendTalent, learnFromFriend } from "../shared/shop.js";
-import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "../shared/visit.js";
+import { callRow, cleanHallView, guestNews, mailRow, stepClaimMail, stepHallAct, stepHallCall, stepSendGift, stepVisitHall, stepWeeklyView } from "../shared/social/visit.js";
 
 // ---------- 跟館友學（決定 0032，規則在 shared/shop.js） ----------
 // 參觀者今天第一次走進這間展廳時叫一次：LEARN_ON_VISIT(我的 P, 主人的 P)，在交易裡，可以改「我的 P」。

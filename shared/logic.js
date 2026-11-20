@@ -7,11 +7,11 @@ import { CLIENT_LINES } from "./systems_text.js";
 import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc/core.js";
 import { BASE_TOTAL, CATS, CORE_CATS, DAY_CLOCK, DAY_MS, DAY_START_HOUR, DECO_CATS, DEFAULT_PICK, KIND_CODE, NOW_CLOCK, PILLOW_CATS, PILLOW_TOTAL, QUIRK_TASKS, RARITY_ORDER, RNG, ROLLED, TZ_HOURS, activeQuirks, addDays, allOpts, asList, attrsOf, b64d, b64e, baseOpts, blockedSet, catOfOption, clampN, codexCount, coreKey, cureByTask, dailyCommissions, daysBetween, describePepe, exhibitById, exhibitOpen, fixQuirks, fromKey, fullPick, gainSan, galleryInsp, grantOption, hallItem, hallScore, hallThemes, isFree, isUnlocked, limitedHome, needSatisfiable, normKey, normPillowKey, nowMs, optOf, parsePillowKey, partOf, pepeKey, pickOne, possibilities, progressEvents, quirkDaysOf, quirkDoneDays, quirkLive, quirkSpan, rarityRank, renameKey, renameVal, rollD100, rollExpr, sortUnlocked, specAllows, todayStr, traitSum, usable } from "./logic_base.js";
 import { fixLegacy, leaveLegacy, newVisit, visitorRecord } from "./legacy.js";
-import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./signin.js";
+import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./social/signin.js";
 import { fixShop } from "./shop.js";
-import { fixShow, newShow } from "./themeshow.js";
+import { fixShow, newShow } from "./story/themeshow.js";
 import { hallSize, hasTalent, skillCheck } from "./systems.js";
-import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./visitors.js";
+import { fixVisitors, freshDayVis, hasSlots, takeVisitorNo } from "./social/visitors.js";
 
 // 底層搬到 logic_base.js，從這裡再匯出一次（web、functions 還是從這個檔拿）
 export * from "./logic_base.js";
@@ -86,11 +86,11 @@ export function newProfile(mode) {
     keys: free ? { bg: true, hold: true, book4: true } : {}, upgrades: free ? Object.fromEntries(UPGRADES.map(u => [u.id, true])) : {},
     recipes: {}, repaired: {}, injured: {}, job: null, skills: null, skillTicks: {}, history: [],
     cellar: { best: 0, cleared: {}, won: {}, floorsDone: {}, run: null }, lines: {}, weekly: null, giftsIn: {},
-    // 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西（shared/signin.js）。博物館的，換參觀者不會跟著換
+    // 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西（shared/social/signin.js）。博物館的，換參觀者不會跟著換
     limited: { got: {}, wear: { stand: null, frame: null }, stock: {} },
     // 第 4 版（11-09，決定 0032）：兌換所（shared/shop.js）。shop 是博物館的（買到的裝備、試煉房間這週的次數）；gear 是現在這位穿著的（VISITOR_KEYS）
     shop: { gear: {}, trials: {} }, gear: [],
-    // 第 4 版（11-09，決定 0035）：主題展辦到哪裡、策展手記讀過沒（shared/themeshow.js）。博物館的，換參觀者不會跟著換
+    // 第 4 版（11-09，決定 0035）：主題展辦到哪裡、策展手記讀過沒（shared/story/themeshow.js）。博物館的，換參觀者不會跟著換
     themeShow: newShow(),
     // 第 4 版（11-08 翊文）：新解開的東西在哪個房間、看過了沒（shared/fresh.js）
     fresh: {},
@@ -98,7 +98,7 @@ export function newProfile(mode) {
     //   cands 是以前「3 位候選人」還沒挑的，0028 以後一直是 null（舊存檔裡有的留著，選職業時清掉）
     perk: null, flaw: null, cands: null, legacy: null, relics: [],
     visit: { from: todayStr(), sec0: 0, made0: 0, deepest: 0, understood: {}, where: null, made: 0, sec: 0 },
-    // 第 4 版（11-08 翊文）：一個帳號最多 3 位參觀者、共用博物館（shared/visitors.js，決定 0018）。自由模式沒有位子
+    // 第 4 版（11-08 翊文）：一個帳號最多 3 位參觀者、共用博物館（shared/social/visitors.js，決定 0018）。自由模式沒有位子
     ...(free ? {} : { vid: "v1", vname: null, slot: 0, oddSeen: {}, visitors: [], visitorCount: 1 }),
   };
 }
@@ -744,7 +744,7 @@ export const SAVE_VERSION = 3;
 export function newSave() {
   return { v: SAVE_VERSION, current: null, profiles: { challenge: null, free: null },
     settings: { font: "m", reduceMotion: false, motionOffDone: true, muted: false, dayMin: 0, holidayLook: true, oldLobby: false }, tutorialDone: false, gen2Migrated: false,
-    signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/signin.js）
+    signin: newSignin() }; // holidayLook：節日那天換一下外觀（設定可以關，決定 0030）；signin：每日簽到，帳號的（shared/social/signin.js）
 }
 // 舊名字換新名字（RENAMED）：key 是用「|」接起來的選項
 // 文字裡有沒有舊名字。新名字可能包含舊名字（俄國8+9 裡面就有俄國8），要先拿掉新名字再找，不然每次載入都會當成舊存檔

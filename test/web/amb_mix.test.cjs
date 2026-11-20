@@ -1,4 +1,4 @@
-// 賭場環境音跟熱鬧連動（shared/room_mood.js 的 heatOf、ambMix）＋ fx.js 的賭場、銀行環境音會建、會停（用假的 AudioContext）
+// 賭場環境音跟熱鬧連動（shared/social/room_mood.js 的 heatOf、ambMix）＋ fx.js 的賭場、銀行環境音會建、會停（用假的 AudioContext）
 // node test/web/amb_mix.test.cjs（npm test 也會跑）。聲音好不好聽 AI 聽不到，這裡只量「有沒有建節點、有沒有停、有沒有丟錯」。
 const assert = require("assert");
 const fs = require("fs");

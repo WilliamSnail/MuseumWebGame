@@ -1,4 +1,4 @@
-// 館內公佈欄（shared/notices.js）和信箱（shared/mailbox.js）：node test/web/notice.test.cjs（npm test 也會跑）
+// 館內公佈欄（shared/game/notices.js）和信箱（shared/social/mailbox.js）：node test/web/notice.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

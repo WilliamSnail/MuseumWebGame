@@ -926,7 +926,7 @@ export const TRIAL_ROOMS = [
       { label: "硬把牠搬開", check: { type: "power", target: 18 }, success: { text: "搬開了。牠還在念，不過你已經聽懂牠怕什麼。" }, fail: { text: "石膏比你想的還重，有壹隻被壓到。", injure: true } },
     ] },
 ];
-// 每週排行榜（決定 0039，shared/board.js）。公告和遊戲裡共用。都是草稿，Yuga 可以改。
+// 每週排行榜（決定 0039，shared/social/board.js）。公告和遊戲裡共用。都是草稿，Yuga 可以改。
 // 只寫大家都看得到的東西：不提還沒開放的劇情、不提理智、怪癖、靈感。提醒要鼓勵，不點名誰最後。emoji 放在 board.js（這個檔不放 emoji）
 export const BOARD_TEXT = {
   title: "佩佩博物館2　本週榜單",
@@ -985,7 +985,7 @@ export const SIGNIN_TEXT = {
   dup: "這個已經有了，換成靈感",
   limitedNote: "限定的東西不算進「全部解鎖」，另外算。",
 };
-// 節日（shared/holidays.js 的 HOLIDAY_INFO）：名字、節日的話（館方的口吻，之後每週劇情可以拿來用）、公告多寫的、那天畫廊的藝術品
+// 節日（shared/story/holidays.js 的 HOLIDAY_INFO）：名字、節日的話（館方的口吻，之後每週劇情可以拿來用）、公告多寫的、那天畫廊的藝術品
 // art 照 HOLIDAY_INFO 的 art 順序：title（標題）、lines（說明牌），可以加 successAside、failAside（看完的旁白）
 export const HOLIDAY_TEXT = {
   newyear: { name: "元旦", words: "新的壹年開館了。館長在大門口掛了壹串金色的紙花，說今年的佩佩會更多。", notice: ["大廳的燈換成金色的，櫃台多放了壹盤糖。"],
@@ -1025,7 +1025,7 @@ export const HOLIDAY_TEXT = {
     art: [{ title: "快要十二點的肖像", lines: ["肖像上方掛了壹面時鐘，指針停在十二點前。", "館員說，這幅畫每年只在今天走動壹次。"] }] },
 };
 
-// 趣味節日（shared/holidays.js 的 FUN_INFO，決定 0044）：名字、館內的話（博物館的口吻，草稿，Yuga 可以改）、hint＝跟遊戲裡哪間房有呼應（沒有就不寫）
+// 趣味節日（shared/story/holidays.js 的 FUN_INFO，決定 0044）：名字、館內的話（博物館的口吻，草稿，Yuga 可以改）、hint＝跟遊戲裡哪間房有呼應（沒有就不寫）
 export const FUN_TEXT = {
   birdday: { name: "賞鳥日", line: "窗台上來了壹位不買門票的訪客，館員默默把牠登記成常客。" },
   hatday: { name: "帽子日", line: "館員把全館的帽子排成壹排，說今天每壹頂都有被戴到的權利。", hint: "手作坊可以幫佩佩挑壹頂喜歡的帽子。" },

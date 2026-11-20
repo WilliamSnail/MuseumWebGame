@@ -17,13 +17,13 @@
 //    sections   [[段落名, [句子, …]], …]，畫面會寫成「〓段落名〓」
 //    area       （選填，11-14 起）同壹天的更新合成壹張時，歸在哪壹段：NOTICE_AREAS 其中壹個。沒寫就照 id 的關鍵字自動歸（noticeArea），歸不了的進「其他」。新公告請寫
 //    cta        「前往」按鈕：{ label, room, params } 或 { label, panel: "mail" }
-//    gift       附在信箱的獎勵：{ id, title, insp, mood }（shared/mailbox.js 會寄出去，一個 id 只寄一次）
+//    gift       附在信箱的獎勵：{ id, title, insp, mood }（shared/social/mailbox.js 會寄出去，一個 id 只寄一次）
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { WEEKLY_TEXT } from "./systems_text.js";
-import { weekIndex } from "./logic_base.js";
-import { weeklyTheme } from "./themeshow.js";
-import { holidayNotices } from "./holidays.js";
+import { WEEKLY_TEXT } from "../systems_text.js";
+import { weekIndex } from "../logic_base.js";
+import { weeklyTheme } from "../story/themeshow.js";
+import { holidayNotices } from "../story/holidays.js";
 // 公告資料：content/notices/<id>.json → tools/content/notices_build.cjs 合成這個檔（不進 git）
 import { NOTICES_DATA } from "./notices_data.js";
 
@@ -47,7 +47,7 @@ export function noticeArea(n) {
 }
 const RANK = { urgent: 3, important: 2, normal: 1, low: 0 };
 
-// 館方公告的資料：一則一個檔 content/notices/<id>.json（npm run notice 加新的），tools/content/notices_build.cjs 合成 shared/notices_data.js
+// 館方公告的資料：一則一個檔 content/notices/<id>.json（npm run notice 加新的），tools/content/notices_build.cjs 合成 shared/game/notices_data.js
 export const NOTICES = NOTICES_DATA;
 
 // 這週的特展（跟展廳的「本週特展」同一個主題）。台灣時間週一 05:00 換週（決定 0019，weekIndex）
@@ -74,7 +74,7 @@ export function visibleNotices(P, today) {
   const list = NOTICES.filter(n => noticeLive(n, today));
   const w = weeklyNotice(P);
   if (w) list.push(w);
-  list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/holidays.js，決定 0030）
+  list.push(...holidayNotices(today)); // 節日公告：節日前兩天貼、節日最後一天下架（shared/story/holidays.js，決定 0030）
   NOTICE_EXTRA.forEach(f => { const n = f(P, today); if (n) list.push(n); });
   // 排序：新的在前 → 同壹天重要的在前 → 寫在前面的在前。置頂（pinned）不再影響排序
   // （翊文 11-12：「最新的要在最上面」——11-10 的版本是置頂優先，置頂的「開館」「結伴下樓」壓在 11-12 的更新上面）

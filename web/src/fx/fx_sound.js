@@ -530,7 +530,7 @@ import { api, now, pick, rand } from "./fx_core.js";
       n.connect(fl); fl.connect(v); v.connect(to); n.start(0, Math.random());
       return { n, fl, v };
     }
-    // 音效檔（11-15，翊文給的 Pixabay 素材；清單、來源、授權在 shared/sfx_files.js 和 web/public/sfx/來源.md）。
+    // 音效檔（11-15，翊文給的 Pixabay 素材；清單、來源、授權在 shared/game/sfx_files.js 和 web/public/sfx/來源.md）。
     //   用到才下載（/sfx/<id>.mp3），同壹個檔只抓壹次；抓不到、解不開就安靜，不出錯。
     const FILES = {};
     let lastSfxAt = 0; // 館友按鈕的音效最後壹次響的時間（銀行的環境小聲音避開它，11-16）
@@ -893,7 +893,7 @@ import { api, now, pick, rand } from "./fx_core.js";
         return { nodes: [room.n], timers: [pad, steps, nost] };
       },
       cellar(c, g, own) { // 地下收藏庫：照「第幾層」和「在做什麼」換聲音（11-15 翊文：「看看每層地下室適合那些聲音，以及打鬥或房間探索」→「照這個做」）
-        // 錄音都是 Pixabay（來源在 shared/sfx_files.js）。ui_core.js 的 audioState 用 ambMix({ floor, mode }) 告訴這裡現在在哪；沒告訴（選樓層的地方）用 base。
+        // 錄音都是 Pixabay（來源在 shared/game/sfx_files.js）。ui_core.js 的 audioState 用 ambMix({ floor, mode }) 告訴這裡現在在哪；沒告訴（選樓層的地方）用 base。
         //   mode：map 看地圖、選路／explore 房間探索／fight 遇到怪物／gate 守門／rest 休息點
         //   每層：bed＝三條底音的音量（wind 風、basement 地下室錄音、sewer 下水道管線）；odd＝偶爾冒出來的聲音；gap＝幾秒冒壹次；drip 合成的滴水；coming＝會不會很久壹次「有人來了」
         const FLOOR = {
@@ -909,7 +909,7 @@ import { api, now, pick, rand } from "./fx_core.js";
         const b = bed(c, g, 'bandpass', 420, 1.1, 0.035); // 合成的風，墊底
         const L = { wind: fileLoop(c, g, 'wind', 0), basement: fileLoop(c, g, 'basement-ambience', 0), sewer: fileLoop(c, g, 'sewer-pipe', 0), void: fileLoop(c, g, 'void-echo', 0), drips: fileLoop(c, g, 'water-drips', 0), cave: fileLoop(c, g, 'cave-drips', 0), waves: fileLoop(c, g, 'waves', 0) }; // cave：選樓層大廳的洞穴滴水；waves：B4 的水波（11-16 翊文） // drips：11-16 翊文「這可以改成地下室廳的水聲特效」，取代合成的滴水，音量照每層的 drip
         const nodes = [b.n, lfo(c, 0.11, 260, b.fl.frequency), lfo(c, 0.17, 0.015, b.v.gain), L.wind.n, L.basement.n, L.sewer.n, L.void.n, L.drips.n, L.cave.n, L.waves.n];
-        // 11-15 翊文給的音樂（Pixabay，shared/sfx_files.js）：用到才下載（lazy）。戰鬥＝ready-fight、守門＝stairs-boss、B2～B5 平常＝緊張的 suspense-*（B1 不放）
+        // 11-15 翊文給的音樂（Pixabay，shared/game/sfx_files.js）：用到才下載（lazy）。戰鬥＝ready-fight、守門＝stairs-boss、B2～B5 平常＝緊張的 suspense-*（B1 不放）
         const LZ = {};
         const music = (id, v, fade) => { // v＝這個狀態要多大聲；0 而且還沒建過就不建（不下載）
           if (!LZ[id]) { if (v <= 0) return; LZ[id] = fileLoop(c, g, id, 0); nodes.push(LZ[id].n); }
@@ -980,14 +980,14 @@ import { api, now, pick, rand } from "./fx_core.js";
       },
       // 賭場：爵士感的走路低音＋刷子鼓＋電鋼琴的零星和弦（Claude 自己寫的，不是任何現成的歌）。
       // 翊文 11-15：賭場、銀行要有背景樂和環境音。D 小調 ii–V–I：Dm7 → G7 → Cmaj7 → A7 ｜ Dm7 → G7 → Cmaj7 → Cmaj7，96 拍、搖擺感，壹圈 8 小節約 20 秒。
-      // 人聲底噪（濾波雜訊）的音量、籌碼碰撞的頻率，跟「熱鬧」連動：ui_core 的 audioState 把 shared/room_mood.js 的 ambMix(heat) 傳進來（ambMix(m)），這裡不寫門檻
+      // 人聲底噪（濾波雜訊）的音量、籌碼碰撞的頻率，跟「熱鬧」連動：ui_core 的 audioState 把 shared/social/room_mood.js 的 ambMix(heat) 傳進來（ambMix(m)），這裡不寫門檻
       casino(c, g) {
         const B = 0.625, SW = B * 0.62; // 壹拍；搖擺：後半拍晚壹點
         const BASS = [[73.42, 87.31, 110, 92.5], [98, 123.47, 146.83, 69.3], [65.41, 82.41, 98, 103.83], [110, 138.59, 82.41, 69.3],
           [73.42, 87.31, 110, 92.5], [98, 123.47, 146.83, 69.3], [65.41, 82.41, 98, 103.83], [65.41, 82.41, 98, 82.41]];
         const KEYS = [[174.61, 220, 261.63, 329.63], [174.61, 246.94, 293.66, 392], [164.81, 196, 246.94, 329.63], [196, 220, 277.18, 329.63],
           [174.61, 220, 261.63, 329.63], [174.61, 246.94, 293.66, 392], [164.81, 196, 246.94, 329.63], [164.81, 196, 246.94, 329.63]];
-        const cur = { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 }; // 還沒收到 ambMix 之前的備用值（=平常）；真正的數字在 shared/room_mood.js
+        const cur = { crowd: 0.008, chipMin: 7000, chipMax: 13000, chipN: 2 }; // 還沒收到 ambMix 之前的備用值（=平常）；真正的數字在 shared/social/room_mood.js
         const crowdG = c.createGain(); crowdG.gain.value = cur.crowd; crowdG.connect(g);
         // 11-15：人聲改用真的賭場錄音（Pixabay「Casino Ambiance」），合成的 murmur 降低留著墊底（檔案還沒下載完時也有聲音）；兩個都跟熱鬧連動（crowdG）
         const nodes = murmur(c, crowdG, 1.5);
@@ -1280,7 +1280,7 @@ import { api, now, pick, rand } from "./fx_core.js";
       tinnitus(on) { want.tinnitus = !!on; sync(); },
       dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; const toEdge = v === 'edge' && want.dread !== 'edge'; want.dread = v; sync(); if (toEdge && unlocked && !(api.settings && api.settings.muted)) { const c = ctx(); if (c) fileOnce(c, bus.heart, 'pulse-rise', 0.5); } }, // 剛掉到 15 以下：升高音壹次
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
-      // 播壹次音效檔（id 見 shared/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
+      // 播壹次音效檔（id 見 shared/game/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
       file(id, g) {
         try {
           if (!isOn('sfx')) return;

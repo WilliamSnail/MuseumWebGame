@@ -3,7 +3,7 @@
 // 規則只改 shared/，不要改 functions/shared/（每次都會被蓋掉）。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
-require("../content/notices_build.cjs").write(); // 公告資料（shared/notices_data.js，不進 git）要先產生，下面才複製得到
+require("../content/notices_build.cjs").write(); // 公告資料（shared/game/notices_data.js，不進 git）要先產生，下面才複製得到
 require("../content/world_pack.cjs").write(); require("../content/market_pack.cjs").write();
 require("../content/world_events_pack.cjs").write(); // 排程填的世界事件（shared/world/events.js，決定 0092） // 世界單位名單（shared/world/roster.js，W3）先跟上 content/world/units/
 require("../content/map_pack.cjs").write(); // 館外地圖的點（shared/world/map_data.js）

@@ -1,7 +1,7 @@
 // ================================================================
 //  參觀館友的展廳、送佩佩、伺服器的信：伺服器每一步要做的事（多人版 M2，docs/規劃/多人實作.md）
 //  翊文 11-09：「之後可以參觀館友的展廳、送佩佩……也要加入立即可以使用的功能」→ 館友名片上直接有按鈕、對方不在線也能用、收到的東西馬上能用。
-//  規則本身在 shared/gifts.js、shared/mailbox.js。這個檔把「一次呼叫要做什麼」寫成純函式（step 開頭的）：
+//  規則本身在 shared/social/gifts.js、shared/social/mailbox.js。這個檔把「一次呼叫要做什麼」寫成純函式（step 開頭的）：
 //    functions/game/visit.js 只負責讀資料庫、叫這裡、把結果在同一個 Firestore 交易裡寫回去。這樣不開模擬器也測得到（test/game/visit.test.cjs）。
 //  訪客簿（Firestore 的 halls/{主人}，只有 Functions 讀寫）：
 //    { log: [{ uid, nick, day, at, like, note, paid }], likes, seenAt }
@@ -9,11 +9,11 @@
 //    paid：這筆有沒有給主人來訪的靈感。likes：累計幾個讚。seenAt：主人上次看的時間（比它新的算「新的」）。
 //  「今天」、「現在」都由呼叫的人給（伺服器的時間），不信瀏覽器。玩家打的字（暱稱、留言）一律只當資料，畫面用純文字顯示。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js";
-import { normKey, parsePillowKey, refPick } from "./logic_base.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "../config.js";
+import { normKey, parsePillowKey, refPick } from "../logic_base.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, checkHallCall, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
-import { casCleanSouvenirs, casCleanTitle } from "./casino/wallet.js";
+import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";
 
 // ---------- 訪客簿 ----------
 export function fixGuestBook(raw) {

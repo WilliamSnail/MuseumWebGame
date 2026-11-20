@@ -6,7 +6,7 @@
 //  - 我的展廳（hall）用 ui_hallnow.js 原本的名單（openAll）。
 //  - 資料是 ui_today.js 的 readCasino 讀 peek 時記進 UI.hallNow；讀到新的就跟著換（ui_hallnow.js 的 hallNowWatch）。開發時沒登入用假資料。
 // ================================================================
-import { matesByRoom } from "../../../shared/mates.js";
+import { matesByRoom } from "../../../shared/social/mates.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, ROOM_NAMES, UI, btn, closeOnOutside, h, icon, miniLayer } from "../core/ui_core.js";
 import { crowdSummary, hallNowWatch, hallPeople, openAll } from "./ui_hallnow.js";

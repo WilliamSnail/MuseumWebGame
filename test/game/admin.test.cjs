@@ -1,4 +1,4 @@
-// 管理員介面的摘要（shared/admin.js，決定 0033）：node test/game/admin.test.cjs（npm test 也會跑）
+// 管理員介面的摘要（shared/game/admin.js，決定 0033）：node test/game/admin.test.cjs（npm test 也會跑）
 // 資料都是假的。測試：摘要算得對、壞掉的存檔不會丟錯、舊存檔也能算、摘要裡沒有 email、誰是管理員。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
@@ -205,7 +205,7 @@ T("摘要裡沒有 email、uid、整份存檔", G => {
 });
 T("程式裡沒有寫死 email", () => {
   const ROOT = path.join(__dirname, "..", "..");
-  ["shared/admin.js", "functions/game/admin.js", "web/src/panels/ui_admin.js"].forEach(f => {
+  ["shared/game/admin.js", "functions/game/admin.js", "web/src/panels/ui_admin.js"].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), "utf8");
     assert.ok(!/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(src), `${f} 裡有 email`);
   });

@@ -7,7 +7,7 @@ import { CELLAR, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./sys
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, canStartCellar, cellarFloor, clampN, codexCount, dailyCommissions, decoOpen, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, hasUp, isFree, isUnlocked, knownTotal, limitedHome, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sequelOpen, sortUnlocked, specAllows, teamItems, todayStr, traitSum, understandCheck, usable } from "./logic_base.js";
 import { cellarDarkLoss, jobSkill, skillOf, traitHits, traitTag } from "./legacy.js";
 import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
-import { weeklyState } from "./themeshow.js";
+import { weeklyState } from "./story/themeshow.js";
 
 // ---------- 系統 K：工坊升級 ----------
 export function hallSize(P) { return 6 + (hasUp(P, "ped7") ? 1 : 0) + (hasUp(P, "ped8") ? 1 : 0); }
@@ -238,7 +238,7 @@ export function startCellar(P, floor, keys) {
 export function currentRoom(P) {
   const run = P.cellar.run;
   if (!run) return null;
-  if (run.extra) return run.extra; // 每週劇情多出來的一間（shared/story.js 的 startStoryRoom）：只走這一間
+  if (run.extra) return run.extra; // 每週劇情多出來的一間（shared/story/core.js 的 startStoryRoom）：只走這一間
   const f = cellarFloor(run.floor);
   return f ? f.rooms[run.idx] || null : null;
 }

@@ -13,7 +13,7 @@ const LINKS = [["🎟 入館", SITE]];
 const footer = () => LINKS.map(([name, url]) => `${name}：${url}`).join("\n");
 const MAX = 2000; // Discord 一則訊息最多 2000 字
 
-// 這週的限時活動（決定 0041）：壞的丟掉、照時間排好（跟遊戲用同一份 shared/events.js）。evs 不給就從 week.json 的 events 整理
+// 這週的限時活動（決定 0041）：壞的丟掉、照時間排好（跟遊戲用同一份 shared/story/events.js）。evs 不給就從 week.json 的 events 整理
 let SHARED = null;
 const shared = () => SHARED || (SHARED = require("../../test/load_shared.cjs").load());
 function weekEvents(w) {

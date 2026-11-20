@@ -12,13 +12,13 @@
 //        --loop：照 --trim 截一段，頭尾 3 秒交叉淡化，可以接起來循環；64 kbps、I=-28
 //        --trim 起:迄  只留這一段（秒；只給「:迄」就是從頭）；--fadeout N 最後 N 秒淡出
 //        --stereo 保留雙聲道；--lufs、--kbps 自己指定；超過 800 KB 會警告（test/web/sfx_files.test.cjs 會擋）
-//   3. 在 shared/sfx_files.js 和 web/public/sfx/來源.md 各加一列（id 重複就報錯）。
+//   3. 在 shared/game/sfx_files.js 和 web/public/sfx/來源.md 各加一列（id 重複就報錯）。
 //   4. 原檔先複製到 .claude/交接/音效/原檔/（桌面的檔會被移走）。
 //   5. 印出接下來要做的：在哪裡呼叫、跑 npm run fx:report。
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 
 const ROOT = path.join(__dirname, "..", "..");
-const SFX_JS = path.join(ROOT, "shared", "sfx_files.js");
+const SFX_JS = path.join(ROOT, "shared", "game", "sfx_files.js");
 const SRC_MD = path.join(ROOT, "web", "public", "sfx", "來源.md");
 const OUT_DIR = path.join(ROOT, "web", "public", "sfx");
 const MAX_KB = 800;
@@ -58,13 +58,13 @@ function nameWithNote(name, o) {
   if (o.fadeout) parts.push(`最後 ${n1(o.fadeout)} 秒淡出`);
   return parts.length ? `${name}（${parts.join("，")}）` : name;
 }
-// 加到 shared/sfx_files.js 的 SFX_FILES 最後面；回傳新的檔案內容。id 重複就丟錯
+// 加到 shared/game/sfx_files.js 的 SFX_FILES 最後面；回傳新的檔案內容。id 重複就丟錯
 function addToSfxFiles(text, e) {
   const re = new RegExp('^\\s*"' + e.id.replace(/[-]/g, "\\-") + '":', "m");
-  if (re.test(text)) throw new Error(`id「${e.id}」已經在 shared/sfx_files.js 裡了`);
+  if (re.test(text)) throw new Error(`id「${e.id}」已經在 shared/game/sfx_files.js 裡了`);
   const row = `  ${JSON.stringify(e.id)}: { name: ${JSON.stringify(e.name)}, by: ${JSON.stringify(e.by)}, url: ${JSON.stringify(e.url)},${e.loop ? " loop: true," : ""} use: ${JSON.stringify(e.use)} },\n`;
   const end = text.indexOf("\n};\nexport const SFX_LICENSE");
-  if (end < 0) throw new Error("shared/sfx_files.js 的格式變了（找不到 SFX_FILES 結尾），tools/assets/sfx_add.cjs 要跟著改");
+  if (end < 0) throw new Error("shared/game/sfx_files.js 的格式變了（找不到 SFX_FILES 結尾），tools/assets/sfx_add.cjs 要跟著改");
   return text.slice(0, end + 1) + row + text.slice(end + 1);
 }
 // 加到 來源.md 表格最後一列後面
@@ -183,7 +183,7 @@ async function main() {
   fs.writeFileSync(SFX_JS, addToSfxFiles(fs.readFileSync(SFX_JS, "utf8"), e));
   fs.writeFileSync(SRC_MD, addToSourceMd(fs.readFileSync(SRC_MD, "utf8"), e));
 
-  console.log(`\n做好了：web/public/sfx/${a.id}.mp3（${kb} KB，${n1(outDur)} 秒，${opt.stereo ? "雙" : "單"}聲道 ${kbps} kbps）\n登記：shared/sfx_files.js、web/public/sfx/來源.md\n原檔備份：${bakFile}\n`);
+  console.log(`\n做好了：web/public/sfx/${a.id}.mp3（${kb} KB，${n1(outDur)} 秒，${opt.stereo ? "雙" : "單"}聲道 ${kbps} kbps）\n登記：shared/game/sfx_files.js、web/public/sfx/來源.md\n原檔備份：${bakFile}\n`);
   console.log("接下來：");
   console.log(loop
     ? `  1. 環境音：在 web/src/fx/fx.js 的 AMB.<房間> 裡加  fileLoop(c, g, '${a.id}', 音量).n（記得放進 nodes）`

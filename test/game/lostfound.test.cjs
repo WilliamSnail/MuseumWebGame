@@ -1,4 +1,4 @@
-// 招領（shared/lostfound.js，翊文 11-13）：node test/game/lostfound.test.cjs（npm test 也會跑）
+// 招領（shared/social/lostfound.js，翊文 11-13）：node test/game/lostfound.test.cjs（npm test 也會跑）
 // 理智歸零的參觀者做成招領單、只公開該公開的、幾天內遇得到、自己的遇不到、送回去壹次、送的人和原本的館友拿到什麼、舊存檔。數字讀 NUM。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");

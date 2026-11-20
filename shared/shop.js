@@ -20,9 +20,9 @@ import { LIMITED_ITEMS, NUM, SKILLS } from "./config.js";
 import { GEAR_TEXT, SHOP_TEXT, TRIAL_ROOMS } from "./systems_text.js";
 import { asList, canStartCellar, cellarFloor, gearItem, isFree, ownsGear, parseDice, rollExpr, shopObj, shopState, todayStr, weekIndex, wornGear } from "./logic_base.js";
 import { jobSkill } from "./legacy.js";
-import { grantLimited, limitedInfo, ownsLimited } from "./signin.js";
-import { eventRunFix, eventScale } from "./events.js";
-import { STORY_ITEMS, itemDesc, storyState } from "./story_state.js";
+import { grantLimited, limitedInfo, ownsLimited } from "./social/signin.js";
+import { eventRunFix, eventScale } from "./story/events.js";
+import { STORY_ITEMS, itemDesc, storyState } from "./story/state.js";
 
 // ---------- 存檔 ----------
 // 穿的清單整理乾淨：認得、有買、不重複、不超過上限

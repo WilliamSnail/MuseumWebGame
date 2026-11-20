@@ -61,7 +61,7 @@ const names = Object.keys;
 // 5. 改名對照
 {
   const text = "export const CAS_MENU = [\n  { n: 2, id: \"tea\", name: \"冰涼啤酒\", price: 45 },\n  { n: 4, id: \"juice\", name: \"堂主推薦葡萄酒\" },\n];";
-  const base = { "shared/casino/text.js": text, "shared/story.js": "export const TASK_GIVERS = { yuga: \"Yuga Bot\", hall: \"堂主\" };" };
+  const base = { "shared/casino/text.js": text, "shared/story/core.js": "export const TASK_GIVERS = { yuga: \"Yuga Bot\", hall: \"堂主\" };" };
   const rn = [{ old: "冰涼麥茶", neu: "冰涼啤酒", table: "CAS_MENU", when: "t" }];
   const files = { ...base, "web/src/a.js": "const s = '給你壹杯冰涼麥茶';", "docs/規則/x.md": "冰涼麥茶", "docs/決定/0040.md": "冰涼麥茶", "content/weeks/w/d1.json": "冰涼麥茶" };
   const bad = R.checkNames(names(files), mk(files), rn);

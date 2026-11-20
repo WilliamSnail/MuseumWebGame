@@ -1,7 +1,7 @@
 // 掌聲門檻、整點鐘聲的判斷（11-16）
 const assert = require("assert");
 (async () => {
-  const A = await import("../../shared/applause.js");
+  const A = await import("../../shared/social/applause.js");
   const T = (y, mo, d, h, mi, s = 0) => Date.UTC(y, mo - 1, d, h - 8, mi, s); // 台灣時間 → 毫秒
   assert.strictEqual(A.taipeiHour(T(2026, 11, 16, 0, 0)), 0);
   assert.strictEqual(A.taipeiHour(T(2026, 11, 16, 23, 59, 59)), 23);

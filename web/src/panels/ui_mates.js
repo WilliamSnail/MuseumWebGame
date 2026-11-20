@@ -1,6 +1,6 @@
 // ================================================================
 //  大廳導覽圖上的館友（翊文 11-09：「上線的館友目前在哪個房間可以在大廳導覽圖內顯示」）
-//  規則在 shared/mates.js（名單 → 每間房有誰）。樣式在 css/mates.css。
+//  規則在 shared/social/mates.js（名單 → 每間房有誰）。樣式在 css/mates.css。
 //  - 每間房的下緣（放不下就上緣）一排小名牌：燈號＋暱稱；暫離的淡一點；放不下的寫「+N」。
 //  - 不在圖上的：門口、設定放圖下面一行「在別處」；結局、黑房間、不認得的不顯示。
 //  - 只更新導覽圖上的 <g class="fp-mates">，不重畫大廳（大廳每次重畫會換展示的佩佩、收掉滑鼠停著的提示、打斷教學）。
@@ -8,7 +8,7 @@
 //  - 名牌 pointer-events:none，點下去是房間的點擊；單機版（沒有 NET）、斷線時不畫。
 //  ui_screens1.js 的大廳畫好導覽圖之後叫 ADDONS.planMates(plan)；名單有變時這裡自己更新。
 // ================================================================
-import { fitMates, matesByRoom } from "../../../shared/mates.js";
+import { fitMates, matesByRoom } from "../../../shared/social/mates.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, UI, h } from "../core/ui_core.js";
 

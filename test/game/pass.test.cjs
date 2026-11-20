@@ -1,4 +1,4 @@
-// 館友證和典藏冊的摘要（shared/pass.js）：node test/game/pass.test.cjs（npm test 也會跑）
+// 館友證和典藏冊的摘要（shared/social/pass.js）：node test/game/pass.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

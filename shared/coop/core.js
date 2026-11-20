@@ -27,7 +27,7 @@
 import { NUM } from "../config.js";
 import { addDays, addMyth, cellarFloor, fromKey, isFree, limitedHome, maxSan, pickOne, rollExpr, sanCheck } from "../logic_base.js";
 import { cellarDarkLoss } from "../legacy.js";
-import { eventRunFix } from "../events.js";
+import { eventRunFix } from "../story/events.js";
 import { trialById, trialState, trialWin } from "../shop.js";
 import { injureDaysOf, limitedFx, skillCheck, teamHas } from "../systems.js";
 import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopFloorOf, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";

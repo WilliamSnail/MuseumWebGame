@@ -1,4 +1,4 @@
-// 每週劇情的規則（shared/story.js）：node test/story/story.test.cjs（npm test 也會跑）
+// 每週劇情的規則（shared/story/core.js）：node test/story/story.test.cjs（npm test 也會跑）
 // 內容用真的 content/weeks/備用/（備用週「常青1」、備用的一天），正式週在測試裡用備用週複製一份。
 // 排程每週寫的正式週（content/weeks/2026-W46/ 這種）不讀進來：測試不跟著每週的內容變。
 const assert = require("assert");

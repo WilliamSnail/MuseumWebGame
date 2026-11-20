@@ -16,10 +16,10 @@
 // ================================================================
 import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "../logic_base.js";
 import { skillOf } from "../legacy.js";
-import { eventScale, eventTag } from "../events.js";
+import { eventScale, eventTag } from "../story/events.js";
 import { trialById } from "../shop.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./text.js";
-import { cleanSay } from "../party.js";
+import { cleanSay } from "../social/party.js";
 import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./base.js";
 
 // ---------- 小骰子 ----------

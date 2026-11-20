@@ -1,5 +1,5 @@
 // ================================================================
-//  招領（翊文 11-13；規則在 shared/lostfound.js，規劃 docs/規劃/銀行特展老主顧招領規劃.md 第四節）
+//  招領（翊文 11-13；規則在 shared/social/lostfound.js，規劃 docs/規劃/銀行特展老主顧招領規劃.md 第四節）
 //  lostSync   讀自己的存檔，把最近理智歸零的參觀者寫成公開的招領單：Realtime Database 的 lostFound/{id}（館友讀得到，只有這裡寫得動）。
 //             已經有的不蓋掉（送回去的標記 back 要留著）。畫面登入後、換參觀者後叫。
 //  lostReturn 送到招領處：同壹個交易改送的人的存檔（+靈感、記成看過）、寄壹封信給原本的館友（心情）、記下誰送回去的。
@@ -11,8 +11,8 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { nowMs, todayStr } from "../shared/logic.js";
-import { MAIL_DAYS } from "../shared/mailbox.js";
-import { LOST_TEXT, lostCards, lostReturnStep } from "../shared/lostfound.js";
+import { MAIL_DAYS } from "../shared/social/mailbox.js";
+import { LOST_TEXT, lostCards, lostReturnStep } from "../shared/social/lostfound.js";
 
 const db = () => getFirestore();
 const rtdb = () => getDatabase();

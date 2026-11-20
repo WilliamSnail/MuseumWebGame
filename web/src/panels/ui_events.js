@@ -1,5 +1,5 @@
 // ================================================================
-//  限時活動的畫面（決定 0041；規則 shared/events.js；內容寫在 content/weeks/<週>/week.json 的 events）
+//  限時活動的畫面（決定 0041；規則 shared/story/events.js；內容寫在 content/weeks/<週>/week.json 的 events）
 //  這個檔放：
 //    大廳的一條（還沒開始寫「今晚 20:00～22:00：○○」，進行中會倒數，結束就消失；ui_screens1.js 的 ADDONS.lobbyEvent）
 //    開跑的通知（eventNoticeTick：遊戲開著活動開始了、或活動中打開遊戲，跳壹則有按鈕的通知；決定 0045）
@@ -9,7 +9,7 @@
 //  介面上的字用「壹」。
 // ================================================================
 import { nowMs } from "../../../shared/logic.js";
-import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventNoticeText, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks, eventsToNotify } from "../../../shared/events.js";
+import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventNoticeText, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks, eventsToNotify } from "../../../shared/story/events.js";
 import { ADDONS, HIDE_CHROME, P, PANELS, UI, every, h, icon, navTo, note, readJSON, snd, sndFile } from "../core/ui_core.js";
 
 // 只讀正式週的 week.json（備用週沒有日期，不會有活動）

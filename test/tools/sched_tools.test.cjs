@@ -20,14 +20,14 @@ const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log(
 T("ship：內容路徑（content、維護日誌、公告、.claude、打包檔）才算內容", () => {
   ["content/weeks/2026-W47/d2.json", "content/story/帳本.json", "docs/維護日誌/2026/11-16_翊文_x.md", "content/notices/upd-x.json", ".claude/交接/x.md", "shared/npc/roster.js", "shared/world/map_data.js"]
     .forEach(f => assert.ok(SHIP.isContentFile(f), f));
-  ["web/src/core/main.js", "shared/world/map.js", "shared/notices.js", "shared/story.js", "functions/index.js", "tools/release/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
+  ["web/src/core/main.js", "shared/world/map.js", "shared/game/notices.js", "shared/story/core.js", "functions/index.js", "tools/release/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
     .forEach(f => assert.ok(!SHIP.isContentFile(f), f));
 });
 T("ship：全部是內容才跳過；有任何程式檔、沒有檔案、--full 都照舊全跑", () => {
   const c = ["content/weeks/2026-W47/d2.json", "docs/維護日誌/2026/a.md", "content/notices/upd-x.json"];
   assert.strictEqual(SHIP.contentOnly(c), true);
   assert.strictEqual(SHIP.contentOnly([...c, "tools/content/day_check.cjs"]), false);
-  assert.strictEqual(SHIP.contentOnly([...c, "shared/story.js"]), false);
+  assert.strictEqual(SHIP.contentOnly([...c, "shared/story/core.js"]), false);
   assert.strictEqual(SHIP.contentOnly([]), false, "沒有檔案不能當成只動內容");
   assert.strictEqual(SHIP.contentOnly(undefined), false);
   const none = new Set();

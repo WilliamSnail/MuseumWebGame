@@ -8,7 +8,7 @@
 import { BADGES, EXHIBITS, FLAWS, GEAR_ITEMS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, NUM, PEPE_PARTS, PERKS, PILLOW_PARTS, RARITY_TABLE, RENAMED } from "./config.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, STORY_CHAPTERS } from "./content.js";
 import { BOOK_SEQUELS, CELLAR, CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./systems_text.js";
-import { holidayExhibitById, holidaysOn } from "./holidays.js";
+import { holidayExhibitById, holidaysOn } from "./story/holidays.js";
 
 // ---------- 小工具 ----------
 export let RNG = Math.random;
@@ -455,7 +455,7 @@ export function fixQuirks(list, now = nowMs()) {
 // ---------- 畫廊、圖書館 ----------
 export function exhibitById(id) {
   const ex = EXHIBITS.find(e => e.id === id);
-  if (!ex) return holidayExhibitById(id); // 節日的藝術品（shared/holidays.js，決定 0030）
+  if (!ex) return holidayExhibitById(id); // 節日的藝術品（shared/story/holidays.js，決定 0030）
   const extra = (typeof NEW_EXHIBITS !== "undefined" && NEW_EXHIBITS[id]) || {};
   return Object.assign({}, extra, ex, { title: ex.title || extra.title, label: ex.label || extra.label, lines: ex.lines || extra.lines || [] });
 }

@@ -9,14 +9,14 @@
 //  - 名字是玩家打的字：只用 h() 的字串（純文字）。介面文字照第 1 代用「壹」。
 // ================================================================
 import { NUM } from "../../../shared/config.js";
-import { eventBars, eventEffect, eventLeftText, eventRange, eventWhen } from "../../../shared/events.js";
+import { eventBars, eventEffect, eventLeftText, eventRange, eventWhen } from "../../../shared/story/events.js";
 import { freshRooms } from "../../../shared/fresh.js";
 import { nextStep } from "../../../shared/guide.js";
 import { codexCount, dailyCommissions, fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
 import { roomProgress } from "../../../shared/systems.js";
-import { matesByRoom } from "../../../shared/mates.js";
-import { passView } from "../../../shared/pass.js";
-import { storyState } from "../../../shared/story_state.js";
+import { matesByRoom } from "../../../shared/social/mates.js";
+import { passView } from "../../../shared/social/pass.js";
+import { storyState } from "../../../shared/story/state.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, IMG, P, PANELS, ROOM_NAMES, SAVE, SCREENS, UI, every, frogHTML, h, icon, navTo, planPortrait, titleTag } from "../core/ui_core.js";
 import { allEvents } from "../panels/ui_events.js";
@@ -93,7 +93,7 @@ function matesStrip() {
   return { box, draw, chip };
 }
 
-// 各房間現在幾位（房間熱絡用，門檻在 shared/room_mood.js）＝館友（matesByRoom）＋ NPC、散客（peek 的 now.rooms[id].n，旅客＋委託人＋散客）；賭場再加被館友邀去的 NPC（now.casino）
+// 各房間現在幾位（房間熱絡用，門檻在 shared/social/room_mood.js）＝館友（matesByRoom）＋ NPC、散客（peek 的 now.rooms[id].n，旅客＋委託人＋散客）；賭場再加被館友邀去的 NPC（now.casino）
 function roomCounts() {
   const by = matesByRoom(NET.roster || []), now = UI.hallNow, rooms = now && now.rooms && typeof now.rooms === "object" ? now.rooms : {}, out = {};
   Object.keys(by).filter(k => k !== "elsewhere").forEach(k => { out[k] = by[k].length; });

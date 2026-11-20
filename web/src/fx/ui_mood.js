@@ -1,14 +1,14 @@
 // ================================================================
 //  房間效果的畫面層（翊文 11-15：「大廳也可以有些效果反應這些訊息」「銀行和賭場也可以有類似的特效」；docs/規劃/大廳效果提案.md）
-//  狀態（暖冷、暗、人影幾個、旗、怪影子）只由 shared/room_mood.js 的 roomMood 算；這裡收資料、畫、換狀態時慢慢淡變。
+//  狀態（暖冷、暗、人影幾個、旗、怪影子）只由 shared/social/room_mood.js 的 roomMood 算；這裡收資料、畫、換狀態時慢慢淡變。
 //  跟館友自己的理智效果分開（#lights、#vignette、body 的 lights-out／bout／faint／flee、ui_odd 的黑影）：
 //    - 自己壹層，class 都是 rm-，不加在 body 上，不碰那些 id 和 class；
 //    - 館友自己的效果優先：有熄燈、昏倒、逃跑、發作就收起來；跟著游標的黑影出現時，怪影子不出現（roomMood 的 own）。
 //  用法：mountMood(host, "lobby" | "bank" | "casino", { portrait })：把效果層放進 host，回傳它。
 //  素材：目前都是 SVG／CSS 畫的，沒有圖。
 // ================================================================
-import { heatOf, roomHeats, roomMood } from "../../../shared/room_mood.js";
-import { eventBars } from "../../../shared/events.js";
+import { heatOf, roomHeats, roomMood } from "../../../shared/social/room_mood.js";
+import { eventBars } from "../../../shared/story/events.js";
 import { todayStr } from "../../../shared/logic.js";
 import { ADDONS, UI, every, h } from "../core/ui_core.js";
 import { allEvents } from "../panels/ui_events.js";
@@ -50,7 +50,7 @@ export function moodData() {
   };
 }
 
-// 賭場環境音要的熱鬧程度（0 冷清～3 沸騰；只讀資料，換算在 shared/room_mood.js）
+// 賭場環境音要的熱鬧程度（0 冷清～3 沸騰；只讀資料，換算在 shared/social/room_mood.js）
 export function ambHeat() { return heatOf(moodData()); }
 
 // ---------- 畫的零件（SVG） ----------

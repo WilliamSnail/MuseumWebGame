@@ -3,11 +3,11 @@
 //  合併就會自動部署，可是還開著的網頁跑的是舊程式，要重新整理才會換。
 //  這裡每隔壹段時間、切回這個分頁時，去拿壹次 index.html（firebase.json 設了 no-cache），
 //  看裡面的程式檔名（/assets/index-xxxx.js）跟現在跑的是不是同壹個。不壹樣就在畫面上方跳壹條「館裡更新了」。
-//  判斷在 shared/notices.js 的 buildScript、buildChanged；這裡只負責去拿和演出來。
+//  判斷在 shared/game/notices.js 的 buildScript、buildChanged；這裡只負責去拿和演出來。
 //  開發時（npm run dev）程式是 /src/main.js，沒有檔名可以比，不檢查。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { buildChanged, buildScript } from "../../../shared/notices.js";
+import { buildChanged, buildScript } from "../../../shared/game/notices.js";
 import { NET } from "./net_firebase.js";
 import { UI, h, persist } from "./ui_core.js";
 

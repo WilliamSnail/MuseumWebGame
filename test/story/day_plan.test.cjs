@@ -132,7 +132,7 @@ T("節日配活動：名字對得上的店先、店輪流、d3 以後、最多 2
   assert.deepStrictEqual(r2.fest.map(x => x.store).sort(), ["bj", "craft"], "餐車用過了：d4 給手作坊（填字遊戲日），d6 的神祕日借給最少用的牌桌");
   // 日子不夠：missing 和上網查的提示
   const r3 = P.suggestFest([], [], { npc: true, fest: 2 });
-  assert.strictEqual(r3.fest.length, 0); assert.strictEqual(r3.missing, 3); assert.ok(r3.hint.includes("shared/holidays.js") && r3.hint.includes("FUN_TEXT"));
+  assert.strictEqual(r3.fest.length, 0); assert.strictEqual(r3.missing, 3); assert.ok(r3.hint.includes("shared/story/holidays.js") && r3.hint.includes("FUN_TEXT"));
   assert.strictEqual(P.suggestFest(days, [], { npc: false, fest: 0 }).fest.length, 0, "不缺就不選");
   assert.deepStrictEqual(P.storeUsage([{ npc: { store: "bj" }, fest: [{ store: "bj" }, { store: "job" }] }]), { food: 0, bj: 2, job: 1, cellar: 0, craft: 0 });
 });

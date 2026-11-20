@@ -98,5 +98,5 @@ export { stockTwTick } from "./stock/stock_tw.js"; // 台股盤中：每分鐘�
 export { art, auctionTick } from "./casino/art.js"; // 藝術市場：跟館方買賣每日特展的畫（11-14，shared/casino/art.js）
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
 export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./game/visit.js";
-export { clientError } from "./game/client_error.js"; // 前端錯誤回報（決定 0125，shared/client_error.js）
-export { lostReturn, lostSync } from "./game/lostfound.js"; // 招領（翊文 11-13，shared/lostfound.js）
+export { clientError } from "./game/client_error.js"; // 前端錯誤回報（決定 0125，shared/game/client_error.js）
+export { lostReturn, lostSync } from "./game/lostfound.js"; // 招領（翊文 11-13，shared/social/lostfound.js）

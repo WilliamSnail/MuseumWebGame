@@ -3,7 +3,7 @@
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-require("../tools/content/notices_build.cjs").write(); // shared/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
+require("../tools/content/notices_build.cjs").write(); // shared/game/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
 const STEPS = [
   ["規則測試", ["test/game/logic.test.cjs"]],
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/web/room_mood.test.cjs"]],

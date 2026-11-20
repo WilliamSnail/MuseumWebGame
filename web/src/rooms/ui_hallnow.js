@@ -7,7 +7,7 @@
 //  - 資料是 ui_today.js 的 readCasino 讀 peek 時記進 UI.hallNow、UI.reviews；這裡每 90 秒再叫壹次（畫面還在才叫）。
 //  - 名字、評語是 NPC 說的話，也當不可信的字：只用 h() 的字串。
 // ================================================================
-import { matesByRoom } from "../../../shared/mates.js";
+import { matesByRoom } from "../../../shared/social/mates.js";
 import { NPC_ROSTER } from "../../../shared/npc/roster.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "../core/ui_core.js";

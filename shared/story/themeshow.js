@@ -21,9 +21,9 @@
 //  文字（手記、配件的名字以外的字）放這個檔最下面，是草稿，Yuga 可以改；配件的名字在 systems_text.js 的 LIMITED_TEXT。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, WEEKLY_IDS } from "./config.js";
-import { clampN, daysBetween, hallScore, isFree, todayStr, weekIndex } from "./logic_base.js";
-import { grantLimited } from "./signin.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, WEEKLY_IDS } from "../config.js";
+import { clampN, daysBetween, hallScore, isFree, todayStr, weekIndex } from "../logic_base.js";
+import { grantLimited } from "../social/signin.js";
 
 const isShowDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isShowBox = v => !!v && typeof v === "object" && !Array.isArray(v);
@@ -291,7 +291,7 @@ export function weeklyState(P) {
   const date = P.day ? P.day.date : todayStr();
   const w = weekIndex(date);
   if (!P.weekly || P.weekly.w !== w) {
-    if (P.weekly && P.weekly.w < w) settleWeekShow(P, P.weekly, date); // 換週：照上週的最高分結算（決定 0035，shared/themeshow.js）
+    if (P.weekly && P.weekly.w < w) settleWeekShow(P, P.weekly, date); // 換週：照上週的最高分結算（決定 0035，shared/story/themeshow.js）
     P.weekly = { w, theme: weeklyTheme(date), slots: [null, null, null, null, null, null], best: 0 };
   }
   return P.weekly;

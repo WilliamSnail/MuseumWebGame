@@ -20,7 +20,7 @@ import { twSecret } from "../stock/stock_tw.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { casWkSync } from "../shared/casino/week.js";
 import { NUM } from "../shared/config.js";
-import { cleanSay, fixParty, newParty } from "../shared/party.js";
+import { cleanSay, fixParty, newParty } from "../shared/social/party.js";
 import { isFree, setRng, taipeiDay } from "../shared/logic.js";
 import { bad, leaveCurrent, ledParty, needMember, newId, now, partyHooks, rtdb } from "../coop/party.js";
 import { cryptoRng, wkDefOf } from "./casino.js";

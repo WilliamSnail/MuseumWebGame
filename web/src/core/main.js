@@ -72,16 +72,16 @@ import "../rooms/ui_route.js"; // 地圖選路（地下室改版）；ui_coop.js
 import "../rooms/ui_fight.js"; // 打怪物的畫面（地下室改版，決定 0067、0068）；ui_coop.js 在 fight 階段叫它
 import "../rooms/ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop/core.js，伺服器在 functions/coop/coop.js
 import "../panels/ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
-import "../panels/ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
+import "../panels/ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story/core.js
 import "../panels/ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/game/admin.js 來
 import "../panels/ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
-import "../panels/ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
-import "../panels/ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/content/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
-import "../panels/ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
-import "../panels/ui_pass.js"; // 館友證和典藏冊（11-10，決定 0058，整合的第 2 步）：規則在 shared/pass.js；要放在 ui_login、ui_signin、ui_story 後面
+import "../panels/ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/story/themeshow.js
+import "../panels/ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/social/board.js，資料是 tools/content/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
+import "../panels/ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/social/mates.js
+import "../panels/ui_pass.js"; // 館友證和典藏冊（11-10，決定 0058，整合的第 2 步）：規則在 shared/social/pass.js；要放在 ui_login、ui_signin、ui_story 後面
 import "../rooms/ui_hub.js"; // 大廳的總覽（11-10，決定 0061）：要放在 ui_signin、ui_story、ui_pass 後面；ui_today 它自己會 import
 import "../panels/ui_today.js"; // 「今天」清單（11-10，整合的第 1 步）：簽到、劇情、任務、信箱、賭場剩幾次排在壹張，每項有「前往」
-import "../panels/ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/events.js
+import "../panels/ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/story/events.js
 import "../rooms/casino/ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
 import "../rooms/casino/ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
 import "../rooms/casino/ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino/casino.js
@@ -97,12 +97,12 @@ import "../rooms/ui_pool.js"; // 館門口的池子（決定 0132）：要放在
 import "../css/pool.css";
 import "../rooms/ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
 import "../rooms/ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino/wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
-import "../panels/ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/lostfound.js）
+import "../panels/ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/social/lostfound.js）
 import "../rooms/casino/ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 
 import "./ui_scrollhint.js"; // 「往下滑還有」的提示（11-16）
 import "../css/scrollhint.css";
-import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊網頁跳「館裡更新了」；判斷在 shared/notices.js
+import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊網頁跳「館裡更新了」；判斷在 shared/game/notices.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
 if (debugScreen) window.__PM_NODOOR__ = true; // 開發時直接進畫面，不放開館布幕

@@ -1,14 +1,14 @@
 // ================================================================
 //  本週榜單的畫面（決定 0039）。跟公佈欄 ui_board.js 不一樣：這裡是排行榜。
 //  翊文：「另外每周排行榜也可以用discord推送給大家看，並提供一些建議」；遊戲裡也看得到（只在館內，docs/規則/界線.md 第 4 點）。
-//  資料：boards/latest（tools/content/weekly_board.cjs 每週一寫的），每次打開讀一次。規則在 shared/board.js，樣式在 css/rank.css。
+//  資料：boards/latest（tools/content/weekly_board.cjs 每週一寫的），每次打開讀一次。規則在 shared/social/board.js，樣式在 css/rank.css。
 //  入口：右上角選單的「本週榜單」（ui_core.js 的 buildNav）。ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 PANELS。
 //  暱稱是玩家打的字：一律當純文字放（不要用 h 的 html）。介面文字照第 1 代用「壹」。
 // ================================================================
 import { BOARD_TEXT } from "../../../shared/systems_text.js";
 import { NUM } from "../../../shared/config.js";
 import { fill } from "../../../shared/logic.js";
-import { boardGroups, boardPeriodText, boardValueText, boardViewOf } from "../../../shared/board.js";
+import { boardGroups, boardPeriodText, boardValueText, boardViewOf } from "../../../shared/social/board.js";
 import { NET } from "../core/net_firebase.js";
 import { PANELS, h, icon, snd, titleTag } from "../core/ui_core.js";
 import { overlay } from "./ui_board.js";

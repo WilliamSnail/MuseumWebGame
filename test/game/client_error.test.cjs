@@ -4,7 +4,7 @@ const assert = require("assert"), fs = require("fs"), path = require("path");
 let pass = 0, fail = 0;
 const T = async (name, fn) => { try { await fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 (async () => {
-  const M = await import("../../shared/client_error.js"), { CLIENT_ERR, clientErrClean, clientErrKey, clientErrAllow, clientErrQuota, clientErrText } = M;
+  const M = await import("../../shared/game/client_error.js"), { CLIENT_ERR, clientErrClean, clientErrKey, clientErrAllow, clientErrQuota, clientErrText } = M;
   await T("清乾淨：email、像 uid 的字、網域、網址的 ? 和 # 都不留", () => {
     const uid = "AbCdEfGhIjKlMnOpQrStUvWxYz12", t = clientErrText(`Failed for yuga.test+1@gmail.com uid ${uid} at https://pepe-museum.web.app/assets/ui.js?token=SECRET#frag:12:3`);
     assert.ok(!/gmail|@|SECRET|token|pepe-museum\.web\.app|#frag/.test(t) && !t.includes(uid), t);

@@ -228,7 +228,7 @@ function tableNames(readText, table) {
     return m ? [...m[1].matchAll(/name: "([^"]+)"/g)].map(x => x[1]) : [];
   }
   if (table === "TASK_GIVERS") {
-    const m = readText("shared/story.js").match(/export const TASK_GIVERS = \{([^}]*)\}/);
+    const m = readText("shared/story/core.js").match(/export const TASK_GIVERS = \{([^}]*)\}/);
     return m ? [...m[1].matchAll(/:\s*"([^"]+)"/g)].map(x => x[1]) : [];
   }
   return [];

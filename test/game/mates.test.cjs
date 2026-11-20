@@ -1,4 +1,4 @@
-// 大廳導覽圖上的館友（shared/mates.js）：node test/game/mates.test.cjs（npm test 也會跑）
+// 大廳導覽圖上的館友（shared/social/mates.js）：node test/game/mates.test.cjs（npm test 也會跑）
 // 名單 → 每間房有誰：只算 online／away、自己和 offline 不算、room 只認白名單、reveal 對到手作坊、放不下的「+N」。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
@@ -86,7 +86,7 @@ T("ES 模組載得起來", G => { assert.strictEqual(typeof G.matesByRoom, "func
 (async () => {
   const { pathToFileURL } = require("url");
   try {
-    const m = await import(pathToFileURL(require("path").join(__dirname, "..", "..", "shared", "mates.js")).href);
+    const m = await import(pathToFileURL(require("path").join(__dirname, "..", "..", "shared", "social", "mates.js")).href);
     assert.strictEqual(m.mateSpot("reveal"), "workshop"); pass++;
   } catch (e) { fail++; console.log("FAIL 當 ES 模組載入\n   ", e.message); }
   console.log(`${pass} passed, ${fail} failed（導覽圖上的館友）`);

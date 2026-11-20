@@ -1,10 +1,10 @@
 // ================================================================
 //  前端錯誤回報（決定 0125，翊文 11-17：「加」）：網頁出了錯，把清乾淨的壹筆（訊息、位置、stack 前 5 行、畫面 id、版本、視窗大小）丟給伺服器 clientError。
-//  不送存檔、名字、uid、email、網址的 ? 和 #（shared/client_error.js 的 clientErrClean 清；伺服器再清壹次）。
+//  不送存檔、名字、uid、email、網址的 ? 和 #（shared/game/client_error.js 的 clientErrClean 清；伺服器再清壹次）。
 //  每次開頁最多 5 筆、同樣的不重複送；開發時（npm run dev）不送。送不出去（還沒連上、離線）就算了，不重試超過壹次。
 //  reportClientError(err, where)：畫面自己 try/catch 抓到的錯也用它報（例如委託櫃台的側欄）。
 // ================================================================
-import { CLIENT_ERR, clientErrAllow, clientErrClean } from "../../../shared/client_error.js";
+import { CLIENT_ERR, clientErrAllow, clientErrClean } from "../../../shared/game/client_error.js";
 import { NET } from "./net_firebase.js";
 
 const sent = [];

@@ -11,7 +11,7 @@ import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../.
 import { COOP } from "../../../shared/coop/base.js";
 import { nowMs } from "../../../shared/logic.js";
 import { btn, celebrateEl, diceWords, h, itemHTML, snd, sndFile } from "../core/ui_core.js";
-import { FIGHT_SFX, fightSfxKey } from "../../../shared/fight_sfx.js";
+import { FIGHT_SFX, fightSfxKey } from "../../../shared/game/fight_sfx.js";
 
 const ACT_TEXT = { push: "推", see: "看穿", calm: "安撫", guard: "擋", flee: "逃跑", retreat: "撤退", point: "指出弱點", taunt: "引開", inspire: "鼓舞", share: "分膽", comfort: "安慰", reveal: "看清" };
 // 合作的新行動圖示（素材 3-6，一條五格）、角色徽章（3-7，一條五格）
@@ -66,7 +66,7 @@ const roundKey = v => {
 const reduceMotion = () => typeof document !== "undefined" && document.body.classList.contains("reduce-motion");
 // 壹件事 → 壹格：who（亮起來的座位）、pops（跳出來的字，on ＝座位 id 或 "foe"）、fxs（特效）、dhp（壓力變多少）、lunge（怪物出招）
 function stepOf(v, e) {
-  const me = v.me, s = { who: e.id || null, pops: [], fxs: [], dhp: 0, lunge: false, line: lineOf(v, e), sfx: fightSfxKey(e) }; // sfx：這壹步的聲音（shared/fight_sfx.js）
+  const me = v.me, s = { who: e.id || null, pops: [], fxs: [], dhp: 0, lunge: false, line: lineOf(v, e), sfx: fightSfxKey(e) }; // sfx：這壹步的聲音（shared/game/fight_sfx.js）
   const pop = (on, text, cls) => s.pops.push({ on, text, cls });
   const fx = (kind, on) => s.fxs.push({ kind, on });
   if (e.t === "push") { fx("push", "foe"); pop("foe", `−${e.n}`, "dmg"); s.dhp = -e.n; if (e.san) pop(e.id, `理智 −${e.san}`, "hurt"); if (e.shell) pop(e.id, "殼擋掉壹些", "miss"); else if (e.thick) pop(e.id, `被擋掉 ${e.thick}`, "miss"); else if (e.inspired) pop(e.id, `鼓舞 +${e.inspired}`, "good"); }

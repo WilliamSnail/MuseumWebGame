@@ -1,4 +1,4 @@
-// 趣味節日（shared/holidays.js 的 funDaysOf，決定 0044）：node test/story/funday.test.cjs（npm test 也會跑）
+// 趣味節日（shared/story/holidays.js 的 funDaysOf，決定 0044）：node test/story/funday.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 const { dayMessage } = require("../../tools/content/discord_post.cjs");

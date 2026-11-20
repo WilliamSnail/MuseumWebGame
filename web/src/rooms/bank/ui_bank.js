@@ -196,7 +196,7 @@ async function bankLoad() {
   catch (e) { UI.bankErr = (e && e.message) || "連不上銀行"; }
   finally { UI.bankLoading = false; if (UI.screen === "bank") rerender(); }
 }
-// 音效（11-15，翊文：「有些音效好像銀行也可以用，例如存錢」；檔案和來源在 shared/sfx_files.js）：錢放進去＝籌碼落下，錢回到手上＝吐硬幣（大筆＝壹串）；失敗＝原本的 error
+// 音效（11-15，翊文：「有些音效好像銀行也可以用，例如存錢」；檔案和來源在 shared/game/sfx_files.js）：錢放進去＝籌碼落下，錢回到手上＝吐硬幣（大筆＝壹串）；失敗＝原本的 error
 // 銀行的聲音：bank_sfx.js（11-16 抽成共用，簡易銀行也用）
 // 做壹件事：act 是 casino 的動作（bank、borrow、repay），回答有 bankHall 就換上
 async function bankDo(act, data) {

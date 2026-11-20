@@ -12,7 +12,7 @@ import { CAS_TEXT } from "../../../../shared/casino/text.js";
 import { casCardName, casFill, casNum } from "../../../../shared/casino/core.js";
 import { CAS_QUICK } from "../../../../shared/casino/table.js";
 import { nowMs } from "../../../../shared/logic.js";
-import { PARTY, cleanSay, fixParty, partyMembers } from "../../../../shared/party.js";
+import { PARTY, cleanSay, fixParty, partyMembers } from "../../../../shared/social/party.js";
 import { NET } from "../../core/net_firebase.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, sndFile, titleOfId, titleTag } from "../../core/ui_core.js";
 import { npcName } from "../../panels/ui_npc_card.js";
@@ -21,7 +21,7 @@ import { ambHeat, mountMood } from "../../fx/ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "../../panels/ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
 import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
-import { APPLAUSE } from "../../../../shared/applause.js";
+import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { CAS_WK } from "./ui_casino_week.js";
 
 const hashOf = s => [...String(s)].reduce((n, c) => (n * 31 + c.codePointAt(0)) >>> 0, 7);

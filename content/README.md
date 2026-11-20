@@ -2,8 +2,8 @@
 
 > 2026-11-09 寫（Claude）。給每週一 04:30、每天 04:30 的排程看，人也可以看。
 > 規劃在 `docs/規劃/每週劇情.md`；排程每一步怎麼做在 `content/排程說明.md`。
-> 遊戲的規則在 `shared/story.js`，畫面在 `web/src/panels/ui_story.js`，檢查程式 `tools/content/week_check.cjs`（`npm test` 會跑）。
-> 格式改了，這份、檢查程式、`shared/story.js` 要一起改。
+> 遊戲的規則在 `shared/story/core.js`，畫面在 `web/src/panels/ui_story.js`，檢查程式 `tools/content/week_check.cjs`（`npm test` 會跑）。
+> 格式改了，這份、檢查程式、`shared/story/core.js` 要一起改。
 
 ---
 
@@ -15,7 +15,7 @@ content/
 ├─ 排程說明.md           ← 排程的每一步
 ├─ 排程設定.json         ← 「這週暫停」（第六節）
 ├─ story/帳本.json       ← 劇情帳本（第五節）。不打包進網頁
-├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/content/notices_build.cjs 合成 shared/notices_data.js，不進 git）
+├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/content/notices_build.cjs 合成 shared/game/notices_data.js，不進 git）
 ├─ npc/<id>.json        ← 館內 NPC（第十節）：壹位壹個檔。不進網頁，伺服器用 copy_shared 打包
 └─ weeks/               ← 網頁只讀這裡的 .json（web/src/panels/ui_story.js 的 import.meta.glob）
    ├─ 2026-W47/         ← 正式週：ISO 週的名字（週一開始）
@@ -66,7 +66,7 @@ content/
 }
 ```
 
-- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/content/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
+- **限時活動 `events`**（台灣時間；規則 `shared/story/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/content/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
   - Functions 拿得到同一份：`tools/release/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
 
 - **賭場的每週收藏 `casino`**（決定 0042，規則 `shared/casino/week.js`）：選填，沒有的舊週照常。格式：
@@ -138,7 +138,7 @@ content/
   - 週日（d7）放一本 `"ending": true` 的書（不寫 unlock），讀了 `ending.need.read` 本才打開，收這週的線、留一個接下週的線索。
   - 結局要讀的本數，不用走到 B2 以下就讀得到（新玩家也打得開）。
 - **每天至少一本書**在這週的 `week` 或 `floor` 線上（接著昨天往下）。
-- **線索和看懂**（選填，舊內容照常；規則 `shared/clues.js`，排程怎麼用 `content/排程說明.md` 一之四）：
+- **線索和看懂**（選填，舊內容照常；規則 `shared/story/clues.js`，排程怎麼用 `content/排程說明.md` 一之四）：
   - `"clue": "c-xxx"`：加在**書**、**房間**（`adds[]`）、**今日特展的畫**（`show.works[]`）上。id 是 `c-` 開頭、小寫英文、數字、`-`，壹條線索壹個 id、壹個地方。玩家把書讀完、找到房間、看過那幅畫，遊戲就悄悄記下（`P.clues`），沒有任何提示。每日任務、賭場（`casino`）、公佈欄、每週任務旁白**還不能**放 `clue`（遊戲不會算，檢查程式會擋）。備用週、備用的一天也不能。
   - `"understand": [{ "id": "u-xxx", "need": ["c-a", "c-b"], "from": "招領箱的帳", "text": "他沒有離開。……", "hint": "還有壹條在地下 B3" }]`：壹組線索集齊就跳「你看懂了：text」，記進圖書館的《看懂的事》（不扣理智、不發作，給 `NUM.story.understandInsp` 靈感，壹件壹次）。`need` 可以放更早幾天、更早幾週的線索，不能放還沒出現的（`npm test` 擋）；`text` 80 字以內、不用寫「你看懂了：」；`from` 24 字以內；`hint` 40 字以內、必填，拿到壹部分線索、還沒集齊時會看到「有件事快看懂了：還差 N 條」加這句；壹條都沒拿到就不顯示。壹天最多 2 件。
   - 玩家拿不到的線索（過了那週還沒找到的房間、沒看的畫）不卡：遊戲只要求還拿得到的。書永遠補讀得到。
@@ -149,7 +149,7 @@ content/
 
 ## 四、固定的種類（只能從這裡挑；新的要寫程式、走一般的 PR）
 
-### 任務（`shared/story.js` 的 `STORY_TASKS`）
+### 任務（`shared/story/core.js` 的 `STORY_TASKS`）
 
 | kind | 參數 | 每日／每週 | 畫面上的字（遊戲自己產生） |
 |---|---|---|---|
@@ -302,7 +302,7 @@ content/
 
 ## 八、季節線（決定 0037）
 
-- 一年四季各一條線，跨好幾週，大約每兩週一章，接得上當季的節日（`shared/holidays.js` 的 `holidayOf`）。
+- 一年四季各一條線，跨好幾週，大約每兩週一章，接得上當季的節日（`shared/story/holidays.js` 的 `holidayOf`）。
 - **季節照節氣切**：立冬約 11/7 起是冬、立春約 2/4 起是春、立夏約 5/5 起是夏、立秋約 8/7 起是秋（`yearSeason(日期)`）；這週的週一屬於哪一季就算哪一季（`weekSeason(週)`）。節日剛好在換季那週，可以放在新的那一季（2027-W05 的週一還沒立春，除夕 2/5 已經過了，放春天）。
 - **是副劇情**：每章從季節和節日的角度碰到主線的東西（同一個帳、同一批人物或地方、同一個謎的另一面），不揭曉主線的謎底、不搶主線的進度。
 - **帳本** `seasonal.lines[].chapters[]`：`week`（哪一週）、`title`、`holiday`（當週的節日，可以 `null`）、`tell`（要交代的事）、`ties`（碰到主線的哪一點）、`written`（還沒寫 `null`；寫了放書的 id）。`lines` 也要有這條線（`kind: "season"`，`start` 寫第一章那週）。
@@ -323,7 +323,7 @@ content/
 - **不畫 Pepe the Frog 的樣子，也不畫青蛙或任何像 Pepe 的角色**。新的畫以**場景、物品、抽象、光影**為主。要青蛙就用 `art: "frog"`（遊戲自己的青蛙）。
 - 不下載、不描別人的圖；不用真實的品牌標誌；不畫真人。
 
-### 規矩（`shared/story.js` 的 `sanitizeSvg`：檢查程式擋，畫面也會再淨化一次）
+### 規矩（`shared/story/core.js` 的 `sanitizeSvg`：檢查程式擋，畫面也會再淨化一次）
 
 - 只准這些標籤（`SVG_TAGS`）：`svg`、`g`、`defs`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`title`、`desc`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`mask`、`pattern`、`use`，還有 `filter` 和裡面的 `feGaussianBlur`、`feTurbulence`、`feDisplacementMap`、`feColorMatrix`、`feComponentTransfer`、`feFuncR/G/B/A`、`feBlend`、`feComposite`、`feMerge`、`feMergeNode`、`feOffset`、`feFlood`、`feDropShadow`。
 - 屬性也有白名單（`SVG_ATTRS`：幾何、顏色、線條、字型、漸層、濾鏡）。**不准**：`script`、`foreignObject`、`image`、`a`、`style`（標籤和屬性都不准，顏色直接寫在屬性上）、`class`、`on` 開頭的事件、外部網址、註解、CDATA。

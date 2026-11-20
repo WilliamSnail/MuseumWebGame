@@ -9,9 +9,9 @@
 // ================================================================
 import { nextStep } from "../../../shared/guide.js";
 import { fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
-import { passView } from "../../../shared/pass.js";
-import { stampHow } from "../../../shared/story.js";
-import { storyState } from "../../../shared/story_state.js";
+import { passView } from "../../../shared/social/pass.js";
+import { stampHow } from "../../../shared/story/core.js";
+import { storyState } from "../../../shared/story/state.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, cicon, freshTag, frogHTML, go, h, icon, navTo, titleTag } from "../core/ui_core.js";
 import { hubExtras } from "../panels/ui_signin.js";

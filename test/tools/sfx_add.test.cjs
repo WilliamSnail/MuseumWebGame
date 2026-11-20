@@ -57,7 +57,7 @@ t(() => {
 // 真實的檔案也要能加得進去（只測字串，不寫檔）
 t(() => {
   const fs = require("fs"), path = require("path");
-  const real = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "sfx_files.js"), "utf8");
+  const real = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "game", "sfx_files.js"), "utf8");
   const md = fs.readFileSync(path.join(__dirname, "..", "..", "web", "public", "sfx", "來源.md"), "utf8");
   assert.ok(S.addToSfxFiles(real, E).includes('"new-one"'));
   assert.ok(S.addToSourceMd(md, E).includes("new-one.mp3"));

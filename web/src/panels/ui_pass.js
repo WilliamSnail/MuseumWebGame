@@ -2,15 +2,15 @@
 //  館友證和典藏冊（決定 0058；介面整合的第 2 步，見 docs/規劃/介面整合規劃.md）
 //  館友證是封面：暱稱、稱號、入館日、籌碼和週章、紀錄，最下面是帳號的設定（登入了才有，原本的「我的帳號」）。
 //  翻開是典藏冊，用頁籤分：佩佩、書和看懂的事、紀念品、裝飾、成就。
-//  只讀現有的資料（shared/pass.js 的 passView），每壹頁有「前往」帶到原本的房間；原本的房間都留著。
+//  只讀現有的資料（shared/social/pass.js 的 passView），每壹頁有「前往」帶到原本的房間；原本的房間都留著。
 //  賭場全部的紀念品、賭場成就在伺服器：這裡只列掛在展廳的和戴著的稱號，其他連到賭場。
 //  入口：導覽列「今天」右邊的「館友證」、右上角選單。ui_core 不能 import 這個檔：這裡把自己登記進 PANELS。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
 import { casNum } from "../../../shared/casino/core.js";
 import { fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
-import { PASS_TABS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/pass.js";
-import { signinState } from "../../../shared/signin.js";
+import { PASS_TABS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/social/pass.js";
+import { signinState } from "../../../shared/social/signin.js";
 import { NET } from "../core/net_firebase.js";
 import { ART } from "../core/art.js";
 import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";

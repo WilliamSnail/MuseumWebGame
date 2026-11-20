@@ -1,6 +1,6 @@
 // ================================================================
 //  館內公佈欄、信箱的畫面（翊文 11-08：「要像其他遊戲有個公佈欄」→「公佈欄和信箱」）
-//  規則在 shared/notices.js、shared/mailbox.js；做法見規劃第四節「館內公佈欄」。
+//  規則在 shared/game/notices.js、shared/social/mailbox.js；做法見規劃第四節「館內公佈欄」。
 //  樣子（翊文 11-08：「應該可以在整個畫面最上面覆蓋，像真的公告欄一樣」）：
 //    蓋在整個畫面上，導覽列、狀態列也蓋住。
 //    公佈欄＝木框＋軟木板，公告是用圖釘釘上去的紙，沒讀的蓋著紅色火漆。信箱＝木框＋綠絨布，一封一個信封。
@@ -9,8 +9,8 @@
 //  ui_core 不能 import 這個檔（它在後面），所以這裡把自己登記進 ui_core 的 PANELS。
 // ================================================================
 import { realTodayStr } from "../../../shared/logic.js";
-import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../../shared/notices.js";
-import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../../shared/mailbox.js";
+import { NOTICE_CATS, autoOpenPlan, boardNotices, isUnread, markAllRead, markRead, noticeState, noticeStatus, skipToday, visibleNotices } from "../../../shared/game/notices.js";
+import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncMail } from "../../../shared/social/mailbox.js";
 import { FX } from "../fx/fx.js";
 import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, sndFile, updateBoardBadges, updateStatus } from "../core/ui_core.js";
 

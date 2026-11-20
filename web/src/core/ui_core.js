@@ -6,22 +6,22 @@ import { casExact, casNum } from "../../../shared/casino/core.js";
 import { LEGACY, NUM } from "../../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../../shared/content.js";
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../../shared/systems_text.js";
-import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../../shared/applause.js";
+import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../../shared/social/applause.js";
 import { ART } from "./art.js";
 import { FX } from "../fx/fx.js";
-import { ambMix, sanDread } from "../../../shared/room_mood.js";
+import { ambMix, sanDread } from "../../../shared/social/room_mood.js";
 import { ambFor } from "./audio_state.js";
 import { markTokens, taipeiDay, todayStr } from "../../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../../shared/logic.js";
 import { hasTalent, memberPower, skillCheck, understandLine } from "../../../shared/systems.js";
-import { weeklyTheme } from "../../../shared/themeshow.js";
-import { freeSlots, hasSlots, visitorTotal } from "../../../shared/visitors.js";
+import { weeklyTheme } from "../../../shared/story/themeshow.js";
+import { freeSlots, hasSlots, visitorTotal } from "../../../shared/social/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../../shared/fresh.js";
-import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../../shared/notices.js";
-import { syncMail, unclaimedCount } from "../../../shared/mailbox.js";
-import { holidayClass, holidayOf } from "../../../shared/holidays.js";
+import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../../shared/game/notices.js";
+import { syncMail, unclaimedCount } from "../../../shared/social/mailbox.js";
+import { holidayClass, holidayOf } from "../../../shared/story/holidays.js";
 import { titleName, titleText } from "../../../shared/titles.js";
-import { storyState } from "../../../shared/story_state.js";
+import { storyState } from "../../../shared/story/state.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
@@ -121,7 +121,7 @@ export function celebrate(kind) {
   document.body.append(el);
   setTimeout(() => el.remove(), 2400);
 }
-// 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/sfx_files.js）。g 音量 0～1
+// 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/game/sfx_files.js）。g 音量 0～1
 export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
 
 // 說明牌上的字：偏執發作時都寫「牠們在看你」，理智低時偶爾歪掉、錯字
@@ -1284,7 +1284,7 @@ export function quirkMakeBox(pick) {
   }));
 }
 // 看懂了什麼（翊文 11-08）：蓋壹張紫色的卡片，再發作；第壹次看懂的記進圖書館的《看懂的事》
-// 集齊線索看懂的（shared/clues.js）：跟看懂檢定同壹張大卡片，按了才關，不會錯過。不扣理智、不發作
+// 集齊線索看懂的（shared/story/clues.js）：跟看懂檢定同壹張大卡片，按了才關，不會錯過。不扣理智、不發作
 export function understoodCard(e) {
   snd("eerie", 2); sndFile("suspense-short", 0.4); // 「你看懂了」：越來越緊張的壹段（11-16 翊文，Pixabay「Suspense Tension」）
   return quirkLayer("你看懂了", e.from ? `來自：${e.from}` : "", [

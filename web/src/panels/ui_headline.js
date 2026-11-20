@@ -1,15 +1,15 @@
 // ================================================================
 //  大廳的跑馬燈：今天的重要事件和經濟事件（翊文 11-15：「各種每日重要事件包括每日經濟事件的跑馬燈」）
-//  清單怎麼排、每種最多幾則，只寫在 shared/headlines.js 的 todayHeadlines；這裡只收資料、畫、處理點擊。
+//  清單怎麼排、每種最多幾則，只寫在 shared/story/headlines.js 的 todayHeadlines；這裡只收資料、畫、處理點擊。
 //  - 每則可以點（跳到財報、公佈欄、賭場）；滑鼠移上去、鍵盤停在上面就停；
 //  - 尊重「減少動態」：不捲，改成壹則壹則切換；沒有事件顯示壹句平常的話。
 //  - 財報的資料（景氣、世界經濟換狀態、市場新聞、日報）要跟伺服器拿壹次 bankHall（登入了才有；壹天拿壹次），拿到才補進去。
 // ================================================================
 import { NET } from "../core/net_firebase.js";
-import { eventBars, eventLeftText, eventRange, eventWhen } from "../../../shared/events.js";
-import { HL_QUIET, orderHeadlines, todayHeadlines } from "../../../shared/headlines.js";
+import { eventBars, eventLeftText, eventRange, eventWhen } from "../../../shared/story/events.js";
+import { HL_QUIET, orderHeadlines, todayHeadlines } from "../../../shared/story/headlines.js";
 import { RNG, todayStr } from "../../../shared/logic.js";
-import { visibleNotices } from "../../../shared/notices.js";
+import { visibleNotices } from "../../../shared/game/notices.js";
 import { P, PANELS, UI, every, h, navTo } from "../core/ui_core.js";
 import { allEvents } from "./ui_events.js";
 import { bankHallView } from "../rooms/bank/ui_bank.js";

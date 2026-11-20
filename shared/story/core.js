@@ -14,12 +14,12 @@
 //    所以不用在每個房間加程式；畫面每次 updateStatus 叫一次 syncStory 就好。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { NUM, SKILLS } from "./config.js";
-import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, canStartCellar, cellarFloor, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan, weekIndex } from "./logic_base.js";
+import { NUM, SKILLS } from "../config.js";
+import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, canStartCellar, cellarFloor, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan, weekIndex } from "../logic_base.js";
 import { cleanEvents, eventListLine } from "./events.js";
-import { STORY_ITEMS, isPlain, storyState } from "./story_state.js";
-import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
-import { casArtMarkViewed, casArtViewCredit } from "./casino/art.js";
+import { STORY_ITEMS, isPlain, storyState } from "./state.js";
+import { growSkill, limitedNames, rangeWords, shopOnSale } from "../shop.js";
+import { casArtMarkViewed, casArtViewCredit } from "../casino/art.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -194,7 +194,7 @@ export function storyWeekAt(lib, label, today, fb) {
     question: typeof wk.question === "string" ? wk.question : "", // 本週疑點（排程說明 一之七）：本週那頁、疑點簿都會寫
     lines: [], days: [], books: [], rooms: [], works: [], daily: [],
     ending: { read: wk.ending && wk.ending.need && Number.isFinite(+wk.ending.need.read) ? +wk.ending.need.read : null },
-    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, events: reg ? cleanEvents(wk.events, monday, label) : [], // events：這週的限時活動（決定 0041，shared/events.js）
+    weeklyBonus: reward(wk.weeklyBonus), anomaly: null, events: reg ? cleanEvents(wk.events, monday, label) : [], // events：這週的限時活動（決定 0041，shared/story/events.js）
      shop: asList(wk.shop), // shop：這週兌換所上架的限定頭飾（shared/shop.js 的 shopOnSale）
   };
   const lineMap = {};
@@ -758,7 +758,7 @@ export function seasonLines(P, weeks) {
 export function markLinesSeen(P, lines) { const S = storyState(P); asList(lines).forEach(l => { S.seen[l.id] = l.key; }); }
 export function trackLine(P, id) { const S = storyState(P); S.track = S.track === id ? null : id; return S.track; }
 
-// ---------- 公佈欄：這週的公告（shared/notices.js 的格式；同一則每天多一行，不另外發） ----------
+// ---------- 公佈欄：這週的公告（shared/game/notices.js 的格式；同一則每天多一行，不另外發） ----------
 export function storyNotice(W, today, now) {
   if (!W || W.past) return null;
   return {
