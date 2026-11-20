@@ -159,13 +159,11 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
   .origin-onescreen .origin-main.book-open > .shelves { display: none; }
   .origin-onescreen .origin-main:not(.book-open) > .reader { display: none; }
   .origin-onescreen .origin-main > .reader { padding: 0; }
-  /* 回書架放在書頭左邊，跟標題同壹排；標題讓出左右各壹塊，長的標題換行 */
-  .origin-onescreen .reader .book { position: relative; }
-  .origin-onescreen .reader .book > .book-back { display: inline-flex; align-items: center; gap: 4px; position: absolute; top: -10px; left: -6px; z-index: 2; min-height: 28px; margin: 0; padding: 0 8px; border-radius: 3px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #9A2E38, #6E1C26); color: #F6E4B0; font: inherit; font-size: .75rem; cursor: pointer; }
-  .origin-onescreen .reader .book > .book-title { align-self: stretch; margin-left: 86px; margin-right: 0; text-align: center; font-size: .9375rem; letter-spacing: .12em; padding: 5px 20px 6px; }
-  .origin-onescreen .reader .book > .book-back svg { width: 12px; height: 12px; }
+  /* 回書架：放在書的最下面、置中（標題在最上面置中，上下對稱）；做成書籤的樣子，不搶書名牌 */
+  .origin-onescreen .reader .book > .book-back { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; align-self: center; min-height: 34px; margin: 8px 0 0; padding: 0 20px; border-radius: 17px; border: 1px solid rgba(110, 28, 38, .55); background: rgba(110, 28, 38, .08); color: #6E1C26; font: inherit; font-size: .875rem; letter-spacing: .1em; cursor: pointer; }
+  .origin-onescreen .reader .book > .book-back svg { width: 14px; height: 14px; }
   /* 還打不開的書：標題、提示、內文縮小，跟回書架分開 */
-  .origin-onescreen .reader .book.sealed-book > .book-title { margin: -12px 0 8px 86px; }
+  .origin-onescreen .reader .book.sealed-book > .book-title { margin: -12px auto 8px; font-size: .9375rem; padding: 4px 22px 5px; }
   .origin-onescreen .reader .book.sealed-book > .book-hint { margin: 0 0 6px; font-size: .8125rem; }
   .origin-onescreen .reader .book.sealed-book > .sealed-hint { font-size: .9375rem; line-height: 1.6; padding: 8px 10px; margin: 0; }
 }
