@@ -1,0 +1,15 @@
+{
+  "id": "t-number",
+  "name": "號碼機",
+  "kind": "trace",
+  "ledger": "號碼機（B1 溫椅子旁的）",
+  "story": "只留叫號的聲音和溫的號碼紙。",
+  "likes": [],
+  "route": {},
+  "budget": {
+    "tier": "none",
+    "perDay": 0,
+    "max": 0
+  },
+  "arc": []
+}
