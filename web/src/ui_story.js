@@ -26,7 +26,7 @@ import { FRESH_KEY } from "../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
-import { bookGain, bookReader, roomHead } from "./ui_screens1.js";
+import { bookBack, bookGain, bookReader, roomHead } from "./ui_screens1.js";
 import { holidayOf } from "../../shared/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
@@ -450,7 +450,7 @@ export function openStoryBook(w, b, reader, el) {
   const st = bookState(P, w, b);
   if (st === "locked") {
     snd("eerie", 1);
-    reader.replaceChildren(h("div", { class: "book sealed-book" }, h("h2", { class: "book-title" }, "還打不開的書"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, bookHint(w, b))));
+    reader.replaceChildren(h("div", { class: "book sealed-book" }, bookBack(reader), h("h2", { class: "book-title" }, "還打不開的書"), h("p", { class: "book-hint" }, icon("key"), " 怎麼打開"), h("p", { class: "sealed-hint" }, bookHint(w, b))));
     return;
   }
   const l = lineById(w, b.line);
@@ -464,7 +464,7 @@ export function openStoryBook(w, b, reader, el) {
     storyTick(); updateStatus(); persist();
   } });
   const book = reader.querySelector(".book");
-  if (book) book.insertBefore(h("p", { class: "book-from" }, `${l ? `${LINE_KINDS[l.kind] || ""}〈${l.name}〉・` : ""}${w.label}・第 ${b.day} 天`), book.children[1] || null);
+  if (book) book.insertBefore(h("p", { class: "book-from" }, `${l ? `${LINE_KINDS[l.kind] || ""}〈${l.name}〉・` : ""}${w.label}・第 ${b.day} 天`), (book.querySelector(".book-title") || {}).nextSibling || null);
 }
 // 賭場集滿的小故事（決定 0042）：領過週章（P.story.cas）才放上書架，過了那週還是讀得到
 function casinoStory(w) {
@@ -474,7 +474,7 @@ function casinoStory(w) {
 function openCasinoStory(w, st, reader) {
   bookReader(reader, st.title, st.pages);
   const book = reader.querySelector(".book");
-  if (book) book.insertBefore(h("p", { class: "book-from" }, `賭場收藏〈${st.def.title}〉・${w.label}`), book.children[1] || null);
+  if (book) book.insertBefore(h("p", { class: "book-from" }, `賭場收藏〈${st.def.title}〉・${w.label}`), (book.querySelector(".book-title") || {}).nextSibling || null);
 }
 function casinoSpine(w, reader) {
   const st = casinoStory(w);
