@@ -225,12 +225,34 @@ function cleanWorktrees() {
   try { require("child_process").spawn(process.execPath, [path.join(__dirname, "wt_clean.cjs"), "--do", "--quiet"], { cwd: process.cwd(), detached: true, stdio: "ignore" }).unref(); } catch (e) { /* 不影響上線 */ }
 }
 
+// 在 worktree 裡上線完：把主資料夾（E:\MuseumWebGame 這種）也拉到最新（翊文 11-20：「上線後自動更新主資料夾」；
+// 之前主資料夾停在 11-13 的舊分支，落後 main 1,497 個 commit 都沒人發現）。
+//   - 主資料夾有沒存的改動：不動，只提醒（那是別人正在做的事）。
+//   - 在 main：pull --ff-only。
+//   - 在別的分支、那個分支已經併進 main：切回 main 再 pull。還沒併進 main 的分支不動。
+// 失敗只提醒，不算上線失敗。
+function syncMainFolder(dir) {
+  const g = args => git(["-C", dir, ...args], { ok: true });
+  if (g(["status", "--porcelain", "--untracked-files=no"]).out) { console.log(`（主資料夾 ${dir} 有沒存的改動，沒有幫它更新）`); return; }
+  const br = g(["branch", "--show-current"]).out;
+  if (br !== "main") {
+    if (!br || g(["merge-base", "--is-ancestor", "HEAD", "origin/main"]).status !== 0) { console.log(`（主資料夾在分支 ${br || "（沒有分支）"}，還沒併進 main，沒有幫它切）`); return; }
+    if (g(["checkout", "main"]).status !== 0) { console.log("（主資料夾切不回 main：等壹下自己跑 git checkout main、git pull）"); return; }
+  }
+  for (let i = 0; i < 3; i++) { if (g(["pull", "--ff-only"]).status === 0) { console.log(`主資料夾 ${dir} 也拉到最新了。`); return; } sleep(2000); }
+  console.log("（主資料夾沒能拉到最新：等壹下自己跑 git pull）");
+}
+
 // 上線完回到 main、拉最新（11-10：每次都要手動做，OneDrive 還常鎖住 index，切到一半會留下壹堆「改過的檔」）。
 // 鎖住就等 2 秒重試；真的回不去只提醒，不算失敗（PR 已經上線了）。
 function backToMain() {
   // worktree 裡不切：main 被主資料夾佔著，切了壹定失敗（11-14 每次都印「沒能回到 main」）
   const gd = git(["rev-parse", "--git-dir"], { ok: true }).out, cd = git(["rev-parse", "--git-common-dir"], { ok: true }).out;
-  if (gd && cd && path.resolve(ROOT, gd) !== path.resolve(ROOT, cd)) { console.log("（在 worktree 裡：不切回 main。這個 worktree 下次上線時會被 tools/wt_clean.cjs 收掉）"); return; }
+  if (gd && cd && path.resolve(ROOT, gd) !== path.resolve(ROOT, cd)) {
+    console.log("（在 worktree 裡：不切回 main。這個 worktree 下次上線時會被 tools/wt_clean.cjs 收掉）");
+    syncMainFolder(path.resolve(ROOT, cd, ".."));
+    return;
+  }
   for (let i = 0; i < 6; i++) {
     const a = git(["checkout", "main"], { ok: true });
     const b = a.status === 0 ? git(["pull", "--ff-only"], { ok: true }) : a;
