@@ -6,7 +6,7 @@ let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } finally { G.setRng(null); } };
 const LOW = () => 0, HIGH = () => 0.999999, MID = () => 0.3; // LOW：骰子最小（但 d100 的 00 是 100，檢定不會過）；HIGH：骰子最大；MID：d100 擲三十幾，技能高的會過
 const JS = x => JSON.parse(JSON.stringify(x));
-const same = (a, b, m) => assert.deepStrictEqual(JS(a), JS(b), m); // 規則在另一個 vm 裡跑，陣列要先轉過才比得了（docs/踩過的坑.md）
+const same = (a, b, m) => assert.deepStrictEqual(JS(a), JS(b), m); // 規則在另一個 vm 裡跑，陣列要先轉過才比得了（docs/規則/踩過的坑.md）
 // 一個座位：picks ＝帶的佩佩（只寫要的欄位），skills ＝偵查、神秘學、說服
 // brave ＝膽量（壯膽）。測試預設 0，才看得到真的扣多少理智；要測壯膽的自己寫 null（照人數給）
 function seat(G, id, picks, skills = {}, san = 60, brave = 0) {

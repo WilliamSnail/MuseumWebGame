@@ -4,7 +4,7 @@
 //    info、login、restore、logout、updateMe、loadSave、save、saveSoon、flush、connect、disconnect、where、send、on、
 //    me、state、roster、rev、loggedIn
 //  事件：status、login、logout、roster、arrive、leave、message、saved、saveError、conflict
-//  資料放哪裡、規則：docs/Firebase做法.md。
+//  資料放哪裡、規則：docs/操作/Firebase做法.md。
 //  - 登入：Firebase Auth。模擬器：打名字就登入（模擬器接受假的 Google 憑證，email 是 dev-…@dev.local）。正式：Google 登入。
 //    登入後叫 Functions 的 join（檢查邀請名單、建館友）。
 //  - 存檔：Firestore 的 saves/{uid}，用交易檢查 rev（別的分頁先存了 → conflict）。

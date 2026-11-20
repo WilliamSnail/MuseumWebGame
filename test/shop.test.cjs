@@ -463,7 +463,7 @@ T("限定頭飾：6～8 件；都有文字；不算進圖鑑、全部解鎖；�
     assert.ok(G.LIMITED_TEXT[id], id); assert.ok(it.desc && it.price > 0, id);
     assert.ok(!/一/.test(it.name + it.desc), "畫面上的字用壹");
   });
-  assert.strictEqual(G.CORE_TOTAL, 1280, "圖鑑格數不變（docs/界線.md：1,280 格）");
+  assert.strictEqual(G.CORE_TOTAL, 1280, "圖鑑格數不變（docs/規則/界線.md：1,280 格）");
   const P = fresh(G);
   const known = G.knownTotal(P), poss = G.possibilities(P);
   stamps(G, P, 99);

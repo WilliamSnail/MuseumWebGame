@@ -1,4 +1,4 @@
-/* 新的大廳（決定 0066，ui_lobby2.js；草稿在 drafts/新大廳/）。素材在 web/public/lobby/。
+/* 新的大廳（決定 0066，ui_lobby2.js；草稿在 docs/草稿/新大廳/）。素材在 web/public/lobby/。
    回滾：shared/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
 
 /* 捲軸出現、消失時寬度不變（導覽圖的高度跟著寬度走，不留的話 1366 寬會在「有捲軸／沒捲軸」之間來回跳，畫面停住） */
@@ -269,14 +269,14 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .l2-todobox .l2-todo:nth-child(n+3) { display: none; }
 }
 
-/* ---------- 框改成九宮格零件（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材生成.md、tools/build_panel_kits.py） ----------
+/* ---------- 框改成九宮格零件（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材/素材生成.md、tools/build_panel_kits.py） ----------
    gold9.webp：金框條（角固定、邊重複接，不 fill）；底另外鋪酒紅花紋 wine.webp 或羊皮紙 parch.webp。gold-orn-*：大的框角上疊的雕花。 */
 .l2-strip { border: 9px solid transparent; border-image: url(/kit/gold9.webp) 52 / 9px round;
   background: #3A0E16 url(/kit/wine.webp) 0 0 / 256px padding-box; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
 /* 館友證、待辦卡：翊文 11-12 覺得原本的框比較好看，照舊用 /lobby/panel-parch、card-*（之後用舊框當參考重新生成零件） */
 
 /* ================================================================
-   大廳手機橫拿（11-13，翊文生的 U-9；docs/介面整合規劃.md 第六步）
+   大廳手機橫拿（11-13，翊文生的 U-9；docs/規劃/介面整合規劃.md 第六步）
    量到的：740×375 是 711 高、要捲。原因：上面「手機（760 寬以下）」那段把右欄拆開（display: contents）排成壹直條，橫拿 740 寬也中了。
    橫拿改回左右兩欄：導覽圖滿高在左，右邊壹欄放館友證、今天要做的事、手上有的
    ================================================================ */
@@ -304,7 +304,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
 }
 
 /* ================================================================
-   大廳手機直拿（11-13，翊文生的 U-10；docs/介面整合規劃.md 第六步）
+   大廳手機直拿（11-13，翊文生的 U-10；docs/規劃/介面整合規劃.md 第六步）
    量到的：375×740 是 1407 高、導覽圖在最下面要捲。改成一個畫面：活動預告壹條｜導覽圖（用剩下的高度，寬度照直式底圖的比例縮）｜今天要做的事壹排兩張｜（分頁列、狀態列在 #status 裡）
    館友在線、館友證、手上有的：直拿放不下，到「館友證」「今天」「選單」看
    ================================================================ */

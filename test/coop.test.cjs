@@ -11,7 +11,7 @@ const T = (name, fn) => { try { G = load(); fn(); pass++; } catch (e) { fail++; 
 const d100 = N => { const t = N === 100 ? 0 : Math.floor(N / 10), u = N === 100 ? 0 : N % 10; return [(t + 0.5) / 10, (u + 0.5) / 10]; };
 const dN = (v, n) => (v - 0.5) / n; // 讓 1Dn 擲出 v
 function seq(...vals) { const q = vals.flat(); return () => q.length ? q.shift() : 0.5; }
-const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）
+const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/規則/架構.md 第 6 節）
 const DATE = "2026-11-08";
 const BASE = { 稀有度: "普通", 心情: "開心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" };
 function person(job = "detective") {

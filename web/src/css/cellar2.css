@@ -102,7 +102,7 @@
 .new-lobby-on .cellar-on .floor.locked .floor-door { width: min(100%, 110px); }
 @media (max-height: 500px) and (orientation: landscape) { .new-lobby-on .cellar-on .floor.locked .floor-door { width: min(100%, 52px); } }
 
-/* ---------- 石板鐵框改成零件組的（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材生成.md） ----------
+/* ---------- 石板鐵框改成零件組的（翊文 11-12：「背景板子會因為寬度被拉長變形」，docs/素材/素材生成.md） ----------
    零件在 web/public/cellar/kit/（原圖 assets/panel-kit/）：石板鋪滿、鐵條重複接、邊上的鉚釘平均排開、四個角疊在最上面。
    都不拉伸，所以寬扁的、方的都不變形。--kb 鐵條厚、--kc 角的寬（零件是兩倍大，畫面上縮壹半）。 */
 .new-lobby-on .cellar-on .cx-hero, .new-lobby-on .cellar-on .trial-box { --kb: 22px; --kc: 100px;

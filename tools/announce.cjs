@@ -104,7 +104,7 @@ function dayEntry(week, n, date, addDays) {
   const at = `${date} ${DAY_POST_AT}`;
   return { id: `day-${week}-d${n}`, at, atMs: parseAt(at), until: parseAt(`${addDays(date, 1)} 05:00`), isDay: true, make: () => dayPost(week, n) };
 }
-// 揭露週（帳本 revealBeats，docs/劇情揭露節奏.md，決定 0078）：那天的今日館訊後面多發壹則「館裡有些不一樣了」。只提醒大家來找，不寫細節。
+// 揭露週（帳本 revealBeats，docs/規劃/劇情揭露節奏.md，決定 0078）：那天的今日館訊後面多發壹則「館裡有些不一樣了」。只提醒大家來找，不寫細節。
 // 日期：排程放進遊戲那天（revealedOn）；還沒標就當週三。那天的 dN.json 還沒有就不發；skipped 的不發。idx：第幾次揭露，換不同的句子
 function beatEntry(b, date, idx, addDays) {
   const at = `${date} ${DAY_POST_AT}`;

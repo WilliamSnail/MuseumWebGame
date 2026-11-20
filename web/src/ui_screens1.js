@@ -421,7 +421,7 @@ export function diffGame(ex, artBox, info) {
 SCREENS.origin = (root, params) => {
   root.classList.add("onescreen-room", "origin-onescreen"); // 11-14 圖書館套 onescreen 骨架（css/origin2.css）
   root.append(roomHead("圖書館", "書可以翻開。新章節解鎖時，書背會亮起來。"));
-  const tab = ORIGIN_TABS.some(t => t[0] === params.tab) ? params.tab : "shelf"; // 書架分頁籤（11-09，docs/每週劇情.md 第九節）：館藏、禁書照舊，主線、每週劇情、節日在 ui_story.js
+  const tab = ORIGIN_TABS.some(t => t[0] === params.tab) ? params.tab : "shelf"; // 書架分頁籤（11-09，docs/規劃/每週劇情.md 第九節）：館藏、禁書照舊，主線、每週劇情、節日在 ui_story.js
   const reader = h("div", { class: "reader", "aria-live": "polite" }, h("p", { class: "empty" }, "從書架上挑一本書。"));
   const books = [{ id: 0, title: "起源", spine: "起源", gen1: true }].concat(allChapters());
   const shelf = h("div", { class: "shelf" }, h("span", { class: "shelf-label" }, "館藏"),

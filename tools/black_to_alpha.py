@@ -2,7 +2,7 @@
 # 用法（anaconda 的 torch 環境，要 PIL、numpy）：
 #   python tools/black_to_alpha.py 輸入.webp 輸出.webp [--color 253,248,230] [--crop 0,130,1024,440] [--gamma 1.0] [--resize 寬]
 # 做法：亮度（0～255）÷255 當 alpha（可用 --gamma 調曲線），RGB 全部填 --color，輸出 RGBA。
-# 第壹個用途：館外地圖的邊緣霧（11-16，docs/館外地圖素材清單.md 的 M-9）。
+# 第壹個用途：館外地圖的邊緣霧（11-16，docs/素材/館外地圖素材清單.md 的 M-9）。
 import sys
 import numpy as np
 from PIL import Image

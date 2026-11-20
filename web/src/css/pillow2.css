@@ -1,7 +1,7 @@
 /* ================================================================
    抱枕工作台重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
    標題壹行｜左：抱枕（吃剩下的高度）＋三排選項（材質、尺寸、填充）｜右：名牌、可能性、做的鈕、抱抱的提示｜最下面：收藏的抽屜
-   前綴 pl-（docs/class名單.md）；根 class pillow-onescreen
+   前綴 pl-（docs/規則/class名單.md）；根 class pillow-onescreen
    ================================================================ */
 .screen.pillow-onescreen > .onescreen-main.pl-main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: stretch; }
 .pillow-onescreen .pl-left { display: flex; flex-direction: column; gap: 8px; min-height: 0; max-height: 100%; overflow: visible; }

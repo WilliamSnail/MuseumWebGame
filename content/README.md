@@ -1,7 +1,7 @@
 # content/：每週劇情的內容（格式）
 
 > 2026-11-09 寫（Claude）。給每週一 04:30、每天 04:30 的排程看，人也可以看。
-> 規劃在 `docs/每週劇情.md`；排程每一步怎麼做在 `content/排程說明.md`。
+> 規劃在 `docs/規劃/每週劇情.md`；排程每一步怎麼做在 `content/排程說明.md`。
 > 遊戲的規則在 `shared/story.js`，畫面在 `web/src/ui_story.js`，檢查程式 `tools/week_check.cjs`（`npm test` 會跑）。
 > 格式改了，這份、檢查程式、`shared/story.js` 要一起改。
 
@@ -365,7 +365,7 @@ content/
 
 ## 十、館內 NPC：`content/npc/`（11-14，翊文：每個 NPC 都有名字、都有故事線）
 
-> 規劃在 `docs/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/config.js` 的 `NUM.npc`。
+> 規劃在 `docs/規劃/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/config.js` 的 `NUM.npc`。
 > **名單和故事線由每天的排程寫**（`content/排程說明.md` 一之十一）；程式怎麼用它（行程、館內股人數、拍賣出價、日報新聞句）是另外的 PR，這裡只管內容。
 
 **一位 NPC 一個檔**：`content/npc/<id>.json`，檔名就是 id。網頁不讀這裡（不打包進網頁）；伺服器靠 `tools/copy_shared.cjs` 打包成 `functions/shared/npc_list_data.js` 的 `NPC_LIST`（整份、照 id 排序），跟 `content/weeks` 打包的方式壹樣。
@@ -423,7 +423,7 @@ content/
 - **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
 - **哪些地方可以用 NPC 的名字**（還沒接）：日報新聞句（`news`）、展廳留言、委託人出現和完成後的話、拍賣結果公告、館內股的「不同的人」。程式接上之前，名單只是內容，遊戲的玩法不變。
 
-## 十一、已知世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/世界經濟規劃.md`）
+## 十一、已知世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/規劃/世界經濟規劃.md`）
 
 - 一個單位一個檔，檔名＝id。單位是一棵樹：`parent` 指向上一層（頂層寫 `null`），第一版只有 7 個集團／組織加獨立的文化部（`u-culture`，劇情單位）。
 - 欄位：`id`、`name`（14 字內）、`kind`（group／firm／org／story）、`parent`、`sector`（tech、daily、finance、arts、school、public、story）、`share`（占已知世界的比例）、`staff`（員工數，只用來比大小）、`stocks`（掛的館外股票 id，每支只能掛一處）、`story`（true 只給文化部）、`note`（選填，60 字內，只寫明面的說明）。

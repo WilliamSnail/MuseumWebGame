@@ -1,4 +1,4 @@
-// class 名字的檢查（11-13，docs/class名單.md）：node test/class_names.test.cjs（npm test 也會跑）
+// class 名字的檢查（11-13，docs/規則/class名單.md）：node test/class_names.test.cjs（npm test 也會跑）
 //
 // 為什麼：新大廳在 <html> 上加了 .ui2，後來委託櫃台的 css 也用 .ui2 當前綴，
 // 結果 .ui2 .note-card 改到全遊戲的委託單、地下房間卡、打怪面板。
@@ -13,7 +13,7 @@ const path = require("path");
 const assert = require("assert");
 
 const ROOT = path.join(__dirname, "..");
-const DOC = path.join(ROOT, "docs", "class名單.md");
+const DOC = path.join(ROOT, "docs", "規則", "class名單.md");
 const CSS_DIR = path.join(ROOT, "web", "src", "css");
 const JS_DIR = path.join(ROOT, "web", "src");
 
@@ -21,7 +21,7 @@ const JS_DIR = path.join(ROOT, "web", "src");
 function tableRows(md, heading) {
   const lines = md.split(/\r?\n/);
   const start = lines.findIndex(l => /^##\s/.test(l) && l.includes(heading));
-  assert.ok(start >= 0, `class名單.md 找不到「${heading}」這一節`);
+  assert.ok(start >= 0, `docs/規則/class名單.md 找不到「${heading}」這一節`);
   const rows = [];
   for (let i = start + 1; i < lines.length && !/^##\s/.test(lines[i]); i++) {
     if (!/^\s*\|/.test(lines[i]) || /^\s*\|[\s:|-]+\|\s*$/.test(lines[i])) continue;
@@ -103,7 +103,7 @@ assert.ok(Object.keys(prefixCount).length > 20, "css 掃不到東西，檢查壞
 assert.deepStrictEqual(violations.slice(0, 8), [],
   `\n有 css 規則用全域 class 當開頭（共 ${violations.length} 條）。\n` +
   "全域 class 是加在 <html>／<body> 上的，整個遊戲都有；拿它當前綴會改到別的畫面（11-13 的 .ui2 事件）。\n" +
-  "改用這個畫面自己的 class 當前綴（先查 docs/class名單.md）。真的要全域，把它寫進名單「允許的例外」。");
+  "改用這個畫面自己的 class 當前綴（先查 docs/規則/class名單.md）。真的要全域，把它寫進名單「允許的例外」。");
 
 // ---- 掃 JS：往 body／documentElement 加的 class 要先登記 ----
 const jsFiles = fs.readdirSync(JS_DIR).filter(f => f.endsWith(".js")).map(f => path.join(JS_DIR, f));
@@ -133,7 +133,7 @@ jsFiles.forEach(file => {
   }
 });
 assert.deepStrictEqual(unlisted, [],
-  "\nJS 往 <html>／<body> 加了名單裡沒有的 class。先把它登記到 docs/class名單.md 的「全域 class」，再來加。");
+  "\nJS 往 <html>／<body> 加了名單裡沒有的 class。先把它登記到 docs/規則/class名單.md 的「全域 class」，再來加。");
 
 // ---- 名單過期：登記了卻完全沒用到 ----
 const stale = globals.filter(g => !usedGlobalInCss.has(g.name) && !usedGlobalInJs.has(g.name)).map(g => g.name);
@@ -145,7 +145,7 @@ assert.deepStrictEqual(stale.filter(n => !EXEMPT_STALE.includes(n)), [], "\n名�
 const warns = Object.entries(prefixCount)
   .filter(([p, o]) => o.names.size >= 5 && !knownPrefix.has(p) && !isGlobal(p.slice(0, -1)) && !isGlobal(p + "*"))
   .map(([p, o]) => `${p}（${[...o.files].slice(0, 2).join("、")}，${o.names.size} 個 class）`);
-if (warns.length) console.log("  警告：css 有名單裡沒有的前綴，請補進 docs/class名單.md「CSS 前綴」：\n   " + warns.join("\n   "));
+if (warns.length) console.log("  警告：css 有名單裡沒有的前綴，請補進 docs/規則/class名單.md「CSS 前綴」：\n   " + warns.join("\n   "));
 
 // 這個檢查本身要擋得住：假的壞例子
 (function selfTest() {

@@ -165,7 +165,7 @@ function festData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "npc_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 的 week.json.npc（館內股的 NPC 劇情日）\nexport const NPC_DAYS = " + JSON.stringify(npcData()) + ";\nexport const FEST_DAYS = " + JSON.stringify(festData()) + ";\nexport const ECON_EVENTS = " + JSON.stringify(econData()) + ";\n");
-// 館內 NPC 名單（11-14，docs/館內NPC規劃.md 步驟 3）：content/npc/*.json 整份打包成 NPC_LIST（照 id 排序）。給伺服器算行程、預算、故事線（步驟 3 以後的程式用）。
+// 館內 NPC 名單（11-14，docs/規劃/館內NPC規劃.md 步驟 3）：content/npc/*.json 整份打包成 NPC_LIST（照 id 排序）。給伺服器算行程、預算、故事線（步驟 3 以後的程式用）。
 // 讀不出來或沒過 tools/npc_check.cjs 的不放進去（檢查會在 npm test 擋下來）。只放遊戲資料，不放 __file。劇情角色（kind trace）也在裡面：算人數、出價時要自己跳過 kind trace。
 function npcList() {
   const dir = path.join(ROOT, "content", "npc"), out = [];

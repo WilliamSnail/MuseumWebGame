@@ -1,4 +1,4 @@
-// 音效與特效總表（11-16）：docs/音效與特效總表.md 由程式產生（npm run fx:report，不進 git），--check 只檢查程式跟 fx_notes.json 對得上，加上解析用的正規式
+// 音效與特效總表（11-16）：docs/素材/音效與特效總表.md 由程式產生（npm run fx:report，不進 git），--check 只檢查程式跟 fx_notes.json 對得上，加上解析用的正規式
 const fs = require("fs"), assert = require("assert"), cp = require("child_process"), path = require("path");
 const R = require("../tools/fx_report.cjs");
 let n = 0;
@@ -47,7 +47,7 @@ t("fnAt 找得到外面的函式", () => {
 }
 // 打鬥聲音表算進總表：skill-reveal、war-drums-hit 不能被誤判「沒人用」，todo 的項數有列
 {
-  const doc = fs.readFileSync(path.join(__dirname, "..", "docs", "音效與特效總表.md"), "utf8");
+  const doc = fs.readFileSync(path.join(__dirname, "..", "docs", "素材", "音效與特效總表.md"), "utf8");
   const unusedLine = doc.split(/\r?\n/).find(l => l.startsWith("- **沒人用的**"));
   assert.ok(!/skill-reveal|war-drums-hit/.test(unusedLine), "打鬥聲音表用到的音效檔被判成沒人用");
   assert.ok(/還在用合成音、之後要找錄音的：\d+ 項/.test(doc) && doc.includes("## 7. 地下打鬥的聲音"));

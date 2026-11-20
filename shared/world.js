@@ -1,5 +1,5 @@
 // ================================================================
-//  世界經濟的「世界文件」（W2，決定 0086，規劃 docs/世界經濟規劃.md 第 5、6 節）
+//  世界經濟的「世界文件」（W2，決定 0086，規劃 docs/規劃/世界經濟規劃.md 第 5、6 節）
 //  純函式。伺服器每小時的排程（functions/world.js 的 worldTick，併進 auctionTick）呼叫 wdTick：換日第一次才寫，同一天再跑什麼都不做。
 //  world/main：{ v, day, pool, grownSeen, last }
 //    pool        已知世界的「備用池」：house.world（館的對外帳戶）以外的那一份。現在是 0，搬錢預設關閉（NUM.casino.worldDoc.gateway ＝ 0）。
@@ -157,7 +157,7 @@ export function wuDebit(house, id, n) {
 }
 
 // ================================================================
-//  W5 連動（決定 0086，規劃 docs/世界經濟規劃.md 第 4 節）：每個頂層單位每天算一個健康值 h，每週一換狀態（一般／減薪／緊縮／裁員），
+//  W5 連動（決定 0086，規劃 docs/規劃/世界經濟規劃.md 第 4 節）：每個頂層單位每天算一個健康值 h，每週一換狀態（一般／減薪／緊縮／裁員），
 //  狀態決定 NPC 來館花錢的預算倍率（只動預算，不動 NPC 在不在場；全館不會一夜變空）。house.wh ＝ { day, base, idx, h, st, ev }。
 //    h ＝ clamp(1 ＋ 景氣 b × 行業係數 ＋ 旗下館外股票這一週的漲跌 × stockW, min, max)；文化部固定 1.0、家計沒有 h（倍率 1）。
 //    狀態（每週一看一次）：h ≥ cut → 一般（倍率 1～upMax）；squeeze ≤ h ＜ cut → 減薪 ×0.8；h ＜ squeeze → 連續 squeezeWeeks 週緊縮 ×0.5，連續 layoffWeeks 週裁員 ×0.3；下限 floor。
@@ -583,7 +583,7 @@ export function whCard(house, day) {
 }
 
 // ================================================================
-//  W6 NPC 錢包和換工作（決定 0086，規劃 docs/世界經濟規劃.md 3.3 階段 B）
+//  W6 NPC 錢包和換工作（決定 0086，規劃 docs/規劃/世界經濟規劃.md 3.3 階段 B）
 //  house.npcw ＝ { day, bal: { NPC id: 錢包裡有多少 }, lay: { id: { since } }, job: { id: { unit, since } }, ev: [{ day, npc, from, to, t }] }
 //  錢包的錢在帳上是已知世界分類裡的壹個成員「u-wallets」（比例 0，只有 adj），所以總和仍等於 house.world；**沒有憑空多錢**：
 //    每天發薪（nwPayday）：把每位 NPC 的錢包補到「今天預算 × targetDays 天」（預算 ＝ perDay × dayPct% × 所屬集團的 W5 倍率），從所屬集團出（集團的錢不夠就少補）；多出來的（倍率降了）退回集團。
@@ -668,7 +668,7 @@ export function nwNews(house, day, npcName, days = 1) {
 }
 
 // ================================================================
-//  NPC 理智（決定 0090 第一步，docs/理智值提案.md 第 1 節）：house.npcw.san[NPC id] ＝ 0～100，沒有紀錄 ＝ 初始值（NUM.casino.worldDoc.san.start）。累積型：
+//  NPC 理智（決定 0090 第一步，docs/規劃/理智值提案.md 第 1 節）：house.npcw.san[NPC id] ＝ 0～100，沒有紀錄 ＝ 初始值（NUM.casino.worldDoc.san.start）。累積型：
 //    每天收盤時（casNpcLive 的整天結算）照那天的行程加減：去地下 −2（一天最多 −4）、去餐車 +1、完全沒來館 +3（休息；這兩項只補到初始值為止）、自然往初始值靠 1；被裁 −8、找到新工作 +5（W6 的 ev，那天發生的）；
 //    排程填的 sanEvents（劇情決定的欄位，之後接）。一天最多變 ±daily（排程和換工作的事件不算）。夾 0～100。
 //  理智低的影響（只放小的）：< lowRoute 不去地下（那一站不花錢）；< lowStars 展廳評價少 1 顆星；< lowBudget 預算 ×budgetMult（再乘 W5 的倍率，總倍率仍 ≥ health.floor）。

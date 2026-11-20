@@ -1,4 +1,4 @@
-/* 餐車重新設計（11-20，翊文；ui_casino.js 的 dinerPane）：夜市攤車。圖照 docs/餐車素材清單.md：木牌用零件組框（四角固定、邊條重複接、中間木紋鋪滿，不拉伸）。前綴 dn- */
+/* 餐車重新設計（11-20，翊文；ui_casino.js 的 dinerPane）：夜市攤車。圖照 docs/素材/餐車素材清單.md：木牌用零件組框（四角固定、邊條重複接、中間木紋鋪滿，不拉伸）。前綴 dn- */
 .dn { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 0 0 12px; border-radius: 6px; overflow: hidden;
   background: linear-gradient(180deg, rgba(20, 10, 4, .35), rgba(20, 10, 4, 0) 120px), url(/kit/wood-fill.webp) 0 0 / 320px; box-shadow: inset 0 0 0 2px #2A1A0C, 0 4px 10px rgba(0, 0, 0, .45); }
 .dn > :not(.dn-awning):not(.dn-lights) { margin-left: 12px; margin-right: 12px; }

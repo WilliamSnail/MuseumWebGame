@@ -1,8 +1,8 @@
 /* ================================================================
-   介面重塑：每個廳壹個畫面看得完（翊文 11-13；docs/介面整合規劃.md 第六步）
+   介面重塑：每個廳壹個畫面看得完（翊文 11-13；docs/規劃/介面整合規劃.md 第六步）
    零件：翊文生的 assets/ui2/P-1～P-3，切好放在 web/public/ui2/（tools/cut_frames.py --box）；軟木板 ui2-cork 是照 U-2 的顏色算的（Gemini 生不出來）。
    共同的骨架（先用在委託櫃台，.screen.onescreen-room）：
-   注意：前綴不要拿 html／body 上的全域 class 來用（名單在 docs/class名單.md）。html 本身有 .new-lobby-on（新大廳，ui_lobby2.js），寫 .new-lobby-on .note-card 會改到全部的委託單、打怪面板（11-13 踩過，PR 218 上線後才發現）。以前叫 u2r、u2-main 等，11-13 改名。
+   注意：前綴不要拿 html／body 上的全域 class 來用（名單在 docs/規則/class名單.md）。html 本身有 .new-lobby-on（新大廳，ui_lobby2.js），寫 .new-lobby-on .note-card 會改到全部的委託單、打怪面板（11-13 踩過，PR 218 上線後才發現）。以前叫 u2r、u2-main 等，11-13 改名。
      標題壹行（銅牌＋羊皮紙條＋按鈕）｜主區＋右邊側欄｜最下面收藏的抽屜
    ================================================================ */
 .screen.onescreen-room { --onescreen-gap: 10px; display: flex; flex-direction: column; height: calc(100svh - var(--nav-h) - var(--status-real, var(--status-h)) - 20px); }
@@ -12,7 +12,7 @@
 .onescreen-room > .onescreen-main > * { max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
 .onescreen-room > .onescreen-drawer { flex: none; }
 
-/* ---------- 字色、字級（11-13，docs/介面配色.md；翊文：「各種顏色、字體等等的有沒有平衡也要看看」） ----------
+/* ---------- 字色、字級（11-13，docs/規則/介面配色.md；翊文：「各種顏色、字體等等的有沒有平衡也要看看」） ----------
    淺色底（羊皮紙、銅牌）上用 --ink 這組；深色底（木頭、石牆）上用 --paper 這組。不要在淺底上用淺字（11-13 展廳側欄踩過）。
    字級只用四級：--type-tiny（最小，標籤）、--type-small（說明）、--type-body（內文）、--type-head（標題）。 */
 .onescreen-room, .cellar-rules-layer { --ink: #2E2014; --ink-soft: #5A4030; --ink-accent: #8E2A24; --ink-good: #1F5A2C;
@@ -557,7 +557,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
 /* ================================================================
    圖鑑室（11-13，第四個套骨架的廳；ui_screens2.js 的 SCREENS.codex；版面草稿在 Design 畫布「圖鑑室一個畫面」）
    標題壹行｜頁籤壹排（P-4 銅牌頁籤）｜主區：圖鑑的格子（太多，在框裡捲）＋側欄：篩選（收起來）、點壹格的說明牌
-   字色、字級用 --ink、--type-（docs/介面配色.md）
+   字色、字級用 --ink、--type-（docs/規則/介面配色.md）
    ================================================================ */
 .screen.onescreen-room.codex-onescreen > .seg.big-tabs { flex: none; display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 8px; padding: 0; background: none; border: 0; box-shadow: none; overflow-x: auto; scrollbar-width: none; }
 .codex-onescreen > .seg.big-tabs .seg-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 4px 14px 2px; border: 10px solid transparent; border-image: url(/ui2/ui2-tab-1.webp) 30 40 fill / 10px 16px stretch; background: none; color: var(--ink); font-size: var(--type-body); font-weight: 700; box-shadow: none; border-radius: 0; }
@@ -645,7 +645,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
 }
 
 /* ================================================================
-   版面問題修正（11-13，測試 session 實測回報；docs/測試清單.md）
+   版面問題修正（11-13，測試 session 實測回報；docs/操作/測試清單.md）
    ================================================================ */
 /* 手機橫拿：拉開抽屜不要把上面的版面擠光（委託單、展台才拖得到）：只拉開壹排收藏，篩選和頁籤那排不放 */
 @media (max-height: 500px) and (orientation: landscape) {

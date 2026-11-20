@@ -1,6 +1,6 @@
 # 合併到 main 之後：測試（跟 PR 一樣的）和裝套件＋打包同時跑，都過了才部署到正式的 pepe-museum（決定 0023、0024）。
 # 免費帳號的私人 repo 鎖不住 main（翊文 11-08：「沒問題」），所以「測試沒過就不部署」寫在這裡：deploy 要等 test 過。
-# 部署用的服務帳號金鑰放在 GitHub 的 Secrets：FIREBASE_SERVICE_ACCOUNT（只有翊文能放，AI 拿不到；怎麼建見 docs/Firebase做法.md 第六節）。
+# 部署用的服務帳號金鑰放在 GitHub 的 Secrets：FIREBASE_SERVICE_ACCOUNT（只有翊文能放，AI 拿不到；怎麼建見 docs/操作/Firebase做法.md 第六節）。
 # 還沒放金鑰之前，部署那一步會跳過（不會報錯）。
 name: Deploy
 

@@ -1,7 +1,7 @@
 /* ================================================================
    圖書館重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
    標題壹行｜頁籤壹排（銅牌，跟畫廊、館長室壹樣）｜左：書架（翊文生的書背、銅邊隔板）、右：讀書的地方，各自在裡面捲。
-   前綴：origin-（docs/class名單.md）
+   前綴：origin-（docs/規則/class名單.md）
    ================================================================ */
 .screen.origin-onescreen > .onescreen-main.origin-main { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 20px; align-items: stretch; }
 .origin-onescreen .origin-main > .shelves { gap: 26px; padding: 0 6px 24px 0; align-content: start; min-height: 0; }

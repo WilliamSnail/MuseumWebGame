@@ -1,6 +1,6 @@
 // 每週劇情的內容檢查：node tools/week_check.cjs（npm test 會跑；排程開 PR 之前也跑）
 // 檢查 content/weeks/（週包、備用週、備用的一天）、content/story/帳本.json、content/排程設定.json。
-// 規則照 docs/每週劇情.md 第五、六、十二節；格式見 content/README.md。
+// 規則照 docs/規劃/每週劇情.md 第五、六、十二節；格式見 content/README.md。
 // 有錯（errors）就失敗；警告（warnings，例如到期還沒收的伏筆）只印出來，排程要寫進 PR。
 // 別的檔可以 require 這支，用 checkContent({ files, ledger, settings, today }) 檢查記憶體裡的內容（test/week_check.test.cjs）。
 const fs = require("fs"), path = require("path");
@@ -19,7 +19,7 @@ const LIMITS = { foeName: 12, foeText: 40, foeCard: 80, weeklyWords: 40, weekTit
   roomTitle: 14, roomHint: 26, roomIntro: 50, roomLine: 50, choiceLabel: 16, resultText: 50, svgText: 40, real: 50, realMax: 3,
   understandText: 80, understandFrom: 24, understandHint: 40, understandPerDay: 2, understandNeedMax: 6, // 線索和看懂（shared/clues.js）
   yugaSays: 40, yugaDone: 40 }; // Yuga Bot 交代的任務（每日任務的 giver、says、done）
-// 禁用字（新聞的界線：docs/每週劇情.md 第三節、docs/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
+// 禁用字（新聞的界線：docs/規劃/每週劇情.md 第三節、docs/規則/界線.md）。有就擋。英文字母一律擋（品牌、Pepe），B1 這種樓層和 1D3 這種骰子例外
 // 選舉、投票、兩岸、戰爭、宗教這類一般的字可以寫（翊文 11-09：館內的展品投票選館長；「可以拿掉」；決定 0037）；擋的是真實的職位、政黨、組織、人名
 const BANNED = [
   "總統", "立委", "議員", "政府", "國民黨", "民進黨", "民眾黨", "親民黨", "時代力量", "台灣基進", "共產黨", "藍營", "綠營",
@@ -70,7 +70,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     if (max && len(s) > max) E(where, `太長了（${len(s)} 字，最多 ${max}）`);
     if (s.includes("一")) E(where, "畫面上的字用「壹」，不要用「一」（決定 0001）");
     const hit = BANNED.find(w => s.includes(w));
-    if (hit) E(where, `有禁用字「${hit}」（docs/每週劇情.md 第三節）`);
+    if (hit) E(where, `有禁用字「${hit}」（docs/規劃/每週劇情.md 第三節）`);
     if (/[A-Za-z]/.test(s.replace(/B\d/g, "").replace(/\d+D\d+/g, ""))) E(where, "不要有英文字母（品牌、別人的作品名；樓層寫 B1 可以）");
     [...s.matchAll(/\[\[(.+?)\|(.+?)\]\]/g)].forEach(m => { if (!G.BOOK_ACTION_IDS.includes(m[2])) E(where, `書裡可以點的字，動作「${m[2]}」不存在（只能用 ${G.BOOK_ACTION_IDS.join("、")}）`); });
     const braces = s.replace(/\{圖鑑格數\}/g, "");
@@ -470,7 +470,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         });
       }
     }
-    // 館內股的 NPC 劇情日（規劃 2.8k、docs/館內NPC規劃.md）：每週最多一家店一天，那天 NPC 多去（數字在 NUM.casino.stockIn，內容不能自己寫大小）。可以不寫
+    // 館內股的 NPC 劇情日（規劃 2.8k、docs/規劃/館內NPC規劃.md）：每週最多一家店一天，那天 NPC 多去（數字在 NUM.casino.stockIn，內容不能自己寫大小）。可以不寫
     if (wk.npc !== undefined) {
       const nw = where + "/week.json.npc";
       if (o.fallback) E(nw, "備用週不寫 npc（沒有日期）");
@@ -690,7 +690,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     });
     // 揭露節奏（決定 0078）：沒有 revealBeats 的舊帳本照常。格式錯、揭露太像謎底、露臉、地方太少都擋
     if (L.revealBeats != null) checkRevealBeats(L, G, E, W, `${lw}.revealBeats`, nowWeek);
-    // 子主旨和世界的層（docs/世界觀主旨.md）：沒有 main.subthemes 的舊帳本照常
+    // 子主旨和世界的層（docs/規劃/世界觀主旨.md）：沒有 main.subthemes 的舊帳本照常
     checkSubthemes(L, E, W, lw);
     // 兩週壹段、地圖計畫、館外地圖資料（翊文 11-16）
     checkUnits(L, E, W, lw, ctx);
@@ -732,7 +732,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   return { errors, warnings, lib };
 }
 
-// 帳本的 revealBeats（docs/劇情揭露節奏.md）：每兩週壹次小揭露。只檢查格式和不破梗，不看遊戲裡有沒有放（那是排程的事）
+// 帳本的 revealBeats（docs/規劃/劇情揭露節奏.md）：每兩週壹次小揭露。只檢查格式和不破梗，不看遊戲裡有沒有放（那是排程的事）
 const BEAT_WHERE = ["書", "房間", "今日特展", "每週任務旁白", "公佈欄", "賭場收藏", "賭場台詞", "NPC 日報", "季節線", "拍賣預展", "限時活動"];
 const BEAT_CLUE_WHERE = ["書", "房間", "今日特展"]; // 遊戲只記這三種的 clue
 const BEAT_FACE = ["長相", "臉", "眼睛", "模樣", "樣子", "走進來", "現身", "露面"]; // 劇情角色不露臉
@@ -791,7 +791,7 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
   });
 }
 
-// 帳本的 main.subthemes、world.layers、weeks.<週>.subthemes（docs/世界觀主旨.md，翊文 11-14）：只檢查格式和對得上，不看寫得好不好
+// 帳本的 main.subthemes、world.layers、weeks.<週>.subthemes（docs/規劃/世界觀主旨.md，翊文 11-14）：只檢查格式和對得上，不看寫得好不好
 const SUB_ID = /^st-[a-z]+$/, DAYS = ["d1", "d2", "d3", "d4", "d5", "d6", "d7"];
 function checkSubthemes(L, E, W, lw) {
   const S = isObj(L.main) ? L.main.subthemes : null;

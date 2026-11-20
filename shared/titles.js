@@ -6,7 +6,7 @@
 //    titlePublish(錢包, 存檔)   伺服器（functions/casino.js）用：現在要公開的稱號 { id, name } 或 null。錢包只有 Functions 寫得動，所以不信存檔裡的名字
 //    titlesFromDb(原始資料)     瀏覽器讀 Realtime Database 的 titles：{ uid: { id, name } }，不對的丟掉
 //    titleName(稱號)            畫面上放的字：沒有、壞掉的回傳空字串（沒稱號的人版面不變）
-//  公開的只有「稱號的 id 和名字」一個欄位；email、理智、怪癖、靈感都不在裡面（docs/界線.md）。
+//  公開的只有「稱號的 id 和名字」一個欄位；email、理智、怪癖、靈感都不在裡面（docs/規則/界線.md）。
 //  放在 Realtime Database 的 titles/{uid}：只有 Functions 寫得動，館友讀得到（database.rules.json）。
 // ================================================================
 import { NUM } from "./config.js";

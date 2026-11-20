@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "main": "index.js",
-  "description": "佩佩博物館 4 的 Cloud Functions：伺服器說了算的事（docs/Firebase做法.md 第三節）。規則在 ../shared/，部署前複製進 functions/shared/。",
+  "description": "佩佩博物館 4 的 Cloud Functions：伺服器說了算的事（docs/操作/Firebase做法.md 第三節）。規則在 ../shared/，部署前複製進 functions/shared/。",
   "engines": { "node": "22" },
   "dependencies": {
     "firebase-admin": "^13.0.0",

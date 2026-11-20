@@ -137,7 +137,7 @@ async function all() {
   await fsSet("discordTest/config", { publicKey: PUB_HEX, guildId: GUILD });
   const day = taipeiDay();
   await fsSet(`discordJoinDay/${day}`, { n: 0 });
-  const cfg = require("../shared/../test/load_shared.cjs").load().NUM.discord;
+  const cfg = require("../test/load_shared.cjs").load().NUM.discord;
   const BONUS = cfg.linkBonus, START = require("../test/load_shared.cjs").load().NUM.casino.startChips;
 
   // ---- 入口：簽名、PING、設定、伺服器 ----

@@ -1,6 +1,6 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  藝術市場第一步（11-14，shared/casino/art.js；規劃 docs/經濟體系規劃.md 2.10 節）：跟館方買賣每日特展的畫。
+//  藝術市場第一步（11-14，shared/casino/art.js；規劃 docs/規劃/經濟體系規劃.md 2.10 節）：跟館方買賣每日特展的畫。
 //  art  act "quote"（只讀：今天特展上能買的畫、現價、我收藏的畫）、"buy"（d.id）、"sell"（d.id）
 //  買賣在 casino.js 的 playCore 裡做：錢包、莊家、存檔（P.art）在同一個 Firestore 交易，錢只搬不生（casHouseMove "art"）。
 //  畫的登記（id、日期、畫框…）是 tools/copy_shared.cjs 打包進來的 shared/art_data.js，價格和稀有度都在伺服器算，不信瀏覽器。
@@ -70,7 +70,7 @@ export const art = onCall(async req => {
 });
 
 // ================================================================
-//  藝術市場第二步：畫的拍賣（11-14，shared/casino/auction.js；規劃 docs/經濟體系規劃.md 2.10b 節）
+//  藝術市場第二步：畫的拍賣（11-14，shared/casino/auction.js；規劃 docs/規劃/經濟體系規劃.md 2.10b 節）
 //  casinoAuction/main（data：JSON 字串，只有 Functions 碰得到；出價是封閉的，瀏覽器永遠讀不到）
 //  art  act "auctions"（看：開放中的拍賣、最近收標的得標價、我的出價）、"bid"（d.id、d.amt：出價或加價，只能往上）、
 //       "list"（d.id 畫的 id、d.reserve 底價：把自己的畫拿去拍）、"cancel"（d.id 拍賣 id：沒人出價才能取消）

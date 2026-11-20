@@ -2,7 +2,7 @@
 // 為什麼要有：打包（vite build）只會擋「import 了一個對方沒 export 的名字」，
 // 但「用到別的檔 export 的名字、卻忘了 import」不會擋，要等玩家玩到那一行才壞（ReferenceError）。
 // 這裡用 acorn＋eslint-scope 找出每個檔「沒宣告、也沒 import，卻用到」的名字，只要那個名字是專案裡別的檔 export 的，就算錯。
-// 另外也檢查：ui_core.js 不准 import 比它後面的畫面檔（理由見 docs/架構.md 4.1 節）。
+// 另外也檢查：ui_core.js 不准 import 比它後面的畫面檔（理由見 docs/規則/架構.md 4.1 節）。
 const fs = require("fs"), path = require("path");
 const acorn = require("acorn"), es = require("eslint-scope");
 

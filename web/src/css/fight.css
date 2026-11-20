@@ -182,7 +182,7 @@ body.reduce-motion .fg-fx.inline { animation: none; background-position: 100% 0;
 .fg-stage.fl5 { background: linear-gradient(rgba(27, 22, 31, .4), rgba(27, 22, 31, .8)), url(/cellar2/stage-b5.webp) center 60% / cover; }
 @media (max-height: 500px) and (orientation: landscape) { .fg-intent { margin-top: 8px; border-width: 12px; } .fg-intent::before, .fg-intent::after { height: 14px; } }
 
-/* ---------- 結算演出（docs/打怪演出規劃.md）：壹件壹件演、跳數字、條慢慢掉、回合小結 ---------- */
+/* ---------- 結算演出（docs/規劃/打怪演出規劃.md）：壹件壹件演、跳數字、條慢慢掉、回合小結 ---------- */
 .fg-bar i { transition: width 600ms ease; }
 .fg-seat.acting { border-color: #FBEFD9; box-shadow: 0 0 0 3px rgba(251, 239, 217, .5), 0 0 18px rgba(214, 178, 94, .6); transform: translateY(-2px); }
 .fg-seat.shake { animation: fg-shake 420ms ease; }

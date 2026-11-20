@@ -1,7 +1,7 @@
 /* ================================================================
    手作坊重做（11-14，美術統籌）：套 onescreen 骨架（onescreen.css），整頁不捲。
    標題壹行｜上：佩佩的展台（吃剩下的高度）＋右邊名牌、可能性、做｜下：選項托盤（類別頁籤、卡片壹排左右滑、工具）
-   前綴 ws-（docs/class名單.md）；根 class workshop-onescreen。舊的 ui.css、landscape.css 用 .scr-workshop 排版，這裡要蓋掉。
+   前綴 ws-（docs/規則/class名單.md）；根 class workshop-onescreen。舊的 ui.css、landscape.css 用 .scr-workshop 排版，這裡要蓋掉。
    ================================================================ */
 .screen.scr-workshop.workshop-onescreen { display: flex; flex-direction: column; }
 .screen.workshop-onescreen > .onescreen-main.ws-main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: stretch; }
