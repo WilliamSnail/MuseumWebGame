@@ -10,7 +10,7 @@
 // ================================================================
 import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino/text.js";
+import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_HALL_NOTES, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino/text.js";
 import { casCardName, casFill, casHand, casNum } from "../../shared/casino/core.js";
 import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino/wallet.js";
 import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
@@ -659,28 +659,53 @@ function livePane() {
 }
 
 // ---------- 餐車 ----------
+// 11-20 重新設計（翊文）：夜市攤車。棚子、掛燈（裝飾）→ 說明列 → 三區木牌（小點心、正餐、貴的）→ 堂主字條 → 托盤（剛買的）。價錢、機率不動。css/diner.css（dn-）
+const DN_GROUPS = [["小點心", it => !it.ticket && it.price <= 100], ["正餐", it => !it.ticket && it.price > 100 && it.price <= 100000], ["貴的", it => it.ticket || it.price > 100000]];
+function dinerNote() {
+  const d = todayStr(); let k = 0; for (const c of d) k = (k * 31 + c.charCodeAt(0)) % 9973;
+  const txt = CAS_HALL_NOTES[k % CAS_HALL_NOTES.length];
+  const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"));
+  const el = h("details", { class: "dn-note" }, h("summary", null, icon("scroll"), h("span", null, "堂主的字條")), body);
+  if (window.innerWidth > 760) el.open = true; // 電腦攤開；手機收成壹個便條，點了才展開
+  return el;
+}
+function dinerCard(it, w, buy) {
+  const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
+  const pricey = it.ticket || it.price > 100000;
+  const words = it.ticket ? [] : casFoodWords(it);
+  const why = lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null;
+  return h("li", { class: "dn-card" + (pricey ? " dn-pricey" : "") + (lack || locked ? " dn-off" : ""), "data-food": it.id },
+    h("span", { class: "dn-pic", "aria-hidden": "true" }, h("img", { src: `/diner/food-${it.id}.webp`, alt: "", loading: "lazy" })),
+    h("b", { class: "dn-name" }, it.name),
+    h("span", { class: "dn-fx" }, it.ticket ? h("span", { class: "dn-chip" }, h("i", { class: "dn-ico ticket", "aria-hidden": "true" }), "券，壹定拿到") : words.map(x => h("span", { class: "dn-chip" }, h("i", { class: "dn-ico " + (x.startsWith("理智") ? "san" : "mood"), "aria-hidden": "true" }), markText(x)))),
+    it.ticket ? null : h("details", { class: "dn-odds" }, h("summary", null, h("i", { class: "dn-ico ticket", "aria-hidden": "true" }), "有機會抽到券"), h("span", null, `${it.odds}% 機率抽到大禮包券`)),
+    h("span", { class: "dn-price" }, h("i", { class: "dn-coin", "aria-hidden": "true" }), casNum(it.price)),
+    btn("買", () => buy(it), "primary small dn-buy", { disabled: lack || locked || S.busy ? true : null, title: why }));
+}
 function dinerPane() {
   const w = S.w;
   const buy = it => act("buy", { item: it.n }, r => {
-    S.dinerLines = r.lines || [];
+    S.dinerLines = r.lines || []; S.dinerLast = it.id;
     snd("coin");
     if (it.icon === "cup") { sndFile("pouring", 0.45); setTimeout(() => sndFile("bubbles", 0.22), 2600); } // 倒完再冒壹點泡 // 飲料（啤酒、葡萄酒、白蘭地）：倒水聲（11-16 翊文，Pixabay「Pouring Water」）
     if (r.mood) note(`心情 +${r.mood}${r.san ? `，理智 +${r.san}` : ""}`, "good");
     else if (r.san) note(`理智 +${r.san}`, "good");
     celebrate(r.ach);
   });
-  return [
-    sec("餐車", h("p", { class: "cas-note" }, fill(CAS_TEXT.dinerHello, { name: CAS_TEXT.dealer }), "。", CAS_TEXT.dinerHint, "。"),
-      h("p", { class: "cas-note" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
-      h("p", { class: "cas-have" }, w.opened > 0 ? "今天的大禮包你開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"),
-      h("ul", { class: "cas-menu" }, CAS_MENU.map(it => {
-        const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
-        return h("li", null, h("span", { class: "cas-n" }, String(it.n)), h("span", { class: "cas-name" }, h("b", null, it.name), h("small", null, it.ticket ? "券" : markText([...casFoodWords(it), `${it.odds}% 機率抽到券`].join("・")))),
-          h("span", { class: "cas-price" }, casNum(it.price)),
-          btn("買", () => buy(it), "primary small", { disabled: lack || locked || S.busy ? true : null, title: lack ? "籌碼不夠" : locked ? "先開今天的大禮包" : null }));
-      })),
-      S.dinerLines.length ? h("div", { class: "cas-say" }, S.dinerLines.map(l => h("p", null, l))) : null),
-  ];
+  const menu = CAS_MENU.filter(it => !it.redirect);
+  const last = S.dinerLast ? CAS_MENU.find(it => it.id === S.dinerLast) : null;
+  return h("div", { class: "dn" },
+    h("div", { class: "dn-awning", "aria-hidden": "true" }), h("div", { class: "dn-lights", "aria-hidden": "true" }),
+    h("div", { class: "dn-top" },
+      h("div", { class: "dn-hello" },
+        h("p", { class: "dn-say" }, fill(CAS_TEXT.dinerHello, { name: CAS_TEXT.dealer }), "。"),
+        h("p", { class: "dn-stat" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
+        h("p", { class: w.opened > 0 ? "dn-open" : "dn-open dn-warn" }, w.opened > 0 ? "今天的大禮包開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。")),
+      dinerNote()),
+    h("div", { class: "dn-groups" }, DN_GROUPS.map(([title, test]) => { const its = menu.filter(test); return its.length ? h("section", { class: "dn-group" + (title === "貴的" ? " dn-g-pricey" : "") }, h("h3", null, title), h("ul", { class: "dn-cards" }, its.map(it => dinerCard(it, w, buy)))) : null; })),
+    h("div", { class: "dn-tray" + (S.dinerLines.length ? " dn-has" : ""), "aria-live": "polite" },
+      last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, h("img", { src: `/diner/food-${last.id}.webp`, alt: "" })) : h("span", { class: "dn-tray-empty" }, "托盤是空的"),
+      S.dinerLines.length ? h("div", { class: "dn-tray-say dn-in" }, S.dinerLines.map(l => h("p", null, l))) : null));
 }
 
 // ---------- 換小獎 ----------
