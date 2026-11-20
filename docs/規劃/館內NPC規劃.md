@@ -160,7 +160,7 @@
 ### 步驟 3：有名字、有行程、有故事線的 NPC（**11-14 翊文：「直接做到步驟 3」，內容和檢查已上線；排程和每位的故事線寫在 content/npc 和 content/排程說明.md**）
 
 - 內容：`content/npc/`（委託人 20 位搬進來＋一批有名字的旅客，每位都有 `arc` 故事線的第 1～2 段）；每天 05:00 算行程 `house.npc`；展廳留言、展廳參觀者、委託人出現、日報新聞句改用 NPC 名字。館內股的人數改成行程加總（期望值對齊 2）。
-- 程式：新檔 `shared/npc.js`（純函式：行程、加成、檢查）、`shared/logic.js` 的 `visitorArrive`、`dailyCommissions`、`casino/report.js`。約 3～4 個 PR。
+- 程式：新檔 `shared/npc/core.js`（純函式：行程、加成、檢查）、`shared/logic.js` 的 `visitorArrive`、`dailyCommissions`、`casino/report.js`。約 3～4 個 PR。
 - **要翊文決定**：委託人 20 位的 `likes`、`route`（Yuga 寫）；旅客的名字模板；NPC 占一家店人數的上限 40% 行嗎；劇情角色（`trace`）確定不算人數、不出價。
 
 ### 步驟 4：NPC 參加畫的拍賣
@@ -201,7 +201,7 @@
 
 ## 七、接線收尾（11-14）
 
-- **每位委託人自己的進度**：`house.npcc.cl = { 委託人 id: 張數 }`（`comm` 是全館總數，`hall` 是展廳人次，都還在）。伺服器算不出每張委託是誰（要看玩家的存檔），所以交委託時網頁一起說「委託人的名字」（`act: "job"` 的 `clients`，跟 `slots` 壹對壹），伺服器用名單認人，不認得的只算進 `comm`。`npcCounters(house.npcc)`（shared/npc.js）：有 `cl` 就用每位自己的數，沒有（舊資料）就用 `comm` 總數。
+- **每位委託人自己的進度**：`house.npcc.cl = { 委託人 id: 張數 }`（`comm` 是全館總數，`hall` 是展廳人次，都還在）。伺服器算不出每張委託是誰（要看玩家的存檔），所以交委託時網頁一起說「委託人的名字」（`act: "job"` 的 `clients`，跟 `slots` 壹對壹），伺服器用名單認人，不認得的只算進 `comm`。`npcCounters(house.npcc)`（shared/npc/core.js）：有 `cl` 就用每位自己的數，沒有（舊資料）就用 `comm` 總數。
 - **網頁也知道進度**：`casino` 的 `peek` 多回 `npcc: { comm, hall, cl }`，`ui_today.js` 存進 `npcWebSet`，展廳的故事留言、館內近況、參觀者都用 `npcWebCounters()`。沒登入或還沒收到就只看日期。
 - **委託櫃台每天平均 2 位**：後期故事線把 `job` 權重換掉，櫃台只剩約 1.5 位；補了幾位的 `route.job`。`node tools/dev/npc_avg.cjs` 看五家店平均（目標 2）。
 - **拍賣成交者**：`casAucView().done[]` 多 `buyerName`（NPC「館外的收藏家 某某」、玩家壹律「館友」、流標是 null）和 `npcBuyer`。

@@ -9,8 +9,8 @@
 //    statBandOf(kind, value) → 分級代碼，給只有數字的地方用（例如財報卡的分布）。
 //  純函式，不碰 DOM。
 // ================================================================
-import { NUM } from "./config.js";
-import { nwSan, whMult, whUnrest } from "./world_base.js";
+import { NUM } from "../config.js";
+import { nwSan, whMult, whUnrest } from "./base.js";
 
 const svN = v => (v === null || v === undefined || v === "" || typeof v === "boolean" || !Number.isFinite(+v) ? null : +v);
 // 分級表：由低到高；上限（含）以內算那一級。unitUnrest 是「高 ＝ 不安」，所以分級名字反過來讀。

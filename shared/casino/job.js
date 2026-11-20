@@ -12,8 +12,8 @@ import { NUM } from "../config.js";
 import { casHouseMove } from "./book.js";
 import { casInSpent, casInUsed } from "./stock_in.js";
 import { RNG } from "../logic_base.js";
-import { nwPoke } from "../world.js";
-import { npcByName } from "../npc.js";
+import { nwPoke } from "../world/core.js";
+import { npcByName } from "../npc/core.js";
 
 const cjBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cjNum = (v, d = 0) => (Number.isFinite(+v) ? +v : d);

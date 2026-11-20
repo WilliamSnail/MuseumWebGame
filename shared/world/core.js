@@ -10,13 +10,13 @@
 //    之後（W3）單位分帳、成長按權重分，才把成長搬到排程。
 //  搬錢（wdSettle）：house.world 和 pool 之間搬，總和不變。預設關閉；要開之前，casBookSnap 必須把 pool 算進總量（否則對帳差不是 0）。
 // ================================================================
-import { NUM } from "./config.js";
-import { hashStr } from "./logic_base.js";
-import { OUT_STOCKS } from "./stocks_text.js";
-import { WORLD_UNITS } from "./world_roster.js";
-import { WORLD_MARKETS } from "./world_markets.js";
-import { WORLD_EVENTS } from "./world_events.js";
-import { nwSan, wdN, whCfg, whClamp, whMult, whUnrest, wuBox } from "./world_base.js";
+import { NUM } from "../config.js";
+import { hashStr } from "../logic_base.js";
+import { OUT_STOCKS } from "../stock/text.js";
+import { WORLD_UNITS } from "./roster.js";
+import { WORLD_MARKETS } from "./markets.js";
+import { WORLD_EVENTS } from "./events.js";
+import { nwSan, wdN, whCfg, whClamp, whMult, whUnrest, wuBox } from "./base.js";
 import { statBandOf, statView } from "./stat_view.js";
 
 const wdBox = v => !!v && typeof v === "object" && !Array.isArray(v);

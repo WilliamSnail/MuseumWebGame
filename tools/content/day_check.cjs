@@ -2,7 +2,7 @@
 // 把所有「內容」的檢查壹次跑完，最後印壹張過／沒過的清單；任何壹項沒過，結束碼 1。警告不擋，但要貼進 PR。
 //   1. 每週劇情和帳本（tools/content/week_check.cjs：週包、每天的檔、帳本、揭露節奏 revealBeats、NPC、不破梗、禁用字）
 //   2. 館內 NPC（tools/check/npc_check.cjs：預算、不露臉、季節節奏）
-//   3. NPC 名單打包（shared/npc_roster.js 有沒有跟 content/npc 壹致；不壹致就跑 node tools/content/npc_pack.cjs）
+//   3. NPC 名單打包（shared/npc/roster.js 有沒有跟 content/npc 壹致；不壹致就跑 node tools/content/npc_pack.cjs）
 //   4. 維護日誌的格式（tools/check/log_check.cjs；有沒有寫日誌）
 //   5. 預約公告對得上工作流程（tools/content/announce.cjs --check）；趣味節日清單（test/story/funday.test.cjs：排程新增節日後要過）
 //   6. 今天的檔缺什麼（tools/content/day_plan.cjs：clue、market、特展的新畫、結局書；只提醒，不擋）
@@ -29,17 +29,17 @@ function summarize(name, code, stdout, stderr) {
 }
 // 名單打包有沒有跟上：回傳 { ok, message }
 function packFresh(root = ROOT) {
-  const pack = require("./npc_pack.cjs"), f = path.join(root, "shared", "npc_roster.js");
-  if (!fs.existsSync(f)) return { ok: false, message: "shared/npc_roster.js 不見了：跑 node tools/content/npc_pack.cjs" };
+  const pack = require("./npc_pack.cjs"), f = path.join(root, "shared", "npc", "roster.js");
+  if (!fs.existsSync(f)) return { ok: false, message: "shared/npc/roster.js 不見了：跑 node tools/content/npc_pack.cjs" };
   const now = pack.source(pack.roster(path.join(root, "content", "npc")));
-  return fs.readFileSync(f, "utf8") === now ? { ok: true, message: "名單跟 content/npc 壹致" } : { ok: false, message: "shared/npc_roster.js 沒跟上 content/npc：跑 node tools/content/npc_pack.cjs，再 git add" };
+  return fs.readFileSync(f, "utf8") === now ? { ok: true, message: "名單跟 content/npc 壹致" } : { ok: false, message: "shared/npc/roster.js 沒跟上 content/npc：跑 node tools/content/npc_pack.cjs，再 git add" };
 }
-// 館外地圖（content/map/館外.json）有沒有打包進 shared/map_data.js（以前只有 npm test 才抓得到，ship 的本機測試約 2 分鐘後才發現）
+// 館外地圖（content/map/館外.json）有沒有打包進 shared/world/map_data.js（以前只有 npm test 才抓得到，ship 的本機測試約 2 分鐘後才發現）
 function mapFresh(root = ROOT) {
-  const pack = require("./map_pack.cjs"), f = path.join(root, "shared", "map_data.js"), src = path.join(root, "content", "map", "館外.json");
+  const pack = require("./map_pack.cjs"), f = path.join(root, "shared", "world", "map_data.js"), src = path.join(root, "content", "map", "館外.json");
   if (!fs.existsSync(src)) return { ok: true, message: "沒有館外地圖資料" };
-  if (!fs.existsSync(f)) return { ok: false, message: "shared/map_data.js 不見了：跑 node tools/content/map_pack.cjs" };
-  return fs.readFileSync(f, "utf8") === pack.source(pack.spots(src)) ? { ok: true, message: "館外地圖跟 content/map/館外.json 壹致" } : { ok: false, message: "shared/map_data.js 沒跟上 content/map/館外.json：跑 node tools/content/map_pack.cjs，再 git add" };
+  if (!fs.existsSync(f)) return { ok: false, message: "shared/world/map_data.js 不見了：跑 node tools/content/map_pack.cjs" };
+  return fs.readFileSync(f, "utf8") === pack.source(pack.spots(src)) ? { ok: true, message: "館外地圖跟 content/map/館外.json 壹致" } : { ok: false, message: "shared/world/map_data.js 沒跟上 content/map/館外.json：跑 node tools/content/map_pack.cjs，再 git add" };
 }
 
 // ---------- --strict：今天「一定要」的項目（純函式，測試用） ----------

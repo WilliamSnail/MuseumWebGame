@@ -7,8 +7,8 @@ const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const mk = G => G.casHouseFix(G.casHouseNew(), "2026-11-16").house;
 const px = (G, k) => { const o = {}; for (const s of G.OUT_STOCKS) o[s.id] = 100 * k; return o; };
-T("市場名單 shared/world_markets.js 跟上 content/world/markets（跑 node tools/content/market_pack.cjs）", () => {
-  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "..", "shared", "world_markets.js"), "utf8"), MP.source(MP.markets()));
+T("市場名單 shared/world/markets.js 跟上 content/world/markets（跑 node tools/content/market_pack.cjs）", () => {
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "..", "shared", "world", "markets.js"), "utf8"), MP.source(MP.markets()));
 });
 T("每個單位都在某個市場；沒寫 market 就用 sector；名單裡沒有的當公共", G => {
   for (const u of G.WORLD_UNITS) assert.ok(G.wmDef(G.wmOfUnit(u.id)), u.id); assert.strictEqual(G.wmOfUnit("g-island"), "island"); assert.strictEqual(G.wmOfUnit("g-daily"), "daily"); assert.strictEqual(G.wmOfUnit("不存在"), "public");

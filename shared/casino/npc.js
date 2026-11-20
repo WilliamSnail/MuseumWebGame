@@ -13,8 +13,8 @@ import { RNG, hashStr, mulberry32 } from "../logic_base.js";
 import { casHand, casPoint } from "./core.js";
 import { casHouseWorldIn, casHouseWorldOut, casWorldLow } from "./book.js";
 import { casBetMax, casHouseLevel, casPayAdd, casPayLeft } from "./wallet.js";
-import { npcDayStartMs, npcVisitsToday } from "../npc_spend.js";
-import { npcLikesNow } from "../npc.js";
+import { npcDayStartMs, npcVisitsToday } from "../npc/spend.js";
+import { npcLikesNow } from "../npc/core.js";
 
 const ncN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const ncBox = o => !!o && typeof o === "object" && !Array.isArray(o);

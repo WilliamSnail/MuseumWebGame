@@ -41,18 +41,18 @@ import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "../shared/
 import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "../shared/casino/bond.js";
 import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "../shared/casino/stock_lev.js";
 import { casArtSecret } from "../shared/casino/art.js";
-import { npcCounters, npcPublic } from "../shared/npc.js";
+import { npcCounters, npcPublic } from "../shared/npc/core.js";
 import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "../shared/npc_data.js";
-import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "../shared/econ_events.js";
+import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "../shared/world/econ_events.js";
 import { NPC_LIST } from "../shared/npc_list_data.js";
 import { npcCasAway } from "../shared/casino/npc.js";
-import { npcCardView } from "../shared/npc_card.js";
-import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "../shared/world.js";
+import { npcCardView } from "../shared/npc/card.js";
+import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "../shared/world/core.js";
 import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "../shared/casino/stock_grp.js";
 import { casSellForDebt } from "../shared/casino/debt.js";
 import { casAdvisorExtend, casAdvisorLetter } from "../shared/casino/advisor.js";
 import { MAIL_DAYS } from "../shared/mailbox.js";
-import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "../shared/npc_spend.js";
+import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "../shared/npc/spend.js";
 import { casInvestPublic, casInvestRun } from "../shared/casino/invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "../shared/casino/stock_in.js";
 import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "../shared/casino/stock.js";
@@ -134,8 +134,8 @@ export async function playCore(me, email, opts, fn) {
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
       casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino/stock_in.js）
-      casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/econ_events.js）
-      casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
+      casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/world/econ_events.js）
+      casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc/spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資海外（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
       casStockSetReal(house, tw, us, day, Object.assign({}, TW_SYMBOLS, US_SYMBOLS), Object.assign({}, TW_NAMES, US_NAMES)); // 畫面要的真實代號、已經算進遊戲價的真實價（代號只在伺服器）
       casStockSetDiv(house, divDoc); // 除息、配股事件放進莊家（錢包領息在下面的 PegSync）
@@ -415,7 +415,7 @@ async function writeEcon(doc, day) {
     if (!(snapN && snapN.day === yd)) { try { const cp = JSON.parse(JSON.stringify(h)); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snapN = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("writeEcon npcs", e && e.message); } } // 日報是唯讀、不換日：昨天的 npcs 可能還沒結算，在複本上補算
     // 銀行廳的財報頁也讀這裡（shared/casino/gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
     const A = doc.diff.act || {}, g = doc.gdp;
-    // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc_spend.js 的 house.npcs，日報那兩行也是讀這個）
+    // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc/spend.js 的 house.npcs，日報那兩行也是讀這個）
     const N = snapN, NC = (N && N.crowd) || {};
     const npcRows = N ? [["館外旅客", `${casNum(N.people || 0)} 位`], ["散客", `${casNum(NC.people || 0)} 位`], ["館外帶進館", casNum((N.total || 0) + (NC.ticket || 0) + (NC.shop || 0))]] : [];
     const rows = [["餐車", `${casNum(A.food || 0)} 份`], ["21 點", `${casNum(A.bjHands || 0)} 手`], ["拚經濟成功", `${casNum(A.econWin || 0)} 次`], ...(N ? [["展廳參觀者", `${casNum((N.hallN || 0) + (NC.people || 0))} 位`]] : []), ["館友領到分紅的參觀者", `${casNum(A.ticketPeople || 0)} 位`], ...npcRows,

@@ -4,7 +4,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 //  資料來源：台灣證交所的即時行情介面（mis.twse.com.tw，公開、不用金鑰；跟美股那邊的 Yahoo 一樣不是官方保證的介面，抓不到就標沒資料，不編）。
 //  真實代號只放在這個檔（不進 shared/，名字表不寫代號）。
 //
-//  怎麼跑：排程每分鐘叫一次 stockTwTick（週一到週五 09:00～13:59）。每次先讀 stocksTw/latest，shared/stocks_tw.js 的 twNeed 說要不要抓：
+//  怎麼跑：排程每分鐘叫一次 stockTwTick（週一到週五 09:00～13:59）。每次先讀 stocksTw/latest，shared/stock/tw.js 的 twNeed 說要不要抓：
 //    09:00 起抓開盤價（抓到才開盤，超過 09:30 還沒有就整天不開）；之後每 15 分鐘壹個錨點，錨點時間過了 3 分鐘內每分鐘重抓；
 //    再抓不到，這壹段真實成分當 0，只剩隨機（資料標 stale）。
 //  放哪裡（都只有 Functions 碰得到，firestore.rules 沒開放）：
@@ -17,8 +17,8 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
 import { taipeiDay } from "../shared/logic.js";
-import { outStockWeekend } from "../shared/stocks.js";
-import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "../shared/stocks_tw.js";
+import { outStockWeekend } from "../shared/stock/core.js";
+import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "../shared/stock/tw.js";
 
 const db = () => getFirestore();
 const docRef = () => db().doc("stocksTw/latest");

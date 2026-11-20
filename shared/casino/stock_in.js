@@ -28,9 +28,9 @@ import { casSellCap, casSellTip } from "./credit.js";
 import { casCount, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain } from "./book.js";
 import { casFill, casNum } from "./core.js";
 import { hashStr, mulberry32 } from "../logic_base.js";
-import { npcTrips } from "../npc_trip.js";
-import { casNpcSpend, crowdShopCounts, npcShopArrive } from "../npc_spend.js";
-import { CAS_STOCK_IN, IN_STOCKS } from "../stocks_in_text.js";
+import { npcTrips } from "../npc/trip.js";
+import { casNpcSpend, crowdShopCounts, npcShopArrive } from "../npc/spend.js";
+import { CAS_STOCK_IN, IN_STOCKS } from "../stock/in_text.js";
 import { CAS_STOCK } from "./text.js";
 
 // 亂數的祕密：伺服器每次處理前用 casInSecret(...) 設進來（Functions 的 stocksTwSecret/main，玩家讀不到）。沒設的時候（網頁、測試）用壹個固定字串——網頁拿不到真的曲線，只拿到伺服器算好的價
@@ -225,7 +225,7 @@ export function casInSeriesR(H, open, day, id, secret = SECRET) {
 
 // ---------- 真的市場：每個價怎麼算（決定 0113） ----------
 export const casInMktOn = () => !!(NUM.casino.stockIn.mkt && NUM.casino.stockIn.mkt.on);
-// 這天這家店每個價（15 分鐘）到店的人數：NPC 每站 1 位、逛店的散客壹組 n 位（shared/npc_spend.js 的 npcShopArrive）；沒有名單（測試、舊程式）全是 0（價格不動）
+// 這天這家店每個價（15 分鐘）到店的人數：NPC 每站 1 位、逛店的散客壹組 n 位（shared/npc/spend.js 的 npcShopArrive）；沒有名單（測試、舊程式）全是 0（價格不動）
 function inArrive(day, secret, npcCtx) {
   const C = NUM.casino.stockIn, out = {};
   for (const id of IN_IDS) out[id] = new Array(C.ticks).fill(0);
@@ -398,7 +398,7 @@ export function casInRoll(house, day, B, secret = SECRET, npcDays, npcCtx) {
   for (let i = 0; i < n; i++) {
     const next = inAdd(d, 1);
     pre = { day: d, open: Object.assign({}, H.open) }; // 這壹天的開盤價（還沒被換掉）
-    if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（已知世界的錢，shared/npc_spend.js）
+    if (npcCtx && Array.isArray(npcCtx.list) && npcCtx.list.length) casNpcSpend(house, d, secret, npcCtx.list, npcCtx.counters); // NPC 這壹天付的門票、店裡花的錢（已知世界的錢，shared/npc/spend.js）
     if (house.npcs && house.npcs.day === d && inBox(house.npcs.shopBy)) { // 這壹天 NPC 和散客在各家店花的錢，記進營收（決定 0087）
       for (const st of IN_STORES) { const b = house.npcs.shopBy[st], x = inBox(b) ? inN(b.npc) + inN(b.crowd) : 0; if (!inBox(H.rev[d])) H.rev[d] = {}; if (!inBox(H.rev[d][st])) H.rev[d][st] = { p: 0, x: 0 }; H.rev[d][st].x = x; }
     }

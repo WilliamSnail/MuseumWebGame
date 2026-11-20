@@ -11,8 +11,8 @@ import { casFill, casNum } from "./core.js";
 import { casLoanFrom, casRepay, casRepayPart } from "./wallet.js";
 import { casStockFeePct, casStockFix, casStockHouseFix, casStockSell } from "./stock.js";
 import { IN_IDS, casInFix, casInPrice, casInSell } from "./stock_in.js";
-import { OUT_STOCKS } from "../stocks_text.js";
-import { US_IDS } from "../stocks_tw.js";
+import { OUT_STOCKS } from "../stock/text.js";
+import { US_IDS } from "../stock/tw.js";
 
 export const CAS_DEBT = {
   none: "你現在沒有欠款，不用賣股票還債。",

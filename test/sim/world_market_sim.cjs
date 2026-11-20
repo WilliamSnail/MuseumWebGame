@@ -1,7 +1,7 @@
 // 設計用的模擬（還沒接進遊戲）：node test/sim/world_market_sim.cjs [markets|pump|all]
 // markets：各市場自己的景氣循環，接真實台股／美股（放大 β、會回平均、有上限），看真實大漲大跌日（±5%）下的樣子，和來館人數倍率的範圍。
 // pump：集團股被大量買賣、拉抬的情境：價格 → 健康值 → 營收／借款 → 價格的回饋有沒有失控，館友拉抬壹輪賺賠多少。
-// 全是獨立的算式，不碰 shared/；決定以後才寫進 shared/world.js。種子固定，同樣的輸入同樣的輸出。
+// 全是獨立的算式，不碰 shared/；決定以後才寫進 shared/world/core.js。種子固定，同樣的輸入同樣的輸出。
 const mul32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const gauss = r => { let u = 0, v = 0; while (!u) u = r(); v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));

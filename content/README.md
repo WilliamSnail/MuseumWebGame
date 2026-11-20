@@ -143,7 +143,7 @@ content/
   - `"understand": [{ "id": "u-xxx", "need": ["c-a", "c-b"], "from": "招領箱的帳", "text": "他沒有離開。……", "hint": "還有壹條在地下 B3" }]`：壹組線索集齊就跳「你看懂了：text」，記進圖書館的《看懂的事》（不扣理智、不發作，給 `NUM.story.understandInsp` 靈感，壹件壹次）。`need` 可以放更早幾天、更早幾週的線索，不能放還沒出現的（`npm test` 擋）；`text` 80 字以內、不用寫「你看懂了：」；`from` 24 字以內；`hint` 40 字以內、必填，拿到壹部分線索、還沒集齊時會看到「有件事快看懂了：還差 N 條」加這句；壹條都沒拿到就不顯示。壹天最多 2 件。
   - 玩家拿不到的線索（過了那週還沒找到的房間、沒看的畫）不卡：遊戲只要求還拿得到的。書永遠補讀得到。
 - **今天的現實世界 `real`**（選填）：`"real": ["台北有壹場光影展，展到月底。"]`，字串陣列，最多 3 則、每則 50 字以內。只寫查得到來源的真實台灣活動、展覽、節慶（來源記在 `靈感來源.md`，不進這個檔）；沒有就不寫這欄。遊戲裡不顯示，只有 Discord 的 `/pepe-今日活動` 會列。規矩跟新聞一樣（決定 0048），檢查程式會擋禁用字、英文字母；備用的一天不能寫。做法看 `content/排程說明.md` 一之六。
-- **世界股市新聞 `market`**（選填，11-14）：`"market": [{ "title": "掌心晶片鋪傳出訂單", "line": "島上傳出新壹批單。", "tone": "up", "ref": ["handbrain"] }]`，3～5 則；`title` 14 字、`line` 40 字以內；`tone` 是 `up`、`down`、`flat`；`ref`（選填）是遊戲裡館外股票的 id（`shared/stocks_text.js` 的 `OUT_STOCKS`，最多 3 個，可以寫字串或陣列）。是把「昨天外面股市發生的事」改寫成遊戲裡的新聞，顯示在銀行廳的財報頁（`bankHall.world`）。只能用遊戲裡的名字；不寫真公司、真人、真實代號、任何數字和百分比、預測和買賣建議；檢查程式會擋（`MARKET_BANNED`）。沒有合適的就整個不寫；備用的一天不能寫。做法看 `content/排程說明.md` 一之十。
+- **世界股市新聞 `market`**（選填，11-14）：`"market": [{ "title": "掌心晶片鋪傳出訂單", "line": "島上傳出新壹批單。", "tone": "up", "ref": ["handbrain"] }]`，3～5 則；`title` 14 字、`line` 40 字以內；`tone` 是 `up`、`down`、`flat`；`ref`（選填）是遊戲裡館外股票的 id（`shared/stock/text.js` 的 `OUT_STOCKS`，最多 3 個，可以寫字串或陣列）。是把「昨天外面股市發生的事」改寫成遊戲裡的新聞，顯示在銀行廳的財報頁（`bankHall.world`）。只能用遊戲裡的名字；不寫真公司、真人、真實代號、任何數字和百分比、預測和買賣建議；檢查程式會擋（`MARKET_BANNED`）。沒有合適的就整個不寫；備用的一天不能寫。做法看 `content/排程說明.md` 一之十。
 - **賭場加碼 `casino`**（選填，決定 0042）：`"casino": { "item": { id, name, desc, when }, "note": "多壹段話（50 字以內）" }`。`item` 是一件加碼的收藏品（格式跟 week.json 的 casino.items 一樣，id 不能跟這週的重複），那天 05:00 才打開，**不算集滿的條件**；`note` 顯示在賭場的「本週收藏」和每週劇情面板。這週的 week.json 沒有 casino 就不能寫；備用的一天不能寫。
 - 錯過的天：書還在、可以補讀；每日任務這週裡都能補做（獎勵照領；「3 個都做完多一份」和 `dailyAll` 只算當天做完的，決定 0060）；今日特展的靈感只有當天。
 
@@ -417,7 +417,7 @@ content/
   "variants": { "steady": { "text": "…" }, "tired": { "text": "…", "news": "…", "delay": 1 },
     "uneasy": { "action": "hold", "news": "…" }, "edge": { "action": "branch", "news": "…" } } }
 ```
-  - `variants` 的鍵只能是 `steady`／`tired`／`uneasy`／`edge`（跟 `shared/stat_view.js` 的 `npcSan` 壹樣）；`steady`、`tired` 要有 `text`（`tired` 可加 `delay`：1 或 2 週）；`uneasy.action` 是 `hold`／`skip`／`alt`（`alt` 要有 `text`）；`edge.action` 只能是 `branch`。**有 `beat` 的步驟只能寫 `steady`、`tired`。**劇情角色（t-）沒有理智，不寫。
+  - `variants` 的鍵只能是 `steady`／`tired`／`uneasy`／`edge`（跟 `shared/world/stat_view.js` 的 `npcSan` 壹樣）；`steady`、`tired` 要有 `text`（`tired` 可加 `delay`：1 或 2 週）；`uneasy.action` 是 `hold`／`skip`／`alt`（`alt` 要有 `text`）；`edge.action` 只能是 `branch`。**有 `beat` 的步驟只能寫 `steady`、`tired`。**劇情角色（t-）沒有理智，不寫。
   - `branch`（另壹條結局，由排程在觸發那天寫）：`{ "id", "since", "steps": [1～3 段 { step, from, text, news, ties, ending }] }`，`from` 要比 `since` 晚，最後壹段 `ending: true`。
   - 資料還沒有程式讀：變成什麼分級、什麼時候走哪壹步，是伺服器週結算的事（還沒做）；現在只檢查格式。
 - **檢查程式擋什麼**（`node tools/check/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
@@ -439,4 +439,4 @@ content/
 - `moodEvent`：`[{ "date": "2026-11-20", "n": -10 }]`，那天展廳氣氛 ±（−20～20，最多 3 筆）。
 - 日期要在這週內；同一個對象同一天只能有一筆；不認得的欄位（例如想寫理由的 `note`）會被擋。
 - **壞消息推不安**：`dN.json` 的 `market` 裡 `tone: "down"` 且 `ref` 指到某集團旗下的館外股票，那個集團的不安 +2（壹個集團壹天最多壹次）。不用另外寫。
-- 用 `npm run world:event` 寫（不手改）；`npm test` 的 `week_check` 擋格式，`shared/world_events.js` 是打包出來給伺服器用的，不要手改。
+- 用 `npm run world:event` 寫（不手改）；`npm test` 的 `week_check` 擋格式，`shared/world/events.js` 是打包出來給伺服器用的，不要手改。

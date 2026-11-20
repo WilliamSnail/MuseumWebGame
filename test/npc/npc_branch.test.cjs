@@ -77,7 +77,7 @@ T("variants：steady 可換句、tired 換句（delay 最多 1 週）、uneasy h
 });
 T("接上了：賭場邀請的牌桌結算和交委託都會記互動；收盤時 npcSpendDay 會在新一段的前一天結算", G => {
   const fs = require("fs"), path = require("path");
-  const tab = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "casino", "table.js"), "utf8"), job = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "casino", "job.js"), "utf8"), sp = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "npc_spend.js"), "utf8");
+  const tab = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "casino", "table.js"), "utf8"), job = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "casino", "job.js"), "utf8"), sp = fs.readFileSync(path.join(__dirname, "..", "..", "shared", "npc", "spend.js"), "utf8");
   assert.ok(/nwPoke\(ctx\.house, ctx\.day, s\.npc\.host, s\.npc\.id, nwPokeKind\(s\.out\)\)/.test(tab)); assert.ok(/nwPoke\(house, day, uid, nm\.id, "jobDone"\)/.test(job)); assert.ok(/nwArcWeek\(house, day,/.test(sp));
   const h = mk(G), w = { chips: 0, st: {}, cj: null }, c = G.CLIENTS[0], who = G.npcByName(c.name); const r = G.casJobChips(w, h, ["0"], D, () => 0.5, [c.name], "u1"); assert.ok(r.ok && r.n === 1, JSON.stringify(r)); assert.strictEqual(G.nwPokeNet(G.nwFix(h), D, who.id), 1, "交委託：委託人 +1");
 });

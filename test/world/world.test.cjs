@@ -128,7 +128,7 @@ T("world:health／world:sim --scan／world:news draft：景氣差時科技進緊
 });
 const WE = require("../../tools/content/world_events_pack.cjs"), EV = require("../../tools/content/world_event.cjs");
 T("world_events 打包跟 content/weeks 一致；world:event 加、擋、list、clear（暫存資料夾，不打包）", () => {
-  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "..", "shared", "world_events.js"), "utf8"), WE.source(WE.events()), "shared/world_events.js 沒跟上（跑 node tools/content/world_events_pack.cjs）");
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "..", "shared", "world", "events.js"), "utf8"), WE.source(WE.events()), "shared/world/events.js 沒跟上（跑 node tools/content/world_events_pack.cjs）");
   const G = load(), d = tmp(); fs.mkdirSync(path.join(d, "2026-W47")); const f = path.join(d, "2026-W47", "week.json"); fs.writeFileSync(f, JSON.stringify({ week: "2026-W47", start: "2026-11-16" }, null, 2));
   const out = [], run = a => EV.main(a.concat(["--week", "2026-W47"]), d, G, x => out.push(x), false);
   run(["san", "--date", "2026-11-18", "--npc", "c-bus", "--n", "-5"]); run(["unrest", "--date", "2026-11-19", "--unit", "g-island", "--n", "8"]); run(["mood", "--date", "2026-11-20", "--n", "-10"]);

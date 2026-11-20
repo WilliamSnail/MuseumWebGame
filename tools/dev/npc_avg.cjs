@@ -1,4 +1,4 @@
-// 館內 NPC 每家店平均每天幾位：node tools/dev/npc_avg.cjs [天數=400]（行程規則 shared/npc_trip.js；目標每家都接近 NUM.casino.stockIn.npcLambda）
+// 館內 NPC 每家店平均每天幾位：node tools/dev/npc_avg.cjs [天數=400]（行程規則 shared/npc/trip.js；目標每家都接近 NUM.casino.stockIn.npcLambda）
 const { load } = require("../../test/load_shared.cjs");
 const G = load();
 const days = +process.argv[2] || 400, out = {}, list = G.NPC_ROSTER;

@@ -12,16 +12,16 @@
 import { NUM } from "../config.js";
 import { casHouseMove } from "./book.js";
 import { casBankEcon, casFxMul, casWorldNews } from "./gdp.js";
-import { OUT_STOCKS } from "../stocks_text.js";
+import { OUT_STOCKS } from "../stock/text.js";
 import { CAS_BANK, CAS_TAKE } from "./text.js";
 import { casFill, casNum } from "./core.js";
 import { casLoanView } from "./wallet.js";
 import { casBondHeld, casBondView } from "./bond.js";
 import { casStockValue, casStockViewAll } from "./stock.js";
-import { casNpcToday } from "../npc_spend.js";
+import { casNpcToday } from "../npc/spend.js";
 import { casInvestPubView } from "./invest.js";
 import { casDebtView } from "./debt.js";
-import { gbFix, gbPay, gbSplitOn } from "../world.js";
+import { gbFix, gbPay, gbSplitOn } from "../world/core.js";
 import { casAdvisorPlan } from "./advisor.js";
 
 const cbkBox = v => !!v && typeof v === "object" && !Array.isArray(v);

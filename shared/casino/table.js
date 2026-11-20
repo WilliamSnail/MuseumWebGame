@@ -16,7 +16,7 @@ import { CAS_TEXT } from "./text.js";
 import { casBetCheck, casDealerPlay, casHand, casOutcome, casPayout, casPoint, casShown, casShuffle } from "./core.js";
 import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./wallet.js";
 import { hashStr, mulberry32 } from "../logic_base.js";
-import { nwPoke, nwPokeKind } from "../world.js";
+import { nwPoke, nwPokeKind } from "../world/core.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./npc.js";
 
 export const CAS_QUICK = ["加油", "好牌", "莊家別爆", "再來壹把", "我不行了", "運氣來了"]; // 快速短句（自由打字另外走 cleanSay）

@@ -302,7 +302,7 @@ export const NUM = {
       collector: { label: "藏家", perDay: [1500000, 3000000], max: [1000000, 3000000] },
     },
     arcNeed: { commissions: 500, hallVisits: 5000 },
-    // 展廳的旅客（11-14，shared/npc.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
+    // 展廳的旅客（11-14，shared/npc/core.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
     hallStory: 0.4, newsMax: 2,
   },
   // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/content/week_check.cjs 檢查）
@@ -388,7 +388,7 @@ export const NUM = {
     maxBet: 10000000,       // 等翊文：最大的注（舊的沒有上限，只看錢包）
     // 已知世界的池子（11-14，規劃 2.12，翊文：「已知世界也是個經濟體系，從那裏扣錢」）：house.world。start 起始、growBase 每天成長（再 ×（1 ＋ growExtPct% × 外部景氣）；真正憑空的，記 worldGrow）、
     //   lowPct 池子低於起始的幾 % 算吃緊；吃緊時 NPC 付錢（門票、拍賣）壹天最多付池子的 lowPayPct%，莊家向已知世界貸款暫停；賣股、槓桿賺的錢從海外（house.ext）付，不受這個限制（決定 0126）。
-    // 世界文件（W2，決定 0086，shared/world.js）：gateway 館的對外帳戶（house.world）最多放多少，其餘放 world/main 的備用池；0 ＝ 關閉、不搬錢（W3 分帳時才開）
+    // 世界文件（W2，決定 0086，shared/world/core.js）：gateway 館的對外帳戶（house.world）最多放多少，其餘放 world/main 的備用池；0 ＝ 關閉、不搬錢（W3 分帳時才開）
     //   W3 分帳（決定 0086）：已知世界的錢分成「各單位＋家計＋公共」（house.wu，只是帳上的分類，總和永遠等於 house.world）。household 家計占的比例（頂層單位的 share 在 content/world/units，公共＝剩下的）；
     //   sectorCoef 行業對景氣的敏感度：每天成長分給單位的權重 ＝ 比例 ×（1 ＋ 係數 × 景氣 b）。
     //   W5 連動：health 健康值 h ＝ clamp(1 ＋ 景氣 × 行業係數 ＋ 旗下股票週漲跌 × stockW, min, max)；週一換狀態：h ≥ cut 一般（預算倍率 1～upMax）、squeeze ≤ h ＜ cut 減薪、h ＜ squeeze 連續 squeezeWeeks 週緊縮／layoffWeeks 週裁員；mult 各狀態的預算倍率、floor 最低倍率、chgCap 股價週漲跌最多算多少
@@ -598,22 +598,22 @@ export const NUM = {
       //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進博物館資金（持有成本，取代 drag；%）。
       //   換比例零頭 stockRebase 照舊。真實價的合理範圍 sane（相對前壹收盤的倍數）：超出的當壞資料不收
       direct: true, staleMin: 3, holdPct: 0.04, sane: [0.5, 2],
-      // 台股盤中（11-14，規劃 2.8d，shared/stocks_tw.js）：from／len 開盤、收盤（台灣時間 09:00 起算的分鐘，09:00～13:30 ＝ 0～270）；seg 幾分鐘壹個真實錨點；
+      // 台股盤中（11-14，規劃 2.8d，shared/stock/tw.js）：from／len 開盤、收盤（台灣時間 09:00 起算的分鐘，09:00～13:30 ＝ 0～270）；seg 幾分鐘壹個真實錨點；
       //   giveUp 開盤後超過幾分鐘還沒抓到第壹個價，當天不開；retry 錨點時間過了幾分鐘內重抓，再抓不到這壹段真實成分當 0；
       //   minSd 兩個錨點之間每分鐘隨機走的標準差 %；band 夾在前壹收盤 ±幾 %（台股漲跌停）；sd15 各股 15 分鐘標準差 %（規劃 2.8d 第 3 節的真實資料）
       // noOpenIdx：台股 13:25（第 265 分鐘）起不能新開槓桿、放空（收盤集合競價那五分鐘，翊文 11-14）；13:30 用官方收盤價平倉（收盤後再抓壹次，twNeed 的 fin）
       tw: { noOpenIdx: 265, from: 540, len: 270, seg: 15, giveUp: 30, retry: 3, minSd: 0.1, band: 10,
         sd15: { islandforge: 0.26, handbrain: 0.61, bigassembly: 0.34, trianglepower: 0.61, linetower: 0.3, brainrack: 0.31, cloudcabinet: 0.55, customchip: 0.64, voltgrid: 0.5, wavefreight: 0.3, ironwing: 0.33, plugstation: 0.37, pillpot: 0.4, needlelab: 0.43, towerbeam: 0.34, coilelder: 0.35 } },
-      // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stocks_tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
+      // 美股盤中（11-14，規劃 2.8i）：跟台股同一套模型。open 開盤是美東當天 00:00 起算的分鐘（570 ＝ 09:30；日光節約由 shared/stock/tw.js 的 usOpenMs 用 Intl 算），len 390 ＝ 09:30～16:00；
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
-      // earlyLen：美股提早收盤日（13:00 美東收，壹年約 3 天：感恩節隔天、聖誕夜、7 月 3 日；shared/stocks_tw.js 的 usEarlyClose）那天盤中有幾分鐘（570 → 780 ＝ 210）
+      // earlyLen：美股提早收盤日（13:00 美東收，壹年約 3 天：感恩節隔天、聖誕夜、7 月 3 日；shared/stock/tw.js 的 usEarlyClose）那天盤中有幾分鐘（570 → 780 ＝ 210）
       us: { open: 570, len: 390, earlyLen: 210, seg: 15, giveUp: 30, retry: 3, band: 10,
         minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06, bigshipport: 0.1, greenleafclinic: 0.11, quantumfrog: 0.19, smallcore: 0.19, messengerlab: 0.22, oldgamestore: 0.09, fingerbank: 0.11, betkingdom: 0.14, droidhive: 0.12, treadclub: 0.09, blockpark: 0.16, popcornhall: 0.14, blackgoldwell: 0.09, bluefireyard: 0.08, greenglowmine: 0.15, raremountain: 0.12, redcoppermine: 0.1, richsoilshop: 0.11, vaultbrick: 0.1, blackbarrel: 0.12 },
         sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26, bigshipport: 0.38, greenleafclinic: 0.45, quantumfrog: 0.76, smallcore: 0.74, messengerlab: 0.89, oldgamestore: 0.34, fingerbank: 0.44, betkingdom: 0.55, droidhive: 0.47, treadclub: 0.37, blockpark: 0.62, popcornhall: 0.54, blackgoldwell: 0.34, bluefireyard: 0.3, greenglowmine: 0.61, raremountain: 0.49, redcoppermine: 0.4, richsoilshop: 0.43, vaultbrick: 0.42, blackbarrel: 0.47 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：博物館資金 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）
     // 參觀者門票（11-13，翊文同意方向，規劃玩法 11、2.6 節）：展廳每來一位付 評分×perScore 籌碼；展廳主分紅 ownerPct%、博物館資金 budgetPct%、其餘進修繕基金；每人每天最多 perDay 位付。先照這樣，等翊文
-    // NPC 來館花錢（11-14，shared/npc_spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進博物館資金、其餘修繕基金）；
+    // NPC 來館花錢（11-14，shared/npc/spend.js，翊文：「要」）：on 開關；ticket 每位到館的 NPC 付壹張門票（不分紅給玩家：ticketBudgetPct% 進博物館資金、其餘修繕基金）；
     //   shopPct 去的每家店花 perDay 的幾 %（餐車、牌桌進莊家，委託櫃台、地下收藏庫、手作坊進博物館資金）；dayPct 每位 NPC 壹天最多花 perDay 的幾 %（連門票）；
     //   dayCap 全館壹天最多（×（1＋extPct%×景氣）），hallLambda 展廳壹天平均來幾位 NPC。都從已知世界池子搬
     //   npcWeights：有名字的 NPC 第壹站幾點到的比重（05:00 起每小時壹個；白天晚上平均，00:00～04:00 少但有，翊文 11-14「深夜也要有人」）
@@ -623,12 +623,12 @@ export const NUM = {
       // 散客也逛店（翊文 11-14：「散客去店裡、算進股價」）：跟展廳那幾組「分開」抽（逛店的散客不顯示在展廳，不然看展廳的組別就能猜到哪家店明天的人數）：每家店每天平均 shop.perStore 位散客，
       //   壹組幾位、什麼類型看這家店的個性（學生愛餐車和手作坊、旅行團愛餐車和牌桌、退休長輩愛地下收藏庫…）；每位進店花 shop.spend（餐車牌桌進莊家、其餘進博物館資金），全館壹天 shop.dayCap；算進這家店「昨天不同的人」
       crowd: { wander: { p: 0.95, from: [0.1, 0.3], len: [0.6, 0.85], rooms: { gallery: 3, origin: 2, codex: 1, fusion: 1, pillow: 1, casino: 0, bank: 1, workshop: 0, commission: 0, office: 1, cellar: 0 } }, shop: { perStore: 72, stay: [60, 240], spend: 800, dayCap: 600000 }, groupsDay: 300, weekendMult: 1.5, stay: [30, 120], ticket: 500, dayCap: 1200000, weights: [1, 1, 1, 1, 1, 2, 2, 3, 5, 5, 5, 5, 4, 4, 6, 6, 6, 3, 1, 1, 0.5, 0.5, 0.5, 0.5] }, // 停留分鐘（翊文 11-14：「延長停留＋多加 NPC」）；門票旅客、散客都 500（翊文 11-14：「都500，我想要籌碼跟台幣感覺相當，增加散客數量來補足賺錢的部分」「補滿」）：groupsDay 300（每天約 1,500 位散客）；dayCap 照舊 50 萬（econ:check：散客門票 ≤ 已知世界每天成長的 10%），約 1,000 位以後的散客不再付錢，門票總收入約原本的七成；weights 是 05:00 起每小時的比重，最後五個是 00:00～04:00（翊文 11-14：「深夜也要有人」，少但不是零）
-      // 即時在場（11-14，shared/npc_spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
+      // 即時在場（11-14，shared/npc/spend.js）：到了才付錢；reviewDay 壹位 NPC 壹天在展廳最多留幾則評價、reviewKeep 全館最近的評價留幾則
       reviewDay: 2, reviewKeep: 20 },
     // 展廳參觀者門票（11-14 改版，決定 0079 取代 0073 的分法）：到訪的人（有名字的 NPC、散客，每位）自己付壹張票（npcSpend.ticket／crowd.ticket，已知世界付，到的那刻）；
     //   票的 ownerPct% 放進「那壹位的分紅池」，那壹刻真的在看展廳、領了這個 key 的線上玩家分：先領的拿池子剩下的 firstPct%（再領的拿再剩下的 firstPct%…，總額不超過池子）；
     //   perDay 壹個人壹天最多領幾位的分紅（壹組散客壹組算人數，用到幾位算幾位）。沒人領的池子留在博物館資金（票的博物館資金那份）。
-    // 劇情經濟事件（11-14，shared/econ_events.js；排程只選種類、日期、等級，數字都在這裡）：foreignPct 外資 NPC 買畫的力道 ＋幾 %（等級 1～3）；windowMax 館債簽收窗口最多幾天、redeemPct 窗口每天最多付莊家超過準備金的幾 %；
+    // 劇情經濟事件（11-14，shared/world/econ_events.js；排程只選種類、日期、等級，數字都在這裡）：foreignPct 外資 NPC 買畫的力道 ＋幾 %（等級 1～3）；windowMax 館債簽收窗口最多幾天、redeemPct 窗口每天最多付莊家超過準備金的幾 %；
     //   freezeMax 畫價凍結最多幾天；repayPct 莊家提早還貸款占「超過健康線 ×2 的部分」的 %（等級 1～3）；perWeek 每週最多幾個動錢的事件；ahead 事先公告的天數
     econEvent: { foreignPct: [15, 20, 30], windowMax: 3, redeemPct: 50, freezeMax: 7, repayPct: [5, 10, 20], perWeek: 2, ahead: { foreign: 2, bondWindow: 3, artFreeze: 2 } },
     ticket: { perDay: 20, ownerPct: 30, firstPct: 50 },

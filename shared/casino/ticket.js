@@ -1,14 +1,14 @@
 // ================================================================
 //  展廳參觀者門票（11-13 初版；11-14 改版，決定 0079 取代 0073 的分法，翊文：「靈感照人數算」「門票整合成壹套、票價維持現在」）
-//  展廳的人（有名字的 NPC、散客）是伺服器排的（shared/npc_spend.js 的 hallFeed）；每位到訪的人到的那刻自己付壹張票（NPC 2 萬、散客 1 萬／位，已知世界付，
-//    30% 博物館資金、70% 修繕基金，shared/npc_spend.js）。玩家不再另外收「評分×perScore」的門票（以前的做法會對同壹個人收兩次）。
+//  展廳的人（有名字的 NPC、散客）是伺服器排的（shared/npc/spend.js 的 hallFeed）；每位到訪的人到的那刻自己付壹張票（NPC 2 萬、散客 1 萬／位，已知世界付，
+//    30% 博物館資金、70% 修繕基金，shared/npc/spend.js）。玩家不再另外收「評分×perScore」的門票（以前的做法會對同壹個人收兩次）。
 //  玩家分紅：到訪的那刻，票的 ownerPct% 放進那壹位的分紅池（house.hallPot）；那壹刻真的在看展廳的線上玩家，領了這個 key（瀏覽器回報看到了哪些 key，伺服器驗證在今天的時刻表裡、已經到了）
 //    就從池子拿 firstPct%（先領的拿池子剩下的壹半，再領的拿再剩下的壹半…，總額永遠不超過池子；沒人領的留在博物館資金）。錢從博物館資金搬給玩家（搬，不是憑空）。
 //  壹個人壹天最多領 perDay 位的分紅（壹組散客算人數，剩下不夠就按比例）。自由模式（沒有挑戰存檔）不領。
 // ================================================================
 import { NUM } from "../config.js";
-import { hallFeed } from "../npc_spend.js";
-import { whCrowdMood } from "../world.js";
+import { hallFeed } from "../npc/spend.js";
+import { whCrowdMood } from "../world/core.js";
 import { isFree } from "../logic_base.js";
 import { casCount } from "./book.js";
 

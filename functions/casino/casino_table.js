@@ -15,7 +15,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { casBonusPct } from "../shared/casino/core.js";
 import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTNpcDrop, casTNpcInvite, casTNpcWho, casTSeats, casTSit, casTView } from "../shared/casino/table.js";
 import { NPC_LIST } from "../shared/npc_list_data.js";
-import { npcCounters } from "../shared/npc.js";
+import { npcCounters } from "../shared/npc/core.js";
 import { twSecret } from "../stock/stock_tw.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { casWkSync } from "../shared/casino/week.js";

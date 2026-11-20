@@ -12,7 +12,7 @@ import { bankSfx, keyBeep } from "../../fx/bank_sfx.js";
 import { CAS_BOND } from "../../../../shared/casino/text.js";
 import { roomHead } from "../../core/ui_room.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "../../core/ui_stat.js";
-import { statView } from "../../../../shared/stat_view.js";
+import { statView } from "../../../../shared/world/stat_view.js";
 import { mountMood } from "../../fx/ui_mood.js";
 import { NUM } from "../../../../shared/config.js";
 import { addDays, mdShift, todayStr } from "../../../../shared/logic.js";

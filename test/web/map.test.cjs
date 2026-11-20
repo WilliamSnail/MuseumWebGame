@@ -8,8 +8,8 @@ const ok = (c, m) => { if (!c) { fails++; console.log("  ✗", m); } };
 const eq = (a, b, m) => ok(JSON.stringify(a) === JSON.stringify(b), `${m}（得到 ${JSON.stringify(a)}，要 ${JSON.stringify(b)}）`);
 
 // 1. 網頁的資料跟 content/map/館外.json 一致（沒跟上就跑 node tools/content/map_pack.cjs）
-const f = path.join(__dirname, "..", "..", "shared", "map_data.js");
-ok(fs.readFileSync(f, "utf8") === pack.source(pack.spots()), "shared/map_data.js 沒跟上 content/map/館外.json（跑 node tools/content/map_pack.cjs）");
+const f = path.join(__dirname, "..", "..", "shared", "world", "map_data.js");
+ok(fs.readFileSync(f, "utf8") === pack.source(pack.spots()), "shared/world/map_data.js 沒跟上 content/map/館外.json（跑 node tools/content/map_pack.cjs）");
 ok(Array.isArray(G.MAP_SPOTS) && G.MAP_SPOTS.every(s => !("source" in s)), "網頁資料不含 source");
 
 const S = [

@@ -1,4 +1,4 @@
-// 世界文件（W2，決定 0086，shared/world.js）：node test/world/world_doc.test.cjs（npm test 也會跑）
+// 世界文件（W2，決定 0086，shared/world/core.js）：node test/world/world_doc.test.cjs（npm test 也會跑）
 // 換日第一次才記、同一天不重複、成長是兩次之間的差、壞資料變回預設、搬錢總和不變（預設關閉）、莊家不被改。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");

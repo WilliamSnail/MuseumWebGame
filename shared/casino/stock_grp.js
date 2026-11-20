@@ -4,7 +4,7 @@
 //    資本額（市值基準）＝ 集團「應有的池子」× capMult；每股起始 p0。基本價 F ＝ 每股淨值（池子 ÷ 股數）× pb × 健康值項 × 市場景氣項（經濟 → 股價）。
 //    館友買賣照館內股 0113 的推價：Pnew ＝ P × exp(q ÷ depth)，半個價差 half，莊家當造市商；每個 15 分鐘價最多動 tickLim%、壹天離開盤價最多 dayLim%（漲跌停）。
 //    每 15 分鐘價往 F 回 revert，加壹點固定的雜湊雜訊（不用 RNG）。惰性補算（跟 wtAdvance、館內股同壹招）：碰到莊家文件時推到現在。
-//  股價 → 經濟：集團自己的股價漲跌也算進健康值的股價項（shared/world.js 的 whIdx，上限照現有 stockW×chgCap）；
+//  股價 → 經濟：集團自己的股價漲跌也算進健康值的股價項（shared/world/core.js 的 whIdx，上限照現有 stockW×chgCap）；
 //    增資（吃緊的集團發新股給造市商，錢進集團池子）、庫藏股（集團用池子買回，股數少）、現金股利（每週壹次，成長的壹部分）、股票股利、分割（價格太高）。
 //  錢：全部是搬動。買賣：錢包 ↔ 莊家（來源 gStock，手續費進博物館資金、證交稅進政府帳）；增資／庫藏股：莊家 ↔ 已知世界（gRaise／gBuy）並記到那個集團的池子；股利：已知世界 → 錢包（gDiv）從那個集團出。
 //  存在哪：莊家 house.gs ＝ { day, k 今天推到第幾個價, n 事件編號, ev: [最近的公司事件], div 指數除數, idx 最近指數, u: { 單位 id: { S 股數, P 現價, o 開盤價, i 莊家持倉, h 全館持股, a0 上週壹的池子, hist: [近 30 天收盤] } } }
@@ -12,8 +12,8 @@
 //  純函式，不碰資料庫和 DOM。
 // ================================================================
 import { NUM } from "../config.js";
-import { WORLD_UNITS } from "../world_roster.js";
-import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "../world.js";
+import { WORLD_UNITS } from "../world/roster.js";
+import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "../world/core.js";
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./book.js";
 import { casInIdx } from "./stock_in.js";
 import { hashStr } from "../logic_base.js";

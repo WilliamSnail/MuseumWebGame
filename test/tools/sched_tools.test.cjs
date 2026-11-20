@@ -18,9 +18,9 @@ const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log(
 
 // ---------- 1. ship：只動內容就跳過本機的 npm test 和 build ----------
 T("ship：內容路徑（content、維護日誌、公告、.claude、打包檔）才算內容", () => {
-  ["content/weeks/2026-W47/d2.json", "content/story/帳本.json", "docs/維護日誌/2026/11-16_翊文_x.md", "content/notices/upd-x.json", ".claude/交接/x.md", "shared/npc_roster.js", "shared/map_data.js"]
+  ["content/weeks/2026-W47/d2.json", "content/story/帳本.json", "docs/維護日誌/2026/11-16_翊文_x.md", "content/notices/upd-x.json", ".claude/交接/x.md", "shared/npc/roster.js", "shared/world/map_data.js"]
     .forEach(f => assert.ok(SHIP.isContentFile(f), f));
-  ["web/src/core/main.js", "shared/map.js", "shared/notices.js", "shared/story.js", "functions/index.js", "tools/release/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
+  ["web/src/core/main.js", "shared/world/map.js", "shared/notices.js", "shared/story.js", "functions/index.js", "tools/release/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
     .forEach(f => assert.ok(!SHIP.isContentFile(f), f));
 });
 T("ship：全部是內容才跳過；有任何程式檔、沒有檔案、--full 都照舊全跑", () => {
@@ -130,12 +130,12 @@ T("strict：只看今天，舊的週不追溯（W46 的 d7 沒有 touched 也沒
 });
 T("day:check：館外地圖打包有沒有跟上", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mapfresh-"));
-  fs.mkdirSync(path.join(dir, "shared")); fs.mkdirSync(path.join(dir, "content", "map", ), { recursive: true });
+  fs.mkdirSync(path.join(dir, "shared", "world"), { recursive: true }); fs.mkdirSync(path.join(dir, "content", "map", ), { recursive: true });
   assert.strictEqual(C.mapFresh(dir).ok, true, "沒有地圖資料不擋");
   fs.writeFileSync(path.join(dir, "content", "map", "館外.json"), JSON.stringify({ version: 1, spots: [{ id: "m-a", name: "巷口", layer: "L1", from: "2026-11-18", x: 1, y: 2, line: "一句" }] }));
-  assert.strictEqual(C.mapFresh(dir).ok, false, "shared/map_data.js 不見了");
+  assert.strictEqual(C.mapFresh(dir).ok, false, "shared/world/map_data.js 不見了");
   const pack = require("../../tools/content/map_pack.cjs");
-  fs.writeFileSync(path.join(dir, "shared", "map_data.js"), pack.source(pack.spots(path.join(dir, "content", "map", "館外.json"))));
+  fs.writeFileSync(path.join(dir, "shared", "world", "map_data.js"), pack.source(pack.spots(path.join(dir, "content", "map", "館外.json"))));
   assert.strictEqual(C.mapFresh(dir).ok, true);
   fs.writeFileSync(path.join(dir, "content", "map", "館外.json"), JSON.stringify({ version: 1, spots: [] }));
   const r = C.mapFresh(dir); assert.ok(!r.ok && r.message.includes("map_pack"));

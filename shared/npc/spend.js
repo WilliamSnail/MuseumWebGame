@@ -1,6 +1,6 @@
 // ================================================================
 //  NPC 來館：什麼時候在哪、付門票、在店裡花錢、在展廳留評價（11-14，docs/規劃/館內NPC規劃.md；翊文：「NPC 和參觀者可以在伺服器上有隨機時間正在參觀…大廳加一個現在展廳有多少人」）
-//  純函式。每天（台灣 05:00 換日）每位 NPC 的行程（shared/npc_trip.js：今天去哪幾處）再各抽「幾點到、待多久」：
+//  純函式。每天（台灣 05:00 換日）每位 NPC 的行程（shared/npc/trip.js：今天去哪幾處）再各抽「幾點到、待多久」：
 //    整天都可能有人（05:00 到隔天 05:00，分鐘 0～1440，從 05:00 起算；翊文 11-14：「深夜也要有人」。館內股的營業時間另外是 05:00～23:30，跟這個無關），壹位 NPC 的幾站排成壹串不重疊（先後順序、中間空壹下都是亂數）；店待 shopStay（30～120）分鐘、展廳 hallStay（60～180）分鐘。
 //    種子含伺服器祕密：玩家算不出誰幾點在哪。「現在誰在哪」只看時間算得出來，不用排程、不用存（npcPresence）。
 //  錢和評價在「到了」的那壹刻才發生（惰性結算 casNpcLive：任何壹個碰到莊家文件的交易，把已經到時間、還沒結算的幾站結掉；house.npcLive.done 記哪些做過了，冪等）：
@@ -11,15 +11,15 @@
 //    順序是「到的先後」；已知世界吃緊不花。record：house.npcLive（今天的進度）、house.npcs（最近壹個完整的壹天，日報寫）。
 //  館內股的「昨天不同的人」還是用整天的行程（casInNpcFor），跟「現在誰在場」無關；所以畫面不顯示各家店現在幾個 NPC（會洩漏明天的跳空）。
 // ================================================================
-import { NUM } from "./config.js";
-import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "./casino/book.js";
-import { hashStr, mulberry32 } from "./logic_base.js";
-import { casFxMul, casFxPolicy } from "./casino/gdp.js";
-import { npcStoryLine, npcLikesNow } from "./npc.js";
-import { npcTrips } from "./npc_trip.js";
-import { CAS_MENU } from "./casino/text.js";
-import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
-import { nwSan } from "./world_base.js";
+import { NUM } from "../config.js";
+import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "../casino/book.js";
+import { hashStr, mulberry32 } from "../logic_base.js";
+import { casFxMul, casFxPolicy } from "../casino/gdp.js";
+import { npcStoryLine, npcLikesNow } from "./core.js";
+import { npcTrips } from "./trip.js";
+import { CAS_MENU } from "../casino/text.js";
+import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "../world/core.js";
+import { nwSan } from "../world/base.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 // 稅（決定 0111）：營業稅、娛樂稅都內含，進政府帳。kind "biz"｜"ent"

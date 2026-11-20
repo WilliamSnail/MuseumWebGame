@@ -484,7 +484,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         if (G.NUM.casino.stockIn.npcBoostMax > 0.33) E(nw, "NUM.casino.stockIn.npcBoostMax 不能超過 0.33（再大，預先進場就賺得到，規劃 2.8k）");
       }
     }
-    // 劇情經濟事件（翊文 11-14，shared/econ_events.js）：econ [{ kind, date, level, name }]。排程只選種類、日期、等級，數字全在 NUM.casino.econEvent；動錢的每週最多 perWeek 個、同種壹週壹個
+    // 劇情經濟事件（翊文 11-14，shared/world/econ_events.js）：econ [{ kind, date, level, name }]。排程只選種類、日期、等級，數字全在 NUM.casino.econEvent；動錢的每週最多 perWeek 個、同種壹週壹個
     if (wk.econ !== undefined) {
       const ew = where + "/week.json.econ", mon = o.fallback ? null : G.isoMonday(name), EV = G.NUM.casino.econEvent;
       if (o.fallback) E(ew, "備用週不寫 econ（沒有日期）");

@@ -10,7 +10,7 @@
 import { PEPE_PARTS, UPGRADES } from "./config.js";
 import { CATS, isFree, isUnlocked, partOf, reqMet, todayStr } from "./logic_base.js";
 import { upgradeState } from "./systems.js";
-import { mapSpots } from "./map.js";
+import { mapSpots } from "./world/map.js";
 
 // 每種東西的 key（畫面那邊找小牌子也用這裡，兩邊才不會寫不一樣）
 export const FRESH_KEY = {
