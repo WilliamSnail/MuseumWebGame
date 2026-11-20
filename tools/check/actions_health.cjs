@@ -12,7 +12,7 @@ function failures(runs, now = Date.now()) {
 function text(bad) {
   const by = {};
   for (const r of bad) (by[r.workflowName] = by[r.workflowName] || []).push(r);
-  return Object.entries(by).map(([name, rs]) => `- **${name}**：失敗 ${rs.length} 次，最近一次 ${rs[0].createdAt.replace("T", " ").slice(0, 16)}（UTC） ${rs[0].url}`).join("\n");
+  return Object.entries(by).map(([name, rs]) => `- **${name}**：失敗 ${rs.length} 次，最近一次 ${rs[0].createdAt.replace("T", () => " ").slice(0, 16)}（UTC） ${rs[0].url}`).join("\n");
 }
 if (require.main === module) {
   const runs = JSON.parse(gh(["run", "list", "--limit", "200", "--json", "workflowName,conclusion,createdAt,headBranch,event,url"]));

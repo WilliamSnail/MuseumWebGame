@@ -463,7 +463,7 @@ SCREENS.origin = (root, params) => {
         return sealed;
       }
       const el = h("button", { type: "button", class: "spine dark" + (b.after ? " sequel" : ""), "aria-label": b.after ? `禁書：${b.title}（《${seriesRoot(b).spine}》的續集）` : `禁書：${b.title}` },
-        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null,
+        b.after ? h("span", { class: "spine-two" }, h("span", { class: "spine-t" }, b.spine.replace(`${seriesRoot(b).spine}・`, () => "")), seriesTag(b)) : h("span", { class: "spine-t" }, b.spine), !isFree(P) && !P.mythFrom[b.id] ? h("span", { class: "spine-m" }, `神話 +${b.myth}`) : null,
         rereadReady(P, b) ? h("span", { class: "spine-m spine-again", title: "讀過了還沒看懂：今天可以再翻開壹次" }, "再看壹次") : null);
       freshMark(el, isFresh(P, "origin", FRESH_KEY.book(b.id))); // 新的禁書、續集（11-08）
       el.addEventListener("click", () => openForbidden(b, reader));

@@ -38,7 +38,7 @@ function draft(events, units, week = "<週>", day = "<幾>") {
   const by = new Map(units.map(u => [u.id, u]));
   return events.filter(e => DRAFT[e.to] && by.has(e.unit)).map(e => {
     const u = by.get(e.unit), d = DRAFT[e.to], title = u.name + d.t, ref = (u.stocks || []).slice(0, 3);
-    return { title, line: u.name + d.line.replace("那邊", ""), tone: d.tone, ref, day: e.day, command: `npm run world:news -- add --week ${week} --day ${day} --title ${title} --line ${u.name}${d.line.replace("那邊", "")} --tone ${d.tone}${ref.length ? " --ref " + ref.join(",") : ""}` };
+    return { title, line: u.name + d.line.replace("那邊", () => ""), tone: d.tone, ref, day: e.day, command: `npm run world:news -- add --week ${week} --day ${day} --title ${title} --line ${u.name}${d.line.replace("那邊", () => "")} --tone ${d.tone}${ref.length ? " --ref " + ref.join(",") : ""}` };
   });
 }
 function main(argv, weeksDir = path.join(ROOT, "content", "weeks"), c = null, log = console.log) {

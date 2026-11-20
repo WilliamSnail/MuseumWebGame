@@ -88,7 +88,7 @@ export const DC_DIGEST_SITE = "https://pepe-museum.web.app";
 export function dcDigestText(list, day, areaOf, areas) {
   const items = (list || []).filter(n => n && n.title && n.publish === day && n.cat !== "特展活動");
   if (!items.length) return "";
-  const head = `📰 今天的更新（${day.slice(5).replace("-", "/")}）`, tail = "完整內容在館內公佈欄。";
+  const head = `📰 今天的更新（${day.slice(5).replace("-", () => "/")}）`, tail = "完整內容在館內公佈欄。";
   const by = new Map(areas.map(a => [a, []]));
   for (const n of items) { const a = areaOf(n); (by.get(a) || by.get("其他") || []).push(n.title.replace(/\s+/g, " ").trim()); }
   const lines = [head];

@@ -220,7 +220,7 @@ export function bankBar(C, io) {
   // 銀行的樣子（翊文 11-10：「介面稍微在更精美一點，像銀行一點」）：行名和狀態、三格數字、借款金額、借款明細（像存摺）
   const debt = w.chips < 0, owed = L.list.reduce((s, x) => s + x.owe, 0);
   const fig = (label, value, sub) => h("div", { class: "bk-fig" }, h("span", { class: "bk-fig-l" }, label), h("b", null, value), sub ? h("small", null, sub) : null);
-  const md = s => s.slice(5).replace("-", "/");
+  const md = s => s.slice(5).replace("-", () => "/");
   // 借款、存款兩個頁籤（11-13，Yuga Bot 銀行的活存、定存）
   const bt = C.bankTab !== "loan" && C.bank ? "save" : "loan"; // 存款在左邊、是預設（11-17 翊文）；存款資料還沒來才先顯示借款
   const btab = (id, name) => h("button", { type: "button", role: "tab", class: "bk-tab" + (bt === id ? " on" : ""), "aria-selected": String(bt === id), onClick: () => { C.bankTab = id; io.draw(); } }, name);
