@@ -34,7 +34,7 @@
 
 /* 手機直拿：標題收小，佩佩、「做」、名牌在上面（主區自己捲），選項托盤固定在下面 */
 @media (max-width: 760px) and (orientation: portrait) {
-  .screen.workshop-onescreen > .room-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; margin: 0 0 4px; }
+  .screen.workshop-onescreen > .room-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 4px; }
   .screen.workshop-onescreen > .room-head h1 { font-size: .75rem; padding: 2px 8px 4px; border-width: 10px; min-width: 0; }
   .screen.workshop-onescreen > .room-head .sub { display: none; }
   .screen.workshop-onescreen > .room-head .rh-row { margin: 0; flex: none; }
