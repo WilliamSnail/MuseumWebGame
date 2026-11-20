@@ -26,6 +26,7 @@
 import { NUM } from "../core/config.js";
 import { casSellCap, casSellMoney, casSellTip } from "./credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
+import { casTradeLog, casTradeMarkOrder } from "./trade_log.js";
 import { gsFeePct, gsMatch } from "./stock_grp.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./stock_in.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "../stock/in_text.js";
@@ -377,6 +378,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
   S.cost[id] = stN(S.cost[id]) + cost + fee; // 總成本含買進手續費
   S.fee += fee;
   H.held[id] = stN(H.held[id]) + n;
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "o", a: "b", n, p: px, f: fee });
   return { ok: true, n, px, cost, fee, lines: [casFill(CAS_STOCK.buyOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
 
@@ -409,6 +411,7 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (!free) S.sold = { day, n: stSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, stN(H.held[id]) - n);
   if (!free) H.net = { day, n: stNetToday(H, day) + gross };
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "o", a: "s", n, p: px, f: fee, x: tax, g: profit, r: free });
   return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
@@ -576,7 +579,7 @@ export function casStockMatch(w, house, day, t) {
     const r = o.kind === "buy" ? casStockBuy(w, house, o.id, o.n, day, null) : casStockSell(w, house, o.id, o.n, day, null);
     H.px[o.id] = saved;
     if (r.ok) {
-      out.fills++;
+      out.fills++; casTradeMarkOrder(w);
       stNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: stOrderName(o), n: casNum(r.n), px: casPx(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
         : casFill(O.fillSell, { name: stOrderName(o), kind: stKind(o), n: casNum(r.n), px: casPx(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: r.tax > 0 ? "，證交稅 " + casNum(r.tax) : "" }));
     } else { out.cancels++; stNote(S, casFill(O.capCancel, { name: stOrderName(o), kind: stKind(o), n: casNum(o.n) })); }

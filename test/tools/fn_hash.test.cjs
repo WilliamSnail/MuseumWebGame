@@ -12,4 +12,9 @@ T("functions/ 的程式改了指紋就變", () => {
   finally { fs.writeFileSync(f, old); }
   assert.strictEqual(fnHash().hash, h0, "改回來就回到原本的指紋");
 });
+T("copy_shared 複製前先清空 functions/shared/：搬家後留下的舊檔會被清掉（11-20）", () => {
+  const d = path.join(FN, "shared", "old_stale_dir"); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, "x.js"), "//"); fs.writeFileSync(path.join(FN, "shared", "stale_top.js"), "//");
+  require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "release", "copy_shared.cjs")], { stdio: "ignore" });
+  assert.ok(!fs.existsSync(d) && !fs.existsSync(path.join(FN, "shared", "stale_top.js")), "舊檔要被清掉"); assert.ok(fs.existsSync(path.join(FN, "shared", "core", "config.js")) && fs.existsSync(path.join(FN, "shared", "day_data.js")), "新的要複製進來");
+});
 console.log(`${pass} passed, ${fail} failed（函式這包的指紋）`); process.exit(fail ? 1 : 0);
