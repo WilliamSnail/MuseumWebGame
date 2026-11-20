@@ -54,7 +54,7 @@ export const STORY_TASKS = {
 export const LINE_KINDS = { main: "主線", season: "季節", week: "這週的", floor: "樓層的新劇情線", holiday: "節日", side: "小插曲", curator: "策展手記" };
 // 跨週的線：id 不加週的名字，好幾週的書算同一條（主線、季節線）
 export const CROSS_WEEK_KINDS = ["main", "season"];
-// 今日特展：用 web/src/art.js 已經有的畫法，換參數（frog ＝遊戲自己的青蛙，pick 照手作坊的選項）。不畫 Pepe the Frog 的樣子
+// 今日特展：用 web/src/core/art.js 已經有的畫法，換參數（frog ＝遊戲自己的青蛙，pick 照手作坊的選項）。不畫 Pepe the Frog 的樣子
 export const SHOW_ART = ["frog", "portrait", "strange", "rare", "statue", "hidden"];
 export const SHOW_FX = ["sepia", "faded", "dust", "dark", "flip", "water", "torn", "shadow", "glow"]; // 畫面上的效果（web/src/css/story.css）
 export const SHOW_FRAMES = ["gold", "dark", "wood", "plain", "ornate"];

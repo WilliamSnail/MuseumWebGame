@@ -1,4 +1,4 @@
-/* 主題展辦完（決定 0035，web/src/ui_themeshow.js）。展廳牆是深色的：字用 --on-wall、--on-wall-sub */
+/* 主題展辦完（決定 0035，web/src/panels/ui_themeshow.js）。展廳牆是深色的：字用 --on-wall、--on-wall-sub */
 
 /* ----- 牆下面：展期、三級 ----- */
 .ts-panel { margin: 4px 0 18px; padding: 12px 16px; border: 1px solid rgba(200,162,90,.55); border-radius: 10px; background: linear-gradient(180deg, rgba(200,162,90,.14), rgba(20,8,10,.32)); color: var(--on-wall); }

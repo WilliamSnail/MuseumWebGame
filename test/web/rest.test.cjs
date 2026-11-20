@@ -1,7 +1,7 @@
-// 閒置省電（web/src/rest.js）：沒操作 REST_MS 之後，只停無限循環的動畫；有操作就接著動
+// 閒置省電（web/src/core/rest.js）：沒操作 REST_MS 之後，只停無限循環的動畫；有操作就接著動
 const assert = require("assert");
 (async () => {
-  const { restLoop, REST_MS } = await import("../../web/src/rest.js");
+  const { restLoop, REST_MS } = await import("../../web/src/core/rest.js");
   const mk = (iter) => ({ playState: "running", effect: { getComputedTiming: () => ({ iterations: iter }) }, pause() { this.playState = "paused"; }, play() { this.playState = "running"; } });
   const loop = mk(Infinity), once = mk(1);
   let svgPaused = false;

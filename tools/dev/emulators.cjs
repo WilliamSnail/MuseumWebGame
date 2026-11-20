@@ -4,7 +4,7 @@
 // - 資料放在 .firebase-data/（不進 repo），關掉時存下來，下次開的時候讀回來。
 // - 開之前把 shared/ 複製進 functions/shared/（Functions 要 import 同一份規則）。
 // - 同時開好幾套（好幾個分支各測各的 Functions）：EMU_SET=1 npm run emulators，每個連接埠加 1000×EMU_SET、資料不存；
-//   網頁要連同一套：VITE_EMU_SET=1 npx vite --port 5190 --strictPort（web/src/firebase_config.js）。沒設就是原本那一套。
+//   網頁要連同一套：VITE_EMU_SET=1 npx vite --port 5190 --strictPort（web/src/core/firebase_config.js）。沒設就是原本那一套。
 const { spawnSync, spawn } = require("child_process");
 const fs = require("fs"), path = require("path");
 

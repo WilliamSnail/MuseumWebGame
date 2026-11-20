@@ -186,7 +186,7 @@ async function main() {
   console.log(`\n做好了：web/public/sfx/${a.id}.mp3（${kb} KB，${n1(outDur)} 秒，${opt.stereo ? "雙" : "單"}聲道 ${kbps} kbps）\n登記：shared/sfx_files.js、web/public/sfx/來源.md\n原檔備份：${bakFile}\n`);
   console.log("接下來：");
   console.log(loop
-    ? `  1. 環境音：在 web/src/fx.js 的 AMB.<房間> 裡加  fileLoop(c, g, '${a.id}', 音量).n（記得放進 nodes）`
+    ? `  1. 環境音：在 web/src/fx/fx.js 的 AMB.<房間> 裡加  fileLoop(c, g, '${a.id}', 音量).n（記得放進 nodes）`
     : `  1. 畫面音效：在 web/src/ui_*.js 呼叫  sndFile("${a.id}", 音量)；環境音裡偶爾播：fileOnce(c, g, '${a.id}', 音量)`);
   console.log("  2. npm run fx:report   （更新 docs/素材/音效與特效總表.md，會把這個新音效列進去）");
   console.log("  3. npm test            （test/web/sfx_files.test.cjs 會檢查三邊對得上）");

@@ -2,7 +2,7 @@
 
 > 2026-11-09 寫（Claude）。給每週一 04:30、每天 04:30 的排程看，人也可以看。
 > 規劃在 `docs/規劃/每週劇情.md`；排程每一步怎麼做在 `content/排程說明.md`。
-> 遊戲的規則在 `shared/story.js`，畫面在 `web/src/ui_story.js`，檢查程式 `tools/content/week_check.cjs`（`npm test` 會跑）。
+> 遊戲的規則在 `shared/story.js`，畫面在 `web/src/panels/ui_story.js`，檢查程式 `tools/content/week_check.cjs`（`npm test` 會跑）。
 > 格式改了，這份、檢查程式、`shared/story.js` 要一起改。
 
 ---
@@ -17,7 +17,7 @@ content/
 ├─ story/帳本.json       ← 劇情帳本（第五節）。不打包進網頁
 ├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/content/notices_build.cjs 合成 shared/notices_data.js，不進 git）
 ├─ npc/<id>.json        ← 館內 NPC（第十節）：壹位壹個檔。不進網頁，伺服器用 copy_shared 打包
-└─ weeks/               ← 網頁只讀這裡的 .json（web/src/ui_story.js 的 import.meta.glob）
+└─ weeks/               ← 網頁只讀這裡的 .json（web/src/panels/ui_story.js 的 import.meta.glob）
    ├─ 2026-W47/         ← 正式週：ISO 週的名字（週一開始）
    │  ├─ week.json      ← 週的設定（週一排程寫；npm run day:new 會先建骨架）
    │  ├─ d1.json … d7.json ← 一天一個（d1＝週一。那天 04:30 寫）

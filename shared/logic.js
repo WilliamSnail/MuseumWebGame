@@ -552,7 +552,7 @@ export function deliver(P, idx, item) {
 }
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
-// 收藏裡的東西。格式跟收藏列一樣（web/src/ui_core.js 的 collectionItems；那邊改了這裡也要改）：
+// 收藏裡的東西。格式跟收藏列一樣（web/src/core/ui_core.js 的 collectionItems；那邊改了這裡也要改）：
 //   佩佩 { kind: "pepe", key, pick, perfect }、失敗作 { kind: "failed", key, pick }、修復品 { kind: "repaired", key, pick }、抱枕 { kind: "pillow", key }
 export function ownedItems(P, kind) {
   if (kind === "repaired") return Object.keys(P.repaired || {}).map(key => ({ kind: "repaired", key, pick: fromKey(key) })).filter(i => i.pick);

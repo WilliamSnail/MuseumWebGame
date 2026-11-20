@@ -3,7 +3,7 @@ const assert = require("assert"), fs = require("fs"), path = require("path");
 (async () => {
   const { FIGHT_SFX, fightSfxKey } = await import("../../shared/fight_sfx.js");
   const { SFX_FILES } = await import("../../shared/sfx_files.js");
-  const fx = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "fx_sound.js"), "utf8");
+  const fx = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "fx", "fx_sound.js"), "utf8");
   const i = fx.indexOf("const R = {"), j = fx.indexOf("\n    };", i), R = new Set((fx.slice(i, j).match(/^\s{6}([a-zA-Z0-9]+)\(/gm) || []).map(x => x.trim().slice(0, -1)));
   for (const [k, v] of Object.entries(FIGHT_SFX)) {
     assert.ok(v.snd || v.file, k + " 要有 snd 或 file");

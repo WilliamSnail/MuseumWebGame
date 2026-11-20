@@ -8,9 +8,10 @@ const acorn = require("acorn"), es = require("eslint-scope");
 
 const ROOT = path.join(__dirname, "..", "..");
 const sharedJs = d => fs.readdirSync(path.join(ROOT, "shared", d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? sharedJs(d ? d + "/" + e.name : e.name) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
+const webJs = d => fs.readdirSync(path.join(ROOT, "web/src", d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? (["css", "assets"].includes(e.name) ? [] : webJs(d ? d + "/" + e.name : e.name)) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
 const FILES = [
   ...sharedJs("").map(f => "shared/" + f), // shared/ 有子資料夾（casino/、coop/…），連裡面的檔一起查
-  ...fs.readdirSync(path.join(ROOT, "web/src")).filter(f => f.endsWith(".js")).map(f => "web/src/" + f),
+  ...webJs("").map(f => "web/src/" + f), // web/src/ 也有子資料夾（core/、fx/、rooms/、panels/），連裡面的檔一起查
 ];
 const LATER_THAN_CORE = ["ui_screens1.js", "ui_screens2.js", "ui_screens3.js", "ui_curio.js", "ui_odd.js", "ui_board.js", "ui_login.js", "ui_party.js", "ui_coop.js", "ui_trace.js", "ui_signin.js", "ui_story.js", "ui_admin.js", "ui_shop.js", "ui_visit.js", "ui_themeshow.js", "ui_board_rank.js", "ui_today.js", "ui_hub.js", "ui_pass.js", "ui_mates.js", "ui_casino_slot.js", "ui_casino_live.js", "ui_casino.js", "ui_casino_table.js", "ui_casino_week.js", "ui_events.js", "ui_orient.js", "ui_discord.js", "ui_update.js", "ui_work.js", "ui_lobby2.js", "boot.js", "debug_boot.js", "main.js"];
 
@@ -76,10 +77,10 @@ for (const f of FILES) {
     const have = allExports(target);
     for (const n of im.names) if (!have.has(n)) errs.push(`${f}:${im.line}：import 了「${n}」，可是 ${target} 沒有 export 它`);
   }
-  if (f === "web/src/ui_core.js") {
+  if (f === "web/src/core/ui_core.js") {
     for (const src of it.imports) {
       const base = path.basename(src);
-      if (LATER_THAN_CORE.includes(base)) errs.push(`web/src/ui_core.js：不准 import ${src}（ui_core 不能 import 比它後面的畫面檔）`);
+      if (LATER_THAN_CORE.includes(base)) errs.push(`web/src/core/ui_core.js：不准 import ${src}（ui_core 不能 import 比它後面的畫面檔）`);
     }
   }
 }
@@ -99,7 +100,7 @@ for (const f of FILES) {
   shared.forEach(f => { if (!state[f]) dfs(f); });
 }
 // 例外：fx_core.js 的小工具 h（做 DOM 元素）和 ui_core.js 的 h 是兩個不同的東西，兩邊不互相 import
-const SAME_NAME_OK = { h: ["web/src/fx_core.js", "web/src/ui_core.js"] };
+const SAME_NAME_OK = { h: ["web/src/fx/fx_core.js", "web/src/core/ui_core.js"] };
 for (const [n, fs2] of Object.entries(owner)) if (fs2.length > 1 && !(SAME_NAME_OK[n] && fs2.every(f => SAME_NAME_OK[n].includes(f)))) errs.push(`同一個名字「${n}」在 ${fs2.join("、")} 都有 export`);
 
 if (errs.length) { console.error(errs.join("\n")); console.error(`${errs.length} 個問題`); process.exit(1); }

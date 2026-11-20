@@ -10,7 +10,7 @@ function spots(file = path.join(ROOT, "content", "map", "館外.json")) {
   const list = o && Array.isArray(o.spots) ? o.spots : [];
   return list.filter(s => s && typeof s.id === "string").map(s => { const r = {}; KEEP.forEach(k => { if (s[k] !== undefined) r[k] = s[k]; }); return r; }).sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : a.id < b.id ? -1 : 1));
 }
-const HEAD = "// tools/content/map_pack.cjs 產生的，不要改（改 content/map/館外.json，再跑 node tools/content/map_pack.cjs）。\n// 館外地圖的點（揭露當天才寫進去）：規則在 shared/map.js，畫面在 web/src/ui_map.js。\n";
+const HEAD = "// tools/content/map_pack.cjs 產生的，不要改（改 content/map/館外.json，再跑 node tools/content/map_pack.cjs）。\n// 館外地圖的點（揭露當天才寫進去）：規則在 shared/map.js，畫面在 web/src/rooms/ui_map.js。\n";
 const source = list => HEAD + "export const MAP_SPOTS = " + JSON.stringify(list).replace(/\},\{/g, "},\n{") + ";\n";
 function write() { const f = path.join(ROOT, "shared", "map_data.js"), s = source(spots()); if (!fs.existsSync(f) || fs.readFileSync(f, "utf8") !== s) fs.writeFileSync(f, s); return f; }
 module.exports = { spots, source, write };

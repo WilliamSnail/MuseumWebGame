@@ -1,5 +1,5 @@
 /* ================================================================
-   Hamachi 賭場（決定 0040；web/src/ui_casino.js、ui_casino_table.js）。放在最後載入（main.js）。
+   Hamachi 賭場（決定 0040；web/src/rooms/casino/ui_casino.js、ui_casino_table.js）。放在最後載入（main.js）。
    蓋在畫面上的木框 nb-frame 用 board.css 的；這裡把裡面換成綠絨布牌桌。
    ================================================================ */
 .nb-frame.nb-casino { width: min(920px, 100%); }
@@ -196,7 +196,7 @@ body.reduce-motion .cas-card, body.reduce-motion .cas-hand.shaky .cas-card { ani
 .cas-body > * { flex-shrink: 0; } /* 空間不夠就捲動，不要把每一塊壓扁（壓扁了牌會跑出框外） */
 .cas-invite { display: flex; flex-direction: column; gap: 4px; }
 
-/* 每週收藏（決定 0042；web/src/ui_casino_week.js）：賭場的「本週收藏」頁籤是綠絨布，每週劇情面板是羊皮紙，兩邊各配顏色 */
+/* 每週收藏（決定 0042；web/src/rooms/casino/ui_casino_week.js）：賭場的「本週收藏」頁籤是綠絨布，每週劇情面板是羊皮紙，兩邊各配顏色 */
 .cw-box { display: flex; flex-direction: column; gap: 8px; }
 .cw-box p { margin: 0; line-height: 1.6; }
 .cw-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }

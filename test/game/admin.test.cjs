@@ -205,7 +205,7 @@ T("摘要裡沒有 email、uid、整份存檔", G => {
 });
 T("程式裡沒有寫死 email", () => {
   const ROOT = path.join(__dirname, "..", "..");
-  ["shared/admin.js", "functions/game/admin.js", "web/src/ui_admin.js"].forEach(f => {
+  ["shared/admin.js", "functions/game/admin.js", "web/src/panels/ui_admin.js"].forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), "utf8");
     assert.ok(!/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(src), `${f} 裡有 email`);
   });

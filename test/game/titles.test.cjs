@@ -202,7 +202,7 @@ T("Functions 只在 casino.js 寫 titles/{uid}，而且交易成功才公開", G
   }
 });
 T("瀏覽器只讀 titles，不寫", G => {
-  const src = fs.readFileSync(path.join(ROOT, "web", "src", "net_firebase.js"), "utf8");
+  const src = fs.readFileSync(path.join(ROOT, "web", "src", "core", "net_firebase.js"), "utf8");
   assert.ok(/ref\(rtdb, "titles"\)/.test(src));
   assert.ok(!/set\(ref\(rtdb, "titles/.test(src) && !/ref\(rtdb, `titles/.test(src));
 });

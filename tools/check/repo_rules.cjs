@@ -13,17 +13,17 @@ const TOP = [".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "
 const fs = require("fs");
 const MAX_LINES = 1200;
 // 11-20 已經超過的：數字是現在的行數，只准變小（變小了就把這裡的數字改小；降到 1,200 以下就刪掉這行）
-const BIG = { "web/src/ui_core.js": 1350, "web/src/fx_sound.js": 1323, "web/src/ui_bank.js": 1319 };
+const BIG = { "web/src/core/ui_core.js": 1350, "web/src/fx/fx_sound.js": 1323, "web/src/rooms/bank/ui_bank.js": 1319 };
 // 11-20 以前就有的數字檔名：之後改名了就從這裡拿掉
-const OLD_NUM = ["web/src/ui_screens1.js", "web/src/ui_screens2.js", "web/src/ui_screens3.js", "web/src/ui_lobby2.js"];
+const OLD_NUM = ["web/src/rooms/ui_screens1.js", "web/src/rooms/ui_screens2.js", "web/src/rooms/ui_screens3.js", "web/src/rooms/ui_lobby2.js"];
 // 這幾個資料夾的第一層只准放這些檔，新檔一律放進子資料夾（11-20 資料夾結構第二輪）
-const FIRST_LEVEL = { tools: ["README.md"], test: ["load_shared.cjs", "run_all.cjs", "esm_smoke.mjs"], functions: ["index.js", "options.js", "package.json", "package-lock.json"] };
-const CODE = /^(shared\/.*|web\/src\/[^/]+|functions\/(?!shared\/|node_modules\/).*)\.(js|cjs|mjs)$/;
+const FIRST_LEVEL = { tools: ["README.md"], test: ["load_shared.cjs", "run_all.cjs", "esm_smoke.mjs"], functions: ["index.js", "options.js", "package.json", "package-lock.json"], "web/src": [] };
+const CODE = /^(shared\/.*|web\/src\/(?!css\/|assets\/).*|functions\/(?!shared\/|node_modules\/).*)\.(js|cjs|mjs)$/;
 function check(files, readText = f => fs.readFileSync(path.join(ROOT, f), "utf8")) {
   const bad = [];
   const top = new Set(files.map(f => f.split("/")[0]));
   for (const t of top) if (!TOP.includes(t)) bad.push(`最上層多了「${t}」：不在 tools/check/repo_rules.cjs 的 TOP 清單（暫存檔不要 commit；真的要加就改清單）`);
-  for (const f of files) { const m = f.match(/^([^/]+)\/([^/]+)$/); if (m && FIRST_LEVEL[m[1]] && !FIRST_LEVEL[m[1]].includes(m[2])) bad.push(`${f}：${m[1]}/ 第一層不放新檔，放進子資料夾（見 AGENTS.md 第 4 節）`); }
+  for (const f of files) { const m = f.match(/^(tools|test|functions|web\/src)\/([^/]+)$/); if (m && !FIRST_LEVEL[m[1]].includes(m[2])) bad.push(`${f}：${m[1]}/ 第一層不放新檔，放進子資料夾（見 AGENTS.md 第 4 節）`); }
   for (const f of files) if (/^test\/sim[^/]*\.c?js$/.test(f)) bad.push(`${f}：模擬腳本放 test/sim/`);
   for (const f of files) { const m = f.match(/^shared\/(casino|coop|cellar|discord)(_[^/]*)?\.js$/); if (m) bad.push(`${f}：放進 shared/${m[1]}/ 子資料夾`); }
   for (const f of files) if (/^(shared|web\/src|functions|tools)\/(.*\/)?[^/]*[a-z_]\d\.(js|cjs|mjs)$/i.test(f) && !OLD_NUM.includes(f)) bad.push(`${f}：檔名不要用數字結尾，取個看得出用途的名字`);
@@ -37,8 +37,8 @@ function check(files, readText = f => fs.readFileSync(path.join(ROOT, f), "utf8"
 }
 // web/src 的 import 繞圈（A → B → … → A）
 function webCycles(files, readText) {
-  const web = files.filter(f => /^web\/src\/[^/]+\.js$/.test(f)), g = {};
-  for (const f of web) g[f] = [...readText(f).matchAll(/from "\.\/([\w]+\.js)"/g)].map(m => "web/src/" + m[1]).filter(x => x !== f && web.includes(x));
+  const web = files.filter(f => /^web\/src\/(?!css\/|assets\/).*\.js$/.test(f)), g = {};
+  for (const f of web) g[f] = [...readText(f).matchAll(/from "(\.{1,2}\/[\w/.]+\.js)"/g)].map(m => path.posix.normalize(path.posix.join(path.posix.dirname(f), m[1]))).filter(x => x !== f && web.includes(x));
   const out = [], state = {}, stack = [];
   const dfs = f => { state[f] = 1; stack.push(f); for (const d of g[f]) { if (state[d] === 1) out.push("web/src 的 import 繞圈了：" + [...stack.slice(stack.indexOf(d)), d].map(x => x.slice(8)).join(" → ") + "（共用的東西搬到下層的檔，或用 PANELS／ADDONS 登記）"); else if (!state[d]) dfs(d); } stack.pop(); state[f] = 2; };
   for (const f of web) if (!state[f]) dfs(f);

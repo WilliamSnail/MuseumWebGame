@@ -131,7 +131,7 @@ export function casBankBreak(w, id) {
   B.terms = B.terms.filter(t => t !== x); w.chips += x.amt;
   return { ok: true, n: x.amt, lines: [casFill(CAS_BANK.breakOk, { n: casNum(x.amt) })] };
 }
-// 銀行廳（美術統籌在做 web/src/ui_bank.js）要的全部：現金、存款、借款；館債、股票、景氣還沒做先給 null。
+// 銀行廳（美術統籌在做 web/src/rooms/bank/ui_bank.js）要的全部：現金、存款、借款；館債、股票、景氣還沒做先給 null。
 // net：淨值 ＝ 現金 ＋ 活存 ＋ 定存 －（沒還的本金加利息）。之後加持股市值
 // house 給的話多館債（bonds）；淨值也加上館債本金和憑證
 // dayData 給的話多 world（財報頁的世界股市新聞，shared/casino/gdp.js 的 casWorldNews；dayData ＝ functions/shared/day_data.js 的 DAY_DATA）

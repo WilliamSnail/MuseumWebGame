@@ -1,4 +1,4 @@
-// 聲音狀態：結構檢查（tools/check/snd_check.cjs）、「該放哪首」的決定（web/src/audio_state.js 的 ambFor）、每個房間的環境音換掉後計時器都停（假的 AudioContext）
+// 聲音狀態：結構檢查（tools/check/snd_check.cjs）、「該放哪首」的決定（web/src/core/audio_state.js 的 ambFor）、每個房間的環境音換掉後計時器都停（假的 AudioContext）
 // 11-16 翊文：「被理智嚇退出房間，原本在房間裡的音效不會停」。
 const assert = require("assert");
 const fs = require("fs");
@@ -11,7 +11,7 @@ const rd = f => fs.readFileSync(path.join(root, f), "utf8");
 
 T("結構檢查：現在的程式沒有問題", () => { const r = run(); assert.deepStrictEqual(r.bad, []); assert.ok(r.rooms.length >= 17); });
 T("結構檢查：抓得到壞掉的寫法（每一種都試）", () => {
-  const fx = rd("web/src/fx_sound.js");
+  const fx = rd("web/src/fx/fx_sound.js");
   const mut = (a, b) => { assert.ok(fx.includes(a), "找不到：" + a); return checkFx(fx.replace(a, b)).bad; };
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [sched, steps]").some(x => /creepyHook/.test(x)), "creepyHook timer 漏掉");
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [steps, ck.timer]").some(x => /sched/.test(x)), "every 漏掉");
@@ -27,14 +27,14 @@ T("結構檢查：抓得到壞掉的寫法（每一種都試）", () => {
 });
 T("結構檢查：UI 端的清除點（登出、離開地下、框走 nbClose）", () => {
   assert.deepStrictEqual(checkUi().bad, []);
-  const lg = rd("web/src/ui_login.js");
+  const lg = rd("web/src/panels/ui_login.js");
   assert.ok(/nbClose/.test(lg) && /setAmbOver\(null\)/.test(lg));
 });
 
 // ---- ambFor ----
-const ambFor = new Function(rd("web/src/audio_state.js").replace(/^export\s+/gm, "") + ";return ambFor;")();
+const ambFor = new Function(rd("web/src/core/audio_state.js").replace(/^export\s+/gm, "") + ";return ambFor;")();
 const AMB_OF = (() => {
-  const src = (rd("web/src/ui_core.js").match(/export const AMB_OF = \{([\s\S]*?)\};/) || [, ""])[1];
+  const src = (rd("web/src/core/ui_core.js").match(/export const AMB_OF = \{([\s\S]*?)\};/) || [, ""])[1];
   const o = {}; for (const m of src.matchAll(/(\w+): ("[^"]*"|null)/g)) o[m[1]] = m[2] === "null" ? null : m[2].slice(1, -1); return o;
 })();
 const base = { hasP: true, live: true, dark: false, params: {}, ambOf: AMB_OF, ambOver: null, cellarSnd: null, heat: () => 2, dread: () => "low", creepy: () => false };
@@ -167,7 +167,7 @@ for (const room of Object.keys(SONGS)) {
   }));
 }
 T("fx.js：每個房間的環境音換掉後，計時器都停了（只剩淡出收尾用的）", () => {
-  const rooms = ambEntries(rd("web/src/fx_sound.js")).map(e => e.name);
+  const rooms = ambEntries(rd("web/src/fx/fx_sound.js")).map(e => e.name);
   for (const room of rooms) {
     const { FX, timers } = loadFx();
     FX.sound.demo("click");

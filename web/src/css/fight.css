@@ -1,4 +1,4 @@
-/* 打怪物的畫面（地下室改版，決定 0067、0068；web/src/ui_fight.js）
+/* 打怪物的畫面（地下室改版，決定 0067、0068；web/src/rooms/ui_fight.js）
    規劃第八節：一眼看得出要怎麼做。能按的有框有字；按鈕在下半部、夠大（至少 44px 高）。 */
 .fg-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 12px 10px; border-radius: 12px; background: linear-gradient(#2A2230, #1B161F); color: #FBEFD9; overflow: hidden; }
 .fg-stage.p2 { background: linear-gradient(#3A1F26, #1B161F); }

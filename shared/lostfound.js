@@ -7,7 +7,7 @@
 //  流程：
 //    1. 伺服器（functions/game/lostfound.js 的 lostSync）讀館友的存檔，把最近 NUM.lost.days 天理智歸零的參觀者做成公開的招領單，
 //       放在 Realtime Database 的 lostFound/{id}（館友讀得到，只有伺服器寫得動）。
-//    2. 別的館友走地下，每壹層第壹次進房間擲壹次，NUM.lost.meetPct% 會遇到壹張（web/src/ui_lost.js）。
+//    2. 別的館友走地下，每壹層第壹次進房間擲壹次，NUM.lost.meetPct% 會遇到壹張（web/src/panels/ui_lost.js）。
 //    3. 三個選項：
 //       送到招領處（lostReturn，伺服器）：原本的館友信箱收到壹封信、心情 +ownerMood；送的人 +finderInsp 靈感。壹張只能送回去壹次。
 //       唸出登記簿上的名字（畫面自己做）：理智檢定 readSan，看到他那壹行紀錄。

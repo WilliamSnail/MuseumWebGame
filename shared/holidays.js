@@ -23,7 +23,7 @@ export const HOLIDAY_YEARS = [2026, 2027, 2028];
 //   kind   國定（國定假日）、傳統（傳統節日、節氣）、紀念（紀念日：不換外觀、不發獎勵、不貼節日公告）
 //   fixed  每年同一天（"MM-DD"）；dates：每年不一樣的（農曆、節氣），照年份寫
 //   look   外觀的主題（body 的 class 是 holiday-主題；畫廊的藝術品也用它畫小裝飾）。紀念日沒有
-//   art    那天畫廊「節日特展」的藝術品：base 是用遊戲已經有的哪一種畫（web/src/art.js 的 ART.exhibit），statue 是新畫的節日雕像；
+//   art    那天畫廊「節日特展」的藝術品：base 是用遊戲已經有的哪一種畫（web/src/core/art.js 的 ART.exhibit），statue 是新畫的節日雕像；
 //          look 是畫上加的小裝飾；san 是看的時候的理智檢定（不寫＝不可怕）。標題、說明牌在 HOLIDAY_TEXT[節日].art
 //   同一天有兩個節日（2028-04-04 兒童節、清明節）：照這張表的順序，前面的算「那天的節日」，外觀和獎勵只給一份。
 export const HOLIDAY_INFO = [

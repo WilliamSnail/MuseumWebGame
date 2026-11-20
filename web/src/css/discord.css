@@ -1,4 +1,4 @@
-/* 我的帳號裡的「綁定 Discord」（決定 0051，web/src/ui_discord.js） */
+/* 我的帳號裡的「綁定 Discord」（決定 0051，web/src/panels/ui_discord.js） */
 .na-discord[hidden] { display: none; }
 .na-discord { align-items: start; }
 .nd-body { min-width: 0; }

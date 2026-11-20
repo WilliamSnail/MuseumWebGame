@@ -4,7 +4,7 @@ const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-16", at = (h) => Date.UTC(2026, 10, 16, h - 8, 0);
-const ROOT = path.join(__dirname, "..", ".."), ui = fs.readFileSync(path.join(ROOT, "web", "src", "ui_bank.js"), "utf8");
+const ROOT = path.join(__dirname, "..", ".."), ui = fs.readFileSync(path.join(ROOT, "web", "src", "rooms", "bank", "ui_bank.js"), "utf8");
 const levRule = G => { const h = G.casHouseFix(G.casHouseNew(), D0).house, w = G.casWalletFix(G.casWalletNew(), D0); return G.casStockLevView(w, h, D0, at(12)).lev.rule; };
 T("槓桿規則的字：手續費、利息、借券、當沖稅、筆數、冷卻都讀設定；美股 0 寫「免手續費」", G => {
   const r = levRule(G); assert.ok(r.includes("台股 0.05%") && r.includes("美股 免手續費") && r.includes("館內股 0.5%、集團股 0.2%"), r);

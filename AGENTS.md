@@ -93,7 +93,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 - **`ui_core.js` 不准 import 比它後面的檔**（ui_screens1/2/3、ui_curio、ui_odd、ui_board、boot、debug_boot）。需要的東西搬進 `ui_core.js`。
 - **共用狀態 `SAVE`、`P`、`IMG`、`FIT` 宣告在 `ui_core.js`，別的檔不能直接賦值**，要用 `setSave()`、`setP()`、`setImg()`、`setFit()`。改裡面的欄位（`P.insp += 2`）可以直接改。
 - 畫面檔的最外層（載入時就執行的程式）不要用別的畫面檔的東西。
-- 新的畫面檔要加進 `web/src/main.js`，放在 `boot.js` 前面。
+- 新的畫面檔要加進 `web/src/core/main.js`，放在 `boot.js` 前面。
 - 開發用的程式（`debug_boot.js`）只在 `npm run dev` 載入，不能進 `dist/`。
 
 **架構**（11-20 架構整理，翊文：「要怎麼避免以後再發生這些問題」）：
@@ -101,14 +101,20 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 - 動手前先想**放哪個資料夾、哪支檔**：同一個系統的新檔放在一起（賭場的放 `shared/casino/`，整理完後照這個做）；不要再開 `xxx3.js` 這種帶數字、看不出用途的檔名。
 - **不准互相 import**：A import B，B 就不能 import A（繞圈也不行）。兩邊都要用的東西搬到下層的新檔；畫面檔之間要叫對方，用 `PANELS`／`ADDONS` 登記（例：`ADDONS.actDone`、`PANELS.afterEnter`）。
 - **單檔不要超過 1,200 行**：快到了就照分段拆成幾支。
-- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
+- **命名和放哪**（11-20 資料夾結構第二輪，翊文：「照規劃做」）：
+  - 程式路徑（資料夾、檔名）一律英文 snake_case；文件、維護日誌可以用中文。
+  - 同一個系統只用一個字：是 `stock` 就不要再開 `stocks`；資料夾名＝系統名（`casino`、`coop`、`discord`、`stock`、`world`、`npc`、`cellar`）。
+  - 測試照原始碼的分法放：`shared/casino/` 的測試放 `test/casino/`；`tools/` 的腳本測試放 `test/tools/`；模擬放 `test/sim/`。
+  - docs 照性質放：`docs/規劃/`（規劃、提案）、`docs/規則/`（界線、架構、介面原則…）、`docs/操作/`（怎麼查、怎麼測、流程）、`docs/素材/`（素材清單、prompt）、`docs/決定/`；第一層只留 `現況.md`、`未來更新.md`。
+  - `tools/` 分 `release/`、`check/`、`content/`、`assets/`、`dev/`、`fb/`；`functions/` 照系統分資料夾，`index.js`、`options.js` 留第一層；`web/src/` 分 `core/`、`fx/`、`rooms/`（賭場、銀行各有子資料夾）、`panels/`。
+- 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、`tools/`／`test/`／`functions/`／`web/src/` 第一層的新檔（要放子資料夾）、模擬放錯地方、`shared/` 第一層的 casino_／coop_／cellar_／discord_ 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
 - 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/dev/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
 - 自動流程失敗會寫進 GitHub issue「自動流程失敗通報」（`tools/check/actions_health.cjs`，每天 20:10）；看到就修，修好關掉。
 
 **其他**：
 
 - 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`）。
-- 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/rest.js`）。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
+- 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`）。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
 - 新的文字是草稿，Yuga 可以改；Yuga 改過的以 Yuga 的為準。
 - 文件、日誌、註解用繁體中文、白話、短句，一句一件事；用一般的「一」，引用遊戲畫面上的字才照原樣寫「壹」。
 - 更多會踩的坑：`docs/規則/架構.md` 第 6 節。

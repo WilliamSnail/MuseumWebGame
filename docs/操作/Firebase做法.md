@@ -9,7 +9,7 @@
 
 ```
 瀏覽器（web/，Vite 打包）
-  │  NET（web/src/net_firebase.js）：介面跟原本的 net.js 一樣
+  │  NET（web/src/core/net_firebase.js）：介面跟原本的 net.js 一樣
   ├─ Authentication：Google 登入
   ├─ Firestore：存檔、帳號、展廳、信箱
   ├─ Realtime Database：在線名單、給我的通知、邀請、隊伍
@@ -103,7 +103,7 @@ Hosting：放 dist/，網址 專案名.web.app
 
 ## 四、畫面的 NET
 
-`web/src/net.js` 的介面不變（`info`、`login`、`restore`、`logout`、`updateMe`、`loadSave`、`save`、`saveSoon`、`flush`、`connect`、`where`、`send`、`on`、`me`、`state`、`roster`、`rev`、`loggedIn`），新的 `web/src/net_firebase.js` 照這個介面接 Firebase：
+`web/src/net.js` 的介面不變（`info`、`login`、`restore`、`logout`、`updateMe`、`loadSave`、`save`、`saveSoon`、`flush`、`connect`、`where`、`send`、`on`、`me`、`state`、`roster`、`rev`、`loggedIn`），新的 `web/src/core/net_firebase.js` 照這個介面接 Firebase：
 
 | NET | Firebase |
 |---|---|
@@ -159,7 +159,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 - [x] 開專案 `pepe-museum`（網址 `pepe-museum.web.app`）。
 - [x] Blaze：走 Google Cloud 的免費試用（抵免額 NT$9,727）。**2027-02-07 之前要按「升級」改成付費帳戶，不然服務會停。**
-- [x] 註冊網頁應用程式 `PEPE_MUSEUM`，設定寫進 `web/src/firebase_config.js` 的 `prod`。
+- [x] 註冊網頁應用程式 `PEPE_MUSEUM`，設定寫進 `web/src/core/firebase_config.js` 的 `prod`。
 - [x] Authentication 打開 Google 登入（公開名稱「佩佩博物館2」）。
 - [x] Firestore（`(default)`、asia-east1、正式版模式、每日備份 30 天）。
 - [x] Realtime Database（asia-southeast1、鎖定模式）。
@@ -170,7 +170,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 ## 八、管理員（翊文在後台設，決定 0033）
 
-管理員只看得到大家的進度，不能改（`functions/game/admin.js`、`shared/admin.js`、`web/src/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
+管理員只看得到大家的進度，不能改（`functions/game/admin.js`、`shared/admin.js`、`web/src/panels/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
 
 翊文怎麼把自己設成管理員（AI 不能做，AI 碰不到正式的 Firebase）：
 
@@ -237,7 +237,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 
 ## 十一、Discord 聯動第一步（決定 0051）
 
-規劃在 `docs/規劃/Discord聯動規劃.md`。程式：`functions/discord/discord.js`（入口 `discordBot`）、`discord_data.js`（Firestore 交易）、`discord_link.js`（遊戲裡的三個 callable）、`discord_config.js`（設定）；規則 `shared/discord/core.js`；畫面 `web/src/ui_discord.js`（選單 → 我的帳號 → Discord）。
+規劃在 `docs/規劃/Discord聯動規劃.md`。程式：`functions/discord/discord.js`（入口 `discordBot`）、`discord_data.js`（Firestore 交易）、`discord_link.js`（遊戲裡的三個 callable）、`discord_config.js`（設定）；規則 `shared/discord/core.js`；畫面 `web/src/panels/ui_discord.js`（選單 → 我的帳號 → Discord）。
 
 - **設定**：`functions/discord/discord_config.js` 的 `DISCORD` 有三個欄位（Application ID、Public Key、Guild ID），**翊文 11-09 給了，已經填好**。都不是密碼。空的時候 `discordBot` 回 503、遊戲裡不顯示「綁定 Discord」，其他 Function 不受影響。Bot token 第一步用不到。
 - **3 秒**：不另開 codebase、不用 `FUNCTION_TARGET` 懶載入、不設 `minInstances`。量過：載入整個 `functions/index.js` 1.3 秒、只載入 `options.js` 加 Firebase 兩個套件 1.2 秒，差 0.1 秒，時間幾乎都花在 Firebase 的套件上，拆也省不了。指令都只讀、寫幾份文件就回，不先回「處理中」。正式環境的冷啟動還沒量；若常超過 3 秒，才設 `minInstances: 1`（要先查價再問翊文）。
@@ -276,5 +276,5 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 ### 存檔衝突的結論（21 點和餐車會改存檔）
 
 - 伺服器端：`playCore` 在同一個交易裡讀錢包、牌局、莊家、存檔，寫回時存檔的 `rev` 加一，交易成功後才用 `inbox` 通知 `save_changed`（`why: "casino"`）。Discord 和遊戲走同一條路，兩邊同時按，Firestore 會讓其中一邊重試。模擬器實測：餐車加心情後 `saves/{uid}` 的 `rev` 7 → 8、心情真的加了、`inbox/{uid}` 有 `save_changed` 的 `rev: 8`。
-- 遊戲分頁同時開著（只讀程式確認，沒有在瀏覽器試）：分頁存檔用交易檢查 `rev`（`web/src/net_firebase.js` 的 `save()`），現在的 `rev` 跟手上的不同就不寫、發 `conflict`，不會蓋掉伺服器剛寫的值；分頁連著的話收到 `save_changed` 會先丟掉還沒送出去的存檔再重讀（`reloadSave`，`web/src/ui_login.js`），所以伺服器的值不會被舊的蓋掉。**代價**（原本就有，賭場在別的分頁玩也一樣）：分頁裡「幾秒內還沒存出去」的操作，會在 Discord 動作之後被丟掉。分頁沒連線的話，之後存檔會碰到 conflict，改用伺服器的那份。
+- 遊戲分頁同時開著（只讀程式確認，沒有在瀏覽器試）：分頁存檔用交易檢查 `rev`（`web/src/core/net_firebase.js` 的 `save()`），現在的 `rev` 跟手上的不同就不寫、發 `conflict`，不會蓋掉伺服器剛寫的值；分頁連著的話收到 `save_changed` 會先丟掉還沒送出去的存檔再重讀（`reloadSave`，`web/src/panels/ui_login.js`），所以伺服器的值不會被舊的蓋掉。**代價**（原本就有，賭場在別的分頁玩也一樣）：分頁裡「幾秒內還沒存出去」的操作，會在 Discord 動作之後被丟掉。分頁沒連線的話，之後存檔會碰到 conflict，改用伺服器的那份。
 - 改哪位參觀者：存檔裡 `profiles.challenge`，跟遊戲裡的賭場一樣。沒有存檔或沒有挑戰模式的人，Discord 只算籌碼，沒有心情、理智的變化。自由模式也沒有。
