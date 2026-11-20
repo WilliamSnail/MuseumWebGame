@@ -97,7 +97,9 @@ for (const f of FILES) {
   };
   shared.forEach(f => { if (!state[f]) dfs(f); });
 }
-for (const [n, fs2] of Object.entries(owner)) if (fs2.length > 1) errs.push(`同一個名字「${n}」在 ${fs2.join("、")} 都有 export`);
+// 例外：fx_core.js 的小工具 h（做 DOM 元素）和 ui_core.js 的 h 是兩個不同的東西，兩邊不互相 import
+const SAME_NAME_OK = { h: ["web/src/fx_core.js", "web/src/ui_core.js"] };
+for (const [n, fs2] of Object.entries(owner)) if (fs2.length > 1 && !(SAME_NAME_OK[n] && fs2.every(f => SAME_NAME_OK[n].includes(f)))) errs.push(`同一個名字「${n}」在 ${fs2.join("、")} 都有 export`);
 
 if (errs.length) { console.error(errs.join("\n")); console.error(`${errs.length} 個問題`); process.exit(1); }
 console.log(`模組 ${FILES.length} 個，import／export 都對得上`);

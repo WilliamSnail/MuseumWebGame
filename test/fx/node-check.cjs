@@ -2,8 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const file = path.join(__dirname, '..', '..', 'web', 'src', 'fx.js');
-const code = fs.readFileSync(file, 'utf8').replace(/^export\s+/gm, ''); // 第 4 版：fx.js 是模組，拿掉 export 再測
+const code = require('../../tools/fx_source.cjs').allSource(); // fx 拆成好幾支（fx_core、fx_sound…），拿掉 import／export、照順序接起來再測
 
 assert.ok(typeof document === 'undefined' && typeof window === 'undefined', 'node has no DOM');
 const FX = new Function(code + ';return FX;')();

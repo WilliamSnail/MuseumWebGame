@@ -41,7 +41,7 @@ function fakeCtx(log) {
   };
 }
 function loadFx() {
-  const code = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx.js"), "utf8").replace(/^export\s+/gm, "");
+  const code = require("../tools/fx_source.cjs").allSource();
   const log = { made: 0, started: 0, stopped: 0 };
   const timers = new Set(); let id = 0;
   const ctx = fakeCtx(log);
@@ -52,7 +52,7 @@ function loadFx() {
   return { FX, log, timers };
 }
 T("fx.js：賭場、銀行環境音會建節點、換掉會停計時器；不丟錯", () => {
-  const code = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx.js"), "utf8");
+  const code = fs.readFileSync(path.join(__dirname, "..", "web", "src", "fx_sound.js"), "utf8");
   assert.ok(/\bcasino\(c, g(?:, own)?\)/.test(code) && /\bbank\(c, g(?:, own)?\)/.test(code), "AMB 要有 casino、bank");
   for (const room of ["casino", "bank"]) {
     const { FX, log, timers } = loadFx();
