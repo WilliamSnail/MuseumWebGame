@@ -170,16 +170,18 @@ const plRound = v => Math.round(v * 10000) / 10000;
 export function casPoolEnsure(w, house, nick, uid, day) {
   const P = NUM.casino.pool, G = NUM.casino.cultureGift;
   if (!P || !G || !G.on || !house || house.pool || !house.cg || !house.cg[G.id] || !G.nicks.some(x => String(x).replace(/\s+/g, "").toLowerCase() === String(nick == null ? "" : nick).replace(/\s+/g, "").toLowerCase())) return false;
-  house.pool = { uid: String(uid), base: Math.max(1, casNetWorth(w, house)), lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
+  house.pool = { uid: String(uid), base: Math.max(1, casNetWorth(w, house)), e: 0, lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
   return true;
 }
-// 每天 05:00 日報算（nw ＝ 日報那刻他的淨值）：水位目標 ＝ clamp(start ＋ (1−start) × ln(x) ÷ ln(xT)，min，1)，x ＝ 淨值 ÷ 起點；每天最多動 step；連續 confirm 個日報目標 ≥ 1 且水位到頂，就是「水漲到門檻」，那天晚上 night ＝ 當天（全館看得到事件），
+// 每天 05:00 日報算（nw ＝ 日報那刻他的淨值）：水位目標 ＝ clamp(start ＋ (1−start) × e ÷ earnT，min，1)，e ＝ 累計賺的（每天日報淨值比上壹次多的部分，虧的不算，決定 0142）；每天最多動 step；連續 confirm 個日報目標 ≥ 1 且水位到頂，就是「水漲到門檻」，那天晚上 night ＝ 當天（全館看得到事件），
 // 隔天日報（天亮前）收完：水退回 start、起點重設成那一刻的淨值、hits ＋ 1。只收東西（劇情定），不動錢。壹天只算壹次。回傳有沒有動
 export function casPoolDay(house, day, nw) {
   const C = NUM.casino.pool, P = house && house.pool;
   if (!C || !P || !P.uid || !(P.base > 0) || P.day === day || !Number.isFinite(+nw)) return false;
-  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
-  const x = Math.max(1e-6, nw / P.base), target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * Math.log(x) / Math.log(C.xT))), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
+  if (!(P.e >= 0)) { P.e = 0; P.base = Math.max(1, Math.floor(nw)); P.day = day; return true; } // 決定 0142：舊的 pool 第壹次日報，從 0 開始累計（不追溯），上壹次淨值設成現在
+  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
+  P.e += Math.max(0, Math.floor(nw) - P.base); P.base = Math.max(1, Math.floor(nw)); // 決定 0142：只算賺的（跟上壹次日報比，虧的當 0），累計 e 只增不減
+  const target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * P.e / C.earnT)), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
   P.lv = plRound(Math.min(1, Math.max(C.min, P.lv + dl))); P.day = day;
   P.trace = (P.trace || []).concat([dl > 0.00005 ? 1 : dl < -0.00005 ? -1 : 0]).slice(-C.trace);
   P.hold = target >= 1 ? (P.hold || 0) + 1 : 0;

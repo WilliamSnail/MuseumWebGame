@@ -392,7 +392,7 @@ export const NUM = {
     //   trace 留幾天的漲退痕跡、grid 水位量化成幾格（peek 給畫面）
     // 門檻那晚收走一個名字（決定 0133）：被收走的佩佩名字變空白名牌，名牌背面是館友號碼（加入順序）；信一年後過期
     poolTake: { on: true, expireDays: 365 },
-    pool: { xT: 1.5, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
+    pool: { earnT: 200000000, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
     // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino_text.js 的 CAS_GIFT。on:false 關掉
     cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
     // 佩佩銀行跟賭場分開（決定 0130，翊文 11-19）：館友借款（新的）、館債、存款利息改由準備金 house.gb 出錢；賭場、股票留在莊家。舊借款（9.85 億）留在莊家照舊還給莊家。
