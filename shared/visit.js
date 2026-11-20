@@ -2,7 +2,7 @@
 //  參觀館友的展廳、送佩佩、伺服器的信：伺服器每一步要做的事（多人版 M2，docs/規劃/多人實作.md）
 //  翊文 11-09：「之後可以參觀館友的展廳、送佩佩……也要加入立即可以使用的功能」→ 館友名片上直接有按鈕、對方不在線也能用、收到的東西馬上能用。
 //  規則本身在 shared/gifts.js、shared/mailbox.js。這個檔把「一次呼叫要做什麼」寫成純函式（step 開頭的）：
-//    functions/visit.js 只負責讀資料庫、叫這裡、把結果在同一個 Firestore 交易裡寫回去。這樣不開模擬器也測得到（test/visit.test.cjs）。
+//    functions/visit.js 只負責讀資料庫、叫這裡、把結果在同一個 Firestore 交易裡寫回去。這樣不開模擬器也測得到（test/game/visit.test.cjs）。
 //  訪客簿（Firestore 的 halls/{主人}，只有 Functions 讀寫）：
 //    { log: [{ uid, nick, day, at, like, note, paid }], likes, seenAt }
 //    log：一天一位館友一筆，最新的在前面，最多 NUM.guest.logMax 筆（今天的不會被擠掉：來訪靈感的上限要算今天的）。

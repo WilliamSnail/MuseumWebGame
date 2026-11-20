@@ -8,7 +8,7 @@
 //   6. 理智低的恐怖音樂放的時候，房間的整首曲子要壓低（11-17 翊文：「理智低的恐怖音樂放的時候 讓房間的鋼琴降低」）：
 //      songCycle 的曲子要先過 SONG_GAINS 的小音量鈕（停的時候拿掉），sync() 照恐怖音樂開關調它；房間裡不能自己用 fileOnce 放整首曲子（要走 songCycle）
 //   4. 蓋在畫面上的框（.nb-layer）被程式直接拿掉時，要走 nbClose（框關掉才會收賭場、合作的聲音和計時器）
-// 有問題 exit 1。test/snd_check.test.cjs 也用它。
+// 有問題 exit 1。test/tools/snd_check.test.cjs 也用它。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const rd = f => fs.readFileSync(path.join(ROOT, f), "utf8");

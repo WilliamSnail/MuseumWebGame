@@ -4,7 +4,7 @@
 //   2. 館內 NPC（tools/check/npc_check.cjs：預算、不露臉、季節節奏）
 //   3. NPC 名單打包（shared/npc_roster.js 有沒有跟 content/npc 壹致；不壹致就跑 node tools/content/npc_pack.cjs）
 //   4. 維護日誌的格式（tools/check/log_check.cjs；有沒有寫日誌）
-//   5. 預約公告對得上工作流程（tools/content/announce.cjs --check）；趣味節日清單（test/funday.test.cjs：排程新增節日後要過）
+//   5. 預約公告對得上工作流程（tools/content/announce.cjs --check）；趣味節日清單（test/story/funday.test.cjs：排程新增節日後要過）
 //   6. 今天的檔缺什麼（tools/content/day_plan.cjs：clue、market、特展的新畫、結局書；只提醒，不擋）
 // 完整的 npm test（整個遊戲的測試）由 npm run ship 跑，這裡不重複。
 //   npm run day:check                     用現在的台灣日期
@@ -113,7 +113,7 @@ function main() {
   { const mf = mapFresh(); results.push({ name: "館外地圖打包", ok: mf.ok, warnings: [], errors: mf.ok ? [] : [mf.message], note: mf.ok ? mf.message : "" }); }
   results.push(run("維護日誌", ["tools/check/log_check.cjs"]));
   results.push(run("預約公告和工作流程", ["tools/content/announce.cjs", "--check"]));
-  results.push(run("趣味節日清單（今日冷知識）", ["test/funday.test.cjs"]));
+  results.push(run("趣味節日清單（今日冷知識）", ["test/story/funday.test.cjs"]));
   try { // 今天的檔缺什麼：只提醒
     const { planDay, gatherFor } = require("./day_plan.cjs"), { load } = require("../../test/load_shared.cjs"), G = load();
     const date = i >= 0 ? a[i + 1] : G.taipeiDay(Date.now()), p = planDay(gatherFor(date, G)), g = p.dayGaps, W = [];

@@ -100,7 +100,7 @@ function defaultChecks(o, touched) {
   const c = [{ name: "world:check（單位和 NPC 的隸屬）", run: () => sh("../check/world_check.cjs", []) }, { name: "econ:check（經濟自我檢查）", run: () => sh("../check/econ_check.cjs", []) }];
   if (touched.has("npc")) c.push({ name: "npc_check（NPC 內容）", run: () => sh("../check/npc_check.cjs", []) });
   if (o.full) c.push({ name: "npm test（整套）", run: () => { const r = spawnSync("npm", ["test"], { cwd: ROOT, encoding: "utf8", shell: true, maxBuffer: 1 << 26 }); return { ok: r.status === 0, out: (r.stdout || "") + (r.stderr || "") }; } });
-  else for (const t of ["world.test.cjs", "world_split.test.cjs", "econ_check.test.cjs"]) c.push({ name: "test/" + t, run: () => { const r = spawnSync(process.execPath, [path.join(ROOT, "test", t)], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 }); return { ok: r.status === 0, out: (r.stdout || "") + (r.stderr || "") }; } });
+  else for (const t of ["world/world.test.cjs", "world/world_split.test.cjs", "tools/econ_check.test.cjs"]) c.push({ name: "test/" + t, run: () => { const r = spawnSync(process.execPath, [path.join(ROOT, "test", t)], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 }); return { ok: r.status === 0, out: (r.stdout || "") + (r.stderr || "") }; } });
   return c;
 }
 // 模擬壹次（用磁碟上現在的檔案重新載入）：回傳要比的幾個數字

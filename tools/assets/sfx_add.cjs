@@ -11,7 +11,7 @@
 //        一般：單聲道 80 kbps、loudnorm I=-20 TP=-2
 //        --loop：照 --trim 截一段，頭尾 3 秒交叉淡化，可以接起來循環；64 kbps、I=-28
 //        --trim 起:迄  只留這一段（秒；只給「:迄」就是從頭）；--fadeout N 最後 N 秒淡出
-//        --stereo 保留雙聲道；--lufs、--kbps 自己指定；超過 800 KB 會警告（test/sfx_files.test.cjs 會擋）
+//        --stereo 保留雙聲道；--lufs、--kbps 自己指定；超過 800 KB 會警告（test/web/sfx_files.test.cjs 會擋）
 //   3. 在 shared/sfx_files.js 和 web/public/sfx/來源.md 各加一列（id 重複就報錯）。
 //   4. 原檔先複製到 .claude/交接/音效/原檔/（桌面的檔會被移走）。
 //   5. 印出接下來要做的：在哪裡呼叫、跑 npm run fx:report。
@@ -23,7 +23,7 @@ const SRC_MD = path.join(ROOT, "web", "public", "sfx", "來源.md");
 const OUT_DIR = path.join(ROOT, "web", "public", "sfx");
 const MAX_KB = 800;
 
-// ---------- 解析（test/sfx_add.test.cjs 會測） ----------
+// ---------- 解析（test/tools/sfx_add.test.cjs 會測） ----------
 // 「作者-標題-編號.mp3」→ { author, slug（標題的 slug，不含編號）, num, full（標題-編號） }；對不上格式回 null
 function parsePixabayFilename(file) {
   const base = String(file).split(/[\\/]/).pop().replace(/\.mp3$/i, ""); // Windows 和 Linux 的路徑都吃（CI 是 Linux）
@@ -170,7 +170,7 @@ async function main() {
   const r = cp.spawnSync("ffmpeg", args, { encoding: "utf8" });
   if (r.status !== 0) throw new Error("ffmpeg 失敗：" + (r.stderr || "").slice(-400));
   const kb = Math.round(fs.statSync(out).size / 1024), outDur = probeDuration(out);
-  if (kb > MAX_KB) console.warn(`警告：${a.id}.mp3 有 ${kb} KB，超過 ${MAX_KB} KB，test/sfx_files.test.cjs 會擋；請加 --trim 截短或 --kbps 降低`);
+  if (kb > MAX_KB) console.warn(`警告：${a.id}.mp3 有 ${kb} KB，超過 ${MAX_KB} KB，test/web/sfx_files.test.cjs 會擋；請加 --trim 截短或 --kbps 降低`);
 
   // 備份原檔
   const bak = path.join(repoMain(), ".claude", "交接", "音效", "原檔");
@@ -189,7 +189,7 @@ async function main() {
     ? `  1. 環境音：在 web/src/fx.js 的 AMB.<房間> 裡加  fileLoop(c, g, '${a.id}', 音量).n（記得放進 nodes）`
     : `  1. 畫面音效：在 web/src/ui_*.js 呼叫  sndFile("${a.id}", 音量)；環境音裡偶爾播：fileOnce(c, g, '${a.id}', 音量)`);
   console.log("  2. npm run fx:report   （更新 docs/素材/音效與特效總表.md，會把這個新音效列進去）");
-  console.log("  3. npm test            （test/sfx_files.test.cjs 會檢查三邊對得上）");
+  console.log("  3. npm test            （test/web/sfx_files.test.cjs 會檢查三邊對得上）");
 }
 
 module.exports = { parsePixabayFilename, parsePixabayTitle, parseTrim, nameWithNote, addToSfxFiles, addToSourceMd, buildFilter };

@@ -1,5 +1,5 @@
 // 每日排程的幾支腳本共用的小函式（11-16 每日排程優化：day_check --strict、day_new、day_pr、ledger reveal／written／day 以前各寫各的）
-// 全部是純函式（不讀檔、不連網），test/sched_tools.test.cjs 用假資料測。
+// 全部是純函式（不讀檔、不連網），test/tools/sched_tools.test.cjs 用假資料測。
 //   asList、isObj          小工具
 //   collectClues(day)      今天的檔放了哪些 clue：[{ id, where（書／房間／今日特展／其他）, title }]（同壹個 id 只算壹次）
 //   isMainBook(book, wk)   這本書是不是主線章節書（line 是 main-sN，或 week.json 的 lines 裡那條 kind 是 main）

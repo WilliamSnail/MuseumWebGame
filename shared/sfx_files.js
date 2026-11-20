@@ -4,7 +4,7 @@
 //  播法：畫面用 ui_core.js 的 sndFile(id, 音量)；環境音在 web/src/fx.js 用 fileLoop／fileOnce。
 //  授權：Pixabay Content License（https://pixabay.com/service/license-summary/）：可以免費用在遊戲裡、可以改、不用標作者；
 //    不能把檔案單獨拿去賣或轉發。我們還是每個都標來源（翊文要求），人看的版本在 web/public/sfx/來源.md。
-//  新增檔案：放進 web/public/sfx、這裡加壹列、來源.md 加壹列（test/sfx_files.test.cjs 會檢查三邊對得上）。
+//  新增檔案：放進 web/public/sfx、這裡加壹列、來源.md 加壹列（test/web/sfx_files.test.cjs 會檢查三邊對得上）。
 // ================================================================
 // hq: true ＝ 音樂，音質比較高（雙聲道 80～128 kbps），檔案可以到 2 MB（11-16 翊文：「理智>55高的時候的音樂可以稍微音質高一點嗎」）；用到才下載
 export const SFX_FILES = {

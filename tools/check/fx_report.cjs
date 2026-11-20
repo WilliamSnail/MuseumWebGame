@@ -13,7 +13,7 @@ const NOTES = path.join(ROOT, "content", "fx_notes.json");
 const rd = rel => fs.readFileSync(path.join(ROOT, rel), "utf8");
 const cell = s => String(s === null || s === undefined ? "" : s).replace(/\|/g, "／").replace(/\r?\n/g, " ").trim();
 
-// ---------- 解析小工具（test/fx_report.test.cjs 會測） ----------
+// ---------- 解析小工具（test/tools/fx_report.test.cjs 會測） ----------
 // 從 text 的 open（"(" 的位置）找到對應的 ")"，回傳括號裡的字（略過字串裡的括號）
 function callArgs(text, open) {
   let depth = 0, q = null;

@@ -216,7 +216,7 @@ export function casReportView(doc) {
 //  全世界金流總覽（11-17 翊文：銀行多一個「金流」頁籤，動態 hub 顯示錢往哪裡流）
 //  每個記帳的來源代號歸到一條線：[X, Y] ＝ 這個來源在 X、Y 兩個地方之間搬錢。
 //  節點：world 已知世界（含旅客、散客、各集團、文化部）、house 莊家、budget 博物館資金、museum 修繕基金、gov 稅收、sea 海底、players 館友（全部合起來）、gen 憑空（成長、擴充、開場）。
-//  新來源沒歸到線就過不了 test/flow_hub.test.cjs。只給合計和來源標籤，不給個別館友和 NPC。
+//  新來源沒歸到線就過不了 test/casino/flow_hub.test.cjs。只給合計和來源標籤，不給個別館友和 NPC。
 // ================================================================
 export const CAS_FLOW_NODES = [ // tier：第幾層（上到下）；org：屬於哪個框（佩佩博物館）；順序就是同一層從左到右
   { id: "gen", name: "增長", tier: 0, note: "成長、擴充、開場：不是從哪個帳搬來的" },

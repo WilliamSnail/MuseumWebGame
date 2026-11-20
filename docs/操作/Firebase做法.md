@@ -243,7 +243,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 - **3 秒**：不另開 codebase、不用 `FUNCTION_TARGET` 懶載入、不設 `minInstances`。量過：載入整個 `functions/index.js` 1.3 秒、只載入 `options.js` 加 Firebase 兩個套件 1.2 秒，差 0.1 秒，時間幾乎都花在 Firebase 的套件上，拆也省不了。指令都只讀、寫幾份文件就回，不先回「處理中」。正式環境的冷啟動還沒量；若常超過 3 秒，才設 `minInstances: 1`（要先查價再問翊文）。
 - **獎勵**：`discord_data.js` 的交易裡讀 `casinoWallets/{uid}`（沒有就用 `casWalletFix` 開一個：開場籌碼照給，再加 `NUM.discord.linkBonus`）和 `discordBonus/{uid}`，沒領過才寫兩份。跟賭場搶同一份文件，Firestore 會讓一邊重試。不從莊家扣。
 - **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/content/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
-- **Firestore 規則沒改**：這些集合都走最後一條「一律不准」（`test/discord_bot.test.cjs` 擋「規則裡不准出現 discord」）。
+- **Firestore 規則沒改**：這些集合都走最後一條「一律不准」（`test/discord/discord_bot.test.cjs` 擋「規則裡不准出現 discord」）。
 
 ### 要翊文做的（AI 碰不到）
 
@@ -263,7 +263,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dr
 - **資料**（都只有 Functions 碰得到，`firestore.rules` 沒動）：`discordOutbox/{事件id}`（`kind`、`text`、`status`：pending → sending → sent／merged／skipped／failed）、`discordOutboxState/{kind}`（`{ at }` 上次發出的時間，冷卻用；21 點是 `bj-{uid}` 存併單的狀態）。模擬器才有的：`discordTest/out`（控制「有沒有 token」「發送會不會失敗」）、`discordTestSent/{id}`（模擬器「會發的訊息」）。
 - **寫入**：遊戲交易成功**之後**呼叫 `outHouse`、`outJoin`、`outLiveOn`、`outDonate`、`outBj`；內部包了 try／catch 和 2 秒逾時，寫不進去只記錄，永遠不丟錯。
 - **發送**：`discordOutboxSend`（`onDocumentCreated("discordOutbox/{id}")`，地區跟著全域設定 asia-east1，跟 Firestore 同一區）。一個交易裡檢查：還是 pending、不太舊、有 token、冷卻過了，才改成 sending 並記下冷卻時間；然後打 Discord 的 API。失敗記 `failed` 和原因，不重試。
-- **Token**：`.github/workflows/deploy.yml` 部署前用 `printf` 把 `DISCORD_BOT_TOKEN`、`DISCORD_CHANNEL_ID`（GitHub Secrets，就是發公告用的那組）寫進 `functions/.env`（`.gitignore` 擋住），部署完不管成不成功都用 `trap` 刪掉。Function 讀 `process.env`；沒有就不發、不報錯。不用 `defineSecret`（secret 不存在會讓整個部署失敗）。`test/discord_out.test.cjs` 檢查這些寫法。
+- **Token**：`.github/workflows/deploy.yml` 部署前用 `printf` 把 `DISCORD_BOT_TOKEN`、`DISCORD_CHANNEL_ID`（GitHub Secrets，就是發公告用的那組）寫進 `functions/.env`（`.gitignore` 擋住），部署完不管成不成功都用 `trap` 刪掉。Function 讀 `process.env`；沒有就不發、不報錯。不用 `defineSecret`（secret 不存在會讓整個部署失敗）。`test/discord/discord_out.test.cjs` 檢查這些寫法。
 - **模擬器絕不連真的 Discord**：`FUNCTIONS_EMULATOR === "true"` 時完全不看環境變數裡的 token，也不呼叫 `fetch`。
 - **可能卡住的地方**：這是專案第一個 Firestore 觸發的 Function。第一次部署時，Google Cloud 可能要先開 Eventarc API，或給部署用的服務帳號權限；失敗的話看 Actions 的錯誤訊息，其他 Function 不受影響。
 

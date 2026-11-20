@@ -66,7 +66,7 @@ async function cmdChips(p, now) {
   const fs = getFirestore();
   const [ms, ws, ts] = await Promise.all([fs.doc(`members/${uid}`).get(), fs.doc(`casinoWallets/${uid}`).get(), getDatabase().ref("titles").child(uid).get()]);
   if (!ms.exists) return dcReply(dcText("chipsGone"), true);
-  // 稱號只讀不寫（titles 由賭場寫，test/titles.test.cjs 擋其他檔的寫法，所以這裡用 ref("titles").child(uid)）
+  // 稱號只讀不寫（titles 由賭場寫，test/game/titles.test.cjs 擋其他檔的寫法，所以這裡用 ref("titles").child(uid)）
   const w = casWalletFix(parseData(ws), taipeiDay(now)); // 沒進過賭場＝開場的數字（跟遊戲裡的 peek 一樣，不建錢包）
   const says = await yugaLineFor(uid, now); // Yuga Bot 交代的任務：今天有、你還沒做完，最後多壹行（只有本人看得到）
   return dcReply(dcChipsText(ms.data().nick, w.chips, ts.val()) + (says ? "\n" + says : ""), true);

@@ -2,7 +2,7 @@
 // 檢查 content/npc/*.json：每位 NPC 一個檔，檔名＝id。格式見 content/README.md 第八節，規劃在 docs/規劃/館內NPC規劃.md。
 // 規則（數字都在 shared/config.js 的 NUM.npc）：必填欄位、id 和名字不重複、地點和喜好只能用允許的、預算在那一級的範圍內而且每位不一樣、
 // 沒有真人／品牌／政黨（跟週劇情壹樣的禁用字）、不破梗（帳本 mysteries 的謎底字句）、劇情角色（trace）不露臉、不帶錢。
-// 別的檔可以 require 這支：checkNpc({ npcs, ledger })（test/npc_check.test.cjs 用壞資料測）。
+// 別的檔可以 require 這支：checkNpc({ npcs, ledger })（test/npc/npc_check.test.cjs 用壞資料測）。
 const fs = require("fs"), path = require("path");
 const { load } = require("../../test/load_shared.cjs");
 const G = load();

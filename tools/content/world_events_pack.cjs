@@ -2,7 +2,7 @@
 //   content/weeks/<週>/week.json 的 sanEvents（某位 NPC 理智 ±）、unrest（某集團集體不安 ±）、moodEvent（那天展廳氣氛 ±）
 //   content/weeks/<週>/dN.json 的 market（世界市場新聞）裡 tone 是 down、ref 指到館外股票的，記下股票 id（壞消息推不安）
 // → WORLD_EVENTS = { "日期": { san: { NPC id: n }, unrest: { 集團 id: n }, mood: n, down: [股票 id] } }。伺服器換日、收盤時用（shared/world.js）。
-// 內容改了就跑 node tools/content/world_events_pack.cjs；npm test（test/world.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
+// 內容改了就跑 node tools/content/world_events_pack.cjs；npm test（test/world/world.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const isDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
