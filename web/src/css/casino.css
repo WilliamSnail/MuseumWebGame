@@ -571,3 +571,30 @@ body.reduce-motion .cas-bub { animation: none; }
 .cas-acct .bank-acct p { display: flex; justify-content: space-between; margin: 2px 0; font-size: var(--type-small, .8125rem); }
 .cas-acct .bank-acct p.net { border-top: 1px solid rgba(201, 165, 90, .4); padding-top: 4px; margin-top: 4px; }
 .cas-acct .bank-acct b.bad { color: #E08A6A; } .cas-acct .bank-acct b.good { color: #9FD3A8; }
+
+/* ===== 賭場手機直拿重新整理（11-20，測試 session 用 375×740 看到的：牌桌的下注／發牌鈕被關在 172px 的小窗、全 0 的帳戶佔 250px、關閉鈕被擠出螢幕、霓虹招牌疊在標題上）=====
+   做法：①裝飾（霓虹招牌、荷官小牌、籌碼塔）手機直拿不放，它們疊在標題和內容上；②標題壹列壹定放得下：關閉鈕在最右、不被擠出去；
+   ③「我的帳戶」預設收成壹行、放在牌桌下面（點了才展開）、跟館友同桌更下面；牌桌（下注、要牌、停牌）拿到全部剩下的高度；④餐車頁的說明收起來，品項在上 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-casino .rm-neon, .nb-casino .rm-dealer, .nb-casino .rm-chips, .nb-casino .rm-roll { display: none; }
+  .nb-casino .nb-top { gap: 4px; }
+  .nb-casino .nb-plaque { flex: 0 1 auto; min-width: 0; padding: 4px 10px; }
+  .nb-casino .nb-plaque h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8125rem; letter-spacing: .04em; }
+  .nb-casino .nb-top-r { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+  .nb-casino .cas-chips { padding: 2px 8px; font-size: .8125rem; white-space: nowrap; }
+  .nb-casino .nb-x { width: 38px; height: 38px; flex: 0 0 38px; }
+  .nb-casino .cas-row { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .nb-casino .cas-row > .cas-body { order: 1; flex: 1 1 auto; min-height: 0; }
+  .cas-side > .cas-bank { order: 0; }
+  .cas-side > .cas-acct { order: 2; flex: none; margin-top: 4px; }
+  .cas-side > .cas-mp { order: 3; flex: none; }
+  .cas-acct-h { min-height: 34px; }
+  /* 牌桌：下注／要牌／停牌和牌面要在第一屏：荷官的話收成壹小條、莊家有多少錢不佔壹行、要牌停牌兩顆並排 */
+  .nb-casino .cas-house { display: none; }
+  .nb-casino .cas-say { min-height: 34px; max-height: 52px; padding: 4px 10px; }
+  .nb-casino .cas-body .cas-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .nb-casino .cas-body .cas-acts > .cas-ask { grid-column: 1 / -1; }
+  .nb-casino .cas-body .cas-acts > .btn { min-height: 44px; }
+  .nb-casino .cas-body .cas-acts > .btn:not(.primary) { border: 1px solid #D6B25E; background: rgba(20, 30, 24, .85); color: #F8E3A0; font-weight: 700; }
+  .nb-casino .cas-betbox .cas-hint, .nb-casino .cas-note.cas-limit { display: none; }
+}
