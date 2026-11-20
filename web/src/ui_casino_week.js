@@ -1,12 +1,12 @@
 // ================================================================
-//  賭場的每週收藏的畫面（決定 0042；規則 shared/casino_week.js；內容寫在 content/weeks/<週>/week.json 的 casino）
+//  賭場的每週收藏的畫面（決定 0042；規則 shared/casino/week.js；內容寫在 content/weeks/<週>/week.json 的 casino）
 //  這個檔只畫「伺服器給我的進度」，什麼都不算、不發獎：條件、收藏品、領週章都在伺服器（functions/casino.js 的 wk、wkclaim）。
 //  兩個地方用同一份畫法：賭場的「本週收藏」頁籤（ui_casino.js）、每週劇情面板的「本週賭場收藏」（ui_story.js）。
 //  進度從伺服器拿一次放在這裡（CAS_WK）；賭場每一步的回答也會更新它。沒登入、連不上就寫「進度要連上伺服器才看得到」。
 //  介面上的字用「壹」。名字、說明、故事都是草稿，Yuga 可以改。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { casWkBase, casWkCondText, casWkProgress, casWkVisible } from "../../shared/casino_week.js";
+import { casWkBase, casWkCondText, casWkProgress, casWkVisible } from "../../shared/casino/week.js";
 import { NET } from "./net_firebase.js";
 import { PANELS, UI, btn, h, icon, note, snd } from "./ui_core.js";
 

@@ -1,6 +1,6 @@
 // 藝術市場數值驗算（11-14，數值平衡；規劃 2.10、2.10a 節）
 // node test/sim/sim_art.cjs
-// 價格公式同 shared/casino_art.js 的 casArtPrice（底價 ×（1 + 放久了 + 景氣 + 搶手））。
+// 價格公式同 shared/casino/art.js 的 casArtPrice（底價 ×（1 + 放久了 + 景氣 + 搶手））。
 let s = 77; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
 const nrm = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
 const pct = x => (x * 100).toFixed(1) + "%";

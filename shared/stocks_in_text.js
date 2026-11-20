@@ -1,5 +1,5 @@
 // 館內五家店股票的字（11-14）。草稿，Yuga 可以改；Yuga 改過的以 Yuga 的為準。
-// id 跟 shared/casino_stock_in.js 的 IN_STORES 壹樣：food 餐車、bj 牌桌（賭場）、job 委託櫃台、cellar 地下收藏庫、craft 手作坊。
+// id 跟 shared/casino/stock_in.js 的 IN_STORES 壹樣：food 餐車、bj 牌桌（賭場）、job 委託櫃台、cellar 地下收藏庫、craft 手作坊。
 // 規矩：不寫真公司名、不寫股票代號；這是館裡自己的店，價格只看館裡的人去了沒有。
 export const IN_STOCKS = [
   { id: "food", name: "餐車股", intro: "窗口前面排的隊有多長，就是它的行情。" },

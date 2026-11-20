@@ -2,7 +2,7 @@
 //  畫面 1–5、7：開場、大廳、畫廊、圖書館、手作坊、揭曉
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CAS_TEXT } from "../../shared/casino_text.js";
+import { CAS_TEXT } from "../../shared/casino/text.js";
 import { EXHIBITS, GALLERY_INTRO, GEN_TEXT, LEGACY, NUM, ORIGIN, RARITY_TABLE, UPGRADES } from "../../shared/config.js";
 import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD_RECOVER_TEXT, PERFECT_WORK_TEXT, ROOM_HINTS, SAN_ASIDES, TITLE_TAGLINE, TUTORIAL_TEXT } from "../../shared/content.js";
 import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/systems_text.js";

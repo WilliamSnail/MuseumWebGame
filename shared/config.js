@@ -148,7 +148,7 @@ export const NUM = {
   // newCellar：地下室改版（決定 0067、0068）。true ＝合作地下每一層的房間探索完之後要打守門，打贏才算走完。
   //   11-12 翊文說直接打開，不用先自己測（決定 0069）。有問題改回 false 就回到舊的（房間走完直接算這一層走完），舊的程式都還在
   ui: { newLobby: true, newCellar: true, lobbyCrowdMusic: 150, lobbySan: [55, 30, 15], casinoBusyMusic: 35, workshopBusyMusic: 20 }, // workshopBusyMusic：手作坊超過幾人換成翊文的錄音（11-17 翊文：「這首手作坊多人的時候可以放」；20 是先估的） // casinoBusyMusic：賭場超過幾人換成 Copper Nights（11-16 翊文：「賭場裡超過35人就改播這個」）； // lobbySan：大廳照理智換曲（11-16 翊文）：低於 55 放「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律； // lobbyCrowdMusic：館內同時超過幾人，大廳換成「Inviting Loop」（11-16 翊文：「人潮很多的時候用這首」；150 是先估的，太常/太少出現就改）
-  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim/sim_fight.cjs
+  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar/fight.js。數字都是草稿，模擬 node test/sim/sim_fight.cjs
   //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
   //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
   //   seeMod、calmMod：看穿（偵查、神秘學取高的）、安撫（說服）的技能加多少；calmHp：安撫成功順便減多少壓力
@@ -171,7 +171,7 @@ export const NUM = {
     inspire: 3, comfort: "1D3", comfortDiv: 30, revealMod: 20,
     // 怪物個性「殼很硬」：沒看穿之前推只剩幾成（模擬 11-12：0.5 的時候 B1 紙箱 1 人只贏 54%）
     shellMult: 0.65 },
-  // 地下室的小地圖（shared/cellar_map.js）：rows 排；每排壹定有壹間探索房（翊文 11-12：「房間探索還是要保留喔，是個重點」），壹趟可以把這層的房間全部走完
+  // 地下室的小地圖（shared/cellar/map.js）：rows 排；每排壹定有壹間探索房（翊文 11-12：「房間探索還是要保留喔，是個重點」），壹趟可以把這層的房間全部走完
   //   wide：某壹排有 3 個點的機率（不然 2 個）；最後壹排是休息＋別的；最底是守門
   //   rank2、rank3：遭遇的怪物是 2 級、3 級的機率 ＝ [第壹排的機率, 每往下壹排多多少]
   // restSan：休息回幾點理智（今天還有獎勵的趟才有）；chestInsp：寶箱開到好的，靈感幾點；chestSan：開到壞的扣多少理智；
@@ -218,7 +218,7 @@ export const NUM = {
   fusionSan: "1/1D4",       // 融合要做的理智檢定（原本 0/1D4）
   inherit: 45,              // 每一類從爸爸、媽媽各遺傳的機率（%），剩下的是突變
   lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3", perOwner: 2, returnsDay: 2 }, // 招領（shared/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定；防刷（翊文：「不能讓玩家用一直歸零來刷」）：壹個館友最多 perOwner 張、送的人壹天最多 returnsDay 次拿靈感
-  // 藝術市場（11-14，shared/casino_art.js，規劃 2.10、2.10a 節；翊文：畫是避險資產，像富人買來避險；「最好一兩個禮拜內回本」）。
+  // 藝術市場（11-14，shared/casino/art.js，規劃 2.10、2.10a 節；翊文：畫是避險資產，像富人買來避險；「最好一兩個禮拜內回本」）。
   //   tiers：稀有度四級的底價（尋常 100 萬 ＝ 新玩家一開場的籌碼，所以是「有錢之後才做的事」）。
   //   放久了（casArtAge）：展出後前 ageFastDays 天每天漲 ageFastPct %，之後每天只漲 ageUpPct %，最多漲到 ageCapPct %（到頂就不再漲，所以不是穩賺）。
   //   moodPct：景氣反向 ±%（景氣差微漲）；demandPct／demandCapPct：全館每多一人持有漲 %、最多 %；sellPct：賣回只拿現價幾 %（價差，短線進出一定虧）。
@@ -232,7 +232,7 @@ export const NUM = {
     sellQuotaPct: 5, sellQuotaBase: 5000000, heldPct: 40,
     // 再看收藏的畫（規劃 2.10b，翊文 11-14）：壹幅壹天壹次靈感（跟今日特展同壹件共用）；全部收藏壹天合計 viewInspDay；稀有度（尋常、少見、珍藏、孤品）加的靈感；超過上限只剩文字
     viewInspDay: 6, viewRarityBonus: [0, 0, 1, 2] },
-  // 藝術市場第二步：畫的拍賣（11-14，shared/casino_auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
+  // 藝術市場第二步：畫的拍賣（11-14，shared/casino/auction.js，規劃 2.10b 節；翊文：封閉式、每幅稀有畫壹場、玩家可以拍自己的畫、只公開得標價）。
   //   minTier：這一級以上（珍藏）的畫只在拍賣買；內容標了 auction 的也是。closeDays／closeHour：展出那天起算幾天後、台灣幾點收標。
   //   houseReservePct：館方拍的底價 ＝ 展出那天的館方價 × 這個 %。
   //   玩家的畫：底價在館方現價的 floorPct～ceilPct %（出價上限也是 ceilPct，也不超過現價 ＋ premiumDay）；賣家每天靠拍賣收的溢價（成交價 － 現價）合計 ≤ premiumDay；
@@ -381,7 +381,7 @@ export const NUM = {
     weekGold: { start32: 45, allBlack: 90, allFlat: 90, failedOnly: 30, noHat: 90, noLegend: 70, pillowWeek: 90, gopnikWeek: 90 },
   },
   // 第 4 版（11-09，決定 0040）：Hamachi 賭場（規則 shared/casino*.js，伺服器 functions/casino*.js）。籌碼跟靈感分開，沒有真錢。
-  // 標「等翊文」的是我先定的數字，翊文看過再改。賠率、禮包機率、餐點價錢是舊 Discord bot 的（packs、MENU 在 shared/casino_text.js）
+  // 標「等翊文」的是我先定的數字，翊文看過再改。賠率、禮包機率、餐點價錢是舊 Discord bot 的（packs、MENU 在 shared/casino/text.js）
   casino: {
     startChips: 10000000,   // 新玩家的籌碼（翊文 11-15：「新進玩家都給1000萬」，決定 0081 的 2.5 萬改掉）。舊程式裡沒有預設（錢包檔是手動建的）；20 個舊錢包裡有 3 個剛好是 1,000,000（沒動過的起始值），所以沿用
     minBet: 10,             // 等翊文：最小的注
@@ -404,7 +404,7 @@ export const NUM = {
     // 門檻那晚收走一個名字（決定 0133）：被收走的佩佩名字變空白名牌，名牌背面是館友號碼（加入順序）；信一年後過期
     poolTake: { on: true, expireDays: 365 },
     pool: { earnT: 200000000, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
-    // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino_text.js 的 CAS_GIFT。on:false 關掉
+    // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino/text.js 的 CAS_GIFT。on:false 關掉
     cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
     // 決定 0143（翊文 11-20）：再多幾筆資助，每筆各記壹次（house.cg[id]、w.gifts[id]）。letter 2 ＝ 第二封信；撥款不算進水位的「賺的」（casCultureGift 帶 uid 時把該人的 pool.who 起點加上撥款額）
     cultureGiftMore: [{ id: "moc-jerry-2026-11", nicks: ["sun jerry"], amt: 1000000000, days: 365 }, { id: "moc-yuga2-2026-11", nicks: ["YUGa Chu"], amt: 500000000, days: 365, letter: 2 }],
@@ -437,13 +437,13 @@ export const NUM = {
       health: { min: 0.6, max: 1.2, stockW: 0.5, chgCap: 0.3, cut: 0.9, squeeze: 0.75, squeezeWeeks: 2, layoffWeeks: 4, mult: { cut: 0.8, squeeze: 0.5, layoff: 0.3 }, upMax: 1.1, floor: 0.3 }, gateway: 0, household: 0.1, sectorCoef: { tech: 0.3, finance: 0.15, arts: 0.1, daily: 0, school: -0.05, public: -0.1, story: 0 } },
     world: { start: 10000000000, expand: 90000000000, growBase: 5000000, growYoy: true, growExtPct: 20, // 決定 0117：expand 一次性加進已知世界（每個莊家文件壹次，記 mint.worldExpand）；growYoy：每天成長 ＝ max(growBase, 池子 × max(0, GDP 年增率%) ÷ 100 ÷ 365)，不再乘景氣 b（growExtPct 留著當舊算法）
       lowPct: 10, lowPayPct: 1 },
-    // 館方投資海外（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino_invest.js。莊家 bankroll 超過 reserve 的部分、博物館資金超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
+    // 館方投資海外（11-14，規劃 2.8f 第五節、決定 0074）：shared/casino/invest.js。莊家 bankroll 超過 reserve 的部分、博物館資金超過 budgetKeep 的部分，每天投 dailyPct%（×（1 ＋ extPct% × 外部景氣））；
     //   持股成本合計 ≤ 超過部分的 holdCapPct%；七成（topPct）買最近 lookback 天漲最多的 topN 支、evenPct 平均、randPct 隨機壹支；比成本跌 stopLossPct% 賣壹半、漲 takeProfitPct% 賣三分之壹；
     //   持股總賺賠虧超過 stopPct% 暫停買進 stopDays 天。on:false 整個關掉
     invest: { on: true, reserve: 100000000, budgetKeep: 500000000, dailyPct: 3, extPct: 50, holdCapPct: 30, mode: "even", dip: { days: 20, pct: 5, mult: 3, minDays: 5 }, topN: 2, topPct: 70, evenPct: 20, randPct: 10, lookback: 3, stopLossPct: 0, takeProfitPct: 0, stopPct: 25, stopDays: 7 }, // 決定 0099：mode even ＝ 每天平均買全部、價格比自己 20 天均價低 5% 以上的那幾支加碼 ×3，不追高、不停損停利（0 ＝ 關）；mode chase ＝ 舊的（追最近 lookback 天漲最多的 topN 支）
     // 新玩家的起始籌碼是文化部補助（決定 0082）：從已知世界池子搬、來源記 cultureStart，不再憑空。on:false ＝照舊憑空給。maxPlayers：全館最多補助幾位（池子吃緊時只補付得出的部分）
     culture: { on: true, name: "文化部" },
-    // 世界集團的股票（決定 0121，shared/casino_stock_grp.js）：名單 listed 的集團發股。資本額 ＝ 池子 × capMult；基本價 ＝ 每股淨值 × pb ×（1＋healthW×(h−1)）×（1＋marketW×市場景氣）；推價 depthPct（買 1% 股本推約 5%）、半價差 half、漲跌停 dayLim、每 15 分鐘 tickLim；
+    // 世界集團的股票（決定 0121，shared/casino/stock_grp.js）：名單 listed 的集團發股。資本額 ＝ 池子 × capMult；基本價 ＝ 每股淨值 × pb ×（1＋healthW×(h−1)）×（1＋marketW×市場景氣）；推價 depthPct（買 1% 股本推約 5%）、半價差 half、漲跌停 dayLim、每 15 分鐘 tickLim；
     //   （決定 0122：拿掉持股上限；壹人壹天 80%、莊家庫存 100%）壹人壹天 dayVolPct%、莊家庫存 makerCapPct%；每週一：現金股利（池子成長 × payoutPct%）、增資（吃緊、hBelow、莊家要留 keep）、庫藏股（健康、價格低於基本價 discPct%）、股票股利（價格 ≥ stockDivPx）、分割（價格 ≥ splitPx）
     gstock: { on: true, cover: { pct: 50, max: 200000000 }, capMult: 2, p0: 100, pb: 2, floor: 1, ticks: 75, half: 0.01, depthPct: 20, tickLim: 3, dayLim: 10, revert: 0.1, sd: 0.004, healthW: 0.5, marketW: 0.1, dayVolPct: 80, makerCapPct: 100, payoutPct: 30,
       raise: { pct: 5, discPct: 5, hBelow: 0.9, keep: 100000000 }, buyback: { pct: 2, premPct: 2, hAbove: 1.05, discPct: 90, maxPoolPct: 2 }, stockDivPx: 250, stockDivPct: 5, splitPx: 500, splitK: 2 },
@@ -468,8 +468,8 @@ export const NUM = {
     // 每個 id 只撥壹次（記在 house.grants），記成館外進來（casHouseMint，來源 grant），日報「從館外進來」看得到。
     // 11-14 翊文：「好，那改成文化部借款」：記成債（house.debt.culture，不計利息），莊家超過準備金的部分拿去還（先博物館資金、再這個、最後已知世界貸款），還的時候燒掉。
     grants: [{ id: "moc-2026-11", amt: 1000000000, name: "文化部借款" }],
-    // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino_wallet.js 的 casBorrow、casRepay、casLoanRoll
-    // 財經專員（決定 0093 第 3 件，shared/casino_advisor.js）：欠了不少錢（錢包是負的，或沒還的借款本金加利息 ≥ minOwe）的館友，銀行頁出現專員提還款計畫。
+    // 跟 Yuga 借錢（決定 0064，取代原本的免費救濟）：每筆固定利息、幾天內要還、額度準時還清就提高。規則在 shared/casino/wallet.js 的 casBorrow、casRepay、casLoanRoll
+    // 財經專員（決定 0093 第 3 件，shared/casino/advisor.js）：欠了不少錢（錢包是負的，或沒還的借款本金加利息 ≥ minOwe）的館友，銀行頁出現專員提還款計畫。
     // 借款延期：每筆最多 maxExt 次、還沒到期才行，到期日多 extendDays 天，手續費 feePct% 加進要還的錢。手續費換算成每天的利率要不低於借款本身（econ:check 守）。resendDays：好起來之後又欠了，隔幾天可以再寄信。
     advisor: { minOwe: 1000000, extendDays: 3, feePct: 5, maxExt: 1, resendDays: 7 },
     loan: {
@@ -489,11 +489,11 @@ export const NUM = {
       part: { minAbs: 1000, minPct: 5, max: 8 },
       split: { on: true, kMin: 2, kMax: 4, gMin: 3, gMax: 7, minAmt: 100000, minAgeDays: 1 },
       quick: [2500, 7500, 12500], // 畫面上的快速按鈕（另外有「借滿」）：額度太小、quickPct 算不出來時才用這組
-      quickPct: [10, 25, 50],     // 快速按鈕照額度的幾 %（11-15，翊文：額度 300 萬時按鈕還是 2,500 太小「好改」）；shared/casino_wallet.js casLoanQuick 取成 1、2、3、5 開頭的整數
+      quickPct: [10, 25, 50],     // 快速按鈕照額度的幾 %（11-15，翊文：額度 300 萬時按鈕還是 2,500 太小「好改」）；shared/casino/wallet.js casLoanQuick 取成 1、2、3、5 開頭的整數
       discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
-    // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino_wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
+    // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino/wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
     work: {
       payMax: 3000000,      // 每天最多還這麼多（規劃 2.11a：欠 3 億的人不能三天就印 3 億）。取 payPct% 和這個比較小的
       payPct: 34,           // 每天換日還「開工那天的欠款」的 34%（三天還完；翊文 11-10：「地下室工作每天可以欠下錢的34%」）
@@ -526,17 +526,17 @@ export const NUM = {
     job: { min: 1000, max: 2000, step: 100, perDay: 5 },
     // 拚經濟（舊 Discord 21 點的玩法，決定 0052）：亂數 r 是 0～rMax 的整數，r > winAbove 成功，莊家 +r×winPer；否則失敗，莊家 -r×losePer，按的人有 lootPct% 撈到同額的油水。數字照舊；每人每天幾次是新的（等翊文）
     // budgetStart：拚經濟的錢從「博物館資金」進出（翊文 11-10：「先設定一個地方，讓它其實從那邊扣錢，這個之後怎麼接上其他的，我們再討論」）。存在莊家同壹份（casinoHouse/main 的 budget）；先給這麼多，不夠可以是負的，只記帳不擋
-    // Yuga Bot 銀行（11-13，翊文：「可以投資了」；shared/casino_bank.js，規劃玩法 2）。利息從莊家出，莊家 ≤ 0 不給
+    // Yuga Bot 銀行（11-13，翊文：「可以投資了」；shared/casino/bank.js，規劃玩法 2）。利息從莊家出，莊家 ≤ 0 不給
     //   savePct：活存每天 %（本金最多算 saveCap）；terms：定存的種類；houseCapPct：壹次最多付莊家的 %；catchup：太久沒來最多補幾天
     //   利率順序（測試擋）：活存 < 定存 < 借款（loan.interestPct／loan.days），借錢來存不會賺
     bank: { savePct: 0.1, saveCap: 10000000, min: 250, quick: [2500, 25000, 125000],
       terms: [{ days: 3, pct: 1 }, { days: 7, pct: 3 }], termMax: 3, termMin: 2500, termCap: 10000000, houseCapPct: 0.05, catchup: 30 },
-    // 館債（11-13，shared/casino_bond.js，規劃玩法 3）：每週壹期，利率照莊家的錢（bankroll ÷ houseStart 的 %）由好到壞；壹張 unit；
+    // 館債（11-13，shared/casino/bond.js，規劃玩法 3）：每週壹期，利率照莊家的錢（bankroll ÷ houseStart 的 %）由好到壞；壹張 unit；
     //   壹個人每期最多 perUser、帳號要開了 minAge 天；有憑證的話，莊家回到起始的 iouAtPct% 以上補付。
     //   利率順序（測試擋）：定存 7 天 < 館債最低的壹週 < 借款（loan.interestPct／loan.days ×7）
     bond: { unit: 100000, perUser: 5000000, minAge: 3, iouAtPct: 50,
       tiers: [{ fromPct: 50, pct: 4, cap: 20000000 }, { fromPct: 10, pct: 6, cap: 30000000 }, { fromPct: 0, pct: 8, cap: 50000000 }] },
-    // 股票槓桿、放空、當沖（11-14，shared/casino_stock_lev.js；規劃 2.8b、2.8d、2.8e、2.8f、2.8j；規則先做，還沒接到伺服器和畫面）。
+    // 股票槓桿、放空、當沖（11-14，shared/casino/stock_lev.js；規劃 2.8b、2.8d、2.8e、2.8f、2.8j；規則先做，還沒接到伺服器和畫面）。
     //   maxLev 各市場最多幾倍（0 ＝ 不開放；美股 11-14 翊文決定開，照信用解鎖，部位上限同台股）；maxLagMin 台股、美股真實行情落後超過幾分鐘就暫停「新開」（已開的、平倉、強平照常）；forcePct 剩下的保證金不到原本的幾 % 就強制平倉；
     //   levByCredit 信用等級對應的倍數上限 [[等級 ≥, 倍數], …]（翊文 11-14：「新手 2 倍，信用升級解鎖」；跟 maxLev 取小的，已開的部位不受影響）；
     //   interestPct 借的錢（部位 − 保證金）的利息 %，borrowPct 放空的借券費（占部位）%，手續費沿用 stock.feePct；
@@ -549,7 +549,7 @@ export const NUM = {
     stockLev: { byMk: { tw: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0.15 }, us: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0 } }, maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 0, coolMin: 0,
       posLimit: 20000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
       credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 1, lateLoss: 3 } },
-    // 館內五家店的股票（11-14，shared/casino_stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
+    // 館內五家店的股票（11-14，shared/casino/stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
     //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
     //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
     //   daySd 整天標準差 %、dayCap 夾開盤價 ±%；cap 每人每家最多持有幾股；exposeFloor 莊家接館內股的保底（規劃 2.8e）。手續費、賣出上限、全館淨賣出上限、exposePct 沿用 stock 的。
@@ -576,7 +576,7 @@ export const NUM = {
       //   tickLim 每個價最多動多少、dayLim 每天最多離當天開盤（昨天收盤）多少；half 造市商半個價差（旅客散客付的，館友買賣也付）；rho 造市商每個價把持倉的幾 % 回補給已知世界；
       //   walkSd 價格自己的小雜訊；floatCap／floatShort 旅客散客合計最多持有／賣空發行股數的幾 %。
       mkt: { on: true, Ns: 100000, depth: 16000, size: 40, sizeCap: 40, band: 0.01, mixF: 0.7, mixC: 0.1, tickLim: 0.03, dayLim: 0.1, half: 0.01, rho: 0.05, walkSd: 0.0003, floatCap: 0.1, floatShort: 0.02 } },
-    // 股票（11-14，銀行第三步，shared/casino_stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
+    // 股票（11-14，銀行第三步，shared/casino/stock.js；數字由數值平衡訂，規劃 2.8a 節）。這壹步只做館外七支
     //   start 起始股價、floor 最低、outCap 館外壹天最多漲跌 %、drag 每天再扣 %（真實股市長期往上漂，不扣的話抱著就賺）
     //   feePct 手續費（進博物館資金）。停盤：每支只在自己的盤中交易（台股 tw、美股 us，見下面），盤外都停（11-14 規劃 2.8i 起，不再有全館 22:00～05:00 的停盤）
     //   exposePct 全館持股總市值最多是莊家的幾 %、sellDay 壹人壹天賣出上限、netSellPct／netSellFlat 全館壹天淨賣出上限
@@ -633,7 +633,7 @@ export const NUM = {
     econEvent: { foreignPct: [15, 20, 30], windowMax: 3, redeemPct: 50, freezeMax: 7, repayPct: [5, 10, 20], perWeek: 2, ahead: { foreign: 2, bondWindow: 3, artFreeze: 2 } },
     ticket: { perDay: 20, ownerPct: 30, firstPct: 50 },
     tax: { bizPct: 5, entPct: 5 }, // 營業稅（NPC、散客在店裡的花費；牌桌不課）、娛樂稅（NPC、散客的門票）：內含，進政府帳（決定 0111）
-    // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080，shared/casino_npc.js、casino_table.js；翊文：「賭場邀請 NPC 一起來」「也可以參與多人賭桌」）：
+    // 邀請在場的 NPC 壹起去賭場（11-14，決定 0080，shared/casino/npc.js、casino_table.js；翊文：「賭場邀請 NPC 一起來」「也可以參與多人賭桌」）：
     //   perNpcDay 壹位 NPC 壹天最多答應幾次；tableMax 壹桌最多幾位 NPC；perHost 壹位館友同時最多帶幾位（翊文 11-17：「讓邀請去賭場的旅客不只能帶一個人」「最多 3 位」，壹桌 4 個座位剛好坐滿）；stay 壹次待幾分鐘；coolMs 被拒之後同壹位館友 30 分鐘才能再邀；baseP／likeP 答應的機率 %（愛玩牌桌 likes bj 再加 likeP）；
     //   lossPct／winPct 壹位 NPC 壹天最多輸／贏他 perDay 的幾 %（到了就說離開台詞走人）；dayCap 全館 NPC 壹天在賭場淨輸或淨贏的上限（任壹邊到了，今天不再答應、在桌上的也走）；
     //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
@@ -652,7 +652,7 @@ export const NUM = {
     report: { seaPerCm: 100000 },
     // 實況和斗內（舊 Discord 21 點的玩法，決定 0053）：金額是 base + step×k，k 是 1～kMax 的整數（舊的：10000 + 10000×1～25，也就是 2 萬～26 萬），自己不能選。durationMs 開播多久自動下播；graceMs 實況主離線超過這麼久算下播（關掉遊戲）。perDay、receiveCap 是新的（等翊文）
     live: { base: 10000, step: 10000, kMax: 25, durationMs: 3600000, graceMs: 60000, perDay: 3, receiveCap: 1000000 },
-    foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino_text.js 的 CAS_MENU
+    foodCap: { mood: 10, san: 3 }, // 餐車的吃的（翊文 11-09）：一天最多加這麼多，不然籌碼會變成買不完的心情（等翊文）。每樣加多少在 casino/text.js 的 CAS_MENU
     hangMax: 3,             // 展廳最多掛幾件紀念品
     titleMax: 12,           // 舊資料裡的紀念品、成就名字最多幾個字
     // 同桌（第二階段）
@@ -662,7 +662,7 @@ export const NUM = {
     resultMs: 10000,        // 看結果的時間，之後自動下一局
     sayGapMs: 1500,         // 說話至少隔多久
     chatKeep: 30,           // 聊天留最近幾句
-    // 每週收藏（決定 0042，shared/casino_week.js）。數字全部等翊文
+    // 每週收藏（決定 0042，shared/casino/week.js）。數字全部等翊文
     week: {
       stamp: 1,             // 一週集滿，領 1 枚週章（每週任務一個 1 枚、全做完再多 2 枚，所以這個很少）。靈感一點都不給
       itemsMin: 3,          // 一週的收藏品 3～5 件（week.json 的 casino.items）
@@ -691,7 +691,7 @@ export const NUM = {
     achCap: 999,            // 成就王的成就數上限
     discordMax: 2000,       // Discord 一則最多幾個字（公告、/pepe-排行榜 都不能超過）
   },
-  // Discord 聯動第一步（決定 0051，規則 shared/discord.js）
+  // Discord 聯動第一步（決定 0051，規則 shared/discord/core.js）
   discord: {
     linkBonus: 1000000,     // 綁定獎勵（籌碼）：每個遊戲帳號只送一次，解除再綁、換 Discord 都不再送（翊文 11-09：「送100萬」）
     linkCodeMin: 10,        // 綁定碼（6 位數）幾分鐘內有效、只能用一次
@@ -704,7 +704,7 @@ export const NUM = {
     newsMax: 10,            // /pepe-更新 最多列幾則
     realMax: 3,             // /pepe-今日活動 的「今天的現實世界」最多列幾則
     realChars: 60,          // 每則最多幾個字（檢查程式限 50，這裡是 Functions 這邊的保險）
-    // 第二步：遊戲大事發到頻道（規則 shared/discord_out.js）
+    // 第二步：遊戲大事發到頻道（規則 shared/discord/out.js）
     outCooldownMin: 10,     // 同壹種事件（破產、救回來、加入、開播…）最多每幾分鐘壹則
     outDonateMin: 1,        // 斗內感謝的冷卻（斗內本來就是要馬上說謝謝）
     outMaxAgeMin: 30,       // 事件寫進去超過幾分鐘還沒發，就不發了（過時的事不要突然跳出來）
@@ -807,7 +807,7 @@ export const CELLAR_REWARDS = {
 export const CELLAR_POWER = { 普通: 1, 稀有: 2, 超稀有: 3, 傳說級稀有: 5, 不可名狀: 6, 失敗作: 0, perfect: 1 };
 // 心情相剋：前面的剋後面的（俄國8+9 不被剋）
 export const MOOD_BEATS = { 開心: "傷心", 傷心: "生氣", 生氣: "開心" };
-// ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 systems_text.js 的 FOE_TEXT；規則 shared/cellar_fight.js） ----------
+// ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 systems_text.js 的 FOE_TEXT；規則 shared/cellar/fight.js） ----------
 // hp ＝壓力（3 隻、1 個人的時候）；boss ＝守門，壓到零進第二階段（hp2、moves2）；mood、color ＝相剋照房間的算法（memberPower）
 // 招：kind "hit" 撲向壹個人的佩佩（倒下壹隻）、"scare" 壹個人扣理智 san、"all" 每個人扣理智 san、"grow" 壓力回 n；w ＝抽到的比重
 // 數字是草稿：node test/sim/sim_fight.cjs 看 1～4 人的勝率和回合數

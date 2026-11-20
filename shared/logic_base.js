@@ -571,7 +571,7 @@ export function lineCommission(P, date) {
   }
   return null;
 }
-// 委託的靈感：照 NUM.rewardPct 打折（決定 0062：少給的那部分改給籌碼，casino_job.js）。產生委託時就算好，委託單上寫的就是拿到的
+// 委託的靈感：照 NUM.rewardPct 打折（決定 0062：少給的那部分改給籌碼，casino/job.js）。產生委託時就算好，委託單上寫的就是拿到的
 export function jobReward(n) { return Math.max(1, Math.round((+n || 0) * NUM.rewardPct / 100)); }
 
 // ---------- 系統 D：圖鑑、徽章、整類全收集 ----------

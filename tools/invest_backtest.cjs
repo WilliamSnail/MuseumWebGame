@@ -1,7 +1,7 @@
 // 館方投資策略回測（決定 0099）：用真實日線（Yahoo 公開圖表介面，5 年）比較幾種策略。
 //   node tools/invest_backtest.cjs --fetch [資料夾]      先抓資料（預設放在系統暫存資料夾的 invest_bt）
 //   node tools/invest_backtest.cjs [交易日數] [資料夾]    跑回測（預設每個窗口 250 個交易日）
-// 規則照 shared/casino_invest.js：每天投現金的 3%、持股成本上限 30% 的現金、手續費 0.5%（博物館資金 0）。
+// 規則照 shared/casino/invest.js：每天投現金的 3%、持股成本上限 30% 的現金、手續費 0.5%（博物館資金 0）。
 const fs = require("fs"), path = require("path");
 const dir = process.argv[3] || path.join(require("os").tmpdir(), "invest_bt"), PF = path.join(dir, "prices.json");
 const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", islandforge: "2330.TW", handbrain: "2454.TW", bigassembly: "2317.TW", trianglepower: "2308.TW", linetower: "2412.TW", brainrack: "2382.TW", cloudcabinet: "6669.TW", customchip: "3661.TW", voltgrid: "1519.TW", wavefreight: "2609.TW", ironwing: "2618.TW", plugstation: "1513.TW", pillpot: "1795.TW", needlelab: "4743.TWO", towerbeam: "9958.TW", coilelder: "1609.TW" }; // 真實代號只放在 tools/（不進 shared/）

@@ -1,13 +1,13 @@
 // ================================================================
 //  藝術市場第一步（11-14）：畫廊「今日特展」每幅畫下面的「買下」「賣回」，和「我收藏的畫」。
-//  規則和錢都在伺服器（functions/art.js、shared/casino_art.js）：這裡只拿報價、按按鈕、畫結果。
+//  規則和錢都在伺服器（functions/art.js、shared/casino/art.js）：這裡只拿報價、按按鈕、畫結果。
 //  定位是避險資產（翊文：「畫可以當像富人買用來避險的感覺」）：價錢不閃、不跳、不用紅綠箭頭，安安靜靜寫一個數字。
 //  沒登入、連不上伺服器就不顯示（畫廊照常）。介面上的字照第 1 代用「壹」。
 // ================================================================
-import { casNum } from "../../shared/casino.js";
-import { CAS_ART } from "../../shared/casino_art.js";
+import { casNum } from "../../shared/casino/core.js";
+import { CAS_ART } from "../../shared/casino/art.js";
 import { NET } from "./net_firebase.js";
-import { CAS_AUC } from "../../shared/casino_auction.js";
+import { CAS_AUC } from "../../shared/casino/auction.js";
 import { NUM } from "../../shared/config.js";
 import { APPLAUSE, aucDealDone } from "../../shared/applause.js";
 import { ADDONS, UI, btn, celebrate, go, h, note, setChips, snd, sndFile } from "./ui_core.js";
@@ -140,7 +140,7 @@ export function hallArtWall(list) {
   return box;
 }
 
-// ---------- 拍賣（11-14，shared/casino_auction.js、functions/art.js；翊文：封閉式出價、每幅稀有畫壹場、玩家也能拍自己的畫、只公開得標價） ----------
+// ---------- 拍賣（11-14，shared/casino/auction.js、functions/art.js；翊文：封閉式出價、每幅稀有畫壹場、玩家也能拍自己的畫、只公開得標價） ----------
 // 資料：NET.call("art", { act: "auctions" }) → { ok, chips, auctions }。動作 bid { id, amt }、list { id: 畫的 id, reserve }、cancel { id: 拍賣的 id } → { ok, lines, chips, rev, view }
 // auctions.open[]：{ id, kind, sellerName, work, title, tierName, reserve, ceil, closeAt, bidders, mine, mineSeller, canCancel }；done[]：{ id, sellerName, title, tierName, price（流標是 null）, closedAt }
 let auc = null, aucMsg = null, aucBusy = false, aucLoading = false, aucFailed = false;
@@ -220,7 +220,7 @@ export function auctionPane() {
     const mine = ((data && data.mine) || []).filter(x => !x.lock);
     const listId = aucForm.listId && mine.some(x => x.id === aucForm.listId) ? aucForm.listId : "";
     const pick = mine.find(x => x.id === listId);
-    // 範圍要跟伺服器一樣（shared/casino_auction.js 的 casAucRange）：下限進位、上限不超過現價加溢價上限、都照 unit 進位（11-14 測試：畫面寫 200.24 萬，伺服器要 200.3 萬）
+    // 範圍要跟伺服器一樣（shared/casino/auction.js 的 casAucRange）：下限進位、上限不超過現價加溢價上限、都照 unit 進位（11-14 測試：畫面寫 200.24 萬，伺服器要 200.3 萬）
     const unit = NUM.auction.unit || 1000, prem = A.premiumDay || NUM.auction.premiumDay;
     const lo = pick ? Math.ceil(pick.price * (A.floorPct || 80) / 100 / unit) * unit : 0, hi = pick ? Math.floor(Math.min(pick.price * (A.ceilPct || 150) / 100, pick.price + prem) / unit) * unit : 0;
     const resv = h("input", { type: "number", inputmode: "numeric", class: "gal-in", min: String(lo), step: String(NUM.auction.unit || 1000), placeholder: "底價", value: aucForm.reserve === "" ? "" : String(aucForm.reserve), "aria-label": "底價", onInput: e => { aucForm.reserve = e.target.value === "" ? "" : Number(e.target.value); } });

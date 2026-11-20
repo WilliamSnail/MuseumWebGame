@@ -1,4 +1,4 @@
-// 合作地下收藏庫接上打怪物（shared/coop_fight.js，決定 0067、0068）：node test/coop_fight.test.cjs（npm test 也會跑）
+// 合作地下收藏庫接上打怪物（shared/coop/fight.js，決定 0067、0068）：node test/coop_fight.test.cjs（npm test 也會跑）
 // 房間探索完才打守門、沒開的時候跟以前一模一樣、大家選了才結算、時間到當擋、打贏才算走完這一層、
 // 逃跑成功不算走完、全隊倒了這一趟結束、倒下的真的受傷、膽量一趟一份、看不到別人選什麼、讀回來（JSON）還能打。
 const assert = require("assert");
@@ -28,7 +28,7 @@ let clock = NOW;
 // 把這一層的房間都走完（都選安全的），停在下一個不是 vote／result 的階段
 function walkRooms(run, Ps, ids) {
   for (let i = 0; i < 40 && ["vote", "result", "carry", "carried", "route", "rest", "chest"].includes(run.phase); i++) {
-    if (run.phase === "route") { // 地圖選路（coop_route.js）：壹路走探索房，最後壹排走休息，再來是守門
+    if (run.phase === "route") { // 地圖選路（coop/route.js）：壹路走探索房，最後壹排走休息，再來是守門
       const opts = G.coopRouteOptions(run), kindOf = id => G.cmapNode(run.cmap, id).kind;
       const pick = opts.find(id => kindOf(id) === "explore") || opts.find(id => kindOf(id) === "rest") || opts.find(id => kindOf(id) === "gate") || opts[0];
       ids.forEach(id => { if (run.phase === "route") G.coopAct(run, Ps, id, "route", { node: pick }, ++clock); });
@@ -52,7 +52,7 @@ T("沒開守門（舊的）：房間走完直接是 floorDone，跟以前一樣"
 });
 T("開了守門：房間都探索完才開打，是這一層的守門；還沒打贏不算走完這一層", () => {
   const { run, Ps, ids } = party(["a", "b"]);
-  assert.strictEqual(run.phase, "route", "壹開始先選路（地圖，coop_route.js）");
+  assert.strictEqual(run.phase, "route", "壹開始先選路（地圖，coop/route.js）");
   walkRooms(run, Ps, ids);
   assert.strictEqual(run.phase, "fight");
   assert.strictEqual(run.fight.foe, G.fightFoesOf(1, true)[0].id);

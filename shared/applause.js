@@ -6,7 +6,7 @@
 export const APPLAUSE = {
   hallScore: 60, // 展廳評分從不到這個分數變成到這個分數，掌聲壹次（壹般展出不響）
   vol: 0.4, // 掌聲音量（Blackjack 的歡呼也用這個）
-  aucWords: ["賣出，", "拍到「"], // 拍賣收標的通知句子（shared/casino_auction.js 的 soldLine、wonLine）含這些字＝成交
+  aucWords: ["賣出，", "拍到「"], // 拍賣收標的通知句子（shared/casino/auction.js 的 soldLine、wonLine）含這些字＝成交
 };
 export const CHIME = {
   checkMs: 15000, // 每 15 秒看壹次時間

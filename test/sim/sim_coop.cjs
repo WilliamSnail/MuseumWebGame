@@ -1,4 +1,4 @@
-// 模擬合作地下收藏庫（shared/coop.js）：1–4 個人、每人帶 1 或 2 隻，B1–B5 各走一層，跟單人的地下比。
+// 模擬合作地下收藏庫（shared/coop/core.js）：1–4 個人、每人帶 1 或 2 隻，B1–B5 各走一層，跟單人的地下比。
 // node test/sim/sim_coop.cjs [次數，預設 1000] [開始理智，預設 NUM.startSanity]
 // 隊員的收藏照 sim_cellar.cjs 的 buildProfile 做（B1、B2 用 early，B3、B4 用 mid，B5 用 late）。
 // 同一個號碼的那一趟，單人和合作用的是同一份收藏（第 1 位隊員就是單人那位），比較才公平。

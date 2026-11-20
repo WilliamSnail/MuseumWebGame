@@ -22,11 +22,11 @@
 //   fn-errors     只讀：Cloud Functions 最近 36 小時 WARNING 以上、或含「日報」「失敗」「Error」「錯」的紀錄（Cloud Logging），每則只印時間、哪個函式、訊息前 300 字；email、uid 樣子的字遮掉。
 //                 什麼時候用：某件事沒發生、不知道哪裡出錯（11-15 當天日報沒產生）。
 //   invest-status 只讀：館方投資兩個池子的持股、成本、停損、每天記的價，和股價換比例的紀錄（11-17）。
-//   advisor-rules-mail  寫：把財經專員「借款新規定」的信（shared/casino_advisor.js 的 casAdvisorRulesLetter，決定 0114）寄給所有「還有借款沒還」而且還沒收過的館友：
+//   advisor-rules-mail  寫：把財經專員「借款新規定」的信（shared/casino/advisor.js 的 casAdvisorRulesLetter，決定 0114）寄給所有「還有借款沒還」而且還沒收過的館友：
 //                 每個錢包一個交易：寫 mail/{uid}/items/advisor-rules、錢包記 adv.rules（每人只寄一次；跑第二次不會重寄）。紀錄只印人數，不印 uid、名字。
 //                 什麼時候用：借款部分還款、分期上線的那一刻（翊文 11-17：「上線那刻寄給所有還有借款沒還的館友」）。
 //   player-invest 只讀：壹位館友（name 填暱稱）的持股、成本、市值、帳面賺賠、槓桿部位、掛單、累計賺賠、借款、淨值（11-17）。名字在紀錄裡遮掉。
-//   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino_stock.js 的 casStockPegNow，
+//   stock-tw-peg  去證交所抓台股最近壹次收盤（休市時介面回上壹個交易日的），把還沒換過的台股換成「倍數 × 真實價」（shared/casino/stock.js 的 casStockPegNow，
 //                 跟換日時壹樣：錢包照比例換股數、市值不變）。只動 casinoHouse/main 的 stk；已經換過的不會再換。
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 //   client-errors 只讀：網頁回報上來的前端錯誤（決定 0125，clientErrors 集合，7 天）。依訊息分組：次數、最後出現、版本、畫面、視窗大小、位置、stack 前 3 行。不印名字、uid、email（寫入時就清過，這裡再遮壹次）。
@@ -121,7 +121,7 @@ async function stockTwPeg(db) {
   }
   console.log(`證交所：${day || "沒有日期"}，${Object.keys(closes).length} 支有價：` + Object.entries(closes).map(([k, v]) => `${k} ${v}`).join("、"));
   if (Object.keys(closes).length !== Object.keys(syms).length) { console.log("有幾支抓不到，這次不換（不編價）"); process.exitCode = 1; return; }
-  const { casStockPegNow } = await import(require("url").pathToFileURL(path.join(__dirname, "..", "shared", "casino_stock.js")).href);
+  const { casStockPegNow } = await import(require("url").pathToFileURL(path.join(__dirname, "..", "shared", "casino/stock.js")).href);
   const ref = db.doc("casinoHouse/main");
   const done = await db.runTransaction(async tx => {
     const s = await tx.get(ref);
@@ -137,7 +137,7 @@ async function stockTwPeg(db) {
 // 寫：借款新規定的信寄給所有還有借款的館友（見檔頭 advisor-rules-mail）。每個錢包自己一個交易（讀錢包、寫信、記寄過了），重跑不會重寄
 async function advisorRulesMail(db, FieldValue) {
   const href = f => require("url").pathToFileURL(path.join(__dirname, "..", "shared", f)).href;
-  const { casAdvisorRulesLetter } = await import(href("casino_advisor.js")), { MAIL_DAYS } = await import(href("mailbox.js")), { todayStr } = await import(href("logic.js"));
+  const { casAdvisorRulesLetter } = await import(href("casino/advisor.js")), { MAIL_DAYS } = await import(href("mailbox.js")), { todayStr } = await import(href("logic.js"));
   const day = todayStr(), ws = await db.collection("casinoWallets").get();
   let sent = 0, skipped = 0, failed = 0;
   for (const d of ws.docs) {
@@ -279,8 +279,8 @@ async function playerInvest(db, name) {
   if (!hits.length) { console.log("找不到這個名字的館友（比對 members 的暱稱，不分大小寫、空白）"); process.exitCode = 1; return; }
   if (hits.length > 1) console.log(`同名的有 ${hits.length} 位，壹位壹位列`);
   const url = p => require("url").pathToFileURL(path.join(__dirname, "..", "shared", p)).href;
-  const { casStockViewAll } = await import(url("casino_stock.js"));
-  const { casStockLevView } = await import(url("casino_stock_lev.js"));
+  const { casStockViewAll } = await import(url("casino/stock.js"));
+  const { casStockLevView } = await import(url("casino/stock_lev.js"));
   const { taipeiDay } = await import(url("logic.js"));
   const hs = await db.doc("casinoHouse/main").get();
   const house = hs.exists ? JSON.parse(hs.data().data || "{}") : {};

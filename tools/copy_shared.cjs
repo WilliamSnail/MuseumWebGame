@@ -11,11 +11,15 @@ require("./npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc_roster.js�
 const from = path.join(ROOT, "shared"), to = path.join(ROOT, "functions", "shared");
 fs.mkdirSync(to, { recursive: true });
 let n = 0;
-for (const f of fs.readdirSync(from)) {
-  if (!f.endsWith(".js")) continue;
-  fs.copyFileSync(path.join(from, f), path.join(to, f));
-  n++;
-}
+// 連子資料夾（casino/、coop/、cellar/、discord/）一起複製
+const copyDir = rel => {
+  for (const e of fs.readdirSync(path.join(from, rel), { withFileTypes: true })) {
+    const r = rel ? rel + "/" + e.name : e.name;
+    if (e.isDirectory()) { fs.mkdirSync(path.join(to, r), { recursive: true }); copyDir(r); }
+    else if (e.name.endsWith(".js")) { fs.copyFileSync(path.join(from, r), path.join(to, r)); n++; }
+  }
+};
+copyDir("");
 // 限時活動（決定 0041）：Functions 只拿得到 functions/ 裡的東西，所以把 content/weeks/<週>/week.json 的 events 一起打包進去。
 // 每次部署（每週劇情合併就會部署）都重做一次。只放 { start, events }，不放劇情（還沒開放的劇情不能到處送）。
 function eventData() {
@@ -74,7 +78,7 @@ function dayData() {
         if (typeof d.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) continue;
         const real = Array.isArray(d.real) ? d.real.filter(s => typeof s === "string" && s.trim()).slice(0, 3) : [];
         out[d.date] = { title, n, board: typeof d.board === "string" ? d.board : "", real };
-        // 世界股市新聞（財報頁，shared/casino_gdp.js 的 casWorldNews）：壞的在那邊丟掉；檢查在 tools/week_check.cjs
+        // 世界股市新聞（財報頁，shared/casino/gdp.js 的 casWorldNews）：壞的在那邊丟掉；檢查在 tools/week_check.cjs
         if (Array.isArray(d.market) && d.market.length) out[d.date].market = d.market.slice(0, 5);
         // Yuga Bot 交代的任務：只放 { id, says }（荷官那句話），不放任務種類、答案、獎勵；week 是為了拼出存檔裡的任務 id（週/任務 id）
         const g = Array.isArray(d.daily) ? d.daily.find(t => t && t.giver === "yuga" && typeof t.says === "string" && t.says.trim() && typeof t.id === "string") : null;
@@ -85,13 +89,13 @@ function dayData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "day_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每天的館訊（board）和現實消息（real），依日期查（給 Discord 的 /pepe-今日活動）\nexport const DAY_DATA = " + JSON.stringify(dayData()) + ";\n");
-// 已知世界的經濟（11-14）：content/economy.json 的 gdp（台灣最新一季 GDP 年增率），每日排劇情的排程更新，給景氣指數的外部景氣用（shared/casino_gdp.js 的 casGdpExt）。
+// 已知世界的經濟（11-14）：content/economy.json 的 gdp（台灣最新一季 GDP 年增率），每日排劇情的排程更新，給景氣指數的外部景氣用（shared/casino/gdp.js 的 casGdpExt）。
 function economyData() {
   const f = path.join(ROOT, "content", "economy.json");
   try { const d = JSON.parse(fs.readFileSync(f, "utf8")); return d.gdp ? { gdp: d.gdp } : {}; } catch (e) { console.error("economy.json：讀不出來", e.message); return {}; }
 }
 fs.writeFileSync(path.join(to, "economy_data.js"), "// copy_shared.cjs 產生的，不要改。content/economy.json（已知世界的景氣，給 Functions 算景氣指數）\nexport const ECONOMY = " + JSON.stringify(economyData()) + ";\n");
-// 藝術市場（11-14，shared/casino_art.js）：每日特展的畫登記起來給伺服器查價（不放 svg 和畫的內容）。id 跟存檔的 P.story.works 一樣（週/畫 id），只收正式的週（備用週的 id 會變，先不賣）。
+// 藝術市場（11-14，shared/casino/art.js）：每日特展的畫登記起來給伺服器查價（不放 svg 和畫的內容）。id 跟存檔的 P.story.works 一樣（週/畫 id），只收正式的週（備用週的 id 會變，先不賣）。
 function artData() {
   const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
   if (!fs.existsSync(dir)) return out;
@@ -119,7 +123,7 @@ function artData() {
   return out;
 }
 fs.writeFileSync(path.join(to, "art_data.js"), "// copy_shared.cjs 產生的，不要改。content/weeks 每日特展的畫（id、日期、畫框、理智、線索、稀有度、名字），給藝術市場查價\nexport const ART_WORKS = " + JSON.stringify(artData()) + ";\n");
-// 館內股的 NPC 劇情日（11-14，shared/casino_stock_in.js）：content/weeks/*/week.json 的 npc { store, date, name } → { 日期: { store, name } }。內容檢查在 tools/week_check.cjs
+// 館內股的 NPC 劇情日（11-14，shared/casino/stock_in.js）：content/weeks/*/week.json 的 npc { store, date, name } → { 日期: { store, name } }。內容檢查在 tools/week_check.cjs
 function npcData() {
   const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
   if (!fs.existsSync(dir)) return out;

@@ -1,15 +1,15 @@
 // ================================================================
-//  實況和斗內的畫面（決定 0053；規則 shared/casino_live.js，伺服器 functions/casino.js 的 live／liveOn／liveOff／donate）
+//  實況和斗內的畫面（決定 0053；規則 shared/casino/live.js，伺服器 functions/casino.js 的 live／liveOn／liveOff／donate）
 //  這個檔放全館共用的部分：
 //    聽 Realtime Database 的 casinoLive（Functions 寫、館友讀）：現在誰在實況、最近一則感謝。有人斗內，在線的人都跳一則「○○ 斗內了 N！實況主感謝 ○○ 的斗內～」，
 //    收到斗內的人（msg.toUid 是自己）順便重讀籌碼，狀態列的數字跟著變。剛連上那一刻已經在那裡的舊訊息不跳。
 //    大廳的一小行「○○ 正在實況」（ADDONS.lobbyLive），點了開賭場的「實況」頁籤。
-//  賭場裡的「實況」頁籤在 ui_casino.js（要用賭場的 act、draw）。這裡什麼都不算：誰在播、到期、離線算下播，都用 shared/casino_live.js 的 liveActive，跟伺服器同一份規則；伺服器是準的。
+//  賭場裡的「實況」頁籤在 ui_casino.js（要用賭場的 act、draw）。這裡什麼都不算：誰在播、到期、離線算下播，都用 shared/casino/live.js 的 liveActive，跟伺服器同一份規則；伺服器是準的。
 //  文字界線：只顯示遊戲暱稱。動畫：這裡沒有動畫；跳的字用現有的 toast（不擋畫面）。介面上的字用「壹」。
 // ================================================================
-import { CAS_LIVE } from "../../shared/casino_text.js";
-import { casFill, casNum } from "../../shared/casino.js";
-import { liveActive, liveFix } from "../../shared/casino_live.js";
+import { CAS_LIVE } from "../../shared/casino/text.js";
+import { casFill, casNum } from "../../shared/casino/core.js";
+import { liveActive, liveFix } from "../../shared/casino/live.js";
 import { nowMs } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, every, h, icon, note, setChips, snd } from "./ui_core.js";

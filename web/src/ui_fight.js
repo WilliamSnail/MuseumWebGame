@@ -1,14 +1,14 @@
 // ================================================================
 //  打怪物的畫面（地下室改版，決定 0067、0068；規劃 docs/地下室改版規劃.md 第八節「一眼看得出要怎麼做」）
-//  規則在 shared/cellar_fight.js、shared/coop_fight.js；伺服器在 functions/coop.js。這個檔只畫伺服器給的樣子，什麼都不算。
+//  規則在 shared/cellar/fight.js、shared/coop/fight.js；伺服器在 functions/coop.js。這個檔只畫伺服器給的樣子，什麼都不算。
 //  ui_coop.js 在 phase 是 "fight" 的時候叫 fightStage（上面的舞台）和 fightCard（下面的卡片）。
 //  第八節的十條：最上面一行寫現在要做什麼；能按的有框有字；按之前就看得到結果；下一招是一句白話、指到誰；
 //    壓力和理智用條；誰選好了、還剩幾秒一直看得到；結果寫得出為什麼；手機按鈕在下半部、夠大。
 //  怪物的圖還沒生成（docs/地下室素材清單.md）：先用程式畫的剪影。素材好了換 foeArt 就好。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar_fight.js";
-import { COOP } from "../../shared/coop_base.js";
+import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar/fight.js";
+import { COOP } from "../../shared/coop/base.js";
 import { nowMs } from "../../shared/logic.js";
 import { btn, celebrateEl, diceWords, h, itemHTML, snd, sndFile } from "./ui_core.js";
 import { FIGHT_SFX, fightSfxKey } from "../../shared/fight_sfx.js";

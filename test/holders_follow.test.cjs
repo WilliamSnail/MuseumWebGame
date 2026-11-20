@@ -50,17 +50,18 @@ T("館方的均價紀錄：跟現在差 3 倍以上的舊價丟掉（不會被�
 });
 // ---------- 2 結構 ----------
 const HOLDERS = {
-  "casino_stock.js": "錢包（w.stk）：換比例 casStockPegSync 照 peg.ev、除權 casStockDivSync；全館持股數 H.held 在 stPegDirect、除權時跟著換",
-  "casino_invest.js": "館方兩個池子（house.inv）：ivPegSync 照 peg.ev、ivSplitSync 照除權",
-  "casino_stock_in.js": "館內股（w.stk 的館內那份）：館內五家店沒有換比例、除權",
-  "casino_debt.js": "只讀（賣股還債，先 casStockFix、casInFix）",
-  "casino_advisor.js": "只讀（財經專員看持股）",
-  "casino_art.js": "不是股票（館藏的畫 house.art.own）",
-  "casino_auction.js": "不是股票（拍賣的畫）",
+  "casino/stock.js": "錢包（w.stk）：換比例 casStockPegSync 照 peg.ev、除權 casStockDivSync；全館持股數 H.held 在 stPegDirect、除權時跟著換",
+  "casino/invest.js": "館方兩個池子（house.inv）：ivPegSync 照 peg.ev、ivSplitSync 照除權",
+  "casino/stock_in.js": "館內股（w.stk 的館內那份）：館內五家店沒有換比例、除權",
+  "casino/debt.js": "只讀（賣股還債，先 casStockFix、casInFix）",
+  "casino/advisor.js": "只讀（財經專員看持股）",
+  "casino/art.js": "不是股票（館藏的畫 house.art.own）",
+  "casino/auction.js": "不是股票（拍賣的畫）",
 };
 T("結構：shared/ 裡每個用到「.own[」的檔都登記了怎麼處理換比例、除權", () => {
   const dir = path.join(__dirname, "..", "shared");
-  const used = fs.readdirSync(dir).filter(f => f.endsWith(".js") && /\.own\[/.test(fs.readFileSync(path.join(dir, f), "utf8")));
+  const all = d => fs.readdirSync(path.join(dir, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? all(d ? d + "/" + e.name : e.name) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
+  const used = all("").filter(f => /\.own\[/.test(fs.readFileSync(path.join(dir, f), "utf8")));
   const missing = used.filter(f => !HOLDERS[f]);
   assert.deepStrictEqual(missing, [], `這些檔存了股數（或別的 own），還沒登記到 test/holders_follow.test.cjs 的 HOLDERS：${missing.join("、")}。如果是館外股的股數，換比例（house.stk.peg.ev）和除權（house.stk.div.ev）都要跟著換，並加進上面的行為測試`);
 });

@@ -125,7 +125,7 @@ T("畫面：館外每支多 real（代號、真實價、真實漲跌）和 mult�
 });
 T("shared 裡沒有寫死真實代號（代號只在 functions）", G => {
   const fs = require("fs"), path = require("path");
-  for (const f of ["stocks_text.js", "casino_stock.js", "stocks_tw.js", "casino_text.js"]) {
+  for (const f of ["stocks_text.js", "casino/stock.js", "stocks_tw.js", "casino/text.js"]) {
     const src = fs.readFileSync(path.join(__dirname, "..", "shared", f), "utf8");
     assert.ok(!/\b(NVDA|AMD|AAPL|TSLA|MSFT|QQQ|2330|2454|2317|2308|2412|2382|6669|3661|1519|2609|2618|1513|1795|4743|9958|1609)\b/.test(src.replace(/\/\/.*$/gm, "")), f + " 不能有真實代號");
   }

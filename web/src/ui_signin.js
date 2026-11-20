@@ -18,7 +18,7 @@ import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "..
 import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
 import { stampHow } from "../../shared/story.js";
 import { storyState } from "../../shared/story_state.js";
-import { casNum } from "../../shared/casino.js";
+import { casNum } from "../../shared/casino/core.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";
 import { NET } from "./net_firebase.js";

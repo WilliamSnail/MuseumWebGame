@@ -114,7 +114,7 @@ export function partyReady(p, uid, ready) {
   return { ok: true };
 }
 // ---------- 合作地下（kind "cellar"，11-09）：選層數、留守、看完之後再走一趟 ----------
-// 隊長選層數。層數看每個人自己的進度：這裡不擋，開始時伺服器照存檔再檢查（shared/coop.js 的 canStartCoop）
+// 隊長選層數。層數看每個人自己的進度：這裡不擋，開始時伺服器照存檔再檢查（shared/coop/core.js 的 canStartCoop）
 export function partyFloor(p, uid, floor) {
   if (p.kind !== "cellar" || p.phase !== "lobby") return { ok: false, reason: "現在不能選層數" };
   if (p.leader !== uid) return { ok: false, reason: "要隊長選層數" };

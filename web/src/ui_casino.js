@@ -4,15 +4,15 @@
 //  入口：右上角「選單」的「Hamachi 賭場」（ui_core.js 的 buildNav → PANELS.casino）。
 //  蓋在畫面上的木框＋綠絨布（ui_board.js 的 overlay）。頁籤：牌桌、本週收藏、大禮包、拚經濟、實況（決定 0053）、餐車、換小獎、成就、財產。
 //  「本週收藏」（決定 0042）：這週的收藏品和進度、集滿領週章、讀集滿的故事；畫在 ui_casino_week.js，進度和領獎都是伺服器的。
-//  荷官是 Yuga Bot，台詞是舊 Discord 21 點的（shared/casino_text.js）。理智低的時候伺服器給的牌會是假的，結算才翻回真的。
+//  荷官是 Yuga Bot，台詞是舊 Discord 21 點的（shared/casino/text.js）。理智低的時候伺服器給的牌會是假的，結算才翻回真的。
 //  籌碼跟靈感分開，沒有真錢。介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 //  第二階段的館友同桌在 ui_casino_table.js（登記 ADDONS.casinoTable）。
 // ================================================================
 import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
-import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino_text.js";
-import { casCardName, casFill, casHand, casNum } from "../../shared/casino.js";
-import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino_wallet.js";
+import { CAS_ACH, CAS_BANK, CAS_BOND, CAS_ECON, CAS_FIND_TEXT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_TEXT } from "../../shared/casino/text.js";
+import { casCardName, casFill, casHand, casNum } from "../../shared/casino/core.js";
+import { casCleanSouvenirs, casCleanTitle, casFoodWords, casPoorReason } from "../../shared/casino/wallet.js";
 import { yugaLine, yugaMarkSaid } from "../../shared/story.js";
 import { exchangeUse } from "../../shared/shop.js";
 import { isFree, todayStr } from "../../shared/logic.js";
@@ -64,8 +64,8 @@ function sync(r) {
   if (Array.isArray(r.wkNew) && r.wkNew.length) S.wkNew = (S.wkNew || []).concat(r.wkNew); // 新的收藏品：等牌翻完再告訴他（celebrate）
   if (r.wkDone) S.wkDone = true;
   if (r.reopen) say([r.reopen]);
-  if (r.bank) S.bank = r.bank; // Yuga Bot 銀行的活存、定存（伺服器算的，shared/casino_bank.js）
-  if (r.bond) S.bond = r.bond; // 館債（shared/casino_bond.js）
+  if (r.bank) S.bank = r.bank; // Yuga Bot 銀行的活存、定存（伺服器算的，shared/casino/bank.js）
+  if (r.bond) S.bond = r.bond; // 館債（shared/casino/bond.js）
   if (Array.isArray(r.bankNotes) && r.bankNotes.length) say(r.bankNotes); // 利息入帳、定存到期
 }
 function say(lines) {
@@ -156,7 +156,7 @@ function draw() {
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
-// 跟 Yuga Bot 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino_wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
+// 跟 Yuga Bot 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino/wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
 // 每個頁籤上方壹條：還能借多少、借的按鈕；有沒還的就列出來，每筆壹顆「還」。借不了的時候寫原因
 // 賭場的銀行：整塊（平常收成壹條）。賭場和畫廊的拍賣頁籤用同壹份（bankBar）；賭場這邊的狀態是 S，動作是 act、say、draw
 const CAS_IO = { act: (...a) => act(...a), say: l => say(l), draw: () => draw(), leave: () => S.m.close() };
@@ -248,7 +248,7 @@ export function bankBar(C, io) {
         h("td", null, x.from && Date.now() < x.from ? h("small", { class: "bk-soon" }, `${new Date(x.from).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Taipei" })} 起可還`) : btn("還款", () => io.act("repay", { id: x.id }, r2 => { io.say(r2.lines); bankSfx("repay", null); }), "small", { disabled: off || playing || w.chips < x.owe ? true : null })))))) : null);
 }
 
-// Yuga Bot 銀行的存款頁（活存、定存）。規則在 shared/casino_bank.js，伺服器 act bank（op：put、take、term、break）
+// Yuga Bot 銀行的存款頁（活存、定存）。規則在 shared/casino/bank.js，伺服器 act bank（op：put、take、term、break）
 function savePane(C, io, fig, md, off) {
   const B = C.bank, w = C.w;
   const bank = (op, extra) => io.act("bank", Object.assign({ op }, extra), r2 => { io.say(r2.lines); bankSfx("bank", { op }); });

@@ -2,9 +2,9 @@
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { STORY_CHAPTERS } from "../../shared/content.js";
 import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, ensureDay, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, todayStr, visitorArrive } from "../../shared/logic.js";
-import { coopRoom } from "../../shared/coop_base.js";
-import { viewFor } from "../../shared/coop.js";
-import { coopAct, coopBegin } from "../../shared/coop_flow.js";
+import { coopRoom } from "../../shared/coop/base.js";
+import { viewFor } from "../../shared/coop/core.js";
+import { coopAct, coopBegin } from "../../shared/coop/flow.js";
 import { assignJob } from "../../shared/legacy.js";
 import { hallSize, startCellar } from "../../shared/systems.js";
 import { storyState } from "../../shared/story_state.js";
@@ -15,8 +15,8 @@ import { overlay } from "./ui_board.js";
 import { TASK_ICON, ptsPanel, taskCard } from "./ui_tasks.js";
 import { fightCard, fightOnRedraw, fightReplaySync, fightStage } from "./ui_fight.js";
 import { routeCard, routeStage } from "./ui_route.js";
-import { coopRouteOptions } from "../../shared/coop_route.js";
-import { cmapNode } from "../../shared/cellar_map.js";
+import { coopRouteOptions } from "../../shared/coop/route.js";
+import { cmapNode } from "../../shared/cellar/map.js";
 
 // #fight：不連伺服器，直接打開合作地下的守門打怪（地下室改版的畫面，ui_fight.js）。跟你壹隊的「小華」會自己選推。
 //   #fight　壹開打；#fight:p2　推到第二階段；#fight:solo　壹個人（館方助手補位）；#fight:f3g　換成那隻怪物、那壹層的舞台（看圖用，數字不準）

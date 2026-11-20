@@ -11,7 +11,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { isFree } from "./logic_base.js";
-import { casAchInfo, casCleanTitle, casShortName } from "./casino_wallet.js";
+import { casAchInfo, casCleanTitle, casShortName } from "./casino/wallet.js";
 
 // 一次最多讀幾個人的稱號（館友名單的上限，防止壞資料把畫面拖慢）
 export const TITLES_MAX = 500;
