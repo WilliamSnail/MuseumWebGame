@@ -662,7 +662,7 @@ function livePane() {
 
 // ---------- 餐車 ----------
 // 11-20 重新設計（翊文）：夜市攤車。棚子、掛燈（裝飾）→ 說明列 → 三區木牌（小點心、正餐、貴的）→ 堂主字條 → 托盤（剛買的）。價錢、機率不動。css/diner.css（dn-）
-const DN_GROUPS = [["小點心", it => !it.ticket && it.price <= 100], ["正餐", it => !it.ticket && it.price > 100 && it.price <= 100000], ["貴的", it => it.ticket || it.price > 100000]];
+const DN_GROUPS = [["小點心", it => !it.ticket && it.price <= 100], ["正餐", it => !it.ticket && it.price > 100 && it.price <= 100000], ["珍藏品", it => it.ticket || it.price > 100000]];
 // 說明（第二層）：電腦攤開；手機收起來點開，品項在上。沒開大禮包（有事要先做）時手機也攤開
 function dinerMore(a, b, calm) {
   const mobile = window.innerWidth <= 760;
@@ -712,7 +712,7 @@ function dinerPane() {
         dinerMore(h("p", { class: "dn-stat" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
           h("p", { class: w.opened > 0 ? "dn-open" : "dn-open dn-warn" }, w.opened > 0 ? "今天的大禮包開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"), w.opened > 0)),
       dinerNote()),
-    h("div", { class: "dn-groups" }, DN_GROUPS.map(([title, test]) => { const its = menu.filter(test); return its.length ? h("section", { class: "dn-group" + (title === "貴的" ? " dn-g-pricey" : "") }, h("h3", null, title), h("ul", { class: "dn-cards" }, its.map(it => dinerCard(it, w, buy)))) : null; })),
+    h("div", { class: "dn-groups" }, DN_GROUPS.map(([title, test]) => { const its = menu.filter(test); return its.length ? h("section", { class: "dn-group" + (title === "珍藏品" ? " dn-g-pricey" : "") }, h("h3", null, title), h("ul", { class: "dn-cards" }, its.map(it => dinerCard(it, w, buy)))) : null; })),
     h("div", { class: "dn-tray" + (S.dinerLines.length ? " dn-has" : ""), "aria-live": "polite" },
       last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, h("img", { src: `/diner/food-${last.id}.webp`, alt: "" })) : h("span", { class: "dn-tray-empty" }, h("img", { src: "/diner/prop-tray.webp", alt: "" }), "托盤是空的"),
       S.dinerLines.length ? h("div", { class: "dn-tray-say dn-in" }, S.dinerLines.map(l => h("p", null, l))) : null));
