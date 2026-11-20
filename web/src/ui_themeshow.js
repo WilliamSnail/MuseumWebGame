@@ -20,7 +20,7 @@ import { SHOW_NOTES, SHOW_POSTER_PICK, SHOW_THEMES, SHOW_TIER_NAME, hasShowPendi
 import { APPLAUSE } from "../../shared/applause.js";
 import { ART } from "./art.js";
 import { $$, ADDONS, HOOKS, P, UI, btn, freshMark, go, h, icon, later, miniLayer, note, persist, rerender, snd, sndFile, updateStatus } from "./ui_core.js";
-import { bookReader } from "./ui_screens1.js";
+import { bookReader } from "./ui_room.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { shelfRow } from "./ui_story.js";
 
