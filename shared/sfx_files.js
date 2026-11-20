@@ -1,7 +1,7 @@
 // ================================================================
 //  音效檔清單（11-15，翊文從 Pixabay 下載給的；「不只可以用在賭場」）
 //  檔案在 web/public/sfx/<id>.mp3（已壓縮：單聲道、音量對齊；環境音頭尾做成接得起來的循環）。
-//  播法：畫面用 ui_core.js 的 sndFile(id, 音量)；環境音在 web/src/fx.js 用 fileLoop／fileOnce。
+//  播法：畫面用 ui_core.js 的 sndFile(id, 音量)；環境音在 web/src/fx/fx.js 用 fileLoop／fileOnce。
 //  授權：Pixabay Content License（https://pixabay.com/service/license-summary/）：可以免費用在遊戲裡、可以改、不用標作者；
 //    不能把檔案單獨拿去賣或轉發。我們還是每個都標來源（翊文要求），人看的版本在 web/public/sfx/來源.md。
 //  新增檔案：放進 web/public/sfx、這裡加壹列、來源.md 加壹列（test/web/sfx_files.test.cjs 會檢查三邊對得上）。

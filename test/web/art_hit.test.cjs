@@ -2,7 +2,7 @@
 // 背景畫滿 -100..300，青蛙的 svg 是 overflow: visible；只用 mask 時看不到的部分還是點得到，會蓋住旁邊的卡片和頁籤。
 // 要用 clip-path 剪掉（clip-path 會連點擊範圍壹起剪，mask 不會）。瀏覽器實測見維護日誌 11-13 手作坊背景點擊範圍
 const fs = require("fs"), path = require("path"), assert = require("assert");
-const art = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "art.js"), "utf8");
+const art = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "core", "art.js"), "utf8");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.error("沒過：" + name + "\n  " + e.message); } };
 T("框起來的背景有 clip-path（不只 mask）", () => {

@@ -121,7 +121,7 @@ T("餐車的吃的加心情、理智：有每天上限、換日重算、券和�
       assert.ok(!d.includes("理智"), `${it.id}：Discord 不放理智`);
     }
     const fs = require("fs"), path = require("path"), src = f => fs.readFileSync(path.join(__dirname, "..", "..", f), "utf8");
-    for (const f of ["web/src/ui_casino.js", "shared/discord/play.js"]) assert.ok(!/\bit\.(mood|san)\b/.test(src(f)), `${f}：效果的字要用 casFoodWords，不要自己組`);
+    for (const f of ["web/src/rooms/casino/ui_casino.js", "shared/discord/play.js"]) assert.ok(!/\bit\.(mood|san)\b/.test(src(f)), `${f}：效果的字要用 casFoodWords，不要自己組`);
     // 換小獎的每壹樣都要有用途；背包材料的份數要跟真的換週章壹樣
     for (const x of G.NUM.casino.exchange) {
       const u = G.exchangeUse(x.id);

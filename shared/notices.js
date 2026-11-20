@@ -65,7 +65,7 @@ export function weeklyNotice(P) {
   };
 }
 
-// 別的檔加進來的公告（例如每週劇情的「本週地下收藏庫」，web/src/ui_story.js 登記）：一筆是 (P, today) => 公告或 null
+// 別的檔加進來的公告（例如每週劇情的「本週地下收藏庫」，web/src/panels/ui_story.js 登記）：一筆是 (P, today) => 公告或 null
 export const NOTICE_EXTRA = [];
 // 這則今天看得到嗎：已經發布、還沒下架（日期含當天）。Discord 的 /pepe-更新 也用這個判斷
 export function noticeLive(n, today) { return !!n && (!n.publish || n.publish <= today) && (!n.expire || today <= n.expire); }
@@ -155,7 +155,7 @@ export function autoOpenPlan(state, list, today) {
 }
 export function skipToday(state, today) { state.skip = today; }
 
-// ---------- 有新版本（翊文 11-10：「好，加提示」；畫面在 web/src/ui_update.js） ----------
+// ---------- 有新版本（翊文 11-10：「好，加提示」；畫面在 web/src/core/ui_update.js） ----------
 // 從 index.html（或 script 的 src 連在壹起的字）找打包後的程式檔名「/assets/index-xxxx.js」；找不到（開發時）是 null
 export function buildScript(text) {
   const m = /\/assets\/index-[A-Za-z0-9_-]+\.js/.exec(String(text || ""));

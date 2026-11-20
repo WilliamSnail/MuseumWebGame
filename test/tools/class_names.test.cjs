@@ -106,7 +106,8 @@ assert.deepStrictEqual(violations.slice(0, 8), [],
   "改用這個畫面自己的 class 當前綴（先查 docs/規則/class名單.md）。真的要全域，把它寫進名單「允許的例外」。");
 
 // ---- 掃 JS：往 body／documentElement 加的 class 要先登記 ----
-const jsFiles = fs.readdirSync(JS_DIR).filter(f => f.endsWith(".js")).map(f => path.join(JS_DIR, f));
+const webJsDeep = (d, rel = "") => fs.readdirSync(path.join(d, rel), { withFileTypes: true }).flatMap(e => e.isDirectory() ? (["css", "assets"].includes(e.name) ? [] : webJsDeep(d, rel ? rel + "/" + e.name : e.name)) : e.name.endsWith(".js") ? [rel ? rel + "/" + e.name : e.name] : []);
+const jsFiles = webJsDeep(JS_DIR).map(f => path.join(JS_DIR, f)); // web/src 有子資料夾
 const usedGlobalInJs = new Set(), unlisted = [];
 // b／root 這種短名字在別處是別的東西；只認「const b = document.body」宣告後 2500 字元內的
 function aliasNear(src, idx) {

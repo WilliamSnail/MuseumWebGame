@@ -1,6 +1,6 @@
 // ================================================================
 //  房間效果的狀態（翊文 11-15：「大廳也可以有些效果反應這些訊息」「銀行和賭場也可以有類似的特效」；docs/規劃/大廳效果提案.md）
-//  大廳、銀行、賭場都叫這壹個，**門檻和換算只寫在這壹處**。畫面層是 web/src/ui_mood.js。純函式，不碰 DOM。
+//  大廳、銀行、賭場都叫這壹個，**門檻和換算只寫在這壹處**。畫面層是 web/src/fx/ui_mood.js。純函式，不碰 DOM。
 //    roomMood(data) → { light: { warm, dim }, crowd, flags: { bunting }, omen, hide }
 //      light.warm：−1（冷、偏暗偏藍）～ 1（暖、偏金）；light.dim：0～1，整體再暗多少（莊家吃緊、景氣差）
 //      crowd：畫幾個小人影（0～RM.crowdMax）
@@ -47,7 +47,7 @@ export function roomMood(data) {
 
 // ---------- 熱鬧程度 → 環境音（翊文 11-15：賭場、銀行要有背景樂和環境音；人聲和籌碼聲跟熱鬧連動） ----------
 // heat：0 冷清、1 平常、2 熱絡、3 沸騰（用 crowdMood 的分級，沒資料就是 1）。**門檻只在 stat_view.js 的 crowdMood，換算只在這裡。**
-// ambMix(heat) → { crowd, chipMin, chipMax, chipN }：人聲底噪的音量、籌碼聲間隔的毫秒範圍、壹次最多幾下。web/src/fx.js 的 AMB.casino 照這個放。
+// ambMix(heat) → { crowd, chipMin, chipMax, chipN }：人聲底噪的音量、籌碼聲間隔的毫秒範圍、壹次最多幾下。web/src/fx/fx.js 的 AMB.casino 照這個放。
 const HEAT_OF = { cold: 0, plain: 1, warm: 2, buzz: 3 };
 export const AMB_MIX = [
   { crowd: 0.004, chipMin: 14000, chipMax: 24000, chipN: 1 },

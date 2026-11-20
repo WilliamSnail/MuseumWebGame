@@ -51,10 +51,10 @@ export const PEPE_PARTS = [
     { name: "觸手帽", forbidden: true, myth: 5 },
     { name: "毛帽", mutant: true },
     { name: "紳士帽", gift: "collector" },
-    // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS）
+    // 第 4 版（11-09，決定 0030）：只有每週全簽到拿得到的帽子（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/core/art.js 的 HATS）
     { name: "館員帽", limited: "signin" },
     { name: "燈籠帽", limited: "signin" },
-    // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/art.js 的 HATS；哪一週賣哪幾件見 LIMITED_ITEMS 下面的說明）
+    // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾（名字、樣子都是草稿，Yuga 可以改；畫法在 web/src/core/art.js 的 HATS；哪一週賣哪幾件見 LIMITED_ITEMS 下面的說明）
     { name: "黃雨帽", limited: "shop" },
     { name: "廚師帽", limited: "shop" },
     { name: "毛耳罩", limited: "shop" },
@@ -713,7 +713,7 @@ export const NUM = {
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）
-// 名字、說明在 systems_text.js 的 LIMITED_TEXT；樣子在 web/src/art.js。每週全簽到照 NUM.signin.weekKinds 輪到哪一種，那一種裡再照週輪流
+// 名字、說明在 systems_text.js 的 LIMITED_TEXT；樣子在 web/src/core/art.js。每週全簽到照 NUM.signin.weekKinds 輪到哪一種，那一種裡再照週輪流
 export const LIMITED_ITEMS = [
   { id: "hat-curator", kind: "part", cat: "帽子", opt: "館員帽" },
   { id: "hat-lantern", kind: "part", cat: "帽子", opt: "燈籠帽" },

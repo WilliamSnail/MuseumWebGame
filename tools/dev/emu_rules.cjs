@@ -1,5 +1,5 @@
 // 把 database.rules.json 放進模擬器裡遊戲用的那個 Realtime Database：node tools/dev/emu_rules.cjs（第 N 套：EMU_SET=N）
-// 為什麼要有：模擬器照 firebase.json 把規則放在預設的 demo-pepe4-default-rtdb，但遊戲和 Functions 用的名字是 demo-pepe4（web/src/firebase_config.js）。
+// 為什麼要有：模擬器照 firebase.json 把規則放在預設的 demo-pepe4-default-rtdb，但遊戲和 Functions 用的名字是 demo-pepe4（web/src/core/firebase_config.js）。
 // 所以 npm run emulators 開起來，demo-pepe4 這個資料庫其實沒有規則（誰都讀得到）。要測「玩家讀不到別人的東西」，開好模擬器之後跑一次這支。
 // 只連 127.0.0.1 的模擬器，碰不到正式的 Firebase。
 const fs = require("fs"), path = require("path"), http = require("http");

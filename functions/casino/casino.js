@@ -269,7 +269,7 @@ const levStock = ctx => {
 };
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
-  // 畫面（web/src/ui_bank.js）讀的是 bankHall.stocks，槓桿頁籤要的 lev、positions、credit、levCap 也要在那裡（11-14 測試：只放在 stock，槓桿頁籤和部位卡永遠不出現）
+  // 畫面（web/src/rooms/bank/ui_bank.js）讀的是 bankHall.stocks，槓桿頁籤要的 lev、positions、credit、levCap 也要在那裡（11-14 測試：只放在 stock，槓桿頁籤和部位卡永遠不出現）
   const hall = casBankHall(ctx.w, ctx.day, ctx.house, ctx.t, ctx.stale, DAY_DATA), lev = levStock(ctx);
   hall.trade = (tc => tc && Object.assign(tc, { rows: tc.rows.map(x => Object.assign({ label: CAS_FLOW_UNIT[x.k] || x.k }, x)) }))(wtCard(ctx.house)); // 財報「集團之間的往來」：本週累計、目前欠金融集團的（決定 0120）
   hall.gs = gsView(ctx.w, ctx.house, ctx.day, ctx.t); // 世界集團的股票：價格、指數、我的持股（決定 0121）

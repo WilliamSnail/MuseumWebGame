@@ -97,12 +97,12 @@ T("提示只在「直拿、寬 ≤ 760、手指」才顯示；橫拿的版面只
   assert.ok(landscape.length >= 10);
 });
 T("ui_orient.js 的條件跟 css 一樣；planPortrait 不把橫拿的手機當直拿", () => {
-  const core = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "ui_core.js"), "utf8");
+  const core = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "core", "ui_core.js"), "utf8");
   assert.ok(core.includes('export const LANDSCAPE_Q = "(max-height: 500px) and (orientation: landscape)";'));
   assert.ok(/export function planPortrait\(\) \{ return matchMedia\("\(max-width: 760px\)"\)\.matches && !matchMedia\(LANDSCAPE_Q\)\.matches; \}/.test(core));
 });
 T("設定頁有「手機直拿提醒」，公告有說手機建議橫著玩", G => {
-  const s2 = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "ui_screens2.js"), "utf8");
+  const s2 = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "rooms", "ui_screens2.js"), "utf8");
   assert.ok(s2.includes("手機直拿提醒") && s2.includes("setOrientSkip"));
   const n = G.NOTICES.find(x => x.id === "landscape1");
   assert.ok(n && n.tags.includes("更新") && n.cat === "館方公告");

@@ -1,6 +1,6 @@
-// 銀行「規則與小提示」（web/src/ui_bank.js 的 helpSections）不能再寫過時的話、要有這幾天新增的分頁（決定 0126～0130）。只讀原始碼，不跑畫面。node test/casino/bank_help.test.cjs（npm test 也會跑）
+// 銀行「規則與小提示」（web/src/rooms/bank/ui_bank.js 的 helpSections）不能再寫過時的話、要有這幾天新增的分頁（決定 0126～0130）。只讀原始碼，不跑畫面。node test/casino/bank_help.test.cjs（npm test 也會跑）
 const assert = require("assert"), fs = require("fs"), path = require("path");
-const src = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "ui_bank.js"), "utf8");
+const src = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "rooms", "bank", "ui_bank.js"), "utf8");
 const a = src.indexOf("function helpSections"), b = src.indexOf("function openHelp"); const help = src.slice(a, b);
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };

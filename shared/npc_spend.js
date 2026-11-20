@@ -114,7 +114,7 @@ export function crowdShopToday(day, secret) {
   }
   return out.sort((a, b) => a.start - b.start || (a.key < b.key ? -1 : 1));
 }
-// 房間 id（大廳的 LOBBY2_ROOMS，web/src/ui_lobby2.js）：NPC 行程的 place 對到哪個房間（決定 0094）；餐車、牌桌都在賭場
+// 房間 id（大廳的 LOBBY2_ROOMS，web/src/rooms/ui_lobby2.js）：NPC 行程的 place 對到哪個房間（決定 0094）；餐車、牌桌都在賭場
 export const NPC_ROOM = { hall: "hall", food: "casino", bj: "casino", job: "commission", cellar: "cellar", craft: "workshop", bank: "bank", auction: "gallery" };
 // 這壹天逛店的散客在各家店各有幾位（館內股「昨天不同的人」用，整天的總數；現在在場幾位不給）
 export function crowdShopCounts(day, secret) { const o = { food: 0, bj: 0, job: 0, cellar: 0, craft: 0 }; for (const g of crowdShopToday(day, secret)) o[g.store] += g.n; return o; }

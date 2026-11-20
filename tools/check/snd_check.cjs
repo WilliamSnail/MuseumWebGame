@@ -99,12 +99,13 @@ function checkFx(fx) {
   return { bad, info: [...new Set(info)], rooms: ents.map(e => e.name) };
 }
 
+const webJsDeep = (d, rel = "") => fs.readdirSync(path.join(d, rel), { withFileTypes: true }).flatMap(e => e.isDirectory() ? (["css", "assets"].includes(e.name) ? [] : webJsDeep(d, rel ? rel + "/" + e.name : e.name)) : e.name.endsWith(".js") ? [rel ? rel + "/" + e.name : e.name] : []);
 function checkUi() {
   const bad = [], info = [];
-  const files = fs.readdirSync(path.join(ROOT, "web/src")).filter(f => f.endsWith(".js"));
-  const core = rd("web/src/ui_core.js");
+  const files = webJsDeep(path.join(ROOT, "web/src")); // web/src 有子資料夾，連裡面的檔一起查
+  const core = rd("web/src/core/ui_core.js");
   for (const f of files) {
-    if (f === "ui_core.js") continue;
+    if (f === "core/ui_core.js") continue;
     const s = rd("web/src/" + f);
     for (const m of s.matchAll(/UI\.(ambOver|cellarSnd|cellarSndKey|cellarSndFrom|ambHeat|ambTimer)\s*=[^=]/g)) bad.push(`${f}：直接改 UI.${m[1]}（要走 setAmbOver／setCellarSnd）`);
     const opens = [...s.matchAll(/setAmbOver\(\s*"/g)].length, closes = [...s.matchAll(/setAmbOver\(\s*null/g)].length;
@@ -114,7 +115,7 @@ function checkUi() {
   }
   if (!/prev === "cellar" && name !== "cellar" && UI\.cellarSndFrom === "room"/.test(core)) bad.push("ui_core.js go()：離開地下收藏庫沒有收 room 設的地下聲音");
   if (!/clearInterval\(UI\.ambTimer\)/.test(core)) bad.push("ui_core.js setAmbOver：沒有 clearInterval(UI.ambTimer)");
-  const lg = rd("web/src/ui_login.js"), lo = lg.slice(lg.indexOf('NET.on("logout"'), lg.indexOf("// ---------- 伺服器改了我的存檔"));
+  const lg = rd("web/src/panels/ui_login.js"), lo = lg.slice(lg.indexOf('NET.on("logout"'), lg.indexOf("// ---------- 伺服器改了我的存檔"));
   if (!/nbClose/.test(lo)) bad.push("ui_login.js 登出：蓋在上面的框沒有走 nbClose");
   if (!/setAmbOver\(null\)/.test(lo) || !/setCellarSnd\(null\)/.test(lo)) bad.push("ui_login.js 登出：沒有收 setAmbOver／setCellarSnd");
   for (const f of files) for (const m of rd("web/src/" + f).matchAll(/querySelectorAll\("\.nb-layer"\)\.forEach\(([^\n]*)/g))
@@ -125,7 +126,7 @@ function checkUi() {
 }
 
 function run() {
-  const fx = checkFx(rd("web/src/fx_sound.js")), ui = checkUi();
+  const fx = checkFx(rd("web/src/fx/fx_sound.js")), ui = checkUi();
   return { bad: [...fx.bad, ...ui.bad], info: [...fx.info, ...ui.info], rooms: fx.rooms };
 }
 module.exports = { checkFx, checkUi, ambEntries, run };

@@ -4,7 +4,7 @@
 //
 //  這個檔只有純函式：不碰 Firebase、不碰畫面、不碰 Discord。
 //    tools/content/weekly_board.cjs（每週一 05:15 跑）把讀到的資料傳進來，把結果寫進 Firestore、發到 Discord。
-//    web/src/ui_board_rank.js 讀 boards/latest，用 boardViewOf 整理過才畫。
+//    web/src/panels/ui_board_rank.js 讀 boards/latest，用 boardViewOf 整理過才畫。
 //  流程：
 //    boardWeekOf(現在)            要算哪一週：一律是「剛過完的那一週」（週一 05:00 換週，排程跑的時候新的一週剛開始）
 //    boardStatsOf(存檔, 週)       一個人的數字。存檔壞了回傳 { ok: false }，不會丟錯

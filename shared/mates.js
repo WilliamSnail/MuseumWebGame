@@ -1,12 +1,12 @@
 // ================================================================
 //  大廳導覽圖上的館友（11-09）：在線名單 → 每間房有誰。純規則，不碰畫面。
-//  畫面在 web/src/ui_mates.js；測試在 test/game/mates.test.cjs。
+//  畫面在 web/src/panels/ui_mates.js；測試在 test/game/mates.test.cjs。
 //  room 是玩家寫進資料庫的字串：只認白名單，不認得的一律不顯示。
 // ================================================================
 
 import { titleName } from "./titles.js";
 
-// 導覽圖上有的房間（跟 web/src/art.js 的 PLAN 對得上）
+// 導覽圖上有的房間（跟 web/src/core/art.js 的 PLAN 對得上）
 export const MATE_ROOMS = ["lobby", "origin", "gallery", "codex", "office", "workshop", "pillow", "commission", "cellar", "hall", "library", "fusion", "casino", "bank"]; // bank：11-14 加的銀行廳。漏掉的話，在那間房的館友會被整個丟掉，大廳的「館友在線」會寫成沒人（翊文 11-14 回報）
 // 不在圖上、但可以寫「在別處」的：門口、設定
 export const MATE_ELSEWHERE = { title: "在門口", settings: "在設定" };

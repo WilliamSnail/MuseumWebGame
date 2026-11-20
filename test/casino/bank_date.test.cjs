@@ -22,8 +22,8 @@ T("mdShift：天數不是數字回「—」；日期超出範圍也不丟錯", G
   assert.doesNotThrow(() => G.mdShift("9999-99-99", 1e15));
   assert.strictEqual(G.mdShift("2026-11-22", 1e15), "—"); // 超過 JS 日期範圍
 });
-T("銀行頁（web/src/ui_bank.js）沒有直接用 toISOString、Date.parse：日期都走 mdShift", () => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "ui_bank.js"), "utf8");
+T("銀行頁（web/src/rooms/bank/ui_bank.js）沒有直接用 toISOString、Date.parse：日期都走 mdShift", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "..", "web", "src", "rooms", "bank", "ui_bank.js"), "utf8");
   assert.ok(!/toISOString\s*\(/.test(src), "ui_bank.js 不要直接用 toISOString（日期壞掉會丟 RangeError），改用 mdShift");
   assert.ok(!/Date\.parse\s*\(/.test(src), "ui_bank.js 不要直接用 Date.parse（結果 NaN 再丟給 Date 就壞），改用 mdShift");
 });

@@ -12,7 +12,7 @@
 地下收藏庫入口、圖鑑室、展廳（含手機直拿）、委託櫃台抽屜、打怪手機橫拿、大廳（手機橫拿、直拿、電腦右欄、導覽圖多銀行房間）、融合室（魔法陣＋抽屜修正，PR 274、281）、銀行廳畫面（PR 265，示範資料）、賭場手機（PR 275、280，沒量過）。
 
 ## 還沒做 / 要注意
-1. **銀行廳**：主 session 在改 `web/src/ui_bank.js`，不要動；要改 `css/bank.css` 先跟主 session 說。待辦：手機橫拿很擠（主區 174px）、換上翊文的紅漲綠跌小牌（`ui2-bank-tag-up/down`）、股價折線底（`ui2-bank-chart`）、定存格底（`ui2-bank-slot`）。導覽圖「銀行」熱區要 `ADDONS.bankOpen = true` 才出現（主 session 管）。
+1. **銀行廳**：主 session 在改 `web/src/rooms/bank/ui_bank.js`，不要動；要改 `css/bank.css` 先跟主 session 說。待辦：手機橫拿很擠（主區 174px）、換上翊文的紅漲綠跌小牌（`ui2-bank-tag-up/down`）、股價折線底（`ui2-bank-chart`）、定存格底（`ui2-bank-slot`）。導覽圖「銀行」熱區要 `ADDONS.bankOpen = true` 才出現（主 session 管）。
 2. **賭場手機**（PR 275、280）都是 CSS 推算、沒在瀏覽器量（賭場要伺服器錢包）。請測試 session 複測：375×740 寬不被撐開、「發牌」在第一屏。
 3. **圖書館**（U-6、P-8 書架框／層板／亮書、P-9 站著的書 12 本）還沒做；**畫廊**還沒做；**手作坊**主 session 在修，先別動；**打怪手機直拿**要照 `assets/cellar2/ui-手機.webp` 重排；**館友證**主 session 的子代理在做頭像，別動。
 4. 融合室：放一隻、空的、按下融合的動畫（`.fusing`）沒看過；光絲零件（`ui2-light-thread`）沒用上。

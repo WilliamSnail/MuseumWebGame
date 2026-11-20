@@ -1,6 +1,6 @@
 /* ================================================================
    每日簽到、簽到日曆、節日（11-09，決定 0030）
-   規則在 shared/signin.js、shared/holidays.js；畫面在 web/src/ui_signin.js。
+   規則在 shared/signin.js、shared/holidays.js；畫面在 web/src/panels/ui_signin.js。
    ================================================================ */
 
 /* ---------- 節日的外觀（body.holiday-主題，ui_core.js 的 applyHolidayLook） ----------

@@ -1,6 +1,6 @@
 // ================================================================
 //  手機轉橫的提示（11-09，翊文：「手機介面改成橫向操作好了」，決定 0043）。純規則，不碰畫面。
-//  畫面在 web/src/ui_orient.js、web/src/css/landscape.css；測試在 test/web/orient.test.cjs。
+//  畫面在 web/src/core/ui_orient.js、web/src/css/landscape.css；測試在 test/web/orient.test.cjs。
 //  「先用直的」記在這台裝置（localStorage），不進存檔、不上傳；所以這裡的函式都收一個 storage 進來，不自己去拿。
 // ================================================================
 

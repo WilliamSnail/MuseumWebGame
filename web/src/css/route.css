@@ -1,4 +1,4 @@
-/* 地圖選路（地下室改版；web/src/ui_route.js）。規劃第八節：能走的點會跳、有框、有字；不能走的是淡的 */
+/* 地圖選路（地下室改版；web/src/rooms/ui_route.js）。規劃第八節：能走的點會跳、有框、有字；不能走的是淡的 */
 .cx-main > .rt-map, .cx-main > .rt-card { flex: none; }
 .rt-map { position: relative; display: grid; gap: 6px; padding: 10px; border-radius: 12px; color: #FBEFD9;
   background: linear-gradient(rgba(27, 22, 31, .55), rgba(27, 22, 31, .85)), url(/cellar2/stage-b1.webp) center / cover; }
