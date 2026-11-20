@@ -164,6 +164,7 @@ function reliefBar() { return bankBar(S, CAS_IO); }
 // 右邊壹欄：銀行＋牌桌頁籤的「跟館友同桌」（翊文 11-14：「一覽就看到不用滑到底下」）。窄的畫面：銀行在上、同桌釘在下面（css）
 function sideCol() {
   const mp = S.tab === "table" && ADDONS.casinoTable ? ADDONS.casinoTable() : null;
+  try { if (window.innerWidth <= 760 && localStorage.getItem("pm-acct-fold") == null) localStorage.setItem("pm-acct-fold", "1"); } catch (e) { /* 手機第一次進來：帳戶先收成壹行（11-20，點了再展開，之後記著） */ }
   const acct = ADDONS.bankAcctBox ? ADDONS.bankAcctBox() : null; // 我的帳戶（11-16，可以收折；ui_bank.js）
   return h("div", { class: "cas-side" }, reliefBar(), acct, mp);
 }
@@ -661,10 +662,16 @@ function livePane() {
 // ---------- 餐車 ----------
 // 11-20 重新設計（翊文）：夜市攤車。棚子、掛燈（裝飾）→ 說明列 → 三區木牌（小點心、正餐、貴的）→ 堂主字條 → 托盤（剛買的）。價錢、機率不動。css/diner.css（dn-）
 const DN_GROUPS = [["小點心", it => !it.ticket && it.price <= 100], ["正餐", it => !it.ticket && it.price > 100 && it.price <= 100000], ["貴的", it => it.ticket || it.price > 100000]];
+// 說明（第二層）：電腦攤開；手機收起來點開，品項在上。沒開大禮包（有事要先做）時手機也攤開
+function dinerMore(a, b, calm) {
+  const el = h("details", { class: "dn-more" }, h("summary", null, "吃東西的說明"), a, b);
+  if (window.innerWidth > 760 || !calm) el.open = true;
+  return el;
+}
 function dinerNote() {
   const d = todayStr(); let k = 0; for (const c of d) k = (k * 31 + c.charCodeAt(0)) % 9973;
   const txt = CAS_HALL_NOTES[k % CAS_HALL_NOTES.length];
-  const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"));
+  const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"), h("img", { class: "dn-cup", src: "/diner/prop-cup.webp", alt: "", title: "多留了壹杯，不說是給誰的" }));
   const el = h("details", { class: "dn-note" }, h("summary", null, icon("scroll"), h("span", null, "堂主的字條")), body);
   if (window.innerWidth > 760) el.open = true; // 電腦攤開；手機收成壹個便條，點了才展開
   return el;
@@ -699,12 +706,12 @@ function dinerPane() {
     h("div", { class: "dn-top" },
       h("div", { class: "dn-hello" },
         h("p", { class: "dn-say" }, fill(CAS_TEXT.dinerHello, { name: CAS_TEXT.dealer }), "。"),
-        h("p", { class: "dn-stat" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
-        h("p", { class: w.opened > 0 ? "dn-open" : "dn-open dn-warn" }, w.opened > 0 ? "今天的大禮包開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。")),
+        dinerMore(h("p", { class: "dn-stat" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
+          h("p", { class: w.opened > 0 ? "dn-open" : "dn-open dn-warn" }, w.opened > 0 ? "今天的大禮包開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"), w.opened > 0)),
       dinerNote()),
     h("div", { class: "dn-groups" }, DN_GROUPS.map(([title, test]) => { const its = menu.filter(test); return its.length ? h("section", { class: "dn-group" + (title === "貴的" ? " dn-g-pricey" : "") }, h("h3", null, title), h("ul", { class: "dn-cards" }, its.map(it => dinerCard(it, w, buy)))) : null; })),
     h("div", { class: "dn-tray" + (S.dinerLines.length ? " dn-has" : ""), "aria-live": "polite" },
-      last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, h("img", { src: `/diner/food-${last.id}.webp`, alt: "" })) : h("span", { class: "dn-tray-empty" }, "托盤是空的"),
+      last ? h("span", { class: "dn-pic dn-tray-pic dn-in", "aria-hidden": "true" }, h("img", { src: `/diner/food-${last.id}.webp`, alt: "" })) : h("span", { class: "dn-tray-empty" }, h("img", { src: "/diner/prop-tray.webp", alt: "" }), "托盤是空的"),
       S.dinerLines.length ? h("div", { class: "dn-tray-say dn-in" }, S.dinerLines.map(l => h("p", null, l))) : null));
 }
 

@@ -6,18 +6,21 @@
 .dn-lights { height: 30px; margin-top: -8px; margin-bottom: -10px; background: url(/diner/lights.webp) 0 0 / auto 30px repeat-x; pointer-events: none; filter: drop-shadow(0 0 4px rgba(255, 217, 122, .5)); }
 .dn-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 260px); gap: 12px; align-items: start; }
 /* 說明板：黑板 */
-.dn-hello { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 4px; background: url(/diner/board.webp) 0 0 / 256px; border: 6px solid #5A3A1E; box-shadow: inset 0 0 12px rgba(0, 0, 0, .6), 0 3px 6px rgba(0, 0, 0, .5); color: #EDE6D0; }
+.dn-hello { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 4px; background: #20302A url(/diner/board.webp) center / cover no-repeat; border: 6px solid #5A3A1E; box-shadow: inset 0 0 12px rgba(0, 0, 0, .6), 0 3px 6px rgba(0, 0, 0, .5); color: #EDE6D0; }
 .dn-hello p { margin: 0; }
 .dn-say { color: #F8E3A0; font-weight: 700; }
 .dn-stat { font-size: .875rem; opacity: .92; }
 .dn-open { font-size: .8125rem; color: #BFE6C8; }
 .dn-open.dn-warn { color: #F2C98A; }
 /* 堂主的字條：黃色便條紙，略歪，貼在右上角 */
-.dn-note { transform: rotate(1.4deg); background: linear-gradient(180deg, #F3E39A, #E8D17A); color: #3A2A10; border-radius: 2px 2px 4px 4px; box-shadow: 0 3px 6px rgba(0, 0, 0, .45); position: relative; }
+.dn-note { transform: rotate(1.4deg); background: #EBD58A url(/diner/prop-note.webp) center / cover no-repeat; color: #3A2A10; border-radius: 2px 2px 4px 4px; box-shadow: 0 3px 6px rgba(0, 0, 0, .45); position: relative; }
 .dn-note::before { content: ""; position: absolute; top: -7px; left: 50%; width: 54px; height: 14px; margin-left: -27px; background: rgba(255, 255, 255, .45); transform: rotate(-2deg); }
 .dn-note > summary { list-style: none; display: flex; align-items: center; gap: 6px; padding: 10px 12px 4px; cursor: pointer; font-weight: 700; font-size: .875rem; min-height: 32px; }
 .dn-note > summary::-webkit-details-marker { display: none; }
 .dn-note-t { padding: 0 12px 10px; font-family: "Kaiti TC", "BiauKai", "DFKai-SB", serif; font-size: 1rem; line-height: 1.6; }
+.dn-note-t { position: relative; }
+.dn-cup { position: absolute; right: 6px; bottom: 2px; width: 44px; height: auto; opacity: .95; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+.dn-note-t small { padding-right: 48px; }
 .dn-note-t p { margin: 0 0 2px; } .dn-note-t small { display: block; text-align: right; opacity: .7; }
 /* 三區木牌 */
 .dn-group h3 { margin: 0 0 8px; font-size: .9375rem; letter-spacing: .2em; color: #F8E3A0; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
@@ -44,17 +47,22 @@
 .dn-buy { grid-area: buy; justify-self: end; min-height: 36px; }
 /* 托盤：剛買的東西滑進來（只演壹次） */
 .dn-tray { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; border-radius: 8px 8px 20px 20px; background: url(/kit/wood-fill.webp) 0 0 / 160px; border: 3px solid #2A1A0C; box-shadow: inset 0 3px 8px rgba(0, 0, 0, .5); }
-.dn-tray-empty { font-size: .8125rem; color: #EADFC6; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
+.dn-tray-empty { display: inline-flex; align-items: center; gap: 10px; font-size: .8125rem; color: #EADFC6; text-shadow: 0 1px 0 rgba(0, 0, 0, .6); }
+.dn-tray-empty img { height: 44px; width: auto; }
 .dn-tray-pic { flex: none; }
 .dn-tray-say { flex: 1; min-width: 0; color: #FFF3D2; text-shadow: 0 1px 2px rgba(0, 0, 0, .8); }
 .dn-tray-say p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
 .dn-in { animation: dnIn .45s ease-out 1; }
 @keyframes dnIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+.dn-more > summary { cursor: pointer; min-height: 28px; display: inline-flex; align-items: center; color: #F8E3A0; text-decoration: underline dotted; list-style: none; font-size: .875rem; }
+.dn-more > summary::-webkit-details-marker { display: none; }
+@media (min-width: 761px) { .dn-more > summary { display: none; } }
 @media (max-width: 760px) {
+  .dn-hello { padding: 8px 12px; }
   .dn-top { grid-template-columns: minmax(0, 1fr); }
   .dn-groups { grid-template-columns: minmax(0, 1fr); }
-  .dn-awning { height: 40px; background-size: auto 40px; }
-  .dn-lights { height: 22px; background-size: auto 22px; }
+  .dn-awning { height: 30px; background-size: auto 30px; }
+  .dn-lights { height: 18px; margin-top: -6px; margin-bottom: -6px; background-size: auto 18px; }
   .dn-card { grid-template-columns: 48px minmax(0, 1fr) auto; padding: 18px 22px 16px; }
   .dn-pic { width: 48px; height: 48px; }
   .dn-name { font-size: .9375rem; }
