@@ -184,6 +184,14 @@ function menuBadge(W) {
 }
 // 狀態列的「追蹤」那一行（點了走過去）
 // 房間裡的『這裡有任務』小橫幅（11-20，任務入口重新規劃）：進了有今天任務能做的房間，頂上出壹條；做完換成『完成 +N 分・回任務板』；可以關（這個房間這個狀態今天不再出）
+// 今天某位交代人交代的任務那壹句：還沒做完說 says、做完了說 done（台詞照內容檔）。沒有就 null（餐車的堂主字條、房間小橫幅用）
+export function giverTaskLine(giver) {
+  const W = on() ? curWeek() : null; if (!W || W.past) return null;
+  const d = todayOf(W); if (!d) return null;
+  const t = d.daily.find(x => x.giver === giver && x.says); if (!t) return null;
+  const done = taskDone(P, t);
+  return { text: done && t.done ? t.done : t.says, done, name: giverName(giver) };
+}
 const RT_SKIP = {}; // 關掉的：「房間|狀態」→ 今天的日期
 function roomTaskBar() {
   let el = document.getElementById("rtk");
@@ -203,12 +211,13 @@ function roomTaskBar() {
   const text = pend.length
     ? `這裡有任務：${taskText(t, W)}（${n}／${tgt}）${pend.length > 1 ? `　還有 ${pend.length - 1} 個` : ""}`
     : `完成 +${taskPts(t) || 0} 分${got.length > 1 ? `（共 ${got.length} 個）` : ""}・到任務板領獎勵`;
-  const key = state + "|" + text;
+  const gl = t.giver && t.says && t.giver !== "yuga" ? `${giverName(t.giver)}：${state === "done" && t.done ? t.done : t.says}` : ""; // 交代人在這個房間多說壹句（Yuga 的話荷官在賭場自己說）
+  const key = state + "|" + text + "|" + gl;
   if (el.dataset.k !== key || el.dataset.room !== room) {
     el.dataset.k = key; el.dataset.room = room;
     el.className = "rtk " + state;
     el.replaceChildren(
-      h("button", { type: "button", class: "rtk-main", onClick: () => PANELS.today && PANELS.today() }, icon(state === "done" ? "check" : "scroll"), h("span", { class: "rtk-t" }, text), h("span", { class: "rtk-go", "aria-hidden": "true" }, "任務板 →")),
+      h("button", { type: "button", class: "rtk-main", onClick: () => PANELS.today && PANELS.today() }, icon(state === "done" ? "check" : "scroll"), h("span", { class: "rtk-col" }, h("span", { class: "rtk-t" }, text), gl ? h("small", { class: "rtk-g" }, gl) : null), h("span", { class: "rtk-go", "aria-hidden": "true" }, "任務板 →")),
       h("button", { type: "button", class: "rtk-x", "aria-label": "先關掉這條", title: "先關掉", onClick: () => { RT_SKIP[room + "|" + state] = day; el.hidden = true; } }, icon("close")));
   }
   el.hidden = false;

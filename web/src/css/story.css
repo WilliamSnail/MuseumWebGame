@@ -250,3 +250,7 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 .rtk-x { flex: none; width: 32px; border: 0; border-left: 1px solid rgba(231, 200, 120, .3); background: none; color: #CDBE9F; cursor: pointer; }
 .rtk-x svg, .rtk-x .ic { width: 12px; height: 12px; }
 @media (max-width: 760px) { .rtk { left: 6px; right: 50px; max-width: none; top: 6px; z-index: 30; } .rtk-t { white-space: normal; max-height: 2.6em; font-size: .75rem; } .rtk-go { display: none; } } /* 手機：蓋在最上面那條館名列上（館名只是裝飾），不壓房間的標題和按鈕 */
+
+.rtk-col { display: flex; flex-direction: column; min-width: 0; }
+.rtk-g { display: block; color: #E6C879; font-size: .75rem; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) { .rtk-g { white-space: normal; max-height: 2.7em; } }
