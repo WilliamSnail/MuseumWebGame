@@ -30,7 +30,7 @@ import { cellarDarkLoss } from "../core/legacy.js";
 import { eventRunFix } from "../story/events.js";
 import { trialById, trialState, trialWin } from "../core/shop.js";
 import { injureDaysOf, limitedFx, skillCheck, teamHas } from "../core/systems.js";
-import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopFloorOf, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";
+import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopFloorOf, coopMarkDeep, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";
 import { coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./fun.js";
 import { fightFoesOf, fightIntentHidden } from "../cellar/fight.js";
 import { coopFightStart, coopFightView, coopGateDue, coopRouteBack } from "./fight.js";
@@ -104,6 +104,7 @@ export function startCoop(members, floor, opt = {}) {
   if (run.fun) coopStart(run, Ps);
   if (coopRouteOn(run)) coopRouteBegin(run, Ps); // 地下室改版：先選路（coop/route.js）
   members.forEach(m => { if (!m.guard && m.P.visit) m.P.visit.deepest = Math.max(m.P.visit.deepest || 0, floor); }); // 走到地下第幾層（歷任參觀者牆），跟 startCellar 一樣
+  coopMarkDeep(run, Ps);
   coopSync(run, Ps);
   return { ok: true, run, events: coopNewEvents(run) };
 }
@@ -386,6 +387,7 @@ export function coopContinue(run, Ps) {
   if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
   run.floor = run.next; run.idx = 0; run.next = null; run.used = {};
   run.members.forEach(m => { m.used = {}; });
+  coopMarkDeep(run, Ps);
   run.team = coopTeam(run, Ps);
   coopNextLeader(run);
   run.phase = "vote";

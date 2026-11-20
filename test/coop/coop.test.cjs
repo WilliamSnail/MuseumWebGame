@@ -52,6 +52,13 @@ T("館方助手補到 COOP.teamMin 隻：一個人帶 1 隻補 2 隻、帶 2 隻
   // 助手不投票、不會受傷
   assert.deepStrictEqual(J(G.coopVoters(one).map(m => m.id)), ["a"]);
 });
+T("合作下去記走到第幾層（P.cellar.coopDeep，每日任務用）：開始記、往下走更新、試煉不記", () => {
+  const { run, Ps } = party([{ id: "a" }, { id: "b" }]);
+  const D = Ps.a.day.date;
+  assert.deepStrictEqual(J(Ps.a.cellar.coopDeep), { date: D, floor: 1 }); assert.deepStrictEqual(J(Ps.b.cellar.coopDeep), { date: D, floor: 1 });
+  run.floor = 2; G.coopMarkDeep(run, Ps); assert.strictEqual(Ps.a.cellar.coopDeep.floor, 2);
+  run.floor = 1; G.coopMarkDeep(run, Ps); assert.strictEqual(Ps.a.cellar.coopDeep.floor, 2, "不會往回變小");
+});
 T("檢查：人數、每人帶幾隻、重複、受傷、隊伍上限、自由模式、層數照每個人自己的進度", () => {
   const A = person(), B = person();
   const a = [mk(A), mk(A, { 顏色: "綠" })], b = [mk(B), mk(B, { 顏色: "綠" })];

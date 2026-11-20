@@ -111,6 +111,12 @@ T("存檔：舊存檔沒有 P.story，用到時補；壞掉的也修", G => {
   const back = G.migrateSave(JSON.parse(JSON.stringify(save)));
   assert.strictEqual(back.profiles.challenge.story.stamps, 0);
 });
+T("每日任務「走到 B幾」：單人（P.cellar.run）和合作（P.cellar.coopDeep）都算，別天的合作不算",G => {
+  const D = "2026-11-09", W = G.storyWeek(LIB(G), D);
+  const a = fresh(G); a.cellar.run = { floor: 3 }; G.syncStory(a, W, D); assert.strictEqual(G.storyState(a).deep[D], 3, "單人");
+  const b = fresh(G); b.cellar.coopDeep = { date: D, floor: 2 }; G.syncStory(b, W, D); assert.strictEqual(G.storyState(b).deep[D], 2, "合作");
+  const c = fresh(G); c.cellar.coopDeep = { date: "2026-11-08", floor: 4 }; G.syncStory(c, W, D); assert.ok(!G.storyState(c).deep[D], "前一天的合作不算今天");
+});
 T("書：當天就能讀的會出現；讀完給靈感（只給一次）", G => {
   const P = fresh(G), W = G.storyWeek(LIB(G), "2026-11-09");
   const ev = G.syncStory(P, W, "2026-11-09");
