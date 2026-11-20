@@ -107,7 +107,7 @@ T("政策：拚經濟成功抽到的政策持續到隔天；振興觀光門票�
   assert.strictEqual(r.fx, "tourism"); assert.ok(r.lines.some(l => l.includes("政策效果")));
   assert.strictEqual(G.casFxPolicy(s.house, D, "ticket"), 1 + K.polPct / 100); assert.strictEqual(G.casFxPolicy(s.house, plus(D, 1), "ticket"), 1 + K.polPct / 100);
   assert.strictEqual(G.casFxPolicy(s.house, plus(D, 2), "ticket"), 1, "第三天失效"); assert.strictEqual(G.casFxPolicy(s.house, D, "find"), 1);
-  const t = (house, d) => { const w = G.casWalletFix(G.casWalletNew(), d), P = G.newProfile("challenge"); P.hallVisitors = 0; const { buildProfile } = require("./sim_cellar.cjs"); void buildProfile; return { w, P }; };
+  const t = (house, d) => { const w = G.casWalletFix(G.casWalletNew(), d), P = G.newProfile("challenge"); P.hallVisitors = 0; const { buildProfile } = require("./sim/sim_cellar.cjs"); void buildProfile; return { w, P }; };
   void t;
   const tix = pol2 => { const house = G.casHouseFix(G.casHouseNew(), D).house; if (pol2) house.pol = { idx: 1, fx: "tourism", day: D }; G.casNpcLive(house, D, Infinity, "s", [], null); return { total: house.npcs.crowd.ticket }; }; // 11-14：門票改成到訪的人自己付（shared/npc_spend.js），政策照樣讓票價多壹成
   const CRc = G.NUM.casino.npcSpend.crowd, cap0 = CRc.dayCap; CRc.dayCap = 1e12; // 散客門票上限會碰到（11-14 起散客壹天上千位）：這裡只看政策有沒有讓票價變高

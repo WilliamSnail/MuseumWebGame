@@ -148,7 +148,7 @@ export const NUM = {
   // newCellar：地下室改版（決定 0067、0068）。true ＝合作地下每一層的房間探索完之後要打守門，打贏才算走完。
   //   11-12 翊文說直接打開，不用先自己測（決定 0069）。有問題改回 false 就回到舊的（房間走完直接算這一層走完），舊的程式都還在
   ui: { newLobby: true, newCellar: true, lobbyCrowdMusic: 150, lobbySan: [55, 30, 15], casinoBusyMusic: 35, workshopBusyMusic: 20 }, // workshopBusyMusic：手作坊超過幾人換成翊文的錄音（11-17 翊文：「這首手作坊多人的時候可以放」；20 是先估的） // casinoBusyMusic：賭場超過幾人換成 Copper Nights（11-16 翊文：「賭場裡超過35人就改播這個」）； // lobbySan：大廳照理智換曲（11-16 翊文）：低於 55 放「Familiar Melody, Subly Wrong」、低於 30「Lobby Silence」、低於 15 到 0 放原本的合成旋律； // lobbyCrowdMusic：館內同時超過幾人，大廳換成「Inviting Loop」（11-16 翊文：「人潮很多的時候用這首」；150 是先估的，太常/太少出現就改）
-  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim_fight.cjs
+  // 地下室改版（決定 0067，規劃 docs/地下室改版規劃.md）：打怪物的規則 shared/cellar_fight.js。數字都是草稿，模擬 node test/sim/sim_fight.cjs
   //   baseTeam、perPlayer、pressureHp：怪物的壓力照隊伍放大＝基本 × 隻數 ÷ baseTeam ×（1 ＋ perPlayer ×（人數 − 1））＋ pressureHp × 全隊理智壓力的級數
   //   die：每個人「推」擲的骰子；weakMult：看穿之後「推」乘多少（館方助手不算）
   //   seeMod、calmMod：看穿（偵查、神秘學取高的）、安撫（說服）的技能加多少；calmHp：安撫成功順便減多少壓力
@@ -258,7 +258,7 @@ export const NUM = {
   limitedFx: { teamCap: 6, homeSeen: "avatar" }, // 限定帽子的探索加成：全隊強度加起來最多 +teamCap（決定 0085）；館內效果看館友證頭像那隻佩佩戴的帽子
   linesFrom: 4,             // 解鎖幾個選項之後，老主顧（委託人關係線）才開始出現
   lineReward: 8,            // 老主顧的委託給多少靈感
-  // 第 4 版（11-09，決定 0030）：每日簽到、每週全簽到、節日。數字是草稿，跑 test/sim.cjs 看過（維護日誌 11-09_翊文_每日簽到.md）
+  // 第 4 版（11-09，決定 0030）：每日簽到、每週全簽到、節日。數字是草稿，跑 test/sim/sim.cjs 看過（維護日誌 11-09_翊文_每日簽到.md）
   signin: {
     // 照「累計第幾次」七天一輪（斷掉不歸零）：第 1～7 次各給什麼。第 7 次多一點。一輪加起來靈感 17、心情 13（每天平均靈感 2 點多）
     // 第 1 次只給心情：第一天剛開館就多 3 靈感，模擬裡「玩 10 分鐘解鎖幾個」從 4 變 5（11-09 跑過），所以靈感從第 2 次才給
@@ -337,7 +337,7 @@ export const NUM = {
     seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）
     shelfRow: 8,            // 書架一排最多放幾本，超過就分頁
   },
-  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/shop.js）。數字是草稿，跑 test/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
+  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/shop.js）。數字是草稿，跑 test/sim/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
   // 技能的上限：技能書、提升技能、試煉房間、跟館友學都到 NUM.story.skillCap（80）；上課只到 lessonCap（60）；換日的經驗檢定照舊到 99
   shop: {
     gearWorn: 2,            // 現在這位參觀者最多穿幾件裝備
@@ -592,7 +592,7 @@ export const NUM = {
       // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低
       twX: [{ lag: 5, x: 0.4 }, { lag: 20, x: 0.3 }, { lag: Infinity, x: 0.25 }],
       // 照真實股價的比例（11-14，規劃 2.8h，翊文「美股×4、台股×24」「可以（拉回）」）：遊戲價 ＝ 倍數 × 真實價。第壹次換日時把價位換成這個比例（持股照比例換股數、市值不變）；
-      //   之後每天開盤把遊戲價往「倍數 × 真實價」拉回 lamPct% 的差距，壹天最多拉回 2 × feePct − 0.04（%）：拉回量小於來回手續費加 drag，看盤的人收盤前知道方向也賺不到（test/sim_peg.cjs）
+      //   之後每天開盤把遊戲價往「倍數 × 真實價」拉回 lamPct% 的差距，壹天最多拉回 2 × feePct − 0.04（%）：拉回量小於來回手續費加 drag，看盤的人收盤前知道方向也賺不到（test/sim/sim_peg.cjs）
       peg: { us: 32, tw: 1, lamPct: 30 },
       // 直接用真實價（11-14，規劃 2.8l，翊文：「維持，直接用真實價即時成交」）：direct 開＝遊戲價 ＝ 倍數 × 真實價（每分鐘抓、即時成交；下面的錨點、橋、拉回、drag 都不用，測試設 false 走舊的）。
       //   staleMin 超過幾分鐘沒有新的真實價，這支暫停買賣（價停在最後一個價、標「未更新」）；holdPct 每天換日，持股市值的這個 % 從錢包搬進博物館資金（持有成本，取代 drag；%）。
@@ -638,7 +638,7 @@ export const NUM = {
     //   lossPct／winPct 壹位 NPC 壹天最多輸／贏他 perDay 的幾 %（到了就說離開台詞走人）；dayCap 全館 NPC 壹天在賭場淨輸或淨贏的上限（任壹邊到了，今天不再答應、在桌上的也走）；
     //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
     npcCas: { on: true, perNpcDay: 3, tableMax: 3, perHost: 3, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
-    // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
+    // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：博物館資金低到這個負數，拚經濟成功完全不撥款。
     packDayCap: 30000000, // 決定 0116：全館大禮包壹天最多付這麼多籌碼，超過的包當天只發 1～3 星
     health: { low: 30000000, lowPacks: 1, brokePacks: 0 },
@@ -810,7 +810,7 @@ export const MOOD_BEATS = { 開心: "傷心", 傷心: "生氣", 生氣: "開心"
 // ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 content3.js 的 FOE_TEXT；規則 shared/cellar_fight.js） ----------
 // hp ＝壓力（3 隻、1 個人的時候）；boss ＝守門，壓到零進第二階段（hp2、moves2）；mood、color ＝相剋照房間的算法（memberPower）
 // 招：kind "hit" 撲向壹個人的佩佩（倒下壹隻）、"scare" 壹個人扣理智 san、"all" 每個人扣理智 san、"grow" 壓力回 n；w ＝抽到的比重
-// 數字是草稿：node test/sim_fight.cjs 看 1～4 人的勝率和回合數
+// 數字是草稿：node test/sim/sim_fight.cjs 看 1～4 人的勝率和回合數
 export const CELLAR_FOES = [
   { id: "f1a", floor: 1, trait: { kind: "shell" }, hp: 44, mood: "傷心", color: "黃", moves: [{ id: "topple", kind: "hit", w: 2 }, { id: "dust", kind: "scare", san: "1D2", w: 2 }] },
   { id: "f1b", floor: 1, trait: { kind: "steal", every: 2 }, hp: 93, mood: null, color: "紅", moves: [{ id: "cling", kind: "scare", san: "1D3", w: 2 }, { id: "pile", kind: "grow", n: 4, w: 1 }] },

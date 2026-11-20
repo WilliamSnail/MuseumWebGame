@@ -35,7 +35,7 @@ import { coopFightFix, coopFightStart, coopFightView, coopGateDue } from "./coop
 import { fightFoesOf, fightIntentHidden } from "./cellar_fight.js";
 import { coopRouteBack, coopRouteBegin, coopRouteFix, coopRouteMapView, coopRouteOn } from "./coop_route.js";
 
-// ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim_coop.cjs） ----------
+// ---------- 數值（config.js 別人也在改，合作的數值先放這裡；模擬：node test/sim/sim_coop.cjs） ----------
 export const COOP = {
   maxPlayers: 4,          // 一隊最多幾個人（一個人也能下去）
   eachMin: 1, eachMax: 2, // 每個人帶幾隻
@@ -51,7 +51,7 @@ export const COOP = {
   //   3 隻、1 個人跟單人一樣。骰子（1D10，平均 5.5）不會因為人多變大，所以門檻裡「骰子那一份」不放大，只放大「要靠佩佩湊的那一份」。
   //   規劃寫的「門檻 × 隻數 ÷ 3」連骰子那份也放大，6 隻的時候比單人難很多。
   //   perPlayer：每個人都挑自己收藏裡最強的，人越多隊伍越強（3 個人各帶 1 隻，比 1 個人帶 3 隻強），所以每多一個人門檻再 +0.5。
-  //   模擬（node test/sim_coop.cjs）看過：2–4 人的強度勝算跟單人差不多（11-08 的日誌）。
+  //   模擬（node test/sim/sim_coop.cjs）看過：2–4 人的強度勝算跟單人差不多（11-08 的日誌）。
   baseTeam: 3, dice: 5.5, scale: 1, perPlayer: 0.5,
   tentacleSan: "1D3",     // 觸手帽：每次強度檢定，帶牠的人扣這麼多理智（跟單人的一樣，logic3.js 的 cellarResolve 寫死 1D3）
   // 全隊的理智壓力（好玩的機制 1）：看「全隊平均理智」（幽靈算 0、館方助手不算）。

@@ -39,7 +39,7 @@ export function adminEmail(token) {
 export function isAdminInvite(d) { return admObj(d) && d.admin === true && !d.disabled; }
 
 // ---------- 一個人的摘要 ----------
-// 解鎖了幾個：跟「全部解鎖」同一個算法（test/sim.cjs 的 baseLocked）。禁忌、突變、禮物、限定、鑰匙不算；一開始就有的不算
+// 解鎖了幾個：跟「全部解鎖」同一個算法（test/sim/sim.cjs 的 baseLocked）。禁忌、突變、禮物、限定、鑰匙不算；一開始就有的不算
 export function adminUnlock(P) {
   let have = 0, total = 0;
   CATS.forEach(c => PEPE_PARTS.find(p => p.name === c).options.forEach(o => {
