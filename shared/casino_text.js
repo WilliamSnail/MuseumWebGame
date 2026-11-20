@@ -214,11 +214,11 @@ export const CAS_PACKS = [
 // 舊的機率（烤雞 5%、上將茶 70%）每買壹次平均賺幾十萬到一百多萬，可以無限買。test/casino.test.cjs 會擋：餐點、券都不能是穩賺的
 export const CAS_MENU = [
   { n: 1, id: "chicken", name: "烤雞肉", price: 100, odds: 0.0013, mood: 2, icon: "chicken", line: "給你壹份烤雞肉" },
-  { n: 2, id: "tea", name: "冰涼麥茶", price: 45, odds: 0.00064, mood: 1, san: 1, icon: "cup", line: "給你壹杯冰涼麥茶！" },
+  { n: 2, id: "tea", name: "冰涼啤酒", price: 45, odds: 0.00064, mood: 1, san: 1, icon: "cup", line: "給你壹杯冰涼啤酒！" },
   { n: 3, id: "feast", name: "歡樂分享餐", price: 500, odds: 0.00725, mood: 3, icon: "box", line: "歡樂分享餐來了" },
-  { n: 4, id: "juice", name: "堂主推薦葡萄汁", price: 2500, odds: 0.0375, mood: 4, icon: "cup", line: "堂主說這杯最好" },
+  { n: 4, id: "juice", name: "堂主推薦葡萄酒", price: 2500, odds: 0.0375, mood: 4, icon: "cup", line: "堂主說這杯最好" },
   { n: 5, id: "snack", name: "零食壹包", price: 50, odds: 0.0013, icon: "box", line: "", redirect: "chicken" }, // 舊的：點零食會被換成烤雞肉串（價錢、機率都是烤雞肉的）
-  { n: 6, id: "admiral", name: "海軍上將珍藏茶", price: 2000000, odds: 30, mood: 5, san: 2, icon: "cup", line: "海軍上將的珍藏，小心拿" },
+  { n: 6, id: "admiral", name: "海軍上將白蘭地", price: 2000000, odds: 30, mood: 5, san: 2, icon: "cup", line: "海軍上將的珍藏，小心拿" },
   { n: 7, id: "sushi", name: "搶鮮壽司", price: 50, odds: 0.00075, mood: 2, icon: "fish", line: "", special: "sushi" },
   { n: 8, id: "ticket1", name: "大禮包 1 抽券", price: 2000000, odds: 100, ticket: 1, icon: "gift", line: "你買了大禮包 1 抽券" },
   { n: 9, id: "ticket11", name: "大禮包 11 抽券", price: 20000000, odds: 100, ticket: 11, icon: "gift", line: "你買了大禮包 11 抽券" }, // 10 抽的價錢買 11 抽
@@ -226,10 +226,10 @@ export const CAS_MENU = [
 // 餐點變成財產（紀念品）的名字和說明
 export const CAS_PROPS = {
   chicken: { name: "烤雞肉", desc: "餐車的招牌。吃完還記得那個味道。" },
-  tea: { name: "冰涼麥茶", desc: "壹杯冰冰涼涼的麥茶。" },
+  tea: { name: "冰涼啤酒", desc: "壹杯冰冰涼涼的啤酒。" },
   feast: { name: "歡樂分享餐", desc: "壹個人吃不完的分享餐。" },
-  juice: { name: "堂主推薦葡萄汁", desc: "堂主說最好喝的那壹杯。" },
-  admiral: { name: "海軍上將珍藏茶", desc: "海軍上將珍藏的茶，很貴，很香。" },
+  juice: { name: "堂主推薦葡萄酒", desc: "堂主說最好喝的那壹杯。" },
+  admiral: { name: "海軍上將白蘭地", desc: "海軍上將珍藏的白蘭地，很貴，很香。" },
   sushi: { name: "搶鮮壽司", desc: "賭場只有 Hamachi 壽司，這壹盤是搶來的。" },
   gold: { name: "金色籌碼", desc: "抽到五星億萬大禮包的人才有。" },
   table: { name: "牌桌的小旗", desc: "跟館友同桌打過牌的紀念。" },

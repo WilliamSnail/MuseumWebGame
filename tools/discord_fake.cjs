@@ -641,7 +641,7 @@ async function all() {
     assert.ok(sel.options.every(o => o.label.length <= 100 && o.value && o.description.length <= 100));
     const other = await press(sel.custom_id, randId(), { menu: true, values: ["tea"] }); assert.strictEqual(other.flags, 64); has(other.text, "不是你的");
     const w0 = (await walletOf(u.uid)).chips; const buy = await press(sel.custom_id, u.did, { menu: true, values: ["tea"] });
-    assert.strictEqual(buy.type, 7); has(buy.text, "冰涼麥茶", "謝謝"); hasNot(buy.text, "理智"); assert.strictEqual(buy.comps[0].components[0].type, 3, "選單還在，可以再買");
+    assert.strictEqual(buy.type, 7); has(buy.text, "冰涼啤酒", "謝謝"); hasNot(buy.text, "理智"); assert.strictEqual(buy.comps[0].components[0].type, 3, "選單還在，可以再買");
     assert.strictEqual((await walletOf(u.uid)).chips, w0 - 1750);
     const poor = await press(sel.custom_id, u.did, { menu: true, values: ["admiral"] }); // 200 萬，買得起（100 萬 + 獎勵）？買不起就會說錢不夠
     assert.strictEqual(poor.type, 7);
