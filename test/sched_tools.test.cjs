@@ -4,14 +4,14 @@ const assert = require("assert");
 const fs = require("fs"), os = require("os"), path = require("path");
 const { load } = require("./load_shared.cjs");
 const G = load();
-const SHIP = require("../tools/ship.cjs");
-const P = require("../tools/day_plan.cjs");
-const C = require("../tools/day_check.cjs");
-const D = require("../tools/day_lib.cjs");
-const N = require("../tools/day_new.cjs");
-const PR = require("../tools/day_pr.cjs");
-const LG = require("../tools/ledger.cjs");
-const IS = require("../tools/issue.cjs");
+const SHIP = require("../tools/release/ship.cjs");
+const P = require("../tools/content/day_plan.cjs");
+const C = require("../tools/content/day_check.cjs");
+const D = require("../tools/content/day_lib.cjs");
+const N = require("../tools/content/day_new.cjs");
+const PR = require("../tools/content/day_pr.cjs");
+const LG = require("../tools/content/ledger.cjs");
+const IS = require("../tools/release/issue.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack || e.message); } };
@@ -20,13 +20,13 @@ const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log(
 T("ship：內容路徑（content、維護日誌、公告、.claude、打包檔）才算內容", () => {
   ["content/weeks/2026-W47/d2.json", "content/story/帳本.json", "維護日誌/2026/11-16_翊文_x.md", "content/notices/upd-x.json", ".claude/交接/x.md", "shared/npc_roster.js", "shared/map_data.js"]
     .forEach(f => assert.ok(SHIP.isContentFile(f), f));
-  ["web/src/main.js", "shared/map.js", "shared/notices.js", "shared/story.js", "functions/index.js", "tools/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
+  ["web/src/main.js", "shared/map.js", "shared/notices.js", "shared/story.js", "functions/index.js", "tools/release/ship.cjs", "test/a.test.cjs", "package.json", "docs/決定/0001.md", "contentX/a.json", "xcontent/a.json"]
     .forEach(f => assert.ok(!SHIP.isContentFile(f), f));
 });
 T("ship：全部是內容才跳過；有任何程式檔、沒有檔案、--full 都照舊全跑", () => {
   const c = ["content/weeks/2026-W47/d2.json", "維護日誌/2026/a.md", "content/notices/upd-x.json"];
   assert.strictEqual(SHIP.contentOnly(c), true);
-  assert.strictEqual(SHIP.contentOnly([...c, "tools/day_check.cjs"]), false);
+  assert.strictEqual(SHIP.contentOnly([...c, "tools/content/day_check.cjs"]), false);
   assert.strictEqual(SHIP.contentOnly([...c, "shared/story.js"]), false);
   assert.strictEqual(SHIP.contentOnly([]), false, "沒有檔案不能當成只動內容");
   assert.strictEqual(SHIP.contentOnly(undefined), false);
@@ -134,7 +134,7 @@ T("day:check：館外地圖打包有沒有跟上", () => {
   assert.strictEqual(C.mapFresh(dir).ok, true, "沒有地圖資料不擋");
   fs.writeFileSync(path.join(dir, "content", "map", "館外.json"), JSON.stringify({ version: 1, spots: [{ id: "m-a", name: "巷口", layer: "L1", from: "2026-11-18", x: 1, y: 2, line: "一句" }] }));
   assert.strictEqual(C.mapFresh(dir).ok, false, "shared/map_data.js 不見了");
-  const pack = require("../tools/map_pack.cjs");
+  const pack = require("../tools/content/map_pack.cjs");
   fs.writeFileSync(path.join(dir, "shared", "map_data.js"), pack.source(pack.spots(path.join(dir, "content", "map", "館外.json"))));
   assert.strictEqual(C.mapFresh(dir).ok, true);
   fs.writeFileSync(path.join(dir, "content", "map", "館外.json"), JSON.stringify({ version: 1, spots: [] }));
@@ -188,7 +188,7 @@ T("day:pr：PR 說明有書、特展、警告，不寫謎底細節；日誌草�
   const body = PR.prBody(info);
   ["《書》", "svg 新畫 1 幅", "揭露節奏：第 1 次", "某個警告", "全部通過", "tools/x.cjs"].forEach(s => assert.ok(body.includes(s), s));
   assert.ok(!body.includes("牆上的記號高度"), "不寫揭露的細節");
-  const spec = PR.logSpec(info), { logText } = require("../tools/new_doc.cjs");
+  const spec = PR.logSpec(info), { logText } = require("../tools/content/new_doc.cjs");
   assert.ok(logText(spec, "2026-11-18 08:00:00", "1.0").includes("類型: 內容"));
   assert.ok(spec.scope.every(f => f.startsWith("content/")));
   assert.deepStrictEqual(PR.warningLines("✓ a\n  警告 一\n警告 二\n"), ["一", "二"]);
@@ -319,7 +319,7 @@ T("strict：週骨架的「待寫」沒改掉就擋（answer 不算），改掉�
   assert.ok(!has(C.strictIssues(mk("2026-11-16", { ledger: L, wk: { ...filled, answer: undefined }, day })), "week.json 還有"), "answer 不放不算待寫");
 });
 T("day:new 週一：已有 week.json 不覆蓋（main 只在沒有時才建）", () => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "day_new.cjs"), "utf8");
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "content", "day_new.cjs"), "utf8");
   assert.ok(src.includes("if (p.isMonday && !wk)"), "只有週一而且沒有 week.json 才建");
   assert.ok(src.includes("weekSkeleton(p, ctx.ledger"));
 });

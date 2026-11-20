@@ -1,6 +1,6 @@
 // 音效與特效總表（11-16）：docs/素材/音效與特效總表.md 由程式產生（npm run fx:report，不進 git），--check 只檢查程式跟 fx_notes.json 對得上，加上解析用的正規式
 const fs = require("fs"), assert = require("assert"), cp = require("child_process"), path = require("path");
-const R = require("../tools/fx_report.cjs");
+const R = require("../tools/check/fx_report.cjs");
 let n = 0;
 const t = (name, fn) => { fn(); n++; };
 
@@ -39,9 +39,9 @@ t("fnAt 找得到外面的函式", () => {
 
 // 總表不進 git：先檢查「程式跟清單對得上」，再在本機產生一次，下面的檢查讀產生出來的檔
 {
-  const chk = cp.spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "fx_report.cjs"), "--check"], { encoding: "utf8" });
+  const chk = cp.spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "check", "fx_report.cjs"), "--check"], { encoding: "utf8" });
   assert.strictEqual(chk.status, 0, "程式跟 content/fx_notes.json 對不上：跑 npm run fx:report\n" + (chk.stderr || chk.stdout));
-  const gen = cp.spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "fx_report.cjs")], { encoding: "utf8" });
+  const gen = cp.spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "check", "fx_report.cjs")], { encoding: "utf8" });
   assert.strictEqual(gen.status, 0, "產生總表失敗\n" + (gen.stderr || gen.stdout));
   n++;
 }

@@ -2,7 +2,7 @@
 // 名字表乾淨、漲跌縮放和上限、休市不動、週末不動、缺資料用前一天、資料到了沒、壞資料、抓資料腳本的整理。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const F = require("../tools/stocks_fetch.cjs");
+const F = require("../tools/content/stocks_fetch.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const ids = G => G.OUT_STOCKS.map(s => s.id);
@@ -90,7 +90,7 @@ T("repo 裡的 content/stocks/daily.json 格式沒問題", G => {
   assert.deepStrictEqual(F.check(d), []);
 });
 T("寫進資料庫的文件：只有 updated 和 days、格式壞的不寫", G => {
-  const P = require("../tools/stocks_publish.cjs");
+  const P = require("../tools/content/stocks_publish.cjs");
   const d = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "..", "content", "stocks", "daily.json"), "utf8"));
   const doc = P.buildDoc(Object.assign({ extra: 1 }, d)); assert.strictEqual(Object.keys(doc).sort().join(), "days,updated");
   assert.throws(() => P.buildDoc({ days: { "2026-11-12": { nope: 1 } } })); assert.throws(() => P.buildDoc({ days: {} })); assert.throws(() => P.buildDoc(null));

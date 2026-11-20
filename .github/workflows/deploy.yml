@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  # 測試：跟 prepare 同時跑。這個 commit 的 tree 跟某個 PR 的 CI 全套測過的 tree 完全一樣，就跳過重跑（tools/deploy_gate.cjs 判斷；
+  # 測試：跟 prepare 同時跑。這個 commit 的 tree 跟某個 PR 的 CI 全套測過的 tree 完全一樣，就跳過重跑（tools/release/deploy_gate.cjs 判斷；
   # 判斷不出來、手動部署、中間有別包先合進 main，一律照跑）。測試沒過 → test 紅 → deploy 不會跑（needs）。
   test:
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
         name: 要不要重跑測試（tree 跟 PR 的 CI 測過的一樣就不用）
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/deploy_gate.cjs --github-output
+        run: node tools/release/deploy_gate.cjs --github-output
       - uses: actions/setup-node@v5
         if: steps.gate.outputs.skip_tests != 'true'
         with:
@@ -131,12 +131,12 @@ jobs:
         if: env.HAS_KEY == 'true'
         run: test -s dist/index.html
       # 函式沒變就不部署函式（11-16，翊文：Cloud Functions 壹個月 81 美元，幾乎都是每次部署整批重建 40 多個函式）：
-      # tools/fn_hash.cjs 算 functions/ 這包（含複製進去的 shared、content）的指紋；上次部署過同壹個指紋（Actions cache 有 fn-deployed-<指紋>）就只部署網頁和規則。
+      # tools/release/fn_hash.cjs 算 functions/ 這包（含複製進去的 shared、content）的指紋；上次部署過同壹個指紋（Actions cache 有 fn-deployed-<指紋>）就只部署網頁和規則。
       # 手動部署（workflow_dispatch）壹律連函式壹起。cache 7 天沒用會被清掉，清掉就照常部署壹次，不會漏
       - name: 算函式這包的指紋
         id: fnh
         if: env.HAS_KEY == 'true'
-        run: echo "hash=$(node tools/fn_hash.cjs | tail -1)" >> "$GITHUB_OUTPUT"
+        run: echo "hash=$(node tools/release/fn_hash.cjs | tail -1)" >> "$GITHUB_OUTPUT"
       - name: 這個指紋部署過了嗎
         id: fnseen
         if: env.HAS_KEY == 'true' && github.event_name == 'push'
@@ -181,7 +181,7 @@ jobs:
         with:
           path: .fn-deployed
           key: fn-deployed-${{ steps.fnh.outputs.hash }}
-      # 今日館訊主要由 ship 部署成功後叫，定時備援在 09:17、09:37（tools/announce.cjs；定時的會等部署完才發）。這裡補的是：沒用 ship 合併的、早上部署壞掉現在修好的
+      # 今日館訊主要由 ship 部署成功後叫，定時備援在 09:17、09:37（tools/content/announce.cjs；定時的會等部署完才發）。這裡補的是：沒用 ship 合併的、早上部署壞掉現在修好的
       - name: 讀哪些公告發過了
         if: env.HAS_KEY == 'true'
         continue-on-error: true
@@ -196,6 +196,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if node tools/announce.cjs --any-due; then
+          if node tools/content/announce.cjs --any-due; then
             gh workflow run discord-scheduled.yml --repo "$GITHUB_REPOSITORY" --ref main
           fi

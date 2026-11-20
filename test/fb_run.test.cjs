@@ -1,6 +1,6 @@
-// npm run fb：只留「做這個動作」那步、拿出數字、比兩次（tools/fb_run.cjs，翊文 11-15：「需要的腳本都要寫，才能快速準確」）
+// npm run fb：只留「做這個動作」那步、拿出數字、比兩次（tools/fb/fb_run.cjs，翊文 11-15：「需要的腳本都要寫，才能快速準確」）
 const assert = require("assert");
-const { stepLines, numbersOf, diffNumbers, parseArgs } = require("../tools/fb_run.cjs");
+const { stepLines, numbersOf, diffNumbers, parseArgs } = require("../tools/fb/fb_run.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
 T("只留做這個動作那步、拿掉雜訊", () => {

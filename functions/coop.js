@@ -22,7 +22,7 @@ import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logi
 import { NUM } from "./shared/config.js";
 import { switchVisitor } from "./shared/visitors.js";
 import { eventLive, eventRunOf, eventsFromWeeks } from "./shared/events.js";
-import { EVENT_WEEKS } from "./shared/events_data.js"; // tools/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
+import { EVENT_WEEKS } from "./shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
 import { traceRunEnd } from "./coop_trace.js";
 

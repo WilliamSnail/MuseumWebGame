@@ -106,7 +106,7 @@ export function dcDigestText(list, day, areaOf, areas) {
   lines.push(tail);
   return lines.join("\n");
 }
-// 真的發出去的那則：彙整＋入館連結（跟 tools/discord_post.cjs 的公告壹樣的尾巴）。沒有公告回 ""
+// 真的發出去的那則：彙整＋入館連結（跟 tools/content/discord_post.cjs 的公告壹樣的尾巴）。沒有公告回 ""
 export function dcDigestPost(list, day, areaOf, areas) {
   const t = dcDigestText(list, day, areaOf, areas);
   return t ? `${t}\n\n🎟 入館：${DC_DIGEST_SITE}` : "";

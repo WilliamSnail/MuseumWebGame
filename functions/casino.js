@@ -12,7 +12,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //    casinoLive/main   現在的實況主和最近一則感謝（data：JSON 字串）。開播、下播、斗內都在同一個 Firestore 交易裡改；斗內同時改兩邊的錢包（不經過莊家），實況主還沒有錢包就當場補開場籌碼再加
 //    /casinoLive（Realtime Database）  同一份的公開鏡像（只有暱稱和 uid，館友讀得到），交易成功之後寫；用 seq 擋掉晚到的舊資料。畫面聽這裡，跳「感謝」和大廳的「正在實況」
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
-//    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
+//    這週的內容從 shared/casino_week_data.js 來（tools/release/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  Yuga Bot 日報（11-13）：act report。每天第一個來問的人觸發壹次「全館快照」（一致讀取所有錢包、莊家、打到一半的注），存 casinoReport/{day}（data：JSON），跟上一份相減就是那段時間的帳。
 //    錢包的 led、莊家的 led 記了每一條憑空、消失、莊家進出的路（shared/casino/book.js）；快照加起來對不上開場就 console.error（守恆壞了）
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。

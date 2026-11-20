@@ -1,5 +1,5 @@
 // 館外股票的每日漲跌（11-13）：把真實的漲跌幅換成遊戲裡的漲跌。只算數字，買賣規則不在這裡。
-// 資料長這樣（content/stocks/daily.json 的 days，由 tools/stocks_fetch.cjs 每天產生）：
+// 資料長這樣（content/stocks/daily.json 的 days，由 tools/content/stocks_fetch.cjs 每天產生）：
 //   daily.days = { "2026-11-12": { greeneye: -1.23, redclaw: 0.8, squarewin: null, ... }, ... }
 //   key＝真實市場的日期；值＝那天的漲跌幅（%，不是小數）；null＝那天這家休市；整天都沒有 key＝沒抓到（或週末）。
 // 對應：市場日期 M 的漲跌，在遊戲日期 M 的隔天發生。美股台灣時間 M+1 早上才收盤，遊戲 05:00 換日，剛好接得上。

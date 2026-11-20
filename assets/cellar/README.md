@@ -1,6 +1,6 @@
 # 地下室的素材（11-11）
 
-翊文用 prompt C1～C6 生的，`tools/cut_sheet.py` 去背切開。遊戲用的是縮小的 webp：`web/public/cellar/`。
+翊文用 prompt C1～C6 生的，`tools/assets/cut_sheet.py` 去背切開。遊戲用的是縮小的 webp：`web/public/cellar/`。
 
 - `_c1-panels.png` → `panel-stone` 鐵框石面板、`notice` 釘在牆上的告示、`banner-iron` 鐵橫條、`scroll` 捲軸
 - `_c2-doors.webp` → `door-open` 開著、`door-locked` 上鎖、`door-current` 現在這層（發光）、`door-sealed` 封起來（還沒用）

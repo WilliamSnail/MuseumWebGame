@@ -1,13 +1,13 @@
 // 決定 0121：景氣分市場（每個市場自己的景氣、接真實台股／美股、放大、會回平均、影響來館和花錢）。node test/world_market.test.cjs（npm test 也會跑）
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
-const MP = require("../tools/market_pack.cjs");
+const MP = require("../tools/content/market_pack.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); G.NUM.casino.grants = []; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const mk = G => G.casHouseFix(G.casHouseNew(), "2026-11-16").house;
 const px = (G, k) => { const o = {}; for (const s of G.OUT_STOCKS) o[s.id] = 100 * k; return o; };
-T("市場名單 shared/world_markets.js 跟上 content/world/markets（跑 node tools/market_pack.cjs）", () => {
+T("市場名單 shared/world_markets.js 跟上 content/world/markets（跑 node tools/content/market_pack.cjs）", () => {
   assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_markets.js"), "utf8"), MP.source(MP.markets()));
 });
 T("每個單位都在某個市場；沒寫 market 就用 sector；名單裡沒有的當公共", G => {

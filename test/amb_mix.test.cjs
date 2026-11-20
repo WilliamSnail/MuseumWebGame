@@ -41,7 +41,7 @@ function fakeCtx(log) {
   };
 }
 function loadFx() {
-  const code = require("../tools/fx_source.cjs").allSource();
+  const code = require("../tools/check/fx_source.cjs").allSource();
   const log = { made: 0, started: 0, stopped: 0 };
   const timers = new Set(); let id = 0;
   const ctx = fakeCtx(log);

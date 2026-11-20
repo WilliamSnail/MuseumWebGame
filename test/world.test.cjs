@@ -1,7 +1,7 @@
 // 世界經濟的名單和腳本（決定 0086）：node test/world.test.cjs（npm test 也會跑）
 // 名單檢查（兩層加總、parent、股票只掛一處、劇情單位）、NPC 的隸屬；world:unit／world:npc／world:gdp 三支腳本（在暫存資料夾裡跑，不動 repo 的檔案）。
 const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path");
-const L = require("../tools/world_lib.cjs"), U = require("../tools/world_unit.cjs"), N = require("../tools/world_npc.cjs"), GD = require("../tools/world_gdp.cjs"), WC = require("../tools/world_check.cjs");
+const L = require("../tools/content/world_lib.cjs"), U = require("../tools/content/world_unit.cjs"), N = require("../tools/content/world_npc.cjs"), GD = require("../tools/content/world_gdp.cjs"), WC = require("../tools/check/world_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
 const STOCKS = ["islandforge", "greeneye"];
@@ -83,7 +83,7 @@ T("world:gdp 照現在的 content/economy.json 跑（--dry）：同樣的數字�
   const e = rd(path.join(__dirname, "..", "content", "economy.json")).gdp, f = path.join(tmp(), "e.json"); fs.writeFileSync(f, JSON.stringify({ gdp: e }));
   const out = []; GD.main(["--quarter", e.quarter, "--yoy", String(e.yoy), "--published", e.published, "--dry"], f, x => out.push(x)); assert.ok(/沒有差異/.test(out.join("")));
 });
-const B = require("../tools/world_budget.cjs"), SM = require("../tools/world_sim.cjs"), NW = require("../tools/world_news.cjs");
+const B = require("../tools/content/world_budget.cjs"), SM = require("./sim/world_sim.cjs"), NW = require("../tools/content/world_news.cjs");
 const { load } = require("./load_shared.cjs");
 T("world:budget：每個集團的 NPC 人數、perDay、每天最多花、撐幾天；份額太小會被擋", () => {
   const G = load({ __realMoney: true }), us = L.readUnits(), ns = L.readNpcs(), r = B.budget(G, us, ns);
@@ -114,7 +114,7 @@ T("world:news：加、檢查、數字和真實名字和預測擋掉、3～5 則�
   const before = fs.readFileSync(f, "utf8"); run(["add", "--title", "再一則", "--line", "也很平靜。", "--tone", "flat", "--dry"]); assert.strictEqual(fs.readFileSync(f, "utf8"), before, "--dry 不寫");
   run(["clear"]); assert.ok(!("market" in JSON.parse(fs.readFileSync(f, "utf8"))));
 });
-const HL = require("../tools/world_health.cjs");
+const HL = require("../tools/check/world_health.cjs");
 T("world:health／world:sim --scan／world:news draft：景氣差時科技進緊縮裁員、有下限；草稿過檢查", () => {
   const G = load({ __realMoney: true }), ns = L.readNpcs(), NT = ["casino.worldDoc.trade.wealthW=0", "casino.worldDoc.trade.loan.pct=0"] /* 決定 0119 的交易另外在 world_trade.test 測；這裡看舊的健康值規則 */, r = SM.sim(G, ns, { days: 7 * 6, b: -1, set: NT }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; });
   const x = HL.rows(G, r.house, names), tech = x.rows.find(t => t.id === "g-island"); assert.ok(tech && ["squeeze", "layoff"].includes(tech.state), "景氣 −1：科技緊縮或裁員 " + tech.state); assert.ok(tech.mult >= G.NUM.casino.worldDoc.health.floor);
@@ -123,12 +123,12 @@ T("world:health／world:sim --scan／world:news draft：景氣差時科技進緊
   const sc = SM.scan(() => load({ __realMoney: true }), ns, NT); assert.strictEqual(sc.length, 6); assert.ok(sc.every(t => t.ok), "六種組合都守恆不破產"); const lowB = sc.find(t => t.b === -1 && t.days === 90); assert.ok(lowB.minMult <= 0.31 && lowB.layoff > 0, "景氣谷底 90 天會裁員，有下限");
   assert.ok(sc.find(t => t.b === 1 && t.days === 30).perDay >= sc.find(t => t.b === -1 && t.days === 30).perDay, "景氣好時 NPC 花得比較多");
   const G2 = load({ __realMoney: true }), r2 = SM.sim(G2, ns, { days: 7 * 4, b: -1, set: NT }), dr = NW.draft(G2.whNews(r2.house, r2.house.wh.day, 14), L.readUnits(), "2026-W49", "3");
-  assert.ok(dr.length >= 1 && dr.every(t => /npm run world:news -- add/.test(t.command))); const g = load(), c = { W: g.WORLD_NEWS, stockIds: g.OUT_STOCKS.map(q => q.id), names: g.OUT_STOCKS.map(q => q.name).concat(g.IN_STOCKS.map(q => q.name)), banned: require("../tools/week_check.cjs").MARKET_BANNED };
+  assert.ok(dr.length >= 1 && dr.every(t => /npm run world:news -- add/.test(t.command))); const g = load(), c = { W: g.WORLD_NEWS, stockIds: g.OUT_STOCKS.map(q => q.id), names: g.OUT_STOCKS.map(q => q.name).concat(g.IN_STOCKS.map(q => q.name)), banned: require("../tools/content/week_check.cjs").MARKET_BANNED };
   dr.forEach(t => assert.deepStrictEqual(NW.checkItem({ title: t.title, line: t.line, tone: t.tone, ref: t.ref }, c), [], t.title + " 要過新聞檢查"));
 });
-const WE = require("../tools/world_events_pack.cjs"), EV = require("../tools/world_event.cjs");
+const WE = require("../tools/content/world_events_pack.cjs"), EV = require("../tools/content/world_event.cjs");
 T("world_events 打包跟 content/weeks 一致；world:event 加、擋、list、clear（暫存資料夾，不打包）", () => {
-  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_events.js"), "utf8"), WE.source(WE.events()), "shared/world_events.js 沒跟上（跑 node tools/world_events_pack.cjs）");
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "..", "shared", "world_events.js"), "utf8"), WE.source(WE.events()), "shared/world_events.js 沒跟上（跑 node tools/content/world_events_pack.cjs）");
   const G = load(), d = tmp(); fs.mkdirSync(path.join(d, "2026-W47")); const f = path.join(d, "2026-W47", "week.json"); fs.writeFileSync(f, JSON.stringify({ week: "2026-W47", start: "2026-11-16" }, null, 2));
   const out = [], run = a => EV.main(a.concat(["--week", "2026-W47"]), d, G, x => out.push(x), false);
   run(["san", "--date", "2026-11-18", "--npc", "c-bus", "--n", "-5"]); run(["unrest", "--date", "2026-11-19", "--unit", "g-island", "--n", "8"]); run(["mood", "--date", "2026-11-20", "--n", "-10"]);

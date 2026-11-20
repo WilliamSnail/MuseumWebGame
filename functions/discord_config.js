@@ -5,12 +5,12 @@
 //
 //  模擬器（FUNCTIONS_EMULATOR === "true"）才會用測試設定，正式環境永遠用下面的常數：
 //    環境變數 DISCORD_TEST_PUBLIC_KEY（64 個十六進位字）、DISCORD_TEST_GUILD_ID（數字），
-//    或模擬器 Firestore 的 discordTest/config（tools/discord_fake.cjs 每次跑會產生新的金鑰組放進去）。
+//    或模擬器 Firestore 的 discordTest/config（tools/content/discord_fake.cjs 每次跑會產生新的金鑰組放進去）。
 // ================================================================
 import { getFirestore } from "firebase-admin/firestore";
 
 export const DISCORD = {
-  applicationId: "300999289197428737", // Application ID（註冊指令用，tools/discord_commands.cjs 從環境變數讀，這裡只是記錄）
+  applicationId: "300999289197428737", // Application ID（註冊指令用，tools/content/discord_commands.cjs 從環境變數讀，這裡只是記錄）
   publicKey: "b3c10a482cc94d6d2e53c95701af8c0758e42e5a1e17b6ac04d0f7864a3a1075", // Public Key：64 個十六進位字，驗 Discord 簽名用
   guildId: "291221925571854347", // 佩佩博物館 Discord 伺服器的 ID：只接受這個伺服器來的指令
 };

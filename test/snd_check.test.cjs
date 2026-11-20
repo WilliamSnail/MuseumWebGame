@@ -1,9 +1,9 @@
-// 聲音狀態：結構檢查（tools/snd_check.cjs）、「該放哪首」的決定（web/src/audio_state.js 的 ambFor）、每個房間的環境音換掉後計時器都停（假的 AudioContext）
+// 聲音狀態：結構檢查（tools/check/snd_check.cjs）、「該放哪首」的決定（web/src/audio_state.js 的 ambFor）、每個房間的環境音換掉後計時器都停（假的 AudioContext）
 // 11-16 翊文：「被理智嚇退出房間，原本在房間裡的音效不會停」。
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-const { checkFx, checkUi, ambEntries, run } = require("../tools/snd_check.cjs");
+const { checkFx, checkUi, ambEntries, run } = require("../tools/check/snd_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, e.message); } };
 const root = path.join(__dirname, "..");
@@ -90,7 +90,7 @@ T("ambFor：圖庫的走音、失敗作之夜只在該房間算；自由模式�
 
 // ---- fx.js：每個房間建了再換掉，計時器都停（假的 AudioContext） ----
 function loadFx() {
-  const code = require("../tools/fx_source.cjs").allSource();
+  const code = require("../tools/check/fx_source.cjs").allSource();
   const log = { made: 0 };
   const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {}, cancelScheduledValues() {} });
   const node = () => { log.made++; return { connect(x) { return x; }, disconnect() {}, start() {}, stop() {} }; };

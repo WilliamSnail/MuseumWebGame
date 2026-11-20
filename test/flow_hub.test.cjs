@@ -1,5 +1,5 @@
 // 銀行「金流」頁籤的資料（11-17）：node test/flow_hub.test.cjs（npm test 也會跑）
-// 來源有沒有歸到線，由 tools/books_sign_check.cjs 掃（那支也在 npm test 裡）；這裡測：名單全部有線、方向對、led0 相減、沒有 led0 回 null
+// 來源有沒有歸到線，由 tools/check/books_sign_check.cjs 掃（那支也在 npm test 裡）；這裡測：名單全部有線、方向對、led0 相減、沒有 led0 回 null
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;

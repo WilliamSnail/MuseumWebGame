@@ -76,7 +76,7 @@ import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來
 import "./ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
 import "./ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/themeshow.js
-import "./ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
+import "./ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/board.js，資料是 tools/content/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
 import "./ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/mates.js
 import "./ui_pass.js"; // 館友證和典藏冊（11-10，決定 0058，整合的第 2 步）：規則在 shared/pass.js；要放在 ui_login、ui_signin、ui_story 後面
 import "./ui_hub.js"; // 大廳的總覽（11-10，決定 0061）：要放在 ui_signin、ui_story、ui_pass 後面；ui_today 它自己會 import

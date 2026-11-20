@@ -1,10 +1,10 @@
-# 定時發到 Discord（tools/announce.cjs）：今日館訊（每天排程 08:23 開始寫、約 08:55 部署完；部署成功後馬上叫這支，定時 09:17／09:37 是備援）、限時活動開跑、content/公告排程.json 的預約公告。
-# 只在該發的時間跑：repo 是私有的，一直檢查會用光免費的 Actions 額度（理由見 tools/announce.cjs）。
+# 定時發到 Discord（tools/content/announce.cjs）：今日館訊（每天排程 08:23 開始寫、約 08:55 部署完；部署成功後馬上叫這支，定時 09:17／09:37 是備援）、限時活動開跑、content/公告排程.json 的預約公告。
+# 只在該發的時間跑：repo 是私有的，一直檢查會用光免費的 Actions 額度（理由見 tools/content/announce.cjs）。
 # 發過的記在 Actions cache，到點和補的那次不會重發。
 name: Discord 預約公告
 
 on:
-  # >>> 定時（tools/announce.cjs --sync 產生的，不要手改）
+  # >>> 定時（tools/content/announce.cjs --sync 產生的，不要手改）
   schedule:
     - cron: "17 1 * * *" # 今日館訊：台灣每天 09:17（備援：排程 08:23 開始、約 08:55 部署完，備援排在部署之後）
     - cron: "37 1 * * *" # 今日館訊：補一次
@@ -48,14 +48,14 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        # 最新壹次部署不是現在 main 的那個 commit（還沒開始跑）就寫 stale/：定時備援會等部署完才發今日館訊（tools/announce.cjs 的 deployNotReady）
+        # 最新壹次部署不是現在 main 的那個 commit（還沒開始跑）就寫 stale/：定時備援會等部署完才發今日館訊（tools/content/announce.cjs 的 deployNotReady）
         run: echo "state=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow=deploy.yml --branch main --limit 1 --json status,conclusion,headSha --jq '.[0] | if .headSha == env.GITHUB_SHA then ([.status, .conclusion] | join("/")) else "stale/" end')" >> "$GITHUB_OUTPUT"
       - name: 發到時間的公告
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
           DEPLOY_STATE: ${{ steps.deploy.outputs.state }}
-        run: node tools/announce.cjs
+        run: node tools/content/announce.cjs
       - name: 記下哪些發過了
         if: always()
         uses: actions/cache/save@v4

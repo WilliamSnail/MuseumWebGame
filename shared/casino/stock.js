@@ -192,7 +192,7 @@ function stPegDirect(H, id, target, before, mult) {
   H.held[id] = Math.floor(stN(H.held[id]) * before / target);
   return true;
 }
-// 手動換成真實價（11-15，翊文：「台股還停在 10,000 可以我們先手動改一次嗎」；tools/fb_task.cjs 的 stock-tw-peg）：
+// 手動換成真實價（11-15，翊文：「台股還停在 10,000 可以我們先手動改一次嗎」；tools/fb/fb_task.cjs 的 stock-tw-peg）：
 //   closes ＝ { id: 最近壹次收盤的真實價 }。跟換日時壹樣用 stPegDirect（錢包照 peg.ev 換股數、市值不變；已經換過這個倍數的不再換）。回傳 [{ id, from, to }]
 export function casStockPegNow(house, closes) {
   const H = casStockHouseFix(house), C = NUM.casino.stock, out = [];

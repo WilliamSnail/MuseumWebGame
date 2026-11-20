@@ -163,7 +163,7 @@ export function storyPackFor(lib, label, fb) {
   const reg = lib.weeks[label], fbName = reg ? null : (fb && lib.fallback[fb] ? fb : pickFallback(lib, label)), src = reg || (fbName ? lib.fallback[fbName] : null);
   return src && src.week ? { src, fbName } : null;
 }
-// skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
+// skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/content/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
 // Yuga Bot 交代的任務：giver 只認 "yuga"，says／done 要是有字的字串（最多 YUGA_MAX 字），不然當作沒有這回事。備用的壹天不收（不知道那天劇情走到哪）
 export const YUGA_MAX = 40;
 // 每日任務的交代人（決定 0145，帳本 taskGivers.list 是正本；這裡只放畫面要的名字，新的交代人加在這裡和帳本）
@@ -891,7 +891,7 @@ export function sanitizeSvg(svg, prefix = "") {
   return out;
 }
 
-// ---------- 預算（tools/week_check.cjs 和測試用） ----------
+// ---------- 預算（tools/content/week_check.cjs 和測試用） ----------
 const maxChoiceInsp = r => Math.max(0, ...asList(r && r.choices).map(c => +(c && c.success && c.success.insp) || 0));
 const addR = (a, r) => { const x = reward(r); a.insp += x.insp; a.mood += x.mood; a.items += x.items.length; a.skills += x.skill ? 1 : 0; return a; };
 // 一天全部拿到的（週包裡的原始格式）

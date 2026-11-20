@@ -18,7 +18,7 @@
 
 | AI 在哪裡 | 怎麼按 |
 |---|---|
-| 翊文電腦上（Claude Code、Antigravity） | 用電腦上登入好的 `gh`：`npm run -s wf -- 流程.yml -f 欄位=值`（`tools/wf_run.cjs`，會等跑完、照結果回報）。多行文字寫進檔案，用 `--file 欄位=檔案` |
+| 翊文電腦上（Claude Code、Antigravity） | 用電腦上登入好的 `gh`：`npm run -s wf -- 流程.yml -f 欄位=值`（`tools/release/wf_run.cjs`，會等跑完、照結果回報）。多行文字寫進檔案，用 `--file 欄位=檔案` |
 | 雲端、接得上 GitHub | 要翊文給它這個 repo 的權限，而且包含執行 Actions；只能讀的話發不出去 |
 | 接不上 GitHub | 把要發的文字寫好給翊文，翊文到 GitHub 的 **Actions → 流程名字 → Run workflow** 貼上、按執行 |
 
@@ -37,7 +37,7 @@
 
 ## 四、發 Discord 公告的規矩
 
-> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。**多行文字壹定放檔案**：`ship --say-now-file 檔案`、`npm run say -- --file 檔案`（Windows 上 npm run 經過 cmd.exe，參數裡換行後面會被切掉；11-17「集團股開放買賣」只發出標題）。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
+> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/content/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。**多行文字壹定放檔案**：`ship --say-now-file 檔案`、`npm run say -- --file 檔案`（Windows 上 npm run 經過 cmd.exe，參數裡換行後面會被切掉；11-17「集團股開放買賣」只發出標題）。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
 
 1. **要翊文同意才發**（翊文說「發 Discord」「公告 Discord」才算）。發出去就收不回來。
 2. 遊戲裡也要有館方公告（`npm run notice`，檔在 `content/notices/`），不能只發 Discord。
@@ -52,4 +52,4 @@
   - 限時活動、預約公告也是它寫進 `content/weeks/<週>/week.json` 的 `events`、`content/公告排程.json`；到時間由 `discord-scheduled.yml` 發到 Discord。
 - **部署完的當天更新**：`deploy.yml` 合併到 main、部署成功後，自動把當天的「館方公告」整理發到 Discord。
 - 所以：**每週內容、每天的館訊、活動開跑的通知都是自動的**。手動的 `discord-announce.yml` 只用在翊文另外交代的公告（例如改版說明）。
-- 臨時加活動（例如 11-12 的「掉進地下的找零」）：寫進這週的 `week.json` 的 `events`，跑 `node tools/week_check.cjs content/weeks/<週>`，走 PR 上線；開跑時 Discord 會自己發。
+- 臨時加活動（例如 11-12 的「掉進地下的找零」）：寫進這週的 `week.json` 的 `events`，跑 `node tools/content/week_check.cjs content/weeks/<週>`，走 PR 上線；開跑時 Discord 會自己發。

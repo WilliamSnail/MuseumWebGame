@@ -1,10 +1,10 @@
-// 每週排行榜（shared/board.js、tools/weekly_board.cjs，決定 0039）：node test/board.test.cjs（npm test 也會跑）
+// 每週排行榜（shared/board.js、tools/content/weekly_board.cjs，決定 0039）：node test/board.test.cjs（npm test 也會跑）
 // 資料都是假的；不連 Firebase、不連 Discord（db、fetcher 都是假的）。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");
-const { parseOptions, isDaily, newRoomFloor, runWeekly, runDaily } = require("../tools/weekly_board.cjs");
-const { footer, MAX } = require("../tools/discord_post.cjs");
+const { parseOptions, isDaily, newRoomFloor, runWeekly, runDaily } = require("../tools/content/weekly_board.cjs");
+const { footer, MAX } = require("../tools/content/discord_post.cjs");
 
 const tw = s => Date.parse(s + "+08:00"); // 台灣時間 → 毫秒
 const RUN = tw("2026-11-16T05:15:00"); // 週一 05:15：算剛過完的 2026-W46（11-09～11-15）
@@ -568,9 +568,9 @@ T("規則：館友可以讀 boards、不能寫；其他沒放寬", () => {
   assert.ok(/match \/saves\/\{uid\} \{\s*allow read: if isMember\(\) && isMe\(uid\);/.test(r), "存檔還是只有自己讀得到");
 });
 
-T("真的跑的時候：tools/weekly_board.cjs 叫的 board.xxx 都拿得到（load_shared 串在一起看不出來，11-09 上線時才發現少 nowMs）", async () => {
-  const b = await require("../tools/weekly_board.cjs").loadBoard();
-  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "weekly_board.cjs"), "utf8");
+T("真的跑的時候：tools/content/weekly_board.cjs 叫的 board.xxx 都拿得到（load_shared 串在一起看不出來，11-09 上線時才發現少 nowMs）", async () => {
+  const b = await require("../tools/content/weekly_board.cjs").loadBoard();
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "content", "weekly_board.cjs"), "utf8");
   const names = [...new Set([...src.matchAll(/\bboard\.([a-zA-Z]+)\(/g)].map(m => m[1]))];
   assert.ok(names.includes("nowMs") && names.length >= 4, names.join());
   for (const n of names) assert.strictEqual(typeof b[n], "function", n);
@@ -788,7 +788,7 @@ T("跑起來（假 Firestore）：週一先寫沒有基準的快照，下一週�
   assert.ok(sent[1].includes("💰 【賭神】") && sent[1].includes("🃏 【牌桌王】") && sent[1].length <= MAX);
 });
 T("workflow 跑的腳本有讀 casinoWallets，而且規則沒有放寬（玩家讀不到錢包）", () => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "weekly_board.cjs"), "utf8");
+  const src = fs.readFileSync(path.join(__dirname, "..", "tools", "content", "weekly_board.cjs"), "utf8");
   assert.ok(src.includes('collection("casinoWallets")'));
   const r = fs.readFileSync(path.join(__dirname, "..", "firestore.rules"), "utf8");
   assert.ok(!/casinoWallets[^}]*allow (read|write): if (isMember|true|request)/.test(r), "錢包的規則不放寬");

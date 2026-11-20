@@ -281,7 +281,7 @@ export const NUM = {
     giftListMax: 60,        // 送佩佩的框一次列幾隻（按「再多列」看更多）
     callListMax: 10,        // 「請你去看展廳」的通知一次列幾則（今天、昨天沒看的）
   },
-  // 館內 NPC 的內容規則（11-14，docs/規劃/館內NPC規劃.md 步驟 3；內容在 content/npc/，檢查在 tools/npc_check.cjs）。這裡只放「內容能寫的範圍」，不碰股票、拍賣的程式。
+  // 館內 NPC 的內容規則（11-14，docs/規劃/館內NPC規劃.md 步驟 3；內容在 content/npc/，檢查在 tools/check/npc_check.cjs）。這裡只放「內容能寫的範圍」，不碰股票、拍賣的程式。
   //   kinds：visitor 旅客、client 委託人、trace 劇情角色（只留痕跡、不算人數、不出價）；places：去哪（hall 展廳、五家店 food/bj/job/cellar/craft、bank 銀行、auction 拍賣）；
   //   likeThemes：展廳主題（HALL_THEME_BONUS 的 id）；likeRarity：畫的稀有度（尋常、少見、珍藏、孤品）；routeMax：route 每個地方的權重 0～routeMax。
   //   tiers：預算分級（單位：籌碼）。perDay 壹天最多花多少、max 單筆最多（出價、買畫），都落在那一級的範圍內，而且 max ≤ perDay；每個 NPC 的 perDay 不能跟別人壹樣
@@ -305,7 +305,7 @@ export const NUM = {
     // 展廳的旅客（11-14，shared/npc.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
     hallStory: 0.4, newsMax: 2,
   },
-  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/week_check.cjs 檢查）
+  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/content/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
     understandInsp: 3,      // 線索集齊、「你看懂了」壹件給幾靈感（壹件只給壹次；不扣理智、不發作，shared/clues.js）
@@ -350,7 +350,7 @@ export const NUM = {
     lessonPrice: [{ below: 30, insp: 6 }, { below: 45, insp: 10 }, { below: 61, insp: 15 }], // 技能現在低於 below 時要幾靈感
     trialSkill: "1D5",      // 地下的試煉房間、週包房間獎勵的技能成長
     trialPerWeek: 1,        // 一間試煉房間一週可以拿幾次成長（週一 05:00 換週）
-    weekSkillRooms: 2,      // 週包一週最多幾間房間的獎勵可以寫技能成長（tools/week_check.cjs 檢查）
+    weekSkillRooms: 2,      // 週包一週最多幾間房間的獎勵可以寫技能成長（tools/content/week_check.cjs 檢查）
     learnChance: 50,        // 一起融合：對方拿手的技能比你高，你那個技能 +1 的機率（%）
     learnPerDay: 2,         // 一天最多這樣學會幾次（P.day 的）
     learnGain: 1,           // 學會了加幾點
@@ -367,7 +367,7 @@ export const NUM = {
     perWeek: 3,             // 一週最多排幾場（週一排程挑 1～2 場，其他給臨時加的）
     earliest: "05:00",      // 活動最早幾點開始（05:00 換日，不跨日）
     minMin: 30, maxMin: 360, // 一場最短、最長幾分鐘
-    titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/week_check.cjs 檢查）
+    titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/content/week_check.cjs 檢查）
     noticeMinLeft: 5,       // 開跑的通知：活動剩不到這麼多分鐘就不跳了（快結束才打開遊戲，大廳那條看得到就好；決定 0045）
   },
   // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
@@ -416,7 +416,7 @@ export const NUM = {
     govSweep: { on: true, pct: 100, capPct: 0, cultureGrant: 3000000000 }, // cultureGrant：公共機構壹次撥給文化部的錢（贈款，不記債；house.govGrant 擋重複）
     bankSplit: { on: true, reservePct: 20, gdepKeepPct: 70, hdepW: 150000000, hdepRate: 0.012, hdepLow: 30000000, hdepOutPct: 20, sweepHousePct: 30, bondMove: 2100000 },
     worldDoc: { market: { on: true, amp: 1.5, common: 0.9, commonSd: 0.05, visitK: 0.35, visitLo: 0.6, visitHi: 1.4, spendK: 0.3, spendLo: 0.7, spendHi: 1.3, solace: ["c-late", "c-postman", "c-tourist", "v-dancer"], solaceK: 0.2, moodK: 40, realCap: 20 }, /* 決定 0121：景氣分市場。amp 真實漲跌放大倍數（翊文 11-17 選 1.5）；visit／spend 來館頻率、花錢意願的 k 和範圍；solace 景氣差時反而來館解悶的 NPC（id 清單）；moodK 散客組數照展廳氣氛（氣氛 50 ± 50 → ±moodK%）；realCap 真實單日漲跌夾 ±%（防資料錯誤） */ crowd: { high: 60, low: 30, mult: { high: { "帶小孩的家庭": 1.3, "旅行團": 1.3 }, low: { "獨自看展的人": 2, "兩位朋友": 1.3, "旅行團": 0.7 } } }, events: { downPush: 2, sanMax: 10, unrestMax: 15, moodMax: 20 }, unrest: { start: 20, back: 2, cut: 3, squeeze: 5, layoff: 8, normal: -5, slow: 60, reverse: 80 }, mood: { base: 50, b: 20, san: 0.3, trouble: -5, weekend: 5 }, branch: { on: true, segStart: "2026-11-16", segDays: 14, histDays: 7, minDays: 3, recoverN: 2, perUidNpc: 3, netUidNpc: 3, perUid: 10, perNpc: 6, delta: { win: 1, blackjack: 1, lose: -1, loseRow: -2, bust: -2, jobDone: 1, jobFail: -1 } }, san: { start: 70, daily: 10, cellar: -2, cellarMax: -4, food: 1, rest: 3, back: 1, lay: -8, job: 5, lowRoute: 30, lowStars: 50, lowBudget: 30, budgetMult: 0.9 }, wallet: { on: true, targetDays: 2, joinWeeks: 4, layoffPct: 30, findPct: 25 }, trade: { on: true, live: true, wealthW: 5, dCap: 0.2, loan: { pct: 3, ratePct: 0.02, repayH: 0.95, finPct: 10 }, goods: [{ from: "g-daily", to: "g-overseas", pct: 20 }, { from: "g-overseas", to: "g-island", pct: 10 }], revPct: 0.5,
-      // 集團之間的往來（決定 0127，翊文 11-18：往來要熱絡、×1.5）：flows 每筆「付款方 from 每天付池子的 pct% 給收款方 to」，種類 k 是金流圖的名字；份量用最小二乘法調成每個單位名目上收＝付（tools/world_trade_sim.cjs --emit），
+      // 集團之間的往來（決定 0127，翊文 11-18：往來要熱絡、×1.5）：flows 每筆「付款方 from 每天付池子的 pct% 給收款方 to」，種類 k 是金流圖的名字；份量用最小二乘法調成每個單位名目上收＝付（test/sim/world_trade_sim.cjs --emit），
       //   實付 ＝ 池子 × pct% × 付款方預算倍率（whMult：一般 1～1.1、減薪 0.8、緊縮 0.5、裁員 0.3）×（1 ＋ bK × 景氣）、最多付它現有的。flowDefault：名單上有、表裡沒寫的集團（新增、拆分的）照這個預設付。
       flows: [
       { k: "tradeDaily", from: "g-arts", to: "g-daily", pct: 0.0569 }, { k: "tradeDaily", from: "g-school", to: "g-daily", pct: 0.0657 }, { k: "tradeDaily", from: "g-finance", to: "g-daily", pct: 0.0285 }, { k: "tradeDaily", from: "g-island", to: "g-daily", pct: 0.0135 }, { k: "tradeDaily", from: "g-overseas", to: "g-daily", pct: 0.0017 }, { k: "tradeDaily", from: "g-public", to: "g-daily", pct: 0.0484 }, { k: "tradeDaily", from: "u-culture", to: "g-daily", pct: 0.0328 },

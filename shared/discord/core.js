@@ -7,7 +7,7 @@
 //    - 解析 Discord 送來的 interaction（dcParse）、組回覆（dcReply 和各種 dc…Text）
 //    - 綁定碼、自己加入的碼：格式、期限、打錯太多次暫時擋、每天加入上限
 //    - 公開的字：只有遊戲暱稱；沒有 email、理智、怪癖、靈感（任何回覆都不放）
-//    - 指令清單（dcCommands，tools/discord_commands.cjs 拿去註冊）
+//    - 指令清單（dcCommands，tools/content/discord_commands.cjs 拿去註冊）
 //    - 網址帶 ?join=碼 的處理（dcJoinParam、dcStripJoin）
 //  所有名字都用 dc／DC 開頭（shared 的五個檔接在一起跑，頂層名字不能重複）。
 //  Discord 的回覆是玩家看的，文字照第 1 代用「壹」。文字都是草稿，Yuga 可以改。

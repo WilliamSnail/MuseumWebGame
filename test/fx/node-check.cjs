@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const code = require('../../tools/fx_source.cjs').allSource(); // fx 拆成好幾支（fx_core、fx_sound…），拿掉 import／export、照順序接起來再測
+const code = require('../../tools/check/fx_source.cjs').allSource(); // fx 拆成好幾支（fx_core、fx_sound…），拿掉 import／export、照順序接起來再測
 
 assert.ok(typeof document === 'undefined' && typeof window === 'undefined', 'node has no DOM');
 const FX = new Function(code + ';return FX;')();

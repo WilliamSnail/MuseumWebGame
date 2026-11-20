@@ -1,6 +1,6 @@
 // 館外股票的名字表（11-13，銀行第三步「股票」的館外那一半）。文字是草稿，Yuga 可以改，Yuga 改過的以 Yuga 的為準。
 // 規矩：不寫真公司名、不寫股票代號、不用商標；名字讓人猜得到是哪一家。
-// id 是遊戲裡的名字，每天資料（content/stocks/daily.json）也用這個 id。真實的代號只放在 tools/stocks_fetch.cjs，不進 shared/。
+// id 是遊戲裡的名字，每天資料（content/stocks/daily.json）也用這個 id。真實的代號只放在 tools/content/stocks_fetch.cjs，不進 shared/。
 // kind：stock＝一家店，index＝一籃子的平均（指數）。
 // 館外股的分類（11-19，翊文：美股要有可以縮放的分類）：畫面照這張表的順序分組（可以收合）。id 是 OUT_STOCKS 每支的 cat；改名字、換順序只改這裡
 export const OUT_CATS = [

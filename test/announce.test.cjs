@@ -1,8 +1,8 @@
-// tools/announce.cjs：預約公告、今日館訊八點半、活動開跑：時間換算、該發哪幾則、不重發、工作流程對得上（不會真的連 Discord）
+// tools/content/announce.cjs：預約公告、今日館訊八點半、活動開跑：時間換算、該發哪幾則、不重發、工作流程對得上（不會真的連 Discord）
 const assert = require("assert");
 const fs = require("fs"), path = require("path"), os = require("os");
-const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, DAY_POST_AT, RETRY_MIN, WINDOW_MIN, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS } = require("../tools/announce.cjs");
-const { shared } = require("../tools/discord_post.cjs");
+const { parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, DAY_POST_AT, RETRY_MIN, WINDOW_MIN, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS } = require("../tools/content/announce.cjs");
+const { shared } = require("../tools/content/discord_post.cjs");
 
 let pass = 0, fail = 0;
 const tests = [];
@@ -120,7 +120,7 @@ T("讀真的週：改版之前發過的今日館訊不會重發；排好的活�
   assert.ok(ids.includes("event-2026-W46/winter-trial"));
 });
 T("揭露週：那天的今日館訊後面多壹則「館裡有些不壹樣了」，不寫細節；沒有那天的檔、跳過的不發", () => {
-  const { beatPost } = require("../tools/discord_post.cjs");
+  const { beatPost } = require("../tools/content/discord_post.cjs");
   const os = require("os"), dir = fs.mkdtempSync(path.join(os.tmpdir(), "beat-"));
   fs.mkdirSync(path.join(dir, "2026-W47"));
   fs.writeFileSync(path.join(dir, "2026-W47", "week.json"), JSON.stringify({ start: "2026-11-16" }));
@@ -169,7 +169,7 @@ T("排程 08:23 開始、約 08:55 部署完：備援晚於部署；今天的檔
 T("部署完不直接發：沒發的才叫預約公告那支（同一個人發，才不會重複）", () => {
   const d = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "deploy.yml"), "utf8");
   assert.ok(!d.includes("discord_post.cjs"));
-  assert.ok(d.includes("tools/announce.cjs --any-due") && d.includes("gh workflow run discord-scheduled.yml"));
+  assert.ok(d.includes("tools/content/announce.cjs --any-due") && d.includes("gh workflow run discord-scheduled.yml"));
   assert.ok(/actions: write/.test(d));
 });
 const ymlPath = path.join(__dirname, "..", ".github", "workflows", "discord-scheduled.yml");

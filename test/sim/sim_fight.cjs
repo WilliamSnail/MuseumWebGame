@@ -13,7 +13,7 @@
 // 每一場都重新給膽量（壯膽）；真的一趟只給一次，所以多人的「每人扣理智」這裡會偏低。
 // 背包：每個人帶 BAG 點靈感（預設 8）進來，算「這一場的背包得失」：贏＝合作多給的靈感（fightWinInsp）；全隊倒下＝背包剩一半（NUM.cellarMap.bagKeep）；逃跑、撤退、怪物走掉＝背包不扣
 // 印出：贏的比例、平均幾回合、每個人平均扣多少理智、每個人平均倒下幾隻
-// 別的工具也用這支：tools/new_level.cjs 用 simFoe 幫每天的新怪物調難度
+// 別的工具也用這支：tools/content/new_level.cjs 用 simFoe 幫每天的新怪物調難度
 const { G, buildProfile } = require("./sim_cellar.cjs");
 // FIGHT='{"perPlayer":0.8}' 臨時改 NUM.fight 的數字；FOEHP='{"normal":1.2,"boss":1.1}' 臨時把普通怪物、守門的壓力乘幾倍（調數值時用，不會存）
 if (process.env.FIGHT) Object.assign(G.NUM.fight, JSON.parse(process.env.FIGHT));

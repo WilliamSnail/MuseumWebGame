@@ -77,7 +77,7 @@
 ### 2.4 NPC 的錢
 
 - **NPC 沒有自己的錢包，錢從已知世界的池子來（11-14，翊文：「NPC 的錢從已知世界來」；規劃 2.12 已上線）。** NPC 付的錢（買畫、付門票）是 `house.world` 搬給賣家、預算池、館方帳（`casWorldOut`／`casPoolWorldOut`，來源 `npcArt`、`ticket`…）；NPC 向館方買畫付的錢搬回已知世界（`casWorldIn`／`casHouseWorldIn`）。**不再用 `casMint`／`casBurn`**。池子吃緊（低於起始 10%）時 NPC 買畫也受「一天最多付池子 1%」的上限（`casWorldRoom`），買不起就不出價。NPC 不需要有「存款」，只需要「今天願意花多少」（`budget`，下面）
-- **每個 NPC 的 `budget` 按他是誰，數字一定不一樣**（翊文 11-14：「每個 NPC 根據他是誰，可以拿的數目一定不一樣」）：身分分五級（`NUM.npc.tiers`，程式在 `tools/npc_check.cjs` 檢查）——`none` 劇情角色不帶錢、`drifter` 路人（一天 2 萬～20 萬）、`modest` 小資（10 萬～60 萬）、`comfortable` 小康（50 萬～150 萬）、`collector` 藏家（150 萬～300 萬）；每一級有 `perDay`（一天最多花多少）和 `max`（單筆最多）的範圍，兩者都取一千的倍數、`max` ≤ `perDay`，**同一個全館裡沒有兩位 NPC 的 `perDay` 一樣**（就算同一級，也各有各的數字）。例：咖啡店老闆（小康）`perDay` 70 萬、`max` 40 萬；收藏家（藏家）最多 300 萬。身分決定「他夠不夠格買孤品」：`max` 低於畫現價的 NPC 不出價。
+- **每個 NPC 的 `budget` 按他是誰，數字一定不一樣**（翊文 11-14：「每個 NPC 根據他是誰，可以拿的數目一定不一樣」）：身分分五級（`NUM.npc.tiers`，程式在 `tools/check/npc_check.cjs` 檢查）——`none` 劇情角色不帶錢、`drifter` 路人（一天 2 萬～20 萬）、`modest` 小資（10 萬～60 萬）、`comfortable` 小康（50 萬～150 萬）、`collector` 藏家（150 萬～300 萬）；每一級有 `perDay`（一天最多花多少）和 `max`（單筆最多）的範圍，兩者都取一千的倍數、`max` ≤ `perDay`，**同一個全館裡沒有兩位 NPC 的 `perDay` 一樣**（就算同一級，也各有各的數字）。例：咖啡店老闆（小康）`perDay` 70 萬、`max` 40 萬；收藏家（藏家）最多 300 萬。身分決定「他夠不夠格買孤品」：`max` 低於畫現價的 NPC 不出價。
 - 全館一天 NPC 買畫的總額另有上限（見 3.2），再受池子吃緊的上限。
 - 以後如果要有「NPC 有帳本、會越有錢」的玩法，另外一步決定（步驟 5）。
 
@@ -191,7 +191,7 @@
 2. **λ ＝ 2**（每家店每天平均 2 位 NPC，Poisson；`NUM.casino.stockIn.npcLambda`）；日報寫旅客人數（已上線：「昨天館外來了 N 位旅客」）。
 3. **劇情日的加成 B 上限 0.30**（`npcBoostMax`）；**C 做成突發的大事件**（不預告）：機率 0.3%／家／天、b ＝ 0.5～1.0（接下來的 PR）。日子公開的劇情日只用 B。
 4. **劇情排程寫名字和故事線**：每週的 `week.json.npc` 標那天、那家店、活動名字（24 字內）；NPC 的故事線（`arc`）在 `content/npc/` 每位一個檔，每一段標 `from`（哪一天起）和選擇性的 `need`（全館進度）、`ties`（呼應主線）。寫法在 `content/排程說明.md`。
-5. **內容檢查擋破梗**：`tools/npc_check.cjs` 檢查名字、字數、禁用字、真人真公司真政黨、劇情角色（`trace`）不露臉不帶錢不出價、預算分級（按身分、各位不同）、故事線的段數和日期；`npm test` 和 CI 都跑。
+5. **內容檢查擋破梗**：`tools/check/npc_check.cjs` 檢查名字、字數、禁用字、真人真公司真政黨、劇情角色（`trace`）不露臉不帶錢不出價、預算分級（按身分、各位不同）、故事線的段數和日期；`npm test` 和 CI 都跑。
 6. **NPC 的錢**：從已知世界的池子來（2.4、3.2），不用 `casMint`；每個 NPC 的預算按身分不同。
 7. **NPC 占一家店人數的上限 40%**（`npcShareMax`）。
 
@@ -203,5 +203,5 @@
 
 - **每位委託人自己的進度**：`house.npcc.cl = { 委託人 id: 張數 }`（`comm` 是全館總數，`hall` 是展廳人次，都還在）。伺服器算不出每張委託是誰（要看玩家的存檔），所以交委託時網頁一起說「委託人的名字」（`act: "job"` 的 `clients`，跟 `slots` 壹對壹），伺服器用名單認人，不認得的只算進 `comm`。`npcCounters(house.npcc)`（shared/npc.js）：有 `cl` 就用每位自己的數，沒有（舊資料）就用 `comm` 總數。
 - **網頁也知道進度**：`casino` 的 `peek` 多回 `npcc: { comm, hall, cl }`，`ui_today.js` 存進 `npcWebSet`，展廳的故事留言、館內近況、參觀者都用 `npcWebCounters()`。沒登入或還沒收到就只看日期。
-- **委託櫃台每天平均 2 位**：後期故事線把 `job` 權重換掉，櫃台只剩約 1.5 位；補了幾位的 `route.job`。`node tools/npc_avg.cjs` 看五家店平均（目標 2）。
+- **委託櫃台每天平均 2 位**：後期故事線把 `job` 權重換掉，櫃台只剩約 1.5 位；補了幾位的 `route.job`。`node tools/dev/npc_avg.cjs` 看五家店平均（目標 2）。
 - **拍賣成交者**：`casAucView().done[]` 多 `buyerName`（NPC「館外的收藏家 某某」、玩家壹律「館友」、流標是 null）和 `npcBuyer`。
