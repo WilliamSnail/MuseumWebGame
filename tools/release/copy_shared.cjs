@@ -8,7 +8,7 @@ require("../content/world_pack.cjs").write(); require("../content/market_pack.cj
 require("../content/world_events_pack.cjs").write(); // 排程填的世界事件（shared/world/events.js，決定 0092） // 世界單位名單（shared/world/roster.js，W3）先跟上 content/world/units/
 require("../content/map_pack.cjs").write(); // 館外地圖的點（shared/world/map_data.js）
 require("../content/npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc/roster.js）先跟上 content/npc/
-const from = path.join(ROOT, "shared"), to = path.join(ROOT, "functions", "shared");
+const from = path.join(ROOT, "shared"), to = process.env.COPY_SHARED_TO || path.join(ROOT, "functions", "shared"); // COPY_SHARED_TO：測試用，複製到自己的暫存資料夾，不動真的 functions/shared/（11-21）
 fs.mkdirSync(to, { recursive: true });
 // 複製前先清空：shared/ 搬家、改名之後，舊檔留在這裡會讓 fn_hash 測試誤紅、函式包多帶舊檔（11-20）。下面產生的檔（*_data.js、README.md）每次都會重寫，所以全清沒關係；資料夾本身留著（模擬器可能正看著它）
 for (const e of fs.readdirSync(to)) fs.rmSync(path.join(to, e), { recursive: true, force: true });
