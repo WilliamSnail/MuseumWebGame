@@ -11,6 +11,9 @@ import { btn, h, icon, snd } from "./ui_core.js";
 export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion", pillow: "pillow", hug: "heart", view: "gallery", show: "gallery", read: "book", cellar: "stairs", spot: "key",
   casino: "cards", bank: "bank", food: "food", visit: "users", gift: "gift", stockLook: "magnifier", lesson: "notebook", sign: "stamp", board: "scroll",
   readWeek: "book", dailyAll: "star", showDays: "gallery", ending: "book" };
+// 去哪裡做：按鈕上寫地點（11-20，翊文：按了直接跳房間，看起來像按錯）
+const PLACE = { workshop: "手作坊", commission: "委託櫃台", fusion: "融合室", pillow: "抱枕工作台", gallery: "畫廊", origin: "圖書館", cellar: "地下收藏庫", casino: "賭場", bank: "銀行", friends: "館友名單", signin: "簽到", board: "公佈欄" };
+export const placeName = w => (w && (PLACE[w.room] || PLACE[w.panel])) || "";
 // 交代人：剪影的顏色（底色、剪影色）；有正式圖的 id 放進 GIVER_ART
 const GIVER_TONE = { yuga: ["#2F4A3A", "#BFE6C8"], hall: ["#4A3322", "#E6C879"], postman: ["#2F3F55", "#C9D8EE"], clerk: ["#4F3A2A", "#F3DFA6"], scale: ["#3E3A2A", "#E7D28A"], number: ["#2E2E34", "#D9D9E6"] };
 export const GIVER_ART = new Set(["yuga"]); // yuga：玩家 Yuga 自己畫的 Yuga Bot 頭像（決定 0147）
@@ -30,7 +33,7 @@ export function taskCard(o) {
   const reply = giver && done && t.done ? t.done : "";
   const act = claimed ? h("span", { class: "tkc-stamp" }, icon("check"), h("span", null, "領過了"))
     : done ? btn("領獎勵", o.onClaim, "primary small tkc-claim")
-      : o.where && !o.past ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], o.onGo, "small tkc-go") : null;
+      : o.where && !o.past ? btn([placeName(o.where) ? "去" + placeName(o.where) : "前往", " ", h("span", { "aria-hidden": "true" }, "→")], o.onGo, "small tkc-go") : null;
   return h("li", { class: "tkc-card" + (done ? " done" : "") + (claimed ? " claimed" : "") + (giver ? " giver" : "") },
     giver ? h("div", { class: "tkc-say" }, giverAv(t.giver), h("div", { class: "tkc-bubble" }, h("small", null, giverName(t.giver)), h("p", null, reply || t.says))) : null,
     h("div", { class: "tkc-body" },
