@@ -14,7 +14,7 @@ import { npcWebSet } from "../../shared/npc.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, icon, navTo, snd, updateBoardBadges } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
-import { goStep, openStory, storyToday } from "./ui_story.js";
+import { goStep, openStory, storyToday, storyTodayNodes } from "./ui_story.js";
 import { signinToday } from "./ui_signin.js";
 
 // 伺服器上的（大禮包、拚經濟剩幾次）：上壹次讀到的。還沒讀過是 null，不算進數字
@@ -126,17 +126,19 @@ function rowOf(x, m) {
     h("span", { class: "td-main" }, h("b", null, x.title), x.sub ? h("small", null, x.sub) : null),
     btn([x.label, " ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); x.go(); }, x.todo ? "primary small" : "small ghost"));
 }
-function bodyOf(m) {
-  const all = todayItems(), todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
-  if (!all.length) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有每日的事，隨便逛吧。" : "今天沒有要做的事。");
+function bodyOf(m, draw) {
+  const story = storyTodayNodes(m, draw), skip = x => story && /^(yuga|daily)-/.test(x.key); // 每日任務改畫成任務卡（跟每週劇情同壹份零件），清單裡不重複列
+  const all = todayItems().filter(x => !skip(x)), todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
+  if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有每日的事，隨便逛吧。" : "今天沒有要做的事。");
   return h("div", { class: "td-body" },
+    story,
     todo.length ? h("ul", { class: "td-list" }, todo.map(x => rowOf(x, m))) : h("p", { class: "td-all" }, icon("sparkle"), " 今天的都做完了。"),
     done.length ? h("details", { class: "td-done", open: !todo.length || undefined }, h("summary", null, `做完的（${done.length}）`), h("ul", { class: "td-list" }, done.map(x => rowOf(x, m)))) : null,
     NET.me && !casNow() ? h("p", { class: "td-note" }, "賭場剩幾次還在讀……") : null);
 }
 export async function openToday() {
   const m = overlay("nb-today", "今天", "今天要做的事", "calendar");
-  const draw = () => { if (m.layer.isConnected) m.surface.replaceChildren(bodyOf(m)); };
+  const draw = () => { if (m.layer.isConnected) m.surface.replaceChildren(bodyOf(m, draw)); };
   snd("flip");
   draw();
   if (await readCasino()) { draw(); updateBoardBadges(); }
