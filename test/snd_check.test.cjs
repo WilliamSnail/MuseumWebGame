@@ -11,7 +11,7 @@ const rd = f => fs.readFileSync(path.join(root, f), "utf8");
 
 T("結構檢查：現在的程式沒有問題", () => { const r = run(); assert.deepStrictEqual(r.bad, []); assert.ok(r.rooms.length >= 17); });
 T("結構檢查：抓得到壞掉的寫法（每一種都試）", () => {
-  const fx = rd("web/src/fx.js");
+  const fx = rd("web/src/fx_sound.js");
   const mut = (a, b) => { assert.ok(fx.includes(a), "找不到：" + a); return checkFx(fx.replace(a, b)).bad; };
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [sched, steps]").some(x => /creepyHook/.test(x)), "creepyHook timer 漏掉");
   assert.ok(mut("timers: [sched, steps, ck.timer]", "timers: [steps, ck.timer]").some(x => /sched/.test(x)), "every 漏掉");
@@ -90,7 +90,7 @@ T("ambFor：圖庫的走音、失敗作之夜只在該房間算；自由模式�
 
 // ---- fx.js：每個房間建了再換掉，計時器都停（假的 AudioContext） ----
 function loadFx() {
-  const code = rd("web/src/fx.js").replace(/^export\s+/gm, "");
+  const code = require("../tools/fx_source.cjs").allSource();
   const log = { made: 0 };
   const param = () => ({ value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setTargetAtTime() {}, cancelScheduledValues() {} });
   const node = () => { log.made++; return { connect(x) { return x; }, disconnect() {}, start() {}, stop() {} }; };
@@ -167,7 +167,7 @@ for (const room of Object.keys(SONGS)) {
   }));
 }
 T("fx.js：每個房間的環境音換掉後，計時器都停了（只剩淡出收尾用的）", () => {
-  const rooms = ambEntries(rd("web/src/fx.js")).map(e => e.name);
+  const rooms = ambEntries(rd("web/src/fx_sound.js")).map(e => e.name);
   for (const room of rooms) {
     const { FX, timers } = loadFx();
     FX.sound.demo("click");
