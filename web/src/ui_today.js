@@ -114,7 +114,7 @@ export function todayChips() {
 export function lobbyToday() {
   if (!P || isFree(P)) return h("span", { class: "lobby-today", hidden: true });
   const chips = todayChips(), todo = todayItems().filter(x => x.todo);
-  return h("section", { class: "lobby-today" + (todo.length ? "" : " done"), "aria-label": "今天要做的事" },
+  return h("section", { class: "lobby-today" + (todo.length ? "" : " done"), "aria-label": "任務" },
     h("button", { type: "button", class: "lt-head", title: "打開任務板", onClick: () => openToday() }, icon("calendar"), h("b", null, "任務"),
       h("span", null, todo.length ? `還有 ${todo.length} 件` : "都做完了")),
     h("div", { class: "lt-chips" }, chips.map(c => h("button", { type: "button", class: "lt-chip" + (c.todo ? "" : " ok"), title: c.tip, onClick: () => c.go() }, icon(c.todo ? c.ic : "check"), h("span", null, c.text)))));

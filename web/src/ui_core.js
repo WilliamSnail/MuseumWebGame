@@ -292,7 +292,7 @@ export function buildNav() {
   const item = (cls, ic, label, fn) => h("button", { type: "button", class: "md-item " + cls, onClick: () => { toggleMenu(false); fn(); } }, ic === "shop" ? cicon(ic) : icon(ic), h("span", { class: "md-t" }, label), h("span", { class: "md-badge" }));
   const roomItem = ([id, name]) => h("a", { href: "#", class: "nav-drawer-link md-item", dataset: { room: id, name }, onClick: e => { e.preventDefault(); toggleMenu(false); navTo(id); } }, icon(NAV_ICON[id] || "sparkle"), h("span", { class: "md-t" }, name), freshTag("nav-fresh"));
   const drawer = h("div", { class: "nav-drawer", id: "navDrawer", hidden: true, role: "region", "aria-label": "選單" },
-    h("div", { class: "md-group" }, item("md-today", "calendar", "今天要做的事", () => openPanel("today")), item("md-account", "user", "館友證和典藏冊", () => openPanel("pass"))),
+    h("div", { class: "md-group" }, item("md-today", "calendar", "任務", () => openPanel("today")), item("md-account", "user", "館友證和典藏冊", () => openPanel("pass"))),
     h("p", { class: "md-h" }, "公告與信件"),
     h("div", { class: "md-group" }, item("md-board", "scroll", "館內公佈欄", () => openPanel("board")), item("md-mail", "mail", "信箱", () => openPanel("mail")), item("md-cal", "calendar", "簽到日曆", () => openPanel("calendar"))), // 簽到日曆（11-09，決定 0030）
     h("p", { class: "md-h" }, "劇情"), // 每週劇情（11-09，ui_story.js 登記 PANELS.story）
@@ -603,7 +603,7 @@ export function updateBoardBadges() {
   if (ADDONS.calBadge) setItem(".md-cal", ADDONS.calBadge(), false); // 「今天還沒簽到」（ui_signin.js）
   const tn = ADDONS.todayCount ? ADDONS.todayCount() : 0, tt = $(".nav-today"); // 「今天」還沒做的幾項（ui_today.js）
   setItem(".md-today", tn ? `${tn} 項` : "", false);
-  if (tt) { $(".nt-n", tt).textContent = tn ? String(tn) : ""; tt.classList.toggle("has-n", tn > 0); tt.setAttribute("aria-label", tn ? `任務（還有 ${tn} 件事沒做）` : "任務"); tt.title = tn ? `任務板：今天還有 ${tn} 件事沒做` : "任務板：今天要做的事都做完了"; }
+  if (tt) { $(".nt-n", tt).textContent = tn ? String(tn) : ""; tt.classList.toggle("has-n", tn > 0); tt.setAttribute("aria-label", tn ? `任務（還有 ${tn} 件事沒做）` : "任務"); tt.title = tn ? `任務板：今天還有 ${tn} 件事沒做` : "任務板：任務都做完了"; }
   if (mb) {
     const n = badge.count + mails;
     mb.dataset.n = String(n);
