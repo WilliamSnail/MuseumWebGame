@@ -28,6 +28,7 @@ import "./css/rank.css"; // 本週榜單（11-09，決定 0039）
 import "./css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 import "./css/events.css"; // 限時活動（決定 0041）
 import "./css/casino.css"; // Hamachi 賭場（決定 0040）
+import "./css/tasks.css"; // 每日任務的畫面零件（11-20）
 import "./css/discord.css"; // 我的帳號裡的「綁定 Discord」（決定 0051）
 import "./css/today.css"; // 「今天」清單和導覽列的「今天」（11-10）
 import "./css/pass.css"; // 館友證和典藏冊（11-10，決定 0058）
