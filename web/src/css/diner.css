@@ -68,3 +68,23 @@
   .dn-name { font-size: .9375rem; }
   .dn-note { transform: none; }
 }
+
+/* 手機直拿第二輪（11-20）：木牌壓薄，第一屏看得到 3 樣以上 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .dn { gap: 8px; }
+  .dn-card { padding: 14px 16px 12px; gap: 2px 8px; grid-template-columns: 40px minmax(0, 1fr) auto; background-size: 28px, 28px, 28px, 28px, auto 14px, auto 14px, 14px auto, 14px auto, 160px; }
+  .dn-card { background-position: top left, top right, bottom left, bottom right, 28px top, 28px bottom, left 28px, right 28px, 0 0; }
+  .dn-pic { width: 40px; height: 40px; }
+  .dn-name { font-size: .875rem; }
+  .dn-odds { display: none; }
+  .dn-group h3 { margin-bottom: 4px; }
+  .dn-hello { padding: 6px 10px; }
+  .dn-note > summary { min-height: 26px; padding: 6px 10px 2px; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .dn-lights { display: none; }
+  .dn-awning { height: 24px; background-size: auto 24px; }
+  .dn-hello { border-width: 3px; }
+  .dn-note { margin-top: 2px; }
+  .dn-group h3 { font-size: .8125rem; }
+}

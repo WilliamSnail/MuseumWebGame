@@ -153,6 +153,7 @@ function draw() {
   // 銀行放在右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）；窄的畫面照舊放在上面（css 的 order）
   m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, sideCol()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
   box.scrollTop = keepY;
+  const on = tabs.querySelector('.nb-tab.on'); if (on && window.innerWidth <= 760) { const l = on.offsetLeft - 8; if (tabs.scrollLeft > l || tabs.scrollLeft + tabs.clientWidth < on.offsetLeft + on.offsetWidth) tabs.scrollLeft = l; } // 手機頁籤壹排橫向滑：選中的捲到看得到（11-20）
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
