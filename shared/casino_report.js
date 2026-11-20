@@ -23,9 +23,9 @@ export const CAS_REPORT = {
   mint: { worldGrow: "已知世界每天成長（照 GDP 年增率）", worldExpand: "已知世界一次性擴充", cultureStart: "文化部補助（新玩家的起始籌碼）", stockRebase: "股票換成真實比例的零頭", start: "新館友的開場籌碼", signWeek: "全勤簽到", legacy: "認領舊錢包", ticket: "參觀者門票（展廳主分紅）", discord: "綁定 Discord", work: "欠款去地下工作補回", test: "測試" },
   houseMint: { reset: "莊家破產後重新開張", grant: "文化部借款（已知世界撥款，要還）", worldLoan: "已知世界貸款（莊家破產重開，要還）", ticketBudget: "參觀者門票（進博物館資金）", ticketMuseum: "參觀者門票（進修繕基金）" },
   // 已知世界的池子（規劃 2.12）：每個來源讓池子變多少（正＝進已知世界）
-  world: { govSweep: "政府帳搬進公共機構", cultureGift: "文化部資助", pLoan: "新借款（佩佩銀行借出）", pLoanBack: "館友還款（還給佩佩銀行）", pBankInt: "存款利息（佩佩銀行付）", pBond: "館債（佩佩銀行）", bondMove: "舊館債本金（莊家搬給佩佩銀行）", hdepIn: "莊家水位上繳（存進佩佩銀行）", hdepOut: "莊家領回存款", hdepInt: "佩佩銀行付莊家的存款利息", gbSweepH: "佩佩銀行盈餘（給莊家）", gbSweepB: "佩佩銀行盈餘（給博物館資金）", groupDeposit: "集團存進佩佩銀行", groupWithdraw: "集團從佩佩銀行領回", groupLoan: "集團向佩佩銀行借款", groupRepay: "集團還佩佩銀行", groupIntDep: "佩佩銀行付集團的存款利息", groupIntLoan: "集團付佩佩銀行的放款利息", groupBankLoan: "佩佩銀行向博物館資金借", groupBankRepay: "佩佩銀行還博物館資金", groupBankInt: "佩佩銀行付博物館資金的利息", gRaise: "集團增資（莊家買新股，錢進集團）", gBuy: "集團庫藏股（集團買回，錢給莊家）", gDiv: "集團股息（集團付）", stockBuy: "買股票（錢給海外）", stockSell: "賣股票（海外付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（海外付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟已知世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
+  world: { govSweep: "稅收搬進公共機構的帳", cultureGift: "文化部資助", pLoan: "新借款（佩佩銀行借出）", pLoanBack: "館友還款（還給佩佩銀行）", pBankInt: "存款利息（佩佩銀行付）", pBond: "館債（佩佩銀行）", bondMove: "舊館債本金（莊家搬給佩佩銀行）", hdepIn: "莊家水位上繳（存進佩佩銀行）", hdepOut: "莊家領回存款", hdepInt: "佩佩銀行付莊家的存款利息", gbSweepH: "佩佩銀行盈餘（給莊家）", gbSweepB: "佩佩銀行盈餘（給博物館資金）", groupDeposit: "集團存進佩佩銀行", groupWithdraw: "集團從佩佩銀行領回", groupLoan: "集團向佩佩銀行借款", groupRepay: "集團還佩佩銀行", groupIntDep: "佩佩銀行付集團的存款利息", groupIntLoan: "集團付佩佩銀行的放款利息", groupBankLoan: "佩佩銀行向博物館資金借", groupBankRepay: "佩佩銀行還博物館資金", groupBankInt: "佩佩銀行付博物館資金的利息", gRaise: "集團增資（莊家買新股，錢進集團）", gBuy: "集團庫藏股（集團買回，錢給莊家）", gDiv: "集團股息（集團付）", stockBuy: "買股票（錢給海外）", stockSell: "賣股票（海外付）", stockRebase: "股票換比例的零頭", houseInvFix: "館方投資換比例校正（補莊家）", budgetInvFix: "館方投資換比例校正（補博物館資金）", bizTax: "營業稅（政府先拿）", dividend: "股息（海外付）", inMarket: "館內股的旅客散客買賣、造市商回補（跟已知世界）", entTax: "娛樂稅（政府先拿）", stockLevWin: "槓桿賺的", stockLevLoss: "槓桿賠的", worldLoan: "貸款給莊家", worldRepay: "莊家還貸款", grant: "文化部借款撥款", cultureRepay: "莊家還文化部借款", ticket: "參觀者門票（展廳主）", ticketBudget: "參觀者門票（博物館資金）", ticketMuseum: "參觀者門票（修繕基金）", npcArt: "旅客買畫、賣畫", npcTicketBudget: "NPC 的門票（博物館資金）", npcTicketMuseum: "NPC 的門票（修繕基金）", npcCrowdBudget: "散客的門票（博物館資金）", npcCrowdMuseum: "散客的門票（修繕基金）", npcFood: "NPC 在餐車花的", npcBj: "NPC 在牌桌花的", npcJob: "NPC 在委託櫃台花的", npcCellar: "NPC 在地下收藏庫花的", npcCraft: "NPC 在手作坊花的", houseInvestBuy: "莊家投資（買）", houseInvestSell: "莊家投資（賣）", budgetInvestBuy: "博物館資金投資（買）", budgetInvestSell: "博物館資金投資（賣）" },
   burn: { exchange: "換小獎", cultureRepay: "莊家還文化部借款", worldRepay: "莊家還已知世界貸款" },
-  flow: { govSweep: "政府帳搬進公共機構", gStock: "集團股票（莊家當造市商）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", gLev: "集團股槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetFix: "博物館資金補撥給莊家（11-17 館債那期照新規定該由博物館資金付，一次性）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
+  flow: { govSweep: "稅收搬進公共機構的帳", gStock: "集團股票（莊家當造市商）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", stockIn: "館內股票（莊家當對手盤）", stockLev: "槓桿（莊家當對手盤）", gLev: "集團股槓桿（莊家當對手盤）", bond: "債券", art: "旅客買畫、賣畫（莊家）", artAuction: "畫的拍賣", bankInt: "銀行利息", investFee: "館方投資的手續費", stockFee: "股票手續費", artFee: "拍賣手續費", stockTax: "股票證交稅", divTax: "股利所得稅", bizTax: "營業稅（店裡的花費）", entTax: "娛樂稅（門票）", npcArtBuy: "旅客買畫（莊家收到）", tax: "莊家稅", budgetLoan: "跟博物館資金借（莊家破產重開）", budgetFix: "博物館資金補撥給莊家（11-17 館債那期照新規定該由博物館資金付，一次性）", budgetRepay: "還博物館資金", bj: "21 點", pack: "免費和買來的大禮包", food: "餐車", loan: "借出去的錢", loanBack: "借款還回來（含逾期被扣）", econWin: "拚經濟成功（博物館資金撥來）", econLoot: "拚經濟被撈走的油水", econSea: "拚經濟沉到海底", job: "交委託", find: "地下撿到的" },
   gag: "對帳：差 1 枚，原因不明。",
   seaNote: "水面底下有人在數東西。",
 };
@@ -152,7 +152,7 @@ export function casReportView(doc) {
     if (!first && d.budget < 0) { const days = Math.floor(H.budget / (-d.budget / span)); bl.push(`照這個速度，大約還撐 ${rpN(days)} 天。`); }
   }
   secs.push({ t: "博物館資金（館方）", lines: bl });
-  secs.push({ t: "政府帳", lines: [`政府帳有 ${rpN(H.gov || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.gov || 0)}）`}。收證交稅（賣台股、館內股）、營業稅（NPC、散客在店裡花的錢）、娛樂稅（NPC、散客的門票）；每天換日整筆搬進公共機構，再由補助和公共採購流回已知世界。`] });
+  secs.push({ t: "稅收", lines: [`稅收（公共機構底下）有 ${rpN(H.gov || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.gov || 0)}）`}。收證交稅（賣台股、館內股）、營業稅（NPC、散客在店裡花的錢）、娛樂稅（NPC、散客的門票）；每天換日整筆搬進公共機構，再由補助和公共採購流回已知世界。`] });
   secs.push({ t: "修繕基金", lines: [`修繕基金有 ${rpN(H.museum || 0)} 籌碼${first ? "" : `（這段時間 ${rpSign(d.museum || 0)}）`}。來自參觀者的門票，之後用在修繕、捐款、預算公投。`] });
   // 海底：只給水位
   const cm = Math.floor(Math.max(0, H.sea) / C.seaPerCm), dcm = first ? 0 : Math.floor(Math.max(0, H.sea) / C.seaPerCm) - Math.floor(Math.max(0, H.sea - d.sea) / C.seaPerCm);
@@ -215,7 +215,7 @@ export function casReportView(doc) {
 // ================================================================
 //  全世界金流總覽（11-17 翊文：銀行多一個「金流」頁籤，動態 hub 顯示錢往哪裡流）
 //  每個記帳的來源代號歸到一條線：[X, Y] ＝ 這個來源在 X、Y 兩個地方之間搬錢。
-//  節點：world 已知世界（含旅客、散客、各集團、文化部）、house 莊家、budget 博物館資金、museum 修繕基金、gov 政府帳、sea 海底、players 館友（全部合起來）、gen 憑空（成長、擴充、開場）。
+//  節點：world 已知世界（含旅客、散客、各集團、文化部）、house 莊家、budget 博物館資金、museum 修繕基金、gov 稅收、sea 海底、players 館友（全部合起來）、gen 憑空（成長、擴充、開場）。
 //  新來源沒歸到線就過不了 test/flow_hub.test.cjs。只給合計和來源標籤，不給個別館友和 NPC。
 // ================================================================
 export const CAS_FLOW_NODES = [ // tier：第幾層（上到下）；org：屬於哪個框（佩佩博物館）；順序就是同一層從左到右
@@ -225,7 +225,7 @@ export const CAS_FLOW_NODES = [ // tier：第幾層（上到下）；org：屬�
   { id: "ext", name: "海外（真實市場）", tier: 1, note: "真實的股票、行情、股利。負數＝館友在真實市場賺回來的，比投出去的多" },
   { id: "players", name: "館友", tier: 2, note: "所有館友的錢包合起來" },
   { id: "house", name: "莊家", tier: 2, org: "museum", note: "Yuga Bot 的賭場錢" },
-  { id: "gov", name: "政府帳", tier: 3, note: "證交稅、營業稅、娛樂稅；每天搬進公共機構" },
+  { id: "gov", name: "稅收", tier: 3, note: "公共機構底下：證交稅、營業稅、娛樂稅；每天搬進公共機構的帳" },
   { id: "sea", name: "海底", tier: 3, note: "B4 水面底下，沉掉的錢" },
   { id: "museum", name: "修繕基金", tier: 3, org: "museum", note: "門票七成，之後修繕和預算公投" },
   { id: "budget", name: "博物館資金", tier: 3, org: "museum", note: "館方行政、投資、還館債" },

@@ -55,7 +55,7 @@ const lqRate = (id, k) => { const m = lqMk(id), B = lqC().byMk && m && lqC().byM
 // 規則那段字裡的費用和限制，全部讀設定（決定 0136；以前寫死 0.5%、0.15%、0.3%、壹天 3 筆、等 15 分鐘，早就跟設定不一樣了）
 export function casLevCostText() {
   const C = lqC(), tw = casLevRates(TW_IDS[0]), us = casLevRates(US_IDS[0]), df = casLevRates("in"), grp = casLevRates("grp"), p = v => +(v * 100).toFixed(4) + "%", fee = v => casFeeText(+(v * 100).toFixed(4));
-  return `手續費（買賣各收）：台股 ${fee(tw.fee)}、美股 ${fee(us.fee)}、館內股 ${fee(df.fee)}、集團股 ${fee(grp.fee)}。做多另收借的錢每天的利息：台股、美股 ${p(tw.interest)}，館內股和集團股 ${p(df.interest)}；放空另收借券費：台股、美股 ${p(tw.borrow)}，館內股和集團股 ${p(df.borrow)}。` + (tw.tax > 0 ? `台股平倉另收當沖證交稅 ${p(tw.tax)}（進政府帳）。` : "") + (C.opensDay > 0 ? `壹天最多開 ${C.opensDay} 筆。` : "壹天開幾筆不限。") + (C.coolMin > 0 ? `同壹檔平倉後要等 ${C.coolMin} 分鐘。` : "平倉後馬上可以再開。");
+  return `手續費（買賣各收）：台股 ${fee(tw.fee)}、美股 ${fee(us.fee)}、館內股 ${fee(df.fee)}、集團股 ${fee(grp.fee)}。做多另收借的錢每天的利息：台股、美股 ${p(tw.interest)}，館內股和集團股 ${p(df.interest)}；放空另收借券費：台股、美股 ${p(tw.borrow)}，館內股和集團股 ${p(df.borrow)}。` + (tw.tax > 0 ? `台股平倉另收當沖證交稅 ${p(tw.tax)}（進公共機構的稅收）。` : "") + (C.opensDay > 0 ? `壹天最多開 ${C.opensDay} 筆。` : "壹天開幾筆不限。") + (C.coolMin > 0 ? `同壹檔平倉後要等 ${C.coolMin} 分鐘。` : "平倉後馬上可以再開。");
 }
 export const casLevRates = id => ({ fee: lqFeePct(id) / 100, interest: lqRate(id, "interestPct") / 100, borrow: lqRate(id, "borrowPct") / 100, tax: lqRate(id, "taxPct") / 100 });
 
@@ -350,7 +350,7 @@ function lqSettle(w, house, S, pos, px, t, why) {
   else if (eff < 0) { if (hp) { casHouseMove(house, src, -eff); w.chips += eff; } else casWorldIn(w, house, "stockLevLoss", -eff); }
   const equity = pos.margin + eff, feeDue = Math.ceil(stBuyCost(px, pos.qty) * lqFeePct(pos.id) / 100), fee = Math.min(feeDue, Math.max(0, equity));
   w.chips -= fee; house.budget += fee; casCount(house, "levFee", fee);
-  // 當沖證交稅（決定 0136，台股 0.15%：平倉的部位金額 × 稅率，無條件進位、最少 1；美股、館內股、集團股沒有）：從剩下的保證金扣，扣不到就少收，進政府帳
+  // 當沖證交稅（決定 0136，台股 0.15%：平倉的部位金額 × 稅率，無條件進位、最少 1；美股、館內股、集團股沒有）：從剩下的保證金扣，扣不到就少收，進公共機構的稅收
   const taxRate = lqRate(pos.id, "taxPct"), taxDue = taxRate > 0 ? Math.max(1, Math.ceil(stBuyCost(px, pos.qty) * taxRate / 100)) : 0, tax = Math.min(taxDue, Math.max(0, equity - fee));
   if (tax > 0) { w.chips -= tax; casPoolGain(house, "gov", "stockTax", tax); casCount(house, "levTax", tax); }
   const back = equity - fee - tax;
