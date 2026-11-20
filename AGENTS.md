@@ -37,6 +37,7 @@ npm test               # 全部檢查，要全過（不含模擬）
 npm run build          # 打包到 dist/，要成功
 npm run version:bump   # 換版本號（version.json）
 npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md。要重複做的事都要寫腳本；同樣的邏輯有兩份以上就合併成共用的（翊文 11-15）
+npm run ui:check        # 畫面版面檢查（要瀏覽器，不在 npm test）：改了畫面，上線前一定要跑；手機 375×740 和電腦 2140×1440
 npm run log:index      # 在本機重產日誌索引（不進 git，不要手改）
 npm run notice -- --area 賭場 --title "標題" "第壹句"   # 加館方公告（寫成 content/notices/<id>.json，一則一檔，不要手改 shared/notices.js 的陣列）
 node test/sim/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
@@ -114,6 +115,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 **其他**：
 
 - 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`）。
+- **改了畫面，上線前一定要跑 `npm run ui:check`**（起 dev server、無頭瀏覽器開主要畫面，報超出視窗的元素、被切掉的按鈕、字被擠成直排；要登入的畫面它會列為跳過，另外用模擬器看）。出現的是你改到的畫面就修掉；舊畫面本來就有的不用順手修，寫進日誌。腳本在 `tools/check/ui_check.cjs`，還沒放進 npm test 和 CI（太慢、要瀏覽器）。
 - 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`）。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
 - 新的文字是草稿，Yuga 可以改；Yuga 改過的以 Yuga 的為準。
 - 文件、日誌、註解用繁體中文、白話、短句，一句一件事；用一般的「一」，引用遊戲畫面上的字才照原樣寫「壹」。

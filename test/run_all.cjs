@@ -175,6 +175,7 @@ const STEPS = [
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/check/log_check.cjs"]],
+  ["畫面版面檢查 npm run ui:check（不開瀏覽器：畫面清單、量測程式、報告整理、AGENTS.md 有寫；真的開瀏覽器太慢，改畫面的人自己跑，11-20）", ["test/tools/ui_check.test.cjs"]],
   ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/、shared 子資料夾、檔名不用數字結尾、單檔不超過 1,200 行、web/src 不繞圈，11-20）", ["tools/check/repo_rules.cjs"]],
 ];
 
