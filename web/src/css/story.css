@@ -254,3 +254,14 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 .rtk-col { display: flex; flex-direction: column; min-width: 0; }
 .rtk-g { display: block; color: #E6C879; font-size: .75rem; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 760px) { .rtk-g { white-space: normal; max-height: 2.7em; } }
+
+/* 每週劇情面板手機直拿（11-20，測試回報：『兌換所』鈕擠成直排、關閉鈕超出螢幕）：頂列不換行、兌換所鈕不斷字、週章字縮小 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-story .nb-top { gap: 4px; flex-wrap: nowrap; }
+  .nb-story .nb-top-r { flex: 1 1 auto; justify-content: flex-end; min-width: 0; gap: 4px; flex-wrap: nowrap; }
+  .nb-story .nb-plaque { flex: 0 1 auto; min-width: 0; padding: 4px 10px; }
+  .nb-story .nb-plaque h2 { font-size: .8125rem; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sp-stamps { font-size: .75rem; white-space: nowrap; }
+  .sp-shop { flex: none; white-space: nowrap; min-height: 34px; padding: 0 8px; font-size: .75rem; }
+  .nb-story .nb-x { width: 38px; height: 38px; flex: 0 0 38px; }
+}

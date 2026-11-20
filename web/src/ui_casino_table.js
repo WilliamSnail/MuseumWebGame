@@ -93,9 +93,11 @@ async function endTable(leave) {
   if (leave && !s.gone) { try { await NET.call("partyAction", { pid: s.pid, act: "leave" }); } catch (e) { /* 隊伍已經不在了 */ } }
 }
 // 我看到的樣子有更新（伺服器版本比較大的才算；自己叫的回覆不帶 chips，保留上一次的）
+let inviteClose = null, inviteBase = 1; // 邀人的小窗：有人入座了就自己關（11-20，測試回報：乙入座 20 多秒後還開著寫『邀請送出了』）
 function onView(v, fromWatch) {
   const s = T;
   if (!s) return;
+  if (inviteClose && v.seats && v.seats.length > inviteBase) { const c = inviteClose; inviteClose = null; c(); }
   if (s.view && v.seq < s.view.seq && v.round <= s.view.round) return;
   if (typeof v.chips === "number") { s.chips = v.chips; setChips(v.chips); }
   const prev = s.view, me0 = v.seats && v.seats.find(x => x.you), pme = prev && prev.seats && prev.seats.find(x => x.you);
@@ -240,6 +242,7 @@ function draw() {
   parts.push(h("p", { class: "cas-rules" }, "同桌：壹副牌、壹個莊家，照入座的順序輪流；時間到、斷線都當停牌；有人離桌不影響別人。"));
   // 右欄：簡易銀行＋我的帳戶（11-16，翊文：「賭場的賭桌也可以看到簡易銀行嗎，以及自己的帳戶，依樣可以收折」）。簡易銀行的節點留著重用（不要每次重畫都跟伺服器要壹次）
   if (!s.bankBox && ADDONS.casinoBankBox) s.bankBox = ADDONS.casinoBankBox();
+  try { if (window.innerWidth <= 760 && localStorage.getItem("pm-acct-fold") == null) localStorage.setItem("pm-acct-fold", "1"); } catch (e) { /* 手機第壹次：帳戶先收成壹行（11-20，跟牌桌壹致，點了再展開） */ }
   const side = h("div", { class: "cas-side" }, s.bankBox || null, ADDONS.bankAcctBox ? ADDONS.bankAcctBox() : null);
   s.m.surface.replaceChildren(h("div", { class: "cas-row" }, h("div", { class: "cas-body", dataset: { tab: "table" } }, parts), side), h("p", { class: "cas-foot" }, CAS_TEXT.series));
   const b = s.m.surface.querySelector(".cas-body"); if (b) b.scrollTop = keep;
@@ -348,6 +351,8 @@ export async function openNpcInvite(pidGiven) {
   if (!UI.net || !NET.loggedIn) { note("要登入才能邀請。", "bad"); return; }
   const m = miniLayer("邀人一起玩 21 點", "在線的館友會收到邀請；館裡的旅客、委託人，答不答應要看他自己。");
   m.card.classList.add("cas-npcinv");
+  inviteBase = T && T.view && T.view.seats ? T.view.seats.length : 1;
+  inviteClose = () => m.close(); const _c = m.close; m.close = () => { if (inviteClose) inviteClose = null; _c(); };
   m.layer.classList.add("sp-top"); // 從牌桌裡按「邀旅客一起玩」時，牌桌（z 8800）會蓋住預設的小視窗（z 80）
   closeOnOutside(m);
   const sentTo = new Set();
