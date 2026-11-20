@@ -20,8 +20,8 @@
 //    gift       附在信箱的獎勵：{ id, title, insp, mood }（shared/social/mailbox.js 會寄出去，一個 id 只寄一次）
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { WEEKLY_TEXT } from "../systems_text.js";
-import { weekIndex } from "../logic_base.js";
+import { WEEKLY_TEXT } from "../core/systems_text.js";
+import { weekIndex } from "../core/logic_base.js";
 import { weeklyTheme } from "../story/themeshow.js";
 import { holidayNotices } from "../story/holidays.js";
 // 公告資料：content/notices/<id>.json → tools/content/notices_build.cjs 合成這個檔（不進 git）

@@ -1,6 +1,6 @@
 // 館內 NPC 的內容檢查：node tools/check/npc_check.cjs（npm test 會跑；tools/content/week_check.cjs 也會呼叫）
 // 檢查 content/npc/*.json：每位 NPC 一個檔，檔名＝id。格式見 content/README.md 第八節，規劃在 docs/規劃/館內NPC規劃.md。
-// 規則（數字都在 shared/config.js 的 NUM.npc）：必填欄位、id 和名字不重複、地點和喜好只能用允許的、預算在那一級的範圍內而且每位不一樣、
+// 規則（數字都在 shared/core/config.js 的 NUM.npc）：必填欄位、id 和名字不重複、地點和喜好只能用允許的、預算在那一級的範圍內而且每位不一樣、
 // 沒有真人／品牌／政黨（跟週劇情壹樣的禁用字）、不破梗（帳本 mysteries 的謎底字句）、劇情角色（trace）不露臉、不帶錢。
 // 別的檔可以 require 這支：checkNpc({ npcs, ledger })（test/npc/npc_check.test.cjs 用壞資料測）。
 const fs = require("fs"), path = require("path");
@@ -84,8 +84,8 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
     text(w + ".name", n.name, L.name, { legacy: true, latin: trace });
     if (typeof n.name === "string") { if (names.has(n.name)) E(w, `名字「${n.name}」重複了（每個 NPC 都要有自己的名字）`); names.add(n.name); }
     text(w + ".story", n.story, L.story, { trace });
-    if (n.kind === "client") text(w + ".note", n.note, L.note, { legacy: true, latin: true }); // 委託人的 note 是 shared/content.js CLIENTS 的原文，不改
-    else if (n.note !== undefined) E(w, "note 只有委託人（client）有（原文來自 shared/content.js 的 CLIENTS）");
+    if (n.kind === "client") text(w + ".note", n.note, L.note, { legacy: true, latin: true }); // 委託人的 note 是 shared/core/content.js CLIENTS 的原文，不改
+    else if (n.note !== undefined) E(w, "note 只有委託人（client）有（原文來自 shared/core/content.js 的 CLIENTS）");
     if (trace) {
       if (typeof n.ledger !== "string" || (ledger && !ledgerChars.includes(n.ledger))) E(w, "劇情角色要有 ledger：帳本 characters 裡那位的名字");
     } else if (n.ledger !== undefined) E(w, "ledger 只有劇情角色（trace）有");
@@ -211,8 +211,8 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
 
   // 委託人 20 位要整批搬進來，名字和 note 不改（Yuga 寫的文字以 Yuga 的為準）
   const CL = clients || (G.CLIENTS || []);
-  CL.forEach(c => { const n = npcs.find(x => x && x.kind === "client" && x.name === c.name); if (!n) E("content/npc", `委託人「${c.name}」（shared/content.js CLIENTS）還沒搬進來`); else if (n.note !== c.note) E(`content/npc/${n.__file || n.id}`, `note 要跟 CLIENTS 原文壹樣：「${c.note}」`); });
-  npcs.filter(n => n && n.kind === "client" && !CL.some(c => c.name === n.name)).forEach(n => W(`content/npc/${n.__file || n.id}`, "這位委託人不在 shared/content.js 的 CLIENTS 裡（新的委託人要程式端也接上，否則委託不會用到他）"));
+  CL.forEach(c => { const n = npcs.find(x => x && x.kind === "client" && x.name === c.name); if (!n) E("content/npc", `委託人「${c.name}」（shared/core/content.js CLIENTS）還沒搬進來`); else if (n.note !== c.note) E(`content/npc/${n.__file || n.id}`, `note 要跟 CLIENTS 原文壹樣：「${c.note}」`); });
+  npcs.filter(n => n && n.kind === "client" && !CL.some(c => c.name === n.name)).forEach(n => W(`content/npc/${n.__file || n.id}`, "這位委託人不在 shared/core/content.js 的 CLIENTS 裡（新的委託人要程式端也接上，否則委託不會用到他）"));
   // 帳本的劇情角色都要有對應的 trace
   if (ledger) asList(ledger.characters).filter(c => c && c.npc).forEach(c => { if (!npcs.some(n => n && n.id === c.npc && n.kind !== "trace")) E("帳本 characters", `「${c.name}」的 npc「${c.npc}」在 content/npc/ 找不到（要是旅客或委託人）`); });
   if (ledger) asList(ledger.characters).filter(c => c && c.name && !c.npc).map(c => c.name).forEach(c => { if (!npcs.some(n => n && n.kind === "trace" && n.ledger === c)) W("content/npc", `帳本的角色「${c}」還沒有劇情角色（trace）的 NPC 檔`); });

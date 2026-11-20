@@ -1,5 +1,5 @@
 // ================================================================
-//  兌換所、委託櫃台的上課、地下的試煉房間的畫面（決定 0032；規則在 shared/shop.js）
+//  兌換所、委託櫃台的上課、地下的試煉房間的畫面（決定 0032；規則在 shared/core/shop.js）
 //  翊文 11-09：「每周任務集滿後可以換更高級的裝備，並且提升技能」「6個職業的技能選好後要怎麼能增加也要想辦法」
 //  入口：右上角「選單」的「兌換所」（ui_core.js 的 buildNav）、大廳的「本週地下收藏庫」小卡、每週劇情面板上面、委託櫃台的上課那一塊。
 //  舊的檔只加小接口（ADDONS、PANELS 是 ui_core.js 的，ui_core 不能 import 這個檔）：
@@ -7,12 +7,12 @@
 //  蓋在畫面上的木框用 ui_board.js 的 overlay()；限定頭飾的「馬上使用」用 ui_signin.js 的 useNow。
 //  介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 // ================================================================
-import { GEAR_ITEMS, NUM, SKILLS } from "../../../shared/config.js";
-import { SHOP_TEXT, SKILL_TEXT } from "../../../shared/systems_text.js";
-import { isFree, todayStr } from "../../../shared/logic.js";
+import { GEAR_ITEMS, NUM, SKILLS } from "../../../shared/core/config.js";
+import { SHOP_TEXT, SKILL_TEXT } from "../../../shared/core/systems_text.js";
+import { isFree, todayStr } from "../../../shared/core/logic.js";
 import { limitedInfo, ownsLimited } from "../../../shared/social/signin.js";
-import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear } from "../../../shared/shop.js";
-import { ownsGear, wornGear } from "../../../shared/logic_base.js";
+import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear } from "../../../shared/core/shop.js";
+import { ownsGear, wornGear } from "../../../shared/core/logic_base.js";
 import { stampHow } from "../../../shared/story/core.js";
 import { storyState } from "../../../shared/story/state.js";
 import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "../core/ui_core.js";

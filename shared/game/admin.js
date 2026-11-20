@@ -12,14 +12,14 @@
 //  「現在」用 nowMs()（Functions 裡就是伺服器的時間）；「今天」照台灣時間 05:00 換日（taipeiDay）。
 //  介面上的字（adminAgo 這些）照第 1 代用「壹」。
 // ================================================================
-import { BADGES, PEPE_PARTS } from "../config.js";
-import { ENDINGS, FORBIDDEN_BOOKS } from "../content.js";
-import { BOOK4, ENDING_CELLAR, JOBS, QUIRK_TASK_TEXT } from "../systems_text.js";
-import { CATS, CORE_TOTAL, activeQuirks, allChapters, asList, codexCount, maxSan, nowMs, taipeiDay } from "../logic_base.js";
-import { gameDayNo, migrateSave, quirkDaysLeft, quirkName } from "../logic.js";
-import { bookSequels } from "../logic_base.js";
-import { traitById } from "../logic_base.js";
-import { traitName } from "../legacy.js";
+import { BADGES, PEPE_PARTS } from "../core/config.js";
+import { ENDINGS, FORBIDDEN_BOOKS } from "../core/content.js";
+import { BOOK4, ENDING_CELLAR, JOBS, QUIRK_TASK_TEXT } from "../core/systems_text.js";
+import { CATS, CORE_TOTAL, activeQuirks, allChapters, asList, codexCount, maxSan, nowMs, taipeiDay } from "../core/logic_base.js";
+import { gameDayNo, migrateSave, quirkDaysLeft, quirkName } from "../core/logic.js";
+import { bookSequels } from "../core/logic_base.js";
+import { traitById } from "../core/logic_base.js";
+import { traitName } from "../core/legacy.js";
 import { signinState, weekProgress } from "../social/signin.js";
 import { isoWeek } from "../story/core.js";
 import { storyState } from "../story/state.js";

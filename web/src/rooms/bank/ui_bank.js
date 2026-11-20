@@ -14,8 +14,8 @@ import { roomHead } from "../../core/ui_room.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "../../core/ui_stat.js";
 import { statView } from "../../../../shared/world/stat_view.js";
 import { mountMood } from "../../fx/ui_mood.js";
-import { NUM } from "../../../../shared/config.js";
-import { addDays, mdShift, todayStr } from "../../../../shared/logic.js";
+import { NUM } from "../../../../shared/core/config.js";
+import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
@@ -1081,7 +1081,7 @@ function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只
 }
 
 // ---------- 規則與小提示（翊文 11-14：「這個銀行裡面有沒有一個按鈕可以把這些小tip給玩家參考」）----------
-// 數字都從 shared/config.js 的 NUM 讀；伺服器 view 有給的（開收盤、倍數上限）優先用 view 的
+// 數字都從 shared/core/config.js 的 NUM 讀；伺服器 view 有給的（開收盤、倍數上限）優先用 view 的
 const clock = m => { const t = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`; };
 const pc = n => `${Number(n)}%`;
 const feeT = v => (v > 0 ? pc(v) : "免手續費"); // 手續費 0 寫「免手續費」（決定 0136）

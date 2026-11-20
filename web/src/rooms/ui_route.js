@@ -6,9 +6,9 @@
 //    最下面一直有「撤退」。
 //  圖：web/public/cellar2/map-node.webp（探索、遭遇、寶箱、休息、守門，一條五格）、map-mark.webp（爪痕 1～3、棋子、標籤、印章）
 // ================================================================
-import { NUM } from "../../../shared/config.js";
-import { cellarFloor } from "../../../shared/logic_base.js";
-import { describePepe, fromKey } from "../../../shared/logic.js";
+import { NUM } from "../../../shared/core/config.js";
+import { cellarFloor } from "../../../shared/core/logic_base.js";
+import { describePepe, fromKey } from "../../../shared/core/logic.js";
 import { COOP_ROUTE_KIND } from "../../../shared/coop/route.js";
 import { btn, h, itemHTML, ptNode, snd } from "../core/ui_core.js";
 

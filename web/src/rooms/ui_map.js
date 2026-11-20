@@ -7,8 +7,8 @@
 //  - 素材在 web/public/map/（tools/assets/map_assets.py 處理翊文生的原圖）。沒有任何價格、數字、集團的錢，不寫別的館的名字和總數。
 //  - 開發時資料還是空的就用假資料排版（玩家看不到）。
 // ================================================================
-import { todayStr } from "../../../shared/logic.js";
-import { isFresh } from "../../../shared/fresh.js";
+import { todayStr } from "../../../shared/core/logic.js";
+import { isFresh } from "../../../shared/core/fresh.js";
 import { MAP_LAYER_NAME, mapLayersOn, mapSpots } from "../../../shared/world/map.js";
 import { NPC_ROSTER } from "../../../shared/npc/roster.js";
 import { ADDONS, P, freshTag, h, sndFile } from "../core/ui_core.js";

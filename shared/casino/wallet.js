@@ -9,11 +9,11 @@
 //    sk 連勝連敗（shared/casino/streak.js，決定 0049）；title 現在當稱號的成就 id；hung 掛在展廳的財產 id；st 統計；legacy { at } 認領過舊資料；tablePid 現在坐的牌桌（第二階段）
 //    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino/week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { CAS_ACH, CAS_GIFT, CAS_GIFT2, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./core.js";
-import { RNG, clampN, gainSan, hashStr, isFree, limitedHome } from "../logic_base.js";
-import { weekIndex } from "../logic_base.js";
+import { RNG, clampN, gainSan, hashStr, isFree, limitedHome } from "../core/logic_base.js";
+import { weekIndex } from "../core/logic_base.js";
 import { eventLive } from "../story/events.js";
 import { isoMonday, isoWeek, rewardText, storyPackFor } from "../story/core.js";
 import { STORY_ITEMS, storyState } from "../story/state.js";

@@ -10,7 +10,7 @@ const imp = f => import(pathToFileURL(path.join(__dirname, "..", "..", "shared",
 async function main() {
   require("./notices_build.cjs").write(); // shared/game/notices_data.js 不進 git，先產生
   const { NOTICES, NOTICE_AREAS, noticeArea } = await imp("game/notices.js");
-  const { taipeiDay } = await imp("logic.js");
+  const { taipeiDay } = await imp("core/logic.js");
   const { dcDigestText } = await imp("discord/out.js"); // 組字在 shared/discord/out.js（伺服器排程也用同壹份）
   const a = process.argv.slice(2), i = a.indexOf("--date"), day = i >= 0 ? a[i + 1] : taipeiDay(Date.now());
   process.stdout.write(dcDigestText(NOTICES, day, noticeArea, NOTICE_AREAS));

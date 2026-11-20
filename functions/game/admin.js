@@ -10,7 +10,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { adminEmail, adminOverviewOf, isAdminInvite } from "../shared/game/admin.js";
-import { nowMs } from "../shared/logic.js";
+import { nowMs } from "../shared/core/logic.js";
 
 async function isAdmin(auth) {
   const email = auth ? adminEmail(auth.token) : null;

@@ -43,15 +43,15 @@ const names = Object.keys;
 {
   assert.deepStrictEqual(R.yiHits("每一個人、一天一次、十一天、第一章、不一樣"), ["一個", "一天", "一次", "一樣"]);
   const js = "export const A = { t: \"給你一個禮物\", u: \"給你壹個禮物\", v: `今天${n}一次`, w: \"十一次\" };\n// 一個註解\nexport const B = [\n  \"舊的一張\",\n  \"新的一張\",\n];";
-  const files = { "web/src/rooms/x.js": js, "shared/systems_text.js": js, "shared/logic.js": js, "content/weeks/w/d1.json": "{\n  \"a\": \"壹個\",\n  \"b\": \"一天\",\n  \"c\": \"一次 壹檢查略過\"\n}", "content/notices/n.json": "{\"a\":\"一個\"}" };
-  const added = new Map([["web/src/rooms/x.js", new Set([1, 2, 5])], ["shared/systems_text.js", new Set([1])], ["shared/logic.js", new Set([1])], ["content/weeks/w/d1.json", new Set([2, 3, 4])], ["content/notices/n.json", new Set([1])]]);
+  const files = { "web/src/rooms/x.js": js, "shared/core/systems_text.js": js, "shared/core/logic.js": js, "content/weeks/w/d1.json": "{\n  \"a\": \"壹個\",\n  \"b\": \"一天\",\n  \"c\": \"一次 壹檢查略過\"\n}", "content/notices/n.json": "{\"a\":\"一個\"}" };
+  const added = new Map([["web/src/rooms/x.js", new Set([1, 2, 5])], ["shared/core/systems_text.js", new Set([1])], ["shared/core/logic.js", new Set([1])], ["content/weeks/w/d1.json", new Set([2, 3, 4])], ["content/notices/n.json", new Set([1])]]);
   const bad = R.checkYi(added, mk(files));
   assert.ok(bad.some(b => b.startsWith("web/src/rooms/x.js:1")), "新加的「一個」要報：" + bad.join("\n"));
   assert.ok(bad.some(b => b.startsWith("web/src/rooms/x.js:5")), "多行陣列裡新加的那行要報");
   assert.ok(!bad.some(b => b.startsWith("web/src/rooms/x.js:4")), "沒新加的行不報");
   assert.ok(!bad.some(b => /x\.js:2/.test(b)), "註解不報");
-  assert.ok(bad.some(b => b.startsWith("shared/systems_text.js:1")), "shared 的 *_text 要查");
-  assert.ok(!bad.some(b => b.startsWith("shared/logic.js")), "shared/logic.js 不是畫面文字檔");
+  assert.ok(bad.some(b => b.startsWith("shared/core/systems_text.js:1")), "shared 的 *_text 要查");
+  assert.ok(!bad.some(b => b.startsWith("shared/core/logic.js")), "shared/core/logic.js 不是畫面文字檔");
   assert.ok(bad.some(b => b.startsWith("content/weeks/w/d1.json:3")) && !bad.some(b => /d1\.json:(2|4)/.test(b)), "json 只報新加的一天，壹和略過的不報：" + bad.join("\n"));
   assert.ok(!bad.some(b => b.startsWith("content/notices")), "公告不查");
   const d = R.parseDiff("diff --git a/x b/x\n--- a/x\n+++ b/x\n@@ -3,2 +3,3 @@\n+a\n@@ -9 +10 @@\n+b\n@@ -20,2 +20,0 @@\n-c\ndiff --git a/y b/y\n--- a/y\n+++ /dev/null\n@@ -1 +0,0 @@\n-z");
@@ -75,5 +75,11 @@ const names = Object.keys;
   const log = console.log; console.log = () => {};
   let bad; try { bad = R.runAll(); } finally { console.log = log; }
   assert.deepStrictEqual(bad, [], "現在的 repo 違反了程式的規矩：\n" + bad.join("\n"));
+}
+{ // 資料夾的規矩第 3 條：shared/ 第一層只准子資料夾
+  const RR = require("../../tools/check/repo_rules.cjs");
+  const bad = RR.check(["shared/new_thing.js", "shared/core/logic.js", "shared/casino/core.js"], () => "x");
+  assert.ok(bad.some(b => b.startsWith("shared/new_thing.js")), "shared/ 第一層的 .js 要被擋");
+  assert.ok(!bad.some(b => b.startsWith("shared/core/")) && !bad.some(b => b.startsWith("shared/casino/")), "子資料夾裡的不擋");
 }
 console.log("程式的規矩的測試都過了");

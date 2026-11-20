@@ -1,5 +1,5 @@
 /* 新的大廳（決定 0066，ui_lobby2.js；草稿在 docs/草稿/新大廳/）。素材在 web/public/lobby/。
-   回滾：shared/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
+   回滾：shared/core/config.js 的 NUM.ui.newLobby 改 false（這整個檔就用不到了）。 */
 
 /* 捲軸出現、消失時寬度不變（導覽圖的高度跟著寬度走，不留的話 1366 寬會在「有捲軸／沒捲軸」之間來回跳，畫面停住） */
 html.new-lobby-on { scrollbar-gutter: stable; }

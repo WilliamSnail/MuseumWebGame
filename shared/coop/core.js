@@ -24,12 +24,12 @@
 //  run 從資料庫讀回來可以直接傳（每一步開頭會先 coopFix 補回 Realtime Database 弄掉的空陣列、空物件）。
 //  run.phase：vote（等大家投票）→ result（看結果）→ vote …… → floorDone（這一層走完）→ over（結束，run.over 寫為什麼）
 // ================================================================
-import { NUM } from "../config.js";
-import { addDays, addMyth, cellarFloor, fromKey, isFree, limitedHome, maxSan, pickOne, rollExpr, sanCheck } from "../logic_base.js";
-import { cellarDarkLoss } from "../legacy.js";
+import { NUM } from "../core/config.js";
+import { addDays, addMyth, cellarFloor, fromKey, isFree, limitedHome, maxSan, pickOne, rollExpr, sanCheck } from "../core/logic_base.js";
+import { cellarDarkLoss } from "../core/legacy.js";
 import { eventRunFix } from "../story/events.js";
-import { trialById, trialState, trialWin } from "../shop.js";
-import { injureDaysOf, limitedFx, skillCheck, teamHas } from "../systems.js";
+import { trialById, trialState, trialWin } from "../core/shop.js";
+import { injureDaysOf, limitedFx, skillCheck, teamHas } from "../core/systems.js";
 import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopFloorOf, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";
 import { coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./fun.js";
 import { fightFoesOf, fightIntentHidden } from "../cellar/fight.js";

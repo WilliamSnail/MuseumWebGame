@@ -1,7 +1,7 @@
 import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onRequest } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { casPoolView } from "../shared/casino/bank.js";
 
 // 館門口池子的水位（決定 0132、0133）：給每日排程讀的公開 JSON，Hosting 的 /data/pool.json 轉過來。

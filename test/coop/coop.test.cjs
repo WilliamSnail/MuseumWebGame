@@ -629,7 +629,7 @@ T("從資料庫讀回來（空的不見、陣列變物件）也接得下去，�
 (async () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
-    const logic = await import(url("logic.js"));
+    const logic = await import(url("core/logic.js"));
     const coop = await import(url("coop/core.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, DATE);
     const key = logic.finishMake(P, Object.assign({}, BASE), { natural: 50 }).key;

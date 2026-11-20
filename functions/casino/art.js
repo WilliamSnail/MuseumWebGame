@@ -14,8 +14,8 @@ import { ECON_EVENTS } from "../shared/npc_data.js";
 import { casEconActive } from "../shared/world/econ_events.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { ART_WORKS } from "../shared/art_data.js";
-import { NUM } from "../shared/config.js";
-import { taipeiDay } from "../shared/logic.js";
+import { NUM } from "../shared/core/config.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { needMember, now } from "../coop/party.js";
 import { no, playCore, shape } from "./casino.js";
 

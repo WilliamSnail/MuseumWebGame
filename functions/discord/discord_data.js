@@ -18,8 +18,8 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 // ================================================================
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
-import { NUM } from "../shared/config.js";
-import { taipeiDay } from "../shared/logic.js";
+import { NUM } from "../shared/core/config.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { casWalletFix } from "../shared/casino/wallet.js";
 import { casMint } from "../shared/casino/book.js";
 import { dcExpireAt, dcExpired, dcJoinCodeMake, dcJoinFull, dcLinkCodeMake, dcLinkCodeOf, dcTriesFail, dcTriesState } from "../shared/discord/core.js";

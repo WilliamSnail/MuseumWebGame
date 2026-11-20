@@ -19,7 +19,7 @@ const VARIANTS = [
 const TENT = !!process.env.TENT;
 const SHIFT = process.env.SHIFT ? +process.env.SHIFT : 0; // 目標加幾（看「門檻要加多少才維持現在的難度」）
 const cnt = (items, f) => items.filter(f).length;
-// 隊伍強度（照 shared/systems.js teamPower，只把「比讚、巫師帽、觸手帽」換成可以疊的版本）
+// 隊伍強度（照 shared/core/systems.js teamPower，只把「比讚、巫師帽、觸手帽」換成可以疊的版本）
 function power(P, items, room, v) {
   let t = items.reduce((n, it) => n + G.memberPower(it, room), 0);
   const like = cnt(items, it => it.pick.姿勢 === "比讚"), wiz = cnt(items, it => it.pick.帽子 === "巫師帽"), ten = cnt(items, it => it.pick.帽子 === "觸手帽");

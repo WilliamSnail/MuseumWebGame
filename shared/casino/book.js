@@ -1,4 +1,4 @@
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 // ================================================================
 //  賭場的記帳（11-13，數值平衡；docs/規劃/經濟體系規劃.md 第 2.2 節 P0）
 //  純函式，不碰資料庫，也不依賴別的檔（所以 casino_wallet、econ、find、job 都可以 import）。

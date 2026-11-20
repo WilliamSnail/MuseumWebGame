@@ -11,8 +11,8 @@
 //      理智用完還會熄燈），所以這個扣法不會發作、不會熄燈、不會把人弄到不能玩。理智已經 1 以下（含熄燈）就不扣。
 //    - 自由模式（isFree）、沒有存檔的人沒有效果，計數也不動。
 // ================================================================
-import { NUM } from "../config.js";
-import { clampN, isFree } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { clampN, isFree } from "../core/logic_base.js";
 
 const casSkNz = n => (Number.isFinite(+n) ? Math.max(0, Math.floor(+n)) : 0);
 const CAS_SK_NUM = ["零", "壹", "兩", "三", "四", "五", "六", "七", "八", "九", "十"];

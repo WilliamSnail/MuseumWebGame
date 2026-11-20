@@ -8,7 +8,7 @@
 import { NET } from "../core/net_firebase.js";
 import { eventBars, eventLeftText, eventRange, eventWhen } from "../../../shared/story/events.js";
 import { HL_QUIET, orderHeadlines, todayHeadlines } from "../../../shared/story/headlines.js";
-import { RNG, todayStr } from "../../../shared/logic.js";
+import { RNG, todayStr } from "../../../shared/core/logic.js";
 import { visibleNotices } from "../../../shared/game/notices.js";
 import { P, PANELS, UI, every, h, navTo } from "../core/ui_core.js";
 import { allEvents } from "./ui_events.js";

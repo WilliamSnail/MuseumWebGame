@@ -52,7 +52,7 @@ T("merge：清單兩邊都留、其他只留內容；公告檔和不進 git 的�
   const l = '<<<<<<< a\nconst O = ["x.js", "new1.js", "z.js"];\n=======\nconst O = ["x.js", "z.js", "new2.js"];\n>>>>>>> b\n';
   assert.strictEqual(keepBoth(l, "list"), 'const O = ["x.js", "new1.js", "z.js", "new2.js"];\n');
   assert.ok(canAuto("shared/game/notices.js") && canAuto("docs/維護日誌/README.md") && canAuto("docs/素材/音效與特效總表.md"));
-  assert.ok(!canAuto("shared/logic.js"));
+  assert.ok(!canAuto("shared/core/logic.js"));
 });
 T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別場不動；找不到回 null", () => {
   const w = { events: [{ id: "a", date: "2026-11-11", from: "20:00", to: "22:00" }, { id: "b", date: "2026-11-14", from: "20:00", to: "22:00" }] };

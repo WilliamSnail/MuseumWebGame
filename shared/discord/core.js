@@ -12,12 +12,12 @@
 //  所有名字都用 dc／DC 開頭（shared 的五個檔接在一起跑，頂層名字不能重複）。
 //  Discord 的回覆是玩家看的，文字照第 1 代用「壹」。文字都是草稿，Yuga 可以改。
 // ================================================================
-import { NUM } from "../config.js";
-import { BOARD_TEXT } from "../systems_text.js";
+import { NUM } from "../core/config.js";
+import { BOARD_TEXT } from "../core/systems_text.js";
 import { eventEffect, eventRange, eventsOnDate } from "../story/events.js";
 import { funDaysOf, holidaysOn } from "../story/holidays.js";
 import { boardCut, boardDiscordNick, boardGroups, boardPeriodText, boardTrim, boardValueText, boardViewOf } from "../social/board.js";
-import { titleName } from "../titles.js";
+import { titleName } from "../core/titles.js";
 import { noticeLive, NOTICES } from "../game/notices.js";
 
 export const DC_SITE = "https://pepe-museum.web.app";

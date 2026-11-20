@@ -727,7 +727,7 @@ body.reduce-motion .dk-eyes i { animation: none; }
 /* ================================================================
    11-08 翊文要的：「玩家新解開的東西應該介面上要有提示有那個地方解開了」
    金色小牌子「新」，像展品旁邊的說明牌：導覽列（手機在選單按鈕上）、大廳導覽圖、房間裡那件東西（卡片、畫、書背、徽章、樓層、升級）
-   不用紅點（規劃：紅點太多大家就不看了）：只有真的有新東西才出現，看過壹次就拿掉（規則在 shared/fresh.js）
+   不用紅點（規劃：紅點太多大家就不看了）：只有真的有新東西才出現，看過壹次就拿掉（規則在 shared/core/fresh.js）
    ================================================================ */
 .fresh-tag { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
   min-width: 1.75em; height: 1.5em; padding: 0 .35em; box-sizing: border-box; border-radius: 3px;

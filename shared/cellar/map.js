@@ -13,9 +13,9 @@
 //  地圖：{ floor, rows: [[{ id, kind, room?, foe? }]], gate: { id, kind: "gate", foe }, links: { 點 id: [下一排可以走的點 id] } }
 //  kind："explore" 探索（room ＝房間 id）、"foe" 遭遇（foe ＝怪物 id）、"chest" 寶箱和怪事、"rest" 休息、"gate" 守門
 // ================================================================
-import { NUM } from "../config.js";
-import { RNG, hashStr, mulberry32 } from "../logic_base.js";
-import { cellarFloor } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { RNG, hashStr, mulberry32 } from "../core/logic_base.js";
+import { cellarFloor } from "../core/logic_base.js";
 import { fightFoesOf } from "./fight.js";
 
 export const CMAP_KINDS = ["explore", "foe", "chest", "rest", "gate"];

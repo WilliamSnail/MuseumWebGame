@@ -5,7 +5,7 @@
 //  海底只給水位（公分），不給數字（規劃第五節問題 12 還沒決定）。博物館資金、莊家給數字。
 //  介面上的字用「壹」。文字是草稿，Yuga 可以改。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casBookSumObj } from "./book.js";
 import { CAS_FX_TEXT } from "./gdp.js";
 import { CAS_ECON, CAS_MENU } from "./text.js";

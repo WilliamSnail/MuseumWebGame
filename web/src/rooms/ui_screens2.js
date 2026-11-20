@@ -4,17 +4,17 @@
 
 // ---------- 6 抱枕工作台（系統 I：印你的佩佩） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../../shared/config.js";
-import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../../shared/content.js";
-import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../../shared/systems_text.js";
+import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../../shared/core/config.js";
+import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../../shared/core/content.js";
+import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../../shared/core/systems_text.js";
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
-import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../../shared/logic.js";
+import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../../shared/core/logic.js";
 import { npcNews, npcWebCounters } from "../../../shared/npc/core.js";
-import { bookSequels, hasUp, sequelOpen, unlockSequel } from "../../../shared/logic_base.js";
-import { hasTalent, skillCheck } from "../../../shared/systems.js";
-import { FRESH_KEY, freshUnder, isFresh } from "../../../shared/fresh.js";
-import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../../shared/legacy.js";
+import { bookSequels, hasUp, sequelOpen, unlockSequel } from "../../../shared/core/logic_base.js";
+import { hasTalent, skillCheck } from "../../../shared/core/systems.js";
+import { FRESH_KEY, freshUnder, isFresh } from "../../../shared/core/fresh.js";
+import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../../shared/core/legacy.js";
 import { isLimitedMat, stockOf } from "../../../shared/social/signin.js";
 import { APPLAUSE, hallApplauseDue } from "../../../shared/social/applause.js";
 import { reportClientError } from "../core/error_report.js";
@@ -151,7 +151,7 @@ SCREENS.commission = root => {
 };
 
 // ---------- 「壹鍵交件」（翊文 11-08：「可以設計一鍵提交委託嗎，就是把符合的都自動符合的都委託都交上去」） ----------
-// 挑哪一件、怎麼交都在 shared/logic.js（autoDeliverables、keepRank、deliverAll）。
+// 挑哪一件、怎麼交都在 shared/core/logic.js（autoDeliverables、keepRank、deliverAll）。
 // 這裡只管：委託單上方的按鈕、先用 ask() 問一次、交完蓋一張總結，最後才用 showEvents() 演出徽章這些事件。
 // 不像手動交件每張都蓋章、飄字、跳提示，免得一次跳一大堆。
 // 側欄壹塊壹塊各自包起來（11-17，玩家回報壹鍵交件整塊不見）：壹塊出錯只剩壹個小提示，不連累其他塊，錯誤回報給伺服器（error_report.js）

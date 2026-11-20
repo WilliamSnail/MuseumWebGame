@@ -17,20 +17,20 @@
 //  存檔是玩家自己寫的（shared/game/admin.js 開頭）：值一律當不可信，只拿數字、有上限。暱稱只當純文字；貼到 Discord 前要過 boardDiscordNick。
 //  文字在 systems_text.js 的 BOARD_TEXT，數字在 config.js 的 NUM.board。
 // ================================================================
-import { NUM } from "../config.js";
-import { FORBIDDEN_BOOKS } from "../content.js";
-import { BOARD_TEXT, BOOK4 } from "../systems_text.js";
+import { NUM } from "../core/config.js";
+import { FORBIDDEN_BOOKS } from "../core/content.js";
+import { BOARD_TEXT, BOOK4 } from "../core/systems_text.js";
 import { casNum } from "../casino/core.js";
 import { adminSummary } from "../game/admin.js";
-import { addDays, asList, hallScore, nowMs, taipeiDay } from "../logic_base.js";
-import { fill, migrateSave } from "../logic.js";
-import { bookSequels, weekIndex } from "../logic_base.js";
-import { cellarFloors } from "../systems.js";
-import { shopState } from "../logic_base.js";
+import { addDays, asList, hallScore, nowMs, taipeiDay } from "../core/logic_base.js";
+import { fill, migrateSave } from "../core/logic.js";
+import { bookSequels, weekIndex } from "../core/logic_base.js";
+import { cellarFloors } from "../core/systems.js";
+import { shopState } from "../core/logic_base.js";
 import { dayStartMs, isoWeek, weekMonday } from "../story/core.js";
 import { storyState } from "../story/state.js";
 import { showStatus } from "../story/themeshow.js";
-import { titleName } from "../titles.js";
+import { titleName } from "../core/titles.js";
 
 const brdObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const brdNum = v => (typeof v === "number" && Number.isFinite(v) ? v : 0);

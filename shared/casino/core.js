@@ -8,10 +8,10 @@
 //  牌用 0–51 的整數：點 ＝ 數字 % 13（0 是 A，1–9 是 2–10，10、11、12 是 J、Q、K），花色 ＝ floor(數字 / 13)。
 //  理智低的時候，畫面會看錯牌（casWarpCard）：只是顯示，算點數、派彩用真的牌。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { CAS_TEXT } from "./text.js";
-import { RNG, hashStr, isFree, mulberry32 } from "../logic_base.js";
-import { skillOf } from "../legacy.js";
+import { RNG, hashStr, isFree, mulberry32 } from "../core/logic_base.js";
+import { skillOf } from "../core/legacy.js";
 
 export const CAS_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 export const CAS_SUITS = ["♠", "♥", "♦", "♣"];

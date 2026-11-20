@@ -21,8 +21,8 @@
 //  文字（手記、配件的名字以外的字）放這個檔最下面，是草稿，Yuga 可以改；配件的名字在 systems_text.js 的 LIMITED_TEXT。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, WEEKLY_IDS } from "../config.js";
-import { clampN, daysBetween, hallScore, isFree, todayStr, weekIndex } from "../logic_base.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, WEEKLY_IDS } from "../core/config.js";
+import { clampN, daysBetween, hallScore, isFree, todayStr, weekIndex } from "../core/logic_base.js";
 import { grantLimited } from "../social/signin.js";
 
 const isShowDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);

@@ -1,4 +1,4 @@
-// 兌換所和技能成長（shared/shop.js，決定 0032）：node test/game/shop.test.cjs（npm test 也會跑）
+// 兌換所和技能成長（shared/core/shop.js，決定 0032）：node test/game/shop.test.cjs（npm test 也會跑）
 // 數字都讀 NUM；用到亂數的固定骰子（G.setRng）。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");

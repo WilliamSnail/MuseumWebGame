@@ -10,11 +10,11 @@
 //  提示用現有的 note()，不亮小紅點；只有新的手記標「新」（跟每週劇情的新書一樣）。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { LIMITED_ITEMS, NUM } from "../../../shared/config.js";
-import { HALL_THEME_TEXT } from "../../../shared/content.js";
-import { WEEKLY_TEXT } from "../../../shared/systems_text.js";
-import { isFresh, markFresh, markFreshEvents } from "../../../shared/fresh.js";
-import { isFree, isUnlocked, todayStr } from "../../../shared/logic.js";
+import { LIMITED_ITEMS, NUM } from "../../../shared/core/config.js";
+import { HALL_THEME_TEXT } from "../../../shared/core/content.js";
+import { WEEKLY_TEXT } from "../../../shared/core/systems_text.js";
+import { isFresh, markFresh, markFreshEvents } from "../../../shared/core/fresh.js";
+import { isFree, isUnlocked, todayStr } from "../../../shared/core/logic.js";
 import { limitedInfo, ownsLimited } from "../../../shared/social/signin.js";
 import { SHOW_NOTES, SHOW_POSTER_PICK, SHOW_THEMES, SHOW_TIER_NAME, hasShowPending, noteCounts, noteOpen, noteRead, readShowNote, showBox, showHintDue, showItemOf, showPosters, showRewards, showStatus, showTiers, showTitle, syncShow, takeShowPending, weekGold, weekItemOf } from "../../../shared/story/themeshow.js";
 import { APPLAUSE } from "../../../shared/social/applause.js";

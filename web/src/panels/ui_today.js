@@ -9,7 +9,7 @@
 // ================================================================
 import { syncMail, unclaimedCount } from "../../../shared/social/mailbox.js";
 import { visibleNotices } from "../../../shared/game/notices.js";
-import { dailyCommissions, isFree, realTodayStr, regularsView } from "../../../shared/logic.js";
+import { dailyCommissions, isFree, realTodayStr, regularsView } from "../../../shared/core/logic.js";
 import { npcWebSet } from "../../../shared/npc/core.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, icon, navTo, snd, updateBoardBadges } from "../core/ui_core.js";

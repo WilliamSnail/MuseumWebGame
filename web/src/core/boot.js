@@ -2,12 +2,12 @@
 //  開館
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { GEN_TEXT } from "../../../shared/config.js";
+import { GEN_TEXT } from "../../../shared/core/config.js";
 import { ART } from "./art.js";
 import { FX } from "../fx/fx.js";
-import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../../shared/logic.js";
-import { visitorEvery } from "../../../shared/systems.js";
-import { nowMs } from "../../../shared/logic.js";
+import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../../shared/core/logic.js";
+import { visitorEvery } from "../../../shared/core/systems.js";
+import { nowMs } from "../../../shared/core/logic.js";
 import { NET } from "./net_firebase.js";
 import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, noteRetasked, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
 import { dailyRecovery } from "../rooms/ui_screens1.js";

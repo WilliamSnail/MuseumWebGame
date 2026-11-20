@@ -74,7 +74,7 @@ import "../rooms/ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）
 import "../panels/ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "../panels/ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story/core.js
 import "../panels/ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/game/admin.js 來
-import "../panels/ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/shop.js
+import "../panels/ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/core/shop.js
 import "../panels/ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/story/themeshow.js
 import "../panels/ui_board_rank.js"; // 本週榜單（11-09，決定 0039）：規則在 shared/social/board.js，資料是 tools/content/weekly_board.cjs 每週寫的。跟公佈欄 ui_board.js 不一樣
 import "../panels/ui_mates.js"; // 大廳導覽圖上的館友在哪間房（11-09）：規則在 shared/social/mates.js

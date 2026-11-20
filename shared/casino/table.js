@@ -11,11 +11,11 @@
 //  NPC 座位（11-14，決定 0080，規則在 shared/casino/npc.js）：uid 是 "n~NPC的id"，座位多 npc：{ id, style, host 帶他來的館友, until 待到哪個毫秒, said 這局說了幾句 }；
 //    沒有錢包：注從已知世界出、賠付回已知世界；下注、要牌、停牌都由伺服器馬上替他做，不等計時；館友先下注他才下注（桌上只有 NPC 時不開局）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { CAS_TEXT } from "./text.js";
 import { casBetCheck, casDealerPlay, casHand, casOutcome, casPayout, casPoint, casShown, casShuffle } from "./core.js";
 import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./wallet.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { nwPoke, nwPokeKind } from "../world/core.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./npc.js";
 

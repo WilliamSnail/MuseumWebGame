@@ -7,7 +7,7 @@ import { CELLAR, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./sys
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, canStartCellar, cellarFloor, clampN, codexCount, dailyCommissions, decoOpen, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, hasUp, isFree, isUnlocked, knownTotal, limitedHome, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sequelOpen, sortUnlocked, specAllows, teamItems, todayStr, traitSum, understandCheck, usable } from "./logic_base.js";
 import { cellarDarkLoss, jobSkill, skillOf, traitHits, traitTag } from "./legacy.js";
 import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
-import { weeklyState } from "./story/themeshow.js";
+import { weeklyState } from "../story/themeshow.js";
 
 // ---------- 系統 K：工坊升級 ----------
 export function hallSize(P) { return 6 + (hasUp(P, "ped7") ? 1 : 0) + (hasUp(P, "ped8") ? 1 : 0); }
@@ -347,7 +347,7 @@ export function cellarApply(P, res, sanSuccess) {
   const firstClear = !P.cellar.cleared[room.id]; // 第一次走這個房間（回理智只算第一次，不能一直下去刷）
   if (o.insp) { fx.insp = firstWin ? o.insp + (limitedHome(P).winInsp || 0) : NUM.cellarRepeatInsp; if (!isFree(P)) P.insp += fx.insp; } // 礦工帽：第壹次過多 1 靈感
   if (success) P.cellar.won[room.id] = true;
-  if (success && room.trial) fx.trial = trialWin(P, room); // 試煉房間過了：技能成長（決定 0032，shared/shop.js）
+  if (success && room.trial) fx.trial = trialWin(P, room); // 試煉房間過了：技能成長（決定 0032，shared/core/shop.js）
   if (o.san) {
     const s = String(o.san).trim();
     if (s.startsWith("+")) { fx.sanGain = isFree(P) || !firstWin ? 0 : gainSan(P, rollExpr(s.slice(1)).total); }

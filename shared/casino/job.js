@@ -8,10 +8,10 @@
 //  錢包的欄位 cj：{ day, n 今天拿了幾次, slots 今天給過的格子 }；舊錢包沒有，這裡補。
 //  純函式：亂數用 RNG（測試可以換，也可以從參數 rnd 傳）；「今天」從參數來。籌碼不是錢，這裡沒有任何換成現實東西的路。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove } from "./book.js";
 import { casInSpent, casInUsed } from "./stock_in.js";
-import { RNG } from "../logic_base.js";
+import { RNG } from "../core/logic_base.js";
 import { nwPoke } from "../world/core.js";
 import { npcByName } from "../npc/core.js";
 

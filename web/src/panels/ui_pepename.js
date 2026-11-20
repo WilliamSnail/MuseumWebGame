@@ -1,5 +1,5 @@
 // ================================================================
-//  替佩佩取名（11-19，決定 0133；shared/logic.js 的 pepeRename）
+//  替佩佩取名（11-19，決定 0133；shared/core/logic.js 的 pepeRename）
 //  P.pepes[key].nm ＝ 名字（≤12 字）。被「收走名字」的那隻：nm 空白、e.tk ＝ { no 館友號碼, day, stamp }。
 //  畫面：
 //   ① 圖鑑的說明、展台的卡：有名字就是銅名牌；沒名字有「替牠取名」；
@@ -7,8 +7,8 @@
 //   ③ 重新取過名（tk.stamp）：名字旁邊一枚小空心圓章。
 //  口氣安靜：不解釋、不說誰收的。名字當純文字（textContent），不當 HTML。
 // ================================================================
-import { PEPE_NAME } from "../../../shared/config.js";
-import { pepeRename } from "../../../shared/logic.js";
+import { PEPE_NAME } from "../../../shared/core/config.js";
+import { pepeRename } from "../../../shared/core/logic.js";
 import { P, h, btn, icon, note, persist, snd } from "../core/ui_core.js";
 
 const pad3 = n => String(Math.max(0, Math.floor(+n || 0))).padStart(3, "0");

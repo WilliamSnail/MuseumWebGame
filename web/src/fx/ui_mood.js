@@ -9,7 +9,7 @@
 // ================================================================
 import { heatOf, roomHeats, roomMood } from "../../../shared/social/room_mood.js";
 import { eventBars } from "../../../shared/story/events.js";
-import { todayStr } from "../../../shared/logic.js";
+import { todayStr } from "../../../shared/core/logic.js";
 import { ADDONS, UI, every, h } from "../core/ui_core.js";
 import { allEvents } from "../panels/ui_events.js";
 

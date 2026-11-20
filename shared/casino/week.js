@@ -16,9 +16,9 @@
 //  純函式：「今天」「這週」從參數傳進來，不碰時鐘；沒有亂數。壞資料不丟錯（casWeekDef 把壞的丟掉、casWkFix 補欄位）。
 //  沒有真錢：籌碼不是錢，這裡的獎勵只有紀念品、稱號、1 枚週章和一小段故事，沒有靈感。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { CAS_MENU } from "./text.js";
-import { addDays, asList } from "../logic_base.js";
+import { addDays, asList } from "../core/logic_base.js";
 
 const wkBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wkInt = (v, lo = 0, hi = 1e6) => (Number.isFinite(+v) ? Math.max(lo, Math.min(hi, Math.floor(+v))) : lo);

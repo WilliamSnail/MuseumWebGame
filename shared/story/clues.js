@@ -8,8 +8,8 @@
 //  線索從哪裡算「拿到」：書讀完、房間找到、今日特展的畫看過（都是 P.story 已經有的紀錄，所以舊資料也補得上）
 //  舊週拿不到的（沒找到的房間、沒看的畫）不卡：need 只算「已經拿到」或「還拿得到」的
 // ================================================================
-import { NUM } from "../config.js";
-import { addDays, isFree } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { addDays, isFree } from "../core/logic_base.js";
 import { isoMonday, isoWeek, weekDayNo } from "./core.js";
 import { storyState } from "./state.js";
 

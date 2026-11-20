@@ -14,10 +14,10 @@
 //  機制 8 一起搬：run.carry ＝ { idx: 第幾間之後, item, picks, done, result }。
 //  機制 9 報告：run.stats 收集，走完 coopMakeReport，存進每個人的 P.coopReports（博物館的，不跟著參觀者換）。
 // ================================================================
-import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "../logic_base.js";
-import { skillOf } from "../legacy.js";
+import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "../core/logic_base.js";
+import { skillOf } from "../core/legacy.js";
 import { eventScale, eventTag } from "../story/events.js";
-import { trialById } from "../shop.js";
+import { trialById } from "../core/shop.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./text.js";
 import { cleanSay } from "../social/party.js";
 import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./base.js";

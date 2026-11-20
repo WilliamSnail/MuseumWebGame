@@ -16,7 +16,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomBytes } from "node:crypto";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { outStockWeekend } from "../shared/stock/core.js";
 import { TW_IDS, twApply, twBackfill, twDocNew, twDocRoll, twIdx, twNeed } from "../shared/stock/tw.js";
 

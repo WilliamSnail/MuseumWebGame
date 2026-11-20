@@ -10,7 +10,7 @@
 //    壹段壹段往下解鎖，前壹段沒到後面就不算。
 //  route、likes：最新那壹段有寫就蓋掉最上層的（例：第 3 段之後他不再去地下）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { NPC_ROSTER } from "./roster.js";
 
 export const NPC_PEOPLE = NPC_ROSTER; // 旅客和委託人（網頁看得到的）

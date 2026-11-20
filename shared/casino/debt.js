@@ -6,7 +6,7 @@
 //    不算進壹人壹天的賣出額度（sold）和館內股的全館淨賣出（net）：賣的錢大半馬上還給莊家。
 //  純函式。館外股、館內股都能賣。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casFill, casNum } from "./core.js";
 import { casLoanFrom, casRepay, casRepayPart } from "./wallet.js";
 import { casStockFeePct, casStockFix, casStockHouseFix, casStockSell } from "./stock.js";

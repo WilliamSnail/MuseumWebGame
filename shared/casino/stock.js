@@ -23,7 +23,7 @@
 //  限價單、停損單（規劃 2.8c，只做現股）：下單時鎖住籌碼（買）或股數（賣、停損）；每個價出來時 casStockMatch 照下單順序檢查；
 //    成交價壹律用觸發的那個價（跳空比掛的價更好或更差都照它）。house.stk.hist { 日期: { id: 股價 } } 留最近幾天，隔幾天才上線的人，中間日子的價也算。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casSellCap, casSellMoney, casSellTip } from "./credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
 import { gsFeePct, gsMatch } from "./stock_grp.js";

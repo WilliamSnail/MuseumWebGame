@@ -18,7 +18,7 @@
 //   { day, openIdx 第壹個價是第幾分鐘抓到的（null＝還沒）, closed 今天不開了, k 已經算到第幾段（橋已建好）,
 //     prevReal { id: 真實前壹收盤 }, R { id: { px 上壹次抓到的真實價, seg 第幾段抓的 } }, A { id: 現在這壹段開頭的錨點 },
 //     ser { id: [rel × 每分鐘] }, lag { id: 落後分鐘 }, stale { id: true＝這壹段沒抓到真實價 }, log [最近幾次], days { 日期: { openIdx, ser } } }
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { OUT_STOCKS } from "./text.js";
 
 export const TW_IDS = OUT_STOCKS.filter(s => s.market === "tw").map(s => s.id);

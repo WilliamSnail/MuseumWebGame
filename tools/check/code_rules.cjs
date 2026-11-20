@@ -1,7 +1,7 @@
 // 程式的規矩（11-20，翊文：「把約束寫進程式碼，不是文件」）。npm test 會跑，違規就失敗。
 // 以前這些規矩只寫在 AGENTS.md，AI 看過也會漏；現在寫成檢查，漏了 CI 就紅。
 //   1. shared/ 是純函式：不准 Math.random、new Date()（現在）、Date.now、document、window、localStorage、sessionStorage。
-//      亂數走 RNG()、今天走 todayStr()、現在走 nowMs()（shared/logic_base.js）。有參數的 new Date(ms)／new Date(Date.UTC(…)) 是日期算術，不擋。
+//      亂數走 RNG()、今天走 todayStr()、現在走 nowMs()（shared/core/logic_base.js）。有參數的 new Date(ms)／new Date(Date.UTC(…)) 是日期算術，不擋。
 //   2. web/src/css 的 infinite：只准白名單裡的（氣氛動畫，45 秒沒操作 web/src/core/rest.js 會停）。提醒用的閃爍閃 3 下就停，不寫 infinite。
 //   3. .replace("字串", "字串")（第二個參數是字串）：`$$`、`$&` 會被當成特殊符號，改用函式 .replace("a", () => "b")、split/join。web/src、shared、tools、functions。
 //   4. 畫面文字用「壹」：只看這次新加的行（git diff），出現「一個、一天、一次、一張、一起…」就報；舊的不擋。
@@ -15,8 +15,8 @@ const ROOT = path.join(__dirname, "..", "..");
 // ---------- 白名單（每一條都要寫原因；新加的要有理由，不是為了讓檢查過） ----------
 // 1. shared/ 純函式：「檔案|寫法」→ 原因
 const PURE_ALLOW = {
-  "shared/logic_base.js|Math.random": "RNG 的預設實作（RNG = Math.random）；其他地方一律用 RNG()",
-  "shared/logic_base.js|Date.now": "nowMs() 的預設時鐘；其他地方一律用 nowMs()",
+  "shared/core/logic_base.js|Math.random": "RNG 的預設實作（RNG = Math.random）；其他地方一律用 RNG()",
+  "shared/core/logic_base.js|Date.now": "nowMs() 的預設時鐘；其他地方一律用 nowMs()",
   "shared/casino/wallet.js|Math.random": "沒傳 rng 時的備援（o.rng ? o.rng() : Math.random()）；測試和伺服器都有傳 rng",
 };
 // 2. 無限動畫：「css 檔名」→ { names: 動畫名字, why }。全部都被 rest.js 在 45 秒沒操作時停掉。
@@ -211,10 +211,10 @@ function resolveBase(base) {
   const mb = git(["merge-base", "origin/main", "HEAD"]);
   return mb.status === 0 ? mb.stdout.trim() : null;
 }
-function addedLines(base) { // 回傳 Map，或 null（找不到基準）
+function addedLines(base) { // 回傳 Map，或 null（找不到基準）。用 -M 認搬家：只搬位置的檔不會整份算新加的行（11-20 shared/ 分資料夾）
   const b = resolveBase(base);
   if (!b) return null;
-  const map = parseDiff(git(["diff", "-U0", "--no-color", "--no-renames", b]).stdout);
+  const map = parseDiff(git(["diff", "-U0", "--no-color", "-M", b]).stdout);
   for (const f of git(["ls-files", "-o", "--exclude-standard"]).stdout.split("\n").filter(Boolean)) { // 還沒 add 的新檔：整份都是新的
     try { const n = fs.readFileSync(path.join(ROOT, f), "utf8").split("\n").length; map.set(f, new Set(Array.from({ length: n }, (_, i) => i + 1))); } catch (e) { /* 讀不到就略過 */ }
   }

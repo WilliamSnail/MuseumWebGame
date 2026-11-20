@@ -5,8 +5,8 @@
 //  只給「已經發生的和現在的」：今天的行程只列已經開始的站（未來的站是今天各店的人數，會洩漏明天館內股的跳空，決定 0094）；理智、錢包只給分級；故事線只給解鎖到的段落。
 //  不碰存檔、不碰錢，只讀。
 // ================================================================
-import { NUM } from "../config.js";
-import { HALL_THEME_TEXT } from "../content.js";
+import { NUM } from "../core/config.js";
+import { HALL_THEME_TEXT } from "../core/content.js";
 import { npcArcIndex, npcArcNow, npcLikesNow } from "./core.js";
 import { NPC_ROOM, npcDayStartMs, npcVisitsToday } from "./spend.js";
 import { npcCasAway } from "../casino/npc.js";

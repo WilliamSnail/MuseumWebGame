@@ -9,9 +9,9 @@
 //  run.gate ＝這一趟有沒有打守門（startCoop 的 opt.gate，伺服器照 NUM.ui.newCellar 開）；run.gateDone ＝ { 層數: true }
 //  run.phase "fight"：run.fight ＝這一場；run.votes ＝ { 隊員 id: { act, for, tap } }
 // ================================================================
-import { NUM } from "../config.js";
-import { addDays } from "../logic_base.js";
-import { injureDaysOf } from "../systems.js";
+import { NUM } from "../core/config.js";
+import { addDays } from "../core/logic_base.js";
+import { injureDaysOf } from "../core/systems.js";
 import { coopActive, coopFightFix, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
 import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "../cellar/fight.js";
 

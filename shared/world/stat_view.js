@@ -9,7 +9,7 @@
 //    statBandOf(kind, value) → 分級代碼，給只有數字的地方用（例如財報卡的分布）。
 //  純函式，不碰 DOM。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { nwSan, whMult, whUnrest } from "./base.js";
 
 const svN = v => (v === null || v === undefined || v === "" || typeof v === "boolean" || !Number.isFinite(+v) ? null : +v);

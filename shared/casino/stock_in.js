@@ -23,11 +23,11 @@
 //
 //  純函式：「今天」「現在幾點」「亂數的祕密」從參數來，不碰資料庫和 DOM。槓桿、放空、當沖、限價單是後面幾步（還沒做）。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casSellCap, casSellTip } from "./credit.js";
 import { casCount, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain } from "./book.js";
 import { casFill, casNum } from "./core.js";
-import { hashStr, mulberry32 } from "../logic_base.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { npcTrips } from "../npc/trip.js";
 import { casNpcSpend, crowdShopCounts, npcShopArrive } from "../npc/spend.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "../stock/in_text.js";

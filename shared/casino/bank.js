@@ -9,7 +9,7 @@
 //  不用每天回來領：下壹次碰到莊家（任何賭場動作）時，把沒算的天數補算（最多 catchup 天）。
 //  純函式：「今天」從參數來，不碰資料庫和 DOM。錢包欄位 w.bank：{ save, terms: [{ id, amt, days, pct, day, due }], seq, day, earned, notes }
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove } from "./book.js";
 import { casBankEcon, casFxMul, casWorldNews } from "./gdp.js";
 import { OUT_STOCKS } from "../stock/text.js";

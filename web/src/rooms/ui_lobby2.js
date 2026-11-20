@@ -3,17 +3,17 @@
 //  - 導覽圖用畫好的底圖（web/public/lobby/land.webp），11 個房間是疊在上面的透明按鈕；名字、進度、館友名牌、「新」都由程式畫。
 //  - 右邊壹欄：館友證、今天要做的事（第壹張發光、做完的變淡）、4 個小圓章（週章、委託、靈感、收藏）。
 //  - 活動預告、館友在線縮成兩條細橫幅，放在導覽圖上面。籌碼在狀態列。
-//  - 回滾：shared/config.js 的 NUM.ui.newLobby 改成 false 就回到舊的大廳（ui_screens1.js 的 SCREENS.lobby 原封不動）；
+//  - 回滾：shared/core/config.js 的 NUM.ui.newLobby 改成 false 就回到舊的大廳（ui_screens1.js 的 SCREENS.lobby 原封不動）；
 //    玩家也可以在設定頁選「舊的大廳」（SAVE.settings.oldLobby）。
 //  - 房間按鈕保留 .fp-room[data-room]：教學（ui_screens1.js 的 tutorial）照舊找得到畫廊、手作坊。
 //  - 名字是玩家打的字：只用 h() 的字串（純文字）。介面文字照第 1 代用「壹」。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
+import { NUM } from "../../../shared/core/config.js";
 import { eventBars, eventEffect, eventLeftText, eventRange, eventWhen } from "../../../shared/story/events.js";
-import { freshRooms } from "../../../shared/fresh.js";
-import { nextStep } from "../../../shared/guide.js";
-import { codexCount, dailyCommissions, fromKey, isFree, num, todayStr } from "../../../shared/logic.js";
-import { roomProgress } from "../../../shared/systems.js";
+import { freshRooms } from "../../../shared/core/fresh.js";
+import { nextStep } from "../../../shared/core/guide.js";
+import { codexCount, dailyCommissions, fromKey, isFree, num, todayStr } from "../../../shared/core/logic.js";
+import { roomProgress } from "../../../shared/core/systems.js";
 import { matesByRoom } from "../../../shared/social/mates.js";
 import { passView } from "../../../shared/social/pass.js";
 import { storyState } from "../../../shared/story/state.js";

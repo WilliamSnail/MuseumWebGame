@@ -184,7 +184,7 @@ content/
 
 ### 兌換所上架（`week.json` 的 `shop`）
 
-週包可以指定這週賣哪幾件限定頭飾，照這週的主題挑。**只能從下面已經畫好的挑**（`shared/config.js` 的 `LIMITED_ITEMS` 裡 `shop: true` 的）；要新畫的寫提案（`content/排程說明.md` 第六節）。
+週包可以指定這週賣哪幾件限定頭飾，照這週的主題挑。**只能從下面已經畫好的挑**（`shared/core/config.js` 的 `LIMITED_ITEMS` 裡 `shop: true` 的）；要新畫的寫提案（`content/排程說明.md` 第六節）。
 
 | id | 名字（草稿） | 適合什麼主題 |
 |---|---|---|
@@ -212,7 +212,7 @@ content/
 
 ### 房間（本週異狀、`adds`）
 
-跟 `shared/systems_text.js` 的 `CELLAR` 一樣的格式，多幾個欄位：
+跟 `shared/core/systems_text.js` 的 `CELLAR` 一樣的格式，多幾個欄位：
 
 ```json
 { "id": "backdoor", "floor": 1, "line": "backdoor",
@@ -365,7 +365,7 @@ content/
 
 ## 十、館內 NPC：`content/npc/`（11-14，翊文：每個 NPC 都有名字、都有故事線）
 
-> 規劃在 `docs/規劃/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/check/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/config.js` 的 `NUM.npc`。
+> 規劃在 `docs/規劃/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/check/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/core/config.js` 的 `NUM.npc`。
 > **名單和故事線由每天的排程寫**（`content/排程說明.md` 一之十一）；程式怎麼用它（行程、館內股人數、拍賣出價、日報新聞句）是另外的 PR，這裡只管內容。
 
 **一位 NPC 一個檔**：`content/npc/<id>.json`，檔名就是 id。網頁不讀這裡（不打包進網頁）；伺服器靠 `tools/release/copy_shared.cjs` 打包成 `functions/shared/npc_list_data.js` 的 `NPC_LIST`（整份、照 id 排序），跟 `content/weeks` 打包的方式壹樣。
@@ -375,7 +375,7 @@ content/
   "id": "c-umbrella",              // 英文小寫、數字、-；旅客 v-、委託人 c-、劇情角色 t- 開頭；壹旦用了就不改
   "name": "賣傘的老闆",              // 12 字以內，每位都要有名字，不能跟別人重複
   "kind": "client",                // visitor 旅客｜client 委託人｜trace 劇情角色
-  "note": "只在下雨天開門。",         // 只有委託人：shared/content.js CLIENTS 的原文，不改
+  "note": "只在下雨天開門。",         // 只有委託人：shared/core/content.js CLIENTS 的原文，不改
   "story": "在巷口賣傘，傘架上總有壹把沒標價。", // 60 字以內的小傳（跟 note 不同，是新寫的）
   "likes": ["food", "hall", "尋常"],  // 1～5 個：地點、展廳主題、畫的稀有度（下表）
   "route": { "food": 5, "hall": 3, "job": 2 }, // 一天的行程權重，0～10 的整數，至少壹個大於 0

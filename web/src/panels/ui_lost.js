@@ -4,8 +4,8 @@
 //  - 進館的時候（afterEnter）叫壹次 lostSync：把自己館裡最近理智歸零的參觀者寫成公開的招領單（Jerry 那種之前的也會補上）。
 //  - 單人和合作的地下，每壹層第壹次進房間擲壹次，NUM.lost.meetPct% 會遇到壹張別人的（跟 ui_work.js 的 cellarMeet 同壹套）。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
-import { isFree, todayStr } from "../../../shared/logic.js";
+import { NUM } from "../../../shared/core/config.js";
+import { isFree, todayStr } from "../../../shared/core/logic.js";
 import { LOST_TEXT, lostMarkSeen, lostOpen, lostRecordText, lostSeeText } from "../../../shared/social/lostfound.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, P, SAVE, UI, btn, h, persist, rerender, sanFlow, snd, updateStatus } from "../core/ui_core.js";

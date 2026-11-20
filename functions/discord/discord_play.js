@@ -18,7 +18,7 @@ import { CAS_MENU } from "../shared/casino/text.js";
 import { DC_BET_OPT, DC_PACK_OPT, DC_LIVE_OPT, DC_CMD, DC_TEXT, dcReply, dcText, dcUpdate } from "../shared/discord/core.js";
 import { dcBjButtons, dcBjText, dcBorrowText, dcBorrowTip, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub, dcYugaLine } from "../shared/discord/play.js";
 import { DAY_DATA } from "../shared/day_data.js";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 import { actBuy, actDeal, actEcon, actHitStand, actPack, actRelief, cryptoRng, liveAct, no, playCore, shape } from "../casino/casino.js";
 import { linkedUid } from "./discord_data.js";
 import { outBj } from "./discord_out.js";

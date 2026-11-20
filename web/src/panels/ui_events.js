@@ -8,7 +8,7 @@
 //  大廳那一條自己一秒更新一次，不跟著別人換房間、名單更新重畫，所以不會閃。
 //  介面上的字用「壹」。
 // ================================================================
-import { nowMs } from "../../../shared/logic.js";
+import { nowMs } from "../../../shared/core/logic.js";
 import { eventBarText, eventBars, eventEffect, eventLeftText, eventListLine, eventLive, eventNoticeText, eventRange, eventRunOf, eventTag, eventWhen, eventsFromWeeks, eventsToNotify } from "../../../shared/story/events.js";
 import { ADDONS, HIDE_CHROME, P, PANELS, UI, every, h, icon, navTo, note, readJSON, snd, sndFile } from "../core/ui_core.js";
 

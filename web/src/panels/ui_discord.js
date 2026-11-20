@@ -8,9 +8,9 @@
 //  ui_login.js 的 openAccount 叫 ADDONS.discordRow()：給它壹列（平常是空的，讀到狀態才長出來）。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
+import { NUM } from "../../../shared/core/config.js";
 import { dcNum } from "../../../shared/discord/core.js";
-import { nowMs } from "../../../shared/logic.js";
+import { nowMs } from "../../../shared/core/logic.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, ask, btn, h, note, snd } from "../core/ui_core.js";
 

@@ -12,14 +12,14 @@
 //  蓋在畫面上的木框用 ui_board.js 的 overlay()。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { LIMITED_ITEMS, NUM } from "../../../shared/config.js";
-import { SIGNIN_TEXT } from "../../../shared/systems_text.js";
+import { LIMITED_ITEMS, NUM } from "../../../shared/core/config.js";
+import { SIGNIN_TEXT } from "../../../shared/core/systems_text.js";
 import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../../shared/story/holidays.js";
 import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../../shared/social/signin.js";
 import { stampHow } from "../../../shared/story/core.js";
 import { storyState } from "../../../shared/story/state.js";
 import { casNum } from "../../../shared/casino/core.js";
-import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../../shared/logic.js";
+import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../../shared/core/logic.js";
 import { ART } from "../core/art.js";
 import { NET } from "../core/net_firebase.js";
 import { $$, ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, cicon, go, h, icon, setChips, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "../core/ui_core.js";

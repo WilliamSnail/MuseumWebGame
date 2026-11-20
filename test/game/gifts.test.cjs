@@ -317,7 +317,7 @@ T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒
 (async () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
-    const logic = await import(url("logic.js"));
+    const logic = await import(url("core/logic.js"));
     const gifts = await import(url("social/gifts.js"));
     const mailbox = await import(url("social/mailbox.js"));
     for (const [k, v] of Object.entries(gifts)) assert.notStrictEqual(v, undefined, "gifts." + k);

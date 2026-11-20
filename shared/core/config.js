@@ -337,7 +337,7 @@ export const NUM = {
     seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）
     shelfRow: 8,            // 書架一排最多放幾本，超過就分頁
   },
-  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/shop.js）。數字是草稿，跑 test/sim/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
+  // 第 4 版（11-09，決定 0032）：兌換所、技能成長（規則 shared/core/shop.js）。數字是草稿，跑 test/sim/sim.cjs、sim_san.cjs、sim_cellar.cjs 看過（維護日誌 11-09_翊文_兌換所和技能.md）
   // 技能的上限：技能書、提升技能、試煉房間、跟館友學都到 NUM.story.skillCap（80）；上課只到 lessonCap（60）；換日的經驗檢定照舊到 99
   shop: {
     gearWorn: 2,            // 現在這位參觀者最多穿幾件裝備
@@ -721,7 +721,7 @@ export const LIMITED_ITEMS = [
   { id: "frame-vine", kind: "deco", slot: "frame" },
   { id: "mat-star", kind: "mat", cat: "材質", opt: "星光絨", n: 3 },
   // 第 4 版（11-09，決定 0032）：兌換所賣的限定頭飾。shop: true ＝只有兌換所賣（每週全簽到不會輪到）；price ＝幾枚週章。
-  // 週包 week.json 可以寫 shop: ["hat-rain", …] 指定這週賣哪幾件（排程照這週的主題挑）；沒指定的週照週號輪流（shared/shop.js 的 shopOnSale）
+  // 週包 week.json 可以寫 shop: ["hat-rain", …] 指定這週賣哪幾件（排程照這週的主題挑）；沒指定的週照週號輪流（shared/core/shop.js 的 shopOnSale）
   { id: "hat-rain", kind: "part", cat: "帽子", opt: "黃雨帽", shop: true, price: 5 },
   { id: "hat-chef", kind: "part", cat: "帽子", opt: "廚師帽", shop: true, price: 5 },
   { id: "hat-muff", kind: "part", cat: "帽子", opt: "毛耳罩", shop: true, price: 5 },
@@ -892,7 +892,7 @@ export const HALL_POINTS = { 普通: 4, 稀有: 7, 超稀有: 10, 傳說級稀�
 export const HALL_THEME_BONUS = { legend: 20, angry: 15, tears: 15, russia8: 15, rainbow: 15, hats: 12, pillows: 12, joy: 12, flat: 10, failed: 10 };
 
 // ---------- 第 4 版：參觀者一位接一位（翊文 11-08，roguelike 的繼承） ----------
-// 規則在 shared/legacy.js；文字在 systems_text.js 的 TRAIT_TEXT、LEGACY_TEXT。
+// 規則在 shared/core/legacy.js；文字在 systems_text.js 的 TRAIT_TEXT、LEGACY_TEXT。
 // 換人時：前一位留一樣東西給下一位（A）。
 // 每一位參觀者（第一位也是）都從 6 個職業自己選，選好再抽一個小優點、一個小缺點（決定 0028；以前換人時是從 3 位候選人挑）。
 // 替佩佩取名（決定 0133）：所有佩佩都能取；最多 max 個字；含 bad 裡任何壹段（去空白、轉小寫比對）就擋

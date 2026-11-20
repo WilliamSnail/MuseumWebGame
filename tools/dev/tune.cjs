@@ -3,7 +3,7 @@
 //   npm run tune -- NUM.casino.loan.interestPct=8 unit:g-island.share=0.12 npc:c-bus.budget.perDay=250000
 //   npm run tune -- --file 調整.txt --dry          清單檔每行壹項（# 開頭是註解）；--dry ＝ 改了、檢查、模擬，然後還原，不留下任何改動
 // 改動的寫法（路徑用點，值能當 JSON 讀就當 JSON，不然當字串）：
-//   NUM.壹路.下去=值　　　　shared/config.js 的 NUM（也可以是 config.js 裡別的 export const，例如 LIMITED_FX.館員帽.skill=6）。用 acorn 找到那個屬性、只換那個值，註解和排版不動；
+//   NUM.壹路.下去=值　　　　shared/core/config.js 的 NUM（也可以是 config.js 裡別的 export const，例如 LIMITED_FX.館員帽.skill=6）。用 acorn 找到那個屬性、只換那個值，註解和排版不動；
 //                        只能改壹個數字、字串或 true／false（物件、陣列、算式要手改）；型別不能變
 //   unit:集團id.欄位=值　　content/world/units，叫 world:unit 的 set
 //   npc:NPCid.欄位路徑=值　content/npc，叫 world:npc 的 set（例如 budget.perDay、job.unit）
@@ -12,7 +12,7 @@
 // 任何壹項沒過、或模擬破產／守恆不對：exit 1，檔案還原成原本的樣子。只改 repo 的檔案，不碰正式站。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..", "..");
-const CONFIG = path.join(ROOT, "shared", "config.js");
+const CONFIG = path.join(ROOT, "shared", "core", "config.js");
 
 // ---------- 讀改動 ----------
 function parseArgs(argv) {
@@ -43,12 +43,12 @@ function readChanges(o) {
   return out;
 }
 
-// ---------- 改 shared/config.js：用 acorn 找到屬性，只換那個值 ----------
+// ---------- 改 shared/core/config.js：用 acorn 找到屬性，只換那個值 ----------
 function patchConfig(src, root, pathSegs, value, force = false) {
   const acorn = require("acorn"), ast = acorn.parse(src, { ecmaVersion: "latest", sourceType: "module", ranges: true });
   let obj = null;
   for (const n of ast.body) if (n.type === "ExportNamedDeclaration" && n.declaration && n.declaration.type === "VariableDeclaration") for (const d of n.declaration.declarations) if (d.id.name === root && d.init) obj = d.init;
-  if (!obj) throw new Error(`shared/config.js 裡沒有 export const ${root}`);
+  if (!obj) throw new Error(`shared/core/config.js 裡沒有 export const ${root}`);
   const keyOf = p => (p.key.type === "Identifier" ? p.key.name : String(p.key.value));
   let node = obj;
   for (let i = 0; i < pathSegs.length; i++) {
@@ -75,7 +75,7 @@ function applyChange(c, ctx) {
   if (c.kind === "config") {
     const src = fs.readFileSync(ctx.configFile, "utf8"), r = patchConfig(src, c.root, c.path, c.value);
     fs.writeFileSync(ctx.configFile, r.src); ctx.touched.add("config");
-    return { text: c.text, from: r.old, to: c.value, where: `shared/config.js 的 ${c.root}.${c.path.join(".")}` };
+    return { text: c.text, from: r.old, to: c.value, where: `shared/core/config.js 的 ${c.root}.${c.path.join(".")}` };
   }
   const log = () => {};
   if (c.kind === "unit") { const U = require("../content/world_unit.cjs"), before = readJson(path.join(ctx.unitDir, c.id + ".json")); U.main(["set", `${c.id}.${c.field}`, c.raw], ctx.unitDir, ctx.npcDir, ctx.stockIds, log); ctx.touched.add("unit"); return { text: c.text, from: before[c.field], to: c.value, where: `content/world/units/${c.id}.json` }; }

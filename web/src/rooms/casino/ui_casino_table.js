@@ -7,11 +7,11 @@
 //  - 關掉框＝離桌（離開隊伍）。重新整理、斷線回來：進館時 PANELS.casinoResume 接回去。
 //  別人說的話、暱稱壹律當純文字（textContent）。理智低時，牌會看錯（只有自己，結算翻回真的）。
 // ================================================================
-import { NUM } from "../../../../shared/config.js";
+import { NUM } from "../../../../shared/core/config.js";
 import { CAS_TEXT } from "../../../../shared/casino/text.js";
 import { casCardName, casFill, casNum } from "../../../../shared/casino/core.js";
 import { CAS_QUICK } from "../../../../shared/casino/table.js";
-import { nowMs } from "../../../../shared/logic.js";
+import { nowMs } from "../../../../shared/core/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../../../shared/social/party.js";
 import { NET } from "../../core/net_firebase.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, sndFile, titleOfId, titleTag } from "../../core/ui_core.js";

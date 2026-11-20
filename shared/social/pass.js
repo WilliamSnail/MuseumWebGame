@@ -4,16 +4,16 @@
 //  賭場的籌碼、全部的紀念品、賭場成就在伺服器，這裡沒有：畫面自己接（籌碼）或連過去（紀念品、成就）。
 // ================================================================
 
-import { BADGES, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "../config.js";
-import { UNDERSTAND_TEXT } from "../systems_text.js";
-import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../logic_base.js";
-import { gameDayNo, quirkName } from "../logic.js";
-import { jobInfo, jobSkill, skillOf } from "../legacy.js";
-import { roomProgress } from "../systems.js";
-import { traitById } from "../logic_base.js";
-import { traitDesc, traitName } from "../legacy.js";
-import { gearInfo } from "../shop.js";
-import { wornGear } from "../logic_base.js";
+import { BADGES, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "../core/config.js";
+import { UNDERSTAND_TEXT } from "../core/systems_text.js";
+import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../core/logic_base.js";
+import { gameDayNo, quirkName } from "../core/logic.js";
+import { jobInfo, jobSkill, skillOf } from "../core/legacy.js";
+import { roomProgress } from "../core/systems.js";
+import { traitById } from "../core/logic_base.js";
+import { traitDesc, traitName } from "../core/legacy.js";
+import { gearInfo } from "../core/shop.js";
+import { wornGear } from "../core/logic_base.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, wornDeco } from "./signin.js";
 import { storyState } from "../story/state.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";

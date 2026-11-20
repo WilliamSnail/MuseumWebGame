@@ -10,7 +10,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
-import { nowMs, todayStr } from "../shared/logic.js";
+import { nowMs, todayStr } from "../shared/core/logic.js";
 import { MAIL_DAYS } from "../shared/social/mailbox.js";
 import { LOST_TEXT, lostCards, lostReturnStep } from "../shared/social/lostfound.js";
 

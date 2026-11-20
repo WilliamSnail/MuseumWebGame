@@ -1,5 +1,5 @@
 // ================================================================
-//  邀請、隊伍、兩個人一起融合（多人版 M3）。規則在 shared/social/party.js、shared/systems.js 的 fuseTogether。
+//  邀請、隊伍、兩個人一起融合（多人版 M3）。規則在 shared/social/party.js、shared/core/systems.js 的 fuseTogether。
 //  狀態放 Realtime Database：
 //    /invites/{iid}     邀請（只有 Functions 讀寫）。回覆了就刪掉；過期的在同一個人下次邀請時刪掉
 //    /sent/{uid}/{iid}  這個人送出去、還沒回覆的邀請（to、kind、expires）：找自己的舊邀請用，不用在 /invites 建索引
@@ -14,8 +14,8 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getDatabase } from "firebase-admin/database";
 import { randomUUID } from "node:crypto";
 import { PARTY, PARTY_KINDS, canStartParty, fixParty, inviteOver, inviteProblem, newInvite, newParty, partyJoin, partyLeave, partyMembers, partyPick, partyReady, pruneProblem } from "../shared/social/party.js";
-import { hashStr, mulberry32, setDayClock, setRng } from "../shared/logic.js";
-import { fuseTogether } from "../shared/systems.js";
+import { hashStr, mulberry32, setDayClock, setRng } from "../shared/core/logic.js";
+import { fuseTogether } from "../shared/core/systems.js";
 
 // 合作地下（functions/coop/coop.js）、賭場同桌（functions/casino/casino_table.js）掛在這裡（各自 push 進去，每一種自己看 kind）：離開隊伍之前要先把他從走到一半的那一趟拿掉；隊伍解散時收掉那一趟的東西
 export const partyHooks = { beforeLeave: [], closed: [] };

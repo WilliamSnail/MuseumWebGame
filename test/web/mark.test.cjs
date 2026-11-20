@@ -1,4 +1,4 @@
-// shared/logic.js 的 markTokens：說明文字標重點（翊文 11-09）
+// shared/core/logic.js 的 markTokens：說明文字標重點（翊文 11-09）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 const G = load();

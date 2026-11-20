@@ -14,11 +14,11 @@
 //  伺服器改了我的存檔（送佩佩、領信）：先 NET.flush()，回來 reloadSave()（docs/規劃/多人實作.md 原則 3）。
 //  玩家打的字（暱稱、留言）只當資料：一律用 h() 的文字，不用 html。
 // ================================================================
-import { HALL_THEME_TEXT } from "../../../shared/content.js";
+import { HALL_THEME_TEXT } from "../../../shared/core/content.js";
 import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../../shared/social/gifts.js";
-import { WEEKLY_TEXT } from "../../../shared/systems_text.js";
-import { NUM } from "../../../shared/config.js";
-import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../../shared/logic.js";
+import { WEEKLY_TEXT } from "../../../shared/core/systems_text.js";
+import { NUM } from "../../../shared/core/config.js";
+import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../../shared/core/logic.js";
 import { ART } from "../core/art.js";
 import { NET } from "../core/net_firebase.js";
 import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait, sndFile } from "../core/ui_core.js";
@@ -26,7 +26,7 @@ import { overlay } from "../panels/ui_board.js";
 import { RANK, ago, reloadSave } from "../panels/ui_login.js";
 import { roomHead } from "../core/ui_room.js";
 import { cellarFxBox } from "./ui_screens1.js";
-import { learnText } from "../../../shared/shop.js";
+import { learnText } from "../../../shared/core/shop.js";
 import { posterWall } from "../panels/ui_themeshow.js";
 import { actDone } from "../panels/ui_story.js";
 
@@ -58,7 +58,7 @@ const stillHere = params => UI.screen === "hall" && UI.params === params;
 
 // 參觀完成時叫一次（走進來、讀到展廳之後）。ctx：{ owner: { id, nick }, view, first（今天第一次來這間）, gain, learn }
 // 跟館友學的接口（claude/兌換所和技能，合併時接）：伺服器的 visitHall 學到了就回傳 learn（functions/game/visit.js 的 LEARN_ON_VISIT），
-// 跟館友學（決定 0032）：今天第一次走進這間展廳，伺服器叫 learnFromFriend；那一句話跟一起融合同一句（shared/shop.js 的 learnText）。要在參觀完成時多做什麼，加在 visitDone。
+// 跟館友學（決定 0032）：今天第一次走進這間展廳，伺服器叫 learnFromFriend；那一句話跟一起融合同一句（shared/core/shop.js 的 learnText）。要在參觀完成時多做什麼，加在 visitDone。
 function visitDone(ctx) { /* 現在沒有要多做的 */ }
 function visitLearnLine(learn, who) {
   if (!learn) return null;

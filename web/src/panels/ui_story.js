@@ -10,12 +10,12 @@
 //  ui_core 不能 import 這個檔（它在後面）：這裡把自己登記進 ui_core 的 PANELS、HOOKS。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { NUM } from "../../../shared/config.js";
-import { activeQuirks, isFree, nowMs, todayStr } from "../../../shared/logic.js";
+import { NUM } from "../../../shared/core/config.js";
+import { activeQuirks, isFree, nowMs, todayStr } from "../../../shared/core/logic.js";
 import { NOTICE_EXTRA } from "../../../shared/game/notices.js";
 import { casWkBase } from "../../../shared/casino/week.js";
 import { casWkDefFor } from "../../../shared/casino/wallet.js";
-import { isFresh, markFresh } from "../../../shared/fresh.js";
+import { isFresh, markFresh } from "../../../shared/core/fresh.js";
 import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../../shared/story/core.js";
 import { itemDesc, storyState } from "../../../shared/story/state.js";
 import { ART } from "../core/art.js";
@@ -24,7 +24,7 @@ import { NET } from "../core/net_firebase.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "../core/ui_core.js";
 import { CAS_AUC } from "../../../shared/casino/auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../../shared/story/clues.js";
-import { FRESH_KEY } from "../../../shared/fresh.js";
+import { FRESH_KEY } from "../../../shared/core/fresh.js";
 import { overlay } from "./ui_board.js";
 import { noticeCard } from "./ui_party.js";
 import { eventListBox } from "./ui_events.js";

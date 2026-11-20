@@ -15,7 +15,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { bad, inbox, needMember, newId, now, rtdb } from "./party.js";
 import { claimLikes, likeProblem, newShadow, newSign, okWispKey, shadowsToDrop, signProblem, signsToDrop, traceRoomById } from "../shared/coop/trace.js";
 import { coopMember } from "../shared/coop/base.js";
-import { taipeiDay } from "../shared/logic.js";
+import { taipeiDay } from "../shared/core/logic.js";
 
 const LOUNGE_KEEP = 30; // 交誼廳留最近幾張
 

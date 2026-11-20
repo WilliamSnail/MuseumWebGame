@@ -1,4 +1,4 @@
-// 稱號到處看得到（shared/titles.js，決定 0050）：node test/game/titles.test.cjs（npm test 也會跑）
+// 稱號到處看得到（shared/core/titles.js，決定 0050）：node test/game/titles.test.cjs（npm test 也會跑）
 // 公開哪一個稱號、讀回來怎麼檢查、館友名單、導覽圖、每週榜單，還有 Realtime Database 規則只放寬 titles 一個地方。
 // 資料都是假的；不連 Firebase。
 const assert = require("assert");

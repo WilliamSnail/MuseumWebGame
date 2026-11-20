@@ -6,10 +6,10 @@
 //    就從池子拿 firstPct%（先領的拿池子剩下的壹半，再領的拿再剩下的壹半…，總額永遠不超過池子；沒人領的留在博物館資金）。錢從博物館資金搬給玩家（搬，不是憑空）。
 //  壹個人壹天最多領 perDay 位的分紅（壹組散客算人數，剩下不夠就按比例）。自由模式（沒有挑戰存檔）不領。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { hallFeed } from "../npc/spend.js";
 import { whCrowdMood } from "../world/core.js";
-import { isFree } from "../logic_base.js";
+import { isFree } from "../core/logic_base.js";
 import { casCount } from "./book.js";
 
 const tkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);

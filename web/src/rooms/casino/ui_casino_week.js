@@ -5,7 +5,7 @@
 //  進度從伺服器拿一次放在這裡（CAS_WK）；賭場每一步的回答也會更新它。沒登入、連不上就寫「進度要連上伺服器才看得到」。
 //  介面上的字用「壹」。名字、說明、故事都是草稿，Yuga 可以改。
 // ================================================================
-import { NUM } from "../../../../shared/config.js";
+import { NUM } from "../../../../shared/core/config.js";
 import { casWkBase, casWkCondText, casWkProgress, casWkVisible } from "../../../../shared/casino/week.js";
 import { NET } from "../../core/net_firebase.js";
 import { PANELS, UI, btn, h, icon, note, snd } from "../../core/ui_core.js";

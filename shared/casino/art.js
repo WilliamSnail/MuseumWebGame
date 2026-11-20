@@ -13,11 +13,11 @@
 //  莊家 house.art = { own: { 畫 id: 全館持有幾份 } }（舊的莊家沒有，用到時補）
 //  純函式：「今天」從參數來，不碰亂數。伺服器入口在 functions/casino/art.js。
 // ================================================================
-import { NUM } from "../config.js";
+import { NUM } from "../core/config.js";
 import { casHouseMove } from "./book.js";
 import { casFxMood } from "./gdp.js";
 import { casNum } from "./core.js";
-import { galleryInsp, hashStr, mulberry32 } from "../logic_base.js";
+import { galleryInsp, hashStr, mulberry32 } from "../core/logic_base.js";
 
 const arBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const arN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);

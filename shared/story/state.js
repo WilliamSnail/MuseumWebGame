@@ -2,11 +2,11 @@
 //  劇情存檔的基本讀寫和道具表：story.js 和 shop.js 都要用，所以放在這裡（不 import 它們）。
 //  搬自原本的 story.js。
 // ================================================================
-import { NUM } from "../config.js";
-import { parseDice } from "../logic_base.js";
+import { NUM } from "../core/config.js";
+import { parseDice } from "../core/logic_base.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
-// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/shop.js 的 tradeMats）
+// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/core/shop.js 的 tradeMats）
 export const STORY_ITEMS = {
   "book:偵查": { name: "技能書《放大鏡的用法》", kind: "skillBook", skill: "偵查" },
   "book:鑑賞": { name: "技能書《看畫的方法》", kind: "skillBook", skill: "鑑賞" },

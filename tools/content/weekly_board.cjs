@@ -154,7 +154,7 @@ async function main() {
 
 // 真的跑的時候用的規則：board.js 的，加上「現在」（nowMs 是 logic.js 的，board.js 沒有 export；測試的 load_shared 串在一起所以看不出來）
 async function loadBoard() {
-  const [board, logic] = await Promise.all([import("../../shared/social/board.js"), import("../../shared/logic.js")]);
+  const [board, logic] = await Promise.all([import("../../shared/social/board.js"), import("../../shared/core/logic.js")]);
   return Object.assign({}, board, { nowMs: logic.nowMs });
 }
 

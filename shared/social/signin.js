@@ -16,10 +16,10 @@
 //  之後有伺服器：簽到改成伺服器判斷今天簽過沒（規劃第四節「每日簽到」），格式不變。
 //  數字在 config.js 的 NUM.signin、LIMITED_ITEMS；文字在 systems_text.js 的 SIGNIN_TEXT、LIMITED_TEXT。
 // ================================================================
-import { LIMITED_ITEMS, NUM } from "../config.js";
-import { LIMITED_TEXT } from "../systems_text.js";
-import { addDays, clampN, grantOption, isFree, isUnlocked, limitedHome } from "../logic_base.js";
-import { weekIndex } from "../logic_base.js";
+import { LIMITED_ITEMS, NUM } from "../core/config.js";
+import { LIMITED_TEXT } from "../core/systems_text.js";
+import { addDays, clampN, grantOption, isFree, isUnlocked, limitedHome } from "../core/logic_base.js";
+import { weekIndex } from "../core/logic_base.js";
 import { holidayOf, holidaysOn } from "../story/holidays.js";
 
 export const SIGNIN_VERSION = 1;

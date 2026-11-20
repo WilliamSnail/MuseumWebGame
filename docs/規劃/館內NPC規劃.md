@@ -13,8 +13,8 @@
 
 | 角色 | 在哪裡 | 有名字？ | 有個性／喜好？ | 現在做什麼 |
 |---|---|---|---|---|
-| **展廳參觀者** | `shared/logic.js` 的 `visitorArrive`（每 150 秒一位，`NUM.visitorEvery`）、留言 `VISITOR_COMMENTS`（`shared/content.js`）；網頁 `boot.js`、展廳畫面 | 程式裡現在沒有（只有「一位參觀者」）。**翊文 11-14：每個 NPC 在館內都有名字**，所以下面統一補上名字（旅客也有） | 只有留言的口氣（分展廳評分低／中／高、完美作品、不可名狀、主題） | 給靈感（`1 ＋ 展廳評分 ÷ 50`，一天最多 `visitorInspDay` 40）；付門票（`shared/casino/ticket.js`，玩法 11：三份分給展廳主／預算池／館方帳） |
-| **委託人** | `shared/content.js` 的 `CLIENTS`（20 位，名字加一句 `note`）、`CLIENT_COMMENTS`（完成後的話）；`shared/logic.js` `dailyCommissions`；籌碼 `shared/casino/job.js` | 有（賣傘的老闆、八樓的鄰居、退休的郵差…） | 只有一句 `note`（「只在下雨天開門」） | 每天出委託（要做什麼佩佩）；完成給靈感、交委託給籌碼（莊家出） |
+| **展廳參觀者** | `shared/core/logic.js` 的 `visitorArrive`（每 150 秒一位，`NUM.visitorEvery`）、留言 `VISITOR_COMMENTS`（`shared/core/content.js`）；網頁 `boot.js`、展廳畫面 | 程式裡現在沒有（只有「一位參觀者」）。**翊文 11-14：每個 NPC 在館內都有名字**，所以下面統一補上名字（旅客也有） | 只有留言的口氣（分展廳評分低／中／高、完美作品、不可名狀、主題） | 給靈感（`1 ＋ 展廳評分 ÷ 50`，一天最多 `visitorInspDay` 40）；付門票（`shared/casino/ticket.js`，玩法 11：三份分給展廳主／預算池／館方帳） |
+| **委託人** | `shared/core/content.js` 的 `CLIENTS`（20 位，名字加一句 `note`）、`CLIENT_COMMENTS`（完成後的話）；`shared/core/logic.js` `dailyCommissions`；籌碼 `shared/casino/job.js` | 有（賣傘的老闆、八樓的鄰居、退休的郵差…） | 只有一句 `note`（「只在下雨天開門」） | 每天出委託（要做什麼佩佩）；完成給靈感、交委託給籌碼（莊家出） |
 | **留言的人** | 展廳留言（`VISITOR_COMMENTS`）、合作地下的留言牌（`shared/coop/trace.js`，固定格式）、節日日的留言句（`systems_text.js` 的 `poetry` 等） | 沒有 | 只有句子 | 文字，不碰錢 |
 | **劇情角色** | `content/story/帳本.json` 的 `characters`：守夜的警衛、會計（第二位收藏者）、多出來的那壹隻、蹲著的先生、Yuga Bot；`mysteries`、`foreshadow`、`news` | 有 | 有（每個角色一句 `how`：怎麼說話、**什麼不能寫**，例如「不寫長相」「不直接出場」） | 只出現在痕跡裡（字跡、瓜子殼、溫的椅墊、日報的字），**不露臉**；每週劇情（`content/weeks/*/week.json`、`dN.json`）決定他們今天留下什麼 |
 | **Yuga Bot（荷官、莊家）** | `shared/casino*.js`、日報（`shared/casino/report.js`）、`content/排程說明.md` 一之五（身世） | 有 | 有（口頭禪「拚經濟，做就對了」，身世每週最多露一層） | 賭場的對手、發日報、借錢給莊家的世界設定 |
@@ -160,7 +160,7 @@
 ### 步驟 3：有名字、有行程、有故事線的 NPC（**11-14 翊文：「直接做到步驟 3」，內容和檢查已上線；排程和每位的故事線寫在 content/npc 和 content/排程說明.md**）
 
 - 內容：`content/npc/`（委託人 20 位搬進來＋一批有名字的旅客，每位都有 `arc` 故事線的第 1～2 段）；每天 05:00 算行程 `house.npc`；展廳留言、展廳參觀者、委託人出現、日報新聞句改用 NPC 名字。館內股的人數改成行程加總（期望值對齊 2）。
-- 程式：新檔 `shared/npc/core.js`（純函式：行程、加成、檢查）、`shared/logic.js` 的 `visitorArrive`、`dailyCommissions`、`casino/report.js`。約 3～4 個 PR。
+- 程式：新檔 `shared/npc/core.js`（純函式：行程、加成、檢查）、`shared/core/logic.js` 的 `visitorArrive`、`dailyCommissions`、`casino/report.js`。約 3～4 個 PR。
 - **要翊文決定**：委託人 20 位的 `likes`、`route`（Yuga 寫）；旅客的名字模板；NPC 占一家店人數的上限 40% 行嗎；劇情角色（`trace`）確定不算人數、不出價。
 
 ### 步驟 4：NPC 參加畫的拍賣
