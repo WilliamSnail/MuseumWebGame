@@ -110,7 +110,7 @@ T("任務：種類要存在、每日任務做得完、不放一定要掉理智�
   expectErr(c => { c.files["2026-W47/d1.json"].daily[1].need = { 顏色: "黑" }; }, /一開始就有的選項/);
   expectErr(c => { c.files["2026-W47/d1.json"].daily[1].need = { 稀有度: "傳說級稀有" }; }, /不要指定稀有度/);
   expectErr(c => { c.files["2026-W47/d1.json"].daily.pop(); }, /daily 要剛好 3 個/);
-  expectErr(c => { c.files["2026-W47/d1.json"].daily = [{ id: "x1", kind: "cellar", floor: 2, reward: { insp: 1 } }, { id: "x2", kind: "fuse", n: 2, reward: { insp: 1 } }, { id: "x3", kind: "show", reward: { insp: 1 } }]; }, /大約要 13 分鐘/);
+  expectErr(c => { c.files["2026-W47/d1.json"].daily = [{ id: "x1", kind: "cellar", floor: 2, reward: { insp: 1 } }, { id: "x2", kind: "fuse", n: 2, reward: { insp: 1 } }, { id: "x3", kind: "show", reward: { insp: 1 } }]; }, /分鐘，太多了/);
   expectErr(c => { c.files["2026-W47/week.json"].weekly[0] = { id: "w1", kind: "show", reward: { insp: 2 } }; }, /不能當每週任務/);
   expectErr(c => { c.files["2026-W47/d4.json"].daily[0].book = "9z"; }, /book「9z」不是這週/);
 });

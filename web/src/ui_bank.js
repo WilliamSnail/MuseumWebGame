@@ -20,6 +20,7 @@ import { casNum, casPx } from "../../shared/casino.js";
 import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
 import { flowPane } from "./bank_flow.js";
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../shared/casino_report.js";
+import { actDone } from "./ui_story.js";
 
 const fp = casPx; // 股價（小數兩位；決定 0108）
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
@@ -206,6 +207,7 @@ async function bankDo(act, data) {
     const r = await NET.call("casino", Object.assign({ act }, data));
     if (!r || !r.ok) { snd("error"); note((r && r.reason) || "沒辦法", "bad"); return; }
     bankSfx(act, data);
+    if (act === "bank" && data && data.op === "put") actDone("bank"); // 每日任務：存壹筆（決定 0146）
     if (r.bankHall) { UI.bankHall = bankHallView(r.bankHall); UI.bankAt = Date.now(); }
     if (r.wallet) setChips(r.wallet.chips);
     (r.lines || []).concat(r.bankNotes || []).forEach(t => note(t, "good"));
@@ -986,6 +988,7 @@ function gsOrdersPanel(G) {
 }
 // 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
 function gstockPane(v) {
+  actDone("stockLook"); // 每日任務：看壹支集團股的走勢（決定 0146）
   // 翊文 11-17：「這個應該要向其他頁籤可以直接輸入數字」「要有這些功能阿」：買／賣二選壹、1／10／100、買滿／全賣、自訂股數、走勢
   const G = v.gs; if (!G || !G.list || !G.list.length) return soon("集團股", "世界集團的股票正在準備，開放時館方公告會說。");
   const list = G.list, cur = list[Math.min(UI.bankGs || 0, list.length - 1)], tone = n => (n > 0 ? "up" : n < 0 ? "down" : "");
