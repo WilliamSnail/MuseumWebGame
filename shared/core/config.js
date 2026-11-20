@@ -403,7 +403,9 @@ export const NUM = {
     //   trace 留幾天的漲退痕跡、grid 水位量化成幾格（peek 給畫面）
     // 門檻那晚收走一個名字（決定 0133）：被收走的佩佩名字變空白名牌，名牌背面是館友號碼（加入順序）；信一年後過期
     poolTake: { on: true, expireDays: 365 },
-    pool: { earnT: 200000000, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24 },
+    pool: { earnT: 200000000, start: 0.6, min: 0.1, step: 0.03, confirm: 3, trace: 7, grid: 24,
+      // 決定 0148（翊文 11-20）：沒有收資助、也算進水位合計的人。nicks 暱稱比對照舊（去空白、小寫）；from 從這天起第壹次進來才加（起點 ＝ 那一刻的淨值，之後每天正的收益累計，虧的不扣）；take false ＝ 門檻那晚不收他的名字（要不要收等翊文確認）
+      extra: [{ nicks: ["朱翊文"], from: "2026-11-20", take: false }] },
     // 文化部資助一位館友（決定 0131，翊文 11-19）：只一次、不是借款。錢從文化部（已知世界的 u-culture）出，記 cultureGift；暱稱比對照 fb 的 player-invest（去空白、小寫）；信在 shared/casino/text.js 的 CAS_GIFT。on:false 關掉
     cultureGift: { on: true, id: "moc-yuga-2026-11", nicks: ["YUGa Chu"], amt: 1000000000, days: 365 },
     // 決定 0143（翊文 11-20）：再多幾筆資助，每筆各記壹次（house.cg[id]、w.gifts[id]）。letter 2 ＝ 第二封信；撥款不算進水位的「賺的」（casCultureGift 帶 uid 時把該人的 pool.who 起點加上撥款額）
