@@ -119,6 +119,9 @@ function main() {
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
 
+  // 搬家前留下的舊檔（不在 git 裡的舊位置）先清掉，免得 git add -A 把它們帶進 commit、或讓測試和資料夾規矩誤紅（11-20，tools/dev/clean_stale.cjs）
+  const stale = require("../dev/clean_stale.cjs").clean();
+  if (stale.length) console.log(`清掉搬家前留下的舊檔：${stale.join("、")}`);
   const lp = localPlan(pendingFiles(), o.flags);
   if (lp.line) console.log(lp.line);
   if (lp.mode === "full") {
