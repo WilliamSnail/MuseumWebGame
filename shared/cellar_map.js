@@ -3,7 +3,7 @@
 //  翊文 11-12：「有你說的隨機地圖那一些嗎」「房間探索還是要保留喔，是個重點」
 //  一層 NUM.cellarMap.rows 排，一排 2～3 個點，從上往下走，最底是守門怪物。
 //  房間探索是重點：
-//    前面每一排一定有一間探索房（就是 content3.js CELLAR 的房間，文字、選項都不變），這一層的房間每一間都在地圖上；
+//    前面每一排一定有一間探索房（就是 systems_text.js CELLAR 的房間，文字、選項都不變），這一層的房間每一間都在地圖上；
 //    探索房一路連到下一排的探索房，所以一趟可以把這一層的房間全部走完（跟改版前一樣）。
 //    不想探索的那一排，可以改走遭遇（打怪物）或寶箱。
 //  最後一排一定有休息（守門前喘口氣）。
@@ -14,8 +14,8 @@
 //  kind："explore" 探索（room ＝房間 id）、"foe" 遭遇（foe ＝怪物 id）、"chest" 寶箱和怪事、"rest" 休息、"gate" 守門
 // ================================================================
 import { NUM } from "./config.js";
-import { RNG, hashStr, mulberry32 } from "./logic.js";
-import { cellarFloor } from "./logic3.js";
+import { RNG, hashStr, mulberry32 } from "./logic_base.js";
+import { cellarFloor } from "./logic_base.js";
 import { fightFoesOf } from "./cellar_fight.js";
 
 export const CMAP_KINDS = ["explore", "foe", "chest", "rest", "gate"];

@@ -15,7 +15,7 @@ import { NUM } from "./config.js";
 import { CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casDealerPlay, casHand, casOutcome, casPayout, casPoint, casShown, casShuffle } from "./casino.js";
 import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./casino_wallet.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { nwPoke, nwPokeKind } from "./world.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./casino_npc.js";
 

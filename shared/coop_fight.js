@@ -10,28 +10,13 @@
 //  run.phase "fight"：run.fight ＝這一場；run.votes ＝ { 隊員 id: { act, for, tap } }
 // ================================================================
 import { NUM } from "./config.js";
-import { addDays } from "./logic.js";
-import { injureDaysOf } from "./logic3.js";
-import { coopActive, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop.js";
-import { coopRouteBack } from "./coop_route.js";
+import { addDays } from "./logic_base.js";
+import { injureDaysOf } from "./systems.js";
+import { coopActive, coopFightFix, coopFinish, coopFloorComplete, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop_base.js";
 import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "./cellar_fight.js";
 
 // 這一層還要不要打守門
 export const coopGateDue = run => !!(run && run.gate && !run.trial && !(run.gateDone && run.gateDone[run.floor]) && fightFoesOf(run.floor, true)[0]);
-// 從資料庫讀回來補欄位（空的陣列、空的物件會不見）
-export function coopFightFix(run) {
-  if (!run || typeof run !== "object") return run;
-  run.gate = !!run.gate;
-  if (!run.gateDone || typeof run.gateDone !== "object") run.gateDone = {};
-  const f = run.fight;
-  if (!f || typeof f !== "object") { run.fight = null; return run; }
-  const arr = v => Array.isArray(v) ? v : v && typeof v === "object" ? Object.keys(v).sort((a, b) => a - b).map(k => v[k]) : [];
-  f.seats = arr(f.seats);
-  f.seats.forEach(s => { s.pepes = arr(s.pepes); if (!s.used || typeof s.used !== "object") s.used = {}; if (!s.skills || typeof s.skills !== "object") s.skills = {}; s.helper = !!s.helper; s.out = !!s.out; s.ghost = !!s.ghost; s.pepes.forEach(p => { p.down = !!p.down; p.perfect = !!p.perfect; }); });
-  ["intent", "over", "last"].forEach(k => { if (f[k] === undefined) f[k] = null; });
-  f.weak = !!f.weak; f.tap = !!f.tap; f.cheer = f.cheer || 0;
-  return run;
-}
 
 // 開一場。foe ＝怪物的 id（或每天的內容寫的整份怪物）；kind ＝ "gate"
 export function coopFightStart(run, Ps, foe, kind = "gate", rank = 1) {
@@ -138,4 +123,13 @@ export function coopFightView(run, id) {
   if (!f) return null;
   const seat = fightSeatOf(f, id);
   return { name: fightNameOf(f), intent: fightIntentText(f), risk: fightIntentRisk(f), options: seat ? fightOptions(f, id) : [], can: fightCanAct(seat), waiting: fightActors(f).filter(s => !(run.votes && run.votes[s.id])).map(s => s.id), fleeNeed: Math.ceil(fightActors(f).length / 2), limit: NUM.fight.maxRounds };
+}
+
+// 這個點做完了：回到選路（大家都倒了就結束）
+export function coopRouteBack(run, Ps, events = coopNewEvents(run)) {
+  run.room = null; run.rest = null;
+  if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
+  run.phase = "route";
+  coopSync(run, Ps);
+  return { ok: true, run, events };
 }

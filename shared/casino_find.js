@@ -13,8 +13,8 @@ import { casHouseMove } from "./casino_book.js";
 import { casInUsed } from "./casino_stock_in.js";
 import { casFxPolicy } from "./casino_gdp.js";
 import { CAS_FIND_TEXT } from "./casino_text.js";
-import { CELLAR } from "./content3.js";
-import { RNG } from "./logic.js";
+import { CELLAR } from "./systems_text.js";
+import { RNG } from "./logic_base.js";
 
 const cfBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cfNum = (v, d = 0) => (Number.isFinite(+v) ? +v : d);

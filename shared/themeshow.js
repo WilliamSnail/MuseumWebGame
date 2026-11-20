@@ -18,12 +18,11 @@
 //      weeks: { 週的號碼: { theme, best, gold, item, dup, date } }, read: { 主題: 讀完手記的那天 },
 //      pending: [還沒演給玩家看的事件], hinted: 今天提示過「再 1 天」的那天 }
 //  只在挑戰模式。自由模式沒有展期，限定配件本來就都打開了。
-//  文字（手記、配件的名字以外的字）放這個檔最下面，是草稿，Yuga 可以改；配件的名字在 content3.js 的 LIMITED_TEXT。
+//  文字（手記、配件的名字以外的字）放這個檔最下面，是草稿，Yuga 可以改；配件的名字在 systems_text.js 的 LIMITED_TEXT。
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM } from "./config.js";
-import { clampN, daysBetween, hallScore, isFree } from "./logic.js";
-import { weeklyState } from "./logic3.js";
+import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, WEEKLY_IDS } from "./config.js";
+import { clampN, daysBetween, hallScore, isFree, todayStr, weekIndex } from "./logic_base.js";
 import { grantLimited } from "./signin.js";
 
 const isShowDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -155,7 +154,7 @@ export function syncShow(P, today) {
   }
   return ev;
 }
-// 換週（logic3.js 的 weeklyState 叫）：照上週的最高分。到金就給那週特展的配件；已經有了照簽到的規矩換成靈感
+// 換週（systems.js 的 weeklyState 叫）：照上週的最高分。到金就給那週特展的配件；已經有了照簽到的規矩換成靈感
 export function settleWeekShow(P, W, today) {
   if (!P || isFree(P) || !isShowBox(W) || !Number.isInteger(W.w)) return null;
   const box = showBox(P), best = W.best || 0;
@@ -285,3 +284,15 @@ export const SHOW_POSTER_PICK = {
   flat: { 心情: "開心", 顏色: "綠", 姿勢: "躺平" },
   failed: { 心情: "傷心", 顏色: "紅", 姿勢: "站著", failed: true },
 };
+
+// ---------- 每週特展 ----------
+export function weeklyTheme(dateStr) { return WEEKLY_IDS[((weekIndex(dateStr) % WEEKLY_IDS.length) + WEEKLY_IDS.length) % WEEKLY_IDS.length]; }
+export function weeklyState(P) {
+  const date = P.day ? P.day.date : todayStr();
+  const w = weekIndex(date);
+  if (!P.weekly || P.weekly.w !== w) {
+    if (P.weekly && P.weekly.w < w) settleWeekShow(P, P.weekly, date); // 換週：照上週的最高分結算（決定 0035，shared/themeshow.js）
+    P.weekly = { w, theme: weeklyTheme(date), slots: [null, null, null, null, null, null], best: 0 };
+  }
+  return P.weekly;
+}

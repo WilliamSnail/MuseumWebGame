@@ -13,7 +13,7 @@
 //  Discord 的回覆是玩家看的，文字照第 1 代用「壹」。文字都是草稿，Yuga 可以改。
 // ================================================================
 import { NUM } from "./config.js";
-import { BOARD_TEXT } from "./content3.js";
+import { BOARD_TEXT } from "./systems_text.js";
 import { eventEffect, eventRange, eventsOnDate } from "./events.js";
 import { funDaysOf, holidaysOn } from "./holidays.js";
 import { boardCut, boardDiscordNick, boardGroups, boardPeriodText, boardTrim, boardValueText, boardViewOf } from "./board.js";

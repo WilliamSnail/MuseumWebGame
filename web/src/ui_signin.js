@@ -13,10 +13,11 @@
 //  介面文字照第 1 代用「壹」。
 // ================================================================
 import { LIMITED_ITEMS, NUM } from "../../shared/config.js";
-import { SIGNIN_TEXT } from "../../shared/content3.js";
+import { SIGNIN_TEXT } from "../../shared/systems_text.js";
 import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../shared/holidays.js";
 import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../shared/signin.js";
-import { stampHow, storyState } from "../../shared/story.js";
+import { stampHow } from "../../shared/story.js";
+import { storyState } from "../../shared/story_state.js";
 import { casNum } from "../../shared/casino.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../shared/logic.js";
 import { ART } from "./art.js";

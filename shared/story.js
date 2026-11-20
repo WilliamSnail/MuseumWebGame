@@ -15,11 +15,11 @@
 //  介面上的字照第 1 代用「壹」。
 // ================================================================
 import { NUM, SKILLS } from "./config.js";
-import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan } from "./logic.js";
-import { canStartCellar, cellarFloor, weekIndex } from "./logic3.js";
+import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, canStartCellar, cellarFloor, clampN, cureByTask, daysBetween, exhibitById, fromKey, hashStr, isFree, optOf, parseDice, rollExpr, splitSan, weekIndex } from "./logic_base.js";
+import { cleanEvents, eventListLine } from "./events.js";
+import { STORY_ITEMS, isPlain, storyState } from "./story_state.js";
 import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
 import { casArtMarkViewed, casArtViewCredit } from "./casino_art.js";
-import { cleanEvents, eventListLine } from "./events.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -70,19 +70,6 @@ export const SVG_ATTRS = ["id", "viewBox", "preserveAspectRatio", "x", "y", "x1"
   "k1", "k2", "k3", "k4", "tableValues", "slope", "intercept", "amplitude", "exponent", "flood-color", "flood-opacity", "stitchTiles", "color-interpolation-filters"];
 // 書裡 [[字|動作]] 可以用的動作（ui_screens1.js 的 BOOK_ACTIONS）
 export const BOOK_ACTION_IDS = ["void", "mirror", "window", "beat", "hat", "codex", "cellar"];
-// 獎勵的東西。skillBook：用了技能加 NUM.story.skillBook；heal：受傷的佩佩全部好；material：收著，在兌換所換週章（shared/shop.js 的 tradeMats）
-export const STORY_ITEMS = {
-  "book:偵查": { name: "技能書《放大鏡的用法》", kind: "skillBook", skill: "偵查" },
-  "book:鑑賞": { name: "技能書《看畫的方法》", kind: "skillBook", skill: "鑑賞" },
-  "book:神秘學": { name: "技能書《不要念出聲》", kind: "skillBook", skill: "神秘學" },
-  "book:幸運": { name: "技能書《擲骰子的姿勢》", kind: "skillBook", skill: "幸運" },
-  "book:手工藝": { name: "技能書《縫線入門》", kind: "skillBook", skill: "手工藝" },
-  "book:說服": { name: "技能書《怎麼說好話》", kind: "skillBook", skill: "說服" },
-  firstAid: { name: "急救箱", kind: "heal" },
-  "mat:畫布": { name: "舊畫布", kind: "material" },
-  "mat:金箔": { name: "金箔", kind: "material", worth: 2 }, // 換週章算 2 份（翊文 11-09：「幫我改金箔」，它比舊畫布貴很多）
-  "mat:金線": { name: "金線", kind: "material" },
-};
 
 // ---------- 日期：週、季 ----------
 const storyIsDate = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -269,22 +256,6 @@ export function todayOf(W) { return W && !W.past ? dayOf(W, W.dayNo) : null; }
 export function lineById(W, id) { return W ? W.lines.find(l => l.id === id) || null : null; }
 
 // ---------- 存檔 ----------
-// P.story = { v, books: { id: { got, read } }, tasks: { id: { base, done, claimed } }, works: { id: 日期 }, spots: { 房間 id: 日期 },
-//             weeks: { 週: { fb, first, bonus: { 第幾天: 日期 }, weekBonus } }, deep: { 日期: 走到第幾層 }, showInsp: { 日期: 拿了幾靈感 },
-//             bag: { 東西 id: 幾個 }, stamps: 週章, track: 追蹤哪一條劇情線, seen: { 劇情線 id: 看過的下一步 }, log: [],
-//             said: { 任務 id: 日期 } Yuga Bot 交代的任務，做完後荷官說過 done 了（ui_casino.js；舊存檔沒有，storyState 補）,
-//             cas: { 週: 日期 } 賭場每週收藏集滿、領過週章的週（伺服器寫，決定 0042；書架才讀得到那週集滿的小故事） }
-const isPlain = v => !!v && typeof v === "object" && !Array.isArray(v);
-export function storyState(P) {
-  if (!isPlain(P.story)) P.story = {};
-  const S = P.story;
-  S.v = 1;
-  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas", "said", "acts", "chipDue"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
-  if (!Number.isFinite(S.stamps) || S.stamps < 0) S.stamps = 0;
-  if (typeof S.track !== "string") S.track = null;
-  if (!Array.isArray(S.log)) S.log = [];
-  return S;
-}
 // 舊的紀錄清掉（8 週以前的任務、看過的畫、每天的數字）；書讀過的留著（劇情回顧要用）
 export function pruneStory(S, today) {
   const cutDate = addDays(weekMonday(today), -56), cutWeek = isoWeek(cutDate);
@@ -507,13 +478,6 @@ export function syncStory(P, W, today) {
 
 // ---------- 獎勵 ----------
 export function itemName(id) { return (STORY_ITEMS[id] || { name: id }).name; }
-export function itemDesc(id) {
-  const it = STORY_ITEMS[id];
-  if (!it) return "";
-  if (it.kind === "skillBook") { const p = parseDice(NUM.story.skillBook); return `用了：${it.skill} +${p.m ? `${p.n}～${p.n * p.m}` : p.flat}（最多到 ${NUM.story.skillCap}）。給現在這位參觀者。`; }
-  if (it.kind === "heal") return "用了：地下收藏庫受傷的佩佩，全部馬上好。";
-  return `用來換週章：到兌換所，每 ${NUM.shop.matToStamp} 份換壹枚。這個算 ${it.worth || 1} 份。`;
-}
 export function milesText(v) { const t = rewardText(v.reward); return [t, v.chips ? `籌碼 ${v.chips.toLocaleString("en-US")}` : "", v.box ? "籌碼禮盒" : ""].filter(Boolean).join("、"); }
 export function rewardText(r) {
   if (!r) return "";
@@ -709,7 +673,7 @@ export function viewCollectWork(P, W, id, tier, today) {
 export function weekReview(W) { return W ? W.works.filter(w => w.day < Math.min(W.dayNo, 7)) : []; }
 
 // ---------- 地下收藏庫：本週異狀、這週多出來的房間 ----------
-// 用遊戲已經有的房間（content3.js 的 CELLAR 那種格式）組出來，借單人地下收藏庫的流程走一間（P.cellar.run.extra，logic3.js 認得）
+// 用遊戲已經有的房間（systems_text.js 的 CELLAR 那種格式）組出來，借單人地下收藏庫的流程走一間（P.cellar.run.extra，systems.js 認得）
 export function roomOpen(P, r) { return !!r && (r.floor <= ((P.cellar && P.cellar.best) || 0) + 1); }
 export function startStoryRoom(P, W, id, keys) {
   if (!P || isFree(P)) return { ok: false, reason: "自由模式不下去" };

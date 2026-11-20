@@ -68,8 +68,8 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 **放哪裡**：
 
 - 數值 → `shared/config.js`（`NUM` 等）。
-- 文字 → `shared/content.js`、`shared/content3.js`。
-- 判斷 → `shared/logic.js`、`shared/logic3.js`。
+- 文字 → `shared/content.js`、`shared/systems_text.js`。
+- 判斷 → `shared/logic.js`、`shared/systems.js`（原 logic3.js）。底層共用的在 `shared/logic_base.js`；shared/ 的 import 單向、不准繞圈（check_imports 擋）。
 - 演出 → `web/src/` 的畫面檔。
 
 **規則是純函式**：

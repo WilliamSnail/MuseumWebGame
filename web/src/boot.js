@@ -6,7 +6,7 @@ import { GEN_TEXT } from "../../shared/config.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../shared/logic.js";
-import { visitorEvery } from "../../shared/logic3.js";
+import { visitorEvery } from "../../shared/systems.js";
 import { nowMs } from "../../shared/logic.js";
 import { NET } from "./net_firebase.js";
 import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, noteRetasked, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";

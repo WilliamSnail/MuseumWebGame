@@ -12,10 +12,10 @@
 //  一天＝台灣時間 05:00 到隔天 05:00（決定 0019）：節日那天也是照 todayStr() 的日期，凌晨 04:59 還算前一天。
 //  純函式：只讀傳進來的日期字串（"YYYY-MM-DD"），不碰時鐘、不碰畫面。
 //  之後每週劇情（docs/每週劇情.md）要用：holidayOf(日期) 回傳名字、主題、「節日的話」、那天的藝術品。
-//  文字在 content3.js 的 HOLIDAY_TEXT（草稿，Yuga 可以改）；獎勵的數字在 config.js 的 NUM.signin。
+//  文字在 systems_text.js 的 HOLIDAY_TEXT（草稿，Yuga 可以改）；獎勵的數字在 config.js 的 NUM.signin。
 // ================================================================
 import { NUM } from "./config.js";
-import { HOLIDAY_TEXT, FUN_TEXT } from "./content3.js";
+import { HOLIDAY_TEXT, FUN_TEXT } from "./systems_text.js";
 
 export const HOLIDAY_YEARS = [2026, 2027, 2028];
 
@@ -161,7 +161,7 @@ export function holidayNotices(today) {
 //  只在大廳一小行、簽到日曆、Discord 今日館訊露出來；壹天可以有好幾個。
 //  規則：fixed ＝每年同壹天（"MM-DD"）；nth ＝ [月, 第幾個, 星期幾（0 是星期日）]，例如 [4, 1, 6] ＝ 4 月第壹個星期六。
 //  閏日（02-29）只有閏年才有那壹天，所以只有閏年碰得到。不限 HOLIDAY_YEARS：哪壹年都算得出來。
-//  文字在 content3.js 的 FUN_TEXT（名字、館內的話、有呼應的房間；草稿，Yuga 可以改）。日期的來源在 docs/決定/0044-趣味節日.md。
+//  文字在 systems_text.js 的 FUN_TEXT（名字、館內的話、有呼應的房間；草稿，Yuga 可以改）。日期的來源在 docs/決定/0044-趣味節日.md。
 // ================================================================
 export const FUN_INFO = [
   { key: "birdday", fixed: "01-05" },

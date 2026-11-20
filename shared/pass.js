@@ -5,13 +5,17 @@
 // ================================================================
 
 import { BADGES, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "./config.js";
-import { UNDERSTAND_TEXT } from "./content3.js";
-import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, gameDayNo, isFree, maxSan, quirkName, todayStr } from "./logic.js";
-import { jobInfo, jobSkill, roomProgress, skillOf } from "./logic3.js";
-import { traitById, traitDesc, traitName } from "./legacy.js";
-import { gearInfo, wornGear } from "./shop.js";
+import { UNDERSTAND_TEXT } from "./systems_text.js";
+import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "./logic_base.js";
+import { gameDayNo, quirkName } from "./logic.js";
+import { jobInfo, jobSkill, skillOf } from "./legacy.js";
+import { roomProgress } from "./systems.js";
+import { traitById } from "./logic_base.js";
+import { traitDesc, traitName } from "./legacy.js";
+import { gearInfo } from "./shop.js";
+import { wornGear } from "./logic_base.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, wornDeco } from "./signin.js";
-import { storyState } from "./story.js";
+import { storyState } from "./story_state.js";
 import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
 
 // 典藏冊的頁籤（第壹頁是館友證本身）

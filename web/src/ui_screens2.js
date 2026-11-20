@@ -6,12 +6,13 @@
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../shared/config.js";
 import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../shared/content.js";
-import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/content3.js";
+import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../shared/systems_text.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../shared/logic.js";
 import { npcNews, npcWebCounters } from "../../shared/npc.js";
-import { bookSequels, hasTalent, hasUp, sequelOpen, skillCheck, unlockSequel } from "../../shared/logic3.js";
+import { bookSequels, hasUp, sequelOpen, unlockSequel } from "../../shared/logic_base.js";
+import { hasTalent, skillCheck } from "../../shared/systems.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../shared/legacy.js";
 import { isLimitedMat, stockOf } from "../../shared/signin.js";

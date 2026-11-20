@@ -10,7 +10,8 @@ import { HALL_THEME_TEXT } from "./content.js";
 import { npcArcIndex, npcArcNow, npcLikesNow } from "./npc.js";
 import { NPC_ROOM, npcDayStartMs, npcVisitsToday } from "./npc_spend.js";
 import { npcCasAway } from "./casino_npc.js";
-import { nwBal, nwBudgetMult, nwSan, nwUnitOf } from "./world.js";
+import { nwBal, nwBudgetMult, nwUnitOf } from "./world.js";
+import { nwSan } from "./world_base.js";
 import { statView } from "./stat_view.js";
 
 export const NPC_CARD_PLACE = { hall: "展廳", food: "餐車", bj: "21 點桌", job: "委託櫃台", craft: "手作坊", cellar: "地下收藏庫", bank: "銀行", auction: "拍賣廳" };

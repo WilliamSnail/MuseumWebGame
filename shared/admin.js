@@ -14,12 +14,15 @@
 // ================================================================
 import { BADGES, PEPE_PARTS } from "./config.js";
 import { ENDINGS, FORBIDDEN_BOOKS } from "./content.js";
-import { BOOK4, ENDING_CELLAR, JOBS, QUIRK_TASK_TEXT } from "./content3.js";
-import { CATS, CORE_TOTAL, activeQuirks, allChapters, asList, codexCount, gameDayNo, maxSan, migrateSave, nowMs, quirkDaysLeft, quirkName, taipeiDay } from "./logic.js";
-import { bookSequels } from "./logic3.js";
-import { traitById, traitName } from "./legacy.js";
+import { BOOK4, ENDING_CELLAR, JOBS, QUIRK_TASK_TEXT } from "./systems_text.js";
+import { CATS, CORE_TOTAL, activeQuirks, allChapters, asList, codexCount, maxSan, nowMs, taipeiDay } from "./logic_base.js";
+import { gameDayNo, migrateSave, quirkDaysLeft, quirkName } from "./logic.js";
+import { bookSequels } from "./logic_base.js";
+import { traitById } from "./logic_base.js";
+import { traitName } from "./legacy.js";
 import { signinState, weekProgress } from "./signin.js";
-import { isoWeek, storyState } from "./story.js";
+import { isoWeek } from "./story.js";
+import { storyState } from "./story_state.js";
 import { visitorName, visitorTotal } from "./visitors.js";
 
 const admObj = v => !!v && typeof v === "object" && !Array.isArray(v);

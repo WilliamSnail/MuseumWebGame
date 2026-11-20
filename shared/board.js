@@ -15,17 +15,20 @@
 //  玩家看得到的 doc 裡沒有 uid、email，也沒有理智、怪癖、靈感。累計數字（snapshot）放另一份文件，玩家讀不到（firestore.rules）。
 //  隱身的人照算：這是遊戲進度，不是在線狀態。
 //  存檔是玩家自己寫的（shared/admin.js 開頭）：值一律當不可信，只拿數字、有上限。暱稱只當純文字；貼到 Discord 前要過 boardDiscordNick。
-//  文字在 content3.js 的 BOARD_TEXT，數字在 config.js 的 NUM.board。
+//  文字在 systems_text.js 的 BOARD_TEXT，數字在 config.js 的 NUM.board。
 // ================================================================
 import { NUM } from "./config.js";
 import { FORBIDDEN_BOOKS } from "./content.js";
-import { BOARD_TEXT, BOOK4 } from "./content3.js";
+import { BOARD_TEXT, BOOK4 } from "./systems_text.js";
 import { casNum } from "./casino.js";
 import { adminSummary } from "./admin.js";
-import { addDays, asList, fill, hallScore, migrateSave, nowMs, taipeiDay } from "./logic.js";
-import { bookSequels, cellarFloors, weekIndex } from "./logic3.js";
-import { shopState } from "./shop.js";
-import { dayStartMs, isoWeek, storyState, weekMonday } from "./story.js";
+import { addDays, asList, hallScore, nowMs, taipeiDay } from "./logic_base.js";
+import { fill, migrateSave } from "./logic.js";
+import { bookSequels, weekIndex } from "./logic_base.js";
+import { cellarFloors } from "./systems.js";
+import { shopState } from "./logic_base.js";
+import { dayStartMs, isoWeek, weekMonday } from "./story.js";
+import { storyState } from "./story_state.js";
 import { showStatus } from "./themeshow.js";
 import { titleName } from "./titles.js";
 

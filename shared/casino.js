@@ -10,8 +10,8 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { CAS_TEXT } from "./casino_text.js";
-import { RNG, hashStr, isFree, mulberry32 } from "./logic.js";
-import { skillOf } from "./logic3.js";
+import { RNG, hashStr, isFree, mulberry32 } from "./logic_base.js";
+import { skillOf } from "./legacy.js";
 
 export const CAS_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 export const CAS_SUITS = ["♠", "♥", "♦", "♣"];

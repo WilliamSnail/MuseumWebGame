@@ -18,7 +18,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { CAS_MENU } from "./casino_text.js";
-import { addDays, asList } from "./logic.js";
+import { addDays, asList } from "./logic_base.js";
 
 const wkBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wkInt = (v, lo = 0, hi = 1e6) => (Number.isFinite(+v) ? Math.max(lo, Math.min(hi, Math.floor(+v))) : lo);

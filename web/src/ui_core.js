@@ -5,7 +5,7 @@
 import { casExact, casNum } from "../../shared/casino.js";
 import { LEGACY, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/content3.js";
+import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/systems_text.js";
 import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../shared/applause.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
@@ -13,14 +13,15 @@ import { ambMix, sanDread } from "../../shared/room_mood.js";
 import { ambFor } from "./audio_state.js";
 import { markTokens, taipeiDay, todayStr } from "../../shared/logic.js";
 import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, applySan, baseOpts, calmExhibits, clampN, dailyCommissions, describePepe, describePillow, endingDue, ensureDay, exhibitById, expireQuirks, fill, finishMake, fromKey, gainQuirk, gameDayNo, halveCost, halved, involuntary, isFree, knownTotal, maxSan, miniLeft, nowMs, num, pad, parseDice, parsePillowKey, possibilities, quirkDaysLeft, quirkDoneToday, quirkName, quirkNeedDays, realTodayStr, sanCheck, secToNextDay, splitSan, startBout, tickAction, understandCheck } from "../../shared/logic.js";
-import { hasTalent, memberPower, skillCheck, understandLine, weeklyTheme } from "../../shared/logic3.js";
+import { hasTalent, memberPower, skillCheck, understandLine } from "../../shared/systems.js";
+import { weeklyTheme } from "../../shared/themeshow.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../shared/visitors.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../shared/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../shared/notices.js";
 import { syncMail, unclaimedCount } from "../../shared/mailbox.js";
 import { holidayClass, holidayOf } from "../../shared/holidays.js";
 import { titleName, titleText } from "../../shared/titles.js";
-import { storyState } from "../../shared/story.js";
+import { storyState } from "../../shared/story_state.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
 
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
@@ -1144,7 +1145,7 @@ export function quirkEffects(q) {
   return [["bad", q.opt ? `手作坊不敢選「${q.opt}」：可能性變少` : `「${q.cat}」只敢選「${baseOpts(q.cat)[0]}」：可能性變少`]];
 }
 // ---------- 怪癖的治法：在 2 個不同的遊戲日各做壹次，不然壹週後自己消失（翊文 11-09，決定 0046；0027 是「做完壹件事、20 分鐘」） ----------
-// 規則在 shared/logic.js（q.task、q.done、q.until、cureByTask、retaskQuirks、expireQuirks）；文字在 content3.js 的 QUIRK_TASK_TEXT、QUIRK_PLAN_TEXT
+// 規則在 shared/logic.js（q.task、q.done、q.until、cureByTask、retaskQuirks、expireQuirks）；文字在 systems_text.js 的 QUIRK_TASK_TEXT、QUIRK_PLAN_TEXT
 const qf = (t, o) => Object.keys(o).reduce((r, k) => r.split("{" + k + "}").join(String(o[k])), String(t)); // {n} 這種帶名字的填空（logic.js 的 fill 只有 {x}）
 export const QUIRK_TASK_ICON = { hug: "pillow", deliver: "commission", calm: "gallery" };
 // 「到畫廊看壹幅不可怕的畫就好了。」；這個怪癖沒有治法（得到時都做不到）是空字串

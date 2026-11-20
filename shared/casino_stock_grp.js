@@ -16,7 +16,7 @@ import { WORLD_UNITS } from "./world_roster.js";
 import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "./world.js";
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./casino_book.js";
 import { casInIdx } from "./casino_stock_in.js";
-import { hashStr } from "./logic.js";
+import { hashStr } from "./logic_base.js";
 // 集團股的手續費 %（決定 0137）：feeOut.grp，沒寫就用 feePct
 export const gsFeePct = () => { const O = NUM.casino.stock.feeOut; return O && O.grp != null ? O.grp : NUM.casino.stock.feePct; };
 

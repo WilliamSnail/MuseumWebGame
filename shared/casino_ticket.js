@@ -9,7 +9,7 @@
 import { NUM } from "./config.js";
 import { hallFeed } from "./npc_spend.js";
 import { whCrowdMood } from "./world.js";
-import { isFree } from "./logic.js";
+import { isFree } from "./logic_base.js";
 import { casCount } from "./casino_book.js";
 
 const tkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);

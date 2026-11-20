@@ -12,14 +12,14 @@
 //        P.limited = { got: { id: 拿到的日期 }, wear: { stand: 展台裝飾 id, frame: 名牌框 id }, stock: { 材料名: 剩幾份 } }
 //        帽子另外打開在 P.unlocked（手作坊才選得到）。
 //    - 簽到只在挑戰模式；自由模式什麼都打開了（跟禁忌、突變的選項一樣），限定的也可以直接用。
-//  一天＝台灣時間 05:00 換日（todayStr），一週＝週一 05:00 到下週一 05:00（logic3.js 的 weekIndex）。日期都由呼叫的人傳進來。
+//  一天＝台灣時間 05:00 換日（todayStr），一週＝週一 05:00 到下週一 05:00（systems.js 的 weekIndex）。日期都由呼叫的人傳進來。
 //  之後有伺服器：簽到改成伺服器判斷今天簽過沒（規劃第四節「每日簽到」），格式不變。
-//  數字在 config.js 的 NUM.signin、LIMITED_ITEMS；文字在 content3.js 的 SIGNIN_TEXT、LIMITED_TEXT。
+//  數字在 config.js 的 NUM.signin、LIMITED_ITEMS；文字在 systems_text.js 的 SIGNIN_TEXT、LIMITED_TEXT。
 // ================================================================
 import { LIMITED_ITEMS, NUM } from "./config.js";
-import { LIMITED_TEXT } from "./content3.js";
-import { addDays, clampN, grantOption, isFree, isUnlocked, limitedHome } from "./logic.js";
-import { weekIndex } from "./logic3.js";
+import { LIMITED_TEXT } from "./systems_text.js";
+import { addDays, clampN, grantOption, isFree, isUnlocked, limitedHome } from "./logic_base.js";
+import { weekIndex } from "./logic_base.js";
 import { holidayOf, holidaysOn } from "./holidays.js";
 
 export const SIGNIN_VERSION = 1;

@@ -8,7 +8,7 @@
 // ================================================================
 import { NUM } from "../../shared/config.js";
 import { FIGHT_MOVES, FIGHT_ROLE_TEXT, fightTraitOf, fightTraitText } from "../../shared/cellar_fight.js";
-import { COOP } from "../../shared/coop.js";
+import { COOP } from "../../shared/coop_base.js";
 import { nowMs } from "../../shared/logic.js";
 import { btn, celebrateEl, diceWords, h, itemHTML, snd, sndFile } from "./ui_core.js";
 import { FIGHT_SFX, fightSfxKey } from "../../shared/fight_sfx.js";

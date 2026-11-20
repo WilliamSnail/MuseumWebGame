@@ -436,7 +436,7 @@ T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
   assert.strictEqual(P.relics[0].name, null); assert.strictEqual(P.legacy.fromName, null);
 });
 
-// ---------- 真正的 ES 模組也接得上（legacy ⇄ logic ⇄ logic3 互相 import） ----------
+// ---------- 真正的 ES 模組也接得上（legacy、logic、systems 接得上） ----------
 (async () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "shared", f)).href;
@@ -444,7 +444,7 @@ T("遺物、前一位留下的記名字（沒有名字是 null）", () => {
     const legacy = await import(url("legacy.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, "2026-11-08");
     assert.ok(legacy.chooseJob(P, "artisan")); // 第一位也抽
-    assert.ok(legacy.traitById(P.perk) && legacy.traitById(P.flaw));
+    assert.ok(logic.traitById(P.perk) && logic.traitById(P.flaw));
     logic.nextVisitor(P, "russia8", { type: "skill" });
     assert.strictEqual(P.cands, null); assert.strictEqual(P.job, null);
     assert.ok(legacy.chooseJob(P, "gambler"));

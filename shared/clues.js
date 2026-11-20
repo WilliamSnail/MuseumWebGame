@@ -9,8 +9,9 @@
 //  舊週拿不到的（沒找到的房間、沒看的畫）不卡：need 只算「已經拿到」或「還拿得到」的
 // ================================================================
 import { NUM } from "./config.js";
-import { addDays, isFree } from "./logic.js";
-import { isoMonday, isoWeek, storyState, weekDayNo } from "./story.js";
+import { addDays, isFree } from "./logic_base.js";
+import { isoMonday, isoWeek, weekDayNo } from "./story.js";
+import { storyState } from "./story_state.js";
 
 const clObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const clList = v => Array.isArray(v) ? v : [];

@@ -2,17 +2,14 @@
 //  第 3 版的新系統：工坊升級、融合室、職業與技能、地下收藏庫、每週特展、交換碼、修復台
 //  （一樣只有規則，不碰畫面）
 // ================================================================
+import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, LIMITED_FX, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, UPGRADES } from "./config.js";
+import { CELLAR, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./systems_text.js";
+import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, canStartCellar, cellarFloor, clampN, codexCount, dailyCommissions, decoOpen, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, hasUp, isFree, isUnlocked, knownTotal, limitedHome, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sequelOpen, sortUnlocked, specAllows, teamItems, todayStr, traitSum, understandCheck, usable } from "./logic_base.js";
+import { cellarDarkLoss, jobSkill, skillOf, traitHits, traitTag } from "./legacy.js";
+import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
+import { weeklyState } from "./themeshow.js";
 
 // ---------- 系統 K：工坊升級 ----------
-// ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, LIMITED_FX, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, SKILLS, UPGRADES, WEEKLY_IDS } from "./config.js";
-import { settleWeekShow } from "./themeshow.js";
-import { BOOK_SEQUELS, CELLAR, JOBS, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./content3.js";
-import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, limitedHome, allOpts, applySan, attrsOf, b64d, b64e, clampN, codexCount, dailyCommissions, decoOpen, describePepe, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, isFree, isUnlocked, knownTotal, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sortUnlocked, specAllows, todayStr, understandCheck, usable } from "./logic.js";
-import { cellarDarkLoss, traitHits, traitSum, traitTag } from "./legacy.js";
-import { friendTalent, learnFromFriend, trialWin } from "./shop.js";
-
-export const hasUp = (P, id) => !!(P && P.upgrades && P.upgrades[id]);
 export function hallSize(P) { return 6 + (hasUp(P, "ped7") ? 1 : 0) + (hasUp(P, "ped8") ? 1 : 0); }
 export function visitorEvery(P) { return hasUp(P, "fame") ? NUM.visitorFame : NUM.visitorEvery; }
 export function fusionLimit(P) { return NUM.fusionPerDay + (hasUp(P, "forge2") ? 3 : 0); }
@@ -44,36 +41,7 @@ export function rerollTens(P, roll) {
 }
 
 // ---------- 系統 L：職業與技能（CoC：擲 d100 ≤ 技能值就成功） ----------
-export const JOB_SKILL = { detective: "偵查", historian: "鑑賞", occultist: "神秘學", gambler: "幸運", artisan: "手工藝", salesman: "說服" };
-export function jobInfo(id) {
-  const j = typeof JOBS !== "undefined" ? JOBS.find(x => x.id === id) : null;
-  return j || { id, name: id, skill: JOB_SKILL[id] };
-}
-export const jobSkill = id => (jobInfo(id) || {}).skill || JOB_SKILL[id];
 export const hasTalent = (P, skill) => !!(P && !isFree(P) && P.job && jobSkill(P.job) === skill);
-// 擲一位參觀者的技能：拿手的 56–65，其他 16–25（換人時的候選人先擲好，卡片上看得到；11-08）
-export function rollSkills(id) {
-  const main = jobSkill(id), out = {};
-  SKILLS.forEach(s => { out[s] = s === main ? NUM.skillMainBase + rollExpr(NUM.skillMain).total : NUM.skillOtherBase + rollExpr(NUM.skillBase).total; });
-  return out;
-}
-// skills：已經擲好的技能（候選人用）；沒給就現在擲
-export function assignJob(P, id, skills) {
-  P.job = id;
-  P.skills = skills ? Object.assign({}, skills) : rollSkills(id);
-  const main = jobSkill(id);
-  P.skillTicks = {};
-  const out = { main, value: P.skills[main] };
-  // 賭徒：開場的心情擲兩次取高
-  if (id === "gambler") {
-    const r = rollExpr("3D6"), again = r.total * 5;
-    out.moodAgain = { roll: r, value: again, before: P.mood };
-    if (again > P.mood) { P.mood = again; P.moodRoll = r.faces; }
-  }
-  return out;
-}
-// 技能值：加上穿著的裝備（放大鏡這種，欄位 "skill:偵查"，決定 0032）。成長、傳下去看的是 P.skills 本身，不算裝備
-export const skillOf = (P, s) => Math.min(99, ((P && P.skills && P.skills[s]) || 15) + traitSum(P, "skill:" + s));
 export function skillCheck(P, s, mod = 0) {
   if (!P || isFree(P)) return { skill: s, success: false, skip: true };
   const target = clampN(skillOf(P, s) + mod, 1, 99);
@@ -259,18 +227,7 @@ export function fuseTogether(PA, a, PB, b) {
 }
 
 // ---------- 系統 M：地下收藏庫 ----------
-export const cellarFloor = n => (typeof CELLAR !== "undefined" ? CELLAR : []).find(f => f.floor === n) || null;
 export const cellarFloors = () => (typeof CELLAR !== "undefined" ? CELLAR : []).map(f => f.floor);
-export function teamItems(P, keys) { return (keys || []).map(k => { const e = P.pepes[k]; return e ? { kind: "pepe", key: k, pick: fromKey(k), perfect: !!e.perfect } : null; }).filter(Boolean); }
-export function canStartCellar(P, floor, keys) {
-  if (!cellarFloor(floor)) return { ok: false, reason: "這一層還沒開放" };
-  if (floor > (P.cellar.best || 0) + 1) return { ok: false, reason: `要先走過 B${floor - 1}` };
-  const team = teamItems(P, keys);
-  if (team.length !== 3 || new Set(keys).size !== 3) return { ok: false, reason: "要帶 3 隻不一樣的佩佩" };
-  const hurt = team.find(t => P.injured[t.key]);
-  if (hurt) return { ok: false, reason: `「${describePepe(hurt.pick).title}」受傷了，還不能下去` };
-  return { ok: true, team };
-}
 export function startCellar(P, floor, keys) {
   const can = canStartCellar(P, floor, keys);
   if (!can.ok) return can;
@@ -495,27 +452,7 @@ export function roomProgress(P) {
 }
 
 // ---------- 禁書的續集（翊文 11-08） ----------
-export const bookSequels = () => (typeof BOOK_SEQUELS !== "undefined" ? BOOK_SEQUELS : []);
-export function sequelCondition(P, s) {
-  if (s.need === "gopnikSquat") return Object.keys(P.pepes).some(k => { const p = fromKey(k); return !!p && p.心情 === "俄國8+9" && p.姿勢 === "斯拉夫蹲"; });
-  if (s.need === "hallGopnik") return P.hall.length > 0 && P.hall.every(it => it && it.kind === "pepe" && (fromKey(it.key) || {}).心情 === "俄國8+9");
-  if (s.need === "cellarEnd") return !!(P.cellar && P.cellar.best >= 5);
-  return false; // idleOrigin（在圖書館什麼都不做）、codexBeyond（圖鑑最後壹格的下壹格）：畫面那邊直接打開
-}
-export const sequelOpen = (P, s) => isFree(P) || !!(P.keys && P.keys[s.id]);
 export const sequelVisible = (P, s) => isFree(P) || !!P.mythFrom[s.after] || sequelOpen(P, s); // 讀過上壹本，書架上才會出現蓋著的這本
-export function unlockSequel(P, id) {
-  const s = bookSequels().find(x => x.id === id);
-  if (!s || sequelOpen(P, s)) return [];
-  P.keys[id] = todayStr(); P.news.origin = true;
-  return [{ type: "book", id, title: s.title }];
-}
-export function sequelEvents(P) {
-  if (isFree(P)) return [];
-  const ev = [];
-  bookSequels().forEach(s => { if (!sequelOpen(P, s) && P.mythFrom[s.after] && sequelCondition(P, s)) ev.push(...unlockSequel(P, s.id)); });
-  return ev;
-}
 
 // ---------- 修復台（升級後才有） ----------
 export function repairFailed(P, key) {
@@ -541,23 +478,6 @@ export function healInjured(P, key) {
 }
 
 // ---------- 每週特展 ----------
-// 第幾週：從星期一算起。dateStr 是 todayStr() 給的日期（台灣時間 05:00 換日），所以換週是台灣時間週一 05:00（決定 0019）：
-// 週一 04:59 還是星期日的日期，算上一週。1970-01-01 是星期四，加 3 天讓 1970-01-05（星期一）變成第 1 週的第一天
-export function weekIndex(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const days = Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 3; // 讓每一週從星期一開始
-  return Math.floor(days / 7);
-}
-export function weeklyTheme(dateStr) { return WEEKLY_IDS[((weekIndex(dateStr) % WEEKLY_IDS.length) + WEEKLY_IDS.length) % WEEKLY_IDS.length]; }
-export function weeklyState(P) {
-  const date = P.day ? P.day.date : todayStr();
-  const w = weekIndex(date);
-  if (!P.weekly || P.weekly.w !== w) {
-    if (P.weekly && P.weekly.w < w) settleWeekShow(P, P.weekly, date); // 換週：照上週的最高分結算（決定 0035，shared/themeshow.js）
-    P.weekly = { w, theme: weeklyTheme(date), slots: [null, null, null, null, null, null], best: 0 };
-  }
-  return P.weekly;
-}
 export function weeklyAllows(theme, it) {
   if (!it) return false;
   const a = attrsOf(it);
@@ -663,7 +583,7 @@ export function understandList(P) {
   });
 }
 
-// ---------- 看懂檢定：看懂了什麼（翊文 11-08）。文字在 content3.js 的 UNDERSTAND_TEXT ----------
+// ---------- 看懂檢定：看懂了什麼（翊文 11-08）。文字在 systems_text.js 的 UNDERSTAND_TEXT ----------
 // src：展品 id、"book:書的 id"、"cellar:房間 id"（取第壹個字當層數）、"fusion"、"push"
 export function understandId(src) {
   const s = String(src || "");

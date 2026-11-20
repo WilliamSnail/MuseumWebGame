@@ -5,11 +5,13 @@
 import { CAS_TEXT } from "../../shared/casino_text.js";
 import { EXHIBITS, GALLERY_INTRO, GEN_TEXT, LEGACY, NUM, ORIGIN, RARITY_TABLE, UPGRADES } from "../../shared/config.js";
 import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD_RECOVER_TEXT, PERFECT_WORK_TEXT, ROOM_HINTS, SAN_ASIDES, TITLE_TAGLINE, TUTORIAL_TEXT } from "../../shared/content.js";
-import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/content3.js";
+import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../shared/systems_text.js";
 import { ART } from "./art.js";
 import { FX } from "./fx.js";
 import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, understandTarget, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../shared/logic.js";
-import { bookSequels, cellarFloors, cellarFxShort, cellarPartFx, cellarPickFx, fusionLeft, hasTalent, hasUp, understandList, rereadTry, rereadReady, jobInfo, rerollTens, rerollsLeft, roomProgress, sequelEvents, sequelOpen, sequelVisible, skillCheck, unlockSequel, upgradeState } from "../../shared/logic3.js";
+import { bookSequels, hasUp, sequelEvents, sequelOpen, unlockSequel } from "../../shared/logic_base.js";
+import { cellarFloors, cellarFxShort, cellarPartFx, cellarPickFx, fusionLeft, hasTalent, understandList, rereadTry, rereadReady, rerollTens, rerollsLeft, roomProgress, sequelVisible, skillCheck, upgradeState } from "../../shared/systems.js";
+import { jobInfo } from "../../shared/legacy.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../shared/fresh.js";
 import { nextStep } from "../../shared/guide.js";
 import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../shared/visitors.js";
@@ -637,7 +639,7 @@ function afraidBar(cat) {
   return h("div", { class: "afraid-bar", role: "note" }, icon("eye"), h("div", { class: "afraid-lines" }, lines));
 }
 // 「在地下的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值，讓大家參考來製作」）
-// 數字全部來自 shared/logic3.js 的 cellarPickFx（跟地下實際算的同壹份）。opts.rarityKnown：做好的成品才有稀有度和完美，沒做之前不把稀有度算進去
+// 數字全部來自 shared/systems.js 的 cellarPickFx（跟地下實際算的同壹份）。opts.rarityKnown：做好的成品才有稀有度和完美，沒做之前不把稀有度算進去
 export function cellarFxBox(pick, opts = {}) {
   const fx = cellarPickFx(pick, opts), known = !!opts.rarityKnown;
   return h("details", { class: "onescreen-card ws-fx", open: known ? "" : null },

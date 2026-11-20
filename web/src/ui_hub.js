@@ -10,7 +10,8 @@
 import { nextStep } from "../../shared/guide.js";
 import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { passView } from "../../shared/pass.js";
-import { stampHow, storyState } from "../../shared/story.js";
+import { stampHow } from "../../shared/story.js";
+import { storyState } from "../../shared/story_state.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, cicon, freshTag, frogHTML, go, h, icon, navTo, titleTag } from "./ui_core.js";
 import { hubExtras } from "./ui_signin.js";

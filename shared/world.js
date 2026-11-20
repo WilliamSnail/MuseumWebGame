@@ -11,14 +11,14 @@
 //  搬錢（wdSettle）：house.world 和 pool 之間搬，總和不變。預設關閉；要開之前，casBookSnap 必須把 pool 算進總量（否則對帳差不是 0）。
 // ================================================================
 import { NUM } from "./config.js";
+import { hashStr } from "./logic_base.js";
+import { OUT_STOCKS } from "./stocks_text.js";
 import { WORLD_UNITS } from "./world_roster.js";
 import { WORLD_MARKETS } from "./world_markets.js";
 import { WORLD_EVENTS } from "./world_events.js";
-import { OUT_STOCKS } from "./stocks_text.js";
-import { hashStr } from "./logic.js";
+import { nwSan, wdN, whCfg, whClamp, whMult, whUnrest, wuBox } from "./world_base.js";
 import { statBandOf, statView } from "./stat_view.js";
 
-const wdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
 const wdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wdDayOk = d => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d);
 
@@ -70,7 +70,6 @@ export function wdSettle(house, wIn, gateway = NUM.casino.worldDoc ? NUM.casino.
 export const WU_HH = "u-household"; // 家計：沒有單位的人（學生、退休、自由業）
 export const WU_EXT = "u-ext"; // 舊的「海外」單位（決定 0121）：決定 0126 起海外是並列的帳 house.ext，這個 id 只剩壹次性搬出（wuExtSplit）用
 export const WU_PUB = "pub"; // 公共：剩下的（只在 wuAmounts 的結果裡，不存在 adj）
-const wuBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const wuTop = () => WORLD_UNITS.filter(u => u && u.parent == null);
 // 初始比例：頂層單位用名單的 share，家計 NUM.casino.worldDoc.household，公共是剩下的
 export function wuRatios() {
@@ -165,8 +164,6 @@ export function wuDebit(house, id, n) {
 //    股價用「昨天以前」的價（house.stk.px 在換日算好之後的現價，不是盤中），每天最多留 8 天，週漲跌 ＝ 現在對 7 天前，夾在 ±chgCap（換股數比例時不會讓 h 暴衝）。
 // ================================================================
 export const WH_STATES = ["normal", "cut", "squeeze", "layoff"];
-const whCfg = () => NUM.casino.worldDoc.health;
-const whClamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const whIsMon = day => new Date(day + "T00:00:00Z").getUTCDay() === 1;
 const whUnits = () => wuTop().filter(u => u.kind !== "story");
 export function whFix(house) {
@@ -230,8 +227,6 @@ export function whTick(house, day, px, grown = 0) {
   const old = w.mood; w.mood = { day, v: whMood(house, day), prev: old && old.day === whAddDays(day, -1) ? old.v : null }; // prev ＝昨天的氣氛（散客類型權重用，換日前後都是同壹個數字）
   return true;
 }
-// 集團的集體不安（沒有紀錄 ＝ 平常的值）；排程填的劇情事件用 whUnrestAdd 推（劇情決定的欄位，之後接）
-export const whUnrest = (house, id) => { const v = house && house.wh && house.wh.unrest ? house.wh.unrest[id] : undefined; return v == null ? NUM.casino.worldDoc.unrest.start : whClamp(wdN(v), 0, 100); };
 export function whUnrestAdd(house, id, n) { const w = whFix(house); if (!w || !(id in w.st)) return null; w.unrest[id] = whClamp(whUnrest(house, id) + wdN(n), 0, 100); return w.unrest[id]; }
 // 散客的展廳氣氛：無狀態，每天由景氣、NPC 平均理智、有幾個集團減薪以上、週末算出來（不動錢）
 export function whMood(house, day) {
@@ -242,14 +237,6 @@ export function whMood(house, day) {
   return whClamp(Math.round(M.base + M.b * b + M.san * (dev / n) + M.trouble * trouble + (wd === 0 || wd === 6 ? M.weekend : 0) + ev), 0, 100);
 }
 function whAddDays(day, n) { return new Date(Date.parse(day + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10); }
-// NPC 預算倍率：一般 1～upMax（h 高時多一點）、減薪、緊縮、裁員；文化部、家計、沒有的單位 ＝ 1；最低 floor
-export function whMult(house, unitId) {
-  const w = house && wuBox(house.wh) ? house.wh : null, C = whCfg();
-  if (!w || !wuBox(w.st) || !wuBox(w.st[unitId])) return 1;
-  const s = w.st[unitId].s, h = +w.h[unitId] || 1;
-  const m = s === "normal" ? whClamp(h, 1, C.upMax) : (C.mult[s] || 1);
-  return Math.max(C.floor, m);
-}
 // ---------- 景氣分市場（決定 0121）：每個市場自己的景氣指數 b（−1～+1），接真實台股／美股、放大、會回平均 ----------
 // house.mk = { day, c 共同因子, b: { 市場: 數 }, p: { 股票 id: 昨天收盤價 }, f: { NPC id: 今天來館倍率 }, g: 昨天的 f }
 const wmCfg = () => NUM.casino.worldDoc.market;
@@ -664,7 +651,6 @@ export function nwNews(house, day, npcName, days = 1) {
 //  理智低的影響（只放小的）：< lowRoute 不去地下（那一站不花錢）；< lowStars 展廳評價少 1 顆星；< lowBudget 預算 ×budgetMult（再乘 W5 的倍率，總倍率仍 ≥ health.floor）。
 //  玩家看得到數字和分級（statView 的 npcSan，翊文 11-15 第 3 題）。
 // ================================================================
-export const nwSan = (house, id) => { const v = house && house.npcw && wuBox(house.npcw.san) ? house.npcw.san[id] : undefined; return v == null ? NUM.casino.worldDoc.san.start : whClamp(wdN(v), 0, 100); };
 // 預算倍率：集團的 W5 倍率 ×（理智低時 budgetMult），不低於 health.floor
 export function nwBudgetMult(house, n, unitId) {
   const S = NUM.casino.worldDoc.san, m = whMult(house, unitId) * (nwSan(house, n && n.id) < S.lowBudget ? S.budgetMult : 1) * wmNpcMul(house, n, "spend");

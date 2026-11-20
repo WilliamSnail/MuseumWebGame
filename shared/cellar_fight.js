@@ -6,7 +6,7 @@
 //    結算順序固定：撤 → 招式 → 看穿 → 安撫 → 擋 → 推 → 怪物出招。所以同一回合有人看穿、有人推，當回合就加成。
 //  純函式、同步：不碰 P、不碰畫面。這裡只改 fight，回傳「每個人要扣多少理智、哪隻倒下、哪個技能有用到」（fx），
 //    真的套到存檔（applySan、受傷幾天、技能成長）由接進合作流程的那一步做（規劃第九節第 3 步）。
-//  亂數都用 RNG（伺服器每一步之前 setRng）。數字在 config.js 的 NUM.fight、CELLAR_FOES；字在 content3.js 的 FOE_TEXT。
+//  亂數都用 RNG（伺服器每一步之前 setRng）。數字在 config.js 的 NUM.fight、CELLAR_FOES；字在 systems_text.js 的 FOE_TEXT。
 //
 //  怎麼用：
 //    seats ＝ [fightSeat(P, 帳號 id, 暱稱, [帶的佩佩 key]) …, fightHelperSeat(館方助手的佩佩)]
@@ -20,9 +20,10 @@
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
 import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "./config.js";
-import { FOE_TEXT } from "./content3.js";
-import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "./logic.js";
-import { memberPower, skillOf } from "./logic3.js";
+import { FOE_TEXT } from "./systems_text.js";
+import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "./logic_base.js";
+import { memberPower } from "./systems.js";
+import { skillOf } from "./legacy.js";
 
 // 帽子、姿勢變成一場一次的招式（原本是自動觸發的能力）
 export const FIGHT_MOVES = {

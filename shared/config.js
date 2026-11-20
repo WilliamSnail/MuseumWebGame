@@ -254,7 +254,7 @@ export const NUM = {
   cellarRepeatInsp: 1,      // 已經過關的房間再過一次只給 1 靈感
   idleBook: 15,             // 讀過《佩佩起源考》後，在圖書館什麼都不做幾秒，續集會出現（11-08 翊文說等了沒反應：20 → 15，並且等的時候書會越來越亮）
   cellarRest: "1D3",        // 隊伍裡有躺平、毛帽：每一層第一次走時各回這麼多理智
-  cellarFx: { wizard: 2, tentacle: 5, gent: 10, handstand: 1, stack: { like: 2, wizard: 2, tentacle: 1 }, floorBump: { 4: 2, 5: 2 } }, // 地下探索：巫師帽全隊強度 +、觸手帽全隊強度 +（要付理智）、紳士帽的技能檢定 +、倒立自己強度 +。手作坊的「地下效果」顯示（logic3.js cellarPartFx）也讀這裡。stack：比讚、巫師帽、觸手帽帶幾隻最多算幾份（決定 0109，翊文 11-16：比讚、巫師帽最多 2 份，觸手帽 1 份）；floorBump：疊加之後 B4、B5 強度檢定目標各 +2（已經寫進 content3.js 的目標，這裡只是記錄）
+  cellarFx: { wizard: 2, tentacle: 5, gent: 10, handstand: 1, stack: { like: 2, wizard: 2, tentacle: 1 }, floorBump: { 4: 2, 5: 2 } }, // 地下探索：巫師帽全隊強度 +、觸手帽全隊強度 +（要付理智）、紳士帽的技能檢定 +、倒立自己強度 +。手作坊的「地下效果」顯示（systems.js cellarPartFx）也讀這裡。stack：比讚、巫師帽、觸手帽帶幾隻最多算幾份（決定 0109，翊文 11-16：比讚、巫師帽最多 2 份，觸手帽 1 份）；floorBump：疊加之後 B4、B5 強度檢定目標各 +2（已經寫進 systems_text.js 的目標，這裡只是記錄）
   limitedFx: { teamCap: 6, homeSeen: "avatar" }, // 限定帽子的探索加成：全隊強度加起來最多 +teamCap（決定 0085）；館內效果看館友證頭像那隻佩佩戴的帽子
   linesFrom: 4,             // 解鎖幾個選項之後，老主顧（委託人關係線）才開始出現
   lineReward: 8,            // 老主顧的委託給多少靈感
@@ -713,7 +713,7 @@ export const NUM = {
 };
 // ---------- 第 4 版（11-09，決定 0030）：只有簽到拿得到的東西 ----------
 // kind：part（佩佩部件，cat、opt 是 PEPE_PARTS 裡 limited 的選項）、deco（slot：stand 展台裝飾、frame 名牌框；只好看、不影響數值）、mat（材料，n 是一次給幾份）
-// 名字、說明在 content3.js 的 LIMITED_TEXT；樣子在 web/src/art.js。每週全簽到照 NUM.signin.weekKinds 輪到哪一種，那一種裡再照週輪流
+// 名字、說明在 systems_text.js 的 LIMITED_TEXT；樣子在 web/src/art.js。每週全簽到照 NUM.signin.weekKinds 輪到哪一種，那一種裡再照週輪流
 export const LIMITED_ITEMS = [
   { id: "hat-curator", kind: "part", cat: "帽子", opt: "館員帽" },
   { id: "hat-lantern", kind: "part", cat: "帽子", opt: "燈籠帽" },
@@ -747,7 +747,7 @@ export const LIMITED_ITEMS = [
   { id: "week-gopnikWeek", kind: "part", cat: "帽子", opt: "金瓜子項鍊", from: "week", theme: "gopnikWeek" },
 ];
 // ---------- 第 4 版（11-09，決定 0032）：兌換所的裝備 ----------
-// 名字、說明在 content3.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。
+// 名字、說明在 systems_text.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。
 // 效果的欄位跟小優點、小缺點一樣（下面 PERKS 的說明），legacy.js 的 traitSum 會一起算，所以不用在規則裡另外加判斷；
 // 多一種 "skill:技能名"：那個技能檢定時多幾點（不改技能本身，也不影響成長）。tier：common 普通、fine 精良、rare 稀有（價錢在 NUM.shop.gearPrice）。
 // 會讓理智好過的（探險燈）放在最貴的一級；理智要「算容易歸零」（docs/界線.md）。
@@ -773,7 +773,7 @@ export const UPGRADES = [
   { id: "repair", cost: 30 },
 ];
 
-// ---------- 第 3 版：融合室的隱藏配方（系統 J；文字在 content3.js 的 RECIPE_TEXT） ----------
+// ---------- 第 3 版：融合室的隱藏配方（系統 J；文字在 systems_text.js 的 RECIPE_TEXT） ----------
 // a、b ＝兩隻爸媽要符合的條件（順序不拘）；child ＝小孩一定會有的選項；minRarity ＝至少幾級；fixed ＝直接決定稀有度、不擲骰
 export const RECIPES = [
   { id: "forbidden", a: { 帽子: "觸手帽" }, b: { 稀有度: "不可名狀" }, child: { 帽子: "觸手帽" }, fixed: "不可名狀", san: "1D6/1D20" },
@@ -792,10 +792,10 @@ export const RECIPES = [
 // 調出來的顏色在地下收藏庫多幾點強度
 export const COLOR_POWER = { 橘: 1, 藍: 1, 紫: 1, 白: 1, 粉: 1 };
 
-// ---------- 第 3 版：參觀者的職業與技能（系統 L；名字、說明在 content3.js 的 JOBS） ----------
+// ---------- 第 3 版：參觀者的職業與技能（系統 L；名字、說明在 systems_text.js 的 JOBS） ----------
 export const SKILLS = ["偵查", "鑑賞", "神秘學", "幸運", "手工藝", "說服"];
 
-// ---------- 第 3 版：地下收藏庫每一層第一次過關的獎勵（系統 M；房間文字在 content3.js 的 CELLAR） ----------
+// ---------- 第 3 版：地下收藏庫每一層第一次過關的獎勵（系統 M；房間文字在 systems_text.js 的 CELLAR） ----------
 export const CELLAR_REWARDS = {
   1: { insp: 10, unlock: ["帽子", "毛帽"] },
   2: { insp: 12, book: "book4" },
@@ -807,7 +807,7 @@ export const CELLAR_REWARDS = {
 export const CELLAR_POWER = { 普通: 1, 稀有: 2, 超稀有: 3, 傳說級稀有: 5, 不可名狀: 6, 失敗作: 0, perfect: 1 };
 // 心情相剋：前面的剋後面的（俄國8+9 不被剋）
 export const MOOD_BEATS = { 開心: "傷心", 傷心: "生氣", 生氣: "開心" };
-// ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 content3.js 的 FOE_TEXT；規則 shared/cellar_fight.js） ----------
+// ---------- 地下室改版（決定 0067）：怪物（名字、台詞在 systems_text.js 的 FOE_TEXT；規則 shared/cellar_fight.js） ----------
 // hp ＝壓力（3 隻、1 個人的時候）；boss ＝守門，壓到零進第二階段（hp2、moves2）；mood、color ＝相剋照房間的算法（memberPower）
 // 招：kind "hit" 撲向壹個人的佩佩（倒下壹隻）、"scare" 壹個人扣理智 san、"all" 每個人扣理智 san、"grow" 壓力回 n；w ＝抽到的比重
 // 數字是草稿：node test/sim/sim_fight.cjs 看 1～4 人的勝率和回合數
@@ -829,7 +829,7 @@ export const CELLAR_FOES = [
   { id: "f5g", floor: 5, trait: { kind: "blur", n: 3 }, boss: true, hp: 95, hp2: 63, mood: null, color: null, moves: [{ id: "queue", kind: "hit", w: 1 }, { id: "almost", kind: "scare", san: "1D6", w: 2 }, { id: "another", kind: "grow", n: 9, w: 1 }], moves2: [{ id: "nameless", kind: "all", san: "1D5", w: 2 }, { id: "queue", kind: "hit", w: 1 }] },
 ];
 
-// ---------- 第 3 版：每週特展的主題（文字在 content3.js 的 WEEKLY_TEXT） ----------
+// ---------- 第 3 版：每週特展的主題（文字在 systems_text.js 的 WEEKLY_TEXT） ----------
 export const WEEKLY_IDS = ["start32", "allBlack", "allFlat", "failedOnly", "noHat", "noLegend", "pillowWeek", "gopnikWeek"];
 
 // ---------- 畫廊（第 1 代的文字原樣保留，不要改） ----------
@@ -892,7 +892,7 @@ export const HALL_POINTS = { 普通: 4, 稀有: 7, 超稀有: 10, 傳說級稀�
 export const HALL_THEME_BONUS = { legend: 20, angry: 15, tears: 15, russia8: 15, rainbow: 15, hats: 12, pillows: 12, joy: 12, flat: 10, failed: 10 };
 
 // ---------- 第 4 版：參觀者一位接一位（翊文 11-08，roguelike 的繼承） ----------
-// 規則在 shared/legacy.js；文字在 content3.js 的 TRAIT_TEXT、LEGACY_TEXT。
+// 規則在 shared/legacy.js；文字在 systems_text.js 的 TRAIT_TEXT、LEGACY_TEXT。
 // 換人時：前一位留一樣東西給下一位（A）。
 // 每一位參觀者（第一位也是）都從 6 個職業自己選，選好再抽一個小優點、一個小缺點（決定 0028；以前換人時是從 3 位候選人挑）。
 // 替佩佩取名（決定 0133）：所有佩佩都能取；最多 max 個字；含 bad 裡任何壹段（去空白、轉小寫比對）就擋

@@ -14,26 +14,17 @@
 //    限定頭飾   照 signin.js 的 LIMITED_ITEMS 那一套（P.limited、P.unlocked）。
 //  效果：裝備的欄位跟小優缺點一樣，legacy.js 的 traitsOf 把穿著的裝備一起算進 traitSum（不用到處加判斷）。自由模式沒有裝備。
 //  純函式：只改傳進來的 P，亂數用 RNG（rollExpr 裡），「今天」由呼叫的人傳（不傳就 todayStr()）。
-//  數字在 config.js 的 NUM.shop、GEAR_ITEMS、LIMITED_ITEMS；文字在 content3.js 的 GEAR_TEXT、LIMITED_TEXT、SHOP_TEXT、TRIAL_ROOMS。
+//  數字在 config.js 的 NUM.shop、GEAR_ITEMS、LIMITED_ITEMS；文字在 systems_text.js 的 GEAR_TEXT、LIMITED_TEXT、SHOP_TEXT、TRIAL_ROOMS。
 // ================================================================
-import { GEAR_ITEMS, LIMITED_ITEMS, NUM, SKILLS } from "./config.js";
-import { GEAR_TEXT, SHOP_TEXT, TRIAL_ROOMS } from "./content3.js";
-import { asList, isFree, parseDice, rollExpr, todayStr } from "./logic.js";
-import { canStartCellar, cellarFloor, jobSkill, weekIndex } from "./logic3.js";
+import { LIMITED_ITEMS, NUM, SKILLS } from "./config.js";
+import { GEAR_TEXT, SHOP_TEXT, TRIAL_ROOMS } from "./systems_text.js";
+import { asList, canStartCellar, cellarFloor, gearItem, isFree, ownsGear, parseDice, rollExpr, shopObj, shopState, todayStr, weekIndex, wornGear } from "./logic_base.js";
+import { jobSkill } from "./legacy.js";
 import { grantLimited, limitedInfo, ownsLimited } from "./signin.js";
-import { STORY_ITEMS, itemDesc, storyState } from "./story.js";
 import { eventRunFix, eventScale } from "./events.js";
-
-const shopObj = v => !!v && typeof v === "object" && !Array.isArray(v);
+import { STORY_ITEMS, itemDesc, storyState } from "./story_state.js";
 
 // ---------- 存檔 ----------
-export function newShop() { return { gear: {}, trials: {} }; }
-export function shopState(P) {
-  if (!shopObj(P.shop)) P.shop = newShop();
-  if (!shopObj(P.shop.gear)) P.shop.gear = {};
-  if (!shopObj(P.shop.trials)) P.shop.trials = {};
-  return P.shop;
-}
 // 穿的清單整理乾淨：認得、有買、不重複、不超過上限
 function cleanWorn(P, list) {
   const own = shopState(P).gear, out = [];
@@ -65,16 +56,12 @@ export function growSkill(P, skill, spec, cap, boost) {
 function priceRow(table, value) { return table.find(r => value < r.below) || table[table.length - 1]; }
 
 // ---------- 裝備 ----------
-export function gearItem(id) { return GEAR_ITEMS.find(x => x.id === id) || null; }
 export function gearInfo(id) {
   const it = gearItem(id);
   if (!it) return null;
   const T = GEAR_TEXT[id] || {}, v = Object.values(it).find(x => typeof x === "number") || 0;
   return Object.assign({}, it, { name: T.name || id, desc: String(T.desc || "").split("{n}").join(String(Math.abs(v))), tierName: SHOP_TEXT.tiers[it.tier] || "", price: NUM.shop.gearPrice[it.tier] });
 }
-export const ownsGear = (P, id) => !!(P && !isFree(P) && shopState(P).gear[id]);
-// 現在這位穿著的（裝備的物件；traitsOf 一起算）。自由模式沒有
-export function wornGear(P) { return P && !isFree(P) ? asList(P.gear).map(gearItem).filter(Boolean).filter(g => ownsGear(P, g.id)) : []; }
 export const isWorn = (P, id) => wornGear(P).some(g => g.id === id);
 // 買
 export function buyGear(P, id, today = todayStr()) {
@@ -170,7 +157,7 @@ export function startTrial(P, id, keys, date = dateOf(P), boost = null) {
   P.cellar.run = { floor: r.floor, idx: 0, team: keys.slice(), used: {}, log: [], extra };
   return { ok: true };
 }
-// 過關（logic3.js 的 cellarApply 叫）：room.trial ＝哪個技能。給成長、記這週的次數。這週拿過了回傳 null
+// 過關（systems.js 的 cellarApply 叫）：room.trial ＝哪個技能。給成長、記這週的次數。這週拿過了回傳 null
 export function trialWin(P, room, date = dateOf(P)) {
   if (!P || isFree(P) || !room || !room.trial || trialUsed(P, room.id, date) >= NUM.shop.trialPerWeek) return null;
   const grown = growSkill(P, room.trial, NUM.shop.trialSkill, skillCapAll(), eventRunFix(room.boost));
@@ -186,7 +173,7 @@ export function friendTalent(F) {
   const skill = jobSkill(F.job), value = F.skills[skill];
   return skill && typeof value === "number" ? { skill, value } : null;
 }
-// 一起融合完成時叫（logic3.js 的 fuseTogether）。之後「參觀展廳」做好了，也叫這個：把館友的 friendTalent 傳進來就好（維護日誌寫了）。
+// 一起融合完成時叫（systems.js 的 fuseTogether）。之後「參觀展廳」做好了，也叫這個：把館友的 friendTalent 傳進來就好（維護日誌寫了）。
 // friend ＝ { skill, value }：對方這個技能比你高才有機會，機率 NUM.shop.learnChance，一天最多學會 NUM.shop.learnPerDay 次。
 // 回傳 { skill, value（對方的）, from, to, gained, capped（今天學夠了）}；對方沒有比你高、自由模式回傳 null
 export function learnFromFriend(P, friend) {

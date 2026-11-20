@@ -13,7 +13,7 @@ import { NUM } from "./config.js";
 import { casFill, casNum } from "./casino.js";
 import { casShortName } from "./casino_wallet.js";
 import { CAS_LIVE } from "./casino_text.js";
-import { RNG } from "./logic.js";
+import { RNG } from "./logic_base.js";
 
 const lvBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const lvNum = (v, d = 0) => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : d);

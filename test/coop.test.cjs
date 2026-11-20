@@ -635,7 +635,7 @@ T("從資料庫讀回來（空的不見、陣列變物件）也接得下去，�
     const key = logic.finishMake(P, Object.assign({}, BASE), { natural: 50 }).key;
     const s = coop.startCoop([{ id: "a", P, keys: [key] }], 1);
     assert.ok(s.ok, s.reason);
-    assert.strictEqual(s.run.team.length, coop.COOP.teamMin);
+    assert.strictEqual(s.run.team.length, (await import(url("coop_base.js"))).COOP.teamMin);
     assert.ok(coop.coopResolve(s.run, { a: P }, { a: 2 }).ok);
     pass++;
   } catch (e) { fail++; console.log("FAIL ES 模組", "\n   ", e.message); }

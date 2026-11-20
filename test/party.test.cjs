@@ -1,4 +1,4 @@
-// 邀請、隊伍（shared/party.js）和兩個人一起融合（shared/logic3.js 的 fuseTogether）：node test/party.test.cjs（npm test 也會跑）
+// 邀請、隊伍（shared/party.js）和兩個人一起融合（shared/systems.js 的 fuseTogether）：node test/party.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0, G;

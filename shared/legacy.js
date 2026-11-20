@@ -12,7 +12,7 @@
 //    看完其他結局（館長、地下館長、你的佩佩博物館）可以退休；館長室的名片上也可以自己退休（retireCheck）。
 //    退休跟理智歸零走同一條路：nextVisitor(P, 怎麼結束的, 留下的)。
 //  純函式：只改傳進來的 P，亂數用 RNG。
-//  數值在 config.js（LEGACY、PERKS、FLAWS），文字在 content3.js（TRAIT_TEXT、LEGACY_TEXT）。
+//  數值在 config.js（LEGACY、PERKS、FLAWS），文字在 systems_text.js（TRAIT_TEXT、LEGACY_TEXT）。
 //
 //  存在 P 裡的（newProfile 給預設；舊存檔由 fixLegacy 補）：
 //    P.perk、P.flaw  這一位的小優點、小缺點（id）。選職業時抽（chooseJob）；還沒選職業、自由模式是 null。
@@ -23,22 +23,15 @@
 //    P.visit         這一位自己的統計：{ from（來的那天）, sec0, made0, deepest（地下走到第幾層）, understood（看懂了哪些）, where（理智在哪裡用完）,
 //                    made（這一位做了幾隻）, sec（這一位玩了幾秒） }。made、sec 是多位參觀者（11-08）加的：stats.made、activeSec 是整間博物館的，三位輪流玩，相減會算到別人的
 //  效果接在原本的規則裡（找 traitSum）：logic.js 的 makePillow、deliver、understandCheck；
-//  logic3.js 的 skillGrowth、fusionPrice、teamPower、cellarApply、injureDaysOf。
+//  systems.js 的 skillGrowth、fusionPrice、teamPower、cellarApply、injureDaysOf。
 //  開場就算的（心情、理智、技能起點）在選職業時加（chooseJob → startStats）。
 // ================================================================
 import { FLAWS, LEGACY, NUM, PERKS, SKILLS } from "./config.js";
-import { GEAR_TEXT, TRAIT_TEXT } from "./content3.js";
-import { RNG, activeQuirks, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, todayStr } from "./logic.js";
-import { JOB_SKILL, assignJob, jobSkill, rollSkills } from "./logic3.js";
-import { wornGear } from "./shop.js";
+import { GEAR_TEXT, JOBS, TRAIT_TEXT } from "./systems_text.js";
+import { activeQuirks, asList, clampN, daysBetween, hallItem, isFree, maxSan, normKey, normPillowKey, pickOne, rollExpr, todayStr, traitById, traitSum, traitsOf } from "./logic_base.js";
 
 // ---------- 小優點、小缺點 ----------
-export const traitById = id => (id && (PERKS.find(t => t.id === id) || FLAWS.find(t => t.id === id))) || null;
 export const traitName = id => (TRAIT_TEXT[id] || GEAR_TEXT[id] || {}).name || id;
-// 這一位身上的優缺點，加上穿著的裝備（兌換所，決定 0032；欄位一樣，下面的 traitSum、traitHits 一起算）。自由模式沒有
-export function traitsOf(P) { return P && !isFree(P) ? [P.perk, P.flaw].map(traitById).filter(Boolean).concat(wornGear(P)) : []; }
-// 優缺點和裝備在某一個欄位加起來是多少，例如 traitSum(P, "fusion") ＝ 融合多花（＋）或少花（−）幾靈感
-export function traitSum(P, field) { return traitsOf(P).reduce((n, t) => n + (typeof t[field] === "number" ? t[field] : 0), 0); }
 // 影響到這個欄位的那幾個：[{ id, name, v }]（畫面寫「力氣大 +1」用）
 export function traitHits(P, field) { return traitsOf(P).filter(t => typeof t[field] === "number" && t[field]).map(t => ({ id: t.id, name: traitName(t.id), v: t[field] })); }
 // 「力氣大 +1」「沒力氣 −1」
@@ -233,3 +226,34 @@ export function fixLegacy(P, hadVisit) {
     .map(r => Object.assign({}, r, { key: r.kind === "pillow" ? normPillowKey(r.key) : normKey(r.key) }));
   return P;
 }
+
+// ---------- 系統 L：職業與技能（CoC：擲 d100 ≤ 技能值就成功） ----------
+export const JOB_SKILL = { detective: "偵查", historian: "鑑賞", occultist: "神秘學", gambler: "幸運", artisan: "手工藝", salesman: "說服" };
+export function jobInfo(id) {
+  const j = typeof JOBS !== "undefined" ? JOBS.find(x => x.id === id) : null;
+  return j || { id, name: id, skill: JOB_SKILL[id] };
+}
+export const jobSkill = id => (jobInfo(id) || {}).skill || JOB_SKILL[id];
+// 擲一位參觀者的技能：拿手的 56–65，其他 16–25（換人時的候選人先擲好，卡片上看得到；11-08）
+export function rollSkills(id) {
+  const main = jobSkill(id), out = {};
+  SKILLS.forEach(s => { out[s] = s === main ? NUM.skillMainBase + rollExpr(NUM.skillMain).total : NUM.skillOtherBase + rollExpr(NUM.skillBase).total; });
+  return out;
+}
+// skills：已經擲好的技能（候選人用）；沒給就現在擲
+export function assignJob(P, id, skills) {
+  P.job = id;
+  P.skills = skills ? Object.assign({}, skills) : rollSkills(id);
+  const main = jobSkill(id);
+  P.skillTicks = {};
+  const out = { main, value: P.skills[main] };
+  // 賭徒：開場的心情擲兩次取高
+  if (id === "gambler") {
+    const r = rollExpr("3D6"), again = r.total * 5;
+    out.moodAgain = { roll: r, value: again, before: P.mood };
+    if (again > P.mood) { P.mood = again; P.moodRoll = r.faces; }
+  }
+  return out;
+}
+// 技能值：加上穿著的裝備（放大鏡這種，欄位 "skill:偵查"，決定 0032）。成長、傳下去看的是 P.skills 本身，不算裝備
+export const skillOf = (P, s) => Math.min(99, ((P && P.skills && P.skills[s]) || 15) + traitSum(P, "skill:" + s));
