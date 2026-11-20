@@ -159,5 +159,10 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
   .origin-onescreen .origin-main.book-open > .shelves { display: none; }
   .origin-onescreen .origin-main:not(.book-open) > .reader { display: none; }
   .origin-onescreen .origin-main > .reader { padding: 0; }
-  .origin-onescreen .reader .book > .book-back { display: inline-flex; align-items: center; gap: 4px; flex: none; align-self: flex-start; min-height: 36px; margin: -6px 0 22px; padding: 0 12px; border-radius: 4px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #9A2E38, #6E1C26); color: #F6E4B0; font: inherit; font-size: .875rem; cursor: pointer; }
+  .origin-onescreen .reader .book > .book-back { display: inline-flex; align-items: center; gap: 4px; flex: none; align-self: flex-start; min-height: 28px; margin: -10px 0 14px; padding: 0 8px; border-radius: 3px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #9A2E38, #6E1C26); color: #F6E4B0; font: inherit; font-size: .75rem; cursor: pointer; }
+  .origin-onescreen .reader .book > .book-back svg { width: 12px; height: 12px; }
+  /* 還打不開的書：標題、提示、內文縮小，跟回書架分開 */
+  .origin-onescreen .reader .book.sealed-book > .book-title { margin: 0 0 8px; font-size: .9375rem; padding: 4px 22px 5px; }
+  .origin-onescreen .reader .book.sealed-book > .book-hint { margin: 0 0 6px; font-size: .8125rem; }
+  .origin-onescreen .reader .book.sealed-book > .sealed-hint { font-size: .9375rem; line-height: 1.6; padding: 8px 10px; margin: 0; }
 }
