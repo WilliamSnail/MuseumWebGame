@@ -68,3 +68,11 @@
 .hsh-ic { background: rgba(255,250,235,.85) !important; }
 .st-stamps .st-label { display: inline-flex; align-items: center; gap: 3px; }
 .st-stamps .st-label .ic, .st-stamps .st-label .ic svg { width: 16px; height: 16px; }
+
+/* 今天面板裡的每日任務卡、積分板（11-20，ui_tasks.js）：深色底上的任務卡用跟清單列壹樣的紙色 */
+.td-story { display: flex; flex-direction: column; gap: 8px; }
+.td-story .sp-tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.nb-today .tkc-card { background: linear-gradient(180deg, #F7EFDD, #EFE3C8); color: var(--parch-ink); box-shadow: inset 0 0 0 1px var(--gold-lo), 0 3px 10px rgba(0, 0, 0, .4); border: 0; }
+.nb-today .tkc-card.done { background: linear-gradient(180deg, #E4F0DA, #D4E6C8); }
+.nb-today .tkc-pts { margin: 0; }
+.nb-today .td-story .sp-note { color: #CDBE9F; margin: 0; }

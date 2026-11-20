@@ -267,6 +267,14 @@ function taskRow(W, t, draw, m) {
   return taskCard({ t, text: taskText(t, W), kindIcon: TASK_ICON[t.kind], pts: t.weekly ? 0 : taskPts(t), n, tgt, reward: r, state: st.claimed ? "claimed" : st.done ? "done" : "todo",
     words: t.weekly && t.words ? ptMark(t.words) : null, where, past: W.past, onGo: () => { m.close(); goStep(where); }, onClaim: () => claimFlow(claimTask(P, W, t.id, todayStr()), draw) });
 }
+export function storyTodayNodes(m, draw) {
+  if (!on()) return null;
+  const W = curWeek(); if (!W) return null;
+  const S = storyState(P), d = todayOf(W); if (!d || !d.daily.length) return null;
+  return h("section", { class: "td-story" },
+    ptsDay(d) ? ptsBox(W, S, d, draw) : null,
+    h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m))));
+}
 function bonusRow(text, state, reward, claim) {
   return h("li", { class: "sp-task sp-bonus" + (state === "claimed" ? " claimed" : "") },
     h("span", { class: "sp-check", "aria-hidden": "true" }, icon("star")),
