@@ -20,11 +20,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     fs: { allow: [here] }, // web/ 要讀得到上一層的 shared/
-    // 遊戲伺服器（另開 npm run server，port 8787）：/api 和 /ws 轉過去，網頁和伺服器看起來是同一個網址
-    proxy: {
-      "/api": "http://127.0.0.1:8787",
-      "/ws": { target: "ws://127.0.0.1:8787", ws: true },
-    },
   },
   build: {
     outDir: "../dist",
