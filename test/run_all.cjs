@@ -85,6 +85,7 @@ const STEPS = [
   ["三支經濟腳本（價格總表、寫死金額掃描、正式站帳面的檢查，翊文 11-15）", ["test/tools/econ_scripts.test.cjs"]],
   ["館外股倍數改了（台股 ×1、美股 ×32，決定 0081）：舊的換過的再換壹次、錢包市值不變、之後不再換", ["test/stock/stock_repeg.test.cjs"]],
   ["水位三人合計（朱翊文從 11-20 起算、起點是進來那刻的淨值、虧的不扣、門檻照舊、預設不收他的名字，決定 0148）", ["test/casino/pool_three.test.cjs"]],
+  ["找 NPC 一起下地下（誰邀得動、答應率、禮物錢守恆、NPC 當隊員自己投票、離隊、只剩 NPC 就結束、壹起下去紀錄、每日任務 withNpc，決定 0149）", ["test/coop/coop_npc.test.cjs"]],
   ["股票成交紀錄（館外股、館內股、集團股、槓桿的成交都記進 w.tl，最近 50 筆環狀、掛單成交標記、只多記不改錢、50 筆大小、view 新的在前名字查好）", ["test/stock/trade_log.test.cjs"]],
   ["館內五家店的股票（營業時間、盤中曲線、05:00 跳空 K＝0.03、不同的人、買賣守恆、上限、畫面格式，規劃 2.8a／2.8b／2.8g）", ["test/stock/casino_stock_in.test.cjs"]],
   ["莊家跟整個經濟接軌（破產借錢重開、記債、還債、破產分級、借款額度上限、守恆，規劃 2.11／2.11a）", ["test/casino/casino_house.test.cjs"]],

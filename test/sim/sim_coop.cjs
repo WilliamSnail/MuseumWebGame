@@ -117,7 +117,7 @@ function evalCoop(run, Ps, id, room, ch) {
 }
 function coop(profiles, each, floor, seed) {
   const rng = G.mulberry32(seed); G.setRng(rng);
-  const members = profiles.map((P, j) => ({ id: "p" + j, name: "隊員" + (j + 1), P, keys: pickKeys(P, floor, each[j]), rewarded: !UNREWARDED }));
+  const members = profiles.map((P, j) => ({ id: "p" + j, name: "隊員" + (j + 1), P, keys: pickKeys(P, floor, each[j]), rewarded: !UNREWARDED, npc: P.__npc ? "sim" : null, style: "basic" })); // P.__npc：找 NPC 下地下的模擬把這位標成 NPC（sim_coop_npc_many.cjs）
   const s = G.startCoop(members, floor, FUN ? { id: "sim" + seed, fun: true, event: EVENT } : {});
   if (!s.ok) return null;
   const run = s.run, Ps = {};
@@ -168,6 +168,7 @@ function coop(profiles, each, floor, seed) {
   o.ghost = run.members.filter(m => m.ghost).length / members.length;
   o.loss = members.reduce((n, m) => n + (START - m.P.sanity), 0) / members.length;
   o.insp = members.reduce((n, m, j) => n + (m.P.insp - inspBefore[j]), 0) / members.length;
+  o.insp0 = members[0].P.insp - inspBefore[0]; o.loss0 = START - members[0].P.sanity; // 第 1 位隊員（「我」）自己的，找 NPC 的模擬看這個
   return o;
 }
 

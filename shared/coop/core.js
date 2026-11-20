@@ -30,7 +30,7 @@ import { cellarDarkLoss } from "../core/legacy.js";
 import { eventRunFix } from "../story/events.js";
 import { trialById, trialState, trialWin } from "../core/shop.js";
 import { injureDaysOf, limitedFx, skillCheck, teamHas } from "../core/systems.js";
-import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopFloorOf, coopMarkDeep, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";
+import { COOP, coopActive, coopFinish, coopFix, coopFloorComplete, coopHumanVoters, coopFloorOf, coopMarkDeep, coopMember, coopNewEvents, coopNextLeader, coopPower, coopPressure, coopRoller, coopRoom, coopSanGain, coopSanHit, coopSync, coopTargetOf, coopTeam, coopVoters } from "./base.js";
 import { coopCarryDue, coopCheckFun, coopFilterView, coopPlanRoom, coopRoomDone, coopStart } from "./fun.js";
 import { fightFoesOf, fightIntentHidden } from "../cellar/fight.js";
 import { coopFightStart, coopFightView, coopGateDue, coopRouteBack } from "./fight.js";
@@ -88,7 +88,7 @@ export function startCoop(members, floor, opt = {}) {
     leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
-      return { id: m.id, name: m.name || m.id, keys: m.guard ? [] : m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null, vid: m.P.vid || null, guard: !!m.guard, skips: 0,
+      return { npc: m.npc || null, style: m.npc ? m.style || "basic" : null, role: m.npc ? m.role || null : null, id: m.id, name: m.name || m.id, keys: m.guard ? [] : m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null, vid: m.P.vid || null, guard: !!m.guard, skips: 0,
         ghost: false, out: null, san: m.P.sanity, max: maxSan(m.P), myth: m.P.myth, startSan: m.P.sanity, used: {},
         got: { insp: 0, sanLoss: 0, sanGain: 0, myth: 0, injured: [], rooms: 0 } };
     }),
@@ -321,7 +321,7 @@ export function coopResolve(run, Ps, votes, opt = {}) {
   run.log.push({ floor: run.floor, room: room.id, choice: vote.pick, type: check.type, success: check.success });
   if (run.fun) coopRoomDone(run, Ps, room, ch, vote, check, fx, events);
   run.phase = "result";
-  if (!coopVoters(run).length) coopFinish(run, "lost"); // 大家都變幽靈了：這一趟到這裡
+  if (!coopHumanVoters(run).length) coopFinish(run, "lost"); // 大家都變幽靈了：這一趟到這裡
   coopSync(run, Ps);
   return { ok: true, run, vote, check, fx, events };
 }
@@ -384,7 +384,7 @@ export function coopContinue(run, Ps) {
   const events = coopNewEvents(run);
   run.step++;
   run.members.forEach(m => { if (!m.out && m.ghost) { m.out = "ghost"; events[m.id].push({ type: "surface" }); } });
-  if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
+  if (!coopHumanVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
   run.floor = run.next; run.idx = 0; run.next = null; run.used = {};
   run.members.forEach(m => { m.used = {}; });
   coopMarkDeep(run, Ps);

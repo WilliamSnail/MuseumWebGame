@@ -20,7 +20,7 @@ import { eventScale, eventTag } from "../story/events.js";
 import { trialById } from "../core/shop.js";
 import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./text.js";
 import { cleanSay } from "../social/party.js";
-import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./base.js";
+import { COOP, coopActive, coopFinish, coopFloorOf, coopHumanVoters, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./base.js";
 
 // ---------- 小骰子 ----------
 export const coopLocalRng = (run, tag) => mulberry32(hashStr(`${run.id || ""}:${run.seed}:${tag}`));
@@ -209,7 +209,7 @@ export function coopGuess(run, Ps, votes) {
   run.stats.truth.push({ floor, id: t.id, guess: pick, right: t.right });
   coopNoteGhosts(run, coopRoom(run), null);
   run.last = Object.assign({}, run.last, { truth: { id: t.id, guess: pick, right: t.right, fakes: t.found.filter(x => x.fake).map(x => ({ kind: x.kind, by: x.by })) } });
-  if (!coopVoters(run).length) coopFinish(run, "lost");
+  if (!coopHumanVoters(run).length) coopFinish(run, "lost");
   else if (!run.next) coopFinish(run, "done");
   else run.phase = "floorDone";
   coopSync(run, Ps);
