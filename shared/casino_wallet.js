@@ -20,7 +20,7 @@ import { backFromWork, sendToWork, workBench } from "./visitors.js";
 import { casSkFix, casSkStep } from "./casino_streak.js";
 import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
-import { gbCollect, gbDaily, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
+import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "./world.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./casino_week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -118,6 +118,7 @@ export function casHouseFix(h, day) {
   wuExtSplit(h); // 決定 0126：海外從已知世界搬出來，變成並列的帳 house.ext（壹次）
   if (day && h.day && h.day !== day) reopen = casHouseDaily(h, day);
   if (day) h.day = day;
+  govSweep(h, day); govGrant(h); // 決定 0140：政府帳搬進公共機構（每天壹次）
   gbDaily(h, day); // 決定 0130：佩佩銀行每天壹次（舊館債搬一次、莊家水位上繳、盈餘分配）
   wuFix(h); // 已知世界的帳上分類（W3，決定 0086）：沒有就照比例建
   return { house: h, reopen };
