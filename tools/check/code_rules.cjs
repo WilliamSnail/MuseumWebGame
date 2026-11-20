@@ -41,8 +41,9 @@ const RENAMES = [
 
 // ---------- 小工具 ----------
 function gitFiles() {
-  const r = spawnSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 });
-  return r.stdout.split("\0").filter(Boolean);
+  // 還沒 add 的新檔也要查（不然本機過了、commit 之後 CI 才紅，11-20 就發生過）
+  const r = spawnSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 26 });
+  return [...new Set(r.stdout.split("\0").filter(Boolean))];
 }
 const defaultRead = f => fs.readFileSync(path.join(ROOT, f), "utf8");
 function parse(src) {
@@ -166,7 +167,7 @@ const yiHits = s => [...new Set([...String(s).matchAll(YI_RE)].map(m => m[0]))];
 function checkYi(added, read = defaultRead) { // added：Map 檔名 → 新加的行號 Set
   const bad = [];
   for (const [f, lines] of added) {
-    const fmt = (ln, ws) => `${f}:${ln}：畫面文字要用「壹」，不是「一」（${ws.join("、")} → ${ws.map(w => w.replace("一", "壹")).join("、")}）；真的要保留就在那壹行加「${YI_SKIP}」`;
+    const fmt = (ln, ws) => `${f}:${ln}：畫面文字要用「壹」，不是「一」（${ws.join("、")} → ${ws.map(w => w.split("一").join("壹")).join("、")}）；真的要保留就在那壹行加「${YI_SKIP}」`;
     if (YI_JSON.test(f)) {
       const arr = read(f).split("\n");
       for (const ln of [...lines].sort((a, b) => a - b)) { const t = arr[ln - 1] || ""; if (!t.includes(YI_SKIP) && yiHits(t).length) bad.push(fmt(ln, yiHits(t))); }
