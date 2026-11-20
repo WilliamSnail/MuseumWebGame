@@ -144,7 +144,7 @@ function flushEvents() {
       note(`書架多了壹本：〈${e.book.title}〉（圖書館的「${shelfName(shelfTabOf(l))}」）`, "good", 7000);
     } else if (e.type === "storyTask") {
       snd("bell");
-      note(`任務完成：${taskText(e.task, W)}。到「每週劇情」領獎勵。`, "good");
+      note(`任務完成：${taskText(e.task, W)}。到「任務板」領獎勵。`, "good", 0, PANELS.today ? { label: "打開任務板", run: () => PANELS.today() } : undefined);
     } else if (e.type === "storySpot") {
       snd("unlock");
       const r = claimSpot(P, W, e.room.id, todayStr());
@@ -271,10 +271,8 @@ function taskRow(W, t, draw, m) {
 export function storyTodayNodes(m, draw) {
   if (!on()) return null;
   const W = curWeek(); if (!W) return null;
-  const S = storyState(P), d = todayOf(W); if (!d || !d.daily.length) return null;
-  return h("section", { class: "td-story" },
-    ptsDay(d) ? ptsBox(W, S, d, draw) : null,
-    h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m))));
+  const x = storyTaskSections(W, draw, m);
+  return x.daily || x.weekly ? h("div", { class: "td-story" }, x.daily, x.weekly, x.old) : null;
 }
 function bonusRow(text, state, reward, claim) {
   return h("li", { class: "sp-task sp-bonus" + (state === "claimed" ? " claimed" : "") },
@@ -296,19 +294,10 @@ function ptsBox(W, S, d, draw) {
   return h("div", null, ptsPanel({ td, cap: C.dayCap, wk, goal: C.goal, ms, milesText, onClaim: claim }),
     h("p", { class: "sp-note" }, `每週拿到 ${C.goal} 分是大獎；300 分先領壹半。籌碼從博物館資金出：賭場、銀行、餐車、參觀、送佩佩這幾個任務，做完各給 ${C.taskChip.toLocaleString("en-US")}（壹天最多 ${C.taskChipDay} 個）。`));
 }
-function weekPane(W, draw, m) {
-  if (!W) return h("p", { class: "nb-empty" }, "這週還沒有地下收藏庫的劇情。");
+// 任務板用（ui_today.js）：今天的每日任務（含積分板）、每週任務、補做。11-20 從 weekPane 搬出來，劇情面板只留壹行連結
+export function storyTaskSections(W, draw, m) {
   const S = storyState(P), d = todayOf(W), today = todayStr();
-  const head = h("div", { class: "sp-head" },
-    h("p", { class: "sp-kicker" }, `本週地下收藏庫・第 ${W.dayNo} 天／7 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`),
-    h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptMark(s))),
-    W.question ? h("p", { class: "sp-question" }, h("span", null, "本週疑點"), W.question) : null,
-    h("div", { class: "sp-go" }, btn([icon("book"), " 圖書館的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
-      d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
-      btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
-  const events = eventListBox(W.events);
-  const cdef = weekCasino(W), casino = cdef ? weekBox(cdef, todayStr(), { after: draw }) : null; // 賭場的每週收藏（決定 0042）
-  const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
+  if (!d) return { daily: null, weekly: null, old: null };
   const pdNew = d && ptsDay(d), bonusText = x => ptsDay(x) ? `拿滿 ${NUM.story.pts.dayCap} 分，多壹份` : "3 個都做完，多壹份";
   const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, pdNew ? ptsBox(W, S, d, draw) : null, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow(bonusText(d), dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
@@ -324,13 +313,29 @@ function weekPane(W, draw, m) {
     h("ul", { class: "sp-tasks" }, x.daily.filter(open).map(t => taskRow(W, t, draw, m)),
       bonusRow(ptsDay(x) ? `當天拿滿 ${NUM.story.pts.dayCap} 分，多壹份` : "3 個都在當天做完，多壹份", dayBonusState(P, W, x.n), x.dailyBonus, () => claimFlow(claimDayBonus(P, W, x.n, today), draw)))]),
     h("p", { class: "sp-note" }, "補做的任務獎勵照領、書照樣解開；每週任務的「每日任務全部做完」只算當天做完的天。")) : null;
+  return { daily, weekly, old };
+}
+function weekPane(W, draw, m) {
+  if (!W) return h("p", { class: "nb-empty" }, "這週還沒有地下收藏庫的劇情。");
+  const S = storyState(P), d = todayOf(W), today = todayStr();
+  const head = h("div", { class: "sp-head" },
+    h("p", { class: "sp-kicker" }, `本週地下收藏庫・第 ${W.dayNo} 天／7 天・這週還剩 ${weekLeftText(nowMs(), W.start)}`),
+    h("h2", null, `〈${W.title}〉`), W.summary.map(s => h("p", null, ptMark(s))),
+    W.question ? h("p", { class: "sp-question" }, h("span", null, "本週疑點"), W.question) : null,
+    h("div", { class: "sp-go" }, btn([icon("book"), " 圖書館的書架"], () => { m.close(); go("origin", { tab: "weekly" }); }, "small"),
+      d && d.show ? btn([icon("gallery"), ` 今日特展：${d.show.title}`], () => { m.close(); go("gallery", { show: true }); }, "small") : null,
+      btn([icon("stairs"), " 地下收藏庫"], () => { m.close(); navTo("cellar"); }, "small")));
+  const events = eventListBox(W.events);
+  const cdef = weekCasino(W), casino = cdef ? weekBox(cdef, todayStr(), { after: draw }) : null; // 賭場的每週收藏（決定 0042）
+  const anomaly = W.anomaly ? sec("本週異狀", h("div", { class: "sp-anomaly" }, h("b", null, W.anomaly.title), W.anomaly.text.map(s => h("p", null, ptMark(s))))) : null;
+  const taskLink = sec("每日任務和每週任務", h("p", { class: "sp-note" }, "任務搬到「任務板」了：今天的積分、交代的人、每日和每週任務、補做都在那裡。"), btn([icon("calendar"), " 打開任務板"], () => { m.close(); if (PANELS.today) PANELS.today(); }, "primary small"));
   const bag = Object.entries(S.bag).filter(([, n]) => n > 0);
   const bagSec = sec("背包", bag.length ? h("ul", { class: "sp-bag" }, bag.map(([id, n]) => {
     const can = itemUsable(P, id);
     return h("li", null, h("b", null, `${itemName(id)} ×${n}`), h("small", null, itemDesc(id)),
       can.ok ? btn("使用", () => { const u = useStoryItem(P, id); if (!u.ok) { note(u.reason, "bad"); return; } snd("unlock"); note(`用了${itemName(id)}：${u.text}`, "good"); updateStatus(); persist(); draw(); }, "small") : h("span", { class: "sp-keep" }, can.reason));
   })) : h("p", { class: "sp-note" }, "還沒有東西。任務的獎勵（技能書、急救箱、材料）會放在這裡。"));
-  return [head, events, anomaly, casino, daily, weekly, old, bagSec];
+  return [head, events, anomaly, casino, taskLink, bagSec];
 }
 function lineCard(l, draw, m) {
   return h("li", { class: "sp-line" + (l.done ? " done" : "") + (l.tracked ? " tracked" : "") },

@@ -115,30 +115,30 @@ export function lobbyToday() {
   if (!P || isFree(P)) return h("span", { class: "lobby-today", hidden: true });
   const chips = todayChips(), todo = todayItems().filter(x => x.todo);
   return h("section", { class: "lobby-today" + (todo.length ? "" : " done"), "aria-label": "今天要做的事" },
-    h("button", { type: "button", class: "lt-head", title: "打開今天的清單", onClick: () => openToday() }, icon("calendar"), h("b", null, "今天"),
+    h("button", { type: "button", class: "lt-head", title: "打開任務板", onClick: () => openToday() }, icon("calendar"), h("b", null, "任務"),
       h("span", null, todo.length ? `還有 ${todo.length} 件` : "都做完了")),
     h("div", { class: "lt-chips" }, chips.map(c => h("button", { type: "button", class: "lt-chip" + (c.todo ? "" : " ok"), title: c.tip, onClick: () => c.go() }, icon(c.todo ? c.ic : "check"), h("span", null, c.text)))));
 }
 ADDONS.lobbyToday = lobbyToday;
 
-function rowOf(x, m) {
-  return h("li", { class: "td-row" + (x.todo ? "" : " done") },
-    h("span", { class: "td-ic", "aria-hidden": "true" }, x.todo ? icon(x.ic) : icon("check")),
-    h("span", { class: "td-main" }, h("b", null, x.title), x.sub ? h("small", null, x.sub) : null),
-    btn([x.label, " ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); x.go(); }, x.todo ? "primary small" : "small ghost"));
+// 其他要做的事（簽到、信箱、老主顧、週劇情獎勵、賭場…）：收成壹排小按鈕，不跟任務搶位子（11-20，任務板）
+function miniOf(x, m) {
+  return h("button", { type: "button", class: "td-mini" + (x.todo ? "" : " done"), title: x.title + (x.sub ? "：" + x.sub : ""), onClick: () => { m.close(); x.go(); } },
+    h("span", { class: "td-mini-ic", "aria-hidden": "true" }, x.todo ? icon(x.ic) : icon("check")), h("span", { class: "td-mini-t" }, x.chip || x.title),
+    x.todo ? h("i", { class: "td-mini-dot", "aria-label": "還沒做" }) : null);
 }
 function bodyOf(m, draw) {
-  const story = storyTodayNodes(m, draw), skip = x => story && /^(yuga|daily)-/.test(x.key); // 每日任務改畫成任務卡（跟每週劇情同壹份零件），清單裡不重複列
-  const all = todayItems().filter(x => !skip(x)), todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
-  if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有每日的事，隨便逛吧。" : "今天沒有要做的事。");
+  const story = storyTodayNodes(m, draw), skip = x => story && /^(yuga-|daily-|weekly$)/.test(x.key); // 每日、每週任務改畫成任務卡（跟每週劇情同壹份零件），清單裡不重複列
+  const all = todayItems().filter(x => !skip(x));
+  if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有任務，隨便逛吧。" : "今天沒有要做的事。");
+  const sorted = all.slice().sort((p, q) => (q.todo ? 1 : 0) - (p.todo ? 1 : 0));
   return h("div", { class: "td-body" },
     story,
-    todo.length ? h("ul", { class: "td-list" }, todo.map(x => rowOf(x, m))) : h("p", { class: "td-all" }, icon("sparkle"), " 今天的都做完了。"),
-    done.length ? h("details", { class: "td-done", open: !todo.length || undefined }, h("summary", null, `做完的（${done.length}）`), h("ul", { class: "td-list" }, done.map(x => rowOf(x, m)))) : null,
+    sorted.length ? h("section", { class: "td-others" }, h("h3", null, "其他要做的事"), h("div", { class: "td-minis" }, sorted.map(x => miniOf(x, m)))) : null,
     NET.me && !casNow() ? h("p", { class: "td-note" }, "賭場剩幾次還在讀……") : null);
 }
 export async function openToday() {
-  const m = overlay("nb-today", "今天", "今天要做的事", "calendar");
+  const m = overlay("nb-today", "任務板", "任務板：今天和這週要做的事", "calendar");
   const draw = () => { if (m.layer.isConnected) m.surface.replaceChildren(bodyOf(m, draw)); };
   snd("flip");
   draw();
