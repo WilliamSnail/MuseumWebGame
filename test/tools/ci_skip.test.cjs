@@ -14,7 +14,7 @@ const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log(
 T("ship 的 isContentFile／contentOnly 就是 changed_files 的", () => {
   assert.strictEqual(SHIP.isContentFile, CF.isContentFile);
   assert.strictEqual(SHIP.contentOnly, CF.contentOnly);
-  assert.strictEqual(CF.contentOnly(["content/weeks/a.json", "維護日誌/2026/a.md"]), true);
+  assert.strictEqual(CF.contentOnly(["content/weeks/a.json", "docs/維護日誌/2026/a.md"]), true);
   assert.strictEqual(CF.contentOnly(["content/a.json", "tools/release/ship.cjs"]), false);
   assert.strictEqual(CF.contentOnly([]), false, "沒有檔案不算只改內容");
   assert.strictEqual(CF.contentOnly(["content\\weeks\\a.json"]), true, "Windows 的斜線也認得");

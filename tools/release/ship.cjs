@@ -7,7 +7,7 @@
 //   --body-file 檔案   內容太長時放檔案
 //   --no-merge        只開 PR、等 CI，不合併
 //   --skip-local      不跑本機的 npm test 和 vite build（CI 還是會跑）
-//   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、維護日誌/（公告在 content/notices/）、
+//   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、docs/維護日誌/（公告在 content/notices/）、
 //                     .claude/，加上從 content 打包出來的 shared/npc_roster.js、shared/map_data.js）時，本機改跑 npm run day:check（要過才繼續），
 //                     不跑 npm test 和 vite build（11-16 每日排程優化：內容 PR 每次省 2～5 分鐘；CI 和部署照跑，安全網還在）。
 //                     只要有任何程式檔（web/、shared/ 其他檔、functions/、tools/、test/、package.json…）就照舊全跑
@@ -70,13 +70,13 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
 // 只動「內容」嗎（純函式，測試用）：每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）。
-// 內容路徑：content/、維護日誌/（公告在 content/notices/）、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
+// 內容路徑：content/、docs/維護日誌/（公告在 content/notices/）、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
 const { isContentFile, contentOnly } = require("./changed_files.cjs"); // 11-16 第二批：抽到共用的檔，CI 也用同壹個判斷
 // 本機要跑什麼：{ mode: "skip" | "content" | "full", line }（line 是要印的壹行說明）
 function localPlan(files, flags) {
   const has = x => flags && flags.has && flags.has(x);
   if (has("skip-local")) return { mode: "skip", line: "（--skip-local：不跑本機的 npm test 和 build，CI 還是會跑）" };
-  if (!has("full") && contentOnly(files)) return { mode: "content", line: `這次只改內容（${files.length} 個檔，全在 content/、維護日誌/、公告、.claude/）：跳過本機的 npm test 和 build，改跑 npm run day:check；CI 和部署照跑。要全跑加 --full` };
+  if (!has("full") && contentOnly(files)) return { mode: "content", line: `這次只改內容（${files.length} 個檔，全在 content/、docs/維護日誌/、公告、.claude/）：跳過本機的 npm test 和 build，改跑 npm run day:check；CI 和部署照跑。要全跑加 --full` };
   return { mode: "full", line: has("full") ? "（--full：本機全跑 npm test 和 build）" : "" };
 }
 // 還沒 commit 的時候，這個分支相對 origin/main 改到哪些檔（已 commit、沒 commit、新檔都算）
@@ -135,7 +135,7 @@ function main() {
   mergeMain(ai);
   const files = changedFiles();
   if (!body) {
-    const log = files.find(f => /^維護日誌\/\d{4}\/.+\.md$/.test(f));
+    const log = files.find(f => /^docs\/維護日誌\/\d{4}\/.+\.md$/.test(f));
     body = log ? bodyFromLog(fs.readFileSync(path.join(ROOT, log), "utf8")) : "";
     if (!body) throw new Error("要有 --body 或 --body-file（這個分支也沒有新的維護日誌可以拿來當說明）");
     console.log(`PR 說明用維護日誌：${log}`);

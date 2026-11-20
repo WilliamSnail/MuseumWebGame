@@ -38,7 +38,7 @@ function prBody(info) {
     L.push(`- 今日特展《${s.show}》${s.works} 幅，其中 svg 新畫 ${s.svg} 幅${s.adds ? `；新房間 ${s.adds} 間` : "；沒有新房間"}`);
     L.push(`- 世界股市新聞 ${s.market} 則${p.market.weekend && !s.market ? "（週末休市）" : ""}；現實世界 real ${s.real} 則${s.casino ? "；賭場加碼壹段" : ""}`);
   }
-  const other = files.filter(f => !/^content\/weeks\/.+\/(d\d|week)\.json$|靈感來源\.md$|^維護日誌\//.test(f));
+  const other = files.filter(f => !/^content\/weeks\/.+\/(d\d|week)\.json$|靈感來源\.md$|^docs\/維護日誌\//.test(f));
   if (other.length) L.push(`- 另外改了：${other.slice(0, 8).join("、")}${other.length > 8 ? ` 等 ${other.length} 個檔` : ""}`);
   L.push("", "## 劇情節奏", "", `- ${p.beat.kind}${p.isBeatDay && p.beat.beat ? `；揭露節奏：第 ${revealCount(ledger)} 次` : ""}`);
   const st = subthemeNames(ledger, rec); if (st) L.push(`- 子主旨：主打 ${st.main || "（沒寫）"}${st.side.length ? "，陪襯 " + st.side.join("、") : ""}`);

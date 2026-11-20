@@ -234,7 +234,7 @@ function tableNames(readText, table) {
   return [];
 }
 const NAME_SCOPE = f => /^(shared|web\/src|functions|tools|test)\/.*\.(js|cjs|mjs)$/.test(f) && !/^functions\/(shared|node_modules)\//.test(f) && !/^(tools\/check\/code_rules\.cjs|test\/tools\/code_rules\.test\.cjs)$/.test(f)
-  || /^(AGENTS|README)\.md$/.test(f) || /^docs\/(?!決定\/).*\.md$/.test(f)
+  || /^(AGENTS|README)\.md$/.test(f) || /^docs\/(?!決定\/|維護日誌\/).*\.md$/.test(f)
   || /^content\/[^/]*\.(md|json)$/.test(f) || /^content\/(npc|map|world|stocks)\//.test(f);
 function checkNames(files, read = defaultRead, renames = RENAMES) {
   const bad = [];
