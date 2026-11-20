@@ -18,7 +18,7 @@ import { isLimitedMat, stockOf } from "../../shared/signin.js";
 import { APPLAUSE, hallApplauseDue } from "../../shared/applause.js";
 import { reportClientError } from "./error_report.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, sndFile, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "./ui_core.js";
-import { afterEnter, roomHead, onescreenDrawer } from "./ui_screens1.js";
+import { roomHead, onescreenDrawer } from "./ui_room.js";
 import { orientSkipped, setOrientSkip } from "./ui_orient.js";
 import { hallTabs, legacyFill, retireFlow, visitorLabel, weeklyHall } from "./ui_screens3.js";
 import { enliven } from "./ui_curio.js";
@@ -655,7 +655,7 @@ SCREENS.settings = root => {
         btn(other === "free" ? "換到自由模式" : "換到挑戰模式", () => {
           if (other === "challenge" && !SAVE.profiles.challenge) { go("title", {}, { action: false }); return; }
           if (other === "free" && !SAVE.profiles.free) SAVE.profiles.free = newProfile("free");
-          useProfile(other); go("lobby", {}, { action: false }); afterEnter();
+          useProfile(other); go("lobby", {}, { action: false }); PANELS.afterEnter();
         }, "ghost")) : null,
       h("div", { class: "set-row" }, h("span", null, "存檔碼"), h("div", null,
         btn("匯出", () => {
