@@ -16,7 +16,7 @@ import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { casWkBase } from "../../shared/casino_week.js";
 import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, giverName, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark } from "./ui_core.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "./ui_core.js";
@@ -246,7 +246,7 @@ function taskRow(W, t, draw, m) {
   return h("li", { class: "sp-task" + (st.done ? " done" : "") + (st.claimed ? " claimed" : "") },
     h("span", { class: "sp-check", "aria-hidden": "true" }, st.done ? icon("check") : null),
     h("span", { class: "sp-t-main" }, h("span", { class: "sp-t-text" }, taskText(t, W)), t.weekly && t.words ? h("small", { class: "sp-t-words" }, ptMark(t.words)) : null,
-      t.giver === "yuga" && t.says ? h("small", { class: "sp-t-yuga" }, h("b", null, "Yuga Bot 交代："), t.says) : null, h("small", { class: "sp-t-r" }, rewardText(r))),
+      t.giver && t.says ? h("small", { class: "sp-t-yuga" }, h("b", null, giverName(t.giver) + "交代："), t.says) : null, h("small", { class: "sp-t-r" }, rewardText(r))),
     h("span", { class: "sp-t-n" }, `${n}／${tgt}`), act);
 }
 function bonusRow(text, state, reward, claim) {

@@ -509,7 +509,11 @@ T("Yuga 交代的任務：寫對的過（R 可以寫，done 選填）", () => {
   const c = regular(); giver({ done: "R。我就知道。" })(c);
   const r = run(c); assert.deepStrictEqual(r.errors, []);
 });
-T("Yuga 交代的任務：giver 只能是 yuga", () => expectErr(giver({ giver: "boss" }), /giver 只能是/));
+T("交代人：id 要在名單裡", () => expectErr(giver({ giver: "boss" }), /不在帳本 taskGivers/));
+T("交代人：別位可以交（不用寫 R）", () => { const c = regular(); giver({ giver: "postman", says: "這封信只寫了名字。你替我送壹隻佩佩過去。" })(c); const r = run(c); assert.ok(!r.errors.some(e => /giver/.test(e)), r.errors.join("; ")); });
+T("交代人：別位不能寫 R", () => expectErr(giver({ giver: "clerk", says: "R，幫我記壹下。" }), /英文字母/));
+T("交代人：不能寫贏輸賺賠", () => expectErr(giver({ giver: "yuga", says: "R，去打壹手，贏了算你的。" }), /不能寫「贏」/));
+T("交代人：壹天可以三個、同壹位最多兩個", () => { const c = regular(); const d = c.files["2026-W47/d3.json"].daily; ["postman","clerk","number"].forEach((g, i) => Object.assign(d[i], { giver: g, says: "你去看壹眼。" })); assert.ok(!run(c).errors.some(e => /交代人|giver/.test(e))); d[2].giver = "postman"; d[1].giver = "postman"; assert.ok(run(c).errors.some(e => /最多 2 個/.test(e))); });
 T("Yuga 交代的任務：says 必填", () => expectErr(giver({ says: undefined }), /says.*要有字/));
 T("Yuga 交代的任務：says 太長（超過 40 字）", () => expectErr(giver({ says: "壹".repeat(41) }), /says.*太長/));
 T("Yuga 交代的任務：done 太長", () => expectErr(giver({ done: "壹".repeat(41) }), /done.*太長/));
@@ -517,11 +521,11 @@ T("Yuga 交代的任務：says 的「一」要寫「壹」", () => expectErr(giv
 T("Yuga 交代的任務：done 的「一」要寫「壹」", () => expectErr(giver({ done: "R，一下就好。" }), /done.*壹/));
 T("Yuga 交代的任務：禁用字", () => expectErr(giver({ says: "R，總統來過。" }), /says.*禁用字/));
 T("Yuga 交代的任務：R 以外的英文字母擋", () => expectErr(giver({ says: "R，叫 Pepe 來。" }), /says.*英文字母/));
-T("Yuga 交代的任務：一天最多一個", () => expectErr(c => { giver()(c); giver({}, 3, 1)(c); }, /壹天最多壹個/));
+T("交代人：同壹位壹天最多 2 個", () => expectErr(c => { giver()(c); giver({}, 3, 1)(c); giver({}, 3, 2)(c); }, /最多 2 個/));
 T("Yuga 交代的任務：只有 says／done 沒有 giver 會擋", () => expectErr(c => { c.files["2026-W47/d3.json"].daily[0].says = "R，測試。"; }, /要寫 giver/));
 T("Yuga 交代的任務：備用週不能放", () => {
   const c = regular(); Object.assign(c.files["備用/常青1/d2.json"].daily[0], { giver: "yuga", says: "R，測試。" });
-  assert.ok(has(run(c), /備用週、備用的壹天不能讓 Yuga Bot 交任務/));
+  assert.ok(has(run(c), /備用週、備用的壹天不能有交代人/));
 });
 
 T("館內股的 NPC 劇情日（week.json.npc）：對的過；店不對、日期不在這週、多寫欄位（想自己寫大小）、備用週都擋", () => {

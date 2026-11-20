@@ -169,10 +169,13 @@ export function storyPackFor(lib, label, fb) {
 // skill：房間的獎勵可以寫技能成長（決定 0032；只有房間可以，tools/week_check.cjs 擋）。加多少是 NUM.shop.trialSkill
 // Yuga Bot 交代的任務：giver 只認 "yuga"，says／done 要是有字的字串（最多 YUGA_MAX 字），不然當作沒有這回事。備用的壹天不收（不知道那天劇情走到哪）
 export const YUGA_MAX = 40;
+// 每日任務的交代人（決定 0145，帳本 taskGivers.list 是正本；這裡只放畫面要的名字，新的交代人加在這裡和帳本）
+export const TASK_GIVERS = { yuga: "Yuga Bot", hall: "堂主", postman: "退休的郵差", clerk: "便利商店店員", scale: "阿秤", number: "號碼機" };
+export const giverName = id => TASK_GIVERS[id] || "";
 const yugaText = s => (typeof s === "string" && s.trim() ? [...s.trim()].slice(0, YUGA_MAX).join("") : "");
 function yugaTask(t, ok) {
-  const says = ok && t.giver === "yuga" ? yugaText(t.says) : "";
-  t.giver = says ? "yuga" : null; t.says = says; t.done = says ? yugaText(t.done) : "";
+  const says = ok && TASK_GIVERS[t.giver] ? yugaText(t.says) : "";
+  t.giver = says ? t.giver : null; t.says = says; t.done = says ? yugaText(t.done) : "";
   return t;
 }
 const reward = r => ({ insp: Math.max(0, +(r && r.insp) || 0), mood: Math.max(0, +(r && r.mood) || 0), items: asList(r && r.items).filter(id => STORY_ITEMS[id]), stamps: Math.max(0, +(r && r.stamps) || 0), skill: r && SKILLS.includes(r.skill) ? r.skill : null });
