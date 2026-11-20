@@ -33,7 +33,7 @@ export const SFX_FILES = {
   "chest-open": { name: "Chest Opening", by: "freesound_community", url: "https://pixabay.com/sound-effects/chest-opening-87569/", use: "地下合作的寶箱點、信箱領取" },
   "water-drips": { name: "Water Drips（做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/film-special-effects-water-drips-76848/", loop: true, use: "地下收藏庫的滴水（取代合成的滴水）" },
   "water-splash": { name: "Water Splash", by: "Universfield", url: "https://pixabay.com/sound-effects/film-special-effects-water-splash-199583/", use: "拚經濟石沉大海" },
-  "pouring": { name: "Pouring Water", by: "Universfield", url: "https://pixabay.com/sound-effects/film-special-effects-pouring-water-191999/", use: "餐車買飲料（麥茶、葡萄酒、珍藏茶）" },
+  "pouring": { name: "Pouring Water", by: "Universfield", url: "https://pixabay.com/sound-effects/film-special-effects-pouring-water-191999/", use: "餐車買飲料（啤酒、葡萄酒、白蘭地）" },
   "bubbles": { name: "Water Bubbles（截前 6 秒）", by: "Liecio", url: "https://pixabay.com/sound-effects/nature-water-bubbles-257594/", use: "融合室融合時、地下 B4 偶爾冒泡、餐車飲料倒完" },
   "cave-drips": { name: "Dripping Water in Cave（做成循環）", by: "solarmusic", url: "https://pixabay.com/sound-effects/nature-dripping-water-in-cave-114694/", loop: true, use: "地下選樓層大廳的滴水" },
   "waves": { name: "Water Waves（做成循環）", by: "freesound_community", url: "https://pixabay.com/sound-effects/nature-water-waves-71875/", loop: true, use: "地下 B4 的水波" },
