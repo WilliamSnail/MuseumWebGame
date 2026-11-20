@@ -2,10 +2,12 @@
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { STORY_CHAPTERS } from "../../shared/content.js";
 import { BASE_TOTAL, CATS, RNG, SAVE_KEY, codexPick, dailyCommissions, ensureDay, exhibitById, finishMake, mulberry32, newProfile, newSave, nowMs, partOf, pillowKeyOf, placeInHall, setRng, todayStr, visitorArrive } from "../../shared/logic.js";
-import { coopRoom, viewFor } from "../../shared/coop.js";
+import { coopRoom } from "../../shared/coop_base.js";
+import { viewFor } from "../../shared/coop.js";
 import { coopAct, coopBegin } from "../../shared/coop_flow.js";
-import { assignJob, hallSize, startCellar } from "../../shared/logic3.js";
-import { storyState } from "../../shared/story.js";
+import { assignJob } from "../../shared/legacy.js";
+import { hallSize, startCellar } from "../../shared/systems.js";
+import { storyState } from "../../shared/story_state.js";
 import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";

@@ -11,7 +11,7 @@
 import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casInSpent, casInUsed } from "./casino_stock_in.js";
-import { RNG } from "./logic.js";
+import { RNG } from "./logic_base.js";
 import { nwPoke } from "./world.js";
 import { npcByName } from "./npc.js";
 

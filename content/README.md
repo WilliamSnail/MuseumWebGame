@@ -212,7 +212,7 @@ content/
 
 ### 房間（本週異狀、`adds`）
 
-跟 `shared/content3.js` 的 `CELLAR` 一樣的格式，多幾個欄位：
+跟 `shared/systems_text.js` 的 `CELLAR` 一樣的格式，多幾個欄位：
 
 ```json
 { "id": "backdoor", "floor": 1, "line": "backdoor",

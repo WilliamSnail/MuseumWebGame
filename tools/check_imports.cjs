@@ -20,8 +20,11 @@ for (const f of FILES) {
   try { ast = acorn.parse(code, { ecmaVersion: "latest", sourceType: "module", ranges: true, locations: true }); }
   catch (e) { info[f] = { error: `${f}：語法錯誤 ${e.message}` }; continue; }
   const exported = new Set();
-  const imports = [], named = [];
+  const imports = [], named = [], reAll = [], reNames = new Set();
   for (const st of ast.body) {
+    // 再匯出（export * from "./x.js"、export { a } from "./x.js"）：名字算這個檔的，但不算「宣告在這裡」（所以不會被當成重複）
+    if (st.type === "ExportAllDeclaration") { imports.push(st.source.value); reAll.push(st.source.value); }
+    if (st.type === "ExportNamedDeclaration" && st.source) { imports.push(st.source.value); st.specifiers.forEach(x => reNames.add(x.exported.name)); }
     if (st.type === "ExportNamedDeclaration" && st.declaration) {
       const d = st.declaration;
       if (d.id) exported.add(d.id.name);
@@ -37,9 +40,18 @@ for (const f of FILES) {
   const through = [];
   const walkScope = s => { s.through.forEach(r => through.push(r)); };
   walkScope(g);
-  info[f] = { exported, imports, named, through };
+  info[f] = { exported, imports, named, through, reAll, reNames };
 }
 
+// 這個檔拿得到的名字：自己宣告的＋再匯出的（遞迴）
+const allExports = (f, seen = new Set()) => {
+  const it = info[f];
+  if (!it || !it.exported || seen.has(f)) return new Set();
+  seen.add(f);
+  const out = new Set([...it.exported, ...it.reNames]);
+  for (const src of it.reAll) { const t = path.relative(ROOT, path.resolve(ROOT, path.dirname(f), src)).split(path.sep).join("/"); allExports(t, seen).forEach(n => out.add(n)); }
+  return out;
+};
 const owner = {};
 for (const f of FILES) if (info[f].exported) for (const n of info[f].exported) (owner[n] = owner[n] || []).push(f);
 
@@ -60,7 +72,8 @@ for (const f of FILES) {
     const target = path.relative(ROOT, path.resolve(ROOT, path.dirname(f), im.src)).split(path.sep).join("/");
     const t = info[target];
     if (!t || !t.exported) continue;
-    for (const n of im.names) if (!t.exported.has(n)) errs.push(`${f}:${im.line}：import 了「${n}」，可是 ${target} 沒有 export 它`);
+    const have = allExports(target);
+    for (const n of im.names) if (!have.has(n)) errs.push(`${f}:${im.line}：import 了「${n}」，可是 ${target} 沒有 export 它`);
   }
   if (f === "web/src/ui_core.js") {
     for (const src of it.imports) {
@@ -68,6 +81,21 @@ for (const f of FILES) {
       if (LATER_THAN_CORE.includes(base)) errs.push(`web/src/ui_core.js：不准 import ${src}（ui_core 不能 import 比它後面的畫面檔）`);
     }
   }
+}
+// shared/ 的檔互相 import 不准繞圈（A 拿 B、B 又拿 A）：繞圈的話，只要頂層一用到對方的東西就看載入順序，載入順序一變就壞。共用的東西抽到更下層的檔。
+{
+  const shared = FILES.filter(f => f.startsWith("shared/") && !info[f].error);
+  const dep = f => info[f].imports.filter(x => x.startsWith(".")).map(x => path.relative(ROOT, path.resolve(ROOT, path.dirname(f), x)).split(path.sep).join("/")).filter(x => info[x]);
+  const state = {}, stack = [];
+  const dfs = f => {
+    state[f] = 1; stack.push(f);
+    for (const d of dep(f)) {
+      if (state[d] === 1) { errs.push("shared/ 的 import 繞圈了：" + [...stack.slice(stack.indexOf(d)), d].join(" → ")); }
+      else if (!state[d]) dfs(d);
+    }
+    stack.pop(); state[f] = 2;
+  };
+  shared.forEach(f => { if (!state[f]) dfs(f); });
 }
 for (const [n, fs2] of Object.entries(owner)) if (fs2.length > 1) errs.push(`同一個名字「${n}」在 ${fs2.join("、")} 都有 export`);
 

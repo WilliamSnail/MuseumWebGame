@@ -12,7 +12,8 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { COOP, coopFix, coopMember, coopPresent, viewFor } from "./shared/coop.js";
+import { COOP, coopFix, coopMember, coopPresent } from "./shared/coop_base.js";
+import { viewFor } from "./shared/coop.js";
 import { coopAct, coopBegin } from "./shared/coop_flow.js";
 import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop_fun.js";
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "./shared/party.js";

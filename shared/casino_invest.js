@@ -14,7 +14,7 @@
 import { NUM } from "./config.js";
 import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow } from "./casino_book.js";
 import { stBuyCost, stCents, stPx, stSellGet, stValue } from "./casino_stock.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { OUT_STOCKS } from "./stocks_text.js";
 
 const ivBox = o => !!o && typeof o === "object" && !Array.isArray(o);

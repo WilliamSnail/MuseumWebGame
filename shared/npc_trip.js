@@ -7,7 +7,7 @@
 //  種子含伺服器祕密（玩家算不出誰哪天去哪），同樣的輸入同樣的輸出。
 // ================================================================
 import { NUM } from "./config.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { npcCurrent } from "./npc.js";
 
 const NT_STORES = ["food", "bj", "job", "cellar", "craft"], NT_PLACES = NT_STORES.concat(["hall"]); // 展廳排在最後（抽的順序固定，加進來不改前面五家店的結果）

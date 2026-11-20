@@ -8,8 +8,8 @@
 //    false  ＝看過了。留著是為了「掃描」來的東西（買得起的升級、剛能解鎖的選項）不會再標第二次
 // ================================================================
 import { PEPE_PARTS, UPGRADES } from "./config.js";
-import { CATS, isFree, isUnlocked, partOf, reqMet, todayStr } from "./logic.js";
-import { upgradeState } from "./logic3.js";
+import { CATS, isFree, isUnlocked, partOf, reqMet, todayStr } from "./logic_base.js";
+import { upgradeState } from "./systems.js";
 import { mapSpots } from "./map.js";
 
 // 每種東西的 key（畫面那邊找小牌子也用這裡，兩邊才不會寫不一樣）

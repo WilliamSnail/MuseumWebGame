@@ -10,7 +10,7 @@
 //  放在 Realtime Database 的 titles/{uid}：只有 Functions 寫得動，館友讀得到（database.rules.json）。
 // ================================================================
 import { NUM } from "./config.js";
-import { isFree } from "./logic.js";
+import { isFree } from "./logic_base.js";
 import { casAchInfo, casCleanTitle, casShortName } from "./casino_wallet.js";
 
 // 一次最多讀幾個人的稱號（館友名單的上限，防止壞資料把畫面拖慢）

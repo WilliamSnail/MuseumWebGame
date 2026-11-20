@@ -12,7 +12,7 @@
 // ================================================================
 import { LIMITED_ITEMS, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT } from "../../shared/content.js";
-import { WEEKLY_TEXT } from "../../shared/content3.js";
+import { WEEKLY_TEXT } from "../../shared/systems_text.js";
 import { isFresh, markFresh, markFreshEvents } from "../../shared/fresh.js";
 import { isFree, isUnlocked, todayStr } from "../../shared/logic.js";
 import { limitedInfo, ownsLimited } from "../../shared/signin.js";

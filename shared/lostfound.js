@@ -16,8 +16,8 @@
 //  純函式：不碰資料庫、不碰 DOM。
 // ================================================================
 import { NUM } from "./config.js";
-import { addDays, isFree } from "./logic.js";
-import { jobInfo } from "./logic3.js";
+import { addDays, isFree } from "./logic_base.js";
+import { jobInfo } from "./legacy.js";
 
 export const LOST_TEXT = {
   thing: "號碼牌",

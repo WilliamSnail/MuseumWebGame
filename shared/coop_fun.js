@@ -14,13 +14,13 @@
 //  機制 8 一起搬：run.carry ＝ { idx: 第幾間之後, item, picks, done, result }。
 //  機制 9 報告：run.stats 收集，走完 coopMakeReport，存進每個人的 P.coopReports（博物館的，不跟著參觀者換）。
 // ================================================================
-import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop.js";
-import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./coop_text.js";
-import { cleanSay } from "./party.js";
+import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "./logic_base.js";
+import { skillOf } from "./legacy.js";
 import { eventScale, eventTag } from "./events.js";
 import { trialById } from "./shop.js";
-import { RNG, hashStr, maxExpr, mulberry32, rollD100, rollExpr, sanCheck, splitSan, todayStr } from "./logic.js";
-import { skillOf } from "./logic3.js";
+import { COOP_CALLS, COOP_CARRY_TEXT, COOP_EVIDENCE, COOP_ITEMS, COOP_LETTERS, COOP_REPORT_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_SYMBOLS, COOP_WARP_WORDS } from "./coop_text.js";
+import { cleanSay } from "./party.js";
+import { COOP, coopActive, coopFinish, coopFloorOf, coopMember, coopNewEvents, coopPresent, coopRoom, coopSanHit, coopSync, coopVoters } from "./coop_base.js";
 
 // ---------- 小骰子 ----------
 export const coopLocalRng = (run, tag) => mulberry32(hashStr(`${run.id || ""}:${run.seed}:${tag}`));
@@ -173,7 +173,6 @@ export function coopDropEvidence(run, Ps, vote, check) {
   t.found.push(e);
   return e;
 }
-export const coopCanGuess = run => !!(!run.trial && run.truth && !run.truth.done && run.truth.found.length >= COOP.truth.need);
 // 開票：多數；平手領隊的；都沒投就是沒猜。猜對全隊拿靈感、記進《看懂的事》；猜錯全隊（還在地下的）擲理智
 export function coopGuess(run, Ps, votes) {
   if (run.phase !== "guess" || !run.truth) return { ok: false, reason: "現在不用猜" };

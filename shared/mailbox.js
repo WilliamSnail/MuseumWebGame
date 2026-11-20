@@ -6,9 +6,9 @@
 //  日期用 realTodayStr。11-09 起跟 todayStr 一樣是台灣時間 05:00 換日（決定 0019）；以前一天是玩 15 分鐘，信箱才另外用真的日曆。
 //  11-08（多人版 M2）：附件多一種「佩佩」gift.pepe（館友送的，格式見 shared/gifts.js 的 cleanGiftItem）。領的時候用 putGift 放進收藏。
 // ================================================================
-import { addDays, isFree } from "./logic.js";
+import { addDays, isFree } from "./logic_base.js";
 import { cleanGiftItem, giftItemText, putGift } from "./gifts.js";
-import { STORY_ITEMS, storyState } from "./story.js";
+import { STORY_ITEMS, storyState } from "./story_state.js";
 
 // 附背包的東西（11-15 起，材料補償用）：只收 STORY_ITEMS 有的 id，最多 10 個
 const cleanItems = a => (Array.isArray(a) ? a : []).filter(id => typeof id === "string" && STORY_ITEMS[id]).slice(0, 10);

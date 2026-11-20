@@ -4,7 +4,8 @@
 //  這裡照順序看玩家做過什麼，回傳「下一步去哪個房間、做什麼」；基本的都做過就回傳 null，大廳就不再顯示。
 //  純函式：只讀 P，不改任何東西。畫面在 web/src/ui_screens1.js 的大廳。
 // ================================================================
-import { dailyCommissions, isFree, makeCost } from "./logic.js";
+import { dailyCommissions, isFree } from "./logic_base.js";
+import { makeCost } from "./logic.js";
 
 // 回傳 { room, text, why } 或 null。text、why 是畫面上的字（介面照第 1 代用「壹」）。
 export function nextStep(P) {

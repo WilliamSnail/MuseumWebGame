@@ -10,7 +10,7 @@
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
 import { NUM } from "./config.js";
-import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "./logic.js";
+import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "./logic_base.js";
 import { showPosters } from "./themeshow.js";
 
 export const SOCIAL = {

@@ -16,7 +16,7 @@
 // ================================================================
 import { HALL_THEME_TEXT } from "../../shared/content.js";
 import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../shared/gifts.js";
-import { WEEKLY_TEXT } from "../../shared/content3.js";
+import { WEEKLY_TEXT } from "../../shared/systems_text.js";
 import { NUM } from "../../shared/config.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../shared/logic.js";
 import { ART } from "./art.js";

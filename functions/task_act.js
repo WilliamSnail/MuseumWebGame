@@ -2,7 +2,7 @@
 // 由各自的 Function 在成功之後記壹筆到 taskAct/{uid}.days[日期][種類]。領籌碼時（casino 的 taskChips）只付存檔說做完、而且這裡也有紀錄的。
 // 只有伺服器寫（玩家的瀏覽器碰不到這份）；記不進去不影響原本的動作（只是少領壹次籌碼）。
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { weekIndex } from "./shared/logic3.js";
+import { weekIndex } from "./shared/logic_base.js";
 const ref = uid => getFirestore().doc("taskAct/" + uid);
 const dayMinus = (day, n) => new Date(Date.parse(day + "T00:00:00Z") - n * 86400000).toISOString().slice(0, 10);
 

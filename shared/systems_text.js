@@ -572,7 +572,7 @@ export const ROOM_HINTS3 = {
 };
 
 // ----- 禁書的續集（翊文 11-08：「像這種書本可以有續集來讓玩家解開」） -----
-// after：讀過哪壹本才看得到；need：怎麼解開（logic3.js 的 sequelCondition；idleOrigin、codexBeyond 是畫面那邊打開的）
+// after：讀過哪壹本才看得到；need：怎麼解開（systems.js 的 sequelCondition；idleOrigin、codexBeyond 是畫面那邊打開的）
 // hint：書架上那本蓋著的書，點了會寫的提示。書裡 [[字|動作]] 是可以點的字（動作在 ui_screens1.js 的 BOOK_ACTIONS）
 export const BOOK_SEQUELS = [
   { id: "book1b", after: "book1", need: "idleOrigin", title: "佩佩起源考・補遺", spine: "起源考・補遺",

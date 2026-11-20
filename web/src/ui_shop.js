@@ -8,11 +8,13 @@
 //  介面文字照第 1 代用「壹」。名字、說明都是草稿，Yuga 可以改。
 // ================================================================
 import { GEAR_ITEMS, NUM, SKILLS } from "../../shared/config.js";
-import { SHOP_TEXT, SKILL_TEXT } from "../../shared/content3.js";
+import { SHOP_TEXT, SKILL_TEXT } from "../../shared/systems_text.js";
 import { isFree, todayStr } from "../../shared/logic.js";
 import { limitedInfo, ownsLimited } from "../../shared/signin.js";
-import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, ownsGear, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear, wornGear } from "../../shared/shop.js";
-import { stampHow, storyState } from "../../shared/story.js";
+import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear } from "../../shared/shop.js";
+import { ownsGear, wornGear } from "../../shared/logic_base.js";
+import { stampHow } from "../../shared/story.js";
+import { storyState } from "../../shared/story_state.js";
 import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "./ui_screens3.js";

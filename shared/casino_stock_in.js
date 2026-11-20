@@ -27,7 +27,7 @@ import { NUM } from "./config.js";
 import { casSellCap, casSellTip } from "./casino_credit.js";
 import { casCount, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain } from "./casino_book.js";
 import { casFill, casNum } from "./casino.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { npcTrips } from "./npc_trip.js";
 import { casNpcSpend, crowdShopCounts, npcShopArrive } from "./npc_spend.js";
 import { CAS_STOCK_IN, IN_STOCKS } from "./stocks_in_text.js";

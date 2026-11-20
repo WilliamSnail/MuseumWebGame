@@ -17,7 +17,7 @@ import { NUM } from "./config.js";
 import { casHouseMove } from "./casino_book.js";
 import { casFxMood } from "./casino_gdp.js";
 import { casNum } from "./casino.js";
-import { galleryInsp, hashStr, mulberry32 } from "./logic.js";
+import { galleryInsp, hashStr, mulberry32 } from "./logic_base.js";
 
 const arBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const arN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);

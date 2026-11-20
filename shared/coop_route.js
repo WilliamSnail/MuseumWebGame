@@ -4,7 +4,7 @@
 //  有守門的趟（run.gate，正式版照 NUM.ui.newCellar）才走地圖；試煉、沒開的照舊一間一間走。
 //
 //  一層的流程：route（大家投下一個點）→ 走到那個點 → 回到 route …… → 最後一排走完 → 守門（gate）
-//    探索 explore：就是原本的房間（content3.js CELLAR，文字、選項都不變），走原本的 vote → result → route
+//    探索 explore：就是原本的房間（systems_text.js CELLAR，文字、選項都不變），走原本的 vote → result → route
 //    遭遇 foe：打一隻這一層的一般怪物（coop_fight.js，kind "foe"）。打贏、逃掉、牠走掉都回 route；全隊倒了這一趟結束
 //    休息 rest：每個人各選各的：回一點理智（"san"），或治好自己一隻受傷的佩佩（"heal"）。沒選的當回理智
 //    寶箱 chest：開出一件小事，有好有壞；全隊平均理智低的時候內容不一樣。看完按繼續（ack）
@@ -14,12 +14,11 @@
 //  純函式；亂數用 RNG()。
 // ================================================================
 import { NUM } from "./config.js";
-import { RNG, pickOne, rollExpr } from "./logic.js";
-import { cellarFloor } from "./logic3.js";
-import { cmapNext, cmapNode, cmapNodes, cmapOfDay, cmapPeek } from "./cellar_map.js";
-import { coopActive, coopArr, coopFinish, coopMember, coopNewEvents, coopNextLeader, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop.js";
+import { RNG, cellarFloor, pickOne, rollExpr } from "./logic_base.js";
+import { coopActive, coopArr, coopFinish, coopMember, coopNewEvents, coopNextLeader, coopSanGain, coopSanHit, coopSync, coopVoters } from "./coop_base.js";
 import { coopPlanRoom } from "./coop_fun.js";
-import { coopFightStart } from "./coop_fight.js";
+import { coopFightStart, coopRouteBack } from "./coop_fight.js";
+import { cmapNext, cmapNode, cmapNodes, cmapOfDay, cmapPeek } from "./cellar_map.js";
 
 // 寶箱、怪事開出來的東西（草稿，Yuga 可以改）。low ＝全隊平均理智低（壓力 2 級以上）的時候看到的
 export const COOP_CHEST_TEXT = {
@@ -38,22 +37,6 @@ export const COOP_CHEST_TEXT = {
 };
 
 export const coopRouteOn = run => !!(run && run.gate && !run.trial);
-
-// 從資料庫讀回來補欄位（空的陣列會不見、陣列可能變成物件）
-export function coopRouteFix(run) {
-  if (!run || typeof run !== "object") return run;
-  if (run.cmap && typeof run.cmap === "object") {
-    const m = run.cmap;
-    m.rows = coopArr(m.rows).map(r => coopArr(r));
-    if (!m.links || typeof m.links !== "object") m.links = {};
-    Object.keys(m.links).forEach(k => { m.links[k] = coopArr(m.links[k]); });
-  } else run.cmap = null;
-  run.path = coopArr(run.path);
-  if (run.node === undefined) run.node = null;
-  if (run.chest === undefined) run.chest = null;
-  if (run.rest === undefined) run.rest = null;
-  return run;
-}
 
 // 下樓（第一層或往下一層）：今天這一層的地圖，站在入口，開始選路
 export function coopRouteBegin(run, Ps) {
@@ -119,15 +102,6 @@ export function coopRouteGo(run, Ps, votes) {
   }
   // 寶箱、怪事
   coopChestOpen(run, Ps, events);
-  return { ok: true, run, events };
-}
-
-// 這個點做完了：回到選路（大家都倒了就結束）
-export function coopRouteBack(run, Ps, events = coopNewEvents(run)) {
-  run.room = null; run.rest = null;
-  if (!coopVoters(run).length) { coopFinish(run, "lost"); coopSync(run, Ps); return { ok: true, run, events }; }
-  run.phase = "route";
-  coopSync(run, Ps);
   return { ok: true, run, events };
 }
 

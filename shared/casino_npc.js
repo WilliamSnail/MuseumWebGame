@@ -9,7 +9,7 @@
 //  打法（content/npc/<id>.json 的 casino.style）：careful 保守、basic 標準、bold 大膽、wild 亂來；沒寫的當 basic。台詞 casino.lines 沒寫的用下面的預設。
 // ================================================================
 import { NUM } from "./config.js";
-import { RNG, hashStr, mulberry32 } from "./logic.js";
+import { RNG, hashStr, mulberry32 } from "./logic_base.js";
 import { casHand, casPoint } from "./casino.js";
 import { casHouseWorldIn, casHouseWorldOut, casWorldLow } from "./casino_book.js";
 import { casBetMax, casHouseLevel, casPayAdd, casPayLeft } from "./casino_wallet.js";

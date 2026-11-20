@@ -17,7 +17,7 @@ import { casCount, casHouseMove } from "./casino_book.js";
 import { CAS_FX_TEXT, casFxMul, casFxPolicy, casFxPolicyOn } from "./casino_gdp.js";
 import { CAS_ECON } from "./casino_text.js";
 import { casFill, casNum } from "./casino.js";
-import { RNG } from "./logic.js";
+import { RNG } from "./logic_base.js";
 
 const ecBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const ecNum = (v, d = 0) => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : d);

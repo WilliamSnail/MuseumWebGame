@@ -13,12 +13,13 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "./casino_book.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { casFxMul, casFxPolicy } from "./casino_gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
 import { CAS_MENU } from "./casino_text.js";
-import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSan, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
+import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
+import { nwSan } from "./world_base.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 // 稅（決定 0111）：營業稅、娛樂稅都內含，進政府帳。kind "biz"｜"ent"

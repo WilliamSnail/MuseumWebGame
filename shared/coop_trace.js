@@ -6,8 +6,8 @@
 //  - 最後的影子：館友在哪一間理智歸零，那裡留一個影子，點了看他最後選了什麼。
 //  - 幽影：最近有館友走過這一層，房間裡偶爾看到他的佩佩半透明地走過去。
 // ================================================================
-import { fromKey, todayStr } from "./logic.js";
-import { CELLAR } from "./content3.js";
+import { fromKey, todayStr } from "./logic_base.js";
+import { CELLAR } from "./systems_text.js";
 
 export const TRACE = {
   signMax: 10,        // 每人最多幾則，舊的被換掉

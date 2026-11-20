@@ -21,9 +21,11 @@ import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopS
 import { eventExtraTurns, eventRunFix } from "./events.js";
 import { trialById } from "./shop.js";
 import { coopFightRound, coopReplayMs } from "./coop_fight.js";
-import { coopRest, coopRouteBack, coopRouteGo, coopRouteOptions } from "./coop_route.js";
+import { coopRest, coopRouteGo, coopRouteOptions } from "./coop_route.js";
+import { coopRouteBack } from "./coop_fight.js";
 import { fightActors, fightSeatOf } from "./cellar_fight.js";
-import { COOP, canStartCoop, coopAdvance, coopContinue, coopEnd, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopResolve, coopRoom, coopVoters, startCoop } from "./coop.js";
+import { COOP, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopRoom, coopVoters } from "./coop_base.js";
+import { canStartCoop, coopAdvance, coopContinue, coopEnd, coopResolve, startCoop } from "./coop.js";
 
 // ---------- 每天前幾趟有獎勵（照帳號：P.coopDay 不跟著參觀者換，決定 0020） ----------
 // 算一趟，回傳這一趟有沒有獎勵。P.coopDay ＝ { date, n }

@@ -10,7 +10,7 @@
 import { NUM } from "../../shared/config.js";
 import { CAS_TEXT } from "../../shared/casino_text.js";
 import { casFill, casNum } from "../../shared/casino.js";
-import { jobInfo } from "../../shared/logic3.js";
+import { jobInfo } from "../../shared/legacy.js";
 import { freeSlots, visitorName, workCandidates, workingVisitor } from "../../shared/visitors.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, SAVE, UI, btn, h, miniLayer, note, persist, rerender, snd } from "./ui_core.js";

@@ -1,6 +1,6 @@
 // ================================================================
 //  邀請、隊伍、兩個人一起融合的畫面（多人版 M3，翊文 11-08：先做「一起融合」）
-//  規則在 shared/party.js、shared/logic3.js 的 fuseTogether；伺服器在 functions/party.js。
+//  規則在 shared/party.js、shared/systems.js 的 fuseTogether；伺服器在 functions/party.js。
 //  - 館友小卡上「邀請壹起融合」（登記在 ui_core.js 的 FRIEND_ACTIONS）。
 //  - 邀請卡排在右下角（.inv-stack）：送出去的在上面倒數；收到的在下面，60 秒倒數，接受／婉拒。
 //    同時收到好幾個，一次只顯示最早的那張，卡上寫「還有 N 個邀請」（11-09：原本疊在一起，下面那張看不到）。
@@ -10,7 +10,7 @@
 // ================================================================
 import { NUM } from "../../shared/config.js";
 import { describePepe, fromKey, isFree, nowMs } from "../../shared/logic.js";
-import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/logic3.js";
+import { canFuseOne, fusionLeft, fusionPrice } from "../../shared/systems.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, FRIEND_ACTIONS, P, UI, btn, collectionItems, h, itemHTML, note, snd, titleOfId, titleTag } from "./ui_core.js";

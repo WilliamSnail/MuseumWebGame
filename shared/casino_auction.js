@@ -18,7 +18,7 @@
 // ================================================================
 import { NUM } from "./config.js";
 import { casCount, casHouseMove, casHouseWorldOut, casPoolGain, casPoolWorldOut, casWorldOut, casWorldRoom } from "./casino_book.js";
-import { hashStr, mulberry32 } from "./logic.js";
+import { hashStr, mulberry32 } from "./logic_base.js";
 import { casArtFix, casArtHouse, casArtPrice } from "./casino_art.js";
 import { casBondFix } from "./casino_bond.js";
 import { casNum } from "./casino.js";

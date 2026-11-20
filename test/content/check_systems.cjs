@@ -1,14 +1,14 @@
-// Validator for shared/content3.js（第 4 版：ES 模組）. Usage: node check3.cjs [sharedDir]
-// Loads config.js, content.js, content3.js as separate scripts in ONE context (like the browser),
+// Validator for shared/systems_text.js（第 4 版：ES 模組）. Usage: node check_systems.cjs [sharedDir]
+// Loads config.js, content.js, systems_text.js as separate scripts in ONE context (like the browser),
 // so a name clash between files fails here too.
 const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 
 const dir = process.argv[2] || path.join(__dirname, "..", "..", "shared");
-const file3 = path.join(dir, "content3.js");
+const file3 = path.join(dir, "systems_text.js");
 const raw3 = fs.readFileSync(file3, "utf8");
-if (/^\s*import\b/m.test(raw3)) { console.error("content3.js 不准 import"); process.exit(1); }
+if (/^\s*import\b/m.test(raw3)) { console.error("systems_text.js 不准 import"); process.exit(1); }
 const unexport = t => t.replace(/^export\s+/gm, ""); // 第 4 版：拿掉 export，照舊當成一般程式檢查
 const src3 = unexport(raw3);
 
@@ -25,7 +25,7 @@ const declared = [...src3.matchAll(/^(const|let|var|function|class)\s+([A-Za-z_$
 for (const d of declared) if (!NAMES.includes(d)) err("extra top-level declaration: " + d);
 
 const ctx = vm.createContext({});
-for (const f of ["config.js", "content.js", "content3.js"]) {
+for (const f of ["config.js", "content.js", "systems_text.js"]) {
   const p = path.join(dir, f);
   try {
     vm.runInContext(unexport(fs.readFileSync(p, "utf8")), ctx, { filename: p });

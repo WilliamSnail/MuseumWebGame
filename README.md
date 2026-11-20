@@ -85,7 +85,7 @@ npm run preview  # 看打包後的樣子
 **想改設定、文字的人**（例如 Yuga）：
 
 - 選項、數值：`shared/config.js` 最上面那一段。
-- 劇情、委託、提示：`shared/content.js`、`shared/content3.js`。
+- 劇情、委託、提示：`shared/content.js`、`shared/systems_text.js`。
 - 改完跑 `npm test`，再用 `npm run dev` 看一下。
 
 ---

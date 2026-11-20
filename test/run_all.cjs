@@ -169,7 +169,7 @@ const STEPS = [
   ["調數值的總入口 npm run tune（acorn 只換那個值、unit／npc 叫現有的腳本、檢查沒過就還原、--dry，決定 0089）", ["test/tune.test.cjs"]],
   ["世界文件（world/main、換日第壹次才記、成長是兩次的差、不改莊家、搬錢總和不變且預設關閉，W2，決定 0086）", ["test/world_doc.test.cjs"]],
   ["內容檢查（content.js）", ["test/content/check.cjs"]],
-  ["內容檢查（content3.js）", ["test/content/check3.cjs"]],
+  ["內容檢查（systems_text.js）", ["test/content/check_systems.cjs"]],
   ["特效在 Node 載得起來", ["test/fx/node-check.cjs"]],
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],

@@ -58,7 +58,7 @@ export const COOP_CLUE_TEXT = {
   guard: "你在監視器前，看不到房間裡的細節。",
 };
 
-// 湊證據猜真相（機制 3）。每種證據一個代號；每位住客有三種。猜對了記進《看懂的事》（content3.js 的 UNDERSTAND_TEXT，id 是 understand）
+// 湊證據猜真相（機制 3）。每種證據一個代號；每位住客有三種。猜對了記進《看懂的事》（systems_text.js 的 UNDERSTAND_TEXT，id 是 understand）
 export const COOP_EVIDENCE = { foot: "腳印", smell: "味道", sound: "聲音", photo: "照片", scratch: "抓痕", cold: "冷風", hair: "毛" };
 export const COOP_EVIDENCE_LINES = {
   foot: "灰塵上有壹串小腳印，走到牆邊就沒有了。",
