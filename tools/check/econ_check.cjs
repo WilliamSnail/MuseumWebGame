@@ -102,7 +102,7 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
 (function sims() {
   const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
   const pois = (r, l) => { const L = Math.exp(-l); let k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; };
-  let sum = 0; const M = 1500, D = "2026-11-12";
+  let sum = 0; const Q = !!process.env.ECON_CHECK_QUICK, M = Q ? 300 : 1500, D =  "2026-11-12";
   for (let i = 1; i <= M; i++) {
     const h = G.casHouseFix(G.casHouseNew(), "2026-11-01").house, H = G.casInHouseFix(h);
     let s = (i * 2654435761) >>> 0; const r = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
@@ -117,9 +117,9 @@ const grants = (C.grants || []).reduce((s, g) => s + g.amt, 0);
   const h = G.casHouseFix(G.casHouseNew(), "2026-11-16").house; let tot = 0; const days = 120;
   for (let i = 0; i < days; i++) tot += G.casNpcSpend(h, add("2026-11-16", i), "n" + i, list, null).total;
   { // 展廳有人嗎（翊文 11-14：延長停留＋多加 NPC；目標展廳平均 ≥ 2 位、0 人的時間 < 20%）；用現在 content/npc 的名單，每 10 分鐘看壹次
-    let hs = 0, hz = 0, n = 0;
-    for (let d = 0; d < 40; d++) { const v = G.npcVisitsToday(add("2026-11-16", d), "p" + d, list, null); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; hs += k; if (!k) hz++; n++; } }
-    const CR = C.npcSpend.crowd; let cs = 0, cn = 0, cz = 0; for (let d = 0; d < 40; d++) { const day = add("2026-11-16", d), v = G.npcVisitsToday(day, "p" + d, list, null), g = G.crowdVisitsToday(day, "p" + d); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length + g.filter(x => x.start <= m && m < x.end).reduce((a, x) => a + x.n, 0); cs += k; if (!k) cz++; cn++; } }
+    let hs = 0, hz = 0, n = 0; const DAYS = Q ? 12 : 40;
+    for (let d = 0; d < DAYS; d++) { const v = G.npcVisitsToday(add("2026-11-16", d), "p" + d, list, null); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length; hs += k; if (!k) hz++; n++; } }
+    const CR = C.npcSpend.crowd; let cs = 0, cn = 0, cz = 0; for (let d = 0; d < DAYS; d++) { const day = add("2026-11-16", d), v = G.npcVisitsToday(day, "p" + d, list, null), g = G.crowdVisitsToday(day, "p" + d); for (let m = 0; m < 1110; m += 10) { const k = v.filter(x => x.place === "hall" && x.start <= m && m < x.end).length + g.filter(x => x.start <= m && m < x.end).reduce((a, x) => a + x.n, 0); cs += k; if (!k) cz++; cn++; } }
     check("模擬：含散客，展廳平均 ≥ 2 位、0 人的時間 < 20%", cs / cn >= 2 && cz / cn < 0.2, `平均 ${(cs / cn).toFixed(2)} 位；0 人 ${pct(cz / cn * 100)}`);
     check("散客門票：壹天上限 ≤ 已知世界每天成長的 25%（決定 0102）", CR.dayCap <= grow * 0.25, `${fmt(CR.dayCap)} ≤ ${fmt(grow * 0.25)}`);
     check("模擬：展廳平均 ≥ 2 位、0 人的時間 < 20%（只算有名字的 NPC）", hs / n >= 2 && hz / n < 0.2, `平均 ${(hs / n).toFixed(2)} 位；0 人 ${pct(hz / n * 100)}`);
@@ -196,15 +196,24 @@ function ledger(file) {
   return { out, bad };
 }
 
+// 帳面模式：回傳 { status, stdout }（讀不起來會丟錯，由呼叫的人處理）。測試直接呼叫它，不用每次都開子行程重載 shared（11-20 加速）
+function ledgerCli(f) {
+  const r = ledger(f), out = ["== 經濟帳面摘要 =="];
+  r.out.forEach(l => out.push(l));
+  out.push(r.bad.length ? "\n異常：" : "\n沒有異常。"); r.bad.forEach(m => out.push("  ✗ " + m));
+  return { status: r.bad.length ? 1 : 0, stdout: out.join("\n") + "\n" };
+}
+module.exports = { ledgerCli };
 const i = process.argv.indexOf("--ledger");
-if (i >= 0) {
+if (require.main !== module) { /* 被測試 require：只給 ledgerCli，不跑規則 */ }
+else if (i >= 0) {
   const f = process.argv[i + 1];
   if (!f || !fs.existsSync(f)) { console.error("用法：node tools/check/econ_check.cjs --ledger 檔案.json"); process.exit(2); }
-  const r = ledger(f);
-  console.log("== 經濟帳面摘要 =="); r.out.forEach(l => console.log(l));
-  console.log(r.bad.length ? "\n異常：" : "\n沒有異常。"); r.bad.forEach(m => console.log("  ✗ " + m));
-  process.exit(r.bad.length ? 1 : 0);
-}
+  const o = ledgerCli(f);
+  process.stdout.write(o.stdout);
+  process.exit(o.status);
+} else main();
+function main() {
 runRules();
 let failN = 0, warnN = 0;
 console.log("== 經濟規則自我檢查（NUM）==");
@@ -215,3 +224,4 @@ for (const r of rows) {
 }
 console.log(`\n${rows.length} 項：${rows.length - failN - warnN} 過、${warnN} 警告、${failN} 沒過`);
 process.exit(failN ? 1 : 0);
+}

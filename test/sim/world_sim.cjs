@@ -30,21 +30,33 @@ function sim(G, npcs, opts = {}) {
     const N = h.npcs && h.npcs.day === d ? h.npcs : null, t = N ? N.ticket + N.shop + N.crowd.ticket + N.crowd.shop : 0;
     spent.total += t; if (N && N.byUnit) for (const k of Object.keys(N.byUnit)) spent.byUnit[k] = (spent.byUnit[k] || 0) + N.byUnit[k];
     perDay.push({ d, spent: t, world: h.world, out: before - h.world });
+    if (opts.snapAt && opts.snapAt.includes(i + 1) && i + 1 < days) opts.onSnap(i + 1, finish(G, h, { gov: h.gov, days: i + 1, b, w0, a0, spent: JSON.parse(JSON.stringify(spent)), bank0, bud0, perDay: perDay.slice() })); // 中途的結果：30 天的結果就是 90 天跑到第 30 天（每天的種子只看第幾天），不用再跑壹次（11-20 加速）
   }
+  return finish(G, h, { gov: h.gov, days, b, w0, a0, spent, bank0, bud0, perDay });
+}
+function finish(G, h, c) {
+  const { days, b, w0, a0, spent, bank0, bud0, perDay } = c;
   const a1 = G.wuAmounts(h), sum = o => Object.values(o).reduce((x, y) => x + y, 0);
   const bals = Object.values((h.npcw && h.npcw.bal) || {}), wal = { total: bals.reduce((x, y) => x + y, 0), n: bals.length, min: bals.length ? Math.min(...bals) : 0, max: bals.length ? Math.max(...bals) : 0, moves: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "move").length, lays: ((h.npcw && h.npcw.ev) || []).filter(e => e.t === "lay").length };
   const sv = Object.values((h.npcw && h.npcw.san) || {}); wal.san = { n: sv.length, min: sv.length ? Math.min(...sv) : 70, max: sv.length ? Math.max(...sv) : 70, low: sv.filter(x => x < 30).length };
-  return { gov: h.gov, wal, days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
+  return { gov: c.gov, wal, days, b, w0, w1: h.world, a0, a1, spent, bank: h.bankroll - bank0, budget: h.budget - bud0, gap: sum(a1) - h.world, perDay, house: h };
 }
 // 景氣 −1／0／+1 各跑 30 和 90 天（W5 連動）：NPC 每天花多少、各狀態幾個集團、最低倍率、有沒有裁員、莊家和博物館資金撐不撐得住。回傳 [{ b, days, perDay, states, minMult, layoff, ok }]
-function scan(load, npcs, set = []) {
+// extra：{ days: [14, 28], on(b, 天數, 結果, G) }：同壹趟順便在這幾天停壹下給呼叫的人看（測試用，省掉另外再跑壹次短的）；只有 −1／0／1 各自跑到的天數會停
+function scan(load, npcs, set = [], extra = null) {
   const out = [];
-  for (const days of [30, 90]) for (const b of [-1, 0, 1]) {
-    const G = load(), r = sim(G, npcs, { days, b, set }), st = { normal: 0, cut: 0, squeeze: 0, layoff: 0 };
+  const row = (G, r, days, b) => {
+    const st = { normal: 0, cut: 0, squeeze: 0, layoff: 0 };
     const w = r.house.wh; if (w) Object.values(w.st).forEach(s => { st[s.s]++; });
     const mult = w ? Object.keys(w.st).map(k => G.whMult(r.house, k)) : [1];
-    out.push({ b, days, wallet: r.wal, perDay: r.spent.total / days, states: st, minMult: Math.min(...mult), layoff: st.layoff, ok: r.gap === 0 && r.a1.pub >= 0 && r.house.bankroll >= 0 && r.house.budget >= 0 });
+    return { b, days, wallet: r.wal, perDay: r.spent.total / days, states: st, minMult: Math.min(...mult), layoff: st.layoff, ok: r.gap === 0 && r.a1.pub >= 0 && r.house.bankroll >= 0 && r.house.budget >= 0 };
+  };
+  for (const b of [-1, 0, 1]) { // 每個景氣壹次跑 90 天，30 天的那壹列在跑到第 30 天時就拿
+    const G = load();
+    const r = sim(G, npcs, { days: 90, b, set, snapAt: [30].concat(extra ? extra.days : []), onSnap: (d, r30) => { if (d === 30) out.push(row(G, r30, d, b)); else extra.on(b, d, r30, G); } });
+    out.push(row(G, r, 90, b));
   }
+  out.sort((x, y) => x.days - y.days || x.b - y.b); // 跟以前的順序壹樣：30 天的三個景氣、90 天的三個景氣
   return out;
 }
 module.exports = { sim, scan };

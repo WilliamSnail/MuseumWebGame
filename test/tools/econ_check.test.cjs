@@ -2,7 +2,9 @@
 const assert = require("assert"), { spawnSync } = require("child_process"), fs = require("fs"), os = require("os"), path = require("path");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
-const run = args => spawnSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "check", "econ_check.cjs")].concat(args), { encoding: "utf8" });
+const { ledgerCli } = require("../../tools/check/econ_check.cjs"); // 帳面不開子行程（每次開要重載 shared 1.3 秒）：直接呼叫，丟錯的話文字放 stderr
+const runL = f => { try { const r = ledgerCli(f); return { status: r.status, stdout: r.stdout, stderr: "" }; } catch (e) { return { status: 1, stdout: "", stderr: String(e && e.message) }; } };
+const run = args => args[0] === "--ledger" ? runL(args[1]) : spawnSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "check", "econ_check.cjs")].concat(args), { encoding: "utf8", env: Object.assign({}, process.env, { ECON_CHECK_QUICK: "1" }) });
 T("規則面：現在的 NUM 沒有「沒過」的項目（警告可以有）", () => { const r = run([]); assert.strictEqual(r.status, 0, r.stdout.slice(-1500)); assert.ok(/\d+ 項：\d+ 過、\d+ 警告、0 沒過/.test(r.stdout)); });
 T("帳面：正常的帳沒有異常；吃緊、館債逾期、對帳差、莊家破產都會紅字", () => {
   const f = path.join(os.tmpdir(), "econ_" + process.pid + ".json"), W = 10000000000;
