@@ -707,3 +707,6 @@ body[data-screen="bank"] #room { background: none; }
 
 .bank-mk-sum { margin: 4px 0 6px; font-size: .86rem; line-height: 1.5; color: var(--bank-mute); } /* 各行業景氣的白話摘要（11-20） */
 .bank-mk-tr { margin-left: 4px; font-size: .78em; opacity: .85; } /* 景氣比上週（11-20） */
+.bank-grpsw { margin: 0; } .bank-grpsw button { min-height: 36px; }
+@media (max-width: 760px) { .bank-grpsw button { min-height: 32px; padding-top: 0; padding-bottom: 0; } }
+@media (min-width: 761px) { .bank-grpsw { align-self: flex-start; width: fit-content; } .bank-grpsw button { flex: none; padding: 0 22px; } }
