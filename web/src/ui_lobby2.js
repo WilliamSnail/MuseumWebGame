@@ -24,7 +24,7 @@ import { headlineStrip } from "./ui_headline.js";
 import { mountMood } from "./ui_mood.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "./ui_today.js";
-import { openStory, storyToday } from "./ui_story.js";
+import { storyToday } from "./ui_story.js";
 import { giverAv } from "./ui_tasks.js";
 
 const L = "/lobby/"; // 素材（web/public/lobby，打包時原樣複製）
@@ -172,14 +172,14 @@ function todoCards(step) {
   // 今天的每日任務：壹定排在前面（11-20，翊文：玩家大多看不到每日任務）。有交代人就放頭像和壹句話
   if (st && st.dailyN) {
     const g = st.giver;
-    cards.push({ t: `每日任務 ${st.dailyN - st.dailyLeft}／${st.dailyN}`, s: g ? `${g.name}：${g.says}` : st.daily.find(x => !x.done) ? st.daily.find(x => !x.done).text : "今天的都做完了", go: () => openStory(), todo: st.dailyLeft > 0, giver: g && g.id });
+    cards.push({ t: `每日任務 ${st.dailyN - st.dailyLeft}／${st.dailyN}`, s: g ? `${g.name}：${g.says}` : st.daily.find(x => !x.done) ? st.daily.find(x => !x.done).text : "今天的都做完了", go: () => PANELS.today && PANELS.today(), todo: st.dailyLeft > 0, giver: g && g.id });
   }
   if (step) cards.push({ t: step.text, s: step.why, go: () => navTo(step.room), todo: true });
   const rest = x => !/^(yuga|daily)-/.test(x.key);
   items.filter(x => x.todo && rest(x)).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: true }));
   items.filter(x => !x.todo && rest(x)).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: false }));
   const shown = cards.slice(0, ADDONS.hallNowBox ? 2 : 4); // 最多 2 張（右欄多了展廳現在、最近的評價）；再多右欄就擠出畫面（全部在導覽列的「今天」）
-  const bar = st && st.pts ? h("button", { type: "button", class: "l2-pts", title: "打開今天的任務", onClick: () => openStory() },
+  const bar = st && st.pts ? h("button", { type: "button", class: "l2-pts", title: "打開任務板", onClick: () => PANELS.today && PANELS.today() },
     h("span", null, h("b", null, "今天 " + st.pts.td), `／${st.pts.cap}`), h("i", { class: "l2-pts-bar", "aria-hidden": "true" }, h("u", { style: `width:${Math.min(100, Math.round(st.pts.td / st.pts.cap * 100))}%` })),
     h("span", null, h("b", null, "這週 " + st.pts.wk), `／${st.pts.goal}`)) : null;
   if (!shown.length) return h("div", { class: "l2-todos" }, bar, h("p", { class: "l2-empty" }, isFree(P) ? "自由模式：所有選項都打開了，到手作坊捏佩佩。" : "今天的事都做完了。"));
@@ -209,7 +209,7 @@ export function lobby2(root) {
   const side = h("aside", { class: "l2-side", "aria-label": "今天" },
     passCard(),
     mates.box,
-    h("div", { class: "l2-box l2-todobox" }, h("div", { class: "l2-h" }, "今天要做的事"), todoCards(step)), // 手機直拿：排到導覽圖上面（css/lobby2.css）
+    h("div", { class: "l2-box l2-todobox" }, h("div", { class: "l2-h" }, "任務"), todoCards(step)), // 手機直拿：排到導覽圖上面（css/lobby2.css）
     isFree(P) || !(UI.net || import.meta.env.DEV) || !ADDONS.hallNowBox ? null : h("div", { class: "l2-box l2-hnbox" }, ADDONS.hallNowBox("lobby")), // 展廳現在幾人、最近的評價（ui_hallnow.js；登入了才有）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },

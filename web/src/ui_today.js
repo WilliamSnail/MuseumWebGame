@@ -59,11 +59,11 @@ export function todayItems() {
   if (sg) add("signin", "calendar", sg.done ? "今天簽到了" : "每日簽到", sg.text, !sg.done, sg.done ? "簽到日曆" : "蓋章簽到", () => (sg.done ? PANELS.calendar : PANELS.signin)(), "簽到");
   const st = storyToday();
   if (st) {
-    if (st.claim) add("claim", "gift", "每週劇情有獎勵可以領", `${st.claim} 個`, true, "去領", () => openStory(), `領獎勵 ${st.claim}`);
-    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "打開任務", () => openStory(), "每日"));
+    if (st.claim) add("claim", "gift", "每週劇情有獎勵可以領", `${st.claim} 個`, true, "去領", () => openToday(), `領獎勵 ${st.claim}`);
+    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "打開任務", () => openToday(), "每日"));
     st.daily.filter(t => !t.yuga || t.done).forEach(t => add("daily-" + t.id, "book", t.done ? (t.claimed ? "每日任務（領過了）" : "每日任務做完了") : "每日任務", `${t.text}（${t.n}／${t.tgt}）`,
-      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "打開任務", () => openStory(), "每日"));
-    add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openStory(), `每週 ${st.weekly[0]}／${st.weekly[1]}`);
+      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "打開任務", () => openToday(), "每日"));
+    add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openToday(), `每週 ${st.weekly[0]}／${st.weekly[1]}`);
   }
   // 老主顧今天在櫃台（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」）
   const rv = !isFree(P) && P.day ? regularsView(P, dailyCommissions(P, P.day.date)) : null;

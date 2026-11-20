@@ -36,7 +36,7 @@ T("畫面上的字沒有英文（房間名字、橫幅、按鈕都用中文）",
   const code = s.split("\n").filter(l => !/^\s*\/\//.test(l)).map(l => l.replace(/\/\/ .*$/, "")).join("\n"); // 註解不算
   const strings = [...code.matchAll(/"([^"\\\n]*[一-鿿][^"\\\n]*)"/g)].map(m => m[1]);
   strings.filter(t => !/[`$?:(),]/.test(t)).forEach(t => assert.ok(!/[A-Za-z]{2,}/.test(t), t)); // 跨過程式碼的不是字串，跳過
-  assert.ok(strings.includes("今天要做的事") && strings.includes("手上有的"));
+  assert.ok(strings.includes("任務") && strings.includes("手上有的"));
 });
 
 console.log(`${fail ? "✗" : "✓"} 新的大廳：${pass} 項通過${fail ? `、${fail} 項沒過` : ""}`);
