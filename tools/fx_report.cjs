@@ -1,7 +1,7 @@
 // 聲音和畫面特效的總表（翊文 11-16：「做一張聲音和畫面特效的總表，好追蹤和改進，自動產生並檢查」）
 //   npm run fx:report            重新產生 docs/音效與特效總表.md（並把新項目補進 content/fx_notes.json）
 //   npm run fx:report -- --check 只檢查程式掃得出來、fx_notes.json 每個項目都有，缺了就結束碼 1（npm test 會跑）。總表本身不進 git（.gitignore），要看就跑上面那行
-// 全部從程式掃出來：shared/sfx_files.js、web/src/fx.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
+// 全部從程式掃出來：shared/sfx_files.js、web/src/fx_sound.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
 //   ui_mood.js、css、shared/room_mood.js、地下戰鬥特效。
 // 「畫面特效」和「理智規則」是一張清單（下面 VFX、SAN_RULES），每項帶一個「標記」去程式裡找行號；標記找不到就報錯 → 改名或刪掉程式時會被抓到，要回來改這張清單。
 // 翊文聽過沒、要不要調：寫在 content/fx_notes.json（不用改程式）。
@@ -158,14 +158,14 @@ const VFX = [
   { key: "san-odd-follow", group: "理智效果", name: "有東西跟著游標（odd-follower）", find: ["web/src/ui_odd.js", /odd-follower/], css: ["web/src/css/theme3.css", /^\.odd-follower \{/], when: "壹個淡淡的黑色佩佩影子慢慢追著游標，追上會低語", nums: () => `ODD_AT.follow＝${oddAt().follow}；越低越明顯` },
   { key: "san-odd-talk", group: "理智效果", name: "按鈕在跟你說話（odd talk）", find: ["web/src/ui_odd.js", /ODD_LINES/], css: ["web/src/css/theme3.css", /^.btn.odd-talking/], when: "游標移到按鈕上，字偶爾亂碼成別句，1.6 秒後變回來（功能照常）", nums: () => `ODD_AT.talk＝${oddAt().talk}` },
   // FX 工具（fx.js）
-  { key: "fxt-floatText", group: "畫面工具", name: "飄字（FX.floatText）", find: ["web/src/fx.js", /function floatText/], css: ["web/src/css/fx.css", /^\.fx-float \{/], when: "數字變動時從目標往上飄（好綠、壞紅）", nums: () => "tone：good／bad／neutral" },
-  { key: "fxt-rollOverlay", group: "畫面工具", name: "擲骰彈窗（FX.rollOverlay）", find: ["web/src/fx.js", /function rollOverlay/], css: ["web/src/css/fx.css", /^\.fx-roll-title/], when: "所有要擲骰的地方（理智檢定、發作、下一位參觀者…），可帶結果音效 outcome.sound", nums: () => "骰盤 createDiceTray；骰子聲 R.dice" },
-  { key: "fxt-goldDust", group: "畫面工具", name: "金粉（FX.goldDust）", find: ["web/src/fx.js", /function goldDust/], css: ["web/src/css/fx.css", /^\.fx-dust/], when: "稀有、傳說的開箱等慶祝處", nums: () => "預設 2.5 秒；顏色 DUST 陣列" },
-  { key: "fxt-countTo", group: "畫面工具", name: "數字滾動（FX.countTo、里程表）", find: ["web/src/fx.js", /function countTo/], css: ["web/src/css/fx.css", /^\.fx-odo \{/], when: "金額、分數變動的數字" , nums: () => "" },
-  { key: "fxt-toast", group: "畫面工具", name: "提示條（FX.toast）", find: ["web/src/fx.js", /function toast/], css: ["web/src/css/fx.css", /^\.fx-toast \{/], when: "角落的短訊息", nums: () => "" },
-  { key: "fxt-spotlight", group: "畫面工具", name: "聚光導覽（FX.spotlight）", find: ["web/src/fx.js", /function spotlight\(/], css: ["web/src/css/fx.css", /^\.fx-spot \{/], when: "新手導覽，把一塊畫面圈亮其餘壓暗", nums: () => "" },
-  { key: "fxt-drag", group: "畫面工具", name: "拖放（makeDraggable／makeDropTarget）", find: ["web/src/fx.js", /function makeDraggable/], css: ["web/src/css/fx.css", /^\.fx-ghost/], when: "拖卡片、拖物品", nums: () => "" },
-  { key: "fxt-press", group: "畫面工具", name: "按下去的小動作（FX.press）", find: ["web/src/fx.js", /function press\(/], css: ["web/src/css/fx.css", /^\.fx-press/], when: "按鈕按下時微縮", nums: () => "" },
+  { key: "fxt-floatText", group: "畫面工具", name: "飄字（FX.floatText）", find: ["web/src/fx_misc.js", /function floatText/], css: ["web/src/css/fx.css", /^\.fx-float \{/], when: "數字變動時從目標往上飄（好綠、壞紅）", nums: () => "tone：good／bad／neutral" },
+  { key: "fxt-rollOverlay", group: "畫面工具", name: "擲骰彈窗（FX.rollOverlay）", find: ["web/src/fx_dice.js", /function rollOverlay/], css: ["web/src/css/fx.css", /^\.fx-roll-title/], when: "所有要擲骰的地方（理智檢定、發作、下一位參觀者…），可帶結果音效 outcome.sound", nums: () => "骰盤 createDiceTray；骰子聲 R.dice" },
+  { key: "fxt-goldDust", group: "畫面工具", name: "金粉（FX.goldDust）", find: ["web/src/fx_misc.js", /function goldDust/], css: ["web/src/css/fx.css", /^\.fx-dust/], when: "稀有、傳說的開箱等慶祝處", nums: () => "預設 2.5 秒；顏色 DUST 陣列" },
+  { key: "fxt-countTo", group: "畫面工具", name: "數字滾動（FX.countTo、里程表）", find: ["web/src/fx_misc.js", /function countTo/], css: ["web/src/css/fx.css", /^\.fx-odo \{/], when: "金額、分數變動的數字" , nums: () => "" },
+  { key: "fxt-toast", group: "畫面工具", name: "提示條（FX.toast）", find: ["web/src/fx_misc.js", /function toast/], css: ["web/src/css/fx.css", /^\.fx-toast \{/], when: "角落的短訊息", nums: () => "" },
+  { key: "fxt-spotlight", group: "畫面工具", name: "聚光導覽（FX.spotlight）", find: ["web/src/fx_misc.js", /function spotlight\(/], css: ["web/src/css/fx.css", /^\.fx-spot \{/], when: "新手導覽，把一塊畫面圈亮其餘壓暗", nums: () => "" },
+  { key: "fxt-drag", group: "畫面工具", name: "拖放（makeDraggable／makeDropTarget）", find: ["web/src/fx_drag.js", /function makeDraggable/], css: ["web/src/css/fx.css", /^\.fx-ghost/], when: "拖卡片、拖物品", nums: () => "" },
+  { key: "fxt-press", group: "畫面工具", name: "按下去的小動作（FX.press）", find: ["web/src/fx_misc.js", /function press\(/], css: ["web/src/css/fx.css", /^\.fx-press/], when: "按鈕按下時微縮", nums: () => "" },
 ];
 let _odd = null;
 function oddAt() {
@@ -176,7 +176,7 @@ function oddAt() {
 
 // 理智、聲音規則（標記在程式裡找行號）
 const SAN_RULES = [
-  { key: "snd-heart", name: "心跳", find: ["web/src/fx.js", /const heartGap/], when: "理智 30 以下：心跳，越低越快越大聲（歸零前）", nums: () => "heartGap：>20 每 1050ms、>10 每 780ms、其餘 560ms；heartK 音量 0.45～1（fx.js）" },
+  { key: "snd-heart", name: "心跳", find: ["web/src/fx_sound.js", /const heartGap/], when: "理智 30 以下：心跳，越低越快越大聲（歸零前）", nums: () => "heartGap：>20 每 1050ms、>10 每 780ms、其餘 560ms；heartK 音量 0.45～1（fx.js）" },
   { key: "snd-unease", name: "不安的低鳴", find: ["web/src/ui_core.js", /S\.unease\(/], when: "理智 40 以下，越低越明顯", nums: () => "unease＝(40−理智)/40（ui_core.js audioState）" },
   { key: "snd-tinnitus", name: "耳鳴", find: ["web/src/ui_core.js", /S\.tinnitus\(/], when: "瘋狂發作中", nums: () => "P.bout（ui_core.js audioState）" },
   { key: "snd-dread", name: "理智低的恐怖音樂（horror-low／horror-edge）", find: ["web/src/ui_core.js", /S\.dread\(/], when: "理智 < 45 疊 horror-low；≤ 15（含歸零）換 horror-edge；進 15 以下響一次 pulse-rise", nums: m => `SAN_DREAD＝${JSON.stringify(m.SAN_DREAD)}、sanDread()（shared/room_mood.js）` },
@@ -198,17 +198,17 @@ async function build(notes) {
   const keys = []; // 這份總表會用到的 fx_notes 名字（給「補新項目」用）
 
   // --- R（合成音效） ---
-  const R = blocks("web/src/fx.js", /^    const R = \{/, /^    \};/, /^      ([A-Za-z_][\w]*)\(t[,)]/);
+  const R = blocks("web/src/fx_sound.js", /^    const R = \{/, /^    \};/, /^      ([A-Za-z_][\w]*)\(t[,)]/);
   const Rnames = new Set(R.map(r => r.name));
   // --- AMB（環境音） ---
-  const AMB = blocks("web/src/fx.js", /^    const AMB = \{/, /^    \};/, /^      ([A-Za-z_]\w*)\(c, g(?:, own)?\)/);
+  const AMB = blocks("web/src/fx_sound.js", /^    const AMB = \{/, /^    \};/, /^      ([A-Za-z_]\w*)\(c, g(?:, own)?\)/);
 
   // --- 觸發點 ---
   const T = { snd: {}, file: {}, dynSnd: [], dynFile: [], unreg: [] }; // name → [{file,line,fn,vol,note}]
   const add = (bucket, k, row) => ((bucket[k] = bucket[k] || []).push(row));
   for (const rel of files) {
     const text = src(rel), lines = text.split("\n"), short = rel.replace("web/src/", "");
-    const isFx = rel === "web/src/fx.js";
+    const isFx = rel === "web/src/fx_sound.js";
     for (const x of findSnd(text, Rnames)) {
       if (/^\s*export const snd = /.test(lines[x.line - 1])) continue;
       if (x.dynamic) { if (!/^\w+$/.test(x.raw) || x.raw !== "n") T.dynSnd.push({ file: short, line: x.line, fn: fnAt(lines, x.line - 1), raw: x.raw }); continue; }
@@ -236,24 +236,24 @@ async function build(notes) {
     if (e.snd) { if (Rnames.has(e.snd)) add(T.snd, e.snd, { ...row, vol: "" }); else T.unreg.push({ id: e.snd + "（合成音）", file: "shared/fight_sfx.js", line: at }); }
   }
   // 環境音裡的檔案
-  const fxText = src("web/src/fx.js");
+  const fxText = src("web/src/fx_sound.js");
   const ambFile = {}; // AMB 名 → [{kind,id,vol}]
   for (const a of AMB) {
     const calls = findFileCalls(a.body), list = [];
     for (const c of calls) {
       if (c.dynamic) continue;
-      for (const id of c.ids) { list.push({ kind: c.kind === "fileLoop" ? "循環" : "偶爾", id, vol: c.vol }); add(T.file, id, { file: "fx.js", line: a.startLine + c.line - 1, fn: "AMB." + a.name, vol: c.vol, note: c.kind }); if (!sfx[id]) T.unreg.push({ id, file: "fx.js", line: a.startLine + c.line - 1 }); }
+      for (const id of c.ids) { list.push({ kind: c.kind === "fileLoop" ? "循環" : "偶爾", id, vol: c.vol }); add(T.file, id, { file: "fx_sound.js", line: a.startLine + c.line - 1, fn: "AMB." + a.name, vol: c.vol, note: c.kind }); if (!sfx[id]) T.unreg.push({ id, file: "fx_sound.js", line: a.startLine + c.line - 1 }); }
     }
     // 表裡的 id（FLOOR、SUSP、odd 清單這種沒直接呼叫的）
     const seen = new Set(list.map(x => x.id));
-    for (const id of strLits(a.body)) if (sfx[id] && !seen.has(id)) { seen.add(id); list.push({ kind: "表裡", id, vol: "" }); add(T.file, id, { file: "fx.js", line: a.startLine, fn: "AMB." + a.name, vol: "", note: "（表裡的 id，音量看表）" }); }
+    for (const id of strLits(a.body)) if (sfx[id] && !seen.has(id)) { seen.add(id); list.push({ kind: "表裡", id, vol: "" }); add(T.file, id, { file: "fx_sound.js", line: a.startLine, fn: "AMB." + a.name, vol: "", note: "（表裡的 id，音量看表）" }); }
     ambFile[a.name] = list;
   }
   // 環境音以外的 fx.js 檔案呼叫（dreadMusic 等）
   const outAmb = fxText.split("\n");
   for (const m of fxText.matchAll(/(?<![\w$])dreadMusic\(c, (["'])([\w-]+)\1, ([^)]+)\)/g)) {
     const ln = lineOf(fxText, m.index);
-    if (sfx[m[2]]) add(T.file, m[2], { file: "fx.js", line: ln, fn: fnAt(outAmb, ln - 1), vol: m[3].trim(), note: "dreadMusic" });
+    if (sfx[m[2]]) add(T.file, m[2], { file: "fx_sound.js", line: ln, fn: fnAt(outAmb, ln - 1), vol: m[3].trim(), note: "dreadMusic" });
   }
   // 其他檔裡直接引用到的 id（引號字串，且不在上面已經有觸發的）：算「用到」
   const quotedAt = {};
@@ -297,10 +297,10 @@ async function build(notes) {
   const fightFxNames = new Set(); fightFx.forEach(x => fightFxNames.add(x.kind));
   const fightFxInJs = (src("web/src/ui_fight.js").match(/const FX_ART = (\{[^}]*\})/) || [])[1];
   const fightArt = fightFxInJs ? evalObj(fightFxInJs) : {};
-  const fxToolNames = [...((fxText.match(/Object\.assign\(api, \{([\s\S]*?)\n  \}\);/) || [, ""])[1].matchAll(/^    (\w+)\s*[:,]/gm))].map(m => m[1]);
+  const fxToolNames = [...((src("web/src/fx.js").match(/Object\.assign\(api, \{([\s\S]*?)\n\}\);/) || [, ""])[1].matchAll(/^  (\w+)\s*[:,]/gm))].map(m => m[1]);
 
   // --- 環境音表 ---
-  const floorLines = src("web/src/fx.js").split("\n");
+  const floorLines = src("web/src/fx_sound.js").split("\n");
   const fs0 = floorLines.findIndex(l => /^\s*const FLOOR = \{/.test(l)), fe0 = floorLines.findIndex((l, i) => i > fs0 && /^\s*\};/.test(l));
   const FLOOR = [];
   for (let i = fs0 + 1; i < fe0; i++) {
@@ -347,7 +347,7 @@ async function build(notes) {
     "", "### 加新音效", "",
     "從 Pixabay 下載 mp3 後，一個指令做完壓縮、登記、備份原檔（細節看 `tools/sfx_add.cjs` 最上面）：", "",
     "```", 'npm run sfx:add -- "<下載的 mp3 路徑>" --id <英文id> --use "用在哪" [--loop] [--trim 起:迄秒] [--fadeout 秒] [--lufs -24] [--kbps 80] [--stereo] [--url <Pixabay 網址>] [--name "原名"] [--by 作者]', "```", "",
-    "跑完照它印的提示在程式裡呼叫 `sndFile(\"<id>\", 音量)`（畫面）或 `fileLoop`／`fileOnce`（環境音，在 `web/src/fx.js`），最後 `npm run fx:report`。", "",
+    "跑完照它印的提示在程式裡呼叫 `sndFile(\"<id>\", 音量)`（畫面）或 `fileLoop`／`fileOnce`（環境音，在 `web/src/fx_sound.js`），最後 `npm run fx:report`。", "",
     "### 聽過／要調怎麼記", "",
     "`content/fx_notes.json`：`{ \"<音效檔 id、合成音名字、房間名或畫面特效名>\": { \"heard\": \"2026-11-16\" 或 null, \"note\": \"太大聲…\" 或 null } }`。每個項目已經先放好（null）。",
     `目前翊文聽過：音效檔 ${heardN(sfxIds)}／${sfxIds.length}、合成音 ${heardN([...Rnames])}／${Rrows}、房間背景 ${heardN(AMB.map(a => "amb:" + a.name))}／${Arows}。有寫「要調」的：${Object.entries(notes).filter(([, v]) => v && v.note).length} 項。`);
@@ -366,21 +366,21 @@ async function build(notes) {
   }
 
   // 2 合成
-  sec("## 2. 合成音效（`web/src/fx.js` 的 `const R`）");
+  sec("## 2. 合成音效（`web/src/fx_sound.js` 的 `const R`）");
   o.push("全部程式即時合成，沒有檔案。用 `snd(\"名字\")` 呼叫。「呼叫處」是第 4 節找得到的處數。", "",
     "| 名字 | 說明（程式註解） | 在 | 呼叫處 |" + nCols, "|---|---|---|---|---|---|");
-  for (const r of R) { keys.push(r.name); o.push(`| ${r.name} | ${cell(r.desc)} | fx.js:${r.line} | ${(T.snd[r.name] || []).length}${!T.snd[r.name] && weakR[r.name] ? "（字串引用）" : ""} | ${noteCols(notes, r.name)} |`); }
+  for (const r of R) { keys.push(r.name); o.push(`| ${r.name} | ${cell(r.desc)} | fx_sound.js:${r.line} | ${(T.snd[r.name] || []).length}${!T.snd[r.name] && weakR[r.name] ? "（字串引用）" : ""} | ${noteCols(notes, r.name)} |`); }
 
   // 3 環境音
   sec("## 3. 環境音／背景樂");
-  o.push("### 3-1. 各房間（`web/src/fx.js` 的 `const AMB`）", "",
+  o.push("### 3-1. 各房間（`web/src/fx_sound.js` 的 `const AMB`）", "",
     "「用到的檔」＝ `fileLoop`（一直循環）／`fileOnce`（偶爾播一次）的 id 和音量；「間隔」＝ 程式裡 `rand(a, b)` 排程的秒數；其他（和弦、人聲、腳步）是合成的。", "",
     "| 房間 | 說明 | 在 | 用到的檔（音量） | 間隔（秒） |" + nCols, "|---|---|---|---|---|---|---|");
   for (const a of AMB) {
     keys.push("amb:" + a.name);
     const fl = ambFile[a.name].map(x => `${x.kind} ${x.id}${x.vol ? " " + x.vol.replace(/\s+/g, "") : ""}`);
     const iv = [...a.body.matchAll(/\(\)\s*=>\s*rand\((\d+),\s*(\d+)\)/g)].map(m => `${+m[1] / 1000}～${+m[2] / 1000}`);
-    o.push(`| ${a.name} | ${cell(a.desc)} | fx.js:${a.line} | ${cell(fl.join("；"))} | ${cell([...new Set(iv)].join("；"))} | ${noteCols(notes, "amb:" + a.name)} |`);
+    o.push(`| ${a.name} | ${cell(a.desc)} | fx_sound.js:${a.line} | ${cell(fl.join("；"))} | ${cell([...new Set(iv)].join("；"))} | ${noteCols(notes, "amb:" + a.name)} |`);
   }
   o.push("", "### 3-2. 哪個畫面放哪一個（`web/src/ui_core.js` 的 `AMB_OF`）", "", "| 畫面 | 環境音 |", "|---|---|");
   for (const [k, v] of AMB_OF) o.push(`| ${k} | ${v} |`);
@@ -389,7 +389,7 @@ async function build(notes) {
   o.push("", "### 3-3. 地下收藏庫：每層（`fx.js` 的 `FLOOR`）", "",
     "bed＝三～四條底音的音量（wind 風、basement 地下室、sewer 下水道、cave 洞穴滴水、waves 水波、void 虛空）；odd＝偶爾冒的音效檔；gap＝幾秒冒一次；drip＝滴水錄音的音量倍數。", "",
     "| 層 | 底音 bed | 偶爾冒 odd | gap（秒） | drip | 有人來了 | 說明 | 在 |", "|---|---|---|---|---|---|---|---|");
-  for (const f of FLOOR) o.push(`| ${f.floor === "base" ? "選樓層（base）" : "B" + f.floor} | ${cell(Object.entries(f.o.bed).map(([k, v]) => k + " " + v).join("、"))} | ${cell([...new Set(f.o.odd)].join("、"))} | ${(f.o.gap || []).join("～")} | ${f.o.drip} | ${f.o.coming ? "會" : ""} | ${cell(f.note)} | fx.js:${f.line} |`);
+  for (const f of FLOOR) o.push(`| ${f.floor === "base" ? "選樓層（base）" : "B" + f.floor} | ${cell(Object.entries(f.o.bed).map(([k, v]) => k + " " + v).join("、"))} | ${cell([...new Set(f.o.odd)].join("、"))} | ${(f.o.gap || []).join("～")} | ${f.o.drip} | ${f.o.coming ? "會" : ""} | ${cell(f.note)} | fx_sound.js:${f.line} |`);
   o.push("", "### 3-4. 地下收藏庫：在做什麼（`fx.js` 的 `MODE`）", "",
     "bed＝底音乘幾倍；gapK＝偶爾冒的間隔乘幾倍（0＝不冒）；dripK＝滴水。背景音樂另在 `applyMusic`：戰鬥 ready-fight、守門 stairs-boss／horror-gate、B1～B5 平常 suspense-*。", "",
     "| 狀態 | 說明 | bed | gapK | dripK | 其他 |", "|---|---|---|---|---|---|");
@@ -438,7 +438,7 @@ async function build(notes) {
   sec("## 6. 畫面特效");
   for (const g of ["房間效果", "理智效果", "畫面工具"]) {
     o.push(`### 6-${["房間效果", "理智效果", "畫面工具"].indexOf(g) + 1}. ${g}`, "",
-      g === "房間效果" ? "狀態（暖冷、暗、人影、旗、怪影子）只由 `shared/room_mood.js` 的 `roomMood` 算，`web/src/ui_mood.js` 畫，樣式在 `web/src/css/mood.css`（`rm-` 開頭）。" : g === "理智效果" ? "館友自己的理智效果比房間效果大：有熄燈、昏倒、逃跑、發作就把房間效果收起來。" : "`web/src/fx.js` 匯出的 `FX` 工具，樣式在 `web/src/css/fx.css`。", "",
+      g === "房間效果" ? "狀態（暖冷、暗、人影、旗、怪影子）只由 `shared/room_mood.js` 的 `roomMood` 算，`web/src/ui_mood.js` 畫，樣式在 `web/src/css/mood.css`（`rm-` 開頭）。" : g === "理智效果" ? "館友自己的理智效果比房間效果大：有熄燈、昏倒、逃跑、發作就把房間效果收起來。" : "`web/src/fx_sound.js` 匯出的 `FX` 工具，樣式在 `web/src/css/fx.css`。", "",
       "| 名字 | 什麼時候出現 | 門檻或數字在哪一處 | 程式 | 樣式 |" + nCols, "|---|---|---|---|---|---|---|");
     for (const v of vfxRows.filter(x => x.group === g)) { keys.push(v.key); o.push(`| ${cell(v.name)} | ${cell(v.when)} | ${cell(v.nums(rm))} | ${v.where} | ${v.cssWhere ? v.cssWhere : ""} | ${noteCols(notes, v.key)} |`); }
     o.push("");

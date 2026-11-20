@@ -125,7 +125,7 @@ function checkUi() {
 }
 
 function run() {
-  const fx = checkFx(rd("web/src/fx.js")), ui = checkUi();
+  const fx = checkFx(rd("web/src/fx_sound.js")), ui = checkUi();
   return { bad: [...fx.bad, ...ui.bad], info: [...fx.info, ...ui.info], rooms: fx.rooms };
 }
 module.exports = { checkFx, checkUi, ambEntries, run };
