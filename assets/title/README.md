@@ -17,3 +17,10 @@
 - 小圓章邊緣有些許綠邊，放在深色底上不明顯；要貼在淺色底上要再修。
 - 授權要翊文確認；不要放 Pepe the Frog 的樣子（決定 0005）。
 - 不在 `web/` 底下，不會進 `dist/`。
+
+
+---
+## 原圖已移出 repo（11-20，翊文：只存切好的）
+- 移出：`_sheet-cards.webp`、`_sheet-deco.webp`
+- 要找原檔：`git show 41f45c13:assets/title/<檔名>`（41f45c13 以前的 commit 都有）。
+- 切好的成品在 `web/public/`（哪個檔用在哪、從哪張原圖切的，看 `docs/素材/素材索引.md`）。

@@ -20,3 +20,10 @@
 
 - `port.webp`：翊文用直式 prompt 生的，572x1024，沒有文字。遊戲用 `web/public/lobby/port.webp`。
 - 房間位置在 `web/src/ui_lobby2.js` 的 `LOBBY2_ROOMS` 的 `port`（這張圖的像素）：上面一整排畫廊；圖書館、我的展廳；融合室、大廳（八角形）、抱枕工作台；圖鑑室、地下收藏庫；手作坊、委託櫃台；館長室、賭場；最下面是入口。
+
+
+---
+## 原圖已移出 repo（11-20，翊文：只存切好的）
+- 移出：`land.webp`、`port.webp`
+- 要找原檔：`git show 41f45c13:assets/floorplan/<檔名>`（41f45c13 以前的 commit 都有）。
+- 切好的成品在 `web/public/`（哪個檔用在哪、從哪張原圖切的，看 `docs/素材/素材索引.md`）。
