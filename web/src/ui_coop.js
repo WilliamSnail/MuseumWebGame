@@ -62,7 +62,7 @@ async function partyAct(act, extra) {
 export function openCoop(pid, o = {}) {
   if (S && S.pid === pid) { if (!(S.m && S.m.layer.isConnected)) mount(); return; }
   if (S) endSession(false);
-  NET.flush().catch(() => {}); // 手上的先送上去，之後都是伺服器寫（docs/多人實作.md 第二節第 3 條）
+  NET.flush().catch(() => {}); // 手上的先送上去，之後都是伺服器寫（docs/規劃/多人實作.md 第二節第 3 條）
   UI.saveHold = true;
   document.body.classList.add("coop-on");
   S = { pid, m: null, party: null, view: null, gone: false, out: null, shown: -1, anim: false, busy: null, offs: [], timers: {}, clock: null, pending: [], resumed: !!o.resumed, myVote: null, tickAt: 0, bestSent: false, chat: [], chatSeen: 0 };
@@ -404,7 +404,7 @@ function oddLine(v) {
 }
 function drawRun(v) {
   const s = S, me = meOf(v), f = floorOf(v), lv = v.pressure ? v.pressure.lv : 0;
-  fightReplaySync(v); // 打怪物：新的壹回合結算出來，開始演（docs/打怪演出規劃.md）
+  fightReplaySync(v); // 打怪物：新的壹回合結算出來，開始演（docs/規劃/打怪演出規劃.md）
   const hold = fightHold(v); // 打完最後壹回合還在演：先畫打怪的舞台，演完才換到下壹步
   const top = [h("span", { class: "cx-clock" }), v.ended ? null : btn("離隊", leaveRun, "small")];
   s.m.setTop(top);

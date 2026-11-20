@@ -1,4 +1,4 @@
-// 館內 NPC 的經濟接線（11-14，docs/館內NPC規劃.md 步驟 3）：node test/npc_econ.test.cjs（npm test 也會跑）
+// 館內 NPC 的經濟接線（11-14，docs/規劃/館內NPC規劃.md 步驟 3）：node test/npc_econ.test.cjs（npm test 也會跑）
 // 行程（每位 NPC 每天抽去哪幾家店、可能都不去、劇情角色跳過、平均 λ）、館內股人數用行程加總、全館計數、GDP 的投資和門票看已知世界的流向。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

@@ -1,4 +1,4 @@
-// 館內 GDP 和景氣指數的模擬（11-13，數值平衡；docs/經濟體系規劃.md 2.7 節）
+// 館內 GDP 和景氣指數的模擬（11-13，數值平衡；docs/規劃/經濟體系規劃.md 2.7 節）
 // node test/sim/sim_gdp.cjs [天數，預設 120]
 // 用 casinoReport 的每日快照（casBookSnap 相減）算每天的 GDP：消費＋投資＋政府支出＋淨出口，再算成長率和景氣指數，看雜訊多大。
 // 玩家行為：每人每天有 ACTIVE 機率上線；上線就做滿每日上限，賺到的 R 比例輸給莊家（同 sim_econ_world.cjs）。

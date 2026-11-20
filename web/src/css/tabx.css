@@ -1,5 +1,5 @@
 /* ================================================================
-   頁籤牌子：六種材質，每個廳挑一種（翊文 11-14 生的 P-13；分類和理由在 docs/頁籤牌子素材.md）
+   頁籤牌子：六種材質，每個廳挑一種（翊文 11-14 生的 P-13；分類和理由在 docs/素材/頁籤牌子素材.md）
    用法：廳的根 class 設四個變數；牌子的圖、字色都從變數來，不要每個廳各抄一份 border-image。
    圖：web/public/ui2/ui2-tabx-<材質>-1（平常）、-2（選好）。放在最後面載入，蓋過各廳舊的黃銅牌。
    ================================================================ */
@@ -59,7 +59,7 @@
 }
 /* 設定的頁籤：黃銅（跟畫廊壹樣） */
 .settings-onescreen { --tabx-1: url(/ui2/ui2-tabx-brass-1.webp); --tabx-2: url(/ui2/ui2-tabx-brass-2.webp); --tabx-ink: #1A0F06; --tabx-ink-on: #1A0F06; --tabx-sh: rgba(255, 240, 200, .7); --tabx-sh-on: rgba(255, 240, 200, .7); }
-/* 賭場面板的頁籤：墨綠絲絨牌（賭桌的綠，金邊跟籌碼同壹國；docs/頁籤牌子素材.md） */
+/* 賭場面板的頁籤：墨綠絲絨牌（賭桌的綠，金邊跟籌碼同壹國；docs/素材/頁籤牌子素材.md） */
 .nb-casino { --tabx-1: url(/ui2/ui2-tabx-velvet-1.webp); --tabx-2: url(/ui2/ui2-tabx-velvet-2.webp); --tabx-ink: #F3E3A8; --tabx-ink-on: #FFF3C4; --tabx-sh: rgba(0, 0, 0, .65); --tabx-sh-on: rgba(0, 40, 10, .7); }
 .nb-casino .nb-tabs { gap: 4px; }
 .nb-casino .nb-tab { min-height: 46px; padding: 0 10px; border: 12px solid transparent; border-image: var(--tabx-1) 30 40 fill / 12px 20px stretch; border-radius: 0; background: none; box-shadow: none; transform: none; color: var(--tabx-ink); text-shadow: 0 1px 0 var(--tabx-sh); font-weight: 800; }

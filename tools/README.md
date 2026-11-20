@@ -26,7 +26,7 @@
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/edit_lib.cjs")` 的 `editor` |
 | **改很多處文字（首選）**：寫純文字計畫檔，反引號、`$`、引號都不用跳脫；有壹處對不上就壹個檔都不寫 | `npm run edits -- 計畫檔`（格式在 `tools/apply_edits.cjs` 開頭，`--check` 只檢查） |
 | 一張好幾格的綠底素材切成一條（怪物姿勢、特效、圖示） | `~/anaconda3/python.exe tools/cut_frames.py 原圖 輸出.webp --rows 6 [--cell 200]`（`--rows 4,3` 每排幾格；用法在檔案開頭） |
-| 給翊文生素材：Prompt 做成網頁，每張有參考圖、「複製參考圖」「複製 Prompt」兩顆鈕 | `node tools/flat_prompts.cjs` → `docs/地下室素材Prompt.html`（從 `docs/地下室素材清單.md` 產生，不要手改） |
+| 給翊文生素材：Prompt 做成網頁，每張有參考圖、「複製參考圖」「複製 Prompt」兩顆鈕 | `node tools/flat_prompts.cjs` → `docs/素材/地下室素材Prompt.html`（從 `docs/素材/地下室素材清單.md` 產生，不要手改） |
 | **每天的排程做新關卡**：幾個旋鈕 → 地下今天的怪物；自動調難度、模擬 1～4 人、印出玩家會看到什麼、寫進當天的檔 | `npm run level:new -- 規格.json`（`--write` 寫進 `dN.json`；`--styles` 列出打法；格式在 `tools/new_level.cjs` 開頭；步驟在 `content/排程說明.md` 一之八） |
 | 打怪物的模擬（改 `NUM.fight`、`CELLAR_FOES` 之後跑） | `node test/sim/sim_fight.cjs 200`（`RANK=3` 看 3 級的） |
 | 開工作資料夾、接好依賴（同時做好幾件事、子代理一人一個） | `npm run wt -- --dir 路徑 --branch claude/主題`（`--remove` 收掉） |
@@ -41,11 +41,11 @@
 | **劇情帳本只看今天用得到的、壹次改壹個欄位**（帳本 13 萬字，不用整份讀、整份重寫） | `npm run ledger -- today`；`get／keys／set／push <路徑> [值]`（路徑用點，陣列可用 id，例 `foreshadow.f-page.closed`） |
 | **不開瀏覽器分頁，把畫面照成 PNG**：壹次照電腦和手機橫拿（打開就看得到的樣子；要按按鈕、要登入的還是用瀏覽器走） | 先開著 `npm run local`，再 `npm run shot -- "http://localhost:5287/#lobby"`（`--size 800x1000,375x812`、`--out 資料夾`；只准 localhost），用 Read 打開 PNG 看 |
 | **照手機直拿（375 寬）**：shot.cjs 窄過 500 照不了；這支模擬觸控手機，可以先跑 JS（按按鈕、拿掉提示泡泡）再照 | `node tools/shot_phone.cjs "http://localhost:5287/?x=1#lobby" --js "document.querySelector('.tb-menu').click()" --out a.png`（`--size`、`--wait`、`--full`；會自動略過「請轉橫」） |
-| **登入後的畫面照成 PNG**（賭場每一頁、銀行、展廳…；先用 `emu:call` 建帳號、`emu:doc` 給籌碼，最後才照；說明在 `docs/本機模擬器實測.md`） | `node tools/shot_login.cjs --url http://localhost:5393 --user 賭場甲 --room 賭場 --tab 成就 --size 375x740 --out a.png`（`--mode 新參觀者`、`--size 1366x768／740x375`） |
+| **登入後的畫面照成 PNG**（賭場每一頁、銀行、展廳…；先用 `emu:call` 建帳號、`emu:doc` 給籌碼，最後才照；說明在 `docs/操作/本機模擬器實測.md`） | `node tools/shot_login.cjs --url http://localhost:5393 --user 賭場甲 --room 賭場 --tab 成就 --size 375x740 --out a.png`（`--mode 新參觀者`、`--size 1366x768／740x375`） |
 | 量某個畫面放著不動時瀏覽器有多忙（重畫幾次、幾毫秒；改前改後比效能） | `node tools/perf_idle.cjs "http://localhost:5287/?x=1#lobby" --size 1920x1080 --secs 10`；加 `--top 15` 列出最吃 CPU 的函式，加 `--js "…"` 先在頁面跑壹段（例如停掉動畫比較），加 `--after "…"` 量完印出頁面上的值 |
-| **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/測試清單.md`） | `node tools/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/qa_casino_ev.cjs 400000` |
+| **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/操作/測試清單.md`） | `node tools/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/qa_casino_ev.cjs 400000` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
-| **按 Firebase 固定動作、存結果、跟上次比**（改正式資料的前後對照；按要翊文同意） | `npm run fb -- house-ledger --save W4前`、`--diff W4前`；`--show 名字` 不按只看。查錯：`npm run fb -- fn-errors`；量大小：`house-size`。整份在 `docs/伺服器除錯.md`。排隊超過 10 分鐘還沒開始會自己取消、重按壹次（`gh_lib` 的 `dispatch`） |
+| **按 Firebase 固定動作、存結果、跟上次比**（改正式資料的前後對照；按要翊文同意） | `npm run fb -- house-ledger --save W4前`、`--diff W4前`；`--show 名字` 不按只看。查錯：`npm run fb -- fn-errors`；量大小：`house-size`。整份在 `docs/操作/伺服器除錯.md`。排隊超過 10 分鐘還沒開始會自己取消、重按壹次（`gh_lib` 的 `dispatch`） |
 | 看今天 20:00 Discord 彙整會發什麼 | `node tools/discord_digest.cjs [--date 2026-11-15]`（每天 20:00 由伺服器排程 `discordDigestTick` 發，`functions/discord_digest.js`；GitHub 的 `discord-digest.yml` 只留手動補發） |
 | 寫新腳本要叫 GitHub（觸發流程、等跑完、讀紀錄、找 gh） | 用 `tools/gh_lib.cjs` 的 `dispatch`、`runLog`、`ghRun`，**不要再自己寫壹份**；雲端擋 GraphQL，只用 `gh workflow／run／api` |
 
@@ -55,7 +55,7 @@
 
 **瀏覽器分頁是大家共用的**：預設分頁可能被別的子代理導走，畫面會莫名其妙關掉。要測就自己開新分頁（`tabs_create`，之後每個動作都帶 `tabId`）。怎麼快速進遊戲、測難走到的情況，看 `tools/browser_snippets.md`。
 
-**動手前先看 `docs/踩過的坑.md`**：部署、Discord、測試、改檔踩過的坑都在那裡。又踩到新的就寫進去。
+**動手前先看 `docs/規則/踩過的坑.md`**：部署、Discord、測試、改檔踩過的坑都在那裡。又踩到新的就寫進去。
 
 **要拿 `ship` 的結果，別接 `| tail`**（結束碼會被吃掉）：`npm run ship -- ... > log 2>&1; echo $?`，再找 `✓ PR`。
 

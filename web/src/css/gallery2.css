@@ -1,6 +1,6 @@
 /* ================================================================
    畫廊重做（11-14，美術統籌；翊文：「先直接做，讓我們畫廊有好的新介面」）
-   骨架：.screen.onescreen-room.gallery-onescreen（onescreen.css）。前綴 gal-（docs/class名單.md）
+   骨架：.screen.onescreen-room.gallery-onescreen（onescreen.css）。前綴 gal-（docs/規則/class名單.md）
    零件：翊文生的 P-5：ui2-frame（畫框）、ui2-easel（畫架）。畫排成壹排，左右滑；畫框高度跟著牆走，整頁不捲。
    ================================================================ */
 .gallery-onescreen .gal-main { grid-template-columns: minmax(0, 1fr) 280px; align-items: stretch; }

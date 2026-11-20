@@ -1,5 +1,5 @@
 // ================================================================
-//  Discord 聯動第二步：遊戲大事發到頻道的規則（決定 0051，docs/Discord聯動規劃.md「第二步」）
+//  Discord 聯動第二步：遊戲大事發到頻道的規則（決定 0051，docs/規劃/Discord聯動規劃.md「第二步」）
 //  純函式：不碰網路、資料庫、時鐘（時間從參數來）。Functions（functions/discord_out.js）負責寫 discordOutbox、發送。
 //  流程：遊戲裡的交易成功之後，把事件寫進 discordOutbox/{id}（只有 Functions 碰得到，firestore.rules 最後壹條擋住瀏覽器）；
 //        onDocumentCreated 的 Function 檢查冷卻，發到頻道。Discord 掛掉、沒 token、發失敗，都不影響遊戲。

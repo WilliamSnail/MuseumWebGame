@@ -1,4 +1,4 @@
-// NPC 預算總表（每個集團）：node tools/world_budget.cjs [--unit g-daily]（npm run world:budget）。決定 0086，規劃 docs/世界經濟規劃.md 第 7 節。
+// NPC 預算總表（每個集團）：node tools/world_budget.cjs [--unit g-daily]（npm run world:budget）。決定 0086，規劃 docs/規劃/世界經濟規劃.md 第 7 節。
 // 每個集團：NPC 人數、perDay 加總、倍率後的預算（現在倍率 1）、壹天最多能花（每人 perDay × dayPct%，到館的第一天再加門票）、占全館每天上限（dayCap）的比例、
 // 這個集團在已知世界的起始份額、照那個份額撐得了幾天。沒有單位的（學生、退休、自由業）算在家計。
 // 擋：任何集團「最多能花 × 30 天」超過它的份額（撐不到 30 天）→ exit 1。全館加起來超過 dayCap 只是提醒（dayCap 本來就是擋總量的上限）。只讀 repo 的檔案。

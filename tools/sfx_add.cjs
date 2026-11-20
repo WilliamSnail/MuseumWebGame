@@ -188,7 +188,7 @@ async function main() {
   console.log(loop
     ? `  1. 環境音：在 web/src/fx.js 的 AMB.<房間> 裡加  fileLoop(c, g, '${a.id}', 音量).n（記得放進 nodes）`
     : `  1. 畫面音效：在 web/src/ui_*.js 呼叫  sndFile("${a.id}", 音量)；環境音裡偶爾播：fileOnce(c, g, '${a.id}', 音量)`);
-  console.log("  2. npm run fx:report   （更新 docs/音效與特效總表.md，會把這個新音效列進去）");
+  console.log("  2. npm run fx:report   （更新 docs/素材/音效與特效總表.md，會把這個新音效列進去）");
   console.log("  3. npm test            （test/sfx_files.test.cjs 會檢查三邊對得上）");
 }
 

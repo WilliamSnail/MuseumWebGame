@@ -1,4 +1,4 @@
-// 各集團的健康值和狀態：node tools/world_health.cjs [--b 0] [--weeks 8]（npm run world:health -- …）。決定 0086（W5），規劃 docs/世界經濟規劃.md 第 4 節。
+// 各集團的健康值和狀態：node tools/world_health.cjs [--b 0] [--weeks 8]（npm run world:health -- …）。決定 0086（W5），規劃 docs/規劃/世界經濟規劃.md 第 4 節。
 // 用真的程式（莊家換日 → whTick）從頭跑 weeks 週、景氣每天都當 b，印最後一天每個集團：健康值 h、這週狀態、NPC 預算倍率、連續低迷幾週、離緊縮／裁員還差幾週。
 // 想看正式站現在的：請翊文同意後按固定動作 world-status（npm run fb -- world-status）。這支只讀 repo 的檔案。
 //   --b 景氣（−1～1，預設 0）　--weeks 幾週（預設 8，最多 52）　--set 路徑=值（NUM 底下，可以多次）

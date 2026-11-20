@@ -1,4 +1,4 @@
-// NPC 買畫（11-14，docs/館內NPC規劃.md 步驟 4）：node test/npc_art.test.cjs（npm test 也會跑）
+// NPC 買畫（11-14，docs/規劃/館內NPC規劃.md 步驟 4）：node test/npc_art.test.cjs（npm test 也會跑）
 // 每場最多壹位 NPC 出價、錢從已知世界的池子來、不超過自己的預算和全館壹天的上限、NPC 沒贏也會把價格抬到他的出價、玩家的畫賣給 NPC 賣家拿到錢、守恆。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

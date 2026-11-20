@@ -1,4 +1,4 @@
-// 開 Firebase 模擬器：npm run emulators（docs/Firebase做法.md 第五節）
+// 開 Firebase 模擬器：npm run emulators（docs/操作/Firebase做法.md 第五節）
 // - 專案名用 demo-pepe4：demo- 開頭的專案不用登入 Firebase，也不會連到真的專案。
 // - 要 Java 21。這台電腦的 PATH 找不到 java 時，試著找 Windows 上 Eclipse Adoptium 裝的位置。
 // - 資料放在 .firebase-data/（不進 repo），關掉時存下來，下次開的時候讀回來。

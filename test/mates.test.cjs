@@ -4,7 +4,7 @@ const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
-const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/架構.md 第 6 節）
+const J = x => JSON.parse(JSON.stringify(x)); // vm 裡的物件拿出來比（見 docs/規則/架構.md 第 6 節）
 const P = (id, nick, status, room, extra = {}) => Object.assign({ id, nick, status, room }, extra);
 
 T("導覽圖上的每間房都認得；名單和 art.js 的 PLAN 對得上", G => {

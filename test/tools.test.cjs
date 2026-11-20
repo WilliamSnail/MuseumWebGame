@@ -51,7 +51,7 @@ T("merge：清單兩邊都留、其他只留內容；公告檔和不進 git 的�
   assert.strictEqual(keepBoth("<<<<<<< a\nA\n=======\nB\n>>>>>>> b\n"), "A\nB\n");
   const l = '<<<<<<< a\nconst O = ["x.js", "new1.js", "z.js"];\n=======\nconst O = ["x.js", "z.js", "new2.js"];\n>>>>>>> b\n';
   assert.strictEqual(keepBoth(l, "list"), 'const O = ["x.js", "new1.js", "z.js", "new2.js"];\n');
-  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md") && canAuto("docs/音效與特效總表.md"));
+  assert.ok(canAuto("shared/notices.js") && canAuto("維護日誌/README.md") && canAuto("docs/素材/音效與特效總表.md"));
   assert.ok(!canAuto("shared/logic.js"));
 });
 T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別場不動；找不到回 null", () => {

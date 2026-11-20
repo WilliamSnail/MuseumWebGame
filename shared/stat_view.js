@@ -1,5 +1,5 @@
 // ================================================================
-//  公用的「數值怎麼看」：statView（決定 0088，docs/理智值提案.md 第 6 節）
+//  公用的「數值怎麼看」：statView（決定 0088，docs/規劃/理智值提案.md 第 6 節）
 //  畫面、日報、Discord、腳本、伺服器回傳給畫面都叫這一個，**分級的門檻和名字只寫在這一處**，不各自算。
 //    statView(kind, id, data) → { value, band, label, tone, hint, pub } 或 null（沒有資料）
 //      kind：unitHealth（集團健康值 h）、unitState（一般／減薪／緊縮／裁員）、budgetMult（NPC 預算倍率）、

@@ -47,11 +47,11 @@ import "./css/office2.css"; // 館長室重做（11-14，ui_screens3.js） // �
 import "./css/mood.css"; // 房間效果（11-15，ui_mood.js）
 import "./css/stat.css"; // 公用數值元件（11-15，ui_stat.js）
 import "./css/bank.css"; // Yuga Bot 銀行廳（11-13，ui_bank.js）
-import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/介面整合規劃.md 第六步）。零件在 public/ui2
+import "./css/onescreen.css"; // 介面重塑：每個廳壹個畫面（11-13，docs/規劃/介面整合規劃.md 第六步）。零件在 public/ui2
 import "./css/map.css"; // 館外地圖（11-16，ui_map.js）
 import "./css/npccard.css"; // 旅客卡（11-16，ui_npc_card.js）
 import "./css/hallnow.css"; // 展廳現在、評價（11-14，ui_hallnow.js）
-import "./css/tabx.css"; // 頁籤牌子六種材質（11-14，docs/頁籤牌子素材.md）
+import "./css/tabx.css"; // 頁籤牌子六種材質（11-14，docs/素材/頁籤牌子素材.md）
 import "./css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";

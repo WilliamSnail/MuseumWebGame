@@ -1,5 +1,5 @@
 // ================================================================
-//  地下室改版：打怪物的規則（決定 0067，規劃 docs/地下室改版規劃.md 第四節）
+//  地下室改版：打怪物的規則（決定 0067，規劃 docs/規劃/地下室改版規劃.md 第四節）
 //  翊文 11-12：「讓整個冒險更有趣，最好還有互動打怪物的部分」「預設都要能合作」
 //  一開始就是 1～4 個人的版本：一個人下去＝一個人的隊伍（館方助手補位），沒有另一套單人規則。
 //  回合制：怪物先亮出下一招（fight.intent），每個人各選一個行動，fightRound 一起結算。
@@ -36,13 +36,13 @@ export const FIGHT_MOVES = {
   squat: { cat: "姿勢", v: "斯拉夫蹲" },  // 這回合自己的佩佩不會倒
   cheer: { cat: "姿勢", v: "比讚" },      // 下一回合每個人的推 +cheer
 };
-// 合作的新行動（docs/打怪玩法規劃.md 第四節）：引開（坦）、鼓舞、分膽（輔助）、安慰（治療）、看清（偵查）
+// 合作的新行動（docs/規劃/打怪玩法規劃.md 第四節）：引開（坦）、鼓舞、分膽（輔助）、安慰（治療）、看清（偵查）
 export const FIGHT_TEAM_ACTS = ["taunt", "inspire", "share", "comfort", "reveal"];
 export const FIGHT_ACTS = ["push", "see", "calm", "guard", "flee", "retreat", "point"].concat(FIGHT_TEAM_ACTS, Object.keys(FIGHT_MOVES));
 // 角色（開打時照帶的佩佩和職業算「你適合」，第四節）
 export const FIGHT_ROLE_TEXT = { tank: "坦", support: "輔助", healer: "治療", dps: "輸出", scout: "偵查" };
 
-// ---------- 怪物的個性（docs/打怪玩法規劃.md 第二節；CELLAR_FOES[].trait） ----------
+// ---------- 怪物的個性（docs/規劃/打怪玩法規劃.md 第二節；CELLAR_FOES[].trait） ----------
 export const FIGHT_TRAIT_KINDS = ["shell", "thick", "slippery", "stubborn", "grow", "steal", "mark", "veil", "blur"];
 export function fightTraitText(t) {
   if (!t) return null;

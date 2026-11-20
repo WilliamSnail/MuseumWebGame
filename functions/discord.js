@@ -1,6 +1,6 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  Discord 聯動第一步：Yuga Bot 的入口 discordBot（決定 0051，docs/Discord聯動規劃.md）
+//  Discord 聯動第一步：Yuga Bot 的入口 discordBot（決定 0051，docs/規劃/Discord聯動規劃.md）
 //  Discord 把指令用 HTTPS 送來（Interactions Endpoint URL），我們驗簽名、當場讀資料庫、回覆。
 //    - 簽名：X-Signature-Ed25519、X-Signature-Timestamp，用 Discord 的公鑰（discord_config.js）驗，過不了回 401。時間戳差太多也拒絕。
 //    - 沒設定（公鑰、伺服器 ID 還是空的）回 503，其他 Function 不受影響。

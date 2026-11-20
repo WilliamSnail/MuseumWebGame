@@ -12,7 +12,7 @@
 // node tools/weekly_board.cjs --dry-run    只印不發：不寫 Firestore、不發 Discord
 // node tools/weekly_board.cjs --force      這週發過了也重算、再發一次（數字會變成現在的）
 // node tools/weekly_board.cjs --daily      每天更新；加 --force 週一也算；加 --dry-run 只印不寫
-// 連模擬器（docs/Firebase做法.md 第十節）：FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
+// 連模擬器（docs/操作/Firebase做法.md 第十節）：FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
 //   有 FIRESTORE_EMULATOR_HOST 就一定不發 Discord。--now 只有連模擬器時能用。
 const fs = require("fs"), path = require("path");
 const { send, footer, MAX } = require("./discord_post.cjs");

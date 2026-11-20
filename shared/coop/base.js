@@ -36,7 +36,7 @@ export const COOP = {
     { below: 30, lv: 2, power: 2, skill: -10, failSan: 1 },
     { below: 20, lv: 3, power: 3, skill: -15, failSan: 2 },
   ],
-  // 伺服器走一趟的時間（shared/coop/flow.js，docs/多人實作.md 的 M4）：投票 30 秒、棄權連 3 次離隊、斷線 60 秒
+  // 伺服器走一趟的時間（shared/coop/flow.js，docs/規劃/多人實作.md 的 M4）：投票 30 秒、棄權連 3 次離隊、斷線 60 秒
   voteMs: 30000, resultMs: 20000, floorMs: 30000, resumeMs: 15000,
   fightMs: 25000,          // 打怪物：每回合選行動的時間（地下室改版，決定 0067）
   maxSkips: 3,             // 連幾次沒投票算掛機、自動離隊

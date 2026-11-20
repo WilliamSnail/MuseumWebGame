@@ -1,4 +1,4 @@
-// 世界經濟（已知世界的單位和 NPC 的隸屬）的共用工具：讀寫 content/world/units、檢查兩層加總。規劃 docs/世界經濟規劃.md、決定 0086。
+// 世界經濟（已知世界的單位和 NPC 的隸屬）的共用工具：讀寫 content/world/units、檢查兩層加總。規劃 docs/規劃/世界經濟規劃.md、決定 0086。
 // 這支只讀寫 repo 裡的檔案，不碰正式站。tools/world_check.cjs、world_unit.cjs、world_npc.cjs 都用它。
 // 單位是一棵樹：用 parent 指向上一層（頂層是 null），不寫死兩層。
 const fs = require("fs"), path = require("path");
