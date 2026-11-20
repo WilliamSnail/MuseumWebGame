@@ -625,3 +625,15 @@ body.reduce-motion .cas-bub { animation: none; }
   .cas-side > .cas-mp .btn { width: 100%; white-space: nowrap; }
   .nb-casino .cas-body:has(.cas-result) .cas-say { display: none; } /* 結果出來了：輸贏已在結果條上，荷官的話不再佔壹塊，下注框才在第壹屏 */
 }
+
+/* 同桌（nb-table）手機直拿（11-20，測試複看 PR 846）：這個畫面沒有頁籤和『跟館友同桌』，銀行條是 .cas-bank-host，要整列；帳戶也整列；帳戶展開時限高，遊戲區不被擠成小窗 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .cas-side > .cas-bank-host { grid-column: 1 / -1; grid-row: 1; order: 0; min-width: 0; }
+  .nb-table .cas-side > .cas-acct { grid-column: 1 / -1; grid-row: 3; }
+  .nb-casino .cas-acct .bank-acct { max-height: 112px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .nb-casino .cas-acct .bank-acct p.net { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-table .nb-top-r .btn { white-space: nowrap; min-width: max-content; padding: 0 10px; }
+  .nb-table .cas-inv-b { min-height: 40px; font-size: .9375rem; }
+}
