@@ -1,0 +1,163 @@
+{
+  "day": 5,
+  "date": "2026-11-20",
+  "holiday": null,
+  "board": "委託櫃台清點：日報文化部欄往外多壹筆，對方是號碼。書架多 1 本書。",
+  "books": [
+    {
+      "id": "5a",
+      "line": "w47-count",
+      "clue": "c-desk-sum-extra",
+      "title": "委託櫃台的清點日",
+      "spine": "合計",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "今天是委託櫃台的清點日。\n店員把壹整個月的委託單攤在桌上，\n壹張壹張翻，嘴裡小聲念著數字。\n「每張都對。」他說，「壹張都沒少。」",
+        "他把單子加起來，寫在最下面那行：合計。\n你也數了壹遍，跟他壹樣。\n但他的合計欄，比兩個人數出來的都多壹格。",
+        "「這壹格是誰的？」你問。\n店員看著那壹格，想了很久：\n「是收單的人吧。每天收單的時候，我都在櫃台後面。」\n他拿筆點了點自己，又把筆放下。",
+        "樓梯口的粉筆記號又往下延了壹小段，\n停在通往 B2 的第壹階。\n警衛蹲在那裡，不再數第三遍，\n只是用捲尺，從地板量到自己的肩膀。",
+        "店員把清點好的單子綁成壹疊：\n「這個月，委託櫃台的帳是平的。」\n他頓了壹下，補壹句：\n「如果我不算我自己的話。」\n(你沒有回答，只是把那壹疊單子，輕輕放回抽屜)"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d5a",
+      "kind": "read",
+      "book": "5a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d5b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d5c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w3",
+      "words": "委託櫃台清點日，單子加起來比人數多壹格；店員說那壹格是收單的人。"
+    }
+  ],
+  "show": {
+    "title": "清點日",
+    "intro": "樓梯口這排畫掛得很低：壹張數過兩遍的委託單、通往 B2 的第壹階，和壹隻替店員蓋章的佩佩。",
+    "works": [
+      {
+        "id": "s5a",
+        "frame": "dark",
+        "fx": [],
+        "title": "合計欄的最後壹格",
+        "lines": [
+          "委託單的合計欄比單子多出壹格，格子裡沒有字。",
+          "旁邊的筆放在桌沿，筆尖朝著櫃台後面的椅子。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><defs><linearGradient id='n' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2a2418'/><stop offset='1' stop-color='#100d08'/></linearGradient></defs>",
+          "<rect width='240' height='300' fill='url(#n)'/>",
+          "<rect x='30' y='170' width='180' height='14' fill='#5a4630'/><rect x='40' y='184' width='8' height='90' fill='#46361f'/><rect x='192' y='184' width='8' height='90' fill='#46361f'/>",
+          "<rect x='60' y='60' width='120' height='104' fill='#e8e2cc' transform='rotate(-3 120 112)'/>",
+          "<g stroke='#6b6454' stroke-width='2'><path d='M72 82 H168 M72 100 H168 M72 118 H168 M72 136 H168'/></g>",
+          "<rect x='72' y='142' width='34' height='16' fill='none' stroke='#b6463a' stroke-width='2'/><rect x='108' y='142' width='34' height='16' fill='none' stroke='#b6463a' stroke-width='2'/><rect x='144' y='142' width='34' height='16' fill='none' stroke='#b6463a' stroke-width='2' stroke-dasharray='4 3'/>",
+          "<path d='M190 164 L226 150' stroke='#c9a24a' stroke-width='4' stroke-linecap='round'/>",
+          "<circle cx='40' cy='40' r='16' fill='#d9d6c4' opacity='.55'/></svg>"
+        ],
+        "clue": "c-desk-sum-extra2",
+        "san": "0/1D3"
+      },
+      {
+        "id": "s5b",
+        "frame": "gold",
+        "fx": [
+          "sepia"
+        ],
+        "title": "通往 B2 的第壹階",
+        "lines": [
+          "粉筆記號停在最上面那壹階，再往下是暗的。",
+          "階梯下面站著幾個蓋著白布的影子，布上沒有掛牌子。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#14161c'/>",
+          "<path d='M20 40 H220 V70 H20Z M30 70 H210 V110 H30Z M40 110 H200 V160 H40Z' fill='#2c313b'/>",
+          "<g stroke='#e8e4d4' stroke-width='3' stroke-linecap='round'><path d='M60 62 V48 M70 62 V48 M80 62 V48 M90 62 V48 M100 62 V48'/><path d='M96 64 L66 46'/></g>",
+          "<g fill='#d8d5c8' opacity='.85'><path d='M50 290 Q50 215 78 215 Q106 215 106 290Z'/><path d='M130 290 Q130 225 156 225 Q182 225 182 290Z'/></g>",
+          "<path d='M60 224 Q78 214 96 224' stroke='#9a978a' fill='none' stroke-width='2'/></svg>"
+        ]
+      },
+      {
+        "id": "s5c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "替店員蓋章的佩佩",
+        "lines": [
+          "牠踮著腳，把章蓋在最後壹格旁邊，沒有蓋進去。",
+          "店員問為什麼，牠說：「這壹格不是我的，也不是你的。」"
+        ]
+      }
+    ]
+  },
+  "adds": [],
+  "market": [
+    {
+      "title": "夜市暖點心攤延長營業壹小時",
+      "line": "攤主說今晚的號碼牌發到最後壹張，才發現發出去的比人數多壹張。",
+      "tone": "up",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠驗貨單改成兩人簽",
+      "line": "驗貨單最下面的簽名欄，現在要兩個人各簽壹次，簽完常常還空壹格。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行號碼簿重印",
+      "line": "新號碼簿比舊的厚壹頁，多的那壹頁只印了壹個號碼，旁邊沒有名字。",
+      "tone": "flat",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官把記牌本翻到新的壹頁，每手畫壹筆，數到第八筆，他停下來看了看自己站的位置。"
+  },
+  "real": [
+    "北市選戰剩八天，街角的政見看板旁多了幾張貼紙，寫著「請數壹遍再投」。",
+    "週五傍晚，下班的人在公車站排成長長的壹列，隊伍尾巴壹直在變。"
+  ]
+}
