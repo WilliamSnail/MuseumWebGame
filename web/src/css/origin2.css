@@ -167,3 +167,9 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
   .origin-onescreen .reader .book.sealed-book > .book-hint { margin: 0 0 6px; font-size: .8125rem; }
   .origin-onescreen .reader .book.sealed-book > .sealed-hint { font-size: .9375rem; line-height: 1.6; padding: 8px 10px; margin: 0; }
 }
+
+/* 書架換行（11-20，翊文截圖：第二排的書壓在隔板上、下面一排的標籤被切）：書架下緣多留空間給隔板，排與排之間隔開 */
+.origin-onescreen .story-shelf { padding-bottom: 28px; margin-bottom: 36px; }
+.origin-onescreen .story-shelf .spine { margin-bottom: 0; }
+.origin-onescreen .story-shelf .shelf-label { z-index: 2; }
+@media (max-width: 760px) { .origin-onescreen .story-shelf { padding-bottom: 20px; margin-bottom: 28px; } }
