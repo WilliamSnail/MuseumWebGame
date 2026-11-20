@@ -493,6 +493,7 @@ export function casStockLevView(w, house, day, t, src) {
 }
 // 把這次平倉、強平的話拿走（畫面下次拿到就說）
 // 成交紀錄給畫面（shared/casino/trade_log.js）：最近 50 筆，新的在前，名字查好。
+// profit ＝ 實際賺賠（賣出金額 − 手續費 − 證交稅 − 成本，跟錢包實際變化對得上，11-20 翊文）：存檔裡館外股、館內股的 g 是扣稅前（遊戲原本的 profit），這裡扣掉同一筆的 x；集團股的 g 本來就扣過稅；槓桿平倉的 g 已含兩次手續費和當沖稅。舊紀錄也這樣算，不改存檔
 // market：out 館外股、in 館內股、grp 集團股；lev＝true 是槓桿的開倉／平倉（畫面放在「槓桿」頁籤）；kind：buy／sell／open／close；why 只有平倉有（close 手動、liq 強平、stop 停損、take 停利、flat 收盤自動）
 export function casTradeView(w) {
   const L = w && Array.isArray(w.tl) ? w.tl : [], MK = { o: "out", i: "in", g: "grp" };
@@ -500,7 +501,7 @@ export function casTradeView(w) {
     const lev = r.a === "lo" || r.a === "lc";
     return { day: r.d || null, t: lqN(r.t) || null, id: r.id, name: lqName(r.id), market: MK[r.m] || "out", lev, kind: lev ? (r.a === "lo" ? "open" : "close") : r.a === "b" ? "buy" : "sell",
       side: lev ? (r.y === "s" ? "short" : "long") : null, mult: lev ? lqN(r.v) || null : null, why: lev && r.a === "lc" ? r.w || "close" : null,
-      n: lqN(r.n), price: Number(r.p) || 0, fee: lqN(r.f), tax: lqN(r.x), profit: r.a === "b" || r.a === "lo" ? null : Math.round(Number(r.g) || 0), order: !!r.q, debt: !!r.r };
+      n: lqN(r.n), price: Number(r.p) || 0, fee: lqN(r.f), tax: lqN(r.x), profit: r.a === "b" || r.a === "lo" ? null : Math.round((Number(r.g) || 0) - (r.a === "s" && r.m !== "g" ? lqN(r.x) : 0)), order: !!r.q, debt: !!r.r };
   });
 }
 export function casLevTakeNotes(w) { const S = casLevFix(w), n = S.notes; S.notes = []; return n; }
