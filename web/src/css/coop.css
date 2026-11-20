@@ -289,3 +289,8 @@ body.reduce-motion .tr-wisp { display: none; }
 .cx-npc-say.ok b { color: #A5E3B5; }
 .cx-npc-say p { margin: 0; line-height: 1.5; }
 @media (max-width: 760px) { .cx-npc-face { width: 52px; height: 52px; font-size: 1.25rem; } }
+
+/* 隊伍 7～8 隻（4 個人，每人最多 2 隻；11-21）：每隻只剩 12% 寬，名牌縮小、單雙數上下錯開才不疊在一起 */
+.cx-dense .cs-tag { font-size: .625rem; padding: 1px 5px; }
+.cx-dense .cs-frog:nth-child(even) .cs-tag { top: -22px; }
+@media (max-width: 760px) { .cx-dense .cs-tag { max-width: 64px; overflow: hidden; text-overflow: ellipsis; } }
