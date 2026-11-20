@@ -141,3 +141,8 @@
 /* 賭場浮層的頂端放不下就只寫「N 人」 */
 .nb-top .btn.rn-pill { min-height: 36px; padding: 0 10px; font-size: .8rem; }
 @media (max-width: 560px) { .nb-top .rn-pill .rn-t { display: none; } }
+/* 大廳手機直拿的精簡列：放不下就換行，「邀旅客去賭場」不被切（11-20） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .l2-pbar, .hn-bar { flex-wrap: wrap; }
+  .hn-bar .hn-inv { flex: 1 1 auto; white-space: nowrap; min-width: max-content; }
+}

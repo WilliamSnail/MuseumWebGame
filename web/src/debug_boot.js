@@ -8,7 +8,7 @@ import { coopAct, coopBegin } from "../../shared/coop/flow.js";
 import { assignJob } from "../../shared/legacy.js";
 import { hallSize, startCellar } from "../../shared/systems.js";
 import { storyState } from "../../shared/story_state.js";
-import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, setP, setSave, useProfile } from "./ui_core.js";
+import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, note, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "./ui_screens1.js";
 import { pickJob } from "./ui_screens3.js";
 import { overlay } from "./ui_board.js";
@@ -158,6 +158,8 @@ function fightPreview(arg) {
             mk("make", "做 2 隻佩佩", "todo", null, "", "", 25, 1, 2, true))))); }, 300);
       return;
     }
+    // #toast：連發好幾則提示（任務完成合併成壹則、手機最多 2 則，11-20）
+    if (screen === "toast") { go("lobby", {}, { action: false }); setTimeout(() => { for (let i = 1; i <= 5; i++) note(`任務完成：做 ${i} 隻佩佩。到「每週劇情」領獎勵。`, "good"); note("書架多了壹本：〈測試〉", "good"); note("領到了：靈感 +1", "good"); }, 600); return; }
     if (screen === "book") { go("origin", {}, { action: false }); setTimeout(() => openBook(STORY_CHAPTERS[0], $(".reader")), 300); return; }
     go(screen, arg && !["lowsan", "bout", "quirk"].includes(arg) && !/^pool/.test(arg) && !/^pnm/.test(arg) && screen !== "tasks" ? { tab: arg } : {}, { action: false });
   }, 150);

@@ -277,3 +277,9 @@ body.reduce-motion .fx-press.is-pressed { scale: none; opacity: .86; }
 @keyframes cel-fall { 0% { opacity: 1; transform: translateY(0) rotate(var(--rot)); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(110vh) translateX(calc(var(--dx) * .4)) rotate(calc(var(--rot) + 540deg)); } }
 @keyframes cel-flash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes cel-mote { 0% { opacity: 0; transform: translate(0, 0) scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) - 90px)) scale(1.2); } }
+
+/* 手機直拿：提示縮小、貼在底下，不蓋住操作區（11-20，翊文：任務完成壹疊疊在畫面中間） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .fx-toasts { gap: 4px; max-width: calc(100vw - 16px); bottom: calc(var(--status-real, 110px) + 8px); }
+  .fx-toast { min-height: 32px; padding: 5px 12px; font-size: 13px; line-height: 1.4; max-width: calc(100vw - 16px); }
+}
