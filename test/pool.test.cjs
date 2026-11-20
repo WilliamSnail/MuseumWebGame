@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
+const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.cultureGiftMore = []; /* 決定 0143 的多筆資助另外在 gift_multi.test 測 */ G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-19", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const mk = (G, base = 1000000000) => { const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base, e: 0, lv: G.NUM.casino.pool.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] }; return h; };
 // 決定 0142：水位看「拿到款後累計賺的」：每天日報淨值比上壹次多的部分加進 e（虧的當 0、不扣），目標 ＝ clamp(start ＋ (1−start) × e ÷ earnT，min，1)
@@ -23,12 +23,12 @@ T("到門檻：賺滿 earnT 後水位到 1 而且連續 confirm 個日報目標 
   const h3 = mk(G); for (let i = 1; i <= 13; i++) G.casPoolDay(h3, add(D0, i), 1000000000 + C.earnT * 2); assert.ok(!h3.pool.night, "到頂之前不會有"); assert.ok(h3.pool.lv < 1 || h3.pool.hold < C.confirm);
 });
 T("舊的 pool（沒有 e）：第壹次日報從 0 開始，不追溯，上壹次淨值設成現在", G => {
-  const h = mk(G); delete h.pool.e; h.pool.base = 1000; G.casPoolDay(h, add(D0, 1), 900000000); assert.strictEqual(h.pool.e, 0); assert.strictEqual(h.pool.base, 900000000); assert.strictEqual(h.pool.lv, G.NUM.casino.pool.start);
+  const h = mk(G); delete h.pool.e; h.pool.base = 1000; G.casPoolDay(h, add(D0, 1), 900000000); assert.strictEqual(h.pool.e, 0); assert.strictEqual(h.pool.who.u1.base, 900000000); assert.strictEqual(h.pool.lv, G.NUM.casino.pool.start);
 });
 T("門檻那晚過去（隔天日報）：水退回 start、e 歸 0、上壹次淨值重設、hits ＋ 1、night 清掉；不動錢", G => {
   const C = G.NUM.casino.pool, h = mk(G); let d = 0, nw = 1000000000; while (!h.pool.night && d < 60) { d++; nw += C.earnT / 5; G.casPoolDay(h, add(D0, d), nw); }
   assert.ok(h.pool.night, "有到門檻"); const night = h.pool.night, bank0 = h.bankroll, bud0 = h.budget, world0 = h.world; G.casPoolDay(h, add(D0, d + 1), 1800000000);
-  assert.strictEqual(h.pool.lv, C.start); assert.strictEqual(h.pool.e, 0); assert.strictEqual(h.pool.base, 1800000000); assert.strictEqual(h.pool.night, null); assert.strictEqual(h.pool.hits, 1); assert.strictEqual(h.pool.last.day, night); assert.strictEqual(h.pool.hold, 0);
+  assert.strictEqual(h.pool.lv, C.start); assert.strictEqual(h.pool.e, 0); assert.strictEqual(h.pool.who.u1.base, 1800000000); assert.strictEqual(h.pool.night, null); assert.strictEqual(h.pool.hits, 1); assert.strictEqual(h.pool.last.day, night); assert.strictEqual(h.pool.hold, 0);
   assert.strictEqual(h.bankroll, bank0); assert.strictEqual(h.budget, bud0); assert.strictEqual(h.world, world0);
 });
 T("全館看得到的 view：不寫誰、不寫數字；night 只在那壹天的 18:00 到隔天 05:00 前是 true；band、量化格、痕跡", G => {

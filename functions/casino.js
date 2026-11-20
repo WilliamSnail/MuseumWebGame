@@ -145,7 +145,7 @@ export async function playCore(me, email, opts, fn) {
       const stale = twStale(tw, day).concat(usStale(us, day)); // 哪幾支這壹段沒有新行情（畫面要標出來，不要讓人以為真的沒漲跌）
       const ctx = { secret: sec, w, house, stale, round: parse(rs), P, S, day, t, uid: me.uid, nick: me.nick, id: newId(), legacy: ls && ls.exists ? ls.data() : null, reopen, evPacks, roundDirty: false, saveDirty: false };
       hb = ctx.house.bankroll;
-      const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t);
+      const gift = casCultureGift(ctx.w, ctx.house, me.nick, day, t, me.uid);
       casPoolEnsure(ctx.w, ctx.house, me.nick, me.uid, day); // 決定 0132：收到資助的人壹進來，建池子水位的起點（house.pool） // 文化部資助（決定 0131）：該收的人壹進來就到（peek 也會跑壹次空交易），錢和信在同壹個交易
       const took = ctx.P ? casPoolTake(ctx.house, ctx.P, me.uid, memberNo, day) : null; // 決定 0133：門檻那晚過去，壹進來就收走壹個名字（存檔同壹個交易改、寫短信和收據）
       if (took) ctx.saveDirty = true;
@@ -159,7 +159,7 @@ export async function playCore(me, email, opts, fn) {
       // 11-15：財經專員的信原本在上面先寫、這裡才讀評價，Firestore 交易「讀要在寫之前」→ 欠錢又剛好有新評價的人每次都失敗（銀行顯示示範資料）。所有讀完才寫
       if (letter) tx.set(db().doc(`mail/${me.uid}/items/${letter.id}`), Object.assign({}, letter.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       if (took) for (const m of took.mails) tx.set(db().doc(`mail/${me.uid}/items/${m.id}`), Object.assign({}, m.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
-      if (gift) tx.set(db().doc(`mail/${me.uid}/items/${gift.id}`), Object.assign({}, gift.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
+      if (gift) for (const g of gift.list) tx.set(db().doc(`mail/${me.uid}/items/${g.id}`), Object.assign({}, g.mail, { fromId: null, createdAt: FieldValue.serverTimestamp() }));
       for (const d of Object.keys(rvDocs)) tx.set(db().doc("npcReviews/" + d), casReviewsMerge(rvDocs[d], newRv.filter(x => x.day === d), d));
       put(tx, walletRef(me.uid), ctx.w);
       put(tx, houseRef(), ctx.house);
@@ -389,7 +389,7 @@ async function reportSnap(day) {
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && !s.npc && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
     const snap = casBookSnap(wallets, house, inplay, day);
-    if (house.pool && house.pool.uid) { const pd = ws.docs.find(d => d.id === house.pool.uid); if (pd) snap.poolNw = casNetWorth(casWalletFix(JSON.parse(pd.data().data), null), house); } // 決定 0132：池子水位要的淨值（只有伺服器的日報看到）
+    if (house.pool && house.pool.uid) { snap.poolNws = {}; for (const u of Object.keys(house.pool.who || { [house.pool.uid]: 1 })) { const pd = ws.docs.find(d => d.id === u); if (pd) snap.poolNws[u] = casNetWorth(casWalletFix(JSON.parse(pd.data().data), null), house); } } // 決定 0132：池子水位要的淨值（只有伺服器的日報看到）
     // 昨天館外來客花了多少：house.npcs 是換日後第壹個玩的人（casInRoll）才結算的；日報是唯讀、不換日，05:00 後第壹個碰到的如果是日報，house.npcs 還是前天的 → 財報停在前天。
     // 這裡在複本上補算昨天的（只拿 npcs 欄位，不動錢、不寫回去）
     const yd = new Date(Date.parse(day + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
@@ -423,7 +423,7 @@ async function writeEcon(doc, day) {
     h.invPub = casInvestPublic(h, day); // 銀行財報頁的館方投資（延遲壹天：日報產生那壹刻的快照，整天不變）
     h.econ = { yoy: doc.ext && doc.ext.ok ? doc.ext.yoy : 0, b: doc.index.b, bIn: doc.index.bIn, bExt: doc.index.bExt, label: doc.index.label, day,
       perDay: doc.index.perDay, g: doc.index.g, ext: casNpcExt(N), world: whCard(h, day), books: casBooksView(doc), led0: casFlowLed0(doc.snap), rows, top: top && top.n > 0 ? top : null, frozen: h.budget <= 0 };
-    if (doc.snap && Number.isFinite(+doc.snap.poolNw)) casPoolDay(h, day, doc.snap.poolNw); // 決定 0132：池子水位每天壹次
+    if (doc.snap && doc.snap.poolNws) casPoolDay(h, day, doc.snap.poolNws); // 決定 0132：池子水位每天壹次
     put(tx, houseRef(), h);
   });
   ECON_DONE = day;
