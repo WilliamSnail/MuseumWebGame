@@ -1,7 +1,7 @@
 // 趣味節日（shared/holidays.js 的 funDaysOf，決定 0044）：node test/funday.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const { dayMessage } = require("../tools/discord_post.cjs");
+const { dayMessage } = require("../tools/content/discord_post.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
 const names = (G, d) => Array.from(G.funDaysOf(d).map(x => x.key)); // vm 裡出來的陣列不同 realm，用 Array.from 轉成這邊的

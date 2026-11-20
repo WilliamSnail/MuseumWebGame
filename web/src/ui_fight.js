@@ -27,7 +27,7 @@ const moveTip = (o, desc) => (o.move && o.ok ? (o.act === "tentacle" && o.noSan 
 const INTENT_ICON = { hit: "撲", scare: "嚇", all: "全", grow: "多", veil: "？", blur: "？" };
 const odds = n => (n >= 85 ? "幾乎壹定成" : n >= 65 ? "大概七成" : n >= 45 ? "大概壹半" : n >= 25 ? "大概三成" : "很難");
 
-// 生好的圖（翊文 11-12，原圖 assets/cellar2/，tools/cut_frames.py 切成一條）：
+// 生好的圖（翊文 11-12，原圖 assets/cellar2/，tools/assets/cut_frames.py 切成一條）：
 //   怪物一張三格：平常、出招、安靜下來（[格寬, 格高]）；特效一條 n 格；行動圖示一條六格
 const FOE_ART = { f1a: [300, 284], f1b: [300, 270], f1g: [188, 300], f2a: [296, 295], f2b: [300, 256], f2g: [240, 300], f3a: [260, 300], f3b: [249, 300], f3g: [276, 300], f4a: [253, 300], f4b: [300, 300], f4g: [300, 300], f5a: [252, 300], f5b: [252, 300], f5g: [252, 300] };
 const FX_ART = { push: 7, see: 6, san: 6, stamp: 6, calm: 6, guard: 6, brave: 12, grow: 6, flee: 6, phase: 8 }; // 格數要跟 fight.css 的 steps(N) 一樣

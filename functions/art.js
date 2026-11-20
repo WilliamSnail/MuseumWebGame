@@ -3,7 +3,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  藝術市場第一步（11-14，shared/casino/art.js；規劃 docs/規劃/經濟體系規劃.md 2.10 節）：跟館方買賣每日特展的畫。
 //  art  act "quote"（只讀：今天特展上能買的畫、現價、我收藏的畫）、"buy"（d.id）、"sell"（d.id）
 //  買賣在 casino.js 的 playCore 裡做：錢包、莊家、存檔（P.art）在同一個 Firestore 交易，錢只搬不生（casHouseMove "art"）。
-//  畫的登記（id、日期、畫框…）是 tools/copy_shared.cjs 打包進來的 shared/art_data.js，價格和稀有度都在伺服器算，不信瀏覽器。
+//  畫的登記（id、日期、畫框…）是 tools/release/copy_shared.cjs 打包進來的 shared/art_data.js，價格和稀有度都在伺服器算，不信瀏覽器。
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";

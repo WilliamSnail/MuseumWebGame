@@ -21,7 +21,7 @@ functions/shared/
 .claude/worktrees/
 
 # 產生的檔，不進 git（11-16 公告拆檔：以前這些都是大家同時改同一個檔、一直撞）
-# 公告：content/notices/<id>.json → tools/notices_build.cjs；日誌總表：npm run log:index；音效特效總表：npm run fx:report
+# 公告：content/notices/<id>.json → tools/content/notices_build.cjs；日誌總表：npm run log:index；音效特效總表：npm run fx:report
 shared/notices_data.js
 維護日誌/README.md
 docs/素材/音效與特效總表.md

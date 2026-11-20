@@ -40,14 +40,14 @@ Hosting：放 dist/，網址 專案名.web.app
 | `casinoLegacy/{小寫 email}` | 舊 Discord 21 點的資料：`chips`、`achievements`、`properties`；翊文之後放。認領後多 `claimedBy`。**不放進 repo** | 沒有人（只有 Functions） | 翊文（後台）；Functions 只標 `claimedBy` |
 | `mail/{uid}/items/{id}` | 伺服器的信（送佩佩、來訪的謝禮，之後的補償）。領了標 `claimed`，不刪 | 沒有人（瀏覽器叫 Functions 的 `socialNews` 拿） | 只有 Functions |
 | `calls/{uid}/items/{id}` | 「請你去看我的展廳」（11-09）：編號 `call-日期-請的人`，同一天同一位只有一則（再請就蓋過去、變回沒看過）。看過標 `seen`，不刪 | 沒有人（瀏覽器叫 `socialNews` 拿；沒寫進規則，走「一律不准」） | 只有 Functions |
-| `boards/{週}`、`boards/latest` | 每週排行榜（決定 0039）：榜單、建議、提醒、`posted`。只有暱稱和榜上的數字，沒有 uid、email。`latest` 是最新一週的整份複製 | 館友 | 只有 `tools/weekly_board.cjs`（Admin SDK） |
+| `boards/{週}`、`boards/latest` | 每週排行榜（決定 0039）：榜單、建議、提醒、`posted`。只有暱稱和榜上的數字，沒有 uid、email。`latest` 是最新一週的整份複製 | 館友 | 只有 `tools/content/weekly_board.cjs`（Admin SDK） |
 | `discordLinks/{discordId}`、`discordUids/{uid}` | Discord 聯動（決定 0051）：Discord 帳號 ↔ 遊戲帳號，兩邊都唯一、可以解除 | 沒有人（只有 Functions；走最下面的「一律不准」） | 只有 Functions |
 | `discordCodes/{L碼、u uid、J碼、j discordId}` | 綁定碼（6 位數，10 分鐘）、自己加入的連結碼（16 個字，30 分鐘），用掉標記 | 沒有人 | 只有 Functions，交易 |
 | `discordTries/{discordId}` | 綁定碼打錯幾次（10 分鐘內 5 次暫時擋） | 沒有人 | 只有 Functions |
 | `discordBonus/{uid}` | 綁定獎勵領過了。**解除綁定不會刪**，所以每個遊戲帳號只送一次 | 沒有人 | 只有 Functions，跟錢包同一個交易 |
 | `discordJoins/{discordId}`、`discordJoinDay/{台灣日期}` | 這個 Discord 帳號靠連結加入過（或被擋）、今天靠 Discord 加入幾人（上限 5） | 沒有人 | 只有 Functions |
-| `discordTest/config` | **只有模擬器**：`tools/discord_fake.cjs` 放的測試公鑰和伺服器 ID。正式環境不讀 | 沒有人 | 模擬器的測試 |
-| `boards/{週}/private/people` | 那一週每個人的累計數字（圖鑑、書、展廳、地下），下週相減用。用 uid 當 key，所以放另一份：Firestore 的規則不能只擋一個欄位 | 沒有人（走最下面的「一律不准」） | 只有 `tools/weekly_board.cjs` |
+| `discordTest/config` | **只有模擬器**：`tools/content/discord_fake.cjs` 放的測試公鑰和伺服器 ID。正式環境不讀 | 沒有人 | 模擬器的測試 |
+| `boards/{週}/private/people` | 那一週每個人的累計數字（圖鑑、書、展廳、地下），下週相減用。用 uid 當 key，所以放另一份：Firestore 的規則不能只擋一個欄位 | 沒有人（走最下面的「一律不准」） | 只有 `tools/content/weekly_board.cjs` |
 
 - 存檔用**一個字串欄位**放整份 JSON：Firestore 一份文件最多 1 MiB，欄位數也有上限；字串不用一層一層建索引（`firestore.indexes.json` 把 `data` 排除）。
 - 沒有 `members/{uid}` 的人，什麼都讀不到、寫不了（`firestore.rules`）。這就是邀請制：Google 帳號誰都能登入，但不在名單上就進不了館。
@@ -128,7 +128,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 - 模擬器的管理畫面：http://localhost:4400（看資料、看登入的人）。
 - 連接埠（`firebase.json`）：Auth 9099、Firestore 8180、Realtime Database 9100、Functions 5101、Hosting 5050、管理畫面 4400。翊文的電腦 8080、9000、4000 已經有別的程式在用，所以不用預設的。
-- **模擬器的 Realtime Database 規則**：`npm run emulators` 把規則放在 `demo-pepe4-default-rtdb`，遊戲用的是 `demo-pepe4`，所以本機其實沒有規則。要測「玩家讀不到」：開好之後跑 `node tools/emu_rules.cjs`（第 N 套前面加 `EMU_SET=N`）。
+- **模擬器的 Realtime Database 規則**：`npm run emulators` 把規則放在 `demo-pepe4-default-rtdb`，遊戲用的是 `demo-pepe4`，所以本機其實沒有規則。要測「玩家讀不到」：開好之後跑 `node tools/dev/emu_rules.cjs`（第 N 套前面加 `EMU_SET=N`）。
 - 模擬器關掉資料就沒了；要留著用 `--export-on-exit`（`npm run emulators` 已經設好，放在 `.firebase-data/`，不進 repo）。
 - 同時開好幾套（好幾個分支各測各的 Functions）：`EMU_SET=1 npm run emulators`，連接埠都加 1000×EMU_SET（管理畫面 5400），資料不存；網頁要連同一套：`VITE_EMU_SET=1 npx vite --port 5190 --strictPort`。會有一行「multiple instances」的警告，沒關係。
 
@@ -208,7 +208,7 @@ gh workflow run firebase-task.yml -f action=stats
 
 ## 十、每週排行榜（決定 0039）
 
-`.github/workflows/weekly-board.yml` 跑 `tools/weekly_board.cjs`，規則在 `shared/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
+`.github/workflows/weekly-board.yml` 跑 `tools/content/weekly_board.cjs`，規則在 `shared/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
 
 - **什麼時候**：每週一台灣時間 05:15（cron `15 21 * * 0`，UTC 週日 21:15）。GitHub 的排程可能晚幾分鐘，只在預設分支跑。
 - **算哪一週**：一律是剛過完的那一週。週三手動按，算的也是上一週。
@@ -230,7 +230,7 @@ gh workflow run weekly-board.yml -f dry_run=false -f force=true   # 這週發過
 
 ```bash
 EMU_SET=4 npm run emulators        # Firestore 在 12180
-FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
+FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/content/weekly_board.cjs --dry-run --now 2026-11-16T05:15:00+08:00
 ```
 
 有 `FIRESTORE_EMULATOR_HOST` 就一定不發 Discord，就算環境變數有金鑰也一樣。`--now` 只有連模擬器時能用。
@@ -242,7 +242,7 @@ FIRESTORE_EMULATOR_HOST=127.0.0.1:12180 node tools/weekly_board.cjs --dry-run --
 - **設定**：`functions/discord_config.js` 的 `DISCORD` 有三個欄位（Application ID、Public Key、Guild ID），**翊文 11-09 給了，已經填好**。都不是密碼。空的時候 `discordBot` 回 503、遊戲裡不顯示「綁定 Discord」，其他 Function 不受影響。Bot token 第一步用不到。
 - **3 秒**：不另開 codebase、不用 `FUNCTION_TARGET` 懶載入、不設 `minInstances`。量過：載入整個 `functions/index.js` 1.3 秒、只載入 `options.js` 加 Firebase 兩個套件 1.2 秒，差 0.1 秒，時間幾乎都花在 Firebase 的套件上，拆也省不了。指令都只讀、寫幾份文件就回，不先回「處理中」。正式環境的冷啟動還沒量；若常超過 3 秒，才設 `minInstances: 1`（要先查價再問翊文）。
 - **獎勵**：`discord_data.js` 的交易裡讀 `casinoWallets/{uid}`（沒有就用 `casWalletFix` 開一個：開場籌碼照給，再加 `NUM.discord.linkBonus`）和 `discordBonus/{uid}`，沒領過才寫兩份。跟賭場搶同一份文件，Firestore 會讓一邊重試。不從莊家扣。
-- **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
+- **模擬器測試**：`npm run local -- --set 5 --port 5285`（背景）→ `node tools/content/discord_fake.cjs --set 5`。它每次產生新的金鑰組放進模擬器的 `discordTest/config`，`functions/discord_config.js` 只在 `FUNCTIONS_EMULATOR === "true"` 時讀它（環境變數 `DISCORD_TEST_PUBLIC_KEY`、`DISCORD_TEST_GUILD_ID` 也行），repo 裡沒有任何金鑰。
 - **Firestore 規則沒改**：這些集合都走最後一條「一律不准」（`test/discord_bot.test.cjs` 擋「規則裡不准出現 discord」）。
 
 ### 要翊文做的（AI 碰不到）

@@ -125,7 +125,7 @@
   .new-lobby-on .cellar-on .cx-hero, .new-lobby-on .cellar-on .trial-box { --kb: 14px; --kc: 64px; }
 }
 
-/* ---------- 本週異狀、隊伍規則改成九宮格零件（不拉伸；tools/build_panel_kits.py） ---------- */
+/* ---------- 本週異狀、隊伍規則改成九宮格零件（不拉伸；tools/assets/build_panel_kits.py） ---------- */
 .new-lobby-on .cellar-on .story-cellar:not(.trial-box) { border: 40px solid transparent; border-image: url(/kit/notice9.webp) 150 fill / 40px round; padding: 0 6px; }
 .new-lobby-on .cellar-on .legend.placard { border-style: solid; border-color: transparent; border-width: 44px 26px 44px 22px; border-image: url(/kit/scrollv9.webp) 220 130 220 110 fill / 44px 26px 44px 22px stretch round; padding: 4px 10px; } /* 上下拉（翊文 11-12），軸在上下 */
 .new-lobby-on .cellar-on .legend.placard .pl-title { margin-top: 0; }

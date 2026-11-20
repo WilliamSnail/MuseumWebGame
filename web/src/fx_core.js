@@ -1,5 +1,5 @@
 // fx 的共用小工具（utilities）和 FX 物件 api。其他 fx_*.js 都從這裡拿。
-// 11-20 從 fx.js 拆出來：內容照原樣搬（縮排也沒動，所以 tools/fx_report.cjs、test 掃字串的規則照舊）。
+// 11-20 從 fx.js 拆出來：內容照原樣搬（縮排也沒動，所以 tools/check/fx_report.cjs、test 掃字串的規則照舊）。
 
 export const api = {};
 

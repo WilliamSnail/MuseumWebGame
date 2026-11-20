@@ -126,7 +126,7 @@ export function dcBorrowText(r) {
 // 失敗的原因是「錢不夠」而且借得到：多壹行「可以打 /pepe-借錢」。w 是 casWalletFix 過的錢包；其他情況原樣
 export const dcBorrowTip = (reason, w) => (casPoorReason(reason) && casCanRelief(w) ? DC_TEXT.borrowTip : "");
 // Yuga Bot 交代的任務：info 是 DAY_DATA[今天]（{ week, yuga: { id, says } }），save 是這個人的存檔（可以沒有）。
-// 今天有、而且這個人還沒做完 → 回那句 says（過 dcScrub）；沒有或做完了 → ""。只有 says，不帶答案（打包時只放 says，tools/copy_shared.cjs）
+// 今天有、而且這個人還沒做完 → 回那句 says（過 dcScrub）；沒有或做完了 → ""。只有 says，不帶答案（打包時只放 says，tools/release/copy_shared.cjs）
 export function dcYugaLine(info, save) {
   const y = info && info.yuga;
   if (!y || typeof y.says !== "string" || typeof y.id !== "string") return "";

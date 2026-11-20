@@ -2,7 +2,7 @@
 
 > 2026-11-09 寫（Claude）。給每週一 04:30、每天 04:30 的排程看，人也可以看。
 > 規劃在 `docs/規劃/每週劇情.md`；排程每一步怎麼做在 `content/排程說明.md`。
-> 遊戲的規則在 `shared/story.js`，畫面在 `web/src/ui_story.js`，檢查程式 `tools/week_check.cjs`（`npm test` 會跑）。
+> 遊戲的規則在 `shared/story.js`，畫面在 `web/src/ui_story.js`，檢查程式 `tools/content/week_check.cjs`（`npm test` 會跑）。
 > 格式改了，這份、檢查程式、`shared/story.js` 要一起改。
 
 ---
@@ -15,7 +15,7 @@ content/
 ├─ 排程說明.md           ← 排程的每一步
 ├─ 排程設定.json         ← 「這週暫停」（第六節）
 ├─ story/帳本.json       ← 劇情帳本（第五節）。不打包進網頁
-├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/notices_build.cjs 合成 shared/notices_data.js，不進 git）
+├─ notices/<id>.json    ← 館方公告：壹則壹個檔（11-16 起；npm run notice 加。tools/content/notices_build.cjs 合成 shared/notices_data.js，不進 git）
 ├─ npc/<id>.json        ← 館內 NPC（第十節）：壹位壹個檔。不進網頁，伺服器用 copy_shared 打包
 └─ weeks/               ← 網頁只讀這裡的 .json（web/src/ui_story.js 的 import.meta.glob）
    ├─ 2026-W47/         ← 正式週：ISO 週的名字（週一開始）
@@ -66,8 +66,8 @@ content/
 }
 ```
 
-- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
-  - Functions 拿得到同一份：`tools/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
+- **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/content/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
+  - Functions 拿得到同一份：`tools/release/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
 
 - **賭場的每週收藏 `casino`**（決定 0042，規則 `shared/casino/week.js`）：選填，沒有的舊週照常。格式：
 
@@ -93,7 +93,7 @@ content/
   - 進度、發收藏品、集滿都是伺服器算的（玩家改畫面沒有用）。統計從週一 05:00 累計，週一 05:00 換週。過期的週：拿到的財產留著，沒拿到的就過了，不懲罰。
   - 集滿：這週 `items` 全部拿到（每天加碼的不算）。拿紀念品、稱號；週章 1 枚和故事要玩家按「領」。**不能寫靈感、心情、東西、週章**（檢查程式擋）。
   - 收藏品的說明和集滿的故事要接這週的劇情線、圍繞主旨（像副劇情），帳本 `weeks.<週>.casino` 要記（沒寫會警告）。備用週（`備用/常青1`）寫一組通用的。
-  - Functions 拿得到同一份：`tools/copy_shared.cjs` 部署前把每週 `week.json`、`dN.json` 的 `casino` 打包進 `functions/shared/casino_week_data.js`。
+  - Functions 拿得到同一份：`tools/release/copy_shared.cjs` 部署前把每週 `week.json`、`dN.json` 的 `casino` 打包進 `functions/shared/casino_week_data.js`。
 
 - `kind`：`week` 這週的、`floor` 樓層的新劇情線、`main` 主線、`season` 季節線（第八節）、`holiday` 節日、`side` 小插曲（備用的一天用）、`curator` 策展手記（之後）。
 - 備用週不放 `main`、`season`、`holiday` 的線（可能在任何一週用到）。`main`、`season` 跨週用同一個 id、同一個名字。
@@ -170,7 +170,7 @@ content/
 
 - 每日任務：`n` 最多 2；`make` 的 `need` 只能用一開始就有的選項（紅、綠、開心、傷心、沒有、棒球帽、站著、坐著）；`view` 只能挑不用理智檢定的畫（`portrait`、`rare`）；`cellar` 最多 B2；3 個加起來大約 `NUM.story.dailyMinutes`（12）分鐘以內。
 - 不放一定要掉理智的任務。參觀館友、送佩佩、簽到還沒做，先不放。
-- **Yuga Bot 交代的任務（選填，每日任務才能寫）**：任務本身還是上面的種類和獎勵，多三個欄位：`"giver": "yuga"`、`"says": "R，我剛想到壹件事。B2 那邊你幫我數壹下。"`（必填，40 字以內，荷官交代的話）、`"done": "R。我就知道。……"`（選填，40 字以內，做完後荷官說壹次）。壹天最多壹個；備用週、備用的壹天不能寫。字母只有「R」（荷官叫玩家的方式）可以寫；「一」要寫「壹」。遊戲裡：每週劇情的任務清單標「Yuga Bot 交代」並顯示 `says`；進賭場時荷官說 `says`（沒做完），做完後進賭場說 `done`（只說壹次，記在存檔 `P.story.said`）；Discord 綁定的人用 `/pepe-籌碼`、`/pepe-21點`、`/pepe-餐車` 時，沒做完就在回覆最後多壹行 `says`（`tools/copy_shared.cjs` 只打包 `says`，不打包任務種類和答案）。**不能在台詞裡寫答案**。
+- **Yuga Bot 交代的任務（選填，每日任務才能寫）**：任務本身還是上面的種類和獎勵，多三個欄位：`"giver": "yuga"`、`"says": "R，我剛想到壹件事。B2 那邊你幫我數壹下。"`（必填，40 字以內，荷官交代的話）、`"done": "R。我就知道。……"`（選填，40 字以內，做完後荷官說壹次）。壹天最多壹個；備用週、備用的壹天不能寫。字母只有「R」（荷官叫玩家的方式）可以寫；「一」要寫「壹」。遊戲裡：每週劇情的任務清單標「Yuga Bot 交代」並顯示 `says`；進賭場時荷官說 `says`（沒做完），做完後進賭場說 `done`（只說壹次，記在存檔 `P.story.said`）；Discord 綁定的人用 `/pepe-籌碼`、`/pepe-21點`、`/pepe-餐車` 時，沒做完就在回覆最後多壹行 `says`（`tools/release/copy_shared.cjs` 只打包 `says`，不打包任務種類和答案）。**不能在台詞裡寫答案**。
 - 每個任務都要有 `reward`。
 
 ### 獎勵
@@ -287,10 +287,10 @@ content/
 - `pauseWeeks: ["2026-W48"]`：只停那幾週。
 - 遊戲不讀這份；排程開始前讀。
 
-## 七、檢查程式擋什麼（`node tools/week_check.cjs`）
+## 七、檢查程式擋什麼（`node tools/content/week_check.cjs`）
 
 - 格式：放的位置、檔名（`week.json`、`d1`–`d7`）、週的名字、`start` 是週一、`date` 對得上、還沒到的天先寫（比遊戲的今天晚超過一天）。
-- 字數（第三節的數字）、畫面上的字用「壹」（**不准有「一」**）、禁用字（真實的職位、政黨、人名、災難、傷亡、犯罪、醫療、品牌……，清單在 `tools/week_check.cjs` 的 `BANNED`；選舉、投票、兩岸這類一般的字可以寫）、英文字母（樓層 B1、骰子 1D3 除外）、大括號只准 `{圖鑑格數}`、書裡的動作要存在。
+- 字數（第三節的數字）、畫面上的字用「壹」（**不准有「一」**）、禁用字（真實的職位、政黨、人名、災難、傷亡、犯罪、醫療、品牌……，清單在 `tools/content/week_check.cjs` 的 `BANNED`；選舉、投票、兩岸這類一般的字可以寫）、英文字母（樓層 B1、骰子 1D3 除外）、大括號只准 `{圖鑑格數}`、書裡的動作要存在。
 - 任務的種類和參數、每日任務做得完、獎勵的東西存在、不超過預算。
 - 賭場收藏（`casino`）：件數 3～5、條件種類和 `n` 的範圍、`meal` 要寫是哪樣、id 不重複、字數、畫面用「壹」、禁用字、英文字母；集滿的獎勵只能有稱號、紀念品、小故事（不能寫靈感、週章）；每天加碼的格式。帳本 weeks 沒寫 `casino` → 警告。
 - 房間獎勵的技能成長：只有房間可以、技能要存在、不能有 `none` 的選項、一天和一週的上限。週包的 `shop`：要是陣列、id 要是兌換所賣的、不重複、不超過上限。
@@ -351,7 +351,7 @@ content/
 2. **用 path 畫的房間**（d3 `s3b`「門縫後面」）：牆、地板的透視線、門框、門板都是 `path`；最亮的只有門縫和地上那道光，門縫裡站著一個看不清楚的影子。
 3. **抽象的冷風**（d7 `s7d`「風把招領單吹走了」）：深藍底，幾條又粗又抖的 `path`（`stroke` 用漸層、兩頭透明），再疊一層 `feGaussianBlur` 的霧；紙片越遠越小。
 
-新畫要照這個順序確認：`npm test` 過（`tools/week_check.cjs` 擋不准的東西）。**檢查不看畫得好不好、像不像青蛙**：那是寫的人自己要守的。
+新畫要照這個順序確認：`npm test` 過（`tools/content/week_check.cjs` 擋不准的東西）。**檢查不看畫得好不好、像不像青蛙**：那是寫的人自己要守的。
 
 ## 預約公告
 
@@ -365,10 +365,10 @@ content/
 
 ## 十、館內 NPC：`content/npc/`（11-14，翊文：每個 NPC 都有名字、都有故事線）
 
-> 規劃在 `docs/規劃/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/config.js` 的 `NUM.npc`。
+> 規劃在 `docs/規劃/館內NPC規劃.md`（步驟 3 的內容那一半）；檢查程式 `tools/check/npc_check.cjs`（`npm test` 和 `week_check` 都會跑）；數字範圍在 `shared/config.js` 的 `NUM.npc`。
 > **名單和故事線由每天的排程寫**（`content/排程說明.md` 一之十一）；程式怎麼用它（行程、館內股人數、拍賣出價、日報新聞句）是另外的 PR，這裡只管內容。
 
-**一位 NPC 一個檔**：`content/npc/<id>.json`，檔名就是 id。網頁不讀這裡（不打包進網頁）；伺服器靠 `tools/copy_shared.cjs` 打包成 `functions/shared/npc_list_data.js` 的 `NPC_LIST`（整份、照 id 排序），跟 `content/weeks` 打包的方式壹樣。
+**一位 NPC 一個檔**：`content/npc/<id>.json`，檔名就是 id。網頁不讀這裡（不打包進網頁）；伺服器靠 `tools/release/copy_shared.cjs` 打包成 `functions/shared/npc_list_data.js` 的 `NPC_LIST`（整份、照 id 排序），跟 `content/weeks` 打包的方式壹樣。
 
 ```json
 {
@@ -420,7 +420,7 @@ content/
   - `variants` 的鍵只能是 `steady`／`tired`／`uneasy`／`edge`（跟 `shared/stat_view.js` 的 `npcSan` 壹樣）；`steady`、`tired` 要有 `text`（`tired` 可加 `delay`：1 或 2 週）；`uneasy.action` 是 `hold`／`skip`／`alt`（`alt` 要有 `text`）；`edge.action` 只能是 `branch`。**有 `beat` 的步驟只能寫 `steady`、`tired`。**劇情角色（t-）沒有理智，不寫。
   - `branch`（另壹條結局，由排程在觸發那天寫）：`{ "id", "since", "steps": [1～3 段 { step, from, text, news, ties, ending }] }`，`from` 要比 `since` 晚，最後壹段 `ending: true`。
   - 資料還沒有程式讀：變成什麼分級、什麼時候走哪壹步，是伺服器週結算的事（還沒做）；現在只檢查格式。
-- **檢查程式擋什麼**（`node tools/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
+- **檢查程式擋什麼**（`node tools/check/npc_check.cjs`）：欄位和 id 格式、名字和 id 不重複、地點和喜好只能用上面的、預算在那壹級的範圍內而且每位不壹樣、禁用字、**破梗**（`SPOILERS` 固定字句，加上跟帳本 `mysteries` 的 truth／understood 連續 6 個字壹樣就擋）、劇情角色不露臉（`FACE`）、故事線日期往後、`need` 的指標、`ties` 要在帳本裡、20 位委託人壹定都在而且 `note` 照原文、帳本的角色都要有 trace（沒有只警告；帳本角色有 `npc` 欄、指到旅客或委託人的，不用 trace 檔，但 `npc` 要找得到）。
 - **哪些地方可以用 NPC 的名字**（還沒接）：日報新聞句（`news`）、展廳留言、委託人出現和完成後的話、拍賣結果公告、館內股的「不同的人」。程式接上之前，名單只是內容，遊戲的玩法不變。
 
 ## 十一、已知世界的單位：`content/world/units/`（11-15，決定 0086，規劃 `docs/規劃/世界經濟規劃.md`）

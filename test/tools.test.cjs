@@ -1,16 +1,16 @@
-// 給 AI 重複用的腳本：tools/ship.cjs、local_game.cjs、new_doc.cjs、edit_lib.cjs（只測規則，不會真的合併、開伺服器）
+// 給 AI 重複用的腳本：tools/release/ship.cjs、local_game.cjs、new_doc.cjs、edit_lib.cjs（只測規則，不會真的合併、開伺服器）
 const assert = require("assert");
-const { parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk } = require("../tools/ship.cjs");
-const wf = require("../tools/wf_run.cjs");
-const emuDoc = require("../tools/emu_doc.cjs");
-const wt = require("../tools/new_worktree.cjs");
-const { keepBoth, canAuto } = require("../tools/merge_main.cjs");
-const { moveEventNow, rtdbPort, fnPort } = require("../tools/local_game.cjs");
-const { nextDecision, safeName, logText, decisionText } = require("../tools/new_doc.cjs");
-const { editorOf } = require("../tools/edit_lib.cjs");
-const { parsePlan, planResult } = require("../tools/apply_edits.cjs");
-const { collectSvgs } = require("../tools/svg_preview.cjs");
-const { parseSizes, localOnly, shotName } = require("../tools/shot.cjs");
+const { parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk } = require("../tools/release/ship.cjs");
+const wf = require("../tools/release/wf_run.cjs");
+const emuDoc = require("../tools/dev/emu_doc.cjs");
+const wt = require("../tools/dev/new_worktree.cjs");
+const { keepBoth, canAuto } = require("../tools/release/merge_main.cjs");
+const { moveEventNow, rtdbPort, fnPort } = require("../tools/dev/local_game.cjs");
+const { nextDecision, safeName, logText, decisionText } = require("../tools/content/new_doc.cjs");
+const { editorOf } = require("../tools/dev/edit_lib.cjs");
+const { parsePlan, planResult } = require("../tools/dev/apply_edits.cjs");
+const { collectSvgs } = require("../tools/assets/svg_preview.cjs");
+const { parseSizes, localOnly, shotName } = require("../tools/dev/shot.cjs");
 
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };
@@ -63,7 +63,7 @@ T("local：活動移到 90 秒後、開壹小時，時間是台灣時間；別�
   assert.strictEqual(moveEventNow(w, "c", 0), null);
   assert.strictEqual(moveEventNow({}, "a", 0), null);
   assert.strictEqual(rtdbPort(8), 17100);
-  assert.deepStrictEqual([fnPort(4), fnPort(5)], [9101, 10101], "跟 tools/emulators.cjs 壹樣");
+  assert.deepStrictEqual([fnPort(4), fnPort(5)], [9101, 10101], "跟 tools/dev/emulators.cjs 壹樣");
 });
 T("doc：決定的下一個號碼；檔名不會有不能用的字", () => {
   assert.strictEqual(nextDecision(["0044-趣味節日.md", "0009-x.md", "README.md"]), "0045");
@@ -95,7 +95,7 @@ T("edit：找不到、不只一處都會丟錯；字裡的 $ 不會被吃掉", (
 
 // ---------- discord_commands.cjs / discord_fake.cjs（決定 0051） ----------
 T("discord_commands：沒金鑰要說缺哪個、不能連線；ID 不是數字也擋；請求的網址和內容對", () => {
-  const { request } = require("../tools/discord_commands.cjs");
+  const { request } = require("../tools/content/discord_commands.cjs");
   assert.throws(() => request({}), /DISCORD_BOT_TOKEN.*DISCORD_APPLICATION_ID.*DISCORD_GUILD_ID/);
   assert.throws(() => request({ DISCORD_BOT_TOKEN: "t", DISCORD_APPLICATION_ID: "abc", DISCORD_GUILD_ID: "123456" }), /數字/);
   const r = request({ DISCORD_BOT_TOKEN: "secret-token", DISCORD_APPLICATION_ID: "111111", DISCORD_GUILD_ID: "222222" });
@@ -105,7 +105,7 @@ T("discord_commands：沒金鑰要說缺哪個、不能連線；ID 不是數字�
   assert.ok(body.length >= 8 && body.every(c => /^pepe-/.test(c.name)));
 });
 T("discord_commands：錯誤訊息裡的 token 會遮掉", () => {
-  const { redact } = require("../tools/discord_commands.cjs");
+  const { redact } = require("../tools/content/discord_commands.cjs");
   assert.ok(!redact("bad Bot secret-token here").includes("secret-token"));
   assert.strictEqual(redact("沒有 token"), "沒有 token");
 });
@@ -189,7 +189,7 @@ T("shot：大小看得懂、只准 localhost、檔名帶畫面和大小", () => 
   assert.strictEqual(shotName("http://localhost:5287/#office:upgrades", { w: 812, h: 375 }), "shot_office_upgrades_812x375.png");
 });
 // 11-14：ship 的 --say、--after-deploy、公告警告、日誌當說明；npm run say、npm run notice
-const SH = require("../tools/ship.cjs"), SAY = require("../tools/say.cjs"), NO = require("../tools/notice.cjs");
+const SH = require("../tools/release/ship.cjs"), SAY = require("../tools/content/say.cjs"), NO = require("../tools/content/notice.cjs");
 T("ship：新選項 --say、--after-deploy、--no-notice", () => {
   const o = SH.parseArgs(["--title", "標題標題", "--say", "🎲 上線", "--after-deploy", "gh workflow run x.yml", "--no-notice"]);
   assert.strictEqual(o.say, "🎲 上線"); assert.strictEqual(o["after-deploy"], "gh workflow run x.yml"); assert.ok(o.flags.has("no-notice"));
@@ -202,7 +202,7 @@ T("ship：沒給說明就拿維護日誌的兩段", () => {
 T("ship：改了玩家看得到的檔卻沒公告會警告；有公告、只改 tools 不警告", () => {
   assert.ok(/沒有加館方公告/.test(SH.noticeWarning(["web/src/ui_bank.js", "維護日誌/2026/x.md"])));
   assert.strictEqual(SH.noticeWarning(["web/src/ui_bank.js", "content/notices/upd-x.json"]), "");
-  assert.strictEqual(SH.noticeWarning(["tools/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
+  assert.strictEqual(SH.noticeWarning(["tools/content/say.cjs", "docs/未來更新.md", "test/x.test.cjs"]), "");
 });
 T("say：空的、太長、@ 人都擋下來", () => {
   assert.strictEqual(SAY.checkText("  🎲 好  "), "🎲 好");

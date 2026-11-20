@@ -1,7 +1,7 @@
 // ship／gh_lib 等 CI、等部署（11-16）：不用 gh run watch（會中途斷掉、非零結束，PR 其實已合併、部署成功卻被判失敗），
 // 改成輪詢 run 的 status／conclusion；網路短暫錯誤重試。用假的查狀態函式測。
 const assert = require("assert");
-const { runVerdict, waitRun } = require("../tools/gh_lib.cjs");
+const { runVerdict, waitRun } = require("../tools/release/gh_lib.cjs");
 let n = 0;
 const t = (name, fn) => { fn(); n++; };
 // 假的查狀態：照順序回傳（Error 就丟錯）

@@ -1,6 +1,6 @@
 /* ================================================================
    介面重塑：每個廳壹個畫面看得完（翊文 11-13；docs/規劃/介面整合規劃.md 第六步）
-   零件：翊文生的 assets/ui2/P-1～P-3，切好放在 web/public/ui2/（tools/cut_frames.py --box）；軟木板 ui2-cork 是照 U-2 的顏色算的（Gemini 生不出來）。
+   零件：翊文生的 assets/ui2/P-1～P-3，切好放在 web/public/ui2/（tools/assets/cut_frames.py --box）；軟木板 ui2-cork 是照 U-2 的顏色算的（Gemini 生不出來）。
    共同的骨架（先用在委託櫃台，.screen.onescreen-room）：
    注意：前綴不要拿 html／body 上的全域 class 來用（名單在 docs/規則/class名單.md）。html 本身有 .new-lobby-on（新大廳，ui_lobby2.js），寫 .new-lobby-on .note-card 會改到全部的委託單、打怪面板（11-13 踩過，PR 218 上線後才發現）。以前叫 u2r、u2-main 等，11-13 改名。
      標題壹行（銅牌＋羊皮紙條＋按鈕）｜主區＋右邊側欄｜最下面收藏的抽屜

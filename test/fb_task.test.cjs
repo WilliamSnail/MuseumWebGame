@@ -1,6 +1,6 @@
-// tools/fb_task.cjs：Firebase 的固定動作只做得到那幾件事（不會連 Firebase）
+// tools/fb/fb_task.cjs：Firebase 的固定動作只做得到那幾件事（不會連 Firebase）
 const assert = require("assert");
-const { ACTIONS, parseTask, planTask, econPick, houseLedger, worldStatus } = require("../tools/fb_task.cjs");
+const { ACTIONS, parseTask, planTask, econPick, houseLedger, worldStatus } = require("../tools/fb/fb_task.cjs");
 
 let pass = 0, fail = 0;
 const later = [], TA = (name, fn) => later.push(fn().then(() => { pass++; }, e => { fail++; console.log("FAIL " + name + "\n    " + e.message); }));

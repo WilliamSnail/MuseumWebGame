@@ -6,7 +6,7 @@
 //    { "id": "double11", "kind": "coopBoost", "date": "2026-11-11", "from": "20:00", "to": "22:00", "title": "…", "words": "…" }
 //    時間都是台灣時間；不跨 05:00（一天從 05:00 換日）；date 在這週之內。
 //  種類（EVENT_KINDS）：coopBoost 合作地下收藏庫的靈感變多、活動中多 1 趟有獎勵；trialBoost 試煉房間的技能成長變多。
-//    加新種類：EVENT_KINDS 多一列、NUM.events 多數字、用到的地方多一個判斷；tools/week_check.cjs 自動認得。
+//    加新種類：EVENT_KINDS 多一列、NUM.events 多數字、用到的地方多一個判斷；tools/content/week_check.cjs 自動認得。
 //  誰說了算：
 //    合作的加成：Functions 用伺服器時間判斷（functions/coop.js 按出發那一刻）。開始時在活動內，這一趟就照活動算到走完（記在 run.event），
 //      22:01 才走完也不會被扣。玩家改電腦時間沒用。
@@ -44,7 +44,7 @@ export function eventAt(date, hm) {
 }
 
 // ---------- 檢查：回傳問題的清單（空的＝沒問題） ----------
-// weekStart：這週的週一 "YYYY-MM-DD"（不給就不檢查日期在不在這週）。只管格式、時間、字數；禁用字、「壹」那些由 tools/week_check.cjs 查
+// weekStart：這週的週一 "YYYY-MM-DD"（不給就不檢查日期在不在這週）。只管格式、時間、字數；禁用字、「壹」那些由 tools/content/week_check.cjs 查
 export function eventProblems(raw, weekStart) {
   if (!evBox(raw)) return ["要寫成 { id, kind, date, from, to, title, words }"];
   const N = NUM.events, out = [];

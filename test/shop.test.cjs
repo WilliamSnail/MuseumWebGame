@@ -2,7 +2,7 @@
 // 數字都讀 NUM；用到亂數的固定骰子（G.setRng）。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const { readWeeks } = require("../tools/week_check.cjs");
+const { readWeeks } = require("../tools/content/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } finally { G.setNowClock(null); G.setRng(null); } };
 const clone = o => JSON.parse(JSON.stringify(o));

@@ -1,7 +1,7 @@
 // 每週任務的旁白（決定 0048）：week.json 的 words、當天的 weeklyWords 換掉、還沒到的天讀不到；檢查擋壞的
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const { checkContent } = require("../tools/week_check.cjs");
+const { checkContent } = require("../tools/content/week_check.cjs");
 const G = load();
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };

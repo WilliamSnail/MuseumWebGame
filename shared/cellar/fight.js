@@ -106,7 +106,7 @@ export const fightFoesOf = (floor, boss = false) => CELLAR_FOES.filter(f => f.fl
 export const fightFoeName = id => (FOE_TEXT[id] || {}).name || "說不出名字的東西";
 // 每天的內容（content/weeks/週/dN.json）的 cellar 那一塊：今天地下多一隻怪物。回傳問題的清單
 //   { floor: 1～5, rank?: 1～3, foe: 怪物（fightFoeCheck）, card: [登記卡的字 1～3 段], line: 這週的劇情線 id }
-//   lineIds：這週有哪些劇情線（不給就不檢查 line）。字數、禁用字由 tools/week_check.cjs 另外檢查
+//   lineIds：這週有哪些劇情線（不給就不檢查 line）。字數、禁用字由 tools/content/week_check.cjs 另外檢查
 export function fightDailyCheck(c, lineIds = null) {
   if (!c || typeof c !== "object" || Array.isArray(c)) return ["cellar 要是壹個物件"];
   const bad = [];
@@ -123,7 +123,7 @@ export function fightDailyCheck(c, lineIds = null) {
 // 這一場的怪物：內建的照 id 找；每天的內容自己寫的（content/weeks 的 dN.json，規劃第十二節）整份放在 fight.custom
 export const fightFoeOf = fight => (fight && fight.custom) || fightFoe(fight && fight.foe);
 export const fightNameOf = fight => (fight && fight.custom && fight.custom.name) || fightFoeName(fight && fight.foe);
-// 每天的內容寫的怪物要過這個檢查（之後接進 tools/week_check.cjs）：回傳問題的清單，沒問題是空的
+// 每天的內容寫的怪物要過這個檢查（之後接進 tools/content/week_check.cjs）：回傳問題的清單，沒問題是空的
 //   { id, name, intro, floor, hp, mood?, color?, moves: [{ id, kind, text, san?, n?, w? }], boss?, hp2?, moves2?, phase2? }
 export const FIGHT_CUSTOM = { hp: [10, 90], sanMax: 6, growMax: 10, moves: [2, 4], nameMax: 12, textMax: 40 };
 export function fightFoeCheck(d) {

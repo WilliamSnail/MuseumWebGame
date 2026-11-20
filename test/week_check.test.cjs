@@ -1,8 +1,8 @@
-// 每週劇情的內容檢查（tools/week_check.cjs）擋得住壞的內容：node test/week_check.test.cjs（npm test 也會跑）
+// 每週劇情的內容檢查（tools/content/week_check.cjs）擋得住壞的內容：node test/week_check.test.cjs（npm test 也會跑）
 // 做法：拿真的備用週當底，複製成一個正式週（2026-W47），每一項改壞一個地方，看檢查有沒有擋下來。
 const assert = require("assert");
 const path = require("path");
-const { checkContent, readWeeks, readJSON, LEDGER, SETTINGS } = require("../tools/week_check.cjs");
+const { checkContent, readWeeks, readJSON, LEDGER, SETTINGS } = require("../tools/content/week_check.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
 const clone = o => JSON.parse(JSON.stringify(o));

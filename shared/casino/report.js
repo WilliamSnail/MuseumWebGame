@@ -39,7 +39,7 @@ const rpList = (obj, names, signed) => Object.entries(obj || {}).filter(([, v]) 
   .map(([k, v]) => `${names[k] || k}　${signed ? rpSign(v) : rpN(v)}`);
 
 // flow 裡「不是莊家的錢」的來源（記帳的人用 casPoolWorldIn／Out：錢在博物館資金或修繕基金跟已知世界之間搬，flow 記的是那個池子的角度：正＝進池子）。
-// 莊家那塊（銀行財報的莊家、日報的「進出」）不能列它們，不然博物館資金收的門票會變成莊家的錢（11-16 對帳腳本 tools/books_sign_check.cjs 擋這個）
+// 莊家那塊（銀行財報的莊家、日報的「進出」）不能列它們，不然博物館資金收的門票會變成莊家的錢（11-16 對帳腳本 tools/check/books_sign_check.cjs 擋這個）
 export const CAS_BOOK_POOL = { npcTicketBudget: "budget", npcCrowdBudget: "budget", npcJob: "budget", taskChips: "budget", taskWeek: "budget", npcCellar: "budget", npcCraft: "budget", npcArt: "budget", budgetInvestBuy: "budget", budgetInvestSell: "budget", npcTicketMuseum: "museum", npcCrowdMuseum: "museum", gbSweepB: "budget", groupIntDep: "budget", groupIntLoan: "budget", groupBankLoan: "budget", groupBankRepay: "budget", groupBankInt: "budget", stockFee: "budget", artFee: "budget", stockTax: "gov", govSweep: "gov", bizTax: "gov", entTax: "gov", divTax: "gov" };
 // 帳上的來源代號 → 玩家看的名字（找不到才回代號，對帳腳本會擋沒有名字的）
 // acct 是「已知世界」時，同壹個代號先用已知世界的名字（例如 grant：已知世界那塊叫「文化部借款撥款」，莊家那塊叫「文化部借款」）
@@ -49,7 +49,7 @@ export const casReportLabel = (k, acct) => (acct === "world" || acct === "ext" |
 // 全部從日報已經算好的 snap 和 diff 拿（延遲壹天、整天不變）。每個帳的 n 都是「這個帳自己的角度」：進來是正、出去是負。
 //   莊家＝flow（扣掉博物館資金、修繕基金的搬動）＋houseMint（扣掉門票、已知世界成長）－houseBurn；已知世界＝wflow（正＝進已知世界）＋每天成長；
 //   博物館資金＝門票、投資買賣、NPC 在委託／地下／手作坊花的、莊家跟博物館資金借還、投資手續費；修繕基金＝門票進修繕基金；海底沒有記來源，不列。
-// full＝true 時多回 all（每個帳的全部來源 [{ k, label, n }]，k 是帳上的來源代號），給 tools/books_sign_check.cjs 對帳用。
+// full＝true 時多回 all（每個帳的全部來源 [{ k, label, n }]，k 是帳上的來源代號），給 tools/check/books_sign_check.cjs 對帳用。
 export function casBooksView(doc, full) {
   if (!doc || !doc.snap || !doc.snap.house || !doc.diff) return null;
   const H = doc.snap.house, d = doc.diff, R = CAS_REPORT, add = (m, k, label, v) => { if (v) m.push({ k, label, n: Math.round(v) }); };

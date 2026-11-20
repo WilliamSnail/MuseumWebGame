@@ -1,8 +1,8 @@
-// tools/day_plan.cjs（npm run day:plan）和 tools/day_check.cjs（npm run day:check）：用假資料測，不讀真的內容、不連網
+// tools/content/day_plan.cjs（npm run day:plan）和 tools/content/day_check.cjs（npm run day:check）：用假資料測，不讀真的內容、不連網
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");
-const P = require("../tools/day_plan.cjs");
-const C = require("../tools/day_check.cjs");
+const P = require("../tools/content/day_plan.cjs");
+const C = require("../tools/content/day_check.cjs");
 const G = load();
 
 let pass = 0, fail = 0;
@@ -167,8 +167,8 @@ T("day:check：NPC 打包跟真的內容壹致", () => {
   const r = C.packFresh(); assert.ok(r.ok, r.message);
 });
 
-// npm run ledger（tools/ledger.cjs）：只看這週、壹次改壹個欄位
-const LG = require("../tools/ledger.cjs");
+// npm run ledger（tools/content/ledger.cjs）：只看這週、壹次改壹個欄位
+const LG = require("../tools/content/ledger.cjs");
 T("ledger：get／set／push 用點路徑，陣列可以用 id", () => {
   const L = { weeks: { "2026-W47": { hooks: ["d1：a"] } }, foreshadow: [{ id: "f-page", due: "2026-W50", closed: false }] };
   assert.strictEqual(LG.get(L, "foreshadow.f-page.due"), "2026-W50");

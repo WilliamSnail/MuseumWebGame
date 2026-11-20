@@ -1,8 +1,8 @@
-// 館內 NPC 的內容檢查（tools/npc_check.cjs）擋得住壞的內容，真的 content/npc 過得了，也打包得進 functions/shared：node test/npc_check.test.cjs（npm test 也會跑）
+// 館內 NPC 的內容檢查（tools/check/npc_check.cjs）擋得住壞的內容，真的 content/npc 過得了，也打包得進 functions/shared：node test/npc_check.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
-const { checkNpc, readNpc } = require("../tools/npc_check.cjs");
-const { readJSON, LEDGER } = require("../tools/week_check.cjs");
+const { checkNpc, readNpc } = require("../tools/check/npc_check.cjs");
+const { readJSON, LEDGER } = require("../tools/content/week_check.cjs");
 const G = require("./load_shared.cjs").load();
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
@@ -85,7 +85,7 @@ T("擋：委託人的 note 被改", () => expectErr(c => { get(c, "c-cat").note 
 T("擋：JSON 壞掉的檔", () => { const c = base(); c.bad = ["content/npc/x.json：JSON 讀不出來（壞）"]; assert.ok(run(c).errors.some(e => /JSON 讀不出來/.test(e))); });
 T("警告：帳本多了角色但沒有 trace", () => { const c = base(); c.ledger = clone(ledger); c.ledger.characters.push({ name: "新來的人", how: "測試" }); assert.ok(run(c).warnings.some(w => /新來的人/.test(w))); });
 
-// 打包給伺服器：tools/copy_shared.cjs → functions/shared/npc_list_data.js
+// 打包給伺服器：tools/release/copy_shared.cjs → functions/shared/npc_list_data.js
 T("季節節奏：ties 到後面季節的謎、日期又比前壹季收線早 → 警告；寫了 early 就不警告；early 格式不對 → 擋", () => {
   const c = base(), st = get(c, "c-first").arc[2];
   st.from = "2026-12-21"; st.early = "測試：排程和翊文看過"; // 揭露對齊後真的檔都不早了，這裡用壞的來測
@@ -126,7 +126,7 @@ T("帳本 characters 的 npc 欄：指到不存在的旅客要擋；有 npc 欄�
 });
 (async () => {
   try {
-    require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "tools", "copy_shared.cjs")], { stdio: "pipe" });
+    require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
     const url = require("url").pathToFileURL(path.join(__dirname, "..", "functions", "shared", "npc_list_data.js")).href;
     const { NPC_LIST } = await import(url);
     T("打包：NPC_LIST 跟 content/npc 壹樣多、照 id 排序、內容壹樣", () => {

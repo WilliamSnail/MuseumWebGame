@@ -33,11 +33,11 @@ jobs:
           node-version: 22
       - name: 只印清單
         if: inputs.print_only
-        run: node tools/discord_commands.cjs --print
+        run: node tools/content/discord_commands.cjs --print
       - name: 註冊指令
         if: ${{ !inputs.print_only }}
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_APPLICATION_ID: ${{ inputs.application_id }}
           DISCORD_GUILD_ID: ${{ inputs.guild_id }}
-        run: node tools/discord_commands.cjs
+        run: node tools/content/discord_commands.cjs

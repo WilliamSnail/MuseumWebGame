@@ -3,7 +3,7 @@
 //  翊文：「另外每周排行榜也可以用discord推送給大家看，並提供一些建議」
 //
 //  這個檔只有純函式：不碰 Firebase、不碰畫面、不碰 Discord。
-//    tools/weekly_board.cjs（每週一 05:15 跑）把讀到的資料傳進來，把結果寫進 Firestore、發到 Discord。
+//    tools/content/weekly_board.cjs（每週一 05:15 跑）把讀到的資料傳進來，把結果寫進 Firestore、發到 Discord。
 //    web/src/ui_board_rank.js 讀 boards/latest，用 boardViewOf 整理過才畫。
 //  流程：
 //    boardWeekOf(現在)            要算哪一週：一律是「剛過完的那一週」（週一 05:00 換週，排程跑的時候新的一週剛開始）
@@ -349,7 +349,7 @@ export function boardTrim(b, lv = 0) {
   return { rows: b.rows.filter(r => r.rank <= [99, 2, 1][k]), more: 0 };
 }
 const BRD_MEDAL = ["🥇", "🥈", "🥉"];
-// doc：boardCompute 的 doc（或從 Firestore 讀回來的）。endText：最後面的連結（tools/discord_post.cjs 的 footer）
+// doc：boardCompute 的 doc（或從 Firestore 讀回來的）。endText：最後面的連結（tools/content/discord_post.cjs 的 footer）
 // 太長時先收提醒、再收建議、再收每個榜的名次（boardTrim），最後才整行整行截短；「館長室 敬啟」和連結一定留著
 export function boardDiscordText(doc, endText = "", max = NUM.board.discordMax) {
   const v = boardViewOf(doc);

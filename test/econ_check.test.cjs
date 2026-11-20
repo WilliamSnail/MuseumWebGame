@@ -1,8 +1,8 @@
-// 經濟自我檢查腳本（tools/econ_check.cjs）：目前的 NUM 要全過；帳面摘要標得出異常。node test/econ_check.test.cjs（npm test 也會跑）
+// 經濟自我檢查腳本（tools/check/econ_check.cjs）：目前的 NUM 要全過；帳面摘要標得出異常。node test/econ_check.test.cjs（npm test 也會跑）
 const assert = require("assert"), { spawnSync } = require("child_process"), fs = require("fs"), os = require("os"), path = require("path");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
-const run = args => spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "econ_check.cjs")].concat(args), { encoding: "utf8" });
+const run = args => spawnSync(process.execPath, [path.join(__dirname, "..", "tools", "check", "econ_check.cjs")].concat(args), { encoding: "utf8" });
 T("規則面：現在的 NUM 沒有「沒過」的項目（警告可以有）", () => { const r = run([]); assert.strictEqual(r.status, 0, r.stdout.slice(-1500)); assert.ok(/\d+ 項：\d+ 過、\d+ 警告、0 沒過/.test(r.stdout)); });
 T("帳面：正常的帳沒有異常；吃緊、館債逾期、對帳差、莊家破產都會紅字", () => {
   const f = path.join(os.tmpdir(), "econ_" + process.pid + ".json"), W = 10000000000;
@@ -30,7 +30,7 @@ T("帳面：econ-status 的 base64 分行輸出（行前有時間、中間夾別
   r = run(["--ledger", f]); assert.notStrictEqual(r.status, 0); assert.ok(/少了幾行/.test(r.stdout + r.stderr), r.stdout + r.stderr); fs.unlinkSync(f);
 });
 T("帳面：econ-status 的 hex 輸出（行前有時間、結尾有「.」）接得回來；少一行、被遮成 ***、檢查碼對不上都會明講；已知的過渡期假差額不紅字", () => {
-  const { econCrc } = require("../tools/fb_task.cjs"), f = path.join(os.tmpdir(), "econ4_" + process.pid + ".txt"), NL = "\n", W = 10000000000;
+  const { econCrc } = require("../tools/fb/fb_task.cjs"), f = path.join(os.tmpdir(), "econ4_" + process.pid + ".txt"), NL = "\n", W = 10000000000;
   const h = { bankroll: 2e9, budget: 1e9, museum: 0, sea: 0, world: W + 764291250, day: "2026-11-20", debt: { budget: 0, culture: 9e8, world: 0 }, led: { world: { stockBuy: 1 } }, pad: "x".repeat(700) };
   const enc = (kind, o) => { const b = Buffer.from(JSON.stringify(o)).toString("hex"), n = Math.ceil(b.length / 120), L = []; for (let i = 0; i < n; i++) L.push("2026-11-14T10:00:0" + (i % 10) + "Z ECON_HEX " + kind + " " + (i + 1) + "/" + n + " " + b.length + " " + econCrc(b) + " " + b.slice(i * 120, (i + 1) * 120) + " ."); return L; };
   const mk = gap => ["Run", ...enc("H", h), "別的字", ...enc("R", { day: "2026-11-14", gap, house: h }), ""].join(NL);

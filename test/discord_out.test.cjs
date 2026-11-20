@@ -1,6 +1,6 @@
 // Discord 聯動第二步的規則（shared/discord/out.js，決定 0051）：node test/discord_out.test.cjs（npm test 也會跑）
 // 事件的字、冷卻、太舊的不發、送出去的 body 不 @ 任何人；再加原始碼上的檢查（token 不進 repo、部署流程、模擬器不連真的 Discord）。
-// 真的寫 outbox、發送、冷卻、失敗的流程要用模擬器測：node tools/discord_fake.cjs（tools/README.md）
+// 真的寫 outbox、發送、冷卻、失敗的流程要用模擬器測：node tools/content/discord_fake.cjs（tools/README.md）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("./load_shared.cjs");

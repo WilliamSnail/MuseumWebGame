@@ -1,6 +1,6 @@
 // ================================================================
 //  館內 NPC（11-14，docs/規劃/館內NPC規劃.md 步驟 3 的文字那一半）
-//  名單在 content/npc/*.json，經 tools/npc_pack.cjs 變成 shared/npc_roster.js（旅客 visitor、委託人 client；劇情角色 trace 不在裡面，只留痕跡、不露臉）。
+//  名單在 content/npc/*.json，經 tools/content/npc_pack.cjs 變成 shared/npc_roster.js（旅客 visitor、委託人 client；劇情角色 trace 不在裡面，只留痕跡、不露臉）。
 //  這裡只有純函式：給「今天」和全館的進度，算每位 NPC 現在是故事線的哪壹段、要說什麼。不碰錢、不碰股票、不碰拍賣、不碰存檔。
 //
 //  故事線 arc[]：每壹段 { step, from, text, news, need?, route?, likes?, ties? }

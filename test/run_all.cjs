@@ -3,7 +3,7 @@
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-require("../tools/notices_build.cjs").write(); // shared/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
+require("../tools/content/notices_build.cjs").write(); // shared/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
 const STEPS = [
   ["規則測試", ["test/logic.test.cjs"]],
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/room_mood.test.cjs"]],
@@ -137,13 +137,13 @@ const STEPS = [
   ["npm run fb：按固定動作、存結果、跟上次比（11-15）", ["test/fb_run.test.cjs"]],
   ["Firebase 的固定動作", ["test/fb_task.test.cjs"]],
   ["每週劇情的內容檢查擋得住壞的內容", ["test/week_check.test.cjs"]],
-  ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/week_check.cjs"]],
+  ["每週劇情的內容（content/weeks、帳本、排程設定）", ["tools/content/week_check.cjs"]],
   ["館內 NPC 的內容檢查（欄位、名字不重複、預算在那一級而且每位不壹樣、不破梗、不露臉、打包給伺服器，11-14 步驟 3）", ["test/npc_check.test.cjs"]],
   ["館外地圖（打包跟上、兩階亮度、補讀、透明片、新點，11-16）", ["test/map.test.cjs"]],
   ["館內 NPC 的純函式（打包給網頁、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致，11-14）", ["test/npc.test.cjs"]],
-  ["館內 NPC 的內容（content/npc）", ["tools/npc_check.cjs"]],
+  ["館內 NPC 的內容（content/npc）", ["tools/check/npc_check.cjs"]],
   ["世界經濟的名單和腳本（單位的樹、兩層加總、股票只掛一處、劇情單位、NPC 的隸屬、world:unit／npc／gdp，決定 0086）", ["test/world.test.cjs"]],
-  ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/world_check.cjs"]],
+  ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/check/world_check.cjs"]],
   ["賣股還債（不受壹人壹天賣出上限、賣的錢先補負數再照到期順序還借款、最多賣到剛好夠還、館外館內股、帳對得上，決定 0093 第 2 件）", ["test/casino_debt.test.cjs"]],
   ["各房間即時人數、館內股盤中價格跟著到店人數走（房間對照、人數對得上、修正不改開盤價、沒名單不修正，決定 0094）", ["test/npc_rooms.test.cjs"]],
   ["旅客卡的資料（只給已經發生的、理智和錢包只給分級、劇情角色不給，決定 0096）", ["test/npc_card.test.cjs"]],
@@ -173,9 +173,9 @@ const STEPS = [
   ["內容檢查（systems_text.js）", ["test/content/check_systems.cjs"]],
   ["特效在 Node 載得起來", ["test/fx/node-check.cjs"]],
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
-  ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],
-  ["維護日誌的格式", ["tools/log_check.cjs"]],
-  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/、shared 子資料夾、檔名不用數字結尾、單檔不超過 1,200 行、web/src 不繞圈，11-20）", ["tools/repo_rules.cjs"]],
+  ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check/check_imports.cjs"]],
+  ["維護日誌的格式", ["tools/check/log_check.cjs"]],
+  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/、shared 子資料夾、檔名不用數字結尾、單檔不超過 1,200 行、web/src 不繞圈，11-20）", ["tools/check/repo_rules.cjs"]],
 ];
 
 // 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。
