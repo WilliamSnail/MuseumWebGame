@@ -66,6 +66,13 @@ export function addDays(dateStr, n) {
   const [y, m, d] = String(dateStr).split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
+// "YYYY-MM-DD" 往後 n 天，回「MM-DD」給畫面顯示；日期空的、格式不對、n 不是數字，回「—」，不丟錯（銀行頁用：壹筆壞資料不能讓整頁壞掉）
+export function mdShift(dateStr, n = 0) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr == null ? "" : dateStr)), k = Number(n);
+  if (!m || !Number.isFinite(k)) return "—";
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3] + k);
+  return Number.isFinite(t) ? new Date(t).toISOString().slice(5, 10) : "—";
+}
 export function b64e(s) {
   if (typeof btoa === "function") return btoa(unescape(encodeURIComponent(s)));
   return Buffer.from(s, "utf8").toString("base64");

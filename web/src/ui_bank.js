@@ -15,7 +15,7 @@ import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat
 import { statView } from "../../shared/stat_view.js";
 import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
-import { addDays, todayStr } from "../../shared/logic.js";
+import { addDays, mdShift, todayStr } from "../../shared/logic.js";
 import { casNum, casPx } from "../../shared/casino/core.js";
 import { casLevSizeOf } from "../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
@@ -183,7 +183,7 @@ export function bankHallView(b) {
   return {
     demo: false, cash: b.cash, net: b.net,
     save: Object.assign({}, s, { savePct: P100(s.savePct), terms: s.terms.map(t => Object.assign({}, t, { pct: P100(t.pct), due: md(t.due) })), kinds: s.kinds.map(k => Object.assign({}, k, { pct: P100(k.pct) })) }),
-    loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), at: x.from, from: "莊家" })) }),
+    loan: Object.assign({}, l, { pct: P100(l.pct), list: l.list.map(x => Object.assign({}, x, { day: md(x.day), due: md(x.due), dueIso: x.due, at: x.from, from: "莊家" })) }),
     bonds, stocks: b.stocks, gs: b.gs || null, trade: b.trade || null, debt: b.debt || null, advisor: b.advisor || null, econ: b.econ, today: b.today || null, world: b.world || null, houseInv: b.houseInv || null, live: b.live || null, flow: b.flow || null, // live：全館的帳的即時餘額（11-17）
   };
 }
@@ -260,7 +260,7 @@ function splitLoan(l, x) {
   const sp = l.split, m = miniLayer("轉分期", `把這筆分成 ${sp.kMin}～${sp.kMax} 期，每期隔 ${sp.gMin}～${sp.gMax} 天；第壹期就是原本的到期日。延後的部分照借款的日利率（每天 ${(sp.dayFeePct).toFixed(2)}%）收手續費，算進每期要還的錢。分期和延期只能選壹個，轉了不能再轉。`);
   let k = sp.kMin, g = sp.gMin;
   const info = h("div", { class: "bank-hint" });
-  const plan = () => { const base = Math.floor(x.amt / k), baseO = Math.floor(x.owe / k), rate = sp.dayFeePct / 100, due = d => { const t = new Date(Date.parse(x.due + "T00:00:00Z") + d * 86400000); return t.toISOString().slice(5, 10); }; let fee = 0; const rows = []; for (let i = 0; i < k; i++) { const a = base + (i === 0 ? x.amt - base * k : 0), o = baseO + (i === 0 ? x.owe - baseO * k : 0), f = i === 0 ? 0 : Math.ceil(a * rate * g * i); fee += f; rows.push(`${due(g * i)} 還 ${fmt(o + f)}`); } return { rows, fee }; };
+  const plan = () => { const base = Math.floor(x.amt / k), baseO = Math.floor(x.owe / k), rate = sp.dayFeePct / 100, due = d => mdShift(x.dueIso, d); let fee = 0; const rows = []; for (let i = 0; i < k; i++) { const a = base + (i === 0 ? x.amt - base * k : 0), o = baseO + (i === 0 ? x.owe - baseO * k : 0), f = i === 0 ? 0 : Math.ceil(a * rate * g * i); fee += f; rows.push(`${due(g * i)} 還 ${fmt(o + f)}`); } return { rows, fee }; };
   const upd = () => { const p = plan(); info.textContent = `${p.rows.join("、")}；手續費共 ${fmt(p.fee)}`; };
   const seg = (label, vals, get, set) => h("div", { class: "bank-acts" }, h("small", null, label), ...vals.map(n => btn(String(n), () => { set(n); upd(); }, "small bank-btn")));
   const ks = []; for (let i = sp.kMin; i <= sp.kMax; i++) ks.push(i); const gs = []; for (let i = sp.gMin; i <= sp.gMax; i++) gs.push(i);
