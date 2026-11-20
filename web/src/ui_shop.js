@@ -17,7 +17,7 @@ import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, insp
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "./ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
-import { curWeek } from "./ui_story.js";
+import { actDone, curWeek } from "./ui_story.js";
 import { eventBoostText } from "../../shared/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
 import { openCoopTrial } from "./ui_coop.js";
@@ -161,7 +161,7 @@ function lessonBox() {
     const take = () => {
       const r = takeLesson(P, s);
       if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
-      snd("unlock"); note(`上完課了：${s} ${r.before} → ${r.after}（擲 ${r.roll.total}）`, "good"); persist(); updateStatus(); rerender();
+      snd("unlock"); note(`上完課了：${s} ${r.before} → ${r.after}（擲 ${r.roll.total}）`, "good"); actDone("lesson"); persist(); updateStatus(); rerender();
     };
     return h("div", { class: "lesson-row" }, h("span", { class: "lesson-n" }, s, " ", h("b", null, String(P.skills[s]))),
       st.full ? h("span", { class: "lesson-full" }, "櫃台教到這裡") : btn(`上課（花 ${st.price} 靈感）`, take, "small", { disabled: !st.ok }));

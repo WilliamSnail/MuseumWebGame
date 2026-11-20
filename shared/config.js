@@ -321,6 +321,17 @@ export const NUM = {
     dailyMinutes: 12,       // 3 個每日任務加起來最多幾分鐘（照 STORY_TASKS 每種的估計時間算）
     dayBudget: { insp: 22, mood: 10, items: 1, skills: 1 },      // 一天全部拿到的上限：3 個每日任務＋全做完的那份＋那天的書＋那天加的房間＋今日特展（skills：幾間房間給技能成長，決定 0032）
     weekTaskBudget: { insp: 60, mood: 20, items: 3, skills: 1 }, // 5 個每週任務＋全做完的那份＋本週異狀的房間
+    // 每日任務活躍積分（決定 0146，翊文 11-20）：每個每日任務有積分（STORY_TASKS 的 pts）；壹天最多算 dayCap 分，壹週累計到里程碑領獎。
+    // 壹天有 minTasks 個以上每日任務才算新制（舊的 3 個任務的天照舊：全做完多壹份、沒有積分）。from ＝新制開始的日期（排程從這天起每天 6 個任務）。
+    // miles：到 at 分領的東西。stamps 週章、items 物品（"rotate" ＝舊畫布、金線、金箔輪著）、chips 固定籌碼、box ＝禮盒（伺服器抽，從莊家出）。300 分是大獎的壹半、500 分是另壹半（合起來是整份）。
+    // 籌碼都從博物館資金出（taskChips、taskWeek，決定 0146）：基金不夠付就先不付，下次再領。
+    pts: {
+      dayCap: 120, goal: 500, minTasks: 5, from: "2026-11-23",
+      miles: [{ at: 100, mood: 5 }, { at: 200, insp: 3 }, { at: 300, stamps: 1, box: 1 }, { at: 400, insp: 4, chips: 200000 }, { at: 500, stamps: 1, items: ["rotate"], box: 1 }],
+      taskChip: 30000, taskChipDay: 2,   // 伺服器看得到的任務（賭場、銀行、餐車、參觀、送佩佩）各給幾籌碼，壹天最多算幾個
+      boxes: [{ w: 50, chips: 300000 }, { w: 35, chips: 600000 }, { w: 15, chips: 1500000 }], // 壹個禮盒（半份）：機率權重和籌碼，期望 58.5 萬；500＋300 兩個合起來 117 萬
+      reward: { 15: { mood: 1 }, 20: { mood: 2 }, 25: { insp: 1 }, 30: { insp: 1, mood: 1 }, 35: { insp: 1, mood: 1 }, 40: { insp: 2 } }, // 內容檔沒寫獎勵的每日任務，照積分給
+    },
     startWeek: "2026-W46",  // 每週劇情從這一週開始有（更早的週沒有劇情，也不用備用週）
     seasonStart: "2026-11-16", // 第一季從這一週開始（2026-W47）；之前的算「序章」
     seasonWeeks: 4,         // 一季幾週（書架上一季收成一本合訂本）

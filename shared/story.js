@@ -25,16 +25,26 @@ import { cleanEvents, eventListLine } from "./events.js";
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
 // 參觀館友、送佩佩、簽到還沒做，先不放
 export const STORY_TASKS = {
-  make: { when: "both", min: 1.5 },     // 做 n 隻佩佩，need 可以指定 { 顏色: "綠" } 這種（每日任務只能指定一開始就有的選項）
-  deliver: { when: "both", min: 1 },    // 交 n 張委託
-  fuse: { when: "both", min: 2 },       // 融合 n 次
-  pillow: { when: "both", min: 1 },     // 做 n 個抱枕
-  hug: { when: "daily", min: 0.5 },     // 抱 n 次抱枕（今天的）
-  view: { when: "both", min: 0.5 },     // 在畫廊看某一幅畫 n 次（exhibit ＝展品 id；每日任務只能挑不用理智檢定的）
-  show: { when: "daily", min: 3 },      // 看完今日特展
-  read: { when: "both", min: 2 },       // 讀這週的某一本書（book ＝書的 id）
-  cellar: { when: "both", min: 3 },     // 在地下收藏庫走到 B{floor}
-  spot: { when: "both", min: 3 },       // 找到這週多出來的房間（room ＝房間的 id）
+  // pts ＝每日任務的積分（決定 0146）；act ＝靠「做過了」的紀錄（storyAct）判斷；chip ＝伺服器看得到，做了可以拿籌碼
+  make: { when: "both", min: 2, pts: 25 },       // 做 n 隻佩佩，need 可以指定 { 顏色: "綠" } 這種（每日任務只能指定一開始就有的選項）
+  deliver: { when: "both", min: 1.5, pts: 20 },  // 交 n 張委託
+  fuse: { when: "both", min: 2.5, pts: 30 },     // 融合 n 次
+  pillow: { when: "both", min: 1.5, pts: 20 },   // 做 n 個抱枕
+  hug: { when: "daily", min: 1, pts: 15 },       // 抱 n 次抱枕（今天的）
+  view: { when: "both", min: 1, pts: 15 },       // 在畫廊看某一幅畫 n 次（exhibit ＝展品 id；每日任務只能挑不用理智檢定的）
+  show: { when: "daily", min: 3, pts: 30 },      // 看完今日特展
+  read: { when: "both", min: 2.5, pts: 25 },     // 讀這週的某一本書（book ＝書的 id）
+  cellar: { when: "both", min: 4, pts: 40 },     // 在地下收藏庫走到 B{floor}
+  spot: { when: "both", min: 4, pts: 40 },       // 找到這週多出來的房間（room ＝房間的 id）
+  casino: { when: "daily", min: 1.5, pts: 20, act: 1, chip: 1 },  // 在賭場打壹手 21 點（不設輸贏、不設下注額）
+  bank: { when: "daily", min: 1.5, pts: 20, act: 1, chip: 1 },    // 在銀行存壹筆
+  food: { when: "daily", min: 1, pts: 15, act: 1, chip: 1 },      // 到餐車吃壹樣東西
+  visit: { when: "daily", min: 2, pts: 25, act: 1, chip: 1 },     // 參觀壹位館友的展廳（只算別人）
+  gift: { when: "daily", min: 2, pts: 30, act: 1, chip: 1 },      // 送館友壹隻佩佩（只算別人）
+  stockLook: { when: "daily", min: 1, pts: 15, act: 1 },          // 看壹支集團股的走勢
+  lesson: { when: "daily", min: 1.5, pts: 20, act: 1 },           // 在委託櫃台上壹堂課
+  sign: { when: "daily", min: 0.5, pts: 10, act: 1 },             // 簽到
+  board: { when: "daily", min: 0.5, pts: 10, act: 1 },            // 看公佈欄
   readWeek: { when: "weekly", min: 0 }, // 讀這週的書 n 本
   dailyAll: { when: "weekly", min: 0 }, // 每日任務全部做完 n 天
   showDays: { when: "weekly", min: 0 }, // 看完今日特展 n 天
@@ -229,7 +239,7 @@ export function storyWeekAt(lib, label, today, fb) {
     const day = {
       n, date, spare, holiday: d.holiday || (STORY_HOLIDAY_OF ? STORY_HOLIDAY_OF(date) : null) || null, board: d.board || "",
       books: asList(d.books).map((b, i) => Object.assign({}, b, { id: p + b.id, local: b.id, day: n, idx: i, line: lineOf(b.line, p), unlock: b.ending ? { type: "ending" } : unlock(b.unlock), pages: asList(b.pages) })),
-      daily: asList(d.daily).map((t, i) => yugaTask(task(t, p, { daily: true, day: n, date, idx: i }), !spare && !fbName)),
+      daily: ptsFill(asList(d.daily).map((t, i) => yugaTask(task(t, p, { daily: true, day: n, date, idx: i }), !spare && !fbName))),
       dailyBonus: reward(d.dailyBonus),
       show: d.show ? { title: d.show.title || "", intro: d.show.intro || "", works: asList(d.show.works).map(w => Object.assign({}, w, { id: p + w.id, local: w.id, day: n, date })) } : null,
       adds: asList(d.adds).map(r => room(r, p, n)),
@@ -269,7 +279,7 @@ export function storyState(P) {
   if (!isPlain(P.story)) P.story = {};
   const S = P.story;
   S.v = 1;
-  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas", "said"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
+  ["books", "tasks", "works", "spots", "weeks", "deep", "showInsp", "bag", "seen", "cas", "said", "acts", "chipDue"].forEach(k => { if (!isPlain(S[k])) S[k] = {}; });
   if (!Number.isFinite(S.stamps) || S.stamps < 0) S.stamps = 0;
   if (typeof S.track !== "string") S.track = null;
   if (!Array.isArray(S.log)) S.log = [];
@@ -291,7 +301,7 @@ const roomOf = (W, id) => W ? W.rooms.find(r => r.id === id) || null : null;
 export function showOfDay(W, n) { const d = dayOf(W, n); return d && d.show ? d.show : null; }
 export function taskTarget(t, W) {
   if (t.kind === "show") { const s = showOfDay(W, t.day); return s ? s.works.length : 1; }
-  if (t.kind === "read" || t.kind === "spot" || t.kind === "ending" || t.kind === "cellar") return 1;
+  if (t.kind === "read" || t.kind === "spot" || t.kind === "ending" || t.kind === "cellar" || (STORY_TASKS[t.kind] && STORY_TASKS[t.kind].act)) return 1;
   return t.n;
 }
 // 任務的字（畫面用）
@@ -308,6 +318,15 @@ export function taskText(t, W) {
     case "read": { const b = bookOf(W, t.book); return `讀書架上的〈${b ? b.title : "？"}〉`; }
     case "cellar": return `在地下收藏庫走到 B${t.floor || 1}`;
     case "spot": { const r = roomOf(W, t.room); return r ? (r.hint || `去 B${r.floor} 看看`) : "找到這週多出來的地方"; }
+    case "casino": return "到賭場打壹手 21 點";
+    case "bank": return "到銀行存壹筆";
+    case "food": return "到餐車吃壹樣東西";
+    case "visit": return "參觀壹位館友的展廳";
+    case "gift": return "送館友壹隻佩佩";
+    case "stockLook": return "看壹支集團股的走勢";
+    case "lesson": return "在委託櫃台上壹堂課";
+    case "sign": return "簽到";
+    case "board": return "看公佈欄";
     case "readWeek": return `讀這週的書 ${n} 本`;
     case "dailyAll": return `每日任務全部做完 ${n} 天`;
     case "showDays": return `看完今日特展 ${n} 天`;
@@ -326,6 +345,12 @@ export function taskGo(t, W) {
     case "show": case "showDays": return { room: "gallery", params: { show: true } };
     case "read": case "readWeek": case "ending": return { room: "origin", params: { tab: "weekly" } };
     case "cellar": case "spot": return { room: "cellar" };
+    case "casino": case "food": return { room: "casino" };
+    case "bank": case "stockLook": return { room: "bank" };
+    case "visit": case "gift": return { panel: "friends" };
+    case "lesson": return { room: "commission" };
+    case "sign": return { panel: "signin" };
+    case "board": return { panel: "board" };
     default: return null;
   }
 }
@@ -352,7 +377,33 @@ function counterOf(P, t) {
 }
 const allDailyDone = (S, d) => d.daily.length > 0 && d.daily.every(t => S.tasks[t.id] && S.tasks[t.id].done);
 // 都在當天做完（補做的不算）：「3 個都做完多一份」、「每日任務全部做完 N 天」看這個（決定 0060）
-const allDailyOnTime = (S, d) => allDailyDone(S, d) && (NUM.story.lateBonus || d.daily.every(t => !S.tasks[t.id].late));
+// 新制的天（每日任務 minTasks 個以上）：看積分，不看「全做完」（決定 0146）
+export const ptsDay = d => !!d && d.daily.length >= NUM.story.pts.minTasks;
+export const taskPts = t => (!t || t.weekly ? 0 : +t.pts > 0 ? +t.pts : (STORY_TASKS[t.kind] || {}).pts || 0);
+// 這天算到的積分：做完的任務加起來，最多 dayCap；onTime ＝只算當天做完的（補做的不算）
+export function dayPts(S, d, onTime) {
+  if (!d) return 0;
+  const sum = d.daily.reduce((a, t) => { const st = S.tasks[t.id]; return a + (st && st.done && (!onTime || NUM.story.lateBonus || !st.late) ? taskPts(t) : 0); }, 0);
+  return Math.min(NUM.story.pts.dayCap, sum);
+}
+export const weekPts = (S, W) => (W ? W.days.filter(ptsDay).reduce((a, d) => a + dayPts(S, d), 0) : 0);
+const allDailyOnTime = (S, d) => ptsDay(d) ? dayPts(S, d, true) >= NUM.story.pts.dayCap : allDailyDone(S, d) && (NUM.story.lateBonus || d.daily.every(t => !S.tasks[t.id].late));
+// 內容檔沒寫獎勵的每日任務，新制的天照積分給
+function ptsFill(daily) {
+  if (daily.length < NUM.story.pts.minTasks) return daily;
+  daily.forEach(t => { const r = t.reward; if (!r.insp && !r.mood && !r.items.length && !r.stamps && !r.skill) t.reward = reward(NUM.story.pts.reward[taskPts(t)]); });
+  return daily;
+}
+// 「做過了」的紀錄：S.acts[日期] = { 種類: 1 }。UI 在真的做了的那一刻叫 storyAct（不重複記）
+export function storyAct(P, kind, today) {
+  if (!P || isFree(P) || !STORY_TASKS[kind] || !STORY_TASKS[kind].act) return false;
+  const S = storyState(P), a = S.acts[today] || (S.acts[today] = {});
+  if (a[kind]) return false;
+  a[kind] = 1;
+  Object.keys(S.acts).sort().slice(0, -14).forEach(d => delete S.acts[d]); // 只留最近 14 天
+  return true;
+}
+const actSince = (S, kind, from, W) => Object.keys(S.acts).some(d => d >= from && d <= W.end && S.acts[d][kind]);
 const showDone = (S, d) => !!(d.show && d.show.works.length && d.show.works.every(w => S.works[w.id]));
 // 任務現在做到多少（0 到 taskTarget）
 export function taskCount(P, W, t, S = storyState(P)) {
@@ -370,7 +421,7 @@ export function taskCount(P, W, t, S = storyState(P)) {
     case "dailyAll": n = W.days.filter(d => allDailyOnTime(S, d)).length; break; // 只算當天做完的天
     case "showDays": n = W.days.filter(d => showDone(S, d)).length; break;
     case "ending": n = W.books.some(b => b.ending && S.books[b.id] && S.books[b.id].read) ? 1 : 0; break;
-    default: n = 0;
+    default: n = STORY_TASKS[t.kind] && STORY_TASKS[t.kind].act ? (actSince(S, t.kind, t.date || W.start, W) ? 1 : 0) : 0; // 靠「做過了」的紀錄（storyAct）；補做的算補的那天做的
   }
   if (st && st.done) n = target; // 做完就是做完，數字不會再掉回去
   return clampN(n, 0, target);
@@ -444,7 +495,10 @@ export function syncStory(P, W, today) {
     live.forEach(t => {
       let st = S.tasks[t.id];
       if (!st) { const c = counterOf(P, t); st = S.tasks[t.id] = { base: c == null ? 0 : c, done: null, claimed: null }; }
-      if (!st.done && taskCount(P, W, t, S) >= taskTarget(t, W)) { st.done = today; if (t.daily && t.date && today > t.date) st.late = true; ev.push({ type: "storyTask", task: t }); }
+      if (!st.done && taskCount(P, W, t, S) >= taskTarget(t, W)) {
+        st.done = today; if (t.daily && t.date && today > t.date) st.late = true; ev.push({ type: "storyTask", task: t });
+        if (t.daily && STORY_TASKS[t.kind] && STORY_TASKS[t.kind].chip) { const c = S.chipDue[today] || (S.chipDue[today] = {}); c[t.kind] = 1; Object.keys(S.chipDue).sort().slice(0, -14).forEach(d => delete S.chipDue[d]); } // 伺服器看得到的任務做完了：可以去領籌碼（伺服器自己再看做過沒有）
+      }
     });
     books();
   }
@@ -460,6 +514,7 @@ export function itemDesc(id) {
   if (it.kind === "heal") return "用了：地下收藏庫受傷的佩佩，全部馬上好。";
   return `用來換週章：到兌換所，每 ${NUM.shop.matToStamp} 份換壹枚。這個算 ${it.worth || 1} 份。`;
 }
+export function milesText(v) { const t = rewardText(v.reward); return [t, v.chips ? `籌碼 ${v.chips.toLocaleString("en-US")}` : "", v.box ? "籌碼禮盒" : ""].filter(Boolean).join("、"); }
 export function rewardText(r) {
   if (!r) return "";
   const bits = [];
@@ -523,10 +578,11 @@ export function dayBonusState(P, W, n) {
   const S = storyState(P), d = dayOf(W, n), rec = S.weeks[W.label];
   if (!d) return "none";
   if (rec && rec.bonus && rec.bonus[n]) return "claimed";
-  if (!allDailyDone(S, d)) return "wait";
+  if (ptsDay(d) ? dayPts(S, d) < NUM.story.pts.dayCap : !allDailyDone(S, d)) return "wait";
   return allDailyOnTime(S, d) ? "ready" : "late"; // late：有補做的，這壹份沒有
 }
 export function claimDayBonus(P, W, n, today) {
+  // （新制的天：當天拿滿 dayCap 分多壹份；舊制：3 個都做完）
   if (!P || isFree(P) || !W || W.past) return { ok: false, reason: "這週已經過了" };
   const st = dayBonusState(P, W, n);
   if (st !== "ready") return { ok: false, reason: st === "claimed" ? "領過了" : st === "late" ? "有補做的，這壹份只給當天做完的" : "3 個每日任務還沒都做完" };
@@ -551,6 +607,30 @@ export function claimWeekBonus(P, W, today) {
   const r = Object.assign({}, W.weeklyBonus, { items: W.weeklyBonus.items.slice(), stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });
   give(P, S, r, today, `${W.label}/week`);
   return { ok: true, reward: r };
+}
+// ---------- 每週積分里程碑（決定 0146） ----------
+const MAT_ROTATE = ["mat:畫布", "mat:金線", "mat:金箔"];
+// [{ at, state: "wait"|"ready"|"claimed", reward, chips, box }]：reward 是玩家端直接給的（靈感、心情、週章、物品），chips／box 是伺服器從莊家付的（milesChips）
+export function milesView(P, W) {
+  if (!P || isFree(P) || !W || !W.days.some(ptsDay)) return [];
+  const S = storyState(P), rec = S.weeks[W.label], pts = weekPts(S, W);
+  return NUM.story.pts.miles.map(m => ({ at: m.at, state: rec && rec.miles && rec.miles[m.at] ? "claimed" : pts >= m.at ? "ready" : "wait", reward: mileReward(m, W), chips: m.chips || 0, box: m.box || 0 }));
+}
+function mileReward(m, W) {
+  const items = asList(m.items).map(id => id === "rotate" ? MAT_ROTATE[((weekIndex(W.start) % 3) + 3) % 3] : id).filter(id => STORY_ITEMS[id]);
+  return { insp: m.insp || 0, mood: m.mood || 0, items, stamps: m.stamps || 0, skill: null };
+}
+export function claimMile(P, W, at, today) {
+  if (!P || isFree(P) || !W || W.past) return { ok: false, reason: "這週已經過了" };
+  const v = milesView(P, W).find(x => x.at === at);
+  if (!v) return { ok: false, reason: "沒有這一格" };
+  if (v.state === "claimed") return { ok: false, reason: "領過了" };
+  if (v.state !== "ready") return { ok: false, reason: "積分還不夠" };
+  const S = storyState(P), rec = S.weeks[W.label] || (S.weeks[W.label] = { fb: W.fallback, first: today, bonus: {} });
+  if (!isPlain(rec.miles)) rec.miles = {};
+  rec.miles[at] = today;
+  give(P, S, v.reward, today, `${W.label}/pts${at}`);
+  return { ok: true, reward: v.reward, chips: v.chips, box: v.box };
 }
 // 還沒領的：這週做完、還沒領的任務（每日任務錯過當天，只要還在這週就還能領）
 export function unclaimed(P, W) {

@@ -27,6 +27,7 @@ import { RANK, ago, reloadSave } from "./ui_login.js";
 import { cellarFxBox, roomHead } from "./ui_screens1.js";
 import { learnText } from "../../shared/shop.js";
 import { posterWall } from "./ui_themeshow.js";
+import { actDone } from "./ui_story.js";
 
 const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : ""); // "2026-11-09" → "11/9"
 const arrow = () => h("span", { "aria-hidden": "true" }, "→");
@@ -73,6 +74,7 @@ async function loadVisit(f, params) {
     st.data = r;
     if (r.rev) await reloadSave(r.rev);
     visitDone({ owner: r.owner, view: r.view, first: r.first, gain: r.gain, learn: r.learn });
+    if (r.open) actDone("visit"); // 每日任務：參觀壹位館友的展廳（決定 0146）
     seenCallsFrom(f.id); // 他請我來看，我來了：那則通知不用再留
   } catch (e) { st.err = e.message || "走不進去，等壹下再試。"; }
   st.loading = false;
@@ -255,6 +257,7 @@ export function openGift(friend) {
       const r = await NET.call("sendGift", { to: friend.id, item: { kind: sel.kind, key: sel.key } });
       await reloadSave(r.rev); // 伺服器已經從我的收藏拿掉了
       sent = r.text;
+      actDone("gift"); // 每日任務：送館友壹隻佩佩（決定 0146）
       sel = null;
       snd("coin");
       note(`寄出去了：${r.text}。${friend.nick} 的信箱多了壹封。`, "good");

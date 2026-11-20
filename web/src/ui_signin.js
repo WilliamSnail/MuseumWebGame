@@ -24,6 +24,7 @@ import { NET } from "./net_firebase.js";
 import { $$, ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, cicon, go, h, icon, setChips, motionOff, note, persist, persistNow, ptNode, rerender, sanShort, showEvents, snd, updateBoardBadges, updateStatus } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
 import { exInspLine, focusExhibit } from "./ui_screens1.js";
+import { actDone } from "./ui_story.js";
 
 const WD = ["日", "壹", "二", "三", "四", "五", "六"];
 const WEEK_HEAD = ["壹", "二", "三", "四", "五", "六", "日"];
@@ -205,6 +206,7 @@ export function openSignin(o = {}) {
     const r = signIn(SAVE, P, today);
     if (r.ok && r.weekly) weekChips();
     if (!r.ok) { if (!r.already) { snd("error"); note(r.reason, "bad"); } draw(); return; }
+    actDone("sign"); // 每日任務：簽到（決定 0146）
     result = r;
     snd("stamp");
     if (r.weekly || r.holiday) setTimeout(() => snd("bell"), 420);

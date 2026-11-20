@@ -26,7 +26,7 @@ import { overlay } from "./ui_board.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
-import { casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
+import { actDone, casinoDefOf, curWeek, weekCasino } from "./ui_story.js";
 import { slotMachine } from "./ui_casino_slot.js";
 import { LIVE, liveClock, liveNow, liveThanks, onLive } from "./ui_casino_live.js";
 
@@ -50,6 +50,7 @@ let S = null; // { m, tab, w, round, house, say, busy, shown（莊家翻開幾�
 
 async function call(act, data) {
   const r = await NET.call("casino", Object.assign({ act }, data || {}));
+  if (r && r.ok !== false) { if (act === "deal") actDone("casino"); else if (act === "buy") actDone("food"); } // 每日任務：打壹手、吃壹樣東西（決定 0146）
   if (r && r.wallet && typeof r.wallet.chips === "number") setChips(r.wallet.chips); // 狀態列跟著變
   return r;
 }
@@ -183,7 +184,7 @@ export function casinoBankBox() {
       let r = null;
       try {
         r = await NET.call("casino", Object.assign({ act: name }, data || {}));
-        if (r && r.ok === false) { snd("error"); note(r.reason || "沒辦法。", "bad"); } else { sync2(r); UI.bankAt = 0; if (then) await then(r); } // 錢動了：我的帳戶下次重讀
+        if (r && r.ok === false) { snd("error"); note(r.reason || "沒辦法。", "bad"); } else { if (name === "bank" && data && data.op === "put") actDone("bank"); sync2(r); UI.bankAt = 0; if (then) await then(r); } // 錢動了：我的帳戶下次重讀
       } catch (e) { snd("error"); note((e && e.message) || "沒辦法。", "bad"); }
       C.busy = false; io.draw();
       return r;
