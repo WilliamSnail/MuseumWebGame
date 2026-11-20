@@ -33,11 +33,10 @@ const TAB_ICON = {
   bond: SVG('<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>'), // 債券（壹張紙）
   stock: SVG('<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>'), // 往上的折線
   auction: SVG('<path d="M4 20h10M7 20v-3h4v3"/><path d="m5 11 6 6M8 6l6 6M13 4l5 5-3 3-5-5z"/><path d="M16 18h4"/>'), // 拍賣槌
-  gstock: SVG('<path d="M4 20V9l4-3 4 3v11M12 20V4l4 3v13M3 20h18"/>'), // 幾棟樓（集團）
   report: SVG('<path d="M5 4h13v16H5z"/><path d="M8 8h7M8 12h7M8 16h4"/><path d="M5 4v16"/>'), // 帳本
   flow: SVG('<circle cx="12" cy="12" r="2.2"/><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="6" r="1.6"/><circle cx="12" cy="20" r="1.6"/><path d="M6.4 7.2 10 10.6M17.6 7.2 14 10.6M12 14.2V18.2"/>'), // 中心往外的幾條線（金流 hub）
 };
-const TABS = [["report", "財報"], ["flow", "金流"], ["stock", "股票"], ["gstock", "集團股"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
+const TABS = [["report", "財報"], ["flow", "金流"], ["stock", "股票"], ["save", "存款"], ["loan", "借款"], ["bond", "館債"], ["auction", "拍賣"]]; // 拍賣不是這個廳的頁籤：按了直接進畫廊的「拍賣」頁籤（翊文 11-14） // 翊文 11-14：財報最左邊第一個，第二個是股票
 const pctText = p => `${(p * 100).toFixed(p * 100 % 1 ? 1 : 0)}%`;
 
 // ---------- 示範資料（伺服器還沒給 bankHall 的時候用；格式照 Yuga 說的 bankHall） ----------
@@ -782,7 +781,7 @@ const TONE_MARK = { up: ["▲", "up"], down: ["▼", "down"], flat: ["－", ""] 
 function goStock(v, id) {
   const list = v.stocks ? v.stocks.list : [], i = list.findIndex(x => x.id === id);
   if (i < 0) return;
-  UI.bankTab = "stock"; UI.bankStock = i; UI.bankPV = "trade"; rerender();
+  UI.bankTab = "stock"; UI.bankGrp = "std"; UI.bankStock = i; UI.bankPV = "trade"; rerender();
 }
 const isPhone = () => window.innerWidth < 761 || window.innerHeight < 501;
 // 手機：把壹塊收成壹行，點開才看（電腦照舊整塊畫）
@@ -1025,8 +1024,10 @@ function gstockPane(v) {
       (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null),
       S && S.lev ? positionsPanel(S) : null, gsOrdersPanel(G)));
 }
+// 股票頁籤（翊文 11-20：集團股併進來）：上面一排切「台股・美股・館內股」和「集團股」；選集團股畫集團股那套，銀行說明預設跳「集團股」。成交紀錄之後放這裡
+const stockHome = v => { const hasG = v.gs && v.gs.list && v.gs.list.length, grp = UI.bankGrp === "grp"; if (!hasG || !v.stocks) return hasG ? gstockPane(v) : stockPane(v); const fr = document.createDocumentFragment(); fr.append(seg([["std", "一般股"], ["grp", "集團股"]], grp ? "grp" : "std", k => { UI.bankGrp = k; rerender(); }, "kind bank-grpsw"), grp ? gstockPane(v) : stockPane(v)); return fr; };
 const flowReload = () => { if (UI.screen === "bank" && UI.bankTab === "flow" && !UI.bankLoading) bankLoad(); }; // 金流頁籤開著：每 45 秒重拿（bank_flow.js 排）
-const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockPane, gstock: gstockPane, report: reportPane, flow: v => flowPane(v, { panel, reload: flowReload }) };
+const PANES = { save: savePane, loan: loanPane, bond: bondPane, stock: stockHome, report: reportPane, flow: v => flowPane(v, { panel, reload: flowReload }) };
 
 // ---------- 右欄 ----------
 // 我的帳戶的幾行（銀行右欄、賭場和同桌賭桌的小塊共用，11-16）
@@ -1172,7 +1173,7 @@ function helpSections(v) {
     ] },
     { id: "gstock", name: "集團股", blocks: [
       ["是什麼", [
-        "已知世界裡名單上標「上市」的集團都發股票，在「集團股」那一頁買賣。每家的資本額是它的池子的 " + G.capMult + " 倍，股數固定、每週一才會增資、庫藏股、配股或分割。",
+        "已知世界裡名單上標「上市」的集團都發股票，在「股票」頁籤上面切到「集團股」買賣。每家的資本額是它的池子的 " + G.capMult + " 倍，股數固定、每週一才會增資、庫藏股、配股或分割。",
         `營業時間每天 ${clock(300)}～${clock(300 + (G.ticks - 1) * 15)}，每 15 分鐘一個價。`]],
       ["價錢怎麼動", [
         "基本價看這家集團每股的淨值、健康值（景氣、旗下股票）、所屬市場的景氣；價格會慢慢往基本價靠。",
@@ -1275,7 +1276,7 @@ function helpSections(v) {
   ];
 }
 function openHelp(v) {
-  const secs = helpSections(v), cur = { id: UI.bankHelp && secs.some(x => x.id === UI.bankHelp) ? UI.bankHelp : ({ stock: "stock", gstock: "gstock", flow: "flow", save: "save", loan: "loan", bond: "bond", report: "report" }[UI.bankTab] || "stock") };
+  const secs = helpSections(v), cur = { id: UI.bankHelp && secs.some(x => x.id === UI.bankHelp) ? UI.bankHelp : ({ stock: UI.bankGrp === "grp" ? "gstock" : "stock", flow: "flow", save: "save", loan: "loan", bond: "bond", report: "report" }[UI.bankTab] || "stock") };
   const m = miniLayer("規則與小提示", "數字是現在的設定，改了這裡會跟著變。");
   m.card.classList.add("bank-help");
   const chips = h("div", { class: "bank-help-tabs", role: "tablist" });
@@ -1292,7 +1293,6 @@ function openHelp(v) {
   closeOnOutside(m);
 }
 const helpBtn = v => btn([h("span", { class: "bank-help-q", "aria-hidden": "true" }, "？"), "規則與小提示"], () => openHelp(v), "small bank-btn gold bank-helpbtn");
-
 // ---------- 整個畫面 ----------
 SCREENS.bank = root => {
   if (!UI.localPlay && !UI.bankLoading && Date.now() - (UI.bankAt || 0) > 20000) bankLoad(); // 進來先跟伺服器拿；拿到前畫示範資料（上面寫著）
