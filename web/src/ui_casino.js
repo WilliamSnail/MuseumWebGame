@@ -664,9 +664,10 @@ function livePane() {
 const DN_GROUPS = [["小點心", it => !it.ticket && it.price <= 100], ["正餐", it => !it.ticket && it.price > 100 && it.price <= 100000], ["貴的", it => it.ticket || it.price > 100000]];
 // 說明（第二層）：電腦攤開；手機收起來點開，品項在上。沒開大禮包（有事要先做）時手機也攤開
 function dinerMore(a, b, calm) {
-  const el = h("details", { class: "dn-more" }, h("summary", null, "吃東西的說明"), a, b);
-  if (window.innerWidth > 760 || !calm) el.open = true;
-  return el;
+  const mobile = window.innerWidth <= 760;
+  const el = h("details", { class: "dn-more" }, h("summary", null, "吃東西的說明"), a, mobile && !calm ? null : b);
+  if (!mobile) el.open = true; // 手機壹律收起來，品項在上；還沒開大禮包的提醒（有事要先做）另外放在外面壹行（11-20 測試複看）
+  return mobile && !calm ? h("div", { class: "dn-moreb" }, el, b) : el;
 }
 function dinerNote() {
   const d = todayStr(); let k = 0; for (const c of d) k = (k * 31 + c.charCodeAt(0)) % 9973;

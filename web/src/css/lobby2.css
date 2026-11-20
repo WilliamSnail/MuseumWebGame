@@ -412,3 +412,10 @@ body.reduce-motion .hl-track { animation: none; }
   .new-lobby-on #status .st-toggle { min-width: 46px; padding: 0 4px; font-size: .625rem; letter-spacing: 0; margin-right: 4px; }
   .new-lobby-on #status .st-row .st-item { min-width: 0; }
 }
+
+/* 手機直拿狀態列：數字長（1000 萬、9990 萬）不被「更多」擠掉（11-20 測試複看：「萬」被切 6px） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .new-lobby-on #status:not(.open) .st-num { font-size: .8125rem; letter-spacing: -.01em; }
+  .new-lobby-on #status:not(.open) .st-row { gap: 0; padding-left: 8px; }
+  .new-lobby-on #status .st-toggle { min-width: 40px; margin-right: 2px; }
+}
