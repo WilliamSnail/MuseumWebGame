@@ -101,6 +101,15 @@ T("NPC 理智太低：離隊，真人還能繼續", G => {
   G.coopNpcTurn(run, Ps);
   assert.strictEqual(m.out, "left"); assert.ok(run.phase !== "over", "真人還在，這趟繼續");
 });
+T("人數加成：NPC 算 bonusWeight 個人（預設 1 ＝跟真人一樣；0.5 ＝半個人，壯膽和打贏的靈感少一些）", G => {
+  const { run } = startWithNpc(G), ms = run.members;
+  assert.strictEqual(G.NUM.casino.coopNpc.bonusWeight, 1); assert.strictEqual(G.coopBonusCount(ms), 2);
+  assert.strictEqual(G.fightCourage(G.coopBonusCount(ms)), G.NUM.fight.courage);
+  G.NUM.casino.coopNpc.bonusWeight = 0.5;
+  assert.strictEqual(G.coopBonusCount(ms), 1.5); assert.strictEqual(G.fightCourage(G.coopBonusCount(ms)), 0, "壹個真人加半個 NPC 還不到第二個人");
+  assert.strictEqual(G.fightWinInsp(G.coopBonusCount(ms), 1), G.fightWinInsp(1, 1));
+  G.NUM.casino.coopNpc.bonusWeight = 1; assert.strictEqual(G.fightWinInsp(G.coopBonusCount(ms), 1), G.fightWinInsp(2, 1));
+});
 T("真人都離開：只剩 NPC 不算隊伍，這趟結束", G => {
   const { run, Ps } = startWithNpc(G);
   G.coopLeave(run, Ps, "a");

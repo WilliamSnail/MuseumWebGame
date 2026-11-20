@@ -73,6 +73,8 @@ export const coopActive = run => run.members.filter(m => !m.out && !m.guard);
 export const coopPresent = run => run.members.filter(m => !m.out);
 // 能投票、能擲骰的人：還在地下、不是幽靈
 export const coopCanAct = m => !!m && !m.out && !m.ghost && !m.guard;
+// 人數加成要算幾個人（找 NPC 下地下，決定 0149）：真人壹個算 1、NPC 壹位算 NUM.casino.coopNpc.bonusWeight；給打怪的壯膽和打贏的靈感用（member ＝ 隊員的陣列，可以是投票者或座位對應的隊員）
+export const coopBonusCount = members => members.reduce((n, m) => n + (m && m.npc ? NUM.casino.coopNpc.bonusWeight : 1), 0);
 // 真人的投票者（找 NPC 下地下，決定 0149）：「大家都變幽靈／離開了」要看真人，只剩 NPC 不算一隊
 export const coopHumanVoters = run => coopVoters(run).filter(m => !m.npc);
 export const coopVoters = run => run.members.filter(coopCanAct);

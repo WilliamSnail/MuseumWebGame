@@ -4,11 +4,12 @@
 const { G } = require("./sim_cellar.cjs");
 process.env.SIM_FUN = "1"; process.env.SIM_TALK = "1";
 const S = require("./sim_coop.cjs");
+if (process.env.NPC_W) G.NUM.casino.coopNpc.bonusWeight = +process.env.NPC_W; // NPC_W=0.5：NPC 只算半個人的人數加成（決定 0149 的保險 A）
 const RUNS = +process.argv[2] || 80, FLOORS = (process.argv[3] || "2,4,5").split(",").map(Number);
 const avg = (xs, f) => xs.length ? xs.reduce((n, x) => n + f(x), 0) / xs.length : 0;
 const START = G.NUM.startSanity;
 function member(kind, floor, i, j) {
-  if (kind === "npc") { const P = S.profile(1, i, 20 + j); P.cellar.best = floor - 1; P.sanity = 70; P.day.startSan = 70; return P; }
+  if (kind === "npc") { const P = S.profile(1, i, 20 + j); P.__npc = true; P.cellar.best = floor - 1; P.sanity = 70; P.day.startSan = 70; return P; }
   return S.profile(floor, i, j);
 }
 function run(h, n, floor, pep = 1) {

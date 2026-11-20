@@ -641,10 +641,11 @@ export const NUM = {
     //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
     npcCas: { on: true, perNpcDay: 3, tableMax: 3, perHost: 3, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
     // 找 NPC 一起下地下收藏庫（決定 0149，翊文 11-21：NPC 像真人隊友、邀請送 5,000 籌碼給 NPC）。規則 shared/coop/npc.js、shared/npc/coop.js；模擬 test/sim/sim_coop_npc_human.cjs
+    //   bonusWeight：NPC 算幾個人的「人數加成」（打怪每多一人 +1 靈感、壯膽每多一人 +5 膽量；1 ＝跟真人一樣，0.5 ＝半個人；強度門檻和怪的壓力照常算全部的人，因為他們真的在場）。翊文選保險 A 時設 0.5、maxNpc 設 3；
     //   on 總開關；maxNpc 每隊最多幾位 NPC（至少要有壹個真人；模擬：帶 2 位在 B2 比真人 2 人隊還好，保險建議 1，等翊文決定）；gift 邀請送的籌碼（進已知世界，來源 npcGift）；
     //   baseP／routeP／giftP 答應率 ＝ baseP ＋ route.cellar × routeP ＋ gift 給了的 giftP（最多 95、最少 5）；minSan 他的理智低於這個不答應；perDay 壹位 NPC 壹天最多陪幾趟；
     //   leaveSan 趟裡他的理智掉到這個以下，說壹句話離隊；stayMin 最久陪多少分鐘（趟太久就放他回去）；startSan 他的起始理智（沒紀錄就用 worldDoc.san.start）；coolMs 被拒絕之後同壹位館友再邀同壹位要等多久
-    coopNpc: { on: true, maxNpc: 1, gift: 5000, baseP: 50, routeP: 5, giftP: 20, minSan: 40, perDay: 2, leaveSan: 25, stayMin: 20, coolMs: 1800000, coolKeep: 200, ties: [5, 15, 30] },
+    coopNpc: { on: true, maxNpc: 1, bonusWeight: 1, gift: 5000, baseP: 50, routeP: 5, giftP: 20, minSan: 40, perDay: 2, leaveSan: 25, stayMin: 20, coolMs: 1800000, coolKeep: 200, ties: [5, 15, 30] },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：博物館資金低到這個負數，拚經濟成功完全不撥款。
     packDayCap: 30000000, // 決定 0116：全館大禮包壹天最多付這麼多籌碼，超過的包當天只發 1～3 星
