@@ -311,7 +311,7 @@ export function wtWealth(house, id) {
   return whClamp((wdN(x.adj[id]) + rec + dep) / base, -T.dCap, T.dCap) * T.wealthW;
 }
 // 帳上搬：from 單位 → to 單位（adj），最多搬 from 現有的；回傳搬了多少。總和不變
-// 每壹筆也記在 house.led.units["種類|from|to"]（累計），銀行金流頁籤（shared/casino_report.js 的 casFlowHub）算今天集團之間的線用；kind 是 "trade…"，名字在 CAS_FLOW_UNIT
+// 每壹筆也記在 house.led.units["種類|from|to"]（累計），銀行金流頁籤（shared/casino/report.js 的 casFlowHub）算今天集團之間的線用；kind 是 "trade…"，名字在 CAS_FLOW_UNIT
 export function wtLed(house, kind, from, to, n) { if (!(n > 0)) return; const L = (house.led = wuBox(house.led) ? house.led : {}), U = (L.units = wuBox(L.units) ? L.units : {}), k = kind + "|" + from + "|" + to; U[k] = wdN(U[k]) + n; }
 function wtMove(house, from, to, n, kind) {
   n = wdN(n); const x = wuFix(house);

@@ -1,5 +1,5 @@
 // ================================================================
-//  探險報告掛展廳、貼交誼廳（好玩的機制 9）；留下痕跡（好玩的機制 7，不用同時在線）。規則在 shared/coop_trace.js。
+//  探險報告掛展廳、貼交誼廳（好玩的機制 9）；留下痕跡（好玩的機制 7，不用同時在線）。規則在 shared/coop/trace.js。
 //  放哪裡：
 //    /lounge/{報告 id}       交誼廳：大家貼的探險報告。館友讀得到，只有 Functions 寫
 //    存檔的 P.coopReports、P.hallReport：報告、掛在展廳的是哪一張（走 Firestore 交易，rev 加一，通知 save_changed）
@@ -13,8 +13,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { bad, inbox, needMember, newId, now, rtdb } from "./party.js";
-import { claimLikes, likeProblem, newShadow, newSign, okWispKey, shadowsToDrop, signProblem, signsToDrop, traceRoomById } from "./shared/coop_trace.js";
-import { coopMember } from "./shared/coop_base.js";
+import { claimLikes, likeProblem, newShadow, newSign, okWispKey, shadowsToDrop, signProblem, signsToDrop, traceRoomById } from "./shared/coop/trace.js";
+import { coopMember } from "./shared/coop/base.js";
 import { taipeiDay } from "./shared/logic.js";
 
 const LOUNGE_KEEP = 30; // 交誼廳留最近幾張

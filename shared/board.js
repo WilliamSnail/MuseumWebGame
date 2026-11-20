@@ -20,7 +20,7 @@
 import { NUM } from "./config.js";
 import { FORBIDDEN_BOOKS } from "./content.js";
 import { BOARD_TEXT, BOOK4 } from "./systems_text.js";
-import { casNum } from "./casino.js";
+import { casNum } from "./casino/core.js";
 import { adminSummary } from "./admin.js";
 import { addDays, asList, hallScore, nowMs, taipeiDay } from "./logic_base.js";
 import { fill, migrateSave } from "./logic.js";

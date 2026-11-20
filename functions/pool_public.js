@@ -2,7 +2,7 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 import { onRequest } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { taipeiDay } from "./shared/logic.js";
-import { casPoolView } from "./shared/casino_bank.js";
+import { casPoolView } from "./shared/casino/bank.js";
 
 // 館門口池子的水位（決定 0132、0133）：給每日排程讀的公開 JSON，Hosting 的 /data/pool.json 轉過來。
 // 只有 { day, lv, dir, band, night, trace, hits }（跟 peek 回的 pool 壹樣）；不寫是誰、不寫淨值或金額；沒有登入也讀得到。快取 60 秒（night 看時間）。

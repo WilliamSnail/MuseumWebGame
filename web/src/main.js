@@ -69,7 +69,7 @@ import "./ui_party.js"; // 邀請、隊伍、一起融合（多人版 M3，11-08
 import "./ui_trace.js"; // 留下痕跡（留言牌、影子、幽影，11-09）
 import "./ui_route.js"; // 地圖選路（地下室改版）；ui_coop.js 在 route、rest、chest 階段叫它
 import "./ui_fight.js"; // 打怪物的畫面（地下室改版，決定 0067、0068）；ui_coop.js 在 fight 階段叫它
-import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop.js，伺服器在 functions/coop.js
+import "./ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop/core.js，伺服器在 functions/coop.js
 import "./ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "./ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story.js
 import "./ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/admin.js 來
@@ -85,7 +85,7 @@ import "./ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
 import "./ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
 import "./ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino.js
 import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
-import "./ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord_link.js，規則在 shared/discord.js
+import "./ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord_link.js，規則在 shared/discord/core.js
 import "./ui_npc_card.js";
 import "./ui_map.js"; // 圖書館的「地圖」頁籤（11-16）；放在旅客卡後面（用 npcName） // 旅客卡（11-16）：點旅客名字看狀況；放在用到的檔前面
 import "./ui_hallnow.js";
@@ -95,7 +95,7 @@ import "./css/pepename.css";
 import "./ui_pool.js"; // 館門口的池子（決定 0132）：要放在 ui_lobby2 前面（大廳畫導覽圖時會叫它）
 import "./css/pool.css";
 import "./ui_lobby2.js"; // 新的大廳（決定 0066）：要放在 ui_today、ui_events、ui_casino_live 後面；回滾改 NUM.ui.newLobby
-import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino_wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
+import "./ui_work.js"; // 欠款送參觀者去地下工作（決定 0064 第二部分）：規則在 shared/casino/wallet.js 的 casWork*；要放在 ui_login、ui_screens1 後面
 import "./ui_lost.js"; // 招領：地下遇到別的館友以前理智歸零的參觀者（翊文 11-13，shared/lostfound.js）
 import "./ui_casino_table.js"; // 賭場的館友同桌（第二階段）：伺服器在 functions/casino_table.js；放在 ui_party 後面（PARTY_HOOKS）
 

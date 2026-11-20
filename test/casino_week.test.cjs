@@ -1,4 +1,4 @@
-// Hamachi 賭場的每週收藏（shared/casino_week.js、casino_wallet.js，決定 0042）：node test/casino_week.test.cjs（npm test 也會跑）
+// Hamachi 賭場的每週收藏（shared/casino/week.js、casino/wallet.js，決定 0042）：node test/casino_week.test.cjs（npm test 也會跑）
 // 換週歸零、過期不懲罰、重複領不行、條件邊界、壞資料不丟錯、舊錢包沒有這些欄位、同桌和單人都算、條件只由伺服器算（畫面改不了）。
 // 數字讀 NUM；用到亂數的固定骰子（G.setRng）。
 const assert = require("assert");

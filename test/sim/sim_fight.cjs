@@ -1,4 +1,4 @@
-// 模擬地下室改版的打怪物（shared/cellar_fight.js，決定 0067）：1～4 個人，每層的一般怪物和守門各打很多場
+// 模擬地下室改版的打怪物（shared/cellar/fight.js，決定 0067）：1～4 個人，每層的一般怪物和守門各打很多場
 // node test/sim/sim_fight.cjs [次數，預設 300]　　RANK=3 node test/sim/sim_fight.cjs 200 看 3 級的怪物
 //   SHOW=sum 只印「普通／等級 2／等級 3／守門」四類的平均勝率（調數值用）；SHOW=end 另外印結局和背包得失
 //   POLICY=basic 回到舊選法（只看穿、推、擋），拿來對照

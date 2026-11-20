@@ -1,5 +1,5 @@
 // 把 Yuga Bot 的斜線指令（/pepe-…）註冊到佩佩博物館的 Discord 伺服器（guild commands，決定 0051）。
-// 指令清單在 shared/discord.js 的 dcCommands()；這支只負責送出去。送的是「整份取代」：清單裡沒有的舊指令會被拿掉。
+// 指令清單在 shared/discord/core.js 的 dcCommands()；這支只負責送出去。送的是「整份取代」：清單裡沒有的舊指令會被拿掉。
 //
 //   node tools/discord_commands.cjs --print   只印清單，不連 Discord（沒有金鑰也能跑，測試用）
 //   node tools/discord_commands.cjs           註冊。要三樣東西（環境變數）：

@@ -1,5 +1,5 @@
 // ================================================================
-//  合作地下收藏庫（多人版 M4）。規則在 shared/coop.js、shared/coop_flow.js；這個檔只管讀寫。
+//  合作地下收藏庫（多人版 M4）。規則在 shared/coop/core.js、shared/coop/flow.js；這個檔只管讀寫。
 //  放哪裡：
 //    Firestore /coopRuns/{pid}            這一趟完整的狀態（data：JSON 字串）。只有 Functions 碰得到：線索、幻覺、地圖都在裡面
 //    Realtime Database /coopView/{pid}/{uid}  給這個人看的樣子（viewFor，r：第幾版，j：JSON 字串）。只有他自己讀得到
@@ -12,10 +12,10 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { COOP, coopFix, coopMember, coopPresent } from "./shared/coop_base.js";
-import { viewFor } from "./shared/coop.js";
-import { coopAct, coopBegin } from "./shared/coop_flow.js";
-import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop_fun.js";
+import { COOP, coopFix, coopMember, coopPresent } from "./shared/coop/base.js";
+import { viewFor } from "./shared/coop/core.js";
+import { coopAct, coopBegin } from "./shared/coop/flow.js";
+import { coopReportProblem, coopSayBuild, coopSayGap } from "./shared/coop/fun.js";
 import { canStartParty, fixParty, newParty, partyBack, partyFloor, partyGuard, partyLeave, partyMembers, partyTrial } from "./shared/party.js";
 import { trialById } from "./shared/shop.js";
 import { ensureDay, hashStr, mulberry32, setRng, taipeiDay } from "./shared/logic.js";
@@ -130,7 +130,7 @@ async function startRun(me, pid) {
       setRng(mulberry32(hashStr(`${id}:start`)));
       let r;
       // 限時活動：用伺服器時間 t 判斷（玩家改電腦時間沒用）。按出發這一刻在活動內，這一趟就照活動算到走完，記在 run.event
-      // 合作試煉（隊長在準備區選了試煉房間）：吃試煉的活動，每個人的成長走完那一刻照自己的資格各算各的（shared/coop.js 的 coopTrialDone）
+      // 合作試煉（隊長在準備區選了試煉房間）：吃試煉的活動，每個人的成長走完那一刻照自己的資格各算各的（shared/coop/core.js 的 coopTrialDone）
       const trial = party.trial && trialById(party.trial) ? { id: party.trial, date: today } : null;
       const event = eventRunOf(eventLive(eventsFromWeeks(EVENT_WEEKS), trial ? "trialBoost" : "coopBoost", t));
       // 地下室改版（決定 0067）：房間探索完打守門。正式版照 NUM.ui.newCellar；開發時模擬器可以用 NEW_CELLAR=1 先打開

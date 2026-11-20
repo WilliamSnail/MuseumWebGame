@@ -1,20 +1,20 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
 //  Hamachi 賭場（決定 0040）：單人 21 點、籌碼錢包、大禮包、餐車、救濟、換小獎、成就和財產、舊資料認領。
-//  規則在 shared/casino.js、shared/casino_wallet.js；這個檔只管讀寫，每一步都是 Firestore 交易。
+//  規則在 shared/casino/core.js、shared/casino/wallet.js；這個檔只管讀寫，每一步都是 Firestore 交易。
 //  放哪裡（都只有 Functions 碰得到，firestore.rules 沒開放）：
 //    casinoWallets/{uid}   籌碼錢包（data：JSON 字串）
 //    casinoRounds/{uid}    現在這一手：洗好的牌、莊家的底牌都在裡面（畫面只拿到看得到的）
 //    casinoHouse/main      莊家的錢（大家共用）
 //    casinoLegacy/{小寫 email}   舊 Discord 21 點的籌碼、成就、財產，翊文之後放；認領後標 claimedBy
-//  拚經濟（決定 0052）：act econ，全館共用的莊家跟著拚，一人一天 3 次（shared/casino_econ.js）。
-//  實況和斗內（決定 0053）：act live（看）、liveOn（開播）、liveOff（下播）、donate（斗內）。規則在 shared/casino_live.js（純函式，之後 Discord 也用）。
+//  拚經濟（決定 0052）：act econ，全館共用的莊家跟著拚，一人一天 3 次（shared/casino/econ.js）。
+//  實況和斗內（決定 0053）：act live（看）、liveOn（開播）、liveOff（下播）、donate（斗內）。規則在 shared/casino/live.js（純函式，之後 Discord 也用）。
 //    casinoLive/main   現在的實況主和最近一則感謝（data：JSON 字串）。開播、下播、斗內都在同一個 Firestore 交易裡改；斗內同時改兩邊的錢包（不經過莊家），實況主還沒有錢包就當場補開場籌碼再加
 //    /casinoLive（Realtime Database）  同一份的公開鏡像（只有暱稱和 uid，館友讀得到），交易成功之後寫；用 seq 擋掉晚到的舊資料。畫面聽這裡，跳「感謝」和大廳的「正在實況」
 //  每週收藏（決定 0042）：每一步結束（shape）叫 casWkSync，在同一個交易裡看統計夠了沒、發收藏品；週章和故事要按「領」（wkclaim，伺服器寫存檔）。
 //    這週的內容從 shared/casino_week_data.js 來（tools/copy_shared.cjs 部署前把 content/weeks 的 casino 打包進去）。
 //  Yuga Bot 日報（11-13）：act report。每天第一個來問的人觸發壹次「全館快照」（一致讀取所有錢包、莊家、打到一半的注），存 casinoReport/{day}（data：JSON），跟上一份相減就是那段時間的帳。
-//    錢包的 led、莊家的 led 記了每一條憑空、消失、莊家進出的路（shared/casino_book.js）；快照加起來對不上開場就 console.error（守恆壞了）
+//    錢包的 led、莊家的 led 記了每一條憑空、消失、莊家進出的路（shared/casino/book.js）；快照加起來對不上開場就 console.error（守恆壞了）
 //  牌用 crypto 的亂數洗（不用種子：種子猜得到的話，看得到的牌就推得出底牌）。
 //  連勝連敗（決定 0049）：結算的同一個交易裡，心情、理智寫進存檔（deal、hit、stand 都讀存檔）。
 //  改到存檔的（換小獎的靈感、稱號、掛紀念品）：同一個交易寫存檔（rev 加一），交易成功才通知 save_changed。
@@ -23,41 +23,41 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { randomInt } from "node:crypto";
 import { NUM } from "./shared/config.js"; // 11-15：日報用到 NUM.casino.world.start 卻沒 import，11-15 起日報都產生失敗（ReferenceError）
-import { casNum, casRoundView } from "./shared/casino.js";
-import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "./shared/casino_bank.js";
-import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino_wallet.js";
-import { CAS_LIVE, CAS_TEXT } from "./shared/casino_text.js";
-import { casWkSync, casWkView } from "./shared/casino_week.js";
+import { casNum, casRoundView } from "./shared/casino/core.js";
+import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from "./shared/casino/bank.js";
+import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "./shared/casino/wallet.js";
+import { CAS_LIVE, CAS_TEXT } from "./shared/casino/text.js";
+import { casWkSync, casWkView } from "./shared/casino/week.js";
 import { titlePublish } from "./shared/titles.js";
-import { casCellarFind } from "./shared/casino_find.js";
-import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino_book.js";
-import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino_report.js";
-import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino_gdp.js";
+import { casCellarFind } from "./shared/casino/find.js";
+import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "./shared/casino/book.js";
+import { CAS_FLOW_UNIT, casBooksView, casFlowHub, casFlowLed0, casReportView } from "./shared/casino/report.js";
+import { casGdpExt, casGdpIndex, casGdpOf } from "./shared/casino/gdp.js";
 import { ECONOMY } from "./shared/economy_data.js";
 import { DAY_DATA } from "./shared/day_data.js";
-import { casTicketClaimKeys } from "./shared/casino_ticket.js";
-import { casJobChips } from "./shared/casino_job.js";
-import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "./shared/casino_econ.js";
-import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino_bond.js";
-import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino_stock_lev.js";
-import { casArtSecret } from "./shared/casino_art.js";
+import { casTicketClaimKeys } from "./shared/casino/ticket.js";
+import { casJobChips } from "./shared/casino/job.js";
+import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "./shared/casino/econ.js";
+import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "./shared/casino/bond.js";
+import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "./shared/casino/stock_lev.js";
+import { casArtSecret } from "./shared/casino/art.js";
 import { npcCounters, npcPublic } from "./shared/npc.js";
 import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "./shared/npc_data.js";
 import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "./shared/econ_events.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
-import { npcCasAway } from "./shared/casino_npc.js";
+import { npcCasAway } from "./shared/casino/npc.js";
 import { npcCardView } from "./shared/npc_card.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "./shared/world.js";
-import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "./shared/casino_stock_grp.js";
-import { casSellForDebt } from "./shared/casino_debt.js";
-import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino_advisor.js";
+import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "./shared/casino/stock_grp.js";
+import { casSellForDebt } from "./shared/casino/debt.js";
+import { casAdvisorExtend, casAdvisorLetter } from "./shared/casino/advisor.js";
 import { MAIL_DAYS } from "./shared/mailbox.js";
 import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "./shared/npc_spend.js";
-import { casInvestPublic, casInvestRun } from "./shared/casino_invest.js";
-import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino_stock_in.js";
-import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino_stock.js";
-import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino_bank.js";
-import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino_live.js";
+import { casInvestPublic, casInvestRun } from "./shared/casino/invest.js";
+import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "./shared/casino/stock_in.js";
+import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "./shared/casino/stock.js";
+import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "./shared/casino/bank.js";
+import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "./shared/casino/live.js";
 import { eventLive, eventsFromWeeks } from "./shared/events.js";
 import { EVENT_WEEKS } from "./shared/events_data.js";
 import { CAS_WEEK_LIB } from "./shared/casino_week_data.js";
@@ -123,17 +123,17 @@ export async function playCore(me, email, opts, fn) {
       wmWriteVisit(house, day, NPC_LIST); // 景氣分市場（決定 0121）：每位 NPC 今天的來館倍率（行程用 npcCounters 看到）
       casCultureFund(w, house); // 新玩家的起始籌碼是文化部補助：第壹次碰到莊家時改記成已知世界出的（決定 0082）
       casLoanToHouse(w, house); // 到期被直接扣掉的借款交給莊家（決定 0071）
-      const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino_bank.js）
-      const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由博物館資金墊，再不夠開憑證，shared/casino_bond.js）
+      const bankEv = casBankAccrue(w, house, day); // Yuga Bot 銀行：換日補算活存利息、到期的定存（利息從莊家出，shared/casino/bank.js）
+      const bondEv = casBondSettle(w, house, day); // 館債：到期的還本金加利息（莊家不夠先由博物館資金墊，再不夠開憑證，shared/casino/bond.js）
       if ((bankEv && bankEv.back && bankEv.back.length) || (bondEv && bondEv.back && bondEv.back.length)) casLevCreditAdd(w, day); // 定存、館債準時到期：信用點 +1（壹天最多 1，規劃 2.8b、2.8j）
       casStockTwSettle(house, tw, day); // 換日以前先把上一天台股的收盤價套上去
       casStockUsSettle(house, us, day); // 美股也是（冬令收盤剛好是 05:00 換日那一刻，這裡補上最後一個價）
       casLevSweep(w, house, day, t); // 槓桿、放空、當沖（規劃 2.8j）：強平、昨天以前沒平的收盤平倉。要在換日調價、館內股換日、價位換比例「之前」，用的是昨天的價
-      casStockRoll(house, day, {}, casStockReals(house, tw, us)); // 股票換日（照真實比例換價位、開盤拉回，規劃 2.8h）：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino_stock.js）
+      casStockRoll(house, day, {}, casStockReals(house, tw, us)); // 股票換日（照真實比例換價位、開盤拉回，規劃 2.8h）：台股、美股的漲跌都在盤中動完了，這裡只扣 drag（shared/casino/stock.js）
       casStockTwApply(house, tw, day, t); // 台股現在這分鐘的價、開盤狀態（沒開盤的時間買賣、下單、取消都擋）
       casStockUsApply(house, us, day, t); // 美股一樣
       casLevSweep(w, house, day, t); // 台股、美股現在這分鐘的狀態更新了（13:30 收盤了嗎、有沒有碰到強平）再掃壹次
-      casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino_stock_in.js）
+      casInRoll(house, day, house.econ && house.econ.b, undefined, NPC_DAYS, { list: NPC_LIST, fest: FEST_DAYS, counters: npcCounters(house.npcc) }); // 館內五家店：今天的開盤價（昨天不同的人、景氣、隨機跳空）；同壹天只算壹次（shared/casino/stock_in.js）
       casEconRun(house, day, ECON_EVENTS); // 劇情經濟事件（館債簽收窗口、畫價凍結、莊家提早還貸款；冪等，shared/econ_events.js）
       casNpcLive(house, day, t, sec, NPC_LIST, npcCounters(house.npcc)); // NPC 今天到了的那幾站：付門票、店裡花錢、展廳評價（惰性結算，冪等，shared/npc_spend.js）
       casInvestRun(house, casStockHouseFix(house), day, sec, house.econ && house.econ.b); // 館方投資海外（規劃 2.8f）：換日後第壹次、用今天的價；同壹天只跑壹次
@@ -303,7 +303,7 @@ export const actPack = (ctx, d) => {
   const r = casOpenPacks(ctx.w, ctx.house, d.n, ctx.day);
   return r.ok ? shape(ctx, { packs: r.packs, total: r.total, ach: r.ach }) : no(r);
 };
-// 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino_wallet.js）
+// 借錢（遊戲的「向 Yuga 借」和 Discord 的 /pepe-借錢 共用；次數、補到多少都在 casRelief，shared/casino/wallet.js）
 // 決定 0064 之後是有利息的借款：Discord 沒有參數，借 NUM.casino.loan.discord 這麼多（casRelief）
 export const actRelief = ctx => {
   const r = casRelief(ctx.w, ctx.day, !!(ctx.round && ctx.round.state === "playing"), ctx.t, ctx.house);
@@ -350,7 +350,7 @@ export const actStock = (ctx, d) => {
   if (op === "seen" && r.ok) casInSeen(ctx.w, ctx.house, ctx.day, ctx.t); // 館內股也記「看過了」
   return r.ok ? shape(ctx, { lines: r.lines }) : no(r);
 };
-// Yuga Bot 銀行（shared/casino_bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
+// Yuga Bot 銀行（shared/casino/bank.js）：d.op 是 put 存活存、take 領活存、term 開定存（d.kind 第幾種）、break 解約（d.id）。打牌打到壹半也可以（注已經扣掉了）
 export const actBank = (ctx, d) => {
   const op = String(d.op || "");
   const r = op === "put" ? casBankPut(ctx.w, d.amt) : op === "take" ? casBankTake(ctx.w, d.amt)
@@ -379,7 +379,7 @@ export const actBuy = (ctx, d) => {
   return r.ok ? shape(ctx, { lines: r.lines, item: r.item, tickets: r.tickets, ach: r.ach, mood: r.mood, san: r.san }) : no(r);
 };
 
-// ---------- Yuga Bot 日報（shared/casino_report.js） ----------
+// ---------- Yuga Bot 日報（shared/casino/report.js） ----------
 // 一致讀取（readOnly 交易）全館：錢包、莊家、打到一半的注。不鎖東西，也不會讀到壹半
 async function reportSnap(day) {
   return db().runTransaction(async tx => {
@@ -413,7 +413,7 @@ async function writeEcon(doc, day) {
     if (h.econ && h.econ.day === day && h.econ.ext && h.econ.ext.day === yd && h.econ.world && h.econ.books && h.econ.led0) return; // 今天已經寫好了（日報別人先建、這個實例第壹次看到時才會走到這裡）
     let snapN = (doc.snap.house && doc.snap.house.npcs) || null;
     if (!(snapN && snapN.day === yd)) { try { const cp = JSON.parse(JSON.stringify(h)); casNpcSpend(cp, yd, sec, NPC_LIST, npcCounters(cp.npcc)); if (cp.npcs && cp.npcs.day === yd) snapN = casBookSnap([], cp, 0, day).house.npcs; } catch (e) { console.warn("writeEcon npcs", e && e.message); } } // 日報是唯讀、不換日：昨天的 npcs 可能還沒結算，在複本上補算
-    // 銀行廳的財報頁也讀這裡（shared/casino_gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
+    // 銀行廳的財報頁也讀這裡（shared/casino/gdp.js 的 casBankEcon）：多存每天的 GDP、成長率、昨天發生的事、最熱鬧的那件
     const A = doc.diff.act || {}, g = doc.gdp;
     // 館外來的人（11-15，翊文：「昨天發生的事也沒有變，不是應該有很多npc跟散客了嗎」）：有名字的旅客、散客、他們帶進館的籌碼（shared/npc_spend.js 的 house.npcs，日報那兩行也是讀這個）
     const N = snapN, NC = (N && N.crowd) || {};
@@ -437,9 +437,9 @@ export async function casReport() {
     const prevQ = await db().collection("casinoReport").where("day", "<", day).orderBy("day", "desc").limit(14).get();
     const olds = prevQ.docs.map(d => JSON.parse(d.data().data)).reverse(); // 由舊到新（最多 14 份，算景氣指數的成長率用）
     const prev = olds.length ? olds[olds.length - 1] : null;
-    const ob = casBookOpeningNext(prev, snap, NUM.casino.world.start); // 對帳基準（已知世界有帳的那壹天起算；見 shared/casino_book.js）
+    const ob = casBookOpeningNext(prev, snap, NUM.casino.world.start); // 對帳基準（已知世界有帳的那壹天起算；見 shared/casino/book.js）
     const doc = { day, at: t, snap, diff: casBookDiff(prev && prev.snap, snap), prevDay: prev ? prev.day : null, opening: ob.opening, wfix: true, openingFix: ob.fix }; // 已知世界有帳的第壹天：起始的池子算進開場總和（規劃 2.12）
-    doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino_gdp.js）
+    doc.gdp = casGdpOf(doc.diff); // 館內 GDP（活動量，shared/casino/gdp.js）
     const hist = olds.filter(o => o.gdp && o.diff).map(o => ({ from: o.diff.from, to: o.day, total: o.gdp.total })).concat([{ from: doc.diff.from, to: day, total: doc.gdp.total }]);
     const ext = casGdpExt(ECONOMY, day); // 已知世界的景氣（content/economy.json，每日排劇情的排程更新）
     doc.index = casGdpIndex(hist, prev && prev.index ? prev.index.bIn : 0, snap.active7, ext.b);
@@ -449,7 +449,7 @@ export async function casReport() {
     if (doc.gap !== 0) console.error("賭場記帳：全館的帳對不上", day, "差", doc.gap); // 有壹條動籌碼的路沒有記到帳上
     let made = false;
     try { await ref.create({ day, data: JSON.stringify(doc), updatedAt: FieldValue.serverTimestamp() }); made = true; } catch (e) { /* 別人先建了：讀他的 */ }
-    if (made) await writeEcon(doc, day); // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino_gdp.js 的 casFxMul）
+    if (made) await writeEcon(doc, day); // 景氣寫回莊家：之後拚經濟撥款、門票、存款利率照這個算（shared/casino/gdp.js 的 casFxMul）
     s = await ref.get();
   }
   const rdoc = JSON.parse(s.data().data);
@@ -463,7 +463,7 @@ export const casino = onCall(async req => {
   const d = req.data || {};
   switch (act) {
     // 進賭場：錢包（第一次會建）、這一手有沒有沒打完的、舊資料有沒有可以認領的
-    // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和博物館資金、修繕基金在同一個交易裡加（shared/casino_ticket.js）
+    // 參觀者門票（11-13）：瀏覽器說展廳來了幾位（P.hallVisitors），伺服器照存檔算展廳評分、每天上限，錢包和博物館資金、修繕基金在同一個交易裡加（shared/casino/ticket.js）
     case "tickets": return play(req, me, { save: true }, ctx => {
       const sec2 = ctx.secret;
       const r = casTicketClaimKeys(ctx.w, ctx.house, ctx.P, ctx.day, d.keys, sec2, NPC_LIST, npcCounters(ctx.house.npcc), ctx.t);

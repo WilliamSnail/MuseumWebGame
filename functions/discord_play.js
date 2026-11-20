@@ -6,17 +6,17 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 //  遊戲（casino 這個 Function）呼叫的是同壹批。次數、上限、籌碼、存檔都跟遊戲共用，不會因為換到 Discord 多拿壹份。
 //  **3 秒**：每壹個動作當場把交易做完就回，不先回再繼續做（Function 回完不保證還能跑），也不編輯訊息演出：結果壹次排好回完。
 //  公開與否：21 點的牌局、餐車只有本人看得到（ephemeral）；大禮包、拚經濟、實況、斗內回在頻道。
-//    21 點打完，頻道另外有壹行結果（走 outbox，同壹個人 5 分鐘內連打併成壹則：shared/discord_out.js 的 dcOutBjAdd，functions/discord_out.js 的 processBj）。
+//    21 點打完，頻道另外有壹行結果（走 outbox，同壹個人 5 分鐘內連打併成壹則：shared/discord/out.js 的 dcOutBjAdd，functions/discord_out.js 的 processBj）。
 //  按鈕：custom_id 是「bj:hit|stand:{seq}:{Discord ID}」；seq 擋掉連按兩下和過期的按鈕，Discord ID 擋掉別人按（再驗 interaction 的使用者）。
 //  存檔：21 點（連勝連敗的心情、理智）和餐車（吃了加心情）會改存檔，跟遊戲壹樣在同壹個交易裡寫、rev 加壹、事後通知 save_changed（見 casino.js 的 playCore）。
 //    改的是存檔裡「挑戰模式」的那位參觀者（profiles.challenge），跟遊戲裡的賭場壹樣；沒有存檔或沒有挑戰模式的人，只算籌碼，沒有心情、理智的變化。
 //  回覆壹律過 dcScrub：不放 email、理智、怪癖、靈感；暱稱過 dcNick；不 @ 任何人。
 // ================================================================
 import { getFirestore } from "firebase-admin/firestore";
-import { casFoodLeft, casPoorReason, casWalletFix } from "./shared/casino_wallet.js";
-import { CAS_MENU } from "./shared/casino_text.js";
-import { DC_BET_OPT, DC_PACK_OPT, DC_LIVE_OPT, DC_CMD, DC_TEXT, dcReply, dcText, dcUpdate } from "./shared/discord.js";
-import { dcBjButtons, dcBjText, dcBorrowText, dcBorrowTip, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub, dcYugaLine } from "./shared/discord_play.js";
+import { casFoodLeft, casPoorReason, casWalletFix } from "./shared/casino/wallet.js";
+import { CAS_MENU } from "./shared/casino/text.js";
+import { DC_BET_OPT, DC_PACK_OPT, DC_LIVE_OPT, DC_CMD, DC_TEXT, dcReply, dcText, dcUpdate } from "./shared/discord/core.js";
+import { dcBjButtons, dcBjText, dcBorrowText, dcBorrowTip, dcCustomParse, dcDonateText, dcEconText, dcFoodMenu, dcFoodText, dcLiveOffText, dcLiveOnText, dcPackText, dcReasonText, dcScrub, dcYugaLine } from "./shared/discord/play.js";
 import { DAY_DATA } from "./shared/day_data.js";
 import { taipeiDay } from "./shared/logic.js";
 import { actBuy, actDeal, actEcon, actHitStand, actPack, actRelief, cryptoRng, liveAct, no, playCore, shape } from "./casino.js";

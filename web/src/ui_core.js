@@ -2,7 +2,7 @@
 //  畫面：共用的部分（導覽列、狀態列、燈光、理智檢定流程）
 // ================================================================
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
-import { casExact, casNum } from "../../shared/casino.js";
+import { casExact, casNum } from "../../shared/casino/core.js";
 import { LEGACY, NUM } from "../../shared/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../shared/content.js";
 import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../shared/systems_text.js";

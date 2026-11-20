@@ -7,7 +7,7 @@
 //  入口：導覽列「今天」右邊的「館友證」、右上角選單。ui_core 不能 import 這個檔：這裡把自己登記進 PANELS。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { casNum } from "../../shared/casino.js";
+import { casNum } from "../../shared/casino/core.js";
 import { fromKey, isFree, num, todayStr } from "../../shared/logic.js";
 import { PASS_TABS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../shared/pass.js";
 import { signinState } from "../../shared/signin.js";

@@ -1,6 +1,6 @@
 // ================================================================
 //  合作地下收藏庫的畫面（多人版 M4，翊文 11-08、11-09）
-//  規則在 shared/coop.js、shared/coop_flow.js；伺服器在 functions/coop.js。這個檔只畫「伺服器給我的樣子」，什麼都不算。
+//  規則在 shared/coop/core.js、shared/coop/flow.js；伺服器在 functions/coop.js。這個檔只畫「伺服器給我的樣子」，什麼都不算。
 //  - 入口：地下收藏庫的畫面（ADDONS.cellarTop）、館友小卡（FRIEND_ACTIONS）。邀請卡用 ui_party.js 那一套（PARTY_HOOKS 接回來）。
 //  - 木框（overlay）開著的時候：準備區（聽 parties/{pid}）→ 走一趟（聽 coopView/{pid}/{我}）。
 //  - 走的時候畫面不存檔（UI.saveHold）：每一步都是伺服器寫存檔，收到 save_changed 重新讀（ui_login.js）。
@@ -15,9 +15,9 @@ import { rangeWords, trialById, trialRooms, trialState } from "../../shared/shop
 import { describePepe, fromKey, isFree, migrateSave, nowMs, todayStr } from "../../shared/logic.js";
 import { cellarFloor } from "../../shared/logic_base.js";
 import { cellarFloors, memberPower } from "../../shared/systems.js";
-import { COOP } from "../../shared/coop_base.js";
-import { coopTurnsLeft } from "../../shared/coop_flow.js";
-import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop_text.js";
+import { COOP } from "../../shared/coop/base.js";
+import { coopTurnsLeft } from "../../shared/coop/flow.js";
+import { COOP_CALLS, COOP_CARRY_TEXT, COOP_CLUE_TEXT, COOP_EVIDENCE, COOP_EVIDENCE_LINES, COOP_GUARD_TEXT, COOP_LETTERS, COOP_OVER_TEXT, COOP_PRESSURE_TEXT, COOP_RESIDENTS, COOP_SAY, COOP_TRUTH_TEXT } from "../../shared/coop/text.js";
 import { PARTY, canStartParty, fixParty, partyMembers } from "../../shared/party.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, SAVE, UI, setCellarSnd, sndFile, ask, btn, checkEnding, collectionItems, h, icon, itemHTML, note, ptNode, rerender, sanShort, setSave, showEvents, snd, titleOfId, titleTag, updateStatus, useProfile } from "./ui_core.js";
 import { overlay } from "./ui_board.js";

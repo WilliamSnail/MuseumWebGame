@@ -1,6 +1,6 @@
 // ================================================================
 //  合作地下收藏庫的地圖選路畫面（地下室改版，決定 0067；規劃 docs/地下室改版規劃.md 第三節、第八節「選路的畫面」）
-//  規則在 shared/coop_route.js；伺服器在 functions/coop.js（動作 route、rest、ack）。這個檔只畫伺服器給的樣子。
+//  規則在 shared/coop/route.js；伺服器在 functions/coop.js（動作 route、rest、ack）。這個檔只畫伺服器給的樣子。
 //  ui_coop.js 在 phase 是 route、rest、chest 的時候叫這裡：routeStage（上面的地圖）、routeCard／restCard／chestCard（下面的卡片）。
 //  第八節：最上面一行寫現在要做什麼；能走的點會跳、有框、有字；點一個先看小卡（是什麼、誰投了這裡），再按「走這裡」才算投票；
 //    最下面一直有「撤退」。
@@ -9,7 +9,7 @@
 import { NUM } from "../../shared/config.js";
 import { cellarFloor } from "../../shared/logic_base.js";
 import { describePepe, fromKey } from "../../shared/logic.js";
-import { COOP_ROUTE_KIND } from "../../shared/coop_route.js";
+import { COOP_ROUTE_KIND } from "../../shared/coop/route.js";
 import { btn, h, itemHTML, ptNode, snd } from "./ui_core.js";
 
 const NODE_ICON = { explore: 0, foe: 1, chest: 2, rest: 3, gate: 4 };

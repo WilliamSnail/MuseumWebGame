@@ -7,8 +7,9 @@ const fs = require("fs"), path = require("path");
 const acorn = require("acorn"), es = require("eslint-scope");
 
 const ROOT = path.join(__dirname, "..");
+const sharedJs = d => fs.readdirSync(path.join(ROOT, "shared", d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? sharedJs(d ? d + "/" + e.name : e.name) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
 const FILES = [
-  ...fs.readdirSync(path.join(ROOT, "shared")).filter(f => f.endsWith(".js")).map(f => "shared/" + f),
+  ...sharedJs("").map(f => "shared/" + f), // shared/ 有子資料夾（casino/、coop/…），連裡面的檔一起查
   ...fs.readdirSync(path.join(ROOT, "web/src")).filter(f => f.endsWith(".js")).map(f => "web/src/" + f),
 ];
 const LATER_THAN_CORE = ["ui_screens1.js", "ui_screens2.js", "ui_screens3.js", "ui_curio.js", "ui_odd.js", "ui_board.js", "ui_login.js", "ui_party.js", "ui_coop.js", "ui_trace.js", "ui_signin.js", "ui_story.js", "ui_admin.js", "ui_shop.js", "ui_visit.js", "ui_themeshow.js", "ui_board_rank.js", "ui_today.js", "ui_hub.js", "ui_pass.js", "ui_mates.js", "ui_casino_slot.js", "ui_casino_live.js", "ui_casino.js", "ui_casino_table.js", "ui_casino_week.js", "ui_events.js", "ui_orient.js", "ui_discord.js", "ui_update.js", "ui_work.js", "ui_lobby2.js", "boot.js", "debug_boot.js", "main.js"];

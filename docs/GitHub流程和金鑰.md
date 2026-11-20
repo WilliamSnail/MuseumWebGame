@@ -29,7 +29,7 @@
 | 流程 | 做什麼 | 什麼時候按 |
 |---|---|---|
 | `discord-announce.yml` | 發一則公告到 Discord（欄位 `message`，最多 2000 字，不會 @ 人） | **翊文說要發才發**。例：`npm run -s wf -- discord-announce.yml --file message=公告.txt` |
-| `discord-commands.yml` | 註冊 Yuga Bot 的斜線指令（清單在 `shared/discord.js`，整份取代） | 改了指令清單之後。欄位 `application_id=300999289197428737`、`guild_id=291221925571854347`（不是密碼） |
+| `discord-commands.yml` | 註冊 Yuga Bot 的斜線指令（清單在 `shared/discord/core.js`，整份取代） | 改了指令清單之後。欄位 `application_id=300999289197428737`、`guild_id=291221925571854347`（不是密碼） |
 | `discord-test.yml` | 發一則測試訊息，確認 token、頻道、權限對不對 | 懷疑 bot 壞了的時候 |
 | `discord-log.yml` | 看 Yuga Bot 每個指令花多久（只印時間、狀態碼、耗時） | 查 bot 慢、沒回應 |
 | `firebase-task.yml` | 正式 Firebase 的固定動作（決定 0038） | **只有翊文要求時** |

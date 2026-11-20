@@ -1,6 +1,6 @@
 // ================================================================
 //  銀行「金流」頁籤（11-17 翊文：「做一個動態的 hub 完整顯示整個世界各項金流流動方向的即時動畫」）
-//  資料：bankHall.flow（shared/casino_report.js 的 casFlowHub）＝ 今天 05:00 起每兩個地方之間的淨流向：{ edges: [{ from, to, amt, srcs: [{ src, label, amt }] }], bal }
+//  資料：bankHall.flow（shared/casino/report.js 的 casFlowHub）＝ 今天 05:00 起每兩個地方之間的淨流向：{ edges: [{ from, to, amt, srcs: [{ src, label, amt }] }], bal }
 //  畫法：節點排成橢圓、已知世界在中間；每條線壹條帶箭頭的線，線上有金色小圓片沿著方向跑（SVG 的 animateMotion，瀏覽器自己動，不用我們每格算；分頁在背景它會自己停）。
 //        粗細＝今天流多少（取對數）、圓片數量跟著多壹點（上限 6 個壹條）。點線上的金額小牌或方塊，下面列出是哪些來源。
 //  只給合計和來源標籤，沒有個別館友和 NPC 的名字。介面字用「壹」。
