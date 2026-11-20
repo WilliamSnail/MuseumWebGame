@@ -26,6 +26,7 @@
 import { NUM } from "../core/config.js";
 import { casSellCap, casSellTip } from "./credit.js";
 import { casCount, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain } from "./book.js";
+import { casTradeLog, casTradeMarkOrder } from "./trade_log.js";
 import { casFill, casNum } from "./core.js";
 import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { npcTrips } from "../npc/trip.js";
@@ -482,6 +483,7 @@ export function casInBuy(w, house, id, shares, day, t, secret = SECRET, px0) {
   S.own[id] = have + n; S.fee += fee;
   H.held[id] = inN(H.held[id]) + n;
   H.net = { day, n: inNetToday(H, day) - cost }; // 買進讓今天的淨賣出變少
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "i", a: "b", n, p: px, f: fee });
   return { ok: true, n, px, cost, fee, lines: [casFill(T.buyOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), cost: casNum(cost), fee: casNum(fee) })] };
 }
 // opts.free ＝賣股還債（shared/casino/debt.js）：不受壹人壹天賣出上限和全館淨賣出上限、不算進今天賣出的額度
@@ -513,6 +515,7 @@ export function casInSell(w, house, id, shares, day, t, secret = SECRET, px0, op
   S.fee += fee; if (!free) S.sold = { day, n: inSoldToday(S, day) + gross };
   H.held[id] = Math.max(0, inN(H.held[id]) - n);
   if (!free) H.net = { day, n: inNetToday(H, day) + gross };
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "i", a: "s", n, p: px, f: fee, x: tax, g: gross - fee - costOut, r: free });
   return { ok: true, n, px, gross, fee, tax, net, lines: [casFill(T.sellOk, { name: inDef(id).name, n: casNum(n), px: casNum(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
@@ -586,7 +589,7 @@ export function casInMatch(w, house, day, t, secret = SECRET) {
     // 成交：先把鎖住的還回去，再照市價單的做法走壹遍（手續費、記帳、上限都跟市價單壹樣），用 hit 當成交價
     inDrop(w, S, o);
     const r = o.kind === "buy" ? casInBuy(w, house, o.id, o.n, day, null, secret, hit) : casInSell(w, house, o.id, o.n, day, null, secret, hit);
-    if (r.ok) {
+    if (r.ok) { casTradeMarkOrder(w);
       out.fills++;
       inNote(S, o.kind === "buy" ? casFill(O.fillBuy, { name: inDef(o.id).name, n: casNum(r.n), px: casNum(r.px), cost: casNum(r.cost), fee: casNum(r.fee) })
         : casFill(O.fillSell, { name: inDef(o.id).name, kind: inKindName(o.kind), n: casNum(r.n), px: casNum(r.px), net: casNum(r.net), fee: casNum(r.fee), taxText: r.tax > 0 ? "，證交稅 " + casNum(r.tax) : "" }));

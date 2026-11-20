@@ -116,14 +116,19 @@ T("world:news：加、檢查、數字和真實名字和預測擋掉、3～5 則�
 });
 const HL = require("../../tools/check/world_health.cjs");
 T("world:health／world:sim --scan／world:news draft：景氣差時科技進緊縮裁員、有下限；草稿過檢查", () => {
-  const G = load({ __realMoney: true }), ns = L.readNpcs(), NT = ["casino.worldDoc.trade.wealthW=0", "casino.worldDoc.trade.loan.pct=0"] /* 決定 0119 的交易另外在 world_trade.test 測；這裡看舊的健康值規則 */, r = SM.sim(G, ns, { days: 7 * 6, b: -1, set: NT }), names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; });
-  const x = HL.rows(G, r.house, names), tech = x.rows.find(t => t.id === "g-island"); assert.ok(tech && ["squeeze", "layoff"].includes(tech.state), "景氣 −1：科技緊縮或裁員 " + tech.state); assert.ok(tech.mult >= G.NUM.casino.worldDoc.health.floor);
-  assert.strictEqual(x.rows.find(t => t.id === "g-public").state, "normal", "公共機構是防禦型"); assert.ok(x.rows.every(t => t.mult >= 0.3 - 1e-9));
-  const calm = HL.rows(load({ __realMoney: true }), SM.sim(load({ __realMoney: true }), ns, { days: 14, b: 0, set: NT }).house, names); assert.ok(calm.rows.every(t => t.state === "normal"), "景氣 0：都正常");
-  const sc = SM.scan(() => load({ __realMoney: true }), ns, NT); assert.strictEqual(sc.length, 6); assert.ok(sc.every(t => t.ok), "六種組合都守恆不破產"); const lowB = sc.find(t => t.b === -1 && t.days === 90); assert.ok(lowB.minMult <= 0.31 && lowB.layoff > 0, "景氣谷底 90 天會裁員，有下限");
+  const ns = L.readNpcs(), NT = ["casino.worldDoc.trade.wealthW=0", "casino.worldDoc.trade.loan.pct=0"] /* 決定 0119 的交易另外在 world_trade.test 測；這裡看舊的健康值規則 */, names = {}; L.readUnits().forEach(u => { names[u.id] = u.name; });
+  let dr = null;
+  // 景氣 −1 的 42 天（健康值）、28 天（新聞草稿）、景氣 0 的 14 天，都是 scan 那趟 90 天的前段：每天的種子只看第幾天，所以同壹趟跑到那天停下來看，結果跟另外跑短的壹樣（11-20 加速）
+  const on = (b, d, r, G) => {
+    if (b === -1 && d === 42) {
+      const x = HL.rows(G, r.house, names), tech = x.rows.find(t => t.id === "g-island"); assert.ok(tech && ["squeeze", "layoff"].includes(tech.state), "景氣 −1：科技緊縮或裁員 " + (tech && tech.state)); assert.ok(tech.mult >= G.NUM.casino.worldDoc.health.floor);
+      assert.strictEqual(x.rows.find(t => t.id === "g-public").state, "normal", "公共機構是防禦型"); assert.ok(x.rows.every(t => t.mult >= 0.3 - 1e-9));
+    } else if (b === 0 && d === 14) { const calm = HL.rows(G, r.house, names); assert.ok(calm.rows.every(t => t.state === "normal"), "景氣 0：都正常"); }
+    else if (b === -1 && d === 28) dr = NW.draft(G.whNews(r.house, r.house.wh.day, 14), L.readUnits(), "2026-W49", "3");
+  };
+  const sc = SM.scan(() => load({ __realMoney: true }), ns, NT, { days: [14, 28, 42], on }); assert.strictEqual(sc.length, 6); assert.ok(sc.every(t => t.ok), "六種組合都守恆不破產"); const lowB = sc.find(t => t.b === -1 && t.days === 90); assert.ok(lowB.minMult <= 0.31 && lowB.layoff > 0, "景氣谷底 90 天會裁員，有下限");
   assert.ok(sc.find(t => t.b === 1 && t.days === 30).perDay >= sc.find(t => t.b === -1 && t.days === 30).perDay, "景氣好時 NPC 花得比較多");
-  const G2 = load({ __realMoney: true }), r2 = SM.sim(G2, ns, { days: 7 * 4, b: -1, set: NT }), dr = NW.draft(G2.whNews(r2.house, r2.house.wh.day, 14), L.readUnits(), "2026-W49", "3");
-  assert.ok(dr.length >= 1 && dr.every(t => /npm run world:news -- add/.test(t.command))); const g = load(), c = { W: g.WORLD_NEWS, stockIds: g.OUT_STOCKS.map(q => q.id), names: g.OUT_STOCKS.map(q => q.name).concat(g.IN_STOCKS.map(q => q.name)), banned: require("../../tools/content/week_check.cjs").MARKET_BANNED };
+  assert.ok(dr && dr.length >= 1 && dr.every(t => /npm run world:news -- add/.test(t.command))); const g = load(), c = { W: g.WORLD_NEWS, stockIds: g.OUT_STOCKS.map(q => q.id), names: g.OUT_STOCKS.map(q => q.name).concat(g.IN_STOCKS.map(q => q.name)), banned: require("../../tools/content/week_check.cjs").MARKET_BANNED };
   dr.forEach(t => assert.deepStrictEqual(NW.checkItem({ title: t.title, line: t.line, tone: t.tone, ref: t.ref }, c), [], t.title + " 要過新聞檢查"));
 });
 const WE = require("../../tools/content/world_events_pack.cjs"), EV = require("../../tools/content/world_event.cjs");

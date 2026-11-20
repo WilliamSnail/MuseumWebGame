@@ -39,7 +39,7 @@ import { casTicketClaimKeys } from "../shared/casino/ticket.js";
 import { casJobChips } from "../shared/casino/job.js";
 import { casEconLeft, casEconPlay, casEconView, casPolicyView } from "../shared/casino/econ.js";
 import { casBondBuy, casBondRedeem, casBondSettle, casBondTakeNotes, casBondView } from "../shared/casino/bond.js";
-import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView } from "../shared/casino/stock_lev.js";
+import { casLevClose, casLevCreditAdd, casLevOpen, casLevPidNo, casLevSet, casLevSweep, casLevTakeNotes, casStockLevView, casTradeView } from "../shared/casino/stock_lev.js";
 import { casArtSecret } from "../shared/casino/art.js";
 import { npcCounters, npcPublic } from "../shared/npc/core.js";
 import { ECON_EVENTS, FEST_DAYS, NPC_DAYS } from "../shared/npc_data.js";
@@ -265,7 +265,7 @@ export const wkDefOf = w => casWkDefFor(CAS_WEEK_LIB, w.wk.week);
 // 畫面的 positions[].id 是「單號」p3（平倉送 pid），股票的 id 是 sid；其餘欄位（no、name、market、side、lev、qty、entry、margin、now、pnl、maintPct、liqPx、openedDay、dayTrade）一起給
 const levStock = ctx => {
   const v = casStockViewAll(ctx.w, ctx.house, ctx.day, ctx.t, ctx.stale), L = casStockLevView(ctx.w, ctx.house, ctx.day, ctx.t);
-  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id })), credit: L.credit, levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
+  return Object.assign(v, { lev: L.lev, positions: L.positions.map(p => Object.assign({}, p, { id: "p" + p.no, sid: p.id })), credit: L.credit, trades: casTradeView(ctx.w), levCap: { posLimit: L.posLimit, posUsed: L.posUsed, profitCap: L.profitCap, netToday: L.netToday } });
 };
 export const shape = (ctx, extra) => {
   const sync = casWkSync(ctx.w, wkDefOf(ctx.w), ctx.day);
@@ -274,7 +274,7 @@ export const shape = (ctx, extra) => {
   hall.trade = (tc => tc && Object.assign(tc, { rows: tc.rows.map(x => Object.assign({ label: CAS_FLOW_UNIT[x.k] || x.k }, x)) }))(wtCard(ctx.house)); // 財報「集團之間的往來」：本週累計、目前欠金融集團的（決定 0120）
   hall.gs = gsView(ctx.w, ctx.house, ctx.day, ctx.t); // 世界集團的股票：價格、指數、我的持股（決定 0121）
   hall.flow = casFlowHub(ctx.house, ctx.day); // 金流頁籤（11-17）：今天 05:00 起各條線的流量
-  if (hall && hall.stocks) Object.assign(hall.stocks, { lev: lev.lev, positions: lev.positions, credit: lev.credit, levCap: lev.levCap });
+  if (hall && hall.stocks) Object.assign(hall.stocks, { lev: lev.lev, positions: lev.positions, credit: lev.credit, trades: lev.trades, levCap: lev.levCap });
   return Object.assign({ ok: true, wallet: casWalletView(ctx.w, ctx.day, ctx.house), wk: casWkView(ctx.w, ctx.day), wkNew: sync.newItems, wkDone: sync.completed,
     econ: casEconView(ctx.w, ctx.day), bank: casBankView(ctx.w, ctx.day), bankHall: hall, stock: lev, bond: casBondView(ctx.w, ctx.house, ctx.day), bankNotes: casBankTakeNotes(ctx.w).concat(casBondTakeNotes(ctx.w), casStockTakeNotes(ctx.w), casLevTakeNotes(ctx.w)), round: ctx.round ? casRoundView(ctx.round, "") : null, house: casHouseLines(ctx.house), reopen: ctx.reopen || null, evPacks: ctx.evPacks || 0 }, extra || {});
 };
