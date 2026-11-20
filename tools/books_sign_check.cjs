@@ -34,7 +34,8 @@ function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;
   const B = /\b(casWorldIn|casWorldOut|casWorldFund|casPoolMint|casPoolGain|casPoolWorldIn|casPoolWorldOut)\(\s*[\w.\[\]]+\s*,\s*(?:[\w.\[\]]+|"(?:budget|museum|gov)")\s*,\s*"(\w+)"/g;
   const out = {}, put = (k, kind) => (out[k] = out[k] || new Set()).add(kind);
-  for (const f of fs.readdirSync(path.join(ROOT, "shared")).filter(x => x.endsWith(".js") && x !== "casino_book.js")) {
+  const sharedJs = d => fs.readdirSync(path.join(ROOT, "shared", d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? sharedJs(d ? d + "/" + e.name : e.name) : e.name.endsWith(".js") ? [d ? d + "/" + e.name : e.name] : []);
+  for (const f of sharedJs("").filter(x => x !== "casino/book.js")) {
     const src = fs.readFileSync(path.join(ROOT, "shared", f), "utf8");
     for (const m of src.matchAll(A)) put(m[2], m[1]);
     for (const m of src.matchAll(B)) put(m[2], m[1]);
@@ -81,7 +82,7 @@ function run() {
   for (const { day, doc } of days) {
     const d = doc.diff, v = G.casBooksView(doc, true), tag = a => `${day} ${ACCT_NAME[a] || a}`;
     // 金流頁籤（casFlowEdges）：每個來源都要歸到一條線
-    for (const k of G.casFlowEdges(v.all).lost) P(tag("金流"), `來源 ${k} 沒歸到金流的線（shared/casino_report.js 的 CAS_FLOW_LINE）`);
+    for (const k of G.casFlowEdges(v.all).lost) P(tag("金流"), `來源 ${k} 沒歸到金流的線（shared/casino/report.js 的 CAS_FLOW_LINE）`);
     // (a) 對帳
     for (const a of ["bankroll", "world", "museum", "gov"]) {
       const sum = v.all[a].reduce((x, y) => x + y.n, 0), real = v.d[a];
@@ -148,8 +149,8 @@ function run() {
   for (const [k, kinds] of Object.entries(keys)) {
     const onlyMint = [...kinds].every(x => mintKinds.has(x));
     if (!onlyMint && !known.has(k)) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）不在符號表裡，新加的來源要想好它在每個帳是進還是出，加到 tools/books_sign_check.cjs 的 SIGN`);
-    if (!G.CAS_FLOW_LINE[k]) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒歸到金流的線（shared/casino_report.js 的 CAS_FLOW_LINE）`);
-    if (G.casReportLabel(k) === k) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒有中文名字（shared/casino_report.js 的 CAS_REPORT）`);
+    if (!G.CAS_FLOW_LINE[k]) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒歸到金流的線（shared/casino/report.js 的 CAS_FLOW_LINE）`);
+    if (G.casReportLabel(k) === k) P("掃程式", `來源 ${k}（${[...kinds].join("、")}）沒有中文名字（shared/casino/report.js 的 CAS_REPORT）`);
   }
   return { probs, info };
 }

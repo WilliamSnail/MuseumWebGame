@@ -4,7 +4,7 @@
 //    台股上市 `代號.TW`、上櫃 `代號.TWO`（合一）、美股直接用代號。範圍 1 個月；抓不到的那支這一輪略過，下一輪再抓。
 //  存在 Firestore stocksDiv/latest：{ at, ev: [{ id, kind "div"｜"split", ex 除息日, amt 每股現金股利（真實幣別）, r 配股後股數是原來的幾倍 }] }。
 //  除息日：台股用台灣日期、美股用美東日期（跟遊戲日一致）。台股的配股，Yahoo 記成 splits（例 1040:1000 ＝ 配 4%）。
-//  玩家領股息、配股由 shared/casino_stock.js 的 casStockSetDiv／casStockPegSync 做（照除息日開始時的持股）。
+//  玩家領股息、配股由 shared/casino/stock.js 的 casStockSetDiv／casStockPegSync 做（照除息日開始時的持股）。
 //  不編資料：沒抓到就沒有事件。
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";

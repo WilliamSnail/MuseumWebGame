@@ -9,7 +9,7 @@ import { NUM } from "./config.js";
 import { HALL_THEME_TEXT } from "./content.js";
 import { npcArcIndex, npcArcNow, npcLikesNow } from "./npc.js";
 import { NPC_ROOM, npcDayStartMs, npcVisitsToday } from "./npc_spend.js";
-import { npcCasAway } from "./casino_npc.js";
+import { npcCasAway } from "./casino/npc.js";
 import { nwBal, nwBudgetMult, nwUnitOf } from "./world.js";
 import { nwSan } from "./world_base.js";
 import { statView } from "./stat_view.js";

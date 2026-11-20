@@ -1,5 +1,5 @@
 // 賭場的模擬：node test/sim/sim_casino.cjs [幾手，預設 400000]
-// 用同一份規則（shared/casino.js），不同的打法、不同的加成，看每注玩家平均賺賠多少（負的＝莊家贏）。
+// 用同一份規則（shared/casino/core.js），不同的打法、不同的加成，看每注玩家平均賺賠多少（負的＝莊家贏）。
 // 也跑「雙人同桌」跟單人的結果會不會不一樣（同一副牌、輪流），和大禮包、餐車的莊家流水。
 // 結果寫進維護日誌 11-09_翊文_Hamachi賭場.md。
 const { load } = require("../load_shared.cjs");

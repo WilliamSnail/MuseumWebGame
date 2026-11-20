@@ -21,7 +21,7 @@ function weekEvents(w) {
   return G.cleanEvents(w && w.events, w && w.start, w && w.week).map(ev => ({ date: ev.date, from: ev.from, to: ev.to, title: ev.title, words: ev.words, effect: G.eventEffect(ev), when: G.eventWhen(ev), wd: "一二三四五六日"[G.weekDayNo(ev.date) - 1] }));
 }
 
-// 賭場的每週收藏（決定 0042）：週一提壹句這週的收藏；那天 dN.json 有加碼的收藏品或話，就提壹句。壞的不提（跟遊戲用同一份 shared/casino_week.js 整理）
+// 賭場的每週收藏（決定 0042）：週一提壹句這週的收藏；那天 dN.json 有加碼的收藏品或話，就提壹句。壞的不提（跟遊戲用同一份 shared/casino/week.js 整理）
 // 回傳 { week: 週一那句（沒有就 ""）, today: [那天的句子] }
 function casinoLines(w, d, n) {
   const out = { week: "", today: [] };

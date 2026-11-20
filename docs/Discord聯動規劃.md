@@ -43,7 +43,7 @@
 
 - 拚經濟、21 點、大禮包、餐車、斗內都呼叫跟遊戲一樣的 `shared/` 規則和交易。
 - `functions/casino.js` 的 `play(req, …)` 現在靠 `req.auth` 認人，要先拆成吃 `uid` 的核心，遊戲和 Discord 各包一層。
-- 新的純規則放 `shared/discord.js`（解析指令、組訊息），才測得到。
+- 新的純規則放 `shared/discord/core.js`（解析指令、組訊息），才測得到。
 
 ### 要先處理的技術風險
 
@@ -90,7 +90,7 @@ Discord 要求 **3 秒內回應**，這是最大的風險，還沒量過：
 
 **做好了（11-09，模擬器測過，還沒部署）**：
 
-- 做法：遊戲裡的交易成功**之後**寫 `discordOutbox/{事件id}`（`functions/discord_out.js` 的 `outboxPut`：寫不進去只記錄、不丟錯，所以不會讓交易失敗），`discordOutboxSend`（`onDocumentCreated`）發到頻道。規則在 `shared/discord_out.js`（事件的字、冷卻、太舊、body）。
+- 做法：遊戲裡的交易成功**之後**寫 `discordOutbox/{事件id}`（`functions/discord_out.js` 的 `outboxPut`：寫不進去只記錄、不丟錯，所以不會讓交易失敗），`discordOutboxSend`（`onDocumentCreated`）發到頻道。規則在 `shared/discord/out.js`（事件的字、冷卻、太舊、body）。
 - 事件：`broke` 莊家破產（拚經濟或別的把莊家弄成負的）、`breaker` 某人贏的那一手把莊家打到負的、`rescued` 拚經濟把莊家拚回來、`join` 靠 `/pepe-加入` 成為館友、`liveOn` 開播、`donate` 斗內感謝；第三步加了 `bj`（在 Discord 打完的 21 點）。同桌打到破產只說「莊家破產了」（沒有「是誰」）。
 - 冷卻 `NUM.discord.outCooldownMin`（10 分鐘）、斗內 `outDonateMin`（1 分鐘）；冷卻中的不補發（標 skipped）；超過 `outMaxAgeMin`（30 分鐘）才輪到的不發。每天最多 5 人靠 Discord 加入，但「加入」這一種 10 分鐘只發一則。
 - 同一件事只發一次：文件名是事件的身分，發送前在交易裡把 `pending` 改成 `sending`。發失敗記 `failed` 和原因，不重試。沒 token：標 `skipped: no-token`，不佔冷卻。
@@ -119,7 +119,7 @@ Discord 要求 **3 秒內回應**，這是最大的風險，還沒量過：
 **做好了（11-09，模擬器測過，還沒部署）**：
 
 - 六個指令都做了：`/pepe-21點 下注`（可以打 `10000`、`10萬`；不填下注＝接著打還沒打完的那手）、`/pepe-大禮包 [幾包]`（預設 1 包）、`/pepe-餐車`（選單 9 樣）、`/pepe-拚經濟`、`/pepe-實況 [開播｜下播]`（預設開播）、`/pepe-斗內`。沒綁定的人收到怎麼綁定或加入。
-- 做法：`functions/casino.js` 的 `play` 拆成 `playCore`，每個動作在交易裡做的事搬成 `actDeal`、`actHitStand`、`actPack`、`actBuy`、`actEcon`（`liveAct` 也匯出），遊戲和 `functions/discord_play.js` 都呼叫它們。文字和按鈕在 `shared/discord_play.js`（`DC_TEXT`、`CAS_*`）。
+- 做法：`functions/casino.js` 的 `play` 拆成 `playCore`，每個動作在交易裡做的事搬成 `actDeal`、`actHitStand`、`actPack`、`actBuy`、`actEcon`（`liveAct` 也匯出），遊戲和 `functions/discord_play.js` 都呼叫它們。文字和按鈕在 `shared/discord/play.js`（`DC_TEXT`、`CAS_*`）。
 - 公開與否：21 點牌局和餐車只有本人；大禮包、拚經濟、實況、斗內回在頻道。**和原本表格不同的地方**：大禮包、拚經濟不演拉霸和跳字（要編輯訊息，違反 3 秒），一次列完；拚經濟的結果公開。
 - 21 點打完，頻道多一行結果（走 outbox，同一個人 5 分鐘內連打併成一則：編輯第一則）。在遊戲裡打完的不公開。
 - 存檔衝突的結論：見 `docs/Firebase做法.md` 第十二節。

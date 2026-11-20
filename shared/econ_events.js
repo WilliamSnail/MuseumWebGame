@@ -12,8 +12,8 @@
 //  事先公告：foreign、artFreeze 提前 ahead 天、bondWindow 提前 3 天，日報寫；houseRepay、audit 不預告（不動玩家價格）。repo 是公開的，所以會動玩家價格或錢的都預告給所有人，沒有人比別人早知道的好處。
 // ================================================================
 import { NUM } from "./config.js";
-import { casHouseWorldIn, casLedFix } from "./casino_book.js";
-import { casFill, casNum } from "./casino.js";
+import { casHouseWorldIn, casLedFix } from "./casino/book.js";
+import { casFill, casNum } from "./casino/core.js";
 
 const eeN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const eeDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);

@@ -1,6 +1,6 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  Discord 聯動第二步：遊戲大事發到頻道（決定 0051，規則 shared/discord_out.js）
+//  Discord 聯動第二步：遊戲大事發到頻道（決定 0051，規則 shared/discord/out.js）
 //  遊戲裡的交易成功「之後」，把事件寫進 discordOutbox/{id}（outboxPut：寫不進去只記錄，永遠不丟錯，所以不會讓原本的交易失敗）。
 //  discordOutboxSend（onDocumentCreated）撿起來發到頻道：
 //    - 同壹件事只發壹次：文件的名字就是事件的身分（create 第二次會失敗），發送前在交易裡把 pending 改成 sending（Eventarc 重複送也不會發兩次）
@@ -15,8 +15,8 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { dcNick } from "./shared/discord.js";
-import { dcOutBjAdd, dcOutBjText, dcOutBjWindow, dcOutBody, dcOutEvent, dcOutGate, dcOutStale } from "./shared/discord_out.js";
+import { dcNick } from "./shared/discord/core.js";
+import { dcOutBjAdd, dcOutBjText, dcOutBjWindow, dcOutBody, dcOutEvent, dcOutGate, dcOutStale } from "./shared/discord/out.js";
 
 const db = () => getFirestore();
 const EMU = () => process.env.FUNCTIONS_EMULATOR === "true";

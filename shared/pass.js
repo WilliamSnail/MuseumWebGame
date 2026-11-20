@@ -16,7 +16,7 @@ import { gearInfo } from "./shop.js";
 import { wornGear } from "./logic_base.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, wornDeco } from "./signin.js";
 import { storyState } from "./story_state.js";
-import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
+import { casCleanSouvenirs, casCleanTitle } from "./casino/wallet.js";
 
 // 典藏冊的頁籤（第壹頁是館友證本身）
 export const PASS_TABS = [["card", "館友證"], ["visitor", "參觀者"], ["pepe", "佩佩"], ["books", "書和看懂的事"], ["souvenir", "紀念品"], ["deco", "裝飾"], ["ach", "成就"]];

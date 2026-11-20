@@ -69,7 +69,7 @@ content/
 - **限時活動 `events`**（台灣時間；規則 `shared/events.js`，數字 `NUM.events`，決定 0041）：`kind` 有 `coopBoost`（合作地下收藏庫：記號對上、猜對、搬回來的靈感變多，活動那天多 1 趟有獎勵）、`casinoBoost`（賭場：活動時間內第一次進賭場多 1 包免費大禮包，每場每人一次）、`trialBoost`（試煉房間過關的技能成長變多；單人試煉、邀館友一起打的合作試煉都算）和 `cellarChips`（地下走完房間撿到籌碼時多 80～120 萬，單人多人都算）。`date` 在這週之內；`from`、`to` 像 `"20:00"`，同一天、`to` 晚於 `from`、不早於 05:00、30～360 分鐘；`title` 16 字、`words` 60 字（畫面上的字，用「壹」）；一週最多 3 場、同一天不重疊、id 不重複；備用週不能寫。壞的會被 `tools/week_check.cjs` 擋；遊戲遇到壞的會直接略過（不丟錯）。大廳、公佈欄、每週劇情面板、Discord 都會自己列出來。怎麼排看 `content/排程說明.md` 的「一之二」。
   - Functions 拿得到同一份：`tools/copy_shared.cjs` 部署前把 `events` 打包進 `functions/shared/events_data.js`（每週劇情合併就會部署）。
 
-- **賭場的每週收藏 `casino`**（決定 0042，規則 `shared/casino_week.js`）：選填，沒有的舊週照常。格式：
+- **賭場的每週收藏 `casino`**（決定 0042，規則 `shared/casino/week.js`）：選填，沒有的舊週照常。格式：
 
   ```json
   "casino": {
@@ -89,7 +89,7 @@ content/
   ```
 
   - `name` 12 字、`desc` 50 字、畫面上的字用「壹」、過禁用字、不要英文字母。`id` 英文、數字、-、_，這週裡不能重複（包括每天加碼的）。
-  - `when.type` 只能從這些挑（`shared/casino_week.js` 的 `CAS_WK_CONDS`；`n` 的上限是一週做得到的範圍）：`wins` 贏幾手（15）、`hands` 打完幾手（30）、`blackjack` 黑傑克（3）、`charlie` 五張過關（2）、`dealerBust` 看荷官爆牌（5）、`push` 平手（5）、`streak` 連贏（5）、`table` 跟館友同桌打完幾手（10，同桌要有 2 個人以上下注）、`packs` 開幾包大禮包（14；每天免費 2 包）、`bigPack` 三星以上的大禮包（3）、`meals` 吃過幾種不同的餐點（6）、`meal` 點過某樣餐點（要寫 `meal`：`chicken`、`tea`、`feast`、`juice`、`admiral`、`sushi`，`n` 最多 3；大禮包券不算餐點）。單人和同桌的「手」都算。
+  - `when.type` 只能從這些挑（`shared/casino/week.js` 的 `CAS_WK_CONDS`；`n` 的上限是一週做得到的範圍）：`wins` 贏幾手（15）、`hands` 打完幾手（30）、`blackjack` 黑傑克（3）、`charlie` 五張過關（2）、`dealerBust` 看荷官爆牌（5）、`push` 平手（5）、`streak` 連贏（5）、`table` 跟館友同桌打完幾手（10，同桌要有 2 個人以上下注）、`packs` 開幾包大禮包（14；每天免費 2 包）、`bigPack` 三星以上的大禮包（3）、`meals` 吃過幾種不同的餐點（6）、`meal` 點過某樣餐點（要寫 `meal`：`chicken`、`tea`、`feast`、`juice`、`admiral`、`sushi`，`n` 最多 3；大禮包券不算餐點）。單人和同桌的「手」都算。
   - 進度、發收藏品、集滿都是伺服器算的（玩家改畫面沒有用）。統計從週一 05:00 累計，週一 05:00 換週。過期的週：拿到的財產留著，沒拿到的就過了，不懲罰。
   - 集滿：這週 `items` 全部拿到（每天加碼的不算）。拿紀念品、稱號；週章 1 枚和故事要玩家按「領」。**不能寫靈感、心情、東西、週章**（檢查程式擋）。
   - 收藏品的說明和集滿的故事要接這週的劇情線、圍繞主旨（像副劇情），帳本 `weeks.<週>.casino` 要記（沒寫會警告）。備用週（`備用/常青1`）寫一組通用的。

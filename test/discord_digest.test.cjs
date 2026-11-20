@@ -1,6 +1,6 @@
 // 每天 20:00 的 Discord 更新彙整（tools/discord_digest.cjs，翊文 11-15：「Discord更新太洗板了」）
 const assert = require("assert");
-const G = require("./load_shared.cjs").load(), digestText = (...a) => G.dcDigestText(...a); // 組字在 shared/discord_out.js
+const G = require("./load_shared.cjs").load(), digestText = (...a) => G.dcDigestText(...a); // 組字在 shared/discord/out.js
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.message); } };
 const AREAS = ["股票與銀行", "賭場", "其他"], areaOf = n => n.area || "其他";

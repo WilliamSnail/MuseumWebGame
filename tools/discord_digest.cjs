@@ -11,7 +11,7 @@ async function main() {
   require("./notices_build.cjs").write(); // shared/notices_data.js 不進 git，先產生
   const { NOTICES, NOTICE_AREAS, noticeArea } = await imp("notices.js");
   const { taipeiDay } = await imp("logic.js");
-  const { dcDigestText } = await imp("discord_out.js"); // 組字在 shared/discord_out.js（伺服器排程也用同壹份）
+  const { dcDigestText } = await imp("discord/out.js"); // 組字在 shared/discord/out.js（伺服器排程也用同壹份）
   const a = process.argv.slice(2), i = a.indexOf("--date"), day = i >= 0 ? a[i + 1] : taipeiDay(Date.now());
   process.stdout.write(dcDigestText(NOTICES, day, noticeArea, NOTICE_AREAS));
 }

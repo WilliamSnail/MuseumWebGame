@@ -1,4 +1,4 @@
-// 合作地下收藏庫的地圖選路（shared/coop_route.js，地下室改版第九節第 5 步）：node test/coop_route.test.cjs（npm test 也會跑）
+// 合作地下收藏庫的地圖選路（shared/coop/route.js，地下室改版第九節第 5 步）：node test/coop_route.test.cjs（npm test 也會跑）
 // 有守門的趟先選路、探索點走原本的房間、遭遇打一般怪物、休息各選各的、寶箱看完繼續、最後打守門、
 // 沒開守門照舊、試煉照舊、送給畫面的地圖不寫怪物是誰、讀回來（JSON）還能走、平手領隊決定、亂送的不丟錯。
 const assert = require("assert");

@@ -1,4 +1,4 @@
-// 財經專員（決定 0093 第 3 件，shared/casino_advisor.js）：node test/casino_advisor.test.cjs（npm test 也會跑）
+// 財經專員（決定 0093 第 3 件，shared/casino/advisor.js）：node test/casino_advisor.test.cjs（npm test 也會跑）
 // 欠多少才算、借款延期（手續費、每筆壹次、到期前才行、不留到下次修復時被洗掉）、還款計畫的賣股順序、個人信（壹人壹封、好起來又欠了隔幾天再寄）、帳對得上。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

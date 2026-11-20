@@ -1,4 +1,4 @@
-// 合作地下收藏庫的規則（shared/coop.js）：node test/coop.test.cjs（npm test 也會跑）
+// 合作地下收藏庫的規則（shared/coop/core.js）：node test/coop.test.cjs（npm test 也會跑）
 // 投票、強度門檻放大、技能找最高的人、每個人各自扣理智、受傷是自己的佩佩、第一次過關各自算、rewarded、館方助手、撤退、幽靈、viewFor、同一個種子一樣。
 // 數字一律讀 COOP、NUM、CELLAR；會擲骰的都固定骰子。
 const assert = require("assert");
@@ -630,12 +630,12 @@ T("從資料庫讀回來（空的不見、陣列變物件）也接得下去，�
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "shared", f)).href;
     const logic = await import(url("logic.js"));
-    const coop = await import(url("coop.js"));
+    const coop = await import(url("coop/core.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, DATE);
     const key = logic.finishMake(P, Object.assign({}, BASE), { natural: 50 }).key;
     const s = coop.startCoop([{ id: "a", P, keys: [key] }], 1);
     assert.ok(s.ok, s.reason);
-    assert.strictEqual(s.run.team.length, (await import(url("coop_base.js"))).COOP.teamMin);
+    assert.strictEqual(s.run.team.length, (await import(url("coop/base.js"))).COOP.teamMin);
     assert.ok(coop.coopResolve(s.run, { a: P }, { a: 2 }).ok);
     pass++;
   } catch (e) { fail++; console.log("FAIL ES 模組", "\n   ", e.message); }

@@ -13,7 +13,7 @@ import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "./config.js"
 import { normKey, parsePillowKey, refPick } from "./logic_base.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, checkHallCall, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
-import { casCleanSouvenirs, casCleanTitle } from "./casino_wallet.js";
+import { casCleanSouvenirs, casCleanTitle } from "./casino/wallet.js";
 
 // ---------- 訪客簿 ----------
 export function fixGuestBook(raw) {

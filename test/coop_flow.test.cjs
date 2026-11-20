@@ -1,4 +1,4 @@
-// 合作地下收藏庫的流程（shared/coop_flow.js）：node test/coop_flow.test.cjs（npm test 也會跑）
+// 合作地下收藏庫的流程（shared/coop/flow.js）：node test/coop_flow.test.cjs（npm test 也會跑）
 // 投票湊齊就開票、時間到算棄權、連 3 次離隊、看完結果、往下或回地面、離隊、太久沒人動、每天前 3 趟有獎勵。
 const assert = require("assert");
 const { load } = require("./load_shared.cjs");

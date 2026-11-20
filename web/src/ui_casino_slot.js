@@ -1,10 +1,10 @@
 // =====================================================================
 //  大禮包的拉霸機（翊文 11-09：「抽大禮包的過程不夠好，要有拉霸感的精緻動畫」）
 //  結果是伺服器決定的：這裡先轉，伺服器回來才知道停在哪裡。只有演出，不影響結果。
-//  五輪從左停到右，幾顆星就停幾個 ★。停法在 shared/casino.js 的 casSlotPlan。
+//  五輪從左停到右，幾顆星就停幾個 ★。停法在 shared/casino/core.js 的 casSlotPlan。
 //  動畫減量：不轉，直接顯示結果（字要看得到）。
 // =====================================================================
-import { casNum, casSlotPlan } from "../../shared/casino.js";
+import { casNum, casSlotPlan } from "../../shared/casino/core.js";
 import { FX } from "./fx.js";
 import { h, holdFor, motionOff, snd, sndFile } from "./ui_core.js";
 

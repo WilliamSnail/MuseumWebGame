@@ -604,7 +604,7 @@ export function understandLine(P, src) {
 
 // ---------- 手作坊顯示「這個選項在地下收藏庫的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值」）----------
 // 數字全部讀上面實際在算的設定（NUM.cellarFx、NUM.fight、NUM.cellarRest、CELLAR_POWER、COLOR_POWER、MOOD_BEATS），畫面不另外寫壹份。
-// 回傳 [{ where: "強度"|"探索"|"打怪", text }]：強度＝自己的強度（兩種玩法都用）；探索＝走房間；打怪＝一場一次的招式（cellar_fight.js 的 FIGHT_MOVES）。沒有地下效果的選項回 []
+// 回傳 [{ where: "強度"|"探索"|"打怪", text }]：強度＝自己的強度（兩種玩法都用）；探索＝走房間；打怪＝一場一次的招式（cellar/fight.js 的 FIGHT_MOVES）。沒有地下效果的選項回 []
 // 限定帽子的說明（決定 0085）：[{ where: "探索"|"打怪"|"館內", text }]。數字讀 LIMITED_FX，跟實際算的壹份
 export function limitedFxLines(name) {
   const f = LIMITED_FX[name], out = []; if (!f) return out;

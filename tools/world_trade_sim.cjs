@@ -17,7 +17,7 @@ const DAYS = +process.argv[2] || 90, OFF = process.argv.includes("--off"), BANK 
 const add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const npcs = L.readNpcs().filter(n => n.kind !== "trace");
 const D = "g-daily", F = "g-finance", I = "g-island", O = "g-overseas", A = "g-arts", S = "g-school", P = "g-public", C = "u-culture";
-// 往來表（目標份量：萬／天，名目）。kind 是金流圖上的名字（shared/casino_report.js 的 CAS_FLOW_UNIT）
+// 往來表（目標份量：萬／天，名目）。kind 是金流圖上的名字（shared/casino/report.js 的 CAS_FLOW_UNIT）
 const FLOWS = [
   ["tradeDaily", "日用品採購", [[A, D, 150], [S, D, 250], [F, D, 250], [I, D, 400], [O, D, 500], [P, D, 300], [C, D, 50]]],
   ["tradeFee", "金融服務費", [[D, F, 500], [O, F, 300], [I, F, 250], [A, F, 60], [S, F, 60], [P, F, 100]]],

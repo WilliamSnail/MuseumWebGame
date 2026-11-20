@@ -12,19 +12,19 @@
 //  館內股的「昨天不同的人」還是用整天的行程（casInNpcFor），跟「現在誰在場」無關；所以畫面不顯示各家店現在幾個 NPC（會洩漏明天的跳空）。
 // ================================================================
 import { NUM } from "./config.js";
-import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "./casino_book.js";
+import { casHouseWorldOut, casPoolWorldOut, casWorldLow } from "./casino/book.js";
 import { hashStr, mulberry32 } from "./logic_base.js";
-import { casFxMul, casFxPolicy } from "./casino_gdp.js";
+import { casFxMul, casFxPolicy } from "./casino/gdp.js";
 import { npcStoryLine, npcLikesNow } from "./npc.js";
 import { npcTrips } from "./npc_trip.js";
-import { CAS_MENU } from "./casino_text.js";
+import { CAS_MENU } from "./casino/text.js";
 import { WU_HH, WU_WAL, wtLed, whCrowdMood, nwBal, nwBudgetMult, nwPayday, nwArcWeek, nwSanDay, nwSpend, nwUnitOf, wuDebit, wuHave } from "./world.js";
 import { nwSan } from "./world_base.js";
 
 const nsN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 // 稅（決定 0111）：營業稅、娛樂稅都內含，進政府帳。kind "biz"｜"ent"
 const nsTax = (amt, kind) => Math.floor(amt * NUM.casino.tax[kind + "Pct"] / 100);
-// 金流圖（決定 0128）：NPC、散客花的錢是從哪個單位出的（家計、NPC 錢包、集團），只記帳（house.led.units，kind ＝ 來源代號），不動錢。npcBj 還有賭場 NPC 的注（casino_npc.js），沒有全記，所以不記
+// 金流圖（決定 0128）：NPC、散客花的錢是從哪個單位出的（家計、NPC 錢包、集團），只記帳（house.led.units，kind ＝ 來源代號），不動錢。npcBj 還有賭場 NPC 的注（casino/npc.js），沒有全記，所以不記
 const nsLed = (house, src, from, to, n) => { if (n > 0 && src !== "npcBj") wtLed(house, src, from, to, n); };
 const SHOP = { food: ["house", "npcFood"], bj: ["house", "npcBj"], job: ["budget", "npcJob"], cellar: ["budget", "npcCellar"], craft: ["budget", "npcCraft"] };
 // 館外來客在餐車「點」菜單上的品項（11-15，翊文：「NPC 自己也可以買餐車裡面的東西嗎」）：照常識挑（啤酒、烤雞肉、壽司最常，分享餐、葡萄酒少），價錢照 CAS_MENU；
@@ -90,7 +90,7 @@ export function hallFeed(day, secret, list, counters, fromMs, toMs, mood = null)
   for (const g of crowdVisitsToday(day, secret, mood)) out.push({ key: g.key, kind: "crowd", at: base + g.start * 60000, until: base + g.end * 60000, label: g.label, n: g.n });
   return out.filter(e => e.at >= fromMs && e.at <= toMs).sort((a, b) => a.at - b.at || (a.key < b.key ? -1 : 1));
 }
-// 分紅池（house.hallPot { day, keys: { key: { n, left } } }）：到訪的那壹刻開，領分紅的人從裡面拿（shared/casino_ticket.js）
+// 分紅池（house.hallPot { day, keys: { key: { n, left } } }）：到訪的那壹刻開，領分紅的人從裡面拿（shared/casino/ticket.js）
 function hallPotOpen(house, day, key, n, amt) {
   if (!house.hallPot || typeof house.hallPot !== "object" || house.hallPot.day !== day) house.hallPot = { day, keys: {} };
   if (amt > 0 && !house.hallPot.keys[key]) house.hallPot.keys[key] = { n, left: amt };
@@ -127,7 +127,7 @@ export function crowdWander(day, secret, g) {
   return { room, a, b };
 }
 // 現在（nowMs）誰在哪。只給「展廳」的人數和名字（各家店現在有幾個 NPC 不給：那就是今天的人數，會洩漏明天的跳空）。day 是遊戲日
-// away：現在被館友邀去賭場的 NPC id（Set，shared/casino_npc.js 的 npcCasAway）：他們不算在展廳、也不算在館裡別的地方，另外列在 casino
+// away：現在被館友邀去賭場的 NPC id（Set，shared/casino/npc.js 的 npcCasAway）：他們不算在展廳、也不算在館裡別的地方，另外列在 casino
 export function npcPresence(day, nowMs, secret, list, counters, away, mood = null) {
   const aw = away && typeof away.has === "function" ? away : new Set(), m = (nowMs - npcDayStartMs(day)) / 60000, v0 = npcVisitsToday(day, secret, list, counters).filter(x => x.start <= m && m < x.end), v = v0.filter(x => !aw.has(x.id));
   const hall = v.filter(x => x.place === "hall");

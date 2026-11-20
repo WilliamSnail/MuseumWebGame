@@ -19,7 +19,7 @@ import { CATS, DAY_MS, DAY_START_HOUR, TZ_HOURS, addDays, asList, canStartCellar
 import { cleanEvents, eventListLine } from "./events.js";
 import { STORY_ITEMS, isPlain, storyState } from "./story_state.js";
 import { growSkill, limitedNames, rangeWords, shopOnSale } from "./shop.js";
-import { casArtMarkViewed, casArtViewCredit } from "./casino_art.js";
+import { casArtMarkViewed, casArtViewCredit } from "./casino/art.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -652,7 +652,7 @@ export function viewShowWork(P, W, id, today) {
   if (!w.san) out.cured = cureByTask(P, "calm");
   return out;
 }
-// 再看收藏的畫（規劃 2.10b）：規則在 casino_art.js 的 casArtViewCredit。tier ＝收藏那幅的稀有度。可怕的畫每次都擲理智（out.san；habituate 次以上同壹天變 0/1），
+// 再看收藏的畫（規劃 2.10b）：規則在 casino/art.js 的 casArtViewCredit。tier ＝收藏那幅的稀有度。可怕的畫每次都擲理智（out.san；habituate 次以上同壹天變 0/1），
 // 上限滿了（out.capped）就不給靈感也不擲理智。看過的記成看過（今日特展那邊就不再當第壹次）
 export function viewCollectWork(P, W, id, tier, today) {
   const S = storyState(P), w = W ? W.works.find(x => x.id === id) : null;

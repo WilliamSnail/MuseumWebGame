@@ -9,17 +9,17 @@
 import { ADDONS, SCREENS, UI, btn, closeOnOutside, go, h, icon, miniLayer, navTo, note, rerender, setChips, snd, sndFile } from "./ui_core.js";
 import { NET } from "./net_firebase.js";
 import { bankSfx, keyBeep } from "./bank_sfx.js";
-import { CAS_BOND } from "../../shared/casino_text.js";
+import { CAS_BOND } from "../../shared/casino/text.js";
 import { roomHead } from "./ui_room.js";
 import { statBadge, statBands, statBar, statCounts, statLegend } from "./ui_stat.js";
 import { statView } from "../../shared/stat_view.js";
 import { mountMood } from "./ui_mood.js";
 import { NUM } from "../../shared/config.js";
 import { addDays, todayStr } from "../../shared/logic.js";
-import { casNum, casPx } from "../../shared/casino.js";
-import { casLevSizeOf } from "../../shared/casino_stock_lev.js";
+import { casNum, casPx } from "../../shared/casino/core.js";
+import { casLevSizeOf } from "../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../shared/casino_report.js";
+import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../shared/casino/report.js";
 import { actDone } from "./ui_story.js";
 
 const fp = casPx; // 股價（小數兩位；決定 0108）
@@ -604,7 +604,7 @@ function levTrade(v, S, cur) {
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
   const phone = window.innerWidth < 761 || window.innerHeight < 501;
   const sum = h("details", { class: "bank-sum", open: phone ? null : "" });
-  // 整股（11-14 測試：以前畫面寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：股數 ＝ 保證金×倍數÷價 無條件捨去，部位 ＝ 股數×價，保證金 ＝ 部位÷倍數 進位（跟 shared/casino_stock_lev.js 的 casLevOpen 壹樣）
+  // 整股（11-14 測試：以前畫面寫保證金 10 萬、部位 20 萬，伺服器股數要整股，實際只開 6 股、扣 8.64 萬）：股數 ＝ 保證金×倍數÷價 無條件捨去，部位 ＝ 股數×價，保證金 ＝ 部位÷倍數 進位（跟 shared/casino/stock_lev.js 的 casLevOpen 壹樣）
   const levSize = m0 => { const z = casLevSizeOf(m0, lev, cur.price); return { qty: z.qty, pos: z.notional, mg: z.margin }; };
   const calc = () => {
     const sz = levSize(Math.min(f.margin || 0, maxMargin)), m = sz.mg, pos = sz.pos, feeAmt = Math.ceil(pos * RT.fee), carry = Math.ceil((long ? pos - m : pos) * (long ? RT.interest : RT.borrow));

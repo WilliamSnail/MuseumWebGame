@@ -1,6 +1,6 @@
 import "./options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  Hamachi 賭場：館友同桌（第二階段，決定 0040）。規則在 shared/casino_table.js；這個檔只管讀寫。
+//  Hamachi 賭場：館友同桌（第二階段，決定 0040）。規則在 shared/casino/table.js；這個檔只管讀寫。
 //  用現有的隊伍（kind "table"，1–4 人，隊伍一直是 lobby：隨時有人進出）。放哪裡：
 //    Firestore casinoTables/{pid}        這一桌完整的狀態（data：JSON 字串）：牌組、莊家底牌都在裡面，只有 Functions 碰得到
 //    Realtime Database casinoView/{pid}/{uid}  給這個人看的樣子（casTView，r：第幾版，j：JSON 字串），只有他自己讀得到
@@ -12,13 +12,13 @@ import "./options.js"; // 地區、initializeApp：一定要最先（見 options
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { casBonusPct } from "./shared/casino.js";
-import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTNpcDrop, casTNpcInvite, casTNpcWho, casTSeats, casTSit, casTView } from "./shared/casino_table.js";
+import { casBonusPct } from "./shared/casino/core.js";
+import { CAS_QUICK, casTAct, casTAdvance, casTBet, casTLeave, casTNew, casTNpcDrop, casTNpcInvite, casTNpcWho, casTSeats, casTSit, casTView } from "./shared/casino/table.js";
 import { NPC_LIST } from "./shared/npc_list_data.js";
 import { npcCounters } from "./shared/npc.js";
 import { twSecret } from "./stock_tw.js";
-import { casHouseFix, casWalletFix } from "./shared/casino_wallet.js";
-import { casWkSync } from "./shared/casino_week.js";
+import { casHouseFix, casWalletFix } from "./shared/casino/wallet.js";
+import { casWkSync } from "./shared/casino/week.js";
 import { NUM } from "./shared/config.js";
 import { cleanSay, fixParty, newParty } from "./shared/party.js";
 import { isFree, setRng, taipeiDay } from "./shared/logic.js";

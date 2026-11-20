@@ -1,5 +1,5 @@
 // ================================================================
-//  Hamachi 賭場：館友同桌的畫面（第二階段，決定 0040；規則 shared/casino_table.js，伺服器 functions/casino_table.js）
+//  Hamachi 賭場：館友同桌的畫面（第二階段，決定 0040；規則 shared/casino/table.js，伺服器 functions/casino_table.js）
 //  這個檔只畫「伺服器給我的樣子」：1–4 人同壹張桌、同壹副牌、同壹個莊家，各下各的注，輪流要牌，有時間限制。
 //  - 入口：賭場「牌桌」頁籤下面（ADDONS.casinoTable）、館友小卡「邀請壹起玩 21 點」（FRIEND_ACTIONS）。邀請卡用 ui_party.js 那壹套（PARTY_HOOKS.table 接回來）。
 //  - 木框開著：聽 parties/{pid}（誰在桌上）、casinoView/{pid}/{我}（我看到的樣子）、casinoChat/{pid}（桌上說的話）。
@@ -8,9 +8,9 @@
 //  別人說的話、暱稱壹律當純文字（textContent）。理智低時，牌會看錯（只有自己，結算翻回真的）。
 // ================================================================
 import { NUM } from "../../shared/config.js";
-import { CAS_TEXT } from "../../shared/casino_text.js";
-import { casCardName, casFill, casNum } from "../../shared/casino.js";
-import { CAS_QUICK } from "../../shared/casino_table.js";
+import { CAS_TEXT } from "../../shared/casino/text.js";
+import { casCardName, casFill, casNum } from "../../shared/casino/core.js";
+import { CAS_QUICK } from "../../shared/casino/table.js";
 import { nowMs } from "../../shared/logic.js";
 import { PARTY, cleanSay, fixParty, partyMembers } from "../../shared/party.js";
 import { NET } from "./net_firebase.js";

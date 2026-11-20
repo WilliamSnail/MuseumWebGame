@@ -19,7 +19,7 @@ import { connectDatabaseEmulator, get, getDatabase, onChildAdded, onDisconnect, 
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 import { setNowClock } from "../../shared/logic.js";
 import { titlesFromDb } from "../../shared/titles.js";
-import { dcJoinParam, dcStripJoin } from "../../shared/discord.js";
+import { dcJoinParam, dcStripJoin } from "../../shared/discord/core.js";
 import { EMULATOR_PORTS, FIREBASE_PROJECTS, FUNCTIONS_REGION, firebaseTarget } from "./firebase_config.js";
 import { NetError } from "./net_error.js";
 
