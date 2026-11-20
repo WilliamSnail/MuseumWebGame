@@ -10,7 +10,7 @@
 //    wk 這週的收藏進度 { week, c 統計, got 拿到哪幾件, done, claimed }；wkLog 以前幾週的紀錄（決定 0042，shared/casino_week.js；舊錢包沒有這兩欄，Fix 會補）
 // ================================================================
 import { NUM } from "./config.js";
-import { CAS_ACH, CAS_GIFT, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
+import { CAS_ACH, CAS_GIFT, CAS_GIFT2, CAS_LIVE, CAS_MENU, CAS_PACKS, CAS_PROPS, CAS_TEXT } from "./casino_text.js";
 import { casBetCheck, casBonusPct, casFill, casHit, casNewRound, casNum, casRoundView, casShuffle, casStand } from "./casino.js";
 import { RNG, clampN, gainSan, hashStr, isFree, limitedHome } from "./logic.js";
 import { weekIndex } from "./logic3.js";
@@ -381,10 +381,18 @@ export function casLoanRoll(w, day) {
 // 同壹個交易裡寄壹封信（回傳 { id, mail }，伺服器寫進 mail/{uid}/items）。條件不符、已經撥過、已知世界付不出就回 null
 export const casGiftKey = s => String(s == null ? "" : s).replace(/\s+/g, "").toLowerCase();
 // 這個暱稱是不是文化部資助的對象（伺服器的 peek 用：是的才多做壹個交易）
-export const casGiftWho = nick => { const G = NUM.casino.cultureGift; return !!G && !!G.on && G.nicks.some(x => casGiftKey(x) === casGiftKey(nick)); };
-export function casCultureGift(w, house, nick, day, t) {
-  const G = NUM.casino.cultureGift;
-  if (!G || !G.on || !w || !house || !okDay(day) || !G.nicks.some(x => casGiftKey(x) === casGiftKey(nick))) return null;
+// 所有的資助（決定 0131 第壹筆、0143 起可以多筆）；總開關是第壹筆的 on
+export const casGiftList = () => { const G = NUM.casino.cultureGift; return G && G.on ? [G].concat(NUM.casino.cultureGiftMore || []) : []; };
+export const casGiftWho = nick => casGiftList().some(G => G.nicks.some(x => casGiftKey(x) === casGiftKey(nick)));
+// 回傳第壹封 { id, mail, got, list }；list ＝ 這次到的所有 { id, mail, got }（壹次可以到好幾筆）。uid 有給的話，撥款額同步加進水位的起點（不算賺的，決定 0143）
+export function casCultureGift(w, house, nick, day, t, uid) {
+  if (!w || !house || !okDay(day)) return null;
+  const list = [];
+  for (const G of casGiftList()) { const r = casGiftOne(w, house, G, nick, day, uid); if (r) list.push(r); }
+  return list.length ? Object.assign({}, list[0], { list }) : null;
+}
+function casGiftOne(w, house, G, nick, day, uid) {
+  if (!G.nicks.some(x => casGiftKey(x) === casGiftKey(nick))) return null;
   if (!casIsObj(house.cg)) house.cg = {};
   if (!casIsObj(w.gifts)) w.gifts = {};
   if (house.cg[G.id] || w.gifts[G.id]) return null;
@@ -392,7 +400,8 @@ export function casCultureGift(w, house, nick, day, t) {
   const got = casWorldOut(w, house, "cultureGift", n, NUM.casino.world); if (got !== n) return null;
   wuDebit(house, "u-culture", n); wtLed(house, "cultureGift", "u-culture", "players", n); // 金流圖：文化部 → 館友
   house.cg[G.id] = day; w.gifts[G.id] = day;
-  const T = CAS_GIFT, id = ("cg-" + G.id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100);
+  if (uid && house.pool && casIsObj(house.pool.who) && casIsObj(house.pool.who[uid])) house.pool.who[uid].base += n; // 撥款不算賺的：起點跟著加
+  const T = G.letter === 2 ? CAS_GIFT2 : CAS_GIFT, id = ("cg-" + G.id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100);
   return { id, mail: { id, from: T.name, title: T.title, note: [casFill(T.hello, { nick: String(nick) })].concat(T.lines).join("\n"), gift: { insp: 0, mood: 0 }, sent: day, expire: casAddDays(day, G.days || 365), claimed: false }, got: n };
 }
 // 現在借得到嗎：可以的話回 null，不行回原因（畫面上那壹條、Discord 都用這個）

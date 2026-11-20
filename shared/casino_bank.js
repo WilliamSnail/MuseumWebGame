@@ -167,20 +167,33 @@ export function casNetWorth(w, house) {
 }
 const plRound = v => Math.round(v * 10000) / 10000;
 // 收到資助的人壹進來：莊家文件 house.pool 還沒有就建（起點 base ＝ 這一刻的淨值，水位在 start）。回傳有沒有新建
+// 決定 0143：水位看好幾個人合計賺的（house.pool.who ＝ { uid: { base 上壹次日報的淨值, e 累計賺的 } }）；第壹位建池子，之後收到資助的人壹進來加進 who（起點是那一刻的淨值，收到的款已經在裡面）
 export function casPoolEnsure(w, house, nick, uid, day) {
-  const P = NUM.casino.pool, G = NUM.casino.cultureGift;
-  if (!P || !G || !G.on || !house || house.pool || !house.cg || !house.cg[G.id] || !G.nicks.some(x => String(x).replace(/\s+/g, "").toLowerCase() === String(nick == null ? "" : nick).replace(/\s+/g, "").toLowerCase())) return false;
-  house.pool = { uid: String(uid), base: Math.max(1, casNetWorth(w, house)), e: 0, lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] };
-  return true;
+  const P = NUM.casino.pool, G = NUM.casino.cultureGift, key = s => String(s == null ? "" : s).replace(/\s+/g, "").toLowerCase();
+  if (!P || !G || !G.on || !house || !house.cg) return false;
+  const got = [G].concat(NUM.casino.cultureGiftMore || []).some(g => house.cg[g.id] && g.nicks.some(x => key(x) === key(nick)));
+  if (!got) return false;
+  const u = String(uid), nw = Math.max(1, casNetWorth(w, house));
+  if (!house.pool) { house.pool = { uid: u, who: { [u]: { base: nw, e: 0 } }, base: nw, e: 0, lv: P.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] }; return true; }
+  const Q = house.pool; if (!Q.who) casPoolWho(Q);
+  if (Q.who[u]) return false;
+  Q.who[u] = { base: nw, e: 0 }; return true;
 }
+// 舊的 pool（單壹 uid）換成 who（base、e 照搬）
+const casPoolWho = Q => { if (!Q.who || typeof Q.who !== "object") Q.who = { [String(Q.uid)]: { base: Math.max(1, +Q.base || 1), e: Math.max(0, +Q.e || 0) } }; return Q.who; };
 // 每天 05:00 日報算（nw ＝ 日報那刻他的淨值）：水位目標 ＝ clamp(start ＋ (1−start) × e ÷ earnT，min，1)，e ＝ 累計賺的（每天日報淨值比上壹次多的部分，虧的不算，決定 0142）；每天最多動 step；連續 confirm 個日報目標 ≥ 1 且水位到頂，就是「水漲到門檻」，那天晚上 night ＝ 當天（全館看得到事件），
 // 隔天日報（天亮前）收完：水退回 start、起點重設成那一刻的淨值、hits ＋ 1。只收東西（劇情定），不動錢。壹天只算壹次。回傳有沒有動
-export function casPoolDay(house, day, nw) {
+// nws ＝ { uid: 淨值 }（決定 0143，多人合計）；給壹個數字就當成 pool.uid 那位
+export function casPoolDay(house, day, nws) {
   const C = NUM.casino.pool, P = house && house.pool;
-  if (!C || !P || !P.uid || !(P.base > 0) || P.day === day || !Number.isFinite(+nw)) return false;
-  if (!(P.e >= 0)) { P.e = 0; P.base = Math.max(1, Math.floor(nw)); P.day = day; return true; } // 決定 0142：舊的 pool 第壹次日報，從 0 開始累計（不追溯），上壹次淨值設成現在
-  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; P.base = Math.max(1, Math.floor(nw)); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
-  P.e += Math.max(0, Math.floor(nw) - P.base); P.base = Math.max(1, Math.floor(nw)); // 決定 0142：只算賺的（跟上壹次日報比，虧的當 0），累計 e 只增不減
+  if (!C || !P || !P.uid || P.day === day) return false;
+  if (typeof nws === "number" || typeof nws === "string") nws = { [P.uid]: +nws };
+  if (!nws || typeof nws !== "object" || !Object.values(nws).some(v => Number.isFinite(+v))) return false;
+  const legacy = !(P.e >= 0), who = casPoolWho(P), fl = v => Math.max(1, Math.floor(+v));
+  if (legacy) { P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.day = day; return true; } // 決定 0142：舊的 pool 第壹次日報，從 0 開始累計（不追溯），上壹次淨值設成現在
+  if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.takeLeft = Object.keys(who); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
+  for (const u of Object.keys(who)) { if (!Number.isFinite(+nws[u])) continue; who[u].e += Math.max(0, Math.floor(+nws[u]) - who[u].base); who[u].base = fl(nws[u]); } // 決定 0142、0143：每個人各自跟自己上壹次比，只算賺的（虧的當 0），累計只增不減；水位看大家合計
+  P.e = Object.values(who).reduce((a, x) => a + x.e, 0);
   const target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * P.e / C.earnT)), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
   P.lv = plRound(Math.min(1, Math.max(C.min, P.lv + dl))); P.day = day;
   P.trace = (P.trace || []).concat([dl > 0.00005 ? 1 : dl < -0.00005 ? -1 : 0]).slice(-C.trace);
@@ -202,13 +215,13 @@ export function casPoolView(house, day, t) {
 // 收了：名字清成空白（稱號留著，畫面把名牌顯示成空白）、記 e.tk ＝ { no（館友號碼，加入順序，第壹次收的那刻定，再收還是同壹個）、day、n（被收幾次）、stamp ＝ false（重新取名才變 true）}、pool.take 清掉。
 // 不動錢。回傳 { key, pepe, no, mails: [短信, 收據] } 或 null（沒有待收、不是他、沒有存檔、還沒有號碼、或沒有可收的 → 沒有可收的也會清掉待收，下次門檻再來）
 export function casPoolTake(house, P, uid, memberNo, day) {
-  const C = NUM.casino.poolTake, Q = house && house.pool;
-  if (!C || !C.on || !Q || !Q.take || String(Q.uid) !== String(uid) || !P || !P.pepes || !Number.isInteger(memberNo) || memberNo < 1) return null;
+  const C = NUM.casino.poolTake, Q = house && house.pool, left = Q ? (Array.isArray(Q.takeLeft) && Q.takeLeft.length ? Q.takeLeft : [String(Q.uid)]) : [];
+  if (!C || !C.on || !Q || !Q.take || !left.includes(String(uid)) || !P || !P.pepes || !Number.isInteger(memberNo) || memberNo < 1) return null;
   const ks = Object.keys(P.pepes), named = ks.filter(k => P.pepes[k] && P.pepes[k].nm);
   let key = null;
   if (named.length) key = named.reduce((m, k) => ((P.pepes[k].nmSeq || 0) >= (P.pepes[m].nmSeq || 0) ? k : m));
   else { const ti = ks.filter(k => P.pepes[k] && P.pepes[k].title && !P.pepes[k].tk); if (ti.length) key = ti.reduce((m, k) => ((P.pepes[k].s || 0) >= (P.pepes[m].s || 0) ? k : m)); }
-  const night = Q.take; Q.take = null;
+  const night = Q.take; Q.takeLeft = left.filter(x => x !== String(uid)); if (!Q.takeLeft.length) { Q.take = null; Q.takeLeft = null; } // 決定 0143：兩個人各收壹隻，都收完才清掉待收
   if (!key) { Q.took = { day: night, none: true }; return null; }
   const e = P.pepes[key], pepe = e.nm || e.title, no = e.tk && e.tk.no ? e.tk.no : memberNo;
   e.tk = { no, day: night, n: ((e.tk && e.tk.n) || 0) + 1, stamp: false, was: pepe }; e.nm = ""; e.nmSeq = 0;
