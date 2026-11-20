@@ -163,6 +163,7 @@ const STEPS = [
   ["海外科技集團改名跨海科技集團（單位、景氣市場、集團股名稱、畫面；id 不變，決定 0139）", ["test/cross_sea_name.test.cjs"]],
   ["美股新增 18 支和館外股分類（OUT_CATS、每支 cat、view 的 cats、新股 ext 不改既有景氣和館方投資、自然資源市場，決定 0134）", ["test/out_stocks_cat.test.cjs"]],
   ["景氣分市場（每個市場自己的景氣、接真實台股美股、放大 1.5、會回平均、影響來館頻率和花錢、愛解悶的 NPC、財報只給分級，決定 0121）", ["test/world_market.test.cjs"]],
+  ["財報各行業景氣的白話摘要（11-20）", ["test/market_summary.test.cjs"]],
   ["集團之間的交易（放款、貨款、營收、整天陸續發生、借款整週分散、財報的往來，決定 0119、0120）", ["test/world_trade.test.cjs"]],
   ["世界分帳（已知世界的錢分給單位、家計、公共：總和等於 house.world、成長按權重分、新玩家補助從文化部出、名單打包跟上，W3，決定 0086）", ["test/world_split.test.cjs"]],
   ["調數值的總入口 npm run tune（acorn 只換那個值、unit／npc 叫現有的腳本、檢查沒過就還原、--dry，決定 0089）", ["test/tune.test.cjs"]],
@@ -173,6 +174,7 @@ const STEPS = [
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/log_check.cjs"]],
+  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/，11-20）", ["tools/repo_rules.cjs"]],
 ];
 
 // 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。

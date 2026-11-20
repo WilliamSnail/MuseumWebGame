@@ -265,6 +265,8 @@ function wmReal(m, px, anchor, cats) {
 export function wmTick(house, day, px) {
   const C = wmCfg(), m = wmFix(house); if (!C || !C.on || !m || !wdDayOk(day) || m.day === day) return false;
   const gap = m.day && m.day < day ? Math.max(1, Math.min(14, Math.round((Date.parse(day) - Date.parse(m.day)) / 86400000))) : 1;
+  // 上週的景氣（11-20 翊文：「加上跟上週比」）：換週那天，先把更新前的值（上週最後壹天）存成 lw，財報照它比
+  { const wd = new Date(day + "T00:00:00Z").getUTCDay(), mon = whAddDays(day, -((wd + 6) % 7)); if (!wuBox(m.lw) || m.lw.wk !== mon) m.lw = { wk: mon, b: m.day ? Object.assign({}, m.b) : null }; }
   const real = {}; for (const d of WORLD_MARKETS) real[d.id] = wmReal(m, px, d.anchor, d.cats);
   for (let i = gap - 1; i >= 0; i--) {
     const dd = whAddDays(day, -i); m.c = whClamp(C.common * m.c + C.commonSd * wmGauss(dd + "|common"), -1, 1);
@@ -548,6 +550,26 @@ export function whNews(house, day, days = 1) {
   const from = whAddDays(day, -days);
   return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, unit: e.unit, to: e.to, text: `${whName(e.unit)}${WH_TEXT[e.to]}了` }));
 }
+
+// 財報「各行業的景氣」上面的兩三句白話摘要（11-20 翊文：「景氣市場在財報有沒有文字敘述?」→「好，加摘要」）。
+// 只從各市場的分級組字（不寫數字、不寫死市場名），新增市場自己跟著長
+const WM_ORDER = ["low", "cool", "plain", "warm", "hot"];
+export function wmSummary(markets) {
+  const ms = (markets || []).filter(m => m && WM_ORDER.includes(m.band)); if (!ms.length) return [];
+  const pick = bs => ms.filter(m => bs.includes(m.band)).map(m => m.name), join = a => a.length > 3 ? a.slice(0, 3).join("、") + `等 ${a.length} 個` : a.join("、");
+  const hot = pick(["hot", "warm"]), cold = pick(["low", "cool"]), flat = pick(["plain"]), out = [];
+  if (hot.length && cold.length) out.push(`${join(hot)}正熱，${join(cold)}偏冷，各行業冷熱不壹。`);
+  else if (hot.length) out.push(hot.length === ms.length ? "各行業都在回溫，整體景氣不錯。" : `${join(hot)}正熱，其他行業平穩。`);
+  else if (cold.length) out.push(cold.length === ms.length ? "各行業都偏冷，整體景氣低迷。" : `${join(cold)}偏冷，其他行業平穩。`);
+  else out.push("各行業都很平穩，沒有特別冷或熱的。");
+  const top = ms.slice().sort((a, b) => WM_ORDER.indexOf(b.band) - WM_ORDER.indexOf(a.band));
+  if (top[0].band === "hot") out.push(`最熱的是${top[0].name}。`);
+  if (top[top.length - 1].band === "low") out.push(`${top[top.length - 1].name}最冷，那壹行的人來館少、花得也省。`);
+  const up = ms.filter(m => WM_ORDER.includes(m.prev) && WM_ORDER.indexOf(m.band) > WM_ORDER.indexOf(m.prev)).map(m => m.name), down = ms.filter(m => WM_ORDER.includes(m.prev) && WM_ORDER.indexOf(m.band) < WM_ORDER.indexOf(m.prev)).map(m => m.name);
+  if (ms.some(m => WM_ORDER.includes(m.prev))) out.push(up.length || down.length ? `跟上週比，${[up.length ? join(up) + "轉熱" : "", down.length ? join(down) + "轉冷" : ""].filter(Boolean).join("，")}。` : "跟上週比，各行業冷熱沒變。");
+  if (hot.length || cold.length) out.push("景氣熱的行業，員工來館比較勤、花錢比較大方，對應的集團股也比較有力；冷的反過來。");
+  return out;
+}
 // 財報「已知世界」卡的資料（只給分布，不列每家的數字）：{ day, states 各狀態幾個單位, bands h 的分布 [＜squeeze, squeeze～cut, cut～1.1, ≥1.1], avgMult 預算倍率平均, events 最近一週換狀態的 }
 export function whCard(house, day) {
   const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return null;
@@ -555,8 +577,9 @@ export function whCard(house, day) {
   us.forEach(u => { const s = w.st[u.id]; if (s) states[s.s]++; const h = +w.h[u.id]; if (h > 0) bands[{ tight: 0, weak: 1, normal: 2, strong: 3 }[statBandOf("unitHealth", h)]]++; }); // 分級只寫在 stat_view.js
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   const un = [0, 0, 0, 0]; us.forEach(u => { un[{ calm: 0, stir: 1, uneasy: 2, turmoil: 3 }[statBandOf("unitUnrest", whUnrest(house, u.id))]]++; });
-  const mk = wuBox(house.mk) ? WORLD_MARKETS.map(d => { const v = statView("marketB", null, wmB(house, d.id)); return v ? { id: d.id, name: d.name, band: v.band, label: v.label, tone: v.tone } : null; }).filter(Boolean) : []; // 各市場景氣只給分級（決定 0121）
-  return { day: w.day, states, bands, unrestBands: un, markets: mk, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
+  const lw = wuBox(house.mk) && wuBox(house.mk.lw) && wuBox(house.mk.lw.b) ? house.mk.lw.b : null;
+  const mk = wuBox(house.mk) ? WORLD_MARKETS.map(d => { const v = statView("marketB", null, wmB(house, d.id)), pv = lw && Number.isFinite(+lw[d.id]) ? statView("marketB", null, +lw[d.id]) : null; return v ? { id: d.id, name: d.name, band: v.band, label: v.label, tone: v.tone, prev: pv ? pv.band : null } : null; }).filter(Boolean) : []; // 各市場景氣只給分級（決定 0121）
+  return { day: w.day, states, bands, unrestBands: un, markets: mk, marketSummary: wmSummary(mk), mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
 }
 
 // ================================================================

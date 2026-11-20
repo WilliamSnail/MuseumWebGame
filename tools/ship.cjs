@@ -215,8 +215,14 @@ function main() {
     if (r.status !== 0) { console.log("✗ 部署後的指令失敗了（PR 已經上線）"); after = false; }
   }
   backToMain();
+  cleanWorktrees();
   if (!after) { nw && console.log(nw); throw new Error("PR 上線了，但部署後要做的事有壹件沒成功（看上面）"); }
   if (nw) console.log(`\n${nw}`);
+}
+
+// 上線成功後在背景清掉用完的工作副本（11-20 架構整理：堆到 108 個）。不等它、失敗也不管，規則在 tools/wt_clean.cjs
+function cleanWorktrees() {
+  try { require("child_process").spawn(process.execPath, [path.join(__dirname, "wt_clean.cjs"), "--do", "--quiet"], { cwd: process.cwd(), detached: true, stdio: "ignore" }).unref(); } catch (e) { /* 不影響上線 */ }
 }
 
 // 上線完回到 main、拉最新（11-10：每次都要手動做，OneDrive 還常鎖住 index，切到一半會留下壹堆「改過的檔」）。
@@ -224,7 +230,7 @@ function main() {
 function backToMain() {
   // worktree 裡不切：main 被主資料夾佔著，切了壹定失敗（11-14 每次都印「沒能回到 main」）
   const gd = git(["rev-parse", "--git-dir"], { ok: true }).out, cd = git(["rev-parse", "--git-common-dir"], { ok: true }).out;
-  if (gd && cd && path.resolve(ROOT, gd) !== path.resolve(ROOT, cd)) { console.log("（在 worktree 裡：不切回 main，用完可以 git worktree remove）"); return; }
+  if (gd && cd && path.resolve(ROOT, gd) !== path.resolve(ROOT, cd)) { console.log("（在 worktree 裡：不切回 main。這個 worktree 下次上線時會被 tools/wt_clean.cjs 收掉）"); return; }
   for (let i = 0; i < 6; i++) {
     const a = git(["checkout", "main"], { ok: true });
     const b = a.status === 0 ? git(["pull", "--ff-only"], { ok: true }) : a;

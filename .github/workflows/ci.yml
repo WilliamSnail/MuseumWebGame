@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# 同一個 PR 又推了新的：舊的那次直接取消，不用跑完（11-20：省 Actions 分鐘，ship 修 CI 常常連推好幾次）
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,8 +24,19 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      # node_modules 整包快取（跟 deploy.yml 同一把 key）：套件沒變就不用 npm ci，每次省 15～20 秒（11-20）
+      - id: nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            functions/node_modules
+          key: nm-${{ runner.os }}-n22-${{ hashFiles('package-lock.json', 'functions/package-lock.json') }}
+      - name: 裝套件（快取沒有才裝）
+        if: steps.nm.outputs.cache-hit != 'true'
+        run: |
+          npm ci
+          npm --prefix functions ci
       # 記下這次測的是哪個 tree（pull_request 測的是 GitHub 暫時合出來的 merge ref）。合併後 deploy.yml 看這個名字：
       # 合併出來的 tree 跟這裡測過的完全一樣，就不重跑一樣的測試（tools/deploy_gate.cjs）。這步一定要在測試之前，名字格式不能改。
       - id: tree
