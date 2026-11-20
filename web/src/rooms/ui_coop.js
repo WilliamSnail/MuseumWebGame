@@ -29,6 +29,7 @@ import { afterEnter } from "./ui_screens1.js";
 import { stageAct, stageProp } from "./ui_screens3.js";
 import { fightCard, fightFx, fightHold, fightOnRedraw, fightReplaySync, fightStage } from "./ui_fight.js";
 import { chestCard, restCard, routeCard, routeStage } from "./ui_route.js";
+import { npcBox, npcCards, npcCount, npcReset } from "./ui_coop_npc.js";
 
 const canPlay = () => !!P && !isFree(P);
 const ROLL_HOLD = 1800; // 骰子自己擲（大家看同壹顆，不用等誰按），停多久自己關
@@ -108,7 +109,7 @@ function onFrameClose() {
 async function endSession(leave) {
   const s = S;
   if (!s) return;
-  S = null;
+  S = null; npcReset();
   s.offs.forEach(f => { try { f(); } catch (e) { /* 已經停了 */ } });
   clearInterval(s.clock);
   Object.values(s.timers).forEach(x => clearTimeout(x.t));
@@ -135,8 +136,14 @@ async function reloadSave() {
 }
 
 // ---------- 伺服器給了新的樣子 ----------
+function npcLeft(s, v) { // 旅客撐不住先上去了（run.log 的 npcLeave）：只說新的那幾筆
+  const gone = (v.log || []).filter(e => e && e.npcLeave), seen = s.npcSeen == null ? gone.length : s.npcSeen;
+  gone.slice(seen).forEach(e => note(`${e.name} 有點撐不住，先上去了。`));
+  s.npcSeen = gone.length;
+}
 function onView(v) {
   const s = S;
+  npcLeft(s, v);
   if (!s.view) { s.view = v; s.shown = v.step; draw(); return; } // 剛接回來：不重演
   const newStep = v.step > s.shown;
   s.view = v;
@@ -222,6 +229,7 @@ function tickClock() {
 
 // ---------- 隊友斷線 ----------
 function offline(id) {
+  if (String(id).startsWith("npc:")) return false; // 旅客沒有帳號，不看在不在線
   if (!NET.roster.length) return false;
   const r = NET.roster.find(x => x.id === id);
   return !r || r.status === "offline";
@@ -287,8 +295,8 @@ function drawLobby() {
       h("span", { class: "pt-name" }, m.guard ? "留在監視器前" : typeof m.best === "number" ? (m.best ? `走過 B${m.best}` : "還沒下去過") : "　"),
       h("span", { class: "pt-state" }, off ? "不在線……" : m.ready ? "準備好了" : m.guard ? "還沒準備好" : "還在選"));
   };
-  const empties = Array.from({ length: Math.max(0, PARTY.maxMembers.cellar - ms.length) }, () => h("div", { class: "pt-member wait cx-member" }, h("b", null, "空位")));
-  const members = h("div", { class: "pt-members cx-members" }, ms.map(card), empties);
+  const empties = Array.from({ length: Math.max(0, PARTY.maxMembers.cellar - ms.length - npcCount(party)) }, () => h("div", { class: "pt-member wait cx-member" }, h("b", null, "空位")));
+  const members = h("div", { class: "pt-members cx-members" }, ms.map(card), npcCards(party), empties);
 
   // 層數：隊長選；看每個人自己的進度（決定：每個人都要走過上一層）
   const known = ms.filter(m => !m.guard).map(m => (typeof m.best === "number" ? m.best : null)).filter(x => x != null); // 留守的人不下去：不看他走到哪
@@ -322,6 +330,7 @@ function drawLobby() {
   s.m.surface.replaceChildren(h("div", { class: "pt-wrap" },
     h("p", { class: "nb-hint pt-intro" }, `壹隊 1–${COOP.maxPlayers} 個人，每人帶 ${COOP.eachMin}–${COOP.eachMax} 隻（隊伍最多 ${COOP.teamMax} 隻）；不到 ${COOP.teamMin} 隻由${COOP.helperName}補。大家壹起投票，看同壹顆骰子，理智各扣各的。全隊的理智越低，下面越危險。`),
     members,
+    npcBox(party, s.pid, { redraw: draw, seatsUsed: ms.length + npcCount(party), blocked: party.trial ? "試煉房間不能帶旅客。" : ms.some(m => m.guard) ? "有人留守的隊不能帶旅客。" : null }),
     h("div", { class: "cx-row" }, h("span", { class: "cx-label" }, "下到"), floors),
     h("div", { class: "cx-row" }, h("span", { class: "cx-label" }, "或試煉"), trials),
     trialNote,
@@ -778,9 +787,9 @@ function memberTable(v) {
     const loss = (f.sanLoss || 0) + (f.hazard || 0) + (r ? r.loss : 0) + (r ? (f.pressure || 0) + (f.dark || 0) : 0);
     if (loss) parts.push(`理智 −${loss}`);
     if (f.sanGain) parts.push(`理智 +${f.sanGain}`);
-    if (f.insp) parts.push(`+${f.insp} 靈感`);
+    if (f.insp && !m.npc) parts.push(`+${f.insp} 靈感`);
     if (f.myth) parts.push(`神話 +${f.myth}`);
-    return h("div", { class: "cx-tr" + (m.id === v.me ? " me" : "") + (m.ghost ? " ghost" : "") }, h("b", null, m.name), h("span", null, parts.join("，") || "沒事"), h("span", { class: "cx-san" }, m.ghost ? "名牌空白" : `理智 ${m.san}`));
+    return h("div", { class: "cx-tr" + (m.id === v.me ? " me" : "") + (m.ghost ? " ghost" : "") }, h("b", null, m.name, m.npc ? h("small", { class: "cx-npc-tag" }, "旅客") : null), h("span", null, parts.join("，") || "沒事"), h("span", { class: "cx-san" }, m.ghost ? "名牌空白" : `理智 ${m.san}`));
   }));
 }
 function resultCard(v, me) {
@@ -868,13 +877,13 @@ function sideBox(v) {
   const meId = v.me;
   return h("div", { class: "cx-mates" }, v.members.filter(m => m.out !== "left").map(m => {
     const off = m.id !== meId && offline(m.id), pct = Math.round(100 * Math.max(0, m.san) / Math.max(1, m.max || 99));
-    const tags = [m.id === v.leader && v.phase === "vote" ? "領隊" : null, m.guard ? "留守" : null, m.ghost ? "名牌空白" : null, m.out === "ghost" ? "回到地面了" : null, off ? "不在線" : null].filter(Boolean);
+    const tags = [m.npc ? "旅客" : null, m.id === v.leader && v.phase === "vote" ? "領隊" : null, m.guard ? "留守" : null, m.ghost ? "名牌空白" : null, m.out === "ghost" ? "回到地面了" : null, off ? "不在線" : null].filter(Boolean);
     const did = v.phase === "vote" || v.phase === "floorDone" ? v.votes && v.votes[m.id] !== undefined : v.phase === "result" ? v.acks && v.acks[m.id] : false;
     return h("div", { class: "cx-mate" + (m.id === meId ? " me" : "") + (off ? " off" : "") + (m.ghost ? " ghost" : "") },
       h("div", { class: "cx-mate-top" }, h("b", null, m.name), did ? h("i", { class: "cx-did", "aria-label": "好了" }, "✓") : null),
       tags.length ? h("div", { class: "cx-tags" }, tags.map(t => h("span", null, t))) : null,
       m.guard ? null : h("div", { class: "cx-bar", role: "img", "aria-label": `理智 ${m.san}` }, h("i", { style: { width: pct + "%" } })),
-      m.guard ? null : h("div", { class: "cx-mate-n" }, `理智 ${m.san}`, m.got && m.got.insp ? `・靈感 +${m.got.insp}` : ""));
+      m.guard ? null : h("div", { class: "cx-mate-n" }, `理智 ${m.san}`, m.got && m.got.insp && !m.npc ? `・靈感 +${m.got.insp}` : ""));
   }));
 }
 
