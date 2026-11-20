@@ -19,11 +19,16 @@ function source() { require("../tools/content/notices_build.cjs").write(); /* sh
 function names() { return [...new Set(ORDER.flatMap(f => exportsOf(read(f))))]; }
 
 // 回傳一個物件：G.名字 讀到的永遠是 vm 裡現在的值（例如 setRng 之後的 RNG）
+// 同一個程序裡每次 load 都要重組、重新編譯整份 shared/（約 1.3 秒），壹支測試有幾十項就慢了：組好的程式和編譯結果只做壹次，每次只換新的 vm 環境（資料都是全新的）
+let compiled = null;
 function load(extra = {}) {
   const ctx = Object.assign({ console, Buffer, setTimeout, clearTimeout }, extra);
   vm.createContext(ctx);
-  const getters = names().map(n => `get ${n}() { return ${n}; }`).join(",\n");
-  vm.runInContext(source() + `\n;globalThis.__G = {\n${getters}\n};`, ctx, { filename: "shared（接起來）.js" });
+  if (!compiled) {
+    const getters = names().map(n => `get ${n}() { return ${n}; }`).join(",\n");
+    compiled = new vm.Script(source() + `\n;globalThis.__G = {\n${getters}\n};`, { filename: "shared（接起來）.js" });
+  }
+  compiled.runInContext(ctx);
   if (!extra.__realMoney) legacyMoney(ctx.__G.NUM);
   return ctx.__G;
 }

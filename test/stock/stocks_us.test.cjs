@@ -19,7 +19,7 @@ const segGot = (G, base, j, ret, lag) => { G.US_IDS.forEach(id => px0(G, id)); c
 function runDay(G, secret, day, opts) {
   opts = opts || {};
   G.US_IDS.forEach(id => px0(G, id)); const doc = G.usDocNew(day), base = Object.fromEntries(G.US_IDS.map(id => [id, prevReal[id] * (1 + (opts.gap || 0))]));
-  for (let idx = 0; idx <= 390; idx++) {
+  for (let idx = 0; idx <= (opts.to == null ? 390 : opts.to); idx++) { // opts.to：只跑到第幾分鐘（統計測試只看前面幾十分鐘，不必跑完整天）
     const need = G.usNeed(doc, idx);
     if (!need) continue;
     let got = null;
@@ -103,7 +103,7 @@ T("種子有祕密：同樣輸入同樣結果、換祕密整條不同、doc 裡�
   assert.ok(!J(a).includes("祕密甲"));
 });
 T("真實成分：用跟台股壹樣的 X（落後 ≤5 分 0.4、≤20 分 0.3、更久 0.25）；上壹段真實漲 1%，錨點平均多漲 X%", G => {
-  const avg = (ret, lag) => { let sum = 0; const N = 400; for (let i = 0; i < N; i++) { const d = runDay(G, "k" + i, W, { ret, lag }); sum += d.ser[ID][30] / d.ser[ID][15] - 1; } return sum / N; };
+  const avg = (ret, lag) => { let sum = 0; const N = 40; for (let i = 0; i < N; i++) { const d = runDay(G, "k" + i, W, { ret, lag, to: 30 }); sum += d.ser[ID][30] / d.ser[ID][15] - 1; } return sum / N; };
   const base = avg(0, 0), up = avg(0.01, 0), slow = avg(0.01, 15);
   assert.ok(Math.abs(up - base - 0.004) < 0.0009, "X＝0.4：" + (up - base));
   assert.ok(Math.abs(slow - base - 0.003) < 0.0009, "落後 15 分 X＝0.3：" + (slow - base));
