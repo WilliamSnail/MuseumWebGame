@@ -76,7 +76,6 @@ npm run preview  # 看打包後的樣子
 ├─ web/            ← 網頁：index.html 是外殼，畫面、美術、聲音在 src/
 ├─ functions/      ← Cloud Functions：伺服器說了算的事（規則照舊在 shared/）
 ├─ firebase.json、firestore.rules、database.rules.json ← Firebase 的設定和規則
-├─ server/、db/    ← 舊的 Node 伺服器（決定 0021 之後停用，留著當參考）
 ├─ test/           ← 測試和模擬
 ├─ tools/、.github/ ← 日誌工具、PR 模板、CI
 ├─ package.json、vite.config.js、version.json
