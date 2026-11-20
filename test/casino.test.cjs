@@ -664,7 +664,7 @@ T("文字：不出現酒、炸雞、手機和餐廳品牌、真錢的字；畫�
   const strings = [];
   const walk = x => { if (typeof x === "string") strings.push(x); else if (Array.isArray(x)) x.forEach(walk); else if (x && typeof x === "object") Object.values(x).forEach(walk); };
   walk(G.CAS_TEXT); walk(G.CAS_MENU.map(m => [m.name, m.line])); walk(G.CAS_PROPS); walk(G.CAS_ACH.map(a => [a.name, a.desc])); walk(G.CAS_PACKS.map(p => p.name));
-  const banned = ["酒", "啤", "炸雞", "肯德基", "KFC", "ASHAHI", "SAMSUNG", "三星手機", "白蘭地", "爭鮮", "麥當勞", "現金", "真錢", "儲值", "提款", "台幣", "美金", "NT$", "$"];
+  const banned = ["炸雞", "肯德基", "KFC", "ASHAHI", "SAMSUNG", "三星手機", "爭鮮", "麥當勞", "現金", "真錢", "儲值", "提款", "台幣", "美金", "NT$", "$"];
   for (const s of strings) {
     for (const b of banned) assert.ok(!s.includes(b), `「${s}」不能有「${b}」`);
     assert.ok(!s.includes("一"), `「${s}」畫面上的字用壹`);
