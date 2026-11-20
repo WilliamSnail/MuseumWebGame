@@ -25,3 +25,6 @@ functions/shared/
 shared/notices_data.js
 維護日誌/README.md
 docs/音效與特效總表.md
+
+# 上線腳本的 PR 說明暫存（11-20 整理：body_tmp.md 曾被誤 commit）
+body_tmp.md
