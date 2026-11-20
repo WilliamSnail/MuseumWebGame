@@ -650,8 +650,8 @@ export function drawChips() {
   if (!box) return;
   box.hidden = !UI.net || typeof UI.chips !== "number";
   if (box.hidden) return;
-  $(".st-num", box).textContent = casNum(UI.chips);
-  box.dataset.exact = casExact(UI.chips);
+  const was = box.dataset.v === undefined ? null : +box.dataset.v; box.dataset.v = String(UI.chips); box.classList.remove("m-flash-up", "m-flash-down"); if (was != null && UI.chips !== was) { void box.offsetWidth; box.classList.add(UI.chips > was ? "m-flash-up" : "m-flash-down"); } // 錢的漲跌：變多紅、變少綠，閃壹下（11-21）
+  $(".st-num", box).textContent = casNum(UI.chips); box.dataset.exact = casExact(UI.chips);
 }
 // 導覽列「兌換所」旁邊的週章數字（自由模式沒有）
 export function drawShopTab() {

@@ -6,6 +6,7 @@
 //   3. .replace("字串", "字串")（第二個參數是字串）：`$$`、`$&` 會被當成特殊符號，改用函式 .replace("a", () => "b")、split/join。web/src、shared、tools、functions。
 //   4. 畫面文字用「壹」：只看這次新加的行（git diff），出現「一個、一天、一次、一張、一起…」就報；舊的不擋。
 //   5. 名字只放一處：改過名的餐車品項、交代人，舊名不准再出現在現役的程式和說明（維護 RENAMES）。
+//   6. 錢的漲跌顏色（11-21 翊文：照台股，賺漲＝紅、賠跌＝綠）：css 裡 .up／.down／.k-win／.k-lose 這類選擇器不准寫死色碼，要用 var(--money-up)／var(--money-down)（ui.css）；不是錢的（技能成長、頭條預告…）寫進 MONEY_ALLOW 並說原因。
 // 用法：node tools/check/code_rules.cjs [--base origin/main] [--only 1,2,3,4,5]
 //   --base：第 4 項拿哪個版本當基準（CI 用 origin/main）；沒給就自動用 origin/main 和 HEAD 的共同祖先，找不到就跳過第 4 項。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
@@ -236,6 +237,41 @@ function tableNames(readText, table) {
 const NAME_SCOPE = f => /^(shared|web\/src|functions|tools|test)\/.*\.(js|cjs|mjs)$/.test(f) && !/^functions\/(shared|node_modules)\//.test(f) && !/^(tools\/check\/code_rules\.cjs|test\/tools\/code_rules\.test\.cjs)$/.test(f)
   || /^(AGENTS|README)\.md$/.test(f) || /^docs\/(?!決定\/|維護日誌\/).*\.md$/.test(f)
   || /^content\/[^/]*\.(md|json)$/.test(f) || /^content\/(npc|map|world|stocks)\//.test(f);
+// ---------- 6. 錢的漲跌顏色 ----------
+// 「css 檔名|選擇器」→ 原因。不是錢的漲跌（技能、劇情、預告）才准寫死色碼
+const MONEY_ALLOW = {
+  "theme3.css|.cand-sk.up i": "技能成長（融合候選），不是錢",
+  "theme3.css|.cand-sk.down i": "技能成長（融合候選），不是錢",
+  "fight.css|.fg-pop.up": "打怪的紫色彈字（成長），不是錢",
+  "lobby2.css|.hl-i.up": "頭條「即將發生」的斜體，不是漲跌",
+  "bank.css|.bank-book .bank-chg.tag.up": "漲跌標籤是貼圖，字是深咖啡色壓在圖上，不是紅綠字",
+  "bank.css|.bank-book .bank-chg.tag.down": "同上",
+  "casino.css|.cas-econ-stage.k-win p.last": "拚經濟小遊戲的結語（金色），不是籌碼輸贏",
+};
+const MONEY_SEL = /\.(up|down|k-win|k-lose|k-blackjack|k-charlie|m-up|m-down)\b/;
+function moneyFindings(css) {
+  const out = [], t = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const m of t.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const sels = m[1].split(",").map(s => s.trim().replace(/\s+/g, " ")).filter(s => MONEY_SEL.test(s));
+    if (!sels.length) continue;
+    if (/(^|;)\s*(color|border-color|fill|stroke|text-shadow|box-shadow)\s*:[^;]*(#[0-9a-fA-F]{3,8}\b|rgba?\()/.test(m[2])) sels.forEach(s => out.push(s));
+  }
+  return out;
+}
+function checkMoney(files, read = defaultRead, allow = MONEY_ALLOW) {
+  const bad = [];
+  for (const f of files) {
+    const m = f.match(/^web\/src\/css\/([^/]+\.css)$/);
+    if (!m) continue;
+    for (const s of new Set(moneyFindings(read(f)))) if (!allow[m[1] + "|" + s]) bad.push(`${f}：「${s}」寫死了顏色。錢的漲跌要用 var(--money-up)（賺、漲＝紅）／var(--money-down)（賠、跌＝綠），見 docs/規則/介面配色.md；不是錢的才加進 tools/check/code_rules.cjs 的 MONEY_ALLOW 並寫原因`);
+  }
+  for (const k of Object.keys(allow)) {
+    const [file, sel] = k.split("|"), f = "web/src/css/" + file;
+    if (!files.includes(f)) { bad.push(`MONEY_ALLOW 的 ${file} 已經沒有這個檔了，拿掉`); continue; }
+    if (!moneyFindings(read(f)).includes(sel)) bad.push(`MONEY_ALLOW 的 ${k} 已經沒有寫死色碼了，從白名單拿掉`);
+  }
+  return bad;
+}
 function checkNames(files, read = defaultRead, renames = RENAMES) {
   const bad = [];
   for (const r of renames) {
@@ -259,6 +295,7 @@ const CHECKS = {
   3: { name: ".replace(字串, 字串)", run: (files, o) => checkReplace(files, o.read) },
   4: { name: "新加的畫面文字用「壹」", run: (files, o) => { const a = addedLines(o.base); if (!a) { console.log("  （找不到 origin/main，第 4 項跳過；CI 會跑）"); return []; } return checkYi(a, o.read); } },
   5: { name: "名字只放一處（改名對照）", run: (files, o) => checkNames(files, o.read) },
+  6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
 };
 function runAll(opts = {}) {
   const files = opts.files || gitFiles(), only = opts.only || Object.keys(CHECKS).map(Number), bad = [];
@@ -276,4 +313,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };

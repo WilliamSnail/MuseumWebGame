@@ -310,7 +310,7 @@ function savePane(v) {
   return h("div", { class: "bank-cols" },
     panel("活存", "隨時可以領，每天 05:00 給利息",
       h("div", { class: "bank-big" }, pic("jar", "jar"), num("big", fmt(s.save))),
-      h("p", { class: "bank-meta" }, "利率 ", h("b", { class: "good" }, `${pctText(s.savePct)}／天`), "　昨天利息 ", h("b", { class: "good" }, sign(s.earned))),
+      h("p", { class: "bank-meta" }, "利率 ", h("b", null, `${pctText(s.savePct)}／天`), "　昨天利息 ", h("b", { class: s.earned > 0 ? "up" : "" }, sign(s.earned))),
       h("div", { class: "bank-acts" }, btn("存入", () => pickAmt("存進活存", "從手上的籌碼搬進活存", quickOf(s.quick, v.cash, s.min).concat(v.cash >= s.min ? [[v.cash, `全部 ${fmt(v.cash)}`]] : []), amt => bankDo("bank", { op: "put", amt }), { min: s.min, max: v.cash, verb: "存入" }), "primary big bank-btn gold"),
         btn("提出", () => pickAmt("從活存領出", "搬回手上的籌碼", quickOf(s.quick, s.save).concat(s.save > 0 ? [[s.save, `全部 ${fmt(s.save)}`]] : []), amt => bankDo("bank", { op: "take", amt }), { min: 1, max: s.save, verb: "領出" }), "big bank-btn")),
       h("p", { class: "bank-hint" }, "利息由莊家付。莊家缺錢的時候，利息會停發，這裡會寫「莊家吃緊」。")),
@@ -390,7 +390,7 @@ function bondPane(v) {
   return h("div", { class: "bank-cols" },
     panel(i.name, `每週一期，到 ${i.due}`,
       h("p", { class: "bank-line" }, i.line),
-      h("p", { class: "bank-meta" }, "這期利率 ", h("b", { class: "good" }, `${pctText(i.pct)}／週`), "　莊家", h("b", null, b.state || "健康")),
+      h("p", { class: "bank-meta" }, "這期利率 ", h("b", null, `${pctText(i.pct)}／週`), "　莊家", h("b", null, b.state || "健康")),
       h("div", { class: "bank-meter", role: "img", "aria-label": `已發 ${(used * 100).toFixed(0)}%` }, h("i", { style: { width: used * 100 + "%" } })),
       h("p", { class: "bank-meta" }, `還剩 ${fmt(i.left)} ／ 一共 ${fmt(i.cap)}`),
       h("div", { class: "bank-acts" }, i.young ? h("p", { class: "bank-why" }, `帳號開了 3 天以上才能買（還要 ${i.young} 天）。`) : null,
@@ -1037,7 +1037,7 @@ function acctRows(v) {
   // 館債：本金加債權憑證（測試 11-13：買了看不出錢去哪）；借款沒欠寫 0，不寫「−0」（測試 11-13）
   return [["現金", v.cash], ["活存", v.save.save], ["定存", termSum], ["館債", v.bonds ? v.bonds.held.reduce((n, x) => n + x.amt, 0) + (v.bonds.iou || 0) : 0], ["持股市值", stockVal], ["借款", owe ? -owe : 0]];
 }
-const acctBody = v => h("div", { class: "bank-acct" }, acctRows(v).map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "bad" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", { class: "good" }, fmt(v.net))));
+const acctBody = v => h("div", { class: "bank-acct" }, acctRows(v).map(([k, n]) => h("p", null, h("span", null, k), h("b", { class: n < 0 ? "down" : "" }, n < 0 ? "−" + fmt(-n) : fmt(n || 0)))), h("p", { class: "net" }, h("span", null, "淨值"), h("b", null, fmt(v.net))));
 // 賭場、同桌賭桌右欄的「我的帳戶」（11-16，翊文：「賭場的賭桌也可以看到簡易銀行嗎，以及自己的帳戶，依樣可以收折」）：
 // 標題那條點了收起／打開（記在 localStorage pm-acct-fold）；資料跟銀行廳同壹份（act bankHall），打開時讀壹次、之後 60 秒內不重讀
 const ACCT_FOLD = "pm-acct-fold";

@@ -5,6 +5,8 @@
    ================================================================ */
 .bank-onescreen { --bank-navy: #1D2B45; --bank-navy-2: #142036; --bank-navy-3: #0F192B; --bank-gold: #D6B25E; --bank-gold-hi: #F3DFA6; --bank-mute: #A9B4C8; --bank-text: #EEF1F6;
   --bank-paper: #F6F1E3; --bank-paper-2: #E9E1CB; --bank-ink: #26324A; --bank-ink-soft: #6B7894; --bank-up: #A32F1E; --bank-down: #1F5A2C; }
+/* 錢的漲跌（11-21 翊文，照台股：賺、漲＝紅；賠、跌＝綠）：變數在 ui.css，淺底（存摺、清單列）換深色那組 */
+.bank-book, .bank-tk, .bank-row { --money-up: var(--money-up-ink); --money-down: var(--money-down-ink); }
 /* 房間的底：深藍，不用大廳的紫紅花紋 */
 .bank-onescreen { background: none; }
 body[data-screen="bank"] { background: #0F192B url(/ui2/ui2-bg-bank.webp) center top / cover fixed no-repeat; }
@@ -18,7 +20,7 @@ body[data-screen="bank"] { background: #0F192B url(/ui2/ui2-bg-bank.webp) center
 .bank-num { font-family: Georgia, "Times New Roman", serif; font-variant-numeric: tabular-nums; color: #FFFFFF; font-size: var(--type-head, 1.05rem); }
 .bank-num.big { font-size: 2rem; line-height: 1.1; }
 .bank-meta { margin: 0; font-size: var(--type-body, .875rem); color: #C9D1DE; }
-.bank-meta b { color: #FFFFFF; }
+.bank-meta b { color: #FFFFFF; } .bank-meta b.up, .bank-acct b.up { color: var(--money-up); } .bank-acct b.down { color: var(--money-down); }
 .bank-hint, .bank-why { margin: 0; font-size: var(--type-small, .75rem); line-height: 1.5; color: var(--bank-mute); }
 .bank-why { color: #FFD9CC; }
 .bank-line, .bank-news { margin: 0; font-size: var(--type-body, .875rem); line-height: 1.6; color: #C9D1DE; }
@@ -28,10 +30,10 @@ body[data-screen="bank"] { background: #0F192B url(/ui2/ui2-bg-bank.webp) center
 .bank-quote small { color: var(--bank-mute); }
 /* 漲跌：紅漲綠跌（台灣習慣），一定有 ▲▼。深藍底上用淺色，米色底上用深色 */
 .bank-chg { font-weight: 700; font-size: var(--type-body, .875rem); color: var(--bank-mute); }
-.bank-panel > .bank-quote .bank-chg.up, .bank-side .bank-chg.up { color: #FF8A78; }
-.bank-panel > .bank-quote .bank-chg.down, .bank-side .bank-chg.down { color: #7FD39B; }
-.bank-book .bank-chg.up, .bank-tk .bank-chg.up { color: var(--bank-up); }
-.bank-book .bank-chg.down, .bank-tk .bank-chg.down { color: var(--bank-down); }
+.bank-panel > .bank-quote .bank-chg.up, .bank-side .bank-chg.up { color: var(--money-up); }
+.bank-panel > .bank-quote .bank-chg.down, .bank-side .bank-chg.down { color: var(--money-down); }
+.bank-book .bank-chg.up, .bank-tk .bank-chg.up { color: var(--money-up); }
+.bank-book .bank-chg.down, .bank-tk .bank-chg.down { color: var(--money-down); }
 
 /* 按鈕：看得出能按（翊文 11-13：「借款跟存款可以明顯一點嗎，有點看不到像是按鈕」）。深藍底金邊、字加粗，主要的是金色 */
 .bank-onescreen .bank-btn { min-height: 44px; padding: 0 16px; border: 1px solid var(--bank-gold); border-radius: 6px; background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: var(--bank-gold-hi); font-weight: 700; font-size: var(--type-body, .875rem); letter-spacing: .08em; cursor: pointer; box-shadow: 0 1px 0 rgba(255, 255, 255, .15) inset, 0 2px 4px rgba(0, 0, 0, .35); }
@@ -297,9 +299,9 @@ body[data-screen="bank"] #room { background: none; }
 .bank-dir { padding: 0 6px; border-radius: 3px; font-style: normal; font-size: var(--type-tiny, .6875rem); font-weight: 800; background: #A32F1E; color: #FFF; }
 .bank-dir.short { background: #1F5A2C; }
 .bank-pos-pnl { margin-left: auto; font-weight: 800; font-family: Georgia, serif; color: var(--bank-mute); }
-.bank-pos-pnl.up { color: #FF8A78; } .bank-pos-pnl.down { color: #7FD39B; }
+.bank-pos-pnl.up { color: var(--money-up); } .bank-pos-pnl.down { color: var(--money-down); }
 .bank-pos-pnl .bank-pos-pct { margin-left: 6px; font-size: .78em; font-weight: 700; opacity: .9; } /* 報酬率（賺賠÷保證金，11-19） */
-.bank-pos-m .bank-pos-mv { font-weight: 700; } .bank-pos-m .bank-pos-mv.up { color: #FF8A78; } .bank-pos-m .bank-pos-mv.down { color: #7FD39B; } /* 股價漲跌：紅漲綠跌，不管做多放空（翊文 11-19） */
+.bank-pos-m .bank-pos-mv { font-weight: 700; } .bank-pos-m .bank-pos-mv.up { color: var(--money-up); } .bank-pos-m .bank-pos-mv.down { color: var(--money-down); } /* 股價漲跌：紅漲綠跌，不管做多放空（翊文 11-19） */
 .bank-pos-m { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 0; font-size: var(--type-small, .75rem); color: #C9D1DE; }
 .bank-ratio { position: relative; height: 16px; border-radius: 8px; background: rgba(0, 0, 0, .4); border: 1px solid rgba(214, 178, 94, .5); overflow: hidden; }
 .bank-ratio i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #C2452F, #E0B040 45%, #5CC4B4); }
@@ -329,15 +331,15 @@ body[data-screen="bank"] #room { background: none; }
 .bank-world li > span { display: grid; gap: 2px; }
 .bank-world li small { font-size: var(--type-small, .75rem); color: #C9D1DE; }
 .bank-tone { flex: none; width: 1.2em; text-align: center; font-style: normal; font-weight: 800; color: var(--bank-mute); }
-.bank-tone.up { color: #FF8A78; } .bank-tone.down { color: #7FD39B; }
+.bank-tone.up { color: var(--money-up); } .bank-tone.down { color: var(--money-down); }
 .bank-refs { display: flex; flex-wrap: wrap; gap: 4px; }
 .bank-ref { min-height: 28px; padding: 0 10px; border: 1px solid var(--bank-gold); border-radius: 999px; background: rgba(214, 178, 94, .14); color: var(--bank-gold-hi); font: inherit; font-size: var(--type-small, .75rem); font-weight: 700; cursor: pointer; }
 .bank-ref:hover { background: rgba(214, 178, 94, .3); }
 .bank-real { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
 .bank-real b { font-weight: 800; letter-spacing: .04em; }
 .bank-real em { font-style: normal; font-weight: 700; }
-.bank-book .bank-real em.up { color: var(--bank-up); } .bank-book .bank-real em.down { color: var(--bank-down); }
-.bank-panel .bank-real em.up { color: #FF8A78; } .bank-panel .bank-real em.down { color: #7FD39B; }
+.bank-book .bank-real em.up { color: var(--money-up); } .bank-book .bank-real em.down { color: var(--money-down); }
+.bank-panel .bank-real em.up { color: var(--money-up); } .bank-panel .bank-real em.down { color: var(--money-down); }
 .bank-realline { display: flex; flex-wrap: wrap; align-items: baseline; }
 .bank-row.stock small.ln.real { display: block; }
 
@@ -381,7 +383,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-row.holdings.sum { cursor: default; background: var(--bank-paper-2); border-top: 1px solid #C9B98F; }
 .bank-pl { display: grid; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .bank-pl small { font-size: var(--type-tiny, .6875rem); }
-.bank-pl.up { color: var(--bank-up); } .bank-pl.down { color: var(--bank-down); }
+.bank-pl.up { color: var(--money-up); } .bank-pl.down { color: var(--money-down); }
 .bank-row.holdings .bank-mk { margin-left: 6px; color: var(--bank-ink-soft); border-color: #A88A52; }
 .bank-pos-f small.has-oco { color: var(--bank-gold-hi); }
 @media (max-width: 760px), (max-height: 500px) and (orientation: landscape) { .bank-pos-f small.has-oco { display: inline; } }
@@ -437,7 +439,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-invsum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 14px; margin-bottom: 6px; }
 .bank-invsum p { display: flex; justify-content: space-between; gap: 8px; margin: 0; padding: 3px 0; border-bottom: 1px dashed rgba(214, 178, 94, .25); font-size: var(--type-body, .875rem); }
 .bank-invsum p span { color: var(--bank-text-soft, #C9D1DE); }
-.bank-invsum b.up, .bank-pl.up { color: var(--bank-up); } .bank-invsum b.down, .bank-pl.down { color: var(--bank-down); }
+.bank-invsum b.up, .bank-pl.up { color: var(--money-up); } .bank-invsum b.down, .bank-pl.down { color: var(--money-down); }
 .bank-book.inv .bank-bh, .bank-row.inv { grid-template-columns: 1.4fr .8fr 1fr 1fr; }
 .bank-row.inv { min-height: 44px; }
 .bank-invy { margin-top: 8px; font-size: var(--type-small, .75rem); }
@@ -555,8 +557,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-book-n small { font-size: .7rem; opacity: .75; }
 .bank-book-v { display: grid; justify-items: end; gap: 1px; flex: none; }
 .bank-book-v i { font-style: normal; font-size: .72rem; }
-.bank-book-v i.up, .bank-book-top b.up { color: #6FBF73; }
-.bank-book-v i.down, .bank-book-top b.down { color: #E0705F; }
+.bank-book-v i.up, .bank-book-top b.up { color: var(--money-up); }
+.bank-book-v i.down, .bank-book-top b.down { color: var(--money-down); }
 .bank-book-v em { font-style: normal; opacity: .7; font-size: .75rem; }
 .bank-book-v.dim, .bank-book-top .dim { opacity: .7; }
 .bank-book-row[open] summary em { transform: rotate(180deg); display: inline-block; }
@@ -606,7 +608,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-node { min-height: 44px; padding: 0 12px; border: 1px solid var(--bank-gold); border-radius: 6px; background: rgba(255, 255, 255, .06); color: var(--bank-gold-hi); font: inherit; font-weight: 700; cursor: pointer; }
 .bank-flow-node:hover { background: rgba(255, 255, 255, .14); }
 .bank-flow-sum { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 6px; color: var(--bank-mute); font-size: var(--type-small, .75rem); }
-.bank-flow-sum b { color: var(--bank-text); font-size: var(--type-body, .875rem); } .bank-flow-sum b.up { color: #FF8A78; } .bank-flow-sum b.down { color: #7FD39B; }
+.bank-flow-sum b { color: var(--bank-text); font-size: var(--type-body, .875rem); } .bank-flow-sum b.up { color: var(--money-up); } .bank-flow-sum b.down { color: var(--money-down); }
 .bank-flow-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .bank-flow-l > li { border: 1px solid rgba(214, 178, 94, .4); border-radius: 6px; background: rgba(255, 255, 255, .04); overflow: hidden; }
 .bank-flow-l > li.on { border-color: var(--bank-gold-hi); background: rgba(214, 178, 94, .12); }
@@ -616,7 +618,7 @@ body[data-screen="bank"] #room { background: none; }
 .bank-flow-row b { color: var(--bank-gold-hi); } .bank-flow-row em { font-style: normal; color: var(--bank-gold); width: 1em; text-align: center; }
 .bank-flow-src { list-style: none; margin: 0; padding: 4px 10px 8px; display: grid; gap: 3px; border-top: 1px dashed rgba(214, 178, 94, .35); }
 .bank-flow-src li { display: flex; justify-content: space-between; gap: 8px; font-size: var(--type-small, .75rem); color: var(--bank-mute); }
-.bank-flow-src li b { color: #FF8A78; } .bank-flow-src li b.down { color: #7FD39B; } .bank-flow-src small { display: block; }
+.bank-flow-src li b { color: var(--money-up); } .bank-flow-src li b.down { color: var(--money-down); } .bank-flow-src small { display: block; }
 @media (max-width: 760px) { .bank-flow { grid-template-columns: minmax(0, 1fr); } }
 .bank-flow-frame rect { fill: rgba(214, 178, 94, .06); stroke: rgba(214, 178, 94, .55); stroke-width: 1.2; stroke-dasharray: 6 4; }
 .bank-flow-frame text { paint-order: stroke; stroke: #0F192B; stroke-width: 4px; fill: #D6B25E; font-size: 12.5px; font-weight: 700; letter-spacing: .14em; }
@@ -659,8 +661,8 @@ body[data-screen="bank"] #room { background: none; }
 @keyframes bank-flow-zout { from { transform: scale(1.14); opacity: .2; } to { transform: scale(1); opacity: 1; } }
 .bank-flow-node-g.focus rect { stroke: #FFF3C4; stroke-width: 2.4; }
 
-.bank-flow-node-g .b.neg { fill: #FF9A86; font-weight: 700; } /* 負的餘額（例如海外帳）：帶負號、偏紅 */
-.bank-flow-node-g:has(.b.neg) rect { stroke: #E0705C; }
+.bank-flow-node-g .b.neg { fill: var(--money-down); font-weight: 700; } /* 負的餘額（例如海外帳）：帶負號、綠（賠＝綠，11-21） */
+.bank-flow-node-g:has(.b.neg) rect { stroke: var(--money-down); }
 /* 手機直拿：放大縮小按鈕縮小，跟路徑排同一行（翊文 11-17：「手機的放大縮小按鈕太大了」） */
 @media (max-width: 760px) {
   .bank-flow-bar { flex-wrap: nowrap; padding: 4px 6px; }
@@ -719,5 +721,5 @@ body[data-screen="bank"] #room { background: none; }
 .bt-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 4px; border-bottom: 1px dashed rgba(230, 220, 192, .25); font-size: .8125rem; color: #EADFC6; }
 .bt-row small { display: block; font-size: .6875rem; color: #B9AE92; }
 .bt-main { display: grid; gap: 2px; min-width: 0; } .bt-main > b { font-weight: 700; } .bt-main > b small { display: inline; margin-left: 6px; }
-.bt-end { display: grid; text-align: right; } .bt-end > b.up { color: #7FD99A; } .bt-end > b.down { color: #F09A8E; }
+.bt-end { display: grid; text-align: right; } .bt-end > b.up { color: var(--money-up); } .bt-end > b.down { color: var(--money-down); }
 .bt-act { display: inline; } .bt-act small { display: inline; margin-left: 2px; } .bt-act.in { color: #F2D58A; } .bt-act.out { color: #9FC3F0; }
