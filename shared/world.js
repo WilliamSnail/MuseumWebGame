@@ -561,6 +561,24 @@ export function whNews(house, day, days = 1) {
   const from = whAddDays(day, -days);
   return w.ev.filter(e => e.day > from && e.day <= day).map(e => ({ day: e.day, unit: e.unit, to: e.to, text: `${whName(e.unit)}${WH_TEXT[e.to]}了` }));
 }
+
+// 財報「各行業的景氣」上面的兩三句白話摘要（11-20 翊文：「景氣市場在財報有沒有文字敘述?」→「好，加摘要」）。
+// 只從各市場的分級組字（不寫數字、不寫死市場名），新增市場自己跟著長
+const WM_ORDER = ["low", "cool", "plain", "warm", "hot"];
+export function wmSummary(markets) {
+  const ms = (markets || []).filter(m => m && WM_ORDER.includes(m.band)); if (!ms.length) return [];
+  const pick = bs => ms.filter(m => bs.includes(m.band)).map(m => m.name), join = a => a.length > 3 ? a.slice(0, 3).join("、") + `等 ${a.length} 個` : a.join("、");
+  const hot = pick(["hot", "warm"]), cold = pick(["low", "cool"]), flat = pick(["plain"]), out = [];
+  if (hot.length && cold.length) out.push(`${join(hot)}正熱，${join(cold)}偏冷，各行業冷熱不壹。`);
+  else if (hot.length) out.push(hot.length === ms.length ? "各行業都在回溫，整體景氣不錯。" : `${join(hot)}正熱，其他行業平穩。`);
+  else if (cold.length) out.push(cold.length === ms.length ? "各行業都偏冷，整體景氣低迷。" : `${join(cold)}偏冷，其他行業平穩。`);
+  else out.push("各行業都很平穩，沒有特別冷或熱的。");
+  const top = ms.slice().sort((a, b) => WM_ORDER.indexOf(b.band) - WM_ORDER.indexOf(a.band));
+  if (top[0].band === "hot") out.push(`最熱的是${top[0].name}。`);
+  if (top[top.length - 1].band === "low") out.push(`${top[top.length - 1].name}最冷，那壹行的人來館少、花得也省。`);
+  if (hot.length || cold.length) out.push("景氣熱的行業，員工來館比較勤、花錢比較大方，對應的集團股也比較有力；冷的反過來。");
+  return out;
+}
 // 財報「已知世界」卡的資料（只給分布，不列每家的數字）：{ day, states 各狀態幾個單位, bands h 的分布 [＜squeeze, squeeze～cut, cut～1.1, ≥1.1], avgMult 預算倍率平均, events 最近一週換狀態的 }
 export function whCard(house, day) {
   const w = house && wuBox(house.wh) ? house.wh : null; if (!w) return null;
@@ -569,7 +587,7 @@ export function whCard(house, day) {
   const avg = us.length ? us.reduce((a, u) => a + whMult(house, u.id), 0) / us.length : 1;
   const un = [0, 0, 0, 0]; us.forEach(u => { un[{ calm: 0, stir: 1, uneasy: 2, turmoil: 3 }[statBandOf("unitUnrest", whUnrest(house, u.id))]]++; });
   const mk = wuBox(house.mk) ? WORLD_MARKETS.map(d => { const v = statView("marketB", null, wmB(house, d.id)); return v ? { id: d.id, name: d.name, band: v.band, label: v.label, tone: v.tone } : null; }).filter(Boolean) : []; // 各市場景氣只給分級（決定 0121）
-  return { day: w.day, states, bands, unrestBands: un, markets: mk, mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
+  return { day: w.day, states, bands, unrestBands: un, markets: mk, marketSummary: wmSummary(mk), mood: w.mood ? { v: w.mood.v, band: statBandOf("crowdMood", w.mood.v) } : null, avgMult: Math.round(avg * 100) / 100, events: whNews(house, day || w.day, 7).map(e => ({ day: e.day, text: e.text })).concat(wtNews(house, day || w.day, 7)) };
 }
 
 // ================================================================

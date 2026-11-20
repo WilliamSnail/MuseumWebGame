@@ -931,7 +931,7 @@ function outsidePanel(e, trade) {
     h("div", { class: "bank-wld-sec" }, h("b", null, "各集團現在的狀態"), statBar(states), statLegend(states)),
     bands.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團景氣分布"), statBands(bands)) : null,
     unrest.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "集團的人心"), statBands(unrest)) : null,
-    Array.isArray(w.markets) && w.markets.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "各行業的景氣"), h("ul", { class: "bank-who" }, w.markets.map(m => h("li", null, h("b", null, m.name), " ", h("span", { class: "bank-mood " + (m.tone === "good" ? "up" : m.tone === "bad" || m.tone === "warn" ? "down" : "") }, m.label))))) : null,
+    Array.isArray(w.markets) && w.markets.length ? h("div", { class: "bank-wld-sec" }, h("b", null, "各行業的景氣"), Array.isArray(w.marketSummary) && w.marketSummary.length ? h("p", { class: "bank-mk-sum" }, w.marketSummary.join("")) : null, h("ul", { class: "bank-who" }, w.markets.map(m => h("li", null, h("b", null, m.name), " ", h("span", { class: "bank-mood " + (m.tone === "good" ? "up" : m.tone === "bad" || m.tone === "warn" ? "down" : "") }, m.label))))) : null,
     w.mood ? h("div", { class: "bank-wld-sec" }, h("b", null, "展廳的散客氣氛", " ", statBadge(statView("crowdMood", null, +w.mood.v), { kind: "crowdMood", hint: true }))) : null,
     h("div", { class: "bank-wld-sec" }, h("b", null, "館外 NPC 的花錢力道", " ", statBadge(statView("budgetMult", null, mult), { kind: "budgetMult", hint: true })),
       h("div", { class: "bank-gauge", role: "img", "aria-label": `預算倍率 ${mult.toFixed(2)}` }, h("i", { style: { left: Math.round(((mult - 0.3) / 0.8) * 100) + "%" } })),
