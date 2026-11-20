@@ -17,7 +17,7 @@ import "./discord_warm.js"; // 啟動時先連好資料庫（檔裡有為什麼�
 import { discordConfig } from "./discord_config.js";
 import { linkByCode, linkedUid, startJoin, unlinkByDiscord } from "./discord_data.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
-import { eventsFromWeeks } from "../shared/events.js";
+import { eventsFromWeeks } from "../shared/story/events.js";
 import { EVENT_WEEKS } from "../shared/events_data.js";
 import { DAY_DATA } from "../shared/day_data.js";
 import { NUM } from "../shared/config.js";

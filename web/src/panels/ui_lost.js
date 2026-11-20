@@ -1,12 +1,12 @@
 // ================================================================
-//  招領：在地下遇到別的館友以前理智歸零的參觀者（翊文 11-13；規則 shared/lostfound.js，伺服器 functions/game/lostfound.js）
+//  招領：在地下遇到別的館友以前理智歸零的參觀者（翊文 11-13；規則 shared/social/lostfound.js，伺服器 functions/game/lostfound.js）
 //  不叫幽靈：他沒有變成鬼，是沒有走出去。地上有壹張招領單，夾著他的號碼牌。
 //  - 進館的時候（afterEnter）叫壹次 lostSync：把自己館裡最近理智歸零的參觀者寫成公開的招領單（Jerry 那種之前的也會補上）。
 //  - 單人和合作的地下，每壹層第壹次進房間擲壹次，NUM.lost.meetPct% 會遇到壹張別人的（跟 ui_work.js 的 cellarMeet 同壹套）。
 // ================================================================
 import { NUM } from "../../../shared/config.js";
 import { isFree, todayStr } from "../../../shared/logic.js";
-import { LOST_TEXT, lostMarkSeen, lostOpen, lostRecordText, lostSeeText } from "../../../shared/lostfound.js";
+import { LOST_TEXT, lostMarkSeen, lostOpen, lostRecordText, lostSeeText } from "../../../shared/social/lostfound.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, P, SAVE, UI, btn, h, persist, rerender, sanFlow, snd, updateStatus } from "../core/ui_core.js";
 import { reloadSave } from "./ui_login.js";

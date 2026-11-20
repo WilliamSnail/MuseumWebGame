@@ -1,5 +1,5 @@
 // 每週排行榜（決定 0039，翊文 11-09：「另外每周排行榜也可以用discord推送給大家看，並提供一些建議」）。
-// 由 .github/workflows/weekly-board.yml 跑：每週一台灣時間 05:15 算剛過完的那一週，也可以手動按。規則都在 shared/board.js。
+// 由 .github/workflows/weekly-board.yml 跑：每週一台灣時間 05:15 算剛過完的那一週，也可以手動按。規則都在 shared/social/board.js。
 //   1. 讀 members、saves，跟上週的快照（boards/{上週}/private/people）相減。
 //   2. 先寫快照：boards/{週}（給玩家看的榜單）、boards/{週}/private/people（累計數字，有 uid，玩家讀不到）、boards/latest（遊戲裡讀這份）。
 //   3. 再發 Discord，發了才記 posted。Discord 沒放金鑰或發失敗，快照照樣留著；下次跑會用同一份榜單補發。
@@ -58,7 +58,7 @@ async function readPeople(db) {
 }
 
 // 回傳 { status, text }。status：already 這週發過了、dry 只印不發、empty 沒人有進度、skip 沒放 Discord、failed 發失敗、posted 發了
-// board：shared/board.js（測試傳 load_shared 載入的）；db：Firestore（測試傳假的）；env、fetcher 傳給 send
+// board：shared/social/board.js（測試傳 load_shared 載入的）；db：Firestore（測試傳假的）；env、fetcher 傳給 send
 async function runWeekly({ db, board, opts = {}, env = process.env, fetcher, log = console.log, warn = console.error, floorOf = newRoomFloor }) {
   const wk = board.boardWeekOf(opts.now != null ? opts.now : board.nowMs());
   const pubRef = db.doc(`boards/${wk.label}`), latestRef = db.doc("boards/latest");
@@ -154,7 +154,7 @@ async function main() {
 
 // 真的跑的時候用的規則：board.js 的，加上「現在」（nowMs 是 logic.js 的，board.js 沒有 export；測試的 load_shared 串在一起所以看不出來）
 async function loadBoard() {
-  const [board, logic] = await Promise.all([import("../../shared/board.js"), import("../../shared/logic.js")]);
+  const [board, logic] = await Promise.all([import("../../shared/social/board.js"), import("../../shared/logic.js")]);
   return Object.assign({}, board, { nowMs: logic.nowMs });
 }
 

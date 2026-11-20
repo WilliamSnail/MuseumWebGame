@@ -1,6 +1,6 @@
 // ================================================================
 //  地下打鬥：每壹種事件配什麼聲音（11-16 翊文：「先加壹些音效，並標記之後可以增加這些 royalty free 音效」）
-//  壹張表管全部：snd ＝ web/src/fx/fx.js 合成的音效（R 裡的名字）、file ＝ web/public/sfx 的音效檔（shared/sfx_files.js 的 id）、g ＝ 檔案的音量。
+//  壹張表管全部：snd ＝ web/src/fx/fx.js 合成的音效（R 裡的名字）、file ＝ web/public/sfx 的音效檔（shared/game/sfx_files.js 的 id）、g ＝ 檔案的音量。
 //  todo ＝ 之後想換成 royalty free 錄音時要找什麼樣的聲音（有寫的就是「暫時用合成的，之後要找」）；npm run fx:report 會列出來。
 //  事件的 key：e.t（push、calm、guard…），怪物個性是 trait:<kind>，逃跑 flee:ok／flee:no，帽子和姿勢招式 move:<招式 id>。
 //  畫面在 web/src/rooms/ui_fight.js：每壹步重播時照這張表響；沒有在表裡的照舊響通用的「受傷／喀」。

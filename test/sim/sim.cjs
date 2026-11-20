@@ -12,7 +12,7 @@ const SIGNIN = process.env.SIGNIN !== "0";
 const SHOW = process.env.SHOW !== "0";
 // 每個動作大約要幾秒（含走路、看說明牌、擲骰動畫、揭曉動畫）
 const COST = { view: 25, san: 10, make: 40, pillow: 25, deliver: 20, unlock: 8, read: 60, hug: 6, idle: 10, start: 90 };
-// 每週劇情（11-09，shared/story.js）：STORY=0 不算。照備用週「常青1」真的內容算每天拿到多少（每日任務、全做完的那份、書、今日特展、B1 的房間、每週任務平均到每天），
+// 每週劇情（11-09，shared/story/core.js）：STORY=0 不算。照備用週「常青1」真的內容算每天拿到多少（每日任務、全做完的那份、書、今日特展、B1 的房間、每週任務平均到每天），
 // 假設每天都做完；花的時間：讀書 60 秒一本、看特展 25 秒一幅、走一間房 90 秒。每日任務本身（做佩佩、交委託、看畫）本來就在下面的玩法裡，不另外算時間
 const STORY = process.env.STORY !== "0";
 // 館友來參觀（11-09，決定 0020）：VISITS=每天有幾位館友來（照 gifts.js 的 visitGain 算，一天最多 SOCIAL.visitInspMax 次），假設謝禮的信每天都領。預設 0：一個人玩

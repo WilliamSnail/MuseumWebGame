@@ -81,7 +81,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FieldValue } from "firebase-admin/firestore";
 import { casAucMails, casAucBid, casAucCancel, casAucDocFix, casAucDue, casAucList, casAucOpenHouse, casAucPeople, casAucSettle, casAucView, casAucWallet } from "../shared/casino/auction.js";
 import { inbox } from "../coop/party.js";
-import { MAIL_DAYS } from "../shared/mailbox.js";
+import { MAIL_DAYS } from "../shared/social/mailbox.js";
 import { worldTick } from "../world/world.js";
 
 const aucRef = () => db().doc("casinoAuction/main");

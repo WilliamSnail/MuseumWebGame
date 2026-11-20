@@ -1,7 +1,7 @@
 // 公告一則一個檔（11-16 公告拆檔）：node test/tools/notices_split.test.cjs（npm test 也會跑）
 //   1. 遷移：舊陣列拆成檔再合回來，id 集合和順序不變、一則都不掉、內容一樣；重複的 id 只留一份；可以重跑（main 又插了新公告）
 //   2. 合成：沒有 order 的（npm run notice 新加的）排最前面；格式不對的檔會報錯；舊陣列又出現會報錯並提示
-//   3. 真的 content/notices/：每個檔名跟 id 一樣、id 不重複、欄位對得上 shared/notices.js 的規則；shared/notices.js 裡沒有舊陣列
+//   3. 真的 content/notices/：每個檔名跟 id 一樣、id 不重複、欄位對得上 shared/game/notices.js 的規則；shared/game/notices.js 裡沒有舊陣列
 //   4. merge_main 的救援：拆檔前開的分支帶著舊的 notices.js，裡面 main 還沒有的公告會拆成檔
 const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path");
 const MIG = require("../../tools/content/notices_migrate.cjs"), B = require("../../tools/content/notices_build.cjs");

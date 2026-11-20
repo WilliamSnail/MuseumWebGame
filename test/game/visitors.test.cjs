@@ -1,4 +1,4 @@
-// 多位參觀者：一個帳號最多 3 位，同時在館裡、共用一間博物館（shared/visitors.js，決定 0018）：node test/game/visitors.test.cjs（npm test 也會跑）
+// 多位參觀者：一個帳號最多 3 位，同時在館裡、共用一間博物館（shared/social/visitors.js，決定 0018）：node test/game/visitors.test.cjs（npm test 也會跑）
 // 換來換去欄位不會掉、博物館的不跟著換、每天的次數不會重算、dayVis、最多 3 位、號碼不重複、nextVisitor 在位子裡換人、舊存檔、名字、自由模式。
 // 數字一律讀 NUM、LEGACY。
 const assert = require("assert");
@@ -329,7 +329,7 @@ T("自由模式不受影響：沒有位子，這些函式都不做事", () => {
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
     const logic = await import(url("logic.js"));
-    const visitors = await import(url("visitors.js"));
+    const visitors = await import(url("social/visitors.js"));
     const P = logic.newProfile("challenge"); logic.ensureDay(P, DAY);
     assert.ok(visitors.addVisitor(P, "小華", 1));
     assert.ok(visitors.switchVisitor(P, "v1"));

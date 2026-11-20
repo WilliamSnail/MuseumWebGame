@@ -1,5 +1,5 @@
 // ================================================================
-//  前端錯誤回報的伺服器端（決定 0125，shared/client_error.js）。
+//  前端錯誤回報的伺服器端（決定 0125，shared/game/client_error.js）。
 //  網頁把清乾淨的錯誤丟進來；這裡再清壹次、限流、同壹天同樣的訊息次數加壹。
 //  存在獨立集合 clientErrors（不碰 house、不碰任何人的存檔）。Firestore 規則沒開這個集合，網頁讀寫不了，只有這支函式和固定動作 client-errors 看得到。
 //  限流：每個人（IP 加當天，雜湊過、只留 16 碼）每分鐘 5 筆；全站每天最多 400 種不同的錯誤。超過就默默丟掉（回 ok 但 dropped）。
@@ -9,7 +9,7 @@ import "../options.js";
 import { createHash } from "node:crypto";
 import { onCall } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
-import { CLIENT_ERR, clientErrClean, clientErrKey, clientErrQuota } from "../shared/client_error.js";
+import { CLIENT_ERR, clientErrClean, clientErrKey, clientErrQuota } from "../shared/game/client_error.js";
 
 const dayOf = ms => new Date(ms + 8 * 3600000).toISOString().slice(0, 10); // 台灣日期
 export const clientError = onCall(async req => {

@@ -450,7 +450,7 @@ T("賭場收藏：casino.line 要在這週的 lines 裡；沒寫 line 的正式�
   c.files["2026-W47/week.json"].events = [{ id: "cn", kind: "casinoBoost", date: "2026-11-18", from: "20:00", to: "22:00", title: "招領櫃檯夜", words: "賭場多開壹個小窗口。" }];
   assert.deepStrictEqual(run(c).errors, []);
 });
-// ---------- 線索和看懂（shared/clues.js） ----------
+// ---------- 線索和看懂（shared/story/clues.js） ----------
 const withClues = c => {
   c.files["2026-W47/d1.json"].books[0].clue = "c-hand-one";
 

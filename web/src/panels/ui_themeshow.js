@@ -1,5 +1,5 @@
 // ================================================================
-//  主題展辦完的畫面（決定 0035，docs/規劃/每週劇情.md 第十節）。規則在 shared/themeshow.js，樣式在 css/themeshow.css。
+//  主題展辦完的畫面（決定 0035，docs/規劃/每週劇情.md 第十節）。規則在 shared/story/themeshow.js，樣式在 css/themeshow.css。
 //  這個檔放：
 //    展廳：牆下面的展期、三級和獎勵（ADDONS.hallShow）、牆上的海報、主題小卡上的獎牌（ADDONS.themeCard）
 //    本週特展：到金拿什麼（ADDONS.weeklyShow）
@@ -15,9 +15,9 @@ import { HALL_THEME_TEXT } from "../../../shared/content.js";
 import { WEEKLY_TEXT } from "../../../shared/systems_text.js";
 import { isFresh, markFresh, markFreshEvents } from "../../../shared/fresh.js";
 import { isFree, isUnlocked, todayStr } from "../../../shared/logic.js";
-import { limitedInfo, ownsLimited } from "../../../shared/signin.js";
-import { SHOW_NOTES, SHOW_POSTER_PICK, SHOW_THEMES, SHOW_TIER_NAME, hasShowPending, noteCounts, noteOpen, noteRead, readShowNote, showBox, showHintDue, showItemOf, showPosters, showRewards, showStatus, showTiers, showTitle, syncShow, takeShowPending, weekGold, weekItemOf } from "../../../shared/themeshow.js";
-import { APPLAUSE } from "../../../shared/applause.js";
+import { limitedInfo, ownsLimited } from "../../../shared/social/signin.js";
+import { SHOW_NOTES, SHOW_POSTER_PICK, SHOW_THEMES, SHOW_TIER_NAME, hasShowPending, noteCounts, noteOpen, noteRead, readShowNote, showBox, showHintDue, showItemOf, showPosters, showRewards, showStatus, showTiers, showTitle, syncShow, takeShowPending, weekGold, weekItemOf } from "../../../shared/story/themeshow.js";
+import { APPLAUSE } from "../../../shared/social/applause.js";
 import { ART } from "../core/art.js";
 import { $$, ADDONS, HOOKS, P, UI, btn, freshMark, go, h, icon, later, miniLayer, note, persist, rerender, snd, sndFile, updateStatus } from "../core/ui_core.js";
 import { bookReader } from "../core/ui_room.js";

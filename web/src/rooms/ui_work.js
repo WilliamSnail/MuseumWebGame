@@ -2,7 +2,7 @@
 //  欠款送參觀者去地下工作的畫面（決定 0064 第二部分）
 //  翊文 11-10：籌碼是負的就要選壹位自己的參觀者送去地下室工作，每天還開工那天欠款的 34%，還清才回來；
 //  工作的參觀者每天理智 −5（最低 1），可以花博物館的靈感幫他補。
-//  規則在 shared/casino/wallet.js 的 casWork*（錢和理智在伺服器的錢包），「誰在工作」記在存檔（shared/visitors.js 的 sendToWork、backFromWork）。
+//  規則在 shared/casino/wallet.js 的 casWork*（錢和理智在伺服器的錢包），「誰在工作」記在存檔（shared/social/visitors.js 的 sendToWork、backFromWork）。
 //  這裡只畫：要送人時跳的視窗（不選不能繼續玩挑戰模式）、花靈感幫他、回來的通知。伺服器改了存檔就重新讀（reloadSave）。
 //  入口：連上時、進館時、「今天」清單、賭場讀到錢包時都會叫 ADDONS.workPeek / ADDONS.workCheck。
 //  介面文字照第 1 代用「壹」。
@@ -11,7 +11,7 @@ import { NUM } from "../../../shared/config.js";
 import { CAS_TEXT } from "../../../shared/casino/text.js";
 import { casFill, casNum } from "../../../shared/casino/core.js";
 import { jobInfo } from "../../../shared/legacy.js";
-import { freeSlots, visitorName, workCandidates, workingVisitor } from "../../../shared/visitors.js";
+import { freeSlots, visitorName, workCandidates, workingVisitor } from "../../../shared/social/visitors.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, SAVE, UI, btn, h, miniLayer, note, persist, rerender, snd } from "../core/ui_core.js";
 import { reloadSave, refreshLogin } from "../panels/ui_login.js";

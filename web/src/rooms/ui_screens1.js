@@ -14,7 +14,7 @@ import { cellarFloors, cellarFxShort, cellarPartFx, cellarPickFx, fusionLeft, ha
 import { jobInfo } from "../../../shared/legacy.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../../shared/fresh.js";
 import { nextStep } from "../../../shared/guide.js";
-import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../../shared/visitors.js";
+import { addVisitor, cleanName, freeSlots, renameVisitor, switchVisitor, visitorSlots } from "../../../shared/social/visitors.js";
 import { traitDesc, traitName } from "../../../shared/legacy.js";
 import { noteCraft, $, planPortrait, $$, ADDONS, understandFlow, HIDE_CHROME, IMG, P, PANELS, RCOLOR, ROOM_NAMES, SAVE, SCREENS, UI, actionTick, applySettings, ask, btn, checkEnding, collectionItems, costText, every, freshMark, freshTag, frogHTML, go, h, icon, inspHave, itemHTML, later, limitPill, miniPill, motionOff, navTo, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkCureText, quirkHereBox, quirkLeftNode, quirkLeftText, quirkMakeBox, quirkProgText, rdot, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, useProfile, wait } from "../core/ui_core.js";
 import { BOOK_ACTIONS, BOOK_LINK, bookBack, bookGain, bookLine, bookReader, onescreenDrawer, roomHead } from "../core/ui_room.js";
@@ -42,7 +42,7 @@ SCREENS.title = root => {
     loginArea(titleActions)), titleMusicBtn());
 };
 // 按鈕的名字（翊文 11-08：「進館跟繼續這兩個鈕名稱不太對，繼續參觀應該才要是主要的，進館應該改稱新參觀者」）。
-// 多位參觀者（翊文 11-08：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/visitors.js）：
+// 多位參觀者（翊文 11-08：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/social/visitors.js）：
 //   - 挑戰模式有進度：三個位子的卡片（visitorSlotsBox）。有人的位子「繼續參觀」（上次玩的那位是主要的金色按鈕）、可以改名字；空位子「新參觀者」。
 //   - 沒有進度：「新參觀者」（主要）＋自由模式，跟以前一樣。
 //   - 「新參觀者」先取名字再擲心情、選職業：每一位都從 6 個職業選，再抽一個小優點、一個小缺點（pickJob；決定 0028，以前空位子加的是從 3 位候選人挑）。
@@ -529,7 +529,7 @@ export function openUnderstood(reader) {
         x.hint ? h("span", { class: "uk-hint" }, "提示：" + x.hint) : null))),
     weekUnderstoodBox()));
 }
-// 每週劇情裡看懂的（線索集齊才會多壹件，shared/clues.js）。快看懂的只說還差幾條和提示，不給答案
+// 每週劇情裡看懂的（線索集齊才會多壹件，shared/story/clues.js）。快看懂的只說還差幾條和提示，不給答案
 function weekUnderstoodBox() {
   const v = weekUnderstood();
   if (!v.done.length && !v.near.length) return null;

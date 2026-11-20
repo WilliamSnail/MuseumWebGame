@@ -9,9 +9,9 @@
 //    - 「同一個交易」由後端負責：sendGift 改好送的人的 P、回傳要寄給對方的信，後端把兩邊一起寫進去。
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
-import { NUM } from "./config.js";
-import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "./logic_base.js";
-import { showPosters } from "./themeshow.js";
+import { NUM } from "../config.js";
+import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "../logic_base.js";
+import { showPosters } from "../story/themeshow.js";
 
 export const SOCIAL = {
   visitInsp: 2,     // 館友今天第一次來參觀，展廳主人拿幾點靈感
@@ -221,7 +221,7 @@ export function giftItemText(g) {
   return name + (it.kind === "failed" ? "（失敗作）" : it.kind === "repaired" ? "（修復品）" : it.perfect ? "（完美作品）" : "");
 }
 
-// ---------- 信（格式照 shared/mailbox.js：id、from、title、note、gift、sent、expire、claimed） ----------
+// ---------- 信（格式照 shared/social/mailbox.js：id、from、title、note、gift、sent、expire、claimed） ----------
 // 寄信的人的暱稱是玩家打的字：畫面上壹律當純文字顯示。
 // 送佩佩的信：gift.pepe 是那隻
 export function giftMail({ id, fromNick, gift, today }) {

@@ -4,7 +4,7 @@
 //  積分板：今天 N／120 的槽、這週 N／500 的槽（五個里程碑釘在槽上：還沒到暗、到了亮可以領、領過打勾）、領獎的小儀式。
 //  交代人的頭像先用剪影＋顏色頂著；正式的圖放 web/public/tasks/giver-<id>.webp，再把 id 加進 GIVER_ART 就會換上（不用改別的）。
 // ================================================================
-import { giverName, rewardText } from "../../../shared/story.js";
+import { giverName, rewardText } from "../../../shared/story/core.js";
 import { btn, h, icon, snd } from "../core/ui_core.js";
 
 // 種類 → 圖示（art.js 已有的名字）

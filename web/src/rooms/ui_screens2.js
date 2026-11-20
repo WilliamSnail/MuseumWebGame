@@ -15,8 +15,8 @@ import { bookSequels, hasUp, sequelOpen, unlockSequel } from "../../../shared/lo
 import { hasTalent, skillCheck } from "../../../shared/systems.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../../shared/fresh.js";
 import { RETIRE_ENDINGS, retireCheck, traitHits, traitTag } from "../../../shared/legacy.js";
-import { isLimitedMat, stockOf } from "../../../shared/signin.js";
-import { APPLAUSE, hallApplauseDue } from "../../../shared/applause.js";
+import { isLimitedMat, stockOf } from "../../../shared/social/signin.js";
+import { APPLAUSE, hallApplauseDue } from "../../../shared/social/applause.js";
 import { reportClientError } from "../core/error_report.js";
 import { $, $$, ADDONS, FIT, IMG, P, PANELS, RCOLOR, SAVE, SCREENS, UI, actionTick, closeOnOutside, syncStatusHeight, applyBodyState, applySettings, ask, btn, collectionItems, collectionStrip, costText, diceWords, freshMark, freshTag, frogHTML, go, h, holdFor, icon, inspHave, itemHTML, itemTitle, later, miniLayer, miniPill, motionOff, sndFile, note, noteCured, pepePlacard, persist, placard, placeTarget, ptNode, quirkHereBox, quirkLayer, rdot, rerender, sanFlow, saveFit, saveImages, setP, setSave, showEvents, snd, trackGaze, updateStatus, useProfile, wait } from "../core/ui_core.js";
 import { roomHead, onescreenDrawer } from "../core/ui_room.js";

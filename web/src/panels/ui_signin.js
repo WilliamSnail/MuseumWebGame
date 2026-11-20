@@ -3,7 +3,7 @@
 //  翊文 11-09：「每日簽到要先做，可以獲得一些東西，每周全簽到也可以獲得 特別項目」
 //             「遊戲要有一個簽到的日曆看看每日簽到程度，以及節日特別活動」「收到的東西馬上能用」
 //             「每日有特別的節日時，外觀主題要改一下下(當天而已)」「節慶也要新增節慶相關的畫廊的畫或雕像等等的藝術品」
-//  規則在 shared/signin.js、shared/holidays.js；樣式在 css/signin.css。
+//  規則在 shared/social/signin.js、shared/story/holidays.js；樣式在 css/signin.css。
 //  入口：
 //    - 進館後在大廳跳一張簽到卡（公佈欄先：ui_board.js 的 autoBoard 決定好了才跳；今天簽過就不跳；一次登入最多自動跳 2 個視窗）。
 //    - 大廳標題下面一條「今天的簽到」（ADDONS.lobby）；右上角「選單」的「簽到日曆」（ui_core.js 的 buildNav）。
@@ -14,10 +14,10 @@
 // ================================================================
 import { LIMITED_ITEMS, NUM } from "../../../shared/config.js";
 import { SIGNIN_TEXT } from "../../../shared/systems_text.js";
-import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../../shared/holidays.js";
-import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../../shared/signin.js";
-import { stampHow } from "../../../shared/story.js";
-import { storyState } from "../../../shared/story_state.js";
+import { HOLIDAY_YEARS, funDaysOf, holidayOf, holidaysOn, nextHoliday } from "../../../shared/story/holidays.js";
+import { cycleReward, weekRewardText, limitedInfo, limitedCount, makeupCheck, makeupDays, ownsLimited, signIn, signMakeup, signPreview, signedOn, signinMonth, signinState, stockOf, useTarget, wearDeco, weekProgress, wornDeco } from "../../../shared/social/signin.js";
+import { stampHow } from "../../../shared/story/core.js";
+import { storyState } from "../../../shared/story/state.js";
 import { casNum } from "../../../shared/casino/core.js";
 import { DEFAULT_PICK, daysBetween, exhibitOpen, isFree, realTodayStr, sanSpecFor } from "../../../shared/logic.js";
 import { ART } from "../core/art.js";

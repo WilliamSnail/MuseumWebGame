@@ -1,13 +1,13 @@
 // ================================================================
 //  管理員介面的畫面（第一版：只看不改，決定 0033）
 //  翊文：「管理員介面呢，可以看到大家進度的部分」
-//  資料從 Functions 來（functions/game/admin.js）；怎麼算在 shared/admin.js；樣式在 css/admin.css。
+//  資料從 Functions 來（functions/game/admin.js）；怎麼算在 shared/game/admin.js；樣式在 css/admin.css。
 //    - 登入後問一次 adminCheck。是管理員，右上角選單才多一項「管理員」（ui_core.js 的 ADDONS.adminMenu）；不是的話畫面完全不變。
 //    - 打開時抓一次 adminOverview；之後只有按「重新整理」才抓，不自動抓。
 //  暱稱、參觀者的名字都是玩家打的字：一律當純文字放（不要用 h 的 html）。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { adminAgo, adminPlayText, adminSortRows, adminTimeText } from "../../../shared/admin.js";
+import { adminAgo, adminPlayText, adminSortRows, adminTimeText } from "../../../shared/game/admin.js";
 import { nowMs, num } from "../../../shared/logic.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, PANELS, btn, h, roomLabel, snd } from "../core/ui_core.js";

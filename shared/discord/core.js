@@ -14,11 +14,11 @@
 // ================================================================
 import { NUM } from "../config.js";
 import { BOARD_TEXT } from "../systems_text.js";
-import { eventEffect, eventRange, eventsOnDate } from "../events.js";
-import { funDaysOf, holidaysOn } from "../holidays.js";
-import { boardCut, boardDiscordNick, boardGroups, boardPeriodText, boardTrim, boardValueText, boardViewOf } from "../board.js";
+import { eventEffect, eventRange, eventsOnDate } from "../story/events.js";
+import { funDaysOf, holidaysOn } from "../story/holidays.js";
+import { boardCut, boardDiscordNick, boardGroups, boardPeriodText, boardTrim, boardValueText, boardViewOf } from "../social/board.js";
 import { titleName } from "../titles.js";
-import { noticeLive, NOTICES } from "../notices.js";
+import { noticeLive, NOTICES } from "../game/notices.js";
 
 export const DC_SITE = "https://pepe-museum.web.app";
 // 指令名字：全部小寫 pepe- 開頭（Discord 規定小寫），打 /pepe 就會列出全部
@@ -135,7 +135,7 @@ export function dcTriesFail(rec, nowMs) {
 // 今天靠 Discord 加入的人數滿了沒
 export const dcJoinFull = n => Math.max(0, Math.floor(+n || 0)) >= NUM.discord.joinPerDay;
 
-// Google 登入 token 的 email：要驗證過。照 shared/admin.js 的 adminEmail（那個檔很大，這裡不 import）
+// Google 登入 token 的 email：要驗證過。照 shared/game/admin.js 的 adminEmail（那個檔很大，這裡不 import）
 export function dcVerifiedEmail(token) {
   if (!dcObj(token) || token.email_verified !== true || typeof token.email !== "string") return null;
   const e = token.email.trim().toLowerCase();

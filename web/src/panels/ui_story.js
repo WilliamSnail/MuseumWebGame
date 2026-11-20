@@ -1,5 +1,5 @@
 // ================================================================
-//  每週劇情的畫面（規則在 shared/story.js；規劃 docs/規劃/每週劇情.md；內容 content/weeks/，格式 content/README.md）
+//  每週劇情的畫面（規則在 shared/story/core.js；規劃 docs/規劃/每週劇情.md；內容 content/weeks/，格式 content/README.md）
 //  這個檔放：
 //    「每週劇情」面板（選單、大廳、公佈欄的「前往」打開）：本週、每日任務、每週任務、週章、背包、劇情線、劇情回顧
 //    圖書館書架的頁籤（館藏、禁書、主線、每週劇情、節日）和合訂本
@@ -12,18 +12,18 @@
 // ================================================================
 import { NUM } from "../../../shared/config.js";
 import { activeQuirks, isFree, nowMs, todayStr } from "../../../shared/logic.js";
-import { NOTICE_EXTRA } from "../../../shared/notices.js";
+import { NOTICE_EXTRA } from "../../../shared/game/notices.js";
 import { casWkBase } from "../../../shared/casino/week.js";
 import { casWkDefFor } from "../../../shared/casino/wallet.js";
 import { isFresh, markFresh } from "../../../shared/fresh.js";
-import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../../shared/story.js";
-import { itemDesc, storyState } from "../../../shared/story_state.js";
+import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../../shared/story/core.js";
+import { itemDesc, storyState } from "../../../shared/story/state.js";
 import { ART } from "../core/art.js";
 import { understoodCard, markText, ptMark, setChips } from "../core/ui_core.js";
 import { NET } from "../core/net_firebase.js";
 import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "../core/ui_core.js";
 import { CAS_AUC } from "../../../shared/casino/auction.js";
-import { casebookView, clueNew, clueSync, understandView } from "../../../shared/clues.js";
+import { casebookView, clueNew, clueSync, understandView } from "../../../shared/story/clues.js";
 import { FRESH_KEY } from "../../../shared/fresh.js";
 import { overlay } from "./ui_board.js";
 import { noticeCard } from "./ui_party.js";
@@ -31,7 +31,7 @@ import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "../rooms/casino/ui_casino_week.js";
 import { bookBack, bookGain, bookReader, roomHead } from "../core/ui_room.js";
 import { TASK_ICON, claimBurst, giverBoard, ptsPanel, taskCard } from "./ui_tasks.js";
-import { holidayOf } from "../../../shared/holidays.js";
+import { holidayOf } from "../../../shared/story/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "../rooms/ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
 // 節日接上每週劇情（11-09）：那一天是節日，週包的那天就帶著節日（名字、節日的話、藝術品），書和公告可以提到它
@@ -161,7 +161,7 @@ function flushEvents() {
   });
   persist();
 }
-// 《看懂的事》的「這些週看懂的」：已經看懂的、快看懂的（只有拿到部分線索才列，不給 text）。圖書館的書用（shared/clues.js）
+// 《看懂的事》的「這些週看懂的」：已經看懂的、快看懂的（只有拿到部分線索才列，不給 text）。圖書館的書用（shared/story/clues.js）
 export function weekUnderstood() { return P && !isFree(P) ? understandView(P, STORY_LIB, todayStr()) : { done: [], near: [] }; }
 // 選單裡「每週劇情」的數字：可以領的獎勵（有新的劇情線、下一步只亮小點）
 function claimables(W) {

@@ -1,4 +1,4 @@
-// 館友之間的規則（shared/gifts.js，多人版 M2）：node test/game/gifts.test.cjs（npm test 也會跑）
+// 館友之間的規則（shared/social/gifts.js，多人版 M2）：node test/game/gifts.test.cjs（npm test 也會跑）
 // 台灣時間 05:00 換日、來訪靈感的上限、留言的檢查、展廳給別人看的部分（不漏存檔）、請館友來看、本週特展給別人比的部分、
 // 送佩佩（能不能送、拿出來、放進去、完美作品、失敗作、修復品）、信（送、領、領兩次、過期、自由模式）。
 // 數字一律讀 SOCIAL。
@@ -318,8 +318,8 @@ T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒
   try {
     const url = f => pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href;
     const logic = await import(url("logic.js"));
-    const gifts = await import(url("gifts.js"));
-    const mailbox = await import(url("mailbox.js"));
+    const gifts = await import(url("social/gifts.js"));
+    const mailbox = await import(url("social/mailbox.js"));
     for (const [k, v] of Object.entries(gifts)) assert.notStrictEqual(v, undefined, "gifts." + k);
     const A = logic.newProfile("challenge"); logic.ensureDay(A, DAY);
     const B = logic.newProfile("challenge"); logic.ensureDay(B, DAY);

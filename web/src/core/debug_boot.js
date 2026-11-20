@@ -7,7 +7,7 @@ import { viewFor } from "../../../shared/coop/core.js";
 import { coopAct, coopBegin } from "../../../shared/coop/flow.js";
 import { assignJob } from "../../../shared/legacy.js";
 import { hallSize, startCellar } from "../../../shared/systems.js";
-import { storyState } from "../../../shared/story_state.js";
+import { storyState } from "../../../shared/story/state.js";
 import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, note, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "../rooms/ui_screens1.js";
 import { pickJob } from "../rooms/ui_screens3.js";

@@ -7,8 +7,8 @@
 //  入口：導覽列「公佈欄」右邊的「今天」、右上角選單最上面。ui_core 不能 import 這個檔：這裡把自己登記進 PANELS、ADDONS。
 //  介面文字照第 1 代用「壹」。
 // ================================================================
-import { syncMail, unclaimedCount } from "../../../shared/mailbox.js";
-import { visibleNotices } from "../../../shared/notices.js";
+import { syncMail, unclaimedCount } from "../../../shared/social/mailbox.js";
+import { visibleNotices } from "../../../shared/game/notices.js";
 import { dailyCommissions, isFree, realTodayStr, regularsView } from "../../../shared/logic.js";
 import { npcWebSet } from "../../../shared/npc/core.js";
 import { NET } from "../core/net_firebase.js";

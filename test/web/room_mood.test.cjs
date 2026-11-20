@@ -1,4 +1,4 @@
-// 房間效果的狀態（shared/room_mood.js）：node test/web/room_mood.test.cjs（npm test 也會跑）
+// 房間效果的狀態（shared/social/room_mood.js）：node test/web/room_mood.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

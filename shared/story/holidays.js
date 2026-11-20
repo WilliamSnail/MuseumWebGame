@@ -14,8 +14,8 @@
 //  之後每週劇情（docs/規劃/每週劇情.md）要用：holidayOf(日期) 回傳名字、主題、「節日的話」、那天的藝術品。
 //  文字在 systems_text.js 的 HOLIDAY_TEXT（草稿，Yuga 可以改）；獎勵的數字在 config.js 的 NUM.signin。
 // ================================================================
-import { NUM } from "./config.js";
-import { HOLIDAY_TEXT, FUN_TEXT } from "./systems_text.js";
+import { NUM } from "../config.js";
+import { HOLIDAY_TEXT, FUN_TEXT } from "../systems_text.js";
 
 export const HOLIDAY_YEARS = [2026, 2027, 2028];
 
@@ -126,7 +126,7 @@ export function nextHoliday(today) {
   return d ? { date: d.date, holiday: holidaysOn(d.date)[0] } : null;
 }
 
-// 公佈欄的節日公告（shared/notices.js 的格式）：節日前 NUM.signin.noticeBefore 天發布，節日最後一天下架；紀念日不貼
+// 公佈欄的節日公告（shared/game/notices.js 的格式）：節日前 NUM.signin.noticeBefore 天發布，節日最後一天下架；紀念日不貼
 // 一次節日一則（春節除夕到初五是同一則）
 export function holidayNotices(today) {
   const before = (NUM.signin && NUM.signin.noticeBefore) || 0, out = [];

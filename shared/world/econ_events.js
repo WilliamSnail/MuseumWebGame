@@ -64,7 +64,7 @@ export function casEconUpText(up) {
   return up.map(u => casFill(CAS_ECON_EV[u.kind], { m: +u.date.slice(5, 7), d: +u.date.slice(8, 10), pct: E.foreignPct[Math.min(3, u.level) - 1], n: u.kind === "bondWindow" ? Math.min(E.windowMax, u.level) : Math.min(E.freezeMax, u.level) }));
 }
 
-// 大廳跑馬燈的「預告」（美術統籌的 shared/headlines.js 讀）：明天起 days 天內、可以公開說的事，照日期排：[{ text, date }]。
+// 大廳跑馬燈的「預告」（美術統籌的 shared/story/headlines.js 讀）：明天起 days 天內、可以公開說的事，照日期排：[{ text, date }]。
 // 只放：劇情經濟事件的預告（econUp ＝ casEconUpcoming 的結果；對帳日 audit 不預告）、預告的活動（festUp ＝ casInFestUp 的結果：可能辦成、可能沒辦成，所以寫「可能」）。不放數字以外的內情，不動錢。
 const UP_STORE = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
 export function casUpcoming(econUp, festUp, day, days = 3) {

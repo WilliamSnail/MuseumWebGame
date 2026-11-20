@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 const here = fileURLToPath(new URL(".", import.meta.url));
 const { version } = JSON.parse(readFileSync(new URL("./version.json", import.meta.url), "utf8"));
 
-// shared/notices_data.js 不進 git：dev、build 開始前先由 content/notices/*.json 產生（沒變就不寫，很快）
+// shared/game/notices_data.js 不進 git：dev、build 開始前先由 content/notices/*.json 產生（沒變就不寫，很快）
 const buildNotices = () => createRequire(import.meta.url)("./tools/content/notices_build.cjs").write();
 const noticesPlugin = { name: "notices-data", buildStart() { buildNotices(); }, configureServer() { buildNotices(); } };
 

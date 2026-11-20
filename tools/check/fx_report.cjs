@@ -1,8 +1,8 @@
 // 聲音和畫面特效的總表（翊文 11-16：「做一張聲音和畫面特效的總表，好追蹤和改進，自動產生並檢查」）
 //   npm run fx:report            重新產生 docs/素材/音效與特效總表.md（並把新項目補進 content/fx_notes.json）
 //   npm run fx:report -- --check 只檢查程式掃得出來、fx_notes.json 每個項目都有，缺了就結束碼 1（npm test 會跑）。總表本身不進 git（.gitignore），要看就跑上面那行
-// 全部從程式掃出來：shared/sfx_files.js、web/src/fx/fx_sound.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
-//   ui_mood.js、css、shared/room_mood.js、地下戰鬥特效。
+// 全部從程式掃出來：shared/game/sfx_files.js、web/src/fx/fx_sound.js（R、AMB）、ui_core.js（AMB_OF）、所有 web/src/*.js 的 snd／sndFile／fileOnce／fileLoop、
+//   ui_mood.js、css、shared/social/room_mood.js、地下戰鬥特效。
 // 「畫面特效」和「理智規則」是一張清單（下面 VFX、SAN_RULES），每項帶一個「標記」去程式裡找行號；標記找不到就報錯 → 改名或刪掉程式時會被抓到，要回來改這張清單。
 // 翊文聽過沒、要不要調：寫在 content/fx_notes.json（不用改程式）。
 const fs = require("fs"), path = require("path");
@@ -130,17 +130,17 @@ function blocks(rel, startRe, endRe, entryRe) {
 function evalObj(text) { return new Function("return (" + text + ")")(); } // 只吃自己 repo 的程式碼
 
 async function load() {
-  const sfx = (await import("../../shared/sfx_files.js")).SFX_FILES;
-  const rm = await import("../../shared/room_mood.js");
-  const fightSfx = (await import("../../shared/fight_sfx.js")).FIGHT_SFX; // 地下打鬥的聲音表（11-16 補：以前沒掃，skill-reveal、war-drums-hit 被誤判沒人用）
+  const sfx = (await import("../../shared/game/sfx_files.js")).SFX_FILES;
+  const rm = await import("../../shared/social/room_mood.js");
+  const fightSfx = (await import("../../shared/game/fight_sfx.js")).FIGHT_SFX; // 地下打鬥的聲音表（11-16 補：以前沒掃，skill-reveal、war-drums-hit 被誤判沒人用）
   return { sfx, rm, fightSfx };
 }
 
 // ---------- 畫面特效清單（標記在程式裡找行號） ----------
 // key＝fx_notes.json 的名字；find＝[檔, 標記 regex]；nums＝門檻在哪一處（說明文字，數字用 live 的）
 const VFX = [
-  // 房間效果（ui_mood.js 畫、shared/room_mood.js 算）
-  { key: "rm-light", group: "房間效果", name: "燈光（暖／冷／暗）", find: ["web/src/fx/ui_mood.js", /rm-warmglow/], css: ["web/src/css/mood.css", /^\.rm-warmglow/], when: "大廳、銀行、賭場。散客氣氛好＝暖金、差＝冷藍；莊家吃緊／景氣差再壓暗", nums: m => `暖冷 RM.warm=${JSON.stringify(m.RM.warm)}；暗度＝吃緊×0.5＋景氣<−0.3 加 0.2，最多 0.7（shared/room_mood.js roomMood）` },
+  // 房間效果（ui_mood.js 畫、shared/social/room_mood.js 算）
+  { key: "rm-light", group: "房間效果", name: "燈光（暖／冷／暗）", find: ["web/src/fx/ui_mood.js", /rm-warmglow/], css: ["web/src/css/mood.css", /^\.rm-warmglow/], when: "大廳、銀行、賭場。散客氣氛好＝暖金、差＝冷藍；莊家吃緊／景氣差再壓暗", nums: m => `暖冷 RM.warm=${JSON.stringify(m.RM.warm)}；暗度＝吃緊×0.5＋景氣<−0.3 加 0.2，最多 0.7（shared/social/room_mood.js roomMood）` },
   { key: "rm-crowd", group: "房間效果", name: "人影（剪影小人）", find: ["web/src/fx/ui_mood.js", /silhouette\(/], css: ["web/src/css/mood.css", /^\.rm-crowd\b/], when: "大廳、賭場（銀行不畫）。展廳現在有人才出現，人越多越多", nums: m => `展廳 3～20 人畫 3～7 個、21～60 人 8～16 個、60 人以上 ${m.RM.crowdMax} 個（roomMood 裡）` },
   { key: "rm-bunting", group: "房間效果", name: "旗（政策紅金、活動青米）", find: ["web/src/fx/ui_mood.js", /function buntingSVG/], css: ["web/src/css/mood.css", /^\.rm-bunting\b/], when: "今天有本日政策或限時活動；兩個都有就兩種旗", nums: () => "沒有門檻（有就掛）；旗的種類在 roomMood 的 flags.bunting" },
   { key: "rm-omen", group: "房間效果", name: "怪影子（很淡、出現一下就沒）", find: ["web/src/fx/ui_mood.js", /function omenSVG/], css: ["web/src/css/mood.css", /^\.rm-omens\b/], when: "理智低的 NPC 多、集團人心不安；館友自己有黑影（跟著游標）或自己的理智效果時不出現", nums: m => `出現機率＝sanLow×0.12＋不安×0.08＋動盪×0.18（最多 1），低於 ${m.RM.omenMin} 就不出現；sanLow 指理智低於 ${m.RM.sanLow} 的 NPC` },
@@ -149,7 +149,7 @@ const VFX = [
   { key: "rm-casino-smoke", group: "房間效果", name: "賭場：煙霧", find: ["web/src/fx/ui_mood.js", /rm-smoke/], css: ["web/src/css/mood.css", /^\.rm-smoke\b/], when: "賭場熱絡以上；畫在牌桌後面不擋介面", nums: () => "ui_mood.js casinoFx；樣式 mood.css .rm-smoke" },
   { key: "rm-casino-dealer", group: "房間效果", name: "賭場：荷官台詞", find: ["web/src/fx/ui_mood.js", /rm-dealer/], css: ["web/src/css/mood.css", /^\.rm-dealer\b/], when: "賭場，台詞依熱鬧程度 4 句（DEALER）", nums: () => "ui_mood.js 的 DEALER 陣列" },
   { key: "rm-chandelier", group: "房間效果", name: "賭場：吊燈／銀行：金色吊燈", find: ["web/src/fx/ui_mood.js", /rm-chandelier|rm-lamps/], css: ["web/src/css/mood.css", /^\.rm-chandelier\b/], when: "賭場、銀行常駐，燈暗（吃緊、景氣差）時壓低", nums: () => "mood.css 的 calc(…--rm-dim…)" },
-  { key: "rm-rooms", group: "房間效果", name: "大廳導覽圖的各房間熱絡（外框亮、小人影、人數牌）", find: ["web/src/fx/ui_mood.js", /rm-rglow/], css: ["web/src/css/mood.css", /^\.rm-rglow\b/], when: "大廳導覽圖，每間房現在有幾位館友", nums: m => `房間人數 ${m.RM.roomLv.join("、")} 人＝1、2、3 級；展廳乘 ${m.RM.roomScale.hall}（shared/room_mood.js RM.roomLv、roomScale、roomHeats）` },
+  { key: "rm-rooms", group: "房間效果", name: "大廳導覽圖的各房間熱絡（外框亮、小人影、人數牌）", find: ["web/src/fx/ui_mood.js", /rm-rglow/], css: ["web/src/css/mood.css", /^\.rm-rglow\b/], when: "大廳導覽圖，每間房現在有幾位館友", nums: m => `房間人數 ${m.RM.roomLv.join("、")} 人＝1、2、3 級；展廳乘 ${m.RM.roomScale.hall}（shared/social/room_mood.js RM.roomLv、roomScale、roomHeats）` },
   // 館友自己的理智效果
   { key: "san-lights-out", group: "理智效果", name: "熄燈（lights-out）", find: ["web/src/core/ui_core.js", /"lights-out"/], css: ["web/src/css/theme3.css", /^body\.lights-out #lights/], when: "理智歸零（P.dark）：整個畫面變黑，只有游標附近有光；房間效果全部收起", nums: () => "P.dark（ui_core.js applyBodyState）" },
   { key: "san-bout", group: "理智效果", name: "瘋狂發作（bout、暈邊、手抖）", find: ["web/src/core/ui_core.js", /classList\.toggle\("bout"/], css: ["web/src/css/ui.css", /^body\.bout #vignette/], when: "擲到瘋狂發作時：畫面邊緣發暗、發作中顯示晶片、部分類型卡片手抖", nums: () => "boutFlow（ui_core.js）擲 1D10 查表；效果 body.bout、body.bout-N" },
@@ -180,7 +180,7 @@ const SAN_RULES = [
   { key: "snd-heart", name: "心跳", find: ["web/src/fx/fx_sound.js", /const heartGap/], when: "理智 30 以下：心跳，越低越快越大聲（歸零前）", nums: () => "heartGap：>20 每 1050ms、>10 每 780ms、其餘 560ms；heartK 音量 0.45～1（fx.js）" },
   { key: "snd-unease", name: "不安的低鳴", find: ["web/src/core/ui_core.js", /S\.unease\(/], when: "理智 40 以下，越低越明顯", nums: () => "unease＝(40−理智)/40（ui_core.js audioState）" },
   { key: "snd-tinnitus", name: "耳鳴", find: ["web/src/core/ui_core.js", /S\.tinnitus\(/], when: "瘋狂發作中", nums: () => "P.bout（ui_core.js audioState）" },
-  { key: "snd-dread", name: "理智低的恐怖音樂（horror-low／horror-edge）", find: ["web/src/core/ui_core.js", /S\.dread\(/], when: "理智 < 45 疊 horror-low；≤ 15（含歸零）換 horror-edge；進 15 以下響一次 pulse-rise", nums: m => `SAN_DREAD＝${JSON.stringify(m.SAN_DREAD)}、sanDread()（shared/room_mood.js）` },
+  { key: "snd-dread", name: "理智低的恐怖音樂（horror-low／horror-edge）", find: ["web/src/core/ui_core.js", /S\.dread\(/], when: "理智 < 45 疊 horror-low；≤ 15（含歸零）換 horror-edge；進 15 以下響一次 pulse-rise", nums: m => `SAN_DREAD＝${JSON.stringify(m.SAN_DREAD)}、sanDread()（shared/social/room_mood.js）` },
   { key: "snd-whisper", name: "低語層數", find: ["web/src/core/ui_core.js", /export const whisperLayers/], when: "理智越低，低語疊越多層（R.whisper）", nums: () => "50 以上 2 層；40–49：3；30–39：4；20–29：5；10–19：6；1–9：7；0：8（ui_core.js whisperLayers）" },
   { key: "snd-zero", name: "理智歸零的遠處低音鼓", find: ["web/src/core/audio_state.js", /amb = "zero"/], when: "理智歸零（P.dark）時環境音換成 AMB.zero", nums: () => "P.dark" },
   { key: "snd-mix-casino", name: "賭場的熱鬧連動環境音（ambMix）", find: ["web/src/core/ui_core.js", /ambMix\(mix\[1\]\.heat\)/], when: "賭場開著時每 30 秒照熱鬧程度調人聲音量、籌碼聲間隔", nums: m => "AMB_MIX（見 3-5）" },
@@ -227,14 +227,14 @@ async function build(notes) {
     // sound: "name"（rollOverlay 的結果音）
     for (const m of text.matchAll(/\bsound:\s*(["'])(\w+)\1/g)) if (Rnames.has(m[2])) add(T.snd, m[2], { file: short, line: lineOf(text, m.index), fn: fnAt(lines, lineOf(text, m.index) - 1), vol: "", note: "sound: 結果音" });
   }
-  // 地下打鬥聲音表（shared/fight_sfx.js 的 FIGHT_SFX）：file 欄算音效檔的使用處、snd 欄算合成音的使用處
-  const fightLines = src("shared/fight_sfx.js").split("\n");
+  // 地下打鬥聲音表（shared/game/fight_sfx.js 的 FIGHT_SFX）：file 欄算音效檔的使用處、snd 欄算合成音的使用處
+  const fightLines = src("shared/game/fight_sfx.js").split("\n");
   const fightKeys = Object.keys(fightSfx);
   for (const k of fightKeys) {
     const e = fightSfx[k], at = fightLines.findIndex(l => l.includes(JSON.stringify(k) + ":") || l.startsWith("  " + k + ":")) + 1;
-    const row = { file: "shared/fight_sfx.js", line: at, fn: "FIGHT_SFX[" + k + "]", vol: e.g !== undefined ? String(e.g) : "", note: "打鬥聲音表" };
-    if (e.file) { add(T.file, e.file, row); if (!sfx[e.file]) T.unreg.push({ id: e.file, file: "shared/fight_sfx.js", line: at }); }
-    if (e.snd) { if (Rnames.has(e.snd)) add(T.snd, e.snd, { ...row, vol: "" }); else T.unreg.push({ id: e.snd + "（合成音）", file: "shared/fight_sfx.js", line: at }); }
+    const row = { file: "shared/game/fight_sfx.js", line: at, fn: "FIGHT_SFX[" + k + "]", vol: e.g !== undefined ? String(e.g) : "", note: "打鬥聲音表" };
+    if (e.file) { add(T.file, e.file, row); if (!sfx[e.file]) T.unreg.push({ id: e.file, file: "shared/game/fight_sfx.js", line: at }); }
+    if (e.snd) { if (Rnames.has(e.snd)) add(T.snd, e.snd, { ...row, vol: "" }); else T.unreg.push({ id: e.snd + "（合成音）", file: "shared/game/fight_sfx.js", line: at }); }
   }
   // 環境音裡的檔案
   const fxText = src("web/src/fx/fx_sound.js");
@@ -355,7 +355,7 @@ async function build(notes) {
 
   // 1 音效檔
   sec("## 1. 音效檔（Pixabay）");
-  o.push("來源：`shared/sfx_files.js`（人看的版本在 `web/public/sfx/來源.md`）。「呼叫處」是第 4 節觸發點裡找得到的處數；環境音表裡引用的算在「環境音」。", "",
+  o.push("來源：`shared/game/sfx_files.js`（人看的版本在 `web/public/sfx/來源.md`）。「呼叫處」是第 4 節觸發點裡找得到的處數；環境音表裡引用的算在「環境音」。", "",
     "| id | 原名 | 作者 | 用在 | 循環 | 大小 KB | 呼叫處 | 環境音 |" + nCols, "|---|---|---|---|---|---|---|---|---|---|");
   for (const id of sfxIds) {
     keys.push(id);
@@ -395,7 +395,7 @@ async function build(notes) {
     "bed＝底音乘幾倍；gapK＝偶爾冒的間隔乘幾倍（0＝不冒）；dripK＝滴水。背景音樂另在 `applyMusic`：戰鬥 ready-fight、守門 stairs-boss／horror-gate、B1～B5 平常 suspense-*。", "",
     "| 狀態 | 說明 | bed | gapK | dripK | 其他 |", "|---|---|---|---|---|---|");
   for (const [k, v] of Object.entries(MODE)) o.push(`| ${k} | ${modeNote[k] || ""} | ${v.bed} | ${v.gapK} | ${v.dripK} | ${v.wind !== undefined ? "wind " + v.wind : ""} |`);
-  o.push("", "### 3-5. 賭場的熱鬧連動（`shared/room_mood.js` 的 `AMB_MIX`）", "",
+  o.push("", "### 3-5. 賭場的熱鬧連動（`shared/social/room_mood.js` 的 `AMB_MIX`）", "",
     "| 熱鬧程度 heat | 人聲音量 | 籌碼聲間隔（ms） | 一次最多幾下 |", "|---|---|---|---|");
   rm.AMB_MIX.forEach((m, i) => o.push(`| ${i}（${["冷清", "平常", "熱絡", "沸騰"][i]}） | ${m.crowd} | ${m.chipMin}～${m.chipMax} | ${m.chipN} |`));
 
@@ -433,13 +433,13 @@ async function build(notes) {
   sec("## 5. 沒人用的、沒登記的");
   o.push("**沒人用的音效檔**（登記了、檔案在，程式裡找不到呼叫也沒引號字串）：" + (unusedSfx.length ? unusedSfxText : "無"), "",
     "**沒人用的合成音**（`R` 裡有、程式裡找不到呼叫）：" + (unusedR.length ? unusedR.join("、") : "無"), "",
-    "**用了卻沒登記的音效檔 id**（呼叫了但 `shared/sfx_files.js` 沒有）：" + (unreg.length ? unreg.map(x => `${x.id}（${x.file}:${x.line}）`).join("、") : "無"));
+    "**用了卻沒登記的音效檔 id**（呼叫了但 `shared/game/sfx_files.js` 沒有）：" + (unreg.length ? unreg.map(x => `${x.id}（${x.file}:${x.line}）`).join("、") : "無"));
 
   // 6 畫面特效
   sec("## 6. 畫面特效");
   for (const g of ["房間效果", "理智效果", "畫面工具"]) {
     o.push(`### 6-${["房間效果", "理智效果", "畫面工具"].indexOf(g) + 1}. ${g}`, "",
-      g === "房間效果" ? "狀態（暖冷、暗、人影、旗、怪影子）只由 `shared/room_mood.js` 的 `roomMood` 算，`web/src/fx/ui_mood.js` 畫，樣式在 `web/src/css/mood.css`（`rm-` 開頭）。" : g === "理智效果" ? "館友自己的理智效果比房間效果大：有熄燈、昏倒、逃跑、發作就把房間效果收起來。" : "`web/src/fx/fx_sound.js` 匯出的 `FX` 工具，樣式在 `web/src/css/fx.css`。", "",
+      g === "房間效果" ? "狀態（暖冷、暗、人影、旗、怪影子）只由 `shared/social/room_mood.js` 的 `roomMood` 算，`web/src/fx/ui_mood.js` 畫，樣式在 `web/src/css/mood.css`（`rm-` 開頭）。" : g === "理智效果" ? "館友自己的理智效果比房間效果大：有熄燈、昏倒、逃跑、發作就把房間效果收起來。" : "`web/src/fx/fx_sound.js` 匯出的 `FX` 工具，樣式在 `web/src/css/fx.css`。", "",
       "| 名字 | 什麼時候出現 | 門檻或數字在哪一處 | 程式 | 樣式 |" + nCols, "|---|---|---|---|---|---|---|");
     for (const v of vfxRows.filter(x => x.group === g)) { keys.push(v.key); o.push(`| ${cell(v.name)} | ${cell(v.when)} | ${cell(v.nums(rm))} | ${v.where} | ${v.cssWhere ? v.cssWhere : ""} | ${noteCols(notes, v.key)} |`); }
     o.push("");
@@ -450,9 +450,9 @@ async function build(notes) {
   for (const f of fightFx) { const k = "fight-fx:" + f.kind; keys.push(k); o.push(`| ${f.kind} | ${f.file} | ${f.kb === null ? "（檔案不在）" : f.kb} | ${f.frames} | ${fightArt[f.kind] === undefined ? "（FX_ART 沒登記）" : fightArt[f.kind]}${fightArt[f.kind] !== undefined && String(fightArt[f.kind]) !== f.frames ? "（對不上）" : ""} | ${f.ms} | ${FIGHT_USE[f.kind] || "（未寫）"} | fight.css:${f.line} | ${noteCols(notes, k)} |`); }
   o.push("", "### 6-5. FX 工具清單（`fx.js` 匯出）", "", "`" + fxToolNames.join("`、`") + "`", "");
 
-  o.push("### 6-6. 門檻速查（shared/room_mood.js、ui_odd.js 目前的值）", "", "```",
+  o.push("### 6-6. 門檻速查（shared/social/room_mood.js、ui_odd.js 目前的值）", "", "```",
     "RM = " + JSON.stringify(rm.RM), "SAN_DREAD = " + JSON.stringify(rm.SAN_DREAD), "ODD_AT = " + JSON.stringify(oddAt()), "```", "");
-  o.push("## 7. 地下打鬥的聲音（`shared/fight_sfx.js` 的 FIGHT_SFX）", "",
+  o.push("## 7. 地下打鬥的聲音（`shared/game/fight_sfx.js` 的 FIGHT_SFX）", "",
     "事件 → 聲音。畫面在 `web/src/rooms/ui_fight.js`，沒有在表裡的事件照舊響通用的「受傷／喀」。**現在**欄有「錄音」＝已經是音效檔；「合成」＝程式即時合成的，`todo` 是之後要找的 royalty free 聲音。", "",
     "| 事件 key | 現在用什麼 | todo（之後要找的聲音） |", "|---|---|---|");
   for (const k of fightKeys) { const e = fightSfx[k]; o.push(`| ${cell(k)} | ${e.file ? "錄音 " + e.file + (e.g !== undefined ? "（音量 " + e.g + "）" : "") : e.snd ? "合成 " + e.snd : "（無）"} | ${cell(e.todo || "")} |`); }

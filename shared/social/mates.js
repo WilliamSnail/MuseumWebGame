@@ -4,7 +4,7 @@
 //  room 是玩家寫進資料庫的字串：只認白名單，不認得的一律不顯示。
 // ================================================================
 
-import { titleName } from "./titles.js";
+import { titleName } from "../titles.js";
 
 // 導覽圖上有的房間（跟 web/src/core/art.js 的 PLAN 對得上）
 export const MATE_ROOMS = ["lobby", "origin", "gallery", "codex", "office", "workshop", "pillow", "commission", "cellar", "hall", "library", "fusion", "casino", "bank"]; // bank：11-14 加的銀行廳。漏掉的話，在那間房的館友會被整個丟掉，大廳的「館友在線」會寫成沒人（翊文 11-14 回報）

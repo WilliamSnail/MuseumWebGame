@@ -30,7 +30,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `members/{uid}` | 這個帳號是館友：`nick`、`invisible`、`joinedAt` | 館友 | 只有 Functions（`join` 檢查邀請名單之後建） |
 | `invites/{email}` | 邀請名單；`admin: true` 的是管理員（第八節） | 沒有人（只有 Functions） | 翊文在 Firestore 後台（AI 碰不到） |
 | `saves/{uid}` | 整份存檔：`data`（JSON 字串）、`rev`、`updatedAt` | 自己 | 自己，`rev` 一定要加一（防兩個分頁互相蓋）；Functions 改別人的存檔時也加一 |
-| `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
+| `halls/{uid}` | 訪客簿（M2）：誰哪一天來過、按讚、留言，格式見 `shared/social/visit.js`。展廳本身不另外存，別人來的時候 Functions 當場讀存檔、只取展廳那一部分（決定 0034） | 沒有人（只有 Functions） | 只有 Functions |
 | `coopRuns/{pid}` | 合作地下完整的一趟（`data`：JSON 字串，裡面有線索、幻覺、地圖） | 沒有人（只有 Functions） | 只有 Functions，跟存檔同一個交易 |
 | `casinoWallets/{uid}` | 賭場的籌碼錢包（`data`：JSON 字串，籌碼、成就、財產、統計；決定 0040） | 沒有人（只有 Functions） | 只有 Functions |
 | `casinoRounds/{uid}` | 賭場現在這一手：洗好的牌、莊家的底牌都在裡面 | 沒有人（只有 Functions） | 只有 Functions，交易 |
@@ -89,11 +89,11 @@ Hosting：放 dist/，網址 專案名.web.app
 | `coopTrace` | 報告掛展廳、貼交誼廳；留言牌、按讚、領讚的靈感、影子、幽影（`shared/coop/trace.js`） | M2、M6 |
 | `visitHall`、`hallAct` | 走進館友的展廳（給展廳那一部分、記來訪、寄謝禮）、按讚、留言 | M2 |
 | `sendGift`、`claimMail` | 送佩佩（同一個交易從自己的收藏拿掉、寄進對方的信箱）、領信（同一個交易放進存檔、把信標成領過） | M2 |
-| `hallCall` | 請館友來看我的展廳（11-09，取代分享碼）：沒有獎勵，同一位可以一直請，自己的展廳要開館；寫 `calls`、送 `hall_call` 通知（`shared/gifts.js` 的 `checkHallCall`、`shared/visit.js` 的 `stepHallCall`） | M2 |
+| `hallCall` | 請館友來看我的展廳（11-09，取代分享碼）：沒有獎勵，同一位可以一直請，自己的展廳要開館；寫 `calls`、送 `hall_call` 通知（`shared/social/gifts.js` 的 `checkHallCall`、`shared/social/visit.js` 的 `stepHallCall`） | M2 |
 | `visitWeekly` | 跟館友比本週特展（11-09，取代特展碼）：只讀，檢查對方是館友，只回那一週的最高分和展台（`weeklyView` → `stepWeeklyView`，格子走 `cleanHallSlot`）；不算來訪、不寄信；對方沒開館、這週沒擺過就只回旗標 | M2 |
 | `socialNews` | 我的新消息：還沒領的信、誰來過我的展廳、誰請我去看展廳（`calls`；`seenCalls` 把處理過的標起來） | M2 |
 | `adminCheck` | 我是不是管理員：回傳 `{ admin }`。畫面登入後問一次，決定選單要不要多「管理員」 | 決定 0033 |
-| `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
+| `adminOverview` | 大家的進度（只讀）：讀 `members`、`saves`、`/status`，用 `shared/game/admin.js` 算成摘要。不是管理員回「沒有權限」。不回傳 email、uid、整份存檔 | 決定 0033 |
 | `casino` | Hamachi 賭場（決定 0040）：`open`（錢包、舊資料有沒有）、`deal`、`hit`、`stand`、`relief`、`pack`、`buy`、`exchange`、`title`、`hang`、`legacy`（認領）、`econ`（拚經濟，決定 0052）、`live`（誰在實況）、`liveOn`、`liveOff`、`donate`（實況和斗內，決定 0053；實況主離線看 `/status`）。規則 `shared/casino*.js` | 決定 0040 |
 | `casinoTable` | 賭場同桌：`open`（開桌）、`join`（入座）、`bet`、`hit`、`stand`、`tick`（時間到往下走）、`say`（短句、打字）。離桌用 `partyAction` 的 `leave`（掛鉤幫他離桌）。規則 `shared/casino/table.js` | 決定 0040 |
 
@@ -170,7 +170,7 @@ npm run dev         # 遊戲（Vite），開發時自動連模擬器
 
 ## 八、管理員（翊文在後台設，決定 0033）
 
-管理員只看得到大家的進度，不能改（`functions/game/admin.js`、`shared/admin.js`、`web/src/panels/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
+管理員只看得到大家的進度，不能改（`functions/game/admin.js`、`shared/game/admin.js`、`web/src/panels/ui_admin.js`）。程式裡不寫死任何 email、uid，名單就是 `invites`。
 
 翊文怎麼把自己設成管理員（AI 不能做，AI 碰不到正式的 Firebase）：
 
@@ -208,7 +208,7 @@ gh workflow run firebase-task.yml -f action=stats
 
 ## 十、每週排行榜（決定 0039）
 
-`.github/workflows/weekly-board.yml` 跑 `tools/content/weekly_board.cjs`，規則在 `shared/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
+`.github/workflows/weekly-board.yml` 跑 `tools/content/weekly_board.cjs`，規則在 `shared/social/board.js`。金鑰照 `firebase-task.yml` 的做法（寫暫存檔、用完 `if: always()` 刪）。
 
 - **什麼時候**：每週一台灣時間 05:15（cron `15 21 * * 0`，UTC 週日 21:15）。GitHub 的排程可能晚幾分鐘，只在預設分支跑。
 - **算哪一週**：一律是剛過完的那一週。週三手動按，算的也是上一週。

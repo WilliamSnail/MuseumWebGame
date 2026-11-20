@@ -1,11 +1,11 @@
 // 併 origin/main，只會「大家都往後加」的檔案自動解衝突（翊文 11-09：「自動收集各種可能多步驟但其實可以用腳本加速的地方，讓子代裡需要也可以共用這些腳本」）
 //   npm run merge:main
 // 自動解的：測試清單和模組清單（兩邊都留）；11-16 公告拆檔後：公告是一則一個檔（不會撞），日誌總表和音效特效總表不進 git（不會撞）。
-// 公告拆檔前開的分支帶著舊的 shared/notices.js（陣列裡插了新公告）：把裡面 main 還沒有的公告拆成檔（tools/content/notices_migrate.cjs 的 rescue），notices.js 留 main 的。其他的衝突停下來，要人看。
+// 公告拆檔前開的分支帶著舊的 shared/game/notices.js（陣列裡插了新公告）：把裡面 main 還沒有的公告拆成檔（tools/content/notices_migrate.cjs 的 rescue），notices.js 留 main 的。其他的衝突停下來，要人看。
 const fs = require("fs"), path = require("path");
 const { spawnSync } = require("child_process");
 const ROOT = path.join(__dirname, "..", "..");
-const NOTICES_JS = "shared/notices.js";
+const NOTICES_JS = "shared/game/notices.js";
 const GENERATED = ["docs/維護日誌/README.md", "docs/素材/音效與特效總表.md"]; // 11-16 起不進 git（npm run log:index、npm run fx:report 產生）
 // 兩邊都留
 const KEEP_BOTH = { "test/run_all.cjs": "plain", "test/tools/tools.test.cjs": "plain", "test/esm_smoke.mjs": "list", "test/load_shared.cjs": "list", "tools/check/check_imports.cjs": "list", "docs/現況.md": "plain", "tools/README.md": "plain" };

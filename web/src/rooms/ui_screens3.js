@@ -13,13 +13,13 @@ import { CATS, ROLLED, activeQuirks, asList, clampN, decoOpen, exhibitById, fill
 import { buyUpgrade, canFuse, limitedFxShort, cellarAdvance, cellarApply, cellarFloors, cellarResolve, currentRoom, fusionBlood, fusionChances, fusionLeft, fusionLimit, fusionPrice, fusionRarityCost, healInjured, injureDaysOf, leaveCellar, matchMix, matchRecipe, memberPower, paletteView, placeWeekly, repairFailed, skillGrowth, startCellar, startFusion, teamPower, upgradeState } from "../../../shared/systems.js";
 import { cellarFloor, hasUp, teamItems } from "../../../shared/logic_base.js";
 import { jobInfo, jobSkill, skillOf } from "../../../shared/legacy.js";
-import { weeklyState } from "../../../shared/themeshow.js";
+import { weeklyState } from "../../../shared/story/themeshow.js";
 import { FRESH_KEY, freshUnder, isFresh, markFresh } from "../../../shared/fresh.js";
 import { RETIRE_ENDINGS, cellarDarkLoss, chooseJob, legacyOptions, retireCheck, traitDesc, traitHits, traitName, traitTag, visitorMade, visitorRecord } from "../../../shared/legacy.js";
-import { cleanName, renameVisitor } from "../../../shared/visitors.js";
+import { cleanName, renameVisitor } from "../../../shared/social/visitors.js";
 import { $, $$, ADDONS, P, PANELS, SCREENS, UI, setCellarSnd, sndFile, actionTick, ask, btn, collectionItems, collectionStrip, costText, freshMark, freshTag, go, h, icon, inspHave, itemHTML, itemTitle, later, limitPill, lossFlow, miniLayer, note, persist, persistNow, placard, placeTarget, ptNode, quirkCard, rerender, sanFlow, sanShort, sanWords, showEvents, snd, updateStatus, wait } from "../core/ui_core.js";
 import { onescreenDrawer, roomHead } from "../core/ui_room.js";
-import { SOCIAL } from "../../../shared/gifts.js";
+import { SOCIAL } from "../../../shared/social/gifts.js";
 import { storyCellarBox } from "../panels/ui_story.js"; // 每週劇情（11-09）：本週異狀、這週多出來的地方
 
 // 選職業（每一位參觀者都一樣，第一位也是；11-08 翊文：「6 個職業自己選，再抽優缺點」，決定 0028）：
@@ -138,7 +138,7 @@ export function legacyLine(L) {
   if (L.type === "skill") return legacyFill(LEGACY_TEXT.gotSkill, { who, skill: L.skill, plus: L.plus });
   return null;
 }
-// ---------- 多位參觀者的名字（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/visitors.js） ----------
+// ---------- 多位參觀者的名字（11-08 翊文：「玩家可以選擇和命名多個參觀者」，決定 0018；規則在 shared/social/visitors.js） ----------
 // 名字是玩家打的字：一律用 h() 的字串（純文字）放，不用 html:
 // 稱呼：有名字「阿明（第 2 位參觀者）」，沒有「第 2 位參觀者」
 export const whoOf = (n, name) => (name ? `${name}（第 ${n || 1} 位參觀者）` : `第 ${n || 1} 位參觀者`);
@@ -441,7 +441,7 @@ export function officeRepair() {
       }, "ghost"))))
       : h("p", { class: "empty" }, `沒有失敗作。擲出 ${NUM.fumbleFrom}–100 才會有。`));
 }
-// 送館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友 → 選一隻 → 寄到他的信箱（規則在 shared/gifts.js，伺服器在 functions/game/visit.js 的 sendGift）。取代交換碼
+// 送館友（11-09，翊文：「這些分享不需要用分享碼了，直接可以選擇館友才對」）：選館友 → 選一隻 → 寄到他的信箱（規則在 shared/social/gifts.js，伺服器在 functions/game/visit.js 的 sendGift）。取代交換碼
 export function officeTrade() {
   const free = isFree(P);
   return h("div", { class: "trade" }, h("div", { class: "share-box" },

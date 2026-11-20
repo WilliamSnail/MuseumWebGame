@@ -2,7 +2,7 @@
 //  賭桌的音效（翊文 11-15：「賭桌上各種動作也應該要有音效」）：單人 21 點（ui_casino.js）和同桌（ui_casino_table.js）共用，名字和音量只寫這壹處。
 //  casSfx(kind)：bet 下注、deal 發牌、hit 要牌、stand 停牌、dealer 莊家翻／補壹張、turn 輪到你、
 //                win 贏、bigWin 黑傑克／五張過關、push 平手、lose 輸、bust 爆牌。
-//  用現有的合成音（flip、click、coin、error）加 shared/sfx_files.js 裡的音效檔（coin-drop、coin-payout…）；靜音、#畫面 自動靜音都沿用 snd／sndFile。
+//  用現有的合成音（flip、click、coin、error）加 shared/game/sfx_files.js 裡的音效檔（coin-drop、coin-payout…）；靜音、#畫面 自動靜音都沿用 snd／sndFile。
 //  聲音 AI 聽不到：音量是照其他地方的用法抓的，要翊文聽聽看。
 // ================================================================
 import { snd, sndFile } from "../core/ui_core.js";

@@ -1,7 +1,7 @@
 // ================================================================
 //  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/規劃/多人實作.md）。對方不在線也能用。
 //  翊文 11-09：「之後可以參觀館友的展廳、送佩佩……也要加入立即可以使用的功能」→ 館友名片上直接有按鈕、做好就上線、收到的東西馬上能用、不用等對方在線。
-//  規則在 shared/gifts.js、shared/mailbox.js、shared/visit.js；伺服器在 functions/game/visit.js。樣式在 css/visit.css。
+//  規則在 shared/social/gifts.js、shared/social/mailbox.js、shared/social/visit.js；伺服器在 functions/game/visit.js。樣式在 css/visit.css。
 //  - 館友小卡：「參觀展廳」「送佩佩」（登記在 ui_core.js 的 FRIEND_ACTIONS）。
 //  - 走進館友的展廳：go("hall", { friend: { id, nick } })，SCREENS.hall 看到 friend 就叫這裡（ADDONS.friendHall）。
 //    只畫內建的樣子（玩家自己的圖不上傳，規劃第一節第 5 點）；按讚、留言每天每間一次。
@@ -15,7 +15,7 @@
 //  玩家打的字（暱稱、留言）只當資料：一律用 h() 的文字，不用 html。
 // ================================================================
 import { HALL_THEME_TEXT } from "../../../shared/content.js";
-import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../../shared/gifts.js";
+import { canGive, cleanHallNote, giftCount, SOCIAL } from "../../../shared/social/gifts.js";
 import { WEEKLY_TEXT } from "../../../shared/systems_text.js";
 import { NUM } from "../../../shared/config.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../../shared/logic.js";

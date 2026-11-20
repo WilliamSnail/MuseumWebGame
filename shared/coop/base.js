@@ -5,7 +5,7 @@
 import { NUM } from "../config.js";
 import { applySan, cellarFloor, clampN, fromKey, fullPick, gainSan, maxSan, pepeKey, understandCheck } from "../logic_base.js";
 import { skillOf, traitHits, traitTag } from "../legacy.js";
-import { eventRunFix } from "../events.js";
+import { eventRunFix } from "../story/events.js";
 import { trialById } from "../shop.js";
 import { cellarAdvance, limitedFx, teamHas, teamPower, understandLine } from "../systems.js";
 import { gainQuirk, startBout } from "../logic.js";

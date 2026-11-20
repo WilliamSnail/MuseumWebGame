@@ -18,7 +18,7 @@
 //  回傳 { ok, saves（存檔有沒有變）, dropped（這一步離隊的人）, ended（這一趟剛結束）, noop（什麼都沒變）} 或 { ok: false, reason }。
 // ================================================================
 import { coopCarryDo, coopCarryPick, coopGuess, coopKnock, coopMakeReport, coopSaveReport } from "./fun.js";
-import { eventExtraTurns, eventRunFix } from "../events.js";
+import { eventExtraTurns, eventRunFix } from "../story/events.js";
 import { trialById } from "../shop.js";
 import { coopFightRound, coopReplayMs } from "./fight.js";
 import { coopRest, coopRouteGo, coopRouteOptions } from "./route.js";

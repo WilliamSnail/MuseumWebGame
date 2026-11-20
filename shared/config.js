@@ -217,7 +217,7 @@ export const NUM = {
   fusionPerDay: 3,          // 一天可以融合幾次（升級「第二座融合爐」再 +3）
   fusionSan: "1/1D4",       // 融合要做的理智檢定（原本 0/1D4）
   inherit: 45,              // 每一類從爸爸、媽媽各遺傳的機率（%），剩下的是突變
-  lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3", perOwner: 2, returnsDay: 2 }, // 招領（shared/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定；防刷（翊文：「不能讓玩家用一直歸零來刷」）：壹個館友最多 perOwner 張、送的人壹天最多 returnsDay 次拿靈感
+  lost: { days: 7, meetPct: 30, finderInsp: 2, ownerMood: 5, readSan: "0/1D3", perOwner: 2, returnsDay: 2 }, // 招領（shared/social/lostfound.js，翊文 11-13）：理智歸零的參觀者幾天內遇得到、每層遇到的機會、送回去的獎勵、唸名字的理智檢定；防刷（翊文：「不能讓玩家用一直歸零來刷」）：壹個館友最多 perOwner 張、送的人壹天最多 returnsDay 次拿靈感
   // 藝術市場（11-14，shared/casino/art.js，規劃 2.10、2.10a 節；翊文：畫是避險資產，像富人買來避險；「最好一兩個禮拜內回本」）。
   //   tiers：稀有度四級的底價（尋常 100 萬 ＝ 新玩家一開場的籌碼，所以是「有錢之後才做的事」）。
   //   放久了（casArtAge）：展出後前 ageFastDays 天每天漲 ageFastPct %，之後每天只漲 ageUpPct %，最多漲到 ageCapPct %（到頂就不再漲，所以不是穩賺）。
@@ -270,7 +270,7 @@ export const NUM = {
     makeupCost: 1,                         // 補簽：這週已經過去、沒簽到的壹天，花幾枚週章補（翊文 11-11：「可以補這週沒有簽到的，花一個週章」）
     noticeBefore: 2,                       // 節日公告在節日前幾天貼出來
   },
-  // 第 4 版（11-09）：參觀館友的展廳、伺服器的信（規則 shared/visit.js；來訪的靈感、留言字數這些在 gifts.js 的 SOCIAL）
+  // 第 4 版（11-09）：參觀館友的展廳、伺服器的信（規則 shared/social/visit.js；來訪的靈感、留言字數這些在 gifts.js 的 SOCIAL）
   guest: {
     postersMax: 13,         // 參觀時最多看幾張展覽海報（主題展 10 個、每週特展 3 個）
     logMax: 60,             // 訪客簿留幾筆（一天一位館友一筆；今天的不會被擠掉）
@@ -305,10 +305,10 @@ export const NUM = {
     // 展廳的旅客（11-14，shared/npc/core.js）：來的人照 route.hall 的權重從旅客和委託人裡抽（跟上壹位不同）；hallStory＝這壹位說自己的故事（現在這壹段的字，還沒有就說身分）的機率，其餘照舊留壹般的評語
     hallStory: 0.4, newsMax: 2,
   },
-  // 第 4 版（11-09）：每週劇情（規則 shared/story.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/content/week_check.cjs 檢查）
+  // 第 4 版（11-09）：每週劇情（規則 shared/story/core.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/content/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
-    understandInsp: 3,      // 線索集齊、「你看懂了」壹件給幾靈感（壹件只給壹次；不扣理智、不發作，shared/clues.js）
+    understandInsp: 3,      // 線索集齊、「你看懂了」壹件給幾靈感（壹件只給壹次；不扣理智、不發作，shared/story/clues.js）
     showInsp: [1, 2],       // 今日特展第一次看一幅：不用理智檢定的／要理智檢定的
     showInspDay: 5,         // 今日特展一天最多拿幾靈感
     showSvgKB: 12,          // 今日特展自己畫的向量圖（works[].svg）一幅最多幾 KB
@@ -358,7 +358,7 @@ export const NUM = {
     limitedMax: 4,          // 週包的 shop 最多指定幾件
     matToStamp: 3,          // 幾份材料（背包裡的舊畫布、金箔、金線，哪一種都算）換一枚週章
   },
-  // 第 4 版（11-09，決定 0041）：限時活動（規則 shared/events.js，內容寫在 content/weeks/<週>/week.json 的 events）。數字都等翊文看
+  // 第 4 版（11-09，決定 0041）：限時活動（規則 shared/story/events.js，內容寫在 content/weeks/<週>/week.json 的 events）。數字都等翊文看
   events: {
     coopBoost: { mult: 1.5, extraTurns: 1 }, // 合作地下收藏庫：記號對上、猜對、搬回來的靈感 ×1.5；活動中那天多 1 趟有獎勵（P.coopDay 上限 +1，不疊加）
     casinoBoost: { extraPacks: 1 },          // 賭場：活動時間內，第一次進賭場多 1 包免費大禮包（每場活動每人一次；等翊文）
@@ -370,7 +370,7 @@ export const NUM = {
     titleMax: 16, wordsMax: 60, // 名字、一段話的字數上限（tools/content/week_check.cjs 檢查）
     noticeMinLeft: 5,       // 開跑的通知：活動剩不到這麼多分鐘就不跳了（快結束才打開遊戲，大廳那條看得到就好；決定 0045）
   },
-  // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
+  // 第 4 版（11-09，決定 0035）：主題展辦完（規則 shared/story/themeshow.js）。分數實際到得了多少，寫在維護日誌 11-09_翊文_主題展.md
   show: {
     days: 3,                // 同一個主題連續掛幾天才算辦完（真的天，05:00 換日；掛上那天算第 1 天）
     tiers: [60, 80, 95],    // 銅、銀、金要幾分
@@ -493,7 +493,7 @@ export const NUM = {
       discord: 2500,        // Discord 的 /pepe-借錢 沒有參數，壹次借這麼多（額度不夠就借剩下的）
       maxOpen: 10,          // 同時最多幾筆沒還
     },
-    // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino/wallet.js 的 casWork*，參觀者那邊在 shared/visitors.js
+    // 欠款送參觀者去地下工作（決定 0064 第二部分）。規則在 shared/casino/wallet.js 的 casWork*，參觀者那邊在 shared/social/visitors.js
     work: {
       payMax: 3000000,      // 每天最多還這麼多（規劃 2.11a：欠 3 億的人不能三天就印 3 億）。取 payPct% 和這個比較小的
       payPct: 34,           // 每天換日還「開工那天的欠款」的 34%（三天還完；翊文 11-10：「地下室工作每天可以欠下錢的34%」）
@@ -678,7 +678,7 @@ export const NUM = {
       keepWeeks: 8,         // 錢包裡留幾週的紀錄（過期的週：拿到的財產留著，沒領的週章還能補領）
     },
   },
-  // 第 4 版（11-09，決定 0039）：每週排行榜（規則 shared/board.js）
+  // 第 4 版（11-09，決定 0039）：每週排行榜（規則 shared/social/board.js）
   board: {
     top: 3,                 // 每個榜列到第幾名（同分同名次；全勤例外，簽滿的都列）
     fullDays: 7,            // 全勤：這週簽滿幾天

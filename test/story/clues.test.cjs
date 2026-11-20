@@ -1,4 +1,4 @@
-// 線索 → 你看懂了（shared/clues.js）：node test/story/clues.test.cjs（npm test 也會跑）
+// 線索 → 你看懂了（shared/story/clues.js）：node test/story/clues.test.cjs（npm test 也會跑）
 // 用自己拼的小內容測規則；W46 第 1 天用真的 content/weeks/ 的檔
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");

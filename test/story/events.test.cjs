@@ -1,4 +1,4 @@
-// 限時活動（shared/events.js，決定 0041）：node test/story/events.test.cjs（npm test 也會跑）
+// 限時活動（shared/story/events.js，決定 0041）：node test/story/events.test.cjs（npm test 也會跑）
 // 開始、結束的邊界、台灣時間、換日、開始時在活動內就算到走完、不在活動內沒加成、壞資料不丟錯、多 1 趟只在活動內、試煉的加成。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
@@ -268,7 +268,7 @@ T("試煉：一週還是只拿一次（活動不多給次數）", () => {
 });
 
 // ---------- Functions 拿得到同一份 ----------
-// tools/release/copy_shared.cjs 把 content/weeks/*/week.json 的 events 打包成 functions/shared/events_data.js；Functions 用同一份規則（shared/events.js）算
+// tools/release/copy_shared.cjs 把 content/weeks/*/week.json 的 events 打包成 functions/shared/events_data.js；Functions 用同一份規則（shared/story/events.js）算
 T("開跑通知（決定 0045）：進行中才跳、跳過的不再跳、快結束不跳、壞的時間不跳", () => {
   const G = load();
   const list = G.cleanEvents([{ id: "a", kind: "coopBoost", date: "2026-11-11", from: "20:00", to: "22:00", title: "加班夜", words: "字" }], "2026-11-09", "W");

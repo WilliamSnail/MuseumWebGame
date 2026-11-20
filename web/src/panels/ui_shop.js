@@ -10,17 +10,17 @@
 import { GEAR_ITEMS, NUM, SKILLS } from "../../../shared/config.js";
 import { SHOP_TEXT, SKILL_TEXT } from "../../../shared/systems_text.js";
 import { isFree, todayStr } from "../../../shared/logic.js";
-import { limitedInfo, ownsLimited } from "../../../shared/signin.js";
+import { limitedInfo, ownsLimited } from "../../../shared/social/signin.js";
 import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear } from "../../../shared/shop.js";
 import { ownsGear, wornGear } from "../../../shared/logic_base.js";
-import { stampHow } from "../../../shared/story.js";
-import { storyState } from "../../../shared/story_state.js";
+import { stampHow } from "../../../shared/story/core.js";
+import { storyState } from "../../../shared/story/state.js";
 import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "../core/ui_core.js";
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "../rooms/ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { actDone, curWeek } from "./ui_story.js";
-import { eventBoostText } from "../../../shared/events.js";
+import { eventBoostText } from "../../../shared/story/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
 import { openCoopTrial } from "../rooms/ui_coop.js";
 

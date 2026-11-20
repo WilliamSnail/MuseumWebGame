@@ -1,4 +1,4 @@
-// 主題展辦完（shared/themeshow.js，決定 0035）：node test/story/themeshow.test.cjs（npm test 也會跑）
+// 主題展辦完（shared/story/themeshow.js，決定 0035）：node test/story/themeshow.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;

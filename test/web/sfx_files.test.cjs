@@ -1,10 +1,10 @@
 // 音效檔清單、檔案、來源.md 三邊對得上（11-15，Pixabay 素材要標來源）
 const fs = require("fs"), path = require("path"), assert = require("assert");
 (async () => {
-  const { SFX_FILES } = await import("../../shared/sfx_files.js");
+  const { SFX_FILES } = await import("../../shared/game/sfx_files.js");
   const dir = path.join(__dirname, "..", "..", "web", "public", "sfx");
   const files = fs.readdirSync(dir).filter(f => f.endsWith(".mp3")).map(f => f.slice(0, -4)).sort();
-  assert.deepStrictEqual(files, Object.keys(SFX_FILES).sort(), "web/public/sfx 的 mp3 要跟 shared/sfx_files.js 壹樣");
+  assert.deepStrictEqual(files, Object.keys(SFX_FILES).sort(), "web/public/sfx 的 mp3 要跟 shared/game/sfx_files.js 壹樣");
   const md = fs.readFileSync(path.join(dir, "來源.md"), "utf8");
   for (const [id, x] of Object.entries(SFX_FILES)) {
     assert.ok(x.name && x.by && (x.own ? (x.url === "" || /^https:\/\/suno\.com\/song\//.test(x.url)) : /^https:\/\/pixabay\.com\/(sound-effects|music)\//.test(x.url)), id + " 要有原名、作者、網址（Pixabay；翊文自己生成的 own: true 用 Suno 網址）");

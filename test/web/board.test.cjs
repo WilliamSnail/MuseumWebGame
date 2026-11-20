@@ -1,4 +1,4 @@
-// 每週排行榜（shared/board.js、tools/content/weekly_board.cjs，決定 0039）：node test/web/board.test.cjs（npm test 也會跑）
+// 每週排行榜（shared/social/board.js、tools/content/weekly_board.cjs，決定 0039）：node test/web/board.test.cjs（npm test 也會跑）
 // 資料都是假的；不連 Firebase、不連 Discord（db、fetcher 都是假的）。
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
