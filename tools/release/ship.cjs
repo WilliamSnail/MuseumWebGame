@@ -8,7 +8,7 @@
 //   --no-merge        只開 PR、等 CI，不合併
 //   --skip-local      不跑本機的 npm test 和 vite build（CI 還是會跑）
 //   --full            強制照舊全跑本機的 npm test 和 build。沒給的話：這個分支改到的檔案全部是「內容」（content/、docs/維護日誌/（公告在 content/notices/）、
-//                     .claude/，加上從 content 打包出來的 shared/npc_roster.js、shared/map_data.js）時，本機改跑 npm run day:check（要過才繼續），
+//                     .claude/，加上從 content 打包出來的 shared/npc/roster.js、shared/world/map_data.js）時，本機改跑 npm run day:check（要過才繼續），
 //                     不跑 npm test 和 vite build（11-16 每日排程優化：內容 PR 每次省 2～5 分鐘；CI 和部署照跑，安全網還在）。
 //                     只要有任何程式檔（web/、shared/ 其他檔、functions/、tools/、test/、package.json…）就照舊全跑
 //   沒給 --body：拿這個分支新加的維護日誌的「為什麼要改」「改了什麼」當 PR 說明（11-14：常常忘了給說明被擋）
@@ -70,7 +70,7 @@ const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0,
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
 
 // 只動「內容」嗎（純函式，測試用）：每個檔案都在內容路徑裡才算；空的清單不算（沒東西就照舊全跑）。
-// 內容路徑：content/、docs/維護日誌/（公告在 content/notices/）、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc_roster.js、shared/map_data.js
+// 內容路徑：content/、docs/維護日誌/（公告在 content/notices/）、.claude/（交接檔，不進遊戲），以及 content 打包出來的 shared/npc/roster.js、shared/world/map_data.js
 const { isContentFile, contentOnly } = require("./changed_files.cjs"); // 11-16 第二批：抽到共用的檔，CI 也用同壹個判斷
 // 本機要跑什麼：{ mode: "skip" | "content" | "full", line }（line 是要印的壹行說明）
 function localPlan(files, flags) {
@@ -97,7 +97,7 @@ function bodyFromLog(md) {
 function noticeWarning(files) {
   const f = files.filter(Boolean);
   if (f.some(x => x.startsWith("content/notices/"))) return "";
-  const seen = f.filter(x => /^(web\/|functions\/|shared\/)/.test(x) && !/\.test\.|^shared\/npc_roster\.js$/.test(x));
+  const seen = f.filter(x => /^(web\/|functions\/|shared\/)/.test(x) && !/\.test\.|^shared\/npc\/roster\.js$/.test(x));
   return seen.length ? `⚠ 改了 ${seen.slice(0, 3).join("、")}${seen.length > 3 ? ` 等 ${seen.length} 個檔` : ""}，但沒有加館方公告（npm run notice -- …）。不是玩家看得到的就加 --no-notice。` : "";
 }
 const changedFiles = () => git(["diff", "--name-only", "origin/main...HEAD"], { ok: true }).out.split("\n").map(s => s.trim()).filter(Boolean);

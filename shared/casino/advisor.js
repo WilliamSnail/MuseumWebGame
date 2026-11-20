@@ -12,9 +12,9 @@ import { casStockFix, casStockHouseFix } from "./stock.js";
 import { IN_IDS, casInFix, casInPrice } from "./stock_in.js";
 import { casDebtOwed } from "./debt.js";
 import { casLoanSplitPlan } from "./wallet.js";
-import { IN_STOCKS } from "../stocks_in_text.js";
-import { OUT_STOCKS } from "../stocks_text.js";
-import { US_IDS } from "../stocks_tw.js";
+import { IN_STOCKS } from "../stock/in_text.js";
+import { OUT_STOCKS } from "../stock/text.js";
+import { US_IDS } from "../stock/tw.js";
 
 export const CAS_ADVISOR = {
   name: "財經專員 梁安",

@@ -1,4 +1,4 @@
-// 旅客卡的資料（決定 0096，shared/npc_card.js）：node test/npc/npc_card.test.cjs（npm test 也會跑）
+// 旅客卡的資料（決定 0096，shared/npc/card.js）：node test/npc/npc_card.test.cjs（npm test 也會跑）
 const assert = require("assert");
 const fs = require("fs"), path = require("path");
 const { load } = require("../load_shared.cjs");

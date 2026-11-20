@@ -1,6 +1,6 @@
 // ================================================================
 //  館內 NPC（11-14，docs/規劃/館內NPC規劃.md 步驟 3 的文字那一半）
-//  名單在 content/npc/*.json，經 tools/content/npc_pack.cjs 變成 shared/npc_roster.js（旅客 visitor、委託人 client；劇情角色 trace 不在裡面，只留痕跡、不露臉）。
+//  名單在 content/npc/*.json，經 tools/content/npc_pack.cjs 變成 shared/npc/roster.js（旅客 visitor、委託人 client；劇情角色 trace 不在裡面，只留痕跡、不露臉）。
 //  這裡只有純函式：給「今天」和全館的進度，算每位 NPC 現在是故事線的哪壹段、要說什麼。不碰錢、不碰股票、不碰拍賣、不碰存檔。
 //
 //  故事線 arc[]：每壹段 { step, from, text, news, need?, route?, likes?, ties? }
@@ -10,8 +10,8 @@
 //    壹段壹段往下解鎖，前壹段沒到後面就不算。
 //  route、likes：最新那壹段有寫就蓋掉最上層的（例：第 3 段之後他不再去地下）。
 // ================================================================
-import { NUM } from "./config.js";
-import { NPC_ROSTER } from "./npc_roster.js";
+import { NUM } from "../config.js";
+import { NPC_ROSTER } from "./roster.js";
 
 export const NPC_PEOPLE = NPC_ROSTER; // 旅客和委託人（網頁看得到的）
 export const npcById = (id, list = NPC_PEOPLE) => list.find(n => n.id === id) || null;
@@ -34,7 +34,7 @@ export function npcNeedMet(need, counters, npcId) {
 export function npcCounters(npcc) {
   if (!npcc || typeof npcc !== "object") return null;
   const cl = npcc.cl && typeof npcc.cl === "object" && !Array.isArray(npcc.cl) ? npcc.cl : null;
-  return { commissions: cl && Object.keys(cl).length ? cl : npcc.comm, hallVisits: npcc.hall, ...(npcc.mkv && typeof npcc.mkv === "object" ? { mkv: npcc.mkv } : {}) }; // mkv：景氣分市場今天各 NPC 的來館倍率（決定 0121，shared/world.js 的 wmWriteVisit 寫）
+  return { commissions: cl && Object.keys(cl).length ? cl : npcc.comm, hallVisits: npcc.hall, ...(npcc.mkv && typeof npcc.mkv === "object" ? { mkv: npcc.mkv } : {}) }; // mkv：景氣分市場今天各 NPC 的來館倍率（決定 0121，shared/world/core.js 的 wmWriteVisit 寫）
 }
 // 給網頁看的 house.npcc：只留數字（comm、hall、cl）
 export function npcPublic(npcc) {

@@ -1,6 +1,6 @@
 // ================================================================
 //  股票（11-14，銀行第三步；翊文：「規劃好了我們就上線新的銀行體系讓大家玩，可以投資了」）
-//  這壹步只做館外七支（shared/stocks_text.js 的 OUT_STOCKS，每天的真實漲跌由 shared/stocks.js 換算）。
+//  這壹步只做館外七支（shared/stock/text.js 的 OUT_STOCKS，每天的真實漲跌由 shared/stock/core.js 換算）。
 //  館內五家店、槓桿、放空、當沖、盤中價格是後面幾步，規劃在 docs/規劃/經濟體系規劃.md 2.8。
 //
 //  錢怎麼動（shared/casino/book.js）：跟「海外（真實市場）」買賣（翊文 11-14：「股票不是跟"海外"買的嗎?」→「好更改」）。
@@ -28,12 +28,12 @@ import { casSellCap, casSellMoney, casSellTip } from "./credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
 import { gsFeePct, gsMatch } from "./stock_grp.js";
 import { IN_IDS, casInCostSeed, casInMatch, casInOrder, casInOrderHalt, casInPrice, casInSeen, casInValueApprox, casInView } from "./stock_in.js";
-import { CAS_STOCK_IN, IN_STOCKS } from "../stocks_in_text.js";
+import { CAS_STOCK_IN, IN_STOCKS } from "../stock/in_text.js";
 import { CAS_STOCK } from "./text.js";
-import { OUT_CATS, OUT_STOCKS } from "../stocks_text.js";
+import { OUT_CATS, OUT_STOCKS } from "../stock/text.js";
 import { casFill, casNum, casPx } from "./core.js";
-import { outStockWeekend } from "../stocks.js";
-import { TW_IDS, US_IDS, mkLen, usEarlyClose, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "../stocks_tw.js";
+import { outStockWeekend } from "../stock/core.js";
+import { TW_IDS, US_IDS, mkLen, usEarlyClose, stockIsTw, stockIsUs, twIdx, usIdx, usOpenMs } from "../stock/tw.js";
 
 const stBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const stN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -419,7 +419,7 @@ function stDivInfo(H, id, day) {
 }
 // ---------- 畫面要的 ----------
 // 回傳 { list: [{ id, name, line, kind, price, chg, mine, value }], fee, halt, exposeLeft, sellLeft, total }
-// stale：哪幾支今天沒有新資料（shared/stocks.js 的 outStockStale）。標出來，不要讓人以為真的沒漲跌
+// stale：哪幾支今天沒有新資料（shared/stock/core.js 的 outStockStale）。標出來，不要讓人以為真的沒漲跌
 const stLastSession = (T, id) => { // 最近壹場（有兩個以上的價）的盤中走勢
   const P = T && stBox(T.past) ? T.past : {};
   for (const d of Object.keys(P).sort().reverse()) {
@@ -593,7 +593,7 @@ export function casStockSeen(w, house) {
 }
 
 // ---------- 台股、美股盤中（規劃 2.8d、2.8i） ----------
-// 把伺服器抓價算好的盤中資料（Firestore stocksTw/latest、stocksUs/latest，shared/stocks_tw.js 的格式）套到莊家：
+// 把伺服器抓價算好的盤中資料（Firestore stocksTw/latest、stocksUs/latest，shared/stock/tw.js 的格式）套到莊家：
 // 盤中那幾支的股價 ＝ 這個分鐘的價（今天開盤價 × rel），house.stk.tw／us 記今天的狀態和盤中每分鐘的價（畫面、掛單檢查用）。
 // 每次錢包被碰到、在 casStockRoll 之後呼叫；沒有資料或還沒換日就只更新狀態。純函式：t 從參數來。
 // 狀態 st：pre 開盤前、pending 開盤後等第壹個價（真實開盤價）、open、closed（收盤、超過 giveUp 分鐘沒抓到、週末假日）

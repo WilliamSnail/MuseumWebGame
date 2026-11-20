@@ -5,13 +5,13 @@
 //   node tools/content/stocks_fetch.cjs --fresh [檔案]            資料落後超過 3 天就失敗（排程用）
 // 資料來源：Yahoo Finance 的公開圖表介面（query1.finance.yahoo.com/v8/finance/chart），不用金鑰。
 //   不是官方保證的介面，可能被擋、改格式、限流；抓不到的那家這次就空著，不會寫壞舊資料。理由和限制見 PR 與日誌。
-// 真實的代號只放在這支，不進 shared/（名字表不寫代號）。id 對應 shared/stocks_text.js。
-// 格式見 shared/stocks.js 開頭。只寫「已經收盤」的日子：盤中的最新一根會丟掉。
+// 真實的代號只放在這支，不進 shared/（名字表不寫代號）。id 對應 shared/stock/text.js。
+// 格式見 shared/stock/core.js 開頭。只寫「已經收盤」的日子：盤中的最新一根會丟掉。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "^IXIC", islandforge: "2330.TW", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", bigshipport: "CCL", greenleafclinic: "TLRY", quantumfrog: "IONQ", smallcore: "OKLO", messengerlab: "MRNA", oldgamestore: "GME", fingerbank: "SOFI", betkingdom: "DKNG", droidhive: "KTOS", treadclub: "PTON", blockpark: "RBLX", popcornhall: "AMC", blackgoldwell: "APA", bluefireyard: "AR", greenglowmine: "UEC", raremountain: "MP", redcoppermine: "FCX", richsoilshop: "MOS", vaultbrick: "UGL", blackbarrel: "UCO" };
 const KEEP = 40;
-const FRESH_DAYS = 3; // 跟 shared/stocks.js 的 OUT_STOCK_NUM.staleDays 一樣
+const FRESH_DAYS = 3; // 跟 shared/stock/core.js 的 OUT_STOCK_NUM.staleDays 一樣
 
 // 把一檔的圖表回應變成 { 市場日期: 漲跌幅% }（第一根沒有前一根可比，不算）
 function parseChart(json, nowSec) {

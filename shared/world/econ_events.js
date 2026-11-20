@@ -11,9 +11,9 @@
 //    E1（外館借展的拍品）用現有的「拍賣」旗標（content 的畫標 auction），價格照稀有度，程式不用改；E5（吃緊／寬鬆的旁白）、E6（對帳員來訪）只能旁白／用現有的 npc 劇情日。
 //  事先公告：foreign、artFreeze 提前 ahead 天、bondWindow 提前 3 天，日報寫；houseRepay、audit 不預告（不動玩家價格）。repo 是公開的，所以會動玩家價格或錢的都預告給所有人，沒有人比別人早知道的好處。
 // ================================================================
-import { NUM } from "./config.js";
-import { casHouseWorldIn, casLedFix } from "./casino/book.js";
-import { casFill, casNum } from "./casino/core.js";
+import { NUM } from "../config.js";
+import { casHouseWorldIn, casLedFix } from "../casino/book.js";
+import { casFill, casNum } from "../casino/core.js";
 
 const eeN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
 const eeDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);

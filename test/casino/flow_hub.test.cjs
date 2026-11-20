@@ -58,7 +58,7 @@ T("flow：名單上有上級的單位（子公司）也有節點，掛在上級�
   assert.ok(e.edges.some(x => x.from === "w:g-daily-sub" && x.to === "house"));
 });
 T("flow：集團之間的交易（world.js 記的 trade…）每種都有名字、線的兩端是集團；今天的量＝現在減 05:00", G => {
-  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "shared", "world.js"), "utf8");
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "shared", "world", "core.js"), "utf8");
   const kinds = new Set([...src.matchAll(/"(trade\w+)"/g)].map(m => m[1])); assert.ok(kinds.size >= 5, "world.js 的 trade 種類：" + [...kinds].join());
   for (const k of kinds) assert.ok(G.CAS_FLOW_UNIT[k], "交易種類 " + k + " 沒有名字（shared/casino/report.js 的 CAS_FLOW_UNIT）");
   for (const m of src.matchAll(/wtMove\(house, [^;]*?\);/g)) if (!m[0].startsWith("wtMove(house, from, to") && !/"trade\w+"\)/.test(m[0])) assert.fail("wtMove 呼叫沒帶種類：" + m[0].slice(0, 80));

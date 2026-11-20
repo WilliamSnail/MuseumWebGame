@@ -9,12 +9,12 @@ import { NUM } from "../config.js";
 import { casBookSumObj } from "./book.js";
 import { CAS_FX_TEXT } from "./gdp.js";
 import { CAS_ECON, CAS_MENU } from "./text.js";
-import { WORLD_UNITS } from "../world_roster.js";
-import { WU_HH, WU_PUB, WU_WAL, wuAmounts } from "../world.js";
-import { statView } from "../stat_view.js";
-import { NPC_ROSTER } from "../npc_roster.js";
-import { npcCounters, npcNews } from "../npc.js";
-import { CAS_ECON_EV, casEconUpText } from "../econ_events.js";
+import { WORLD_UNITS } from "../world/roster.js";
+import { WU_HH, WU_PUB, WU_WAL, wuAmounts } from "../world/core.js";
+import { statView } from "../world/stat_view.js";
+import { NPC_ROSTER } from "../npc/roster.js";
+import { npcCounters, npcNews } from "../npc/core.js";
+import { CAS_ECON_EV, casEconUpText } from "../world/econ_events.js";
 import { casFill } from "./core.js";
 
 export const CAS_REPORT = {
@@ -98,8 +98,8 @@ export function casReportView(doc) {
     hl.push(`莊家健康度：玩家輸給莊家 ${rpN(inn)}，莊家發給玩家 ${rpN(outg)}（比值 ${ratio.toFixed(2)}，${ratio >= 1 ? "健康" : ratio >= 0.6 ? "吃緊" : "失血"}）。`);
     if (ratio < 0.6) hl.push("莊家在失血：錢少於 " + rpN(NUM.casino.health.low) + " 時，免費大禮包每天少發。");
   }
-  if (H.npcc && doc.day) { const nw = npcNews(doc.day, npcCounters(H.npcc), 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc.js）
-  if (Array.isArray(H.econUp) && H.econUp.length) hl.push("預告：" + casEconUpText(H.econUp).join("")); // 劇情經濟事件的預告（shared/econ_events.js）
+  if (H.npcc && doc.day) { const nw = npcNews(doc.day, npcCounters(H.npcc), 2); if (nw.length) hl.push("館內近況：" + nw.map(x => x.news).join(" ")); } // 館內 NPC 的故事（shared/npc/core.js）
+  if (Array.isArray(H.econUp) && H.econUp.length) hl.push("預告：" + casEconUpText(H.econUp).join("")); // 劇情經濟事件的預告（shared/world/econ_events.js）
   if (doc.audit) hl.push(casFill(CAS_ECON_EV.audit, { gap: rpSign(doc.gap || 0) })); // 全館對帳日（E8）
   if (Array.isArray(H.festUp) && H.festUp.length) { // 預告的活動（規劃 2.8k）：可能辦成，也可能沒辦成，辦成才會多來壹批旅客
     const nm = { food: "餐車", bj: "牌桌", job: "委託櫃台", cellar: "地下收藏庫", craft: "手作坊" };
@@ -121,7 +121,7 @@ export function casReportView(doc) {
     const unit = id => (WORLD_UNITS.find(u => u.id === id) || {}).name || id, who = id => (NPC_ROSTER.find(n => n.id === id) || {}).name;
     H.npcw.ev.filter(e => e.day === doc.day || e.day === (doc.snap && doc.snap.day)).slice(0, 2).forEach(e => { const n = who(e.npc); if (n) hl.push(e.t === "lay" ? `${n}被${unit(e.from)}裁員了。` : `${n}到${unit(e.to)}工作了。`); });
   }
-  if (H.npcs && H.npcs.menu) { // 餐車賣給館外來客的（照菜單點，shared/npc_spend.js）
+  if (H.npcs && H.npcs.menu) { // 餐車賣給館外來客的（照菜單點，shared/npc/spend.js）
     const nm = id => (CAS_MENU.find(m => m.id === id) || {}).name || id, it = Object.keys(H.npcs.menu).map(k => ({ k, n: (H.npcs.menu[k].npc || 0) + (H.npcs.menu[k].crowd || 0) })).filter(x => x.n > 0).sort((x, y) => y.n - x.n);
     if (it.length) hl.push("昨天餐車賣給館外的客人：" + it.map(x => nm(x.k) + " ×" + rpN(x.n)).join("、") + "。");
     const o = Array.isArray(H.npcs.orders) ? H.npcs.orders[0] : null; if (o && o.who) hl.push(o.who + "在餐車點了" + (o.n > 1 ? " " + o.n + " 份" : "壹份") + nm(o.item) + "。");
@@ -260,7 +260,7 @@ export const CAS_FLOW_LINE = {
 // 今天 05:00 起各條記帳的累計（跟日報快照同一份：led0 在換日寫財報時存，shared/casino/book.js 的 casBookSnap 同一套來源）
 // 線從出錢的單位出發（決定 0128）的來源：有單位端點的記帳（house.led.units）取代同名來源整個已知世界的那條（同壹筆錢）
 export const CAS_FLOW_GRP = new Set(["cultureGift", "gRaise", "gBuy", "gDiv", "npcFood", "npcJob", "npcCellar", "npcCraft", "npcTicketBudget", "npcTicketMuseum", "npcCrowdBudget", "npcCrowdMuseum", "entTax", "bizTax"]);
-export const CAS_FLOW_UNIT = { tradeGovGrant: "政府撥款（公共機構→文化部）", tradeHhGoods: "家計買日用品", tradeHhTax: "家計繳稅", tradeHhFee: "家計付保險利息", tradeWage: "集團付薪水給家計", wageNpc: "發薪水（集團→NPC 錢包）", wageBack: "多的薪水退回（NPC 錢包→集團）", tradeDaily: "日用品採購", tradeFee: "金融服務費", tradeResearch: "研究委託", tradeDesign: "展覽設計委託", tradeTax: "稅與規費", tradeSubsidy: "補助與公共採購", tradeTech: "科技服務", tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world.js 的 wtLed 記的）：線的兩端是帳上記的集團
+export const CAS_FLOW_UNIT = { tradeGovGrant: "政府撥款（公共機構→文化部）", tradeHhGoods: "家計買日用品", tradeHhTax: "家計繳稅", tradeHhFee: "家計付保險利息", tradeWage: "集團付薪水給家計", wageNpc: "發薪水（集團→NPC 錢包）", wageBack: "多的薪水退回（NPC 錢包→集團）", tradeDaily: "日用品採購", tradeFee: "金融服務費", tradeResearch: "研究委託", tradeDesign: "展覽設計委託", tradeTax: "稅與規費", tradeSubsidy: "補助與公共採購", tradeTech: "科技服務", tradeGoods: "貨款（集團之間）", tradeLoan: "金融集團放款", tradeInterest: "借款利息", tradeRepay: "還款", tradeRev: "旗下股票營收（公共和集團）", gRaise: "集團增資（莊家買新股）", gBuy: "集團庫藏股（莊家收到買回的錢）", gDiv: "集團股利（發給持股的館友）" }; // gRaise／gBuy／gDiv（決定 0123）：線的兩端是莊家或館友和那家集團，不是整個已知世界 // 集團之間的交易種類（shared/world/core.js 的 wtLed 記的）：線的兩端是帳上記的集團
 export const casFlowLed0 = snap => { const H = snap.house; return { day: snap.day || null, u: Object.assign({}, H.units), w: Object.assign({}, H.wflow), x: Object.assign({}, H.xflow), g: Object.assign({}, H.gflow), m: Object.assign({}, H.mint), f: Object.assign({}, H.flow), b: Object.assign({}, H.burn) }; };
 const cfDiff = (now, then) => { const o = {}; for (const k of new Set([...Object.keys(now || {}), ...Object.keys(then || {})])) { const d = Math.round((+(now || {})[k] || 0) - (+(then || {})[k] || 0)); if (d) o[k] = d; } return o; };
 // all：casBooksView(doc, true).all（每個帳的 [{ k, label, n }]，n 是這個帳自己的角度）。回傳 { edges, lost }

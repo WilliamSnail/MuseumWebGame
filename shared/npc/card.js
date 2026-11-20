@@ -5,14 +5,14 @@
 //  只給「已經發生的和現在的」：今天的行程只列已經開始的站（未來的站是今天各店的人數，會洩漏明天館內股的跳空，決定 0094）；理智、錢包只給分級；故事線只給解鎖到的段落。
 //  不碰存檔、不碰錢，只讀。
 // ================================================================
-import { NUM } from "./config.js";
-import { HALL_THEME_TEXT } from "./content.js";
-import { npcArcIndex, npcArcNow, npcLikesNow } from "./npc.js";
-import { NPC_ROOM, npcDayStartMs, npcVisitsToday } from "./npc_spend.js";
-import { npcCasAway } from "./casino/npc.js";
-import { nwBal, nwBudgetMult, nwUnitOf } from "./world.js";
-import { nwSan } from "./world_base.js";
-import { statView } from "./stat_view.js";
+import { NUM } from "../config.js";
+import { HALL_THEME_TEXT } from "../content.js";
+import { npcArcIndex, npcArcNow, npcLikesNow } from "./core.js";
+import { NPC_ROOM, npcDayStartMs, npcVisitsToday } from "./spend.js";
+import { npcCasAway } from "../casino/npc.js";
+import { nwBal, nwBudgetMult, nwUnitOf } from "../world/core.js";
+import { nwSan } from "../world/base.js";
+import { statView } from "../world/stat_view.js";
 
 export const NPC_CARD_PLACE = { hall: "展廳", food: "餐車", bj: "21 點桌", job: "委託櫃台", craft: "手作坊", cellar: "地下收藏庫", bank: "銀行", auction: "拍賣廳" };
 export const NPC_CARD_TIER = { collector: "收藏家級", comfortable: "寬裕", modest: "小康", drifter: "四處流浪", none: "沒什麼錢" };

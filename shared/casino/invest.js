@@ -15,7 +15,7 @@ import { NUM } from "../config.js";
 import { casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolWorldIn, casPoolWorldOut, casWorldLow } from "./book.js";
 import { stBuyCost, stCents, stPx, stSellGet, stValue } from "./stock.js";
 import { hashStr, mulberry32 } from "../logic_base.js";
-import { OUT_STOCKS } from "../stocks_text.js";
+import { OUT_STOCKS } from "../stock/text.js";
 
 const ivBox = o => !!o && typeof o === "object" && !Array.isArray(o);
 const ivN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);

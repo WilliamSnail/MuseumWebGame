@@ -21,7 +21,7 @@ import { backFromWork, sendToWork, workBench } from "../visitors.js";
 import { casSkFix, casSkStep } from "./streak.js";
 import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casPoolPay, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./book.js";
 import { casInSpent, casInUsed } from "./stock_in.js";
-import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "../world.js";
+import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "../world/core.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);

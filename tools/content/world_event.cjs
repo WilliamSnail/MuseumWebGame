@@ -5,7 +5,7 @@
 //   npm run world:event -- mood --week 2026-W47 --date 2026-11-18 --n -10                    那天的展廳氣氛 ±（−20～20）
 //   npm run world:event -- list --week 2026-W47                                              看這週寫了什麼
 //   npm run world:event -- clear --week 2026-W47 [--kind san|unrest|mood]                    清掉（整週或某一種）
-// 每次寫之前先過 week_check 同樣的規則（id 存在、日期在這週、數字範圍、同一對象同一天只有一筆、每週最多幾筆）；寫完會重新打包 shared/world_events.js。加 --dry 只印不寫。
+// 每次寫之前先過 week_check 同樣的規則（id 存在、日期在這週、數字範圍、同一對象同一天只有一筆、每週最多幾筆）；寫完會重新打包 shared/world/events.js。加 --dry 只印不寫。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const KEYS = { san: ["sanEvents", "npc", "sanMax", 6], unrest: ["unrest", "unit", "unrestMax", 4], mood: ["moodEvent", null, "moodMax", 3] };

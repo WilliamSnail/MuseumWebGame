@@ -11,7 +11,7 @@ import { casArtBuy, casArtSecret, casArtSell, casArtTier, casArtView } from "../
 import { twSecret } from "../stock/stock_tw.js";
 import { NPC_LIST } from "../shared/npc_list_data.js";
 import { ECON_EVENTS } from "../shared/npc_data.js";
-import { casEconActive } from "../shared/econ_events.js";
+import { casEconActive } from "../shared/world/econ_events.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { ART_WORKS } from "../shared/art_data.js";
 import { NUM } from "../shared/config.js";

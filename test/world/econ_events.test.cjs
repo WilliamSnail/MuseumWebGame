@@ -1,4 +1,4 @@
-// 劇情經濟事件（11-14，shared/econ_events.js）：node test/world/econ_events.test.cjs（npm test 也會跑）
+// 劇情經濟事件（11-14，shared/world/econ_events.js）：node test/world/econ_events.test.cjs（npm test 也會跑）
 // 外資 NPC（出價機率、壹天總額加成）、館債簽收窗口（提早拿回、利息照比例、莊家付不出就不給）、畫價凍結（窗口內第壹次報的價）、莊家提早還貸款（只在那天、還完仍在健康線以上）、對帳日、預告。
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");

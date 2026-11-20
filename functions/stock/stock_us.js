@@ -6,18 +6,18 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 //  「夜光科技指數」對應 QQQ（那斯達克 100 的 ETF，可以交易、盤中有即時價；指數本身 ^IXIC 盤中的資料比較不穩）。
 //
 //  怎麼跑：排程每分鐘叫一次 stockUsTick（美東週一到週五 09:00～16:59，所以夏令冬令都不用改；時區由 Cloud Scheduler 的 timeZone 處理）。
-//    每次先算「美東現在是哪一天、開盤後第幾分鐘」（shared/stocks_tw.js 的 usNyDay、usIdx，Intl 算，日光節約自動對），
+//    每次先算「美東現在是哪一天、開盤後第幾分鐘」（shared/stock/tw.js 的 usNyDay、usIdx，Intl 算，日光節約自動對），
 //    再讀 stocksUs/latest，usNeed 說要不要抓：09:30 起抓開盤價（抓到才開盤，超過 10:00 還沒有就整天不開，美國國定假日就是這樣休市）；
 //    之後每 15 分鐘壹個錨點，錨點時間過了 3 分鐘內每分鐘重抓；再抓不到，這壹段真實成分當 0，只剩隨機（資料標 stale）。
 //  放哪裡（都只有 Functions 碰得到，firestore.rules 沒開放）：
 //    stocksUs/latest        今天的錨點、每分鐘的價（相對前壹收盤的倍數）和最近幾天，格式跟 stocksTw/latest 壹樣（日期 ＝ 美東日期 ＝ 遊戲日期）
 //    亂數種子用的伺服器祕密跟台股共用 stocksTwSecret/main（stock_tw.js 的 twSecret；種子字串裡有股票 id，兩邊不會撞）
-//  行情的落後（lag）：這壹包最新的 K 棒時間離現在幾分鐘（所有股票取最新的），shared/stocks_tw.js 的 twXOf 照落後多久決定真實成分 X。
+//  行情的落後（lag）：這壹包最新的 K 棒時間離現在幾分鐘（所有股票取最新的），shared/stock/tw.js 的 twXOf 照落後多久決定真實成分 X。
 // ================================================================
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
-import { outStockWeekend } from "../shared/stocks.js";
-import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "../shared/stocks_tw.js";
+import { outStockWeekend } from "../shared/stock/core.js";
+import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "../shared/stock/tw.js";
 import { NUM } from "../shared/config.js";
 import { twSecret } from "./stock_tw.js";
 

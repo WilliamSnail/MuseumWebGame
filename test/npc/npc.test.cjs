@@ -1,4 +1,4 @@
-// 館內 NPC 的純函式（shared/npc.js）和網頁用的名單（shared/npc_roster.js）：打包跟上內容、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致、存檔相容。
+// 館內 NPC 的純函式（shared/npc/core.js）和網頁用的名單（shared/npc/roster.js）：打包跟上內容、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致、存檔相容。
 const fs = require("fs"), path = require("path");
 const { load } = require("../load_shared.cjs");
 const pack = require("../../tools/content/npc_pack.cjs");
@@ -9,8 +9,8 @@ const eq = (a, b, m) => ok(JSON.stringify(a) === JSON.stringify(b), `${m}（得�
 const rngOf = seq => { let i = 0; return () => seq[i++ % seq.length]; };
 
 // 1. 網頁的名單跟 content/npc/ 一致（沒有就要跑 node tools/content/npc_pack.cjs）、不含劇情角色
-const f = path.join(__dirname, "..", "..", "shared", "npc_roster.js");
-ok(fs.readFileSync(f, "utf8") === pack.source(pack.roster()), "shared/npc_roster.js 沒跟上 content/npc/（跑 node tools/content/npc_pack.cjs）");
+const f = path.join(__dirname, "..", "..", "shared", "npc", "roster.js");
+ok(fs.readFileSync(f, "utf8") === pack.source(pack.roster()), "shared/npc/roster.js 沒跟上 content/npc/（跑 node tools/content/npc_pack.cjs）");
 ok(G.NPC_PEOPLE.length >= 29 && G.NPC_PEOPLE.every(n => n.kind === "visitor" || n.kind === "client"), "名單只有旅客和委託人");
 ok(!G.NPC_PEOPLE.some(n => n.kind === "trace" || /^t-/.test(n.id)), "劇情角色不進網頁名單");
 

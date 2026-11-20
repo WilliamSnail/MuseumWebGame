@@ -4,7 +4,7 @@
 import { EXHIBITS, HALL_THEME_BONUS, NUM, ORIGIN, PEPE_NAME, PEPE_PARTS, PILLOW_PARTS, RENAMED, UPGRADES } from "./config.js";
 import { QUIRK_TEXT, VISITOR_COMMENTS } from "./content.js";
 import { CLIENT_LINES } from "./systems_text.js";
-import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc.js";
+import { npcByName, npcPickHall, npcStoryLine, npcWebCounters } from "./npc/core.js";
 import { BASE_TOTAL, CATS, CORE_CATS, DAY_CLOCK, DAY_MS, DAY_START_HOUR, DECO_CATS, DEFAULT_PICK, KIND_CODE, NOW_CLOCK, PILLOW_CATS, PILLOW_TOTAL, QUIRK_TASKS, RARITY_ORDER, RNG, ROLLED, TZ_HOURS, activeQuirks, addDays, allOpts, asList, attrsOf, b64d, b64e, baseOpts, blockedSet, catOfOption, clampN, codexCount, coreKey, cureByTask, dailyCommissions, daysBetween, describePepe, exhibitById, exhibitOpen, fixQuirks, fromKey, fullPick, gainSan, galleryInsp, grantOption, hallItem, hallScore, hallThemes, isFree, isUnlocked, limitedHome, needSatisfiable, normKey, normPillowKey, nowMs, optOf, parsePillowKey, partOf, pepeKey, pickOne, possibilities, progressEvents, quirkDaysOf, quirkDoneDays, quirkLive, quirkSpan, rarityRank, renameKey, renameVal, rollD100, rollExpr, sortUnlocked, specAllows, todayStr, traitSum, usable } from "./logic_base.js";
 import { fixLegacy, leaveLegacy, newVisit, visitorRecord } from "./legacy.js";
 import { fixLimited, fixSignin, isLimitedMat, newSignin, stockOf, useStock } from "./signin.js";
@@ -705,7 +705,7 @@ export function visitorArrive(P, rng = RNG, entry = null) {
   else pool = VISITOR_COMMENTS[hs.score < 35 ? "low" : hs.score < 70 ? "mid" : "high"];
   let c = pickOne(pool, rng);
   const day = todayStr(), got = visitorInspToday(P, day);
-  // 館內 NPC（11-14，shared/npc.js）：來的人有名字。照 route.hall 的權重抽壹位（跟上壹位不同）；NUM.npc.hallStory 的機率說自己的故事（現在這壹段的字，還沒有就說身分），其餘照舊留壹般的評語。
+  // 館內 NPC（11-14，shared/npc/core.js）：來的人有名字。照 route.hall 的權重抽壹位（跟上壹位不同）；NUM.npc.hallStory 的機率說自己的故事（現在這壹段的字，還沒有就說身分），其餘照舊留壹般的評語。
   //   壹般評語的 who 剛好是某位 NPC（老派收藏家、數學老師…）就算是他說的（npc 欄）。不改靈感、不改來的間隔
   const last = P.visitorLog[0], np = npcPickHall(rng, day, npcWebCounters(), undefined, last && last.npc);
   const sl = np && rng() < NUM.npc.hallStory ? npcStoryLine(np.id, day, npcWebCounters()) : null;

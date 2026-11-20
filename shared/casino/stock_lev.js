@@ -37,9 +37,9 @@ import { casFill, casNum, casPx } from "./core.js";
 import { CAS_STOCK_LEV } from "./stock_lev_text.js";
 import { IN_IDS, casInAdvance, casInHouseFix, casInIdx, casInPrice, casInSecret, casInSeriesR } from "./stock_in.js";
 import { casFeeText, casStockFeePct, casStockHouseFix, casStockIdHalt, stBuyCost, stCents, stPx } from "./stock.js";
-import { TW_IDS, US_IDS, twIdx, usIdx } from "../stocks_tw.js";
-import { IN_STOCKS } from "../stocks_in_text.js";
-import { OUT_STOCKS } from "../stocks_text.js";
+import { TW_IDS, US_IDS, twIdx, usIdx } from "../stock/tw.js";
+import { IN_STOCKS } from "../stock/in_text.js";
+import { OUT_STOCKS } from "../stock/text.js";
 
 const lqP = stPx; // 價：小數兩位（決定 0108）；股數、保證金、損益是整數
 const lqBox = v => !!v && typeof v === "object" && !Array.isArray(v);

@@ -10,7 +10,7 @@ import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../../
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
 import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../../shared/logic.js";
-import { npcNews, npcWebCounters } from "../../../shared/npc.js";
+import { npcNews, npcWebCounters } from "../../../shared/npc/core.js";
 import { bookSequels, hasUp, sequelOpen, unlockSequel } from "../../../shared/logic_base.js";
 import { hasTalent, skillCheck } from "../../../shared/systems.js";
 import { FRESH_KEY, freshUnder, isFresh } from "../../../shared/fresh.js";
@@ -450,7 +450,7 @@ SCREENS.hall = (root, params) => {
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
       : h("p", { class: "theme-hint big" }, "牆上還沒有主題。", h("b", null, "擺對主題"), "，牆上會浮出主題名，", h("b", { class: "good" }, "評分 +10～+20"), "。點「主題」看哪壹個最接近。"));
   const room = h("div", { class: "hall-room", style: { "--n": String(P.hall.length) } }, P.hall.map((s, i) => pedestal(s, i)));
-  const news = npcNews(todayStr(), npcWebCounters()); // 館內近況（11-14，shared/npc.js）：旅客和委託人現在的故事，壹兩句小字
+  const news = npcNews(todayStr(), npcWebCounters()); // 館內近況（11-14，shared/npc/core.js）：旅客和委託人現在的故事，壹兩句小字
   const visitors = h("section", { class: "visitors", id: "visitors" }, h("h3", null, "參觀者留言"),
     news.length ? h("p", { class: "sub npc-news" }, "館裡最近：" + news.map(x => x.news).join(" ")) : null,
     P.visitorLog.length ? P.visitorLog.slice(0, 6).map(v => visitorCard(v)) : h("p", { class: "empty" }, hs.items.length ? "參觀者快來了。" : "擺上作品，參觀者就會來。"));

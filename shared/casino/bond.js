@@ -14,7 +14,7 @@ import { NUM } from "../config.js";
 import { casHouseMove } from "./book.js";
 import { CAS_BOND } from "./text.js";
 import { casFill, casNum } from "./core.js";
-import { gbBondIn, gbBondPay, gbFix, gbSplitOn } from "../world.js";
+import { gbBondIn, gbBondPay, gbFix, gbSplitOn } from "../world/core.js";
 
 const cbdBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const cbdN = v => (Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0);
@@ -109,7 +109,7 @@ export function casBondSettle(w, house, day) {
   B.notes = B.notes.slice(-5);
   return out;
 }
-// 簽收窗口（劇情經濟事件 bondWindow，shared/econ_events.js）：窗口內可以提早拿回館債，本金加「已持有天數」照比例的利息（利率不變，不會比到期多）；
+// 簽收窗口（劇情經濟事件 bondWindow，shared/world/econ_events.js）：窗口內可以提早拿回館債，本金加「已持有天數」照比例的利息（利率不變，不會比到期多）；
 // 莊家壹天最多付 redeemPct% 的（bankroll ＋ 超過準備金的部分）；付不出的留著，不開憑證、不動博物館資金。回傳 { ok, n 幾張, amt 本金, int 利息 }
 export function casBondRedeem(w, house, day) {
   const E = NUM.casino.econEvent, W = house && house.ev && house.ev.window;

@@ -4,7 +4,7 @@
 // 付款額 ＝ 付款方池子 × pct% × 它的預算倍率（whMult：一般 1～1.1、減薪 0.8、緊縮 0.5、裁員 0.3）×（1 ＋ 0.5 × 景氣 b），最多付到它現有的。
 // 景氣 −1／0／+1 各跑壹遍；--off ＝ 只有現在的兩條貨款（對照）。不碰正式站。
 const LS = require("../load_shared.cjs"), vm = require("vm"), fs = require("fs"), path = require("path"), L = require("../../tools/content/world_lib.cjs");
-// 載入 shared/，再把 wtWealth 換成「帳上的錢加上在銀行的存款」的版本（存款也是集團的資產，不然存進去健康值會掉；正式做時改 shared/world.js 的 wtWealth，原型用這個 hook）
+// 載入 shared/，再把 wtWealth 換成「帳上的錢加上在銀行的存款」的版本（存款也是集團的資產，不然存進去健康值會掉；正式做時改 shared/world/core.js 的 wtWealth，原型用這個 hook）
 const HOOK = "wtWealth = function (house, id) { const T = wtCfg(); if (!T || !T.on) return 0; const x = wuFix(house), base = wtBase(house, id); if (!x || !(base > 0)) return 0; const rec = id === WT_FIN && wuBox(house.wh) && wuBox(house.wh.loan) ? Object.values(house.wh.loan).reduce((a, L) => a + wdN(L && L.amt), 0) : 0; const dep = house.__gb && house.__gb.dep ? wdN(house.__gb.dep[id]) : 0; return whClamp((wdN(x.adj[id]) + rec + dep) / base, -T.dCap, T.dCap) * T.wealthW; };";
 function load(extra) {
   const ctx = Object.assign({ console, Buffer, setTimeout, clearTimeout }, extra); vm.createContext(ctx);

@@ -138,7 +138,7 @@ module.exports = { parseArgs, parseChange, patchConfig, literalOf, run, defaultC
 if (require.main === module) {
   try {
     const o = parseArgs(process.argv.slice(2)), { load } = require("../../test/load_shared.cjs"), L = require("../content/world_lib.cjs");
-    const ctx = { configFile: CONFIG, unitDir: L.UNIT_DIR, npcDir: L.NPC_DIR, rosterFile: path.join(ROOT, "shared", "world_roster.js"), npcRosterFile: path.join(ROOT, "shared", "npc_roster.js"), stockIds: load().OUT_STOCKS.map(s => s.id), touched: new Set() };
+    const ctx = { configFile: CONFIG, unitDir: L.UNIT_DIR, npcDir: L.NPC_DIR, rosterFile: path.join(ROOT, "shared", "world", "roster.js"), npcRosterFile: path.join(ROOT, "shared", "npc", "roster.js"), stockIds: load().OUT_STOCKS.map(s => s.id), touched: new Set() };
     process.exitCode = run(o, ctx).ok ? 0 : 1;
   } catch (e) { console.error("✗ " + e.message); process.exit(1); }
 }

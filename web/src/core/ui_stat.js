@@ -1,5 +1,5 @@
 // ================================================================
-//  公用的「數值怎麼看」畫面元件（翊文 11-15：「寫個公用的方式，這樣以後哪邊都好呼叫」；資料層是 shared/stat_view.js，決定 0088）
+//  公用的「數值怎麼看」畫面元件（翊文 11-15：「寫個公用的方式，這樣以後哪邊都好呼叫」；資料層是 shared/world/stat_view.js，決定 0088）
 //  玩家看分級和一句話，不看數字。tone 對應的顏色只寫在 css/stat.css（sv- 開頭）。
 //    statBadge(sv, { hint })        小牌：「保守」。sv 是 statView 的回傳；null 就回 null（呼叫的地方照放，h() 會略過 null）
 //    statBar(items, { label })      長條：壹條切成幾段，寬度照 n；items = [{ label, n, tone }]
@@ -10,7 +10,7 @@
 // ================================================================
 import { UI, h } from "./ui_core.js";
 import { NUM } from "../../../shared/config.js";
-import { statView, statBandOf } from "../../../shared/stat_view.js";
+import { statView, statBandOf } from "../../../shared/world/stat_view.js";
 
 const TONES = ["good", "neutral", "warn", "bad"];
 const tone = t => (TONES.includes(t) ? t : "neutral");

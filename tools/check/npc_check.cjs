@@ -167,7 +167,7 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
         else if (!isObj(V)) E(vw, "要是 { steady, tired, uneasy, edge } 的物件");
         else Object.entries(V).forEach(([lv, v]) => {
           const lw = vw + "." + lv;
-          if (!["steady", "tired", "uneasy", "edge"].includes(lv)) { E(vw, `不認得「${lv}」（只能 steady、tired、uneasy、edge，跟 shared/stat_view.js 的 npcSan 壹樣）`); return; }
+          if (!["steady", "tired", "uneasy", "edge"].includes(lv)) { E(vw, `不認得「${lv}」（只能 steady、tired、uneasy、edge，跟 shared/world/stat_view.js 的 npcSan 壹樣）`); return; }
           if (!isObj(v)) { E(lw, "要是物件"); return; }
           if (s.beat !== undefined && (lv === "uneasy" || lv === "edge")) E(lw, "這壹步掛了主線揭露（beat），只能換句子：不能寫 uneasy、edge（不暫停、不跳步、不分岔）");
           const keys = { steady: ["text", "news"], tired: ["text", "news", "delay"], uneasy: ["action", "text", "news"], edge: ["action", "news"] }[lv];

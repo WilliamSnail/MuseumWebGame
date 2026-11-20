@@ -5,9 +5,9 @@ const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 require("../content/notices_build.cjs").write(); // 公告資料（shared/notices_data.js，不進 git）要先產生，下面才複製得到
 require("../content/world_pack.cjs").write(); require("../content/market_pack.cjs").write();
-require("../content/world_events_pack.cjs").write(); // 排程填的世界事件（shared/world_events.js，決定 0092） // 世界單位名單（shared/world_roster.js，W3）先跟上 content/world/units/
-require("../content/map_pack.cjs").write(); // 館外地圖的點（shared/map_data.js）
-require("../content/npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc_roster.js）先跟上 content/npc/
+require("../content/world_events_pack.cjs").write(); // 排程填的世界事件（shared/world/events.js，決定 0092） // 世界單位名單（shared/world/roster.js，W3）先跟上 content/world/units/
+require("../content/map_pack.cjs").write(); // 館外地圖的點（shared/world/map_data.js）
+require("../content/npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc/roster.js）先跟上 content/npc/
 const from = path.join(ROOT, "shared"), to = path.join(ROOT, "functions", "shared");
 fs.mkdirSync(to, { recursive: true });
 let n = 0;
@@ -139,7 +139,7 @@ function npcData() {
   return out;
 }
 // 預告的活動（規劃 2.8k）：week.json.fest [{ store, date, name }] → { 日期: [{ store, name }] }
-// 劇情經濟事件（shared/econ_events.js）：week.json.econ [{ kind, date, level, name }] → { 日期: [{ kind, level, name }] }
+// 劇情經濟事件（shared/world/econ_events.js）：week.json.econ [{ kind, date, level, name }] → { 日期: [{ kind, level, name }] }
 function econData() {
   const dir = path.join(ROOT, "content", "weeks"), out = {}, isDay = s => typeof s === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s);
   if (!fs.existsSync(dir)) return out;

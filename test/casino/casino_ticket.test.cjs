@@ -1,5 +1,5 @@
 // 展廳參觀者門票（11-14 改版，決定 0079）：node test/casino/casino_ticket.test.cjs（npm test 也會跑）
-// 到訪的人（有名字的 NPC、散客）到的那刻自己付票（shared/npc_spend.js），玩家領的是「分紅池」：驗證 key、先領的拿壹半、總額不超過池子、每天 perDay 位、散客照人數、冪等、守恆、自由模式不領。
+// 到訪的人（有名字的 NPC、散客）到的那刻自己付票（shared/npc/spend.js），玩家領的是「分紅池」：驗證 key、先領的拿壹半、總額不超過池子、每天 perDay 位、散客照人數、冪等、守恆、自由模式不領。
 const assert = require("assert"), fs = require("fs"), path = require("path");
 const { G, buildProfile } = require("../sim/sim_cellar.cjs");
 let pass = 0, fail = 0;

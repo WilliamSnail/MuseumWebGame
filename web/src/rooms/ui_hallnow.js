@@ -8,7 +8,7 @@
 //  - 名字、評語是 NPC 說的話，也當不可信的字：只用 h() 的字串。
 // ================================================================
 import { matesByRoom } from "../../../shared/mates.js";
-import { NPC_ROSTER } from "../../../shared/npc_roster.js";
+import { NPC_ROSTER } from "../../../shared/npc/roster.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "../core/ui_core.js";
 import { crowdMoodLine, npcSanBadge } from "../core/ui_stat.js";
@@ -160,10 +160,10 @@ async function loadReviews(gb) {
   if (gb.who) q.who = gb.who;
   return NET.call("casino", q);
 }
-// 選一位 NPC：名單是 shared/npc_roster.js（旅客 visitor、委託人 client；劇情角色 trace 不留評價，不在名單裡，這裡也擋掉）
+// 選一位 NPC：名單是 shared/npc/roster.js（旅客 visitor、委託人 client；劇情角色 trace 不留評價，不在名單裡，這裡也擋掉）
 const npcsOf = kind => NPC_ROSTER.filter(n => n.kind === kind && n.kind !== "trace");
 function guestbook() {
-  const gb = UI.gb || (UI.gb = { day: null, who: "", data: null, busy: false, failed: false }); // who：NPC 的 id（shared/npc_roster.js）
+  const gb = UI.gb || (UI.gb = { day: null, who: "", data: null, busy: false, failed: false }); // who：NPC 的 id（shared/npc/roster.js）
   const root = h("div", { class: "hn-gb" });
   const go = patch => { Object.assign(gb, patch); fetchIt(); };
   const fetchIt = async () => {
