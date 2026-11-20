@@ -13,7 +13,7 @@ export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion
   readWeek: "book", dailyAll: "star", showDays: "gallery", ending: "book" };
 // 交代人：剪影的顏色（底色、剪影色）；有正式圖的 id 放進 GIVER_ART
 const GIVER_TONE = { yuga: ["#2F4A3A", "#BFE6C8"], hall: ["#4A3322", "#E6C879"], postman: ["#2F3F55", "#C9D8EE"], clerk: ["#4F3A2A", "#F3DFA6"], scale: ["#3E3A2A", "#E7D28A"], number: ["#2E2E34", "#D9D9E6"] };
-export const GIVER_ART = new Set([]);
+export const GIVER_ART = new Set(["yuga"]); // yuga：玩家 Yuga 自己畫的 Yuga Bot 頭像（決定 0147）
 const BUST = `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="18" r="9" fill="currentColor"/><path d="M6 46c1-11 8-16 18-16s17 5 18 16z" fill="currentColor"/></svg>`;
 export function giverAv(id, o = {}) {
   const tone = GIVER_TONE[id] || GIVER_TONE.hall;
