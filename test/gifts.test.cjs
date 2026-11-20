@@ -341,7 +341,7 @@ T("本週特展：自由模式、還沒開館、壞存檔是 open false；還沒
   assert.strictEqual(G.hallArt(null).length, 0); assert.strictEqual(G.hallArt({ art: { own: "壞" } }).length, 0);
 });
 T("掛畫加展廳評分：照稀有度加分、總共有上限、拍賣中的不算、展廳沒東西不加；hallView／cleanHallView 給 artBonus；分數跟 hallScore 同壹個算法", () => {
-  const { buildProfile } = require("./sim_cellar.cjs"); void buildProfile;
+  const { buildProfile } = require("./sim/sim_cellar.cjs"); void buildProfile;
   const C = G.NUM.hallArt, P = G.newProfile("challenge"); Object.keys(G.CATS ? {} : {});
   assert.strictEqual(G.hallArtBonus(P), 0); assert.strictEqual(G.hallArtBonus(null), 0);
   P.art = { v: 1, own: { a: { tier: 0, date: "2026-11-01" }, b: { tier: 3, date: "2026-11-01" } } }; assert.strictEqual(G.hallArtBonus(P), C.pts[0] + C.pts[3]);

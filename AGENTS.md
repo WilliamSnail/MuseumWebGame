@@ -38,7 +38,7 @@ npm run version:bump   # 換版本號（version.json）
 npm run ship|local|doc:new  # 省步驟的腳本（子代理也用）：tools/README.md。要重複做的事都要寫腳本；同樣的邏輯有兩份以上就合併成共用的（翊文 11-15）
 npm run log:index      # 在本機重產日誌索引（不進 git，不要手改）
 npm run notice -- --area 賭場 --title "標題" "第壹句"   # 加館方公告（寫成 content/notices/<id>.json，一則一檔，不要手改 shared/notices.js 的陣列）
-node test/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
+node test/sim/sim.cjs 1000 # 節奏的模擬；還有 sim_san.cjs、sim_cellar.cjs
 npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順序）；改經濟數字（NUM.casino、NUM.auction）前後都要跑，紅字不准合併。帳面：node tools/econ_check.cjs --ledger 檔案.json（docs/經濟自我檢查.md）
 npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入口：改好幾處、自動跑檢查和模擬、不過就還原（tools/tune.cjs）
 ```

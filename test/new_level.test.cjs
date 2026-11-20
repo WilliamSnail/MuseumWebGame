@@ -2,7 +2,7 @@
 // 每一種打法、每一層做出來的那一塊都過檢查；少寫預告會說；調難度會往目標靠；今天的點放得進地圖、看得到等級看不到是誰。
 const assert = require("assert");
 const L = require("../tools/new_level.cjs");
-const { G } = require("./sim_fight.cjs");
+const { G } = require("./sim/sim_fight.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } finally { G.setRng(null); } };
 const JS = x => JSON.parse(JSON.stringify(x));

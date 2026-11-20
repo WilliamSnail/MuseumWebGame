@@ -12,7 +12,7 @@
 - [ ] `npm test` 全過
 - [ ] `npm run build` 成功
 - [ ] 瀏覽器實際看過（電腦和手機寬度）<!-- 沒看就寫沒看，不要打勾 -->
-- [ ] 改了數值有重跑模擬（`node test/sim.cjs 1000`、`node test/sim_san.cjs 1000`），數字寫在日誌
+- [ ] 改了數值有重跑模擬（`node test/sim/sim.cjs 1000`、`node test/sim/sim_san.cjs 1000`），數字寫在日誌
 
 ## 一定要做的
 

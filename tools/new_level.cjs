@@ -23,7 +23,7 @@
 //   }
 // 故事怎麼接：照 content/排程說明.md「一之七」和「一之八」。這支只管關卡，不寫故事。
 const fs = require("fs"), path = require("path");
-const { G, simFoe } = require("../test/sim_fight.cjs");
+const { G, simFoe } = require("../test/sim/sim_fight.cjs");
 const ROOT = path.join(__dirname, "..");
 
 // 打法：每一種「玩起來不一樣」，不是只有數字不同。what ＝給排程看的一句話；kinds ＝用到哪幾種招（texts 要寫這幾種）
