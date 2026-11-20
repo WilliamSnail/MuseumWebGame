@@ -19,7 +19,7 @@ T("館外股：買、賣各記壹筆（價、股數、手續費、稅、損益�
   assert.strictEqual(s.a, "s"); assert.strictEqual(s.p, rs.px); assert.strictEqual(s.f, rs.fee); assert.strictEqual(s.x || 0, rs.tax); assert.strictEqual(s.g || 0, rs.profit);
   const v = G.casTradeView(w);
   assert.strictEqual(v.length, 2); assert.strictEqual(v[0].kind, "sell"); assert.strictEqual(v[1].kind, "buy", "新的在前");
-  assert.ok(v[0].name && v[0].name !== ID, "名字查好"); assert.strictEqual(v[0].market, "out"); assert.strictEqual(v[0].lev, false); assert.strictEqual(v[1].profit, null); assert.strictEqual(v[0].profit, rs.profit);
+  assert.ok(v[0].name && v[0].name !== ID, "名字查好"); assert.strictEqual(v[0].market, "out"); assert.strictEqual(v[0].lev, false); assert.strictEqual(v[1].profit, null); assert.strictEqual(v[0].profit, rs.profit - rs.tax, "畫面的損益是扣證交稅後的實際賺賠");
 });
 T("失敗的買賣不記", G => {
   const { w, house } = fresh(G); w.chips = 1;
@@ -47,6 +47,16 @@ T("集團股：買賣記 m＝g、價是每股均價", G => {
   const b = G2.gsBuy(w, h, "g-daily", 1000, D, NOON); assert.ok(b.ok, b.reason); const r = G2.gsSell(w, h, "g-daily", 1000, D, NOON); assert.ok(r.ok, r.reason);
   assert.strictEqual(w.tl.length, 2); assert.strictEqual(w.tl[0].m, "g"); assert.strictEqual(w.tl[0].p, b.px); assert.strictEqual(w.tl[1].g || 0, r.profit);
   const v = G2.casTradeView(w); assert.strictEqual(v[0].market, "grp"); assert.ok(v[0].name && v[0].name !== "g-daily");
+});
+T("損益扣稅後：跟錢包實際變化對得上（館外股、館內股、集團股；舊紀錄也是）", G => {
+  const { w, house } = fresh(G); const t = at(D, 14); G.casStockBuy(w, house, ID, 100, D, t); const c1 = w.chips; G.casStockSell(w, house, ID, 100, D, t);
+  const x = w.tl[1]; assert.ok(x.x > 0, "館外股有證交稅");
+  const net = w.chips - c1, paid = w.tl[0].p * 100 + w.tl[0].f;
+  assert.strictEqual(G.casTradeView(w)[0].profit, net - paid, "實際賺賠 ＝ 實拿 − 成本");
+  const v2 = G.casTradeView({ tl: [{ d: D, id: ID, m: "o", a: "s", n: 1, p: 100, f: 1, x: 5, g: 90 }, { d: D, id: "g-daily", m: "g", a: "s", n: 1, p: 100, f: 1, x: 5, g: 84 }] });
+  assert.strictEqual(v2[1].profit, 85, "舊的館外股紀錄在 view 裡扣稅"); assert.strictEqual(v2[0].profit, 84, "集團股的 g 本來就扣過稅");
+  const { w: w2, house: h2 } = fresh(G); G.casInRoll(h2, D, 0, SEC); const b = G.casInBuy(w2, h2, IN, 20, D, at(D, 10), SEC), c2 = w2.chips; const s = G.casInSell(w2, h2, IN, 20, D, at(D, 10), SEC);
+  assert.strictEqual(G.casTradeView(w2)[0].profit, (w2.chips - c2) - (b.cost + b.fee), "館內股也對得上");
 });
 T("最近 50 筆：超過丟最舊的；50 筆大小在 5 KB 內", G => {
   const { w, house } = fresh(G), t = at(D, 14);
