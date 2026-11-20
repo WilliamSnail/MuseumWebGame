@@ -553,6 +553,12 @@ function weekUnderstoodBox() {
     v.done.length ? h("ol", { class: "uk-list" }, v.done.map(x => h("li", null, h("span", { class: "uk-from" }, x.from || "館裡"), h("span", { class: "uk-line" }, ptNode(x.text))))) : null,
     v.near.map(x => h("p", { class: "uk-near" }, `有件事快看懂了：還差 ${x.left} 條。`, x.hint ? h("span", { class: "uk-hint" }, ptNode(x.hint)) : null)));
 }
+// 手機直拿：書打開時蓋住書架，書上面有「回書架」（電腦和橫拿不顯示，css/origin2.css）
+export function bookBack(reader) {
+  const main = reader.closest ? reader.closest(".origin-main") : null; if (!main) return null;
+  main.classList.add("book-open");
+  return h("button", { type: "button", class: "book-back", onClick: () => { main.classList.remove("book-open"); $$(".spine.on").forEach(x => x.classList.remove("on")); } }, icon("arrowLeft"), h("span", null, "回書架"));
+}
 export function bookReader(reader, title, pages, o = {}) {
   let i = 0;
   const page = h("div", { class: "page" });
@@ -573,7 +579,7 @@ export function bookReader(reader, title, pages, o = {}) {
   page.addEventListener("pointerdown", e => { sx = e.clientX; });
   page.addEventListener("pointerup", e => { if (sx != null && Math.abs(e.clientX - sx) > 40) flip(e.clientX < sx ? 1 : -1); sx = null; });
   const book = h("div", { class: "book", tabindex: "0", onKeydown: e => { if (e.key === "ArrowRight") flip(1); if (e.key === "ArrowLeft") flip(-1); } },
-    h("h2", { class: "book-title" }, title), pages.some(p => /\[\[/.test(p)) ? h("p", { class: "book-hint" }, icon("sparkle"), " 書裡發亮的字可以點") : null,
+    bookBack(reader), h("h2", { class: "book-title" }, title), pages.some(p => /\[\[/.test(p)) ? h("p", { class: "book-hint" }, icon("sparkle"), " 書裡發亮的字可以點") : null,
     page, h("div", { class: "book-nav" }, prev, count, next), h("div", { class: "book-gains", "aria-live": "polite" }));
   reader.replaceChildren(book);
   draw();
