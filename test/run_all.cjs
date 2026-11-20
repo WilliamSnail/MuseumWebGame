@@ -174,7 +174,7 @@ const STEPS = [
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/log_check.cjs"]],
-  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/，11-20）", ["tools/repo_rules.cjs"]],
+  ["資料夾的規矩（最上層只放清單裡的、模擬放 test/sim/、shared 子資料夾、檔名不用數字結尾、單檔不超過 1,200 行、web/src 不繞圈，11-20）", ["tools/repo_rules.cjs"]],
 ];
 
 // 同時跑好幾項（翊文 11-13：「你能優化一下測試嗎」）：以前壹項排完才跑下壹項，現在壹次跑「核心數 − 1」項。

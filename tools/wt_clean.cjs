@@ -11,6 +11,7 @@ const ROOT = path.resolve(process.cwd(), common, "..");
 const DIR = path.join(ROOT, ".claude", "worktrees");
 const KEEP = new Set(["fbsnap", "fbtool"]);
 const SESSION = /^[a-z]+-[a-z]+-[0-9a-f]{6}$/;
+const RECENT_MS = 6 * 3600e3;
 const here = path.resolve(process.cwd());
 const doIt = process.argv.includes("--do"), quiet = process.argv.includes("--quiet");
 const log = (...a) => { if (!quiet) console.log(...a); };
@@ -27,6 +28,10 @@ function plan() {
       if (!rest.length) out.leftover.push(name); else out.kept.push(name);
       continue;
     }
+    // 6 小時內動過的不收（11-20：剛開、還沒改東西的 worktree 看起來也是「沒改動、已併進 main」，被收掉過一次）
+    const gd = path.resolve(d, git(["rev-parse", "--git-dir"], d).stdout.trim());
+    const touched = Math.max(...["index", "HEAD", "logs/HEAD"].map(x => { try { return fs.statSync(path.join(gd, x)).mtimeMs; } catch (e) { return 0; } }));
+    if (Date.now() - touched < RECENT_MS) { out.kept.push(name + "（6 小時內動過）"); continue; }
     if (git(["status", "--porcelain"], d).stdout.trim()) { out.kept.push(name + "（有改動）"); continue; }
     if (git(["merge-base", "--is-ancestor", "HEAD", "origin/main"], d).status !== 0) { out.kept.push(name + "（還沒併進 main）"); continue; }
     out.remove.push(name);
