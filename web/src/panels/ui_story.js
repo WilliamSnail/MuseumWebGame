@@ -588,7 +588,7 @@ function weekVolume(w, reader) {
   const cst = casinoStory(w);
   if (cst) items.push(h("li", null, h("button", { type: "button", class: "vol-book", onClick: () => openCasinoStory(w, cst, reader) }, h("span", null, "賭場"), h("b", null, `〈${cst.title}〉`))));
   reader.replaceChildren(h("div", { class: "book vol-book-list" }, h("h2", { class: "book-title" }, `〈${w.title}〉`),
-    h("p", { class: "book-from" }, `${seasonName(seasonOf(w.label))}・${w.label}（${w.start.slice(5).replace("-", "/")} 起）`),
+    h("p", { class: "book-from" }, `${seasonName(seasonOf(w.label))}・${w.label}（${w.start.slice(5).replace("-", () => "/")} 起）`),
     w.summary.map(s => h("p", { class: "vol-sum" }, ptNode(s))), h("ol", { class: "vol-list" }, items)));
 }
 function seasonVolume(n, weeks, reader) {

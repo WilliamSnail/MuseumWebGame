@@ -14,7 +14,7 @@ import { claimAllMail, claimMail, daysLeft, giftText, mailList, pruneMail, syncM
 import { FX } from "../fx/fx.js";
 import { ADDONS, planPortrait, P, PANELS, SAVE, UI, btn, go, h, icon, markText, navTo, note, persist, snd, sndFile, updateBoardBadges, updateStatus } from "../core/ui_core.js";
 
-const md = s => s ? s.slice(5).replace("-", "/") : ""; // "2026-11-08" → "11/08"
+const md = s => s ? s.slice(5).replace("-", () => "/") : ""; // "2026-11-08" → "11/08"
 const narrow = () => planPortrait(); // 橫拿的手機寬度夠，左右分欄（決定 0043）
 const TILT = [-1.2, .9, -.5, 1.1, -.8, .4]; // 紙釘上去不會剛好正正的
 

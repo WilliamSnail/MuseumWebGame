@@ -399,7 +399,7 @@ function bondPane(v) {
       h("p", { class: "bank-hint" }, "到期還本金加利息；" + (b.window ? "現在簽收窗口開著，可以到右邊「我持有的」提早贖回。" : "平常不能提早贖回、不能轉讓（簽收窗口開著的時候才可以）。"))),
     panel("我持有的", `共 ${fmt(i.mine)}`,
       ledger(["金額", "到期拿到", ""], b.held.map(x => h("div", { class: "bank-row", role: "row" }, h("span", null, h("b", null, fmt(x.amt))), h("span", { class: "bank-tab-num" }, `${fmt(x.amt + x.int)}（${x.due}）`), h("span", null)))), b.window ? h("div", { class: "bank-redeem" },
-        h("p", { class: "bank-line" }, h("b", null, "現在可以提早贖回"), b.window.until ? `（到 ${String(b.window.until).slice(5).replace("-", "/")}）` : ""),
+        h("p", { class: "bank-line" }, h("b", null, "現在可以提早贖回"), b.window.until ? `（到 ${String(b.window.until).slice(5).replace("-", () => "/")}）` : ""),
         h("p", { class: "bank-meta sm" }, "拿回本金，加上已經持有的天數照比例算的利息，不會比到期多。館方一天能付的有限，付不出就明天再試。"),
         btn("提早贖回", () => confirmTrade("提早贖回館債", [["持有", fmt(b.held.reduce((n, x) => n + x.amt, 0))], ["拿回", "本金＋照持有天數算的利息（以伺服器算的為準）"]], "確認贖回", () => bankDo("bank", { op: "bondRedeem" })), "primary big bank-btn gold", { disabled: b.held.length ? null : true }),
         b.held.length ? null : h("p", { class: "bank-why" }, "你還沒有買這一期的館債。")) : null));
@@ -650,7 +650,7 @@ function levTrade(v, S, cur) {
 }
 // ---------- 交易：掛單（限價買、限價賣、停損賣） ----------
 const KIND_TEXT = { buy: "限價買", sell: "限價賣", stop: "停損賣" };
-const expText = d => (d ? String(d).slice(5).replace("-", "/") : ""); // 2026-11-17 → 11/17
+const expText = d => (d ? String(d).slice(5).replace("-", () => "/") : ""); // 2026-11-17 → 11/17
 function orderTrade(v, S, cur) {
   const f = form(), k = f.okind, halt = stockHalt(S, cur);
   if (f.opx === "" || f.opxFor !== cur.id + k) { f.opx = Math.max(0.01, Math.round(cur.price * (k === "buy" ? 0.98 : k === "sell" ? 1.02 : 0.97) * 100) / 100); f.opxFor = cur.id + k; f.on = f.on || 1; }
@@ -834,7 +834,7 @@ function houseInvPanel(v) {
   const hold = Array.isArray(I.hold) ? I.hold : [], ys = Array.isArray(I.yesterday) ? I.yesterday : [];
   const paused = Object.keys(I.paused || {}).map(k => `${POOL_TEXT[k] || k}：${PAUSE_TEXT[I.paused[k]] || "暫停買進"}`);
   const empty = !hold.length && !ys.length;
-  return panel("館方投資", h("span", null, `截至 ${String(I.asOf || "").slice(5).replace("-", "/")}（昨天的資料，不是現在）`, btn([icon("scroll"), " 投資方式"], openInvestHow, "ghost small bank-howbtn", { title: "館方怎麼投資：白話說明" })),
+  return panel("館方投資", h("span", null, `截至 ${String(I.asOf || "").slice(5).replace("-", () => "/")}（昨天的資料，不是現在）`, btn([icon("scroll"), " 投資方式"], openInvestHow, "ghost small bank-howbtn", { title: "館方怎麼投資：白話說明" })),
     empty ? h("p", { class: "bank-empty" }, "館方還沒有投資。") : [
       h("div", { class: "bank-invsum" },
         h("p", null, h("span", null, "總成本"), h("b", null, fmt(I.cost))), h("p", null, h("span", null, "總市值"), h("b", null, fmt(I.value))),
@@ -915,11 +915,11 @@ function tradeSec(t) {
   // 先照種類加總（貨款、放款、利息…壹行壹種、大的在前），點開才看那壹種是誰付給誰（翊文 11-18：往來變多，壹列列太長）
   const kinds = new Map(); for (const x of t.rows || []) { const g = kinds.get(x.k) || { k: x.k, label: x.label || x.k, n: 0, list: [] }; g.n += x.n; g.list.push(x); kinds.set(x.k, g); }
   const groups = [...kinds.values()].sort((a, b) => b.n - a.n), loans = t.loans || [], total = groups.reduce((n, g) => n + g.n, 0);
-  return h("div", { class: "bank-wld-sec" }, h("b", null, "集團之間的往來"), h("small", { class: "bank-meta sm" }, `　本週（${String(t.since || "").slice(5).replace("-", "/")} 起）累計，整天陸續入帳`),
+  return h("div", { class: "bank-wld-sec" }, h("b", null, "集團之間的往來"), h("small", { class: "bank-meta sm" }, `　本週（${String(t.since || "").slice(5).replace("-", () => "/")} 起）累計，整天陸續入帳`),
     groups.length ? h("div", { class: "bank-trade" }, groups.map(g => h("details", { class: "bank-trade-k" },
       h("summary", null, h("b", null, g.label), h("small", null, `${g.list.length} 筆`), h("span", { class: "bank-tab-num" }, fmt(g.n)), h("i", { class: "bank-trade-bar", "aria-hidden": "true" }, h("u", { style: { width: Math.max(3, Math.round(g.n / Math.max(1, total) * 100)) + "%" } })), h("em", { "aria-hidden": "true" }, "點開 ▾")),
       h("ul", { class: "bank-who" }, g.list.slice().sort((a, b) => b.n - a.n).map(x => h("li", null, `${x.fromName} → ${x.toName}　`, h("span", { class: "bank-tab-num" }, fmt(x.n)))))))) : h("p", { class: "bank-meta sm" }, "這週還沒有往來。"),
-    h("p", { class: "bank-meta sm" }, loans.length ? "還欠金融集團：" + loans.map(l => `${l.name} ${fmt(l.amt)}（${String(l.day || "").slice(5).replace("-", "/")} 借）`).join("、") : "目前沒有集團欠金融集團的錢。"));
+    h("p", { class: "bank-meta sm" }, loans.length ? "還欠金融集團：" + loans.map(l => `${l.name} ${fmt(l.amt)}（${String(l.day || "").slice(5).replace("-", () => "/")} 借）`).join("、") : "目前沒有集團欠金融集團的錢。"));
 }
 function outsidePanel(e, trade) {
   const w = e && e.world;
@@ -938,7 +938,7 @@ function outsidePanel(e, trade) {
       h("div", { class: "bank-gl" }, h("span", null, "縮手 0.3"), h("span", { class: "bank-tab-num" }, `目前 ${mult.toFixed(2)} 倍`), h("span", null, "放手 1.1"))),
     tradeSec(trade),
     h("div", { class: "bank-wld-sec" }, h("b", null, "這週換了狀態的"),
-      events.length ? h("ul", { class: "bank-who" }, events.slice(0, 6).map(x => h("li", null, h("small", { class: "bank-tab-num" }, String(x.day || "").slice(5).replace("-", "/") + "　"), String(x.text || "")))) : h("p", { class: "bank-meta sm" }, "這週沒有換狀態的。")));
+      events.length ? h("ul", { class: "bank-who" }, events.slice(0, 6).map(x => h("li", null, h("small", { class: "bank-tab-num" }, String(x.day || "").slice(5).replace("-", () => "/") + "　"), String(x.text || "")))) : h("p", { class: "bank-meta sm" }, "這週沒有換狀態的。")));
 }
 function reportPane(v) {
   const e = v.econ, world = worldPanel(v);
@@ -983,7 +983,7 @@ function gsOrdersPanel(G) {
   return panel("掛著的單", os.length ? os.length + " 張" : "沒有掛單",
     os.length ? h("div", { class: "bank-orders" }, os.map(o => h("div", { class: "bank-order" },
       h("span", null, h("i", { class: "bank-kind " + o.kind }, o.kindName || KIND_TEXT[o.kind] || o.kind), h("b", null, o.name || o.id)),
-      h("span", { class: "bank-order-d" }, (o.kind === "sell" ? "≥ " : "≤ ") + fp(o.px) + " × " + fmt(o.n) + " 股", h("small", null, "鎖 " + fmt(o.hold) + (o.kind === "buy" ? " 籌碼" : " 股") + "・" + String(o.day || "").slice(5).replace("-", "/") + " 收盤前有效")),
+      h("span", { class: "bank-order-d" }, (o.kind === "sell" ? "≥ " : "≤ ") + fp(o.px) + " × " + fmt(o.n) + " 股", h("small", null, "鎖 " + fmt(o.hold) + (o.kind === "buy" ? " 籌碼" : " 股") + "・" + String(o.day || "").slice(5).replace("-", () => "/") + " 收盤前有效")),
       btn("取消", () => bankDo("stock", { op: "cancel", id: o.id, no: o.no }), "small bank-btn", { disabled: G.halt ? true : null })))) : h("p", { class: "bank-empty-dark" }, "價格到了你設的數字才會成交，當天有效。"));
 }
 // 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
