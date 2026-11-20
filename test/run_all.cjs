@@ -1,5 +1,5 @@
 // npm test：一次跑全部的檢查。任何一項沒過，整個就算沒過（CI 也是跑這個）。
-// 模擬（sim*.cjs）比較久，不在這裡跑；改數值時自己跑：node test/sim.cjs 1000
+// 模擬（sim*.cjs）比較久，不在這裡跑；改數值時自己跑：node test/sim/sim.cjs 1000
 const path = require("path");
 
 const root = path.join(__dirname, "..");

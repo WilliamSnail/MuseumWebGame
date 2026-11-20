@@ -16,7 +16,7 @@ import { NOTICE_EXTRA } from "../../shared/notices.js";
 import { casWkBase } from "../../shared/casino_week.js";
 import { casWkDefFor } from "../../shared/casino_wallet.js";
 import { isFresh, markFresh } from "../../shared/fresh.js";
-import { LINE_KINDS, STORY_TASKS, claimMile, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
+import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemDesc, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyState, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../shared/story.js";
 import { ART } from "./art.js";
 import { understoodCard, markText, ptMark, setChips } from "./ui_core.js";
 import { NET } from "./net_firebase.js";
@@ -28,6 +28,7 @@ import { overlay } from "./ui_board.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "./ui_casino_week.js";
 import { bookBack, bookGain, bookReader, roomHead } from "./ui_room.js";
+import { TASK_ICON, claimBurst, ptsPanel, taskCard } from "./ui_tasks.js";
 import { holidayOf } from "../../shared/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "./ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
@@ -263,14 +264,8 @@ function taskRow(W, t, draw, m) {
   const S = storyState(P), st = S.tasks[t.id] || {}, n = taskCount(P, W, t), tgt = taskTarget(t, W);
   const r = Object.assign({}, t.reward, { stamps: t.weekly ? NUM.story.stampPerTask : 0 });
   const where = taskGo(t, W);
-  const act = st.claimed ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了")
-    : st.done ? btn("領獎勵", () => claimFlow(claimTask(P, W, t.id, todayStr()), draw), "primary small")
-      : where && !W.past ? btn(["前往 ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); goStep(where); }, "small") : null;
-  return h("li", { class: "sp-task" + (st.done ? " done" : "") + (st.claimed ? " claimed" : "") },
-    h("span", { class: "sp-check", "aria-hidden": "true" }, st.done ? icon("check") : null),
-    h("span", { class: "sp-t-main" }, h("span", { class: "sp-t-text" }, taskText(t, W)), t.weekly && t.words ? h("small", { class: "sp-t-words" }, ptMark(t.words)) : null,
-      t.giver && t.says ? h("small", { class: "sp-t-yuga" }, h("b", null, giverName(t.giver) + "交代："), t.says) : null, h("small", { class: "sp-t-r" }, rewardText(r))),
-    h("span", { class: "sp-t-n" }, `${n}／${tgt}`), act);
+  return taskCard({ t, text: taskText(t, W), kindIcon: TASK_ICON[t.kind], pts: t.weekly ? 0 : taskPts(t), n, tgt, reward: r, state: st.claimed ? "claimed" : st.done ? "done" : "todo",
+    words: t.weekly && t.words ? ptMark(t.words) : null, where, past: W.past, onGo: () => { m.close(); goStep(where); }, onClaim: () => claimFlow(claimTask(P, W, t.id, todayStr()), draw) });
 }
 function bonusRow(text, state, reward, claim) {
   return h("li", { class: "sp-task sp-bonus" + (state === "claimed" ? " claimed" : "") },
@@ -281,19 +276,15 @@ function bonusRow(text, state, reward, claim) {
 }
 // 每週活躍積分：今天幾分、這週幾分、里程碑（決定 0146）
 function ptsBox(W, S, d, draw) {
-  const C = NUM.story.pts, wk = weekPts(S, W), td = dayPts(S, d), ms = milesView(P, W), cap = C.dayCap;
-  const pct = (a, b) => Math.min(100, Math.round(a / b * 100));
-  const claim = v => () => {
+  const C = NUM.story.pts, wk = weekPts(S, W), td = dayPts(S, d), ms = milesView(P, W);
+  const claim = v => {
     const r = claimMile(P, W, v.at, todayStr());
+    if (!r.ok) { snd("error"); note(r.reason, "bad"); return; }
+    claimBurst(`${v.at} 分的獎勵`, milesText(v));
     claimFlow(r, draw);
-    if (r.ok && (r.chips || r.box)) setTimeout(() => settleChips(), 600);
+    if (r.chips || r.box) setTimeout(() => settleChips(), 600);
   };
-  return h("div", { class: "sp-pts" },
-    h("p", { class: "sp-pts-line" }, h("b", null, `今天 ${td}／${cap} 分`), h("span", { class: "sp-pts-bar", role: "img", "aria-label": `今天 ${td} 分，最多 ${cap}` }, h("i", { style: `width:${pct(td, cap)}%` }))),
-    h("p", { class: "sp-pts-line" }, h("b", null, `這週 ${wk}／${C.goal} 分`), h("span", { class: "sp-pts-bar wk", role: "img", "aria-label": `這週 ${wk} 分，大獎 ${C.goal}` }, h("i", { style: `width:${pct(wk, C.goal)}%` }))),
-    h("ul", { class: "sp-miles" }, ms.map(v => h("li", { class: "sp-mile " + v.state },
-      h("b", null, `${v.at} 分`), h("small", null, milesText(v)),
-      v.state === "claimed" ? h("span", { class: "sp-claimed" }, icon("check"), " 領過了") : v.state === "ready" ? btn("領", claim(v), "primary small") : h("span", { class: "sp-wait" }, `還差 ${v.at - wk} 分`)))),
+  return h("div", null, ptsPanel({ td, cap: C.dayCap, wk, goal: C.goal, ms, milesText, onClaim: claim }),
     h("p", { class: "sp-note" }, `每週拿到 ${C.goal} 分是大獎；300 分先領壹半。籌碼從博物館資金出：賭場、銀行、餐車、參觀、送佩佩這幾個任務，做完各給 ${C.taskChip.toLocaleString("en-US")}（壹天最多 ${C.taskChipDay} 個）。`));
 }
 function weekPane(W, draw, m) {
