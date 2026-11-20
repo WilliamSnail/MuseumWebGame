@@ -14,7 +14,7 @@ import { npcWebSet } from "../../shared/npc.js";
 import { NET } from "./net_firebase.js";
 import { ADDONS, P, PANELS, UI, btn, h, icon, navTo, snd, updateBoardBadges } from "./ui_core.js";
 import { overlay } from "./ui_board.js";
-import { goStep, openStory, storyToday, storyTodayNodes } from "./ui_story.js";
+import { openStory, storyToday, storyTodayNodes } from "./ui_story.js";
 import { signinToday } from "./ui_signin.js";
 
 // 伺服器上的（大禮包、拚經濟剩幾次）：上壹次讀到的。還沒讀過是 null，不算進數字
@@ -60,9 +60,9 @@ export function todayItems() {
   const st = storyToday();
   if (st) {
     if (st.claim) add("claim", "gift", "每週劇情有獎勵可以領", `${st.claim} 個`, true, "去領", () => openStory(), `領獎勵 ${st.claim}`);
-    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "前往", () => (t.go ? goStep(t.go) : openStory()), "每日"));
+    st.daily.filter(t => t.yuga && !t.done).forEach(t => add("yuga-" + t.id, "dice", "Yuga Bot 交代", `${t.yuga}（${t.text}，${t.n}／${t.tgt}）`, true, "打開任務", () => openStory(), "每日"));
     st.daily.filter(t => !t.yuga || t.done).forEach(t => add("daily-" + t.id, "book", t.done ? (t.claimed ? "每日任務（領過了）" : "每日任務做完了") : "每日任務", `${t.text}（${t.n}／${t.tgt}）`,
-      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "前往", () => (!t.done && t.go ? goStep(t.go) : openStory()), "每日"));
+      !t.done || !t.claimed, t.done ? (t.claimed ? "看看" : "領獎勵") : "打開任務", () => openStory(), "每日"));
     add("weekly", "star", "每週任務", `〈${st.title}〉做完 ${st.weekly[0]}／${st.weekly[1]}`, st.weekly[0] < st.weekly[1], "打開每週劇情", () => openStory(), `每週 ${st.weekly[0]}／${st.weekly[1]}`);
   }
   // 老主顧今天在櫃台（翊文 11-13：「追蹤那些來參觀者的劇情應該更明顯」）
