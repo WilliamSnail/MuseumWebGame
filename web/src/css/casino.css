@@ -598,3 +598,30 @@ body.reduce-motion .cas-bub { animation: none; }
   .nb-casino .cas-body .cas-acts > .btn:not(.primary) { border: 1px solid #D6B25E; background: rgba(20, 30, 24, .85); color: #F8E3A0; font-weight: 700; }
   .nb-casino .cas-betbox .cas-hint, .nb-casino .cas-note.cas-limit { display: none; }
 }
+
+/* ===== 賭場手機直拿第二輪（11-20，翊文：21 點結果頁下注框被帳戶／同桌條擋住；餐車品項窗口太矮）=====
+   把周圍的東西壓薄，牌桌／餐車拿到最多高度：頁籤壹排橫向滑（選中的捲到看得到）、帳戶和同桌並排成壹條放最下面 */
+@media (max-width: 760px) and (orientation: portrait) {
+  .nb-casino .nb-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; scrollbar-width: none; margin-bottom: 4px; }
+  .nb-casino .nb-tab { flex: 0 0 auto; min-width: 64px; padding: 0 8px; }
+  .nb-casino .cas-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px; flex: 1; min-height: 0; }
+  .cas-side > .cas-bank { grid-column: 1 / -1; grid-row: 1; order: 0; }
+  .nb-casino .cas-row > .cas-body { grid-column: 1 / -1; grid-row: 2; order: 0; min-height: 0; }
+  .cas-side > .cas-acct { grid-column: 1; grid-row: 3; order: 0; margin: 0; }
+  .cas-side > .cas-acct:has(.cas-acct-h[aria-expanded="true"]) { grid-column: 1 / -1; }
+  .cas-side > .cas-mp { grid-column: 2; grid-row: 3; order: 0; padding: 4px 8px; flex-wrap: nowrap; gap: 6px; }
+  .cas-side > .cas-acct:has(.cas-acct-h[aria-expanded="true"]) ~ .cas-mp { grid-column: 1 / -1; grid-row: 4; }
+  .cas-side > .cas-mp h3 { font-size: .8125rem; white-space: nowrap; }
+  .cas-side > .cas-mp .btn { min-height: 32px; padding: 0 10px; font-size: .8125rem; }
+  .cas-acct-h { min-height: 38px; }
+  .cas-acct-h small { display: none; }
+  .nb-casino .cas-foot { display: none; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .cas-side > .cas-acct, .cas-side > .cas-mp { align-self: end; }
+  .cas-side > .cas-mp h3 { display: none; }
+  .cas-side > .cas-mp { justify-content: stretch; }
+  .cas-side > .cas-mp .cas-acts { flex: 1; }
+  .cas-side > .cas-mp .btn { width: 100%; white-space: nowrap; }
+  .nb-casino .cas-body:has(.cas-result) .cas-say { display: none; } /* 結果出來了：輸贏已在結果條上，荷官的話不再佔壹塊，下注框才在第壹屏 */
+}
