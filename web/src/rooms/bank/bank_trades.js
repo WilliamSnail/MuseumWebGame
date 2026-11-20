@@ -11,7 +11,7 @@ const MARKET = { out: "館外股", in: "館內股", grp: "集團股" };
 const isPhone = () => window.innerWidth < 761 || window.innerHeight < 501;
 
 function timeOf(r) {
-  const day = String(r.day || "").slice(5).replace("-", "/");
+  const day = String(r.day || "").slice(5).split("-").join("/");
   if (!r.t) return h("span", null, day, h("small", null, "掛單成交"));
   const d = new Date(r.t + 8 * 3600e3), hm = d.toISOString().slice(11, 16);
   return h("span", null, day, h("small", null, hm));
