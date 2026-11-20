@@ -279,17 +279,22 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     daily.forEach((t, i) => { minutes += taskOk(`${where}.daily[${i}]`, t, Object.assign({ day: d }, ctx), "daily"); });
     if (minutes > N.dailyMinutes) E(where, `3 個每日任務大約要 ${minutes} 分鐘，太多了（最多 ${N.dailyMinutes}）`);
     // Yuga Bot 交代的任務：giver 只能是 yuga、says 必填、done 選填；壹天最多壹個；備用的壹天不能有。字 R 是荷官叫玩家的方式，其他英文字母照樣擋
-    const yuga = (s, max, w) => text(w, typeof s === "string" ? s.replace(/R/g, "阿") : s, max);
+    // 交代人（決定 0145）：id 要在帳本 taskGivers.list；R 只有 yuga 可以用；says／done 不能寫贏輸、賺賠、催玩、叫人掏錢
+    const GIVERS = {}; ((ledger && ledger.taskGivers && ledger.taskGivers.list) || []).forEach(g => { if (g && g.id) GIVERS[g.id] = g; });
+    if (!Object.keys(GIVERS).length) Object.keys(G.TASK_GIVERS || {}).forEach(id => { GIVERS[id] = { id }; }); // 沒帳本（測試）就用程式裡的名單
+    const NOPE = ["贏", "輸", "賺", "賠", "掏錢", "趕快", "快點", "最後機會", "別錯過", "再來", "多玩", "加碼", "下注", "梭哈"];
+    const yuga = (s, max, w, giver) => { text(w, typeof s === "string" && giver === "yuga" ? s.replace(/R/g, "阿") : s, max); if (typeof s === "string") { const hit = NOPE.find(x => s.includes(x)); if (hit) E(w, `交代不能寫「${hit}」（不寫贏輸賺賠、不催、不叫人掏錢，排程說明 一之四之四）`); } };
     daily.forEach((t, i) => {
       if (!isObj(t)) return;
       const w = `${where}.daily[${i}]`;
-      if (t.giver === undefined) { if (t.says !== undefined || t.done !== undefined) E(w, "有 says／done 就要寫 giver: \"yuga\""); return; }
-      if (t.giver !== "yuga") E(w + ".giver", "giver 只能是 \"yuga\"");
-      if (o.spare || !o.date) E(w + ".giver", "備用週、備用的壹天不能讓 Yuga Bot 交任務（不知道那天劇情走到哪）");
-      yuga(t.says, LIMITS.yugaSays, w + ".says");
-      if (t.done !== undefined) yuga(t.done, LIMITS.yugaDone, w + ".done");
+      if (t.giver === undefined) { if (t.says !== undefined || t.done !== undefined) E(w, "有 says／done 就要寫 giver"); return; }
+      if (!GIVERS[t.giver]) E(w + ".giver", `giver「${t.giver}」不在帳本 taskGivers.list（有 ${Object.keys(GIVERS).join("、") || "沒有"}）`);
+      else if (GIVERS[t.giver].from && o.date && o.date < GIVERS[t.giver].from) E(w + ".giver", `${t.giver} ${GIVERS[t.giver].from} 起才能交任務`);
+      if (o.spare || !o.date) E(w + ".giver", "備用週、備用的壹天不能有交代人（不知道那天劇情走到哪）");
+      yuga(t.says, LIMITS.yugaSays, w + ".says", t.giver);
+      if (t.done !== undefined) yuga(t.done, LIMITS.yugaDone, w + ".done", t.giver);
     });
-    if (daily.filter(t => isObj(t) && t.giver !== undefined).length > 1) E(where, "壹天最多壹個 Yuga Bot 交代的任務");
+    { const by = {}; daily.forEach(t => { if (isObj(t) && t.giver !== undefined) by[t.giver] = (by[t.giver] || 0) + 1; }); Object.entries(by).forEach(([g, n]) => { if (n > 2) E(where, `同壹位交代人（${g}）壹天最多 2 個任務`); }); }
     // 每日任務至少壹條直接碰這週的故事（排程說明 一之七；11-10 以前寫的不追）
     if (o.date && o.date > "2026-11-10" && !daily.some(t => isObj(t) && (t.kind === "read" || t.kind === "spot" || t.giver !== undefined)))
       W(where + ".daily", "3 個每日任務都沒有直接碰這週的故事：至少壹條用 read（今天的書）、spot（這週的房間），或讓 Yuga Bot 交代（排程說明 一之七）");
