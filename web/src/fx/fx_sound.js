@@ -677,7 +677,7 @@ import { api, now, pick, rand } from "./fx_core.js";
           const t = c.currentTime, pick = state.tier || (state.event ? 'event' : state.crowd ? 'crowd' : state.night ? 'night' : 'normal'); // 11-20 翊文：深夜（台灣 23:30～05:00）大廳平常放 lobby-night；理智低、活動、人潮優先
           mel.gain.setTargetAtTime(pick === 'synth' ? 1 : 0, t, 1.2);
           if (pick !== 'synth' && !song[pick]) song[pick] = fileLoop(c, g, SONG_ID[pick], 0, true);
-          for (const k of Object.keys(song)) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? 0.45 : 0, t, k === pick && t < 2 ? 0.3 : 1.2);
+          for (const k of Object.keys(song)) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? (k === 'night' ? 0.7 : 0.45) : 0, /* 11-21 翊文：深夜那首「音量再調高」：只拉高這首 */ t, k === pick && t < 2 ? 0.3 : 1.2);
         };
         const mix = (m) => {
           ck.mix(m);
