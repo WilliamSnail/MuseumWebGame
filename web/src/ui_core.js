@@ -271,8 +271,8 @@ export function buildNav() {
   const boardTab = h("a", { href: "#", class: "nav-link nav-board", "aria-haspopup": "dialog", dataset: { name: "館內公佈欄" }, onClick: e => { e.preventDefault(); openPanel("board"); } },
     icon("scroll"), h("span", { class: "nl-t" }, "公佈欄"), h("span", { class: "nb-seal", "aria-hidden": "true" }), h("span", { class: "nb-dot", "aria-hidden": "true" }));
   // 「今天」（翊文 11-10，ui_today.js 登記 PANELS.today）：今天還沒做的事有幾項，數字寫在旁邊
-  const todayTab = h("a", { href: "#", class: "nav-link nav-today", "aria-haspopup": "dialog", dataset: { name: "今天" }, onClick: e => { e.preventDefault(); openPanel("today"); } },
-    icon("calendar"), h("span", { class: "nl-t" }, "今天"), h("span", { class: "nt-n", "aria-hidden": "true" }));
+  const todayTab = h("a", { href: "#", class: "nav-link nav-today", "aria-haspopup": "dialog", dataset: { name: "任務" }, onClick: e => { e.preventDefault(); openPanel("today"); } },
+    icon("calendar"), h("span", { class: "nl-t" }, "任務"), h("span", { class: "nt-n", "aria-hidden": "true" }));
   // 「館友證」（11-10，決定 0058，ui_pass.js 登記 PANELS.pass）：封面是證件，翻開是典藏冊
   const passTab = h("a", { href: "#", class: "nav-link nav-pass", "aria-haspopup": "dialog", dataset: { name: "館友證" }, onClick: e => { e.preventDefault(); openPanel("pass"); } },
     icon("user"), h("span", { class: "nl-t" }, "館友證"));
@@ -536,7 +536,7 @@ function tabBar() {
     ic === "shop" ? cicon(ic) : icon(ic), h("span", { class: "tb-t" }, label), h("span", { class: "tb-n", "aria-hidden": "true" }));
   return h("nav", { class: "tabbar", "aria-label": "常用" },
     tb("tb-room", "lobby", "大廳", () => navTo("lobby"), { dataset: { room: "lobby" } }),
-    tb("tb-today", "calendar", "今天", () => openPanel("today")),
+    tb("tb-today", "calendar", "任務", () => openPanel("today")),
     tb("tb-shop", "shop", "兌換所", () => openPanel("shop")),
     tb("tb-room", "dice", "賭場", () => navTo("casino"), { dataset: { room: "casino" } }),
     tb("tb-menu", "menu", "選單", () => toggleMenu(), { "aria-controls": "navDrawer", "aria-expanded": "false" }));
@@ -603,7 +603,7 @@ export function updateBoardBadges() {
   if (ADDONS.calBadge) setItem(".md-cal", ADDONS.calBadge(), false); // 「今天還沒簽到」（ui_signin.js）
   const tn = ADDONS.todayCount ? ADDONS.todayCount() : 0, tt = $(".nav-today"); // 「今天」還沒做的幾項（ui_today.js）
   setItem(".md-today", tn ? `${tn} 項` : "", false);
-  if (tt) { $(".nt-n", tt).textContent = tn ? String(tn) : ""; tt.classList.toggle("has-n", tn > 0); tt.setAttribute("aria-label", tn ? `今天（還有 ${tn} 件事沒做）` : "今天"); tt.title = tn ? `今天還有 ${tn} 件事沒做` : "今天要做的事都做完了"; }
+  if (tt) { $(".nt-n", tt).textContent = tn ? String(tn) : ""; tt.classList.toggle("has-n", tn > 0); tt.setAttribute("aria-label", tn ? `任務（還有 ${tn} 件事沒做）` : "任務"); tt.title = tn ? `任務板：今天還有 ${tn} 件事沒做` : "任務板：今天要做的事都做完了"; }
   if (mb) {
     const n = badge.count + mails;
     mb.dataset.n = String(n);
@@ -614,7 +614,7 @@ export function updateBoardBadges() {
     setTab(".tb-menu", n, "選單");
     const tm = $(".tb-menu"); if (tm) tm.classList.toggle("has-seal", badge.seal);
   }
-  setTab(".tb-today", tn, "今天");
+  setTab(".tb-today", tn, "任務");
 }
 // 稱號小標籤（決定 0050）：館友名單、小卡、選館友、榜單、隊伍、牌桌共用。沒有稱號就回傳 null（版面不變）。
 // 字很長就在 css 裡縮成「…」（.ttl），完整的字放在滑鼠停上去的提示。稱號是玩家的成就名，一律純文字

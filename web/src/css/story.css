@@ -238,3 +238,15 @@ body.reduce-motion .btn.sl-nudge { animation: none; }
 .sp-mile { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid rgba(0, 0, 0, .15); border-radius: 6px; }
 .sp-mile.ready { border-color: #c9a24a; }
 .sp-mile.claimed { opacity: .6; }
+
+/* 房間裡的『這裡有任務』小橫幅（11-20，ui_story.js roomTaskBar）：固定在導覽列下面，不推開畫面；做完變綠；可以關 */
+.rtk { position: fixed; z-index: 15; top: calc(var(--nav-h, 56px) + 6px); right: 10px; max-width: min(460px, calc(100vw - 20px)); display: flex; align-items: stretch; border-radius: 6px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #3B2A1D, #2A1D14); color: #F3E6C8; box-shadow: 0 4px 10px rgba(0, 0, 0, .45); font-size: .8125rem; }
+.rtk[hidden] { display: none; }
+.rtk.done { border-color: #8FD3A5; background: linear-gradient(180deg, #24402F, #1A2E22); }
+.rtk-main { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 36px; padding: 4px 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rtk-main .ic, .rtk-main svg { width: 16px; height: 16px; flex: none; color: #E6C879; }
+.rtk-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rtk-go { flex: none; padding: 1px 8px; border-radius: 10px; background: #B08A3E; color: #FFF8DC; font-size: .75rem; white-space: nowrap; }
+.rtk-x { flex: none; width: 32px; border: 0; border-left: 1px solid rgba(231, 200, 120, .3); background: none; color: #CDBE9F; cursor: pointer; }
+.rtk-x svg, .rtk-x .ic { width: 12px; height: 12px; }
+@media (max-width: 760px) { .rtk { left: 6px; right: 6px; max-width: none; top: calc(var(--nav-h, 48px) + 2px); } .rtk-t { white-space: normal; max-height: 2.6em; } }
