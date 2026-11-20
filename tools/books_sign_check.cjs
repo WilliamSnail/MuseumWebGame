@@ -18,17 +18,17 @@ const SIGN = {
     npcFood: 1, npcBj: 0, npcArtBuy: 1, pack: -1, job: -1, find: -1, loan: -1, loanBack: 1, food: 1, econWin: 1, econLoot: -1, econSea: -1, bankInt: -1,
     bj: 0, art: 0, artAuction: 0, bond: 0, stockIn: 0, stockLev: 0, gLev: 0, tax: -1, inMarket: 0, gStock: 0, gRaise: -1, gBuy: 1 },
   budget: { gbSweepB: 1, ticketBudget: 1, npcTicketBudget: 1, npcCrowdBudget: 1, npcJob: 1, npcCellar: 1, npcCraft: 1, npcArt: 1, budgetInvestBuy: -1, budgetInvestSell: 1, budgetInvFix: 1, investFee: 1, budgetLoan: -1, budgetFix: -1, budgetRepay: 1, econWin: -1, stockFee: 1, artFee: 1, groupIntDep: -1, groupIntLoan: 1, groupBankLoan: -1, groupBankRepay: 1, groupBankInt: 1 },
-  gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1 },
+  gov: { stockTax: 1, bizTax: 1, entTax: 1, divTax: 1, govSweep: -1 },
   gb: { pLoan: -1, pLoanBack: 1, pBankInt: -1, pBond: 0, bondMove: 1, hdepIn: 1, hdepOut: -1, hdepInt: -1, gbSweepH: -1, gbSweepB: -1, groupDeposit: 1, groupWithdraw: -1, groupLoan: -1, groupRepay: 1, groupBankLoan: 1, groupBankRepay: -1, groupBankInt: -1 }, // 佩佩銀行準備金（決定 0127）：進準備金是正
   museum: { ticketMuseum: 1, npcTicketMuseum: 1, npcCrowdMuseum: 1 },
   ext: { stockBuy: 1, stockSell: -1, stockRebase: -1, stockLevWin: -1, stockLevLoss: 1, dividend: -1, houseInvestBuy: 1, houseInvestSell: -1, houseInvFix: -1, budgetInvestBuy: 1, budgetInvestSell: -1, budgetInvFix: -1 }, // 海外（決定 0126）：進海外是正
   world: { cultureGift: -1, groupDeposit: -1, groupWithdraw: 1, groupLoan: 1, groupRepay: -1, groupIntDep: 1, groupIntLoan: -1, worldLoan: -1, worldRepay: 1, grant: -1, cultureRepay: 1, cultureStart: -1,
     npcFood: -1, npcBj: 0, npcJob: -1, npcCellar: -1, npcCraft: -1, npcArt: -1, npcArtBuy: -1, npcTicketBudget: -1, npcTicketMuseum: -1, npcCrowdBudget: -1, npcCrowdMuseum: -1,
-    worldGrow: 1, worldExpand: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
+    worldGrow: 1, worldExpand: 1, govSweep: 1, bizTax: -1, entTax: -1, inMarket: 0, gRaise: 1, gBuy: -1, gDiv: -1 },
 };
 const ACCT_NAME = { bankroll: "莊家", budget: "博物館資金", museum: "修繕基金", gov: "政府帳", world: "已知世界", ext: "海外", gb: "佩佩銀行準備金" };
 // 同壹筆錢在兩個帳（已知世界 ↔ 莊家／博物館資金／修繕基金）：這些來源在兩邊的數字要剛好相反。npcArt 的已知世界那邊還包著賣家的錢包，不比
-const PAIRED = { bankroll: ["bondMove", "hdepIn", "hdepOut", "hdepInt", "gbSweepH", "gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["gbSweepB", "npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix", "groupIntDep", "groupIntLoan", "groupBankLoan", "groupBankRepay", "groupBankInt"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax"], gb: ["groupDeposit", "groupWithdraw", "groupLoan", "groupRepay"] };
+const PAIRED = { bankroll: ["bondMove", "hdepIn", "hdepOut", "hdepInt", "gbSweepH", "gRaise", "gBuy", "inMarket", "cultureRepay", "worldRepay", "grant", "worldLoan", "houseInvestBuy", "houseInvestSell", "houseInvFix", "npcFood", "npcBj", "npcArtBuy"], budget: ["gbSweepB", "npcTicketBudget", "npcCrowdBudget", "npcJob", "npcCellar", "npcCraft", "budgetInvestBuy", "budgetInvestSell", "budgetInvFix", "groupIntDep", "groupIntLoan", "groupBankLoan", "groupBankRepay", "groupBankInt"], museum: ["npcTicketMuseum", "npcCrowdMuseum"], gov: ["bizTax", "entTax", "govSweep"], gb: ["groupDeposit", "groupWithdraw", "groupLoan", "groupRepay"] };
 
 function scanKeys() { // 掃 shared/ 的記帳呼叫，拿到每個來源代號
   const A = /\b(casHouseMove|casHouseWorldIn|casHouseWorldOut|casHouseMint|casHouseBurn|casMint|casBurn)\(\s*[\w.]+\s*,\s*"(\w+)"/g;
