@@ -264,3 +264,28 @@ body.reduce-motion .tr-wisp { display: none; }
 .cx-hero .cx-entry p, .cx-hero p { flex: none; }
 @media (max-width: 760px) { .cx-hero { grid-template-columns: 1fr; } .cxh-side { flex-direction: row; } .cxh-go { min-width: 0; width: 100%; } }
 @media (max-height: 500px) and (orientation: landscape) { .cx-hero { padding: 10px 14px; } .cxh-t { font-size: 1.1rem; } .cxh-pts { font-size: .8rem; line-height: 1.5; margin-bottom: 6px; } .cxh-go { min-height: 42px; font-size: 1rem; } }
+
+/* ---------- 旅客（NPC）一起下去（決定 0149，11-21）：準備區的「旅客」那一塊、隊員格、趟裡的小標記。前綴 cx-npc ---------- */
+.cx-npc { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid rgba(143, 200, 224, .45); border-radius: 3px; background: rgba(40, 70, 90, .22); }
+.cx-npc-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.cx-npc-h small { font-size: .8125rem; color: #CFE4EE; line-height: 1.5; }
+.cx-npc-tag { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: #3C7A99; color: #fff; font-size: .6875rem; font-weight: 700; letter-spacing: .04em; vertical-align: 2px; white-space: nowrap; }
+.pt-member.cx-npc-card { border: 1px dashed rgba(60, 122, 153, .7); background: linear-gradient(180deg, #EAF4F8, #D6E7EF); }
+.cx-npc-face { width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #F2E3BC, #CBB588); border: 2px solid #3C7A99; color: #5A3A1E; font-family: var(--serif); font-size: 1.75rem; }
+.cx-npc-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.cx-npc-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; min-height: 44px; padding: 6px 10px; border: 1px solid #A88A52; border-radius: 6px; background: rgba(243, 230, 196, .92); color: #2E2014; }
+.cx-npc-list li.in { border-color: #3C7A99; background: rgba(218, 236, 244, .95); }
+.cx-npc-list li.cool { opacity: .65; }
+.cx-npc-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 200px; }
+.cx-npc-who small { font-size: .8125rem; color: #5B4630; line-height: 1.4; }
+.cx-npc-san { color: #3C6A4A !important; }
+.cx-npc-chance { font-size: .875rem; white-space: nowrap; }
+.cx-npc-chance b { font-size: 1rem; }
+.cx-npc-gift { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: .875rem; color: #FBEFD9; cursor: pointer; }
+.cx-npc-gift input { width: 20px; height: 20px; flex: none; }
+.cx-npc-gift small { color: #CFE4EE; }
+.cx-npc-gift.off { opacity: .6; cursor: default; }
+.cx-npc-say { display: grid; gap: 2px; padding: 6px 10px; border-radius: 6px; background: rgba(0, 0, 0, .25); color: #FBEFD9; }
+.cx-npc-say.ok b { color: #A5E3B5; }
+.cx-npc-say p { margin: 0; line-height: 1.5; }
+@media (max-width: 760px) { .cx-npc-face { width: 52px; height: 52px; font-size: 1.25rem; } }
