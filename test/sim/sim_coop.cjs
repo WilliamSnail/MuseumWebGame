@@ -168,6 +168,7 @@ function coop(profiles, each, floor, seed) {
   o.ghost = run.members.filter(m => m.ghost).length / members.length;
   o.loss = members.reduce((n, m) => n + (START - m.P.sanity), 0) / members.length;
   o.insp = members.reduce((n, m, j) => n + (m.P.insp - inspBefore[j]), 0) / members.length;
+  o.insp0 = members[0].P.insp - inspBefore[0]; o.loss0 = START - members[0].P.sanity; // 第 1 位隊員（「我」）自己的，找 NPC 的模擬看這個
   return o;
 }
 

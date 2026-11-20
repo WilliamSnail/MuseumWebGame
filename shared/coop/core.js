@@ -88,7 +88,7 @@ export function startCoop(members, floor, opt = {}) {
     leader: first.id, votes: {}, acks: {}, deadline: null, report: null,
     members: members.map(m => {
       Ps[m.id] = m.P;
-      return { id: m.id, name: m.name || m.id, keys: m.guard ? [] : m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null, vid: m.P.vid || null, guard: !!m.guard, skips: 0,
+      return { npc: m.npc || null, style: m.npc ? m.style || "basic" : null, role: m.npc ? m.role || null : null, id: m.id, name: m.name || m.id, keys: m.guard ? [] : m.keys.slice(), rewarded: m.rewarded !== false, job: m.P.job || null, vid: m.P.vid || null, guard: !!m.guard, skips: 0,
         ghost: false, out: null, san: m.P.sanity, max: maxSan(m.P), myth: m.P.myth, startSan: m.P.sanity, used: {},
         got: { insp: 0, sanLoss: 0, sanGain: 0, myth: 0, injured: [], rooms: 0 } };
     }),

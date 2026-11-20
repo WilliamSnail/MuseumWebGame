@@ -26,6 +26,7 @@ import { coopRouteBack } from "./fight.js";
 import { fightActors, fightSeatOf } from "../cellar/fight.js";
 import { COOP, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopRoom, coopVoters } from "./base.js";
 import { canStartCoop, coopAdvance, coopContinue, coopEnd, coopResolve, startCoop } from "./core.js";
+import { coopNpcTurn } from "./npc.js";
 
 // ---------- 每天前幾趟有獎勵（照帳號：P.coopDay 不跟著參觀者換，決定 0020） ----------
 // 算一趟，回傳這一趟有沒有獎勵。P.coopDay ＝ { date, n }
@@ -49,12 +50,13 @@ export function coopBegin(members, floor, today, now, opt = {}) {
   if (tr) members.forEach(m => { m.rewarded = false; }); // 合作試煉（決定 0041）：拿的是技能成長，不算每天 3 趟、沒有靈感
   else {
     const extra = eventExtraTurns(eventRunFix(opt.event)); // 限時活動：開始這一刻在活動內，多 1 趟有獎勵
-    members.forEach(m => { m.rewarded = coopTakeTurn(m.P, today, extra); });
+    members.forEach(m => { m.rewarded = m.npc ? false : coopTakeTurn(m.P, today, extra); }); // NPC 沒有帳號，不算每天 3 趟、沒有獎勵（決定 0149）
   }
   const s = startCoop(members, floor, Object.assign({ day: today }, opt)); // day：今天的地圖（地下室改版）
   if (!s.ok) return s;
   s.run.at = now;
   coopArm(s.run, now);
+  coopNpcTurn(s.run, Object.fromEntries(members.map(m => [m.id, m.P]))); // 找 NPC 下地下：NPC 先投好
   return s;
 }
 
@@ -269,6 +271,7 @@ export function coopAct(run, Ps, uid, act, data = {}, now = 0, opt = null) {
   } else return { ok: false, reason: "不認得的動作" };
   if (r && r.ok === false) return r;
   run.at = now;
+  if (run.phase !== "over") coopNpcTurn(run, Ps); // NPC 在新的階段先投好（人投完就能結算），理智太低的離隊
   wrapUp(run, Ps, out, now, opt);
   return out;
 }
