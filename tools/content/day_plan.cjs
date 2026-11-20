@@ -7,7 +7,7 @@
 //   npm run day:plan -- --json          印成 JSON（給別的工具用）
 //   npm run day:plan -- --week          這壹週七天的節日、趣味節日、帳本 calendar
 //
-// 規矩的詳細在 content/排程說明.md（最上面的清單會指到每一節）。這支只做「查表」：判斷用的函式都是純函式，test/day_plan.test.cjs 用假資料測。
+// 規矩的詳細在 content/排程說明.md（最上面的清單會指到每一節）。這支只做「查表」：判斷用的函式都是純函式，test/story/day_plan.test.cjs 用假資料測。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 

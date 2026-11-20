@@ -844,7 +844,7 @@ export function casOpenPacks(w, house, n, day) {
 // 這樣東西吃下去其實是哪壹樣（零食會變成烤雞，舊的梗）：菜單上的數字要跟實際加的壹樣
 export const casFoodOf = it => (it && it.redirect ? CAS_MENU.find(x => x.id === it.redirect) || it : it);
 // 這樣東西的效果說明，遊戲和 Discord 都用這壹份，不要各自組字（翊文 11-09：屬性不要寫錯）。
-// showSan：Discord 的頻道裡不放理智，傳 false。test/casino.test.cjs 會實際買過每壹樣，比對這裡寫的和真的加的
+// showSan：Discord 的頻道裡不放理智，傳 false。test/casino/casino.test.cjs 會實際買過每壹樣，比對這裡寫的和真的加的
 export function casFoodWords(it, showSan = true) {
   const f = casFoodOf(it);
   return [f && f.mood ? `心情 +${f.mood}` : "", showSan && f && f.san ? `理智 +${f.san}` : ""].filter(Boolean);

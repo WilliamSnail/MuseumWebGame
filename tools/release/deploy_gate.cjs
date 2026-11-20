@@ -15,7 +15,7 @@
 const { spawnSync } = require("child_process");
 const fs = require("fs"), path = require("path");
 
-// ci.yml 的步驟名字（test/deploy_gate.test.cjs 會確認 ci.yml 真的用這些名字）
+// ci.yml 的步驟名字（test/tools/deploy_gate.test.cjs 會確認 ci.yml 真的用這些名字）
 const STEP_TEST = "測試（規則、內容、特效、模組、日誌格式）", STEP_BUILD = "打包";
 const TREE_STEP = /^測試的 tree ([0-9a-f]{40})$/;
 

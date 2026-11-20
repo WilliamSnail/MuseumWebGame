@@ -13,7 +13,7 @@ const check = (name, ok, detail, level = "fail") => rows.push({ name, ok: !!ok, 
 const pct = x => (Math.round(x * 1000) / 1000) + "%";
 const fmt = n => Math.round(+n || 0).toLocaleString("en-US");
 
-// 規則面的全部檢查包成函式：只有「跑規則」才執行；--ledger 帳面模式不跑（省約 7 秒，test/econ_check.test.cjs 會開 12 次帳面）
+// 規則面的全部檢查包成函式：只有「跑規則」才執行；--ledger 帳面模式不跑（省約 7 秒，test/tools/econ_check.test.cjs 會開 12 次帳面）
 const W = C.world, grow = W.growBase, npcDay = C.npcSpend.dayCap * (1 + C.npcSpend.extPct / 100), npcArt = N.auction.npcDay * (1 + N.auction.npcExtPct / 100); // 帳面也要用（W、npcDay），所以放在函式外面
 function runRules() {
 // ---------- 規則面 ----------

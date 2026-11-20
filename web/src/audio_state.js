@@ -1,6 +1,6 @@
 // 「現在該放哪一首環境音」的決定，從 ui_core.js 的 audioState 抽出來的純函式（11-16 聲音狀態檢查）。
 // 不碰畫面、不碰 fx.js：輸入畫面、存檔狀態、蓋在上面的框、地下的聲音狀態，輸出環境音的名字和要告訴它的 ambMix。
-// 這樣 test/snd_check.test.cjs 可以不開瀏覽器，直接測「地下→大廳」「賭場框開著被嚇退」這些轉換。
+// 這樣 test/tools/snd_check.test.cjs 可以不開瀏覽器，直接測「地下→大廳」「賭場框開著被嚇退」這些轉換。
 // AMB_OF（畫面→環境音）還是留在 ui_core.js（tools/check/fx_report.cjs 從那裡掃）；呼叫的人傳進來。
 
 // 回傳 { amb, mix }：amb ＝ 最後要放的環境音（含理智歸零的 "zero"）；mix ＝ [名字, 內容] 或 null，要在放之前呼叫 ambMix。

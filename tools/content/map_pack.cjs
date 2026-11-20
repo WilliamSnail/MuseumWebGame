@@ -1,6 +1,6 @@
 // 把 content/map/館外.json 打包成 shared/map_data.js（圖書館「地圖」頁籤讀的點，11-16；規格 .claude/交接/主線拓展規劃稿.md 第伍節）。
 // 網頁不能直接讀 content/，所以轉成壹個進 repo 的 js 檔。內容由排程在「揭露當天」寫進 content/map/館外.json（只增不減；後面的不能先寫）。
-// 改了就跑 node tools/content/map_pack.cjs；npm test 會檢查有沒有跟上（test/map.test.cjs）。copy_shared.cjs 也會順手跑。
+// 改了就跑 node tools/content/map_pack.cjs；npm test 會檢查有沒有跟上（test/web/map.test.cjs）。copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const KEEP = ["id", "name", "layer", "from", "x", "y", "icon", "line", "npc", "need"]; // source 是給審的人看的，不進遊戲

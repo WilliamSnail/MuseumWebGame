@@ -5,7 +5,7 @@
 //  做法：換人＝換欄位。
 //    - 規則照舊讀 P.sanity 這些欄位。現在在場的那位，欄位就在 P 上。
 //    - 不在場的那幾位放在 P.visitors：每位是一包 VISITOR_KEYS 的欄位，另外帶 cellarRun（正在走的地下）、dayVis（今天掉了多少理智）。
-//    - 換人（switchVisitor）：把現在這位收進 P.visitors，再把要換的那位放出來。來回換要完全一樣（test/visitors.test.cjs）。
+//    - 換人（switchVisitor）：把現在這位收進 P.visitors，再把要換的那位放出來。來回換要完全一樣（test/game/visitors.test.cjs）。
 //    - 博物館的（收藏、靈感、解鎖、升級、P.day 的每天次數……）不跟著換。換人不會多拿次數。
 //    - P.day 裡算這一位理智的（DAY_VIS_KEYS）：換人時收進這位的 dayVis（記日期）；換回來同一天就放回去，不同天照新的一天重算。
 //    - 第幾位參觀者：每位自己記 visitor；新的號碼從博物館的 P.visitorCount 拿（takeVisitorNo），三個位子不會重號。

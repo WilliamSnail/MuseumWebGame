@@ -2,7 +2,7 @@
 // 檢查 content/weeks/（週包、備用週、備用的一天）、content/story/帳本.json、content/排程設定.json。
 // 規則照 docs/規劃/每週劇情.md 第五、六、十二節；格式見 content/README.md。
 // 有錯（errors）就失敗；警告（warnings，例如到期還沒收的伏筆）只印出來，排程要寫進 PR。
-// 別的檔可以 require 這支，用 checkContent({ files, ledger, settings, today }) 檢查記憶體裡的內容（test/week_check.test.cjs）。
+// 別的檔可以 require 這支，用 checkContent({ files, ledger, settings, today }) 檢查記憶體裡的內容（test/story/week_check.test.cjs）。
 const fs = require("fs"), path = require("path");
 const { load } = require("../../test/load_shared.cjs");
 const { eventSlotOk } = require("./announce.cjs");

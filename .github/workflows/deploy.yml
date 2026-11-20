@@ -54,7 +54,7 @@ jobs:
         run: |
           npm ci
           npm --prefix functions ci
-      # 部署前的最後一道：不看改了什麼，全套（test/ci_skip.test.cjs 會確認這裡沒有跳過的開關）
+      # 部署前的最後一道：不看改了什麼，全套（test/tools/ci_skip.test.cjs 會確認這裡沒有跳過的開關）
       - name: 測試（規則、內容、特效、模組、日誌格式；全套）
         if: steps.gate.outputs.skip_tests != 'true'
         run: npm test

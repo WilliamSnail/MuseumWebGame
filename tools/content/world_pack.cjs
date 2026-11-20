@@ -1,5 +1,5 @@
 // 把 content/world/units/*.json 打包成 shared/world_roster.js（伺服器和測試共用的單位名單，W3，決定 0086）。
-// 只放算帳要用的欄位（id、名字、kind、parent、sector、share）。內容改了就跑 node tools/content/world_pack.cjs；npm test（test/world.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
+// 只放算帳要用的欄位（id、名字、kind、parent、sector、share）。內容改了就跑 node tools/content/world_pack.cjs；npm test（test/world/world.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const KEEP = ["id", "name", "kind", "parent", "sector", "market", "listed", "share", "stocks"];

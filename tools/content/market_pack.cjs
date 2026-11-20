@@ -1,4 +1,4 @@
-// 把 content/world/markets/*.json 打包成 shared/world_markets.js（景氣分市場，決定 0121）。內容改了就跑 node tools/content/market_pack.cjs；npm test（test/world_market.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
+// 把 content/world/markets/*.json 打包成 shared/world_markets.js（景氣分市場，決定 0121）。內容改了就跑 node tools/content/market_pack.cjs；npm test（test/world/world_market.test.cjs）會檢查有沒有跟上，copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const KEEP = ["cats", "id", "name", "kind", "anchor", "beta", "kappa", "sd", "rho"];

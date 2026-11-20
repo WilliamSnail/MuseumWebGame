@@ -17,7 +17,7 @@ const BIG = { "web/src/ui_core.js": 1350, "web/src/fx_sound.js": 1323, "web/src/
 // 11-20 以前就有的數字檔名：之後改名了就從這裡拿掉
 const OLD_NUM = ["web/src/ui_screens1.js", "web/src/ui_screens2.js", "web/src/ui_screens3.js", "web/src/ui_lobby2.js"];
 // 這幾個資料夾的第一層只准放這些檔，新檔一律放進子資料夾（11-20 資料夾結構第二輪）
-const FIRST_LEVEL = { tools: ["README.md"] };
+const FIRST_LEVEL = { tools: ["README.md"], test: ["load_shared.cjs", "run_all.cjs", "esm_smoke.mjs"] };
 const CODE = /^(shared\/.*|web\/src\/[^/]+|functions\/[^/]+)\.(js|cjs|mjs)$/;
 function check(files, readText = f => fs.readFileSync(path.join(ROOT, f), "utf8")) {
   const bad = [];

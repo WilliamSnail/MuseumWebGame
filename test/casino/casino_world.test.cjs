@@ -1,0 +1,85 @@
+// 已知世界的池子（11-14，規劃 2.12）：node test/casino/casino_world.test.cjs（npm test 也會跑）
+// 錢進出已知世界是搬（買股、賣股、槓桿、門票、貸款、還款、撥款），只有每天成長是憑空；吃緊時賣出有上限、暫停貸款；文化部借款計利息；日報有一段「跟已知世界的往來」。數字讀 NUM。
+const assert = require("assert");
+const { load } = require("../load_shared.cjs");
+let pass = 0, fail = 0;
+const T = (name, fn) => { const G = load(); G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.grants = []; G.NUM.casino.world.expand = 0; G.NUM.casino.worldDoc.trade.bank.on = false; /* 佩佩銀行的存款利息另外在 world_trade_flows 測（決定 0127） */ G.NUM.casino.world.growYoy = false; /* 決定 0117 的擴充和 GDP 成長另外測 */ G.NUM.casino.houseLoan.cultureDue = ""; /* 館債分期另外在 casino_culture.test 測 */ try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
+const D0 = "2026-11-14", D1 = "2026-11-15", ID = "greeneye", TW = Date.parse(D0 + "T21:40:00+08:00");
+const add = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return new Date(Date.UTC(y, m - 1, dd + n)).toISOString().slice(0, 10); };
+const mk = (G, chips = 500000000) => { const w = G.casWalletFix(G.casWalletNew(), D0), house = G.casHouseFix(G.casHouseNew(), D0).house; w.chips = chips; G.casStockHouseFix(house); G.casStockRoll(house, D0, {}); return { w, house }; };
+const inv = (G, s) => { const sn = G.casBookSnap([s.w], s.house, 0, null); return G.casBookTotal(sn) - G.casBookMinted(sn) + G.casBookBurned(sn); };
+
+T("新莊家有已知世界的池子（起始 100 億）；舊莊家第壹次碰到補上；算進全館總和", G => {
+  const h = G.casHouseFix(G.casHouseNew(), D0).house; assert.strictEqual(h.world, G.NUM.casino.world.start);
+  const old = G.casHouseFix({ v: 1, bankroll: 5 }, D0).house; assert.strictEqual(old.world, G.NUM.casino.world.start);
+  const s = G.casBookSnap([], h, 0, null); assert.ok(G.casBookTotal(s) >= G.NUM.casino.world.start);
+});
+T("買股錢給海外、賣股海外付：house.ext 跟著變（決定 0126，已知世界不動），不是憑空也不是燒掉，總帳不變", G => {
+  const s = mk(G), t0 = inv(G, s), w0 = s.house.ext, wd0 = s.house.world;
+  const b = G.casStockBuy(s.w, s.house, ID, 100, D0, null); assert.ok(b.ok);
+  assert.strictEqual(s.house.ext, w0 + b.cost, "買：海外多了股價"); assert.strictEqual(s.house.world, wd0, "已知世界不動");
+  assert.strictEqual(inv(G, s), t0, "守恆");
+  const r = G.casStockSell(s.w, s.house, ID, "max", D0, null); assert.ok(r.ok);
+  assert.strictEqual(s.house.ext, w0 + b.cost - r.gross, "賣：海外少了賣出金額");
+  assert.strictEqual(inv(G, s), t0, "守恆");
+  assert.ok(!s.w.led.mint.stockSell && !s.w.led.burn.stockBuy, "不再是憑空／消失");
+});
+T("每天成長（真正憑空）：growBase ×（1 ＋ growExtPct% × 景氣）；記 mint.worldGrow；總帳守恆（成長算憑空）", G => {
+  const WC = G.NUM.casino.world, h = G.casHouseFix(G.casHouseNew(), D0).house; h.econ.b = 1;
+  const t0 = (() => { const s = G.casBookSnap([], h, 0, null); return G.casBookTotal(s) - G.casBookMinted(s) + G.casBookBurned(s); })();
+  const r = G.casHouseFix(h, D1).house;
+  assert.strictEqual(r.world, WC.start + Math.floor(WC.growBase * (1 + WC.growExtPct / 100)), "景氣 +1：多 20%");
+  assert.strictEqual(r.led.mint.worldGrow, r.world - WC.start);
+  const s1 = G.casBookSnap([], r, 0, null); assert.strictEqual(G.casBookTotal(s1) - G.casBookMinted(s1) + G.casBookBurned(s1), t0, "守恆");
+  const h2 = G.casHouseFix(G.casHouseNew(), D0).house; h2.econ.b = -1; assert.strictEqual(G.casHouseFix(h2, D1).house.world, WC.start + Math.floor(WC.growBase * (1 - WC.growExtPct / 100)), "景氣 −1：少 20%");
+});
+T("已知世界吃緊（低於起始的 10%）：賣出照付（錢從海外出，不受池子上限，決定 0126）；買股照收；暫停貸款給莊家", G => {
+  const WC = G.NUM.casino.world, s = mk(G, 5e9);
+  const b = G.casStockBuy(s.w, s.house, ID, 1500, D0, null); assert.ok(b.ok);
+  s.house.world = Math.floor(WC.start * WC.lowPct / 100) - 1; // 吃緊
+  assert.ok(G.casWorldLow(s.house, WC));
+  const room = G.casWorldRoom(s.house, WC), cap = Math.floor(s.house.world * WC.lowPayPct / 100);
+  assert.strictEqual(room, cap, "已知世界自己的上限 ＝ 池子的 1%（NPC 付錢、貸款等照舊用它）");
+  const wd0 = s.house.world, e0 = s.house.ext, r = G.casStockSell(s.w, s.house, ID, "max", D0, null);
+  assert.ok(r.ok && r.gross > cap, "賣股不受已知世界的上限：" + (r.reason || "")); assert.strictEqual(s.house.world, wd0); assert.strictEqual(s.house.ext, e0 - r.gross);
+  const w0 = s.house.ext, b2 = G.casStockBuy(s.w, s.house, ID, 1, D0, null); assert.ok(b2.ok); assert.strictEqual(s.house.ext, w0 + b2.cost, "買股照收");
+  // 貸款暫停
+  const h = G.casHouseFix(G.casHouseNew(), D0).house; h.bankroll = -50000000; h.world = Math.floor(WC.start * WC.lowPct / 100 / 2); h.budget = 0; // 成長 500 萬後還是吃緊
+  const r2 = G.casHouseFix(h, D1).house; assert.strictEqual(r2.debt.world, 0, "吃緊時不貸款"); assert.ok(r2.bankroll < 0);
+});
+T("文化部持有的館債：每天計利息（cultureInterestPct），莊家賺了還的錢回到已知世界", G => {
+  const H = G.NUM.casino.houseLoan, WC = G.NUM.casino.world, h = G.casHouseFix(G.casHouseNew(), D0).house; h.debt.culture = 1000000000; h.bankroll = H.reserve;
+  const r = G.casHouseFix(h, D1).house;
+  assert.strictEqual(r.debt.culture, 1000000000 + Math.ceil(1000000000 * H.cultureInterestPct / 100), "壹天的利息計進債");
+  h.bankroll = H.reserve + 400000000; const w0 = h.world;
+  const r2 = G.casHouseFix(h, add(D1, 1)).house;
+  assert.ok(r2.world > w0, "還的錢進已知世界");
+});
+T("日報：有「跟已知世界的往來」一段（現在多少、進出的來源）和「真的憑空來的、真的消失的」", G => {
+  const s = mk(G); const b = G.casStockBuy(s.w, s.house, ID, 100, D0, null); assert.ok(b.ok);
+  const snap0 = G.casBookSnap([s.w], mk(G).house, 0, D0), snap1 = G.casBookSnap([s.w], s.house, 0, D1);
+  const doc = { day: D1, at: 0, snap: snap1, diff: G.casBookDiff(snap0, snap1), opening: 0 };
+  const v = G.casReportView(doc), txt = v.secs.map(x => x.t + "|" + x.lines.join("|")).join("\n");
+  assert.ok(txt.includes("跟已知世界的往來"), txt); assert.ok(txt.includes("買股票"), "進已知世界的來源");
+  assert.ok(txt.includes("真的憑空來的、真的消失的"));
+});
+T("決定 0117：已知世界一次性擴充 900 億（每個莊家文件壹次、記 mint.worldExpand、帳上分類總和仍等於池子、對帳守恆）", G => {
+  G.NUM.casino.world.expand = 90000000000;
+  const h = G.casHouseFix(G.casHouseNew(), "2026-11-17").house, w0 = G.NUM.casino.world.start;
+  assert.strictEqual(h.world, w0 + 90000000000); assert.strictEqual(h.led.mint.worldExpand, 90000000000); assert.ok(h.wExp);
+  const a = G.wuAmounts(h); assert.strictEqual(Object.values(a).reduce((x, y) => x + y, 0), h.world, "分類總和 ＝ 池子");
+  const h2 = G.casHouseFix(h, "2026-11-17").house; assert.strictEqual(h2.world, w0 + 90000000000, "只做壹次");
+  const old = G.casHouseNew(); old.world = 11060000000; const o2 = G.casHouseFix(old, "2026-11-17").house; assert.strictEqual(o2.world, 11060000000 + 90000000000, "舊莊家照現在的池子加 900 億");
+});
+T("決定 0117：每天成長 ＝ max(growBase, 池子 × max(0, yoy%) ÷ 365)，不看景氣 b；yoy 負的或沒有就用 growBase", G => {
+  G.NUM.casino.world.growYoy = true;
+  const mk = (yoy, b) => { const h = G.casHouseFix(G.casHouseNew(), "2026-11-17").house; h.world = 101000000000; h.econ = { b, yoy }; return h; };
+  const g = (yoy, b) => { const h = mk(yoy, b), w = h.world; return G.casHouseFix(h, "2026-11-18").house.world - w; };
+  assert.strictEqual(g(14.36, 0), Math.floor(101000000000 * 14.36 / 100 / 365));
+  assert.strictEqual(g(14.36, 1), g(14.36, -1), "景氣 b 不影響");
+  assert.strictEqual(g(-3, 0), G.NUM.casino.world.growBase, "yoy 負的：只有 growBase");
+  assert.strictEqual(g(0, 0), G.NUM.casino.world.growBase);
+  const h = mk(14.36, 0), w = h.world; h.world = 10000000000; assert.strictEqual(G.casHouseFix(h, "2026-11-18").house.world - 10000000000, G.NUM.casino.world.growBase, "小池子：不比現在差（下限 growBase）");
+});
+console.log(`${pass} passed, ${fail} failed（已知世界的池子）`);
+process.exit(fail ? 1 : 0);

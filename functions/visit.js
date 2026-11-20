@@ -1,6 +1,6 @@
 // ================================================================
 //  參觀館友的展廳、送佩佩、伺服器的信（多人版 M2，docs/規劃/多人實作.md）。對方不在線也能用。
-//  規則在 shared/gifts.js、shared/mailbox.js；一次呼叫要做的事在 shared/visit.js 的 step…（純函式，測試 test/visit.test.cjs）。
+//  規則在 shared/gifts.js、shared/mailbox.js；一次呼叫要做的事在 shared/visit.js 的 step…（純函式，測試 test/game/visit.test.cjs）。
 //  這裡只讀資料庫、叫 step、在同一個 Firestore 交易裡寫回去。
 //  資料（都只有 Functions 讀寫，firestore.rules 沒開給瀏覽器）：
 //    saves/{uid}             存檔。伺服器改了 rev 加一，再送 save_changed（原則 3）

@@ -11,7 +11,7 @@ import { NUM } from "../config.js";
 //      mint：莊家憑空多的（破產重開）。flow：莊家的錢因為這個來源變多少（正＝進莊家，負＝出莊家）
 //  每天第一次有人看財報時，伺服器把全館加總存成一份快照（casBookSnap）；兩份快照相減就是那一天的帳（casBookDiff）。
 //  守恆：錢包總和 ＋ 在路上的（借款被扣、還沒交給莊家）＋ 打到一半的注 ＋ 莊家 ＋ 博物館資金 ＋ 海底，
-//        永遠等於 開場的總和 ＋ 全部 mint － 全部 burn。測試 test/casino_book.test.cjs 擋這個。
+//        永遠等於 開場的總和 ＋ 全部 mint － 全部 burn。測試 test/casino/casino_book.test.cjs 擋這個。
 // ================================================================
 const bkNz = n => (Number.isFinite(+n) ? Math.floor(+n) : 0);
 const bkBox = o => !!o && typeof o === "object" && !Array.isArray(o);
