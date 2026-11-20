@@ -470,7 +470,7 @@ async function leaveRun() {
 }
 // 舞台：最多 6 隻，頭上寫是誰的
 function stage(v) {
-  const room = roomOf(v), st = h("div", { class: "cellar-stage cx-stage" });
+  const room = roomOf(v), st = h("div", { class: "cellar-stage cx-stage" + (v.team.length > 6 ? " cx-dense" : "") }); // 7～8 隻：名牌縮小、單雙數上下錯開
   st.append(h("div", { class: "cellar-scene", html: ART.cellarScene ? ART.cellarScene(v.floor) : "" }));
   st.append(h("div", { class: "cs-prop" }, h("div", { class: "cs-p-art" }), h("span", { class: "cs-p-label" })));
   const nameOf = id => (v.members.find(m => m.id === id) || {}).name || "";
