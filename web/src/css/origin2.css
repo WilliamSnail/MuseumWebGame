@@ -149,3 +149,23 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
   .origin-onescreen .story-shelf { padding-top: 40px; }
   .origin-onescreen .story-shelf .shelf-label { top: 8px; }
 }
+
+/* ===== 手機直拿：書打開看不到（翊文 11-20）=====
+   原因：上面「書架整理」把左欄寫成 minmax(300px,540px) 兩欄，蓋掉了手機的單欄，讀書的地方被擠到螢幕右邊外面。
+   做法：手機直拿回單欄；書打開時蓋住書架（.book-open），書上面有「回書架」。電腦和橫拿不用這個鍵。 */
+.book-back { display: none; }
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.origin-onescreen > .onescreen-main.origin-main { grid-template-columns: minmax(0, 1fr); }
+  .origin-onescreen .origin-main.book-open > .shelves { display: none; }
+  .origin-onescreen .origin-main:not(.book-open) > .reader { display: none; }
+  .origin-onescreen .origin-main > .reader { padding: 0; }
+  /* 回書架放在書頭左邊，跟標題同壹排；標題讓出左右各壹塊，長的標題換行 */
+  .origin-onescreen .reader .book { position: relative; }
+  .origin-onescreen .reader .book > .book-back { display: inline-flex; align-items: center; gap: 4px; position: absolute; top: -10px; left: -6px; z-index: 2; min-height: 28px; margin: 0; padding: 0 8px; border-radius: 3px; border: 1px solid #C9A24E; background: linear-gradient(180deg, #9A2E38, #6E1C26); color: #F6E4B0; font: inherit; font-size: .75rem; cursor: pointer; }
+  .origin-onescreen .reader .book > .book-title { align-self: stretch; margin-left: 86px; margin-right: 0; text-align: center; font-size: .9375rem; letter-spacing: .12em; padding: 5px 20px 6px; }
+  .origin-onescreen .reader .book > .book-back svg { width: 12px; height: 12px; }
+  /* 還打不開的書：標題、提示、內文縮小，跟回書架分開 */
+  .origin-onescreen .reader .book.sealed-book > .book-title { margin: -12px 0 8px 86px; }
+  .origin-onescreen .reader .book.sealed-book > .book-hint { margin: 0 0 6px; font-size: .8125rem; }
+  .origin-onescreen .reader .book.sealed-book > .sealed-hint { font-size: .9375rem; line-height: 1.6; padding: 8px 10px; margin: 0; }
+}
