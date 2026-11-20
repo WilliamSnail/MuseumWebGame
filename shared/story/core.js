@@ -452,6 +452,8 @@ export function syncStory(P, W, today) {
   // 地下收藏庫走到第幾層（每日、每週任務「走到 B幾」）
   const run = P.cellar && P.cellar.run;
   if (run && !run.extra && run.floor) S.deep[today] = Math.max(S.deep[today] || 0, run.floor);
+  const cd = P.cellar && P.cellar.coopDeep; // 合作下去（shared/coop/base.js 的 coopMarkDeep）：今天走到第幾層也算
+  if (cd && cd.date === today && cd.floor > 0) S.deep[today] = Math.max(S.deep[today] || 0, cd.floor);
   // 這週多出來的房間：在地下收藏庫過了（P.cellar.won）就算找到
   W.rooms.forEach(r => { if (!S.spots[r.id] && P.cellar && P.cellar.won && P.cellar.won[r.id]) { S.spots[r.id] = today; ev.push({ type: "storySpot", room: r }); } });
   // 任務：這週到今天為止的每日任務（前幾天的可以補做，決定 0060）、這週的每週任務。第一次看到時記下 base

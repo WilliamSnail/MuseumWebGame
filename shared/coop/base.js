@@ -61,6 +61,11 @@ export const COOP = {
 };
 
 // ---------- 小工具 ----------
+// 合作下去走到第幾層，記在每個隊員的 P.cellar.coopDeep ＝ { date, floor }（每日任務「走到 B幾」看它；單人的看 P.cellar.run，決定 0146 之後補，11-21）。試煉房間、沒有帳號的人（留守也算有帳號）不記
+export function coopMarkDeep(run, Ps) {
+  if (!run || run.trial) return;
+  run.members.forEach(m => { const P = Ps && Ps[m.id]; if (!P || !P.cellar || m.guard) return; const date = (P.day && P.day.date) || run.day; if (date) P.cellar.coopDeep = { date, floor: Math.max(P.cellar.coopDeep && P.cellar.coopDeep.date === date ? P.cellar.coopDeep.floor : 0, run.floor) }; });
+}
 export const coopMember = (run, id) => run.members.find(m => m.id === id) || null;
 // 還在地下的人（離隊、幽靈回到地面、留在監視器前的都不算；還在走這一層的幽靈算）
 export const coopActive = run => run.members.filter(m => !m.out && !m.guard);
