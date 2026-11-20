@@ -31,6 +31,7 @@
 // ================================================================
 import { NUM } from "../core/config.js";
 import { casCreditLevel } from "./credit.js";
+import { casTradeLog } from "./trade_log.js";
 import { casCount, casHouseCover, casHouseMove, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
 import { gsLevBook, gsLevClose, gsLevOk, gsLevSrc, gsLevTrade, gsNameOf } from "./stock_grp.js";
 import { casFill, casNum, casPx } from "./core.js";
@@ -310,6 +311,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   S.opens = { day, n: opensToday + 1 };
   if (H) H[mk] += notional;
   casCount(house, "levOpen");
+  casTradeLog(w, { d: day, t: +t || 0, id, m: mk === "in" ? "i" : mk === "grp" ? "g" : "o", a: "lo", n: qty, p: px, f: cost.total, y: side === "long" ? "l" : "s", v: lev, mk });
   return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casPx(px), margin: casNum(margin), fee: casNum(cost.total), liq: casPx(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
 }
 
@@ -364,6 +366,7 @@ function lqSettle(w, house, S, pos, px, t, why) {
   casCount(house, "levClose");
   const sideW = pos.side === "long" ? T.long : T.short;
   const out = { px, pnl: eff, back, fee, tax, bad, clipped, why };
+  casTradeLog(w, { d: pos.day, t: lqT(t) ? +t : 0, id: pos.id, m: pos.mk === "in" ? "i" : pos.mk === "grp" ? "g" : "o", a: "lc", n: pos.qty, p: px, f: fee, x: tax, g: eff - fee - tax - pos.fee, y: pos.side === "long" ? "l" : "s", v: pos.lev, w: why, mk: pos.mk });
   if (why === "liq") S.notes.push(casFill(T.liqNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
   if (why === "stop") S.notes.push(casFill(T.stopNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
   if (why === "take") S.notes.push(casFill(T.takeNote, { name: lqName(pos.id), side: sideW, px: casPx(px), back: casNum(back) }));
@@ -489,6 +492,17 @@ export function casStockLevView(w, house, day, t, src) {
   };
 }
 // 把這次平倉、強平的話拿走（畫面下次拿到就說）
+// 成交紀錄給畫面（shared/casino/trade_log.js）：最近 50 筆，新的在前，名字查好。
+// market：out 館外股、in 館內股、grp 集團股；lev＝true 是槓桿的開倉／平倉（畫面放在「槓桿」頁籤）；kind：buy／sell／open／close；why 只有平倉有（close 手動、liq 強平、stop 停損、take 停利、flat 收盤自動）
+export function casTradeView(w) {
+  const L = w && Array.isArray(w.tl) ? w.tl : [], MK = { o: "out", i: "in", g: "grp" };
+  return L.slice().reverse().map(r => {
+    const lev = r.a === "lo" || r.a === "lc";
+    return { day: r.d || null, t: lqN(r.t) || null, id: r.id, name: lqName(r.id), market: MK[r.m] || "out", lev, kind: lev ? (r.a === "lo" ? "open" : "close") : r.a === "b" ? "buy" : "sell",
+      side: lev ? (r.y === "s" ? "short" : "long") : null, mult: lev ? lqN(r.v) || null : null, why: lev && r.a === "lc" ? r.w || "close" : null,
+      n: lqN(r.n), price: Number(r.p) || 0, fee: lqN(r.f), tax: lqN(r.x), profit: r.a === "b" || r.a === "lo" ? null : Math.round(Number(r.g) || 0), order: !!r.q, debt: !!r.r };
+  });
+}
 export function casLevTakeNotes(w) { const S = casLevFix(w), n = S.notes; S.notes = []; return n; }
 // 畫面平倉送的單號是 "p3"（stock view 的 positions[].id）：只留數字。以前伺服器寫 /D/g（只去掉大寫 D），"p3" 變 NaN，平倉鈕永遠「找不到這筆部位」（11-14 測試發現）
 export const casLevPidNo = pid => parseInt(String(pid == null ? "" : pid).replace(/\D/g, ""), 10);

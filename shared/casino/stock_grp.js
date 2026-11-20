@@ -16,6 +16,7 @@ import { WORLD_UNITS } from "../world/roster.js";
 import { whName, wmB, wtLed, wmOfUnit, wuAmounts, wuCredit, wuDebit, wuFix } from "../world/core.js";
 import { casCount, casHouseCover, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain, casWorldOut } from "./book.js";
 import { casInIdx } from "./stock_in.js";
+import { casTradeLog, casTradeMarkOrder } from "./trade_log.js";
 import { hashStr } from "../core/logic_base.js";
 // 集團股的手續費 %（決定 0137）：feeOut.grp，沒寫就用 feePct
 export const gsFeePct = () => { const O = NUM.casino.stock.feeOut; return O && O.grp != null ? O.grp : NUM.casino.stock.feePct; };
@@ -204,6 +205,7 @@ export function gsBuy(w, house, id, shares, day, t, fixPx) {
   if (cost + fee > w.chips) return { ok: false, reason: "籌碼不夠。" };
   w.chips -= cost; casHouseMove(house, "gStock", cost); w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   U.P = Math.max(C.floor, q.Pn); U.i -= n; U.h += n; S.h[id] = have + n; S.cost[id] = gN(S.cost[id]) + cost + fee; S.v = { day, n: Object.assign(S.v.day === day ? S.v.n : {}, { [id]: vol + n }) };
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "g", a: "b", n, p: Math.round(cost / n), f: fee });
   return { ok: true, n, cost, fee, px: Math.round(cost / n), lines: [`買進「${gsNameOf(id)}」${n} 股，每股約 ${Math.round(cost / n)}，花了 ${cost}，手續費 ${fee}。`] };
 }
 export function gsSell(w, house, id, shares, day, t, fixPx) {
@@ -233,6 +235,7 @@ export function gsSell(w, house, id, shares, day, t, fixPx) {
   const costOut = n >= have ? gN(S.cost[id]) : Math.floor(gN(S.cost[id]) * n / have), profit = gross - fee - tax - costOut;
   U.P = Math.max(C.floor, q.Pn); U.i += n; U.h = Math.max(0, U.h - n); S.h[id] = have - n; if (S.h[id] <= 0) { delete S.h[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, gN(S.cost[id]) - costOut);
   S.v = { day, n: Object.assign(S.v.day === day ? S.v.n : {}, { [id]: vol + n }) };
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "g", a: "s", n, p: Math.round(gross / n), f: fee, x: tax, g: profit });
   return { ok: true, n, gross, fee, tax, profit, part, lent, lines: [`賣出「${gsNameOf(id)}」${n} 股${part > 0 ? `（莊家付不起整筆，只收了這些，另外 ${part} 股沒賣掉）` : ""}，每股約 ${Math.round(gross / n)}，拿到 ${gross - fee - tax}，手續費 ${fee}，證交稅 ${tax}。`] };
 }
 // ---------- 掛單（決定 0124，翊文 11-17：成交照現股推價）----------
@@ -277,7 +280,7 @@ export function gsMatch(w, house, day, t) {
     if (hit === undefined) { if (closed) { gsDrop(w, S, o); note(`${gKind[o.kind]}「${gsNameOf(o.id)}」${o.n} 股今天沒成交，已經取消。`); out.cancels++; } continue; }
     const kind = o.kind, n = o.n, id = o.id; gsDrop(w, S, o); // 先退回鎖住的，再照市價單走壹遍，成交價用碰到的價
     const r = kind === "buy" ? gsBuy(w, house, id, n, day, null, hit) : gsSell(w, house, id, n, day, null, hit);
-    if (r.ok) { out.fills++; note(`${gKind[kind]}「${gsNameOf(id)}」成交：${r.n} 股，價格 ${hit}${r.part > 0 ? "（只賣掉這些）" : ""}。`); } else { out.cancels++; note(`${gKind[kind]}「${gsNameOf(id)}」${n} 股碰到價格了，但成交不了（${r.reason}），已取消。`); }
+    if (r.ok) { out.fills++; casTradeMarkOrder(w); note(`${gKind[kind]}「${gsNameOf(id)}」成交：${r.n} 股，價格 ${hit}${r.part > 0 ? "（只賣掉這些）" : ""}。`); } else { out.cancels++; note(`${gKind[kind]}「${gsNameOf(id)}」${n} 股碰到價格了，但成交不了（${r.reason}），已取消。`); }
   }
   return out;
 }

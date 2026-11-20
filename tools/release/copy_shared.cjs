@@ -10,6 +10,8 @@ require("../content/map_pack.cjs").write(); // 館外地圖的點（shared/world
 require("../content/npc_pack.cjs").write(); // 館內 NPC 名單（shared/npc/roster.js）先跟上 content/npc/
 const from = path.join(ROOT, "shared"), to = path.join(ROOT, "functions", "shared");
 fs.mkdirSync(to, { recursive: true });
+// 複製前先清空：shared/ 搬家、改名之後，舊檔留在這裡會讓 fn_hash 測試誤紅、函式包多帶舊檔（11-20）。下面產生的檔（*_data.js、README.md）每次都會重寫，所以全清沒關係；資料夾本身留著（模擬器可能正看著它）
+for (const e of fs.readdirSync(to)) fs.rmSync(path.join(to, e), { recursive: true, force: true });
 let n = 0;
 // 連子資料夾（casino/、coop/、cellar/、discord/）一起複製
 const copyDir = rel => {
