@@ -671,7 +671,7 @@ function dinerPane() {
   });
   return [
     sec("餐車", h("p", { class: "cas-note" }, fill(CAS_TEXT.dinerHello, { name: CAS_TEXT.dealer }), "。", CAS_TEXT.dinerHint, "。"),
-      h("p", { class: "cas-note" }, markText(`吃東西會加**心情**，茶還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
+      h("p", { class: "cas-note" }, markText(`吃東西會加**心情**，啤酒和白蘭地還會加**理智**。今天還能加心情 ${w.foodMoodLeft} 點、理智 ${w.foodSanLeft} 點。`)),
       h("p", { class: "cas-have" }, w.opened > 0 ? "今天的大禮包你開過了，吃東西有機會抽到券。" : "今天還沒開大禮包：先到「大禮包」開壹包，吃東西才抽得到券、才買得到券。"),
       h("ul", { class: "cas-menu" }, CAS_MENU.map(it => {
         const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);
