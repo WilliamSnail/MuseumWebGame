@@ -14,6 +14,8 @@ export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion
 // 去哪裡做：按鈕上寫地點（11-20，翊文：按了直接跳房間，看起來像按錯）
 const PLACE = { workshop: "手作坊", commission: "委託櫃台", fusion: "融合室", pillow: "抱枕工作台", gallery: "畫廊", origin: "圖書館", cellar: "地下收藏庫", casino: "賭場", bank: "銀行", friends: "館友名單", signin: "簽到", board: "公佈欄" };
 export const placeName = w => (w && (PLACE[w.room] || PLACE[w.panel])) || "";
+// 交代人在哪裡（照 content/story/帳本.json taskGivers.list 的 where，帳本不打包進網頁，這裡抄壹份；帳本改了這裡要跟著改）
+export const GIVER_WHERE = { yuga: "賭場", hall: "餐車", postman: "館門口的信箱", clerk: "招領箱、銀行", scale: "夜市、銀行", number: "B1 小門旁" };
 // 交代人：剪影的顏色（底色、剪影色）；有正式圖的 id 放進 GIVER_ART
 const GIVER_TONE = { yuga: ["#2F4A3A", "#BFE6C8"], hall: ["#4A3322", "#E6C879"], postman: ["#2F3F55", "#C9D8EE"], clerk: ["#4F3A2A", "#F3DFA6"], scale: ["#3E3A2A", "#E7D28A"], number: ["#2E2E34", "#D9D9E6"] };
 export const GIVER_ART = new Set(["yuga"]); // yuga：玩家 Yuga 自己畫的 Yuga Bot 頭像（決定 0147）
@@ -30,12 +32,11 @@ export function giverAv(id, o = {}) {
 export function taskCard(o) {
   const t = o.t, done = o.state !== "todo", claimed = o.state === "claimed", giver = t.giver && t.says;
   const pct = Math.min(100, Math.round((o.tgt ? o.n / o.tgt : 0) * 100));
-  const reply = giver && done && t.done ? t.done : "";
   const act = claimed ? h("span", { class: "tkc-stamp" }, icon("check"), h("span", null, "領過了"))
     : done ? btn("領獎勵", o.onClaim, "primary small tkc-claim")
       : o.where && !o.past ? btn([placeName(o.where) ? "去" + placeName(o.where) : "前往", " ", h("span", { "aria-hidden": "true" }, "→")], o.onGo, "small tkc-go") : null;
   return h("li", { class: "tkc-card" + (done ? " done" : "") + (claimed ? " claimed" : "") + (giver ? " giver" : "") },
-    giver ? h("div", { class: "tkc-say" }, giverAv(t.giver), h("div", { class: "tkc-bubble" }, h("small", null, giverName(t.giver)), h("p", null, reply || t.says))) : null,
+    giver ? giverAv(t.giver, { small: true }) : null,
     h("div", { class: "tkc-body" },
       h("span", { class: "tkc-ic", "aria-hidden": "true" }, icon(o.kindIcon || "star")),
       h("div", { class: "tkc-main" },
@@ -75,4 +76,16 @@ export function claimBurst(title, text) {
   const el = h("div", { class: "tkc-burst", role: "status" }, h("div", { class: "tkc-seal", "aria-hidden": "true" }, icon("star")), h("b", null, title), text ? h("p", null, text) : null);
   document.body.append(el); snd("coin");
   setTimeout(() => el.classList.add("out"), 1500); setTimeout(() => el.remove(), 1900);
+}
+
+// 今天的交代（任務板，11-20）：今天有交代任務的每位交代人：頭像、名字、在哪、現在說的那句（沒做完 says、做完換 done）；做完的變淡；按了去他那裡。
+// items：[{ giver, text, done, go }]，照任務順序；onGo(item) 由呼叫的人處理（關任務板、過去）
+export function giverBoard(items, onGo) {
+  if (!items.length) return null;
+  return h("div", { class: "tkc-giv" }, h("h4", null, "今天的交代"),
+    h("ul", null, items.map(it => h("li", { class: it.done ? "done" : "" },
+      h("button", { type: "button", class: "tkc-giv-b", title: it.go ? "過去" : "", onClick: () => onGo(it) },
+        giverAv(it.giver, { small: true }),
+        h("span", { class: "tkc-giv-t" }, h("b", null, giverName(it.giver)), h("small", null, "・在" + (GIVER_WHERE[it.giver] || "館裡")), h("p", null, it.text)),
+        it.go ? h("span", { class: "tkc-giv-go", "aria-hidden": "true" }, "→") : null)))));
 }
