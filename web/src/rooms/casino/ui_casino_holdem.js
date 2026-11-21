@@ -119,13 +119,14 @@ function blindTags(v) {
 }
 const seatBox = (s, v, compact) => {
   const act = v.phase === "play" && v.toAct === s.uid, tag = blindTags(v)[s.uid];
-  const st = s.sitOut ? "・等下壹手" : s.st === "allin" ? "・全下" : s.st === "fold" ? "・蓋牌" : "";
+  const st = s.sitOut ? "・等下壹手" : s.st === "allin" ? "・全下" : "", folded = s.st === "fold" && !s.sitOut, live = !folded && !s.sitOut && s.hole && s.hole.length && !s.me;
   return h("div", { class: "hd-seat" + (s.me ? " me" : "") + (act ? " turn" : "") + (s.st === "fold" || s.sitOut ? " fold" : "") + (compact ? " compact" : "") },
     // 名字壹行：小章（旅客、D、SB／BB）在名字前面（不疊在名字上）；手機名字最多 4 字加「‥」，全名放 title（11-22 qa：手機整桌要不捲就放得下）
     h("div", { class: "bj-who" }, h("div", { class: "hd-nm" },
       h("b", { title: s.nick }, h("span", { class: "n-full" }, s.nick, s.me ? "（你）" : ""), h("span", { class: "n-short" }, [...s.nick].length > 5 ? [...s.nick].slice(0, 4).join("") + "‥" : s.nick))),
       h("small", null, h("span", { class: "n-full" }, "桌上 "), casNum(s.stack), st),
-      (s.npc || s.btn || tag) ? h("span", { class: "hd-tg" }, // 小章在名字下面壹行（旅客、D、SB／BB），不疊在名字上
+      (s.npc || s.btn || tag || folded || live) ? h("span", { class: "hd-tg" }, // 小章在名字下面壹行（旅客、D、SB／BB），不疊在名字上；蓋牌寫「蓋」，還在打的有兩張小牌背（11-22 qa）
+        folded ? h("i", { class: "hd-fold", title: "蓋牌了" }, "蓋") : live ? h("span", { class: "hd-mini", title: "還在打", "aria-hidden": "true" }, h("i"), h("i")) : null,
         s.npc ? h("i", { class: "hd-npc", title: "館裡的旅客" }, "客") : null, s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null) : null),
     s.say && !s.sitOut ? h("p", { class: "hd-say-npc", title: s.say }, s.say) : null,
     s.hole && s.hole.length && !s.sitOut ? h("div", { class: "cas-hand" }, s.hole.map(cardOrBack)) : null,
