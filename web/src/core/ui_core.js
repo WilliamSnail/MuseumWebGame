@@ -308,7 +308,7 @@ export function buildNav() {
     h("p", { class: "md-h" }, "設定"),
     h("div", { class: "md-group" }, roomItem(["settings", ROOM_NAMES.settings])));
   document.querySelectorAll("body > #navDrawer").forEach(e => e.remove()); // 手機上搬到外層的舊選單（toggleMenu）：重畫時拿掉，不然有兩個 #navDrawer
-  nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, sound, menu), drawer);
+  nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, h("button", { class: "icon-btn nav-pass-btn", type: "button", title: "館友證", "aria-label": "館友證", onClick: () => openPanel("pass") }, icon("user")), sound, menu), drawer); // 手機頂欄多壹顆館友證（11-21：手機大廳底下的館友證條為了不用捲被收起來了，入口放這裡）
   if (!UI.menuWired) {
     UI.menuWired = true;
     // 點選單外面就關起來

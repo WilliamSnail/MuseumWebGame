@@ -619,3 +619,7 @@ body.holding .ped-slot .ped-block { border-style: dashed; border-color: var(--ac
 #st-chips.m-flash-up .st-num { animation: mFlashUp 1.4s ease-out 1; } #st-chips.m-flash-down .st-num { animation: mFlashDown 1.4s ease-out 1; }
 @keyframes mFlashUp { 0% { color: var(--money-up); text-shadow: 0 0 8px var(--money-up); } 100% { text-shadow: none; } }
 @keyframes mFlashDown { 0% { color: var(--money-down); text-shadow: 0 0 8px var(--money-down); } 100% { text-shadow: none; } }
+
+/* 手機頂欄的館友證小圖示（11-21）：電腦導覽列已經有「館友證」頁籤 */
+.nav-pass-btn { display: none; }
+@media (max-width: 760px) { .nav-pass-btn { display: inline-flex; } }

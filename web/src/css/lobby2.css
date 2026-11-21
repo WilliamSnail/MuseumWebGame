@@ -318,7 +318,8 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .l2-map.port { height: 100%; width: auto; max-width: 100%; aspect-ratio: 572 / 1024; }
   .l2-todobox { order: 3; flex: none; }
   .l2-todobox .l2-h { display: none; }
-  .l2-todos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .l2-todos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } /* minmax(0, …)：任務卡的字再長也不把右邊那欄擠出畫面（11-21 翊文手機截圖） */
+  .l2-todos > .l2-pts { grid-column: 1 / -1; margin: 0; } /* 今天／這週的積分條佔壹整排（以前跟任務卡擠在壹格，進度條縮成壹顆藥丸） */
   .l2-todobox .l2-todo { min-height: 56px; }
   .l2-todobox .l2-todo small { display: none; }
   .l2-todobox .l2-todo b { font-size: .8125rem; line-height: 1.25; }
