@@ -255,13 +255,13 @@ export function openGift(friend) {
     draw();
     try {
       await NET.flush().catch(() => {});
-      const r = await NET.call("sendGift", { to: friend.id, item: { kind: sel.kind, key: sel.key } });
+      const item = { kind: sel.kind, key: sel.key }, r = friend.via ? await friend.via(item) : await NET.call("sendGift", { to: friend.id, item }); // via：送交代人（ui_giver_talk.js）走自己的伺服器動作
       await reloadSave(r.rev); // 伺服器已經從我的收藏拿掉了
       sent = r.text;
-      actDone("gift"); // 每日任務：送館友壹隻佩佩（決定 0146）
+      if (!friend.noAct) actDone("gift"); // 每日任務：送館友壹隻佩佩（決定 0146）；送交代人不算
       sel = null;
       snd("coin");
-      note(`寄出去了：${r.text}。${friend.nick} 的信箱多了壹封。`, "good");
+      note(friend.via ? r.text : `寄出去了：${r.text}。${friend.nick} 的信箱多了壹封。`, "good");
       updateStatus();
     } catch (e) { snd("error"); note(e.message || "送不出去。", "bad"); }
     busy = false;
@@ -301,7 +301,7 @@ export function openGift(friend) {
       if (sel.kind !== "failed") foot = h("div", { class: "gf-foot" }, foot, cellarFxBox(sel.pick, { rarityKnown: true, perfect: !!can.perfect }));
     } else foot = h("p", { class: "pt-hint gf-hint" }, sent ? `寄出去了：${sent}。還要再送的話，再選壹隻。` : "先選壹隻。");
     m.surface.replaceChildren(h("div", { class: "pt-wrap gf-wrap" },
-      h("p", { class: "nb-hint pt-intro" }, `寄到 ${friend.nick} 的信箱：他不在線也收得到，上線後自己領（${SOCIAL.mailDays} 天沒領就不見）。受傷的、在地下的不能送；擺在展台上的，只有壹隻要先拿下來。`),
+      h("p", { class: "nb-hint pt-intro" }, friend.intro || `寄到 ${friend.nick} 的信箱：他不在線也收得到，上線後自己領（${SOCIAL.mailDays} 天沒領就不見）。受傷的、在地下的不能送；擺在展台上的，只有壹隻要先拿下來。`),
       tabs, list, foot));
   };
   draw();

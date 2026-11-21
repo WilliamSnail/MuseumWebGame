@@ -466,7 +466,7 @@ export function storyLobby() {
 }
 
 // ---------- 圖書館：書架的頁籤 ----------
-export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["map", "地圖"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"], ["guestbook", "旅客留言簿"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
+export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["map", "地圖"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"], ["guestbook", "旅客留言簿"], ["talk", "交談紀錄"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
 const shelfName = id => (ORIGIN_TABS.find(t => t[0] === id) || [id, id])[1];
 // 全部的週（今天這週＋以前的），舊的在前
 let pastCache = { key: null, list: [] };

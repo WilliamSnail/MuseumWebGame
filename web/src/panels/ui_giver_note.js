@@ -5,15 +5,17 @@
 //  放的地方：郵差＝地圖的信箱、站內信箱；店員＝任務板「其他要做的事」、銀行；阿秤＝銀行、地圖的夜市；號碼機＝地下收藏庫（B1 小門旁）；荷官 Yuga Bot＝賭場牌桌（ui_casino.js）；堂主＝餐車（ui_casino.js 的字條，原本就有）。
 //  樣式在 css/tasks.css（前綴 gv-）。介面文字用「壹」。
 // ================================================================
+import { giverName } from "../../../shared/story/core.js";
 import { ADDONS, h } from "../core/ui_core.js";
+import { giverTalk } from "./ui_giver_talk.js";
 import { giverTaskLine } from "./ui_story.js";
 import { GIVER_WHERE, giverAv } from "./ui_tasks.js";
 
+// 今天有交代就說那句；沒有交代也留著（可以聊、送佩佩）。互動（閒聊、熟識度、拜託、送佩佩）在 ui_giver_talk.js（11-21）
 export function giverNote(id) {
-  const gl = giverTaskLine(id);
-  if (!gl) return null;
-  return h("div", { class: "gv-note" + (gl.done ? " done" : ""), role: "note" }, giverAv(id, { small: true }),
-    h("div", { class: "gv-t" }, h("b", null, gl.name), h("small", null, "・在" + (GIVER_WHERE[id] || "館裡")), h("p", null, gl.text)));
+  const gl = giverTaskLine(id), name = gl ? gl.name : giverName(id);
+  return h("div", { class: "gv-note" + (gl && gl.done ? " done" : ""), role: "note" }, giverAv(id, { small: true }),
+    h("div", { class: "gv-t" }, h("b", null, name), h("small", null, "・在" + (GIVER_WHERE[id] || "館裡")), gl ? h("p", null, gl.text) : null, giverTalk(id)));
 }
 export function giverStrip(ids) {
   const list = ids.map(giverNote).filter(Boolean);

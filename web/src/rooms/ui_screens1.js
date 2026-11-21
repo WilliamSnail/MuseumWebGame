@@ -484,6 +484,11 @@ SCREENS.origin = (root, params) => {
     root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb" }, ADDONS.guestbook()));
     return;
   }
+  if (tab === "talk" && ADDONS.giverLog) { // 交談紀錄（11-21）：六位交代人各一本，ui_giver_log.js
+    root.classList.add("origin-gb-on");
+    root.append(originTabs(tab, Object.assign(counts, { talk: [6, 0, 0] })), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb" }, ADDONS.giverLog()));
+    return;
+  }
   if (tab === "map" && ADDONS.worldMap) { // 館外地圖（11-16）：日期到了亮輪廓、拿到線索才亮字（ui_map.js）
     root.classList.add("origin-gb-on");
     root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb origin-map" }, ADDONS.worldMap()));
