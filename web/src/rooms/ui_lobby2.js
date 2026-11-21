@@ -215,7 +215,7 @@ export function lobby2(root) {
   const wrap = h("div", { class: "l2" },
     h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), headlineStrip(), h("div", { class: "l2-pbar" }, ADDONS.hallNowBar && (UI.net || import.meta.env.DEV) && !isFree(P) ? ADDONS.hallNowBar() : null, mates.chip)), live, h("div", { class: "l2-mapbox" }, map)),
     side);
-  root.append(wrap);
+  root.append(wrap); if (ADDONS.lobbyLyrics) root.append(ADDONS.lobbyLyrics()); // 深夜曲的字幕（fixed，不佔位；ui_lyrics.js）
   document.body.classList.add("lobby-wide-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉
   // 名單有變：橫幅和名牌跟著換（換了房間就不再理）
   const offs = [];
