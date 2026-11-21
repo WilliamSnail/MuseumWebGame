@@ -15,7 +15,7 @@ export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion
 const PLACE = { workshop: "手作坊", commission: "委託櫃台", fusion: "融合室", pillow: "抱枕工作台", gallery: "畫廊", origin: "圖書館", cellar: "地下收藏庫", casino: "賭場", bank: "銀行", friends: "館友名單", signin: "簽到", board: "公佈欄" };
 export const placeName = w => (w && (PLACE[w.room] || PLACE[w.panel])) || "";
 // 交代人在哪裡（照 content/story/帳本.json taskGivers.list 的 where，帳本不打包進網頁，這裡抄壹份；帳本改了這裡要跟著改）
-export const GIVER_WHERE = { yuga: "賭場", hall: "餐車", postman: "館門口的信箱", clerk: "招領箱、銀行", scale: "夜市、銀行", number: "B1 小門旁" };
+export const GIVER_WHERE = { yuga: "賭場", hall: "餐車", postman: "館門口的信箱", clerk: "任務板、銀行", scale: "夜市、銀行", number: "B1 小門旁" };
 // 交代人：剪影的顏色（底色、剪影色）；有正式圖的 id 放進 GIVER_ART
 const GIVER_TONE = { yuga: ["#2F4A3A", "#BFE6C8"], hall: ["#4A3322", "#E6C879"], postman: ["#2F3F55", "#C9D8EE"], clerk: ["#4F3A2A", "#F3DFA6"], scale: ["#3E3A2A", "#E7D28A"], number: ["#2E2E34", "#D9D9E6"] };
 export const GIVER_ART = new Set(["yuga"]); // yuga：玩家 Yuga 自己畫的 Yuga Bot 頭像（決定 0147）

@@ -141,8 +141,9 @@ function bodyOf(m, draw) {
   const all = todayItems().filter(x => !skip(x));
   if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有任務，隨便逛吧。" : "今天沒有要做的事。");
   const todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
-  return h("div", { class: "td-body" },
-    all.length ? h("section", { class: "td-others" }, h("h3", null, todo.length ? "其他要做的事" : "其他的事都做完了"),
+  const clerk = ADDONS.giverStrip ? ADDONS.giverStrip(["clerk"]) : null; // 店員在任務板（簽到、招領這類他交代的；11-21 翊文：「放在任務欄」）
+  return h("div", { class: "td-body" }, all.length ? null : clerk,
+    all.length ? h("section", { class: "td-others" }, h("h3", null, todo.length ? "其他要做的事" : "其他的事都做完了"), clerk,
       todo.length ? h("ul", { class: "td-list" }, todo.map(x => rowOf(x, m))) : null,
       done.length ? h("div", { class: "td-minis" }, done.map(x => miniOf(x, m))) : null) : null,
     story,
