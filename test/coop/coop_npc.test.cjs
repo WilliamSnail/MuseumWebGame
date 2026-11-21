@@ -175,4 +175,13 @@ T("審查 6：領隊只輪真人（旅客不當領隊）", G => {
   const { run } = startWithNpc(G);
   for (let i = 0; i < 4; i++) { G.coopNextLeader(run); assert.strictEqual(run.leader, "a"); }
 });
+T("退回：沒出發就走了（請走、解散）趟數退壹不低於 0、不動別隊的；昨天留的不退今天的", G => {
+  const house = mkHouse(G), n = G.NPC_ROSTER.find(x => x.id === "v-ke"), t = G.npcDayStartMs(D) + 3600000;
+  G.npcCoopAccept(house, D, n, "pA", "u1", t); assert.strictEqual(house.npcCoop.by["v-ke"].n, 1);
+  assert.ok(!G.npcCoopRefund(house, D, "v-ke", "pB"), "別隊的不退"); assert.strictEqual(house.npcCoop.by["v-ke"].n, 1);
+  assert.ok(G.npcCoopRefund(house, D, "v-ke", "pA")); assert.strictEqual(house.npcCoop.by["v-ke"].n, 0); assert.ok(!house.npcCoop.at["v-ke"]);
+  assert.ok(!G.npcCoopRefund(house, D, "v-ke", "pA"), "已經放走，不會退兩次"); assert.strictEqual(house.npcCoop.by["v-ke"].n, 0);
+  G.npcCoopAccept(house, D, n, "pA", "u1", G.npcDayStartMs(D) - 1000); G.npcCoopAccept(house, D, n, "pA", "u1", t); house.npcCoop.at["v-ke"].since = G.npcDayStartMs(D) - 1000;
+  const n0 = house.npcCoop.by["v-ke"].n; G.npcCoopRefund(house, D, "v-ke"); assert.strictEqual(house.npcCoop.by["v-ke"].n, n0, "昨天留的不退");
+});
 console.log(fail ? `找 NPC 下地下：${fail} 項沒過` : `找 NPC 下地下：${pass} 項都過`); process.exit(fail ? 1 : 0);
