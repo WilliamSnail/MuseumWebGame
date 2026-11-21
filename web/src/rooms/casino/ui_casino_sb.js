@@ -17,7 +17,7 @@ export function sbShowResult() {
   setTimeout(() => {
     const el = document.querySelector(".sb-res"), body = el && el.closest(".cas-body");
     if (!body) return;
-    const over = el.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 48;
+    const over = el.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 110;
     if (over > 0) body.scrollTo({ top: body.scrollTop + over, behavior: "smooth" });
   }, 80);
 }

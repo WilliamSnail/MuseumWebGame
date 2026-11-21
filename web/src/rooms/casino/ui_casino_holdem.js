@@ -43,7 +43,10 @@ async function call(st, data) {
   return r;
 }
 function take(st, v) {
-  const prev = st.view;
+  const prev = st.view, sitting = v.seats.find(s => s.me);
+  if (st.rebuy && sitting && sitting.stack > 0) st.rebuy = false; // 再買入坐下了：回到牌桌畫面
+  if (sitting) st.said = "";
+  if (prev && prev.seats.some(s => s.me) && !sitting && !st.leaving) { st.said = "連續兩次沒動作，先請你離座，籌碼回錢包了。想玩再坐下。"; note(st.said); } // 被請離座要說壹句（④）
   st.view = v; st.viewAt = Date.now();
   if (st.pid !== v.pid) st.pid = v.pid;
   if (!prev || prev.hand !== v.hand || prev.street !== v.street) { st.raise = 0; st.raiseOpen = false; }
@@ -93,7 +96,7 @@ function setupPane(st, join) {
     return b;
   });
   return h("div", { class: "hd-setup" },
-    join ? h("p", { class: "hd-say" }, "選買入的籌碼，坐下就加入這桌（第壹次被邀請、離座後想回來都是這裡）。") : h("p", { class: "hd-say" }, st.said || "選盲注級距和買入，開壹桌，再邀館友。"),
+    join ? h("p", { class: "hd-say" }, st.said || "選買入的籌碼，坐下就加入這桌（第壹次被邀請、離座後想回來都是這裡）。") : h("p", { class: "hd-say" }, st.said || "選盲注級距和買入，開壹桌，再邀館友。"),
     join ? null : h("div", { class: "sb-sec" }, h("h4", null, "盲注"), h("div", { class: "sb-opts" }, levels)),
     h("div", { class: "sb-sec" }, h("h4", null, "買入（錢從錢包搬到桌上，離桌搬回來）"),
       tipOn(h("div", { class: "bj-bet" }, input, btn("最少", () => set(mn), "small ghost"), btn("最多", () => set(Math.min(mx, chips)), "small ghost"), btn(join ? "坐下" : "開桌", go, "primary big bj-deal", { disabled: st.busy ? true : null })),
@@ -131,10 +134,12 @@ function actions(st, v) {
     h("div", { class: "hd-quick" }, [["最小", minTo], ["半池", Math.min(maxTo, Math.max(minTo, v.curBet + Math.floor(v.pot / 2)))], ["底池", Math.min(maxTo, Math.max(minTo, v.curBet + v.pot))]].map(([t, n]) => btn(t, () => { st.raise = n; redraw(); }, "small ghost")))) : null;
   if (slider) { const inp = slider.querySelector("input"); inp.value = String(st.raise); inp.addEventListener("input", () => { st.raise = Number(inp.value); slider.querySelector(".hd-raise-n").textContent = casNum(st.raise); }); }
   const dis = st.busy ? true : null;
+  let raiseBtn = null;
+  if (slider) { const inp = slider.querySelector("input"); inp.addEventListener("input", () => { if (raiseBtn) raiseBtn.textContent = `加注到 ${casNum(st.raise)}`; }); } // 拉滑桿：按鈕字跟著變（要在按鈕建好之後才有 raiseBtn）
   return h("div", { class: "hd-acts bj-sticky" }, slider,
     h("div", { class: "bj-acts" }, btn("蓋牌", () => send("fold"), "big", { disabled: dis }),
       L.check ? btn("過牌", () => send("check"), "big", { disabled: dis }) : btn(`跟注 ${casNum(L.call)}`, () => send("call"), "primary big", { disabled: dis }),
-      L.canRaise ? (st.raiseOpen ? btn(`加注到 ${casNum(st.raise)}`, () => { st.raiseOpen = false; send("raise", st.raise); }, "primary big", { disabled: dis }) : btn("加注…", () => { st.raiseOpen = true; redraw(); }, "primary big", { disabled: dis, title: "選要加到多少" })) : null,
+      L.canRaise ? (st.raiseOpen ? (raiseBtn = btn(`加注到 ${casNum(st.raise)}`, () => { st.raiseOpen = false; send("raise", st.raise); }, "primary big", { disabled: dis })) : btn("加注…", () => { st.raiseOpen = true; redraw(); }, "primary big", { disabled: dis, title: "選要加到多少" })) : null,
       me && L.maxTo > 0 ? btn("全下", () => send("allin"), "big", { disabled: dis }) : null));
 }
 function tablePane(st) {
@@ -162,6 +167,7 @@ function invitePane(st) {
 async function leave(st) {
   if (!st.pid) return;
   const pid = st.pid;
+  st.leaving = true; setTimeout(() => { st.leaving = false; }, 3000);
   stop(st); st.pid = null; st.view = null; st.buy = ""; redraw();
   try { await NET.call("partyAction", { pid, act: "leave" }); } catch (e) { /* 那桌已經收了 */ }
   try { await NET.call("casino", { act: "peek" }); } catch (e) { /* 錢包下次進賭場會更新 */ }
