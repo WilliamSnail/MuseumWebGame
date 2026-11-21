@@ -18,6 +18,7 @@ import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./wallet.js";
 import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { nwPoke, nwPokeKind } from "../world/core.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./npc.js";
+import { npcRelBonus } from "../social/npcrel.js";
 
 export const CAS_QUICK = ["加油", "好牌", "莊家別爆", "再來壹把", "我不行了", "運氣來了"]; // 快速短句（自由打字另外走 cleanSay）
 
@@ -264,7 +265,7 @@ export function casTNpcInvite(t, ctx, uid, npcId, now) {
   const left = npcCasCoolLeft(hs, ctx.day, uid, npcId, now);
   if (left > 0) return { ok: false, reason: `他剛拒絕過你，${Math.ceil(left / 60000)} 分鐘後再邀`, wait: left };
   if (!casTNpcWho(ctx, now).some(x => x.id === npcId)) return { ok: false, reason: "他現在不在館裡，或今天不想玩了" };
-  const p = npcCasChance(hs, ctx.day, n, ctx.counters || null), ask = npcCasAsk(hs, ctx.day, npcId);
+  const p = npcCasChance(hs, ctx.day, n, ctx.counters || null, ctx.wallets && ctx.wallets[uid] ? npcRelBonus(ctx.wallets[uid], npcId) : 0), ask = npcCasAsk(hs, ctx.day, npcId);
   const seat = (kind, tag) => npcCasLine(n, kind, `${sec}|${ctx.day}|${npcId}|${t.pid}|${kind}|${tag}`);
   if (npcCasRoll(sec, ctx.day, uid, npcId, ask) >= p) { // 被拒絕
     npcCasCool(hs, ctx.day, uid, npcId, now);

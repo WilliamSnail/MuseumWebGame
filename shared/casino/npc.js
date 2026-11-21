@@ -81,10 +81,10 @@ export function npcCasInvitable(house, day, nowMs, secret, list, counters) {
   return out;
 }
 // 答不答應的機率（%）：baseP，愛玩牌桌（likes 有 bj）再加 likeP，今天剩下的額度越少越不想玩
-export function npcCasChance(house, day, n, counters) {
+export function npcCasChance(house, day, n, counters, bonus = 0) {
   const C = NUM.casino.npcCas, R = npcCasRoom(house, day, n), per = ncN(n.budget && n.budget.perDay), cap = Math.max(1, Math.floor(per * C.lossPct / 100));
   const like = (npcLikesNow(n, day, counters) || []).includes("bj") ? C.likeP : 0;
-  return Math.max(5, Math.min(95, Math.round((C.baseP + like) * (0.3 + 0.7 * Math.min(1, R.lossLeft / cap)))));
+  return Math.max(5, Math.min(95, Math.round((C.baseP + like + ncN(bonus)) * (0.3 + 0.7 * Math.min(1, R.lossLeft / cap)))));
 }
 // 被邀壹次就記壹次（答應或拒絕都算）：每次擲骰的種子不同，同壹位館友隔 30 分鐘再邀會重擲、不會永遠同壹個結果。回傳這次是第幾次（從 0 起）
 export function npcCasAsk(house, day, id) { const by = myBy(npcCasFix(house, day), id), k = ncN(by.ask); by.ask = k + 1; return k; }

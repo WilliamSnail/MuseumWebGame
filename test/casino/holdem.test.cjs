@@ -11,7 +11,7 @@ const card = (r, s = 0) => r + 13 * s, A = 0, K = 12, Q = 11, J = 10, R10 = 9;
 const mkCtx = G => { const house = G.casHouseFix(G.casHouseNew(), DAY).house; return { wallets: {}, house, day: DAY, hlog: [], h0: house.bankroll }; };
 const wallet = (G, chips) => { const w = G.casWalletFix(G.casWalletNew(), DAY); w.chips = chips; return w; };
 // 坐好兩個人（各買 bb × 100）、發好第壹手。回傳 { t, ctx, a, b }（a 是按鈕＝小盲、先說話的人）
-function setup(G, { lv = 1, buy = null, rng = 7 } = {}) {
+function setup(G, { lv = 2, buy = null, rng = 7 } = {}) {
   const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv, now: NOW }), bb = G.NUM.casino.holdem.levels[lv][1];
   ctx.wallets.A = wallet(G, 1e9); ctx.wallets.B = wallet(G, 1e9);
   G.setRng(lcg(rng));
@@ -41,7 +41,7 @@ T("牌力：類別大小、踢腳、A2345 順子、皇家同花順、7 張取最
   assert.ok(S([[A, 0], [A, 1], [K, 2], [K, 3], [Q, 0], [Q, 1], [2, 2]]) < S([[A, 0], [A, 1], [K, 2], [K, 3], [Q, 0], [Q, 1], [A, 2]]), "三對取最好的兩對");
 });
 T("買入：第壹次最少 40 個大盲、最多 min(5,000 萬, 200 個大盲)；補籌碼不能超過；打牌中不能補；籌碼從錢包搬到桌上", G => {
-  const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 1, now: NOW }), w = wallet(G, 1e9), bb = 100000, lim = G.casHBuyLimits(t);
+  const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 2, now: NOW }), w = wallet(G, 1e9), bb = 100000, lim = G.casHBuyLimits(t);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(lim)), { min: 40 * bb, max: 200 * bb });
   assert.ok(!G.casHBuyin(t, "A", "甲", 39 * bb, w, ctx).ok); assert.ok(!G.casHBuyin(t, "A", "甲", 201 * bb, w, ctx).ok);
   assert.ok(!G.casHBuyin(t, "A", "甲", 1000.5, w, ctx).ok); assert.ok(!G.casHBuyin(t, "A", "甲", -5, w, ctx).ok);
@@ -52,7 +52,7 @@ T("買入：第壹次最少 40 個大盲、最多 min(5,000 萬, 200 個大盲)�
   G.NUM.casino.holdem.buyMax = 30 * bb; assert.strictEqual(G.casHBuyLimits(t).max, 30 * bb); // 買入上限（翊文：5,000 萬）
 });
 T("發牌：每人 2 張、盲注、小盲（按鈕）先說話、有效籌碼；總錢不變", G => {
-  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[1];
+  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[2];
   assert.strictEqual(t.phase, "play"); assert.strictEqual(t.seats[a].hole.length, 2); assert.strictEqual(t.seats[b].hole.length, 2);
   assert.strictEqual(t.seats[a].bet, B[0]); assert.strictEqual(t.seats[b].bet, B[1]); assert.strictEqual(t.curBet, B[1]);
   assert.strictEqual(t.E, 100 * bb); assert.strictEqual(t.btn, a);
@@ -61,14 +61,14 @@ T("發牌：每人 2 張、盲注、小盲（按鈕）先說話、有效籌碼�
   assert.ok(G.casHView(t, b, NOW, ctx).legal === undefined, "沒輪到的人沒有動作");
 });
 T("翻牌前蓋牌：大盲拿走小盲、不抽水（底池 ≤ 2 個大盲）、記紀錄", G => {
-  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[1];
+  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[2];
   const r = G.casHAct(t, a, "fold", 0, ctx, NOW + 1000); assert.ok(r.ok && r.finished);
   assert.strictEqual(t.seats[a].stack, 100 * bb - B[0]); assert.strictEqual(t.seats[b].stack, 100 * bb + B[0]);
   assert.strictEqual(t.res.rake, 0); assert.deepStrictEqual(JSON.parse(JSON.stringify(t.res.winners)), [b]); assert.strictEqual(t.res.how, "fold");
   assert.strictEqual(ctx.hlog.length, 1); assert.strictEqual(ctx.hlog[0].net[b], B[0]); assert.strictEqual(total(t, ctx), 2e9); assert.strictEqual(t.phase, "over");
 });
 T("動作規則：不是你的回合、過牌要跟、加注太少／太多／小數、全下當跟注、不認得的動作", G => {
-  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[1];
+  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[2];
   assert.ok(!G.casHAct(t, b, "check", 0, ctx, NOW).ok, "還沒輪到"); assert.ok(!G.casHAct(t, a, "check", 0, ctx, NOW).ok, "要跟注");
   assert.ok(!G.casHAct(t, a, "raise", B[1] + 1, ctx, NOW).ok, "最少加到 2 個大盲"); assert.ok(!G.casHAct(t, a, "raise", 101 * bb, ctx, NOW).ok, "超過有效籌碼");
   assert.ok(!G.casHAct(t, a, "raise", 3 * bb + 0.5, ctx, NOW).ok); assert.ok(!G.casHAct(t, a, "jump", 0, ctx, NOW).ok); assert.ok(!G.casHAct(t, "Z", "fold", 0, ctx, NOW).ok);
@@ -99,7 +99,7 @@ T("抽水封頂：全下大池只抽 3 個大盲；平手對分底池（單的�
   assert.strictEqual(t.seats[a].stack + t.seats[b].stack, 200 * bb - 3 * bb); assert.strictEqual(t.res.winners.length, 2); assert.strictEqual(total(t, ctx), 2e9);
 });
 T("有效籌碼：兩人籌碼不一樣，每人這手最多投入較少的那個；大籌碼的人輸了也只輸這麼多", G => {
-  G0 = G; const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 1, now: NOW }), bb = 100000;
+  G0 = G; const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 2, now: NOW }), bb = 100000;
   ctx.wallets.A = wallet(G, 1e9); ctx.wallets.B = wallet(G, 1e9); G.setRng(lcg(3));
   G.casHBuyin(t, "A", "甲", 50 * bb, ctx.wallets.A, ctx); G.casHBuyin(t, "B", "乙", 150 * bb, ctx.wallets.B, ctx); G.casHStart(t, ctx, NOW);
   assert.strictEqual(t.E, 50 * bb); const a = t.toAct, b = t.order.find(x => x !== a);
@@ -133,7 +133,7 @@ T("超時：輪到的人超過時間自動過牌（沒有要跟）或蓋牌；�
   assert.ok(!t.seats[a] || !t.seats[b], "有人連續超時被請離座"); assert.strictEqual(total(t, ctx), 2e9); assert.ok(Object.values(ctx.wallets).some(w => w.chips > 1e9 - 100 * bb));
 });
 T("離座：打牌中離座＝蓋牌，對方贏底池，離座的人帶走剩下的籌碼；沒坐的人離座沒事", G => {
-  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[1];
+  G0 = G; const { t, ctx, a, b, bb } = setup(G), B = G.NUM.casino.holdem.levels[2];
   const r = G.casHLeave(t, a, ctx, NOW + 100); assert.ok(r.ok); assert.ok(!t.seats[a]); assert.strictEqual(ctx.wallets[a].chips, 1e9 - 100 * bb + (100 * bb - B[0]));
   assert.strictEqual(t.seats[b].stack, 100 * bb + B[0]); assert.strictEqual(t.phase, "wait", "只剩壹個人：等人"); assert.strictEqual(t.res.how, "fold"); assert.strictEqual(total(t, ctx), 2e9);
   assert.ok(G.casHLeave(t, "nobody", ctx, NOW).none);
@@ -152,7 +152,7 @@ T("看到的樣子：自己的底牌看得到、對方是 -1、攤牌那手才�
   assert.ok(v2.seats.every(s => s.hole.length === 0), "結束後底牌清掉，只剩 res 裡攤牌的那兩手");
 });
 T("亂打 300 手：每手總錢不變、籌碼不會是負的或小數、每手都會結束", G => {
-  G0 = G; const rnd = lcg(2026), ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 0, now: NOW }), bb = 10000;
+  G0 = G; const rnd = lcg(2026), ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 1, now: NOW }), bb = 10000;
   ctx.wallets.A = wallet(G, 5e8); ctx.wallets.B = wallet(G, 5e8); G.setRng(lcg(11));
   G.casHBuyin(t, "A", "甲", 100 * bb, ctx.wallets.A, ctx); G.casHBuyin(t, "B", "乙", 60 * bb, ctx.wallets.B, ctx);
   let now = NOW, hands = 0, guard = 0;
@@ -173,7 +173,7 @@ T("亂打 300 手：每手總錢不變、籌碼不會是負的或小數、每手
 
 // ---------- 3～6 人桌（邊池、多人輪流、按鈕、中途入座、離座） ----------
 // 坐好 n 個人（P1…Pn，各買指定的大盲數）、發好第壹手。回傳 { t, ctx, ids, bb }
-function setupN(G, bbs, { lv = 1, rng = 5 } = {}) {
+function setupN(G, bbs, { lv = 2, rng = 5 } = {}) {
   const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv, now: NOW }), bb = G.NUM.casino.holdem.levels[lv][1], ids = bbs.map((_, i) => "P" + (i + 1));
   G.setRng(lcg(rng)); G0 = G;
   ids.forEach((u, i) => { ctx.wallets[u] = wallet(G, 1e10); assert.ok(G.casHBuyin(t, u, "名" + u, bbs[i] * bb, ctx.wallets[u], ctx).ok); });
@@ -184,7 +184,7 @@ const ALLSUITS = (a, b, c, d, e) => [card(a, 0), card(b, 1), card(c, 2), card(d,
 const act = (G, t, ctx, a, to = 0) => { const r = G.casHAct(t, t.toAct, a, to, ctx, NOW); assert.ok(r.ok, JSON.stringify(r)); return r; };
 
 T("3 人：按鈕、小盲、大盲、翻牌前從大盲的下壹位開始；翻牌後從按鈕左邊開始；下壹手按鈕往下壹位", G => {
-  const { t, ctx, ids, bb } = setupN(G, [100, 100, 100]), B = G.NUM.casino.holdem.levels[1];
+  const { t, ctx, ids, bb } = setupN(G, [100, 100, 100]), B = G.NUM.casino.holdem.levels[2];
   assert.strictEqual(t.btn, "P1"); assert.strictEqual(t.seats.P2.bet, B[0]); assert.strictEqual(t.seats.P3.bet, B[1]); assert.strictEqual(t.toAct, "P1");
   assert.strictEqual(total(t, ctx), 3e10);
   act(G, t, ctx, "call"); act(G, t, ctx, "call"); act(G, t, ctx, "check"); // P1 跟、小盲補、大盲有選擇權：過牌
@@ -223,7 +223,7 @@ T("邊池：最小籌碼的人全下贏了，大池的人互相比；蓋牌的�
   assert.strictEqual(total(t, ctx), 3e10);
 });
 T("沒人跟的加注退還：翻牌前加注到 10、其他人蓋牌，贏家拿回多投的整層、只抽「有人跟到的」那部分的水", G => {
-  const { t, ctx, bb } = setupN(G, [100, 100, 100]), B = G.NUM.casino.holdem.levels[1];
+  const { t, ctx, bb } = setupN(G, [100, 100, 100]), B = G.NUM.casino.holdem.levels[2];
   act(G, t, ctx, "raise", 10 * bb); act(G, t, ctx, "fold"); act(G, t, ctx, "fold");
   const pot = B[0] * 3 + (B[1] - B[0]) * 2, rake = Math.floor(pot * 0.05); // 小盲 0.5、大盲 1、加注的人壹開始跟到的 1：沒人跟的 9 整層退還
   assert.strictEqual(t.res.pot, pot); assert.strictEqual(t.res.rake, rake); assert.strictEqual(t.seats.P1.stack, 100 * bb + B[0] + B[1] - rake);
@@ -278,7 +278,7 @@ T("收桌（隊伍解散）：這手打到一半、有人全下，桌子收掉�
 });
 function randomTable(G, { n, hands, pairDay, seed, leaveRate = 0.01 }) {
   const rnd = lcg(seed), bb = 10000; if (pairDay) G.NUM.casino.holdem.pairDay = pairDay * bb;
-  const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 0, now: NOW }), ids = Array.from({ length: n }, (_, i) => "P" + (i + 1)); G.setRng(lcg(seed + 1)); G0 = G;
+  const ctx = mkCtx(G), t = G.casHNew({ pid: "p1", lv: 1, now: NOW }), ids = Array.from({ length: n }, (_, i) => "P" + (i + 1)); G.setRng(lcg(seed + 1)); G0 = G;
   ids.forEach(u => { ctx.wallets[u] = wallet(G, 1e9); G.casHBuyin(t, u, "名" + u, (20 + Math.floor(rnd() * 120)) * bb, ctx.wallets[u], ctx); });
   const grand = () => Object.values(ctx.wallets).reduce((x, w) => x + w.chips, 0) + G.casHInplay(t) + ctx.house.bankroll - ctx.h0, G1 = grand();
   let now = NOW, done = 0, guard = 0, maxLoss = 0;
