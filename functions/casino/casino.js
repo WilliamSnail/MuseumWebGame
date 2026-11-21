@@ -72,6 +72,7 @@ import { US_NAMES, US_SYMBOLS, stocksUs, usStale } from "../stock/stock_us.js";
 import { stocksDiv } from "../stock/stock_div.js";
 import { outDonate, outHouse, outLiveOn } from "../discord/discord_out.js";
 import { markAct, readActs } from "./task_act.js";
+import { giverLogAdd, giverLogFix, giverRun } from "../shared/social/giver.js";
 
 export const cryptoRng = () => randomInt(0, 0x100000000) / 0x100000000;
 const db = () => getFirestore();
@@ -498,6 +499,18 @@ export const casino = onCall(async req => {
     case "sbInfo": return play(req, me, {}, ctx => shape(ctx, { info: { wheel: casWheelInfo(ctx.house, ctx.day), miscount: casMiscountInfo(ctx.house, ctx.day) } }));
     case "wheel": return play(req, me, {}, ctx => { const r = casWheelSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
     case "miscount": return play(req, me, {}, ctx => { const r = casMiscountSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
+    // 交代人互動（決定 0151）：d.op ＝ info（六位現在的樣子，不動東西）、tap 閒聊、visit 來訪、ask 接下臨時拜託、askDone 拜託做完、gift 送佩佩（d.item ＝ { kind, key }）；heard（d.ids ＝ 聽過的句子 id，最多 10 句）、log（讀交談紀錄）。規則在 shared/social/giver.js
+    case "giver": {
+      const op = String(d.op || ""), day = taipeiDay(now());
+      if (op === "heard" || op === "log") { // 交談紀錄放自己的文件，錢包不用跟著讀寫（每次呼叫 casino 都整份讀寫錢包）
+        const ref = db().doc(`casinoNpcLog/${me.uid}`);
+        if (op === "log") { const sn = await ref.get(); return { ok: true, log: giverLogFix(sn.exists ? JSON.parse(sn.data().data) : null).g }; }
+        const added = await db().runTransaction(async tx => { const sn = await tx.get(ref), r = giverLogAdd(parse(sn), String(d.id || ""), d.ids, day); if (r.added) put(tx, ref, r.doc); return r.added; });
+        return { ok: true, added };
+      }
+      const acts = op === "askDone" ? await readActs(me.uid, day) : {};
+      return play(req, me, { save: op === "gift" }, ctx => { const r = giverRun(ctx, d, acts); return r.ok ? { ok: true, giver: r, chips: ctx.w.chips } : no(r); }); // 不用 shape（那是整個銀行畫面，閒聊壹下不用算）
+    }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
     // 回 { ok, day, items: [{ id, who, npc, text, stars, at, day }]（新的在前）, total 這壹天符合的共幾則, prevDay／nextDay 前後有資料的日子或 null }

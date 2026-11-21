@@ -20,6 +20,8 @@ const cfg = kind => NUM.npcRel[kind === "giver" ? "giver" : "traveler"];
 
 // 讀回來的錢包：補欄位、清掉壞的（最多留 NUM.npcRel.maxEntries 位）
 export function npcRelFix(w) {
+  if (!nrBox(w.npcDay)) w.npcDay = { day: null, g: 0, t: 0 }; // 今天送出去幾隻（g 交代人、t 旅客），換日重設（giver.js 用）。就地整理：呼叫的人手上拿著這個物件
+  w.npcDay.day = typeof w.npcDay.day === "string" ? w.npcDay.day : null; w.npcDay.g = nrN(w.npcDay.g); w.npcDay.t = nrN(w.npcDay.t);
   if (!nrBox(w.npcRel)) w.npcRel = {};
   const ids = Object.keys(w.npcRel);
   for (const id of ids) {

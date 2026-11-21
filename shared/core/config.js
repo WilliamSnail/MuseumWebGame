@@ -144,8 +144,9 @@ export const RARITY_TABLE = [
 // ---------- 數值（之後跑模擬再調） ----------
 export const NUM = {
   // 交代人熟識度、旅客好感度（決定 0151、0150 補充二；shared/social/npcrel.js）：只升不降；只換文字、稱號、旅客比較容易答應邀請（bondP 每級加幾 %），不給籌碼靈感
-  npcRel: { maxEntries: 120, bondP: [0, 5, 10, 15],
-    giver: { lv: [10, 50, 140], dayCap: 12, src: { chat: { xp: 1, max: 3 }, visit: { xp: 1, max: 1 }, task: { xp: 4, max: 1 }, ask: { xp: 3, max: 1 }, gift: { xp: 3, max: 1 } } },
+  npcRel: { maxEntries: 120, bondP: [0, 5, 10, 15], tapMax: 8, tapAnnoyed: 4, // tapMax 要跟 giver.src.tap.max 壹樣
+    askP: [30, 35, 40], askMax: 2, giftDay: { giver: 3, traveler: 2 }, recent: 3, react: { like: 5, ok: 3, off: 1 }, logMax: 200, logIds: 10,
+    giver: { lv: [10, 50, 140], dayCap: 12, src: { tap: { xp: 0, max: 8 }, chat: { xp: 1, max: 3 }, visit: { xp: 1, max: 1 }, task: { xp: 4, max: 1 }, ask: { xp: 3, max: 1 }, gift: { xp: 3, max: 1 } } },
     traveler: { lv: [8, 30, 70], dayCap: 8, src: { table: { xp: 2, max: 1 }, cellar: { xp: 4, max: 1 }, invite: { xp: 1, max: 1 }, gift: { xp: 3, max: 1 } } } },
   // 介面的版本（決定 0066，翊文 11-11：「把這個當大版本更新，之後有問題可以回滾」）。
   // newLobby：新的大廳（導覽圖底圖、右欄、圓形圖示）。有問題改成 false 就回到舊的大廳，舊的程式都還在
