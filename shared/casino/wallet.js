@@ -22,6 +22,7 @@ import { casSkFix, casSkStep } from "./streak.js";
 import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBurn, casHouseMint, casHouseMove, casPoolPay, casHouseWorldIn, casHouseWorldOut, casLedFix, casMint, casWorldGrow, casWorldExpand, casWorldLow, casCultureDue } from "./book.js";
 import { casInSpent, casInUsed } from "./stock_in.js";
 import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "../world/core.js";
+import { npcRelFix } from "../social/npcrel.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -32,7 +33,7 @@ export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {}, cult: 1 },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
-    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
+    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, npcRel: {}, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
@@ -59,6 +60,7 @@ export function casWalletFix(w, day) {
   casLedFix(w, ["mint", "burn"]); // 記帳（shared/casino/book.js）；舊錢包的開場籌碼沒記，不補（快照只看之後的變化）
   casLoanFix(w);
   casWorkFix(w);
+  npcRelFix(w); // 交代人熟識度、旅客好感度（shared/social/npcrel.js）
   if (!casIsObj(w.signWk)) w.signWk = {}; // 全簽到送過籌碼的週（決定 0064 之後，翊文 11-11）
   for (const k of Object.keys(base.st)) if (!Number.isFinite(w.st[k])) w.st[k] = base.st[k];
   if (!casIsObj(w.ex.n)) w.ex.n = {};
@@ -241,6 +243,7 @@ export function casAchInfo(w, id) {
   const base = CAS_ACH.find(a => a.id === id);
   if (base) return { id, name: base.name, desc: base.desc, old: false };
   const e = w && w.ach && w.ach[id];
+  if (e && typeof e.name === "string" && /^npc:[a-z0-9][a-z0-9-]{0,39}$/.test(id)) return { id, name: casShortName(e.name), desc: "跟這位熟了。", old: false, npc: true };
   if (e && typeof e.name === "string" && casIsWkId(id)) return { id, name: casShortName(e.name), desc: `賭場 ${id.slice(3)} 的每週收藏集滿了。`, old: false, wk: true };
   if (e && typeof e.name === "string") return { id, name: casShortName(e.name), desc: "以前在 Discord 21 點拿到的。", old: true };
   return null;
@@ -970,7 +973,7 @@ export function casCleanTitle(t) {
   if (!t || typeof t !== "object" || typeof t.id !== "string") return null;
   const a = CAS_ACH.find(x => x.id === t.id);
   if (a) return { id: a.id, name: a.name };
-  if ((/^old:a:[0-9a-z]+$/.test(t.id) || /^wk:\d{4}-W\d{2}$/.test(t.id)) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
+  if ((/^old:a:[0-9a-z]+$/.test(t.id) || /^npc:[a-z0-9][a-z0-9-]{0,39}$/.test(t.id) || /^wk:\d{4}-W\d{2}$/.test(t.id)) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
   return null;
 }
 
