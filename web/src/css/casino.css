@@ -466,7 +466,7 @@ body.reduce-motion .live-dot { animation: none; }
   .nb-casino .nb-plaque h2 { font-size: .875rem; letter-spacing: .08em; }
   .nb-casino .nb-plaque .ic, .nb-casino .nb-plaque .ic svg { width: 16px; height: 16px; }
   .nb-casino .nb-top-r { flex-wrap: nowrap; gap: 4px; }
-  .nb-casino .nb-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; overflow: visible; flex-wrap: initial; }
+  .nb-casino .nb-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; overflow: visible; flex-wrap: initial; }
   .nb-casino .nb-tab { min-height: 36px; min-width: 0; padding: 0 1px; border-width: 6px; border-image-width: 6px 10px; font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
   .nb-casino .nb-tab svg, .nb-casino .nb-tab .ic { display: none; }
   .cas-bank.slim { padding: 4px 8px; gap: 6px; flex-wrap: nowrap; }
@@ -638,3 +638,22 @@ body.reduce-motion .cas-bub { animation: none; }
   .nb-table .nb-top-r .btn { white-space: nowrap; min-width: max-content; padding: 0 10px; }
   .nb-table .cas-inv-b { min-height: 40px; font-size: .9375rem; }
 }
+
+/* ===== 頁籤 9 → 4（11-21，翊文）：大禮包、我的 兩頁各放好幾塊，上面壹排小標點了捲過去；實況收成牌桌旁的可收起壹塊 ===== */
+.cas-grp { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 6px; }
+.cas-grp > * { flex-shrink: 0; }
+.cas-subnav { display: flex; flex-wrap: wrap; gap: 6px; }
+.cas-sub { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 44px; padding: 4px 8px; border-radius: 8px; cursor: pointer; font: inherit; color: #F8E3A0; background: rgba(0,0,0,.28); border: 1px solid rgba(231,200,120,.45); }
+.cas-sub:hover, .cas-sub:focus-visible { background: rgba(231,200,120,.16); }
+.cas-sub b { font-family: var(--serif); letter-spacing: .06em; font-size: .9375rem; }
+.cas-sub small { font-size: .75rem; color: rgba(248,227,160,.8); }
+.cas-live-fold { padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,.22); border: 1px solid rgba(231,200,120,.3); }
+.cas-live-fold > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; font-family: var(--serif); letter-spacing: .08em; color: #F8E3A0; }
+.cas-live-fold > summary small { margin-left: auto; font-size: .75rem; color: rgba(248,227,160,.7); }
+.cas-live-fold > summary small.on { color: #FF8A78; }
+.cas-live-fold > .cas-sec { margin-top: 6px; padding: 8px 0 0; border: 0; background: none; }
+.cas-live-fold > .cas-sec > h3 { display: none; }
+.cas-side > .cas-live-fold { order: 2; flex: none; }
+@media (max-width: 760px) { .cas-sub b { font-size: .8125rem; letter-spacing: 0; } .cas-sub { padding: 3px 4px; } }
+@media (max-width: 760px) and (orientation: portrait) { .nb-casino .nb-tab { flex: 1 1 0; } } /* 4 個頁籤平分壹排 */
+#ui-tip { z-index: 9995; } /* 說明牌（ui_tip.js）要蓋在賭場的視窗上面 */

@@ -164,7 +164,7 @@ import { EASE, afterAnim, animate, caf, clamp, easeOut3, focusNoScroll, h, hasDO
       const ex = Array.from(w.children).find((c) => c._key === key && !c.classList.contains('is-out'));
       if (ex) {
         ex._n = (ex._n || 1) + 1;
-        const tx = ex.querySelector('.fx-toast-text'); if (tx) tx.textContent = key === 'ach' ? '拿到 ' + ex._n + ' 個成就：到「成就」頁籤看、可以當稱號。' : '任務完成 ' + ex._n + ' 個：到「任務板」領獎勵。';
+        const tx = ex.querySelector('.fx-toast-text'); if (tx) tx.textContent = key === 'ach' ? '拿到 ' + ex._n + ' 個成就：到賭場的「我的」頁籤看、可以當稱號。' : '任務完成 ' + ex._n + ' 個：到「任務板」領獎勵。';
         clearTimeout(ex._fxT); ex._fxT = setTimeout(() => dismissToast(ex), ms);
         return () => dismissToast(ex);
       }
