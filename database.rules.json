@@ -121,6 +121,14 @@
         }
       }
     },
+    "holdemView": {
+      "$pid": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
+    },
     "casinoChat": {
       "$pid": {
         ".read": "auth != null && root.child('parties').child($pid).child('members').child(auth.uid).exists()",

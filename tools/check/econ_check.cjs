@@ -65,6 +65,12 @@ check("財經專員延期（決定 0093 第 3 件）：手續費換成每天的�
     check(nm + "（決定 0150）：單轉最多贏 maxWin ≤ 莊家健康線 health.low 的 1/6（壹轉不會讓莊家吃緊）；壹轉最多 " + cfg.maxBets + " 種", cfg.maxWin <= C.health.low / 6 && cfg.maxBets >= 1, "maxWin " + cfg.maxWin + "、health.low " + C.health.low);
   });
 }
+{ // 德州撲克（決定 0150）：抽水 > 0 且每手都抽、封頂；買入上限 ≤ 單注上限 的 5 倍；壹天對同壹人上限 ≤ 買入上限（壹手最多搬 pairDay）；新帳號起始籌碼壹天搬不出超過 pairDay
+  const H = C.holdem;
+  check("德州撲克（決定 0150）：抽水 5%～10%、封頂 ≥ 1 個大盲（沒有抽水＝免費轉帳，抽太多沒人玩）；底池 ≤ 2 個大盲不抽", H.rakePct >= 5 && H.rakePct <= 10 && H.rakeCapBB >= 1, "抽水 " + H.rakePct + "%、封頂 " + H.rakeCapBB + " 個大盲");
+  check("德州撲克（決定 0150）：壹天對同壹人淨輸上限 pairDay ≤ 買入上限 buyMax，且 ≥ 10 個最大的大盲（上限太小最高級的桌子打不起來）", H.pairDay <= H.buyMax && H.pairDay >= 10 * Math.max(...H.levels.map(l => l[1])), "pairDay " + H.pairDay + "、buyMax " + H.buyMax + "、最大的大盲 " + Math.max(...H.levels.map(l => l[1])));
+  check("德州撲克（決定 0150）：每人每步 turnMs ≤ 60 秒、連續超時 maxTimeouts ≥ 1（不能讓壹個人卡住桌子）；桌子至少 2 個座位", H.turnMs <= 60000 && H.maxTimeouts >= 1 && H.seats >= 2, "turnMs " + H.turnMs + "、maxTimeouts " + H.maxTimeouts + "、seats " + H.seats);
+}
 check("館內股盤中跟著人數走（決定 0094）：ramp 在 0～1 之間（1 ＝ 照跳空的斜率全部反映；超過 1 會變成反向可以套）", C.stockIn.ramp >= 0 && C.stockIn.ramp <= 1, `ramp ${C.stockIn.ramp}`);
 check("世界文件：搬錢預設關閉（gateway ＝ 0）；要開之前 casBookSnap 必須把備用池算進總量，不然對帳差不是 0（W3 才做）", !(C.worldDoc && C.worldDoc.gateway > 0), `gateway ${C.worldDoc && C.worldDoc.gateway}`);
 check("文化部館債：利率（每天）＜ 已知世界貸款利率（每天）", C.houseLoan.cultureInterestPct < C.houseLoan.interestPct, `${C.houseLoan.cultureInterestPct}% ＜ ${C.houseLoan.interestPct}%`);
