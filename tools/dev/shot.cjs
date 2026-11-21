@@ -45,7 +45,7 @@ function main() {
 
   for (const s of sizes) {
     const png = path.join(outDir, shotName(url, s)), prof = fs.mkdtempSync(path.join(os.tmpdir(), "shot-"));
-    const r = spawnSync(browser, ["--headless=new", "--disable-gpu", "--no-sandbox", "--hide-scrollbars", `--user-data-dir=${prof}`, `--window-size=${s.w},${s.h}`,
+    const r = spawnSync(browser, ["--headless=new", "--mute-audio", "--disable-gpu", "--no-sandbox", "--hide-scrollbars", `--user-data-dir=${prof}`, `--window-size=${s.w},${s.h}`,
       `--virtual-time-budget=${wait}`, `--screenshot=${png}`, url], { encoding: "utf8", timeout: 90000 });
     // Windows 的 Edge 會先回來、在背景寫檔：等檔案出現、大小不再變（跟 svg_preview.cjs 壹樣）
     const until = Date.now() + 30000; let last = -1;
