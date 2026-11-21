@@ -9,7 +9,7 @@ import { WHEEL_COLORS, WHEEL_RARITIES, WHEEL_SLOTS, WHEEL_SPECIAL } from "../../
 import { ADDONS, h, snd, wait } from "../../core/ui_core.js";
 import { casinoAct, casinoRefresh, casinoState } from "./ui_casino.js";
 import { gameIntro, howTo } from "./ui_casino_felt.js";
-import { sbAdd, sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult } from "./ui_casino_sb.js";
+import { sbAdd, sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult, sbShowResult } from "./ui_casino_sb.js";
 
 const COLOR = { 紅: "#B8322A", 綠: "#2E7D4A", 黃: "#D9B21C", 黑: "#26221F", 虹彩: "#8A5AB8" };
 const MARK = { 普通: "", 稀有: "◆", 超稀有: "◆◆", 傳說: "★", 特別: "✦" };
@@ -80,7 +80,7 @@ export function wheelPane() {
     st.busy = true; st.result = null;
     const r = await casinoAct("wheel", { bets }, async r => { st.hitSlot = r.spin.outcome.slot; await spinTo(st, r.spin.outcome.slot); st.result = r.spin; st.bets = {}; snd(r.spin.net > 0 ? "coin" : "error"); });
     st.busy = false;
-    if (!r || !r.ok) redraw();
+    if (!r || !r.ok) redraw(); else sbShowResult();
   };
   const hit = st.result ? WHEEL_SLOTS[st.result.outcome.slot] : null;
   return [

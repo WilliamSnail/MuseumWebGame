@@ -12,6 +12,15 @@ import { btn, h } from "../../core/ui_core.js";
 import { tipOn } from "../../core/ui_tip.js";
 
 export const SB_UNITS = [100, 1000, 10000, 100000];
+// 結果出來：把結果卡捲進賭場內文看得到的範圍（只捲 .cas-body，不連外層壹起捲）
+export function sbShowResult() {
+  setTimeout(() => {
+    const el = document.querySelector(".sb-res"), body = el && el.closest(".cas-body");
+    if (!body) return;
+    const over = el.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 48;
+    if (over > 0) body.scrollTo({ top: body.scrollTop + over, behavior: "smooth" });
+  }, 80);
+}
 const pct = p => `${Math.round(p * 1000) / 10}%`;
 const back = t => Math.round(t.p * t.mult * 100); // 平均每押 100 拿回幾
 // 同壹次進賭場（casinoState 的 S）共用的 sbInfo：{ S, info, busy }
