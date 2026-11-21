@@ -17,22 +17,91 @@
 //  ctx：{ wallets: { uid: 錢包 }, house, day, hlog（陣列：每手的紀錄，伺服器寫進 casinoHoldemLog） }
 // ================================================================
 import { NUM } from "../core/config.js";
-import { casHouseMove, casCount } from "./book.js";
+import { casHouseMove, casCount, casHouseWorldIn, casHouseWorldOut } from "./book.js";
+import { hashStr, mulberry32 } from "../core/logic_base.js";
+import { hdNpcPlan } from "./holdem_npc.js";
+import { npcCasAccept, npcCasAsk, npcCasAway, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasInvitable, npcCasLine, npcCasRoll, npcCasRoom, npcCasStyle } from "./npc.js";
+import { npcRelBonus } from "../social/npcrel.js";
 import { casShuffle } from "./core.js";
 import { holdemName, holdemScore } from "./holdem_eval.js";
 
 const hdN = v => (Number.isFinite(+v) ? Math.floor(+v) : 0);
-const hdBlinds = t => { const L = NUM.casino.holdem.levels[t.lv] || NUM.casino.holdem.levels[0]; return { sb: L[0], bb: L[1] }; };
+// 盲注記在桌子上（t.bl，開桌那刻的盲注）：以後級距清單改了（11-22 前面加了入門桌，編號後移），已經開著的桌子盲注也不會變。沒有 t.bl 的舊桌（11-22 以前開的）照當時的三級編號
+const HD_OLD_LEVELS = [[5000, 10000], [50000, 100000], [500000, 1000000]];
+const hdBlinds = t => { const L = Array.isArray(t.bl) && t.bl.length === 2 ? t.bl : HD_OLD_LEVELS[t.lv] || NUM.casino.holdem.levels[0]; return { sb: L[0], bb: L[1] }; };
 export const casHSeats = t => t.order.map(id => t.seats[id]).filter(Boolean);
 const hdPairKey = (a, b) => [a, b].sort().join("|");
 // 從 uid 的下壹位開始、轉壹圈（uid 自己排最後；uid 不在桌上就從頭）
 const hdAfter = (t, uid) => { const i = t.order.indexOf(uid); return i < 0 ? t.order.slice() : t.order.slice(i + 1).concat(t.order.slice(0, i + 1)); };
 const hdDealt = t => casHSeats(t).filter(s => s.hole.length > 0);
 const hdAlive = t => hdDealt(t).filter(s => s.st === "in" || s.st === "allin");
+// ---------- 旅客 NPC（決定 0150 補充二）：座位多 npc: { id, style, host, until, said, say }；uid 是 "npc:<旅客 id>"，沒有錢包 ----------
+// 籌碼從已知世界來（casHouseWorldOut，來源 npcBj，跟 21 點壹樣）：留在桌上、不算「打牌中」（莊家帳上已經有這筆）；每手結算後他的淨輸贏 Δ 讓莊家帳跟著增減（casHouseMove npcBj），離座把剩下的還給已知世界。
+// 額度：每手最多投入 min(籌碼、他今天還能輸、今天還能贏、全館壹天上限剩下的 ÷ 桌上 NPC 數)，所以他壹天輸不超過 lossPct、贏不超過 winPct、全館不超過 dayCap。真人對 NPC 不記 house.hd.pair（額度已經擋了）。
+const hdIsNpc = s => !!(s && s.npc);
+const hdNpcData = (ctx, id) => (Array.isArray(ctx.npcList) ? ctx.npcList : []).find(x => x && x.id === id) || null;
+const hdPl = (ctx, a, b) => (hdIsNpc(a) || hdIsNpc(b) ? Infinity : casHPairLeft(ctx.house, ctx.day, a.uid, b.uid));
+function hdNpcCap(ctx, s, nNpc) {
+  const n = hdNpcData(ctx, s.npc.id), C = NUM.casino.npcCas;
+  if (!n || !n.budget) return 0;
+  const R = npcCasRoom(ctx.house, ctx.day, n);
+  if (!R.ok) return 0;
+  const net = Math.abs(npcCasFix(ctx.house, ctx.day).net);
+  return Math.max(0, Math.min(s.stack, R.lossLeft, R.winLeft, Math.floor(Math.max(0, C.dayCap - net) / Math.max(1, nNpc))));
+}
+// 坐下時帶多少：min(今天還能輸、今天還能贏、風格決定的大盲數、買入上限、全館上限剩下的 ÷ 這桌 NPC 數)
+function hdNpcBuy(ctx, n, bb, count) {
+  const C = NUM.casino.npcCas, H = NUM.casino.holdem, R = npcCasRoom(ctx.house, ctx.day, n);
+  if (!R.ok) return 0;
+  const net = Math.abs(npcCasFix(ctx.house, ctx.day).net), bbs = H.npcBuyBB[npcCasStyle(n)] || H.npcBuyBB.basic;
+  return Math.max(0, Math.min(R.lossLeft, R.winLeft, bbs * bb, H.buyMax, Math.floor(Math.max(0, C.dayCap - net) / Math.max(1, count))));
+}
+// 錢給座位：NPC 的回已知世界，真人的進錢包。回傳有沒有成功（真人的錢包不在就不動）
+function hdPay(ctx, s, amt) {
+  if (hdIsNpc(s)) { if (amt > 0) casHouseWorldIn(ctx.house, "npcBj", amt); return true; }
+  const w = ctx.wallets[s.uid];
+  if (!w) return false;
+  w.chips += amt;
+  return true;
+}
+const hdFreeNpc = (ctx, s) => { if (hdIsNpc(s)) npcCasFree(ctx.house, s.npc.id); };
+// 桌上最近說的話（NPC 的氣泡）：最多 5 句
+function hdTalk(t, s, text) {
+  if (!text) return;
+  if (!Array.isArray(t.talk)) t.talk = [];
+  t.talk.push({ uid: s.uid, nick: s.nick, text, hand: t.hand });
+  if (t.talk.length > 5) t.talk.splice(0, t.talk.length - 5);
+  s.npc.say = { text, hand: t.hand };
+}
+const hdSeed = (t, ctx, s, kind) => `${ctx.secret || ""}|${ctx.day}|${s.npc.id}|${t.pid}|${t.hand}|${kind}`;
+function hdNpcSay(t, ctx, s, kind, p) {
+  if (mulberry32(hashStr(hdSeed(t, ctx, s, kind + "|p")))() >= p) return;
+  hdTalk(t, s, npcCasLine(hdNpcData(ctx, s.npc.id), kind, hdSeed(t, ctx, s, kind)));
+}
+// 還在座的 NPC：時間到、額度用完（cap 不到 2 個大盲）就離座（兩手之間才走）
+function hdNpcSweep(t, ctx, now) {
+  if (t.phase === "play") return;
+  const npcs = casHSeats(t).filter(hdIsNpc), bb = hdBlinds(t).bb;
+  for (const s of npcs) {
+    if (now >= s.npc.until || hdNpcCap(ctx, s, npcs.length) < 2 * bb) { hdNpcSay(t, ctx, s, "leave", 1); casHLeave(t, s.uid, ctx, now, true); }
+  }
+}
+// 輪到 NPC 就讓他馬上動作（伺服器做，不等計時），連續做到輪到真人或這手結束
+function hdNpcRun(t, ctx, now) {
+  for (let k = 0; k < 80 && t.phase === "play"; k++) {
+    const s = t.seats[t.toAct];
+    if (!s || !hdIsNpc(s)) break;
+    const toCall = t.curBet - s.bet, maxTo = s.bet + hdRoom(s), pot = casHSeats(t).reduce((a, x) => a + x.put, 0);
+    const pl = hdNpcPlan(s.npc.style, { hole: s.hole, board: t.board, toCall, pot, bet: s.bet, curBet: t.curBet, minTo: Math.min(t.curBet + t.lastRaise, maxTo), maxTo, bb: hdBlinds(t).bb });
+    let r = hdAct(t, s.uid, pl.a, pl.to, ctx, now);
+    if (!r.ok) r = hdAct(t, s.uid, toCall > 0 ? "fold" : "check", 0, ctx, now);
+    if (!r.ok) break;
+  }
+}
 
 export function casHNew({ pid, lv, now }) {
   const L = Number.isInteger(lv) && lv >= 0 && lv < NUM.casino.holdem.levels.length ? lv : 0;
-  return { v: 2, game: "holdem", pid, lv: L, hand: 0, phase: "wait", deadline: null, street: 0, board: [], deck: [], toAct: null, curBet: 0, lastRaise: 0, E: 0, btn: null, seats: {}, order: [], res: null, rev: 0, at: now };
+  return { v: 3, game: "holdem", pid, lv: L, bl: NUM.casino.holdem.levels[L].slice(), hand: 0, phase: "wait", deadline: null, street: 0, board: [], deck: [], toAct: null, curBet: 0, lastRaise: 0, E: 0, btn: null, seats: {}, order: [], res: null, rev: 0, at: now };
 }
 // 買入的最少、最多（第一次坐下最少 buyMinBB 個大盲；桌上的籌碼最多 min(buyMax, buyMaxBB 個大盲)）
 export function casHBuyLimits(t) {
@@ -73,22 +142,27 @@ export function casHBuyin(t, uid, nick, amount, w, ctx) {
 // ---------- 發牌 ----------
 // 坐著的人裡，籌碼 ≥ 2 個大盲、今天對每個同桌的人還能輸 ≥ 2 個大盲的，有 2 個以上就開壹手。不夠回 { ok: false, why: "alone"｜"short"｜"cap" }
 export function casHStart(t, ctx, now) {
-  const C = NUM.casino.holdem, B = hdBlinds(t), seated = casHSeats(t);
+  const C = NUM.casino.holdem, B = hdBlinds(t);
+  hdNpcSweep(t, ctx, now);
+  const seated = casHSeats(t);
   const stop = why => { t.phase = "wait"; t.deadline = null; t.toAct = null; return { ok: false, why }; };
-  if (!C.on || seated.length < 2) return stop("alone");
+  if (!C.on || seated.length < 2 || !seated.some(s => !hdIsNpc(s))) return stop("alone");
   let D = seated.filter(s => s.stack >= 2 * B.bb);
   if (D.length < 2) return stop("short");
-  // 今天兩人之間額度不到 2 個大盲的，不能同桌打這手：壹次請走「卡到最多人」的那位（同樣多就請籌碼少的），直到沒有人卡人
+  // 今天兩個真人之間額度不到 2 個大盲的，不能同桌打這手：壹次請走「卡到最多人」的那位（同樣多就請籌碼少的），直到沒有人卡人（NPC 不看這個，他有自己的額度）
   for (;;) {
     const bad = {}; let any = false;
-    for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) if (casHPairLeft(ctx.house, ctx.day, D[i].uid, D[j].uid) < 2 * B.bb) { any = true; bad[D[i].uid] = (bad[D[i].uid] || 0) + 1; bad[D[j].uid] = (bad[D[j].uid] || 0) + 1; }
+    for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) if (hdPl(ctx, D[i], D[j]) < 2 * B.bb) { any = true; bad[D[i].uid] = (bad[D[i].uid] || 0) + 1; bad[D[j].uid] = (bad[D[j].uid] || 0) + 1; }
     if (!any) break;
     const worst = D.slice().sort((x, y) => (bad[y.uid] || 0) - (bad[x.uid] || 0) || x.stack - y.stack)[0];
     D = D.filter(s => s !== worst);
     if (D.length < 2) return stop("cap");
   }
+  const nNpc = seated.filter(hdIsNpc).length;
+  D = D.filter(s => !hdIsNpc(s) || hdNpcCap(ctx, s, nNpc) >= 2 * B.bb);
+  if (D.length < 2 || !D.some(s => !hdIsNpc(s))) return stop("cap");
   const caps = {};
-  D.forEach(s => { caps[s.uid] = Math.min(s.stack, ...D.filter(o => o !== s).map(o => casHPairLeft(ctx.house, ctx.day, s.uid, o.uid))); });
+  D.forEach(s => { caps[s.uid] = Math.min(s.stack, hdIsNpc(s) ? hdNpcCap(ctx, s, nNpc) : Infinity, ...D.filter(o => o !== s).map(o => hdPl(ctx, s, o))); });
   const raw = Object.assign({}, caps); // 再壓到「別人最大的 cap」以內：沒人跟得起的部分沒意義
   D.forEach(s => { caps[s.uid] = Math.min(raw[s.uid], Math.max(...D.filter(o => o !== s).map(o => raw[o.uid]))); });
   const deck = casShuffle();
@@ -103,6 +177,7 @@ export function casHStart(t, ctx, now) {
   const post = (s, amt) => { s.stack -= amt; s.put += amt; s.bet += amt; };
   post(t.seats[sb], B.sb); post(t.seats[bb], B.bb);
   t.deck = deck; t.curBet = B.bb; t.lastRaise = B.bb; t.toAct = first; t.deadline = now + C.turnMs; t.phase = "play"; t.res = null;
+  hdNpcRun(t, ctx, now);
   return { ok: true };
 }
 
@@ -115,7 +190,13 @@ const hdRoom = s => Math.max(0, Math.min(s.stack, s.cap - s.put));
 
 // ---------- 做壹個動作 ----------
 // a：fold／check／call／raise（to ＝加到多少，這條街的總投入）／allin
+// 真人（或超時）的動作；做完之後輪到 NPC 就讓他們馬上動作
 export function casHAct(t, uid, a, to, ctx, now) {
+  const r = hdAct(t, uid, a, to, ctx, now);
+  if (r.ok) { hdNpcRun(t, ctx, now); if (t.phase === "over") r.finished = true; }
+  return r;
+}
+function hdAct(t, uid, a, to, ctx, now) {
   const me = t.seats[uid];
   if (!me) return { ok: false, reason: "你不在這桌。" };
   if (t.phase !== "play" || me.st !== "in") return { ok: false, reason: "現在沒有在打。" };
@@ -208,6 +289,7 @@ function hdSettle(t, ctx, now, how) {
       let rest = c.a;
       winners.forEach((w, i) => {
         const x = i === winners.length - 1 ? rest : Math.floor(c.a * gain[w.uid] / net); rest -= x;
+        if (hdIsNpc(c.s) || hdIsNpc(w)) return; // 真人對 NPC 不記兩人的帳（NPC 有自己的額度）
         const r = L > 0 ? Math.floor(x * p.rake / L) : 0, key = hdPairKey(c.s.uid, w.uid), ids = key.split("|"), rec = Array.isArray(pair[key]) ? pair[key] : [0, 0];
         const nr = [hdN(rec[0]), hdN(rec[1])]; nr[ids.indexOf(c.s.uid)] -= x; nr[ids.indexOf(w.uid)] += x - r; pair[key] = nr;
       });
@@ -216,15 +298,25 @@ function hdSettle(t, ctx, now, how) {
   if (rake > 0) { casHouseMove(ctx.house, "bj", rake); casCount(ctx.house, "holdemRake", rake); }
   casCount(ctx.house, "holdemHands");
   const delta = {}; dealt.forEach(s => { delta[s.uid] = s.stack - s.s0; });
+  const npcSeats = dealt.filter(hdIsNpc);
+  if (npcSeats.length) { // NPC 這手的輸贏：記他今天的、全館的，莊家帳跟著他的籌碼增減（他的籌碼是莊家帳上的外面世界的錢）
+    const nc = npcCasFix(ctx.house, ctx.day);
+    for (const s of npcSeats) {
+      const by = nc.by[s.npc.id] || (nc.by[s.npc.id] = { n: 0, net: 0, hands: 0 });
+      by.net += delta[s.uid]; by.hands = (by.hands | 0) + 1; nc.net += delta[s.uid];
+      if (delta[s.uid]) casHouseMove(ctx.house, "npcBj", delta[s.uid]);
+    }
+  }
   const res = { hand: t.hand, how, winners: [...new Set(pots.flatMap(p => p.winners))], pot: total, rake, net: delta, board: t.board.slice(), street: t.street, pots: pots.map(p => ({ amount: p.amt, winners: p.winners, elig: p.elig.map(s => s.uid) })) };
   if (how === "showdown") { res.cards = {}; res.names = {}; alive.forEach(s => { res.cards[s.uid] = s.hole.slice(); res.names[s.uid] = holdemName(scores[s.uid]); }); }
   t.res = res;
   if (Array.isArray(ctx.hlog)) ctx.hlog.push({ at: now, pid: t.pid, hand: t.hand, lv: t.lv, how, street: t.street, pot: total, rake, net: delta, players: dealt.length, nicks: Object.fromEntries(dealt.map(s => [s.uid, s.nick])) });
   dealt.forEach(s => { s.put = 0; s.bet = 0; s.st = "idle"; s.acted = false; s.hole = []; s.cap = 0; });
+  npcSeats.forEach(s => hdNpcSay(t, ctx, s, delta[s.uid] > 0 ? "win" : "lose", 0.4));
   t.phase = "over"; t.toAct = null; t.deck = []; t.deadline = now + C.resultMs;
   for (const id of t.order.slice()) { // 全下時離座的人：這手贏的錢現在進錢包
     const s = t.seats[id];
-    if (s && s.leaving) { const w = ctx.wallets[id]; if (w) { w.chips += s.stack; hdRemove(t, id); } else s.leaving = false; }
+    if (s && s.leaving) { if (hdPay(ctx, s, s.stack)) { hdFreeNpc(ctx, s); hdRemove(t, id); } else s.leaving = false; }
   }
   if (casHSeats(t).length < 2) { t.phase = "wait"; t.deadline = null; }
   return { ok: true, finished: true };
@@ -237,11 +329,10 @@ function hdRemove(t, uid) {
 
 // ---------- 離座（離開隊伍、斷線太久、超時太多） ----------
 // 打牌中離座：還沒蓋牌的＝蓋牌；投進這手底池的錢不能帶走（留在池裡，全下的人照常分），座位留到這手結束，剩下的籌碼先回錢包。沒在打的人直接把桌上的籌碼拿回錢包
-export function casHLeave(t, uid, ctx, now) {
+export function casHLeave(t, uid, ctx, now, quiet = false) {
   const s = t.seats[uid];
   if (!s) return { ok: true, none: true };
-  const w = ctx.wallets[uid];
-  if (!w) return { ok: false, reason: "錢包讀不到。" }; // 錢包壹定要在（呼叫的人讀了）；沒有的話籌碼留在座位上不丟
+  if (!hdIsNpc(s) && !ctx.wallets[uid]) return { ok: false, reason: "錢包讀不到。" }; // 錢包壹定要在（呼叫的人讀了）；沒有的話籌碼留在座位上不丟
   if (t.phase === "play" && s.hole.length) {
     if (s.st === "in") {
       s.st = "fold";
@@ -250,18 +341,60 @@ export function casHLeave(t, uid, ctx, now) {
       else if (!hdPending(t).length) hdProgress(t, ctx, now);
     }
     if (t.phase === "play" && t.seats[uid]) { // 這手還沒打完：投進去的錢還在底池裡，座位留到這手結束；剩下的籌碼先回錢包
-      const out = s.stack; w.chips += out; s.stack = 0; s.s0 -= out; s.leaving = true;
+      const out = s.stack; hdPay(ctx, s, out); s.stack = 0; s.s0 -= out; s.leaving = true;
       return { ok: true, cashed: out, later: true };
     }
   }
-  const out = s.stack; w.chips += out; hdRemove(t, uid);
+  const out = s.stack; hdPay(ctx, s, out); hdFreeNpc(ctx, s); hdRemove(t, uid);
   if (t.phase !== "play" && casHSeats(t).length < 2) { t.phase = "wait"; t.deadline = null; t.toAct = null; }
+  if (!quiet && t.order.length && !casHSeats(t).some(x => !hdIsNpc(x))) casHClose(t, ctx, now); // 真人都走了：NPC 不自己打，這手打完（發完牌攤牌）NPC 帶著錢回去
   return { ok: true, cashed: out };
+}
+
+// ---------- 邀請旅客 NPC（沿用 21 點 npcCas 的規則，決定 0080、0150 補充二） ----------
+// 現在邀得動誰：[{ id, name }]（在館裡、不在賭場、今天還有額度）。uid 有給：他剛拒絕過這位館友、30 分鐘還沒到的不列出來
+export function casHNpcWho(ctx, now, uid) {
+  const l = npcCasInvitable(ctx.house, ctx.day, now, ctx.secret || "", Array.isArray(ctx.npcList) ? ctx.npcList : [], ctx.counters || null);
+  return uid ? l.filter(x => !(npcCasCoolLeft(ctx.house, ctx.day, uid, x.id, now) > 0)) : l;
+}
+// 館友 uid 邀 npcId 坐下。回傳 { ok: false, reason }（邀不了，什麼都沒改）或 { ok: true, accepted, name, line, until?, brought? }（沒答應 line 是他的拒絕台詞，同壹位 30 分鐘內不能再邀）
+export function casHNpcInvite(t, ctx, uid, npcId, now) {
+  const C = NUM.casino.npcCas, H = NUM.casino.holdem, me = t.seats[uid], list = Array.isArray(ctx.npcList) ? ctx.npcList : [], hs = ctx.house, sec = ctx.secret || "", B = hdBlinds(t);
+  if (!C.on || !H.on) return { ok: false, reason: "邀請客人還沒開放" };
+  if (!me || hdIsNpc(me)) return { ok: false, reason: "你不在這桌" };
+  if (casHSeats(t).filter(s => s.npc && s.npc.host === uid).length >= (C.perHost || 1)) return { ok: false, reason: `你已經帶了 ${C.perHost || 1} 位客人` };
+  const n = list.find(x => x && x.id === npcId && x.kind !== "trace");
+  if (!n) return { ok: false, reason: "他不在館裡" };
+  if (casHSeats(t).filter(s => s.npc).length >= C.tableMax) return { ok: false, reason: "這桌的客人夠多了" };
+  if (t.order.length >= H.seats) return { ok: false, reason: "這桌坐滿了" };
+  if (npcCasAway(hs, now).has(npcId)) return { ok: false, reason: "他已經跟別人去玩了" };
+  const left = npcCasCoolLeft(hs, ctx.day, uid, npcId, now);
+  if (left > 0) return { ok: false, reason: `他剛拒絕過你，${Math.ceil(left / 60000)} 分鐘後再邀`, wait: left };
+  if (!casHNpcWho(ctx, now).some(x => x.id === npcId)) return { ok: false, reason: "他現在不在館裡，或今天不想玩了" };
+  const nNpc = casHSeats(t).filter(hdIsNpc).length + 1, stack0 = hdNpcBuy(ctx, n, B.bb, nNpc);
+  if (stack0 < 2 * B.bb) return { ok: false, reason: "他今天的額度不夠坐這桌，換小壹點的桌" };
+  const w = ctx.wallets && ctx.wallets[uid], bonus = w ? npcRelBonus(w, npcId) : 0;
+  const p = npcCasChance(hs, ctx.day, n, ctx.counters || null, bonus), ask = npcCasAsk(hs, ctx.day, npcId);
+  const line = kind => npcCasLine(n, kind, `${sec}|${ctx.day}|${npcId}|${t.pid}|${kind}|${ask}`);
+  if (npcCasRoll(sec, ctx.day, uid, npcId, ask) >= p) { // 被拒絕
+    npcCasCool(hs, ctx.day, uid, npcId, now);
+    return { ok: true, accepted: false, name: n.name, line: line("refuse") };
+  }
+  const got = casHouseWorldOut(hs, "npcBj", stack0, NUM.casino.world); // 籌碼從已知世界來；到不了 2 個大盲就不坐（還回去）
+  if (got < 2 * B.bb) { if (got > 0) casHouseWorldIn(hs, "npcBj", got); return { ok: false, reason: "他今天不想玩了" }; }
+  npcCasAccept(hs, ctx.day, n, t.pid, uid, now, sec);
+  const rnd = mulberry32(hashStr(`${sec}|${ctx.day}|${npcId}|${t.pid}|hdstay|${ask}`)), until = now + (H.npcStay[0] + Math.floor(rnd() * (H.npcStay[1] - H.npcStay[0] + 1))) * 60000;
+  hs.npcCas.at[npcId].until = until;
+  const seat = { uid: "npc:" + npcId, nick: n.name, stack: got, put: 0, bet: 0, cap: 0, st: "idle", acted: false, hole: [], s0: 0, timeouts: 0, npc: { id: npcId, style: npcCasStyle(n), host: uid, until, said: 0, say: null } };
+  t.seats[seat.uid] = seat; t.order.push(seat.uid);
+  const said = line("accept"); hdTalk(t, seat, said);
+  if (t.phase === "wait") casHStart(t, ctx, now);
+  return { ok: true, accepted: true, name: n.name, line: said, until, brought: casHSeats(t).filter(x => x.npc && x.npc.host === uid).length };
 }
 
 // 桌子要收了（隊伍解散）：每個人都離座；這手還沒打完就把牌發完攤牌（全下的底池要有人分，不能跟著桌子消失），贏的錢進錢包
 export function casHClose(t, ctx, now) {
-  for (const id of t.order.slice()) casHLeave(t, id, ctx, now);
+  for (const id of t.order.slice()) casHLeave(t, id, ctx, now, true);
   if (t.phase === "play") { while (t.board.length < 5) t.board.push(t.deck.pop()); t.street = 3; hdSettle(t, ctx, now, hdAlive(t).length <= 1 ? "fold" : "showdown"); }
   return { ok: true };
 }
@@ -291,12 +424,14 @@ export function casHView(t, uid, now, ctx) {
   const C = NUM.casino.holdem, B = hdBlinds(t), me = t.seats[uid], lim = casHBuyLimits(t);
   const v = {
     game: "holdem", pid: t.pid, hand: t.hand, phase: t.phase, street: t.street, board: t.board.slice(), now, deadline: t.deadline,
-    level: { lv: t.lv, sb: B.sb, bb: B.bb, levels: C.levels }, buy: lim, rake: { pct: C.rakePct, capBB: C.rakeCapBB, cap: C.rakeCapBB * B.bb },
+    level: { lv: Math.max(0, C.levels.findIndex(l => l[1] === B.bb)), sb: B.sb, bb: B.bb, levels: C.levels }, buy: lim, rake: { pct: C.rakePct, capBB: C.rakeCapBB, cap: C.rakeCapBB * B.bb },
     pot: casHSeats(t).reduce((a, s) => a + s.put, 0), toAct: t.toAct, curBet: t.curBet, E: t.E, res: t.res, rev: t.rev,
-    seats: casHSeats(t).map(s => ({ uid: s.uid, nick: s.nick, stack: s.stack, put: s.put, bet: s.bet, st: s.st, me: s.uid === uid, btn: t.btn === s.uid, hole: s.uid === uid ? s.hole.slice() : (s.hole.length ? [-1, -1] : []), timeouts: s.timeouts, leaving: !!s.leaving, sitOut: t.phase === "play" && s.st === "idle" })),
+    seats: casHSeats(t).map(s => ({ uid: s.uid, nick: s.nick, stack: s.stack, put: s.put, bet: s.bet, st: s.st, me: s.uid === uid, btn: t.btn === s.uid, hole: s.uid === uid ? s.hole.slice() : (s.hole.length ? [-1, -1] : []), timeouts: s.timeouts, leaving: !!s.leaving, npc: hdIsNpc(s), say: s.npc && s.npc.say && s.npc.say.hand >= t.hand - 1 ? s.npc.say.text : null, sitOut: t.phase === "play" && s.st === "idle" })),
     sitting: !!me, seatsMax: C.seats,
   };
-  if (ctx && me && t.order.length > 1) v.pairLeft = Math.min(...t.order.filter(x => x !== uid).map(o => casHPairLeft(ctx.house, ctx.day, uid, o)));
+  const others = t.order.filter(x => x !== uid && !hdIsNpc(t.seats[x]));
+  if (ctx && me && others.length) v.pairLeft = Math.min(...others.map(o => casHPairLeft(ctx.house, ctx.day, uid, o)));
+  v.talk = Array.isArray(t.talk) ? t.talk.slice(-3) : [];
   if (me && t.phase === "play" && t.toAct === uid) {
     const toCall = t.curBet - me.bet, room = hdRoom(me), maxTo = me.bet + room;
     v.legal = { check: toCall <= 0, call: toCall > 0 ? Math.min(toCall, room) : 0, minTo: Math.min(t.curBet + t.lastRaise, maxTo), maxTo, canRaise: maxTo > t.curBet, fold: true };
@@ -306,4 +441,4 @@ export function casHView(t, uid, now, ctx) {
 // 有沒有人坐著（桌子可以收了）
 export const casHEmpty = t => t.order.length === 0;
 // 全館日報要算的「打牌中」：桌上的籌碼（沒投入的加投入的）
-export const casHInplay = t => casHSeats(t).reduce((a, s) => a + s.stack + s.put, 0);
+export const casHInplay = t => casHSeats(t).reduce((a, s) => a + (hdIsNpc(s) ? 0 : s.stack + s.put), 0); // NPC 的籌碼在莊家帳上，不算打牌中
