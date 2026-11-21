@@ -53,7 +53,7 @@ export function handEl(cards, o = {}) {
 
 // 荷官的任務（giverTaskLine('yuga')）：今天有交代，進牌桌／各遊戲說那句；做完說回話；也進說過的話。同壹句只記壹次
 export function casinoGiver() {
-  const gl = S ? giverTaskLine("yuga") : null;
+  const gl = S ? giverTaskLine("yuga", "casino") : null; // 賭場：先挑做賭場的那個任務（打壹手），沒有才看別的
   if (gl && S.giverSaid !== gl.text) { S.giverSaid = gl.text; say([gl.text]); }
   return gl;
 }
@@ -767,7 +767,7 @@ function dinerMore(a, b, calm) {
 }
 function dinerNote() {
   const d = todayStr(); let k = 0; for (const c of d) k = (k * 31 + c.charCodeAt(0)) % 9973;
-  const gl = giverTaskLine("hall"); // 今天有堂主交代的任務：字條寫那壹句（內容檔的台詞）；做完換成回話。沒有才用壹天壹句的老字條
+  const gl = giverTaskLine("hall", "casino"); // 今天有堂主交代的任務：字條寫那壹句（內容檔的台詞）；做完換成回話。沒有才用壹天壹句的老字條
   const txt = gl ? gl.text : CAS_HALL_NOTES[k % CAS_HALL_NOTES.length];
   const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"), h("img", { class: "dn-cup", src: "/diner/prop-cup.webp", alt: "", title: "多留了壹杯，不說是給誰的" }));
   const el = h("details", { class: "dn-note" }, h("summary", null, icon("scroll"), h("span", null, "堂主的字條")), body);

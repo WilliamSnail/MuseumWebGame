@@ -308,6 +308,19 @@ export function taskText(t, W) {
   }
 }
 // 這個任務要去哪裡做：{ room, params } 或 { panel }（畫面的「前往」）
+// 一位交代人壹天可能交代兩個以上任務（例：荷官有「綠色佩佩」和「賭場打壹手」）：挑現在該說哪壹句。
+// daily：今天的任務；giver：交代人；done(t)：做完了沒；room：說話的地方（賭場＝"casino"：先挑做這間房的事的那個）。
+// 規則：有給 room 就先看「去的地方是這間房」的任務（沒有就看全部）；裡面還有沒做完的就說第壹個沒做完的（says）；都做完了說最後壹個做完的（有 done 說 done，沒有說 says）。沒有交代回 null。
+export function giverPick(daily, giver, done, room, W) {
+  const all = (daily || []).filter(x => x && x.giver === giver && x.says);
+  if (!all.length) return null;
+  const here = room ? all.filter(x => { const g = taskGo(x, W); return g && g.room === room; }) : [];
+  const list = here.length ? here : all;
+  const pend = list.find(x => !done(x));
+  if (pend) return { task: pend, done: false, text: pend.says };
+  const t = list[list.length - 1];
+  return { task: t, done: true, text: t.done || t.says };
+}
 export function taskGo(t, W) {
   switch (t.kind) {
     case "make": return { room: "workshop" };

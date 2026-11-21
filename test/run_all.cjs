@@ -16,6 +16,7 @@ const STEPS = [
   ["進館順序：賭場同桌不會跳過公佈欄和簽到，公告後才問要不要回牌桌", ["test/web/after_enter.test.cjs"]],
   ["每日重要事件清單（只放今天、每種有上限、預告壹則、壞資料不丟錯）", ["test/story/headlines.test.cjs"]],
   ["深夜大廳歌曲字幕：這個時間點顯示哪壹句、內容檔格式", ["test/game/lyrics.test.cjs"]],
+  ["交代人壹天兩個任務：挑現在該說哪壹句（giverPick）", ["test/story/giver_pick.test.cjs"]],
   ["新玩家的下一步", ["test/web/guide.test.cjs"]],
   ["公佈欄、信箱", ["test/web/notice.test.cjs"]],
   ["公告一則一個檔：拆檔遷移（id 和順序不變、可以重跑）、合成、舊陣列偵測、併 main 救援", ["test/tools/notices_split.test.cjs"]],

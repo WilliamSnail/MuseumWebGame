@@ -16,7 +16,7 @@ import { NOTICE_EXTRA } from "../../../shared/game/notices.js";
 import { casWkBase } from "../../../shared/casino/week.js";
 import { casWkDefFor } from "../../../shared/casino/wallet.js";
 import { isFresh, markFresh } from "../../../shared/core/fresh.js";
-import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../../shared/story/core.js";
+import { LINE_KINDS, STORY_TASKS, claimMile, taskPts, dayPts, giverName, giverPick, milesText, milesView, ptsDay, storyAct, weekPts, stampHow, bookHint, bookState, claimDayBonus, claimSpot, claimTask, claimWeekBonus, dayBonusState, isoWeek, itemName, itemUsable, lineById, markLinesSeen, readStoryBook, rewardText, roomOpen, sanitizeSvg, seasonName, seasonOf, setStoryHolidayOf, shelfTabOf, seasonLines, spotClaimed, startStoryRoom, storyLibrary, storyLines, storyNotice, storyPastWeeks, storyWeek, syncStory, taskCount, taskDone, taskGo, taskTarget, taskText, todayOf, trackLine, unclaimed, useStoryItem, viewCollectWork, viewShowWork, weekBonusState, weekLeftText, weekReview } from "../../../shared/story/core.js";
 import { itemDesc, storyState } from "../../../shared/story/state.js";
 import { ART } from "../core/art.js";
 import { understoodCard, markText, ptMark, setChips } from "../core/ui_core.js";
@@ -185,12 +185,11 @@ function menuBadge(W) {
 // 狀態列的「追蹤」那一行（點了走過去）
 // 房間裡的『這裡有任務』小橫幅（11-20，任務入口重新規劃）：進了有今天任務能做的房間，頂上出壹條；做完換成『完成 +N 分・回任務板』；可以關（這個房間這個狀態今天不再出）
 // 今天某位交代人交代的任務那壹句：還沒做完說 says、做完了說 done（台詞照內容檔）。沒有就 null（餐車的堂主字條、房間小橫幅用）
-export function giverTaskLine(giver) {
+export function giverTaskLine(giver, room) { // room：說話的地方（賭場 "casino"）；壹位交代人壹天有兩個任務時，挑現在該說的那壹句（shared/story/core.js 的 giverPick）
   const W = on() ? curWeek() : null; if (!W || W.past) return null;
   const d = todayOf(W); if (!d) return null;
-  const t = d.daily.find(x => x.giver === giver && x.says); if (!t) return null;
-  const done = taskDone(P, t);
-  return { text: done && t.done ? t.done : t.says, done, name: giverName(giver) };
+  const g = giverPick(d.daily, giver, t => taskDone(P, t), room, W); if (!g) return null;
+  return { text: g.text, done: g.done, name: giverName(giver), id: g.task.id };
 }
 const RT_SKIP = {}; // 關掉的：「房間|狀態」→ 今天的日期
 function roomTaskBar() {
