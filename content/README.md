@@ -440,3 +440,14 @@ content/
 - 日期要在這週內；同一個對象同一天只能有一筆；不認得的欄位（例如想寫理由的 `note`）會被擋。
 - **壞消息推不安**：`dN.json` 的 `market` 裡 `tone: "down"` 且 `ref` 指到某集團旗下的館外股票，那個集團的不安 +2（壹個集團壹天最多壹次）。不用另外寫。
 - 用 `npm run world:event` 寫（不手改）；`npm test` 的 `week_check` 擋格式，`shared/world/events.js` 是打包出來給伺服器用的，不要手改。
+
+## 十三、交代人互動台詞：`content/givers/<id>.json`（11-21，決定 0151，規劃 `docs/規劃/交代人互動規劃.md`）
+
+每位交代人一個檔，檔名＝帳本 `taskGivers` 的 id。第一批（閒聊、字條、稱呼）：
+
+- `call`：稱呼四級 `0～3`，字串可以放 `{name}`（玩家的名字）。
+- `chat.morning／noon／evening／night`：四個時段各 3 句；不在的時段留空陣列，改寫 `away.<時段>`（字條，至少 2 句）。
+- `chat.annoyed`（連點的不耐煩）、`chat.lowSan`（理智低）、`chat.named`（熟識度 Lv2 以上，可放 `{name}`）各 3 句。
+- `chat.yesterday.task／visit／gift`：各至少 1 句。
+- 每句 40 字內、「壹」不用「一」、沒有英文字母（只有 yuga 的 R）和阿拉伯數字、不寫贏輸賺賠催玩掏錢、不碰撥款信那條線。檢查：`node tools/check/givers_check.cjs`（npm test 會跑）。
+- 第二批（小故事、拜託、送禮反應）、第三批（串門子、稱號）之後加欄位。
