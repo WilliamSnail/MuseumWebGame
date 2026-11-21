@@ -44,6 +44,7 @@ export function giverPickLine(id, n, lv) {
 // ---------- 伺服器 ----------
 let INFO = null, loading = null;
 const cards = new Set();
+export const giverWatch = el => { cards.add(el); return el; }; // 讀回來要重畫的元素（要有 paint）
 const paintAll = () => cards.forEach(c => (c.isConnected ? c.paint() : cards.delete(c)));
 export function giverLoad(force) {
   if (!NET.loggedIn) return null;
@@ -58,11 +59,13 @@ export const giverHeard = (id, ids) => { const l = ids.filter(Boolean); if (l.le
 const view = id => INFO && (INFO.givers || []).find(g => g.id === id);
 const offerOf = id => INFO && (INFO.offers || []).find(o => o.id === id);
 
-// 熟識度：四格＋級名
+// 熟識度：四格（目前那格依這級已經漲了多少塗滿壹部分）＋級名＋「再 N 點」（11-21 qa：看不出同級內有漲）
+const LV_FROM = [0, 10, 50, 140]; // 要跟 NUM.npcRel.giver.lv 壹樣
 function pips(v) {
-  const lv = v ? v.lv : 0;
+  const lv = v ? v.lv : 0, frac = v && v.next ? Math.max(0, Math.min(1, ((v.xp | 0) - LV_FROM[lv]) / Math.max(1, v.next - LV_FROM[lv]))) : 0;
   return h("span", { class: "gv-lv", title: v && v.next ? `再 ${v.left} 點到「${GV_LV[Math.min(3, lv + 1)]}」` : "" },
-    [0, 1, 2, 3].map(i => h("i", { class: i < lv ? "on" : i === lv ? "cur" : "" })), h("small", null, GV_LV[lv] || GV_LV[0]));
+    [0, 1, 2, 3].map(i => h("i", { class: i < lv ? "on" : i === lv ? "cur" : "", style: i === lv && frac ? `--f:${Math.round(frac * 100)}%` : null })), h("small", null, GV_LV[lv] || GV_LV[0]),
+    v && v.next ? h("small", { class: "gv-left" }, `再 ${v.left} 點`) : null);
 }
 export function giverLvTag(id) {
   const el = h("span", { class: "gv-lvtag" });
@@ -129,7 +132,7 @@ export function giverTalk(id) {
       const key = r.react === "like" ? "love" : r.react === "off" ? "off" : "ok", list = (G.gift && G.gift[key]) || [], i = list.length ? (giverDayNo() + id.length) % list.length : 0;
       if (list.length) { said = giverFill(list[i]); giverHeard(id, [`${id}:gift.${key}:${i}`]); }
       stat(r); reload();
-      return { rev: r.rev, text: said || "收下了。" };
+      return { rev: r.rev, text: (said || "收下了").replace(/。+$/, ""), close: true };
     } });
   }
   box.paint = paint; cards.add(box); paint(); giverLoad();

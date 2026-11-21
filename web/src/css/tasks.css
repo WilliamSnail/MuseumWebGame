@@ -124,3 +124,9 @@
   .gv-lv small { display: none; }
   .gv-t b { font-size: .9375rem; }
 }
+/* 11-21 qa：熟識度同級內的進度、交談紀錄書架用滿寬 */
+.gv-lv i.cur { background: linear-gradient(to right, #B07A1F var(--f, 0%), transparent var(--f, 0%)); }
+.gv-lv .gv-left { color: #7C6B52; }
+@media (max-width: 760px) { .gv-lv .gv-left { display: none; } }
+.gv-log { grid-column: 1 / -1; width: 100%; }
+.gv-log-books { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }

@@ -173,3 +173,6 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
 .origin-onescreen .story-shelf .spine { margin-bottom: 0; }
 .origin-onescreen .story-shelf .shelf-label { z-index: 2; }
 @media (max-width: 760px) { .origin-onescreen .story-shelf { padding-bottom: 20px; margin-bottom: 28px; } }
+/* 看懂的事（11-21 翊文：「底下沒有紙」）：這本沒有 .page 包著，內容超過紙就掉到紙外；讓整本自己捲 */
+.origin-onescreen .reader .book.uk-book { overflow-y: auto; scrollbar-width: thin; }
+.origin-onescreen .reader .book.uk-book > * { flex: none; }
