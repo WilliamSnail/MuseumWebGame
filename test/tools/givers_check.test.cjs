@@ -35,5 +35,15 @@ T("缺時段、缺字條、缺稱號、id 不在帳本都擋", () => {
   expectErr(c => { delete get(c, "hall").call[3]; }, /要有字/);
   expectErr(c => { get(c, "hall").id = "nobody"; }, /不在帳本/);
 });
+T("第二批：小故事、拜託、送禮的欄位都擋得住壞的", () => {
+  expectErr(c => { get(c, "hall").story.parts[0].pop(); }, /每段 3 句/);
+  expectErr(c => { get(c, "hall").errands[0].kind = "deposit"; }, /kind 只能是/);
+  expectErr(c => { get(c, "hall").errands[2].to = "hall"; }, /另壹位交代人/);
+  expectErr(c => { get(c, "hall").gift.likes.款式 = ["A"]; }, /欄位只能是/);
+  expectErr(c => { get(c, "hall").gift.likes.帽子 = ["不存在的帽"]; }, /不是圖鑑裡的選項/);
+  expectErr(c => { get(c, "hall").gift.love = ["壹"]; }, /至少 2 句/);
+  expectErr(c => { get(c, "number").story.last = "（收走你的名字。）"; }, /不能寫/);
+  assert.ok(get(base(), "number").gift, "號碼機也收禮（決定 0151 題 5 選 B）");
+});
 console.log(`交代人台詞檢查：${pass} 通過，${fail} 失敗`);
 if (fail) process.exit(1);
