@@ -172,3 +172,24 @@
 .bj-saylog li { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: baseline; font-size: .875rem; }
 .bj-saylog time { color: #7C6B52; font-variant-numeric: tabular-nums; }
 .bj-saylog b { white-space: nowrap; }
+
+/* 德州 2～6 人桌（11-21 晚）：對手排在上面壹圈（最多 5 位），公共牌在中間，我在下面；SB／BB 小標、等下壹手 */
+.hd-opps { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; width: 100%; align-items: start; }
+.hd-opps.n1 { max-width: 220px; margin: 0 auto; }
+.hd-opps.n2 { max-width: 420px; margin: 0 auto; }
+.hd-seat.compact { padding: 4px 6px; min-width: 0; }
+.hd-seat.compact .bj-who b { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd-seat.compact .cas-card { width: 38px; height: 54px; }
+.hd-seat.empty { opacity: .45; border: 1px dashed rgba(255, 243, 207, .35); }
+.hd-blind { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: .6875rem; font-weight: 800; color: #FFF3CF; background: rgba(0, 0, 0, .5); box-shadow: inset 0 0 0 1px rgba(240, 205, 122, .7); }
+@media (max-width: 760px) {
+  .hd-opps { gap: 4px; }
+  .hd-seat.compact .cas-card { width: 30px; height: 43px; }
+  .hd-seat.compact .bj-who small { font-size: .6875rem; }
+  .hd-seat.compact .hd-bet { font-size: .6875rem; }
+}
+/* 德州多人桌（座位多、手機桌面更擠）：動作列壓成壹排 4 顆 */
+@media (max-width: 760px) {
+  .hd-acts .bj-acts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .hd-acts .bj-acts .btn { min-height: 44px; padding: 0 2px; font-size: .8125rem; overflow: hidden; text-overflow: ellipsis; }
+}
