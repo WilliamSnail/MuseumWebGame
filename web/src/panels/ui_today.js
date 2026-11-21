@@ -121,20 +121,31 @@ export function lobbyToday() {
 }
 ADDONS.lobbyToday = lobbyToday;
 
-// 其他要做的事（簽到、信箱、老主顧、週劇情獎勵、賭場…）：收成壹排小按鈕，不跟任務搶位子（11-20，任務板）
+// 其他要做的事（簽到、信箱、老主顧、週劇情獎勵、賭場…）：收成壹排小按鈕，放在任務板最上面（11-20 任務板；11-21 翊文：「其他要做的事放最底下未免也太不明顯了吧」）
+// 簽到過了不變灰：按鈕改寫「簽到日曆」，日曆從這裡打得開（大廳的簽到條簽完會收起來，11-21 翊文：「原本簽到功能用的日曆呢？不見了嗎」）
+const miniKeep = x => !x.todo && x.key === "signin";
+// 還沒做的畫成跟任務卡壹樣的整條（11-21 翊文：「其他要做的事不能跟整個任務板整合在壹起嗎？之前比較明顯」）；做完的才收成小按鈕
+function rowOf(x, m) {
+  return h("li", { class: "td-row" },
+    h("span", { class: "td-ic", "aria-hidden": "true" }, icon(x.ic)),
+    h("span", { class: "td-main" }, h("b", null, x.title), x.sub ? h("small", null, x.sub) : null),
+    btn([x.label, " ", h("span", { "aria-hidden": "true" }, "→")], () => { m.close(); x.go(); }, "primary small"));
+}
 function miniOf(x, m) {
-  return h("button", { type: "button", class: "td-mini" + (x.todo ? "" : " done"), title: x.title + (x.sub ? "：" + x.sub : ""), onClick: () => { m.close(); x.go(); } },
-    h("span", { class: "td-mini-ic", "aria-hidden": "true" }, x.todo ? icon(x.ic) : icon("check")), h("span", { class: "td-mini-t" }, x.chip || x.title),
+  return h("button", { type: "button", class: "td-mini" + (x.todo ? "" : miniKeep(x) ? " keep" : " done"), title: x.title + (x.sub ? "：" + x.sub : ""), onClick: () => { m.close(); x.go(); } },
+    h("span", { class: "td-mini-ic", "aria-hidden": "true" }, x.todo || miniKeep(x) ? icon(x.ic) : icon("check")), h("span", { class: "td-mini-t" }, miniKeep(x) ? x.label : x.chip || x.title),
     x.todo ? h("i", { class: "td-mini-dot", "aria-label": "還沒做" }) : null);
 }
 function bodyOf(m, draw) {
   const story = storyTodayNodes(m, draw), skip = x => story && /^(yuga-|daily-|weekly$)/.test(x.key); // 每日、每週任務改畫成任務卡（跟每週劇情同壹份零件），清單裡不重複列
   const all = todayItems().filter(x => !skip(x));
   if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有任務，隨便逛吧。" : "今天沒有要做的事。");
-  const sorted = all.slice().sort((p, q) => (q.todo ? 1 : 0) - (p.todo ? 1 : 0));
+  const todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
   return h("div", { class: "td-body" },
+    all.length ? h("section", { class: "td-others" }, h("h3", null, todo.length ? "其他要做的事" : "其他的事都做完了"),
+      todo.length ? h("ul", { class: "td-list" }, todo.map(x => rowOf(x, m))) : null,
+      done.length ? h("div", { class: "td-minis" }, done.map(x => miniOf(x, m))) : null) : null,
     story,
-    sorted.length ? h("section", { class: "td-others" }, h("h3", null, "其他要做的事"), h("div", { class: "td-minis" }, sorted.map(x => miniOf(x, m)))) : null,
     NET.me && !casNow() ? h("p", { class: "td-note" }, "賭場剩幾次還在讀……") : null);
 }
 export async function openToday() {
