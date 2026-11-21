@@ -29,6 +29,8 @@ import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casE
 import { CAS_LIVE, CAS_TEXT } from "../shared/casino/text.js";
 import { casWkSync, casWkView } from "../shared/casino/week.js";
 import { casPassView } from "../shared/casino/pass_view.js";
+import { casWheelInfo, casWheelSpin } from "../shared/casino/wheel.js";
+import { casMiscountInfo, casMiscountSpin } from "../shared/casino/miscount.js";
 import { titlePublish } from "../shared/core/titles.js";
 import { casCellarFind } from "../shared/casino/find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "../shared/casino/book.js";
@@ -490,6 +492,10 @@ export const casino = onCall(async req => {
       const ws = await walletRef(me.uid).get(), day = taipeiDay(now()), w = casWalletFix(parse(ws), day);
       return Object.assign({ ok: true, entered: ws.exists }, casPassView(w, wkDefOf(w)));
     }
+    // 新牌桌遊戲（決定 0150）：佩佩轉盤 wheel、差壹畫 miscount。d.bets＝[{ id, bet }]。info：兩個遊戲的格子、賠率、現在能押多少（不動錢）。錢走莊家（來源 bj＝牌桌），規則在 shared/casino/side_bets.js
+    case "sbInfo": return play(req, me, {}, ctx => shape(ctx, { info: { wheel: casWheelInfo(ctx.house, ctx.day), miscount: casMiscountInfo(ctx.house, ctx.day) } }));
+    case "wheel": return play(req, me, {}, ctx => { const r = casWheelSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
+    case "miscount": return play(req, me, {}, ctx => { const r = casMiscountSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
     // 回 { ok, day, items: [{ id, who, npc, text, stars, at, day }]（新的在前）, total 這壹天符合的共幾則, prevDay／nextDay 前後有資料的日子或 null }
