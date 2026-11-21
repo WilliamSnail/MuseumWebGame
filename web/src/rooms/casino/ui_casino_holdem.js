@@ -55,9 +55,6 @@ function take(st, v) {
   if (!prev || prev.hand !== v.hand || prev.street !== v.street) { st.raise = 0; st.raiseOpen = false; }
   if (v.res && (!prev || !prev.res || prev.res.hand !== v.res.hand)) { const me = v.seats.find(s => s.me), n = v.res.net && me ? v.res.net[me.uid] : 0; snd(n > 0 ? "coin" : n < 0 ? "error" : "flip"); }
   else if (!prev || prev.toAct !== v.toAct || prev.street !== v.street) snd("flip");
-  // 輪到我（手機）：貼底的動作列會蓋住公共牌下半，所以把內文捲到底，動作列回到自己的位置，牌看得全（11-21 qa 實測 ①）
-  const meS = v.seats.find(s => s.me);
-  if (meS && v.phase === "play" && v.toAct === meS.uid && (!prev || prev.toAct !== v.toAct || prev.street !== v.street) && window.matchMedia && window.matchMedia("(max-width: 760px)").matches) setTimeout(() => { const b = document.querySelector(".cas-body"); if (b) b.scrollTo({ top: b.scrollHeight, behavior: "smooth" }); }, 150);
   if (v.phase === "wait" && st.view && !v.seats.length) st.pid = null;
   for (const x of v.talk || []) { const mt = /^npc:([vc]-[a-z0-9-]+)/.exec(String(x.uid || "")); if (mt) travelerHeard(mt[1], x.text, "casino"); } // 旅客說的話記進交談紀錄（11-22）
 }
@@ -124,10 +121,10 @@ const seatBox = (s, v, compact) => {
   const act = v.phase === "play" && v.toAct === s.uid, tag = blindTags(v)[s.uid];
   const st = s.sitOut ? "・等下壹手" : s.st === "allin" ? "・全下" : s.st === "fold" ? "・蓋牌" : "";
   return h("div", { class: "hd-seat" + (s.me ? " me" : "") + (act ? " turn" : "") + (s.st === "fold" || s.sitOut ? " fold" : "") + (compact ? " compact" : "") },
-    h("div", { class: "bj-who" }, h("b", { title: s.nick }, s.nick, s.me ? "（你）" : ""),
-      s.npc ? h("i", { class: "hd-npc", title: "館裡的旅客" }, "旅客") : null, s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null,
-      h("small", null, `桌上 ${casNum(s.stack)}${st}`)),
-    s.say && !s.sitOut ? h("p", { class: "hd-say-npc" }, s.say) : null,
+    (s.npc || s.btn || tag) ? h("span", { class: "hd-tags" }, // 小章（旅客、D、SB／BB）疊在座位右上角，不佔高度（11-22 qa：窄欄疊成兩行撐高座位）
+      s.npc ? h("i", { class: "hd-npc", title: "館裡的旅客" }, "旅客") : null, s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null) : null,
+    h("div", { class: "bj-who" }, h("b", { title: s.nick }, s.nick, s.me ? "（你）" : ""), h("small", null, `桌上 ${casNum(s.stack)}${st}`)),
+    s.say && !s.sitOut ? h("p", { class: "hd-say-npc", title: s.say }, s.say) : null,
     s.hole && s.hole.length && !s.sitOut ? h("div", { class: "cas-hand" }, s.hole.map(cardOrBack)) : null,
     s.bet > 0 ? h("p", { class: "hd-bet" }, "押 ", h("b", null, casNum(s.bet))) : null);
 };
@@ -167,6 +164,14 @@ function actions(st, v) {
       L.canRaise ? (st.raiseOpen ? (raiseBtn = btn(`加注到 ${casNum(st.raise)}`, () => { st.raiseOpen = false; send("raise", st.raise); }, "primary big", { disabled: dis })) : btn("加注…", () => { st.raiseOpen = true; redraw(); }, "primary big", { disabled: dis, title: "選要加到多少" })) : null,
       me && L.maxTo > 0 ? btn("全下", () => send("allin"), "big", { disabled: dis }) : null));
 }
+// 輪到我（手機）：貼底的動作列會蓋住公共牌，所以把內文捲到底，動作列回到自己的位置，牌看得全（11-21 qa 實測 ①；11-22 改成畫面畫出來時才捲：畫面重畫會換掉 .cas-body，在收到 view 時捲會被洗掉）
+function scrollForTurn(st, v) {
+  const me = v.seats.find(x => x.me), key = me && v.phase === "play" && v.toAct === me.uid ? `${v.hand}|${v.street}|${v.toAct}` : "";
+  if (!key) { st.scrollKey = ""; return; }
+  if (st.scrollKey === key || !window.matchMedia || !window.matchMedia("(max-width: 760px)").matches) return;
+  st.scrollKey = key;
+  for (const ms of [60, 400]) setTimeout(() => { const b = document.querySelector(".cas-body"); if (b && st.scrollKey === key) b.scrollTo({ top: b.scrollHeight }); }, ms);
+}
 function tablePane(st) {
   const v = st.view, me = v.seats.find(s => s.me), opps = v.seats.filter(s => !s.me), max = v.seatsMax || 2;
   const board = h("div", { class: "hd-board", "aria-label": "公共牌" }, [0, 1, 2, 3, 4].map(i => (v.board[i] != null ? cardEl(v.board[i]) : h("span", { class: "hd-slot", "aria-hidden": "true" }))));
@@ -174,6 +179,7 @@ function tablePane(st) {
   const reason = wait ? (v.seats.length < 2 ? "等館友坐下……" : limit ? "你跟同桌某位今天的輸贏到上限了，這手先坐壹下。" : "有人的籌碼不夠開下壹手。") : me && me.sitOut ? (limit ? "你跟同桌某位今天的輸贏到上限了，這手先坐壹下。" : "你這手先不玩，等下壹手。") : null;
   const stateTip = { title: "底池", what: "這一手大家放進去的籌碼，贏的人全拿（有人全下時會分主池、邊池）。", how: [`每手抽 ${v.rake.pct}%，最多 ${v.rake.capBB} 個大盲（${casNum(v.rake.cap)}），進莊家`, "只有底池超過 2 個大盲才抽"] };
   const empties = Math.max(0, max - v.seats.length);
+  scrollForTurn(st, v);
   return [
     h("div", { class: "hd-head" }, h("span", null, `盲注 ${casNum(v.level.sb)}／${casNum(v.level.bb)}・第 ${v.hand} 手・${v.seats.length}／${max} 人`), h("span", { class: "hd-clock", role: "timer" }), btn("離桌", () => leave(st), "small ghost")),
     h("div", { class: "bj-table hd-table" },

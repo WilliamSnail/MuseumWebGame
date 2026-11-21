@@ -208,3 +208,8 @@
 /* 11-22 qa：旅客的泡泡不要讓座位變高（手機六人桌動作列蓋公共牌）→ 壹行、超過就刪節號；手機更小 */
 .hd-say-npc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (max-width: 760px) { .hd-say-npc { font-size: .6875rem; padding: 1px 4px; } .hd-npc { font-size: .625rem; padding: 0 3px; } }
+/* 11-22 qa：小章、旅客的話都不佔座位高度——小章疊右上角，話疊在牌下緣；座位高度跟別人壹樣 */
+.hd-seat { position: relative; }
+.hd-tags { position: absolute; top: -6px; right: 2px; z-index: 2; display: inline-flex; gap: 2px; }
+.hd-tags .hd-npc, .hd-tags .hd-btn, .hd-tags .hd-blind { margin: 0; }
+.hd-seat .hd-say-npc { position: absolute; left: 2px; right: 2px; bottom: -4px; z-index: 2; margin: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
