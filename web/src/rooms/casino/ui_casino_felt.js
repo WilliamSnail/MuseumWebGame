@@ -13,6 +13,23 @@ import { h, icon } from "../../core/ui_core.js";
 import { tipOn } from "../../core/ui_tip.js";
 import { noticeCard } from "../../panels/ui_party.js";
 
+// 21 點的演出步調（毫秒；翊文 11-21：「每壹個步驟太快了，不好反應」）。要調快慢只改這裡。單人（ui_casino.js）和同桌（ui_casino_table.js）共用
+export const BJ_PACE = { deal: 350, hit: 350, hole: 800, dealerCard: 700, line: 520, result: 350 };
+// 等 ms 毫秒；牌桌被點了（st.skip）就馬上往下（演出中點壹下跳過）。st 換了（關掉賭場）也馬上停
+export async function bjPause(st, now, ms) {
+  for (let t = 0; t < ms && st.skip !== true; t += 50) { if (now() !== st) return; await new Promise(r => setTimeout(r, Math.min(50, ms - t))); }
+}
+
+// 把某壹塊捲進賭場內文看得到的範圍（只捲 .cas-body；extra：下緣要留多少，貼底的下注列／動作列會蓋住壹塊）
+export function showInBody(sel, extra = 24) {
+  setTimeout(() => {
+    const el = document.querySelector(sel), body = el && el.closest(".cas-body");
+    if (!body) return;
+    const over = el.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + extra;
+    if (over > 0) body.scrollTo({ top: body.scrollTop + over, behavior: "smooth" });
+  }, 80);
+}
+
 // 遊戲清單：games＝[{ id, name, ic }]；cur＝現在哪個；go(id)。只有壹個遊戲就不畫（回 null）
 export function gameNav(games, cur, go, busy) {
   if (!games || games.length < 2) return null;
