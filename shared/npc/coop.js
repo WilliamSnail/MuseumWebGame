@@ -84,6 +84,13 @@ export function npcCoopAccept(house, day, n, pid, host, nowMs) {
   c.at[n.id] = { pid, host, since: nowMs, until: nowMs + C.stayMin * 60000 };
   return c.at[n.id].until;
 }
+// 出發時確認他還留給這一隊：還是這一隊的（過期了也沒被別隊請走）→ 重新計時、true；別隊已經請走了 → false；沒人留（被清掉了）→ 重新留給這一隊、true
+export function npcCoopHold(house, day, id, pid, host, nowMs) {
+  const c = npcCoopFix(house, day), at = c.at[id];
+  if (cpBox(at) && at.pid !== pid) return false;
+  c.at[id] = { pid, host: cpBox(at) && at.host ? at.host : host, since: cpBox(at) ? cpN(at.since) : nowMs, until: nowMs + NUM.casino.coopNpc.stayMin * 60000 };
+  return true;
+}
 export function npcCoopCool(house, day, uid, id, nowMs) {
   const C = NUM.casino.coopNpc, c = npcCoopFix(house, day);
   for (const k of Object.keys(c.cool)) if (cpN(c.cool[k]) <= nowMs) delete c.cool[k];
