@@ -3,6 +3,7 @@
 //
 //   npm run local -- --set 8 --port 5288     開（要放背景跑；預設第 8 套、5288）
 //   npm run local -- --set 8 --stop          關掉這套（只關這支開的，不動別的模擬器）
+//   npm run local -- --list                  看哪幾套有人在用、是誰（資料夾）開的（11-21：兩個 session 同時用第 7 套，登入和資料被搞亂過）
 //   npm run local -- --event-now double11    順便把這場活動暫時移到 90 秒後開始（改 week.json，測完 git checkout 還原，不要 commit）
 //
 // 網址 ?user=小明 就是登入小明；開第二個分頁 ?user=小華 就是兩個人。
@@ -87,8 +88,25 @@ function stop() {
 
   console.log(`第 ${SET} 套關了。`);
 }
+// 誰開的：記在 pid 檔裡（資料夾、時間），別人想開同壹套時看得到是誰在用
+const owner = () => ({ cwd: ROOT, at: new Date().toISOString() });
+async function listSets() {
+  let any = false;
+  for (const n of fs.readdirSync(os.tmpdir()).filter(f => /^pepe-local-game-\d+\.json$/.test(f))) {
+    const set = Number(n.match(/\d+/)[0]);
+    let j = null;
+    try { j = JSON.parse(fs.readFileSync(path.join(os.tmpdir(), n), "utf8")); } catch (e) { continue; /* 壞檔略過 */ }
+    if (!(await portUp(rtdbPort(set)))) continue; // 記錄還在、但模擬器已經沒開（舊的記錄）：不算有人用
+    console.log(`第 ${set} 套：網頁 port ${j.port}，${j.owner ? j.owner.cwd + "（" + j.owner.at + "）" : "不知道誰開的"}`); any = true;
+  }
+  if (!any) console.log("沒有人在用本機模擬器。");
+}
 async function start() {
-  if (fs.existsSync(PID_FILE)) { console.log(`第 ${SET} 套好像開著，先關：npm run local -- --set ${SET} --stop`); }
+  if (fs.existsSync(PID_FILE)) {
+    let who = "";
+    try { const o = JSON.parse(fs.readFileSync(PID_FILE, "utf8")).owner; who = o ? `（${o.cwd}，${o.at}）` : ""; } catch (e) { /* 壞檔 */ }
+    console.log(`第 ${SET} 套好像開著${who}，先關：npm run local -- --set ${SET} --stop；別人在用就換壹套（--set 別的、--list 看哪幾套有人）`);
+  }
   // 舊的還開著就停：不然新的開不起來，測到的會是別的分支的程式
   if (await portUp(rtdbPort(SET)) || await portUp(PORT, "localhost")) throw new Error(`連接埠已經有人在用（第 ${SET} 套或 ${PORT}），測到的會是別的分支：先關掉`);
   const opts = { cwd: ROOT, shell: true, stdio: "ignore", detached: process.platform !== "win32", windowsHide: true };
@@ -97,7 +115,7 @@ async function start() {
   const rules = spawnSync(process.execPath, ["tools/dev/emu_rules.cjs"], { cwd: ROOT, encoding: "utf8", env: Object.assign({}, process.env, { EMU_SET: String(SET) }) });
   console.log((rules.stdout + rules.stderr).trim());
   const web = spawn("npx", ["vite", "--port", String(PORT), "--strictPort"], Object.assign({}, opts, { env: Object.assign({}, process.env, { VITE_EMU_SET: String(SET) }) }));
-  fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid], port: PORT }));
+  fs.writeFileSync(PID_FILE, JSON.stringify({ pids: [emu.pid, web.pid], port: PORT, owner: owner() }));
   if (!(await waitPort(PORT, 60000, "localhost"))) throw new Error("網頁一分鐘內沒開起來");
   if (!(await waitFn(fnPort(SET), 120000))) throw new Error("Functions 兩分鐘內沒載入好：先看 functions 有沒有語法錯誤");
   console.log(`好了：http://localhost:${PORT}/?user=小明`);
@@ -105,6 +123,7 @@ async function start() {
 }
 
 async function main() {
+  if (process.argv.includes("--list")) return listSets();
   if (process.argv.includes("--stop")) return stop();
   if (arg("event-now")) eventNow(arg("event-now"));
   await start();

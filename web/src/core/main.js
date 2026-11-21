@@ -114,6 +114,7 @@ import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊�
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;
 if (debugScreen) window.__PM_NODOOR__ = true; // 開發時直接進畫面，不放開館布幕
 
+if (import.meta.env.DEV) import("./qa_hooks.js"); // 實測用的 window.__qa（11-21）：正式打包不會載入
 import("./boot.js").then(() => {
   if (debugScreen) import("./debug_boot.js");
 });

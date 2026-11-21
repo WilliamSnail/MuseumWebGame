@@ -53,6 +53,8 @@
     "shot": "node tools/dev/shot.cjs",
     "merge:main": "node tools/release/merge_main.cjs",
     "emu:call": "node tools/dev/emu_call.cjs",
+    "qa:user": "node tools/dev/qa_user.cjs",
+    "qa:giver": "node tools/dev/qa_giver.cjs",
     "functions:shared": "node tools/release/copy_shared.cjs",
     "level:new": "node tools/content/new_level.cjs",
     "fb": "node tools/fb/fb_run.cjs",
