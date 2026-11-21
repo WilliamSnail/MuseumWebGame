@@ -116,6 +116,7 @@ const STEPS = [
   ["賭場的實況和斗內（開播、搶不走、到期和離線算下播、斗內金額範圍和守恆、不能斗自己、不夠錢、每日上限、收款上限、換日、壞資料、實況主沒有錢包、資料庫規則，決定 0053）", ["test/casino/casino_live.test.cjs"]],
   ["交代人互動（閒聊、來訪、臨時拜託、送禮、交談紀錄、Lv3 稱號，決定 0151）", ["test/social/giver.test.cjs"]],
   ["交代人資料打包（shared/npc/givers.js 跟上 content/givers）", ["test/tools/givers_pack.test.cjs"]],
+  ["德州撲克邀旅客 NPC（邀請、錢從已知世界來、額度、離座、打法合規、亂打，決定 0150 補充二）", ["test/casino/holdem_npc.test.cjs"]],
   ["交代人熟識度和旅客好感度（門檻、每天上限、只增不減、Lv3 發稱號進稱號系統、旅客答應率加成、不給籌碼，決定 0151、0150 補充二）", ["test/social/npcrel.test.cjs"]],
   ["德州撲克 2 人桌（牌力、買入、盲注、動作規則、抽水、有效籌碼、壹天對同壹人上限、超時、離座、看到的樣子、亂打 300 手錢守恆，決定 0150）", ["test/casino/holdem.test.cjs"]],
   ["佩佩轉盤、差壹畫（格子、賠率和優勢、不可能必賺、單轉最多贏、莊家吃緊、守恆、對帳，決定 0150）", ["test/casino/wheel.test.cjs"]],

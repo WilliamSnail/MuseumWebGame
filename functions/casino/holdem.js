@@ -11,7 +11,10 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { casHAct, casHAdvance, casHBuyin, casHClose, casHLeave, casHNew, casHStart, casHView } from "../shared/casino/holdem.js";
+import { casHAct, casHAdvance, casHBuyin, casHClose, casHLeave, casHNew, casHNpcInvite, casHNpcWho, casHStart, casHView } from "../shared/casino/holdem.js";
+import { NPC_LIST } from "../shared/npc_list_data.js";
+import { npcCounters } from "../shared/npc/core.js";
+import { twSecret } from "../stock/stock_tw.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { NUM } from "../shared/core/config.js";
 import { fixParty, newParty } from "../shared/social/party.js";
@@ -30,20 +33,20 @@ const viewPath = (pid, uid) => `holdemView/${pid}/${uid}`;
 // 一個交易：讀桌子、座位的錢包（加上 uid 自己的）、莊家 → 補完過期的 → fn → 寫回。fn({ t, ctx, now }) 回傳 { ok, ... }。
 // 不 ok 也會把「補完過期的」寫回去（時間早就過了）；fn 說 write: false 而且沒有補完什麼就不寫
 async function tableTxn(pid, uid, opts, fn) {
-  const t0 = now(), day = taipeiDay(t0);
+  const t0 = now(), day = taipeiDay(t0), secret = await twSecret(); // 祕密種子：旅客答不答應、說什麼都用它（玩家算不出來）
   setRng(cryptoRng);
   try {
     const out = await db().runTransaction(async tx => {
       const ts = await tx.get(tableRef(pid));
       if (!ts.exists && !opts.create) throw bad("這桌已經收了");
       const t = ts.exists ? parse(ts) : casHNew({ pid, lv: opts.lv, now: t0 });
-      const ids = t.order.slice();
+      const ids = t.order.filter(id => !(t.seats[id] && t.seats[id].npc)); // 旅客 NPC 沒有錢包
       if (uid && !ids.includes(uid)) ids.push(uid);
       const [hs, ...ws] = await Promise.all([tx.get(houseRef()), ...ids.map(id => tx.get(walletRef(id)))]);
       const wallets = {};
       ids.forEach((id, i) => { wallets[id] = casWalletFix(parse(ws[i]), day); });
       const { house } = casHouseFix(parse(hs), day);
-      const ctx = { wallets, house, day, hlog: [] };
+      const ctx = { wallets, house, day, hlog: [], secret, npcList: NPC_LIST, counters: npcCounters(house.npcc) };
       const moved = casHAdvance(t, ctx, t0);
       const r = fn({ t, ctx, now: t0 }) || { ok: true };
       if (r.write === false && !moved && !ctx.hlog.length && ts.exists) return Object.assign({}, r, { t, ctx });
@@ -60,14 +63,14 @@ const viewFor = (t, uid, ctx) => Object.assign(casHView(t, uid, now(), ctx), { c
 // 給每個人看的樣子。兩步差很近時，晚到的舊版不能蓋掉新的
 async function publish(t, ctx) {
   const r = t.rev || 0;
-  await Promise.all(t.order.filter(id => !(t.seats[id] && t.seats[id].leaving)).map(id => rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(viewFor(t, id, ctx)) }))));
+  await Promise.all(t.order.filter(id => !(t.seats[id] && (t.seats[id].leaving || t.seats[id].npc))).map(id => rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(viewFor(t, id, ctx)) }))));
 }
 async function inParty(pid, uid) {
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
   if (!p || p.kind !== "holdem" || !p.members[uid]) throw bad("你不在這桌的隊伍裡");
   return p;
 }
-const answer = (r, uid) => Object.assign({ ok: r.ok !== false, view: viewFor(r.t, uid, r.ctx) }, r.ok === false ? { reason: r.reason } : {});
+const answer = (r, uid) => Object.assign({ ok: r.ok !== false, view: viewFor(r.t, uid, r.ctx) }, r.ok === false ? { reason: r.reason } : {}, r.who ? { who: r.who } : {}, r.invite ? { invite: r.invite } : {});
 
 // ---------- 離座的掛鉤（functions/coop/party.js 的 leaveParty 叫） ----------
 partyHooks.beforeLeave.push(async (pid, uid) => {
@@ -86,10 +89,10 @@ async function closeTable(pid) {
     await db().runTransaction(async tx => {
       const ts = await tx.get(tableRef(pid));
       if (!ts.exists) return;
-      const t = parse(ts), ids = t.order.slice();
+      const t = parse(ts), ids = t.order.filter(id => !(t.seats[id] && t.seats[id].npc));
       const [hs, ...ws] = await Promise.all([tx.get(houseRef()), ...ids.map(id => tx.get(walletRef(id)))]);
       const wallets = {}; ids.forEach((id, i) => { wallets[id] = casWalletFix(parse(ws[i]), day); });
-      const { house } = casHouseFix(parse(hs), day), ctx = { wallets, house, day, hlog: [] };
+      const { house } = casHouseFix(parse(hs), day), ctx = { wallets, house, day, hlog: [], npcList: NPC_LIST };
       setRng(cryptoRng);
       try { casHClose(t, ctx, t0); } finally { setRng(null); }
       for (const id of ids) put(tx, walletRef(id), wallets[id]);
@@ -146,6 +149,9 @@ export const casinoHoldem = onCall(async req => {
       return s;
     }); break;
     case "act": r = await tableTxn(pid, me.uid, {}, ({ t, ctx, now: t0 }) => casHAct(t, me.uid, String(d.a || ""), d.to, ctx, t0)); break;
+    // 邀請旅客 NPC（決定 0150 補充二）：npcWho ＝ 現在邀得動誰（只讀）；npcInvite ＝ 邀 d.npc 坐下（答應了他就坐進這桌；被拒絕他的拒絕台詞在 invite.line，30 分鐘後才能再邀）
+    case "npcWho": r = await tableTxn(pid, me.uid, {}, ({ ctx, now: t0 }) => ({ ok: true, write: false, who: casHNpcWho(ctx, t0, me.uid) })); break;
+    case "npcInvite": r = await tableTxn(pid, me.uid, {}, ({ t, ctx, now: t0 }) => { const x = casHNpcInvite(t, ctx, me.uid, String(d.npc || ""), t0); return x.ok ? Object.assign({}, x, { invite: { accepted: x.accepted, name: x.name, line: x.line, brought: x.brought } }) : Object.assign({ write: false }, x); }); break;
     case "tick": r = await tableTxn(pid, me.uid, {}, () => ({ ok: true, write: false })); break;
     default: throw new HttpsError("invalid-argument", "不認得的動作");
   }
