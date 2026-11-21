@@ -851,6 +851,9 @@ PANELS.casino = openCasino;
 // 其他檔（同桌）要借用
 export const casinoState = () => S;
 export const casinoRefresh = () => { if (S) draw(); };
+// 轉盤、差壹畫、德州（各自壹支檔）借用：送壹個動作給伺服器（會處理忙碌、錢包、錯誤訊息），結果回來才跑 then（then 裡面不會重畫，演出可以放心動節點）
+export const casinoAct = (name, data, then) => act(name, data, then);
+export const casinoSay = lines => { say(lines); };
 
 // ---------- 展廳上的稱號和紀念品（自己的、來參觀的館友看到的） ----------
 function shelfEl(title, items) {

@@ -50,3 +50,56 @@
   .bj-chips { gap: 6px; }
   .bj-acts .btn { min-width: 0; flex: 1 1 0; }
 }
+
+/* ===== 轉盤、差壹畫（11-21）：押法按鈕、單位籌碼、結果；盤和正字 ===== */
+.sb-sec { padding: 8px 12px; border-radius: 8px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(231, 200, 120, .3); }
+.sb-sec h4 { margin: 0 0 6px; font-family: var(--serif); letter-spacing: .08em; color: #F8E3A0; font-size: .9375rem; }
+.sb-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.sb-optwrap { position: relative; display: inline-flex; }
+.sb-opt { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 88px; min-height: 52px; padding: 6px 10px; border-radius: 8px; cursor: pointer; font: inherit; color: #F3E3A8; text-align: left; background: rgba(0, 0, 0, .35); border: 1px solid rgba(214, 178, 94, .7); }
+.sb-opt b { font-size: .875rem; }
+.sb-opt small { font-size: .75rem; color: #CFE3D4; }
+.sb-opt:hover:not(:disabled), .sb-opt:focus-visible { background: rgba(224, 183, 90, .18); }
+.sb-opt.on { background: rgba(224, 183, 90, .3); border-color: #FFF0B8; box-shadow: 0 0 0 2px #E0B75A; }
+.sb-amt { position: absolute; top: -8px; right: -6px; padding: 1px 8px; border-radius: 999px; font-style: normal; font-size: .75rem; font-weight: 800; color: #2A1A08; background: #F0CD7A; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+.sb-minus { position: absolute; bottom: -8px; right: -6px; width: 24px; height: 24px; padding: 0; border-radius: 50%; cursor: pointer; font-weight: 800; line-height: 1; color: #F3E3A8; background: #0B2A1B; border: 1px solid #D6B25E; }
+.sb-opt.wh-紅 { border-left: 6px solid #B8322A; } .sb-opt.wh-綠 { border-left: 6px solid #2E7D4A; } .sb-opt.wh-黃 { border-left: 6px solid #D9B21C; } .sb-opt.wh-黑 { border-left: 6px solid #26221F; }
+.sb-bar { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0; }
+.sb-sum { margin: 0; color: #FFF3CF; } .sb-sum small { color: #CFE3D4; }
+.sb-units { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.sb-units .bj-chip { width: 56px; height: 56px; }
+.bj-chip.sel { box-shadow: 0 0 0 3px #FFF0B8, 0 4px 8px rgba(0, 0, 0, .55); transform: translateY(-3px); }
+.sb-go { display: flex; gap: 10px; align-items: center; }
+.sb-go .btn.big { min-width: 120px; min-height: 48px; }
+.sb-res { padding: 8px 12px; border-radius: 8px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(231, 200, 120, .55); }
+.sb-res ul { list-style: none; margin: 0 0 6px; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.sb-res li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; font-size: .875rem; }
+.sb-res li.miss { opacity: .75; }
+.sb-res li small { color: #CFE3D4; }
+.sb-net { margin: 0; font-family: var(--serif); font-size: 1.0625rem; color: #FFF3CF; }
+.wh-stage, .mc-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
+.wh-svg { width: min(100%, 340px); height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)); }
+.wh-cell { cursor: pointer; }
+.wh-cell:hover { filter: brightness(1.25); }
+.wh-mark { font-size: 11px; fill: #FFF3CF; pointer-events: none; }
+.wh-num { font-size: 9px; fill: rgba(255, 243, 207, .8); pointer-events: none; }
+.wh-say { margin: 0; text-align: center; color: #FFF3CF; font-size: .9375rem; min-height: 1.5em; }
+.mc-paper { width: min(100%, 520px); min-height: 150px; padding: 14px 16px; border-radius: 6px; background: #F6ECCF; color: #3A2412; box-shadow: 0 4px 12px rgba(0, 0, 0, .5), inset 0 0 0 1px #B99A5A; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.mc-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+.mc-grp { width: 40px; height: 52px; }
+.mc-stroke { stroke: #3A2412; stroke-width: 4.5; fill: none; }
+.mc-grp.extra .mc-stroke { stroke: #B8322A; }
+.mc-grp.gone .mc-stroke { stroke: #7C6B52; stroke-dasharray: 4 5; opacity: .8; }
+.mc-plus { font-size: 1.5rem; font-weight: 800; }
+.mc-note { margin: 0; font-family: var(--serif); letter-spacing: .06em; }
+.mc-empty { margin: 0; color: #7C6B52; }
+@media (max-width: 760px) {
+  .sb-opt { min-width: 0; flex: 1 1 calc(50% - 6px); min-height: 48px; }
+  .sb-units .bj-chip { width: 48px; height: 48px; }
+  .wh-svg { width: min(100%, 280px); }
+  .mc-paper { min-height: 120px; }
+  .mc-grp { width: 34px; height: 44px; }
+}
+.cas-body > .bj { flex: none; min-height: 0; } /* 牌桌頁籤的內容比視窗高就捲動，不要把整塊壓扁（壓扁會跟後面的實況塊疊在壹起） */
+.bj-nav { align-self: flex-start; }
+@media (min-width: 761px) { .bj-nav { position: sticky; top: 0; } }
