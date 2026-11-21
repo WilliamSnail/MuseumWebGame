@@ -7,7 +7,7 @@
 
 export const PARTY = {
   inviteMs: 60000,                     // 邀請卡 60 秒（規劃第三節「直接邀請」）
-  maxMembers: { fusion: 2, cellar: 4, table: 4, holdem: 2 }, // table：賭場同桌（決定 0040），隊伍一直是 lobby，隨時有人進出
+  maxMembers: { fusion: 2, cellar: 4, table: 4, holdem: 6 }, // table：賭場同桌（決定 0040），隊伍一直是 lobby，隨時有人進出
   minMembers: { fusion: 2, cellar: 1, table: 1, holdem: 1 }, // 地下一個人也能下去（館方助手補位）；賭場一個人也能開桌
   picks: { fusion: 1, cellar: 2, table: 0, holdem: 0 },      // 每人帶幾隻（一起融合 1 隻；地下 1–2 隻，決定 0020；賭場不帶）
   sayMax: 50,                           // 自由打字一句幾個字（決定 0020）
