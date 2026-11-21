@@ -33,7 +33,7 @@ export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {}, cult: 1 },
     rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
-    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, npcRel: {}, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
+    ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, npcRel: {}, npcDay: { day: null, g: 0, t: 0 }, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
 }
