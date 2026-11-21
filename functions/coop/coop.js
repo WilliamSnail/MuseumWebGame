@@ -25,10 +25,10 @@ import { eventLive, eventRunOf, eventsFromWeeks } from "../shared/story/events.j
 import { EVENT_WEEKS } from "../shared/events_data.js"; // tools/release/copy_shared.cjs 從 content/weeks 打包進來的（限時活動，決定 0041）
 import { bad, changeParty, clearPartyOf, inbox, leaveCurrent, ledParty, memberOf, needMember, newId, now, partyHooks, rtdb, statusOf } from "./party.js";
 import { traceRunEnd } from "./coop_trace.js";
-import { coopNpcEnd } from "./coop_npc.js";
+import { coopNpcEnd, coopNpcRelease } from "./coop_npc.js";
 import { coopNpcP, coopNpcMember } from "../shared/coop/npc.js";
 import { NPC_LIST } from "../shared/npc_list_data.js";
-import { npcCoopInfo } from "../shared/npc/coop.js";
+import { npcCoopHold, npcCoopInfo } from "../shared/npc/coop.js";
 import { casHouseFix } from "../shared/casino/wallet.js";
 import { nwSan } from "../shared/world/base.js";
 
@@ -66,7 +66,7 @@ async function runStep(pid, uid, act, data = {}) {
       Ps[id] = P;
       revs[id] = s.data().rev;
     });
-    run.members.filter(m => m.npc && !m.out).forEach(m => { Ps[m.id] = coopNpcP({ npc: m.npc, role: m.role }, run.floor, m.san, opt.today); });
+    run.members.filter(m => m.npc && !m.out).forEach(m => { Ps[m.id] = coopNpcP({ npc: m.npc, role: m.role }, run.floor, m.san, opt.today, m.got && m.got.injured); });
     // 骰子：中間不 await
     setRng(mulberry32(hashStr(`${run.id}:${run.step}:${run.rev || 0}`)));
     let r;
@@ -93,15 +93,16 @@ async function afterStep(pid, { r, run, saved }, uid, act) {
   for (const id of r.dropped) {
     if (id === uid && act === "leave") continue; // 自己按離開：partyAction 接著會把他移出隊伍
     const m = coopMember(run, id);
+    if (m && m.npc) continue; // 旅客沒有帳號：不寫通知、不動隊伍
     await rtdb().ref(viewPath(pid, id)).remove();
     await changeParty(pid, p => partyLeave(p, id)).catch(() => {});
     await clearPartyOf(id, pid);
     await inbox(id, { t: "coop_out", pid, why: "afk" });
-    for (const o of coopPresent(run)) if (o.id !== id) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "afk" });
+    for (const o of coopPresent(run)) if (o.id !== id && !o.npc) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "afk" });
   }
   if (r.ended) {
     await rtdb().ref(`parties/${pid}`).update({ phase: "done", npcs: null }).catch(() => {});
-    await coopNpcEnd(run).catch(e => console.error("找 NPC 下地下：收尾寫不進去", e));
+    await coopNpcEnd(run).catch(() => coopNpcEnd(run)).catch(e => console.error("找 NPC 下地下：收尾寫不進去（旅客的理智、停留的標記沒更新）", run.id, e)); // 失敗再試壹次；還是不行就留在 fn-errors 看得到
     await traceRunEnd(run).catch(e => console.error("合作地下：痕跡寫不進去", e)); // 最後的影子、幽影（機制 7）
   }
 }
@@ -139,6 +140,9 @@ async function startRun(me, pid) {
       if (npcIds.length) {
         if (party.trial) throw bad("試煉房間不能帶旅客");
         const house = casHouseFix(hsnap && hsnap.exists ? JSON.parse(hsnap.data().data) : null, today).house;
+        const lost = npcIds.filter(nid => !npcCoopHold(house, today, nid, pid, me.uid, t)); // 他還留給這一隊嗎？（準備區等太久、別隊先請走了）
+        if (lost.length) { const er = bad("有位旅客已經被別隊請走了，他先離開隊伍；再邀壹位吧"); er.npcLost = lost; throw er; }
+        tx.set(db.doc("casinoHouse/main"), { data: JSON.stringify(house), updatedAt: FieldValue.serverTimestamp() });
         npcIds.forEach(nid => {
           const n = NPC_LIST.find(x => x && x.id === nid);
           if (!n) throw bad("有位旅客找不到了");
@@ -168,6 +172,7 @@ async function startRun(me, pid) {
     run = out.run; saved = out.revOut;
   } catch (e) {
     // 開始不了：回到準備的樣子，誰也沒扣東西。原因寫進隊伍，大家都看得到
+    if (e && e.npcLost) await Promise.all(e.npcLost.map(nid => rtdb().ref(`parties/${pid}/npcs/${nid}`).remove())).catch(() => {});
     const err = e instanceof HttpsError ? e : new HttpsError("internal", "伺服器出錯了，誰都沒有扣東西，再試壹次");
     if (!(e instanceof HttpsError)) console.error("合作地下開始不了", e);
     await rtdb().ref(`parties/${pid}`).update({ phase: "lobby", fail: { reason: err.message, at: now() } });
@@ -188,6 +193,13 @@ partyHooks.beforeLeave.push(async (pid, uid) => {
   catch (e) { if (!(e instanceof HttpsError)) console.error("合作地下離隊出錯", e); } // 這一趟已經不在了：照樣離開隊伍
 });
 partyHooks.closed.push(async pid => {
+  // 找 NPC 下地下（審查 11-21 第 8 點）：隊伍解散時，還沒收尾的趟要把旅客的理智寫回、留給這隊的旅客放走
+  const rs = await runRef(pid).get().catch(() => null);
+  if (rs && rs.exists) {
+    const run = JSON.parse(rs.data().data);
+    if (!run.ended) await coopNpcEnd(run).catch(e => console.error("找 NPC 下地下：解散時收尾寫不進去", pid, e));
+  }
+  await coopNpcRelease(pid).catch(e => console.error("找 NPC 下地下：解散時放走旅客寫不進去", pid, e));
   await clearRunStuff(pid);
 });
 async function clearRunStuff(pid) {
@@ -208,7 +220,7 @@ async function pruneRun(me, pid, uid) {
   await changeParty(pid, p => partyLeave(p, uid)).catch(() => {});
   await clearPartyOf(uid, pid);
   const m = coopMember(res.run, uid);
-  for (const o of coopPresent(res.run)) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "offline" });
+  for (const o of coopPresent(res.run)) if (!o.npc) await inbox(o.id, { t: "party", pid, left: m ? m.name : "隊友", why: "offline" });
   await inbox(uid, { t: "coop_out", pid, why: "offline" });
   return { ok: true, pruned: true };
 }

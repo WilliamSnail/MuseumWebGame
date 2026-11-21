@@ -23,12 +23,13 @@ export const coopNpcHumans = run => run.members.filter(m => !m.npc && !m.out);
 const ROLE_SKILL = { carry: { 手工藝: 90 }, lead: { 偵查: 60 }, calm: { 說服: 70 } };
 
 // 這位 NPC 的 P（每一步現做，不存）。san ＝他現在的理智；day ＝今天。要在 setRng 之前叫（裡面自己設種子、用完還原）
-export function coopNpcP(info, floor, san, day) {
+export function coopNpcP(info, floor, san, day, hurt) {
   setRng(mulberry32(hashStr("npcP:" + info.npc)));
   let P;
   try { P = newProfile("challenge"); ensureDay(P, day); } finally { setRng(null); }
   const key = coopNpcKey(info.npc);
   P.pepes = { [key]: { n: 1, s: 1, perfect: false } }; P.injured = {};
+  (Array.isArray(hurt) ? hurt : []).forEach(k => { P.injured[k] = 1; }); // 這一趟前面受傷的（run 上記的 m.got.injured）：每一步重做，傷不能被清掉
   P.sanity = Math.max(1, Math.round(san)); if (P.day) P.day.startSan = P.sanity; P.myth = 0; P.insp = 0;
   P.job = null; P.vid = null;
   const sk = Object.assign({}, ROLE_SKILL[info.role] || {});
@@ -43,7 +44,7 @@ export function coopNpcKey(npc) {
 }
 // 給 startCoop 的成員（P 是上面做的）
 export function coopNpcMember(info, floor, san, day) {
-  const P = coopNpcP(info, floor, san, day);
+  const P = coopNpcP(info, floor, san, day, []);
   return { id: coopNpcMemberId(info.npc), npc: info.npc, name: info.name, style: info.style || "basic", role: info.role || null, P, keys: [coopNpcKey(info.npc)], rewarded: false };
 }
 

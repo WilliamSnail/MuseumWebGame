@@ -129,4 +129,39 @@ T("每日任務 withNpc：40 分、靠「做過了」；P.cellar.coopNpc 是今�
   assert.ok(G.STORY_TASKS.withNpc && G.STORY_TASKS.withNpc.act && G.STORY_TASKS.withNpc.pts === 40);
   G.storyAct(P, "withNpc", "2026-11-23"); assert.ok(G.storyState(P).acts["2026-11-23"].withNpc);
 });
+// ---------- 審查修正（11-21） ----------
+T("審查 1：旅客也佔座位——3 位旅客＋1 真人，第 2 位館友加不進來", G => {
+  const p = G.newParty({ pid: "p1", kind: "cellar", leader: "a", leaderNick: "甲", now: 1 });
+  ["v-ke", "v-photo", "v-poet"].forEach(id => assert.ok(G.partyNpcAdd(p, "a", { npc: id, name: id }, 3).ok));
+  assert.ok(!G.partyJoin(p, "b", "乙", 2).ok, "座位滿了，旅客也算");
+  G.partyNpcRemove(p, "v-poet"); assert.ok(G.partyJoin(p, "b", "乙", 3).ok);
+});
+T("審查 1、3 備援：出發時人加旅客超過 4、或有人留守，canStartParty 擋下並說原因", G => {
+  const p = G.newParty({ pid: "p1", kind: "cellar", leader: "a", leaderNick: "甲", now: 1 });
+  G.partyJoin(p, "b", "乙", 2); Object.values(p.members).forEach(m => { m.ready = true; m.pick = ["k"]; });
+  p.npcs = { "v-ke": { name: "a" }, "v-photo": { name: "b" }, "v-poet": { name: "c" } }; // 繞過 partyNpcAdd 的壞資料
+  assert.ok(!G.canStartParty(p, "a").ok && /座位/.test(G.canStartParty(p, "a").reason));
+  delete p.npcs["v-poet"]; assert.ok(G.canStartParty(p, "a").ok);
+  p.members.b.guard = true; p.members.b.pick = []; assert.ok(!G.canStartParty(p, "a").ok && /留守/.test(G.canStartParty(p, "a").reason));
+});
+T("審查 2：出發時確認他還留給這一隊——被別隊請走就不行；沒人留（被清掉）就重新留給這一隊", G => {
+  const house = mkHouse(G), n = G.NPC_ROSTER.find(x => x.id === "v-ke"), t = 1e12, C = G.NUM.casino.coopNpc;
+  G.npcCoopAccept(house, D, n, "pA", "u1", t);
+  assert.ok(G.npcCoopHold(house, D, "v-ke", "pA", "u1", t + 3600000), "過期了、但還沒別隊拿走：自己的，重新計時");
+  assert.strictEqual(house.npcCoop.at["v-ke"].until, t + 3600000 + C.stayMin * 60000);
+  G.npcCoopFree(house, "v-ke"); G.npcCoopAccept(house, D, n, "pB", "u2", t + 4000000);
+  assert.ok(!G.npcCoopHold(house, D, "v-ke", "pA", "u1", t + 4000001), "別隊已經請走");
+  assert.strictEqual(house.npcCoop.at["v-ke"].pid, "pB", "不動別隊的");
+  G.npcCoopFree(house, "v-ke"); assert.ok(G.npcCoopHold(house, D, "v-ke", "pA", "u1", t + 5000000)); assert.strictEqual(house.npcCoop.at["v-ke"].pid, "pA");
+});
+T("審查 4：旅客這一趟受傷的佩佩，每一步重做 P 時還是受傷（不能上場）", G => {
+  const info = { npc: "v-ke", role: "carry" }, key = G.coopNpcKey("v-ke");
+  assert.ok(!G.coopNpcP(info, 1, 70, DATE).injured[key], "沒傷");
+  assert.ok(G.coopNpcP(info, 1, 70, DATE, [key]).injured[key], "有傷");
+});
+T("審查 10：真人都走了、只剩旅客，趟結束（coopLeave 用 coopHumanVoters）", G => {
+  const { run, Ps } = startWithNpc(G);
+  G.coopLeave(run, Ps, "a"); assert.ok(run.phase === "over" || run.ended);
+});
+
 console.log(fail ? `找 NPC 下地下：${fail} 項沒過` : `找 NPC 下地下：${pass} 項都過`); process.exit(fail ? 1 : 0);

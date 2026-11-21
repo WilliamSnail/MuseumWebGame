@@ -46,6 +46,7 @@ async function invite(me, pid, npcId, gift) {
   if (typeof npcId !== "string" || !npcId) throw new HttpsError("invalid-argument", "要說邀誰");
   if (Object.keys(p.npcs || {}).length >= C.maxNpc) throw bad(`每隊最多帶 ${C.maxNpc} 位旅客`);
   const t = now(), day = taipeiDay(t), secret = await twSecret();
+  // 順序（審查 11-21 第 9 點）：①交易 A 擲骰、留他給這一隊（不碰錢）②加進隊伍 ③交易 B 才收禮物。②失敗只要把他放回去，錢還沒動，不用退
   const out = await db().runTransaction(async tx => {
     const [hs, ws] = await Promise.all([tx.get(houseRef()), tx.get(walletRef(me.uid))]);
     const { house } = casHouseFix(parse(hs), day), w = casWalletFix(parse(ws), day);
@@ -58,31 +59,61 @@ async function invite(me, pid, npcId, gift) {
     if (gift && w.chips < C.gift) throw bad("籌碼不夠送禮物");
     const k = npcCoopAsk(house, day, npcId), roll = npcCoopRoll(secret, day, me.uid, npcId, k), chance = npcCoopChance(n, !!gift);
     const info = npcCoopInfo(n);
-    if (roll >= chance) { // 被拒絕：不收禮物，記冷卻
+    if (roll >= chance) { // 被拒絕：記冷卻
       npcCoopCool(house, day, me.uid, npcId, t);
       put(tx, houseRef(), house);
       return { accepted: false, line: npcCoopLine(n, "refuse", `${secret}|${day}|${me.uid}|${npcId}|r${k}`), chance, info };
     }
-    if (gift) npcCoopGift(w, house); // 答應了才收
     npcCoopAccept(house, day, n, pid, me.uid, t);
-    put(tx, houseRef(), house); put(tx, walletRef(me.uid), w);
-    return { accepted: true, gifted: !!gift, line: npcCoopLine(n, "accept", `${secret}|${day}|${me.uid}|${npcId}|a${k}`), chance, info, chips: w.chips };
+    put(tx, houseRef(), house);
+    return { accepted: true, line: npcCoopLine(n, "accept", `${secret}|${day}|${me.uid}|${npcId}|a${k}`), chance, info };
   });
   if (!out.accepted) return { ok: true, accepted: false, line: out.line, name: out.info.name };
   try {
     await changeParty(pid, q => partyNpcAdd(q, me.uid, out.info, C.maxNpc, 4));
-  } catch (e) { // 隊伍加不進去（滿了、已開始）：把禮物和 NPC 還回去
-    await db().runTransaction(async tx => {
-      const [hs, ws] = await Promise.all([tx.get(houseRef()), tx.get(walletRef(me.uid))]);
-      const { house } = casHouseFix(parse(hs), day), w = casWalletFix(parse(ws), day);
-      npcCoopFree(house, npcId);
-      const c = npcCoopFix(house, day); if (c.by[npcId]) c.by[npcId].n = Math.max(0, c.by[npcId].n - 1);
-      if (out.gifted) { w.chips += C.gift; house.world = Math.max(0, house.world - C.gift); if (house.led && house.led.world) house.led.world.npcGift = (house.led.world.npcGift || 0) - C.gift; }
-      put(tx, houseRef(), house); put(tx, walletRef(me.uid), w);
-    }).catch(err => console.error("找 NPC 下地下：邀請失敗，還原也失敗", err));
+  } catch (e) { // 隊伍加不進去（滿了、已開始）：把他放回去（還沒收錢）
+    await npcRelease(npcId, day).catch(err => console.error("找 NPC 下地下：邀請失敗，放回去也失敗", err));
     throw e;
   }
-  return { ok: true, accepted: true, line: out.line, name: out.info.name, chips: out.chips, gifted: !!out.gifted };
+  let chips;
+  if (gift) {
+    try {
+      chips = await db().runTransaction(async tx => { // 答應了才收禮物
+        const [hs, ws] = await Promise.all([tx.get(houseRef()), tx.get(walletRef(me.uid))]);
+        const { house } = casHouseFix(parse(hs), day), w = casWalletFix(parse(ws), day);
+        if (w.chips < C.gift) throw bad("籌碼不夠送禮物");
+        npcCoopGift(w, house);
+        put(tx, houseRef(), house); put(tx, walletRef(me.uid), w);
+        return w.chips;
+      });
+    } catch (e) { // 兩次交易之間錢被花掉了：他先離開隊伍（沒收錢，不用退）
+      await changeParty(pid, q => partyNpcRemove(q, npcId)).catch(() => {});
+      await npcRelease(npcId, day).catch(err => console.error("找 NPC 下地下：收禮物失敗，放回去也失敗", err));
+      throw e;
+    }
+  }
+  return { ok: true, accepted: true, line: out.line, name: out.info.name, chips, gifted: !!gift };
+}
+// 把他放回去：不再留給任何隊，今天陪的趟數退壹（邀請沒成）
+async function npcRelease(npcId, day) {
+  await db().runTransaction(async tx => {
+    const { house } = casHouseFix(parse(await tx.get(houseRef())), day);
+    npcCoopFree(house, npcId);
+    const c = npcCoopFix(house, day); if (c.by[npcId]) c.by[npcId].n = Math.max(0, c.by[npcId].n - 1);
+    put(tx, houseRef(), house);
+  });
+}
+// 隊伍解散了（沒開始、或趟被清掉）：留給這一隊的旅客都放走，不用等停留時間到
+export async function coopNpcRelease(pid) {
+  await db().runTransaction(async tx => {
+    const { house } = casHouseFix(parse(await tx.get(houseRef())), taipeiDay(now()));
+    const c = house.npcCoop;
+    if (!c || !c.at) return;
+    const mine = Object.keys(c.at).filter(id => c.at[id] && c.at[id].pid === pid);
+    if (!mine.length) return;
+    mine.forEach(id => npcCoopFree(house, id));
+    put(tx, houseRef(), house);
+  });
 }
 
 // 把 NPC 請走（準備區）：禮物不退

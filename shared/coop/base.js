@@ -271,7 +271,7 @@ export function coopLeave(run, Ps, id) {
   const events = coopNewEvents(run);
   run.team = coopTeam(run, Ps);
   if (run.leader === id) coopNextLeader(run);
-  if (run.phase !== "over" && !coopVoters(run).some(x => !x.npc)) coopFinish(run, "lost"); // 只剩 NPC 在地下（找 NPC 下地下，決定 0149）也算全員離開
+  if (run.phase !== "over" && !coopHumanVoters(run).length) coopFinish(run, "lost"); // 只剩 NPC 在地下（找 NPC 下地下，決定 0149）也算全員離開
   coopSync(run, Ps);
   return { ok: true, run, events };
 }

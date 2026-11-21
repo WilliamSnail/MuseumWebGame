@@ -76,7 +76,7 @@ export function partyJoin(p, uid, nick, now) {
   if (p.phase !== "lobby") return { ok: false, reason: "已經開始了" };
   // 已經在隊伍裡（例如重新整理過、框不見了，又被邀請一次）：當作重新進來，大家重新按準備
   if (p.members[uid]) { Object.values(p.members).forEach(m => { m.ready = false; }); delete p.fail; return { ok: true }; }
-  if (Object.keys(p.members).length >= PARTY.maxMembers[p.kind]) return { ok: false, reason: "隊伍滿了" };
+  if (Object.keys(p.members).length + Object.keys(p.npcs || {}).length >= PARTY.maxMembers[p.kind]) return { ok: false, reason: Object.keys(p.npcs || {}).length ? "隊伍滿了（旅客也佔座位）" : "隊伍滿了" }; // 旅客也佔座位（決定 0149）
   p.members[uid] = { nick, ready: false, pick: [], joinedAt: now };
   delete p.fail; // 人變了：上次「開始不了」的原因不算了
   return { ok: true };
@@ -172,6 +172,9 @@ export function canStartParty(p, uid) {
   if (p.leader !== uid) return { ok: false, reason: "要隊長按開始" };
   const ms = partyMembers(p);
   if (ms.length < PARTY.minMembers[p.kind]) return { ok: false, reason: p.kind === "fusion" ? "壹起融合要兩個人" : "人不夠" };
+  const nn = Object.keys(p.npcs || {}).length; // 找 NPC 下地下（決定 0149）：加入時擋過，出發時再擋壹次（隊伍資料被別的路徑改過也不會卡住）
+  if (nn && ms.some(m => m.guard)) return { ok: false, reason: "有人留守的時候不能帶旅客：請把旅客請走，或留守的人回來" };
+  if (nn && ms.length + nn > PARTY.maxMembers[p.kind]) return { ok: false, reason: "人加旅客超過 4 個座位：請把旅客請走壹位" };
   const notReady = ms.find(m => !m.ready || (!m.pick.length && !m.guard));
   if (notReady) return { ok: false, reason: `等 ${notReady.nick} 準備好`, waitFor: notReady.id }; // waitFor：等的是誰（是自己的話，畫面寫「等你準備好」）
   return { ok: true, members: ms };
