@@ -30,6 +30,7 @@ import { CAS_LIVE, CAS_TEXT } from "../shared/casino/text.js";
 import { casWkSync, casWkView } from "../shared/casino/week.js";
 import { casPassView } from "../shared/casino/pass_view.js";
 import { casWheelInfo, casWheelSpin } from "../shared/casino/wheel.js";
+import { casHInplay } from "../shared/casino/holdem.js";
 import { casMiscountInfo, casMiscountSpin } from "../shared/casino/miscount.js";
 import { titlePublish } from "../shared/core/titles.js";
 import { casCellarFind } from "../shared/casino/find.js";
@@ -386,12 +387,13 @@ export const actBuy = (ctx, d) => {
 // 一致讀取（readOnly 交易）全館：錢包、莊家、打到一半的注。不鎖東西，也不會讀到壹半
 async function reportSnap(day) {
   return db().runTransaction(async tx => {
-    const [hs, ws, rs, ts] = await Promise.all([tx.get(houseRef()), tx.get(db().collection("casinoWallets")), tx.get(db().collection("casinoRounds")), tx.get(db().collection("casinoTables"))]);
+    const [hs, ws, rs, ts, hds] = await Promise.all([tx.get(houseRef()), tx.get(db().collection("casinoWallets")), tx.get(db().collection("casinoRounds")), tx.get(db().collection("casinoTables")), tx.get(db().collection("casinoHoldem"))]);
     const house = casHouseFix(parse(hs), null).house;
     const wallets = ws.docs.map(d => casWalletFix(JSON.parse(d.data().data), null));
     let inplay = 0;
     rs.docs.forEach(d => { const r = JSON.parse(d.data().data); if (r && r.state === "playing") inplay += Math.floor(+r.bet) || 0; });
     ts.docs.forEach(d => { const t = JSON.parse(d.data().data); Object.values((t && t.seats) || {}).forEach(s => { if (s && !s.npc && s.bet > 0 && s.out == null) inplay += Math.floor(+s.bet) || 0; }); });
+    hds.docs.forEach(d => { inplay += casHInplay(JSON.parse(d.data().data)); }); // 德州撲克桌上的籌碼（沒投入的加投入的，決定 0150）
     const snap = casBookSnap(wallets, house, inplay, day);
     if (house.pool && house.pool.uid) { snap.poolNws = {}; for (const u of Object.keys(house.pool.who || { [house.pool.uid]: 1 })) { const pd = ws.docs.find(d => d.id === u); if (pd) snap.poolNws[u] = casNetWorth(casWalletFix(JSON.parse(pd.data().data), null), house); } } // 決定 0132：池子水位要的淨值（只有伺服器的日報看到）
     // 昨天館外來客花了多少：house.npcs 是換日後第壹個玩的人（casInRoll）才結算的；日報是唯讀、不換日，05:00 後第壹個碰到的如果是日報，house.npcs 還是前天的 → 財報停在前天。
