@@ -113,3 +113,7 @@
   .bj-seat .cas-card { width: 40px; height: 56px; }
   .bj-seat .cas-hand { min-height: 52px; }
 }
+
+/* PR 920 實測（11-21）：電腦高螢幕（2140×1440）賭場的框只有 800px 高，轉盤頁要在小框裡捲才按得到「轉！」→ 高螢幕用滿畫面高度（最高 1300px）；手機內文底下多留壹點，「這壹轉」合計列才不會被「往下滑還有」蓋住 */
+@media (min-height: 900px) and (min-width: 900px) { .nb-frame.nb-casino { height: min(1300px, calc(100vh - 36px)); height: min(1300px, calc(100svh - 36px)); } }
+@media (max-width: 760px) { .nb-casino .cas-body { padding-bottom: 40px; } }
