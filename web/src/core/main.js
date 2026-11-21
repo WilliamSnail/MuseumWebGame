@@ -28,6 +28,7 @@ import "../css/rank.css"; // 本週榜單（11-09，決定 0039）
 import "../css/mates.css"; // 大廳導覽圖上的館友名牌（11-09）
 import "../css/events.css"; // 限時活動（決定 0041）
 import "../css/casino.css"; // Hamachi 賭場（決定 0040）
+import "../css/casino_bj.css"; // 賭場牌桌重新設計（11-21）：左邊直排遊戲欄、橢圓牌桌、圓籌碼（前綴 bj-）
 import "../css/tasks.css"; // 每日任務的畫面零件（11-20）
 import "../css/diner.css"; // 餐車重新設計（11-20）
 import "../css/discord.css"; // 我的帳號裡的「綁定 Discord」（決定 0051）

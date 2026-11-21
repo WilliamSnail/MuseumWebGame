@@ -75,6 +75,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `artmarket-` | `artmarket.css` | 藝術市場（`ui_art.js`）：畫廊今日特展每幅畫下面的買賣（`artmarket-row`）和「我收藏的畫」（`artmarket-shelf`）。不要跟畫框的 `art-` 搞混 |
 | `sv-`、`tone-` | `stat.css` | 公用數值元件（`ui_stat.js`）：`sv-badge`（小牌）、`sv-bar`、`sv-bands`；`tone-good／neutral／warn／bad` 是顏色，只在 stat.css 定義 |
 | `hl-` | `lobby2.css` | 大廳「今日要聞」跑馬燈（`ui_headline.js`）：`hl-view`、`hl-track`、`hl-i`、`hl-still`（減少動態時壹則壹則切換） |
+| `bj-` | `casino_bj.css` | 賭場牌桌頁籤（11-21 重新設計，`ui_casino_felt.js`）：`bj`（遊戲欄＋牌桌）、`bj-nav`／`bj-g`（切換遊戲；電腦左邊直排，手機上面壹排）、`bj-table`／`bj-seat`／`bj-bubble`（橢圓牌桌）、`bj-chip`（圓籌碼）、`bj-betbar`／`bj-amt`／`bj-acts`／`bj-how`／`bj-log` |
 | `ly-` | `lobby2.css`、`lyrics_tap.css`（開發用） | 深夜大廳歌曲字幕（11-21，`ui_lyrics.js`）：`ly-box`、`ly-line`（`on` 顯示、`whisper` 耳語）。開發用對時工具用 `ly-tap`、`ly-tap-*` |
 | `bank-` | `bank.css` | Yuga Bot 銀行廳（`ui_bank.js`）：`bank-onescreen`（套骨架）、`bank-panel`（深藍面板）、`bank-book`（米色存摺表格）、`bank-ticker`（最下面的今日行情）。賭場銀行用的是 `cas-bank`、`bk-`，不要搞混 |
 | `gal-` | `gallery2.css` | 畫廊重做（11-14，`ui_story.js` 的 `galleryShell`、`ui_art.js` 的拍賣）：`gallery-onescreen`（套骨架）、`gal-wall`（畫牆）、`gal-corridor`（畫框走廊）、`gal-side`／`gal-rules`（側欄）、`gal-lot`／`gal-easel`（拍賣的畫架） |

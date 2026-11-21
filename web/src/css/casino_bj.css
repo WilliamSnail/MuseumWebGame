@@ -1,0 +1,52 @@
+/* 賭場牌桌頁籤重新設計（11-21，翊文選方向 C：左邊直排遊戲欄；docs/規劃/牌桌重新設計.md）。ui_casino_felt.js、ui_casino.js 的 bjPane。
+   前綴 bj-。舊的 cas-felt、cas-seat 等（同桌 ui_casino_table.js 還在用）不動。 */
+.bj { display: flex; gap: 12px; flex: 1; min-height: 0; }
+.bj-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.bj-main > * { flex: none; }
+/* 切換遊戲：電腦左邊直排（圖示＋字） */
+.bj-nav { flex: 0 0 96px; display: flex; flex-direction: column; gap: 8px; }
+.bj-g { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 76px; padding: 8px 4px; border-radius: 10px; cursor: pointer; font: inherit; font-weight: 800; color: #F3E3A8; background: rgba(0, 0, 0, .35); border: 1px solid rgba(214, 178, 94, .7); }
+.bj-g svg, .bj-g .ic { width: 28px; height: 28px; }
+.bj-g:hover:not(:disabled), .bj-g:focus-visible { background: rgba(224, 183, 90, .18); }
+.bj-g.on { color: #2A1A08; background: linear-gradient(#F4D58A, #C9962F); border-color: #FFF0B8; box-shadow: 0 0 0 2px #E0B75A, 0 4px 10px rgba(0, 0, 0, .45); }
+/* 橢圓牌桌 */
+.bj-table { position: relative; display: flex; flex-direction: column; justify-content: space-around; align-items: center; gap: 10px; min-height: 340px; padding: 16px 20px 18px; border-radius: 120px 120px 18px 18px / 70px 70px 18px 18px; border: 4px solid #7B5226; background: radial-gradient(ellipse at 50% 38%, #2F8A5C, #1D5A3B 78%); box-shadow: inset 0 0 50px rgba(0, 0, 0, .55), 0 6px 16px rgba(0, 0, 0, .4); }
+.bj-seat { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.bj-who { text-align: center; color: #FFF3CF; }
+.bj-who b { font-family: var(--serif); letter-spacing: .08em; }
+.bj-who small { display: block; font-size: .8125rem; color: #D6EFD9; }
+.bj-seat .cas-hand { justify-content: center; min-height: 76px; }
+.bj-empty { margin: 0; padding: 14px 0; color: rgba(255, 243, 207, .85); }
+.bj-bubble { position: absolute; top: 14px; right: 18px; z-index: 1; max-width: min(46%, 300px); margin: 0; padding: 8px 12px; border-radius: 12px 12px 4px 12px; font-size: .875rem; line-height: 1.5; color: #3A2412; background: #FFF3CF; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
+.bj-table .cas-result { position: static; margin: 0; width: min(100%, 460px); }
+/* 下注：數字＋圓籌碼 */
+.bj-betbar { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 0; }
+.bj-bet { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+.bj-amt { width: 170px; min-height: 48px; padding: 0 12px; border-radius: 8px; border: 2px solid #D6B25E; background: #0B2A1B; color: #FFF3CF; font-size: 1.375rem; font-weight: 800; text-align: center; font-family: inherit; }
+.bj-deal { min-width: 120px; }
+.bj-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.bj-chip { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; padding: 0; cursor: pointer; font: inherit; font-size: .8125rem; font-weight: 800; color: #fff; border: 5px dashed rgba(255, 255, 255, .85); box-shadow: 0 4px 8px rgba(0, 0, 0, .55), inset 0 0 0 3px rgba(0, 0, 0, .25); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.bj-chip:hover:not(:disabled), .bj-chip:focus-visible { transform: translateY(-3px); }
+.bj-chip:disabled { filter: grayscale(.8); opacity: .5; cursor: not-allowed; }
+.bj-c0 { background: #B32D2D; } .bj-c1 { background: #2B5FA8; } .bj-c2 { background: #2E7D4A; } .bj-c3 { background: #222; } .bj-c4 { background: #8A5AB8; }
+.bj-acts { display: flex; justify-content: center; gap: 12px; }
+.bj-acts .btn { min-width: 140px; min-height: 52px; font-size: 1.125rem; }
+.bj-log, .bj-how { padding: 8px 12px; border-radius: 8px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(231, 200, 120, .3); }
+.bj-log > summary, .bj-how > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; color: #F8E3A0; font-family: var(--serif); letter-spacing: .06em; }
+.bj-how p { margin: 4px 0; font-size: .875rem; line-height: 1.6; color: rgba(243, 238, 220, .85); }
+/* 手機直拿：遊戲切換變成上面壹排大按鈕（圖示＋字、目前那個金色實心）；牌桌壓矮，發牌、要牌、停牌在第壹屏 */
+@media (max-width: 760px) {
+  .bj { flex-direction: column; gap: 8px; }
+  .bj-nav { flex: none; flex-direction: row; gap: 6px; }
+  .bj-g { flex: 1 1 0; min-width: 0; flex-direction: row; justify-content: center; gap: 6px; min-height: 48px; padding: 4px 6px; font-size: .9375rem; }
+  .bj-g svg, .bj-g .ic { width: 22px; height: 22px; flex: none; }
+  .bj-g-t { white-space: nowrap; }
+  .bj-table { min-height: 0; gap: 6px; padding: 10px 10px 12px; border-radius: 60px 60px 14px 14px / 36px 36px 14px 14px; }
+  .bj-seat .cas-hand { min-height: 60px; gap: 5px; }
+  .bj-seat .cas-card { width: 44px; height: 62px; }
+  .bj-bubble { position: static; max-width: 100%; align-self: stretch; font-size: .8125rem; padding: 5px 10px; }
+  .bj-amt { width: 130px; min-height: 44px; font-size: 1.125rem; }
+  .bj-chip { width: 52px; height: 52px; border-width: 4px; font-size: .6875rem; }
+  .bj-chips { gap: 6px; }
+  .bj-acts .btn { min-width: 0; flex: 1 1 0; }
+}
