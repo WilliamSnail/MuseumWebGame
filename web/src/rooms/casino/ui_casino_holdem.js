@@ -97,7 +97,7 @@ function setupPane(st, join) {
   const set = n => { input.value = String(n); st.buy = input.value; };
   const go = () => { st.buy = input.value; call(st, join ? { act: "buyin", pid: st.pid, buy: num() } : { act: "open", lv, buy: num() }); };
   const levels = C().levels.map((l, i) => {
-    const b = h("button", { type: "button", class: "sb-opt" + (i === lv ? " on" : ""), disabled: join || st.busy ? true : null, "aria-pressed": String(i === lv) }, h("b", null, `盲注 ${casNum(l[0])}／${casNum(l[1])}`), h("small", null, `買入 ${casNum(buyRange(i)[0])}～${casNum(buyRange(i)[1])}`));
+    const b = h("button", { type: "button", class: "sb-opt" + (i === lv ? " on" : ""), disabled: join || st.busy ? true : null, "aria-pressed": String(i === lv) }, h("b", null, i === 0 ? "入門桌・" : "", `盲注 ${casNum(l[0])}／${casNum(l[1])}`), h("small", null, `買入 ${casNum(buyRange(i)[0])}～${casNum(buyRange(i)[1])}`));
     tipOn(b, { title: "盲注", what: `小盲 ${casNum(l[0])}、大盲 ${casNum(l[1])}：每手開始前兩個人先放的底注。`, how: [`買入最少 ${C().buyMinBB} 個大盲 = ${casNum(buyRange(i)[0])}`, `最多 ${C().buyMaxBB} 個大盲（上限 ${casNum(C().buyMax)}）`] });
     b.addEventListener("click", () => { st.lv = i; st.buy = ""; redraw(); });
     return b;

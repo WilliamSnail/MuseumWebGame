@@ -205,3 +205,6 @@
 /* 德州的旅客座位（11-22）：名字旁小標「旅客」、說的話壹句 */
 .hd-npc { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: .6875rem; font-weight: 800; color: #3A2412; background: #E0B75A; }
 .hd-say-npc { margin: 2px 0 0; padding: 3px 6px; border-radius: 8px; font-size: .75rem; line-height: 1.4; color: #3A2412; background: #FFF3CF; overflow-wrap: anywhere; }
+/* 11-22 qa：旅客的泡泡不要讓座位變高（手機六人桌動作列蓋公共牌）→ 壹行、超過就刪節號；手機更小 */
+.hd-say-npc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (max-width: 760px) { .hd-say-npc { font-size: .6875rem; padding: 1px 4px; } .hd-npc { font-size: .625rem; padding: 0 3px; } }
