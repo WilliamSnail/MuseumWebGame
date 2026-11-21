@@ -88,7 +88,8 @@ import "../fx/ui_lyrics.js"; // 深夜大廳歌曲的字幕（11-21）
 import "../rooms/casino/ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
 import "../rooms/casino/ui_casino.js";
 import "../rooms/casino/ui_casino_wheel.js"; // 佩佩轉盤（決定 0150，牌桌頁籤的遊戲；要放在 ui_casino.js 後面）
-import "../rooms/casino/ui_casino_miscount.js"; // 差壹畫（決定 0150） // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino/casino.js
+import "../rooms/casino/ui_casino_miscount.js"; // 差壹畫（決定 0150）
+import "../rooms/casino/ui_casino_holdem.js"; // 德州撲克 2 人桌（決定 0150） // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino/casino.js
 import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
 import "../panels/ui_discord.js"; // 我的帳號裡的「綁定 Discord」（決定 0051）：伺服器在 functions/discord/discord_link.js，規則在 shared/discord/core.js
 import "../panels/ui_npc_card.js";
