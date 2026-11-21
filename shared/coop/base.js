@@ -140,9 +140,10 @@ export function coopRoller(run, Ps, skill) {
   return best ? best.id : null;
 }
 // 領隊每間輪一個人：照隊員順序找下一位能投票的
+// 旅客不當領隊（審查 11-21 第 6 點）
 export function coopNextLeader(run) {
   const ms = run.members, i0 = ms.findIndex(m => m.id === run.leader);
-  for (let k = 1; k <= ms.length; k++) { const m = ms[(i0 + k + ms.length) % ms.length]; if (coopCanAct(m)) { run.leader = m.id; return run.leader; } }
+  for (let k = 1; k <= ms.length; k++) { const m = ms[(i0 + k + ms.length) % ms.length]; if (coopCanAct(m) && !m.npc) { run.leader = m.id; return run.leader; } }
   run.leader = null;
   return null;
 }

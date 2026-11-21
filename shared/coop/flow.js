@@ -24,7 +24,8 @@ import { coopFightRound, coopReplayMs } from "./fight.js";
 import { coopRest, coopRouteGo, coopRouteOptions } from "./route.js";
 import { coopRouteBack } from "./fight.js";
 import { fightActors, fightSeatOf } from "../cellar/fight.js";
-import { COOP, coopFinish, coopFix, coopLeave, coopMember, coopPresent, coopRoom, coopVoters } from "./base.js";
+import { COOP, coopFinish, coopFix, coopHumanVoters, coopLeave, coopMember, coopPresent, coopRoom, coopVoters } from "./base.js";
+import { NUM } from "../core/config.js";
 import { canStartCoop, coopAdvance, coopContinue, coopEnd, coopResolve, startCoop } from "./core.js";
 import { coopNpcTurn } from "./npc.js";
 
@@ -67,7 +68,8 @@ export function coopArm(run, now) {
   run.votes = {}; run.acks = {};
   run.deadline = ms ? now + ms : null;
 }
-const everyVoted = run => { const vs = coopVoters(run); return vs.length > 0 && vs.every(m => run.votes[m.id] !== undefined); };
+// 這壹層走完的投票：旅客不用等（他在 doFloor 算票時才表態）
+const everyVoted = run => { const vs = run.phase === "floorDone" ? coopHumanVoters(run) : coopVoters(run); return vs.length > 0 && vs.every(m => run.votes[m.id] !== undefined); };
 const everyAcked = run => { const ps = coopPresent(run); return ps.length > 0 && ps.every(m => run.acks[m.id]); };
 
 // ---------- 走下一步（都會改 out） ----------
@@ -91,7 +93,7 @@ function doAdvance(run, Ps, now, out) {
 }
 function doFloor(run, Ps, now, out) {
   const count = { down: 0, up: 0 };
-  coopVoters(run).forEach(m => { const v = run.votes[m.id]; if (v === "down" || v === "up") count[v]++; });
+  coopVoters(run).forEach(m => { const v = m.npc ? (m.san < NUM.casino.coopNpc.floorUpSan ? "up" : null) : run.votes[m.id]; if (v === "down" || v === "up") count[v]++; }); // 旅客：理智低投回地面，其餘跟真人多數走（不加票，審查 11-21 第 5 點）
   const go = count.down > count.up ? "down" : count.up > count.down ? "up" : run.votes[run.leader] === "down" ? "down" : "up"; // 平手領隊；都沒投就回地面
   if (go === "down" && run.next) { // 沒有下一層可以走（最底層，或守門沒打贏）：投往下也是回地面
     const r = coopContinue(run, Ps);

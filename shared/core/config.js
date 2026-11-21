@@ -645,7 +645,7 @@ export const NUM = {
     //   on 總開關；maxNpc 每隊最多幾位 NPC（至少要有壹個真人；模擬：帶 2 位在 B2 比真人 2 人隊還好，保險建議 1，等翊文決定）；gift 邀請送的籌碼（進已知世界，來源 npcGift）；
     //   baseP／routeP／giftP 答應率 ＝ baseP ＋ route.cellar × routeP ＋ gift 給了的 giftP（最多 95、最少 5）；minSan 他的理智低於這個不答應；perDay 壹位 NPC 壹天最多陪幾趟；
     //   leaveSan 趟裡他的理智掉到這個以下，說壹句話離隊；stayMin 最久陪多少分鐘（趟太久就放他回去）；startSan 他的起始理智（沒紀錄就用 worldDoc.san.start）；coolMs 被拒絕之後同壹位館友再邀同壹位要等多久
-    coopNpc: { on: true, maxNpc: 3, bonusWeight: 1, gift: 5000, baseP: 50, routeP: 5, giftP: 20, minSan: 40, perDay: 2, leaveSan: 25, stayMin: 20, coolMs: 1800000, coolKeep: 200, ties: [5, 15, 30] },
+    coopNpc: { on: true, maxNpc: 3, bonusWeight: 1, gift: 5000, baseP: 50, routeP: 5, giftP: 20, minSan: 40, perDay: 2, leaveSan: 25, floorUpSan: 40, stayMin: 20, coolMs: 1800000, coolKeep: 200, ties: [5, 15, 30] },
     // 莊家健康度保護（11-14，數值平衡；翊文 11-13『都做』）：預算凍結以後，免費大禮包的錢只能靠玩家輸回來（test/sim/sim_econ_world.cjs：玩家輸回的比例低於約 0.4～0.6，莊家就破產）。
     // 莊家的錢少於 low：每人每天的免費大禮包只發 lowPacks 包；破產中（≤ 0）：只發 brokePacks 包。買來的券、拚經濟抽到的券不受影響。budgetFloor（在 econ 裡）：博物館資金低到這個負數，拚經濟成功完全不撥款。
     packDayCap: 30000000, // 決定 0116：全館大禮包壹天最多付這麼多籌碼，超過的包當天只發 1～3 星
