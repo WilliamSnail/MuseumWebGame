@@ -117,7 +117,7 @@ function wkNotes(s, v) {
   if (!w || !Array.isArray(w.items) || s.wkSeen === w.k) return;
   s.wkSeen = w.k;
   CAS_WK.at = 0; // 賭場和劇情面板的進度過期，下次打開重問伺服器
-  w.items.forEach(it => { note(`收藏品「${it.name}」到手了！到賭場的「本週收藏」頁籤看。`, "good"); snd("unlock"); });
+  w.items.forEach(it => { note(`收藏品「${it.name}」到手了！到賭場「大禮包」頁籤的「本週收藏」看。`, "good"); snd("unlock"); });
   if (w.done) { note("這週的賭場收藏集滿了！到「本週收藏」領週章、讀集滿的故事。", "good"); snd("unlock"); }
 }
 function resultNotes(v) {
@@ -125,7 +125,7 @@ function resultNotes(v) {
   if (!me || !me.out) return;
   casSfx(casOutSfx(me.out));
   if (me.out.kind === "blackjack") sndFile("applause-cheer", APPLAUSE.vol); // 同桌拿到 Blackjack
-  for (const a of me.ach || []) { note(`成就「${a.name}」！在賭場的「成就」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
+  for (const a of me.ach || []) { note(`成就「${a.name}」！在賭場的「我的」頁籤看、可以當稱號。`, "good"); snd("unlock"); }
   if (me.ticket) note(CAS_TEXT.packWon, "good");
 }
 
