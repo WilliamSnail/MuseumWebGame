@@ -451,3 +451,5 @@ content/
 - `chat.yesterday.task／visit／gift`：各至少 1 句。
 - 每句 40 字內、「壹」不用「一」、沒有英文字母（只有 yuga 的 R）和阿拉伯數字、不寫贏輸賺賠催玩掏錢、不碰撥款信那條線。檢查：`node tools/check/givers_check.cjs`（npm test 會跑）。
 - 第二批（小故事、拜託、送禮反應）、第三批（串門子、稱號）之後加欄位。
+
+第二批欄位（同壹個檔）：`story.parts`（3 段、每段 3 句）、`story.last`（Lv3 才看到的括號句）、`errands`（臨時拜託至少 3 件：`kind` 是現有動作 visit／sendPepe／eat／lostbox／casinoCollection／cellar／cellarExhibit／spot／read／stock／auction／tell，`tell` 要有 `to`＝另壹位交代人，不放存錢買賣那類籌碼動作；`ask`、`done`）、`gift`（`likes`、`dislikes` 的欄位只認稀有度、心情、顏色、帽子、姿勢，失敗作只能放稀有度；`love`、`ok`、`off` 各 2 句，`first` 1 句）。六位都收禮，包括號碼機。
