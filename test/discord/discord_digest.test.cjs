@@ -6,8 +6,9 @@ const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log(
 const AREAS = ["股票與銀行", "賭場", "其他"], areaOf = n => n.area || "其他";
 T("只列今天發布的館方公告、照分段、特展活動不列", () => {
   const s = digestText([{ title: "A", publish: "2026-11-15", area: "賭場" }, { title: "B", publish: "2026-11-14", area: "賭場" }, { title: "C", publish: "2026-11-15", area: "股票與銀行" }, { title: "D", publish: "2026-11-15", cat: "特展活動" }], "2026-11-15", areaOf, AREAS);
-  assert.ok(s.startsWith("📰 今天的更新（11/15）"));
+  assert.ok(s.startsWith("📰 **今天的館訊**（11/15）"));
   assert.ok(s.indexOf("【股票與銀行】") < s.indexOf("【賭場】"), "照分段順序");
+  assert.ok(!s.includes("今天的重點"), "三則以下不挑重點");
   assert.ok(s.includes("・A") && s.includes("・C") && !s.includes("・B") && !s.includes("・D"));
 });
 T("今天沒有公告就是空的（不發）", () => assert.strictEqual(digestText([{ title: "B", publish: "2026-11-14" }], "2026-11-15", areaOf, AREAS), ""));
@@ -18,7 +19,7 @@ T("太多時不超過 Discord 的長度，寫還有幾則", () => {
 });
 T("真的發的那則多入館連結；沒有公告就不發", () => {
   const s = G.dcDigestPost([{ title: "A", publish: "2026-11-15", area: "賭場" }], "2026-11-15", areaOf, AREAS);
-  assert.ok(s.startsWith("📰 今天的更新") && s.endsWith("🎟 入館：https://pepe-museum.web.app"));
+  assert.ok(s.startsWith("📰 **今天的館訊**") && s.endsWith("🎟 入館：https://pepe-museum.web.app"));
   assert.strictEqual(G.dcDigestPost([], "2026-11-15", areaOf, AREAS), "");
 });
 T("伺服器排程：每天台灣 20:00、同壹天只寫壹則（outbox 的 id 帶日期）", () => {
