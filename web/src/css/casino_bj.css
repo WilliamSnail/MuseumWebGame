@@ -193,3 +193,10 @@
   .hd-acts .bj-acts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
   .hd-acts .bj-acts .btn { min-height: 44px; padding: 0 2px; font-size: .8125rem; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* 手機：4 顆遊戲切換（21點／德州撲克／佩佩轉盤／差壹畫）壹排放得下，右緣不被切（11-21） */
+@media (max-width: 760px) {
+  .bj-g { gap: 3px; padding: 4px 2px; font-size: .8125rem; }
+  .bj-g svg, .bj-g .ic { width: 18px; height: 18px; }
+  .bj-nav { gap: 4px; overflow: hidden; }
+}

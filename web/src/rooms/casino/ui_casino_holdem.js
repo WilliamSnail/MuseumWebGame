@@ -53,6 +53,9 @@ function take(st, v) {
   if (!prev || prev.hand !== v.hand || prev.street !== v.street) { st.raise = 0; st.raiseOpen = false; }
   if (v.res && (!prev || !prev.res || prev.res.hand !== v.res.hand)) { const me = v.seats.find(s => s.me), n = v.res.net && me ? v.res.net[me.uid] : 0; snd(n > 0 ? "coin" : n < 0 ? "error" : "flip"); }
   else if (!prev || prev.toAct !== v.toAct || prev.street !== v.street) snd("flip");
+  // 輪到我（手機）：貼底的動作列會蓋住公共牌下半，所以把內文捲到底，動作列回到自己的位置，牌看得全（11-21 qa 實測 ①）
+  const meS = v.seats.find(s => s.me);
+  if (meS && v.phase === "play" && v.toAct === meS.uid && (!prev || prev.toAct !== v.toAct || prev.street !== v.street) && window.matchMedia && window.matchMedia("(max-width: 760px)").matches) setTimeout(() => { const b = document.querySelector(".cas-body"); if (b) b.scrollTo({ top: b.scrollHeight, behavior: "smooth" }); }, 150);
   if (v.phase === "wait" && st.view && !v.seats.length) st.pid = null;
 }
 function watch(st) {
@@ -164,7 +167,7 @@ function tablePane(st) {
   const v = st.view, me = v.seats.find(s => s.me), opps = v.seats.filter(s => !s.me), max = v.seatsMax || 2;
   const board = h("div", { class: "hd-board", "aria-label": "公共牌" }, [0, 1, 2, 3, 4].map(i => (v.board[i] != null ? cardEl(v.board[i]) : h("span", { class: "hd-slot", "aria-hidden": "true" }))));
   const wait = v.phase === "wait", limit = v.pairLeft != null && v.pairLeft <= 0;
-  const reason = wait ? (v.seats.length < 2 ? "等館友坐下……" : limit ? "今天跟某些人打到輸贏上限了，這手先不玩。" : "有人的籌碼不夠開下壹手。") : me && me.sitOut ? "你這手先不玩，等下壹手。" : null;
+  const reason = wait ? (v.seats.length < 2 ? "等館友坐下……" : limit ? "你跟同桌某位今天的輸贏到上限了，這手先坐壹下。" : "有人的籌碼不夠開下壹手。") : me && me.sitOut ? (limit ? "你跟同桌某位今天的輸贏到上限了，這手先坐壹下。" : "你這手先不玩，等下壹手。") : null;
   const stateTip = { title: "底池", what: "這一手大家放進去的籌碼，贏的人全拿（有人全下時會分主池、邊池）。", how: [`每手抽 ${v.rake.pct}%，最多 ${v.rake.capBB} 個大盲（${casNum(v.rake.cap)}），進莊家`, "只有底池超過 2 個大盲才抽"] };
   const empties = Math.max(0, max - v.seats.length);
   return [
@@ -175,7 +178,7 @@ function tablePane(st) {
       me ? seatBox(me, v, false) : null,
       v.phase === "over" || (wait && v.res) ? resultBanner(v) : null),
     v.seats.length < max ? (v.seats.length < 2 ? invitePane(st) : h("details", { class: "bj-how" }, h("summary", null, `邀更多館友（${v.seats.length}／${max}）`), invitePane(st))) : null,
-    me && me.stack <= 0 && wait ? h("div", { class: "sb-sec" }, h("h4", null, "籌碼用完了"), btn("再買入", () => { st.view = Object.assign({}, v); st.rebuy = true; redraw(); }, "primary")) : null,
+    me && me.stack <= 0 && !(v.phase === "play" && me.st === "allin") ? h("div", { class: "sb-sec" }, h("h4", null, "籌碼用完了"), btn("再買入", () => { st.view = Object.assign({}, v); st.rebuy = true; redraw(); }, "primary")) : null,
     v.phase === "play" ? actions(st, v) : null,
   ];
 }
