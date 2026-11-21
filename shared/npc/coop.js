@@ -49,6 +49,14 @@ export function npcCoopAway(house, nowMs) {
   return out;
 }
 export function npcCoopFree(house, id) { if (cpBox(house.npcCoop) && cpBox(house.npcCoop.at)) delete house.npcCoop.at[id]; }
+// 沒出發就走了（準備區被請走、隊伍解散）：放走他、今天陪的趟數退壹（不低於 0）；禮物不退。pid 有給就要確認還留給這壹隊。回傳有沒有退
+export function npcCoopRefund(house, day, id, pid) {
+  const c = npcCoopFix(house, day), at = c.at[id];
+  if (!cpBox(at) || (pid != null && at.pid !== pid)) return false;
+  delete c.at[id];
+  if (cpN(at.since) >= npcDayStartMs(day) && cpBox(c.by[id])) c.by[id].n = Math.max(0, cpN(c.by[id].n) - 1); // 昨天留的不退今天的
+  return true;
+}
 export const npcCoopLine = (n, kind, seed) => {
   const mine = n && cpBox(n.cellar) && cpBox(n.cellar.lines) && Array.isArray(n.cellar.lines[kind]) && n.cellar.lines[kind].length ? n.cellar.lines[kind] : NPC_COOP_LINES[kind] || [];
   return mine.length ? String(mine[Math.floor(mulberry32(hashStr(String(seed)))() * mine.length)]).slice(0, 30) : "";

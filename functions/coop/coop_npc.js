@@ -10,7 +10,7 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { NUM } from "../shared/core/config.js";
 import { NPC_LIST } from "../shared/npc_list_data.js";
 import { npcCounters } from "../shared/npc/core.js";
-import { npcCoopAccept, npcCoopAsk, npcCoopChance, npcCoopCool, npcCoopCoolLeft, npcCoopDone, npcCoopFix, npcCoopFree, npcCoopGift, npcCoopInfo, npcCoopInvitable, npcCoopLine, npcCoopOk, npcCoopRoll } from "../shared/npc/coop.js";
+import { npcCoopRefund, npcCoopAccept, npcCoopAsk, npcCoopChance, npcCoopCool, npcCoopCoolLeft, npcCoopDone, npcCoopGift, npcCoopInfo, npcCoopInvitable, npcCoopLine, npcCoopOk, npcCoopRoll } from "../shared/npc/coop.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { fixParty, partyNpcAdd, partyNpcRemove } from "../shared/social/party.js";
 import { taipeiDay } from "../shared/core/logic.js";
@@ -98,20 +98,19 @@ async function invite(me, pid, npcId, gift) {
 async function npcRelease(npcId, day) {
   await db().runTransaction(async tx => {
     const { house } = casHouseFix(parse(await tx.get(houseRef())), day);
-    npcCoopFree(house, npcId);
-    const c = npcCoopFix(house, day); if (c.by[npcId]) c.by[npcId].n = Math.max(0, c.by[npcId].n - 1);
+    npcCoopRefund(house, day, npcId);
     put(tx, houseRef(), house);
   });
 }
 // 隊伍解散了（沒開始、或趟被清掉）：留給這一隊的旅客都放走，不用等停留時間到
 export async function coopNpcRelease(pid) {
   await db().runTransaction(async tx => {
-    const { house } = casHouseFix(parse(await tx.get(houseRef())), taipeiDay(now()));
+    const day = taipeiDay(now()), { house } = casHouseFix(parse(await tx.get(houseRef())), day);
     const c = house.npcCoop;
     if (!c || !c.at) return;
     const mine = Object.keys(c.at).filter(id => c.at[id] && c.at[id].pid === pid);
     if (!mine.length) return;
-    mine.forEach(id => npcCoopFree(house, id));
+    mine.forEach(id => npcCoopRefund(house, day, id, pid)); // 沒出發的才會留在這裡（出發過的趟已由 coopNpcEnd 收尾）：趟數退壹
     put(tx, houseRef(), house);
   });
 }
@@ -123,7 +122,7 @@ async function dismiss(me, pid, npcId) {
   await db().runTransaction(async tx => {
     const hs = await tx.get(houseRef()), day = taipeiDay(now());
     const { house } = casHouseFix(parse(hs), day);
-    npcCoopFree(house, npcId);
+    npcCoopRefund(house, day, npcId, pid); // 沒出發就請走：趟數退壹，禮物不退
     put(tx, houseRef(), house);
   }).catch(() => {});
   return { ok: true };
