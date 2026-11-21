@@ -6,11 +6,16 @@
 // 別的檔可以 require：checkGivers({ givers, ledger })
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
+const G = require("../../test/load_shared.cjs").load();
 const DIR = path.join(ROOT, "content", "givers");
 const LEDGER = path.join(ROOT, "content", "story", "帳本.json");
 const MAX = 40;
 const NAME_MAX = 8; // 代入 {name} 時，名字最長算幾個字
 const SLOTS = ["morning", "noon", "evening", "night"];
+// 臨時拜託連到的現有動作（不放籌碼動作：存錢、買賣；拜託不給籌碼）
+const KINDS = ["visit", "sendPepe", "eat", "lostbox", "casinoCollection", "cellar", "cellarExhibit", "spot", "read", "stock", "auction", "tell"];
+// 送禮喜好只認這五個欄位（數值平衡 11-21：伺服器只認這些）；失敗作只能放在稀有度
+const GIFT_CATS = ["稀有度", "心情", "顏色", "帽子", "姿勢"];
 const NOPE = ["贏", "輸", "賺", "賠", "掏錢", "趕快", "快點", "最後機會", "別錯過", "再來", "多玩", "加碼", "下注", "梭哈", "連贏", "手氣"];
 // 規劃第 5 節：撥款信那條線和後面的季才揭的事
 const SPOILERS = ["池子", "水位", "門檻", "名牌", "文化部", "收走", "請離開", "請跟我來", "會計", "排隊", "警衛", "水閘", "交接", "下壹位館長", "總帳", "別的館", "120", "禮包"];
@@ -44,6 +49,30 @@ function checkGivers({ givers = [], bad = [], ledger = null } = {}) {
     const p = SPOILERS.find(x => s.includes(x)); if (p) E(w, `不能寫「${p}」（撥款信那條線、後面才揭的事）`);
   };
   const list = (w, a, min, id) => { if (!Array.isArray(a)) return E(w, "要是陣列"); if (a.length < min) E(w, `至少 ${min} 句（現在 ${a.length}）`); a.forEach((s, i) => line(`${w}[${i}]`, s, id)); };
+  const extra = (g, w) => {
+    if (g.story === undefined && g.errands === undefined && g.gift === undefined) return; // 第一批的檔還沒有第二批欄位
+    const st = g.story;
+    if (!isObj(st) || !Array.isArray(st.parts) || st.parts.length !== 3) E(`${w}.story`, "要有 parts（3 段）和 last");
+    else { st.parts.forEach((p, i) => { if (!Array.isArray(p) || p.length !== 3) E(`${w}.story.parts[${i}]`, "每段 3 句"); else list(`${w}.story.parts[${i}]`, p, 3, g.id); }); line(`${w}.story.last`, st.last, g.id); }
+    if (!Array.isArray(g.errands) || g.errands.length < 3) E(`${w}.errands`, "臨時拜託至少 3 件");
+    else g.errands.forEach((e, i) => {
+      const ew = `${w}.errands[${i}]`;
+      if (!isObj(e) || !KINDS.includes(e.kind)) return E(ew, `kind 只能是 ${KINDS.join("、")}`);
+      line(`${ew}.ask`, e.ask, g.id); line(`${ew}.done`, e.done, g.id);
+      if (e.kind === "tell") { if (!ids.has(e.to) || e.to === g.id) E(ew, "tell 要有 to，是另壹位交代人"); } else if (e.to !== undefined) E(ew, "只有 tell 可以有 to");
+    });
+    const gf = g.gift;
+    if (!isObj(gf)) return E(`${w}.gift`, "要有 gift");
+    for (const k of ["likes", "dislikes"]) {
+      if (!isObj(gf[k])) { E(`${w}.gift.${k}`, "要是物件（欄位是稀有度、心情、顏色、帽子、姿勢）"); continue; }
+      for (const [cat, names] of Object.entries(gf[k])) {
+        if (!GIFT_CATS.includes(cat)) { E(`${w}.gift.${k}.${cat}`, `欄位只能是 ${GIFT_CATS.join("、")}`); continue; }
+        (Array.isArray(names) ? names : []).forEach(n => { const ok = n === "失敗作" ? cat === "稀有度" : G.optOf(cat, n); if (!ok) E(`${w}.gift.${k}.${cat}`, `「${n}」不是圖鑑裡的選項`); });
+      }
+    }
+    if (!Object.keys(gf.likes || {}).length) E(`${w}.gift.likes`, "至少有壹個喜好");
+    list(`${w}.gift.love`, gf.love, 2, g.id); list(`${w}.gift.ok`, gf.ok, 2, g.id); list(`${w}.gift.off`, gf.off, 2, g.id); list(`${w}.gift.first`, gf.first, 1, g.id);
+  };
   for (const g of givers) {
     const w = `content/givers/${g.__file || g.id}`;
     if (!g.id || !ids.has(g.id)) E(w, `id「${g.id}」不在帳本 taskGivers.list`);
@@ -64,6 +93,7 @@ function checkGivers({ givers = [], bad = [], ledger = null } = {}) {
     list(`${w}.chat.named`, c.named, 3, g.id);
     if (!isObj(c.yesterday)) E(`${w}.chat.yesterday`, "要有 yesterday：task、visit、gift");
     else for (const k of ["task", "visit", "gift"]) list(`${w}.chat.yesterday.${k}`, c.yesterday[k], 1, g.id);
+    extra(g, w);
   }
   for (const id of ids) if (givers.length && !seen.has(id)) E("content/givers", `帳本有交代人「${id}」，但沒有 ${id}.json`);
   return { errors };
