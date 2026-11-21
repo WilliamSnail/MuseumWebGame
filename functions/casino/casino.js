@@ -28,6 +28,7 @@ import { casPoolDay, casPoolEnsure, casPoolTake, casPoolView, casNetWorth } from
 import { casCultureFund, casCultureGift, casGiftWho, casBuy, casEventPacks, casExchange, casHang, casHouseFix, casHouseLines, casLegacyClaim, casLegacyPeek, casOpenPacks, casPacksLeft, casRelief, casBorrow, casRepay, casRepayPart, casLoanSplit, casLoanToHouse, casLoanTakeNotes, casWorkStart, casWorkCheer, casWorkEnd, casWorkView, casMustWork, casWorkMeet, casWorkPublic, casSignWeekChips, casTaskChips, casSetTitle, casStepDeal, casStepHit, casStepStand, casWalletFix, casWalletView, casWkClaim, casWkDefFor } from "../shared/casino/wallet.js";
 import { CAS_LIVE, CAS_TEXT } from "../shared/casino/text.js";
 import { casWkSync, casWkView } from "../shared/casino/week.js";
+import { casPassView } from "../shared/casino/pass_view.js";
 import { titlePublish } from "../shared/core/titles.js";
 import { casCellarFind } from "../shared/casino/find.js";
 import { casBookDiff, casBookGap, casBookOpening, casBookOpeningNext, casBookSnap } from "../shared/casino/book.js";
@@ -483,6 +484,11 @@ export const casino = onCall(async req => {
       const house = JSON.parse(JSON.stringify(h || {})); // 複本
       if (h) { house.reviews = []; casNpcLive(house, day, t, sec, NPC_LIST, counters); } // 今天到了的幾站（byNpc）結到現在；不寫回去
       return { ok: true, card: npcCardView(id, { day, nowMs: t, secret: sec, list: NPC_LIST, counters, house }) };
+    }
+    // 館友證的「賭場」頁（11-21）：成就、換到的小獎、本週收藏、財產的摘要。只讀：不建錢包、不寫任何東西（沒進過賭場＝全空）；欄位寫在 shared/casino/pass_view.js
+    case "pass": {
+      const ws = await walletRef(me.uid).get(), day = taipeiDay(now()), w = casWalletFix(parse(ws), day);
+      return Object.assign({ ok: true, entered: ws.exists }, casPassView(w, wkDefOf(w)));
     }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。
