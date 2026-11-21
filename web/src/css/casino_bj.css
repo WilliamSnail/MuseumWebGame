@@ -245,3 +245,17 @@
   .hd-seat.compact .hd-nm b { font-size: .6875rem; }
   .hd-seat.compact .bj-who small { font-size: .625rem; }
 }
+/* 11-22 qa：蓋牌看得出來（灰＋「蓋」）、還在打的有小牌背；手機再省 32px（牌略小、行距縮） */
+.hd-fold { display: inline-block; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: .6875rem; font-weight: 800; color: #F3EEDC; background: rgba(0, 0, 0, .55); }
+.hd-mini { display: inline-flex; gap: 2px; }
+.hd-mini i { display: block; width: 11px; height: 15px; border-radius: 2px; background: repeating-linear-gradient(45deg, #7B2D2D 0 3px, #A33F3F 3px 6px); box-shadow: 0 0 0 1px #FFF3CF; }
+.hd-seat.fold .hd-nm b, .hd-seat.fold .bj-who small { text-decoration: none; }
+@media (max-width: 760px) {
+  .cas-body:has(.hd-table) > .cas-live-fold, .cas-body:has(.hd-table) .bj-how { display: none; } /* 打牌時：實況和怎麼玩先收起來（整桌要壹屏放得下；離桌就回來） */
+  .hd-head { min-height: 0; line-height: 1.2; margin: 0; }
+  .hd-mid { gap: 2px; }
+  .hd-pot { margin: 0; padding: 2px 10px; font-size: .875rem; }
+  .hd-seat.me { padding-top: 2px; padding-bottom: 2px; gap: 2px; }
+  .hd-acts.bj-sticky { padding-top: 4px; padding-bottom: 2px; }
+  .hd-acts .bj-acts .btn { min-height: 40px; }
+}
