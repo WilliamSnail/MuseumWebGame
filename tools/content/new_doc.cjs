@@ -11,7 +11,7 @@
 //     "decision": { "title": "活動開跑通知", "who": "翊文", "why": ["原話"], "body": "## 決定\n\n1. …" }   可以不寫
 //   }
 const fs = require("fs"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 
 const ROOT = path.join(__dirname, "..", "..");
 const TYPES = ["新功能", "修正", "平衡", "內容", "文件", "伺服器"];

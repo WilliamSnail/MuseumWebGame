@@ -111,6 +111,7 @@ const STEPS = [
   ["營業稅、娛樂稅（NPC、散客的店裡花費和門票，內含進政府帳、牌桌不課、守恆，決定 0111）", ["test/npc/npc_tax.test.cjs"]],
   ["股票證交稅 0.3%（台股、館內股；美股不收）、平均成本、持股明細欄位（規劃 2.8f 補）", ["test/stock/casino_stock_tax.test.cjs"]],
   ["賭場的實況和斗內（開播、搶不走、到期和離線算下播、斗內金額範圍和守恆、不能斗自己、不夠錢、每日上限、收款上限、換日、壞資料、實況主沒有錢包、資料庫規則，決定 0053）", ["test/casino/casino_live.test.cjs"]],
+  ["館友證的賭場摘要（成就、財產、換小獎、本週收藏；只讀、空錢包全空、欄位固定，11-21）", ["test/casino/pass_view.test.cjs"]],
   ["Hamachi 賭場的每週收藏（換週歸零、過期不懲罰、重複領不行、條件邊界、壞資料、舊錢包、同桌和單人都算、只由伺服器算，決定 0042）", ["test/casino/casino_week.test.cjs"]],
   ["稱號到處看得到（公開哪一個、讀回來檢查、館友名單、導覽圖、每週榜單、資料庫規則只放寬 titles，決定 0050）", ["test/game/titles.test.cjs"]],
   ["Hamachi 賭場的連勝連敗（連贏回心情、連輸扣理智、平手不算、歸零、每天上限、換日、舊錢包、理智最低留 1、自由模式、重複送同一局，決定 0049）", ["test/casino/casino_streak.test.cjs"]],
@@ -189,7 +190,7 @@ const STEPS = [
 // 每項本來就是自己的 Node 程式；會寫檔的（tools.test）都用自己的暫存資料夾、伺服器用隨機 port，同時跑不會打架。
 // 結果還是照上面的順序印。TEST_JOBS=1 ＝ 照舊壹項壹項跑（懷疑同時跑出問題時用）。--slow：最後列出最慢的 10 項。
 const os = require("os");
-const { spawn } = require("child_process");
+const { spawn } = require("../tools/dev/child.cjs");
 const JOBS = Math.max(1, Number(process.env.TEST_JOBS) || Math.max(2, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1));
 const t0 = Date.now();
 const results = new Array(STEPS.length);

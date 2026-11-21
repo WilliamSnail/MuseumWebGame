@@ -15,7 +15,7 @@
 //   --allow-no-market／--allow-no-meme   今天真的沒有合適的世界股市新聞、政治梗：加這個放行，並在 PR 說明寫原因
 //   --fix                               名單、館外地圖的打包沒跟上時，直接幫你打包（要 git add；ship 會 add -A）
 const fs = require("fs"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const { asList, isObj, collectClues, isMainBook, hasDayLine, hasPlaceholder, CONTENT_PLACEHOLDER } = require("./day_lib.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 

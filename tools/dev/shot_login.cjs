@@ -7,7 +7,7 @@
 //   --after "JS 片段"：進完房間、點完頁籤之後再跑壹段（例如塞假資料再重畫；可用 await、sleep）
 //   --query "&mood=good"：網址後面多帶的參數（例如房間效果的 ?mood=good／mid／bad，開發才有用）
 //   --mode 自由模式（預設；賭場、銀行、大廳都能看）或 新參觀者（要有挑戰存檔，用 qa_seed_save 放）
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("./child.cjs");
 const path = require("path"), os = require("os");
 const a = process.argv.slice(2), v = (k, d) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : d; };
 const base = v("--url", "http://localhost:5393"), user = v("--user", null), room = v("--room", "賭場"), tab = v("--tab", ""), mode = v("--mode", "自由模式");

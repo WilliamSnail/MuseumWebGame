@@ -8,7 +8,7 @@
 //   npm run econ:status -- --yes             跑壹次，印檢查結果
 //   npm run econ:status -- --yes --keep 檔案  把 log 另外存起來（預設存在暫存資料夾）
 //   node tools/check/econ_status.cjs --file 檔案.txt  不連網路，只對已經存好的 log 做檢查（測試用）
-const fs = require("fs"), os = require("os"), path = require("path"), { spawnSync } = require("child_process");
+const fs = require("fs"), os = require("os"), path = require("path"), { spawnSync } = require("../dev/child.cjs");
 
 // 從 wf_run 的輸出裡留下 ECON_HEX 那幾行（其他行不要），回傳文字；沒有就丟錯
 function pickEcon(text) {

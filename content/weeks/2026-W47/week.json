@@ -13,9 +13,26 @@
     "週日會知道，記號停在哪裡。"
   ],
   "lines": [
-    { "id": "w47-count", "name": "牆上的正字", "kind": "week" },
-    { "id": "w47-gazette", "name": "寄到的公報", "kind": "week" },
-    { "id": "w47-casino", "name": "賭場的記牌本", "kind": "week" }
+    {
+      "id": "w47-count",
+      "name": "牆上的正字",
+      "kind": "week"
+    },
+    {
+      "id": "w47-gazette",
+      "name": "寄到的公報",
+      "kind": "week"
+    },
+    {
+      "id": "w47-casino",
+      "name": "賭場的記牌本",
+      "kind": "week"
+    },
+    {
+      "id": "main-s1",
+      "name": "第壹季　帳對不上",
+      "kind": "main"
+    }
   ],
   "anomaly": {
     "title": "小門後面的牆",
@@ -25,57 +42,184 @@
       "帶 3 隻佩佩下去，就能走進去數數看。"
     ],
     "room": {
-      "id": "tally", "floor": 1, "line": "w47-count",
-      "title": "畫滿正字的牆", "hint": "去 B1 小門後面看看那面牆",
+      "id": "tally",
+      "floor": 1,
+      "line": "w47-count",
+      "title": "畫滿正字的牆",
+      "hint": "去 B1 小門後面看看那面牆",
       "intro": "門縫裡的牆很長，壹直延伸到燈照不到的地方。每壹畫都很小、很整齊，像是量過的。",
-      "lines": ["牆上的正字壹組壹組排好，每組都用粉筆圈起來。", "你的影子落在牆上，剛好蓋住最後壹組。"],
-      "mood": null, "color": "黃",
-      "choices": [
-        { "label": "從第壹組開始數", "check": { "type": "skill", "skill": "偵查", "mod": 10 },
-          "success": { "text": "你壹畫壹畫數過去，數到最後，總數比你手上的目錄多壹畫。", "insp": 3 },
-          "fail": { "text": "你數到壹半，粉筆灰飄下來，壹時忘了數到哪。", "san": "1D2" } },
-        { "label": "用手電筒照牆的盡頭", "check": { "type": "san", "spec": "0/1D3" },
-          "success": { "text": "光照到盡頭，牆還在往前。你把手電筒收好，先把數到的寫下來。", "insp": 3 },
-          "fail": { "text": "光裡有壹個影子在數，你看不清是誰的。", "san": "1D2" } },
-        { "label": "先在門口登記壹下", "check": { "type": "none" },
-          "success": { "text": "你寫下「已看過」。門縫比剛才寬了壹點。" } }
+      "lines": [
+        "牆上的正字壹組壹組排好，每組都用粉筆圈起來。",
+        "你的影子落在牆上，剛好蓋住最後壹組。"
       ],
-      "reward": { "insp": 3 }
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "從第壹組開始數",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 10
+          },
+          "success": {
+            "text": "你壹畫壹畫數過去，數到最後，總數比你手上的目錄多壹畫。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "你數到壹半，粉筆灰飄下來，壹時忘了數到哪。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "用手電筒照牆的盡頭",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "光照到盡頭，牆還在往前。你把手電筒收好，先把數到的寫下來。",
+            "insp": 3
+          },
+          "fail": {
+            "text": "光裡有壹個影子在數，你看不清是誰的。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "先在門口登記壹下",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你寫下「已看過」。門縫比剛才寬了壹點。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 3
+      }
     }
   },
   "weekly": [
-    { "id": "w1", "kind": "spot", "room": "tally", "words": "警衛說，數壹遍就好，不要數第三遍。", "reward": { "insp": 6 } },
-    { "id": "w2", "kind": "spot", "room": "gazette", "reward": { "items": ["book:偵查"] } },
-    { "id": "w3", "kind": "readWeek", "n": 6, "reward": { "insp": 8 } },
-    { "id": "w4", "kind": "dailyAll", "n": 3, "reward": { "mood": 10 } },
-    { "id": "w5", "kind": "ending", "reward": { "insp": 8 } }
+    {
+      "id": "w1",
+      "kind": "spot",
+      "room": "tally",
+      "words": "警衛說，數壹遍就好，不要數第三遍。",
+      "reward": {
+        "insp": 6
+      }
+    },
+    {
+      "id": "w2",
+      "kind": "spot",
+      "room": "gazette",
+      "reward": {
+        "items": [
+          "book:偵查"
+        ]
+      }
+    },
+    {
+      "id": "w3",
+      "kind": "readWeek",
+      "n": 6,
+      "reward": {
+        "insp": 8
+      }
+    },
+    {
+      "id": "w4",
+      "kind": "dailyAll",
+      "n": 3,
+      "reward": {
+        "mood": 10
+      }
+    },
+    {
+      "id": "w5",
+      "kind": "ending",
+      "reward": {
+        "insp": 8
+      }
+    }
   ],
-  "weeklyBonus": { "insp": 10, "items": ["mat:金線"] },
+  "weeklyBonus": {
+    "insp": 10,
+    "items": [
+      "mat:金線"
+    ]
+  },
   "events": [
-    { "id": "tally-night", "kind": "coopBoost", "date": "2026-11-18", "from": "20:00", "to": "22:00",
+    {
+      "id": "tally-night",
+      "kind": "coopBoost",
+      "date": "2026-11-18",
+      "from": "20:00",
+      "to": "22:00",
       "title": "兩個人壹起數",
-      "words": "警衛說壹個人數會差壹點，找館友壹起下去，兩邊對壹對，帳比較容易對上。" },
-    { "id": "gazette-trial", "kind": "trialBoost", "date": "2026-11-21", "from": "20:00", "to": "22:00",
+      "words": "警衛說壹個人數會差壹點，找館友壹起下去，兩邊對壹對，帳比較容易對上。"
+    },
+    {
+      "id": "gazette-trial",
+      "kind": "trialBoost",
+      "date": "2026-11-21",
+      "from": "20:00",
+      "to": "22:00",
       "title": "公報問答試煉夜",
-      "words": "展品們在試煉房間辦了壹場問答，壹個人闖或找館友壹起闖都行，答得好的收穫多壹點。" }
+      "words": "展品們在試煉房間辦了壹場問答，壹個人闖或找館友壹起闖都行，答得好的收穫多壹點。"
+    }
   ],
   "casino": {
     "line": "w47-casino",
     "title": "賭場的記牌本",
     "intro": "荷官在牌桌邊放了壹本記牌本，每打完壹手就畫壹筆。畫到第八筆，本子上總會多出壹筆。",
     "items": [
-      { "id": "tallybook", "name": "記牌本", "desc": "荷官每手畫壹筆的小本子。畫成正字的樣子，字很小、很整齊。",
-        "when": { "type": "hands", "n": 8 } },
-      { "id": "chalk", "name": "壹截粉筆", "desc": "放在記牌本旁邊，短了壹小截。荷官說他沒用過。",
-        "when": { "type": "wins", "n": 3 } },
-      { "id": "pack", "name": "沒署名的禮包", "desc": "禮包的卡片寫著「請數壹數」，署名欄是空的。",
-        "when": { "type": "packs", "n": 2 } },
-      { "id": "tea", "name": "兩杯麥茶", "desc": "桌上放著兩杯冰涼麥茶，荷官只點了壹杯。",
-        "when": { "type": "meal", "meal": "tea", "n": 1 } }
+      {
+        "id": "tallybook",
+        "name": "記牌本",
+        "desc": "荷官每手畫壹筆的小本子。畫成正字的樣子，字很小、很整齊。",
+        "when": {
+          "type": "hands",
+          "n": 8
+        }
+      },
+      {
+        "id": "chalk",
+        "name": "壹截粉筆",
+        "desc": "放在記牌本旁邊，短了壹小截。荷官說他沒用過。",
+        "when": {
+          "type": "wins",
+          "n": 3
+        }
+      },
+      {
+        "id": "pack",
+        "name": "沒署名的禮包",
+        "desc": "禮包的卡片寫著「請數壹數」，署名欄是空的。",
+        "when": {
+          "type": "packs",
+          "n": 2
+        }
+      },
+      {
+        "id": "tea",
+        "name": "兩杯麥茶",
+        "desc": "桌上放著兩杯冰涼麥茶，荷官只點了壹杯。",
+        "when": {
+          "type": "meal",
+          "meal": "tea",
+          "n": 1
+        }
+      }
     ],
     "reward": {
       "title": "記牌本常客",
-      "souvenir": { "name": "多壹畫的記牌本", "desc": "賭場送的紀念。每數八畫，就多壹畫。" },
+      "souvenir": {
+        "name": "多壹畫的記牌本",
+        "desc": "賭場送的紀念。每數八畫，就多壹畫。"
+      },
       "story": {
         "title": "荷官的記牌本",
         "pages": [
@@ -86,10 +230,27 @@
       }
     }
   },
-  "npc": { "store": "job", "date": "2026-11-20", "name": "清點日的委託櫃台" },
+  "npc": {
+    "store": "job",
+    "date": "2026-11-20",
+    "name": "清點日的委託櫃台"
+  },
   "fest": [
-    { "store": "food", "date": "2026-11-19", "name": "廁所開動日" },
-    { "store": "bj", "date": "2026-11-21", "name": "記牌夜" }
+    {
+      "store": "food",
+      "date": "2026-11-19",
+      "name": "廁所開動日"
+    },
+    {
+      "store": "bj",
+      "date": "2026-11-21",
+      "name": "記牌夜"
+    }
   ],
-  "ending": { "need": { "read": 6 } }
+  "ending": {
+    "need": {
+      "read": 6
+    }
+  },
+  "answer": "牆上多出來的那壹畫，高度跟站著數的人壹樣高；記號停在往地下貳樓的樓梯口，樓梯第壹階放著壹塊溫的空白名牌。"
 }

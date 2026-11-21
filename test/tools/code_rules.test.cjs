@@ -91,4 +91,17 @@ const names = Object.keys;
   assert.ok(bad.some(b => b.startsWith("shared/new_thing.js")), "shared/ 第一層的 .js 要被擋");
   assert.ok(!bad.some(b => b.startsWith("shared/core/")) && !bad.some(b => b.startsWith("shared/casino/")), "子資料夾裡的不擋");
 }
+{ // 7. 開外部程式要走 tools/dev/child.cjs
+  const cpn = "child" + "_process"; // 拆開寫，這個測試檔自己才不會被第 7 項抓到
+  const src = { "tools/a.cjs": `const { spawnSync } = require("${cpn}");`, "test/b.test.cjs": `const cp = require("node:${cpn}");`, "tools/dev/child.cjs": `const cp = require("${cpn}");`, "tools/c.cjs": 'const { spawnSync } = require("../dev/child.cjs");', "web/src/d.js": `import x from "${cpn}";` };
+  const bad = R.checkChild(Object.keys(src), f => src[f]);
+  assert.strictEqual(bad.length, 2, bad.join(" | "));
+  assert.ok(bad[0].startsWith("tools/a.cjs:1") && bad[1].startsWith("test/b.test.cjs:1"));
+  const C = require("../../tools/dev/child.cjs");
+  const r = C.spawnSync(process.execPath, ["-e", "process.stdout.write('ok')"], { encoding: "utf8" });
+  assert.strictEqual(r.stdout, "ok", "helper 要跟 child_process 壹樣能用");
+  assert.strictEqual(C.execSync(`"${process.execPath}" -e "process.stdout.write('hi')"`, { encoding: "utf8" }), "hi");
+  assert.strictEqual(C.hide({ windowsHide: false }).windowsHide, false, "呼叫的人可以自己蓋掉");
+  assert.strictEqual(C.hide().windowsHide, true);
+}
 console.log("程式的規矩的測試都過了");

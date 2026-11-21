@@ -7,7 +7,7 @@
 //
 // 網址 ?user=小明 就是登入小明；開第二個分頁 ?user=小華 就是兩個人。
 const fs = require("fs"), os = require("os"), path = require("path"), http = require("http");
-const { spawn, spawnSync } = require("child_process");
+const { spawn, spawnSync } = require("./child.cjs");
 
 const ROOT = path.join(__dirname, "..", "..");
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i >= 0 ? process.argv[i + 1] : d; };
