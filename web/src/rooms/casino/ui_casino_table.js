@@ -20,6 +20,7 @@ import { overlay } from "../../panels/ui_board.js";
 import { ambHeat, mountMood } from "../../fx/ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "../../panels/ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
+import { BJ_PACE, bjPause } from "./ui_casino_felt.js";
 import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
 import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { CAS_WK } from "./ui_casino_week.js";
@@ -99,7 +100,8 @@ function onView(v, fromWatch) {
   if (!s) return;
   if (inviteClose && v.seats && v.seats.length > inviteBase) { const c = inviteClose; inviteClose = null; c(); }
   if (s.view && v.seq < s.view.seq && v.round <= s.view.round) return;
-  if (typeof v.chips === "number") { s.chips = v.chips; setChips(v.chips); }
+  const prev0 = s.view, toResult = !!(prev0 && prev0.phase !== "result" && v.phase === "result" && v.dealer && v.dealer.cards.length), toPlay = !!(prev0 && prev0.phase !== "play" && v.phase === "play");
+  if (typeof v.chips === "number") { if (toResult) s.pendChips = v.chips; else { s.chips = v.chips; setChips(v.chips); } } // 結果要演完才換籌碼（翊文 11-21：「每壹個步驟太快了」）
   const prev = s.view, me0 = v.seats && v.seats.find(x => x.you), pme = prev && prev.seats && prev.seats.find(x => x.you);
   if (prev && v.phase === "play" && prev.phase !== "play") casSfx("deal"); // 下注時間到、開始發牌
   else if (prev && v.phase === "play" && me0 && pme && me0.cards.length > pme.cards.length) casSfx("hit"); // 我要了壹張
@@ -108,8 +110,34 @@ function onView(v, fromWatch) {
   if (me0 && v.phase === "play" && v.turn === me0.uid && prev && prev.turn !== v.turn) casSfx("turn"); // 輪到我
   s.view = v;
   wkNotes(s, v);
-  if (v.phase === "result" && s.noted !== v.round + ":" + v.pid) { s.noted = v.round + ":" + v.pid; resultNotes(v); }
+  if (v.phase === "result" && s.noted !== v.round + ":" + v.pid) { s.noted = v.round + ":" + v.pid; if (toResult) s.afterStage = () => resultNotes(v); else resultNotes(v); }
   draw();
+  if (toResult) stageResult(s, prev0);
+  else if (toPlay) stageDeal(s, v);
+}
+// 發牌壹張壹張（你們各壹張、莊家明牌、你們各第二張、莊家暗牌）；演的時候點壹下牌桌可以跳過
+async function stageDeal(s, v) {
+  const seats = v.seats.filter(x => x.cards.length), order = [];
+  seats.forEach(x => order.push(["s", x.uid, 0])); order.push(["d", null, 1]); seats.forEach(x => order.push(["s", x.uid, 1])); order.push(["d", null, 0]);
+  s.skip = false; s.stage = { deal: 0, order };
+  for (let k = 1; k <= order.length && T === s && s.stage; k++) { s.stage.deal = k; draw(); casSfx("deal"); await bjPause(s, () => T, BJ_PACE.deal); }
+  if (T !== s) return;
+  s.stage = null; s.skip = false; draw();
+}
+// 結果：停壹下，莊家先翻暗牌（停壹下），再壹張壹張補牌，最後才出每個人的輸贏和籌碼
+async function stageResult(s, prev) {
+  s.skip = false; s.stage = { rev: -1, prevDealer: prev.dealer.cards, out: true };
+  draw();
+  await bjPause(s, () => T, BJ_PACE.line);
+  const n = s.view.dealer.cards.length;
+  if (T === s && s.stage) { s.stage.rev = 2; casSfx("dealer"); draw(); await bjPause(s, () => T, BJ_PACE.hole); }
+  for (let k = 3; k <= n && T === s && s.stage; k++) { s.stage.rev = k; casSfx("dealer"); draw(); await bjPause(s, () => T, BJ_PACE.dealerCard); }
+  if (T === s) await bjPause(s, () => T, BJ_PACE.result);
+  if (T !== s) return;
+  s.stage = null; s.skip = false;
+  if (s.pendChips != null) { s.chips = s.pendChips; setChips(s.pendChips); s.pendChips = null; }
+  draw();
+  if (s.afterStage) { const f = s.afterStage; s.afterStage = null; f(); }
 }
 // 每週收藏（決定 0042）：伺服器在結算的那個交易裡發的，跟著給我的樣子一起來（wkNew.k 是第幾版，同一版只說一次）
 function wkNotes(s, v) {
@@ -203,16 +231,23 @@ function bubbles(s) {
   if (fresh) draw();
 }
 // ---------- 畫面 ----------
+// 莊家的牌：結果演出中先看到翻牌前的樣子，再翻暗牌、壹張壹張補；發牌中只看到發到的
+function dealerCards(s, v) {
+  const st = s.stage;
+  if (st && st.out) return st.rev < 2 ? st.prevDealer : v.dealer.cards.slice(0, Math.max(2, st.rev));
+  if (st && st.order) return v.dealer.cards.filter((c, i) => st.order.slice(0, st.deal).some(o => o[0] === "d" && o[2] === i));
+  return v.dealer.cards;
+}
 function seatCard(s, v) {
   const phaseBet = v.phase === "bet";
-  const state = s.gone ? "離桌了，這手當停牌" : s.out ? "" : s.st === "idle" ? (phaseBet ? "還沒下注" : "旁觀") : s.st === "bet" ? "下好注了" : s.st === "play" ? (v.turn === s.uid ? "要牌中……" : "等輪到") : s.st === "done" ? "爆了" : s.timedOut ? "時間到，停牌" : "停牌";
+  const state = s.gone ? "離桌了，這手當停牌" : s.out && !(T && T.stage && T.stage.out) ? "" : s.st === "idle" ? (phaseBet ? "還沒下注" : "旁觀") : s.st === "bet" ? "下好注了" : s.st === "play" ? (v.turn === s.uid ? "要牌中……" : "等輪到") : s.st === "done" ? "爆了" : s.timedOut ? "時間到，停牌" : "停牌";
   const kinds = { win: "贏了", blackjack: "黑傑克！", charlie: "五張過關！", push: "平手", lose: "輸了" };
   const bub = T && T.bub && T.bub[s.uid];
   return h("div", { class: "cas-seat tb" + (s.you ? " me" : "") + (s.npc ? " npc" : "") + (v.turn === s.uid ? " turn" : "") + (s.gone ? " gone" : "") },
     bub && bub.until > Date.now() ? h("p", { class: "cas-bub" + (s.npc ? " npc" : ""), role: "status" }, String(bub.text)) : null,
     h("div", { class: "cas-who" }, h("b", null, s.npc && String(s.uid).startsWith("n~") ? npcName(String(s.uid).slice(2), s.nick) : s.nick, s.you ? "（你）" : ""), s.npc ? h("i", { class: "cas-npc-tag", title: "館內的旅客，不是真人" }, "NPC") : null, titleTag(titleOfId(s.uid), "cas-ttl"), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
-    s.cards.length ? handEl(s.cards, { warped: s.warped, label: `${s.nick} 的牌` }) : null,
-    s.out ? h("p", { class: "cas-tb-out k-" + s.out.kind }, s.out.kind === "lose" && s.out.why === "bust" ? "爆牌" : kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
+    s.cards.length ? handEl(T && T.stage && T.stage.order ? s.cards.filter((c, i) => T.stage.order.slice(0, T.stage.deal).some(o => o[0] === "s" && o[1] === s.uid && o[2] === i)) : s.cards, { warped: s.warped, label: `${s.nick} 的牌` }) : null,
+    s.out && !(T && T.stage && T.stage.out) ? h("p", { class: "cas-tb-out k-" + s.out.kind }, s.out.kind === "lose" && s.out.why === "bust" ? "爆牌" : kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
 }
 function draw() {
   const s = T;
@@ -226,15 +261,15 @@ function draw() {
   const parts = [];
   parts.push(h("div", { class: "cas-tb-head" }, h("span", { class: "cas-count", role: "timer" }, countText(v)), h("small", null, `第 ${v.round + 1} 局・${v.seats.length}／${NUM.casino.seats} 人`)));
   parts.push(h("div", { class: "cas-felt" },
-    h("div", { class: "cas-seat dealer" }, h("div", { class: "cas-who" }, h("b", null, CAS_TEXT.dealer), v.dealer.total != null ? h("small", null, `點數 ${v.dealer.total}`) : v.dealer.up != null ? h("small", null, `明牌 ${v.dealer.up}`) : null),
-      v.dealer.cards.length ? handEl(v.dealer.cards, { label: "莊家的牌" }) : h("p", { class: "cas-empty" }, "下注，荷官就發牌。")),
+    h("div", { class: "cas-seat dealer" }, h("div", { class: "cas-who" }, h("b", null, CAS_TEXT.dealer), v.dealer.total != null && !(s.stage && s.stage.out) ? h("small", null, `點數 ${v.dealer.total}`) : v.dealer.up != null ? h("small", null, `明牌 ${v.dealer.up}`) : null),
+      dealerCards(s, v).length ? handEl(dealerCards(s, v), { label: "莊家的牌" }) : h("p", { class: "cas-empty" }, "下注，荷官就發牌。")),
     h("div", { class: "cas-tb-seats" }, v.seats.map(x => seatCard(x, v)), !v.full ? h("button", { type: "button", class: "cas-seat tb cas-empty-seat", onClick: () => openNpcInvite(s.pid), "aria-label": "空位：邀人一起玩" }, h("b", null, "＋ 邀人"), h("small", null, "館友或旅客")) : null)),
     inviteBtn(s, v));
-  if (v.phase === "result" && me && me.out) parts.push(h("p", { class: "cas-dealer-line" }, h("b", null, CAS_TEXT.dealer + "："), dealerLine(me.out)));
+  if (v.phase === "result" && me && me.out && !(s.stage && s.stage.out)) parts.push(h("p", { class: "cas-dealer-line" }, h("b", null, CAS_TEXT.dealer + "："), dealerLine(me.out)));
   // 我能做的事
   if (v.phase === "bet" && me && !me.bet) parts.push(betBox(s));
   else if (v.phase === "bet" && me) parts.push(h("p", { class: "cas-hint" }, "下好注了，等其他人（時間到就發牌）。"));
-  else if (v.phase === "play" && me && v.turn === me.uid && me.st === "play") parts.push(h("div", { class: "cas-acts bj-acts bj-sticky" }, h("p", { class: "cas-ask" }, CAS_TEXT.askHit),
+  else if (v.phase === "play" && me && v.turn === me.uid && me.st === "play" && !s.stage) parts.push(h("div", { class: "cas-acts bj-acts bj-sticky" }, h("p", { class: "cas-ask" }, CAS_TEXT.askHit),
     btn("要（加牌）", () => doAct("hit", { seq: v.seq }), "primary big", { disabled: s.busy ? true : null }), btn("不要", () => doAct("stand", { seq: v.seq }), "big", { disabled: s.busy ? true : null })));
   else if (v.phase === "play" && me && !me.bet) parts.push(h("p", { class: "cas-hint" }, "這局你沒下注，旁觀。下一局再下。"));
   if (me && me.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
@@ -246,6 +281,7 @@ function draw() {
   const side = h("div", { class: "cas-side" }, s.bankBox || null, ADDONS.bankAcctBox ? ADDONS.bankAcctBox() : null);
   s.m.surface.replaceChildren(h("div", { class: "cas-row" }, h("div", { class: "cas-body", dataset: { tab: "table" } }, parts), side), h("p", { class: "cas-foot" }, CAS_TEXT.series));
   const b = s.m.surface.querySelector(".cas-body"); if (b) b.scrollTop = keep;
+  const felt = s.m.surface.querySelector(".cas-felt"); if (felt) felt.addEventListener("click", () => { if (s.stage) s.skip = true; }); // 演出中點壹下跳過
   drawChat();
 }
 function dealerLine(o) {

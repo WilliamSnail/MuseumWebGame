@@ -24,7 +24,7 @@ import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
 import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { overlay } from "../../panels/ui_board.js";
 import { tipOn } from "../../core/ui_tip.js";
-import { bjSeat, bjTable, chipRow, gameIntro, gameNav, howTo } from "./ui_casino_felt.js";
+import { BJ_PACE, bjPause, bjSeat, bjTable, chipRow, gameIntro, gameNav, howTo, showInBody } from "./ui_casino_felt.js";
 import { noticeCard } from "../../panels/ui_party.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -67,7 +67,7 @@ let S = null; // { m, tab, w, round, house, say, busy, shown（莊家翻開幾�
 async function call(act, data) {
   const r = await NET.call("casino", Object.assign({ act }, data || {}));
   if (r && r.ok !== false) { if (act === "deal") actDone("casino"); else if (act === "buy") actDone("food"); } // 每日任務：打壹手、吃壹樣東西（決定 0146）
-  if (r && r.wallet && typeof r.wallet.chips === "number") setChips(r.wallet.chips); // 狀態列跟著變
+  if (r && r.wallet && typeof r.wallet.chips === "number") { if (S && S.hold) S.hold.next = r.wallet.chips; else setChips(r.wallet.chips); } // 狀態列跟著變（演出中先留著，演完才換：S.hold）
   return r;
 }
 function sync(r) {
@@ -161,7 +161,7 @@ function tabsIntro() {
 
 // ---------- 畫面 ----------
 function chipsPill() {
-  return h("span", { class: "cas-chips", title: CAS_TEXT.chipsNote }, icon("dice"), " 籌碼 ", h("b", null, casNum(S.w ? S.w.chips : 0)));
+  return h("span", { class: "cas-chips", title: CAS_TEXT.chipsNote }, icon("dice"), " 籌碼 ", h("b", null, casNum(S.hold ? S.hold.chips : S.w ? S.w.chips : 0)));
 }
 function draw() {
   if (!S || !S.m.layer.isConnected) return;
@@ -347,17 +347,20 @@ function houseLine() {
 function bjPane() {
   const r = S.round, w = S.w;
   const playing = r && r.state === "playing";
-  const dealerCards = r ? (S.shown == null ? r.dealer.cards : r.dealer.cards.slice(0, Math.max(S.shown, 2)).map((c, i) => (S.shown === 0 && i === 0 ? -1 : c))) : [];
+  const ds = S.dealStep, hideLast = !!S.hideLast; // ds：發牌演到第幾張（0～4，沒在演是 null）；hideLast：你要的那張牌先不翻
+  const dealerCards = r ? (ds != null ? (ds >= 4 ? r.dealer.cards : ds >= 2 ? [r.dealer.cards[1]] : []) : S.shown == null ? r.dealer.cards : r.dealer.cards.slice(0, Math.max(S.shown, 2)).map((c, i) => (S.shown === 0 && i === 0 ? -1 : c))) : [];
   const dealerTotal = r && r.state === "done" && S.shown == null ? r.dealer.total : null;
   const dealer = bjSeat("dealer", CAS_TEXT.dealer, r ? (dealerTotal != null ? `點數 ${dealerTotal}` : playing || S.shown != null ? `明牌 ${r.dealer.up}` : "") : "", r ? handEl(dealerCards, { label: "莊家的牌" }) : h("p", { class: "bj-empty" }, "下注，荷官就發牌。"));
-  const you = r ? bjSeat("me", "你", `點數 ${r.player.total}${r.player.soft && r.player.total < 21 ? "（有 A）" : ""}・注 ${casNum(r.bet)}${r.bonusPct ? `・加成 +${r.bonusPct}%` : ""}`, handEl(r.player.cards, { warped: r.warped, label: "你的牌", fresh: S.fresh })) : null;
-  const banner = r && r.state === "done" && r.out ? resultCard(r) : null;
+  const pCards = r ? (ds != null ? r.player.cards.slice(0, (ds >= 1 ? 1 : 0) + (ds >= 3 ? 1 : 0)) : hideLast ? r.player.cards.slice(0, -1) : r.player.cards) : [];
+  const you = r && (pCards.length || ds == null) ? bjSeat("me", "你", ds != null || hideLast ? "" : `點數 ${r.player.total}${r.player.soft && r.player.total < 21 ? "（有 A）" : ""}・注 ${casNum(r.bet)}${r.bonusPct ? `・加成 +${r.bonusPct}%` : ""}`, handEl(pCards, { warped: r.warped, label: "你的牌", fresh: S.fresh })) : null;
+  const banner = r && r.state === "done" && r.out && S.shown == null && ds == null && !hideLast && !S.finishing ? resultCard(r) : null;
   const felt = bjTable({ bubble: S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner });
+  felt.addEventListener("click", () => { if (S && S.animating) S.skip = true; }); // 演出中點壹下跳過
   const parts = [houseLine(), felt];
-  if (playing && S.shown == null) {
+  if (playing && S.shown == null && ds == null && !hideLast) {
     parts.push(h("div", { class: "bj-acts" }, btn("要牌", () => move("hit"), "primary big", { disabled: S.busy ? true : null }), btn("停牌", () => move("stand"), "big", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
-  } else if (!playing && S.shown == null) parts.push(betBar());
+  } else if (!playing && S.shown == null && ds == null) parts.push(betBar());
   // 荷官說過的話：桌上只看得到最新壹句，其他收在這裡
   if (S.say.length > 1) parts.push(h("details", { class: "bj-log" }, h("summary", null, "荷官說過的話"), h("div", { class: "cas-say", role: "log", "aria-label": "荷官的話" }, S.say.map((l, i) => h("p", { class: i === S.say.length - 1 ? "last" : "" }, i === S.say.length - 1 ? h("b", null, CAS_TEXT.dealer + "：") : null, l)))));
   parts.push(howTo([`規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。`, `連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`]));
@@ -430,33 +433,53 @@ function celebrateWk() {
   for (const it of items) { note(`收藏品「${it.name}」到手了！到「大禮包」頁籤的「本週收藏」看。`, "good"); snd("unlock"); }
   if (done) { note("這週的賭場收藏集滿了！到「大禮包」頁籤的「本週收藏」領週章、讀集滿的故事。", "good"); snd("unlock"); }
 }
+const pace = ms => bjPause(S, () => S, ms);
+const hold = () => { if (S && S.w) S.hold = { chips: S.w.chips, next: null }; }; // 演出前先記著現在的籌碼，演完才換成新的
+const release = () => { const hd = S && S.hold; if (!hd) return; S.hold = null; if (hd.next != null) setChips(hd.next); };
+const animStart = () => { S.animating = true; S.skip = false; };
+const animEnd = () => { if (S) { S.animating = false; S.skip = false; S.finishing = false; } };
 async function deal(text) {
-  S.shown = null; S.fresh = null;
+  S.shown = null; S.fresh = null; S.dealStep = 0; hold();
+  const s = S;
   await act("deal", { text }, async r => {
     const v = r.round;
+    animStart();
+    for (let k = 1; k <= 4 && S === s; k++) { S.dealStep = k; draw(); casSfx("deal"); await pace(BJ_PACE.deal); } // 你、莊家明牌、你、莊家暗牌，壹張壹張
+    if (S !== s) return;
+    S.dealStep = null;
     say([CAS_TEXT.dealHole, fill(CAS_TEXT.dealUp, { card: casCardName(v.dealer.cards[1]) })]);
-    casSfx("bet"); casSfx("deal"); // 下注的籌碼聲＋發牌的三下
+    casSfx("bet");
     if (v.state === "done") await finish(v, r, { natural: true });
     else if (r.settle) { celebrate(r.settle.ach); streakNote(r.settle.streak); }
+    animEnd(); release();
   });
+  if (S === s) { S.dealStep = null; animEnd(); release(); draw(); showInBody(".bj-table .cas-result", 230); }
 }
 async function move(kind) {
   const r0 = S.round;
   if (!r0 || r0.state !== "playing") return;
+  hold();
+  const s = S;
   await act(kind, { seq: r0.seq }, async r => {
     const v = r.round;
+    animStart();
     if (kind === "hit") {
       const c = v.player.cards[v.player.cards.length - 1];
       S.fresh = v.player.cards.length - 1;
+      S.hideLast = true; draw(); casSfx("hit"); await pace(BJ_PACE.hit); S.hideLast = false; draw(); // 你要的那張單獨翻
       say([`您收到壹張明牌：${casCardName(c)}，目前總點數為 ${v.player.total}`]);
-      casSfx("hit");
+      if (v.state === "done") await pace(BJ_PACE.hit);
     } else if (kind === "stand") casSfx("stand");
+    if (S !== s) return;
     if (v.state === "done") await finish(v, r, { stood: kind === "stand" });
+    animEnd(); release();
   });
+  if (S === s) { S.hideLast = false; animEnd(); release(); draw(); showInBody(".bj-table .cas-result", 230); }
 }
 // 打完了：荷官照順序說話、翻牌（結果早就在伺服器算好，這裡只是演出來）
 async function finish(v, r, o) {
   const s = S, out = v.out, real = v.dealer.cards;
+  s.finishing = true; // 演完才出結果橫幅
   const steps = [];
   const total = n => casHand(real.slice(0, n)).total;
   const bust = out.why === "bust", charlie = out.kind === "charlie";
@@ -482,10 +505,13 @@ async function finish(v, r, o) {
     if (n != null) s.shown = n === 0 ? 0 : n;
     if (n != null && n >= 2) casSfx("dealer"); // 莊家翻牌、補牌，每壹張壹下
     draw();
-    await wait(n != null && n >= 3 ? 700 : 520);
+    await pace(n === 0 ? BJ_PACE.line : n === 2 ? BJ_PACE.hole : n != null && n >= 3 ? BJ_PACE.dealerCard : BJ_PACE.line); // 停牌後先翻暗牌（停壹下）再壹張壹張補
   }
   s.shown = null;
   if (S !== s) return;
+  await pace(BJ_PACE.result); // 最後才出結果橫幅和籌碼
+  if (S !== s) return;
+  s.finishing = false; draw();
   casSfx(casOutSfx(out)); // 贏、黑傑克／五張、平手、輸、爆牌各壹種
   if (r.ticket) say([CAS_TEXT.packWon]);
   if (r.settle) { say(r.settle.lines || []); celebrate(r.settle.ach); streakNote(r.settle.streak); }
