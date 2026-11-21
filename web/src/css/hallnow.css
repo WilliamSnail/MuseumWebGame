@@ -146,3 +146,7 @@
   .l2-pbar, .hn-bar { flex-wrap: wrap; }
   .hn-bar .hn-inv { flex: 1 1 auto; white-space: nowrap; min-width: max-content; }
 }
+
+/* 11-21 邀旅客壹起下地下：兩顆邀請鈕包在 hn-invs 裡，不改原本的排法（display: contents） */
+.hn-invs { display: contents; }
+.hn-inv-cellar { margin-top: 6px; }

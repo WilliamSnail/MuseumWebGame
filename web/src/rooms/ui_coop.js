@@ -945,6 +945,15 @@ async function openNew() {
     if (r && r.pid) openCoop(r.pid);
   } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
 }
+// 大廳的「邀旅客壹起下地下」（ui_hallnow.js）：已經在隊伍裡就接回去、沒有就開新的隊伍，進準備區（那裡的「旅客」那塊可以邀人）
+ADDONS.coopWithNpc = async () => {
+  if (!canPlay()) { note("要先用挑戰模式的參觀者進館。", "bad"); return; }
+  try {
+    const pid = NET.me ? await NET.read(`partyOf/${NET.me.id}`) : null;
+    if (S && S.pid) { /* 準備區已經開著 */ } else if (typeof pid === "string" && pid) openCoop(pid); else await openNew();
+    setTimeout(() => { const el = document.querySelector(".cx-npc"); if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" }); }, 600);
+  } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
+};
 // 試煉房間那邊的「邀館友壹起」（ui_shop.js）：開壹隊、選好那間試煉，進準備區
 export async function openCoopTrial(id) {
   if (!canPlay()) { note("要先用挑戰模式的參觀者進館。", "bad"); return; }
