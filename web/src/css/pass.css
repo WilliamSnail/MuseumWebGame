@@ -91,3 +91,59 @@
 /* 大廳右欄的小館友證：頭像是整隻佩佩，要塞進圓框 */
 .l2-av { overflow: hidden; }
 .l2-av > svg { width: 82%; height: 82%; border-radius: 50%; }
+
+/* ===== 館友證重新設計（11-21，翊文選方向 A）：左邊證件常駐、右邊冊子 5 個頁籤 ===== */
+.nb-frame.nb-pass { width: min(1100px, 100%); }
+.ps-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.ps-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
+.ps-side .ps-card { width: 100%; align-self: stretch; flex: none; }
+.ps-side .ps-card-main { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; }
+.ps-side .ps-photo { width: 72px; height: 72px; }
+.ps-side .ps-id h3 { font-size: 1.125rem; }
+.ps-side .ps-id dl { font-size: .875rem; }
+.ps-card-act { display: flex; justify-content: center; padding: 0 12px 10px; }
+.ps-side-more { display: flex; flex-direction: column; gap: 10px; }
+.ps-side-more > * { flex: none; }
+.ps-right { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+/* 頁籤：羊皮紙牌子（ui2/ui2-tabx-parchment，跟圖鑑室同壹種） */
+.nb-pass { --tabx-1: url(/ui2/ui2-tabx-parchment-1.webp); --tabx-2: url(/ui2/ui2-tabx-parchment-2.webp); --tabx-ink: #3A2410; --tabx-ink-on: #3A2410; }
+.nb-pass .nb-tabs { gap: 4px; flex-wrap: wrap; }
+.nb-pass .nb-tab { min-height: 44px; padding: 0 10px; border: 12px solid transparent; border-image: var(--tabx-1) 30 40 fill / 12px 20px stretch; border-radius: 0; background: none; box-shadow: none; transform: none; color: var(--tabx-ink); font-weight: 800; }
+.nb-pass .nb-tab.on { border-image-source: var(--tabx-2); box-shadow: none; color: var(--tabx-ink-on); }
+.nb-pass .nb-tab:not(.on):hover { filter: brightness(1.08); }
+/* 總覽：四塊摘要，點了翻到那壹頁 */
+.ps-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ps-tile { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 12px 14px; border-radius: 6px; cursor: pointer; font: inherit; color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #F1E6CB); border: 1px solid var(--gold-lo); }
+.ps-tile:hover, .ps-tile:focus-visible { box-shadow: 0 0 0 2px #E0B75A; }
+.ps-tile-t { width: 100%; display: flex; justify-content: space-between; align-items: baseline; font-family: var(--serif); letter-spacing: .1em; color: #6E5020; }
+.ps-go { font-size: .8125rem; font-weight: 400; letter-spacing: 0; color: #8A5A1C; }
+.ps-tile-n { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; overflow-wrap: anywhere; }
+.ps-tile small { color: var(--parch-sub); font-size: .8125rem; }
+.ps-narrow { display: none; }
+.ps-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.ps-chip { padding: 2px 10px; border-radius: 999px; font-size: .8125rem; background: rgba(217, 180, 92, .3); box-shadow: inset 0 0 0 1px rgba(156, 116, 40, .45); }
+.ps-chip.hung { background: rgba(217, 180, 92, .6); }
+/* 手機直拿：證件縮成壹條（頭像、名字、稱號、籌碼），紀錄和帳號放進「總覽」；頁籤 5 個壹排 */
+@media (max-width: 760px) {
+  .ps-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 6px; }
+  .ps-side { overflow: visible; }
+  .ps-side .ps-card-top, .ps-side .ps-card-foot, .ps-side-more { display: none; }
+  .ps-side .ps-card-main { grid-template-columns: 48px minmax(0, 1fr); padding: 8px 10px; gap: 8px; }
+  .ps-side .ps-photo { width: 48px; height: 48px; }
+  .ps-side .ps-id h3 { margin: 0 0 2px; font-size: 1rem; }
+  .ps-side .ps-id dl { font-size: .8125rem; grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 0 8px; }
+  .ps-side .ps-id dl dt:nth-of-type(n+3), .ps-side .ps-id dl dd:nth-of-type(n+3) { display: none; }
+  .ps-card-act { position: absolute; }
+  .ps-side .ps-card { position: relative; }
+  .ps-side .ps-card-act { top: 6px; right: 6px; padding: 0; }
+  .ps-side .ps-card-act .btn.ps-av-btn { min-height: 30px; height: 30px; min-width: 30px; width: 30px; padding: 0; }
+  .nb-pass .nb-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .nb-pass .nb-tab { min-height: 36px; min-width: 0; padding: 0 1px; border-width: 6px; border-image-width: 6px 10px; font-size: .75rem; letter-spacing: 0; white-space: nowrap; }
+  .ps-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .ps-tile { padding: 8px 10px; }
+  .ps-go, .ps-av-t { display: none; }
+  .ps-tile-n { font-size: 1.0625rem; }
+  .ps-side .ps-id h3 { padding-right: 44px; }
+  .ps-narrow { display: flex; flex-direction: column; gap: 10px; }
+  .ps-narrow > * { flex: none; }
+}

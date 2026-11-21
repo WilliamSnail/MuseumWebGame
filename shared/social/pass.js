@@ -19,7 +19,20 @@ import { storyState } from "../story/state.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";
 
 // 典藏冊的頁籤（第壹頁是館友證本身）
-export const PASS_TABS = [["card", "館友證"], ["visitor", "參觀者"], ["pepe", "佩佩"], ["books", "書和看懂的事"], ["souvenir", "紀念品"], ["deco", "裝飾"], ["ach", "成就"]];
+export const PASS_TABS = [["card", "總覽"], ["pepe", "佩佩與書"], ["casino", "賭場"], ["visitor", "參觀者"], ["deco", "裝飾"]]; // 11-21 重新設計：7 個收成 5 個（翊文選方向 A）；左邊的證件常駐
+// 館友證各頁籤、各區塊的說明牌（滑鼠移過去、手機長按；字用「壹」）。title 標題、what 這是什麼、how 怎麼拿到
+export const PASS_TIPS = {
+  card: { title: "總覽", what: "每壹頁的進度壹眼看完，點壹塊就翻到那壹頁。", how: ["左邊是你的館友證：頭像、稱號、籌碼、週章", "手機上紀錄和帳號放在這壹頁"] },
+  pepe: { title: "佩佩與書", what: "做過的佩佩、圖鑑的徽章、讀過的書和看懂的事。", how: ["在手作坊做佩佩，圖鑑就會收進來", "徽章在圖鑑室拿到", "書在圖書館讀"] },
+  casino: { title: "賭場", what: "你在 Hamachi 賭場的成就、本週收藏、財產（紀念品）和換小獎。", how: ["打牌、吃東西、開大禮包都可能拿到", "每塊的「前往」會帶你到賭場對應的頁"] },
+  visitor: { title: "參觀者", what: "現在這位參觀者的職業、技能、裝備和怪癖。", how: ["在館長室選職業、換人", "裝備用週章到兌換所換"] },
+  deco: { title: "裝飾", what: "限定的收藏：每日簽到和兌換所才拿得到的裝飾。", how: ["每日簽到會有機會拿到", "拿到的可以「拿去用」"] },
+  badge: { title: "徽章", what: "圖鑑室的徽章，做到壹件事就拿到壹個。", how: ["沒拿到的先顯示鎖頭", "到圖鑑室看每個怎麼拿"] },
+  ach: { title: "成就", what: "在賭場做到某些事拿到的成就，可以挑壹個當稱號。", how: ["稱號展廳、館友名單、榜單上看得到"] },
+  week: { title: "本週收藏", what: "這週賭場的收藏品和進度，集滿領週章、讀集滿的故事。", how: ["每週壹重算"] },
+  props: { title: "財產（紀念品）", what: "餐車買到的、以前帶來的紀念品。", how: ["可以掛在自己的展廳，來參觀的館友看得到", "最多掛幾件有上限"] },
+  swap: { title: "換小獎", what: "用籌碼換壹點點小東西（靈感、舊畫布、金箔）。", how: ["每樣每週有上限，週壹 05:00 重算"] },
+};
 
 // 玩了多久：「3 小時 20 分」「45 分」
 export function passPlayText(sec) {
