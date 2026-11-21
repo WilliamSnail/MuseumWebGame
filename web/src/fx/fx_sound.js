@@ -503,7 +503,7 @@ import { api, now, pick, rand } from "./fx_core.js";
     };
 
     // ---------- 會一直響的：環境音、心跳、耳鳴、不安的低鳴 ----------
-    const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null, dread: null };
+    const want = { amb: null, heart: null, tinnitus: false, unease: 0, mix: null, dread: null, night: null };
     let ambNow = null, heartStop = null, tinNow = null, droneNow = null;
     // 房間的整首曲子（songCycle 的鋼琴、大提琴）每個房間壹個小音量鈕：理智低的恐怖音樂放的時候壓低到 SONG_DREAD_DUCK
     // （11-17 翊文：「理智低的恐怖音樂放的時候 讓房間的鋼琴降低」）。恐怖音樂停了慢慢回到 1
@@ -553,7 +553,7 @@ import { api, now, pick, rand } from "./fx_core.js";
         if (!buf || hh.dead) return;
         const s = c.createBufferSource(); s.buffer = buf; s.loop = true;
         s.loopStart = 0.05; s.loopEnd = Math.max(0.1, buf.duration - 0.05);
-        s.connect(v); s.start(0, fromStart ? 0.05 : 0.05 + Math.random() * Math.max(0, buf.duration - 0.2)); hh.src = s;
+        s.connect(v); const o0 = fromStart ? 0.05 : 0.05 + Math.random() * Math.max(0, buf.duration - 0.2); s.start(0, o0); hh.src = s; hh.t0 = c.currentTime; hh.o = o0; hh.d = buf.duration; // t0、o、d：歌詞對時用（nightPos）
       });
       return hh;
     }
@@ -675,7 +675,7 @@ import { api, now, pick, rand } from "./fx_core.js";
         mel.gain.value = 0;
         const apply = () => {
           const t = c.currentTime, pick = state.tier || (state.event ? 'event' : state.crowd ? 'crowd' : state.night ? 'night' : 'normal'); // 11-20 翊文：深夜（台灣 23:30～05:00）大廳平常放 lobby-night；理智低、活動、人潮優先
-          mel.gain.setTargetAtTime(pick === 'synth' ? 1 : 0, t, 1.2);
+          mel.gain.setTargetAtTime(pick === 'synth' ? 1 : 0, t, 1.2); want.night = pick === 'night' ? song.night : null;
           if (pick !== 'synth' && !song[pick]) song[pick] = fileLoop(c, g, SONG_ID[pick], 0, true);
           for (const k of Object.keys(song)) if (song[k]) song[k].v.gain.setTargetAtTime(pick === k ? (k === 'night' ? 0.7 : 0.45) : 0, /* 11-21 翊文：深夜那首「音量再調高」：只拉高這首 */ t, k === pick && t < 2 ? 0.3 : 1.2);
         };
@@ -1275,7 +1275,7 @@ import { api, now, pick, rand } from "./fx_core.js";
       play,
       names: Object.keys(R),
       ambient(type) { want.amb = type || null; sync(); },
-      ambMix(m) { want.mix = m || null; if (ambNow && ambNow.mix && want.mix) ambNow.mix(want.mix); }, // 熱鬧程度（賭場的人聲和籌碼聲）；別的房間不理它
+      nightPos() { const hh = want.night, c = ctx(); if (!hh || !hh.src || !c || !isOn('amb')) return null; const L = hh.d - 0.1; return 0.05 + ((hh.o - 0.05 + c.currentTime - hh.t0) % L + L) % L; }, /* nightPos：深夜曲現在放到第幾秒（歌詞字幕用）；沒在放、靜音、還沒載好就是 null */ ambMix(m) { want.mix = m || null; if (ambNow && ambNow.mix && want.mix) ambNow.mix(want.mix); }, // 熱鬧程度（賭場的人聲和籌碼聲）；別的房間不理它
       heart(san) { want.heart = san != null && san > 0 && san <= 30 ? san : null; sync(); },
       tinnitus(on) { want.tinnitus = !!on; sync(); },
       dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; const toEdge = v === 'edge' && want.dread !== 'edge'; want.dread = v; sync(); if (toEdge && unlocked && !(api.settings && api.settings.muted)) { const c = ctx(); if (c) fileOnce(c, bus.heart, 'pulse-rise', 0.5); } }, // 剛掉到 15 以下：升高音壹次

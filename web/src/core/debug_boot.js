@@ -12,6 +12,7 @@ import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, note, s
 import { focusExhibit, openBook } from "../rooms/ui_screens1.js";
 import { pickJob } from "../rooms/ui_screens3.js";
 import { overlay } from "../panels/ui_board.js";
+import "./lyrics_tap.js"; // 歌詞對時工具（?lyrics-tap 加 #lobby，只在開發載入）
 import { TASK_ICON, ptsPanel, taskCard } from "../panels/ui_tasks.js";
 import { fightCard, fightOnRedraw, fightReplaySync, fightStage } from "../rooms/ui_fight.js";
 import { routeCard, routeStage } from "../rooms/ui_route.js";

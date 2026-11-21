@@ -83,6 +83,7 @@ import "../rooms/ui_hub.js"; // 大廳的總覽（11-10，決定 0061）：要�
 import "../panels/ui_today.js"; // 「今天」清單（11-10，整合的第 1 步）：簽到、劇情、任務、信箱、賭場剩幾次排在壹張，每項有「前往」
 import "../panels/ui_events.js"; // 限時活動（決定 0041）：大廳的一條、合作和試煉的標籤；規則在 shared/story/events.js
 import "../rooms/casino/ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
+import "../fx/ui_lyrics.js"; // 深夜大廳歌曲的字幕（11-21）
 import "../rooms/casino/ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
 import "../rooms/casino/ui_casino.js"; // Hamachi 賭場（決定 0040）：規則在 shared/casino*.js，伺服器在 functions/casino/casino.js
 import "./ui_orient.js"; // 手機直拿時請玩家轉橫、橫拿的版面在 css/landscape.css（決定 0043）
