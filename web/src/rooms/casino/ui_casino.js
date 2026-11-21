@@ -185,7 +185,7 @@ function draw() {
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   // 銀行放在右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）；窄的畫面照舊放在上面（css 的 order）
   m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, sideCol()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
-  box.scrollTop = keepY;
+  box.scrollTop = keepY; m.surface.scrollTop = 0; // 外框自己不該捲（11-21 翊文：往下滑後按不到上面的頁籤）；要捲的是 .cas-body
   const on = tabs.querySelector('.nb-tab.on'); if (on && window.innerWidth <= 760) { const l = on.offsetLeft - 8; if (tabs.scrollLeft > l || tabs.scrollLeft + tabs.clientWidth < on.offsetLeft + on.offsetWidth) tabs.scrollLeft = l; } // 手機頁籤壹排橫向滑：選中的捲到看得到（11-20）
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
   if (S.anchor) { const a = S.anchor; S.anchor = null; jump(a, false); } // 從舊的 tab 參數進來：捲到那壹塊
