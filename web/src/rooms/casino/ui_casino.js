@@ -115,7 +115,7 @@ export async function openCasino(o) {
   mountMood(m.layer.querySelector(".nb-frame"), "casino", { fx: ["chips", "neon", "dealer"] } /* 煙霧在介面後面，不走 fx */); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
   setAmbOver("casino", ambHeat); // 底下房間的環境樂換成賭場那首（關掉換回去）
-  S = { m, tab: want ? want[0] : "table", anchor: want ? want[1] : null, w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
+  S = { m, tab: want ? want[0] : "table", anchor: want ? want[1] : null, liveOpen: want && want[1] === "live" ? true : null, w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;
   draw();
   snd("flip");
@@ -170,7 +170,7 @@ function draw() {
   box.scrollTop = keepY;
   const on = tabs.querySelector('.nb-tab.on'); if (on && window.innerWidth <= 760) { const l = on.offsetLeft - 8; if (tabs.scrollLeft > l || tabs.scrollLeft + tabs.clientWidth < on.offsetLeft + on.offsetWidth) tabs.scrollLeft = l; } // 手機頁籤壹排橫向滑：選中的捲到看得到（11-20）
   const sb = box.querySelector(".cas-say"); if (sb) sb.scrollTop = sb.scrollHeight; // 荷官最新的話在最下面
-  if (S.anchor) { const a = S.anchor; S.anchor = null; jump(a); } // 從舊的 tab 參數進來：捲到那壹塊
+  if (S.anchor) { const a = S.anchor; S.anchor = null; jump(a, false); } // 從舊的 tab 參數進來：捲到那壹塊
 }
 const sec = (title, ...kids) => h("section", { class: "cas-sec" }, title ? h("h3", null, title) : null, ...kids);
 // 跟 Yuga Bot 借（決定 0064：平常就看得到，每筆有利息、幾天內要還）。規則在 shared/casino/wallet.js 的 casBorrow、casRepay，伺服器 act borrow、repay。
@@ -616,15 +616,17 @@ function goTab(id, anchor) {
   if (!S) return;
   const was = S.tab;
   S.tab = id; S.anchor = anchor || null;
+  if (anchor === "live") S.liveOpen = true; // 「去斗內」連結：手機也要看得到斗內按鈕
   if (id === "table") liveLoad();
   if (id === "gift") reportLoad();
   draw();
-  if (was === id && anchor) { S.anchor = null; jump(anchor); }
+  if (was === id && anchor) { S.anchor = null; jump(anchor, false); }
 }
 // 大禮包、我的：壹頁放好幾塊，上面壹排小標點了捲到那壹塊
-function jump(sec) {
-  const el = S && S.m.surface.querySelector(`[data-sec="${sec}"]`);
-  if (el) el.scrollIntoView({ block: "start", behavior: "smooth" });
+// 只捲內文那壹塊（.cas-body）：scrollIntoView 會連外層視窗壹起捲，手機的頁籤列會被推到標題列後面（11-21 qa-e 測 PR 907）。smooth：小標點的用滑的；從舊連結進來（第壹次畫）直接到位，不然後面那次重畫會把還沒滑到的位置蓋回 0
+function jump(sec, smooth = true) {
+  const el = S && S.m.surface.querySelector(`[data-sec="${sec}"]`), body = el && el.closest(".cas-body");
+  if (body) body.scrollTo({ top: body.scrollTop + el.getBoundingClientRect().top - body.getBoundingClientRect().top - 4, behavior: smooth ? "smooth" : "auto" });
 }
 const grp = (id, ...kids) => h("div", { class: "cas-grp", dataset: { sec: id } }, ...kids.flat().filter(Boolean));
 function subNav(items) {
