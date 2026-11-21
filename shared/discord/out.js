@@ -85,17 +85,30 @@ export function dcOutBody(text) {
 // list：館方公告（NOTICES）；day：台灣日期；areaOf、areas：分段（noticeArea、NOTICE_AREAS）。今天沒有公告回 ""（不發）
 export const DC_DIGEST_MAX = 1800; // Discord 壹則 2000 字，後面還要放連結
 export const DC_DIGEST_SITE = "https://pepe-museum.web.app";
+// 11-21 翊文：「把八點的 discord 公告做的精彩一點」→ 開頭壹句、「今天的重點」挑三則配壹句說明、其他照分段加圖示
+const DC_AREA_IC = { "股票與銀行": "📈", "NPC 與展廳": "🖼", "畫廊與拍賣": "🔨", "賭場": "🎲", "各廳新介面": "🪟", "地下與劇情": "🕯", "其他": "📌" };
+const DC_HOT = /多了|新的|換新|重新設計|有歌詞|可以|開放|上線/;
+const dcOneLine = n => { const sec = Array.isArray(n.sections) && n.sections[0] && Array.isArray(n.sections[0][1]) ? n.sections[0][1][0] : ""; const t = String(sec || "").split(/[。：]/)[0].trim(); return t.length > 42 ? t.slice(0, 41) + "…" : t; };
 export function dcDigestText(list, day, areaOf, areas) {
   const items = (list || []).filter(n => n && n.title && n.publish === day && n.cat !== "特展活動");
   if (!items.length) return "";
-  const head = `📰 今天的更新（${day.slice(5).replace("-", () => "/")}）`, tail = "完整內容在館內公佈欄。";
+  const md = day.slice(5).replace("-", () => "/"), clean = n => n.title.replace(/\s+/g, " ").trim();
+  const rank = n => (n.importance === "important" ? 0 : n.importance === "low" ? 2 : 1) - (DC_HOT.test(n.title) ? 0.5 : 0);
+  const hot = items.slice().sort((x, y) => rank(x) - rank(y)).slice(0, Math.min(3, items.length > 3 ? 3 : 1));
+  const head = `📰 **今天的館訊**（${md}）`, intro = `今天館裡改了 ${items.length} 件事。`, tail = "完整內容在館內公佈欄，進館點「公告」。";
+  const lines = [head, intro, ""];
+  let used = head.length + intro.length + tail.length + 8, shown = 0;
+  if (items.length > 3) {
+    lines.push("✨ **今天的重點**"); used += 12;
+    for (const n of hot) { const one = dcOneLine(n), l = `**${clean(n)}**${one ? "\n　" + one : ""}`; lines.push(l); used += l.length + 1; shown++; }
+    lines.push(""); used += 1;
+  }
+  const rest = items.filter(n => !(items.length > 3 && hot.includes(n)));
   const by = new Map(areas.map(a => [a, []]));
-  for (const n of items) { const a = areaOf(n); (by.get(a) || by.get("其他") || []).push(n.title.replace(/\s+/g, " ").trim()); }
-  const lines = [head];
-  let used = head.length + tail.length + 4, shown = 0;
+  for (const n of rest) { const a = areaOf(n); (by.get(a) || by.get("其他") || []).push(clean(n)); }
   for (const [a, ts] of by) { // 壹行壹行加，放不下就停（不會因為某壹段太長整段都不見）
     if (!ts.length) continue;
-    const h = `【${a}】`;
+    const h = `${DC_AREA_IC[a] || "📌"} 【${a}】`;
     if (used + h.length + 1 > DC_DIGEST_MAX) break;
     lines.push(h); used += h.length + 1;
     let full = false;
@@ -103,7 +116,7 @@ export function dcDigestText(list, day, areaOf, areas) {
     if (full) break;
   }
   if (shown < items.length) lines.push(`…還有 ${items.length - shown} 則`);
-  lines.push(tail);
+  lines.push("", tail);
   return lines.join("\n");
 }
 // 真的發出去的那則：彙整＋入館連結（跟 tools/content/discord_post.cjs 的公告壹樣的尾巴）。沒有公告回 ""
