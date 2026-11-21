@@ -6,6 +6,7 @@
 //  這個檔不 import ui_coop.js（不准繞圈）；要重畫準備區，由 ui_coop.js 把 draw 傳進來。
 // ================================================================
 import { NET } from "../core/net_firebase.js";
+import { travelerHeard } from "../panels/ui_traveler_talk.js";
 import { NUM } from "../../../shared/core/config.js";
 import { NPC_COOP_ROLE_TEXT } from "../../../shared/npc/coop.js";
 import { UI, btn, h, icon, note, setChips, snd } from "../core/ui_core.js";
@@ -54,6 +55,7 @@ async function invite(x, redraw) {
     const name = (r && r.name) || x.name;
     if (r && r.ok) {
       s.said = { name, line: r.line || "", ok: !!r.accepted };
+      travelerHeard(x.id, r.line, "cellar"); // 旅客說的話記進交談紀錄（11-21）
       s.who = (s.who || []).filter(w => w.id !== x.id); // 答應了＝在隊裡；拒絕了＝一陣子不能再問
       if (r.accepted) { snd("coin"); if (typeof r.chips === "number") setChips(r.chips); } else snd("error");
     } else { s.said = { name, line: (r && r.reason) || "邀不了。", ok: false, reason: true }; snd("error"); }

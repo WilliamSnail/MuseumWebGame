@@ -111,3 +111,16 @@
 .gv-acts .btn.gv-b { color: #3A2412; background: rgba(58, 36, 18, .06); box-shadow: inset 0 0 0 1px rgba(58, 36, 18, .45); }
 .gv-acts .btn.gv-b:disabled { opacity: .45; }
 .gv-log-list li { min-height: 0; height: auto; flex: none; }
+
+/* 交代人卡不要每位壹整列（翊文 11-21：「每一個NPC站一列太多了」）：寬螢幕並排；手機壓矮，頭像縮小、按鈕壹排 */
+.gv-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 6px; }
+.gv-note { padding: 6px 10px; gap: 8px; }
+.gv-note .tkc-av { flex: none; }
+.gv-talk { margin-top: 2px; gap: 4px; }
+.gv-acts .btn { min-height: 28px; padding: 0 10px; font-size: .875rem; }
+@media (max-width: 760px) {
+  .gv-strip { grid-template-columns: 1fr; gap: 4px; }
+  .gv-note .tkc-av { width: 36px; height: 36px; }
+  .gv-lv small { display: none; }
+  .gv-t b { font-size: .9375rem; }
+}
