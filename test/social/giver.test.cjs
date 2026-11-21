@@ -78,4 +78,12 @@ T("交談紀錄：同壹句不重複、壹次最多 10 句、每位最多 200 �
   assert.strictEqual(r.doc.g.hall[0][0], 324, "2026-11-21 是 2026-01-01 之後第 324 天");
   const bad = G.giverLogFix({ v: 1, g: { clerk: [[1, "ok:1"], ["x", "no"], [2, "ok:1"], [3, "A B"]], zzz: [[1, "q"]] } }); assert.deepStrictEqual(JSON.parse(JSON.stringify(bad.g.clerk)), [[1, "ok:1"]]); assert.ok(!bad.g.zzz);
 });
+T("旅客的交談本子：旅客 id（v-、c- 開頭）才收、每位最多 20 句丟最舊、最多 80 位、不影響交代人的本子；劇情角色 t- 不收", G => {
+  let r = G.giverLogAdd(null, "v-bai", ["v-bai:chat:1", "v-bai:chat:1", "pair:a-b:0"], D1); assert.strictEqual(r.added, 2); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.t["v-bai"].map(x => x[1]))), ["v-bai:chat:1", "pair:a-b:0"]); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.g)), {});
+  assert.strictEqual(G.giverLogAdd(r.doc, "t-yuga", ["a:1"], D1).added, 0, "劇情角色不收"); assert.strictEqual(G.giverLogAdd(r.doc, "V-BAI", ["a:1"], D1).added, 0); assert.strictEqual(G.giverLogAdd(r.doc, "bai", ["a:1"], D1).added, 0);
+  let d = null; for (let i = 0; i < 5; i++) d = G.giverLogAdd(d, "c-first", Array.from({ length: 10 }, (_, j) => "n:" + i + "-" + j), D1).doc;
+  assert.strictEqual(d.t["c-first"].length, 20); assert.strictEqual(d.t["c-first"][19][1], "n:4-9"); assert.ok(!d.t["c-first"].some(x => x[1] === "n:0-0"));
+  let e = null; for (let i = 0; i < 90; i++) e = G.giverLogAdd(e, "v-n" + i, ["s:1"], D1).doc; assert.ok(Object.keys(e.t).length <= 80, "最多 80 本"); assert.ok(e.t["v-n89"]);
+  const mixed = G.giverLogAdd(G.giverLogAdd(null, "clerk", ["x:1"], D1).doc, "v-bai", ["y:1"], D1).doc; assert.ok(mixed.g.clerk.length === 1 && mixed.t["v-bai"].length === 1);
+});
 console.log(fail ? `交代人互動：${fail} 項沒過` : `交代人互動：${pass} 項都過`); process.exit(fail ? 1 : 0);

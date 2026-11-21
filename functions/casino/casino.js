@@ -499,12 +499,12 @@ export const casino = onCall(async req => {
     case "sbInfo": return play(req, me, {}, ctx => shape(ctx, { info: { wheel: casWheelInfo(ctx.house, ctx.day), miscount: casMiscountInfo(ctx.house, ctx.day) } }));
     case "wheel": return play(req, me, {}, ctx => { const r = casWheelSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
     case "miscount": return play(req, me, {}, ctx => { const r = casMiscountSpin(ctx.w, ctx.house, ctx.day, d.bets); return r.ok ? shape(ctx, { spin: r }) : no(r); });
-    // 交代人互動（決定 0151）：d.op ＝ info（六位現在的樣子，不動東西）、tap 閒聊、visit 來訪、ask 接下臨時拜託、askDone 拜託做完、gift 送佩佩（d.item ＝ { kind, key }）；heard（d.ids ＝ 聽過的句子 id，最多 10 句）、log（讀交談紀錄）。規則在 shared/social/giver.js
+    // 交代人互動（決定 0151）：d.op ＝ info（六位現在的樣子，不動東西）、tap 閒聊、visit 來訪、ask 接下臨時拜託、askDone 拜託做完、gift 送佩佩（d.item ＝ { kind, key }）；heard（d.id ＝ 交代人或旅客的 id、d.ids ＝ 聽過的句子 id，最多 10 句）、log（讀交談紀錄：log 是交代人那六本、travelers 是旅客的本子）。規則在 shared/social/giver.js
     case "giver": {
       const op = String(d.op || ""), day = taipeiDay(now());
       if (op === "heard" || op === "log") { // 交談紀錄放自己的文件，錢包不用跟著讀寫（每次呼叫 casino 都整份讀寫錢包）
         const ref = db().doc(`casinoNpcLog/${me.uid}`);
-        if (op === "log") { const sn = await ref.get(); return { ok: true, log: giverLogFix(sn.exists ? JSON.parse(sn.data().data) : null).g }; }
+        if (op === "log") { const sn = await ref.get(); const lg = giverLogFix(sn.exists ? JSON.parse(sn.data().data) : null); return { ok: true, log: lg.g, travelers: lg.t }; }
         const added = await db().runTransaction(async tx => { const sn = await tx.get(ref), r = giverLogAdd(parse(sn), String(d.id || ""), d.ids, day); if (r.added) put(tx, ref, r.doc); return r.added; });
         return { ok: true, added };
       }

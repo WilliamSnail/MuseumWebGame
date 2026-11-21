@@ -107,27 +107,33 @@ export function giverRun(ctx, d, acts = {}) {
   return gvNo("不認得的動作。");
 }
 
-// ---------- 交談紀錄（圖書館）：casinoNpcLog/{uid} = { v: 1, g: { 交代人id: [[天數, "句子 id"], ...] } }（舊的在前）----------
-export const giverLogNew = () => ({ v: 1, g: {} });
+// ---------- 交談紀錄（圖書館）：casinoNpcLog/{uid} = { v: 1, g: { 交代人id: [[天數, "句子 id"], ...] }, t: { 旅客id: [[天數, "句子 id"], ...] } }（舊的在前）----------
+// 交代人每位最多 logMax 句、旅客每位最多 logMaxTraveler 句，旅客最多 logTravelers 位（超過丟最舊的那本）；串門子記在字母順序在前那位名下（畫面兩邊都查）
+export const GIVER_LOG_TRAVELER = /^[vc]-[a-z0-9][a-z0-9-]{0,37}$/;
+export const giverLogNew = () => ({ v: 1, g: {}, t: {} });
+const gvLogList = (a, max) => {
+  const seen = new Set();
+  return (Array.isArray(a) ? a : []).filter(x => Array.isArray(x) && Number.isInteger(x[0]) && typeof x[1] === "string" && GIVER_LOG_ID.test(x[1]) && !seen.has(x[1]) && seen.add(x[1])).map(x => [x[0], x[1]]).slice(-max);
+};
 export function giverLogFix(doc) {
-  const out = giverLogNew();
-  if (!gvBox(doc) || !gvBox(doc.g)) return out;
-  for (const id of NPC_REL_GIVERS) {
-    const a = Array.isArray(doc.g[id]) ? doc.g[id] : [], seen = new Set();
-    out.g[id] = a.filter(x => Array.isArray(x) && Number.isInteger(x[0]) && typeof x[1] === "string" && GIVER_LOG_ID.test(x[1]) && !seen.has(x[1]) && seen.add(x[1])).map(x => [x[0], x[1]]).slice(-NUM.npcRel.logMax);
-  }
+  const out = giverLogNew(), C = NUM.npcRel;
+  if (!gvBox(doc)) return out;
+  for (const id of NPC_REL_GIVERS) if (gvBox(doc.g) && Array.isArray(doc.g[id])) out.g[id] = gvLogList(doc.g[id], C.logMax);
+  if (gvBox(doc.t)) for (const id of Object.keys(doc.t).filter(k => GIVER_LOG_TRAVELER.test(k)).slice(-C.logTravelers)) out.t[id] = gvLogList(doc.t[id], C.logMaxTraveler);
   return out;
 }
-// 記聽過的句子：id 要是六位之壹、每句要符合格式、同壹句不重複、壹次最多 logIds 句、每位最多 logMax 句（超過丟最舊的）。回傳 { doc, added }；added 是 0 就不用寫
+// 記聽過的句子：id 要是六位交代人或旅客（v-、c- 開頭）之壹、每句要符合格式、同壹句不重複、壹次最多 logIds 句、超過上限丟最舊的。回傳 { doc, added }；added 是 0 就不用寫
 export function giverLogAdd(doc, id, ids, day) {
-  const fixed = giverLogFix(doc);
-  if (!NPC_REL_GIVERS.includes(id) || !Array.isArray(ids)) return { doc: fixed, added: 0 };
-  const list = fixed.g[id] || (fixed.g[id] = []), have = new Set(list.map(x => x[1])), d = gvDayNo(day);
+  const fixed = giverLogFix(doc), C = NUM.npcRel, isG = NPC_REL_GIVERS.includes(id);
+  if ((!isG && !GIVER_LOG_TRAVELER.test(String(id))) || !Array.isArray(ids)) return { doc: fixed, added: 0 };
+  const box = isG ? fixed.g : fixed.t, max = isG ? C.logMax : C.logMaxTraveler, list = box[id] || (box[id] = []), have = new Set(list.map(x => x[1])), d = gvDayNo(day);
   let added = 0;
-  for (const s of ids.slice(0, NUM.npcRel.logIds)) {
+  for (const s of ids.slice(0, C.logIds)) {
     if (typeof s !== "string" || !GIVER_LOG_ID.test(s) || have.has(s)) continue;
     list.push([d, s]); have.add(s); added++;
   }
-  if (list.length > NUM.npcRel.logMax) list.splice(0, list.length - NUM.npcRel.logMax);
+  if (list.length > max) list.splice(0, list.length - max);
+  if (!added && !list.length) delete box[id];
+  if (!isG) { const ks = Object.keys(fixed.t); if (ks.length > C.logTravelers) delete fixed.t[ks[0]]; }
   return { doc: fixed, added };
 }
