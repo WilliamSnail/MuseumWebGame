@@ -9,6 +9,7 @@
 // ================================================================
 import { matesByRoom } from "../../../shared/social/mates.js";
 import { NPC_ROSTER } from "../../../shared/npc/roster.js";
+import { NUM } from "../../../shared/core/config.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, UI, btn, closeOnOutside, every, h, miniLayer } from "../core/ui_core.js";
 import { crowdMoodLine, npcSanBadge } from "../core/ui_stat.js";
@@ -67,9 +68,14 @@ export function crowdSummary(groups) {
   return [...m].map(([t, k]) => (k > 1 ? `${t} ×${k}` : t));
 }
 // 「邀去賭場」：看得出能按的鈕。邀不邀得動由伺服器的名單決定（ui_casino_table.js 的 openNpcInvite），沒登入、沒人在館裡就不放
+// 11-21（翊文：「邀請旅客也不只能去賭場了，現在不是可以去地下室了嗎」）：旁邊多壹顆「邀旅客壹起下地下」：沒隊伍先開隊伍、有隊伍接回去，進準備區的「旅客」那塊（ui_coop_npc.js）邀
 function inviteBtn(c, before) {
-  if (!ADDONS.npcInvite || !NET.me || !c.canInvite) return null;
-  return btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀旅客去賭場", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], () => { if (before) before(); ADDONS.npcInvite(); }, "primary big hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" });
+  const casino = ADDONS.npcInvite && NET.me && c.canInvite;
+  const cellar = ADDONS.coopWithNpc && NET.me && NUM.casino.coopNpc && NUM.casino.coopNpc.on && (c.canInvite || (c.all && c.all.tourists > 0));
+  if (!casino && !cellar) return null;
+  return h("div", { class: "hn-invs" },
+    casino ? btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀旅客去賭場", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], () => { if (before) before(); ADDONS.npcInvite(); }, "primary big hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" }) : null,
+    cellar ? btn([h("span", { "aria-hidden": "true" }, "▼ "), "邀旅客壹起下地下"], () => { if (before) before(); ADDONS.coopWithNpc(); }, "big hn-inv hn-inv-cellar", { title: "開地下收藏庫的隊伍（已經有隊伍就接回去），在準備區的「旅客」那塊邀館裡的旅客壹起下去（他可能答應，也可能拒絕；送禮答應率比較高）" }) : null);
 }
 // 旅客名單：名字後面接理智小牌（全部的視窗寫分級和數字；窄的地方只在不穩定時寫分級）
 function nameList(c, n, calm) {
