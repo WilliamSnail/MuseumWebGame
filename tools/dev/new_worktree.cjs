@@ -4,7 +4,7 @@
 //   npm run wt -- --dir C:\某處\econ --branch claude/拚經濟
 //   npm run wt -- --dir C:\某處\econ --remove        收掉（只拿掉資料夾和 junction，依賴本體不會動）
 const fs = require("fs"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("./child.cjs");
 
 const LINKS = ["node_modules", path.join("functions", "node_modules")];
 const branchOk = b => !!b && /^claude\/./.test(b) && !/\s/.test(b);

@@ -5,7 +5,7 @@
 // 找得到 Edge／Chrome／Chromium 就用無頭模式截圖；截不到（雲端排程連不上 dbus）或找不到瀏覽器，改用 Playwright；都不行才只印 HTML 路徑。印出 PNG 路徑（再用 Read 打開看）。
 // 畫是白底 360×450，太暗看不到的東西（例如深色地上的深色腳印）在這裡就看得出來。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 
 function collectSvgs(targets) {
   const files = [];

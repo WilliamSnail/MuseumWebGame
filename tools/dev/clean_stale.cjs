@@ -3,7 +3,7 @@
 //   node tools/dev/clean_stale.cjs --do   真的刪（ship 上線前會自己跑）
 // 只刪「不在 git 裡」的東西：路徑在 STALE 清單上、而且 git ls-files 找不到它。進了 git 的、清單外的一律不碰。
 // 以後再搬家，把舊位置加進 STALE。
-const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
+const fs = require("fs"), path = require("path"), { spawnSync } = require("./child.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 const STALE = [
   "維護日誌",                      // 11-20 搬到 docs/維護日誌/

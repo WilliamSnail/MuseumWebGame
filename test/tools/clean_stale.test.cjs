@@ -1,5 +1,5 @@
 // tools/dev/clean_stale.cjs：只刪清單上、不在 git 裡的舊檔；進了 git 的、清單外的不碰
-const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path"), { spawnSync } = require("child_process");
+const assert = require("assert"), fs = require("fs"), os = require("os"), path = require("path"), { spawnSync } = require("../../tools/dev/child.cjs");
 const { clean, staleList } = require("../../tools/dev/clean_stale.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("✗ " + name + "：" + e.message); } };

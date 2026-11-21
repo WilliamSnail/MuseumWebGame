@@ -10,7 +10,7 @@
 // 改完自動跑：world:check、econ:check、npc_check（有改 NPC 時）、世界經濟的測試；--full 改跑整套 npm test；
 //   world:sim（30 天，景氣 0 和 −1）前後對照：已知世界、NPC 每天花多少、莊家、博物館資金、各狀態的集團數、守恆、有沒有破產。--no-sim 跳過模擬。
 // 任何壹項沒過、或模擬破產／守恆不對：exit 1，檔案還原成原本的樣子。只改 repo 的檔案，不碰正式站。
-const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
+const fs = require("fs"), path = require("path"), { spawnSync } = require("./child.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 const CONFIG = path.join(ROOT, "shared", "core", "config.js");
 

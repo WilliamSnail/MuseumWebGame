@@ -126,7 +126,7 @@ T("帳本 characters 的 npc 欄：指到不存在的旅客要擋；有 npc 欄�
 });
 (async () => {
   try {
-    require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
+    require("../../tools/dev/child.cjs").execFileSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
     const url = require("url").pathToFileURL(path.join(__dirname, "..", "..", "functions", "shared", "npc_list_data.js")).href;
     const { NPC_LIST } = await import(url);
     T("打包：NPC_LIST 跟 content/npc 壹樣多、照 id 排序、內容壹樣", () => {

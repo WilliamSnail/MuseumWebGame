@@ -4,7 +4,7 @@
 // 會刪的：git worktree 裡「沒有改動、HEAD 已經併進 origin/main」的；還有只剩 node_modules／dist／functions 的殘留資料夾（不是 worktree 了）。
 // 不刪的：fbsnap、fbtool（固定動作用）、Claude Desktop 開給 session 的（名字像 wizardly-goldwasser-527b04，由 app 自己收）、現在所在的這個。
 // ship.cjs 上線成功後會在背景跑 --do（不等它）。
-const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
+const fs = require("fs"), path = require("path"), { spawnSync } = require("./child.cjs");
 const git = (args, cwd) => spawnSync("git", args, { cwd, encoding: "utf8" });
 const common = git(["rev-parse", "--git-common-dir"], process.cwd()).stdout.trim();
 const ROOT = path.resolve(process.cwd(), common, "..");

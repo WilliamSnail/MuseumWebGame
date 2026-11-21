@@ -4,7 +4,7 @@
 //   node tools/dev/shot_phone.cjs "http://localhost:5287/?x=1#lobby" [--size 375x812] [--wait 6000] [--js "document.querySelector('.tb-menu').click()"] [--out a.png] [--full]
 // --js 可以給好幾次，照順序跑，每段之間等 800ms。預設會先在 body 加 orient-skip（略過「請轉橫」）。印出 PNG 路徑。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("child_process");
+const { spawn } = require("./child.cjs");
 
 const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const all = k => args.flatMap((a, i) => a === k ? [args[i + 1]] : []);
