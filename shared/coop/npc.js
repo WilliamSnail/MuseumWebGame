@@ -100,7 +100,6 @@ export function coopNpcTurn(run, Ps) {
       if (seat && !seat.out && fightCanAct(seat)) { v[id] = { act: m.style === "careful" ? "guard" : "push", for: null, tap: 0 }; changed = true; }
     }
     else if (run.phase === "guess" && v[id] === undefined) { v[id] = pickGuess(run); changed = true; }
-    else if (run.phase === "floorDone" && v[id] === undefined) { v[id] = "down"; changed = true; }
     else if ((run.phase === "result" || run.phase === "carried" || run.phase === "chest") && !run.acks[id]) { run.acks[id] = true; changed = true; }
     else if (run.phase === "carry" && run.carry && run.carry.picks && run.carry.picks[id] === undefined) { run.carry.picks[id] = "skip"; changed = true; } // 搬東西：他不抬（抬壞了不好說話），手工藝高的專長照樣讓助手那一份穩
   }

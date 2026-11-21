@@ -164,4 +164,15 @@ T("審查 10：真人都走了、只剩旅客，趟結束（coopLeave 用 coopHu
   G.coopLeave(run, Ps, "a"); assert.ok(run.phase === "over" || run.ended);
 });
 
+T("審查 5：floorDone 真人投完就結算（旅客不用等）；旅客理智低投回地面、其餘跟真人；平手領隊（真人）定", G => {
+  const go = (san, vote) => { const { run, Ps } = startWithNpc(G, "carry", "basic", san); run.phase = "floorDone"; run.votes = {}; run.next = run.next || { floor: 2 }; run.members[1].san = san; const r = G.coopAct(run, Ps, "a", "floor", { go: vote }, 2000); assert.ok(r.ok); return run; };
+  assert.strictEqual(go(70, "down").phase, "vote", "真人投下去、旅客不用等，直接下壹層");
+  assert.ok(go(70, "up").ended, "真人投回地面就回地面");
+  assert.strictEqual(go(30, "down").phase, "vote", "平手：領隊（真人）投下去");
+  assert.ok(go(30, "up").ended);
+});
+T("審查 6：領隊只輪真人（旅客不當領隊）", G => {
+  const { run } = startWithNpc(G);
+  for (let i = 0; i < 4; i++) { G.coopNextLeader(run); assert.strictEqual(run.leader, "a"); }
+});
 console.log(fail ? `找 NPC 下地下：${fail} 項沒過` : `找 NPC 下地下：${pass} 項都過`); process.exit(fail ? 1 : 0);
