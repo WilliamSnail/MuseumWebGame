@@ -257,10 +257,11 @@ export function openGift(friend) {
       await NET.flush().catch(() => {});
       const item = { kind: sel.kind, key: sel.key }, r = friend.via ? await friend.via(item) : await NET.call("sendGift", { to: friend.id, item }); // via：送交代人（ui_giver_talk.js）走自己的伺服器動作
       await reloadSave(r.rev); // 伺服器已經從我的收藏拿掉了
-      sent = r.text;
+      sent = String(r.text || "").replace(/。+$/, "");
       if (!friend.noAct) actDone("gift"); // 每日任務：送館友壹隻佩佩（決定 0146）；送交代人不算
       sel = null;
       snd("coin");
+      if (friend.via) { sel = null; note(r.text, "good"); updateStatus(); m.close(); return; } // 送交代人：壹天壹隻，送完就關
       note(friend.via ? r.text : `寄出去了：${r.text}。${friend.nick} 的信箱多了壹封。`, "good");
       updateStatus();
     } catch (e) { snd("error"); note(e.message || "送不出去。", "bad"); }
