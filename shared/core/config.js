@@ -639,6 +639,11 @@ export const NUM = {
     //   perNpcDay 壹位 NPC 壹天最多答應幾次；tableMax 壹桌最多幾位 NPC；perHost 壹位館友同時最多帶幾位（翊文 11-17：「讓邀請去賭場的旅客不只能帶一個人」「最多 3 位」，壹桌 4 個座位剛好坐滿）；stay 壹次待幾分鐘；coolMs 被拒之後同壹位館友 30 分鐘才能再邀；baseP／likeP 答應的機率 %（愛玩牌桌 likes bj 再加 likeP）；
     //   lossPct／winPct 壹位 NPC 壹天最多輸／贏他 perDay 的幾 %（到了就說離開台詞走人）；dayCap 全館 NPC 壹天在賭場淨輸或淨贏的上限（任壹邊到了，今天不再答應、在桌上的也走）；
     //   bet 每種打法壹注占 perDay 的 %（careful 保守、basic 標準、bold 大膽、wild 亂來），betMax 壹注上限；say 壹局最多說幾句（cap）、說兩句的機率（pTwo）、說自己輸贏的機率（pSelf）、替別人喝采的機率（pCheer）
+    // 新牌桌遊戲（決定 0150，翊文 11-21：「照建議做」）：佩佩轉盤、差壹畫，都是對莊家，錢走莊家（來源跟 21 點壹樣記 bj＝牌桌）。
+    //   edge：莊家優勢（賠率＝floor((1−優勢)÷中獎機率×10)÷10）；maxWin：任何結果下單轉最多贏多少（所以賠率高的押法能押的少）；maxBets：壹轉最多幾筆押法。
+    wheel: { on: true, edge: 0.04, maxWin: 5000000, maxBets: 12 },
+    //   差壹畫：pExact＝「剛好」的權重（滿分 100；其餘平分給 多／少 × 第 1～5 筆出錯 十種）
+    miscount: { on: true, edge: 0.04, maxWin: 5000000, maxBets: 8, pExact: 60 },
     npcCas: { on: true, perNpcDay: 3, tableMax: 3, perHost: 3, stay: [8, 20], coolMs: 1800000, baseP: 55, likeP: 25, lossPct: 8, winPct: 15, dayCap: 300000, bet: { careful: 0.3, basic: 0.5, bold: 1, wild: 1.5 }, betMax: 30000, say: { cap: 2, pTwo: 35, pSelf: 60, pCheer: 45 }, coolKeep: 200 },
     // 找 NPC 一起下地下收藏庫（決定 0149，翊文 11-21：NPC 像真人隊友、邀請送 5,000 籌碼給 NPC）。規則 shared/coop/npc.js、shared/npc/coop.js；模擬 test/sim/sim_coop_npc_human.cjs
     //   bonusWeight：NPC 算幾個人的「人數加成」（打怪每多一人 +1 靈感、壯膽每多一人 +5 膽量；1 ＝跟真人一樣，0.5 ＝半個人；強度門檻和怪的壓力照常算全部的人，因為他們真的在場）。翊文選保險 A 時設 0.5、maxNpc 設 3；
