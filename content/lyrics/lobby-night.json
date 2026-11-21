@@ -1,0 +1,20 @@
+{
+  "_說明": "深夜大廳歌曲（web/public/sfx/lobby-night.mp3，約 137 秒循環）的字幕。t＝開始的秒數，end＝結束的秒數（沒寫就到下壹句開始，最長 6 秒）。kind：choir 合唱、whisper 耳語（小字偏壹邊）、gap 沒有字。時間軸 11-21 是用音量起伏估的，還沒人聽過對時；用 ?lyrics-tap#lobby 對時，做法見 docs/操作/歌詞對時.md。",
+  "song": "lobby-night",
+  "lines": [
+    { "t": 10.0, "text": "各位館友", "kind": "choir" },
+    { "t": 14.0, "text": "本館即將閉館", "kind": "choir" },
+    { "t": 21.0, "text": "請勿觸摸展品", "kind": "choir" },
+    { "t": 26.0, "text": "請攜帶好隨身物品", "kind": "choir" },
+    { "t": 32.0, "text": "請勿讓展品", "kind": "choir" },
+    { "t": 36.0, "text": "觸摸你　啊——", "kind": "choir" },
+    { "t": 42.0, "kind": "gap" },
+    { "t": 47.0, "text": "閉館後", "kind": "choir" },
+    { "t": 52.0, "text": "請勿回頭", "kind": "choir" },
+    { "t": 58.0, "kind": "gap" },
+    { "t": 100.0, "text": "若有人", "kind": "choir" },
+    { "t": 106.0, "text": "叫你的名字", "kind": "choir" },
+    { "t": 114.0, "kind": "gap" },
+    { "t": 126.0, "text": "那不是館員", "kind": "whisper", "end": 133.0 }
+  ]
+}

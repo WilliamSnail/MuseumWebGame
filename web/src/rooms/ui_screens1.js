@@ -252,7 +252,7 @@ SCREENS.lobby = root => {
     !isFree(P) && (P.vname || P.visitor > 1) ? h("p", { class: "sub lobby-who" }, visitorLabel(P)) : null); // 多位參觀者（11-08）：有名字寫名字
   // 總覽（ui_hub.js，決定 0061）：下壹步、今天的事、簽到、本週劇情、館友證收成壹塊。自由模式沒有總覽，照舊排
   const hub = ADDONS.lobbyHub ? ADDONS.lobbyHub() : null;
-  root.append(roomHead("大廳", sub), hub || stepBar, hub || !ADDONS.lobbyToday ? null : ADDONS.lobbyToday(), ADDONS.lobbyEvent ? ADDONS.lobbyEvent() : null, ADDONS.lobbyLive ? ADDONS.lobbyLive() : null, hub || !ADDONS.lobby ? null : ADDONS.lobby(), hub ? null : storyLobby(), lobbyFriends(), ADDONS.lobbyGuests ? ADDONS.lobbyGuests() : null, h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；lobbyGuests：你不在時誰來過（多人版 M2，ui_visit.js）；storyLobby：本週地下收藏庫（每週劇情，11-09）
+  root.append(roomHead("大廳", sub), hub || stepBar, hub || !ADDONS.lobbyToday ? null : ADDONS.lobbyToday(), ADDONS.lobbyEvent ? ADDONS.lobbyEvent() : null, ADDONS.lobbyLive ? ADDONS.lobbyLive() : null, ADDONS.lobbyLyrics ? ADDONS.lobbyLyrics() : null, hub || !ADDONS.lobby ? null : ADDONS.lobby(), hub ? null : storyLobby(), lobbyFriends(), ADDONS.lobbyGuests ? ADDONS.lobbyGuests() : null, h("div", { class: "lobby-wrap" }, plan, side), hint); // lobbyFriends：在線的館友（多人版 M1）；lobbyGuests：你不在時誰來過（多人版 M2，ui_visit.js）；storyLobby：本週地下收藏庫（每週劇情，11-09）
 };
 
 // ---------- 3 畫廊：橫向走廊 ----------
