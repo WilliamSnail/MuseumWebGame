@@ -20,7 +20,7 @@ import { overlay } from "../../panels/ui_board.js";
 import { ambHeat, mountMood } from "../../fx/ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "../../panels/ui_party.js";
 import { casinoState, handEl } from "./ui_casino.js";
-import { BJ_PACE, bjPause } from "./ui_casino_felt.js";
+import { BJ_PACE, bjPause, openSayLog } from "./ui_casino_felt.js";
 import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
 import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { CAS_WK } from "./ui_casino_week.js";
@@ -138,6 +138,12 @@ async function stageResult(s, prev) {
   if (s.pendChips != null) { s.chips = s.pendChips; setChips(s.pendChips); s.pendChips = null; }
   draw();
   if (s.afterStage) { const f = s.afterStage; s.afterStage = null; f(); }
+  const me = s.view && s.view.seats.find(x => x.you); // 荷官這手最後說的那句，也記進說過的話
+  if (me && me.out) (s.dealerLog || (s.dealerLog = [])).push({ at: Date.now(), who: CAS_TEXT.dealer, text: dealerLine(me.out) });
+}
+// 說過的話：荷官每手最後說的、同桌的館友和旅客在桌上說的（時間＋誰）
+function sayEntries(s) {
+  return (s.dealerLog || []).concat((s.chat || []).map(x => ({ at: Number(x.at) || 0, who: String(x.name || "館友"), text: String(x.text || "") }))).sort((a, b) => a.at - b.at);
 }
 // 每週收藏（決定 0042）：伺服器在結算的那個交易裡發的，跟著給我的樣子一起來（wkNew.k 是第幾版，同一版只說一次）
 function wkNotes(s, v) {
@@ -259,7 +265,7 @@ function draw() {
   const mem = s.party ? partyMembers(s.party) : [];
   const old = s.m.surface.querySelector(".cas-body"), keep = old ? old.scrollTop : 0;
   const parts = [];
-  parts.push(h("div", { class: "cas-tb-head" }, h("span", { class: "cas-count", role: "timer" }, countText(v)), h("small", null, `第 ${v.round + 1} 局・${v.seats.length}／${NUM.casino.seats} 人`)));
+  parts.push(h("div", { class: "cas-tb-head" }, h("span", { class: "cas-count", role: "timer" }, countText(v)), h("small", null, `第 ${v.round + 1} 局・${v.seats.length}／${NUM.casino.seats} 人`), btn("說過的話", () => openSayLog("這桌說過的話", sayEntries(s)), "small ghost", { title: "荷官、館友、旅客在這桌說過的話" })));
   parts.push(h("div", { class: "cas-felt" },
     h("div", { class: "cas-seat dealer" }, h("div", { class: "cas-who" }, h("b", null, CAS_TEXT.dealer), v.dealer.total != null && !(s.stage && s.stage.out) ? h("small", null, `點數 ${v.dealer.total}`) : v.dealer.up != null ? h("small", null, `明牌 ${v.dealer.up}`) : null),
       dealerCards(s, v).length ? handEl(dealerCards(s, v), { label: "莊家的牌" }) : h("p", { class: "cas-empty" }, "下注，荷官就發牌。")),

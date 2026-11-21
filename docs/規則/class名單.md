@@ -78,6 +78,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `bj-` | `casino_bj.css` | 賭場牌桌頁籤（11-21 重新設計，`ui_casino_felt.js`）：`bj`（遊戲欄＋牌桌）、`bj-nav`／`bj-g`（切換遊戲；電腦左邊直排，手機上面壹排）、`bj-table`／`bj-seat`／`bj-bubble`（橢圓牌桌）、`bj-chip`（圓籌碼）、`bj-betbar`／`bj-amt`／`bj-acts`／`bj-how`／`bj-log` |
 | `hd-` | `casino_bj.css` | 德州撲克（11-21，`ui_casino_holdem.js`）：`hd-table`／`hd-seat`／`hd-board`／`hd-slot`／`hd-pot`（牌桌）、`hd-acts`／`hd-raise`／`hd-quick`（動作）、`hd-setup`（開桌）、`hd-clock`（倒數） |
 | `sb-`、`wh-`、`mc-` | `casino_bj.css` | 轉盤、差壹畫（11-21，`ui_casino_sb.js`、`ui_casino_wheel.js`、`ui_casino_miscount.js`）：`sb-opt`（押法按鈕）、`sb-bar`、`sb-res`（結果）；`wh-`（轉盤的盤、顏色）；`mc-`（差壹畫的紙和正字） |
+| `gv-` | `tasks.css` | 交代人在自己待的地方說今天交代的那句（11-21，`ui_giver_note.js`）：`gv-strip`（排在壹起）、`gv-note`（壹位的字條，`done` 變淡）、`gv-t`。賭場荷官的泡泡用 `bj-bubble`（`casino_bj.css`） |
 | `ly-` | `lobby2.css`、`lyrics_tap.css`（開發用） | 深夜大廳歌曲字幕（11-21，`ui_lyrics.js`）：`ly-box`、`ly-line`（`on` 顯示、`whisper` 耳語）。開發用對時工具用 `ly-tap`、`ly-tap-*` |
 | `bank-` | `bank.css` | Yuga Bot 銀行廳（`ui_bank.js`）：`bank-onescreen`（套骨架）、`bank-panel`（深藍面板）、`bank-book`（米色存摺表格）、`bank-ticker`（最下面的今日行情）。賭場銀行用的是 `cas-bank`、`bk-`，不要搞混 |
 | `gal-` | `gallery2.css` | 畫廊重做（11-14，`ui_story.js` 的 `galleryShell`、`ui_art.js` 的拍賣）：`gallery-onescreen`（套骨架）、`gal-wall`（畫牆）、`gal-corridor`（畫框走廊）、`gal-side`／`gal-rules`（側欄）、`gal-lot`／`gal-easel`（拍賣的畫架） |

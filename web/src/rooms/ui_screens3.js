@@ -593,7 +593,8 @@ SCREENS.cellar = root => {
   root.classList.add("onescreen-room", "cellar-onescreen");
   if (!side.children.length) root.classList.add("cellar-no-side");
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。", rulesBtn),
-    h("div", { class: "onescreen-main" },
+    h("div", { class: "onescreen-main" }, ADDONS.giverStrip ? ADDONS.giverStrip(["number"]) : "", // 號碼機：B1 小門旁（11-21）
+
       h("div", { class: "cellar-entry" },
         h("div", { class: "floors" }, floorEls),
         h("div", { class: "team-wrap" }, h("div", { class: "team" }, slotEls), h("div", { class: "team-side" }, powerBox, go_))),

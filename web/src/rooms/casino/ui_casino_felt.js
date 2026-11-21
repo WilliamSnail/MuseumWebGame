@@ -9,7 +9,7 @@
 // ================================================================
 import { casNum } from "../../../../shared/casino/core.js";
 import { CAS_GAME_INTRO, CAS_TIPS } from "../../../../shared/casino/text.js";
-import { h, icon } from "../../core/ui_core.js";
+import { btn, h, icon, miniLayer } from "../../core/ui_core.js";
 import { tipOn } from "../../core/ui_tip.js";
 import { noticeCard } from "../../panels/ui_party.js";
 
@@ -40,8 +40,18 @@ export function gameNav(games, cur, go, busy) {
   }));
 }
 // 橢圓牌桌：bubble＝荷官最新壹句；dealer、you＝bjSeat 的結果；banner＝輸贏那壹條
-export const bjTable = ({ bubble, dealer, you, banner }) => h("div", { class: "bj-table" },
-  bubble ? h("p", { class: "bj-bubble", role: "status" }, bubble) : null, dealer, you, banner || null);
+export const bjTable = ({ bubble, dealer, you, banner, onSaid }) => h("div", { class: "bj-table" },
+  bubble ? (onSaid ? h("button", { type: "button", class: "bj-bubble can", role: "status", title: "點壹下看說過的話", onClick: onSaid }, h("span", null, bubble), h("small", null, "說過的話 ›")) : h("p", { class: "bj-bubble", role: "status" }, bubble)) : null, dealer, you, banner || null);
+// 說過的話：這桌最近 20 句左右（新的在上面），每句時間＋誰說的。entries：[{ at, who, text }]（單人的荷官、同桌的荷官和館友、旅客都放這裡）
+export function openSayLog(title, entries) {
+  const list = (entries || []).slice(-20).reverse(), m = miniLayer(title, list.length ? "最近說過的話，新的在上面。" : "還沒有人說話。");
+  m.layer.classList.add("sp-top");
+  const clock = ms => new Date(ms).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  if (list.length) m.card.append(h("ul", { class: "bj-saylog" }, list.map(x => h("li", null, h("time", null, clock(x.at)), h("b", null, x.who), h("span", null, x.text)))));
+  m.card.append(h("div", { class: "hn-acts" }, btn("關掉", () => m.close(), "primary")));
+  m.layer.addEventListener("click", e => { if (e.target === m.layer) m.close(); });
+  return m;
+}
 export const bjSeat = (cls, label, note, hand) => h("div", { class: "bj-seat " + cls }, h("div", { class: "bj-who" }, h("b", null, label), note ? h("small", null, note) : null), hand);
 // 籌碼：list＝[100, 1000, …]；chips＝錢包有多少（不夠的灰掉）；onPick(n)；onAll()＝全下
 export function chipRow(list, chips, onPick, onAll, busy) {

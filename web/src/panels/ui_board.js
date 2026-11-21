@@ -194,7 +194,7 @@ export function openMailbox() {
           h("span", { class: "nb-env-gift" }, giftText(x.gift) || "（只有信，沒有附東西）")),
         act);
     }) : [h("p", { class: "nb-empty" }, "信箱是空的。")];
-    m.surface.replaceChildren(h("p", { class: "nb-hint" }, "獎勵、補償、館友送的佩佩、來訪的謝禮，都會寄到這裡。寄到之後 30 天沒領就會不見。"), h("div", { class: "nb-envs" }, envs));
+    m.surface.replaceChildren(ADDONS.giverStrip ? ADDONS.giverStrip(["postman"]) : "", h("p", { class: "nb-hint" }, "獎勵、補償、館友送的佩佩、來訪的謝禮，都會寄到這裡。寄到之後 30 天沒領就會不見。"), h("div", { class: "nb-envs" }, envs));
     updateBoardBadges();
   };
   draw();

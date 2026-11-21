@@ -7,7 +7,7 @@
 import { casNum } from "../../../../shared/casino/core.js";
 import { WHEEL_COLORS, WHEEL_RARITIES, WHEEL_SLOTS, WHEEL_SPECIAL } from "../../../../shared/casino/wheel.js";
 import { ADDONS, h, snd, wait } from "../../core/ui_core.js";
-import { casinoAct, casinoRefresh, casinoState } from "./ui_casino.js";
+import { casinoAct, casinoGiver, casinoRefresh, casinoState } from "./ui_casino.js";
 import { gameIntro, howTo } from "./ui_casino_felt.js";
 import { sbAdd, sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult, sbShowResult } from "./ui_casino_sb.js";
 
@@ -85,7 +85,7 @@ export function wheelPane() {
   const hit = st.result ? WHEEL_SLOTS[st.result.outcome.slot] : null;
   return [
     h("div", { class: "wh-stage" }, wheelEl(st, wh),
-      h("p", { class: "wh-say", role: "status" }, hit ? `停在第 ${st.result.outcome.slot + 1} 格：${hit.color}・${hit.rar}` : "點下面的押法，或直接點盤上的壹格押單格。")),
+      h("p", { class: "wh-say", role: "status" }, hit ? `停在第 ${st.result.outcome.slot + 1} 格：${hit.color}・${hit.rar}` : (casinoGiver() || {}).text || "點下面的押法，或直接點盤上的壹格押單格。")),
     st.result ? sbResult(st.result, wh) : null,
     sec("顏色", opts(colorIds), "wh-colors"), sec("稀有度", opts(rarIds)), sec("顏色×稀有度", opts(comboIds), "wh-combos"),
     special ? sec("特別格", opts([special.id])) : null,

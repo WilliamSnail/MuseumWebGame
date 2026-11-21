@@ -69,3 +69,12 @@
 .tkc-giv-t b { font-size: .9375rem; } .tkc-giv-t small { color: #6E4A12; font-size: .75rem; }
 .tkc-giv-t p { margin: 2px 0 0; line-height: 1.5; }
 .tkc-giv-go { flex: none; padding: 2px 8px; border-radius: 10px; background: #B08A3E; color: #FFF8DC; }
+
+/* 交代人在自己待的地方說今天交代的那句（11-21，ui_giver_note.js）：頭像＋名字＋壹句話，樣子跟餐車堂主的字條、牌桌荷官的泡泡同壹套 */
+.gv-strip { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.gv-note { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 243, 207, .94); color: #3A2412; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.gv-note.done { opacity: .75; }
+.gv-t { min-width: 0; }
+.gv-t b { font-family: var(--serif); letter-spacing: .06em; }
+.gv-t small { color: #7C6B52; }
+.gv-t p { margin: 2px 0 0; font-size: .9375rem; line-height: 1.5; overflow-wrap: anywhere; }

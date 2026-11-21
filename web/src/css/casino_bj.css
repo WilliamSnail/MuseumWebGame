@@ -161,3 +161,14 @@
 
 /* PR 925／926 實測：手機遊戲切換欄、德州上面那排貼右邊 → 留邊距 */
 @media (max-width: 760px) { .bj { padding: 0 4px; } .hd-head { padding: 0 2px 0 4px; } .bj-nav { padding-right: 2px; } }
+
+/* 荷官說過的話可以點（11-21）：泡泡是按鈕、下面有「說過的話 ›」；小窗列最近 20 句（時間＋誰＋話） */
+.bj-bubble.can { cursor: pointer; border: 0; font: inherit; text-align: left; display: flex; flex-direction: column; gap: 2px; }
+.bj-bubble.can small { color: #8A5A1C; font-size: .75rem; }
+.bj-bubble.can:hover, .bj-bubble.can:focus-visible { box-shadow: 0 0 0 2px #E0B75A, 0 2px 8px rgba(0, 0, 0, .5); }
+.cas-dealer-line.can { cursor: pointer; font: inherit; color: inherit; text-align: left; background: none; border: 0; padding: 0; }
+.cas-dealer-line.can small { color: #F0CD7A; }
+.bj-saylog { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.bj-saylog li { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; align-items: baseline; font-size: .875rem; }
+.bj-saylog time { color: #7C6B52; font-variant-numeric: tabular-nums; }
+.bj-saylog b { white-space: nowrap; }

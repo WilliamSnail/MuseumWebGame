@@ -24,7 +24,7 @@ import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
 import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { overlay } from "../../panels/ui_board.js";
 import { tipOn } from "../../core/ui_tip.js";
-import { BJ_PACE, bjPause, bjSeat, bjTable, chipRow, gameIntro, gameNav, howTo, showInBody } from "./ui_casino_felt.js";
+import { BJ_PACE, bjPause, bjSeat, bjTable, chipRow, gameIntro, gameNav, howTo, openSayLog, showInBody } from "./ui_casino_felt.js";
 import { noticeCard } from "../../panels/ui_party.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -51,6 +51,12 @@ export function handEl(cards, o = {}) {
   return h("div", { class: "cas-hand" + (o.warped ? " shaky" : ""), "aria-label": o.label || "牌" }, cards.map((c, i) => cardEl(c, { cls: o.fresh === i ? "fresh" : "" })));
 }
 
+// 荷官的任務（giverTaskLine('yuga')）：今天有交代，進牌桌／各遊戲說那句；做完說回話；也進說過的話。同壹句只記壹次
+export function casinoGiver() {
+  const gl = S ? giverTaskLine("yuga") : null;
+  if (gl && S.giverSaid !== gl.text) { S.giverSaid = gl.text; say([gl.text]); }
+  return gl;
+}
 // ---------- 遊戲清單（牌桌頁籤：左邊直排，手機上面壹排）----------
 // 其他遊戲（轉盤、差壹畫、德州）各自壹支檔，用 ADDONS.casinoGame({ id, name, ic, pane() }) 登記；只有壹個遊戲時不畫切換欄
 const GAMES = [{ id: "bj", name: "21 點", ic: "cards", pane: () => bjPane() }];
@@ -86,8 +92,9 @@ function sync(r) {
 }
 function say(lines) {
   if (!S) return;
-  for (const l of lines) if (l) S.say.push(String(l));
-  S.say = S.say.slice(-8);
+  const log = S.sayLog || (S.sayLog = []);
+  for (const l of lines) if (l) { S.say.push(String(l)); if (!log.length || log[log.length - 1].text !== String(l)) log.push({ at: Date.now(), who: CAS_TEXT.dealer, text: String(l) }); } // 說過的話：時間＋誰（單人只有荷官）
+  S.say = S.say.slice(-20); S.sayLog = log.slice(-20);
 }
 // 一個動作：送給伺服器、等結果。荷官的挑剔（ok: false，gag）也是荷官在說話，不是錯誤
 async function act(name, data, then) {
@@ -354,7 +361,8 @@ function bjPane() {
   const pCards = r ? (ds != null ? r.player.cards.slice(0, (ds >= 1 ? 1 : 0) + (ds >= 3 ? 1 : 0)) : hideLast ? r.player.cards.slice(0, -1) : r.player.cards) : [];
   const you = r && (pCards.length || ds == null) ? bjSeat("me", "你", ds != null || hideLast ? "" : `點數 ${r.player.total}${r.player.soft && r.player.total < 21 ? "（有 A）" : ""}・注 ${casNum(r.bet)}${r.bonusPct ? `・加成 +${r.bonusPct}%` : ""}`, handEl(pCards, { warped: r.warped, label: "你的牌", fresh: S.fresh })) : null;
   const banner = r && r.state === "done" && r.out && S.shown == null && ds == null && !hideLast && !S.finishing ? resultCard(r) : null;
-  const felt = bjTable({ bubble: S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner });
+  const gl = casinoGiver(); // 荷官 Yuga Bot 也是交代人：今天有交代，沒玩之前泡泡說那句（11-21）
+  const felt = bjTable({ bubble: !r && gl ? gl.text : S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner, onSaid: () => openSayLog("荷官說過的話", S.sayLog) });
   felt.addEventListener("click", () => { if (S && S.animating) S.skip = true; }); // 演出中點壹下跳過
   const parts = [houseLine(), felt];
   if (playing && S.shown == null && ds == null && !hideLast) {
@@ -362,7 +370,6 @@ function bjPane() {
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   } else if (!playing && S.shown == null && ds == null) parts.push(betBar());
   // 荷官說過的話：桌上只看得到最新壹句，其他收在這裡
-  if (S.say.length > 1) parts.push(h("details", { class: "bj-log" }, h("summary", null, "荷官說過的話"), h("div", { class: "cas-say", role: "log", "aria-label": "荷官的話" }, S.say.map((l, i) => h("p", { class: i === S.say.length - 1 ? "last" : "" }, i === S.say.length - 1 ? h("b", null, CAS_TEXT.dealer + "：") : null, l)))));
   parts.push(howTo([`規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。`, `連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`]));
   return parts;
 }
