@@ -147,6 +147,7 @@
   .hn-bar .hn-inv { flex: 1 1 auto; white-space: nowrap; min-width: max-content; }
 }
 
-/* 11-21 邀旅客壹起下地下：兩顆邀請鈕包在 hn-invs 裡，不改原本的排法（display: contents） */
-.hn-invs { display: contents; }
-.hn-inv-cellar { margin-top: 6px; }
+
+/* 11-21 大廳邀旅客合成壹顆：小卡的兩個去處 */
+.hn-inv-menu { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.hn-inv-menu .btn { width: 100%; min-height: 48px; }
