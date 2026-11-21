@@ -9,6 +9,7 @@ const STEPS = [
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/web/room_mood.test.cjs"]],
   ["賭場、銀行的背景樂：熱鬧程度換算（ambMix）、環境音會建會停會尊重靜音", ["test/web/amb_mix.test.cjs"]],
   ["音效檔（Pixabay）：清單、檔案、來源.md 對得上，程式用到的都有登記", ["test/web/sfx_files.test.cjs"]],
+  ["清工作副本：刪 worktree 前先停 git 監看、core.fsmonitor 設 false（11-21）", ["test/tools/wt_clean.test.cjs"]],
   ["聲音狀態檢查（npm run snd:check）：每個房間的環境音計時器都進 timers、檔案都接房間的 g、地下→大廳／賭場框／登出的聲音都收乾淨、該放哪首（ambFor）", ["test/tools/snd_check.test.cjs"]],
   ["音效與特效總表：docs/素材/音效與特效總表.md 跟程式對得上（npm run fx:report），掃 snd／sndFile 的解析", ["test/tools/fx_report.test.cjs"]],
   ["npm run sfx:add：Pixabay 檔名和網頁標題解析、登記到 sfx_files.js 和 來源.md", ["test/tools/sfx_add.test.cjs"]],
