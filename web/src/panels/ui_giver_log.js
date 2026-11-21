@@ -12,7 +12,7 @@ import { giverName } from "../../../shared/story/core.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, btn, h } from "../core/ui_core.js";
 import { tipOn } from "../core/ui_tip.js";
-import { GV_LV, giverDayNo, giverFill, giverLoad } from "./ui_giver_talk.js";
+import { GV_LV, giverDayNo, giverFill, giverLoad, giverWatch } from "./ui_giver_talk.js";
 import { travelerName, travelerText } from "./ui_traveler_talk.js";
 
 const ORDER = ["yuga", "hall", "postman", "clerk", "scale", "number"];
@@ -67,6 +67,7 @@ export function giverLog() {
     const lv = id => { const v = info && (info.givers || []).find(g => g.id === id); return GV_LV[v ? v.lv : 0]; };
     box.replaceChildren(head, h("div", { class: "gv-log-books" }, ORDER.map(id => h("button", { type: "button", class: "gv-log-book", onClick: () => { open = id; paint(); } }, h("b", null, giverName(id)), h("small", null, lv(id)))), h("button", { type: "button", class: "gv-log-book", onClick: () => { openT = "*"; paint(); } }, h("b", null, "旅客交談"), h("small", null, "牌桌、地下"))));
   };
+  box.paint = paint; giverWatch(box); // 熟識度讀回來要重畫（直接進這頁時六本不要都寫「陌生」）
   paint();
   if (NET.loggedIn) NET.call("casino", { act: "giver", op: "log" }).then(r => { if (r && r.ok && r.log) { data = r.log; trav = r.travelers || {}; } else failed = true; }).catch(() => { failed = true; }).then(paint);
   return box;
