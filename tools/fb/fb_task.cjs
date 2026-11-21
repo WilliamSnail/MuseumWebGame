@@ -262,6 +262,14 @@ async function houseLedger(db) {
   console.log(`館債（莊家欠館友、還沒到期的本金＋債權憑證）：${fmt(tot("bondOwed"))}　（${rows.filter(r => r.bondOwed > 0).length} 個錢包）`);
   { const bank = nz(h.bankroll) + nz(h.budget) + nz(h.sea) + nz(h.museum) + nz(h.gov) + nz(h.world) + nz(h.ext) + nz(h.gb && h.gb.cash), players = tot("chips") + tot("bank") + tot("margin") + tot("hold");
     console.log(`全館的錢合計（不含在路上的借款、打到一半的注）：${fmt(bank + players)}　＝ 莊家 ${fmt(h.bankroll)} ＋ 博物館資金 ${fmt(h.budget)} ＋ 海底 ${fmt(h.sea)} ＋ 修繕基金 ${fmt(h.museum)} ＋ 政府帳 ${fmt(h.gov)} ＋ 已知世界 ${fmt(h.world)} ＋ 海外 ${fmt(h.ext)} ＋ 銀行準備金 ${fmt(h.gb && h.gb.cash)} ＋ 館友的錢 ${fmt(players)}`); }
+  { // 打到一半的錢（不在錢包也不在莊家帳上，所以上面那行對帳會少）：21 點打到一半的注、牌桌上的注、德州撲克桌上的籌碼（沒投入的加投入的，跳過 NPC）。算法同 functions/casino/casino.js 的 reportSnap
+    const read = async c => (await db.collection(c).get()).docs.map(d => { try { return JSON.parse(d.data().data || "{}"); } catch (e) { return {}; } });
+    const [rs, ts, hds] = [await read("casinoRounds"), await read("casinoTables"), await read("casinoHoldem")];
+    const bj = rs.reduce((a, r) => a + (r && r.state === "playing" ? nz(r.bet) : 0), 0) + ts.reduce((a, t) => a + Object.values((t && t.seats) || {}).reduce((b, x) => b + (x && !x.npc && x.bet > 0 && x.out == null ? nz(x.bet) : 0), 0), 0);
+    const hd = hds.reduce((a, t) => a + Object.values((t && t.seats) || {}).reduce((b, x) => b + (x && !x.npc ? nz(x.stack) + nz(x.put) : 0), 0), 0);
+    const players2 = tot("chips") + tot("bank") + tot("margin") + tot("hold"), bank2 = nz(h.bankroll) + nz(h.budget) + nz(h.sea) + nz(h.museum) + nz(h.gov) + nz(h.world) + nz(h.ext) + nz(h.gb && h.gb.cash);
+    console.log(`打牌中（還在牌桌上的錢）：21 點打到一半的注 ${fmt(bj)}（${rs.filter(r => r && r.state === "playing").length} 局）＋ 德州撲克桌上的籌碼 ${fmt(hd)}（${hds.length} 桌）；含打牌中的全館合計：${fmt(bank2 + players2 + bj + hd)}（上面那行不含這兩項，所以有人坐在德州桌上時會比平常少，不是錢不見了）`);
+  }
   rows.forEach((r, i) => {
     console.log(`  #${i + 1}　籌碼 ${fmt(r.chips)}　沒還的借款 ${fmt(r.loan)}　借款額度 ${fmt(r.limit)}` + (r.bank || r.margin || r.hold ? `　存款 ${fmt(r.bank)}　保證金 ${fmt(r.margin)}　買單鎖住 ${fmt(r.hold)}` : ""));
     const m = list(r.mint), b = list(r.burn);
