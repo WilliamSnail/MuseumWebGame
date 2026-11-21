@@ -14,7 +14,9 @@ import { ADDONS, PANELS, btn, h, note, snd } from "../../core/ui_core.js";
 import { tipOn } from "../../core/ui_tip.js";
 import { PARTY_HOOKS, sendInvite } from "../../panels/ui_party.js";
 import { cardEl, casinoRefresh, casinoState } from "./ui_casino.js";
+import { travelerHeard } from "../../panels/ui_traveler_talk.js";
 import { gameIntro, howTo } from "./ui_casino_felt.js";
+import { openHoldemNpc } from "./ui_casino_holdem_npc.js";
 
 const C = () => NUM.casino.holdem;
 const bbOf = lv => C().levels[lv][1];
@@ -57,6 +59,7 @@ function take(st, v) {
   const meS = v.seats.find(s => s.me);
   if (meS && v.phase === "play" && v.toAct === meS.uid && (!prev || prev.toAct !== v.toAct || prev.street !== v.street) && window.matchMedia && window.matchMedia("(max-width: 760px)").matches) setTimeout(() => { const b = document.querySelector(".cas-body"); if (b) b.scrollTo({ top: b.scrollHeight, behavior: "smooth" }); }, 150);
   if (v.phase === "wait" && st.view && !v.seats.length) st.pid = null;
+  for (const x of v.talk || []) { const mt = /^npc:([vc]-[a-z0-9-]+)/.exec(String(x.uid || "")); if (mt) travelerHeard(mt[1], x.text, "casino"); } // 旅客說的話記進交談紀錄（11-22）
 }
 function watch(st) {
   stop(st);
@@ -122,8 +125,9 @@ const seatBox = (s, v, compact) => {
   const st = s.sitOut ? "・等下壹手" : s.st === "allin" ? "・全下" : s.st === "fold" ? "・蓋牌" : "";
   return h("div", { class: "hd-seat" + (s.me ? " me" : "") + (act ? " turn" : "") + (s.st === "fold" || s.sitOut ? " fold" : "") + (compact ? " compact" : "") },
     h("div", { class: "bj-who" }, h("b", { title: s.nick }, s.nick, s.me ? "（你）" : ""),
-      s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null,
+      s.npc ? h("i", { class: "hd-npc", title: "館裡的旅客" }, "旅客") : null, s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null,
       h("small", null, `桌上 ${casNum(s.stack)}${st}`)),
+    s.say && !s.sitOut ? h("p", { class: "hd-say-npc" }, s.say) : null,
     s.hole && s.hole.length && !s.sitOut ? h("div", { class: "cas-hand" }, s.hole.map(cardOrBack)) : null,
     s.bet > 0 ? h("p", { class: "hd-bet" }, "押 ", h("b", null, casNum(s.bet))) : null);
 };
@@ -184,7 +188,7 @@ function tablePane(st) {
 }
 function invitePane(st) {
   const mates = (NET.roster || []).filter(p => p && !p.me && (p.status === "online" || p.status === "away"));
-  return h("div", { class: "sb-sec" }, h("h4", null, "邀館友壹起玩"), mates.length ? h("div", { class: "sb-opts" }, mates.map(p => btn(p.nick, () => sendInvite(p, "holdem"), "small primary"))) : h("p", { class: "cas-hint" }, "現在沒有別的館友在線。"));
+  return h("div", { class: "sb-sec" }, h("h4", null, "邀館友壹起玩"), h("div", { class: "sb-opts" }, btn([h("span", { "aria-hidden": "true" }, "♠"), " 邀旅客"], () => openHoldemNpc(st, v => { take(st, v); redraw(); }), "small primary", { title: "邀館裡的旅客坐下來打" })), mates.length ? h("div", { class: "sb-opts" }, mates.map(p => btn(p.nick, () => sendInvite(p, "holdem"), "small primary"))) : h("p", { class: "cas-hint" }, "現在沒有別的館友在線。"));
 }
 async function leave(st) {
   if (!st.pid) return;

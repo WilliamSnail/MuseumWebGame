@@ -202,3 +202,6 @@
 }
 /* 11-21 翊文：「說的話位置也不對擋到很多東西」→ 荷官的泡泡不再浮在牌桌右上角蓋住牌，改成在桌面最上面壹條（置中） */
 .bj-bubble { position: static; align-self: center; max-width: min(94%, 560px); }
+/* 德州的旅客座位（11-22）：名字旁小標「旅客」、說的話壹句 */
+.hd-npc { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: .6875rem; font-weight: 800; color: #3A2412; background: #E0B75A; }
+.hd-say-npc { margin: 2px 0 0; padding: 3px 6px; border-radius: 8px; font-size: .75rem; line-height: 1.4; color: #3A2412; background: #FFF3CF; overflow-wrap: anywhere; }
