@@ -29,7 +29,10 @@
       "book": "6a",
       "reward": {
         "insp": 2
-      }
+      },
+      "giver": "number",
+      "says": "叫號：地下貳樓，壹位。先讀書，再往下走。",
+      "done": "叫號：下壹位。（沒有人應。）"
     },
     {
       "id": "d6b",
@@ -37,6 +40,20 @@
       "exhibit": "portrait",
       "reward": {
         "insp": 2
+      },
+      "giver": "postman",
+      "says": "空信封的收件欄也是空的。你去看肖像，比壹比名牌。",
+      "done": "肖像的名牌有字。我數過，每壹塊都有。"
+    },
+    {
+      "id": "d6d",
+      "kind": "show",
+      "giver": "postman",
+      "says": "今天的特展掛在樓梯旁。我陪你看，不數。",
+      "done": "看完了。我的信封，好像輕了壹點。",
+      "reward": {
+        "insp": 1,
+        "mood": 1
       }
     },
     {
@@ -47,6 +64,30 @@
       },
       "reward": {
         "mood": 5
+      },
+      "giver": "yuga",
+      "says": "R，綠色最好認。你做壹隻綠的，我拿來當記號。",
+      "done": "R，收到。我把它放在牌桌邊，替壹個空位。"
+    },
+    {
+      "id": "d6e",
+      "kind": "casino",
+      "giver": "yuga",
+      "says": "R，記牌夜。你替我打壹手，我畫壹筆。",
+      "done": "R。畫滿壹排，差壹畫。是我自己數的，不是你。",
+      "reward": {
+        "mood": 2
+      }
+    },
+    {
+      "id": "d6f",
+      "kind": "cellar",
+      "floor": 2,
+      "giver": "number",
+      "says": "叫號：地下貳樓。往下走，不用排。",
+      "done": "叫號：差壹號。（空白的名牌，是溫的。）",
+      "reward": {
+        "insp": 2
       }
     }
   ],

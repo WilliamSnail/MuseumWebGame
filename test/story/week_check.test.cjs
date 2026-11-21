@@ -10,6 +10,9 @@ const base = readWeeks();
 const ledger0 = readJSON(LEDGER), settings0 = readJSON(SETTINGS);
 const TODAY = "2026-11-22"; // W47 的週日
 
+const SIX_FROM = require("../load_shared.cjs").load().NUM.story.pts.from;
+// 新制的壹天：6 個種類不重複、不用指到書和房間、積分 170、有籌碼的 2 個、心情獎勵不超過壹天的預算
+const sixTasks = n => [["show", {}], ["cellar", { floor: 1 }], ["casino", {}], ["visit", {}], ["make", {}], ["fuse", {}]].map(([kind, extra], i) => { const G0 = require("../load_shared.cjs").load(); return Object.assign({ id: "d" + n + "x" + i, kind, reward: G0.NUM.story.pts.reward[G0.STORY_TASKS[kind].pts] }, extra); }); // 獎勵照積分表給，才不超過壹天的預算
 // 備用週「常青1」複製成正式週 2026-W47：補上 week、start、每天的 date，劇情線換成這週的 id，帳本也補上
 function regular() {
   const files = clone(base.files), out = {};
@@ -23,6 +26,7 @@ function regular() {
     d.date = `2026-11-${15 + n}`;
     d.books.forEach(b => { b.line = b.line === "lost" ? "w47-lost" : "w47-door"; });
     d.adds.forEach(r => { r.line = r.line === "lost" ? "w47-lost" : "w47-door"; });
+    if (d.date >= SIX_FROM) d.daily = sixTasks(n); // 11-21 起每天 6 個每日任務（NUM.story.pts.from）；複製的備用週只有 3 個
     out[`2026-W47/d${n}.json`] = d;
   }
   wk.anomaly.room.line = "w47-lost";

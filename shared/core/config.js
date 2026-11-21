@@ -326,7 +326,7 @@ export const NUM = {
     // miles：到 at 分領的東西。stamps 週章、items 物品（"rotate" ＝舊畫布、金線、金箔輪著）、chips 固定籌碼、box ＝禮盒（伺服器抽，從莊家出）。300 分是大獎的壹半、500 分是另壹半（合起來是整份）。
     // 籌碼都從博物館資金出（taskChips、taskWeek，決定 0146）：基金不夠付就先不付，下次再領。
     pts: {
-      dayCap: 120, goal: 500, minTasks: 5, from: "2026-11-23",
+      dayCap: 120, goal: 500, minTasks: 5, from: "2026-11-21",
       miles: [{ at: 100, mood: 5 }, { at: 200, insp: 3 }, { at: 300, stamps: 1, box: 1 }, { at: 400, insp: 4, chips: 200000 }, { at: 500, stamps: 1, items: ["rotate"], box: 1 }],
       taskChip: 30000, taskChipDay: 2,   // 伺服器看得到的任務（賭場、銀行、餐車、參觀、送佩佩）各給幾籌碼，壹天最多算幾個
       boxes: [{ w: 50, chips: 300000 }, { w: 35, chips: 600000 }, { w: 15, chips: 1500000 }], // 壹個禮盒（半份）：機率權重和籌碼，期望 58.5 萬；500＋300 兩個合起來 117 萬
