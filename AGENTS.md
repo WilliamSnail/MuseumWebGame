@@ -119,7 +119,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 
 - 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`；要換就用 `.replace("a", () => "b")` 或 split/join；npm test 會擋）。
 - 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite（npm test 會擋，白名單在 `tools/check/code_rules.cjs`）；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`），但要加進白名單並寫原因。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
-- 改程式碼不要用 `String.prototype.replace(字串, 字串)`（`$$` 會變成 `$`）。
+- 腳本要開外部程式（git、npm、gh…）一律用 `tools/dev/child.cjs`，不要直接用 child_process（預設不開視窗；不然 AI 在背景跑時 Windows 會一直閃 CMD 視窗，翊文 11-21；npm test 會擋）。
 - **改了畫面，上線前一定要跑 `npm run ui:check`**（起 dev server、無頭瀏覽器開主要畫面，報超出視窗的元素、被切掉的按鈕、字被擠成直排；要登入的畫面它會列為跳過，另外用模擬器看）。出現的是你改到的畫面就修掉；舊畫面本來就有的不用順手修，寫進日誌。腳本在 `tools/check/ui_check.cjs`，還沒放進 npm test 和 CI（太慢、要瀏覽器）。
 - 手機寬度另外看。新動畫不用做「減少動態」的版本（設定已拿掉，翊文 11-15）。提醒用的閃爍（發光、脈動、叫你按這裡）閃 3 下就停，不要寫 infinite；只要有壹個無限循環的動畫，瀏覽器就每秒畫 60 格，手機會熱（11-17）。氣氛動畫可以 infinite，45 秒沒操作會自己停（`web/src/core/rest.js`）。新的 css 前綴、往 html／body 加的 class，先查 `docs/規則/class名單.md`（`npm test` 會檢查）。
 - 新的文字是草稿，Yuga 可以改；Yuga 改過的以 Yuga 的為準。

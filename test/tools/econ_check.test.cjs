@@ -1,5 +1,5 @@
 // 經濟自我檢查腳本（tools/check/econ_check.cjs）：目前的 NUM 要全過；帳面摘要標得出異常。node test/tools/econ_check.test.cjs（npm test 也會跑）
-const assert = require("assert"), { spawnSync } = require("child_process"), fs = require("fs"), os = require("os"), path = require("path");
+const assert = require("assert"), { spawnSync } = require("../../tools/dev/child.cjs"), fs = require("fs"), os = require("os"), path = require("path");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 4).join("\n    ")); } };
 const { ledgerCli } = require("../../tools/check/econ_check.cjs"); // 帳面不開子行程（每次開要重載 shared 1.3 秒）：直接呼叫，丟錯的話文字放 stderr

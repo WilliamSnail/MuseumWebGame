@@ -6,7 +6,7 @@
 //   --top N：同時錄 CPU 剖析，列出最吃時間的 N 個函式（檔名:行），找「是誰在空轉」用（11-17 玩家反應手機、電腦會熱）
 // 同壹個畫面改前、改後各量壹次比較。數字會隨電腦有差，要在同壹台、同壹個大小比。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("child_process");
+const { spawn } = require("./child.cjs");
 
 const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const url = args.find(a => /^https?:/.test(a));

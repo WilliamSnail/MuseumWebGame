@@ -5,7 +5,7 @@
 //   4. 檔名不准用數字結尾（logic3.js、content4.js 這種看不出用途）。
 //   5. 程式檔（shared/、web/src/ 第一層、functions/）單檔不超過 MAX_LINES 行；已經超過的列在 BIG，只准變小。
 //   6. web/src 的 import 不准繞圈（shared/ 的繞圈由 tools/check/check_imports.cjs 擋）。
-const { spawnSync } = require("child_process"), path = require("path");
+const { spawnSync } = require("../dev/child.cjs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const TOP = [".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "assets", "content", "database.rules.json", "docs",
   "firebase.json", "firestore.indexes.json", "firestore.rules", "functions", "package-lock.json", "package.json", "shared", "test", "tools", "version.json",

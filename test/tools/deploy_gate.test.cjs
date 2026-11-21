@@ -1,7 +1,7 @@
 // 部署前要不要重跑測試（tools/release/deploy_gate.cjs）：tree 跟 PR 的 CI 測過的完全一樣才跳過，其他一律照跑
 const assert = require("assert");
 const fs = require("fs"), os = require("os"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../../tools/dev/child.cjs");
 const G = require("../../tools/release/deploy_gate.cjs");
 const root = path.join(__dirname, "..", "..");
 const read = f => fs.readFileSync(path.join(root, f), "utf8");

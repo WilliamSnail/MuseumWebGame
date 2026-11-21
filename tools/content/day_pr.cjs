@@ -7,7 +7,7 @@
 //   day:check --strict 的結果、檢查程式的警告（要貼進 PR）。只寫看得到的名字，不寫謎底。
 //   草稿不進 repo（放系統暫存資料夾），要補充的話改完再丟給 ship／doc:new。
 const fs = require("fs"), os = require("os"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const { asList, isObj } = require("./day_lib.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 

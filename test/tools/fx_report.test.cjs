@@ -1,5 +1,5 @@
 // 音效與特效總表（11-16）：docs/素材/音效與特效總表.md 由程式產生（npm run fx:report，不進 git），--check 只檢查程式跟 fx_notes.json 對得上，加上解析用的正規式
-const fs = require("fs"), assert = require("assert"), cp = require("child_process"), path = require("path");
+const fs = require("fs"), assert = require("assert"), cp = require("../../tools/dev/child.cjs"), path = require("path");
 const R = require("../../tools/check/fx_report.cjs");
 let n = 0;
 const t = (name, fn) => { fn(); n++; };

@@ -190,7 +190,7 @@ const STEPS = [
 // 每項本來就是自己的 Node 程式；會寫檔的（tools.test）都用自己的暫存資料夾、伺服器用隨機 port，同時跑不會打架。
 // 結果還是照上面的順序印。TEST_JOBS=1 ＝ 照舊壹項壹項跑（懷疑同時跑出問題時用）。--slow：最後列出最慢的 10 項。
 const os = require("os");
-const { spawn } = require("child_process");
+const { spawn } = require("../tools/dev/child.cjs");
 const JOBS = Math.max(1, Number(process.env.TEST_JOBS) || Math.max(2, (os.availableParallelism ? os.availableParallelism() : os.cpus().length) - 1));
 const t0 = Date.now();
 const results = new Array(STEPS.length);

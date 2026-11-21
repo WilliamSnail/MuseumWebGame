@@ -7,9 +7,11 @@
 //   4. 畫面文字用「壹」：只看這次新加的行（git diff），出現「一個、一天、一次、一張、一起…」就報；舊的不擋。
 //   5. 名字只放一處：改過名的餐車品項、交代人，舊名不准再出現在現役的程式和說明（維護 RENAMES）。
 //   6. 錢的漲跌顏色（11-21 翊文：照台股，賺漲＝紅、賠跌＝綠）：css 裡 .up／.down／.k-win／.k-lose 這類選擇器不准寫死色碼，要用 var(--money-up)／var(--money-down)（ui.css）；不是錢的（技能成長、頭條預告…）寫進 MONEY_ALLOW 並說原因。
+//   7. 開外部程式不跳視窗（11-21 翊文：「為什麼我的 Windows CMD 視窗會跳出來一下再不見」）：tools/、test/ 不准直接 require("child_process")，
+//      一律用 tools/dev/child.cjs（預設 windowsHide: true）。
 // 用法：node tools/check/code_rules.cjs [--base origin/main] [--only 1,2,3,4,5]
 //   --base：第 4 項拿哪個版本當基準（CI 用 origin/main）；沒給就自動用 origin/main 和 HEAD 的共同祖先，找不到就跳過第 4 項。
-const fs = require("fs"), path = require("path"), { spawnSync } = require("child_process");
+const fs = require("fs"), path = require("path"), { spawnSync } = require("../dev/child.cjs");
 const acorn = require("acorn");
 const ROOT = path.join(__dirname, "..", "..");
 
@@ -288,6 +290,18 @@ function checkNames(files, read = defaultRead, renames = RENAMES) {
   return bad;
 }
 
+// 7. 開外部程式要從 tools/dev/child.cjs（windowsHide 預設 true），不然背景跑時 Windows 每叫壹次 git、npm 就閃壹個視窗
+const CHILD_HELPER = "tools/dev/child.cjs";
+const CHILD_RE = /(require\(\s*|from\s*|import\(\s*)["'](node:)?child_process["']/;
+function checkChild(files, read = defaultRead) {
+  const bad = [];
+  for (const f of files) {
+    if (f === CHILD_HELPER || !/^(tools|test)\/.+\.(c|m)?js$/.test(f)) continue;
+    read(f).split("\n").forEach((l, i) => { if (!/^\s*\/\//.test(l) &&CHILD_RE.test(l)) bad.push(`${f}:${i + 1}：不要直接用 child_process，改成 require("${CHILD_HELPER}" 的相對路徑)（預設 windowsHide: true，背景跑時不會閃 CMD 視窗）`); });
+  }
+  return bad;
+}
+
 // ---------- 主程式 ----------
 const CHECKS = {
   1: { name: "shared/ 是純函式", run: (files, o) => checkPure(files, o.read) },
@@ -296,6 +310,7 @@ const CHECKS = {
   4: { name: "新加的畫面文字用「壹」", run: (files, o) => { const a = addedLines(o.base); if (!a) { console.log("  （找不到 origin/main，第 4 項跳過；CI 會跑）"); return []; } return checkYi(a, o.read); } },
   5: { name: "名字只放一處（改名對照）", run: (files, o) => checkNames(files, o.read) },
   6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
+  7: { name: "開外部程式用 tools/dev/child.cjs（不跳視窗）", run: (files, o) => checkChild(files, o.read) },
 };
 function runAll(opts = {}) {
   const files = opts.files || gitFiles(), only = opts.only || Object.keys(CHECKS).map(Number), bad = [];
@@ -313,4 +328,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
