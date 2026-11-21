@@ -13,6 +13,7 @@ import { NET } from "../core/net_firebase.js";
 import { ADDONS, btn, h } from "../core/ui_core.js";
 import { tipOn } from "../core/ui_tip.js";
 import { GV_LV, giverDayNo, giverFill, giverLoad } from "./ui_giver_talk.js";
+import { travelerName, travelerText } from "./ui_traveler_talk.js";
 
 const ORDER = ["yuga", "hall", "postman", "clerk", "scale", "number"];
 const TIP = { title: "交談紀錄", what: "這裡記下他對你說過的話，同壹句只記壹次。" };
@@ -33,8 +34,8 @@ export function giverLogText(sid) {
 const dateOf = n => new Date(Date.parse("2026-01-01T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const dayLabel = n => { const t = giverDayNo(); return n === t ? "今天" : n === t - 1 ? "昨天" : dateOf(n); };
 
-function bookPage(id, rows, back) {
-  const lines = (rows || []).map(([d, sid]) => ({ d, r: giverLogText(sid) })).filter(x => x.r).reverse(); // 新的在上面
+function bookPage(id, rows, back, name, resolve = giverLogText) {
+  const lines = (rows || []).map(([d, sid]) => ({ d, r: resolve(sid) })).filter(x => x.r).reverse(); // 新的在上面
   const kids = [];
   let last = null;
   for (const x of lines) {
@@ -43,12 +44,12 @@ function bookPage(id, rows, back) {
     kids.push(h("li", { class: x.r.tag === "小故事" ? "page" : "" }, x.r.tag ? h("small", null, x.r.tag) : null, x.r.text.split("\n").map(t => h("span", { class: "gv-log-t" }, t))));
   }
   return h("div", { class: "gv-log-page" },
-    h("div", { class: "gv-log-head" }, btn("‹ 回書架", back, "small ghost"), h("b", null, giverName(id))),
+    h("div", { class: "gv-log-head" }, btn("‹ 回書架", back, "small ghost"), h("b", null, name || giverName(id))),
     lines.length ? h("ul", { class: "gv-log-list" }, kids) : h("p", { class: "nb-empty" }, "還沒聽他說過話。"));
 }
 export function giverLog() {
   const box = h("div", { class: "gv-log" });
-  let data = null, failed = false, open = null;
+  let data = null, trav = {}, failed = false, open = null, openT = null;
   const paint = () => {
     const head = h("p", { class: "nb-hint" }, "六位交代人說過的話，壹句只記壹次。");
     tipOn(head, TIP);
@@ -56,12 +57,18 @@ export function giverLog() {
     if (failed) return box.replaceChildren(head, h("p", { class: "nb-empty" }, "現在讀不到交談紀錄。"));
     if (!data) return box.replaceChildren(head, h("p", { class: "nb-empty" }, "翻開紀錄……"));
     if (open) return box.replaceChildren(bookPage(open, data[open], () => { open = null; paint(); }));
+    if (openT === "*") { // 旅客交談：每位旅客壹頁（只列有可顯示句子的）
+      const ids = Object.keys(trav).filter(k => (trav[k] || []).some(([, s]) => travelerText(k, s)));
+      return box.replaceChildren(h("div", { class: "gv-log-head" }, btn("‹ 回書架", () => { openT = null; paint(); }, "small ghost"), h("b", null, "旅客交談")),
+        ids.length ? h("div", { class: "gv-log-books" }, ids.map(k => h("button", { type: "button", class: "gv-log-book", onClick: () => { openT = k; paint(); } }, h("b", null, travelerName(k))))) : h("p", { class: "nb-empty" }, "還沒聽旅客說過話。"));
+    }
+    if (openT) return box.replaceChildren(bookPage(openT, trav[openT], () => { openT = "*"; paint(); }, travelerName(openT), s => travelerText(openT, s)));
     const info = giverLoad();
     const lv = id => { const v = info && (info.givers || []).find(g => g.id === id); return GV_LV[v ? v.lv : 0]; };
-    box.replaceChildren(head, h("div", { class: "gv-log-books" }, ORDER.map(id => h("button", { type: "button", class: "gv-log-book", onClick: () => { open = id; paint(); } }, h("b", null, giverName(id)), h("small", null, lv(id))))));
+    box.replaceChildren(head, h("div", { class: "gv-log-books" }, ORDER.map(id => h("button", { type: "button", class: "gv-log-book", onClick: () => { open = id; paint(); } }, h("b", null, giverName(id)), h("small", null, lv(id)))), h("button", { type: "button", class: "gv-log-book", onClick: () => { openT = "*"; paint(); } }, h("b", null, "旅客交談"), h("small", null, "牌桌、地下"))));
   };
   paint();
-  if (NET.loggedIn) NET.call("casino", { act: "giver", op: "log" }).then(r => { if (r && r.ok && r.log) data = r.log; else failed = true; }).catch(() => { failed = true; }).then(paint);
+  if (NET.loggedIn) NET.call("casino", { act: "giver", op: "log" }).then(r => { if (r && r.ok && r.log) { data = r.log; trav = r.travelers || {}; } else failed = true; }).catch(() => { failed = true; }).then(paint);
   return box;
 }
 ADDONS.giverLog = giverLog;

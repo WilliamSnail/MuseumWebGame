@@ -16,6 +16,7 @@ import { PARTY, cleanSay, fixParty, partyMembers } from "../../../../shared/soci
 import { NET } from "../../core/net_firebase.js";
 import { ADDONS, FRIEND_ACTIONS, P, PANELS, UI, ask, btn, closeOnOutside, h, icon, miniLayer, netRoom, note, setAmbOver, setChips, snd, sndFile, titleOfId, titleTag } from "../../core/ui_core.js";
 import { npcName } from "../../panels/ui_npc_card.js";
+import { travelerHeard } from "../../panels/ui_traveler_talk.js";
 import { overlay } from "../../panels/ui_board.js";
 import { ambHeat, mountMood } from "../../fx/ui_mood.js";
 import { PARTY_HOOKS, sendInvite } from "../../panels/ui_party.js";
@@ -231,6 +232,7 @@ function bubbles(s) {
     const at = Number(x.at) || 0, key = String(x.by || "");
     if (!key || at <= s.bubFrom || (s.bub[key] && s.bub[key].at >= at)) continue;
     s.bub[key] = { text: String(x.text || ""), at, until: Date.now() + BUBBLE_MS, npc: !!x.npc };
+    const nm = x.npc && /^n~([vc]-[a-z0-9-]+)/.exec(key); if (nm) travelerHeard(nm[1], x.text, "casino"); // 旅客說的話記進交談紀錄（11-21）
     fresh = true;
     setTimeout(() => { if (T === s && s.bub[key] && s.bub[key].until <= Date.now() + 50) { delete s.bub[key]; draw(); } }, BUBBLE_MS + 100);
   }
@@ -420,6 +422,7 @@ export async function openNpcInvite(pidGiven) {
       const r = await NET.call("casinoTable", { act: "npcInvite", pid, npc: x.id });
       if (r && r.ok && r.invite) {
         said = { name: r.invite.name || x.name, line: r.invite.line || "", ok: !!r.invite.accepted };
+        travelerHeard(x.id, r.invite.line, "casino");
         // 答應了：視窗不關，可以接著邀（翊文 11-17：「讓邀請去賭場的旅客不只能帶一個人」，壹位館友最多 perHost 位）；後面的牌桌先開好
         who = who.filter(w => w.id !== x.id); // 答應了＝去賭場了；拒絕＝30 分鐘內不能再邀
         if (r.invite.accepted) { snd("coin"); brought = Math.max(brought + 1, +r.invite.brought || 0); openTable(pid); if (T && T.pid === pid) refreshWho(T); m.layer.classList.add("sp-top"); }
