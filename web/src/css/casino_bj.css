@@ -103,3 +103,13 @@
 .cas-body > .bj { flex: none; min-height: 0; } /* 牌桌頁籤的內容比視窗高就捲動，不要把整塊壓扁（壓扁會跟後面的實況塊疊在壹起） */
 .bj-nav { align-self: flex-start; }
 @media (min-width: 761px) { .bj-nav { position: sticky; top: 0; } }
+
+/* PR 919 實測（11-21）：要牌停牌、下注列在手機也要壹直看得到（貼在內文的下緣）；同桌的要／不要也用大按鈕 */
+.bj-sticky, .bj-acts { position: sticky; bottom: 0; z-index: 2; padding: 8px 0 6px; background: linear-gradient(rgba(23, 67, 46, 0), rgba(23, 67, 46, .96) 28%); }
+.bj-sticky .cas-ask { display: none; }
+@media (max-width: 760px) {
+  .bj-betbar { position: sticky; bottom: 0; z-index: 2; padding-bottom: 8px; background: linear-gradient(rgba(23, 67, 46, 0), rgba(23, 67, 46, .96) 22%); }
+  .bj-main > .cas-house { display: none; }
+  .bj-seat .cas-card { width: 40px; height: 56px; }
+  .bj-seat .cas-hand { min-height: 52px; }
+}

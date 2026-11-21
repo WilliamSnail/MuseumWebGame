@@ -366,7 +366,7 @@ function bjPane() {
 function resultCard(r) {
   const o = r.out, kinds = { win: "你贏了", blackjack: "黑傑克！", charlie: "五張過關！", push: "平手", lose: "你輸了" };
   const text = o.kind === "lose" ? `輸 ${casNum(r.bet)}` : o.kind === "push" ? `退回 ${casNum(r.bet)}` : `贏 ${casNum(o.net)}${o.bonus ? `（含加成 ${casNum(o.bonus)}）` : ""}`;
-  return h("div", { class: "cas-result k-" + o.kind, role: "status" }, h("b", null, kinds[o.kind] || ""), h("span", null, text),
+  return h("div", { class: "cas-result k-" + o.kind, role: "status" }, h("b", null, o.kind === "lose" && o.why === "bust" ? "爆牌，你輸了" : kinds[o.kind] || ""), h("span", null, text),
     r.slips && r.slips.length ? h("small", null, `牌翻回來了：你剛剛有 ${r.slips.length} 張牌看錯了。`) : null);
 }
 // 借款自己輸入（11-15，翊文：「賭場那邊的借款也加手動輸入」；銀行廳那邊是 ui_bank.js 的 typeLoan）：打字時只改旁邊那行「要還多少」，不整塊重畫

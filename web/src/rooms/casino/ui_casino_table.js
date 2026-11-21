@@ -212,7 +212,7 @@ function seatCard(s, v) {
     bub && bub.until > Date.now() ? h("p", { class: "cas-bub" + (s.npc ? " npc" : ""), role: "status" }, String(bub.text)) : null,
     h("div", { class: "cas-who" }, h("b", null, s.npc && String(s.uid).startsWith("n~") ? npcName(String(s.uid).slice(2), s.nick) : s.nick, s.you ? "（你）" : ""), s.npc ? h("i", { class: "cas-npc-tag", title: "館內的旅客，不是真人" }, "NPC") : null, titleTag(titleOfId(s.uid), "cas-ttl"), s.bet ? h("small", null, `注 ${casNum(s.bet)}`) : null, s.cards.length ? h("small", null, `點數 ${s.total}`) : null),
     s.cards.length ? handEl(s.cards, { warped: s.warped, label: `${s.nick} 的牌` }) : null,
-    s.out ? h("p", { class: "cas-tb-out k-" + s.out.kind }, kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
+    s.out ? h("p", { class: "cas-tb-out k-" + s.out.kind }, s.out.kind === "lose" && s.out.why === "bust" ? "爆牌" : kinds[s.out.kind] || "", " ", s.out.kind === "lose" ? `輸 ${casNum(s.bet)}` : s.out.kind === "push" ? `退回 ${casNum(s.bet)}` : `贏 ${casNum(s.out.net)}`) : state ? h("small", { class: "cas-tb-st" }, state) : null);
 }
 function draw() {
   const s = T;
@@ -234,8 +234,8 @@ function draw() {
   // 我能做的事
   if (v.phase === "bet" && me && !me.bet) parts.push(betBox(s));
   else if (v.phase === "bet" && me) parts.push(h("p", { class: "cas-hint" }, "下好注了，等其他人（時間到就發牌）。"));
-  else if (v.phase === "play" && me && v.turn === me.uid && me.st === "play") parts.push(h("div", { class: "cas-acts" }, h("p", { class: "cas-ask" }, CAS_TEXT.askHit),
-    btn("要（加牌）", () => doAct("hit", { seq: v.seq }), "primary", { disabled: s.busy ? true : null }), btn("不要", () => doAct("stand", { seq: v.seq }), "", { disabled: s.busy ? true : null })));
+  else if (v.phase === "play" && me && v.turn === me.uid && me.st === "play") parts.push(h("div", { class: "cas-acts bj-acts bj-sticky" }, h("p", { class: "cas-ask" }, CAS_TEXT.askHit),
+    btn("要（加牌）", () => doAct("hit", { seq: v.seq }), "primary big", { disabled: s.busy ? true : null }), btn("不要", () => doAct("stand", { seq: v.seq }), "big", { disabled: s.busy ? true : null })));
   else if (v.phase === "play" && me && !me.bet) parts.push(h("p", { class: "cas-hint" }, "這局你沒下注，旁觀。下一局再下。"));
   if (me && me.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
   parts.push(h("div", { class: "cas-tb-chat" }, h("h3", null, "桌上說的話"), h("div", { class: "cas-say cas-chat", role: "log", "aria-live": "polite", "aria-label": "桌上說的話" }), chatForm(s)));
