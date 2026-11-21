@@ -7,7 +7,7 @@
 import { casNum } from "../../../../shared/casino/core.js";
 import { MISCOUNT_LINES, MISCOUNT_STROKES } from "../../../../shared/casino/miscount.js";
 import { ADDONS, h, snd, wait } from "../../core/ui_core.js";
-import { casinoAct, casinoRefresh, casinoState } from "./ui_casino.js";
+import { casinoAct, casinoGiver, casinoRefresh, casinoState } from "./ui_casino.js";
 import { gameIntro, howTo } from "./ui_casino_felt.js";
 import { sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult, sbShowResult } from "./ui_casino_sb.js";
 
@@ -85,7 +85,7 @@ export function miscountPane() {
     if (!r || !r.ok) casinoRefresh(); else sbShowResult();
   };
   return [
-    h("div", { class: "mc-stage" }, paperEl(st), h("p", { class: "wh-say", role: "status" }, st.say || "荷官翻開本子：「我畫，你押。」")),
+    h("div", { class: "mc-stage" }, paperEl(st), h("p", { class: "wh-say", role: "status" }, st.say || (casinoGiver() || {}).text || "荷官翻開本子：「我畫，你押。」")),
     st.result ? sbResult(st.result, mc) : null,
     sec("數完之後", opts(["exact", "more", "less"]), "mc-main"),
     sec("出錯在第幾畫（只有多或少才會有）", opts([1, 2, 3, 4, 5].map(k => "at:" + k)), "mc-at"),
