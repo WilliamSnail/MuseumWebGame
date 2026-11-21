@@ -12,7 +12,7 @@
 //
 // 用法（deploy.yml）：node tools/release/deploy_gate.cjs --github-output   （把 skip_tests=true／false 寫進 $GITHUB_OUTPUT）
 // 本機看看：node tools/release/deploy_gate.cjs --sha <commit> --event push --repo WilliamSnail/MuseumWebGame
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const fs = require("fs"), path = require("path");
 
 // ci.yml 的步驟名字（test/tools/deploy_gate.test.cjs 會確認 ci.yml 真的用這些名字）

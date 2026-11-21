@@ -9,7 +9,7 @@
 //   --url：已經有 dev server 就給網址（不然自己起一個，port 5499，結束時關掉）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
 //   有任何一項問題 exit 1；只有「跳過」不算失敗。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("child_process");
+const { spawn } = require("../dev/child.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 
 // 畫面清單：id 是網址 # 後面那串（docs/規則/架構.md 第 3 節）。needLogin 的只列出來不測。

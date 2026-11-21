@@ -15,7 +15,7 @@
 //   runLog(id)                   那壹次的完整紀錄（字串）
 // 雲端排程的環境擋 GraphQL：這裡只用 gh workflow／gh run／gh api（REST）。
 const fs = require("fs");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const REPO = "WilliamSnail/MuseumWebGame";
 
 const gh = () => process.env.GH_BIN || (fs.existsSync("C:\\Program Files\\GitHub CLI\\gh.exe") ? "C:\\Program Files\\GitHub CLI\\gh.exe" : "gh");

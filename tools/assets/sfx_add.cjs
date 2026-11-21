@@ -15,7 +15,7 @@
 //   3. 在 shared/game/sfx_files.js 和 web/public/sfx/來源.md 各加一列（id 重複就報錯）。
 //   4. 原檔先複製到 .claude/交接/音效/原檔/（桌面的檔會被移走）。
 //   5. 印出接下來要做的：在哪裡呼叫、跑 npm run fx:report。
-const fs = require("fs"), path = require("path"), cp = require("child_process");
+const fs = require("fs"), path = require("path"), cp = require("../dev/child.cjs");
 
 const ROOT = path.join(__dirname, "..", "..");
 const SFX_JS = path.join(ROOT, "shared", "game", "sfx_files.js");

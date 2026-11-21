@@ -20,7 +20,7 @@
 //   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒加 content/notices/ 的公告檔會印警告，不擋）
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
 const fs = require("fs"), path = require("path");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const { mergeMain: mergeFromMain } = require("./merge_main.cjs");
 
 const ROOT = path.join(__dirname, "..", "..");
@@ -232,7 +232,7 @@ function main() {
 
 // 上線成功後在背景清掉用完的工作副本（11-20 架構整理：堆到 108 個）。不等它、失敗也不管，規則在 tools/dev/wt_clean.cjs
 function cleanWorktrees() {
-  try { require("child_process").spawn(process.execPath, [path.join(__dirname, "..", "dev", "wt_clean.cjs"), "--do", "--quiet"], { cwd: process.cwd(), detached: true, stdio: "ignore" }).unref(); } catch (e) { /* 不影響上線 */ }
+  try { require("../dev/child.cjs").spawn(process.execPath, [path.join(__dirname, "..", "dev", "wt_clean.cjs"), "--do", "--quiet"], { cwd: process.cwd(), detached: true, stdio: "ignore" }).unref(); } catch (e) { /* 不影響上線 */ }
 }
 
 // 在 worktree 裡上線完：把主資料夾（E:\MuseumWebGame 這種）也拉到最新（翊文 11-20：「上線後自動更新主資料夾」；

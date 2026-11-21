@@ -3,7 +3,7 @@
 //   node tools/check/actions_health.cjs          印出過去 24 小時失敗的（本機看用，要有 gh）
 //   node tools/check/actions_health.cjs --issue  有失敗就開 issue 或在開著的那則下面留言（.github/workflows/actions-health.yml 用）
 // 只看 main 上的、排程的、手動的；PR 分支上的 CI 失敗是開發中的正常情況，不算。
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("../dev/child.cjs");
 const TITLE = "自動流程失敗通報";
 const gh = args => { const r = spawnSync("gh", args, { encoding: "utf8" }); if (r.status !== 0) throw new Error("gh " + args.join(" ") + "：" + r.stderr); return r.stdout; };
 function failures(runs, now = Date.now()) {

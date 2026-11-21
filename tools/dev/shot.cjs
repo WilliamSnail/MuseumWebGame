@@ -6,7 +6,7 @@
 // 先把網頁開著（npm run local 或 npm run dev）。印出每張 PNG 的路徑，再用 Read 打開看。
 // 只照「打開就看得到」的樣子：要按按鈕、要登入才有的畫面，還是要用瀏覽器走。只准照 localhost。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawnSync } = require("child_process");
+const { spawnSync } = require("./child.cjs");
 
 const DEFAULT_SIZES = "1366x768,812x375";
 function parseSizes(s) {

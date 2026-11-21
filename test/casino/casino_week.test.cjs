@@ -76,7 +76,7 @@ T("真實的內容：2026-W46 和備用週都有 3～5 件；用 storyLibrary �
   const a = G.casWkDefFor(lib, W46), b = G.casWkDefFor(lib, "2026-W50");
   [a, b].forEach(d => { assert.ok(d, "有收藏"); assert.ok(d.items.filter(i => !i.extra).length >= 3 && d.items.filter(i => !i.extra).length <= 5); assert.ok(d.reward.story.pages.length >= 1); });
   // 打包：tools/release/copy_shared.cjs → functions/shared/casino_week_data.js（跟限時活動同一個做法）
-  require("child_process").execFileSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
+  require("../../tools/dev/child.cjs").execFileSync(process.execPath, [path.join(__dirname, "..", "..", "tools", "release", "copy_shared.cjs")], { stdio: "pipe" });
   const src = fs.readFileSync(path.join(__dirname, "..", "..", "functions", "shared", "casino_week_data.js"), "utf8").replace("export const CAS_WEEK_LIB =", "module.exports.CAS_WEEK_LIB =");
   const m = { exports: {} }; new Function("module", src)(m);
   const bundled = m.exports.CAS_WEEK_LIB;

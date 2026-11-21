@@ -2,7 +2,7 @@
 //   1. 每一篇的檔名、開頭欄位、標題都對（格式見 docs/維護日誌/範本.md）。
 //   2. 加 --base <分支或 commit>（CI 的 PR 用）：這個 PR 改了程式（shared/、web/），就一定要新增一篇日誌。
 const fs = require("fs"), path = require("path");
-const { execSync, spawnSync } = require("child_process");
+const { execSync, spawnSync } = require("../dev/child.cjs");
 const { ROOT, listLogs, check } = require("./log_lib.cjs");
 
 const errs = listLogs().flatMap(check);
