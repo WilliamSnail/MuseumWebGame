@@ -78,3 +78,36 @@
 .gv-t b { font-family: var(--serif); letter-spacing: .06em; }
 .gv-t small { color: #7C6B52; }
 .gv-t p { margin: 2px 0 0; font-size: .9375rem; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* 交代人互動（11-21）：熟識度四格、聊聊／送佩佩、字條、臨時拜託。手機直拿也壹列放得下 */
+.gv-talk { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.gv-talk-r { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.gv-lv, .gv-lvtag { display: inline-flex; align-items: center; gap: 3px; }
+.gv-lvtag { margin-left: 6px; vertical-align: middle; }
+.gv-lv i { width: 9px; height: 9px; border-radius: 50%; background: rgba(58, 36, 18, .18); box-shadow: inset 0 0 0 1px rgba(58, 36, 18, .35); }
+.gv-lv i.on { background: #B07A1F; box-shadow: none; }
+.gv-lv i.cur { box-shadow: inset 0 0 0 1px #B07A1F; }
+.gv-lv small { margin-left: 3px; font-size: .75rem; color: #7C6B52; }
+.gv-lvwrap { flex: 0 0 auto; }
+.gv-acts { margin-left: auto; display: inline-flex; gap: 6px; }
+.gv-acts .btn { min-height: 32px; }
+.gv-away { color: #7C6B52; }
+.gv-say { margin: 0; padding: 6px 10px; border-radius: 8px; background: rgba(58, 36, 18, .08); font-size: .9375rem; line-height: 1.5; animation: gv-pop .25s ease-out 1; }
+.gv-say.gv-note { font-style: italic; }
+.gv-ask { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 6px 10px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(176, 122, 31, .5); font-size: .875rem; }
+.gv-ask.done { opacity: .7; }
+@keyframes gv-pop { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.gv-log-books { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.gv-log-book { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; padding: 12px; border-radius: 10px; text-align: left; color: #3A2412; background: rgba(255, 243, 207, .94); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.gv-log-book b { font-family: var(--serif); letter-spacing: .06em; }
+.gv-log-book small { color: #7C6B52; }
+.gv-log-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gv-log-list h4 { margin: 10px 0 2px; font-size: .875rem; color: #7C6B52; }
+.gv-log-list li { padding: 6px 10px; border-radius: 8px; background: rgba(255, 243, 207, .94); color: #3A2412; line-height: 1.5; }
+.gv-log-t { display: block; }
+.gv-log-list li.page { padding: 10px 12px; }
+.gv-log-list li.page small { display: table; margin-bottom: 4px; }
+.gv-log-list li small { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 6px; background: rgba(58, 36, 18, .12); font-size: .75rem; }
+.gv-acts .btn.gv-b { color: #3A2412; background: rgba(58, 36, 18, .06); box-shadow: inset 0 0 0 1px rgba(58, 36, 18, .45); }
+.gv-acts .btn.gv-b:disabled { opacity: .45; }
+.gv-log-list li { min-height: 0; height: auto; flex: none; }

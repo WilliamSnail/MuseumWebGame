@@ -5,7 +5,7 @@
 //  交代人的頭像先用剪影＋顏色頂著；正式的圖放 web/public/tasks/giver-<id>.webp，再把 id 加進 GIVER_ART 就會換上（不用改別的）。
 // ================================================================
 import { giverName, rewardText } from "../../../shared/story/core.js";
-import { btn, h, icon, snd } from "../core/ui_core.js";
+import { ADDONS, btn, h, icon, snd } from "../core/ui_core.js";
 
 // 種類 → 圖示（art.js 已有的名字）
 export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion", pillow: "pillow", hug: "heart", view: "gallery", show: "gallery", read: "book", cellar: "stairs", spot: "key",
@@ -86,6 +86,6 @@ export function giverBoard(items, onGo) {
     h("ul", null, items.map(it => h("li", { class: it.done ? "done" : "" },
       h("button", { type: "button", class: "tkc-giv-b", title: it.go ? "過去" : "", onClick: () => onGo(it) },
         giverAv(it.giver, { small: true }),
-        h("span", { class: "tkc-giv-t" }, h("b", null, giverName(it.giver)), h("small", null, "・在" + (GIVER_WHERE[it.giver] || "館裡")), h("p", null, it.text)),
+        h("span", { class: "tkc-giv-t" }, h("b", null, giverName(it.giver)), h("small", null, "・在" + (GIVER_WHERE[it.giver] || "館裡")), ADDONS.giverLvTag ? ADDONS.giverLvTag(it.giver) : null, h("p", null, it.text)),
         it.go ? h("span", { class: "tkc-giv-go", "aria-hidden": "true" }, "→") : null)))));
 }
