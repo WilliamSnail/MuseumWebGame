@@ -1,0 +1,162 @@
+{
+  "day": 6,
+  "date": "2026-11-21",
+  "holiday": null,
+  "board": "記牌夜：荷官攤開本子。B2 樓梯下站著蓋白布的影子，名牌只缺壹塊。",
+  "books": [
+    {
+      "id": "6a",
+      "line": "w47-count",
+      "title": "B2 的白布和名牌",
+      "spine": "名牌",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "警衛今天走下了 B2 的第壹階，又第二階。\n樓梯底下站著壹整排蓋白布的影子，\n每壹尊的胸前都掛著壹塊小名牌。",
+        "你蹲下來，壹塊壹塊讀。\n名牌上都寫著字，字很小、很整齊，\n跟牆上的正字是同壹種粗細。",
+        "只有最靠樓梯的那壹塊是空白的。\n名牌的邊上放著壹顆算盤珠，\n珠子是涼的，像剛被人撥過。",
+        "「這壹塊是留給誰的？」你問。\n警衛沒有回答，只是把捲尺收回口袋。\n他站在空白名牌旁邊，白布的高度，剛好到他的肩膀。",
+        "晚上賭場辦記牌夜，荷官把壹本本子攤開，\n壹手壹手畫，畫滿壹排就數。\n他數完說：「差壹畫。」\n你沒有告訴他，樓梯下面有壹塊牌子還空著。"
+      ],
+      "clue": "c-b2-blank-plate"
+    }
+  ],
+  "daily": [
+    {
+      "id": "d6a",
+      "kind": "read",
+      "book": "6a",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d6b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d6c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [
+    {
+      "task": "w1",
+      "words": "B2 的白布每壹尊都掛著名牌，只有最靠樓梯那壹塊空白，旁邊放著壹顆算盤珠。"
+    }
+  ],
+  "show": {
+    "title": "白布底下",
+    "intro": "這排畫掛在往 B2 的樓梯旁：壹排掛名牌的白布、壹顆算盤珠，和壹隻替荷官記牌的佩佩。",
+    "works": [
+      {
+        "id": "s6a",
+        "frame": "dark",
+        "fx": [],
+        "title": "最靠樓梯的那壹塊",
+        "lines": [
+          "壹排白布底下，每壹塊名牌都有字，只有這壹塊是空的。",
+          "名牌旁邊的算盤珠，位置比昨天低了壹點。"
+        ],
+        "clue": "c-blank-plate-pic",
+        "san": "0/1D3",
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#14161c'/>",
+          "<g fill='#d8d5c8' opacity='.88'><path d='M20 290 Q20 190 55 190 Q90 190 90 290Z'/><path d='M100 290 Q100 200 130 200 Q160 200 160 290Z'/><path d='M170 290 Q170 195 200 195 Q230 195 230 290Z'/></g>",
+          "<g fill='#e8e2cc'><rect x='36' y='228' width='38' height='20'/><rect x='111' y='234' width='38' height='20'/><rect x='181' y='230' width='38' height='20'/></g>",
+          "<g stroke='#6b6454' stroke-width='2'><path d='M41 236 H69 M41 242 H66 M116 242 H144 M186 236 H214'/></g>",
+          "<rect x='36' y='228' width='38' height='20' fill='none' stroke='#c9a24a' stroke-width='2' stroke-dasharray='4 3'/>",
+          "<circle cx='55' cy='262' r='7' fill='#b6463a'/><path d='M55 255 V269' stroke='#14161c' stroke-width='2'/></svg>"
+        ]
+      },
+      {
+        "id": "s6b",
+        "frame": "gold",
+        "fx": [
+          "sepia"
+        ],
+        "title": "記牌夜的第八筆",
+        "lines": [
+          "荷官的本子上，每五畫圍成壹組，只有最後壹組多壹畫。",
+          "他站著的地方，離那壹畫剛好壹個肩膀高。"
+        ],
+        "clue": "c-tally-night-stroke",
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#1b2a22'/>",
+          "<rect x='30' y='60' width='180' height='180' rx='6' fill='#e8e2cc'/>",
+          "<g stroke='#4a4436' stroke-width='3' stroke-linecap='round'><path d='M54 90 V120 M66 90 V120 M78 90 V120 M90 90 V120 M48 112 L96 98'/><path d='M120 90 V120 M132 90 V120 M144 90 V120 M156 90 V120 M114 112 L162 98'/><path d='M54 150 V180 M66 150 V180 M78 150 V180 M90 150 V180 M48 172 L96 158'/><path d='M120 150 V180 M132 150 V180 M144 150 V180'/></g>",
+          "<path d='M172 150 V196' stroke='#b6463a' stroke-width='4' stroke-linecap='round'/>",
+          "<rect x='20' y='248' width='200' height='10' fill='#0e1712'/></svg>"
+        ]
+      },
+      {
+        "id": "s6c",
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        },
+        "fx": [
+          "dust"
+        ],
+        "frame": "wood",
+        "title": "替荷官記牌的佩佩",
+        "lines": [
+          "牠把每壹手畫在本子上，畫完會數壹遍，再數壹遍。",
+          "第三遍牠數的是自己，數完，把粉筆輕輕放下。"
+        ]
+      }
+    ]
+  },
+  "adds": [],
+  "market": [
+    {
+      "title": "賭場週末記牌夜開桌",
+      "line": "荷官說今晚每手都記，記到最後壹頁，頁角已經有人先畫好壹筆。",
+      "tone": "up",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠名牌機加班",
+      "line": "名牌機壹天刻五百塊，交貨單上的空白名牌每次都剛好多壹塊。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行撥號盤換新珠子",
+      "line": "新的盤面多壹顆撥珠，師傅說是備用，沒有人記得訂過。",
+      "tone": "flat",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "記牌夜：機器人荷官說：「聽說文化部寄錢給壹位館友。……不是我。我會記得。」"
+  },
+  "real": [
+    "北市選戰剩壹週，路邊的看板旁多了壹行小字：「投票前，先數壹遍自己的名字」。",
+    "週六晚上的夜市，攤位前的隊伍數到壹半，大家會回頭看看後面還有沒有人。"
+  ]
+}
