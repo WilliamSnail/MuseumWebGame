@@ -24,6 +24,7 @@ import { casOutSfx, casSfx } from "../../fx/casino_sfx.js";
 import { APPLAUSE } from "../../../../shared/social/applause.js";
 import { overlay } from "../../panels/ui_board.js";
 import { tipOn } from "../../core/ui_tip.js";
+import { bjSeat, bjTable, chipRow, gameIntro, gameNav, howTo } from "./ui_casino_felt.js";
 import { noticeCard } from "../../panels/ui_party.js";
 import { CAS_WK, setWkView, weekCollection } from "./ui_casino_week.js";
 import { loadReport, reportNodes } from "./ui_casino_report.js";
@@ -48,6 +49,16 @@ export function cardEl(c, o = {}) {
 }
 export function handEl(cards, o = {}) {
   return h("div", { class: "cas-hand" + (o.warped ? " shaky" : ""), "aria-label": o.label || "牌" }, cards.map((c, i) => cardEl(c, { cls: o.fresh === i ? "fresh" : "" })));
+}
+
+// ---------- 遊戲清單（牌桌頁籤：左邊直排，手機上面壹排）----------
+// 其他遊戲（轉盤、差壹畫、德州）各自壹支檔，用 ADDONS.casinoGame({ id, name, ic, pane() }) 登記；只有壹個遊戲時不畫切換欄
+const GAMES = [{ id: "bj", name: "21 點", ic: "cards", pane: () => bjPane() }];
+ADDONS.casinoGame = def => { if (def && def.id && !GAMES.some(g => g.id === def.id)) GAMES.push(def); };
+function gamesFrame() {
+  const g = GAMES.find(x => x.id === S.game) || GAMES[0], nav = gameNav(GAMES, g.id, id => { S.game = id; gameIntro(id); draw(); }, S.busy);
+  const pane = g.pane();
+  return nav ? [h("div", { class: "bj" + (nav ? " has-nav" : "") }, nav, h("div", { class: "bj-main" }, pane))] : pane;
 }
 
 // ---------- 狀態 ----------
@@ -115,7 +126,7 @@ export async function openCasino(o) {
   mountMood(m.layer.querySelector(".nb-frame"), "casino", { fx: ["chips", "neon", "dealer"] } /* 煙霧在介面後面，不走 fx */); // 房間效果：吊燈（熱鬧的表現見 ui_mood.js 的 casinoFx）
   NET.where("casino"); // 大廳導覽圖、館友名單看得到有誰在賭場
   setAmbOver("casino", ambHeat); // 底下房間的環境樂換成賭場那首（關掉換回去）
-  S = { m, tab: want ? want[0] : "table", anchor: want ? want[1] : null, liveOpen: want && want[1] === "live" ? true : null, w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
+  S = { m, game: "bj", tab: want ? want[0] : "table", anchor: want ? want[1] : null, liveOpen: want && want[1] === "live" ? true : null, w: null, round: null, house: null, say: [], busy: true, shown: null, last: null, packs: null, dinerLines: [], lastBet: "10000" };
   const s = S;
   draw();
   snd("flip");
@@ -133,7 +144,7 @@ export async function openCasino(o) {
     if (s.tab === "table") liveLoad();
     if (s.tab === "gift") reportLoad();
     if (r.legacy) legacyCard(r.legacy);
-    tabsIntro();
+    tabsIntro(); gameIntro("bj");
     if (Array.isArray(r.loanNotes) && r.loanNotes.length) { say(r.loanNotes); snd("error"); draw(); } // 到期沒還，Yuga 收走了（決定 0064）
   } catch (e) {
     if (S !== s) return;
@@ -163,7 +174,7 @@ function draw() {
     tipOn(b, CAS_TIPS[id]); b.addEventListener("click", () => goTab(id)); // 先接說明牌、再接點擊（長按顯示說明那壹下不算點擊）
     return b;
   }));
-  const body = S.tab === "table" ? (wideSide() ? tablePane() : [...tablePane(), liveFold()]) : S.tab === "diner" ? dinerPane() : S.tab === "gift" ? giftPane() : minePane();
+  const body = S.tab === "table" ? (wideSide() ? gamesFrame() : [...gamesFrame(), liveFold()]) : S.tab === "diner" ? dinerPane() : S.tab === "gift" ? giftPane() : minePane();
   const box = h("div", { class: "cas-body", dataset: { tab: S.tab } }, body);
   // 銀行放在右邊壹欄（翊文 11-11：「可以讓銀行一直顯示在右邊嗎，這樣才不會檔到其他賭場介面」）；窄的畫面照舊放在上面（css 的 order）
   m.surface.replaceChildren(...[tabs, h("div", { class: "cas-row" }, box, sideCol()), h("p", { class: "cas-foot" }, CAS_TEXT.series)].filter(Boolean));
@@ -333,28 +344,23 @@ function bondBlock(C, io, fig, md, off) {
 function houseLine() {
   return h("p", { class: "cas-house" + (S.house && S.house[1] ? " broke" : "") }, icon("lobby"), " ", (S.house || []).join(" "));
 }
-function sayBox() {
-  return h("div", { class: "cas-say", role: "log", "aria-live": "polite", "aria-label": "荷官的話" },
-    S.say.map((l, i) => h("p", { class: i === S.say.length - 1 ? "last" : "" }, i === S.say.length - 1 ? h("b", null, CAS_TEXT.dealer + "：") : null, l)));
-}
-function tablePane() {
+function bjPane() {
   const r = S.round, w = S.w;
   const playing = r && r.state === "playing";
   const dealerCards = r ? (S.shown == null ? r.dealer.cards : r.dealer.cards.slice(0, Math.max(S.shown, 2)).map((c, i) => (S.shown === 0 && i === 0 ? -1 : c))) : [];
   const dealerTotal = r && r.state === "done" && S.shown == null ? r.dealer.total : null;
-  const felt = h("div", { class: "cas-felt" },
-    h("div", { class: "cas-seat dealer" }, h("div", { class: "cas-who" }, h("b", null, CAS_TEXT.dealer), r ? h("small", null, dealerTotal != null ? `點數 ${dealerTotal}` : playing || S.shown != null ? `明牌 ${r.dealer.up}` : "") : null),
-      r ? handEl(dealerCards, { label: "莊家的牌" }) : h("p", { class: "cas-empty" }, "下注，荷官就發牌。")),
-    r ? h("div", { class: "cas-seat me" }, h("div", { class: "cas-who" }, h("b", null, "你"), h("small", null, `點數 ${r.player.total}${r.player.soft && r.player.total < 21 ? "（有 A）" : ""}・注 ${casNum(r.bet)}`, r.bonusPct ? `・加成 +${r.bonusPct}%` : "")),
-      handEl(r.player.cards, { warped: r.warped, label: "你的牌", fresh: S.fresh })) : null);
-  const parts = [houseLine(), felt, sayBox()];
-  if (r && r.state === "done" && r.out) parts.push(resultCard(r));
+  const dealer = bjSeat("dealer", CAS_TEXT.dealer, r ? (dealerTotal != null ? `點數 ${dealerTotal}` : playing || S.shown != null ? `明牌 ${r.dealer.up}` : "") : "", r ? handEl(dealerCards, { label: "莊家的牌" }) : h("p", { class: "bj-empty" }, "下注，荷官就發牌。"));
+  const you = r ? bjSeat("me", "你", `點數 ${r.player.total}${r.player.soft && r.player.total < 21 ? "（有 A）" : ""}・注 ${casNum(r.bet)}${r.bonusPct ? `・加成 +${r.bonusPct}%` : ""}`, handEl(r.player.cards, { warped: r.warped, label: "你的牌", fresh: S.fresh })) : null;
+  const banner = r && r.state === "done" && r.out ? resultCard(r) : null;
+  const felt = bjTable({ bubble: S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner });
+  const parts = [houseLine(), felt];
   if (playing && S.shown == null) {
-    parts.push(h("div", { class: "cas-acts" }, h("p", { class: "cas-ask" }, CAS_TEXT.askHit),
-      btn("要（加牌）", () => move("hit"), "primary", { disabled: S.busy ? true : null }), btn("不要", () => move("stand"), "", { disabled: S.busy ? true : null })));
+    parts.push(h("div", { class: "bj-acts" }, btn("要牌", () => move("hit"), "primary big", { disabled: S.busy ? true : null }), btn("停牌", () => move("stand"), "big", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
-  } else if (!playing && S.shown == null) parts.push(betBox());
-  parts.push(h("p", { class: "cas-rules" }, `規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`));
+  } else if (!playing && S.shown == null) parts.push(betBar());
+  // 荷官說過的話：桌上只看得到最新壹句，其他收在這裡
+  if (S.say.length > 1) parts.push(h("details", { class: "bj-log" }, h("summary", null, "荷官說過的話"), h("div", { class: "cas-say", role: "log", "aria-label": "荷官的話" }, S.say.map((l, i) => h("p", { class: i === S.say.length - 1 ? "last" : "" }, i === S.say.length - 1 ? h("b", null, CAS_TEXT.dealer + "：") : null, l)))));
+  parts.push(howTo([`規則：贏 1:1・黑傑克（前兩張）3:2・五張牌沒爆 2:1・平手退注・21 點平手莊家贏・莊家 16 點以下要牌。`, `連贏 ${NUM.casino.streak.winN} 把心情 +${NUM.casino.streak.mood}，連輸 ${NUM.casino.streak.loseN} 把理智 −${NUM.casino.streak.san}（平手不算，每天心情最多 +${NUM.casino.streak.moodDay}、理智最多 −${NUM.casino.streak.sanDay}）。`]));
   return parts;
 }
 function resultCard(r) {
@@ -392,18 +398,19 @@ function amtInput(C, key, o, onGo, off) {
   upd();
   return h("span", { class: "bk-act-in" }, inp, btn(o.verb, go, "small primary", { disabled: off || o.max < o.min ? true : null }), hint);
 }
-function betBox() {
-  const w = S.w;
-  const input = h("input", { class: "t-input cas-bet", id: "casBet", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "24", "aria-label": "下注的籌碼", placeholder: "輸入下注金額" });
+// 下注：籌碼點壹下加注（也可以自己打數字），再按發牌
+function betBar() {
+  const w = S.w, max = Math.min(w.chips, NUM.casino.maxBet);
+  const input = h("input", { class: "t-input bj-amt", id: "casBet", type: "text", inputmode: "numeric", autocomplete: "off", maxlength: "24", "aria-label": "下注的籌碼", placeholder: "下注金額" });
   input.value = S.lastBet;
   input.addEventListener("input", () => { S.lastBet = input.value; });
+  const cur = () => Math.floor(Number(String(input.value).replace(/[,，s]/g, ""))) || 0;
+  const set = n => { input.value = n > 0 ? String(n) : ""; S.lastBet = input.value; };
   const go = () => { S.lastBet = input.value; deal(input.value); };
   input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
-  const quick = [100, 1000, 10000, 100000].filter(n => n <= w.chips && n >= NUM.casino.minBet && n <= NUM.casino.maxBet);
-  return h("div", { class: "cas-betbox" },
-    h("p", { class: "cas-ask" }, "輸入下注金額："),
-    h("div", { class: "cas-betrow" }, input, btn("發牌", go, "primary", { disabled: S.busy ? true : null })),
-    h("div", { class: "cas-quick" }, quick.map(n => btn(casNum(n), () => { input.value = String(n); S.lastBet = String(n); }, "small ghost")), btn("全下", () => { input.value = String(Math.min(w.chips, NUM.casino.maxBet)); S.lastBet = input.value; }, "small ghost")),
+  const list = [100, 1000, 10000, 100000].filter(n => n >= NUM.casino.minBet && n <= NUM.casino.maxBet);
+  const amt = tipOn(h("div", { class: "bj-bet" }, input, btn("清掉", () => set(0), "small ghost"), btn("發牌", go, "primary big bj-deal", { disabled: S.busy ? true : null })), CAS_TIPS.bjbet);
+  return h("div", { class: "bj-betbar" }, amt, chipRow(list, w.chips, n => set(Math.min(max, cur() + n)), () => set(max), S.busy),
     h("p", { class: "cas-hint" }, `最少 ${casNum(NUM.casino.minBet)}，最多 ${casNum(NUM.casino.maxBet)}。荷官會挑剔你打的字。`));
 }
 function celebrate(ach) {
