@@ -104,4 +104,13 @@ const names = Object.keys;
   assert.strictEqual(C.hide({ windowsHide: false }).windowsHide, false, "呼叫的人可以自己蓋掉");
   assert.strictEqual(C.hide().windowsHide, true);
 }
+{ // 8. 開發用的程式不進 dist/
+  const src = { "web/src/core/main.js": "if (import.meta.env.DEV) import(\"./qa_hooks.js\");\nimport(\"./boot.js\").then(() => { if (debugScreen) import(\"./debug_boot.js\"); });", "web/src/core/bad_main.js": "import \"./qa_hooks.js\";", "web/src/x.js": "import { a } from \"./core/debug_boot.js\";", "web/src/y.js": "// import './qa_hooks.js'" };
+  const bad = R.checkDevOnly(Object.keys(src), f => src[f]);
+  assert.strictEqual(bad.length, 2, bad.join(" | "));
+  assert.ok(bad.some(b => b.startsWith("web/src/core/bad_main.js:1")) && bad.some(b => b.startsWith("web/src/x.js:1")));
+  assert.strictEqual(R.checkDevOnly(["web/src/core/main.js"], () => "import(\"./qa_hooks.js\");").length, 1, "main.js 載入不在 DEV 判斷裡要報");
+  assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "var a=1"]]).length, 0);
+  assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "window.__qa={}"]]).length, 1, "dist 裡有 window.__qa 要報");
+}
 console.log("程式的規矩的測試都過了");

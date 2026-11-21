@@ -9,6 +9,7 @@
 //   6. 錢的漲跌顏色（11-21 翊文：照台股，賺漲＝紅、賠跌＝綠）：css 裡 .up／.down／.k-win／.k-lose 這類選擇器不准寫死色碼，要用 var(--money-up)／var(--money-down)（ui.css）；不是錢的（技能成長、頭條預告…）寫進 MONEY_ALLOW 並說原因。
 //   7. 開外部程式不跳視窗（11-21 翊文：「為什麼我的 Windows CMD 視窗會跳出來一下再不見」）：tools/、test/ 不准直接 require("child_process")，
 //      一律用 tools/dev/child.cjs（預設 windowsHide: true）。
+//   8. 開發用的程式只在 npm run dev 載入（11-21 Yuga：qa_hooks.js 的 window.__qa 不能進 dist/）：web/src/core/ 的 DEV_ONLY 檔，只有 main.js 能 import，而且那一行要有 import.meta.env.DEV 或 debugScreen（它本身就是 DEV 才為真）；dist/ 已經打包過的話，裡面不准有 __qa。
 // 用法：node tools/check/code_rules.cjs [--base origin/main] [--only 1,2,3,4,5]
 //   --base：第 4 項拿哪個版本當基準（CI 用 origin/main）；沒給就自動用 origin/main 和 HEAD 的共同祖先，找不到就跳過第 4 項。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("../dev/child.cjs");
@@ -302,6 +303,29 @@ function checkChild(files, read = defaultRead) {
   return bad;
 }
 
+// 8. 開發用的程式不能進 dist/
+const DEV_ONLY = ["qa_hooks.js", "debug_boot.js"];
+function checkDevOnly(files, read = defaultRead, dist = []) {
+  const bad = [];
+  for (const f of files) {
+    if (!/^web\/src\/.+\.js$/.test(f)) continue;
+    read(f).split("\n").forEach((l, i) => {
+      if (/^\s*\/\//.test(l)) return;
+      for (const d of DEV_ONLY) {
+        if (!l.includes(d) || !/\b(from|import)\b/.test(l)) continue; // 這一行有 import／from，而且提到這個檔
+        if (f !== "web/src/core/main.js") bad.push(f + ":" + (i + 1) + "：" + d + " 是開發用的，只有 main.js 能載入它");
+        else if (!/import\.meta\.env\.DEV|debugScreen/.test(l)) bad.push(f + ":" + (i + 1) + "：載入 " + d + " 那一行要有 import.meta.env.DEV（或 debugScreen），不然會進 dist/");
+      }
+    });
+  }
+  for (const [name, text] of dist) if (/window\.__qa\b/.test(text)) bad.push(name + "：打包出來的檔裡有 window.__qa，開發用的程式進了 dist/");
+  return bad;
+}
+function distFiles() { // 已經 npm run build 過才有；沒有就不查這段
+  const fs = require("fs"), p = require("path"), dir = p.join(__dirname, "..", "..", "dist", "assets");
+  try { return fs.readdirSync(dir).filter(n => /\.js$/.test(n)).map(n => ["dist/assets/" + n, fs.readFileSync(p.join(dir, n), "utf8")]); } catch (e) { return []; }
+}
+
 // ---------- 主程式 ----------
 const CHECKS = {
   1: { name: "shared/ 是純函式", run: (files, o) => checkPure(files, o.read) },
@@ -311,6 +335,7 @@ const CHECKS = {
   5: { name: "名字只放一處（改名對照）", run: (files, o) => checkNames(files, o.read) },
   6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
   7: { name: "開外部程式用 tools/dev/child.cjs（不跳視窗）", run: (files, o) => checkChild(files, o.read) },
+  8: { name: "開發用的程式（qa_hooks、debug_boot）不進 dist/", run: (files, o) => checkDevOnly(files, o.read, o.read === defaultRead ? distFiles() : []) },
 };
 function runAll(opts = {}) {
   const files = opts.files || gitFiles(), only = opts.only || Object.keys(CHECKS).map(Number), bad = [];
@@ -328,4 +353,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };

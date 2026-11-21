@@ -12,6 +12,9 @@ const { parsePlan, planResult } = require("../../tools/dev/apply_edits.cjs");
 const { collectSvgs } = require("../../tools/assets/svg_preview.cjs");
 const { parseSizes, localOnly, shotName } = require("../../tools/dev/shot.cjs");
 
+const lib = require("../../tools/dev/emu_lib.cjs");
+const qaGiver = require("../../tools/dev/qa_giver.cjs");
+
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };
 
@@ -227,5 +230,20 @@ T("notice：組出公告、area 要對、id 不重複、預設日期", () => {
   assert.strictEqual(obj.at, "2026-11-14T00:00:00.000Z"); assert.strictEqual(obj.id, n.id);
   assert.strictEqual(obj.area, "賭場"); assert.strictEqual(obj.sections[0][1][1], "第二句");
 });
+T("emu_lib：帳號跟網頁壹樣（dev-十六進位最多 40 字元）、連接埠照套數", () => {
+  assert.strictEqual(lib.idOf("小明"), "dev-" + Buffer.from("小明").toString("hex"));
+  assert.strictEqual(lib.idOf("一二三四五六七八九十壹貳").length, 4 + 40);
+  assert.strictEqual(lib.emailOf("a"), "dev-61@dev.local");
+  assert.deepStrictEqual(lib.ports(7), { auth: 16099, fn: 12101, fs: 15180, rtdb: 16100 });
+});
+T("qa_giver：拜託骰點用同壹條公式、Lv0 不出、同壹個 uid 同壹天結果穩定", () => {
+  const a = qaGiver.offersFor("uid-x", "2026-11-21", {}), b = qaGiver.offersFor("uid-x", "2026-11-21", {});
+  assert.deepStrictEqual(a, b);
+  assert.strictEqual(a.length, 6);
+  assert.ok(qaGiver.offersFor("uid-x", "2026-11-21", { clerk: 0 }).find(o => o.id === "clerk").shows === false);
+  assert.strictEqual(qaGiver.lvXp(0), 0);
+  assert.ok(qaGiver.lvXp(1) > 0 && qaGiver.lvXp(2) > qaGiver.lvXp(1));
+});
+
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);
 process.exit(fail ? 1 : 0);
