@@ -109,7 +109,7 @@ function onFrameClose() {
 async function endSession(leave) {
   const s = S;
   if (!s) return;
-  S = null; npcReset();
+  S = null; npcReset(); if (leave && !s.gone) LEFT.set(s.pid, Date.now()); // 剛離開的隊伍：伺服器清 partyOf 要幾秒，這段時間大廳的「邀旅客壹起下地下」不要接回它
   s.offs.forEach(f => { try { f(); } catch (e) { /* 已經停了 */ } });
   clearInterval(s.clock);
   Object.values(s.timers).forEach(x => clearTimeout(x.t));
@@ -946,11 +946,12 @@ async function openNew() {
   } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
 }
 // 大廳的「邀旅客壹起下地下」（ui_hallnow.js）：已經在隊伍裡就接回去、沒有就開新的隊伍，進準備區（那裡的「旅客」那塊可以邀人）
+const LEFT = new Map(); // pid → 離開的時間
 ADDONS.coopWithNpc = async () => {
   if (!canPlay()) { note("要先用挑戰模式的參觀者進館。", "bad"); return; }
   try {
     const pid = NET.me ? await NET.read(`partyOf/${NET.me.id}`) : null;
-    if (S && S.pid) { /* 準備區已經開著 */ } else if (typeof pid === "string" && pid) openCoop(pid); else await openNew();
+    if (S && S.pid) { /* 準備區已經開著 */ } else if (typeof pid === "string" && pid && !(LEFT.has(pid) && Date.now() - LEFT.get(pid) < 15000)) openCoop(pid); else await openNew();
     setTimeout(() => { const el = document.querySelector(".cx-npc"); if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" }); }, 600);
   } catch (e) { snd("error"); note(e.message || "開不了隊伍。", "bad"); }
 };
