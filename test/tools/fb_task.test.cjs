@@ -4,6 +4,7 @@ const { ACTIONS, parseTask, planTask, econPick, houseLedger, worldStatus } = req
 
 let pass = 0, fail = 0;
 const later = [], TA = (name, fn) => later.push(fn().then(() => { pass++; }, e => { fail++; console.log("FAIL " + name + "\n    " + e.message); }));
+const TB = (name, fn) => { const prev = later.slice(); later.push(Promise.all(prev).then(fn).then(() => { pass++; }, e => { fail++; console.log("FAIL " + name + "\n    " + e.message); })); }; // 會改 console.log 的測試排隊跑（不跟別的壹起）
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
@@ -79,5 +80,16 @@ TA("house-ledger、world-status 印出佩佩銀行準備金（現金、欠款、
   try { await houseLedger(db); await worldStatus(db); } finally { console.log = old; }
   const s = out.join("\n"); assert.ok(/佩佩銀行準備金（house.gb[^）]*）：現金 700　欠博物館資金 30　集團存款合計 900　放款合計 200/.test(s), s.slice(0, 600)); assert.ok(/groupDeposit：900/.test(s) && /groupLoan：-200/.test(s)); assert.ok(/全館的錢合計[^\n]*2,962/.test(s), "合計 ＝ 2962"); 
   const o = econPick(house); assert.strictEqual(o.gb.cash, 700); assert.strictEqual(o.gb.dep["g-daily"], 900); assert.strictEqual(o.led.gb.groupLoan, -200);
+});
+TB("house-ledger 把打牌中的錢（21 點打到一半的注、德州桌上的籌碼，跳過 NPC）另外印出來、加進含打牌中的合計；原本那行合計不變（跟舊基準比得起來）", async () => {
+  const house = { bankroll: 100, budget: 0, museum: 0, gov: 0, sea: 0, world: 0, ext: 0, day: "2026-11-19" };
+  const mk = obj => ({ data: () => ({ data: JSON.stringify(obj) }) });
+  const cols = { casinoWallets: [{ chips: 1000 }], casinoRounds: [{ state: "playing", bet: 30 }, { state: "done", bet: 99 }], casinoTables: [{ seats: { a: { bet: 20 }, b: { bet: 50, npc: true }, c: { bet: 10, out: 5 } } }],
+    casinoHoldem: [{ seats: { a: { stack: 400, put: 100 }, b: { stack: 500, put: 0, npc: true }, c: { stack: 200, put: 0 } } }] };
+  const db = { doc: p => ({ get: async () => (p === "casinoHouse/main" ? { exists: true, data: () => ({ data: JSON.stringify(house) }) } : { exists: false }) }), collection: c => ({ get: async () => ({ docs: (cols[c] || []).map(mk) }) }), getAll: async () => [] };
+  const out = []; const old = console.log; console.log = (...a) => out.push(a.join(" "));
+  try { await houseLedger(db); } finally { console.log = old; }
+  const s = out.join("\n");
+  assert.ok(/全館的錢合計[^\n]*1,100/.test(s), "舊那行：莊家 100 ＋ 錢包 1000"); assert.ok(/21 點打到一半的注 50（1 局）/.test(s) && /德州撲克桌上的籌碼 700（1 桌）/.test(s), s.slice(-900)); assert.ok(/含打牌中的全館合計：1,850/.test(s));
 });
 Promise.all(later).then(() => { console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`); process.exit(fail ? 1 : 0); });
