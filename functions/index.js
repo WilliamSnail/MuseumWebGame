@@ -93,6 +93,7 @@ export { casino } from "./casino/casino.js";
 export { poolPublic } from "./casino/pool_public.js"; // 館門口池子的水位（公開 JSON，給排程讀；Hosting /data/pool.json，決定 0133）
 export { npcSan } from "./npc/san_levels.js"; // 旅客理智等級（公開 JSON，給排程讀；Hosting /data/npc_san.json，決定 0103）
 export { casinoTable } from "./casino/casino_table.js";
+export { casinoHoldem } from "./casino/holdem.js";
 export { stockUsTick } from "./stock/stock_us.js"; // 美股盤中：美東 09:30～16:00 每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8i）
 export { stockDivTick } from "./stock/stock_div.js"; // 配股息：每小時抓 Yahoo 的除息、配股事件（決定 0112）
 export { stockTwTick } from "./stock/stock_tw.js"; // 台股盤中：每分鐘排程，每 15 分鐘抓真實行情（11-14，規劃 2.8d）

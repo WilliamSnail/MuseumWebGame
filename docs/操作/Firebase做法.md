@@ -35,6 +35,8 @@ Hosting：放 dist/，網址 專案名.web.app
 | `casinoWallets/{uid}` | 賭場的籌碼錢包（`data`：JSON 字串，籌碼、成就、財產、統計；決定 0040） | 沒有人（只有 Functions） | 只有 Functions |
 | `casinoRounds/{uid}` | 賭場現在這一手：洗好的牌、莊家的底牌都在裡面 | 沒有人（只有 Functions） | 只有 Functions，交易 |
 | `casinoTables/{pid}` | 賭場同桌完整的一桌（`data`：JSON 字串：牌組、莊家底牌、每個座位的注和牌） | 沒有人（只有 Functions） | 只有 Functions，跟座位的錢包同一個交易 |
+| `casinoHoldem/{pid}` | 德州撲克壹桌（決定 0150；`data`：JSON 字串：牌組、雙方底牌、座位的籌碼和投入） | 沒有人（只有 Functions） | 只有 Functions，跟座位的錢包同一個交易；全館日報算「打牌中」 |
+| `casinoHoldemLog/{自動編號}` | 德州撲克每手的紀錄（桌、輸贏、抽水；給管理介面看串通） | 沒有人（只有 Functions） | 只有 Functions |
 | `casinoHouse/main` | 莊家的錢（大家共用，可以破產） | 沒有人（只有 Functions） | 只有 Functions |
 | `casinoLive/main` | 賭場「實況」現在的實況主和最近一則感謝（`data`：JSON 字串；決定 0053）。斗內時跟兩邊的錢包在同一個交易裡改；實況主還沒有錢包就當場補開場籌碼再加 | 沒有人（只有 Functions） | 只有 Functions，交易 |
 | `casinoLegacy/{小寫 email}` | 舊 Discord 21 點的資料：`chips`、`achievements`、`properties`；翊文之後放。認領後多 `claimedBy`。**不放進 repo** | 沒有人（只有 Functions） | 翊文（後台）；Functions 只標 `claimedBy` |
@@ -65,6 +67,7 @@ Hosting：放 dist/，網址 專案名.web.app
 | `/coopView/{pid}/{uid}` | 合作地下給這個人看的樣子（`viewFor`） | 只有 Functions；**只有他自己讀得到** |
 | `/coopChat/{pid}` | 合作地下的對話（已經變形的，短句、叫聲、打的字），隊伍解散就清 | 只有 Functions；隊員讀得到 |
 | `/casinoView/{pid}/{uid}` | 賭場同桌給這個人看的樣子（`casTView`，加他自己的籌碼） | 只有 Functions；**只有他自己讀得到** |
+| `/holdemView/{pid}/{uid}` | 德州撲克給這個人看的樣子（`casHView`，加他自己的籌碼；對方的底牌是 -1） | 只有 Functions；**只有他自己讀得到** |
 | `/casinoChat/{pid}`、`/casinoChatAt/{pid}` | 同桌說的話（最近 30 句，隊伍解散就清）、送太快的擋 | 只有 Functions；聊天隊員讀得到，`ChatAt` 誰都不能讀 |
 | `/coopChatLog/{pid}`、`/coopChatAt/{pid}` | 短句變形前的原文（報告用）、送太快的擋 | 只有 Functions，誰都不能讀 |
 | `/coopTalkLog/{這一趟}/{id}`、`/coopReports/{id}` | 打的字的紀錄（誰、原文、變形後，不記 email；不清）、檢舉 | 只有 Functions；之後的管理員讀，玩家讀不到 |
