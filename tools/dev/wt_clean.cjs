@@ -4,6 +4,8 @@
 // 會刪的：git worktree 裡「沒有改動、HEAD 已經併進 origin/main」的；還有只剩 node_modules／dist／functions 的殘留資料夾（不是 worktree 了）。
 // 不刪的：fbsnap、fbtool（固定動作用）、Claude Desktop 開給 session 的（名字像 wizardly-goldwasser-527b04，由 app 自己收）、現在所在的這個。
 // ship.cjs 上線成功後會在背景跑 --do（不等它）。
+// git 的檔案監看（fsmonitor--daemon）：Git for Windows 安裝時預設開，每個 worktree 各起壹個常駐程式，刪了 worktree 它也不會走（11-21 堆到 60 個）。
+//   這個 repo 不大（約 3,000 個檔），監看幫不了多少：--do 時把 repo 的 core.fsmonitor 設成 false，刪 worktree 前先叫它的監看停下來。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("./child.cjs");
 const git = (args, cwd) => spawnSync("git", args, { cwd, encoding: "utf8" });
 const common = git(["rev-parse", "--git-common-dir"], process.cwd()).stdout.trim();
@@ -42,8 +44,9 @@ if (require.main === module) {
   const p = plan();
   log(`可以刪：worktree ${p.remove.length} 個、殘留資料夾 ${p.leftover.length} 個；保留 ${p.kept.length} 個`);
   if (!doIt) { p.remove.concat(p.leftover).forEach(n => log("  " + n)); process.exit(0); }
+  if (git(["config", "--local", "--get", "core.fsmonitor"], ROOT).stdout.trim() !== "false") git(["config", "--local", "core.fsmonitor", "false"], ROOT); // 11-21：不要每個 worktree 都起壹個監看
   let n = 0;
-  for (const name of p.remove) if (git(["worktree", "remove", path.join(DIR, name)], ROOT).status === 0) n++;
+  for (const name of p.remove) if ((git(["fsmonitor--daemon", "stop"], path.join(DIR, name)), git(["worktree", "remove", path.join(DIR, name)], ROOT)).status === 0) n++;
   for (const name of p.leftover) { try { fs.rmSync(path.join(DIR, name), { recursive: true, force: true }); n++; } catch (e) { log("刪不掉 " + name + "：" + e.message); } }
   git(["worktree", "prune"], ROOT);
   log(`刪了 ${n} 個`);
