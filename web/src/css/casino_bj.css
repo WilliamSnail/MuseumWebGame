@@ -213,3 +213,35 @@
 .hd-tags { position: absolute; top: -6px; right: 2px; z-index: 2; display: inline-flex; gap: 2px; }
 .hd-tags .hd-npc, .hd-tags .hd-btn, .hd-tags .hd-blind { margin: 0; }
 .hd-seat .hd-say-npc { position: absolute; left: 2px; right: 2px; bottom: -4px; z-index: 2; margin: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+
+/* 11-22 qa 第四輪（從根本收）：手機德州整桌不捲就放得下
+   ① 打牌時隱藏遊戲切換和右邊的銀行／同桌欄（離桌回來就有）；② 對手縮成壹排小卡：名字（最多 4 字＋‥）、籌碼、狀態，不畫對手的底牌背；
+   ③ 小章（客／D／SB／BB）在名字前面；④ 旅客的話只在輪到他時出現（不佔高度）。 */
+.hd-tags { display: none; }
+.hd-nm { display: flex; align-items: center; justify-content: center; gap: 3px; min-width: 0; max-width: 100%; }
+.hd-nm b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hd-nm i { flex: none; margin: 0; }
+.hd-seat .n-short { display: none; }
+@media (max-width: 760px) {
+  .nb-casino .cas-row:has(.hd-table) > .cas-side { display: none; }
+  .bj:has(.hd-table) > .bj-nav { display: none; }
+  .hd-seat .n-full { display: none; }
+  .hd-seat .n-short { display: inline; }
+  .hd-seat.compact .cas-hand { display: none; }
+  .hd-seat.compact { padding: 3px 2px; gap: 1px; text-align: center; }
+  .hd-seat.compact .hd-nm b { font-size: .75rem; }
+  .hd-seat.compact .bj-who small { font-size: .6875rem; line-height: 1.25; }
+  .hd-seat.compact .hd-bet { margin: 0; font-size: .6875rem; line-height: 1.2; }
+  .hd-nm i { font-size: .5625rem; padding: 0 3px; line-height: 1.3; }
+  .hd-seat.compact .hd-say-npc { display: none; }
+  .hd-seat.compact.turn .hd-say-npc { display: block; position: absolute; left: -4px; right: -4px; top: 100%; z-index: 3; }
+  .hd-table { gap: 4px; }
+}
+.hd-tg { display: flex; justify-content: center; gap: 2px; flex-wrap: wrap; margin-top: 1px; }
+.hd-tg i { margin: 0; }
+@media (max-width: 760px) {
+  .bj-table.hd-table { padding-left: 4px; padding-right: 4px; }
+  .hd-opps { gap: 2px; }
+  .hd-seat.compact .hd-nm b { font-size: .6875rem; }
+  .hd-seat.compact .bj-who small { font-size: .625rem; }
+}
