@@ -117,3 +117,44 @@
 /* PR 920 實測（11-21）：電腦高螢幕（2140×1440）賭場的框只有 800px 高，轉盤頁要在小框裡捲才按得到「轉！」→ 高螢幕用滿畫面高度（最高 1300px）；手機內文底下多留壹點，「這壹轉」合計列才不會被「往下滑還有」蓋住 */
 @media (min-height: 900px) and (min-width: 900px) { .nb-frame.nb-casino { height: min(1300px, calc(100vh - 36px)); height: min(1300px, calc(100svh - 36px)); } }
 @media (max-width: 760px) { .nb-casino .cas-body { padding-bottom: 40px; } }
+
+/* ===== 德州撲克（11-21）：開桌、牌桌（對手在上、公共牌在中間、我在下）、加注滑桿 ===== */
+.hd-head { display: flex; align-items: center; gap: 10px; justify-content: space-between; color: #FFF3CF; font-size: .9375rem; }
+.hd-clock { font-weight: 800; color: #F0CD7A; min-width: 4em; text-align: center; }
+.hd-table { min-height: 420px; justify-content: space-between; }
+.hd-seat { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px; }
+.hd-seat.turn { box-shadow: 0 0 0 3px #F0CD7A; background: rgba(0, 0, 0, .18); }
+.hd-seat.fold { opacity: .55; }
+.hd-seat .cas-card { width: 52px; height: 74px; }
+.hd-btn { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-left: 6px; border-radius: 50%; font-style: normal; font-size: .75rem; font-weight: 800; color: #2A1A08; background: #F0CD7A; }
+.hd-bet { margin: 0; color: #FFF3CF; font-size: .875rem; }
+.hd-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.hd-board { display: flex; gap: 8px; justify-content: center; }
+.hd-board .cas-card { width: 54px; height: 76px; }
+.hd-slot { width: 54px; height: 76px; border-radius: 6px; border: 2px dashed rgba(255, 243, 207, .35); }
+.hd-pot { margin: 0; padding: 3px 14px; border-radius: 999px; color: #FFF3CF; background: rgba(0, 0, 0, .4); }
+.hd-say { margin: 0; text-align: center; color: #FFF3CF; }
+.hd-setup { display: flex; flex-direction: column; gap: 10px; }
+.hd-acts { display: flex; flex-direction: column; gap: 8px; }
+.hd-raise { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.hd-raise input[type="range"] { flex: 1 1 200px; min-width: 160px; max-width: 360px; accent-color: #E0B75A; }
+.hd-raise-n { min-width: 6em; text-align: center; color: #FFF3CF; font-size: 1.125rem; }
+.hd-quick { display: flex; gap: 6px; }
+.hd-wait { text-align: center; }
+.hd-head .btn { flex: none; }
+@media (max-width: 760px) {
+  .hd-table { min-height: 0; gap: 6px; }
+  .hd-seat .cas-card { width: 42px; height: 60px; }
+  .hd-board .cas-card, .hd-slot { width: 42px; height: 60px; }
+  .hd-head { font-size: .8125rem; }
+}
+.hd-buy { flex: 0 0 auto; width: 150px; }
+.hd-acts.bj-sticky { background: linear-gradient(rgba(23, 67, 46, 0), rgba(23, 67, 46, .98) 14%); }
+@media (max-width: 760px) {
+  .hd-acts .bj-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .hd-acts .bj-acts .btn { min-width: 0; min-height: 46px; padding: 0 6px; font-size: 1rem; white-space: nowrap; }
+  .hd-raise { gap: 6px; }
+  .hd-raise input[type="range"] { flex: 1 1 140px; min-width: 120px; }
+  .hd-raise-n { min-width: 4em; font-size: 1rem; }
+  .hd-quick .btn { min-height: 32px; }
+}
