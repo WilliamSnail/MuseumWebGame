@@ -11,7 +11,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 // ================================================================
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { casHAct, casHAdvance, casHBuyin, casHLeave, casHNew, casHStart, casHView } from "../shared/casino/holdem.js";
+import { casHAct, casHAdvance, casHBuyin, casHClose, casHLeave, casHNew, casHStart, casHView } from "../shared/casino/holdem.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
 import { NUM } from "../shared/core/config.js";
 import { fixParty, newParty } from "../shared/social/party.js";
@@ -60,7 +60,7 @@ const viewFor = (t, uid, ctx) => Object.assign(casHView(t, uid, now(), ctx), { c
 // 給每個人看的樣子。兩步差很近時，晚到的舊版不能蓋掉新的
 async function publish(t, ctx) {
   const r = t.rev || 0;
-  await Promise.all(t.order.map(id => rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(viewFor(t, id, ctx)) }))));
+  await Promise.all(t.order.filter(id => !(t.seats[id] && t.seats[id].leaving)).map(id => rtdb().ref(viewPath(t.pid, id)).transaction(cur => (cur && cur.r > r ? undefined : { r, j: JSON.stringify(viewFor(t, id, ctx)) }))));
 }
 async function inParty(pid, uid) {
   const p = fixParty((await rtdb().ref(`parties/${pid}`).get()).val());
@@ -91,7 +91,7 @@ async function closeTable(pid) {
       const wallets = {}; ids.forEach((id, i) => { wallets[id] = casWalletFix(parse(ws[i]), day); });
       const { house } = casHouseFix(parse(hs), day), ctx = { wallets, house, day, hlog: [] };
       setRng(cryptoRng);
-      try { for (const id of ids) casHLeave(t, id, ctx, t0); } finally { setRng(null); }
+      try { casHClose(t, ctx, t0); } finally { setRng(null); }
       for (const id of ids) put(tx, walletRef(id), wallets[id]);
       put(tx, houseRef(), house);
       for (const h of ctx.hlog) tx.set(db().collection("casinoHoldemLog").doc(), Object.assign({ day, updatedAt: FieldValue.serverTimestamp() }, h));
