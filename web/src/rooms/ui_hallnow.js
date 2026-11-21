@@ -73,9 +73,21 @@ function inviteBtn(c, before) {
   const casino = ADDONS.npcInvite && NET.me && c.canInvite;
   const cellar = ADDONS.coopWithNpc && NET.me && NUM.casino.coopNpc && NUM.casino.coopNpc.on && (c.canInvite || (c.all && c.all.tourists > 0));
   if (!casino && !cellar) return null;
-  return h("div", { class: "hn-invs" },
-    casino ? btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀旅客去賭場", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], () => { if (before) before(); ADDONS.npcInvite(); }, "primary big hn-inv", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" }) : null,
-    cellar ? btn([h("span", { "aria-hidden": "true" }, "▼ "), "邀旅客壹起下地下"], () => { if (before) before(); ADDONS.coopWithNpc(); }, "big hn-inv hn-inv-cellar", { title: "開地下收藏庫的隊伍（已經有隊伍就接回去），在準備區的「旅客」那塊邀館裡的旅客壹起下去（他可能答應，也可能拒絕；送禮答應率比較高）" }) : null);
+  const toCasino = () => ADDONS.npcInvite(), toCellar = () => ADDONS.coopWithNpc();
+  // 11-21（翊文：「大廳邀請旅客變成兩個，可以整合成同壹個按鈕」）：大廳只留壹顆「邀旅客」；按下去在壹張小卡選去哪（只有壹個去處就直接去）
+  const ask = () => {
+    if (before) before();
+    if (!casino || !cellar) { (casino ? toCasino : toCellar)(); return; }
+    const m = miniLayer("邀旅客", "館裡的旅客可以陪你：選壹個去處。他可能答應，也可能拒絕。");
+    m.layer.classList.add("sp-top");
+    const pick = fn => () => { m.close(); fn(); };
+    m.card.append(h("div", { class: "hn-inv-menu" },
+      btn([h("span", { "aria-hidden": "true" }, "♠ "), "去賭場同桌打 21 點", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], pick(toCasino), "primary big", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點" }),
+      btn([h("span", { "aria-hidden": "true" }, "▼ "), "壹起下地下收藏庫"], pick(toCellar), "primary big", { title: "開地下收藏庫的隊伍（已經有隊伍就接回去），在準備區的「旅客」那塊邀；送禮答應率比較高" })),
+      h("div", { class: "hn-acts" }, btn("先不要", () => m.close(), "ghost small")));
+    closeOnOutside(m);
+  };
+  return btn([h("span", { "aria-hidden": "true" }, "♠ "), "邀旅客", c.inviteN && !cellar ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], ask, "primary big hn-inv", { title: casino && cellar ? "邀館裡的旅客：去賭場同桌打 21 點，或壹起下地下收藏庫（他可能答應，也可能拒絕）" : casino ? "邀館裡的旅客、委託人到賭場同桌打 21 點（他可能答應，也可能拒絕）" : "邀館裡的旅客壹起下地下收藏庫（他可能答應，也可能拒絕）" });
 }
 // 旅客名單：名字後面接理智小牌（全部的視窗寫分級和數字；窄的地方只在不穩定時寫分級）
 function nameList(c, n, calm) {
