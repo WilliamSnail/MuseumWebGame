@@ -81,9 +81,10 @@ function inviteBtn(c, before) {
     const m = miniLayer("邀旅客", "館裡的旅客可以陪你：選壹個去處。他可能答應，也可能拒絕。");
     m.layer.classList.add("sp-top");
     const pick = fn => () => { m.close(); fn(); };
+    const two = (a, b) => [h("b", null, a), h("small", null, b)]; // 兩顆壹樣高：第壹行名字、第二行小字
     m.card.append(h("div", { class: "hn-inv-menu" },
-      btn([h("span", { "aria-hidden": "true" }, "♠ "), "去賭場同桌打 21 點", c.inviteN ? h("i", { class: "hn-inv-n" }, `（館裡 ${c.inviteN} 位）`) : null], pick(toCasino), "primary big", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點" }),
-      btn([h("span", { "aria-hidden": "true" }, "▼ "), "壹起下地下收藏庫"], pick(toCellar), "primary big", { title: "開地下收藏庫的隊伍（已經有隊伍就接回去），在準備區的「旅客」那塊邀；送禮答應率比較高" })),
+      btn(two("♠ 去賭場打 21 點", c.inviteN ? `館裡 ${c.inviteN} 位旅客可以邀` : "同桌打牌"), pick(toCasino), "primary big", { title: "邀館裡的旅客、委託人到賭場同桌打 21 點" }),
+      btn(two("▼ 壹起下地下", "到準備區邀，送禮答應率高"), pick(toCellar), "primary big", { title: "開地下收藏庫的隊伍（已經有隊伍就接回去），在準備區的「旅客」那塊邀；送禮答應率比較高" })),
       h("div", { class: "hn-acts" }, btn("先不要", () => m.close(), "ghost small")));
     closeOnOutside(m);
   };

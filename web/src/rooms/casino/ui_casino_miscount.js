@@ -9,7 +9,7 @@ import { MISCOUNT_LINES, MISCOUNT_STROKES } from "../../../../shared/casino/misc
 import { ADDONS, h, snd, wait } from "../../core/ui_core.js";
 import { casinoAct, casinoRefresh, casinoState } from "./ui_casino.js";
 import { gameIntro, howTo } from "./ui_casino_felt.js";
-import { sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult } from "./ui_casino_sb.js";
+import { sbBar, sbInfoLoad, sbList, sbNew, sbOpt, sbResult, sbShowResult } from "./ui_casino_sb.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const svg = (tag, attrs, ...kids) => { const n = document.createElementNS(NS, tag); for (const k in attrs || {}) n.setAttribute(k, attrs[k]); kids.forEach(c => c && n.append(c)); return n; };
@@ -82,7 +82,7 @@ export function miscountPane() {
       snd(r.spin.net > 0 ? "coin" : "error");
     });
     st.busy = false;
-    if (!r || !r.ok) casinoRefresh();
+    if (!r || !r.ok) casinoRefresh(); else sbShowResult();
   };
   return [
     h("div", { class: "mc-stage" }, paperEl(st), h("p", { class: "wh-say", role: "status" }, st.say || "荷官翻開本子：「我畫，你押。」")),
