@@ -200,3 +200,5 @@
   .bj-g svg, .bj-g .ic { width: 18px; height: 18px; }
   .bj-nav { gap: 4px; overflow: hidden; }
 }
+/* 11-21 翊文：「說的話位置也不對擋到很多東西」→ 荷官的泡泡不再浮在牌桌右上角蓋住牌，改成在桌面最上面壹條（置中） */
+.bj-bubble { position: static; align-self: center; max-width: min(94%, 560px); }

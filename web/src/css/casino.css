@@ -657,3 +657,5 @@ body.reduce-motion .cas-bub { animation: none; }
 @media (max-width: 760px) { .cas-sub b { font-size: .8125rem; letter-spacing: 0; } .cas-sub { padding: 3px 4px; } }
 @media (max-width: 760px) and (orientation: portrait) { .nb-casino .nb-tab { flex: 1 1 0; } } /* 4 個頁籤平分壹排 */
 #ui-tip { z-index: 9995; } /* 說明牌（ui_tip.js）要蓋在賭場的視窗上面 */
+/* 11-21 翊文：往下滑後按不到上面的頁籤 → 頁籤黏在上面（外框的 overflow 是 hidden，被程式捲走時也留得住） */
+.nb-casino .nb-tabs { position: sticky; top: 0; z-index: 6; background: #1F4B34; }
