@@ -103,6 +103,14 @@ function checkExtend(L, E, W, lw) {
       if (!/^d[1-7]$/.test(f.day || "")) E(w, k + ".day 要是 d1～d7（放在哪天）");
       if (typeof f.where !== "string" || !f.where.trim()) E(w, k + ".where 要寫放在哪裡");
       if (k === "cost" && (typeof f.san !== "string" || !f.san.trim())) E(w, "cost.san 要寫理智代價（例如 1/1D4）");
+      if (k === "cost" && f.understand !== undefined) [f.understand].concat(asList(f.understand && f.understand.more)).forEach((u, j) => {
+        const uw = w + ".cost.understand" + (j ? ".more[" + (j - 1) + "]" : "");
+        if (!isObj(u)) { E(uw, "要是物件"); return; }
+        const parts = String(u.san).split("/").map(t => t.trim()), fail = parts[1] || "", mx = /^([0-9]+)D([0-9]+)$/.exec(fail), pr = t => typeof t === "string" && /^\(.+\)$/.test(t.trim());
+        if (parts.length !== 2 || parts[0] !== "0" || !(mx || /^[0-9]+$/.test(fail))) E(uw, "san 要寫「0/失敗的擲法」（成功不扣），例：0/1D4");
+        else if ((mx ? +mx[1] * +mx[2] : +fail) > 6) E(uw, "失敗最多扣 6 點");
+        if (!pr(u.successAside) || !pr(u.failAside)) E(uw, "successAside、failAside 要有，寫成 (…)");
+      });
     });
     if (asList(x.leads).length < 3) E(w, "leads 至少要三個去處（三條線索原則、永遠有三個去處）");
     else asList(x.leads).forEach(l => { if (typeof l !== "string" || !l.trim()) E(w, "leads 每個要有字"); });

@@ -9,7 +9,7 @@
 //  舊週拿不到的（沒找到的房間、沒看的畫）不卡：need 只算「已經拿到」或「還拿得到」的
 // ================================================================
 import { NUM } from "../core/config.js";
-import { addDays, isFree } from "../core/logic_base.js";
+import { addDays, applySan, isFree, sanCheck } from "../core/logic_base.js";
 import { isoMonday, isoWeek, weekDayNo } from "./core.js";
 import { storyState } from "./state.js";
 
@@ -40,7 +40,7 @@ export function clueCatalog(lib, today) {
       clList(d.show && d.show.works).forEach(w => { if (clObj(w) && clStr(w.clue) && clStr(w.id)) cat.sources.push(Object.assign({ clue: w.clue, kind: "work", sid: p + w.id, title: clStr(w.title) }, at)); });
       clList(d.understand).forEach(u => {
         if (!clObj(u) || !clStr(u.id) || !clStr(u.text) || !clList(u.need).length) return;
-        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint), layer: clStr(u.layer), who: clStr(u.who), where: clStr(u.where) }, at));
+        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint), layer: clStr(u.layer), who: clStr(u.who), where: clStr(u.where), san: clStr(u.san), successAside: clStr(u.successAside), failAside: clStr(u.failAside) }, at));
       });
     }
   });
@@ -140,7 +140,13 @@ export function clueSync(P, lib, today) {
       if (clObj(P.visit)) { if (!clObj(P.visit.understood)) P.visit.understood = {}; P.visit.understood[def.id] = true; }
       const insp = Math.max(0, +NUM.story.understandInsp || 0);
       P.insp = (+P.insp || 0) + insp;
-      out.push({ type: "understood", id: def.id, from: def.from, text: def.text, hint: def.hint, insp, n: cat.defs.filter(x => P.understood[x.id]).length });
+      // 讀懂那一刻的理智檢定（11-22，跟 UNDERSTAND_TEXT 的 san 同壹套）：每日檔的 understand 有 san 才擲，只在第壹次讀懂；成功不扣，失敗最多 NUM.story.understandSanMax
+      let san = null;
+      if (def.san) {
+        const sc = sanCheck(P, def.san, "understand:" + def.id), loss = sc.success ? 0 : Math.min(sc.loss, NUM.story.understandSanMax), ev = applySan(P, loss, "understand:" + def.id);
+        san = { success: sc.success, loss: ev.loss, aside: (sc.success ? def.successAside : def.failAside) || "", zero: ev.zero, roll: sc.roll.total };
+      }
+      out.push({ type: "understood", id: def.id, from: def.from, text: def.text, hint: def.hint, insp, n: cat.defs.filter(x => P.understood[x.id]).length, san });
     });
     return out;
   } catch (e) { return []; }
