@@ -18,6 +18,14 @@ T("真的 content/npc：都過、沒有壞檔", () => {
   const r = run(base());
   assert.deepStrictEqual(r.errors, []);
 });
+T("旅客 bond：50 位旅客都有稱號和送禮（11-22）；稱號太長、欄位亂寫、送禮句有輸贏會擋", () => {
+  const tr = real.npcs.filter(n => n.kind !== "trace"); assert.ok(tr.every(n => n.bond && n.bond.title && n.bond.gift), "每位旅客都要有 bond.title 和 bond.gift");
+  const id = tr[0].id;
+  expectErr(c => { get(c, id).bond.title.name = "這個稱號字數實在太太太太長了"; }, /1～12 字/);
+  expectErr(c => { get(c, id).bond.gift.likes = { 蠢欄位: ["普通"] }; }, /欄位只能是/);
+  expectErr(c => { get(c, id).bond.gift.love = ["贏了好開心"]; }, /輸贏賺賠/);
+  expectErr(c => { delete get(c, id).bond.gift.first; }, /至少壹句/);
+});
 T("數量和種類：委託人 20 位全搬進來、帳本 5 位角色都是劇情角色、旅客至少 8 位", () => {
   const k = x => real.npcs.filter(n => n.kind === x);
   assert.strictEqual(k("client").length, G.CLIENTS.length);
