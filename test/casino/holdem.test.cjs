@@ -310,5 +310,39 @@ T("亂打 3～5 人桌：每種人數各 200 手，總錢不變", G => { for (co
 T("亂打 4 人桌、壹天對同壹人上限只有 40 個大盲：兩兩之間的淨輸贏壹直不超過上限（每步檢查）", G => {
   const { done } = randomTable(G, { n: 4, hands: 250, seed: 31, pairDay: 40, leaveRate: 0.005 }); assert.ok(done > 0);
 });
+// ---------- 顯示用的欄位（11-22）：每個座位這輪最後的動作 last、這手的動作紀錄 log、結算停多久、牌型描述 ----------
+T("last 和 log：盲注只記 last；每個動作記進 log（旅客壹樣）；換輪清掉 last；下壹手清掉 log；log 不超過 logMax；view 有這兩個欄位", G => {
+  const C = G.NUM.casino.holdem, { t, ctx, ids, bb } = setupN(G, [100, 100, 100]), B = C.levels[2];
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(t.seats.P2.last)), { a: "sb", amt: B[0] }); assert.deepStrictEqual(JSON.parse(JSON.stringify(t.seats.P3.last)), { a: "bb", amt: B[1] }); assert.strictEqual(t.log.length, 0);
+  act(G, t, ctx, "raise", 3 * bb); act(G, t, ctx, "fold"); act(G, t, ctx, "call");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(t.log.map(x => [x.uid, x.a, x.amt, x.street]))), [["P1", "raise", 3 * bb, 0], ["P2", "fold", 0, 0], ["P3", "call", 2 * bb, 0]]);
+  assert.strictEqual(t.street, 1); assert.ok(ids.every(u => t.seats[u].last === null), "換輪（翻牌）清掉每個人的 last");
+  act(G, t, ctx, "check"); const v = G.casHView(t, "P1", NOW, ctx);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(v.seats.find(s => s.uid === "P3").last)), { a: "check", amt: 0 }); assert.strictEqual(v.log.length, 4); assert.strictEqual(v.log[3].nick, "名P3"); assert.strictEqual(v.log[3].street, 1);
+  for (let i = 0; i < C.logMax + 3; i++) { if (t.phase !== "play") break; const L = G.casHView(t, t.toAct, NOW, ctx).legal; act(G, t, ctx, L.check ? "check" : "call"); }
+  assert.ok(t.log.length <= C.logMax && G.casHView(t, "P1", NOW, ctx).log.length <= C.logMax);
+  assert.strictEqual(t.phase, "over"); assert.ok(t.log.length > 0, "結算畫面還看得到這手的紀錄");
+  G.casHAdvance(t, ctx, NOW + C.resultMs + C.resultExtraMs + 1); assert.strictEqual(t.hand, 2); assert.strictEqual(t.log.length, 0, "下壹手開始：紀錄清空");
+  assert.ok(ids.some(u => t.seats[u].last && t.seats[u].last.a === "bb"));
+});
+T("超時：log 和 last 有 to 旗標；全下記 allin；view 每個座位有 timeouts", G => {
+  const { t, ctx, a } = setup(G), C = G.NUM.casino.holdem;
+  G.casHAdvance(t, ctx, NOW + C.turnMs); assert.strictEqual(t.log[t.log.length - 1].to, true); assert.strictEqual(t.seats[a].last.to, true); assert.strictEqual(t.seats[a].timeouts, 1);
+  const s2 = setup(G, { rng: 9 }); G.casHAct(s2.t, s2.a, "allin", 0, s2.ctx, NOW); assert.strictEqual(s2.t.log[0].a, "allin"); assert.ok(s2.t.log[0].amt > 0);
+});
+T("結算時間：壹般 resultMs；有邊池或多位贏家多 resultExtraMs（讀 NUM）", G => {
+  const C = G.NUM.casino.holdem;
+  const s1 = setup(G); G.casHAct(s1.t, s1.a, "fold", 0, s1.ctx, NOW); assert.strictEqual(s1.t.deadline, NOW + C.resultMs);
+  const { t, ctx, bb } = setupN(G, [40, 70, 100]);
+  rig(t, { P1: [card(A, 0), card(A, 1)], P2: [card(K, 2), card(K, 3)], P3: [card(Q, 0), card(Q, 1)] }, ALLSUITS(2, 5, 8, 3, 9));
+  act(G, t, ctx, "allin"); act(G, t, ctx, "allin"); act(G, t, ctx, "call"); assert.ok(t.res.pots.length > 1); assert.strictEqual(t.deadline, NOW + C.resultMs + C.resultExtraMs);
+  assert.ok(C.resultMs >= 9000 && C.resultExtraMs > 0);
+});
+T("牌型描述 holdemDescribe：只用給的牌", G => {
+  const D = cs => G.holdemDescribe(cs.map(([r, s]) => card(r, s)));
+  assert.strictEqual(D([[K, 0], [K, 1]]), "壹對 K"); assert.strictEqual(D([[A, 0], [8, 1]]), "高牌 A"); assert.strictEqual(D([[A, 0], [K, 0], [Q, 0], [J, 0], [R10, 0]]), "皇家同花順");
+  assert.strictEqual(D([[A, 0], [1, 1], [2, 2], [3, 3], [4, 0]]), "順子（5 高）"); assert.strictEqual(D([[5, 0], [5, 1], [5, 2], [2, 0], [2, 1]]), "葫蘆（6 帶 3）");
+  assert.strictEqual(D([[K, 0], [K, 1], [5, 2], [5, 3], [2, 0]]), "兩對（K、6）"); assert.strictEqual(G.holdemDescribe([card(K)]), "");
+});
 console.log(fail ? `德州撲克：${fail} 項沒過` : `德州撲克：${pass} 項都過`); process.exit(fail ? 1 : 0);
 

@@ -34,3 +34,18 @@ export function holdemScore(cards) {
 }
 export const holdemCat = sc => Math.floor(sc / Math.pow(15, 5));
 export const holdemName = sc => HOLDEM_HAND_NAMES[holdemCat(sc)];
+// 給畫面的短描述（「你現在：壹對 K」）：cards 是我的底牌加已翻開的公共牌（至少 2 張）。純函式；只用自己看得到的牌
+const HD_RANK_NAMES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+export function holdemDescribe(cards) {
+  if (!cards || cards.length < 2) return "";
+  const sc = holdemScore(cards), cat = holdemCat(sc), d = i => Math.floor(sc / Math.pow(15, 4 - i)) % 15, R = i => HD_RANK_NAMES[d(i)];
+  if (cat === 8) return d(0) === 12 ? "皇家同花順" : `同花順（${R(0)} 高）`;
+  if (cat === 7) return `四條 ${R(0)}`;
+  if (cat === 6) return `葫蘆（${R(0)} 帶 ${R(1)}）`;
+  if (cat === 5) return `同花（${R(0)} 高）`;
+  if (cat === 4) return `順子（${R(0)} 高）`;
+  if (cat === 3) return `三條 ${R(0)}`;
+  if (cat === 2) return `兩對（${R(0)}、${R(1)}）`;
+  if (cat === 1) return `壹對 ${R(0)}`;
+  return `高牌 ${R(0)}`;
+}

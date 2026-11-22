@@ -170,12 +170,14 @@ export function casHStart(t, ctx, now) {
   const seq = hdAfter(t, btn).filter(u => ids.includes(u)); // 按鈕的下壹位開始、按鈕排最後
   const n = seq.length, sb = n === 2 ? btn : seq[0], bb = n === 2 ? seq[0] : seq[1], first = n === 2 ? sb : seq[2 % n];
   t.hand++; t.btn = btn; t.street = 0; t.board = [];
-  seated.forEach(s => { s.hole = []; s.put = 0; s.bet = 0; s.st = "idle"; s.acted = false; s.cap = 0; s.s0 = s.stack; });
+  seated.forEach(s => { s.hole = []; s.put = 0; s.bet = 0; s.st = "idle"; s.acted = false; s.cap = 0; s.s0 = s.stack; s.last = null; });
+  t.log = [];
   D.forEach(s => { s.st = "in"; s.cap = caps[s.uid]; });
   t.E = Math.max(...D.map(s => s.cap));
   for (const id of t.order) { const s = t.seats[id]; if (s.st === "in") s.hole = [deck.pop(), deck.pop()]; }
   const post = (s, amt) => { s.stack -= amt; s.put += amt; s.bet += amt; };
   post(t.seats[sb], B.sb); post(t.seats[bb], B.bb);
+  hdMark(t, t.seats[sb], "sb", t.seats[sb].bet, false); hdMark(t, t.seats[bb], "bb", t.seats[bb].bet, false);
   t.deck = deck; t.curBet = B.bb; t.lastRaise = B.bb; t.toAct = first; t.deadline = now + C.turnMs; t.phase = "play"; t.res = null;
   hdNpcRun(t, ctx, now);
   return { ok: true };
@@ -187,6 +189,15 @@ function hdPending(t) {
   return live.length <= 1 ? live.filter(s => s.bet < t.curBet) : live.filter(s => !(s.acted && s.bet === t.curBet));
 }
 const hdRoom = s => Math.max(0, Math.min(s.stack, s.cap - s.put));
+// 這輪最後的動作（s.last，換輪清掉）和這手的動作紀錄（t.log，最多 logMax 筆，下壹手清掉；只給畫面看，不影響錢和規則）。
+// a：fold／check／call／raise／allin／sb／bb；amt：跟注＝補了多少、加注／全下／盲注＝這條街的總投入。盲注只記在 last，不進 log
+function hdMark(t, s, a, amt, log = true) {
+  s.last = { a, amt };
+  if (!log) return;
+  if (!Array.isArray(t.log)) t.log = [];
+  t.log.push({ uid: s.uid, nick: s.nick, a, amt, street: t.street });
+  if (t.log.length > NUM.casino.holdem.logMax) t.log.splice(0, t.log.length - NUM.casino.holdem.logMax);
+}
 
 // ---------- 做壹個動作 ----------
 // a：fold／check／call／raise（to ＝加到多少，這條街的總投入）／allin
@@ -203,19 +214,19 @@ function hdAct(t, uid, a, to, ctx, now) {
   if (t.toAct !== uid) return { ok: false, reason: "還沒輪到你。" };
   const toCall = t.curBet - me.bet, room = hdRoom(me), maxTo = me.bet + room;
   const pay = amt => { me.stack -= amt; me.put += amt; me.bet += amt; };
-  if (a === "fold") { me.st = "fold"; me.timeouts = 0; return hdProgress(t, ctx, now); }
-  let reopened = false;
+  if (a === "fold") { me.st = "fold"; me.timeouts = 0; hdMark(t, me, "fold", 0); return hdProgress(t, ctx, now); }
+  let reopened = false, paid = 0;
   if (a === "check") {
     if (toCall > 0) return { ok: false, reason: "要跟注或蓋牌。" };
   } else if (a === "call") {
     if (toCall <= 0) return { ok: false, reason: "不用跟，可以過牌。" };
-    pay(Math.min(toCall, room));
+    paid = Math.min(toCall, room); pay(paid);
   } else if (a === "raise" || a === "allin") {
     const target = a === "allin" ? maxTo : hdN(to);
     if (a === "raise" && !(+to === target)) return { ok: false, reason: "加注要壹個整數。" };
     if (target > maxTo) return { ok: false, reason: `最多加到 ${maxTo.toLocaleString("en-US")}。` };
     if (target <= t.curBet) { // 全下但沒有比對方多：就是跟注
-      if (a === "allin" && toCall > 0) pay(Math.min(toCall, room));
+      if (a === "allin" && toCall > 0) { paid = Math.min(toCall, room); pay(paid); }
       else if (a === "allin") { /* 沒有要跟、也加不上去：當過牌 */ }
       else return { ok: false, reason: "加注要比對方多。" };
     } else {
@@ -229,6 +240,10 @@ function hdAct(t, uid, a, to, ctx, now) {
   me.acted = true; me.timeouts = 0;
   if (reopened) casHSeats(t).forEach(s => { if (s !== me && s.st === "in") s.acted = false; });
   if (me.stack <= 0 || me.put >= me.cap) me.st = "allin";
+  if (a === "check" && me.st !== "allin") hdMark(t, me, "check", 0);
+  else if (a === "call" && me.st !== "allin") hdMark(t, me, "call", paid);
+  else if (me.st === "allin") hdMark(t, me, "allin", me.bet);
+  else hdMark(t, me, "raise", me.bet);
   return hdProgress(t, ctx, now);
 }
 
@@ -247,7 +262,7 @@ function hdProgress(t, ctx, now) {
   if (t.street >= 3 || live.length <= 1) { while (t.board.length < 5) t.board.push(t.deck.pop()); t.street = 3; return hdSettle(t, ctx, now, "showdown"); }
   t.street++;
   t.board.push(...(t.street === 1 ? [t.deck.pop(), t.deck.pop(), t.deck.pop()] : [t.deck.pop()]));
-  casHSeats(t).forEach(s => { s.bet = 0; s.acted = false; });
+  casHSeats(t).forEach(s => { s.bet = 0; s.acted = false; s.last = null; });
   t.curBet = 0; t.lastRaise = hdBlinds(t).bb;
   const ids = live.map(s => s.uid);
   t.toAct = hdAfter(t, t.btn).find(u => ids.includes(u)); // 翻牌後從按鈕左邊第壹個還在的人開始（2 人時就是大盲）
@@ -314,7 +329,8 @@ function hdSettle(t, ctx, now, how) {
   if (Array.isArray(ctx.hlog)) ctx.hlog.push({ at: now, pid: t.pid, hand: t.hand, lv: t.lv, how, street: t.street, pot: total, rake, net: delta, players: dealt.length, nicks: Object.fromEntries(dealt.map(s => [s.uid, s.nick])) });
   dealt.forEach(s => { s.put = 0; s.bet = 0; s.st = "idle"; s.acted = false; s.hole = []; s.cap = 0; });
   npcSeats.forEach(s => hdNpcSay(t, ctx, s, delta[s.uid] > 0 ? "win" : "lose", 0.4));
-  t.phase = "over"; t.toAct = null; t.deck = []; t.deadline = now + C.resultMs;
+  const long = pots.length > 1 || res.winners.length > 1; // 有邊池、多位贏家：多給壹點時間讀
+  t.phase = "over"; t.toAct = null; t.deck = []; t.deadline = now + C.resultMs + (long ? C.resultExtraMs : 0);
   for (const id of t.order.slice()) { // 全下時離座的人：這手贏的錢現在進錢包
     const s = t.seats[id];
     if (s && s.leaving) { if (hdPay(ctx, s, s.stack)) { hdFreeNpc(ctx, s); hdRemove(t, id); } else s.leaving = false; }
@@ -410,7 +426,9 @@ export function casHAdvance(t, ctx, now) {
     if (t.phase === "play" && t.deadline != null && now >= t.deadline && t.toAct) {
       const uid = t.toAct, me = t.seats[uid], toCall = t.curBet - me.bet, n = me.timeouts + 1;
       casHAct(t, uid, toCall > 0 ? "fold" : "check", 0, ctx, now);
-      if (t.seats[uid]) t.seats[uid].timeouts = n;
+      const tl = Array.isArray(t.log) ? t.log[t.log.length - 1] : null;
+      if (tl && tl.uid === uid) tl.to = true; // 超時自動做的（畫面寫「超時」）
+      if (t.seats[uid]) { t.seats[uid].timeouts = n; if (t.seats[uid].last) t.seats[uid].last.to = true; }
       if (n >= C.maxTimeouts && t.seats[uid]) casHLeave(t, uid, ctx, now);
       moved = true; continue;
     }
@@ -428,12 +446,13 @@ export function casHView(t, uid, now, ctx) {
     game: "holdem", pid: t.pid, hand: t.hand, phase: t.phase, street: t.street, board: t.board.slice(), now, deadline: t.deadline,
     level: { lv: Math.max(0, C.levels.findIndex(l => l[1] === B.bb)), sb: B.sb, bb: B.bb, levels: C.levels }, buy: lim, rake: { pct: C.rakePct, capBB: C.rakeCapBB, cap: C.rakeCapBB * B.bb },
     pot: casHSeats(t).reduce((a, s) => a + s.put, 0), toAct: t.toAct, curBet: t.curBet, E: t.E, res: t.res, rev: t.rev,
-    seats: casHSeats(t).map(s => ({ uid: s.uid, nick: s.nick, stack: s.stack, put: s.put, bet: s.bet, st: s.st, me: s.uid === uid, btn: t.btn === s.uid, hole: s.uid === uid ? s.hole.slice() : (s.hole.length ? [-1, -1] : []), timeouts: s.timeouts, leaving: !!s.leaving, npc: hdIsNpc(s), say: s.npc && s.npc.say && s.npc.say.hand >= t.hand - 1 ? s.npc.say.text : null, sitOut: t.phase === "play" && s.st === "idle" })),
+    seats: casHSeats(t).map(s => ({ uid: s.uid, nick: s.nick, stack: s.stack, put: s.put, bet: s.bet, st: s.st, me: s.uid === uid, btn: t.btn === s.uid, hole: s.uid === uid ? s.hole.slice() : (s.hole.length ? [-1, -1] : []), timeouts: s.timeouts, last: s.last ? Object.assign({}, s.last) : null, leaving: !!s.leaving, npc: hdIsNpc(s), say: s.npc && s.npc.say && s.npc.say.hand >= t.hand - 1 ? s.npc.say.text : null, sitOut: t.phase === "play" && s.st === "idle" })),
     sitting: !!me, seatsMax: C.seats,
   };
   const others = t.order.filter(x => x !== uid && !hdIsNpc(t.seats[x]));
   if (ctx && me && others.length) v.pairLeft = Math.min(...others.map(o => casHPairLeft(ctx.house, ctx.day, uid, o)));
   v.talk = Array.isArray(t.talk) ? t.talk.slice(-3) : [];
+  v.log = Array.isArray(t.log) ? t.log.slice(-C.logMax).map(x => Object.assign({}, x)) : []; // 這手的動作紀錄（旅客的動作也在裡面，伺服器壹口氣做完、畫面靠它補回去）
   if (me && t.phase === "play" && t.toAct === uid) {
     const toCall = t.curBet - me.bet, room = hdRoom(me), maxTo = me.bet + room;
     v.legal = { check: toCall <= 0, call: toCall > 0 ? Math.min(toCall, room) : 0, minTo: Math.min(t.curBet + t.lastRaise, maxTo), maxTo, canRaise: maxTo > t.curBet, fold: true };
