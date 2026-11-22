@@ -211,20 +211,31 @@ export function openPass(o = {}) {
     if (!cas) return h("p", { class: "nb-empty" }, "讀取賭場的紀錄……");
     if (!cas.ok) return [h("p", { class: "nb-empty" }, "現在讀不到賭場的紀錄。"), h("div", { class: "sp-go" }, casGo("去賭場", "table"))];
     if (!cas.entered) return [h("p", { class: "nb-empty" }, "還沒進過賭場。進去走壹趟，成就和紀念品就會出現在這裡。"), h("div", { class: "sp-go" }, casGo("去賭場", "table"))];
-    const A = cas.ach, Pp = cas.props, S = cas.swap, W = cas.wk, chip = (t, cls) => h("span", { class: "ps-chip" + (cls ? " " + cls : "") }, t);
+    const A = cas.ach, Pp = cas.props, S = cas.swap, W = cas.wk, chip = (t, cls, tip) => h("span", { class: "ps-chip" + (cls ? " " + cls : ""), title: tip || "" }, t);
+    const ST = cas.st || {}, KIND_NAME = { base: "賭場成就", npc: "旅客給的", wk: "每週收藏集滿", old: "以前帶來的" };
+    const stLine = [["hands", "打過幾手"], ["wins", "贏"], ["losses", "輸"], ["pushes", "平手"], ["blackjacks", "21 點"], ["bestWin", "最長連贏"], ["bestLose", "最長連輸"], ["allinWins", "梭哈贏過"], ["dealerBusts", "荷官爆牌"], ["tables", "坐過幾桌"], ["star5", "五星餐點"], ["finds", "撿到東西"], ["jobs", "打工"], ["reliefs", "向 Yuga 借"]].filter(([k]) => Number.isFinite(ST[k]));
     return [
       secT(`成就　${A.have}／${A.total}`, "ach", bar(A.have, A.total),
-        A.extra ? h("p", { class: "sp-note" }, `另外還有 ${A.extra} 個（每週收藏集滿、以前 Discord 帶來的）。`) : null,
-        A.recent.length ? h("div", { class: "ps-chips" }, A.recent.map(a => chip(a.name))) : h("p", { class: "sp-note" }, "還沒有成就。在賭場打牌、吃東西就會拿到。"),
+        A.extra ? h("p", { class: "sp-note" }, `另外還有 ${A.extra} 個（每週收藏集滿、旅客給的、以前 Discord 帶來的）。`) : null,
+        A.list && A.list.length ? ["base", "npc", "wk", "old"].map(k => { const xs = A.list.filter(a => a.kind === k); return xs.length ? [h("p", { class: "sp-note" }, `${KIND_NAME[k]}　${xs.length}`), h("div", { class: "ps-chips" }, xs.map(a => chip(a.name, "", `${a.desc || ""}${a.d ? `（${a.d}）` : ""}`)))] : null; }) : h("p", { class: "sp-note" }, "還沒有成就。在賭場打牌、吃東西就會拿到。"),
         h("p", { class: "sp-note" }, A.title ? ["現在戴著的稱號：", titleTag(A.title.name, "ps-ttl")] : "還沒有戴稱號。在賭場挑壹個成就當稱號，展廳和館友名單都看得到。"),
         h("div", { class: "sp-go" }, casGo("賭場的成就", "ach"), PANELS.rank ? goBtn("本週榜單", () => PANELS.rank(), "star") : null)),
-      W ? secT(`本週收藏　${W.got}／${W.total}`, "week", bar(W.got, W.total), h("p", { class: "sp-note" }, W.claimed ? "集滿了，週章領過了。" : W.done ? "集滿了！到賭場領週章、讀集滿的故事。" : `還差 ${W.total - W.got} 件集滿。`), h("div", { class: "sp-go" }, casGo("本週收藏", "week"))) : null,
+      W ? secT(`本週收藏　${W.got}／${W.total}`, "week", bar(W.got, W.total), h("p", { class: "sp-note" }, W.claimed ? "集滿了，週章領過了。" : W.done ? "集滿了！到賭場領週章、讀集滿的故事。" : `還差 ${W.total - W.got} 件集滿。`),
+        W.items ? h("div", { class: "ps-chips" }, W.items.map(it => chip(it.got ? it.name : "？？？", it.got ? "hung" : "", it.got ? it.desc : "還沒拿到"))) : null,
+        cas.wkPast && cas.wkPast.length ? [h("p", { class: "sp-note" }, "過去幾週"), h("ul", { class: "pv-gear" }, cas.wkPast.slice(0, 8).map(x => h("li", { class: x.done ? "" : "ps-miss" }, icon(x.done ? "star" : "lock"), h("span", null, h("b", null, x.week), h("small", null, `收了 ${x.got} 件${x.done ? "・集滿" : ""}${x.claimed ? "・領過週章" : ""}`)))))] : null,
+        h("div", { class: "sp-go" }, casGo("本週收藏", "week"))) : null,
       secT(`財產（紀念品）　${Pp.have} 種・${Pp.copies} 件`, "props", h("p", { class: "sp-note" }, `掛在展廳 ${Pp.hung}／${Pp.hungMax} 件，來參觀的館友看得到。`),
-        Pp.recent.length ? h("div", { class: "ps-chips" }, Pp.recent.map(p => chip(p.name + (p.n > 1 ? ` ×${p.n}` : ""), p.hung ? "hung" : ""))) : h("p", { class: "sp-note" }, "還沒有財產。到餐車買壹份東西，就是第壹件紀念品。"),
+        Pp.list && Pp.list.length ? h("div", { class: "ps-chips" }, Pp.list.map(p => chip(p.name + (p.n > 1 ? ` ×${p.n}` : ""), p.hung ? "hung" : "", `${p.desc || ""}${p.d ? `（${p.d}）` : ""}`))) : h("p", { class: "sp-note" }, "還沒有財產。到餐車買壹份東西，就是第壹件紀念品。"),
         h("div", { class: "sp-go" }, casGo("賭場的財產", "props"), goBtn("展廳", () => navTo("hall"), "hall"))),
+      cas.meals ? sec(`餐車　吃過 ${cas.meals.total} 份・${cas.meals.kinds} 種`, cas.meals.rows.length ? h("div", { class: "ps-chips" }, cas.meals.rows.map(m => chip(`${m.name} ×${m.n}`))) : h("p", { class: "sp-note" }, "還沒吃過。到賭場的餐車買壹份。"),
+        cas.meals.left ? h("p", { class: "sp-note" }, `今天吃東西還能補 心情 ${cas.meals.left.mood}、理智 ${cas.meals.left.san}。`) : null, h("div", { class: "sp-go" }, casGo("餐車", "diner"))) : null,
+      cas.packs ? sec("大禮包和券", h("div", { class: "ps-stats" }, stat("今天還能開", `${cas.packs.left} 包`), stat("今天開了", `${cas.packs.opened} 包`), stat("手上的券", `${cas.packs.tickets} 張`)), h("div", { class: "sp-go" }, casGo("大禮包", "packs"))) : null,
       secT(`換小獎　這週換了 ${S.used} 次`, "swap", h("div", { class: "ps-stats" }, S.rows.map(r => stat(SWAP_NAME[r.id] || r.id, `還剩 ${r.left}／${r.perWeek}`))),
-        h("p", { class: "sp-note" }, "籌碼換壹點點小東西，每週有上限（週壹 05:00 重算）。換到的東西直接進背包，沒有留紀錄。"),
-        h("div", { class: "sp-go" }, casGo("去換小獎", "swap")))];
+        S.tot ? h("p", { class: "sp-note" }, `從有紀錄以來，換過 ${S.tot.n} 次：${S.tot.rows.filter(r => r.n).map(r => `${SWAP_NAME[r.id] || r.id} ${r.n} 次`).join("、") || "還沒換過"}。`) : null,
+        h("p", { class: "sp-note" }, "籌碼換壹點點小東西，每週有上限（週壹 05:00 重算）。"),
+        h("div", { class: "sp-go" }, casGo("去換小獎", "swap"))),
+      stLine.length ? sec("戰績", h("div", { class: "ps-stats" }, stLine.map(([k, n]) => stat(n, num(ST[k]))))) : null,
+      cas.bond && cas.bond.length ? sec(`認得的人　${cas.bond.length} 位`, h("ul", { class: "pv-gear" }, cas.bond.map(b => h("li", null, icon("users"), h("span", null, h("b", null, b.name), h("small", null, `${b.kind === "giver" ? "交代人" : "旅客"}・熟識度 ${b.lv}${b.next != null ? `（${b.xp}／${b.next}）` : "（滿了）"}`)))))) : null];
   };
   // 圖鑑室的徽章（原本的「成就」頁）
   const badgesSec = v => { const a = v.ach; return secT(`徽章　${a.have}／${a.total}`, "badge", bar(a.have, a.total),
