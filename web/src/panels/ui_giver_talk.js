@@ -59,11 +59,12 @@ async function ask(data) {
   try { await NET.flush().catch(() => {}); const r = await NET.call("casino", Object.assign({ act: "giver" }, data)); return r && r.giver ? Object.assign({}, r.giver, { ok: r.ok, rev: r.rev }) : r; } catch (e) { return { ok: false, reason: (e && e.message) || "沒辦法。" }; }
 }
 export const giverHeard = (id, ids) => { const l = ids.filter(Boolean); if (l.length && NET.loggedIn) NET.call("casino", { act: "giver", op: "heard", id, ids: l }).catch(() => {}); };
+const visitSent = new Set(); // 這次開網頁已經報過「來了」的交代人（伺服器壹天只算壹次，這裡只是少打壹點 API）
 const view = id => INFO && (INFO.givers || []).find(g => g.id === id);
 const offerOf = id => INFO && (INFO.offers || []).find(o => o.id === id);
 
 // 熟識度：四格（目前那格依這級已經漲了多少塗滿壹部分）＋級名＋「再 N 點」（11-21 qa：看不出同級內有漲）
-const LV_FROM = [0, 10, 50, 140]; // 要跟 NUM.npcRel.giver.lv 壹樣
+const LV_FROM = [0, 10, 40, 100]; // 要跟 NUM.npcRel.giver.lv 壹樣
 function pips(v) {
   const lv = v ? v.lv : 0, frac = v && v.next ? Math.max(0, Math.min(1, ((v.xp | 0) - LV_FROM[lv]) / Math.max(1, v.next - LV_FROM[lv]))) : 0;
   return h("span", { class: "gv-lv", title: v && v.next ? `再 ${v.left} 點到「${GV_LV[Math.min(3, lv + 1)]}」` : "" },
@@ -91,6 +92,7 @@ export function giverTalk(id) {
   let said = null, busy = false, mention = null, open = false; // mention：這句提到的那位（點他的名字展開他的卡）
   const paint = () => {
     const v = view(id), away = giverAway(id), over = !!v && v.taps >= TAP_MAX, off = away || over || !NET.loggedIn;
+    if (v && !v.visited && !visitSent.has(id) && NET.loggedIn) { visitSent.add(id); ask({ op: "visit", id }).then(r => { if (r && r.ok) { stat(r); reload(); } }); } // 進他待的地方壹天 +1 熟識度（不在的時段看字條也算）
     const of = offerOf(id), er = of && G.errands && G.errands[of.k];
     const rows = [h("div", { class: "gv-talk-r" },
       h("span", { class: "gv-lvwrap" }, pips(v)),
