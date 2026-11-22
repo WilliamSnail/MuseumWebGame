@@ -1523,8 +1523,6 @@ T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起�
   G.setNowClock(null);
 });
 
-console.log(`\n${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
 T("B5 走完：結局馬上存進 P.endings（不用等結局畫面）；再走不覆蓋；B1 走完不存", () => {
   const P = fresh(), last = f => G.cellarFloor(f).rooms.length - 1;
   P.cellar.run = { floor: 1, idx: last(1), team: [], used: {}, log: [] }; assert.ok(!G.cellarAdvance(P).ending); assert.ok(!P.endings.cellar);
@@ -1534,7 +1532,7 @@ T("B5 走完：結局馬上存進 P.endings（不用等結局畫面）；再走�
 });
 
 T("禁書的通用解鎖條件：from 日期、clue 線索、understood 讀懂、item 掉落；壹串全部成立才亮；寫錯的不亮；附頁看有沒有那件掉落", () => {
-  const P = fresh(); G.setNowClock && G.setNowClock(Date.parse("2026-12-07T10:00:00+08:00"));
+  const P = fresh(); G.setNowClock(() => Date.parse("2026-12-07T10:00:00+08:00"));
   assert.ok(G.needOk(P, "from:2026-12-07")); assert.ok(!G.needOk(P, "from:2026-12-08")); assert.ok(!G.needOk(P, "from:壞掉"));
   assert.ok(!G.needOk(P, "clue:c-x")); P.clues = { "c-x": "2026-12-01" }; assert.ok(G.needOk(P, "clue:c-x"));
   assert.ok(!G.needOk(P, "understood:b-1")); P.understood = { "b-1": "2026-12-02" }; assert.ok(G.needOk(P, "understood:b-1"));
@@ -1544,9 +1542,12 @@ T("禁書的通用解鎖條件：from 日期、clue 線索、understood 讀懂�
   const s = { id: "bx", after: "book1", need: ["from:2026-12-07", "item:foe-f1g"], appendix: { need: "item:foe-f2g", text: "x" } };
   assert.ok(G.sequelCondition(P, s)); assert.ok(!G.sequelAppendixOpen(P, s)); G.grantLimited(P, "foe-f2g", "2026-12-06"); assert.ok(G.sequelAppendixOpen(P, s));
   assert.strictEqual(G.sequelCondition(P, { need: "cellarEnd" }), false, "舊的寫法照舊"); assert.ok(!G.sequelAppendixOpen(P, { id: "y" }));
-  G.setNowClock && G.setNowClock(null);
+  G.setNowClock(null);
 });
-T("物品說明能帶來歷：LIMITED_TEXT 的 origin 會出現在 limitedInfo", () => {
-  assert.strictEqual(G.limitedInfo("foe-f1g").origin, ""); const T0 = G.LIMITED_TEXT["foe-f1g"]; T0.origin = "箱蓋的邊角被人靠過很多次。"; assert.strictEqual(G.limitedInfo("foe-f1g").origin, "箱蓋的邊角被人靠過很多次。");
+T("物品說明能帶來歷：LIMITED_TEXT 的 origin 會出現在 limitedInfo；沒寫的是空字串", () => {
+  const T0 = G.LIMITED_TEXT["foe-f1g"]; assert.strictEqual(G.limitedInfo("foe-f1g").origin, T0.origin || "");
+  const keep = T0.origin; T0.origin = "測試的來歷。"; assert.strictEqual(G.limitedInfo("foe-f1g").origin, "測試的來歷。"); delete T0.origin; assert.strictEqual(G.limitedInfo("foe-f1g").origin, ""); if (keep) T0.origin = keep;
 });
 
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);
