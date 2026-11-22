@@ -119,5 +119,26 @@ T("隨身物 passGear：全部裝備、穿著順序、三個位子各穿什麼�
   assert.strictEqual(G.passView(fresh(G, "free"), {}).gear, null);
 });
 
+T("工坊升級和遺物歷任 passUpgrades／passLegacy：7 項狀態、買了變 owned、遺物和歷任照存檔、自由模式 null、不改存檔", G => {
+  const P = fresh(G); P.insp = 999;
+  G.passView(P, { today: G.todayStr() }); // 第壹次會補 P.story（storyState 的老習慣），之後才比不改存檔
+  const before = JSON.stringify(P);
+  const u0 = J(G.passView(P, { today: G.todayStr() })).upgrades;
+  assert.strictEqual(JSON.stringify(P), before);
+  assert.strictEqual(u0.list.length, G.UPGRADES.length); assert.strictEqual(u0.have, 0); assert.strictEqual(u0.insp, 999);
+  assert.ok(u0.list.every(x => x.name && x.desc));
+  assert.strictEqual(u0.list.find(x => x.id === "ped8").state, "req", "第八個展台要先買第七個");
+  assert.ok(G.buyUpgrade(P, "ped7").ok);
+  const u1 = J(G.passView(P, { today: G.todayStr() })).upgrades;
+  assert.strictEqual(u1.have, 1); assert.strictEqual(u1.list.find(x => x.id === "ped7").state, "owned"); assert.strictEqual(u1.list.find(x => x.id === "ped8").state, "buy");
+  assert.deepStrictEqual(J(G.passView(P, {})).relics, { relics: [], history: [] });
+  P.relics = [{ n: 1, name: "甲", kind: "pepe", key: "k", perfect: true, title: null, d: "2026-11-01" }, { bad: 1 }];
+  P.history = [{ n: 1, name: "甲", job: P.job, madeThis: 4, deepest: 2, understood: 3, endedBy: "retire", d: "2026-11-02" }];
+  const L = J(G.passView(P, {})).relics;
+  assert.strictEqual(L.relics.length, 1); assert.strictEqual(L.relics[0].name, "甲");
+  assert.strictEqual(L.history.length, 1); assert.strictEqual(L.history[0].made, 4); assert.strictEqual(L.history[0].jobName, P.job ? G.jobInfo(P.job).name : "");
+  const f = fresh(G, "free"); assert.strictEqual(G.passView(f, {}).upgrades, null); assert.strictEqual(G.passView(f, {}).relics, null);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
