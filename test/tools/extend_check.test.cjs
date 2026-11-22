@@ -23,6 +23,7 @@ T("同壹個人的階往回走會擋", () => bad(L => { L.extend.threads.find(x 
 T("週表沒列三個去處會擋", () => bad(L => { L.extend.weeks["2026-W50"].leads = ["只有壹個"]; }, /leads 至少要三個/));
 T("三條線索不足或同一種地方會擋", () => { bad(L => { L.extend.weeks["2026-W49"].clues.splice(1); }, /clues 至少三條/); bad(L => { L.extend.weeks["2026-W49"].clues.forEach(c => { c.where = "書"; }); }, /三種以上/); });
 T("closes 要跟 mysteries 的收線週一致、旁證不能晚於收線週", () => { bad(L => { L.extend.weeks["2026-W50"].closes = ["m-guard"]; }, /不是這週/); bad(L => { L.mysteries.list.find(m => m.id === "m-queue").closeBy = "2026-W51"; }, /晚於 m-queue 的收線週/); });
+T("掉落 items：5 件都有、沒審過或抄謎底或週對不上會擋", () => { assert.strictEqual(real.extend.items.length, 5); bad(L => { L.extend.items[0].audit.status = "待審"; }, /audit 要是審過/); bad(L => { L.extend.items[0].lore = L.mysteries.list.find(m => m.id === "m-queue").truth.slice(0, 12); }, /破梗/); bad(L => { L.extend.items[0].week = "2026-W52"; }, /drops 要列|晚於/); });
 T("beats 不在 revealBeats 會擋", () => bad(L => { L.extend.weeks["2026-W52"].beats.push("b99"); }, /不在 revealBeats/));
 T("person 不在 taskGivers 會擋", () => bad(L => { L.extend.threads[0].person = "nobody"; }, /不在 taskGivers/));
 console.log(`extend_check：${pass} 過、${fail} 失敗`);
