@@ -10,7 +10,7 @@
 //  數字在 SOCIAL（之後可以搬進 config.js 的 NUM）。畫面上的字用「壹」。
 // ================================================================
 import { NUM } from "../core/config.js";
-import { CATS, allOpts, asList, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr } from "../core/logic_base.js";
+import { CATS, CORE_TOTAL, allOpts, asList, codexCount, describePepe, fromKey, hallItem, hallScore, isFree, normKey, parsePillowKey, progressEvents, todayStr, wornGear } from "../core/logic_base.js";
 import { showPosters } from "../story/themeshow.js";
 
 export const SOCIAL = {
@@ -51,9 +51,15 @@ export function hallView(save) {
   try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
   const wear = (P.limited && P.limited.wear) || {}; // 簽到拿的展台裝飾、名牌框（11-09，決定 0030）：館友來參觀也看得到
   const hung = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) : null; // 掛在牆上的探險報告（決定 0036）
-  return { open: true, art: hallArt(P), artBonus: hs.artBonus || 0, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
+  return { open: true, art: hallArt(P), artBonus: hs.artBonus || 0, slots, score: hs.score || 0, theme: hs.theme || null, themes: (hs.themes || []).slice(), report: hung || null, deco: typeof wear.stand === "string" ? wear.stand : null, frame: typeof wear.frame === "string" ? wear.frame : null, posters: showPosters(P), souvenirs: Array.isArray(P.hallSouvenirs) ? P.hallSouvenirs.slice(0, 6) : [], title: P.casinoTitle && typeof P.casinoTitle === "object" ? P.casinoTitle : null, pass: hallPassView(save, P) }; // posters：辦完的展覽（決定 0035）；souvenirs、title：賭場的紀念品和稱號（決定 0040，給別人看之前 visit.js 的 cleanHallView 會過濾）
 }
 
+// 公開版館友證（翊文 11-22：「看別人的館友證」，做；公開：暱稱、名牌框、稱號、裝備 2 件、簽到天數、收藏數、最深樓層、成就數、掛出的紀念品；錢和籌碼不公開）。
+// 這裡只算裝備、收藏數、最深樓層、徽章數、簽到天數；暱稱、名牌框、稱號、紀念品本來就在展廳的 view 裡。成就數用圖鑑徽章（賭場成就在賭場錢包，不從這裡讀）
+export function hallPassView(save, P) {
+  const sg = save && save.signin && typeof save.signin === "object" ? save.signin : null;
+  return { gear: wornGear(P).map(g => g.id), have: codexCount(P), total: CORE_TOTAL, best: (P.cellar && Math.floor(+P.cellar.best)) || 0, badges: Object.keys(P.badges && typeof P.badges === "object" ? P.badges : {}).length, signins: sg && Number.isFinite(+sg.count) ? Math.max(0, Math.floor(+sg.count)) : 0 };
+}
 // 展廳主人收藏的畫（翊文 11-14：「大家的展廳也可以看到買的畫」「其他人參觀別人展廳時也可以看到」）：只給畫的 id、名字、稀有度、拍賣中與否；
 // **不給買價、現價、籌碼、買的日期**（買價是主人的錢的資訊，現價可以算出怎麼賺）。從存檔的 P.art.own 讀，不信存檔以外的東西。稀有的在前、同稀有度照買的日期（舊的在前）
 export function hallArt(P) {

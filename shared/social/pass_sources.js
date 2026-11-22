@@ -29,7 +29,7 @@ export const PASS_SOURCES = [
   { id: "books", name: "圖書館的書（章節）", from: null, save: ["P.chaptersRead", "P.seen"], pass: { src: "pass", key: "books.origin" }, use: "goto", pub: [] },
   { id: "understood", name: "看懂的事", from: { file: "shared/core/systems_text.js", list: "UNDERSTAND_TEXT" }, save: ["P.understood", "P.clues"], pass: { src: "pass", key: "books.understood" }, use: "none", pub: [] },
   // ---- 展廳 ----
-  { id: "hall", name: "展廳（展台上的佩佩、評分、主題）", from: null, save: ["P.hall", "P.hallVisitors", "P.visitorLog", "P.themesSeen", "P.themeShow", "P.giftsIn", "P.visit", "P.fullRows"], pass: { src: "pass", key: "hall" }, use: "goto", pub: ["slots", "art", "score", "artBonus", "theme", "posters", "report"] },
+  { id: "hall", name: "展廳（展台上的佩佩、評分、主題）", from: null, save: ["P.hall", "P.hallVisitors", "P.visitorLog", "P.themesSeen", "P.themeShow", "P.giftsIn", "P.visit", "P.fullRows"], pass: { src: "pass", key: "hall" }, use: "goto", pub: ["slots", "art", "score", "artBonus", "theme", "posters", "report", "pass"] },
   { id: "souvenirs", name: "掛在展廳的紀念品", from: null, save: ["W.hung", "W.props"], pass: { src: "pass", key: "souvenirs" }, use: "hang", pub: ["souvenirs"] },
   // ---- 簽到、限定品 ----
   { id: "limited", name: "限定品（簽到、兌換所、主題展）", from: { file: "shared/core/config.js", list: "LIMITED_ITEMS" }, save: ["P.limited", "SAVE.signin"], pass: [{ src: "pass", key: "deco.items" }, { src: "pass", key: "sign" }], use: "use", pub: ["deco", "frame"] },
