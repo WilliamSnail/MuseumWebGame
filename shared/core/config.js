@@ -657,7 +657,7 @@ export const NUM = {
     // 德州撲克（決定 0150，翊文 11-21）：館友對館友，先做 2 人桌。levels：[小盲, 大盲] 三級；buyMinBB／buyMaxBB：買入最少、最多幾個大盲，buyMax：買入上限（翊文：5,000 萬）；
     //   rakePct／rakeCapBB：抽水 5%、封頂 3 個大盲、每手都抽（底池 ≤ 2 個大盲不抽），進莊家（來源記 bj）；turnMs：每人 30 秒；maxTimeouts：連續超時幾次自動離座；
     //   resultMs：看結果幾毫秒；pairDay：壹天對同壹人淨輸上限（翊文：2,000 萬）；seats：壹桌幾人（先 2，之後 6）；新帳號可以直接坐（翊文 11-21）
-    holdem: { on: true, levels: [[500, 1000], [5000, 10000], [50000, 100000], [500000, 1000000]], npcStay: [15, 35], npcBuyBB: { careful: 40, basic: 60, bold: 100, wild: 100 }, buyMinBB: 40, buyMaxBB: 200, buyMax: 50000000, rakePct: 5, rakeCapBB: 3, turnMs: 30000, maxTimeouts: 2, resultMs: 6000, pairDay: 20000000, seats: 6 },
+    holdem: { on: true, levels: [[500, 1000], [5000, 10000], [50000, 100000], [500000, 1000000]], npcStay: [15, 35], npcBuyBB: { careful: 40, basic: 60, bold: 100, wild: 100 }, buyMinBB: 40, buyMaxBB: 200, buyMax: 50000000, rakePct: 5, rakeCapBB: 3, turnMs: 30000, warnMs: 10000, maxTimeouts: 2, resultMs: 9000, resultExtraMs: 2000, logMax: 8, pairDay: 20000000, seats: 6 },
     wheel: { on: true, edge: 0.04, maxWin: 5000000, maxBets: 12 },
     //   差壹畫：pExact＝「剛好」的權重（滿分 100；其餘平分給 多／少 × 第 1～5 筆出錯 十種）
     miscount: { on: true, edge: 0.04, maxWin: 5000000, maxBets: 8, pExact: 60 },

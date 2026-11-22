@@ -2,12 +2,12 @@
 //  德州撲克 2 人桌的畫面（決定 0150，翊文 11-21；規則 shared/casino/holdem.js、holdem_eval.js；伺服器 functions/casino/holdem.js 的 casinoHoldem）
 //  （11-21 晚改成 2～6 人桌：座位圈、SB／BB、邊池、多位贏家、這手先不玩。）
 //  館友對館友：隊伍 kind 是 "holdem"（邀請走現有的邀請）。這個檔只畫「伺服器給我的樣子」：牌型、輸贏、抽水、邊界都在伺服器，畫面不算。
-//  流程：沒有桌子＝開桌（選盲注級距、買入）→ 邀館友 → 兩人坐下就自動開第壹手 → 輪流（蓋牌／過牌／跟注／加注／全下，每步 30 秒）→ 攤牌看結果 → 下壹手。
+//  流程：沒有桌子＝開桌（選盲注級距、買入）→ 邀館友 → 兩人坐下就自動開第壹手 → 輪流（蓋牌／過牌／跟注／加注／全下，每步秒數 NUM.casino.holdem.turnMs）→ 攤牌看結果 → 下壹手。
 //  畫面用 RTDB holdemView/{pid}/{我}（每個動作的回答裡也有 view）；到了 view.deadline 叫壹次 tick，伺服器照時間自動過牌或蓋牌。
 //  登記成賭場牌桌頁籤的遊戲（ADDONS.casinoGame）；PARTY_HOOKS.holdem 讓被邀請的人接受後直接進這張桌。動畫只有壹次性的；沒有無限循環。
 // ================================================================
 import { casNum } from "../../../../shared/casino/core.js";
-import { HOLDEM_HAND_NAMES } from "../../../../shared/casino/holdem_eval.js";
+import { HOLDEM_HAND_NAMES, holdemDescribe } from "../../../../shared/casino/holdem_eval.js";
 import { NUM } from "../../../../shared/core/config.js";
 import { NET } from "../../core/net_firebase.js";
 import { ADDONS, PANELS, btn, h, note, snd } from "../../core/ui_core.js";
@@ -63,14 +63,39 @@ function watch(st) {
   if (!st.pid || !NET.me) return;
   const pid = st.pid;
   st.offs.push(NET.watch(`holdemView/${pid}/${NET.me.id}`, v => { if (H === st && st.pid === pid && v && v.j) { take(st, JSON.parse(v.j)); redraw(); } }));
-  st.clock = setInterval(() => { // 倒數的字、時間到叫壹次 tick
+  st.clock = setInterval(() => { // 倒數的字和進度條、時間到叫壹次 tick
     if (H !== st || !st.view) return;
-    const el = document.querySelector(".hd-clock");
-    const v = st.view, left = Math.max(0, Math.ceil((v.deadline - (v.now + (Date.now() - (st.viewAt || Date.now())))) / 1000));
-    if (el) el.textContent = v.deadline ? `${left} 秒` : "";
+    const v = st.view, left = leftSec(st);
+    paintClock(v, left);
     if (v.deadline && left <= 0 && st.tickFor !== v.deadline) { st.tickFor = v.deadline; call2(st, { act: "tick", pid: st.pid }); }
   }, 500);
 }
+// ---------- 倒數（11-22：每個倒數都寫是誰的、什麼時間；前端用 deadline 算，標籤看 phase） ----------
+const STREETS = ["翻牌前", "翻牌", "轉牌", "河牌"];
+const leftSec = st => { const v = st.view; return v && v.deadline ? Math.max(0, Math.ceil((v.deadline - (v.now + (Date.now() - (st.viewAt || Date.now())))) / 1000)) : 0; };
+// 回傳 { text, cls, pct }：輪到我（最明顯）、輪到別人、結算（下壹手幾秒後開始）、等人（不倒數）
+export function holdemTurn(v, left) {
+  const act = v.phase === "play" && v.toAct ? v.seats.find(s => s.uid === v.toAct) : null;
+  if (act) { const me = !!act.me, low = left * 1000 <= C().warnMs; return { text: me ? `輪到你・${left} 秒` : `輪到 ${act.nick}・${left} 秒`, cls: (me ? "me" : "other") + (low ? " low" : ""), pct: Math.min(100, Math.round(left * 1000 / C().turnMs * 100)) }; }
+  if (v.phase === "over" && v.deadline) return { text: `下壹手 ${left} 秒後開始`, cls: "over", pct: Math.min(100, Math.round(left * 1000 / Math.max(1, v.deadline - v.now) * 100)) };
+  return { text: "等人坐下", cls: "wait", pct: 0 };
+}
+function paintClock(v, left) {
+  const i = holdemTurn(v, left);
+  document.querySelectorAll(".hd-turn").forEach(el => {
+    const c = "hd-turn " + i.cls; if (el.className !== c) el.className = c;
+    const t = el.querySelector(".hd-clock"); if (t && t.textContent !== i.text) t.textContent = i.text;
+    const b = el.querySelector(".hd-bar b"); if (b) b.style.width = i.pct + "%";
+  });
+}
+function turnBar(st, v) {
+  const i = holdemTurn(v, leftSec(st));
+  const me = v.seats.find(x => x.me), warn = me && me.timeouts > 0 && v.phase !== "wait" ? h("span", { class: "hd-warn", role: "status" }, `你已超時 ${me.timeouts} 次，再超時 ${Math.max(1, C().maxTimeouts - me.timeouts)} 次會被請離座`) : null;
+  return h("div", { class: "hd-turn " + i.cls, role: "timer" }, h("span", { class: "hd-clock" }, i.text), h("span", { class: "hd-bar", "aria-hidden": "true" }, h("b", { style: `width:${i.pct}%` })), warn);
+}
+// 這輪最後的動作、動作紀錄的字
+const actText = (a, n) => ({ fold: "蓋牌", check: "過牌", call: `跟注 ${casNum(n)}`, raise: `加注到 ${casNum(n)}`, allin: `全下 ${casNum(n)}`, sb: `小盲 ${casNum(n)}`, bb: `大盲 ${casNum(n)}` })[a] || "";
+const lastText = l => (l ? actText(l.a, l.amt) + (l.to ? "（超時）" : "") : "");
 // tick 不顯示忙碌（伺服器自己會推新的 view）
 async function call2(st, data) { try { const r = await NET.call("casinoHoldem", data); if (r && r.view) { take(st, r.view); redraw(); } else if (r && r.gone) { st.pid = null; st.view = null; redraw(); } } catch (e) { /* 下次再試 */ } }
 // 重新整理、斷線回來：還在德州隊伍裡就接回去
@@ -130,26 +155,37 @@ const seatBox = (s, v, compact) => {
         s.npc ? h("i", { class: "hd-npc", title: "館裡的旅客" }, "客") : null, s.btn ? h("i", { class: "hd-btn", title: "按鈕" }, "D") : null, tag ? h("i", { class: "hd-blind", title: tag === "SB" ? "小盲" : "大盲" }, tag) : null) : null),
     s.say && !s.sitOut ? h("p", { class: "hd-say-npc", title: s.say }, s.say) : null,
     s.hole && s.hole.length && !s.sitOut ? h("div", { class: "cas-hand" }, s.hole.map(cardOrBack)) : null,
-    s.bet > 0 ? h("p", { class: "hd-bet" }, "押 ", h("b", null, casNum(s.bet))) : null);
+    s.last && !s.sitOut ? h("p", { class: "hd-last k-" + s.last.a, title: "這輪最後的動作" }, lastText(s.last)) : null,
+    s.bet > 0 ? h("p", { class: "hd-bet" }, "押 ", h("b", null, casNum(s.bet))) : null,
+    s.me ? nowHand(v, s) : null);
 };
-function resultBanner(v) {
+// 我現在的牌型：只用自己的底牌和已翻開的公共牌（翻牌前只有口袋對才寫）
+function nowHand(v, me) {
+  if (v.phase !== "play" || !me.hole || me.hole.length < 2 || me.hole.some(c => c < 0) || (me.st !== "in" && me.st !== "allin")) return null;
+  const d = holdemDescribe(me.hole.concat(v.board));
+  return d && (v.board.length || d.startsWith("壹對")) ? h("p", { class: "hd-now" }, "你現在：", h("b", null, d)) : null;
+}
+function resultBanner(st, v) {
+  const turn = v.phase === "over" ? turnBar(st, v) : null; // 「下壹手 N 秒後開始」放在結算裡
   const r = v.res;
   if (!r) return null;
   const me = v.seats.find(s => s.me), net = r.net || {}, inHand = me && Object.prototype.hasOwnProperty.call(net, me.uid), n = inHand ? net[me.uid] || 0 : 0;
   const won = r.winners && me && r.winners.includes(me.uid), winners = (r.winners || []).map(id => (v.seats.find(x => x.uid === id) || {}).nick).filter(Boolean);
   const how = r.how === "fold" ? (won ? "其他人都蓋牌了" : "") : r.names && me && r.names[me.uid] ? `你是${r.names[me.uid]}` : "";
-  const pots = Array.isArray(r.pots) && r.pots.length > 1 ? r.pots.map((p, i) => `${i ? "邊池 " + i : "主池"} ${casNum(p.amount)} → ${(p.winners || []).map(id => (v.seats.find(x => x.uid === id) || {}).nick || "").filter(Boolean).join("、")}`) : null;
+  const pots = Array.isArray(r.pots) && r.pots.length > 1 ? r.pots.map((p, i) => `${i ? (r.pots.length > 2 ? "邊池" + i : "邊池") : "主池"} ${casNum(p.amount)} → ${(p.winners || []).map(id => (v.seats.find(x => x.uid === id) || {}).nick || "").filter(Boolean).join("、")}`) : null;
   return h("div", { class: "cas-result k-" + (!inHand ? "push" : n > 0 ? "win" : n < 0 ? "lose" : "push"), role: "status" },
     h("b", null, !inHand ? "這手你沒參加" : n > 0 ? "你贏了" : n < 0 ? "你輸了" : "平分"),
     h("span", null, inHand ? `${n > 0 ? "+" : n < 0 ? "−" : ""}${casNum(Math.abs(n))}${how ? "・" + how : ""}` : ""),
     winners.length ? h("small", null, `贏家：${winners.join("、")}${winners.length > 1 ? "（平分）" : ""}`) : null,
-    r.how === "showdown" && r.names ? h("small", null, v.seats.filter(x => r.names[x.uid]).map(x => `${x.nick}：${r.names[x.uid]}`).join("　")) : null,
+    r.how === "showdown" && r.names ? h("div", { class: "hd-shows" }, v.seats.filter(x => r.names[x.uid]).map(x => h("div", { class: "hd-show" + ((r.winners || []).includes(x.uid) ? " win" : "") },
+      h("b", null, x.me ? "你" : x.nick), h("span", { class: "cas-hand" }, ((r.cards || {})[x.uid] || []).map(cardOrBack)), h("em", null, r.names[x.uid])))) : null,
     pots ? h("small", null, pots.join("　")) : null,
-    r.rake ? h("small", null, `抽水 ${casNum(r.rake)}`) : null);
+    h("small", null, `底池 ${casNum(r.pot || 0)}${r.rake ? `・抽水 ${casNum(r.rake)}` : ""}`),
+    turn);
 }
 function actions(st, v) {
   const L = v.legal, me = v.seats.find(s => s.me);
-  if (!L) return v.phase === "play" ? h("p", { class: "cas-hint hd-wait" }, "等其他人……") : null;
+  if (!L) return v.phase === "play" ? h("p", { class: "cas-hint hd-wait" }, (() => { const w = v.seats.find(s => s.uid === v.toAct && !s.me); return w ? `等 ${w.nick}……` : "等其他人……"; })()) : null;
   const send = (a, to) => call(st, { act: "act", pid: st.pid, a, to });
   const minTo = L.minTo, maxTo = L.maxTo, bb = v.level.bb;
   if (!st.raise || st.raise < minTo) st.raise = minTo;
@@ -170,7 +206,7 @@ function actions(st, v) {
 }
 // 輪到我（手機）：貼底的動作列會蓋住公共牌，所以把內文捲到底，動作列回到自己的位置，牌看得全（11-21 qa 實測 ①；11-22 改成畫面畫出來時才捲：畫面重畫會換掉 .cas-body，在收到 view 時捲會被洗掉）
 function scrollForTurn(st, v) {
-  const me = v.seats.find(x => x.me), key = me && v.phase === "play" && v.toAct === me.uid ? `${v.hand}|${v.street}|${v.toAct}` : "";
+  const me = v.seats.find(x => x.me), key = me && v.phase === "play" && v.toAct === me.uid ? `${v.hand}|${v.street}|${v.toAct}` : v.phase === "over" ? `${v.hand}|over` : ""; // 輪到我、結算：都捲到底（動作列、結算條完整看到）
   if (!key) { st.scrollKey = ""; return; }
   if (st.scrollKey === key || !window.matchMedia || !window.matchMedia("(max-width: 760px)").matches) return;
   st.scrollKey = key;
@@ -185,16 +221,23 @@ function tablePane(st) {
   const empties = Math.max(0, max - v.seats.length);
   scrollForTurn(st, v);
   return [
-    h("div", { class: "hd-head" }, h("span", null, `盲注 ${casNum(v.level.sb)}／${casNum(v.level.bb)}・第 ${v.hand} 手・${v.seats.length}／${max} 人`), h("span", { class: "hd-clock", role: "timer" }), btn("離桌", () => leave(st), "small ghost")),
+    h("div", { class: "hd-head" }, h("span", { class: "hd-street" }, `盲注 ${casNum(v.level.sb)}／${casNum(v.level.bb)}・${v.hand ? `第 ${v.hand} 手・${v.phase === "wait" ? "等人" : v.phase === "over" ? "結算" : STREETS[v.street] || ""}・` : ""}${v.seats.length}／${max} 人`), btn("離桌", () => leave(st), "small ghost")),
+    v.phase !== "over" ? turnBar(st, v) : null,
     h("div", { class: "bj-table hd-table" },
       h("div", { class: "hd-opps n" + Math.min(5, opps.length + (wait ? empties : 0)) }, opps.map(o => seatBox(o, v, true)), wait ? Array.from({ length: Math.min(empties, 5 - opps.length) }, () => h("div", { class: "hd-seat empty compact" }, h("p", { class: "bj-empty" }, "空位"))) : null),
-      h("div", { class: "hd-mid" }, board, tipOn(h("p", { class: "hd-pot" }, "底池 ", h("b", null, casNum(v.pot))), stateTip), reason ? h("p", { class: "hd-say" }, reason) : null),
+      h("div", { class: "hd-mid" }, board, tipOn(h("p", { class: "hd-pot" }, "底池 ", h("b", null, casNum(v.phase === "over" && v.res ? v.res.pot : v.pot))), stateTip), logList(v), reason ? h("p", { class: "hd-say" }, reason) : null),
       me ? seatBox(me, v, false) : null,
-      v.phase === "over" || (wait && v.res) ? resultBanner(v) : null),
+      v.phase === "over" || (wait && v.res) ? resultBanner(st, v) : null),
     v.seats.length < max ? (v.seats.length < 2 ? invitePane(st) : h("details", { class: "bj-how" }, h("summary", null, `邀更多館友（${v.seats.length}／${max}）`), invitePane(st))) : null,
     me && me.stack <= 0 && !(v.phase === "play" && me.st === "allin") ? h("div", { class: "sb-sec" }, h("h4", null, "籌碼用完了"), btn("再買入", () => { st.view = Object.assign({}, v); st.rebuy = true; redraw(); }, "primary")) : null,
     v.phase === "play" ? actions(st, v) : null,
   ];
+}
+// 底池旁最近 4 筆動作（旅客壹口氣做完，玩家靠這裡看到誰做了什麼）
+function logList(v) {
+  const L = (v.log || []).slice(-4), my = (v.seats.find(s => s.me) || {}).uid;
+  if (!L.length) return null;
+  return h("ul", { class: "hd-log", "aria-label": "這手最近的動作" }, L.map((e, i) => h("li", { class: i === L.length - 1 ? "new" : "" }, h("b", null, e.uid === my ? "你" : e.nick), " ", lastText(e))));
 }
 function invitePane(st) {
   const mates = (NET.roster || []).filter(p => p && !p.me && (p.status === "online" || p.status === "away"));
@@ -220,7 +263,8 @@ export function holdemPane() {
   return [body, howTo([
     "2～6 個人壹桌：每人兩張底牌、桌上五張公共牌（翻牌 3 張、轉牌 1 張、河牌 1 張），用最大的五張比牌型。",
     `牌型由小到大：${HOLDEM_HAND_NAMES.join("、")}（再大的就是同花大順）。`,
-    "每輪輪到你：蓋牌（放棄這手）、過牌（沒人加注時不用放籌碼）、跟注（補到對方的注）、加注、全下。每步 30 秒，時間到自動過牌或蓋牌，連續 2 次超時自動離座。",
+    `每輪輪到你：蓋牌（放棄這手）、過牌（沒人加注時不用放籌碼）、跟注（補到對方的注）、加注、全下。每步 ${C().turnMs / 1000} 秒，時間到自動過牌或蓋牌，連續 ${C().maxTimeouts} 次超時自動離座（超時壹次會先警告）。`,
+    `桌上寫著輪到誰、剩幾秒；每個座位寫這輪最後做了什麼；底池旁列出最近幾筆動作。結算後停 ${C().resultMs / 1000} 秒（有邊池、多位贏家多 ${C().resultExtraMs / 1000} 秒）再開下壹手。`,
     `底池抽 ${C().rakePct}%（最多 ${C().rakeCapBB} 個大盲）進莊家；壹天對同壹人淨輸最多 ${casNum(C().pairDay)}，到了就不能再跟他同桌（那壹手你先不玩）。有人全下時，底池會分成主池和邊池。`])];
 }
 ADDONS.casinoGame({ id: "holdem", name: "德州", ic: "users", pane: holdemPane });
