@@ -6,7 +6,7 @@
 // 要登入才看得到的畫面（銀行、餐車、拍賣…）這裡看不到：會在報告裡列出「跳過」，用 docs/操作/本機模擬器實測.md 的方法另外看。
 // 改畫面的人上線前一定要跑（AGENTS.md）。還沒放進 npm test 和 CI（要瀏覽器、太慢）。
 // 用法：npm run ui:check [-- --screens lobby,today --sizes phone,desktop --url http://localhost:5173 --shots 資料夾 --wait 3500 --js "先在頁面跑的 JS" --json]
-//   --url：已經有 dev server 就給網址（不然自己起一個，port 5499，結束時關掉）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
+//   --url：已經有 dev server 就給網址（會印警告、而且比對它是不是這個資料夾起的，不是就停；不然自己找空的埠起一個，結束時關掉；--port 可指定埠）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
 //   有任何一項問題 exit 1；只有「跳過」不算失敗。
 const fs = require("fs"), path = require("path"), os = require("os");
 const { spawn } = require("../dev/child.cjs");
@@ -126,12 +126,29 @@ function findBrowser() {
   const c = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
   return c.find(x => fs.existsSync(x));
 }
+// 找一個沒人在聽的埠（自己問作業系統要）。11-22 美術統籌踩到：預設固定 5499，別的 session 的 dev server 剛好占著，ui:check 連過去量到別人的畫面
+function freePort() {
+  return new Promise((res, rej) => { const srv = require("net").createServer(); srv.unref(); srv.on("error", rej); srv.listen(0, "127.0.0.1", () => { const p = srv.address().port; srv.close(() => res(p)); }); });
+}
+// 這個網址上的 dev server 是不是從「這個資料夾」起的：把它回的 main.js 原始碼（?raw）跟這個資料夾的檔案比。回 true／false／null（連不上）
+async function serverIsHere(url, root = ROOT) {
+  try {
+    const r = await fetch(url + "/src/core/main.js?raw");
+    if (!r.ok) return false;
+    const m = (await r.text()).match(/export default ("(?:[^"\\]|\\.)*")/);
+    return !!m && JSON.parse(m[1]) === fs.readFileSync(path.join(root, "web", "src", "core", "main.js"), "utf8");
+  } catch (e) { return null; }
+}
 async function startServer(port) {
   const url = `http://localhost:${port}`;
   const vite = path.join(ROOT, "node_modules", "vite", "bin", "vite.js");
   const proc = spawn(process.execPath, [vite, "--port", String(port), "--strictPort", "--host", "localhost"], { cwd: ROOT, stdio: "ignore" });
-  for (let i = 0; i < 150; i++) { await sleep(300); try { const r = await fetch(url + "/"); if (r.ok) return { url, proc }; } catch (e) { /* 還沒好 */ } if (proc.exitCode !== null) break; }
-  proc.kill(); throw new Error(`dev server 起不來（port ${port} 被占用？可以用 --url 接已經開著的）`);
+  for (let i = 0; i < 150; i++) {
+    await sleep(300);
+    if (proc.exitCode !== null) break; // 我們自己起的那個死了（埠被搶走）：不能再連，連到的會是別人的
+    try { const r = await fetch(url + "/"); if (r.ok && proc.exitCode === null) { if ((await serverIsHere(url)) !== true) { proc.kill(); throw new Error(`埠 ${port} 回的不是這個資料夾（${ROOT}）的畫面，停下來，免得量到別人的`); } return { url, proc }; } } catch (e) { if (/回的不是這個資料夾/.test(e.message)) throw e; /* 還沒好 */ }
+  }
+  proc.kill(); throw new Error(`dev server 起不來（port ${port}）`);
 }
 async function openBrowser() {
   const exe = findBrowser();
@@ -177,7 +194,14 @@ async function main() {
   const opts = { js: val("--js", null), wait: +val("--wait", 3500), shots: val("--shots", null) && path.resolve(val("--shots")), json: a.includes("--json") };
   const picked = SCREENS.filter(s => !want || want.includes(s.id));
   let srv = null, base = val("--url", null);
-  if (!base) { srv = await startServer(+val("--port", 5499)); base = srv.url; }
+  if (!base) { srv = await startServer(+val("--port", 0) || await freePort()); base = srv.url; }
+  else { // --url：接別人開的 server，量到的畫面不一定是這個資料夾的（11-22）
+    console.log(`⚠ 用 --url ${base}：不是自己起的 server，量到的可能是別的資料夾、別的分支的畫面。`);
+    const here = await serverIsHere(base);
+    if (here === false) { console.log(`✗ 這個 server 回的 main.js 跟這個資料夾（${ROOT}）的不一樣，是別的資料夾起的。不用 --url（讓它自己起）就好。`); process.exit(1); }
+    if (here === null) { console.log("✗ --url 連不上"); process.exit(1); }
+    console.log("  （main.js 跟這個資料夾的一樣，繼續）");
+  }
   const B = await openBrowser();
   const report = [], skipped = [];
   try {
@@ -222,4 +246,4 @@ function print(report, skipped, problems) {
   console.log(problems.length ? `\n${problems.length} 個問題` : "\n沒有發現問題");
 }
 if (require.main === module) main().catch(e => { console.error("✗", e.message); process.exit(1); });
-module.exports = { SCREENS, SIZES, MEASURE, TAP_SCREENS, TAP_MIN, summarize };
+module.exports = { SCREENS, SIZES, MEASURE, TAP_SCREENS, TAP_MIN, summarize, freePort, serverIsHere, startServer };
