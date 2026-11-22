@@ -38,6 +38,7 @@
 | 開本機測試環境：模擬器、規則、網頁 | `npm run local -- --set 8 --port 5288`（放背景跑；`--stop` 關掉；測試請換到還沒開的 `--set`，不然會測到別的分支） |
 | 測限時活動：把一場移到 90 秒後開始 | `npm run local -- --event-now double11`（測完 `git checkout` 還原，不要 commit） |
 | 寫日誌、決定：時間、版本、號碼、索引都自動 | `npm run doc:new -- spec.json`（格式看 `tools/content/new_doc.cjs` 開頭） |
+| 日誌標題寫錯：很接近的改成範本的寫法，「還沒做、要注意」「給下一個人」漏了補「- 沒有」；只動這個分支的日誌 | `npm run log:fix`（`ship` 跑測試前會先跑，格式還是不對就先停，11-22） |
 | 一次改很多檔：找不到或不只一處會丟錯 | `require("./tools/dev/edit_lib.cjs")` 的 `editor` |
 | **改很多處文字（首選）**：寫純文字計畫檔，反引號、`$`、引號都不用跳脫；有壹處對不上就壹個檔都不寫 | `npm run edits -- 計畫檔`（格式在 `tools/dev/apply_edits.cjs` 開頭，`--check` 只檢查） |
 | 一張好幾格的綠底素材切成一條（怪物姿勢、特效、圖示） | `~/anaconda3/python.exe tools/assets/cut_frames.py 原圖 輸出.webp --rows 6 [--cell 200]`（`--rows 4,3` 每排幾格；用法在檔案開頭） |

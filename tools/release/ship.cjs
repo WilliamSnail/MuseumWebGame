@@ -122,6 +122,8 @@ function main() {
   // 搬家前留下的舊檔（不在 git 裡的舊位置）先清掉，免得 git add -A 把它們帶進 commit、或讓測試和資料夾規矩誤紅（11-20，tools/dev/clean_stale.cjs）
   const stale = require("../dev/clean_stale.cjs").clean();
   if (stale.length) console.log(`清掉搬家前留下的舊檔：${stale.join("、")}`);
+  // 日誌標題先自動修，格式不對就在跑測試前停（11-22 翊文：「寫的維護日誌有三個段落標題沒照範本……讓他比較少發生」，tools/check/log_fix.cjs）
+  { const lf = require("../check/log_fix.cjs").fixChanged(); if (lf.fixed.length) console.log("日誌標題自動改好（npm run log:fix）：\n" + lf.fixed.join("\n")); if (lf.errs.length) throw new Error("維護日誌格式不對，先改好再上線（還沒跑測試）：\n" + lf.errs.join("\n")); }
   const lp = localPlan(pendingFiles(), o.flags);
   if (lp.line) console.log(lp.line);
   if (lp.mode === "full") {
