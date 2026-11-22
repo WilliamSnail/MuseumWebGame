@@ -83,6 +83,8 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 
 **測試**：
 
+- 測試加在檔案最後的 `console.log(…passed…)` 和 `process.exit` **前面**；寫在後面永遠不會跑（npm test 會擋）。
+
 - 改了共用的東西（`shared/`、`ui_core.js`、存檔欄位），要改測試或加測試。
 - 測試裡跟數值有關的讀 `NUM`，不要寫死。
 - 會用到亂數的測試要固定骰子（`G.setRng(...)`）。

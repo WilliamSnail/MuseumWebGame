@@ -1298,7 +1298,7 @@ export function understandFlow(src) {
   persist();
   snd("eerie", 2);
   return quirkLayer("你看懂了", u.from ? `來自：${u.from}` : "", [
-    h("p", { class: "uk-text" }, ptNode(u.text)),
+    h("p", { class: "uk-text" }, ptNode(u.text), u.san && u.san.aside ? h("span", { class: "uk-aside" }, " ", ptNode(u.san.aside), u.san.loss ? `（理智 −${u.san.loss}）` : "") : null), // 讀懂的理智檢定旁白（失敗才扣）
     h("p", { class: "uk-note" }, u.isNew ? `這件事記進了圖書館書架上的《看懂的事》（${u.n}／${u.total}）。` : u.id ? "你早就看懂過這件事了。只是又想起來了。" : "這件事太大了，記不下來。"),
   ], "uk-modal", "我寧可沒看懂");
 }
