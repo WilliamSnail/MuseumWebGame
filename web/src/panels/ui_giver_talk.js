@@ -150,5 +150,7 @@ export function giverTalk(id) {
   box.paint = paint; cards.add(box); paint(); giverLoad();
   return box;
 }
+// 領了他交代的每日任務的獎勵之後叫（ui_story.js 用 ADDONS.giverTaskDone）：伺服器壹天壹位 +4
+ADDONS.giverTaskDone = async id => { if (!GIVERS[id] || !NET.loggedIn) return; const r = await ask({ op: "taskDone", id }); if (r && r.ok && r.up) note(`${GIVERS[id].name}更認得你了：${GV_LV[r.lv] || ""}。`, "good"); INFO = null; giverLoad(true); };
 ADDONS.giverTalk = giverTalk;
 ADDONS.giverLvTag = giverLvTag;

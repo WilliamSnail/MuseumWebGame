@@ -310,7 +310,7 @@ function taskRow(W, t, draw, m) {
   const r = Object.assign({}, t.reward, { stamps: t.weekly ? NUM.story.stampPerTask : 0 });
   const where = taskGo(t, W);
   return taskCard({ t, sayText: t.giver && t.says ? (taskDone(P, t) && t.done ? t.done : t.says) : null, text: taskText(t, W), kindIcon: TASK_ICON[t.kind], pts: t.weekly ? 0 : taskPts(t), n, tgt, reward: r, state: st.claimed ? "claimed" : st.done ? "done" : "todo",
-    words: t.weekly && t.words ? ptMark(t.words) : null, where, past: W.past, onGo: () => { m.close(); goStep(where); }, onClaim: () => claimFlow(claimTask(P, W, t.id, todayStr()), draw) });
+    words: t.weekly && t.words ? ptMark(t.words) : null, where, past: W.past, onGo: () => { m.close(); goStep(where); }, onClaim: () => { const r = claimTask(P, W, t.id, todayStr()); if (r && r.ok && t.giver && ADDONS.giverTaskDone) ADDONS.giverTaskDone(t.giver); claimFlow(r, draw); } });
 }
 export function storyTodayNodes(m, draw) {
   if (!on()) return null;
