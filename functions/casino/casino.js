@@ -509,7 +509,7 @@ export const casino = onCall(async req => {
         return { ok: true, added };
       }
       const acts = op === "askDone" ? await readActs(me.uid, day) : {};
-      return play(req, me, { save: op === "gift" }, ctx => { const r = giverRun(ctx, d, acts); return r.ok ? { ok: true, giver: r, chips: ctx.w.chips } : no(r); }); // 不用 shape（那是整個銀行畫面，閒聊壹下不用算）
+      return play(req, me, { save: op === "gift" || op === "taskDone" }, ctx => { const r = giverRun(ctx, d, acts); return r.ok ? { ok: true, giver: r, chips: ctx.w.chips } : no(r); }); // 不用 shape（那是整個銀行畫面，閒聊壹下不用算）
     }
     case "report": return { ok: true, report: await casReport() };
     // 旅客留言簿（圖書館）：NPC 評價的完整歷史，只讀。d.day 要看哪壹天（沒給＝有資料的最新壹天）、d.who 只看某位（名字或 id）、d.limit 最多幾則（≤ 50）。

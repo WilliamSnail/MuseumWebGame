@@ -90,6 +90,17 @@ T("串門子的對話記在字母順序在前那位名下；記在後面那位�
   const p = G.giverPairAt("morning", D1, "U1"), ok = G.giverLogAdd(null, p.a, [p.sid, "clerk:chat.morning:0"], D1); assert.strictEqual(ok.added, 2);
   assert.strictEqual(G.giverLogAdd(null, p.b, [p.sid], D1).added, 0, "記在 b 名下不收"); assert.strictEqual(G.giverLogAdd(null, "scale", ["pair:clerk-scale:0"], D1).added, 0);
 });
+T("做完他交代的每日任務：領了獎勵才給 +4、壹位壹天壹次、今天領幾個任務最多算幾次、換日重算", G => {
+  const ctx = mk(G); assert.ok(!run(G, ctx, { op: "taskDone", id: "yuga" }).ok, "沒有挑戰模式的參觀者");
+  const P = withPepes(ctx); const S = G.storyState(P);
+  assert.ok(!run(G, ctx, { op: "taskDone", id: "yuga" }).ok, "今天沒領任務");
+  S.tasks.t1 = { done: D1, claimed: D1 }; const r = run(G, ctx, { op: "taskDone", id: "yuga" }); assert.ok(r.ok && r.gained === 4, JSON.stringify(r)); assert.strictEqual(ctx.w.npcRel.yuga.xp, 4);
+  assert.ok(!run(G, ctx, { op: "taskDone", id: "yuga" }).ok, "壹天壹位壹次"); assert.ok(!run(G, ctx, { op: "taskDone", id: "hall" }).ok, "只領了 1 個任務，只算 1 次");
+  S.tasks.t2 = { done: D1, claimed: D1 }; assert.ok(run(G, ctx, { op: "taskDone", id: "hall" }).ok); assert.strictEqual(ctx.w.npcRel.hall.xp, 4);
+  S.tasks.t3 = { done: D1, claimed: D1 }; assert.ok(!run(G, ctx, { op: "taskDone", id: "yuga" }).ok, "同壹位今天算過了");
+  ctx.day = D2; S.tasks.t4 = { done: D2, claimed: D2 }; assert.ok(run(G, ctx, { op: "taskDone", id: "yuga" }).ok, "隔天重算");
+  assert.strictEqual(ctx.w.chips, G.casWalletFix(G.casWalletNew(), D1).chips, "不給籌碼");
+});
 T("交談紀錄：同壹句不重複、壹次最多 10 句、每位最多 200 句丟最舊、格式不對丟掉、不認得的人丟掉、沒新句子 added 是 0", G => {
   let r = G.giverLogAdd(null, "clerk", ["chat.morning:1", "chat.morning:1", "BAD ID", "task:2026-11-23:1:says", 5], D1); assert.strictEqual(r.added, 2); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.g.clerk.map(x => x[1]))), ["chat.morning:1", "task:2026-11-23:1:says"]);
   assert.strictEqual(G.giverLogAdd(r.doc, "clerk", ["chat.morning:1"], D2).added, 0); assert.strictEqual(G.giverLogAdd(r.doc, "t-yuga", ["a:1"], D1).added, 0);

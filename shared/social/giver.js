@@ -8,6 +8,7 @@ import { NUM } from "../core/config.js";
 import { GIVERS } from "../npc/givers.js";
 import { describePepe, fromKey, hashStr, mulberry32, normKey } from "../core/logic_base.js";
 import { giftCount, takeGift } from "./gifts.js";
+import { storyState } from "../story/state.js";
 import { NPC_REL_GIVERS, npcRelAdd, npcRelFix, npcRelView } from "./npcrel.js";
 
 export const GIVER_TITLES = { yuga: "牌桌的熟面孔", hall: "餐車的常客", postman: "收信人", clerk: "大夜班的幫手", scale: "秤得出的人", number: "聽得懂叫號的人" };
@@ -21,7 +22,7 @@ const gvDayNo = day => Math.max(0, Math.floor((Date.parse(day + "T00:00:00Z") - 
 // 今天的送禮計數（換日重設）
 function gvDay(w, day) {
   npcRelFix(w);
-  if (w.npcDay.day !== day) w.npcDay = { day, g: 0, t: 0 };
+  if (w.npcDay.day !== day) { w.npcDay.day = day; w.npcDay.g = 0; w.npcDay.t = 0; w.npcDay.td = 0; }
   return w.npcDay;
 }
 // 送他的這隻他怎麼反應："like"（喜歡）、"ok"（普通）、"off"（不太對）。只看五個欄位：稀有度（失敗作算「失敗作」）、心情、顏色、帽子、姿勢
@@ -68,6 +69,13 @@ export function giverRun(ctx, d, acts = {}) {
     return out(r, { n, annoyed: n >= NUM.npcRel.tapAnnoyed, over: false });
   }
   if (op === "visit") return out(add("visit"));
+  if (op === "taskDone") { // 領了他交代的每日任務的獎勵：+4（壹位壹天壹次）。任務的內容伺服器不知道是誰交代的（在每週的內容裡），所以信客戶端說的人，但今天最多算「今天真的領了幾個任務」那麼多次
+    if (!ctx.P) return gvNo("要用挑戰模式的參觀者進館才算。");
+    const claimed = Object.values(storyState(ctx.P).tasks || {}).filter(x => gvBox(x) && x.claimed === ctx.day).length, nd = gvDay(w, ctx.day);
+    if (nd.td >= claimed) return gvNo("今天沒有領到他交代的任務獎勵。");
+    const r = add("task"); if (r.why === "src_max") return gvNo("今天算過了。");
+    nd.td++; return out(r);
+  }
   if (op === "ask") { // 接下今天的臨時拜託
     const o = giverOffers(w, ctx.day, ctx.uid).find(x => x.id === id);
     if (!o) return gvNo("他今天沒有拜託你的事。");
