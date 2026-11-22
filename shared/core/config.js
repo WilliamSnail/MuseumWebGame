@@ -5,7 +5,7 @@
 //    forbidden ＝禁忌選項（不算在基本組合裡，佩佩神話夠了才會自己打開）；
 //    mutant ＝突變選項（只能靠融合室配種突變出來）；gift ＝委託人送的選項；
 //    key ＝要在地下收藏庫拿到鑰匙才會打開（deco ＝裝飾類別，拿到鑰匙組合才會變多）；
-//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032；"show"：主題展辦到金、"week"：每週特展到金，決定 0035）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
+//    limited ＝限定（"signin"：只有每週全簽到拿得到，決定 0030；"shop"：只有兌換所賣，決定 0032；"show"：主題展辦到金、"week"：每週特展到金，決定 0035；"foe"：地下守門第壹次打贏）。限定的不算進基本組合、圖鑑、「全部解鎖」，另外算。
 //  ・新加的選項如果畫法裡沒有對應，圖上會用預設的樣子，文字照樣出現。
 //  ・下面的文字是 Claude 的草稿；標「第 1 代」的文字不要改。
 // ================================================================
@@ -78,6 +78,10 @@ export const PEPE_PARTS = [
     { name: "黑絨領結", limited: "week" },
     { name: "小枕頭髮夾", limited: "week" },
     { name: "金瓜子項鍊", limited: "week" },
+    // 地下守門第壹次打贏掉的（11-22，只好看：沒有地下效果，LIMITED_FX 不寫）
+    { name: "紙箱頂", limited: "foe" },
+    { name: "白布頭罩", limited: "foe" },
+    { name: "等門的小帽", limited: "foe" },
   ] },
   { name: "姿勢", options: [
     { name: "站著", start: true },
@@ -768,6 +772,12 @@ export const LIMITED_ITEMS = [
   { id: "week-allBlack", kind: "part", cat: "帽子", opt: "黑絨領結", from: "week", theme: "allBlack" },
   { id: "week-pillowWeek", kind: "part", cat: "帽子", opt: "小枕頭髮夾", from: "week", theme: "pillowWeek" },
   { id: "week-gopnikWeek", kind: "part", cat: "帽子", opt: "金瓜子項鍊", from: "week", theme: "gopnikWeek" },
+  // 地下守門（CELLAR_FOES 的 boss）第壹次打贏掉壹件（11-22，美術統籌 11-22 選的品項）：foe 是怪物 id；只好看，不進每週全簽到、不進兌換所，不影響任何數值
+  { id: "foe-f1g", kind: "part", cat: "帽子", opt: "紙箱頂", from: "foe", foe: "f1g" },
+  { id: "foe-f2g", kind: "part", cat: "帽子", opt: "白布頭罩", from: "foe", foe: "f2g" },
+  { id: "foe-f3g", kind: "deco", slot: "frame", from: "foe", foe: "f3g" },
+  { id: "foe-f4g", kind: "deco", slot: "stand", from: "foe", foe: "f4g" },
+  { id: "foe-f5g", kind: "part", cat: "帽子", opt: "等門的小帽", from: "foe", foe: "f5g" },
 ];
 // ---------- 第 4 版（11-09，決定 0032）：兌換所的裝備 ----------
 // 名字、說明在 systems_text.js 的 GEAR_TEXT。放在博物館（P.shop.gear），現在這位參觀者最多穿 NUM.shop.gearWorn 件（P.gear，換人時各穿各的）。

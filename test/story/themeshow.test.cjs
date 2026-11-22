@@ -235,7 +235,7 @@ T("自由模式沒有展期；限定配件本來就打開了；舊的自由模�
 });
 
 T("配件：10 個主題各一件，每週特展 3 件；有文字、不算進全部解鎖、不會被全簽到抽到", G => {
-  const items = G.LIMITED_ITEMS.filter(x => x.from);
+  const items = G.LIMITED_ITEMS.filter(x => x.from === "show" || x.from === "week");
   const shows = items.filter(x => x.from === "show");
   eq(shows.map(x => x.theme).sort(), Object.keys(G.HALL_THEME_BONUS).sort());
   eq(G.SHOW_THEMES.slice().sort(), Object.keys(G.HALL_THEME_BONUS).sort());

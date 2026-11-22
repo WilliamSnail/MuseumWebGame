@@ -9,16 +9,23 @@
 //                    財產（紀念品）：have 幾種、copies 共幾件、hung 掛在展廳幾件；recent 最近拿到的前 6 種
 //   swap  { week, used, rows[{id,chips,perWeek,left}], tot { n, chips, rows[{id,n,chips}] } }（tot：從 11-22 起累計換了幾次、花了多少）
 //                    換小獎：這週已經換了幾次（used），每一項還剩幾次
+//   packs { left, opened, tickets }          大禮包今天剩幾包、今天開了幾包、券幾張（11-22）
+//   meals { total, kinds, rows[{id,name,n}], left{mood,san}|null }  餐車吃過的；left 是今天還能補多少（day 沒給是 null）
+//   wkPast[{week,got,done,claimed}]（新的在前）、st（戰績，數字）、bond[{id,name,kind,lv,xp,next}]（認得的旅客和交代人，熟識度高的在前）
+//   另外 ach.list／props.list 是完整清單（含每週收藏、舊 Discord 的）；wk.items 是這週每件（11-22）
 //   wk    { week, got, total, done, claimed } | null
 //                    本週收藏：基本收藏品拿到幾件／共幾件；done：集滿了嗎；claimed：領了週章嗎。def 沒給（這週沒有賭場收藏）就是 null
 // ================================================================
 import { NUM } from "../core/config.js";
-import { CAS_ACH } from "./text.js";
+import { CAS_ACH, CAS_MENU } from "./text.js";
 import { casAchInfo, casExTotFix, casExchangeLeft, casPropInfo } from "./wallet.js";
+import { GIVERS } from "../npc/givers.js";
+import { NPC_ROSTER } from "../npc/roster.js";
+import { npcRelKind, npcRelView } from "../social/npcrel.js";
 import { casWkBase } from "./week.js";
 
 const newest = (ids, map) => ids.slice().sort((a, b) => String(map[b].d || "").localeCompare(String(map[a].d || "")) || (a < b ? -1 : 1));
-export function casPassView(w, def) {
+export function casPassView(w, def, day = null) {
   const ids = Object.keys(w.ach || {}).filter(id => casAchInfo(w, id)), base = ids.filter(id => CAS_ACH.some(a => a.id === id));
   const ach = {
     have: base.length, total: CAS_ACH.length, extra: ids.length - base.length, wk: ids.filter(id => casAchInfo(w, id).wk).length,
@@ -37,5 +44,17 @@ export function casPassView(w, def) {
     const items = casWkBase(def);
     wk = { week: def.label, got: items.filter(it => w.wk.got && w.wk.got[it.id]).length, total: items.length, done: !!w.wk.done, claimed: !!w.wk.claimed };
   }
-  return { chips: w.chips, ach, props, swap, wk };
+  // ---- 11-22 賭場頁補完（美術統籌要的）：都只讀，錢和籌碼以外的東西 ----
+  ach.list = newest(ids, w.ach).map(id => { const a = casAchInfo(w, id); return { id, name: a.name, desc: a.desc || "", d: w.ach[id].d || null, kind: base.includes(id) ? "base" : a.npc ? "npc" : a.wk ? "wk" : "old" }; });
+  props.list = newest(pids, w.props).map(id => { const p = casPropInfo(w, id); return { id, name: p.name, desc: p.desc || "", n: w.props[id].n || 0, d: w.props[id].d || null, hung: hung.includes(id) }; });
+  const packs = { left: Math.max(0, +(w.pk && w.pk.left) || 0), opened: Math.max(0, +(w.pk && w.pk.opened) || 0), tickets: Math.max(0, Math.floor(+w.tickets || 0)) }; // 大禮包今天剩幾包、今天開了幾包、券幾張
+  const FC = NUM.casino.foodCap, fd = day && w.food && w.food.day === day ? w.food : { mood: 0, san: 0 };
+  const meals = { total: Object.values(w.meals || {}).reduce((s, n) => s + Math.max(0, +n || 0), 0), kinds: Object.keys(w.meals || {}).filter(id => +w.meals[id] > 0).length,
+    rows: CAS_MENU.filter(m => +(w.meals || {})[m.id] > 0).map(m => ({ id: m.id, name: m.name, n: +w.meals[m.id] })), left: day ? { mood: Math.max(0, FC.mood - (+fd.mood || 0)), san: Math.max(0, FC.san - (+fd.san || 0)) } : null }; // left：今天吃東西還能補多少心情、理智
+  if (wk) wk.items = casWkBase(def).map(it => ({ id: it.id, name: it.name, desc: it.desc, got: !!(w.wk.got && w.wk.got[it.id]) }));
+  const wkPast = Object.keys(w.wkLog || {}).sort().reverse().map(k => ({ week: k, got: +w.wkLog[k].got || 0, done: !!w.wkLog[k].done, claimed: !!w.wkLog[k].claimed }));
+  const st = {}; for (const k of Object.keys(w.st || {})) if (Number.isFinite(+w.st[k])) st[k] = +w.st[k];
+  const nameOf = id => (GIVERS[id] && GIVERS[id].name) || ((NPC_ROSTER.find(n => n && n.id === id) || {}).name) || null;
+  const bond = Object.keys(w.npcRel || {}).filter(id => nameOf(id)).map(id => { const v = npcRelView(w, id, null); return { id, name: nameOf(id), kind: npcRelKind(id), lv: v.lv, xp: v.xp, next: v.next }; }).sort((a, b) => b.xp - a.xp || (a.id < b.id ? -1 : 1));
+  return { chips: w.chips, ach, props, swap, wk, packs, meals, wkPast, st, bond };
 }

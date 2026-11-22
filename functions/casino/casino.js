@@ -493,7 +493,7 @@ export const casino = onCall(async req => {
     // 館友證的「賭場」頁（11-21）：成就、換到的小獎、本週收藏、財產的摘要。只讀：不建錢包、不寫任何東西（沒進過賭場＝全空）；欄位寫在 shared/casino/pass_view.js
     case "pass": {
       const ws = await walletRef(me.uid).get(), day = taipeiDay(now()), w = casWalletFix(parse(ws), day);
-      return Object.assign({ ok: true, entered: ws.exists }, casPassView(w, wkDefOf(w)));
+      return Object.assign({ ok: true, entered: ws.exists }, casPassView(w, wkDefOf(w), day));
     }
     // 新牌桌遊戲（決定 0150）：佩佩轉盤 wheel、差壹畫 miscount。d.bets＝[{ id, bet }]。info：兩個遊戲的格子、賠率、現在能押多少（不動錢）。錢走莊家（來源 bj＝牌桌），規則在 shared/casino/side_bets.js
     case "sbInfo": return play(req, me, {}, ctx => shape(ctx, { info: { wheel: casWheelInfo(ctx.house, ctx.day), miscount: casMiscountInfo(ctx.house, ctx.day) } }));

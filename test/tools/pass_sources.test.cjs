@@ -23,7 +23,7 @@ T("來源 → 館友證：登記了館友證沒顯示的要擋（要有 none 白
 });
 T("來源 → 館友證：passView 算了但畫面沒讀要擋；unused 白名單在畫面讀了以後要擋", () => {
   const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.kind !== "unused"); assert.ok(has(check(d), /souvenirs 算了但畫面/));
-  const e = fresh(); e.uiSrc += " x.souvenirs "; assert.ok(has(check(e), /souvenirs（unused）畫面已經讀/));
+  const e = fresh(); e.uiSrc += " x.souvenirs "; assert.ok(has(check(e), /souvenirs（unused souvenirs）畫面已經讀/));
 });
 T("館友證 → 來源：passView 回的欄位拿掉了、登記表指到不存在的檔或清單、輸出多了沒對應的欄位都要擋", () => {
   const d = fresh(); delete d.passOut.pepe.failed; assert.ok(has(check(d), /沒有欄位 pepe\.failed/));

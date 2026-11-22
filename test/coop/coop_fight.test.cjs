@@ -99,6 +99,7 @@ T("打贏守門：才算走完這一層，拿第一次過關的獎勵；合作�
   assert.strictEqual(run.phase, "floorDone");
   assert.ok(Ps.a.cellar.floorsDone[1] && Ps.b.cellar.floorsDone[1]);
   const foeId = run.fightLast.foe; assert.ok(Ps.a.cellar.foes[foeId] && Ps.b.cellar.foes[foeId], "怪物圖鑑：打贏記壹筆"); assert.ok(!G.foeLog(Ps.a, foeId), "同壹種不重複記"); assert.ok(!G.foeLog(Ps.a, "no-such-foe"), "不在清單的不記");
+  if (foeId === "f1g") { assert.ok(Ps.a.limited.got["foe-f1g"] && Ps.b.limited.got["foe-f1g"], "守門第壹次掉限定品"); assert.ok(G.isUnlocked(Ps.a, "帽子", "紙箱頂"), "帽子打開了"); assert.ok(run.fresh.a.some(e => e.type === "foeDrop" && e.id === "foe-f1g")); assert.strictEqual(G.foeDrop(Ps.a, "f1g").dup, true, "再掉是重複"); } else assert.fail("B1 的守門應該是 f1g：" + foeId);
   assert.strictEqual(Ps.a.cellar.best, 1);
   assert.strictEqual(run.next, 2);
   assert.ok(run.gateDone[1] && !run.fight);

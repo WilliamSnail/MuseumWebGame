@@ -64,34 +64,6 @@
    "since": "2026-11-22"
   },
   {
-   "row": "packs",
-   "kind": "none",
-   "id": "B1",
-   "reason": "大禮包剩幾包、券幾張",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "meals",
-   "kind": "none",
-   "id": "B6",
-   "reason": "餐車吃過什麼、今天心情／理智還能補多少",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "stats",
-   "kind": "none",
-   "id": "B9",
-   "reason": "賭場戰績（贏幾手、連勝、最大贏）",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "npcbond",
-   "kind": "none",
-   "id": "N1",
-   "reason": "認得的旅客和交代人：熟識度、稱號（W.npcRel）",
-   "since": "2026-11-22"
-  },
-  {
    "row": "failed",
    "kind": "partial",
    "id": "M2",
@@ -187,7 +159,8 @@
    "kind": "unused",
    "id": "B3",
    "reason": "passView.souvenirs 算了但 ui_pass.js 沒讀（畫面用賭場那份）",
-   "since": "2026-11-22"
+   "since": "2026-11-22",
+   "key": "souvenirs"
   },
   {
    "row": "pepes",
@@ -208,6 +181,46 @@
    "kind": "partial",
    "id": "R1",
    "reason": "技能只有數字，沒有說明",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "packs",
+   "kind": "unused",
+   "id": "B1",
+   "key": "packs",
+   "reason": "伺服器已回 packs（大禮包剩幾包、券幾張），畫面還沒畫",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "meals",
+   "kind": "unused",
+   "id": "B6",
+   "key": "meals",
+   "reason": "伺服器已回 meals（吃過什麼、今天還能補多少），畫面還沒畫",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "stats",
+   "kind": "unused",
+   "id": "B9",
+   "key": "st",
+   "reason": "伺服器已回 st（戰績），畫面還沒畫",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "npcbond",
+   "kind": "unused",
+   "id": "N1",
+   "key": "bond",
+   "reason": "伺服器已回 bond（認得的旅客和交代人），畫面還沒畫",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "week",
+   "kind": "unused",
+   "id": "B7",
+   "key": "wkPast",
+   "reason": "伺服器已回 wkPast 和 wk.items（每件名稱、過去幾週），畫面還沒畫",
    "since": "2026-11-22"
   }
  ]
