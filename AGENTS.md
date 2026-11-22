@@ -46,7 +46,7 @@ npm run econ:check     # 經濟自我檢查（套利條件、上限、利率順�
 npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入口：改好幾處、自動跑檢查和模擬、不過就還原（tools/dev/tune.cjs）
 ```
 
-- **在瀏覽器看**：`npm run dev`，網址加 `#畫面` 直接進那個畫面、放好假收藏，例如 `#lobby`、`#cellarrun`、`#fusion2`、`#office:upgrades`、`#gallery:lowsan`。**這會清掉這個瀏覽器在 localhost:5173 的存檔**。完整清單見 `docs/規則/架構.md` 第 3 節。
+- **在瀏覽器看**：`npm run dev`，網址加 `#畫面` 直接進那個畫面、放好假收藏，例如 `#lobby`、`#cellarrun`、`#fusion2`、`#office:upgrades`、`#gallery:lowsan`。**這會清掉這個瀏覽器在 localhost:5173 的存檔**。完整清單見 `docs/規則/架構.md` 第 3 節。**賭場、銀行不用登入也看得到**：`#casino`、`#casino:餐車`、`#bank:財報`…（假伺服器，只能看畫面、不動錢；說明在 `docs/操作/本機模擬器實測.md` 第 0 節）。
 - 要看的寬度：電腦約 1366、平板約 800、手機 375。
 - **聲音 AI 聽不到**，要用量的（`docs/規則/架構.md` 第 3 節、4.6 節），日誌要寫「還沒人聽過」。開發時網址有 `#畫面` 或 `?user=` 會自動靜音，要出聲加 `&sound`。
 - **登入後才看得到的畫面（賭場、銀行、拍賣…）**：用 Firebase 模擬器登入假帳號、給籌碼、無頭瀏覽器照圖，步驟在 `docs/操作/本機模擬器實測.md`（每個 session 用不同的 `--set` 和 `--port`）。

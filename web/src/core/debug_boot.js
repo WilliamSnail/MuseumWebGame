@@ -93,12 +93,15 @@ function fightPreview(arg) {
   draw();
 }
 
+// 假伺服器的網址可以用中文頁籤名：#casino:餐車、#bank:財報
+const CAS_ALIAS = { 牌桌: "table", 餐車: "diner", 大禮包: "gift", 我的: "mine" };
+const BANK_ALIAS = { 財報: "report", 金流: "flow", 股票: "stock", 存款: "save", 借款: "loan", 館債: "bond" };
 (function () {
   const want = decodeURIComponent((location.hash || "").slice(1));
   if (!want) return;
   window.__PM_NODOOR__ = true; // 截圖直接進畫面，不放開館布幕
   const [screen, arg, extra] = want.split(":");
-  setTimeout(() => {
+  setTimeout(async () => {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* 沒關係 */ }
     setSave(newSave()); SAVE.tutorialDone = true; SAVE.gen2Migrated = true;
     SAVE.profiles.challenge = newProfile("challenge");
@@ -126,6 +129,8 @@ function fightPreview(arg) {
     if (screen === "lobby" && /^pool/.test(arg || "")) UI.pool = { low: { lv: 2, dir: -1, band: "low", night: false, trace: [9, 7, 6, 4, 3, 3, 2], hits: 0 }, mid: { lv: 12, dir: 1, band: "mid", night: true, trace: [8, 9, 10, 11, 11, 12, 12], hits: 1 }, edge: { lv: 19, dir: 1, band: "edge", night: false, trace: [14, 15, 17, 18, 19, 19, 19], hits: 2 }, over: { lv: 24, dir: 1, band: "over", night: true, trace: [18, 19, 21, 22, 23, 24, 24], hits: 4 } }[arg.slice(4)] || { lv: 12, dir: 0, band: "mid", night: false, trace: [], hits: 0 };
     if (/^pnm/.test(arg || "")) { const k = its.map(i => i.key); P.nmSeq = 2; P.pepes[k[0]].nm = "小綠"; P.pepes[k[0]].nmSeq = 1; P.pepes[k[1]].tk = { no: 7, day: "2026-11-18", n: 1, stamp: false, was: "舊名" }; P.pepes[k[1]].nm = ""; P.pepes[k[2]].nm = "新名字"; P.pepes[k[2]].nmSeq = 2; P.pepes[k[2]].tk = { no: 12, day: "2026-11-18", n: 1, stamp: true, was: "舊" }; } // 取名的示範（決定 0133）
     setRng(null);
+    // 假伺服器（mock_net.js）：賭場、銀行、館友證要登入才看得到，這裡換成假的 NET（不連網路），畫面用錄下來的伺服器回應。網址加 ?mock 任何畫面都用
+    if (/^(casino|bank|pass)$/.test(screen) || /[?&]mock/.test(location.search)) (await import("./mock_net.js")).installMock();
     if (screen === "route") { go("lobby", {}, { action: false }); setTimeout(() => routePreview(arg), 300); return; }
     if (screen === "fight") { go("lobby", {}, { action: false }); setTimeout(() => fightPreview(arg), 300); return; }
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
@@ -140,7 +145,8 @@ function fightPreview(arg) {
     if (screen === "ending") { go("ending", { id: arg || "curator" }, { action: false }); return; }
     // 簽到卡、簽到日曆（11-09，決定 0030）：#signin、#calendar；兌換所（決定 0032）：#shop，放好 40 枚週章
     if (screen === "shop") storyState(P).stamps = 40;
-    if (screen === "signin" || screen === "calendar" || screen === "shop" || screen === "casino" || screen === "pass" || screen === "today") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](), 300); return; }
+    if (screen === "signin" || screen === "calendar" || screen === "shop" || screen === "casino" || screen === "pass" || screen === "today") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](screen === "casino" && arg && arg !== "lowsan" ? { tab: CAS_ALIAS[arg] || arg } : undefined), 300); return; } // #casino:餐車 → 賭場開在那一頁（casTabOf 認得的名字：table、diner…）
+    if (screen === "bank") { UI.bankTab = arg && arg !== "lowsan" ? BANK_ALIAS[arg] || arg : "report"; go("bank", {}, { action: false }); return; } // #bank:股票 → 銀行開在那一頁（report、flow、stock、save、loan、bond）
     // #tasks：每日任務的畫面零件（11-20，ui_tasks.js），假資料；#tasks:full 是領得到的樣子
     if (screen === "tasks") {
       go("lobby", {}, { action: false });

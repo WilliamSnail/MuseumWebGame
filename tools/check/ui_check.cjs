@@ -34,9 +34,17 @@ const SCREENS = [
   { id: "calendar", name: "簽到日曆" },
   { id: "pass", name: "館友證" },
   { id: "title", name: "標題" },
-  { id: "casino", name: "賭場", needLogin: true },
-  { id: "casino:餐車", name: "餐車", needLogin: true },
-  { id: "bank", name: "銀行", needLogin: true },
+  // 賭場、銀行要登入：用假伺服器（web/src/core/mock_net.js，網址 #畫面 就會裝，不用登入、不用模擬器），畫面是錄下來的伺服器回應
+  { id: "casino", name: "賭場：牌桌（假伺服器）" },
+  { id: "casino:餐車", name: "賭場：餐車（假伺服器）" },
+  { id: "casino:大禮包", name: "賭場：大禮包（假伺服器）" },
+  { id: "casino:我的", name: "賭場：我的（假伺服器）" },
+  { id: "bank:財報", name: "銀行：財報（假伺服器）" },
+  { id: "bank:金流", name: "銀行：金流（假伺服器）" },
+  { id: "bank:股票", name: "銀行：股票（假伺服器）" },
+  { id: "bank:存款", name: "銀行：存款（假伺服器）" },
+  { id: "bank:借款", name: "銀行：借款（假伺服器）" },
+  { id: "bank:館債", name: "銀行：館債（假伺服器）" },
 ];
 const SIZES = { phone: { w: 375, h: 740, mobile: true, dpr: 2 }, desktop: { w: 2140, h: 1440, mobile: false, dpr: 1 } };
 
@@ -100,6 +108,8 @@ const MEASURE = `(() => {
   return out;
 })()`;
 
+// 關掉第壹次進來跳的說明卡：按每個看得到的「知道了」
+const DISMISS = `[...document.querySelectorAll('button')].filter(b => b.offsetParent && /^知道了$/.test(b.innerText.trim())).forEach(b => b.click())`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function findBrowser() {
   const c = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
@@ -139,6 +149,7 @@ async function inspect(B, base, scr, size, opts) {
   await B.send("Page.navigate", { url: `${base}/?uichk=${Date.now()}#${encodeURIComponent(scr.id)}` });
   await sleep(opts.wait);
   await B.evaluate("document.body.classList.add('orient-skip')");
+  if (/^(casino|bank|pass)/.test(scr.id)) { await B.evaluate(DISMISS); await sleep(600); await B.evaluate(DISMISS); await sleep(300); } // 假伺服器的賭場、銀行：第壹次進來的說明卡（「知道了」）先關掉，不然蓋住畫面量不到
   await sleep(400);
   if (opts.js) { await B.evaluate(opts.js); await sleep(500); } // --js：先跑壹段（測試檢查本身用，或先按開某個分頁）
   await B.evaluate(`window.__W = ${sz.w}; window.__H = ${sz.h};`);
