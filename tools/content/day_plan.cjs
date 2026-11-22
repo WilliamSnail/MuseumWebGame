@@ -232,6 +232,8 @@ function format(p) {
     asList(x.threads).forEach(t => B(`  人物線 ${t.id}（${t.person}，第 ${t.stage} 階，${t.audit && t.audit.status}）：${t.seed}　放在：${t.where}`));
     B(`  結論：${x.conclusion}　線索：${asList(x.clues).map(c => c.where + "—" + c.what).join("；")}`);
     B("  每天寫完自問：玩家手上至少有三個能往下追的方向（書、房間、特展、公佈欄、交代人、地下各算一個）？不到就補");
+    ["dread", "cost", "pepe", "horror"].forEach(k => { const f = x[k]; if (f) B(`  四問 ${k}（${f.day}，${f.where}）：${f.what}${f.san ? "　理智 " + f.san : ""}`); });
+    B("  寫完自問：恐懼、代價、佩佩、嚇人的展品，四件都做了嗎？（排程說明 一、第 2 點 0a）");
     if (x.note) B(`  注意：${x.note}`);
     B("  規矩：只用審過的旁證、不自己加；壹週放壹天；放了在 weeks.<週>.ties 記壹行（排程說明 一、第 2 點）");
   }

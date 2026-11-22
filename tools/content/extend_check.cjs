@@ -70,6 +70,15 @@ function checkExtend(L, E, W, lw) {
     if (cl.length < 3 || new Set(cl.map(c => c && c.where)).size < 3) E(w, "clues 至少三條、分在三種以上不同的地方（三條線索原則）");
     cl.forEach(c => { if (!isObj(c) || !c.where || !c.what) E(w, "clues 每條要有 where 和 what"); });
     asList(x.closes).forEach(id => { const m = mys.find(y => y && y.id === id); if (!m) E(w, `closes「${id}」不在 mysteries 裡`); else if (m.closeBy !== k) E(w, `closes「${id}」的 closeBy 是 ${m.closeBy}，不是這週（extend.weeks 要跟 mysteries 對得上）`); });
+    // 四問自我審查（翊文 11-22）：恐懼、代價、佩佩、嚇人的展品，每週都要寫
+    [["dread", "恐懼：這週的問題底下的那壹層"], ["cost", "代價：知道了就回不去的揭露和理智代價"], ["pepe", "佩佩：直接指向牠的線索"], ["horror", "嚇人的展品：這週用的那壹件"]].forEach(([k, label]) => {
+      const f = x[k];
+      if (!isObj(f)) { E(w, k + " 要有（" + label + "）：{ what, day, where }"); return; }
+      if (typeof f.what !== "string" || f.what.trim().length < 8) E(w, k + ".what 要寫這週怎麼做到（8 字以上）");
+      if (!/^d[1-7]$/.test(f.day || "")) E(w, k + ".day 要是 d1～d7（放在哪天）");
+      if (typeof f.where !== "string" || !f.where.trim()) E(w, k + ".where 要寫放在哪裡");
+      if (k === "cost" && (typeof f.san !== "string" || !f.san.trim())) E(w, "cost.san 要寫理智代價（例如 1/1D4）");
+    });
     if (asList(x.leads).length < 3) E(w, "leads 至少要三個去處（三條線索原則、永遠有三個去處）");
     else asList(x.leads).forEach(l => { if (typeof l !== "string" || !l.trim()) E(w, "leads 每個要有字"); });
   });
