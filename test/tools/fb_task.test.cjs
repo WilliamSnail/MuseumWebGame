@@ -8,7 +8,7 @@ const TB = (name, fn) => { const prev = later.slice(); later.push(Promise.all(pr
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + e.message); } };
 
 T("只有固定的動作，其他一律不做", () => {
-  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "client-errors", "advisor-rules-mail"]);
+  assert.deepStrictEqual(ACTIONS, ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "client-errors", "advisor-rules-mail", "digest-now"]);
   assert.deepStrictEqual(parseTask({ action: "stock-reroll" }), { action: "stock-reroll" }, "重算股價不用 email");
   // 工作流程的下拉選單要跟程式的清單壹樣，不然按得到的動作程式不認得（或反過來）
   const yml = require("fs").readFileSync(require("path").join(__dirname, "..", "..", ".github", "workflows", "firebase-task.yml"), "utf8");
@@ -92,4 +92,15 @@ TB("house-ledger 把打牌中的錢（21 點打到一半的注、德州桌上的
   const s = out.join("\n");
   assert.ok(/全館的錢合計[^\n]*1,100/.test(s), "舊那行：莊家 100 ＋ 錢包 1000"); assert.ok(/21 點打到一半的注 50（1 局）/.test(s) && /德州撲克桌上的籌碼 700（1 桌）/.test(s), s.slice(-900)); assert.ok(/含打牌中的全館合計：1,850/.test(s));
 });
+// digest-now（11-22）：組出來的字要跟伺服器 20:00 那則壹樣（dcDigestPost，帶入館連結）；不用填 email
+later.push((async () => {
+  try {
+    const { digestText } = require("../../tools/fb/fb_task.cjs");
+    const r = await digestText(Date.UTC(2026, 10, 22, 8, 0)); // 台灣 11-22 16:00
+    assert.strictEqual(r.day, "2026-11-22");
+    assert.ok(r.text === "" || /🎟 入館：https:\/\/pepe-museum\.web\.app$/.test(r.text), "要跟伺服器壹樣帶入館連結");
+    assert.deepStrictEqual(parseTask({ action: "digest-now" }), { action: "digest-now" });
+    pass++;
+  } catch (e) { fail++; console.log("FAIL digest-now", e.message); }
+})());
 Promise.all(later).then(() => { console.log(`${pass} passed, ${fail} failed（Firebase 的固定動作）`); process.exit(fail ? 1 : 0); });
