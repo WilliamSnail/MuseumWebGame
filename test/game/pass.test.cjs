@@ -150,5 +150,25 @@ T("名牌框：戴著的名牌框出現在證件上（card.frame），沒戴是 
   assert.strictEqual(G.passView(fresh(G, "free"), {}).card.frame, null);
 });
 
+T("收藏頁列表：失敗作、修復品、抱枕、配方、禁書（沒讀的不寫書名）", G => {
+  const P = fresh(G);
+  const base = Object.assign({}, G.DEFAULT_PICK), k1 = G.pepeKey({ ...base, 稀有度: G.RARITY_ORDER[0] }), k2 = G.pepeKey({ ...base, 稀有度: G.RARITY_ORDER[1] });
+  P.failed[k1] = 2; P.failed.bad = 5; P.repaired[k2] = 1;
+  P.recipes[G.RECIPES[0].id] = "2026-11-05";
+  P.mythFrom.book1 = "2026-11-06";
+  const v = J(G.passView(P, {})), p = v.pepe;
+  assert.deepStrictEqual(p.failedList, [{ key: k1, n: 2 }], "認不得的 key 不列");
+  assert.strictEqual(p.failedTotal, 7, "份數照存檔加起來（壞的 key 也算進總數，跟圖鑑壹樣不去改它）");
+  assert.deepStrictEqual(p.repairedList, [{ key: k2, n: 1 }]); assert.strictEqual(p.repairedTotal, 1);
+  assert.strictEqual(p.recipeList.length, G.RECIPES.length);
+  const r0 = p.recipeList[0]; assert.ok(r0.found && r0.date === "2026-11-05" && r0.name !== "？？？");
+  const r1 = p.recipeList[1]; assert.ok(!r1.found && r1.name === "？？？" && r1.hint, "沒找到的只給提示");
+  const f = v.books.forbidden;
+  assert.strictEqual(f.total, 9); assert.strictEqual(f.have, 1); assert.strictEqual(f.allSeats, 1);
+  assert.strictEqual(f.list.find(x => x.id === "book1").read, "2026-11-06");
+  assert.ok(f.list.filter(x => !x.read).every(x => x.title === "？？？"), "沒讀過的不寫書名");
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).books.forbidden, null);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
