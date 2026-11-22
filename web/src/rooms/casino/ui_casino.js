@@ -364,7 +364,7 @@ function bjPane() {
   const gl = casinoGiver(); // 荷官 Yuga Bot 也是交代人：今天有交代，沒玩之前泡泡說那句（11-21）
   const felt = bjTable({ bubble: !r && gl ? gl.text : S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner, onSaid: () => openSayLog("荷官說過的話", S.sayLog) });
   felt.addEventListener("click", () => { if (S && S.animating) S.skip = true; }); // 演出中點壹下跳過
-  const parts = [houseLine(), felt];
+  const parts = [houseLine(), felt, ADDONS.giverPair ? ADDONS.giverPair("牌桌邊") : null]; // 荷官和號碼機在牌桌邊串門子（11-22）
   if (playing && S.shown == null && ds == null && !hideLast) {
     parts.push(h("div", { class: "bj-acts" }, btn("要牌", () => move("hit"), "primary big", { disabled: S.busy ? true : null }), btn("停牌", () => move("stand"), "big", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));
@@ -772,7 +772,8 @@ function dinerNote() {
   const body = h("div", { class: "dn-note-t" }, h("p", null, txt), h("small", null, "——堂"), h("img", { class: "dn-cup", src: "/diner/prop-cup.webp", alt: "", title: "多留了壹杯，不說是給誰的" }));
   const el = h("details", { class: "dn-note" }, h("summary", null, icon("scroll"), h("span", null, "堂主的字條")), body);
   if (window.innerWidth > 760) el.open = true; // 電腦攤開；手機收成壹個便條，點了才展開
-  return el;
+  const pair = ADDONS.giverPair ? ADDONS.giverPair("餐車") : null; // 堂主和郵差／荷官在餐車串門子（11-22）
+  return pair ? h("div", null, el, pair) : el;
 }
 function dinerCard(it, w, buy) {
   const lack = w.chips < it.price, locked = it.ticket && !(w.opened > 0);

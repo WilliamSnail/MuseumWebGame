@@ -17,8 +17,10 @@ export function giverNote(id) {
   return h("div", { class: "gv-note" + (gl && gl.done ? " done" : ""), role: "note" }, giverAv(id, { small: true }),
     h("div", { class: "gv-t" }, h("b", null, name), h("small", null, "・在" + (GIVER_WHERE[id] || "館裡")), gl ? h("p", null, gl.text) : null, giverTalk(id)));
 }
-export function giverStrip(ids) {
-  const list = ids.map(giverNote).filter(Boolean);
+// place：這個房間的地點名（巷口、銀行旁、夜市口…）；給了，那個時段剛好有人在這裡串門子，就多壹張兩位同框的卡（ui_giver_pair.js）
+export function giverStrip(ids, place) {
+  const list = ids.map(giverNote).filter(Boolean), pair = place && ADDONS.giverPair ? ADDONS.giverPair(place) : null;
+  if (pair) list.push(pair);
   return list.length ? h("div", { class: "gv-strip" }, list) : null;
 }
 ADDONS.giverStrip = giverStrip; // 各房間用 ADDONS.giverStrip([id]) 放（不用互相 import）
