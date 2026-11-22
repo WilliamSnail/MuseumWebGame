@@ -51,6 +51,7 @@ import { casEconActive, casEconRun, casEconUpcoming, casUpcoming } from "../shar
 import { NPC_LIST } from "../shared/npc_list_data.js";
 import { npcCasAway } from "../shared/casino/npc.js";
 import { npcCardView } from "../shared/npc/card.js";
+import { npcRelKind, npcRelView } from "../shared/social/npcrel.js";
 import { nwSanPublic, whCard, whCrowdMood, whMoodPublic, wmWriteVisit, wtAdvance, wtCard } from "../shared/world/core.js";
 import { gsAdvance, gsBuy, gsCancel, gsIs, gsOrder, gsSell, gsView } from "../shared/casino/stock_grp.js";
 import { casSellForDebt } from "../shared/casino/debt.js";
@@ -488,7 +489,10 @@ export const casino = onCall(async req => {
       const t = now(), day = taipeiDay(t), sec = await twSecret(), hs = await houseRef().get(), h = hs.exists ? parse(hs) : null, counters = npcCounters(h && h.npcc);
       const house = JSON.parse(JSON.stringify(h || {})); // 複本
       if (h) { house.reviews = []; casNpcLive(house, day, t, sec, NPC_LIST, counters); } // 今天到了的幾站（byNpc）結到現在；不寫回去
-      return { ok: true, card: npcCardView(id, { day, nowMs: t, secret: sec, list: NPC_LIST, counters, house }) };
+      const card = npcCardView(id, { day, nowMs: t, secret: sec, list: NPC_LIST, counters, house });
+      // 好感度（旅客才有；只讀玩家自己的錢包，沒錢包就是 0）：給畫面畫等級和進度條
+      if (card && npcRelKind(id) === "traveler") { const ws2 = await walletRef(me.uid).get(), v = npcRelView(ws2.exists ? casWalletFix(parse(ws2), day) : null, id, day); card.bond = { lv: v.lv, xp: v.xp, next: v.next, left: v.left }; }
+      return { ok: true, card };
     }
     // 館友證的「賭場」頁（11-21）：成就、換到的小獎、本週收藏、財產的摘要。只讀：不建錢包、不寫任何東西（沒進過賭場＝全空）；欄位寫在 shared/casino/pass_view.js
     case "pass": {

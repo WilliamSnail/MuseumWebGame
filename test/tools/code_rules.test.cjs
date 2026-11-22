@@ -120,4 +120,14 @@ const names = Object.keys;
   assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "window.__mock={on:1}"]]).length, 1, "dist 裡有 window.__mock 要報");
   assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "id:\"mock-me\""]]).length, 1, "dist 裡有 mock-me 要報");
 }
+T9();
+function T9() {
+  const css = (a, b) => ({ "web/src/css/a.css": ".mini-layer.sp-top { z-index: 9100; }\n" + (b ? ".mini-layer.sp-top ~ .nb-layer { z-index: " + b + "; }" : "") });
+  const run = o => R.checkLayers(Object.keys(o), f => o[f]);
+  assert.deepStrictEqual(run(css(0, 9200)), []);
+  assert.strictEqual(run(css(0, 9000)).length, 1);
+  assert.strictEqual(run(css(0, 0)).length, 1);
+  assert.deepStrictEqual(R.checkLayers(["web/src/css/b.css"], () => ".x{color:red}"), []);
+}
+
 console.log("程式的規矩的測試都過了");

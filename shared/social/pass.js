@@ -16,7 +16,8 @@ import { jobInfo, jobSkill, skillOf } from "../core/legacy.js";
 import { hallSize, roomProgress, upgradeState } from "../core/systems.js";
 import { traitById } from "../core/logic_base.js";
 import { traitDesc, traitName } from "../core/legacy.js";
-import { gearInfo } from "../core/shop.js";
+import { gearInfo, matCount } from "../core/shop.js";
+import { STORY_ITEMS } from "../story/state.js";
 import { asList, gearItem, ownsGear, wornGear } from "../core/logic_base.js";
 import { visitorSlots } from "./visitors.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, stockOf, wornDeco } from "./signin.js";
@@ -169,6 +170,14 @@ export function passSign(o) {
   if (!o || !Number.isInteger(o.signins) || !o.streak) return null;
   return { count: o.signins, cur: o.streak.cur || 0, best: o.streak.best || 0, makeups: o.streak.makeups || 0 };
 }
+// 換週章的材料（翊文 11-22：「換週章的材料也要，然後可以在那裡連結的兌換所」）：背包裡的舊畫布、金箔、金線，份數照兌換所的算法（金箔算 2 份）。自由模式 null。只讀。
+export function passMats(P) {
+  if (!P || isFree(P)) return null;
+  const bag = storyState(P).bag, need = NUM.shop.matToStamp;
+  const list = Object.keys(STORY_ITEMS).filter(id => STORY_ITEMS[id].kind === "material").map(id => ({ id, name: STORY_ITEMS[id].name, n: Math.max(0, Math.floor(+bag[id]) || 0), worth: STORY_ITEMS[id].worth || 1 }));
+  const total = matCount(P);
+  return { list, total, need, stamps: Math.floor(total / need) };
+}
 export function passAvatar(P) {
   const k = P && typeof P.avatar === "string" ? P.avatar : "";
   return k && P.pepes && P.pepes[k] && fromKey(k) ? k : "";
@@ -220,6 +229,7 @@ export function passView(P, o = {}) {
     upgrades: passUpgrades(P),
     relics: passLegacy(P),
     hall: passHall(P),
+    mats: passMats(P),
     cellar: passCellar(P),
     sign: passSign(o),
     pepe: {
