@@ -163,6 +163,7 @@ export function openPass(o = {}) {
         L.history.length > 5 ? h("p", { class: "sp-note" }, `只列最近 5 位，全部 ${L.history.length} 位在館長室的牆上。`) : null, wall) : null];
   };
 
+  const thumbN = x => h("span", { class: "ps-thumb", title: x.n > 1 ? `×${x.n}` : "", html: frogHTML(fromKey(x.key)), "aria-hidden": "true" }, x.n > 1 ? h("i", { class: "ps-thumb-n" }, `×${x.n}`) : null);
   const pepePane = v => {
     const p = v.pepe;
     return [
@@ -170,6 +171,13 @@ export function openPass(o = {}) {
         h("div", { class: "ps-rar" }, p.byRarity.map(x => h("span", { class: "ps-rar-i" }, rdot(x.r), ` ${x.r} ${x.n}`))),
         h("div", { class: "sp-go" }, goBtn("圖鑑室", () => go("codex"), "codex"), goBtn("展廳", () => navTo("hall"), "hall"))),
       p.recent.length ? sec("最近收進來的", h("div", { class: "ps-recent" }, p.recent.map(k => h("span", { class: "ps-thumb", html: frogHTML(fromKey(k)), "aria-hidden": "true" })))) : null,
+      p.failedTotal || p.repairedTotal ? sec(`失敗作與修復品`,
+        p.failedTotal ? [h("p", { class: "sp-note" }, `失敗作 ${p.failedTotal} 件（${p.failed} 種）`), h("div", { class: "ps-recent" }, p.failedList.map(x => thumbN(x)))] : null,
+        p.repairedTotal ? [h("p", { class: "sp-note" }, `修好的 ${p.repairedTotal} 件（${p.repaired} 種）`), h("div", { class: "ps-recent" }, p.repairedList.map(x => thumbN(x)))] : null,
+        p.failed + p.repaired > 12 ? h("p", { class: "sp-note" }, "只列前 12 種，全部在圖鑑室。") : null,
+        h("div", { class: "sp-go" }, goBtn("圖鑑室", () => go("codex", { tab: "failed" }), "codex"))) : null,
+      p.pillowTotal ? sec(`抱枕　${p.pillowTotal} 個`, h("ul", { class: "pv-gear" }, p.pillowList.map(x => h("li", null, icon("pillow"), h("span", null, h("b", null, x.title), x.n > 1 ? h("small", null, `×${x.n}`) : null)))), h("div", { class: "sp-go" }, goBtn("抱枕工作台", () => navTo("pillow")))) : null,
+      sec(`隱藏配方　${p.recipes[0]}／${p.recipes[1]}`, h("ul", { class: "pv-gear" }, p.recipeList.map(r => h("li", { class: r.found ? "" : "ps-miss" }, icon(r.found ? "star" : "lock"), h("span", null, h("b", null, r.name), h("small", null, r.found ? (r.date ? `${r.hint}（${r.date}）` : r.hint) : r.hint))))), h("div", { class: "sp-go" }, goBtn("配方", () => go("codex", { tab: "recipes" })), goBtn("融合室", () => navTo("fusion")))),
       sec("其他的收藏", h("div", { class: "ps-stats" },
         stat("融合配方", `${p.recipes[0]}／${p.recipes[1]}`), stat("失敗作", `${p.failed} 種`), stat("修好的", `${p.repaired} 種`),
         stat("抱枕", p.pillow.text.replace(/^(✓ )?抱枕 /, "")), stat("展台", p.hall.text.replace(/^(✓ )?展台 /, ""))),
@@ -185,6 +193,10 @@ export function openPass(o = {}) {
         stat("看懂的事", `${b.understood[0]}／${b.understood[1]}`)),
         h("p", { class: "sp-note" }, "《看懂的事》放在圖書館書架的「館藏」那壹頁，最右邊。"),
         h("div", { class: "sp-go" }, goBtn("圖書館的書架", () => go("origin"), "book"), !v.free ? goBtn("每週的書", () => go("origin", { tab: "weekly" })) : null)),
+      b.forbidden ? sec(`禁書　${b.forbidden.have}／${b.forbidden.total}`,
+        h("ul", { class: "pv-gear" }, b.forbidden.list.map(x => h("li", { class: x.read ? "" : "ps-miss" }, icon(x.read ? "book" : "lock"), h("span", null, h("b", null, x.title), h("small", null, x.read ? (x.read === "讀過" ? "讀過" : `讀過・${x.read}`) : "還沒讀"))))),
+        h("p", { class: "sp-note" }, "禁書每位參觀者各自讀：這裡寫現在這位讀過的。"), b.forbidden.seats > 1 ? h("p", { class: "sp-note" }, `${b.forbidden.seats} 位參觀者合起來，讀過 ${b.forbidden.allSeats} 本。`) : null,
+        h("div", { class: "sp-go" }, goBtn("圖書館的禁書", () => go("origin", { tab: "forbidden" }), "book"))) : null,
       v.free ? null : h("h3", { class: "ps-h" }, "疑點簿"),
       v.free ? null : casePane()];
   };

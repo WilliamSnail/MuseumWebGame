@@ -64,31 +64,10 @@
    "since": "2026-11-22"
   },
   {
-   "row": "failed",
-   "kind": "partial",
-   "id": "M2",
-   "reason": "失敗作、修復品只有「N 種」，沒有縮圖和總件數",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "pillows",
-   "kind": "partial",
-   "id": "M3",
-   "reason": "抱枕只有一段文字，沒有總份數、縮圖",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "recipes",
-   "kind": "partial",
-   "id": "M4",
-   "reason": "隱藏配方只有 x／y，沒有已發現的名稱和日期",
-   "since": "2026-11-22"
-  },
-  {
    "row": "understood",
    "kind": "partial",
    "id": "L3",
-   "reason": "看懂的事兩份清單各自算（靜態 26 件和每週 u-），x／26 不含後者；禁書（L1）、每週的書（L2）也還沒有",
+   "reason": "看懂的事兩份清單各自算（靜態 26 件和每週 u-），x／26 不含後者；每週的書（L2）也還沒有總數",
    "since": "2026-11-22"
   },
   {
@@ -173,7 +152,7 @@
    "row": "books",
    "kind": "partial",
    "id": "L2",
-   "reason": "每週的書沒有總數；禁書沒有（L1）",
+   "reason": "每週的書沒有總數（禁書 L1 已補：passView.books.forbidden）",
    "since": "2026-11-22"
   },
   {
