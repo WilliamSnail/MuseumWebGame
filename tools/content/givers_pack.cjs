@@ -7,7 +7,7 @@ function givers(dir = path.join(ROOT, "content", "givers")) {
   const out = {};
   if (!fs.existsSync(dir)) return out;
   for (const f of fs.readdirSync(dir).sort()) {
-    if (!f.endsWith(".json")) continue;
+    if (!f.endsWith(".json") || f.startsWith("_")) continue; // _ids.json 是句數紀錄，不打包
     let o; try { o = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")); } catch (e) { console.error("交代人：讀不出來", f, e.message); continue; }
     if (!o || typeof o.id !== "string") continue;
     out[o.id] = o;

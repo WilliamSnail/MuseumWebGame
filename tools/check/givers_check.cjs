@@ -27,13 +27,36 @@ function readGivers(dir = DIR) {
   const givers = [], bad = [];
   if (!fs.existsSync(dir)) return { givers, bad };
   for (const f of fs.readdirSync(dir).sort()) {
-    if (!f.endsWith(".json")) continue;
+    if (!f.endsWith(".json") || f.startsWith("_")) continue;
     try { const o = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")); o.__file = f; givers.push(o); } catch (e) { bad.push(`content/givers/${f}：JSON 讀不了（${e.message}）`); }
   }
   return { givers, bad };
 }
 
-function checkGivers({ givers = [], bad = [], ledger = null } = {}) {
+// 台詞檔只能往後加（規劃 9.2）：交談紀錄只存句子 id（<id>:<欄位>:<序>），中間拿掉或插入，舊紀錄就會指到別句。
+// content/givers/_ids.json 記每個陣列目前的句數和稱號 id；句數變少、欄位不見、稱號 id 改了都會擋。
+// 句子真的要拿掉：改完跑 node tools/check/givers_check.cjs --update --allow-shrink（並寫進決定或日誌）。
+function snapshotIds(givers) {
+  const out = {};
+  const walk = (p, v) => {
+    if (Array.isArray(v)) { out[p] = v.length; v.forEach((x, i) => { if (Array.isArray(x) || isObj(x)) walk(`${p}[${i}]`, x); }); }
+    else if (isObj(v)) for (const k of Object.keys(v)) walk(p ? `${p}.${k}` : k, v[k]);
+    else if (p.endsWith("title.id")) out[p] = String(v);
+  };
+  for (const g of givers) walk(g.id, Object.fromEntries(Object.entries(g).filter(([k]) => !["id", "__file", "name", "where"].includes(k))));
+  return out;
+}
+function checkIds(givers, snap) {
+  const now = snapshotIds(givers), errors = [];
+  for (const [k, v] of Object.entries(snap || {})) {
+    if (!(k in now)) errors.push(`content/givers：${k} 不見了（台詞檔只能往後加；真的要拿掉用 --update --allow-shrink）`);
+    else if (typeof v === "number" && now[k] < v) errors.push(`content/givers：${k} 從 ${v} 句變成 ${now[k]} 句（台詞檔只能往後加，不能拿掉或重排）`);
+    else if (typeof v === "string" && now[k] !== v) errors.push(`content/givers：${k} 從「${v}」改成「${now[k]}」（稱號 id 改了，舊的稱號會對不上）`);
+  }
+  return errors;
+}
+
+function checkGivers({ givers = [], bad = [], ledger = null, ids: snap = null } = {}) {
   const errors = bad.slice();
   const E = (w, m) => errors.push(`${w}：${m}`);
   const ids = new Set(((ledger && ledger.taskGivers && ledger.taskGivers.list) || []).map(g => g.id));
@@ -135,15 +158,25 @@ function checkGivers({ givers = [], bad = [], ledger = null } = {}) {
     extra(g, w);
   }
   for (const id of ids) if (givers.length && !seen.has(id)) E("content/givers", `帳本有交代人「${id}」，但沒有 ${id}.json`);
+  if (snap) errors.push(...checkIds(givers, snap));
   return { errors };
 }
 
-module.exports = { checkGivers, readGivers, SLOTS };
+module.exports = { checkGivers, readGivers, SLOTS, snapshotIds, checkIds };
 
 if (require.main === module) {
   const ledger = JSON.parse(fs.readFileSync(LEDGER, "utf8"));
   const { givers, bad } = readGivers();
-  const r = checkGivers({ givers, bad, ledger });
+  const IDS = path.join(DIR, "_ids.json");
+  if (process.argv.includes("--update")) {
+    const old = fs.existsSync(IDS) ? JSON.parse(fs.readFileSync(IDS, "utf8")) : {};
+    const errs = process.argv.includes("--allow-shrink") ? [] : checkIds(givers, old);
+    if (errs.length) { console.log(errs.map(e => "✗ " + e).join("\n")); process.exit(1); }
+    fs.writeFileSync(IDS, JSON.stringify(snapshotIds(givers), null, 1) + "\n");
+    console.log("寫好 content/givers/_ids.json");
+  }
+  const ids = fs.existsSync(IDS) ? JSON.parse(fs.readFileSync(IDS, "utf8")) : null;
+  const r = checkGivers({ givers, bad, ledger, ids });
   if (r.errors.length) { console.log(r.errors.map(e => "✗ " + e).join("\n")); process.exit(1); }
   console.log(`交代人台詞：${givers.length} 位，都過`);
 }
