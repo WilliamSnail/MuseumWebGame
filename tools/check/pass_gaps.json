@@ -92,38 +92,10 @@
    "since": "2026-11-22"
   },
   {
-   "row": "swap",
-   "kind": "partial",
-   "id": "B2",
-   "reason": "換到的累計沒有紀錄（本來就沒留，規則改動項目）",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "props",
-   "kind": "partial",
-   "id": "B3",
-   "reason": "紀念品只有最近 6 個，沒有完整清單",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "achs",
-   "kind": "partial",
-   "id": "B4",
-   "reason": "成就只有最近 6 個；npc:、wk:、old:a: 三種只有「另外還有 N 個」",
-   "since": "2026-11-22"
-  },
-  {
    "row": "title",
    "kind": "partial",
    "id": "B5",
    "reason": "不能在館友證直接換稱號",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "week",
-   "kind": "partial",
-   "id": "B7",
-   "reason": "每週收藏沒有每件名稱、過去幾週",
    "since": "2026-11-22"
   },
   {
@@ -152,46 +124,6 @@
    "kind": "partial",
    "id": "R1",
    "reason": "技能只有數字，沒有說明",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "packs",
-   "kind": "unused",
-   "id": "B1",
-   "key": "packs",
-   "reason": "伺服器已回 packs（大禮包剩幾包、券幾張），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "meals",
-   "kind": "unused",
-   "id": "B6",
-   "key": "meals",
-   "reason": "伺服器已回 meals（吃過什麼、今天還能補多少），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "stats",
-   "kind": "unused",
-   "id": "B9",
-   "key": "st",
-   "reason": "伺服器已回 st（戰績），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "npcbond",
-   "kind": "unused",
-   "id": "N1",
-   "key": "bond",
-   "reason": "伺服器已回 bond（認得的旅客和交代人），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "week",
-   "kind": "unused",
-   "id": "B7",
-   "key": "wkPast",
-   "reason": "伺服器已回 wkPast 和 wk.items（每件名稱、過去幾週），畫面還沒畫",
    "since": "2026-11-22"
   }
  ]
