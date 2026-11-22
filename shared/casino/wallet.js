@@ -23,6 +23,7 @@ import { casWorldFund, casWorldOut, casWorldRoom, casBurn, casCount, casHouseBur
 import { casInSpent, casInUsed } from "./stock_in.js";
 import { gbCollect, gbDaily, govGrant, govSweep, gbFix, gbLend, gbRoom, gbSplitOn, whTick, wtLed, wuDebit, wuExtSplit, wuFix, wuGrow } from "../world/core.js";
 import { npcRelFix } from "../social/npcrel.js";
+import { GIVERS } from "../npc/givers.js";
 import { casWeekDef, casWkHand, casWkMeal, casWkNew, casWkPacks, casWkRoll } from "./week.js";
 
 const casIsObj = o => !!o && typeof o === "object" && !Array.isArray(o);
@@ -239,11 +240,12 @@ export const casShortName = s => [...casCleanName(s)].slice(0, NUM.casino.titleM
 const CAS_WK_ID = /^wk:\d{4}-W\d{2}(:[A-Za-z0-9_-]{1,32})?$/;
 const casIsWkId = id => typeof id === "string" && CAS_WK_ID.test(id);
 const casLegacyId = (kind, name) => `old:${kind}:${hashStr(name).toString(36)}`;
+const CAS_NPC_ACH = /^npc:[a-z0-9][a-z0-9-]{0,39}(:[a-z0-9][a-z0-9-]{0,39})?$/; // 稱號成就：npc:<旅客id>、npc:<交代人id>:<稱號id>
 export function casAchInfo(w, id) {
   const base = CAS_ACH.find(a => a.id === id);
   if (base) return { id, name: base.name, desc: base.desc, old: false };
   const e = w && w.ach && w.ach[id];
-  if (e && typeof e.name === "string" && /^npc:[a-z0-9][a-z0-9-]{0,39}$/.test(id)) return { id, name: casShortName(e.name), desc: "跟這位熟了。", old: false, npc: true };
+  if (e && typeof e.name === "string" && CAS_NPC_ACH.test(id)) { const [, gid, tid] = id.split(":"), gt = GIVERS[gid] && GIVERS[gid].title; return { id, name: casShortName(e.name), desc: tid && gt && gt.id === tid && gt.desc ? String(gt.desc) : "跟這位熟了。", old: false, npc: true }; }
   if (e && typeof e.name === "string" && casIsWkId(id)) return { id, name: casShortName(e.name), desc: `賭場 ${id.slice(3)} 的每週收藏集滿了。`, old: false, wk: true };
   if (e && typeof e.name === "string") return { id, name: casShortName(e.name), desc: "以前在 Discord 21 點拿到的。", old: true };
   return null;
@@ -973,7 +975,7 @@ export function casCleanTitle(t) {
   if (!t || typeof t !== "object" || typeof t.id !== "string") return null;
   const a = CAS_ACH.find(x => x.id === t.id);
   if (a) return { id: a.id, name: a.name };
-  if ((/^old:a:[0-9a-z]+$/.test(t.id) || /^npc:[a-z0-9][a-z0-9-]{0,39}$/.test(t.id) || /^wk:\d{4}-W\d{2}$/.test(t.id)) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
+  if ((/^old:a:[0-9a-z]+$/.test(t.id) || CAS_NPC_ACH.test(t.id) || /^wk:\d{4}-W\d{2}$/.test(t.id)) && typeof t.name === "string" && casShortName(t.name)) return { id: t.id, name: casShortName(t.name) };
   return null;
 }
 

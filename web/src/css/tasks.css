@@ -131,3 +131,5 @@
 .gv-log { grid-column: 1 / -1; width: 100%; }
 .gv-log-books { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 .screen.onescreen-room.cellar-onescreen > .gv-strip { flex: none; margin: 0 0 6px; }
+.gv-say .gv-mention { color: inherit; font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.gv-say .gv-mention[aria-expanded="true"] { text-decoration-style: solid; }
