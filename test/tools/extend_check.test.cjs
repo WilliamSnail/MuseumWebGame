@@ -25,6 +25,14 @@ T("三條線索不足或同一種地方會擋", () => { bad(L => { L.extend.week
 T("closes 要跟 mysteries 的收線週一致、旁證不能晚於收線週", () => { bad(L => { L.extend.weeks["2026-W50"].closes = ["m-guard"]; }, /不是這週/); bad(L => { L.mysteries.list.find(m => m.id === "m-queue").closeBy = "2026-W51"; }, /晚於 m-queue 的收線週/); });
 T("掉落 items：5 件都有、沒審過或抄謎底或週對不上會擋", () => { assert.strictEqual(real.extend.items.length, 5); bad(L => { L.extend.items[0].audit.status = "待審"; }, /audit 要是審過/); bad(L => { L.extend.items[0].lore = L.mysteries.list.find(m => m.id === "m-queue").truth.slice(0, 12); }, /破梗/); bad(L => { L.extend.items[0].week = "2026-W52"; }, /drops 要列|晚於/); });
 T("四問：每週 dread、cost、pepe、horror 缺了或空了會擋；cost 要有 san", () => { ["dread", "cost", "pepe", "horror"].forEach(k => bad(L => { delete L.extend.weeks["2026-W51"][k]; }, new RegExp(k + " 要有"))); bad(L => { L.extend.weeks["2026-W49"].horror.what = "空"; }, /horror.what/); bad(L => { L.extend.weeks["2026-W52"].cost.day = "週三"; }, /cost.day/); bad(L => { delete L.extend.weeks["2026-W53"].cost.san; }, /cost.san/); });
+T("總表 collect：八個謎和文化部、已知世界、撥款信都在；非集團寫不負責、少列、週對不上會擋", () => {
+  assert.ok(real.extend.collect.rows.length >= 18);
+  bad(L => { L.extend.collect.rows.find(r => r.id === "c-culture").pepe = "不負責：沒有"; }, /不能寫不負責|只有集團/);
+  bad(L => { L.extend.collect.rows.find(r => r.id === "c-m-you").dread = "不負責：x不負責不負責不負責"; }, /只有集團/);
+  bad(L => { L.extend.collect.rows.find(r => r.id === "c-g-daily").pepe = "不負責"; }, /不負責|要有字/);
+  bad(L => { L.extend.collect.rows = L.extend.collect.rows.filter(r => r.id !== "c-known"); }, /少了 c-known/);
+  bad(L => { L.extend.collect.rows.find(r => r.id === "c-m-count").week = "2026-W40"; }, /不在 extend.weeks/);
+});
 T("beats 不在 revealBeats 會擋", () => bad(L => { L.extend.weeks["2026-W52"].beats.push("b99"); }, /不在 revealBeats/));
 T("person 不在 taskGivers 會擋", () => bad(L => { L.extend.threads[0].person = "nobody"; }, /不在 taskGivers/));
 console.log(`extend_check：${pass} 過、${fail} 失敗`);
