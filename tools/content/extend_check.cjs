@@ -112,6 +112,9 @@ function checkExtend(L, E, W, lw) {
         if (!pr(u.successAside) || !pr(u.failAside)) E(uw, "successAside、failAside 要有，寫成 (…)");
       });
     });
+    // 每週都要有 dayPlan（d1～d7；翊文 11-22，排程每天看今天那壹項）
+    if (!isObj(x.dayPlan)) E(w, "dayPlan 要有：{ d1: \"…\", …, d7: \"…\" }（每天放什麼）");
+    else ["d1", "d2", "d3", "d4", "d5", "d6", "d7"].forEach(d => { if (typeof x.dayPlan[d] !== "string" || x.dayPlan[d].trim().length < 8) E(w, "dayPlan." + d + " 要寫這天放什麼（8 字以上）"); });
     if (asList(x.leads).length < 3) E(w, "leads 至少要三個去處（三條線索原則、永遠有三個去處）");
     else asList(x.leads).forEach(l => { if (typeof l !== "string" || !l.trim()) E(w, "leads 每個要有字"); });
   });
