@@ -19,7 +19,7 @@ import { tipOn } from "../core/ui_tip.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
 import { relicItem, retireWords, whoOf } from "../rooms/ui_screens3.js";
-import { itemArt, useNow } from "./ui_signin.js";
+import { itemArt, originNode, useNow } from "./ui_signin.js";
 import { casePane } from "./ui_story.js";
 import { gearCard } from "./ui_shop.js";
 
@@ -236,7 +236,7 @@ export function openPass(o = {}) {
       sec(`限定的收藏　${d.have}／${d.total}`,
         h("div", { class: "ps-items" }, d.items.map(it => h("div", { class: "sg-item k-" + it.kind + (it.own ? "" : " ps-miss") },
           h("span", { class: "sg-item-art", html: it.own ? itemArt(it.id) : "", "aria-hidden": "true" }, it.own ? null : icon("lock")),
-          h("div", { class: "sg-item-body" }, h("b", null, it.own ? it.name : "？？？"), h("span", { class: "sg-item-kind" }, it.kindName + (it.worn ? "・用著" : "")),
+          h("div", { class: "sg-item-body" }, h("b", null, it.own ? it.name : "？？？"), h("span", { class: "sg-item-kind" }, it.kindName + (it.worn ? "・用著" : "")), it.own && it.desc ? h("small", { class: "sg-item-desc" }, it.desc) : null, it.own ? originNode(it.origin) : null,
             it.own && !v.free ? btn("拿去用", () => useNow(it.id, m.close), "small") : null)))),
         h("p", { class: "sp-note" }, "這些只有每日簽到和兌換所拿得到。"),
         h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null, PANELS.shop && !v.free ? goBtn("兌換所", () => PANELS.shop(), "shop:c") : null))];
