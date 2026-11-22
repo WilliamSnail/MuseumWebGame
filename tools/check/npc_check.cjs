@@ -73,7 +73,23 @@ function checkNpc({ npcs = [], bad = [], ledger = null, banned = null, clients =
   npcs.forEach((n, i) => {
     const id = isObj(n) && typeof n.id === "string" ? n.id : "", w = `content/npc/${isObj(n) && n.__file || "第 " + (i + 1) + " 筆"}`;
     if (!isObj(n)) { E(w, "要是物件"); return; }
-    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "branch", "casino", "cellar", "__file"]; // job：隸屬哪個單位（內容由 tools/check/world_check.cjs 檢查，決定 0086）
+    const allowed = ["id", "name", "kind", "note", "ledger", "story", "likes", "route", "budget", "job", "arc", "branch", "casino", "cellar", "bond", "__file"]; // job：隸屬哪個單位（內容由 tools/check/world_check.cjs 檢查，決定 0086）
+    if (n.bond != null) { // 旅客好感度的文字（11-22）：稱號、送禮喜好和反應；格式照交代人（content/givers）
+      const b = n.bond, bw = w + ".bond", BAD = /[A-Za-z0-9]|贏|輸|賺|賠|籌碼|掏錢/, CATS = ["稀有度", "心情", "顏色", "帽子", "姿勢"], RAR = ["普通", "稀有", "超稀有", "傳說級稀有", "不可名狀"];
+      if (!isObj(b)) E(bw, "要是物件");
+      else {
+        const t = b.title;
+        if (t != null) { if (!isObj(t) || !/^[a-z]+$/.test(t.id || "") || typeof t.name !== "string" || [...t.name].length < 1 || [...t.name].length > 12 || typeof t.desc !== "string" || !t.desc.trim()) E(bw + ".title", "要是 { id（小寫英文）, name（1～12 字）, desc }"); else if (BAD.test(t.name + t.desc)) E(bw + ".title", "稱號不能有英文、數字、輸贏賺賠"); }
+        const g = b.gift;
+        if (g != null) {
+          if (!isObj(g)) E(bw + ".gift", "要是物件");
+          else {
+            ["likes", "dislikes"].forEach(k => { if (g[k] == null) return; if (!isObj(g[k])) { E(bw + ".gift." + k, "要是物件"); return; } Object.entries(g[k]).forEach(([c, a]) => { if (!CATS.includes(c)) E(bw + ".gift." + k, "欄位只能是 " + CATS.join("、")); else (Array.isArray(a) ? a : []).forEach(v => { const ok = v === "失敗作" ? c === "稀有度" : c === "稀有度" ? RAR.includes(v) : G.optOf(c, v); if (!ok) E(bw + ".gift." + k + "." + c, "「" + v + "」不是圖鑑裡的選項"); }); }); });
+            ["love", "ok", "off", "first"].forEach(k => { if (!Array.isArray(g[k]) || !g[k].length) E(bw + ".gift." + k, "要有至少壹句"); else g[k].forEach(x => { if (typeof x !== "string" || !x.trim() || [...x].length > 30) E(bw + ".gift." + k, "每句 1～30 字"); else if (BAD.test(x)) E(bw + ".gift." + k, "「" + x + "」不能有英文、數字、輸贏賺賠、掏錢"); }); });
+          }
+        }
+      }
+    }
     Object.keys(n).forEach(k => { if (!allowed.includes(k)) E(w, `不認得欄位「${k}」（只能 ${allowed.filter(x => x !== "__file").join("、")}）`); });
     if (!/^[a-z][a-z0-9-]{2,23}$/.test(id)) { E(w, "id 要是英文小寫、數字、-（3～24 字，開頭是字母）"); return; }
     if (n.__file && n.__file !== id + ".json") E(w, `檔名要跟 id 壹樣（${id}.json）`);
