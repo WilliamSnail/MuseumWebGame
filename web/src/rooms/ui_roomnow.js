@@ -8,7 +8,7 @@
 // ================================================================
 import { matesByRoom } from "../../../shared/social/mates.js";
 import { NET } from "../core/net_firebase.js";
-import { ADDONS, ROOM_NAMES, UI, btn, closeOnOutside, h, icon, miniLayer } from "../core/ui_core.js";
+import { ADDONS, FRIEND_ACTIONS, ROOM_NAMES, UI, btn, closeOnOutside, h, icon, miniLayer, roomLabel, titleTag } from "../core/ui_core.js";
 import { crowdSummary, hallNowWatch, hallPeople, openAll } from "./ui_hallnow.js";
 import { npcName } from "../panels/ui_npc_card.js";
 import { npcSanBadge } from "../core/ui_stat.js";
@@ -22,6 +22,7 @@ const FAKE_ROOMS = { gallery: { n: 4, npc: 1, crowd: 3, ids: ["fake-a"], names: 
 export function roomPeople(room) {
   const by = matesByRoom(NET.roster || []), now = UI.hallNow, rooms = now && now.rooms && typeof now.rooms === "object" ? now.rooms : fake() ? FAKE_ROOMS : null;
   const mates = (by[room] || []).map(m => ({ nick: m.nick, id: m.id }));
+  if (!mates.length && fake() && room === "gallery") mates.push({ nick: "阿福（開發假資料）", id: "fake-m" });
   const r = rooms && rooms[room] ? rooms[room] : {}, ids = Array.isArray(r.ids) ? r.ids.map(String) : [], names = Array.isArray(r.names) ? r.names.map(String) : [];
   const npc = ids.map((id, i) => ({ id, name: names[i] || "旅客" }));
   let npcN = Math.max(0, +r.npc || 0), crowdN = Math.max(0, +r.crowd || 0), groups = Array.isArray(r.groups) ? r.groups.map(g => ({ label: String(g.label || "散客"), n: Number(g.n) || 0, wander: !!g.wander })) : [];
@@ -36,6 +37,22 @@ export function roomPeople(room) {
   return { mates, npc, npcN, groups, crowdN, n, known: !!(now || rooms) };
 }
 
+// 點館友的名字：開他的小卡（燈號、稱號、在哪裡，加上館友小卡的按鈕：參觀展廳、送佩佩…；翊文 11-22：「這裡應該也可以按到 NPC 的狀態跟館友的狀態」）
+// 從賭場、銀行這些面板裡開的：按了按鈕要把底下的面板一起收掉，不然走進去的畫面被蓋住
+function openMate(x) {
+  const p = (NET.roster || []).find(r => r.id === x.id) || { id: x.id, nick: x.nick, status: "online" };
+  const m = miniLayer(p.nick, "");
+  m.card.classList.add("hn-layer", "rn-mate");
+  m.layer.classList.add("sp-top");
+  closeOnOutside(m);
+  m.card.querySelector(".sub").remove();
+  const where = p.status === "offline" ? "現在不在線" : p.status === "away" ? `離開壹下・${roomLabel(p.room)}` : roomLabel(p.room);
+  const acts = FRIEND_ACTIONS.filter(a => !a.show || a.show(p));
+  m.card.append(h("div", { class: "rn-mate-h" }, h("i", { class: "nf-dot " + (p.status || "online"), "aria-hidden": "true" }), h("span", null, where), titleTag(p.title)),
+    acts.length ? h("div", { class: "rn-acts" }, acts.map(a => btn(a.label, () => { m.close(); document.querySelectorAll(".nb-layer").forEach(l => { try { if (l.nbClose) l.nbClose(); else l.remove(); } catch (e) { l.remove(); } }); a.run(p); }, "small"))) : null,
+    h("div", { class: "rn-acts" }, btn("關起來", () => m.close(), "ghost")));
+}
+
 function openRoom(room) {
   if (room === "hall") { openAll(); return; }
   const p = roomPeople(room), name = ROOM_NAMES[room] || room;
@@ -48,7 +65,7 @@ function openRoom(room) {
   if (gv) gv.seen();
   m.card.append(
     strip ? h("section", { class: "rn-sec rn-givers" }, h("h3", null, "交代人"), strip) : null,
-    p.mates.length ? sec("館友", h("p", { class: "hn-names" }, p.mates.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", x.nick)))) : null,
+    p.mates.length ? sec("館友", h("p", { class: "hn-names" }, p.mates.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", x.id ? h("button", { type: "button", class: "npk-name", title: `看看 ${x.nick}`, "aria-label": `${x.nick}，看他的狀況`, onClick: () => openMate(x) }, x.nick) : x.nick)))) : null,
     p.npcN ? sec("旅客", p.npc.length ? h("p", { class: "hn-names" }, p.npc.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", npcName(x.id, x.name), npcSanBadge(x.id, { calm: true, num: false })))) : h("p", { class: "hn-empty" }, `${p.npcN} 位（名單還沒有送來）`)) : null,
     p.crowdN || p.groups.length ? sec("散客", h("p", { class: "hn-names" }, p.groups.length ? crowdSummary(p.groups.map(g => (g.wander ? Object.assign({}, g, { label: g.label + "（順路逛來）" }) : g))).join("、") : `${p.crowdN} 位`)) : null,
     h("div", { class: "rn-acts" }, btn("關起來", () => m.close(), "ghost")));

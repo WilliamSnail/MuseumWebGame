@@ -158,3 +158,10 @@
 .hn-inv-menu { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
 .hn-inv-menu .btn { width: 100%; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .hn-inv-menu .btn small { font-size: .75rem; opacity: .85; font-weight: 400; }
+
+/* 點館友名字開的小卡（ui_roomnow.js openMate）：按鈕一顆一行，字不被擠成直排 */
+.mini-card.rn-mate { width: min(360px, 94vw); }
+.rn-mate-h { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; color: var(--ink, #2E2014); }
+.rn-mate-h .nf-dot { flex: none; }
+.rn-mate .rn-acts { flex-direction: column; align-items: stretch; gap: 8px; }
+.rn-mate .rn-acts .btn { white-space: nowrap; min-height: 44px; justify-content: center; }
