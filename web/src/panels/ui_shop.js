@@ -10,7 +10,7 @@
 import { GEAR_ITEMS, NUM, SKILLS } from "../../../shared/core/config.js";
 import { SHOP_TEXT, SKILL_TEXT } from "../../../shared/core/systems_text.js";
 import { isFree, todayStr } from "../../../shared/core/logic.js";
-import { limitedInfo, ownsLimited } from "../../../shared/social/signin.js";
+import { limitedInfo, ownsLimited, stockOf } from "../../../shared/social/signin.js";
 import { buyGear, buyLimited, buySkillUp, gearInfo, isWorn, lessonLeft, lessonState, limitedPrice, matCount, rangeWords, shopOnSale, skillUpState, startTrial, takeLesson, takeOffGear, tradeMats, trialRooms, trialState, wearGear } from "../../../shared/core/shop.js";
 import { ownsGear, wornGear } from "../../../shared/core/logic_base.js";
 import { stampHow } from "../../../shared/story/core.js";
@@ -73,7 +73,9 @@ export function openShop(o = {}) {
     const body = tab === "gear" ? gearPane(draw) : tab === "skill" ? skillPane(draw) : tab === "limited" ? limitedPane(draw) : matPane(draw);
     // 週章怎麼拿（翊文 11-11）：手上沒有的時候自己打開
     const how = h("details", { class: "shp-how", open: S.stamps < 1 ? true : null }, h("summary", null, cicon("stamp"), " 週章怎麼拿"), h("ul", null, stampHow().map(t => h("li", null, t))));
-    const box = h("div", { class: "sp-body", dataset: { tab } }, h("p", { class: "sp-note shp-why" }, SHOP_TEXT.why), how, body);
+    // 回館友證（11-22）：從館友證過來的、或是想回去看看的，壹按就回到對的那頁（限定、材料回「裝飾」，其他回「參觀者」）
+    const back = PANELS.pass ? h("div", { class: "sp-go shp-back" }, btn([icon("user"), " 回館友證"], () => { m.close(); PANELS.pass({ tab: o.back || (tab === "limited" || tab === "mat" ? "deco" : "visitor") }); }, "small primary")) : null;
+    const box = h("div", { class: "sp-body", dataset: { tab } }, back, h("p", { class: "sp-note shp-why" }, SHOP_TEXT.why), how, body);
     m.surface.replaceChildren(tabs, box);
     box.scrollTop = keepY;
   };
@@ -138,7 +140,7 @@ function limitedPane(draw) {
       };
       return h("li", { class: "shp-lim" + (own ? " own" : "") }, h("span", { class: "shp-lim-art", html: itemArt(id), "aria-hidden": "true" }),
         h("b", null, it.name), h("small", null, it.desc),
-        own ? [h("span", { class: "sp-claimed" }, icon("check"), " 已經有了"), btn(["去手作坊戴上 ", h("span", { "aria-hidden": "true" }, "→")], () => useNow(id), "small")]
+        own ? [h("span", { class: "sp-claimed" }, icon("check"), " 已經有了", it.kind === "mat" ? `・剩 ${stockOf(P, it.opt)} 份` : ""), btn(["去手作坊戴上 ", h("span", { "aria-hidden": "true" }, "→")], () => useNow(id), "small")]
           : [btn(costStamps("換", price), buy, "primary small", { disabled: S.stamps < price }), S.stamps < price ? h("small", { class: "shp-short" }, `還差 ${price - S.stamps} 枚`) : null]);
     })));
 }

@@ -208,5 +208,47 @@ T("地下和簽到：怪物圖鑑沒打贏的不寫名字、結局照存檔、�
   assert.deepStrictEqual(J(G.passView(P, { signins: 5, streak: { cur: 2, best: 4, makeups: 1 } }).sign), { count: 5, cur: 2, best: 4, makeups: 1 });
 });
 
+T("三個座位 passSeats：現在是第幾位／共幾位、別位的職業心情理智、自由模式沒有、不改存檔", G => {
+  const P = fresh(G); G.passView(P, {}); const before0 = JSON.stringify(P); // 先看過壹次（passView 會補出 story 欄位），再比對
+  const s0 = J(G.passView(P, {})).visitors;
+  assert.strictEqual(JSON.stringify(P), before0);
+  assert.strictEqual(s0.count, 1); assert.strictEqual(s0.seats.length, G.LEGACY.slots); assert.strictEqual(s0.cur, P.slot);
+  P.job = G.JOBS[0].id; P.skills = P.skills || {}; // 第壹位選過職業，第二位還沒
+  assert.ok(G.addVisitor(P, "乙"));
+  const s1 = J(G.passView(P, {})).visitors, cur = s1.seats.find(s => s && s.current), other = s1.seats.find(s => s && !s.current);
+  assert.strictEqual(s1.count, 2); assert.strictEqual(s1.cur, cur.slot); assert.ok(cur.picking && other && !other.picking);
+  assert.strictEqual(other.jobName, G.jobInfo(G.visitorSlots(P).find(s => s && !s.current).job).name);
+  assert.strictEqual(other.mood, G.visitorSlots(P).find(s => s && !s.current).mood); assert.ok(other.sanity > 0 && other.maxSan > 0);
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).visitors, null);
+});
+T("技能的裝備加成：只標穿著的裝備給的點數，數值本來就含加成；脫下來就沒有標", G => {
+  const P = fresh(G); G.storyState(P).stamps = 99; P.job = G.JOBS[0].id; P.skills = P.skills || {}; G.SKILLS.forEach(k => { P.skills[k] = 20; });
+  const g = G.GEAR_ITEMS.find(x => Object.keys(x).some(k => k.startsWith("skill:"))), key = Object.keys(g).find(k => k.startsWith("skill:")), sk = key.slice(6);
+  assert.ok(G.buyGear(P, g.id).ok);
+  const base = J(G.passView(P, {})).visitor.skills.find(k => k.s === sk);
+  assert.deepStrictEqual(base.gear, []);
+  assert.ok(G.wearGear(P, g.id).ok);
+  const on = J(G.passView(P, {})).visitor.skills.find(k => k.s === sk);
+  assert.strictEqual(on.gear.length, 1); assert.strictEqual(on.gear[0].v, g[key]); assert.ok(on.gear[0].name);
+  assert.strictEqual(on.v, G.skillOf(P, sk)); assert.strictEqual(on.v, Math.min(99, base.v + g[key]));
+  assert.ok(J(G.passView(P, {})).visitor.skills.filter(k => k.s !== sk).every(k => k.gear.every(x => x.v)));
+});
+T("看懂的事分四組：每組 have／total、沒看懂寫？？？、總數對得上、每週的 u- 不混進來", G => {
+  const P = fresh(G), b0 = J(G.passView(P, {})).books, L = b0.understoodLayers;
+  assert.deepStrictEqual(L.map(x => x.layer), ["物", "人", "規矩", "你"]);
+  assert.strictEqual(L.reduce((a, x) => a + x.total, 0), G.UNDERSTAND_TEXT.length); assert.strictEqual(b0.understood[1], G.UNDERSTAND_TEXT.length);
+  assert.ok(L.every(x => x.have === 0 && x.list.every(y => !y.got && y.name === "？？？" && y.where === "")));
+  const t = G.UNDERSTAND_TEXT[0]; P.understood = { [t.id]: "2026-11-22", "u-test-week": "2026-11-22" };
+  const b1 = J(G.passView(P, {})).books, grp = b1.understoodLayers.find(x => x.layer === t.layer), it = grp.list.find(y => y.id === t.id);
+  assert.strictEqual(grp.have, 1); assert.ok(it.got && it.name === t.from && it.name !== "？？？");
+  assert.strictEqual(b1.understood[0], 1); assert.strictEqual(b1.understoodLayers.reduce((a, x) => a + x.have, 0), 1, "u- 開頭的每週那份不算");
+});
+T("材料剩幾份：deco.items 的 n（材料才有，其他是 null，自由模式 null）", G => {
+  const P = fresh(G), mat = G.LIMITED_ITEMS.find(x => x.kind === "mat"), other = G.LIMITED_ITEMS.find(x => x.kind !== "mat");
+  const it = id => J(G.passView(P, {})).deco.items.find(x => x.id === id);
+  assert.strictEqual(it(mat.id).n, 0); assert.strictEqual(it(other.id).n, null);
+  assert.ok(J(G.passView(fresh(G, "free"), {}).deco.items).every(x => x.n === null));
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
