@@ -206,15 +206,15 @@
 .ps-hall-i .ps-empty { display: flex; align-items: center; justify-content: center; background: rgba(120,100,60,.12); }
 
 /* ===== 館友證套素材（11-22，翊文選方案 C「金邊木牌＋銅牌標題」）：只在 .nb-pass 底下覆寫，不動 story.css 的共用規則 =====
-   區塊＝kit/wood-gold 四角四邊＋kit/parch；標題＝ui2-title 銅牌（卡在框的上緣）；證件＝ui2-side；隨身物格＝ui2-slot-1。
+   區塊＝kit/wood-gold（邊條兩端已裁掉透明邊，tile 寬高要給整數 px，不然會有縫） 四角四邊＋kit/parch；標題＝ui2-title 銅牌（卡在框的上緣）；證件＝ui2-side；隨身物格＝ui2-slot-1。
    第壹塊的 margin-top（14px）要留著：銅牌往框外突出 14px，.sp-body（捲動容器）只有 4px 的上內距，少了就會被切掉。 */
 .nb-pass .ps-body { gap: 8px; }
 .nb-pass .sp-sec { position: relative; margin-top: 14px; padding: 18px 8px 6px; border: 14px solid transparent; border-radius: 0; box-shadow: 0 3px 8px rgba(0,0,0,.45);
   background:
     url(/kit/wood-gold-corner-tl.webp) left top / 26px 25px no-repeat border-box, url(/kit/wood-gold-corner-tr.webp) right top / 26px 25px no-repeat border-box,
     url(/kit/wood-gold-corner-bl.webp) left bottom / 26px 25px no-repeat border-box, url(/kit/wood-gold-corner-br.webp) right bottom / 26px 25px no-repeat border-box,
-    url(/kit/wood-gold-edge-h.webp) left 26px top / auto 14px repeat-x border-box, url(/kit/wood-gold-edge-h.webp) left 26px bottom / auto 14px repeat-x border-box,
-    url(/kit/wood-gold-edge-v.webp) left top 26px / 14px auto repeat-y border-box, url(/kit/wood-gold-edge-v.webp) right top 26px / 14px auto repeat-y border-box,
+    url(/kit/wood-gold-edge-h.webp) left 26px top / 43px 14px repeat-x border-box, url(/kit/wood-gold-edge-h.webp) left 26px bottom / 43px 14px repeat-x border-box,
+    url(/kit/wood-gold-edge-v.webp) left top 26px / 14px 50px repeat-y border-box, url(/kit/wood-gold-edge-v.webp) right top 26px / 14px 50px repeat-y border-box,
     url(/kit/parch.webp) 0 0 / 256px padding-box; }
 .nb-pass .sp-sec h3 { position: absolute; left: 14px; top: -28px; z-index: 1; box-sizing: border-box; max-width: calc(100% - 28px); margin: 0; padding: 0 4px; height: 28px; line-height: 24px; font-size: .9375rem; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: #2A1608; text-shadow: 0 1px 0 rgba(255,235,170,.6); border: 0 solid transparent; border-width: 0 20px; border-image: url(/ui2/ui2-title.webp) 0 70 fill / 0 20px stretch; }
