@@ -29,6 +29,7 @@
 | `reduce-motion` | body | `ui_core.js`（設定頁） | 11-15 拿掉設定後不會再加上（舊存檔讀進來就清掉） | 舊的關動畫規則還留著；**新動畫不用管它** |
 | `font-*` | body | `ui_core.js` | 永遠有一個：`font-s`、`font-m`、`font-l` | 字體大小 |
 | `lowsan` | body | `ui_core.js` | 理智低於 40 | 低理智的抖動、變色 |
+| `sf*` | body | `ui_sanfx.js`（`ADDONS.sanFx`） | 理智低於 NUM.sanFx.tiers 的第 1／2／3 個門檻（55、40、25），壹次只有壹個 | 畫廊、展廳、大廳的怪事分段（sf3 四周壓暗；`sanfx.css`） |
 | `bout` | body | `ui_core.js` | 瘋狂發作中（`P.bout`） | 發作 |
 | `bout-*` | body | `ui_core.js` | 發作中的第幾種：`bout-0` 到 `bout-9` | 各種發作的樣子 |
 | `watching` | body | `ui_core.js` | 理智低於 40 或發作第 3 種 | 眼睛跟著游標 |
@@ -53,7 +54,7 @@ css 規則用上面的全域 class 加後代當開頭，只有這裡寫的才准
 |---|---|---|
 | `reduce-motion` | `*` | `body.reduce-motion .xxx { animation: none }`，故意全域 |
 | `holding` | `*` | 拖的時候，所有能放的地方都要畫框，故意全域 |
-| `lowsan`、`lights-out`、`faint`、`flee`、`watching`、`bout`、`bout-*` | `*` | 理智狀態影響全部畫面 |
+| `lowsan`、`lights-out`、`faint`、`flee`、`watching`、`bout`、`bout-*`、`sf*` | `*` | 理智狀態影響全部畫面 |
 | `holiday-*`、`holiday-on` | `*` | 節日裝飾全域 |
 | `font-*` | `*` | 字體大小全域 |
 | `room-frame-on` | `*` | 有沒有導覽列影響全部畫面 |
@@ -126,6 +127,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `rg-` | `theme3.css`、`onescreen.css` | 老主顧（regulars） |
 | `bk-` | `casino.css` | 賭場的書（book） |
 | `cw-` | `casino.css` | 賭場的每週收藏（casino week） |
+| `sf-` | `sanfx.css` | 理智低時的怪事（sanity fx）：眼睛、白布、佩佩轉頭、「今日要聞」換口氣 |
 | `ps-` | `pass.css` | 通行證卡（pass） |
 | `pv-` | `pass.css` | 通行證預覽（pass view） |
 | `qk-` | `theme3.css` | 怪癖（quirk） |

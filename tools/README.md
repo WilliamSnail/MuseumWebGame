@@ -67,6 +67,7 @@
 | **QA：給模擬器裡的玩家放佩佩、放招領單、算餐車期望值**（做回歸測試用，清單在 `docs/操作/測試清單.md`） | `node tools/dev/qa_seed_save.cjs --set 3 --nick 小明 --pepes 14`；`node tools/dev/qa_lost_card.cjs --set 3 --owner <uid> [--n 2]`；`node tools/dev/qa_casino_ev.cjs 400000` |
 | 看某個時間 Discord 會發什麼（不會真的發） | `npm run announce:preview -- "2026-11-10 08:30"` |
 | **按 Firebase 固定動作、存結果、跟上次比**（改正式資料的前後對照；按要翊文同意） | `npm run fb -- house-ledger --save W4前`、`--diff W4前`；`--show 名字` 不按只看。查錯：`npm run fb -- fn-errors`；量大小：`house-size`。整份在 `docs/操作/伺服器除錯.md`。排隊超過 10 分鐘還沒開始會自己取消、重按壹次（`gh_lib` 的 `dispatch`） |
+| **排程檢視（11-22）**：`ledger -- today` 延伸世界排最前、謎／新聞線／揭露只印標題（`--full` 才全文）；`day:plan -- --week --next` 看下壹週；`day:plan` 底下多印延伸世界（四問、extend.items、collect）；`day:check --strict` 查今天排到的四問真的放了；ship 失敗印可貼進 issue 的報告；每天 09:30 `tools/check/schedule_health.cjs` 看今天的 dN.json 有沒有放（`.github/workflows/schedule-health.yml`） | `npm run ledger -- today [--full]`、`node tools/check/schedule_health.cjs` |
 | **測試檔不准把測試寫在 `process.exit` 後面**（`npm test` 會跑） | `node tools/check/test_exit.cjs` |
 | **館友證的來源檢查**（登記表 `shared/social/pass_sources.js`、白名單 `tools/check/pass_gaps.json`；新增存檔欄位或玩家拿得到的東西要登記；`npm test` 會跑） | `npm run pass:check` |
 | **程式的規矩五條**（shared/ 純函式、無限動畫白名單、`.replace(字串, 字串)`、新加的畫面文字用壹、改名對照；`npm test` 會跑；改規矩或白名單看 `tools/check/code_rules.cjs` 開頭） | `npm run code:check [-- --base origin/main --only 1,4]`（第 4 項只看跟 base 比新加的行；沒給 base 就用 origin/main 和 HEAD 的共同祖先） |

@@ -312,9 +312,9 @@ function main() {
   const { load } = require("../../test/load_shared.cjs"), G = load(), a = process.argv.slice(2);
   const i = a.indexOf("--date"), date = i >= 0 ? a[i + 1] : G.taipeiDay(Date.now());
   if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date || "")) throw new Error("--date 要寫成 2026-11-17");
-  if (a.includes("--week")) { console.log(formatWeek(weekOverview(date, G, gather(date, G).ledger))); return; }
-  const p = planDay(gather(date, G));
-  console.log(a.includes("--json") ? JSON.stringify(p, null, 2) : format(p));
+  if (a.includes("--week")) { const d0 = a.includes("--next") ? G.addDays(date, 7) : date; console.log(formatWeek(weekOverview(d0, G, gather(d0, G).ledger))); return; } // --next：看下壹週（週日先排下週、週一用）
+  const ctx = gather(date, G), p = planDay(ctx);
+  console.log(a.includes("--json") ? JSON.stringify(p, null, 2) : format(p) + require("./extend_view.cjs").extendTail(ctx.ledger, p.week, p.weekday)); // 延伸世界的掉落／附頁和四問（extend_view.cjs，11-22）
 }
 if (require.main === module) { try { main(); } catch (e) { console.error(e.message); process.exit(1); } }
 module.exports = { suggestFest, weekItems, funStore, storeUsage, festName, weekOverview, formatWeek, gatherFor: gather, planDay, format, suggestStores, weekGaps, beatInfo, npcNeeds, beatNpcGaps, gdpWindow, dayGaps, commandsFor, STORES, WEEKLY_KEYS };

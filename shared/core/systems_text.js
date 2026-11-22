@@ -59,6 +59,9 @@ export const RECIPE_TEXT = {
   mixPink: { name: "稀釋過的紅", hint: "在紅裡面，加壹點什麼都沒有。", found: "紅加白，調出了粉。" },
 };
 
+// 理智低的時候，大廳「今日要聞」偶爾換成的句子（11-22；草稿，延伸劇情世界和 Yuga 可以改；web/src/fx/ui_sanfx.js）
+export const SANFX_TEXT = { label: "今日沒有人值班", lines: ["請不要回頭。", "今天沒有人值班。", "你已經在這裡很久了。", "剛剛是誰在說話？"] };
+
 // ----- 系統 K：工坊升級 -----
 export const UPGRADE_TEXT = {
   ped7: { name: "第七個展台", desc: "展廳多一個展台。佩佩多一個可以站的地方。" },

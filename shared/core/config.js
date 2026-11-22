@@ -187,6 +187,8 @@ export const NUM = {
   // restSan：休息回幾點理智（今天還有獎勵的趟才有）；chestInsp：寶箱開到好的，靈感幾點；chestSan：開到壞的扣多少理智；
   // chestOdds：[好的, 怪的] 的機率，剩下是壞的。數字是草稿（11-12）
   cellarMap: { rows: 5, wide: 0.5, rank2: [0.2, 0.12], rank3: [0, 0.06], restSan: 6, chestInsp: 2, chestSan: "1D3", chestOdds: [0.45, 0.3], bagKeep: 2 }, // bagKeep：全隊倒下時背包剩幾分之一（2 ＝剩一半）
+  // 理智低時畫廊、展廳、大廳的怪事（翊文 11-22：「理智55以下就逐漸有」）：tiers 是三段的門檻（< 55、< 40、< 25），gap 是每段壹次怪事隔幾秒（最短、最長），cloth 是白布滑下的高度（像素）。判斷在 shared/social/room_mood.js 的 sanFxTier，畫在 web/src/fx/ui_sanfx.js
+  sanFx: { tiers: [55, 40, 25], gap: [[50, 100], [25, 55], [12, 30]], cloth: [14, 36, 90] },
   sanDayBack: { n: 5, cap: 75 }, // 每天（05:00 換日）第一次進館，理智自己恢復 n 點，最多恢復到 cap；原本就比 cap 高的不扣、理智 0（熄燈）的不恢復（翊文 11-11：「每天自己會恢復 San 值 5 點，恢復最高加到 75」）
   startSanity: 50,          // 理智從 50 開始，CoC 的平均值（翊文 11-08：理智要更容易歸零；原本 70）
   startInsp: 12,            // 一開始的靈感（夠做一隻；11-10 做一隻 2 → 3 → 6 → 12，跟著改）

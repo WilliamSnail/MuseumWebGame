@@ -14,6 +14,12 @@ function text(bad) {
   for (const r of bad) (by[r.workflowName] = by[r.workflowName] || []).push(r);
   return Object.entries(by).map(([name, rs]) => `- **${name}**：失敗 ${rs.length} 次，最近一次 ${rs[0].createdAt.replace("T", () => " ").slice(0, 16)}（UTC） ${rs[0].url}`).join("\n");
 }
+// 開 issue 或在開著的那則下面留言（schedule_health.cjs 也用）
+function report(body) {
+  const open = JSON.parse(gh(["issue", "list", "--state", "open", "--search", `${TITLE} in:title`, "--json", "number,title"])).find(i => i.title === TITLE);
+  if (open) gh(["issue", "comment", String(open.number), "--body", body]);
+  else gh(["issue", "create", "--title", TITLE, "--body", body]);
+}
 if (require.main === module) {
   const runs = JSON.parse(gh(["run", "list", "--limit", "200", "--json", "workflowName,conclusion,createdAt,headBranch,event,url"]));
   const bad = failures(runs);
@@ -21,9 +27,7 @@ if (require.main === module) {
   const body = `過去 24 小時失敗的自動流程：\n\n${text(bad)}\n\n（tools/check/actions_health.cjs 每天自動整理；修好之後把這則 issue 關掉）`;
   console.log(body);
   if (process.argv.includes("--issue")) {
-    const open = JSON.parse(gh(["issue", "list", "--state", "open", "--search", `${TITLE} in:title`, "--json", "number,title"])).find(i => i.title === TITLE);
-    if (open) gh(["issue", "comment", String(open.number), "--body", body]);
-    else gh(["issue", "create", "--title", TITLE, "--body", body]);
+    report(body);
   }
 }
-module.exports = { failures, text };
+module.exports = { failures, text, report };
