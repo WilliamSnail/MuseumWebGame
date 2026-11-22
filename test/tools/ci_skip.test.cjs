@@ -39,5 +39,11 @@ T("工作流程沒有人設 SKIP_SLOW_ECON", () => {
   fs.readdirSync(path.join(root, ".github", "workflows")).filter(f => f.endsWith(".yml")).forEach(f => assert.ok(!read(".github/workflows/" + f).includes("SKIP_SLOW_ECON"), f));
 });
 
+T("ship 認得 --brief 和 --doc（11-22）", () => {
+  const o = SHIP.parseArgs(["--title", "測試標題", "--brief", "--doc", "x.json"]);
+  assert.ok(o.flags.has("brief")); assert.strictEqual(o.doc, "x.json");
+  assert.throws(() => SHIP.parseArgs(["--doc"]), /後面要有內容/);
+});
+
 console.log(`${pass} passed, ${fail} failed（CI 不跳測試）`);
 process.exit(fail ? 1 : 0);
