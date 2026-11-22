@@ -287,3 +287,12 @@ body.holiday-on .lobby-sign { border-color: var(--hol-a); box-shadow: 0 0 0 1px 
 .sg-origin { margin: 4px 0 0; font-size: .8125rem; line-height: 1.5; color: var(--parch-sub, #5A4630); }
 .sg-origin b { color: #6E5020; letter-spacing: .1em; }
 .sg-item-desc { display: block; margin-top: 2px; color: var(--parch-sub, #5A4630); line-height: 1.5; }
+
+/* 公開版館友證（11-22）：展廳牌子旁邊的小卡 */
+.fh-pass { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 4px 12px; border-radius: 6px; background: rgba(255,255,255,.12); }
+.fh-pass-gear { display: flex; align-items: center; gap: 6px; }
+.fh-pass-g { display: inline-flex; align-items: center; gap: 3px; }
+.fh-pass-g .gear-art { width: 28px; height: 28px; display: inline-block; }
+.fh-pass-g .gear-art svg { width: 100%; height: 100%; }
+.fh-pass-s { display: inline-flex; align-items: baseline; gap: 4px; }
+.fh-pass-s small, .fh-pass-gear small { font-size: .75rem; opacity: .8; }

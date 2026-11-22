@@ -9,7 +9,7 @@
 //    paid：這筆有沒有給主人來訪的靈感。likes：累計幾個讚。seenAt：主人上次看的時間（比它新的算「新的」）。
 //  「今天」、「現在」都由呼叫的人給（伺服器的時間），不信瀏覽器。玩家打的字（暱稱、留言）一律只當資料，畫面用純文字顯示。
 // ================================================================
-import { HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "../core/config.js";
+import { GEAR_ITEMS, HALL_THEME_BONUS, LIMITED_ITEMS, NUM, PILLOW_PARTS } from "../core/config.js";
 import { normKey, parsePillowKey, refPick } from "../core/logic_base.js";
 import { GIFT_KINDS, SOCIAL, checkHallAct, checkHallCall, cleanHallNote, giftItemText, giftKeyOk, sendGift, visitGain, visitMail } from "./gifts.js";
 import { claimMail, pruneMail, sendMail } from "./mailbox.js";
@@ -99,6 +99,12 @@ function cleanHallReport(r) {
     lines: list(r.lines, 20).filter(l => l && typeof l.t === "string").map(l => ({ k: /^[a-zA-Z]{1,12}$/.test(l.k) ? l.k : "x", t: hallRepStr(l.t, 200) })),
   };
 }
+// 公開版館友證（別人看得到的那一小部分）：裝備只收 GEAR_ITEMS 的 id（最多穿幾件照 NUM.shop.gearWorn），數字都夾在合理範圍
+export function cleanPassView(p) {
+  const n = (x, max) => Math.max(0, Math.min(max, Math.floor(+x) || 0));
+  const ids = new Set(GEAR_ITEMS.map(g => g.id));
+  return { gear: [...new Set(Array.isArray(p && p.gear) ? p.gear.filter(id => typeof id === "string" && ids.has(id)) : [])].slice(0, NUM.shop.gearWorn), have: n(p && p.have, 5000000), total: n(p && p.total, 5000000), best: n(p && p.best, 20), badges: n(p && p.badges, 200), signins: n(p && p.signins, 5000) };
+}
 export function cleanHallView(view) {
   if (!view || !view.open) return { open: false };
   const worn = (id, slot) => (LIMITED_ITEMS.some(x => x.id === id && x.kind === "deco" && x.slot === slot) ? id : null);
@@ -115,6 +121,7 @@ export function cleanHallView(view) {
     report: cleanHallReport(view.report),
     souvenirs: casCleanSouvenirs(view.souvenirs), // 賭場的紀念品、稱號（決定 0040）：只收清單上的 id 和短短的純文字名字
     title: casCleanTitle(view.title),
+    pass: cleanPassView(view.pass), // 公開版館友證（11-22）
   };
 }
 
