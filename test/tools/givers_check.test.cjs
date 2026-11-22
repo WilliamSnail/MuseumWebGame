@@ -45,5 +45,18 @@ T("第二批：小故事、拜託、送禮的欄位都擋得住壞的", () => {
   expectErr(c => { get(c, "number").story.last = "（收走你的名字。）"; }, /不能寫/);
   assert.ok(get(base(), "number").gift, "號碼機也收禮（決定 0151 題 5 選 B）");
 });
+T("第三批：串門子、提到別人、稱號的欄位都擋得住壞的", () => {
+  const pairs = real.givers.reduce((n, g) => n + Object.keys(g.pairs || {}).length, 0);
+  assert.strictEqual(pairs, 6, "規劃第 3 節六組串門子");
+  assert.ok(real.givers.every(g => g.title && g.title.name), "六位都有稱號");
+  expectErr(c => { get(c, "postman").pairs = { hall: { where: "餐車", slot: "noon", talks: [[{ by: "postman", say: "壹。" }, { by: "hall", say: "貳。" }]] } }; }, /字母順序在前/);
+  expectErr(c => { get(c, "hall").pairs.postman.talks[0] = [{ by: "hall", say: "壹。" }]; }, /2～3 句/);
+  expectErr(c => { get(c, "hall").pairs.postman.talks[0][0].by = "yuga"; }, /其中壹位/);
+  expectErr(c => { get(c, "hall").pairs.postman.slot = "dawn"; }, /時段只能是/);
+  expectErr(c => { get(c, "hall").pairs.postman.talks[0][0].say = "今天一碗湯。"; }, /壹/);
+  expectErr(c => { get(c, "hall").chat.mention.hall = ["壹。"]; }, /另壹位交代人/);
+  expectErr(c => { get(c, "hall").title.id = "常客"; }, /稱號 id/);
+  expectErr(c => { get(c, "hall").title.name = "壹".repeat(13); }, /最多 12 字/);
+});
 console.log(`交代人台詞檢查：${pass} 通過，${fail} 失敗`);
 if (fail) process.exit(1);

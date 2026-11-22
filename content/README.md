@@ -450,6 +450,8 @@ content/
 - `chat.annoyed`（連點的不耐煩）、`chat.lowSan`（理智低）、`chat.named`（熟識度 Lv2 以上，可放 `{name}`）各 3 句。
 - `chat.yesterday.task／visit／gift`：各至少 1 句。
 - 每句 40 字內、「壹」不用「一」、沒有英文字母（只有 yuga 的 R）和阿拉伯數字、不寫贏輸賺賠催玩掏錢、不碰撥款信那條線。檢查：`node tools/check/givers_check.cjs`（npm test 會跑）。
-- 第二批（小故事、拜託、送禮反應）、第三批（串門子、稱號）之後加欄位。
+- 第二批（小故事、拜託、送禮反應）、第三批（串門子、稱號）見下面。
 
 第二批欄位（同壹個檔）：`story.parts`（3 段、每段 3 句）、`story.last`（Lv3 才看到的括號句）、`errands`（臨時拜託至少 3 件：`kind` 是現有動作 visit／sendPepe／eat／lostbox／casinoCollection／cellar／cellarExhibit／spot／read／stock／auction／tell，`tell` 要有 `to`＝另壹位交代人，不放存錢買賣那類籌碼動作；`ask`、`done`）、`gift`（`likes`、`dislikes` 的欄位只認稀有度、心情、顏色、帽子、姿勢，失敗作只能放稀有度；`love`、`ok`、`off` 各 2 句，`first` 1 句）。六位都收禮，包括號碼機。
+
+第三批欄位（同壹個檔）：`chat.mention`（Lv2 起提到別人：對方 id → 至少 1 句）、`title`（`id` 小寫英數，成就 id 是 `npc:<交代人id>:<id>`；`name` 12 字內；`desc` 說明）、`pairs`（串門子，**只寫在字母順序在前那位的檔**，對話紀錄也記在那位名下：對方 id → `where`、`slot`、可選 `day:"sun"`、`talks`＝幾段對話，每段 2～3 句 `{by, say}`，`by` 是兩位其中壹位）。句子 id 規則見規劃第 9.2 節，**台詞只能往後加，不插入、不重排**。
