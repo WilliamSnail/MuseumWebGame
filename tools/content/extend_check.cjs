@@ -54,6 +54,31 @@ function checkExtend(L, E, W, lw) {
     [it.lore, it.extraPage].forEach(t => { if (typeof t !== "string") return; const x = t.replace(MARKS, ""); for (let q = 0; q + 6 <= x.length; q++) if (grams.has(x.slice(q, q + 6))) { E(w, `破梗：「${x.slice(q, q + 6)}」跟 mysteries 的謎底字句壹樣`); break; } });
     if (!isObj(it.audit) || it.audit.status !== "審過" || asList(it.audit.checks).length < 3) E(w, "audit 要是審過、checks 至少三項（掉落的來歷每條都要審）");
   });
+  // 總表 extend.collect（翊文 11-22：年底壹起收）：每條線哪週收、收在哪個謎底下、四問；只有集團可以寫「不負責：原因」，文化部和已知世界要扛恐懼、代價、佩佩
+  const C = X.collect;
+  if (C != null) {
+    const cw = lw + ".extend.collect", rows = isObj(C) ? asList(C.rows) : [], cids = new Set();
+    if (!isObj(C) || !rows.length) E(cw, "要是 { rows: [...] }，至少壹列");
+    rows.forEach((r, i) => {
+      const w = cw + ".rows[" + i + "]";
+      if (!isObj(r)) { E(w, "要是物件"); return; }
+      if (!/^c-[a-z0-9-]+$/.test(r.id || "")) E(w, "id 要是 c-xxx"); else if (cids.has(r.id)) E(w, "id「" + r.id + "」重複"); else cids.add(r.id);
+      if (typeof r.line !== "string" || !r.line.trim()) E(w, "line 要有字");
+      if (!weeks[r.week]) E(w, "week「" + r.week + "」不在 extend.weeks 裡");
+      if (typeof r.under !== "string" || !r.under.trim()) E(w, "under 要寫收在哪個謎底下");
+      ["dread", "cost", "pepe", "horror"].forEach(k => {
+        if (typeof r[k] !== "string" || r[k].trim().length < 4) { E(w, k + " 要有字（寫怎麼做到，或「不負責：原因」）"); return; }
+        if (r[k].startsWith("不負責：")) {
+          if (r.kind !== "集團") E(w, k + " 只有集團可以寫「不負責」；" + r.kind + " 要自己扛");
+          else if (r[k].trim().length < 10) E(w, k + " 的「不負責」要寫原因和同週誰補");
+        }
+      });
+      if (r.id === "c-culture" || r.id === "c-known") ["dread", "cost", "pepe"].forEach(k => { if (typeof r[k] === "string" && r[k].startsWith("不負責")) E(w, r.id + " 的 " + k + " 不能寫不負責（文化部和已知世界要扛）"); });
+    });
+    ["c-culture", "c-known", "c-grant-threshold", "c-grant-holder", "c-grant-taken"].forEach(id => { if (!cids.has(id)) E(cw, "少了 " + id + " 那列"); });
+    ["m-count", "m-world", "m-accountant", "m-capital", "m-guard", "m-queue", "m-ledger", "m-you"].forEach(id => { if (!cids.has("c-" + id)) E(cw, "少了 c-" + id + " 那列（八個謎都要在總表）"); });
+    Object.keys(weeks).forEach(k => asList(weeks[k] && weeks[k].lines).forEach(id => { if (!cids.has(id)) E(lw + ".extend.weeks." + k + ".lines", "「" + id + "」不在 extend.collect 裡"); }));
+  }
   Object.keys(weeks).forEach(k => {
     const x = weeks[k], w = `${lw}.extend.weeks.${k}`;
     if (!/^\d{4}-W\d{2}$/.test(k)) { E(w, "鍵要是週的名字"); return; }
