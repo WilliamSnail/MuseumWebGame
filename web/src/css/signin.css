@@ -278,3 +278,7 @@ body.holiday-on .lobby-sign { border-color: var(--hol-a); box-shadow: 0 0 0 1px 
 .sg-extras li { display: flex; align-items: center; gap: 4px; }
 .sg-extras b { color: #7A5A1E; }
 .sg-extras .ic, .sg-extras .ic svg { width: 16px; height: 16px; }
+
+/* 打怪掉的名牌框（11-22）：空畫框＝壹圈素木畫框 */
+.hall-plate.lim-foe-f3g { box-shadow: inset 0 0 0 3px #8A5A2E, inset 0 0 0 5px #C9A06A, inset 0 0 0 6px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.35); padding: 8px 22px; }
+.nf-nick.lim-foe-f3g { padding: 1px 8px; border-radius: 3px; box-shadow: inset 0 0 0 1px #B98A52, 0 0 0 2px rgba(185,138,82,.4); background: linear-gradient(180deg, rgba(201,160,106,.16), rgba(0,0,0,0)); }
