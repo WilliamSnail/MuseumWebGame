@@ -59,7 +59,7 @@ export function giverRun(ctx, d, acts = {}) {
   npcRelFix(w);
   if (op === "info") return gvSum(w, ctx);
   if (!NPC_REL_GIVERS.includes(id) || !GIVERS[id]) return gvNo("沒有這位交代人。");
-  const add = (src, o) => npcRelAdd(w, id, ctx.day, src, Object.assign({ title: GIVER_TITLES[id] }, o));
+  const gt = GIVERS[id].title, add = (src, o) => npcRelAdd(w, id, ctx.day, src, Object.assign({ title: gt && gt.name ? gt.name : GIVER_TITLES[id], titleId: gt && gt.id }, o)); // 稱號名字和 id 以 content/givers 的 title 為準，沒寫就用 GIVER_TITLES
   const out = (r, extra) => Object.assign({ ok: true, id, xp: r.xp, lv: r.lv, up: !!r.up, title: r.title || null, gained: r.gained | 0 }, extra);
   if (op === "tap") { // 點他閒聊：前 3 次加熟識度、第 4 次起不耐煩、壹天最多 tapMax 下
     const t = add("tap", { xp: 0 });
@@ -107,6 +107,32 @@ export function giverRun(ctx, d, acts = {}) {
   return gvNo("不認得的動作。");
 }
 
+// ---------- 串門子（content/givers 的 pairs，寫在字母順序在前那位的檔；兩位同時間同地點對話）----------
+// 全部的組合：[{ id: "clerk-postman", a, b, where, slot, day（只有那天才有，例 "sun"，沒有＝每天）, talks: [[{ by, say }]] }]
+export function giverPairs() {
+  const out = [];
+  for (const a of NPC_REL_GIVERS) {
+    const P = GIVERS[a] && GIVERS[a].pairs;
+    if (!gvBox(P)) continue;
+    for (const b of Object.keys(P).sort()) if (NPC_REL_GIVERS.includes(b) && a < b && gvBox(P[b]) && Array.isArray(P[b].talks) && P[b].talks.length) out.push({ id: a + "-" + b, a, b, where: String(P[b].where || ""), slot: P[b].slot, day: P[b].day || null, talks: P[b].talks });
+  }
+  return out;
+}
+export const giverWeekday = day => ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(day + "T00:00:00Z").getUTCDay()];
+// 現在這個時段、這壹天，玩家聽得到哪壹組（壹次壹組、壹天壹組；同壹個人同壹天看到的壹樣）。slot：morning／noon／evening／night；day：台灣日期；seed：玩家 uid（不給也行）
+// 回 { id, a, b, where, ti（第幾段對話）, talk: [{ by, say }], sid（交談紀錄的句子 id：pair:<組合id>:<段>，記在 a 名下，畫面兩位的本子都要顯示）} 或 null
+export function giverPairAt(slot, day, seed = "") {
+  const wd = giverWeekday(day), ok = giverPairs().filter(p => p.slot === slot && (!p.day || p.day === wd));
+  if (!ok.length) return null;
+  const p = ok[Math.floor(mulberry32(hashStr(`${seed}|${day}|${slot}|pair`))() * ok.length)], ti = (gvDayNo(day) + hashStr(p.id)) % p.talks.length;
+  return { id: p.id, a: p.a, b: p.b, where: p.where, ti, talk: p.talks[ti], sid: `pair:${p.id}:${ti}` };
+}
+// 句子 id 查字（圖書館）：pair:<a>-<b>:<段> → 那段對話 [{ by, say }]；查不到回 null
+export function giverPairTalk(sid) {
+  const m = /^pair:([a-z0-9]+)-([a-z0-9]+):([0-9]{1,3})$/.exec(String(sid)), p = m && giverPairs().find(x => x.id === m[1] + "-" + m[2]);
+  return p && p.talks[+m[3]] ? p.talks[+m[3]] : null;
+}
+
 // ---------- 交談紀錄（圖書館）：casinoNpcLog/{uid} = { v: 1, g: { 交代人id: [[天數, "句子 id"], ...] }, t: { 旅客id: [[天數, "句子 id"], ...] } }（舊的在前）----------
 // 交代人每位最多 logMax 句、旅客每位最多 logMaxTraveler 句，旅客最多 logTravelers 位（超過丟最舊的那本）；串門子記在字母順序在前那位名下（畫面兩邊都查）
 export const GIVER_LOG_TRAVELER = /^[vc]-[a-z0-9][a-z0-9-]{0,37}$/;
@@ -129,7 +155,7 @@ export function giverLogAdd(doc, id, ids, day) {
   const box = isG ? fixed.g : fixed.t, max = isG ? C.logMax : C.logMaxTraveler, list = box[id] || (box[id] = []), have = new Set(list.map(x => x[1])), d = gvDayNo(day);
   let added = 0;
   for (const s of ids.slice(0, C.logIds)) {
-    if (typeof s !== "string" || !GIVER_LOG_ID.test(s) || have.has(s)) continue;
+    if (typeof s !== "string" || !GIVER_LOG_ID.test(s) || have.has(s) || (s.startsWith("pair:") && !s.startsWith("pair:" + id + "-"))) continue; // 串門子只記在字母順序在前那位名下
     list.push([d, s]); have.add(s); added++;
   }
   if (list.length > max) list.splice(0, list.length - max);

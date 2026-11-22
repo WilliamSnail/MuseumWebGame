@@ -63,11 +63,32 @@ T("送禮的限制：只有壹隻的完美作品或有名字的擋住、修復�
   assert.ok(!r4.ok && /送夠/.test(r4.reason), "壹天合計 3 隻"); assert.strictEqual(ctx.w.chips, chips); assert.strictEqual(P.insp, insp);
   ctx.day = D2; assert.ok(run(G, ctx, { op: "gift", id: "clerk", item: { kind: "pepe", key: ks[1] } }).ok, "隔天重算");
 });
-T("到 Lv3 發稱號（六位各壹個名字）；稱號進同壹份成就、挑得起來", G => {
-  for (const [id, name] of Object.entries(G.GIVER_TITLES)) {
-    const ctx = mk(G); lvl(ctx, id, 139); run(G, ctx, { op: "tap", id });
-    assert.strictEqual(ctx.w.ach["npc:" + id].name, name, id); assert.ok(G.casSetTitle(ctx.w, null, "npc:" + id).ok);
+T("到 Lv3 發稱號（六位各壹個，id 是 npc:<交代人>:<title.id>，名字和說明用 content 的 title）；稱號進同壹份成就、挑得起來、說明查得到", G => {
+  for (const id of Object.keys(G.GIVER_TITLES)) {
+    const ctx = mk(G), t = G.GIVERS[id].title, aid = "npc:" + id + ":" + t.id; lvl(ctx, id, 139); run(G, ctx, { op: "tap", id });
+    assert.strictEqual(ctx.w.ach[aid].name, t.name, id); assert.ok(!ctx.w.ach["npc:" + id], "不再發舊格式"); assert.ok(G.casSetTitle(ctx.w, null, aid).ok);
+    const info = G.casAchInfo(ctx.w, aid); assert.ok(info.npc && info.desc === t.desc && info.name === t.name, id); assert.ok(G.casCleanTitle({ id: aid, name: t.name }), "清稱號認得");
+    run(G, ctx, { op: "visit", id }); assert.strictEqual(Object.keys(ctx.w.ach).filter(k => k.startsWith("npc:" + id)).length, 1, "只發壹次");
   }
+  const old = mk(G); old.w.ach["npc:clerk"] = { name: "舊稱號", d: D1 }; lvl(old, "clerk", 139); run(G, old, { op: "tap", id: "clerk" });
+  assert.deepStrictEqual(Object.keys(old.w.ach).filter(k => k.startsWith("npc:")), ["npc:clerk"], "舊格式的人不會再領壹個"); assert.strictEqual(G.casAchInfo(old.w, "npc:clerk").desc, "跟這位熟了。");
+});
+T("chat.mention：只提到有檔的另壹位交代人、句子在內容裡（至少 1 句）", G => {
+  for (const id of Object.keys(G.GIVER_TITLES)) { const m = G.GIVERS[id].chat.mention; assert.ok(m && Object.keys(m).length, id); for (const [o, a] of Object.entries(m)) { assert.ok(o !== id && G.GIVERS[o], id + "→" + o); assert.ok(Array.isArray(a) && a.length >= 1 && a.every(x => typeof x === "string" && x), id + "→" + o); } }
+});
+T("串門子：六組、兩位字母順序在前的檔寫；一個時段壹天壹組、同壹個人同壹天壹樣；週日限定只在週日；句子的人是那兩位", G => {
+  const ps = G.giverPairs(); assert.strictEqual(ps.length, 6); assert.ok(ps.every(p => p.a < p.b && p.id === p.a + "-" + p.b && p.where && p.talks.every(t => t.length >= 2 && t.length <= 3 && t.every(l => l.by === p.a || l.by === p.b))));
+  const sun = "2026-11-22", mon = "2026-11-23"; assert.strictEqual(G.giverWeekday(sun), "sun"); assert.strictEqual(G.giverWeekday(mon), "mon");
+  const hy = ps.find(p => p.id === "hall-yuga"); assert.strictEqual(hy.day, "sun");
+  assert.ok(G.giverPairAt("evening", sun, "U1")); assert.ok(!G.giverPairAt("evening", mon, "U1") || G.giverPairAt("evening", mon, "U1").id !== "hall-yuga", "平日不出週日組");
+  const seen = new Set(); for (let i = 0; i < 80; i++) seen.add(G.giverPairAt("evening", sun, "U" + i).id); assert.ok(seen.has("hall-yuga") && seen.has("number-yuga") && seen.has("postman-scale"), "晚上週日三組都有人遇到");
+  const x = G.giverPairAt("morning", D1, "U9"); assert.deepStrictEqual(JSON.parse(JSON.stringify(G.giverPairAt("morning", D1, "U9"))), JSON.parse(JSON.stringify(x))); assert.strictEqual(x.id, "clerk-postman"); assert.strictEqual(x.sid, "pair:clerk-postman:" + x.ti);
+  assert.ok(!G.giverPairAt("night", D1, "U1") || G.giverPairAt("night", D1, "U1").id === "clerk-scale"); assert.strictEqual(G.giverPairAt("noon", D1, "U1").id, "hall-postman");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(G.giverPairTalk(x.sid))), JSON.parse(JSON.stringify(x.talk))); assert.strictEqual(G.giverPairTalk("pair:clerk-postman:99"), null); assert.strictEqual(G.giverPairTalk("pair:zzz-yyy:0"), null);
+});
+T("串門子的對話記在字母順序在前那位名下；記在後面那位名下的丟掉", G => {
+  const p = G.giverPairAt("morning", D1, "U1"), ok = G.giverLogAdd(null, p.a, [p.sid, "clerk:chat.morning:0"], D1); assert.strictEqual(ok.added, 2);
+  assert.strictEqual(G.giverLogAdd(null, p.b, [p.sid], D1).added, 0, "記在 b 名下不收"); assert.strictEqual(G.giverLogAdd(null, "scale", ["pair:clerk-scale:0"], D1).added, 0);
 });
 T("交談紀錄：同壹句不重複、壹次最多 10 句、每位最多 200 句丟最舊、格式不對丟掉、不認得的人丟掉、沒新句子 added 是 0", G => {
   let r = G.giverLogAdd(null, "clerk", ["chat.morning:1", "chat.morning:1", "BAD ID", "task:2026-11-23:1:says", 5], D1); assert.strictEqual(r.added, 2); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.g.clerk.map(x => x[1]))), ["chat.morning:1", "task:2026-11-23:1:says"]);
@@ -79,7 +100,7 @@ T("交談紀錄：同壹句不重複、壹次最多 10 句、每位最多 200 �
   const bad = G.giverLogFix({ v: 1, g: { clerk: [[1, "ok:1"], ["x", "no"], [2, "ok:1"], [3, "A B"]], zzz: [[1, "q"]] } }); assert.deepStrictEqual(JSON.parse(JSON.stringify(bad.g.clerk)), [[1, "ok:1"]]); assert.ok(!bad.g.zzz);
 });
 T("旅客的交談本子：旅客 id（v-、c- 開頭）才收、每位最多 20 句丟最舊、最多 80 位、不影響交代人的本子；劇情角色 t- 不收", G => {
-  let r = G.giverLogAdd(null, "v-bai", ["v-bai:chat:1", "v-bai:chat:1", "pair:a-b:0"], D1); assert.strictEqual(r.added, 2); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.t["v-bai"].map(x => x[1]))), ["v-bai:chat:1", "pair:a-b:0"]); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.g)), {});
+  let r = G.giverLogAdd(null, "v-bai", ["v-bai:chat:1", "v-bai:chat:1", "v-bai:chat:2"], D1); assert.strictEqual(r.added, 2); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.t["v-bai"].map(x => x[1]))), ["v-bai:chat:1", "v-bai:chat:2"]); assert.deepStrictEqual(JSON.parse(JSON.stringify(r.doc.g)), {});
   assert.strictEqual(G.giverLogAdd(r.doc, "t-yuga", ["a:1"], D1).added, 0, "劇情角色不收"); assert.strictEqual(G.giverLogAdd(r.doc, "V-BAI", ["a:1"], D1).added, 0); assert.strictEqual(G.giverLogAdd(r.doc, "bai", ["a:1"], D1).added, 0);
   let d = null; for (let i = 0; i < 5; i++) d = G.giverLogAdd(d, "c-first", Array.from({ length: 10 }, (_, j) => "n:" + i + "-" + j), D1).doc;
   assert.strictEqual(d.t["c-first"].length, 20); assert.strictEqual(d.t["c-first"][19][1], "n:4-9"); assert.ok(!d.t["c-first"].some(x => x[1] === "n:0-0"));
