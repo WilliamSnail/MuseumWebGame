@@ -234,7 +234,7 @@ body.reduce-motion .l2-todo.on::after, body.reduce-motion .l2-room.is-goal::befo
   .tb-btn[data-room="lobby"] > .ic { background-image: url(/lobby/nav-lobby.webp); }
   .tb-btn[data-room="casino"] > .ic { background-image: url(/lobby/nav-casino.webp); }
   .tb-today > .ic { background-image: url(/lobby/nav-today.webp); }
-  .tb-shop > .ic { background-image: url(/lobby/nav-shop.webp); }
+  .tb-pass > .ic { background-image: url(/lobby/nav-pass.webp); }
   .tb-menu > .ic { background-image: url(/lobby/nav-menu.webp); width: 24px; height: 24px; margin: 2px 0; }
   .tb-btn.on { color: #F3DFA6; }
   .tb-btn.on::before { content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 3px; border-radius: 0 0 3px 3px; background: #E3B95A; box-shadow: 0 0 8px rgba(227,185,90,.6); }
