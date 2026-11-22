@@ -423,7 +423,7 @@ body.reduce-motion .hall-onescreen .onescreen-side .hall-themes summary { animat
 /* ---------- 地下入口：手機直拿 ---------- */
 @media (max-width: 760px) {
   /* 標題壹行：廳名、回大廳、規則 */
-  .screen.onescreen-room.cellar-onescreen > .room-head { flex-wrap: nowrap; }
+  .screen.onescreen-room.cellar-onescreen > .room-head { flex-wrap: wrap; row-gap: 4px; } /* 11-22：「這裡現在 N 人」帶了交代人頭像，壹行放不下（原本就被切到螢幕外），改成放不下就換行 */
   .screen.onescreen-room.cellar-onescreen > .room-head .head-tools { flex: 0 1 auto; order: 0; margin-left: auto; }
   .screen.onescreen-room.cellar-onescreen > .room-head .onescreen-big { min-height: 34px; padding: 0 8px; }
   .screen.onescreen-room.cellar-onescreen > .onescreen-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }

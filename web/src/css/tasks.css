@@ -136,7 +136,10 @@
 @media (max-width: 760px) { .gv-lv .gv-left { display: none; } }
 .gv-log { grid-column: 1 / -1; width: 100%; }
 .gv-log-books { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-.screen.onescreen-room.cellar-onescreen > .gv-strip { flex: none; margin: 0 0 6px; }
+/* 房間頂上「這裡現在 N 人」那顆鈕上的新話小點（11-22，ui_roomnow.js）：閃 3 下就停，不寫 infinite */
+.gv-dot { position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: #FF5A3C; border: 2px solid #1E1410; animation: gv-dotPulse 1s ease-in-out 3; pointer-events: none; }
+@keyframes gv-dotPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 90, 60, 0); } 50% { transform: scale(1.35); box-shadow: 0 0 0 5px rgba(255, 90, 60, .45); } }
+.rn-givers .gv-strip { margin: 4px 0 0; }
 .gv-say .gv-mention { color: inherit; font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
 .gv-say .gv-mention[aria-expanded="true"] { text-decoration-style: solid; }
 

@@ -44,7 +44,10 @@ function openRoom(room) {
   m.layer.classList.add("sp-top"); // 從賭場、銀行這些面板（z 8800）裡開，要蓋得住（翊文 11-16：點了看不到）；旅客卡也是 sp-top，後開的在上面
   closeOnOutside(m);
   const sec = (title, ...kids) => h("section", { class: "rn-sec" }, h("h3", null, title), ...kids);
+  const gv = ADDONS.roomGivers ? ADDONS.roomGivers(room) : null, strip = gv ? gv.strip() : null; // 這個房間的交代人（店員、阿秤、號碼機、荷官）：頭像在按鈕上，話在這裡（翊文 11-22）
+  if (gv) gv.seen();
   m.card.append(
+    strip ? h("section", { class: "rn-sec rn-givers" }, h("h3", null, "交代人"), strip) : null,
     p.mates.length ? sec("館友", h("p", { class: "hn-names" }, p.mates.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", x.nick)))) : null,
     p.npcN ? sec("旅客", p.npc.length ? h("p", { class: "hn-names" }, p.npc.map((x, i) => h("span", { class: "hn-nm" }, i ? "、" : "", npcName(x.id, x.name), npcSanBadge(x.id, { calm: true, num: false })))) : h("p", { class: "hn-empty" }, `${p.npcN} 位（名單還沒有送來）`)) : null,
     p.crowdN || p.groups.length ? sec("散客", h("p", { class: "hn-names" }, p.groups.length ? crowdSummary(p.groups.map(g => (g.wander ? Object.assign({}, g, { label: g.label + "（順路逛來）" }) : g))).join("、") : `${p.crowdN} 位`)) : null,
@@ -54,18 +57,21 @@ function openRoom(room) {
 // 房間標題旁的小按鈕。ui_screens1.js 的 roomHead 叫它
 export function roomPeopleBtn(room) {
   if (!ROOM_PEOPLE.includes(room)) return null;
-  const b = h("button", { type: "button", class: "btn ghost small rn-pill", onClick: () => openRoom(room) });
+  const gv = ADDONS.roomGivers ? ADDONS.roomGivers(room) : null; // 有交代人的房間：人數後面接他們的小頭像，有新話就加小點
+  const b = h("button", { type: "button", class: "btn ghost small rn-pill", onClick: () => { openRoom(room); draw(); } });
   let shown = false;
   const draw = () => {
     if (shown && !b.isConnected) return false;
     if (b.isConnected) shown = true;
     const n = room === "hall" ? hallPeople().total : roomPeople(room).n, known = room === "hall" ? hallPeople().known : roomPeople(room).known;
-    b.replaceChildren(icon("users"), h("span", null, h("span", { class: "rn-t" }, " 這裡現在"), known ? ` ${n} 人` : "？"));
-    b.title = "看看現在有誰在這裡";
-    b.classList.toggle("empty", known && !n);
+    b.replaceChildren(icon("users"), h("span", null, h("span", { class: "rn-t" }, " 這裡現在"), known ? ` ${n} 人` : "？"),
+      gv ? h("span", { class: "rn-avs" }, gv.avatars()) : null, gv && gv.fresh() ? h("i", { class: "gv-dot", "aria-label": "交代人有新的話" }) : null);
+    b.title = gv ? "看看現在有誰在這裡，還有交代人" : "看看現在有誰在這裡";
+    b.classList.toggle("empty", known && !n && !gv);
     return true;
   };
   hallNowWatch(draw);
+  if (gv) { b.paint = draw; gv.watch(b); }
   draw();
   return b;
 }

@@ -62,6 +62,7 @@ export const giverHeard = (id, ids) => { const l = ids.filter(Boolean); if (l.le
 const visitSent = new Set(); // 這次開網頁已經報過「來了」的交代人（伺服器壹天只算壹次，這裡只是少打壹點 API）
 const view = id => INFO && (INFO.givers || []).find(g => g.id === id);
 const offerOf = id => INFO && (INFO.offers || []).find(o => o.id === id);
+export const giverOffer = id => { const o = offerOf(id); return !!o && !o.done; }; // 他有臨時拜託還沒做完（房間頂上那顆鈕的小點用）
 
 // 熟識度：四格（目前那格依這級已經漲了多少塗滿壹部分）＋級名＋「再 N 點」（11-21 qa：看不出同級內有漲）
 const LV_FROM = [0, 10, 40, 100]; // 要跟 NUM.npcRel.giver.lv 壹樣
