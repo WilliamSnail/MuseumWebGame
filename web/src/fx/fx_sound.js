@@ -20,7 +20,8 @@ import { api, now, pick, rand } from "./fx_core.js";
       const o = c.createGain(); o.gain.value = MASTER;
       o.connect(lp); lp.connect(comp); comp.connect(c.destination);
       const b = {};
-      ['sfx', 'amb', 'heart'].forEach((k) => { b[k] = c.createGain(); b[k].gain.value = vol[k]; b[k].connect(o); });
+      b.ambDuck = c.createGain(); b.ambDuck.connect(o); // 背景讓路的鈕：amb 先過它（11-22 翊文：「圖書館讀到主線劇情揭露時音樂好像會跟背景音樂重疊」），file(id, g, { duck: true }) 放的時候壓低
+      ['sfx', 'amb', 'heart'].forEach((k) => { b[k] = c.createGain(); b[k].gain.value = vol[k]; b[k].connect(k === 'amb' ? b.ambDuck : o); });
       return { o, b };
     }
     function ctx() {
@@ -1280,8 +1281,7 @@ import { api, now, pick, rand } from "./fx_core.js";
       tinnitus(on) { want.tinnitus = !!on; sync(); },
       dread(level) { const v = level === 'low' || level === 'edge' ? level : null; if (v === want.dread) return; const toEdge = v === 'edge' && want.dread !== 'edge'; want.dread = v; sync(); if (toEdge && unlocked && !(api.settings && api.settings.muted)) { const c = ctx(); if (c) fileOnce(c, bus.heart, 'pulse-rise', 0.5); } }, // 剛掉到 15 以下：升高音壹次
       unease(x) { const v = Math.max(0, Math.min(1, +x || 0)); if (Math.abs(v - want.unease) < 0.02 && (v > 0) === (want.unease > 0)) return; want.unease = v; sync(); },
-      // 播壹次音效檔（id 見 shared/game/sfx_files.js，例如 'coin-drop'、'slot-bonus'、'crowd-cheer'）；g 音量 0～1，預設 0.5。走 sfx 音軌（音量滑桿、靜音照舊）
-      file(id, g) {
+      file(id, g, opt) { // 播壹次音效檔（id 見 shared/game/sfx_files.js）；g 音量 0～1，預設 0.5，走 sfx 音軌。opt.duck：放的時候背景音樂（房間旋律、鋼琴、恐怖音樂）先讓開
         try {
           if (!isOn('sfx')) return;
           const c = ctx(); if (!c) return;
@@ -1289,7 +1289,7 @@ import { api, now, pick, rand } from "./fx_core.js";
             if (!buf || !isOn('sfx')) return;
             const s = c.createBufferSource(), v = c.createGain();
             s.buffer = buf; v.gain.value = g == null ? 0.5 : Math.max(0, Math.min(1, +g));
-            s.connect(v); v.connect(bus.sfx); s.start(); lastSfxAt = now();
+            s.connect(v); v.connect(bus.sfx); s.start(); lastSfxAt = now(); if (opt && opt.duck && bus.ambDuck) { const t = c.currentTime, p = bus.ambDuck.gain; p.cancelScheduledValues(t); p.setTargetAtTime(0.08, t, 0.4); p.setTargetAtTime(1, t + Math.max(1, buf.duration - 2), 1.2); }
           });
         } catch (e) { /* never throw */ }
       },

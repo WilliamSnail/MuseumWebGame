@@ -17,7 +17,7 @@
     { "match": "public/diner/(awning|lights)", "cat": "框和邊條", "what": "條紋遮陽棚（橫向重複）／掛燈串（橫向重複）", "use": "任何夜市、攤車的頂", "from": "餐車 D-4（11-20）" },
     { "match": "public/diner/food-", "cat": "品項和道具插畫", "what": "餐車品項插畫（烤雞、啤酒、壽司、分享餐、葡萄酒、白蘭地、1 抽券、11 抽券）", "use": "品項卡、獎勵、任務", "from": "餐車 D-7 八格＋D-7_beer（11-20）" },
     { "match": "public/diner/prop-", "cat": "品項和道具插畫", "what": "餐車道具：便條紙、杯墊小杯、空托盤、小黑板雕花框", "use": "字條、托盤、說明板", "from": "餐車 D-8（11-20）" },
-    { "match": "public/tasks/giver-", "cat": "人物頭像", "what": "任務交代人頭像（Yuga Bot：玩家 Yuga 手繪，決定 0147；其他五位用剪影，在 ui_tasks.js）", "use": "任務卡、任務板、小橫幅", "from": "翊文給的手機截圖（原圖不進 repo）" },
+    { "match": "public/tasks/giver-", "cat": "人物頭像", "what": "任務交代人頭像（Yuga Bot：玩家 Yuga 手繪，決定 0147；其他五位用程式畫的剪影 SVG，在 web/src/panels/ui_giver_bust.js，每位不同：堂主＝瓜皮帽加字條、郵差＝前簷帽加郵包和信、店員＝側簷帽加名牌和小帳、阿秤＝毛巾加秤、號碼機＝機器加叫號紙；由 ui_tasks.js 的 giverAv 接上，顏色在 GIVER_TONE）", "use": "任務卡、任務板、小橫幅", "from": "翊文給的手機截圖（原圖不進 repo）" },
     { "match": "public/cellar/kit/", "cat": "框和邊條", "what": "地下室石板鐵框零件：石板、鐵條、四角、鉚釘", "use": "暗色石板面板", "from": "assets/panel-kit 石板系列（41f45c13）；tools/build_panel_kits.py" },
     { "match": "public/cellar/", "cat": "房間和場景插畫", "what": "地下室素材（石牆背景、鐵框石面板、告示、鐵橫條、捲軸、門、展台、稀有度卡、按鈕）", "use": "地下收藏庫畫面", "from": "assets/cellar/_c1～_c5 總表（翊文 11-11 生，41f45c13）；assets/cellar/ 還留著切好的單張" },
     { "match": "public/cellar2/(foe-|stage-)", "cat": "怪物和特效", "what": "打怪畫面的怪物（五層×三種）／各層舞台", "use": "地下打怪", "from": "assets/cellar2 2-1、2-2（翊文 11-12 生，41f45c13）" },
