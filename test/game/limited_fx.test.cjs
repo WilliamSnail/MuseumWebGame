@@ -7,7 +7,7 @@ const T = (name, fn) => { try { G = load(); fn(); pass++; } catch (e) { fail++; 
 const mk = o => ({ pick: Object.assign({ 稀有度: "普通", 心情: "傷心", 顏色: "紅", 帽子: "沒有", 姿勢: "站著" }, o), perfect: false });
 const fresh = () => { const P = G.newProfile("challenge"); G.ensureDay(P, "2026-11-08"); G.CATS.forEach(c => G.PEPE_PARTS.find(p => p.name === c).options.forEach(o => { if (!o.forbidden && !o.mutant && !o.mix && !o.gift && !o.limited && !o.key && !P.unlocked[c].includes(o.name)) P.unlocked[c].push(o.name); })); P.insp = 500; return P; };
 const none = o => Object.keys(o).length === 0;
-const hats = () => G.PEPE_PARTS.find(p => p.name === "帽子").options.filter(o => o.limited && o.limited !== "show" ? true : o.limited).map(o => o.name);
+const hats = () => G.PEPE_PARTS.find(p => p.name === "帽子").options.filter(o => o.limited && o.limited !== "foe").map(o => o.name);
 
 T("每頂限定帽子都有能力、有說明、有短標", () => {
   const L = hats(); assert.ok(L.length >= 23, "限定帽子 " + L.length);

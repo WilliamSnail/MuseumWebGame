@@ -15,11 +15,27 @@ T("換小獎累計：換了幾次、花了多少都記下來；每週重算的 e
   const w2 = G.casWalletFix(JSON.parse(JSON.stringify(w)), "2026-12-07"); assert.strictEqual(w2.ex.n[x.id] || 0, 0, "換週重算"); assert.strictEqual(w2.exTot[x.id].n, n, "累計不重算");
   assert.deepStrictEqual(JSON.parse(JSON.stringify(G.casExTotFix({ [x.id]: { n: -3, chips: "a" }, zzz: { n: 1 }, bad: 5 }))), { [x.id]: { n: 0, chips: 0 } });
 });
+T("賭場頁補完（11-22）：大禮包、完整成就和財產清單、餐車吃過的和今天還能補多少、戰績、認得的人、每週收藏每件和過去幾週", G => {
+  const day = "2026-11-10", w = G.casWalletFix(G.casWalletNew(), day), snap = JSON.stringify(w);
+  w.tickets = 4; w.meals.chicken = 3; w.meals.tea = 1; w.food = { day, mood: 4, san: 1 }; w.st.hands = 12;
+  G.npcRelAdd(w, "clerk", day, "chat"); G.npcRelAdd(w, "c-math", day, "invite");
+  w.ach["npc:clerk:helper"] = { name: "大夜班的幫手", d: day }; w.props.chicken = { n: 2, d: day };
+  const before = JSON.stringify(w), v = JS(G.casPassView(w, null, day));
+  assert.strictEqual(JSON.stringify(w), before, "只讀");
+  assert.deepStrictEqual(v.packs, { left: G.NUM.casino.dailyPacks, opened: 0, tickets: 4 });
+  assert.strictEqual(v.meals.total, 4); assert.strictEqual(v.meals.kinds, 2); assert.ok(v.meals.rows.some(r => r.id === "chicken" && r.n === 3));
+  assert.deepStrictEqual(v.meals.left, { mood: G.NUM.casino.foodCap.mood - 4, san: G.NUM.casino.foodCap.san - 1 }); assert.strictEqual(JS(G.casPassView(w, null)).meals.left, null, "沒給日期不亂猜");
+  assert.strictEqual(v.st.hands, 12);
+  assert.ok(v.bond.some(b => b.id === "clerk" && b.kind === "giver" && b.name) && v.bond.some(b => b.id === "c-math" && b.kind === "traveler"));
+  assert.ok(v.ach.list.some(a => a.id === "npc:clerk:helper" && a.kind === "npc" && a.desc)); assert.ok(v.props.list.some(p => p.id === "chicken" && p.n === 2));
+  w.wkLog["2026-W44"] = { got: 3, done: day, claimed: null }; assert.strictEqual(JS(G.casPassView(w, null, day)).wkPast[0].week, "2026-W44");
+  void snap;
+});
 T("空錢包：全空、欄位都在", G => {
   const w = W(G), v = G.casPassView(w, null);
   assert.strictEqual(v.chips, w.chips);
-  assert.deepStrictEqual(JS(v.ach), { have: 0, total: G.CAS_ACH.length, extra: 0, wk: 0, recent: [], title: null });
-  assert.deepStrictEqual(JS(v.props), { have: 0, copies: 0, hung: 0, hungMax: G.NUM.casino.hangMax, recent: [] });
+  assert.deepStrictEqual(JS(v.ach), { have: 0, total: G.CAS_ACH.length, extra: 0, wk: 0, recent: [], title: null, list: [] });
+  assert.deepStrictEqual(JS(v.props), { have: 0, copies: 0, hung: 0, hungMax: G.NUM.casino.hangMax, recent: [], list: [] });
   assert.strictEqual(v.swap.used, 0); assert.strictEqual(v.swap.rows.length, G.NUM.casino.exchange.length);
   assert.ok(v.swap.rows.every(r => r.left === r.perWeek));
   assert.strictEqual(v.wk, null);
@@ -53,7 +69,7 @@ T("本週收藏：這週的才有；拿到幾件／共幾件、集滿、領了",
   const w = W(G);
   const def = { label: "2026-W46", items: [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "x", extra: true }] };
   w.wk = G.casWkNew("2026-W46"); w.wk.got = { a: 1, x: 1 };
-  assert.deepStrictEqual(JS(G.casPassView(w, def).wk), { week: "2026-W46", got: 1, total: 3, done: false, claimed: false });
+  const wk = JS(G.casPassView(w, def).wk); assert.strictEqual(wk.items.length, 3); assert.strictEqual(wk.items.filter(x => x.got).length, 1); delete wk.items; assert.deepStrictEqual(wk, { week: "2026-W46", got: 1, total: 3, done: false, claimed: false });
   w.wk.week = "2026-W45"; assert.strictEqual(G.casPassView(w, def).wk, null, "別週的進度不算這週");
 });
 T("只讀：看完錢包一個字沒變", G => {

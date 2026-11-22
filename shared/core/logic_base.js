@@ -160,7 +160,7 @@ export function catalogNo(pick) {
   if (i >= 0) return "No. " + pad(i + 1);
   // 限定的選項（簽到拿的帽子，決定 0030）另外編號「限 No.」，不改到原本「異 No.」「禁 No.」的號碼
   // 主題展、每週特展的（決定 0035）再另外編「展 No.」，不改到簽到那幾頂的號碼
-  const lateOf = (c, v) => { const l = (optOf(c, v) || {}).limited; return l === "show" || l === "week"; };
+  const lateOf = (c, v) => { const l = (optOf(c, v) || {}).limited; return l === "show" || l === "week" || l === "foe"; };
   const lim = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).limited), late = CORE_CATS.some(c => lateOf(c, pick[c]));
   // 調色盤的顏色（11-10）再另外編「調 No.」：別的編號算的時候都不把調色的顏色算進去，舊的號碼才不會變
   const mixed = CORE_CATS.some(c => (optOf(c, pick[c]) || {}).mix), noMix = (c, n) => !optOf(c, n).mix;
@@ -227,7 +227,7 @@ export function unlockState(P, cat, name) {
   if (o.mix) return { state: "mutant", text: "要在融合室用兩種顏色調出來（融合室有調色盤）" };
   if (o.gift) { const l = typeof CLIENT_LINES !== "undefined" && CLIENT_LINES[o.gift]; return { state: "gift", text: `跟${l ? l.name : "委託人"}的委託走完才會收到` }; }
   if (o.key) return { state: "key", text: o.key === "bg" ? "地下收藏庫 B3 的鑰匙打開" : "地下收藏庫 B5 的鑰匙打開" };
-  if (o.limited) return { state: "limited", text: o.limited === "shop" ? "兌換所限定：用週章換" : o.limited === "week" ? "每週特展限定：那週的特展到金才拿得到" : o.limited === "show" ? "主題展限定：辦到金才拿得到" : "簽到限定：每週全簽到拿得到" }; // 決定 0030、0032、0035
+  if (o.limited) return { state: "limited", text: o.limited === "shop" ? "兌換所限定：用週章換" : o.limited === "week" ? "每週特展限定：那週的特展到金才拿得到" : o.limited === "show" ? "主題展限定：辦到金才拿得到" : o.limited === "foe" ? "地下守門限定：第壹次打贏才拿得到" : "簽到限定：每週全簽到拿得到" }; // 決定 0030、0032、0035
   if (!reqMet(P, o.req)) return { state: "req", text: reqText(o.req) };
   const cost = unlockCost(P);
   return { state: "buy", cost, ok: P.insp >= cost, text: `${cost} 靈感解鎖` };

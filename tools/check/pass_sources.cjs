@@ -7,6 +7,7 @@ const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
 const SCAN_FILES = ["shared/core/config.js", "shared/core/systems_text.js", "shared/casino/text.js"];
 const SCAN_RE = /_ITEMS$|^UPGRADES$|^RECIPES$|^BADGES$|^SKILLS$|^CAS_|^CELLAR_|^TRIAL_|^UNDERSTAND_/;
+const passOf = r => (!r.pass ? [] : Array.isArray(r.pass) ? r.pass : [r.pass]); // 壹列可以對到好幾個欄位（pass 寫陣列）
 const getPath = (o, p) => p.split(".").reduce((x, k) => (x && typeof x === "object" ? x[k] : undefined), o);
 
 function check(d) {
@@ -29,14 +30,17 @@ function check(d) {
   // ① passView 真的有這個欄位、畫面真的讀它
   const gapOf = (row, kind) => gaps.filter(g => g.row === row && g.kind === kind);
   for (const r of rows) {
-    const nGap = gapOf(r.id, "none").length, uGap = gapOf(r.id, "unused").length;
-    if (!r.pass) { if (!nGap) bad.push(`登記表 ${r.id}（${r.name}）館友證沒有顯示：要補，或在 pass_gaps.json 的 gaps 加 kind "none" 一條（寫原因）`); continue; }
+    const nGap = gapOf(r.id, "none").length, uGaps = gapOf(r.id, "unused");
+    if (!passOf(r).length) { if (!nGap) bad.push(`登記表 ${r.id}（${r.name}）館友證沒有顯示：要補，或在 pass_gaps.json 的 gaps 加 kind "none" 一條（寫原因）`); continue; }
     if (nGap) bad.push(`pass_gaps.json 的 ${r.id}（none）已經有顯示了（登記表 pass 有值），把那條刪掉`);
-    const out = r.pass.src === "casino" ? d.casOut : d.passOut;
-    if (getPath(out, r.pass.key) === undefined) { bad.push(`登記表 ${r.id}：${r.pass.src} 的輸出裡沒有欄位 ${r.pass.key}（改名或拿掉了？）`); continue; }
-    const seg = r.pass.key.split(".").pop(), read = new RegExp(["\\."+seg+"\\b", "\\b"+seg+"\\s*[:,}]", '"'+seg+'"'].join("|")).test(d.uiSrc);
-    if (!read && !uGap) bad.push(`登記表 ${r.id}：${r.pass.key} 算了但畫面（web/src/panels/ui_pass.js）沒讀：畫出來，或在 gaps 加 kind "unused" 一條`);
-    if (read && uGap) bad.push(`pass_gaps.json 的 ${r.id}（unused）畫面已經讀 ${r.pass.key} 了，把那條刪掉`);
+    for (const ps of passOf(r)) {
+      const out = ps.src === "casino" ? d.casOut : d.passOut;
+      if (getPath(out, ps.key) === undefined) { bad.push(`登記表 ${r.id}：${ps.src} 的輸出裡沒有欄位 ${ps.key}（改名或拿掉了？）`); continue; }
+      const seg = ps.key.split(".").pop(), read = new RegExp(["\\."+seg+"\\b", "\\b"+seg+"\\s*[:,}]", '"'+seg+'"'].join("|")).test(d.uiSrc), uGap = uGaps.find(g => g.key === ps.key);
+      if (!read && !uGap) bad.push(`登記表 ${r.id}：${ps.key} 算了但畫面（web/src/panels/ui_pass.js）沒讀：畫出來，或在 gaps 加 kind "unused"（寫 key）一條`);
+      if (read && uGap) bad.push(`pass_gaps.json 的 ${r.id}（unused ${ps.key}）畫面已經讀了，把那條刪掉`);
+    }
+    for (const g of uGaps) if (!passOf(r).some(ps => ps.key === g.key)) bad.push(`pass_gaps.json 的 ${r.id}（unused）指到的欄位 ${g.key} 登記表沒有`);
   }
   for (const g of gaps) {
     if (!rows.some(r => r.id === g.row)) bad.push(`pass_gaps.json 的 gaps：找不到登記表的列「${g.row}」`);
@@ -45,7 +49,7 @@ function check(d) {
   }
   // ② 輸出的每個欄位都要有對應的列
   for (const [src, out] of [["pass", d.passOut], ["casino", d.casOut]]) for (const k of Object.keys(out)) {
-    const hit = rows.some(r => r.pass && r.pass.src === src && (r.pass.key === k || r.pass.key.startsWith(k + ".")));
+    const hit = rows.some(r => passOf(r).some(p => p.src === src && (p.key === k || p.key.startsWith(k + "."))));
     if (!hit && !(src === "pass" && hidePass[k]) && !(src === "casino" && hidePass["casino." + k])) bad.push(`${src === "pass" ? "passView" : "casPassView"} 回了欄位 ${k}，登記表沒有對應的列（來源拿掉了？或加壹列／加進白名單 hidePass）`);
   }
   for (const k of Object.keys(hidePass)) { const [s, f] = k.startsWith("casino.") ? ["casino", k.slice(7)] : ["pass", k]; if (!Object.keys(s === "pass" ? d.passOut : d.casOut).includes(f)) bad.push(`白名單 hidePass 的 ${k} 輸出裡已經沒有，刪掉`); }
@@ -66,7 +70,7 @@ function gather() {
   return {
     rows: JSON.parse(JSON.stringify(G.PASS_SOURCES)), gaps: JSON.parse(rd("tools/check/pass_gaps.json")),
     saveKeys: { P: Object.keys(G.newProfile("challenge")), W: Object.keys(G.casWalletNew()) },
-    lazy: ["P.casinoTitle"], // 沒有存檔預設值、第壹次戴稱號才長出來的欄位（登記表有寫，不算拿掉）
+    lazy: ["P.casinoTitle", "W.food"], // 沒有存檔預設值、第壹次戴稱號才長出來的欄位（登記表有寫，不算拿掉）
      listExports, passOut: JSON.parse(JSON.stringify(G.passView(P, { signins: 3 }))), casOut: JSON.parse(JSON.stringify(G.casPassView(W, null))), uiSrc, pubKeys: Object.keys(G.cleanHallView({ open: true })),
   };
 }

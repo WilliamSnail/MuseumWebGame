@@ -19,11 +19,12 @@
 //    fightAfter(f)                       打完：倒下的佩佩哪幾隻真的受傷
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
-import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "../core/config.js";
+import { CELLAR_FOES, LIMITED_FX, LIMITED_ITEMS, MOOD_BEATS, NUM } from "../core/config.js";
 import { FOE_TEXT } from "../core/systems_text.js";
 import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr, todayStr } from "../core/logic_base.js";
 import { memberPower } from "../core/systems.js";
 import { skillOf } from "../core/legacy.js";
+import { grantLimited } from "../social/signin.js";
 
 // 帽子、姿勢變成一場一次的招式（原本是自動觸發的能力）
 export const FIGHT_MOVES = {
@@ -211,6 +212,11 @@ export function foeLog(P, id, day = todayStr()) {
   if (!P.cellar.foes || typeof P.cellar.foes !== "object" || Array.isArray(P.cellar.foes)) P.cellar.foes = {};
   if (P.cellar.foes[id]) return false;
   P.cellar.foes[id] = day; return true;
+}
+// 守門第壹次打贏掉的限定品（只好看）：回傳 grantLimited 的結果（沒有、或這隻怪不掉東西回 null）
+export function foeDrop(P, id, day = todayStr()) {
+  const it = LIMITED_ITEMS.find(x => x.from === "foe" && x.foe === id);
+  return it ? grantLimited(P, it.id, day) : null;
 }
 export const fightWinInsp = (players, rank = 1) => NUM.fight.coopInsp * Math.max(0, Math.floor(players) - 1) + NUM.fight.rankInsp[fightRankOf(rank) - 1];
 // 逃跑成功的機率（百分比）
