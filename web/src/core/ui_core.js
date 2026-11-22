@@ -308,7 +308,7 @@ export function buildNav() {
     h("p", { class: "md-h" }, "設定"),
     h("div", { class: "md-group" }, roomItem(["settings", ROOM_NAMES.settings])));
   document.querySelectorAll("body > #navDrawer").forEach(e => e.remove()); // 手機上搬到外層的舊選單（toggleMenu）：重畫時拿掉，不然有兩個 #navDrawer
-  nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, h("button", { class: "icon-btn nav-pass-btn", type: "button", title: "館友證", "aria-label": "館友證", onClick: () => openPanel("pass") }, icon("user")), sound, menu), drawer); // 手機頂欄多壹顆館友證（11-21：手機大廳底下的館友證條為了不用捲被收起來了，入口放這裡）
+  nav.replaceChildren(brand, links, h("div", { class: "nav-tools" }, sound, menu), drawer); // 手機的館友證：11-21 放頂欄小圖示看不出來，11-22 改放底部分頁列（tabBar 的 tb-pass）
   if (!UI.menuWired) {
     UI.menuWired = true;
     // 點選單外面就關起來
@@ -527,7 +527,7 @@ export function openStatus(on) {
   st.classList.toggle("open", on);
   if (t) { t.setAttribute("aria-expanded", String(on)); t.setAttribute("aria-label", on ? "收起狀態列" : "展開狀態列，看全部的數字"); $(".stt-t", t).textContent = on ? "收起" : "更多"; }
 }
-// 手機的底部分頁列（翊文 11-12：「整個手機的介面可能都要再想壹下」，選 A）：大廳、今天、兌換所、賭場、選單五顆大按鈕。
+// 手機的底部分頁列（翊文 11-12：「整個手機的介面可能都要再想壹下」，選 A）：大廳、今天、館友證、賭場、選單五顆大按鈕（11-22 兌換所換成館友證）。
 // 放在狀態列裡面最下面壹排，狀態列的高度（--status-real）就把它算進去，各頁底下的留白、跳出的框不用另外改。
 // 只有 html.new-lobby-on 而且寬度 760 以下看得到（css/lobby2.css）；回滾跟著 NUM.ui.newLobby
 export const phoneTabs = () => typeof matchMedia !== "undefined" && document.documentElement.classList.contains("new-lobby-on") && matchMedia("(max-width: 760px)").matches;
@@ -537,7 +537,7 @@ function tabBar() {
   return h("nav", { class: "tabbar", "aria-label": "常用" },
     tb("tb-room", "lobby", "大廳", () => navTo("lobby"), { dataset: { room: "lobby" } }),
     tb("tb-today", "calendar", "任務", () => openPanel("today")),
-    tb("tb-shop", "shop", "兌換所", () => openPanel("shop")),
+    tb("tb-pass", "user", "館友證", () => openPanel("pass")), // 11-22 翊文：「把兌換所換成館友證」（手機原本只有頂欄小圖示，看不出來）。兌換所還在選單裡、各廳的「前往」
     tb("tb-room", "dice", "賭場", () => navTo("casino"), { dataset: { room: "casino" } }),
     tb("tb-menu", "menu", "選單", () => toggleMenu(), { "aria-controls": "navDrawer", "aria-expanded": "false" }));
 }
@@ -661,8 +661,6 @@ export function drawShopTab() {
   a.hidden = !P || isFree(P);
   a.classList.toggle("has-n", n > 0);
   const b = $(".ns-n", a); if (b) b.textContent = n > 99 ? "99+" : String(n);
-  setTab(".tb-shop", n, "兌換所");
-  const ts = $(".tb-shop"); if (ts) ts.hidden = !P || isFree(P);
   a.title = n ? `兌換所：你有 ${n} 枚週章` : "兌換所";
 }
 // 籌碼變多：響錢袋聲（11-15 翊文：「這個可以在玩家其他地方獲得籌碼的音效」，Pixabay「Coin and Money Bag 2」）。
