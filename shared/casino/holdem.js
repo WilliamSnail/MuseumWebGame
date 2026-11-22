@@ -21,7 +21,7 @@ import { casHouseMove, casCount, casHouseWorldIn, casHouseWorldOut } from "./boo
 import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { hdNpcPlan } from "./holdem_npc.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasInvitable, npcCasLine, npcCasRoll, npcCasRoom, npcCasStyle } from "./npc.js";
-import { npcRelBonus } from "../social/npcrel.js";
+import { npcRelBonus, npcRelTogether, npcRelTravelerAdd } from "../social/npcrel.js";
 import { casShuffle } from "./core.js";
 import { holdemName, holdemScore } from "./holdem_eval.js";
 
@@ -295,6 +295,7 @@ function hdSettle(t, ctx, now, how) {
       });
     }
   }
+  npcRelTogether(ctx, dealt); // 旅客的好感度：壹起打滿幾手
   if (rake > 0) { casHouseMove(ctx.house, "bj", rake); casCount(ctx.house, "holdemRake", rake); }
   casCount(ctx.house, "holdemHands");
   const delta = {}; dealt.forEach(s => { delta[s.uid] = s.stack - s.s0; });
@@ -387,6 +388,7 @@ export function casHNpcInvite(t, ctx, uid, npcId, now) {
   hs.npcCas.at[npcId].until = until;
   const seat = { uid: "npc:" + npcId, nick: n.name, stack: got, put: 0, bet: 0, cap: 0, st: "idle", acted: false, hole: [], s0: 0, timeouts: 0, npc: { id: npcId, style: npcCasStyle(n), host: uid, until, said: 0, say: null } };
   t.seats[seat.uid] = seat; t.order.push(seat.uid);
+  if (w) npcRelTravelerAdd(w, npcId, ctx.day, "invite", list); // 邀請被答應：旅客好感度 +1
   const said = line("accept"); hdTalk(t, seat, said);
   if (t.phase === "wait") casHStart(t, ctx, now);
   return { ok: true, accepted: true, name: n.name, line: said, until, brought: casHSeats(t).filter(x => x.npc && x.npc.host === uid).length };

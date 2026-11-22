@@ -61,4 +61,18 @@ T("熟識度不給錢：加滿壹位到 Lv3 前後，錢包的籌碼、靈感都
   for (let d = 1; d <= 30; d++) { const day = "2026-12-" + String(d).padStart(2, "0"); for (const s of ["chat", "chat", "chat", "visit", "task", "ask"]) G.npcRelAdd(w, "yuga", day, s, { title: "牌桌的熟面孔" }); }
   assert.strictEqual(w.npcRel.yuga.lv, 3); assert.strictEqual(w.chips, chips); assert.strictEqual(JSON.stringify(w.led), led, "沒有憑空多、沒有消失");
 });
+T("旅客好感度的來源：id 要在旅客清單、劇情角色（trace）和交代人不算、稱號只在 bond.title 有寫時發（Lv3、只發壹次）、不給籌碼", G => {
+  const w = wal(G), chips = w.chips, list = [{ id: "c-a", name: "甲", kind: "client" }, { id: "c-b", name: "乙", kind: "client", bond: { title: "乙的牌友" } }, { id: "t-x", name: "影", kind: "trace" }];
+  assert.ok(!G.npcRelTravelerAdd(w, "c-zz", D1, "table", list).ok, "不在清單"); assert.ok(!G.npcRelTravelerAdd(w, "t-x", D1, "table", list).ok, "劇情角色不算"); assert.ok(!G.npcRelTravelerAdd(w, "clerk", D1, "table", list).ok);
+  assert.strictEqual(G.npcRelTravelerAdd(w, "c-a", D1, "invite", list).gained, 1); assert.strictEqual(G.npcRelTravelerAdd(w, "c-a", D1, "invite", list).gained, 0, "壹天壹次");
+  for (let d = 1; d <= 12; d++) { const day = "2026-12-" + String(d).padStart(2, "0"); for (const sr of ["table", "cellar", "invite"]) { G.npcRelTravelerAdd(w, "c-a", day, sr, list); G.npcRelTravelerAdd(w, "c-b", day, sr, list); } }
+  assert.strictEqual(w.npcRel["c-a"].lv, 3); assert.ok(!w.ach || !w.ach["npc:c-a"], "沒寫 bond.title 不發稱號");
+  assert.strictEqual(w.ach["npc:c-b"].name, "乙的牌友"); assert.strictEqual(Object.keys(w.ach).filter(k => k.startsWith("npc:")).length, 1); assert.strictEqual(w.chips, chips);
+});
+T("同桌打牌：壹起打滿 5 手才給 +2（只給壹次）、只有館友有錢包才算、旅客座位不會被加", G => {
+  const w = wal(G), ctx = { wallets: { H: w }, day: D1, npcList: [{ id: "c-a", name: "甲", kind: "client" }] }, seats = [{ uid: "H" }, { uid: "npc:c-a", npc: { id: "c-a" } }, { uid: "Z" }];
+  for (let i = 0; i < 4; i++) G.npcRelTogether(ctx, seats); assert.ok(!w.npcRel["c-a"] || w.npcRel["c-a"].xp === 0, "4 手還不算");
+  G.npcRelTogether(ctx, seats); assert.strictEqual(w.npcRel["c-a"].xp, 2); for (let i = 0; i < 5; i++) G.npcRelTogether(ctx, seats); assert.strictEqual(w.npcRel["c-a"].xp, 2, "不重複");
+  assert.strictEqual(seats[0].tw["c-a"], 10); assert.ok(!seats[1].tw && !seats[2].tw, "沒錢包的人不記");
+});
 console.log(fail ? `熟識度和好感度：${fail} 項沒過` : `熟識度和好感度：${pass} 項都過`); process.exit(fail ? 1 : 0);

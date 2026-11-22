@@ -59,6 +59,24 @@ export function npcRelBonus(w, id) {
   const lv = npcRelView(w, id, null).lv;
   return NUM.npcRel.bondP[lv] || 0;
 }
+// 旅客的好感度（伺服器呼叫；來源「table 同桌打牌／cellar 壹起下地下／invite 邀請被答應／gift 送禮」，數字在 NUM.npcRel.traveler.src）。list＝旅客清單（NPC_LIST）：id 要在裡面、不是劇情角色（kind trace）。稱號名字用 content/npc 的 bond.title（字串，或 { name }），沒寫就不發稱號
+export function npcRelTravelerAdd(w, id, day, src, list, opts = {}) {
+  const n = Array.isArray(list) && list.find(x => x && x.id === id);
+  if (!w || !n || n.kind === "trace" || npcRelKind(id) !== "traveler") return { ok: false, why: "no_npc", gained: 0 };
+  const bt = n.bond && n.bond.title, name = typeof bt === "string" ? bt : bt && typeof bt.name === "string" ? bt.name : null;
+  return npcRelAdd(w, id, day, src, Object.assign({ title: name || undefined }, opts));
+}
+// 壹手（局）打完：同桌的旅客和館友各記壹手，滿 NUM.npcRel.togetherHands 手時給那位館友 +「同桌打牌」。seats：這手有打的座位（旅客有 .npc.id；館友有 .uid）；座位上的 tw 是「跟某位旅客壹起打了幾手」
+export function npcRelTogether(ctx, seats) {
+  const need = NUM.npcRel.togetherHands;
+  for (const n of seats.filter(s => s.npc && s.npc.id)) for (const s of seats.filter(x => !x.npc)) {
+    const w = ctx.wallets && ctx.wallets[s.uid];
+    if (!w) continue;
+    const m = s.tw && typeof s.tw === "object" ? s.tw : (s.tw = {});
+    m[n.npc.id] = (m[n.npc.id] | 0) + 1;
+    if (m[n.npc.id] === need) npcRelTravelerAdd(w, n.npc.id, ctx.day, "table", ctx.npcList);
+  }
+}
 // 加熟識度。src：來源名（NUM.npcRel.<kind>.src 裡的）；xp：這次要加的（不給＝用來源的預設）；title：到 Lv3 要發的稱號名字、titleId：稱號 id（呼叫的人從伺服器的資料表查，title 沒給就不發稱號）
 // 回傳 { ok, gained, xp, lv, up（升級了）, title（這次新發的稱號成就 id 或 null）, why（沒加的原因） }
 export function npcRelAdd(w, id, day, src, opts = {}) {
