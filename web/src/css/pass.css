@@ -204,3 +204,70 @@
 .ps-hall-n { opacity: .7; }
 .ps-hall-i.empty { opacity: .55; }
 .ps-hall-i .ps-empty { display: flex; align-items: center; justify-content: center; background: rgba(120,100,60,.12); }
+
+/* ===== 館友證套素材（11-22，翊文選方案 C「金邊木牌＋銅牌標題」）：只在 .nb-pass 底下覆寫，不動 story.css 的共用規則 =====
+   區塊＝kit/wood-gold 四角四邊＋kit/parch；標題＝ui2-title 銅牌（卡在框的上緣）；證件＝ui2-side；隨身物格＝ui2-slot-1。
+   第壹塊的 margin-top（14px）要留著：銅牌往框外突出 14px，.sp-body（捲動容器）只有 4px 的上內距，少了就會被切掉。 */
+.nb-pass .ps-body { gap: 8px; }
+.nb-pass .sp-sec { position: relative; margin-top: 14px; padding: 18px 8px 6px; border: 14px solid transparent; border-radius: 0; box-shadow: 0 3px 8px rgba(0,0,0,.45);
+  background:
+    url(/kit/wood-gold-corner-tl.webp) left top / 26px 25px no-repeat border-box, url(/kit/wood-gold-corner-tr.webp) right top / 26px 25px no-repeat border-box,
+    url(/kit/wood-gold-corner-bl.webp) left bottom / 26px 25px no-repeat border-box, url(/kit/wood-gold-corner-br.webp) right bottom / 26px 25px no-repeat border-box,
+    url(/kit/wood-gold-edge-h.webp) left 26px top / auto 14px repeat-x border-box, url(/kit/wood-gold-edge-h.webp) left 26px bottom / auto 14px repeat-x border-box,
+    url(/kit/wood-gold-edge-v.webp) left top 26px / 14px auto repeat-y border-box, url(/kit/wood-gold-edge-v.webp) right top 26px / 14px auto repeat-y border-box,
+    url(/kit/parch.webp) 0 0 / 256px padding-box; }
+.nb-pass .sp-sec h3 { position: absolute; left: 14px; top: -28px; z-index: 1; box-sizing: border-box; max-width: calc(100% - 28px); margin: 0; padding: 0 4px; height: 28px; line-height: 24px; font-size: .9375rem; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #2A1608; text-shadow: 0 1px 0 rgba(255,235,170,.6); border: 0 solid transparent; border-width: 0 20px; border-image: url(/ui2/ui2-title.webp) 0 70 fill / 0 20px stretch; }
+.nb-pass .sp-sec > .ps-bar { margin: 4px 0 10px; }
+.nb-pass .ps-stat { background: rgba(255,250,232,.55); border-radius: 3px; }
+.nb-pass .ps-bar { height: 12px; border-radius: 3px; background: #3A2415; box-shadow: 0 0 0 2px #7A5A1E; }
+.nb-pass .ps-chip, .nb-pass .ps-badge.got { background: rgba(60,38,22,.88); color: #F3E0B0; box-shadow: inset 0 0 0 1px #C9A04A; }
+.nb-pass .ps-chip.hung { background: #7A5A1E; }
+/* 證件封面：ui2-side 九宮格；頂條「PEPE MUSEUM／館友證」改放在框裡面、用銅牌當底，不被角飾壓到 */
+.nb-pass .ps-card { overflow: visible; border: 20px solid transparent; border-image: url(/ui2/ui2-side.webp) 46 fill / 20px stretch; border-radius: 0; background: none; box-shadow: none; }
+.nb-pass .ps-card-top { margin: -4px 0 4px; padding: 5px 2px; white-space: nowrap; font-size: .75rem; letter-spacing: .1em; color: #2A1608; text-shadow: 0 1px 0 rgba(255,235,170,.6); font-weight: 700; background: none; border: 0 solid transparent; border-width: 0 20px; border-image: url(/ui2/ui2-title.webp) 0 70 fill / 0 20px stretch; }
+.nb-pass .ps-card-main { padding: 6px 0 8px; }
+.nb-pass .ps-card-foot { padding: 6px 0 8px; }
+.nb-pass .ps-photo { padding: 9px; box-sizing: border-box; border-radius: 0; background: url(/ui2/ui2-slot-1.webp) center / 100% 100% no-repeat; box-shadow: none; color: #EED79C; }
+.nb-pass .ps-photo > svg { border-radius: 4px; background: rgba(255,250,232,.9); }
+.nb-pass .ps-gear { padding: 6px 0 8px; background: none; }
+.nb-pass .ps-slot { border: 0; border-radius: 0; background: url(/ui2/ui2-slot-1.webp) center / 100% 100% no-repeat; color: #EED79C; }
+.nb-pass .ps-slot .gear-art, .nb-pass .ps-slot .gear-art svg { width: 28px; height: 28px; }
+.nb-pass .ps-slot.empty { background: url(/ui2/ui2-slot-1.webp) center / 100% 100% no-repeat; color: #EED79C; }
+.nb-pass .ps-slot:hover, .nb-pass .ps-slot:focus-visible { box-shadow: none; filter: brightness(1.25); outline: 2px solid rgba(238,215,156,.8); outline-offset: -2px; }
+.nb-pass .ps-card-act { padding: 0 0 4px; }
+/* 前往按鈕（goBtn、拿去用）：要看得出能按——金底、粗框、下緣有厚度，按下去往下壓；手機至少 44px 高 */
+.nb-pass .sp-go .btn, .nb-pass .ps-items .btn { min-height: 40px; padding: 0 16px; border: 2px solid #7A5A1E; border-radius: 6px; font-weight: 700; color: #2A1608; background: linear-gradient(180deg, #FFF1C8, #E8C877); box-shadow: 0 2px 0 #6E5020; }
+.nb-pass .sp-go .btn:hover, .nb-pass .ps-items .btn:hover { background: linear-gradient(180deg, #FFF7DC, #F2D88C); }
+.nb-pass .sp-go .btn:active, .nb-pass .ps-items .btn:active { transform: translateY(2px); box-shadow: 0 0 0 #6E5020; background: #E0BC62; }
+/* 總覽的小卡：右下角「看全部 →」，按下去往下壓 */
+.nb-pass .ps-tile { position: relative; padding-bottom: 36px; border: 2px solid #7A5A1E; box-shadow: inset 0 0 0 1px rgba(255,235,170,.7), 0 2px 0 #6E5020; }
+.nb-pass .ps-tile:hover, .nb-pass .ps-tile:focus-visible { box-shadow: inset 0 0 0 1px rgba(255,235,170,.7), 0 2px 0 #6E5020, 0 0 0 2px #E0B75A; }
+.nb-pass .ps-tile:active { transform: translateY(2px); box-shadow: inset 0 0 0 1px rgba(255,235,170,.7); background: #EBD9A8; }
+.nb-pass .ps-tile .ps-go { position: absolute; right: 8px; bottom: 8px; display: inline-flex; padding: 3px 11px; border-radius: 999px; font-size: .8125rem; font-weight: 700; color: #FFF3C4; background: #7A5A1E; }
+.nb-pass .ps-av-btn { border-width: 2px; }
+@media (max-width: 760px) {
+  .nb-pass .sp-sec { padding: 16px 4px 4px; }
+  .nb-pass .ps-card { border-width: 14px; border-image-width: 14px; }
+  .nb-pass .ps-side .ps-card-main { padding: 0; }
+  .nb-pass .ps-side .ps-gear-n { display: none; } /* 換頭像鈕放在這壹排的右邊（≥44px），「0／2」手機上不寫 */
+  .nb-pass .ps-side .ps-gear { padding: 2px 0 2px; }
+  .nb-pass .ps-side .ps-photo { padding: 6px; }
+  .nb-pass .ps-side .ps-slot { width: 44px; height: 44px; }
+  .nb-pass .ps-side .ps-slot .gear-art, .nb-pass .ps-side .ps-slot .gear-art svg { width: 26px; height: 26px; }
+  .nb-pass .nb-x { min-width: 44px; min-height: 44px; }
+  .nb-pass .ps-side .ps-card-act { top: auto; bottom: 0; right: 0; }
+  .nb-pass .ps-side .ps-id h3 { padding-right: 0; }
+  .nb-pass .ps-side .ps-card-act .btn.ps-av-btn { min-height: 44px; height: 44px; min-width: 44px; width: 44px; }
+  .nb-pass .sp-go .btn, .nb-pass .ps-items .btn, .nb-pass .sp-sec .btn { min-height: 44px; }
+  /* 頁籤：像壹顆顆按鈕，選中的亮金底、往下壓；6 個放不下，可以左右滑（scroll-snap），右邊露出半顆 */
+  .nb-pass .nb-tabs { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding: 2px 2px 5px; }
+  .nb-pass .nb-tabs::-webkit-scrollbar { display: none; }
+  .nb-pass .nb-tab { flex: 0 0 22%; scroll-snap-align: center; min-height: 44px; padding: 0 2px; border: 2px solid #7A5A1E; border-image: none; border-radius: 8px; font-size: .8125rem; color: #3A2410;
+    background: linear-gradient(180deg, #E9D9AE, #CDB27C); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 3px 0 #4A2E1A; }
+  .nb-pass .nb-tab.on { border-image: none; border-color: #FFF0B8; color: #2A1608; background: linear-gradient(180deg, #FFE08A, #E3B13F); transform: translateY(3px);
+    box-shadow: inset 0 2px 5px rgba(90,60,10,.55), 0 0 0 2px #E0B75A; }
+  .nb-pass .nb-tab:not(.on):active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 #4A2E1A; }
+  .nb-pass .ps-go { display: inline-flex; }
+  .nb-pass .ps-tile { padding: 8px 10px 34px; }
+}
