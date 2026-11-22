@@ -1549,5 +1549,17 @@ T("物品說明能帶來歷：LIMITED_TEXT 的 origin 會出現在 limitedInfo�
   const keep = T0.origin; T0.origin = "測試的來歷。"; assert.strictEqual(G.limitedInfo("foe-f1g").origin, "測試的來歷。"); delete T0.origin; assert.strictEqual(G.limitedInfo("foe-f1g").origin, ""); if (keep) T0.origin = keep;
 });
 
+T("讀懂的理智檢定：條目有 san 才擲、只在第壹次讀懂、成功不扣、失敗最多 understandSanMax、有旁白；自由模式和沒寫 san 的不擲", () => {
+  const e = G.UNDERSTAND_TEXT.find(x => x.id === "strange"); e.san = "0/1D4"; e.successAside = "(沒事)"; e.failAside = "(手在抖)";
+  let P = fresh(); P.sanity = 50; G.setRng(seq(d100(10)));
+  let u = G.understandLine(P, "strange"); assert.ok(u.isNew && u.san && u.san.success && u.san.loss === 0 && u.san.aside === "(沒事)"); assert.strictEqual(P.sanity, 50);
+  P = fresh(); P.sanity = 50; G.setRng(seq(d100(90), dN(4, 4)));
+  u = G.understandLine(P, "strange"); assert.ok(!u.san.success && u.san.loss === 4 && u.san.aside === "(手在抖)"); assert.strictEqual(P.sanity, 46);
+  G.setRng(seq(d100(90), dN(4, 4))); const again = G.understandLine(P, "strange"); assert.ok(!again.isNew && again.san === null && P.sanity === 46, "第二次讀不再擲");
+  e.san = "0/1D20"; P = fresh(); P.sanity = 50; G.setRng(seq(d100(90), dN(20, 20))); u = G.understandLine(P, "strange"); assert.strictEqual(u.san.loss, G.NUM.story.understandSanMax, "失敗最多 6 點");
+  P = fresh("free"); G.setRng(seq(d100(90), 0.99)); assert.strictEqual(G.understandLine(P, "strange").san, null, "自由模式不擲");
+  delete e.san; delete e.successAside; delete e.failAside; P = fresh(); P.sanity = 50; assert.strictEqual(G.understandLine(P, "strange").san, null, "沒寫 san 不擲"); G.setRng(null);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

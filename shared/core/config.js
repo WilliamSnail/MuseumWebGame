@@ -318,6 +318,7 @@ export const NUM = {
   // 第 4 版（11-09）：每週劇情（規則 shared/story/core.js，規劃 docs/規劃/每週劇情.md）。週包的獎勵加起來不能超過下面的預算（tools/content/week_check.cjs 檢查）
   story: {
     bookInsp: 2,            // 第一次讀完一本這週的書給幾靈感（只有那一週給；補讀以前的不給）
+    understandSanMax: 6,    // 《看懂的事》讀懂時的理智檢定（UNDERSTAND_TEXT 的 san）：成功不扣，失敗最多扣這麼多（延伸世界，11-22）
     understandInsp: 3,      // 線索集齊、「你看懂了」壹件給幾靈感（壹件只給壹次；不扣理智、不發作，shared/story/clues.js）
     showInsp: [1, 2],       // 今日特展第一次看一幅：不用理智檢定的／要理智檢定的
     showInspDay: 5,         // 今日特展一天最多拿幾靈感

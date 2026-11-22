@@ -269,6 +269,13 @@ function checkOutcome(o, p) {
   if (!isStr(b.spine) || len(b.spine) > 6) err("BOOK4.spine 1-6 chars");
   if (!Array.isArray(b.lines) || b.lines.length !== 3) err("BOOK4.lines must be 3");
   if (!paren(b.successAside) || !paren(b.failAside)) err("BOOK4 asides must be (…)");
+  // 《看懂的事》讀懂時的理智檢定（11-22）：san 寫「成功／失敗」兩段，成功壹定是 0（成功不扣），失敗最多 CFG.story 的 understandSanMax；要有括號的成功、失敗旁白
+  for (const u of C.UNDERSTAND_TEXT) if (u.san !== undefined) {
+    const parts = String(u.san).split("/").map(x => x.trim()), fail = parts[1] || "", mx = /^([0-9]+)D([0-9]+)$/.exec(fail);
+    if (parts.length !== 2 || parts[0] !== "0" || !(mx || /^[0-9]+$/.test(fail))) err("UNDERSTAND_TEXT " + u.id + ".san 要寫「0/失敗的擲法」（成功不扣），例：0/1D4");
+    else { const max = mx ? +mx[1] * +mx[2] : +fail; if (max > 6) err("UNDERSTAND_TEXT " + u.id + ".san 失敗最多扣 6 點（現在最多 " + max + "）"); }
+    if (!paren(u.successAside) || !paren(u.failAside)) err("UNDERSTAND_TEXT " + u.id + " 的 successAside、failAside 要有，而且寫成 (…)");
+  } else if (u.successAside !== undefined || u.failAside !== undefined) err("UNDERSTAND_TEXT " + u.id + " 有旁白但沒有 san");
   const e = C.ENDING_CELLAR;
   keysExactly(e, ["title", "lines"], "ENDING_CELLAR");
   if (e.title !== "地下館長") err("ENDING_CELLAR.title must be 地下館長");

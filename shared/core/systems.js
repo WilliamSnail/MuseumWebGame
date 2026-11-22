@@ -599,7 +599,13 @@ export function understandLine(P, src) {
   const isNew = !P.understood[id];
   if (isNew) P.understood[id] = todayStr();
   if (P.visit) { P.visit.understood = P.visit.understood || {}; P.visit.understood[id] = true; } // 這一位看懂了幾件（歷任參觀者牆，11-08）
-  return { id, from: e.from, text: e.text, isNew, n: count(), total };
+  // 讀懂那一刻的理智檢定（11-22，延伸世界「知道了就回不去」）：條目有 san 才擲，只在第壹次讀懂；成功不扣，失敗最多扣 NUM.story.understandSanMax，成功／失敗各有旁白（successAside、failAside）
+  let san = null;
+  if (isNew && e.san && !isFree(P)) {
+    const sc = sanCheck(P, e.san, "understand:" + id), loss = sc.success ? 0 : Math.min(sc.loss, NUM.story.understandSanMax), ev = applySan(P, loss, "understand:" + id);
+    san = { success: sc.success, loss: ev.loss, aside: (sc.success ? e.successAside : e.failAside) || "", zero: ev.zero, roll: sc.roll.total };
+  }
+  return { id, from: e.from, text: e.text, isNew, n: count(), total, san };
 }
 
 // ---------- 手作坊顯示「這個選項在地下收藏庫的效果」（翊文 11-14：「地下的帽子、姿勢等效果，在手作坊就可以顯示相對應數值」）----------

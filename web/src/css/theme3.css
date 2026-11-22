@@ -1114,3 +1114,4 @@ button.st-item { cursor: pointer; }
 .rg-modal blockquote { margin: 4px 0 0 0; padding-left: 10px; border-left: 3px solid #B38A3E; color: #3A2A20; }
 .rg-modal .rg-say { font-size: 1.1rem; }
 @media (max-width: 760px) { .rg-h { flex-basis: 100%; } .rg-card { min-width: 0; flex: 1 1 0; padding: 6px 8px; } .rg-card .rg-name { font-size: .875rem; } .rg-dots i { width: 7px; height: 7px; } .rg-strip { gap: 6px; } }
+.uk-aside { display: block; margin-top: 4px; font-size: .875rem; font-style: italic; color: #6B5586; }
