@@ -165,5 +165,12 @@ T("W46 第 1 天（真的內容）：招領單讀完拿到 c-small-hand-note；�
   assert.strictEqual(G.UNDERSTAND_TEXT.length, 26);
 });
 
+T("《看懂的事》每條都有 layer（物、人、規矩、你），四類都有（11-22）；understandList 讀得到", G => {
+  G.UNDERSTAND_TEXT.forEach(x => assert.ok(G.UNDERSTAND_LAYERS.includes(x.layer), x.id + " 的 layer「" + x.layer + "」不對"));
+  G.UNDERSTAND_LAYERS.forEach(l => assert.ok(G.UNDERSTAND_TEXT.some(x => x.layer === l), "沒有 " + l + " 這一類"));
+  const P = player(G, "2026-11-09"); P.understood.book1 = "2026-11-09";
+  assert.strictEqual(G.understandList(P).find(x => x.id === "book1").layer, "規矩");
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
