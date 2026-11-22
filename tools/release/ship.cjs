@@ -17,6 +17,8 @@
 //   --say-now "文字"                大更新要馬上發才用（tools/content/say.cjs）：例如新廳開放、全館活動開跑、壞掉修好要通知大家
 //   --say-now-file 檔案             同上，文字放檔案。**多行壹定用這個**：Windows 上 npm run 經過 cmd.exe，參數裡的換行後面會被切掉（11-17 Discord 只發出標題）
 //   --after-deploy "指令"           部署成功後再跑壹條指令（每日排程用：--after-deploy "gh workflow run discord-scheduled.yml --ref main"）
+//   --brief           只印 ✓／✗ 那幾行（結果和失敗原因）：背景跑、只想看結論時用，不用再接 grep（11-22）
+//   --doc 檔.json     先用這個 spec 寫維護日誌（npm run doc:new）再上線；一個指令做完「寫日誌＋上線」（11-22）。檔案不存在就停，免得沒日誌被 CI 擋
 //   --no-notice       不是玩家看得到的改動，不用提醒公告（改了 web／shared／functions 卻沒加 content/notices/ 的公告檔會印警告，不擋）
 // AI 的名字從環境變數 SHIP_AI 來（預設 Claude Opus 5.5）。可以跑很久，放背景跑。
 const fs = require("fs"), path = require("path");
@@ -33,8 +35,8 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith("--")) throw new Error(`看不懂「${a}」`);
     const k = a.slice(2);
-    if (["skip-local", "no-merge", "no-notice", "full"].includes(k)) { out.flags.add(k); continue; }
-    if (!["title", "body", "body-file", "message", "say", "say-file", "say-now", "say-now-file", "after-deploy"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
+    if (["skip-local", "no-merge", "no-notice", "full", "brief"].includes(k)) { out.flags.add(k); continue; }
+    if (!["title", "body", "body-file", "message", "say", "say-file", "say-now", "say-now-file", "after-deploy", "doc"].includes(k)) throw new Error(`沒有 --${k} 這個選項`);
     if (argv[i + 1] === undefined) throw new Error(`--${k} 後面要有內容`);
     out[k] = argv[++i];
   }
@@ -116,9 +118,16 @@ function main() {
   const sayText = o["say-now-file"] ? fs.readFileSync(o["say-now-file"], "utf8") : o["say-now"];
   if (o["say-now"] && process.platform === "win32" && process.env.npm_lifecycle_event) console.log("（提醒：用 npm run 在 Windows 上傳 --say-now，文字裡的換行後面會被切掉；多行請改 --say-now-file 檔案）");
   if (sayText) require("../content/say.cjs").checkText(sayText); // 先檢查，免得上線完才發現發不出去
+  if (o.flags.has("brief")) { const raw = console.log; console.log = (...a) => { const t = a.join(" "); if (/^s*(✓|✗)/.test(t) || /失敗|FAIL|錯誤/.test(t)) raw(...a); }; }
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
 
+  if (o.doc) { // 先寫日誌（spec 要存在；doc:new 會自己算時間、版本、索引）
+    if (!fs.existsSync(o.doc)) throw new Error(`--doc 的檔案不存在：${o.doc}`);
+    const d = spawnSync(process.execPath, [path.join(ROOT, "tools", "content", "new_doc.cjs"), o.doc], { cwd: ROOT, encoding: "utf8" });
+    if (d.status !== 0) throw new Error("寫日誌失敗：" + failText((d.stdout || "") + (d.stderr || "")));
+    console.log("✓ 日誌：" + (d.stdout || "").trim().split("\n").slice(-1)[0]);
+  }
   // 搬家前留下的舊檔（不在 git 裡的舊位置）先清掉，免得 git add -A 把它們帶進 commit、或讓測試和資料夾規矩誤紅（11-20，tools/dev/clean_stale.cjs）
   const stale = require("../dev/clean_stale.cjs").clean();
   if (stale.length) console.log(`清掉搬家前留下的舊檔：${stale.join("、")}`);
