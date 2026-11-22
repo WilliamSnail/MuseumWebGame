@@ -5,7 +5,7 @@
 //  搬自原本的 logic.js（主要）、systems.js（續集、工坊升級判斷、地下室樓層、週次）、legacy.js（特質）、shop.js（裝備存檔）。
 //  這次只搬位置，函式內容沒有改；web 和 functions 還是從 logic.js 拿（logic.js 會再匯出這裡的東西）。
 // ================================================================
-import { BADGES, EXHIBITS, FLAWS, GEAR_ITEMS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, NUM, PEPE_PARTS, PERKS, PILLOW_PARTS, RARITY_TABLE, RENAMED } from "./config.js";
+import { BADGES, EXHIBITS, FLAWS, GEAR_ITEMS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, LIMITED_ITEMS, NUM, PEPE_PARTS, PERKS, PILLOW_PARTS, RARITY_TABLE, RENAMED } from "./config.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, STORY_CHAPTERS } from "./content.js";
 import { BOOK_SEQUELS, CELLAR, CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./systems_text.js";
 import { holidayExhibitById, holidaysOn } from "../story/holidays.js";
@@ -769,7 +769,26 @@ export function canStartCellar(P, floor, keys) {
 
 // ---------- 禁書的續集（翊文 11-08） ----------
 export const bookSequels = () => (typeof BOOK_SEQUELS !== "undefined" ? BOOK_SEQUELS : []);
+// 通用條件（11-22，延伸世界的新禁書用）：need 可以寫壹條字串，或壹串字串（全部都要成立）。字串的樣子：
+//   from:2026-12-07     這天（含）以後才亮（對齊每週揭露）
+//   clue:線索id         手上有那條線索（P.clues，shared/story/clues.js）
+//   understood:條目id   讀懂了那件事（P.understood）
+//   item:限定品id       有那件掉落（LIMITED_ITEMS：守門第壹次打贏掉的）
+// 不認得的寫法、壞掉的日期＝不成立（寧可不亮，不要亂亮）。附頁（s.appendix.need）也用同壹套：有那件才看得到最後壹頁
+export function needOk(P, need) {
+  if (Array.isArray(need)) return need.length > 0 && need.every(n => needOk(P, n));
+  const m = typeof need === "string" ? /^(from|clue|understood|item):(.+)$/.exec(need) : null;
+  if (!m) return false;
+  const [, k, v] = m;
+  if (k === "from") return /^d{4}-d{2}-d{2}$/.test(v) && todayStr() >= v;
+  if (k === "clue") return !!(P.clues && typeof P.clues === "object" && P.clues[v]);
+  if (k === "understood") return !!(P.understood && P.understood[v]);
+  const it = LIMITED_ITEMS.find(x => x.id === v);
+  return !!it && (isFree(P) || !!(P.limited && P.limited.got && P.limited.got[v]) || (it.kind === "part" && isUnlocked(P, it.cat, it.opt)));
+}
+export const sequelAppendixOpen = (P, s) => !!(s && s.appendix && needOk(P, s.appendix.need));
 export function sequelCondition(P, s) {
+  if (Array.isArray(s.need) || (typeof s.need === "string" && s.need.includes(":"))) return needOk(P, s.need);
   if (s.need === "gopnikSquat") return Object.keys(P.pepes).some(k => { const p = fromKey(k); return !!p && p.心情 === "俄國8+9" && p.姿勢 === "斯拉夫蹲"; });
   if (s.need === "hallGopnik") return P.hall.length > 0 && P.hall.every(it => it && it.kind === "pepe" && (fromKey(it.key) || {}).心情 === "俄國8+9");
   if (s.need === "cellarEnd") return !!(P.cellar && P.cellar.best >= 5);
