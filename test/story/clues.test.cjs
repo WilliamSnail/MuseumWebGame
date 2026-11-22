@@ -172,5 +172,22 @@ T("《看懂的事》每條都有 layer（物、人、規矩、你），四類�
   assert.strictEqual(G.understandList(P).find(x => x.id === "book1").layer, "規矩");
 });
 
+T("每日檔的讀懂可以帶理智檢定：成功不扣、失敗最多 understandSanMax、只擲壹次、旁白跟著事件出來（11-22）", G => {
+  const mk = () => { const L = lib(); L.weeks["2026-W47"].days[2].understand[0].san = "0/1D4"; L.weeks["2026-W47"].days[2].understand[0].successAside = "(你把手背到身後)"; L.weeks["2026-W47"].days[2].understand[0].failAside = "(你的手指也在動)"; return L; };
+  for (let k = 0; k < 20; k++) {
+    G.setRng(() => (k % 2 ? 0.01 : 0.99)); // 低＝擲得過、高＝失敗；固定骰子
+    const L = mk(), P = player(G); read(G, P, "1a"); found(G, P); viewed(G, P); read(G, P, "2a");
+    const san = P.sanity, ev = G.clueSync(P, L, TODAY);
+    assert.strictEqual(ev.length, 1); assert.ok(ev[0].san, "有 san 的條目要帶檢定結果");
+    assert.ok(ev[0].san.aside === "(你把手背到身後)" || ev[0].san.aside === "(你的手指也在動)");
+    assert.strictEqual(ev[0].san.success, ev[0].san.aside === "(你把手背到身後)");
+    if (ev[0].san.success) assert.strictEqual(P.sanity, san, "成功不扣");
+    else assert.ok(san - P.sanity >= 0 && san - P.sanity <= G.NUM.story.understandSanMax, "失敗最多扣上限");
+    assert.strictEqual(G.clueSync(P, L, TODAY).length, 0, "只擲壹次");
+  }
+  const L2 = lib(), P2 = player(G); read(G, P2, "1a"); found(G, P2); viewed(G, P2); read(G, P2, "2a");
+  assert.strictEqual(G.clueSync(P2, L2, TODAY)[0].san, null, "沒寫 san 的條目不擲");
+});
+
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

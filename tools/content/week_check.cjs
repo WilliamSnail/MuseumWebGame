@@ -626,6 +626,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         text(uw + ".from", u.from, LIMITS.understandFrom);
         if (!G.UNDERSTAND_LAYERS.includes(u.layer)) E(uw + ".layer", `layer 要寫，而且是 ${G.UNDERSTAND_LAYERS.join("、")} 之壹（11-22：《看懂的事》分類）`);
         ["who", "where"].forEach(k => { if (u[k] !== undefined && (typeof u[k] !== "string" || !u[k].trim() || u[k].length > 20)) E(uw + "." + k, `${k} 要是 1～20 字（可以不寫）`); });
+        { const sp = understandSanProblem(u, G); if (sp) E(uw + ".san", sp); }
         text(uw + ".hint", u.hint, LIMITS.understandHint); // 必填：拿到壹部分線索時給的提示（不破梗）
         if (!Array.isArray(u.need) || !u.need.length || u.need.length > LIMITS.understandNeedMax) { E(uw + ".need", `要是線索 id 的陣列，1～${LIMITS.understandNeedMax} 條`); return; }
         if (new Set(u.need).size !== u.need.length) E(uw + ".need", "有重複的線索");
@@ -742,6 +743,17 @@ const BEAT_WHERE = ["書", "房間", "今日特展", "每週任務旁白", "公�
 const BEAT_CLUE_WHERE = ["書", "房間", "今日特展"]; // 遊戲只記這三種的 clue
 const BEAT_FACE = ["長相", "臉", "眼睛", "模樣", "樣子", "走進來", "現身", "露面"]; // 劇情角色不露臉
 const BEAT_FIRST = "2026-W47"; // 第壹個揭露週；之後每隔壹週
+// 每日檔 understand 的理智檢定（11-22）：san 寫「0/失敗的擲法」（成功不扣），失敗最多 NUM.story.understandSanMax；有 san 就要有括號的成功、失敗旁白；沒 san 就不能有旁白。回傳問題的文字或 null
+function understandSanProblem(u, G) {
+  const paren = t => typeof t === "string" && /^\(.+\)$/.test(t.trim()) && t.length <= 40;
+  if (u.san === undefined) return u.successAside !== undefined || u.failAside !== undefined ? "有旁白但沒有 san" : null;
+  const parts = String(u.san).split("/").map(x => x.trim()), fail = parts[1] || "", mx = /^([0-9]+)D([0-9]+)$/.exec(fail);
+  if (parts.length !== 2 || parts[0] !== "0" || !(mx || /^[0-9]+$/.test(fail))) return "san 要寫「0/失敗的擲法」（成功不扣），例：0/1D4";
+  const max = mx ? +mx[1] * +mx[2] : +fail, lim = G.NUM.story.understandSanMax;
+  if (max > lim) return `失敗最多扣 ${lim} 點（現在最多 ${max}）`;
+  if (!paren(u.successAside) || !paren(u.failAside)) return "successAside、failAside 要有，寫成 (…)，40 字內";
+  return null;
+}
 function checkRevealBeats(L, G, E, W, lw, nowWeek) {
   const R = L.revealBeats;
   if (!isObj(R) || !Array.isArray(R.list)) { E(lw, "revealBeats 要是 { list: [...] }"); return; }
