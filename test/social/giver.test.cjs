@@ -6,7 +6,7 @@ const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pa
 const D1 = "2026-11-21", D2 = "2026-11-22";
 const mk = G => ({ w: G.casWalletFix(G.casWalletNew(), D1), P: null, house: G.casHouseFix(G.casHouseNew(), D1).house, day: D1, uid: "U1", saveDirty: false });
 const run = (G, ctx, d, acts) => G.giverRun(ctx, d, acts);
-const lvl = (ctx, id, xp) => { ctx.w.npcRel[id] = { xp, lv: xp >= 140 ? 3 : xp >= 50 ? 2 : xp >= 10 ? 1 : 0, day: null, today: { xp: 0 } }; };
+const lvl = (ctx, id, xp) => { ctx.w.npcRel[id] = { xp, lv: xp >= 100 ? 3 : xp >= 40 ? 2 : xp >= 10 ? 1 : 0, day: null, today: { xp: 0 } }; };
 // 挑戰模式的存檔：只放送禮會碰到的欄位
 function withPepes(ctx) { const P = { mode: "challenge", pepes: {}, failed: {}, repaired: {}, hall: [], weekly: null, injured: {}, visitors: [], serial: 0, insp: 7 }; ctx.P = P; return P; }
 const key = (G, o) => { const base = {}; G.CATS.forEach(c => { const o = G.allOpts(c); base[c] = o[o.length - 1]; }); const p = Object.assign(base, o); return G.CATS.map(c => p[c]).join("|"); };
@@ -65,12 +65,12 @@ T("送禮的限制：只有壹隻的完美作品或有名字的擋住、修復�
 });
 T("到 Lv3 發稱號（六位各壹個，id 是 npc:<交代人>:<title.id>，名字和說明用 content 的 title）；稱號進同壹份成就、挑得起來、說明查得到", G => {
   for (const id of Object.keys(G.GIVER_TITLES)) {
-    const ctx = mk(G), t = G.GIVERS[id].title, aid = "npc:" + id + ":" + t.id; lvl(ctx, id, 139); run(G, ctx, { op: "tap", id });
+    const ctx = mk(G), t = G.GIVERS[id].title, aid = "npc:" + id + ":" + t.id; lvl(ctx, id, 99); run(G, ctx, { op: "tap", id });
     assert.strictEqual(ctx.w.ach[aid].name, t.name, id); assert.ok(!ctx.w.ach["npc:" + id], "不再發舊格式"); assert.ok(G.casSetTitle(ctx.w, null, aid).ok);
     const info = G.casAchInfo(ctx.w, aid); assert.ok(info.npc && info.desc === t.desc && info.name === t.name, id); assert.ok(G.casCleanTitle({ id: aid, name: t.name }), "清稱號認得");
     run(G, ctx, { op: "visit", id }); assert.strictEqual(Object.keys(ctx.w.ach).filter(k => k.startsWith("npc:" + id)).length, 1, "只發壹次");
   }
-  const old = mk(G); old.w.ach["npc:clerk"] = { name: "舊稱號", d: D1 }; lvl(old, "clerk", 139); run(G, old, { op: "tap", id: "clerk" });
+  const old = mk(G); old.w.ach["npc:clerk"] = { name: "舊稱號", d: D1 }; lvl(old, "clerk", 99); run(G, old, { op: "tap", id: "clerk" });
   assert.deepStrictEqual(Object.keys(old.w.ach).filter(k => k.startsWith("npc:")), ["npc:clerk"], "舊格式的人不會再領壹個"); assert.strictEqual(G.casAchInfo(old.w, "npc:clerk").desc, "跟這位熟了。");
 });
 T("chat.mention：只提到有檔的另壹位交代人、句子在內容裡（至少 1 句）", G => {

@@ -6,9 +6,9 @@ const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pa
 const D1 = "2026-11-21", D2 = "2026-11-22";
 const wal = G => G.casWalletFix(G.casWalletNew(), D1);
 
-T("熟識度：門檻（交代人 10／50／140、旅客 8／30／70）、只增不減、每個來源壹天有次數上限", G => {
+T("熟識度：門檻（交代人 10／40／100、旅客 8／30／70）、只增不減、每個來源壹天有次數上限", G => {
   const w = wal(G);
-  assert.deepStrictEqual([G.npcRelLv("giver", 9), G.npcRelLv("giver", 10), G.npcRelLv("giver", 50), G.npcRelLv("giver", 140)], [0, 1, 2, 3]);
+  assert.deepStrictEqual([G.npcRelLv("giver", 9), G.npcRelLv("giver", 10), G.npcRelLv("giver", 40), G.npcRelLv("giver", 100)], [0, 1, 2, 3]);
   assert.deepStrictEqual([G.npcRelLv("traveler", 7), G.npcRelLv("traveler", 8), G.npcRelLv("traveler", 30), G.npcRelLv("traveler", 70)], [0, 1, 2, 3]);
   for (let i = 0; i < 6; i++) G.npcRelAdd(w, "clerk", D1, "chat");
   assert.strictEqual(w.npcRel.clerk.xp, 3, "閒聊壹天只算前 3 次（每次 +1）");
@@ -23,15 +23,15 @@ T("每天上限：交代人 12、旅客 8（所有來源加起來）；超過的
   assert.strictEqual(w.npcRel["v-bai"].xp, 8); assert.strictEqual(w.npcRel["v-bai"].lv, 1);
 });
 T("升級回報 up、Lv3 才發稱號（壹次、名字短、進 w.ach 的 npc: 成就）、沒給 title 就不發", G => {
-  const w = wal(G); w.npcRel = { postman: { xp: 138, lv: 2, day: null, today: { xp: 0 } } };
+  const w = wal(G); w.npcRel = { postman: { xp: 98, lv: 2, day: null, today: { xp: 0 } } };
   const none = G.npcRelAdd(w, "postman", D1, "task"); assert.strictEqual(none.lv, 3); assert.ok(none.up); assert.strictEqual(none.title, null, "沒給稱號名字就不發"); assert.ok(!w.ach["npc:postman"]);
-  const w2 = wal(G); w2.npcRel = { postman: { xp: 138, lv: 2, day: null, today: { xp: 0 } } };
+  const w2 = wal(G); w2.npcRel = { postman: { xp: 98, lv: 2, day: null, today: { xp: 0 } } };
   const r = G.npcRelAdd(w2, "postman", D1, "task", { title: "收信人" }); assert.strictEqual(r.title, "npc:postman"); assert.strictEqual(w2.ach["npc:postman"].name, "收信人");
   const again = G.npcRelAdd(w2, "postman", D2, "visit", { title: "收信人" }); assert.strictEqual(again.title, null, "只發壹次");
-  const w3 = wal(G); w3.npcRel = { postman: { xp: 100, lv: 2, day: null, today: { xp: 0 } } }; assert.strictEqual(G.npcRelAdd(w3, "postman", D1, "task", { title: "收信人" }).title, null, "還沒 Lv3");
+  const w3 = wal(G); w3.npcRel = { postman: { xp: 90, lv: 2, day: null, today: { xp: 0 } } }; assert.strictEqual(G.npcRelAdd(w3, "postman", D1, "task", { title: "收信人" }).title, null, "還沒 Lv3");
 });
 T("稱號進現有的稱號系統：casAchInfo 認得 npc: 成就、casCleanTitle 白名單收、亂寫的丟掉、casSetTitle 可以戴、pass 的 title 帶得出來", G => {
-  const w = wal(G); w.npcRel = { clerk: { xp: 139, lv: 2, day: null, today: { xp: 0 } } };
+  const w = wal(G); w.npcRel = { clerk: { xp: 99, lv: 2, day: null, today: { xp: 0 } } };
   G.npcRelAdd(w, "clerk", D1, "task", { title: "大夜班的幫手" });
   const info = G.casAchInfo(w, "npc:clerk"); assert.ok(info && info.name === "大夜班的幫手" && !info.old);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(G.casCleanTitle({ id: "npc:clerk", name: "大夜班的幫手" }))), { id: "npc:clerk", name: "大夜班的幫手" });
