@@ -84,7 +84,7 @@ export function openPass(o = {}) {
   // 每個區塊壹行摘要＋「前往」。tab：點了換到冊子的哪壹頁
   const tile = (id, title, big, line, tabId) => {
     const el = h("button", { type: "button", class: "ps-tile", onClick: () => { tab = tabId; draw(); snd("flip"); } },
-      h("b", { class: "ps-tile-t" }, title, h("span", { class: "ps-go", "aria-hidden": "true" }, "前往 →")), h("span", { class: "ps-tile-n" }, big), line ? h("small", null, line) : null);
+      h("b", { class: "ps-tile-t" }, title, h("span", { class: "ps-go", "aria-hidden": "true" }, "看全部 →")), h("span", { class: "ps-tile-n" }, big), line ? h("small", null, line) : null);
     return tipOn(el, PASS_TIPS[id]);
   };
   const casOff = v => v.free || !UI.net || !NET.loggedIn; // 自由模式、沒登入：賭場在伺服器，看不到
@@ -345,6 +345,7 @@ export function openPass(o = {}) {
       h("aside", { class: "ps-side", "aria-label": "館友證" }, certCard(v), h("div", { class: "ps-side-more" }, recordsSec(v), accountSec())),
       h("div", { class: "ps-right" }, tabs, h("div", { class: "sp-body ps-body ps-pane-" + tab }, PANES[tab](v)))));
     const body = m.surface.querySelector(".ps-body"); if (body) body.scrollTop = keepY;
+    const on = tabs.querySelector(".nb-tab.on"); if (on && tabs.scrollWidth > tabs.clientWidth) tabs.scrollLeft = on.offsetLeft - (tabs.clientWidth - on.offsetWidth) / 2; // 手機頁籤可以左右滑：選中的自動捲到中間
     if (focusGear) { focusGear = false; const e = body && body.querySelector(".pv-seats, .shp-list, .pv-gear"); if (e) (e.closest(".sp-sec") || e).scrollIntoView({ block: "start" }); } // 從封面的隨身物點進來：直接捲到裝備那段
   }
   draw();
