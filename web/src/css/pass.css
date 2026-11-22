@@ -173,3 +173,13 @@
 .nb-pass .pv-seat small { color: #5A4630; }
 .nb-pass .pv-seat i { color: #6E5020; }
 .nb-pass .pv-seat.on { background: #E3C57D !important; border-color: #9C7428; box-shadow: inset 0 0 0 1px #9C7428; }
+
+/* 工坊升級（11-22，參觀者頁）：每項壹行，右邊寫狀態 */
+.pv-up { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pv-up li { display: flex; align-items: center; gap: 10px; }
+.pv-up li > .ic { flex: 0 0 auto; width: 22px; height: 22px; color: #9C7428; }
+.pv-up li.got > .ic { color: #3E6A30; }
+.pv-up li > span:nth-child(2) { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pv-up small { color: var(--parch-sub, #5A4630); line-height: 1.4; }
+.pv-up-st { flex: 0 0 auto; font-size: .8125rem; color: #6E5020; text-align: right; font-variant-numeric: tabular-nums; }
+.pv-up li.got .pv-up-st { color: #3E6A30; }

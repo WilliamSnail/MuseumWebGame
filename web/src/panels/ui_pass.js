@@ -14,11 +14,11 @@ import { PASS_TABS, PASS_TIPS, avatarChoices, passAvatar, passView, setPassAvata
 import { signinState } from "../../../shared/social/signin.js";
 import { NET } from "../core/net_firebase.js";
 import { ART } from "../core/art.js";
-import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
+import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, itemTitle, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
 import { tipOn } from "../core/ui_tip.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
-import { whoOf } from "../rooms/ui_screens3.js";
+import { relicItem, retireWords, whoOf } from "../rooms/ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { casePane } from "./ui_story.js";
 import { gearCard } from "./ui_shop.js";
@@ -101,7 +101,7 @@ export function openPass(o = {}) {
   // 現在這位參觀者（翊文 11-10：「把館友證補齊」）：館長室名片上有的這裡都看得到；要改（脫裝備、退休）還是去館長室
   const visitorPane = v => {
     const x = v.visitor;
-    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), ...gearPane(v), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))]; // 還沒選職業也能穿裝備（裝備是博物館的、跟職業無關）
+    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), ...gearPane(v), upgradeSec(v), ...legacySecs(v), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))]; // 還沒選職業也能穿裝備（裝備是博物館的、跟職業無關）
     return [
       sec(null, h("div", { class: "pv-head" },
         h("div", { class: "pv-badge", html: ART.jobBadge(x.job), "aria-hidden": "true" }),
@@ -113,6 +113,7 @@ export function openPass(o = {}) {
       ...gearPane(v),
       x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
         h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
+      upgradeSec(v), ...legacySecs(v),
       h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
   };
 
@@ -136,6 +137,28 @@ export function openPass(o = {}) {
       spare.length ? sec("有的、還沒穿", list(spare)) : null,
       shop.length ? sec(`兌換所還能換　（你有 ${g.stamps} 枚週章）`, list(shop), h("div", { class: "sp-go" }, PANELS.shop ? goBtn("到兌換所看全部", () => PANELS.shop({ tab: "gear" }), "shop:c") : null))
         : sec("兌換所還能換", h("p", { class: "sp-note" }, `全部 ${g.items.length} 件都換齊了。`))];
+  };
+
+  // 工坊升級、遺物、歷任參觀者（11-22）：只讀；要買、要看整面牆去館長室
+  const upgradeSec = v => {
+    const u = v.upgrades;
+    if (!u) return null;
+    return sec(`工坊升級　${u.have}／${u.list.length}`,
+      h("ul", { class: "pv-up" }, u.list.map(x => h("li", { class: x.state === "owned" ? "got" : "" }, icon(x.state === "owned" ? "check" : "hammer"),
+        h("span", null, h("b", null, x.name), h("small", null, x.desc)),
+        h("span", { class: "pv-up-st" }, x.state === "owned" ? (x.date || "已有") : x.state === "req" ? x.text : `${x.cost} 靈感${x.ok ? "" : `（還差 ${x.cost - u.insp}）`}`)))),
+      h("p", { class: "sp-note" }, `你現在有 ${u.insp} 靈感。升級在館長室買。`),
+      h("div", { class: "sp-go" }, goBtn("館長室的升級", () => go("office", { tab: "upgrades" }), "plus")));
+  };
+  const legacySecs = v => {
+    const L = v.relics;
+    if (!L || (!L.relics.length && !L.history.length)) return [];
+    const wall = h("div", { class: "sp-go" }, goBtn("歷任參觀者牆", () => go("office", { tab: "history" }), "hourglass"));
+    return [
+      L.relics.length ? sec(`遺物　${L.relics.length} 件`, h("ul", { class: "pv-gear" }, L.relics.map(r => { const it = relicItem(r); return h("li", null, icon("medal"), h("span", null, h("b", null, it ? itemTitle(it) : "？"), h("small", null, `${whoOf(r.n, r.name)} 留下的${r.d ? `・${r.d}` : ""}`))); })), wall) : null,
+      L.history.length ? sec(`歷任參觀者　${L.history.length} 位`, h("ul", { class: "pv-gear" }, L.history.slice(0, 5).map(x => h("li", null, icon("hourglass"), h("span", null, h("b", null, `${whoOf(x.n, x.name)}${x.jobName ? `・${x.jobName}` : ""}`),
+        h("small", null, [x.made != null ? `做了 ${x.made} 隻` : null, x.deepest ? `走到 B${x.deepest}` : null, x.understood ? `看懂 ${x.understood} 件` : null, retireWords(x.endedBy)].filter(Boolean).join("・") || "沒有留下紀錄"))))),
+        L.history.length > 5 ? h("p", { class: "sp-note" }, `只列最近 5 位，全部 ${L.history.length} 位在館長室的牆上。`) : null, wall) : null];
   };
 
   const pepePane = v => {

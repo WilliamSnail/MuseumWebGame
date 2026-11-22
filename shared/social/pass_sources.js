@@ -17,8 +17,8 @@ export const PASS_SOURCES = [
   { id: "visitor", name: "現在這位參觀者", from: null, save: ["P.mode", "P.visitor", "P.vname", "P.job", "P.perk", "P.flaw", "P.mood", "P.sanity", "P.myth", "P.insp", "P.stats", "P.quirks", "P.created", "P.activeSec", "P.done"], pass: { src: "pass", key: "visitor.stats" }, use: "goto", pub: [] },
   { id: "skills", name: "技能", from: { file: "shared/core/config.js", list: "SKILLS" }, save: ["P.skills", "P.skillTicks"], pass: { src: "pass", key: "visitor.skills" }, use: "none", pub: [] },
   { id: "gear", name: "兌換所裝備", from: { file: "shared/core/config.js", list: "GEAR_ITEMS" }, save: ["P.gear", "P.shop"], pass: { src: "pass", key: "gear" }, use: "wear", pub: [] }, // 11-22：封面隨身物＋參觀者頁三段（passGear），可以直接穿脫、買
-  { id: "upgrades", name: "工坊升級", from: { file: "shared/core/config.js", list: "UPGRADES" }, save: ["P.upgrades"], pass: null, use: "goto", pub: [] },
-  { id: "relics", name: "遺物和歷任參觀者", from: null, save: ["P.legacy", "P.relics", "P.history"], pass: null, use: "none", pub: [] },
+  { id: "upgrades", name: "工坊升級", from: { file: "shared/core/config.js", list: "UPGRADES" }, save: ["P.upgrades"], pass: { src: "pass", key: "upgrades" }, use: "goto", pub: [] },
+  { id: "relics", name: "遺物和歷任參觀者", from: null, save: ["P.legacy", "P.relics", "P.history"], pass: { src: "pass", key: "relics" }, use: "none", pub: [] },
   { id: "visitors", name: "三位參觀者的座位", from: null, save: ["P.visitors", "P.visitorCount", "P.slot", "P.vid", "P.oddSeen"], pass: null, use: "goto", pub: [] },
   // ---- 收藏（佩佩、書） ----
   { id: "pepes", name: "做過的佩佩", from: null, save: ["P.pepes", "P.unlocked", "P.unlockCount", "P.avatar"], pass: { src: "pass", key: "pepe.recent" }, use: "use", pub: [] },

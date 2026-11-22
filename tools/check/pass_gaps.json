@@ -43,20 +43,6 @@
  },
  "gaps": [
   {
-   "row": "upgrades",
-   "kind": "none",
-   "id": "R4",
-   "reason": "工坊升級 7 項：已買／未買／還差多少（館長室買，證上只看）",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "relics",
-   "kind": "none",
-   "id": "R5",
-   "reason": "遺物和歷任參觀者牆",
-   "since": "2026-11-22"
-  },
-  {
    "row": "visitors",
    "kind": "none",
    "id": "R6",

@@ -18,8 +18,8 @@ T("來源 → 館友證：config／text 多了清單沒登記要擋；白名單 
   const e = fresh(); e.gaps.hideLists.GEAR_ITEMS = "x"; assert.ok(has(check(e), /hideLists 的 GEAR_ITEMS 已經登記/));
 });
 T("來源 → 館友證：登記了館友證沒顯示的要擋（要有 none 白名單）；補完了白名單還留著也要擋", () => {
-  const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.row !== "upgrades"); assert.ok(has(check(d), /upgrades.*館友證沒有顯示/));
-  const e = fresh(); e.rows.find(r => r.id === "upgrades").pass = { src: "pass", key: "visitor.stats" }; assert.ok(has(check(e), /upgrades（none）已經有顯示/));
+  const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.row !== "visitors"); assert.ok(has(check(d), /visitors.*館友證沒有顯示/));
+  const e = fresh(); e.rows.find(r => r.id === "visitors").pass = { src: "pass", key: "visitor.stats" }; assert.ok(has(check(e), /visitors（none）已經有顯示/));
 });
 T("來源 → 館友證：passView 算了但畫面沒讀要擋；unused 白名單在畫面讀了以後要擋", () => {
   const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.kind !== "unused"); assert.ok(has(check(d), /souvenirs 算了但畫面/));

@@ -4,12 +4,12 @@
 //  賭場的籌碼、全部的紀念品、賭場成就在伺服器，這裡沒有：畫面自己接（籌碼）或連過去（紀念品、成就）。
 // ================================================================
 
-import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "../core/config.js";
-import { UNDERSTAND_TEXT } from "../core/systems_text.js";
+import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
+import { UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
 import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../core/logic_base.js";
 import { gameDayNo, quirkName } from "../core/logic.js";
 import { jobInfo, jobSkill, skillOf } from "../core/legacy.js";
-import { roomProgress } from "../core/systems.js";
+import { roomProgress, upgradeState } from "../core/systems.js";
 import { traitById } from "../core/logic_base.js";
 import { traitDesc, traitName } from "../core/legacy.js";
 import { gearInfo } from "../core/shop.js";
@@ -71,6 +71,20 @@ export function passGear(P) {
   return { max: NUM.shop.gearWorn, stamps: storyState(P).stamps || 0, worn, items, seats };
 }
 
+// 工坊升級（11-22）：7 項各自的狀態（owned 已買／req 要先買上一級／buy 可以買，有 cost、ok＝靈感夠不夠）。自由模式沒有，回 null。只讀（要買去館長室）。
+export function passUpgrades(P) {
+  if (!P || isFree(P)) return null;
+  const list = UPGRADES.map(u => { const t = UPGRADE_TEXT[u.id] || {}, st = upgradeState(P, u.id); return { id: u.id, name: t.name || u.id, desc: t.desc || "", state: st.state, cost: u.cost, ok: !!st.ok, date: st.state === "owned" ? ((P.upgrades && P.upgrades[u.id]) || "") : "", text: st.text || "" }; });
+  return { list, have: list.filter(x => x.state === "owned").length, insp: P.insp || 0 };
+}
+// 遺物和歷任參觀者（11-22）：relics 是遺物櫃的快照（最新的在前）；history 是歷任牆的壹筆壹筆（最新的在前，只帶畫面要寫的欄位）。自由模式 null。
+export function passLegacy(P) {
+  if (!P || isFree(P)) return null;
+  const relics = asList(P.relics).filter(r => r && typeof r.key === "string").map(r => ({ n: r.n, name: r.name || null, kind: r.kind, key: r.key, perfect: !!r.perfect, title: r.title || null, d: r.d || "" }));
+  const history = asList(P.history).filter(Boolean).map(x => ({ n: x.n, name: x.name || null, job: x.job || null, jobName: x.job ? jobInfo(x.job).name : "", made: x.madeThis != null ? x.madeThis : null, deepest: x.deepest || 0, understood: x.understood || 0, endedBy: x.endedBy || null, d: x.d || "" }));
+  return { relics, history };
+}
+
 // 館友證的頭像（11-13）：玩家自己挑壹隻收藏過的佩佩。存檔 P.avatar 是那隻的 key。
 // 選的那隻不在收藏裡（舊存檔、或之後被拿掉）就當成沒有頭像，回空字串；不會去改存檔。
 export function passAvatar(P) {
@@ -120,6 +134,8 @@ export function passView(P, o = {}) {
     records,
     visitor: passVisitor(P),
     gear: passGear(P),
+    upgrades: passUpgrades(P),
+    relics: passLegacy(P),
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),
