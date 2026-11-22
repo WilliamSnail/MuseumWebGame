@@ -81,7 +81,7 @@
    "row": "hall",
    "kind": "partial",
    "id": "H1",
-   "reason": "展廳：沒有縮圖和排列、評分和主題、收藏的畫、海報進度、累計參觀（H1～H6）",
+   "reason": "展廳：每週特展的本週最高分和歷史（H5）、累計收到的靈感總數（沒有存總數，只能算最近 12 位）、展廳留言和讚（在伺服器）",
    "since": "2026-11-22"
   },
   {
@@ -132,14 +132,6 @@
    "id": "S1",
    "reason": "簽到：哪幾天、連續幾天、補簽、星光絨剩幾份、能不能拿下（S1～S6）",
    "since": "2026-11-22"
-  },
-  {
-   "row": "souvenirs",
-   "kind": "unused",
-   "id": "B3",
-   "reason": "passView.souvenirs 算了但 ui_pass.js 沒讀（畫面用賭場那份）",
-   "since": "2026-11-22",
-   "key": "souvenirs"
   },
   {
    "row": "pepes",
