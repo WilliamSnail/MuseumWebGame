@@ -44,6 +44,16 @@ function checkExtend(L, E, W, lw) {
       } else if (a.status === "退回" && typeof a.note !== "string") E(w, "退回的要在 audit.note 寫原因");
     }
   });
+  asList(X.items).forEach((it, i) => {
+    const w = `${lw}.extend.items[${i}]`;
+    if (!isObj(it)) { E(w, "要是物件"); return; }
+    ["id", "name", "book", "lore", "extraPage"].forEach(k => { if (typeof it[k] !== "string" || !it[k].trim()) E(w, `${k} 要有字`); });
+    if (!weeks[it.week]) E(w, `week「${it.week}」不在 extend.weeks 裡`); else if (!asList(weeks[it.week].drops).includes(it.id)) E(w, `extend.weeks.${it.week}.drops 要列 ${it.id}`);
+    const m = mys.find(y => y && y.id === it.mystery);
+    if (!m) E(w, `mystery「${it.mystery}」不在 mysteries 裡`); else if (it.week > m.closeBy) E(w, `week ${it.week} 晚於 ${it.mystery} 的收線週 ${m.closeBy}`);
+    [it.lore, it.extraPage].forEach(t => { if (typeof t !== "string") return; const x = t.replace(MARKS, ""); for (let q = 0; q + 6 <= x.length; q++) if (grams.has(x.slice(q, q + 6))) { E(w, `破梗：「${x.slice(q, q + 6)}」跟 mysteries 的謎底字句壹樣`); break; } });
+    if (!isObj(it.audit) || it.audit.status !== "審過" || asList(it.audit.checks).length < 3) E(w, "audit 要是審過、checks 至少三項（掉落的來歷每條都要審）");
+  });
   Object.keys(weeks).forEach(k => {
     const x = weeks[k], w = `${lw}.extend.weeks.${k}`;
     if (!/^\d{4}-W\d{2}$/.test(k)) { E(w, "鍵要是週的名字"); return; }
