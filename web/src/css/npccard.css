@@ -41,3 +41,9 @@
 .npk-card .sv-badge.tone-good { --c: #2F7A34; } .npk-card .sv-badge.tone-neutral { --c: #5A5348; }
 .npk-card .sv-badge.tone-warn { --c: #8A5A00; } .npk-card .sv-badge.tone-bad { --c: #A42F20; }
 .npk-card .sv-badge small { color: #5A4A38; }
+
+/* 好感度條（11-22）：沿用 .npk-meter，這裡只調字和顏色 */
+.npk-bond-t { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.npk-bond-t small { opacity: .75; font-size: .75rem; }
+.npk-bondbar > i { background: linear-gradient(90deg, #B8892E, #E6C877); }
+.npk-bond .npk-k { cursor: help; }

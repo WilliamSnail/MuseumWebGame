@@ -112,5 +112,22 @@ const names = Object.keys;
   assert.strictEqual(R.checkDevOnly(["web/src/core/main.js"], () => "import(\"./qa_hooks.js\");").length, 1, "main.js 載入不在 DEV 判斷裡要報");
   assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "var a=1"]]).length, 0);
   assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "window.__qa={}"]]).length, 1, "dist 裡有 window.__qa 要報");
+  // 假伺服器（11-22）：只有 debug_boot.js 能載入 mock_net.js，只有 mock_net.js 能載入假資料；dist 裡有 window.__mock、mock-me 要報
+  const mk = { "web/src/core/debug_boot.js": "const m = (await import(\"./mock_net.js\")).installMock();", "web/src/core/main.js": "import(\"./mock_net.js\");", "web/src/core/mock_net.js": "import FIX from \"./mock/fixtures.json\";", "web/src/rooms/x.js": "import FIX from \"../core/mock/fixtures.json\";" };
+  const bm = R.checkDevOnly(Object.keys(mk), f => mk[f]);
+  assert.strictEqual(bm.length, 2, bm.join(" | "));
+  assert.ok(bm.some(b => b.startsWith("web/src/core/main.js:1")) && bm.some(b => b.startsWith("web/src/rooms/x.js:1")));
+  assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "window.__mock={on:1}"]]).length, 1, "dist 裡有 window.__mock 要報");
+  assert.strictEqual(R.checkDevOnly([], () => "", [["dist/assets/a.js", "id:\"mock-me\""]]).length, 1, "dist 裡有 mock-me 要報");
 }
+T9();
+function T9() {
+  const css = (a, b) => ({ "web/src/css/a.css": ".mini-layer.sp-top { z-index: 9100; }\n" + (b ? ".mini-layer.sp-top ~ .nb-layer { z-index: " + b + "; }" : "") });
+  const run = o => R.checkLayers(Object.keys(o), f => o[f]);
+  assert.deepStrictEqual(run(css(0, 9200)), []);
+  assert.strictEqual(run(css(0, 9000)).length, 1);
+  assert.strictEqual(run(css(0, 0)).length, 1);
+  assert.deepStrictEqual(R.checkLayers(["web/src/css/b.css"], () => ".x{color:red}"), []);
+}
+
 console.log("程式的規矩的測試都過了");

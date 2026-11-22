@@ -6,7 +6,7 @@
 // 要登入才看得到的畫面（銀行、餐車、拍賣…）這裡看不到：會在報告裡列出「跳過」，用 docs/操作/本機模擬器實測.md 的方法另外看。
 // 改畫面的人上線前一定要跑（AGENTS.md）。還沒放進 npm test 和 CI（要瀏覽器、太慢）。
 // 用法：npm run ui:check [-- --screens lobby,today --sizes phone,desktop --url http://localhost:5173 --shots 資料夾 --wait 3500 --js "先在頁面跑的 JS" --json]
-//   --url：已經有 dev server 就給網址（不然自己起一個，port 5499，結束時關掉）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
+//   --url：已經有 dev server 就給網址（會印警告、而且比對它是不是這個資料夾起的，不是就停；不然自己找空的埠起一個，結束時關掉；--port 可指定埠）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
 //   有任何一項問題 exit 1；只有「跳過」不算失敗。
 const fs = require("fs"), path = require("path"), os = require("os");
 const { spawn } = require("../dev/child.cjs");
@@ -34,16 +34,26 @@ const SCREENS = [
   { id: "calendar", name: "簽到日曆" },
   { id: "pass", name: "館友證" },
   { id: "title", name: "標題" },
-  { id: "casino", name: "賭場", needLogin: true },
-  { id: "casino:餐車", name: "餐車", needLogin: true },
-  { id: "bank", name: "銀行", needLogin: true },
+  // 賭場、銀行要登入：用假伺服器（web/src/core/mock_net.js，網址 #畫面 就會裝，不用登入、不用模擬器），畫面是錄下來的伺服器回應
+  { id: "casino", name: "賭場：牌桌（假伺服器）" },
+  { id: "casino:餐車", name: "賭場：餐車（假伺服器）" },
+  { id: "casino:大禮包", name: "賭場：大禮包（假伺服器）" },
+  { id: "casino:我的", name: "賭場：我的（假伺服器）" },
+  { id: "bank:財報", name: "銀行：財報（假伺服器）" },
+  { id: "bank:金流", name: "銀行：金流（假伺服器）" },
+  { id: "bank:股票", name: "銀行：股票（假伺服器）" },
+  { id: "bank:存款", name: "銀行：存款（假伺服器）" },
+  { id: "bank:借款", name: "銀行：借款（假伺服器）" },
+  { id: "bank:館債", name: "銀行：館債（假伺服器）" },
 ];
+// 手機上「最重要」的畫面（翊文 11-22）：能按的東西短邊至少這麼多 px（目標 44，量到 40 以下才報）
+const TAP_SCREENS = /^(today|tasks|pass|calendar)/, TAP_MIN = 40;
 const SIZES = { phone: { w: 375, h: 740, mobile: true, dpr: 2 }, desktop: { w: 2140, h: 1440, mobile: false, dpr: 1 } };
 
 // ---------- 在頁面裡跑的量測（回傳壹個 JSON） ----------
 // 寫成字串是為了丟進 Runtime.evaluate；不能用外面的變數。
 const MEASURE = `(() => {
-  const vw = window.__W, vh = window.__H, /* 手機模擬時內容壹超出，innerWidth 會跟著變大，所以用我們設定的寬 */ out = { over: [], clipped: [], vertical: [], hscroll: false, texts: document.body.innerText.length };
+  const vw = window.__W, vh = window.__H, /* 手機模擬時內容壹超出，innerWidth 會跟著變大，所以用我們設定的寬 */ out = { over: [], clipped: [], vertical: [], small: [], hscroll: false, texts: document.body.innerText.length };
   const cs = e => getComputedStyle(e);
   const shown = e => { const s = cs(e); if (s.display === "none" || s.visibility === "hidden" || +s.opacity === 0) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const hiddenChain = e => { for (let x = e; x && x !== document.body; x = x.parentElement) { const s = cs(x); if (s.display === "none" || s.visibility === "hidden" || +s.opacity === 0) return true; } return false; };
@@ -84,6 +94,15 @@ const MEASURE = `(() => {
     const vwid = Math.max(0, R - L), vhei = Math.max(0, B - T);
     if (vwid < r.width * 0.8 || vhei < r.height * 0.8) out.clipped.push({ el: label(b), w: Math.round(r.width), h: Math.round(r.height), vw: Math.round(vwid), vh: Math.round(vhei) });
   }
+  // 2b. 點擊面積太小（11-22 翊文：「基本上手機版最重要就是任務板跟館友證」；原則在 docs/規則/介面設計原則.md 第七節）：只在手機看任務板、館友證、簽到日曆（window.__TAP），能按的東西短邊要 ≥ __TAP_MIN px
+  const layers = [...document.querySelectorAll(".nb-layer, .mini-layer")], seenTap = new Set(); // 有蓋層（館友證、任務板是視窗）就只量最上面那層，底下的大廳不算；提示小卡（toast）、狀態列不算
+  if (window.__TAP) for (const b of btns) {
+    const r = b.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
+    if (b.closest("[aria-hidden=true], .fx-toast, .status-bar, #status")) continue;
+    if (layers.length && !layers[layers.length - 1].contains(b)) continue;
+    const key = label(b) + Math.round(r.width) + "x" + Math.round(r.height); if (seenTap.has(key)) continue; seenTap.add(key); // 同樣的只報壹次
+    if (Math.min(r.width, r.height) < window.__TAP_MIN) out.small.push({ el: label(b), w: Math.round(r.width), h: Math.round(r.height) });
+  }
   // 3. 直排：按鈕、標題壹行只有 1 個字
   const heads = all.filter(e => e.matches("button, .btn, [role=button], h1, h2, h3, h4, h5, h6, [class*=title], [class*=-head], .nb-title, b") && shown(e) && !hiddenChain(e));
   for (const e of heads) {
@@ -100,17 +119,36 @@ const MEASURE = `(() => {
   return out;
 })()`;
 
+// 關掉第壹次進來跳的說明卡：按每個看得到的「知道了」
+const DISMISS = `[...document.querySelectorAll('button')].filter(b => b.offsetParent && /^知道了$/.test(b.innerText.trim())).forEach(b => b.click())`;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function findBrowser() {
   const c = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"];
   return c.find(x => fs.existsSync(x));
 }
+// 找一個沒人在聽的埠（自己問作業系統要）。11-22 美術統籌踩到：預設固定 5499，別的 session 的 dev server 剛好占著，ui:check 連過去量到別人的畫面
+function freePort() {
+  return new Promise((res, rej) => { const srv = require("net").createServer(); srv.unref(); srv.on("error", rej); srv.listen(0, "127.0.0.1", () => { const p = srv.address().port; srv.close(() => res(p)); }); });
+}
+// 這個網址上的 dev server 是不是從「這個資料夾」起的：把它回的 main.js 原始碼（?raw）跟這個資料夾的檔案比。回 true／false／null（連不上）
+async function serverIsHere(url, root = ROOT) {
+  try {
+    const r = await fetch(url + "/src/core/main.js?raw");
+    if (!r.ok) return false;
+    const m = (await r.text()).match(/export default ("(?:[^"\\]|\\.)*")/);
+    return !!m && JSON.parse(m[1]) === fs.readFileSync(path.join(root, "web", "src", "core", "main.js"), "utf8");
+  } catch (e) { return null; }
+}
 async function startServer(port) {
   const url = `http://localhost:${port}`;
   const vite = path.join(ROOT, "node_modules", "vite", "bin", "vite.js");
   const proc = spawn(process.execPath, [vite, "--port", String(port), "--strictPort", "--host", "localhost"], { cwd: ROOT, stdio: "ignore" });
-  for (let i = 0; i < 150; i++) { await sleep(300); try { const r = await fetch(url + "/"); if (r.ok) return { url, proc }; } catch (e) { /* 還沒好 */ } if (proc.exitCode !== null) break; }
-  proc.kill(); throw new Error(`dev server 起不來（port ${port} 被占用？可以用 --url 接已經開著的）`);
+  for (let i = 0; i < 150; i++) {
+    await sleep(300);
+    if (proc.exitCode !== null) break; // 我們自己起的那個死了（埠被搶走）：不能再連，連到的會是別人的
+    try { const r = await fetch(url + "/"); if (r.ok && proc.exitCode === null) { if ((await serverIsHere(url)) !== true) { proc.kill(); throw new Error(`埠 ${port} 回的不是這個資料夾（${ROOT}）的畫面，停下來，免得量到別人的`); } return { url, proc }; } } catch (e) { if (/回的不是這個資料夾/.test(e.message)) throw e; /* 還沒好 */ }
+  }
+  proc.kill(); throw new Error(`dev server 起不來（port ${port}）`);
 }
 async function openBrowser() {
   const exe = findBrowser();
@@ -139,9 +177,10 @@ async function inspect(B, base, scr, size, opts) {
   await B.send("Page.navigate", { url: `${base}/?uichk=${Date.now()}#${encodeURIComponent(scr.id)}` });
   await sleep(opts.wait);
   await B.evaluate("document.body.classList.add('orient-skip')");
+  if (/^(casino|bank|pass)/.test(scr.id)) { await B.evaluate(DISMISS); await sleep(600); await B.evaluate(DISMISS); await sleep(300); } // 假伺服器的賭場、銀行：第壹次進來的說明卡（「知道了」）先關掉，不然蓋住畫面量不到
   await sleep(400);
   if (opts.js) { await B.evaluate(opts.js); await sleep(500); } // --js：先跑壹段（測試檢查本身用，或先按開某個分頁）
-  await B.evaluate(`window.__W = ${sz.w}; window.__H = ${sz.h};`);
+  await B.evaluate(`window.__W = ${sz.w}; window.__H = ${sz.h}; window.__TAP = ${!!(sz.mobile && TAP_SCREENS.test(scr.id))}; window.__TAP_MIN = ${TAP_MIN};`);
   let m = await B.evaluate(MEASURE);
   for (let t = 0; t < 2 && m.texts < 20; t++) { await sleep(3000); m = await B.evaluate(MEASURE); } // 慢壹點才畫出來的，再等
   const state = await B.evaluate(`({ room: (document.body.dataset && document.body.dataset.room) || "", login: !!document.querySelector(".login, .lg-card, [class*=login]") || /請先登入|需要登入|登入後/.test(document.body.innerText), title: document.title })`);
@@ -155,7 +194,14 @@ async function main() {
   const opts = { js: val("--js", null), wait: +val("--wait", 3500), shots: val("--shots", null) && path.resolve(val("--shots")), json: a.includes("--json") };
   const picked = SCREENS.filter(s => !want || want.includes(s.id));
   let srv = null, base = val("--url", null);
-  if (!base) { srv = await startServer(+val("--port", 5499)); base = srv.url; }
+  if (!base) { srv = await startServer(+val("--port", 0) || await freePort()); base = srv.url; }
+  else { // --url：接別人開的 server，量到的畫面不一定是這個資料夾的（11-22）
+    console.log(`⚠ 用 --url ${base}：不是自己起的 server，量到的可能是別的資料夾、別的分支的畫面。`);
+    const here = await serverIsHere(base);
+    if (here === false) { console.log(`✗ 這個 server 回的 main.js 跟這個資料夾（${ROOT}）的不一樣，是別的資料夾起的。不用 --url（讓它自己起）就好。`); process.exit(1); }
+    if (here === null) { console.log("✗ --url 連不上"); process.exit(1); }
+    console.log("  （main.js 跟這個資料夾的一樣，繼續）");
+  }
   const B = await openBrowser();
   const report = [], skipped = [];
   try {
@@ -182,6 +228,7 @@ function summarize(report) {
     for (const x of r.m.over) out.push({ r, kind: "超出視窗", text: `${x.el}：右邊 ${x.right}、左邊 ${x.left}、寬 ${x.w}${x.fixed ? "（固定／絕對位置）" : ""}` });
     if (r.m.hscroll && !r.m.over.length) out.push({ r, kind: "超出視窗", text: `頁面出現橫向捲軸（內容寬 ${r.m.scrollW}）` });
     for (const x of r.m.clipped) out.push({ r, kind: "按鈕被切", text: `${x.el}：實際 ${x.w}×${x.h}，可見 ${x.vw}×${x.vh}` });
+    for (const x of r.m.small || []) out.push({ r, kind: "按鈕太小", text: `${x.el}：${x.w}×${x.h}（手機上最重要的畫面，短邊要 ≥ ${TAP_MIN}px）` });
     for (const x of r.m.vertical) out.push({ r, kind: "字變直排", text: `${x.el}：${x.chars} 個字排成 ${x.lines} 行` });
   }
   return out;
@@ -199,4 +246,4 @@ function print(report, skipped, problems) {
   console.log(problems.length ? `\n${problems.length} 個問題` : "\n沒有發現問題");
 }
 if (require.main === module) main().catch(e => { console.error("✗", e.message); process.exit(1); });
-module.exports = { SCREENS, SIZES, MEASURE, summarize };
+module.exports = { SCREENS, SIZES, MEASURE, TAP_SCREENS, TAP_MIN, summarize, freePort, serverIsHere, startServer };

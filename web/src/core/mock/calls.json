@@ -1,0 +1,20 @@
+{
+  "_說明": "假伺服器（web/src/core/mock_net.js）有哪些呼叫有假資料。錄製腳本 tools/dev/mock_record.cjs 照這張表對模擬器真的叫一次、把回應存進 fixtures.json。key＝函式:動作[:op]。畫面新叫了一個動作，要在這裡加、重錄；測試（test/web/mock_net.test.cjs）會擋掉漏的。",
+  "calls": [
+    { "fn": "casino", "data": { "act": "open" } },
+    { "fn": "casino", "data": { "act": "peek" } },
+    { "fn": "casino", "data": { "act": "pass" } },
+    { "fn": "casino", "data": { "act": "report" } },
+    { "fn": "casino", "data": { "act": "wk" } },
+    { "fn": "casino", "data": { "act": "hallFeed" } },
+    { "fn": "casino", "data": { "act": "bankHall" } },
+    { "fn": "casino", "data": { "act": "sbInfo" } },
+    { "fn": "casino", "data": { "act": "taskChips" } },
+    { "fn": "casino", "data": { "act": "reviews" } },
+    { "fn": "casino", "data": { "act": "giver", "op": "info" } },
+    { "fn": "casino", "data": { "act": "giver", "op": "log" } },
+    { "fn": "casino", "data": { "act": "npcCard", "id": "yuga" } },
+    { "fn": "casino", "data": { "act": "stock", "op": "seen" } }
+  ],
+  "_不錄": "會動錢或改狀態的動作（deal、hit、stand、buy、bank、stock 買賣、borrow、repay、pack、wheel…）：假伺服器統一回「假伺服器不處理」，畫面照樣看得到按鈕，但按下去什麼都不會變。要測規則請用模擬器登入（docs/操作/本機模擬器實測.md）。"
+}

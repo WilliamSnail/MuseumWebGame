@@ -164,6 +164,8 @@
 .nb-story .btn:not(.primary) { color: var(--parch-ink); background: rgba(255,255,255,.4); border-color: var(--gold-lo); }
 /* 領到東西的小視窗：要蓋在面板上面 */
 .mini-layer.sp-top { z-index: 9100; }
+/* 從小框裡再打開的視窗（「這裡現在 N 人」小框裡的送佩佩、旅客卡…）要蓋在小框上面：不然開了也點不到（11-22 PR 1041 的坑；tools/check/code_rules.cjs 第 9 項會擋） */
+.mini-layer.sp-top ~ .nb-layer { z-index: 9200; }
 .sp-gotlist { display: flex; flex-direction: column; gap: 8px; }
 .sp-got { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--parch-line); border-radius: 6px; background: rgba(255,255,255,.4); }
 .sp-got small { grid-column: 1; color: var(--parch-sub); }
