@@ -141,6 +141,7 @@ const STEPS = [
   ["函式這包的指紋（沒變就不部署函式，deploy.yml，11-16）", ["test/tools/fn_hash.test.cjs"]],
   ["部署前要不要重跑測試（tree 跟 PR 的 CI 測過的完全一樣才跳過，其他照跑；deploy.yml 的 test／prepare 並行、deploy 等兩個，11-16）", ["test/tools/deploy_gate.test.cjs"]],
   ["給 AI 重複用的腳本", ["test/tools/tools.test.cjs"]],
+  ["ui:check 不連到別人的 dev server（11-22）：預設找空的埠、埠被占著就報錯、--url 警告並比對是不是這個資料夾的", ["test/tools/ui_check_server.test.cjs"]],
   ["假伺服器（11-22，讓賭場、銀行不用登入就能看）：畫面叫的動作都有假資料或列為不處理、假資料沒有真人資料、錄製腳本和假伺服器 key 一致", ["test/web/mock_net.test.cjs"]],
   ["ship／gh_lib 等 CI、等部署：用 REST 輪詢 run 的狀態、網路短暫錯誤重試、不再因 gh run watch 中斷誤報失敗（11-16）", ["test/tools/gh_wait.test.cjs"]],
   ["每天新關卡的工具（每種打法每一層都過檢查、少寫預告會說、調難度、今天的點放進地圖，決定 0067）", ["test/tools/new_level.test.cjs"]],
