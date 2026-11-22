@@ -753,7 +753,7 @@ export function applyBodyState() {
   const t = free || s >= 70 ? 0 : (70 - s) / 70;
   root.style.setProperty("--wallNow", mixHex("4A1E26", "1E2832", t));
   root.style.setProperty("--dim", (t * 0.42).toFixed(3));
-  b.classList.toggle("lowsan", !free && s < 40 && s > 0);
+  b.classList.toggle("lowsan", !free && s < 40 && s > 0); ADDONS.sanFx && ADDONS.sanFx(s, free);
   b.classList.toggle("lights-out", !!(P && P.dark && !free) && UI.screen !== "ending");
   b.classList.toggle("bout", !!(P && P.bout));
   for (let i = 0; i < 10; i++) b.classList.toggle("bout-" + i, !!(P && P.bout && P.bout.i === i));

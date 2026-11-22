@@ -50,4 +50,16 @@ T("理智恐怖音樂的門檻：45 以上沒有、<45 low、<=15 edge、歸零 
   assert.deepStrictEqual([d(99), d(45), d(44), d(16), d(15), d(1), d(0), d(null), d("x")], [null, null, "low", "low", "edge", "edge", "edge", null, null]);
   assert.strictEqual(G.sanDread(80, true), "edge");
 });
+T("理智漸進的段數 sanFxTier：55、40、25 三個門檻、越低越高段、燈熄／沒資料／壞資料是 0", G => {
+  const [a, b, c] = G.NUM.sanFx.tiers;
+  assert.ok(a > b && b > c && c > 0, "門檻要由高到低");
+  assert.strictEqual(G.sanFxTier(a, false), 0, "剛好在門檻上還沒開始");
+  assert.strictEqual(G.sanFxTier(a - 1, false), 1); assert.strictEqual(G.sanFxTier(b, false), 1);
+  assert.strictEqual(G.sanFxTier(b - 1, false), 2); assert.strictEqual(G.sanFxTier(c, false), 2);
+  assert.strictEqual(G.sanFxTier(c - 1, false), 3); assert.strictEqual(G.sanFxTier(1, false), 3);
+  assert.strictEqual(G.sanFxTier(0, false), 0, "理智歸零＝燈熄了，這裡不演");
+  assert.strictEqual(G.sanFxTier(10, true), 0); assert.strictEqual(G.sanFxTier(null, false), 0); assert.strictEqual(G.sanFxTier("x", false), 0); assert.strictEqual(G.sanFxTier(undefined, false), 0);
+  assert.strictEqual(G.NUM.sanFx.gap.length, 3); assert.strictEqual(G.NUM.sanFx.cloth.length, 3);
+});
+
 console.log(`房間效果：${pass} 過，${fail} 沒過`); process.exit(fail ? 1 : 0);
