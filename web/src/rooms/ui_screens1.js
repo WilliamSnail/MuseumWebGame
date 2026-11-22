@@ -9,7 +9,7 @@ import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
 import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, understandTarget, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../../shared/core/logic.js";
-import { bookSequels, hasUp, sequelEvents, sequelOpen, unlockSequel } from "../../../shared/core/logic_base.js";
+import { bookSequels, hasUp, sequelAppendixOpen, sequelEvents, sequelOpen, unlockSequel } from "../../../shared/core/logic_base.js";
 import { cellarFloors, cellarFxShort, cellarPartFx, cellarPickFx, fusionLeft, hasTalent, understandList, rereadTry, rereadReady, rerollTens, rerollsLeft, roomProgress, sequelVisible, skillCheck, upgradeState } from "../../../shared/core/systems.js";
 import { jobInfo } from "../../../shared/core/legacy.js";
 import { FRESH_KEY, freshRooms, freshUnder, isFresh } from "../../../shared/core/fresh.js";
@@ -554,9 +554,11 @@ export function openBook(b, reader) {
   }
   bookReader(reader, b.title, b.pages, { onEnd: () => { const g = finishChapter(P, b.id); if (g) { bookGain(reader, `+${g} 靈感`, "good"); snd("coin"); updateStatus(); } persist(); } });
 }
+// 禁書的頁：本文壹頁；書有附頁（b.appendix）就多壹頁，有那件掉落才亮，沒有就灰著（11-22 延伸世界）
+const fbPages = b => [b.lines.join("\n")].concat(b.appendix ? [sequelAppendixOpen(P, b) ? b.appendix.text : { locked: true, text: "最後壹頁黏住了，現在還翻不開。" }] : []);
 export async function openForbidden(b, reader) {
   if (UI.busy) return;
-  if (isFree(P)) { bookReader(reader, b.title, [b.lines.join("\n")]); return; }
+  if (isFree(P)) { bookReader(reader, b.title, fbPages(b)); return; }
   const first = !P.mythFrom[b.id];
   // 翊文 11-08：「禁書看過的再看一次應該不需要再減定san值一次，因為已經看過了」
   // 這位參觀者讀過的（P.mythFrom 記著），再翻開就直接讀，不用再擲理智。換下壹位參觀者時 mythFrom 會清掉：新的人第壹次讀還是要擲。
@@ -573,7 +575,7 @@ export async function openForbidden(b, reader) {
         await FX.rollOverlay({ title: "看懂檢定", sub: `《${b.title}》：你讀過了，這次看你「看懂了沒」。擲出 ≤ ${u.target} 就是看懂了。（50＋佩佩神話，懂得越多越容易看懂）`, spec: "d100", result: u.roll,
           outcome: { text: u.success ? "你看懂了。" : "你沒看懂。明天再翻開壹次。", tone: u.success ? "bad" : "good" } });
         const sp = $$(".shelf.forbidden .spine-again").find(x => x.closest(".spine") && x.closest(".spine").classList.contains("on")); if (sp) sp.remove();
-        bookReader(reader, b.title, [b.lines.join("\n")], { aside: u.success ? "(字還是那些字。只是這次，你看懂了)" : "(字還在。你還是不知道它們要說什麼)" });
+        bookReader(reader, b.title, fbPages(b), { asideAt: 0, aside: u.success ? "(字還是那些字。只是這次，你看懂了)" : "(字還在。你還是不知道它們要說什麼)" });
         if (!u.success) { bookGain(reader, "還沒看懂：明天可以再翻開壹次", "neutral"); return; }
         await understandFlow("book:" + b.id);
         const res = await sanFlow(b.san, "book:" + b.id, `《${b.title}》`, { anchor: reader, occult: true, noUk: true });
@@ -586,7 +588,7 @@ export async function openForbidden(b, reader) {
     }
   }
   if (!first) {
-    bookReader(reader, b.title, [b.lines.join("\n")], { aside: "(你讀過了。字還在，只是這次你知道它們要說什麼)" });
+    bookReader(reader, b.title, fbPages(b), { asideAt: 0, aside: "(你讀過了。字還在，只是這次你知道它們要說什麼)" });
     bookGain(reader, "讀過了：這次不用擲理智", "good");
     return;
   }
@@ -597,7 +599,7 @@ export async function openForbidden(b, reader) {
   try {
     const res = await sanFlow(b.san, "book:" + b.id, `《${b.title}》`, { anchor: reader, occult: true });
     if (!res || P.dark) return;
-    bookReader(reader, b.title, [b.lines.join("\n")], { aside: res.r.success ? b.successAside : b.failAside });
+    bookReader(reader, b.title, fbPages(b), { asideAt: 0, aside: res.r.success ? b.successAside : b.failAside });
     bookGain(reader, res.loss ? `理智 −${res.loss}` : "理智沒有掉", res.loss ? "bad" : "good");
     let m = bookMyth(P, b);
     if (m && hasTalent(P, "神秘學")) m += 1; // 神秘學家讀得更懂

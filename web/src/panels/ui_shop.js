@@ -18,7 +18,7 @@ import { storyState } from "../../../shared/story/state.js";
 import { ADDONS, planPortrait, P, PANELS, UI, btn, cicon, gearArt, h, icon, inspHave, limitPill, miniLayer, note, persist, rerender, showEvents, snd, updateStatus } from "../core/ui_core.js";
 import { overlay } from "./ui_board.js";
 import { visitorLabel } from "../rooms/ui_screens3.js";
-import { itemArt, useNow } from "./ui_signin.js";
+import { itemArt, originNode, useNow } from "./ui_signin.js";
 import { actDone, curWeek } from "./ui_story.js";
 import { eventBoostText } from "../../../shared/story/events.js";
 import { eventTagNode, liveEvent } from "./ui_events.js";
@@ -52,7 +52,7 @@ function gearGot(id, redraw) {
 function limitedGot(id, r, redraw) {
   const it = limitedInfo(id);
   gotFlow("換到了", "限定的東西不算進「全部解鎖」，另外算限定收藏。", close => h("div", { class: "sp-got shp-lim-got" },
-    h("span", { class: "shp-lim-art", html: itemArt(id), "aria-hidden": "true" }), h("b", null, it.name), h("small", null, it.desc),
+    h("span", { class: "shp-lim-art", html: itemArt(id), "aria-hidden": "true" }), h("b", null, it.name), h("small", null, it.desc), originNode(it.origin),
     btn(["馬上使用 ", h("span", { "aria-hidden": "true" }, "→")], () => { close(); useNow(id); }, "primary small")), redraw);
   if (r.events && r.events.length) showEvents(r.events);
 }
