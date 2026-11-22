@@ -3,6 +3,7 @@
 // 規矩：id 要在帳本 taskGivers.list、檔名＝id；每句 40 字內；不放英文字母（只有 yuga 的 R）和阿拉伯數字；
 //   畫面上的字用「壹」不用「一」；不寫贏輸賺賠、不催、不叫人掏錢；不碰謎底（規劃第 5 節的字）；
 //   每個時段要有閒聊，不在的時段要有字條；稱呼四級都要有。
+//   第三批：chat.mention（Lv2 起提到別人）、title（稱號）、pairs（串門子，記在字母順序在前那位的檔）。
 // 別的檔可以 require：checkGivers({ givers, ledger })
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
@@ -93,6 +94,44 @@ function checkGivers({ givers = [], bad = [], ledger = null } = {}) {
     list(`${w}.chat.named`, c.named, 3, g.id);
     if (!isObj(c.yesterday)) E(`${w}.chat.yesterday`, "要有 yesterday：task、visit、gift");
     else for (const k of ["task", "visit", "gift"]) list(`${w}.chat.yesterday.${k}`, c.yesterday[k], 1, g.id);
+    // 第三批：Lv2 起提到別人、稱號、串門子
+    if (c.mention !== undefined) {
+      if (!isObj(c.mention)) E(`${w}.chat.mention`, "要是物件（對方 id → 句子陣列）");
+      else for (const [o, a] of Object.entries(c.mention)) {
+        if (o === g.id || !ids.has(o)) E(`${w}.chat.mention.${o}`, "要是另壹位交代人的 id");
+        list(`${w}.chat.mention.${o}`, a, 1, g.id);
+      }
+    }
+    const t = g.title;
+    if (t !== undefined) {
+      if (!isObj(t)) E(`${w}.title`, "要有 id、name、desc");
+      else {
+        if (!/^[a-z0-9]{1,20}$/.test(t.id || "")) E(`${w}.title.id`, "稱號 id 要是小寫英數 1～20 字");
+        line(`${w}.title.name`, t.name, g.id); if (typeof t.name === "string" && len(t.name) > 12) E(`${w}.title.name`, "稱號最多 12 字");
+        line(`${w}.title.desc`, t.desc, g.id);
+      }
+    }
+    if (g.pairs !== undefined) {
+      if (!isObj(g.pairs)) E(`${w}.pairs`, "要是物件（對方 id → 串門子）");
+      else for (const [o, p] of Object.entries(g.pairs)) {
+        const pw = `${w}.pairs.${o}`;
+        if (!ids.has(o) || o === g.id) { E(pw, "要是另壹位交代人的 id"); continue; }
+        if (!(g.id < o)) E(pw, "串門子只記在字母順序在前那位的檔（對話紀錄也記在那位名下）");
+        if (!isObj(p)) { E(pw, "要有 where、slot、talks"); continue; }
+        line(`${pw}.where`, p.where, g.id);
+        if (!SLOTS.includes(p.slot)) E(`${pw}.slot`, `時段只能是 ${SLOTS.join("、")}`);
+        if (p.day !== undefined && p.day !== "sun") E(`${pw}.day`, "day 目前只有 sun（週日）");
+        if (!Array.isArray(p.talks) || !p.talks.length) { E(`${pw}.talks`, "至少壹段對話"); continue; }
+        p.talks.forEach((tk, i) => {
+          const tw = `${pw}.talks[${i}]`;
+          if (!Array.isArray(tk) || tk.length < 2 || tk.length > 3) return E(tw, "每段 2～3 句");
+          tk.forEach((l, j) => {
+            if (!isObj(l) || ![g.id, o].includes(l.by)) return E(`${tw}[${j}]`, "by 要是這兩位其中壹位");
+            line(`${tw}[${j}]`, l.say, l.by);
+          });
+        });
+      }
+    }
     extra(g, w);
   }
   for (const id of ids) if (givers.length && !seen.has(id)) E("content/givers", `帳本有交代人「${id}」，但沒有 ${id}.json`);
