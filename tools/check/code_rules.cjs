@@ -10,6 +10,8 @@
 //   7. 開外部程式不跳視窗（11-21 翊文：「為什麼我的 Windows CMD 視窗會跳出來一下再不見」）：tools/、test/ 不准直接 require("child_process")，
 //      一律用 tools/dev/child.cjs（預設 windowsHide: true）。
 //   8. 開發用的程式只在 npm run dev 載入（11-21 Yuga：qa_hooks.js 的 window.__qa 不能進 dist/）：web/src/core/ 的 DEV_ONLY 檔，只有 main.js 能 import，而且那一行要有 import.meta.env.DEV 或 debugScreen（它本身就是 DEV 才為真）；dist/ 已經打包過的話，裡面不准有 __qa。
+//   9. 小框上面開的視窗要蓋得住（11-22 PR 1041：送佩佩的選擇視窗 z 8800 開在「這裡現在」小框 z 9100 後面，按了沒反應）：.mini-layer.sp-top 有 z-index 的話，
+//      web/src/css 裡要有 `.mini-layer.sp-top ~ .nb-layer` 的規則，z-index 比它大。
 // 用法：node tools/check/code_rules.cjs [--base origin/main] [--only 1,2,3,4,5]
 //   --base：第 4 項拿哪個版本當基準（CI 用 origin/main）；沒給就自動用 origin/main 和 HEAD 的共同祖先，找不到就跳過第 4 項。
 const fs = require("fs"), path = require("path"), { spawnSync } = require("../dev/child.cjs");
@@ -326,6 +328,16 @@ function distFiles() { // 已經 npm run build 過才有；沒有就不查這段
   try { return fs.readdirSync(dir).filter(n => /\.js$/.test(n)).map(n => ["dist/assets/" + n, fs.readFileSync(p.join(dir, n), "utf8")]); } catch (e) { return []; }
 }
 
+// 9. 小框上面開的視窗層級（.mini-layer.sp-top 的 z-index，和 .mini-layer.sp-top ~ .nb-layer 的 z-index）
+const zAfter = (css, sel) => { const i = css.indexOf(sel + " {"); if (i < 0) return null; const m = /z-index:\s*(\d+)/.exec(css.slice(i, css.indexOf("}", i))); return m ? +m[1] : null; };
+function checkLayers(files, read = defaultRead) {
+  const css = files.filter(f => /^web\/src\/css\/.+\.css$/.test(f)).map(read).join("\n");
+  const top = zAfter(css, ".mini-layer.sp-top");
+  if (top == null) return [];
+  const over = zAfter(css, ".mini-layer.sp-top ~ .nb-layer");
+  return over != null && over > top ? [] : [`web/src/css：.mini-layer.sp-top 的 z-index 是 ${top}，要有 .mini-layer.sp-top ~ .nb-layer 的規則（z-index 要比 ${top} 大），不然從小框裡開的視窗會被蓋在後面`];
+}
+
 // ---------- 主程式 ----------
 const CHECKS = {
   1: { name: "shared/ 是純函式", run: (files, o) => checkPure(files, o.read) },
@@ -335,6 +347,7 @@ const CHECKS = {
   5: { name: "名字只放一處（改名對照）", run: (files, o) => checkNames(files, o.read) },
   6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
   7: { name: "開外部程式用 tools/dev/child.cjs（不跳視窗）", run: (files, o) => checkChild(files, o.read) },
+  9: { name: "小框上面開的視窗要蓋得住（nb-layer 比 sp-top 高）", run: (files, o) => checkLayers(files, o.read) },
   8: { name: "開發用的程式（qa_hooks、debug_boot）不進 dist/", run: (files, o) => checkDevOnly(files, o.read, o.read === defaultRead ? distFiles() : []) },
 };
 function runAll(opts = {}) {
@@ -353,4 +366,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkLayers, checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };

@@ -137,7 +137,8 @@
 .btn.rn-pill:hover, .btn.rn-pill:focus-visible { background: linear-gradient(180deg, rgba(54, 32, 24, .96), rgba(80, 48, 30, .96)); box-shadow: 0 0 0 1px rgba(0, 0, 0, .35), 0 0 10px rgba(214, 160, 40, .55); }
 .btn.rn-pill.empty { opacity: .8; }
 .btn.rn-pill svg { width: 1.15em; height: 1.15em; }
-.btn.rn-pill { position: relative; }
+.btn.rn-pill { position: relative; white-space: nowrap; flex-shrink: 0; } /* 手機窄的時候「29 人」不能擠成兩行 */
+.btn.rn-pill > span { white-space: nowrap; }
 /* 有交代人的房間：人數後面接小頭像，兩位疊壹點（11-22） */
 .rn-avs { display: inline-flex; align-items: center; margin-left: 2px; }
 .rn-avs .tkc-av.small { width: 26px; height: 26px; border-width: 1px; box-shadow: none; }
