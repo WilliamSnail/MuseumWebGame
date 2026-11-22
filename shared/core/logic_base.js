@@ -780,7 +780,7 @@ export function needOk(P, need) {
   const m = typeof need === "string" ? /^(from|clue|understood|item):(.+)$/.exec(need) : null;
   if (!m) return false;
   const [, k, v] = m;
-  if (k === "from") return /^d{4}-d{2}-d{2}$/.test(v) && todayStr() >= v;
+  if (k === "from") return /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v) && todayStr() >= v;
   if (k === "clue") return !!(P.clues && typeof P.clues === "object" && P.clues[v]);
   if (k === "understood") return !!(P.understood && P.understood[v]);
   const it = LIMITED_ITEMS.find(x => x.id === v);
