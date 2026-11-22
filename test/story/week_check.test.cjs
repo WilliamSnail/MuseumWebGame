@@ -459,7 +459,7 @@ const withClues = c => {
   c.files["2026-W47/d1.json"].books[0].clue = "c-hand-one";
 
   c.files["2026-W47/d2.json"].show.works[0].clue = "c-work-two";
-  c.files["2026-W47/d2.json"].understand = [{ id: "u-first", need: ["c-hand-one", "c-work-two"], from: "招領箱的帳", text: "他沒有離開。", hint: "還有壹條在畫廊" }];
+  c.files["2026-W47/d2.json"].understand = [{ id: "u-first", layer: "物", need: ["c-hand-one", "c-work-two"], from: "招領箱的帳", text: "他沒有離開。", hint: "還有壹條在畫廊" }];
   return c;
 };
 T("線索和看懂：寫對的過；備用週、舊內容不受影響", () => {
@@ -493,6 +493,9 @@ T("看懂：id、need、text、from、hint 的格式", () => {
 });
 T("看懂：need 的線索要在同一天或更早，找不到、還沒出現都擋", () => {
   expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].need = ["c-nowhere"]; }, /線索「c-nowhere」找不到/);
+  expectErr(c => { withClues(c); delete c.files["2026-W47/d2.json"].understand[0].layer; }, /layer 要寫/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].layer = "別的"; }, /layer 要寫/);
+  expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].who = ""; }, /who 要是/);
   expectErr(c => { withClues(c); c.files["2026-W47/d1.json"].understand = [clone(c.files["2026-W47/d2.json"].understand[0])]; delete c.files["2026-W47/d2.json"].understand; }, /要到 .* 才出現，還沒到/);
   const c = withClues(regular()); // 同一天也可以
   c.files["2026-W47/d2.json"].books[0].clue = "c-same-day"; c.files["2026-W47/d2.json"].understand[0].need = ["c-hand-one", "c-same-day"];

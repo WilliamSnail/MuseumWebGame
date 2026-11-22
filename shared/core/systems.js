@@ -572,7 +572,7 @@ export const UK_EXHIBITS = ["strange", "statue", "hidden", "russia8"];
 export function understandList(P) {
   const got = (P && P.understood) || {}, free = !P || isFree(P), today = todayStr();
   return UNDERSTAND_TEXT.map(x => {
-    if (got[x.id]) return { id: x.id, got: true, from: x.from, text: x.text, hint: "", again: false };
+    if (got[x.id]) return { id: x.id, got: true, from: x.from, text: x.text, hint: "", again: false, layer: x.layer, where: x.where, who: x.who };
     const read = !free && /^book/.test(x.id) ? P.mythFrom[x.id] : null;
     if (read) return read === today
       ? { id: x.id, got: false, hint: "今天翻過這本禁書了，還沒看懂。明天再翻開壹次。", again: false }

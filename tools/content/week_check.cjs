@@ -624,6 +624,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         text(uw + ".text", u.text, LIMITS.understandText);
         if (typeof u.text === "string" && u.text.startsWith("你看懂了")) E(uw + ".text", "不用寫「你看懂了：」，畫面會自己加");
         text(uw + ".from", u.from, LIMITS.understandFrom);
+        if (!G.UNDERSTAND_LAYERS.includes(u.layer)) E(uw + ".layer", `layer 要寫，而且是 ${G.UNDERSTAND_LAYERS.join("、")} 之壹（11-22：《看懂的事》分類）`);
+        ["who", "where"].forEach(k => { if (u[k] !== undefined && (typeof u[k] !== "string" || !u[k].trim() || u[k].length > 20)) E(uw + "." + k, `${k} 要是 1～20 字（可以不寫）`); });
         text(uw + ".hint", u.hint, LIMITS.understandHint); // 必填：拿到壹部分線索時給的提示（不破梗）
         if (!Array.isArray(u.need) || !u.need.length || u.need.length > LIMITS.understandNeedMax) { E(uw + ".need", `要是線索 id 的陣列，1～${LIMITS.understandNeedMax} 條`); return; }
         if (new Set(u.need).size !== u.need.length) E(uw + ".need", "有重複的線索");

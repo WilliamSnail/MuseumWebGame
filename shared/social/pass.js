@@ -4,7 +4,7 @@
 //  賭場的籌碼、全部的紀念品、賭場成就在伺服器，這裡沒有：畫面自己接（籌碼）或連過去（紀念品、成就）。
 // ================================================================
 
-import { BADGES, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "../core/config.js";
+import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS } from "../core/config.js";
 import { UNDERSTAND_TEXT } from "../core/systems_text.js";
 import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../core/logic_base.js";
 import { gameDayNo, quirkName } from "../core/logic.js";
@@ -13,7 +13,8 @@ import { roomProgress } from "../core/systems.js";
 import { traitById } from "../core/logic_base.js";
 import { traitDesc, traitName } from "../core/legacy.js";
 import { gearInfo } from "../core/shop.js";
-import { wornGear } from "../core/logic_base.js";
+import { asList, gearItem, ownsGear, wornGear } from "../core/logic_base.js";
+import { visitorSlots } from "./visitors.js";
 import { limitedBox, limitedCount, limitedInfo, ownsLimited, stockOf, wornDeco } from "./signin.js";
 import { storyState } from "../story/state.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";
@@ -27,6 +28,7 @@ export const PASS_TIPS = {
   casino: { title: "賭場", what: "你在 Hamachi 賭場的成就、本週收藏、財產（紀念品）和換小獎。", how: ["打牌、吃東西、開大禮包都可能拿到", "每塊的「前往」會帶你到賭場對應的頁"] },
   visitor: { title: "參觀者", what: "現在這位參觀者的職業、技能、裝備和怪癖。", how: ["在館長室選職業、換人", "裝備用週章到兌換所換"] },
   deco: { title: "裝飾", what: "限定的收藏：每日簽到和兌換所才拿得到的裝飾。", how: ["每日簽到會有機會拿到", "拿到的可以「拿去用」"] },
+  gear: { title: "隨身物", what: "兌換所換到的裝備，穿在身上才有效果。現在這位參觀者最多穿 2 件。", how: ["點壹下到參觀者頁，穿上或脫下", "裝備用週章到兌換所換，參觀者頁就能直接換"] },
   badge: { title: "徽章", what: "圖鑑室的徽章，做到壹件事就拿到壹個。", how: ["沒拿到的先顯示鎖頭", "到圖鑑室看每個怎麼拿"] },
   ach: { title: "成就", what: "在賭場做到某些事拿到的成就，可以挑壹個當稱號。", how: ["稱號展廳、館友名單、榜單上看得到"] },
   week: { title: "本週收藏", what: "這週賭場的收藏品和進度，集滿領週章、讀集滿的故事。", how: ["每週壹重算"] },
@@ -55,6 +57,18 @@ export function passVisitor(P) {
     gear: wornGear(P).map(g => gearInfo(g.id)).map(it => ({ id: it.id, name: it.name, desc: it.desc, tierName: it.tierName })),
     gearMax: NUM.shop.gearWorn,
   };
+}
+
+// 隨身物（11-22，docs/規劃/館友證裝備整合規劃.md 方向一）：兌換所的裝備放進館友證。
+// items：全部裝備（有沒有、現在這位有沒有穿、價錢）；worn：現在這位穿著的 id（照穿的順序，封面兩格用）；
+// seats：三個位子各穿什麼（只讀；要換只能現在在場的這位，規則本來就只改 P.gear）。自由模式沒有裝備，回 null。只讀，不改存檔。
+export function passGear(P) {
+  if (!P || isFree(P)) return null;
+  const worn = wornGear(P).map(g => g.id), set = new Set(worn);
+  const items = GEAR_ITEMS.map(it => { const g = gearInfo(it.id); return { id: g.id, name: g.name, desc: g.desc, tier: g.tier, tierName: g.tierName, price: g.price, own: ownsGear(P, g.id), worn: set.has(g.id) }; });
+  const idsOf = v => asList(v && v.gear).filter((id, i, a) => gearItem(id) && ownsGear(P, id) && a.indexOf(id) === i).slice(0, NUM.shop.gearWorn);
+  const seats = visitorSlots(P).map(s => (s ? { slot: s.slot, vid: s.vid, name: s.name, jobName: s.job ? jobInfo(s.job).name : "", current: s.current, picking: s.picking, gear: s.current ? worn : idsOf(asList(P.visitors).find(v => v && v.vid === s.vid)) } : null));
+  return { max: NUM.shop.gearWorn, stamps: storyState(P).stamps || 0, worn, items, seats };
 }
 
 // 館友證的頭像（11-13）：玩家自己挑壹隻收藏過的佩佩。存檔 P.avatar 是那隻的 key。
@@ -105,6 +119,7 @@ export function passView(P, o = {}) {
     card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle), avatar: passAvatar(P) || null, photo: passPhoto(P) || null },
     records,
     visitor: passVisitor(P),
+    gear: passGear(P),
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),

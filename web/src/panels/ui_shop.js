@@ -80,7 +80,7 @@ export function openShop(o = {}) {
   draw();
   snd("flip");
 }
-function gearCard(it, draw) {
+export function gearCard(it, draw) { // 館友證參觀者頁也用這張（買、穿、脫只有壹份，不複製）
   const own = ownsGear(P, it.id), worn = isWorn(P, it.id), S = storyState(P);
   const buy = () => {
     const r = buyGear(P, it.id, todayStr());
