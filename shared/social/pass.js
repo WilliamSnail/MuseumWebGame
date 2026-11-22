@@ -5,9 +5,10 @@
 // ================================================================
 
 import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
-import { UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
+import { BOOK4, BOOK_SEQUELS, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
+import { FORBIDDEN_BOOKS } from "../core/content.js";
 import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../core/logic_base.js";
-import { gameDayNo, quirkName } from "../core/logic.js";
+import { describePillow, gameDayNo, quirkName } from "../core/logic.js";
 import { jobInfo, jobSkill, skillOf } from "../core/legacy.js";
 import { roomProgress, upgradeState } from "../core/systems.js";
 import { traitById } from "../core/logic_base.js";
@@ -85,6 +86,18 @@ export function passLegacy(P) {
   return { relics, history };
 }
 
+// 收藏頁的列表（11-22）：失敗作、修復品（key＋份數）、抱枕（key、名字、份數）、隱藏配方（找到了給名字和日期，沒找到只給提示）。每種最多 limit 筆。
+const countList = (o, limit) => Object.keys(o || {}).filter(k => fromKey(k)).sort().slice(0, limit).map(k => ({ key: k, n: Math.max(1, Math.floor(+o[k]) || 1) }));
+const sumCount = o => Object.values(o || {}).reduce((a, x) => a + Math.max(1, Math.floor(+x) || 1), 0);
+// 禁書（11-22）：本篇 3 本、地下收藏目錄、5 本補遺。read＝這位讀過（日期），allSeats＝三個位子裡有任何一位讀過的本數。禁書是每位參觀者各自讀（換人就清，logic.js），所以兩個數字都給。自由模式 null。
+export function passForbidden(P) {
+  if (!P || isFree(P)) return null;
+  const all = [].concat(FORBIDDEN_BOOKS, [BOOK4], BOOK_SEQUELS), seats = [P].concat(asList(P.visitors));
+  const readOf = (v, id) => (v && v.mythFrom && v.mythFrom[id]) || null;
+  const list = all.map(b => { const r = readOf(P, b.id); return { id: b.id, title: r ? b.title : "？？？", after: b.after || null, read: r === true ? "讀過" : r }; }); // 沒讀過的不寫書名（不破梗：補遺的書名會透露劇情）
+  return { list, have: list.filter(x => x.read).length, total: list.length, allSeats: all.filter(b => seats.some(v => readOf(v, b.id))).length, seats: seats.length };
+}
+
 // 館友證的頭像（11-13）：玩家自己挑壹隻收藏過的佩佩。存檔 P.avatar 是那隻的 key。
 // 選的那隻不在收藏裡（舊存檔、或之後被拿掉）就當成沒有頭像，回空字串；不會去改存檔。
 export function passAvatar(P) {
@@ -140,12 +153,16 @@ export function passView(P, o = {}) {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),
       failed: Object.keys(P.failed || {}).length, repaired: Object.keys(P.repaired || {}).length,
+      failedList: countList(P.failed, 12), failedTotal: sumCount(P.failed), repairedList: countList(P.repaired, 12), repairedTotal: sumCount(P.repaired),
       recipes: [RECIPES.filter(r => P.recipes && P.recipes[r.id]).length, RECIPES.length],
+      recipeList: RECIPES.map(r => { const t = RECIPE_TEXT[r.id] || {}, d = P.recipes && P.recipes[r.id]; return { id: r.id, found: !!d, date: typeof d === "string" ? d : "", name: d ? t.name || r.id : "？？？", hint: d ? t.found || "" : t.hint || "" }; }),
       pillow: rp.pillow, hall: rp.hall,
+      pillowList: Object.keys(P.pillows || {}).sort().slice(0, 8).map(k => ({ key: k, title: describePillow(k).title, n: Math.max(1, Math.floor(+P.pillows[k]) || 1) })), pillowTotal: sumCount(P.pillows),
     },
     books: {
       origin: rp.origin,
       week: S ? Object.values(S.books).filter(b => b && b.read).length : null,
+      forbidden: passForbidden(P),
       understood: [UNDERSTAND_TEXT.filter(x => P.understood && P.understood[x.id]).length, UNDERSTAND_TEXT.length],
     },
     souvenirs: free ? [] : casCleanSouvenirs(P.hallSouvenirs),
