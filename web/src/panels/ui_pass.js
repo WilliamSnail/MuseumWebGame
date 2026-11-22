@@ -96,7 +96,7 @@ export function openPass(o = {}) {
       h("div", { class: "ps-tiles" },
         tile("pepe", "佩佩與書", v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`, `圖書館的書 ${v.books.origin.text.replace(/^(✓ )?讀過 /, "")}・徽章 ${v.ach.have}／${v.ach.total}`, "pepe"),
         tile("casino", "賭場", casOff(v) ? (v.free ? "自由模式沒有" : "要登入") : cas && cas.ok ? `籌碼 ${casNum(cas.chips)}` : "…", casOff(v) ? (v.free ? "" : "賭場在伺服器上，登入才看得到") : casLine(), "casino"),
-        tile("visitor", "參觀者", x ? `${x.name || `第 ${x.n} 位`}・${x.jobName}` : "還沒選職業", x ? (x.gear.length ? x.gear.map(g => g.name).join("、") : "還沒穿裝備") : "", "visitor"),
+        tile("visitor", "參觀者", x ? `${x.name || `第 ${x.n} 位`}・${x.jobName}` : "還沒選職業", x ? [v.visitors ? `第 ${v.visitors.cur + 1} 位／共 ${v.visitors.count} 位在館` : "", x.gear.length ? x.gear.map(g => g.name).join("、") : "還沒穿裝備"].filter(Boolean).join("・") : "", "visitor"),
         tile("deco", "裝飾", `${v.deco.have}／${v.deco.total}`, "每日簽到和兌換所拿得到", "deco")),
       h("div", { class: "ps-narrow" }, recordsSec(v), accountSec())]; // 手機：左邊的證件縮成壹條，紀錄和帳號放這裡
   };
@@ -127,12 +127,21 @@ export function openPass(o = {}) {
         x.traits.length ? h("div", { class: "pv-traits" }, x.traits.map(t => h("span", { class: "cand-trait " + t.kind }, h("b", null, `${t.kind === "perk" ? "小優點" : "小缺點"}・${t.name}`), h("span", null, t.desc)))) : null),
       sec("現在的狀態", h("div", { class: "ps-stats" }, x.stats.map(([l, n]) => stat(l, n)))),
       sec("技能", h("div", { class: "pv-skills" }, x.skills.map(k => h("div", { class: "pv-skill" + (k.main ? " main" : "") },
-        h("span", null, k.s, k.main ? "（拿手）" : ""), h("span", { class: "ps-bar", "aria-hidden": "true" }, h("i", { style: { width: k.v + "%" } })), h("b", null, String(k.v)), h("span", { class: "pv-tick", title: "今天用成功過，明天會擲成長" }, k.tick ? "✓" : ""))))),
+        h("span", null, k.s, k.main ? "（拿手）" : "", k.gear.length ? h("small", { class: "pv-skill-gear", title: k.gear.map(g => `${g.name} ${g.v > 0 ? "+" : "−"}${Math.abs(g.v)}`).join("、") }, ` 裝備 ${k.gear.reduce((a, g) => a + g.v, 0) > 0 ? "+" : "−"}${Math.abs(k.gear.reduce((a, g) => a + g.v, 0))}`) : null), h("span", { class: "ps-bar", "aria-hidden": "true" }, h("i", { style: { width: k.v + "%" } })), h("b", null, String(k.v)), h("span", { class: "pv-tick", title: "今天用成功過，明天會擲成長" }, k.tick ? "✓" : ""))))),
       ...gearPane(v),
       x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
         h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
       upgradeSec(v), ...legacySecs(v), ...cellarSecs(v),
       h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
+  };
+
+  // 別位參觀者的狀態（11-22 R6）：職業、心情、理智、神話、小優缺點；只讀，要換人才能動他
+  const seatStatus = (v, sel) => {
+    const x = sel && v.visitors && v.visitors.seats.find(q => q && q.slot === sel.slot);
+    if (!x) return null;
+    return sec(`${x.name}的狀態`, h("div", { class: "ps-stats" }, stat("職業", x.picking ? "還沒選" : x.jobName), stat("心情", `${x.mood}／99`), stat("理智", `${x.sanity}／${x.maxSan}`), stat("佩佩神話", String(x.myth))),
+      x.perk || x.flaw ? h("p", { class: "sp-note" }, [x.perk ? `小優點・${x.perk}` : "", x.flaw ? `小缺點・${x.flaw}` : ""].filter(Boolean).join("　")) : null,
+      x.dark || x.working ? h("p", { class: "sp-note" }, [x.dark ? "燈熄了（理智用完）" : "", x.working ? "在地下室工作" : ""].filter(Boolean).join("・")) : null);
   };
 
   // 裝備（11-22）：三個位子切換；在場的這位分「穿著／有的、還沒穿／兌換所還能換」三段，穿脫和買都在這裡（用兌換所同壹張卡）；別位只讀
@@ -145,7 +154,7 @@ export function openPass(o = {}) {
     const list = arr => h("ul", { class: "shp-list" }, arr.map(it => gearCard(it, draw)));
     if (!sel || !sel.current) {
       const own = (sel ? sel.gear : []).map(id => g.items.find(x => x.id === id)).filter(Boolean);
-      return [chips, sec(`${sel ? sel.name : ""}穿著　${own.length}／${g.max}`, own.length
+      return [chips, seatStatus(v, sel), sec(`${sel ? sel.name : ""}穿著　${own.length}／${g.max}`, own.length
         ? h("ul", { class: "pv-gear" }, own.map(it => h("li", null, gearArt(it.id), h("span", null, h("b", null, it.name), h("small", null, it.desc)))))
         : h("p", { class: "sp-note" }, "還沒有穿東西。"), h("p", { class: "sp-note" }, "這位現在不在場，要換人（標題畫面）才能改他穿的。"))];
     }
@@ -209,6 +218,9 @@ export function openPass(o = {}) {
         stat("看懂的事", `${b.understood[0]}／${b.understood[1]}`)),
         h("p", { class: "sp-note" }, "《看懂的事》放在圖書館書架的「館藏」那壹頁，最右邊。"),
         h("div", { class: "sp-go" }, goBtn("圖書館的書架", () => go("origin"), "book"), !v.free ? goBtn("每週的書", () => go("origin", { tab: "weekly" })) : null)),
+      sec(`看懂的事　${b.understood[0]}／${b.understood[1]}`, b.understoodLayers.map(L => [h("p", { class: "sp-note pv-layer" }, h("b", null, `${L.layer}　${L.have}／${L.total}`)),
+        h("div", { class: "ps-chips" }, L.list.map(x => h("span", { class: "ps-chip" + (x.got ? " hung" : ""), title: x.got ? x.where : "還沒看懂" }, x.name)))]),
+        h("p", { class: "sp-note" }, "分成東西、人、規矩、跟你有關的四種。沒看懂的先不寫名字。每週特展的看懂另外算，不在這裡。")),
       b.forbidden ? sec(`禁書　${b.forbidden.have}／${b.forbidden.total}`,
         h("ul", { class: "pv-gear" }, b.forbidden.list.map(x => h("li", { class: x.read ? "" : "ps-miss" }, icon(x.read ? "book" : "lock"), h("span", null, h("b", null, x.title), h("small", null, x.read ? (x.read === "讀過" ? "讀過" : `讀過・${x.read}`) : "還沒讀"))))),
         h("p", { class: "sp-note" }, "禁書每位參觀者各自讀：這裡寫現在這位讀過的。"), b.forbidden.seats > 1 ? h("p", { class: "sp-note" }, `${b.forbidden.seats} 位參觀者合起來，讀過 ${b.forbidden.allSeats} 本。`) : null,
@@ -264,10 +276,10 @@ export function openPass(o = {}) {
       sec(`限定的收藏　${d.have}／${d.total}`,
         h("div", { class: "ps-items" }, d.items.map(it => h("div", { class: "sg-item k-" + it.kind + (it.own ? "" : " ps-miss") },
           h("span", { class: "sg-item-art", html: it.own ? itemArt(it.id) : "", "aria-hidden": "true" }, it.own ? null : icon("lock")),
-          h("div", { class: "sg-item-body" }, h("b", null, it.own ? it.name : "？？？"), h("span", { class: "sg-item-kind" }, it.kindName + (it.worn ? "・用著" : "")), it.own && it.desc ? h("small", { class: "sg-item-desc" }, it.desc) : null, it.own ? originNode(it.origin) : null,
+          h("div", { class: "sg-item-body" }, h("b", null, it.own ? it.name : "？？？"), h("span", { class: "sg-item-kind" }, it.kindName + (it.worn ? "・用著" : "") + (it.own && it.n !== null && it.n !== Infinity ? `・剩 ${it.n} 份` : "")), it.own && it.desc ? h("small", { class: "sg-item-desc" }, it.desc) : null, it.own ? originNode(it.origin) : null,
             it.own && !v.free ? btn("拿去用", () => useNow(it.id, m.close), "small") : null)))),
         h("p", { class: "sp-note" }, "這些只有每日簽到和兌換所拿得到。"),
-        h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null, PANELS.shop && !v.free ? goBtn("兌換所", () => PANELS.shop(), "shop:c") : null))];
+        h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null, PANELS.shop && !v.free ? goBtn("兌換所", () => PANELS.shop({ tab: "limited" }), "shop:c") : null))];
   };
 
   // 換頭像（11-13）：小視窗，列出收藏過的佩佩，點壹隻就設成頭像；「不用頭像」清掉。小視窗掛在這個框上，框關了它也跟著沒了
