@@ -419,6 +419,7 @@ T("季節線：種類合法、跨週同一條、書進「季節」頁籤", G => 
   assert.strictEqual(b.line, "season-2026-winter", "id 不加週的名字");
   assert.strictEqual(G.shelfTabOf(G.lineById(W, b.line)), "season");
   assert.strictEqual(G.shelfTabOf({ kind: "main" }), "mainline");
+  assert.strictEqual(G.shelfTabOf({ kind: "holiday" }), "season", "節日和季節併在書架同壹頁（11-22）");
   assert.strictEqual(G.shelfTabOf({ kind: "week" }), "weekly");
 });
 T("季節線：進度跨週加起來、下一步帶去補讀舊的、過了那週還能讀（不給靈感）", G => {

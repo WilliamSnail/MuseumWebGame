@@ -465,7 +465,7 @@ export function storyLobby() {
 }
 
 // ---------- 圖書館：書架的頁籤 ----------
-export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["map", "地圖"], ["weekly", "每週劇情"], ["season", "季節"], ["holiday", "節日"], ["curate", "策展"], ["guestbook", "旅客留言簿"], ["talk", "交談紀錄"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
+export const ORIGIN_TABS = [["shelf", "館藏"], ["forbidden", "禁書"], ["mainline", "主線"], ["map", "地圖"], ["weekly", "每週劇情"], ["season", "季節與節日"], ["curate", "策展"], ["guestbook", "旅客留言簿"], ["talk", "交談紀錄"]]; // 策展：主題展的手記（決定 0035，ui_themeshow.js）
 const shelfName = id => (ORIGIN_TABS.find(t => t[0] === id) || [id, id])[1];
 // 全部的週（今天這週＋以前的），舊的在前
 let pastCache = { key: null, list: [] };
@@ -491,7 +491,7 @@ const kindOfBook = (w, b) => { const l = lineById(w, b.line); return l ? l.kind 
 const tabOfBook = (w, b) => shelfTabOf({ kind: kindOfBook(w, b) });
 // 每個頁籤：幾本（打得開的）、沒讀幾本、有沒有新的
 function storyCounts() {
-  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], season: [0, 0, 0], holiday: [0, 0, 0], curate: ADDONS.curateCounts ? ADDONS.curateCounts() : [0, 0, 0], map: ADDONS.mapCounts ? ADDONS.mapCounts() : [0, 0, 0] };
+  const out = { mainline: [0, 0, 0], weekly: [0, 0, 0], season: [0, 0, 0], curate: ADDONS.curateCounts ? ADDONS.curateCounts() : [0, 0, 0], map: ADDONS.mapCounts ? ADDONS.mapCounts() : [0, 0, 0] };
   if (!on()) return out;
   allWeeks().forEach(w => w.books.forEach(b => {
     const st = bookState(P, w, b), c = out[tabOfBook(w, b)];
@@ -594,7 +594,7 @@ function seasonVolume(n, weeks, reader) {
     h("p", { class: "book-from" }, `${weeks.length} 週。點壹週打開。`),
     h("ol", { class: "vol-list" }, weeks.map(w => h("li", null, h("button", { type: "button", class: "vol-book", onClick: () => weekVolume(w, reader) }, h("span", null, w.label), h("b", null, `〈${w.title}〉`)))))));
 }
-// 書架：主線、每週劇情、節日（館藏、禁書照舊在 ui_screens1.js）
+// 書架：主線、每週劇情、季節與節日（館藏、禁書照舊在 ui_screens1.js）
 export function storyShelf(tab, reader, params = {}) {
   if (tab === "curate" && ADDONS.curateShelf) return ADDONS.curateShelf(reader, params); // 策展手記（決定 0035）
   if (!on()) return h("div", { class: "shelf story-shelf" }, h("span", { class: "shelf-label" }, shelfName(tab)), h("p", { class: "shelf-empty" }, "每週劇情在挑戰模式裡。"));
@@ -624,13 +624,15 @@ export function storyShelf(tab, reader, params = {}) {
   }
   if (tab === "season") { // 季節線：一條線一排，新的在上面；過了那週還是可以補讀（決定 0037）
     const rows = seasonLines(P, weeks).reverse().map(l => shelfRow("season-" + l.id, `${l.name}${l.done ? "（走完了）" : ""}`, l.list.map(o => spineFor(o.w, o.b, reader))));
-    return rows.length ? rows : [shelfRow("season", "季節", [], "壹年四季各壹條線，大約兩週壹本。第壹本寫好就會放在這裡。")];
+    const hol = [];
+    weeks.forEach(w => w.books.forEach(b => { if (kindOfBook(w, b) === "holiday") hol.push(spineFor(w, b, reader)); }));
+    if (!rows.length) rows.push(shelfRow("season", "季節", [], "壹年四季各壹條線，大約兩週壹本。第壹本寫好就會放在這裡。"));
+    rows.push(shelfRow("holiday", "節日", hol, "節日那週的故事會放在這裡。")); // 節日的書排在季節線下面（11-22 翊文：季節和節日整合在壹塊）
+    return rows;
   }
-  const want = tab === "mainline" ? "main" : "holiday";
   const list = [];
-  weeks.forEach(w => w.books.forEach(b => { if (kindOfBook(w, b) === want) list.push(spineFor(w, b, reader)); }));
-  const empty = tab === "mainline" ? "地下收藏庫的大謎團，壹章壹本。每週劇情走到主線的時候，這裡會多壹本。" : "節日那週的故事會放在這裡。";
-  return [shelfRow(tab, tab === "mainline" ? "主線" : "節日", list, empty)];
+  weeks.forEach(w => w.books.forEach(b => { if (kindOfBook(w, b) === "main") list.push(spineFor(w, b, reader)); }));
+  return [shelfRow(tab, "主線", list, "地下收藏庫的大謎團，壹章壹本。每週劇情走到主線的時候，這裡會多壹本。")];
 }
 
 // ---------- 畫廊：今日特展 ----------

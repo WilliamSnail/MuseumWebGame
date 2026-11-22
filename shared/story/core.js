@@ -719,7 +719,7 @@ export function spotClaimed(P, W, id) { const rec = storyState(P).weeks[W.label]
 
 // ---------- 劇情線 ----------
 // 每一條：名字、種類、讀了幾本、下一步（只說去哪裡、做什麼）。storyLines 回傳這週的（主線也在這裡，W.lines 裡 kind main 的）；季節線跨週，在 seasonLines
-export function shelfTabOf(line) { const k = line && line.kind; return k === "main" ? "mainline" : k === "season" ? "season" : k === "holiday" ? "holiday" : "weekly"; }
+export function shelfTabOf(line) { const k = line && line.kind; return k === "main" ? "mainline" : (k === "season" || k === "holiday") ? "season" : "weekly"; }
 export function lineNext(P, W, line) {
   const S = storyState(P);
   const books = W.books.filter(b => b.line === line.id);
