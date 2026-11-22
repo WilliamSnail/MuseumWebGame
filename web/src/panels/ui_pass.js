@@ -269,10 +269,18 @@ export function openPass(o = {}) {
     h("div", { class: "ps-badges" }, a.list.map(b => h("span", { class: "ps-badge" + (b.got ? " got" : ""), title: b.got ? `拿到了・${b.got}` : "還沒拿到" }, icon(b.got ? "star" : "lock"), b.name))),
     h("div", { class: "sp-go" }, goBtn("圖鑑室的徽章", () => go("codex", { tab: "badges" }), "star"))); };
 
+  // 換週章的材料（11-22）：背包裡的舊畫布、金箔、金線；3 份換 1 枚週章，到兌換所換
+  const matsSec = v => {
+    const M = v.mats;
+    if (!M) return null;
+    return sec(`換週章的材料　${M.total} 份`, h("ul", { class: "pv-gear" }, M.list.map(x => h("li", { class: x.n ? "" : "ps-miss" }, icon("star"), h("span", null, h("b", null, x.name), h("small", null, x.n ? `${x.n} 個${x.worth > 1 ? `（每個算 ${x.worth} 份）` : ""}` : "沒有"))))),
+      h("p", { class: "sp-note" }, `${M.need} 份材料換 1 枚週章；現在夠換 ${M.stamps} 枚。`),
+      h("div", { class: "sp-go" }, PANELS.shop ? goBtn("兌換所換週章", () => PANELS.shop({ tab: "mat" }), "shop:c") : null));
+  };
   const decoPane = v => {
     const d = v.deco;
     return [
-      signSec(v),
+      signSec(v), matsSec(v),
       sec(`限定的收藏　${d.have}／${d.total}`,
         h("div", { class: "ps-items" }, d.items.map(it => h("div", { class: "sg-item k-" + it.kind + (it.own ? "" : " ps-miss") },
           h("span", { class: "sg-item-art", html: it.own ? itemArt(it.id) : "", "aria-hidden": "true" }, it.own ? null : icon("lock")),

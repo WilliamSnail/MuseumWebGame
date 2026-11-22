@@ -250,5 +250,15 @@ T("材料剩幾份：deco.items 的 n（材料才有，其他是 null，自由�
   assert.ok(J(G.passView(fresh(G, "free"), {}).deco.items).every(x => x.n === null));
 });
 
+T("換週章的材料：份數照兌換所的算法（金箔 2 份）、自由模式 null", G => {
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).mats, null);
+  const P = fresh(G), m0 = J(G.passView(P, {})).mats;
+  assert.strictEqual(m0.total, 0); assert.strictEqual(m0.need, G.NUM.shop.matToStamp); assert.strictEqual(m0.list.length, 3); assert.ok(m0.list.every(x => x.n === 0));
+  const bag = G.storyState(P).bag; bag["mat:畫布"] = 2; bag["mat:金箔"] = 2;
+  const m1 = J(G.passView(P, {})).mats;
+  assert.strictEqual(m1.total, G.matCount(P)); assert.strictEqual(m1.total, 6); assert.strictEqual(m1.stamps, Math.floor(6 / G.NUM.shop.matToStamp));
+  assert.strictEqual(m1.list.find(x => x.id === "mat:金箔").worth, 2);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
