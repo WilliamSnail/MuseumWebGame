@@ -779,6 +779,10 @@ export const ART = (() => {
     stamp: `<path d="M8 2.5l3 7h2l3-7z" fill="#C63D2F" stroke="${CK}" stroke-width="1" stroke-linejoin="round"/><path d="M10.4 2.5l1.6 4 1.6-4" fill="#3F6E8E" stroke="${CK}" stroke-width=".8" stroke-linejoin="round"/>` +
       `<circle cx="12" cy="15" r="6.6" fill="#E3B341" stroke="#8E6516" stroke-width="1.1"/><circle cx="12" cy="15" r="4.9" fill="#F7D774" stroke="#B88A1E" stroke-width=".8"/>` +
       `<path d="M12 11.8l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3z" fill="#B5551A"/><path d="M7.6 12.6a5 5 0 0 1 2.6-2.7" stroke="#FFF6D0" stroke-width="1" stroke-linecap="round" fill="none"/>`,
+    // 文化部的章（延伸世界 柒之六：文化部沒有人臉，只有缺一角的方章和空著的承辦人欄）：紅色的方章，右上角缺了一塊，章面的字跡不成字
+    cultureSeal: `<path d="M3.5 3.5h13.2l-.2 4.4 4 .2v12.4h-17z" fill="#C63D2F" stroke="${CK}" stroke-width="1.1" stroke-linejoin="round"/>` +
+      `<path d="M5.6 5.6h9.4l.2 4.2h3.2v8.6H5.6z" fill="none" stroke="#F7EBD0" stroke-width=".9" stroke-linejoin="round"/>` +
+      `<path d="M7.8 8.6h5M7.8 12.2h2M7.8 14.4h7.6M7.8 16.4h5" stroke="#F7EBD0" stroke-width="1" stroke-linecap="round"/><path d="M16.9 7.6l1-.9M19 8.3l.9-.6" stroke="#8E241A" stroke-width=".8" stroke-linecap="round"/>`,
   };
   const cicon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${CICONS[name] || ""}</svg>`;
   const icon = name => `<svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || `<circle cx="12" cy="12" r="4"/>`}</svg>`;
