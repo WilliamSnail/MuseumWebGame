@@ -13,7 +13,7 @@ import { NUM } from "../core/config.js";
 import { addDays } from "../core/logic_base.js";
 import { injureDaysOf } from "../core/systems.js";
 import { coopActive, coopBonusCount, coopFightFix, coopFinish, coopFloorComplete, coopHumanVoters, coopLeave, coopMember, coopNewEvents, coopSanGain, coopSanHit, coopSync, coopVoters } from "./base.js";
-import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp } from "../cellar/fight.js";
+import { fightActors, fightCanAct, fightCourage, fightFoesOf, fightHelperSeat, fightIntentRisk, fightIntentText, fightNameOf, fightOptions, fightRound, fightSeat, fightSeatOf, fightStart, fightWinInsp, foeLog } from "../cellar/fight.js";
 
 // 這一層還要不要打守門
 export const coopGateDue = run => !!(run && run.gate && !run.trial && !(run.gateDone && run.gateDone[run.floor]) && fightFoesOf(run.floor, true)[0]);
@@ -87,6 +87,7 @@ export function coopFightRound(run, Ps, picks) {
     const insp = fightWinInsp(players, fight.rank);
     coopActive(run).forEach(m => {
       const P = Ps[m.id];
+      if (P && !fight.custom) foeLog(P, fight.foe); // 怪物圖鑑：第壹次打贏記壹筆（不管拿不拿獎勵）
       if (insp > 0 && m.rewarded && P) { P.insp += insp; m.got.insp += insp; events[m.id].push({ type: "fightWin", insp, last: fight.last }); }
       else events[m.id].push({ type: "fightWin", insp: 0, last: fight.last });
     });
