@@ -6,6 +6,7 @@
 // ================================================================
 import { giverName, rewardText } from "../../../shared/story/core.js";
 import { ADDONS, btn, h, icon, snd } from "../core/ui_core.js";
+import { GIVER_BUST } from "./ui_giver_bust.js";
 
 // 種類 → 圖示（art.js 已有的名字）
 export const TASK_ICON = { make: "palette", deliver: "commission", fuse: "fusion", pillow: "pillow", hug: "heart", view: "gallery", show: "gallery", read: "book", cellar: "stairs", spot: "key",
@@ -24,7 +25,7 @@ export function giverAv(id, o = {}) {
   const tone = GIVER_TONE[id] || GIVER_TONE.hall;
   const el = h("span", { class: "tkc-av" + (o.small ? " small" : "") + (id === "yuga" ? " online" : ""), style: `--bg:${tone[0]};--fg:${tone[1]}`, role: "img", "aria-label": giverName(id) });
   if (GIVER_ART.has(id)) el.append(h("img", { src: `/tasks/giver-${id}.webp`, alt: "", loading: "lazy" }));
-  else el.insertAdjacentHTML("beforeend", BUST);
+  else el.insertAdjacentHTML("beforeend", GIVER_BUST[id] || BUST);
   return el;
 }
 
