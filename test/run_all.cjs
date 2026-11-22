@@ -156,6 +156,7 @@ const STEPS = [
   ["館內 NPC 的純函式（打包給網頁、故事線解鎖、抽展廳旅客、展廳留言、委託人名單一致，11-14）", ["test/npc/npc.test.cjs"]],
   ["館內 NPC 的內容（content/npc）", ["tools/check/npc_check.cjs"]],
   ["交代人互動台詞的檢查擋得住壞的（決定 0151）", ["test/tools/givers_check.test.cjs"]],
+  ["延伸世界帳本（六週表、人物線旁證審查）的檢查", ["test/tools/extend_check.test.cjs"]],
   ["交代人互動台詞（content/givers）", ["tools/check/givers_check.cjs"]],
   ["世界經濟的名單和腳本（單位的樹、兩層加總、股票只掛一處、劇情單位、NPC 的隸屬、world:unit／npc／gdp，決定 0086）", ["test/world/world.test.cjs"]],
   ["世界經濟的名單（content/world/units ＋ NPC 的 job）", ["tools/check/world_check.cjs"]],

@@ -67,6 +67,8 @@ function today(L, week, prevWeek) {
   }
   { const u = ((L.main && L.main.units) || []).find(x => x && Array.isArray(x.weeks) && x.weeks.includes(week)); if (u) { const { tell, ...rest } = u; add(`這週在第 ${u.no} 段「${u.title}」的第 ${week === u.weeks[0] ? "1（揭露週）" : "2（回聲週，要做這壹段的進展）"} 週 main.units`, Object.assign({ tell }, rest)); } }
   add(`這週 weeks.${week}`, L.weeks && L.weeks[week]);
+  // 延伸世界（翊文 11-22）：這週的類（物／人／規矩／你）、三個去處、人物線旁證（只能用 audit 審過的）
+  if (L.extend && L.extend.weeks && L.extend.weeks[week]) { const xw = L.extend.weeks[week]; add(`延伸世界 extend.weeks.${week}（這週的類、三個去處、要放的人物線；規則看 extend.規則）`, Object.assign({}, xw, { threads: (L.extend.threads || []).filter(t => (xw.threads || []).includes(t.id)) })); }
   if (prevWeek && !(L.weeks && L.weeks[week])) add(`上週 weeks.${prevWeek}（這週還沒寫，先接上週的鉤子）`, L.weeks && L.weeks[prevWeek] && { hooks: L.weeks[prevWeek].hooks, question: L.weeks[prevWeek].question, motifs: L.weeks[prevWeek].motifs });
   add("還沒收的伏筆 foreshadow（closed 不是 true）", (L.foreshadow || []).filter(f => !f.closed));
   // 其他大段：只印提到這週的那幾筆

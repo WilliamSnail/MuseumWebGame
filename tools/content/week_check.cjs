@@ -6,6 +6,7 @@
 const fs = require("fs"), path = require("path");
 const { load } = require("../../test/load_shared.cjs");
 const { eventSlotOk } = require("./announce.cjs");
+const { checkExtend } = require("./extend_check.cjs");
 const G = load();
 
 const ROOT = path.join(__dirname, "..", "..");
@@ -690,6 +691,8 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
     });
     // 揭露節奏（決定 0078）：沒有 revealBeats 的舊帳本照常。格式錯、揭露太像謎底、露臉、地方太少都擋
     if (L.revealBeats != null) checkRevealBeats(L, G, E, W, `${lw}.revealBeats`, nowWeek);
+    // 延伸世界（翊文 11-22）：六週表、人物線、旁證審查；沒有 extend 的舊帳本照常
+    checkExtend(L, E, W, lw);
     // 子主旨和世界的層（docs/規劃/世界觀主旨.md）：沒有 main.subthemes 的舊帳本照常
     checkSubthemes(L, E, W, lw);
     // 兩週壹段、地圖計畫、館外地圖資料（翊文 11-16）
