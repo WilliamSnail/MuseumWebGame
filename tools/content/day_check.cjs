@@ -42,6 +42,31 @@ function mapFresh(root = ROOT) {
   return fs.readFileSync(f, "utf8") === pack.source(pack.spots(src)) ? { ok: true, message: "館外地圖跟 content/map/館外.json 壹致" } : { ok: false, message: "shared/world/map_data.js 沒跟上 content/map/館外.json：跑 node tools/content/map_pack.cjs，再 git add" };
 }
 
+// ---------- 延伸世界：今天排到的四問、收線，dN.json 真的放了沒（11-22，Yuga 排程檢視第 1 項） ----------
+// 帳本 extend.weeks.<週> 的 dread／cost／pepe／horror 各寫了「哪壹天（day: "d3"）、放在哪（where）」，cost 還可以寫 san。
+// 今天剛好是那壹天，今天的檔就要真的有對應的東西（房間 adds、今日特展 show.works、公佈欄 board、每週任務旁白 daily／weeklyWords、書 books、賭場 casino），cost 的 san 要在今天的檔裡找得到；
+// closes 的謎在這週週日（d7）收，那天要有 clue。where 裡寫「dN …」開頭的段落是別天的，不算今天；不認得的地方（例如 NPC 日報）略過。
+const WHERE_KEYS = [["房間", d => asList(d.adds).length > 0], ["今日特展", d => isObj(d.show) && asList(d.show.works).length > 0], ["公佈欄", d => typeof d.board === "string" && d.board.trim().length > 0],
+  ["任務旁白", d => asList(d.daily).some(t => t && t.says) || asList(d.weeklyWords).length > 0], ["書", d => asList(d.books).length > 0], ["賭場", d => isObj(d.casino) && Object.keys(d.casino).length > 0]];
+const hasSanSpec = (o, spec) => Array.isArray(o) ? o.some(x => hasSanSpec(x, spec)) : isObj(o) ? Object.keys(o).some(k => (k === "san" && typeof o[k] === "string" && o[k].split(" ").join("") === String(spec).split(" ").join("")) || hasSanSpec(o[k], spec)) : false;
+const Q_NAME = { dread: "恐懼", cost: "代價", pepe: "佩佩", horror: "嚇人的展品" };
+function extendIssues({ p, day, ledger }) {
+  const E = [], X = ledger && ledger.extend && ledger.extend.weeks && ledger.extend.weeks[p.week];
+  if (!X || !isObj(day)) return E;
+  const n = "d" + p.weekday, f = p.dayFile;
+  for (const k of ["dread", "cost", "pepe", "horror"]) {
+    const it = X[k];
+    if (!isObj(it) || it.day !== n) continue;
+    String(it.where || "").split(/[；＋;+]/).map(x => x.trim()).filter(x => x && !/^d[1-7]/.test(x)).forEach(seg => {
+      const hit = WHERE_KEYS.find(([key]) => seg.includes(key) || (key === "任務旁白" && seg.includes("每週任務")) || (key === "賭場" && seg.includes("賭場收藏")));
+      if (hit && !hit[1](day)) E.push(`${f}：帳本 extend.weeks.${p.week}.${k}（${Q_NAME[k]}）排在今天，放在「${seg}」，但今天的檔沒有${hit[0]}的內容`);
+    });
+    if (k === "cost" && it.san && !hasSanSpec(day, it.san)) E.push(`${f}：帳本 extend.weeks.${p.week}.cost 要在今天配理智檢定 san「${it.san}」，今天的檔裡找不到`);
+  }
+  if (p.weekday === 7 && asList(X.closes).length && !collectClues(day).length) E.push(`${f}：這週要收線（closes：${asList(X.closes).join("、")}），今天（週日）的檔卻沒有任何 clue`);
+  return E;
+}
+
 // ---------- --strict：今天「一定要」的項目（純函式，測試用） ----------
 // 輸入：p（day_plan 的 planDay 結果）、day（今天的 dN.json，沒有給 null）、wk（這週的 week.json）、ledger（整份帳本）、opts（allowNoMarket、allowNoMeme）。回傳錯誤字串陣列，空的就是過。
 function strictIssues({ p, day, wk, ledger, opts = {} }) {
@@ -73,6 +98,7 @@ function strictIssues({ p, day, wk, ledger, opts = {} }) {
     const lb = asList(ledger && ledger.revealBeats && ledger.revealBeats.list).find(x => x && x.id === b.id);
     if (lb && !(lb.status === "revealed" && lb.revealedOn === p.date && asList(lb.clues).length)) E.push(`帳本 revealBeats「${b.id}」還沒改成 revealed（revealedOn 要是 ${p.date}、clues 要填）：跑 npm run ledger -- reveal ${b.id}`);
   }
+  E.push(...extendIssues({ p, day, ledger })); // 延伸世界：今天排到的四問、收線
   // 週日：結局書、主線章節書、疑點簿 answer
   if (n === 7) {
     const books = asList(day.books);
@@ -140,4 +166,4 @@ function main() {
   process.exitCode = results.some(r => !r.ok) ? 1 : 0;
 }
 if (require.main === module) main();
-module.exports = { summarize, packFresh, mapFresh, strictIssues, formatReport };
+module.exports = { summarize, packFresh, mapFresh, strictIssues, extendIssues, hasSanSpec, formatReport };

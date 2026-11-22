@@ -1,0 +1,26 @@
+# 每天台灣 09:30 看每日排程有沒有跑起來（11-22）：今天的 dN.json 還沒在 main 上、也沒有開著的 PR 帶它，就寫進 GitHub issue「自動流程失敗通報」。規則在 tools/check/schedule_health.cjs。
+name: 每日排程有沒有跑
+
+on:
+  schedule:
+    - cron: "30 1 * * *" # 台灣每天 09:30（排程 08:23 開跑）
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: 今天的檔有沒有放
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/check/schedule_health.cjs --issue

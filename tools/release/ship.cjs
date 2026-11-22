@@ -67,7 +67,8 @@ function run(cmd, args, opts = {}) {
 }
 const briefLine = t => /^\s*(✓|✗)/.test(t) || /失敗|FAIL|錯誤/.test(t); // --brief 要印的行（純函式，測試用）
 const git = (args, opts) => run("git", ["-c", "core.quotepath=false", ...args], opts);
-const say = t => console.log(`\n▶ ${t}`);
+const LAST = { step: null }; // 最後做到哪壹步（失敗報告用）
+const say = t => { LAST.step = t; console.log(`\n▶ ${t}`); };
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
 const mergeMain = ai => mergeFromMain(commitText("併 main（自動解衝突）", ai));
@@ -284,5 +285,16 @@ function backToMain() {
   console.log("（沒能回到 main：等壹下自己跑 git checkout main、git pull）");
 }
 
-if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { briefLine, isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning, rolloverWarning };
+// 失敗報告（11-22，Yuga 排程檢視第 5 項）：ship 停下來的時候，印壹段可以直接貼進 GitHub issue 的文字（排程沒人看著，失敗了要有人知道）。純函式，測試用
+function failReport({ message, step, branch, title, when = new Date() }) {
+  const t = when.toISOString().replace("T", () => " ").slice(0, 16) + "（UTC）";
+  return ["---- 可以直接貼進 issue 的失敗報告 ----", `ship 失敗：${String(title || "（沒給標題）")}`, `- 時間：${t}`, `- 分支：${branch || "（不知道）"}`, `- 停在：${step || "（還沒開始）"}`, "- 原因：", "```", String(message || "").trim().split("\n").slice(0, 30).join("\n"), "```", "（再跑壹次 ship 會從沒做完的地方接著走；commit、PR 做過不會重做）", "----"].join("\n");
+}
+if (require.main === module) {
+  try { main(); } catch (e) {
+    console.error("\n✗ " + e.message);
+    try { const a = process.argv.slice(2), i = a.indexOf("--title"); console.error("\n" + failReport({ message: e.message, step: LAST.step, branch: git(["branch", "--show-current"], { ok: true }).out, title: i >= 0 ? a[i + 1] : "" })); } catch (e2) { /* 報告印不出來也不要蓋掉原本的錯誤 */ }
+    process.exit(1);
+  }
+}
+module.exports = { failReport, briefLine, isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning, rolloverWarning };
