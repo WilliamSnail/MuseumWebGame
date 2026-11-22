@@ -195,5 +195,18 @@ T("展廳頁：新存檔空展台、自由模式 null、擺上去後排列和評
   P.upgrades.ped7 = true; assert.strictEqual(J(G.passView(P, {})).hall.size, 7);
 });
 
+T("地下和簽到：怪物圖鑑沒打贏的不寫名字、結局照存檔、簽到摘要要給了才有", G => {
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).cellar, null);
+  const P = fresh(G), c0 = J(G.passView(P, {})).cellar;
+  assert.strictEqual(c0.foesGot, 0); assert.ok(c0.foes.length > 0 && c0.foes.every(f => f.name === "？？？" && !f.d));
+  assert.ok(c0.endings.every(e => !e.d && e.name === "？？？")); assert.strictEqual(c0.floorList.length, c0.floors);
+  const id = G.CELLAR_FOES[0].id; P.cellar.foes = { [id]: "2026-11-22" }; P.cellar.floorsDone[1] = "2026-11-20"; P.endings.cellar = "2026-11-21";
+  const c1 = J(G.passView(P, {})).cellar;
+  assert.strictEqual(c1.foesGot, 1); assert.ok(c1.foes[0].name !== "？？？" && c1.foes[0].d === "2026-11-22");
+  assert.strictEqual(c1.floorList[0].d, "2026-11-20"); assert.ok(c1.endings.find(e => e.id === "cellar").name !== "？？？");
+  assert.strictEqual(G.passView(P, {}).sign, null);
+  assert.deepStrictEqual(J(G.passView(P, { signins: 5, streak: { cur: 2, best: 4, makeups: 1 } }).sign), { count: 5, cur: 2, best: 4, makeups: 1 });
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

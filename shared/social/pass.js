@@ -4,9 +4,9 @@
 //  賭場的籌碼、全部的紀念品、賭場成就在伺服器，這裡沒有：畫面自己接（籌碼）或連過去（紀念品、成就）。
 // ================================================================
 
-import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
-import { BOOK4, BOOK_SEQUELS, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
-import { FORBIDDEN_BOOKS } from "../core/content.js";
+import { BADGES, CELLAR_FOES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
+import { BOOK4, BOOK_SEQUELS, CELLAR, ENDING_CELLAR, FOE_TEXT, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
+import { ENDINGS, FORBIDDEN_BOOKS } from "../core/content.js";
 import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, hallItem, hallScore, isFree, maxSan, todayStr } from "../core/logic_base.js";
 import { hallArt } from "./gifts.js";
 import { SHOW_THEMES, SHOW_TIER_NAME, showPosters } from "../story/themeshow.js";
@@ -132,6 +132,26 @@ export function passHall(P) {
     report, visitors: Math.max(0, Math.floor(+P.hallVisitors) || 0), log, logInsp,
   };
 }
+// 地下收藏庫的紀錄（翊文 11-22：連怪物圖鑑和 B5 結局都放進館友證）：每層通關日、怪物圖鑑、結局。只讀。
+// 沒打贏過的怪不寫名字（不破梗）；沒看過的結局也不寫名字
+export function passCellar(P) {
+  if (!P || isFree(P)) return null;
+  const C = P.cellar || {}, done = C.floorsDone || {}, foes = C.foes && typeof C.foes === "object" && !Array.isArray(C.foes) ? C.foes : {}, end = P.endings || {};
+  const endName = id => (id === "cellar" ? ENDING_CELLAR.title : (ENDINGS[id] || {}).title) || id;
+  const foeList = CELLAR_FOES.map(f => ({ id: f.id, floor: f.floor, boss: !!f.boss, d: typeof foes[f.id] === "string" ? foes[f.id] : null }));
+  foeList.forEach(f => { f.name = f.d ? (FOE_TEXT[f.id] || {}).name || "說不出名字的東西" : "？？？"; });
+  return {
+    best: C.best || 0, floors: CELLAR.length,
+    floorList: CELLAR.map(f => ({ n: f.floor, d: typeof done[f.floor] === "string" ? done[f.floor] : done[f.floor] ? "走過" : null })),
+    foes: foeList, foesGot: foeList.filter(f => f.d).length,
+    endings: ["curator", "museum", "cellar"].map(id => ({ id, d: typeof end[id] === "string" ? end[id] : end[id] ? "有" : null, name: end[id] ? endName(id) : "？？？" })),
+  };
+}
+// 簽到的摘要（o.signins 簽到幾天、o.streak = signStreak(存檔, 今天) 的結果，畫面給）。沒給就是 null
+export function passSign(o) {
+  if (!o || !Number.isInteger(o.signins) || !o.streak) return null;
+  return { count: o.signins, cur: o.streak.cur || 0, best: o.streak.best || 0, makeups: o.streak.makeups || 0 };
+}
 export function passAvatar(P) {
   const k = P && typeof P.avatar === "string" ? P.avatar : "";
   return k && P.pepes && P.pepes[k] && fromKey(k) ? k : "";
@@ -182,6 +202,8 @@ export function passView(P, o = {}) {
     upgrades: passUpgrades(P),
     relics: passLegacy(P),
     hall: passHall(P),
+    cellar: passCellar(P),
+    sign: passSign(o),
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),

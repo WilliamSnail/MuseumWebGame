@@ -32,10 +32,10 @@ export const PASS_SOURCES = [
   { id: "hall", name: "展廳（展台上的佩佩、評分、主題）", from: null, save: ["P.hall", "P.hallVisitors", "P.visitorLog", "P.themesSeen", "P.themeShow", "P.giftsIn", "P.visit", "P.fullRows"], pass: { src: "pass", key: "hall" }, use: "goto", pub: ["slots", "art", "score", "artBonus", "theme", "posters", "report"] },
   { id: "souvenirs", name: "掛在展廳的紀念品", from: null, save: ["W.hung", "W.props"], pass: { src: "pass", key: "souvenirs" }, use: "hang", pub: ["souvenirs"] },
   // ---- 簽到、限定品 ----
-  { id: "limited", name: "限定品（簽到、兌換所、主題展）", from: { file: "shared/core/config.js", list: "LIMITED_ITEMS" }, save: ["P.limited", "SAVE.signin"], pass: { src: "pass", key: "deco.items" }, use: "use", pub: ["deco", "frame"] },
+  { id: "limited", name: "限定品（簽到、兌換所、主題展）", from: { file: "shared/core/config.js", list: "LIMITED_ITEMS" }, save: ["P.limited", "SAVE.signin"], pass: [{ src: "pass", key: "deco.items" }, { src: "pass", key: "sign" }], use: "use", pub: ["deco", "frame"] },
   // ---- 地下收藏庫 ----
-  { id: "cellar", name: "地下收藏庫（最深樓層、通關、鑰匙、結局）", from: { file: "shared/core/config.js", list: "CELLAR_REWARDS" }, save: ["P.cellar", "P.keys", "P.endings", "P.injured"], pass: { src: "pass", key: "records" }, use: "none", pub: [] },
-  { id: "foes", name: "怪物圖鑑", from: { file: "shared/core/config.js", list: "CELLAR_FOES" }, save: ["P.cellar"], pass: null, use: "none", pub: [] },
+  { id: "cellar", name: "地下收藏庫（最深樓層、通關、鑰匙、結局）", from: { file: "shared/core/config.js", list: "CELLAR_REWARDS" }, save: ["P.cellar", "P.keys", "P.endings", "P.injured"], pass: [{ src: "pass", key: "records" }, { src: "pass", key: "cellar" }], use: "none", pub: [] },
+  { id: "foes", name: "怪物圖鑑", from: { file: "shared/core/config.js", list: "CELLAR_FOES" }, save: ["P.cellar"], pass: { src: "pass", key: "cellar.foes" }, use: "none", pub: [] },
   { id: "trials", name: "試煉房間", from: { file: "shared/core/systems_text.js", list: "TRIAL_ROOMS" }, save: [], pass: null, use: "goto", pub: [] },
   // ---- 賭場（錢包在伺服器；pass.src = casino） ----
   { id: "chips", name: "籌碼和帳本", from: null, save: ["W.v", "W.chips", "W.led", "W.loan", "W.work", "W.rel"], pass: { src: "casino", key: "chips" }, use: "goto", pub: [] },
