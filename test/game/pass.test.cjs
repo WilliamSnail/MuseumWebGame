@@ -140,5 +140,15 @@ T("工坊升級和遺物歷任 passUpgrades／passLegacy：7 項狀態、買了�
   const f = fresh(G, "free"); assert.strictEqual(G.passView(f, {}).upgrades, null); assert.strictEqual(G.passView(f, {}).relics, null);
 });
 
+T("名牌框：戴著的名牌框出現在證件上（card.frame），沒戴是 null，自由模式 null", G => {
+  const P = fresh(G);
+  assert.strictEqual(G.passView(P, {}).card.frame, null);
+  const id = G.LIMITED_ITEMS.find(x => x.kind === "deco" && x.slot === "frame").id;
+  assert.ok(G.grantLimited(P, id, G.todayStr()));
+  assert.ok(G.wearDeco(P, id));
+  assert.strictEqual(G.passView(P, {}).card.frame, id);
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).card.frame, null);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

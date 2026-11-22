@@ -45,7 +45,9 @@ export function openPass(o = {}) {
       h("div", { class: "ps-card-main" },
         h("div", { class: "ps-photo", "aria-hidden": "true", html: c.photo ? frogHTML(fromKey(c.photo)) : "" }, c.photo ? null : icon("user")),
         h("div", { class: "ps-id" },
-          h("h3", null, nick(), c.title ? titleTag(c.title, "ps-ttl") : null),
+          h("h3", null, c.frame
+            ? h("span", { class: "ps-nick lim-" + c.frame }, h("span", { class: "lim-c tl", html: ART.nameCorner(c.frame), "aria-hidden": "true" }), h("span", { class: "lim-c br", html: ART.nameCorner(c.frame), "aria-hidden": "true" }), nick())
+            : nick(), c.title ? titleTag(c.title, "ps-ttl") : null), // 名牌框（11-22 翊文）：戴著的名牌框也套在館友證的名字上
           h("dl", null,
             h("dt", null, "入館日"), h("dd", null, c.created),
             h("dt", null, "今天是"), h("dd", null, `第 ${c.dayNo} 天`),

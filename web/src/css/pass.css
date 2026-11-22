@@ -183,3 +183,10 @@
 .pv-up small { color: var(--parch-sub, #5A4630); line-height: 1.4; }
 .pv-up-st { flex: 0 0 auto; font-size: .8125rem; color: #6E5020; text-align: right; font-variant-numeric: tabular-nums; }
 .pv-up li.got .pv-up-st { color: #3E6A30; }
+
+/* 名牌框（11-22）：館友證上的名字也套戴著的名牌框（金藤、素木畫框…；樣子跟展廳的館主名牌、館友名單同壹組） */
+.ps-nick { position: relative; display: inline-block; padding: 1px 12px; border-radius: 3px; }
+.ps-nick .lim-c { width: 18px; height: 18px; }
+.ps-nick .lim-c.tl { left: -6px; top: -6px; } .ps-nick .lim-c.br { right: -6px; bottom: -6px; }
+.ps-nick.lim-frame-vine { box-shadow: inset 0 0 0 1.5px #C99A2E, 0 0 0 2px rgba(226,181,62,.35); background: linear-gradient(180deg, rgba(233,192,90,.22), rgba(0,0,0,0)); }
+.ps-nick.lim-foe-f3g { box-shadow: inset 0 0 0 2px #8A5A2E, inset 0 0 0 3.5px #C9A06A, 0 0 0 2px rgba(185,138,82,.35); background: linear-gradient(180deg, rgba(201,160,106,.18), rgba(0,0,0,0)); }
