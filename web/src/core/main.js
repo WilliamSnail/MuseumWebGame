@@ -87,6 +87,7 @@ import "../rooms/casino/ui_casino_slot.js"; // 大禮包的拉霸機（11-09）
 import "../panels/ui_giver_log.js"; // 圖書館的「交談紀錄」（11-21）
 import "../panels/ui_giver_pair.js"; // 串門子：兩位交代人同框（11-22）
 import "../panels/ui_giver_note.js"; // 交代人在自己待的地方說今天交代的那句（11-21）：要放在 ui_story.js、ui_tasks.js 後面
+import "../fx/ui_sanfx.js"; // 理智 55 以下逐漸多的怪事（11-22）
 import "../fx/ui_lyrics.js"; // 深夜大廳歌曲的字幕（11-21）
 import "../rooms/casino/ui_casino_live.js"; // 實況和斗內：聽 casinoLive、跳感謝、大廳的「正在實況」（決定 0053）
 import "../rooms/casino/ui_casino.js";
@@ -110,6 +111,7 @@ import "../rooms/casino/ui_casino_table.js"; // 賭場的館友同桌（第二�
 
 import "./ui_scrollhint.js"; // 「往下滑還有」的提示（11-16）
 import "../css/scrollhint.css";
+import "../css/sanfx.css"; // 理智低時畫廊、展廳、大廳的怪事（11-22，ui_sanfx.js）
 import "./ui_update.js"; // 有新版本的提示（11-10）：還開著的舊網頁跳「館裡更新了」；判斷在 shared/game/notices.js
 
 const debugScreen = import.meta.env.DEV && location.hash.length > 1;

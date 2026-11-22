@@ -19,6 +19,7 @@
 //    unrest      集團人心四格 [安穩, 有點躁動, 不安, 動盪]
 //    own         館友自己的理智效果 { lightsOut, faint, flee, bout, shadow }：有任何壹個，房間效果收起；shadow（跟著游標的黑影）出現時怪影子不出現
 // ================================================================
+import { NUM } from "../core/config.js";
 import { statBandOf } from "../world/stat_view.js";
 
 // 導覽圖上各房間的熱絡：房間人數（館友＋旅客＋散客）→ 級數（1～3 人＝1 級、4～9 人＝2 級、10 人以上＝3 級；0 人＝0 級）。門檻只寫這壹處
@@ -81,6 +82,12 @@ export function roomHeats(counts) {
 // 理智低的時候疊上去的恐怖音樂（翊文 11-15：「理智很低、理智歸零，門檻數字上升壹點，平常比較容易聽到」；原本的心跳 30 以下、不安低鳴 40 以下照舊保留，這是另外壹層）
 // 理智 < 45：'low'；<= 15（含歸零）：'edge'；其他：null。門檻只寫這壹處
 export const SAN_DREAD = { low: 45, edge: 15 };
+// 理智低時畫廊、展廳、大廳的怪事分幾段（11-22）：0＝沒有（理智夠高、燈熄了、沒有資料）、1／2／3＝低於 NUM.sanFx.tiers 的第壹／二／三個門檻。門檻只寫在 config.js
+export function sanFxTier(sanity, dark) {
+  const v = rmN(sanity);
+  if (dark || v === null || v <= 0) return 0;
+  return NUM.sanFx.tiers.reduce((t, x, i) => (v < x ? i + 1 : t), 0);
+}
 export function sanDread(sanity, dark) {
   const v = rmN(sanity);
   if (dark) return "edge";
