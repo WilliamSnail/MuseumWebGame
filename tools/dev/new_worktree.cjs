@@ -45,6 +45,7 @@ function main() {
     if (!fs.existsSync(target)) throw new Error(`主資料夾沒有 ${l}：先在 ${root} 跑 npm install`);
     fs.symlinkSync(target, path.join(dir, l), "junction");
   }
+  fs.mkdirSync(path.join(dir, ".claude"), { recursive: true }); // 放 spec.json、PR 說明用（不進 git），免得每次手動 mkdir（11-22）
   console.log(`好了：${dir}（${o.branch}）`);
 }
 
