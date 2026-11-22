@@ -122,7 +122,7 @@ export function celebrate(kind) {
   setTimeout(() => el.remove(), 2400);
 }
 // 播音效檔（11-15，Pixabay 素材；id 和來源在 shared/game/sfx_files.js）。g 音量 0～1
-export const sndFile = (id, g) => { if (FX.sound.file) FX.sound.file(id, g); };
+export const sndFile = (id, g, opt) => { if (FX.sound.file) FX.sound.file(id, g, opt); }; // opt.duck：放的時候背景音樂讓開
 
 // 說明牌上的字：偏執發作時都寫「牠們在看你」，理智低時偶爾歪掉、錯字
 export const TYPO = { 佩: "珮", 的: "旳", 你: "妳", 是: "昰", 看: "着", 了: "子", 這: "这", 一: "－", 隻: "只", 心: "忄" };
