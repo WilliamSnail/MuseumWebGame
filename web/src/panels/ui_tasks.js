@@ -36,12 +36,16 @@ export function taskCard(o) {
   const act = claimed ? h("span", { class: "tkc-stamp" }, icon("check"), h("span", null, "領過了"))
     : done ? btn("領獎勵", o.onClaim, "primary small tkc-claim")
       : o.where && !o.past ? btn([placeName(o.where) ? "去" + placeName(o.where) : "前往", " ", h("span", { "aria-hidden": "true" }, "→")], o.onGo, "small tkc-go") : null;
+  // 有交代人的任務：交代人（剪影、名字、在哪、熟識度）和他的話跟任務狀態同壹列（11-22 翊文：「今天的交代跟任務表整合在壹起」）
+  const gHead = giver ? h("div", { class: "tkc-ghead" }, h("b", null, giverName(t.giver)), h("small", null, "・在" + (GIVER_WHERE[t.giver] || "館裡")), ADDONS.giverLvTag ? ADDONS.giverLvTag(t.giver) : null) : null;
+  const gSay = giver ? h("p", { class: "tkc-gsay" }, o.sayText || t.says) : null;
   return h("li", { class: "tkc-card" + (done ? " done" : "") + (claimed ? " claimed" : "") + (giver ? " giver" : "") },
-    giver ? giverAv(t.giver, { small: true }) : null,
+    giver ? giverAv(t.giver) : null,
     h("div", { class: "tkc-body" },
-      h("span", { class: "tkc-ic", "aria-hidden": "true" }, icon(o.kindIcon || "star")),
+      giver ? null : h("span", { class: "tkc-ic", "aria-hidden": "true" }, icon(o.kindIcon || "star")),
       h("div", { class: "tkc-main" },
-        h("span", { class: "tkc-text" }, o.text),
+        gHead, gSay,
+        h("span", { class: "tkc-text" }, giver ? [h("span", { class: "tkc-ic sm", "aria-hidden": "true" }, icon(o.kindIcon || "star")), o.text] : o.text),
         o.words ? h("small", { class: "tkc-words" }, o.words) : null,
         h("div", { class: "tkc-meta" },
           h("span", { class: "tkc-bar", role: "img", "aria-label": `進度 ${o.n}／${o.tgt}` }, h("i", { style: `width:${pct}%` })),
@@ -77,16 +81,4 @@ export function claimBurst(title, text) {
   const el = h("div", { class: "tkc-burst", role: "status" }, h("div", { class: "tkc-seal", "aria-hidden": "true" }, icon("star")), h("b", null, title), text ? h("p", null, text) : null);
   document.body.append(el); snd("coin");
   setTimeout(() => el.classList.add("out"), 1500); setTimeout(() => el.remove(), 1900);
-}
-
-// 今天的交代（任務板，11-20）：今天有交代任務的每位交代人：頭像、名字、在哪、現在說的那句（沒做完 says、做完換 done）；做完的變淡；按了去他那裡。
-// items：[{ giver, text, done, go }]，照任務順序；onGo(item) 由呼叫的人處理（關任務板、過去）
-export function giverBoard(items, onGo) {
-  if (!items.length) return null;
-  return h("div", { class: "tkc-giv" }, h("h4", null, "今天的交代"),
-    h("ul", null, items.map(it => h("li", { class: it.done ? "done" : "" },
-      h("button", { type: "button", class: "tkc-giv-b", title: it.go ? "過去" : "", onClick: () => onGo(it) },
-        giverAv(it.giver, { small: true }),
-        h("span", { class: "tkc-giv-t" }, h("b", null, giverName(it.giver)), h("small", null, "・在" + (GIVER_WHERE[it.giver] || "館裡")), ADDONS.giverLvTag ? ADDONS.giverLvTag(it.giver) : null, h("p", null, it.text)),
-        it.go ? h("span", { class: "tkc-giv-go", "aria-hidden": "true" }, "→") : null)))));
 }

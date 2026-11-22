@@ -56,19 +56,25 @@
   .tkc-ic { width: 30px; height: 30px; }
 }
 
-/* 任務卡只留小頭像，貼在右上角；對話交給『今天的交代』（11-20） */
-.tkc-card.giver > .tkc-av { position: absolute; top: -9px; left: -7px; width: 28px; height: 28px; z-index: 1; border-width: 2px; }
-/* 今天的交代 */
-.tkc-giv { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: rgba(255, 255, 255, .45); border: 1px solid rgba(90, 60, 30, .25); }
-.tkc-giv h4 { margin: 0 0 6px; font-size: .875rem; letter-spacing: .12em; color: #6E4A12; }
-.tkc-giv ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.tkc-giv li.done { opacity: .55; }
-.tkc-giv-b { display: flex; align-items: center; gap: 10px; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.tkc-giv-b:hover { background: rgba(176, 138, 62, .15); }
-.tkc-giv-t { flex: 1; min-width: 0; }
-.tkc-giv-t b { font-size: .9375rem; } .tkc-giv-t small { color: #6E4A12; font-size: .75rem; }
-.tkc-giv-t p { margin: 2px 0 0; line-height: 1.5; }
-.tkc-giv-go { flex: none; padding: 2px 8px; border-radius: 10px; background: #B08A3E; color: #FFF8DC; }
+/* 有交代人的任務卡（11-22 把「今天的交代」併進來）：左邊交代人剪影，右邊名字、他的話、任務名、進度、獎勵、按鈕 */
+.tkc-card.giver { flex-direction: row; align-items: flex-start; gap: 10px; }
+.tkc-card.giver > .tkc-av { width: 52px; height: 52px; margin-top: 2px; }
+.tkc-card.giver .tkc-body { flex: 1; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; }
+.tkc-ghead { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; line-height: 1.5; } .tkc-ghead b { font-size: .9375rem; } .tkc-ghead small { color: #6E4A12; font-size: .75rem; }
+.tkc-gsay { margin: 2px 0 3px; padding: 3px 9px 4px; line-height: 1.5; border-radius: 3px 10px 10px 10px; background: rgba(255, 255, 255, .6); border: 1px solid rgba(90, 60, 30, .25); }
+.tkc-card.giver .tkc-text { display: flex; align-items: center; gap: 6px; }
+.tkc-ic.sm { flex: none; width: 20px; height: 20px; border-radius: 4px; } .tkc-ic.sm .ic, .tkc-ic.sm svg { width: 13px; height: 13px; }
+@media (max-width: 760px) {
+  .tkc-card.giver { gap: 8px; padding: 7px 8px; }
+  .tkc-card.giver > .tkc-av { width: 40px; height: 40px; }
+  .tkc-card.giver .tkc-body { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .tkc-card.giver .tkc-act { position: absolute; top: 6px; right: 8px; } /* 按鈕放右上角，不佔壹行 */
+  .tkc-card.giver .tkc-ghead { min-height: 32px; padding-right: 76px; }
+  .tkc-card.giver .tkc-act .btn, .tkc-card.giver .tkc-act button { padding: 4px 8px; font-size: .8125rem; white-space: nowrap; }
+  .tkc-card.giver .tkc-stamp { transform: none; padding: 1px 6px; }
+  .tkc-gsay { padding: 2px 7px 3px; font-size: .875rem; }
+  .tkc-card.giver .tkc-meta { gap: 2px 6px; } .tkc-card.giver .tkc-bar { width: 44px; }
+}
 
 /* 交代人在自己待的地方說今天交代的那句（11-21，ui_giver_note.js）：頭像＋名字＋壹句話，樣子跟餐車堂主的字條、牌桌荷官的泡泡同壹套 */
 .gv-strip { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
