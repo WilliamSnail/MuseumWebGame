@@ -21,6 +21,7 @@ import { accountRows } from "./ui_login.js";
 import { whoOf } from "../rooms/ui_screens3.js";
 import { itemArt, useNow } from "./ui_signin.js";
 import { casePane } from "./ui_story.js";
+import { gearCard } from "./ui_shop.js";
 
 const sec = (title, ...kids) => h("section", { class: "sp-sec" }, title ? h("h3", null, title) : null, ...kids);
 const secT = (title, tip, ...kids) => { const el = sec(title, ...kids); const t = el.querySelector("h3"); if (t && PASS_TIPS[tip]) tipOn(t, PASS_TIPS[tip]); return el; }; // 帶說明牌的區塊（滑鼠移到標題、手機長按）
@@ -31,7 +32,7 @@ const bar = (a, b) => h("div", { class: "ps-bar", role: "img", "aria-label": `${
 export function openPass(o = {}) {
   if (!P) return;
   const m = overlay("nb-story nb-pass", "館友證", "館友證和典藏冊", "user");
-  let tab = PASS_TABS.some(t => t[0] === o.tab) ? o.tab : "card";
+  let tab = PASS_TABS.some(t => t[0] === o.tab) ? o.tab : "card", seat = null, focusGear = false; // seat：參觀者頁看哪個位子（null＝現在在場的）
   const leave = fn => () => { m.close(); fn(); };
   const goBtn = (label, fn, ic) => btn([ic ? (ic.endsWith(":c") ? cicon(ic.slice(0, -2)) : icon(ic)) : null, ic ? " " : null, label, " ", h("span", { "aria-hidden": "true" }, "→")], leave(fn), "small");
   const nick = () => (UI.net && NET.me && NET.me.nick) || "館友";
@@ -51,8 +52,21 @@ export function openPass(o = {}) {
             v.visitor ? [h("dt", null, "參觀者"), h("dd", null, `${v.visitor.name || `第 ${v.visitor.n} 位`}・${v.visitor.jobName}`)] : null,
             typeof UI.chips === "number" && UI.net ? [h("dt", null, "籌碼"), h("dd", null, casNum(UI.chips))] : null,
             c.stamps !== null ? [h("dt", null, "週章"), h("dd", null, `${c.stamps} 枚`)] : null))),
+      gearStrip(v),
       h("div", { class: "ps-card-foot" }, v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`),
       h("div", { class: "ps-card-act" }, btn([icon("user"), h("span", { class: "ps-av-t" }, " 換頭像")], () => pickAvatar(), "small ps-av-btn")));
+  };
+  // 隨身物（11-22）：封面兩格。穿了顯示裝備圖，沒穿是虛線空格；點了到參觀者頁，滑鼠移上去、手機長按看效果
+  const gearStrip = v => {
+    const g = v.gear;
+    if (!g) return null;
+    const toVisitor = () => { tab = "visitor"; seat = null; focusGear = true; draw(); snd("flip"); };
+    return h("div", { class: "ps-gear" }, h("b", { class: "ps-gear-t" }, "隨身物"),
+      Array.from({ length: g.max }, (_, i) => {
+        const it = g.worn[i] ? g.items.find(x => x.id === g.worn[i]) : null;
+        const el = h("button", { type: "button", class: "ps-slot" + (it ? "" : " empty"), "aria-label": it ? `${it.name}：${it.desc}` : "隨身物的空格", onClick: toVisitor }, it ? gearArt(it.id) : h("span", { "aria-hidden": "true" }, "＋"));
+        return tipOn(el, it ? { title: `${it.name}（${it.tierName}）`, what: it.desc, how: PASS_TIPS.gear.how } : PASS_TIPS.gear);
+      }), h("span", { class: "ps-gear-n" }, `${g.worn.length}／${g.max}`));
   };
   const recordsSec = v => sec("紀錄", h("div", { class: "ps-stats" }, v.records.map(([l, x]) => stat(l, x))));
   const accountSec = () => UI.net ? sec("帳號", accountRows(draw, m.close)) : sec("帳號", h("p", { class: "sp-note" }, "現在沒有登入：存檔只放在這個瀏覽器。"));
@@ -79,7 +93,7 @@ export function openPass(o = {}) {
       h("div", { class: "ps-tiles" },
         tile("pepe", "佩佩與書", v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`, `圖書館的書 ${v.books.origin.text.replace(/^(✓ )?讀過 /, "")}・徽章 ${v.ach.have}／${v.ach.total}`, "pepe"),
         tile("casino", "賭場", casOff(v) ? (v.free ? "自由模式沒有" : "要登入") : cas && cas.ok ? `籌碼 ${casNum(cas.chips)}` : "…", casOff(v) ? (v.free ? "" : "賭場在伺服器上，登入才看得到") : casLine(), "casino"),
-        tile("visitor", "參觀者", x ? `${x.name || `第 ${x.n} 位`}・${x.jobName}` : "還沒選職業", x ? `裝備 ${x.gear.length}／${x.gearMax}` : "", "visitor"),
+        tile("visitor", "參觀者", x ? `${x.name || `第 ${x.n} 位`}・${x.jobName}` : "還沒選職業", x ? (x.gear.length ? x.gear.map(g => g.name).join("、") : "還沒穿裝備") : "", "visitor"),
         tile("deco", "裝飾", `${v.deco.have}／${v.deco.total}`, "每日簽到和兌換所拿得到", "deco")),
       h("div", { class: "ps-narrow" }, recordsSec(v), accountSec())]; // 手機：左邊的證件縮成壹條，紀錄和帳號放這裡
   };
@@ -87,7 +101,7 @@ export function openPass(o = {}) {
   // 現在這位參觀者（翊文 11-10：「把館友證補齊」）：館長室名片上有的這裡都看得到；要改（脫裝備、退休）還是去館長室
   const visitorPane = v => {
     const x = v.visitor;
-    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))];
+    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), ...gearPane(v), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))]; // 還沒選職業也能穿裝備（裝備是博物館的、跟職業無關）
     return [
       sec(null, h("div", { class: "pv-head" },
         h("div", { class: "pv-badge", html: ART.jobBadge(x.job), "aria-hidden": "true" }),
@@ -96,13 +110,32 @@ export function openPass(o = {}) {
       sec("現在的狀態", h("div", { class: "ps-stats" }, x.stats.map(([l, n]) => stat(l, n)))),
       sec("技能", h("div", { class: "pv-skills" }, x.skills.map(k => h("div", { class: "pv-skill" + (k.main ? " main" : "") },
         h("span", null, k.s, k.main ? "（拿手）" : ""), h("span", { class: "ps-bar", "aria-hidden": "true" }, h("i", { style: { width: k.v + "%" } })), h("b", null, String(k.v)), h("span", { class: "pv-tick", title: "今天用成功過，明天會擲成長" }, k.tick ? "✓" : ""))))),
-      sec(`裝備　${x.gear.length}／${x.gearMax}`, x.gear.length
-        ? h("ul", { class: "pv-gear" }, x.gear.map(g => h("li", null, gearArt(g.id), h("span", null, h("b", null, g.name), h("small", null, g.desc)))))
-        : h("p", { class: "sp-note" }, "還沒有穿東西。用週章到兌換所換。"),
-        h("div", { class: "sp-go" }, PANELS.shop ? goBtn("兌換所", () => PANELS.shop(), "shop:c") : null)),
+      ...gearPane(v),
       x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
         h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
       h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
+  };
+
+  // 裝備（11-22）：三個位子切換；在場的這位分「穿著／有的、還沒穿／兌換所還能換」三段，穿脫和買都在這裡（用兌換所同壹張卡）；別位只讀
+  const gearPane = v => {
+    const g = v.gear;
+    if (!g) return [];
+    const seats = g.seats.filter(Boolean), sel = seats.find(s => (seat === null ? s.current : s.slot === seat)) || seats.find(s => s.current) || seats[0];
+    const chips = seats.length > 1 ? h("div", { class: "pv-seats", role: "tablist", "aria-label": "參觀者的位子" }, seats.map(s => h("button", { type: "button", role: "tab", "aria-selected": String(s === sel), class: "pv-seat" + (s === sel ? " on" : ""), onClick: () => { seat = s.current ? null : s.slot; draw(); snd("flip"); } },
+      h("b", null, s.name), h("small", null, s.picking ? "還沒選職業" : s.jobName), s.current ? h("i", null, "在場") : null))) : null;
+    const list = arr => h("ul", { class: "shp-list" }, arr.map(it => gearCard(it, draw)));
+    if (!sel || !sel.current) {
+      const own = (sel ? sel.gear : []).map(id => g.items.find(x => x.id === id)).filter(Boolean);
+      return [chips, sec(`${sel ? sel.name : ""}穿著　${own.length}／${g.max}`, own.length
+        ? h("ul", { class: "pv-gear" }, own.map(it => h("li", null, gearArt(it.id), h("span", null, h("b", null, it.name), h("small", null, it.desc)))))
+        : h("p", { class: "sp-note" }, "還沒有穿東西。"), h("p", { class: "sp-note" }, "這位現在不在場，要換人（標題畫面）才能改他穿的。"))];
+    }
+    const worn = g.items.filter(it => it.worn), spare = g.items.filter(it => it.own && !it.worn), shop = g.items.filter(it => !it.own);
+    return [chips,
+      sec(`裝備・穿著　${worn.length}／${g.max}`, worn.length ? list(worn) : h("p", { class: "sp-note" }, "還沒有穿東西。有裝備的話從下面挑壹件穿上。"), worn.length >= g.max ? h("p", { class: "sp-note" }, `已經穿了 ${g.max} 件，要穿別件先脫下壹件。`) : null),
+      spare.length ? sec("有的、還沒穿", list(spare)) : null,
+      shop.length ? sec(`兌換所還能換　（你有 ${g.stamps} 枚週章）`, list(shop), h("div", { class: "sp-go" }, PANELS.shop ? goBtn("到兌換所看全部", () => PANELS.shop({ tab: "gear" }), "shop:c") : null))
+        : sec("兌換所還能換", h("p", { class: "sp-note" }, `全部 ${g.items.length} 件都換齊了。`))];
   };
 
   const pepePane = v => {
@@ -202,6 +235,7 @@ export function openPass(o = {}) {
       h("aside", { class: "ps-side", "aria-label": "館友證" }, certCard(v), h("div", { class: "ps-side-more" }, recordsSec(v), accountSec())),
       h("div", { class: "ps-right" }, tabs, h("div", { class: "sp-body ps-body ps-pane-" + tab }, PANES[tab](v)))));
     const body = m.surface.querySelector(".ps-body"); if (body) body.scrollTop = keepY;
+    if (focusGear) { focusGear = false; const e = body && body.querySelector(".pv-seats, .shp-list, .pv-gear"); if (e) (e.closest(".sp-sec") || e).scrollIntoView({ block: "start" }); } // 從封面的隨身物點進來：直接捲到裝備那段
   }
   draw();
   snd("flip");

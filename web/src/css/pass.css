@@ -147,3 +147,29 @@
   .ps-narrow { display: flex; flex-direction: column; gap: 10px; }
   .ps-narrow > * { flex: none; }
 }
+
+/* 隨身物（11-22）：封面兩格＋參觀者頁的座位切換。裝備卡沿用兌換所的 .shp-gear（shop.css） */
+.ps-gear { display: flex; align-items: center; gap: 8px; padding: 6px 16px 8px; border-top: 1px dashed #B89A66; background: rgba(184,154,102,.18); }
+.ps-gear-t { font-family: var(--serif); font-size: .8125rem; color: #6E5020; letter-spacing: .1em; }
+.ps-gear-n { margin-left: auto; font-size: .8125rem; color: #6E5020; font-variant-numeric: tabular-nums; }
+.ps-slot { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 8px; border: 1.5px solid #9C7428; background: rgba(255,255,255,.6); cursor: pointer; }
+.ps-slot .gear-art { background: none; box-shadow: none; }
+.ps-slot .gear-art, .ps-slot .gear-art svg { display: block; width: 34px; height: 34px; }
+.ps-slot.empty { border-style: dashed; border-color: rgba(156,116,40,.6); background: transparent; color: #9C7428; font-size: 1.25rem; }
+.ps-slot:hover, .ps-slot:focus-visible { box-shadow: 0 0 0 2px rgba(217,164,65,.7); }
+.pv-seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.pv-seat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; padding: 6px 4px; border-radius: 6px; border: 1px solid var(--parch-line, rgba(110,80,32,.35)); background: rgba(255,255,255,.3); color: var(--parch-ink, #2B1B0C); cursor: pointer; }
+.pv-seat b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-seat small { color: var(--parch-sub, #5A4630); font-size: .75rem; }
+.pv-seat i { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: .6875rem; color: #6E5020; }
+.pv-seat.on { background: rgba(200,162,90,.3); border-color: var(--gold-lo, #9C7428); }
+@media (max-width: 760px) {
+  .ps-side .ps-gear { padding: 4px 10px 6px; gap: 6px; }
+  .ps-side .ps-slot { width: 32px; height: 32px; border-radius: 6px; }
+  .ps-side .ps-slot .gear-art, .ps-side .ps-slot .gear-art svg { width: 24px; height: 24px; }
+}
+.nb-pass .pv-seat { background: #F2E3C0 !important; background-image: none !important; color: #2B1B0C !important; border: 1px solid rgba(110,80,32,.45); box-shadow: none; font-family: inherit; }
+.nb-pass .pv-seat b { color: #2B1B0C; font-size: .9375rem; }
+.nb-pass .pv-seat small { color: #5A4630; }
+.nb-pass .pv-seat i { color: #6E5020; }
+.nb-pass .pv-seat.on { background: #E3C57D !important; border-color: #9C7428; box-shadow: inset 0 0 0 1px #9C7428; }

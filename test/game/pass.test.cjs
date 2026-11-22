@@ -90,5 +90,29 @@ T("館友證頭像：舊存檔沒有欄位能讀；選的那隻後來不在收�
   const save = G.newSave(); save.profiles.challenge = J(old); assert.strictEqual(G.migrateSave(J(save)).profiles.challenge.avatar, k1);
 });
 
+T("隨身物 passGear：全部裝備、穿著順序、三個位子各穿什麼、自由模式沒有、不改存檔", G => {
+  const P = fresh(G); G.storyState(P).stamps = 99;
+  const ids = G.GEAR_ITEMS.map(x => x.id);
+  assert.ok(G.buyGear(P, ids[0]).ok); assert.ok(G.buyGear(P, ids[1]).ok);
+  assert.ok(G.wearGear(P, ids[1]).ok); assert.ok(G.wearGear(P, ids[0]).ok);
+  const before = JSON.stringify(P);
+  const g = J(G.passView(P, { today: G.todayStr() })).gear;
+  assert.strictEqual(JSON.stringify(P), before);
+  assert.strictEqual(g.max, G.NUM.shop.gearWorn); assert.strictEqual(g.stamps, G.storyState(P).stamps);
+  assert.strictEqual(g.items.length, G.GEAR_ITEMS.length);
+  assert.deepStrictEqual(g.worn, [ids[1], ids[0]], "照穿的順序");
+  assert.ok(g.items.every(x => x.name && !x.desc.includes("{") && x.price > 0));
+  assert.deepStrictEqual(g.items.filter(x => x.own).map(x => x.id).sort(), [ids[0], ids[1]].sort());
+  assert.strictEqual(g.items.filter(x => x.worn).length, 2);
+  assert.strictEqual(g.seats.filter(Boolean).length, 1); assert.strictEqual(g.seats[0].current, true);
+  // 加第二位：第一位收起來，還是看得到他穿什麼；現在這位沒穿
+  assert.ok(G.addVisitor(P, "乙"));
+  const g2 = J(G.passView(P, { today: G.todayStr() })).gear;
+  const cur = g2.seats.find(s => s && s.current), other = g2.seats.find(s => s && !s.current);
+  assert.deepStrictEqual(cur.gear, []); assert.deepStrictEqual(other.gear, [ids[1], ids[0]]);
+  assert.deepStrictEqual(g2.worn, []); assert.ok(g2.items.every(x => !x.worn));
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).gear, null);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
