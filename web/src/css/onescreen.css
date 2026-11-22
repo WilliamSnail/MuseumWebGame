@@ -778,6 +778,15 @@ body.reduce-motion .fusion-onescreen .altar::after { animation: none; }
 .fusion-onescreen .fusion-palette summary span { flex: none; color: var(--ink-accent, #8E2A24); font-size: var(--type-small, .75rem); font-weight: 700; }
 .fusion-onescreen .fusion-palette[open] .fusion-pal-open, .fusion-onescreen .fusion-palette:not([open]) .fusion-pal-close { display: none; }
 .fusion-onescreen .fusion-palette .palette { margin-top: 6px; }
+/* 調色盤放在羊皮紙卡裡：theme3 的字是給深色牆用的（淡色），在淺底上看不到，這裡全改深墨色 */
+.fusion-onescreen .fusion-palette .palette h3 { color: #6B4A12; }
+.fusion-onescreen .fusion-palette .palette .sub { color: #4A3820; }
+.fusion-onescreen .fusion-palette .pal-cell { color: #2E2014; opacity: 1; border-color: rgba(90, 60, 20, .45); background: rgba(255, 250, 232, .45); }
+.fusion-onescreen .fusion-palette .pal-cell:not(.ready):not(.got) { opacity: .85; }
+.fusion-onescreen .fusion-palette .pal-cell.got { border-color: #8A6420; }
+.fusion-onescreen .fusion-palette .pal-cell small { color: #4A3820; opacity: 1; }
+.fusion-onescreen .fusion-palette .pal-dot.q { background: rgba(90, 60, 20, .12); color: #4A3820; }
+.fusion-onescreen .fusion-palette .pal-hit { color: #6B4A12; }
 @media (max-width: 760px) {
   .fusion-onescreen .onescreen-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr); }
   .fusion-onescreen .fusion-stage { border-width: 12px; }
