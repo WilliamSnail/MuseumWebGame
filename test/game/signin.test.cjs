@@ -16,6 +16,20 @@ const signDays = (G, save, P, dates) => dates.map(d => { G.ensureDay(P, d); retu
 const range = (G, from, n) => Array.from({ length: n }, (_, i) => G.addDays(from, i));
 const S = G => G.NUM.signin;
 
+T("連續天數：今天簽了從今天算、今天還沒簽從昨天算（不算斷）、斷了重算、歷史最長、補簽補上的日子接得起來並算補簽次數", G => {
+  const { save, P } = fresh(G);
+  assert.deepStrictEqual(J(G.signStreak(save, "2026-11-09")), { cur: 0, best: 0, makeups: 0 });
+  signDays(G, save, P, ["2026-11-09", "2026-11-10", "2026-11-11"]);
+  assert.deepStrictEqual(J(G.signStreak(save, "2026-11-11")), { cur: 3, best: 3, makeups: 0 });
+  assert.strictEqual(G.signStreak(save, "2026-11-12").cur, 3, "今天還沒簽：從昨天算，不算斷");
+  assert.strictEqual(G.signStreak(save, "2026-11-13").cur, 0, "隔了壹天沒簽就斷了");
+  signDays(G, save, P, ["2026-11-14", "2026-11-15"]);
+  assert.deepStrictEqual(J(G.signStreak(save, "2026-11-15")), { cur: 2, best: 3, makeups: 0 });
+  G.ensureDay(P, "2026-11-15"); const st = G.storyState(P); st.stamps = 5;
+  st.stamps = 9; assert.ok(G.signMakeup(save, P, "2026-11-13", "2026-11-15", st).ok); assert.strictEqual(G.signStreak(save, "2026-11-15").cur, 3, "只補 13，12 還是空的");
+  assert.ok(G.signMakeup(save, P, "2026-11-12", "2026-11-15", st).ok); assert.deepStrictEqual(J(G.signStreak(save, "2026-11-15")), { cur: 7, best: 7, makeups: 2 }, "補上的日子把前後接起來");
+  assert.ok(!Object.keys(save.signin).includes("streak"), "不另存，從 days 算：存檔格式不變");
+});
 T("簽到：一天只能一次；靈感給博物館、心情給現在這位", G => {
   const { save, P } = fresh(G);
   const i0 = P.insp; P.mood = 40;

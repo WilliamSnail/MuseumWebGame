@@ -7,6 +7,14 @@ const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { f
 const JS = x => JSON.parse(JSON.stringify(x));
 const W = G => G.casWalletFix(G.casWalletNew(), "2026-11-10");
 
+T("換小獎累計：換了幾次、花了多少都記下來；每週重算的 ex 不影響累計；壞資料整理掉", G => {
+  const w = G.casWalletFix(G.casWalletNew(), "2026-11-23"), P = G.newProfile("challenge"), x = G.NUM.casino.exchange[0]; w.chips = 10000000;
+  assert.ok(G.casExchange(w, x.id, P).ok); assert.ok(G.casExchange(w, x.id, P).ok || x.perWeek < 2);
+  const n = x.perWeek < 2 ? 1 : 2, v = JSON.parse(JSON.stringify(G.casPassView(w, null)));
+  assert.strictEqual(v.swap.tot.n, n); assert.strictEqual(v.swap.tot.chips, n * x.chips); assert.strictEqual(v.swap.tot.rows.find(r => r.id === x.id).n, n);
+  const w2 = G.casWalletFix(JSON.parse(JSON.stringify(w)), "2026-12-07"); assert.strictEqual(w2.ex.n[x.id] || 0, 0, "換週重算"); assert.strictEqual(w2.exTot[x.id].n, n, "累計不重算");
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(G.casExTotFix({ [x.id]: { n: -3, chips: "a" }, zzz: { n: 1 }, bad: 5 }))), { [x.id]: { n: 0, chips: 0 } });
+});
 T("空錢包：全空、欄位都在", G => {
   const w = W(G), v = G.casPassView(w, null);
   assert.strictEqual(v.chips, w.chips);

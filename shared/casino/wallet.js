@@ -33,7 +33,7 @@ const casNz = (n, d = 0) => (Number.isFinite(+n) ? +n : d);
 export function casWalletNew() {
   return {
     v: 1, chips: NUM.casino.startChips, tix: { day: null, n: 0, seen: null }, seen: null, led: { mint: { start: NUM.casino.startChips }, burn: {}, cult: 1 },
-    rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} },
+    rel: { day: null, n: 0 }, loan: casLoanNew(), work: null, pk: { day: null, left: NUM.casino.dailyPacks, opened: 0 }, tickets: 0, ex: { week: null, n: {} }, exTot: {},
     ach: {}, props: {}, meals: {}, title: null, hung: [], legacy: null, tablePid: null, npcRel: {}, npcDay: { day: null, g: 0, t: 0 }, wk: casWkNew(null), wkLog: {}, sk: { day: null, win: 0, lose: 0, mood: 0, san: 0 },
     st: { hands: 0, wins: 0, losses: 0, pushes: 0, busts: 0, blackjacks: 0, charlies: 0, dealerBusts: 0, allinWins: 0, streak: 0, lstreak: 0, bestWin: 0, bestLose: 0, reliefs: 0, star5: 0, houseBroke: 0, tables: 0, finds: 0, findChips: 0, chipsMax: NUM.casino.startChips, net: 0 },
   };
@@ -65,6 +65,7 @@ export function casWalletFix(w, day) {
   if (!casIsObj(w.signWk)) w.signWk = {}; // 全簽到送過籌碼的週（決定 0064 之後，翊文 11-11）
   for (const k of Object.keys(base.st)) if (!Number.isFinite(w.st[k])) w.st[k] = base.st[k];
   if (!casIsObj(w.ex.n)) w.ex.n = {};
+  w.exTot = casExTotFix(w.exTot); // 換小獎的累計（11-22，換到幾次、花了多少籌碼；每週重算的 ex 不留，這份只加不減）
   if (!Array.isArray(w.hung)) w.hung = [];
   casSkFix(w, day); // 連勝連敗（決定 0049）：舊錢包沒有 sk，補；換日重算今天的份
   if (day) {
@@ -920,6 +921,12 @@ export function casWinTicket(w, bet) {
 
 // ---------- 籌碼換小獎：每週有上限，只換壹點點 ----------
 export const casExchangeItem = id => NUM.casino.exchange.find(x => x.id === id) || null;
+// 換小獎累計：{ 項目 id: { n 換了幾次, chips 花了多少籌碼 } }；壞的丟掉、只收有的項目
+export function casExTotFix(t) {
+  const out = {};
+  if (casIsObj(t)) for (const x of NUM.casino.exchange) if (casIsObj(t[x.id])) out[x.id] = { n: Math.max(0, Math.floor(casNz(t[x.id].n))), chips: Math.max(0, Math.floor(casNz(t[x.id].chips))) };
+  return out;
+}
 export function casExchangeLeft(w, id) { const it = casExchangeItem(id); return it ? Math.max(0, it.perWeek - casNz(w.ex.n[id])) : 0; }
 // P：挑戰模式的參觀者（獎勵放在博物館）。回傳 { ok, reward } ；有給 P 才會真的把獎勵放進去
 export function casExchange(w, id, P) {
@@ -930,6 +937,7 @@ export function casExchange(w, id, P) {
   if (w.chips < it.chips) return { ok: false, reason: `籌碼不夠（要 ${casNum(it.chips)}）` };
   casBurn(w, "exchange", it.chips); // 唯一消失籌碼的地方
   w.ex.n[id] = casNz(w.ex.n[id]) + 1;
+  const tot = (w.exTot = casExTotFix(w.exTot))[id] || (w.exTot[id] = { n: 0, chips: 0 }); tot.n++; tot.chips += it.chips;
   casGiveReward(P, it.reward);
   return { ok: true, reward: it.reward, left: casExchangeLeft(w, id) };
 }
