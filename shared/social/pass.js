@@ -130,7 +130,7 @@ export function passView(P, o = {}) {
   const lim = limitedCount(P);
   return {
     free,
-    card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle), avatar: passAvatar(P) || null, photo: passPhoto(P) || null },
+    card: { created: typeof P.created === "string" ? P.created : today, dayNo: gameDayNo(P, today), stamps: S ? S.stamps || 0 : null, title: casCleanTitle(P.casinoTitle), frame: isFree(P) ? null : wornDeco(P, "frame") || null, avatar: passAvatar(P) || null, photo: passPhoto(P) || null },
     records,
     visitor: passVisitor(P),
     gear: passGear(P),
