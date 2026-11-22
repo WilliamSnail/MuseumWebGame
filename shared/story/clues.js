@@ -17,6 +17,7 @@ const clObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const clList = v => Array.isArray(v) ? v : [];
 const clStr = v => typeof v === "string" ? v : "";
 export const CLUE_ID_RE = /^c-[a-z0-9]+(-[a-z0-9]+)*$/;
+export const UNDERSTAND_LAYERS = ["物", "人", "規矩", "你"]; // 《看懂的事》的分類（11-22）：固定的條目在 systems_text.js、每日檔的 understand 都要寫 layer
 export const UNDERSTAND_ID_RE = /^u-[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // 把 lib 裡「今天以前」的天整理成：sources（哪裡有線索）、defs（哪些看懂）。壞資料略過，不丟錯
@@ -39,7 +40,7 @@ export function clueCatalog(lib, today) {
       clList(d.show && d.show.works).forEach(w => { if (clObj(w) && clStr(w.clue) && clStr(w.id)) cat.sources.push(Object.assign({ clue: w.clue, kind: "work", sid: p + w.id, title: clStr(w.title) }, at)); });
       clList(d.understand).forEach(u => {
         if (!clObj(u) || !clStr(u.id) || !clStr(u.text) || !clList(u.need).length) return;
-        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint) }, at));
+        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint), layer: clStr(u.layer), who: clStr(u.who), where: clStr(u.where) }, at));
       });
     }
   });
@@ -152,7 +153,7 @@ export function understandView(P, lib, today) {
   try {
     const cat = clueCatalog(lib, today), reach = clReachSet(cat, today);
     cat.defs.forEach(def => {
-      if (clObj(P.understood) && P.understood[def.id]) { out.done.push({ id: def.id, from: def.from, text: def.text, date: P.understood[def.id] }); return; }
+      if (clObj(P.understood) && P.understood[def.id]) { out.done.push({ id: def.id, from: def.from, text: def.text, date: P.understood[def.id], layer: def.layer, who: def.who, where: def.where }); return; }
       const have = def.need.filter(c => clHeld(P, c)).length, left = def.need.filter(c => !clHeld(P, c) && reach.has(c)).length;
       if (have > 0 && left > 0) out.near.push({ id: def.id, left, hint: def.hint });
     });
