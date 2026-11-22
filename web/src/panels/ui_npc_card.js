@@ -6,7 +6,10 @@
 //  理智只給分級（ui_stat.js 的 statBadge）、錢包只給分級；今天的行程只列已經開始的站。名字、出身、故事是資料裡的字，只用 h() 的字串（textContent）。
 //  開發時沒登入：用假資料排版（玩家看不到）。
 // ================================================================
+import { NUM } from "../../../shared/core/config.js";
+import { NPC_BOND_TEXT } from "../../../shared/core/systems_text.js";
 import { NET } from "../core/net_firebase.js";
+import { tipOn } from "../core/ui_tip.js";
 import { ADDONS, btn, closeOnOutside, h, miniLayer } from "../core/ui_core.js";
 import { statBadge } from "../core/ui_stat.js";
 
@@ -20,12 +23,24 @@ const FAKE = () => ({
   money: { tier: "comfortable", tierLabel: "寬裕", perDay: 4200, spentToday: 1500, left: 2700, wallet: { band: "ok", label: "還行", tone: "neutral" } },
   where: { room: "casino", label: "賭場（被館友邀去玩牌）", until: Date.now() + 25 * 60000, at: "casino", invited: true },
   today: [{ place: "hall", room: "hall", label: "展廳", at: Date.now() - 3 * 3600000, until: Date.now() - 2 * 3600000, now: false }, { place: "food", room: "casino", label: "餐車", at: Date.now() - 2 * 3600000, until: Date.now() - 3600000, now: false }, { place: "bj", room: "casino", label: "21 點桌", at: Date.now() - 3600000, until: Date.now() + 25 * 60000, now: true }],
+  bond: { lv: 1, xp: 14, next: 30, left: 16 },
   arc: { step: 2, text: "他開始問起館裡有沒有舊的拍賣目錄。", news: "" }, arcDone: [{ step: 1, text: "他第一次走進展廳，站在最角落的畫前很久。" }],
   mood: "有點睡不好",
 });
 
 function row(label, ...kids) { return h("div", { class: "npk-row" }, h("b", { class: "npk-k" }, label), h("div", { class: "npk-v" }, ...kids)); }
 
+// 好感度條（11-22）：熟識度第幾級＋這一級走了多少。只有旅客有 c.bond；滿級（next 是 null）條是滿的。不顯示加成的百分比
+function bondRow(b) {
+  const T = NPC_BOND_TEXT, C = NUM.npcRel.traveler, lv = Math.max(0, Math.min(C.lv.length, Math.floor(+b.lv) || 0)), xp = Math.max(0, +b.xp || 0);
+  const from = lv > 0 ? C.lv[lv - 1] : 0, to = b.next == null ? null : +b.next, pct = to == null ? 100 : Math.max(0, Math.min(100, Math.round(((xp - from) / Math.max(1, to - from)) * 100)));
+  const fill = s => String(s).replace("{n}", String(lv)).replace("{invite}", String(C.src.invite.xp)).replace("{hands}", String(NUM.npcRel.togetherHands)).replace("{table}", String(C.src.table.xp)).replace("{cellar}", String(C.src.cellar.xp));
+  const key = h("b", { class: "npk-k", tabindex: "0" }, T.label);
+  tipOn(key, { title: T.label, what: T.what, how: T.how.map(fill) });
+  return h("div", { class: "npk-row npk-bond" }, key, h("div", { class: "npk-v" },
+    h("div", { class: "npk-bond-t" }, h("b", null, fill(T.lv)), h("small", null, to == null ? T.full : T.next.replace("{n}", String(Math.max(0, to - xp))))),
+    h("div", { class: "npk-meter npk-bondbar", role: "img", "aria-label": `${T.label} ${fill(T.lv)}` }, h("i", { style: { width: pct + "%" } }))));
+}
 function cardBody(c) {
   const parts = [];
   const head = h("div", { class: "npk-head" },
@@ -33,6 +48,7 @@ function cardBody(c) {
     c.job ? h("small", null, c.job.title) : null,
     c.note ? h("p", { class: "npk-note" }, c.note) : null);
   parts.push(head);
+  if (c.bond) parts.push(bondRow(c.bond));
   if (c.san) parts.push(row("理智", statBadge(c.san, { hint: true })));
   else if (c.mood) parts.push(row("狀態", c.mood));
   if (c.money) {

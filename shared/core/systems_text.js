@@ -1187,3 +1187,10 @@ export const FOE_TEXT = {
   f5b: { name: "差壹點的", intro: "牠差壹點就存在了。", moves: { almost: "差壹點就讓{x}看清楚了", another: "後面又來了壹個（壓力會變多）" } },
   f5g: { name: "門前的那壹個", intro: "小門前面，有誰在等。", phase2: "牠轉過來了。", moves: { queue: "要插到{x}的佩佩前面", almost: "差壹點就讓{x}看清楚了", another: "後面又來了壹個（壓力會變多）", nameless: "要問大家牠叫什麼" } },
 };
+
+// 旅客卡的好感度條（翊文 11-22；資料是伺服器 npcCard 的 bond:{lv,xp,next}，數字在 NUM.npcRel.traveler）。草稿，Yuga 可以改。{table}{hands}{cellar}{invite} 是各來源加幾點，畫面照 NUM 填
+export const NPC_BOND_TEXT = {
+  label: "熟識度", lv: "第 {n} 級", full: "已經很熟了", next: "再 {n} 點升級",
+  what: "你跟這位旅客熟不熟。越熟，邀請他壹起玩的時候越容易答應。",
+  how: ["邀請被答應：+{invite}", "同桌打牌，跟他壹起打滿 {hands} 手：+{table}", "壹起走完地下：+{cellar}", "每個來源壹天最多算壹次"],
+};
