@@ -304,7 +304,9 @@ function checkChild(files, read = defaultRead) {
 }
 
 // 8. 開發用的程式不能進 dist/
-const DEV_ONLY = ["qa_hooks.js", "debug_boot.js"];
+const DEV_ONLY = ["qa_hooks.js", "debug_boot.js", "mock_net.js", "mock/fixtures.json"];
+// 誰可以載入它們：qa_hooks、debug_boot 只有 main.js；假伺服器（mock_net.js）只有 debug_boot.js（debug_boot 本身就只有 DEV 才載入）、假資料只有 mock_net.js
+const DEV_IMPORTER = { "mock_net.js": "web/src/core/debug_boot.js", "mock/fixtures.json": "web/src/core/mock_net.js" };
 function checkDevOnly(files, read = defaultRead, dist = []) {
   const bad = [];
   for (const f of files) {
@@ -313,12 +315,14 @@ function checkDevOnly(files, read = defaultRead, dist = []) {
       if (/^\s*\/\//.test(l)) return;
       for (const d of DEV_ONLY) {
         if (!l.includes(d) || !/\b(from|import)\b/.test(l)) continue; // 這一行有 import／from，而且提到這個檔
-        if (f !== "web/src/core/main.js") bad.push(f + ":" + (i + 1) + "：" + d + " 是開發用的，只有 main.js 能載入它");
+        const who = DEV_IMPORTER[d] || "web/src/core/main.js";
+        if (f !== who) bad.push(f + ":" + (i + 1) + "：" + d + " 是開發用的，只有 " + who.split("/").pop() + " 能載入它");
+        else if (who !== "web/src/core/main.js") continue; // 假伺服器、假資料：載入它的檔本身就是 DEV 才有
         else if (!/import\.meta\.env\.DEV|debugScreen/.test(l)) bad.push(f + ":" + (i + 1) + "：載入 " + d + " 那一行要有 import.meta.env.DEV（或 debugScreen），不然會進 dist/");
       }
     });
   }
-  for (const [name, text] of dist) if (/window\.__qa\b/.test(text)) bad.push(name + "：打包出來的檔裡有 window.__qa，開發用的程式進了 dist/");
+  for (const [name, text] of dist) if (/window\.__qa\b|window\.__mock\b|\bmock-me\b/.test(text)) bad.push(name + "：打包出來的檔裡有 window.__qa／window.__mock／mock-me，開發用的程式（qa_hooks、假伺服器）進了 dist/");
   return bad;
 }
 function distFiles() { // 已經 npm run build 過才有；沒有就不查這段
@@ -335,7 +339,7 @@ const CHECKS = {
   5: { name: "名字只放一處（改名對照）", run: (files, o) => checkNames(files, o.read) },
   6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
   7: { name: "開外部程式用 tools/dev/child.cjs（不跳視窗）", run: (files, o) => checkChild(files, o.read) },
-  8: { name: "開發用的程式（qa_hooks、debug_boot）不進 dist/", run: (files, o) => checkDevOnly(files, o.read, o.read === defaultRead ? distFiles() : []) },
+  8: { name: "開發用的程式（qa_hooks、debug_boot、假伺服器）不進 dist/", run: (files, o) => checkDevOnly(files, o.read, o.read === defaultRead ? distFiles() : []) },
 };
 function runAll(opts = {}) {
   const files = opts.files || gitFiles(), only = opts.only || Object.keys(CHECKS).map(Number), bad = [];

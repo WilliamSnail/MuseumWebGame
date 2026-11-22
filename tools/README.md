@@ -56,6 +56,7 @@
 | **瀏覽器 console 的 `window.__qa`**（只有開發版）：進房間、換帳號、叫伺服器、撥前端日期 | `await __qa.enter("銀行")`；`__qa.as("聊乙")`；`await __qa.casino({act:"giver",op:"info"})`；`__qa.date(1)`（`web/src/core/qa_hooks.js`） |
 | **德州／牌桌守恆快照**：錢包＋桌上（扣旅客）＋莊家＋已知世界＋預算＋館＋政府，每手對 `--base` 看差是不是 0 | `npm run qa:holdem -- --set 7 --pid <牌桌號碼> --base <第壹次的 total>` |
 | 看哪幾套本機模擬器有人在用、是誰開的 | `npm run local -- --list` |
+| **賭場、銀行不用登入就能看**（假伺服器 `web/src/core/mock_net.js`，網址 `#casino:餐車`、`#bank:財報`；`ui:check` 也用它）；重錄假資料、比對形狀跟不跟得上伺服器 | `npm run mock:record -- --set 6`（`--check` 只比對） |
 | 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令、整手 21 點（按鈕、seq、別人的按鈕）、遊戲和 Discord 接續、次數共用、存檔、outbox（冷卻、失敗、沒 token）（不連真的 Discord，模擬器的 Function 把「會發的訊息」寫進 `discordTestSent`） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/content/discord_fake.cjs --set 5`（`--show` 印幾則回覆看長相）；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /）。**改了 `shared/` 或 `functions/` 要重開模擬器**（規則是開的時候才複製進去的） |
 | 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/content/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |
 | **用眼睛看今天新畫的 `svg`**：壹天或整週的畫排成壹張 PNG（太暗、跑版、看不出是什麼，這裡看得出來），再用 Read 打開看 | `npm run svg -- content/weeks/2026-W46/d2.json`（給資料夾就是整週；`--out x.png`；無頭 Chrome 截不到或找不到時改用 Playwright，`SVG_PW=1` 直接走 Playwright；都沒有才只印 HTML） |
