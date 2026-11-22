@@ -30,7 +30,7 @@ import { noticeCard } from "./ui_party.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "../rooms/casino/ui_casino_week.js";
 import { bookBack, bookGain, bookReader, roomHead } from "../core/ui_room.js";
-import { TASK_ICON, claimBurst, giverBoard, ptsPanel, taskCard } from "./ui_tasks.js";
+import { TASK_ICON, claimBurst, ptsPanel, taskCard } from "./ui_tasks.js";
 import { holidayOf } from "../../../shared/story/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "../rooms/ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
@@ -309,7 +309,7 @@ function taskRow(W, t, draw, m) {
   const S = storyState(P), st = S.tasks[t.id] || {}, n = taskCount(P, W, t), tgt = taskTarget(t, W);
   const r = Object.assign({}, t.reward, { stamps: t.weekly ? NUM.story.stampPerTask : 0 });
   const where = taskGo(t, W);
-  return taskCard({ t, text: taskText(t, W), kindIcon: TASK_ICON[t.kind], pts: t.weekly ? 0 : taskPts(t), n, tgt, reward: r, state: st.claimed ? "claimed" : st.done ? "done" : "todo",
+  return taskCard({ t, sayText: t.giver && t.says ? (taskDone(P, t) && t.done ? t.done : t.says) : null, text: taskText(t, W), kindIcon: TASK_ICON[t.kind], pts: t.weekly ? 0 : taskPts(t), n, tgt, reward: r, state: st.claimed ? "claimed" : st.done ? "done" : "todo",
     words: t.weekly && t.words ? ptMark(t.words) : null, where, past: W.past, onGo: () => { m.close(); goStep(where); }, onClaim: () => claimFlow(claimTask(P, W, t.id, todayStr()), draw) });
 }
 export function storyTodayNodes(m, draw) {
@@ -343,8 +343,7 @@ export function storyTaskSections(W, draw, m) {
   const S = storyState(P), d = todayOf(W), today = todayStr();
   if (!d) return { daily: null, weekly: null, old: null };
   const pdNew = d && ptsDay(d), bonusText = x => ptsDay(x) ? `拿滿 ${NUM.story.pts.dayCap} 分，多壹份` : "3 個都做完，多壹份";
-  const gi = d.daily.filter(t => t.giver && t.says).map(t => ({ giver: t.giver, text: taskDone(P, t) && t.done ? t.done : t.says, done: taskDone(P, t), go: !W.past ? taskGo(t, W) : null })); // 今天的交代：照任務順序
-  const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, pdNew ? ptsBox(W, S, d, draw) : null, giverBoard(gi, it => { if (it.go) { m.close(); goStep(it.go); } }), h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
+  const daily = d ? sec(`今天的每日任務（第 ${d.n} 天）`, pdNew ? ptsBox(W, S, d, draw) : null, h("ul", { class: "sp-tasks" }, d.daily.map(t => taskRow(W, t, draw, m)),
     bonusRow(bonusText(d), dayBonusState(P, W, d.n), d.dailyBonus, () => claimFlow(claimDayBonus(P, W, d.n, today), draw))),
     h("p", { class: "sp-note" }, pdNew ? `每個任務有積分，壹天最多算 ${NUM.story.pts.dayCap} 分，挑自己想做的。前幾天沒做的這週裡都可以補做，積分照算（算在那壹天）；「多壹份」只給當天拿滿的。` : "前幾天沒做的，這週裡都可以補做，獎勵照領。「3 個都做完，多壹份」只給當天做完的。")) : null;
   const wbr = Object.assign({}, W.weeklyBonus, { stamps: (W.weeklyBonus.stamps || 0) + NUM.story.stampAllBonus });

@@ -148,7 +148,7 @@ function fightPreview(arg) {
         const m = overlay("nb-story", "每週劇情", "每週劇情和劇情線", "book"), full = arg === "full";
         const ms = [100, 200, 300, 400, 500].map((at, i) => ({ at, state: full ? (i < 2 ? "claimed" : i < 4 ? "ready" : "wait") : (i < 1 ? "claimed" : "wait"), reward: {}, chips: at === 400 ? 200000 : 0, box: at === 300 || at === 500 }));
         const txt = v => ({ 100: "心情 +5", 200: "靈感 +3", 300: "週章 1 枚、籌碼禮盒", 400: "靈感 +4、籌碼 200,000", 500: "週章 1 枚、物品、籌碼禮盒" })[v.at];
-        const mk = (kind, text, state, giver, says, done, pts, n, tgt, where) => taskCard({ t: { kind, giver, says, done }, text, kindIcon: TASK_ICON[kind], pts, n, tgt, reward: { insp: 1, mood: 1 }, state, where, onGo() {}, onClaim() {} });
+        const mk = (kind, text, state, giver, says, done, pts, n, tgt, where) => taskCard({ t: { kind, giver, says, done }, sayText: giver && says ? (state !== "todo" && done ? done : says) : null, text, kindIcon: TASK_ICON[kind], pts, n, tgt, reward: { insp: 1, mood: 1 }, state, where, onGo() {}, onClaim() {} });
         m.surface.replaceChildren(h("div", { class: "sp-body" }, h("section", { class: "sp-sec" }, h("h3", null, "今天的每日任務（第 5 天）"),
           ptsPanel({ td: full ? 120 : 65, cap: 120, wk: full ? 340 : 160, goal: 500, ms, milesText: txt, onClaim() {} }),
           h("ul", { class: "sp-tasks" },
@@ -156,6 +156,8 @@ function fightPreview(arg) {
             mk("casino", "在賭場打一手 21 點", "done", "yuga", "來一手，輸贏隨你。", "手氣不錯嘛。", 20, 1, 1, true),
             mk("sign", "簽到", "claimed", "clerk", "蓋個章再走。", "章蓋好了，慢走。", 10, 1, 1, true),
             mk("stockLook", "看一支集團股的走勢", "todo", "scale", "多看兩眼，不吃虧。", "", 15, 0, 1, true),
+            mk("deliver", "送壹隻佩佩給館友", "todo", "postman", "這封信只寫了名字。你替我送壹隻佩佩過去。", "", 20, 0, 1, true),
+            mk("view", "看壹位館友的展廳", "todo", "number", "叫號：七。請到收藏庫小門旁。", "", 15, 0, 1, true),
             mk("make", "做 2 隻佩佩", "todo", null, "", "", 25, 1, 2, true))))); }, 300);
       return;
     }
