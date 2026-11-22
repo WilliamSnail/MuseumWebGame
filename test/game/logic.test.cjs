@@ -1533,3 +1533,20 @@ T("B5 走完：結局馬上存進 P.endings（不用等結局畫面）；再走�
   P.endings.cellar = "2026-01-01"; P.cellar.run = { floor: 5, idx: last(5), team: [], used: {}, log: [] }; G.cellarAdvance(P); assert.strictEqual(P.endings.cellar, "2026-01-01");
 });
 
+T("禁書的通用解鎖條件：from 日期、clue 線索、understood 讀懂、item 掉落；壹串全部成立才亮；寫錯的不亮；附頁看有沒有那件掉落", () => {
+  const P = fresh(); G.setNowClock && G.setNowClock(Date.parse("2026-12-07T10:00:00+08:00"));
+  assert.ok(G.needOk(P, "from:2026-12-07")); assert.ok(!G.needOk(P, "from:2026-12-08")); assert.ok(!G.needOk(P, "from:壞掉"));
+  assert.ok(!G.needOk(P, "clue:c-x")); P.clues = { "c-x": "2026-12-01" }; assert.ok(G.needOk(P, "clue:c-x"));
+  assert.ok(!G.needOk(P, "understood:b-1")); P.understood = { "b-1": "2026-12-02" }; assert.ok(G.needOk(P, "understood:b-1"));
+  assert.ok(!G.needOk(P, "item:foe-f1g")); assert.ok(!G.needOk(P, "item:不存在")); G.grantLimited(P, "foe-f1g", "2026-12-06"); assert.ok(G.needOk(P, "item:foe-f1g"));
+  assert.ok(!G.needOk(P, "item:foe-f3g")); G.grantLimited(P, "foe-f3g", "2026-12-06"); assert.ok(G.needOk(P, "item:foe-f3g"), "名牌框（deco）也算");
+  assert.ok(G.needOk(P, ["from:2026-12-07", "clue:c-x", "item:foe-f1g"])); assert.ok(!G.needOk(P, ["from:2026-12-07", "clue:c-nope"])); assert.ok(!G.needOk(P, [])); assert.ok(!G.needOk(P, "whatever"));
+  const s = { id: "bx", after: "book1", need: ["from:2026-12-07", "item:foe-f1g"], appendix: { need: "item:foe-f2g", text: "x" } };
+  assert.ok(G.sequelCondition(P, s)); assert.ok(!G.sequelAppendixOpen(P, s)); G.grantLimited(P, "foe-f2g", "2026-12-06"); assert.ok(G.sequelAppendixOpen(P, s));
+  assert.strictEqual(G.sequelCondition(P, { need: "cellarEnd" }), false, "舊的寫法照舊"); assert.ok(!G.sequelAppendixOpen(P, { id: "y" }));
+  G.setNowClock && G.setNowClock(null);
+});
+T("物品說明能帶來歷：LIMITED_TEXT 的 origin 會出現在 limitedInfo", () => {
+  assert.strictEqual(G.limitedInfo("foe-f1g").origin, ""); const T0 = G.LIMITED_TEXT["foe-f1g"]; T0.origin = "箱蓋的邊角被人靠過很多次。"; assert.strictEqual(G.limitedInfo("foe-f1g").origin, "箱蓋的邊角被人靠過很多次。");
+});
+
