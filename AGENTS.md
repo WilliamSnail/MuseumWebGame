@@ -110,6 +110,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
   - docs 照性質放：`docs/規劃/`（規劃、提案）、`docs/規則/`（界線、架構、介面原則…）、`docs/操作/`（怎麼查、怎麼測、流程）、`docs/素材/`（素材清單、prompt）、`docs/決定/`；第一層只留 `現況.md`、`未來更新.md`。
   - `tools/` 分 `release/`、`check/`、`content/`、`assets/`、`dev/`、`fb/`；`functions/` 照系統分資料夾，`index.js`、`options.js` 留第一層；`web/src/` 分 `core/`、`fx/`、`rooms/`（賭場、銀行各有子資料夾）、`panels/`。
 - 模擬腳本放 `test/sim/`；最上層不要放新檔（暫存檔、PR 說明放 `.claude/` 或系統的暫存資料夾）。`npm test` 的「資料夾的規矩」（`tools/check/repo_rules.cjs`）會擋：最上層新檔、`tools/`／`test/`／`functions/`／`web/src/` 第一層的新檔（要放子資料夾）、模擬放錯地方、`shared/` 第一層放 .js 檔、數字結尾的檔名、超過 1,200 行的程式檔（舊的三支大檔只准變小）、`web/src` 的 import 繞圈；`shared/` 的繞圈由 `tools/check/check_imports.cjs` 擋。
+- **新增存檔欄位、或新增玩家拿得到的東西，要在 `shared/social/pass_sources.js` 登記**（館友證有沒有跟上；不顯示的寫進 `tools/check/pass_gaps.json` 並寫原因）；補完缺漏就刪白名單那條（`npm run pass:check`，npm test 會擋）。
 - **名字只放一處**：餐車品項（`CAS_MENU`）、交代人（`TASK_GIVERS`）改名時，到 `tools/check/code_rules.cjs` 的 `RENAMES` 加一行「舊名 → 新名」，舊名出現在現役的程式和說明就會被擋（npm test 會擋）。
 - **規矩要寫成檢查**（翊文 11-20，參考「把約束寫進程式碼，不是文件」）：AI 被糾正一次，先問「這能不能寫成檢查？」。能的就加進 `tools/check/`（小的規矩加進 `code_rules.cjs`）、配測試放 `test/tools/`、加進 `test/run_all.cjs`，並在上面那條規矩後面標「（npm test 會擋）」；不要只多寫一條規矩或存進記憶——那兩種漏了沒人知道，檢查漏了 CI 會紅。加檢查前先全掃現有程式，違規的修掉或列白名單（寫原因），不能讓 CI 一開就紅。
 - 用完的工作副本不用自己刪：上線成功後 `ship` 會在背景跑 `tools/dev/wt_clean.cjs` 收掉（只收已經併進 main、沒有改動的）。
