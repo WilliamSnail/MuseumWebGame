@@ -27,6 +27,7 @@ function checkExtend(L, E, W, lw) {
     else { if (!weeks[t.week]) E(w, `week「${t.week}」不在 extend.weeks 裡`); (byWeek[t.week] = byWeek[t.week] || []).push(t.id); }
     if (giverIds.size && !giverIds.has(t.person)) E(w, `person「${t.person}」不在 taskGivers 裡`);
     if (!Number.isInteger(t.stage) || t.stage < 1 || t.stage > 5) E(w, "stage 要是 1～5");
+    { const tm = mys.find(y => y && y.id === t.mystery); if (tm && /^\d{4}-W\d{2}$/.test(tm.closeBy || "") && t.week > tm.closeBy) E(w, `week ${t.week} 晚於 ${t.mystery} 的收線週 ${tm.closeBy}（旁證要在收線前放）`); }
     if (!mysIds.has(t.mystery)) E(w, `mystery「${t.mystery}」不在 mysteries 裡`);
     ["seed", "where", "corroborates"].forEach(k => { if (typeof t[k] !== "string" || !t[k].trim()) E(w, `${k} 要有字`); });
     // 人物線一個人一階一階上：同壹個人，週越晚階越高
@@ -58,6 +59,7 @@ function checkExtend(L, E, W, lw) {
     const cl = asList(x.clues);
     if (cl.length < 3 || new Set(cl.map(c => c && c.where)).size < 3) E(w, "clues 至少三條、分在三種以上不同的地方（三條線索原則）");
     cl.forEach(c => { if (!isObj(c) || !c.where || !c.what) E(w, "clues 每條要有 where 和 what"); });
+    asList(x.closes).forEach(id => { const m = mys.find(y => y && y.id === id); if (!m) E(w, `closes「${id}」不在 mysteries 裡`); else if (m.closeBy !== k) E(w, `closes「${id}」的 closeBy 是 ${m.closeBy}，不是這週（extend.weeks 要跟 mysteries 對得上）`); });
     if (asList(x.leads).length < 3) E(w, "leads 至少要三個去處（三條線索原則、永遠有三個去處）");
     else asList(x.leads).forEach(l => { if (typeof l !== "string" || !l.trim()) E(w, "leads 每個要有字"); });
   });
