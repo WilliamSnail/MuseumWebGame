@@ -18,12 +18,14 @@ T("來源 → 館友證：config／text 多了清單沒登記要擋；白名單 
   const e = fresh(); e.gaps.hideLists.GEAR_ITEMS = "x"; assert.ok(has(check(e), /hideLists 的 GEAR_ITEMS 已經登記/));
 });
 T("來源 → 館友證：登記了館友證沒顯示的要擋（要有 none 白名單）；補完了白名單還留著也要擋", () => {
-  const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.row !== "visitors"); assert.ok(has(check(d), /visitors.*館友證沒有顯示/));
-  const e = fresh(); e.rows.find(r => r.id === "visitors").pass = { src: "pass", key: "visitor.stats" }; assert.ok(has(check(e), /visitors（none）已經有顯示/));
+  // 自己組壹列「館友證沒顯示」的假資料，不靠真實的缺漏（缺漏補完就會消失）
+  const d = fresh(); d.rows.push({ id: "fake", name: "假的", from: null, save: [], pass: null, use: "none", pub: [] }); assert.ok(has(check(d), /fake.*館友證沒有顯示/));
+  d.gaps.gaps.push({ row: "fake", kind: "none", id: "X", reason: "測試", since: "2026-11-22" }); assert.deepStrictEqual(check(d), []);
+  d.rows.find(r => r.id === "fake").pass = { src: "pass", key: "visitor.stats" }; assert.ok(has(check(d), /fake（none）已經有顯示/));
 });
 T("來源 → 館友證：passView 算了但畫面沒讀要擋；unused 白名單在畫面讀了以後要擋", () => {
-  const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.kind !== "unused"); assert.ok(has(check(d), /souvenirs 算了但畫面/));
-  const e = fresh(); e.uiSrc += " x.souvenirs "; assert.ok(has(check(e), /souvenirs（unused souvenirs）畫面已經讀/));
+  const d = fresh(); d.gaps.gaps = d.gaps.gaps.filter(g => g.kind !== "unused"); d.uiSrc = d.uiSrc.split("souvenirs").join(""); assert.ok(has(check(d), /souvenirs 算了但畫面/)); // 畫面（11-22 起）讀了 souvenirs，所以這裡先把它從畫面原始碼拿掉
+  const e = fresh(); e.gaps.gaps.push({ row: "souvenirs", kind: "unused", id: "B3", reason: "x", since: "2026-11-22", key: "souvenirs" }); e.uiSrc += " x.souvenirs "; assert.ok(has(check(e), /souvenirs（unused souvenirs）畫面已經讀/));
 });
 T("館友證 → 來源：passView 回的欄位拿掉了、登記表指到不存在的檔或清單、輸出多了沒對應的欄位都要擋", () => {
   const d = fresh(); delete d.passOut.pepe.failed; assert.ok(has(check(d), /沒有欄位 pepe\.failed/));

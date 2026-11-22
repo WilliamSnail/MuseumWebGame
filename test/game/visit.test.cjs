@@ -35,7 +35,7 @@ T("展廳：給別人的只有展台、分數、主題、裝飾，不漏靈感�
   });
   s.email = "someone@example.com";
   const v = J(G.cleanHallView(G.hallView(s)));
-  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "artBonus", "deco", "frame", "open", "posters", "report", "score", "slots", "souvenirs", "theme", "title"]);
+  assert.deepStrictEqual(Object.keys(v).sort(), ["art", "artBonus", "deco", "frame", "open", "pass", "posters", "report", "score", "slots", "souvenirs", "theme", "title"]);
   assert.deepStrictEqual(v.slots[0], { kind: "pepe", key: k, perfect: true, title: "小綠" });
   assert.strictEqual(v.deco, "stand-velvet");
   assert.strictEqual(v.frame, "frame-vine");
@@ -446,6 +446,14 @@ T("請館友來看：通知給畫面看的樣子只留該給的欄位，壞的�
   assert.strictEqual(Array.from(G.callRow({ fromId: "ua", day: DAY, from: "字".repeat(60) }, "c").from).length, 12);
   assert.strictEqual(G.callRow({ fromId: "ua", day: DAY, at: "x" }, "c").at, 0);
   assert.strictEqual(G.callRow({ fromId: "ua", day: DAY }, "c").from, "館友");
+});
+
+T("公開版館友證：只有裝備 id、收藏數、最深樓層、徽章數、簽到天數；亂寫的裝備和超大的數字會被擋", () => {
+  const bad = J(G.cleanHallView({ open: true, pass: { gear: ["gear-不存在", 5, G.GEAR_ITEMS[0].id, G.GEAR_ITEMS[0].id, G.GEAR_ITEMS[1].id, G.GEAR_ITEMS[2].id], have: 1e12, total: -5, best: 99999, badges: "x", signins: 1e9, money: 123 } })).pass;
+  assert.deepStrictEqual(Object.keys(bad).sort(), ["badges", "best", "gear", "have", "signins", "total"]);
+  assert.ok(bad.gear.length <= G.NUM.shop.gearWorn && bad.gear.every(id => G.GEAR_ITEMS.some(g => g.id === id)) && new Set(bad.gear).size === bad.gear.length);
+  assert.ok(bad.have <= 5000000 && bad.total === 0 && bad.best <= 20 && bad.badges === 0 && bad.signins <= 5000);
+  assert.deepStrictEqual(J(G.cleanHallView({ open: true })).pass, { gear: [], have: 0, total: 0, best: 0, badges: 0, signins: 0 });
 });
 
 console.log(`${pass} passed, ${fail} failed（參觀展廳、送佩佩、伺服器的信）`);

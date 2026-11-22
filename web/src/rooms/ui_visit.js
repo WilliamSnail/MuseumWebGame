@@ -21,12 +21,12 @@ import { NUM } from "../../../shared/core/config.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, nowMs, parsePillowKey } from "../../../shared/core/logic.js";
 import { ART } from "../core/art.js";
 import { NET } from "../core/net_firebase.js";
-import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait, sndFile } from "../core/ui_core.js";
+import { $, ADDONS, FRIEND_ACTIONS, P, PANELS, UI, btn, collectionItems, gearArt, go, h, holdItem, icon, itemHTML, note, rdot, rerender, roomLabel, showEvents, snd, titleTag, updateBoardBadges, updateStatus, wait, sndFile } from "../core/ui_core.js";
 import { overlay } from "../panels/ui_board.js";
 import { RANK, ago, reloadSave } from "../panels/ui_login.js";
 import { roomHead } from "../core/ui_room.js";
 import { cellarFxBox } from "./ui_screens1.js";
-import { learnText } from "../../../shared/core/shop.js";
+import { gearInfo, learnText } from "../../../shared/core/shop.js";
 import { posterWall } from "../panels/ui_themeshow.js";
 import { actDone } from "../panels/ui_story.js";
 
@@ -53,6 +53,16 @@ function friendPedestal(s, i, deco) {
   const block = h("div", { class: "ped-block" }, deco ? h("div", { class: "stand-deco", html: ART.standDeco(deco), "aria-hidden": "true" }) : null);
   return h("div", { class: "ped-slot" + (s ? " full" : "") + (deco ? " has-deco" : ""), "aria-label": s ? `展台 ${i + 1}` : `展台 ${i + 1}：空的` },
     h("div", { class: "ped-art", html: s ? slotArt(s) : "" }), block, s ? slotLabel(s) : h("div", { class: "ped-label empty" }, "空展台"));
+}
+// 公開版館友證（翊文 11-22）：暱稱、名牌框、稱號在牌子和下面的紀念品架；這裡補裝備、收藏數、最深樓層、簽到天數、徽章數。沒有錢和籌碼
+function passCard(v) {
+  const p = v.pass;
+  if (!p) return null;
+  const gear = p.gear.map(id => gearInfo(id)).filter(Boolean);
+  const stat = (t, n) => h("span", { class: "fh-pass-s" }, h("b", null, n), h("small", null, t));
+  return h("div", { class: "fh-pass", "aria-label": "館友證" },
+    h("div", { class: "fh-pass-gear" }, h("small", null, "隨身物"), gear.length ? gear.map(g => h("span", { class: "fh-pass-g", title: `${g.name}：${g.desc}` }, gearArt(g.id), h("small", null, g.name))) : h("small", { class: "fh-pass-none" }, "沒帶東西")),
+    stat("收藏", `${p.have}／${p.total}`), stat("最深", p.best ? `B${p.best}` : "還沒下去"), stat("簽到", `${p.signins} 天`), stat("徽章", String(p.badges)));
 }
 const stillHere = params => UI.screen === "hall" && UI.params === params;
 
@@ -120,7 +130,7 @@ function friendHall(root, params) {
   const plate = h("div", { class: "hall-limited" }, h("div", { class: "hall-plate" + (v.frame ? " lim-" + v.frame : "") },
     v.frame ? h("span", { class: "lim-c tl", html: ART.nameCorner(v.frame), "aria-hidden": "true" }) : null,
     v.frame ? h("span", { class: "lim-c br", html: ART.nameCorner(v.frame), "aria-hidden": "true" }) : null,
-    h("small", null, "館主"), h("b", null, nick)));
+    h("small", null, "館主"), h("b", null, nick)), passCard(v));
   const wall = h("div", { class: "hall-wall" + (theme ? " themed" : "") },
     theme ? h("div", { class: "theme-name enter" }, h("h2", null, theme.name), h("p", null, theme.wall))
       : h("p", { class: "theme-hint" }, hasAny ? "牆上還沒有主題。" : "展台上還沒有東西。"));

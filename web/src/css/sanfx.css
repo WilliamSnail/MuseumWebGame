@@ -1,0 +1,16 @@
+/* 理智低時畫廊、展廳、大廳的怪事（11-22，ui_sanfx.js）。都是壹次性的動畫，放完 JS 會把元素拿掉；提醒用的閃爍閃 3 下就停，不用 infinite */
+.sf-eyes { position: absolute; z-index: 3; display: flex; gap: 6px; pointer-events: none; opacity: 0; animation: sf-blink 1.25s ease-in-out 3 both; }
+.sf-eyes i { display: block; width: 9px; height: 6px; border-radius: 50%; background: #F4EBCB; box-shadow: 0 0 5px rgba(244,235,203,.55); position: relative; }
+.sf-eyes i::after { content: ""; position: absolute; left: 3px; top: 1px; width: 3px; height: 4px; border-radius: 50%; background: #1A1210; }
+@keyframes sf-blink { 0% { opacity: 0; transform: scaleY(.15); } 25% { opacity: .9; transform: scaleY(1); } 70% { opacity: .9; transform: scaleY(1); } 100% { opacity: 0; transform: scaleY(.15); } }
+.ped-slot.sf-turn svg:not(.stand-deco-svg) { transform: rotate(22deg) translateX(9px) scale(1.06); transition: transform 1.1s ease-in-out; }
+.ped-slot svg:not(.stand-deco-svg) { transition: transform 1.1s ease-in-out; }
+.sf-cloth { position: fixed; top: 0; z-index: 40; width: 30%; max-width: 420px; height: 160px; margin-top: -160px; pointer-events: none; opacity: .92;
+  background: linear-gradient(180deg, #F6F3EC, #E7E2D6); clip-path: polygon(0 0, 100% 0, 100% 86%, 88% 100%, 76% 88%, 62% 99%, 50% 86%, 37% 100%, 24% 87%, 11% 99%, 0 86%);
+  animation: sf-cloth 4.4s ease-in-out 1 both; }
+@keyframes sf-cloth { 0% { transform: translateY(0); } 25% { transform: translateY(calc(var(--d, 40px) + 0px)); } 75% { transform: translateY(var(--d, 40px)); } 100% { transform: translateY(0); } }
+.l2-hl.sf-voice { position: relative; }
+.l2-hl.sf-voice .hl-view { visibility: hidden; }
+.sf-voice-t { position: absolute; left: 96px; top: 50%; transform: translateY(-50%); color: #C9C3B2; font-style: italic; letter-spacing: .08em; animation: sf-in 1s ease-out 1 both; }
+@keyframes sf-in { from { opacity: 0; } to { opacity: 1; } }
+body.sf3::after { content: ""; position: fixed; inset: 0; z-index: 30; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(8,4,6,.5) 100%); }

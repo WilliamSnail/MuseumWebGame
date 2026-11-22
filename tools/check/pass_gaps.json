@@ -43,20 +43,6 @@
  },
  "gaps": [
   {
-   "row": "visitors",
-   "kind": "none",
-   "id": "R6",
-   "reason": "另外兩位參觀者的職業、理智、心情；總覽沒寫第幾位／共幾位",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "foes",
-   "kind": "none",
-   "id": "D9",
-   "reason": "怪物圖鑑：資料已記 P.cellar.foes[怪物 id]＝第壹次打贏的日期（合作打怪），館友證和地下還沒有頁；戰利品掉落先不做",
-   "since": "2026-11-22"
-  },
-  {
    "row": "trials",
    "kind": "none",
    "id": "D6",
@@ -67,49 +53,28 @@
    "row": "understood",
    "kind": "partial",
    "id": "L3",
-   "reason": "看懂的事兩份清單各自算（靜態 26 件和每週 u-），x／26 不含後者；每週的書（L2）也還沒有總數",
+   "reason": "看懂的事已依物、人、規矩、你分四組列出（只算固定的 26 件）；每週 u- 的看懂是另一份清單，沒有放進來，歷任牆的數字兩種都算；合作地下 6 件單人拿不到",
    "since": "2026-11-22"
   },
   {
    "row": "cellar",
    "kind": "partial",
    "id": "D1",
-   "reason": "每層通關日、解鎖的選項、鑰匙、B5 結局（D1～D5）只有「走到 B?」",
+   "reason": "試煉房間本週完成幾間（D6）、解鎖的選項和鑰匙名字（鑰匙只算有幾把還沒列）",
    "since": "2026-11-22"
   },
   {
    "row": "hall",
    "kind": "partial",
    "id": "H1",
-   "reason": "展廳：沒有縮圖和排列、評分和主題、收藏的畫、海報進度、累計參觀（H1～H6）",
+   "reason": "展廳：每週特展的本週最高分和歷史（H5）、累計收到的靈感總數（沒有存總數，只能算最近 12 位）、展廳留言和讚（在伺服器）",
    "since": "2026-11-22"
   },
   {
    "row": "visitor",
    "kind": "partial",
    "id": "R1",
-   "reason": "技能文字說明、裝備加成標籤、怪癖治療條件（R1、R3）",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "swap",
-   "kind": "partial",
-   "id": "B2",
-   "reason": "換到的累計沒有紀錄（本來就沒留，規則改動項目）",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "props",
-   "kind": "partial",
-   "id": "B3",
-   "reason": "紀念品只有最近 6 個，沒有完整清單",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "achs",
-   "kind": "partial",
-   "id": "B4",
-   "reason": "成就只有最近 6 個；npc:、wk:、old:a: 三種只有「另外還有 N 個」",
+   "reason": "技能文字說明、怪癖治療條件（R1、R3）",
    "since": "2026-11-22"
   },
   {
@@ -120,26 +85,11 @@
    "since": "2026-11-22"
   },
   {
-   "row": "week",
-   "kind": "partial",
-   "id": "B7",
-   "reason": "每週收藏沒有每件名稱、過去幾週",
-   "since": "2026-11-22"
-  },
-  {
    "row": "limited",
    "kind": "partial",
    "id": "S1",
-   "reason": "簽到：哪幾天、連續幾天、補簽、星光絨剩幾份、能不能拿下（S1～S6）",
+   "reason": "簽到：能不能拿下（S2～S6）；哪幾天在簽到日曆",
    "since": "2026-11-22"
-  },
-  {
-   "row": "souvenirs",
-   "kind": "unused",
-   "id": "B3",
-   "reason": "passView.souvenirs 算了但 ui_pass.js 沒讀（畫面用賭場那份）",
-   "since": "2026-11-22",
-   "key": "souvenirs"
   },
   {
    "row": "pepes",
@@ -160,46 +110,6 @@
    "kind": "partial",
    "id": "R1",
    "reason": "技能只有數字，沒有說明",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "packs",
-   "kind": "unused",
-   "id": "B1",
-   "key": "packs",
-   "reason": "伺服器已回 packs（大禮包剩幾包、券幾張），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "meals",
-   "kind": "unused",
-   "id": "B6",
-   "key": "meals",
-   "reason": "伺服器已回 meals（吃過什麼、今天還能補多少），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "stats",
-   "kind": "unused",
-   "id": "B9",
-   "key": "st",
-   "reason": "伺服器已回 st（戰績），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "npcbond",
-   "kind": "unused",
-   "id": "N1",
-   "key": "bond",
-   "reason": "伺服器已回 bond（認得的旅客和交代人），畫面還沒畫",
-   "since": "2026-11-22"
-  },
-  {
-   "row": "week",
-   "kind": "unused",
-   "id": "B7",
-   "key": "wkPast",
-   "reason": "伺服器已回 wkPast 和 wk.items（每件名稱、過去幾週），畫面還沒畫",
    "since": "2026-11-22"
   }
  ]

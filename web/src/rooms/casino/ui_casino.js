@@ -364,7 +364,7 @@ function bjPane() {
   const gl = casinoGiver(); // 荷官 Yuga Bot 也是交代人：今天有交代，沒玩之前泡泡說那句（11-21）
   const felt = bjTable({ bubble: !r && gl ? gl.text : S.say.length ? S.say[S.say.length - 1] : "", dealer, you, banner, onSaid: () => openSayLog("荷官說過的話", S.sayLog) });
   felt.addEventListener("click", () => { if (S && S.animating) S.skip = true; }); // 演出中點壹下跳過
-  const parts = [houseLine(), felt, ADDONS.giverPair ? ADDONS.giverPair("牌桌邊") : null]; // 荷官和號碼機在牌桌邊串門子（11-22）
+  const parts = [houseLine(), felt]; // 荷官和號碼機在牌桌邊串門子（11-22）：現在收在房間頂上「這裡現在 N 人」的小框裡（ui_giver_note.js 的 ROOM_GIVERS）
   if (playing && S.shown == null && ds == null && !hideLast) {
     parts.push(h("div", { class: "bj-acts" }, btn("要牌", () => move("hit"), "primary big", { disabled: S.busy ? true : null }), btn("停牌", () => move("stand"), "big", { disabled: S.busy ? true : null })));
     if (r.warped) parts.push(h("p", { class: "cas-warn", role: "note" }, "眼睛有點花……牌好像不太對勁。"));

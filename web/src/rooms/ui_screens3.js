@@ -593,7 +593,6 @@ SCREENS.cellar = root => {
   root.classList.add("onescreen-room", "cellar-onescreen");
   if (!side.children.length) root.classList.add("cellar-no-side");
   root.append(roomHead("地下收藏庫", (typeof ROOM_HINTS3 !== "undefined" && ROOM_HINTS3.cellar) || "帶 3 隻佩佩下去。", rulesBtn),
-    ADDONS.giverStrip ? ADDONS.giverStrip(["number"]) : "", // 號碼機：B1 小門旁（11-21）；放在 onescreen-main 外面，不然會佔掉那個兩欄的格子（翊文：「地下收藏室全部跑版了」）
     h("div", { class: "onescreen-main" },
 
       h("div", { class: "cellar-entry" },

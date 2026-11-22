@@ -31,10 +31,13 @@
 //                 什麼時候用：台股上線在週末，換日找不到收盤、壹直停在起始價（11-15）。
 //   client-errors 只讀：網頁回報上來的前端錯誤（決定 0125，clientErrors 集合，7 天）。依訊息分組：次數、最後出現、版本、畫面、視窗大小、位置、stack 前 3 行。不印名字、uid、email（寫入時就清過，這裡再遮壹次）。
 //                 什麼時候用：玩家說畫面壞了（11-17 壹鍵交件整塊不見），本機重現不了。
+//   digest-now   寫：今天的 Discord 館訊提早發（翊文 11-22：「今天的discord 更新發布可以提早嗎」）。跟伺服器 20:00 的 discordDigestTick 同壹條路：
+//                組好 dcDigestPost（今天發布的館方公告）寫進 discordOutbox/digest-日期，discordOutboxSend 撿起來發。同壹天只寫得進壹次，
+//                所以 20:00 那次會「寫過了」不再發；之後才加的公告就不會出現在今天這則。今天沒有公告就不寫。紀錄只印字數和有沒有寫成。
 // 紀錄裡不印 email、名字：--mask 那一步先遮起來，輸入值從事件檔讀，不經過環境變數。
 const fs = require("fs"), path = require("path");
 
-const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "client-errors", "advisor-rules-mail"];
+const ACTIONS = ["invite", "admin-on", "admin-off", "disable", "enable", "stats", "stock-reroll", "house-ledger", "stock-status", "econ-status", "stock-tw-peg", "house-size", "fn-errors", "world-status", "player-invest", "invest-status", "client-errors", "advisor-rules-mail", "digest-now"];
 
 // 只讀：函式的錯誤紀錄（見檔頭 fn-errors）。用同壹把金鑰拿 token 呼叫 Cloud Logging 的 entries:list
 async function fnErrors(cred, projectId) {
@@ -432,6 +435,26 @@ async function stats(db) {
   rows.forEach(([k, v]) => console.log(`${k}：${v}`));
 }
 
+// 寫：今天的館訊提早發（見檔頭 digest-now）。組字照 functions/discord/discord_digest.js 的 digestRun（dcDigestPost），寫法照 outboxPut（create：同壹天第二次寫會失敗）
+async function digestText(now = Date.now()) {
+  const { pathToFileURL } = require("url"), imp = f => import(pathToFileURL(path.join(__dirname, "..", "..", "shared", f)).href);
+  require("../content/notices_build.cjs").write(); // shared/game/notices_data.js 不進 git，先產生
+  const { NOTICES, NOTICE_AREAS, noticeArea } = await imp("game/notices.js"), { taipeiDay } = await imp("core/logic.js"), { dcDigestPost } = await imp("discord/out.js");
+  const day = taipeiDay(now);
+  return { day, text: dcDigestPost(NOTICES, day, noticeArea, NOTICE_AREAS) };
+}
+async function digestNow(db) {
+  const { day, text } = await digestText();
+  if (!text) { console.log(`${day} 今天沒有公告，不發`); return; }
+  try {
+    await db.doc(`discordOutbox/digest-${day}`).create({ kind: "digest", text, status: "pending", at: Date.now() });
+    console.log(`${day} 館訊寫進 discordOutbox 了（${[...text].length} 字），伺服器會馬上發；20:00 那次會看到寫過了，不會再發`);
+  } catch (e) {
+    if (e && (e.code === 6 || /already exists/i.test(String(e.message)))) { console.log(`${day} 今天的館訊已經寫過了，不會重發`); return; }
+    throw e;
+  }
+}
+
 async function main() {
   const inputs = readEvent();
   if (process.argv.includes("--mask")) { // 這一步在最前面：之後的紀錄都會把它們遮掉
@@ -459,6 +482,7 @@ async function main() {
   if (task.action === "invest-status") { await investStatus(db); return; }
   if (task.action === "client-errors") { await clientErrors(db); return; }
   if (task.action === "advisor-rules-mail") { await advisorRulesMail(db, FieldValue); return; }
+  if (task.action === "digest-now") { await digestNow(db); return; }
   const ref = db.doc(`invites/${task.email}`);
   const snap = await ref.get();
   const plan = planTask(task, snap.exists, snap.data());
@@ -468,4 +492,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error("沒做成：" + String(e.message || e).split("\n")[0].slice(0, 300)); process.exit(1); });
-module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc, houseLedger, worldStatus };
+module.exports = { ACTIONS, parseTask, planTask, econPick, econCrc, houseLedger, worldStatus, digestText };
