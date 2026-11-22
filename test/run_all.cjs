@@ -193,6 +193,7 @@ const STEPS = [
   ["維護日誌的格式", ["tools/check/log_check.cjs"]],
   ["不准用 Write 新建維護日誌的 hook（.claude/settings.json，11-22）", ["test/tools/hook_log_write.test.cjs"]],
   ["維護日誌的標題自動修（log:fix，ship 上線前先跑，11-22）", ["test/tools/log_fix.test.cjs"]],
+  ["館友證的來源檢查（登記表、白名單、passView、對外欄位雙向對得上；來源多了或拿掉了要擋，11-22）", ["test/tools/pass_sources.test.cjs", "tools/check/pass_sources.cjs"]],
   ["程式的規矩（shared/ 是純函式、無限動畫要在白名單、.replace(字串, 字串)、新加的畫面文字用壹、改名對照；每條的測試，11-20）", ["test/tools/code_rules.test.cjs"]],
   ["程式的規矩檢查本體（對現在的 repo 跑壹遍）", ["tools/check/code_rules.cjs"]],
   ["畫面版面檢查 npm run ui:check（不開瀏覽器：畫面清單、量測程式、報告整理、AGENTS.md 有寫；真的開瀏覽器太慢，改畫面的人自己跑，11-20）", ["test/tools/ui_check.test.cjs"]],

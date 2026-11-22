@@ -1,0 +1,228 @@
+{
+ "_說明": "館友證來源登記表的白名單（tools/check/pass_sources.cjs 讀；規劃 docs/規劃/館友證裝備整合規劃.md 第七節）。hideSave：存檔欄位不用顯示的（寫原因）；hideLists：清單不是玩家拿得到的東西；hidePass：passView／casPassView 的欄位不對應壹類東西；gaps：館友證還沒補完的，補完就刪（kind none＝完全沒有，登記表那列 pass 要是 null；partial＝只顯示壹部分；unused＝passView 算了但畫面沒讀）。",
+ "hideSave": {
+  "P.moodRoll": "開局擲心情的骰面，只在開局演出用",
+  "P.serial": "佩佩的流水號計數器",
+  "P.mythFrom": "神話值的來源記錄（內部）",
+  "P.day": "今天的暫存（今天做過什麼）",
+  "P.hugDays": "已停用（決定 0027），舊存檔才有",
+  "P.comments": "訪客留言暫存，展廳側欄自己讀",
+  "P.daily": "今天的每日任務暫存，任務板自己讀",
+  "P.bout": "怪癖發作的暫存",
+  "P.swapNext": "下一次換人的旗標",
+  "P.dark": "介面深色旗標",
+  "P.news": "消息紅點旗標",
+  "P.wsPick": "手作坊上次選的部件（介面記憶）",
+  "P.lines": "說過的台詞記錄（避免重複）",
+  "P.weekly": "每週特展進行中的暫存，展廳自己讀",
+  "P.fresh": "新手提示看過了沒",
+  "P.cands": "已停用（舊的 3 位候選人），舊存檔才有",
+  "W.tablePid": "現在坐的牌桌（內部，離桌就清）"
+ },
+ "hideLists": {
+  "CELLAR_POWER": "打怪的數值，不是玩家拿得到的",
+  "UNDERSTAND_FALLBACK": "看懂的事的備用文字",
+  "CAS_TAKE": "賭場台詞",
+  "CAS_GIFT": "賭場送禮台詞",
+  "CAS_GIFT2": "賭場送禮台詞",
+  "CAS_TEXT": "賭場說明文字",
+  "CAS_HALL_NOTES": "展廳的便條文字",
+  "CAS_FIND_TEXT": "找東西小遊戲的文字",
+  "CAS_BANK": "銀行文字（籌碼之外的財產由銀行頁自己看）",
+  "CAS_BOND": "債券文字（同上）",
+  "CAS_STOCK": "股票文字（同上）",
+  "CAS_ECON": "拚經濟文字",
+  "CAS_LIVE": "賭場即時動態文字",
+  "CAS_TIPS": "賭場提示文字",
+  "CAS_GAME_INTRO": "各遊戲說明文字"
+ },
+ "hidePass": {
+  "free": "旗標：自由模式",
+  "card": "證件本身（名牌、頭像、稱號、週章），不是壹類東西",
+  "records": "紀錄區：從各類東西挑幾個數字摘要"
+ },
+ "gaps": [
+  {
+   "row": "upgrades",
+   "kind": "none",
+   "id": "R4",
+   "reason": "工坊升級 7 項：已買／未買／還差多少（館長室買，證上只看）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "relics",
+   "kind": "none",
+   "id": "R5",
+   "reason": "遺物和歷任參觀者牆",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "visitors",
+   "kind": "none",
+   "id": "R6",
+   "reason": "另外兩位參觀者的職業、理智、心情；總覽沒寫第幾位／共幾位",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "foes",
+   "kind": "none",
+   "id": "D9",
+   "reason": "怪物圖鑑（P.cellar.foes）和戰利品：翊文 11-22 決定先做圖鑑",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "trials",
+   "kind": "none",
+   "id": "D6",
+   "reason": "試煉房間本週完成幾間、剩幾次",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "packs",
+   "kind": "none",
+   "id": "B1",
+   "reason": "大禮包剩幾包、券幾張",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "meals",
+   "kind": "none",
+   "id": "B6",
+   "reason": "餐車吃過什麼、今天心情／理智還能補多少",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "stats",
+   "kind": "none",
+   "id": "B9",
+   "reason": "賭場戰績（贏幾手、連勝、最大贏）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "npcbond",
+   "kind": "none",
+   "id": "N1",
+   "reason": "認得的旅客和交代人：熟識度、稱號（W.npcRel）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "failed",
+   "kind": "partial",
+   "id": "M2",
+   "reason": "失敗作、修復品只有「N 種」，沒有縮圖和總件數",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "pillows",
+   "kind": "partial",
+   "id": "M3",
+   "reason": "抱枕只有一段文字，沒有總份數、縮圖",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "recipes",
+   "kind": "partial",
+   "id": "M4",
+   "reason": "隱藏配方只有 x／y，沒有已發現的名稱和日期",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "understood",
+   "kind": "partial",
+   "id": "L3",
+   "reason": "看懂的事兩份清單各自算（靜態 26 件和每週 u-），x／26 不含後者；禁書（L1）、每週的書（L2）也還沒有",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "cellar",
+   "kind": "partial",
+   "id": "D1",
+   "reason": "每層通關日、解鎖的選項、鑰匙、B5 結局（D1～D5）只有「走到 B?」",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "hall",
+   "kind": "partial",
+   "id": "H1",
+   "reason": "展廳：沒有縮圖和排列、評分和主題、收藏的畫、海報進度、累計參觀（H1～H6）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "visitor",
+   "kind": "partial",
+   "id": "R1",
+   "reason": "技能文字說明、裝備加成標籤、怪癖治療條件（R1、R3）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "swap",
+   "kind": "partial",
+   "id": "B2",
+   "reason": "換到的累計沒有紀錄（本來就沒留，規則改動項目）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "props",
+   "kind": "partial",
+   "id": "B3",
+   "reason": "紀念品只有最近 6 個，沒有完整清單",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "achs",
+   "kind": "partial",
+   "id": "B4",
+   "reason": "成就只有最近 6 個；npc:、wk:、old:a: 三種只有「另外還有 N 個」",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "title",
+   "kind": "partial",
+   "id": "B5",
+   "reason": "不能在館友證直接換稱號",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "week",
+   "kind": "partial",
+   "id": "B7",
+   "reason": "每週收藏沒有每件名稱、過去幾週",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "limited",
+   "kind": "partial",
+   "id": "S1",
+   "reason": "簽到：哪幾天、連續幾天、補簽、星光絨剩幾份、能不能拿下（S1～S6）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "souvenirs",
+   "kind": "unused",
+   "id": "B3",
+   "reason": "passView.souvenirs 算了但 ui_pass.js 沒讀（畫面用賭場那份）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "pepes",
+   "kind": "partial",
+   "id": "M1",
+   "reason": "完整列表、完美作品標記、融合產物（M1、M5、M6）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "books",
+   "kind": "partial",
+   "id": "L2",
+   "reason": "每週的書沒有總數；禁書沒有（L1）",
+   "since": "2026-11-22"
+  },
+  {
+   "row": "skills",
+   "kind": "partial",
+   "id": "R1",
+   "reason": "技能只有數字，沒有說明",
+   "since": "2026-11-22"
+  }
+ ]
+}

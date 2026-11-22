@@ -10,6 +10,7 @@
     "test": "node test/run_all.cjs",
     "log:index": "node tools/check/log_index.cjs",
     "log:fix": "node tools/check/log_fix.cjs",
+    "pass:check": "node tools/check/pass_sources.cjs",
     "code:check": "node tools/check/code_rules.cjs",
     "ui:check": "node tools/check/ui_check.cjs",
     "econ:check": "node tools/check/econ_check.cjs",

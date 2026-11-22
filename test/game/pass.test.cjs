@@ -44,6 +44,11 @@ T("自由模式：沒有週章，限定的東西都算有", G => {
   assert.strictEqual(v.free, true); assert.strictEqual(v.card.stamps, null); assert.strictEqual(v.books.week, null);
   assert.ok(v.deco.items.every(x => x.own));
 });
+T("材料剩幾份：材料有數字（每次簽到拿 3 份），不是材料和自由模式是 null", G => {
+  const P = fresh(G); G.limitedBox(P).stock["星光絨"] = 5;
+  const v = J(G.passView(P, {})), mat = v.deco.items.find(x => x.kind === "mat"), other = v.deco.items.find(x => x.kind !== "mat");
+  assert.strictEqual(mat.n, 5); assert.strictEqual(other.n, null); assert.ok(J(G.passView(fresh(G, "free"), {})).deco.items.every(x => x.n === null));
+});
 T("玩了多久的字", G => {
   assert.strictEqual(G.passPlayText(0), "0 分"); assert.strictEqual(G.passPlayText(59 * 60), "59 分"); assert.strictEqual(G.passPlayText(3600), "1 小時 0 分"); assert.strictEqual(G.passPlayText(undefined), "0 分");
 });
