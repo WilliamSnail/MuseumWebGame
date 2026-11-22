@@ -242,6 +242,17 @@ export const ART = (() => {
     小枕頭髮夾: { h: 10, svg: h => ln(`M112 ${h + 2}L146 ${h - 7}`, "#C99A2E", 2.6) + miniPillow(130, h - 6, 1.05, "#F7CBD8", "#B0708A") },
     金瓜子項鍊: { h: 0, wear: g => seedNecklace(g, "#E2B53E", "#8A6512", "#C99A2E") },
   });
+
+  // 打怪掉的（11-22 翊文：「打怪掉的 5 件裝飾」）：5 隻守門第一次打贏各掉一件。名字、說明是草稿（延伸劇情世界會改）；改名要連 LIMITED_ITEMS 的 opt 壹起改
+  Object.assign(HATS, {
+    紙箱頂: { h: 52, svg: h => `<g transform="rotate(-6 100 ${h})"><rect x="73" y="${h - 32}" width="54" height="32" fill="#C9A06A" stroke="#7A5A2E" stroke-width="${SW}" stroke-linejoin="round"/><path d="M73 ${h - 32}L80 ${h - 38}H120L127 ${h - 32}Z" fill="#B88C54" stroke="#7A5A2E" stroke-width="1.6" stroke-linejoin="round"/>` +
+      `<rect x="94" y="${h - 32}" width="12" height="32" fill="#E9D9A8" stroke="#B9A05E" stroke-width="1"/><rect x="84" y="${h - 52}" width="32" height="14" fill="#D7B37B" stroke="#7A5A2E" stroke-width="${SW}" stroke-linejoin="round" transform="rotate(7 100 ${h - 45})"/></g>` +
+      ln(`M79 ${h - 12}h8M79 ${h - 8}h5`, "#7A5A2E", 1.4) + `<text x="112" y="${h - 8}" font-size="9" font-family="serif" fill="#B3262E">+1</text>` },
+    白布頭罩: { h: 12, svg: h => `<path d="M63 ${h + 4}Q60 ${h - 40} 100 ${h - 42}Q140 ${h - 40} 137 ${h + 4}L131 ${h + 12}L123 ${h + 4}L114 ${h + 13}L105 ${h + 4}L96 ${h + 13}L87 ${h + 4}L78 ${h + 12}Z" fill="#F6F3EC" stroke="#A9A598" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      ln(`M80 ${h - 30}Q84 ${h - 10} 79 ${h + 8}M100 ${h - 38}Q101 ${h - 15} 99 ${h + 8}M120 ${h - 30}Q116 ${h - 10} 121 ${h + 8}`, "#D2CEC2", 1.4) },
+    等門的小帽: { h: 28, svg: h => `<path d="M68 ${h + 2}Q70 ${h - 22} 100 ${h - 24}Q130 ${h - 22} 132 ${h + 2}Q100 ${h + 9} 68 ${h + 2}Z" fill="#5C6B84" stroke="#2F3A50" stroke-width="${SW}" stroke-linejoin="round"/>` +
+      C(100, h - 27, 4, "#D9A441", ' stroke="#8A6512" stroke-width="1.2"') + C(100, h - 9, 6.2, "#E9D9A8", ' stroke="#8A6512" stroke-width="1.2"') + `<circle cx="100" cy="${h - 10.5}" r="1.7" fill="#2F3A50"/><path d="M99.2 ${h - 10}L98.2 ${h - 5.5}H101.8L100.8 ${h - 10}Z" fill="#2F3A50"/>` },
+  });
   // 首飾的位置：ny、nw 是脖子（嘴巴下面）的高度、身體在那裡的半寬；ax、ay 是耳環掛的地方（眼睛外側，不超出身體）
   const wearGeo = g => {
     const half = y => g.rx * Math.sqrt(Math.max(0, 1 - ((y - g.cy) / g.ry) ** 2));
@@ -899,12 +910,17 @@ export const ART = (() => {
   } };
   // 展台裝飾：紅絨緞帶（掛在每一座展台的邊上，中間別一顆金色徽章）；只是好看
   function standDeco(id) {
+    if (id === "foe-f4g") { // 未乾的墨跡展台布：深藍的布，邊上滴下幾滴墨
+      return svgOpen("0 0 120 34", null, ' aria-hidden="true" class="stand-deco-svg"') + `<path d="M2 4Q30 20 60 8Q90 20 118 4V12Q90 28 60 16Q30 28 2 12Z" fill="#1F2A44" stroke="#0E1426" stroke-width="1.2"/>` + ln("M10 9Q30 20 52 12M68 12Q90 22 110 9", "#6C82B8", 1) +
+        [[26, 22, 6], [60, 19, 8], [93, 22, 5]].map(([x, y, d]) => `<path d="M${x} ${y}v${d}` + `" stroke="#0E1426" stroke-width="2.2" stroke-linecap="round"/><circle cx="${x}" cy="${y + d + 1.5}" r="2.3" fill="#0E1426"/><circle cx="${x - .7}" cy="${y + d + .8}" r=".7" fill="#8FA4D0"/>`).join("") + "</svg>";
+    }
     if (id !== "stand-velvet") return "";
     return svgOpen("0 0 120 34", null, ' aria-hidden="true" class="stand-deco-svg"') + `<path d="M2 4Q30 26 60 10Q90 26 118 4V10Q90 32 60 16Q30 32 2 10Z" fill="#8E2233" stroke="#5E1622" stroke-width="1.2"/>` + ln("M4 8Q30 28 60 13Q90 28 116 8", "#C8576A", 1.2, ' opacity=".7"') +
       ln("M8 10V30M112 10V30", "#C99A2E", 1.4) + C(8, 31, 2.2, "#E2B53E") + C(112, 31, 2.2, "#E2B53E") + C(60, 14, 6.5, "#E2B53E", ' stroke="#8A6512" stroke-width="1.2"') + spark(60, 14, 3.2, "#FFF1C2") + `</svg>`;
   }
   // 名牌框的角：金色藤蔓（左上角的樣子；其他角由畫面轉過去）
   function nameCorner(id) {
+    if (id === "foe-f3g") return svgOpen("0 0 40 40", null, ' aria-hidden="true" class="name-corner-svg"') + `<path d="M2 38V8Q2 2 8 2H38V8H8V38Z" fill="#B98A52" stroke="#5E3F1E" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 36V10Q6 6 10 6H36" fill="none" stroke="#E0BC84" stroke-width="1.2"/><path d="M2 2L8 8" stroke="#5E3F1E" stroke-width="1.2"/>` + C(5, 5, 1.2, "#5E3F1E") + "</svg>"; // 不肯回框的那壹幅：空的木畫框
     if (id !== "frame-vine") return "";
     return svgOpen("0 0 40 40", null, ' aria-hidden="true" class="name-corner-svg"') + ln("M3 37V14Q3 3 14 3H37", "#C99A2E", 2.6) + ln("M8 30Q8 10 28 8", "#E2B53E", 1.4) +
       [[6, 22, -30], [12, 12, -60], [22, 6, -80], [5, 30, -10]].map(([x, y, r]) => `<ellipse cx="${x + 3}" cy="${y}" rx="2.4" ry="5" fill="#B98A1E" transform="rotate(${r} ${x} ${y})"/>`).join("") + C(14, 14, 2.4, "#F2D894") + `</svg>`;
