@@ -21,6 +21,7 @@ T("旁證抄謎底字句會擋", () => bad(L => { const m = L.mysteries.list.fin
 T("壹週超過兩條人物線會擋", () => bad(L => { L.extend.weeks["2026-W48"].threads.push("t-number-2"); }, /最多兩條/));
 T("同壹個人的階往回走會擋", () => bad(L => { L.extend.threads.find(x => x.id === "t-number-3").stage = 1; }, /階要隨週數往上/));
 T("週表沒列三個去處會擋", () => bad(L => { L.extend.weeks["2026-W50"].leads = ["只有壹個"]; }, /leads 至少要三個/));
+T("三條線索不足或同一種地方會擋", () => { bad(L => { L.extend.weeks["2026-W49"].clues.splice(1); }, /clues 至少三條/); bad(L => { L.extend.weeks["2026-W49"].clues.forEach(c => { c.where = "書"; }); }, /三種以上/); });
 T("beats 不在 revealBeats 會擋", () => bad(L => { L.extend.weeks["2026-W52"].beats.push("b99"); }, /不在 revealBeats/));
 T("person 不在 taskGivers 會擋", () => bad(L => { L.extend.threads[0].person = "nobody"; }, /不在 taskGivers/));
 console.log(`extend_check：${pass} 過、${fail} 失敗`);

@@ -230,6 +230,8 @@ function format(p) {
     const x = p.extend; B(""); B(`【延伸世界（翊文 11-22）：這週是「${x.kind}」，第 ${x.stage} 階】這週每天都照 extend 走，不用舊的「回聲週不放新細節」；上面列的揭露都要放`);
     B(`  問題：${x.question}`); B(`  三個去處（都要有東西可看）：${asList(x.leads).join("；")}`);
     asList(x.threads).forEach(t => B(`  人物線 ${t.id}（${t.person}，第 ${t.stage} 階，${t.audit && t.audit.status}）：${t.seed}　放在：${t.where}`));
+    B(`  結論：${x.conclusion}　線索：${asList(x.clues).map(c => c.where + "—" + c.what).join("；")}`);
+    B("  每天寫完自問：玩家手上至少有三個能往下追的方向（書、房間、特展、公佈欄、交代人、地下各算一個）？不到就補");
     if (x.note) B(`  注意：${x.note}`);
     B("  規矩：只用審過的旁證、不自己加；壹週放壹天；放了在 weeks.<週>.ties 記壹行（排程說明 一、第 2 點）");
   }

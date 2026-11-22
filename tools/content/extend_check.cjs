@@ -54,6 +54,10 @@ function checkExtend(L, E, W, lw) {
     if (ids.length > 2) E(w, `壹週最多兩條人物線（現在 ${ids.length} 條）`);
     ids.forEach(id => { if (!tids.has(id)) E(w, `threads「${id}」不在 extend.threads 裡`); });
     (byWeek[k] || []).forEach(id => { if (!ids.includes(id)) E(w, `extend.threads 的「${id}」寫了這週，卻沒列在這週的 threads`); });
+    if (typeof x.conclusion !== "string" || !x.conclusion.trim()) E(w, "conclusion 要有字（這週要讓玩家推出來的結論）");
+    const cl = asList(x.clues);
+    if (cl.length < 3 || new Set(cl.map(c => c && c.where)).size < 3) E(w, "clues 至少三條、分在三種以上不同的地方（三條線索原則）");
+    cl.forEach(c => { if (!isObj(c) || !c.where || !c.what) E(w, "clues 每條要有 where 和 what"); });
     if (asList(x.leads).length < 3) E(w, "leads 至少要三個去處（三條線索原則、永遠有三個去處）");
     else asList(x.leads).forEach(l => { if (typeof l !== "string" || !l.trim()) E(w, "leads 每個要有字"); });
   });
