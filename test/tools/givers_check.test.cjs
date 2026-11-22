@@ -58,5 +58,21 @@ T("第三批：串門子、提到別人、稱號的欄位都擋得住壞的", ()
   expectErr(c => { get(c, "hall").title.id = "常客"; }, /稱號 id/);
   expectErr(c => { get(c, "hall").title.name = "壹".repeat(13); }, /最多 12 字/);
 });
+T("台詞檔只能往後加：句數變少、欄位不見、稱號 id 改了都擋，往後加可以", () => {
+  const { snapshotIds, checkIds } = require("../../tools/check/givers_check.cjs");
+  const snap = snapshotIds(real.givers);
+  assert.ok(snap["hall.chat.morning"] >= 3 && snap["hall.title.id"], "有記句數和稱號 id");
+  assert.deepStrictEqual(checkIds(real.givers, snap), []);
+  const more = clone(real.givers); more.find(g => g.id === "hall").chat.morning.push("多壹句。");
+  assert.deepStrictEqual(checkIds(more, snap), [], "往後加不擋");
+  const less = clone(real.givers); less.find(g => g.id === "hall").chat.morning.pop();
+  assert.ok(checkIds(less, snap).some(e => /只能往後加/.test(e)));
+  const gone = clone(real.givers); delete gone.find(g => g.id === "hall").errands;
+  assert.ok(checkIds(gone, snap).some(e => /不見了/.test(e)));
+  const tid = clone(real.givers); tid.find(g => g.id === "hall").title.id = "other";
+  assert.ok(checkIds(tid, snap).some(e => /稱號 id/.test(e)));
+  const r = readGivers(); assert.ok(r.givers.every(g => g.id), "_ids.json 不會被當成交代人讀進來");
+  const c = base(); c.ids = snap; assert.deepStrictEqual(checkGivers(c).errors, []);
+});
 console.log(`交代人台詞檢查：${pass} 通過，${fail} 失敗`);
 if (fail) process.exit(1);
