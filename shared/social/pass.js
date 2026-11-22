@@ -111,6 +111,7 @@ export function passView(P, o = {}) {
     ["地下收藏庫", best ? `走到 B${best}` : "還沒下去"],
   ];
   if (Number.isInteger(o.signins)) records.push(["簽到", `${o.signins} 天`]);
+  if (o.streak && Number.isInteger(o.streak.cur)) records.push(["連續簽到", `${o.streak.cur} 天（最長 ${o.streak.best} 天）`]); // signStreak(SAVE, 今天) 的結果，畫面給
   records.push(["在館裡的時間", passPlayText(P.activeSec)]);
   const lim = limitedCount(P);
   return {

@@ -409,7 +409,7 @@ export function cellarAdvance(P) {
       out.events.push({ type: "key", key: r.key, from: before, to: possibilities(P), total: knownTotal(P) });
     }
     if (r.book) { P.keys[r.book] = todayStr(); out.events.push({ type: "book", id: r.book }); P.news.origin = true; }
-    if (r.ending) out.ending = r.ending;
+    if (r.ending) { out.ending = r.ending; if (P.endings && typeof P.endings === "object" && !P.endings[r.ending]) P.endings[r.ending] = todayStr(); } // 結局馬上存（以前只在結局畫面打開時才寫，合作走完沒看到畫面就沒記，11-22）
     if (out.next) out.events.push({ type: "floor", floor: out.next }); // 下壹層開放了（11-08：地下收藏庫的樓層牌子標「新」）
   }
   if (out.next && P.visit) P.visit.deepest = Math.max(P.visit.deepest || 0, out.next); // 接著往下走（歷任參觀者牆，11-08）
