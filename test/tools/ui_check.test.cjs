@@ -22,6 +22,8 @@ const ps = U.summarize([
   { scr, size: "desktop", m: { over: [], clipped: [], vertical: [], hscroll: false } },
   { scr, size: "phone", error: "boom" }]);
 assert.deepStrictEqual(ps.map(p => p.kind), ["超出視窗", "按鈕被切", "字變直排", "錯誤"]);
+assert.deepStrictEqual(U.summarize([{ scr, size: "phone", m: { over: [], clipped: [], vertical: [], small: [{ el: "button.go", w: 60, h: 28 }], hscroll: false } }]).map(p => p.kind), ["按鈕太小"], "手機上最重要的畫面，按鈕太小要報");
+assert.ok(U.TAP_SCREENS.test("pass") && U.TAP_SCREENS.test("tasks:full") && !U.TAP_SCREENS.test("gallery"));
 assert.deepStrictEqual(U.summarize([{ scr, size: "phone", m: { over: [], clipped: [], vertical: [], hscroll: true, scrollW: 500 } }]).map(p => p.kind), ["超出視窗"], "只有橫向捲軸也要報");
 // 有寫進 package.json 和 AGENTS.md（改畫面的人要看得到）
 assert.strictEqual(JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).scripts["ui:check"], "node tools/check/ui_check.cjs");

@@ -46,12 +46,14 @@ const SCREENS = [
   { id: "bank:借款", name: "銀行：借款（假伺服器）" },
   { id: "bank:館債", name: "銀行：館債（假伺服器）" },
 ];
+// 手機上「最重要」的畫面（翊文 11-22）：能按的東西短邊至少這麼多 px（目標 44，量到 40 以下才報）
+const TAP_SCREENS = /^(today|tasks|pass|calendar)/, TAP_MIN = 40;
 const SIZES = { phone: { w: 375, h: 740, mobile: true, dpr: 2 }, desktop: { w: 2140, h: 1440, mobile: false, dpr: 1 } };
 
 // ---------- 在頁面裡跑的量測（回傳壹個 JSON） ----------
 // 寫成字串是為了丟進 Runtime.evaluate；不能用外面的變數。
 const MEASURE = `(() => {
-  const vw = window.__W, vh = window.__H, /* 手機模擬時內容壹超出，innerWidth 會跟著變大，所以用我們設定的寬 */ out = { over: [], clipped: [], vertical: [], hscroll: false, texts: document.body.innerText.length };
+  const vw = window.__W, vh = window.__H, /* 手機模擬時內容壹超出，innerWidth 會跟著變大，所以用我們設定的寬 */ out = { over: [], clipped: [], vertical: [], small: [], hscroll: false, texts: document.body.innerText.length };
   const cs = e => getComputedStyle(e);
   const shown = e => { const s = cs(e); if (s.display === "none" || s.visibility === "hidden" || +s.opacity === 0) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const hiddenChain = e => { for (let x = e; x && x !== document.body; x = x.parentElement) { const s = cs(x); if (s.display === "none" || s.visibility === "hidden" || +s.opacity === 0) return true; } return false; };
@@ -91,6 +93,15 @@ const MEASURE = `(() => {
     if (!xFree) { L = Math.max(L, 0); R = Math.min(R, vw); } // 沒有捲動容器：視窗左右也是邊界（上下可以捲，不算）
     const vwid = Math.max(0, R - L), vhei = Math.max(0, B - T);
     if (vwid < r.width * 0.8 || vhei < r.height * 0.8) out.clipped.push({ el: label(b), w: Math.round(r.width), h: Math.round(r.height), vw: Math.round(vwid), vh: Math.round(vhei) });
+  }
+  // 2b. 點擊面積太小（11-22 翊文：「基本上手機版最重要就是任務板跟館友證」；原則在 docs/規則/介面設計原則.md 第七節）：只在手機看任務板、館友證、簽到日曆（window.__TAP），能按的東西短邊要 ≥ __TAP_MIN px
+  const layers = [...document.querySelectorAll(".nb-layer, .mini-layer")], seenTap = new Set(); // 有蓋層（館友證、任務板是視窗）就只量最上面那層，底下的大廳不算；提示小卡（toast）、狀態列不算
+  if (window.__TAP) for (const b of btns) {
+    const r = b.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
+    if (b.closest("[aria-hidden=true], .fx-toast, .status-bar, #status")) continue;
+    if (layers.length && !layers[layers.length - 1].contains(b)) continue;
+    const key = label(b) + Math.round(r.width) + "x" + Math.round(r.height); if (seenTap.has(key)) continue; seenTap.add(key); // 同樣的只報壹次
+    if (Math.min(r.width, r.height) < window.__TAP_MIN) out.small.push({ el: label(b), w: Math.round(r.width), h: Math.round(r.height) });
   }
   // 3. 直排：按鈕、標題壹行只有 1 個字
   const heads = all.filter(e => e.matches("button, .btn, [role=button], h1, h2, h3, h4, h5, h6, [class*=title], [class*=-head], .nb-title, b") && shown(e) && !hiddenChain(e));
@@ -152,7 +163,7 @@ async function inspect(B, base, scr, size, opts) {
   if (/^(casino|bank|pass)/.test(scr.id)) { await B.evaluate(DISMISS); await sleep(600); await B.evaluate(DISMISS); await sleep(300); } // 假伺服器的賭場、銀行：第壹次進來的說明卡（「知道了」）先關掉，不然蓋住畫面量不到
   await sleep(400);
   if (opts.js) { await B.evaluate(opts.js); await sleep(500); } // --js：先跑壹段（測試檢查本身用，或先按開某個分頁）
-  await B.evaluate(`window.__W = ${sz.w}; window.__H = ${sz.h};`);
+  await B.evaluate(`window.__W = ${sz.w}; window.__H = ${sz.h}; window.__TAP = ${!!(sz.mobile && TAP_SCREENS.test(scr.id))}; window.__TAP_MIN = ${TAP_MIN};`);
   let m = await B.evaluate(MEASURE);
   for (let t = 0; t < 2 && m.texts < 20; t++) { await sleep(3000); m = await B.evaluate(MEASURE); } // 慢壹點才畫出來的，再等
   const state = await B.evaluate(`({ room: (document.body.dataset && document.body.dataset.room) || "", login: !!document.querySelector(".login, .lg-card, [class*=login]") || /請先登入|需要登入|登入後/.test(document.body.innerText), title: document.title })`);
@@ -193,6 +204,7 @@ function summarize(report) {
     for (const x of r.m.over) out.push({ r, kind: "超出視窗", text: `${x.el}：右邊 ${x.right}、左邊 ${x.left}、寬 ${x.w}${x.fixed ? "（固定／絕對位置）" : ""}` });
     if (r.m.hscroll && !r.m.over.length) out.push({ r, kind: "超出視窗", text: `頁面出現橫向捲軸（內容寬 ${r.m.scrollW}）` });
     for (const x of r.m.clipped) out.push({ r, kind: "按鈕被切", text: `${x.el}：實際 ${x.w}×${x.h}，可見 ${x.vw}×${x.vh}` });
+    for (const x of r.m.small || []) out.push({ r, kind: "按鈕太小", text: `${x.el}：${x.w}×${x.h}（手機上最重要的畫面，短邊要 ≥ ${TAP_MIN}px）` });
     for (const x of r.m.vertical) out.push({ r, kind: "字變直排", text: `${x.el}：${x.chars} 個字排成 ${x.lines} 行` });
   }
   return out;
@@ -210,4 +222,4 @@ function print(report, skipped, problems) {
   console.log(problems.length ? `\n${problems.length} 個問題` : "\n沒有發現問題");
 }
 if (require.main === module) main().catch(e => { console.error("✗", e.message); process.exit(1); });
-module.exports = { SCREENS, SIZES, MEASURE, summarize };
+module.exports = { SCREENS, SIZES, MEASURE, TAP_SCREENS, TAP_MIN, summarize };
