@@ -11,7 +11,7 @@
 import { casNum } from "../../../shared/casino/core.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, num, parsePillowKey, todayStr } from "../../../shared/core/logic.js";
 import { PASS_TABS, PASS_TIPS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/social/pass.js";
-import { signinState } from "../../../shared/social/signin.js";
+import { signStreak, signinState } from "../../../shared/social/signin.js";
 import { NET } from "../core/net_firebase.js";
 import { ART } from "../core/art.js";
 import { ADDONS, P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, itemTitle, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
@@ -101,10 +101,25 @@ export function openPass(o = {}) {
       h("div", { class: "ps-narrow" }, recordsSec(v), accountSec())]; // 手機：左邊的證件縮成壹條，紀錄和帳號放這裡
   };
 
+  // 地下收藏庫的紀錄（11-22）：每層通關日、怪物圖鑑、結局。沒打贏過的怪、沒看過的結局不寫名字
+  const cellarSecs = v => {
+    const C = v.cellar;
+    if (!C) return [];
+    return [
+      sec(`地下收藏庫　走到 B${C.best || 0}／B${C.floors}`, h("ul", { class: "pv-gear" }, C.floorList.map(f => h("li", { class: f.d ? "" : "ps-miss" }, icon(f.d ? "star" : "lock"), h("span", null, h("b", null, `B${f.n}`), h("small", null, f.d ? `通關・${f.d}` : "還沒通關"))))),
+        h("div", { class: "sp-go" }, goBtn("地下收藏庫", () => go("cellar"), "stairs"))),
+      sec(`怪物圖鑑　${C.foesGot}／${C.foes.length}`, h("ul", { class: "pv-gear" }, C.foes.map(f => h("li", { class: f.d ? "" : "ps-miss" }, icon(f.d ? "eye" : "lock"), h("span", null, h("b", null, f.name), h("small", null, `B${f.floor}${f.boss ? "・守門" : ""}${f.d ? `・第壹次打贏 ${f.d}` : "・還沒打贏"}`))))),
+        h("p", { class: "sp-note" }, "和館友壹起下去、打贏了才會記下來。")),
+      sec("結局", h("ul", { class: "pv-gear" }, C.endings.map(e => h("li", { class: e.d ? "" : "ps-miss" }, icon(e.d ? "star" : "lock"), h("span", null, h("b", null, e.name), h("small", null, e.d ? (e.d === "有" ? "看過" : `看過・${e.d}`) : "還沒看過")))))), ];
+  };
+  // 簽到的摘要（11-22）：累計、連續、補簽
+  const signSec = v => (v.sign ? sec("簽到", h("div", { class: "ps-stats" }, stat("累計", `${v.sign.count} 天`), stat("連續", `${v.sign.cur} 天`), stat("最長連續", `${v.sign.best} 天`), stat("補簽", `${v.sign.makeups} 次`)),
+    h("div", { class: "sp-go" }, PANELS.calendar && !v.free ? goBtn("簽到日曆", () => PANELS.calendar(), "calendar") : null)) : null);
+
   // 現在這位參觀者（翊文 11-10：「把館友證補齊」）：館長室名片上有的這裡都看得到；要改（脫裝備、退休）還是去館長室
   const visitorPane = v => {
     const x = v.visitor;
-    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), ...gearPane(v), upgradeSec(v), ...legacySecs(v), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))]; // 還沒選職業也能穿裝備（裝備是博物館的、跟職業無關）
+    if (!x) return [h("p", { class: "nb-empty" }, v.free ? "自由模式沒有職業，也不擲骰。" : "還沒選職業。到館長室選。"), ...gearPane(v), upgradeSec(v), ...legacySecs(v), ...cellarSecs(v), v.free ? null : h("div", { class: "sp-go" }, goBtn("館長室", () => go("office"), "info"))]; // 還沒選職業也能穿裝備（裝備是博物館的、跟職業無關）
     return [
       sec(null, h("div", { class: "pv-head" },
         h("div", { class: "pv-badge", html: ART.jobBadge(x.job), "aria-hidden": "true" }),
@@ -116,7 +131,7 @@ export function openPass(o = {}) {
       ...gearPane(v),
       x.quirks.length ? sec("怪癖", h("ul", { class: "pv-quirks" }, x.quirks.map(q => h("li", null, icon("eye"), h("b", null, q.name), h("small", null, q.type === "mania" ? "狂熱" : "恐懼症")))),
         h("p", { class: "sp-note" }, "怎麼治好、還剩多久，寫在館長室的名片上。")) : null,
-      upgradeSec(v), ...legacySecs(v),
+      upgradeSec(v), ...legacySecs(v), ...cellarSecs(v),
       h("div", { class: "sp-go pv-go" }, goBtn("館長室的名片", () => go("office"), "info"))];
   };
 
@@ -245,6 +260,7 @@ export function openPass(o = {}) {
   const decoPane = v => {
     const d = v.deco;
     return [
+      signSec(v),
       sec(`限定的收藏　${d.have}／${d.total}`,
         h("div", { class: "ps-items" }, d.items.map(it => h("div", { class: "sg-item k-" + it.kind + (it.own ? "" : " ps-miss") },
           h("span", { class: "sg-item-art", html: it.own ? itemArt(it.id) : "", "aria-hidden": "true" }, it.own ? null : icon("lock")),
@@ -298,7 +314,7 @@ export function openPass(o = {}) {
   };
   const PANES = { card: overviewPane, pepe: v => [...pepePane(v), badgesSec(v), ...booksPane(v)], hall: hallPane, casino: casinoPane, visitor: visitorPane, deco: decoPane };
   function draw() {
-    const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined });
+    const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined, streak: SAVE && !isFree(P) ? signStreak(SAVE, todayStr()) : undefined });
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "典藏冊" }, PASS_TABS.map(([id, name]) => {
       const b = h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : "") }, name);
       tipOn(b, PASS_TIPS[id]); b.addEventListener("click", () => { tab = id; draw(); snd("flip"); }); // 先接說明牌、再接點擊（長按顯示說明那壹下不算點擊）
