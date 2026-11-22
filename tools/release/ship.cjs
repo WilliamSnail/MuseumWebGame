@@ -65,6 +65,7 @@ function run(cmd, args, opts = {}) {
   if (r.status !== 0 && !opts.ok) throw new Error(`${path.basename(cmd)} ${args.slice(0, 3).join(" ")} 失敗：\n${failText(r.stdout + r.stderr)}`);
   return Object.assign(r, { out: (r.stdout || "").trim() });
 }
+const briefLine = t => /^\s*(✓|✗)/.test(t) || /失敗|FAIL|錯誤/.test(t); // --brief 要印的行（純函式，測試用）
 const git = (args, opts) => run("git", ["-c", "core.quotepath=false", ...args], opts);
 const say = t => console.log(`\n▶ ${t}`);
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -118,7 +119,7 @@ function main() {
   const sayText = o["say-now-file"] ? fs.readFileSync(o["say-now-file"], "utf8") : o["say-now"];
   if (o["say-now"] && process.platform === "win32" && process.env.npm_lifecycle_event) console.log("（提醒：用 npm run 在 Windows 上傳 --say-now，文字裡的換行後面會被切掉；多行請改 --say-now-file 檔案）");
   if (sayText) require("../content/say.cjs").checkText(sayText); // 先檢查，免得上線完才發現發不出去
-  if (o.flags.has("brief")) { const raw = console.log; console.log = (...a) => { const t = a.join(" "); if (/^s*(✓|✗)/.test(t) || /失敗|FAIL|錯誤/.test(t)) raw(...a); }; }
+  if (o.flags.has("brief")) { const raw = console.log; console.log = (...a) => { if (briefLine(a.join(" "))) raw(...a); }; }
   const branch = git(["branch", "--show-current"]).out;
   if (!branchOk(branch)) throw new Error(`現在在「${branch}」，先開分支`);
 
@@ -284,4 +285,4 @@ function backToMain() {
 }
 
 if (require.main === module) { try { main(); } catch (e) { console.error(`\n✗ ${e.message}`); process.exit(1); } }
-module.exports = { isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning, rolloverWarning };
+module.exports = { briefLine, isContentFile, contentOnly, localPlan, parseArgs, commitText, prBody, branchOk, noChecksYet, checksState, titleOk, bodyFromLog, noticeWarning, rolloverWarning };

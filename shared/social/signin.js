@@ -63,7 +63,7 @@ export function limitedInfo(id) {
   const it = limitedItem(id);
   if (!it) return null;
   const T = (typeof LIMITED_TEXT !== "undefined" && LIMITED_TEXT[id]) || {};
-  return Object.assign({}, it, { name: T.name || it.opt || id, kindName: T.kind || "", desc: T.desc || "", use: T.use || "" });
+  return Object.assign({}, it, { name: T.name || it.opt || id, kindName: T.kind || "", desc: T.desc || "", use: T.use || "", origin: T.origin || "" }); // origin：「來歷」（守門掉落的來歷，兩句內，同時是壹條線索；內容寫在 LIMITED_TEXT 的 origin，11-22）
 }
 // 有沒有（自由模式都有）
 export function ownsLimited(P, id) {

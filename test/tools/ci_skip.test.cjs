@@ -43,6 +43,7 @@ T("ship 認得 --brief 和 --doc（11-22）", () => {
   const o = SHIP.parseArgs(["--title", "測試標題", "--brief", "--doc", "x.json"]);
   assert.ok(o.flags.has("brief")); assert.strictEqual(o.doc, "x.json");
   assert.throws(() => SHIP.parseArgs(["--doc"]), /後面要有內容/);
+  assert.ok(SHIP.briefLine("\n✓ PR 1 合併、部署成功") && SHIP.briefLine("✗ npm test 失敗") && !SHIP.briefLine("▶ 等 CI") && !SHIP.briefLine("本機測試"), "--brief 只留 ✓／✗／失敗的行");
 });
 
 console.log(`${pass} passed, ${fail} failed（CI 不跳測試）`);
