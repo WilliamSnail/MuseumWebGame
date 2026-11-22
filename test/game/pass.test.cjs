@@ -179,5 +179,21 @@ T("裝飾頁的說明和來歷：拿到了才給，沒拿到不透露（desc、o
   assert.strictEqual(x1.own, true); assert.strictEqual(x1.desc, info.desc); assert.strictEqual(x1.origin, info.origin);
 });
 
+T("展廳頁：新存檔空展台、自由模式 null、擺上去後排列和評分照存檔，不改存檔", G => {
+  assert.strictEqual(G.passView(fresh(G, "free"), {}).hall, null);
+  const P = fresh(G), h0 = J(G.passView(P, {})).hall;
+  assert.strictEqual(h0.size, 6); assert.strictEqual(h0.have, 0); assert.strictEqual(h0.slots.length, 6); assert.ok(h0.slots.every(x => x === null));
+  assert.strictEqual(h0.score, 0); assert.strictEqual(h0.theme, null); assert.strictEqual(h0.visitors, 0);
+  assert.strictEqual(h0.themesTotal, Object.keys(G.HALL_THEME_TEXT).length); assert.ok(G.PASS_TABS.some(t => t[0] === "hall"));
+  const k = G.pepeKey(Object.assign({}, G.DEFAULT_PICK));
+  P.pepes[k] = { count: 1, perfect: true, first: "2026-11-01", title: "小明" }; P.hall[1] = { kind: "pepe", key: k }; P.hallVisitors = 7;
+  P.visitorLog.unshift({ who: "老派收藏家", text: "逛了壹圈。", gain: 3, full: false });
+  const before = JSON.stringify(P), h1 = J(G.passView(P, {})).hall;
+  assert.strictEqual(JSON.stringify(P), before, "不改存檔");
+  assert.strictEqual(h1.have, 1); assert.strictEqual(h1.slots[0], null); assert.strictEqual(h1.slots[1].key, k); assert.strictEqual(h1.slots[1].title, "小明"); assert.ok(h1.slots[1].perfect);
+  assert.ok(h1.score > 0); assert.strictEqual(h1.visitors, 7); assert.strictEqual(h1.log[0].gain, 3); assert.strictEqual(h1.logInsp, 3);
+  P.upgrades.ped7 = true; assert.strictEqual(J(G.passView(P, {})).hall.size, 7);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

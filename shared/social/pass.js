@@ -7,10 +7,13 @@
 import { BADGES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
 import { BOOK4, BOOK_SEQUELS, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
 import { FORBIDDEN_BOOKS } from "../core/content.js";
-import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, isFree, maxSan, todayStr } from "../core/logic_base.js";
+import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, hallItem, hallScore, isFree, maxSan, todayStr } from "../core/logic_base.js";
+import { hallArt } from "./gifts.js";
+import { SHOW_THEMES, SHOW_TIER_NAME, showPosters } from "../story/themeshow.js";
+import { HALL_THEME_TEXT } from "../core/content.js";
 import { describePillow, gameDayNo, quirkName } from "../core/logic.js";
 import { jobInfo, jobSkill, skillOf } from "../core/legacy.js";
-import { roomProgress, upgradeState } from "../core/systems.js";
+import { hallSize, roomProgress, upgradeState } from "../core/systems.js";
 import { traitById } from "../core/logic_base.js";
 import { traitDesc, traitName } from "../core/legacy.js";
 import { gearInfo } from "../core/shop.js";
@@ -21,11 +24,13 @@ import { storyState } from "../story/state.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";
 
 // 典藏冊的頁籤（第壹頁是館友證本身）
-export const PASS_TABS = [["card", "總覽"], ["pepe", "佩佩與書"], ["casino", "賭場"], ["visitor", "參觀者"], ["deco", "裝飾"]]; // 11-21 重新設計：7 個收成 5 個（翊文選方向 A）；左邊的證件常駐
+export const PASS_TABS = [["card", "總覽"], ["pepe", "佩佩與書"], ["hall", "展廳"], ["casino", "賭場"], ["visitor", "參觀者"], ["deco", "裝飾"]]; // 11-21 重新設計：7 個收成 5 個（翊文選方向 A）；左邊的證件常駐
 // 館友證各頁籤、各區塊的說明牌（滑鼠移過去、手機長按；字用「壹」）。title 標題、what 這是什麼、how 怎麼拿到
 export const PASS_TIPS = {
   card: { title: "總覽", what: "每壹頁的進度壹眼看完，點壹塊就翻到那壹頁。", how: ["左邊是你的館友證：頭像、稱號、籌碼、週章", "手機上紀錄和帳號放在這壹頁"] },
   pepe: { title: "佩佩與書", what: "做過的佩佩、圖鑑的徽章、讀過的書和看懂的事。", how: ["在手作坊做佩佩，圖鑑就會收進來", "徽章在圖鑑室拿到", "書在圖書館讀"] },
+  hall: { title: "展廳", what: "你掛在展台上的佩佩和抱枕、評分和主題、收藏的畫、海報、掛出的紀念品，還有來參觀的人。", how: ["在展廳把佩佩擺上展台", "同壹個主題的佩佩擺在壹起，評分會加分", "館友來參觀你的展廳，也看得到這些"] },
+  art: { title: "收藏的畫", what: "你買到的畫，持有就替展廳加壹點分（有上限）。拍賣中的不算分。", how: ["在畫廊的拍賣和畫市買畫", "館友來參觀你的展廳，也看得到這些畫（看不到買價）"] },
   casino: { title: "賭場", what: "你在 Hamachi 賭場的成就、本週收藏、財產（紀念品）和換小獎。", how: ["打牌、吃東西、開大禮包都可能拿到", "每塊的「前往」會帶你到賭場對應的頁"] },
   visitor: { title: "參觀者", what: "現在這位參觀者的職業、技能、裝備和怪癖。", how: ["在館長室選職業、換人", "裝備用週章到兌換所換"] },
   deco: { title: "裝飾", what: "限定的收藏：每日簽到和兌換所才拿得到的裝飾。", how: ["每日簽到會有機會拿到", "拿到的可以「拿去用」"] },
@@ -100,6 +105,33 @@ export function passForbidden(P) {
 
 // 館友證的頭像（11-13）：玩家自己挑壹隻收藏過的佩佩。存檔 P.avatar 是那隻的 key。
 // 選的那隻不在收藏裡（舊存檔、或之後被拿掉）就當成沒有頭像，回空字串；不會去改存檔。
+// 展廳（翊文 11-22：「展廳」加進館友證，變 6 頁）：展台上的、評分和主題、收藏的畫、海報、掛出的報告、來參觀的人。只讀，不改存檔。
+// 別人看到的是 cleanHallView 的子集（pub 欄位）；這裡是自己的完整版（多了排列的空位、展台升級、參觀紀錄）
+export function passHall(P) {
+  if (!P || isFree(P)) return null;
+  let hs = { score: 0, theme: null, themes: [], artBonus: 0 };
+  try { hs = hallScore(P); } catch (e) { /* 壞掉的存檔：分數當 0 */ }
+  const pepes = P.pepes || {};
+  const slots = (Array.isArray(P.hall) ? P.hall : []).slice(0, 12).map(sl => {
+    let it = null;
+    try { it = hallItem(P, sl); } catch (e) { it = null; }
+    return it ? { kind: it.kind, key: it.key, perfect: !!it.perfect, title: it.kind === "pepe" && pepes[it.key] && typeof pepes[it.key].title === "string" ? pepes[it.key].title : "" } : null;
+  });
+  const themeName = id => (HALL_THEME_TEXT[id] || {}).name || id;
+  const seen = P.themesSeen && typeof P.themesSeen === "object" ? P.themesSeen : {};
+  const log = Array.isArray(P.visitorLog) ? P.visitorLog.slice(0, 5).map(x => ({ who: String((x && x.who) || "").slice(0, 20), text: String((x && x.text) || "").slice(0, 60), gain: Math.max(0, Math.floor(+(x && x.gain)) || 0) })) : [];
+  const logInsp = Array.isArray(P.visitorLog) ? P.visitorLog.reduce((a, x) => a + Math.max(0, Math.floor(+(x && x.gain)) || 0), 0) : 0;
+  const report = P.hallReport && Array.isArray(P.coopReports) ? P.coopReports.find(r => r && r.id === P.hallReport) || null : null;
+  return {
+    size: hallSize(P), slots, have: slots.filter(Boolean).length,
+    ups: [["ped7", !!(P.upgrades && P.upgrades.ped7)], ["ped8", !!(P.upgrades && P.upgrades.ped8)]],
+    score: hs.score || 0, artBonus: hs.artBonus || 0, theme: hs.theme || null, themeName: hs.theme ? themeName(hs.theme) : "", themes: (hs.themes || []).map(id => ({ id, name: themeName(id) })),
+    themesSeen: Object.keys(seen).filter(id => HALL_THEME_TEXT[id]).length, themesTotal: Object.keys(HALL_THEME_TEXT).length,
+    art: hallArt(P),
+    posters: showPosters(P).map(x => ({ theme: x.theme, name: themeName(x.theme), tier: x.tier, tierName: SHOW_TIER_NAME[x.tier] || "", score: x.score, date: x.date })), postersTotal: SHOW_THEMES.length,
+    report, visitors: Math.max(0, Math.floor(+P.hallVisitors) || 0), log, logInsp,
+  };
+}
 export function passAvatar(P) {
   const k = P && typeof P.avatar === "string" ? P.avatar : "";
   return k && P.pepes && P.pepes[k] && fromKey(k) ? k : "";
@@ -149,6 +181,7 @@ export function passView(P, o = {}) {
     gear: passGear(P),
     upgrades: passUpgrades(P),
     relics: passLegacy(P),
+    hall: passHall(P),
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),

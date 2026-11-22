@@ -9,12 +9,12 @@
 //  介面文字照第 1 代用「壹」。
 // ================================================================
 import { casNum } from "../../../shared/casino/core.js";
-import { fromKey, isFree, num, todayStr } from "../../../shared/core/logic.js";
+import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, num, parsePillowKey, todayStr } from "../../../shared/core/logic.js";
 import { PASS_TABS, PASS_TIPS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/social/pass.js";
 import { signinState } from "../../../shared/social/signin.js";
 import { NET } from "../core/net_firebase.js";
 import { ART } from "../core/art.js";
-import { P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, itemTitle, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
+import { ADDONS, P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, itemTitle, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
 import { tipOn } from "../core/ui_tip.js";
 import { overlay } from "./ui_board.js";
 import { accountRows } from "./ui_login.js";
@@ -22,6 +22,7 @@ import { relicItem, retireWords, whoOf } from "../rooms/ui_screens3.js";
 import { itemArt, originNode, useNow } from "./ui_signin.js";
 import { casePane } from "./ui_story.js";
 import { gearCard } from "./ui_shop.js";
+import { posterWall } from "./ui_themeshow.js";
 
 const sec = (title, ...kids) => h("section", { class: "sp-sec" }, title ? h("h3", null, title) : null, ...kids);
 const secT = (title, tip, ...kids) => { const el = sec(title, ...kids); const t = el.querySelector("h3"); if (t && PASS_TIPS[tip]) tipOn(t, PASS_TIPS[tip]); return el; }; // 帶說明牌的區塊（滑鼠移到標題、手機長按）
@@ -259,7 +260,32 @@ export function openPass(o = {}) {
     const first = pop.querySelector(".ps-pick-i.on") || pop.querySelector(".ps-pick-i") || pop.querySelector(".btn");
     first && first.focus();
   }
-  const PANES = { card: overviewPane, pepe: v => [...pepePane(v), badgesSec(v), ...booksPane(v)], casino: casinoPane, visitor: visitorPane, deco: decoPane };
+  // 展廳（11-22 新加的頁籤）：展台、評分和主題、收藏的畫、海報、掛出的紀念品、掛在牆上的報告、來參觀的人
+  const slotArt = s => (s.kind === "pillow" ? (() => { const pp = parsePillowKey(s.key); return ART.pillow(pp.pick, pp.print ? pp.print.pick : null, { failed: !!(pp.print && pp.print.kind === "failed") }); })() : frogHTML(fromKey(s.key), { failed: s.kind === "failed", perfect: !!s.perfect }));
+  const slotName = s => (s.kind === "pillow" ? describePillow(s.key).title : (s.title ? `「${s.title}」` : "") + describePepe(fromKey(s.key), { failed: s.kind === "failed" }).title);
+  const slotNote = s => (s.kind === "pillow" ? "抱枕" : s.kind === "failed" ? FAILED : s.kind === "repaired" ? "修復品" : fromKey(s.key)[ROLLED] + (s.perfect ? "・完美" : ""));
+  const hallPane = v => {
+    const H = v.hall;
+    if (v.free || !H) return h("p", { class: "nb-empty" }, "展廳是挑戰模式的東西，自由模式沒有。");
+    const goHall = h("div", { class: "sp-go" }, goBtn("展廳", () => navTo("hall"), "hall"));
+    return [
+      secT(`展台　${H.have}／${H.size}`, "hall", bar(H.have, H.size),
+        h("div", { class: "ps-hall" }, H.slots.map((s, i) => h("div", { class: "ps-hall-i" + (s ? "" : " empty"), title: s ? slotName(s) : `展台 ${i + 1}：空的` },
+          s ? h("span", { class: "ps-thumb", html: slotArt(s), "aria-hidden": "true" }) : h("span", { class: "ps-thumb ps-empty", "aria-hidden": "true" }, icon("lock")),
+          h("small", null, s ? slotName(s) : "空展台"), s ? h("small", { class: "ps-hall-n" }, slotNote(s)) : null))),
+        h("p", { class: "sp-note" }, H.ups.map(([id, own], i) => `第 ${7 + i} 個展台：${own ? "已經蓋好" : "還沒升級"}`).join("・") + "（在館長室蓋）。"), goHall),
+      sec(`評分　${H.score} 分`, h("div", { class: "ps-stats" }, stat("主題", H.themeName || "還沒有"), stat("掛畫加分", H.artBonus ? `+${H.artBonus}` : "0"), stat("看過的主題", `${H.themesSeen}／${H.themesTotal}`)),
+        H.themes.length > 1 ? h("p", { class: "sp-note" }, `這次湊到的主題：${H.themes.map(t => t.name).join("、")}（算分數最高的那個）`) : null,
+        h("p", { class: "sp-note" }, H.theme ? "同壹個主題的佩佩擺在壹起會加分。" : "展台上壹樣的心情、顏色湊滿，就會出現主題。"), goHall),
+      secT(`收藏的畫　${H.art.length}`, "art", H.art.length ? h("ul", { class: "pv-gear" }, H.art.map(a => h("li", null, icon("star"), h("span", null, h("b", null, a.title || a.id), h("small", null, (a.tierName || "") + (a.auction ? "・拍賣中" : "")))))) : h("p", { class: "sp-note" }, "還沒有買過畫。在拍賣行買到的畫，持有就會替展廳加分。"),
+        h("div", { class: "sp-go" }, UI.net ? goBtn("畫廊的畫", () => go("gallery", { tab: "auction" }), "star") : null)),
+      H.posters.length ? sec(`海報　${H.posters.length}／${H.postersTotal}`, posterWall(H.posters), h("div", { class: "sp-go" }, goBtn("展廳的海報牆", () => navTo("hall"), "hall"))) : sec("海報", h("p", { class: "sp-note" }, "還沒辦過主題展。展廳的主題湊到分數，就會辦成壹場。"), goHall),
+      v.souvenirs.length ? sec(`掛在展廳的紀念品　${v.souvenirs.length} 件`, h("div", { class: "ps-chips" }, v.souvenirs.map(p => h("span", { class: "ps-chip hung", title: p.desc || "" }, p.name))), h("p", { class: "sp-note" }, "來參觀的館友看得到。到賭場掛上或拿下。"), h("div", { class: "sp-go" }, PANELS.casino && UI.net ? goBtn("賭場的財產", () => PANELS.casino({ tab: "props" }), "dice") : null)) : null,
+      H.report && ADDONS.reportSheet ? sec("掛在牆上的探險報告", ADDONS.reportSheet(H.report)) : null,
+      sec(`來參觀的人　累計 ${H.visitors} 位`, H.log.length ? h("ul", { class: "pv-gear" }, H.log.map(x => h("li", null, icon("users"), h("span", null, h("b", null, x.who), h("small", null, x.text + (x.gain ? `（靈感 +${x.gain}）` : "")))))) : h("p", { class: "sp-note" }, "還沒有人來逛。展台上擺了東西，參觀者就會來。"),
+        H.log.length ? h("p", { class: "sp-note" }, `最近 ${H.log.length} 位替你帶來 ${H.log.reduce((a, x) => a + x.gain, 0)} 點靈感。每天的靈感有上限。`) : null, goHall)];
+  };
+  const PANES = { card: overviewPane, pepe: v => [...pepePane(v), badgesSec(v), ...booksPane(v)], hall: hallPane, casino: casinoPane, visitor: visitorPane, deco: decoPane };
   function draw() {
     const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined });
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "典藏冊" }, PASS_TABS.map(([id, name]) => {
