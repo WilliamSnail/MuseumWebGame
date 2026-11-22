@@ -21,7 +21,7 @@
 // ================================================================
 import { CELLAR_FOES, LIMITED_FX, MOOD_BEATS, NUM } from "../core/config.js";
 import { FOE_TEXT } from "../core/systems_text.js";
-import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr } from "../core/logic_base.js";
+import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr, todayStr } from "../core/logic_base.js";
 import { memberPower } from "../core/systems.js";
 import { skillOf } from "../core/legacy.js";
 
@@ -205,6 +205,13 @@ export function fightHp(base, pepes, players, lv = 0, rank = 1) {
 // 膽量先替理智擋，這一趟用完就沒了、不寫進存檔（不然一直開隊伍就能刷理智；界線：理智歸零要算容易出現）
 export const fightCourage = players => NUM.fight.courage * Math.max(0, Math.floor(players) - 1);
 // 合作多給的靈感：每多一個真人隊友，打贏多 coopInsp；比較強的怪物多 rankInsp
+// 怪物圖鑑（11-22）：每種怪第壹次打贏記壹筆 P.cellar.foes[怪物 id] ＝ 日期。只認 CELLAR_FOES 裡的（每週劇情的自訂怪不算）。回傳 true＝這次新記的
+export function foeLog(P, id, day = todayStr()) {
+  if (!P || !P.cellar || typeof P.cellar !== "object" || typeof id !== "string" || !CELLAR_FOES.some(f => f.id === id)) return false;
+  if (!P.cellar.foes || typeof P.cellar.foes !== "object" || Array.isArray(P.cellar.foes)) P.cellar.foes = {};
+  if (P.cellar.foes[id]) return false;
+  P.cellar.foes[id] = day; return true;
+}
 export const fightWinInsp = (players, rank = 1) => NUM.fight.coopInsp * Math.max(0, Math.floor(players) - 1) + NUM.fight.rankInsp[fightRankOf(rank) - 1];
 // 逃跑成功的機率（百分比）
 export const fightFleeChance = fight => (fight.boss ? NUM.fight.fleeBoss : NUM.fight.flee);

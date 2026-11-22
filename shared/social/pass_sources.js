@@ -35,7 +35,7 @@ export const PASS_SOURCES = [
   { id: "limited", name: "限定品（簽到、兌換所、主題展）", from: { file: "shared/core/config.js", list: "LIMITED_ITEMS" }, save: ["P.limited", "SAVE.signin"], pass: { src: "pass", key: "deco.items" }, use: "use", pub: ["deco", "frame"] },
   // ---- 地下收藏庫 ----
   { id: "cellar", name: "地下收藏庫（最深樓層、通關、鑰匙、結局）", from: { file: "shared/core/config.js", list: "CELLAR_REWARDS" }, save: ["P.cellar", "P.keys", "P.endings", "P.injured"], pass: { src: "pass", key: "records" }, use: "none", pub: [] },
-  { id: "foes", name: "怪物", from: { file: "shared/core/config.js", list: "CELLAR_FOES" }, save: [], pass: null, use: "none", pub: [] },
+  { id: "foes", name: "怪物圖鑑", from: { file: "shared/core/config.js", list: "CELLAR_FOES" }, save: ["P.cellar"], pass: null, use: "none", pub: [] },
   { id: "trials", name: "試煉房間", from: { file: "shared/core/systems_text.js", list: "TRIAL_ROOMS" }, save: [], pass: null, use: "goto", pub: [] },
   // ---- 賭場（錢包在伺服器；pass.src = casino） ----
   { id: "chips", name: "籌碼和帳本", from: null, save: ["W.v", "W.chips", "W.led", "W.loan", "W.work", "W.rel"], pass: { src: "casino", key: "chips" }, use: "goto", pub: [] },
