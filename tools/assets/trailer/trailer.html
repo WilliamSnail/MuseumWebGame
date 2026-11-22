@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>佩佩博物館2｜預告片</title>
+<!-- 約 61 秒的預告片。畫面是遊戲的截圖（shots/，shots.cjs 照的），配樂是即時合成的原創配樂。
+     render.cjs 會開這頁、逐格輸出成影片；自己看就打開 render.cjs 印的網址按「播放」。 -->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; }
+  #cv { width: min(100vw, 177.78vh); height: min(56.25vw, 100vh); display: block; background: #000; }
+  .ui { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  #play { pointer-events: auto; font: 600 22px Georgia, "Noto Serif TC", "PMingLiU", serif; letter-spacing: .2em; color: #2A1E16; padding: 16px 36px; border: 1px solid #F2DA9A; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(180deg, #F6E3A8, #C8A25A 60%, #9C7428); box-shadow: 0 0 30px rgba(238,215,156,.45); }
+  #fs { position: fixed; right: 16px; bottom: 14px; color: #C9B08E; background: rgba(0,0,0,.4); border: 1px solid #8C6A2E; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 14px; }
+  #info { position: fixed; left: 16px; bottom: 14px; color: #C9B08E; font-size: 14px; }
+</style>
+</head>
+<body>
+<canvas id="cv" aria-label="佩佩博物館2 預告片"></canvas>
+<div class="ui"><button id="play" type="button" hidden>▶ 播放預告片</button></div>
+<button id="fs" type="button">全螢幕</button>
+<div id="info">準備中…</div>
+<script src="trailer.js"></script>
+</body>
+</html>
