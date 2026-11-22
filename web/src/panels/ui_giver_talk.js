@@ -3,7 +3,7 @@
 //  規則在伺服器（casino act "giver"，shared/social/giver.js）：這裡只問「現在的樣子」（op info）、做動作（tap／ask／askDone／gift）、把聽過的句子 id 交給伺服器記（heard）。
 //  句子挑哪壹句由畫面決定（台詞在 shared/npc/givers.js）；伺服器只記 id，圖書館的「交談紀錄」（ui_giver_log.js）再從 id 查字。
 //  零件：giverTalk(id)＝壹張互動卡（giverNote 把它接在交代的那句後面）；giverLvTag(id)＝任務板用的壹小格熟識度。
-//  句子 id：<交代人>:chat.<時段|annoyed|lowSan|named>:<序>、<交代人>:away.<時段>:<序>、<交代人>:errands:<k>:ask|done、<交代人>:gift.<love|ok|off>:<序>。
+//  句子 id：<交代人>:chat.<時段|annoyed|lowSan|named>:<序>、<交代人>:chat.mention.<對方>:<序>、pair:<a>-<b>:<段>（串門子，記在 a 名下）、<交代人>:away.<時段>:<序>、<交代人>:errands:<k>:ask|done、<交代人>:gift.<love|ok|off>:<序>。
 //  樣式在 css/tasks.css（前綴 gv-）。動畫都是壹次性的。
 // ================================================================
 import { GIVERS } from "../../../shared/npc/givers.js";
@@ -23,6 +23,8 @@ export function giverSlot(ms = nowMs()) {
 }
 export const giverDayNo = () => Math.max(0, Math.floor((Date.parse(todayStr() + "T00:00:00Z") - Date.parse("2026-01-01T00:00:00Z")) / 86400000)) || 0;
 const nick = () => (NET.me && NET.me.nick) || "館友";
+// 提到別人時，句子裡的稱呼（點了展開他的卡）
+const MENTION_WORD = { yuga: "荷官", hall: "堂主", postman: "郵差", clerk: "店員", scale: "阿秤", number: "號碼機" };
 export const giverFill = s => String(s).split("{name}").join(nick());
 // 他現在不在嗎：這個時段沒有閒聊、但有字條
 export function giverAway(id, slot = giverSlot()) {
@@ -33,10 +35,11 @@ export function giverAway(id, slot = giverSlot()) {
 export function giverPickLine(id, n, lv) {
   const G = GIVERS[id], slot = giverSlot(), day = giverDayNo();
   if (!G) return null;
-  const from = (path, arr) => { const a = arr || []; if (!a.length) return null; const i = (day + n * 2 + id.length) % a.length; return { text: giverFill(a[i]), sid: `${id}:${path}:${i}` }; };
+  const from = (path, arr, mention) => { const a = arr || []; if (!a.length) return null; const i = (day + n * 2 + id.length) % a.length; return { text: giverFill(a[i]), sid: `${id}:${path}:${i}`, mention: mention || null }; };
   if (giverAway(id, slot)) return from(`away.${slot}`, G.away[slot]);
   if (n >= ANNOYED_AT) return from("chat.annoyed", G.chat.annoyed);
   if (typeof P.sanity === "number" && P.sanity < 30 && n % 3 === 1) { const r = from("chat.lowSan", G.chat.lowSan); if (r) return r; }
+  if (lv >= 2 && n % 3 === 0 && G.chat.mention) { const ks = Object.keys(G.chat.mention).sort(), o = ks.length ? ks[(day + n) % ks.length] : null, r = o && from(`chat.mention.${o}`, G.chat.mention[o], o); if (r) return r; } // Lv2 起：提到別的交代人（chat.mention）
   if (lv >= 1 && n % 3 === 2) { const r = from("chat.named", G.chat.named); if (r) return r; }
   return from(`chat.${slot}`, G.chat[slot]) || from("chat.morning", G.chat.morning);
 }
@@ -74,12 +77,18 @@ export function giverLvTag(id) {
   return el;
 }
 
+// 句子裡他提到的那位的稱呼變成可以點的連結；句子裡找不到稱呼就接在後面
+function mentionText(text, who, toggle, open) {
+  const word = MENTION_WORD[who], i = word ? text.indexOf(word) : -1, link = txt => h("a", { class: "gv-mention", href: "#", role: "button", "aria-expanded": open ? "true" : "false", title: open ? "收起" : "看他的卡", onclick: e => { e.preventDefault(); toggle(); } }, txt);
+  return i < 0 ? [text, " ", link("（看" + (word || "他") + "）")] : [text.slice(0, i), link(word), text.slice(i + word.length)];
+}
+
 // ---------- 互動卡 ----------
 export function giverTalk(id) {
   const G = GIVERS[id];
   if (!G) return null;
   const box = h("div", { class: "gv-talk" });
-  let said = null, busy = false;
+  let said = null, busy = false, mention = null, open = false; // mention：這句提到的那位（點他的名字展開他的卡）
   const paint = () => {
     const v = view(id), away = giverAway(id), over = !!v && v.taps >= TAP_MAX, off = away || over || !NET.loggedIn;
     const of = offerOf(id), er = of && G.errands && G.errands[of.k];
@@ -89,7 +98,8 @@ export function giverTalk(id) {
       h("span", { class: "gv-acts" },
         btn(over ? "改天再聊" : away ? "看字條" : "聊聊", () => chat(), "small gv-b", { disabled: (over || !NET.loggedIn || busy) ? true : null, title: over ? "今天聊夠了" : "點他說說話" }),
         btn("送佩佩", () => gift(), "small gv-b", { disabled: !NET.loggedIn || busy || (v && v.gifted) ? true : null, title: v && v.gifted ? "今天已經送過他了" : "送他壹隻佩佩" })))];
-    if (said) rows.push(h("p", { class: "gv-say", role: "status" }, said));
+    if (said) rows.push(h("p", { class: "gv-say", role: "status" }, mention ? mentionText(said, mention, () => { open = !open; paint(); }, open) : said));
+    if (said && mention && open && ADDONS.giverStrip) { const c = ADDONS.giverStrip([mention]); if (c) rows.push(c); }
     else if (away) rows.push(h("p", { class: "gv-say gv-note", role: "status" }, giverFill(((G.away || {})[giverSlot()] || [""])[0])));
     if (of && er) rows.push(h("div", { class: "gv-ask" + (of.done ? " done" : "") },
       h("span", null, h("b", null, "臨時拜託："), giverFill(of.done ? er.done : er.ask)),
@@ -107,7 +117,7 @@ export function giverTalk(id) {
     if (r.over) { said = "改天再聊吧。"; reload(); return; }
     snd("flip");
     const pick = giverPickLine(id, r.n | 0, r.lv | 0);
-    if (pick) { said = pick.text; giverHeard(id, [pick.sid]); }
+    if (pick) { said = pick.text; mention = pick.mention; open = false; giverHeard(id, [pick.sid]); }
     stat(r); reload();
   }
   async function take(of) {

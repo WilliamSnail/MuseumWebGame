@@ -77,5 +77,34 @@ T("fx.js：賭場、銀行環境音會建節點、換掉會停計時器；不丟
   assert.strictEqual(FX.sound.state().amb, null, "靜音不播");
 });
 
-console.log(`amb_mix：${pass} 過、${fail} 沒過`);
-if (fail) process.exit(1);
+// 11-22 翊文：「圖書館讀到主線劇情揭露時音樂好像會跟背景音樂重疊」→ file(id, g, { duck: true }) 放的時候背景音軌要壓低、快播完淡回來；沒給 duck 不動
+async function duckTest() {
+  const run = async (opt) => {
+    const code = require("../../tools/check/fx_source.cjs").allSource();
+    const log = { made: 0, started: 0, stopped: 0 }, targets = [];
+    const ctx = fakeCtx(log), mk = ctx.createGain.bind(ctx);
+    ctx.createGain = () => { const n = mk(); n.gain.setTargetAtTime = (v, t) => targets.push([v, t]); return n; };
+    ctx.decodeAudioData = (b, ok) => ok({ duration: 30 });
+    const sandbox = { window: { AudioContext: function () { return ctx; } }, setTimeout: () => 1, clearTimeout: () => {}, fetch: () => Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(1)) }) };
+    const names = Object.keys(sandbox);
+    const FX = new Function(...names, code + ";return FX;")(...names.map(n => sandbox[n]));
+    FX.sound.demo("click"); FX.sound.ambient("library");
+    targets.length = 0;
+    FX.sound.file("film-reveal", 0.45, opt);
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    await new Promise(r => setImmediate(r));
+    return targets;
+  };
+  try {
+    const t = await run({ duck: true });
+    assert.ok(t.some(([v]) => v < 0.2), "duck：背景要壓低");
+    assert.ok(t.some(([v, at]) => v === 1 && at >= 27), "duck：快播完（剩 2 秒）淡回來");
+    const n = await run();
+    assert.ok(!n.some(([v]) => v < 0.2), "沒給 duck 不壓背景");
+    pass++;
+  } catch (e) { fail++; console.log("FAIL duck", e.message); }
+}
+duckTest().then(() => {
+  console.log(`amb_mix：${pass} 過、${fail} 沒過`);
+  if (fail) process.exit(1);
+});

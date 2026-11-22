@@ -14,7 +14,7 @@ export const NPC_REL_KINDS = ["giver", "traveler"];
 export const NPC_REL_GIVERS = ["yuga", "hall", "postman", "clerk", "scale", "number"];
 export const NPC_REL_ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
 // 稱號成就的 id（跟其他成就壹樣放在 w.ach；casAchInfo／casCleanTitle 認 "npc:" 開頭）
-export const npcRelAchId = id => "npc:" + id;
+export const npcRelAchId = (id, tid) => "npc:" + id + (tid ? ":" + tid : ""); // 交代人的稱號是 npc:<交代人id>:<稱號id>（content/givers 的 title.id，11-22）；旅客照舊 npc:<旅客id>
 export const npcRelKind = id => (NPC_REL_GIVERS.includes(id) ? "giver" : "traveler");
 const cfg = kind => NUM.npcRel[kind === "giver" ? "giver" : "traveler"];
 
@@ -59,7 +59,7 @@ export function npcRelBonus(w, id) {
   const lv = npcRelView(w, id, null).lv;
   return NUM.npcRel.bondP[lv] || 0;
 }
-// 加熟識度。src：來源名（NUM.npcRel.<kind>.src 裡的）；xp：這次要加的（不給＝用來源的預設）；title：到 Lv3 要發的稱號名字（呼叫的人從伺服器的資料表查，沒給就不發稱號）
+// 加熟識度。src：來源名（NUM.npcRel.<kind>.src 裡的）；xp：這次要加的（不給＝用來源的預設）；title：到 Lv3 要發的稱號名字、titleId：稱號 id（呼叫的人從伺服器的資料表查，title 沒給就不發稱號）
 // 回傳 { ok, gained, xp, lv, up（升級了）, title（這次新發的稱號成就 id 或 null）, why（沒加的原因） }
 export function npcRelAdd(w, id, day, src, opts = {}) {
   if (!w || typeof id !== "string" || !NPC_REL_ID.test(id)) return { ok: false, why: "bad_id", gained: 0 };
@@ -74,9 +74,9 @@ export function npcRelAdd(w, id, day, src, opts = {}) {
   e.xp += gained; t.xp = nrN(t.xp) + gained; e.lv = npcRelLv(kind, e.xp);
   let title = null;
   if (e.lv >= 3 && typeof opts.title === "string" && opts.title.trim()) {
-    const aid = npcRelAchId(id);
+    const aid = npcRelAchId(id, opts.titleId);
     if (!nrBox(w.ach)) w.ach = {};
-    if (!w.ach[aid]) { w.ach[aid] = { name: [...opts.title.trim()].slice(0, NUM.casino.titleMax).join(""), d: day }; title = aid; }
+    if (!w.ach[aid] && !w.ach[npcRelAchId(id)]) { w.ach[aid] = { name: [...opts.title.trim()].slice(0, NUM.casino.titleMax).join(""), d: day }; title = aid; }
   }
   return { ok: true, gained, xp: e.xp, lv: e.lv, up: e.lv > before, title, why: null };
 }

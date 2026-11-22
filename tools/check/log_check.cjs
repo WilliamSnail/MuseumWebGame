@@ -19,5 +19,6 @@ if (bi > 0) {
   if (touchesCode && !addsLog) errs.push("這個 PR 改了程式，但沒有新增維護日誌（docs/維護日誌/年份/月-日_作者_主題.md）");
 }
 
+if (errs.some(e => e.includes("少了標題"))) errs.push("（標題：npm run log:fix 會把很接近的改對、補上可以空的兩段；寫新日誌用 npm run doc:new 就不會漏）");
 if (errs.length) { console.error(errs.join("\n")); console.error(`${errs.length} 個問題`); process.exit(1); }
 console.log(`維護日誌 ${listLogs().length} 篇，格式都對`);
