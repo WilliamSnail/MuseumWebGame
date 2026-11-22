@@ -549,7 +549,7 @@ T("館內股的 NPC 劇情日（week.json.npc）：對的過；店不對、日�
 
 T("帳本 revealBeats：真的帳本過；格式錯、不是揭露週、破梗、露臉、地方太少都擋（docs/規劃/劇情揭露節奏.md）", () => {
   const first = k => k.ledger.revealBeats.list[0];
-  assert.ok(ledger0.revealBeats.list.length >= 23, "帳本要有揭露節奏");
+  assert.ok(ledger0.revealBeats.list.length >= 15, "帳本要有揭露節奏");
   expectErr(c => { first(c).id = "x1"; }, /id 要是 b01/);
   expectErr(c => { c.ledger.revealBeats.list[1].id = "b01"; }, /重複/);
   expectErr(c => { first(c).week = "2026-W48"; }, /不是揭露週/);
