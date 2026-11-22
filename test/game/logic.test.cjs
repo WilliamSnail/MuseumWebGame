@@ -1525,3 +1525,11 @@ T("存檔：舊存檔的怪癖沒進度當 0 個日子、沒 until 從載入起�
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
+T("B5 走完：結局馬上存進 P.endings（不用等結局畫面）；再走不覆蓋；B1 走完不存", () => {
+  const P = fresh(), last = f => G.cellarFloor(f).rooms.length - 1;
+  P.cellar.run = { floor: 1, idx: last(1), team: [], used: {}, log: [] }; assert.ok(!G.cellarAdvance(P).ending); assert.ok(!P.endings.cellar);
+  P.cellar.run = { floor: 5, idx: last(5), team: [], used: {}, log: [] }; const a = G.cellarAdvance(P);
+  assert.strictEqual(a.ending, "cellar"); assert.strictEqual(P.endings.cellar, G.todayStr());
+  P.endings.cellar = "2026-01-01"; P.cellar.run = { floor: 5, idx: last(5), team: [], used: {}, log: [] }; G.cellarAdvance(P); assert.strictEqual(P.endings.cellar, "2026-01-01");
+});
+

@@ -206,7 +206,7 @@ export function signIn(save, P, today) {
     if (R.mat && mat) { const g = grantLimited(P, mat.id, today, R.mat); gains.push({ kind: "item", id: mat.id, n: g.n, dup: false, insp: 0, why: "holiday" }); }
     holidayGot = R;
   }
-  S.days[today] = { n, k, hol: holiday ? holiday.key : null };
+  S.days[today] = { n, k, hol: holiday ? holiday.key : null }; // 連續天數從 days 的日期算（signStreak）
   const week = weekProgress(save, today);
   if (week.n === 1) addInsp(limitedHome(P).signInsp, "hat"); // 限定帽子（瓜子項鍊）：這週第壹次簽到多 1 靈感
   let weekly = null;
@@ -263,6 +263,17 @@ export function signMakeup(save, P, date, today, story) {
     week.claimed = S.weeks[week.wk];
   }
   return { ok: true, makeup: true, date, cost: c.cost, n, k, reward, holiday: null, holidayGot: null, week, weekly, gains, events };
+}
+
+// ---------- 連續天數、補簽次數（11-22，翊文：「簽到算連續天數」；館友證用） ----------
+// 從 days 的日期算，不另存（補簽補上的日子也算）。cur：到今天為止連續簽了幾天（今天還沒簽，從昨天往回算，不算斷）；best：歷史最長；makeups：補簽過幾次
+export function signStreak(save, today) {
+  const days = signinState(save).days, dates = Object.keys(days).filter(isDate).sort();
+  let best = 0, run = 0, prev = null;
+  for (const d of dates) { run = prev && addDays(prev, 1) === d ? run + 1 : 1; best = Math.max(best, run); prev = d; }
+  let cur = 0, d = isDate(today) && days[today] ? today : isDate(today) ? addDays(today, -1) : null;
+  while (d && days[d]) { cur++; d = addDays(d, -1); }
+  return { cur, best, makeups: dates.filter(x => days[x].mk).length };
 }
 
 // ---------- 簽到日曆 ----------

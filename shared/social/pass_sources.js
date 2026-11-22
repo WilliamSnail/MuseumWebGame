@@ -40,7 +40,7 @@ export const PASS_SOURCES = [
   // ---- 賭場（錢包在伺服器；pass.src = casino） ----
   { id: "chips", name: "籌碼和帳本", from: null, save: ["W.v", "W.chips", "W.led", "W.loan", "W.work", "W.rel"], pass: { src: "casino", key: "chips" }, use: "goto", pub: [] },
   { id: "packs", name: "大禮包和券", from: { file: "shared/casino/text.js", list: "CAS_PACKS" }, save: ["W.pk", "W.tix", "W.tickets", "W.seen"], pass: null, use: "goto", pub: [] },
-  { id: "swap", name: "換小獎", from: null, save: ["W.ex"], pass: { src: "casino", key: "swap" }, use: "goto", pub: [] },
+  { id: "swap", name: "換小獎", from: null, save: ["W.ex", "W.exTot"], pass: { src: "casino", key: "swap" }, use: "goto", pub: [] },
   { id: "props", name: "紀念品（財產）", from: { file: "shared/casino/text.js", list: "CAS_PROPS" }, save: ["W.props"], pass: { src: "casino", key: "props" }, use: "hang", pub: ["souvenirs"] },
   { id: "achs", name: "賭場成就", from: { file: "shared/casino/text.js", list: "CAS_ACH" }, save: ["W.ach"], pass: { src: "casino", key: "ach" }, use: "use", pub: [] },
   { id: "title", name: "稱號", from: null, save: ["W.title", "P.casinoTitle"], pass: { src: "pass", key: "card" }, use: "goto", pub: ["title"] },
