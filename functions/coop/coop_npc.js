@@ -12,6 +12,7 @@ import { NPC_LIST } from "../shared/npc_list_data.js";
 import { npcCounters } from "../shared/npc/core.js";
 import { npcCoopRefund, npcCoopAccept, npcCoopAsk, npcCoopChance, npcCoopCool, npcCoopCoolLeft, npcCoopDone, npcCoopGift, npcCoopInfo, npcCoopInvitable, npcCoopLine, npcCoopOk, npcCoopRoll } from "../shared/npc/coop.js";
 import { casHouseFix, casWalletFix } from "../shared/casino/wallet.js";
+import { npcRelBonus, npcRelTravelerAdd } from "../shared/social/npcrel.js";
 import { fixParty, partyNpcAdd, partyNpcRemove } from "../shared/social/party.js";
 import { taipeiDay } from "../shared/core/logic.js";
 import { twSecret } from "../stock/stock_tw.js";
@@ -57,7 +58,7 @@ async function invite(me, pid, npcId, gift) {
     const left = npcCoopCoolLeft(house, day, me.uid, npcId, t);
     if (left > 0) throw bad(`他剛剛婉拒了你，${Math.ceil(left / 60000)} 分鐘後再問問看`);
     if (gift && w.chips < C.gift) throw bad("籌碼不夠送禮物");
-    const k = npcCoopAsk(house, day, npcId), roll = npcCoopRoll(secret, day, me.uid, npcId, k), chance = npcCoopChance(n, !!gift);
+    const k = npcCoopAsk(house, day, npcId), roll = npcCoopRoll(secret, day, me.uid, npcId, k), chance = npcCoopChance(n, !!gift, npcRelBonus(w, npcId));
     const info = npcCoopInfo(n);
     if (roll >= chance) { // 被拒絕：記冷卻
       npcCoopCool(house, day, me.uid, npcId, t);
@@ -143,10 +144,16 @@ export async function coopNpcEnd(run) {
   const npcs = (run.members || []).filter(m => m.npc);
   if (!npcs.length) return;
   const day = taipeiDay(now());
+  const humans = run.over === "done" ? [...new Set((run.members || []).filter(m => !m.npc && !m.guard && typeof m.id === "string").map(m => m.id))] : []; // 壹次完整走完（到 B5 出口）才記旅客的好感度
   await db().runTransaction(async tx => {
-    const hs = await tx.get(houseRef());
-    const { house } = casHouseFix(parse(hs), day);
+    const [hs, ...ws] = await Promise.all([tx.get(houseRef()), ...humans.map(id => tx.get(walletRef(id)))]);
+    const { house } = casHouseFix(parse(hs), day), wallets = ws.map(s => (s.exists ? casWalletFix(parse(s), day) : null));
     npcs.forEach(m => npcCoopDone(house, day, m.npc, m.san));
     put(tx, houseRef(), house);
+    wallets.forEach((w, i) => { // 壹起下地下：每位館友對每位同行的旅客 +4（好感度不給籌碼、不給靈感）
+      if (!w) return;
+      npcs.forEach(m => npcRelTravelerAdd(w, m.npc && m.npc.id ? m.npc.id : m.npc, day, "cellar", NPC_LIST));
+      put(tx, walletRef(humans[i]), w);
+    });
   });
 }

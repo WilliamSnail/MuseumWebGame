@@ -30,6 +30,10 @@ const inviteOk = (G, m, uid, id, at) => {
 const C = G => G.NUM.casino.npcCas;
 
 T("設定：機率、額度、打法的注都在 NUM.casino.npcCas，全館上限 > 0", G => { const c = C(G); assert.ok(c.on && c.perNpcDay > 0 && c.tableMax > 0 && c.dayCap > 0 && c.lossPct > 0 && c.winPct > 0 && c.betMax > 0); assert.ok(["careful", "basic", "bold", "wild"].every(k => c.bet[k] > 0)); });
+T("好感度：邀請被答應 +1（旅客 id 在名單裡）、壹天壹次", G => {
+  const m = mk(G), f = findAt(G, m.house); inviteOk(G, m, "a", f.id, f.at);
+  const e = m.wallets.a.npcRel[f.id]; assert.ok(e && e.xp === 1, JSON.stringify(e));
+});
 T("誰邀得動：在行程窗口裡的、不是劇情角色；不在館裡的不行；邀得動的名單只有 id 和名字", G => {
   const m = mk(G), f = findAt(G, m.house), w = G.casTNpcWho(m.ctx, f.at);
   assert.ok(w.length >= 1 && w.every(x => Object.keys(x).sort().join() === "id,name" && !x.id.startsWith("t-")));

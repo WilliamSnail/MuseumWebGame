@@ -63,9 +63,9 @@ export const npcCoopLine = (n, kind, seed) => {
 };
 
 // 答應的機率（%）。gift：這次有沒有送禮
-export function npcCoopChance(n, gift) {
+export function npcCoopChance(n, gift, bonus = 0) { // bonus：旅客好感度的加成（％，npcRelBonus）
   const C = NUM.casino.coopNpc, route = n && n.route ? cpN(n.route.cellar) : 0;
-  return Math.max(5, Math.min(95, Math.round(C.baseP + route * C.routeP + (gift ? C.giftP : 0))));
+  return Math.max(5, Math.min(95, Math.round(C.baseP + route * C.routeP + (gift ? C.giftP : 0) + (Number(bonus) || 0))));
 }
 // 現在邀得動的 NPC：[{ id, name, role, chance, giftChance, san }]
 export function npcCoopInvitable(house, day, nowMs, secret, list, counters, uid) {

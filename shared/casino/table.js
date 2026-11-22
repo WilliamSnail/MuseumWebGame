@@ -18,7 +18,7 @@ import { casBetMax, casPayLeft, casSettle, casWinTicket } from "./wallet.js";
 import { hashStr, mulberry32 } from "../core/logic_base.js";
 import { nwPoke, nwPokeKind } from "../world/core.js";
 import { npcCasAccept, npcCasAsk, npcCasAway, npcCasBet, npcCasChance, npcCasCool, npcCasCoolLeft, npcCasFix, npcCasFree, npcCasHit, npcCasInvitable, npcCasLeaveWhy, npcCasLine, npcCasPay, npcCasRefund, npcCasRoll, npcCasStyle, npcCasTake, npcCasUp } from "./npc.js";
-import { npcRelBonus } from "../social/npcrel.js";
+import { npcRelBonus, npcRelTogether, npcRelTravelerAdd } from "../social/npcrel.js";
 
 export const CAS_QUICK = ["加油", "好牌", "莊家別爆", "再來壹把", "我不行了", "運氣來了"]; // 快速短句（自由打字另外走 cleanSay）
 
@@ -186,6 +186,7 @@ export function casTFinish(t, ctx, now) {
       s.ticket = !!(r.ok && ["win", "blackjack", "charlie"].includes(o.kind) && casWinTicket(w, s.bet));
     }
   }
+  npcRelTogether(ctx, bet); // 旅客的好感度：壹起打滿幾手
   t.phase = "result";
   t.turn = null;
   t.deadline = now + NUM.casino.resultMs;
@@ -276,6 +277,7 @@ export function casTNpcInvite(t, ctx, uid, npcId, now) {
   const until = npcCasAccept(hs, ctx.day, n, t.pid, uid, now, sec);
   const s = { uid: "n~" + npcId, nick: n.name, bet: 0, cards: [], st: "idle", san: 99, bonusPct: 0, allin: false, out: null, gone: false, idle: 0, timedOut: false, npc: { id: npcId, style: npcCasStyle(n), host: uid, until, said: 0, first: true } };
   t.seats[s.uid] = s; t.order.push(s.uid); t.seq++;
+  if (ctx.wallets && ctx.wallets[uid]) npcRelTravelerAdd(ctx.wallets[uid], npcId, ctx.day, "invite", list); // 邀請被答應：旅客好感度 +1
   const line = npcSay(t, ctx, s, "accept", "in");
   casTNpcBets(t, ctx, now);
   if (t.phase === "bet" && casTHumanBet(t) && casTSeats(t).every(x => x.bet > 0)) casTDeal(t, ctx, now);

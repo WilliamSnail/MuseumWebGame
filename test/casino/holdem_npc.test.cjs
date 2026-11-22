@@ -36,6 +36,17 @@ T("邀請：答應就坐下（座位 npc、uid npc:<id>、沒有錢包）、籌�
   assert.ok(r.until - now >= 15 * 60000 && r.until - now <= 35 * 60000, "坐 15～35 分鐘");
   assert.ok(t.phase === "play" || t.phase === "wait", "壹位真人＋壹位 NPC 就開打");
 });
+T("好感度：邀請被答應 +1；壹起打滿 5 手 +2（只給壹次）；不給籌碼", G => {
+  const { t, ctx, now } = setup(G); invite(G, t, ctx, now);
+  assert.strictEqual(ctx.wallets.H.npcRel["c-math"].xp, 1, "邀請 +1"); const chips = ctx.wallets.H.chips + G.casHInplay(t);
+  let hands = 0, guard = 0, t0 = now, at5 = null;
+  while (hands < 8 && guard++ < 4000) {
+    if (t.phase !== "play") { t0 += G.NUM.casino.holdem.resultMs + 1; G.casHAdvance(t, ctx, t0); if (t.phase === "wait" && !t.seats["npc:c-math"]) break; continue; }
+    const leg = G.casHView(t, "H", t0, ctx).legal, res = G.casHAct(t, "H", leg.check ? "check" : "call", 0, ctx, t0); assert.ok(res.ok);
+    if (res.finished) { hands++; const n = ctx.house.npcCas.by["c-math"].hands | 0, xp = ctx.wallets.H.npcRel["c-math"].xp; assert.strictEqual(xp, n >= 5 ? 3 : 1, "他打了 " + n + " 手，好感度 " + xp); if (n >= 5) at5 = xp; }
+  }
+  assert.ok(hands >= 5, "至少打了 5 手：" + hands); assert.strictEqual(at5, 3, "第 5 手 +2"); assert.strictEqual(ctx.wallets.H.npcRel["c-math"].xp, 3, "之後不重複"); void chips;
+});
 T("邀請的規矩：不在桌上的人、人不在館裡、桌子滿了、客人太多、已經跟別人去玩都邀不了；被拒絕記冷卻、同壹位 30 分鐘內不能再邀", G => {
   const { t, ctx, now } = setup(G);
   assert.ok(!G.casHNpcInvite(t, ctx, "Z", "c-math", now).ok, "不在這桌"); assert.ok(!G.casHNpcInvite(t, ctx, "H", "nobody", now).ok, "不在館裡");

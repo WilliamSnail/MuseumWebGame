@@ -4,7 +4,7 @@
 // 只放遊戲要用的欄位（沒有 budget）。內容改了就跑 node tools/content/npc_pack.cjs；npm test 會檢查有沒有跟上（test/npc/npc.test.cjs）。copy_shared.cjs 也會順手跑。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
-const KEEP = ["id", "name", "kind", "note", "story", "likes", "route", "arc", "branch", "casino", "cellar", "job"]; // job：隸屬哪個單位（世界經濟 W4，NPC 來館花的錢從所屬集團出）
+const KEEP = ["id", "name", "kind", "note", "story", "likes", "route", "arc", "branch", "casino", "cellar", "job", "bond"]; // job：隸屬哪個單位（世界經濟 W4，NPC 來館花的錢從所屬集團出）
 function roster(dir = path.join(ROOT, "content", "npc")) {
   const out = [];
   if (!fs.existsSync(dir)) return out;
