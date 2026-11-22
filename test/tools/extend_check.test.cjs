@@ -33,6 +33,7 @@ T("總表 collect：八個謎和文化部、已知世界、撥款信都在；非
   bad(L => { L.extend.collect.rows = L.extend.collect.rows.filter(r => r.id !== "c-known"); }, /少了 c-known/);
   bad(L => { L.extend.collect.rows.find(r => r.id === "c-m-count").week = "2026-W40"; }, /不在 extend.weeks/);
 });
+T("每週都要有 dayPlan d1～d7，缺了或太短會擋", () => { bad(L => { delete L.extend.weeks["2026-W50"].dayPlan; }, /dayPlan 要有/); bad(L => { delete L.extend.weeks["2026-W48"].dayPlan.d3; }, /dayPlan\.d3/); bad(L => { L.extend.weeks["2026-W53"].dayPlan.d7 = "短"; }, /dayPlan\.d7/); });
 T("beats 不在 revealBeats 會擋", () => bad(L => { L.extend.weeks["2026-W52"].beats.push("b99"); }, /不在 revealBeats/));
 T("person 不在 taskGivers 會擋", () => bad(L => { L.extend.threads[0].person = "nobody"; }, /不在 taskGivers/));
 console.log(`extend_check：${pass} 過、${fail} 失敗`);

@@ -208,7 +208,7 @@ function format(p) {
   asList(p.funDays).forEach(f => day.push(`趣味節日：${f && f.name || f}`));
   p.calendar.forEach(c => day.push(`帳本 calendar：${c.name}（${c.idea}）`));
   if (day.length) { B(""); B("【今天的日子】"); day.forEach(x => B("  " + x)); }
-  B(""); B(`【這週是：${p.beat.kind}】`);
+  B(""); B(p.extend ? `【這週是：延伸週（${p.extend.kind}）】W48～W53 以 extend 為準：每天照下面「延伸世界」那段放，不是回聲週、不用「不放新細節」的舊節奏；收線看 extend.closes。` : `【這週是：${p.beat.kind}】`);
   if (p.beat.kind === "揭露週" && p.beat.beat) {
     const b = p.beat.beat;
     B(`  ${b.id}（${b.mystery}）：${b.detail}`);
@@ -218,16 +218,19 @@ function format(p) {
     if (b.concrete) B(`  這筆可以更具體（concrete）：${b.safe}`);
     if (p.beatNpc.length) B(`  NPC 要補壹段回應：${p.beatNpc.map(x => x.id + (x.name ? "（" + x.name + "）" : "")).join("、")}`);
     B(`  Discord：揭露的那壹天，館訊後面會自動多發「館裡有些不壹樣了」（日期照 revealedOn，沒標就是週三），不用另外發。`);
+  } else if (p.extend) {
+    B("  （延伸週：揭露、加開、收線都看下面「延伸世界」和這週的 revealBeats，不分揭露週／回聲週／大揭曉週。）");
   } else if (p.beat.kind === "回聲週") {
     B(`  回聲：把上壹個揭露（${p.beat.prev.id}：${p.beat.prev.detail}）換個地方再出現壹次；帳本 weeks.${p.week}.echoOf 寫 ${p.beat.prev.id}。不放新細節。`);
     B(`  上次的 echo 提示：${p.beat.prev.echo || "（沒寫）"}`);
   } else if (p.beat.kind === "大揭曉週") {
-    B(`  收線：${p.beat.closing.join("、")}（照 mysteries 的 closeBy，在當天 dN.json 加 understand；2027-W43 收尾前先問翊文）`);
+    B(`  收線：${p.beat.closing.join("、")}（照 mysteries 的 closeBy，在當天 dN.json 加 understand）`);
     if (p.beat.beat) B(`  同週還有揭露 ${p.beat.beat.id}（${p.beat.beat.mystery}）：${p.beat.beat.detail}（放的地方：${asList(p.beat.beat.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}）`);
   } else B("  不是揭露週也不是回聲週：照原來排，每天至少壹條 clue。");
   asList(p.beat.extras).forEach(x => { B(`  加開（extra）${x.id}（${x.mystery}）：${x.detail}`); B(`    放的地方：${asList(x.channels).map(c => c.where + (c.clue ? "★clue" : "")).join("、")}；放完壹樣改 revealed、revealedOn、clues；不另外發 Discord`); if (x.concrete) B(`    更具體（concrete）：${x.safe}`); });
   if (p.extend) {
     const x = p.extend; B(""); B(`【延伸世界（翊文 11-22）：這週是「${x.kind}」，第 ${x.stage} 階】這週每天都照 extend 走，不用舊的「回聲週不放新細節」；上面列的揭露都要放`);
+    if (asList(x.closes).length) B(`  這週收線：${asList(x.closes).join("、")}（照 mysteries 的 closeBy，在當天 dN.json 寫 understand，san 和旁白抄 cost.understand）`);
     B(`  問題：${x.question}`); B(`  三個去處（都要有東西可看）：${asList(x.leads).join("；")}`);
     asList(x.threads).forEach(t => B(`  人物線 ${t.id}（${t.person}，第 ${t.stage} 階，${t.audit && t.audit.status}）：${t.seed}　放在：${t.where}`));
     B(`  結論：${x.conclusion}　線索：${asList(x.clues).map(c => c.where + "—" + c.what).join("；")}`);
@@ -239,7 +242,7 @@ function format(p) {
     if (x.note) B(`  注意：${x.note}`);
     B("  規矩：只用審過的旁證、不自己加；壹週放壹天；放了在 weeks.<週>.ties 記壹行（排程說明 一、第 2 點）");
   }
-  if (p.unit) { B(""); B(`【兩週壹段】第 ${p.unit.no} 段「${p.unit.title}」的第 ${p.unit.which} 週（${p.unit.which === 1 ? "揭露週" : "回聲週：週日要做這壹段的進展（地圖亮壹塊、主線書多壹頁、NPC 日報壹句）"}）；地圖這段要亮：${p.unit.map.join("、") || "（無）"}（資料寫進 content/map/館外.json，揭露當天才寫）`); }
+  if (p.unit) { B(""); B(`【兩週壹段】第 ${p.unit.no} 段「${p.unit.title}」的第 ${p.unit.which} 週（${p.extend ? "延伸週：不分揭露週／回聲週；只有壹項照做：週日（d7）做這壹段的進展（地圖亮壹塊、主線章節書、NPC 日報壹句）" : p.unit.which === 1 ? "揭露週" : "回聲週：週日要做這壹段的進展（地圖亮壹塊、主線書多壹頁、NPC 日報壹句）"}）；地圖這段要亮：${p.unit.map.join("、") || "（無）"}（資料寫進 content/map/館外.json，揭露當天才寫）`); }
   if (p.chapters.length) { B(""); B("【季節線】"); p.chapters.forEach(c => B(`  ${c.line}「${c.title}」：${c.written ? "已放（" + c.written + "）" : "★還沒放書，這週某壹天放，放了把 written 填書的 id"}`)); }
   if (p.isMonday) {
     B(""); B("【週一要排的（week.json）】");
