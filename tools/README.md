@@ -53,6 +53,7 @@
 | **壹個指令備好測試帳號**：登入、建 members、放挑戰存檔（N 隻佩佩）、建錢包文件 | `npm run qa:user -- --set 7 --nick 聊乙 --pepes 12`（`--no-save`、`--no-wallet`） |
 | **交代人互動測試**：把熟識度改成指定級、算今天誰有臨時拜託（找剛好有拜託的帳號） | `npm run qa:giver -- --set 7 --nick 聊乙 --lv clerk=1,scale=2 --offers`；`npm run qa:giver -- --offers --uid <uid>` |
 | **瀏覽器 console 的 `window.__qa`**（只有開發版）：進房間、換帳號、叫伺服器、撥前端日期 | `await __qa.enter("銀行")`；`__qa.as("聊乙")`；`await __qa.casino({act:"giver",op:"info"})`；`__qa.date(1)`（`web/src/core/qa_hooks.js`） |
+| **德州／牌桌守恆快照**：錢包＋桌上（扣旅客）＋莊家＋已知世界＋預算＋館＋政府，每手對 `--base` 看差是不是 0 | `npm run qa:holdem -- --set 7 --pid <牌桌號碼> --base <第壹次的 total>` |
 | 看哪幾套本機模擬器有人在用、是誰開的 | `npm run local -- --list` |
 | 用假的 Discord 簽名打模擬器的 `discordBot`，走完綁定、加入、獎勵、各個指令、整手 21 點（按鈕、seq、別人的按鈕）、遊戲和 Discord 接續、次數共用、存檔、outbox（冷卻、失敗、沒 token）（不連真的 Discord，模擬器的 Function 把「會發的訊息」寫進 `discordTestSent`） | 先 `npm run local -- --set 5 --port 5285`（背景），再 `node tools/content/discord_fake.cjs --set 5`（`--show` 印幾則回覆看長相）；單打一個指令：`--cmd 'pepe-莊家' --user 12345`（Git Bash 不要寫開頭的 /）。**改了 `shared/` 或 `functions/` 要重開模擬器**（規則是開的時候才複製進去的） |
 | 把 `/pepe-…` 指令註冊到 Discord 伺服器 | `node tools/content/discord_commands.cjs --print`（只印）；真的註冊要 `DISCORD_BOT_TOKEN`、`DISCORD_APPLICATION_ID`、`DISCORD_GUILD_ID`，或在 GitHub 按「註冊 Discord 斜線指令」（`discord-commands.yml`，只能手動） |

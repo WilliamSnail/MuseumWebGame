@@ -15,6 +15,8 @@ const { parseSizes, localOnly, shotName } = require("../../tools/dev/shot.cjs");
 const lib = require("../../tools/dev/emu_lib.cjs");
 const qaGiver = require("../../tools/dev/qa_giver.cjs");
 
+const { holdemTotal } = require("../../tools/dev/qa_holdem.cjs");
+
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL " + name + "\n    " + (e.stack || e.message)); } };
 
@@ -243,6 +245,13 @@ T("qa_giver：拜託骰點用同壹條公式、Lv0 不出、同壹個 uid 同壹
   assert.ok(qaGiver.offersFor("uid-x", "2026-11-21", { clerk: 0 }).find(o => o.id === "clerk").shows === false);
   assert.strictEqual(qaGiver.lvXp(0), 0);
   assert.ok(qaGiver.lvXp(1) > 0 && qaGiver.lvXp(2) > qaGiver.lvXp(1));
+});
+
+T("qa_holdem：守恆總額＝錢包＋桌上（扣旅客）＋莊家＋world＋預算＋館＋政府", () => {
+  const table = { order: ["a", "npc:v-x"], seats: { a: { stack: 90, put: 10 }, "npc:v-x": { stack: 40, put: 5 } } };
+  const r = holdemTotal([100, 200], table, { bankroll: 1000, world: 5000, budget: 300, museum: 20, gov: 3, led: { x: { holdemRake: 7 } } });
+  assert.deepStrictEqual([r.wallets, r.table, r.npcOnTable, r.house, r.total, r.rake], [300, 145, 45, 6323, 300 + 145 - 45 + 6323, 7]);
+  assert.strictEqual(holdemTotal([], null, null).total, 0);
 });
 
 console.log(`${pass} passed, ${fail} failed（重複用的腳本）`);
