@@ -168,7 +168,7 @@ export function passView(P, o = {}) {
     souvenirs: free ? [] : casCleanSouvenirs(P.hallSouvenirs),
     deco: {
       have: lim.have, total: lim.total,
-      items: LIMITED_ITEMS.map(it => { const x = limitedInfo(it.id); return { id: it.id, name: x.name, kindName: x.kindName, own: it.kind === "mat" ? free || !!limitedBox(P).got[it.id] : ownsLimited(P, it.id), worn: it.kind === "deco" && wornDeco(P, it.slot) === it.id, kind: it.kind, n: it.kind === "mat" && !free ? stockOf(P, it.opt) : null }; }), // n：材料剩幾份（不是材料、自由模式是 null）
+      items: LIMITED_ITEMS.map(it => { const x = limitedInfo(it.id), own = it.kind === "mat" ? free || !!limitedBox(P).got[it.id] : ownsLimited(P, it.id); return { id: it.id, name: x.name, kindName: x.kindName, own, desc: own ? x.desc : "", origin: own ? x.origin : "", worn: it.kind === "deco" && wornDeco(P, it.slot) === it.id, kind: it.kind, n: it.kind === "mat" && !free ? stockOf(P, it.opt) : null }; }), // n：材料剩幾份（不是材料、自由模式是 null）
     },
     ach: { have: BADGES.filter(b => P.badges && P.badges[b.id]).length, total: BADGES.length, list: BADGES.map(b => ({ id: b.id, name: b.name, got: (P.badges && P.badges[b.id]) || null })) },
   };

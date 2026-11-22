@@ -46,10 +46,12 @@ export function itemArt(id) {
   if (it.slot === "stand") return `<div class="lim-stand-demo"><i class="lim-ped"></i>${ART.standDeco(id)}</div>`;
   return `<div class="lim-plate-demo lim-${id}"><span class="lim-c tl">${ART.nameCorner(id)}</span><span class="lim-c br">${ART.nameCorner(id)}</span><b>館主</b></div>`;
 }
+// 物品說明的「來歷」（11-22 延伸世界；LIMITED_TEXT[id].origin，沒有就不畫）。館友證的裝飾頁、兌換所拿到的小窗、簽到的卡都用這個
+export const originNode = origin => (origin ? h("p", { class: "sg-origin" }, h("b", null, "來歷"), " ", origin) : null);
 const itemCard = (id, extra) => {
   const it = limitedInfo(id);
   return h("div", { class: "sg-item k-" + it.kind }, h("span", { class: "sg-item-art", html: itemArt(id), "aria-hidden": "true" }),
-    h("div", { class: "sg-item-body" }, h("b", null, it.name), h("span", { class: "sg-item-kind" }, it.kindName), extra || null));
+    h("div", { class: "sg-item-body" }, h("b", null, it.name), h("span", { class: "sg-item-kind" }, it.kindName), extra || null, originNode(it.origin)));
 };
 
 // ---------- 馬上使用 ----------

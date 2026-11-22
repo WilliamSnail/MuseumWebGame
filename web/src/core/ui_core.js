@@ -16,6 +16,7 @@ import { FAILED, FIT_KEY, IMG_KEY, ROLLED, SAVE_KEY, activeQuirks, allOpts, appl
 import { hasTalent, memberPower, skillCheck, understandLine } from "../../../shared/core/systems.js";
 import { weeklyTheme } from "../../../shared/story/themeshow.js";
 import { freeSlots, hasSlots, visitorTotal } from "../../../shared/social/visitors.js";
+import { limitedInfo } from "../../../shared/social/signin.js";
 import { FRESH_KEY, badgeOpens, enterFreshRoom, freshRooms, leaveFreshRoom, markFresh, markFreshEvents, scanFresh } from "../../../shared/core/fresh.js";
 import { boardBadge, boardNotices, noticeState, visibleNotices } from "../../../shared/game/notices.js";
 import { syncMail, unclaimedCount } from "../../../shared/social/mailbox.js";
@@ -1036,6 +1037,7 @@ export async function showEvents(events) {
       const cat = e.key === "bg" ? "背景" : "手上拿的東西";
       note(`拿到「${cat}」的鑰匙：${UI.screen === "workshop" ? "這裡" : "手作坊"}多了「${cat}」頁（可能性 ${num(e.from)} → ${num(e.to)}，已知的組合變成 ${num(e.total)} 種）`, "good");
     }
+    else if (e.type === "foeDrop") { snd("unlock"); const it = limitedInfo(e.id); note(`守門掉了壹樣東西：「${it ? it.name : ""}」。在館友證的「裝飾」看，來歷也寫在那裡`, "good", 7000); } // 打贏守門第壹次的掉落（11-22）
     else if (e.type === "book") {
       snd("eerie", 0);
       const title = e.title || (BOOK4 && e.id === BOOK4.id ? BOOK4.title : ""); // 地下收藏庫 B2 給的那本，事件裡沒有書名

@@ -170,5 +170,14 @@ T("收藏頁列表：失敗作、修復品、抱枕、配方、禁書（沒讀�
   assert.strictEqual(G.passView(fresh(G, "free"), {}).books.forbidden, null);
 });
 
+T("裝飾頁的說明和來歷：拿到了才給，沒拿到不透露（desc、origin）", G => {
+  const P = fresh(G); const it = G.LIMITED_ITEMS.find(x => x.from === "foe") || G.LIMITED_ITEMS[0];
+  const x0 = J(G.passView(P, {})).deco.items.find(x => x.id === it.id);
+  assert.strictEqual(x0.own, false); assert.strictEqual(x0.desc, ""); assert.strictEqual(x0.origin, "");
+  assert.ok(G.grantLimited(P, it.id, G.todayStr()));
+  const x1 = J(G.passView(P, {})).deco.items.find(x => x.id === it.id), info = G.limitedInfo(it.id);
+  assert.strictEqual(x1.own, true); assert.strictEqual(x1.desc, info.desc); assert.strictEqual(x1.origin, info.origin);
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

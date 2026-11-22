@@ -176,3 +176,8 @@ body[data-screen="origin"] { background: #14100E url(/ui2/ui2-bg-3.webp) center 
 /* 看懂的事（11-21 翊文：「底下沒有紙」）：這本沒有 .page 包著，內容超過紙就掉到紙外；讓整本自己捲 */
 .origin-onescreen .reader .book.uk-book { overflow-y: auto; scrollbar-width: thin; }
 .origin-onescreen .reader .book.uk-book > * { flex: none; }
+
+/* 禁書的附頁（11-22）：還沒拿到對應的掉落就灰著 */
+.book .page.locked { opacity: .55; filter: grayscale(1); display: grid; place-items: center; min-height: 120px; border: 1px dashed currentColor; border-radius: 6px; text-align: center; }
+.page-lock-t { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; }
+.page-lock-t .ic, .page-lock-t .ic svg { width: 18px; height: 18px; }

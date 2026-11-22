@@ -282,3 +282,8 @@ body.holiday-on .lobby-sign { border-color: var(--hol-a); box-shadow: 0 0 0 1px 
 /* 打怪掉的名牌框（11-22）：空畫框＝壹圈素木畫框 */
 .hall-plate.lim-foe-f3g { box-shadow: inset 0 0 0 3px #8A5A2E, inset 0 0 0 5px #C9A06A, inset 0 0 0 6px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.35); padding: 8px 22px; }
 .nf-nick.lim-foe-f3g { padding: 1px 8px; border-radius: 3px; box-shadow: inset 0 0 0 1px #B98A52, 0 0 0 2px rgba(185,138,82,.4); background: linear-gradient(180deg, rgba(201,160,106,.16), rgba(0,0,0,0)); }
+
+/* 物品說明的來歷（11-22） */
+.sg-origin { margin: 4px 0 0; font-size: .8125rem; line-height: 1.5; color: var(--parch-sub, #5A4630); }
+.sg-origin b { color: #6E5020; letter-spacing: .1em; }
+.sg-item-desc { display: block; margin-top: 2px; color: var(--parch-sub, #5A4630); line-height: 1.5; }

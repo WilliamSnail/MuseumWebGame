@@ -44,8 +44,10 @@ export function bookReader(reader, title, pages, o = {}) {
   const prev = h("button", { type: "button", class: "book-arrow prev", onClick: () => flip(-1) }, icon("arrowLeft"), h("span", null, "上壹頁"));
   const next = h("button", { type: "button", class: "book-arrow next", onClick: () => flip(1) }, h("span", null, "下壹頁"), icon("arrowRight"));
   const draw = () => {
-    page.replaceChildren(...String(pages[i]).split("\n").map(l => bookLine(l)));
-    if (o.aside && i === pages.length - 1) page.append(h("p", { class: "pl-aside" }, ptNode(o.aside)));
+    const pg = pages[i], lock = pg && typeof pg === "object" && pg.locked; // 禁書的附頁（最後壹頁）：還沒拿到那件掉落就灰著、翻不開
+    page.classList.toggle("locked", !!lock);
+    page.replaceChildren(...(lock ? [h("p", { class: "page-lock-t" }, icon("lock"), " ", pg.text)] : String(pg).split("\n").map(l => bookLine(l))));
+    if (o.aside && i === (o.asideAt != null ? o.asideAt : pages.length - 1)) page.append(h("p", { class: "pl-aside" }, ptNode(o.aside)));
     count.textContent = `${i + 1}／${pages.length}`;
     prev.disabled = i === 0; next.disabled = i === pages.length - 1;
     page.classList.remove("enter"); void page.offsetWidth; page.classList.add("enter");
@@ -56,7 +58,7 @@ export function bookReader(reader, title, pages, o = {}) {
   page.addEventListener("pointerdown", e => { sx = e.clientX; });
   page.addEventListener("pointerup", e => { if (sx != null && Math.abs(e.clientX - sx) > 40) flip(e.clientX < sx ? 1 : -1); sx = null; });
   const book = h("div", { class: "book", tabindex: "0", onKeydown: e => { if (e.key === "ArrowRight") flip(1); if (e.key === "ArrowLeft") flip(-1); } },
-    h("h2", { class: "book-title" }, title), pages.some(p => /\[\[/.test(p)) ? h("p", { class: "book-hint" }, icon("sparkle"), " 書裡發亮的字可以點") : null,
+    h("h2", { class: "book-title" }, title), pages.some(p => typeof p === "string" && /\[\[/.test(p)) ? h("p", { class: "book-hint" }, icon("sparkle"), " 書裡發亮的字可以點") : null,
     page, h("div", { class: "book-nav" }, prev, count, next), h("div", { class: "book-gains", "aria-live": "polite" }), bookBack(reader));
   reader.replaceChildren(book);
   draw();
