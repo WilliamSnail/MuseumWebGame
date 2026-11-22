@@ -235,6 +235,7 @@ function format(p) {
     ["dread", "cost", "pepe", "horror"].forEach(k => { const f = x[k]; if (f) B(`  四問 ${k}（${f.day}，${f.where}）：${f.what}${f.san ? "　理智 " + f.san : ""}`); });
     B("  寫完自問：恐懼、代價、佩佩、嚇人的展品，四件都做了嗎？（排程說明 一、第 2 點 0a）");
     if (asList(x.lines).length) B(`  這週要收的線（總表 extend.collect；npm run ledger -- get extend.collect.rows 看每條的四問）：${asList(x.lines).join("、")}`);
+    if (x.dayPlan && x.dayPlan["d" + p.weekday]) B(`  今天（d${p.weekday}）照 extend 排的：${x.dayPlan["d" + p.weekday]}`);
     if (x.note) B(`  注意：${x.note}`);
     B("  規矩：只用審過的旁證、不自己加；壹週放壹天；放了在 weeks.<週>.ties 記壹行（排程說明 一、第 2 點）");
   }
