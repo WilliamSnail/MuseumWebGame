@@ -496,6 +496,14 @@ T("看懂：need 的線索要在同一天或更早，找不到、還沒出現都
   expectErr(c => { withClues(c); delete c.files["2026-W47/d2.json"].understand[0].layer; }, /layer 要寫/);
   expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].layer = "別的"; }, /layer 要寫/);
   expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].who = ""; }, /who 要是/);
+  { // 讀懂的理智檢定（11-22）
+    const okSan = c => { withClues(c); Object.assign(c.files["2026-W47/d2.json"].understand[0], { san: "0/1D4", successAside: "(你把手背到身後)", failAside: "(你的手指也在動)" }); return c; };
+    assert.deepStrictEqual(run(okSan(regular())).errors, [], "寫對的 san 要過");
+    expectErr(c => { okSan(c); c.files["2026-W47/d2.json"].understand[0].san = "1/1D4"; }, /0\/失敗的擲法/);
+    expectErr(c => { okSan(c); c.files["2026-W47/d2.json"].understand[0].san = "0/2D4"; }, /失敗最多扣/);
+    expectErr(c => { okSan(c); delete c.files["2026-W47/d2.json"].understand[0].failAside; }, /successAside、failAside/);
+    expectErr(c => { withClues(c); c.files["2026-W47/d2.json"].understand[0].successAside = "(只有旁白)"; }, /有旁白但沒有 san/);
+  }
   expectErr(c => { withClues(c); c.files["2026-W47/d1.json"].understand = [clone(c.files["2026-W47/d2.json"].understand[0])]; delete c.files["2026-W47/d2.json"].understand; }, /要到 .* 才出現，還沒到/);
   const c = withClues(regular()); // 同一天也可以
   c.files["2026-W47/d2.json"].books[0].clue = "c-same-day"; c.files["2026-W47/d2.json"].understand[0].need = ["c-hand-one", "c-same-day"];
