@@ -91,7 +91,7 @@ function drawer(spots, sel) {
   return h("div", { class: "map-dr" },
     h("div", { class: "map-dr-h" }, h("img", { class: "map-dr-ic", src: IMG("icon-" + icon), alt: "" }), h("h3", null, s.name), h("small", null, MAP_LAYER_NAME[s.layer] || "")),
     h("p", { class: "map-line" }, s.line),
-    ADDONS.giverStrip && s.id === "m-mailbox" ? ADDONS.giverStrip(["postman"]) : ADDONS.giverStrip && s.id === "m-market" ? ADDONS.giverStrip(["scale"]) : null, // 郵差在信箱、阿秤在夜市（11-21）
+    ADDONS.giverStrip && s.id === "m-mailbox" ? ADDONS.giverStrip(["postman"], "巷口") : ADDONS.giverStrip && s.id === "m-market" ? ADDONS.giverStrip(["scale"], "夜市口") : null, // 郵差在信箱、阿秤在夜市（11-21）
     Array.isArray(s.npc) && s.npc.length ? h("div", null, h("h4", null, "住在這裡的人"), h("ul", { class: "map-whos" }, s.npc.map(who))) : null);
 }
 
