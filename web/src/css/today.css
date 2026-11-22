@@ -88,5 +88,8 @@
 .td-mini.done { opacity: .6; background: rgba(247, 239, 221, .5); }
 .td-mini.keep { background: linear-gradient(180deg, #EFE6D0, #E4D6B6); } /* 簽到過了：還能開簽到日曆，不變灰（11-21） */
 .td-mini:hover { filter: brightness(1.05); }
+.td-mini { border-width: 1.5px; border-color: #8B6A38; box-shadow: 0 2px 0 rgba(110, 80, 32, .5); font-weight: 700; } .td-mini:active { transform: translateY(2px); box-shadow: none; }
+.td-mini::after { content: "›"; margin-left: 2px; color: #8B6A38; font-size: 1.1em; line-height: 1; }
+@media (max-width: 560px) { .td-mini { min-height: 44px; } }
 .td-mini-ic { display: inline-grid; place-items: center; color: #6E4A12; } .td-mini-ic svg { width: 18px; height: 18px; }
 .td-mini-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: #C0392B; border: 2px solid #2C2320; }

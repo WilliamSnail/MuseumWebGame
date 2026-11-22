@@ -150,3 +150,39 @@
 .gv-pair li { max-width: 86%; padding: 3px 9px 4px; line-height: 1.5; background: rgba(255, 255, 255, .65); border: 1px solid rgba(90, 60, 30, .25); }
 .gv-pair li b { display: block; font-size: .75rem; color: #6E4A12; font-weight: 700; }
 .gv-pair li.s-l { align-self: flex-start; border-radius: 3px 10px 10px 10px; } .gv-pair li.s-r { align-self: flex-end; border-radius: 10px 3px 10px 10px; }
+
+/* 任務板的按鈕要看得出能按（11-22 翊文：「手機版的任務版也明顯一點」）：前往＝有框有底的按鈕、領取＝金色最醒目、領過了＝淡灰；電腦也一起，手機再加大點擊面積 */
+.nb-today .tkc-go { min-height: 44px; font-weight: 700; color: #3A2412; background: linear-gradient(180deg, #FFF8E4, #EBDAB0); border: 1.5px solid #8B6A38; box-shadow: 0 2px 0 rgba(110, 80, 32, .55); }
+.nb-today .tkc-go:hover { background: linear-gradient(180deg, #FFFDF2, #F3E4BE); color: #3A2412; }
+.nb-today .tkc-claim { min-height: 44px; font-weight: 700; border: 1.5px solid #6E4A12; box-shadow: 0 2px 0 #6E4A12, 0 4px 10px rgba(0, 0, 0, .35); }
+.nb-today .tkc-go:active, .nb-today .tkc-claim:active, .nb-today .td-row .btn:active, .nb-today .gv-acts .btn:active { transform: translateY(2px); box-shadow: none; }
+.nb-today .tkc-card.claimed { opacity: 1; }
+.nb-today .tkc-card.claimed .tkc-stamp { transform: none; color: #7C7A70; border: 1px solid rgba(90, 80, 60, .35); background: rgba(90, 80, 60, .08); font-weight: 400; padding: 4px 10px; }
+.nb-today .td-row .btn { min-height: 44px; font-weight: 700; box-shadow: 0 2px 0 rgba(110, 80, 32, .6); }
+/* 交代人的「聊聊、送佩佩」：有框、有底、字深，不再像灰掉的 */
+.gv-acts .btn.gv-b { font-weight: 700; background: linear-gradient(180deg, #FFF8E4, #EBDAB0); box-shadow: 0 2px 0 rgba(110, 80, 32, .5); border: 1.5px solid #8B6A38; }
+.gv-acts .btn.gv-b:hover:not(:disabled) { background: linear-gradient(180deg, #FFFDF2, #F3E4BE); color: #3A2412; }
+.gv-acts .btn.gv-b:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+/* 進度條上的領獎點：可領的壹直亮著（閃 3 下後也不熄）、點擊面積放大；領過的綠勾；還沒到的暗 */
+.tkc-pin.ready { z-index: 1; } .tkc-pin.ready::before { content: ""; position: absolute; inset: -6px -12px -24px; }
+.tkc-pin.ready i { box-shadow: 0 0 0 3px rgba(255, 217, 122, .55), 0 0 10px rgba(255, 217, 122, .6); }
+.tkc-pin.ready b { opacity: 1; color: #FFE9A0; font-weight: 700; }
+.tkc-pin.wait { opacity: .75; }
+.tkc-pin:active i { transform: scale(.92); }
+@media (max-width: 560px) {
+  .nb-today .tkc-card.giver .tkc-act, .nb-story .tkc-card.giver .tkc-act { top: 4px; }
+  .nb-story .tkc-card.giver .tkc-ghead { min-height: 48px; padding-right: 118px; }
+  .nb-today .tkc-card.giver .tkc-ghead { min-height: 48px; }
+  .nb-today .tkc-card.giver .tkc-act .btn, .nb-today .tkc-card.giver .tkc-act button { min-height: 44px; padding: 0 10px; }
+  .nb-today .tkc-card.giver .tkc-ghead { min-height: 44px; padding-right: 118px; }
+  .gv-acts .btn.gv-b { min-height: 44px; padding: 0 12px; }
+  /* 手機上最重要的畫面：能按的短邊都要 ≥ 44px（ui:check 的「按鈕太小」）。每週劇情（#tasks）和簽到日曆也在這裡 */
+  .nb-frame.nb-today .nb-x, .nb-frame.nb-story .nb-x, .nb-frame.nb-cal .nb-x { width: 44px; height: 44px; flex: 0 0 44px; }
+  .nb-frame.nb-story .btn.small.tkc-go, .nb-frame.nb-story .btn.small.tkc-claim, .nb-frame.nb-today .btn.small.tkc-go, .nb-frame.nb-today .btn.small.tkc-claim,
+  .nb-frame .tkc-ready .btn.small { min-height: 44px; min-width: 44px; }
+  .nb-story .tkc-go { font-weight: 700; color: #3A2412; background: linear-gradient(180deg, #FFF8E4, #EBDAB0); border: 1.5px solid #8B6A38; box-shadow: 0 2px 0 rgba(110, 80, 32, .55); }
+  .nb-story .tkc-claim { font-weight: 700; border: 1.5px solid #6E4A12; box-shadow: 0 2px 0 #6E4A12, 0 4px 10px rgba(0, 0, 0, .35); }
+  .nb-story .tkc-card.claimed .tkc-stamp { transform: none; color: #7C7A70; border: 1px solid rgba(90, 80, 60, .35); background: rgba(90, 80, 60, .08); font-weight: 400; }
+  .tkc-pin.ready { min-width: 44px; min-height: 44px; }
+  .nb-frame.nb-cal .btn.small, .nb-frame.nb-cal .sg-sign, .nb-frame.nb-sign .sg-sign { min-height: 44px; min-width: 44px; }
+}
