@@ -142,7 +142,7 @@
 
 /* 串門子：兩位交代人同框（11-22，ui_giver_pair.js）。壹人壹句，左邊的靠左、右邊的靠右 */
 .gv-pair { padding: 8px 12px 10px; border-radius: 10px; background: rgba(255, 243, 207, .94); color: #3A2412; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
-.gv-pair-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; } .gv-pair-h small { flex: 1; text-align: center; color: #6E4A12; font-size: .8125rem; }
+.gv-pair-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; } .gv-pair-h small { flex: 1; text-align: center; color: #6E4A12; font-size: .8125rem; line-height: 1.4; } .gv-pair-h small span { display: block; }
 .gv-pair ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .gv-pair li { max-width: 86%; padding: 3px 9px 4px; line-height: 1.5; background: rgba(255, 255, 255, .65); border: 1px solid rgba(90, 60, 30, .25); }
 .gv-pair li b { display: block; font-size: .75rem; color: #6E4A12; font-weight: 700; }

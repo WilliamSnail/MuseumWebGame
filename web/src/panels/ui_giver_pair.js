@@ -21,7 +21,7 @@ export function giverPairScene(place) {
   if (!sent.has(key)) { sent.add(key); giverHeard(p.a, [p.sid]); }
   const side = id => (id === p.a ? "l" : "r");
   return h("div", { class: "gv-pair", role: "note" },
-    h("div", { class: "gv-pair-h" }, giverAv(p.a, { small: true }), h("small", null, `${giverName(p.a)}和${giverName(p.b)}，在${p.where}`), giverAv(p.b, { small: true })),
+    h("div", { class: "gv-pair-h" }, giverAv(p.a, { small: true }), h("small", null, h("span", null, `${giverName(p.a)}和${giverName(p.b)}`), h("span", null, `在${p.where}`)), giverAv(p.b, { small: true })),
     h("ul", null, p.talk.map(t => h("li", { class: "s-" + side(t.by) }, h("b", null, giverName(t.by)), h("span", null, t.say)))));
 }
 ADDONS.giverPair = giverPairScene;
