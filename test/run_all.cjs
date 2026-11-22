@@ -190,6 +190,7 @@ const STEPS = [
   ["ES 模組接得上", ["test/esm_smoke.mjs"]],
   ["import／export 都對得上（沒有漏 import、ui_core 沒 import 後面的檔）", ["tools/check/check_imports.cjs"]],
   ["維護日誌的格式", ["tools/check/log_check.cjs"]],
+  ["不准用 Write 新建維護日誌的 hook（.claude/settings.json，11-22）", ["test/tools/hook_log_write.test.cjs"]],
   ["維護日誌的標題自動修（log:fix，ship 上線前先跑，11-22）", ["test/tools/log_fix.test.cjs"]],
   ["程式的規矩（shared/ 是純函式、無限動畫要在白名單、.replace(字串, 字串)、新加的畫面文字用壹、改名對照；每條的測試，11-20）", ["test/tools/code_rules.test.cjs"]],
   ["程式的規矩檢查本體（對現在的 repo 跑壹遍）", ["tools/check/code_rules.cjs"]],

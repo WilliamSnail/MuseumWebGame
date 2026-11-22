@@ -7,7 +7,7 @@
 //   6. web/src 的 import 不准繞圈（shared/ 的繞圈由 tools/check/check_imports.cjs 擋）。
 const { spawnSync } = require("../dev/child.cjs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
-const TOP = [".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "assets", "content", "database.rules.json", "docs",
+const TOP = [".claude", ".firebaserc", ".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "assets", "content", "database.rules.json", "docs",
   "firebase.json", "firestore.indexes.json", "firestore.rules", "functions", "package-lock.json", "package.json", "shared", "test", "tools", "version.json",
   "vite.config.js", "web"];
 const fs = require("fs");
