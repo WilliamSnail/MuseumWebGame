@@ -64,6 +64,7 @@ import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFresh
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "../shared/casino/bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "../shared/casino/live.js";
 import { eventLive, eventsFromWeeks } from "../shared/story/events.js";
+import { storyAct } from "../shared/story/core.js";
 import { EVENT_WEEKS } from "../shared/events_data.js";
 import { CAS_WEEK_LIB } from "../shared/casino_week_data.js";
 import { setRng, taipeiDay } from "../shared/core/logic.js";
@@ -172,6 +173,7 @@ export async function playCore(me, email, opts, fn) {
       put(tx, houseRef(), ctx.house);
       if (ctx.roundDirty || !rs.exists) { if (ctx.round) put(tx, roundRef(me.uid), ctx.round); }
       let rev = null;
+      if (ctx.saveDirty && opts.act && ctx.P && r.ok !== false) storyAct(ctx.P, opts.act, day); // 每日任務「做過了」跟著這份存檔壹起寫（11-23：餐車買完伺服器改存檔，畫面重讀後本機剛記的「吃過了」被蓋掉，任務板領不到）
       if (ctx.saveDirty && ss && ss.exists) {
         rev = ss.data().rev + 1;
         tx.set(saveRef(me.uid), { data: JSON.stringify(ctx.S), rev, updatedAt: FieldValue.serverTimestamp() });
@@ -569,7 +571,7 @@ export const casino = onCall(async req => {
         return shape(ctx, { legacy: peek, loanNotes, sanity: ctx.P && Number.isFinite(ctx.P.sanity) ? ctx.P.sanity : null });
       });
     }
-    case "deal": { const r = await play(req, me, { save: true }, ctx => actDeal(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "casino", taipeiDay(now())); return r; } // 每日任務「打壹手 21 點」的證據（決定 0146）
+    case "deal": { const r = await play(req, me, { save: true, act: "casino" }, ctx => actDeal(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "casino", taipeiDay(now())); return r; } // 每日任務「打壹手 21 點」的證據（決定 0146）
     case "hit":
     case "stand": return play(req, me, { save: true }, ctx => actHitStand(act, ctx, d));
     case "relief": return play(req, me, {}, actRelief);
@@ -600,7 +602,7 @@ export const casino = onCall(async req => {
       return { ok: true, n: r.n, got: r.chips, chips: ctx.w.chips };
     });
     case "pack": return play(req, me, {}, ctx => actPack(ctx, d));
-    case "buy": { const r = await play(req, me, { save: true }, ctx => actBuy(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "food", taipeiDay(now())); return r; }
+    case "buy": { const r = await play(req, me, { save: true, act: "food" }, ctx => actBuy(ctx, d)); if (r && r.ok !== false) await markAct(me.uid, "food", taipeiDay(now())); return r; }
     // 每日任務、每週積分的籌碼（決定 0146）：存檔說做完、伺服器也看到做過的才付；博物館資金出，不夠就先不付
     case "taskChips": { const day0 = taipeiDay(now()), acts = await readActs(me.uid, day0); return play(req, me, { save: true }, ctx => {
       const P = ctx.P, st = P && P.story;
