@@ -30,7 +30,7 @@ import { noticeCard } from "./ui_party.js";
 import { eventListBox } from "./ui_events.js";
 import { CAS_WK, weekBox, wkGotCount, wkNextText } from "../rooms/casino/ui_casino_week.js";
 import { bookBack, bookGain, bookReader, roomHead } from "../core/ui_room.js";
-import { TASK_ICON, claimBurst, ptsPanel, taskCard } from "./ui_tasks.js";
+import { TASK_ICON, claimBurst, giverTap, ptsPanel, taskCard } from "./ui_tasks.js";
 import { holidayOf } from "../../../shared/story/holidays.js";
 import { ART_HOOKS, artMarketOpen, artMarketRow, artMarketShelf, auctionOn, auctionOpen, auctionPane, collectOn } from "../rooms/ui_art.js"; // 藝術市場：今日特展的畫可以跟館方買賣（11-14）
 
@@ -210,13 +210,13 @@ function roomTaskBar() {
   const text = pend.length
     ? `這裡有任務：${taskText(t, W)}（${n}／${tgt}）${pend.length > 1 ? `　還有 ${pend.length - 1} 個` : ""}`
     : `完成 +${taskPts(t) || 0} 分${got.length > 1 ? `（共 ${got.length} 個）` : ""}・到任務板領獎勵`;
-  const gl = t.giver && t.says && t.giver !== "yuga" ? `${giverName(t.giver)}：${state === "done" && t.done ? t.done : t.says}` : ""; // 交代人在這個房間多說壹句（Yuga 的話荷官在賭場自己說）
+  const gl = t.giver && t.says && t.giver !== "yuga" ? `${giverName(t.giver)}：${state === "done" && t.done ? t.done : t.says}` : "", gid = gl ? t.giver : ""; // 交代人在這個房間多說壹句（Yuga 的話荷官在賭場自己說）
   const key = state + "|" + text + "|" + gl;
   if (el.dataset.k !== key || el.dataset.room !== room) {
     el.dataset.k = key; el.dataset.room = room;
     el.className = "rtk " + state;
     el.replaceChildren(
-      h("button", { type: "button", class: "rtk-main", onClick: () => PANELS.today && PANELS.today() }, icon(state === "done" ? "check" : "scroll"), h("span", { class: "rtk-col" }, h("span", { class: "rtk-t" }, text), gl ? h("small", { class: "rtk-g" }, gl) : null), h("span", { class: "rtk-go", "aria-hidden": "true" }, "任務板 →")),
+      h("button", { type: "button", class: "rtk-main", onClick: () => PANELS.today && PANELS.today() }, icon(state === "done" ? "check" : "scroll"), h("span", { class: "rtk-col" }, h("span", { class: "rtk-t" }, text), gl ? h("small", { class: "rtk-g" }, giverTap(h("b", null, giverName(gid)), gid), gl.slice(giverName(gid).length)) : null), h("span", { class: "rtk-go", "aria-hidden": "true" }, "任務板 →")),
       h("button", { type: "button", class: "rtk-x", "aria-label": "先關掉這條", title: "先關掉", onClick: () => { RT_SKIP[room + "|" + state] = day; el.hidden = true; } }, icon("close")));
   }
   el.hidden = false;

@@ -29,6 +29,15 @@ export function giverAv(id, o = {}) {
   return el;
 }
 
+// 任何提到交代人的地方（頭像、名字）都能點：點了開他的卡（熟識度、聊聊、送佩佩；ui_giver_note.js 的 giverOpen，用 ADDONS 叫，不互相 import）。el 可以放在按鈕裡面（stopPropagation）
+export function giverTap(el, id) {
+  const nm = giverName(id), go = e => { e.stopPropagation(); e.preventDefault(); if (ADDONS.giverOpen) ADDONS.giverOpen(id); };
+  el.classList.add("gv-tap"); el.setAttribute("role", "button"); el.setAttribute("aria-label", `看看${nm}`); el.tabIndex = 0; el.title = `看看${nm}`;
+  el.addEventListener("click", go);
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") go(e); });
+  return el;
+}
+
 // 壹張任務卡。o：{ t, text, kindIcon, pts, n, tgt, reward, state: "todo"|"done"|"claimed", where（能去的話）, onGo, onClaim, past, words }
 export function taskCard(o) {
   const t = o.t, done = o.state !== "todo", claimed = o.state === "claimed", giver = t.giver && t.says;
@@ -37,10 +46,10 @@ export function taskCard(o) {
     : done ? btn("領獎勵", o.onClaim, "primary small tkc-claim")
       : o.where && !o.past ? btn([placeName(o.where) ? "去" + placeName(o.where) : "前往", " ", h("span", { "aria-hidden": "true" }, "→")], o.onGo, "small tkc-go") : null;
   // 有交代人的任務：交代人（剪影、名字、在哪、熟識度）和他的話跟任務狀態同壹列（11-22 翊文：「今天的交代跟任務表整合在壹起」）
-  const gHead = giver ? h("div", { class: "tkc-ghead" }, h("b", null, giverName(t.giver)), h("small", null, "・在" + (GIVER_WHERE[t.giver] || "館裡")), ADDONS.giverLvTag ? ADDONS.giverLvTag(t.giver) : null) : null;
+  const gHead = giver ? h("div", { class: "tkc-ghead" }, giverTap(h("b", null, giverName(t.giver)), t.giver), h("small", null, "・在" + (GIVER_WHERE[t.giver] || "館裡")), ADDONS.giverLvTag ? ADDONS.giverLvTag(t.giver) : null) : null;
   const gSay = giver ? h("p", { class: "tkc-gsay" }, o.sayText || t.says) : null;
   return h("li", { class: "tkc-card" + (done ? " done" : "") + (claimed ? " claimed" : "") + (giver ? " giver" : "") },
-    giver ? giverAv(t.giver) : null,
+    giver ? giverTap(giverAv(t.giver), t.giver) : null,
     h("div", { class: "tkc-body" },
       giver ? null : h("span", { class: "tkc-ic", "aria-hidden": "true" }, icon(o.kindIcon || "star")),
       h("div", { class: "tkc-main" },
