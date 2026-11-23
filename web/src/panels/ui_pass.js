@@ -216,7 +216,7 @@ export function openPass(o = {}) {
         stat("圖書館的書", b.origin.text.replace(/^(✓ )?讀過 /, "")),
         b.week !== null ? stat("每週的書", `讀過 ${b.week} 本`) : null,
         stat("看懂的事", `${b.understood[0]}／${b.understood[1]}`)),
-        h("p", { class: "sp-note" }, "《看懂的事》放在圖書館書架的「館藏」那壹頁，最右邊。"),
+        h("p", { class: "sp-note" }, "《看懂的事》放在圖書館書架的「館藏」那壹頁，書架最上面的紫色那本。"),
         h("div", { class: "sp-go" }, goBtn("圖書館的書架", () => go("origin"), "book"), !v.free ? goBtn("每週的書", () => go("origin", { tab: "weekly" })) : null)),
       sec(`看懂的事　${b.understood[0]}／${b.understood[1]}`, b.understoodLayers.map(L => [h("p", { class: "sp-note pv-layer" }, h("b", null, `${L.layer}　${L.have}／${L.total}`)),
         h("div", { class: "ps-chips" }, L.list.map(x => h("span", { class: "ps-chip" + (x.got ? " hung" : ""), title: x.got ? x.where : "還沒看懂" }, x.name)).concat(b.blank && L.layer === "你" ? [h("span", { class: "ps-chip ps-blank", "aria-hidden": "true" })] : []))]),

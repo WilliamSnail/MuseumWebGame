@@ -438,11 +438,17 @@ SCREENS.origin = (root, params) => {
       });
       return el;
     }));
-  if (!isFree(P)) { // 壹件都還沒看懂也放在書架上（翊文 11-10：館友證寫「放在圖書館的書架上」卻找不到）；翻開都是「？？？」，不破梗
-    const el = h("button", { type: "button", class: "spine uk-spine", "aria-label": "看懂的事" }, h("span", { class: "spine-t" }, "看懂的事"));
-    freshMark(el, isFresh(P, "origin", FRESH_KEY.understood)); // 《看懂的事》多了壹件（11-08）
-    el.addEventListener("click", () => { $$(".spine.on", root).forEach(x => x.classList.remove("on")); el.classList.add("on"); snd("eerie", 1); openUnderstood(reader); });
-    shelf.append(el);
+  // 《看懂的事》不夾在章節裡（翊文 11-23：「只是普通的壹本書」；手機上還被擠到書架右邊外面）：放在館藏書架上面，紫色封面、寫件數
+  // 壹件都還沒看懂也放（翊文 11-10：館友證寫「放在圖書館」卻找不到）；翻開都是「？？？」，不破梗
+  let ukCard = null;
+  if (!isFree(P)) {
+    const got = UNDERSTAND_TEXT.filter(x => P.understood && P.understood[x.id]).length;
+    ukCard = h("button", { type: "button", class: "uk-feature", "aria-label": `看懂的事，${got}／${UNDERSTAND_TEXT.length}` },
+      h("span", { class: "uk-f-cover" }, h("span", { class: "uk-f-t" }, "看懂的事")),
+      h("span", { class: "uk-f-body" }, h("b", null, "《看懂的事》"), h("span", { class: "uk-f-n" }, `看懂 ${got}／${UNDERSTAND_TEXT.length}`), h("span", { class: "uk-f-s" }, "看懂過的事，照故事的順序排。")),
+      h("span", { class: "uk-f-go" }, "翻開"));
+    freshMark(ukCard, isFresh(P, "origin", FRESH_KEY.understood)); // 《看懂的事》多了壹件（11-08）
+    ukCard.addEventListener("click", () => { $$(".spine.on, .uk-feature.on", root).forEach(x => x.classList.remove("on")); ukCard.classList.add("on"); snd("eerie", 1); openUnderstood(reader); });
   }
   const forbList = [];
   FORBIDDEN_BOOKS.concat(typeof BOOK4 !== "undefined" && (P.keys.book4 || isFree(P)) ? [BOOK4] : []).forEach(b => {
@@ -494,7 +500,7 @@ SCREENS.origin = (root, params) => {
     root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main origin-gb origin-map" }, ADDONS.worldMap()));
     return;
   }
-  root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main" }, h("div", { class: "shelves" }, tab === "shelf" ? shelf : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
+  root.append(originTabs(tab, counts), h("div", { class: "origin-wrap onescreen-main origin-main" }, h("div", { class: "shelves" }, tab === "shelf" ? [ukCard, shelf] : tab === "forbidden" ? forb : storyShelf(tab, reader, params)), reader));
   armIdleSequel(root);
 };
 // 《佩佩起源考・補遺》：讀過上壹本之後，在圖書館什麼都不做 NUM.idleBook 秒（點滑鼠、按鍵盤、滾輪會重來；移動滑鼠沒關係）
@@ -532,7 +538,7 @@ export function openUnderstood(reader) {
       ? h("li", null, h("span", { class: "uk-from" }, x.from), h("span", { class: "uk-line" }, ptNode(x.text)))
       : h("li", { class: "unknown" + (x.again ? " again" : "") }, h("span", { class: "uk-line" }, "？？？（還沒看懂）"), x.again ? h("span", { class: "uk-again" }, "再看壹次") : null,
         x.hint ? h("span", { class: "uk-hint" }, "提示：" + x.hint) : null))),
-    weekUnderstoodBox()));
+    weekUnderstoodBox(), bookBack(reader))); // 手機直拿要靠 bookBack 蓋住書架才看得到書（11-23 才發現這本從來沒接上）
 }
 // 每週劇情裡看懂的（線索集齊才會多壹件，shared/story/clues.js）。快看懂的只說還差幾條和提示，不給答案
 function weekUnderstoodBox() {
