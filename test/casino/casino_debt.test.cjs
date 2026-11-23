@@ -13,7 +13,7 @@ const opening = (G, s) => G.casBookOpening(G.casBookSnap([s.w], s.house, 0, null
 const gap = (G, s, op) => G.casBookGap(G.casBookSnap([s.w], s.house, 0, null), op);
 
 T("沒有欠款：擋掉；欠款是錢包的負數：賣超過壹天上限也行，賣到剛好夠還、帳對得上、不算進今天賣出的額度", G => {
-  const s = fresh(G); G.casStockBuy(s.w, s.house, ID, 15000, D, OPEN); // 約 1.5 億的股票
+  G.NUM.casino.stock.sellDay = 20000000; const s = fresh(G); G.casStockBuy(s.w, s.house, ID, 15000, D, OPEN); // 約 1.5 億的股票（上限打開來測：決定 0154 起預設不限）
   assert.ok(!G.casSellForDebt(s.w, s.house, ID, "max", D, OPEN).ok, "沒欠款擋掉"); assert.strictEqual(G.casDebtOwed(s.w, OPEN).total, 0);
   s.w.chips = -60000000; const op = opening(G, s), cap = G.casSellCap(s.w);
   assert.strictEqual(G.casDebtOwed(s.w, OPEN).neg, 60000000); assert.ok(60000000 > cap, "欠的比壹天上限大");

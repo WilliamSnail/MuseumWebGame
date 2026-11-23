@@ -7,13 +7,13 @@
 //    買：股價×股數 錢給海外（casWorldIn，來源 stockBuy），手續費進博物館資金（搬）。
 //    賣：股價×股數 海外付（casWorldOut，來源 stockSell），扣手續費進博物館資金（搬）。
 //    莊家完全不出錢，所以沒有「全館持股 ≤ 莊家 50%」那種上限（以前莊家當對手盤時要有，莊家壹窮股市就停擺）。
-//    海外（真實市場）就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的 drag、每人每天賣出上限。
+//    海外（真實市場）就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的持有成本（決定 0154 起不再有每人每天賣出上限）。
 //    記帳照樣對得上：憑空的、消失的都有來源，日報看得到股市每天讓館裡多了或少了多少。
 //
 //  停盤：每支只在自己的盤中交易（台股 09:00～13:30、美股美東 09:30～16:00，也就是台灣晚上），盤外一律停，而且要等當天第壹個真實開盤價出來才開
 //    （假日、美股國定假日抓不到開盤價就整天休市）。以前美股是「05:00 才動壹次、22:00～05:00 停盤」（11-14 規劃 2.8i 起改成盤中）。
 //
-//  上限：壹人壹天賣出 sellDay（擋多頭時壹口氣印太多錢）。
+//  上限：壹人壹天賣出 sellDay（以前擋多頭時壹口氣印太多錢；決定 0154 起 0 ＝ 不限）。
 //
 //  純函式：「今天」和「現在幾點」從參數來，不碰資料庫和 DOM。
 //  莊家 house.stk：{ day, px: { id: 股價 }, prev: { id: 昨天的股價 }, held: { id: 全館持股 }, net: { day, n 今天全館淨賣出 } }
@@ -24,7 +24,7 @@
 //    成交價壹律用觸發的那個價（跳空比掛的價更好或更差都照它）。house.stk.hist { 日期: { id: 股價 } } 留最近幾天，隔幾天才上線的人，中間日子的價也算。
 // ================================================================
 import { NUM } from "../core/config.js";
-import { casSellCap, casSellMoney, casSellTip } from "./credit.js";
+import { casSellCap, casSellMoney, casSellTip, casSellView } from "./credit.js";
 import { casCount, casPoolGain, casWorldIn, casWorldOut } from "./book.js";
 import { casTradeLog, casTradeMarkOrder } from "./trade_log.js";
 import { gsFeePct, gsMatch } from "./stock_grp.js";
@@ -463,7 +463,7 @@ export function casStockView(w, house, day, t, stale) {
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
     exposeLeft: null, // 跟海外買賣（11-14）：沒有莊家的上限了
     bankroll: house.bankroll, houseBroke: false,
-    sellLeft: Math.max(0, casSellCap(w) - stSoldToday(S, day)), sellCap: casSellCap(w), sellTip: casSellTip(w),
+    ...casSellView(w, stSoldToday(S, day)),
     orders: S.orders.map(o => ({ no: o.no, market: IN_IDS.includes(o.id) ? "in" : stMk(o.id) || "us", kind: o.kind, kindName: CAS_STOCK.order.kinds[o.kind], id: o.id, name: stOrderName(o), n: o.n, px: o.px, now: IN_IDS.includes(o.id) ? casInPrice(house, o.id, day, t).px : H.px[o.id], day: o.day, exp: o.exp, lock: o.kind === "buy" ? o.hold : 0, lockShares: o.kind === "buy" ? 0 : o.n })),
     orderLeft: Math.max(0, C.order.max - S.orders.length), orderMax: C.order.max, orderPerStock: C.order.perStock, orderDays: C.order.days,
     cancelLeft: Math.max(0, C.order.cancelDay - (S.cx.day === day ? S.cx.n : 0)), lockChips: S.hold,

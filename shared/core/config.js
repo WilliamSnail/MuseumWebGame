@@ -600,8 +600,9 @@ export const NUM = {
     // taxPct 證交稅（決定 0111，翊文 11-16：取代資本利得稅 5%）：台股、館內股「賣出」都收賣出金額的 taxPct%，無條件進位、最少 1，進政府帳（搬，不是 burn）；taxUs 美股（0＝不收，貼近真實）；槓桿不收
      
       // sellMultByCredit：壹天賣出上限（sellDay）隨信用等級的倍數 [[等級 ≥, 倍數], …]（決定 0093，翊文 11-15：「賣出上限隨信用等級」；0 級 ×1、2 級 ×2.5、4 級 ×5）。館內股的全館淨賣出上限（netSellPct、netSellFlat）照舊，守住莊家
+      // sellDay 0 ＝ 壹人壹天賣出不限（決定 0154，翊文 11-23：「今天把它取消」；取代決定 0093）。sellMultByCredit 留著，sellDay 改回大於 0 就照等級算
       sellMultByCredit: [[2, 2.5], [4, 50]],
-      exposePct: 70, sellDay: 20000000, netSellPct: 5, netSellFlat: 5000000,
+      exposePct: 70, sellDay: 0, netSellPct: 5, netSellFlat: 5000000,
       // 限價單、停損單（11-14，規劃 2.8c，只做現股）：max 同時最多幾張、perStock 同一支最多幾張、days 有效天數（含下單那天算第 1 天，最後一天 22:00 停盤時取消）、cancelDay 一天最多取消幾次
       order: { max: 10, perStock: 3, days: 1, cancelDay: 20 }, // days：有效到下壹次價格變動（翊文 11-13：「應該每張單有效 1 天 跟真實的依樣」）
       // 台股真實成分 X（規劃 2.8d）：伺服器量到的行情落後分鐘數 ≤ lag 就用這個 x（由小到大找第一個符合的）；落後越久，看盤的人領先越多，真實成分就要壓低

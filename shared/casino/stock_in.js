@@ -24,7 +24,7 @@
 //  純函式：「今天」「現在幾點」「亂數的祕密」從參數來，不碰資料庫和 DOM。槓桿、放空、當沖、限價單是後面幾步（還沒做）。
 // ================================================================
 import { NUM } from "../core/config.js";
-import { casSellCap, casSellTip } from "./credit.js";
+import { casSellCap, casSellTip, casSellView } from "./credit.js";
 import { casCount, casHouseMove, casHouseWorldIn, casHouseWorldOut, casPoolGain } from "./book.js";
 import { casTradeLog, casTradeMarkOrder } from "./trade_log.js";
 import { casFill, casNum } from "./core.js";
@@ -616,7 +616,7 @@ export function casInView(w, house, day, t, secret = SECRET) {
       ...(MK ? { shares: MK.Ns, cap: MK.Ns * price, vol: H.m.day === day ? Math.round(H.m.vol[d.id]) : 0, net: H.m.day === day ? Math.round(H.m.net[d.id]) : 0, fv: H.open[d.id] } : {}) };
   });
   return { list, inDay: { from: C.from, len: C.ticks, step: C.step }, cap: C.cap, total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee, feePct: NUM.casino.stock.feePct / 100,
-    sellLeft: Math.max(0, casSellCap(w) - inSoldToday(S, day)), sellCap: casSellCap(w), sellTip: casSellTip(w), exposeLeft: Math.max(0, casInExposeCap(house) - inHeld(H, house)), mkt: MK ? { Ns: MK.Ns, tickLim: MK.tickLim, dayLim: MK.dayLim, half: MK.half } : null, bankroll: house.bankroll, houseBroke: !(house.bankroll > 0), rule: CAS_STOCK_IN.rule };
+    ...casSellView(w, inSoldToday(S, day)), exposeLeft: Math.max(0, casInExposeCap(house) - inHeld(H, house)), mkt: MK ? { Ns: MK.Ns, tickLim: MK.tickLim, dayLim: MK.dayLim, half: MK.half } : null, bankroll: house.bankroll, houseBroke: !(house.bankroll > 0), rule: CAS_STOCK_IN.rule };
 }
 // 玩家按「看過了」：記下現在的價（fresh 用）
 export function casInSeen(w, house, day, t, secret = SECRET) {

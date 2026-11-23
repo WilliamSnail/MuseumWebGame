@@ -74,10 +74,10 @@ T("什麼都不動的時候，每天會慢慢扣 drag（抱著不會穩賺）", 
   for (let i = 1; i <= 30; i++) { day = `2026-12-${String(i).padStart(2, "0")}`; G.casStockRoll(s.house, day, {}); }
   assert.ok(s.house.stk.px[ID] < px, `30 天後要比 ${px} 低，實際 ${s.house.stk.px[ID]}`);
 });
-T("上限：莊家窮也買得了（跟已知世界買）；壹人壹天賣出上限還在", G => {
+T("上限：莊家窮也買得了（跟已知世界買）；壹人壹天賣出上限打開時照樣擋", G => {
   const s = fresh(G); s.house.bankroll = -100; // 莊家破產
   assert.ok(G.casStockBuy(s.w, s.house, ID, 1000, D, OPEN).ok, "莊家破產也照買（11-14：以前莊家壹窮股市就停擺）");
-  const s3 = fresh(G);
+  G.NUM.casino.stock.sellDay = 20000000; const s3 = fresh(G); // 上限打開來測（決定 0154 起預設不限）
   G.casStockBuy(s3.w, s3.house, ID, 5000, D, OPEN); // 5,000 萬
   const sold = G.casStockSell(s3.w, s3.house, ID, 2000, D, OPEN); // 2,000 萬，剛好上限
   assert.ok(sold.ok, sold.reason);
@@ -161,7 +161,7 @@ T("掛單的價和股數輸入：逗號、空白、全形逗號都清掉；字�
   const bad = G.casStockOrder(s.w, s.house, "buy", ID, "1s0", px - 1, D, OPEN); assert.ok(!bad.ok, "帶字母 s 的股數要被擋，不是被吃成 10");
 });
 T("賣出上限隨信用等級（決定 0093）：0 級 ×1、2 級 ×2.5、4 級 ×50；提示寫升到幾級可以賣到多少；最高級沒有提示；超過上限的訊息帶提示；信用的算法只有一份", G => {
-  const C = G.NUM.casino.stock, w = lv => ({ lev: { cr: { pts: lv * G.NUM.casino.stockLev.credit.ptsPerLevel } } });
+  const C = G.NUM.casino.stock; C.sellDay = 20000000; const w = lv => ({ lev: { cr: { pts: lv * G.NUM.casino.stockLev.credit.ptsPerLevel } } });
   assert.strictEqual(G.casSellCap(w(0)), C.sellDay); assert.strictEqual(G.casSellCap(w(1)), C.sellDay); assert.strictEqual(G.casSellCap(w(2)), C.sellDay * 2.5); assert.strictEqual(G.casSellCap(w(3)), C.sellDay * 2.5); assert.strictEqual(G.casSellCap(w(4)), C.sellDay * 50); assert.strictEqual(G.casSellCap(w(10)), C.sellDay * 50);
   assert.strictEqual(G.casSellCap({}), C.sellDay, "沒有信用資料：照 0 級"); assert.strictEqual(G.casSellTip(w(0)), "信用升到 2 級可以賣到 5,000 萬。"); assert.strictEqual(G.casSellTip(w(2)), "信用升到 4 級可以賣到 10 億。"); assert.strictEqual(G.casSellTip(w(4)), "");
   assert.strictEqual(G.casLevLevel(w(3)), G.casCreditLevel(w(3)), "槓桿用的等級和賣出上限用的等級是同一個算法");
@@ -169,6 +169,13 @@ T("賣出上限隨信用等級（決定 0093）：0 級 ×1、2 級 ×2.5、4 �
   const over = G.casStockSell(s.w, s.house, ID, 1, D, OPEN); assert.ok(!over.ok && over.reason.includes("信用升到 2 級可以賣到 5,000 萬"), over.reason);
   s.w.lev = { cr: { pts: 2 * G.NUM.casino.stockLev.credit.ptsPerLevel, ok: 0, late: 0, day: null } }; G.casLevFix(s.w); assert.ok(G.casStockSell(s.w, s.house, ID, 2500, D, OPEN).ok, "2 級：總共可以賣到 5,000 萬（再賣 3,000 萬）");
   s.w.lev = { cr: { pts: 4 * G.NUM.casino.stockLev.credit.ptsPerLevel } }; const v = G.casStockView(s.w, s.house, D, OPEN); assert.strictEqual(v.sellCap, C.sellDay * 50); assert.strictEqual(v.sellTip, "");
+});
+T("壹人壹天賣出不限（決定 0154，翊文 11-23）：預設 sellDay 0；館外股、館內股賣超過 2,000 萬也行；畫面的 sellLeft、sellCap 是 null、沒有提示", G => {
+  assert.strictEqual(G.NUM.casino.stock.sellDay, 0); assert.strictEqual(G.casSellCap({}), Infinity);
+  const s = fresh(G); s.w.chips = 20000000000; G.casStockBuy(s.w, s.house, ID, 5000, D, OPEN);
+  const r = G.casStockSell(s.w, s.house, ID, 5000, D, OPEN); assert.ok(r.ok, r.reason); assert.ok(r.gross > 20000000, "賣超過 2,000 萬：" + r.gross);
+  const v = G.casStockView(s.w, s.house, D, OPEN); assert.strictEqual(v.sellLeft, null); assert.strictEqual(v.sellCap, null); assert.strictEqual(v.sellTip, "");
+  const iv = JSON.parse(JSON.stringify(v)); assert.strictEqual(iv.sellLeft, null, "傳到畫面也是 null");
 });
 console.log(`casino_stock.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);
