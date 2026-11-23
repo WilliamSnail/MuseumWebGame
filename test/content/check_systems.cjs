@@ -7,7 +7,8 @@ const path = require("path");
 
 const dir = process.argv[2] || path.join(__dirname, "..", "..", "shared", "core");
 const file3 = path.join(dir, "systems_text.js");
-const raw3 = fs.readFileSync(file3, "utf8");
+const fileCellar = path.join(dir, "..", "cellar", "text.js"); // 地下收藏庫的文字從 systems_text.js 搬出來（11-23），這裡當成同壹份壹起檢查
+const raw3 = fs.readFileSync(file3, "utf8") + "\n" + fs.readFileSync(fileCellar, "utf8");
 if (/^\s*import\b/m.test(raw3)) { console.error("systems_text.js 不准 import"); process.exit(1); }
 const unexport = t => t.replace(/^export\s+/gm, ""); // 第 4 版：拿掉 export，照舊當成一般程式檢查
 const src3 = unexport(raw3);
@@ -25,7 +26,7 @@ const declared = [...src3.matchAll(/^(const|let|var|function|class)\s+([A-Za-z_$
 for (const d of declared) if (!NAMES.includes(d)) err("extra top-level declaration: " + d);
 
 const ctx = vm.createContext({});
-for (const f of ["config.js", "content.js", "systems_text.js"]) {
+for (const f of ["config.js", "content.js", "systems_text.js", "../cellar/text.js"]) {
   const p = path.join(dir, f);
   try {
     vm.runInContext(unexport(fs.readFileSync(p, "utf8")), ctx, { filename: p });

@@ -5,7 +5,7 @@
 // check(d) 是純函式（測試用）：d＝{ rows, gaps, saveKeys: { P: [], W: [] }, listExports: { 檔: [名字] }, passOut, casOut, uiSrc, pubKeys }，回傳問題清單。
 const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "..");
-const SCAN_FILES = ["shared/core/config.js", "shared/core/systems_text.js", "shared/casino/text.js"];
+const SCAN_FILES = ["shared/core/config.js", "shared/core/systems_text.js", "shared/cellar/text.js", "shared/casino/text.js"];
 const SCAN_RE = /_ITEMS$|^UPGRADES$|^RECIPES$|^BADGES$|^SKILLS$|^CAS_|^CELLAR_|^TRIAL_|^UNDERSTAND_/;
 const passOf = r => (!r.pass ? [] : Array.isArray(r.pass) ? r.pass : [r.pass]); // 壹列可以對到好幾個欄位（pass 寫陣列）
 const getPath = (o, p) => p.split(".").reduce((x, k) => (x && typeof x === "object" ? x[k] : undefined), o);

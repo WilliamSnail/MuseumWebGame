@@ -5,7 +5,8 @@
 import { casExact, casNum } from "../../../shared/casino/core.js";
 import { LEGACY, NUM } from "../../../shared/core/config.js";
 import { HALL_THEME_TEXT, INVOLUNTARY, MADNESS_TEXT, QUIRK_TEXT, SAN_ASIDES } from "../../../shared/core/content.js";
-import { BOOK4, FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../../shared/core/systems_text.js";
+import { FUSION_TEXT, QUIRK_PLAN_TEXT, QUIRK_TASK_TEXT, STATUS_TIPS } from "../../../shared/core/systems_text.js";
+import { BOOK4 } from "../../../shared/cellar/text.js";
 import { CHIME, chimeCount, chimeDue, taipeiHour } from "../../../shared/social/applause.js";
 import { ART } from "./art.js";
 import { FX } from "../fx/fx.js";
@@ -24,7 +25,6 @@ import { holidayClass, holidayOf } from "../../../shared/story/holidays.js";
 import { titleName, titleText } from "../../../shared/core/titles.js";
 import { storyState } from "../../../shared/story/state.js";
 import { NET } from "./net_firebase.js"; // 決定 0021：改接 Firebase（介面跟 net.js 一樣）
-
 export let SAVE = null, P = null, IMG = {}, FIT = { hatY: 0, hatS: 1, handX: 0, handY: 0 };
 // 第 4 版：模組之間不能直接改別人的變數，別的檔要改這四個，一律用下面的 setter
 export function setSave(v) { SAVE = v; return v; }

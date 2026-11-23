@@ -7,7 +7,7 @@
 //  - 幽影：最近有館友走過這一層，房間裡偶爾看到他的佩佩半透明地走過去。
 // ================================================================
 import { fromKey, todayStr } from "../core/logic_base.js";
-import { CELLAR } from "../core/systems_text.js";
+import { CELLAR } from "../cellar/text.js";
 
 export const TRACE = {
   signMax: 10,        // 每人最多幾則，舊的被換掉

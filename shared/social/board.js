@@ -19,7 +19,8 @@
 // ================================================================
 import { NUM } from "../core/config.js";
 import { FORBIDDEN_BOOKS } from "../core/content.js";
-import { BOARD_TEXT, BOOK4 } from "../core/systems_text.js";
+import { BOARD_TEXT } from "../core/systems_text.js";
+import { BOOK4 } from "../cellar/text.js";
 import { casNum } from "../casino/core.js";
 import { adminSummary } from "../game/admin.js";
 import { addDays, asList, hallScore, nowMs, taipeiDay } from "../core/logic_base.js";

@@ -7,7 +7,8 @@
 // ================================================================
 import { BADGES, EXHIBITS, FLAWS, GEAR_ITEMS, HALL_POINTS, HALL_THEME_BONUS, LIMITED_FX, LIMITED_ITEMS, NUM, PEPE_PARTS, PERKS, PILLOW_PARTS, RARITY_TABLE, RENAMED } from "./config.js";
 import { CLIENTS, CLIENT_COMMENTS, COMMISSION_POOL, NEW_EXHIBITS, STORY_CHAPTERS } from "./content.js";
-import { BOOK_SEQUELS, CELLAR, CHAPTER4, CLIENT_LINES, MORE_CHAPTERS } from "./systems_text.js";
+import { BOOK_SEQUELS, CLIENT_LINES, MORE_CHAPTERS } from "./systems_text.js";
+import { CELLAR, CHAPTER4 } from "../cellar/text.js";
 import { holidayExhibitById, holidaysOn } from "../story/holidays.js";
 
 // ---------- 小工具 ----------

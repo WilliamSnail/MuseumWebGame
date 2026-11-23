@@ -5,7 +5,8 @@
 // ---------- 選職業（系統 L） ----------
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, LEGACY, LIMITED_FX, MOOD_BEATS, NUM, SKILLS, UPGRADES } from "../../../shared/core/config.js";
-import { BOOK4, BOOK_SEQUELS, ENDING_CELLAR, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../../shared/core/systems_text.js";
+import { BOOK_SEQUELS, FUSION_TEXT, JOBS, JOB_TEXT, LEGACY_TEXT, RECIPE_TEXT, ROOM_HINTS3, SKILL_TEXT, UPGRADE_TEXT, VISITOR_TEXT, WEEKLY_TEXT } from "../../../shared/core/systems_text.js";
+import { BOOK4, ENDING_CELLAR } from "../../../shared/cellar/text.js";
 import { ENDINGS, FORBIDDEN_BOOKS, NEXT_VISITOR } from "../../../shared/core/content.js";
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";

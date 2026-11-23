@@ -13,7 +13,7 @@ import { casHouseMove } from "./book.js";
 import { casInUsed } from "./stock_in.js";
 import { casFxPolicy } from "./gdp.js";
 import { CAS_FIND_TEXT } from "./text.js";
-import { CELLAR } from "../core/systems_text.js";
+import { CELLAR } from "../cellar/text.js";
 import { RNG } from "../core/logic_base.js";
 
 const cfBox = v => !!v && typeof v === "object" && !Array.isArray(v);

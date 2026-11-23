@@ -130,4 +130,10 @@ function T9() {
   assert.deepStrictEqual(R.checkLayers(["web/src/css/b.css"], () => ".x{color:red}"), []);
 }
 
+{ // 搬家的行不算新加的（11-23）
+  const text = "壹行很長很長的文字：一個人走過一條街，看見一盞燈。", other = "一行新寫的很長很長的文字：一個人走過一條街。";
+  const map = new Map([["a.js", new Set([1, 2, 3])]]);
+  R.dropMoved(map, new Set([text]), () => ["短", "  " + text + "  ", other].join("\n"));
+  assert.deepStrictEqual([...map.get("a.js")], [1, 3], "同樣的行被刪掉又出現＝搬家，不算新加；沒被刪的、太短的還是算");
+}
 console.log("程式的規矩的測試都過了");

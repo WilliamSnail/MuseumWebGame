@@ -6,7 +6,8 @@
 // ---------- 第 4 版：從別的檔拿的（從第 3 版轉成模組時自動產生；之後新增用到的名字就手動加） ----------
 import { BADGES, GEN_TEXT, NUM, PILLOW_PARTS, RECIPES } from "../../../shared/core/config.js";
 import { ENDINGS, HALL_THEME_TEXT, HUG_TEXT } from "../../../shared/core/content.js";
-import { CLIENT_LINES, ENDING_CELLAR, LEGACY_TEXT, RECIPE_TEXT } from "../../../shared/core/systems_text.js";
+import { CLIENT_LINES, LEGACY_TEXT, RECIPE_TEXT } from "../../../shared/core/systems_text.js";
+import { ENDING_CELLAR } from "../../../shared/cellar/text.js";
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
 import { BASE_TOTAL, autoBarInfo, CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, FAILED, PILLOW_CATS, PILLOW_TOTAL, ROLLED, SAVE_KEY, asList, autoDeliverables, baseOpts, canMakePillow, codexCount, codexPick, coreKey, dailyCommissions, decoOpen, deliver, deliverAll, describePepe, describePillow, exportCode, fromKey, gainSan, gameDayNo, hallItem, hallScore, hug, importCode, isBasePick, isFree, isSpecialOpt, isUnlocked, makePillow, miniReward, newProfile, newSave, num, pad, parsePillowKey, partOf, pepeKey, pickOne, pillowKeyOf, pillowPossibilities, placeInHall, possibilities, quirkName, regularsView, themeProgress, todayStr, usable } from "../../../shared/core/logic.js";

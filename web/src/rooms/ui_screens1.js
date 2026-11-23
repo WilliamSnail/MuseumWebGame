@@ -5,7 +5,8 @@
 import { CAS_TEXT } from "../../../shared/casino/text.js";
 import { EXHIBITS, GALLERY_INTRO, GEN_TEXT, LEGACY, NUM, ORIGIN, RARITY_TABLE, UPGRADES } from "../../../shared/core/config.js";
 import { FAILED_WORK_TEXT, FIND_DIFF_TEXT, FORBIDDEN_BOOKS, FREE_MODE_TEXT, MOOD_RECOVER_TEXT, PERFECT_WORK_TEXT, ROOM_HINTS, SAN_ASIDES, TITLE_TAGLINE, TUTORIAL_TEXT } from "../../../shared/core/content.js";
-import { BOOK4, LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../../shared/core/systems_text.js";
+import { LEGACY_TEXT, ROOM_HINTS3, UNDERSTAND_TEXT, VISITOR_TEXT } from "../../../shared/core/systems_text.js";
+import { BOOK4 } from "../../../shared/cellar/text.js";
 import { ART } from "../core/art.js";
 import { FX } from "../fx/fx.js";
 import { CATS, CORE_TOTAL, FAILED, RARITY_ORDER, RNG, ROLLED, activeQuirks, addMyth, understandTarget, allChapters, allOpts, asList, baseOpts, blockedWhy, bookMyth, canMake, chapterOpen, clampN, codexCount, d100Faces, dailyCommissions, decoOpen, describePepe, doUnlock, exhibitById, exhibitOpen, fill, finishChapter, finishMake, galleryInsp, isBlocked, isFree, isUnlocked, knownTotal, makeCost, maniaQuirk, maxSan, miniReward, moodRecovery, newProfile, num, optOf, pad, partOf, pepeKey, pickOne, possibilities, progressEvents, pushRoll, quirkName, rarityOfRoll, rarityRank, moodNoteOf, readOrigin, reviewsLeft, sanSpecFor, spendRange, startMake, unlockState, usable, viewExhibit, viewsToday } from "../../../shared/core/logic.js";
