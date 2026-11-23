@@ -164,7 +164,7 @@ T("收藏頁列表：失敗作、修復品、抱枕、配方、禁書（沒讀�
   const r0 = p.recipeList[0]; assert.ok(r0.found && r0.date === "2026-11-05" && r0.name !== "？？？");
   const r1 = p.recipeList[1]; assert.ok(!r1.found && r1.name === "？？？" && r1.hint, "沒找到的只給提示");
   const f = v.books.forbidden;
-  assert.strictEqual(f.total, 9); assert.strictEqual(f.have, 1); assert.strictEqual(f.allSeats, 1);
+  assert.strictEqual(f.total, G.FORBIDDEN_BOOKS.length + 1 + G.BOOK_SEQUELS.length); assert.strictEqual(f.have, 1); assert.strictEqual(f.allSeats, 1);
   assert.strictEqual(f.list.find(x => x.id === "book1").read, "2026-11-06");
   assert.ok(f.list.filter(x => !x.read).every(x => x.title === "？？？"), "沒讀過的不寫書名");
   assert.strictEqual(G.passView(fresh(G, "free"), {}).books.forbidden, null);
