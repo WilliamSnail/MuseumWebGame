@@ -21,7 +21,7 @@ import { itemDesc, storyState } from "../../../shared/story/state.js";
 import { ART } from "../core/art.js";
 import { understoodCard, markText, ptMark, setChips } from "../core/ui_core.js";
 import { NET } from "../core/net_firebase.js";
-import { $$, ADDONS, HOOKS, P, PANELS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "../core/ui_core.js";
+import { $$, ADDONS, HOOKS, P, PANELS, SCREENS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "../core/ui_core.js";
 import { CAS_AUC } from "../../../shared/casino/auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../../shared/story/clues.js";
 import { FRESH_KEY } from "../../../shared/core/fresh.js";
@@ -65,6 +65,7 @@ export function goStep(step) {
   if (!step) return;
   if (step.panel && PANELS[step.panel]) { PANELS[step.panel](step.params); return; }
   if (!step.room) { note(step.text || "明天 05:00 之後再來看看。"); return; }
+  if (!SCREENS[step.room] && PANELS[step.room] && P && !P.dark) { PANELS[step.room](step.params); return; } // 賭場是蓋在畫面上的框：參數（例：餐車那頁）交給它
   if (step.params) go(step.room, step.params); else navTo(step.room);
 }
 

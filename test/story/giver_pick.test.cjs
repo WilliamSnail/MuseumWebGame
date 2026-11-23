@@ -30,5 +30,10 @@ T("沒有 done 的台詞：做完還是說 says", G => {
   const C = mk("d1", "make", "壹句。", null);
   assert.strictEqual(G.giverPick([C], "yuga", isDone(["d1"]), null).text, "壹句。");
 });
+T("餐車任務：前往直接開賭場的餐車那頁，也還算在賭場說話（11-23）", G => {
+  assert.strictEqual(JSON.stringify(G.taskGo({ kind: "food" })), JSON.stringify({ room: "casino", params: { tab: "diner" } }));
+  const F = mk("d2", "food", "吃壹口再下去。", null);
+  assert.strictEqual(G.giverPick([A, F], "yuga", isDone([]), "casino").task.id, "d2");
+});
 console.log(`交代人挑壹句：${pass} 項通過、${fail} 項沒過`);
 process.exit(fail ? 1 : 0);

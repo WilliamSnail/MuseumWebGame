@@ -331,7 +331,8 @@ export function taskGo(t, W) {
     case "show": case "showDays": return { room: "gallery", params: { show: true } };
     case "read": case "readWeek": case "ending": return { room: "origin", params: { tab: "weekly" } };
     case "cellar": case "spot": case "withNpc": return { room: "cellar" };
-    case "casino": case "food": return { room: "casino" };
+    case "casino": return { room: "casino" };
+    case "food": return { room: "casino", params: { tab: "diner" } }; // 直接開餐車那壹頁（翊文 11-23）
     case "bank": case "stockLook": return { room: "bank" };
     case "visit": case "gift": return { panel: "friends" };
     case "lesson": return { room: "commission" };
