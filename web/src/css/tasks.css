@@ -186,3 +186,11 @@
   .tkc-pin.ready { min-width: 44px; min-height: 44px; }
   .nb-frame.nb-cal .btn.small, .nb-frame.nb-cal .sg-sign, .nb-frame.nb-sign .sg-sign { min-height: 44px; min-width: 44px; }
 }
+
+/* 提到交代人的地方都能點（ui_tasks.js giverTap → ui_giver_note.js giverOpen，11-23）：名字加虛線底線，頭像游標變手指、聚焦有框 */
+.gv-tap { cursor: pointer; }
+b.gv-tap, small.gv-tap { text-decoration: underline dotted; text-underline-offset: 3px; }
+b.gv-tap:hover, small.gv-tap:hover, b.gv-tap:focus-visible, small.gv-tap:focus-visible { text-decoration-style: solid; }
+.tkc-av.gv-tap:hover, .tkc-av.gv-tap:focus-visible { outline: 2px solid #E7C06A; outline-offset: 2px; }
+.mini-card.gv-open { width: min(420px, 94vw); }
+.tkc-ghead b.gv-tap { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; margin: -8px 0; }

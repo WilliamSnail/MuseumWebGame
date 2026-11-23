@@ -11,7 +11,7 @@ import { giverName } from "../../../shared/story/core.js";
 import { NET } from "../core/net_firebase.js";
 import { ADDONS, h } from "../core/ui_core.js";
 import { giverHeard, giverSlot } from "./ui_giver_talk.js";
-import { giverAv } from "./ui_tasks.js";
+import { giverAv, giverTap } from "./ui_tasks.js";
 
 const sent = new Set();
 export function giverPairScene(place) {
@@ -22,6 +22,6 @@ export function giverPairScene(place) {
   const side = id => (id === p.a ? "l" : "r");
   return h("div", { class: "gv-pair", role: "note" },
     h("div", { class: "gv-pair-h" }, giverAv(p.a, { small: true }), h("small", null, h("span", null, `${giverName(p.a)}和${giverName(p.b)}`), h("span", null, `在${p.where}`)), giverAv(p.b, { small: true })),
-    h("ul", null, p.talk.map(t => h("li", { class: "s-" + side(t.by) }, h("b", null, giverName(t.by)), h("span", null, t.say)))));
+    h("ul", null, p.talk.map(t => h("li", { class: "s-" + side(t.by) }, giverTap(h("b", null, giverName(t.by)), t.by), h("span", null, t.say)))));
 }
 ADDONS.giverPair = giverPairScene;
