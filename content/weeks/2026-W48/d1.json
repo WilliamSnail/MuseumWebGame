@@ -1,0 +1,265 @@
+{
+  "day": 1,
+  "date": "2026-11-23",
+  "holiday": null,
+  "board": "B2 樓梯口多了壹盞燈，白布底下掛著名牌；警衛寫下的總數比展品多壹件；書架多 2 本書。",
+  "books": [
+    {
+      "id": "1a",
+      "line": "w48-plates",
+      "title": "兩排各差壹隻",
+      "spine": "各差壹隻",
+      "unlock": {
+        "type": "now"
+      },
+      "clue": "c-count-two-rows",
+      "pages": [
+        "守夜的警衛在值班紀錄上寫：\n「冷空氣。」\n「往 B2 的樓梯口，今天多了壹盞燈。」",
+        "他昨晚把記號畫到樓梯口，今天沒有往下走，\n先在大廳排了兩排小圓石：\n壹排他數，壹排你數。",
+        "他的壹排，差壹隻。\n你的壹排，也差壹隻。\n可是他差的那壹隻，不是你差的那壹隻。",
+        "他把兩排並起來，總數對了。\n「所以不是少，」他寫，\n「是我們各自漏了不同的壹隻。」",
+        "他又寫：\n「可我寫在紙上的總數，比展品多壹件。」\n「以前都是差壹。這次，是多。」\n(你決定明天陪他下樓)"
+      ]
+    },
+    {
+      "id": "1b",
+      "line": "w48-plates",
+      "title": "最靠樓梯的壹塊",
+      "spine": "空白",
+      "unlock": {
+        "type": "find",
+        "room": "plates"
+      },
+      "pages": [
+        "你走下樓梯。白布壹尊接壹尊，披得很整齊。",
+        "每塊名牌上都寫著字，字很小，很整齊。\n只有最靠樓梯那塊，什麼都沒有。",
+        "它旁邊放著壹顆算盤珠，\n你拿起來，是涼的，放回去，也是涼的。",
+        "你轉身上樓時，\n覺得身後的白布，好像比來的時候，多了壹尊。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d1a",
+      "kind": "read",
+      "book": "1a",
+      "reward": {
+        "insp": 1
+      },
+      "giver": "postman",
+      "says": "警衛在大廳排了兩排圓石。你先讀，讀完再數。",
+      "done": "讀完了？兩排各差壹隻。我送信也差過，我沒告訴人。"
+    },
+    {
+      "id": "d1d",
+      "kind": "show",
+      "reward": {
+        "insp": 1,
+        "mood": 1
+      },
+      "giver": "postman",
+      "says": "今天的特展掛著兩排數東西的畫。我陪你看，不數。",
+      "done": "看完了。我數了，不說差幾隻。"
+    },
+    {
+      "id": "d1b",
+      "kind": "spot",
+      "room": "plates",
+      "reward": {
+        "insp": 2
+      },
+      "giver": "scale",
+      "says": "白布底下的名牌，我秤不了。你下去看，回來告訴我輕重。",
+      "done": "空白那塊，你說是涼的？我猜它比別塊輕壹點。"
+    },
+    {
+      "id": "d1c",
+      "kind": "food",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "number",
+      "says": "叫號：餐車，壹位。吃壹口再下去。",
+      "done": "叫號：下壹位。（叫完號，紙條上多留了壹格空白。）"
+    },
+    {
+      "id": "d1e",
+      "kind": "bank",
+      "reward": {
+        "mood": 2
+      },
+      "giver": "scale",
+      "says": "去銀行存壹枚銅板，我順便秤秤。",
+      "done": "這枚銅板輕了壹點。我再秤壹遍，還是輕壹點。"
+    },
+    {
+      "id": "d1f",
+      "kind": "board",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "clerk",
+      "says": "公佈欄有壹行小字。你看壹眼，我不念。",
+      "done": "記好了。警衛說他寫的總數多壹件，我的小帳還沒記到那壹格。"
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "各差壹隻的兩排",
+    "intro": "這排畫掛在 B2 樓梯口的燈下：兩排小圓石、壹塊空白的名牌，和壹隻幫忙數數的佩佩。",
+    "works": [
+      {
+        "id": "s1a",
+        "frame": "dark",
+        "fx": [],
+        "title": "兩排圓石",
+        "lines": [
+          "壹排缺了左邊數來第四顆，另壹排缺了右邊數來第二顆。",
+          "兩排並起來，剛好壹顆不少。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#16181f'/>",
+          "<rect x='0' y='230' width='240' height='70' fill='#0e0f14'/>",
+          "<g fill='#d8d5c8'><circle cx='30' cy='100' r='9'/><circle cx='62' cy='100' r='9'/><circle cx='94' cy='100' r='9'/><circle cx='158' cy='100' r='9'/><circle cx='190' cy='100' r='9'/><circle cx='222' cy='100' r='9' opacity='0'/></g>",
+          "<circle cx='126' cy='100' r='9' fill='none' stroke='#8d8a80' stroke-dasharray='3 3'/>",
+          "<g fill='#c9a15a'><circle cx='30' cy='170' r='9'/><circle cx='94' cy='170' r='9'/><circle cx='126' cy='170' r='9'/><circle cx='158' cy='170' r='9'/><circle cx='190' cy='170' r='9'/></g>",
+          "<circle cx='62' cy='170' r='9' fill='none' stroke='#8d8a80' stroke-dasharray='3 3'/>",
+          "<text x='20' y='260' font-size='11' fill='#8d8a80' font-family='serif'>各差壹隻，差的不是同壹隻。</text></svg>"
+        ]
+      },
+      {
+        "id": "s1b",
+        "frame": "plain",
+        "fx": [
+          "faded"
+        ],
+        "title": "最靠樓梯的名牌",
+        "lines": [
+          "白布底下掛著壹塊小名牌，上面什麼都沒有。",
+          "旁邊壹顆算盤珠，是涼的。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#1c2128'/>",
+          "<path d='M70 70 Q120 40 170 70 L186 240 H54 Z' fill='#e9e6dc' opacity='.9'/>",
+          "<path d='M90 90 Q120 76 150 90' stroke='#cfcbbd' stroke-width='3' fill='none'/>",
+          "<rect x='92' y='250' width='56' height='22' fill='#f3f0e6' stroke='#8d8a80'/>",
+          "<circle cx='176' cy='262' r='7' fill='#c9a15a'/>",
+          "<rect x='0' y='272' width='240' height='28' fill='#0d0e12'/></svg>"
+        ]
+      },
+      {
+        "id": "s1c",
+        "frame": "wood",
+        "fx": [
+          "dust"
+        ],
+        "title": "幫警衛數數的佩佩",
+        "lines": [
+          "牠站在兩排圓石中間，從左數到右，再從右數到左。",
+          "兩遍都數對了，牠自己沒有算進去。"
+        ],
+        "art": "frog",
+        "pick": {
+          "顏色": "綠",
+          "心情": "開心",
+          "姿勢": "站著"
+        }
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "stairlamp",
+      "floor": 1,
+      "line": "w48-plates",
+      "title": "樓梯口的新燈",
+      "hint": "去 B1 樓梯口，看看那盞新燈",
+      "intro": "往 B2 的樓梯口，吊著壹盞昨天還沒有的燈。燈罩上用粉筆寫著壹行很小的字。",
+      "lines": [
+        "燈下的石階比別處乾淨，像剛有人掃過。",
+        "粉筆字寫著：「下去的人，請數自己的腳步。」"
+      ],
+      "mood": null,
+      "color": "黃",
+      "choices": [
+        {
+          "label": "數壹遍腳步再往下看",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "七級。你再數壹遍，還是七級，可是第八級你沒踩到。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你數到第三級就被燈晃到，忘了數到哪。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把燈罩上的字念出來",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "字念完，燈亮了壹點，樓下傳來壹聲很輕的算盤響。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你念到壹半，覺得有人在後面跟著念。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "先在燈下站壹會",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你站了壹會。影子有兩個，等壹下又剩壹個。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ],
+  "market": [
+    {
+      "title": "夜光街攤位照常收",
+      "line": "冷空氣壹來，夜光街的攤位收得比平常早，燈壹盞壹盞數著熄。",
+      "tone": "down",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠夜班照亮",
+      "line": "巨浪代工廠的夜班燈還亮著，門口的箱子壹疊壹疊對齊。",
+      "tone": "up",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行很安靜",
+      "line": "島線電話行這兩天沒什麼動靜，電話線穩穩垂著。",
+      "tone": "flat",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官在桌角放了壹本對帳的小本子，他說每晚都差壹點，今晚也是。"
+  }
+}
