@@ -158,10 +158,21 @@ const polyAt = (pts, f) => { let want = polyLen(pts) * f; for (let i = 1; i < pt
 const zoomable = (V, id) => (id === "world" ? !wOpen() : id.startsWith("org:") ? SEL.path[0] !== id : id.startsWith("w:") && V.hasKids(id) && id !== focusId());
 const ftitle = (V, f) => f.title || (V.orgs && V.orgs[f.id]) || f.id;
 const name = id => (NM[id] && NM[id].name) || id, balOf = (F, id) => (F.bal && F.bal[id] != null ? F.bal[id] : NM[id] && NM[id].bal != null ? NM[id].bal : null);
+// 點壹個方塊時的「今天進／今天出」：照每條線的細項分開算，不用抵銷後的淨額（翊文 11-23：海外的賣股票錢被買股票抵掉，「今天出」變 0 看不懂）。
+//   細項的 amt 對線的方向，正的照線的方向走、負的是反方向
+export function nodeInOut(edges, nid) {
+  let inn = 0, out = 0;
+  for (const e of edges) {
+    if (e.from !== nid && e.to !== nid) continue;
+    const srcs = e.srcs && e.srcs.length ? e.srcs : [{ amt: e.amt }];
+    for (const x of srcs) { const a = Number(x.amt) || 0, toMe = e.to === nid ? a > 0 : a < 0; if (toMe) inn += Math.abs(a); else out += Math.abs(a); }
+  }
+  return { inn, out };
+}
 // 右邊（手機在下面）的「流向一覽」：每條線壹列「從 → 到　金額」，點開看來源；點方塊就只列那個地方的進出
 function listBox(F, sel, pick) {
   const edges = F.edges, nid = sel.n, rows = edges.map((e, i) => ({ e, i })).filter(x => !nid || x.e.from === nid || x.e.to === nid);
-  const head = nid ? (() => { const inn = rows.filter(x => x.e.to === nid).reduce((n, x) => n + x.e.amt, 0), out = rows.filter(x => x.e.from === nid).reduce((n, x) => n + x.e.amt, 0), bal = balOf(F, nid);
+  const head = nid ? (() => { const { inn, out } = nodeInOut(rows.map(x => x.e), nid), bal = balOf(F, nid);
     return h("div", { class: "bank-flow-head" }, h("h4", null, name(nid), h("small", null, (NM[nid] && NM[nid].note) || "")), h("p", { class: "bank-flow-sum" }, bal != null ? h("span", null, "現在 ", h("b", { class: "bank-tab-num" }, fmt(bal))) : null, h("span", null, "今天進 ", h("b", { class: "bank-tab-num up" }, fmt(inn))), h("span", null, "今天出 ", h("b", { class: "bank-tab-num down" }, fmt(out)))), h("button", { type: "button", class: "bank-flow-node", onClick: () => pick({ n: null, e: null }) }, "‹ 看全部")); })()
     : h("div", { class: "bank-flow-head" }, h("h4", null, "流向一覽", h("small", null, "今天 05:00 起，兩個地方之間的淨流向，大的在上")));
   return h("div", { class: "bank-flow-box" }, head, rows.length ? h("ul", { class: "bank-flow-l" }, rows.map(({ e, i }) => { const on = sel.e === i;
