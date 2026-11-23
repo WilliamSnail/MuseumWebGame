@@ -162,7 +162,7 @@ T("W46 第 1 天（真的內容）：招領單讀完拿到 c-small-hand-note；�
   G.storyState(P).books["2026-W46/1b"] = { got: "2026-11-09", read: "2026-11-09" };
   G.clueSync(P, L, "2026-11-09");
   assert.strictEqual(P.clues["c-small-hand-note"], "2026-11-09");
-  assert.strictEqual(G.UNDERSTAND_TEXT.length, 26);
+  assert.strictEqual(G.UNDERSTAND_TEXT.length, 31);
 });
 
 T("《看懂的事》每條都有 layer（物、人、規矩、你），四類都有（11-22）；understandList 讀得到", G => {
