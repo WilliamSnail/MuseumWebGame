@@ -33,7 +33,7 @@ export function roomHead(title, sub, ...extra) {
 export function bookBack(reader) {
   const main = reader.closest ? reader.closest(".origin-main") : null; if (!main) return null;
   main.classList.add("book-open");
-  return h("button", { type: "button", class: "book-back", onClick: () => { main.classList.remove("book-open"); $$(".spine.on").forEach(x => x.classList.remove("on")); } }, icon("arrowLeft"), h("span", null, "回書架"));
+  return h("button", { type: "button", class: "book-back", onClick: () => { main.classList.remove("book-open"); $$(".spine.on, .uk-feature.on").forEach(x => x.classList.remove("on")); } }, icon("arrowLeft"), h("span", null, "回書架"));
 }
 
 export function bookReader(reader, title, pages, o = {}) {

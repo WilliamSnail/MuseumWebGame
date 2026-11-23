@@ -667,6 +667,16 @@ body.reduce-motion .spine.sealed.stir { animation: none; }
 .uk-text { margin: 4px 0; font-family: var(--serif); font-size: 1.25rem; line-height: 1.9; color: #2A1E3A; padding: 12px 16px; border-left: 4px solid #8A5FC4; background: rgba(138,95,196,.1); border-radius: 0 8px 8px 0; }
 .uk-note { margin: 0; font-size: .875rem; color: #5E4A78; }
 .spine.uk-spine { background: linear-gradient(180deg, #4A2A73, #2E1A4A); color: #E6DCF2; border-color: #8A5FC4; }
+/* 《看懂的事》放在館藏書架上面（翊文 11-23：「只是普通的壹本書」）：紫色封面＋件數＋翻開 */
+.uk-feature { position: relative; display: flex; align-items: center; gap: 14px; width: calc(100% - 16px); margin: 10px 8px 14px; padding: 10px 14px 10px 10px; border: 1px solid #8A5FC4; border-radius: 8px; background: linear-gradient(135deg, #3B2160, #22132F); box-shadow: 0 0 0 1px rgba(0, 0, 0, .4), 0 6px 16px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(230, 220, 242, .18); color: #E6DCF2; font: inherit; text-align: left; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.uk-feature:hover, .uk-feature.on { transform: translateY(-2px); box-shadow: 0 0 0 1px #B99AE6, 0 0 18px rgba(170, 130, 230, .55), 0 6px 16px rgba(0, 0, 0, .45); }
+.uk-f-cover { flex: none; display: grid; place-items: center; width: 44px; height: 64px; border-radius: 2px 5px 5px 2px; background: linear-gradient(90deg, #2A1544 0 7px, #5B3590 7px, #4A2A73); border: 1px solid #B99AE6; box-shadow: 2px 3px 4px rgba(0, 0, 0, .5); }
+.uk-f-t { writing-mode: vertical-rl; font-family: var(--serif); font-size: .75rem; letter-spacing: .2em; color: #F3DFA6; }
+.uk-f-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.uk-f-body b { font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .08em; color: #F3E9FF; }
+.uk-f-n { font-size: .9375rem; font-weight: 700; color: #F3DFA6; }
+.uk-f-s { font-size: .8125rem; color: #CDB8F0; }
+.uk-f-go { flex: none; padding: 6px 14px; border-radius: 16px; background: #8A5FC4; color: #fff; font-size: .875rem; font-weight: 700; letter-spacing: .12em; box-shadow: 0 2px 0 #4A2A73; }
 .uk-book .uk-count { color: var(--parch-sub); margin: 0 0 10px; }
 .uk-list { margin: 0; padding-left: 1.6em; display: flex; flex-direction: column; gap: 10px; }
 .uk-list li { line-height: 1.7; }
