@@ -8,6 +8,7 @@ import { coopAct, coopBegin } from "../../../shared/coop/flow.js";
 import { assignJob } from "../../../shared/core/legacy.js";
 import { hallSize, startCellar } from "../../../shared/core/systems.js";
 import { storyState } from "../../../shared/story/state.js";
+import { PASS_BLANK_AFTER } from "../../../shared/social/pass.js";
 import { $, P, PANELS, SAVE, UI, applyBodyState, collectionItems, go, h, note, setP, setSave, useProfile } from "./ui_core.js";
 import { focusExhibit, openBook } from "../rooms/ui_screens1.js";
 import { pickJob } from "../rooms/ui_screens3.js";
@@ -145,6 +146,8 @@ const BANK_ALIAS = { 財報: "report", 金流: "flow", 股票: "stock", 存款: 
     if (screen === "ending") { go("ending", { id: arg || "curator" }, { action: false }); return; }
     // 簽到卡、簽到日曆（11-09，決定 0030）：#signin、#calendar；兌換所（決定 0032）：#shop，放好 40 枚週章
     if (screen === "shop") storyState(P).stamps = 40;
+    // #pass:blank → 館友證「佩佩與書」那頁，已經讀懂 u-m-count（看多出來的那壹格空白，W48 d7）
+    if (screen === "pass" && arg === "blank") { P.understood = Object.assign({}, P.understood, { [PASS_BLANK_AFTER]: todayStr() }); go("lobby", {}, { action: false }); setTimeout(() => PANELS.pass({ tab: "pepe" }), 300); return; }
     // #casino:德州 → 直接進德州（假伺服器 ?mock&holdem=play／other／over 看打牌中、結算；沒帶 holdem 就是開桌畫面）
     if (screen === "casino" && (arg === "德州" || arg === "holdem")) { go("lobby", {}, { action: false }); setTimeout(async () => { const P0 = await import("../panels/ui_party.js"), C0 = await import("../rooms/casino/ui_casino.js"); if (/[?&]holdem=/.test(location.search)) { P0.PARTY_HOOKS.holdem.open("mock-pid"); return; } if (PANELS.casino) PANELS.casino({ tab: "table" }); setTimeout(() => { const cs = C0.casinoState(); if (cs) { cs.game = "holdem"; C0.casinoRefresh(); } }, 500); }, 300); return; }
     if (screen === "signin" || screen === "calendar" || screen === "shop" || screen === "casino" || screen === "pass" || screen === "today") { go("lobby", {}, { action: false }); setTimeout(() => PANELS[screen] && PANELS[screen](screen === "casino" && arg && arg !== "lowsan" ? { tab: CAS_ALIAS[arg] || arg } : undefined), 300); return; } // #casino:餐車 → 賭場開在那一頁（casTabOf 認得的名字：table、diner…）

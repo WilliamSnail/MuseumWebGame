@@ -11,7 +11,7 @@ const led = () => ({ extend: { weeks: { "2026-W48": {
   dread: { what: "d", day: "d3", where: "房間（B1 牆）；d6 今日特展再出現壹次" }, cost: { what: "c", day: "d7", where: "今日特展（打算盤的背影）", san: "1/1D4" },
   pepe: { what: "p", day: "d4", where: "房間（B1）＋NPC 日報" }, horror: { what: "h", day: "d5", where: "公佈欄＋每週任務旁白" }, closes: ["m-count"] } } } });
 const P = n => ({ week: "2026-W48", weekday: n, dayFile: `content/weeks/2026-W48/d${n}.json` });
-const full = (extra = {}) => Object.assign({ adds: [{ id: "r" }], show: { works: [{ id: "s", san: "1/1D4", clue: "c-x" }] }, board: "公佈欄的字", daily: [{ id: "d", giver: "yuga", says: "x" }], books: [{ id: "b", clue: "c-b" }] }, extra);
+const full = (extra = {}) => Object.assign({ adds: [{ id: "r" }], show: { works: [{ id: "s", san: "1/1D4", clue: "c-x" }] }, board: "公佈欄的字", daily: [{ id: "d", giver: "yuga", says: "x" }], books: [{ id: "b", clue: "c-b" }], understand: [{ id: "u-m-count", layer: "你" }] }, extra);
 T("今天是 dread 那天（d3）：放在房間但今天沒有 adds → 擋；有就過；別天的 d6 那段不算今天", () => {
   assert.ok(has(C.extendIssues({ p: P(3), day: full({ adds: [] }), ledger: led() }), "dread（恐懼）"));
   assert.deepStrictEqual(C.extendIssues({ p: P(3), day: full(), ledger: led() }), []);
@@ -22,6 +22,11 @@ T("cost 那天（d7）：今天的檔要有今日特展、而且找得到 cost.s
   assert.ok(has(C.extendIssues({ p: P(7), day: full({ show: { works: [] }, books: [] }), ledger: led() }), "今日特展"));
   assert.deepStrictEqual(C.extendIssues({ p: P(7), day: full(), ledger: led() }), []);
   assert.ok(has(C.extendIssues({ p: P(7), day: full({ show: { works: [{ id: "s", san: "1/1D4" }] }, books: [] }), ledger: led() }), "沒有任何 clue"));
+});
+T("收線那週的週日：這週的 understand 要有 u-加謎的 id（館友證的空格靠它）", () => {
+  assert.ok(has(C.extendIssues({ p: P(7), day: full({ understand: [{ id: "u-count" }] }), ledger: led() }), "u-m-count"));
+  assert.ok(!has(C.extendIssues({ p: P(6), day: full({ understand: [] }), ledger: led() }), "u-m-count"), "只在週日查");
+  assert.ok(!has(C.extendIssues({ p: P(7), day: full(), ledger: led() }), "u-m-count"));
 });
 T("pepe（房間＋NPC 日報）、horror（公佈欄＋任務旁白）：每個認得的地方都要有；不認得的（NPC 日報）略過", () => {
   assert.ok(has(C.extendIssues({ p: P(4), day: full({ adds: [] }), ledger: led() }), "pepe（佩佩）"));
