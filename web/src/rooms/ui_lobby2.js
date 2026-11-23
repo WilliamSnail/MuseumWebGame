@@ -25,7 +25,7 @@ import { mountMood } from "../fx/ui_mood.js";
 import { roomHasNew } from "./ui_screens1.js";
 import { todayItems } from "../panels/ui_today.js";
 import { storyToday } from "../panels/ui_story.js";
-import { giverAv } from "../panels/ui_tasks.js";
+import { giverAv, giverTap } from "../panels/ui_tasks.js";
 
 const L = "/lobby/"; // 素材（web/public/lobby，打包時原樣複製）
 // 房間在底圖上的位置：box 是橫式底圖（land.webp，1024×572）的像素，port 是直式底圖（port.webp，572×1024，手機直拿用）的像素。icon：assets/rooms 有圖的才放
@@ -184,7 +184,7 @@ function todoCards(step) {
     h("span", null, h("b", null, "這週 " + st.pts.wk), `／${st.pts.goal}`)) : null;
   if (!shown.length) return h("div", { class: "l2-todos" }, bar, h("p", { class: "l2-empty" }, isFree(P) ? "自由模式：所有選項都打開了，到手作坊捏佩佩。" : "今天的事都做完了。"));
   return h("div", { class: "l2-todos" }, bar, shown.map((c, i) => h("button", { type: "button", class: "l2-todo" + (c.todo && i === 0 ? " on" : "") + (c.todo ? "" : " done") + (c.giver ? " has-giver" : ""), onClick: () => c.go && c.go() },
-    c.giver ? giverAv(c.giver, { small: true }) : null, h("span", { class: "l2-todo-t" }, h("b", null, c.t), c.s ? h("small", null, c.s) : null))));
+    c.giver ? giverTap(giverAv(c.giver, { small: true }), c.giver) : null, h("span", { class: "l2-todo-t" }, h("b", null, c.t), c.s ? h("small", null, c.s) : null))));
 }
 ADDONS.lobbyTodoRedraw = () => { const box = document.querySelector(".l2-todobox"); if (!box || !P) return; const old = box.querySelector(".l2-todos, .l2-empty"); if (old) old.replaceWith(todoCards(isFree(P) ? null : nextStep(P))); };
 function seals() {

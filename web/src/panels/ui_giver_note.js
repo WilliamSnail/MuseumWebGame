@@ -8,7 +8,7 @@
 // ================================================================
 import { todayStr } from "../../../shared/core/logic_base.js";
 import { giverName } from "../../../shared/story/core.js";
-import { ADDONS, h } from "../core/ui_core.js";
+import { ADDONS, btn, closeOnOutside, h, miniLayer } from "../core/ui_core.js";
 import { giverLoad, giverOffer, giverTalk, giverWatch } from "./ui_giver_talk.js";
 import { giverTaskLine } from "./ui_story.js";
 import { GIVER_WHERE, giverAv } from "./ui_tasks.js";
@@ -25,6 +25,18 @@ export function giverStrip(ids, place) {
   if (pair) list.push(pair);
   return list.length ? h("div", { class: "gv-strip" }, list) : null;
 }
+// 點任何提到交代人的地方（任務板、大廳的每日任務、房間的任務條、字條、串門子）：開他的卡（翊文 11-23：「讓任何提到代理人的地方都可以點進去」）
+export function giverOpen(id) {
+  const m = miniLayer(giverName(id), "");
+  m.card.classList.add("hn-layer", "gv-open");
+  m.layer.classList.add("sp-top"); // 從任務板、賭場這些面板裡開，要蓋得住
+  closeOnOutside(m);
+  m.card.querySelector(".sub").remove();
+  const note = giverNote(id);
+  m.card.append(note, h("div", { class: "rn-acts" }, btn("關起來", () => m.close(), "ghost")));
+  giverLoad();
+}
+ADDONS.giverOpen = giverOpen;
 ADDONS.giverStrip = giverStrip; // 各房間用 ADDONS.giverStrip([id]) 放（不用互相 import）
 
 // 房間頂上那顆「這裡現在 N 人」的鈕帶交代人的頭像，點開小框才看他們（翊文 11-22：「交代人可以放在現在這裡有幾人的那個位置嗎」；手機上兩張大卡把銀行的財報推到螢幕外）
