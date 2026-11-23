@@ -273,4 +273,4 @@
 }
 
 /* 館友證多出來的那壹格（讀懂 u-m-count 之後）：空的、虛線，看起來像本來就印在那裡；不是鎖住的樣子 */
-.ps-chip.ps-blank, .nb-pass .ps-chip.ps-blank { min-width: 4.5em; min-height: 1.5em; background: transparent; box-shadow: none; border: 1px dashed rgba(156, 116, 40, .55); }
+.ps-chip.ps-blank, .nb-pass .ps-chip.ps-blank { min-width: 4.5em; min-height: 1.5em; background: transparent; box-shadow: none; border: 2px dashed rgba(120, 84, 24, .9); }
