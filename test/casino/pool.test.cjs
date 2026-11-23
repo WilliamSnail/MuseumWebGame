@@ -35,7 +35,7 @@ T("全館看得到的 view：不寫誰、不寫數字；night 只在那壹天的
   const C = G.NUM.casino.pool, h = mk(G); let d = 0; let nw = 1000000000; while (!h.pool.night && d < 60) { d++; nw += C.earnT / 5; G.casPoolDay(h, add(D0, d), nw); } const day = add(D0, d);
   const at = (hh, mm) => Date.parse(day + "T00:00:00+08:00") + (hh * 60 + mm) * 60000, v = t => G.casPoolView(h, day, t);
   assert.ok(!v(at(12, 0)).night, "白天不是"); assert.ok(v(at(18, 0)).night, "晚上是"); assert.ok(v(at(23, 59)).night); assert.ok(!G.casPoolView(h, add(day, 1), at(20, 0)).night, "隔天不是");
-  const x = v(at(20, 0)); assert.strictEqual(x.lv, C.grid); assert.strictEqual(x.band, "over"); assert.strictEqual(x.dir, 1); assert.ok(x.trace.length <= C.trace && x.trace.every(n => [-1, 0, 1].includes(n)));
+  const x = v(at(20, 0)); assert.strictEqual(x.lv, C.grid); assert.strictEqual(x.band, "over"); assert.ok([0, 1].includes(x.dir), "門檻那天水在漲或已經到頂（step 大的時候先到頂、再等 confirm）"); assert.ok(x.trace.length <= C.trace && x.trace.every(n => [-1, 0, 1].includes(n)));
   const s = JSON.stringify(x); assert.ok(!/u1|base|uid/.test(s) && Object.keys(x).sort().join() === "band,dir,hits,lv,night,trace");
   assert.strictEqual(G.casPoolView({}, day, 0), null);
 });
@@ -48,6 +48,12 @@ T("起點：只有收到資助的人（house.cg 有記、暱稱對）才建 hous
   const h = G.casHouseFix(G.casHouseNew(), D0).house, w = G.casWalletFix(G.casWalletNew(), D0), nick = G.NUM.casino.cultureGift.nicks[0];
   assert.strictEqual(G.casPoolEnsure(w, h, nick, "u9", D0), false, "還沒收到資助"); G.casCultureGift(w, h, nick, D0, 1e12); assert.strictEqual(G.casPoolEnsure(w, h, "小明", "u2", D0), false, "別人不建");
   assert.strictEqual(G.casPoolEnsure(w, h, nick, "u9", D0), true); assert.strictEqual(h.pool.uid, "u9"); assert.strictEqual(h.pool.base, G.casNetWorth(w, h)); assert.strictEqual(h.pool.lv, G.NUM.casino.pool.start); const b0 = h.pool.base; w.chips += 5; assert.strictEqual(G.casPoolEnsure(w, h, nick, "u9", D0), false); assert.strictEqual(h.pool.base, b0);
+});
+T("step 改了以後第壹次日報補算以前的日子（決定 0155）：可以動 step ×（記過的天數＋今天）；之後每天照 step", G => {
+  const C = G.NUM.casino.pool, h = mk(G); Object.assign(h.pool, { lv: 0.625, trace: [0, -1, 1, 1] });
+  G.casPoolDay(h, add(D0, 5), 1000000000 + C.earnT); assert.strictEqual(h.pool.sv, C.step);
+  assert.strictEqual(h.pool.lv, Math.min(1, Math.round((0.625 + C.step * 5) * 10000) / 10000), "補算：壹次動到 " + h.pool.lv);
+  h.pool.lv = C.start; G.casPoolDay(h, add(D0, 6), 1000000000 + C.earnT); assert.strictEqual(h.pool.lv, Math.round((C.start + C.step) * 10000) / 10000, "之後壹天只動 step");
 });
 console.log(`${pass} passed, ${fail} failed（館門口池子的水位）`);
 process.exit(fail ? 1 : 0);
