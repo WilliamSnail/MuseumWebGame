@@ -123,6 +123,7 @@ T("取消：退回、不收費、一天 20 次（休市不能取消在 stocks_tw
   assert.ok(G.casStockCancel(s.w, r.order.no, addDay(D, 1), at(addDay(D, 1), 10)).ok, "隔天重算");
 });
 T("賣出額度不夠：成交時取消退股（不排隊）", G => {
+  G.NUM.casino.stock.sellDay = 20000000; // 決定 0154 起預設不限：打開來測
   const s = fresh(G), px = s.house.stk.px[ID];
   s.w.chips = 5000000000; G.casStockBuy(s.w, s.house, ID, 1000, D, OPEN);
   G.casStockOrder(s.w, s.house, "sell", ID, 1000, px + 100, D, OPEN);
