@@ -64,6 +64,12 @@ function extendIssues({ p, day, ledger }) {
     if (k === "cost" && it.san && !hasSanSpec(day, it.san)) E.push(`${f}：帳本 extend.weeks.${p.week}.cost 要在今天配理智檢定 san「${it.san}」，今天的檔裡找不到`);
   }
   if (p.weekday === 7 && asList(X.closes).length && !collectClues(day).length) E.push(`${f}：這週要收線（closes：${asList(X.closes).join("、")}），今天（週日）的檔卻沒有任何 clue`);
+  // 收線的讀懂 id 固定是「u-」加謎的 id（11-23）：館友證靠 u-m-count 多畫壹格空白（shared/social/pass.js 的 PASS_BLANK_AFTER）。週日看這週 d1～d7 合起來，每個要收的謎都要有那條 understand
+  if (p.weekday === 7) {
+    const ids = new Set(asList(day.understand).map(u => u && u.id)), dir = path.dirname(path.join(ROOT, String(f || "")));
+    for (let i = 1; i < 7; i++) { try { asList(JSON.parse(fs.readFileSync(path.join(dir, `d${i}.json`), "utf8")).understand).forEach(u => u && ids.add(u.id)); } catch (e) { /* 那天沒有檔 */ } }
+    asList(X.closes).forEach(mid => { if (!ids.has("u-" + mid)) E.push(`${f}：這週收 ${mid}，這週的 understand 要有壹條 id 是「u-${mid}」（收線的讀懂 id 固定這樣寫；館友證靠它）`); });
+  }
   return E;
 }
 

@@ -219,7 +219,7 @@ export function openPass(o = {}) {
         h("p", { class: "sp-note" }, "《看懂的事》放在圖書館書架的「館藏」那壹頁，最右邊。"),
         h("div", { class: "sp-go" }, goBtn("圖書館的書架", () => go("origin"), "book"), !v.free ? goBtn("每週的書", () => go("origin", { tab: "weekly" })) : null)),
       sec(`看懂的事　${b.understood[0]}／${b.understood[1]}`, b.understoodLayers.map(L => [h("p", { class: "sp-note pv-layer" }, h("b", null, `${L.layer}　${L.have}／${L.total}`)),
-        h("div", { class: "ps-chips" }, L.list.map(x => h("span", { class: "ps-chip" + (x.got ? " hung" : ""), title: x.got ? x.where : "還沒看懂" }, x.name)))]),
+        h("div", { class: "ps-chips" }, L.list.map(x => h("span", { class: "ps-chip" + (x.got ? " hung" : ""), title: x.got ? x.where : "還沒看懂" }, x.name)).concat(b.blank && L.layer === "你" ? [h("span", { class: "ps-chip ps-blank", "aria-hidden": "true" })] : []))]),
         h("p", { class: "sp-note" }, "分成東西、人、規矩、跟你有關的四種。沒看懂的先不寫名字。每週特展的看懂另外算，不在這裡。")),
       b.forbidden ? sec(`禁書　${b.forbidden.have}／${b.forbidden.total}`,
         h("ul", { class: "pv-gear" }, b.forbidden.list.map(x => h("li", { class: x.read ? "" : "ps-miss" }, icon(x.read ? "book" : "lock"), h("span", null, h("b", null, x.title), h("small", null, x.read ? (x.read === "讀過" ? "讀過" : `讀過・${x.read}`) : "還沒讀"))))),

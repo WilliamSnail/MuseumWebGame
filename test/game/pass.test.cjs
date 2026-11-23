@@ -260,5 +260,15 @@ T("換週章的材料：份數照兌換所的算法（金箔 2 份）、自由�
   assert.strictEqual(m1.list.find(x => x.id === "mat:金箔").worth, 2);
 });
 
+T("讀懂 u-m-count 之後館友證多壹格空白（W48 d7）；不算進看懂的件數", G => {
+  const P = fresh(G);
+  const n0 = J(G.passView(P, {})).books;
+  assert.strictEqual(n0.blank, false);
+  P.understood = Object.assign({}, P.understood, { [G.PASS_BLANK_AFTER]: "2026-11-29" });
+  const n1 = J(G.passView(P, {})).books;
+  assert.strictEqual(n1.blank, true); assert.deepStrictEqual(n1.understood, n0.understood);
+  assert.strictEqual(G.PASS_BLANK_AFTER, "u-m-count");
+});
+
 console.log(`pass.test：${pass} 過，${fail} 沒過`);
 if (fail) process.exit(1);

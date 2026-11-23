@@ -25,6 +25,9 @@ import { storyState } from "../story/state.js";
 import { UNDERSTAND_LAYERS } from "../story/clues.js";
 import { casCleanSouvenirs, casCleanTitle } from "../casino/wallet.js";
 
+// 收線那天讀懂的 id 是「u-」加謎的 id（tools/content/day_check.cjs 會擋）。讀懂這件之後館友證多壹格空白：沒有名字、按了沒反應，不算進件數。
+export const PASS_BLANK_AFTER = "u-m-count";
+
 // 典藏冊的頁籤（第壹頁是館友證本身）
 export const PASS_TABS = [["card", "總覽"], ["pepe", "佩佩與書"], ["hall", "展廳"], ["casino", "賭場"], ["visitor", "參觀者"], ["deco", "裝飾"]]; // 11-21 重新設計：7 個收成 5 個（翊文選方向 A）；左邊的證件常駐
 // 館友證各頁籤、各區塊的說明牌（滑鼠移過去、手機長按；字用「壹」）。title 標題、what 這是什麼、how 怎麼拿到
@@ -248,6 +251,7 @@ export function passView(P, o = {}) {
       forbidden: passForbidden(P),
       understood: [UNDERSTAND_TEXT.filter(x => P.understood && P.understood[x.id]).length, UNDERSTAND_TEXT.length],
       understoodLayers: passUnderstood(P),
+      blank: !!(P.understood && P.understood[PASS_BLANK_AFTER]), // 讀懂 m-count 之後，《看懂的事》「你」那排最後多壹格空的（W48 d7 的代價，翊文 11-23）
     },
     souvenirs: free ? [] : casCleanSouvenirs(P.hallSouvenirs),
     deco: {
