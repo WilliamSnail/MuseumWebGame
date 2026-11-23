@@ -195,7 +195,9 @@ export function casPoolDay(house, day, nws) {
   if (P.night && P.night < day) { const nd = P.night; P.lv = C.start; P.e = 0; for (const u of Object.keys(who)) { who[u].e = 0; if (Number.isFinite(+nws[u])) who[u].base = fl(nws[u]); } P.takeLeft = Object.keys(who).filter(u => !who[u].nt); P.hold = 0; P.night = null; P.hits = (P.hits || 0) + 1; P.last = { day: nd }; P.take = nd; P.day = day; P.trace = (P.trace || []).concat([0]).slice(-C.trace); return true; }
   for (const u of Object.keys(who)) { if (!Number.isFinite(+nws[u])) continue; who[u].e += Math.max(0, Math.floor(+nws[u]) - who[u].base); who[u].base = fl(nws[u]); } // 決定 0142、0143：每個人各自跟自己上壹次比，只算賺的（虧的當 0），累計只增不減；水位看大家合計
   P.e = Object.values(who).reduce((a, x) => a + x.e, 0);
-  const target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * P.e / C.earnT)), dl = Math.max(-C.step, Math.min(C.step, target - P.lv));
+  // 決定 0155（翊文 11-24「調快水位」「並且把歷史紀錄也調整」）：step 改了以後第壹次日報，照新的 step 補算以前的日子：可以動 step ×（記過的天數＋今天）；之後每天照 step
+  const back = P.sv !== C.step ? (P.trace || []).length + 1 : 1; P.sv = C.step;
+  const target = Math.min(1, Math.max(C.min, C.start + (1 - C.start) * P.e / C.earnT)), dl = Math.max(-C.step * back, Math.min(C.step * back, target - P.lv));
   P.lv = plRound(Math.min(1, Math.max(C.min, P.lv + dl))); P.day = day;
   P.trace = (P.trace || []).concat([dl > 0.00005 ? 1 : dl < -0.00005 ? -1 : 0]).slice(-C.trace);
   P.hold = target >= 1 ? (P.hold || 0) + 1 : 0;
