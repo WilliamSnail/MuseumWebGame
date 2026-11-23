@@ -5,7 +5,8 @@
 // ================================================================
 
 import { BADGES, CELLAR_FOES, GEAR_ITEMS, LIMITED_ITEMS, NUM, RECIPES, SKILLS, UPGRADES } from "../core/config.js";
-import { BOOK4, BOOK_SEQUELS, CELLAR, ENDING_CELLAR, FOE_TEXT, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
+import { BOOK_SEQUELS, RECIPE_TEXT, UNDERSTAND_TEXT, UPGRADE_TEXT } from "../core/systems_text.js";
+import { BOOK4, CELLAR, ENDING_CELLAR, FOE_TEXT } from "../cellar/text.js";
 import { ENDINGS, FORBIDDEN_BOOKS } from "../core/content.js";
 import { CORE_TOTAL, FAILED, RARITY_ORDER, ROLLED, activeQuirks, codexCount, fromKey, hallItem, hallScore, isFree, maxSan, todayStr } from "../core/logic_base.js";
 import { hallArt } from "./gifts.js";

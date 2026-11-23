@@ -20,7 +20,7 @@
 //    fightStart(每天的內容寫的怪物, seats) 第一個參數也可以是整份怪物（fightFoeCheck 檢查過的），不用改程式就能加新怪物
 // ================================================================
 import { CELLAR_FOES, LIMITED_FX, LIMITED_ITEMS, MOOD_BEATS, NUM } from "../core/config.js";
-import { FOE_TEXT } from "../core/systems_text.js";
+import { FOE_TEXT } from "../cellar/text.js";
 import { RNG, clampN, fromKey, rollD100, rollExpr, maxExpr, todayStr } from "../core/logic_base.js";
 import { memberPower } from "../core/systems.js";
 import { skillOf } from "../core/legacy.js";

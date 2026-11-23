@@ -217,14 +217,23 @@ function resolveBase(base) {
   const mb = git(["merge-base", "origin/main", "HEAD"]);
   return mb.status === 0 ? mb.stdout.trim() : null;
 }
+// 搬家的行不算新加的（11-23 把壹大塊字搬進新檔，不是新寫的字）：同壹次 diff 裡被刪掉的壹模壹樣的行（去掉頭尾空白、6 字以上），從新加的行號拿掉
+function dropMoved(map, removed, readText) {
+  for (const [f, set] of map) {
+    let arr; try { arr = readText(f).split("\n"); } catch (e) { continue; }
+    for (const ln of [...set]) { const t = (arr[ln - 1] || "").trim(); if (t.length >= 6 && removed.has(t)) set.delete(ln); }
+  }
+  return map;
+}
 function addedLines(base) { // 回傳 Map，或 null（找不到基準）。用 -M 認搬家：只搬位置的檔不會整份算新加的行（11-20 shared/ 分資料夾）
   const b = resolveBase(base);
   if (!b) return null;
-  const map = parseDiff(git(["diff", "-U0", "--no-color", "-M", b]).stdout);
+  const diffText = git(["diff", "-U0", "--no-color", "-M", b]).stdout, map = parseDiff(diffText);
+  const removed = new Set(diffText.split("\n").filter(l => l.startsWith("-") && !l.startsWith("--- ")).map(l => l.slice(1).trim()));
   for (const f of git(["ls-files", "-o", "--exclude-standard"]).stdout.split("\n").filter(Boolean)) { // 還沒 add 的新檔：整份都是新的
     try { const n = fs.readFileSync(path.join(ROOT, f), "utf8").split("\n").length; map.set(f, new Set(Array.from({ length: n }, (_, i) => i + 1))); } catch (e) { /* 讀不到就略過 */ }
   }
-  return map;
+  return dropMoved(map, removed, f => fs.readFileSync(path.join(ROOT, f), "utf8"));
 }
 
 // ---------- 5. 名字只放一處 ----------
@@ -370,4 +379,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkLayers, checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkLayers, checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, dropMoved, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };

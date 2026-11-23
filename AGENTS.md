@@ -71,7 +71,7 @@ npm run tune -- NUM.路徑=值 unit:id.欄位=值 --dry   # 調數值的總入�
 **放哪裡**：
 
 - 數值 → `shared/core/config.js`（`NUM` 等）。
-- 文字 → `shared/core/content.js`、`shared/core/systems_text.js`。
+- 文字 → `shared/core/content.js`、`shared/core/systems_text.js`（地下收藏庫的字在 `shared/cellar/text.js`；systems_text.js 超過 1,000 行就先拆再加）。
 - 判斷 → `shared/core/logic.js`、`shared/core/systems.js`（原 logic3.js）。底層共用的在 `shared/core/logic_base.js`；shared/ 的 import 單向、不准繞圈（check_imports 擋）。
 - 演出 → `web/src/` 的畫面檔。
 

@@ -4,6 +4,7 @@ import assert from "node:assert";
 import * as config from "../shared/core/config.js";
 import * as content from "../shared/core/content.js";
 import * as systemsText from "../shared/core/systems_text.js";
+import * as cellarText from "../shared/cellar/text.js";
 import * as logic from "../shared/core/logic.js";
 import * as systems from "../shared/core/systems.js";
 import * as legacy from "../shared/core/legacy.js";
@@ -141,7 +142,7 @@ ok("賭場接得上 config、logic、systems、story（11-09，決定 0040）", 
 ok("地下撿籌碼接得上 config、systemsText、logic、casino_text（決定 0047）", () => {
   logic.setRng(logic.mulberry32(3));
   const w = casinoWallet.casWalletFix(casinoWallet.casWalletNew(), "2026-11-09");
-  const room = systemsText.CELLAR[0].rooms[0].id;
+  const room = cellarText.CELLAR[0].rooms[0].id;
   const r = casinoFind.casCellarFind(w, casinoWallet.casHouseNew(), room, "2026-11-09", () => 0);
   assert.ok(r.ok && r.found >= config.NUM.casino.cellarFind.min);
   assert.ok(!casinoFind.casCellarFind(w, null, room, "2026-11-09", () => 0).ok);

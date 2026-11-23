@@ -3,7 +3,8 @@
 //  （一樣只有規則，不碰畫面）
 // ================================================================
 import { CELLAR_POWER, CELLAR_REWARDS, COLOR_POWER, EXHIBITS, LIMITED_FX, MOOD_BEATS, NUM, PEPE_PARTS, PILLOW_PARTS, RECIPES, UPGRADES } from "./config.js";
-import { CELLAR, RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./systems_text.js";
+import { RECIPE_TEXT, UNDERSTAND_FALLBACK, UNDERSTAND_TEXT } from "./systems_text.js";
+import { CELLAR } from "../cellar/text.js";
 import { CATS, CORE_CATS, CORE_TOTAL, DECO_CATS, KIND_CODE, PILLOW_CATS, PILLOW_TOTAL, RARITY_ORDER, RNG, ROLLED, addDays, addMyth, allChapters, allOpts, applySan, attrsOf, b64d, b64e, canStartCellar, cellarFloor, clampN, codexCount, dailyCommissions, decoOpen, ensureBoardSize, finishMake, fromKey, gainSan, grantOption, hallItem, hasUp, isFree, isUnlocked, knownTotal, limitedHome, normKey, normPillowKey, num, optOf, parseHallCode, parsePillowKey, partOf, pickOne, possibilities, progressEvents, rarityRank, rollD100, rollExpr, sanCheck, scoreItems, sequelOpen, sortUnlocked, specAllows, teamItems, todayStr, traitSum, understandCheck, usable } from "./logic_base.js";
 import { cellarDarkLoss, jobSkill, skillOf, traitHits, traitTag } from "./legacy.js";
 import { friendTalent, learnFromFriend, trialWin } from "./shop.js";

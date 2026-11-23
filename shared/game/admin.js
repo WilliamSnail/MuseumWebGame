@@ -14,7 +14,8 @@
 // ================================================================
 import { BADGES, PEPE_PARTS } from "../core/config.js";
 import { ENDINGS, FORBIDDEN_BOOKS } from "../core/content.js";
-import { BOOK4, ENDING_CELLAR, JOBS, QUIRK_TASK_TEXT } from "../core/systems_text.js";
+import { JOBS, QUIRK_TASK_TEXT } from "../core/systems_text.js";
+import { BOOK4, ENDING_CELLAR } from "../cellar/text.js";
 import { CATS, CORE_TOTAL, activeQuirks, allChapters, asList, codexCount, maxSan, nowMs, taipeiDay } from "../core/logic_base.js";
 import { gameDayNo, migrateSave, quirkDaysLeft, quirkName } from "../core/logic.js";
 import { bookSequels } from "../core/logic_base.js";
