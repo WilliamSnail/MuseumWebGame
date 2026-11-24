@@ -73,9 +73,40 @@ function extendIssues({ p, day, ledger }) {
   return E;
 }
 
+// ---------- 規劃寫好的劇本（11-24，翊文：「你做真正的規劃……排程每天只做細節補足，並結合時事」，決定 0156） ----------
+// 帳本 extend.weeks.<週>.script.dN：{ scene, must: [{ where, text }], san: [{ where, spec }], free }。今天有劇本，must 的句子要原樣出現在今天的檔對應的地方（空白、換行不算），san 的擲法也要在那個地方找得到。
+const readSrc = week => { try { return fs.readFileSync(path.join(ROOT, "content", "weeks", week, "靈感來源.md"), "utf8"); } catch (e) { return ""; } };
+const SCRIPT_PART = { 房間: d => d.adds, 今日特展: d => d.show, 書: d => d.books, 公佈欄: d => d.board, 任務: d => [d.daily, d.weeklyWords], 賭場: d => d.casino, 讀懂: d => d.understand, 市場: d => d.market };
+const strOf = o => Array.isArray(o) ? o.map(strOf).join("|") : isObj(o) ? Object.keys(o).map(k => strOf(o[k])).join("|") : o == null ? "" : String(o);
+const squash = s => String(s).split(/\s+/).join("");
+function scriptIssues({ p, day, ledger }) {
+  const E = [], X = ledger && ledger.extend && ledger.extend.weeks && ledger.extend.weeks[p.week], sc = X && isObj(X.script) && X.script["d" + p.weekday];
+  if (!isObj(sc) || !isObj(day)) return E;
+  const f = p.dayFile, part = w => SCRIPT_PART[w] ? squash(strOf(SCRIPT_PART[w](day))) : null;
+  asList(sc.must).forEach(m => {
+    if (!m || !m.text) return;
+    const hay = part(m.where);
+    if (hay === null) E.push(`${f}：劇本 script.d${p.weekday} 的地方「${m.where}」不認得（只能是 ${Object.keys(SCRIPT_PART).join("、")}）`);
+    else if (!hay.includes(squash(m.text))) E.push(`${f}：劇本 script.d${p.weekday} 要在「${m.where}」原樣放這句：${m.text}`);
+  });
+  asList(sc.san).forEach(x => { const hay = x && part(x.where); if (hay !== null && hay !== undefined && !hay.includes(squash(x.spec))) E.push(`${f}：劇本 script.d${p.weekday} 要在「${x.where}」配理智檢定 ${x.spec}（${x.why || ""}）`); });
+  return E;
+}
+// 時事：週二到週日，靈感來源.md 要有「## dN」那段，裡面至少壹個新聞網址；真的搜不到寫「搜不到：搜了什麼」（11-24，翊文：「時事要結合的夠快」）
+function newsIssues({ p, srcText }) {
+  if (!p || p.weekday === 1) return [];
+  const txt = String(srcText || ""), at = txt.search(new RegExp("^##\\s*d" + p.weekday + "(?![0-9])", "m"));
+  if (at < 0) return [`content/weeks/${p.week}/靈感來源.md 沒有「## d${p.weekday}」那段：寫今天用了哪些新聞（附網址）`];
+  const rest = txt.slice(at + 3), next = rest.search(/^##\s/m), sec = next < 0 ? rest : rest.slice(0, next);
+  const E = [];
+  if (!/https?:\/\//.test(sec) && !/搜不到：\S/.test(sec)) E.push(`content/weeks/${p.week}/靈感來源.md 的「## d${p.weekday}」要有新聞網址（昨天到今早的；真的搜不到寫「搜不到：搜了什麼」）`);
+  if (/https?:\/\//.test(sec) && !/劇情：\S/.test(sec)) E.push(`content/weeks/${p.week}/靈感來源.md 的「## d${p.weekday}」要有「劇情：」那行：時事放進了哪本書、哪個任務或公佈欄（不能只放財報）`);
+  return E;
+}
+
 // ---------- --strict：今天「一定要」的項目（純函式，測試用） ----------
 // 輸入：p（day_plan 的 planDay 結果）、day（今天的 dN.json，沒有給 null）、wk（這週的 week.json）、ledger（整份帳本）、opts（allowNoMarket、allowNoMeme）。回傳錯誤字串陣列，空的就是過。
-function strictIssues({ p, day, wk, ledger, opts = {} }) {
+function strictIssues({ p, day, wk, ledger, opts = {}, src }) {
   const E = [];
   if (!p || p.paused) return E;
   const n = p.weekday, f = p.dayFile, rec = ledger && ledger.weeks && ledger.weeks[p.week] || null, g = p.dayGaps;
@@ -105,6 +136,8 @@ function strictIssues({ p, day, wk, ledger, opts = {} }) {
     if (lb && !(lb.status === "revealed" && lb.revealedOn === p.date && asList(lb.clues).length)) E.push(`帳本 revealBeats「${b.id}」還沒改成 revealed（revealedOn 要是 ${p.date}、clues 要填）：跑 npm run ledger -- reveal ${b.id}`);
   }
   E.push(...extendIssues({ p, day, ledger })); // 延伸世界：今天排到的四問、收線
+  E.push(...scriptIssues({ p, day, ledger })); // 規劃寫好的劇本
+  if (src !== undefined) E.push(...newsIssues({ p, srcText: src })); // 時事（src＝這週的靈感來源.md；沒傳就不查，測試用）
   // 週日：結局書、主線章節書、疑點簿 answer
   if (n === 7) {
     const books = asList(day.books);
@@ -164,7 +197,7 @@ function main() {
     try {
       const { planDay, gatherFor } = require("./day_plan.cjs"), { load } = require("../../test/load_shared.cjs"), G = load();
       const date = i >= 0 ? a[i + 1] : G.taipeiDay(Date.now()), ctx = gatherFor(date, G), p = planDay(ctx), pack = ctx.weeks[p.week];
-      const E = strictIssues({ p, day: pack && pack.days && pack.days[p.weekday] || null, wk: pack && pack.week || null, ledger: ctx.ledger, opts: { allowNoMarket: a.includes("--allow-no-market"), allowNoMeme: a.includes("--allow-no-meme") } });
+      const E = strictIssues({ p, day: pack && pack.days && pack.days[p.weekday] || null, wk: pack && pack.week || null, ledger: ctx.ledger, opts: { allowNoMarket: a.includes("--allow-no-market"), allowNoMeme: a.includes("--allow-no-meme") }, src: readSrc(p.week) });
       results.push({ name: `今天（${date}）一定要有的（--strict）`, ok: !E.length, warnings: [], errors: E, note: p.paused ? "暫停中，不檢查" : E.length ? "" : "每天該有的都有" });
     } catch (e) { results.push({ name: "今天一定要有的（--strict）", ok: false, warnings: [], errors: [`讀不到今天的計畫：${e.message}`], note: "" }); }
   }
@@ -172,4 +205,4 @@ function main() {
   process.exitCode = results.some(r => !r.ok) ? 1 : 0;
 }
 if (require.main === module) main();
-module.exports = { summarize, packFresh, mapFresh, strictIssues, extendIssues, hasSanSpec, formatReport };
+module.exports = { summarize, packFresh, mapFresh, strictIssues, extendIssues, scriptIssues, newsIssues, readSrc, hasSanSpec, formatReport };

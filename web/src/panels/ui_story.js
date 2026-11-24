@@ -725,7 +725,7 @@ function workArt(w) {
     return r.ok ? r.svg : ART.exhibit("none");
   }
   const shadow = (w.fx || []).includes("shadow");
-  if (w.art === "frog") return ART.frog(Object.assign({}, w.pick), { silhouette: shadow, noBg: shadow });
+  if (w.art === "frog") return ART.frog(Object.assign({}, w.pick), { silhouette: shadow, noBg: shadow, failed: w.failed === true }); // failed：掛失敗作（決定 0156，W48 d5）
   return ART.exhibit(w.art, { variant: w.variant || 0 });
 }
 const frameCls = w => `frame st-frame fr-${w.frame || "gold"} art-${w.svg != null ? "svg" : w.art === "frog" ? "frog" : w.art}` + (w.fx || []).map(f => " fx-" + f).join("");

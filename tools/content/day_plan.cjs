@@ -239,6 +239,8 @@ function format(p) {
     B("  寫完自問：恐懼、代價、佩佩、嚇人的展品，四件都做了嗎？（排程說明 一、第 2 點 0a）");
     if (asList(x.lines).length) B(`  這週要收的線（總表 extend.collect；npm run ledger -- get extend.collect.rows 看每條的四問）：${asList(x.lines).join("、")}`);
     if (x.dayPlan && x.dayPlan["d" + p.weekday]) B(`  今天（d${p.weekday}）照 extend 排的：${x.dayPlan["d" + p.weekday]}`);
+    const sc = x.script && x.script["d" + p.weekday];
+    if (sc) { B(""); B(`【今天有寫好的劇本（決定 0156）：場景照走、必寫句原樣放，你只補細節和時事；day:check --strict 會查】`); B(`  場景：${sc.scene}`); asList(sc.must).forEach(m => B(`  必寫（${m.where}）：${m.text}`)); asList(sc.san).forEach(m => B(`  理智（${m.where}）：${m.spec}　${m.why || ""}`)); if (sc.free) B(`  你補的：${sc.free}`); }
     if (x.note) B(`  注意：${x.note}`);
     B("  規矩：只用審過的旁證、不自己加；壹週放壹天；放了在 weeks.<週>.ties 記壹行（排程說明 一、第 2 點）");
   }

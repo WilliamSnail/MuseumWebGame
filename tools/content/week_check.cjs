@@ -144,6 +144,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
       r.errors.forEach(m => E(where + ".svg", m));
       r.texts.forEach(t => text(where + ".svg 裡的字", t, LIMITS.svgText));
     } else if (!G.SHOW_ART.includes(w.art)) E(where, `art 只能是 ${G.SHOW_ART.join("、")}，或用 svg 自己畫（不畫 Pepe 的樣子）`);
+    if (w.failed !== undefined && (w.failed !== true || w.art !== "frog")) E(where, "failed 只能寫 true，而且只能配 art: \"frog\"（掛壹隻失敗作）");
     if (w.art === "frog") {
       if (!isObj(w.pick)) E(where, "frog 要有 pick（手作坊的選項）");
       else Object.entries(w.pick).forEach(([c, v]) => { if (!G.storyOptOk(c, v)) E(where, `pick 的「${c}：${v}」不是手作坊的選項`); });
