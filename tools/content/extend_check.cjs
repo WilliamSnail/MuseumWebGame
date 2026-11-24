@@ -95,6 +95,19 @@ function checkExtend(L, E, W, lw) {
     if (cl.length < 3 || new Set(cl.map(c => c && c.where)).size < 3) E(w, "clues 至少三條、分在三種以上不同的地方（三條線索原則）");
     cl.forEach(c => { if (!isObj(c) || !c.where || !c.what) E(w, "clues 每條要有 where 和 what"); });
     asList(x.closes).forEach(id => { const m = mys.find(y => y && y.id === id); if (!m) E(w, `closes「${id}」不在 mysteries 裡`); else if (m.closeBy !== k) E(w, `closes「${id}」的 closeBy 是 ${m.closeBy}，不是這週（extend.weeks 要跟 mysteries 對得上）`); });
+    // 規劃寫好的劇本（11-24，決定 0156）：script.dN 的格式；內容有沒有放進那天的檔，由 day:check --strict 那天查
+    if (x.script !== undefined) {
+      if (!isObj(x.script)) E(w, "script 要是物件 { d3: {…}, … }");
+      else Object.keys(x.script).filter(k => k !== "note").forEach(k => {
+        const sc = x.script[k], sw = w + ".script." + k, WH = ["房間", "今日特展", "書", "公佈欄", "任務", "賭場", "讀懂", "市場"];
+        if (!/^d[1-7]$/.test(k)) { E(sw, "鍵要是 d1～d7（或 note）"); return; }
+        if (!isObj(sc)) { E(sw, "要是物件 { scene, must, san, free }"); return; }
+        if (typeof sc.scene !== "string" || sc.scene.trim().length < 20) E(sw, "scene 要寫這天的場景（20 字以上）");
+        if (!asList(sc.must).length) E(sw, "must 至少壹句（排程要原樣放的句子）");
+        asList(sc.must).forEach((m, j) => { if (!isObj(m) || !WH.includes(m.where) || typeof m.text !== "string" || !m.text.trim()) E(sw + ".must[" + j + "]", "要有 where（" + WH.join("、") + "）和 text"); else if (/一/.test(m.text)) E(sw + ".must[" + j + "]", "畫面上的字用「壹」"); });
+        asList(sc.san).forEach((m, j) => { if (!isObj(m) || !WH.includes(m.where) || !/^0\/([0-9]+D[0-9]+|[0-9]+)$/.test(String(m.spec || "").split(" ").join(""))) E(sw + ".san[" + j + "]", "要有 where 和 spec（0/失敗的擲法，成功不扣）"); });
+      });
+    }
     // 四問自我審查（翊文 11-22）：恐懼、代價、佩佩、嚇人的展品，每週都要寫
     [["dread", "恐懼：這週的問題底下的那壹層"], ["cost", "代價：知道了就回不去的揭露和理智代價"], ["pepe", "佩佩：直接指向牠的線索"], ["horror", "嚇人的展品：這週用的那壹件"]].forEach(([k, label]) => {
       const f = x[k];

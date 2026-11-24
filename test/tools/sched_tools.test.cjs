@@ -354,5 +354,25 @@ T("ledger range／about：只挑跨到的週、謎題不印謎底；about 找本
   assert.deepStrictEqual(ab.refs.map(x => x[0]).sort(), ["foreshadow.f-a", "revealBeats.list.b1"]);
 });
 
+// 規劃寫好的劇本（決定 0156）：script.dN 的必寫句要原樣在那個地方；理智檢定要找得到；時事要有網址和「劇情：」
+T("劇本：必寫句不在對的地方就擋，放了就過；換行空白不算", () => {
+  const L = { extend: { weeks: { "2026-W48": { script: { d3: { scene: "場景", must: [{ where: "房間", text: "地上沒有腳印。" }, { where: "公佈欄", text: "多記了壹筆。" }], san: [{ where: "房間", spec: "0/1D3" }] } } } } } };
+  const p = { week: "2026-W48", weekday: 3, dayFile: "d3.json" };
+  const bad = C.scriptIssues({ p, day: { adds: [], board: "多記了壹筆。", books: [{ pages: ["地上沒有腳印。"] }] }, ledger: L });
+  assert.strictEqual(bad.length, 2, "房間沒放那句、也沒有理智檢定：" + bad.join("｜"));
+  const ok = C.scriptIssues({ p, day: { adds: [{ intro: "地上\n沒有腳印。", choices: [{ check: { type: "san", spec: "0/1D3" } }] }], board: "多記了壹筆。" }, ledger: L });
+  assert.deepStrictEqual(ok, []);
+  assert.deepStrictEqual(C.scriptIssues({ p: { ...p, weekday: 4 }, day: {}, ledger: L }), [], "沒有劇本的日子不查");
+});
+T("時事：週二起靈感來源要有 ## dN、網址、「劇情：」；搜不到要寫搜了什麼；週一不查", () => {
+  const p = { week: "2026-W48", weekday: 2 };
+  assert.strictEqual(C.newsIssues({ p, srcText: "## d1\nhttps://a 劇情：書" }).length, 1, "沒有 d2 那段");
+  assert.strictEqual(C.newsIssues({ p, srcText: "## d2\nhttps://a" }).length, 1, "有網址沒寫劇情");
+  assert.deepStrictEqual(C.newsIssues({ p, srcText: "## d2（11-24）\n- https://a\n- 劇情：書第壹頁\n## d3\n" }), []);
+  assert.deepStrictEqual(C.newsIssues({ p, srcText: "## d2\n搜不到：選舉 新聞" }), []);
+  assert.strictEqual(C.newsIssues({ p, srcText: "## d20\nhttps://a 劇情：x" }).length, 1, "d20 不是 d2");
+  assert.deepStrictEqual(C.newsIssues({ p: { ...p, weekday: 1 }, srcText: "" }), []);
+});
+
 console.log(`${pass} passed, ${fail} failed（每日排程優化）`);
 process.exit(fail ? 1 : 0);

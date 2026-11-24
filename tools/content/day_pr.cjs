@@ -43,6 +43,9 @@ function prBody(info) {
   L.push("", "## 劇情節奏", "", `- ${p.beat.kind}${p.isBeatDay && p.beat.beat ? `；揭露節奏：第 ${revealCount(ledger)} 次` : ""}`);
   const st = subthemeNames(ledger, rec); if (st) L.push(`- 子主旨：主打 ${st.main || "（沒寫）"}${st.side.length ? "，陪襯 " + st.side.join("、") : ""}`);
   if (p.isMonday) L.push("- 靈感來源：見 content/weeks/" + p.week + "/靈感來源.md");
+  const X = ledger && ledger.extend && ledger.extend.weeks && ledger.extend.weeks[p.week], sc = X && X.script && X.script["d" + p.weekday];
+  if (sc) L.push("", "## 寫好的劇本（決定 0156）", "", `- 必寫句 ${asList(sc.must).length} 句、理智檢定 ${asList(sc.san).length} 個：day:check --strict 查過有原樣放進去`);
+  if (X) { const q = [["dread", "恐懼"], ["cost", "代價"], ["pepe", "佩佩"], ["horror", "嚇人的展品"]].filter(([k]) => X[k] && X[k].day === "d" + p.weekday); if (q.length) L.push("", "## 四問（今天排到的）", "", ...q.map(([k, nm]) => `- ${nm}：${X[k].where}`)); }
   L.push("", "## 檢查", "", "- `npm run day:check -- --strict`：" + (/✓ 全部通過/.test(strictOut) ? "全部通過" : strictOut ? "沒過，看下面" : "（沒跑到）"), "- 本機 npm test 和 build：只改內容時 ship 會跳過，CI 和部署照跑");
   if (warnings.length) L.push("", "## 檢查程式的警告（照貼）", "", ...warnings.map(w => `- ${w}`));
   else L.push("", "## 檢查程式的警告", "", "- 沒有警告");

@@ -138,7 +138,7 @@ const INSPIRE_HEAD = (week) => `# ${week} 靈感來源\n\n> 只給審的人看�
 
 function main() {
   const { load } = require("../../test/load_shared.cjs"), G = load(), a = process.argv.slice(2), i = a.indexOf("--date");
-  const { planDay, gatherFor } = require("./day_plan.cjs"), { strictIssues } = require("./day_check.cjs");
+  const { planDay, gatherFor } = require("./day_plan.cjs"), { strictIssues, readSrc } = require("./day_check.cjs");
   const date = i >= 0 ? a[i + 1] : G.taipeiDay(Date.now()), ctx = gatherFor(date, G), p = planDay(ctx), pack = ctx.weeks[p.week];
   if (p.paused) { console.log(`${date}（${p.week}）暫停中：什麼都不寫（排程說明第五節）。`); return; }
   const wk = pack && pack.week || null, file = path.join(ROOT, p.dayFile), existing = pack && pack.days && pack.days[p.weekday] || null;
@@ -156,7 +156,7 @@ function main() {
   const skel = skeleton(p, wkNow, ctx.ledger);
   if (existing) {
     console.log(`\n${p.dayFile} 已經有了：不覆蓋。`);
-    const miss = missingNotes(existing, skel), E = strictIssues({ p, day: existing, wk, ledger: ctx.ledger, opts: {} });
+    const miss = missingNotes(existing, skel), E = strictIssues({ p, day: existing, wk, ledger: ctx.ledger, opts: {}, src: readSrc(p.week) });
     [...miss, ...E].forEach(x => console.log("  還差：" + x));
     if (!miss.length && !E.length) console.log("  --strict 要的都有了。");
     return;
