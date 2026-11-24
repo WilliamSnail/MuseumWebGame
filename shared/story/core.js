@@ -41,7 +41,7 @@ export const STORY_TASKS = {
   food: { when: "daily", min: 1, pts: 15, act: 1, chip: 1 },      // 到餐車吃壹樣東西
   visit: { when: "daily", min: 2, pts: 25, act: 1, chip: 1 },     // 參觀壹位館友的展廳（只算別人）
   gift: { when: "daily", min: 2, pts: 30, act: 1, chip: 1 },      // 送館友壹隻佩佩（只算別人）
-  stockLook: { when: "daily", min: 1, pts: 15, act: 1 },          // 看壹支集團股的走勢
+  stockLook: { when: "daily", min: 1, pts: 15, act: 1 },          // 看壹支股票的走勢（集團股或壹般股都算，翊文 11-24）
   lesson: { when: "daily", min: 1.5, pts: 20, act: 1 },           // 在委託櫃台上壹堂課
   sign: { when: "daily", min: 0.5, pts: 10, act: 1 },             // 簽到
   board: { when: "daily", min: 0.5, pts: 10, act: 1 },            // 看公佈欄
@@ -295,7 +295,7 @@ export function taskText(t, W) {
     case "food": return "到餐車吃壹樣東西";
     case "visit": return "參觀壹位館友的展廳";
     case "gift": return "送館友壹隻佩佩";
-    case "stockLook": return "看壹支集團股的走勢";
+    case "stockLook": return "看壹支股票的走勢";
     case "lesson": return "在委託櫃台上壹堂課";
     case "sign": return "簽到";
     case "board": return "看公佈欄";
