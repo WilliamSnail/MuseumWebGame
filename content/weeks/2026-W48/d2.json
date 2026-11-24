@@ -1,0 +1,200 @@
+{
+  "day": 2,
+  "date": "2026-11-24",
+  "holiday": null,
+  "board": "銀行的點鈔機上貼了壹張紙條：「數壹次就好。」B2 的白布披上了圍巾；書架多 2 本書。",
+  "books": [
+    {
+      "id": "2a",
+      "line": "w48-plates",
+      "title": "數壹次就好",
+      "spine": "點鈔機",
+      "unlock": {
+        "type": "now"
+      },
+      "clue": "c-bank-count-thrice",
+      "pages": [
+        "昨天警衛的兩排圓石還擺在大廳。\n你去銀行存銅板，順便看了壹眼點鈔機。",
+        "錢姐把同壹疊紙鈔放進去數了三遍。\n螢幕上跳出三個尾數：\n四、九、六。",
+        "她沒有皺眉，只是在機器上貼了壹張紙條：\n「數壹次就好。」\n字很大、很潦草。",
+        "「第二遍就不壹樣了，」她說，\n「所以我們只數壹次。」\n夜市的阿姨路過，點點頭：「我也只記幾袋，不記是誰買的。」",
+        "你走出銀行，回頭看了壹眼。\n機器的螢幕又亮了，這次沒有人放東西進去。\n它自己數了壹遍。"
+      ]
+    },
+    {
+      "id": "2s",
+      "line": "season-2026-winter",
+      "title": "白布底下冷不冷",
+      "spine": "明信片",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "第二張明信片來了。\n還是沒有署名，還是沒有郵戳。\n背面問：「地下冷不冷？白布夠不夠厚？」",
+        "警衛把招領箱裡沒人領的圍巾和毛帽抱去 B2，\n壹尊壹尊披上去。",
+        "他數了數：圍巾剛剛好，每尊壹條。\n他鬆了壹口氣，低頭才發現，\n手上還多壹條。",
+        "那條圍巾只織了壹半，針還插著。\n他把它放在最靠樓梯的那塊空白名牌旁邊。\n名牌沒有動。圍巾也沒有動。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d2a",
+      "kind": "read",
+      "book": "2a",
+      "reward": {
+        "insp": 1
+      }
+    },
+    {
+      "id": "d2d",
+      "kind": "show",
+      "reward": {
+        "insp": 1,
+        "mood": 1
+      }
+    },
+    {
+      "id": "d2b",
+      "kind": "cellar",
+      "floor": 2,
+      "giver": "scale",
+      "says": "B2 披了圍巾的雕像，你下去看壹眼，回來告訴我暖不暖。我只秤得出重的。",
+      "done": "到了？圍巾比我想的輕。輕的東西，通常是有人拿過。",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d2c",
+      "kind": "lesson",
+      "giver": "number",
+      "says": "叫號：上課，壹位。聽壹堂就好，不要聽第二堂。",
+      "done": "叫號：下壹位。（叫完號，紙條上多留了壹格空白，跟昨天的壹樣大。）",
+      "reward": {
+        "mood": 1
+      }
+    },
+    {
+      "id": "d2e",
+      "kind": "stockLook",
+      "giver": "clerk",
+      "says": "集團股的走勢你看壹眼，我不念數字。我的小帳今天早點闔上。",
+      "done": "看完了？我的小帳旁邊多了壹行，字比我的小。不是我寫的，我真的沒寫。",
+      "reward": {
+        "mood": 1
+      }
+    },
+    {
+      "id": "d2f",
+      "kind": "sign",
+      "giver": "postman",
+      "says": "今天的信我送完了。你去簽到，簽壹次就好。",
+      "done": "簽好了。明天我再數壹遍信箱，只數壹遍。",
+      "reward": {
+        "mood": 1
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "數壹次就好",
+    "intro": "這排畫掛在銀行門口：壹台點鈔機、壹塊披著圍巾的雕像，和壹隻只數壹次的佩佩。",
+    "works": [
+      {
+        "id": "s2a",
+        "frame": "dark",
+        "fx": [],
+        "title": "點鈔機的三個尾數",
+        "lines": [
+          "同壹疊紙鈔，數了三遍，三個尾數。",
+          "機器旁貼著壹張紙條：數壹次就好。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#14171d'/>",
+          "<rect x='40' y='90' width='160' height='110' rx='8' fill='#2b303a' stroke='#59606e'/>",
+          "<rect x='56' y='106' width='128' height='30' fill='#0c1a14' stroke='#3e6b55'/>",
+          "<g fill='#7fe0a8' font-family='monospace' font-size='20'><text x='66' y='128'>4</text><text x='106' y='128'>9</text><text x='146' y='128'>6</text></g>",
+          "<rect x='70' y='152' width='100' height='10' fill='#0a0c10'/>",
+          "<g fill='#cfc8b0'><rect x='80' y='140' width='80' height='4' opacity='0.8'/></g>",
+          "<rect x='76' y='214' width='88' height='38' fill='#e9e2c8' transform='rotate(-4 120 233)'/>",
+          "<text x='84' y='237' font-size='13' fill='#3a2a22' font-family='serif' transform='rotate(-4 120 233)'>數壹次就好</text>",
+          "<text x='20' y='280' font-size='11' fill='#8d8a80' font-family='serif'>三遍，三個不壹樣的尾數。</text></svg>"
+        ]
+      },
+      {
+        "id": "s2b",
+        "frame": "wood",
+        "fx": [],
+        "title": "披圍巾的雕像",
+        "lines": [
+          "每尊壹條圍巾，剛剛好。",
+          "最靠樓梯那尊旁邊，多放了壹條織壹半的。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#1b1a22'/>",
+          "<rect x='0' y='250' width='240' height='50' fill='#0f0e14'/>",
+          "<g fill='#cfcabd'><path d='M50 250 L50 130 Q50 90 70 90 Q90 90 90 130 L90 250 Z'/><path d='M120 250 L120 130 Q120 90 140 90 Q160 90 160 130 L160 250 Z'/><path d='M185 250 L185 140 Q185 105 202 105 Q219 105 219 140 L219 250 Z'/></g>",
+          "<g fill='#b04a4a'><rect x='48' y='132' width='44' height='12'/><rect x='118' y='132' width='44' height='12'/><rect x='183' y='140' width='38' height='11'/></g>",
+          "<g fill='#d9c27a'><rect x='56' y='144' width='8' height='30'/><rect x='126' y='144' width='8' height='30'/><rect x='190' y='151' width='8' height='26'/></g>",
+          "<rect x='14' y='232' width='28' height='10' fill='#b04a4a'/><line x1='38' y1='226' x2='38' y2='242' stroke='#d8d5c8'/>",
+          "<rect x='62' y='215' width='16' height='10' fill='#e9e2c8'/>",
+          "<text x='20' y='280' font-size='11' fill='#8d8a80' font-family='serif'>圍巾夠了。手上還多壹條。</text></svg>"
+        ]
+      },
+      {
+        "id": "s2c",
+        "frame": "plain",
+        "fx": [],
+        "title": "夜市的小本子",
+        "lines": [
+          "幾袋，不記是誰買的。",
+          "翻到最後壹頁，只有壹行很小的字。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#2a1f1a'/>",
+          "<rect x='45' y='70' width='150' height='170' rx='4' fill='#efe6cf' stroke='#8a7a55'/>",
+          "<g stroke='#6b5a3a' stroke-width='2'><line x1='65' y1='100' x2='175' y2='100'/><line x1='65' y1='125' x2='175' y2='125'/><line x1='65' y1='150' x2='175' y2='150'/><line x1='65' y1='175' x2='175' y2='175'/></g>",
+          "<g fill='#3a2a22' font-family='serif' font-size='14'><text x='70' y='96'>三袋</text><text x='70' y='121'>五袋</text><text x='70' y='146'>兩袋</text></g>",
+          "<text x='70' y='214' font-size='8' fill='#6b5a3a' font-family='serif'>旁邊那壹行，不是我寫的。</text>",
+          "<circle cx='200' cy='60' r='8' fill='#f0c060'/></svg>"
+        ]
+      }
+    ]
+  },
+  "adds": [],
+  "market": [
+    {
+      "title": "夜光街的攤位少收壹袋",
+      "line": "夜光街今天少收了壹袋貨，攤主只寫幾袋，沒寫是誰買的。",
+      "tone": "flat",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠對了兩遍帳",
+      "line": "巨浪代工廠的箱子今天點了兩遍，兩遍的數不壹樣，他們決定只信第壹遍。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    },
+    {
+      "title": "島線電話行線路照常",
+      "line": "島線電話行今天沒有新消息，電話線穩穩垂著，沒有人去數它。",
+      "tone": "up",
+      "ref": [
+        "linetower"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官今天把籌碼數了壹遍就停手，說第二遍會不壹樣。"
+  }
+}
