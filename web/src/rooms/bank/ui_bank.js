@@ -742,7 +742,7 @@ function holdPanel(v, S, list) {
 }
 function stockPane(v) {
   if (!v.stocks) return soon("股票", "館內五家店和館外股票（跟著真的漲跌）正在準備，開放時館方公告會說。");
-  const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
+  actDone("stockLook"); const S = v.stocks, list = S.list, cur = list[Math.min(UI.bankStock || 0, list.length - 1)];
   list.forEach(x => { if (x.market === "tw" || x.market === "in" || x.market === "us") x.session = twSess(S, x); });
   markSeen(v, list);
   const inShop = cur.market === "in"; // 館內股只有現股
@@ -987,7 +987,7 @@ function gsOrdersPanel(G) {
 }
 // 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
 function gstockPane(v) {
-  actDone("stockLook"); // 每日任務：看壹支集團股的走勢（決定 0146）
+  actDone("stockLook"); // 每日任務：看股票的走勢（決定 0146；11-24 起壹般股頁 stockPane 也算，翊文）
   // 翊文 11-17：「這個應該要向其他頁籤可以直接輸入數字」「要有這些功能阿」：買／賣二選壹、1／10／100、買滿／全賣、自訂股數、走勢
   const G = v.gs; if (!G || !G.list || !G.list.length) return soon("集團股", "世界集團的股票正在準備，開放時館方公告會說。");
   const list = G.list, cur = list[Math.min(UI.bankGs || 0, list.length - 1)], tone = n => (n > 0 ? "up" : n < 0 ? "down" : "");
