@@ -682,5 +682,14 @@ T("每個成就、財產都有名字和說明；成就 id 不重複", G => {
   G.CAS_MENU.filter(m => !m.ticket && !m.redirect).forEach(m => assert.ok(G.CAS_PROPS[m.id], m.id + " 要進財產"));
 });
 
+T("指定日子多發大禮包（packBonus）：那天每人多 n 包、今天已經登入過的也補、同壹天只補壹次、隔天恢復", G => {
+  G.NUM.casino.packBonus = { "2030-01-02": 2 }; const D = G.NUM.casino.dailyPacks;
+  const w = G.casWalletFix(G.casWalletNew(), "2030-01-01"); assert.strictEqual(w.pk.left, D);
+  w.pk.left -= 1; G.casWalletFix(w, "2030-01-02"); assert.strictEqual(w.pk.left, D + 2, "換日：照常 D 包再多 2");
+  w.pk.left -= 1; G.casWalletFix(w, "2030-01-02"); assert.strictEqual(w.pk.left, D + 1, "同壹天不重補");
+  const v = G.casWalletFix(G.casWalletNew(), "2030-01-02"); v.pk.bd = null; v.pk.left = 0; G.casWalletFix(v, "2030-01-02"); assert.strictEqual(v.pk.left, 2, "那天已經登入、開完了才上線的也補 2 包");
+  G.casWalletFix(w, "2030-01-03"); assert.strictEqual(w.pk.left, D, "隔天恢復");
+});
+
 console.log(`${pass} passed, ${fail} failed（賭場）`);
 process.exit(fail ? 1 : 0);

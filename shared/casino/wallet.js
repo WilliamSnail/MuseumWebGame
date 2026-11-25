@@ -72,6 +72,7 @@ export function casWalletFix(w, day) {
     w.seen = day; // 最後來的一天（景氣指數算「過去 7 天有幾個人」）
     if (w.rel.day !== day) w.rel = { day, n: 0 };
     if (w.pk.day !== day) w.pk = { day, left: NUM.casino.dailyPacks, opened: 0 }; // 舊的：每人 2 包、不會換日重算（bug）；這裡每天 2 包，沒開的不累積
+    const pb = NUM.casino.packBonus && NUM.casino.packBonus[day]; if (pb > 0 && w.pk.bd !== day) { w.pk.left += pb; w.pk.bd = day; } // 指定日子每人多發幾包（packBonus；換日 pk 重建，bd 跟著清掉，今天已經登入過的人也補得到）
     const wk = isoWeek(day);
     if (w.ex.week !== wk) w.ex = { week: wk, n: {} };
     casWkRoll(w, wk); // 每週收藏：週一 05:00 換週，上一週收進 wkLog，這週統計歸零（決定 0042）
