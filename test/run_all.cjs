@@ -66,6 +66,7 @@ const STEPS = [
   ["館外股票的每日漲跌（名字表、縮放和上限、休市不動、缺資料用前一天、資料到了沒、抓資料整理，11-13）", ["test/stock/stocks.test.cjs"]],
   ["賭場的拚經濟（成功、失敗、油水的機率邊界、每日上限、換日、莊家和錢包金額、莊家拚回正、文字界線，決定 0052）", ["test/casino/casino_econ.test.cjs"]],
   ["Yuga Bot 銀行的活存、定存（存領、到期、解約、利息從莊家出、破產不給、補算、守恆、利率順序）", ["test/casino/casino_bank.test.cjs"]],
+  ["行情文件的上限（stocksUs／stocksTw 的大欄位不建索引、最滿也小於 1 MiB 的八成；11-25 美股寫不進去）", ["test/stock/doc_limits.test.cjs"]],
   ["遊戲價直接照真實價（每分鐘抓、價＝倍數×真實價、漲跌和真實壹樣、超過 3 分鐘沒新價暫停、第壹次換比例市值不變、持有成本、補最近壹次收盤，規劃 2.8l）", ["test/stock/stocks_direct.test.cjs"]],
   ["館方投資海外（莊家和博物館資金超過保留的部分每天投壹點、錢搬給已知世界、停損停利、虧太多暫停、吃緊暫停、日報寫昨天，規劃 2.8f）", ["test/casino/casino_invest.test.cjs"]],
   ["存股數的地方都跟著換比例、除權（錢包、館方兩個池子、全館持股數；shared/ 用到 .own[ 的檔都要登記，11-17）", ["test/stock/holders_follow.test.cjs"]],
