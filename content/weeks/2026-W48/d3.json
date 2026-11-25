@@ -1,0 +1,248 @@
+{
+  "day": 3,
+  "date": "2026-11-25",
+  "holiday": null,
+  "board": "文化部那壹欄，往外多記了壹筆。B1 牆多了壹間房；書架多 1 本書。",
+  "books": [
+    {
+      "id": "3a",
+      "line": "w48-plates",
+      "title": "往來欄的圓章",
+      "spine": "空心圓章",
+      "unlock": {
+        "type": "now"
+      },
+      "clue": "c-hollow-stamp",
+      "pages": [
+        "選舉公報今天分送到每個展品前面。\n錢姐下班前把賭場和銀行的日報攤在櫃檯上對帳，\n你湊過去看，她沒有趕你。",
+        "日報裡有幾行寫著「跟已知世界的往來」。\n往來欄對方那壹格，蓋著壹枚空心的圓章，章裡的字磨掉了。",
+        "你翻開昨天的、前天的，每壹行都蓋著同壹枚章。\n圓圈壹樣大，缺口也壹樣，\n像用同壹個人的手蓋的。",
+        "「我們只記進來多少、出去多少，」錢姐說，\n「對方是誰，欄裡從來沒有字。」\n她用指甲刮了刮章，印泥是乾的，不是新蓋的。",
+        "你把日報闔上。\n櫃檯上那疊公報最後壹頁，\n也有壹格空著，等人簽收。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d3a",
+      "kind": "read",
+      "book": "3a",
+      "reward": {
+        "insp": 1
+      },
+      "giver": "clerk",
+      "says": "錢姐的日報有壹欄蓋了章。你先讀，我只記零錢，不看那壹欄。",
+      "done": "讀完了？章是空的，我的小帳旁邊那行，也是壹樣小。"
+    },
+    {
+      "id": "d3d",
+      "kind": "show",
+      "reward": {
+        "insp": 1,
+        "mood": 1
+      },
+      "giver": "postman",
+      "says": "今天的特展有壹幅畫，畫的是牆上的正字。我陪你看，不數。",
+      "done": "看完了。我數了壹下，數到壹半就停。"
+    },
+    {
+      "id": "d3b",
+      "kind": "spot",
+      "room": "livewall",
+      "reward": {
+        "insp": 2
+      },
+      "giver": "scale",
+      "says": "B1 牆上的正字，我秤不了。你下去看，回來告訴我，是誰在畫。",
+      "done": "沒有人在畫？可是墨是新的。新的東西，通常是有人拿過。"
+    },
+    {
+      "id": "d3c",
+      "kind": "food",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "number",
+      "says": "叫號：聖代，壹位。吃壹口再下去。",
+      "done": "叫號：下壹位。（叫完號，紙條上多留了壹格空白，這次是壹整排。）"
+    },
+    {
+      "id": "d3e",
+      "kind": "lesson",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "hall",
+      "says": "上課，壹位。公報送來了，我每壹份都簽收，壹份不少。聽壹堂就好。",
+      "done": "上完了？往外多記的那壹筆，我沒簽，也沒人來問。"
+    },
+    {
+      "id": "d3f",
+      "kind": "stockLook",
+      "giver": "clerk",
+      "says": "集團股你看壹眼，我不念數字。公報送到的日子，小帳我早點闔上。",
+      "done": "看完了？小帳旁邊那行，字還是比我的小。",
+      "reward": {
+        "mood": 1
+      }
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "還在數的牆",
+    "intro": "這排畫掛在 B1 樓梯轉角：壹面牆的正字、壹枚空心的圓章，和壹杯聖代。",
+    "works": [
+      {
+        "id": "s3a",
+        "frame": "dark",
+        "fx": [],
+        "title": "最新壹組",
+        "lines": [
+          "正字畫到肩膀那麼高，地上沒有腳印。",
+          "最後壹筆還沒乾，少壹畫。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#15171d'/>",
+          "<rect x='20' y='30' width='200' height='230' fill='#23252d' stroke='#3b3e49'/>",
+          "<g stroke='#d8d5c8' stroke-width='3' stroke-linecap='round'><path d='M40 70v30M48 70v30M56 70v30M64 70v30M36 94l34-24'/><path d='M90 70v30M98 70v30M106 70v30M114 70v30M86 94l34-24'/><path d='M140 70v30M148 70v30M156 70v30M164 70v30M136 94l34-24'/></g>",
+          "<g stroke='#d8d5c8' stroke-width='3' stroke-linecap='round'><path d='M40 130v30M48 130v30M56 130v30M64 130v30M36 154l34-24'/><path d='M90 130v30M98 130v30M106 130v30M114 130v30M86 154l34-24'/></g>",
+          "<g stroke='#7fb8e0' stroke-width='3' stroke-linecap='round'><path d='M40 190v30M48 190v30M56 190v30'/></g>",
+          "<text x='20' y='282' font-size='11' fill='#8d8a80' font-family='serif'>最新那組，墨還沒乾。</text></svg>"
+        ]
+      },
+      {
+        "id": "s3b",
+        "frame": "wood",
+        "fx": [],
+        "title": "空心的圓章",
+        "lines": [
+          "往來欄對方那壹格，章裡的字磨掉了。",
+          "每壹行都蓋同壹枚。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#241f1a'/>",
+          "<rect x='30' y='60' width='180' height='170' fill='#efe6cf' stroke='#8a7a55'/>",
+          "<g stroke='#6b5a3a' stroke-width='1.5'><line x1='30' y1='100' x2='210' y2='100'/><line x1='30' y1='140' x2='210' y2='140'/><line x1='30' y1='180' x2='210' y2='180'/><line x1='120' y1='60' x2='120' y2='230'/></g>",
+          "<g fill='none' stroke='#9a4a3a' stroke-width='3'><circle cx='165' cy='80' r='14'/><circle cx='165' cy='120' r='14'/><circle cx='165' cy='160' r='14'/><circle cx='165' cy='200' r='14'/></g>",
+          "<g fill='#3a2a22' font-family='serif' font-size='12'><text x='40' y='84'>往來</text><text x='40' y='124'>往來</text><text x='40' y='164'>往來</text><text x='40' y='204'>往來</text></g>",
+          "<text x='20' y='272' font-size='11' fill='#8d8a80' font-family='serif'>章裡的字，磨掉了。</text></svg>"
+        ]
+      },
+      {
+        "id": "s3c",
+        "frame": "plain",
+        "fx": [],
+        "title": "聖代開動日",
+        "lines": [
+          "餐車今天的聖代，疊了三層。",
+          "吃的人只有壹個，湯匙放了兩支。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#2a2230'/>",
+          "<path d='M80 120 L160 120 L140 210 L100 210 Z' fill='#e8dfe8' opacity='0.85'/>",
+          "<ellipse cx='120' cy='110' rx='42' ry='16' fill='#f0d6e0'/><ellipse cx='120' cy='88' rx='30' ry='14' fill='#e6c9a0'/><circle cx='120' cy='68' r='8' fill='#b04a4a'/>",
+          "<rect x='116' y='210' width='8' height='40' fill='#cfcabd'/><rect x='90' y='250' width='60' height='6' fill='#cfcabd'/>",
+          "<line x1='175' y1='150' x2='205' y2='230' stroke='#d9c27a' stroke-width='3'/><line x1='185' y1='145' x2='215' y2='225' stroke='#d9c27a' stroke-width='3'/>",
+          "<text x='20' y='282' font-size='11' fill='#8d8a80' font-family='serif'>兩支湯匙，壹個人。</text></svg>"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "livewall",
+      "floor": 1,
+      "line": "w48-plates",
+      "clue": "c-live-tally",
+      "title": "還在數的牆",
+      "hint": "去 B1 往下走的那面牆，看最上面的正字",
+      "intro": "B1 往下走的那面牆，壹直畫著壹排排正字。今天你走近，發現它不像紀錄，像還沒收筆。",
+      "lines": [
+        "最上面那組正字，畫到站著的人的肩膀那麼高。地上沒有腳印。",
+        "最新那組是今天才畫的，墨還沒乾。數的是今天下樓的人，少壹畫。",
+        "可是今天下樓的每壹個人，你都看見了。"
+      ],
+      "mood": null,
+      "color": "黑",
+      "choices": [
+        {
+          "label": "數壹數最新那組有幾畫",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "今天下樓的人你壹個壹個對過，正字上的畫剛好少壹畫。你回頭數人，人數是對的。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你數到壹半，壹個人從你身邊走過，你沒看清是誰，筆畫也跟著糊了。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把手貼上最新那壹畫",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "墨已經乾了，是涼的。你把手收回來，手心壹點顏色也沒沾到。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "墨是溫的。你的手心貼著它的時候，壹畫剛好補上，跟你的脈搏壹樣快。",
+            "san": "1D3"
+          }
+        },
+        {
+          "label": "先在牆下站壹會",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你站了壹會。牆上沒有再多壹畫，可是你覺得自己被數進去了。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ],
+  "market": [
+    {
+      "title": "選舉公報送到，簽收欄多壹格",
+      "line": "公報今天分送到各攤，簽收欄都多出壹格，攤主說簽的時候壹個也沒少。",
+      "tone": "flat",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "綠眼顯卡把人數寫在門口",
+      "line": "綠眼顯卡把今天進出的人數寫在門口，寫到第二行就不寫了。",
+      "tone": "up",
+      "ref": [
+        "greeneye"
+      ]
+    },
+    {
+      "title": "巨浪代工廠改用兩個人對帳",
+      "line": "巨浪代工廠改成兩個人對箱子，說壹個人數會漏，兩個人漏的又不壹樣。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官桌上的往來單，對方欄蓋著壹枚空心的圓章。他說章是舊的，不是他蓋的。"
+  }
+}
