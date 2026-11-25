@@ -5,6 +5,86 @@
       "collectionGroup": "saves",
       "fieldPath": "data",
       "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "ser",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "days",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "R",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "A",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "prevReal",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "lag",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "stale",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksUs",
+      "fieldPath": "log",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "ser",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "days",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "R",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "A",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "prevReal",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "lag",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "stale",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "stocksTw",
+      "fieldPath": "log",
+      "indexes": []
     }
   ]
 }
