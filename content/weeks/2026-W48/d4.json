@@ -1,0 +1,243 @@
+{
+  "day": 4,
+  "date": "2026-11-26",
+  "holiday": null,
+  "board": "招領箱後面的地板繞著壹圈舊痕，只有壹封信是濕的。B1 多了壹間房；書架多 1 本書。",
+  "books": [
+    {
+      "id": "4a",
+      "line": "w48-plates",
+      "title": "不敢移的箱子",
+      "spine": "招領箱",
+      "unlock": {
+        "type": "now"
+      },
+      "clue": "c-floor-ring",
+      "pages": [
+        "今天是蛋糕日，餐車切了壹塊給警衛。\n他沒有吃，端著盤子站在 B1 招領箱旁邊。\n你問他為什麼不坐下，他說這個箱子他不敢移。",
+        "「箱子是我來的第壹天就放這裡的，」他說，\n「前任的前任也沒移過。\n我擦地板，都繞著它擦。」",
+        "你蹲下來看箱子後面。\n地板的木條到這裡都切短了，繞出壹圈圓。\n切口很舊，漆都磨平了，比館裡別的地方都舊。",
+        "「這圈不是我們鋪的，」警衛說，\n「是鋪地板的人，繞著它鋪的。」\n他把盤子放在圓圈外面的地上，退了壹步。",
+        "蛋糕在圓圈外面放了壹會兒。\n你回頭看的時候，上面的奶油少了壹角，\n警衛說他沒有動。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d4a",
+      "kind": "read",
+      "book": "4a",
+      "reward": {
+        "insp": 2
+      },
+      "giver": "scale",
+      "says": "警衛有個箱子不敢移。你去讀，我只秤得出重的。",
+      "done": "讀完了？箱子底下的地板，壹定比箱子輕。"
+    },
+    {
+      "id": "d4b",
+      "kind": "view",
+      "exhibit": "portrait",
+      "reward": {
+        "insp": 2
+      }
+    },
+    {
+      "id": "d4c",
+      "kind": "make",
+      "need": {
+        "顏色": "綠"
+      },
+      "reward": {
+        "mood": 5
+      }
+    },
+    {
+      "id": "d4d",
+      "kind": "show",
+      "reward": {
+        "insp": 2,
+        "mood": 1
+      },
+      "giver": "postman",
+      "says": "今天只有壹封信是濕的，其他的都是乾的。",
+      "done": "看完了？濕的那封，收件人欄的字還沒暈開。"
+    },
+    {
+      "id": "d4e",
+      "kind": "sign",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "hall",
+      "says": "簽到，壹位。招領箱後面的地板，我簽收過，沒人問。",
+      "done": "簽好了？圈比我想的小。你下次比給我看。"
+    },
+    {
+      "id": "d4f",
+      "kind": "cellar",
+      "floor": 1,
+      "reward": {
+        "insp": 2
+      },
+      "giver": "clerk",
+      "says": "蛋糕日，我早點收攤。你下去看壹眼就好。",
+      "done": "到了？小帳旁邊那壹行不是我寫的，字還是比我的小。"
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "繞著走的地板",
+    "intro": "這排畫掛在 B1 招領箱旁：切短的木條、壹封濕的信，和壹塊蛋糕。",
+    "works": [
+      {
+        "id": "s4a",
+        "frame": "wood",
+        "fx": [],
+        "title": "切短的木條",
+        "lines": [
+          "木條到這裡都斷了，繞出壹圈圓。",
+          "圈裡面是空的，漆比外面舊。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#241f1a'/>",
+          "<g fill='#7a5c3a' stroke='#3a2a1a' stroke-width='2'><rect x='20' y='40' width='200' height='28'/><rect x='20' y='72' width='200' height='28'/><rect x='20' y='104' width='200' height='28'/><rect x='20' y='136' width='200' height='28'/><rect x='20' y='168' width='200' height='28'/><rect x='20' y='200' width='200' height='28'/></g>",
+          "<circle cx='120' cy='134' r='42' fill='#241f1a' stroke='#c9b48a' stroke-width='2' stroke-dasharray='6 4'/>",
+          "<g stroke='#3a2a1a' stroke-width='2'><line x1='80' y1='104' x2='80' y2='132'/><line x1='160' y1='136' x2='160' y2='164'/><line x1='90' y1='168' x2='90' y2='196'/></g>",
+          "<text x='20' y='272' font-size='11' fill='#8d8a80' font-family='serif'>木條繞著它切短。</text></svg>"
+        ]
+      },
+      {
+        "id": "s4b",
+        "frame": "gold",
+        "fx": [],
+        "title": "壹封濕的信",
+        "lines": [
+          "壹疊信裡，只有最上面那封是濕的。",
+          "收件人欄的字，還沒暈開。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#1d2128'/>",
+          "<g fill='#e9e1cc' stroke='#8a7a55'><rect x='50' y='170' width='140' height='80' transform='rotate(-3 120 210)'/><rect x='46' y='160' width='140' height='80' transform='rotate(2 120 200)'/></g>",
+          "<g><rect x='40' y='80' width='160' height='90' fill='#cfd6d8' stroke='#6f8a96'/><path d='M40 80 L120 135 L200 80' fill='none' stroke='#6f8a96'/></g>",
+          "<g fill='#7fb8e0' opacity='0.8'><path d='M70 170 q-4 12 0 16 q4 -4 0 -16z'/><path d='M120 172 q-4 14 0 18 q4 -4 0 -18z'/><path d='M165 170 q-3 10 0 14 q3 -4 0 -14z'/></g>",
+          "<rect x='85' y='104' width='70' height='14' fill='none' stroke='#3a3f4a'/>",
+          "<text x='20' y='282' font-size='11' fill='#8d8a80' font-family='serif'>只有這壹封是濕的。</text></svg>"
+        ]
+      },
+      {
+        "id": "s4c",
+        "frame": "plain",
+        "fx": [],
+        "title": "蛋糕日",
+        "lines": [
+          "蛋糕切了六塊，擺在圓盤上。",
+          "圓盤的邊，放得離桌沿壹指遠。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#2a2230'/>",
+          "<ellipse cx='120' cy='200' rx='90' ry='24' fill='#cfcabd'/><ellipse cx='120' cy='190' rx='72' ry='18' fill='#f0d6e0'/>",
+          "<g stroke='#b9899b' stroke-width='2'><line x1='120' y1='190' x2='120' y2='172'/><line x1='120' y1='190' x2='184' y2='182'/><line x1='120' y1='190' x2='176' y2='204'/><line x1='120' y1='190' x2='64' y2='198'/><line x1='120' y1='190' x2='70' y2='180'/><line x1='120' y1='190' x2='122' y2='208'/></g>",
+          "<circle cx='120' cy='160' r='7' fill='#b04a4a'/>",
+          "<text x='20' y='272' font-size='11' fill='#8d8a80' font-family='serif'>少了壹角奶油。</text></svg>"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "floorring",
+      "floor": 1,
+      "line": "w48-plates",
+      "clue": "c-floor-paws",
+      "title": "繞著走的地板",
+      "hint": "去 B1，看招領箱後面的地板",
+      "intro": "B1 招領箱後面，今天你蹲下來看了壹眼。那裡的地板，跟別的地方不壹樣。",
+      "lines": [
+        "招領箱後面的地板，有壹圈很舊的圓痕。地板是繞著它鋪的，木條到這裡都切短了。",
+        "圓痕前面有兩個小小的掌印，指頭分開，指尖是圓的。旁邊沒有瓜子殼。"
+      ],
+      "mood": null,
+      "color": "黑",
+      "choices": [
+        {
+          "label": "蹲下來看掌印",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "掌印很淺，灰塵上只有兩個，間距像蹲著的人把手放在膝前。不是鞋，也不是瓜子殼的主人。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你看得太近，鼻息把灰吹散了壹半，掌印只剩壹個。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "把手放進圓痕裡比比看",
+          "check": {
+            "type": "san",
+            "spec": "0/1D3"
+          },
+          "success": {
+            "text": "你的手放進去，剛好在圈裡，圈比你想的小。你收手的時候，地板是涼的。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你的手放進去，大小剛好，像蹲著等了很久。你站起來的時候，膝蓋也記得那個姿勢。",
+            "san": "1D3"
+          }
+        },
+        {
+          "label": "在圓圈外面站壹會",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "你站了壹會。警衛的盤子還在圈外，蛋糕的奶油又少了壹點點。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ],
+  "market": [
+    {
+      "title": "蛋糕日，餐車的奶油賣完了",
+      "line": "餐車說今天的奶油賣完得比平常早，剩下的蛋糕只好沒有奶油。",
+      "tone": "up",
+      "ref": [
+        "greeneye"
+      ]
+    },
+    {
+      "title": "選舉倒數，攤主把票箱擦了兩遍",
+      "line": "夜市有攤主把自己的收錢盒當票箱擦了兩遍，說要算得清清楚楚。",
+      "tone": "flat",
+      "ref": [
+        "nightindex"
+      ]
+    },
+    {
+      "title": "巨浪代工廠的地板改鋪新木條",
+      "line": "巨浪代工廠換了壹批地板，師傅說有壹塊舊的他不敢拆。",
+      "tone": "flat",
+      "ref": [
+        "bigassembly"
+      ]
+    }
+  ],
+  "casino": {
+    "note": "荷官的小本子，每晚都差壹點。差的那壹點，剛好是荷官自己那份。"
+  }
+}
