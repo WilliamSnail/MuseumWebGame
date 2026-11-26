@@ -600,7 +600,7 @@ function levTrade(v, S, cur) {
   const L = S.lev, f = form(), halt = stockHalt(S, cur);
   const RT = (L.rates && L.rates[cur.market]) || { fee: L.fee, interest: L.interest, borrow: L.borrow, tax: 0 }; // 這個市場的費用（決定 0136）：手續費、利息、借券費、當沖證交稅
   const byM = L.byMarket && L.byMarket[cur.market], capCredit = S.credit && S.credit.maxLev != null ? S.credit.maxLev : Infinity, maxLev = Math.min(byM != null ? byM : L.max, capCredit), shownLev = Math.max(maxLev, Math.min(L.max || 0, 10)), lev = Math.max(1, Math.min(f.lev, maxLev)), long = f.dir === "long"; // 各市場最高幾倍（美股 0＝不能開，寫 usWhy）
-  const roomMargin = S.credit ? Math.max(0, Math.floor((S.credit.posLimit - S.credit.posUsed) / Math.max(1, lev))) : Infinity;
+  const roomMargin = S.credit ? Math.max(0, Math.floor(S.credit.posLimit - S.credit.posUsed)) : Infinity; // 本金上限還剩多少（決定 0157）
   const maxMargin = Math.max(0, Math.min(v.cash, roomMargin));
   const phone = window.innerWidth < 761 || window.innerHeight < 501;
   const sum = h("details", { class: "bank-sum", open: phone ? null : "" });
@@ -631,7 +631,7 @@ function levTrade(v, S, cur) {
       ["強制平倉價（約）", fp(liq), "warn"], stopP ? ["停損價", fp(stopP)] : null, takeP ? ["停利價", fp(takeP)] : null,
       ["今天一定平倉", cur.market === "tw" ? "台股 13:30 前" : "23:30 前"]], long ? "確認開多單" : "確認開空單", doOpen);
   };
-  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : (L.lagWhy && L.lagWhy[cur.id]) ? L.lagWhy[cur.id] : halt ? haltText(S, cur) : L.opensLeft != null && L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "部位上限到了，先平掉壹些。") : "";
+  const why = maxLev <= 0 ? (L.usWhy || "這個市場現在不能開槓桿。") : (L.lagWhy && L.lagWhy[cur.id]) ? L.lagWhy[cur.id] : halt ? haltText(S, cur) : L.opensLeft != null && L.opensLeft < 1 ? `今天開倉的筆數用完了（壹天最多 ${L.opensMax || 3} 筆），明天再來。` : maxMargin < 100000 ? (v.cash < 100000 ? "錢不夠付保證金。" : "本金上限到了，先平掉壹些。") : "";
   return [
     seg([["long", "做多 ▲"], ["short", "放空 ▼"]], f.dir, k => { f.dir = k; rerender(); }),
     h("div", { class: "bank-fld" }, h("span", { class: "bank-fl" }, "倍數"), chips(Array.from({ length: Math.max(0, Math.min(10, Math.floor(shownLev))) }, (_, i) => i + 1), lev, n => { f.lev = n; rerender(); }, n => `${n}×`, n => (n > maxLev ? (S.credit && S.credit.nextText) || "信用等級還沒解鎖這個倍數" : ""))),
@@ -643,7 +643,7 @@ function levTrade(v, S, cur) {
       h("label", { class: "bank-check" }, h("input", { type: "checkbox", checked: f.takeOn ? "" : null, onChange: e => { f.takeOn = e.target.checked; rerender(); } }), "順便設停利"), f.takeOn ? numField("賺", f.take, x => { f.take = x || 0; calc(); }, { unit: "% 就賣", min: 0.1, step: 0.5 }) : null),
     h("div", { class: "bank-acts one" }, btn(`${long ? "開多單" : "開空單"} ${lev}×`, open, "primary big bank-btn gold", { disabled: why || ocoBad || m0 <= 0 ? true : null })),
     why || ocoBad ? h("p", { class: "bank-why" }, why || ocoBad) : null,
-    S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・部位 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
+    S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・本金 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
     S.credit && S.credit.nextText ? h("p", { class: "bank-meta sm bank-nextunlock" }, S.credit.nextText) : null,
     L.owedText || L.owed > 0 ? h("p", { class: "bank-stale" }, h("b", null, "欠條　"), L.owedText || `今天賺的超過館方當天能賠的上限，還有 ${fmt(L.owed)} 記成欠條，明天補發。`) : null,
     h("p", { class: "bank-meta sm" }, `${L.opensLeft != null ? `今天還能開 ${L.opensLeft} 筆。` : ""}當天一定平倉：${cur.market === "tw" ? "台股 13:30" : "23:30"} 前沒平，系統會替你平。`)];
@@ -1061,14 +1061,14 @@ function side(v) {
     panel("我的帳戶", "", acctBody(v)),
     v.stocks && v.stocks.credit ? creditPanel(v.stocks.credit) : null); // 11-15：「今日新聞」拿掉（跟財報卡裡的新聞是同壹句）
 }
-// 信用等級（只有自己看得到，不排行）：準時還款、定存到期換點數，每 5 點 1 級；等級放大槓桿部位上限
+// 信用等級（只有自己看得到，不排行）：準時還款、定存到期、開槓桿換點數，每 5 點 1 級；等級放大槓桿的本金上限（決定 0157）
 function creditPanel(c) {
   return panel("信用", "",
     // 等級放大成壹枚金色徽章（翊文 11-14：「信用的等級數字可以明顯一點嗎」）
     h("div", { class: "bank-lv" }, h("span", { class: "bank-lv-seal", "aria-hidden": "true" }, h("b", null, String(c.level)), h("i", null, "級")),
       h("span", { class: "bank-lv-t" }, h("b", null, `信用 ${c.level} 級`), c.name ? h("em", null, c.name) : null, h("small", null, `信用點 ${c.pts}`))),
     h("p", { class: "bank-meta sm" }, c.nextText || (c.next > 0 ? `再 ${c.next} 點升 ${c.level + 1} 級（信用點 ${c.pts}）。` : `已經是最高級（信用點 ${c.pts}）。`), c.nextText ? `（信用點 ${c.pts}）` : ""),
-    h("p", { class: "bank-meta sm" }, `槓桿最高 ${c.maxLev}×・部位 ${fmt(Math.round(c.posUsed / 10000))} 萬／${fmt(Math.round(c.posLimit / 10000))} 萬`),
+    h("p", { class: "bank-meta sm" }, `槓桿最高 ${c.maxLev}×・本金 ${fmt(Math.round(c.posUsed / 10000))} 萬／${fmt(Math.round(c.posLimit / 10000))} 萬`),
     c.why ? h("p", { class: "bank-hint" }, c.why) : null);
 }
 function ticker(v, dup) { // dup：在股票頁籤，行情表已經有了，只有手機直拿才留這條（拿來換股）
@@ -1142,9 +1142,9 @@ function helpSections(v) {
     { id: "lev", name: "槓桿", blocks: [
       ["開之前", [
         `倍數看信用等級：${lev}。信用在財報頁看。`,
-        `信用升級：每 ${L.credit.ptsPerLevel} 點升一級，一天最多加 ${L.credit.dayGain} 點，借款逾期一次扣 ${L.credit.lateLoss} 點。`,
+        `信用升級：每 ${L.credit.ptsPerLevel} 點升壹級；還款準時、定存或館債到期那天加 ${L.credit.dayGain} 點，每開壹筆本金 ${casNum(L.credit.openMin)} 以上的槓桿加 ${L.credit.openGain} 點，壹天合計最多 ${L.credit.dayMax} 點（壹天最多升壹級）；借款逾期壹次扣 ${L.credit.lateLoss} 點。`,
         (L.opensDay > 0 ? `一天最多開 ${L.opensDay} 筆；` : "一天開幾筆不限；") + (L.coolMin > 0 ? `同一支平倉後要等 ${L.coolMin} 分鐘才能再開。` : "平倉後馬上可以再開。"),
-        `部位（做多加放空）上限 ${casNum(L.posLimit)}、一天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高一級再多 ${L.stepPct}%。`,
+        `放進槓桿的本金（做多加放空的保證金合計）上限 ${casNum(L.posLimit)}、壹天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高壹級再多 ${L.stepPct}%。`,
         `台股、美股行情落後超過 ${L.maxLagMin} 分鐘，暫停「新開」；已經開的、平倉、強平照常。`,
         `台股 ${twNoOpen} 起不能新開（收盤前最後五分鐘是集合競價）。`]],
       ["集團股也能開", [

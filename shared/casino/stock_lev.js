@@ -16,7 +16,7 @@
 //    壞帳（價格跳過強平價、賠超過保證金的那壹段）：沒有人付，只記 house.act.levBadDebt（次數／金額，不是錢）。
 //  強制平倉：保證金加浮動損益剩不到原本的 forcePct%（50%），在「第壹個碰到的價」平倉（跳空穿過就用跳空後的價，不是強平價）。
 //  當沖：壹律當天結束。市場收盤（台股 13:30、館內 23:30）或日子過了還沒平的，用那天最後壹個價自動平倉（casLevSweep）。
-//  信用等級：信用點（w.lev.cr.pts）÷ 5，最高 10 級；只放大部位上限和壹天淨賺上限，不改倍數和手續費。
+//  信用等級：信用點（w.lev.cr.pts）÷ 5，最高 10 級；只放大本金上限（決定 0157：以前是部位上限）和壹天淨賺上限，不改倍數和手續費。
 //
 //  價格來源 src（casLevSrc 用莊家的資料做壹個；測試可以自己給）：
 //    src.now(id)             → { px 現在的價, idx 現在是第幾個價（跟 path 同壹套編號）, open 現在能交易嗎 }
@@ -90,7 +90,7 @@ export function casLevFix(w, day) {
   S.gain = Number.isFinite(+S.gain) ? Math.floor(+S.gain) : 0;
   S.fee = lqN(S.fee);
   if (!lqBox(S.cr)) S.cr = { pts: 0, day: null, ok: null, late: null };
-  S.cr.pts = lqN(S.cr.pts); S.cr.day = lqDay(S.cr.day) ? S.cr.day : null;
+  S.cr.pts = lqN(S.cr.pts); S.cr.day = lqDay(S.cr.day) ? S.cr.day : null; if (S.cr.got !== undefined && !(lqBox(S.cr.got) && lqDay(S.cr.got.day))) delete S.cr.got;
   S.cr.ok = S.cr.ok == null ? null : lqN(S.cr.ok); S.cr.late = S.cr.late == null ? null : lqN(S.cr.late);
   S.owed = (Array.isArray(S.owed) ? S.owed : []).filter(lqBox).map(e => ({ day: lqDay(e.day) ? e.day : null, amt: lqN(e.amt) })).filter(e => e.day && e.amt > 0).sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
   S.notes = (Array.isArray(S.notes) ? S.notes : []).filter(x => typeof x === "string").slice(-8);
@@ -105,21 +105,30 @@ export function casLevHouseFix(house) {
 }
 
 // ---------- 信用等級（規劃 2.8b：用「準時」換，不是用「天天來」換） ----------
-// 信用點來源：w.loan.ok（準時還款的次數）增加 → 那天 +1；w.loan.late（逾期的次數）增加 → 每次 −3。壹天最多 +1。
+// 信用點來源：w.loan.ok（準時還款的次數）增加 → 那天 +dayGain；開壹筆本金夠大的槓桿 → +openGain；w.loan.late（逾期的次數）增加 → 每次 −3。壹天合計最多 dayMax（決定 0157）。
 // 定存到期、館債到期這兩種沒有現成的計數，由接線的人在事件發生時叫 casLevCreditAdd(w, day)（同壹天只算壹次）。
 // 第壹次碰到時把 ok、late 當作起點，之前的不補算（點數從 0 開始）。
+// 決定 0157：壹天合計最多 dayMax 點（S.cr.got 記今天加了幾點）；準時那壹類（cr.day）照舊壹天只算壹次，開槓桿每筆都算
+function lqCrGain(S, day, n) {
+  const K = lqC().credit;
+  if (!lqDay(day) || !(n > 0)) return 0;
+  if (!lqBox(S.cr.got) || S.cr.got.day !== day) S.cr.got = { day, n: 0 };
+  const add = Math.max(0, Math.min(n, (K.dayMax > 0 ? K.dayMax : n) - S.cr.got.n));
+  S.cr.got.n += add; S.cr.pts += add;
+  return add;
+}
 export function casLevCreditAdd(w, day) {
   const S = casLevFix(w), K = lqC().credit;
   if (!lqDay(day) || S.cr.day === day) return 0;
-  S.cr.day = day; S.cr.pts += K.dayGain;
-  return K.dayGain;
+  S.cr.day = day;
+  return lqCrGain(S, day, K.dayGain);
 }
 export function casLevCredit(w, day) {
   const S = w.lev, K = lqC().credit, L = lqBox(w.loan) ? w.loan : {};
   const ok = lqN(L.ok), late = lqN(L.late);
   if (S.cr.ok == null || S.cr.late == null) { S.cr.ok = ok; S.cr.late = late; return S.cr.pts; }
   if (late > S.cr.late) S.cr.pts = Math.max(0, S.cr.pts - K.lateLoss * (late - S.cr.late));
-  if (ok > S.cr.ok && lqDay(day) && S.cr.day !== day) { S.cr.day = day; S.cr.pts += K.dayGain; }
+  if (ok > S.cr.ok && lqDay(day) && S.cr.day !== day) { S.cr.day = day; lqCrGain(S, day, K.dayGain); }
   S.cr.ok = ok; S.cr.late = late;
   return S.cr.pts;
 }
@@ -240,7 +249,7 @@ function lqStopWhy(pos, ref, stop, take) {
 const lqStopText = (stop, take) => casFill(CAS_STOCK_LEV.stopSet, { stop: stop ? casPx(stop) : CAS_STOCK_LEV.unset, take: take ? casPx(take) : CAS_STOCK_LEV.unset });
 
 // ---------- 開倉 ----------
-const lqOpenPos = S => S.pos.reduce((a, p) => a + p.notional, 0);
+const lqOpenPos = S => S.pos.reduce((a, p) => a + p.margin, 0); // 開著的部位放了多少本金（保證金）合計：上限算本金，不算部位大小（決定 0157，翊文 11-26）
 const lqCostOf = (side, notional, margin, id) => {
   const fee = Math.ceil(notional * lqFeePct(id) / 100); // 手續費：算部位
   const carry = side === "long" ? Math.ceil((notional - margin) * lqRate(id, "interestPct") / 100) : Math.ceil(notional * lqRate(id, "borrowPct") / 100); // 做多：借的錢的利息；放空：借券費
@@ -288,7 +297,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (C.opensDay > 0 && opensToday >= C.opensDay) return { ok: false, reason: casFill(T.opens, { n: C.opensDay }) }; // opensDay 0＝不限（11-19 翊文取消）
   if (lqT(t) && S.last[id] && +t - S.last[id] < C.coolMin * 60000) return { ok: false, reason: casFill(T.cool, { n: Math.max(1, Math.ceil((C.coolMin * 60000 - (+t - S.last[id])) / 60000)) }) };
   const notional = stBuyCost(px, qty), margin = Math.ceil(notional / lev), level = casLevLevel(w), limit = casLevPosLimit(level), used = lqOpenPos(S);
-  if (used + notional > limit) return { ok: false, reason: casFill(T.posLimit, { limit: casNum(limit), level, used: casNum(used), add: casNum(notional) }) };
+  if (used + margin > limit) return { ok: false, reason: casFill(T.posLimit, { limit: casNum(limit), level, used: casNum(used), add: casNum(margin) }) };
   const H = mk === "in" || mk === "grp" ? casLevHouseFix(house) : null;
   if (H) {
     if (!(house.bankroll > 0)) return { ok: false, reason: T.houseBroke };
@@ -312,6 +321,7 @@ export function casLevOpen(w, house, args, day, t, src) {
   if (H) H[mk] += notional;
   casCount(house, "levOpen");
   casTradeLog(w, { d: day, t: +t || 0, id, m: mk === "in" ? "i" : mk === "grp" ? "g" : "o", a: "lo", n: qty, p: px, f: cost.total, y: side === "long" ? "l" : "s", v: lev, mk });
+  if (margin >= lqC().credit.openMin) lqCrGain(S, day, lqC().credit.openGain); // 開槓桿也累積信用（決定 0157）
   return { ok: true, pos, cost, lines: [casFill(T.openOk, { name: lqName(id), side: side === "long" ? T.long : T.short, lev, qty: casNum(qty), px: casPx(px), margin: casNum(margin), fee: casNum(cost.total), liq: casPx(casLevLiqPx(pos)) }) + (stop || take ? " " + lqStopText(stop, take) : "")] };
 }
 

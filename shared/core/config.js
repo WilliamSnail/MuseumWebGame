@@ -558,14 +558,14 @@ export const NUM = {
     //   levByCredit 信用等級對應的倍數上限 [[等級 ≥, 倍數], …]（翊文 11-14：「新手 2 倍，信用升級解鎖」；跟 maxLev 取小的，已開的部位不受影響）；
     //   interestPct 借的錢（部位 − 保證金）的利息 %，borrowPct 放空的借券費（占部位）%，手續費沿用 stock.feePct；
     //   opensDay 壹天最多開幾筆（0＝不限，11-19）、coolMin 同壹檔平倉後幾分鐘內不能再開；
-    //   posLimit 部位（做多＋放空合計）上限、profitCap 壹天當沖淨賺最多算多少，都乘 (1 ＋ stepPct% × 信用等級)；
+    //   posLimit 本金上限：開著的槓桿、放空部位放進去的保證金合計（決定 0157，11-26 翊文：以前算部位大小，越高倍能放的本金越少）、profitCap 壹天當沖淨賺最多算多少，都乘 (1 ＋ stepPct% × 信用等級)；
     //   houseExposePct／houseFloor 莊家接館內股槓桿＋放空部位的上限（max(莊家的錢 × %, 保底)，莊家 ≤ 0 不接）；
-    //   credit：ptsPerLevel 幾點升壹級、maxLevel 最高幾級、dayGain 壹天最多加幾點、lateLoss 借款逾期壹次扣幾點。
+    //   credit：ptsPerLevel 幾點升壹級、maxLevel 最高幾級、dayGain 準時還款那天加幾點、openGain 開壹筆槓桿加幾點（本金 ≥ openMin）、dayMax 壹天合計最多加幾點、lateLoss 借款逾期壹次扣幾點。
     //   費用照真實（決定 0136，翊文 11-20 選 C）：館外台股、美股的手續費、利息、借券費、當沖稅照 byMk（沒寫的市場＝館內股、集團股，照上面的 interestPct／borrowPct 和 stock.feePct）；
     //   byMk.{tw,us}：interestPct 做多借的錢每天的利息 %、borrowPct 放空的借券費 %、taxPct 平倉時課的當沖證交稅 %（台股 0.15，進政府帳；美股 0）
     stockLev: { byMk: { tw: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0.15 }, us: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0 } }, maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 0, coolMin: 0,
-      posLimit: 20000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
-      credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 1, lateLoss: 3 } },
+      posLimit: 100000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
+      credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 2, openGain: 1, openMin: 1000000, dayMax: 5, lateLoss: 3 } }, // 決定 0157（翊文 11-26：信用好做壹點、開槓桿也累積、壹天可以升壹級）：還款準時／定存、館債到期那天 +dayGain；每開壹筆本金 ≥ openMin 的槓桿 +openGain；壹天合計最多 dayMax（＝ptsPerLevel，所以壹天最多升壹級）
     // 館內五家店的股票（11-14，shared/casino/stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
     //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
     //   minDays 有效日不到幾天不調、avgDays 平均前幾個有效日、histDays 留幾天的人數；盤中：from 開盤（分鐘，300 ＝ 05:00）、step 每幾分鐘一個價、ticks 一天幾個價（05:00～23:30 ＝ 75）、
