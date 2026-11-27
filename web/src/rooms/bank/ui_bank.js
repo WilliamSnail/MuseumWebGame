@@ -613,7 +613,7 @@ function levTrade(v, S, cur) {
       ["強制平倉價（約）", fp(liq), "warn"], [`保證金剩 ${Math.round(L.force * 100)}% 就平倉`, "", "note"], stopP() ? ["停損價", fp(stopP())] : null, takeP() ? ["停利價", fp(takeP())] : null]; },
     goText: () => (why ? "現在不能開" : `${long ? "開多單" : "開空單"} ${lev}×`), onGo: open });
   return [
-    seg(subTabs([["long", "做多 ▲", "看漲才賺"], ["short", "放空 ▼", "看跌才賺"]]), f.dir, k => { f.dir = k; rerender(); }, "side two"),
+    seg([["long", "做多"], ["short", "放空"]], f.dir, k => { f.dir = k; rerender(); }, "side"),
     pickRow("倍數", Array.from({ length: Math.max(0, Math.min(10, Math.floor(shownLev))) }, (_, i) => [i + 1, i + 1 > maxLev ? (S.credit && S.credit.nextText) || "信用等級還沒解鎖這個倍數" : ""]), lev, n => { f.lev = n; rerender(); }, n => `${n}×`),
     ticket,
     S.credit ? h("p", { class: "bank-meta sm bank-creditline" }, `信用 ${S.credit.level} 級・最高 ${S.credit.maxLev}×・本金 ${fmt(Math.round(S.credit.posUsed / 10000))} 萬／${fmt(Math.round(S.credit.posLimit / 10000))} 萬`) : null,
