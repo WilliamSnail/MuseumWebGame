@@ -780,9 +780,6 @@ body[data-screen="bank"] #room { background: none; }
 .bank-onescreen .btn.bk-go:disabled { opacity: .45; }
 @media (max-width: 760px) { .bank-segs.kind.bk-kinds .bank-seg b { font-size: 1rem; } }
 /* 槓桿、掛單也用下單單（11-27 翊文：「要，一起改」） */
-.bank-segs.side.two .bank-seg { flex-direction: column; display: flex; align-items: center; justify-content: center; gap: 1px; min-height: 58px; letter-spacing: 0; }
-.bank-segs.side.two .bank-seg:nth-child(1)::before, .bank-segs.side.two .bank-seg:nth-child(2)::before { content: none; }
-.bank-segs.side.two .bank-seg small { font-size: .6875rem; font-weight: 500; opacity: .85; }
 .bank-segs.kind.bk-kinds.bk-order .bank-seg b { font-size: 1rem; }
 .bk-label { margin: 2px 0 -4px; font-size: .875rem; font-weight: 700; color: #E9D9A6; }
 .bk-sec { display: grid; gap: 8px; margin-top: 10px; }
