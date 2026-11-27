@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.cultureGiftMore = []; /* 決定 0143 的多筆資助另外在 gift_multi.test 測 */ G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
+const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.pool.on = true; /* 決定 0161 先關了；這份測機制 */ G.NUM.casino.cultureGiftMore = []; /* 決定 0143 的多筆資助另外在 gift_multi.test 測 */ G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-19", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const mk = (G, base = 1000000000) => { const h = G.casHouseFix(G.casHouseNew(), D0).house; h.pool = { uid: "u1", base, e: 0, lv: G.NUM.casino.pool.start, day: null, hold: 0, night: null, hits: 0, last: null, trace: [] }; return h; };
 // 決定 0142：水位看「拿到款後累計賺的」：每天日報淨值比上壹次多的部分加進 e（虧的當 0、不扣），目標 ＝ clamp(start ＋ (1−start) × e ÷ earnT，min，1)
@@ -54,6 +54,13 @@ T("step 改了以後第壹次日報補算以前的日子（決定 0155）：可�
   G.casPoolDay(h, add(D0, 5), 1000000000 + C.earnT); assert.strictEqual(h.pool.sv, C.step);
   assert.strictEqual(h.pool.lv, Math.min(1, Math.round((0.625 + C.step * 5) * 10000) / 10000), "補算：壹次動到 " + h.pool.lv);
   h.pool.lv = C.start; G.casPoolDay(h, add(D0, 6), 1000000000 + C.earnT); assert.strictEqual(h.pool.lv, Math.round((C.start + C.step) * 10000) / 10000, "之後壹天只動 step");
+});
+T("關掉（決定 0161）：on false 時水位不動、不給畫面和公開的 JSON；正式設定是關的", G => {
+  const house = { pool: { uid: "u1", who: { u1: { base: 100, e: 0 } }, base: 100, e: 0, lv: 0.6, day: null, hold: 0, night: null, hits: 1, last: null, trace: [] } };
+  G.NUM.casino.pool.on = false;
+  assert.strictEqual(G.casPoolDay(house, "2026-11-28", { u1: 999999999 }), false); assert.strictEqual(house.pool.lv, 0.6);
+  assert.strictEqual(G.casPoolView(house, "2026-11-28", 0), null);
+  assert.strictEqual(require("../load_shared.cjs").load().NUM.casino.pool.on, false, "正式設定先關著");
 });
 console.log(`${pass} passed, ${fail} failed（館門口池子的水位）`);
 process.exit(fail ? 1 : 0);

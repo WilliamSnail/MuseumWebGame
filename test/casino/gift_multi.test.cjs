@@ -1,7 +1,7 @@
 // 決定 0143：Jerry 也收文化部 10 億、Yuga 再收 5 億；水位看兩人合計賺的；撥款不算賺的；兩人各收壹隻名字
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
-const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; G.NUM.casino.govSweep.on = false;
+const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.pool.on = true; /* 決定 0161 先關了；這份測機制 */ G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; G.NUM.casino.govSweep.on = false;
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-21", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);

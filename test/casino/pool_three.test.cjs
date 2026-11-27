@@ -2,7 +2,7 @@
 const assert = require("assert");
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;
-const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; G.NUM.casino.govSweep.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
+const T = (name, fn) => { const G = load({ __realMoney: true }); G.NUM.casino.grants = []; G.NUM.casino.pool.on = true; /* 決定 0161 先關了；這份測機制 */ G.NUM.casino.houseLoan.fix.on = false; G.NUM.casino.bankSplit.on = false; G.NUM.casino.govSweep.on = false; try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-21", add = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
 const setup = G => {
   const h = G.casHouseFix(G.casHouseNew(), D0).house, w = () => G.casWalletFix(G.casWalletNew(), D0), wy = w(), wj = w(), wm = w(); wm.chips = 500000000;
