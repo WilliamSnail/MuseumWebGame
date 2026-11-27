@@ -419,7 +419,19 @@ body[data-screen="bank"] #room { background: none; }
 .bank-help-sec h3 { margin: 0 0 4px; font-size: var(--type-body, .875rem); color: var(--ink-accent, #8E2A24); }
 .bank-help-sec ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: var(--type-body, .875rem); line-height: 1.5; }
 .bank-help .bank-acts { flex: none; margin-top: 0; }
+/* 說明頁的信用等級表（bank_help_lev.js，11-27） */
+.bank-help-tbl { width: 100%; border-collapse: collapse; font-size: var(--type-small, .75rem); font-variant-numeric: tabular-nums; }
+.bank-help-tbl th, .bank-help-tbl td { padding: 2px 6px; border-bottom: 1px solid rgba(168, 138, 82, .35); text-align: right; white-space: nowrap; }
+.bank-help-tbl th:first-child, .bank-help-tbl td:first-child { text-align: left; }
+.bank-help-tbl th { color: var(--ink-accent, #8E2A24); font-weight: 700; }
+.bank-help-sec li:has(> .bank-help-tbl) { list-style: none; }
 @media (max-width: 760px) { .bank-helpbtn { min-height: 34px; padding: 0 10px; font-size: .75rem; } .bank-help-q { width: 16px; height: 16px; font-size: .6875rem; } }
+/* 手機直拿：「規則與小提示」放到標題牌右邊同壹行，不再自己佔壹整行（翊文 11-27） */
+@media (max-width: 760px) and (orientation: portrait) {
+  .screen.bank-onescreen > .room-head { align-items: center; } /* .screen 加重，蓋過 onescreen.css 的「佔滿壹行」 */
+  .screen.bank-onescreen > .room-head .head-tools { order: 1; flex: 0 1 auto; margin: 0 0 0 auto; min-width: 0; }
+  .screen.bank-onescreen > .room-head .rh-row { order: 2; }
+}
 @media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help { max-height: 94svh; padding: 10px 14px; } .bank-help-chip { min-height: 30px; } .bank-help .bank-acts .bank-btn { min-height: 34px; } .bank-helpbtn { min-height: 30px; padding: 0 8px; font-size: .75rem; } }
 @media (max-height: 500px) and (orientation: landscape) { .mini-card.bank-help > .sub { display: none; } .mini-card.bank-help > h2 { font-size: 1rem; margin: 0; } .bank-help-sec ul { font-size: var(--type-small, .75rem); line-height: 1.4; } }
 

@@ -19,7 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; // 零碎股照金額買賣（決定 0160）
+import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; import { levTable } from "./bank_help_lev.js"; // 零碎股照金額買賣（決定 0160）
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -1144,7 +1144,7 @@ function helpSections(v) {
         `倍數看信用等級：${lev}。信用在財報頁看。`,
         `信用升級：每 ${L.credit.ptsPerLevel} 點升壹級；還款準時、定存或館債到期那天加 ${L.credit.dayGain} 點，每開壹筆本金 ${casNum(L.credit.openMin)} 以上的槓桿加 ${L.credit.openGain} 點，壹天合計最多 ${L.credit.dayMax} 點（壹天最多升壹級）；借款逾期壹次扣 ${L.credit.lateLoss} 點。`,
         (L.opensDay > 0 ? `一天最多開 ${L.opensDay} 筆；` : "一天開幾筆不限；") + (L.coolMin > 0 ? `同一支平倉後要等 ${L.coolMin} 分鐘才能再開。` : "平倉後馬上可以再開。"),
-        `放進槓桿的本金（做多加放空的保證金合計）上限 ${casNum(L.posLimit)}、壹天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高壹級再多 ${L.stepPct}%。`,
+        `放進槓桿的本金（做多加放空的保證金合計）上限 ${casNum(L.posLimit)}、壹天當沖淨賺最多算 ${casNum(L.profitCap)}，信用每高壹級再多 ${L.stepPct}%。每壹級的倍數和上限：`, levTable(L),
         `台股、美股行情落後超過 ${L.maxLagMin} 分鐘，暫停「新開」；已經開的、平倉、強平照常。`,
         `台股 ${twNoOpen} 起不能新開（收盤前最後五分鐘是集合競價）。`]],
       ["集團股也能開", [
