@@ -1,48 +1,58 @@
-// 下單區的排版（11-27 翊文：「這個感覺有點都是文字不太好辨識」、試幾種排版）。
-// unitRow／quickHead 是現在這版（分層上色）用的小零件；ticketBox 是另外兩種試排：b＝下單單（先填數量，壹顆大按鈕）、c＝拉桿（拖比例，壹顆大按鈕）。
-// 試排只在開發時用網址 ?tl=b、?tl=c 看；翊文挑定之後留壹種、刪掉其他。不 import ui_bank.js（不准繞圈），要用的東西由 ui_bank.js 傳進來。
+// 股票下單區（11-27 翊文：「這個感覺有點都是文字不太好辨識」；三種排版挑了 B「下單單」）：
+// 先填數量（−／＋、快捷鍵），下面直接看要付或拿回多少，最後按壹顆大按鈕（紅買綠賣）才跳確認。按股數、按金額（零股）、集團股都用這壹個。
+// 不 import ui_bank.js（不准繞圈）：算錢、確認、送出由呼叫的檔傳進來。
 import { btn, h } from "../../core/ui_core.js";
-
-export const unitRow = el => h("div", { class: "bank-unit" }, h("span", null, "下單方式"), el);
-export const quickHead = side => h("p", { class: "bank-qh" }, side === "buy" ? "快速買（按了先跳確認）" : "快速賣（按了先跳確認）");
-export const ticketKind = () => (import.meta.env.DEV ? new URLSearchParams(location.search).get("tl") : null);
 
 const fmt = n => Number(n).toLocaleString("en-US");
 
-// o = { kind: "b"|"c", side, max, price（顯示用的字）, sumOf(n), ask(n), state }
+// 交易方式分頁（現股／槓桿・放空／掛單）：每顆下面壹行小字說它做什麼，看得出是三顆可以按的鈕
+const KIND_SUB = { spot: "直接買賣", lev: "借錢放大・看跌", order: "到價才成交" };
+export const tradeTabs = list => list.map(([k, t, dis]) => [k, [h("b", null, t), h("small", null, KIND_SUB[k] || "")], dis]);
+// 按股數／按金額（只有館外股：台股、美股）
+export const unitRow = el => h("div", { class: "bank-unit" }, el);
+export const UNIT_TABS = [["n", [h("b", null, "按股數"), h("small", null, "買幾股")]], ["amt", [h("b", null, "按金額"), h("small", null, "不到壹股也能買")]]];
+
+// o = { side, state（{ v, all }，同壹支股、同壹種下法沿用打過的數字）, unit, max, step, start（第壹次的數字）, chips: [[字, 數字, 是不是「全部」]], rows(n) → [[名, 值, class]], why(n) → 不能下單的原因（能下就空字串）, goText(n), onGo(n, all) }
 export function ticketBox(o) {
-  const { kind, side, max, state: st } = o, buy = side === "buy", verb = buy ? "買進" : "賣出";
-  const clamp = n => Math.max(0, Math.min(max, Math.floor(Number(n) || 0)));
-  if (st.n === "" || st.n == null) st.n = Math.min(10, max);
-  st.n = clamp(st.n);
-  const sum = h("dl", { class: "bk-sum" }), go = btn("", () => { if (st.n > 0) o.ask(st.n); }, "bk-go side-" + side);
-  const row = (k, v, cls) => h("div", { class: "bk-sum-r " + (cls || "") }, h("dt", null, k), h("dd", null, v));
-  let input = null, slider = null, big = null;
-  const paint = from => {
-    const n = st.n, x = o.sumOf(n);
-    if (input && from !== "input") input.value = String(n);
-    if (slider && from !== "slider") slider.value = String(n);
-    if (slider) slider.style.setProperty("--p", (max ? Math.round(n / max * 100) : 0) + "%");
-    if (big) big.textContent = fmt(n);
-    sum.replaceChildren(row("股價", o.price), row("手續費", n ? fmt(x.fee) : "0"), !buy && x.tax ? row("證交稅", fmt(x.tax)) : null, row(buy ? "要付" : "拿回", n ? fmt(x.total) : "0", "total"));
-    go.textContent = n ? `${verb} ${fmt(n)} 股` : buy ? "錢不夠買壹股" : "沒有可以賣的";
-    go.disabled = !n;
+  const { side, state: st, max } = o;
+  if (st.v == null) st.v = o.start || "";
+  const num = () => { const n = Number(st.v); return Number.isInteger(n) && n > 0 ? n : 0; };
+  const sum = h("dl", { class: "bk-sum" }), why = h("p", { class: "bk-why", role: "status" });
+  const go = btn("", () => { const n = num(); if (n && !o.why(n)) o.onGo(n, !!st.all); }, "bk-go side-" + side);
+  const input = h("input", { type: "number", inputmode: "numeric", class: "bk-big-in", min: "1", step: "1", placeholder: "0", "aria-label": o.unit === "股" ? "股數" : "金額",
+    onInput: e => { st.v = e.target.value === "" ? "" : Math.floor(Number(e.target.value)); st.all = false; paint(true); } });
+  const paint = typing => {
+    if (!typing) input.value = st.v === "" ? "" : String(st.v);
+    const n = num(), bad = o.why(n);
+    why.textContent = bad; why.hidden = !bad;
+    sum.replaceChildren(...o.rows(bad ? 0 : n).filter(Boolean).map(([k, v, cls]) => h("div", { class: "bk-sum-r " + (cls || "") }, h("dt", null, k), h("dd", null, v))));
+    go.textContent = o.goText(bad ? 0 : n);
+    go.disabled = !n || !!bad || max < 1;
   };
-  const set = (n, from) => { st.n = clamp(n); paint(from); };
-  const chip = (label, n) => h("button", { type: "button", class: "bk-chip", disabled: max > 0 ? null : true, onClick: () => set(n) }, label);
-  let pick;
-  if (kind === "b") {
-    input = h("input", { type: "number", inputmode: "numeric", class: "bk-big-in", min: "0", max: String(max), "aria-label": "股數", onInput: e => set(e.target.value, "input") });
-    pick = [h("div", { class: "bk-field" }, h("button", { type: "button", class: "bk-step", "aria-label": "少壹股", onClick: () => set(st.n - 1) }, "−"), input, h("em", null, "股"), h("button", { type: "button", class: "bk-step", "aria-label": "多壹股", onClick: () => set(st.n + 1) }, "＋")),
-      h("div", { class: "bk-chips" }, chip("10", 10), chip("100", 100), chip("1,000", 1000), chip(buy ? "買滿" : "全賣", max))];
-  } else {
-    big = h("b", null, "0");
-    slider = h("input", { type: "range", class: "bk-slider side-" + side, min: "0", max: String(max), step: "1", "aria-label": "股數", onInput: e => set(e.target.value, "slider") });
-    pick = [h("div", { class: "bk-bignum" }, h("button", { type: "button", class: "bk-step", "aria-label": "少壹股", onClick: () => set(st.n - 1) }, "−"), h("p", null, big, h("em", null, "股")), h("button", { type: "button", class: "bk-step", "aria-label": "多壹股", onClick: () => set(st.n + 1) }, "＋")),
-      slider, h("p", { class: "bk-range-t" }, h("span", null, "0"), h("span", null, `最多 ${fmt(max)}`)),
-      h("div", { class: "bk-chips" }, [25, 50, 75, 100].map(p => chip(p === 100 ? "全部" : p + "%", Math.floor(max * p / 100))))];
-  }
-  const box = h("div", { class: "bk-ticket " + kind }, pick, sum, go);
+  const set = (n, all) => { st.v = Math.max(0, Math.min(max, Math.floor(n))) || ""; st.all = !!all; paint(); };
+  const stepBtn = (d, label, aria) => h("button", { type: "button", class: "bk-step", "aria-label": aria, disabled: max > 0 ? null : true, onClick: () => set(num() + d * o.step) }, label);
+  const box = h("div", { class: "bk-ticket" },
+    h("div", { class: "bk-field" }, stepBtn(-1, "−", "少壹點"), input, h("em", null, o.unit), stepBtn(1, "＋", "多壹點")),
+    h("div", { class: "bk-chips" }, o.chips.map(([label, n, all]) => h("button", { type: "button", class: "bk-chip", disabled: max > 0 && n <= max ? null : true, onClick: () => set(n, all) }, label))),
+    why, sum, go);
   paint();
   return box;
+}
+
+// 按股數的下單單：買滿／全賣、手續費和稅照 sumOf 算（現股、集團股共用；集團股手續費照成交算，sumOf 回的 fee 是 null）
+// o = { side, cur, max, priceText, sumOf(n) → { fee, tax, total }, ask(n, sendN), state }
+export function shareTicket(o) {
+  const { side, max } = o, buy = side === "buy", verb = buy ? "買進" : "賣出";
+  return ticketBox({
+    side, state: o.state, unit: "股", max, step: 1, start: max > 0 ? Math.min(10, max) : "",
+    chips: [["10", 10], ["100", 100], ["1,000", 1000], [buy ? "買滿" : "全賣", max, true]],
+    why: n => (max < 1 ? "" : n > max ? `最多只能${buy ? "買" : "賣"} ${fmt(max)} 股。` : ""),
+    rows: n => {
+      const x = n ? o.sumOf(n) : null;
+      return [["股價", o.priceText], x && x.fee != null ? ["手續費", fmt(x.fee)] : null, x && !buy && x.tax ? ["證交稅", fmt(x.tax)] : null,
+        [buy ? "要付（約）" : "拿回（約）", x ? fmt(x.total) : "—", "total"], x && x.fee == null ? ["手續費照成交算", "", "note"] : null, [buy ? "最多買得起" : "最多可賣", `${fmt(max)} 股`, "note"]];
+    },
+    goText: n => (n ? `${verb} ${fmt(n)} 股` : max < 1 ? (buy ? "現在不能買" : "現在不能賣") : "先填股數"),
+    onGo: (n, all) => o.ask(n, !buy && all && n === max ? "max" : n),
+  });
 }

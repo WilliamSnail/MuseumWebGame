@@ -19,7 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; import { levTable } from "./bank_help_lev.js"; import { quickHead, ticketBox, ticketKind, unitRow } from "./bank_ticket.js"; // 零碎股照金額買賣（決定 0160）
+import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; import { levTable } from "./bank_help_lev.js"; import { UNIT_TABS, shareTicket, tradeTabs, unitRow } from "./bank_ticket.js"; // 零碎股照金額買賣（決定 0160）
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -569,29 +569,14 @@ function spotTrade(v, S, cur) {
       !buy && cur.tax > 0 ? ["證交稅（約）", fmt(x.tax)] : null,
       [buy ? "合計要付（約）" : "拿回（約）", fmt(x.total), "total"]], buy ? "確認買進" : "確認賣出", () => bankDo("stock", { op: side, id: cur.id, n: sendN != null ? sendN : n }));
   };
-  const steps = [1, 10, 100].map(n => btn(`${n} 股`, () => ask(n), "big bank-btn", { disabled: n > max ? true : null }));
-  steps.push(btn(max > 0 ? `${side === "buy" ? "買滿" : "全賣"} ${fmt(max)}` : `${side === "buy" ? "買滿" : "全賣"}`, () => ask(max, side === "buy" ? max : "max"), "primary big bank-btn gold", { disabled: max > 0 ? null : true }));
-  // 自訂股數：只收正整數，超過上限就擋，下面即時算總價
-  const qf = UI.bankQty || (UI.bankQty = { n: "" }), qinfo = h("p", { class: "bank-meta sm bank-qinfo" }), qbtn = btn(side === "buy" ? "買這個數量" : "賣這個數量", () => { const n = qty(); if (n > 0 && n <= max) ask(n); }, "bank-btn gold");
-  const qty = () => { const n = Number(qf.n); return Number.isInteger(n) && n > 0 ? n : 0; };
-  const qcalc = () => {
-    const raw = qf.n, n = qty();
-    qbtn.disabled = true;
-    if (raw === "" || raw == null) { qinfo.textContent = max > 0 ? `最多 ${fmt(max)} 股。` : ""; return; }
-    if (!n) { qinfo.textContent = "股數要是 1 以上的整數。"; return; }
-    if (n > max) { qinfo.textContent = `最多只能${side === "buy" ? "買" : "賣"} ${fmt(max)} 股。`; return; }
-    const x = sumOf(n);
-    qinfo.textContent = side === "buy" ? `${fmt(n)} 股 × ${fp(cur.price)} ＋手續費 ${fmt(x.fee)} ＝ 約 ${fmt(x.total)}` : `${fmt(n)} 股 × ${fp(cur.price)} －手續費 ${fmt(x.fee)}${cur.tax > 0 ? ` －稅 ${fmt(x.tax)}` : ""} ＝ 約拿回 ${fmt(x.total)}`;
-    qbtn.disabled = false;
-  };
-  const custom = max > 0 ? h("div", { class: "bank-custom side-" + side }, numField("自訂股數", qf.n, x => { qf.n = x === "" ? "" : Math.floor(Number(x)); qcalc(); }, { min: 1, step: 1, unit: "股" }), qbtn, qinfo) : null;
-  qcalc();
+  const st = (UI.bankTicket || (UI.bankTicket = {})), key = `${cur.id}|${side}|${mode}`; // 同壹支股、同壹種下法沿用打過的數字
+  const state = st[key] || (st[key] = {});
   const sellNote = ((inShop ? S.inSellLeft : S.sellLeft) != null ? `今天最多賣出約 ${S.sellCap != null ? fmt(S.sellCap) : "—"}，還能賣約 ${fmt(inShop ? S.inSellLeft : S.sellLeft)}。` : "") + (cur.tax > 0 ? `賣出賺到的部分要繳 ${Math.round(cur.tax * 100)}% 資本利得稅（虧的不用繳）。` : "");
   return [
     seg([["buy", "買進"], ["sell", "賣出", !((cur.free != null ? cur.free : cur.mine) || cur.frac)]], side, k => { UI.bankSide = k; rerender(); }, "side"),
-    cur.kind === "out" ? unitRow(seg([["n", "按股數"], ["amt", "按金額"]], mode, k => { setTradeMode(k); rerender(); }, "unit")) : null, ...(mode === "amt" ? [] : ticketKind() ? [ticketBox({ kind: ticketKind(), side, max, price: cur.price.toLocaleString("en-US"), sumOf, ask, state: UI.bankTicket || (UI.bankTicket = { n: "" }) })] : [quickHead(side), h("div", { class: "bank-acts" }, steps)]),
-    ...(mode !== "amt" ? (ticketKind() ? [] : [custom]) : halt ? [] : amountBox({ side, cur, cash: v.cash, sellLeft: sellL, feeRate: feeOf(S, cur), numField, confirmTrade, bankDo, state: UI.bankAmt || (UI.bankAmt = { amt: "" }) }) || []),
-    max < 1 ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
+    cur.kind === "out" ? unitRow(seg(UNIT_TABS, mode, k => { setTradeMode(k); rerender(); }, "unit")) : null,
+    mode !== "amt" ? shareTicket({ side, max, priceText: cur.price.toLocaleString("en-US"), sumOf, ask, state }) : amountBox({ side, cur, halt, cash: v.cash, sellLeft: sellL, feeRate: feeOf(S, cur), confirmTrade, bankDo, state }),
+    max < 1 && (mode !== "amt" || halt) ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
     h("p", { class: "bank-meta sm" }, side === "buy" ? `買 1 股要 ${fmt(one)}（含手續費）。` : sellNote),
     side === "sell" && S.sellTip ? h("p", { class: "bank-hint bank-selltip" }, S.sellTip) : null]; // 「信用升到 N 級可以賣到 X」（決定 0093，sellTip 伺服器寫好）
 }
@@ -765,7 +750,7 @@ function stockPane(v) {
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "開盤沒跳空　"), "昨天來這家店的人太少，今天開盤價跟昨天收盤一樣（盤中照樣會小幅變動）。") : null,
         cur.market === "in" && cur.jump ? h("p", { class: "bank-stale" }, h("b", null, "開盤跳空　"), "今天開盤價跟昨天收盤差了壹截，是昨天的生意帶出來的。") : null,
         hasShares(cur) ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, sharesText(cur)), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
-        tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind bk-kinds") : null,
+        tabs.length > 1 ? seg(tradeTabs(tabs), tab, k => { UI.bankTrade = k; rerender(); }, "kind bk-kinds") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
         h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照真實市場的行情動。買賣各收手續費，進博物館資金。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
@@ -988,7 +973,7 @@ function gsOrdersPanel(G) {
 // 集團股（決定 0121）：世界集團的股票。資料 v.gs ＝ { list: [{ id, name, unit, price, open, chg, shares, mcap, nav, pb, mine, value, cost, limit }], index: { v }, halt, rule, notes }；動作 bankDo("stock", { op: "buy"|"sell", id, n })
 function gstockPane(v) {
   actDone("stockLook"); // 每日任務：看股票的走勢（決定 0146；11-24 起壹般股頁 stockPane 也算，翊文）
-  // 翊文 11-17：「這個應該要向其他頁籤可以直接輸入數字」「要有這些功能阿」：買／賣二選壹、1／10／100、買滿／全賣、自訂股數、走勢
+  // 翊文 11-17：「這個應該要向其他頁籤可以直接輸入數字」「要有這些功能阿」：買／賣二選壹、下單單（11-27，bank_ticket.js）、自訂股數、走勢
   const G = v.gs; if (!G || !G.list || !G.list.length) return soon("集團股", "世界集團的股票正在準備，開放時館方公告會說。");
   const list = G.list, cur = list[Math.min(UI.bankGs || 0, list.length - 1)], tone = n => (n > 0 ? "up" : n < 0 ? "down" : "");
   const rows = list.map((x, i) => h("div", { class: "bank-row gs" + (x === cur ? " on" : ""), role: "row", tabindex: "0", onClick: () => { UI.bankGs = i; rerender(); } },
@@ -998,19 +983,8 @@ function gstockPane(v) {
   const gtabs = [["spot", "現股"]].concat(S && S.lev ? [["lev", "槓桿・放空"]] : [], G.orders ? [["order", "掛單"]] : []), gtab = gtabs.some(t => t[0] === UI.bankGsTrade) ? UI.bankGsTrade : "spot";
   const dis = G.halt ? true : null, sell = UI.bankGsSide === "sell" && cur.mine > 0, side = sell ? "sell" : "buy";
   const maxBuy = Math.max(0, Math.min(Math.floor((v.cash || 0) / Math.max(1, cur.price * 1.01)), cur.limit != null ? cur.limit - cur.mine : Infinity)), max = sell ? cur.mine : maxBuy;
-  const qf = UI.bankGsQty || (UI.bankGsQty = { n: "" }), qinfo = h("p", { class: "bank-meta sm bank-qinfo" }), qty = () => { const n = Number(qf.n); return Number.isInteger(n) && n > 0 ? n : 0; };
-  const qbtn = btn(sell ? "賣這個數量" : "買這個數量", () => { const n = qty(); if (n > 0 && n <= max) ask(!sell, n); }, "bank-btn gold");
-  const qcalc = () => {
-    const raw = qf.n, n = qty(); qbtn.disabled = true;
-    if (raw === "" || raw == null) { qinfo.textContent = max > 0 ? "最多 " + fmt(max) + " 股。" : ""; return; }
-    if (!n) { qinfo.textContent = "股數要是 1 以上的整數。"; return; }
-    if (n > max) { qinfo.textContent = "最多只能" + (sell ? "賣 " : "買 ") + fmt(max) + " 股。"; return; }
-    qinfo.textContent = fmt(n) + " 股 × " + fmt(cur.price) + " ＝ 約 " + fmt(n * cur.price) + "（手續費照成交算）"; qbtn.disabled = G.halt ? true : false;
-  };
-  qcalc();
-  const steps = h("div", { class: "bank-acts" }, ...[1, 10, 100].map(n => btn(fmt(n) + " 股", () => ask(!sell, n), "big bank-btn", { disabled: dis || n > max ? true : null })),
-    btn(sell ? "全賣" + (max > 0 ? " " + fmt(max) : "") : "買滿" + (max > 0 ? " " + fmt(max) : ""), () => (sell ? ask(false, "max") : ask(true, max)), "primary big bank-btn gold", { disabled: dis || max <= 0 ? true : null }));
-  const custom = max > 0 ? h("div", { class: "bank-custom side-" + side }, numField("自訂股數", qf.n, x => { qf.n = x === "" ? "" : Math.floor(Number(x)); qcalc(); }, { min: 1, step: 1, unit: "股" }), qbtn, qinfo) : null;
+  const gst = (UI.bankGsTicket || (UI.bankGsTicket = {})), gkey = `${cur.id}|${side}`;
+  const gsTicket = shareTicket({ side, max: dis ? 0 : max, priceText: fmt(cur.price), sumOf: n => ({ fee: null, total: n * cur.price }), ask: (n, sendN) => ask(!sell, sendN != null ? sendN : n), state: gst[gkey] || (gst[gkey] = {}) });
   return h("div", { class: "bank-cols" },
     h("div", { class: "bank-stack" }, panel("世界集團的股票", G.index && G.index.v ? `集團指數 ${G.index.v}` : "", h("div", { class: "bank-ledger", role: "table" }, h("div", { class: "bank-row gs head", role: "row" }, h("span", null, "名稱"), h("span", null, "股價"), h("span", null, "今天"), h("span", null, "股價淨值比"), h("span", null, "持股")), ...rows)),
       h("p", { class: "bank-meta sm" }, G.rule || "")),
@@ -1019,8 +993,8 @@ function gstockPane(v) {
       h("p", { class: "bank-meta sm" }, `股本 ${fmt(cur.shares)} 股・市值 ${fmt(cur.mcap)}・每股淨值 ${fmt(cur.nav)}`),
       h("p", { class: "bank-meta sm" }, cur.mine ? `你有 ${fmt(cur.mine)} 股，市值 ${fmt(cur.value)}，成本 ${fmt(cur.cost)}` : "你還沒有這支。"),
       cur.hist && cur.hist.length > 1 ? h("div", null, spark(cur.hist), h("p", { class: "bank-meta sm" }, "近 " + cur.hist.length + " 天收盤")) : null,
-      gtabs.length > 1 ? seg(gtabs, gtab, k => { UI.bankGsTrade = k; rerender(); }, "kind bk-kinds") : null,
-      ...(gtab === "lev" ? levTrade(v, S, curL) : gtab === "order" ? gsOrderTrade(v, S0, G, cur) : [seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankGsSide = k; rerender(); }, "side"), quickHead(side), steps, custom]),
+      gtabs.length > 1 ? seg(tradeTabs(gtabs), gtab, k => { UI.bankGsTrade = k; rerender(); }, "kind bk-kinds") : null,
+      ...(gtab === "lev" ? levTrade(v, S, curL) : gtab === "order" ? gsOrderTrade(v, S0, G, cur) : [seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankGsSide = k; rerender(); }, "side"), gsTicket]),
       (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null),
       S && S.lev ? positionsPanel(S) : null, gsOrdersPanel(G), tradesPanel(S0 && S0.trades, "grp")));
 }
