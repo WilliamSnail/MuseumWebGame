@@ -61,6 +61,8 @@ export function eventProblems(raw, weekStart) {
     else if (b - a < N.minMin) out.push(`太短了（最少 ${N.minMin} 分鐘）`);
     else if (b - a > N.maxMin) out.push(`太長了（最多 ${N.maxMin} 分鐘）`);
   }
+  const Wd = N.window; // 11-27 起固定時段（翊文：「以後限時活動可以改成8點到11:30」）
+  if (Wd && typeof raw.date === "string" && raw.date >= Wd.since && (raw.from !== Wd.from || raw.to !== Wd.to)) out.push(`${Wd.since} 起限時活動固定 ${Wd.from}～${Wd.to}（NUM.events.window）`);
   if (typeof raw.title !== "string" || !raw.title.trim()) out.push("title 要有字");
   else if (evChars(raw.title) > N.titleMax) out.push(`title 太長了（${evChars(raw.title)} 字，最多 ${N.titleMax}）`);
   if (typeof raw.words !== "string" || !raw.words.trim()) out.push("words 要有字");

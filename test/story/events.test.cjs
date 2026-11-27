@@ -305,3 +305,11 @@ T("開跑通知（決定 0045）：進行中才跳、跳過的不再跳、快結
   console.log(`限時活動 ${pass} 項過，${fail} 項沒過`);
   process.exit(fail ? 1 : 0);
 })();
+T("固定時段（11-27，翊文：「以後限時活動可以改成8點到11:30」）：since 那天起只准 20:00～23:30；之前的照舊", () => {
+  const W = G.NUM.events.window; assert.strictEqual(W.from, "20:00"); assert.strictEqual(W.to, "23:30");
+  const ev = o => Object.assign({}, RAW, { date: "2026-11-30" }, o);
+  assert.strictEqual(G.eventProblems(ev({ from: "20:00", to: "23:30" })).length, 0);
+  assert.ok(G.eventProblems(ev({ from: "20:00", to: "22:00" })).some(x => /固定/.test(x)));
+  assert.ok(G.eventProblems(ev({ from: "14:00", to: "16:00" })).some(x => /固定/.test(x)));
+  assert.ok(!G.eventProblems(Object.assign({}, RAW, { date: "2026-11-11", from: "20:00", to: "22:00" })).some(x => /固定/.test(x)), "since 以前的不擋");
+});
