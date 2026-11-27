@@ -7,6 +7,7 @@
 //  玩家領股息、配股由 shared/casino/stock.js 的 casStockSetDiv／casStockPegSync 做（照除息日開始時的持股）。
 //  不編資料：沒抓到就沒有事件。
 // ================================================================
+import { EVENING_HOUR, eveningRun, taipeiHour } from "./evening_post.js";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { TW_SYMBOLS, TW_OTC } from "./stock_tw.js";
@@ -53,7 +54,9 @@ export async function stockDivRun(nowMs, fetchFn, dbx) {
   return `事件 ${all.length} 筆${failed.length ? "；沒抓到 " + failed.join("、") : ""}`;
 }
 export const stockDivTick = onSchedule({ schedule: "17 * * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 60 }, async () => {
-  console.log("stockDivTick", await stockDivRun(Date.now()));
+  const now = Date.now();
+  console.log("stockDivTick", await stockDivRun(now));
+  if (taipeiHour(now) === EVENING_HOUR) { try { console.log("eveningRun", await eveningRun(now)); } catch (e) { console.error("傍晚行情發不出去", e && e.message); } } // 11-27 翊文：傍晚行情排成每天發（不另開排程，掛這個每小時的）
 });
 // 給 functions/casino/casino.js 讀（記憶體快取 5 分鐘）
 let divCache = null, divCacheAt = 0;

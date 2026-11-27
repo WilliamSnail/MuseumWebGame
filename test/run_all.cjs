@@ -101,6 +101,7 @@ const STEPS = [
   ["美股照當天美元對台幣匯率（遊戲價 ＝ 匯率 × 美金價、不換股數、沒有匯率用昨天或 ×32、壞匯率不收，11-16）", ["test/stock/stock_us_fx.test.cjs"]],
   ["台股盤中（開盤價才開、15 分鐘錨點加隨機、橋、種子祕密、停盤、掛單照盤中價檢查、view 的盤中資料、守恆，規劃 2.8d）", ["test/stock/stocks_tw.test.cjs"]],
   ["美股盤中（美東開盤時間含日光節約、整個交易日模擬含冬令夏令國定假日、停盤、掛單當天有效和睡前掛單、05:00 換日不重複算、view 欄位、守恆、解析行情，規劃 2.8i）", ["test/stock/stocks_us.test.cjs"]],
+  ["傍晚行情（台股收盤＋美股盤前、只有壹邊、都沒開不發、評語照心情，11-27）", ["test/discord/evening.test.cjs"]],
   ["美股晨間行情（遊戲名＋代號、漲跌、遊戲價、每支壹行、評語、排程的 usTalk、跟今日館訊同時發，11-27）", ["test/discord/us_close.test.cjs"]],
   ["測試的暫存用完就刪（test/ 不直接用 mkdtempSync、tmpDir 結束自動刪，11-27）", ["test/tools/tmp_dir.test.cjs"]],
   ["無頭瀏覽器關乾淨（tools/ 開瀏覽器的腳本都用 child.cjs 的 guardBrowser 收尾、killBrowserProfile 刪暫存，11-27）", ["test/tools/browser_cleanup.test.cjs"]],
