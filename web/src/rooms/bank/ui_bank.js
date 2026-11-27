@@ -19,7 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, sharesText } from "./bank_amount.js"; // 零碎股照金額買賣（決定 0160）
+import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; // 零碎股照金額買賣（決定 0160）
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -548,7 +548,7 @@ function numField(label, value, onChange, opts = {}) {
 const chips = (list, cur, onPick, fmtFn, lockFn) => h("div", { class: "bank-chips" }, list.map(n => { const lk = lockFn ? lockFn(n) : ""; return h("button", { type: "button", class: "bank-chip" + (n === cur ? " on" : "") + (lk ? " locked" : ""), "aria-pressed": String(n === cur), disabled: lk ? true : null, title: lk || null, onClick: () => onPick(n) }, fmtFn ? fmtFn(n) : fmt(n)); }));
 // ---------- 交易：現股 ----------
 function spotTrade(v, S, cur) {
-  const side = UI.bankSide === "sell" && ((cur.free != null ? cur.free : cur.mine) > 0 || cur.frac > 0) ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
+  const side = UI.bankSide === "sell" && ((cur.free != null ? cur.free : cur.mine) > 0 || cur.frac > 0) ? "sell" : "buy", mode = tradeMode(cur); // 買／賣 二選壹；mode 按股數 n／按金額 amt（館外股才有，bank_amount.js），按鈕那排只畫壹排
   const halt = stockHalt(S, cur), one = unitCost(cur, feeOf(S, cur));
   const inShop = cur.market === "in", expL = inShop ? S.inExposeLeft : S.exposeLeft, sellL = inShop ? S.inSellLeft : S.sellLeft, capL = inShop && S.inCap != null ? Math.max(0, S.inCap - cur.mine) : Infinity;
   const maxBuy = halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), capL, expL != null ? Math.floor(expL / Math.max(1, cur.price)) : Infinity));
@@ -589,8 +589,8 @@ function spotTrade(v, S, cur) {
   const sellNote = ((inShop ? S.inSellLeft : S.sellLeft) != null ? `今天最多賣出約 ${S.sellCap != null ? fmt(S.sellCap) : "—"}，還能賣約 ${fmt(inShop ? S.inSellLeft : S.sellLeft)}。` : "") + (cur.tax > 0 ? `賣出賺到的部分要繳 ${Math.round(cur.tax * 100)}% 資本利得稅（虧的不用繳）。` : "");
   return [
     seg([["buy", "買進"], ["sell", "賣出", !((cur.free != null ? cur.free : cur.mine) || cur.frac)]], side, k => { UI.bankSide = k; rerender(); }),
-    h("div", { class: "bank-acts" }, steps),
-    custom, halt ? null : amountBox({ side, cur, cash: v.cash, sellLeft: sellL, feeRate: feeOf(S, cur), numField, confirmTrade, bankDo, state: UI.bankAmt || (UI.bankAmt = { amt: "" }) }),
+    cur.kind === "out" ? seg([["n", "按股數"], ["amt", "按金額"]], mode, k => { setTradeMode(k); rerender(); }) : null, ...(mode === "amt" ? [] : [h("div", { class: "bank-acts" }, steps)]),
+    ...(mode !== "amt" ? [custom] : halt ? [] : amountBox({ side, cur, cash: v.cash, sellLeft: sellL, feeRate: feeOf(S, cur), numField, confirmTrade, bankDo, state: UI.bankAmt || (UI.bankAmt = { amt: "" }) }) || []),
     max < 1 ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
     h("p", { class: "bank-meta sm" }, side === "buy" ? `買 1 股要 ${fmt(one)}（含手續費）。` : sellNote),
     side === "sell" && S.sellTip ? h("p", { class: "bank-hint bank-selltip" }, S.sellTip) : null]; // 「信用升到 N 級可以賣到 X」（決定 0093，sellTip 伺服器寫好）
