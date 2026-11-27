@@ -303,6 +303,42 @@ export function usParseChart(json, day, nowMs) {
   return { open, prev, px, lag: Math.max(0, (nowMs - last) / 60000 - 1) };
 }
 
+// ---------- 盤前的價（決定 0159 之後，11-27）：Yahoo 的 1 分鐘 K 棒在盤前常常沒有今天的資料，盤前改讀 CNBC、Nasdaq 的報價 ----------
+// 字串價 → 數字（"$1,234.50" → 1234.5）；不是正數回 null
+export const usPxNum = v => { const n = Number(String(v == null ? "" : v).split(",").join("").split("$").join("")); return Number.isFinite(n) && n > 0 ? n : null; };
+// CNBC 報價介面的壹支（FormattedQuote 的壹項）→ { prev, px, tradeMs }。盤前：last 是前壹個交易日的收盤，ExtendedMktQuote.type 是 PRE_MKT 時 last 是盤前最新價。
+// 還沒有盤前成交（type 不是 PRE_MKT）：px ＝ 前收、tradeMs null（沒成交價就沒動）。壞資料回 null
+export function usParseCnbcQuote(q) {
+  if (!q || typeof q !== "object") return null;
+  const prev = usPxNum(q.last), e = q.ExtendedMktQuote;
+  if (!prev) return null;
+  const pre = e && e.type === "PRE_MKT" ? usPxNum(e.last) : null, t = pre && e.last_time ? Date.parse(e.last_time) : NaN;
+  return { prev, px: pre || prev, tradeMs: pre && Number.isFinite(t) ? t : null };
+}
+// Nasdaq 報價介面（api.nasdaq.com/api/quote/代號/info）→ { prev, px, tradeMs }：primaryData.lastSalePrice 是現在的價（盤前就是盤前價），前收 ＝ 現價 − netChange
+export function usParseNasdaq(json) {
+  const d = json && json.data && json.data.primaryData;
+  if (!d) return null;
+  const px = usPxNum(d.lastSalePrice), ch = Number(String(d.netChange || "0").split(",").join("")), prev = px && Number.isFinite(ch) ? Math.round((px - ch) * 10000) / 10000 : null;
+  if (!px || !(prev > 0)) return null;
+  const m = /([A-Z][a-z]{2} \d{1,2}, \d{4}) (\d{1,2}):(\d{2}) (AM|PM) ET/.exec(String(d.lastTradeTimestamp || ""));
+  return { prev, px, tradeMs: m ? usEtMs(m[1], +m[2] % 12 + (m[4] === "PM" ? 12 : 0), +m[3]) : null };
+}
+// 美東那天幾點幾分 → 毫秒（日光節約用 usOpenMs 算出來的偏移）
+function usEtMs(dateText, h, mi) {
+  const d = new Date(dateText + " 12:00 UTC"); if (!Number.isFinite(+d)) return null;
+  const day = d.toISOString().slice(0, 10), o = usOpenMs(day); if (o == null) return null;
+  return o + ((h * 60 + mi) - NUM.casino.stock.us.open) * 60000;
+}
+// 很多支的報價 → 跟 Yahoo 那條壹樣的 { id: { open, prev, px, lag } }；lag 取所有有成交的裡面最新那筆（資料源本身的延遲，跟 Yahoo 壹樣套到每壹支）
+export function usPreMerge(rows, nowMs) {
+  const ids = Object.keys(rows).filter(id => rows[id] && rows[id].prev > 0);
+  const ts = ids.map(id => rows[id].tradeMs).filter(Number.isFinite), lag = ts.length ? Math.max(0, (nowMs - Math.max(...ts)) / 60000) : 0;
+  const out = {};
+  for (const id of ids) out[id] = { open: rows[id].px, prev: rows[id].prev, px: rows[id].px, lag };
+  return out;
+}
+
 // ---------- 美股（規劃 2.8i）：同樣的函式，換成美股的名單和設定 ----------
 export const usDocNew = twDocNew;
 export const usDocRoll = (old, day, keep) => twDocRoll(old, day, keep, NUM.casino.stock.us.serKeep);
