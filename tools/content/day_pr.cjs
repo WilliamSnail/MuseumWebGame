@@ -30,7 +30,7 @@ const subthemeNames = (ledger, rec) => {
 };
 // info：{ p, day, rec, ledger, files, strictOut（day:check --strict 的輸出）, warnings（警告字串陣列） }
 function prBody(info) {
-  const { p, day, rec, ledger, files = [], strictOut = "", warnings = [] } = info, s = summarizeDay(day), L = [];
+  const { p, day, rec, ledger, files = [], strictOut = "", warnings = [], selfCheck = "" } = info, s = summarizeDay(day), L = [];
   L.push("## 這次加了什麼", "", `- ${p.week} ${p.isMonday ? "週一（排這壹週：week.json、d1.json、靈感來源.md）" : `d${p.weekday}（${p.weekdayName}）的每日內容`}，日期 ${p.date}`);
   if (s) {
     L.push(`- 書 ${s.books.length} 本：${s.books.map(b => `《${b.title}》${b.tag ? "（" + b.tag + "）" : ""}`).join("、")}`);
@@ -46,6 +46,7 @@ function prBody(info) {
   const X = ledger && ledger.extend && ledger.extend.weeks && ledger.extend.weeks[p.week], sc = X && X.script && X.script["d" + p.weekday];
   if (sc) L.push("", "## 寫好的劇本（決定 0156）", "", `- 必寫句 ${asList(sc.must).length} 句、理智檢定 ${asList(sc.san).length} 個：day:check --strict 查過有原樣放進去`);
   if (X) { const q = [["dread", "恐懼"], ["cost", "代價"], ["pepe", "佩佩"], ["horror", "嚇人的展品"]].filter(([k]) => X[k] && X[k].day === "d" + p.weekday); if (q.length) L.push("", "## 四問（今天排到的）", "", ...q.map(([k, nm]) => `- ${nm}：${X[k].where}`)); }
+  L.push("", "## 自查（決定 0164：放膽寫、列標準自查、讀順）", "", "- " + (selfCheck || "（沒寫：照排程說明第二節的三步：放膽寫、列標準自查、讀順；寫壹行改了哪幾句，用 --self \"…\" 帶進來）"));
   L.push("", "## 檢查", "", "- `npm run day:check -- --strict`：" + (/✓ 全部通過/.test(strictOut) ? "全部通過" : strictOut ? "沒過，看下面" : "（沒跑到）"), "- 本機 npm test 和 build：只改內容時 ship 會跳過，CI 和部署照跑");
   if (warnings.length) L.push("", "## 檢查程式的警告（照貼）", "", ...warnings.map(w => `- ${w}`));
   else L.push("", "## 檢查程式的警告", "", "- 沒有警告");
@@ -81,7 +82,7 @@ function main() {
   const date = opt("date") || G.taipeiDay(Date.now()), ctx = gatherFor(date, G), p = planDay(ctx), pack = ctx.weeks[p.week];
   const day = pack && pack.days && pack.days[p.weekday] || null, rec = ctx.ledger && ctx.ledger.weeks && ctx.ledger.weeks[p.week] || null;
   const r = spawnSync(process.execPath, ["tools/content/day_check.cjs", "--strict", "--date", date], { cwd: ROOT, encoding: "utf8" }), out = (r.stdout || "") + (r.stderr || "");
-  const info = { p, day, rec, ledger: ctx.ledger, files: changedFiles(), strictOut: out, warnings: warningLines(out) };
+  const info = { p, day, rec, ledger: ctx.ledger, files: changedFiles(), strictOut: out, warnings: warningLines(out), selfCheck: opt("self") || "" };
   const dir = opt("out") || path.join(os.tmpdir(), "museum_day_pr");
   fs.mkdirSync(dir, { recursive: true });
   const body = path.join(dir, "pr_body.md"), log = path.join(dir, "log.json");
