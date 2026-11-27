@@ -6,7 +6,7 @@
 // 先把網頁開著（npm run local 或 npm run dev）。印出每張 PNG 的路徑，再用 Read 打開看。
 // 只照「打開就看得到」的樣子：要按按鈕、要登入才有的畫面，還是要用瀏覽器走。只准照 localhost。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawnSync } = require("./child.cjs");
+const { spawnSync, killBrowserProfile } = require("./child.cjs");
 
 const DEFAULT_SIZES = "1366x768,812x375";
 function parseSizes(s) {
@@ -50,7 +50,7 @@ function main() {
     // Windows 的 Edge 會先回來、在背景寫檔：等檔案出現、大小不再變（跟 svg_preview.cjs 壹樣）
     const until = Date.now() + 30000; let last = -1;
     while (Date.now() < until) { const n = fs.existsSync(png) ? fs.statSync(png).size : -1; if (n > 0 && n === last) break; last = n; spawnSync(process.execPath, ["-e", "setTimeout(()=>{},500)"]); }
-    try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
+    killBrowserProfile(prof); // 收殘留的程序再刪資料夾（11-27）
     if (!fs.existsSync(png)) throw new Error(`${s.w}x${s.h} 沒照到：` + (r.stderr || r.error || "").toString().slice(0, 300));
     console.log(`${s.w}x${s.h}：${png}`);
   }

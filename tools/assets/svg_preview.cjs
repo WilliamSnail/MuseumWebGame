@@ -5,7 +5,7 @@
 // 找得到 Edge／Chrome／Chromium 就用無頭模式截圖；截不到（雲端排程連不上 dbus）或找不到瀏覽器，改用 Playwright；都不行才只印 HTML 路徑。印出 PNG 路徑（再用 Read 打開看）。
 // 畫是白底 360×450，太暗看不到的東西（例如深色地上的深色腳印）在這裡就看得出來。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawnSync } = require("../dev/child.cjs");
+const { spawnSync, killBrowserProfile } = require("../dev/child.cjs");
 
 function collectSvgs(targets) {
   const files = [];
@@ -63,7 +63,7 @@ const r = spawnSync(browser, ["--headless=new", "--disable-gpu", "--no-sandbox",
 // Windows 的 Edge 會先回來、在背景寫檔：等檔案出現、大小不再變
 const until = Date.now() + 30000; let last = -1;
 while (Date.now() < until) { const n = fs.existsSync(outPng) ? fs.statSync(outPng).size : -1; if (n > 0 && n === last) break; last = n; spawnSync(process.execPath, ["-e", "setTimeout(()=>{},500)"]); }
-try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
+killBrowserProfile(prof); // 收殘留的程序再刪資料夾（11-27）
 // 雲端排程的環境：無頭 Chrome 連不上 dbus 截不到圖（11-13、11-14 的日誌），改用 Playwright（找本機或全域裝的）再試壹次
 if (!fs.existsSync(outPng) && viaPlaywright(htmlPath, outPng, w, h)) return done(found, outPng);
 if (!fs.existsSync(outPng)) { console.error("截圖失敗：" + (r.stderr || r.error || "").toString().slice(0, 300)); console.log(`HTML：${htmlPath}`); process.exit(1); }

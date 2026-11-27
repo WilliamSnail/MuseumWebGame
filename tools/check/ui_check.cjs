@@ -9,7 +9,7 @@
 //   --url：已經有 dev server 就給網址（會印警告、而且比對它是不是這個資料夾起的，不是就停；不然自己找空的埠起一個，結束時關掉；--port 可指定埠）。--shots：每個畫面存壹張 PNG（看報告的位置用）。
 //   有任何一項問題 exit 1；只有「跳過」不算失敗。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("../dev/child.cjs");
+const { spawn, cdpClose, guardBrowser } = require("../dev/child.cjs");
 const ROOT = path.join(__dirname, "..", "..");
 
 // 畫面清單：id 是網址 # 後面那串（docs/規則/架構.md 第 3 節）。needLogin 的只列出來不測。
@@ -155,16 +155,17 @@ async function openBrowser() {
   if (!exe) throw new Error("找不到 Edge 或 Chrome");
   const port = 9600 + Math.floor(Math.random() * 300), prof = fs.mkdtempSync(path.join(os.tmpdir(), "uichk_"));
   const br = spawn(exe, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--mute-audio", "--no-first-run", "--hide-scrollbars", "about:blank"], { stdio: "ignore" });
+  const kill = guardBrowser(prof, br); // 不管怎麼結束都關乾淨（11-27）
   let list = null;
   for (let i = 0; i < 60 && !list; i++) { await sleep(200); try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch (e) { /* 還沒好 */ } }
-  if (!list) { br.kill(); throw new Error("瀏覽器開不起來"); }
+  if (!list) { kill(); throw new Error("瀏覽器開不起來"); }
   const ws = new WebSocket(list.find(t => t.type === "page").webSocketDebuggerUrl);
   await new Promise(r => ws.addEventListener("open", r, { once: true }));
   let id = 0; const wait = new Map();
   ws.addEventListener("message", m => { const d = JSON.parse(m.data); if (d.id && wait.has(d.id)) { wait.get(d.id)(d); wait.delete(d.id); } });
   const send = (method, params = {}) => new Promise(r => { id++; wait.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
   const evaluate = async code => { const r = await send("Runtime.evaluate", { expression: code, awaitPromise: true, returnByValue: true }); if (r.result && r.result.exceptionDetails) throw new Error((r.result.exceptionDetails.exception || {}).description || "JS 出錯"); return r.result.result.value; };
-  const close = () => { try { ws.close(); } catch (e) { /* 關了 */ } br.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch (e) { /* 沒關係 */ } };
+  const close = () => { cdpClose(ws); kill(); };
   await send("Page.enable");
   return { send, evaluate, close };
 }
