@@ -89,8 +89,10 @@ export const DC_DIGEST_SITE = "https://pepe-museum.web.app";
 const DC_AREA_IC = { "股票與銀行": "📈", "NPC 與展廳": "🖼", "畫廊與拍賣": "🔨", "賭場": "🎲", "各廳新介面": "🪟", "地下與劇情": "🕯", "其他": "📌" };
 const DC_HOT = /多了|新的|換新|重新設計|有歌詞|可以|開放|上線/;
 const dcOneLine = n => { const sec = Array.isArray(n.sections) && n.sections[0] && Array.isArray(n.sections[0][1]) ? n.sections[0][1][0] : ""; const t = String(sec || "").split(/[。：]/)[0].trim(); return t.length > 42 ? t.slice(0, 41) + "…" : t; };
-export function dcDigestText(list, day, areaOf, areas) {
-  const items = (list || []).filter(n => n && n.title && n.publish === day && n.cat !== "特展活動");
+// pick：已經挑好的公告（18:17 合併那則用 dcDigestPick 挑「還沒發過的」）；沒給就照舊挑今天發布的。max：這段最多幾個字（合併時要讓位給傍晚行情）
+export function dcDigestText(list, day, areaOf, areas, pick, max) {
+  const items = Array.isArray(pick) ? pick : (list || []).filter(n => n && n.title && n.publish === day && n.cat !== "特展活動");
+  const MAX = max > 0 ? max : DC_DIGEST_MAX;
   if (!items.length) return "";
   const md = day.slice(5).replace("-", () => "/"), clean = n => n.title.replace(/\s+/g, " ").trim();
   const rank = n => (n.importance === "important" ? 0 : n.importance === "low" ? 2 : 1) - (DC_HOT.test(n.title) ? 0.5 : 0);
@@ -109,15 +111,21 @@ export function dcDigestText(list, day, areaOf, areas) {
   for (const [a, ts] of by) { // 壹行壹行加，放不下就停（不會因為某壹段太長整段都不見）
     if (!ts.length) continue;
     const h = `${DC_AREA_IC[a] || "📌"} 【${a}】`;
-    if (used + h.length + 1 > DC_DIGEST_MAX) break;
+    if (used + h.length + 1 > MAX) break;
     lines.push(h); used += h.length + 1;
     let full = false;
-    for (const t of ts) { const l = `・${t}`; if (used + l.length + 1 > DC_DIGEST_MAX) { full = true; break; } lines.push(l); used += l.length + 1; shown++; }
+    for (const t of ts) { const l = `・${t}`; if (used + l.length + 1 > MAX) { full = true; break; } lines.push(l); used += l.length + 1; shown++; }
     if (full) break;
   }
   if (shown < items.length) lines.push(`…還有 ${items.length - shown} 則`);
   lines.push("", tail);
   return lines.join("\n");
+}
+// 18:17 合併那則（11-27 翊文：館訊和傍晚行情「整合壹起 就18:17發壹次」）：挑最近 3 天發布、還沒發過的公告（seen：發過的 id）。晚上才上線的更新，隔天那則會補上
+export const DC_DIGEST_BACK_DAYS = 3;
+export function dcDigestPick(list, day, seen) {
+  const from = new Date(Date.parse(day + "T00:00:00Z") - DC_DIGEST_BACK_DAYS * 86400000).toISOString().slice(0, 10), S = new Set(Array.isArray(seen) ? seen : []);
+  return (list || []).filter(n => n && n.title && n.id && typeof n.publish === "string" && n.publish >= from && n.publish <= day && n.cat !== "特展活動" && !S.has(n.id));
 }
 // 真的發出去的那則：彙整＋入館連結（跟 tools/content/discord_post.cjs 的公告壹樣的尾巴）。沒有公告回 ""
 export function dcDigestPost(list, day, areaOf, areas) {
