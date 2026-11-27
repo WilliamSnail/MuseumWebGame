@@ -3,7 +3,9 @@
 const assert = require("assert");
 const r2 = x => Math.round(x * 100) / 100; // 股價小數兩位（決定 0108）
 const fs = require("fs"), path = require("path");
-const load = () => { const G = require("../load_shared.cjs").load(); G.NUM.casino.stock.direct = false; return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
+// 決定 0159 加了盤前（04:00 開始，720 分鐘）；這份測模型本身，數字寫的是正常盤，所以固定用盤前之前的設定。盤前的在 stocks_us_pre.test.cjs
+const US_REG = { open: 570, len: 390, earlyLen: 210, giveUp: 30, reg: 0 };
+const load = () => { const G = require("../load_shared.cjs").load(); G.NUM.casino.stock.direct = false; Object.assign(G.NUM.casino.stock.us, US_REG); return G; }; // 這份測的是舊模型（錨點、橋、drag、拉回）；直接用真實價（2.8l）的在 stocks_direct.test.cjs
 let pass = 0, fail = 0;
 const J = x => JSON.stringify(x);
 const T = (name, fn) => { const G = load(); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
@@ -320,7 +322,7 @@ T("view：美股有盤中序列、usState、halted；外層 us 和 usOpenAt；�
   assert.strictEqual(x.intraday.length, 31); assert.strictEqual(x.intradayFrom, 0); assert.strictEqual(x.intraday[30], x.price);
   assert.strictEqual(n.market, "us"); assert.strictEqual(n.intraday.length, 31, "指數（用 ETF 的行情）也盤中");
   assert.strictEqual(tw.market, "tw"); assert.strictEqual(tw.usState, null); assert.strictEqual(tw.halted, true, "這時候台股沒開"); assert.strictEqual(J(tw.intraday), "[]");
-  assert.strictEqual(J(v.us), J({ state: "open", from: 570, len: 390, early: false }));
+  assert.strictEqual(J(v.us), J({ state: "open", from: 570, len: 390, early: false, reg: 0 }));
   assert.strictEqual(v.usOpenAt, G.usOpenMs(W)); assert.strictEqual(v.halt, false);
   assert.strictEqual(v.tw.state, "closed");
   G.casStockSeen(w, house);

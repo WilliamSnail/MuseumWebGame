@@ -10,7 +10,7 @@
 //    海外（真實市場）就是整個台灣，接得住；要擋的是多頭時館裡的錢壹直變多（通膨），靠手續費、每天的持有成本（決定 0154 起不再有每人每天賣出上限）。
 //    記帳照樣對得上：憑空的、消失的都有來源，日報看得到股市每天讓館裡多了或少了多少。
 //
-//  停盤：每支只在自己的盤中交易（台股 09:00～13:30、美股美東 09:30～16:00，也就是台灣晚上），盤外一律停，而且要等當天第壹個真實開盤價出來才開
+//  停盤：每支只在自己的盤中交易（台股 09:00～13:30、美股美東 04:00～16:00（04:00～09:30 是盤前，決定 0159），也就是台灣傍晚到清晨），盤外一律停，而且要等當天第壹個真實開盤價出來才開
 //    （假日、美股國定假日抓不到開盤價就整天休市）。以前美股是「05:00 才動壹次、22:00～05:00 停盤」（11-14 規劃 2.8i 起改成盤中）。
 //
 //  上限：壹人壹天賣出 sellDay（以前擋多頭時壹口氣印太多錢；決定 0154 起 0 ＝ 不限）。
@@ -457,7 +457,7 @@ export function casStockView(w, house, day, t, stale) {
   return {
     list, cats: OUT_CATS.map(c => ({ id: c.id, name: c.name })), fee: C.feePct / 100, feeTw: casStockFeePct(TW_IDS[0]) / 100, feeUs: casStockFeePct(US_IDS[0]) / 100, taxPct: C.taxPct / 100, taxUsPct: C.taxUs / 100, halt: false, // halt：舊欄位，不再有全館停盤，看每支的 halted
     tw: { state: H.tw.day === day ? H.tw.st : "closed", from: C.tw.from, len: C.tw.len },
-    us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: mkLen("us", day), early: usEarlyClose(day) }, // from：美東當天 00:00 起算的分鐘（570 ＝ 09:30）；len 390 分鐘
+    us: { state: H.us.day === day ? H.us.st : "closed", from: C.us.open, len: mkLen("us", day), early: usEarlyClose(day), reg: C.us.reg || 0 }, // reg：第幾分鐘起是正常盤（之前是盤前，決定 0159）；from 美東當天 00:00 起算的分鐘（240 ＝ 04:00）；len 720 分鐘
     usOpenAt: usOpenMs(day), // 這個遊戲日美股開盤的毫秒（日光節約已算進去；畫面要顯示台灣時間幾點開盤用 new Date(usOpenAt)，收盤 ＝ usOpenAt ＋ len×60000）
    
     total: list.reduce((s, x) => s + x.value, 0), feePaid: S.fee,
