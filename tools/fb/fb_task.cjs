@@ -75,6 +75,7 @@ async function houseSize(db) {
     console.log(`  ${k}：${kb(n)}`);
     if (n > 20 * 1024 && h[k] && typeof h[k] === "object") for (const [k2, n2] of top(h[k], 6)) console.log(`      ${k}.${k2}：${kb(n2)}`);
   }
+  { const Q = h.pool || null; console.log(Q ? `館門口池子（決定 0132、0133）：水位 ${(+Q.lv || 0).toFixed(2)}　門檻那晚 ${Q.night || "-"}　到過門檻 ${Q.hits || 0} 次　待收名字 ${Q.take || "-"}（還剩 ${Array.isArray(Q.takeLeft) ? Q.takeLeft.length : 0} 人）　上次收 ${Q.took ? `${Q.took.day || "-"}${Q.took.none ? "（沒有可收的）" : "（收了壹個）"}` : "-"}　最近 ${JSON.stringify(Q.trace || [])}` : "館門口池子：還沒有"); } // 不印是誰（11-27 查門檻那晚）
   for (const p of ["world/main", "stocksTw/latest", "stocksUs/latest"]) { const s = await db.doc(p).get(); console.log(`${p}：${s.exists ? kb(B(s.data())) : "沒有"}`); }
   const ws = await db.collection("casinoWallets").get(), sizes = ws.docs.map(d => B(d.data().data || d.data()));
   if (sizes.length) console.log(`錢包 ${sizes.length} 個：最大 ${kb(Math.max(...sizes))}、平均 ${kb(sizes.reduce((a, b) => a + b, 0) / sizes.length)}`);
