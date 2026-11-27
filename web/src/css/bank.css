@@ -736,11 +736,9 @@ body[data-screen="bank"] #room { background: none; }
 .bt-end { display: grid; text-align: right; } .bt-end > b.up { color: var(--money-up); } .bt-end > b.down { color: var(--money-down); }
 .bt-act { display: inline; } .bt-act small { display: inline; margin-left: 2px; } .bt-act.in { color: #F2D58A; } .bt-act.out { color: #9FC3F0; }
 
-/* 下單區（11-27 翊文：「都是文字不太好辨識」→ 排版 B「下單單」，bank_ticket.js）：交易方式＝三顆有框的鈕（下面小字說做什麼）；買賣＝紅買綠賣；按股數／按金額＝兩顆；再填數量、看金額、按大按鈕 */
+/* 下單區（11-27 翊文：「都是文字不太好辨識」→ 排版 B「下單單」，bank_ticket.js）：交易方式＝三顆有框的鈕；買賣＝紅買綠賣；按股數／按金額＝兩顆；再填數量、看金額、按大按鈕 */
 .bank-segs.kind.bk-kinds { gap: 6px; margin-top: 10px; }
-.bank-segs.kind.bk-kinds .bank-seg { flex-direction: column; gap: 2px; min-height: 58px; padding: 6px 2px; border: 2px solid rgba(214, 178, 94, .75); letter-spacing: 0; }
-.bank-segs.kind.bk-kinds .bank-seg b { font-size: 1.0625rem; line-height: 1.25; }
-.bank-segs.kind.bk-kinds .bank-seg small { font-size: .6875rem; font-weight: 500; line-height: 1.25; opacity: .85; }
+.bank-segs.kind.bk-kinds .bank-seg { min-height: 48px; padding: 6px 2px; border: 2px solid rgba(214, 178, 94, .75); letter-spacing: .04em; font-size: 1.0625rem; font-weight: 800; }
 .bank-segs.kind.bk-kinds .bank-seg:not(.on) { background: linear-gradient(180deg, #34497A, #22345A); color: #F3E3B0; }
 .bank-segs.kind.bk-kinds .bank-seg.on { border-color: #FFF1C4; box-shadow: 0 0 0 2px #7A5A2A, 0 0 14px rgba(240, 217, 149, .55); }
 .bank-segs.side { margin-top: 10px; }
@@ -778,9 +776,8 @@ body[data-screen="bank"] #room { background: none; }
 .bank-onescreen .btn.bk-go { min-height: 56px; width: 100%; border-radius: 12px; border: 2px solid #FFB7A3; background: linear-gradient(180deg, #D35F47, #A9382A); color: #FFF4EE; font-size: 1.25rem; font-weight: 800; letter-spacing: .1em; }
 .bank-onescreen .btn.bk-go.side-sell { border-color: #B9EDCD; background: linear-gradient(180deg, #46A873, #2A7048); color: #F1FFF6; }
 .bank-onescreen .btn.bk-go:disabled { opacity: .45; }
-@media (max-width: 760px) { .bank-segs.kind.bk-kinds .bank-seg b { font-size: 1rem; } }
+@media (max-width: 760px) { .bank-segs.kind.bk-kinds .bank-seg { font-size: 1rem; } }
 /* 槓桿、掛單也用下單單（11-27 翊文：「要，一起改」） */
-.bank-segs.kind.bk-kinds.bk-order .bank-seg b { font-size: 1rem; }
 .bk-label { margin: 2px 0 -4px; font-size: .875rem; font-weight: 700; color: #E9D9A6; }
 .bk-sec { display: grid; gap: 8px; margin-top: 10px; }
 .bk-chips.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
