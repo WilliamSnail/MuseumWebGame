@@ -779,3 +779,14 @@ body[data-screen="bank"] #room { background: none; }
 .bank-onescreen .btn.bk-go.side-sell { border-color: #B9EDCD; background: linear-gradient(180deg, #46A873, #2A7048); color: #F1FFF6; }
 .bank-onescreen .btn.bk-go:disabled { opacity: .45; }
 @media (max-width: 760px) { .bank-segs.kind.bk-kinds .bank-seg b { font-size: 1rem; } }
+/* 槓桿、掛單也用下單單（11-27 翊文：「要，一起改」） */
+.bank-segs.side.two .bank-seg { flex-direction: column; display: flex; align-items: center; justify-content: center; gap: 1px; min-height: 58px; letter-spacing: 0; }
+.bank-segs.side.two .bank-seg:nth-child(1)::before, .bank-segs.side.two .bank-seg:nth-child(2)::before { content: none; }
+.bank-segs.side.two .bank-seg small { font-size: .6875rem; font-weight: 500; opacity: .85; }
+.bank-segs.kind.bk-kinds.bk-order .bank-seg b { font-size: 1rem; }
+.bk-label { margin: 2px 0 -4px; font-size: .875rem; font-weight: 700; color: #E9D9A6; }
+.bk-sec { display: grid; gap: 8px; margin-top: 10px; }
+.bk-chips.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.bk-chip.on { background: linear-gradient(180deg, #F0D995, #C8A25A); color: #1D2B45; border-color: #FFF1C4; box-shadow: 0 0 0 2px #7A5A2A; }
+.bk-sum-r.warn dt, .bk-sum-r.warn dd { color: #FFB4A6; font-weight: 700; }
+.bk-ticket .bank-ocos .bank-check { min-height: 40px; }
