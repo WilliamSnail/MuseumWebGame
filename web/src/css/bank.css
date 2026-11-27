@@ -735,3 +735,47 @@ body[data-screen="bank"] #room { background: none; }
 .bt-main { display: grid; gap: 2px; min-width: 0; } .bt-main > b { font-weight: 700; } .bt-main > b small { display: inline; margin-left: 6px; }
 .bt-end { display: grid; text-align: right; } .bt-end > b.up { color: var(--money-up); } .bt-end > b.down { color: var(--money-down); }
 .bt-act { display: inline; } .bt-act small { display: inline; margin-left: 2px; } .bt-act.in { color: #F2D58A; } .bt-act.out { color: #9FC3F0; }
+
+/* 下單區（11-27 翊文：「都是文字不太好辨識」→ 排版 B「下單單」，bank_ticket.js）：交易方式＝三顆有框的鈕（下面小字說做什麼）；買賣＝紅買綠賣；按股數／按金額＝兩顆；再填數量、看金額、按大按鈕 */
+.bank-segs.kind.bk-kinds { gap: 6px; margin-top: 10px; }
+.bank-segs.kind.bk-kinds .bank-seg { flex-direction: column; gap: 2px; min-height: 58px; padding: 6px 2px; border: 2px solid rgba(214, 178, 94, .75); letter-spacing: 0; }
+.bank-segs.kind.bk-kinds .bank-seg b { font-size: 1.0625rem; line-height: 1.25; }
+.bank-segs.kind.bk-kinds .bank-seg small { font-size: .6875rem; font-weight: 500; line-height: 1.25; opacity: .85; }
+.bank-segs.kind.bk-kinds .bank-seg:not(.on) { background: linear-gradient(180deg, #34497A, #22345A); color: #F3E3B0; }
+.bank-segs.kind.bk-kinds .bank-seg.on { border-color: #FFF1C4; box-shadow: 0 0 0 2px #7A5A2A, 0 0 14px rgba(240, 217, 149, .55); }
+.bank-segs.side { margin-top: 10px; }
+.bank-segs.side .bank-seg { min-height: 48px; font-size: 1.125rem; border-width: 2px; }
+.bank-segs.side .bank-seg:nth-child(1) { border-color: #C4543F; color: #F4A08C; background: rgba(184, 67, 47, .14); }
+.bank-segs.side .bank-seg:nth-child(2) { border-color: #3E9A66; color: #8FD7AB; background: rgba(46, 125, 79, .14); }
+.bank-segs.side .bank-seg:nth-child(1)::before { content: "▲ "; letter-spacing: 0; }
+.bank-segs.side .bank-seg:nth-child(2)::before { content: "▼ "; letter-spacing: 0; }
+.bank-segs.side .bank-seg.on:nth-child(1) { background: linear-gradient(180deg, #D35F47, #A9382A); border-color: #FFB7A3; color: #FFF4EE; box-shadow: 0 0 12px rgba(211, 95, 71, .55); }
+.bank-segs.side .bank-seg.on:nth-child(2) { background: linear-gradient(180deg, #46A873, #2A7048); border-color: #B9EDCD; color: #F1FFF6; box-shadow: 0 0 12px rgba(70, 168, 115, .55); }
+.bank-unit { margin-top: 10px; }
+.bank-unit .bank-segs.unit { gap: 6px; }
+.bank-unit .bank-segs.unit .bank-seg { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 50px; letter-spacing: 0; }
+.bank-unit .bank-segs.unit .bank-seg b { font-size: 1rem; }
+.bank-unit .bank-segs.unit .bank-seg small { font-size: .6875rem; font-weight: 500; opacity: .85; }
+.bank-unit .bank-segs.unit .bank-seg.on { background: #4A66A0; border-color: #BFD3FF; color: #FFFFFF; box-shadow: 0 0 10px rgba(143, 175, 240, .45); }
+.bk-ticket { display: grid; gap: 10px; margin-top: 10px; }
+.bk-field { display: flex; align-items: center; gap: 8px; padding: 6px; border: 2px solid var(--bank-gold, #D6B25E); border-radius: 12px; background: #F3EFE0; }
+.bk-ticket .bk-field .bk-big-in { flex: 1 1 auto; width: 100%; min-width: 0; height: 48px; border: 0; background: none; text-align: right; font-size: 2rem; font-weight: 800; color: #1D2B45; }
+.bk-ticket .bk-field .bk-big-in::placeholder { color: #A89E84; }
+.bk-field em { flex: none; font-style: normal; font-weight: 700; color: #5A4A28; }
+.bk-step { flex: none; width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--bank-gold, #D6B25E); background: linear-gradient(180deg, #2A3C5E, #1D2B45); color: #F8E3A0; font: 800 1.5rem/1 var(--font-num, serif); cursor: pointer; }
+.bk-step:disabled { opacity: .4; }
+.bk-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.bk-chip { min-height: 44px; padding: 0 2px; border-radius: 22px; border: 1px solid rgba(214, 178, 94, .7); background: rgba(20, 30, 50, .7); color: #F8E3A0; font: 700 .9375rem/1 var(--font-num, serif); cursor: pointer; }
+.bk-chip:disabled { opacity: .4; }
+.bk-why { margin: 0; padding: 6px 10px; border-radius: 8px; background: rgba(211, 95, 71, .18); border: 1px solid rgba(255, 160, 130, .6); color: #FFC8B8; font-size: .875rem; }
+.bk-why[hidden] { display: none; }
+.bk-sum { margin: 0; padding: 8px 12px; border-radius: 10px; background: rgba(8, 14, 26, .55); display: grid; gap: 4px; }
+.bk-sum-r { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: .875rem; color: #9AA6BB; }
+.bk-sum-r dd { margin: 0; color: #E8ECF4; font-variant-numeric: tabular-nums; }
+.bk-sum-r.total { padding-top: 6px; margin-top: 2px; border-top: 1px dashed rgba(214, 178, 94, .45); color: #F8E3A0; font-size: 1rem; }
+.bk-sum-r.total dd { font-size: 1.5rem; font-weight: 800; color: #FFF3D0; }
+.bk-sum-r.note { font-size: .75rem; }
+.bank-onescreen .btn.bk-go { min-height: 56px; width: 100%; border-radius: 12px; border: 2px solid #FFB7A3; background: linear-gradient(180deg, #D35F47, #A9382A); color: #FFF4EE; font-size: 1.25rem; font-weight: 800; letter-spacing: .1em; }
+.bank-onescreen .btn.bk-go.side-sell { border-color: #B9EDCD; background: linear-gradient(180deg, #46A873, #2A7048); color: #F1FFF6; }
+.bank-onescreen .btn.bk-go:disabled { opacity: .45; }
+@media (max-width: 760px) { .bank-segs.kind.bk-kinds .bank-seg b { font-size: 1rem; } }

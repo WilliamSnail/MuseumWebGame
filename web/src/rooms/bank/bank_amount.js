@@ -1,8 +1,8 @@
 // 零碎股：照金額買賣（決定 0160，翊文 11-27「輸入金額而非股數的零碎股交易」）。只有館外股（台股、美股）。
-// 現股交易上面壹排「按股數｜按金額」（11-27 翊文：「照金額」那欄不夠明顯）：選按金額時，快捷鍵換成「1 萬、10 萬、100 萬、全部」，
-// 下面是自訂金額；按了先跳確認，確認才送 op buyAmt／sellAmt。選哪壹種記在這台裝置（localStorage）。
-// 這個檔不 import ui_bank.js（不准繞圈）：要用的小工具（確認框、送出、數字欄）由 ui_bank.js 傳進來。
-import { btn, h } from "../../core/ui_core.js";
+// 現股交易上面壹排「按股數｜按金額」（11-27 翊文：「照金額」那欄不夠明顯）：選按金額時，下單單（bank_ticket.js）改填金額，
+// 快捷鍵是「1 萬、10 萬、100 萬、全部」，下面寫約買到幾股；按大按鈕先跳確認，確認才送 op buyAmt／sellAmt。選哪壹種記在這台裝置（localStorage）。
+// 這個檔不 import ui_bank.js（不准繞圈）：要用的小工具（確認框、送出）由 ui_bank.js 傳進來。
+import { ticketBox } from "./bank_ticket.js";
 
 const FRAC = 10000; // 萬分之壹股（跟 shared/casino/stock.js 的 ST_FRAC 壹樣）
 const MODE_KEY = "bankTradeMode";
@@ -22,13 +22,12 @@ export const tradeMode = cur => {
 export const setTradeMode = m => { try { localStorage.setItem(MODE_KEY, m === "amt" ? "amt" : "n"); } catch (e) { /* 存不了就算了 */ } };
 
 const STEPS = [10000, 100000, 1000000];
-// o = { side: "buy"|"sell", cur, cash, sellLeft, feeRate, numField, confirmTrade, bankDo, state }
+// o = { side: "buy"|"sell", cur, halt（休市：下單單照畫，全部灰掉）, cash, sellLeft, feeRate, confirmTrade, bankDo, state }
 export function amountBox(o) {
   const { side, cur } = o, buy = side === "buy";
   if (cur.kind !== "out" || !(cur.price > 0)) return null;
   const c = Math.round(cur.price * 100), units = Math.round(((cur.free != null ? cur.free : +cur.mine || 0) + (+cur.frac || 0)) * FRAC);
-  const worth = Math.floor(c * units / FRAC / 100), cap = buy ? o.cash : Math.min(worth, o.sellLeft != null ? o.sellLeft : Infinity);
-  const st = o.state || (o.state = { amt: "" }), info = h("p", { class: "bank-meta sm bank-qinfo" });
+  const worth = Math.floor(c * units / FRAC / 100), cap = o.halt ? 0 : buy ? o.cash : Math.min(worth, o.sellLeft != null ? o.sellLeft : Infinity);
   // 買：給的金額含手續費，算買得到幾個單位；賣：給的是賣出金額，算要賣幾個單位
   const calc = A => {
     if (buy) {
@@ -51,24 +50,24 @@ export function amountBox(o) {
       : [["賣出金額", fmt(A)], ["約賣掉", `${nText(x.u)} 股`], ["拿回（約）", fmt(x.net), "total"]], buy ? "確認買進" : "確認賣出",
       () => o.bankDo("stock", { op: buy ? "buyAmt" : "sellAmt", id: cur.id, amt: all ? "max" : A }));
   };
-  const steps = STEPS.map(n => btn(wan(n), () => ask(n), "big bank-btn", { disabled: n > cap ? true : null }));
-  steps.push(btn(buy ? "全部籌碼" : "全賣", () => (buy ? ask(o.cash) : ask(worth, true)), "primary big bank-btn gold", { disabled: cap > 0 ? null : true }));
-  const go = btn(buy ? "買這個金額" : "賣這個金額", () => ask(Math.floor(Number(st.amt))), "bank-btn gold");
-  const redo = () => {
-    const raw = st.amt, A = Math.floor(Number(raw));
-    go.disabled = true;
-    if (raw === "" || raw == null) { info.textContent = buy ? "打想花的金額（含手續費），不到壹股的也買得到。" : `能賣的約值 ${fmt(worth)}。`; return; }
-    if (!(A > 0)) { info.textContent = "金額要是 1 以上的整數。"; return; }
-    if (buy && A > o.cash) { info.textContent = `籌碼不夠，最多 ${fmt(o.cash)}。`; return; }
+  const why = A => {
+    if (!A || o.halt) return ""; // 休市的原因寫在下單單下面（ui_bank.js 的 whyNoBuy／whyNoSell）
+    if (buy && A > o.cash) return `籌碼不夠，最多 ${fmt(o.cash)}。`;
     const x = calc(A);
-    if (!(x.u > 0)) { info.textContent = "金額太小，連萬分之壹股都買不到。"; return; }
-    if (!buy && A > worth) { info.textContent = `你這支能賣的只值約 ${fmt(worth)}。`; return; }
-    if (!buy && o.sellLeft != null && x.gross > o.sellLeft) { info.textContent = `今天還能賣約 ${fmt(o.sellLeft)}。`; return; }
-    info.textContent = buy ? `約買到 ${nText(x.u)} 股（含手續費，花的不會超過 ${fmt(A)}）` : `約賣掉 ${nText(x.u)} 股，拿回約 ${fmt(x.net)}`;
-    go.disabled = false;
+    if (!(x.u > 0)) return "金額太小，連萬分之壹股都買不到。";
+    if (!buy && A > worth) return `你這支能賣的只值約 ${fmt(worth)}。`;
+    if (!buy && o.sellLeft != null && x.gross > o.sellLeft) return `今天還能賣約 ${fmt(o.sellLeft)}。`;
+    return "";
   };
-  const field = o.numField("自訂金額", st.amt, x => { st.amt = x === "" ? "" : Math.floor(Number(x)); redo(); }, { min: 1, step: 1, unit: "籌碼" });
-  const inp = field.querySelector && field.querySelector("input"); if (inp) inp.placeholder = "打金額";
-  redo();
-  return [h("div", { class: "bank-acts" }, steps), h("div", { class: "bank-custom" }, field, go, info)];
+  const chips = STEPS.map(n => [wan(n), n]).concat([buy ? ["全部籌碼", o.cash] : ["全賣", worth, true]]);
+  return ticketBox({
+    side, state: o.state, unit: "籌碼", max: Math.max(0, cap), step: 10000, start: "", chips, why,
+    rows: A => {
+      const x = A && !o.halt ? calc(A) : null;
+      return [["股價", fmt(cur.price)], [buy ? "約買到" : "約賣掉", x ? `${nText(x.u)} 股` : "—", "total"],
+        x && !buy ? ["拿回（約）", fmt(x.net)] : null, buy ? ["手上的籌碼", fmt(o.cash), "note"] : ["能賣的約值", fmt(worth), "note"]];
+    },
+    goText: A => (o.halt ? (buy ? "現在不能買" : "現在不能賣") : A ? `${buy ? "買進" : "賣出"} ${fmt(A)}` : "先填金額"),
+    onGo: (A, all) => !o.halt && ask(A, !buy && all && A === worth),
+  });
 }
