@@ -6,7 +6,7 @@
 //   --top N：同時錄 CPU 剖析，列出最吃時間的 N 個函式（檔名:行），找「是誰在空轉」用（11-17 玩家反應手機、電腦會熱）
 // 同壹個畫面改前、改後各量壹次比較。數字會隨電腦有差，要在同壹台、同壹個大小比。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("./child.cjs");
+const { cdpClose, guardBrowser, spawn } = require("./child.cjs");
 
 const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const url = args.find(a => /^https?:/.test(a));
@@ -22,6 +22,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const port = 9300 + Math.floor(Math.random() * 500);
   const prof = fs.mkdtempSync(path.join(os.tmpdir(), "perf_"));
   const br = spawn(exe, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, `--window-size=${W},${H}`, "--mute-audio", "--no-first-run", "about:blank"], { stdio: "ignore" });
+  const kill = guardBrowser(prof, br); // 不管怎麼結束（含出錯的 process.exit）都關乾淨（11-27）
   let list = null;
   for (let i = 0; i < 50 && !list; i++) { await sleep(200); try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch (e) { /* 還沒好 */ } }
   const page = list.find(t => t.type === "page");
@@ -63,7 +64,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     console.log(`    （錄到 ${r(tot)} ms，含 idle）`);
   }
   if (AFTER) { const v = await send("Runtime.evaluate", { expression: AFTER, returnByValue: true }); console.log("  --after：", JSON.stringify(v.result && v.result.value)); }
-  ws.close(); br.kill();
-  try { fs.rmSync(prof, { recursive: true, force: true }); } catch (e) { /* 沒關係 */ }
+  cdpClose(ws); kill();
   process.exit(0);
 })().catch(e => { console.error("✗", e.message); process.exit(1); });

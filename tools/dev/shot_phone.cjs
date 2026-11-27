@@ -4,7 +4,7 @@
 //   node tools/dev/shot_phone.cjs "http://localhost:5287/?x=1#lobby" [--size 375x812] [--wait 6000] [--js "document.querySelector('.tb-menu').click()"] [--out a.png] [--full]
 // --js 可以給好幾次，照順序跑，每段之間等 800ms。預設會先在 body 加 orient-skip（略過「請轉橫」）。印出 PNG 路徑。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("./child.cjs");
+const { cdpClose, guardBrowser, spawn } = require("./child.cjs");
 
 const args = process.argv.slice(2), val = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const all = k => args.flatMap((a, i) => a === k ? [args[i + 1]] : []);
@@ -22,6 +22,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const port = 9300 + Math.floor(Math.random() * 500);
   const prof = fs.mkdtempSync(path.join(os.tmpdir(), "phone_"));
   const br = spawn(exe, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--mute-audio", "--no-first-run", "--hide-scrollbars", "about:blank"], { stdio: "ignore" });
+  const kill = guardBrowser(prof, br); // 不管怎麼結束（含出錯的 process.exit）都關乾淨（11-27）
   let list = null;
   for (let i = 0; i < 50 && !list; i++) { await sleep(200); try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch (e) { /* 還沒好 */ } }
   const page = list.find(t => t.type === "page");
@@ -42,7 +43,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: FULL });
   fs.writeFileSync(out, Buffer.from(shot.result.data, "base64"));
   console.log(out);
-  ws.close(); br.kill();
-  try { fs.rmSync(prof, { recursive: true, force: true }); } catch (e) { /* 沒關係 */ }
+  cdpClose(ws); kill();
   process.exit(0);
 })().catch(e => { console.error("✗", e.message); process.exit(1); });

@@ -1,7 +1,7 @@
 // 預告片用的無頭瀏覽器小工具：開 Edge／Chrome（靜音、無頭），用 DevTools 協定操作壹個分頁。
 // shots.cjs（照遊戲畫面）和 render.cjs（逐格輸出）共用。只准開 localhost。
 const fs = require("fs"), path = require("path"), os = require("os");
-const { spawn } = require("../../dev/child.cjs");
+const { spawn, cdpClose, guardBrowser } = require("../../dev/child.cjs");
 
 const CANDS = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Google/Chrome/Application/chrome.exe", "/usr/bin/google-chrome", "/usr/bin/chromium"];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -13,9 +13,10 @@ async function openBrowser(W, H) {
   const port = 9800 + Math.floor(Math.random() * 400);
   const prof = fs.mkdtempSync(path.join(os.tmpdir(), "trailer_br_"));
   const br = spawn(exe, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--mute-audio", "--autoplay-policy=no-user-gesture-required", "--no-first-run", "--hide-scrollbars", `--window-size=${W},${H}`, "about:blank"], { stdio: "ignore" });
+  const kill = guardBrowser(prof, br); // 不管怎麼結束都關乾淨（11-27）
   let list = null;
   for (let i = 0; i < 60 && !list; i++) { await sleep(200); try { list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(); } catch (e) { /* 還沒好 */ } }
-  if (!list) throw new Error("瀏覽器沒有起來");
+  if (!list) { kill(); throw new Error("瀏覽器沒有起來"); }
   const page = list.find(t => t.type === "page");
   const ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise(r => ws.addEventListener("open", r, { once: true }));
@@ -34,7 +35,7 @@ async function openBrowser(W, H) {
     await send("Page.navigate", { url });
   };
   const shot = async (format = "png") => Buffer.from((await send("Page.captureScreenshot", { format })).result.data, "base64");
-  const close = () => { try { ws.close(); } catch (e) { /* 沒關係 */ } br.kill(); setTimeout(() => { try { fs.rmSync(prof, { recursive: true, force: true }); } catch (e) { /* 沒關係 */ } }, 800); };
+  const close = () => { cdpClose(ws); kill(); };
   return { send, run, shot, goto, close };
 }
 
