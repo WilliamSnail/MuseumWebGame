@@ -19,7 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; import { levTable } from "./bank_help_lev.js"; import { UNIT_TABS, orderTicket, pickRow, shareTicket, subTabs, ticketBox, tradeTabs, unitRow } from "./bank_ticket.js"; // 零碎股照金額買賣（決定 0160）
+import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, setTradeMode, sharesText, tradeMode } from "./bank_amount.js"; import { levTable } from "./bank_help_lev.js"; import { UNIT_TABS, orderTicket, pickRow, shareTicket, ticketBox, unitRow } from "./bank_ticket.js"; // 零碎股照金額買賣（決定 0160）
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -634,7 +634,7 @@ function orderTrade(v, S, cur) {
     : (k === "buy" ? lockOf(px, n) > free : n > free) ? (k === "buy" ? "錢不夠鎖。" : "你沒有那麼多股可以鎖。") : "");
   const noMine = !(cur.free != null ? cur.free : cur.mine);
   return [
-    seg(subTabs([["buy", "限價買", "跌到才買"], ["sell", "限價賣", "漲到才賣", noMine], ["stop", "停損賣", "跌到就賣", noMine]]), k, x => { f.okind = x; f.opx = ""; rerender(); }, "kind bk-kinds bk-order"),
+    seg([["buy", "限價買"], ["sell", "限價賣", noMine], ["stop", "停損賣", noMine]], k, x => { f.okind = x; f.opx = ""; rerender(); }, "kind bk-kinds bk-order"),
     orderTicket({ kind: k, state: f, price: cur.price, why, maxN: px => (k === "buy" ? (px > 0 ? Math.floor(free / (px * (1 + fee))) : 0) : free),
       rows: (px, n) => [["現價", cur.price.toLocaleString("en-US")], [k === "buy" ? "會先鎖住（約）" : "會先鎖住", px && n ? (k === "buy" ? fmt(lockOf(px, n)) : `${fmt(n)} 股`) : "—", "total"], [k === "buy" ? "成交價照當時的價，多的退回" : "成交價照當時的價", "", "note"], ["有效", until, "note"]],
       onGo: (px, n) => confirmTrade(`掛單：${KIND_TEXT[k]} ${cur.name}`, [["價格", fp(px)], ["股數", `${fmt(n)} 股`], k === "buy" ? ["先鎖住（約）", fmt(lockOf(px, n)), "total"] : ["先鎖住", `${fmt(n)} 股`, "total"], ["有效", until]], "確認掛單", () => bankDo("stock", { op: "order", id: cur.id, kind: k, px, n })) }),
@@ -730,7 +730,7 @@ function stockPane(v) {
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "開盤沒跳空　"), "昨天來這家店的人太少，今天開盤價跟昨天收盤一樣（盤中照樣會小幅變動）。") : null,
         cur.market === "in" && cur.jump ? h("p", { class: "bank-stale" }, h("b", null, "開盤跳空　"), "今天開盤價跟昨天收盤差了壹截，是昨天的生意帶出來的。") : null,
         hasShares(cur) ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, sharesText(cur)), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
-        tabs.length > 1 ? seg(tradeTabs(tabs), tab, k => { UI.bankTrade = k; rerender(); }, "kind bk-kinds") : null,
+        tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind bk-kinds") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
         h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照真實市場的行情動。買賣各收手續費，進博物館資金。"),
         cur.market === "in" && S.inCap != null ? h("p", { class: "bank-hint" }, `每家最多持有 ${fmt(S.inCap)} 股。${S.inRule || ""}`) : null,
@@ -931,7 +931,7 @@ function gsOrderTrade(v, S, G, cur) {
   const why = (px, n) => (halt ? "停盤中，等開盤再掛單。" : !(n > 0 && px > 0) ? "" : k === "sell" && px <= cur.price ? "賣的價要比現價（" + fp(cur.price) + "）高，現在就想賣請用「現股」。" : k !== "sell" && px >= cur.price ? (k === "buy" ? "買" : "停損") + "的價要比現價（" + fp(cur.price) + "）低，現在就想買請用「現股」。"
     : k === "buy" ? (lockOf(px, n) > v.cash ? "錢不夠鎖。" : "") : n > free ? "你沒有那麼多股可以鎖。" : "");
   return [
-    seg(subTabs([["buy", "限價買", "跌到才買"], ["sell", "限價賣", "漲到才賣", !free], ["stop", "停損賣", "跌到就賣", !free]]), k, x => { f.okind = x; f.opx = ""; rerender(); }, "kind bk-kinds bk-order"),
+    seg([["buy", "限價買"], ["sell", "限價賣", !free], ["stop", "停損賣", !free]], k, x => { f.okind = x; f.opx = ""; rerender(); }, "kind bk-kinds bk-order"),
     orderTicket({ kind: k, state: f, price: cur.price, why, maxN: px => (k === "buy" ? (px > 0 ? Math.floor(v.cash / (px * (1 + fee))) : 0) : free),
       rows: (px, n) => [["現價", cur.price.toLocaleString("en-US")], [k === "buy" ? "會先鎖住（約）" : "會先鎖住", px && n ? (k === "buy" ? fmt(lockOf(px, n)) : fmt(n) + " 股") : "—", "total"], [k === "buy" ? "成交價照當時的價，多的退回" : "成交價照當時的價", "", "note"], ["有效", "當天收盤前", "note"]],
       onGo: (px, n) => confirmTrade("掛單：" + KIND_TEXT[k] + " " + cur.name, [["價格", fp(px)], ["股數", fmt(n) + " 股"], k === "buy" ? ["先鎖住（約）", fmt(lockOf(px, n)), "total"] : ["先鎖住", fmt(n) + " 股", "total"], ["有效", "當天，收盤沒成交就取消退回"]], "確認掛單", () => bankDo("stock", { op: "order", id: cur.id, kind: k, px, n })) }),
@@ -969,7 +969,7 @@ function gstockPane(v) {
       h("p", { class: "bank-meta sm" }, `股本 ${fmt(cur.shares)} 股・市值 ${fmt(cur.mcap)}・每股淨值 ${fmt(cur.nav)}`),
       h("p", { class: "bank-meta sm" }, cur.mine ? `你有 ${fmt(cur.mine)} 股，市值 ${fmt(cur.value)}，成本 ${fmt(cur.cost)}` : "你還沒有這支。"),
       cur.hist && cur.hist.length > 1 ? h("div", null, spark(cur.hist), h("p", { class: "bank-meta sm" }, "近 " + cur.hist.length + " 天收盤")) : null,
-      gtabs.length > 1 ? seg(tradeTabs(gtabs), gtab, k => { UI.bankGsTrade = k; rerender(); }, "kind bk-kinds") : null,
+      gtabs.length > 1 ? seg(gtabs, gtab, k => { UI.bankGsTrade = k; rerender(); }, "kind bk-kinds") : null,
       ...(gtab === "lev" ? levTrade(v, S, curL) : gtab === "order" ? gsOrderTrade(v, S0, G, cur) : [seg([["buy", "買進"], ["sell", "賣出", !cur.mine]], side, k => { UI.bankGsSide = k; rerender(); }, "side"), gsTicket]),
       (G.notes || []).length ? h("ul", { class: "bank-who" }, G.notes.map(t => h("li", null, t))) : null),
       S && S.lev ? positionsPanel(S) : null, gsOrdersPanel(G), tradesPanel(S0 && S0.trades, "grp")));

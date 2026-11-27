@@ -5,13 +5,8 @@ import { btn, h } from "../../core/ui_core.js";
 
 const fmt = n => Number(n).toLocaleString("en-US");
 
-// 交易方式分頁（現股／槓桿・放空／掛單）：每顆下面壹行小字說它做什麼，看得出是三顆可以按的鈕
-const KIND_SUB = { spot: "直接買賣", lev: "借錢放大・看跌", order: "到價才成交" };
-export const tradeTabs = list => list.map(([k, t, dis]) => [k, [h("b", null, t), h("small", null, KIND_SUB[k] || "")], dis]);
 // 按股數／按金額（只有館外股：台股、美股）
 export const unitRow = el => h("div", { class: "bank-unit" }, el);
-// 做多／放空、掛單種類：名字下面壹行小字
-export const subTabs = list => list.map(([k, t, sub, dis]) => [k, [h("b", null, t), h("small", null, sub)], dis]);
 export const UNIT_TABS = [["n", [h("b", null, "按股數"), h("small", null, "買幾股")]], ["amt", [h("b", null, "按金額"), h("small", null, "不到壹股也能買")]]];
 
 // 大數字欄：−／＋ 和單位。回 { el, show(v) }
