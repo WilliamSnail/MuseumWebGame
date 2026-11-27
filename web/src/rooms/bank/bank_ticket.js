@@ -1,6 +1,7 @@
 // 股票下單區（11-27 翊文：「這個感覺有點都是文字不太好辨識」；三種排版挑了 B「下單單」）：
 // 先填數量（−／＋、快捷鍵），下面直接看要付或拿回多少，最後按壹顆大按鈕（紅買綠賣）才跳確認。按股數、按金額（零股）、集團股都用這壹個。
 // 不 import ui_bank.js（不准繞圈）：算錢、確認、送出由呼叫的檔傳進來。
+import { isKeyBeep, keyBeep } from "../../fx/bank_sfx.js";
 import { btn, h } from "../../core/ui_core.js";
 
 const fmt = n => Number(n).toLocaleString("en-US");
@@ -11,7 +12,7 @@ export const UNIT_TABS = [["n", [h("b", null, "按股數"), h("small", null, "�
 
 // 大數字欄：−／＋ 和單位。回 { el, show(v) }
 function bigField({ aria, unit, onType, onStep, disabled, decimal }) {
-  const input = h("input", { type: "number", inputmode: decimal ? "decimal" : "numeric", class: "bk-big-in", min: "0", step: decimal ? "0.01" : "1", placeholder: "0", "aria-label": aria, onInput: e => onType(e.target.value === "" ? "" : Number(e.target.value)) });
+  const input = h("input", { type: "number", inputmode: decimal ? "decimal" : "numeric", class: "bk-big-in", min: "0", step: decimal ? "0.01" : "1", placeholder: "0", "aria-label": aria, onInput: e => onType(e.target.value === "" ? "" : Number(e.target.value)), onKeydown: e => { if (isKeyBeep(e)) keyBeep(); } }); // 按數字「嗶」（跟其他數字欄壹樣）
   const stepBtn = (d, text, tip) => h("button", { type: "button", class: "bk-step", "aria-label": tip, disabled: disabled ? true : null, onClick: () => onStep(d) }, text);
   return { el: h("div", { class: "bk-field" }, stepBtn(-1, "−", "少壹點"), input, h("em", null, unit), stepBtn(1, "＋", "多壹點")), show: v => { input.value = v === "" || v == null ? "" : String(v); } };
 }
