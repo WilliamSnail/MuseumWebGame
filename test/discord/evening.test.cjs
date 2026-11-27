@@ -33,5 +33,14 @@ T("評語照兩邊的心情挑；同壹天同壹句", () => {
   Object.values(T2).flat().forEach(s => assert.ok(!/一/.test(s), s));
 });
 
+T("館訊合併到 18:17（11-27）：只挑最近 3 天、還沒發過的公告；pick 和字數上限照給的", () => {
+  const L = [{ id: "a", title: "壹", publish: "2026-11-28", sections: [] }, { id: "b", title: "二", publish: "2026-11-27", sections: [] }, { id: "c", title: "三", publish: "2026-11-20", sections: [] }, { id: "d", title: "四", publish: "2026-11-28", cat: "特展活動", sections: [] }];
+  const p = G.dcDigestPick(L, "2026-11-28", ["b"]);
+  assert.deepStrictEqual(p.map(n => n.id).join(), "a", "b 發過、c 太舊、d 是特展");
+  assert.strictEqual(G.dcDigestPick(L, "2026-11-28", []).map(n => n.id).join(), "a,b", "沒發過的昨天那則也補上");
+  const many = Array.from({ length: 30 }, (_, i) => ({ id: "n" + i, title: "很長的公告標題第" + i + "則，說明館裡改了什麼東西", publish: "2026-11-28", sections: [] }));
+  const t = G.dcDigestText(many, "2026-11-28", () => "其他", ["其他"], many, 400);
+  assert.ok(t.length < 520 && t.includes("…還有"), "超過上限就寫還有幾則：" + t.length);
+});
 console.log(`${pass} passed, ${fail} failed（傍晚行情）`);
 process.exit(fail ? 1 : 0);

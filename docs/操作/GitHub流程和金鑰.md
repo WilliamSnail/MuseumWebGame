@@ -37,7 +37,7 @@
 
 ## 四、發 Discord 公告的規矩
 
-> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），每天 20:00 `.github/workflows/discord-digest.yml` 會把**今天發布的館方公告**合成壹則「今天的更新」發出去（`tools/content/discord_digest.cjs`；今天沒有公告就不發）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。**多行文字壹定放檔案**：`ship --say-now-file 檔案`、`npm run say -- --file 檔案`（Windows 上 npm run 經過 cmd.exe，參數裡換行後面會被切掉；11-17「集團股開放買賣」只發出標題）。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
+> **11-15 起，平常上線不發 Discord**（翊文：「Discord更新太洗板了，可不可以調一下」→「晚上8點發」）：玩家看得到的改動只加館方公告（`npm run notice`），**11-28 起每天 18:17 發壹則**（翊文 11-27「整合壹起 就18:17發壹次」）：上面是館訊（最近 3 天發布、還沒發過的館方公告），下面是傍晚行情（台股收盤＋美股盤前），由伺服器排程發（`functions/stock/evening_post.js`，掛在 `stockDivTick`）；沒有新公告、兩邊都沒開盤就不發。以前 20:00 的館訊彙整（`functions/discord/discord_digest.js`）11-28 起不發。早上另有「美股晨間行情」跟今日館訊壹起發（`announce.cjs`）。`ship --say` 只印提醒、不發。**只有大更新才馬上發**：新廳開放、全館活動開跑、壞掉修好要通知大家，用 `ship --say-now "…"` 或 `npm run say`。**多行文字壹定放檔案**：`ship --say-now-file 檔案`、`npm run say -- --file 檔案`（Windows 上 npm run 經過 cmd.exe，參數裡換行後面會被切掉；11-17「集團股開放買賣」只發出標題）。今日館訊（`discord-scheduled.yml`）照舊：排程部署成功後馬上發，定時備援在 09:17、09:37。
 
 1. **要翊文同意才發**（翊文說「發 Discord」「公告 Discord」才算）。發出去就收不回來。
 2. 遊戲裡也要有館方公告（`npm run notice`，檔在 `content/notices/`），不能只發 Discord。

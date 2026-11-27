@@ -18,6 +18,9 @@ export async function digestRun(now = Date.now()) {
   const ok = await outboxPut({ id: `digest-${day}`, kind: "digest", text });
   return { day, sent: ok, why: ok ? "" : "寫過了或寫不進去" };
 }
+// 11-28 起不發（翊文 11-27：館訊和傍晚行情「整合壹起 就18:17發壹次」→ functions/stock/evening_post.js）。排程留著（刪掉 Functions 的部署要另外確認），只是不做事；固定動作 digest-now 還是可以手動發
+export const DIGEST_MERGED_FROM = "2026-11-28";
 export const discordDigestTick = onSchedule({ schedule: "0 20 * * *", timeZone: "Asia/Taipei", retryCount: 0, timeoutSeconds: 60 }, async () => {
+  if (taipeiDay(Date.now()) >= DIGEST_MERGED_FROM) { console.log("discordDigestTick：館訊改到 18:17 跟傍晚行情壹起發，這裡不發"); return; }
   console.log("discordDigestTick", await digestRun());
 });
