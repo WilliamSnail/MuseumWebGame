@@ -56,7 +56,7 @@ function evBlock(rows, L) {
 }
 const evMood = avg => (avg > 0.003 ? 1 : avg < -0.003 ? -1 : 0);
 
-// o = { day: 台灣日期, tw, us（兩份行情文件）, usDay: 美東今天的日期, names, twIds, usIds, twSyms, usSyms, early: 美股今天提早收盤 }
+// o = { day: 台灣日期, tw, us（兩份行情文件）, twIdx: { px, prev } 加權指數（可以沒有）, usDay: 美東今天的日期, names, twIds, usIds, twSyms, usSyms, early: 美股今天提早收盤 }
 export function dcEveningText(o) {
   const fx = o.us && (evOk(o.us.fx) ? o.us.fx : evOk(o.us.fxLast) ? o.us.fxLast : null);
   const tw = evRows(o.tw, o.day, o.twIds, o.names, o.twSyms, 1);
@@ -64,7 +64,11 @@ export function dcEveningText(o) {
   if (!tw && !usAll) return "";
   const L = ["🌇 **Yuga Bot 銀行　傍晚行情**", tw && usAll ? "台股今天收攤了，館外的另壹邊剛醒。櫃台把兩本帳都攤開來：" : tw ? "台股今天收攤了。館外那壹邊今天休息，櫃台只攤開壹本帳：" : "館外的另壹邊剛醒。白天這邊今天沒開，櫃台只攤開壹本帳：", ""];
   let a = null, b = null;
-  if (tw) { L.push(`🏮 **台股收盤**（${o.day.slice(5)}）`); a = evBlock(tw, L); L.push(`${a.n} 支裡，漲 ${a.up} 支、跌 ${a.dn} 支、平 ${a.n - a.up - a.dn} 支。`, ""); }
+  if (tw) {
+    L.push(`🏮 **台股收盤**（${o.day.slice(5)}）`);
+    const ix = o.twIdx; // 大盤（翊文 11-27「台股能不能再加個大盤」）：證交所的加權指數，遊戲裡沒有這支股票，只寫點數和漲跌
+    if (ix && evOk(ix.px) && evOk(ix.prev)) L.push(`📊 島上大盤（加權指數）　${evFmt(ix.px)}（${evPct(ix.px / ix.prev - 1)}）`);
+    a = evBlock(tw, L); L.push(`${a.n} 支裡，漲 ${a.up} 支、跌 ${a.dn} 支、平 ${a.n - a.up - a.dn} 支。`, ""); }
   if (usAll) {
     const idx = usAll.find(x => x.id === "nightindex"), rest = usAll.filter(x => x.id !== "nightindex");
     L.push("🌙 **美股盤前**（價還在動）");

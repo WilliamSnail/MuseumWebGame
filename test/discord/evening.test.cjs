@@ -42,5 +42,11 @@ T("館訊合併到 18:17（11-27）：只挑最近 3 天、還沒發過的公告
   const t = G.dcDigestText(many, "2026-11-28", () => "其他", ["其他"], many, 400);
   assert.ok(t.length < 520 && t.includes("…還有"), "超過上限就寫還有幾則：" + t.length);
 });
+T("台股大盤（11-27，翊文「台股能不能再加個大盤」）：有加權指數就在台股那段第壹行；沒有就不寫；台股沒開也不寫", () => {
+  const t = G.dcEveningText(base({ twIdx: { px: 39308.08, prev: 39151.81 } }));
+  assert.ok(t.includes(["🏮 **台股收盤**（11-27）", "📊 島上大盤（加權指數）　39,308（▲0.4%）", "📈 漲得最兇："].join("\n")), t);
+  assert.ok(!G.dcEveningText(base({})).includes("島上大盤"));
+  assert.ok(!G.dcEveningText(base({ twIdx: { px: 1, prev: 1 }, tw: mk("2026-11-26", [["islandforge", 1, 1], ["pillpot", 1, 1], ["customchip", 1, 1]]) })).includes("島上大盤"));
+});
 console.log(`${pass} passed, ${fail} failed（傍晚行情）`);
 process.exit(fail ? 1 : 0);
