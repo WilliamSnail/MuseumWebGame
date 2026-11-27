@@ -110,6 +110,25 @@ function beatEntry(b, date, idx, addDays) {
   const at = `${date} ${DAY_POST_AT}`;
   return { id: `beat-${b.id}`, at, atMs: parseAt(at), until: parseAt(`${addDays(date, 1)} 05:00`), isDay: true, make: () => beatPost(idx) };
 }
+// 美股晨間行情（翊文 11-27：「就在那個時候順便發」）：跟今日館訊同壹個時間、排在它後面；字由伺服器組（functions/stock/us_close_public.js，/data/us_close.json），
+// 昨夜沒有開盤（週日、週壹早上、美國假日）就是空字串、不發
+const US_CLOSE_FROM = "2026-11-28", US_CLOSE_URL = "https://pepe-museum.web.app/data/us_close.json";
+async function usCloseText(date, fetcher = fetch) {
+  const r = await fetcher(US_CLOSE_URL, { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error("美股收盤資料 " + r.status);
+  const j = await r.json();
+  return j && j.day === date && typeof j.text === "string" ? j.text : "";
+}
+// 排程那天有寫 dN.json 的 usTalk（照當天新聞寫的評語，11-27 翊文：「排程每天也會找新聞，可以配合這個做評語」）就換掉伺服器預設那句「💬 …」
+function usCloseWithTalk(text, dayFile) {
+  if (!text || !dayFile) return text;
+  let talk = null; try { const d = JSON.parse(fs.readFileSync(dayFile, "utf8")); talk = typeof d.usTalk === "string" && d.usTalk.trim() ? d.usTalk.trim() : null; } catch (e) { talk = null; }
+  return talk ? text.split("\n").map(l => (l.startsWith("💬 ") ? "💬 " + talk : l)).join("\n") : text;
+}
+function usCloseEntry(date, addDays, dayFile) {
+  const at = `${date} ${DAY_POST_AT}`;
+  return { id: `usclose-${date}`, at, atMs: parseAt(at), until: parseAt(`${addDays(date, 1)} 05:00`), isDay: true, make: async () => usCloseWithTalk(await usCloseText(date), dayFile) };
+}
 const eventEntry = ev => ({ id: `event-${ev.id}`, at: `${ev.date} ${ev.from}`, atMs: ev.start - EVENT_EARLY_MIN * MIN, until: ev.end, make: () => eventPost(ev) });
 // content/weeks 裡的正式週 → 自動要發的（備用週沒有日期，不算）
 function autoEntries(dir = path.join(ROOT, "content", "weeks")) {
@@ -122,7 +141,7 @@ function autoEntries(dir = path.join(ROOT, "content", "weeks")) {
     if (!w || !w.start) return;
     for (let n = 1; n <= 7; n++) {
       const date = G.addDays(w.start, n - 1);
-      if (date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) out.push(dayEntry(week, n, date, G.addDays));
+      if (date >= DAY_POST_FROM && fs.existsSync(path.join(dir, week, `d${n}.json`))) { out.push(dayEntry(week, n, date, G.addDays)); if (date >= US_CLOSE_FROM) out.push(usCloseEntry(date, G.addDays, path.join(dir, week, `d${n}.json`))); }
     }
     beats.forEach((b, idx) => {
       if (!b || b.week !== week || b.status === "skipped" || b.extra || typeof b.id !== "string") return; // 加開的（extra）不另外發提醒
@@ -163,7 +182,9 @@ async function runDue(entries, posted, now, sender = send) {
   const out = posted.slice(), failed = [];
   for (const e of due) {
     try {
-      if (await sender(e.make ? e.make() : `${e.text}\n\n${footer()}`)) { out.push(e.id); console.log(`發了「${e.id}」。`); }
+      const txt = await (e.make ? e.make() : `${e.text}\n\n${footer()}`); // make 可以是非同步的（美股晨間行情要先抓資料）
+      if (!txt) { out.push(e.id); console.log(`「${e.id}」今天沒有要發的。`); continue; }
+      if (await sender(txt)) { out.push(e.id); console.log(`發了「${e.id}」。`); }
       else failed.push(e.id);
     } catch (err) { failed.push(e.id); console.error(`「${e.id}」沒發成：${err.message}`); }
   }
@@ -218,4 +239,4 @@ async function main() {
 }
 
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { beatEntry, parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };
+module.exports = { usCloseText, usCloseEntry, usCloseWithTalk, beatEntry, parseAt, parseSchedule, cronOf, scheduleBlock, syncWorkflow, duePosts, runDue, dayEntry, eventEntry, autoEntries, eventSlotOk, deployBroken, deployNotReady, blockedState, RETRY_MIN, WINDOW_MIN, DAY_POST_AT, DAY_POST_FROM, EVENT_EARLY_MIN, EVENT_SLOTS, FIXED_CRONS };

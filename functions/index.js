@@ -90,6 +90,7 @@ export { coopTrace } from "./coop/coop_trace.js";
 export { adminCheck, adminOverview } from "./game/admin.js";
 // ---------- Hamachi 賭場（決定 0040）：寫在 casino.js ----------
 export { casino } from "./casino/casino.js";
+export { usClosePublic } from "./stock/us_close_public.js"; // 美股昨夜收盤（公開 JSON，給今日館訊壹起發；Hosting /data/us_close.json，11-27）
 export { poolPublic } from "./casino/pool_public.js"; // 館門口池子的水位（公開 JSON，給排程讀；Hosting /data/pool.json，決定 0133）
 export { npcSan } from "./npc/san_levels.js"; // 旅客理智等級（公開 JSON，給排程讀；Hosting /data/npc_san.json，決定 0103）
 export { casinoTable } from "./casino/casino_table.js";

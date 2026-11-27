@@ -12,6 +12,10 @@
         "function": { "functionId": "npcSan", "region": "asia-east1" }
       },
       {
+        "source": "/data/us_close.json",
+        "function": { "functionId": "usClosePublic", "region": "asia-east1" }
+      },
+      {
         "source": "/data/pool.json",
         "function": { "functionId": "poolPublic", "region": "asia-east1" }
       },

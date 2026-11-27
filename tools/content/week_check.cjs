@@ -350,6 +350,11 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
         d.real.forEach((s, i) => { if (typeof s === "string" && /[@<>`*_~|\\]|:\/\//.test(s)) E(`${where}.real[${i}]`, "不要有連結、@、markdown 符號"); });
       }
     }
+    if (d.usTalk !== undefined) { // 美股晨間行情的評語（11-27，翊文：「排程每天也會找新聞，可以配合這個做評語」）：Discord 發，跟今日館訊同時；20～140 字
+      if (o.spare) E(where + ".usTalk", "備用的一天不能寫 usTalk（那不是真的某一天）");
+      else if (typeof d.usTalk !== "string" || [...d.usTalk].length < 20) E(where + ".usTalk", "要是 20 字以上的字串（沒有就整個不要寫，會用預設的評語）");
+      else text(where + ".usTalk", d.usTalk, 140);
+    }
     if (d.market !== undefined) { // 世界股市新聞（財報頁；content/排程說明.md 一之十）。可以不寫
       const W = G.WORLD_NEWS, mk = where + ".market";
       if (o.spare) E(mk, "備用的一天不能寫 market（那不是真的某一天）");
