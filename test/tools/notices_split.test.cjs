@@ -8,7 +8,7 @@ const MIG = require("../../tools/content/notices_migrate.cjs"), B = require("../
 const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack || e.message); } };
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "notices-"));
+const tmp = () => require("../tmp_dir.cjs").tmpDir("notices-");
 
 const N = (id, publish, extra = {}) => ({ id, v: 1, cat: "館方公告", tags: ["更新"], importance: "low", area: "賭場", title: "標題" + id, publish, expire: "2027-12-31", sections: [["改了什麼", ["句子" + id]]], ...extra });
 const HEAD = 'import { holidayNotices } from "./holidays.js";\n\nexport const NOTICE_AREAS = ["賭場", "其他"];\n';

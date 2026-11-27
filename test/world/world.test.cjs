@@ -9,7 +9,7 @@ const unit = (id, o = {}) => Object.assign({ id, name: id, kind: "group", parent
 const npc = (id, job, o = {}) => Object.assign({ id, name: id, kind: "visitor", job }, o);
 const chk = (units, npcs) => L.checkWorld({ units, npcs, stockIds: STOCKS });
 const has = (errs, s) => assert.ok(errs.some(e => e.includes(s)), `要有「${s}」：` + errs.join(" | "));
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "world-"));
+const tmp = () => require("../tmp_dir.cjs").tmpDir("world-");
 const rd = f => JSON.parse(fs.readFileSync(f, "utf8"));
 
 T("現在的名單全過：8 個單位、每位 NPC 有隸屬、文化部是劇情單位且不掛在集團底下", () => {

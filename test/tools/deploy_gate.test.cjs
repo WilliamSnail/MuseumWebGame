@@ -49,7 +49,7 @@ T("decide：多個候選，有一個對得上就跳過", () => {
 
 // 真的 git：做一個 PR 分支和 merge commit，API 用假的
 function sandbox() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dg-"));
+  const dir = require("../tmp_dir.cjs").tmpDir("dg-");
   const git = (...a) => { const r = spawnSync("git", ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false", ...a], { cwd: dir, encoding: "utf8" }); assert.strictEqual(r.status, 0, a.join(" ") + "\n" + r.stderr); return r.stdout.trim(); };
   git("init", "-q", "-b", "main");
   fs.writeFileSync(path.join(dir, "a.txt"), "1"); git("add", "-A"); git("commit", "-q", "-m", "base");

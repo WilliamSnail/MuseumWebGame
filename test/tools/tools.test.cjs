@@ -174,7 +174,7 @@ T("wt：分支要 claude/ 開頭；缺東西就停", () => {
 
 T("svg：找得到壹天、整週裡每幅 svg，標出在哪、叫什麼", () => {
   const fs = require("fs"), os = require("os"), path = require("path");
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "svgtest-"));
+  const dir = require("../tmp_dir.cjs").tmpDir("svgtest-");
   fs.writeFileSync(path.join(dir, "d1.json"), JSON.stringify({ show: { works: [{ id: "a", title: "甲", svg: ["<svg viewBox='0 0 1 1'>", "</svg>"] }, { id: "b", art: "frog" }] } }));
   fs.writeFileSync(path.join(dir, "d2.json"), JSON.stringify({ books: [{ title: "乙", svg: "<svg></svg>" }] }));
   fs.writeFileSync(path.join(dir, "week.json"), JSON.stringify({ svg: "<svg></svg>" }));
