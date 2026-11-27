@@ -19,7 +19,7 @@ import { addDays, mdShift, todayStr } from "../../../../shared/core/logic.js";
 import { casNum, casPx } from "../../../../shared/casino/core.js";
 import { casLevSizeOf } from "../../../../shared/casino/stock_lev.js";
 import { flowPane } from "./bank_flow.js";
-import { tradesPanel } from "./bank_trades.js";
+import { tradesPanel } from "./bank_trades.js"; import { amountBox, hasShares, sharesText } from "./bank_amount.js"; // 零碎股照金額買賣（決定 0160）
 import { CAS_FLOW_NODES, CAS_FLOW_ORGS } from "../../../../shared/casino/report.js";
 import { actDone } from "../../panels/ui_story.js";
 
@@ -516,7 +516,7 @@ function stockRows(list, cur, S) {
       const closed = s.session && s.session.state !== "open";
       rows.push(h("button", { type: "button", class: "bank-row stock" + (s === cur ? " on" : ""), role: "row", "aria-pressed": String(s === cur), onClick: () => { UI.bankStock = i; UI.bankPV = "trade"; rerender(); } },
         h("span", null, h("b", null, s.name), fresh.has(s.id) ? h("i", { class: "bank-new", title: "價格有變動" }, "新") : null, s.stale ? h("i", { class: "bank-stale-tag" }, "未更新") : null, closed ? h("i", { class: "bank-stale-tag" }, s.session.state === "closed" ? "收盤" : s.session.state === "pre" || s.session.state === "pending" ? "未開" : s.session.state === "halt" ? "停盤" : "休市") : null, s.real ? h("small", { class: "ln real" }, realBit(s)) : s.code ? h("small", { class: "ln real" }, codeBit(s)) : h("small", { class: "ln" }, s.line)),
-        h("span", { class: "bank-tab-num" }, fp(s.price), usdText(s) ? h("small", { class: "bank-usd-sm" }, usdText(s)) : null), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, s.mine ? `${fmt(s.mine)} 股` : "—")));
+        h("span", { class: "bank-tab-num" }, fp(s.price), usdText(s) ? h("small", { class: "bank-usd-sm" }, usdText(s)) : null), upDown(s.chg, true), h("span", { class: "bank-tab-num" }, hasShares(s) ? sharesText(s) : "—")));
     };
     if (!subs) { list.forEach((s, i) => { if (gk(s) === k) rowFor(s, i); }); return; }
     subs.forEach(({ c, rows: g }) => {
@@ -548,7 +548,7 @@ function numField(label, value, onChange, opts = {}) {
 const chips = (list, cur, onPick, fmtFn, lockFn) => h("div", { class: "bank-chips" }, list.map(n => { const lk = lockFn ? lockFn(n) : ""; return h("button", { type: "button", class: "bank-chip" + (n === cur ? " on" : "") + (lk ? " locked" : ""), "aria-pressed": String(n === cur), disabled: lk ? true : null, title: lk || null, onClick: () => onPick(n) }, fmtFn ? fmtFn(n) : fmt(n)); }));
 // ---------- 交易：現股 ----------
 function spotTrade(v, S, cur) {
-  const side = UI.bankSide === "sell" && (cur.free != null ? cur.free : cur.mine) > 0 ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
+  const side = UI.bankSide === "sell" && ((cur.free != null ? cur.free : cur.mine) > 0 || cur.frac > 0) ? "sell" : "buy"; // 買／賣 二選壹，按鈕那排只畫壹排
   const halt = stockHalt(S, cur), one = unitCost(cur, feeOf(S, cur));
   const inShop = cur.market === "in", expL = inShop ? S.inExposeLeft : S.exposeLeft, sellL = inShop ? S.inSellLeft : S.sellLeft, capL = inShop && S.inCap != null ? Math.max(0, S.inCap - cur.mine) : Infinity;
   const maxBuy = halt ? 0 : Math.max(0, Math.min(Math.floor(v.cash / one), capL, expL != null ? Math.floor(expL / Math.max(1, cur.price)) : Infinity));
@@ -588,9 +588,9 @@ function spotTrade(v, S, cur) {
   qcalc();
   const sellNote = ((inShop ? S.inSellLeft : S.sellLeft) != null ? `今天最多賣出約 ${S.sellCap != null ? fmt(S.sellCap) : "—"}，還能賣約 ${fmt(inShop ? S.inSellLeft : S.sellLeft)}。` : "") + (cur.tax > 0 ? `賣出賺到的部分要繳 ${Math.round(cur.tax * 100)}% 資本利得稅（虧的不用繳）。` : "");
   return [
-    seg([["buy", "買進"], ["sell", "賣出", !(cur.free != null ? cur.free : cur.mine)]], side, k => { UI.bankSide = k; rerender(); }),
+    seg([["buy", "買進"], ["sell", "賣出", !((cur.free != null ? cur.free : cur.mine) || cur.frac)]], side, k => { UI.bankSide = k; rerender(); }),
     h("div", { class: "bank-acts" }, steps),
-    custom,
+    custom, halt ? null : amountBox({ side, cur, cash: v.cash, sellLeft: sellL, feeRate: feeOf(S, cur), numField, confirmTrade, bankDo, state: UI.bankAmt || (UI.bankAmt = { amt: "" }) }),
     max < 1 ? h("p", { class: "bank-why" }, side === "buy" ? whyNoBuy(v, S, cur) : whyNoSell(S, cur)) : null,
     h("p", { class: "bank-meta sm" }, side === "buy" ? `買 1 股要 ${fmt(one)}（含手續費）。` : sellNote),
     side === "sell" && S.sellTip ? h("p", { class: "bank-hint bank-selltip" }, S.sellTip) : null]; // 「信用升到 N 級可以賣到 X」（決定 0093，sellTip 伺服器寫好）
@@ -727,12 +727,12 @@ const dec2 = n => (n == null ? "—" : Number(n).toLocaleString("en-US", { minim
 const plBit = (n, pct) => (n == null ? "—" : h("span", { class: "bank-pl " + (n > 0 ? "up" : n < 0 ? "down" : "") }, h("b", null, `${n > 0 ? "+" : n < 0 ? "−" : ""}${fmt(Math.abs(n))}`), pct != null ? h("small", null, `${pct > 0 ? "+" : pct < 0 ? "−" : ""}${(Math.abs(pct) * 100).toFixed(2)}%`) : null));
 // 持倉：市值／數量、單位成本／總成本、當日變更／總漲跌幅（表頭點壹下切換）
 function holdPanel(v, S, list) {
-  const hs = list.filter(x => x.mine > 0), H = UI.bankHold || (UI.bankHold = { a: "total", b: "unit", c: "value" });
+  const hs = list.filter(hasShares), H = UI.bankHold || (UI.bankHold = { a: "total", b: "unit", c: "value" });
   const tog = (k, a, b, la, lb) => h("button", { type: "button", class: "bank-hh", onClick: () => { H[k] = H[k] === a ? b : a; rerender(); }, "aria-label": `切換：${la}、${lb}` }, h("span", null, H[k] === a ? la : lb), h("i", { "aria-hidden": "true" }, "⇄"));
   const sum = (key) => hs.reduce((n, x) => n + (Number(x[key]) || 0), 0), tv = sum("value"), tc = sum("costTotal"), tp = sum("pnl"), td = sum("dayChg");
   const rows = hs.map(s => h("button", { type: "button", class: "bank-row holdings", role: "row", onClick: () => { UI.bankLeft = "market"; UI.bankPV = "trade"; UI.bankStock = list.indexOf(s); rerender(); } },
     h("span", null, h("b", null, s.name), s.market ? h("i", { class: "bank-mk" }, s.market === "tw" ? "台股" : s.market === "us" ? "美股" : "館內") : null),
-    h("span", { class: "bank-tab-num" }, H.c === "value" ? fmt(s.value) : `${fmt(s.mine)} 股`),
+    h("span", { class: "bank-tab-num" }, H.c === "value" ? fmt(s.value) : sharesText(s)),
     h("span", { class: "bank-tab-num" }, H.b === "unit" ? dec2(s.avgCost) : fmt(s.costTotal)),
     H.a === "day" ? plBit(s.dayChg, s.dayPct) : plBit(s.pnl, s.pnlPct)));
   return panel("持倉", S.taxPct ? `賣出課 ${pctText(S.taxPct)} 證交稅（美股不收）` : "", h("div", { class: "bank-book holdings", role: "table" },
@@ -764,7 +764,7 @@ function stockPane(v) {
         cur.stale ? h("p", { class: "bank-stale" }, h("b", null, "未更新　"), cur.stale) : null,
         cur.market === "in" && cur.quiet ? h("p", { class: "bank-stale" }, h("b", null, "開盤沒跳空　"), "昨天來這家店的人太少，今天開盤價跟昨天收盤一樣（盤中照樣會小幅變動）。") : null,
         cur.market === "in" && cur.jump ? h("p", { class: "bank-stale" }, h("b", null, "開盤跳空　"), "今天開盤價跟昨天收盤差了壹截，是昨天的生意帶出來的。") : null,
-        cur.mine ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, `${fmt(cur.mine)} 股`), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
+        hasShares(cur) ? h("p", { class: "bank-meta" }, "你有 ", h("b", null, sharesText(cur)), "，現在值 ", h("b", null, fmt(cur.value)), cur.locked ? h("small", { class: "bank-lockn" }, `（${fmt(cur.locked)} 股鎖在賣單裡）`) : null) : h("p", { class: "bank-meta" }, "你還沒有這支。"),
         tabs.length > 1 ? seg(tabs, tab, k => { UI.bankTrade = k; rerender(); }, "kind") : null,
         tab === "lev" ? levTrade(v, S, cur) : tab === "order" ? orderTrade(v, S, cur) : spotTrade(v, S, cur),
         h("p", { class: "bank-hint" }, cur.real ? cur.mult ? `遊戲價＝真實價 × ${mulText(cur)}，每分鐘跟著真實行情更新，所以遊戲和真實的漲跌幅一樣。抓不到新價超過 3 分鐘會暫停買賣、標「未更新」。買賣各收手續費，進博物館資金。` : "遊戲價＝真實價 × 倍數，每分鐘跟著真實行情更新。買賣各收手續費，進博物館資金。" : "股價照真實市場的行情動。買賣各收手續費，進博物館資金。"),
@@ -1107,7 +1107,7 @@ function helpSections(v) {
         "行情表的組名、美股和台股底下的產業小組，點壹下就能收起來，下次進來還記得。",
         `館外的價錢超過 ${S.staleMin} 分鐘沒更新，這一支會暫停買賣，標「未更新」；等新價來了才能動。`]],
       ["價錢怎麼來", [
-        `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。`,
+        `館外股票：遊戲價 ＝ 真實價 × 倍數（美股 × 當天的美元對台幣匯率（約 ×${S.peg.us}）、台股 ×${S.peg.tw}），所以真實股市漲 1%，這裡也漲 1%。館外股也能「照金額」買賣：打金額就好，買得到不到壹股的零碎股（最小萬分之壹股）；配息、掛單、還債賣股只算整數股，零碎股在換比例時照換之前的價換成籌碼。`,
         "館內股：看昨天來了多少不同的人，見「館內股」那一頁。"]],
       ["要付的錢", [
         `手續費：台股 ${feeT(S.feeOut.tw)}、美股 ${feeT(S.feeOut.us)}（買和賣各收一次）；館內股 ${feeT(S.feePct)}、集團股 ${feeT(S.feeOut.grp)}。`,
