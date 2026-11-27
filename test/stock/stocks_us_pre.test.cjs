@@ -50,5 +50,19 @@ T("文件大小：前幾天只有最近 serKeep 天留每分鐘的價，更早�
   days.forEach((x, i) => { assert.strictEqual(Object.keys(d.days[x].ser).length > 0, i >= days.length - K, x); assert.strictEqual(d.days[x].close[US], 101, x + " 收盤要留"); });
 });
 
+T("盤前報價（CNBC、Nasdaq，11-27）：盤前價、前收、成交時間；沒有盤前成交就用前收；合併成跟 Yahoo 壹樣的格式", G => {
+  const c = G.usParseCnbcQuote({ last: "149.30", ExtendedMktQuote: { type: "PRE_MKT", last: "156.48", last_time: "2026-11-27T04:15:38.542-0500" } });
+  assert.strictEqual(c.prev, 149.3); assert.strictEqual(c.px, 156.48); assert.strictEqual(new Date(c.tradeMs).toISOString(), "2026-11-27T09:15:38.542Z");
+  const none = G.usParseCnbcQuote({ last: "37.13", ExtendedMktQuote: { type: "POST_MKT_PREV", last: "37.00" } });
+  assert.strictEqual(none.px, 37.13, "還沒有盤前成交：用前收"); assert.strictEqual(none.tradeMs, null);
+  assert.strictEqual(G.usParseCnbcQuote({ last: "壞" }), null); assert.strictEqual(G.usParseCnbcQuote(null), null);
+  const n = G.usParseNasdaq({ data: { primaryData: { lastSalePrice: "$1,156.20", netChange: "+6.90", lastTradeTimestamp: "Nov 27, 2026 4:09 AM ET" } } });
+  assert.strictEqual(n.px, 1156.2); assert.strictEqual(n.prev, 1149.3); assert.strictEqual(new Date(n.tradeMs).toISOString(), "2026-11-27T09:09:00.000Z");
+  assert.strictEqual(G.usParseNasdaq({ data: {} }), null);
+  const now = Date.parse("2026-11-27T09:17:38.542Z"), m = G.usPreMerge({ greeneye: c, bluefireyard: none, redclaw: null }, now);
+  assert.deepStrictEqual(Object.keys(m).sort(), ["bluefireyard", "greeneye"]);
+  assert.strictEqual(m.greeneye.open, 156.48); assert.strictEqual(m.greeneye.prev, 149.3);
+  assert.ok(Math.abs(m.greeneye.lag - 2) < 1e-9 && m.bluefireyard.lag === m.greeneye.lag, "lag 取最新那筆，套到每壹支");
+});
 console.log(`${pass} passed, ${fail} failed（美股盤前）`);
 process.exit(fail ? 1 : 0);

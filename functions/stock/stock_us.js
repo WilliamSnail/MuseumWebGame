@@ -17,7 +17,7 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
 import { outStockWeekend } from "../shared/stock/core.js";
-import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart } from "../shared/stock/tw.js";
+import { US_IDS, mkLen, twBackfill, usApply, usDocNew, usDocRoll, usIdx, usNeed, usNyDay, usParseChart, usParseCnbcQuote, usParseNasdaq, usPreMerge } from "../shared/stock/tw.js";
 import { NUM } from "../shared/core/config.js";
 import { twSecret } from "./stock_tw.js";
 
@@ -54,6 +54,36 @@ export async function fetchYahoo(nowMs) {
   const lag = lags.length ? Math.min(...lags) : null;
   for (const id of Object.keys(out)) out[id].lag = lag;
   return out;
+}
+
+// ---------- 盤前（美東 04:00～09:30）：Yahoo 的 1 分鐘 K 棒在盤前常常還沒有今天的資料（11-27 實測：04:00～04:15 壹根都沒有），
+// 改讀 CNBC 的報價介面（壹次抓全部，有盤前價和前收）；CNBC 缺的那幾支用 Nasdaq 的報價補（壹次壹支）；都抓不到才退回 Yahoo。
+// 兩個都不是官方保證的介面（跟 Yahoo 壹樣），可能被擋、改格式；抓不到就當沒資料，不編。
+const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36", Accept: "application/json" };
+const NASDAQ_ETF = new Set(["QQQ", "UGL", "UCO"]); // Nasdaq 的報價介面 ETF 要用 assetclass=etf
+async function fetchCnbcRows() {
+  const syms = US_IDS.map(id => US_SYMBOLS[id]);
+  const r = await fetch("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" + encodeURIComponent(syms.join("|")) + "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1", { headers: UA, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error("CNBC 回 " + r.status);
+  const list = (((await r.json()) || {}).FormattedQuoteResult || {}).FormattedQuote || [], rows = {};
+  for (const q of list) { const id = US_IDS.find(i => US_SYMBOLS[i] === q.symbol), v = usParseCnbcQuote(q); if (id && v) rows[id] = v; }
+  return rows;
+}
+async function fetchNasdaqRow(sym) {
+  const r = await fetch(`https://api.nasdaq.com/api/quote/${encodeURIComponent(sym)}/info?assetclass=${NASDAQ_ETF.has(sym) ? "etf" : "stocks"}`, { headers: UA, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error("Nasdaq 回 " + r.status);
+  return usParseNasdaq(await r.json());
+}
+export async function fetchPre(nowMs) {
+  let rows = {}, err = null;
+  try { rows = await fetchCnbcRows(); } catch (e) { err = e; }
+  const miss = US_IDS.filter(id => !rows[id]);
+  if (miss.length) {
+    const got = await Promise.allSettled(miss.map(id => fetchNasdaqRow(US_SYMBOLS[id])));
+    got.forEach((x, i) => { if (x.status === "fulfilled" && x.value) rows[miss[i]] = x.value; else if (!err) err = x.reason; });
+  }
+  if (!Object.keys(rows).length) { console.warn("盤前 CNBC、Nasdaq 都抓不到，退回 Yahoo：" + String((err && err.message) || err).slice(0, 200)); return fetchYahoo(nowMs); }
+  return usPreMerge(rows, nowMs);
 }
 
 // 美元對台幣的匯率（11-16，翊文：「×32 可以照今日台幣匯率嗎」）：Yahoo 的 TWD=X，開盤時抓壹次、整天固定。抓不到回 null（遊戲價用昨天的匯率，再沒有就 ×32）。合理範圍 15～60
@@ -124,7 +154,7 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx, fxFn) {
   if (!need) return "沒事做";
   let got = null, err = null;
   if (need.fetch) {
-    try { got = await (fetchFn || fetchYahoo)(nowMs); } catch (e) { err = String((e && e.message) || e).slice(0, 200); }
+    try { got = await (fetchFn || (idx < (C.reg || 0) ? fetchPre : fetchYahoo))(nowMs); } catch (e) { err = String((e && e.message) || e).slice(0, 200); } // 盤前改讀 CNBC／Nasdaq（11-27）
   }
   // 匯率：開盤那一分鐘抓；沒抓到的話開盤後 10 分鐘內每分鐘再試（今天還沒有匯率才抓）
   let fx = null;
