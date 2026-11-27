@@ -32,7 +32,7 @@
 | `discord-commands.yml` | 註冊 Yuga Bot 的斜線指令（清單在 `shared/discord/core.js`，整份取代） | 改了指令清單之後。欄位 `application_id=300999289197428737`、`guild_id=291221925571854347`（不是密碼） |
 | `discord-test.yml` | 發一則測試訊息，確認 token、頻道、權限對不對 | 懷疑 bot 壞了的時候 |
 | `discord-log.yml` | 看 Yuga Bot 每個指令花多久（只印時間、狀態碼、耗時） | 查 bot 慢、沒回應 |
-| `firebase-task.yml` | 正式 Firebase 的固定動作（決定 0038） | **只有翊文要求時** |
+| `firebase-task.yml` | 正式 Firebase 的固定動作（決定 0038、0158） | 只讀的 AI 自己跑；**會寫東西的只有翊文要求時** |
 | `discord-scheduled.yml`、`weekly-board.yml`、`deploy.yml` | 定時館訊、每週榜單、合併後部署（部署完會自動發當天的更新） | 自動跑，不用按 |
 
 ## 四、發 Discord 公告的規矩
