@@ -15,7 +15,7 @@
 //   stock-status  只讀：台股、美股盤中的伺服器紀錄（有沒有抓到開盤價、錯誤訊息、落後幾分鐘、哪幾支沒新行情）。不讀亂數祕密。
 //   econ-status   只讀：casinoHouse/main 和最新壹份日報 casinoReport/日期 裡「經濟用到的欄位」（白名單：錢、債、已知世界的池子、NPC 花費、館方投資、每個來源的累計），
 //                 印成 hex 的幾行（ECON_HEX H＝莊家、R＝日報；GitHub 會把祕密裡出現過的字遮成 ***，大括號、base64 結尾都被吃過，所以用只有 0-9a-f 的 hex，帶總長度和檢查碼），直接存成檔餵 node tools/check/econ_check.cjs --ledger。不印名字、uid、email、亂數祕密、錢包。
-//   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包只印最大、平均。
+//   house-size    只讀：莊家（casinoHouse/main）和幾份共用文件有多大、莊家裡哪幾塊最大（只印鍵名和位元組，不印內容）；錢包、存檔印最大、平均，和最大那份裡最大的幾塊（11-27）。
 //                 什麼時候用：每次賭場、銀行動作都要整份讀寫莊家，Firestore 壹份最多 1 MB；要知道離上限多遠、哪壹塊在長（11-15 翊文問伺服器負擔）。
 //   world-status  只讀：世界經濟（決定 0086）——world/main（備用池、最近一天）、最近 3 天的 worldDays 紀錄、莊家的 house.wh（各集團的健康值 h、狀態、預算倍率）、帳上各單位現在多少（house.wu）、最近一天 NPC 各集團出多少（house.npcs.byUnit）。
 //                 什麼時候用：W2 以後確認世界文件有沒有每天寫、W5 以後看哪些集團減薪／緊縮／裁員（管理者看得到每家，財報只給分布）。
@@ -78,6 +78,16 @@ async function houseSize(db) {
   for (const p of ["world/main", "stocksTw/latest", "stocksUs/latest"]) { const s = await db.doc(p).get(); console.log(`${p}：${s.exists ? kb(B(s.data())) : "沒有"}`); }
   const ws = await db.collection("casinoWallets").get(), sizes = ws.docs.map(d => B(d.data().data || d.data()));
   if (sizes.length) console.log(`錢包 ${sizes.length} 個：最大 ${kb(Math.max(...sizes))}、平均 ${kb(sizes.reduce((a, b) => a + b, 0) / sizes.length)}`);
+  // 最大的錢包、存檔裡哪幾塊最大（只印鍵名和位元組；11-27 檢查資料庫會不會塞滿）
+  const bigOf = (docs, label) => {
+    if (!docs.length) return;
+    const raws = docs.map(d => d.data().data), lens = raws.map(r => B(r)), i = lens.indexOf(Math.max(...lens));
+    console.log(`${label} ${docs.length} 份：最大 ${kb(lens[i])}（上限的 ${(lens[i] / 1048576 * 100).toFixed(1)}%）、平均 ${kb(lens.reduce((a, b) => a + b, 0) / lens.length)}`);
+    let o = null; try { o = typeof raws[i] === "string" ? JSON.parse(raws[i]) : raws[i]; } catch (e) { /* 讀不懂就不拆 */ }
+    if (o && typeof o === "object") for (const [k, n] of top(o, 6)) console.log(`  最大那份的 ${k}：${kb(n)}`);
+  };
+  bigOf(ws.docs, "錢包");
+  bigOf((await db.collection("saves").get()).docs, "存檔");
   const rp = await db.collection("casinoReport").orderBy("day", "desc").limit(1).get();
   if (!rp.empty) console.log(`最新日報 casinoReport/${rp.docs[0].data().day}：${kb(B(rp.docs[0].data().data || rp.docs[0].data()))}`);
 }
