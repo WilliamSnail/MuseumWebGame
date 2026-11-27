@@ -1,13 +1,13 @@
 import "../options.js"; // 地區、initializeApp：一定要最先（見 options.js）
 // ================================================================
-//  美股盤中（11-14，規劃 2.8i）：跟台股盤中（functions/stock/stock_tw.js）同一套做法，只是時間是美東 09:30～16:00，資料來源換成美股行情。
+//  美股盤中（11-14，規劃 2.8i）：跟台股盤中（functions/stock/stock_tw.js）同一套做法，只是時間是美東 04:00～16:00（04:00～09:30 是盤前，決定 0159），資料來源換成美股行情。
 //  資料來源：Yahoo Finance 的公開圖表介面（query1.finance.yahoo.com/v8/finance/chart，1 分鐘 K 棒，不用金鑰；跟 tools/content/stocks_fetch.cjs 每日資料同一個介面，
 //    不是官方保證的介面，可能被擋、改格式、限流；抓不到就標沒資料，不編）。真實代號只放在這個檔（不進 shared/，名字表不寫代號）。
 //  「夜光科技指數」對應 QQQ（那斯達克 100 的 ETF，可以交易、盤中有即時價；指數本身 ^IXIC 盤中的資料比較不穩）。
 //
 //  怎麼跑：排程每分鐘叫一次 stockUsTick（美東週一到週五 09:00～16:59，所以夏令冬令都不用改；時區由 Cloud Scheduler 的 timeZone 處理）。
 //    每次先算「美東現在是哪一天、開盤後第幾分鐘」（shared/stock/tw.js 的 usNyDay、usIdx，Intl 算，日光節約自動對），
-//    再讀 stocksUs/latest，usNeed 說要不要抓：09:30 起抓開盤價（抓到才開盤，超過 10:00 還沒有就整天不開，美國國定假日就是這樣休市）；
+//    再讀 stocksUs/latest，usNeed 說要不要抓：04:00 起抓第壹個價（盤前，決定 0159）（抓到才開盤，超過 10:00 還沒有就整天不開，美國國定假日就是這樣休市）；
 //    之後每 15 分鐘壹個錨點，錨點時間過了 3 分鐘內每分鐘重抓；再抓不到，這壹段真實成分當 0，只剩隨機（資料標 stale）。
 //  放哪裡（都只有 Functions 碰得到，firestore.rules 沒開放）：
 //    stocksUs/latest        今天的錨點、每分鐘的價（相對前壹收盤的倍數）和最近幾天，格式跟 stocksTw/latest 壹樣（日期 ＝ 美東日期 ＝ 遊戲日期）
@@ -33,7 +33,7 @@ async function fetchOne(sym, day, nowMs) {
   let err = null;
   for (const host of HOSTS) {
     try {
-      const r = await fetch(`https://${host}/v8/finance/chart/${encodeURIComponent(sym)}?interval=1m&range=1d`, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(8000) });
+      const r = await fetch(`https://${host}/v8/finance/chart/${encodeURIComponent(sym)}?interval=1m&range=1d&includePrePost=true`, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(8000) });
       if (!r.ok) throw new Error(host + " 回 " + r.status);
       return usParseChart(await r.json(), day, nowMs);
     } catch (e) { err = e; }
@@ -154,10 +154,10 @@ export async function stockUsRun(nowMs, fetchFn, secretFn, dbx, fxFn) {
   return done;
 }
 
-// 美東週一到週五 09:00～16:59 每分鐘跑壹次（09:00～09:29 和收盤後那幾分鐘 stockUsRun 自己會跳過）。時區用 Cloud Scheduler 的 timeZone，日光節約由它處理
-export const stockUsTick = onSchedule({ schedule: "* 9-16 * * 1-5", timeZone: "America/New_York", retryCount: 0, timeoutSeconds: 30 }, async () => {
+// 美東週一到週五 04:00～16:59 每分鐘跑壹次（盤前 04:00 起，決定 0159；收盤後那幾分鐘 stockUsRun 自己會跳過）。時區用 Cloud Scheduler 的 timeZone，日光節約由它處理
+export const stockUsTick = onSchedule({ schedule: "* 4-16 * * 1-5", timeZone: "America/New_York", retryCount: 0, timeoutSeconds: 30 }, async () => {
   const now = Date.now(), r = await stockUsRun(now);
-  if (/^09:00$/.test(new Date(now).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" }))) console.log("stockUsBackfill", await stockUsBackfill(now)); // 美股補收盤併進這個排程（美東 09:00 做壹次，開盤前）
+  if (/^04:00$/.test(new Date(now).toLocaleTimeString("en-GB", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" }))) console.log("stockUsBackfill", await stockUsBackfill(now)); // 美股補收盤併進這個排程（美東 04:00 做壹次，盤前開始那壹分鐘）
   console.log("stockUsTick", r);
 });
 

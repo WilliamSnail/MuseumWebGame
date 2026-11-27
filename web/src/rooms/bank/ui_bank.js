@@ -437,17 +437,17 @@ function realBit(s) {
 const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const toMin = t => { const [a, b] = String(t).split(":").map(Number); return a * 60 + (b || 0); };
 const MK_NAME = { tw: "台股", us: "美股", in: "館內店" };
-const SESS_TEXT = { closed: s => `今天已收盤（${s.to}）。`, pre: s => `${s.mk === "us" ? "美股台灣時間" : MK_NAME[s.mk] || ""} ${s.from} 開盤，拿到開盤價才開放買賣。`, pending: () => "已經開盤，還在等開盤價，拿到之前先不能買賣。", noopen: s => `今天${MK_NAME[s.mk] || ""}沒有開市。`, holiday: () => "今天休市。", halt: () => "停盤中（23:30～05:00），明天 05:00 開盤。" };
+const SESS_TEXT = { closed: s => `今天已收盤（${s.to}）。`, pre: s => (s.mk === "us" && s.reg ? `美股台灣時間 ${s.from} 開始盤前交易（正常盤 ${s.reg} 開始），拿到第壹個價才開放買賣。` : `${s.mk === "us" ? "美股台灣時間" : MK_NAME[s.mk] || ""} ${s.from} 開盤，拿到開盤價才開放買賣。`), pending: () => "已經開盤，還在等開盤價，拿到之前先不能買賣。", noopen: s => `今天${MK_NAME[s.mk] || ""}沒有開市。`, holiday: () => "今天休市。", halt: () => "停盤中（23:30～05:00），明天 05:00 開盤。" };
 // 台股的場次（伺服器給 market "tw"、twState、intraday 每分鐘一個價、intradayFrom；外層 S.tw = { from: 540, len: 270 }）→ 畫面用的 session
 const twClock = ms => { const t = new Date(ms + 8 * 3600000); return `${String(t.getUTCHours()).padStart(2, "0")}:${String(t.getUTCMinutes()).padStart(2, "0")}`; }; // 毫秒 → 台灣時間 HH:MM
 function twSess(S, s) {
   // 場次：台股 S.tw = { from: 540, len: 270 }（每分鐘一個價）；美股 S.us = { state, from: 570, len: 390 } 加 S.usOpenAt（開盤的毫秒，含夏令時間；intradayFrom 是距離開盤的分鐘）；館內店 S.inDay = { from: 300, len: 75, step: 15 }
   const tw = s.market === "tw", us = s.market === "us", n = (s.intraday || []).length, off = s.intradayFrom || 0;
   if (us) {
-    const g = Object.assign({ from: 570, len: 390 }, S.us), open = S.usOpenAt;
+    const g = Object.assign({ from: 570, len: 390, reg: 0 }, S.us), open = S.usOpenAt, reg = g.reg > 0 ? twClock(open + g.reg * 60000) : ""; // reg：正常盤從第幾分鐘起（之前是盤前，決定 0159）
     const raw = s.usState || (S.us && S.us.state) || "closed", state = raw === "closed" && !n ? "noopen" : raw;
     if (!open) return { state, mk: "us", from: "", to: "", mid: "", slots: g.len, step: 1, offset: off, at: "" };
-    return { state, mk: "us", from: twClock(open), to: twClock(open + g.len * 60000), mid: twClock(open + g.len * 30000), slots: g.len, step: 1, offset: off, at: n ? twClock(open + (off + n - 1) * 60000) : "" };
+    return { state, mk: "us", from: twClock(open), to: twClock(open + g.len * 60000), mid: reg || twClock(open + g.len * 30000), reg, pre: !!reg && n > 0 && off + n - 1 < g.reg, slots: g.len, step: 1, offset: off, at: n ? twClock(open + (off + n - 1) * 60000) : "" };
   }
   const g = tw ? Object.assign({ from: 540, len: 270, step: 1 }, S.tw) : s.market === "in" ? Object.assign({ from: 300, len: 75, step: 15 }, S.inDay) : null;
   if (!g) return null;
@@ -476,7 +476,7 @@ function chart(s) {
     body = `<line x1="${pad}" x2="${W - pad}" y1="${oy.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="#A9B4C8" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><polygon points="${first[0].toFixed(1)},${H} ${line} ${last[0].toFixed(1)},${H}" fill="${col}" opacity=".18"/><polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${col}"/>`;
   }
   const axis = ss ? h("div", { class: "bank-axis" }, h("span", null, ss.from), h("span", null, ss.mid), h("span", null, ss.to)) : null;
-  const label = (ss ? (ss.state === "open" ? `盤中，每${ss.step > 1 ? ` ${ss.step} ` : ""}分鐘更新一次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "") + (ls ? `圖是上壹場（${ls.day.slice(5)}）的走勢。` : "");
+  const label = (ss ? (ss.state === "open" ? `${ss.pre ? `盤前（正常盤 ${ss.reg} 開始）` : "盤中"}，每${ss.step > 1 ? ` ${ss.step} ` : ""}分鐘更新壹次${ss.at ? `，最新 ${ss.at}` : ""}。` : SESS_TEXT[ss.state](ss)) : "") + (ls ? `圖是上壹場（${ls.day.slice(5)}）的走勢。` : "");
   if (!body && !ss) return null;
   return h("div", { class: "bank-chartbox" },
     h("div", { class: "bank-chart" + (ss && ss.state !== "open" ? " dim" : ""), role: "img", "aria-label": ss ? `走勢，${label}` : `走勢：從 ${fmt(pts[0])} 到 ${fmt(pts[pts.length - 1])}`, html: body ? `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${body}</svg>` : "" }, body ? null : h("p", { class: "bank-nochart" }, label)),
@@ -1102,7 +1102,7 @@ function helpSections(v) {
       ["什麼時候能買賣", [
         `館內五家店：每天 ${clock(inD.from)}～${clock(inD.from + inD.len)}。`,
         `台股：${clock(tw.from)}～${twClose}。`,
-        `美股（台灣時間）：冬令 ${usTime(13)}，夏令 ${usTime(12)}。`,
+        `美股（台灣時間）：冬令 ${usTime(13)}，夏令 ${usTime(12)}${S.us.reg ? `；正常盤從冬令 ${clock(S.us.open + S.us.reg + 13 * 60)}、夏令 ${clock(S.us.open + S.us.reg + 12 * 60)} 開始，之前是盤前（價照真實的盤前價，買賣、槓桿、掛單、停損都能用）` : ""}。`,
         "沒開盤的時候看得到價，但不能買賣。",
         "行情表的組名、美股和台股底下的產業小組，點壹下就能收起來，下次進來還記得。",
         `館外的價錢超過 ${S.staleMin} 分鐘沒更新，這一支會暫停買賣，標「未更新」；等新價來了才能動。`]],

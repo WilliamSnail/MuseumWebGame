@@ -25,7 +25,8 @@ T("最滿的文件（今天整天＋days 留滿）小於 1 MiB 的八成", () =>
     const day = () => { const ser = {}; ids.forEach(id => { ser[id] = Array.from({ length: len + 1 }, (_, i) => 12345.67 + i / 100); }); return ser; };
     const doc = G.twDocNew("2026-11-25");
     doc.ser = day(); ids.forEach(id => { doc.R[id] = { px: 123.45, lag: 1 }; doc.A[id] = 12345.67; doc.prevReal[id] = 123.45; doc.lag[id] = 1; doc.stale[id] = 0; });
-    for (let d = 0; d < keep; d++) doc.days["2026-11-" + (10 + d)] = { openIdx: 0, ser: day(), close: Object.fromEntries(ids.map(id => [id, 123.45])), prev: Object.fromEntries(ids.map(id => [id, 123.45])) };
+    const sk = G.NUM.casino.stock[mk].serKeep || keep; // 決定 0159：美股前幾天只有最近 serKeep 天留每分鐘的價
+    for (let d = 0; d < keep; d++) doc.days["2026-11-" + (10 + d)] = { openIdx: 0, ser: d >= keep - sk ? day() : {}, close: Object.fromEntries(ids.map(id => [id, 123.45])), prev: Object.fromEntries(ids.map(id => [id, 123.45])) };
     doc.log = Array.from({ length: 200 }, (_, j) => ({ j, idx: j, lag: 0.0166, stale: 0 }));
     const kb = Buffer.byteLength(JSON.stringify(doc)) / 1024;
     assert.ok(kb < 1024 * 0.8, `${mk} 最滿約 ${Math.round(kb)} KB，太接近 1 MiB：少留幾天 days，或把 ser 拆到別的文件`);

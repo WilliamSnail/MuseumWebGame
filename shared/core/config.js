@@ -626,7 +626,9 @@ export const NUM = {
       //   band 夾在前壹收盤 ±10%（美股沒有漲跌停，這是遊戲自己的「壹天最多 10%」，跟 outCap 壹樣）；
       //   sd15 各股 15 分鐘標準差 %、minSd 兩個錨點中間每分鐘隨機走的標準差 %：都是 2026-11-13 抓 Yahoo 過去壹個月的 15 分鐘價算的（盤中，不含隔夜跳空）；minSd ≈ sd15 ÷ 4
       // earlyLen：美股提早收盤日（13:00 美東收，壹年約 3 天：感恩節隔天、聖誕夜、7 月 3 日；shared/stock/tw.js 的 usEarlyClose）那天盤中有幾分鐘（570 → 780 ＝ 210）
-      us: { open: 570, len: 390, earlyLen: 210, seg: 15, giveUp: 30, retry: 3, band: 10,
+      // 盤前（決定 0159，翊文 11-26「博物館能加美股盤前交易嗎」「盤前可以開槓桿」，不做盤後）：open 改成 240（美東 04:00 盤前開始），len 720 ＝ 04:00～16:00；reg 330 ＝ 第幾分鐘起是正常盤（09:30）；
+      //   earlyLen 540 ＝ 04:00～13:00；giveUp 360 ＝ 美東 10:00 還抓不到第壹個價就整天休市（跟沒有盤前時壹樣）；serKeep 前幾天的資料只留最近幾天的每分鐘價（掛單檢查只看前 1～2 天），其他天只留收盤，文件才不會太大
+      us: { open: 240, len: 720, earlyLen: 540, reg: 330, serKeep: 2, seg: 15, giveUp: 360, retry: 3, band: 10,
         minSd: { greeneye: 0.09, redclaw: 0.15, nightindex: 0.05, silverapple: 0.05, flashcar: 0.09, squarewin: 0.06, bigshipport: 0.1, greenleafclinic: 0.11, quantumfrog: 0.19, smallcore: 0.19, messengerlab: 0.22, oldgamestore: 0.09, fingerbank: 0.11, betkingdom: 0.14, droidhive: 0.12, treadclub: 0.09, blockpark: 0.16, popcornhall: 0.14, blackgoldwell: 0.09, bluefireyard: 0.08, greenglowmine: 0.15, raremountain: 0.12, redcoppermine: 0.1, richsoilshop: 0.11, vaultbrick: 0.1, blackbarrel: 0.12 },
         sd15: { greeneye: 0.37, redclaw: 0.62, nightindex: 0.19, silverapple: 0.19, flashcar: 0.37, squarewin: 0.26, bigshipport: 0.38, greenleafclinic: 0.45, quantumfrog: 0.76, smallcore: 0.74, messengerlab: 0.89, oldgamestore: 0.34, fingerbank: 0.44, betkingdom: 0.55, droidhive: 0.47, treadclub: 0.37, blockpark: 0.62, popcornhall: 0.54, blackgoldwell: 0.34, bluefireyard: 0.3, greenglowmine: 0.61, raremountain: 0.49, redcoppermine: 0.4, richsoilshop: 0.43, vaultbrick: 0.42, blackbarrel: 0.47 } } },
     econ: { perDay: 3, rMax: 100, winAbove: 30, winPer: 30000, losePer: 10000, ticketPct: 8, lootPct: 55, budgetStart: 1000000000, freezeKeep: 20, budgetFloor: -100000000 }, // freezeKeep：博物館資金 ≤ 0（預算凍結）時，成功只撥平常的幾 %（11-13，沒錢就不再印錢；100 ＝ 不凍結）

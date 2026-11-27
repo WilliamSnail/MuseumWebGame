@@ -32,7 +32,7 @@ const MKS = { tw: { ids: TW_IDS, C: () => NUM.casino.stock.tw }, us: { ids: US_I
 const US_TZ = "America/New_York";
 let usFmtHour = null, usFmtDay = null;
 const usOpenCache = {};
-// 美東那天（日期 YYYY-MM-DD）正常盤開盤（09:30）的毫秒。用那天 17:00 UTC 時美東牆上的幾點判斷冬令（12 點）或夏令（13 點）；日光節約都在凌晨 2 點換，不影響 09:30
+// 美東那天（日期 YYYY-MM-DD）開始交易的毫秒（NUM.casino.stock.us.open；決定 0159 起是盤前 04:00，正常盤 09:30 ＝ 再過 reg 分鐘）。用那天 17:00 UTC 時美東牆上的幾點判斷冬令（12 點）或夏令（13 點）；日光節約都在凌晨 2 點換，不影響 04:00
 export function usOpenMs(day) {
   if (usOpenCache[day] != null) return usOpenCache[day];
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day));
@@ -68,7 +68,7 @@ export function usNyDay(ms) {
   usFmtDay = usFmtDay || new Intl.DateTimeFormat("en-CA", { timeZone: US_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
   return usFmtDay.format(new Date(ms));
 }
-// 距離美東 day 那天 09:30 幾分鐘（09:30 ＝ 0，16:00 ＝ 390；開盤前是負的）。沒給時間回 null
+// 距離美東 day 那天開始交易幾分鐘（決定 0159：04:00 ＝ 0，09:30 正常盤 ＝ 330，16:00 ＝ 720；開始前是負的）。沒給時間回 null
 export function usIdx(t, day) {
   if (t == null || !Number.isFinite(+t)) return null;
   const o = usOpenMs(day);
@@ -112,7 +112,8 @@ export function twDocNew(day) {
   return { day, openIdx: null, closed: false, k: -1, prevReal: {}, R: {}, A: {}, ser: {}, lag: {}, stale: {}, log: [], days: {}, fx: null, fxLast: null };
 }
 // 今天的資料：舊的不是今天，就把舊的收進 days（最多留 keep 天），開新的
-export function twDocRoll(old, day, keep) {
+// serKeep：前幾天只有最近 serKeep 天留每分鐘的價（ser），更早的只留收盤（close、prev）；沒給就全留（台股）
+export function twDocRoll(old, day, keep, serKeep) {
   if (old && old.day === day) return old;
   const doc = twDocNew(day);
   if (old && typeof old === "object") {
@@ -128,6 +129,7 @@ export function twDocRoll(old, day, keep) {
       if (fxOld) doc.days[old.day].fx = fxOld;
     }
     for (const d of Object.keys(doc.days).sort().slice(0, -(keep || 5))) delete doc.days[d];
+    if (serKeep > 0) for (const d of Object.keys(doc.days).sort().slice(0, -serKeep)) if (doc.days[d] && doc.days[d].ser && Object.keys(doc.days[d].ser).length) doc.days[d] = Object.assign({}, doc.days[d], { ser: {} });
   }
   return doc;
 }
@@ -291,7 +293,7 @@ export function usParseChart(json, day, nowMs) {
   let open = null, px = null, last = null;
   r.timestamp.forEach((t, i) => {
     const ms = t * 1000;
-    if (ms < o0 || ms > end) return; // 盤前盤後、別天的不算（也擋掉「今天還沒開盤，回的是昨天」）
+    if (ms < o0 || ms >= end) return; // 盤後、別天的不算（盤前從 04:00 起算進來，決定 0159）；16:00 整那根是盤後第壹根（抓的時候帶了 includePrePost），也不算（也擋掉「今天還沒開盤，回的是昨天」）
     const c = q.close[i], o = q.open && q.open[i];
     if (open == null && typeof o === "number" && o > 0) open = o;
     if (typeof c === "number" && isFinite(c) && c > 0) { px = c; last = ms; }
@@ -303,6 +305,6 @@ export function usParseChart(json, day, nowMs) {
 
 // ---------- 美股（規劃 2.8i）：同樣的函式，換成美股的名單和設定 ----------
 export const usDocNew = twDocNew;
-export const usDocRoll = twDocRoll;
+export const usDocRoll = (old, day, keep) => twDocRoll(old, day, keep, NUM.casino.stock.us.serKeep);
 export const usNeed = (doc, idx) => twNeed(doc, idx, "us");
 export const usApply = (doc, need, idx, got, secret) => twApply(doc, need, idx, got, secret, "us");
