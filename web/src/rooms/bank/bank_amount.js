@@ -70,5 +70,5 @@ export function amountBox(o) {
   const field = o.numField("自訂金額", st.amt, x => { st.amt = x === "" ? "" : Math.floor(Number(x)); redo(); }, { min: 1, step: 1, unit: "籌碼" });
   const inp = field.querySelector && field.querySelector("input"); if (inp) inp.placeholder = "打金額";
   redo();
-  return [h("div", { class: "bank-acts" }, steps), h("div", { class: "bank-custom" }, field, go, info)];
+  return [h("p", { class: "bank-qh" }, buy ? "快速買（按了先跳確認）" : "快速賣（按了先跳確認）"), h("div", { class: "bank-acts" }, steps), h("div", { class: "bank-custom side-" + side }, field, go, info)];
 }
