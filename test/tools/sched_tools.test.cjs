@@ -129,7 +129,7 @@ T("strict：只看今天，舊的週不追溯（W46 的 d7 沒有 touched 也沒
   assert.deepStrictEqual(C.strictIssues(mk("2026-11-18", { day: dayObj(3), ledger: revealed(L) })), []);
 });
 T("day:check：館外地圖打包有沒有跟上", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mapfresh-"));
+  const dir = require("../tmp_dir.cjs").tmpDir("mapfresh-");
   fs.mkdirSync(path.join(dir, "shared", "world"), { recursive: true }); fs.mkdirSync(path.join(dir, "content", "map", ), { recursive: true });
   assert.strictEqual(C.mapFresh(dir).ok, true, "沒有地圖資料不擋");
   fs.writeFileSync(path.join(dir, "content", "map", "館外.json"), JSON.stringify({ version: 1, spots: [{ id: "m-a", name: "巷口", layer: "L1", from: "2026-11-18", x: 1, y: 2, line: "一句" }] }));

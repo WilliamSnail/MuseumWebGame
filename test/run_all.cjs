@@ -101,6 +101,7 @@ const STEPS = [
   ["美股照當天美元對台幣匯率（遊戲價 ＝ 匯率 × 美金價、不換股數、沒有匯率用昨天或 ×32、壞匯率不收，11-16）", ["test/stock/stock_us_fx.test.cjs"]],
   ["台股盤中（開盤價才開、15 分鐘錨點加隨機、橋、種子祕密、停盤、掛單照盤中價檢查、view 的盤中資料、守恆，規劃 2.8d）", ["test/stock/stocks_tw.test.cjs"]],
   ["美股盤中（美東開盤時間含日光節約、整個交易日模擬含冬令夏令國定假日、停盤、掛單當天有效和睡前掛單、05:00 換日不重複算、view 欄位、守恆、解析行情，規劃 2.8i）", ["test/stock/stocks_us.test.cjs"]],
+  ["測試的暫存用完就刪（test/ 不直接用 mkdtempSync、tmpDir 結束自動刪，11-27）", ["test/tools/tmp_dir.test.cjs"]],
   ["無頭瀏覽器關乾淨（tools/ 開瀏覽器的腳本都用 child.cjs 的 guardBrowser 收尾、killBrowserProfile 刪暫存，11-27）", ["test/tools/browser_cleanup.test.cjs"]],
   ["狀態頁的寫法（docs/現況.md〈現況〉3～6 行、docs/未來更新.md 每項開頭寫狀態，11-27 參考 hub 寫法）", ["test/tools/doc_shape.test.cjs"]],
   ["零碎股：照金額買賣（花的不超過金額、累積併成整數股、照金額賣、全賣連零碎、成本照比例、存檔修復、只有館外股，決定 0160）", ["test/stock/casino_stock_frac.test.cjs"]],

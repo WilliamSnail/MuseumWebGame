@@ -3,7 +3,7 @@ const assert = require("assert"), fs = require("fs"), os = require("os"), path =
 const { clean, staleList } = require("../../tools/dev/clean_stale.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("✗ " + name + "：" + e.message); } };
-const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stale-"));
+const dir = require("../tmp_dir.cjs").tmpDir("stale-");
 const git = (...a) => spawnSync("git", a, { cwd: dir, encoding: "utf8" });
 git("init", "-q"); git("config", "user.email", "t@t"); git("config", "user.name", "t");
 const put = (p, s = "x") => { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), s); };

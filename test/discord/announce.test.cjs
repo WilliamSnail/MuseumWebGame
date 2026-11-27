@@ -121,7 +121,7 @@ T("讀真的週：改版之前發過的今日館訊不會重發；排好的活�
 });
 T("揭露週：那天的今日館訊後面多壹則「館裡有些不壹樣了」，不寫細節；沒有那天的檔、跳過的不發", () => {
   const { beatPost } = require("../../tools/content/discord_post.cjs");
-  const os = require("os"), dir = fs.mkdtempSync(path.join(os.tmpdir(), "beat-"));
+  const os = require("os"), dir = require("../tmp_dir.cjs").tmpDir("beat-");
   fs.mkdirSync(path.join(dir, "2026-W47"));
   fs.writeFileSync(path.join(dir, "2026-W47", "week.json"), JSON.stringify({ start: "2026-11-16" }));
   assert.ok(!autoEntries(dir).some(e => e.id.startsWith("beat-")), "週三的檔還沒有就不發");
@@ -160,7 +160,7 @@ T("排程 08:23 開始、約 08:55 部署完：備援晚於部署；今天的檔
   const backups = FIXED_CRONS.slice(0, 2).map(([c]) => tw2(c) % 1440);
   assert.ok(backups.every(m => m >= 9 * 60 + 5), "備援都在 09:05 之後（排程 08:23 開始、約 08:55 部署完還留 10 分鐘）");
   assert.ok(DAY_POST_AT < "08:23", "可發的鐘點早於排程開始：今天的檔存在才是真正的條件");
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ann-")); // 沒有今天的檔：週包只有 week.json
+  const dir = require("../tmp_dir.cjs").tmpDir("ann-"); // 沒有今天的檔：週包只有 week.json
   fs.mkdirSync(path.join(dir, "2026-W47")); fs.writeFileSync(path.join(dir, "2026-W47", "week.json"), JSON.stringify({ week: "2026-W47", start: "2026-11-16" }));
   assert.strictEqual(autoEntries(dir).filter(e => e.isDay).length, 0, "d1.json 還沒進 main：沒有今日館訊可發");
   fs.writeFileSync(path.join(dir, "2026-W47", "d1.json"), "{}");

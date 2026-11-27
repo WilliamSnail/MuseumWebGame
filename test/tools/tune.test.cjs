@@ -4,7 +4,7 @@ const assert = require("assert"), fs = require("fs"), os = require("os"), path =
 const T = require("../../tools/dev/tune.cjs");
 let pass = 0, fail = 0;
 const t = (name, fn) => { try { fn(); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 3).join("\n    ")); } };
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), "tune-"));
+const tmp = () => require("../tmp_dir.cjs").tmpDir("tune-");
 const SRC = `// 開頭的註解
 export const NUM = {
   a: 1, // 一個數字
