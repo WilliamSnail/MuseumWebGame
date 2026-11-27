@@ -60,7 +60,7 @@ import { MAIL_DAYS } from "../shared/social/mailbox.js";
 import { casNpcExt, casNpcLive, casNpcSpend, casNpcTakeReviews, casReviewsFix, casReviewsMerge, casReviewsPick, hallFeed, npcPresence } from "../shared/npc/spend.js";
 import { casInvestPublic, casInvestRun } from "../shared/casino/invest.js";
 import { IN_IDS, casInBuy, casInFestUp, casInRoll, casInSecret, casInSeen, casInSell, casInUsed } from "../shared/casino/stock_in.js";
-import { STOCK_IDS, casStockBuy, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "../shared/casino/stock.js";
+import { STOCK_IDS, casStockBuy, casStockBuyAmt, casStockSellAmt, casStockHouseFix, casStockCancel, casStockFreshN, casStockMatch, casStockOrder, casStockPegSync, casStockReals, casStockRoll, casStockSetDiv, casStockSetReal, casStockSeen, casStockSell, casStockTakeNotes, casStockTwApply, casStockTwSettle, casStockUsApply, casStockUsSettle, casStockViewAll } from "../shared/casino/stock.js";
 import { casBankAccrue, casBankHall, casBankBreak, casBankPut, casBankTake, casBankTakeNotes, casBankTerm, casBankView } from "../shared/casino/bank.js";
 import { liveDonate, liveFix, liveMyView, liveNode, liveStart, liveStop, liveView } from "../shared/casino/live.js";
 import { eventLive, eventsFromWeeks } from "../shared/story/events.js";
@@ -352,6 +352,8 @@ export const actStock = (ctx, d) => {
   }
   const r = op === "buy" ? casStockBuy(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
     : op === "sell" ? casStockSell(ctx.w, ctx.house, String(d.id || ""), d.n, ctx.day, ctx.t)
+    : op === "buyAmt" ? casStockBuyAmt(ctx.w, ctx.house, String(d.id || ""), d.amt, ctx.day, ctx.t) // 零碎股：照金額買賣（決定 0160）
+    : op === "sellAmt" ? casStockSellAmt(ctx.w, ctx.house, String(d.id || ""), d.amt === "max" ? "max" : d.amt, ctx.day, ctx.t)
     : op === "order" ? casStockOrder(ctx.w, ctx.house, String(d.kind || ""), String(d.id || ""), d.n, d.px, ctx.day, ctx.t)
     : op === "cancel" ? casStockCancel(ctx.w, d.no, ctx.day, ctx.t, ctx.house)
     : op === "seen" ? casStockSeen(ctx.w, ctx.house) : { ok: false, reason: "沒有這個動作" };

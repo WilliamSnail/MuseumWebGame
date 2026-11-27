@@ -45,6 +45,9 @@ export const stCents = v => Math.round(+v * 100); // 價 → 分（整數）
 export const stBuyCost = (px, n) => Math.ceil(stCents(px) * n / 100); // 買 n 股要付的錢：進位
 export const stSellGet = (px, n) => Math.floor(stCents(px) * n / 100); // 賣 n 股拿到的錢：捨去
 export const stValue = (px, n) => Math.floor(stCents(px) * n / 100); // 持股市值（帳面）：捨去
+export const ST_FRAC = 10000; // 零碎股的單位：萬分之壹股（決定 0160）
+export const stUnits = (S, id) => stN(S.own[id]) * ST_FRAC + stN(S.frac && S.frac[id]); // 這支總共幾個單位（整數股 × 萬 ＋ 零碎）
+export const stUnitsValue = (px, u) => Math.floor(stCents(px) * u / ST_FRAC / 100); // u 個單位的市值：捨去
 const stDay = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const stAddDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
 const ORDER_KINDS = ["buy", "sell", "stop"];
@@ -73,8 +76,11 @@ export function casStockFix(w) {
   if (!stBox(S.sold)) S.sold = { day: null, n: 0 };
   S.sold.day = stDay(S.sold.day) ? S.sold.day : null;
   S.sold.n = stN(S.sold.n);
+  // 零碎股（決定 0160）：整數股照舊放 own；不到壹股的部分放 frac，單位是萬分之壹股（1～9999）。配息、掛單、還債賣股只看整數股
+  if (!stBox(S.frac)) S.frac = {};
+  for (const k of Object.keys(S.frac)) { const f = stN(S.frac[k]); if (f > 0 && f < ST_FRAC && STOCK_IDS.includes(k)) S.frac[k] = f; else delete S.frac[k]; }
   if (!stBox(S.cost)) S.cost = {}; // 每支持股的總成本（買進花的錢 ＋ 買進手續費；賣出時照比例扣）。資本利得稅、畫面的單位成本、損益用
-  for (const k of Object.keys(S.cost)) { const n = stN(S.cost[k]); if (n > 0 && S.own[k] > 0 && STOCK_IDS.includes(k)) S.cost[k] = n; else delete S.cost[k]; }
+  for (const k of Object.keys(S.cost)) { const n = stN(S.cost[k]); if (n > 0 && (S.own[k] > 0 || S.frac[k] > 0) && STOCK_IDS.includes(k)) S.cost[k] = n; else delete S.cost[k]; }
   S.fee = stN(S.fee);
   S.gain = Number.isFinite(+S.gain) ? Math.floor(+S.gain) : 0; // 可以是負的
   S.seq = stN(S.seq);
@@ -265,6 +271,7 @@ export function casStockPegSync(w, house) {
     const name = stDef(e.id).name;
     if (S.cost[e.id] == null && S.own[e.id] > 0) S.cost[e.id] = stBuyCost(e.from, S.own[e.id]); // 換股數之前還沒有成本記錄：用換之前的價算；換股數時總成本不變（市值不變，零頭用籌碼補不算成本）
     for (const o of S.orders.filter(x => x.id === e.id)) stDrop(w, S, o);
+    { const f = stN(S.frac[e.id]), cash = stUnitsValue(e.from, f); if (f > 0) { delete S.frac[e.id]; if (cash > 0) casWorldOut(w, house, "stockRebase", cash, NUM.casino.world); } } // 換比例：零碎股照換之前的價換成籌碼（決定 0160）
     const sh = stN(S.own[e.id]);
     if (sh > 0) {
       const value = stValue(e.from, sh), ns = Math.floor(value * 100 / stCents(e.to)), rem = value - Math.floor(stCents(e.to) * ns / 100);
@@ -386,6 +393,7 @@ export function casStockBuy(w, house, id, shares, day, t) {
 // opts.free ＝賣股還債（shared/casino/debt.js）：不受壹人壹天賣出上限、不算進今天賣出的額度和全館淨賣出
 export function casStockSell(w, house, id, shares, day, t, opts) {
   const free = !!(opts && opts.free);
+  if (shares === "max" && !free && stDef(id) && stN(casStockFix(w).frac[id]) > 0) return casStockSellAmt(w, house, id, "max", day, t); // 有零碎股：全賣連零碎的壹起賣（決定 0160）
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad };
   if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
@@ -398,14 +406,14 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   const px = H.px[id], gross = stSellGet(px, n), fee = stFee(gross, id);
   stSeed(S, H);
   // 證交稅（決定 0111，取代資本利得稅）：賣出金額的 taxPct%（美股不收），不管賺賠；成本照股數比例扣（平均成本法）只用在損益顯示
-  const costOut = n >= have0 ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n / have0), profit = gross - fee - costOut, tax = casStockTax(id, gross, fee), net = gross - fee - tax;
+  const fr = stN(S.frac[id]), costOut = n >= have0 && !fr ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * n * ST_FRAC / (have0 * ST_FRAC + fr)), profit = gross - fee - costOut, tax = casStockTax(id, gross, fee), net = gross - fee - tax;
   // 壹人壹天賣出上限
   if (!free && stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
   casWorldOut(w, house, "stockSell", gross, NUM.casino.world); // 海外付（house.ext 變少）
   w.chips -= fee + tax; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
   if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); } // 資本利得稅進政府帳（決定 0110；以前進博物館資金）；日報看 house.act.stockTax
   S.own[id] = have0 - n;
-  if (S.own[id] <= 0) { delete S.own[id]; delete S.cost[id]; } else S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut);
+  if (S.own[id] <= 0 && !fr) { delete S.own[id]; delete S.cost[id]; } else { if (S.own[id] <= 0) delete S.own[id]; S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut); }
   S.gain += profit; // 累計賣出賺賠（扣稅前）
   S.fee += fee;
   if (!free) S.sold = { day, n: stSoldToday(S, day) + gross };
@@ -413,6 +421,70 @@ export function casStockSell(w, house, id, shares, day, t, opts) {
   if (!free) H.net = { day, n: stNetToday(H, day) + gross };
   casTradeLog(w, { d: day, t: +t || 0, id, m: "o", a: "s", n, p: px, f: fee, x: tax, g: profit, r: free });
   return { ok: true, n, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casNum(n), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
+}
+
+// ---------- 零碎股：照金額買賣（決定 0160，翊文 11-27「輸入金額而非股數的零碎股交易」）----------
+// 只有館外股（台股、美股）。買：amt 是這次最多花多少（含手續費），買得到幾個萬分之壹股就買幾個；賣：amt 是想賣出的金額（扣手續費、稅之前），"max" ＝ 全賣（含零碎）。
+// 其他規則（停盤、賣出上限、證交稅、成本照比例扣）跟整數股壹樣；錢壹樣從海外進出（casWorldIn／casWorldOut）
+const stAmt = v => Math.floor(Number(String(v == null ? "" : v).replace(/[,，\s]/g, "")));
+const stSetUnits = (S, H, id, u) => {
+  const before = stN(S.own[id]), own = Math.floor(u / ST_FRAC), f = u - own * ST_FRAC;
+  if (own > 0) S.own[id] = own; else delete S.own[id];
+  if (f > 0) S.frac[id] = f; else delete S.frac[id];
+  H.held[id] = Math.max(0, stN(H.held[id]) + own - before); // 莊家曝險只算整數股（零碎的每人每支最多壹股，略過）
+};
+export const casUnitsText = u => casNum(Math.floor(u / ST_FRAC)) + (u % ST_FRAC ? "." + String(u % ST_FRAC).padStart(4, "0").replace(/0+$/, "") : "");
+export function casStockBuyAmt(w, house, id, amt, day, t) {
+  const S = casStockFix(w), H = casStockHouseFix(house);
+  if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad }; // stDef 只認館外股
+  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
+  const A = stAmt(amt), px = H.px[id], c = stCents(px);
+  if (!Number.isFinite(A) || A <= 0 || !(c > 0)) return { ok: false, reason: CAS_STOCK.bad };
+  if (A > w.chips) return { ok: false, reason: CAS_STOCK.poor };
+  const costOf = u => Math.ceil(c * u / ST_FRAC / 100), tot = u => { const k = costOf(u); return k + stFee(k, id); };
+  let u = Math.floor(A * 100 * ST_FRAC / (c * (1 + casStockFeePct(id) / 100)));
+  while (u > 0 && tot(u) > A) u--;
+  const cost = costOf(u), fee = stFee(cost, id);
+  if (u <= 0 || cost <= 0) return { ok: false, reason: CAS_STOCK.frac.tooSmall };
+  stSeed(S, H);
+  casWorldIn(w, house, "stockBuy", cost);
+  w.chips -= fee; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
+  stSetUnits(S, H, id, stUnits(S, id) + u);
+  S.cost[id] = stN(S.cost[id]) + cost + fee;
+  S.fee += fee;
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "o", a: "b", n: u / ST_FRAC, p: px, f: fee });
+  return { ok: true, n: u / ST_FRAC, px, cost, fee, lines: [casFill(CAS_STOCK.buyOk, { name: stDef(id).name, n: casUnitsText(u), px: casPx(px), cost: casNum(cost), fee: casNum(fee) })] };
+}
+export function casStockSellAmt(w, house, id, amt, day, t) {
+  const S = casStockFix(w), H = casStockHouseFix(house);
+  if (!stDef(id) || !stDay(day)) return { ok: false, reason: CAS_STOCK.bad }; // stDef 只認館外股
+  if (casStockIdHalt(house, id, day, t)) return { ok: false, reason: stHaltWhy(house, id, day) };
+  const all = stUnits(S, id), have = Math.max(0, all - stLocked(S, id) * ST_FRAC), px = H.px[id], c = stCents(px);
+  if (all <= 0) return { ok: false, reason: CAS_STOCK.none };
+  if (have <= 0) return { ok: false, reason: casFill(CAS_STOCK.order.noShares, { n: 0 }) };
+  let u;
+  if (amt === "max") u = have;
+  else {
+    const A = stAmt(amt);
+    if (!Number.isFinite(A) || A <= 0 || !(c > 0)) return { ok: false, reason: CAS_STOCK.bad };
+    u = Math.ceil(A * 100 * ST_FRAC / c);
+    if (u > have) return { ok: false, reason: casFill(CAS_STOCK.frac.notEnough, { v: casNum(stUnitsValue(px, have)) }) };
+  }
+  const gross = Math.floor(c * u / ST_FRAC / 100), fee = stFee(gross, id);
+  if (gross <= 0) return { ok: false, reason: CAS_STOCK.frac.tooSmall };
+  stSeed(S, H);
+  const costOut = u >= all ? stN(S.cost[id]) : Math.floor(stN(S.cost[id]) * u / all), profit = gross - fee - costOut, tax = casStockTax(id, gross, fee), net = gross - fee - tax;
+  if (stSoldToday(S, day) + gross > casSellCap(w)) return { ok: false, reason: casFill(CAS_STOCK.sellDay, { cap: casSellMoney(casSellCap(w)), n: casNum(Math.max(0, casSellCap(w) - stSoldToday(S, day))), up: casSellTip(w) }) };
+  casWorldOut(w, house, "stockSell", gross, NUM.casino.world);
+  w.chips -= fee + tax; casPoolGain(house, "budget", "stockFee", fee); casCount(house, "stockFee", fee);
+  if (tax > 0) { casPoolGain(house, "gov", "stockTax", tax); casCount(house, "stockTax", tax); }
+  stSetUnits(S, H, id, all - u);
+  if (all - u <= 0) delete S.cost[id]; else S.cost[id] = Math.max(1, stN(S.cost[id]) - costOut);
+  S.gain += profit; S.fee += fee;
+  S.sold = { day, n: stSoldToday(S, day) + gross };
+  H.net = { day, n: stNetToday(H, day) + gross };
+  casTradeLog(w, { d: day, t: +t || 0, id, m: "o", a: "s", n: u / ST_FRAC, p: px, f: fee, x: tax, g: profit });
+  return { ok: true, n: u / ST_FRAC, px, gross, fee, tax, profit, net, lines: [casFill(CAS_STOCK.sellOk, { name: stDef(id).name, n: casUnitsText(u), px: casPx(px), net: casNum(net), fee: casNum(fee), taxText: tax > 0 ? "，證交稅 " + casNum(tax) : "" })] };
 }
 
 // 畫面要的：這支最近一次（或下一次）的除息日、每股配多少（遊戲價單位，沒資料 null）
@@ -435,13 +507,13 @@ export function casStockView(w, house, day, t, stale) {
   const C = NUM.casino.stock, S = casStockFix(w), H = casStockHouseFix(house);
   const old = Array.isArray(stale) ? stale : [];
   const list = OUT_STOCKS.map(d => {
-    const mk = stMk(d.id), tw = mk === "tw", price = H.px[d.id], mine = stN(S.own[d.id]);
+    const mk = stMk(d.id), tw = mk === "tw", price = H.px[d.id], mine = stN(S.own[d.id]), frac = stN(S.frac[d.id]) / ST_FRAC, has = mine > 0 || frac > 0; // frac：零碎股（0～0.9999 股，決定 0160）
     // 「今天」的漲跌跟今天的開盤基準比（盤中價就是從這個基準算的），不是跟 H.prev。11-14 翊文：紅爪晶片盤中壹路跌卻顯示 ▲0.4%——
     //   11-13 那天 05:00 換日還是舊做法（把前壹晚美股的漲跌套進價格），H.prev 是那之前的價，所以「今天」把昨晚的漲幅也算進來了
     const base = mk && H[mk] && H[mk].day === day && H.hist[day] && H.hist[day][d.id] > 0 ? H.hist[day][d.id] : 0, prev = base || H.prev[d.id];
-    const costTotal = mine > 0 ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round(mine * (price - prev)) : 0, value = stValue(price, mine); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
-    return { id: d.id, name: d.name, fee: casStockFeePct(d.id) / 100, taxPct: casStockTaxPct(d.id) / 100, cat: d.cat || null, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, value,
-      costTotal, avgCost: mine > 0 ? Math.round(costTotal / mine * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: casStockTaxPct(d.id) / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
+    const costTotal = has ? (S.cost[d.id] != null ? S.cost[d.id] : stBuyCost(price, mine)) : 0, dayChg = prev > 0 ? Math.round((mine + frac) * (price - prev)) : 0, value = stUnitsValue(price, stUnits(S, d.id)); // 持股明細（跟館內股同樣的欄位，casInView）：costTotal 總成本（含買進手續費；還沒有記錄的舊持股用現價）、avgCost 單位成本、dayChg 今天的市值變動（籌碼）、dayPct 今天的漲跌幅（比例）、pnl 未實現損益、pnlPct 損益比例
+    return { id: d.id, name: d.name, fee: casStockFeePct(d.id) / 100, taxPct: casStockTaxPct(d.id) / 100, cat: d.cat || null, line: d.intro, kind: "out", price, prevClose: prev, chg: prev > 0 ? (price - prev) / prev : 0, mine, frac, value,
+      costTotal, avgCost: has ? Math.round(costTotal / (mine + frac) * 100) / 100 : 0, dayChg, dayPct: prev > 0 ? (price - prev) / prev : 0, pnl: value - costTotal, pnlPct: costTotal > 0 ? (value - costTotal) / costTotal : 0, tax: casStockTaxPct(d.id) / 100, locked: stLocked(S, d.id), free: Math.max(0, mine - stLocked(S, d.id)),
       stale: old.includes(d.id) ? CAS_STOCK.stale : null,
       // 11-14（規劃 2.8d）：market "tw" 台股盤中會動；halted 這支現在不能買賣；twState 台股的狀態（pre 開盤前、pending 等開盤價、open、closed）；
       //   intraday 今天盤中每分鐘的價（從 intradayFrom 分鐘起，0 ＝ 09:00；其他股票是空陣列）；fresh 價格自從玩家上次按「看過了」之後變過
@@ -480,7 +552,7 @@ export function casStockViewAll(w, house, day, t, stale) {
   return v;
 }
 // 存在股票裡的錢（記帳快照用：持股市值是帳面的，錢其實在莊家那裡，所以不加進總額）
-export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + stValue(H.px[id], stN(S.own[id])), 0) + S.hold + casInValueApprox(w, house); }; // 鎖在買單裡的籌碼也算玩家的
+export const casStockValue = (w, house) => { const S = casStockFix(w), H = casStockHouseFix(house); return STOCK_IDS.reduce((s, id) => s + stUnitsValue(H.px[id], stUnits(S, id)), 0) + S.hold + casInValueApprox(w, house); }; // 鎖在買單裡的籌碼也算玩家的
 export function casStockTakeNotes(w) { const S = casStockFix(w); const n = S.notes; S.notes = []; return n; }
 
 
