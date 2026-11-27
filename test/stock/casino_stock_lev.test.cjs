@@ -24,7 +24,7 @@ T("NUM.casino.stockLev：5 倍、強平 50%、利息 0.15%、借券 0.3%、壹�
   const C = G.NUM.casino.stockLev;
   assert.strictEqual(C.maxLev.in, 5); assert.strictEqual(C.maxLev.tw, 5); assert.strictEqual(C.maxLev.us, 5); assert.strictEqual(C.maxLagMin, 3);
   assert.strictEqual(C.forcePct, 50); assert.strictEqual(C.interestPct, 0.15); assert.strictEqual(C.borrowPct, 0.3);
-  assert.strictEqual(C.opensDay, 0); assert.strictEqual(C.coolMin, 0); /* 11-19 翊文：取消平倉冷卻和每天筆數 */ assert.strictEqual(C.posLimit, 100000000) /* 決定 0157：本金上限 1 億 */; assert.strictEqual(C.profitCap, 10000000);
+  assert.strictEqual(C.opensDay, 0); assert.strictEqual(C.coolMin, 0); /* 11-19 翊文：取消平倉冷卻和每天筆數 */ assert.strictEqual(C.posLimit, 500000000) /* 決定 0157：本金上限 5 億（11-27 翊文） */; assert.strictEqual(C.profitCap, 10000000);
   assert.strictEqual(C.houseExposePct, 20); assert.strictEqual(C.houseFloor, 3000000); assert.strictEqual(G.NUM.casino.stock.feePct, 0.5);
 });
 

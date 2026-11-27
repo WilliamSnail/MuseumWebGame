@@ -564,7 +564,7 @@ export const NUM = {
     //   費用照真實（決定 0136，翊文 11-20 選 C）：館外台股、美股的手續費、利息、借券費、當沖稅照 byMk（沒寫的市場＝館內股、集團股，照上面的 interestPct／borrowPct 和 stock.feePct）；
     //   byMk.{tw,us}：interestPct 做多借的錢每天的利息 %、borrowPct 放空的借券費 %、taxPct 平倉時課的當沖證交稅 %（台股 0.15，進政府帳；美股 0）
     stockLev: { byMk: { tw: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0.15 }, us: { interestPct: 0.02, borrowPct: 0.08, taxPct: 0 } }, maxLev: { in: 5, tw: 5, us: 5, grp: 5 }, maxLagMin: 3, levByCredit: [[0, 2], [2, 3], [4, 5]], forcePct: 50, interestPct: 0.15, borrowPct: 0.3, opensDay: 0, coolMin: 0,
-      posLimit: 100000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
+      posLimit: 500000000, profitCap: 10000000, stepPct: 20, houseExposePct: 20, houseFloor: 3000000,
       credit: { ptsPerLevel: 5, maxLevel: 10, dayGain: 2, openGain: 1, openMin: 1000000, dayMax: 5, lateLoss: 3 } }, // 決定 0157（翊文 11-26：信用好做壹點、開槓桿也累積、壹天可以升壹級）：還款準時／定存、館債到期那天 +dayGain；每開壹筆本金 ≥ openMin 的槓桿 +openGain；壹天合計最多 dayMax（＝ptsPerLevel，所以壹天最多升壹級）
     // 館內五家店的股票（11-14，shared/casino/stock_in.js；規劃 2.8a、2.8b、2.8e、2.8g；翊文：營業 05:00～23:30、K＝0.03）：莊家當對手盤。
     //   start 起始股價、floor 最低；k 跳空倍率、moodPct 景氣漂移（%／天 × B）、noise 隨機 ±%、jumpCap 跳空最多 ±%、minPeople 昨天不到幾個不同的人不調價、
