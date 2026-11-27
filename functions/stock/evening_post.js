@@ -20,9 +20,17 @@ export const DIGEST_MAX = 1000; // 合併時館訊那段最多幾個字（Discor
 const NAMES = Object.fromEntries(OUT_STOCKS.map(s => [s.id, s.name]));
 export const taipeiHour = ms => new Date(ms + 8 * 3600000).getUTCHours();
 
-export function eveningText(tw, us, nowMs) {
+// 台股大盤（加權指數 t00）：證交所即時報價介面，抓不到就不寫那行。d 要是今天（休市日回的是上壹個交易日）
+export async function fetchTaiex(nowMs, fetcher = fetch) {
+  try {
+    const r = await fetcher("https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_t00.tw&json=1&delay=0&_=" + nowMs, { headers: { "User-Agent": "Mozilla/5.0", Referer: "https://mis.twse.com.tw/stock/fibest.jsp" }, signal: AbortSignal.timeout(8000) });
+    const a = r.ok ? ((await r.json()).msgArray || [])[0] : null, px = a && +a.z, prev = a && +a.y;
+    return a && a.d === taipeiDay(nowMs).split("-").join("") && px > 0 && prev > 0 ? { px, prev } : null;
+  } catch (e) { return null; }
+}
+export function eveningText(tw, us, nowMs, twIdx) {
   const usDay = usNyDay(nowMs);
-  return dcEveningText({ day: taipeiDay(nowMs), usDay, tw, us, names: NAMES, twIds: TW_IDS, usIds: US_IDS, twSyms: TW_SYMBOLS, usSyms: US_SYMBOLS, early: usEarlyClose(usDay) });
+  return dcEveningText({ day: taipeiDay(nowMs), usDay, tw, us, twIdx, names: NAMES, twIds: TW_IDS, usIds: US_IDS, twSyms: TW_SYMBOLS, usSyms: US_SYMBOLS, early: usEarlyClose(usDay) });
 }
 // 第壹次（還沒有 seen）：11-28 以前發布的公告都當成發過（11-27 以前每天 20:00 那則發過了）
 export const SEEN_BEFORE = "2026-11-28";
@@ -31,18 +39,18 @@ export function seenStart(seenDoc) {
   return NOTICES.filter(n => n && n.id && typeof n.publish === "string" && n.publish < SEEN_BEFORE).map(n => n.id);
 }
 // 組那壹則：{ text, picked }；兩邊都沒有回 text ""
-export function eveningPost(tw, us, seenIds, nowMs) {
+export function eveningPost(tw, us, seenIds, nowMs, twIdx) {
   const day = taipeiDay(nowMs), picked = dcDigestPick(NOTICES, day, seenIds);
   const digest = picked.length ? dcDigestText(NOTICES, day, noticeArea, NOTICE_AREAS, picked, DIGEST_MAX) : "";
-  const market = eveningText(tw, us, nowMs);
+  const market = eveningText(tw, us, nowMs, twIdx);
   const parts = [digest, market].filter(Boolean);
   return { text: parts.length ? parts.join("\n\n━━━━━━━━━━\n\n") + `\n\n🎟 入館：${DC_DIGEST_SITE}` : "", picked: picked.map(n => n.id) };
 }
 export async function eveningRun(nowMs = Date.now(), dbx) {
   const D = dbx || getFirestore(), day = taipeiDay(nowMs), seenRef = D.doc("discordDigest/seen");
-  const [a, b, c] = await Promise.all([D.doc("stocksTw/latest").get(), D.doc("stocksUs/latest").get(), seenRef.get()]);
+  const [a, b, c, ix] = await Promise.all([D.doc("stocksTw/latest").get(), D.doc("stocksUs/latest").get(), seenRef.get(), fetchTaiex(nowMs)]);
   const seen = seenStart(c.exists ? c.data() : null);
-  const { text, picked } = eveningPost(a.exists ? a.data() : null, b.exists ? b.data() : null, seen, nowMs);
+  const { text, picked } = eveningPost(a.exists ? a.data() : null, b.exists ? b.data() : null, seen, nowMs, ix);
   if (!text) return `傍晚那則 ${day}：沒有新公告、兩邊也都沒開，不發`;
   const ok = await outboxPut({ id: `evening-${day}`, kind: "evening", text });
   if (ok) await seenRef.set({ ids: seen.concat(picked).slice(-400), at: nowMs, day });
