@@ -187,7 +187,7 @@ const casPoolWho = Q => { if (!Q.who || typeof Q.who !== "object") Q.who = { [St
 // nws ＝ { uid: 淨值 }（決定 0143，多人合計）；給壹個數字就當成 pool.uid 那位
 export function casPoolDay(house, day, nws) {
   const C = NUM.casino.pool, P = house && house.pool;
-  if (!C || !P || !P.uid || P.day === day) return false;
+  if (!C || C.on === false || !P || !P.uid || P.day === day) return false;
   if (typeof nws === "number" || typeof nws === "string") nws = { [P.uid]: +nws };
   if (!nws || typeof nws !== "object" || !Object.values(nws).some(v => Number.isFinite(+v))) return false;
   const legacy = !(P.e >= 0), who = casPoolWho(P), fl = v => Math.max(1, Math.floor(+v));
@@ -207,7 +207,7 @@ export function casPoolDay(house, day, nws) {
 // 全館看得到的（peek 回）：不寫誰、不寫數字。lv 量化成 0～grid 格；band；night 只在門檻那晚（那壹天的 18:00 起，到隔天 05:00 換日前）才是 true；trace 最近幾天的漲（1）退（−1）不動（0）；hits 到過幾次
 export function casPoolView(house, day, t) {
   const C = NUM.casino.pool, P = house && house.pool;
-  if (!C || !P || !P.uid) return null;
+  if (!C || C.on === false || !P || !P.uid) return null;
   const mins = Number.isFinite(+t) ? (((Math.floor(+t / 60000) + 480) % 1440) + 1440) % 1440 : 0, evening = mins >= 18 * 60 || mins < 5 * 60;
   const lv = P.lv, band = lv >= 1 ? "over" : lv > 0.9 ? "edge" : lv > 0.6 ? "high" : lv > 0.2 ? "mid" : "low";
   return { lv: Math.round(lv * C.grid), dir: (P.trace || []).length ? P.trace[P.trace.length - 1] : 0, band, night: !!P.night && P.night === day && evening, trace: (P.trace || []).slice(), hits: P.hits || 0 };
