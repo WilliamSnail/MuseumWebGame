@@ -3,7 +3,7 @@
 // 台股今天沒開（週末、假日）就只寫美股；美股今天沒有盤前（週末、美國假日）就只寫台股；兩個都沒有回空字串（不發）。
 // 誰叫：functions/stock/stock_div.js 的 stockDivTick（台灣每小時 :17），18:17 那次組字寫進 discordOutbox/evening-日期（同壹天只發壹次）。
 
-import { usdFmt } from "./us_close.js";
+import { US_INDEX_IDS, usdFmt } from "./us_close.js";
 const evOk = v => typeof v === "number" && isFinite(v) && v > 0;
 const evFmt = n => (n >= 100 ? Math.round(n).toLocaleString("en-US") : (Math.round(n * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 }));
 const evPct = r => `${r >= 0 ? "▲" : "▼"}${Math.abs(r * 100).toFixed(1)}%`;
@@ -71,9 +71,9 @@ export function dcEveningText(o) {
     if (ix && evOk(ix.px) && evOk(ix.prev)) L.push(`📊 島上大盤（加權指數）　${evFmt(ix.px)}（${evPct(ix.px / ix.prev - 1)}）`);
     a = evBlock(tw, L); L.push(`${a.n} 支裡，漲 ${a.up} 支、跌 ${a.dn} 支、平 ${a.n - a.up - a.dn} 支。`, ""); }
   if (usAll) {
-    const idx = usAll.find(x => x.id === "nightindex"), rest = usAll.filter(x => x.id !== "nightindex");
+    const idxs = usAll.filter(x => US_INDEX_IDS.includes(x.id)), rest = usAll.filter(x => !US_INDEX_IDS.includes(x.id));
     L.push("🌙 **美股盤前**（價還在動）");
-    if (idx) L.push(`📊 ${idx.name}　${usdFmt(idx.px)}（${evPct(idx.r)}）`);
+    for (const x of idxs) L.push(`📊 ${x.name}　${usdFmt(x.px)}（${evPct(x.r)}）`);
     b = evBlock(rest, L); L.push(`${b.n} 支裡，漲 ${b.up} 支、跌 ${b.dn} 支、平 ${b.n - b.up - b.dn} 支。價格是美元；館內匯率 ${fx}。`, "");
   }
   const T = EVENING_TALK, m1 = a ? evMood(a.avg) : null, m2 = b ? evMood(b.avg) : null;

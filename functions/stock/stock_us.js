@@ -25,8 +25,8 @@ const db = () => getFirestore();
 const docRef = () => db().doc("stocksUs/latest");
 
 // 遊戲裡的 id → Yahoo 的代號（真實代號只放這裡）
-export const US_SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "QQQ", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", bigshipport: "CCL", greenleafclinic: "TLRY", quantumfrog: "IONQ", smallcore: "OKLO", messengerlab: "MRNA", oldgamestore: "GME", fingerbank: "SOFI", betkingdom: "DKNG", droidhive: "KTOS", treadclub: "PTON", blockpark: "RBLX", popcornhall: "AMC", blackgoldwell: "APA", bluefireyard: "AR", greenglowmine: "UEC", raremountain: "MP", redcoppermine: "FCX", richsoilshop: "MOS", vaultbrick: "UGL", blackbarrel: "UCO", searchshop: "GOOGL", facehall: "META", boxyard: "AMZN" };
-export const US_NAMES = { greeneye: "輝達", redclaw: "超微", nightindex: "那斯達克 100 指數基金", silverapple: "蘋果", flashcar: "特斯拉", squarewin: "微軟", bigshipport: "嘉年華郵輪", greenleafclinic: "Tilray", quantumfrog: "IonQ", smallcore: "Oklo", messengerlab: "Moderna", oldgamestore: "GameStop", fingerbank: "SoFi", betkingdom: "DraftKings", droidhive: "Kratos", treadclub: "Peloton", blockpark: "Roblox", popcornhall: "AMC 院線", blackgoldwell: "APA", bluefireyard: "Antero Resources", greenglowmine: "Uranium Energy", raremountain: "MP Materials", redcoppermine: "Freeport-McMoRan", richsoilshop: "Mosaic", vaultbrick: "ProShares Ultra Gold", blackbarrel: "ProShares Ultra Bloomberg Crude Oil", searchshop: "Alphabet（Google）", facehall: "Meta", boxyard: "Amazon" };
+export const US_SYMBOLS = { greeneye: "NVDA", redclaw: "AMD", nightindex: "QQQ", silverapple: "AAPL", flashcar: "TSLA", squarewin: "MSFT", bigshipport: "CCL", greenleafclinic: "TLRY", quantumfrog: "IONQ", smallcore: "OKLO", messengerlab: "MRNA", oldgamestore: "GME", fingerbank: "SOFI", betkingdom: "DKNG", droidhive: "KTOS", treadclub: "PTON", blockpark: "RBLX", popcornhall: "AMC", blackgoldwell: "APA", bluefireyard: "AR", greenglowmine: "UEC", raremountain: "MP", redcoppermine: "FCX", richsoilshop: "MOS", vaultbrick: "UGL", blackbarrel: "UCO", searchshop: "GOOGL", facehall: "META", boxyard: "AMZN", bigindex: "SPY" };
+export const US_NAMES = { greeneye: "輝達", redclaw: "超微", nightindex: "那斯達克 100 指數基金", silverapple: "蘋果", flashcar: "特斯拉", squarewin: "微軟", bigshipport: "嘉年華郵輪", greenleafclinic: "Tilray", quantumfrog: "IonQ", smallcore: "Oklo", messengerlab: "Moderna", oldgamestore: "GameStop", fingerbank: "SoFi", betkingdom: "DraftKings", droidhive: "Kratos", treadclub: "Peloton", blockpark: "Roblox", popcornhall: "AMC 院線", blackgoldwell: "APA", bluefireyard: "Antero Resources", greenglowmine: "Uranium Energy", raremountain: "MP Materials", redcoppermine: "Freeport-McMoRan", richsoilshop: "Mosaic", vaultbrick: "ProShares Ultra Gold", blackbarrel: "ProShares Ultra Bloomberg Crude Oil", searchshop: "Alphabet（Google）", facehall: "Meta", boxyard: "Amazon", bigindex: "S&P 500 指數基金" };
 const HOSTS = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
 
 async function fetchOne(sym, day, nowMs) {
@@ -60,7 +60,7 @@ export async function fetchYahoo(nowMs) {
 // 改讀 CNBC 的報價介面（壹次抓全部，有盤前價和前收）；CNBC 缺的那幾支用 Nasdaq 的報價補（壹次壹支）；都抓不到才退回 Yahoo。
 // 兩個都不是官方保證的介面（跟 Yahoo 壹樣），可能被擋、改格式；抓不到就當沒資料，不編。
 const UA = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36", Accept: "application/json" };
-const NASDAQ_ETF = new Set(["QQQ", "UGL", "UCO"]); // Nasdaq 的報價介面 ETF 要用 assetclass=etf
+const NASDAQ_ETF = new Set(["QQQ", "SPY", "UGL", "UCO"]); // Nasdaq 的報價介面 ETF 要用 assetclass=etf
 async function fetchCnbcRows() {
   const syms = US_IDS.map(id => US_SYMBOLS[id]);
   const r = await fetch("https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=" + encodeURIComponent(syms.join("|")) + "&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1", { headers: UA, signal: AbortSignal.timeout(8000) });
