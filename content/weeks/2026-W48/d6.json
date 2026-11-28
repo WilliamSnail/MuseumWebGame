@@ -1,0 +1,240 @@
+{
+  "day": 6,
+  "date": "2026-11-28",
+  "holiday": null,
+  "board": "小門的紙條掉了。今天館裡投票，票箱是招領箱。B1 多了壹間房；書架多 1 本書。",
+  "books": [
+    {
+      "id": "6a",
+      "line": "w48-plates",
+      "title": "陪我數的人",
+      "spine": "票箱",
+      "unlock": {
+        "type": "now"
+      },
+      "pages": [
+        "今天館裡也投票。\n展品替 B2 那塊空白的名牌投票，\n票箱就是 B1 的招領箱。\n警衛壹早把箱子擦了兩遍，在蓋子上剪了壹道口。",
+        "排隊的展品壹個接壹個把票投進去。\n警衛站在旁邊數，數到壹半停下來，又從頭數。\n他看見你，招了招手。\n「我自己數，差壹件。你陪我數，就對了。」",
+        "你陪他數。\n他念壹個，你點壹下頭。\n這次數對了。\n他把手放在箱子上，像放在誰的肩膀上。",
+        "你這才看見箱子後面那扇小門。\n貼了很久的「下週再來」，今天掉在地上。\n警衛說那張紙條在他來以前就貼著了。\n他沒有去撿，也沒有去推門。",
+        "「排到截止以前的，都還能投，」他說，\n「隊伍後面還有人，我先不關。」\n你回頭看隊伍，最後面空著壹格，\n警衛還是等了壹會兒，才把投票口用膠帶封起來。"
+      ]
+    }
+  ],
+  "daily": [
+    {
+      "id": "d6a",
+      "kind": "read",
+      "book": "6a",
+      "reward": {
+        "insp": 2
+      },
+      "giver": "hall",
+      "says": "今天館裡投票，排隊的時候讀壹本吧。警衛那本，字條我替你夾好了。",
+      "done": "讀完了？警衛數票的時候，嘴唇動得比我念菜單慢。"
+    },
+    {
+      "id": "d6b",
+      "kind": "show",
+      "reward": {
+        "insp": 2,
+        "mood": 1
+      },
+      "giver": "postman",
+      "says": "B1 那面牆的畫又掛回來了。你去看，這次我先不送信。",
+      "done": "看完了？那面牆比上次多了壹組，我沒數，我只是路過。"
+    },
+    {
+      "id": "d6c",
+      "kind": "bank",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "scale",
+      "says": "今天投票，銀行也照開。你存壹筆，我秤秤看。",
+      "done": "存好了？秤是平的。可是秤盤旁邊，多了壹顆不是我的銅板。"
+    },
+    {
+      "id": "d6d",
+      "kind": "casino",
+      "reward": {
+        "mood": 1
+      },
+      "giver": "yuga",
+      "says": "去賭場打壹手就好。荷官今天說，他要自己數壹遍桌上的人。",
+      "done": "打完了？不用告訴我結果。荷官數完，說今天桌邊站的人剛好。"
+    },
+    {
+      "id": "d6e",
+      "kind": "deliver",
+      "n": 1,
+      "reward": {
+        "insp": 1
+      },
+      "giver": "clerk",
+      "says": "交壹張委託就好。今天票箱用了招領箱，失物我先收在櫃台。",
+      "done": "交好了。小帳旁邊那壹行，今天寫的是壹個數字，我不敢念。"
+    },
+    {
+      "id": "d6f",
+      "kind": "fuse",
+      "n": 1,
+      "reward": {
+        "mood": 2
+      },
+      "giver": "number",
+      "says": "叫號：融合，壹位。融完就領號。",
+      "done": "叫號：下壹位。今天沒有人排在最後那格，我還是等了壹下。"
+    }
+  ],
+  "dailyBonus": {
+    "items": [
+      "mat:畫布"
+    ]
+  },
+  "weeklyWords": [],
+  "show": {
+    "title": "站得下壹個人",
+    "intro": "這排展品掛在 B1 的樓梯口：重掛回來的那面牆、隔間裡的算盤，和今天的票箱。",
+    "works": [
+      {
+        "id": "s6a",
+        "frame": "dark",
+        "fx": [
+          "dark"
+        ],
+        "san": "0/1D3",
+        "title": "最新壹組（重掛）",
+        "lines": [
+          "週三掛過的那面牆，今天又掛回來了。",
+          "最下面多了壹組新的，還是少壹畫。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#15171d'/>",
+          "<rect x='20' y='30' width='200' height='230' fill='#23252d' stroke='#3b3e49'/>",
+          "<g stroke='#d8d5c8' stroke-width='3' stroke-linecap='round'><path d='M40 70v30M48 70v30M56 70v30M64 70v30M36 94l34-24'/><path d='M90 70v30M98 70v30M106 70v30M114 70v30M86 94l34-24'/><path d='M140 70v30M148 70v30M156 70v30M164 70v30M136 94l34-24'/></g>",
+          "<g stroke='#d8d5c8' stroke-width='3' stroke-linecap='round'><path d='M40 130v30M48 130v30M56 130v30M64 130v30M36 154l34-24'/><path d='M90 130v30M98 130v30M106 130v30M114 130v30M86 154l34-24'/></g>",
+          "<g stroke='#7fb8e0' stroke-width='3' stroke-linecap='round'><path d='M40 190v30M48 190v30M56 190v30'/></g>",
+          "<g stroke='#7fb8e0' stroke-width='3' stroke-linecap='round'><path d='M90 190v30M98 190v30M106 190v30'/></g>",
+          "<text x='20' y='282' font-size='11' fill='#8d8a80' font-family='serif'>又多壹組，少壹畫。</text></svg>"
+        ]
+      },
+      {
+        "id": "s6b",
+        "frame": "wood",
+        "fx": [
+          "dust"
+        ],
+        "title": "隔間裡的算盤",
+        "lines": [
+          "只站得下壹個人的隔間，牆上畫滿正字。",
+          "最下面的算盤，有壹格是空的。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#14120f'/>",
+          "<rect x='70' y='20' width='100' height='260' fill='#2a2620' stroke='#4a4236' stroke-width='3'/>",
+          "<g stroke='#cfc8b4' stroke-width='2' stroke-linecap='round' opacity='0.75'><path d='M80 40v18M86 40v18M92 40v18M98 40v18M77 54l24-12M112 40v18M118 40v18M124 40v18M130 40v18M109 54l24-12M144 40v18M150 40v18M156 40v18M162 40v18M141 54l24-12'/>",
+          "<path d='M80 80v18M86 80v18M92 80v18M98 80v18M77 94l24-12M112 80v18M118 80v18M124 80v18M130 80v18M109 94l24-12M144 80v18M150 80v18M156 80v18'/>",
+          "<path d='M80 120v18M86 120v18M92 120v18M98 120v18M77 134l24-12M112 120v18M118 120v18M124 120v18M130 120v18M109 134l24-12M144 120v18M150 120v18M156 120v18M162 120v18M141 134l24-12'/>",
+          "<path d='M80 160v18M86 160v18M92 160v18M98 160v18M77 174l24-12M112 160v18M118 160v18'/></g>",
+          "<rect x='80' y='222' width='80' height='44' fill='#6b4a2a' stroke='#c9b48a' stroke-width='2'/><line x1='80' y1='236' x2='160' y2='236' stroke='#c9b48a' stroke-width='2'/>",
+          "<g stroke='#3a2a1a' stroke-width='2'><line x1='92' y1='222' x2='92' y2='266'/><line x1='106' y1='222' x2='106' y2='266'/><line x1='120' y1='222' x2='120' y2='266'/><line x1='134' y1='222' x2='134' y2='266'/><line x1='148' y1='222' x2='148' y2='266'/></g>",
+          "<g fill='#e9e1cc'><circle cx='92' cy='229' r='5'/><circle cx='106' cy='229' r='5'/><circle cx='134' cy='229' r='5'/><circle cx='148' cy='229' r='5'/><circle cx='92' cy='250' r='5'/><circle cx='106' cy='250' r='5'/><circle cx='120' cy='250' r='5'/><circle cx='134' cy='250' r='5'/><circle cx='148' cy='250' r='5'/></g>",
+          "<circle cx='120' cy='229' r='5' fill='none' stroke='#8d8a80' stroke-dasharray='2 2'/>",
+          "<text x='20' y='296' font-size='11' fill='#8d8a80' font-family='serif'>空著的那壹格。</text></svg>"
+        ]
+      },
+      {
+        "id": "s6c",
+        "frame": "plain",
+        "fx": [],
+        "title": "今天的票箱",
+        "lines": [
+          "招領箱今天當票箱，蓋子上剪了壹道口。",
+          "排到最後的那壹格，有人留著沒走。"
+        ],
+        "svg": [
+          "<svg viewBox='0 0 240 300'><rect width='240' height='300' fill='#e8e2d2'/>",
+          "<rect x='0' y='230' width='240' height='70' fill='#cbbfa4'/>",
+          "<rect x='60' y='130' width='120' height='110' fill='#8a6a44' stroke='#4a3622' stroke-width='3'/>",
+          "<rect x='60' y='120' width='120' height='16' fill='#9c7a50' stroke='#4a3622' stroke-width='3'/>",
+          "<rect x='100' y='124' width='40' height='5' fill='#2a1e12'/>",
+          "<rect x='72' y='170' width='96' height='26' fill='#f4efe2' stroke='#4a3622'/>",
+          "<text x='82' y='188' font-size='13' fill='#4a3622' font-family='serif'>招領／票箱</text>",
+          "<g fill='#f7f4ea' stroke='#9a917d'><rect x='108' y='70' width='22' height='30' transform='rotate(-8 119 85)'/><rect x='130' y='40' width='22' height='30' transform='rotate(6 141 55)'/></g>",
+          "<g fill='#5a5348'><circle cx='20' cy='212' r='7'/><rect x='14' y='219' width='12' height='14'/><circle cx='38' cy='212' r='7'/><rect x='32' y='219' width='12' height='14'/></g>",
+          "<rect x='196' y='205' width='16' height='28' fill='none' stroke='#9a917d' stroke-dasharray='3 3'/>",
+          "<text x='20' y='280' font-size='11' fill='#5a5348' font-family='serif'>排到截止以前，都還能投。</text></svg>"
+        ]
+      }
+    ]
+  },
+  "adds": [
+    {
+      "id": "booth",
+      "floor": 1,
+      "line": "w48-plates",
+      "clue": "c-booth-abacus",
+      "title": "招領箱後面的小隔間",
+      "hint": "去 B1，推開招領箱後面那扇小門",
+      "intro": "「下週再來」的紙條掉在地上。門沒鎖。",
+      "lines": [
+        "門後是壹個只站得下壹個人的小隔間。牆上畫滿正字，最下面擺著壹把算盤。",
+        "算盤少壹顆珠子。",
+        "你退出來看地板。那圈舊圓痕旁邊，多了壹圈新的，木屑還是白的。"
+      ],
+      "mood": null,
+      "color": "黑",
+      "choices": [
+        {
+          "label": "數牆上的正字",
+          "check": {
+            "type": "skill",
+            "skill": "偵查",
+            "mod": 0
+          },
+          "success": {
+            "text": "正字從腳邊畫到頭頂，最上面那組剛好在你頭頂的高度。你數完，少壹畫。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你數到第八組就亂了。重數壹次，有壹組的最後壹筆，畫在你剛才扶牆的地方。",
+            "san": "1D2"
+          }
+        },
+        {
+          "label": "站進隔間裡",
+          "check": {
+            "type": "san",
+            "spec": "0/1D4"
+          },
+          "success": {
+            "text": "你站進去，剛好轉不了身。牆很近，只聽得到你自己的呼吸。",
+            "insp": 2
+          },
+          "fail": {
+            "text": "你數著牆上的正字，數到第三組，聽到有人慢你半拍跟著數。你停下來，那個聲音也停了。",
+            "san": "1D4"
+          }
+        },
+        {
+          "label": "撥壹下算盤",
+          "check": {
+            "type": "none"
+          },
+          "success": {
+            "text": "珠子撥過去，聲音很乾。空著的那壹格，大小剛好是壹顆珠子。"
+          }
+        }
+      ],
+      "reward": {
+        "insp": 2
+      }
+    }
+  ],
+  "usTalk": "感恩節隔天，對面的大市場只開了半天。櫃台的人提早收算盤，收之前又撥了壹遍，說今天的帳短，短得剛好；可是抽屜裡多了壹張沒人填的單子。",
+  "real": [
+    "今天全台地方選舉投票，投票所從早上開到下午四點，排到截止以前的人都還能投。",
+    "週末的早餐店，法式吐司的盤子邊多放了壹小碟糖粉。"
+  ]
+}
