@@ -189,6 +189,7 @@ T("帳本：每條線都要在帳本裡、名字一樣；每週要寫主線推�
 });
 T("帳本：到期還沒收的伏筆只是警告", () => {
   const c = regular(); c.today = "2026-11-30";
+  c.ledger.foreshadow.find(f => f.id === "f-backdoor").closed = false; // 真的帳本 W48 d6 已經收了，這裡自己設成還沒收
   const r = run(c);
   assert.ok(r.warnings.some(w => /f-backdoor/.test(w) && /到期了還沒收/.test(w)), r.warnings.join("\n"));
   c.ledger.foreshadow.find(f => f.id === "f-backdoor").closed = true;
