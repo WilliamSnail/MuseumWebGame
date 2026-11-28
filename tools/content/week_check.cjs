@@ -779,15 +779,16 @@ function checkRevealBeats(L, G, E, W, lw, nowWeek) {
       const k = Math.round((Date.parse(mon) - Date.parse(firstMon)) / 604800000);
       // extra：翊文指定提前揭的線（11-14 館外世界 m-world、11-19 撥款信 m-capital），不受「每隔壹週」限制；同壹週同壹個謎最多壹筆加開（翊文 11-19：不同的謎可以同週各加開壹筆），可以跟正常的壹筆同週
       if (b.extra !== undefined && b.extra !== true) E(w, "extra 只能是 true");
-      if (k < 0 || (!b.extra && k % 2)) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週；加開的要寫 extra: true）`);
-      if (b.extra) { const xk = b.week + "|" + b.mystery; if (seenX.has(xk)) E(w, `${b.week} 已經有壹筆 ${b.mystery} 的加開了（同壹週同壹個謎最多壹筆加開）`); seenX.add(xk); }
-      else { if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露；要加開寫 extra: true）`); seen.add(b.week); }
+      const live = b.status !== "skipped"; // 跳過的（沒放的）不佔揭露週、不算加開、不管收線週（11-28 提前兩週，決定 0166）
+      if (live && (k < 0 || (!b.extra && k % 2))) E(w, `${b.week} 不是揭露週（${BEAT_FIRST} 起每隔壹週；加開的要寫 extra: true）`);
+      if (live && b.extra) { const xk = b.week + "|" + b.mystery; if (seenX.has(xk)) E(w, `${b.week} 已經有壹筆 ${b.mystery} 的加開了（同壹週同壹個謎最多壹筆加開）`); seenX.add(xk); }
+      else if (live) { if (seen.has(b.week)) E(w, `${b.week} 已經有壹筆了（壹週最多壹個揭露；要加開寫 extra: true）`); seen.add(b.week); }
       if (prev && b.week < prev) E(w, "要照週的順序排");
       prev = b.week;
     }
     const m = mys.find(x => x.id === b.mystery);
     if (!m) E(w, `mystery「${b.mystery}」不在 mysteries 裡`);
-    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && (b.extra ? b.week > m.closeBy : b.week >= m.closeBy)) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露（加開 extra 的可以放在收線週）`);
+    else if (mon && /^\d{4}-W\d{2}$/.test(m.closeBy || "") && b.status !== "skipped" && (b.extra ? b.week > m.closeBy : b.week >= m.closeBy)) E(w, `${b.week} 不早於 ${m.id} 的收線週 ${m.closeBy}：收線那週是大揭曉，不是小揭露（加開 extra 的可以放在收線週）`);
     const d = typeof b.detail === "string" ? b.detail.trim() : "";
     if (d.length < 8 || d.length > 120) E(w, "detail 要寫壹句具體看得到的細節（8～120 字）");
     else {

@@ -18,11 +18,12 @@ T("沒有 extend 的舊帳本照常", () => { const L = clone(real); delete L.ex
 T("旁證沒有 audit 會擋", () => bad(L => { delete L.extend.threads[0].audit; }, /audit 要有/));
 T("審過但沒寫誰審、沒寫檢查會擋", () => { bad(L => { L.extend.threads[0].audit.by = ""; }, /audit\.by/); bad(L => { L.extend.threads[0].audit.checks = ["壹項"]; }, /checks 至少列三項/); });
 T("旁證抄謎底字句會擋", () => bad(L => { const m = L.mysteries.list.find(x => x.id === "m-queue"); L.extend.threads[0].seed = m.truth.slice(0, 12); }, /破梗/));
-T("壹週超過兩條人物線會擋", () => bad(L => { L.extend.weeks["2026-W48"].threads.push("t-number-2"); }, /最多兩條/));
+T("壹週超過兩條人物線會擋", () => bad(L => { L.extend.weeks["2026-W48"].threads.push("t-number-2"); }, /最多 2 條/));
+T("壓縮的週寫 threadsMax 和 threadsWhy 才能放寬；沒寫原因不算（11-28 決定 0166）", () => { bad(L => { L.extend.weeks["2026-W50"].threadsWhy = ""; }, /最多 2 條/); bad(L => { L.extend.weeks["2026-W50"].threads.push("t-number-2"); }, /最多 4 條/); });
 T("同壹個人的階往回走會擋", () => bad(L => { L.extend.threads.find(x => x.id === "t-number-3").stage = 1; }, /階要隨週數往上/));
 T("週表沒列三個去處會擋", () => bad(L => { L.extend.weeks["2026-W50"].leads = ["只有壹個"]; }, /leads 至少要三個/));
 T("三條線索不足或同一種地方會擋", () => { bad(L => { L.extend.weeks["2026-W49"].clues.splice(1); }, /clues 至少三條/); bad(L => { L.extend.weeks["2026-W49"].clues.forEach(c => { c.where = "書"; }); }, /三種以上/); });
-T("closes 要跟 mysteries 的收線週一致、旁證不能晚於收線週", () => { bad(L => { L.extend.weeks["2026-W50"].closes = ["m-guard"]; }, /不是這週/); bad(L => { L.mysteries.list.find(m => m.id === "m-queue").closeBy = "2026-W51"; }, /晚於 m-queue 的收線週/); });
+T("closes 要跟 mysteries 的收線週一致、旁證不能晚於收線週", () => { bad(L => { L.extend.weeks["2026-W49"].closes = ["m-guard"]; }, /不是這週/); bad(L => { L.mysteries.list.find(m => m.id === "m-queue").closeBy = "2026-W49"; }, /晚於 m-queue 的收線週/); });
 T("掉落 items：5 件都有、沒審過或抄謎底或週對不上會擋", () => { assert.strictEqual(real.extend.items.length, 5); bad(L => { L.extend.items[0].audit.status = "待審"; }, /audit 要是審過/); bad(L => { L.extend.items[0].lore = L.mysteries.list.find(m => m.id === "m-queue").truth.slice(0, 12); }, /破梗/); bad(L => { L.extend.items[0].week = "2026-W52"; }, /drops 要列|晚於/); });
 T("四問：每週 dread、cost、pepe、horror 缺了或空了會擋；cost 要有 san", () => { ["dread", "cost", "pepe", "horror"].forEach(k => bad(L => { delete L.extend.weeks["2026-W51"][k]; }, new RegExp(k + " 要有"))); bad(L => { L.extend.weeks["2026-W49"].horror.what = "空"; }, /horror.what/); bad(L => { L.extend.weeks["2026-W52"].cost.day = "週三"; }, /cost.day/); bad(L => { delete L.extend.weeks["2026-W53"].cost.san; }, /cost.san/); });
 T("總表 collect：八個謎和文化部、已知世界、撥款信都在；非集團寫不負責、少列、週對不上會擋", () => {

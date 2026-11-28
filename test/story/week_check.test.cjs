@@ -564,6 +564,7 @@ T("帳本 revealBeats：真的帳本過；格式錯、不是揭露週、破梗�
   expectErr(c => { first(c).week = "2026-W48"; }, /不是揭露週/);
   expectErr(c => { c.ledger.revealBeats.list.find(b => b.id === "b02").week = "2026-W47"; }, /已經有壹筆/);
   expectErr(c => { first(c).mystery = "m-nope"; }, /不在 mysteries 裡/);
+  { const c = regular(), b = c.ledger.revealBeats.list.find(x => x.id === "b02"); b.week = "2026-W47"; b.status = "skipped"; assert.ok(!has(run(c), /已經有壹筆|不是揭露週/), "跳過的揭露不佔揭露週（11-28 決定 0166）"); }
   expectErr(c => { c.ledger.revealBeats.list.find(b => b.week === "2026-W49").week = "2026-W51"; c.ledger.revealBeats.list.find(b => b.id === "b02").mystery = "m-count"; }, /不早於|照週的順序/);
   expectErr(c => { first(c).detail = "短"; }, /8～120 字/);
   expectErr(c => { first(c).detail = "差的那壹隻不是東西，是在數的那個人，牆上寫著。"; }, /破梗/);
@@ -650,7 +651,7 @@ T("帳本 main.units（兩週壹段）、world.mapPlan、weeks.<週>.unit：真�
   expectErr(c => { U(c)[0].beatWeek = "2026-W48"; }, /beatWeek 要是第 1 週/);
   expectErr(c => { U(c)[0].beats.push("b99"); }, /不在 revealBeats/);
   expectErr(c => { U(c)[0].beats.push("b02"); }, /不在這壹段/);
-  expectErr(c => { U(c)[1].closes.push("m-queue"); }, /不在這壹段/);
+  expectErr(c => { U(c)[1].closes.push("m-you"); }, /不在這壹段/);
   expectErr(c => { U(c)[0].groups.main.push("g-nope"); }, /不在 content\/world\/units/);
   expectErr(c => { U(c)[0].town.push("v-nope"); }, /不在 content\/npc/);
   expectErr(c => { U(c)[0].map.push("m-nope"); }, /不在 world.mapPlan/);

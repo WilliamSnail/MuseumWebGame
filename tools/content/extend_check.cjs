@@ -87,7 +87,8 @@ function checkExtend(L, E, W, lw) {
     if (!Number.isInteger(x.stage) || x.stage < 1 || x.stage > 5) E(w, "stage 要是 1～5");
     asList(x.beats).forEach(b => { if (!beatIds.has(b)) E(w, `beats「${b}」不在 revealBeats 裡`); });
     const ids = asList(x.threads);
-    if (ids.length > 2) E(w, `壹週最多兩條人物線（現在 ${ids.length} 條）`);
+    const cap = Number.isInteger(x.threadsMax) && x.threadsMax > 2 && typeof x.threadsWhy === "string" && x.threadsWhy.trim() ? x.threadsMax : 2; // 例外：壓縮的週可以寫 threadsMax 和 threadsWhy（11-28 卷二提前兩週，決定 0166）
+    if (ids.length > cap) E(w, `壹週最多 ${cap} 條人物線（現在 ${ids.length} 條${cap === 2 ? "；壓縮的週要放寬就寫 threadsMax 和 threadsWhy" : ""}）`);
     ids.forEach(id => { if (!tids.has(id)) E(w, `threads「${id}」不在 extend.threads 裡`); });
     (byWeek[k] || []).forEach(id => { if (!ids.includes(id)) E(w, `extend.threads 的「${id}」寫了這週，卻沒列在這週的 threads`); });
     if (typeof x.conclusion !== "string" || !x.conclusion.trim()) E(w, "conclusion 要有字（這週要讓玩家推出來的結論）");
