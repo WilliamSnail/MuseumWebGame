@@ -7,6 +7,7 @@ import { ART } from "./art.js";
 import { FX } from "../fx/fx.js";
 import { FIT_KEY, GEN2_KEY, IMG_KEY, SAVE_KEY, SAVE_KEY_ADV, asList, ensureDay, gameDayNo, isFree, migrateGen2, migrateSave, pad, renameVal, todayStr, visitorArrive } from "../../../shared/core/logic.js";
 import { visitorEvery } from "../../../shared/core/systems.js";
+import { tabQuiet } from "../../../shared/game/quiet.js";
 import { nowMs } from "../../../shared/core/logic.js";
 import { NET } from "./net_firebase.js";
 import { $, planPortrait, FIT, P, PANELS, SAVE, UI, applyHolidayLook, applySettings, buildNav, clearHeld, go, h, motionOff, note, persist, noteRetasked, quirkTick, readJSON, rerender, setImg, setSave, snd, toggleMenu, trackGaze, updateDayClock, updateStatus } from "./ui_core.js";
@@ -80,7 +81,8 @@ export function tick() {
 export function boot() {
   // 測試分頁不出聲（翊文 11-08：「測試的音樂可以都先關掉嗎」）：開發時網址帶 ?user=（多人測試）或 #畫面（開發用的畫面）就靜音、不放布幕。
   // 不改存檔裡的聲音設定。要測聲音：網址加 &sound（例如 ?user=小明&sound）。
-  UI.testMute = !!import.meta.env.DEV && (/[?&]user=/.test(location.search) || location.hash.length > 1) && !/[?&]sound/.test(location.search);
+  UI.testMute = !!import.meta.env.DEV && (/[?&]user=/.test(location.search) || location.hash.length > 1) && !/[?&#]sound\b/.test(location.search + location.hash);
+  UI.quiet = tabQuiet({ dev: !!import.meta.env.DEV, webdriver: !!navigator.webdriver, search: location.search, hash: location.hash }); // 開發版、自動化瀏覽器壹律不出聲（11-28，shared/game/quiet.js）；上面那行的 \b 以前存成了退格字元，&sound 沒生效，11-28 修
   // 第 3 版第一次打開：把進階版的存檔搬過來（進階版的檔案照樣能玩，存檔互不影響）
   const v3 = readJSON(SAVE_KEY);
   setSave(migrateSave(v3 || readJSON(SAVE_KEY_ADV)));

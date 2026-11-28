@@ -764,7 +764,7 @@ export function applyBodyState() {
 }
 export function applySettings() {
   const s = SAVE.settings;
-  FX.settings.muted = !!s.muted || !!UI.testMute; // UI.testMute：開發時的測試分頁不出聲（boot.js）
+  FX.settings.muted = !!s.muted || !!UI.testMute || !!UI.quiet; // UI.testMute：開發時的測試分頁；UI.quiet：開發版、自動化瀏覽器壹律不出聲（boot.js、shared/game/quiet.js）
   const vol = s.vol || {};
   if (s.vol && !s.vol.touched && s.vol.amb === 70) s.vol.amb = 100; // 以前的預設是 70，沒拉過就跟著改成 100
   [["sfx", 100], ["amb", 100], ["heart", 100]].forEach(([k, d]) => { if (FX.sound.setVolume) FX.sound.setVolume(k, (vol[k] == null ? d : vol[k]) / 100); });

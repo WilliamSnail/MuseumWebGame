@@ -351,6 +351,16 @@ function checkLayers(files, read = defaultRead) {
   return over != null && over > top ? [] : [`web/src/css：.mini-layer.sp-top 的 z-index 是 ${top}，要有 .mini-layer.sp-top ~ .nb-layer 的規則（z-index 要比 ${top} 大），不然從小框裡開的視窗會被蓋在後面`];
 }
 
+// 10. 程式和文字檔不能有看不見的控制字元（11-28：AI 改檔時反斜線加 b 被吃成退格字元，&sound 和遮 email 的 regex 壞了好幾天都沒人發現）
+const CTRL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+function checkCtrl(files, read = defaultRead) {
+  const bad = [];
+  for (const f of files) {
+    if (!/\.(c|m)?js$|\.json$|\.css$|\.md$|\.html$/.test(f) || /^(node_modules|dist)\//.test(f)) continue;
+    read(f).split("\n").forEach((l, i) => { const m = CTRL_RE.exec(l); if (m) bad.push(`${f}:${i + 1}：有看不見的控制字元（字碼 ${m[0].charCodeAt(0)}）。AI 用指令改檔時反斜線可能被吃掉：改用 String.fromCharCode(92) 拼反斜線`); });
+  }
+  return bad;
+}
 // ---------- 主程式 ----------
 const CHECKS = {
   1: { name: "shared/ 是純函式", run: (files, o) => checkPure(files, o.read) },
@@ -361,6 +371,7 @@ const CHECKS = {
   6: { name: "錢的漲跌顏色（賺漲紅、賠跌綠）用共用變數", run: (files, o) => checkMoney(files, o.read) },
   7: { name: "開外部程式用 tools/dev/child.cjs（不跳視窗）", run: (files, o) => checkChild(files, o.read) },
   9: { name: "小框上面開的視窗要蓋得住（nb-layer 比 sp-top 高）", run: (files, o) => checkLayers(files, o.read) },
+  10: { name: "沒有看不見的控制字元（退格之類）", run: (files, o) => checkCtrl(files, o.read) },
   8: { name: "開發用的程式（qa_hooks、debug_boot、假伺服器）不進 dist/", run: (files, o) => checkDevOnly(files, o.read, o.read === defaultRead ? distFiles() : []) },
 };
 function runAll(opts = {}) {
@@ -379,4 +390,4 @@ if (require.main === module) {
   if (bad.length) { bad.forEach(b => console.log("✗ " + b)); console.log(`${bad.length} 個問題`); process.exit(1); }
   console.log("程式的規矩：都對");
 }
-module.exports = { checkLayers, checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, dropMoved, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };
+module.exports = { checkCtrl, checkLayers, checkDevOnly, checkChild, checkPure, checkInfinite, checkReplace, fixReplace, checkYi, checkNames, checkMoney, moneyFindings, MONEY_ALLOW, parseDiff, dropMoved, infiniteNames, yiHits, runAll, PURE_ALLOW, INFINITE_ALLOW, RENAMES, YI_RE };

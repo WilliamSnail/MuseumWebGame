@@ -347,7 +347,7 @@ async function playerInvest(db, name) {
 // 只讀：前端錯誤回報（見檔頭 client-errors）
 async function clientErrors(db) {
   const snap = await db.collection("clientErrors").orderBy("lastAt", "desc").limit(300).get();
-  const mask = x => String(x == null ? "" : x).replace(/[w.+-]+@[w-]+(?:.[w-]+)+/g, "（email）").replace(/[A-Za-z0-9]{28}/g, "（uid）");
+  const mask = x => String(x == null ? "" : x).replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "（email）").replace(/\b[A-Za-z0-9]{28}\b/g, "（uid）");
   const g = new Map();
   for (const d of snap.docs) { const e = d.data(), k = (e.msg || "") + "|" + (e.src || ""); const r = g.get(k) || { msg: e.msg, src: e.src, n: 0, last: 0, vers: new Set(), screens: new Set(), sizes: new Set(), stack: e.stack }; r.n += e.n || 1; const t = e.lastAt && e.lastAt.toMillis ? e.lastAt.toMillis() : 0; if (t > r.last) { r.last = t; r.stack = e.stack; } if (e.ver) r.vers.add(e.ver); if (e.screen) r.screens.add(e.screen); if (e.vw) r.sizes.add(e.vw + "x" + e.vh); g.set(k, r); }
   console.log(`前端錯誤：最近 7 天 ${snap.size} 筆記錄、${g.size} 種（最新在上）`);
