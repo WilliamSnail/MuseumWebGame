@@ -59,4 +59,6 @@ export const OUT_STOCKS = [
   // 11-20 美股再加 2 支原物料的 2 倍版（決定 0138）：mult ＝ 它的漲跌是金價、油價的幾倍，景氣市場算平均時漲跌 ÷ mult（當成金價、油價本身）
   { id: "vaultbrick", kind: "stock", market: "us", cat: "resource", ext: true, mult: 2, name: "金庫磚", intro: "壹塊塊黃澄澄的金磚，專門跟著金價走，而且壹次走兩倍：金價漲壹步它跳兩步，跌也是。" },
   { id: "blackbarrel", kind: "stock", market: "us", cat: "resource", ext: true, mult: 2, name: "黑油桶", intro: "壹桶桶黑色的原油，專門跟著油價走，而且壹次走兩倍：油價晃壹下它晃兩下，賺賠都放大。" },
+  // 11-28 翊文：「美股可以加入 GOOGL」
+  { id: "searchshop", kind: "stock", market: "us", cat: "tech", ext: true, name: "彩字搜尋鋪", intro: "招牌上的字五顏六色，什麼都能問它；問的人越多，它知道得越多，也越值錢。" },
 ];
