@@ -27,7 +27,7 @@ export const PASS_SOURCES = [
   { id: "recipes", name: "隱藏配方", from: { file: "shared/core/config.js", list: "RECIPES" }, save: ["P.recipes"], pass: { src: "pass", key: "pepe.recipes" }, use: "none", pub: [] },
   { id: "badges", name: "圖鑑徽章", from: { file: "shared/core/config.js", list: "BADGES" }, save: ["P.badges"], pass: { src: "pass", key: "ach.list" }, use: "none", pub: [] },
   { id: "books", name: "圖書館的書（章節）", from: null, save: ["P.chaptersRead", "P.seen"], pass: { src: "pass", key: "books.origin" }, use: "goto", pub: [] },
-  { id: "understood", name: "看懂的事", from: { file: "shared/core/systems_text.js", list: "UNDERSTAND_TEXT" }, save: ["P.understood", "P.clues"], pass: [{ src: "pass", key: "books.understood" }, { src: "pass", key: "books.understoodLayers" }], use: "none", pub: [] },
+  { id: "understood", name: "看懂的事", from: { file: "shared/core/systems_text.js", list: "UNDERSTAND_TEXT" }, save: ["P.understood", "P.clues", "P.keeps"], pass: [{ src: "pass", key: "books.understood" }, { src: "pass", key: "books.understoodLayers" }], use: "none", pub: [] },
   // ---- 展廳 ----
   { id: "hall", name: "展廳（展台上的佩佩、評分、主題）", from: null, save: ["P.hall", "P.hallVisitors", "P.visitorLog", "P.themesSeen", "P.themeShow", "P.giftsIn", "P.visit", "P.fullRows"], pass: { src: "pass", key: "hall" }, use: "goto", pub: ["slots", "art", "score", "artBonus", "theme", "posters", "report", "pass"] },
   { id: "souvenirs", name: "掛在展廳的紀念品", from: null, save: ["W.hung", "W.props"], pass: { src: "pass", key: "souvenirs" }, use: "hang", pub: ["souvenirs"] },

@@ -75,7 +75,7 @@ export function newProfile(mode) {
     sanity: NUM.startSanity, myth: 0, insp: free ? 0 : NUM.startInsp,
     unlocked, unlockCount: 0,
     pepes: {}, failed: {}, pillows: {}, serial: 0, avatar: "", // avatar：館友證的頭像，壹隻收藏過的佩佩的 key；空字串＝不用頭像（11-13）
-    seen: {}, chaptersRead: {}, mythFrom: {}, understood: {}, clues: {},
+    seen: {}, chaptersRead: {}, mythFrom: {}, understood: {}, clues: {}, keeps: {},
     day: null, hugDays: [], badges: {}, done: 0, comments: [], // hugDays：11-09 起不用了（連續抱抱枕治怪癖拿掉，決定 0027）；舊存檔有，先留著
     daily: null, quirks: [], bout: null, swapNext: false, dark: false, // quirks：{ type, cat, opt, since, until, task }，見 gainQuirk
     hall: [null, null, null, null, null, null], hallVisitors: 0, visitorLog: [], themesSeen: {},

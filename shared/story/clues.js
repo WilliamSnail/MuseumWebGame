@@ -7,6 +7,7 @@
 //  拿到線索：悄悄記，沒有任何提示。集齊壹組：回傳 understood 事件（畫面跳「你看懂了」）。不扣理智、不發作
 //  線索從哪裡算「拿到」：書讀完、房間找到、今日特展的畫看過（都是 P.story 已經有的紀錄，所以舊資料也補得上）
 //  舊週拿不到的（沒找到的房間、沒看的畫）不卡：need 只算「已經拿到」或「還拿得到」的
+//  劇情遺物（11-28，翊文「要所有接下來的劇情都要往上」）：understand 可以寫 keep: { name, text, on }，讀懂那壹刻擲理智失敗（on 不寫或 "fail"）或壹定（on: "always"）就放進 P.keeps[讀懂 id] ＝ { day, name, text }。只是拿在身上看的，不影響數值
 // ================================================================
 import { NUM } from "../core/config.js";
 import { addDays, applySan, isFree, sanCheck } from "../core/logic_base.js";
@@ -16,6 +17,8 @@ import { storyState } from "./state.js";
 const clObj = v => !!v && typeof v === "object" && !Array.isArray(v);
 const clList = v => Array.isArray(v) ? v : [];
 const clStr = v => typeof v === "string" ? v : "";
+export const KEEP_ON = ["fail", "always"];
+const clKeep = k => (clObj(k) && clStr(k.name) && clStr(k.text) ? { name: k.name, text: k.text, on: KEEP_ON.includes(k.on) ? k.on : "fail" } : null);
 export const CLUE_ID_RE = /^c-[a-z0-9]+(-[a-z0-9]+)*$/;
 export const UNDERSTAND_LAYERS = ["物", "人", "規矩", "你"]; // 《看懂的事》的分類（11-22）：固定的條目在 systems_text.js、每日檔的 understand 都要寫 layer
 export const UNDERSTAND_ID_RE = /^u-[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -40,7 +43,7 @@ export function clueCatalog(lib, today) {
       clList(d.show && d.show.works).forEach(w => { if (clObj(w) && clStr(w.clue) && clStr(w.id)) cat.sources.push(Object.assign({ clue: w.clue, kind: "work", sid: p + w.id, title: clStr(w.title) }, at)); });
       clList(d.understand).forEach(u => {
         if (!clObj(u) || !clStr(u.id) || !clStr(u.text) || !clList(u.need).length) return;
-        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint), layer: clStr(u.layer), who: clStr(u.who), where: clStr(u.where), san: clStr(u.san), successAside: clStr(u.successAside), failAside: clStr(u.failAside) }, at));
+        cat.defs.push(Object.assign({ id: u.id, need: clList(u.need).filter(c => clStr(c)), from: clStr(u.from), text: u.text, hint: clStr(u.hint), layer: clStr(u.layer), who: clStr(u.who), where: clStr(u.where), san: clStr(u.san), successAside: clStr(u.successAside), failAside: clStr(u.failAside), keep: clKeep(u.keep) }, at));
       });
     }
   });
@@ -146,7 +149,9 @@ export function clueSync(P, lib, today) {
         const sc = sanCheck(P, def.san, "understand:" + def.id), loss = sc.success ? 0 : Math.min(sc.loss, NUM.story.understandSanMax), ev = applySan(P, loss, "understand:" + def.id);
         san = { success: sc.success, loss: ev.loss, aside: (sc.success ? def.successAside : def.failAside) || "", zero: ev.zero, roll: sc.roll.total };
       }
-      out.push({ type: "understood", id: def.id, from: def.from, text: def.text, hint: def.hint, insp, n: cat.defs.filter(x => P.understood[x.id]).length, san });
+      let keep = null; // 劇情遺物：失敗才拿（或 on: always 壹定拿）；同壹件不重複放
+      if (def.keep && (def.keep.on === "always" || (san && !san.success))) { if (!clObj(P.keeps)) P.keeps = {}; if (!P.keeps[def.id]) P.keeps[def.id] = { day: today, name: def.keep.name, text: def.keep.text }; keep = { name: def.keep.name, text: def.keep.text }; }
+      out.push({ type: "understood", id: def.id, from: def.from, text: def.text, hint: def.hint, insp, n: cat.defs.filter(x => P.understood[x.id]).length, san, keep });
     });
     return out;
   } catch (e) { return []; }
@@ -154,9 +159,10 @@ export function clueSync(P, lib, today) {
 
 // 《看懂的事》要畫的：done ＝已經看懂的（照日期排）、near ＝拿到壹部分、還差幾條（不給 text）。壹條都沒拿到的不列（不破梗）
 export function understandView(P, lib, today) {
-  const out = { done: [], near: [] };
+  const out = { done: [], near: [], keeps: [] };
   if (!P || typeof P !== "object" || typeof today !== "string") return out;
   try {
+    if (clObj(P.keeps)) out.keeps = Object.keys(P.keeps).map(id => Object.assign({ id }, P.keeps[id])).filter(k => clStr(k.name) && clStr(k.text)).sort((a, b) => (clStr(a.day) < clStr(b.day) ? -1 : 1)); // 口袋裡的（劇情遺物）
     const cat = clueCatalog(lib, today), reach = clReachSet(cat, today);
     cat.defs.forEach(def => {
       if (clObj(P.understood) && P.understood[def.id]) { out.done.push({ id: def.id, from: def.from, text: def.text, date: P.understood[def.id], layer: def.layer, who: def.who, where: def.where }); return; }

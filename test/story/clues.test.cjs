@@ -53,7 +53,7 @@ T("集齊才跳、只跳一次、靈感只給一次、不扣理智、不發作",
 
 T("提示：壹條都沒拿到不顯示；拿到部分才顯示還差幾條和 hint，不含 text", G => {
   const L = lib(), P = player(G);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(G.understandView(P, L, TODAY))), { done: [], near: [] });
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(G.understandView(P, L, TODAY))), { done: [], near: [], keeps: [] });
   read(G, P, "1a");
   G.clueSync(P, L, TODAY);
   const v = G.understandView(P, L, TODAY);
@@ -189,5 +189,16 @@ T("每日檔的讀懂可以帶理智檢定：成功不扣、失敗最多 underst
   assert.strictEqual(G.clueSync(P2, L2, TODAY)[0].san, null, "沒寫 san 的條目不擲");
 });
 
+T("劇情遺物（11-28）：讀懂時擲理智失敗才放進 P.keeps、事件帶 keep、《看懂的事》列在口袋裡；成功不放；on: always 壹定放；沒寫 keep 不放", G => {
+  const mk = on => { const L = lib(), u = L.weeks["2026-W47"].days[2].understand[0]; u.san = "0/1D4"; u.keep = Object.assign({ name: "摺得很小的紙", text: "上面什麼都沒寫。" }, on ? { on } : {}); return L; };
+  const run = (L, roll) => { G.setRng(() => roll); const P = player(G); read(G, P, "1a"); found(G, P); viewed(G, P); read(G, P, "2a"); return { P, ev: G.clueSync(P, L, TODAY) }; };
+  const bad = run(mk(), 0.99); assert.strictEqual(bad.ev[0].san.success, false); assert.deepStrictEqual(JSON.parse(JSON.stringify(bad.ev[0].keep)), { name: "摺得很小的紙", text: "上面什麼都沒寫。" });
+  const id = bad.ev[0].id; assert.strictEqual(bad.P.keeps[id].name, "摺得很小的紙"); assert.strictEqual(bad.P.keeps[id].day, TODAY);
+  const v = G.understandView(bad.P, mk(), TODAY); assert.strictEqual(v.keeps.length, 1); assert.strictEqual(v.keeps[0].text, "上面什麼都沒寫。");
+  const good = run(mk(), 0.3); assert.strictEqual(good.ev[0].san.success, true); assert.strictEqual(good.ev[0].keep, null); assert.ok(!good.P.keeps || !Object.keys(good.P.keeps).length, "成功不放");
+  const al = run(mk("always"), 0.3); assert.ok(al.ev[0].keep && al.P.keeps[al.ev[0].id], "always 成功也放");
+  const none = run(lib(), 0.99); assert.strictEqual(none.ev[0].keep, null);
+  assert.strictEqual(G.understandView(none.P, lib(), TODAY).keeps.length, 0);
+});
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

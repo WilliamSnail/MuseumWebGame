@@ -1289,7 +1289,7 @@ export function understoodCard(e) {
   snd("eerie", 2); sndFile("suspense-short", 0.4); // 「你看懂了」：越來越緊張的壹段（11-16 翊文，Pixabay「Suspense Tension」）
   return quirkLayer("你看懂了", e.from ? `來自：${e.from}` : "", [
     h("p", { class: "uk-text" }, ptNode(e.text), e.san && e.san.aside ? h("span", { class: "uk-aside" }, " ", ptNode(e.san.aside), e.san.loss ? `（理智 −${e.san.loss}）` : "") : null),
-    h("p", { class: "uk-note" }, `這件事記進了圖書館書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}。`),
+    e.keep ? h("p", { class: "uk-keep" }, `你身上多了：${e.keep.name}。`, h("span", { class: "uk-aside" }, " ", ptNode(e.keep.text))) : null, h("p", { class: "uk-note" }, `這件事記進了圖書館書架上的《看懂的事》${e.insp ? `，+${e.insp} 靈感` : ""}${e.keep ? `；${e.keep.name}放進了口袋（《看懂的事》最下面看得到）` : ""}。`),
   ], "uk-modal", "我看懂了");
 }
 export function understandFlow(src) {
