@@ -798,3 +798,14 @@ export const NPC_BOND_TEXT = {
   what: "你跟這位旅客熟不熟。越熟，邀請他壹起玩的時候越容易答應。",
   how: ["邀請被答應：+{invite}", "同桌打牌，跟他壹起打滿 {hands} 手：+{table}", "壹起走完地下：+{cellar}", "每個來源壹天最多算壹次"],
 };
+
+// 全館投票（shared/story/vote.js）。草稿：選項和館史的字由延伸劇情世界改。
+export const VOTE_TEXT = {
+  options: { write: "寫下名字", blank: "不寫", return: "交還那支筆" },
+  history: { title: "全館的決定", text: "投票結束。全館選了「{choice}」。" },
+  no: {
+    before: "還沒開始投票。", closed: "投票已經截止。", badChoice: "沒有這個選項。",
+    noName: "空欄裡要寫壹個名字。", longName: "名字最多 {n} 個字。", badName: "這個名字寫不上去，換壹個。",
+    noChange: "只能改 {n} 次票，已經改過了。",
+  },
+};
