@@ -53,6 +53,7 @@ import "../css/map.css"; // 館外地圖（11-16，ui_map.js）
 import "../css/npccard.css"; // 旅客卡（11-16，ui_npc_card.js）
 import "../css/hallnow.css"; // 展廳現在、評價（11-14，ui_hallnow.js）
 import "../css/tabx.css"; // 頁籤牌子六種材質（11-14，docs/素材/頁籤牌子素材.md）
+import "../css/vote.css"; // 全館投票（11-28，ui_vote.js）：要放在 lobby2、today、pass、board 後面
 import "../css/landscape.css"; // 手機橫拿的版面和直拿的提示（決定 0043）。要蓋掉前面所有的樣式，所以放在最後
 
 import "./art.js";
@@ -74,6 +75,7 @@ import "../rooms/ui_fight.js"; // 打怪物的畫面（地下室改版，決定 
 import "../rooms/ui_coop.js"; // 合作地下收藏庫（多人版 M4，11-09）：規則在 shared/coop/core.js，伺服器在 functions/coop/coop.js
 import "../panels/ui_signin.js"; // 每日簽到、簽到日曆、節日特展（11-09，決定 0030）
 import "../panels/ui_story.js"; // 每週劇情（11-09）：內容在 content/weeks/，規則在 shared/story/core.js
+import "../panels/ui_vote.js"; // 全館投票（決定 0166）：伺服器在 functions/game/vote.js；要放在 ui_story 後面、大廳前面
 import "../panels/ui_admin.js"; // 管理員介面（只看不改，決定 0033）：資料從 functions/game/admin.js 來
 import "../panels/ui_shop.js"; // 兌換所、委託櫃台的上課、地下的試煉房間（11-09，決定 0032）：規則在 shared/core/shop.js
 import "../panels/ui_themeshow.js"; // 主題展辦完（11-09，決定 0035）：規則在 shared/story/themeshow.js

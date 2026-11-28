@@ -43,13 +43,6 @@
  },
  "gaps": [
   {
-   "row": "vote",
-   "kind": "none",
-   "id": "V1",
-   "reason": "投票寫下的名字只有本人看得到（決定 0166、規劃柒之二）：資料在 storyVote 的 mine.name，館友證要接上（美術，投票畫面一起）",
-   "since": "2026-11-28"
-  },
-  {
    "row": "trials",
    "kind": "none",
    "id": "D6",

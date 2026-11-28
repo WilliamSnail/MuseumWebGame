@@ -31,6 +31,7 @@ const STEPS = [
   ["趣味節日（固定日期、第幾個星期幾、閏日、壹天好幾個、大節日不變、不發獎勵、文字乾淨、Discord 冷知識，決定 0044）", ["test/story/funday.test.cjs"]],
   ["主題展辦完（連續 3 天、三級、限定配件、策展手記、每週特展，決定 0035）", ["test/story/themeshow.test.cjs"]],
   ["全館投票（時間窗、一人一票、改票一次、名字、平手、比例、統計守恆、規則擋讀，決定 0166）", ["test/story/vote.test.cjs"]],
+  ["全館投票的畫面判斷（入口時間、畫哪壹種、名字和送出鈕、備用句子、比例、館友證、接線，決定 0166）", ["test/story/vote_screen.test.cjs"]],
   ["合作地下收藏庫（投票、強度、技能、理智、受傷、幽靈）", ["test/coop/coop.test.cjs"]],
   ["合作地下的流程（投票時間、掛機、離隊、每天幾趟）", ["test/coop/coop_flow.test.cjs"]],
   ["合作地下好玩的機制（線索、幻覺、變形、幽靈、證據、留守、搬東西、報告、痕跡）", ["test/coop/coop_fun.test.cjs"]],

@@ -71,6 +71,8 @@ export function todayItems() {
   if (here) add("regular", "commission", "老主顧在委託櫃台", `${here.name}：第 ${here.step + 1}／${here.of} 段`, true, "去櫃台", () => navTo("commission"), "老主顧");
   const mails = mailCount();
   if (mails) add("mail", "mail", "信箱有東西沒領", `${mails} 封`, true, "打開信箱", () => PANELS.mail(), `信箱 ${mails}`);
+  const vote = ADDONS.voteItem ? ADDONS.voteItem() : null; // 全館投票（ui_vote.js）：開投前壹天起才有。任務板和新大廳另外畫成壹張卡，這裡的給舊大廳的小牌子和導覽列的數字
+  if (vote) out.push(vote);
   const c = casNow();
   if (c && PANELS.casino) {
     add("packs", "gift", "Hamachi 賭場的大禮包", c.packs ? `今天還能開 ${c.packs} 包` : "今天的開完了", c.packs > 0, "去開", () => PANELS.casino({ tab: "packs" }), `大禮包 ${c.packs}`);
@@ -138,11 +140,12 @@ function miniOf(x, m) {
 }
 function bodyOf(m, draw) {
   const story = storyTodayNodes(m, draw), skip = x => story && /^(yuga-|daily-|weekly$)/.test(x.key); // 每日、每週任務改畫成任務卡（跟每週劇情同壹份零件），清單裡不重複列
-  const all = todayItems().filter(x => !skip(x));
-  if (!all.length && !story) return h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有任務，隨便逛吧。" : "今天沒有要做的事。");
+  const all = todayItems().filter(x => x.key !== "vote" && !skip(x)); // 全館投票畫成最上面那張卡（下面的 vote），清單裡不重複列
+  const vote = ADDONS.voteSlot ? ADDONS.voteSlot("board") : null;
+  if (!all.length && !story) return h("div", { class: "td-body" }, vote, h("p", { class: "nb-empty" }, isFree(P) ? "自由模式沒有任務，隨便逛吧。" : "今天沒有要做的事。"));
   const todo = all.filter(x => x.todo), done = all.filter(x => !x.todo);
   const clerk = ADDONS.giverStrip ? ADDONS.giverStrip(["clerk"]) : null; // 店員在任務板（簽到、招領這類他交代的；11-21 翊文：「放在任務欄」）
-  return h("div", { class: "td-body" }, all.length ? null : clerk,
+  return h("div", { class: "td-body" }, vote, all.length ? null : clerk,
     all.length ? h("section", { class: "td-others" }, h("h3", null, todo.length ? "其他要做的事" : "其他的事都做完了"), clerk,
       todo.length ? h("ul", { class: "td-list" }, todo.map(x => rowOf(x, m))) : null,
       done.length ? h("div", { class: "td-minis" }, done.map(x => miniOf(x, m))) : null) : null,

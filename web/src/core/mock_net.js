@@ -8,6 +8,8 @@
 // ================================================================
 import { NUM } from "../../../shared/core/config.js";
 import { newParty } from "../../../shared/social/party.js";
+import { voteCast, voteHistory, votePhase, voteSettle, voteTimes, voteView } from "../../../shared/story/vote.js";
+import { NetError } from "./net_error.js";
 import { NET } from "./net_firebase.js";
 import { UI, setChips } from "./ui_core.js";
 import FIX from "./mock/fixtures.json";
@@ -75,9 +77,51 @@ function giverAnswer(d) {
   if (["heard", "ask", "askDone", "visit"].includes(d.op)) return { ok: true, rev: 1 };
   return null;
 }
+// 全館投票（storyVote，決定 0166）的假伺服器：規則跑真的（shared/story/vote.js），資料只在記憶體，投了、改了畫面會跟著變。
+// 網址 ?mock&vote=before|open|voted|locked|counting|result|missed|nobody：假裝現在是那個時候（NET.voteNow）；不帶就是真的現在。
+//   &votewhy=before|closed|badChoice|noName|longName|badName|noChange：下壹次投票被這個理由擋下來（不附 reason，畫面用備用句子）；net：投票時斷線一次；netpeek：看的時候壹直斷線。
+// 或在 console 叫 __mock.set({ vote: "counting" })、__mock.set({ votewhy: "net" })，再打開投票畫面。館史的字是假的佔位，不是結局
+const VOTE_FAKE_NAME = "測試的名字";
+let VOTE = null;
+function voteParam(k) { return OV[k] != null ? OV[k] : new URLSearchParams(location.search).get(k) || ""; }
+function voteBox() {
+  const mode = voteParam("vote");
+  if (VOTE && VOTE.mode === mode) return VOTE;
+  const t = voteTimes(), H = 3600000;
+  const at = { before: t.opensAt - 18 * H, open: t.opensAt + 26 * H, voted: t.opensAt + 26 * H, locked: t.opensAt + 50 * H, counting: t.closesAt + 2 * H, result: t.resultAt + 3 * H, missed: t.resultAt + 3 * H, nobody: t.resultAt + 3 * H }[mode];
+  const mine = ["voted", "locked", "counting", "result"].includes(mode) ? { choice: "write", name: VOTE_FAKE_NAME, at: t.opensAt + H, changes: mode === "locked" ? 1 : 0, late: false } : null;
+  const counts = mode === "nobody" ? { write: 0, blank: 0, return: 0 } : { write: 7, blank: 9, return: 4 };
+  VOTE = { mode, skew: at ? at - Date.now() : 0, mine, state: { counts: Object.assign({}, counts), late: {}, result: null }, used: "" };
+  return VOTE;
+}
+const voteNow = () => Date.now() + voteBox().skew;
+function voteAnswer(d) {
+  const B = voteBox(), why = voteParam("votewhy"), drop = () => Promise.reject(new NetError(0, "offline", "（假伺服器）斷線"));
+  if (why === "netpeek") return drop();
+  let refused = null;
+  if (d.op === "vote") {
+    if (why === "net" && B.used !== "net") { B.used = "net"; return drop(); }
+    if (why && why !== "net" && B.used !== why) {
+      B.used = why; refused = { why };
+      const t = voteTimes();
+      if (why === "closed") B.skew = t.closesAt + 60000 - Date.now(); // 讓畫面真的走到那個狀態
+      if (why === "before") B.skew = t.opensAt - 3600000 - Date.now();
+      if (why === "noChange" && B.mine) B.mine.changes = 1;
+    } else {
+      const c = voteCast(B.state, B.mine, { choice: d.choice, name: d.name }, voteNow());
+      if (!c.ok) refused = { why: c.why, reason: c.reason };
+      else if (c.changed) { B.state = c.state; B.mine = c.mine; }
+    }
+  }
+  const now = voteNow(), s = voteSettle(B.state, now);
+  B.state = s.state;
+  const history = B.state.result && votePhase(now) === "result" ? [Object.assign(voteHistory(B.state.result), { title: "（館史第壹則・測試標題）", text: "（館史第壹則・測試字）\n（第二行也是測試字：看換行和長一點的句子放不放得下，這裡不是真的內容。）" })] : []; // 壹檢查略過
+  return Promise.resolve(Object.assign({ ok: !refused }, refused, voteView(B.state, B.mine, now, history)));
+}
 export function mockCall(name, d = {}) {
   const key = mockKey(name, d);
   let r;
+  if (name === "storyVote") return wait(250).then(() => voteAnswer(d));
   if (name === "casino" && d.act === "giver" && !(key in FIX.responses) && giverAnswer(d)) return wait(30).then(() => giverAnswer(d));
   if (name === "casinoHoldem" && holdemMode()) r = holdemAnswer(holdemMode(), d);
   else if ((name === "casinoTable" || name === "casinoHoldem") && d.act !== "open") r = tableAnswer(name, d);
@@ -106,6 +150,7 @@ export function installMock(opts = {}) {
   });
   UI.net = true; UI.localPlay = false; // debug_boot 的 #畫面 設了 localPlay（不連伺服器）：銀行看它決定要不要跟伺服器拿資料，假的也要拿
   setChips(OV.chips != null ? OV.chips : ((FIX.responses["casino:peek"] || {}).chips || 0));
-  window.__mock = { on: true, set(o) { Object.assign(OV, o || {}); if (OV.chips != null) setChips(OV.chips); }, calls: () => Object.keys(FIX.responses) };
+  if (voteParam("vote")) NET.voteNow = voteNow; // 投票畫面看假的時間（ui_vote.js）
+  window.__mock = { on: true, set(o) { Object.assign(OV, o || {}); if (OV.chips != null) setChips(OV.chips); if (o && ("vote" in o || "votewhy" in o)) { VOTE = null; if (voteParam("vote")) NET.voteNow = voteNow; else delete NET.voteNow; } }, calls: () => Object.keys(FIX.responses) };
   return window.__mock;
 }

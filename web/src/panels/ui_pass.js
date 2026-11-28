@@ -12,6 +12,8 @@ import { casNum } from "../../../shared/casino/core.js";
 import { FAILED, ROLLED, describePepe, describePillow, fromKey, isFree, num, parsePillowKey, todayStr } from "../../../shared/core/logic.js";
 import { PASS_TABS, PASS_TIPS, avatarChoices, passAvatar, passView, setPassAvatar } from "../../../shared/social/pass.js";
 import { signStreak, signinState } from "../../../shared/social/signin.js";
+import { VOTE_SCREEN_TEXT } from "../../../shared/story/vote_text.js";
+import { voteUiSay } from "../../../shared/story/vote_screen.js";
 import { NET } from "../core/net_firebase.js";
 import { ART } from "../core/art.js";
 import { ADDONS, P, PANELS, SAVE, UI, btn, cicon, frogHTML, gearArt, go, h, icon, itemTitle, navTo, persist, rdot, rerender, snd, titleTag } from "../core/ui_core.js";
@@ -81,6 +83,15 @@ export function openPass(o = {}) {
     casBusy = true;
     NET.call("casino", { act: "pass" }).then(r => { cas = r && r.ok ? r : { failed: true }; }).catch(() => { cas = { failed: true }; }).then(() => { casBusy = false; if (m.layer.isConnected) draw(); });
   };
+  // 全館投票：自己寫在帳上的名字、投了什麼、館史（只有自己的館友證有；資料是 ui_vote.js 跟伺服器問的，開投前壹天起才有）
+  const voteSec = v => {
+    const x = v.vote, T = VOTE_SCREEN_TEXT.pass;
+    if (!x || !PANELS.vote) return null;
+    return sec(T.title,
+      x.name ? [h("p", { class: "sp-note" }, T.name), h("p", { class: "vote-pass-name" }, x.name)]
+        : x.choice ? h("p", { class: "vote-pass-chose" }, voteUiSay(T.chose, { choice: x.choice })) : null,
+      h("div", { class: "sp-go" }, x.history ? goBtn(T.history, () => PANELS.vote({ tab: "history" }), "book") : null, goBtn(T.open, () => PANELS.vote(), "scroll")));
+  };
   // 每個區塊壹行摘要＋「前往」。tab：點了換到冊子的哪壹頁
   const tile = (id, title, big, line, tabId) => {
     const el = h("button", { type: "button", class: "ps-tile", onClick: () => { tab = tabId; draw(); snd("flip"); } },
@@ -93,6 +104,7 @@ export function openPass(o = {}) {
     loadCas(v);
     const x = v.visitor;
     return [
+      voteSec(v),
       h("div", { class: "ps-tiles" },
         tile("pepe", "佩佩與書", v.free ? "自由模式" : `收藏 ${num(v.pepe.have)}／${num(v.pepe.total)}`, `圖書館的書 ${v.books.origin.text.replace(/^(✓ )?讀過 /, "")}・徽章 ${v.ach.have}／${v.ach.total}`, "pepe"),
         tile("casino", "賭場", casOff(v) ? (v.free ? "自由模式沒有" : "要登入") : cas && cas.ok ? `籌碼 ${casNum(cas.chips)}` : "…", casOff(v) ? (v.free ? "" : "賭場在伺服器上，登入才看得到") : casLine(), "casino"),
@@ -334,7 +346,8 @@ export function openPass(o = {}) {
   };
   const PANES = { card: overviewPane, pepe: v => [...pepePane(v), badgesSec(v), ...booksPane(v)], hall: hallPane, casino: casinoPane, visitor: visitorPane, deco: decoPane };
   function draw() {
-    const v = passView(P, { today: todayStr(), signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined, streak: SAVE && !isFree(P) ? signStreak(SAVE, todayStr()) : undefined });
+    const vote = ADDONS.votePass ? ADDONS.votePass(() => { if (m.layer.isConnected) draw(); }) : null; // 還沒問到就先不畫，問到了再重畫
+    const v = passView(P, { today: todayStr(), vote, signins: SAVE && !isFree(P) ? signinState(SAVE).count : undefined, streak: SAVE && !isFree(P) ? signStreak(SAVE, todayStr()) : undefined });
     const tabs = h("div", { class: "nb-tabs", role: "tablist", "aria-label": "典藏冊" }, PASS_TABS.map(([id, name]) => {
       const b = h("button", { type: "button", role: "tab", "aria-selected": String(id === tab), class: "nb-tab" + (id === tab ? " on" : "") }, name);
       tipOn(b, PASS_TIPS[id]); b.addEventListener("click", () => { tab = id; draw(); snd("flip"); }); // 先接說明牌、再接點擊（長按顯示說明那壹下不算點擊）

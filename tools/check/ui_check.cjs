@@ -45,9 +45,30 @@ const SCREENS = [
   { id: "bank:存款", name: "銀行：存款（假伺服器）" },
   { id: "bank:借款", name: "銀行：借款（假伺服器）" },
   { id: "bank:館債", name: "銀行：館債（假伺服器）" },
+  // 全館投票（決定 0166）：q 是假伺服器的狀態（放在網址 # 前面，docs/操作/本機模擬器實測.md 第 0 節）
+  { id: "lobby:vote", q: "mock&vote=open", name: "大廳：全館投票入口（假伺服器）" },
+  { id: "today:vote", q: "mock&vote=open", name: "任務板：全館投票入口（假伺服器）" },
+  { id: "pass:vote", q: "mock&vote=voted", name: "館友證：寫下的名字（假伺服器）" },
+  { id: "vote:before", q: "mock&vote=before", name: "投票：預告（假伺服器）" },
+  { id: "vote:open", q: "mock&vote=open", name: "投票：還沒投（假伺服器）" },
+  { id: "vote:write", q: "mock&vote=open", name: "投票：寫下名字（假伺服器）" },
+  { id: "vote:long", q: "mock&vote=open", name: "投票：名字太長（假伺服器）" },
+  { id: "vote:confirm", q: "mock&vote=open", name: "投票：確認框（假伺服器）" },
+  { id: "vote:voted", q: "mock&vote=voted", name: "投票：投過、還能改（假伺服器）" },
+  { id: "vote:edit", q: "mock&vote=voted", name: "投票：改票（假伺服器）" },
+  { id: "vote:editconfirm", q: "mock&vote=voted", name: "投票：改票確認框（假伺服器）" },
+  { id: "vote:locked", q: "mock&vote=locked", name: "投票：鎖住（假伺服器）" },
+  { id: "vote:counting", q: "mock&vote=counting", name: "投票：等公布（假伺服器）" },
+  { id: "vote:result", q: "mock&vote=result", name: "投票：結果（假伺服器）" },
+  { id: "vote:history", q: "mock&vote=result", name: "投票：館史（假伺服器）" },
+  { id: "vote:history:empty", q: "mock&vote=open", name: "投票：館史空的（假伺服器）" },
+  { id: "vote:send", q: "mock&vote=open&votewhy=badName", name: "投票：被擋下來（假伺服器）" },
+  { id: "vote:send:net", q: "mock&vote=open&votewhy=net", name: "投票：送出斷線（假伺服器）" },
+  { id: "vote:peek:netpeek", q: "mock&vote=open&votewhy=netpeek", name: "投票：連不上（假伺服器）" },
+  { id: "vote:write:lowsan", q: "mock&vote=open", name: "投票：理智低（假伺服器）" },
 ];
 // 手機上「最重要」的畫面（翊文 11-22）：能按的東西短邊至少這麼多 px（目標 44，量到 40 以下才報）
-const TAP_SCREENS = /^(today|tasks|pass|calendar)/, TAP_MIN = 40;
+const TAP_SCREENS = /^(today|tasks|pass|calendar|vote)/, TAP_MIN = 40;
 const SIZES = { phone: { w: 375, h: 740, mobile: true, dpr: 2 }, desktop: { w: 2140, h: 1440, mobile: false, dpr: 1 } };
 
 // ---------- 在頁面裡跑的量測（回傳壹個 JSON） ----------
@@ -175,7 +196,7 @@ async function inspect(B, base, scr, size, opts) {
   await B.send("Emulation.setDeviceMetricsOverride", { width: sz.w, height: sz.h, deviceScaleFactor: sz.dpr, mobile: sz.mobile });
   await B.send("Emulation.setTouchEmulationEnabled", { enabled: sz.mobile, maxTouchPoints: sz.mobile ? 5 : 0 });
   await B.send("Page.navigate", { url: "about:blank" }); await sleep(150);
-  await B.send("Page.navigate", { url: `${base}/?uichk=${Date.now()}#${encodeURIComponent(scr.id)}` });
+  await B.send("Page.navigate", { url: `${base}/?uichk=${Date.now()}${scr.q ? "&" + scr.q : ""}#${encodeURIComponent(scr.id)}` });
   await sleep(opts.wait);
   await B.evaluate("document.body.classList.add('orient-skip')");
   if (/^(casino|bank|pass)/.test(scr.id)) { await B.evaluate(DISMISS); await sleep(600); await B.evaluate(DISMISS); await sleep(300); } // 假伺服器的賭場、銀行：第壹次進來的說明卡（「知道了」）先關掉，不然蓋住畫面量不到
