@@ -102,4 +102,5 @@ export { art, auctionTick } from "./casino/art.js"; // 藝術市場：跟館方�
 // ---------- 參觀展廳、送佩佩、伺服器的信（M2）：寫在 visit.js ----------
 export { claimMail, hallAct, hallCall, sendGift, socialNews, visitHall, visitWeekly } from "./game/visit.js";
 export { clientError } from "./game/client_error.js"; // 前端錯誤回報（決定 0125，shared/game/client_error.js）
+export { storyVote } from "./game/vote.js"; // 全館投票（決定 0162、0166，shared/story/vote.js）
 export { lostReturn, lostSync } from "./game/lostfound.js"; // 招領（翊文 11-13，shared/social/lostfound.js）

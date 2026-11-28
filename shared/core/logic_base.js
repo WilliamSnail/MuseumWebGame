@@ -28,6 +28,12 @@ export const pad = (n, w = 4) => String(n).padStart(w, "0");
 export const clampN = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 export const asList = v => Array.isArray(v) ? v : v ? [v] : [];
 export const pickOne = (arr, rng = RNG) => arr[Math.floor(rng() * arr.length)];
+// 看不見的字：控制字元、零寬空白、方向控制、BOM（清名字、清留言用；用字碼判斷，原始碼裡不寫那種跳脫）
+export function isHiddenChar(ch) {
+  const n = ch.codePointAt(0);
+  return n < 0x20 || n === 0x7f || (n >= 0x200b && n <= 0x200f) || (n >= 0x2028 && n <= 0x202e) || (n >= 0x2060 && n <= 0x206f) || n === 0xfeff;
+}
+
 // ---------- 現在幾點：照網路上的時間（決定 0026） ----------
 // 翊文 11-09：「遊戲裡的內容也是跟著那網路抓取的真實時間時間」。大家同步，改電腦的時間也沒用。
 // 規則裡要「現在」一律用 nowMs()，不要直接 Date.now()。

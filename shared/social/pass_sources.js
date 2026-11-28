@@ -49,4 +49,6 @@ export const PASS_SOURCES = [
   { id: "week", name: "每週收藏", from: null, save: ["W.wk", "W.wkLog"], pass: [{ src: "casino", key: "wk" }, { src: "casino", key: "wkPast" }], use: "goto", pub: [] },
   { id: "stats", name: "賭場戰績", from: null, save: ["W.st", "W.legacy"], pass: { src: "casino", key: "st" }, use: "none", pub: [] },
   { id: "npcbond", name: "認得的旅客和交代人（好感度、熟識度）", from: null, save: ["W.npcRel", "W.npcDay"], pass: { src: "casino", key: "bond" }, use: "none", pub: [] },
+  // ---- 全館投票（決定 0166；自己那壹票在伺服器，storyVote 動作只回給本人） ----
+  { id: "vote", name: "全館投票（寫下的名字）", from: null, save: [], pass: null, use: "none", pub: [] },
 ];
