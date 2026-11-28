@@ -5,12 +5,12 @@ import "../options.js"; // 地區、initializeApp：一定要最先（見 option
 import { onRequest } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { addDays, taipeiDay } from "../shared/core/logic.js";
-import { OUT_STOCKS } from "../shared/stock/text.js";
+import { OUT_NAMES_EMO } from "../shared/stock/text.js";
 import { US_IDS, usEarlyClose } from "../shared/stock/tw.js";
 import { dcUsCloseText } from "../shared/discord/us_close.js";
 import { US_SYMBOLS } from "./stock_us.js";
 
-const NAMES = Object.fromEntries(OUT_STOCKS.map(s => [s.id, s.name]));
+const NAMES = OUT_NAMES_EMO; // 名字前面有 emoji（11-28）
 let CACHE = { at: 0, body: null };
 // 台灣 day 那天早上要發的：美東 day 的前壹天那場（台灣早上時美股剛收的那場）
 export function usCloseBody(doc, nowMs) {

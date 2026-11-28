@@ -2,11 +2,11 @@
 // id 跟 shared/casino/stock_in.js 的 IN_STORES 壹樣：food 餐車、bj 牌桌（賭場）、job 委託櫃台、cellar 地下收藏庫、craft 手作坊。
 // 規矩：不寫真公司名、不寫股票代號；這是館裡自己的店，價格只看館裡的人去了沒有。
 export const IN_STOCKS = [
-  { id: "food", name: "餐車股", intro: "窗口前面排的隊有多長，就是它的行情。" },
-  { id: "bj", name: "牌桌股", intro: "荷官今天發了幾手牌，牌桌就值多少。" },
-  { id: "job", name: "委託櫃台股", intro: "櫃台收了幾張委託單，生意就有多好。" },
-  { id: "cellar", name: "地下收藏庫股", intro: "敢下去的人越多，它越值錢。" },
-  { id: "craft", name: "手作坊股", intro: "今天做了幾隻佩佩，工坊就有多忙。" },
+  { id: "food", name: "餐車股", emo: "🌭", intro: "窗口前面排的隊有多長，就是它的行情。" },
+  { id: "bj", name: "牌桌股", emo: "🃏", intro: "荷官今天發了幾手牌，牌桌就值多少。" },
+  { id: "job", name: "委託櫃台股", emo: "📋", intro: "櫃台收了幾張委託單，生意就有多好。" },
+  { id: "cellar", name: "地下收藏庫股", emo: "🕯️", intro: "敢下去的人越多，它越值錢。" },
+  { id: "craft", name: "手作坊股", emo: "✂️", intro: "今天做了幾隻佩佩，工坊就有多忙。" },
 ];
 export const CAS_STOCK_IN = {
   sub: "館內五家店：每家發行固定股數，價格是旅客、散客和館友真的在買賣推出來的。人多的店買賣多、價格跟著人氣走；每 15 分鐘動壹次。",

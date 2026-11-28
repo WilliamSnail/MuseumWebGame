@@ -2,6 +2,7 @@
 // 畫在股票頁籤的下面：一般股（館外、館內）和集團股各一份，可以篩股票、篩現股／槓桿；手機預設收起，電腦展開。
 // 這個檔不 import ui_bank.js（不准繞圈），樣式用 bank-panel 那套 class（css/bank.css 的 bt-）。
 import { UI, h, rerender } from "../../core/ui_core.js";
+import { stNm } from "./bank_emo.js";
 
 const fmt = n => (n == null ? "—" : Number(n).toLocaleString("en-US"));
 const px = n => (n == null ? "—" : Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
@@ -34,7 +35,7 @@ export function tradesPanel(trades, scope) {
   const body = !all.length ? h("p", { class: "bank-empty-dark" }, "還沒有成交紀錄。從這次更新開始，買賣會記在這裡（最近 50 筆）。")
     : !rows.length ? h("p", { class: "bank-empty-dark" }, "這個條件沒有成交。")
     : h("div", { class: "bt-book", role: "table" }, rows.map(r => h("div", { class: "bt-row", role: "row" }, timeOf(r),
-      h("span", { class: "bt-main" }, h("b", null, r.name || r.id, scope === "std" && MARKET[r.market] ? h("small", null, MARKET[r.market]) : null), h("span", null, actOf(r), "　", fmt(r.n), " 股 × ", px(r.price))),
+      h("span", { class: "bt-main" }, h("b", null, r.name ? stNm(r) : r.id, scope === "std" && MARKET[r.market] ? h("small", null, MARKET[r.market]) : null), h("span", null, actOf(r), "　", fmt(r.n), " 股 × ", px(r.price))),
       h("span", { class: "bt-end" }, h("b", { class: r.profit > 0 ? "up" : r.profit < 0 ? "down" : "" }, r.profit == null ? "—" : (r.profit > 0 ? "+" : "") + fmt(r.profit)), h("small", null, "手續費稅 " + fmt((r.fee || 0) + (r.tax || 0)))))));
   const open = f.open != null ? f.open : !isPhone();
   return h("details", { class: "bank-panel bt", open: open ? true : null, onToggle: e => { f.open = e.target.open; } },

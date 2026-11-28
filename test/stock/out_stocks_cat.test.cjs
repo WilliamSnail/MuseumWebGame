@@ -38,5 +38,11 @@ T("2 倍版（金庫磚、黑油桶）：標 mult 2、自然資源；景氣平�
   const flat = run({}), twice = run({ vaultbrick: 120 });
   assert.ok(twice > flat, "金庫磚漲，自然資源景氣跟著漲"); assert.ok(Math.abs(run({ vaultbrick: 120 }) - run({ greenglowmine: 110 })) < 1e-9, "2 倍版漲 20% ＝ 壹般自然資源股漲 10%（÷ 2）");
 });
+T("emoji（11-28 翊文「好，都配」）：館外、館內每支都有 emo、不重複；Discord 用的名字表前面有 emoji", G => {
+  const all = G.OUT_STOCKS.concat(G.IN_STOCKS);
+  for (const s of all) assert.ok(typeof s.emo === "string" && s.emo.length >= 1 && s.emo.length <= 4 && !/[\w一-鿿]/.test(s.emo), s.id);
+  assert.strictEqual(new Set(all.map(s => s.emo)).size, all.length, "emoji 不重複");
+  assert.strictEqual(G.OUT_NAMES_EMO.boxyard, "📦 萬箱貨棧");
+});
 console.log(`${pass} passed, ${fail} failed（美股新增 18 支和分類）`);
 process.exit(fail ? 1 : 0);
