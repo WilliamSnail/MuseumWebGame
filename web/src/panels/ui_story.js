@@ -163,7 +163,7 @@ function flushEvents() {
   persist();
 }
 // 《看懂的事》的「這些週看懂的」：已經看懂的、快看懂的（只有拿到部分線索才列，不給 text）。圖書館的書用（shared/story/clues.js）
-export function weekUnderstood() { return P && !isFree(P) ? understandView(P, STORY_LIB, todayStr()) : { done: [], near: [] }; }
+export function weekUnderstood() { return P && !isFree(P) ? understandView(P, STORY_LIB, todayStr()) : { done: [], near: [], keeps: [] }; }
 // 選單裡「每週劇情」的數字：可以領的獎勵（有新的劇情線、下一步只亮小點）
 function claimables(W) {
   if (!W || W.past) return 0;

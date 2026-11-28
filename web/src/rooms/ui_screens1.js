@@ -544,11 +544,12 @@ export function openUnderstood(reader) {
 // 每週劇情裡看懂的（線索集齊才會多壹件，shared/story/clues.js）。快看懂的只說還差幾條和提示，不給答案
 function weekUnderstoodBox() {
   const v = weekUnderstood();
-  if (!v.done.length && !v.near.length) return null;
+  if (!v.done.length && !v.near.length && !v.keeps.length) return null;
   return h("div", { class: "uk-weeks" },
     h("h3", { class: "uk-sub" }, "這些週看懂的"),
     v.done.length ? h("ol", { class: "uk-list" }, v.done.map(x => h("li", null, h("span", { class: "uk-from" }, x.from || "館裡"), h("span", { class: "uk-line" }, ptNode(x.text))))) : null,
-    v.near.map(x => h("p", { class: "uk-near" }, `有件事快看懂了：還差 ${x.left} 條。`, x.hint ? h("span", { class: "uk-hint" }, ptNode(x.hint)) : null)));
+    v.near.map(x => h("p", { class: "uk-near" }, `有件事快看懂了：還差 ${x.left} 條。`, x.hint ? h("span", { class: "uk-hint" }, ptNode(x.hint)) : null)),
+    v.keeps.length ? [h("h3", { class: "uk-sub" }, "口袋裡的"), h("ul", { class: "uk-list" }, v.keeps.map(k => h("li", null, h("span", { class: "uk-from" }, k.name), h("span", { class: "uk-line" }, ptNode(k.text)))))] : null); // 劇情遺物（讀懂時擲理智失敗拿到的，11-28）
 }
 
 
