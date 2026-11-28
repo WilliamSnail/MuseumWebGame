@@ -24,6 +24,7 @@ import { NET } from "../core/net_firebase.js";
 import { $$, ADDONS, HOOKS, P, PANELS, SCREENS, UI, btn, cicon, freshMark, freshTag, go, h, icon, later, markFreshNav, miniLayer, navTo, note, noteCured, persist, placard, ptNode, quirkHereBox, rerender, sanFlow, sanShort, sanWords, snd, sndFile, updateStatus } from "../core/ui_core.js";
 import { CAS_AUC } from "../../../shared/casino/auction.js";
 import { casebookView, clueNew, clueSync, understandView } from "../../../shared/story/clues.js";
+import { voteTimes } from "../../../shared/story/vote.js";
 import { FRESH_KEY } from "../../../shared/core/fresh.js";
 import { overlay } from "./ui_board.js";
 import { noticeCard } from "./ui_party.js";
@@ -39,7 +40,8 @@ setStoryHolidayOf(holidayOf);
 
 // ---------- 內容：content/weeks/ 下面所有的 json（帳本 content/story/ 不在這裡，不打包進網頁） ----------
 const RAW = import.meta.glob("../../../content/weeks/**/*.json", { eager: true, import: "default" });
-export const STORY_LIB = storyLibrary(Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k.split("/content/weeks/")[1], v])));
+const FILES = Object.fromEntries(Object.entries(RAW).map(([k, v]) => [k.split("/content/weeks/")[1], v]));
+export let STORY_LIB = storyLibrary(FILES); // 全館投票公布後換成含勝方那版的（voteSync）
 
 // 今天這一週（照 todayStr()，台灣時間 05:00 換日、週一 05:00 換週）。同一天同一個備用週就用同一份
 let weekCache = { key: null, W: null };
@@ -74,6 +76,7 @@ export function goStep(step) {
 let warm = false, queue = [], ticking = false;
 export function storyTick() {
   if (!on()) { trackBar(); roomTaskBar(); return; }
+  voteSync();
   const W = curWeek();
   if (!W) { trackBar(); roomTaskBar(); return; }
   const today = todayStr();
@@ -109,6 +112,21 @@ export function storyTick() {
   // 不用 later：換畫面時 later 的計時器會被取消，ticking 就卡住，之後的事件全部不見
   if (queue.length && !ticking) { ticking = true; setTimeout(flushEvents, 0); }
   showCards();
+}
+// ---------- 全館投票的內容分版（決定 0166；shared/story/vote.js） ----------
+// 公布時間過後跟伺服器看壹次結果（第壹個看的人會讓伺服器結算），拿到了就把勝方那版內容放進來。拿不到就先不放，十分鐘後再試
+let voteGot = false, voteAsking = false, voteAsked = 0;
+async function voteSync() {
+  if (voteGot || voteAsking || !UI.net || !NET.loggedIn) return;
+  const t = nowMs();
+  if (t < voteTimes().resultAt || t - voteAsked < 600000) return;
+  voteAsking = true; voteAsked = t;
+  try {
+    const r = await NET.call("storyVote", { op: "peek" });
+    const winner = r && r.result && r.result.winner;
+    if (winner) { voteGot = true; STORY_LIB = storyLibrary(FILES, winner); weekCache = { key: null, W: null }; pastCache = { key: null, list: [] }; updateStatus(); }
+  } catch (e) { /* 離線或讀不到：下次再看 */ }
+  finally { voteAsking = false; }
 }
 // ---------- 每日任務的「做過了」和籌碼（決定 0146） ----------
 // 真的做了那壹件事的那壹刻叫 actDone("casino")：記進存檔（storyAct），任務就算做完；有籌碼的任務做完會自動去領

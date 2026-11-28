@@ -111,7 +111,7 @@ function artData() {
         const d = JSON.parse(fs.readFileSync(df, "utf8"));
         if (!isDay(d.date) || !d.show || !Array.isArray(d.show.works)) continue;
         for (const w of d.show.works) {
-          if (!w || typeof w.id !== "string") continue;
+          if (!w || typeof w.id !== "string" || w.vote !== undefined) continue; // 照投票結果分版的畫不上藝術市場（伺服器不知道哪版算數）
           const x = { date: d.date, title: typeof w.title === "string" ? w.title : "" };
           if (typeof w.frame === "string") x.frame = w.frame;
           if (w.san) x.san = w.san;

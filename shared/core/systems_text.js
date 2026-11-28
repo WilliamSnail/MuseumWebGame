@@ -802,7 +802,7 @@ export const NPC_BOND_TEXT = {
 // 全館投票（shared/story/vote.js）。草稿：選項和館史的字由延伸劇情世界改。
 export const VOTE_TEXT = {
   options: { write: "寫下名字", blank: "不寫", return: "交還那支筆" },
-  history: { title: "全館的決定", text: "投票結束。全館選了「{choice}」。" },
+  history: { title: "全館的決定", text: { write: "投票結束。全館選了「寫下名字」。", blank: "投票結束。全館選了「不寫」。", return: "投票結束。全館選了「交還那支筆」。" } },
   no: {
     before: "還沒開始投票。", closed: "投票已經截止。", badChoice: "沒有這個選項。",
     noName: "空欄裡要寫壹個名字。", longName: "名字最多 {n} 個字。", badName: "這個名字寫不上去，換壹個。",
