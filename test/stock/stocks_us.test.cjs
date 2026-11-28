@@ -65,8 +65,8 @@ T("美東日期：台灣時間冬令 22:30～隔天 05:00、夏令 21:30～隔�
   assert.strictEqual(G.taipeiDay(G.usOpenMs(W) + 390 * 60000), "2026-11-17", "冬令收盤剛好是 05:00 換日那壹刻");
   assert.strictEqual(G.usNyDay(Date.parse("2026-11-17T04:59:00+08:00")), W);
 });
-T("名單：28 支美股（原本 6 支含指數，11-19 新增 18 支、11-20 再加黃金石油 2 倍 2 支、11-28 加 GOOGL、META），都有 15 分鐘標準差和每分鐘隨機；真實代號不在 shared 裡", G => {
-  assert.strictEqual(G.US_IDS.length, 28); assert.ok(["flashcar", "greeneye", "nightindex", "redclaw", "silverapple", "squarewin"].every(id => G.US_IDS.includes(id)));
+T("名單：29 支美股（原本 6 支含指數，11-19 新增 18 支、11-20 再加黃金石油 2 倍 2 支、11-28 加 GOOGL、META、AMZN），都有 15 分鐘標準差和每分鐘隨機；真實代號不在 shared 裡", G => {
+  assert.strictEqual(G.US_IDS.length, 29); assert.ok(["flashcar", "greeneye", "nightindex", "redclaw", "silverapple", "squarewin"].every(id => G.US_IDS.includes(id)));
   assert.ok(G.stockIsUs(ID) && !G.stockIsUs(TWID) && !G.stockIsTw(ID));
   const C = G.NUM.casino.stock.us;
   for (const id of G.US_IDS) { assert.ok(C.sd15[id] > 0, id); assert.ok(C.minSd[id] > 0, id); }
