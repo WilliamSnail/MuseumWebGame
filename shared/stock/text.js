@@ -61,4 +61,6 @@ export const OUT_STOCKS = [
   { id: "blackbarrel", kind: "stock", market: "us", cat: "resource", ext: true, mult: 2, name: "黑油桶", intro: "壹桶桶黑色的原油，專門跟著油價走，而且壹次走兩倍：油價晃壹下它晃兩下，賺賠都放大。" },
   // 11-28 翊文：「美股可以加入 GOOGL」
   { id: "searchshop", kind: "stock", market: "us", cat: "tech", ext: true, name: "彩字搜尋鋪", intro: "招牌上的字五顏六色，什麼都能問它；問的人越多，它知道得越多，也越值錢。" },
+  // 11-28 翊文：「美股也可以加入 META」
+  { id: "facehall", kind: "stock", market: "us", cat: "tech", ext: true, name: "千面鏡廳", intro: "整面牆都是鏡子，每個走進來的人都對著鏡子說話；鏡子記得每壹張臉，也把這些臉賣給想看的人。" },
 ];

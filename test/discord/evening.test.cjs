@@ -10,12 +10,12 @@ const TW = mk("2026-11-27", [["islandforge", 2180, 2145], ["cloudcabinet", 1670,
 const US = mk("2026-11-27", [["nightindex", 649.43, 633.93], ["greeneye", 155.6, 149.3], ["redclaw", 427, 406.03], ["oldgamestore", 26.9, 26.97], ["bluefireyard", 37.13, 37.13]], 32.93);
 const base = o => Object.assign({ day: "2026-11-27", usDay: "2026-11-27", tw: TW, us: US, names: NAMES, twIds: G.TW_IDS, usIds: G.US_IDS, twSyms: { islandforge: "2330", cloudcabinet: "6669" }, usSyms: { greeneye: "NVDA" } }, o);
 
-T("兩邊都有：台股收盤、美股盤前（指數、每支壹行、遊戲價 ＝ 匯率 × 真實價）、家數、評語；用壹不用一", () => {
+T("兩邊都有：台股收盤、美股盤前（指數、每支壹行、美元價前面加 $）、家數、評語；用壹不用一", () => {
   const t = G.dcEveningText(base({ early: true }));
   assert.ok(t.includes("傍晚行情") && t.includes("兩本帳"), t);
   assert.ok(/🏮 \*\*台股收盤\*\*（11-27）\n📈 漲得最兇：\n大戶櫃匠 6669 ▲6\.4%（1,670）/.test(t), t);
-  assert.ok(t.includes("🌙 **美股盤前**") && /綠眼顯卡 NVDA ▲4\.2%（5,124）/.test(t), t);
-  assert.ok(t.includes("匯率 32.93") && t.includes("💬 ") && t.includes("⏰ 美股今天提早收盤"), t);
+  assert.ok(t.includes("🌙 **美股盤前**") && /綠眼顯卡 NVDA ▲4\.2%（\$155\.60）/.test(t), t);
+  assert.ok(t.includes("價格是美元；館內匯率 32.93") && t.includes("💬 ") && t.includes("⏰ 美股今天提早收盤"), t);
   assert.ok(!/一/.test(t));
 });
 T("只有壹邊：台股沒開就只寫美股、美股沒開就只寫台股；兩邊都沒開回空字串", () => {
