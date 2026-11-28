@@ -91,7 +91,7 @@ T("結算：公布時間前不算、到了算一次、算過不重算；館史�
   const s = G.voteSettle(R.state, TM.resultAt, C); assert.ok(s.settled); eq(s.state.result, { winner: "write", share: { write: 100, blank: 0, return: 0 }, at: TM.resultAt });
   assert.ok(!G.voteSettle(s.state, TM.resultAt + 1, C).settled);
   const h = G.voteHistory(s.state.result, C), str = JSON.stringify(h);
-  assert.ok(h.id === C.id && h.at === TM.resultAt && h.text.includes(G.VOTE_TEXT.options.write) && !str.includes("秘密") && !str.includes("counts"));
+  assert.ok(h.id === C.id && h.at === TM.resultAt && h.text === G.VOTE_TEXT.history.text.write && C.options.every(id => G.VOTE_TEXT.history.text[id].includes(G.VOTE_TEXT.options[id])) && !str.includes("秘密") && !str.includes("counts"));
   assert.strictEqual(G.voteHistory(null, C), null);
 });
 T("給畫面的包：公布前沒有任何票數、比例、結果；只有自己的票和還能改幾次", () => {
@@ -105,5 +105,46 @@ T("伺服器和規則：函式有匯出、投票和館史的路徑 firestore.rul
   assert.ok(rd("functions/index.js").includes("export { storyVote }"));
   const rules = rd("firestore.rules"); assert.ok(!rules.includes("storyVotes") && !rules.includes("houseHistory") && rules.includes("match /{document=**}"));
   assert.ok(rd("functions/game/vote.js").includes("EMULATOR && Number.isFinite(d.testNow)"));
+});
+// ---- 內容分版 ----
+const OPTS = C.options;
+const three = (base, extra = {}) => OPTS.map(vote => Object.assign({ id: `${base}-${vote}`, vote }, extra));
+const variantDay = () => ({ date: "2026-12-16", board: "公佈欄。", voteBoard: { write: "寫了。", blank: "沒寫。", return: "還了。" },
+  books: [{ id: "n1", title: "中性" }].concat(three("end", { title: "結局", clue: "c-end" })),
+  show: { works: [{ id: "w0" }].concat(three("w")) }, adds: [], understand: three("u-end", { text: "字", need: ["c-end"] }) });
+T("voteDay：沒結果時分版的全部不給（不預設不寫）；有結果只留勝方、拿掉 vote；公佈欄接勝方那句；原本的檔沒被改", () => {
+  const d = variantDay(), before = JSON.stringify(d);
+  const none = G.voteDay(d, null); eq(none.books.map(b => b.id), ["n1"]); eq(none.show.works.map(w => w.id), ["w0"]); eq(none.understand, []); assert.strictEqual(none.board, "公佈欄。"); assert.ok(!("voteBoard" in none));
+  const w = G.voteDay(d, "return"); eq(w.books.map(b => b.id), ["n1", "end-return"]); eq(w.show.works.map(x => x.id), ["w0", "w-return"]); assert.strictEqual(w.board, "公佈欄。還了。"); assert.ok(!JSON.stringify(w).includes("\"vote"));
+  assert.strictEqual(JSON.stringify(d), before);
+  const plain = { books: [{ id: "a" }], board: "x" }; assert.strictEqual(G.voteDay(plain, "write"), plain);
+});
+T("storyLibrary 帶勝方：整週內容和線索目錄只看得到那一版", () => {
+  const files = { "2026-W51/week.json": { title: "週" }, "2026-W51/d3.json": variantDay() };
+  const books = vote => G.storyWeekAt(G.storyLibrary(files, vote), "2026-W51", "2026-12-16").books.map(b => b.id);
+  eq(books(), ["2026-W51/n1"]); eq(books("write"), ["2026-W51/n1", "2026-W51/end-write"]);
+  const clues = vote => G.clueCatalog(G.storyLibrary(files, vote), "2026-12-16").sources.map(s => s.sid);
+  eq(clues(), []); eq(clues("blank"), ["2026-W51/end-blank"]);
+});
+const V = require("../../tools/content/vote_check.cjs");
+const shape = day => V.voteShape({ "2026-W51/d3.json": day }, G);
+T("分版檢查：寫齊的過；少壹版、id 重複、線索不同、公佈欄缺句、特展沒有中性畫、放錯地方、公布前的日子、備用週都擋", () => {
+  eq(shape(variantDay()), { has: true, errors: [] }); eq(V.voteShape({ "2026-W48/d1.json": { books: [] } }, G), { has: false, errors: [] });
+  const bad = (mut, word) => { const d = variantDay(); mut(d); const e = shape(d).errors; assert.ok(e.some(x => x.includes(word)), word + " → " + JSON.stringify(e)); };
+  bad(d => d.books.pop(), "三版要齊全"); bad(d => { d.books[1].id = d.books[2].id; }, "重複"); bad(d => { d.books[1].clue = "c-other"; }, "同壹個 clue");
+  bad(d => { delete d.voteBoard.blank; }, "三句都要有字"); bad(d => d.show.works.shift(), "不分版的畫"); bad(d => { d.daily = [{ id: "t", vote: "write" }]; }, "不能寫在這裡");
+  bad(d => { d.books[1].vote = "maybe"; }, "只能是"); bad(d => { d.weeklyWords = [{ vote: "write" }]; }, "不能寫在這裡");
+  assert.ok(V.voteShape({ "2026-W51/d2.json": variantDay() }, G).errors.some(x => x.includes("公布日")));
+  assert.ok(V.voteShape({ "備用/常青/d1.json": variantDay() }, G).errors.some(x => x.includes("正式週")));
+});
+T("week_check：有分版時三個結果各跑壹遍，錯誤併起來；只有某版有的標出來；沒有分版的跟以前壹樣", () => {
+  const m = V.voteMerge(OPTS.map(vote => ({ vote, result: { errors: ["共同"].concat(vote === "write" ? ["只有寫"] : []) } })), "errors");
+  eq(m, ["共同", "（投票結果 write 的版本）只有寫"]);
+  const WC = require("../../tools/content/week_check.cjs"), { files, bad } = WC.readWeeks();
+  const base = WC.checkContent({ files, bad, today: "2026-11-28" });
+  const label = Object.keys(files).filter(k => /^2026-W4[0-9]\/d1[.]json$/.test(k)).pop();
+  const changed = Object.assign({}, files, { [label]: Object.assign({}, files[label], { voteBoard: { write: "甲。", blank: "乙。", return: "丙。" } }) });
+  const r = WC.checkContent({ files: changed, bad, today: "2026-11-28" });
+  assert.ok(r.errors.some(x => x.includes("公布日"))); assert.ok(r.errors.length >= base.errors.length && r.lib.weeks);
 });
 console.log(fail ? `全館投票：${fail} 項沒過` : `全館投票：${pass} 項都過`); process.exit(fail ? 1 : 0);

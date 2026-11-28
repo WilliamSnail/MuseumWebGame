@@ -2,6 +2,7 @@
 //  全館投票（決定 0162、0166；延伸世界 m-you「誰來寫名字」；規劃 docs/規劃/延伸世界深入規劃.md 柒之二）
 //  純函式：不讀寫資料庫、不看時鐘（now 由呼叫的人給，毫秒）。伺服器 functions/game/vote.js 用，畫面的假伺服器也可以用。
 //  數字和時間在 NUM.story.vote，字在 VOTE_TEXT。
+//  內容分版（voteDay）：每天檔的書、房間、今日特展的畫、看懂的事寫 vote＝只有那個結果看得到；公佈欄另外寫 voteBoard。
 //  兩份資料：
 //    全館的（state）：{ counts: {write,blank,return}, late: {…最後 24 小時投的}, result: null | {winner, share, at} }
 //    自己的（mine）：null | { choice, name, at, changes（改過幾次）, late }。name 只給本人看，不進統計、不進館史
@@ -16,6 +17,29 @@ const vtBox = v => !!v && typeof v === "object" && !Array.isArray(v);
 const vtFill = (s, d) => Object.keys(d).reduce((t, k) => t.split("{" + k + "}").join(String(d[k])), s);
 const vtNo = (key, d) => ({ ok: false, why: key, reason: vtFill(VOTE_TEXT.no[key], d || {}) });
 
+// ---------- 內容分版（延伸劇情世界選的做法：寫三版、遊戲自己挑） ----------
+// 每天檔裡可以分版的清單（show.works 另外處理）
+export const VOTE_LISTS = ["books", "adds", "understand"];
+const vtVariant = x => vtBox(x) && x.vote !== undefined;
+// 這一天有沒有分版的東西
+export function voteDayHas(day) {
+  if (!vtBox(day)) return false;
+  const lists = VOTE_LISTS.map(k => day[k]).concat([vtBox(day.show) ? day.show.works : null]);
+  return day.voteBoard !== undefined || lists.some(a => Array.isArray(a) && a.some(vtVariant));
+}
+// 一天的檔照投票結果挑好：只留中性的和勝方的（拿掉 vote 欄位）；voteBoard 勝方那句接在公佈欄後面。
+// winner 是 null（還沒公布、離線、讀不到）：分版的全部不給，不預設哪一版。沒有分版的天原樣回傳
+export function voteDay(day, winner) {
+  if (!voteDayHas(day)) return day;
+  const keep = list => list.filter(x => !vtVariant(x) || (!!winner && x.vote === winner)).map(x => { if (!vtVariant(x)) return x; const c = Object.assign({}, x); delete c.vote; return c; });
+  const out = Object.assign({}, day);
+  VOTE_LISTS.forEach(k => { if (Array.isArray(out[k])) out[k] = keep(out[k]); });
+  if (vtBox(out.show) && Array.isArray(out.show.works)) out.show = Object.assign({}, out.show, { works: keep(out.show.works) });
+  const extra = winner && vtBox(out.voteBoard) && typeof out.voteBoard[winner] === "string" ? out.voteBoard[winner] : "";
+  if (extra) out.board = (typeof out.board === "string" ? out.board : "") + extra;
+  delete out.voteBoard;
+  return out;
+}
 export function voteTimes(C = NUM.story.vote) {
   return { opensAt: Date.parse(C.opens), closesAt: Date.parse(C.closes), resultAt: Date.parse(C.result) };
 }
@@ -93,7 +117,7 @@ export function voteSettle(stateDoc, now, C = NUM.story.vote) {
 // 館史的壹則（全館看到同壹份；不寫個人名字、不寫票數）
 export function voteHistory(result, C = NUM.story.vote) {
   if (!result) return null;
-  return { id: C.id, at: result.at, title: VOTE_TEXT.history.title, text: vtFill(VOTE_TEXT.history.text, { choice: VOTE_TEXT.options[result.winner] }), winner: result.winner, share: result.share };
+  return { id: C.id, at: result.at, title: VOTE_TEXT.history.title, text: VOTE_TEXT.history.text[result.winner], winner: result.winner, share: result.share };
 }
 // 給畫面的壹整包（公布前不給任何票數、比例）
 export function voteView(stateDoc, mineDoc, now, history, C = NUM.story.vote) {

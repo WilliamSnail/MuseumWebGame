@@ -11,6 +11,7 @@ const G = load();
 
 const ROOT = path.join(__dirname, "..", "..");
 const WEEKS = path.join(ROOT, "content", "weeks");
+const { voteShape, voteMerge } = require("./vote_check.cjs"); // 照投票結果分版的內容
 const LEDGER = path.join(ROOT, "content", "story", "帳本.json");
 const SETTINGS = path.join(ROOT, "content", "排程設定.json");
 
@@ -59,7 +60,14 @@ function readWeeks(dir = WEEKS) {
 const readJSON = f => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch (e) { return { __bad: e.message }; } };
 
 // files：readWeeks 的結果；ledger：帳本；settings：排程設定；today：台灣的今天（不給就照現在）
-function checkContent({ files = {}, bad = [], ledger = null, settings = null, today = null, map = null, ctx = {} } = {}) {
+// 內容有照投票結果分版的（tools/content/vote_check.cjs）：分版本身查壹次，其他檢查三個結果各跑壹遍
+function checkContent(args = {}) {
+  const shape = voteShape(args.files || {}, G);
+  if (!shape.has) return checkOnce(args);
+  const runs = G.NUM.story.vote.options.map(vote => ({ vote, result: checkOnce(args, vote) }));
+  return { errors: shape.errors.concat(voteMerge(runs, "errors")), warnings: voteMerge(runs, "warnings"), lib: G.storyLibrary(args.files) };
+}
+function checkOnce({ files = {}, bad = [], ledger = null, settings = null, today = null, map = null, ctx = {} } = {}, vote) {
   const errors = bad.slice(), warnings = [];
   const E = (where, msg) => errors.push(`${where}：${msg}`), W = (where, msg) => warnings.push(`${where}：${msg}`);
   today = today || process.env.WEEK_CHECK_TODAY || G.taipeiDay(Date.now());
@@ -577,7 +585,7 @@ function checkContent({ files = {}, bad = [], ledger = null, settings = null, to
   };
 
   Object.keys(files).forEach(rel => { const p = rel.split("/"); if (!(p.length === 2 && /^\d{4}-W\d{2}$/.test(p[0])) && !(p.length === 3 && p[0] === "備用")) E(`content/weeks/${rel}`, "放錯地方了（正式週 2026-W47/、備用週 備用/名字/、備用的一天 備用/一天/）"); });
-  const lib = G.storyLibrary(files);
+  const lib = G.storyLibrary(files, vote);
   lib.skipped.forEach(s => E(`content/weeks/${s}`, "看不懂這個檔（週要有 week.json，一天叫 d1.json～d7.json）"));
   const done = [];
   Object.keys(lib.fallback).sort().forEach(n => { if (n === "一天") return; done.push(weekOk(n, lib.fallback[n], { fallback: true })); });

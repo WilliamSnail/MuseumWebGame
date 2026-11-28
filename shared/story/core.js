@@ -20,6 +20,7 @@ import { cleanEvents, eventListLine } from "./events.js";
 import { STORY_ITEMS, isPlain, storyState } from "./state.js";
 import { growSkill, limitedNames, rangeWords, shopOnSale } from "../core/shop.js";
 import { casArtMarkViewed, casArtViewCredit } from "../casino/art.js";
+import { voteDay } from "./vote.js";
 
 // ---------- 固定的種類（排程只能從這裡挑；要新的種類得寫程式、走一般的 PR） ----------
 // 任務：when ＝ daily（只能當每日任務）、weekly（只能當每週任務）、both；min ＝大約幾分鐘做得完（檢查「每天做得完」用）
@@ -124,12 +125,13 @@ export function weekSeason(label) { const m = isoMonday(label); return m ? yearS
 
 // ---------- 讀進來的檔整理成一份 ----------
 // files：{ "2026-W46/week.json": 內容, "2026-W46/d1.json": 內容, "備用/常青1/d1.json": …, "備用/一天/插曲1.json": … }（路徑從 content/weeks/ 算起）
-export function storyLibrary(files) {
+// vote：全館投票的勝方（"write"｜"blank"｜"return"）；不給＝還沒公布，分版的內容全部不放（shared/story/vote.js 的 voteDay）
+export function storyLibrary(files, vote) {
   const lib = { weeks: {}, fallback: {}, spare: {}, skipped: [] };
   const put = (box, name, file, v) => {
     const w = box[name] || (box[name] = { name, week: null, days: {} });
     if (file === "week.json") w.week = v;
-    else { const m = /^d([1-7])\.json$/.exec(file); if (m) w.days[+m[1]] = v; else lib.skipped.push(file); }
+    else { const m = /^d([1-7])\.json$/.exec(file); if (m) w.days[+m[1]] = voteDay(v, vote); else lib.skipped.push(file); }
   };
   Object.keys(files || {}).sort().forEach(path => {
     const v = files[path], p = String(path).split("/");
