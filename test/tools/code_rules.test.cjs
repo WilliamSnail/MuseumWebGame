@@ -136,4 +136,11 @@ function T9() {
   R.dropMoved(map, new Set([text]), () => ["短", "  " + text + "  ", other].join("\n"));
   assert.deepStrictEqual([...map.get("a.js")], [1, 3], "同樣的行被刪掉又出現＝搬家，不算新加；沒被刪的、太短的還是算");
 }
+// 10. 看不見的控制字元（11-28）
+{
+  const BS = String.fromCharCode(8), NUL = String.fromCharCode(0), BSL = String.fromCharCode(92);
+  const src = { "web/a.js": "const r = /sound" + BS + "/;", "tools/b.cjs": "x.split(" + NUL + ")", "tools/c.cjs": "const r = /sound" + BSL + "b/; x.split('" + BSL + "u0000')", "web/d.png": BS };
+  const bad = R.checkCtrl(Object.keys(src), f => src[f]);
+  assert.strictEqual(bad.length, 2, bad.join("｜")); assert.ok(bad[0].startsWith("web/a.js:1") && bad[0].includes("字碼 8")); assert.ok(bad[1].startsWith("tools/b.cjs:1"));
+}
 console.log("程式的規矩的測試都過了");

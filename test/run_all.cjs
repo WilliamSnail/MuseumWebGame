@@ -6,6 +6,7 @@ const root = path.join(__dirname, "..");
 require("../tools/content/notices_build.cjs").write(); // shared/game/notices_data.js 不進 git：測試之前先由 content/notices/ 產生
 const STEPS = [
   ["規則測試", ["test/game/logic.test.cjs"]],
+  ["分頁靜音（開發版、自動化瀏覽器壹律不出聲，11-28）", ["test/game/quiet.test.cjs"]],
   ["房間效果的狀態（燈光、人影、旗幟、怪影子；館友自己的理智效果優先、熄燈時收起）", ["test/web/room_mood.test.cjs"]],
   ["賭場、銀行的背景樂：熱鬧程度換算（ambMix）、環境音會建會停會尊重靜音", ["test/web/amb_mix.test.cjs"]],
   ["音效檔（Pixabay）：清單、檔案、來源.md 對得上，程式用到的都有登記", ["test/web/sfx_files.test.cjs"]],
