@@ -14,8 +14,8 @@ export const OUT_CATS = [
   { id: "index", name: "指數基金" },
 ];
 export const OUT_STOCKS = [
-  { id: "greeneye", kind: "stock", market: "us", cat: "tech", name: "綠眼顯卡", emo: "🎮", intro: "做會發綠光的顯卡。館裡的畫面、算盤、機器腦袋，大半靠它撐著。" },
-  { id: "redclaw", kind: "stock", market: "us", cat: "tech", name: "紅爪晶片", emo: "🦀", intro: "綠眼顯卡的老對手，專做紅色封套的晶片。常常追著跑，偶爾衝到前面。" },
+  { id: "greeneye", kind: "stock", market: "us", cat: "tech", name: "綠眼顯卡", emo: "👁️", intro: "做會發綠光的顯卡。館裡的畫面、算盤、機器腦袋，大半靠它撐著。" },
+  { id: "redclaw", kind: "stock", market: "us", cat: "tech", name: "紅爪晶片", emo: "❤️", intro: "綠眼顯卡的老對手，專做紅色封套的晶片。常常追著跑，偶爾衝到前面。" },
   { id: "nightindex", kind: "index", market: "us", cat: "index", name: "夜光科技指數", emo: "🌃", intro: "夜光街上一整排科技攤位的平均行情。不是一家店，是看整條街今天亮不亮。" },
   { id: "islandforge", kind: "stock", market: "tw", cat: "tech", name: "島上鑄晶坊", emo: "🏝️", intro: "島上那間幫大家蓋晶片的鑄造坊。別人畫圖，它動手燒，缺了它很多攤位會停工。" },
   { id: "silverapple", kind: "stock", market: "us", cat: "tech", name: "銀蘋果工坊", emo: "🍎", intro: "賣銀色小機器的工坊，招牌是被咬一口的蘋果。粉絲很多，新品一出就排隊。" },
