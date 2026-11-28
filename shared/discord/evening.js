@@ -3,6 +3,7 @@
 // 台股今天沒開（週末、假日）就只寫美股；美股今天沒有盤前（週末、美國假日）就只寫台股；兩個都沒有回空字串（不發）。
 // 誰叫：functions/stock/stock_div.js 的 stockDivTick（台灣每小時 :17），18:17 那次組字寫進 discordOutbox/evening-日期（同壹天只發壹次）。
 
+import { usdFmt } from "./us_close.js";
 const evOk = v => typeof v === "number" && isFinite(v) && v > 0;
 const evFmt = n => (n >= 100 ? Math.round(n).toLocaleString("en-US") : (Math.round(n * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 }));
 const evPct = r => `${r >= 0 ? "▲" : "▼"}${Math.abs(r * 100).toFixed(1)}%`;
@@ -38,18 +39,18 @@ export const EVENING_TALK = {
   ],
 };
 
-// 壹個市場的列：doc 要是今天開過盤的（day 對、openIdx 有值、沒休市）；mult 是遊戲價的倍數（台股 1、美股匯率）
-function evRows(doc, day, ids, names, syms, mult) {
+// 壹個市場的列：doc 要是今天開過盤的（day 對、openIdx 有值、沒休市）；usd：美股寫美元價（前面加 $，翊文 11-28）
+function evRows(doc, day, ids, names, syms, usd) {
   if (!doc || doc.day !== day || doc.openIdx == null || doc.closed) return null;
   const rows = (ids || []).map(id => {
     const c = doc.R && doc.R[id] && doc.R[id].px, p = doc.prevReal && doc.prevReal[id];
-    return evOk(c) && evOk(p) ? { id, name: ((names && names[id]) || id) + (syms && syms[id] ? ` ${syms[id]}` : ""), r: c / p - 1, px: c * mult } : null;
+    return evOk(c) && evOk(p) ? { id, name: ((names && names[id]) || id) + (syms && syms[id] ? ` ${syms[id]}` : ""), r: c / p - 1, px: c, usd } : null;
   }).filter(Boolean);
   return rows.length >= 3 ? rows : null;
 }
 function evBlock(rows, L) {
   const s = rows.slice().sort((a, b) => b.r - a.r), up = s.filter(x => x.r > 0.0005), dn = s.filter(x => x.r < -0.0005);
-  const line = x => `${x.name} ${evPct(x.r)}（${evFmt(x.px)}）`, ups = up.slice(0, 3), dns = s.slice().reverse().filter(x => x.r < -0.0005).slice(0, 3);
+  const line = x => `${x.name} ${evPct(x.r)}（${x.usd ? usdFmt(x.px) : evFmt(x.px)}）`, ups = up.slice(0, 3), dns = s.slice().reverse().filter(x => x.r < -0.0005).slice(0, 3);
   L.push("📈 漲得最兇：", ...(ups.length ? ups.map(line) : ["沒有壹支在漲"]));
   L.push("📉 跌得最深：", ...(dns.length ? dns.map(line) : ["沒有壹支在跌"]));
   return { n: s.length, up: up.length, dn: dn.length, avg: s.reduce((a, x) => a + x.r, 0) / s.length };
@@ -59,8 +60,8 @@ const evMood = avg => (avg > 0.003 ? 1 : avg < -0.003 ? -1 : 0);
 // o = { day: 台灣日期, tw, us（兩份行情文件）, twIdx: { px, prev } 加權指數（可以沒有）, usDay: 美東今天的日期, names, twIds, usIds, twSyms, usSyms, early: 美股今天提早收盤 }
 export function dcEveningText(o) {
   const fx = o.us && (evOk(o.us.fx) ? o.us.fx : evOk(o.us.fxLast) ? o.us.fxLast : null);
-  const tw = evRows(o.tw, o.day, o.twIds, o.names, o.twSyms, 1);
-  const usAll = fx ? evRows(o.us, o.usDay, o.usIds, o.names, o.usSyms, fx) : null;
+  const tw = evRows(o.tw, o.day, o.twIds, o.names, o.twSyms, false);
+  const usAll = fx ? evRows(o.us, o.usDay, o.usIds, o.names, o.usSyms, true) : null;
   if (!tw && !usAll) return "";
   const L = ["🌇 **Yuga Bot 銀行　傍晚行情**", tw && usAll ? "台股今天收攤了，館外的另壹邊剛醒。櫃台把兩本帳都攤開來：" : tw ? "台股今天收攤了。館外那壹邊今天休息，櫃台只攤開壹本帳：" : "館外的另壹邊剛醒。白天這邊今天沒開，櫃台只攤開壹本帳：", ""];
   let a = null, b = null;
@@ -72,8 +73,8 @@ export function dcEveningText(o) {
   if (usAll) {
     const idx = usAll.find(x => x.id === "nightindex"), rest = usAll.filter(x => x.id !== "nightindex");
     L.push("🌙 **美股盤前**（價還在動）");
-    if (idx) L.push(`📊 ${idx.name}　${evFmt(idx.px)}（${evPct(idx.r)}）`);
-    b = evBlock(rest, L); L.push(`${b.n} 支裡，漲 ${b.up} 支、跌 ${b.dn} 支、平 ${b.n - b.up - b.dn} 支。匯率 ${fx}。`, "");
+    if (idx) L.push(`📊 ${idx.name}　${usdFmt(idx.px)}（${evPct(idx.r)}）`);
+    b = evBlock(rest, L); L.push(`${b.n} 支裡，漲 ${b.up} 支、跌 ${b.dn} 支、平 ${b.n - b.up - b.dn} 支。價格是美元；館內匯率 ${fx}。`, "");
   }
   const T = EVENING_TALK, m1 = a ? evMood(a.avg) : null, m2 = b ? evMood(b.avg) : null;
   const key = !a ? "usOnly" : !b ? "twOnly" : m1 > 0 && m2 > 0 ? "bothUp" : m1 < 0 && m2 < 0 ? "bothDown" : m1 <= 0 && m2 > 0 ? "twDownUsUp" : m1 > 0 && m2 <= 0 ? "twUpUsDown" : m1 < 0 || m2 < 0 ? "bothDown" : "calm";

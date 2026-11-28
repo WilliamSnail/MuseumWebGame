@@ -1,10 +1,10 @@
 // 每天早上的「美股昨夜收盤」（翊文 11-27：「能讓銀行每天早上時順便更新美股收盤價的漲跌資訊嗎」「我是說Discord上發布」「要實際數字，但是用遊戲風格發布」）。
 // 純函式：給美股行情文件（stocksUs/latest 收盤後的樣子）和名字表，組成 Discord 的字；沒有開過盤、資料不夠就回空字串（不發）。
-// 遊戲價 ＝ 當天匯率 × 真實價（決定 0081、peg.us）；漲跌 ＝ 真實收盤 ÷ 真實前收 − 1（跟銀行畫面壹樣）。名字後面加真實代號（由呼叫的人傳進來）。
+// 價格寫真實的美元價，前面加 $（翊文 11-28「可以用美金嗎…標註壹下美元$」）；最後壹行附館內匯率（遊戲價 ＝ 匯率 × 美元價，決定 0081）。漲跌 ＝ 真實收盤 ÷ 真實前收 − 1（跟銀行畫面壹樣）。名字後面加真實代號（由呼叫的人傳進來）。
 // 誰叫：functions/stock/us_close_public.js（公開的 /data/us_close.json）；tools/content/announce.cjs 在今日館訊同壹個時間讀它、發到 Discord（usclose-日期，同壹天只發壹次）。
 
+export const usdFmt = n => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const ucOk = v => typeof v === "number" && isFinite(v) && v > 0;
-const ucFmt = n => (n >= 100 ? Math.round(n).toLocaleString("en-US") : (Math.round(n * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 }));
 const ucPct = r => `${r >= 0 ? "▲" : "▼"}${Math.abs(r * 100).toFixed(1)}%`;
 // 2026-11-27 → 11-27；那天是星期五就回「下週壹」，不然「今天」
 const ucNext = day => { const d = new Date(day + "T12:00:00Z"); return d.getUTCDay() === 5 ? "下週壹傍晚" : "今天傍晚"; };
@@ -67,18 +67,18 @@ export function dcUsCloseText(doc, names, ids, early, syms) {
   if (!fx) return "";
   const rows = (ids || []).map(id => {
     const c = doc.R && doc.R[id] && doc.R[id].px, p = doc.prevReal && doc.prevReal[id];
-    return ucOk(c) && ucOk(p) ? { id, base: (names && names[id]) || id, name: ((names && names[id]) || id) + (syms && syms[id] ? ` ${syms[id]}` : ""), r: c / p - 1, px: c * fx } : null;
+    return ucOk(c) && ucOk(p) ? { id, base: (names && names[id]) || id, name: ((names && names[id]) || id) + (syms && syms[id] ? ` ${syms[id]}` : ""), r: c / p - 1, px: c } : null;
   }).filter(Boolean);
   if (rows.length < 3) return "";
   const idx = rows.find(x => x.id === "nightindex"), rest = rows.filter(x => x.id !== "nightindex").sort((a, b) => b.r - a.r);
   const up = rest.filter(x => x.r > 0.0005), down = rest.filter(x => x.r < -0.0005), flat = rest.length - up.length - down.length;
-  const line = x => `${x.name} ${ucPct(x.r)}（${ucFmt(x.px)}）`;
+  const line = x => `${x.name} ${ucPct(x.r)}（${usdFmt(x.px)}）`;
   const L = ["🌅 **Yuga Bot 銀行　晨間行情**", `館外的市場昨夜收攤了（美東 ${doc.day.slice(5)}${early ? "，提早收盤" : ""}）。櫃台照收盤價記好了帳：`, ""];
-  if (idx) L.push(`📊 ${idx.name}　${ucFmt(idx.px)}（${ucPct(idx.r)}）`);
+  if (idx) L.push(`📊 ${idx.name}　${usdFmt(idx.px)}（${ucPct(idx.r)}）`);
   const ups = rest.slice(0, 3).filter(x => x.r > 0), downs = rest.slice().reverse().slice(0, 3).filter(x => x.r < 0); // 每支壹行（翊文 11-27：「這樣排版比較好」）
   L.push("📈 漲得最兇：", ...(ups.length ? ups.map(line) : ["沒有"]));
   L.push("📉 跌得最深：", ...(downs.length ? downs.map(line) : ["沒有"]));
-  L.push(`${rest.length} 支裡，漲 ${up.length} 支、跌 ${down.length} 支、平 ${flat} 支。匯率 ${fx}。`, "");
+  L.push(`${rest.length} 支裡，漲 ${up.length} 支、跌 ${down.length} 支、平 ${flat} 支。價格是美元；館內匯率 ${fx}。`, "");
   L.push(`💬 ${dcUsCloseTalk(idx ? idx.r : NaN, rest[0], rest[rest.length - 1], doc.day)}`, "");
   L.push(`${ucNext(doc.day)}盤前，窗口再開。`, "——Yuga Bot 銀行");
   return L.join("\n");

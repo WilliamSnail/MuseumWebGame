@@ -12,13 +12,13 @@ const doc = o => Object.assign({ day: "2026-11-25", openIdx: 0, closed: false, f
   prevReal: { nightindex: 638.4, greeneye: 155.38, redclaw: 400, oldgamestore: 27.5, bluefireyard: 37.13 } }, o);
 
 (async () => {
-  await T("組字：遊戲名＋代號、漲跌、遊戲價（匯率 × 真實價）；指數另外壹行；漲跌各列在自己的行；家數；週五寫下週壹", () => {
+  await T("組字：遊戲名＋代號、漲跌、美元價（前面加 $，11-28）；指數另外壹行；漲跌各列在自己的行；家數；週五寫下週壹", () => {
     const t = G.dcUsCloseText(doc({ day: "2026-11-27" }), NAMES, G.US_IDS, true, SYMS);
     assert.ok(t.includes("晨間行情") && t.includes("美東 11-27，提早收盤"), t);
-    assert.ok(t.includes(`📊 ${NAMES.nightindex} QQQ　20,875（▼0.7%）`), t);
-    assert.ok(/📈 漲得最兇：\n.+AMD ▲1\.5%（13,371）/.test(t), t);
-    assert.ok(/📉 跌得最深：\n.+NVDA ▼3\.9%（4,916）\n.+GME ▼1\.9%（888）/.test(t), t);
-    assert.ok(t.includes("4 支裡，漲 1 支、跌 2 支、平 1 支。匯率 32.93。"), t);
+    assert.ok(t.includes(`📊 ${NAMES.nightindex} QQQ　$633.93（▼0.7%）`), t);
+    assert.ok(/📈 漲得最兇：\n.+AMD ▲1\.5%（\$406\.03）/.test(t), t);
+    assert.ok(/📉 跌得最深：\n.+NVDA ▼3\.9%（\$149\.30）\n.+GME ▼1\.9%（\$26\.97）/.test(t), t);
+    assert.ok(t.includes("4 支裡，漲 1 支、跌 2 支、平 1 支。價格是美元；館內匯率 32.93。"), t);
     assert.ok(t.includes("下週壹傍晚盤前"), "11-27 是週五");
     assert.ok(!/一/.test(t), "用壹不用一");
   });

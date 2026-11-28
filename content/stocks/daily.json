@@ -1,38 +1,8 @@
 {
- "updated": "2026-11-28T01:40:11.919Z",
+ "updated": "2026-11-28T03:11:20.273Z",
  "source": "Yahoo Finance chart API（免金鑰）",
  "note": "pct＝真實漲跌幅（%）；null＝那天休市；key＝市場所在地的日期",
  "days": {
-  "2026-10-02": {
-   "greeneye": 1.34,
-   "redclaw": 2.95,
-   "nightindex": 1.19,
-   "islandforge": -0.4,
-   "silverapple": 1.02,
-   "flashcar": 4.65,
-   "squarewin": 0.92,
-   "bigshipport": 2.75,
-   "greenleafclinic": 1.12,
-   "quantumfrog": -0.5,
-   "smallcore": -0.75,
-   "messengerlab": 0.57,
-   "oldgamestore": 2.45,
-   "fingerbank": -0.44,
-   "betkingdom": -3.93,
-   "droidhive": 0.58,
-   "treadclub": -1.01,
-   "blockpark": 2.6,
-   "popcornhall": 0.36,
-   "blackgoldwell": 0.78,
-   "bluefireyard": 0.15,
-   "greenglowmine": -0.64,
-   "raremountain": 1.91,
-   "redcoppermine": 3.98,
-   "richsoilshop": -2.23,
-   "vaultbrick": -1.45,
-   "blackbarrel": -0.38,
-   "searchshop": 1.56
-  },
   "2026-10-05": {
    "greeneye": 2.12,
    "redclaw": -0.34,
@@ -544,34 +514,35 @@
    "searchshop": 1.19
   },
   "2026-10-28": {
-   "greeneye": -1.17,
-   "redclaw": 3.24,
-   "nightindex": 0.27,
+   "greeneye": null,
+   "redclaw": null,
+   "nightindex": null,
    "islandforge": 1.04,
-   "silverapple": -0.94,
-   "flashcar": -0.8,
-   "squarewin": -0.06,
-   "bigshipport": 1.15,
-   "greenleafclinic": -2.89,
-   "quantumfrog": -1.58,
-   "smallcore": -0.77,
-   "messengerlab": 2.98,
-   "oldgamestore": -0.13,
-   "fingerbank": 4.51,
-   "betkingdom": -2.31,
-   "droidhive": -0.36,
-   "treadclub": -0.57,
-   "blockpark": -2.18,
-   "popcornhall": 0,
-   "blackgoldwell": 0.63,
-   "bluefireyard": 0.02,
-   "greenglowmine": 3.73,
-   "raremountain": 0.46,
-   "redcoppermine": 0.99,
-   "richsoilshop": -2.45,
-   "vaultbrick": 0.69,
-   "blackbarrel": 2.73,
-   "searchshop": 1.34
+   "silverapple": null,
+   "flashcar": null,
+   "squarewin": null,
+   "bigshipport": null,
+   "greenleafclinic": null,
+   "quantumfrog": null,
+   "smallcore": null,
+   "messengerlab": null,
+   "oldgamestore": null,
+   "fingerbank": null,
+   "betkingdom": null,
+   "droidhive": null,
+   "treadclub": null,
+   "blockpark": null,
+   "popcornhall": null,
+   "blackgoldwell": null,
+   "bluefireyard": null,
+   "greenglowmine": null,
+   "raremountain": null,
+   "redcoppermine": null,
+   "richsoilshop": null,
+   "vaultbrick": null,
+   "blackbarrel": null,
+   "searchshop": null,
+   "facehall": null
   },
   "2026-10-29": {
    "greeneye": -0.8,
@@ -601,7 +572,8 @@
    "richsoilshop": -0.55,
    "vaultbrick": -2.66,
    "blackbarrel": 0.23,
-   "searchshop": -12.64
+   "searchshop": -12.64,
+   "facehall": 1.96
   },
   "2026-10-30": {
    "greeneye": -4.22,
@@ -631,7 +603,8 @@
    "richsoilshop": 0.88,
    "vaultbrick": -7,
    "blackbarrel": 0.54,
-   "searchshop": -1.4
+   "searchshop": -1.4,
+   "facehall": -1.53
   },
   "2026-11-02": {
    "greeneye": -1.26,
@@ -661,7 +634,8 @@
    "richsoilshop": 3.48,
    "vaultbrick": 3.27,
    "blackbarrel": -10.38,
-   "searchshop": -0.3
+   "searchshop": -0.3,
+   "facehall": -1.34
   },
   "2026-11-03": {
    "greeneye": 2.29,
@@ -691,7 +665,8 @@
    "richsoilshop": -3.21,
    "vaultbrick": -1.2,
    "blackbarrel": 1.41,
-   "searchshop": 0.37
+   "searchshop": 0.37,
+   "facehall": 2.36
   },
   "2026-11-04": {
    "greeneye": -3.17,
@@ -721,7 +696,8 @@
    "richsoilshop": 17.37,
    "vaultbrick": 7.28,
    "blackbarrel": -13.19,
-   "searchshop": 3.18
+   "searchshop": 3.18,
+   "facehall": 1.44
   },
   "2026-11-05": {
    "greeneye": -9.26,
@@ -751,7 +727,8 @@
    "richsoilshop": 3.28,
    "vaultbrick": 1.69,
    "blackbarrel": 0.26,
-   "searchshop": -2.2
+   "searchshop": -2.2,
+   "facehall": -3.96
   },
   "2026-11-06": {
    "greeneye": 2.78,
@@ -781,7 +758,8 @@
    "richsoilshop": 0.13,
    "vaultbrick": -1.64,
    "blackbarrel": 2.33,
-   "searchshop": 0.78
+   "searchshop": 0.78,
+   "facehall": 0.84
   },
   "2026-11-09": {
    "greeneye": -4.27,
@@ -811,7 +789,8 @@
    "richsoilshop": 1.83,
    "vaultbrick": 3.8,
    "blackbarrel": -5.42,
-   "searchshop": 1.18
+   "searchshop": 1.18,
+   "facehall": 5.12
   },
   "2026-11-10": {
    "greeneye": -5.47,
@@ -841,7 +820,8 @@
    "richsoilshop": 0.97,
    "vaultbrick": -5.37,
    "blackbarrel": -2.14,
-   "searchshop": -0.27
+   "searchshop": -0.27,
+   "facehall": 0
   },
   "2026-11-11": {
    "greeneye": 2.87,
@@ -871,7 +851,8 @@
    "richsoilshop": -0.83,
    "vaultbrick": -2.29,
    "blackbarrel": 1.47,
-   "searchshop": 2.11
+   "searchshop": 2.11,
+   "facehall": -1.97
   },
   "2026-11-12": {
    "greeneye": -4.34,
@@ -901,7 +882,8 @@
    "richsoilshop": -4.56,
    "vaultbrick": -5.64,
    "blackbarrel": 5.15,
-   "searchshop": 1.79
+   "searchshop": 1.79,
+   "facehall": -0.82
   },
   "2026-11-13": {
    "greeneye": -2.01,
@@ -931,7 +913,8 @@
    "richsoilshop": 0.74,
    "vaultbrick": 0.1,
    "blackbarrel": -1.3,
-   "searchshop": -0.98
+   "searchshop": -0.98,
+   "facehall": 2.9
   },
   "2026-11-16": {
    "greeneye": -4.12,
@@ -961,7 +944,8 @@
    "richsoilshop": -3.15,
    "vaultbrick": -1.35,
    "blackbarrel": -6.72,
-   "searchshop": -4.07
+   "searchshop": -4.07,
+   "facehall": -2.38
   },
   "2026-11-17": {
    "greeneye": -0.44,
@@ -991,7 +975,8 @@
    "richsoilshop": -2.31,
    "vaultbrick": -0.23,
    "blackbarrel": -0.83,
-   "searchshop": -1.24
+   "searchshop": -1.24,
+   "facehall": -1.2
   },
   "2026-11-18": {
    "greeneye": -2.89,
@@ -1021,7 +1006,8 @@
    "richsoilshop": -3.91,
    "vaultbrick": -6.36,
    "blackbarrel": -3.85,
-   "searchshop": 0.8
+   "searchshop": 0.8,
+   "facehall": -0.4
   },
   "2026-11-19": {
    "greeneye": -3.3,
@@ -1051,7 +1037,8 @@
    "richsoilshop": -0.4,
    "vaultbrick": -3.6,
    "blackbarrel": 3.75,
-   "searchshop": -3.46
+   "searchshop": -3.46,
+   "facehall": -3.27
   },
   "2026-11-20": {
    "greeneye": -14.01,
@@ -1081,7 +1068,8 @@
    "richsoilshop": -5.99,
    "vaultbrick": -7.27,
    "blackbarrel": 0.57,
-   "searchshop": -2.7
+   "searchshop": -2.7,
+   "facehall": -5.93
   },
   "2026-11-23": {
    "greeneye": 31.48,
@@ -1111,7 +1099,8 @@
    "richsoilshop": 7.66,
    "vaultbrick": 5.92,
    "blackbarrel": -7.48,
-   "searchshop": 6.34
+   "searchshop": 6.34,
+   "facehall": 6.55
   },
   "2026-11-24": {
    "greeneye": -5.86,
@@ -1141,7 +1130,8 @@
    "richsoilshop": -2.04,
    "vaultbrick": -4.54,
    "blackbarrel": 3.8,
-   "searchshop": -1.08
+   "searchshop": -1.08,
+   "facehall": -1.3
   },
   "2026-11-25": {
    "greeneye": -3.91,
@@ -1171,7 +1161,8 @@
    "richsoilshop": 3.4,
    "vaultbrick": 1.2,
    "blackbarrel": 3.2,
-   "searchshop": -2.13
+   "searchshop": -2.13,
+   "facehall": 3.4
   },
   "2026-11-26": {
    "greeneye": null,
@@ -1201,7 +1192,39 @@
    "richsoilshop": null,
    "vaultbrick": null,
    "blackbarrel": null,
-   "searchshop": null
+   "searchshop": null,
+   "facehall": null
+  },
+  "2026-11-27": {
+   "greeneye": 0.8,
+   "redclaw": 4.56,
+   "nightindex": 2.31,
+   "islandforge": 1.63,
+   "silverapple": 0.83,
+   "flashcar": 5.22,
+   "squarewin": 0.6,
+   "bigshipport": 0.54,
+   "greenleafclinic": 3.83,
+   "quantumfrog": 6.07,
+   "smallcore": 7.09,
+   "messengerlab": 3.53,
+   "oldgamestore": -2.34,
+   "fingerbank": 2.3,
+   "betkingdom": 1.02,
+   "droidhive": 4.97,
+   "treadclub": -1.23,
+   "blockpark": 3.15,
+   "popcornhall": -2.18,
+   "blackgoldwell": 1.36,
+   "bluefireyard": 0.75,
+   "greenglowmine": 5.1,
+   "raremountain": 1.44,
+   "redcoppermine": 4.57,
+   "richsoilshop": 3.39,
+   "vaultbrick": 4,
+   "blackbarrel": -2.24,
+   "searchshop": 0.68,
+   "facehall": 3.13
   }
  }
 }
