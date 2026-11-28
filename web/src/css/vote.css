@@ -1,0 +1,234 @@
+/* ================================================================
+   全館投票（決定 0166，ui_vote.js）：帳上的空欄和那支筆。深色的帳房桌面，帳頁、選項、確認框是紙。
+   紙上的字用 --parch-ink／--parch-sub，深底的字用淺米色。前綴 vote-。
+   閃爍只閃 3 下、抖動只抖 2 下，沒有無限動畫。
+   ================================================================ */
+
+/* ---------- 大廳、任務板的那張卡 ---------- */
+.vote-slot:empty { display: none; }
+.vote-entry { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; min-height: 56px; padding: 7px 10px 7px 12px; border: 0; border-radius: 4px; cursor: pointer; text-align: left; font: inherit; color: var(--parch-ink);
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 13px, rgba(110,80,32,.16) 13px 14px), linear-gradient(180deg, #FCF7EA, #EBDCB8);
+  box-shadow: inset 0 0 0 2px #C8A25A, inset 6px 0 0 -2px rgba(142,42,36,.55), 0 3px 10px rgba(0,0,0,.45); }
+.vote-entry:hover { filter: brightness(1.05); }
+.vote-entry:active { transform: translateY(1px); }
+.vote-entry-pen { display: block; transform: rotate(-32deg); }
+.vote-entry-pen svg { display: block; width: 100%; height: auto; }
+.vote-entry-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.vote-entry-t b { font-family: var(--serif); font-size: .9375rem; letter-spacing: .06em; line-height: 1.35; }
+.vote-entry-t small { font-size: .75rem; color: #5A4030; line-height: 1.4; }
+.vote-entry-go { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; border-radius: 4px; font-size: .8125rem; font-weight: 700; color: #2A1608; background: linear-gradient(180deg, #FFF1C8, #E3BE66); box-shadow: inset 0 0 0 1px #7A5A1E, 0 2px 0 #6E5020; }
+.vote-entry.todo::after { content: ""; position: absolute; inset: -2px; border-radius: 6px; pointer-events: none; box-shadow: 0 0 18px 3px rgba(255,214,120,.85); opacity: 0; animation: vote-glow 1.6s ease-in-out 3; }
+@keyframes vote-glow { 50% { opacity: 1; } }
+.l2-strips > .vote-slot { grid-column: 1 / -1; }
+.td-body > .vote-slot { flex: none; }
+/* 電腦的大廳多了這壹條：導覽圖照高度縮壹點，不用往下捲 */
+@media (min-width: 1100px) and (min-height: 600px) {
+  .l2.vote-on { --mapw: min(100%, calc((100vh - var(--nav-h) - var(--status-real, var(--status-h)) - 198px) * 1024 / 572)); }
+  .l2-strips .vote-entry-t b { font-size: clamp(.9375rem, .8vw, 1.15rem); }
+  .l2-strips .vote-entry-t small { font-size: clamp(.75rem, .62vw, .95rem); }
+}
+
+/* ---------- 館友證那壹塊 ---------- */
+.vote-pass-name { margin: 6px 0; padding: 8px 14px; border: 2px dashed #9C7428; border-radius: 4px; text-align: center; font-family: var(--serif); font-size: 1.5rem; letter-spacing: .12em; color: #1D130B; background: rgba(255,255,255,.5); overflow-wrap: anywhere; }
+.vote-pass-chose { margin: 4px 0; font-family: var(--serif); font-size: 1rem; }
+
+/* ---------- 投票的畫面 ---------- */
+.nb-frame.nb-vote { width: min(980px, 100%); height: auto; min-height: min(600px, calc(100svh - 36px)); max-height: calc(100vh - 36px); max-height: calc(100svh - 36px); }
+.nb-vote .nb-surface { gap: 10px; color: #F3E6C4; background-color: #241A15; overflow: hidden;
+  background-image: radial-gradient(rgba(0,0,0,.22) 1px, rgba(0,0,0,0) 1.5px), radial-gradient(ellipse at 40% 0%, rgba(238,215,156,.16), rgba(0,0,0,0) 62%); background-size: 4px 4px, 100% 100%; }
+.nb-vote .vote-tabs { flex: none; margin: 0; }
+.nb-vote .vote-tabs .nb-tab { min-width: 108px; min-height: 44px; }
+.vote-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 4px 8px; }
+.vote-wait { display: flex; flex-direction: column; justify-content: center; min-height: 60%; }
+.vote-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
+.vote-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; position: sticky; top: 0; }
+.vote-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.vote-main > * { flex: none; }
+
+/* 帳頁：上面幾列是看不清楚的舊墨跡，中間那格是空欄，下面放那支筆 */
+.vote-ledger { position: relative; padding: 12px 18px 56px 26px; border-radius: 3px; color: var(--parch-ink);
+  background: linear-gradient(90deg, rgba(0,0,0,0) 14px, rgba(142,42,36,.5) 14px 15px, rgba(0,0,0,0) 15px 17px, rgba(142,42,36,.5) 17px 18px, rgba(0,0,0,0) 18px), radial-gradient(ellipse at 80% 90%, rgba(120,80,30,.22), rgba(0,0,0,0) 55%), linear-gradient(170deg, #F8EFD8, #E6D4A8);
+  box-shadow: 0 6px 18px rgba(0,0,0,.55), inset 0 0 30px rgba(110,70,20,.18); }
+.vote-ledger h3 { margin: 0 0 6px; padding-bottom: 6px; border-bottom: 3px double rgba(110,80,32,.65); text-align: center; font-family: var(--serif); font-size: 1.0625rem; letter-spacing: .3em; color: #6E5020; }
+.vote-row { display: grid; grid-template-columns: 34% minmax(0, 1fr); align-items: center; gap: 12px; min-height: 40px; border-bottom: 1px solid rgba(110,80,32,.34); }
+.vote-row i { display: block; height: 7px; border-radius: 5px; opacity: .32; filter: blur(.7px);
+  background: repeating-linear-gradient(92deg, #3A2414 0 7px, rgba(58,36,20,.35) 7px 10px, rgba(0,0,0,0) 10px 13px, #3A2414 13px 16px, rgba(0,0,0,0) 16px 18px); }
+.vote-row.vote-you { min-height: 76px; padding: 6px 0; }
+.vote-field { display: grid; place-items: center; min-height: 58px; padding: 4px 10px; border: 2px dashed #8E2A24; border-radius: 4px; text-align: center; font-family: var(--serif); font-size: 1.0625rem; color: #8A7258; background: rgba(255,255,255,.38); overflow-wrap: anywhere; min-width: 0; white-space: pre-wrap; }
+.vote-field.ink { border-style: solid; border-color: rgba(110,80,32,.5); font-size: 1.5rem; font-weight: 700; letter-spacing: .1em; color: #1D130B; }
+.vote-pen { position: absolute; right: 8%; bottom: 14px; width: 56%; transform: rotate(-7deg); transition: transform .4s ease; pointer-events: none; filter: drop-shadow(0 5px 3px rgba(40,20,5,.45)); }
+.vote-pen svg { display: block; width: 100%; height: auto; }
+.pen-write .vote-pen { transform: translate(-6%, 8px) rotate(-9deg); } /* 筆尖朝著那壹格，但不壓到字 */
+.pen-blank .vote-pen { transform: translate(8%, 4px) rotate(0deg); }
+.pen-return .vote-pen { transform: translate(-40%, 6px) rotate(180deg); }
+.vote-shaky { margin: 0; padding: 8px 12px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; background: rgba(94,30,24,.55); box-shadow: inset 0 0 0 1px rgba(255,170,150,.35); }
+.vote-shaky b { font-family: var(--serif); font-size: 1rem; letter-spacing: .14em; color: #FFD9CB; }
+.vote-shaky small { font-size: .75rem; color: #F1CFC2; }
+/* 手在抖：畫出來的時候抖兩下就停；只動位置，照樣按得到、字不變 */
+.vote-shake { animation: vote-tremble .45s linear 2; }
+.vote-pen.vote-shake svg { animation: vote-tremble .45s linear 2; }
+.vote-pen.vote-shake { animation: none; }
+@keyframes vote-tremble { 20% { translate: -3px 1px; rotate: -.5deg; } 40% { translate: 2px -1px; rotate: .4deg; } 60% { translate: -2px 0; rotate: -.3deg; } 80% { translate: 2px 1px; rotate: .2deg; } }
+
+/* 右邊的字 */
+.vote-head { margin: 2px 0 0; font-family: var(--serif); font-size: 1.3125rem; letter-spacing: .08em; color: #F3DFA6; }
+.vote-lead { margin: 0; font-family: var(--serif); font-size: .9375rem; line-height: 1.6; color: #F3E6C4; }
+.vote-sub { margin: 0; font-size: .8125rem; color: #D8C59A; }
+.vote-left-t { margin: 0; font-size: .8125rem; color: #D8C59A; font-variant-numeric: tabular-nums; }
+.vote-big-left { margin: 0; font-family: var(--serif); font-size: 1.5rem; color: #FFF3D2; font-variant-numeric: tabular-nums; }
+.vote-none { margin: 0; padding: 10px 12px; border-radius: 4px; background: rgba(255,255,255,.07); font-size: .875rem; }
+
+/* 三個選項 */
+.vote-opts { display: flex; flex-direction: column; gap: 8px; }
+.vote-opt { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 14px; border: 2px solid #8C6A2E; border-radius: 6px; cursor: pointer; text-align: left; font: inherit; color: var(--parch-ink);
+  background: linear-gradient(180deg, #F7EFDD, #E7D7B0); box-shadow: 0 3px 0 #5E451A, 0 5px 10px rgba(0,0,0,.35); }
+.vote-opt:hover { filter: brightness(1.05); }
+.vote-opt:active { transform: translateY(2px); box-shadow: 0 1px 0 #5E451A; }
+.vote-opt:disabled { cursor: wait; opacity: .65; }
+.vote-opt-mark { width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; border: 2px solid #7A5A1E; background: #FFF9EA; box-shadow: inset 0 1px 3px rgba(0,0,0,.25); }
+.vote-opt.on { border-color: #8E2A24; background: linear-gradient(180deg, #FFF9E8, #F6E6BC); box-shadow: 0 0 0 3px #EED79C, 0 3px 0 3px rgba(0,0,0,.25); }
+.vote-opt.on .vote-opt-mark { border: 7px solid #8E2A24; }
+.vote-opt-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vote-opt-t b { font-family: var(--serif); font-size: 1.125rem; letter-spacing: .08em; }
+.vote-opt-t small { font-size: .8125rem; color: #5A4030; line-height: 1.45; }
+.vote-opt-on { font-size: .75rem; font-weight: 700; color: #8E2A24; white-space: nowrap; }
+.vote-name { display: flex; flex-direction: column; gap: 5px; padding: 8px 12px 10px; border-radius: 6px; background: rgba(0,0,0,.28); box-shadow: inset 0 0 0 1px rgba(200,162,90,.5); }
+.vote-name-h { display: flex; justify-content: space-between; gap: 10px; font-size: .8125rem; color: #E7D3A2; }
+.vote-count { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vote-count.over { color: #FFB9A8; font-weight: 700; }
+.vote-name-in { width: 100%; box-sizing: border-box; min-height: 48px; padding: 6px 12px; border: 2px solid #8C6A2E; border-radius: 4px; background: #FFF9EA; color: #1D130B; font-family: var(--serif); font-size: 1.1875rem; letter-spacing: .08em; }
+.vote-name-in:focus { outline: 3px solid #EED79C; outline-offset: 1px; }
+.vote-slips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.vote-slips li { display: flex; flex-direction: column; gap: 1px; padding: 8px 14px; border: 1px dashed rgba(238,215,156,.5); border-radius: 4px; }
+.vote-slips b { font-family: var(--serif); font-size: 1rem; letter-spacing: .08em; color: #F3DFA6; }
+.vote-slips small { font-size: .8125rem; color: #D8C59A; }
+.vote-pages { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 8px 12px; border-radius: 4px; background: rgba(142,42,36,.35); box-shadow: inset 0 0 0 1px rgba(238,215,156,.4); font-family: var(--serif); font-size: .875rem; }
+.vote-pages .btn { min-height: 44px; color: #F3DFA6; border-color: #C8A25A; }
+
+/* 送出列：固定在下面，不用捲就按得到 */
+.vote-foot { flex: none; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; padding: 10px 4px 0; border-top: 1px solid rgba(200,162,90,.45); }
+.vote-foot-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.vote-hint { margin: 0; font-size: .875rem; color: #F3E6C4; }
+.vote-btns { display: flex; gap: 10px; margin-left: auto; }
+.nb-vote .vote-btns .btn, .nb-vote .vote-change .btn { min-height: 48px; padding: 0 22px; }
+.nb-vote .btn:disabled { opacity: .42; cursor: not-allowed; }
+.nb-vote .vote-cancel, .nb-vote .vote-alert .btn { color: #F3E6C4; border-color: #C8A25A; }
+.nb-vote .vote-send { min-width: 168px; }
+
+/* 投完、截止、結果 */
+.vote-ticket { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 6px 14px; padding: 10px 14px; border-radius: 4px; color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #EBDCB8); box-shadow: 0 3px 10px rgba(0,0,0,.4); }
+.vote-ticket dt { font-size: .75rem; color: #5A4030; }
+.vote-ticket dd { margin: 0; font-family: var(--serif); font-size: 1.1875rem; font-weight: 700; letter-spacing: .08em; overflow-wrap: anywhere; }
+.vote-ticket dd.vote-own { grid-column: 1 / -1; font-family: inherit; font-size: .75rem; font-weight: 400; letter-spacing: 0; color: #5A4030; }
+.vote-ink { font-family: var(--serif); color: #1D130B; }
+.vote-change { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; font-size: .875rem; }
+.vote-change .btn { margin-left: auto; }
+.vote-locked { margin: 0; padding: 10px 12px; border-radius: 4px; background: rgba(0,0,0,.3); box-shadow: inset 0 0 0 1px rgba(200,162,90,.35); font-size: .875rem; }
+.vote-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.vote-bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; align-items: baseline; }
+.vote-bar-l { font-family: var(--serif); font-size: .9375rem; letter-spacing: .06em; }
+.vote-bar-l em { margin-left: 8px; padding: 0 7px; border-radius: 3px; font-style: normal; font-size: .6875rem; font-weight: 700; color: #2A1608; background: #EED79C; }
+.vote-bars b { font-family: Georgia, var(--serif); font-size: 1.0625rem; font-variant-numeric: tabular-nums; }
+.vote-bar { grid-column: 1 / -1; height: 12px; border-radius: 6px; background: rgba(0,0,0,.5); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(200,162,90,.35); }
+.vote-bar i { display: block; height: 100%; background: linear-gradient(180deg, #A9906A, #6E5836); }
+.vote-bars li.win .vote-bar i { background: linear-gradient(180deg, #F7DE8E, #C08F2C); }
+.vote-bars li.win b { color: #FFE08A; }
+
+/* 館史：壹條時間線 */
+.vote-line { list-style: none; max-width: 720px; margin: 0 auto; padding: 4px 0 4px 20px; display: flex; flex-direction: column; gap: 18px; position: relative; }
+.vote-line::before { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; background: rgba(200,162,90,.55); }
+.vote-line > li { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.vote-line > li::before { content: ""; position: absolute; left: -20px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #D86558, #8E1F1A 62%, #5E120E); box-shadow: 0 0 0 2px #EED79C; }
+.vote-line time { font-size: .75rem; color: #D8C59A; }
+.vote-line article { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 3px; color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #EBDCB8); box-shadow: 0 3px 10px rgba(0,0,0,.45); }
+.vote-line h3 { margin: 0; font-family: var(--serif); font-size: 1.125rem; letter-spacing: .08em; overflow-wrap: anywhere; }
+.vote-line-text { margin: 0; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
+.vote-line .vote-sub { color: #5A4030; }
+.vote-line .vote-bar { background: rgba(74,46,26,.18); }
+.vote-line .vote-bars li.win b { color: #8E2A24; }
+.vote-empty { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 48px 16px; text-align: center; font-family: var(--serif); }
+.vote-empty p { margin: 0; max-width: 22em; line-height: 1.8; }
+.vote-empty-pen { width: 180px; transform: rotate(-8deg); }
+.vote-empty-pen svg { display: block; width: 100%; height: auto; }
+
+/* 擋下來、斷線 */
+.vote-alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0; padding: 10px 12px; border-radius: 4px; background: #6A211A; color: #FFF3E6; box-shadow: inset 0 0 0 1px rgba(255,180,160,.55); font-size: .875rem; line-height: 1.55; }
+.vote-alert span { flex: 1 1 14em; }
+.vote-alert .btn { margin-left: auto; min-height: 44px; }
+.vote-wait .vote-alert { max-width: 520px; margin: 0 auto; }
+
+/* 確認框：蓋在投票畫面上 */
+.vote-confirm { position: fixed; inset: 0; z-index: 2; display: grid; place-items: center; padding: 18px; background: rgba(10,5,4,.72); }
+.vote-confirm-box { width: min(440px, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 18px 20px 16px; border-radius: 4px; color: var(--parch-ink); background: linear-gradient(180deg, #FCF7EA, #EFE2C2); box-shadow: 0 18px 50px rgba(0,0,0,.6), inset 0 0 0 2px #C8A25A; }
+.vote-confirm-box h3 { margin: 0 0 10px; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .14em; color: #8E2A24; text-align: center; }
+.vote-confirm-box dl { margin: 0 0 10px; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 6px 14px; }
+.vote-confirm-box dt { font-size: .8125rem; color: #5A4030; }
+.vote-confirm-box dd { margin: 0; font-family: var(--serif); font-size: 1.25rem; font-weight: 700; letter-spacing: .06em; overflow-wrap: anywhere; white-space: pre-wrap; }
+.vote-confirm-box ul { margin: 0; padding: 8px 10px 8px 26px; border-radius: 4px; background: rgba(110,80,32,.1); font-size: .875rem; line-height: 1.8; }
+.vote-last { margin: 10px 0 0; font-weight: 700; font-size: .875rem; color: #8E2A24; }
+.vote-confirm-box .vote-btns { justify-content: stretch; margin: 14px 0 0; }
+.vote-confirm-box .vote-btns .btn { flex: 1; min-height: 48px; }
+.vote-confirm-box .vote-btns .btn.vote-no-btn { color: var(--parch-ink); border-color: #8C6A2E; background: rgba(255,255,255,.55); }
+
+/* 大螢幕：框和字放大 */
+@media (min-width: 1500px) and (min-height: 1000px) {
+  .nb-frame.nb-vote { width: min(1240px, 100%); min-height: min(720px, calc(100svh - 36px)); }
+  .vote-grid { gap: 30px; }
+  .vote-ledger { padding-bottom: 84px; }
+  .vote-ledger h3 { font-size: 1.25rem; }
+  .vote-row { min-height: 54px; }
+  .vote-row.vote-you { min-height: 104px; }
+  .vote-field { min-height: 80px; font-size: 1.3125rem; }
+  .vote-field.ink { font-size: 2rem; }
+  .vote-pen { bottom: 22px; }
+  .vote-head { font-size: 1.625rem; }
+  .vote-lead, .vote-bar-l { font-size: 1.0625rem; }
+  .vote-opt { min-height: 82px; }
+  .vote-opt-t b { font-size: 1.375rem; }
+  .vote-opt-t small, .vote-sub, .vote-left-t, .vote-hint { font-size: .9375rem; }
+}
+
+/* 手機直拿：壹欄；帳頁縮扁，選項和送出鈕盡量不用捲 */
+@media (max-width: 760px) {
+  .nb-frame.nb-vote { width: 100%; height: 100vh; height: 100svh; min-height: 0; max-height: none; }
+  .nb-vote .vote-tabs .nb-tab { flex: 1; min-width: 0; }
+  .nb-vote .nb-surface { gap: 8px; padding: 8px 8px 10px; }
+  .vote-body { padding: 2px 2px 6px; }
+  .vote-grid { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+  .vote-side { position: static; gap: 8px; }
+  .vote-ledger { padding: 6px 12px 8px 24px; }
+  .vote-ledger h3 { margin-bottom: 0; padding-bottom: 3px; font-size: .8125rem; }
+  .vote-ledger .vote-row { min-height: 16px; }
+  .vote-ledger .vote-row:nth-of-type(n+2):not(.vote-you) { display: none; }
+  .vote-ledger .vote-row.vote-you { min-height: 52px; padding: 4px 0; border-bottom: 0; }
+  .vote-field { min-height: 40px; font-size: .9375rem; }
+  .vote-field.ink { font-size: 1.1875rem; }
+  .vote-pen { width: 28%; right: auto; left: 7%; bottom: 20px; }
+  .pen-write .vote-pen { transform: translate(0, -2px) rotate(-16deg); }
+  .pen-blank .vote-pen { transform: translate(4%, 3px) rotate(0deg); }
+  .pen-return .vote-pen { transform: translate(-6%, 3px) rotate(180deg); }
+  .vote-shaky { padding: 4px 10px; gap: 0 8px; }
+  .vote-shaky b { font-size: .875rem; letter-spacing: .08em; }
+  .vote-shaky small { font-size: .6875rem; }
+  .vote-lead { font-size: .8125rem; }
+  .vote-form .vote-lead { display: none; } /* 開著投的時候：帳頁和三個選項自己說得清楚，高度留給選項 */
+  .vote-opts { gap: 7px; }
+  .vote-opt { min-height: 56px; padding: 5px 12px; gap: 10px; }
+  .vote-opt-t b { font-size: 1rem; }
+  .vote-opt-t small { font-size: .75rem; }
+  .vote-foot { gap: 6px; padding-top: 7px; }
+  .vote-foot-t { flex: 1 1 100%; }
+  .vote-foot .vote-hint, .vote-foot .vote-left-t { font-size: .75rem; }
+  .vote-btns { flex: 1 1 100%; }
+  .vote-foot .vote-btns .btn { flex: 1; }
+  .vote-head { font-size: 1.125rem; }
+  .vote-big-left { font-size: 1.1875rem; }
+  .vote-slips li { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 10px; padding: 7px 12px; }
+  .vote-slips small { font-size: .75rem; }
+  .vote-bars { gap: 6px; }
+  .vote-name { gap: 3px; padding: 6px 10px 8px; }
+  .vote-name-in { min-height: 44px; }
+  .vote-confirm { padding: 12px; }
+  /* 館友證：名字那塊矮壹點，下面的總覽少推下去 */
+  .vote-pass-name { margin: 4px 0; padding: 4px 10px; font-size: 1.25rem; }
+}

@@ -9,7 +9,7 @@ assert.strictEqual(new Set(U.SCREENS.map(s => s.id)).size, U.SCREENS.length, "�
 for (const must of ["lobby", "today", "casino", "bank", "fusion2", "cellarrun", "origin"]) assert.ok(U.SCREENS.some(s => s.id === must || s.id.startsWith(must + ":")), "少了畫面 " + must);
 // 要登入的畫面標 needLogin，其他的都要是 debug_boot 認得的（網址 # 後面的畫面名稱）
 const NAV = fs.readFileSync(path.join(ROOT, "web/src/core/ui_core.js"), "utf8").match(/NAV_ROOMS = \[(.*?)\];/)[1];
-const known = new Set([...NAV.matchAll(/\["(\w+)"/g)].map(m => m[1]).concat(["today", "tasks", "fusion2", "cellarrun", "fight", "route", "shop", "signin", "calendar", "pass", "title", "office"]));
+const known = new Set([...NAV.matchAll(/\["(\w+)"/g)].map(m => m[1]).concat(["today", "tasks", "fusion2", "cellarrun", "fight", "route", "shop", "signin", "calendar", "pass", "title", "office", "vote"]));
 for (const s of U.SCREENS) assert.ok(known.has(s.id.split(":")[0]), `畫面 ${s.id} 不是 debug_boot 認得的名字`);
 assert.deepStrictEqual(Object.keys(U.SIZES).sort(), ["desktop", "phone"]);
 assert.deepStrictEqual([U.SIZES.phone.w, U.SIZES.phone.h, U.SIZES.desktop.w, U.SIZES.desktop.h], [375, 740, 2140, 1440]);

@@ -175,7 +175,7 @@ function todoCards(step) {
     cards.push({ t: `每日任務 ${st.dailyN - st.dailyLeft}／${st.dailyN}`, s: g ? `${g.name}：${g.says}` : st.daily.find(x => !x.done) ? st.daily.find(x => !x.done).text : "今天的都做完了", go: () => PANELS.today && PANELS.today(), todo: st.dailyLeft > 0, giver: g && g.id });
   }
   if (step) cards.push({ t: step.text, s: step.why, go: () => navTo(step.room), todo: true });
-  const rest = x => !/^(yuga|daily)-/.test(x.key);
+  const rest = x => x.key !== "vote" && !/^(yuga|daily)-/.test(x.key); // 全館投票在最上面那條（voteSlot），不佔任務卡的位子
   items.filter(x => x.todo && rest(x)).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: true }));
   items.filter(x => !x.todo && rest(x)).forEach(x => cards.push({ t: x.title, s: x.sub, go: x.go, todo: false }));
   const shown = cards.slice(0, ADDONS.hallNowBox ? 2 : 4); // 最多 2 張（右欄多了展廳現在、最近的評價）；再多右欄就擠出畫面（全部在導覽列的「今天」）
@@ -213,7 +213,7 @@ export function lobby2(root) {
     isFree(P) || !(UI.net || import.meta.env.DEV) || !ADDONS.hallNowBox ? null : h("div", { class: "l2-box l2-hnbox" }, ADDONS.hallNowBox("lobby")), // 展廳現在幾人、最近的評價（ui_hallnow.js；登入了才有）
     isFree(P) ? null : h("div", { class: "l2-box" }, h("div", { class: "l2-h" }, "手上有的"), seals()));
   const wrap = h("div", { class: "l2" },
-    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, eventStrip(), headlineStrip(), h("div", { class: "l2-pbar" }, ADDONS.hallNowBar && (UI.net || import.meta.env.DEV) && !isFree(P) ? ADDONS.hallNowBar() : null, mates.chip)), live, h("div", { class: "l2-mapbox" }, map)),
+    h("section", { class: "l2-left", "aria-label": "大廳" }, h("div", { class: "l2-strips" }, ADDONS.voteSlot ? ADDONS.voteSlot("lobby") : null, eventStrip(), headlineStrip(), h("div", { class: "l2-pbar" }, ADDONS.hallNowBar && (UI.net || import.meta.env.DEV) && !isFree(P) ? ADDONS.hallNowBar() : null, mates.chip)), live, h("div", { class: "l2-mapbox" }, map)),
     side);
   root.append(wrap); if (ADDONS.lobbyLyrics) root.append(ADDONS.lobbyLyrics()); // 深夜曲的字幕（fixed，不佔位；ui_lyrics.js）
   document.body.classList.add("lobby-wide-on"); // 大螢幕放寬（css/lobby2.css）；換房間時 ui_core 的 render 會拿掉

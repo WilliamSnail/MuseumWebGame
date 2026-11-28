@@ -199,7 +199,7 @@ export function avatarChoices(P) {
 // 館友證上要畫的那隻：有挑頭像用頭像，沒有就用最近收進來的
 export function passPhoto(P) { return passAvatar(P) || avatarChoices(P)[0] || ""; }
 
-// o：{ today, signins（簽到幾天，存檔層級的，畫面給） }
+// o：{ today, signins（簽到幾天，存檔層級的，畫面給）, vote（全館投票自己那壹塊，伺服器回的、story/vote_screen.js 整理過；只有自己的版本給） }
 export function passView(P, o = {}) {
   const today = typeof o.today === "string" ? o.today : todayStr();
   const free = isFree(P), rp = roomProgress(P), st = P.stats || {};
@@ -236,6 +236,7 @@ export function passView(P, o = {}) {
     mats: passMats(P),
     cellar: passCellar(P),
     sign: passSign(o),
+    vote: o.vote || null, // 全館投票寫下的名字：資料不在存檔（storyVote 只回給本人），不進對外的版本
     pepe: {
       have: codexCount(P), total: CORE_TOTAL, kinds: keys.length, recent,
       byRarity: RARITY_ORDER.filter(r => r !== FAILED).map(r => ({ r, n: byR[r] || 0 })),

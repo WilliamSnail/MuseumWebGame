@@ -72,6 +72,7 @@ class 名字開頭的字（`xxx-`）。**畫面欄是主要用的畫面**，很�
 | `onescreen-` | `onescreen.css` | 介面重塑的骨架：`onescreen-room`（整個廳）、`-main`、`-side`、`-drawer`、`-pull`、`-card`、`-big`、`-learn`、`-more`、`-lesson-layer`。以前叫 `u2r`、`u2-xxx` |
 | `hall-` | `onescreen.css`、`signin.css` | 我的展廳；`hall-onescreen`（展廳套骨架）以前叫 `hall-u2`。`signin.css` 的是展廳的簽到 |
 | `lobby-` | `hub.css` | 大廳 |
+| `vote-` | `vote.css` | 全館投票（11-28，`ui_vote.js`）：`vote-entry`（大廳、任務板的卡，放在 `vote-slot` 裡）、`vote-ledger`／`vote-field`／`vote-pen`（帳頁、空欄、筆）、`vote-opt`（三個選項）、`vote-foot`（送出列）、`vote-confirm`（確認框）、`vote-bars`（比例）、`vote-line`（館史）。`l2 vote-on` 是大廳多了這條時加的 |
 | `hub-` | `hub.css` | 大廳的導覽圖 |
 | `artmarket-` | `artmarket.css` | 藝術市場（`ui_art.js`）：畫廊今日特展每幅畫下面的買賣（`artmarket-row`）和「我收藏的畫」（`artmarket-shelf`）。不要跟畫框的 `art-` 搞混 |
 | `sv-`、`tone-` | `stat.css` | 公用數值元件（`ui_stat.js`）：`sv-badge`（小牌）、`sv-bar`、`sv-bands`；`tone-good／neutral／warn／bad` 是顏色，只在 stat.css 定義 |

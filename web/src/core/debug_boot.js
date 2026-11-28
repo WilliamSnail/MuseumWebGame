@@ -123,7 +123,7 @@ const BANK_ALIAS = { 財報: "report", 金流: "flow", 股票: "stock", 存款: 
     ["portrait", "strange", "rare", "statue"].forEach(id => { P.seen[id] = 1; });
     P.chaptersRead[0] = true; P.chaptersRead[1] = true;
     dailyCommissions(P, P.day.date)[1].done = true;
-    P.insp = 37; P.mood = 55; P.sanity = arg === "lowsan" ? 28 : 64; P.myth = 3;
+    P.insp = 37; P.mood = 55; P.sanity = arg === "lowsan" || (screen === "vote" && extra === "lowsan") ? 28 : 64; P.myth = 3;
     if (arg === "bout") P.bout = { i: 3, left: 4 };
     if (arg === "quirk") P.quirks = [{ type: "phobia", cat: "帽子", opt: null, since: P.day.date, until: nowMs() + 5 * 86400000 + 5000, task: "calm", done: [] }, { type: "mania", cat: "顏色", opt: "綠", since: P.day.date, until: nowMs() + 2 * 86400000 + 5000, task: "hug", done: [P.day.date] }]; // 怪癖（決定 0046）
     if (typeof assignJob === "function") { assignJob(P, "historian"); P.skillTicks = { 鑑賞: true }; P.upgrades = { ped7: "2026-11-08", repair: "2026-11-08" }; while (P.hall.length < hallSize(P)) P.hall.push(null); }
@@ -131,7 +131,12 @@ const BANK_ALIAS = { 財報: "report", 金流: "flow", 股票: "stock", 存款: 
     if (/^pnm/.test(arg || "")) { const k = its.map(i => i.key); P.nmSeq = 2; P.pepes[k[0]].nm = "小綠"; P.pepes[k[0]].nmSeq = 1; P.pepes[k[1]].tk = { no: 7, day: "2026-11-18", n: 1, stamp: false, was: "舊名" }; P.pepes[k[1]].nm = ""; P.pepes[k[2]].nm = "新名字"; P.pepes[k[2]].nmSeq = 2; P.pepes[k[2]].tk = { no: 12, day: "2026-11-18", n: 1, stamp: true, was: "舊" }; } // 取名的示範（決定 0133）
     setRng(null);
     // 假伺服器（mock_net.js）：賭場、銀行、館友證要登入才看得到，這裡換成假的 NET（不連網路），畫面用錄下來的伺服器回應。網址加 ?mock 任何畫面都用
-    if (/^(casino|bank|pass)$/.test(screen) || /[?&]mock\b/.test(location.search)) (await import("./mock_net.js")).installMock();
+    if (/^(casino|bank|pass|vote)$/.test(screen) || /[?&]mock\b/.test(location.search)) (await import("./mock_net.js")).installMock();
+    // #vote → 全館投票（假伺服器；時間照 ?mock&vote=…）。#vote:history、:write（選寫下名字、打好名字）、:blank、:long（名字太長）、:edit（改票）、:confirm／:editconfirm（確認框）、:send（直接送出，看擋下來的樣子）；後面再加 :lowsan 是理智低
+    if (screen === "vote") {
+      const o = { history: { tab: "history" }, write: { pick: "write", name: "測試的名字" }, blank: { pick: "blank" }, long: { pick: "write", name: "壹貳參肆伍陸柒捌玖拾壹貳參肆" }, edit: { edit: true, pick: "return" }, confirm: { pick: "write", name: "測試的名字", confirm: true }, editconfirm: { edit: true, pick: "blank", confirm: true }, send: { pick: "write", name: "測試的名字", send: true } }[arg] || {};
+      go("lobby", {}, { action: false }); setTimeout(() => PANELS.vote(o), 300); return;
+    }
     if (screen === "route") { go("lobby", {}, { action: false }); setTimeout(() => routePreview(arg), 300); return; }
     if (screen === "fight") { go("lobby", {}, { action: false }); setTimeout(() => fightPreview(arg), 300); return; }
     if (screen === "cellarrun") { const keys = collectionItems("pepe").slice(0, 3).map(i => i.key); startCellar(P, 1, keys); go("cellar", {}, { action: false }); return; }
