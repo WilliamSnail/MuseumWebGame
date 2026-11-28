@@ -6,7 +6,7 @@
 // 寫進 discordOutbox/evening-日期（outboxPut 用 create，同壹天只會寫進壹次），discordOutboxSend 撿起來發。兩邊都沒東西就不發。
 import { getFirestore } from "firebase-admin/firestore";
 import { taipeiDay } from "../shared/core/logic.js";
-import { OUT_STOCKS } from "../shared/stock/text.js";
+import { OUT_NAMES_EMO } from "../shared/stock/text.js";
 import { TW_IDS, US_IDS, usEarlyClose, usNyDay } from "../shared/stock/tw.js";
 import { dcEveningText } from "../shared/discord/evening.js";
 import { DC_DIGEST_SITE, dcDigestPick, dcDigestText } from "../shared/discord/out.js";
@@ -17,7 +17,7 @@ import { outboxPut } from "../discord/discord_out.js";
 
 export const EVENING_HOUR = 18; // 台灣幾點那次發（:17）
 export const DIGEST_MAX = 1000; // 合併時館訊那段最多幾個字（Discord 壹則 2000 字，傍晚行情約 700 字）
-const NAMES = Object.fromEntries(OUT_STOCKS.map(s => [s.id, s.name]));
+const NAMES = OUT_NAMES_EMO; // 名字前面有 emoji（11-28）
 export const taipeiHour = ms => new Date(ms + 8 * 3600000).getUTCHours();
 
 // 台股大盤（加權指數 t00）：證交所即時報價介面，抓不到就不寫那行。d 要是今天（休市日回的是上壹個交易日）
