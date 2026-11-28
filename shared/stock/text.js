@@ -65,4 +65,6 @@ export const OUT_STOCKS = [
   { id: "facehall", kind: "stock", market: "us", cat: "tech", ext: true, name: "千面鏡廳", intro: "整面牆都是鏡子，每個走進來的人都對著鏡子說話；鏡子記得每壹張臉，也把這些臉賣給想看的人。" },
   // 11-28 翊文：「美股也可以加入 AMZN」
   { id: "boxyard", kind: "stock", market: "us", cat: "tech", ext: true, name: "萬箱貨棧", intro: "倉庫大到看不見盡頭，箱子日夜進出；你想要的東西，它總比你先知道放在哪壹格。" },
+  // 11-28 翊文：「美股也可以加入 SPY」：第二個美股指數，比夜光科技指數廣，各行各業都算
+  { id: "bigindex", kind: "index", market: "us", cat: "index", ext: true, name: "全城大盤指數", intro: "整座城五百家大店的平均行情，賣什麼的都算進來；不看哪壹家，是看整座城今天過得好不好。" },
 ];

@@ -29,6 +29,12 @@ const doc = o => Object.assign({ day: "2026-11-25", openIdx: 0, closed: false, f
     assert.strictEqual(G.dcUsCloseText(doc({ R: { greeneye: { px: 1 } } }), NAMES, G.US_IDS), "");
     assert.ok(G.dcUsCloseText(doc({ fx: null, fxLast: 33 }), NAMES, G.US_IDS).includes("匯率 33"), "今天沒匯率用昨天的");
   });
+  await T("兩個指數（11-28 加 SPY）：都在最上面各壹行、不算進漲跌排行和家數", () => {
+    const d = doc({ R: Object.assign({}, doc().R, { bigindex: { px: 728.29 } }), prevReal: Object.assign({}, doc().prevReal, { bigindex: 725 }) });
+    const t = G.dcUsCloseText(d, NAMES, G.US_IDS, false, Object.assign({ bigindex: "SPY" }, SYMS));
+    assert.ok(t.includes(`📊 ${NAMES.nightindex} QQQ　$633.93（▼0.7%）\n📊 ${NAMES.bigindex} SPY　$728.29（▲0.5%）\n📈`), t);
+    assert.ok(t.includes("4 支裡"), t);
+  });
   await T("今日館訊那邊：同壹個時間、排在後面；抓到今天的字就發，日期不對或空字串就不發", async () => {
     const e = A.usCloseEntry("2026-11-28", G.addDays);
     assert.strictEqual(e.id, "usclose-2026-11-28"); assert.ok(e.isDay);

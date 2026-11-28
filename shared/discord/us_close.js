@@ -3,6 +3,8 @@
 // 價格寫真實的美元價，前面加 $（翊文 11-28「可以用美金嗎…標註壹下美元$」）；最後壹行附館內匯率（遊戲價 ＝ 匯率 × 美元價，決定 0081）。漲跌 ＝ 真實收盤 ÷ 真實前收 − 1（跟銀行畫面壹樣）。名字後面加真實代號（由呼叫的人傳進來）。
 // 誰叫：functions/stock/us_close_public.js（公開的 /data/us_close.json）；tools/content/announce.cjs 在今日館訊同壹個時間讀它、發到 Discord（usclose-日期，同壹天只發壹次）。
 
+// 美股的指數（夜光科技指數、11-28 加的全城大盤指數）：Discord 那兩則放在最上面各壹行，不算進漲跌排行；評語看夜光科技指數
+export const US_INDEX_IDS = ["nightindex", "bigindex"];
 export const usdFmt = n => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const ucOk = v => typeof v === "number" && isFinite(v) && v > 0;
 const ucPct = r => `${r >= 0 ? "▲" : "▼"}${Math.abs(r * 100).toFixed(1)}%`;
@@ -70,11 +72,11 @@ export function dcUsCloseText(doc, names, ids, early, syms) {
     return ucOk(c) && ucOk(p) ? { id, base: (names && names[id]) || id, name: ((names && names[id]) || id) + (syms && syms[id] ? ` ${syms[id]}` : ""), r: c / p - 1, px: c } : null;
   }).filter(Boolean);
   if (rows.length < 3) return "";
-  const idx = rows.find(x => x.id === "nightindex"), rest = rows.filter(x => x.id !== "nightindex").sort((a, b) => b.r - a.r);
+  const idxs = rows.filter(x => US_INDEX_IDS.includes(x.id)), idx = idxs.find(x => x.id === "nightindex") || idxs[0], rest = rows.filter(x => !US_INDEX_IDS.includes(x.id)).sort((a, b) => b.r - a.r);
   const up = rest.filter(x => x.r > 0.0005), down = rest.filter(x => x.r < -0.0005), flat = rest.length - up.length - down.length;
   const line = x => `${x.name} ${ucPct(x.r)}（${usdFmt(x.px)}）`;
   const L = ["🌅 **Yuga Bot 銀行　晨間行情**", `館外的市場昨夜收攤了（美東 ${doc.day.slice(5)}${early ? "，提早收盤" : ""}）。櫃台照收盤價記好了帳：`, ""];
-  if (idx) L.push(`📊 ${idx.name}　${usdFmt(idx.px)}（${ucPct(idx.r)}）`);
+  for (const x of idxs) L.push(`📊 ${x.name}　${usdFmt(x.px)}（${ucPct(x.r)}）`);
   const ups = rest.slice(0, 3).filter(x => x.r > 0), downs = rest.slice().reverse().slice(0, 3).filter(x => x.r < 0); // 每支壹行（翊文 11-27：「這樣排版比較好」）
   L.push("📈 漲得最兇：", ...(ups.length ? ups.map(line) : ["沒有"]));
   L.push("📉 跌得最深：", ...(downs.length ? downs.map(line) : ["沒有"]));

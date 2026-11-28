@@ -5,8 +5,8 @@ const { load } = require("../load_shared.cjs");
 let pass = 0, fail = 0;
 const T = (name, fn) => { const G = load({ __realMoney: true }); try { fn(G); pass++; } catch (e) { fail++; console.log("FAIL", name, "\n   ", e.stack.split("\n").slice(0, 5).join("\n    ")); } };
 const D0 = "2026-11-19";
-T("名單：美股 29 支（原 6 ＋ 新 18 ＋ 2 倍版 2 ＋ 11-28 的 GOOGL、META、AMZN）；新股都有 15 分鐘波動和每分鐘隨機、名字不重複、說明壹句；真實代號不在 shared", G => {
-  const ext = G.OUT_STOCKS.filter(s => s.ext); assert.strictEqual(ext.length, 23); assert.strictEqual(G.US_IDS.length, 29);
+T("名單：美股 30 支（原 6 ＋ 新 18 ＋ 2 倍版 2 ＋ 11-28 的 GOOGL、META、AMZN、SPY）；新股都有 15 分鐘波動和每分鐘隨機、名字不重複、說明壹句；真實代號不在 shared", G => {
+  const ext = G.OUT_STOCKS.filter(s => s.ext); assert.strictEqual(ext.length, 24); assert.strictEqual(G.US_IDS.length, 30);
   assert.strictEqual(new Set(G.OUT_STOCKS.map(s => s.name)).size, G.OUT_STOCKS.length, "名字不重複");
   const C = G.NUM.casino.stock.us; for (const s of ext) { assert.strictEqual(s.market, "us"); assert.ok(C.sd15[s.id] > 0 && C.minSd[s.id] > 0, s.id); assert.ok(s.intro && s.intro.length > 10 && !/[A-Za-z]{3,}/.test(s.name + s.intro), s.id + " 說明不放英文代號"); }
   const txt = ["stock/text.js", "core/config.js"].map(f => fs.readFileSync(path.join(__dirname, "..", "..", "shared", f), "utf8")).join("\n");
